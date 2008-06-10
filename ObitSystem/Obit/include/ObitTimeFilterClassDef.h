@@ -1,4 +1,4 @@
-/* $Id: ObitTimeFilterClassDef.h,v 1.4 2008/01/29 02:25:34 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

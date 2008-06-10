@@ -3,7 +3,7 @@
 This module contains utilities for Sky Geometry calculations
 Also primary beam calculations
 """
-# $Id: SkyGeom.py,v 1.4 2007/10/30 13:04:20 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2007
 #  Associated Universities, Inc. Washington DC, USA.

@@ -112,16 +112,13 @@ appropriate file should be sourced before running Obit software.
 ObitSystem/doc/ObitTalk.pdf.  The most recent documentation is available
 from the Obit home page http://www.cv.nrao.edu/~bcotton/Obit.html.
 
-   Updates can be obtained using the Obit anonymous cvs server.  Such an
+   Updates can be obtained using the Obit anonymous svn server.  Such an
 update is recommended when installing this tarball as it is only updated 
 occasionally. 
 To update ObitSystem, cd to the ObitSystem top directory 
 ($OBITINSTALL/ObitSystem as defined in the setup scripts created by 
 the installation) and :
- % cvs -d :pserver:anonymous@cvs.cv.nrao.edu:/home/cvs login
-# at password prompt enter "anoncvs"
- % cvs -d :pserver:anonymous@cvs.cv.nrao.edu:/home/cvs update 
- % cvs -d :pserver:anonymous@cvs.cv.nrao.edu:/home/cvs logout
+ % svn update
 
 64 bit Notes
 ------------

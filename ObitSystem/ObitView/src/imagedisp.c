@@ -1,4 +1,4 @@
-/* $Id: imagedisp.c,v 1.12 2007/08/28 15:05:45 bcotton Exp $  */
+/* $Id$  */
 /* Display widget for images for ObitView allows zoom and scroll       */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 1996,1997,1999,2002-2008

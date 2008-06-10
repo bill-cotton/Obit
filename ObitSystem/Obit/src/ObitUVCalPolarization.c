@@ -1,4 +1,4 @@
-/* $Id: ObitUVCalPolarization.c,v 1.5 2007/08/31 17:24:04 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

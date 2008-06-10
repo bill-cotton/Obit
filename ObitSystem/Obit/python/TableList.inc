@@ -1,4 +1,4 @@
-/* $Id: TableList.inc,v 1.4 2007/07/26 14:28:24 bcotton Exp $   */  
+/* $Id$   */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageDesc type                         */
 /*                                                                    */

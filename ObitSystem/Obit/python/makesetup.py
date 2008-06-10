@@ -1,5 +1,5 @@
 # Python/Obit build utillity
-# $Id: makesetup.py,v 1.2 2005/12/08 00:12:31 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2005
 #  Associated Universities, Inc. Washington DC, USA.

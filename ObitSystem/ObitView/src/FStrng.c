@@ -1,4 +1,4 @@
-/* $Id: FStrng.c,v 1.1 2005/07/23 00:20:08 bcotton Exp $ */
+/* $Id$ */
 /*  Implementation for class FStrng string  */ 
 /* an FStrng is an implementation of character strings with associated
    functions */

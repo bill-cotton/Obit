@@ -1,4 +1,4 @@
-/* $Id: ObitIoN2SolNTable.h,v 1.3 2007/09/07 12:31:39 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

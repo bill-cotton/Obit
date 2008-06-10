@@ -1,4 +1,4 @@
-/* $Id: ObitRPCClassDef.h,v 1.1 2005/08/03 12:11:42 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2005                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

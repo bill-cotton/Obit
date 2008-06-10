@@ -1,4 +1,4 @@
-/* $Id: FArray.inc 7 2008-06-09 14:04:10Z bcotton $           */  
+/* $Id$           */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitFarray type                        */
 /*                                                                    */

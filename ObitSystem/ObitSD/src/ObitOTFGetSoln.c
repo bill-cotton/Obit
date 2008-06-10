@@ -1,4 +1,4 @@
-/* $Id: ObitOTFGetSoln.c,v 1.23 2008/03/20 13:22:00 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

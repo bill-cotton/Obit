@@ -3,7 +3,7 @@
 This class provides estimates of the beam shape
 
 """
-# $Id: BeamShape.py,v 1.2 2008/05/08 18:57:07 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2008
 #  Associated Universities, Inc. Washington DC, USA.

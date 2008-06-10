@@ -1,4 +1,4 @@
-/* $Id: MCube.c,v 1.4 2008/02/29 02:02:57 bcotton Exp $  */
+/* $Id$  */
 /*  MCube: put together images into a cube                            */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2007                                               */

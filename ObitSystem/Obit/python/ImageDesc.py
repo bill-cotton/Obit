@@ -1,4 +1,4 @@
-# $Id: ImageDesc.py,v 1.16 2007/11/10 22:36:03 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004,2005
 #  Associated Universities, Inc. Washington DC, USA.

@@ -1,4 +1,4 @@
-/* $Id: ObitDCon.c,v 1.5 2006/01/28 00:04:41 bcotton Exp $        */
+/* $Id$        */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

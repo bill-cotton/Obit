@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2005/11/04 00:08:39 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #;  Copyright (C) 2002-2008
 #;  Associated Universities, Inc. Washington DC, USA.

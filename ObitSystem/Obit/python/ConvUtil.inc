@@ -1,4 +1,4 @@
-/* $Id: ConvUtil.inc,v 1.1 2006/04/18 20:13:23 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for Convolution utilities                  */
 /*                                                                    */

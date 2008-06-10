@@ -1,4 +1,4 @@
-/* $Id: ObitDConCleanOTF.c,v 1.12 2008/05/15 21:34:01 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2005-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

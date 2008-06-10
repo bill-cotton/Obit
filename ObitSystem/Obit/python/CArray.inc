@@ -1,4 +1,4 @@
-/* $Id: CArray.inc,v 1.7 2006/10/11 17:24:48 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitCArray type                        */
 /*                                                                    */

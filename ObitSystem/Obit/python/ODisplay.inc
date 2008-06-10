@@ -1,4 +1,4 @@
-/* $Id: ODisplay.inc,v 1.1 2005/08/03 19:45:35 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitDisplay type                       */
 /*                                                                    */

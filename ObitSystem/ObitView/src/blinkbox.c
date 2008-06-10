@@ -1,4 +1,4 @@
-/* $Id: blinkbox.c,v 1.5 2007/07/05 12:59:02 bcotton Exp $  */
+/* $Id$  */
 /* image blink control box  for ObitView */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 1996,2002-2008

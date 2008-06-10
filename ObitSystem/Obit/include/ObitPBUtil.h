@@ -1,4 +1,4 @@
-/* $Id: ObitPBUtil.h,v 1.6 2007/10/30 13:03:52 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

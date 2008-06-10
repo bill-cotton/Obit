@@ -1,4 +1,4 @@
-/* $Id: ObitFileFITS.c,v 1.9 2008/03/03 21:14:00 bcotton Exp $        */
+/* $Id$        */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

@@ -1,4 +1,4 @@
-/* $Id: ObitDConCleanWindowClassDef.h,v 1.7 2007/05/16 15:48:58 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

@@ -1,4 +1,4 @@
-/* $Id: IonImage.c,v 1.41 2008/03/03 01:09:21 bcotton Exp $  */
+/* $Id$  */
 /* Obit task to image/CLEAN a uv data set with field-based cal        */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2008                                          */

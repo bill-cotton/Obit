@@ -1,4 +1,4 @@
-/* $Id: Template.c,v 1.10 2007/02/19 15:08:43 bcotton Exp $  */
+/* $Id$  */
 /* Template Obit task - computes mean and RMS of an image             */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2005-2008                                          */

@@ -1,4 +1,4 @@
-/* $Id: History.inc,v 1.6 2006/01/18 20:02:40 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for History utilities                      */
 /*                                                                    */

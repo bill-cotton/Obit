@@ -1,4 +1,4 @@
-# $Id: ImageMosaic.py,v 1.13 2007/11/06 13:01:01 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004,2005
 #  Associated Universities, Inc. Washington DC, USA.

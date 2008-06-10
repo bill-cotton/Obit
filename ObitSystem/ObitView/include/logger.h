@@ -1,4 +1,4 @@
-/* $Id: logger.h,v 1.1.1.1 2005/06/09 12:45:29 bcotton Exp $  */
+/* $Id$  */
 /* Header file for logger.c, position logging routines */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 1996-2008

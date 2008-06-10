@@ -1,4 +1,4 @@
-/* $Id: ObitAll.h,v 1.2 2005/10/06 20:22:54 bcotton Exp $         */
+/* $Id$         */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

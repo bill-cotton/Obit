@@ -1,4 +1,4 @@
-/* $Id: ImageUtil.inc,v 1.4 2006/12/28 15:59:33 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for Image utilities                        */
 /*                                                                    */

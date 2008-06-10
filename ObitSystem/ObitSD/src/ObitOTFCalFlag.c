@@ -1,4 +1,4 @@
-/* $Id: ObitOTFCalFlag.c,v 1.7 2007/09/11 12:50:41 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

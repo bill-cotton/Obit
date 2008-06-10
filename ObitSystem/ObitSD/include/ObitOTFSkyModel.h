@@ -1,4 +1,4 @@
-/* $Id: ObitOTFSkyModel.h,v 1.4 2005/10/06 19:33:28 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

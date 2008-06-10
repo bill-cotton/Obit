@@ -1,4 +1,4 @@
-/* $Id: ObitImageMosaic.c,v 1.60 2008/04/25 17:34:55 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

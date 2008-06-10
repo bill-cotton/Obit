@@ -1,4 +1,4 @@
-/* $Id: ObitRPC.c,v 1.7 2006/07/02 22:44:16 bcotton Exp $    */
+/* $Id$    */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2005-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

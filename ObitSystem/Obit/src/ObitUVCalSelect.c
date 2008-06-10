@@ -1,4 +1,4 @@
-/* $Id: ObitUVCalSelect.c,v 1.14 2008/04/25 17:35:39 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

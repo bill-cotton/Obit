@@ -1,4 +1,4 @@
-# $Id: UVSoln2Cal.py,v 1.1 2006/03/09 18:45:22 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2006
 #  Associated Universities, Inc. Washington DC, USA.

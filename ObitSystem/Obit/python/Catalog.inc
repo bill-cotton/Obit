@@ -1,4 +1,4 @@
-/* $Id: Catalog.inc,v 1.4 2007/03/20 14:40:14 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for Convolution utilities                  */
 /*                                                                    */

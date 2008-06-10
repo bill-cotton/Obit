@@ -1,4 +1,4 @@
-# $Id: IonCal.py,v 1.3 2007/09/07 12:32:42 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2007
 #  Associated Universities, Inc. Washington DC, USA.

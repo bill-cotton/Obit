@@ -1,4 +1,4 @@
-/* $Id: ObitSkyGeom.c,v 1.6 2008/02/10 01:40:02 bcotton Exp $      */
+/* $Id$      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

@@ -12,7 +12,7 @@ OData Members with python interfaces:
 exist     - True if object previously existed prior to object creation
 List      - used to pass instructions to processing
 """
-# $Id: OData.py,v 1.3 2007/12/22 01:42:14 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2007
 #  Associated Universities, Inc. Washington DC, USA.

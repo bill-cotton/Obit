@@ -1,4 +1,4 @@
-# $Id: TableList.py,v 1.5 2007/07/26 14:28:24 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2005
 #  Associated Universities, Inc. Washington DC, USA.

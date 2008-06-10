@@ -1,4 +1,4 @@
-/* $Id: ObitDConCleanPxListDef.h,v 1.6 2006/07/17 16:00:05 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

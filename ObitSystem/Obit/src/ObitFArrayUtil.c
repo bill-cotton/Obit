@@ -1,4 +1,4 @@
-/* $Id: ObitFArrayUtil.c,v 1.5 2008/03/25 17:08:42 bcotton Exp $   */
+/* $Id$   */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2005-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

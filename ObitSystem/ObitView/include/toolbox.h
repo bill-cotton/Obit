@@ -1,4 +1,4 @@
-/* $Id: toolbox.h,v 1.1.1.1 2005/06/09 12:45:29 bcotton Exp $ */
+/* $Id$ */
 /* function prototypes for toolbox.c  */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 1998

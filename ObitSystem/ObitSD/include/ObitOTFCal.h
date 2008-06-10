@@ -1,4 +1,4 @@
-/* $Id: ObitOTFCal.h,v 1.4 2008/02/03 23:09:19 bcotton Exp $      */
+/* $Id$      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

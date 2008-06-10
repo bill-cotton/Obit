@@ -2,7 +2,7 @@
 This contains information about the observations and the size and 
 structure of the data.
 """
-# $Id: OTFDesc.py,v 1.10 2007/08/22 15:07:56 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004-2007
 #  Associated Universities, Inc. Washington DC, USA.

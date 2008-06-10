@@ -1,4 +1,4 @@
-/* $Id: ObitUVWeight.c,v 1.17 2008/05/24 01:29:16 bcotton Exp $    */
+/* $Id$    */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

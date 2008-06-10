@@ -1,4 +1,4 @@
-/* $Id: ObitImageFitDataDef.h,v 1.2 2007/09/20 03:08:13 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

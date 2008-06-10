@@ -1,4 +1,4 @@
-/* $Id: GBTDCROTF.inc,v 1.3 2005/02/06 02:04:17 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for GBTDCROTF type                         */
 /*                                                                    */

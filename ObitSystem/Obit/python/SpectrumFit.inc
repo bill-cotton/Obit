@@ -1,4 +1,4 @@
-/* $Id: SpectrumFit.inc,v 1.4 2008/05/16 23:29:02 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for SpectrumFit type                       */
 /*                                                                    */

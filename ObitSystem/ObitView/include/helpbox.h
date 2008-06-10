@@ -1,4 +1,4 @@
-/* $Id: helpbox.h,v 1.1.1.1 2005/06/09 12:45:29 bcotton Exp $ */
+/* $Id$ */
 /* help dialog box header for XFITSview */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 1998

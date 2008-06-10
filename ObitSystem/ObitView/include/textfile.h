@@ -1,4 +1,4 @@
-/* $Id: textfile.h,v 1.2 2005/07/23 00:20:08 bcotton Exp $ */
+/* $Id$ */
 /*  header file for TextFile (Unix/Xwindow) utilities */ 
 /*-----------------------------------------------------------------------
 *  Copyright (C) 1996-2008

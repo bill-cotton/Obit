@@ -1,4 +1,4 @@
-/* $Id: ObitCInterpolateDef.h,v 1.2 2004/12/10 22:34:19 bcotton Exp $   */
+/* $Id$   */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

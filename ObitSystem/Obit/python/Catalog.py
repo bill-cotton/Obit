@@ -5,7 +5,7 @@ ObitTableMF and ObitTableVL tables containing source catalogs.
 These tables can be generated using Obit Task FndSou or the AIPS tasks
 VSAD or SAD.
 """
-# $Id: Catalog.py,v 1.5 2008/02/07 19:08:53 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2006
 #  Associated Universities, Inc. Washington DC, USA.

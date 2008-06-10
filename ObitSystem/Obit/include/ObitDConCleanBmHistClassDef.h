@@ -1,4 +1,4 @@
-/* $Id: ObitDConCleanBmHistClassDef.h,v 1.1 2005/01/02 23:11:33 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

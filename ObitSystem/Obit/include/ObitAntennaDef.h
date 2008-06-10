@@ -1,4 +1,4 @@
-/* $Id: ObitAntennaDef.h,v 1.2 2007/06/13 18:58:29 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

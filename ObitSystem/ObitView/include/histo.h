@@ -1,4 +1,4 @@
-/* $Id: histo.h,v 1.1 2005/07/23 00:42:27 bcotton Exp $ */
+/* $Id$ */
 /*  header file for histogram equalization functions for Matrix Class */ 
 /*  Histogram equalization is an attempt to have equal numbers of pixels
     in each of the allowed color index states */

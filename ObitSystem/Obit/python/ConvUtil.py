@@ -1,4 +1,4 @@
-# $Id: ConvUtil.py,v 1.1 2006/04/18 20:13:23 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2006
 #  Associated Universities, Inc. Washington DC, USA.

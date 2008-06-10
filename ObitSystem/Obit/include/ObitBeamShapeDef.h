@@ -1,4 +1,4 @@
-/* $Id: ObitBeamShapeDef.h,v 1.1 2008/05/06 13:20:14 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2008                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

@@ -1,4 +1,4 @@
-/* $Id: ObitIonCal.c,v 1.29 2008/02/18 14:44:31 bcotton Exp $        */
+/* $Id$        */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

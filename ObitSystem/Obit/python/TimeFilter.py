@@ -1,6 +1,6 @@
 """ Time domain filtering class
 """
-# $Id: TimeFilter.py,v 1.1 2008/01/29 02:24:33 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2008
 #  Associated Universities, Inc. Washington DC, USA.

@@ -1,4 +1,4 @@
-/* $Id: ObitTimeFilter.c,v 1.9 2008/02/20 15:12:03 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

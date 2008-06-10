@@ -1,4 +1,4 @@
-/* $Id: UVImager.inc,v 1.3 2005/02/06 02:00:39 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageMosaic type                       */
 /*                                                                    */

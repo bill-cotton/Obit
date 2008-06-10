@@ -1,4 +1,4 @@
-/* $Id: cursor.c,v 1.1.1.1 2005/06/09 12:45:29 bcotton Exp $  */
+/* $Id$  */
 /* creates cursor for ObitView window */
 /* tries to use a 16x16 cursor; if this isn't appropriate then the standard */
 /* cursor is returned                                                       */

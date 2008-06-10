@@ -1,4 +1,4 @@
-/* $Id: SCMap.c,v 1.25 2007/08/04 18:04:49 bcotton Exp $  */
+/* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set             */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2008                                          */

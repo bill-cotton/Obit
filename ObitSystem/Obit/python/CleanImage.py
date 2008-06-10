@@ -7,7 +7,7 @@ InfoList  - used to pass instructions to processing
 Member List (readonly)
 mosaic    - ImageMosaic, use PGetMosaic, PSetMosaic
 """
-# $Id: CleanImage.py,v 1.12 2007/02/16 16:57:03 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004-2007
 #  Associated Universities, Inc. Washington DC, USA.

@@ -1,4 +1,4 @@
-/* $Id: OTFDesc.inc,v 1.5 2005/12/06 18:26:33 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for OTFDesc type                           */
 /*                                                                    */

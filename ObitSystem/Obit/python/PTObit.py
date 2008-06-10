@@ -1,5 +1,5 @@
 # Interactive routines to Obit use from ParselTongue
-# $Id: PTObit.py,v 1.3 2005/09/21 14:09:21 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004,2005
 #  Associated Universities, Inc. Washington DC, USA.

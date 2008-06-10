@@ -1,6 +1,6 @@
 """ OTF Utility module
 """
-# $Id: OTFUtil.py,v 1.21 2008/05/15 21:31:49 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004-2008
 #  Associated Universities, Inc. Washington DC, USA.

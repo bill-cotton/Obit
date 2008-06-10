@@ -5,7 +5,7 @@ This class enables fitting models to images
 ImageFit Members with python interfaces:
 List      - used to pass instructions to processing 
 """
-# $Id: ImageFit.py,v 1.2 2007/09/20 03:10:12 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2007
 #  Associated Universities, Inc. Washington DC, USA.

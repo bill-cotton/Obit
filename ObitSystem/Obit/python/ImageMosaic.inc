@@ -1,4 +1,4 @@
-/* $Id: ImageMosaic.inc,v 1.4 2005/02/06 02:00:38 bcotton Exp $   */  
+/* $Id$   */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageMosaic type                       */
 /*                                                                    */

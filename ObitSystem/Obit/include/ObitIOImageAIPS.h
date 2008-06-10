@@ -1,4 +1,4 @@
-/* $Id: ObitIOImageAIPS.h,v 1.8 2008/04/27 20:39:29 bcotton Exp $    */
+/* $Id$    */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

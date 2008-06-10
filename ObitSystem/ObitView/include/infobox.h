@@ -1,4 +1,4 @@
-/* $Id: infobox.h,v 1.1.1.1 2005/06/09 12:45:29 bcotton Exp $ */
+/* $Id$ */
 /* function prototypes for infobox.c */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 1996

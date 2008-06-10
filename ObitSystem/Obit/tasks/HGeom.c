@@ -1,4 +1,4 @@
-/* $Id: HGeom.c,v 1.4 2008/03/04 23:46:43 bcotton Exp $  */
+/* $Id$  */
 /* Obit task - interpolates image to different geometry               */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2005-2008                                          */

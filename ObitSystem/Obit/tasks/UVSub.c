@@ -1,4 +1,4 @@
-/* $Id: UVSub.c,v 1.8 2007/08/17 14:20:02 bcotton Exp $  */
+/* $Id$  */
 /* Obit Task to subtract CLEAN components from uvdata.                */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2005-2008                                          */

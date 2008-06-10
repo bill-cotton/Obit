@@ -1,4 +1,4 @@
-/* $Id: control.c,v 1.3 2005/09/01 11:42:39 bcotton Exp $  */
+/* $Id$  */
 /*    control panel functions for ObitView */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 1996,2002-2008

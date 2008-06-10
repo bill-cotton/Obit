@@ -1,4 +1,4 @@
-/* $Id: FitModel.inc,v 1.3 2007/10/11 13:36:44 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for FitModel type                          */
 /*                                                                    */

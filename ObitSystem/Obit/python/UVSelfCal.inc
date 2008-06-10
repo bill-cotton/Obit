@@ -1,4 +1,4 @@
-/* $Id: UVSelfCal.inc,v 1.4 2006/03/09 19:01:31 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for UV data self calibration utilities     */
 /*                                                                    */

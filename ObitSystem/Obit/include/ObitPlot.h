@@ -1,4 +1,4 @@
-/* $Id: ObitPlot.h 7 2008-06-09 14:04:10Z bcotton $    */
+/* $Id$    */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

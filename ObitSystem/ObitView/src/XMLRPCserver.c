@@ -1,4 +1,4 @@
-/* $Id: XMLRPCserver.c,v 1.15 2006/07/02 22:48:13 bcotton Exp $ */
+/* $Id$ */
 /* XMLRPC server for ObitView */
 /* Much of this material directly adapted from xmlrpc-c-1.2/examples */
 /*-----------------------------------------------------------------------

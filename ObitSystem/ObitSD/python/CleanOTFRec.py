@@ -5,7 +5,7 @@ In a record-based clean, the accumulated model is
 occasionally subtracted from the OTF data and a new
 residual image formed.
 """
-# $Id: CleanOTFRec.py,v 1.2 2007/12/04 00:48:13 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2006,2007
 #  Associated Universities, Inc. Washington DC, USA.

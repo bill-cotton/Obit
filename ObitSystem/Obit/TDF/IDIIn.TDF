@@ -1,4 +1,4 @@
-; $Id: IDIIn.TDF,v 1.1 2007/04/02 18:21:23 bcotton Exp $
+; $Id$
 ; IDIIn 
 ;---------------------------------------------------------------
 ;! Obit Convert IDI data and append to a UV data file.

@@ -1,4 +1,4 @@
-/* $Id: markpos.h,v 1.2 2005/07/20 14:09:18 bcotton Exp $ */
+/* $Id$ */
 /* function prototypes for markpos.c */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 1996-2008

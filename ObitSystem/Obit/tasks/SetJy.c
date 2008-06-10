@@ -1,4 +1,4 @@
-/* $Id: SetJy.c,v 1.1 2007/06/14 15:00:19 bcotton Exp $  */
+/* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2007                                               */

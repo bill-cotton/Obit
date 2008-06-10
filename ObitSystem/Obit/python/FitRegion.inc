@@ -1,4 +1,4 @@
-/* $Id: FitRegion.inc,v 1.2 2007/09/20 03:11:58 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for FitRegion type                          */
 /*                                                                    */

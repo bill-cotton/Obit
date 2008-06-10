@@ -1,4 +1,4 @@
-/* $Id: SNCor.c,v 1.5 2007/02/19 15:08:43 bcotton Exp $  */
+/* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /* applies user-selected corrections to the calibration SN table      */
 /*--------------------------------------------------------------------*/

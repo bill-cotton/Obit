@@ -1,4 +1,4 @@
-/* $Id: ObitFileClassDef.h,v 1.6 2007/03/19 13:47:25 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

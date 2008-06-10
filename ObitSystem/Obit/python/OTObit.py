@@ -264,7 +264,7 @@ Note: these dict are independent of the underlying data structures.
 
 """
 # Interactive routines to Obit use from ObitTalk
-# $Id: OTObit.py,v 1.47 2007/09/11 12:38:38 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2005-2007
 #  Associated Universities, Inc. Washington DC, USA.

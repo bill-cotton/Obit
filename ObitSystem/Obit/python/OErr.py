@@ -1,4 +1,4 @@
-# $Id: OErr.py,v 1.11 2005/12/08 02:01:20 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004
 #  Associated Universities, Inc. Washington DC, USA.

@@ -1,4 +1,4 @@
-/* $Id: ObitSkyModelVMSquint.h,v 1.5 2007/10/30 13:04:39 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

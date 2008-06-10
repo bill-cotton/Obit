@@ -1,4 +1,4 @@
-/* $Id: MednFlag.c,v 1.1 2007/08/08 19:48:49 bcotton Exp $  */
+/* $Id$  */
 /* Obit task to automatically edit visibility data                    */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2007                                               */

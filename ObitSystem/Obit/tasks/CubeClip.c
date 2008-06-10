@@ -1,4 +1,4 @@
-/* $Id: CubeClip.c,v 1.6 2008/01/03 00:21:00 bcotton Exp $  */
+/* $Id$  */
 /* Obit task - Clip insignificant pixels                              */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2008                                          */

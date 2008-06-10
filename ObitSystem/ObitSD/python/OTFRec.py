@@ -13,7 +13,7 @@
     cal      = <> 0 => cal on
     data     = data as list of tuples (data, wt)
 """
-# $Id: OTFRec.py,v 1.1 2008/01/14 12:15:40 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2008
 #  Associated Universities, Inc. Washington DC, USA.

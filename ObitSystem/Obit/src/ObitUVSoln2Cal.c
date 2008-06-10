@@ -1,4 +1,4 @@
-/* $Id: ObitUVSoln2Cal.c,v 1.5 2007/02/16 16:55:33 bcotton Exp $   */
+/* $Id$   */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

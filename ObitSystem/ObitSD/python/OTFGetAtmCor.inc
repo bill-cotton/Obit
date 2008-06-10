@@ -1,4 +1,4 @@
-/* $Id: OTFGetAtmCor.inc,v 1.3 2008/03/14 12:17:51 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for OTF Atmospheric calibration Utilities  */
 /*                                                                    */

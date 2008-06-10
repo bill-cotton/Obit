@@ -1,4 +1,4 @@
-/* $Id: ObitSkyModelClassDef.h,v 1.5 2006/07/17 16:19:01 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

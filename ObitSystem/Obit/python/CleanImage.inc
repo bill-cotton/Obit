@@ -1,4 +1,4 @@
-/* $Id: CleanImage.inc,v 1.4 2005/08/04 14:15:26 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for CleanImage type                        */
 /*                                                                    */

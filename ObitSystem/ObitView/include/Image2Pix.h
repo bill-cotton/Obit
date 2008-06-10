@@ -1,4 +1,4 @@
-/* $Id: Image2Pix.h,v 1.2 2005/08/02 12:47:22 bcotton Exp $ */
+/* $Id$ */
 /* Header file for FITS2Pix routine */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 1996-2008

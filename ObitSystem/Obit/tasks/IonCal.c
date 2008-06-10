@@ -1,4 +1,4 @@
-/* $Id: IonCal.c,v 1.6 2007/07/13 17:02:45 bcotton Exp $  */
+/* $Id$  */
 /* Obit Ionospheric calibration of uv data              */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2008                                          */

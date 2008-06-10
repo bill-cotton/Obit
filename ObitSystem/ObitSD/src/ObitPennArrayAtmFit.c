@@ -1,4 +1,4 @@
-/* $Id: ObitPennArrayAtmFit.c,v 1.8 2008/01/14 12:16:35 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

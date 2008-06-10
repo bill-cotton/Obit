@@ -1,4 +1,4 @@
-/* $Id: ObitFeatherUtil.c,v 1.6 2007/08/31 17:24:03 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2005-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

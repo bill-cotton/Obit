@@ -2,7 +2,7 @@
 
 a MsgWin executes a task for ObitTalk snd displays any messages.
 """
-# $Id: MsgWin.py,v 1.1 2006/07/19 14:08:38 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2006
 #  Associated Universities, Inc. Washington DC, USA.

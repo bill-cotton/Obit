@@ -1,4 +1,4 @@
-/* $Id: messagebox.c,v 1.5 2007/01/11 19:11:55 bcotton Exp $ */
+/* $Id$ */
 /* MessageBox routines for ObitView */
 /* uses a ScrollText to display messages from ObitView      */
 /*-----------------------------------------------------------------------

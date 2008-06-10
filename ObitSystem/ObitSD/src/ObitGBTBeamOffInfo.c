@@ -1,4 +1,4 @@
-/* $Id: ObitGBTBeamOffInfo.c,v 1.4 2005/12/19 00:37:10 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

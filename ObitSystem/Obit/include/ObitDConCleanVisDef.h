@@ -1,4 +1,4 @@
-/* $Id: ObitDConCleanVisDef.h,v 1.8 2007/06/27 14:35:43 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2005-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

@@ -1,4 +1,4 @@
-/* $Id: graph.c,v 1.5 2005/10/19 19:36:25 bcotton Exp $ */
+/* $Id$ */
 /*   Graphics overlay plane functions */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 2005

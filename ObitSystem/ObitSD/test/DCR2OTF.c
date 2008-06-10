@@ -8,7 +8,7 @@
   6) Generic Obit read/Write FITS keywords - replace explicit cfitsio
   7) History
 */
-/* $Id: DCR2OTF.c,v 1.4 2006/12/19 16:27:16 bcotton Exp $                            */
+/* $Id$                            */
 /* Modified to read both beam-switched and non switched data */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */

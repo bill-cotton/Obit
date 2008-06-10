@@ -1,4 +1,4 @@
-/* $Id: ObitOTFCalUtil.c,v 1.16 2008/02/20 14:59:59 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

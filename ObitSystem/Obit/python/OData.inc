@@ -1,4 +1,4 @@
-/* $Id: OData.inc,v 1.1 2007/08/22 15:18:32 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitData type                          */
 /*                                                                    */

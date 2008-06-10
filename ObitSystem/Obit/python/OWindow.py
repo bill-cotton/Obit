@@ -1,4 +1,4 @@
-# $Id: OWindow.py,v 1.3 2005/10/17 12:05:51 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2005
 #  Associated Universities, Inc. Washington DC, USA.

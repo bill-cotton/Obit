@@ -1,4 +1,4 @@
-/* $Id: ObitOTFArrayGeom.c,v 1.8 2007/12/04 00:44:38 bcotton Exp $*/
+/* $Id$*/
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

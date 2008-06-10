@@ -1,4 +1,4 @@
-# $Id: CCBUtil.py,v 1.1 2006/04/14 17:02:31 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2006
 #  Associated Universities, Inc. Washington DC, USA.

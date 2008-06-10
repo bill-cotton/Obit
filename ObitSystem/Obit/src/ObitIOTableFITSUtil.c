@@ -1,4 +1,4 @@
-/* $Id: ObitIOTableFITSUtil.c,v 1.1 2006/06/26 16:47:02 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

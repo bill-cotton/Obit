@@ -1,4 +1,4 @@
-/* $Id: OTFUtil.inc,v 1.8 2008/02/27 15:46:41 bcotton Exp $  
+/* $Id$  
 /*--------------------------------------------------------------------*/
 /* Swig module description for OTF Utilities                          */
 /*                                                                    */

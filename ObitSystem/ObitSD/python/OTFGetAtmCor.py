@@ -1,4 +1,4 @@
-# $Id: OTFGetAtmCor.py,v 1.4 2008/03/14 12:17:51 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004-2008
 #  Associated Universities, Inc. Washington DC, USA.

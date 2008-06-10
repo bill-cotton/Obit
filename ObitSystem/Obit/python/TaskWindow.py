@@ -5,7 +5,7 @@ More thoughts:
 - what happens when task wants to talk to user and ask input?
 """
 # Task Window for running tasks asynchronously
-# $Id: TaskWindow.py,v 1.4 2006/07/21 14:36:42 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2006
 #  Associated Universities, Inc. Washington DC, USA.

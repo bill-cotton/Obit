@@ -1,4 +1,4 @@
-/* $Id: ObitSkyModelVMSquintClassDef.h,v 1.1 2006/05/23 17:31:50 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

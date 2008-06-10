@@ -1,4 +1,4 @@
-/* $Id: ObitUVCal.c,v 1.12 2007/08/23 13:02:07 bcotton Exp $       */
+/* $Id$       */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

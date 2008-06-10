@@ -1,4 +1,4 @@
-/* $Id: ObitErr.inc,v 1.5 2005/12/08 02:01:20 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitErr type                           */
 /*                                                                    */

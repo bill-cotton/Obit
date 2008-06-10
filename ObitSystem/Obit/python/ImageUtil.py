@@ -1,4 +1,4 @@
-# $Id: ImageUtil.py,v 1.8 2007/11/16 16:15:06 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004-2007
 #  Associated Universities, Inc. Washington DC, USA.

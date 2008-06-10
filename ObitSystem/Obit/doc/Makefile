@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1.1.1 2004/07/19 16:42:44 bcotton Exp $
+# $Id$
 # Generic Makefile to generate postscript files from Tex or LaTeX input
 # Uses presence of "\begin{document}" string to indicate LaTeX
 # If only the base of the tex file name is given then that postscript file

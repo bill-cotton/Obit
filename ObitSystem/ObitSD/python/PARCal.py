@@ -1,6 +1,6 @@
 """ Mustang calibration Utility package
 """
-# $Id: PARCal.py,v 1.9 2008/03/20 13:23:53 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2008
 #  Associated Universities, Inc. Washington DC, USA.

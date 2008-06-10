@@ -9,7 +9,7 @@ as the planes.
 The function ObitSpectrumFitEval will evaluate this fit and return an image
 with the flux densities at the desired frequencies.
 """
-# $Id: SpectrumFit.py,v 1.4 2008/05/16 23:29:02 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2008
 #  Associated Universities, Inc. Washington DC, USA.

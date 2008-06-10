@@ -1,4 +1,4 @@
-# $Id: FArrayUtil.py,v 1.1 2006/04/18 20:28:11 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2005
 #  Associated Universities, Inc. Washington DC, USA.

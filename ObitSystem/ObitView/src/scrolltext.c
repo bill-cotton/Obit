@@ -1,4 +1,4 @@
-/* $Id: scrolltext.c,v 1.5 2005/08/06 21:28:00 bcotton Exp $  */
+/* $Id$  */
 /* ScrollText routines for ObitView */
 /* Scrollable boxes displaying text */
 /*-----------------------------------------------------------------------

@@ -1,4 +1,4 @@
-/* $Id: ObitTEMPLATEDef.h,v 1.5 2007/01/29 15:15:37 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2007                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

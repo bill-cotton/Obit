@@ -11,7 +11,7 @@
     ant2 = antenna 2 of baseline
     vis  = visibilities as list of (complex, float) (vis, wt)
 """
-# $Id: UVVis.py,v 1.1 2007/11/17 22:04:43 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2007
 #  Associated Universities, Inc. Washington DC, USA.

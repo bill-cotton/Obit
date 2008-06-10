@@ -18,7 +18,7 @@ can be used in text strings:
  - Superscripts: Characters between a #u and #d will be written as
    superscripts
 """
-# $Id: OPlot.py,v 1.5 2008/05/15 21:01:59 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2006,2008
 #  Associated Universities, Inc. Washington DC, USA.

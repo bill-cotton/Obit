@@ -1,4 +1,4 @@
-/* $Id: ObitSDTypeMaps.swig,v 1.1 2004/08/23 14:27:04 bcotton Exp $                            */  
+/* $Id$                            */  
 /*--------------------------------------------------------------------*/
 /* Swig typemaps for Obit/Pennarray types                             */
 /*                                                                    */

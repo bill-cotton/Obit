@@ -1,4 +1,4 @@
-/* $Id: CleanVis.inc,v 1.6 2007/11/06 13:00:14 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for CleanVis type                          */
 /*                                                                    */

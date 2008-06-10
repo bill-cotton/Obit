@@ -1,4 +1,4 @@
-; $Id: UVSub.TDF,v 1.5 2007/08/17 14:29:21 bcotton Exp $
+; $Id$
 ; UVSub
 ;---------------------------------------------------------------
 ;! Subtracts/divides a model from/into a uv data base

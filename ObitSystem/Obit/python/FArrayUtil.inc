@@ -1,4 +1,4 @@
-/* $Id: FArrayUtil.inc,v 1.1 2006/04/18 20:28:11 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitFarray type                        */
 /*                                                                    */

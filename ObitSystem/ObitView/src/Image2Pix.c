@@ -1,4 +1,4 @@
-/* $Id: Image2Pix.c,v 1.7 2006/12/27 01:52:51 bcotton Exp $  */
+/* $Id$  */
 /* routines to load a FITS file to a ZPixmap for ObitView*/
 /*-----------------------------------------------------------------------
 *  Copyright (C) 1996-2008

@@ -1,4 +1,4 @@
-/* $Id: definecursor.h,v 1.1.1.1 2005/06/09 12:45:29 bcotton Exp $ */
+/* $Id$ */
 /* bitmaps for XFITSview image display cursor */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 1996

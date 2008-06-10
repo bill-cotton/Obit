@@ -1,4 +1,4 @@
-/* $Id: OWindow.inc,v 1.2 2005/12/19 00:12:10 bcotton Exp $   */  
+/* $Id$   */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitDConCleanWindow type               */
 /*                                                                    */

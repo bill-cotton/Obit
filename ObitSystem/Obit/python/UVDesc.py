@@ -8,7 +8,7 @@
     Dict      - (virtual) Python dictionary with contents of descriptor
                 Member Dict
 """
-# $Id: UVDesc.py,v 1.7 2007/08/22 15:19:45 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2005,2007
 #  Associated Universities, Inc. Washington DC, USA.

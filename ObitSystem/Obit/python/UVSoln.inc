@@ -1,4 +1,4 @@
-/* $Id: UVSoln.inc,v 1.2 2007/01/31 15:27:35 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for UV data self calibration utilities     */
 /*                                                                    */

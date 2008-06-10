@@ -1,6 +1,6 @@
 """ Python Obit AIPS directory utilities
 """
-# $Id: AIPSDir.py,v 1.17 2007/09/11 12:38:38 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004,2007
 #  Associated Universities, Inc. Washington DC, USA.

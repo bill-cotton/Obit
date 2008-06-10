@@ -1,4 +1,4 @@
-/* $Id: ObitTableSUUtil.c,v 1.15 2007/06/05 13:54:32 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

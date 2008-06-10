@@ -1,4 +1,4 @@
-/* $Id: BeamShape.inc,v 1.1 2008/05/06 13:20:14 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for BeamShape type                          */
 /*                                                                    */

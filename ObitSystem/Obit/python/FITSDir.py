@@ -1,6 +1,6 @@
 """ Python Obit FITS file directory utilities
 """
-# $Id: FITSDir.py,v 1.5 2007/11/02 20:21:33 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2006
 #  Associated Universities, Inc. Washington DC, USA.

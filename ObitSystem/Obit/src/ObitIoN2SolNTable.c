@@ -1,4 +1,4 @@
-/* $Id: ObitIoN2SolNTable.c,v 1.14 2007/09/07 12:31:39 bcotton Exp $  */
+/* $Id$  */
 /* Notes:
  - Not sure what the units in the Zernike polynomials are,
    for the time being use the gradients.

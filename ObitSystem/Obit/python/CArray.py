@@ -1,4 +1,4 @@
-# $Id: CArray.py,v 1.15 2005/11/27 12:50:37 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004,2005
 #  Associated Universities, Inc. Washington DC, USA.

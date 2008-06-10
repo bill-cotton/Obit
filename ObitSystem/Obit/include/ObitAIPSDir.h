@@ -1,4 +1,4 @@
-/* $Id: ObitAIPSDir.h,v 1.6 2006/02/22 22:37:24 bcotton Exp $                            */
+/* $Id$                            */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

@@ -1,4 +1,4 @@
-/* $Id: IonCal.inc,v 1.3 2007/09/07 12:32:42 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for Ionospheric calibration utilities      */
 /*                                                                    */

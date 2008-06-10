@@ -1,4 +1,4 @@
-/* $Id: scrolltext.h,v 1.2 2005/08/03 11:56:48 bcotton Exp $ */
+/* $Id$ */
 /* header file for ScrollText (Unix/Xwindow) routines */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 1996

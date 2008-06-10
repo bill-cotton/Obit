@@ -1,4 +1,4 @@
-# $Id: ObitSDTables.pl,v 1.26 2008/02/13 20:59:54 bcotton Exp $
+# $Id$
 # This script parses the LaTeX documentation file and produces
 # header and c source files for Obit Tables.
 #

@@ -1,4 +1,4 @@
-/* $Id: ObitOTF.h,v 1.8 2008/02/15 21:59:09 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

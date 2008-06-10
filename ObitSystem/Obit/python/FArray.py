@@ -1,5 +1,5 @@
 # Python interface to Obit float array class.
-# $Id: FArray.py 7 2008-06-09 14:04:10Z bcotton $
+# $Id$
 """ Python Obit multidimensional array of float class
 
 This class is for creating and manipulating a Array as a memory resident 

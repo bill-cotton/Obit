@@ -1,4 +1,4 @@
-/* $Id: Obit2DLegendre.c,v 1.1.1.1 2004/07/19 17:04:45 bcotton Exp $                            */
+/* $Id$                            */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

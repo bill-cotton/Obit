@@ -19,7 +19,7 @@ eDeltaX Error in "X" (RA) offset (deg) of center from reference position
 eDeltaY Error in "Y" (Dec) offset (deg) of center from reference position
 eparms  Error in Model parameters, type dependent 
 """
-# $Id: FitModel.py,v 1.4 2007/10/11 13:38:33 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2007
 #  Associated Universities, Inc. Washington DC, USA.

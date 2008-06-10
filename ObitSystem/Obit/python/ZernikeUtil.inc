@@ -1,4 +1,4 @@
-/* $Id: ZernikeUtil.inc,v 1.1 2006/10/26 21:36:42 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for Zernike polynimoal utilities           */
 /*                                                                    */

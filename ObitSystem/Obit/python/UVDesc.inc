@@ -1,4 +1,4 @@
-/* $Id: UVDesc.inc,v 1.8 2007/11/17 22:33:07 bcotton Exp $   */  
+/* $Id$   */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageDesc type                         */
 /*                                                                    */

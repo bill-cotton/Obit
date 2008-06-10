@@ -1,4 +1,4 @@
-/* $Id: TableUtil.inc,v 1.2 2007/08/23 20:49:03 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for Obit Table Utilities                   */
 /*                                                                    */

@@ -13,7 +13,7 @@ fluxResid Sum of pixel values in residual
 nmodel    Number of models
 models    Array of FitModels
 """
-# $Id: FitRegion.py,v 1.3 2007/10/11 13:35:43 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2007
 #  Associated Universities, Inc. Washington DC, USA.

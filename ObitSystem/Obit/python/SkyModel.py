@@ -8,7 +8,7 @@ SkyModel Members with python interfaces:
 List      - used to pass instructions to processing 
 Mosaic    - ImageMosaic
 """
-# $Id: SkyModel.py,v 1.22 2008/04/22 13:18:34 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004-2007
 #  Associated Universities, Inc. Washington DC, USA.

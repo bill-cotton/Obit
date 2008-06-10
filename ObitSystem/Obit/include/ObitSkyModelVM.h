@@ -1,4 +1,4 @@
-/* $Id: ObitSkyModelVM.h,v 1.6 2007/09/07 12:28:42 bcotton Exp $     */
+/* $Id$     */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

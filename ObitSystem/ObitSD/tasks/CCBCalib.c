@@ -1,4 +1,4 @@
-/* $Id: CCBCalib.c,v 1.4 2008/01/26 18:56:23 bcotton Exp $  */
+/* $Id$  */
 /* Obit Radio Single Disk OTF calibration software                    */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2008                                          */

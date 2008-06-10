@@ -6,7 +6,7 @@ new widgets in this same thread.
    New widgets can be created using the functions
    newMsgWin(tw) create message windiow and execute TaskWindow tw
 """
-# $Id: OTWindow.py,v 1.2 2007/02/28 19:17:48 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2006
 #  Associated Universities, Inc. Washington DC, USA.

@@ -1,4 +1,4 @@
-/* $Id: FITSFile.inc,v 1.2 2007/09/11 12:38:38 bcotton Exp $   */  
+/* $Id$   */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for FITS file utilities                    */
 /*                                                                    */

@@ -1,4 +1,4 @@
-/* $Id: IonSF.c,v 1.2 2007/07/30 10:56:11 bcotton Exp $  */
+/* $Id$  */
 /* Convert Ionospheric movie to 2D structure func (distance,time)     */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2007                                               */

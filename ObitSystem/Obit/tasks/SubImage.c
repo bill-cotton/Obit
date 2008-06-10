@@ -1,4 +1,4 @@
-/* $Id: SubImage.c,v 1.14 2007/12/03 21:22:19 bcotton Exp $  */
+/* $Id$  */
 /* Obit task - SubImage copy a subregion of an image                  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2005-2008                                          */

@@ -1,4 +1,4 @@
-/* $Id: UVSoln2Cal.inc,v 1.2 2007/02/05 15:05:17 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for Image utilities                        */
 /*                                                                    */

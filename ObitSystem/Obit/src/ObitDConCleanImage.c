@@ -1,4 +1,4 @@
-/* $Id: ObitDConCleanImage.c,v 1.7 2006/05/23 17:05:15 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

@@ -1,4 +1,4 @@
-# $Id: UVSelfCal.py,v 1.11 2007/01/31 15:27:35 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C)2005,2006,2007
 #  Associated Universities, Inc. Washington DC, USA.

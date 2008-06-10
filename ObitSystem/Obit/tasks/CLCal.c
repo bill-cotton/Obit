@@ -1,4 +1,4 @@
-/* $Id: CLCal.c,v 1.3 2007/02/19 15:08:42 bcotton Exp $  */
+/* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2008                                          */

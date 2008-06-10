@@ -1,4 +1,4 @@
-/* $Id: VLSSFix.c,v 1.5 2007/02/19 15:08:43 bcotton Exp $  */
+/* $Id$  */
 /* VLSSFix:  Determine and correct position errors in VLSS images     */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2008                                          */

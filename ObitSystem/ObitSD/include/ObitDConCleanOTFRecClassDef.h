@@ -1,4 +1,4 @@
-/* $Id: ObitDConCleanOTFRecClassDef.h,v 1.1 2006/03/30 18:47:09 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

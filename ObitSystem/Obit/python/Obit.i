@@ -1,5 +1,5 @@
 %module Obit
-/* $Id: ObitTypeMaps.swig,v 1.6 2008/05/06 13:22:19 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig typemaps for Obit types                                       */
 /*                                                                    */
@@ -541,7 +541,7 @@
    }
 }
 
-/* $Id: AIPSDir.inc,v 1.11 2007/09/11 12:38:38 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for AIPS directory utilities               */
 /*                                                                    */
@@ -699,7 +699,7 @@ extern int AIPSSetDirname(int disk, char *dir, ObitErr *err)
 
 
 %}
-/* $Id: BeamShape.inc,v 1.1 2008/05/06 13:20:14 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for BeamShape type                          */
 /*                                                                    */
@@ -818,7 +818,7 @@ typedef struct {
   }
 };
 
-/* $Id: CArray.inc,v 1.7 2006/10/11 17:24:48 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitCArray type                        */
 /*                                                                    */
@@ -1066,7 +1066,7 @@ typedef struct {
   }
 };
 
-/* $Id: Catalog.inc,v 1.4 2007/03/20 14:40:14 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for Convolution utilities                  */
 /*                                                                    */
@@ -1253,7 +1253,7 @@ ObitTable* TableVZSel (ObitTable *in, ObitData *data,
 
 
 %}
-/* $Id: CleanImage.inc,v 1.4 2005/08/04 14:15:26 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for CleanImage type                        */
 /*                                                                    */
@@ -1409,7 +1409,7 @@ typedef struct {
   }
 };
 
-/* $Id: CleanVis.inc,v 1.6 2007/11/06 13:00:14 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for CleanVis type                          */
 /*                                                                    */
@@ -1584,7 +1584,7 @@ typedef struct {
   }
 };
 
-/* $Id: ConvUtil.inc,v 1.1 2006/04/18 20:13:23 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for Convolution utilities                  */
 /*                                                                    */
@@ -1638,7 +1638,7 @@ ObitFArray* ConvUtilGaus (ObitImage *inImage, float Maj, float Min, float PA) {
 } // end ConvUtilGaus
 
 %}
-/* $Id: FArray.inc,v 1.19 2007/03/19 13:45:28 bcotton Exp $           */  
+/* $Id$           */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitFarray type                        */
 /*                                                                    */
@@ -2060,7 +2060,7 @@ typedef struct {
   }
 };
 
-/* $Id: FArrayUtil.inc,v 1.1 2006/04/18 20:28:11 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitFarray type                        */
 /*                                                                    */
@@ -2125,7 +2125,7 @@ ObitFArray* FArrayUtilConvolve (ObitFArray *in1, ObitFArray *in2,
 %}
 
 
-/* $Id: FFT.inc,v 1.3 2005/02/06 02:00:38 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitFFT type                           */
 /*                                                                    */
@@ -2246,7 +2246,7 @@ typedef struct {
   }
 };
 
-/* $Id: FInterpolate.inc,v 1.3 2005/02/06 02:00:38 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for FInterpolate type                      */
 /*                                                                    */
@@ -2380,7 +2380,7 @@ typedef struct {
 };
 
 
-/* $Id: FitModel.inc,v 1.3 2007/10/11 13:36:44 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for FitModel type                          */
 /*                                                                    */
@@ -2664,7 +2664,7 @@ typedef struct {
   }
 };
 
-/* $Id: FitRegion.inc,v 1.2 2007/09/20 03:11:58 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for FitRegion type                          */
 /*                                                                    */
@@ -2871,7 +2871,7 @@ typedef struct {
   }
 };
 
-/* $Id: FITSFile.inc,v 1.2 2007/09/11 12:38:38 bcotton Exp $   */  
+/* $Id$   */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for FITS file utilities                    */
 /*                                                                    */
@@ -2939,7 +2939,7 @@ extern int FITSAddDir(char *dir, ObitErr *err)
 } /* end FITSSetDirname */
 
 %}
-/* $Id: History.inc,v 1.6 2006/01/18 20:02:40 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for History utilities                      */
 /*                                                                    */
@@ -3110,7 +3110,7 @@ typedef struct {
   }
 };
 
-/* $Id: ImageDesc.inc,v 1.9 2007/11/10 22:36:03 bcotton Exp $   */  
+/* $Id$   */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageDesc type                         */
 /*                                                                    */
@@ -3399,7 +3399,7 @@ typedef struct {
   }
 };
 
-/* $Id: ImageFit.inc,v 1.1 2007/09/17 15:58:00 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageFit type                          */
 /*                                                                    */
@@ -3507,7 +3507,7 @@ typedef struct {
   }
 };
 
-/* $Id: Image.inc,v 1.14 2008/04/27 20:39:57 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for Image type                             */
 /*                                                                    */
@@ -3917,7 +3917,7 @@ typedef struct {
   }
 };
 
-/* $Id: ImageMosaic.inc,v 1.4 2005/02/06 02:00:38 bcotton Exp $   */  
+/* $Id$   */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageMosaic type                       */
 /*                                                                    */
@@ -4062,7 +4062,7 @@ typedef struct {
   }
 };
 
-/* $Id: ImageUtil.inc,v 1.4 2006/12/28 15:59:33 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for Image utilities                        */
 /*                                                                    */
@@ -4168,7 +4168,7 @@ ImageUtilCCScale (ObitTable *inCCTab, int startComp, int endComp, double scale,
 } // end ImageUtilCCScale
 
 %}
-/* $Id: InfoList.inc,v 1.11 2008/02/03 23:06:51 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitInfoList type                      */
 /*                                                                    */
@@ -4957,7 +4957,7 @@ typedef struct {
   }
 };
 
-/* $Id: IonCal.inc,v 1.3 2007/09/07 12:32:42 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for Ionospheric calibration utilities      */
 /*                                                                    */
@@ -5018,7 +5018,7 @@ ObitTable* IoN2SolNTableConvert (ObitUV *inUV, long outSNVer, ObitTable *NITable
 
 
 %}
-/* $Id: ObitErr.inc,v 1.5 2005/12/08 02:01:20 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitErr type                           */
 /*                                                                    */
@@ -5182,7 +5182,7 @@ typedef struct {
   }
 };
 
-/* $Id: ObitSystem.inc,v 1.9 2007/07/26 14:28:42 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitSystem type                        */
 /*                                                                    */
@@ -5318,7 +5318,7 @@ typedef struct {
   }
 };
 
-/* $Id: OData.inc,v 1.1 2007/08/22 15:18:32 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitData type                          */
 /*                                                                    */
@@ -5542,7 +5542,7 @@ typedef struct {
   }
 };
 
-/* $Id: ODisplay.inc,v 1.1 2005/08/03 19:45:35 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitDisplay type                       */
 /*                                                                    */
@@ -5655,7 +5655,7 @@ typedef struct {
   }
 };
 
-/* $Id: OPlot.inc,v 1.3 2008/02/20 14:58:16 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitPlot type                          */
 /*                                                                    */
@@ -5882,7 +5882,7 @@ typedef struct {
   }
 };
 
-/* $Id: OWindow.inc,v 1.2 2005/12/19 00:12:10 bcotton Exp $   */  
+/* $Id$   */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitDConCleanWindow type               */
 /*                                                                    */
@@ -6095,7 +6095,7 @@ typedef struct {
   }
 };
 
-/* $Id: ParserUtil.inc,v 1.1 2007/11/06 18:57:38 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for parameter file parser utilities        */
 /*                                                                    */
@@ -6154,7 +6154,7 @@ extern int Dump (char *outfile, ObitInfoList *list, ObitErr *err) {
 %}
 
 
-/* $Id: SkyGeom.inc,v 1.3 2007/10/30 13:04:20 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for Image utilities                        */
 /*                                                                    */
@@ -6362,7 +6362,7 @@ float PBUtilRelPB (double Angle, int nfreq, double *Freq, float antSize,
 }
 
 %}
-/* $Id: SkyModel.inc,v 1.5 2007/11/06 13:00:31 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for SkyModel type                          */
 /*                                                                    */
@@ -6590,7 +6590,7 @@ typedef struct {
   }
 };
 
-/* $Id: SpectrumFit.inc,v 1.4 2008/05/16 23:29:02 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for SpectrumFit type                       */
 /*                                                                    */
@@ -6735,7 +6735,7 @@ typedef struct {
   }
 };
 
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -6863,7 +6863,7 @@ extern void TableANSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -6953,7 +6953,7 @@ extern void TableATSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -7032,7 +7032,7 @@ extern void TableBLSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -7121,7 +7121,7 @@ extern void TableBPSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -7198,7 +7198,7 @@ extern void TableCCSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -7283,7 +7283,7 @@ extern void TableCLSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -7362,7 +7362,7 @@ extern void TableCQSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -7798,7 +7798,7 @@ typedef struct {
   }
 };
 
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -7873,7 +7873,7 @@ extern void TableFGSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -7950,7 +7950,7 @@ extern void TableFQSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -8033,7 +8033,7 @@ extern void TableGCSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -8108,7 +8108,7 @@ extern void TableHistorySetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -8210,7 +8210,7 @@ extern void TableIDI_ANTENNASetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -8333,7 +8333,7 @@ extern void TableIDI_ARRAY_GEOMETRYSetHeadKeys (ObitTable *inTab, PyObject *inDi
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -8430,7 +8430,7 @@ extern void TableIDI_FREQUENCYSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -8527,7 +8527,7 @@ extern void TableIDI_SOURCESetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -8714,7 +8714,7 @@ extern void TableIDI_UV_DATASetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -8805,7 +8805,7 @@ extern void TableIMSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id: Table.inc,v 1.16 2007/12/16 20:25:12 bcotton Exp $   */  
+/* $Id$   */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for Table type                             */
 /*                                                                    */
@@ -9467,7 +9467,7 @@ typedef struct {
   }
 };
 
-/* $Id: TableList.inc,v 1.4 2007/07/26 14:28:24 bcotton Exp $   */  
+/* $Id$   */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageDesc type                         */
 /*                                                                    */
@@ -9584,7 +9584,7 @@ typedef struct {
   }
 };
 
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -9671,7 +9671,7 @@ extern void TableMCSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -9756,7 +9756,7 @@ extern void TableMFSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -9837,7 +9837,7 @@ extern void TableNISetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -9912,7 +9912,7 @@ extern void TableNXSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -9989,7 +9989,7 @@ extern void TableOBSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -10072,7 +10072,7 @@ extern void TableOFSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -10155,7 +10155,7 @@ extern void TablePCSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -10232,7 +10232,7 @@ extern void TablePSSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -10319,7 +10319,7 @@ extern void TableSNSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -10404,7 +10404,7 @@ extern void TableSUSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -10485,7 +10485,7 @@ extern void TableTYSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id: TableUtil.inc,v 1.2 2007/08/23 20:49:03 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for Obit Table Utilities                   */
 /*                                                                    */
@@ -10539,7 +10539,7 @@ olong TableCCUtilMerge (ObitTable *in, ObitTable *out, ObitErr *err)
 %}
 
 
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -10664,7 +10664,7 @@ extern void TableVLSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -10743,7 +10743,7 @@ extern void TableVZSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id:  $   */
+/* $Id$   */
 /* DO NOT EDIT - file generated by ObitTables.pl                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C)  2008                                              */
@@ -10826,7 +10826,7 @@ extern void TableWXSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 } 
 
 %}
-/* $Id: TimeFilter.inc,v 1.1 2008/01/29 02:24:33 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitTimeFilter type                    */
 /*                                                                    */
@@ -11079,7 +11079,7 @@ typedef struct {
   }
 };
 
-/* $Id: UVDesc.inc,v 1.8 2007/11/17 22:33:07 bcotton Exp $   */  
+/* $Id$   */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageDesc type                         */
 /*                                                                    */
@@ -11333,7 +11333,7 @@ typedef struct {
   }
 };
 
-/* $Id: UVGSolve.inc,v 1.2 2006/03/13 16:55:30 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for UV data self calibration utilities     */
 /*                                                                    */
@@ -11436,7 +11436,7 @@ typedef struct {
   }
 };
 
-/* $Id: UVImager.inc,v 1.3 2005/02/06 02:00:39 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageMosaic type                       */
 /*                                                                    */
@@ -11558,7 +11558,7 @@ typedef struct {
   }
 };
 
-/* $Id: UV.inc,v 1.23 2008/04/27 20:41:16 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for UV  type                               */
 /*                                                                    */
@@ -11945,7 +11945,7 @@ typedef struct {
   }
 };
 
-/* $Id: UVSelfCal.inc,v 1.4 2006/03/09 19:01:31 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for UV data self calibration utilities     */
 /*                                                                    */
@@ -12051,7 +12051,7 @@ typedef struct {
   }
 };
 
-/* $Id: UVSoln2Cal.inc,v 1.2 2007/02/05 15:05:17 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for Image utilities                        */
 /*                                                                    */
@@ -12092,7 +12092,7 @@ ObitTable* UVSoln2Cal (ObitUV *inUV, ObitUV *outUV, ObitErr *err) {
 
 
 %}
-/* $Id: UVSoln.inc,v 1.2 2007/01/31 15:27:35 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for UV data self calibration utilities     */
 /*                                                                    */
@@ -12208,7 +12208,7 @@ extern ObitTable* SNInvert (ObitTable *inSN, ObitData *outData, long tabVer,
 
 
 %}
-/* $Id: UVVis.inc,v 1.1 2007/11/17 22:04:43 bcotton Exp $   */  
+/* $Id$   */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for UVVis type                             */
 /*                                                                    */
@@ -12347,7 +12347,7 @@ extern void UVVisSet (PyObject* vis, ObitUV* outUV, ObitErr *err) {
 
 %}
 
-/* $Id: ZernikeUtil.inc,v 1.1 2006/10/26 21:36:42 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for Zernike polynimoal utilities           */
 /*                                                                    */

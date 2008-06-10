@@ -1,4 +1,4 @@
-/* $Id: Convol.c,v 1.9 2007/07/13 20:32:34 bcotton Exp $  */
+/* $Id$  */
 /* Convol Obit task convolve an image with another image or a model   */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2008                                          */

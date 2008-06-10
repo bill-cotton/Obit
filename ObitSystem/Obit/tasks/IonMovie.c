@@ -1,4 +1,4 @@
-/* $Id: IonMovie.c,v 1.4 2007/07/27 16:53:36 bcotton Exp $  */
+/* $Id$  */
 /* Obit task to make ionospheric movies from an SN table             */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2007                                               */

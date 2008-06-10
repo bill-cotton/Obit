@@ -5,7 +5,7 @@ List      - used to pass instructions to processing
 Mosaic    - ImageMosaic
 SkyModel  - Sky Model
 """
-# $Id: CleanVis.py,v 1.21 2007/11/06 12:59:59 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2005,2007
 #  Associated Universities, Inc. Washington DC, USA.

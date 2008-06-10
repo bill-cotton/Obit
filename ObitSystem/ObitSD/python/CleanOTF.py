@@ -12,7 +12,7 @@ beam   - Python Obit Image dirty beam object
 clean  - Extant  Python Obit Image to receive, should be cloned from dirty
 err    - Python Obit Error/message stack
 """
-# $Id: CleanOTF.py,v 1.10 2008/05/15 21:35:18 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2005,2008
 #  Associated Universities, Inc. Washington DC, USA.

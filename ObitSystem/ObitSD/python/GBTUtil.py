@@ -3,7 +3,7 @@
 This utility package contains utilities of relevance to the GBT OTF data
 Some of these must be run from ObitTalk.
 """
-# $Id: GBTUtil.py,v 1.5 2008/03/24 20:27:06 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2007,2008
 #  Associated Universities, Inc. Washington DC, USA.

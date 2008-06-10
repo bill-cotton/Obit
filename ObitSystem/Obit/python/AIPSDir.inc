@@ -1,4 +1,4 @@
-/* $Id: AIPSDir.inc,v 1.11 2007/09/11 12:38:38 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for AIPS directory utilities               */
 /*                                                                    */

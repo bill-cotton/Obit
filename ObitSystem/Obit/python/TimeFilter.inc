@@ -1,4 +1,4 @@
-/* $Id: TimeFilter.inc,v 1.1 2008/01/29 02:24:33 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitTimeFilter type                    */
 /*                                                                    */

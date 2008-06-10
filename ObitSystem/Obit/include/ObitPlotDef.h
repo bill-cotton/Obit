@@ -1,4 +1,4 @@
-/* $Id: ObitPlotDef.h,v 1.2 2008/02/20 14:58:16 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

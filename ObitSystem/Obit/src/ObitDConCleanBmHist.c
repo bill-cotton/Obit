@@ -1,4 +1,4 @@
-/* $Id: ObitDConCleanBmHist.c,v 1.9 2006/07/26 23:10:18 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

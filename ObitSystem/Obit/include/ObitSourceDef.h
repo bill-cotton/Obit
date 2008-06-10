@@ -1,4 +1,4 @@
-/* $Id: ObitSourceDef.h,v 1.5 2006/07/06 11:25:55 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

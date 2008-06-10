@@ -1,4 +1,4 @@
-/* $Id: requestbox.h,v 1.1 2005/08/02 22:41:59 bcotton Exp $  */
+/* $Id$  */
 /* function prototypes for requestbox.c */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 2005

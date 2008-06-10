@@ -1,4 +1,4 @@
-/* $Id: ObitOTFGrid.c,v 1.24 2008/05/15 21:31:49 bcotton Exp $     */
+/* $Id$     */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

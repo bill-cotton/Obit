@@ -1,4 +1,4 @@
-/* $Id: poslabel.c,v 1.1 2005/07/23 00:20:08 bcotton Exp $  */
+/* $Id$  */
 /* position labeling utilities for ObitView */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 1996,1997-2008

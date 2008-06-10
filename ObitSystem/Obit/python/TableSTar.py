@@ -18,7 +18,7 @@ Symbol type codes
                             23: Vertical line
                             24: Cross (X) with gap
 """
-# $Id: TableSTar.py,v 1.1 2007/12/16 20:29:28 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2007
 #  Associated Universities, Inc. Washington DC, USA.

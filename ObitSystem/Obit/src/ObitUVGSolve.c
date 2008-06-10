@@ -1,4 +1,4 @@
-/* $Id: ObitUVGSolve.c,v 1.12 2007/07/23 20:22:24 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

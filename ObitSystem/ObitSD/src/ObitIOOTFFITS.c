@@ -1,4 +1,4 @@
-/* $Id: ObitIOOTFFITS.c,v 1.17 2006/07/31 15:55:17 bcotton Exp $   */
+/* $Id$   */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

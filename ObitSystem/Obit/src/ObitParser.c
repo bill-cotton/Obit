@@ -1,4 +1,4 @@
-/* $Id: ObitParser.c,v 1.8 2006/06/28 17:20:20 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

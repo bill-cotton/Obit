@@ -1,4 +1,4 @@
-/* $Id: ObitTypes.h,v 1.2 2005/03/29 14:02:42 bcotton Exp $     */
+/* $Id$     */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2002-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

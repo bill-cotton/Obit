@@ -1,4 +1,4 @@
-/* $Id: SkyModel.inc,v 1.5 2007/11/06 13:00:31 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for SkyModel type                          */
 /*                                                                    */

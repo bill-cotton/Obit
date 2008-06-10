@@ -1,4 +1,4 @@
-/* $Id: ObitGBTIFInfo.h,v 1.3 2004/12/28 13:52:44 bcotton Exp $                            */
+/* $Id$                            */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

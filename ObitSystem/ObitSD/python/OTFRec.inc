@@ -1,4 +1,4 @@
-/* $Id: OTFRec.inc,v 1.1 2008/01/14 12:15:40 bcotton Exp $   */  
+/* $Id$   */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for OTFRec type                            */
 /*                                                                    */

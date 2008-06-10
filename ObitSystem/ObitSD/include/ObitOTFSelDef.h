@@ -1,4 +1,4 @@
-/* $Id: ObitOTFSelDef.h,v 1.3 2008/02/03 23:11:51 bcotton Exp $   */
+/* $Id$   */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

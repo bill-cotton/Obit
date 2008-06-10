@@ -1,4 +1,4 @@
-# $Id: OSystem.py,v 1.17 2007/07/26 14:28:42 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004-2007
 #  Associated Universities, Inc. Washington DC, USA.

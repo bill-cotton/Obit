@@ -1,4 +1,4 @@
-/* $Id: ObitIonCalClassDef.h,v 1.1 2006/01/12 03:03:31 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

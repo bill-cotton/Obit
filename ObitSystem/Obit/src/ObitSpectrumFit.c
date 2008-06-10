@@ -1,4 +1,4 @@
-/* $Id: ObitSpectrumFit.c,v 1.2 2008/05/06 14:03:02 bcotton Exp $        */
+/* $Id$        */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2008                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

@@ -1,4 +1,4 @@
-/* $Id: SNFilt.c,v 1.9 2008/03/02 01:32:11 bcotton Exp $  */
+/* $Id$  */
 /* Obit Filter SN table phases to remove peculiar phases  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2007                                               */

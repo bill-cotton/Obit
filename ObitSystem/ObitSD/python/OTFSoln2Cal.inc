@@ -1,4 +1,4 @@
-/* $Id: OTFSoln2Cal.inc,v 1.2 2005/01/02 22:10:16 bcotton Exp $  */  
+/* $Id$  */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for OTF calibration Utilities              */
 /*                                                                    */

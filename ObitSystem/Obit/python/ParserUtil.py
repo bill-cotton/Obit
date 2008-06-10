@@ -4,7 +4,7 @@ Python utility package for parameter file parser
 
 # Python utility package for parameter file parser
 import Obit, InfoList, OErr
-# $Id: ParserUtil.py,v 1.1 2007/11/06 18:57:38 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2007
 #  Associated Universities, Inc. Washington DC, USA.

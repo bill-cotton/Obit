@@ -1,4 +1,4 @@
-/* $Id: Imager.c,v 1.72 2007/09/14 19:41:57 bcotton Exp $  */
+/* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set               */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2005-2008                                          */

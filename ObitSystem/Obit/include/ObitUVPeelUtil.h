@@ -1,4 +1,4 @@
-/* $Id: ObitUVPeelUtil.h,v 1.2 2007/08/31 17:24:49 bcotton Exp $   */
+/* $Id$   */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2007                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

@@ -37,7 +37,7 @@ Data selection, calibration and editing parameters on List member
   "Feeds"       int  (?,1,1) a list of selected feed numbers, [def all.]
   "keepCal"     bool (1,1,1) If true keep cal-on data, otherwise drop [def True.]
 """
-# $Id: OTF.py,v 1.43 2008/05/15 21:31:49 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004-2008
 #  Associated Universities, Inc. Washington DC, USA.

@@ -8,7 +8,7 @@ SkyModelVMIon Members with python interfaces:
 List      - used to pass instructions to processing
 Mosaic    - ImageMosaic
 """
-# $Id: SkyModelVMIon.py,v 1.2 2007/08/28 20:43:21 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2007
 #  Associated Universities, Inc. Washington DC, USA.

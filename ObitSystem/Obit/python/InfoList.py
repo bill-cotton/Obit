@@ -10,7 +10,7 @@ Most Obit objects contain an InfoList member.
 Members:
 Dict      - Python dictionary with contents of InfoList
 """
-# $Id: InfoList.py,v 1.20 2008/02/15 19:41:55 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004-2008
 #  Associated Universities, Inc. Washington DC, USA.

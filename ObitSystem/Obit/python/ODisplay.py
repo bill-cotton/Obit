@@ -3,7 +3,7 @@
 This class is for creating and using the interface to an image display server
 ONLY ONE MAY EXIST
 """
-# $Id: ODisplay.py,v 1.4 2007/03/04 21:57:02 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004-2007
 #  Associated Universities, Inc. Washington DC, USA.

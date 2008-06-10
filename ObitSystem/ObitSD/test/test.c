@@ -1,4 +1,4 @@
-/* $Id: test.c,v 1.1.1.1 2004/07/19 17:04:43 bcotton Exp $                            */
+/* $Id$                            */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

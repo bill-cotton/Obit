@@ -1,4 +1,4 @@
-/* $Id: ObitUVDesc.c,v 1.20 2008/05/05 19:06:58 bcotton Exp $      */
+/* $Id$      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

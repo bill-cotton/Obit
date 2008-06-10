@@ -1,4 +1,4 @@
-/* $Id: imagedisp.h,v 1.3 2005/07/20 14:09:18 bcotton Exp $ */
+/* $Id$ */
 /* imagedisp (image display widget) header file */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 1996,1999-2008

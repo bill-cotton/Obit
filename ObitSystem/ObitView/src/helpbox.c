@@ -1,4 +1,4 @@
-/* $Id: helpbox.c,v 1.9 2007/07/05 12:59:02 bcotton Exp $  */
+/* $Id$  */
 /* help dialog box  for ObitView */
 /* adopted from "Power programming Motif" by E. F. Johnson and
    K. Reichard, 1993, MIS Press, New York */

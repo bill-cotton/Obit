@@ -1,4 +1,4 @@
-# $Id: OTFSoln2Cal.py,v 1.3 2005/02/12 01:29:13 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004-2005
 #  Associated Universities, Inc. Washington DC, USA.

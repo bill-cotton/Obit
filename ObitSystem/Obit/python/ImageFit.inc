@@ -1,4 +1,4 @@
-/* $Id: ImageFit.inc,v 1.1 2007/09/17 15:58:00 bcotton Exp $    */  
+/* $Id$    */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageFit type                          */
 /*                                                                    */

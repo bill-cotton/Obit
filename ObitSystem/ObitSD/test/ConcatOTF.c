@@ -1,4 +1,4 @@
-/* $Id: ConcatOTF.c,v 1.2 2004/08/23 15:26:14 bcotton Exp $                            */
+/* $Id$                            */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

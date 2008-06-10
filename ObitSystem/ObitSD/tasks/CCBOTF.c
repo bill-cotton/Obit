@@ -1,4 +1,4 @@
-/* $Id: CCBOTF.c,v 1.3 2008/01/26 18:55:56 bcotton Exp $  */
+/* $Id$  */
 /* Read CalTech Continuum Backend data                                */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2008                                          */

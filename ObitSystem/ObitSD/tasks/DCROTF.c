@@ -1,4 +1,4 @@
-/* $Id: DCROTF.c,v 1.2 2008/05/15 21:00:51 bcotton Exp $  */
+/* $Id$  */
 /* Modified to read both beam-switched and non switched data */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */

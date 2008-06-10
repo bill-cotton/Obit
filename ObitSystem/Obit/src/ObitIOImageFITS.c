@@ -1,4 +1,4 @@
-/* $Id: ObitIOImageFITS.c,v 1.40 2008/02/29 02:03:24 bcotton Exp $    */
+/* $Id$    */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

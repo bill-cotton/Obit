@@ -1,4 +1,4 @@
-/* $Id: ObitOTFGridClassDef.h,v 1.2 2005/08/17 23:42:32 bcotton Exp $                            */
+/* $Id$                            */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2002-2003                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

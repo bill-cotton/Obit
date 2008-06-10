@@ -1,5 +1,5 @@
 /* Convert a Penn Array OTF data set into an image cube */
-/* $Id: OTF2Cube.c,v 1.1 2004/09/06 03:10:41 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

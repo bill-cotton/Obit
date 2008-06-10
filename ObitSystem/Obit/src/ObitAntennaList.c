@@ -1,4 +1,4 @@
-/* $Id: ObitAntennaList.c,v 1.9 2007/09/03 15:34:30 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

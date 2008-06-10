@@ -1,4 +1,4 @@
-/* $Id: OTFImage.c,v 1.8 2008/02/28 15:23:02 bcotton Exp $  */
+/* $Id$  */
 /* Obit  Radio Single dish On The Fly imaging software                */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2008                                          */

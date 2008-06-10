@@ -6,7 +6,7 @@ UVGSolve Members with python interfaces:
 InfoList    - used to pass instructions to processing
 Member List  (readonly)
 """
-# $Id: UVGSolve.py,v 1.2 2008/01/03 15:31:36 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C)2006,2008
 #  Associated Universities, Inc. Washington DC, USA.

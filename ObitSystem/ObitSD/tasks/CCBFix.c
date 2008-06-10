@@ -1,4 +1,4 @@
-/* $Id: CCBFix.c,v 1.1 2008/03/11 15:52:09 bcotton Exp $  */
+/* $Id$  */
 /* Fix screwup in  CalTech Continuum Backend data                     */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2008                                               */

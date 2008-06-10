@@ -1,4 +1,4 @@
-# $Id: TableUtil.py,v 1.1 2006/06/13 18:32:38 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2006
 #  Associated Universities, Inc. Washington DC, USA.

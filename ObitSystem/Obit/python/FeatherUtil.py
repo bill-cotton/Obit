@@ -1,6 +1,6 @@
 """ Utility module for Feathering images
 """
-# $Id: FeatherUtil.py,v 1.14 2008/04/22 13:18:50 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004-2008
 #  Associated Universities, Inc. Washington DC, USA.

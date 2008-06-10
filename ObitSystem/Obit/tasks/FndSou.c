@@ -1,4 +1,4 @@
-/* $Id: FndSou.c,v 1.5 2007/10/11 13:35:22 bcotton Exp $  */
+/* $Id$  */
 /* FndSou Obit task - generate source list from image                 */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2008                                          */

@@ -1,4 +1,4 @@
-/* $Id: drawbox.h,v 1.4 2005/08/06 21:28:00 bcotton Exp $ */
+/* $Id$ */
 /* function prototypes for drawbox.c */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 2005

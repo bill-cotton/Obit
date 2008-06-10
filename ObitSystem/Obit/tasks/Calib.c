@@ -1,4 +1,4 @@
-/* $Id: Calib.c,v 1.7 2008/04/28 15:12:17 bcotton Exp $  */
+/* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2008                                          */

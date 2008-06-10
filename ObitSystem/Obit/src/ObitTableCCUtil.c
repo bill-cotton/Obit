@@ -1,4 +1,4 @@
-/* $Id: ObitTableCCUtil.c,v 1.26 2008/04/25 17:34:39 uid3195 Exp $   */
+/* $Id$   */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

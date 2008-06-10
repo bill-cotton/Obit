@@ -33,7 +33,7 @@ Typical usage for a half plane complex to real (nx x ny) FFT is:
 
 
 """
-# $Id: FFT.py,v 1.7 2006/10/11 17:25:09 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004,2006
 #  Associated Universities, Inc. Washington DC, USA.

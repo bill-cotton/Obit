@@ -1,4 +1,4 @@
-/* $Id: ImageOTF.c,v 1.3 2006/10/26 13:49:24 bcotton Exp $     */
+/* $Id$     */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

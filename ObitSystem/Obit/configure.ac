@@ -1,4 +1,4 @@
-# $Id: configure.ac,v 1.9 2008/05/12 14:53:43 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #;  Copyright (C) 2007,2008
 #;  Associated Universities, Inc. Washington DC, USA.

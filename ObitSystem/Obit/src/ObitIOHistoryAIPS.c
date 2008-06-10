@@ -1,4 +1,4 @@
-/* $Id: ObitIOHistoryAIPS.c,v 1.10 2006/06/26 16:48:22 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

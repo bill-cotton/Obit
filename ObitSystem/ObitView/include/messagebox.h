@@ -1,4 +1,4 @@
-/* $Id: messagebox.h,v 1.2 2005/07/20 14:09:18 bcotton Exp $ */
+/* $Id$ */
 /* headers for XFITSview message box routines  */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 1996

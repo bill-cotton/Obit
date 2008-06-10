@@ -1,4 +1,4 @@
-/* $Id: ObitDConCleanPxList.c,v 1.21 2008/03/14 12:16:26 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

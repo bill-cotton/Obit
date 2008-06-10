@@ -1,4 +1,4 @@
-/* $Id: requestbox.c,v 1.12 2007/07/05 12:59:02 bcotton Exp $  */
+/* $Id$  */
 /* Request (of client) boxes  for ObitView */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 2005-2008

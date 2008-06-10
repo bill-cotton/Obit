@@ -1,4 +1,4 @@
-/* $Id: AutoFlag.c,v 1.10 2008/05/22 11:56:02 bcotton Exp $  */
+/* $Id$  */
 /* Obit task to automatically edit visibility data                    */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2005-2008                                          */

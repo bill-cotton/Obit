@@ -1,4 +1,4 @@
-/* $Id: ObitUVSoln.c,v 1.14 2007/06/05 13:55:03 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

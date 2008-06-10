@@ -1,4 +1,4 @@
-/* $Id: lookpos.c,v 1.6 2005/07/23 20:51:37 bcotton Exp $ */
+/* $Id$ */
 /* lookup position from index, Equinox dialog boxes for ObitView */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 1996,1998,2002-2008

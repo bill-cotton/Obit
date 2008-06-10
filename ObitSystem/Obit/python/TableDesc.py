@@ -1,4 +1,4 @@
-# $Id: TableDesc.py,v 1.3 2007/12/16 20:26:15 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2005
 #  Associated Universities, Inc. Washington DC, USA.

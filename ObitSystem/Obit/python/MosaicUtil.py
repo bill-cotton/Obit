@@ -1,4 +1,4 @@
-# $Id: MosaicUtil.py,v 1.11 2008/02/10 01:39:26 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004-2005
 #  Associated Universities, Inc. Washington DC, USA.

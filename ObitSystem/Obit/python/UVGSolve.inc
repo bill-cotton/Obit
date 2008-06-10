@@ -1,4 +1,4 @@
-/* $Id: UVGSolve.inc,v 1.2 2006/03/13 16:55:30 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for UV data self calibration utilities     */
 /*                                                                    */

@@ -1,4 +1,4 @@
-/* $Id: ObitSystem.inc,v 1.9 2007/07/26 14:28:42 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitSystem type                        */
 /*                                                                    */

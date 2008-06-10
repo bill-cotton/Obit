@@ -1,4 +1,4 @@
-/* $Id: ObitUVImagerSquint.c,v 1.3 2007/05/09 21:18:28 bcotton Exp $     */
+/* $Id$     */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

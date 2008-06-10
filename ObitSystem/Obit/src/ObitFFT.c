@@ -1,4 +1,4 @@
-/* $Id: ObitFFT.c,v 1.7 2008/01/18 11:51:28 bcotton Exp $         */
+/* $Id$         */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

@@ -1,4 +1,4 @@
-/* $Id: poslabel.h,v 1.1 2005/07/23 00:20:08 bcotton Exp $ */
+/* $Id$ */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 2005, 2008
 *  Associated Universities, Inc. Washington DC, USA.

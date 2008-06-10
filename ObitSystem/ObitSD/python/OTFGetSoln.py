@@ -1,6 +1,6 @@
 """ OTF calibration and editing utilities
 """
-# $Id: OTFGetSoln.py,v 1.10 2008/02/27 15:47:10 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004-2008
 #  Associated Universities, Inc. Washington DC, USA.

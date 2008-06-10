@@ -1,4 +1,4 @@
-/* $Id: ObitOTFGetAtmCor.c,v 1.11 2008/03/14 12:17:51 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

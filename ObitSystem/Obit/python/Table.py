@@ -11,7 +11,7 @@ Table header keywords for specific table types are available in the keys
 member of a Table after the table has been opened.  These will be updated
 to disk when the table is closed.
 """
-# $Id: Table.py,v 1.16 2007/08/12 12:10:13 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004,2005,2007
 #  Associated Universities, Inc. Washington DC, USA.

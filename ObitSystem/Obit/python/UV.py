@@ -89,7 +89,7 @@ Data selection, calibration and editing parameters on List member:
       0 => Use scan average.
       This is only useful for ReadSelect operations on indexed ObitUVs.
 """
-# $Id: UV.py,v 1.54 2007/12/11 13:49:46 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004-2007
 #  Associated Universities, Inc. Washington DC, USA.

@@ -1,4 +1,4 @@
-/* $Id: ObitZernike.c,v 1.3 2006/10/29 17:28:46 bcotton Exp $                            */
+/* $Id$                            */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

@@ -1,4 +1,4 @@
-/* $Id: toolbox.c,v 1.3 2005/07/16 11:21:56 bcotton Exp $ */
+/* $Id$ */
 /* Toolbox panel functions for ObitView */
 /*-----------------------------------------------------------------------
 *  Copyright (C) 1998,2002-2008

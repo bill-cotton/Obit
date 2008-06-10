@@ -10,7 +10,7 @@ History Members with python interfaces:
 List  - used to pass instructions to processing (file info)
 """
 # Python/Obit History class
-# $Id: History.py,v 1.16 2007/08/22 15:17:37 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004-2007
 #  Associated Universities, Inc. Washington DC, USA.

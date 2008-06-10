@@ -1,4 +1,4 @@
-# $Id: UVImager.py,v 1.17 2007/07/10 18:32:53 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004-2007
 #  Associated Universities, Inc. Washington DC, USA.

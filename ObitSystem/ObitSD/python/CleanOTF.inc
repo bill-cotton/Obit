@@ -1,4 +1,4 @@
-/* $Id: CleanOTF.inc,v 1.4 2005/08/07 18:48:56 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for CleanOTF type                          */
 /*                                                                    */

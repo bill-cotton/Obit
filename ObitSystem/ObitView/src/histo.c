@@ -1,4 +1,4 @@
-/* $Id: histo.c,v 1.1 2005/07/23 00:42:27 bcotton Exp $ */
+/* $Id$ */
 /* Histogram equalization and related functions  */ 
 /*  Histogram equalization is an attempt to have equal numbers of pixels
     in each of the allowed color index states */

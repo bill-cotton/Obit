@@ -1,4 +1,4 @@
-/* $Id: ObitOTFSoln2Cal.h,v 1.3 2007/09/11 12:50:20 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

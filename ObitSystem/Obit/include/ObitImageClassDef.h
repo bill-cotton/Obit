@@ -1,4 +1,4 @@
-/* $Id: ObitImageClassDef.h,v 1.4 2005/12/19 00:19:25 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2002-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

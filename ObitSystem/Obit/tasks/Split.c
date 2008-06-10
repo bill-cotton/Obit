@@ -1,4 +1,4 @@
-/* $Id: Split.c,v 1.3 2007/08/16 13:04:05 bcotton Exp $  */
+/* $Id$  */
 /* Obit Task apply calibration snd write single source files */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2007                                               */

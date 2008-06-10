@@ -1,4 +1,4 @@
-/* $Id: InfoList.inc,v 1.11 2008/02/03 23:06:51 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitInfoList type                      */
 /*                                                                    */

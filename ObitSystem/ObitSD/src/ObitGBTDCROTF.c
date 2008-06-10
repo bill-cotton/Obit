@@ -1,4 +1,4 @@
-/* $Id: ObitGBTDCROTF.c,v 1.5 2006/10/26 13:49:24 bcotton Exp $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

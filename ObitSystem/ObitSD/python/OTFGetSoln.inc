@@ -1,4 +1,4 @@
-/* $Id: OTFGetSoln.inc,v 1.7 2008/02/27 15:47:10 bcotton Exp $ */  
+/* $Id$ */  
 /*--------------------------------------------------------------------*/
 /* Swig module description for OTF calibration Utilities              */
 /*                                                                    */

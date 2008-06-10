@@ -1,4 +1,4 @@
-/* $Id: ObitCArray.c,v 1.12 2005/12/19 00:19:26 bcotton Exp $         */
+/* $Id$         */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

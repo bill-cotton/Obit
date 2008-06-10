@@ -1,4 +1,4 @@
-/* $Id: ObitFArrayClassDef.h 7 2008-06-09 14:04:10Z bcotton $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2002-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

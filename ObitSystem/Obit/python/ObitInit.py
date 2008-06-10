@@ -6,7 +6,7 @@ may be imported in scripts run from the command line.
 AIPS.AIPS.userno should be set prior to import or call
 OSystem.PSetAIPSuser (user) afterwards to set userid
 """
-# $Id: ObitInit.py,v 1.2 2007/09/11 12:38:38 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2007
 #  Associated Universities, Inc. Washington DC, USA.

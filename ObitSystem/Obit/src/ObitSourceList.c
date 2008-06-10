@@ -1,4 +1,4 @@
-/* $Id: ObitSourceList.c,v 1.5 2006/03/06 21:17:01 bcotton Exp $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

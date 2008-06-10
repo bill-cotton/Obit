@@ -6,7 +6,7 @@ This utility package supplies Zernike terms and derivatives.
 
 # Python utility package for Zernike polynomials
 import Obit
-# $Id: ZernikeUtil.py,v 1.1 2006/10/26 21:36:42 bcotton Exp $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2006
 #  Associated Universities, Inc. Washington DC, USA.

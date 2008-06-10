@@ -1,4 +1,4 @@
-/* $Id: Feather.c,v 1.11 2007/07/13 17:02:45 bcotton Exp $  */
+/* $Id$  */
 /* Feather Obit task - Feathers together images            */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2005-2008                                          */
