@@ -1,0 +1,186 @@
+; $Id: Feather.TDF,v 1.7 2007/07/13 17:02:10 bcotton Exp $
+; Feather
+;---------------------------------------------------------------
+;! Feather together images
+;# Obit Task 
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2005,2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: Bill Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+Feather  LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+Feather:  Obit Task to Feather together images
+**PARAM** str 4
+DataType                          "FITS" or "AIPS" type of input
+**PARAM** int   1
+numImage                           Number of input images
+                                   MUST be in order of decreasing resn.
+**PARAM** str 12
+inName                             Image Name (Name) 1
+**PARAM** str 8
+inClass                            Image Name (Class) 1
+**PARAM** int   1
+inSeq             0         9999   Image Name (Seq. #) 1
+**PARAM** str 12
+in2Name                            Image Name (Name) 2
+**PARAM** str 8
+in2Class                           Image Name (Class) 2
+**PARAM** int   1
+in2Seq           0          9999   Image Name (Seq. #) 2
+**PARAM** str 12
+in3Name                            Image Name (Name) 3
+**PARAM** str 8
+in3Class                           Image Name (Class) 3
+**PARAM** int   1
+in3Seq            0         9999   Image Name (Seq. #) 3
+**PARAM** str 12
+in4Name                            Image Name (Name) 4
+**PARAM** str 8
+in4Class                           Image Name (Class) 4
+**PARAM** int   1
+in4Seq            0         9999   Image Name (Seq. #) 4
+**PARAM** str 12
+in5Name                            Image Name (Name) 5
+**PARAM** str 8
+in5Class                           Image Name (Class) 5
+**PARAM** int   1
+in5Seq            0         9999   Image Name (Seq. #) 5
+**PARAM** str 12
+in6Name                            Image Name (Name) 6
+**PARAM** str 8
+in6Class                           Image Name (Class) 6
+**PARAM** int   1
+in6Seq            0         9999   Image Name (Seq. #) 6
+**PARAM** str 12
+in7Name                            Image Name (Name) 7
+**PARAM** str 8
+in7Class                           Image Name (Class) 7
+**PARAM** int   1
+in7Seq            0         9999   Image Name (Seq. #) 7
+**PARAM** str 12
+in8Name                            Image Name (Name) 8
+**PARAM** str 8
+in8Class                           Image Name (Class) 8
+**PARAM** int   1
+in8Seq            0         9999   Image Name (Seq. #) 8
+**PARAM** str 12
+in9Name                            Image Name (Name) 9
+**PARAM** str 8
+in9Class                           Image Name (Class) 9
+**PARAM** int   1
+in9Seq            0         9999   Image Name (Seq. #) 9
+**PARAM** str 12
+in10Name                           Image Name (Name) 10
+**PARAM** str 8
+in10Class                          Image Name (Class) 10
+**PARAM** int   1
+in10Seq           0         9999   Image Name (Seq. #) 10
+**PARAM** str 12
+outName                            Output Image Name
+**PARAM** str 8
+outClass                           Output Image Class
+**PARAM** int   1
+outSeq            0         9999   Output Image Seq. #
+**PARAM** int   1
+inDisk            0            9   Disk drive # 1
+**PARAM** int   1
+in2Disk           0            9   Disk drive # 2
+**PARAM** int   1
+in3Disk           0            9   Disk drive # 3
+**PARAM** int   1
+in4Disk           0            9   Disk drive # 4
+**PARAM** int   1
+in5Disk           0            9   Disk drive # 5
+**PARAM** int   1
+in6Disk           0            9   Disk drive # 6
+**PARAM** int   1
+in7Disk           0            9   Disk drive # 7
+**PARAM** int   1
+in8Disk           0            9   Disk drive # 8
+**PARAM** int   1
+in9Disk           0            9   Disk drive # 9
+**PARAM** int   1
+in10Disk          0            9   Disk drive # 10
+**PARAM** int   1
+outDisk           0            9   output Disk drive
+**PARAM** str 48
+inFITS                             Filename 1 if FITS image
+**PARAM** str 48
+in2FITS                            Filename 2 if FITS image
+**PARAM** str 48
+in3FITS                            Filename 3 if FITS image
+**PARAM** str 48
+in4FITS                            Filename 4 if FITS image
+**PARAM** str 48
+in5FITS                            Filename 5 if FITS image
+**PARAM** str 48
+in6FITS                            Filename 6 if FITS image
+**PARAM** str 48
+in7FITS                            Filename 7 if FITS image
+**PARAM** str 48
+in8FITS                            Filename 8 if FITS image
+**PARAM** str 48
+in9FITS                            Filename 9 if FITS image
+**PARAM** str 48
+in10FITS                           Filename 10 if FITS image
+**PARAM** str 48
+outFITS                            Output Filename if FITS image
+**PARAM** int 10
+noScrat                            AIPS disk numbers for which
+                                   scratch files are disallowed
+----------------------------------------------------------------
+Feather
+Type: Task
+Use:     Obit program Feather Takes up to 10 input images and feathers 
+them  together in the UV plane to produce an image whose spatial 
+frequencies are from the most appropriate input image.  The resultant 
+image will have the resolution of the highest resolution input image
+(the first image)
+   Prior to running Feather, the input images must be placed on the same
+astrometric and photometric scales but need not have the grid of pixels
+or even the same equinox (B1950 and J2000 supported).
+   The input images MUST be given in order of the highest to lowest
+resolution and this resolution must be reflected by the "CLEAN beam"
+size given in the image header.  The output image will have the same
+size and pixel grid as the first (highest resolution) image.
+   Either AIPS or FITS images may be used but currently all input and
+output images must be the same type (AIPS or FITS).
+   History written to an output FITS image is into a History table.
+Adverbs:
+  DataType...."FITS" or AIPS
+  numImage....Number of input images
+  in?Name.....In Image Name(Name). ? = 1->numImage   
+              1 dropped for first input 
+  in?Class....In Image Name(Class).?  = 1->numImage        
+  in?Seq......In Image Name(Seq. #).?       0 => highest.
+  in?Disk.....In Disk drive # of image."    0 => any.
+  in?FITS.....Input File Name if a FITS file
+  outName.....Output Image Name(Name).         
+  outClass....Output Image Name(Class).        
+  outSeq......Output Image Name(Seq. #).       0 => highest.
+  outDisk.....Output Disk drive # of image.    0 => any.
+  outFITS.....Output File Name if a FITS file
+  noScrat.....A list of AIPS disk numbers on which you do not 
+              wish scratch files
+----------------------------------------------------------------

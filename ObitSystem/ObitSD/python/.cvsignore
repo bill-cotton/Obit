@@ -1,0 +1,13 @@
+core.*
+*.pyc
+*.o
+*.so
+*.i
+*.gz
+*.tgz
+*.old
+*_wrap.c
+*_wrap.doc
+junk.*
+work
+ObitPython

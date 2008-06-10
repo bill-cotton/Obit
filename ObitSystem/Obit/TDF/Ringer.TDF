@@ -1,0 +1,129 @@
+; Ringer
+;---------------------------------------------------------------
+;! Fit Rings to SiO maser images
+;# Task 
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: Bill Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+Ringer    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+Ringer:    Task  Fit Rings to SiO maser images  
+**PARAM** str 4
+DataType                               "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                             1st input Filename if FITS image
+**PARAM** str 12
+inName                             1st transition Image name (name)
+**PARAM** str 6
+inClass                            1st transition Image name (class)
+**PARAM** int 1
+inSeq            0.0       9999.0  1st transition Image name (seq. #)
+**PARAM** int 1
+inDisk           0.0          9.0  1st transition Disk drive #
+**PARAM** str 48
+in2File                            2nd input Filename if FITS image
+**PARAM** str 12
+in2Name                            2nd transition Image name (name)
+**PARAM** str 6
+in2Class                           2nd transition Image name (class)
+**PARAM** int 1
+in2Seq            0.0       9999.0 2nd transition Image name (seq. #)
+**PARAM** int 1
+in2Disk           0.0          9.0 2nd transition Disk drive #
+**PARAM** int 7
+BLC              0.0       8192.0  Bottom left corner of image
+                                     0=>entire image
+**PARAM** int 7
+TRC              0.0       8192.0  Top right corner of image
+                                     0=>entire image
+**PARAM** float 1 **DEF** 1.0
+Spacing                            Spacing (pixels) of annular sums
+**PARAM** int 1 **DEF** 51
+NSearch                            Number of Spacings to search 
+**PARAM** float 1 **DEF** 0.001
+Cutoff                             Minimum brightness to use
+**PARAM** float 2
+Center   $                         (x,y) pixel of center
+**PARAM** float 2
+Radius   $                         Fitted ring radius
+**PARAM** float 2
+Width    $                         Fitted ring widths
+**PARAM** float 2
+Frac     $                         Fraction of power in ring
+**PARAM** int 1
+prtLv             0                Print level in selfcal
+----------------------------------------------------------------
+Ringer
+Type: Task
+Use:  Fits rings to one or two SiO maser transitions.
+Takes Squish output images for Stokes I. If two images, then they 
+are assumed to have pixels aligned on the sky.
+Fitting is done by a direct parameter search over center position, the
+sum of the widths of the rings found from a moment analysis is used as
+the objective measure.  The center pixel with the minimum sum of the
+ring widths is the fitted position, widths are from the moment analysis.
+
+Notes:
+   Images with a single dominant cluster of spots may result in a very 
+small ring around this cluster if allowed.  Forcing the initial center
+and restricting the search can help.
+   Using an appropriate Cutoff can be critical for weak sources.
+
+Adverbs:
+  Userid......User ID of owner of image.  0=>current user 32000=>all
+              users
+  DataType...."FITS" or "AIPS"
+  inFile......1st transition  file name if a FITS file
+  inName......1st transition Image name(name).
+  inClass.....1st transition Image name(class).  
+  inSeq.......1st transition Image name(seq. #). 0 => highest.
+  inDisk......1st transition Disk drive # of image.
+  in2File.....2nd transition  file name if a FITS file
+  in2Name.....2nd transition Image name(name).
+  in2Class....2nd transition Image name(class).  
+  in2Seq......2nd transition Image name(seq. #). 0 => highest.
+  in2Disk.....2nd transition Disk drive # of image.
+  BLC.........The Bottom Left-hand pixel of the subarray of the 
+              images to be analysed. The value (0,0) means (1,1).
+  TRC.........The Top Right-hand pixel of the subarray of the 
+              images to be analysed.  The value (0,0) means the 
+              top right hand corner of the entire image.
+  Spacing.....Spacing in pixels for the search.  
+              This is a compromise between sensitivity and
+              resolution, 2.0 is a good compromise
+  NSearch.....The number of trial center positions in uints of 
+              Spacing to search.
+  Cutoff......Minimum brightness pixel to consider
+  Center......Fitted center pixel (1-rel) per transition [output]
+              On input, if not (0,0) then do search about this
+              position.  Otherwise the centroid of the emission in 
+              the images is used
+  Radius......Fitted ring radius in pixels per transition [output]
+  Width.......Fitted ring widths in pixels per transition [output]
+  Frac........Fraction of power in ring per transition [output]
+              The fraction of the total emission in the annulus of
+              radius Radius and width Width.
+  prtLv.......Print level, 0=>none
+----------------------------------------------------------------

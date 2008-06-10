@@ -1,0 +1,15 @@
+# Inputs for Obit program Feather
+$Key = DataType  Str (4) # Type, AIPS or FITS
+FITS
+$Key = nFITS Int (1) # Number of FITS directories
+1
+$Key = FITSdirs Str (48) # Directories of FITS "disks"
+../testIt
+$Key = numImage  Int (1)   # Number of images
+2
+$Key = inFITS1   Str (48)  # first input FITS image
+FeatherTestIn1.fits.gz
+$Key = inFITS2   Str (48)  # second input FITS image
+FeatherTestIn2.fits.gz
+$Key = outFITS   Str (48)  # output FITS image
+!FeatherDebug.fits

@@ -1,0 +1,393 @@
+; $Id: UVSub.TDF,v 1.5 2007/08/17 14:29:21 bcotton Exp $
+; UVSub
+;---------------------------------------------------------------
+;! Subtracts/divides a model from/into a uv data base
+;# Task UV  Obit 
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2005,2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+UVSub     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+UVSub     Obit Task to subtract CLEAN components from uvdata.
+                                   (or, to divide observed visi-
+                                   bility by model visibility)
+**PARAM** str 4
+DataType                            "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                             Input UV file name (name)
+**PARAM** str 6
+inClass                            Input UV file name (class)
+**PARAM** int 1
+inSeq             0.0     9999.0   Input UV file name (seq. #)
+**PARAM** int 1
+inDisk                             Input UV file disk unit #
+**PARAM** str 16 30
+Sources                            Source to process
+**PARAM** int 1 **DEF** -1
+Qual            -10.0              Source qualifier -1=>any
+**PARAM** int 1
+channel          -1.0     9999.0   Spectral channel (0=>all)
+                                   Use 0 for continuum
+**PARAM** int 1
+BIF               0.0     9999.0   First IF (0=>1)
+**PARAM** int 1
+EIF               0.0     9999.0   Highest IF (0=>BIF to last)
+**PARAM** boo 1 **DEF** T
+doCalSelect                        Apply calibration/selection?
+**PARAM** int 1
+doCalib          -1.0        2.0   If >0 calibrate data
+                                   = 2 calibrate weights
+**PARAM** int 1
+gainUse                            CL (or SN) table to apply
+**PARAM** boo 1 **DEF** F
+doPol            -1.0       10.0   If >0 correct polarization.
+**PARAM** int 1
+flagVer                            Flag table version
+**PARAM** int 1
+doBand           -1.0       10.0   If >0 apply bandpass cal.
+                                   Method used depends on value
+                                   of doBand (see Help).
+**PARAM** int 1
+BPVer                              Bandpass table version
+**PARAM** float 3
+Smooth                             Smoothing function. 
+**PARAM** str 48
+in2File                            FITS input image if Type=='FITS'
+**PARAM** str 12
+in2Name                            Cleaned map AIPS name
+**PARAM** str 6
+in2Class                           Cleaned map AIPS class
+**PARAM** int 1
+in2Seq            0.0     9999.0   Cleaned AIPS seq. #
+**PARAM** int 1
+in2Disk                            Cleaned map disk unit #
+**PARAM** int 1   **DEF** 1
+nmaps             0.0     4192.0   No. fields to use for model.
+**PARAM** int 1
+CCVer            -1.0    46655.0   CC file version #.
+**PARAM** int 64
+BComp                              First CLEAN comp to sub.
+                                   1 per field.
+**PARAM** int 64
+EComp                              Last CLEAN comp to sub.
+                                   to use (0 => all)
+**PARAM** float 1
+Flux                               Lowest summed CC component used.
+**PARAM** str 48
+outFile                            FITS output uvdata if Type=='FITS'
+**PARAM** str 12
+outName                            Output UV AIPS file name
+**PARAM** str 6
+outClass                           Output UV AIPS file class
+**PARAM** int 1
+outSeq           -1.0     9999.0   Output UV AIPS fileseq. #
+**PARAM** int 1
+outDisk                            Output UV file disk unit #.
+**PARAM** str 4
+Cmethod                            Modeling method:
+                                   'DFT','GRID','    '
+**PARAM** str 4
+Cmodel                             Model type: 'COMP','IMAG'
+                                   (see Help re images)
+**PARAM** float 1 **DEF** 1.0
+Factor                             Factor times CLEAN fluxes.
+                                   0->1.0  Subtract
+                                     -1.0  Add
+**PARAM** str 4
+Opcode                             'DIV ' => divide visibility
+                                     observation by model vis.
+                                   'MODL' => replace visibility
+                                     with model visibility
+                                   anything else => subtract
+**PARAM** float 1  
+modelFlux        0.0               Model flux density (Jy)
+**PARAM** float 2  
+modelPos        0.0                Model position offset (asec)
+**PARAM** float 4  
+modelParm                          Model parameters (maj, min, pa, type)
+**PARAM** boo 1
+mrgCC                              Merge CC table CCVer?
+**PARAM** boo 1  **DEF** T
+PBCor                              If true, apply freq. 
+                                   dep. pri. beam corr
+**PARAM** float 1  **DEF** 25.0
+antSize                            Pri. antenna size (m) to use
+                                   in PBCor
+**PARAM** int 10
+noScrat                            AIPS disk numbers for which
+                                   scratch files are disallowed
+----------------------------------------------------------------
+UVSub
+Task:  Subtracts/divides a model from/into a uv data base.  The model
+       may be a specific model, a set of CLEAN components files, or a
+       set of images.  "CLEAN" models may be points, Gaussians or
+       uniform, optically thin spheres.  The task can also replace the 
+       data with the model values.
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input UV AIPS file name     Standard defaults.
+  inClass....Input UV AIPS file class.   Standard defaults.
+  inSeq......Input UV AIPS fileseq. #.  0 => highest.
+  inDisk.....Disk drive # of input UV (FITS or AIPS). NO default
+  Sources... Sources  to be processed if multisource file.
+             It usually doesn't make sense to process multiple 
+             sources.
+  Qual.......Only sources with a source qualifier number in the
+             SU table matching Qual will be used if Qual is not
+             -1.  
+  channel....Frequency channel, 0 => all (use 0 for continuum)
+  BIF........First IF to process. 0=>1
+  EIF........Highest IF to process 0=> do BIF to highest.
+             Note: not all data sets will have IFs.
+  doCalSelect.If True apply calibration/selection.
+             This should be True in most (all?) cases
+  doCalib....If >0, calibrate the data using information in the
+             specified Cal (CL) table for multi-source or SN table for
+             single-source data.  If > 1.5, also calibrate the weights
+             (new for VLA, normal for VLBI).  
+  gainUse....Version number of the CL table to apply to multi-source
+             files or the SN table for single-source files.
+             0 => highest.
+  doPol......If > 0 then correct data for instrumental polarization as
+             represented in the AN table.  This correction is only
+             useful if PCAL has been run or feed polarization parameters
+             have been otherwise obtained. 
+  flagVer....Specifies the version of the flagging table to be applied.
+             0 => highest numbered table. <0 => no flagging to be
+             applied.
+  doBand.....If > 0 then correct the data for the shape of the
+             antenna bandpasses using the BP table specified by BPVer.
+             The correction has five modes:
+             (a) if doBand=1 all entries for an antenna in the table
+             are averaged together before correcting the data.
+             (b) if doBand=2 the entry nearest in time (including
+             solution weights) is used to correct the data.
+             (c) if doBand=3 the table entries are interpolated in
+             time (using solution weights) and the data are then
+             corrected.
+             (d) if doBand=4 the entry nearest in time (ignoring
+             solution weights) is used to correct the data.
+             (e) if doBand=5 the table entries are interpolated in
+             time (ignoring solution weights) and the data are then
+             corrected.
+  BPVer......Specifies the version of the BP table to be applied if
+             doBand > 0.  0 => highest numbered table.
+             <0 => no bandpass correction to be applied.
+  Smooth.....Specifies the type of spectral smoothing to be applied to
+             a uv database . The default is not to apply any smoothing.
+             The elements of Smooth are as follows:
+             Smooth(1) = type of smoothing to apply: 0 => no smoothing
+               To smooth before applying bandpass calibration
+                 1 => Hanning, 2 => Gaussian, 3 => Boxcar, 4 => Sinc
+               To smooth after applying bandpass calibration
+                 5 => Hanning, 6 => Gaussian, 7 => Boxcar, 8 => Sinc
+             Smooth(2) = the "diameter" of the function, i.e. width
+               between first nulls of Hanning triangle and sinc
+               function, FWHM of Gaussian, width of Boxcar. Defaults
+               (if < 0.1) are 4, 2, 2 and 3 channels for Smooth(1) =
+               1 - 4 and 5 - 8, resp.
+             Smooth(3) = the diameter over which the convolving
+               function has value - in channels.  Defaults: 1,3,1,4
+               times Smooth(2) used when input Smooth(3) < net
+               Smooth(2).
+  in2Name....Model AIPS name .      Standard defaults.
+  in2Class...Model AIPS class .     Standard defaults.
+  in2Seq.....Model AIPS seq. # .    0 => highest.
+  in2Disk....Disk drive # of model (FITS or AIPS). NO default
+  in2File....FITS input root if Type=='FITS'
+             Any digits should be left off the end of the name as 
+             the 0-rel field number is added (no leading zeroes).
+  nmaps......Number of image files to use for model.  If more than one
+             file is to be used, the Name, Class, Disk and Seq of the
+             subsequent image files will be the same as the first file
+             except that the LAST two characters of the Class will be
+             '01' thru 'E7' for files number 2 thru 4192.  Maximum 4192.
+  CCVer......CC file ver. number.          0 => highest.
+  BComp......The first clean component to process. One value is
+             specified for each field used.
+  EComp......highest CLEAN comps. to use for model. ALL 0 => all.
+             This array has one value per field up to 64 fields.  All
+             components are used for fields > 64.
+             If any EComp[i] < 0, then components are only used up to
+             the first negative in each field.
+  Flux.......Only components > Flux are used in the model.
+  outName....Output UV AIPS file name    Standard defaults.
+  outClass...Output UV AIPS file class.  Standard defaults.
+  outSeq.....Output UV AIPS file seq. #. 0 => highest unique.
+  outDisk....Disk drive # of output UV (FITS or AIPS) NO default
+  Cmethod....This determines the method used to compute the
+             model visibility values.
+             'DFT' uses the direct Fourier transform, this
+             method is the most accurate.
+             'GRID' does a gridded-FFT interpolation model
+             computation.
+             '    ' allows the program to use the fastest
+             method.
+             NOTE: Cmethod='GRID' does not work correctly for RL
+             and LR data; DO NOT USE Cmethod='GRID' for RL, LR!
+             (Not sure this is correct for Obit)
+  Cmodel.....This indicates the type of input model; 'COMP' means that
+             the input model consists of Clean components, 'IMAG'
+             indicates that the input model consists of images.  If
+             Cmodel is '   ' Clean components will be used if present
+             and the image if not.  Note that Clean images do not make
+             good models.  The Clean components have been convolved with
+             the Gaussian Clean beam making their Fourier transform be
+             rather tapered compared to the original uv data.
+  Factor.....This value will be multiplied times the CLEAN component
+             flux densities before subtraction.  The default 0->1.0, so
+             the clean component model will be subtracted from the UV
+             data.  Factor=-1 will add the clean component model to the
+             UV data.  If the image is not in Jy/pixel, Factor should be
+             used to convert to those units.  Note that a Gaussian beam
+             has area 1.1331 * Major_axis * Minor_axis / (axis_incr)**2
+             pixels for square pixels.  Factor is used with all Opcodes.
+  Opcode.....Opcode='DIV ' => divide observed visibility by model
+             visibility.  Opcode='MODL' => replace the visibility with
+             the model visibility.
+             Any other setting of Opcode causes the task to subtract the
+             model visibility from the observed visibility (the normal
+             mode of operation).
+  modelFlux..If this value is larger than 0 then use a single component 
+             the model specified in modelFlux, modelPos, modelParm
+             is made.  modelFlux is the flux density of the model
+  modelPos...RA and Dec offset in the sky in asec from ref. position.
+  modelParm..Other model parameters 
+             modelParm[3] = 0; Point - no other parameters
+             modelParm[3] = 1; Gaussian on sky:
+               [0:2] = major_axis (asec),  minor_axis (asec),  
+               position_angle (deg),
+             modelParm[3] = 3; Uniform sphere:
+               [0] =  radius (asec)
+  mrgCC......If True, then merge each CC table CCVer before 
+           . subtracting (one per field). In each table, all 
+           . components on a given cell have their fluxes summed 
+          .  resulting in a single entry per cell,
+  PBCor......If true, apply frequency dependent primary beam 
+          .  corrections.  Default True
+  antSize....Primary antenna size (m) to use for PBCor def. 25
+  noScrat.....A list of AIPS disk numbers on which you do not 
+              wish scratch files
+---------------------------------------------------------------
+UVSub: task to subtract a clean model from a uv data base
+DOCUMENTOR: B.E.Turner  NRAO/Charlottesville (AIPS version)
+RELATED PROGRAMS:
+
+Note: Not all of this is relevant as it was copied from AIPS.
+
+                        PURPOSE
+
+     The task UVSub can be used to subtract (or add) or divide
+the Fourier transform of a specified model file(s) from/to/into
+a visibility data set.  The input model may consist of the
+CLEAN components associated with one of more input files;
+one or more input images; or, a specified point model.
+In addition, there are two model methods. The DFT method
+(CLEAN components and point model only) takes a direct
+Fourier transform to determine the model visibility values.
+The gridded-FFT method does an FFT on either an image
+consisting of the CLEAN components or another specified image
+and interpolates the model visibility values. There are at
+least three principal circumstances for which this is required.
+(The division option can be used to solve for "correlator
+offsets." See VLA Scientific Memo. No. 152.)
+
+
+EDITING A VISIBILITY DATA SET FOR BAD DATA:
+     Suppose the field contains a moderately strong source
+source, which produces signal on many baselines comparable or
+stronger than the suspected bad data.  One then maps and cleans
+the source (down to a level which does not include the effects
+of the bad data), then subtracts the Fourier transform of the CC
+(Clean Components )file with UVSub, leaving a vis data set in
+which the bad data should now be dominant and easily isolated.
+One then can identify it explicitly by use of UVFND, and flag
+it.  Or, one can judge its level (above noise) by UVPLT, then
+use AutoFlag to flag all vis data above a desired level.  Finally,
+one adds the Fourier transform of the CC file back into the
+edited vis data set, using UVSub with Factor = -1.0, to produce
+an edited final data set.
+   Obit task AutoFlag can also be used to flag data based on high 
+residuals.
+
+
+SUBTRACTION OF CONTINUUM FROM SPECTRAL LINE DATA
+     The continuum can be subtracted from spectral line channels
+either in map-plane or in u-v data.  If the source size S, the
+synthesized beam width s, the center frequency F, and the
+frequency range f satisfy the following constraint
+
+              (S/s) * (f/F) < 0.1
+
+then little scaling occurs from channel to channel and the dirty
+continuum map can be subtracted from the channel maps.  The
+continuum map is generally produced from a sum of the channel
+maps which have no significant line radiation or absorption.
+Cleaning and self-calibration of the differential channel maps
+may be useful if there is sufficient signal to noise.  For the
+purposes of self-calibration, the sum of the u-v data of the
+channels with significant line emission or the original
+continuum u-v data set can be used to increase the dynamic
+range.  The self-calibration solution can then be applied to
+each channel.
+     If the above constraint is not satisfied, then it is more
+accurate to subtract the continuum model directly from the u-v
+data for each channel.  The continuum model is obtained by
+summing the channel maps which contain little significant line
+emission and then cleaning the map to obtain the CC file.  UVSub
+is then used to subtract this continuum model from each of the
+continuum u-v data sets.  As above, cleaning and
+self-calibration may be needed for the residual channel data is
+the signal to noise warrents it.
+     Because of the differential scaling between channels which
+may be summed to generate a continuum map, several continuum
+maps, each composed of relatively closely-spaced frequency
+channels, may have to be made and the cleaned separately.  Each
+CC file will then have to be subtracted from the channels using
+UVSub.  Factor will then have to be adjusted so that the sum of
+the Factor's used is 1.0 with each Factor akin to a weight of
+that particular continuum map (i.e. the number of channels).
+   Note, for VLA data, Obit task Squint does this operation.
+
+nmaps:
+
+     Multiple input files may be specified although all must be
+of the same type (i.e. CLean components files or images).
+Subsequent model files must have the same Name, Class, Disk and
+Seq as the first file (in2Name, in2Class, in2Disk, in2Seq)
+except that the LAST two characters of the CLASS should be ' 1'
+thru '63' for the second through the sixty-fourth file (64 max.).
+This is the convention used by MX to name multiple fields.
+
+Cmethod:
+
+     There are two model computation methods available. The
+'DFT' method is more accurate but under some circumstances the
+'GRID' method is considerable faster for large numbers of components. 
+Only the 'GRID' method may be used for image models.
+

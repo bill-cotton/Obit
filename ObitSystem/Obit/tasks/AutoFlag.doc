@@ -1,0 +1,223 @@
+/* $Id: AutoFlag.doc,v 1.2 2005/09/16 20:28:48 bcotton Exp $ */
+
+                   Auto flag uv data task
+               -------------------------------------
+
+   Obit program AutoFlag is given a uv data set and creates an flaggong
+(FG) table from it.  Some control parameters can be passed either
+through an input text file  or as command line arguments.  Command line
+values take precedence over those in the input file.
+
+   The default for directory names is to use AIPS directories $DA01...
+and for FITS, $FITS, $FITS01...
+
+ Usage: AutoFlag -input file -output ofile [args]
+ Image a set of radio interferometric data
+ Arguments:
+   -input input parameter file, def AutoFlag.in
+   -output uv data onto which to attach FG table, def AutoFlag.out
+   -pgmNumber Program (POPS) number, def 1 
+   -DataType "AIPS" or "FITS" type for input image
+   -AIPSuser User AIPS number, def 2
+   -inFile input FITS uvdata file
+   -inName input AIPS uvdata file name
+   -inClass input AIPS file class
+   -inSeq input AIPS file sequence
+   -inDisk input (AIPS or FITS) disk number (1-rel) 
+   -outFile uv data file onto which to attach the FG table [def. inFile]
+   -outName AIPS file name for FG table [def. inName]
+   -outClass AIPS file class for FG table [def. inClass]
+   -outSeq AIPS file sequence for FG table [def. inSeq]
+   -outDisk file disk for FG table [def. inDisk]
+
+         Imager input file documentation
+
+   This describes the input file format for AutoFlag
+The input file is basically free format with a keyword=value syntax.  
+Comments follow a "#" symbol.  String keywords should have no leading or
+trailing blanks before the end of the line or a comment delimiter.
+If a numeric value is followed by a comment there should be at least one
+blank before the comment delimiter.
+
+   Entries not specified will assume their default values.  Parameters
+may be given in any order but only the recognized parameters given below
+are allowed. 
+
+# Inputs for Obit program AutoFlag
+$Key = DataType  Str (4) # Type, AIPS or FITS
+FITS
+$Key = nFITS Int (1) # Number of FITS directories
+1
+$Key = FITSdirs Str (48)   # Directories of FITS "disks"
+./
+$Key = inFile  Str (48)    # Input uvdata FITS file name
+SelfCalTest.fits
+$Key = inDisk     Int (1)  # input file disk number
+1
+$Key = Sources  Str (16,1) # Sources selected, blank = all
+    
+$Key = Stokes  Str (4)     # Stokes parameter to test
+I   
+$Key =  flagTab Int (1)    # output Flagging table version
+1
+$Key = doPol Boo (1)       # Apply polarization calibration?
+T
+
+
+Variables possibly read from the input_file
+pgmNumber:   Program number (like POPS number) 
+     type: integer
+     default: 1
+
+DataType:    "AIPS" or "FITS" [def {"FITS"}] 
+     type: string
+     default: FITS
+
+nFITS:       Number of FITS directories in FITSdirs
+     type: integer
+     default: number of $FITS, $FITS01... found
+
+FITSdirs:    Array of FITS directories  if Type ="FITS"
+     Put one directory name per line
+     type: string array
+     default: Values of environment variables $FITS, $FITS01... 
+
+AIPSuser:    AIPS user number
+     type: integer
+     default: 2
+
+nAIPS:       Number of AIPS directories in AIPSdirs
+     type: integer
+     default:  number of $DA01, $DA02... found
+
+AIPSdirs:    Array of AIPS directories if Type ="AIPS"
+     Put one directory name per line
+     type: string array
+     default:  Values of environment variables  $DA01, $DA02...
+
+inFile:      input FITS uvdata file name if Type ="FITS"
+     type: string
+     default: Image.fits
+
+inName:      input AIPS uvdata name  if Type ="AIPS"
+     type: string
+     default: None
+
+inClass:     input AIPS uvdata class if Type ="AIPS"
+     type: string
+     default:  None
+
+inSeq:       input AIPS uvdata sequence no if Type ="AIPS"
+     type: integer
+     default:  None
+
+inDisk:      input AIPS or FITS  disk
+     type: integer
+     default: 1
+
+outFile:      FITS uv data file onto which to attach the FG table
+     type: string
+     default: inFile
+
+outName:       AIPS file name for FG table
+     type: string
+     default: inName
+
+outClass:     AIPS file class for FG table
+     type: string
+     default:  None
+
+outSeq:       AIPS file sequence for FG table 
+     type: integer
+     default:  None
+
+outDisk:      output AIPS or FITS  disk
+     type: integer
+     default: 1
+
+Sources:      Sources selected, blank = all
+     type: string
+     default: all
+    
+Stokes:       Stokes parameter to select
+     type: string
+     default: all
+
+BChan:       First (1-rel) channel number selected
+     type: integer
+     default: 1
+
+EChan:       Highest (1-rel) channel number selected
+     type: integer
+     default: 0 => highest in data
+
+BIF:          First (1-rel) IF number selected
+     type: integer
+     default: 1
+
+EIF:           Highest (1-rel) IF number selected
+     type: integer
+     default: 0 => highest in data
+
+subA:          Subarray number to select
+     type: integer
+     default: 0 =  all
+
+TimeRange:     Timerange in days [start, end]
+     type: float [2]
+     default:  all
+
+doCalSelect:    Apply calibration/selection?
+     type: boolean
+     default: False
+
+doCalib:         >0 => apply calibration, 2=> also cal. wt
+     type: integer
+     default: no calibration
+
+gainUse:          Gain table (CL/SN) table to apply, 0=> highest
+                  Only applied if docalib>0
+     type: integer
+     default: highest
+
+doBand:           If >0 apply bandpass cal.
+     type: integer
+     default: no BP cal
+
+BPVer:            Bandpass table version, 0=>highest
+     type: integer
+     default: highest
+
+flagVer:          Flagging table version to apply
+     type: integer
+     default: no flagging
+
+doPol:            Apply polarization calibration
+     type: boolean
+     default: False
+
+flagTab:        Output Flagging table version 
+     type: integer
+     default: 1
+
+VClip:        If > 0.0 VPol clipping level
+     type: float [1]
+     default: 0.0 => no editing
+
+IClip:        If > 0.0 IPol clipping level
+     type: float [1]
+     default: 0.0 => no editing
+
+RMSClip       Abs and fractional clip levels on Time domain RMS
+     type: float [2]
+     default: no RMS flagging
+    
+maxBad:       Maximum fraction of baselines for correlator or antenna
+              to be flagged before all are flagged
+     type: float [1]
+     default: 0.25
+
+timeAvg:        Flagging interval (min)
+     type: float
+     default: 1 min
+    

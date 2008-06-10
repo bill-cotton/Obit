@@ -1,0 +1,755 @@
+; $Id: Imager.TDF,v 1.32 2007/09/14 19:41:57 bcotton Exp $
+; Imager 
+;---------------------------------------------------------------
+;! Obit Radio interferometry imaging software
+;# Task Obit Imaging calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2005-2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+Imager     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+Imager:  Obit radio interferometry imaging software
+**PARAM** str 4
+DataType                            "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                              Input multisource UV data AIPS
+**PARAM** str 6
+inClass                             Input UV data (class)
+**PARAM** int 1
+inSeq                               Input UV data (seq. #)
+**PARAM** int 1
+inDisk                              Input UV data disk drive #
+**PARAM** boo 1  **DEF** F
+doPS                                Do not reprocess sources from PS table
+**PARAM** str 16 30
+Sources                             Source (pointings) list
+**PARAM** int 1 **DEF** -1
+Qual            -10.0               Source qualifier -1=>any
+**PARAM** str 4
+souCode                             Calibrator code '    '=>any
+**PARAM** float 2
+timeRange                           Time range to process.
+**PARAM** str 4
+Stokes                              Stokes to process
+**PARAM** int 1
+FreqID                              Freq. ID to select.
+**PARAM** int 1
+BChan            0.0     8192.0     Low freq. channel 0 for cont.
+**PARAM** int 1
+EChan            0.0     8192.0     Highest freq channel
+**PARAM** int 1
+RChan            0.0     8192.0     Channel to restart CLEAN
+**PARAM** int 1  **DEF** 0
+chInc                               Increment between channels
+**PARAM** int 1  **DEF** 0
+chAvg                               No. ch to average, 0=>all
+**PARAM** int 1
+BIF                                 First IF in average.
+**PARAM** int 1
+EIF                                 Last IF in average.
+**PARAM** int 1
+subA                                Subarray
+**PARAM** boo 1 **DEF** T
+doCalSelect                         Apply calibration/selection?
+**PARAM** int 1
+doCalib          -1         10      Apply calibration table
+**PARAM** int 1
+gainUse                             CL/SN table to apply
+**PARAM** int 1
+doBand           -1.0       10.0    If >0.5 apply bandpass cal.
+**PARAM** int 1
+BPVer                               Bandpass table version
+**PARAM** int 1
+flagVer                             Flag table version
+**PARAM** boo 1 **DEF** F
+doPol                               Apply polarization cal?
+**PARAM** str 4
+outDType                           "FITS" or "AIPS" type of output
+**PARAM** str 48
+outFile                             Output FITS image file ending
+**PARAM** str 12
+outName                             Output AIPS image name
+**PARAM** str 6
+outClass                            Output AIPS image class
+**PARAM** int 1
+outSeq          -1.0     9999.0     Output AIPS image seq. no.
+**PARAM** int 1
+outDisk                             Output image disk drive #
+**PARAM** int 1
+CCVer                               Output CC table version number
+**PARAM** str 48
+out2File                            Output FITS uvdata file ending
+**PARAM** str 12
+out2Name                            Output AIPS uvdata name
+**PARAM** str 6
+out2Class                           Output AIPS uvdata class
+**PARAM** int 1
+out2Seq          -1.0     9999.0    Output AIPS uvdata seq. no.
+**PARAM** int 1
+out2Disk                            Output uvdata disk drive #
+
+                                       Imaging info
+**PARAM** float 1
+FOV             0.0       180.     Radius of field to image deg
+**PARAM** int 1
+NField                             Number of fields
+**PARAM** float 1
+xCells                             Image cell spacing in X in asec.
+**PARAM** float 1
+yCells                             Image cell spacing in Y in asec.
+**PARAM** int 64
+nx                                 Number of "X" (RA) pixels in image 
+                                   (per field)
+**PARAM** int 64
+ny                                 Number of "Y" (Dec) pixels in image. 
+                                   (per field)
+**PARAM** float 64
+RAShift                            Right ascension shift (AIPS convention) 
+                                   (asec) (per field)
+**PARAM** float 64
+DecShift                           Declination shift (AIPS convention)  
+                                   (asec) (per field)
+
+
+**PARAM** float 2
+UVTaper         0.                 (U,V) Gaussian taper klambda
+**PARAM** float 2
+UVRange         0.                 Min & max baseline (klambda)
+**PARAM** float 1
+Robust                             Robustness power: -5 -> pure
+                                   uniform weights, 5 => natural
+**PARAM** int 1
+WtBox           0.        128.     Additional rows and columns
+                                   used in weighting.
+**PARAM** int 1 **DEF** 1
+WtFunc                             Box function type when WtBox
+                                   > 0.  0 -> 1 round pill box.
+**PARAM** boo 1 **DEF** T
+doFull                             Make full field (flattened) image?
+**PARAM** boo 1  **DEF** T
+doRestore                          Restore CCs to images?
+**PARAM** str 48  **DEF** NVSSVZ.FIT
+Catalog                            Outlier catalog name (NVSSVZ.FIT)
+**PARAM** float 1
+OutlierDist                        Maximum distance to add outliers (deg)
+**PARAM** float 1 **DEF** 0.01
+OutlierFlux                        Minimum estimated outlier flux density (Jy)
+**PARAM** float 1  **DEF** -0.75
+OutlierSI                          Spectral index to estimate flux density
+**PARAM** int 1  **DEF** 100
+OutlierSize                        Size of outlier field in pixels
+**PARAM** int 4 50
+CLEANBox        -2.0       8192.   Four coordinates for each box
+**PARAM** boo 1   **DEF** F
+autoWindow                         If true, automatically set windows
+**PARAM** float 1  **DEF** 0.1
+Gain     *         0.0         2.0 CLEAN loop gain
+**PARAM** float 1
+minFlux  *                         Minimum Clean component (Jy)
+**PARAM** int 1  **DEF** 100
+minPatch *        0.0              Min. BEAM half-width.
+**PARAM** int 1
+Niter    *         0.0             Maximum # of I CLEAN comp.
+**PARAM** float 3
+Beam     *      -999.9             Clean beam (maj, min, PA)
+**PARAM** float 1  **DEF** 10.0
+Reuse    *                         Factor * RMS to reuse each cycle
+**PARAM** float 1  **DEF** 1.0e20
+autoCen  *                         Auto center min flux density
+**PARAM** str 4
+Cmethod                            Modeling method:
+                                   'DFT','GRID','    '
+**PARAM** boo 1   **DEF** F
+PBCor                              Apply Frequency PB Corr?
+**PARAM** float 1
+antSize                            Diameter of ant. for PBCor (m)
+**PARAM** float 2
+CCFilter                           Clean component filter
+                                    [0] min. sum flux.
+                                    [1] radius of search
+**PARAM** int 1  **DEF** 50000
+maxPixel           0.0    500000   Maximum pixels searched
+
+                                       Selfcal info
+**PARAM** int 1
+maxPSCLoop                         Max. number of phase selfcal loops
+**PARAM** float 1
+minFluxPSC        0.0              Min. peak phase self cal (Jy)
+**PARAM** float 1
+solPInt           0.0              phase SC Solution interval (min)
+**PARAM** str 4
+solPType                           phase SC Soln. Type: '  ', 'L1', 
+**PARAM** str 4 **DEF** P
+solPMode                           phase SC Soln. Mode:'A&P', 'P', 'P!A',
+**PARAM** int 1
+maxASCLoop                         Max. number of amp&ph selfcal loops
+**PARAM** float 1
+minFluxASC        0.0              Min. peak A&P self cal (Jy)
+**PARAM** float 1
+solAInt           0.0              A&P SC Solution interval (min)
+**PARAM** str 4
+solAType                           A&P SC Soln. Type: '  ', 'L1', 
+**PARAM** str 4 **DEF** A&P
+solAMode                           A&P SC Soln. Mode:'A&P', 'P', 'P!A',
+**PARAM** int 1
+refAnt            0                SC Reference antenna
+**PARAM** float 1  **DEF** 0.01
+WtUV              0.0              Weight outside full wt uvrange
+**PARAM** boo 1 **DEF** F
+avgPol                             Avg. poln?
+**PARAM** boo 1 **DEF** F
+avgIF                              Avg. IFs?
+**PARAM** boo 1  **DEF** F
+doMGM                              Apply mean gain modulus
+**PARAM** float 1  **DEF** 5.0
+minSNR                             Min. allowed SNR in selfcal
+**PARAM** int 1 **DEF** 3
+minNo             2                Min. no. antennas in selfcal
+**PARAM** int 1
+prtLv             0                Print level in selfcal
+**PARAM** str 48 **DEF** ObitView
+dispURL                            Display server URL
+**PARAM** int 10
+noScrat                            AIPS disk numbers for which
+                                   scratch files are disallowed
+----------------------------------------------------------------
+Imager Imaging task for radio Interferometry data
+Type:  Task
+ Use:  Batch processing of radio interferometry data
+
+   The products of this task are a CLEAN image.
+Unless otherwise specified, a fly's eye pattern of
+fields with circular CLEAN boxes will be used to cover the specified
+field of view (FOV).  When processing is finished, the CLEAN images 
+are "flattened" onto a single image.
+   If multiple sources are being processed, some failures are allowed.
+In this case, the error messages will be displayed and the Status in
+the PS table set to "Failed  " rather than "Done    ".
+
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input multisource UV data file
+  inClass....Input UV data file (class).      Standard defaults.
+  inSeq......Input UV data file (seq. #).     0 => highest.
+  inDisk.....Input UV data file disk drive #. 0 => any.
+
+       Data selection
+  doPS.......If true, the PS (Processing Summary) table,
+             if it exists, is searched and fields already processed,
+             present and Status 'Done' will not be reprocessed.
+  Sources....List of sources (pointings) to be processed.
+             '*' or blank = all; a "-" before a source name
+             means all except ANY source named. 
+  Qual.......Only sources with a source qualifier number in the
+             SU table matching Qual will be used if Qual is not
+             -1.  Qual affects the selection of both the list of
+             sources and the list of calibrators.
+  souCode....Calibrators may be selected on the basis of the
+             calibrator code given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The souCode test is applied in addition to the
+             other tests, i.e. Sources and Qual, in the
+             selection of sources to process.
+  timeRange..Time range of the data to be processed. In order:
+             Start and end times in days relative to ref. date.  
+             Use  dhms2day to convert from human readable form
+  Stokes.....Stokes parameters to process.
+             'I' = Stokes I only, 'IQU' = also Q, U
+             'RR', 'LL' also.
+             '    ' => I, Q, U, 
+             'F'=> formal I (both orthogonal Stokes needed)
+  FreqID.....Frequency identifier to select , <=0=>any
+  BChan......First channel number to image, 0=>1.  Channel numbers are 1
+             relative as defined in the input data file.
+  EChan......Highest channel number to to include in image,
+             0 => max 
+  RChan......Channel number to restart CLEAN
+             0 => BChan
+  chInc......Increment between channels to image in spectral cube.
+  chAvg......Number of channels to average, 0=> all
+  BIF........First IF to process. 0=>1
+  EIF........Highest IF to process 0=> do BIF to highest.
+             Note: not all data sets will have IFs.
+  subA.......Sub-array number to use. 0=>all.
+  doCalSelect.If True apply calibration/selection.
+             This should be True in most cases
+  doCalib....If true, apply SN or CL table
+  gainUse....CL/SN table version number to apply. 0=> highest.
+  doBand.....If true (>0) then correct the data for the shape of the
+             antenna bandpasses using the BP table specified by BPVer.
+             The correction has five modes:
+             (a) if doBand=1 all entries for an antenna in the table
+             are averaged together before correcting the data.
+             (b) if doBand=2 the entry nearest in time (including
+             solution weights) is used to correct the data.
+             (c) if doBand=3 the table entries are interpolated in
+             time (using solution weights) and the data are then
+             corrected.
+             (d) if doBand=4 the entry nearest in time (ignoring
+             solution weights) is used to correct the data.
+             (e) if doBand=5 the table entries are interpolated in
+             time (ignoring solution weights) and the data are then
+             corrected.
+             Imager uses doBand as the nearest integer; 0.1 is therefore
+             no correction.
+  BPVer......Specifies the version of the AIPS BP table to be applied
+                0 => highest numbered table.
+               <0 => no bandpass correction to be applied.
+  flagVer....AIPS FG table to use for editing. 0 => highest.
+  doPol......>=1 apply polarization calibration
+  doFull.....If True make full field (flattened) image
+
+      Output files
+  outDType..'FITS' or 'AIPS'  type of output
+             Defaults to DataType.
+  outFile....Ending of output FITS image file name
+             filename = source_name+Stokes+outFile
+  outName....Ending of output AIPS Image Name, 
+             Name = source_name+Stokes+outName
+  outClass...Output image class.  Default = 'ICLEAN'
+             Only the last 5 characters given are used and the
+             first is replaced with the Stokes.
+             Output image name = pointing name (SOURCES)
+             The output CLEAN image will be used during
+             execution as the residual image.
+  outSeq.....Output image sequence number.
+  outDisk....The disk drive # of output images.  0 => highest
+             with space (note: map and Beam go on same disk.
+  outSeq.....Output sequence number.
+  CCVer......CC table version number for continuum data only.  
+             For line data the channel number is used for the 
+             version number.
+  out2File...Ending of output FITS UV data file name
+             filename = source_name+Stokes+out2File
+             Defaults to 'UV'
+             This file will contain the last selected data 
+             with any calibration tables.
+  out2Name...Ending of output AIPS UV data Name, 
+             Name = source_name+Stokes+out2Name
+             Defaults to 'UV'
+             This file will contain the last selected data 
+             with any calibration tables.
+  out2Class..Output uv data class.  Default = 'IMAGER'
+  out2Seq....Output AIPS uv data sequence number.
+  out2Disk...The disk drive # of output uv date.  0 => highest
+             with space. default  = outDisk
+
+   The following control imaging:
+  FOV........Radius of the desired field of view.
+  NField.....Optional parameter to specify fields and overrides
+             the FOV parameter.  Up to 64 may be specified as 
+             parameters; you should have a good reason for doing
+             this as the default behavior is usually what is
+             desired.
+  xCells     [optional] Image cell spacing in X in asec.  
+             If left 0 then the program will compute the value 
+             from the data.  All fields use the same value.
+  yCells     [optional] Image cell spacing in Y in asec. 
+             If left 0 then the program will compute the value 
+             from the data.  All fields use the same value.
+  nx.........[optional] Number of x pixels in each field specified.
+  ny.........[optional] Number of y pixels in each field specified.
+  RAShift....[optional] RA shift (asec) per field
+  DecShift...[optional] Dec shift (asec) per field
+  Catalog....Name of FITS file containing outlier catalog
+             Default  NVSSVZ.FIT
+             This must be in the form of an "AIPS VZ" table.
+             'None' =. Use no outliers
+  OutlierDist..max. distance from pointing to include (deg)
+               default = 10
+  OutlierFlux..min. estimated flux density (Jy)
+                 default = 0.05
+  OutlierSI....Spectral index to use,   default = -0.7
+  OutlierSize.. Size in pixels of confusing fields, default 50
+                NB: This should not be so large as to cause the 
+                outlying fields to be larger than the fields tiling
+                the FOV or the program may die.
+  UVTaper....(U,V) Gaussian taper (kilo-lambda) at 30% level
+  UVRange....(Minimum,Maximum) baseline (kilo-lambda) to
+             process. 
+  Robust.....Briggs' "robustness" parameter.  "Uniform" weights are
+             tempered by a constant being added to the local density of
+             weights.  Robust = -4 is nearly pure uniform weighting,
+             Robust = +4 is nearly pure natural weighting.  Use of this
+             option requires a second array in the memory and may
+             therefore force the data to be sorted.  The option is
+             turned off if Robust < -7 and uniform weighting is turned
+             off is Robust > 7.  
+  WtBox......(U,V) box size for weighting.  This is the support radius
+             over which a sample is counted.  I.e., the sample or its
+             weight is counted over an area 2*WtBox+1 cells on each side
+             in the UV plane, where the UV cell size is (after
+             correcting units) given by 1 / (UVSIZE(i) * Cellsize).
+  WtFunc.....If WtBox > 0, WtFunc controls how the samples are counted
+             as a function of u and v (WtFunc < 0) or of radius (WtFunc
+             > 0).  In the latter case, the function is 0 for radius >
+             WtBox.  Functions are pill box, linear, exponential, and
+             Gaussian for abs(WtFunc) = 1-4, resp.  0 -> 1.  
+  doFull.....Make full field (flattened) image?
+             Otherwise only make facets and leave them.
+  doRestore..Restore CCs to images?
+
+   The following control CLEANing:
+  CLEANBox...A 4x50 array with the specification of a search
+             area.
+             Box(1,i)=-1 indicates a circle of radius Box(2,i)
+             pixels centered on (Box(3,i), Box(4,i))
+             Box(1,i) >= 0 indicates a rectangular box.
+             0 => full and inner fields.
+             Note: the default boxes are set on the basis of
+             the image size, tilling pattern and autoWindow
+  autoWindow.If true, automatically set boxes around significant 
+             emission. (Highly recommended)
+  Gain.......The CLEAN loop gain.  0 => 0.10.
+  minFlux...Stop Clean when abs(resid. image max) < minFlux (Jy)  
+            If minFlux < 0 then Clean stops at first negative Clean
+            Component. 
+  minPatch..Minimum half width of the portion of the beam
+            which is used in the minor CLEAN. Default 500
+  Niter.....CLEAN iteration limit.  0 => 1500
+  Beam......CLEAN restoring beam major, minor axis size in asec and
+            the position angle.  If zeroes, fit beam.
+  Reuse.....If >0 then each cycle of self cal after the first will
+            begin with all summed components whose abs value exceeds
+            Reuse*RMS(Field 1). Default 10
+  autoCen...If the sum of the clean components within 1.5 pixels 
+            of any pixel exceeds autoCen and is not within 0.05 of a cell
+            of a pixel then the image is  remade and deconcolved with the 
+            bright sources (>autoCen, one per facet) on a pixel.
+            This is necessary to achieve high dynamic range.
+            If the initial dirty image has a pixel brighter than autoCen
+            then it presumes that the final image will need centering and
+            the initial CLEAN is stopped at minFlux=0.1*autoCen
+  Cmethod...This determines the method used to compute the
+            model visibility values.
+            'DFT' uses the direct Fourier transform, this
+               method is the most accurate.
+            'GRID' does a gridded-FFT interpolation model
+               computation.
+            '    ' allows the program to use the fastest
+               method.
+  PBCor......Apply Frequency dependent primary beam corrections?
+  antSize....Diameter of antenna for PBCor (m), default = 25
+
+  CCFilter...Clean component filtering parameters.
+             If [0] > 0.0 then for each CLEAN conponent, the
+             sum of all components within CCFilter[1] cells
+             is determined, and if less than CCFilter[0], the
+             component is rejected.
+             This is done after all self-calibration, CLEANing is done
+             and if necessary the residuals remade.
+  maxPixel...The maximum number of pixels that are searched for
+             components in each major cycle.  < 3000
+             => 20050.  This number affects the cpu usage significantly.
+             Too many causes the task to search over many points it will
+             never use.  Too few causes the task to do many more small
+             major cycles, also at great expense.  Use this with great
+             caution, but big wins are possible using larger sizes on
+             very large Cleans.
+
+                          Selfcal info
+              Either phase only or amplitude and phase or both types of
+              Self calibration can be performed.  If both are done, then
+              phase calibration is done first and applied to the data before
+              Amp & Phase self calibration.  In any case, there will be an 
+              SN table attached to the output uv data which is needed to
+              fully calibrate it.
+  maxPSCLoop..Maximum number of phase self calibration loops
+  maxPSCLoop..Min. peak flux density required for phase self cal (Jy)
+  solPInt.....phase SC Solution interval (min)
+  solPType....phase SC Solution Type: '  ', 'L1', 
+  solPMode....phase SC Solution Mode:'A&P', 'P', 'P!A',
+  maxASCLoop..Maximum number of phase self calibration loops
+  maxASCLoop..Min. peak flux density required for phase self cal (Jy)
+  solAInt.....A&P SC Solution interval (min)
+  solAType....A&P SC Solution Type: '  ', 'L1', 
+  solAMode....A&P SC Solution Mode:'A&P', 'P', 'P!A',
+  refAnt......Reference antenna number for selfcal
+  WtUV........Weighting (wrt 1) to use outside of basic uv range in SC
+  avgPol......Average Polarizations in self calibration?
+  avgIF.......Average IFs in self calibration?
+  doMGM.......Apply mean gain modulus to A&P selfcal soln.
+  minSNR......Min. allowed SNR in self cal solution
+  minNo.......Min. allowed no. antennas in selfcal
+  prtLv.......Print level in selfcal, 0=>none
+
+                          Interactive display
+  dispURL.....The URL of the display server to use. "None"=>none
+              "ObitView" =  "http://localhost:8765/RPC2" 
+              This will display fields being CLEANed and allow
+              interactive editing of the CLEAN window.
+              If the display is running on a machine on which the
+              data is not visible, use "http://myhost:port/RPC2"
+              where myhost is the network name and port is the port
+              number (usually 8765), Example:
+              dispURL="http://canis.cv.nrao.edu:8765/RPC2"
+  noScrat.....A list of AIPS disk numbers on which you do not 
+              wish scratch files
+----------------------------------------------------------------
+NB: The following is not all yet implemented
+Imager Imaging task for radio interferometer
+Documenter:  W. D. Cotton,  NRAO
+Related Programs: 
+
+   This task loops over selected pointings doing the following:
+
+   1) Calibrates data from multisource file and then 
+   2) Edit (optional)
+   3) Image and deconvolve
+      - Imaging consists of a mosaic of fields covering FOV
+      - Additional fields are added for NVSS sources
+      - This step may be repeated if the peak in any of the fields
+        exceeds a specified limit (BPARM(1)) then the images 
+        are remade, if necessary, to center the peaks on a pixel.
+   4) Self calibration
+      - Use CLEAN model
+      - Phase self calibrate
+      - Image and deconvolve
+   5) Amplitude self calibration
+      - Use CLEAN model
+      - Phase self calibrate
+      - Image and deconvolve
+   6) Ipol editing
+      - Subtract latest CLEAN model
+      - Clip
+      - Add latest CLEAN model back
+      - Correct for frequency dependent antenna gain.
+   7) Final image and deconvolve
+   8) Reject weak isolated components (CCFILT), subtract
+      surviving components and restore.
+   9) "Flatten" the field images onto the output image.
+  10) Image, deconvolve and flatten Q polarization is requested
+  11) Image, deconvolve and flatten U polarization is requested
+
+Note: until step 8) all model calculation correct for IF
+dependent primary beam corrections.
+Note: using multi-resolution Clean will turn off any requested 
+self-calibration (NGAUS>1).
+Note: sime number of failures are tolerated if multiple sources
+are being processed; see PS table for summary.
+
+   The products of this task are a CLEAN image and a calibrated
+set of uv data. The CLEAN image is the "flattened" version of 
+the CLEAN fields covering the specified field of view (FOV).
+
+   The results are summarized in a (PS) table attached to the
+input uv data.  This table can be used to determine the current
+processing status of a field as well as limited information and
+quality measures for the field.
+
+****************************************************************
+******************   EXTENDED SOURCE OPTIONS   *****************
+****************************************************************
+
+     Clean normally uses a point-source component model and finds one
+component at a time.  For regions consisting of small-diameter objects
+this has been found to work well.  But, for extended objects, the
+selection of a point at one pixel biases Clean against selecting
+points at the adjacent pixels.  In the end, a corrugation has been
+found in which the image is lumpy on a rectangular pattern separated
+by a few pixels (Schwarz, U. J. 1984, in Indirect Imaging, ed. J. A.
+Roberts, p 255).  In addition, extended emission over a large area may
+contribute significantly to the total flux, but have low
+signal-to-noise on a pixel-by-pixel basis at full resolution.  This
+poor S/N further confounds the usual Clean algorithm.  There are two
+solutions proposed for the first problem, one of which also addresses
+the latter.  These are the SDI method found in
+   Steer, D.G., Dewdney, P.E., Ito, M.R. 1984, "Enhancements to the
+      Deconvolution Algorithm 'CLEAN'", Astron.Ap.,137, 159.
+and the multi-resolution Clean one early variant of which is described
+in
+   Wakker, B.P., Schwarz, U.J. 1998, "The Multi-Resolution Clean and
+      its application to the short-spacing problem in interferometry",
+      Astron.Ap., 200, 312.
+IMAGR offers variants of both of these methods.
+
+The SDI Clean proposes to avoid the bias against adjacent pixels by
+taking every pixel above a certain level as a component.  In the case
+of a completely uniform "plateau" in the residual image, this would
+uniformly lower the height of the plateau and each major cycle.  The
+difficulty comes around the edges and irregularities in the plateau.
+The edge pixels have fewer strong neighbors than the central pixels
+and so less is subtracted from them than from the central pixels.  The
+result is a bright edge around the plateau in the next residual image.
+The AIPS task SDCLN uses an iterative method to estimate the different
+loop gains to be applied to the pixels to avoid the bright edges.
+IMAGR uses a less expensive and somewhat less effective method.  The
+intent in IMAGR is to Clean with a normal Clark variant of the Hogbom
+Clean until a significant number of pixels in the residual image are
+essentially "equal".  This is expressed as a crowding of the uppermost
+levels of the histogram so that the ratio of the peak residual flux to
+the lowest level that can be loaded by the BGC Clean is near 1.0.
+IMAGRPRM(4) > 0 specifies that SDI Clean will be used when this ratio
+is less than (1 + GAIN * IMAGRPRM(4)); a typical value might be
+IMAGRPRM(4) = 3.  If the ratio becomes greater than this limit at a
+later step, the BGC Clean will be used until the ratio again falls
+below the limit.  The TV allows you to force the Clean into either BGC
+or SDI if you started by giving IMAGRPRM(4) > 0.  Once forced, it
+remains in the chosen method until forced into the other.
+
+The MR Clean attempts to avoid the corrugation and S/N issues by using
+more than one component diameter in the modeling.  In the early 1970's
+I experimented with using a Gaussian as a component model.  This
+worked well so long as the image contained no sources smaller than the
+Gaussian.  Unfortunately, the sky always contains point sources and
+the method found these and "painted bulls eyes around them".  (The
+bulls eyes are effectively a sin(x)/x function trying to represent a
+small thing as a sum of large things.)  The Wakker and Schmidt MR
+Clean used a smoothed image and beam and a difference image and
+difference beam, doing a fairly normal point-model Clean on each but
+appropriately subtracting the components found in one image from the
+other at every iteration.  In IMAGR, the MR Clean is truly
+multi-resolution, seeking components of intrinsically different
+diameters.  For component i of diameter Di, a dirty image is formed
+by convolving a full-resolution dirty image with a Gaussian Gi of
+diameter Di.  This is actually implemented just by making a normal
+image with an added taper.  This dirty image has a point-spread
+function (dirty point beam) which is the full resolution dirty beam
+convolved with Gi.  However, the response in the dirty image i to a
+Gaussian component Gi is this dirty point spread function convolved a
+second time by Gi.  Thus
+       DirtyImage_i = DirtyImage_0 * Gi
+       BeamImage_i  = BeamImage_0  * Gi * Gi
+where Gi is a Gaussian of diameter Di, subscript 0 refers to the full
+resolution image, and * is a convolution.
+
+IMAGR uses its large number of fields to implement the MR Clean.  If
+you ask for NFIELD fields and NGAUSS Gaussian components, IMAGR will
+make and Clean NFIELD*NGAUSS fields, the first NFIELD with width
+WGAUSS(1), the next NFIELD with width WGAUSS(2), etc.  The ordinary
+parameters such as FLDSIZE, RASHIFT, DECSHIFT are entered only for
+fields 1-NFIELD and are then replicated for the corresponding fields
+at the other resolutions.  The Clean boxes may be entered for fields
+1-NFIELD and replicated.  If BOXFILE is used to enter Clean boxes for
+a filed number > NFIELD then the boxes from the corresponding field <=
+NFIELD are not replicated to that field.  If you specify BMAJ and
+BMIN, IMAGR computes the correct values to use for the various
+component diameters.  If you give BMAJ=0, IMAGR fits the beam
+parameters after one convolution with Gi before recomputing the beam
+with two convolutions.  The MR Clean might attempt to work in other
+modes, but OVERLAP=2 and DO3DIMAG=TRUE are strongly recommended.  If
+you set DOWAIT=TRUE before starting IMAGR, you will have the desirable
+option of forcing the Clean to use a field of your choosing rather
+than the one with the peak flux.
+
+The MR Clean is an experimental algorithm and has been provided with a
+number of "knobs" to adjust its behavior.  All the knobs use the ratio
+of the current beam area (BMAJ(field)*BMIN(field)) to the minimum beam
+area (R).  These knobs are:
+
+    1. Show some preference to select higher resolution images (lower
+       R) for the next image to Clean.  Otherwise a strong point with
+       some extended emission will be over Cleaned at low resolution,
+       forcing higher resolutions to correct many pixels:
+          IMAGRPRM(11) select which field to Clean using peak fluxes
+          (in Jy/beam) weighted by 1 / R**IMAGRPRM(11).
+
+    2. Reduce this preference to zero as one Cleans more and more of
+       the R > 1 fields:
+          IMAGRPRM(12) decrement the initial value of IMAGRPRM(11)
+          used above by IMAGRPRM(12) each time an R > 1 resolution
+          field is Cleaned until it is 0.
+
+    3. The lower resolution fields may easily over Clean creating zero
+       net flux from a mix of negative and positive areas.  These then
+       have to be corrected with numerous high resolution Clean
+       steps.  To use a lower loop gain for lower resolution:
+          IMAGRPRM(13) use gain = GAIN / R ** IMAGRPRM(13)
+
+    4. To avoid over Cleaning with lower resolution, one may also
+       Clean each major cycle less deeply with the FACTOR parameter.
+       To control FACTOR:
+          IMAGRPRM(14,15) use
+             factor = FACTOR + IMAGRPRM(14) * (1 - R ** IMAGRPRM(15))
+
+Multi-resolution experimental control limits:
+    0 <= IMAGRPRM(11) <= 1.0      Try 0.5 (or larger)
+    0 <= IMAGRPRM(12) <= 0.1      Try 0.03 (or .003)
+    0 <= IMAGRPRM(13) <= 1.0      Try 0.5
+    0 <= IMAGRPRM(14) <= 1.0      Try 0.1
+    0 <= IMAGRPRM(15) <= 1.0      Try 0.5
+Note that IMAGRPRM(11-15) = 0 causes each Clean to be done on the
+field with the highest Jy/point-source-beam with the same GAIN and
+FACTOR.  This will likely lead to undesirable results.
+
+The author (Eric Greisen) of this option conceived this current
+algorithm while listening, at the AIPS++ Imaging Workshop in July
+1999, to Mark Holdaway describe his work done with Tim Cornwell.
+Their "multi-scale" Cleans, according to Mark's vu-graphs, use images
+at various smoothings to determine which scale currently has the most
+flux.  The "cross-beams" used for subtraction indicate that extended
+components are used in the modeling, so long as the (i,i) cross beam
+is used for image i on itself (a point on which I was confused).
+Their algorithms, as described, are done all in the image plane which
+avoids some of the over-Cleaning problems, while IMAGR's is done by
+the Cotton-Schwab scheme of subtracting the model visibilities in the
+visibility plane and re-imaging.
+
+Limitations using Multiresolution CLEAN
+---------------------------------------
+Most of the AIPS model processing functions can only deal with a 
+single size model component at a time.  Since the multiresolution
+CLEAN results in model components at a variety of sizes these 
+features do not work and have (mostly?) been disabled in Imager when 
+the multiresolution option (NGAUSS>1) has been selected.  
+The disables features include:
+1) Self calibration
+2) Second stage RFI filtering (RFIFILT(3+4)).
+If these options are needed try using an SDI CLEAN first and then 
+feed the resultant uvdata back into Imager.
+
+AIPS BUGS, DESIGN FLAWS, AND GOTCHAS
+------------------------------------
+
+   Unless CMETHOD is set to 'DFT', the gridded subtraction may 
+fail if it tries to work on an image larger than the first one 
+it does.  Restarting the program will get around the problem. 
+Or specify, 'DFT'.
+
+PS Table
+--------
+   The PS table giving the processing record has the following 
+entries.  
+     FIELD NAME Field name
+     OBSDATE    Observing reference date.
+     RA POINT   Pointing RA at epoch 2000 (deg)
+     DEC POINT  Pointing RA at epoch 2000 (deg)
+     STATUS     Processing status, "Done" or "Failed"
+     IQU        Flags for I, Q, U, true means processed
+     SPECIAL    Special processing applied, not used by Imager
+     NO. FIELDS Number of sub fields
+     CC LIMIT   Flags to using all possible CC, not used by Imager
+     PERCENT    % of visibility data remaining at end of precessing
+     PIX MAX    Pixel max (Jy)
+     PIX MIN    Pixel min (Jy)
+     QUALITY    Quality measure (Estimate of RMS noise)
+     COMMENTS   Comments, left blank by Imager

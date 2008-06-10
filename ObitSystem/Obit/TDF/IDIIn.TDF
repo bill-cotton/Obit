@@ -1,0 +1,65 @@
+; $Id: IDIIn.TDF,v 1.1 2007/04/02 18:21:23 bcotton Exp $
+; IDIIn 
+;---------------------------------------------------------------
+;! Obit Convert IDI data and append to a UV data file.
+;# Task Obit IDI
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+IDIIn      LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+IDIIn :    Convert IDI data and append to a UV data file.
+**PARAM** str 64
+Scan                                Scan for FITS file
+**PARAM** str 64
+DataRoot                            Directory for input
+**PARAM** str 4
+DataType                            "FITS" or "AIPS" type of input
+**PARAM** str 48
+outFile                             FITS output uvdata if Type=='FITS'
+**PARAM** str 12
+outName                             Output UV file name (name)
+**PARAM** str 6
+outClass                            Output UV file name (class)
+**PARAM** int 1
+outSeq           -1.0     9999.0    Output UV file name (seq. #)
+**PARAM** int 1
+outDisk                             Output UV file disk unit #.
+----------------------------------------------------------------
+IDIIn Convert IDI format data to UV
+Type:  Task
+ Use:  Convert archive format to Obit UV data
+
+Adverbs:
+  Scan.......Name of scan (e.g."lwda_uv_2006_10_28_23_59_42")
+  DataRoot...Archive directory for project 
+  DataType..'FITS' or 'AIPS'  type of output
+             Expects full file name to be DataRoot/Scan.fits
+  outFile....Output UV FITS file name
+  outName....Output UV AIPS file name (name).
+  outClass...Output UV file name (class).  Standard defaults.
+  outSeq.....Output UV file name (seq. #). 0 => highest unique.
+  outDisk....Disk drive # of output UV file.  
+----------------------------------------------------------------

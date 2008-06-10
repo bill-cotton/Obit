@@ -1,0 +1,525 @@
+/* $Id: Imager.doc,v 1.12 2005/09/01 13:29:56 bcotton Exp $ */
+
+               Image uv data task
+               -------------------------------------
+
+   Obit program Imager is given a uv data set and creates an image from
+it.  
+Some control parameters can be passed either through an input text file
+or as command line arguments.  Command line values take precedence over
+those in the input file.
+
+   The default for directory names is to use AIPS directories $DA01...
+and for FITS, $FITS, $FITS01...
+
+ Usage: Imager -input file -output ofile [args]
+ Image a set of radio interferometric data
+ Arguments:
+   -input input parameter file, def Imager.in
+   -output output result file, def Imager.out
+   -pgmNumber Program (POPS) number, def 1 
+   -DataType "AIPS" or "FITS" type for input image
+   -AIPSuser User AIPS number, def 2
+   -inFile input FITS uvdata file
+   -inName input AIPS uvdata file name
+   -inClass input AIPS file class
+   -inSeq input AIPS file sequence
+   -inDisk input (AIPS or FITS) disk number (1-rel) 
+   -outFile output FITS Image file (flattened)
+   -outName output AIPS file name (flattened)
+   -outClass output AIPS file class
+   -outSeq output AIPS file sequence
+   -outDisk output (AIPS or FITS) disk number (1-rel) 
+   -out2File output FITS UV data file
+   -out2Name output AIPS uv file name
+   -out2Class output AIPS uv file class
+   -out2Seq output AIPS uv file sequence
+   -out2Disk output (AIPS or FITS) uv disk number (1-rel) 
+
+         Imager input file documentation
+
+   This describes the input file format for Imager
+The input file is basically free format with a keyword=value syntax.  
+Comments follow a "#" symbol.  String keywords should have no leading or
+trailing blanks before the end of the line or a comment delimiter.
+If a numeric value is followed by a comment there should be at least one
+blank before the comment delimiter.
+
+   Entries not specified will assume their default values.  Parameters
+may be given in any order but only the recognized parameters given below
+are allowed. 
+
+# Inputs for Obit program Imager
+$Key = DataType  Str (4) # Type, AIPS or FITS
+FITS
+$Key = nFITS Int (1) # Number of FITS directories
+1
+$Key = FITSdirs Str (48)   # Directories of FITS "disks"
+./
+$Key = inFile  Str (48)    # Input uvdata FITS file name
+SelfCalTest.fits
+$Key = inDisk     Int (1)  # input file disk number
+1
+$Key = outFile  Str (48)   # output image FITS file name
+ImagerTest.fits
+$Key = outDisk    Int (1)  # output file disk number
+1
+$Key = Sources  Str (16,1) # Sources selected, blank = all
+    
+$Key = Stokes  Str (4)     # Stokes parameter to image
+I   
+$Key = FOV     Flt (1)     # Field of view in deg
+0.4167                     # 25/60 = 25'
+$Key =  UVRange Flt (2)    # range n uv plane in klambda
+0.0 0.0
+$Key =  TimeRange Flt (2)  # Timerange in days
+0.0 10.0
+$Key = Robust  Flt (1)     # Briggs robust factor (AIPS version)
+0.0
+$Key = UVTaper  Flt (2)    # Taper in uv plane in klambda in u, v
+0.0 0.0
+$Key = doCalSelect Boo (1) # Apply calibration/selection?
+T
+$Key =  doCalib Int (1)    # >0 => apply calibration, 2=> cal. wt
+2
+$Key =  gainUse Int (1)    # Gain table (CL/SN) table to apply, 0=> highest
+0
+$Key =  doBand  Int (1)    # If >0.5 apply bandpass cal.
+0
+$Key =  BPver Int (1)      # Bandpass table version
+0
+$Key =  flagVer Int (1)    # Flagging table version
+1
+$Key = doPol Boo (1)       # Apply polarization calibration?
+T
+$Key = doFull Boo (1)      # Make full field (flattened) image?
+T
+$Key = Catalog  Str (48)    # Outlier catalog name
+NVSSVZ.FIT
+$Key =  OutlierDist Flt (1) # Maximum distance to add outlyers (deg)
+1,0
+$Key = OutlierFlux Flt (1)  # Minimum estimated outlier flux density (Jy)
+0.003
+$Key = OutlierSI  Flt (1)   # Spectral index to estimate flux density
+-1.0
+$Key =  OutlierSize Int (1) # Size of outlyer field 
+50
+$Key = CLEANBox  Int[4,1]   # Clean box
+0 0 0 0
+$Key = Gain  Flt (1)        # Clean gain
+0.1
+$Key = minFlux  Flt (1)     # Clean minimum flux density
+0.0
+$Key = Niter  Int (1)       # Maximum # of CLEAN comp.
+0.0
+$Key = minPatch  Int (1)    # Clean Min. BEAM half-width
+200
+$Key = Beam   Flt (3)       # Clean beam maj, min, PA (asec, asec, deg)
+0.0 0.0 0.0                 # 0s => fit
+$Key = Cmethod Str (4)      # Modeling method: 'DFT','GRID','    '
+    
+$Key = CCFilter Flt (2)     # CC filter, [min. sum flux, radius in pixels]
+0.0 0.0                     # 0s => no filtering
+$Key = maxPixel Int (1)     # Maximum pixels searched in inner cycle
+50000
+
+
+Variables possibly read from the input_file
+pgmNumber:   Program number (like POPS number) 
+     type: integer
+     default: 1
+
+DataType:    "AIPS" or "FITS" [def {"FITS"}] 
+     type: string
+     default: FITS
+
+nFITS:       Number of FITS directories in FITSdirs
+     type: integer
+     default: number of $FITS, $FITS01... found
+
+FITSdirs:    Array of FITS directories  if Type ="FITS"
+     Put one directory name per line
+     type: string array
+     default: Values of environment variables $FITS, $FITS01... 
+
+AIPSuser:    AIPS user number
+     type: integer
+     default: 2
+
+nAIPS:       Number of AIPS directories in AIPSdirs
+     type: integer
+     default:  number of $DA01, $DA02... found
+
+AIPSdirs:    Array of AIPS directories if Type ="AIPS"
+     Put one directory name per line
+     type: string array
+     default:  Values of environment variables  $DA01, $DA02...
+
+inFile:      input FITS uvdata file name if Type ="FITS"
+     type: string
+     default: Image.fits
+
+inName:      input AIPS uvdata name  if Type ="AIPS"
+     type: string
+     default: None
+
+inClass:     input AIPS uvdata class if Type ="AIPS"
+     type: string
+     default:  None
+
+inSeq:       input AIPS uvdata sequence no if Type ="AIPS"
+     type: integer
+     default:  None
+
+inDisk:      input AIPS or FITS  disk
+     type: integer
+     default: 1
+
+outFile:      Ending of output FITS image file name if Type ="FITS"
+              This will be the flattened image
+              file = source_name+Stokes+outFile
+     type: string
+     default: Image.fits
+
+outName:      Ending of AIPS image name  if Type ="AIPS"
+              Name = source_name+Stokes+outName
+     type: string
+     default: None
+
+outClass:     output AIPS image class if Type ="AIPS"
+     type: string
+     default:  None
+
+outSeq:       output AIPS image sequence no if Type ="AIPS"
+     type: integer
+     default:  None
+
+outDisk:      output AIPS or FITS  disk
+     type: integer
+     default: 1
+
+out2File:     Ending of output FITS uv file name if Type ="FITS"
+              file = source_name+Stokes+out2File
+     type: string
+     default: UV.uvtab
+
+out2Name:     Ending of AIPS uv data name  if Type ="AIPS"
+              Name = source_name+Stokes+out2Name
+     type: string
+     default: UV
+
+out2Class:    output AIPS uv data class if Type ="AIPS"
+     type: string
+     default:  IMAGER
+
+out2Seq:      output AIPS image sequence no if Type ="AIPS"
+     type: integer
+     default:  None
+
+out2Disk:     output AIPS or FITS  disk
+     type: integer
+     default: outDisk
+
+Sources:      Sources selected, blank = all
+     type: string
+     default: all
+    
+Stokes:       Stokes parameter to image
+     type: string
+     default: I
+
+BChan:       First (1-rel) channel number selected
+     type: integer
+     default: 1
+
+EChan:       Highest (1-rel) channel number selected
+     type: integer
+     default: 0 => highest in data
+
+RChan:       Channel (1-rel) number to restart CLEAN
+     type: integer
+     default: 0 => BChan
+
+chInc:       Increment between input channels selected
+     type: integer
+     default: 1
+
+chAvg:       Number of input channels to be averaged
+     type: integer
+     default: all selected
+
+BIF:          First (1-rel) IF number selected
+     type: integer
+     default: 1
+
+EIF:           Highest (1-rel) IF number selected
+     type: integer
+     default: 0 => highest in data
+
+subA:          Subarray number to select
+     type: integer
+     default: 0 =  all
+
+UVRange:       Range in uv plane in klambda
+     type: float [2]
+     default: all
+
+TimeRange:     Timerange in days [start, end]
+     type: float [2]
+     default:  all
+
+rotate         Image rotation angle in deg.
+     type: float
+     default: no rotation
+    
+Robust:         Briggs robust factor (AIPS version)
+     type: float
+     default: 0.0
+
+nuGrid         Number of "U" pixels in weighting grid.
+     type: integer
+     default: size of image in x
+
+nvGrid         Number of "V" pixels in weighting grid.
+     type: integer
+     default: size of image in y
+
+WtBox          Size of weighting box in cells 
+     type: integer
+     default: 0
+
+WtFunc         Weighting convolution function 
+               1=Pill box, 2=linear, 3=exponential, 4=Gaussian
+     type: integer
+     default: 1
+
+UVTaper:        Taper in uv plane in klambda in u, v
+     type: float [2]
+     default: no taper
+
+doCalSelect:    Apply calibration/selection?
+     type: boolean
+     default: False
+
+doCalib:         >0 => apply calibration, 2=> also cal. wt
+     type: integer
+     default: no calibration
+
+gainUse:          Gain table (CL/SN) table to apply, 0=> highest
+                  Only applied if docalib>0
+     type: integer
+     default: highest
+
+doBand:           If >0 apply bandpass cal.
+     type: integer
+     default: no BP cal
+
+BPVer:            Bandpass table version, 0=>highest
+     type: integer
+     default: highest
+
+flagVer:          Flagging table version
+     type: integer
+     default: no flagging
+
+doPol:            Apply polarization calibration
+     type: boolean
+     default: False
+
+FOV:           Field of view to image in deg
+     type: float
+     default: none
+
+NField         Number of fields
+     type: integer
+     default: derived from FOV, uv coverage
+
+xCells         Image cell spacing in X in asec.
+     type: float
+     default: Derived from uv coverage
+    
+yCells         Image cell spacing in Y in asec.
+     type: float
+     default:  Derived from uv coverage
+    
+nx             Number of "X" (RA) pixels in image (per field)
+     type: integer
+     default: derived max. size, may be derived if FOV >0 
+
+ny             Number of "Y" (Dec) pixels in image. (per field)
+     type: integer
+     default: derived max. size, may be derived if FOV >0 
+
+RAShift        Right ascension shift (AIPS convention) (asec) (per field)
+     type: float
+     default: no shift, may be derived if FOV >0 
+    
+DecShift       Declination shift (AIPS convention)  (asec) (per field)
+     type: float
+     default: no shift, may be derived if FOV >0 
+    
+doFull:           Make full field (flattened) image?
+                  Otherwise only make facets and leave them
+     type: boolean
+     default: True
+
+doRestore:        Restore CCs to images?
+     type: boolean
+     default: True
+
+PBCor:            Apply Frequency dependent primary beam corrections?
+     type: boolean
+     default: True
+
+antSize:          Diameter of antenna for PBCor (m)
+     type: float
+     default: 25.0
+
+Catalog:          Outlier catalog name
+     type: string
+     default: NVSSVZ.FIT
+
+OutlierDist:      Maximum distance to add outliers (deg)
+     type: float
+     default: 0.0
+
+OutlierFlux:      Minimum estimated outlier flux density (Jy)
+     type: float
+     default: 1.0e20
+
+OutlierSI:        Spectral index to estimate flux density
+     type: float
+     default: -0.7
+
+OutlierSize:     Size of outlier field (pixels)
+     type: integer
+     default: 50
+
+CLEANBox:        Clean box first facet
+     type: integer
+     default: all but outer pixels
+
+autoWindow:            Automatically set CLEAN windows
+     type: boolean
+     default: False
+
+Gain:            Clean gain
+     type: float
+     default: 0.1
+
+minFlux:        Clean minimum flux density (Jy)
+     type: float
+     default: 0.0
+
+Niter:           Maximum no. of CLEAN comp
+     type: integer
+     default: no CLEAN
+
+minPatch:        Clean Min. BEAM half-width
+     type: integer
+     default: 200
+
+Beam:            Clean beam maj, min, PA (asec, asec, deg)
+     type: float [3]
+     default: fit beam
+
+Cmethod:         Modeling method: 'DFT','GRID','    '
+                 '    ' = chose fastest
+     type: string
+     default: chose fastest
+
+CCFilter:       CC filter, [min. sum flux, radius in pixels]
+                Filters CC components when finished NYI
+     type: float
+     default: no filtering
+    
+maxPixel:       Maximum pixels searched in inner cycl
+     type: integer
+     default: 200
+
+maxSCLoop:      Maximum number of self calibration loops
+     type: integer
+     default: 0 =  no self calibration
+
+minFluxPSC:     Min. peak flux density required for phase self cal (Jy)
+     type: float
+     default: Infinity
+
+minFluxASC:      Min. peak flux density required for A&P self cal (Jy)
+     type: float
+     default: Infinity
+
+refAnt:        Reference antenna number for selfcal
+     type: integer
+     default: 0 =  pick one
+
+solInt:        SC Solution interval (min)
+     type: float
+     default: 1 sec
+    
+solType:       SC Solution Type: '  ', 'L1', 
+     type: string
+     default: "    "
+    
+solMode:       SC Solution Mode:'A&P', 'P', 'P!A',
+     type: string
+     default: 'P'
+    
+WtUV:          Weighting (wrt 1) to use outside of basic uv range in SC
+     type: float
+     default: Infinity
+
+avgPol:        Average Polarizations in self calibration?
+     type: boolean
+     default: False
+
+avgIF:       Average IFs in self calibration?
+     type: boolean
+     default: False
+
+doMGM:       Apply mean gain modulus to A&P selfcal soln.
+     type: boolean
+     default: False
+
+minSNR:       Min. allowed SNR in self cal solution
+     type: float
+     default: 5.0
+    
+minNo:        Min. allowed no. antennas in selfcal
+     type: integer
+     default: 4
+
+prtLv:         Print level in selfcal
+     type: integer
+     default: 0 =  pick one
+
+Taper          UV taper width in wavelengths.
+     type: float
+     default: no taper
+    
+WtPower        Power to raise weights to. 
+               Note: a power of 0.0 sets all the output weights
+     type: float
+     default: no modification
+    
+MaxBaseline    maximum baseline length in wavelengths.
+     type: float
+     default: infinite
+    
+MinBaseline    minimum baseline length in wavelengths.
+     type: float
+     default: zero
+    
+nxBeam         Number of "X" (RA) pixels in beam. (per field)
+     type: integer
+     default: nx of image
+
+nyBeam         Number of "Y" (Dec) pixels in beam. (per field)
+     type: integer
+     default: ny of image
+
+dispURL        Display server URL
+     Display of intermediate images and interactive editing of
+     CLEAN windows.  No display => "None"
+     type: string
+     default: http://localhost:8765/RPC2

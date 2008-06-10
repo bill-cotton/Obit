@@ -1,0 +1,78 @@
+/* $Id: ImageOTF.doc,v 1.1.1.1 2004/07/19 17:04:43 bcotton Exp $ */
+
+               ImageOTF Image OTF format FITS file
+               -------------------------------------
+
+   ImageOTF optionally calibrates and images an OTF data set.
+Control input is from a user edited file.
+
+Usage: ImageOTF -input file [args]
+Image an Obit/OTF data file
+Arguments:
+  -input input parameter file, def ImageOTF.in
+  -outfile output OTF file, def OTFdata.fits
+  -GAINUSE which cal table, 0=>high, -1=> none
+           Will use OTFCal table if present, else OTFSoln.
+  -FLAGVER which flag table?, -1=> none
+
+
+         ImageOTF input file documentation
+
+   This describes the input file format for ImageOTF.
+The input file is basically free format with a keyword=value syntax.  
+Comments follow a "#" symbol.  String keywords should have no leading or
+trailing blanks before the end of the line or a comment delimiter.
+If a numeric value is followed by a comment there should be at least one
+blank before the comment delimiter.
+
+
+   Entries not specified will assume their default values.  Parameters
+may be given in any order but only the recognized parameters given below
+are allowed. 
+
+An example follows:
+# input file for ImageOTF program
+infile  = OTFtable.fits # 
+outfile = !image.fits# the ! allows overwrite, training blanks meaningful
+RA      = 0.0          #  Center RA in degrees
+Dec     = 0.0          #  Center Dec in degrees
+xSpace  = 0.016666667  #  RA cell spacing in deg.
+ySpace  = 0.016666667  #  Dec cell spacing in deg.
+nx      = 500          #  Number of cells in RA
+ny      = 500          #  Number of cells in Dec
+
+Variables possibly read from the input_file
+infile:   input FITS OTF file name
+     type: string
+     default: OTFdata.fits
+
+outfile:   output FITS image file name
+     type: string
+     default: ImageOTF.fits
+
+RA:       Center RA (J2000)in degrees
+     type: float
+     default: 0.0
+
+Dec:      Center Declination in degrees
+     type: float
+     default: 0.0
+
+xSpace:   RA cell spacing in deg.
+     type: float
+     default: 0.016666667
+
+ySpace:   Dec cell spacing in deg.
+     type: float
+     default: 0.016666667
+
+nx:       Number of cells in RA
+     type: integer
+     default: 500
+
+ny:       Number of cells in Dec
+     type: integer
+     default: 500
+
+
+

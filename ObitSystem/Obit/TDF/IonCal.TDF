@@ -1,0 +1,291 @@
+; $Id: IonCal.TDF,v 1.8 2007/07/13 17:02:10 bcotton Exp $
+; IonCal 
+;---------------------------------------------------------------
+;! Obit Radio interferometry software
+;# Task Obit Ionospheric calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2006,2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+IonCal     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+IonCal:   Obit Ionospheric calibration
+**PARAM** str 4
+DataType                            "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                              Input multisource UV data AIPS
+**PARAM** str 6
+inClass                             Input UV data (class)
+**PARAM** int 1
+inSeq                               Input UV data (seq. #)
+**PARAM** int 1
+inDisk                              Input UV data disk drive #
+**PARAM** float 2
+timeRange                           Time range to process.
+**PARAM** int 1
+subA                                Subarray
+**PARAM** int 1
+doCalib          -1         10      Apply calibration table
+**PARAM** int 1
+gainUse                             CL/SN table to apply
+**PARAM** int 1
+doBand           -1.0       10.0    If >0.5 apply bandpass cal.
+**PARAM** int 1
+BPVer                               Bandpass table version
+**PARAM** int 1
+flagVer                             Flag table version
+
+                                       Imaging info
+**PARAM** float 1
+xCells                             Image cell spacing in X in asec.
+**PARAM** float 1
+yCells                             Image cell spacing in Y in asec.
+**PARAM** float 2
+UVTaper         0.                 (U,V) Gaussian taper klambda
+**PARAM** float 2
+UVRange         0.                 Min & max baseline (klambda)
+**PARAM** float 1
+Robust                             Robustness power: -5 -> pure
+                                   uniform weights, 5 => natural
+**PARAM** int 1
+WtBox           0.        128.     Additional rows and columns
+                                   used in weighting.
+**PARAM** int 1 **DEF** 1
+WtFunc                             Box function type when WtBox
+                                       Ionospheric calibration info
+**PARAM** str 48  **DEF** NVSSVZ.FIT
+Catalog                            Calibrator catalog name (NVSSVZ.FIT)
+**PARAM** float 1 **DEF**  10.0
+OutlierDist                        Maximum distance to add outliers (deg)
+**PARAM** float 1 **DEF** 3.0
+OutlierFlux                        Minimum estimated Calibrator flux density (Jy)
+**PARAM** float 1 **DEF** -0.7
+OutlierSI                          Spectral index to estimate flux density
+**PARAM** int 1 **DEF** 100
+OutlierSize                        Size of calibrator field in pixels
+**PARAM** float 1   **DEF** 1.0
+solInt            0.0              Solution interval (min)
+**PARAM** int 1   **DEF** 5
+nZern              2.0        17.0 Number Zernike terms
+**PARAM** float 1   **DEF** 600.0
+FitDist           0.1       9999.0 Size in asec of search 
+**PARAM** float 1   **DEF** 1.0
+MaxDist           0.1         2.0  Max. distance (deg/10) from pointing 
+                                   to accept calibrator
+**PARAM** float 1 **DEF** 1.0
+MinPeak                            Min. acceptable image peak (Jy)
+**PARAM** float 1   **DEF** 10.0
+MaxWt             0.1        999.0 Max. weight in fitting
+**PARAM** int 1   **DEF** 1
+MaxQual           0.0          5.0 Max. cal. quality code in fit
+**PARAM** float 1   **DEF** 60.0
+MaxRMS            0.0              Target RMS residual ("seeing") (asec)
+**PARAM** float 1   **DEF** 0.5
+MinRat            0.0          2.0 Minimum acceptable ratio to average flux 
+**PARAM** boo 1   **DEF** T
+doINEdit                           If true flag solutions for which the seeing 
+                                   residual could not be determined or exceeds 
+                                   MaxRMS
+
+                                       Clean info
+**PARAM** boo 1   **DEF** F
+autoWindow                         If true, automatically set windows
+**PARAM** int 1 **DEF** 200
+Niter    *        0.0              Maximum # of CLEAN comp.
+**PARAM** float 1  **DEF** 0.1
+Gain     *        0.0          2.0 CLEAN loop gain
+**PARAM** float 1
+minFlux  *                         Minimum Clean component (Jy)
+**PARAM** int 1  **DEF** 0
+prtLv             0.0              Print level in selfcal
+**PARAM** str 48 **DEF** ObitView
+dispURL                            Display server URL
+**PARAM** int 10
+noScrat                            AIPS disk numbers for which
+                                   scratch files are disallowed
+----------------------------------------------------------------
+IonCal Ionospheric phase calibration
+Type:  Task
+ Use:  Calibration of low frequency radio interferometry data
+
+   This program does "Field based" calibration of the ionosphere
+in the regime that the wave front from an individual source is 
+describable by a linear gradient across the interferometer array
+but with a potentially spatially and temporally variable gradient
+(refractive offset).  This task will generate an AIPS NI table
+giving series a Zernike polynomial describing the phase screen 
+across the array.  Note: the "piston" term is assumed zero since
+the phase of an interferometer is insensitive to this Zernike term.
+
+   An specified calibration is applied and a series of snapshot 
+images of the calibrator sources implied by Catalog and Outlier* 
+at time intervals of solInt are made.  In each of the snapshot 
+images, the relative position of the source, if above a detection 
+threshold (OutlierFlux), is determined relative to the expected 
+position.  This fitting process is two pass, one to make an 
+estimate of the distortion field and the second to search a 
+relatively restricted distance from where the source is expected.
+After all snapshots are made and fitted, the position offset 
+measurements are filtered to remove spurious points and a time 
+sequence of Zernike polynomials fitted.  Sources with quality 
+codes larger than 0 and showing systematic offsets from the 
+expected position are allowed to have an offset from the catalog 
+position.  The fitted Zernike coefficients are written in an
+AIPS NI table attached to the input data.
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input/output
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input multisource UV data file
+  inClass....Input UV data file (class).      Standard defaults.
+  inSeq......Input UV data file (seq. #).     0 => highest.
+  inDisk.....Input UV data file disk drive #. 0 => any.
+
+       Data selection
+  timeRange..Time range of the data to be processed. 
+             As Start time (decimal days) and end time.
+             Days relative to ref. date.
+             Use  dhms2day to convert from human readable form
+  subA.......Sub-array number to use. 0=>all.
+  doCalib....If true, apply SN or CL table
+  gainUse....CL/SN table version number to apply. 0=> highest.
+  doBand.....If true (>0) then correct the data for the shape of the
+             antenna bandpasses using the BP table specified by BPVer.
+             The correction has five modes:
+             (a) if DOBAND=1 all entries for an antenna in the table
+             are averaged together before correcting the data.
+             (b) if DOBAND=2 the entry nearest in time (including
+             solution weights) is used to correct the data.
+             (c) if DOBAND=3 the table entries are interpolated in
+             time (using solution weights) and the data are then
+             corrected.
+             (d) if DOBAND=4 the entry nearest in time (ignoring
+             solution weights) is used to correct the data.
+             (e) if DOBAND=5 the table entries are interpolated in
+             time (ignoring solution weights) and the data are then
+             corrected.
+             IMAGR uses DOBAND as the nearest integer; 0.1 is therefore
+             "false".
+  BPVer......Specifies the version of the BP table to be applied
+                0 => highest numbered table.
+               <0 => no bandpass correction to be applied.
+  flagVer....FG table to use for editing. 0 => highest.
+
+   The following control Ionospheric calibration 
+  Catalog....Name of FITS file containing calibrator catalog
+             Default  NVSSVZ.FIT
+             This must be in the form of an "AIPS VZ" table.
+             This and the following determine the calibrators.
+  OutlierDist..max. distance from pointing to include (deg)
+               default = 10
+  OutlierFlux..min. estimated flux density (Jy)
+               default = 3.0
+  OutlierSI....Spectral index to use,   default = -0.7
+  OutlierSize..Size in pixels of calibratos fields, default 100
+  solInt......Interval (min) between snapshots
+  nZern.......Number of Zernike polynomial terms, def 5
+              It is best to include all terms of a given 
+              polynomial order 2(1), 5(2), 10(3), 17(4)
+              Allowed values 2, 5, 10,17
+              Note: "piston" term (order zero) is ignored.
+  FitSize.....Distance (asec) to search from the expected positions
+              in the initial search for calibrator offsets.  
+              If a satisfactory fitting of the phase screen is made
+              on the first pass, the secons search will be more
+              restricted so this may be fairly large (600 asec).
+              Default 600
+  MaxDist ....Max. distance (deg/10) from the pointing position to 
+              include calibrators in the phase screen fitting,
+              Default 1.0
+  MinPeak.....Minimum acceptable calibrtor peak brightness (Jy) to use
+              in fitting the ionospheric model.
+  MaxWt.......Max. Weight (peak brightness in Jy/bm) to use in fitting
+              phase screen,  This is to keep the brighter sources from 
+              dominating the solution
+  MaxQual.....Max. allowed calibrator quality code [def 1]
+              values 0-5, lower numbers iindicate more isolation
+              from other emission
+  doINEdit....If True, enable editing on MaxRMS and MinRat [True]
+  MaxRMS .....If the rms residual exceeds this value then the 
+              most discrepant point will be iteratively flagged
+              until either 
+              1) the rms residual is acceptable
+              2) no datum contributes more than twice the average
+                 variance
+              3) too few data are left for a solution.
+              default = 60 asec.
+  MinRat......If doINEdit, the peak flux density for each calibrator
+              is averaged over the full set of snapshots and any 
+              measurements for which the ratio to the peak to the 
+              average is less than MinRat is ignored.  Default 0.5
+
+
+   The following control imaging:
+  xCells     [optional] Image cell spacing in X in asec.  
+             If left 0 then the program will compute the value 
+             from the data.  All fields use the same value.
+  yCells     [optional] Image cell spacing in Y in asec. 
+             If left 0 then the program will compute the value 
+             from the data.  All fields use the same value.
+  UVTaper....(U,V) Gaussian taper (kilo-lambda) at 30% level
+  UVRange....(Minimum,Maximum) baseline (kilo-lambda) to
+             process. 
+  Robust.....Briggs' "robustness" parameter.  "Uniform" weights are
+             tempered by a constant being added to the local density of
+             weights.  Robust = -4 is nearly pure uniform weighting,
+             Robust = +4 is nearly pure natural weighting.  Use of this
+             option requires a second array in the memory and may
+             therefore force the data to be sorted.  The option is
+             turned off if Robust < -7 and uniform weighting is turned
+             off is Robust > 7.  
+  WtBox......(U,V) box size for weighting.  This is the support radius
+             over which a sample is counted.  I.e., the sample or its
+             weight is counted over an area 2*WtBox+1 cells on each side
+             in the UV plane, where the UV cell size is (after
+             correcting units) given by 1 / (UVSIZE(i) * Cellsize).
+  WtFunc.....If WtBox > 0, WtFunc controls how the samples are counted
+             as a function of u and v (WtFunc < 0) or of radius (WtFunc
+             > 0).  In the latter case, the function is 0 for radius >
+             WtBox.  Functions are pill box, linear, exponential, and
+             Gaussian for abs(WtFunc) = 1-4, resp.  0 -> 1.  
+
+   The following control CLEANing:
+  autoWindow.If true, automatically set boxes around significant 
+             emission.
+  Gain.......The CLEAN loop gain.  0 => 0.10.
+  minFlux....Stop Clean when abs(resid. image max) < FLUX (Jy)  If FLUX
+             < 0 then Clean stops at first negative Clean Component.
+  Niter.....CLEAN iteration limit.  default 200
+  prtLv.......Print level, 0=>basic, higher gives more diagnostics  [def. 0]
+
+                          Interactive display
+  dispURL.....The URL of the display server to use. "None"=>none
+              "ObitView" =  "http://localhost:8765/RPC2" 
+              This will display fields being CLEANed and allow
+              interactive editing of the CLEAN window.
+
+  noScrat.....A list of AIPS disk numbers on which you do not 
+              wish scratch files

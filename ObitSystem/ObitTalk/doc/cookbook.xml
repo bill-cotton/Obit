@@ -1,0 +1,533 @@
+<?xml version='1.0'?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.4//EN"
+               "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd" [
+  <!ENTITY pt "<application>ObitTalk</application>">
+  <!ENTITY aips "<application><acronym>AIPS</acronym></application>">
+]>
+
+<book>
+
+<bookinfo>
+<title>&pt; Cookbook</title>
+<author>
+<firstname>Mark</firstname>
+<surname>Kettenis</surname>
+<affiliation><orgname>JIVE</orgname></affiliation>
+</author>
+</bookinfo>
+
+<chapter>
+<title>Installing &pt;</title>
+
+<para>
+Installing &pt; is fairly straightforward.  Full, but generic,
+installation instructions are given in the file
+<filename>INSTALL</filename> included in the distribution.  However,
+there is no real need to read them if you follow the instructions
+below.
+
+First unpack the distribution
+<screen>
+<prompt>$</prompt> <command>tar xfz parseltongue-1.0.tar.gz</command>
+</screen>
+
+and enter the distribution directory
+<screen>
+<prompt>$</prompt> <command>cd parseltongue</command>
+</screen>
+
+Now configure and install &pt;
+
+<screen>
+<prompt>$</prompt> <command>./configure --with-obit=<replaceable>obit</replaceable></command>
+<prompt>$</prompt> <command>make</command>
+<prompt>$</prompt> <command>make install</command>
+</screen>
+
+where <replaceable>obit</replaceable> is the location where you
+installed Obit.  Note that the last step will most likely require
+super-user privileges since by default, &pt; will be installed in
+<filename>/usr/local</filename>.  If you do not have those, replace
+the first step above by
+
+<screen>
+<prompt>$</prompt> <command>./configure --prefix=<replaceable>prefix</replaceable> --with-obit=<replaceable>obit</replaceable></command>
+</screen>
+
+where <replaceable>prefix</replaceable> is the location where you want
+to install &pt;.  You might simply use
+<userinput>--prefix=$HOME</userinput> to install &pt; in your home
+directory.
+</para>
+
+<para>
+In order to use &pt;, it is convenient to add
+<filename><replaceable>prefix</replaceable>/bin</filename> to your
+search path.  In general <filename>/usr/local/bin</filename> will
+already be there, and if you are lucky <filename>$HOME/bin</filename>
+will also be included in your default search path.  If they are not,
+or if you specified a different <replaceable>prefix</replaceable>, you
+can add it by issuing the command
+
+<screen>
+<prompt>$</prompt> <command>PATH=$PATH:<replaceable>prefix</replaceable>/bin</command>
+</screen>
+
+if you use a Bourne shell (<command>sh</command>,
+<command>bash</command>) or Korn Shell (<command>ksh</command>,
+<command>pdksh</command>).  If you use a C shell
+(<command>csh</command>, <command>tcsh</command>), the equivalent
+command is
+
+<screen>
+<prompt>$ </prompt> <command>setenv PATH $PATH:<replaceable>prefix</replaceable>/bin</command>
+</screen>
+
+You might want to add these commands to your
+<filename>.profile</filename> or <filename>.login</filename>.
+</para>
+
+</chapter>
+
+<chapter>
+<title>Running &pt;</title>
+
+<section>
+<title>Interactive use</title>
+
+<para>
+While &pt; is primarily intended as a scripting environment, you can
+also use it by starting an interactive Python interpreter.  The
+command <command>ObitTalk</command> will do this for you.  It will
+ask you for your &aips; number, and come back to you with the standard
+Python prompt
+
+<screen>
+<prompt>$</prompt> <command>ObitTalk</command>
+Python 2.3.4 (#1, Oct  5 2004, 00:17:14) 
+[GCC 3.3.4 (pre 3.3.5 20040809)] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+
+Welcome to ObitTalk
+Please enter your AIPS user ID number: <userinput>666</userinput>
+<prompt>&gt;&gt;&gt;</prompt>
+
+</screen>
+
+The first time you do this, &pt; might take some time to get back to
+you as it goes over your <acronym>AIPS</acronym> installation to
+determine what tasks and adverbs are available.
+</para>
+
+</section>
+
+<section>
+<title>Scripting</title>
+
+<para>
+The <command>ObitTalk</command> can also be used to start scripts
+directly from the command line
+<screen>
+<prompt>$</prompt> <command>ObitTalk script.py</command>
+</screen>
+
+This sets up the required environment variables for &aips;, but in
+order to use &pt; you'll have to import the &pt; modules that you want
+to use.  The following should be enough to be able to use the
+functionality in this cookbook
+
+<programlisting>
+from AIPS import AIPS
+from AIPSTask import AIPSTask, AIPSList
+from AIPSData import AIPSUVData, AIPSImage
+</programlisting>
+
+Of course you are free to import any other Python modules that you
+want.
+
+Because you are not running &pt; interactively it cannot ask you for
+your &aips; number so you have to set it in your script
+
+<programlisting>
+AIPS.userno = 666
+</programlisting>
+</para>
+
+</section>
+
+</chapter>
+
+<chapter>
+<title>Running AIPS tasks</title>
+
+<para>
+It's best to start of with a simple interactive example:
+<informalexample>
+<screen>
+<prompt>$</prompt> <command>ObitTalk</command>
+  ...
+Please enter your AIPS user ID number: <userinput>666</userinput>
+<prompt>&gt;&gt;&gt;</prompt> <command>fitld = AIPSTask('fitld')</command>
+<prompt>&gt;&gt;&gt;</prompt> <command>fitld.infile = 'FITS:N04C2.IDI'</command>
+<prompt>&gt;&gt;&gt;</prompt> <command>fitld.outname = 'N04C2'</command>
+<prompt>&gt;&gt;&gt;</prompt> <command>fitld.outclass = 'UVDATA'</command>
+<prompt>&gt;&gt;&gt;</prompt> <command>fitld.outdisk = 1</command>
+<prompt>&gt;&gt;&gt;</prompt> <command>fitld.outseq = 1</command>
+<prompt>&gt;&gt;&gt;</prompt> <command>fitld.go()</command>
+</screen>
+</informalexample>
+
+If you like bananas, it should be fairly easy to grasp what this does.
+Indeed these commands will use <command>FITLD</command> to read in the
+<acronym>FITS</acronym>-file <filename>N04C2.IDI</filename> from the
+<envar>FITS</envar> area, storing it in a work file on
+<acronym>AIPS</acronym> disk 1.
+</para>
+
+<para>
+In the examples given above, the first line constructs a &pt;<markup>
+</markup>&aips; task object for the <command>FITLD</command> task.
+That object is an instance of the <classname>AIPSTask</classname>
+class.  The lines that follow set several attributes of that task
+abject.  Most of these attributes (in fact all of the attributes in
+this example) would be called adverbs in <acronym>AIPS</acronym>.
+</para>
+
+<para>
+Note that most of the commands in the example are given in lowercase.
+Python is fussy about case.  These days, it is considered rude to
+shout, and ALL-CAPS terminals have pretty much died out, so attributes
+have lowercase names, as do task names.
+</para>
+
+<para>
+Here is another example
+<informalexample>
+<screen>
+<prompt>&gt;&gt;&gt;</prompt> <command>imean = AIPSTask('imean', version='31DEC03')</command>
+<prompt>&gt;&gt;&gt;</prompt> <command>imean.inname = 'MANDELBROT'</command>
+<prompt>&gt;&gt;&gt;</prompt> <command>imean.inclass = 'MANDL'</command>
+<prompt>&gt;&gt;&gt;</prompt> <command>imean.indisk = 1</command>
+<prompt>&gt;&gt;&gt;</prompt> <command>imean.inseq = 1</command>
+<prompt>&gt;&gt;&gt;</prompt> <command>imean.go()</command>
+IMEAN1: Task IMEAN  (release of 31DEC03) begins
+IMEAN1: Image= MANDELBROT  .MANDL .   1 1   xywind=    1    1  256  256
+IMEAN1: Mean and rms found by fitting peak in histogram:
+IMEAN1: Mean= 1.0863E+00 Rms= 9.3035E-01  **** from histogram
+IMEAN1: Mean and rms found by including all data:
+IMEAN1: Mean= 4.6120E+01 Rms= 9.4276E+01 COUNTS   over     65536 pixels
+IMEAN1: Minimum= 1.0000E+00 at  256  256
+IMEAN1: Skypos: X 0.98828  Y 1.488
+IMEAN1: Maximum= 2.5400E+02 at  157  216
+IMEAN1: Skypos: X -0.17188  Y 1.020
+IMEAN1: returns adverbs to AIPS
+IMEAN1: Appears to have ended successfully
+IMEAN1: jop31        31DEC03 NEW: Cpu=       0.0  Real=       0
+<prompt>&gt;&gt;&gt;</prompt> <command>print imean.pixavg, imean.pixstd</command>
+1.08630597591 0.930348217487
+<prompt>&gt;&gt;&gt;</prompt>
+</screen>
+</informalexample>
+
+In this example, we create the task object in a slightly different
+way.  By default, &pt; will create task objects for the default
+version of AIPS.  But if you want to use a different version, you can
+say so by adding
+<userinput>version=<replaceable>version</replaceable></userinput>.
+Now look at the last few lines of the example.  You might not be aware
+of it, but <command>IMEAN</command> does not only accept inputs, but
+also produces outputs.  After you have run the task, these outputs are
+available as attributes of the task object.  Of course this not just
+applies to <command>IMEAN</command>, but to any &aips; task that
+returns adverbs to &aips;.
+</para>
+
+<para>
+As the examples show, setting scalar and string attributes is simple.
+Too make it even easier, &pt; implements range checking on attributes
+<screen>
+<prompt>&gt;&gt;&gt;</prompt> <command>imean.indisk = 10</command>
+Traceback (most recent call last):
+  ...
+ValueError: value '10.0' is out of range for attribute 'indisk'
+<prompt>&gt;&gt;&gt;</prompt> <command>imean.inname = 'THIS_STRING_IS_TOO_LONG'</command>
+Traceback (most recent call last):
+  ...
+ValueError: string 'THIS_STRING_IS_TOO_LONG' is too long for attribute 'inname'
+</screen>
+
+This makes sure you learn about your mistakes as early as possible and
+not when some task falls over with a possibly misterious error
+message.
+</para>
+
+<section>
+<title>Arry-like attributes</title>
+
+<para>
+Setting array-like attributes like <varname>aparm</varname> or
+<varname>sources</varname> is a bit more complicated.  The problem
+here is that in Python array indices start at 0 instead of 1.  To
+avoid confusion, in &pt; the element at index 0 is ignored such that
+
+<screen>
+<prompt>&gt;&gt;&gt;</prompt> <command>possm.aparm[3] = 0.1</command>
+</screen>
+
+indeed sets <varname>APARM(3)</varname>.  The element at index 0 will
+contain the value <constant>None</constant> and cannot be assigned to
+
+<screen>
+<prompt>&gt;&gt;&gt;</prompt> <command>print possm.aparm</command>
+[None, 0.0, 1.0, 0.0, 1.3, -180.0, 180.0, 0.0, 0.0, 0.0, 0.0]
+<prompt>&gt;&gt;&gt;</prompt> <command>possm.aparm[0] = 0.1</command>
+Traceback (most recent call last):
+  ...
+ValueError: setting element '0' is prohibited
+</screen>
+
+Since you cannot assign to the element at index zero, the simple
+minded assignment of Python lists to attributes fails too
+
+<screen>
+<prompt>&gt;&gt;&gt;</prompt> <command>imean.trc = [512, 512]</command>
+Traceback (most recent call last):
+  ...
+ValueError: setting element '0' is prohibited
+</screen>
+
+Python's support for slicing provides a way out of it
+
+<screen>
+<prompt>&gt;&gt;&gt;</prompt> <command>imean.trc[1:] = [512, 512]</command>
+</screen>
+
+but there is also a convenience function named
+<function>AIPSList</function> that prepends the
+<constant>None</constant> to the list such that the assignment works
+
+<screen>
+<prompt>&gt;&gt;&gt;</prompt> <command>imean.trc = AIPSList([512, 512])</command>
+</screen>
+
+Note that in both cases the assignment has a small twist in that the
+array attribute is extended with default values up to its original
+length
+
+<screen>
+<prompt>&gt;&gt;&gt;</prompt> <command>print imean.trc</command>
+[None, 512.0, 512.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+</screen>
+</para>
+
+</section>
+
+<section>
+<title>Special attributes</title>
+
+<para>
+It is good to know that some attributes get special treatment
+
+<variablelist>
+<varlistentry>
+<term>
+<varname>infile</varname>, <varname>outfile</varname>,
+<varname>outprint</varname>
+</term>
+<listitem>
+<para>
+While it possible to specify files by their complete path names since
+the <literal>31DEC02</literal> version of <acronym>AIPS</acronym>
+there still is a limit on the length of the path name.  And 48
+characters does not leave you with a lot of leg room.  To overcome
+this limitation, &pt; allows you to enter path names of arbitrary
+length, as long as the trailing component (the filename itself) does
+not require more than 46 characters.  This works with all versions of
+&aips;, even with versions older than <literal>31DEC02</literal>.
+
+<tip>
+
+<para>
+If you don't specify an area or directory for the
+<varname>outfile</varname> and <varname>outprint</varname> attributes,
+&aips; will place the output file in seemingly random locations.  If
+you want these files to end up in the directory from where you run
+your script, you can prepend <filename>./</filename> to the filename.
+</para>
+
+</tip>
+</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<varname>indata</varname>, <varname>outdata</varname>,
+<varname>in2data</varname>, <varname>in3data</varname>,
+<varname>in4data</varname>, <varname>out2data</varname>
+</term>
+<listitem>
+
+<para>
+Having to specify all four of name, class, disk and sequence number to
+refer to a work file can be a bit of a pain.  To make life a we bit
+easier, &pt; provides these data attributes.  If you have a
+&pt;<markup> </markup> &aips; data object (see <xref linkend="data"/>)
+you can use it to set these attributes, which set name, class, disk
+and sequence number in one go.
+</para>
+
+</listitem>
+</varlistentry>
+<varlistentry>
+<term>
+<varname>msgkill</varname>
+</term>
+<listitem>
+
+<para>
+&aips; can be quite chatty, and in long running scripts it may be
+desirable that only messages about serious problems are displayed.
+&aips; itself provides the <command>MSGKILL</command> pseudoverb and
+&pt; gives you the opportunity to set it, either on per-task basis or
+globally as an attribute of the <classname>AIPSTask</classname>.
+Unfortunately, setting <command>MSGKILL</command> has the drawback
+that suppressed messages are forever lost and &aips; discourages you
+from using it.  However, in &pt; you can set the
+<varname>msgkill</varname> attribute to a negative value.  This will
+prevent messages from being displayed on the terminal, as if you set
+<command>MSGKILL</command> to the absolute value of the attribute, but
+the suppressed messages will still go to the &aips; message file.
+This way you can always inspect them later if the need arises.
+</para>
+
+</listitem>
+</varlistentry>
+</variablelist>
+</para>
+
+</section>
+
+
+</chapter>
+
+<chapter id="data">
+<title>Handling &aips; data</title>
+
+<para>
+Constructing a &pt;<markup> </markup>&aips; data object is fairly
+simple, although things are complicated a bit by the fact that &aips;
+deals with two kinds of data that are quite different from each other:
+images and UV data.  The latter are created as instances of the
+<classname>AIPSUVData</classname> class
+
+<screen>
+<prompt>&gt;&gt;&gt;</prompt> <command>uvdata = AIPSUVData('N04C2', 'UVDATA', 1, 1)</command>
+</screen>
+
+whereas the former use the <classname>AIPSImage</classname> class
+
+<screen>
+<prompt>&gt;&gt;&gt;</prompt> <command>uvdata = AIPSImage('MANDELBROT', 'MANDL', 1, 1)</command>
+</screen>
+
+The syntax is similar in both cases; you specify name, class, disk and
+sequence number of the data.  Here is an example that shows how to use
+the <classname>AIPSImage</classname> class to pass an image from one
+task to the other
+
+<programlisting>
+imgdata = AIPSImage('MANELBROT', 'MANDL', 1, 1)
+
+mandl = AIPSTask('mandl')
+mandl.outdata = imgdata
+mandl.go()
+
+imean = AIPSTask('imean')
+imean.indata = imgdata
+imean.go()
+</programlisting>
+
+The <classname>AIPSImage</classname> and
+<classname>AIPSUVData</classname> classes also provide an interface to
+provide access to &aips; data and manipulate it.
+</para>
+
+<para>
+Manipulation is pretty much limited to deleting extension tables from
+a data set and deleting the data itself.  The latter is a matter of
+calling the method <function>zap()</function> while the former has a
+somewhat more complicated interface:
+
+<programlisting>
+<function>zap_table(<replaceable>type</replaceable><replaceable>version</replaceable>)</function>
+</programlisting>
+
+here <replaceable>type</replaceable> is the type of the extension
+table as a string (e.g. <literal>'AIPS CL'</literal>) and
+<replaceable>version</replaceable> is the version to be deleted.
+Using <literal>0</literal> as the <replaceable>version</replaceable>
+deletes the highest version of the given type, wheras using
+<literal>-1</literal> deletes them all.  So the following example
+
+<screen>
+<prompt>&gt;&gt;&gt;</prompt> <command>uvdata = AIPSUVData('N04C2', 'UVDATA', 1, 1)</command>
+<prompt>&gt;&gt;&gt;</prompt> <command>uvdata.zap_table('AIPS CL', 0)</command>
+</screen>
+
+deletes the last calibration tables from the UV data set
+<literal>N04C2.UVDATA.1</literal> on disk 1.  Note that plot files
+(<literal>'AIPS PL'</literal>) and slice files (<literal>'AIPS
+SL'</literal>) can also be deleted.  So the following lines
+
+<screen>
+<prompt>&gt;&gt;&gt;</prompt> <command>imgdata = AIPSImage('MANELBROT', 'MANDL', 1, 1)</command>
+<prompt>&gt;&gt;&gt;</prompt> <command>imgdata.zap_table('AIPS PL', -1)</command>
+</screen>
+
+can be used to throw away all previously made plots.
+</para>
+
+<para>
+The interface to access data is much richer though.
+</para>
+
+</chapter>
+
+<chapter>
+<title>General feautures</title>
+
+<section>
+<title>Logging</title>
+
+<para>
+&pt; provides a simple, yet powerfull way to capture a log of your
+session.  If you set <varname>AIPS.log</varname> to a file object all
+output from &aips; tasks will be sent to that object:
+
+<screen>
+<prompt>&gt;&gt;&gt;</prompt> <command>AIPS.log = open("ObitTalk.log")</command>
+</screen>
+
+In fact, the above is not the full truth. <varname>AIPS.log</varname>
+does not necessarily have to be a true Python
+<classname>file</classname> object; any object with a
+<function>write</function> method will do.
+</para>
+
+<para>
+The output sent to <varname>AIPS.log</varname> includes the messages
+that are not being displayed on your terminal because the
+<varname>msgkill</varname> attribute was set to a negative value in
+the task object (this does not apply to messages killed by a positive
+value of this attribute; those are lost forever).  </para>
+
+<para>
+To stop logging, set <varname>AIPS.log</varname> to
+<constant>None</constant>.  </para>
+
+</section>
+
+</chapter>
+
+ </book>

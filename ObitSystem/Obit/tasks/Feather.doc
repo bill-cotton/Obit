@@ -1,0 +1,153 @@
+/* $Id: Feather.doc,v 1.3 2005/09/05 20:52:23 bcotton Exp $ */
+
+                  Feather Obit task
+               -------------------------------------
+
+   Obit program Feather Takes up to 10 input images and feathers them
+together in the UV plane to produce an image whose spatial frequencies
+are from the most appropriate input image.  The resultant image will
+have the resolution of the highest resolution input image.
+   Prior to running Feather, the input images must be placed on the same
+astrometric and photometric scales but need not have the grid of pixels
+or even the same equinox (B1950 and J2000 supported).
+   The input images must be given in order of the highest to lowest
+resolution and this resolution must be reflected by the "CLEAN beam"
+size given in the image header.  The output image will have the same
+size and pixel grid as the first (highest resolution) image.
+   Either AIPS or FITS images may be used but currently all input and
+output images must be the same type (AIPS or FITS).
+   Many control parameters can be passed either through an input text file
+or as command line arguments.  Command line values take precedence over
+those in the input file.
+   History written to an output FITS image is into a History table.
+
+   The default for directory names is to use AIPS directories $DA01...
+and for FITS, $FITS, $FITS01... and the numbers are determined by the
+number of these environment variables found.
+
+Usage: Feather -input file -output ofile [args]
+Feather Obit task = feather together up to 10 images
+Arguments:
+  -input input parameter file, def Feather.in
+  -output output result file, def Feather.out
+  -pgmNumber Program (POPS) number, def 1 
+  -DataType AIPS or FITS type for input image
+  -AIPSuser User AIPS number, def 2
+
+
+         Feather input file documentation
+
+   This describes the input file format for Feather
+The input file is basically free format with a keyword/value syntax.  
+Comments follow a "#" symbol.  String keywords should have no leading or
+trailing blanks before the end of the line or a comment delimiter.
+If a numeric value is followed by a comment there should be at least one
+blank before the comment delimiter.
+
+   Entries not specified will assume their default values.  Parameters
+may be given in any order but only the recognized parameters given below
+are allowed. 
+
+An example follows:
+# Inputs for Obit program Feather
+$Key = type  Str (4) # Type, AIPS or FITS
+FITS
+$Key = nFITS Int (1) # Number of FITS directories
+1
+$Key = FITSdirs Str (48)   # Directories of FITS "disks"
+../testIt
+$Key = numImage  Int (1)   # Number of images
+2
+$Key = inFITS    Str (48)  # first input FITS image
+FeatherTestIn1.fits.gz
+$Key = inDisk    Int (1)   # first input FITS image disk number
+1
+$Key = inFITS2   Str (48)  # second input FITS image
+FeatherTestIn2.fits.gz
+$Key = outFITS   Str (48)  # output FITS image
+!FeatherDebug.fits
+
+
+Variables possibly read from the input_file, case matters.
+pgmNumber:   Program number (like POPS number) 
+     type: integer
+     default: 1
+
+DataType:    "AIPS" or "FITS" [def {"FITS"}] 
+     type: string
+     default: FITS
+
+nFITS:       Number of FITS directories in FITSdirs
+     type: integer
+     default: number of $FITS, $FITS01... found
+
+FITSdirs:    Array of FITS directories  if type ="FITS"
+     Put one directory name per line
+     type: string array
+     default: Values of environment variables $FITS, $FITS01... 
+
+AIPSuser:    AIPS user number
+     type: integer
+     default: 2
+
+nAIPS:       Number of AIPS directories in AIPSdirs
+     type: integer
+     default:  number of $DA01, $DA02... found
+
+AIPSdirs:    Array of AIPS directories if type ="AIPS"
+     Put one directory name per line
+     type: string array
+     default:  Values of environment variables $DA01, $DA02...
+
+numImage:    Number of input images, represented by inxxx? below.
+     A maximum of 10 input images are allowed.
+     type: integer
+     default: None
+
+inFITS?:      input FITS image file name ? if type ="FITS"
+              1 dropped for first input
+     type: string
+     default: undefn
+
+inName?:      input AIPS image name ? if type ="AIPS"
+              1 dropped for first input
+     type: string
+     default: undefn
+
+inClass?:     input AIPS image class ? if type ="AIPS"
+              1 dropped for first input
+     type: string
+     default:  undefn
+
+inSeq?:       input AIPS image sequence no ? if type ="AIPS"
+              1 dropped for first input
+     type: integer
+     default:  0
+
+inDisk?:      input AIPS or FITS image disk number ?
+              1 dropped for first input
+     type: integer
+     default: 1
+
+outFITS:      output FITS image file name if type ="FITS"
+     type: string
+     default: undefn
+
+outName:      input AIPS image name if type ="AIPS"
+     type: string
+     default: undefn
+
+outClass:     input AIPS image class if type ="AIPS"
+     type: string
+     default:  undefn
+
+outSeq:       input AIPS image sequence no if type ="AIPS"
+     type: integer
+     default:  0
+
+outDisk:      input AIPS or FITS image disk number
+     type: integer
+     default: 1
+
+
+

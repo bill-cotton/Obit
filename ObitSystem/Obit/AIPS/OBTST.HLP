@@ -1,0 +1,223 @@
+; $Id: OBTST.HLP,v 1.1.1.1 2004/07/19 16:42:44 bcotton Exp $
+; OBTST 
+;---------------------------------------------------------------
+;! Test bed for Obit/AIPS connection
+;# Task AP Imaging calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2003
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+OBTST      LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+OBTST: Test bed for Obit/AIPS connection
+INNAME                             Input multisource UV data
+INCLASS                            Input UV data (class)
+INSEQ                              Input UV data (seq. #)
+INDISK                             Input UV data disk drive #
+SOURCES                            Source (pointings) list
+CALCODE                            Calibrator code '    '=>all
+TIMERANG                           Time range to process.
+STOKES                             Stokes to process
+DOCALIB          -1.0       10.0   Calibrate data?
+GAINUSE                            CL/SN table to apply
+DOBAND           -1.0       10.0   If >0.5 apply bandpass cal.
+BPVER                              Bandpass table version
+SMOOTH                             Smoothing function. See
+                                   HELP SMOOTH for details.
+FLAGVER                            Flag table version
+DOPOL                              Apply polarization cal?
+OUTNAME                            Output  name
+OUTCLASS                           Output dirty image class
+OUT2CLAS                           Output dirty beam class
+OUTSEQ          -1.0     9999.0    Output  seq. no.
+OUTDISK                            Output disk drive #
+CELLSIZE                           (X,Y) size of grid in asec
+IMSIZE          0.0      4096.     Size of Fields
+NFIELD          0.         64.     Number of fields (max. 64)
+FLDSIZE         0.       4096.     Size of each field.
+RASHIFT                            RA shift per field (asec)
+DECSHIFT                           DEC shift per field (asec)
+UVTAPER         0.                 (U,V) Gaussian taper klambda
+UVRANGE         0.                 Min & max baseline (klambda)
+ROBUST                             Robustness power: -5 -> pure
+                                   uniform weights, 5 => natural
+UVWTFN                             UV dist. weight function
+                                     blank => uniform
+UVSIZE          0.                 Array size for doing uniform
+                                   weights.  0 -> actual field
+                                   size.
+UVBOX           0.        128.     Additional rows and columns
+                                   used in weighting.
+UVBXFN                             Box function type when UVBOX
+                                   > 0.  0 -> 1 round pill box.
+BADDISK           -1.0      1000.0 Disks to avoid for scratch.
+----------------------------------------------------------------
+OBTST Obit testbed
+Type:  Task
+ Use:  Test Obit/AIPS interaction
+
+   Currently, calibrated data and makes dirty image
+Adverbs:
+  INNAME.....Input multisource UV data file
+  INCLASS....Input UV data file (class).      Standard defaults.
+  INSEQ......Input UV data file (seq. #).     0 => highest.
+  INDISK.....Input UV data file disk drive #. 0 => any.
+
+       Data selection
+  SOURCES....List of sources (pointings) to be processed.
+             '*' or blank = all; a "-" before a source name
+             means all except ANY source named. 
+  CALCODE...."sources" may be selected on the basis of the
+             calibrator code given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+             NB: The CALCODE test is applied in addition to the
+             other tests, i.e. SOURCES and TIMERANG, in the
+             selection of sources to process.
+             CALCODE affects only the selection of calibrators.
+  TIMERANG...Time range of the data to be processed. In order:
+             Start day, hour, min. sec,
+             end day, hour, min. sec. Days relative to ref.
+             date.
+  STOKES.....Stokes parameters to process.
+             'I' = Stokes I only, 'IQU' = also Q, U
+             '    ' => I, Q, U
+  DOCALIB....If true, calibrate data
+  GAINUSE....CL/SN table version number to apply. 0=> highest.
+  DOBAND.....If true (>0) then correct the data for the shape of the
+             antenna bandpasses using the BP table specified by BPVER.
+             The correction has five modes:
+             (a) if DOBAND=1 all entries for an antenna in the table
+             are averaged together before correcting the data.
+             (b) if DOBAND=2 the entry nearest in time (including
+             solution weights) is used to correct the data.
+             (c) if DOBAND=3 the table entries are interpolated in
+             time (using solution weights) and the data are then
+             corrected.
+             (d) if DOBAND=4 the entry nearest in time (ignoring
+             solution weights) is used to correct the data.
+             (e) if DOBAND=5 the table entries are interpolated in
+             time (ignoring solution weights) and the data are then
+             corrected.
+             IMAGR uses DOBAND as the nearest integer; 0.1 is therefore
+             "false".
+  BPVER......Specifies the version of the BP table to be applied
+                0 => highest numbered table.
+               <0 => no bandpass correction to be applied.
+  SMOOTH.....Specifies the type of spectral smoothing to be applied to a
+             uv database . The default is not to apply any smoothing.
+             The elements of SMOOTH are as follows:
+             SMOOTH(1) = type of smoothing to apply:
+               0 => no smoothing
+               1 => Hanning
+               2 => Gaussian
+               3 => Boxcar
+               4 => Sinc (i.e. sin(x)/x)
+             SMOOTH(2) = the "diameter" of the function, i.e. width
+               between first nulls of Hanning triangle and sinc
+               function, FWHM of Gaussian, width of Boxcar. Defaults (if
+               < 0.1) are 4, 2, 2 and 3 channels for SMOOTH(1) = 1 - 4.
+             SMOOTH(3) = the diameter over which the convolving function
+               has value - in channels.  Defaults: 1, 3, 1, 4 times
+               SMOOTH(2) used when input SMOOTH(3) < net SMOOTH(2).
+  FLAGVER....FG table to use for editing. 0 => highest.
+  DOPOL......>=1 apply polarization calibration
+      Output files
+  OUTNAME....Output image name.  Default = INNAME
+  OUTCLASS...Output image class.  Default = 'OMnnnn'
+             where nnnn is the field number, if given only the first
+             two characters are used.
+  OUT2CLASS..Output beam class).  Default = 'OBnnnn'
+  OUTSEQ.....Output sequence number.
+  OUTDISK....The disk drive # of output images.  0 => highest
+             with space (note: map and Beam go on same disk.
+  OUTSEQ.....Output sequence number.
+
+   The following control imaging:
+  CELLSIZE...(X,Y) pixel separation in asec. 
+  IMSIZE.....IMSIZE(1) is the radius in pixels of the fields.
+  NFIELD.....The number of fields to map in the antenna beam.
+  FLDSIZE....(1,*) is the circular field size in pixels for the CLEAN
+             window per field. 
+             In general leave this zero
+  RASHIFT....RA shift of the phase center of each field from the
+             tangent point of the uv data in asec.  Map center =
+             tangent point + shift. If X>0 shifts map center to 
+             east.  NOTE: RASHIFT and DECSHIFT are not strictly 
+             a shift in RA and Dec. The effect of RASHIFT on the
+             RA of the map center is roughly RASHIFT/COS(Dec).  
+             If the UV data have been rotated then RASHIFT and 
+             DECSHIFT refer to X and Y in the new coordinate 
+             system.
+             In general leave this zero
+  DECSHIFT...Declination shift of map center from tangent point
+             of each field in asec.  Map center = tangent point
+             + shift.  If Y>0 shifts map center to north.
+             In general leave this zero
+  UVTAPER....(U,V) Gaussian taper (kilo-lambda) at 30% level
+  UVRANGE....(Minimum,Maximum) baseline (kilo-lambda) to
+             process. 
+  ROBUST.....Briggs' "robustness" parameter.  "Uniform" weights are
+             tempered by a constant being added to the local density of
+             weights.  ROBUST = -4 is nearly pure uniform weighting,
+             ROBUST = +4 is nearly pure natural weighting.  Use of this
+             option requires a second array in the "AP" memory and may
+             therefore force the data to be sorted.  The option is
+             turned off if ROBUST < -7 and uniform weighting is turned
+             off is ROBUST > 7.  See HELP ROBUST - the AIPS ROBUST
+             differs numerically from that of Briggs.
+  UVWTFN.....Weighting function of (u-v) plane in 2 character code.  If
+             the first character is N use "natural" weighting (no
+             variation due to local density), otherwise use "uniform"
+             weighting (weights are modified by local density of samples
+             - first letter C - or weights under control of UVSIZE,
+             UVBOX, UVBXFN, and ROBUST).  If the second character is the
+             letter O, all weights are set to one, and if the second
+             letter is V, all weights are set the their fourth root,
+             before any use is made of them.
+  UVSIZE.....Size of the array used to count samples for uniform
+             weighting.  Does not have to be a power of two and can be
+             smaller than or bigger than the image size.  The default is
+             the size of the first output image.
+  UVBOX......(U,V) box size for weighting.  This is the support radius
+             over which a sample is counted.  I.e., the sample or its
+             weight is counted over an area 2*UVBOX+1 cells on each side
+             in the UV plane, where the UV cell size is (after
+             correcting units) given by 1 / (UVSIZE(i) * CELLSIZE(i)).
+  UVBXFN.....If UVBOX > 0, UVBXFN controls how the samples are counted
+             as a function of u and v (UVBXFN < 0) or of radius (UVBXFN
+             > 0).  In the latter case, the function is 0 for radius >
+             UVBXFN.  Functions are pill box, linear, exponential, and
+             Gaussian for ABS(UVBXFN) = 1-4, resp.  0 -> 1.  See HELP
+             UVBXFN.
+
+  BADDISK...This array contains the numbers of disks on which
+            it is desired that scratch files not be located.
+            BADDISK has no effect on input and output data.
+----------------------------------------------------------------
+OBTST Obit test bed
+Documenter:  W. D. Cotton,  NRAO
+Related Programs: 

@@ -1,0 +1,51 @@
+/* $Id: PASim2OTF.doc,v 1.1.1.1 2004/07/19 17:04:43 bcotton Exp $ */
+
+               PASim2OTF Convert data to OTF format FITS file
+               -----------------------------------------
+
+   PASim2OTF Converts a Penn Array IDL simulator dataset to an OTF data set.
+Control input is from a user edited file.
+
+         PASim2OTF input file documentation
+
+   This describes the input file format for PASim2OTF.
+The input file is basically free format with a keyword=value syntax.  
+Comments follow a "#" symbol.
+
+
+   Entries not specified will assume their default values.  Parameters
+may be given in any order but only the recognized parameters given below
+are allowed. 
+
+An example follows:
+# input file for PASim2OTF
+geom  = somefile.text with array geometry
+data  = somefile.text with data
+outfile = !OTFtable.fits # the ! allows overwrite
+
+/* variables possibly read from the input_file */
+data:  text file with data
+     type: string
+     default: PennArray.dat
+   The format is one "Penn Array" readout per line.  in order on each line:
+     *detector outputs 1...64
+     *central RA (deg)
+     *central Dec (deg)
+     *"cal on" flag (1 or 0)
+     *timestamp in seconds (arbitrary offset zeroed on a *per scan*
+      basis)
+     *the array rotation in degrees (expressed as a parallactic angle)
+
+geom:  text file with array geometry
+     type: string
+     default: PennArray.geom
+   This file is a fixed output. Each line has the azimuth and
+   elevation of detector N in degrees as an offset from the fiducial
+   central position which is reported in the .raw file.  Line one of this
+   file is N=1; line two is N=2; etc.
+
+outfile:   output FITS image file name
+     type: string
+     default: PASimOTF.fits
+
+

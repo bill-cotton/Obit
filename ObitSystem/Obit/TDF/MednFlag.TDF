@@ -1,0 +1,226 @@
+; $Id: MednFlag.TDF,v 1.2 2007/12/04 23:14:08 bcotton Exp $
+; MednFlag
+;---------------------------------------------------------------
+;! Obit Radio interferometry data editing software
+;# Task Obit Imaging calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2005-2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+MednFlag   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+MednFlag:  Obit radio interferometry data editing software
+**PARAM** str 4
+DataType                            "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                              Input multisource UV data AIPS
+**PARAM** str 6
+inClass                             Input UV data (class)
+**PARAM** int 1
+inSeq                               Input UV data (seq. #)
+**PARAM** int 1
+inDisk                              Input UV data disk drive #
+**PARAM** str 16 30
+Sources                             Source (pointings) list
+**PARAM** float 2
+timeRange                           Time range to process.
+**PARAM** str 4
+Stokes                              Stokes to process
+**PARAM** int 1
+BChan            0.0     8192.0     Low freq. channel 0 for cont.
+**PARAM** int 1
+EChan            0.0     8192.0     Highest freq channel
+**PARAM** int 1
+BIF                                 First IF in average.
+**PARAM** int 1
+EIF                                 Last IF in average.
+**PARAM** int 1
+subA                                Subarray
+**PARAM** boo 1 **DEF** T
+doCalSelect                         Apply calibration/selection?
+**PARAM** int 1
+doCalib          -1         10      Apply calibration table
+**PARAM** int 1
+gainUse                             CL/SN table to apply
+**PARAM** int 1
+doBand           -1.0       10.0    If >0.5 apply bandpass cal.
+**PARAM** int 1
+BPVer                               Bandpass table version
+**PARAM** int 1 **DEF** -1
+flagVer                             Flag table version
+**PARAM** boo 1 **DEF** F
+doPol                               Apply polarization cal?
+**PARAM** str 48
+outFile                             FITS uvdata for output FG table
+**PARAM** str 12
+outName                             AIPS name for output FG table
+**PARAM** str 6
+outClass                            AIPS class for output FG table
+**PARAM** int 1   
+outSeq          -1.0     9999.0     AIPS seq for output FG table
+**PARAM** int 1
+outDisk                             Disk for output FG table
+**PARAM** int 1 **DEF** 1 
+flagTab                             Output Flagging table version 
+**PARAM** float 1 **DEF** 10.0
+flagSig                             Flagging level (sigma)
+**PARAM** float 1 **DEF** 0.5
+alpha                               Smoothing parameter.
+**PARAM** float 1
+timeFlag                            Flagging interval (min)
+**PARAM** float 1
+timeWind                            Averaging window (min)
+**PARAM** int 1
+avgFreq          0.0        9.0     Frequency averaging control
+                                     1 => avg. freq. in IF
+                                          multi-channel avg
+                                     2 => avg. freq. in IF
+                                          single channel avg
+                                     3 => avg IF's also
+**PARAM** int 1
+chAvg                               Number of chan. to average.
+                                    (used if avgFreq = 1)
+                                    <= 0 -> ALL
+**PARAM** int 4 20
+ChanSel                             Array of channel start, stop,
+                                    and increment numbers and IF
+                                    number to be used when
+                                    averaging in frequency.
+**PARAM** int 10
+noScrat                             AIPS disk numbers for which
+                                    scratch files are disallowed
+----------------------------------------------------------------
+MednFlag Automated editing for radio interferometry data
+Type:  Task
+ Use:  Batch processing of radio interferometry data
+
+   This program implements automated editing of radio interferometer 
+data by comparing data, possibly averaged in time and/or frequency, 
+with the average value in a sliding window and flagging data whose
+amplitudes are mode discrepant than a given number of sigma.  
+The averging is a hybrid median window/averaging (see alpha)
+The result of this operation will be a FG (flag) table attached to 
+the "output" data.
+
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input multisource UV data file
+  inClass....Input UV data file (class).      Standard defaults.
+  inSeq......Input UV data file (seq. #).     0 => highest.
+  inDisk.....Input UV data file disk drive #. 0 => any.
+
+       Data selection
+  Sources....List of sources (pointings) to be processed.
+             '*' or blank = all; a "-" before a source name
+             means all except ANY source named. 
+  timeRange..Time range of the data to be processed. In order:
+             Start and end times in days relative to ref. date.  
+             Use  dhms2day to convert from human readable form
+  Stokes.....Stokes parameters to process.
+             'I' = Stokes I only, '    ' => as in data
+  BChan......First channel number to image, 0=>1.  Channel numbers 
+             are 1 relative as defined in the input data file.
+  EChan......Highest channel number to to include in image,
+             0 => max 
+  doCalSelect. If True apply calibration/selection
+             This should be True in most cases
+  doCalib....If true, apply SN or CL table
+  gainUse....CL/SN table version number to apply. 0=> highest.
+  doBand.....If true (>0) then correct the data for the shape of the
+             antenna bandpasses using the BP table specified by BPVer.
+             The correction has five modes:
+             (a) if DOBAND=1 all entries for an antenna in the table
+             are averaged together before correcting the data.
+             (b) if DOBAND=2 the entry nearest in time (including
+             solution weights) is used to correct the data.
+             (c) if DOBAND=3 the table entries are interpolated in
+             time (using solution weights) and the data are then
+             corrected.
+             (d) if DOBAND=4 the entry nearest in time (ignoring
+             solution weights) is used to correct the data.
+             (e) if DOBAND=5 the table entries are interpolated in
+             time (ignoring solution weights) and the data are then
+             corrected.
+  BPVer......Specifies the version of the BP table to be applied
+                0 => highest numbered table.
+               <0 => no bandpass correction to be applied.
+  flagVer....FG table to apply prior to  editing. 0 => highest.
+  doPol......>=1 apply polarization calibration
+
+      Output FG files
+  outFile....Output FITS uvdata for FG table file name
+  outName....Output AIPS uvdata for FG table Name, 
+  outClass...Output uvdata class.  Default = 'ICLEAN'
+  outSeq.....Output image sequence number.
+  outDisk....The disk drive # of output images.  0 => highest
+             with space (note: map and Beam go on same disk.
+  outSeq.....Output sequence number.
+
+      Flagging control
+  flagTab....Output Flagging table version.  This is the FG table 
+             out outName... to be written.  If the output uvdata
+             is the same as the input, it is a very bad idea for 
+             this to equal flagVer.  Default 1.
+  flagSig....Number of sigma from average value in window to flag
+  alpha......Controls the averaging process.
+             0 -> 1 = pure boxcar -> pure MWF (alpha of the 
+             center data samples are ignored and the rest 
+             averaged). 
+  timeFlag...Interval (min) over which data is vector preaveraged.
+  timeWind...Sliding window width (min) over which each timeFlag
+             averaged sample is compared with the window average.
+             Must be several times timeAvg.
+  avgFreq....If 0 < avgFreq <= 1, then spectral channels in the 
+             range from BChan to EChan are averaged in blocks of
+             chAvg channels subject to further selection by
+             ChanSel before the flagging process.
+             If avgFreq > 1, then all frequency channels in
+             each IF (under control of ChanSel) will be averaged.
+             If avgFreq > 2, then all IF's will be averaged also.
+  chAvg......If avgFreq = 1, the number of channels to be averaged
+             together in each channel to be compared.  
+             0 => ALL.  
+  ChanSel....The channels to be averaged when avgFreq > 0 in the
+             form of an array of start and stop channels plus a
+             channel increment and the IF to which they apply.  
+             All 0 => BChan, EChan, 1, 0.  
+             ChanSel(4,i) gives the IF and 0 means all IFs.  
+             Up to 20 groups of these 4 numbers may be
+             specified.  Note that the channel numbers are absolute
+             numbers; they are NOT relative to BIF and BChan.
+             For instance if your data had a spectral line covering
+             channels 56 - 80, and you wished to exclude channels 
+             1 - 10 and 121 - 128 because of bandpass effects, then 
+             you could set avgFreq=2, and ChanSel=11, 55, 1, 0, 
+             81, 121, 1, 0 for a 1-IF data set.  
+             If you only wished to use every other channel from the 
+             second group then you would set ChanSel = 11, 55, 0, 0, 
+             81, 121, 2, 0.
+  noScrat....A list of AIPS disk numbers on which you do not 
+             wish scratch files
+----------------------------------------------------------------

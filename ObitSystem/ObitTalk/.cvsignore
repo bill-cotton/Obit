@@ -1,0 +1,8 @@
+Makefile
+config.log
+config.status
+configure
+work
+autom4te.cache
+*.tar
+*.tgz

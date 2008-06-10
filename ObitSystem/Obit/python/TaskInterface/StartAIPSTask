@@ -1,0 +1,4 @@
+#!/bin/sh
+# Start up aips task
+echo "Start $1"
+$1

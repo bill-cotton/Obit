@@ -1,0 +1,117 @@
+/* $Id: Template.doc,v 1.3 2005/03/29 14:02:43 bcotton Exp $ */
+
+               TEMPLATE Obit task
+               -------------------------------------
+
+   Obit program TEMPLATE is intended as a template for Obit programs and
+as an example reads an image, computed the mean and RMS of a selected
+window, prints the results and writes them in the output file.
+Most control parameters can be passed either through an input text file
+or as command line arguments.  Command line values take precedence over
+those in the input file.
+
+   The default for directory names is to use AIPS directories $DA01...
+and for FITS, $FITS, $FITS01...
+
+ Usage: TEMPLATE -input file -output ofile [args]
+ Template Obit task = get image mean and RMS
+ Arguments:
+   -input input parameter file, def TEMPLATE.in
+   -output output result file, def TEMPLATE.out
+   -pgmNumber Program (POPS) number, def 1 
+   -DataType "AIPS" or "FITS" type for input image
+   -inFile input FITS Image file
+   -AIPSuser User AIPS number, def 2
+   -inName input AIPS file name
+   -inClass input AIPS file class
+   -inSeq input AIPS file sequence
+   -inDisk input (AIPS or FITS) disk number (1-rel) 
+   -BLC bottom-left (1-rel) pixel def. [1,1,..] 
+   -TRC top-right (1-rel) pixel def. [nx,ny,..]
+
+         TEMPLATE input file documentation
+
+   This describes the input file format for TEMPLATE
+The input file is basically free format with a keyword=value syntax.  
+Comments follow a "#" symbol.  String keywords should have no leading or
+trailing blanks before the end of the line or a comment delimiter.
+If a numeric value is followed by a comment there should be at least one
+blank before the comment delimiter.
+
+   Entries not specified will assume their default values.  Parameters
+may be given in any order but only the recognized parameters given below
+are allowed. 
+
+An example follows:
+# Inputs for Template Obit program Template
+$Key = DataType  Str (4) # Type, AIPS or FITS
+FITS
+$Key = inFile  Str (48)  # Input image FITS file name
+Image.fits
+$Key = inDisk  Int (1)   # Disk number, 0=> add no directory
+0
+$Key = BLC     Int (7)   # blc (1-rel)
+1 1 1 1 1 1 1
+$Key = TRC     Int (7)   # trc (1-rel
+0 0 0 0 0 0 0
+
+
+Variables possibly read from the input_file
+pgmNumber:   Program number (like POPS number) 
+     type: integer
+     default: 1
+
+DataType:    "AIPS" or "FITS" [def {"FITS"}] 
+     type: string
+     default: FITS
+
+nFITS:       Number of FITS directories in FITSdirs
+     type: integer
+     default: number of $FITS, $FITS01... found
+
+FITSdirs:    Array of FITS directories  if Type ="FITS"
+     Put one directory name per line
+     type: string array
+     default: Values of environment variables $FITS, $FITS01... 
+
+AIPSuser:    AIPS user number
+     type: integer
+     default: 2
+
+nAIPS:       Number of AIPS directories in AIPSdirs
+     type: integer
+     default:  number of $DA01, $DA02... found
+
+AIPSdirs:    Array of AIPS directories if Type ="AIPS"
+     Put one directory name per line
+     type: string array
+     default:  Values of environment variables  $DA01, $DA02...
+
+inFile:      input FITS image file name if Type ="FITS"
+     type: string
+     default: Image.fits
+
+inName:      input AIPS image name  if Type ="AIPS"
+     type: string
+     default: None
+
+inClass:     input AIPS image class if Type ="AIPS"
+     type: string
+     default:  None
+
+inSeq:       input AIPS image sequence no if Type ="AIPS"
+     type: integer
+     default:  None
+
+inDisk:      input AIPS or FITS image disk
+     type: integer
+     default: 1
+
+BLC:         bottom-left (1-rel) corner
+     type: integer array
+     default: {1,1,1,1,1,1,1}
+
+TRC:         top-right (1-rel) corner
+     type: integer array
+     default: {0,0,0,0,0,0,0} = all
+

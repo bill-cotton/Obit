@@ -1,0 +1,80 @@
+; $Id: noFQId.TDF,v 1.1 2007/08/06 01:14:20 bcotton Exp $
+; noFQId
+;---------------------------------------------------------------
+;! Copy UV data
+;# Task UV  Obit 
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+noFQId     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+noFQId     Task to undo nefarious Fq Ids (all set to 1)
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                             FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                             Input UV file name (name)
+**PARAM** str 6
+inClass                            Input UV file name (class)
+**PARAM** int 1
+inSeq             0.0     9999.0   Input UV file name (seq. #)
+**PARAM** int 1
+inDisk                             Input UV file disk unit #
+**PARAM** str 4
+outDType                           "FITS" or "AIPS" type of output
+**PARAM** str 48
+outFile                            FITS output uvdata if Type=='FITS'
+**PARAM** str 12
+outName                            Output UV AIPS file name
+**PARAM** str 6
+outClass                           Output UV AIPS file class
+**PARAM** int 1
+outSeq           -1.0     9999.0   Output UV AIPS fileseq. #
+**PARAM** int 1
+outDisk                            Output UV file disk unit #.
+----------------------------------------------------------------
+noFQId
+Task:  This task set all Fq Ids to 1.
+   Also fixes NX, SU, AN, SN, CL, TY, GC tables.
+The intent is to use this on continuum calibrator data for which the 
+FQ Ids have little distinction.  
+DO NOT use this on spectroscopic data.
+
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input UV AIPS file name     Standard defaults.
+  inClass....Input UV AIPS file class.   Standard defaults.
+  inSeq......Input UV AIPS fileseq. #.  0 => highest.
+  inDisk.....Disk drive # of input UV (FITS or AIPS). NO default
+             0 FITS => current directory
+  outDType..'FITS' or 'AIPS'  type of output
+  outName....Output UV AIPS file name    Standard defaults.
+  outClass...Output UV AIPS file class.  Standard defaults.
+  outSeq.....Output UV AIPS file seq. #. 0 => highest unique.
+  outDisk....Disk drive # of output UV (FITS or AIPS) NO default
+             0 FITS => current directory
+----------------------------------------------------------------

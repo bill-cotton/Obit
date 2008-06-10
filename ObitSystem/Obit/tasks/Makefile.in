@@ -1,0 +1,92 @@
+# $Id: Makefile.in,v 1.24 2008/05/12 14:53:43 bcotton Exp $
+#-----------------------------------------------------------------------
+#;  Copyright (C) 2002-2008
+#;  Associated Universities, Inc. Washington DC, USA.
+#;
+#;  This program is free software; you can redistribute it and/or
+#;  modify it under the terms of the GNU General Public License as
+#;  published by the Free Software Foundation; either version 2 of
+#;  the License, or (at your option) any later version.
+#;
+#;  This program is distributed in the hope that it will be useful,
+#;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#;  GNU General Public License for more details.
+#;
+#
+#;  You should have received a copy of the GNU General Public
+#;  License along with this program; if not, write to the Free
+#;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+#;  MA 02139, USA.
+#;
+#;  Correspondence concerning this software should be addressed as follows:
+#;         Internet email: bcotton@nrao.edu
+#;         Postal address: W. D. Cotton
+#;                         National Radio Astronomy Observatory
+#;                         520 Edgemont Road
+#;                         Charlottesville, VA 22903-2475 USA
+#-----------------------------------------------------------------------
+#    Makefile to build library routines
+#    Obit software
+#
+#
+#------------------------------------------------------------------------
+
+top_srcdir = @top_srcdir@
+
+# directory for architecture dependent executable files
+BINDIR = $(top_srcdir)/bin/
+
+CC = @CC@
+CPPFLAGS = @CPPFLAGS@
+CFLAGS = -Wall -fno-strict-aliasing -Wall -DFASTOBITMEM @CFLAGS@
+LDFLAGS = @LDFLAGS@
+
+SERVER_CPPFLAGS = @XMLRPC_SERVER_CPPFLAGS@
+SERVER_CFLAGS = 
+SERVER_LDFLAGS = $(LDFLAGS) @XMLRPC_SERVER_LDFLAGS@
+SERVER_LIBS =  @XMLRPC_SERVER_LIBS@ 
+
+CLIENT_CPPFLAGS = @XMLRPC_CLIENT_CPPFLAGS@
+CLIENT_CFLAGS = @ZLIB_CFLAGS@
+CLIENT_LDFLAGS = @XMLRPC_CLIENT_LDFLAGS@ @ZLIB_LDFLAGS@ 
+CLIENT_LIBS = @XMLRPC_LIBS@  @GSL_LIBS@ @ZLIB_LIBS@  \
+        @XMLRPC_CLIENT_LIBS@ 
+
+ALL_CPPFLAGS = $(CPPFLAGS) -I$(top_srcdir)/include @CFITSIO_CPPFLAGS@ \
+	@FFTW_CPPFLAGS@  @FFTW3_CPPFLAGS@  $(CLIENT_CPPFLAGS) $(SERVER_CPPFLAGS) @PLPLOT_CPPFLAGS@ \
+	@PGPLOT_CPPFLAGS@ @DEFS@
+ALL_CFLAGS = $(CFLAGS) @GLIB_CFLAGS@ @GSL_CFLAGS@ @PLPLOT_CFLAGS@ \
+	@PGPLOT_CFLAGS@  \
+	 $(CLIENT_CFLAGS) $(SERVER_CFLAGS)
+ALL_LDFLAGS = $(LDFLAGS) @CFITSIO_LDFLAGS@ @FFTW_LDFLAGS@  @FFTW3_LDFLAGS@  \
+	 @GSL_LDFLAGS@ @PLPLOT_LDFLAGS@ @PGPLOT_LDFLAGS@ \
+	$(CLIENT_LDFLAGS) $(SERVER_LDFLAGS)
+
+LIBS = ../lib/libObit.a @CFITSIO_LIBS@ @FFTW_LIBS@ @FFTW3_LIBS@ @GLIB_LIBS@ \
+	@GSL_LIBS@ @PLPLOT_LIBS@ @PGPLOT_LIBS@ $(CLIENT_LIBS) $(SERVER_LIBS) \
+	@LIBS@ @FLIBS@
+
+
+# get list of all c source files (*.c) files
+AllC    := $(wildcard *.c)
+EXECU   := $(patsubst %.c,%, $(AllC))
+TARGETS := $(addprefix $(BINDIR),$(EXECU))
+
+all: $(TARGETS)
+
+# generic C compile/link
+$(TARGETS): $(BINDIR)% : %.c ../lib/libObit.a  
+	echo "compile $*.c"
+	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS) $(ALL_LDFLAGS) $*.c -o $* $(LIBS)
+	mv $* $(BINDIR)
+
+# For specific executables
+$(EXECU): % : %.c ../lib/libObit.a  
+	$(CC) $(ALL_CPPFLAGS) $(ALL_CFLAGS) $(ALL_LDFLAGS) $< -o $* $(LIBS)
+	mv $* $(BINDIR)
+
+clean:
+	rm -f $(TARGETS)
+	rm -f *.o
+

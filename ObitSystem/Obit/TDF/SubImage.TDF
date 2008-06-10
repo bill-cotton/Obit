@@ -1,0 +1,106 @@
+; $Id: SubImage.TDF,v 1.6 2007/07/13 20:33:21 bcotton Exp $
+; SubImage
+;---------------------------------------------------------------
+;! Copy a sub region of an image
+;# Task 
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2005,2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: Bill Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+SubImage  LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+SubImage:  Task to copy a sub region of an image
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of file
+**PARAM** str 48
+inFile                             input Filename if FITS image
+**PARAM** str 12
+inName                             input AIPS Image name (name)
+**PARAM** str 6
+inClass                            input AIPS Image name (class)
+**PARAM** int 1
+inSeq            0.0       9999.0  input AIPS Image name (seq. #)
+**PARAM** int 1
+inDisk           0.0          9.0  input AIPS Disk drive #
+**PARAM** int 7
+BLC              0.0       4096.0  Bottom left corner of image
+                                     0=>entire image
+**PARAM** int 7
+TRC              0.0       4096.0  Top right corner of image
+                                     0=>entire image
+**PARAM** int 7
+inc              0.0       4096.0  increment on each axis
+                                     0=every pixel
+**PARAM** str 4
+outDType                           "FITS" or "AIPS" type of output
+**PARAM** str 48
+outFile                            output Filename if FITS image
+**PARAM** str 12
+outName                            output AIPS Image name (name)
+**PARAM** str 6
+outClass                           output AIPS Image name (class)
+**PARAM** int 1
+outSeq            0.0       9999.0 output AIPS Image name (seq. #)
+**PARAM** int 1
+outDisk           0.0          9.0 output AIPS Disk drive #
+**PARAM** boo 1
+subCC                              select CC table per plane?
+**PARAM** boo 1
+mrgCC                              merge copied CC tables?
+----------------------------------------------------------------
+SubImage
+Type: Task
+Use:  SubImage copy a subregion of an image.  For image cubes 
+where there is one CC table per channel (plane) the CC tables 
+can also be selected and merged.
+Adverbs:
+  Userid......User ID of owner of image.  0=>current user 32000=>all 
+              users
+  DataType...."FITS" or "AIPS" data for all input and output
+  inFile......Input File name if a FITS file
+  inName......input AIPS Image name(name).       Standard defaults.
+  inClass.....input AIPS Image name(class).      Standard defaults.
+  inSeq.......input AIPS Image name(seq. #).     0 => highest.
+  inDisk......input AIPS Disk drive # of image.  0 => any.
+  BLC.........The Bottom Left-hand pixel of the subarray of the image to
+              be analysed. The value (0,0) means (1,1). 1-rel
+  TRC.........The Top Right-hand pixel of the subarray of the image to
+              be analysed.  The value (0,0) means the top right hand
+              corner of the entire image.  1-rel
+  inc.........Increment on each axis to select, 1=every pixel, 0=>1
+  outDType....'FITS' or 'AIPS'  type of output
+              Defaults to DataType.
+  outFile.....Output File name if a FITS file
+  outName.....Output AIPS Image name(name). def. inName
+  outClass....Output AIPS Image name(class). def 'SUBIM'
+  outSeq......Output AIPS Image name(seq. #).     0 => highest.
+  outDisk.....Output AIPS Disk drive # of image.  0 => any.
+  subCC.......If True, then input CC tables with version numbers
+              corresponding to the plane number (third entry in
+              BLC, TRC) are copied to output starting with
+              version 1.
+  mrgCC.......If True, then merge each CC table copied.  In each 
+              table, all components on a given cell have their
+              fluxes summed resulting in a single entry per cell,
+----------------------------------------------------------------

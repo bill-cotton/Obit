@@ -1,0 +1,744 @@
+# $Id: ObitView.hlp,v 1.3 2005/09/02 01:43:01 bcotton Exp $
+                         ObitView 0.0.0
+
+-----------------------------------------------------------------------
+  Copyright (C) 2005
+  Associated Universities, Inc. Washington DC, USA.
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License as
+  published by the Free Software Foundation; either version 2 of
+  the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+-----------------------------------------------------------------------*/
+
+Please relay comments and/or suggestions to Bill Cotton at NRAO.
+
+Viewer for the Obit environment.
+This program is a viewer for astronomical images in FITS (Flexible
+Image Transport System) format.  Images in normal or gzip compressed
+form may be viewed.  An image can be displayed in a number of ways
+including colorizing the display, zoom and scroll.  In addition,
+celestial positions can be determined for locations in the image by
+clicking the left mouse button when the cursor is over the desired
+feature.
+
+   Further information can be found below on the following:
+
+              Overview
+              File Menu
+              Options Menu
+              Zoom Menu
+              Position Menu
+              Blink Menu
+              Movie Menu
+              Colorize Menu
+              Help Menu
+              Display control
+              Image position
+              Image scrolling
+              Image enhancement
+              Glossary of terms
+
+----------------------------- Overview  -----------------------------
+  
+  This viewer will display and manipulate astronomical images in FITS
+format.  The file to view  can be specified as a command line argument
+or using the Open item in the File menu.   Subsequent files can also
+be selected using the Open function.   Information about the displayed
+image can be obtained using the Image info item in the File menu. 
+If the FITS file directory contains an appropriate index, then a
+celestial position can be entered and ObitView will look up the image
+containing the position (if any) and load this image centered on the
+requested position.
+
+   This image browser can either load FITS files selected from a file
+browser or as specified through and xmlrpc interface.  Files specified
+in this later fashion can be any type supported by Obit (AIPS, FITS).
+The xmlrpc interface can also be used to interactively edit CLEAN
+boxes. 
+
+   Either interface is internet enabled for FITS files. File names of
+the form ftp://ftp.here.there.com/myFile.fits.gz or
+http://www.FaroukU.edu/~someuser/myFavorite.fits will work.
+  
+     The header of a FITS file (or the contents of a text file) may be
+previewed before deciding which image to load.  Once a file is
+displayed it can be manipulated and examined in a number of ways.  If
+the image is larger than the display, the scroll bars on the edge of
+the display will scroll around inside of the image.  Clicking the left
+mouse button in the display will result in the brightness and
+celestial position of the pixel under the cursor being displayed at
+the bottom of the Display control box.  A click on the right mouse
+button is similar except that a point model is fitted to the image
+near the selected pixel; the results are given in the Display control
+box.  These brightness and position displays can be logged to a text
+file by selecting the 'Log positions' option in the file menu.
+
+     Standard World Coordinate System (WCS) coordinates are
+supported as well as the astrometric plate parameters of the Digitized
+Sky Survey (DSS) and IRAF coordinates.  Positions can be displayed and 
+entered in either equinox B1950 or J2000 if the equinox of the image 
+is either of these.
+  
+     The brightness and contrast of the image can be adjusted using
+the horizonal scroll bars  at the top of the Display control box.
+Moving the slider to the right will increase the contrast or the
+brightness.  If the range of pixel brightness  of the portion of the
+image of interest is significantly smaller than the total range,
+contrast and brightness adjustments may be insufficient.  In this
+case, a limited range of pixel values can be displayed using the Pixel
+Range items in the Options control box,  Alternately, the nonlinear
+option in the Options menu may display the desired range of
+brightness.  Blanked pixels always appear as black. By default,
+ObitView will attempt to guess the proper pixel range to display.
+  
+     The image can be displayed in color using one of two color
+schemes, Color Contour and Pseudo Flame in the Colorize menu.  Color
+Contour is an 8 color scheme  which gives a contouring effect and
+Pseudo Flame is a continous color pseudo coloring scheme. giving the
+image a flame like quality.  Option Grayscale is a black and white
+coloring scheme.  The order of the color table (black becomes white
+etc.) is reversed using the Reverse item.   Brightness and contract
+controls also work on colorized images.  The color, contrast and
+brightness can be reset using the Reset item on the Colorize menu.
+  
+     When an image is initially loaded, generally the first plane in
+the file is displayed.  If the image contains multiple frequency or
+polarization planes, other planes can be loaded using the Plane number
+item in the Options control box.  The number and type of planes in the
+file can be determined using the Image Info item in the File menu.  A
+cube can be displayed as a movie (using the 'Movie' item in the Movie
+menu) to show a range of planes in sequence or by selecting planes at
+random.
+  
+     An image can be zoomed in or out using the Zoom menu and
+selecting the desired magnification factor.  Zooming in (factor >
+100%) is done by replicating pixels and zooming out (magnification
+<100%)  by displaying only a subset of the pixels.  Zooming is
+centered on the current scroll position controlled by the image scroll
+bars.  Selecting a zoom factor of 100% undoes the effects of zooming.
+  
+     Celestial positions determined from right mouse clicks will be
+refined by fitting a point model to the position selected.  This will
+fit an accurate position and flux assuming a point object near the
+position of the mouse click.  The results will be displayed in the
+Control Panel.  The Mark Position item in the Position menu will
+bring up a dialog box in which the celestial coordinates of an object
+of interest can be entered; alternately a list of positions can be
+given in a file.  The corresponding location(s) on the image will be
+marked.  If the current FITS directory contains a special index
+(named 'findex.txt'), then the Lookup Position item in the Position
+menu can be used to find the FITS image containing that position and
+load it.
+  
+     Two images can be compared using the Blink facility invoked by
+the Blink menu.  Blinking will alternately display one image and then
+the other.  The first image is loaded into the display and desired
+adjustments are made.  It is then copied into the Blink image using
+the 'Swap Blink and Current' item in the Blink menu.  The second image
+is then loaded into the display and adjusted as desired.  The Blink
+images item on the Blink menu will then begin blinking.  The dwell
+time on each image can be controlled using the scroll bar in the blink
+dialog box.  The Quit button on the dialog box ends blinking.  If the
+two images have pixels coincident on the sky, the zoom and scroll used
+are that for the current display (the one visible before the blink
+starts).  If the pixels are not aligned, blinking uses the scroll,
+zoom and display setup for the blink image that were in effect when it
+was copied to the Blink image and the current setup for the second
+(current) (normal display) image before the blink began.  The 'Swap
+Blink and Current' item swaps the current and blink images.
+  
+--------------------------- File Menu ---------------------------------
+  
+ 
+  This menu includes a number items related to files.  Note: the
+following may read gzip compressed files.
+  
+  Open
+  
+     This item will bring up a file browser dialog box to select the
+FITS file to load.  When a file is loaded, the previous image is
+discarded.  The title bar of the main window gives the name of the
+currently loaded file.
+     Select a FITS image from the browser and click the OK button to
+load the image.  When the file is being loaded to the display, a box
+appears with a progress message and a cancel button.  If the message
+'WARNING: BAD PIXEL RANGE' appears then all of the pixels loaded are
+at one extreme of the range of displayed brightness.  This usually
+indicates inappropriate values in the Set Pixel Range option in the
+Options dialog.  This may be the result of a previous image with a very
+different range of pixel values.  Setting both values to zero will get
+the default display.  
+  
+  Preview
+  
+     This item will display up to about 1000 lines of the header of a
+selected FITS file or text file in a scroll box.  This allows deciding
+which image to load or reading explanatory text.  The first line of
+the header of a FITS header is: 
+  SIMPLE  =                     T     /possibly some comment
+
+  A FITS image file has a line near the beginning of the form:
+  NAXIS1   =              nnn        /possibly some comment
+  
+  where nnn is an integer larger than 0.  The size of the image is
+given by the NAXIS1 and NAXIS2 entries.  Information about the image
+may be contained in HISTORY or COMMENT lines.
+
+  Save as
+
+     This item will copy the currently displayed FITS image into a 
+FITS file to be specified in a file specification dialog box.  The file
+is written in uncompressed form irregardless of the compression state of
+the input file. 
+  
+  Image info
+  
+     This item will display information about the current image
+including positions, frequencies, observation dates, etc.  The Dismiss
+button clears this display; Refresh updates the display for the
+currently loaded image.
+  
+  Log positions
+  
+     This will toggle the logging of brightnesses and positions
+selected by a mouse button click or fitting a point model to the
+image.  When this is turned on, a dialog box will allow selection of
+the text file.  The logging file contains one line per position
+containing 1) the pixel location on the first three axes, 2) the
+celestial position and equinox of the first two axes, 3) the corresponding
+brightness from the image and,  4) the name of the FITS file.  Fitted
+positions are indicated by the subcell precision of the pixel number.
+If the menu item is labeled 'Start Position Logging' then logging is
+currently disabled and selecting this item will turn it on.
+Conversely, if the item is labeled 'Stop Position Logging' then
+logging is currently active and selecting this item will turn it off.
+  
+  Quit
+  
+     This will terminate the program.
+
+  Help
+    Displays information about the file menu.
+  
+  
+--------------------------- Options Menu ------------------------------
+  
+  This menu item will bring up the Options control box which contains
+items that control the range of values loaded into the display and the
+plane in the image loaded.  These items are discussed below.
+  
+Pixel Range
+     The range of values that are present in the image plane displayed
+are shown.  The first value entered (labeled 'Minimum pixel value') is
+the minimum pixel value to be displayed and the second ('Maximum pixel
+value') is the maximum to be displayed.  Pixel values below the
+minimum are set to the minimum and above the maximum are set to the
+maximum.  0, 0 means let ObitView decide the pixel range; the default 
+should be adequate for most purposes but uses assumptions about the
+image which are true for many astronomical images but may not be
+valid especially if the features in the image are fainter than the
+"sky" level (e.g. absorption, Stokes Q, U or V or negative images).
+  
+Plane
+     If the image contains multiple planes (frequency, polarization
+etc.) the desired plane number can be specified using this item.  The
+dialog box will initially contain the current plane number and will
+tell the allowed range of values (1 - n).  Information about the
+number and type of planes may be obtained from the Image info item in
+the File menu.  Planes are numbered 1 relative.
+If many planes are to be viewed, use Movie from the Movie menu.
+  
+Linear display (radio button)
+     This option specifies a linear mapping of image pixel values to
+display colors. 
+  
+Nonlinear display (radio button)
+     This option specifies a nonlinear mapping of pixel values to
+display colors; the mapping function is the square root of the pixel
+value.  This option is useful for displaying an image with a large
+range of pixel values and uses more levels to display low brightness
+than the linear mapping.
+  
+Histogram equalization (radio button)
+     This option specifies a histogram equalization of the pixels in
+the relevant pixel range (specified or ObitView default).  This
+attempts to have equal numbers of pixels (within the range) shown in
+each of the colors of the display.  This option may be useful for
+displaying an image with interesting structure over a wide range of
+brightness. 
+  
+OK
+     This reads the current values and saves them for the next image
+load and dismisses the dialog box.
+
+Cancel
+     Dismisses the dialog box with no changes to the loading
+parameters. 
+  
+Reload
+     This option causes the currently selected image to be reloaded
+into the display using the current set of options.  This needs to be
+done after any of the other options in this dialog box have been
+changed in order for these changes to take effect.
+  
+     When the file is being loaded to the display, a box appears with
+a progress message and a cancel button.  If the message 'WARNING: BAD
+PIXEL RANGE' appears then all of the pixels loaded are at one extreme
+of the range of displayed brightness.  This usually indicates
+inappropriate values in the Set Pixel Range in the Options menu.  This
+may be the result of a previous image with a very different range of
+pixel values.  Setting both values to zero will get the default
+display.  Hitting the Cancel button cancels loading the image.
+
+  Help
+    Displays information about the option menu.
+  
+--------------------------- Zoom Menu ------------------------------
+  
+  This menu controls zooming of the image.
+  
+  25%
+  
+     This will reduce the size of the displayed image to 1/4 of its
+normal size by discarding 3 out of 4 rows and columns.
+  
+  50%
+  
+     This will reduce the size of the displayed image to 1/2 of its
+normal size by discarding alternate rows and columns.
+  
+  100%
+  
+     Resets the zoom to its initial setting.
+  
+  200%
+  
+    This magnifies the image by a factor of two by replicating pixels.
+  
+  
+  400%
+  
+    This magnifies the image by 400%.
+  
+  800%
+  
+     This magnifies the image by 800%.
+  
+  1600%
+  
+    This magnifies the image by 1600%.
+  
+  Help
+    Displays information about the zoom menu.
+  
+    
+--------------------------- Position Menu ----------------------------
+  
+  This menu contains functions related to celestial position. 
+  
+  Set Equinox
+
+   This option allows specifying the equinox (B1950 or J2000) of the
+celestial coordinates displayed or entered.  Thus, if the image is in
+J2000 coordinates and you have a position in B1950, clicking on the
+B1950 button in the Set Equinox dialog box will cause positions
+displayed after a mouse click in the image to be equinox B1950.
+Furthermore, the position specified to Mark Position will be B1950.
+See the 'Source Info' box in the file menu to determine the equinox of
+the image.
+   The dialog box invoked by this menu item has three options: 1) use
+the equinox of the image (default), 2) equinox J2000 and 3) equinox
+B1950.  Note if the image does not specify the equinox then this
+selection has no effect.
+
+  Mark Position
+  
+     This option lets you mark a particular celestial position in the
+current image. Selecting this option brings up a dialog box into which
+the desired celestial position is entered; optionally, the name of a
+text file can be given with a list of positions.  The selected
+positions are marked in the displayed image by a cross whose inner
+positions are not shown so as not to obscure the image.  The cross is
+marked in the display by replacing the previous values with that of
+the brightest pixel in the image.  These markers will persist until
+the display is reloaded with the same or another image.  Note that the
+cross may not be visible on some reduced zoom displays as the marked
+pixels may not be among those shown.  When the desired values are
+entered into this dialog box, the 'Mark' button will proceed to mark the
+image and set the scroll to center the last position marked.  The
+'cancel' button dismisses the box without marking any positions.
+  
+     The size of the cross can be controlled by the two values in the
+line labeled 'size'.  The first of these is the 'inner' size of the
+cross or the distance from the center in pixels in which the cross is
+not marked.  The second value is the 'outer' size or the distance in
+pixels from the center over which the cross appears.
+  
+     If many positions are to be marked, they can be entered in a
+text file prepared by a text editor (e.g. emacs).   Each line of this
+file should have an entry of the form: 
+  
+  RA:h RA:m RAs  Dec:d Dec:m Dec:s inner outer
+  
+  where RA:h, RA:m, RA:s are the hours, minutes and seconds of the
+Right Ascension and Dec:d, Dec:m, and Dec:s are the degrees (with
+-sign if in the south), minutes, and seconds of the Declination.
+Inner and outer are the inner and outer sizes of the marking cross in
+pixels.  
+  An example is:
+  
+    12 34 23.7898  -15 23 45.634 3 10
+  
+     To select a file containing positions, hit the 'file' button for
+a directory browser to specify the text file.  If there are positions
+in the file that are out of the image then the number of these
+positions are reported and the remainder marked. 
+  
+  Lookup Position
+
+    If the current FITS file directory contains a special index, this
+item allows specifying a celestial position and ObitView will
+determine which image (if any) contains that position, load the image,
+and center the display on that position.  The equinox of the position
+can be specified using the 'Set Equinox' option in this menu.  Once
+the desired position is entered in the dialog, the Lookup button will
+cause ObitView to attempt to find and load the desired image.  The
+cancel button dismisses the dialog with no change to the current image.
+
+   The index file in the FITS file directory should have name
+'findex.txt' and obey the following rules.
+
+line 1:
+   This line must specify the equinox of the image field centers, e.g.
+equinox 1950.
+
+lines 2...:
+   These lines give the name of the file, the central position, the
+half width (degrees) in RA and Declination and a priority number.  The
+file containing the specified position with the highest priority
+number is the one selected.  Comments may be given by putting an '!'
+in the first column.  The entry is free format (but must be confined
+to a single line) and the structure of a file entry is:
+
+filename hh mm ss.s -dd mm ss.s hw.ra  hw.dec  priority
+
+Examples follow
+! These images are from the long lost Summarian clay tablets
+!name              RA             Dec   delt_ra delt_dec priority
+sky.fit        11 23 56.234  82 17 56.7  1.87     .25      1
+south.fit.gz   17 23 54.1   -74  4 53    3.65     1        2
+
+   Note: the half width in RA is half the number of cells in RA times 
+the cell spacing divided by the cosine of the declination to account 
+for the converging lines of RA towards the poles.
+
+  Fit Position
+
+    A point model will be fitted near the position of the last left 
+mouse button click in the image.  Clicking the right mouse button will
+cause a point model to be fitted at the current position.  In either case,
+the Display control box will show the fitted position to subcell accuracy 
+as well as the brightness interpolated to that position.  If the fitting is
+successful 'fitted' will appear in the Display control else 'fit failed'
+is shown.  If logging is enabled then the fitted position is logged.
+
+  Help
+    Displays information about the position menu.
+  
+   
+--------------------------- Blink Menu ----------------------------
+  
+  This menu controls blinking.
+  
+  Swap blink and current
+  
+     This will swap the current and blink images.  An image must be
+copied to the blink image for blinking to be effective.  This item
+allows changing the color table of the blink image or examining values
+or positions in that image.  This can be used repeatedly.
+  
+  Blink images
+  
+     This will bring up a dialog control box and start blinking the
+images.  The dwell time is controlled using a scroll bar and the Quit
+button terminates blinking.  The title bar of the main window gives
+the name of the currently displayed file.  When blinking stops, the
+(previously) current image is displayed.  If the images have aligned
+pixels on the sky (the only case that makes sense) then the zoom and
+scroll of the blink image is forced to that of the current image.
+Otherwise, the zoom and scroll are those set for each of the images
+and there may be no correspondence between the pixels of the two
+images.
+
+  Help
+    Displays information about the blink menu.
+    
+--------------------------- Movie Menu ----------------------------
+  
+  
+  Movie
+  
+     This will bring up a dialog box which controls displaying planes
+in a movie-like fashion where the display is periodically updated with
+the next plane.  Planes can be shown as movies or selected manually
+using the scroll bar.  The current plane is indicated by the location
+of the slider in the scroll bar and the text lines under it giving the
+plane number and the value along this axis in the cube.  The movie
+function is controlled by the values in the text boxes labeled
+'planes' (the start plane for the movie), 'to' (the final plane for
+the movie), and 'Dwell (sec)' (the dwell time on each frame in
+seconds).  These values may be modified by clicking on the box and
+typing in new values. The movie is started using the 'Play' button and
+can be stopped prematurely by the 'Stop' button.  The movie proceeds
+through the selected range once.  NB: the speed of the movie may be
+slower than indicated by the 'Dwell' value if it takes longer than
+this to load the next plane from the disk.  The displayed plane can be
+controlled manually using the scroll bar.  The selected plane will
+remain displayed until another plane is selected.  The 'Quit' button
+exits movie mode and resumes the normal display.
+  
+  Help
+    Displays information about th movie menu.
+  
+--------------------------- Colorize Menu ----------------------------
+  
+  This menu controls the colorizing of the image which is
+intrinsically monochromatic.  The brightness and contrast controls
+will modify the color schemes.  Note: blanked pixels are always
+displayed as black.
+  
+  Color Contour
+  
+     This scheme uses a small number of colors to represent the image.
+This gives a color contour effect.
+  
+  Pseudo Flame
+  
+     This scheme uses a continous set of colors and intensities to
+represent the image with a pseudo coloring scheme giving the image a
+flame like quality. 
+  
+  Grayscale
+     
+     This function uses shades of gray to represent the image.
+  
+  Reverse colors
+     
+     This function reverses the order of the color table causing
+(nearly) black to become white etc. Blanked pixels still appear black.
+  
+  Reset colors
+  
+     This resets the colors to shades of gray and resets the
+brightness and contrast controls. 
+  
+Clear Graphics
+
+   Clears the graphics overlay (lines over image).
+
+Set Graphics Color
+
+   Gives 6 choices for the color of graphics overlay:
+   Magenta, Yellow, Red, Cyan, Blue, Green
+Any subsequent darwing (mark position or window editing) in this image
+buffer will be done in this color.  (Note: setting the inner "Mark
+Position" size to zero does a test of the window editing).
+
+  Help
+    Displays information about the Colorize menu.
+  
+  
+--------------------------- Help Menu ----------------------------
+  
+  This menu controls informative displays about the program.
+
+  About ObitView
+     Gives information about this program.
+  
+  Help
+  
+     Displays this information.
+  
+--------------------------- (Clean) Window editing -------------------
+
+                   Interactive Window Editing \n",
+   ObitView can be used as a data processing image display server to 
+interactively edit a set of windows on an image.  These are frequently
+used in the CLEAN deconvolution algorithm but is not limited to this use.
+When a client program displays an image and a window to be possibly  
+edited, the \"Request\" dialog is displayed and the client program waits 
+for a response.  This box can be used to control the editing of a window 
+and pass instructions back to the client program.  Requests are entered 
+using the following radio buttons at the top of the dialog:
+  Continue           Continue program
+  Abort              Abort program - treat as an error
+  Quit operation     Stop current interation and graceful shutdown
+  Turn Off TV        Send no more images to the display
+  View field         Send the image from the field whose 
+                     number (1-rel) is in the following text field
+                     and allow editing its window
+This is followed by a text field in which the, 1-relative, field number
+can be entered, the maximum possible value is given in the label.
+
+   The next row contains two buttons that control the editing of windows.
+Edit -  Begin interactive edit of window on current image.  
+        Instructions and other information are displayed in the dialog box.
+        This editing allows adding new windows (rectangles and circles)
+        and modification or deletion of existing windows.  
+        Note: some line segments may not be displayed with zoom factors
+        25% and 50%.
+Clear - Delete all windows
+
+   The interactive session is ended and the client program sent your
+request using the buttons on the bottom line.
+OK       Return the request in the radio buttons and the edited window
+         to the calling client.
+Cancel   cancel edit (not really implemented - equivalent to OK)
+Help     Give this help text
+
+--------------------------- Miscellaneous ----------------------------
+
+
+   xmlrpc interface.
+
+   ObitView is an xmlrpc server listening to port 8765 (subject to
+change).  Currently (Jul 05) the following functions exist:
+
+ping         sent arbitrary integer, returns "ObitView"
+loadFITS     sent filename, returns completion/failure message
+loadImage    sent file info, returns completion/failure message
+editWindow   sent Obit Clean window, returns edited version
+             or failure message
+
+clientTest.c contains test client software.
+
+   Display control
+  
+  The display control contains scroll bars to control the brightness
+and contrast of the displayed image and information about pixels
+selected in the image. 
+  
+
+   Graphics overlay
+
+   Line drawing may be superposed on images.  This is done using the
+graphics overlay.  These can be erased or color selected using items
+in the Colorize menu.
+
+   Image position
+  
+     The celestial position and brightness of a given pixel can be
+determined by clicking the left mouse button when the cursor is on the
+desired position in the image display.  The results are shown at the
+bottom of the Display control.  A more accurate position may be
+obtained for small objects using the right mouse button to select the
+pixel.  The initial position for the fitting must be within two pixels
+of the local maximum (or minimum) being fitted.
+  
+  
+     Image scrolling      
+
+     If the displayed image is larger than the display area there will
+be scroll bars on the display area.  These scroll bars can be used to
+move the visible area around on the image.
+  
+  
+  
+    Image enhancement
+  
+     The horizional scroll bars in the Display control box set the
+brightness and contrast of the image.  Moving the slider towards the
+right will increase brightness or contrast.  The scroll bars are
+labeled 'Brightness' and 'Contrast' and the value in parentheses are
+relative values between 0 and 255.  
+
+
+--------------------------- Glossary ----------------------------
+
+  Blanked pixels
+  
+     If an image has no measured value associated with a given
+pixel it is said to be blanked or invalid.  ObitView displays these
+as black.
+
+  Blinking
+  
+     Blinking is a technique for comparing images.  If the pixels in
+two images are aligned and the two are repeatedly displayed one after
+another, the details of the two can be compared.
+  
+  Celestial Position
+  
+     Celestial positions on the sky are similar to latitude and
+longitude used to measure position on the earth.  A celestial position
+consists of a 'Right Ascension', usually abreviated RA, which
+corresponds to longitude and a 'Declination', abreviated Dec,
+corresponds to latitude.  Declination is measured in degrees north
+and south of the celestial equator, the projection of the earth's
+equator onto the sky.  Right Ascension is measured in time units,
+hours, minutes and seconds of sidereal time.
+     The Earth's rotation axis wobbles with a 25,000 year period due
+to precession which causes the apparent position of a object to change
+with time.  Celestial positions are therefore usually expressed in
+terms of the earth's orientation at a set of standard times called
+Equinoxes.  The current standard equinoxes are B1950 and J2000
+corresponding to the beginnings of the years 1950 and 2000.  The J
+and B refer to the set of conventions used to 'precess' the
+coordinates (change them to another time).
+  
+  
+  Color Table
+  
+     Image displays show images by representing the value of each
+pixel by a color or gray shade. The correspondence between the pixel
+values and the color displayed is called the color table. ObitView
+uses 128 colors.
+  
+  
+  Image plane
+  
+     The simplest images consist of a single two dimensional array of
+pixels.  An image may contain several (or many) of these 2-D arrays or
+planes.  Each of the planes can be displayed as an image.  These
+planes may represent the same region of the sky at different
+times, frequencies of light or different polarization states of the 
+light.
+  
+ 
+  Pixel
+  
+     A pixel is a cell in an image; its value corresponds to the
+brightness of the image at that position.  In astronomical images a
+pixel corresponds to a location on the sky.  In images with more than
+two dimensions, pixels are sometimes called voxels. 
+  
+
+  Precession
+  
+     Precession is the wobbling of the earth's rotation axis due to
+the gravational field of the sun and moon.  This effect is like the
+wobbling of a top as it slows down.  Earth's rotational axis takes
+about 25,000 years for each cycle.
+  
+  
+  Scrolling
+  
+       If an image is larger than the display, only a portion can be
+seen at once.  Scrolling is the technique of moving the image in the
+display so that different parts are visible. 
+    
+  
+  Zooming
+  
+     Zooming an image on a display gives the visual impression of
+getting closer or further from the objects.  In this program, zooming
+in is done by copying the pixels and zooming out by dropping pixels.
+This technique either blows up a portion of the image for easier
+examination or increases the region of the image that can be shown at
+once on the display.  
+   

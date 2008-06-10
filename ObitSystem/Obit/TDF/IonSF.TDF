@@ -1,0 +1,97 @@
+; IonSF
+;---------------------------------------------------------------
+;! Convert Ionospheric movie to 2D structure func (distance,time)
+;# Task Obit
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning this software should be addressed as
+;;  follows: 
+;;         Internet email: bcotton@nrao.edu
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+IonSF    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+IonSF:  Convert Ion. movie to 2D structure func (distance,time)
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of file
+**PARAM** str 48
+inFile                             input Filename if FITS image
+**PARAM** str 12
+inName                             Input image name
+**PARAM** str 8
+inClass                            Input image class.
+**PARAM** int 1
+inSeq           0.0      9999.0    Input image seq. #. 0=>high
+**PARAM** int 1
+inDisk                             Input disk drive #. 0=>any
+**PARAM** int 7
+BLC             0.0      4096.0    Bottom left corner of image
+                                     0=>entire image
+**PARAM** int 7
+TRC             0.0      4096.0    Top right corner of image
+                                     0=>entire image
+**PARAM** str 4
+outDType                           "FITS" or "AIPS" type of output
+**PARAM** str 48
+outFile                            output Filename if FITS image
+**PARAM** str 12
+outName                            Output name.
+**PARAM** str 6
+outClass                           Output image class.
+**PARAM** int 1
+outSeq         -1.0      9999.0    Output image seq. #.
+                                     0 => highest unique
+**PARAM** int 1
+outDisk                            Output disk drive #
+                                     0 => highest with room
+----------------------------------------------------------------
+IonSF
+Type: Task
+Use:  IonSF will determine the square root of the  structure 
+function for each frame of an ionospheric movie (from IonMovie) 
+and write a 2D image with the structure function on the X axis 
+and image (time) plane.  Pixel values are in units of degrees.
+Adverbs:
+  DataType...."FITS" or "AIPS" data for all input and output
+  inFile......Input File name if a FITS file
+  inName......Input image name.
+  inClass.....Input image class.    Standard defaults.
+  inSeq.......Input image seq. #.   0 => highest.
+  inDisk......input Disk drive # of image.  0 => any.
+  BLC.........The bottom left-hand pixel of the input image
+              which becomes the bottom left corner of the
+              subimage.  The value (0,0) means (1,1).
+  TRC.........The top right-hand pixel of the input image
+              which becomes the top right corner of the
+              subimage.  The value (0,0) means take the top
+              right hand corner of the image.
+  outDType....'FITS' or 'AIPS'  type of output
+              Defaults to DataType.
+              NOTE: cfitsio inexplicably SCREWS up
+              Don't use FITS here!!!!!
+  outFile.....Output File name if a FITS file
+  outName.....Output image name. default = inName
+  outClass....Output image class.   default='IonSF'
+  outSeq......Output image seq. #.  0 => next highest
+  outDisk.....Disk drive # of output.  NO default
+----------------------------------------------------------------

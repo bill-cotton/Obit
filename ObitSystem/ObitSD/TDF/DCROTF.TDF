@@ -1,0 +1,61 @@
+; $Id: DCROTF.TDF,v 1.1 2008/01/29 02:02:55 bcotton Exp $
+; DCROTF
+;---------------------------------------------------------------
+;! Obit GBT/DCR to OTF conversion
+;# Task Obit single dish
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2008
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+DCROTF     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+DCROTF:    GBT/DCR to OTF format conversion
+**PARAM** str 4 **DEF** FITS
+DataType                            type of output (Only FITS)
+**PARAM** str 24
+Scan                                Scan for GBT/DCR FITS file
+**PARAM** str 64
+DataRoot                            Root Directory for input
+**PARAM** str 48
+outOTF                              Output FITS OTF file 
+**PARAM** int 1
+outDisk                             Output image disk drive #
+**PARAM** float 1
+offTime                             Time offset (sec)
+**PARAM** int 1
+scanNo                              Scan number, 0=GBT scan no.
+----------------------------------------------------------------
+OTFImage GBT  Continuum Backend to OTF format conversion
+Type:  Task
+ Use:  Convert archive format to Obit/OTF
+
+Adverbs:
+  Scan.......Name of scan (e.g."2006_03_08_09:10:07")
+  DataRoot...Root of GBT archive directory for project
+  outOTF.....Output OTF data file name
+  outDisk....Output OTF data file disk drive #. 
+             0=> current working directory
+  offTime....Offset in sec to be added to time
+  scanNo.....Scan number, 0=> Use GBT scan no.
+----------------------------------------------------------------

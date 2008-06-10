@@ -1,0 +1,120 @@
+; VLSSFix
+;---------------------------------------------------------------
+;! Determine and correct position errors in VLSS images
+;# Task 
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2006
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: Bill Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+VLSSFix   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+VLSSFix:  Determine and correct position errors in VLSS images
+**PARAM** str 4
+DataType                               "FITS" or "AIPS" type of input
+**PARAM** str 12
+inName                             Image name (name)
+**PARAM** str 6
+inClass                            Image name (class)
+**PARAM** int 1
+inSeq            0.0       9999.0  Image name (seq. #)
+**PARAM** int 1
+inDisk           0.0          9.0  Disk drive #
+**PARAM** str 48
+inFile                             Filename if FITS image
+**PARAM** str 48
+outFile                            output Filename if FITS image
+**PARAM** str 12
+outName                            output AIPS Image name (name)
+**PARAM** str 6
+outClass                           output AIPS Image name (class)
+**PARAM** int 1
+outSeq            0.0       9999.0 output AIPS Image name (seq. #)
+**PARAM** int 1
+outDisk           0.0          9.0 output AIPS Disk drive #
+**PARAM** int 1  **DEF** 5
+nZern              2.0        17.0 no. Zernike poly. terms
+**PARAM** boo 1  **DEF** T
+correct                            Apply corrections?
+**PARAM** str 48  **DEF** NVSSVZ.FIT
+Catalog                            Outlier catalog name (NVSSVZ.FIT)
+**PARAM** int 1   **DEF** 1 
+catDisk                            Catalog FITS disk (1)
+**PARAM** float 1 **DEF** 10.0
+MaxRMS                             Target max. rms residual (asec)
+**PARAM** float 1 **DEF** 1.0
+OutlierFlux                        Minimum estimated outlier flux density (Jy)
+**PARAM** float 1   **DEF** -0.75
+OutlierSI                          Spectral index to estimate flux density
+**PARAM** int 1 **DEF** 1
+MaxQual           2.0                Maximum acceptable calibrator quality
+**PARAM** int 1
+prtLv             0.0                Print level
+**PARAM** float 50  
+coef     $                         fitted coefficients
+----------------------------------------------------------------
+VLSSFix
+Type: Task
+Use:  VLSSFix compare sources in an VLSS image with a catalog
+      and fit a Zernike polynomial to the image and then
+      apply the correction writing a new image.
+Adverbs:
+  DataType...."FITS" or "AIPS"
+  inName......Image name(name).         Standard defaults.
+  inClass.....Image name(class).        Standard defaults.
+  inSeq.......Image name(seq. #).       0 => highest.
+  inDisk......Disk drive # of image.    0 => any.
+  inFile......Input File name if a FITS file
+  outName.....Output AIPS Image name(name). def. inName
+  outClass....Output AIPS Image name(class). def 'SUBIM'
+  outSeq......Output AIPS Image name(seq. #).     0 => highest.
+  outDisk.....Output AIPS Disk drive # of image.  0 => any.
+  outFile.....Output File name if a FITS file
+  nZern.......Number of Zernike polynomial terms, def 5
+              It is best to include all terms of a given 
+              polynomial order 2(1), 5(2), 10(3), 17(4)
+              Allowed range 2-17
+              Note: "piston" term (order zero) is ignored.
+  correct.....If true, apply corrections and write output image
+  Catalog....Name of FITS file containing catalog
+             Default  NVSSVZ.FIT
+             This must be in the form of an "AIPS VZ" table.
+  catDisk....FITS disk of catalog (def 1)
+  maxRMS.....If the rms residual exceeds this value then the 
+             most discrepant point will be iteratively flagged
+             until either 
+             1) the rms residual is acceptable
+             2) no datum contributes more than twice the average
+                variance
+             3) too few data are left for a solution.
+             default = 10 asec.
+  OutlierFlux..min. estimated flux density (Jy)
+                 default = 1.0
+  OutlierSI....Spectral index to use,   default = -0.75
+  qual........Max. allowed calibrator quality code [def 1]
+              values 0-5, lower numbers iindicate more isolation
+              from other emission
+  prtLv.......Print level in selfcal, 0=>none, larger numbers 
+              give increasing levels of diagnostics.
+  coef........[output] fitted coefficients
+----------------------------------------------------------------

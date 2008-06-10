@@ -1,0 +1,80 @@
+/* $Id: AtmCorOTF.doc,v 1.1.1.1 2004/07/19 17:04:43 bcotton Exp $ */
+
+            AtmCorOTF Atmospheric corrections to OTF data
+               -----------------------------------------
+
+   AtmCorOT applies a priori atmospheric and gain calibration to an OTF
+data set.  The results are written to a new OTFSoln table.  These
+solutions will correct for system temperature and atmospheric offsets,
+calibrate to Jy and apply any systematic corrections to the positions.
+All valid data in the input OTF file will be included.
+
+Usage: AtmCorOTF -input file
+Calculate atmospheric corrections for an Obit/OTF data file
+Arguments:
+  -input input parameter file, def AtmCorOTF.in
+
+         AtmCorOTF input file documentation
+
+   This describes the input file format for DCR2OTF.
+The input file is basically free format with a keyword=value syntax.  
+Comments follow a "#" symbol.  String keywords should have no leading or
+trailing blanks before the end of the line or a comment delimiter.
+If a numeric value is followed by a comment there should be at least one
+blank before the comment delimiter.
+
+
+   Entries not specified will assume their default values.  Parameters
+may be given in any order but only the recognized parameters given below
+are uesful. 
+
+An example follows:
+# Inputs for AtmCorOTF CBand
+$Key = infile  Str (16)
+GCCbandOTF.fits
+$Key = SOLINT  Flt (1)  # Solution interval in seconds
+15.0
+$Key = TAU0 Flt (1)     # Zenith opacity in nepers
+0.0065
+$Key = ATEMP Flt (2)    # Effective atmospheric contribution per airmass.
+.599 .605   # tau=0.006@270
+$Key = TRX Flt  (2)     # Receiver temperature per detector
+3.02 2.89   # from nominal Trx+2K and nominal low cal.
+$Key = CALJY Flt  (2)   # Noise cal value in Jy
+1.51 1.73 
+$Key = MINEL Flt  (1)   # Minimum elevation deg
+5.0
+$Key = RAoff Flt (1)    # RA offset in degrees to be added
+ 0.0
+$Key = Decoff Flt (1)   # Dec offset in degrees to be added
+ 0.0
+
+ Variables possibly read from the input_file 
+infile:   input FITS OTF file name
+     type: string
+     default: none
+
+SOLINT:   Solution interval in seconds
+     default: 30
+
+TAU0:     Zenith opacity in nepers
+     default: 0.1
+
+ATEMP:    Effective atmospheric contribution per airmass in units of cal.
+     default: none
+
+TRX:      Receiver temperature per detector in units of cal.
+     default: none
+ 
+CALJY:    Noise cal value per detector in Jy
+     default: none
+
+MINEL:    Minimum elevation deg; solutions at lower elevations flagged.
+     default: 1.0
+
+RAoff:    RA offset in degrees to be added
+     default: 0.0
+
+Decoff:   Dec offset in degrees to be added
+     default: 0.0
+

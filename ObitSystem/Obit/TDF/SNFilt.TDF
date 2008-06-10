@@ -1,0 +1,140 @@
+;SNFLT
+;---------------------------------------------------------------
+;! Filter SN table phases to remove peculiar phases
+;# Task Obit Table 
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+SNFilt    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+SNFilt    Filter SN table phases to remove peculiar phases
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                             Input UV file name (name)
+**PARAM** str 6
+inClass                            Input UV file name (class)
+**PARAM** int 1
+inSeq             0.0     9999.0   Input UV file name (seq. #)
+**PARAM** int 1
+inDisk            0.0        9.0   Input UV file disk unit #
+**PARAM** int 1  **DEF** 1
+solnIn                             Input SN table; 0=>highest
+**PARAM** int 1  **DEF** 2
+solnOut                            Output SN table; 0=>new
+**PARAM** boo 1 **DEF** F
+doGrad                             If true, include gradient
+**PARAM** boo 1 **DEF** F
+doRes                              If true, write residuals
+**PARAM** boo 1 **DEF** F
+doUnwrap                           If true, unwrap VLA phase
+**PARAM** float 1 **DEF** 10.0
+search                             Grad. search halfwidth
+**PARAM** float 1
+maxRMS                             Max. time RMS resid (deg).
+**PARAM** float 2
+timeRange                          Time range to use.
+**PARAM** int 1  **DEF** 1
+refAnt                             Reference antenna 0=>pick.
+**PARAM** float 1
+width                              Width (min) of grad. smoothing
+**PARAM** float 1 **DEF** 0.5
+alpha                              Smoothing parameter.
+**PARAM** int 1
+prtLv             0                Print level
+----------------------------------------------------------------
+SNFilt
+Task:  This task fits a model of a time invariant instrumental 
+phase and time dependent spatial phase gradients to the phases 
+in an SN table and replaces the phases with either this model 
+or only the instrumental phases.  The amplitudes are unaffected.
+This has the effect of removing the time dependent peculiar 
+phases due to small scale structure in the ionosphere.
+   This program is intended to be used for VLA 74 MHZ data to 
+process the solutions from Calib on amplitude and phase 
+calibrators before applying them to to other sources in a CL 
+table.  The phases removed by this program are generally not 
+relevant to other times and directions and will not be removed 
+by ionospheric calibration.
+   Hint: When running Calib, set refAnt to an antenna near the 
+center of the array. 
+
+Adverbs:
+  inName.....Input UV file name (name).      Standard defaults.
+  inClass....Input UV file name (class).     Standard defaults.
+  inSeq......Input UV file name (seq. #).    0 => highest.
+  inDisk.....Disk drive # of input UV file.  NO DEFAULT
+  solnIn.....Input SN table version number to process.
+             0 => highest number
+  solnOut....Output SN table version number, 0 => new table
+  doGrad.....If True include ionospheric gradient.
+             Otherwise only the instrumental component of the 
+             phases is put in the output.
+             For normal calibration, this should be False.
+  doRes......If True, write residuals from model rather than 
+             instrumental phases in output table.
+             For normal calibration, this should be False.
+  doUnwrap...If True attempt to unwrap phases down thearms of the 
+             VLA.  This process may be useful when there are 
+             large phase gradients across the VLA and doRes=False.  
+             Doesn't help for VLBA:Pt.
+             May or may not help VLA data.
+             For normal calibration, this should be False.
+  maxRMS.....Maximum allowable RMS residual (deg) per solution 
+             time, 0 => any.
+  search.....Gradient search halfwidth in units of the synthesized
+             beam FWHM.  The run time is generally dominated by the 
+             direct gradient search step and a smaller search area
+             will run faster but may not be adequate to detect 
+             periods of large phase gradient (= position offset).
+  timeRange..The timerange over which to average the input 
+             phases to form the initial guess of the 
+             instrumental phases. This may be a single scan or
+             period during which the instrument and ionosphere 
+             were both well behaved.  This can be verified by 
+             using it as the sole calibration and seeing if this
+             does a reasonable job focusing the array (IonImage).
+             Antennas which do not have data in this period will 
+             flagged in the solutions.
+             Start and end times in days relative to ref.date.  
+             Use  dhms2day to convert from human readable form
+             0s => all, which is probably a bad idea
+  refAnt.....The reference antenna to define the geometry.
+             This should be the same as used for Calib.
+             Default = 1 :'(
+  width......Width in min of smoothing of fitted gradients.
+             This is only useful if doRes=True and doGrad=False
+             and is not to be used for calibrating data.
+             If width>0.0 the the fitted gradients are smoothed.
+             The parameter controls the type of smoothing.
+  alpha......0 -> 1 = pure boxcar -> pure MWF (alpha of the 
+             center data samples are discarded and the rest 
+             averaged). 
+             This is only useful if doRes=True and doGrad=False.
+  prtLv......Diagnostic print level, 0=>none, 1=Some, 2=lots
+----------------------------------------------------------------

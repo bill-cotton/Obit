@@ -1,0 +1,4051 @@
+Obit_wrap.c
+
+[ Python Module : Obit ]
+
+
+IsAnObitObject(in)
+        [ returns int  ]
+
+ObitGetName(in)
+        [ returns char * ]
+
+AIPSDirFindCNO(disk,user,Aname,Aclass,Atype,seq,err)
+        [ returns int  ]
+        end AIPSDirFindCNO 
+
+AIPSDirHiSeq(disk,user,Aname,Aclass,Atype,err)
+        [ returns int  ]
+        end AIPSDirHiSeq 
+
+AIPSDirAlloc(disk,user,Aname,Aclass,Atype,seq,err)
+        [ returns int  ]
+        end AIPSDirAlloc 
+
+AIPSDirRemoveEntry(disk,user,cno,err)
+        [ returns void  ]
+        end AIPSDirRemoveEntry 
+
+AIPSDirNumber(disk,user,err)
+        [ returns int  ]
+        end AIPSDirNumber 
+
+AIPSDirInfo(disk,user,cno,err)
+        [ returns char * ]
+        end AIPSDirInfo 
+
+AIPSDirStatus(disk,user,cno,code,err)
+        [ returns int  ]
+        end AIPSDirStatus 
+
+AIPSSetDirname(disk,dir,err)
+        [ returns int  ]
+        end AIPSSetDirname 
+
+newBeamShape(name)
+        [ returns ObitBeamShape * ]
+        end newBeamShape
+
+BeamShapeCopy(in,out,err)
+        [ returns ObitBeamShape * ]
+        end BeamShapeCopy
+
+BeamShapeUnref(in)
+        [ returns ObitBeamShape * ]
+
+BeamShapeRef(in)
+        [ returns ObitBeamShape * ]
+
+BeamShapeCreate(name,image,pbmin,antSize,doGain)
+        [ returns ObitBeamShape * ]
+        end BeamShapeCreate
+
+BeamShapeGain(in,ra,dec,parAng)
+        [ returns float  ]
+        end BeamShapeGain
+
+BeamShapeGainSym(in,Angle)
+        [ returns float  ]
+        end BeamShapeGainSym
+
+BeamShapeGetName(in)
+        [ returns char * ]
+
+BeamShapeIsA(in)
+        [ returns int  ]
+
+1.  class BeamShape
+===================
+[ created from struct BeamShape ]
+
+
+BeamShape_me_set(self,me)
+BeamShape_me_get(self)
+        [ Member data: returns ObitBeamShape * ]
+
+new_BeamShape(name,image,pbmin,antSize,doGain)
+        [ Constructor: returns BeamShape * ]
+
+delete_BeamShape(self)
+        [ Destructor: returns void  ]
+
+----------
+
+CArrayCreate(name,ndim,naxis)
+        [ returns ObitCArray * ]
+
+CArrayCopy(in,out,err)
+        [ returns ObitCArray * ]
+        end CArrayCopy 
+
+CArrayIsCompatable(in1,in2)
+        [ returns int  ]
+
+CArrayRealloc(in,ndim,naxis)
+        [ returns ObitCArray * ]
+
+CArrayGetVal(in,pos,val)
+        [ returns void  ]
+
+CArraySetVal(in,pos,val)
+        [ returns void  ]
+
+CArrayMaxAbs(in,outValue2)
+        [ returns float  ]
+
+CArrayNeg(in)
+        [ returns void  ]
+
+CArrayConjg(in)
+        [ returns void  ]
+
+CArrayFill(in,cmpx)
+        [ returns void  ]
+
+CArraySAdd(in,scalar)
+        [ returns void  ]
+
+CArraySMul(in,scalar)
+        [ returns void  ]
+
+CArrayCSAdd(in,scalar)
+        [ returns void  ]
+
+CArrayCSMul(in,scalar)
+        [ returns void  ]
+
+CArrayAdd(in1,in2,out)
+        [ returns void  ]
+
+CArraySub(in1,in2,out)
+        [ returns void  ]
+
+CArrayMul(in1,in2,out)
+        [ returns void  ]
+
+CArrayDiv(in1,in2,out)
+        [ returns void  ]
+
+CArrayMakeF(Cin)
+        [ returns ObitFArray * ]
+
+CArrayMakeC(Fin)
+        [ returns ObitCArray * ]
+
+CArrayIsFCompatable(Cin,Fin)
+        [ returns int  ]
+
+CArrayFMul(Cin,Fin,out)
+        [ returns void  ]
+
+CArrayFDiv(Cin,Fin,out)
+        [ returns void  ]
+
+CArrayFAdd(Cin,Fin,out)
+        [ returns void  ]
+
+CArrayFRot(Cin,Fin,out)
+        [ returns void  ]
+
+CArrayComplex(Fin1,Fin2,out)
+        [ returns void  ]
+
+CArrayReal(in,out)
+        [ returns void  ]
+
+CArrayImag(in,out)
+        [ returns void  ]
+
+CArrayAmp(in,out)
+        [ returns void  ]
+
+CArrayPhase(in,out)
+        [ returns void  ]
+
+CArray2DCenter(in)
+        [ returns void  ]
+
+CArrayAddConjg(in,numConjRow)
+        [ returns ObitCArray * ]
+
+CArrayGetName(in)
+        [ returns char * ]
+        end CArrayGetName
+
+CArrayGetNdim(in)
+        [ returns long  ]
+        end CArrayGetNdim
+
+CArrayGetNaxis(in)
+        [ returns PyObject * ]
+        end CArrayGetNaxis
+
+CArrayIsA(in)
+        [ returns int  ]
+        end CArrayIsA 
+
+CArrayRef(in)
+        [ returns ObitCArray * ]
+        end CArrayRef
+
+CArrayUnref(in)
+        [ returns ObitCArray * ]
+        end CArrayUnref
+
+2.  class CArray
+================
+[ created from struct CArray ]
+
+
+CArray_me_set(self,me)
+CArray_me_get(self)
+        [ Member data: returns ObitCArray * ]
+
+new_CArray(name,ndim,naxis)
+        [ Constructor: returns CArray * ]
+
+delete_CArray(self)
+        [ Destructor: returns void  ]
+
+----------
+
+TableMF2VL(in,out,image,err)
+        [ returns void  ]
+        end TableMF2VL 
+
+TableMFPrint(in,image,prtFile,err)
+        [ returns void  ]
+        end TableMFPrint 
+
+TableVLAppend(in,out,err)
+        [ returns void  ]
+        end TableVLAppend 
+
+TableVLIndex(in,err)
+        [ returns void  ]
+        end TableVLIndex 
+
+TableVLMerge(in,err)
+        [ returns void  ]
+        end TableVLMerge 
+
+TableVLSelect(in,out,err)
+        [ returns void  ]
+        end TableVLSelect 
+
+TableVLPurge(in,field,err)
+        [ returns void  ]
+        end TableVLPurge 
+
+TableVLRedun(in,out,err)
+        [ returns void  ]
+        end TableVLRedun 
+
+TableVLPrint(in,image,prtFile,err)
+        [ returns void  ]
+        end TableVLPrint 
+
+TableVL2VZ(in,data,err)
+        [ returns ObitTable * ]
+        end TableVL2VZ 
+
+TableVZSel(in,data,err)
+        [ returns ObitTable * ]
+        end TableVL2VZ 
+
+newCleanImage(name)
+        [ returns ObitDConCleanImage * ]
+        end newCleanImage
+
+CleanImageCopy(in,out,err)
+        [ returns ObitDConCleanImage * ]
+        end CleanImageCopy
+
+CleanImageUnref(in)
+        [ returns ObitDConCleanImage * ]
+
+CleanImageRef(in)
+        [ returns ObitDConCleanImage * ]
+
+CleanImageGetList(in)
+        [ returns ObitInfoList * ]
+
+CleanImageGetImageMosaic(in)
+        [ returns ObitImageMosaic * ]
+
+CleanImageSetImageMosaic(in,mosaic)
+        [ returns void  ]
+
+CleanImageGetWindow(in)
+        [ returns ObitDConCleanWindow * ]
+
+CleanImageSetWindow(in,window)
+        [ returns void  ]
+
+CleanImageAddWindow(in,field,win,err)
+        [ returns void  ]
+        end CleanImageAddWindow 
+
+CleanImageCreate(name,mosaic,err)
+        [ returns ObitDConCleanImage * ]
+
+CleanImageDeconvolve(in,err)
+        [ returns void  ]
+
+CleanImageDefWindow(in,err)
+        [ returns void  ]
+
+CleanImageGetName(in)
+        [ returns char * ]
+
+CleanImageIsA(in)
+        [ returns int  ]
+
+3.  class CleanImage
+====================
+[ created from struct CleanImage ]
+
+
+CleanImage_me_set(self,me)
+CleanImage_me_get(self)
+        [ Member data: returns ObitDConCleanImage * ]
+
+new_CleanImage(name)
+        [ Constructor: returns CleanImage * ]
+
+delete_CleanImage(self)
+        [ Destructor: returns void  ]
+
+----------
+
+newCleanVis(name)
+        [ returns ObitDConCleanVis * ]
+        end newCleanVis
+
+CleanVisCopy(in,out,err)
+        [ returns ObitDConCleanVis * ]
+        end CleanVisCopy
+
+CleanVisUnref(in)
+        [ returns ObitDConCleanVis * ]
+
+CleanVisRef(in)
+        [ returns ObitDConCleanVis * ]
+
+CleanVisGetList(in)
+        [ returns ObitInfoList * ]
+
+CleanVisGetImageMosaic(in)
+        [ returns ObitImageMosaic * ]
+
+CleanVisSetImageMosaic(in,mosaic)
+        [ returns void  ]
+
+CleanVisGetSkyModel(in)
+        [ returns ObitSkyModel * ]
+
+CleanVisSetSkyModel(in,skymodel)
+        [ returns void  ]
+
+CleanVisGetWindow(in)
+        [ returns ObitDConCleanWindow * ]
+
+CleanVisSetWindow(in,window)
+        [ returns void  ]
+
+CleanVisAddWindow(in,field,win,err)
+        [ returns void  ]
+        end CleanVisAddWindow 
+
+CleanVisCreate(name,uvdata,err)
+        [ returns ObitDConCleanVis * ]
+
+CleanVisDeconvolve(in,err)
+        [ returns void  ]
+
+CleanVisDefWindow(in,err)
+        [ returns void  ]
+
+CleanVisReimage(in,uvdata,err)
+        [ returns int  ]
+
+CleanVisGetName(in)
+        [ returns char * ]
+
+CleanVisIsA(in)
+        [ returns int  ]
+
+4.  class CleanVis
+==================
+[ created from struct CleanVis ]
+
+
+CleanVis_me_set(self,me)
+CleanVis_me_get(self)
+        [ Member data: returns ObitDConCleanVis * ]
+
+new_CleanVis(name)
+        [ Constructor: returns CleanVis * ]
+
+delete_CleanVis(self)
+        [ Destructor: returns void  ]
+
+----------
+
+ConvUtilConv(inImage,convFn,doDivide,rescale,outImage,err)
+        [ returns void  ]
+        end ConvUtilConv 
+
+ConvUtilGaus(inImage,Maj,Min,PA)
+        [ returns ObitFArray * ]
+        end ConvUtilGaus
+
+FArrayCreate(name,ndim,naxis)
+        [ returns ObitFArray * ]
+
+FArrayGetVal(in,pos)
+        [ returns float  ]
+
+FArrayGetBlank()
+        [ returns float  ]
+
+FArraySetVal(in,pos,val)
+        [ returns void  ]
+
+FArrayGetBuf(in)
+        [ returns PyObject * ]
+
+FArrayCopy(in,out,err)
+        [ returns ObitFArray * ]
+        end FArrayCopy 
+
+FArrayClone(in,out,err)
+        [ returns ObitFArray * ]
+        end FArrayCopy 
+
+FArraySubArr(in,blc,trc,err)
+        [ returns ObitFArray * ]
+        end FArraySubArr
+
+FArrayTranspose(in,order,err)
+        [ returns ObitFArray * ]
+        end FArrayTranspose
+
+FArrayIsCompatable(in1,in2)
+        [ returns int  ]
+
+FArrayRealloc(in,ndim,naxis)
+        [ returns ObitFArray * ]
+
+FArrayMax(in,outValue2)
+        [ returns float  ]
+
+FArrayMaxAbs(in,outValue2)
+        [ returns float  ]
+
+FArrayMin(in,outValue2)
+        [ returns float  ]
+
+FArrayDeblank(in,scalar)
+        [ returns void  ]
+
+FArrayRMS(in)
+        [ returns float  ]
+
+FArrayRMS0(in)
+        [ returns float  ]
+
+FArrayRawRMS(in)
+        [ returns float  ]
+
+FArrayMode(in)
+        [ returns float  ]
+
+FArrayMean(in)
+        [ returns float  ]
+
+FArrayFill(in,scalar)
+        [ returns void  ]
+
+FArrayNeg(in)
+        [ returns void  ]
+
+FArraySin(in)
+        [ returns void  ]
+
+FArrayCos(in)
+        [ returns void  ]
+
+FArraySum(in)
+        [ returns float  ]
+
+FArrayCount(in)
+        [ returns long  ]
+
+FArraySAdd(in,scalar)
+        [ returns void  ]
+
+FArraySMul(in,scalar)
+        [ returns void  ]
+
+FArraySDiv(in,scalar)
+        [ returns void  ]
+
+FArrayClip(in,minVal,maxVal,newVal)
+        [ returns void  ]
+
+FArrayInClip(in,minVal,maxVal,newVal)
+        [ returns void  ]
+
+FArrayDivClip(in1,in2,minVal,out)
+        [ returns void  ]
+
+FArrayClipBlank(in,minVal,maxVal)
+        [ returns void  ]
+
+FArrayBlank(in1,in2,out)
+        [ returns void  ]
+
+FArraySumArr(in1,in2,out)
+        [ returns void  ]
+
+FArrayAvgArr(in1,in2,out)
+        [ returns void  ]
+
+FArrayMaxArr(in1,in2,out)
+        [ returns void  ]
+
+FArrayMinArr(in1,in2,out)
+        [ returns void  ]
+
+FArrayAdd(in1,in2,out)
+        [ returns void  ]
+
+FArraySub(in1,in2,out)
+        [ returns void  ]
+
+FArrayMul(in1,in2,out)
+        [ returns void  ]
+
+FArrayDiv(in1,in2,out)
+        [ returns void  ]
+
+FArrayDot(in1,in2)
+        [ returns float  ]
+
+FArrayMulColRow(in,row,col,out)
+        [ returns void  ]
+
+FArray2DCenter(in)
+        [ returns void  ]
+
+FArraySymInv2D(in)
+        [ returns int  ]
+
+FArrayCGauss2D(in,Cen,FWHM)
+        [ returns void  ]
+
+FArrayEGauss2D(in,amp,Cen,GauMod)
+        [ returns void  ]
+
+FArrayShiftAdd(in1,pos1,in2,pos2,scalar,out)
+        [ returns void  ]
+        end FArrayShiftAdd
+
+FArrayPad(in,out,factor)
+        [ returns void  ]
+        end FArrayPad
+
+FArraySelInc(in,out,blc,trc,inc,err)
+        [ returns void  ]
+        end FArraySelInc
+
+FArrayGetName(in)
+        [ returns char * ]
+        end FArrayGetName
+
+FArrayGetNdim(in)
+        [ returns long  ]
+        end FArrayGetNdim
+
+FArrayGetNaxis(in)
+        [ returns PyObject * ]
+        end FArrayGetNaxis
+
+FArrayIsA(in)
+        [ returns int  ]
+        end FArrayIsA 
+
+FArrayRef(in)
+        [ returns ObitFArray * ]
+        end FArrayRef
+
+FArrayUnref(in)
+        [ returns ObitFArray * ]
+        end FArrayUnref
+
+5.  class FArray
+================
+[ created from struct FArray ]
+
+
+FArray_me_set(self,me)
+FArray_me_get(self)
+        [ Member data: returns ObitFArray * ]
+
+new_FArray(name,ndim,naxis)
+        [ Constructor: returns FArray * ]
+
+delete_FArray(self)
+        [ Destructor: returns void  ]
+
+----------
+
+FArrayUtilFitCGauss(in,FWHM,center,peak,err)
+        [ returns PyObject * ]
+        end FArrayUtilFitCGauss
+
+FArrayUtilConvolve(in1,in2,err)
+        [ returns ObitFArray * ]
+        end FArrayUtilConvolve
+
+FFTCreate(name,dir,type,rank,dim)
+        [ returns ObitFFT * ]
+
+FFTSuggestSize(length)
+        [ returns int  ]
+
+FFTR2C(in,inArray,outArray)
+        [ returns void  ]
+
+FFTC2R(in,inArray,outArray)
+        [ returns void  ]
+
+FFTC2C(in,inArray,outArray)
+        [ returns void  ]
+
+FFTGetName(in)
+        [ returns char * ]
+        end FFTGetName
+
+FFTGetRank(in)
+        [ returns int  ]
+        end FFTGetRank
+
+FFTGetDim(in)
+        [ returns int * ]
+        end FFTGetDim
+
+FFTIsA(in)
+        [ returns int  ]
+        end FFTIsA 
+
+FFTRef(in)
+        [ returns ObitFFT * ]
+        end FFTRef
+
+FFTUnref(in)
+        [ returns ObitFFT * ]
+        end FFTUnref
+
+6.  class FFT
+=============
+[ created from struct FFT ]
+
+
+FFT_me_set(self,me)
+FFT_me_get(self)
+        [ Member data: returns ObitFFT * ]
+
+new_FFT(name,dir,type,rank,dim)
+        [ Constructor: returns FFT * ]
+
+delete_FFT(self)
+        [ Destructor: returns void  ]
+
+----------
+
+FInterpolateCreate(name,array,desc,hwidth)
+        [ returns ObitFInterpolate * ]
+        end FInterpolateCreate
+
+FInterpolateCopy(in,out,err)
+        [ returns ObitFInterpolate * ]
+        end FInterpolateCopy
+
+FInterpolateClone(in,out)
+        [ returns ObitFInterpolate * ]
+        end FInterpolateClone 
+
+FInterpolateReplace(in,newArray)
+        [ returns void  ]
+        end FInterpolateReplac
+
+FInterpolatePixel(in,pixel,err)
+        [ returns float  ]
+        end FInterpolatePixel 
+
+FInterpolate1D(in,pixel)
+        [ returns float  ]
+        end FInterpolate1D
+
+FInterpolatePosition(in,coord,err)
+        [ returns float  ]
+        end FInterpolatePosition
+
+FInterpolateGetList(in)
+        [ returns ObitInfoList * ]
+
+FInterpolateGetFArray(in)
+        [ returns ObitFArray * ]
+
+FInterpolateGetDesc(in)
+        [ returns ObitImageDesc * ]
+
+FInterpolateSetDesc(in,desc)
+        [ returns void  ]
+
+FInterpolateGetHwidth(in)
+        [ returns long  ]
+
+FInterpolateSetHwidth(in,hwidth)
+        [ returns void  ]
+
+FInterpolateRef(in)
+        [ returns ObitFInterpolate * ]
+        end FInterpolateRef
+
+FInterpolateUnref(in)
+        [ returns ObitFInterpolate * ]
+        end FInterpolateUnref
+
+FInterpolateIsA(in)
+        [ returns int  ]
+
+7.  class FInterpolate
+======================
+[ created from struct FInterpolate ]
+
+
+FInterpolate_me_set(self,me)
+FInterpolate_me_get(self)
+        [ Member data: returns ObitFInterpolate * ]
+
+new_FInterpolate(name,array,desc,hwidth)
+        [ Constructor: returns FInterpolate * ]
+
+delete_FInterpolate(self)
+        [ Destructor: returns void  ]
+
+----------
+
+newFitModel(name)
+        [ returns ObitFitModel * ]
+        end newFitModel
+
+FitModelCopy(in,out,err)
+        [ returns ObitFitModel * ]
+        end FitModelCopy
+
+FitModelUnref(in)
+        [ returns ObitFitModel * ]
+
+FitModelRef(in)
+        [ returns ObitFitModel * ]
+
+FitModelCreate(name,type,Peak,DeltaX,DeltaY,nparm,parms)
+        [ returns ObitFitModel * ]
+
+FitModelGetType(in)
+        [ returns int  ]
+        end FitModelGetType
+
+FitModelGetPeak(in)
+        [ returns float  ]
+        end FitModelGetPeak(
+
+FitModelGetDeltaX(in)
+        [ returns float  ]
+        end FitModelGetDeltaX
+
+FitModelGetDeltaY(in)
+        [ returns float  ]
+        end FitModelGetDeltaY
+
+FitModelGetNparm(in)
+        [ returns int  ]
+        end FitModelGetNparm
+
+FitModelGetParms(in)
+        [ returns PyObject * ]
+        end FitModelGetParms
+
+FitModelGetePeak(in)
+        [ returns float  ]
+        end FitModelGetePeak
+
+FitModelGeteDeltaX(in)
+        [ returns float  ]
+        end FitModelGeteDeltaX
+
+FitModelGeteDeltaY(in)
+        [ returns float  ]
+        end FitModelGeteDeltaY
+
+FitModelGeteParms(in)
+        [ returns PyObject * ]
+        end FitModelGeteParms
+
+FitModelSetType(in,value)
+        [ returns void  ]
+        end FitModelSetType
+
+FitModelSetPeak(in,value)
+        [ returns void  ]
+        end FitModelSetPeak
+
+FitModelSetDeltaX(in,value)
+        [ returns void  ]
+        end FitModelSetDeltaX
+
+FitModelSetDeltaY(in,value)
+        [ returns void  ]
+        end FitModelSetDeltaY
+
+FitModelSetNparm(in,value)
+        [ returns void  ]
+        end FitModelSetNparm
+
+FitModelSetParms(in,value)
+        [ returns void  ]
+        end FitModelSetParms
+
+FitModelSetePeak(in,value)
+        [ returns void  ]
+        end FitModelSetePeak
+
+FitModelSeteDeltaX(in,value)
+        [ returns void  ]
+        end FitModelSeteDeltaX
+
+FitModelSeteDeltaY(in,value)
+        [ returns void  ]
+        end FitModelSeteDeltaY
+
+FitModelSeteParms(in,value)
+        [ returns void  ]
+        end FitModelSeteParms
+
+DeconGau(in,out,desc)
+        [ returns ObitFitModel * ]
+        end DeconGau
+
+FitModelGaussErr(in,desc,irms)
+        [ returns void  ]
+        end FitModelGaussErr
+
+FitModelGetName(in)
+        [ returns char * ]
+
+FitModelIsA(in)
+        [ returns int  ]
+
+8.  class FitModel
+==================
+[ created from struct FitModel ]
+
+
+FitModel_me_set(self,me)
+FitModel_me_get(self)
+        [ Member data: returns ObitFitModel * ]
+
+new_FitModel(name,type,Peak,DeltaX,DeltaY,nparm,parms)
+        [ Constructor: returns FitModel * ]
+
+delete_FitModel(self)
+        [ Destructor: returns void  ]
+
+----------
+
+newFitRegion(name)
+        [ returns ObitFitRegion * ]
+        end newFitRegion
+
+FitRegionCopy(in,out,err)
+        [ returns ObitFitRegion * ]
+        end FitRegionCopy
+
+FitRegionUnref(in)
+        [ returns ObitFitRegion * ]
+
+FitRegionRef(in)
+        [ returns ObitFitRegion * ]
+
+FitRegionCreate(name,corner,dim,peak,peakResid,RMSResid,fluxResid)
+        [ returns ObitFitRegion * ]
+
+FitRegionSetCorner(in,value)
+        [ returns void  ]
+        end FitRegionSetCorner
+
+FitRegionSetDim(in,value)
+        [ returns void  ]
+        end FitRegionSetDim
+
+FitRegionSetPeak(in,value)
+        [ returns void  ]
+        end FitRegionSetPeak
+
+FitRegionSetPeakResid(in,value)
+        [ returns void  ]
+        end FitRegionSetPeakResid
+
+FitRegionSetRMSResid(in,value)
+        [ returns void  ]
+        end FitRegionSetRMSResid
+
+FitRegionSetFluxResid(in,value)
+        [ returns void  ]
+        end FitRegionSetFluxResid
+
+FitRegionSetNmodel(in,value)
+        [ returns void  ]
+        end FitRegionSetNmodel
+
+FitRegionSetModels(in,value,i)
+        [ returns void  ]
+        end FitRegionSetModels
+
+FitRegionGetCorner(in)
+        [ returns PyObject * ]
+        end FitRegionGetCorner
+
+FitRegionGetDim(in)
+        [ returns PyObject * ]
+        end FitRegionGetDim
+
+FitRegionGetPeak(in)
+        [ returns float  ]
+        end FitRegionGetPeak
+
+FitRegionGetPeakResid(in)
+        [ returns float  ]
+        end FitRegionGetPeakResid
+
+FitRegionGetRMSResid(in)
+        [ returns float  ]
+        end FitRegionGetRMSResid
+
+FitRegionGetFluxResid(in)
+        [ returns float  ]
+        end FitRegionGetFluxResid
+
+FitRegionGetNmodel(in)
+        [ returns int  ]
+        end FitRegionGetNmodel
+
+FitRegionGetModels(in,i)
+        [ returns ObitFitModel * ]
+        end FitRegionGetModels
+
+FitRegionGetName(in)
+        [ returns char * ]
+
+FitRegionIsA(in)
+        [ returns int  ]
+
+9.  class FitRegion
+===================
+[ created from struct FitRegion ]
+
+
+FitRegion_me_set(self,me)
+FitRegion_me_get(self)
+        [ Member data: returns ObitFitRegion * ]
+
+new_FitRegion(name,corner,dim,peak,peakResid,RMSResid,fluxResid)
+        [ Constructor: returns FitRegion * ]
+
+delete_FitRegion(self)
+        [ Destructor: returns void  ]
+
+----------
+
+FITSFileExist(disk,filename,err)
+        [ returns int  ]
+        end FITSFileExist 
+
+FITSAddDir(dir,err)
+        [ returns int  ]
+        end FITSSetDirname 
+
+HistoryCreate(name)
+        [ returns ObitHistory * ]
+        end HistoryCreate
+
+HistoryZap(in,err)
+        [ returns ObitHistory * ]
+        end HistoryZap
+
+HistoryCopy(in,out,err)
+        [ returns ObitHistory * ]
+        end HistoryCopy
+
+HistoryCopyHeader(in,out,err)
+        [ returns int  ]
+        end HistoryCopy
+
+HistoryCopy2Header(in,out,err)
+        [ returns int  ]
+        end HistoryCopy2Header
+
+HistoryHeader2Header(in,out,err)
+        [ returns int  ]
+        end HistoryHeader2Header
+
+HistoryOpen(in,access,err)
+        [ returns int  ]
+
+HistoryClose(in,err)
+        [ returns int  ]
+
+HistoryReadRec(in,recno,err)
+        [ returns PyObject * ]
+
+HistoryWriteRec(in,recno,hiCard,err)
+        [ returns int  ]
+
+HistoryTimeStamp(in,label,err)
+        [ returns int  ]
+
+HistoryUnref(in)
+        [ returns ObitHistory * ]
+
+HistoryRef(in)
+        [ returns ObitHistory * ]
+
+HistoryGetList(in)
+        [ returns ObitInfoList * ]
+
+HistoryIsA(in)
+        [ returns int  ]
+
+HistoryGetName(in)
+        [ returns char * ]
+
+10.  class History
+==================
+[ created from struct History ]
+
+
+History_me_set(self,me)
+History_me_get(self)
+        [ Member data: returns ObitHistory * ]
+
+new_History(name,info,err)
+        [ Constructor: returns History * ]
+
+delete_History(self)
+        [ Destructor: returns void  ]
+
+----------
+
+ImageDescCreate(name)
+        [ returns ObitImageDesc * ]
+        end ImageDescCreate
+
+ImageDescCopy(in,out,err)
+        [ returns ObitImageDesc * ]
+        end ImageDescCopy
+
+ImageDescCopyDesc(in,out,err)
+        [ returns void  ]
+        end ImageDescCopyDesc
+
+ImageDescDefault(name)
+        [ returns ObitImageDesc * ]
+        end ImageDescDefault
+
+ImageDescIndex(in)
+        [ returns void  ]
+        end ImageDescIndex
+
+ImageDescOverlap(in1,in2,err)
+        [ returns int  ]
+        end ImageDescOverlap
+
+ImageDescCvtPixel(in,out,inPixel,err)
+        [ returns PyObject * ]
+        end ImageDescCvtPixel
+
+ImageDescGetPos(in,inPixel,err)
+        [ returns PyObject * ]
+        end ImageDescGetPos
+
+ImageDescGetPixel(in,inPos,err)
+        [ returns PyObject * ]
+        end ImageDescGetPixel
+
+ImageDescGetList(in)
+        [ returns ObitInfoList * ]
+
+ImageDescGetDict(in)
+        [ returns PyObject * ]
+        end ImageDescGetDict
+
+ImageDescSetDict(in,inDict)
+        [ returns void  ]
+        end ImageDescSetDict
+
+ImageDescRef(in)
+        [ returns ObitImageDesc * ]
+        end ImageDescRef
+
+ImageDescUnref(in)
+        [ returns ObitImageDesc * ]
+        end ImageDescUnref
+
+ImageDescIsA(in)
+        [ returns int  ]
+
+11.  class ImageDesc
+====================
+[ created from struct ImageDesc ]
+
+
+ImageDesc_me_set(self,me)
+ImageDesc_me_get(self)
+        [ Member data: returns ObitImageDesc * ]
+
+new_ImageDesc(name)
+        [ Constructor: returns ImageDesc * ]
+
+delete_ImageDesc(self)
+        [ Destructor: returns void  ]
+
+----------
+
+newImageFit(name)
+        [ returns ObitImageFit * ]
+        end newImageFit
+
+ImageFitCopy(in,out,err)
+        [ returns ObitImageFit * ]
+        end ImageFitCopy
+
+ImageFitUnref(in)
+        [ returns ObitImageFit * ]
+
+ImageFitRef(in)
+        [ returns ObitImageFit * ]
+
+ImageFitGetList(in)
+        [ returns ObitInfoList * ]
+
+ImageFitFit(in,image,reg,err)
+        [ returns int  ]
+
+ImageFitGetName(in)
+        [ returns char * ]
+
+ImageFitIsA(in)
+        [ returns int  ]
+
+12.  class ImageFit
+===================
+[ created from struct ImageFit ]
+
+
+ImageFit_me_set(self,me)
+ImageFit_me_get(self)
+        [ Member data: returns ObitImageFit * ]
+
+new_ImageFit(name)
+        [ Constructor: returns ImageFit * ]
+
+delete_ImageFit(self)
+        [ Destructor: returns void  ]
+
+----------
+
+ImageSetFITS(in,size,disk,file,blc,trc,err)
+        [ returns void  ]
+
+ImageSetAIPS(in,size,disk,cno,user,blc,trc,err)
+        [ returns void  ]
+
+ImageCastData(inImage)
+        [ returns ObitData * ]
+        end ImageCastData
+
+ImageCreate(name)
+        [ returns ObitImage * ]
+        end ImageCreate
+
+ImageScratch(in,err)
+        [ returns ObitImage * ]
+        end ImageScratch
+
+ImageInfo(in,err)
+        [ returns PyObject * ]
+        end ImageInfo
+
+ImageZap(in,err)
+        [ returns ObitImage * ]
+        end ImageZap
+
+ImageRename(in,err)
+        [ returns void  ]
+        end ImageRename
+
+ImageCopy(in,out,err)
+        [ returns ObitImage * ]
+        end ImageCopy
+
+ImageClone(in,out,err)
+        [ returns void  ]
+        end ImageClone
+
+ImageClone2(in1,in2,out,err)
+        [ returns void  ]
+        end ImageClone
+
+ImageCloneMem(in,out,err)
+        [ returns void  ]
+        end ImageCloneMem
+
+ImageGetTable(in,access,tabType,outValue1,err)
+        [ returns ObitTable * ]
+        end ImageGetTable
+
+ImageOpen(in,access,err)
+        [ returns int  ]
+        end Open
+
+ImageDirty(in)
+        [ returns void  ]
+        end Dirty
+
+ImageClose(in,err)
+        [ returns int  ]
+        end Close
+
+ImageRead(in,err)
+        [ returns int  ]
+        end Read
+
+ImageWrite(in,err)
+        [ returns int  ]
+        end Write
+
+ImageReadFA(in,array,err)
+        [ returns int  ]
+        end ReadFA
+
+ImageWriteFA(in,array,err)
+        [ returns int  ]
+        end Write
+
+ImageGetPlane(in,outData,plane,err)
+        [ returns int  ]
+        end ImageGetPlane
+
+ImagePutPlane(in,outData,plane,err)
+        [ returns int  ]
+        end ImagePutPlane
+
+ImageZapTable(in,tabType,tabVer,err)
+        [ returns int  ]
+        end ImageZapTable
+
+ImageCopyTables(in,out,exclude,include,err)
+        [ returns int  ]
+        end CopyTables
+
+ImageUpdateTables(in,err)
+        [ returns int  ]
+        end UpdateTables
+
+ImagefullInstantiate(in,access,err)
+        [ returns int  ]
+        end ImagefullInstantiate
+
+ImageUnref(in)
+        [ returns ObitImage * ]
+
+ImageRef(in)
+        [ returns ObitImage * ]
+
+ImageGetList(in)
+        [ returns ObitInfoList * ]
+
+ImageGetTableList(in)
+        [ returns ObitTableList * ]
+
+ImageGetDesc(in)
+        [ returns ObitImageDesc * ]
+
+ImageSetDesc(in,desc)
+        [ returns void  ]
+
+ImageGetFArray(in)
+        [ returns ObitFArray * ]
+
+ImageSetFArray(in,image)
+        [ returns void  ]
+
+ImageGetBeam(in)
+        [ returns ObitImage * ]
+
+ImageSetBeam(in,beam)
+        [ returns void  ]
+
+ImageGetHighVer(in,tabType)
+        [ returns long  ]
+
+ImageisScratch(in)
+        [ returns int  ]
+
+ImageIsA(in)
+        [ returns int  ]
+
+ImageGetName(in)
+        [ returns char * ]
+
+13.  class Image
+================
+[ created from struct Image ]
+
+
+Image_me_set(self,me)
+Image_me_get(self)
+        [ Member data: returns ObitImage * ]
+
+new_Image(name)
+        [ Constructor: returns Image * ]
+
+delete_Image(self)
+        [ Destructor: returns void  ]
+
+----------
+
+newImageMosaic(name,number)
+        [ returns ObitImageMosaic * ]
+        end newImageMosaic
+
+ImageMosaicCopy(in,out,err)
+        [ returns ObitImageMosaic * ]
+        end ImageMosaicCopy
+
+ImageMosaicUnref(in)
+        [ returns ObitImageMosaic * ]
+
+ImageMosaicRef(in)
+        [ returns ObitImageMosaic * ]
+
+ImageMosaicZapImage(in,number,err)
+        [ returns void  ]
+
+ImageMosaicGetList(in)
+        [ returns ObitInfoList * ]
+
+ImageMosaicGetFullImage(in,err)
+        [ returns ObitImage * ]
+
+ImageMosaicSetFullImage(in,image,err)
+        [ returns void  ]
+
+ImageMosaicGetImage(in,number,err)
+        [ returns ObitImage * ]
+
+ImageMosaicSetImage(in,number,image,err)
+        [ returns void  ]
+
+ImageMosaicCreate(name,uvData,err)
+        [ returns ObitImageMosaic * ]
+
+ImageMosaicDefine(in,uvData,doBeam,err)
+        [ returns void  ]
+
+ImageMosaicFlatten(in,err)
+        [ returns void  ]
+
+ImageMosaicGetName(in)
+        [ returns char * ]
+
+ImageMosaicGetNumber(in)
+        [ returns int  ]
+
+ImageMosaicIsA(in)
+        [ returns int  ]
+
+14.  class ImageMosaic
+======================
+[ created from struct ImageMosaic ]
+
+
+ImageMosaic_me_set(self,me)
+ImageMosaic_me_get(self)
+        [ Member data: returns ObitImageMosaic * ]
+
+new_ImageMosaic(name,number)
+        [ Constructor: returns ImageMosaic * ]
+
+delete_ImageMosaic(self)
+        [ Destructor: returns void  ]
+
+----------
+
+ImageUtilCreateImage(inUV,fieldNo,doBeam,err)
+        [ returns ObitImage * ]
+        end ImageUtilCreateImag
+
+ImageUtilMakeImage(inUV,outImage,channel,doBeam,doWeight,err)
+        [ returns void  ]
+        end ImageUtilMakeImag
+
+ImageUtilInterpolateImage(inImage,outImage,inPlane,outPlane,hwidth,err)
+        [ returns void  ]
+        end ImageUtilInterpolateImage
+
+ImageUtilPBApply(inImage,pntImage,outImage,inPlane,outPlane,antSize,err)
+        [ returns void  ]
+        end ImageUtilPBApply
+
+ImageUtilPBImage(pntImage,outImage,outPlane,antSize,minGain,err)
+        [ returns void  ]
+        end ImageUtilPBImage
+
+ImageUtilPBCorr(inImage,pntImage,outImage,inPlane,outPlane,antSize,err)
+        [ returns void  ]
+        end ImageUtilPBCorr
+
+ImageUtilQuanFITS(inImage,fileName,disk,err)
+        [ returns ObitImage * ]
+        end ImageUtilPBCorr
+
+ImageUtilCCScale(inCCTab,startComp,endComp,scale,err)
+        [ returns void  ]
+        end ImageUtilCCScale
+
+15.  class InfoListBlob
+=======================
+[ created from struct InfoListBlob ]
+
+
+InfoListBlob_name_set(self,name)
+InfoListBlob_name_get(self)
+        [ Member data: returns char * ]
+
+InfoListBlob_type_set(self,type)
+InfoListBlob_type_get(self)
+        [ Member data: returns int  ]
+
+InfoListBlob_dim_get(self)
+        [ Member data: returns long * ]
+
+InfoListBlob_data_set(self,data)
+InfoListBlob_data_get(self)
+        [ Member data: returns void * ]
+
+----------
+
+makeInfoListBlob()
+        [ returns InfoListBlob * ]
+
+freeInfoListBlob(blob)
+        [ returns void  ]
+
+InfoListCreate()
+        [ returns ObitInfoList * ]
+        end InfoListCreate
+
+freeInfoList(in)
+        [ returns ObitInfoList * ]
+        end freeList
+
+InfoListCopy(in)
+        [ returns ObitInfoList * ]
+        end InfoListCopy
+
+InfoListRef(in)
+        [ returns ObitInfoList * ]
+        end InfoListRef
+
+InfoListUnref(in)
+        [ returns ObitInfoList * ]
+        end InfoListUnref
+
+InfoListCopyData(in,out)
+        [ returns ObitInfoList * ]
+        end InfoListCopyData
+
+InfoListRemove(in,name)
+        [ returns void  ]
+        end InfoListRemove
+
+InfoListItemResize(in,name,type,dim)
+        [ returns void  ]
+        end InfoListItemResize
+
+InfoListIsA(in)
+        [ returns int  ]
+        end InfoListListIsA
+
+InfoListPutInt(in,name,dim,data,err)
+        [ returns void  ]
+        end InfoListPutInt
+
+InfoListAlwaysPutInt(in,name,dim,data)
+        [ returns void  ]
+        end InfoListAlwaysPutInp
+
+InfoListPutLong(in,name,dim,data,err)
+        [ returns void  ]
+        end InfoListPutLong
+
+InfoListAlwaysPutLong(in,name,dim,data)
+        [ returns void  ]
+        end InfoListAlwaysPutLong
+
+InfoListPutFloat(in,name,dim,data,err)
+        [ returns void  ]
+        end InfoListPutFloat
+
+InfoListAlwaysPutFloat(in,name,dim,data)
+        [ returns void  ]
+        end InfoListAlwaysPutFloat
+
+InfoListPutDouble(in,name,dim,data,err)
+        [ returns void  ]
+        end InfoListPutDouble
+
+InfoListAlwaysPutDouble(in,name,dim,data)
+        [ returns void  ]
+        end InfoListAlwaysPutDouble
+
+InfoListPutBoolean(in,name,dim,data,err)
+        [ returns void  ]
+        end InfoListPutBoolean
+
+InfoListAlwaysPutBoolean(in,name,dim,data)
+        [ returns void  ]
+        end InfoListAlwaysPutBoolean
+
+InfoListPutString(in,name,dim,data,err)
+        [ returns void  ]
+        end InfoListPutString
+
+InfoListAlwaysPutString(in,name,dim,data)
+        [ returns void  ]
+        end InfoListAlwayPutString
+
+InfoListPutSString(in,name,dim,data,err)
+        [ returns void  ]
+        end InfoListPutSString
+
+InfoListAlwaysPutSString(in,name,dim,data)
+        [ returns void  ]
+        end InfoListAlwayPutsString
+
+InfoListGetHelper(in,name,type,dim,data,outBlob)
+        [ returns int  ]
+        end InfoListGetHelper
+
+Info2List(type,dim,data)
+        [ returns PyObject * ]
+        end Info2list
+
+InfoListGet(in,name)
+        [ returns PyObject * ]
+        end InfoListGet
+
+InfoListGetNumber(in,number)
+        [ returns PyObject * ]
+        end InfoListGetNumber
+
+InfoListGetDict(in)
+        [ returns PyObject * ]
+        end InfoListGetDict
+
+16.  class InfoList
+===================
+[ created from struct InfoList ]
+
+
+InfoList_me_set(self,me)
+InfoList_me_get(self)
+        [ Member data: returns ObitInfoList * ]
+
+new_InfoList()
+        [ Constructor: returns InfoList * ]
+
+delete_InfoList(self)
+        [ Destructor: returns void  ]
+
+----------
+
+IoN2SolNTableConvert(inUV,outSNVer,NITable,pos,err)
+        [ returns ObitTable * ]
+        end IoN2SolNTableConvert 
+
+ObitErrUnref(in)
+        [ returns ObitErr * ]
+
+ObitErrRef(in)
+        [ returns ObitErr * ]
+
+ObitErrLog(in)
+        [ returns void  ]
+
+ObitErrClear(in)
+        [ returns void  ]
+
+ObitErrIsA(in)
+        [ returns int  ]
+
+ObitErrCreate()
+        [ returns ObitErr * ]
+
+isError(in)
+        [ returns int  ]
+
+SetError(in)
+        [ returns void  ]
+
+LogError(in,eCode,message)
+        [ returns void  ]
+        end LogError
+
+OErrMsg(in)
+        [ returns char * ]
+
+Bomb()
+        [ returns void  ]
+
+17.  class OErr
+===============
+[ created from struct OErr ]
+
+
+OErr_me_set(self,me)
+OErr_me_get(self)
+        [ Member data: returns ObitErr * ]
+
+new_OErr()
+        [ Constructor: returns OErr * ]
+
+delete_OErr(self)
+        [ Destructor: returns void  ]
+
+----------
+
+Startup(pgmName,pgmNumber,AIPSuser,numberAIPSdisk,AIPSdir,numberFITSdisk,FITSdir,F_TRUE,F_FALSE,err)
+        [ returns ObitSystem * ]
+        end Startup
+
+Shutdown(in)
+        [ returns ObitSystem * ]
+        end Shutdown
+
+SystemIsInit()
+        [ returns int  ]
+        end SystemGetPgmName
+
+SystemToday()
+        [ returns char * ]
+        end SystemToday
+
+SystemGetPgmName()
+        [ returns char * ]
+        end SystemGetPgmName
+
+SystemSetPgmName(pgmName)
+        [ returns void  ]
+        end SystemSetPgmName
+
+SystemGetPgmNumber()
+        [ returns int  ]
+        end SystemGetPgmNumber
+
+SystemSetPgmNumber(pgmNumber)
+        [ returns void  ]
+        end SystemSetPgmNumber
+
+SystemGetAIPSuser()
+        [ returns int  ]
+        end SystemGetAIPSuser
+
+SystemSetAIPSuser(user)
+        [ returns void  ]
+        end SystemGetAIPSuser
+
+MemPrint()
+        [ returns void  ]
+        end MemPrint
+
+18.  class OSystem
+==================
+[ created from struct OSystem ]
+
+
+OSystem_me_set(self,me)
+OSystem_me_get(self)
+        [ Member data: returns ObitSystem * ]
+
+new_OSystem(pgmName,pgmNumber,AIPSuser,numberAIPSdisk,AIPSdir,numberFITSdisk,FITSdir,F_TRUE,F_FALSE,err)
+        [ Constructor: returns OSystem * ]
+
+delete_OSystem(self)
+        [ Destructor: returns void  ]
+
+----------
+
+ODataSetFITS(in,disk,file,err)
+        [ returns void  ]
+        end ODataSetFITS
+
+ODataSetAIPS(in,disk,cno,user,err)
+        [ returns void  ]
+
+ODataScratch(in,err)
+        [ returns ObitData * ]
+        end ODataScratch
+
+ODataZap(in,err)
+        [ returns ObitData * ]
+        end DOataZap
+
+ODataRename(in,err)
+        [ returns void  ]
+        end ODataRename
+
+ODataCopy(in,out,err)
+        [ returns ObitData * ]
+        end ODataCopy
+
+ODataClone(in,out,err)
+        [ returns void  ]
+        end ODataClone
+
+newODataTable(in,access,tabType,outValue1,err)
+        [ returns ObitTable * ]
+        end newDataTable
+
+newODataHistory(in,access,err)
+        [ returns ObitHistory * ]
+        end newODataTable
+
+ODataZapTable(in,tabType,tabVer,err)
+        [ returns int  ]
+        end ODataZapTable
+
+ODataCopyTables(in,out,exclude,include,err)
+        [ returns int  ]
+        end ODataCopyTables
+
+ODataUpdateTables(in,err)
+        [ returns int  ]
+        end ODataUpdateTables
+
+ODataFullInstantiate(in,access,err)
+        [ returns int  ]
+        end ODataFullInstantiate
+
+ODataOpen(in,access,err)
+        [ returns int  ]
+        end OOpen
+
+ODataDirty(in)
+        [ returns void  ]
+        end ODirty
+
+ODataClose(in,err)
+        [ returns int  ]
+        end OClose
+
+ODataUnref(in)
+        [ returns ObitData * ]
+
+ODataRef(in)
+        [ returns ObitData * ]
+
+ODataGetList(in)
+        [ returns ObitInfoList * ]
+
+ODataGetTableList(in)
+        [ returns ObitTableList * ]
+
+ODataGetHighVer(in,tabType)
+        [ returns long  ]
+
+ODataisScratch(in)
+        [ returns int  ]
+
+ODataIsA(in)
+        [ returns int  ]
+
+ODataGetName(in)
+        [ returns char * ]
+
+19.  class OData
+================
+[ created from struct OData ]
+
+
+OData_me_set(self,me)
+OData_me_get(self)
+        [ Member data: returns ObitData * ]
+
+new_OData(name)
+        [ Constructor: returns OData * ]
+
+delete_OData(self)
+        [ Destructor: returns void  ]
+
+----------
+
+ODisplayCreate(name,serverURL,err)
+        [ returns ObitDisplay * ]
+
+ODisplayImage(display,image,err)
+        [ returns int  ]
+        end ODisplayImage
+
+ODisplayMosaic(display,mosaic,field,err)
+        [ returns int  ]
+        end ODisplayMosaic
+
+ODisplayImageEdit(display,image,window,err)
+        [ returns int  ]
+        end ODisplayImageEdit
+
+ODisplayMosaicEdit(display,mosaic,field,window,err)
+        [ returns int  ]
+        end ODisplayMosaicEdit
+
+ODisplayIsA(in)
+        [ returns int  ]
+        end ODisplayIsA 
+
+ODisplayRef(in)
+        [ returns ObitDisplay * ]
+        end ODisplayRef
+
+ODisplayUnref(in)
+        [ returns ObitDisplay * ]
+        end ODisplayUnref
+
+ODisplayGetName(in)
+        [ returns char * ]
+        end ODisplayGetName
+
+20.  class ODisplay
+===================
+[ created from struct ODisplay ]
+
+
+ODisplay_me_set(self,me)
+ODisplay_me_get(self)
+        [ Member data: returns ObitDisplay * ]
+
+new_ODisplay(name,serverURL,err)
+        [ Constructor: returns ODisplay * ]
+
+delete_ODisplay(self)
+        [ Destructor: returns void  ]
+
+----------
+
+OPlotCreate(name)
+        [ returns ObitPlot * ]
+
+PlotInitPlot(in,output,color,nx,ny,err)
+        [ returns void  ]
+        end PlotInitPlot
+
+PlotFinishPlot(in,err)
+        [ returns void  ]
+        end PlotFinishPlot
+
+PlotCopy(in,out,err)
+        [ returns ObitPlot * ]
+        end ObitPlotCopy
+
+PlotXYPlot(in,symbol,n,x,y,err)
+        [ returns void  ]
+        end PlotXYPlot
+
+PlotXYOver(in,symbol,n,x,y,err)
+        [ returns void  ]
+        end PlotXYOver
+
+PlotXYErr(in,symbol,n,x,y,e,err)
+        [ returns void  ]
+        end PlotXYErr
+
+PlotContour(in,label,image,lev,cntfac,err)
+        [ returns void  ]
+        end PlotContour
+
+PlotMarkCross(in,image,n,ra,dec,size,err)
+        [ returns void  ]
+        end PlotMarkCross
+
+PlotSetPlot(in,xmin,xmax,ymin,ymax,just,axis,err)
+        [ returns void  ]
+        end PlotSetPlot
+
+PlotLabel(in,xlabel,ylabel,title,err)
+        [ returns void  ]
+        end ObitPlotLabel
+
+PlotDrawAxes(in,xopt,xtick,nxsub,yopt,ytick,nysub,err)
+        [ returns void  ]
+        end PlotDrawAxes
+
+PlotSetCharSize(in,cscale,err)
+        [ returns void  ]
+        end PlotSetCharSize
+
+PlotSetLineWidth(in,lwidth,err)
+        [ returns void  ]
+        end PlotSetLineWidth
+
+PlotSetColor(in,color,err)
+        [ returns void  ]
+        end PlotSetColor
+
+PlotSetPage(in,sub,err)
+        [ returns void  ]
+        end PlotSetPage
+
+PlotText(in,x,y,dx,dy,fjust,text,err)
+        [ returns void  ]
+        end PlotText
+
+PlotRelText(in,side,disp,coord,fjust,text,err)
+        [ returns void  ]
+        end PlotRelText
+
+PlotDrawLine(in,x1,y1,x2,y2,err)
+        [ returns void  ]
+        end PlotDrawLine
+
+PlotDrawCurve(in,n,x,y,err)
+        [ returns void  ]
+        end PlotDrawCurve
+
+PlotDrawSymbol(in,x,y,symbol,err)
+        [ returns void  ]
+        end PlotDrawSymbol
+
+OPlotIsA(in)
+        [ returns int  ]
+        end OPlotIsA 
+
+OPlotRef(in)
+        [ returns ObitPlot * ]
+        end OPlotRef
+
+OPlotUnref(in)
+        [ returns ObitPlot * ]
+        end OPlotUnref
+
+OPlotGetName(in)
+        [ returns char * ]
+        end OPlotGetName
+
+PlotGetList(in)
+        [ returns ObitInfoList * ]
+
+21.  class OPlot
+================
+[ created from struct OPlot ]
+
+
+OPlot_me_set(self,me)
+OPlot_me_get(self)
+        [ Member data: returns ObitPlot * ]
+
+new_OPlot(name)
+        [ Constructor: returns OPlot * ]
+
+delete_OPlot(self)
+        [ Destructor: returns void  ]
+
+----------
+
+OWindowCreate(name,mosaic,err)
+        [ returns ObitDConCleanWindow * ]
+        end OWindowCreate
+
+OWindowCreate1(name,naxis,err)
+        [ returns ObitDConCleanWindow * ]
+        end OWindowCreate1
+
+OWindowCopy(in,out,err)
+        [ returns ObitDConCleanWindow * ]
+        end OWindowCopy
+
+OWindowSetList(in,inList,field,err)
+        [ returns void  ]
+        end OWindowSetList
+
+OWindowGetList(in,field,err)
+        [ returns PyObject * ]
+        end OWindowGetList
+
+OWindowAdd(in,field,type,window,err)
+        [ returns long  ]
+        end OWindowAdd
+
+OWindowUpdate(in,field,iD,type,window,err)
+        [ returns void  ]
+        end OWindowUpdate
+
+OWindowDel(in,field,iD,err)
+        [ returns void  ]
+        end OWindowDel
+
+OWindowGetMaxID(in,field)
+        [ returns long  ]
+        end OWindowMaxID
+
+OWindowRef(in)
+        [ returns ObitDConCleanWindow * ]
+        end OWindowRef
+
+OWindowUnref(in)
+        [ returns ObitDConCleanWindow * ]
+        end OWindowUnref
+
+OWindowIsA(in)
+        [ returns int  ]
+
+22.  class OWindow
+==================
+[ created from struct OWindow ]
+
+
+OWindow_me_set(self,me)
+OWindow_me_get(self)
+        [ Member data: returns ObitDConCleanWindow * ]
+
+new_OWindow()
+        [ Constructor: returns OWindow * ]
+
+delete_OWindow(self)
+        [ Destructor: returns void  ]
+
+----------
+
+Parse(infile,list,err)
+        [ returns int  ]
+        end Parser
+
+Dump(outfile,list,err)
+        [ returns int  ]
+        end Parser
+
+SkyGeomShiftXY(ra,dec,rotate,shiftRA,shiftDec,outFlt1,outFlt2)
+        [ returns void  ]
+
+SkyGeomXYShift(ra,dec,xShift,yShift,rotate,outDbl1,outDbl2)
+        [ returns void  ]
+
+SkyGeomNewPos(type,ra0,dec0,l,m,outDbl1,outDbl2,outInt1)
+        [ returns void  ]
+
+SkyGeomWorldPos(xpix,ypix,xref,yref,xrefpix,yrefpix,xinc,yinc,rot,type,outDbl1,outDbl2)
+        [ returns int  ]
+
+SkyGeomCDpos(xpix,ypix,xref,yref,xrefpix,yrefpix,xinc,yinc,rot,cd1,cd2,type,outDbl1,outDbl2)
+        [ returns int  ]
+
+SkyGeomXYpix(xpos,ypos,xref,yref,xrefpix,yrefpix,xinc,yinc,rot,type,outFlt1,outFlt2)
+        [ returns int  ]
+
+SkyGeomCDpix(xpos,ypos,xref,yref,xrefpix,yrefpix,xinc,yinc,rot,icd1,icd2,type,outFlt1,outFlt2)
+        [ returns int  ]
+
+SkyGeomWorldPosLM(dx,dy,xref,yref,xinc,yinc,rot,type,outDbl1,outDbl2)
+        [ returns int  ]
+
+SkyGeomXYPixLM(xpos,ypos,xref,yref,xinc,yinc,rot,type,outDbl1,outDbl2)
+        [ returns int  ]
+
+SkyGeomBtoJ(outDbl1,outDbl2)
+        [ returns void  ]
+
+SkyGeomJtoB(outDbl1,outDbl2)
+        [ returns void  ]
+
+SkyGeomEq2Gal(outDbl1,outDbl2)
+        [ returns void  ]
+
+SkyGeomGal2Eq(outDbl1,outDbl2)
+        [ returns void  ]
+
+SkyGeomEq2Ec(outDbl1,outDbl2,epoch)
+        [ returns void  ]
+
+SkyGeomEc2Eq(outDbl1,outDbl2,epoch)
+        [ returns void  ]
+
+SkyGeomRADec2Zern(ra,dec,xshift,yshift,outFlt1,outFlt2,outInt1)
+        [ returns void  ]
+
+PBUtilPoly(Angle,Freq,pbmin)
+        [ returns float  ]
+
+PBUtilJinc(Angle,Freq,antSize,pbmin)
+        [ returns float  ]
+
+PBUtilRelPB(Angle,nfreq,Freq,antSize,pbmin,refFreq)
+        [ returns float  ]
+
+newSkyModel(name)
+        [ returns ObitSkyModel * ]
+        end newSkyModel
+
+SkyModelCopy(in,out,err)
+        [ returns ObitSkyModel * ]
+        end SkyModelCopy
+
+SkyModelUnref(in)
+        [ returns ObitSkyModel * ]
+
+SkyModelRef(in)
+        [ returns ObitSkyModel * ]
+
+SkyModelGetList(in)
+        [ returns ObitInfoList * ]
+
+SkyModelGetImageMosaic(in)
+        [ returns ObitImageMosaic * ]
+
+SkyModelSetImageMosaic(in,mosaic,err)
+        [ returns void  ]
+
+SkyModelCreate(name,mosaic)
+        [ returns ObitSkyModel * ]
+
+SkyModelSubUV(in,inData,outData,err)
+        [ returns void  ]
+
+SkyModelDivUV(in,inData,outData,err)
+        [ returns void  ]
+
+SkyModelCompressCC(in,err)
+        [ returns void  ]
+
+SkyModelGetName(in)
+        [ returns char * ]
+
+SkyModelIsA(in)
+        [ returns int  ]
+
+23.  class SkyModel
+===================
+[ created from struct SkyModel ]
+
+
+SkyModel_me_set(self,me)
+SkyModel_me_get(self)
+        [ Member data: returns ObitSkyModel * ]
+
+new_SkyModel(name)
+        [ Constructor: returns SkyModel * ]
+
+delete_SkyModel(self)
+        [ Destructor: returns void  ]
+
+----------
+
+newSkyModelVMIon(name)
+        [ returns ObitSkyModelVMIon * ]
+        end newSkyModelVMIon
+
+SkyModelVMIonCopy(in,out,err)
+        [ returns ObitSkyModelVMIon * ]
+        end SkyModelVMIonCopy
+
+SkyModelVMIonUnref(in)
+        [ returns ObitSkyModelVMIon * ]
+
+SkyModelVMIonRef(in)
+        [ returns ObitSkyModelVMIon * ]
+
+SkyModelVMIonGetList(in)
+        [ returns ObitInfoList * ]
+
+SkyModelVMIonCreate(name,mosaic)
+        [ returns ObitSkyModelVMIon * ]
+
+SkyModelVMIonGetName(in)
+        [ returns char * ]
+
+SkyModelVMIonIsA(in)
+        [ returns int  ]
+
+24.  class SkyModelVMIon
+========================
+[ created from struct SkyModelVMIon ]
+
+
+SkyModelVMIon_me_set(self,me)
+SkyModelVMIon_me_get(self)
+        [ Member data: returns ObitSkyModelVMIon * ]
+
+new_SkyModelVMIon(name)
+        [ Constructor: returns SkyModelVMIon * ]
+
+delete_SkyModelVMIon(self)
+        [ Destructor: returns void  ]
+
+----------
+
+newSpectrumFit(name)
+        [ returns ObitSpectrumFit * ]
+        end newSpectrumFit
+
+SpectrumFitCopy(in,out,err)
+        [ returns ObitSpectrumFit * ]
+        end SpectrumFitCopy
+
+SpectrumFitUnref(in)
+        [ returns ObitSpectrumFit * ]
+
+SpectrumFitRef(in)
+        [ returns ObitSpectrumFit * ]
+
+SpectrumFitCreate(name,nterm)
+        [ returns ObitSpectrumFit * ]
+
+SpectrumFitCube(in,inImage,outImage,err)
+        [ returns void  ]
+
+SpectrumFitImArr(in,nimage,imArr,outImage,err)
+        [ returns void  ]
+        end SpectrumFitImArr 
+
+SpectrumFitEval(in,inImage,outFreq,outImage,err)
+        [ returns void  ]
+
+SpectrumFitSingle(nfreq,nterm,freq,flux,sigma,err)
+        [ returns PyObject * ]
+        end SpectrumFitPixel
+
+SpectrumFitGetList(in)
+        [ returns ObitInfoList * ]
+
+SpectrumFitGetName(in)
+        [ returns char * ]
+
+SpectrumFitIsA(in)
+        [ returns int  ]
+
+25.  class SpectrumFit
+======================
+[ created from struct SpectrumFit ]
+
+
+SpectrumFit_me_set(self,me)
+SpectrumFit_me_get(self)
+        [ Member data: returns ObitSpectrumFit * ]
+
+new_SpectrumFit(name,nterm)
+        [ Constructor: returns SpectrumFit * ]
+
+delete_SpectrumFit(self)
+        [ Destructor: returns void  ]
+
+----------
+
+TableAN(inData,tabVer,access,tabName,numOrb,numPCal,err)
+        [ returns ObitTable * ]
+
+TableANGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableANSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableAT(inData,tabVer,access,tabName,numBand,err)
+        [ returns ObitTable * ]
+
+TableATGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableATSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableBL(inData,tabVer,access,tabName,numPol,numIF,err)
+        [ returns ObitTable * ]
+
+TableBLGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableBLSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableBP(inData,tabVer,access,tabName,numPol,numIF,numChan,err)
+        [ returns ObitTable * ]
+
+TableBPGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableBPSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableCC(inData,tabVer,access,tabName,noParms,err)
+        [ returns ObitTable * ]
+
+TableCCGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableCCSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableCL(inData,tabVer,access,tabName,numPol,numIF,numTerm,err)
+        [ returns ObitTable * ]
+
+TableCLGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableCLSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableCQ(inData,tabVer,access,tabName,numIF,err)
+        [ returns ObitTable * ]
+
+TableCQGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableCQSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableCT(inData,tabVer,access,tabName,numBand,err)
+        [ returns ObitTable * ]
+
+TableCTGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableCTSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableDescDeeBlank(in)
+        [ returns void  ]
+        end TableDescDeeBlank
+
+TableDescCreate(name)
+        [ returns ObitTableDesc * ]
+        end TableDescCreate
+
+TableDescCopy(in,out,err)
+        [ returns ObitTableDesc * ]
+        end TableDescCopy
+
+TableDescCopyDesc(in,out,err)
+        [ returns void  ]
+        end TableDescCopyDesc
+
+TableDescIndex(in)
+        [ returns void  ]
+        end TableDescIndex
+
+TableDescGetList(in)
+        [ returns ObitInfoList * ]
+
+TableDescGetDict(in)
+        [ returns PyObject * ]
+        end TableDescGetDict
+
+TableDescSetDict(in,inDict)
+        [ returns void  ]
+        end TableDescSetDict
+
+TableDescDef(inDict)
+        [ returns ObitTableDesc * ]
+        end TableDescDef
+
+TableDescRef(in)
+        [ returns ObitTableDesc * ]
+        end TableDescRef
+
+TableDescUnref(in)
+        [ returns ObitTableDesc * ]
+        end TableDescUnref
+
+TableDescIsA(in)
+        [ returns int  ]
+
+26.  class TableDesc
+====================
+[ created from struct TableDesc ]
+
+
+TableDesc_me_set(self,me)
+TableDesc_me_get(self)
+        [ Member data: returns ObitTableDesc * ]
+
+new_TableDesc(name)
+        [ Constructor: returns TableDesc * ]
+
+delete_TableDesc(self)
+        [ Destructor: returns void  ]
+
+----------
+
+TableFG(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableFGGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableFGSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableFQ(inData,tabVer,access,tabName,numIF,err)
+        [ returns ObitTable * ]
+
+TableFQGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableFQSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableGC(inData,tabVer,access,tabName,numBand,numPol,numTabs,err)
+        [ returns ObitTable * ]
+
+TableGCGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableGCSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableHistory(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableHistoryGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableHistorySetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableIDI_ANTENNA(inData,tabVer,access,tabName,no_band,numPCal,err)
+        [ returns ObitTable * ]
+
+TableIDI_ANTENNAGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableIDI_ANTENNASetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableIDI_ARRAY_GEOMETRY(inData,tabVer,access,tabName,no_band,numOrb,err)
+        [ returns ObitTable * ]
+
+TableIDI_ARRAY_GEOMETRYGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableIDI_ARRAY_GEOMETRYSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableIDI_FREQUENCY(inData,tabVer,access,tabName,no_band,err)
+        [ returns ObitTable * ]
+
+TableIDI_FREQUENCYGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableIDI_FREQUENCYSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableIDI_SOURCE(inData,tabVer,access,tabName,no_band,err)
+        [ returns ObitTable * ]
+
+TableIDI_SOURCEGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableIDI_SOURCESetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableIDI_UV_DATA(inData,tabVer,access,tabName,no_band,maxis1,maxis2,maxis3,maxis4,maxis5,err)
+        [ returns ObitTable * ]
+
+TableIDI_UV_DATAGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableIDI_UV_DATASetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableIM(inData,tabVer,access,tabName,numBand,numPol,npoly,err)
+        [ returns ObitTable * ]
+
+TableIMGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableIMSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableDeeBlank(in)
+        [ returns void  ]
+        end TableDeeBlank
+
+TableCreate(name)
+        [ returns ObitTable * ]
+        end TableCreate
+
+TableZap(in,err)
+        [ returns ObitTable * ]
+        end TableZap
+
+TableCopy(in,out,err)
+        [ returns ObitTable * ]
+        end TableCopy
+
+TableClone(in,out)
+        [ returns ObitTable * ]
+        end TableClone
+
+TableConcat(in,out,err)
+        [ returns void  ]
+        end TableCopy
+
+TablefullInstantiate(in,access,err)
+        [ returns int  ]
+        end TablefullInstantiate
+
+TableOpen(in,access,err)
+        [ returns int  ]
+        end Open
+
+TableDirty(in)
+        [ returns void  ]
+        end Dirty
+
+TableClose(in,err)
+        [ returns int  ]
+        end Close
+
+TableReadRow(in,rowno,err)
+        [ returns PyObject * ]
+        end TableReadRow
+
+TableWriteRow(in,rowno,inDict,err)
+        [ returns int  ]
+        end TableWriteRow
+
+TableUnref(in)
+        [ returns ObitTable * ]
+
+TableRef(in)
+        [ returns ObitTable * ]
+
+TableGetList(in)
+        [ returns ObitInfoList * ]
+
+TableGetIOList(in)
+        [ returns ObitInfoList * ]
+
+TableGetDesc(in)
+        [ returns ObitTableDesc * ]
+
+TableGetIODesc(in)
+        [ returns ObitTableDesc * ]
+
+TableSetDesc(in,desc)
+        [ returns void  ]
+
+TableGetVer(in)
+        [ returns long  ]
+
+TableIsA(in)
+        [ returns int  ]
+
+TableGetName(in)
+        [ returns char * ]
+
+TableUtilSort(in,colName,desc,err)
+        [ returns int  ]
+
+27.  class Table
+================
+[ created from struct Table ]
+
+
+Table_me_set(self,me)
+Table_me_get(self)
+        [ Member data: returns ObitTable * ]
+
+new_Table(name)
+        [ Constructor: returns Table * ]
+
+delete_Table(self)
+        [ Destructor: returns void  ]
+
+----------
+
+TableListCreate(name)
+        [ returns ObitTableList * ]
+        end TableListCreate
+
+TableListCopy(in,out,err)
+        [ returns ObitTableList * ]
+        end TableListCopy
+
+TableListGetList(in,err)
+        [ returns PyObject * ]
+        end TableListGetList
+
+TableListGetHigh(in,tabType)
+        [ returns long  ]
+        end TableListGetHigh
+
+TableListPutHi(in,err)
+        [ returns void  ]
+        end TableListPutHi
+
+TableListRef(in)
+        [ returns ObitTableList * ]
+        end TableListRef
+
+TableListUnref(in)
+        [ returns ObitTableList * ]
+        end TableListUnref
+
+TableListIsA(in)
+        [ returns int  ]
+
+28.  class TableList
+====================
+[ created from struct TableList ]
+
+
+TableList_me_set(self,me)
+TableList_me_get(self)
+        [ Member data: returns ObitTableList * ]
+
+new_TableList(name)
+        [ Constructor: returns TableList * ]
+
+delete_TableList(self)
+        [ Destructor: returns void  ]
+
+----------
+
+TableMC(inData,tabVer,access,tabName,numBand,numPol,err)
+        [ returns ObitTable * ]
+
+TableMCGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableMCSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableMF(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableMFGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableMFSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableNI(inData,tabVer,access,tabName,numCoef,err)
+        [ returns ObitTable * ]
+
+TableNIGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableNISetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableNX(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableNXGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableNXSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableOB(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableOBGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableOBSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableOF(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableOFGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableOFSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TablePC(inData,tabVer,access,tabName,numPol,numBand,numTones,err)
+        [ returns ObitTable * ]
+
+TablePCGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TablePCSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TablePS(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TablePSGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TablePSSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableSN(inData,tabVer,access,tabName,numPol,numIF,err)
+        [ returns ObitTable * ]
+
+TableSNGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableSNSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableSU(inData,tabVer,access,tabName,numIF,err)
+        [ returns ObitTable * ]
+
+TableSUGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableSUSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableTY(inData,tabVer,access,tabName,numPol,numIF,err)
+        [ returns ObitTable * ]
+
+TableTYGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableTYSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableCCUtilMerge(in,out,err)
+        [ returns olong  ]
+        end TableCCUtilMerge
+
+TableVL(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableVLGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableVLSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableVZ(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableVZGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableVZSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableWX(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableWXGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableWXSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TimeFilterCreate(name,nTime,nSeries)
+        [ returns ObitTimeFilter * ]
+
+TimeFilterResize(in,nTime)
+        [ returns void  ]
+        end TimeFilterResize
+
+TimeFilterGridTime(in,seriesNo,dTime,nTime,times,data)
+        [ returns void  ]
+        end TimeFilterGridTime
+
+TimeFilterUngridTime(in,seriesNo,nTime,times)
+        [ returns PyObject * ]
+        end TimeFilterUngridTime
+
+TimeFilter2Freq(in)
+        [ returns void  ]
+        end TimeFilter2Freq
+
+TimeFilter2Time(in)
+        [ returns void  ]
+        end TimeFilter2Time
+
+TimeFilterFilter(in,seriesNo,type,parms,err)
+        [ returns void  ]
+        end TimeFilterFilter
+
+TimeFilterDoFilter(in,seriesNo,type,parms,err)
+        [ returns void  ]
+        end TimeFilterDoFilter
+
+TimeFilterPlotPower(in,seriesNo,label,err)
+        [ returns void  ]
+        end TimeFilter
+
+TimeFilterPlotTime(in,seriesNo,label,err)
+        [ returns void  ]
+        end TimeFilter
+
+TimeFilterIsA(in)
+        [ returns int  ]
+        end TimeFilterIsA 
+
+TimeFilterRef(in)
+        [ returns ObitTimeFilter * ]
+        end TimeFilterRef
+
+TimeFilterUnref(in)
+        [ returns ObitTimeFilter * ]
+        end TimeFilterUnref
+
+TimeFilterGetName(in)
+        [ returns char * ]
+        end TimeFilterGetName
+
+TimeFilterGetTime(in,seriesNo)
+        [ returns PyObject * ]
+        end TimeFilterGetTime
+
+TimeFilterGetFreq(in,seriesNo)
+        [ returns PyObject * ]
+        end TimeFilterGetFreq
+
+TimeFilterSetTime(in,seriesNo,inDict)
+        [ returns void  ]
+        end TimeFilterSetTime
+
+TimeFilterSetFreq(in,seriesNo,inDict)
+        [ returns void  ]
+        end TimeFilterSetFreq
+
+29.  class TimeFilter
+=====================
+[ created from struct TimeFilter ]
+
+
+TimeFilter_me_set(self,me)
+TimeFilter_me_get(self)
+        [ Member data: returns ObitTimeFilter * ]
+
+new_TimeFilter(name,nTime,nSeries)
+        [ Constructor: returns TimeFilter * ]
+
+delete_TimeFilter(self)
+        [ Destructor: returns void  ]
+
+----------
+
+UVDescCreate(name)
+        [ returns ObitUVDesc * ]
+        end UVDescCreate
+
+UVDescCopy(in,out,err)
+        [ returns ObitUVDesc * ]
+        end UVDescCopy
+
+UVDescCopyDesc(in,out,err)
+        [ returns void  ]
+        end UVDescCopyDesc
+
+UVDescIndex(in)
+        [ returns void  ]
+        end UVDescIndex
+
+UVDescGetList(in)
+        [ returns ObitInfoList * ]
+
+UVDescGetDict(in)
+        [ returns PyObject * ]
+        end UVDescGetDict
+
+UVDescSetDict(in,inDict)
+        [ returns void  ]
+        end UVDescSetDict
+
+UVDescRef(in)
+        [ returns ObitUVDesc * ]
+        end UVDescRef
+
+UVDescUnref(in)
+        [ returns ObitUVDesc * ]
+        end UVDescUnref
+
+UVDescIsA(in)
+        [ returns int  ]
+
+30.  class UVDesc
+=================
+[ created from struct UVDesc ]
+
+
+UVDesc_me_set(self,me)
+UVDesc_me_get(self)
+        [ Member data: returns ObitUVDesc * ]
+
+new_UVDesc(name)
+        [ Constructor: returns UVDesc * ]
+
+delete_UVDesc(self)
+        [ Destructor: returns void  ]
+
+----------
+
+newUVGSolve(name)
+        [ returns ObitUVGSolve * ]
+        end newUVGSolve
+
+UVGSolveCreate(name)
+        [ returns ObitUVGSolve * ]
+
+UVGSolveCopy(in,out,err)
+        [ returns ObitUVGSolve * ]
+        end UVGSolveCopy
+
+UVGSolveUnref(in)
+        [ returns ObitUVGSolve * ]
+
+UVGSolveRef(in)
+        [ returns ObitUVGSolve * ]
+
+UVGSolveGetList(in)
+        [ returns ObitInfoList * ]
+
+UVGSolveIsA(in)
+        [ returns int  ]
+
+UVGSolveCal(in,inUV,outUV,sel,err)
+        [ returns ObitTable * ]
+        end UVGSolveCal
+
+31.  class UVGSolve
+===================
+[ created from struct UVGSolve ]
+
+
+UVGSolve_me_set(self,me)
+UVGSolve_me_get(self)
+        [ Member data: returns ObitUVGSolve * ]
+
+new_UVGSolve(name)
+        [ Constructor: returns UVGSolve * ]
+
+delete_UVGSolve(self)
+        [ Destructor: returns void  ]
+
+----------
+
+newUVImager(name)
+        [ returns ObitUVImager * ]
+        end newUVImager
+
+UVImagerCopy(in,out,err)
+        [ returns ObitUVImager * ]
+        end UVImagerCopy
+
+UVImagerUnref(in)
+        [ returns ObitUVImager * ]
+
+UVImagerRef(in)
+        [ returns ObitUVImager * ]
+
+UVImagerGetUV(in)
+        [ returns ObitUV * ]
+
+UVImagerGetMosaic(in,err)
+        [ returns ObitImageMosaic * ]
+
+UVImagerCreate(name,uvData,err)
+        [ returns ObitUVImager * ]
+
+UVImagerWeight(in,err)
+        [ returns void  ]
+
+UVImagerImage(in,field,doWeight,doBeam,doFlatten,err)
+        [ returns void  ]
+
+UVImagerFlatten(in,err)
+        [ returns void  ]
+
+UVImagerGetName(in)
+        [ returns char * ]
+
+UVImagerIsA(in)
+        [ returns int  ]
+
+32.  class UVImager
+===================
+[ created from struct UVImager ]
+
+
+UVImager_me_set(self,me)
+UVImager_me_get(self)
+        [ Member data: returns ObitUVImager * ]
+
+new_UVImager(name,uvData,err)
+        [ Constructor: returns UVImager * ]
+
+delete_UVImager(self)
+        [ Destructor: returns void  ]
+
+----------
+
+UVSetFITS(in,nvis,disk,file,err)
+        [ returns void  ]
+        end UVSetFITS
+
+UVSetAIPS(in,nvis,disk,cno,user,err)
+        [ returns void  ]
+
+UVCastData(inUV)
+        [ returns ObitData * ]
+        end UVCastData
+
+UVCreate(name)
+        [ returns ObitUV * ]
+        end UVCreate
+
+UVScratch(in,err)
+        [ returns ObitUV * ]
+        end UVScratch
+
+UVInfo(in,err)
+        [ returns PyObject * ]
+        end UVInfo
+
+UVZap(in,err)
+        [ returns ObitUV * ]
+        end UVZap
+
+UVRename(in,err)
+        [ returns void  ]
+        end UVRename
+
+UVCopy(in,out,err)
+        [ returns ObitUV * ]
+        end UVCopy
+
+UVClone(in,out,err)
+        [ returns void  ]
+        end UVClone
+
+newUVTable(in,access,tabType,outValue1,err)
+        [ returns ObitTable * ]
+        end newUVTable
+
+UVZapTable(in,tabType,tabVer,err)
+        [ returns int  ]
+        end UVZapTable
+
+UVCopyTables(in,out,exclude,include,err)
+        [ returns int  ]
+        end UVCopyTables
+
+UVUpdateTables(in,err)
+        [ returns int  ]
+        end UVUpdateTables
+
+UVfullInstantiate(in,access,err)
+        [ returns int  ]
+        end UVfullInstantiate
+
+UVOpen(in,access,err)
+        [ returns int  ]
+        end Open
+
+UVRead(in,err)
+        [ returns int  ]
+        end Read
+
+UVWrite(in,err)
+        [ returns int  ]
+        end Write
+
+UVRewrite(in,err)
+        [ returns int  ]
+        end Write
+
+UVGetVisBuf(in)
+        [ returns PyObject * ]
+
+UVDirty(in)
+        [ returns void  ]
+        end Dirty
+
+UVClose(in,err)
+        [ returns int  ]
+        end Close
+
+UVWeightData(in,err)
+        [ returns void  ]
+        end UVWeightData
+
+UVGetFreq(in,err)
+        [ returns void  ]
+        end UVGetFreq
+
+UVGetSubA(in,err)
+        [ returns ObitIOCode  ]
+        end UVGetSubA
+
+UVUnref(in)
+        [ returns ObitUV * ]
+
+UVRef(in)
+        [ returns ObitUV * ]
+
+UVGetList(in)
+        [ returns ObitInfoList * ]
+
+UVGetTableList(in)
+        [ returns ObitTableList * ]
+
+UVGetHighVer(in,tabType)
+        [ returns long  ]
+
+UVGetDesc(in)
+        [ returns ObitUVDesc * ]
+
+UVSetDesc(in,desc)
+        [ returns void  ]
+
+UVisScratch(in)
+        [ returns int  ]
+
+UVIsA(in)
+        [ returns int  ]
+
+UVGetName(in)
+        [ returns char * ]
+
+UVUtilUVWExtrema(in,err,val)
+        [ returns void  ]
+        end UVUtilUVWExtrema
+
+UVUtilCopyZero(in,scratch,out,err)
+        [ returns ObitUV * ]
+        end UVUtilCopyZero
+
+UVUtilVisDivide(in1,in2,out,err)
+        [ returns void  ]
+        end UVUtilVisDivide
+
+UVUtilVisSub(in1,in2,out,err)
+        [ returns void  ]
+        end UVUtilVisSub
+
+UVUtilVisCompare(in1,in2,err)
+        [ returns float  ]
+        end UVUtilVisCompare
+
+UVUtilIndex(inUV,err)
+        [ returns void  ]
+        end UVUtilVisIndex
+
+UVUtilAvgF(in,scratch,out,err)
+        [ returns ObitUV * ]
+        end UVUtilAvgF
+
+UVUtilAvgT(in,scratch,out,err)
+        [ returns ObitUV * ]
+        end UVUtilAvgT
+
+UVUtilCount(inUV,timeInt,err)
+        [ returns ObitInfoList * ]
+        end UVUtilCount
+
+UVEditTD(in,out,err)
+        [ returns void  ]
+        end UVEditTD
+
+UVEditFD(in,out,err)
+        [ returns void  ]
+        end UVEditFD
+
+UVEditStokes(in,out,err)
+        [ returns void  ]
+        end UVEditStokes
+
+UVEditClip(in,scratch,out,err)
+        [ returns ObitUV * ]
+        end UVEditClip
+
+UVEditClipStokes(in,scratch,out,err)
+        [ returns ObitUV * ]
+        end UVUtilClipStokes
+
+33.  class UV
+=============
+[ created from struct UV ]
+
+
+UV_me_set(self,me)
+UV_me_get(self)
+        [ Member data: returns ObitUV * ]
+
+new_UV(name)
+        [ Constructor: returns UV * ]
+
+delete_UV(self)
+        [ Destructor: returns void  ]
+
+----------
+
+newUVSelfCal(name)
+        [ returns ObitUVSelfCal * ]
+        end newUVSelfCal
+
+UVSelfCalCreate(name,skyModel)
+        [ returns ObitUVSelfCal * ]
+
+UVSelfCalCopy(in,out,err)
+        [ returns ObitUVSelfCal * ]
+        end UVSelfCalCopy
+
+UVSelfCalUnref(in)
+        [ returns ObitUVSelfCal * ]
+
+UVSelfCalRef(in)
+        [ returns ObitUVSelfCal * ]
+
+UVSelfCalGetList(in)
+        [ returns ObitInfoList * ]
+
+UVSelfCalGetSkyModel(in)
+        [ returns ObitSkyModel * ]
+
+UVSelfCalSetSkyModel(in,skyModel,err)
+        [ returns void  ]
+
+UVSelfCalIsA(in)
+        [ returns int  ]
+
+34.  class UVSelfCal
+====================
+[ created from struct UVSelfCal ]
+
+
+UVSelfCal_me_set(self,me)
+UVSelfCal_me_get(self)
+        [ Member data: returns ObitUVSelfCal * ]
+
+new_UVSelfCal(name)
+        [ Constructor: returns UVSelfCal * ]
+
+delete_UVSelfCal(self)
+        [ Destructor: returns void  ]
+
+----------
+
+UVSoln2Cal(inUV,outUV,err)
+        [ returns ObitTable * ]
+        end UVSoln2Cal
+
+UVSolnRefAnt(SNTab,isuba,refant,err)
+        [ returns int  ]
+        end UVSolnRefAnt
+
+UVSolnSNSmo(SNTab,isuba,err)
+        [ returns void  ]
+        end UVSelfSNSmo
+
+UVSolnDeselSN(SNTab,isuba,fqid,nantf,ants,nsou,sources,timerange,err)
+        [ returns void  ]
+        end UVSolnDeselSN
+
+UVSolnDeselCL(CLTab,isuba,fqid,nantf,ants,nsou,sources,timerange,err)
+        [ returns void  ]
+        end UVSolnDeselCL
+
+SNInvert(inSN,outData,tabVer,err)
+        [ returns ObitTable * ]
+        end SNInvert
+
+UVVisGet(inUV,err)
+        [ returns PyObject * ]
+        end UVVisGet
+
+UVVisSet(vis,outUV,err)
+        [ returns void  ]
+        end UVVisSet
+
+Zernike(n,x,y)
+        [ returns float  ]
+        end Zernike
+
+ZernikeGradX(n,x,y)
+        [ returns float  ]
+        end ZernikeGradX
+
+ZernikeGradY(n,x,y)
+        [ returns float  ]
+        end ZernikeGradY
+
+ZernikePolar(n,rho,phi)
+        [ returns float  ]
+        end ZernikePolar
+
+CleanOTFCreate(name,dirty,beam,clean,err)
+        [ returns ObitDConCleanOTF * ]
+        end CleanOTFCreate
+
+CleanOTFClean(in,err)
+        [ returns void  ]
+        end CleanOTFClean
+
+CleanOTFRestore(in,err)
+        [ returns void  ]
+        end CleanOTFRestore
+
+CleanOTFUnref(in)
+        [ returns ObitDConCleanOTF * ]
+
+CleanOTFRef(in)
+        [ returns ObitDConCleanOTF * ]
+
+CleanOTFGetDirty(in)
+        [ returns ObitImage * ]
+
+CleanOTFSetDirty(in,image)
+        [ returns void  ]
+
+CleanOTFGetBeam(in)
+        [ returns ObitImage * ]
+
+CleanOTFSetBeam(in,image)
+        [ returns void  ]
+
+CleanOTFGetClean(in)
+        [ returns ObitImage * ]
+
+CleanOTFSetClean(in,image)
+        [ returns void  ]
+
+CleanOTFDefWindow(in,err)
+        [ returns void  ]
+
+CleanOTFGetWindow(in)
+        [ returns ObitDConCleanWindow * ]
+
+CleanOTFSetWindow(in,window)
+        [ returns void  ]
+
+CleanOTFAddWindow(in,win,err)
+        [ returns void  ]
+        end CleanOTFAddWindow 
+
+CleanOTFGetList(in)
+        [ returns ObitInfoList * ]
+
+CleanOTFGetNiter(in)
+        [ returns long  ]
+
+CleanOTFGetGain(in)
+        [ returns float  ]
+
+CleanOTFGetFlux(in)
+        [ returns float  ]
+
+CleanOTFGetCleanSize(in)
+        [ returns float  ]
+
+CleanOTFIsA(in)
+        [ returns int  ]
+
+35.  class CleanOTF
+===================
+[ created from struct CleanOTF ]
+
+
+CleanOTF_me_set(self,me)
+CleanOTF_me_get(self)
+        [ Member data: returns ObitDConCleanOTF * ]
+
+new_CleanOTF(name,dirty,beam,clean,err)
+        [ Constructor: returns CleanOTF * ]
+
+delete_CleanOTF(self)
+        [ Destructor: returns void  ]
+
+----------
+
+CleanOTFRecCreate(name,inOTF,err)
+        [ returns ObitDConCleanOTFRec * ]
+        end CleanOTFRecCreate
+
+CleanOTFRecClean(in,err)
+        [ returns void  ]
+        end CleanOTFRecClean
+
+CleanOTFRecRestore(in,err)
+        [ returns void  ]
+        end CleanOTFRecRestore
+
+CleanOTFRecUnref(in)
+        [ returns ObitDConCleanOTFRec * ]
+
+CleanOTFRecRef(in)
+        [ returns ObitDConCleanOTFRec * ]
+
+CleanOTFRecGetMosaic(in)
+        [ returns ObitImageMosaic * ]
+
+CleanOTFRecGetOTF(in)
+        [ returns ObitOTF * ]
+
+CleanOTFRecGetBeam(in)
+        [ returns ObitImage * ]
+
+CleanOTFRecSetBeam(in,image)
+        [ returns void  ]
+
+CleanOTFRecGetClean(in)
+        [ returns ObitImage * ]
+
+CleanOTFRecSetClean(in,image)
+        [ returns void  ]
+
+CleanOTFRecGetWeight(in)
+        [ returns ObitImage * ]
+
+CleanOTFRecSetWeight(in,image)
+        [ returns void  ]
+
+CleanOTFRecDefWindow(in,err)
+        [ returns void  ]
+
+CleanOTFRecGetWindow(in)
+        [ returns ObitDConCleanWindow * ]
+
+CleanOTFRecSetWindow(in,window)
+        [ returns void  ]
+
+CleanOTFRecAddWindow(in,win,err)
+        [ returns void  ]
+        end CleanOTFRecAddWindow 
+
+CleanOTFRecGetList(in)
+        [ returns ObitInfoList * ]
+
+CleanOTFRecGetNiter(in)
+        [ returns long  ]
+
+CleanOTFRecGetGain(in)
+        [ returns float  ]
+
+CleanOTFRecGetFlux(in)
+        [ returns float  ]
+
+CleanOTFRecGetCleanSize(in)
+        [ returns float  ]
+
+CleanOTFRecIsA(in)
+        [ returns int  ]
+
+36.  class CleanOTFRec
+======================
+[ created from struct CleanOTFRec ]
+
+
+CleanOTFRec_me_set(self,me)
+CleanOTFRec_me_get(self)
+        [ Member data: returns ObitDConCleanOTFRec * ]
+
+new_CleanOTFRec(name,inOTF,err)
+        [ Constructor: returns CleanOTFRec * ]
+
+delete_CleanOTFRec(self)
+        [ Destructor: returns void  ]
+
+----------
+
+GBTDCROTFCreate(name)
+        [ returns ObitGBTDCROTF * ]
+        end GBTDCROTFCreate
+
+GBTDCROTFValue(name,outOTF,err)
+        [ returns ObitGBTDCROTF * ]
+        end GBTDCROTFValue
+
+GBTDCROTFConvert(inGDO,inDisk,scanName,err)
+        [ returns void  ]
+        end GBTDCROTFConvert
+
+GBTDCROTFRef(in)
+        [ returns ObitGBTDCROTF * ]
+        end GBTDCROTFRef
+
+GBTDCROTFUnref(in)
+        [ returns ObitGBTDCROTF * ]
+        end GBTDCROTFUnref
+
+GBTDCROTFIsA(in)
+        [ returns int  ]
+
+37.  class GBTDCROTF
+====================
+[ created from struct GBTDCROTF ]
+
+
+GBTDCROTF_me_set(self,me)
+GBTDCROTF_me_get(self)
+        [ Member data: returns ObitGBTDCROTF * ]
+
+new_GBTDCROTF(name)
+        [ Constructor: returns GBTDCROTF * ]
+
+delete_GBTDCROTF(self)
+        [ Destructor: returns void  ]
+
+----------
+
+OTFDescCreate(name)
+        [ returns ObitOTFDesc * ]
+        end OTFDescCreate
+
+OTFDescCopy(in,out,err)
+        [ returns ObitOTFDesc * ]
+        end OTFDescCopy
+
+OTFDescCopyDesc(in,out,err)
+        [ returns void  ]
+        end OTFDescCopyDesc
+
+OTFDescIndex(in)
+        [ returns void  ]
+        end OTFDescIndex
+
+OTFDescGetList(in)
+        [ returns ObitInfoList * ]
+
+OTFDescGetDict(in)
+        [ returns PyObject * ]
+
+OTFDescSetDict(in,inDict)
+        [ returns void  ]
+
+OTFDescRef(in)
+        [ returns ObitOTFDesc * ]
+        end OTFDescRef
+
+OTFDescUnref(in)
+        [ returns ObitOTFDesc * ]
+        end OTFDescUnref
+
+OTFDescIsA(in)
+        [ returns int  ]
+
+38.  class OTFDesc
+==================
+[ created from struct OTFDesc ]
+
+
+OTFDesc_me_set(self,me)
+OTFDesc_me_get(self)
+        [ Member data: returns ObitOTFDesc * ]
+
+new_OTFDesc(name)
+        [ Constructor: returns OTFDesc * ]
+
+delete_OTFDesc(self)
+        [ Destructor: returns void  ]
+
+----------
+
+OTFGetAtmCor(in,out,err)
+        [ returns ObitTable * ]
+        end OTFGetAtmCor
+
+OTFGetAtmEm(in,out,err)
+        [ returns ObitTable * ]
+        end OTFGetAtmEm
+
+OTFGetSolnCal(in,out,err)
+        [ returns ObitTable * ]
+        end OTFGetSolnCal
+
+OTFGetSolnGain(in,out,err)
+        [ returns ObitTable * ]
+        end OTFGetSolnGain
+
+OTFGetSolnFilter(in,out,err)
+        [ returns ObitTable * ]
+        end OTFGetSolnFilter
+
+OTFGetSolnPolyBL(in,out,err)
+        [ returns ObitTable * ]
+        end OTFGetSolnPolyBL
+
+OTFGetSolnMBBase(in,out,err)
+        [ returns ObitTable * ]
+        end OTFGetSolnMBBase
+
+OTFGetInstCal(in,out,err)
+        [ returns ObitTable * ]
+        end OTFGetInstCal
+
+OTFGetSolnPARGain(in,out,err)
+        [ returns ObitTable * ]
+        end OTFGetSolnPARGain
+
+OTFGetSolnPointTab(in,out,err)
+        [ returns ObitTable * ]
+        end OTFGetSolnPointTab
+
+OTFGetDummyCal(in,out,ver,ncoef,err)
+        [ returns ObitTable * ]
+        end OTFGetDummyCal
+
+OTFGetSolnFlag(in,model,out,FGver,err)
+        [ returns void  ]
+        end OTFGetSolnFlag
+
+OTFGetSolnFlagNoModel(in,out,FGver,err)
+        [ returns void  ]
+        end OTFGetSolnFlagNoModel
+
+OTFSetFITS(in,nsamp,disk,file,err)
+        [ returns void  ]
+
+OTFCreate(name)
+        [ returns ObitOTF * ]
+        end OTFCreate
+
+OTFScratch(in,err)
+        [ returns ObitOTF * ]
+        end OTFScratch
+
+OTFInfo(in,err)
+        [ returns PyObject * ]
+        end OTFInfo
+
+OTFZap(in,err)
+        [ returns ObitOTF * ]
+        end OTFZap
+
+OTFRename(in,err)
+        [ returns void  ]
+        end OTFRename
+
+OTFCopy(in,out,err)
+        [ returns ObitOTF * ]
+        end OTF Copy
+
+OTFClone(in,out,err)
+        [ returns void  ]
+        end OTFClone
+
+OTFConcat(in,out,err)
+        [ returns int  ]
+        end OTFClone
+
+OTFOpen(in,access,err)
+        [ returns int  ]
+        end OTFOpen
+
+UVGetRecBuf(in)
+        [ returns PyObject * ]
+
+OTFDirty(in)
+        [ returns void  ]
+        end Dirty
+
+OTFClose(in,err)
+        [ returns int  ]
+        end OTFClose
+
+newOTFTable(in,access,tabType,outValue1,err)
+        [ returns ObitTable * ]
+        end newTable
+
+OTFZapTable(in,tabType,tabVer,err)
+        [ returns int  ]
+        end ZapTable
+
+OTFCopyTables(in,out,exclude,include,err)
+        [ returns int  ]
+        end CopyTables
+
+OTFUpdateTables(in,err)
+        [ returns int  ]
+        end UpdateTables
+
+OTFfullInstantiate(in,access,err)
+        [ returns int  ]
+        end OTFfullInstantiate
+
+OTFSetTarget(in,Target,Flux,RA,Dec,err)
+        [ returns void  ]
+        end OTFSetTarget
+
+OTFUnref(in)
+        [ returns ObitOTF * ]
+
+OTFRef(in)
+        [ returns ObitOTF * ]
+
+OTFGetDesc(in)
+        [ returns ObitOTFDesc * ]
+
+OTFGetList(in)
+        [ returns ObitInfoList * ]
+
+OTFGetTableList(in)
+        [ returns ObitTableList * ]
+
+OTFGetHighVer(in,tabType)
+        [ returns long  ]
+
+OTFisScratch(in)
+        [ returns int  ]
+
+OTFIsA(in)
+        [ returns int  ]
+
+OTFGetName(in)
+        [ returns char * ]
+
+39.  class OTF
+==============
+[ created from struct OTF ]
+
+
+OTF_me_set(self,me)
+OTF_me_get(self)
+        [ Member data: returns ObitOTF * ]
+
+new_OTF(name)
+        [ Constructor: returns OTF * ]
+
+delete_OTF(self)
+        [ Destructor: returns void  ]
+
+----------
+
+OTFRecGet(inOTF,err)
+        [ returns PyObject * ]
+        end OTFRecGet
+
+OTFRecSet(rec,outOTF,err)
+        [ returns void  ]
+        end OTFRecSet
+
+OTFRecGeomProj(rec,inOTF)
+        [ returns PyObject * ]
+        end OTFRecGeomProj
+
+OTFSoln2Cal(in,out,err)
+        [ returns ObitTable * ]
+        end OTFSoln2Cal
+
+OTFUtilSubImage(inOTF,outOTF,image,desc,err)
+        [ returns void  ]
+        end OTFUtilSubImage
+
+OTFUtilModelImage(inOTF,outOTF,image,desc,err)
+        [ returns void  ]
+        end OTFUtilModelImage
+
+OTFUtilScale(inOTF,outOTF,scale,offset,err)
+        [ returns void  ]
+        end OTFUtilScale
+
+OTFUtilNoise(inOTF,outOTF,scale,offset,sigma,err)
+        [ returns void  ]
+        end OTFUtilNoise
+
+OTFUtilSubImageBuff(in,image,factor,err)
+        [ returns void  ]
+        end OTFUtilSubImageBuff
+
+OTFUtilCreateImage(inOTF,err)
+        [ returns ObitImage * ]
+        end OTFUtilCreateImage
+
+OTFUtilMakeImage(inOTF,outImage,doBeam,beam,Wt,err)
+        [ returns void  ]
+        end OTFUtilMakeImage
+
+OTFUtilIndex(inOTF,err)
+        [ returns void  ]
+        end OTFUtilIndex
+
+OTFUtilFitCal(inOTF,detect,err)
+        [ returns void  ]
+        end OTFUtilFitCal
+
+OTFUtilFitOnOff(inOTF,detect,err)
+        [ returns void  ]
+        end OTFUtilFitOnOff
+
+OTFCalUtilFitTip(inOTF,err)
+        [ returns void  ]
+        end OTFCalUtilFitTip
+
+OTFCalUtilFitNod(inOTF,detect,err)
+        [ returns void  ]
+        end OTFCalUtilFitNod
+
+OTFUtilDiffNod(inOTF,scan,err)
+        [ returns void  ]
+        end OTFUtilDiffNod
+
+OTFCalUtilFlag(inOTF,err)
+        [ returns int  ]
+        end OTFCalUtilFlag
+
+OTFUtilConvBeam(inTab,Beam,Template,err)
+        [ returns ObitFArray * ]
+        end OTFUtilConvBeam
+
+TableGBTANTPOSGR(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableGBTANTPOSGRGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableGBTANTPOSGRSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableGBTANTPOSPF(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableGBTANTPOSPFGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableGBTANTPOSPFSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableGBTBEAM_OFFSETS(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableGBTBEAM_OFFSETSGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableGBTBEAM_OFFSETSSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableGBTCCBDATA(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableGBTCCBDATAGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableGBTCCBDATASetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableGBTCCBPORT(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableGBTCCBPORTGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableGBTCCBPORTSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableGBTCCBSTATE(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableGBTCCBSTATEGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableGBTCCBSTATESetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableGBTDCRDATA(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableGBTDCRDATAGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableGBTDCRDATASetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableGBTDCRRECEIVER(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableGBTDCRRECEIVERGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableGBTDCRRECEIVERSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableGBTDCRSTATE(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableGBTDCRSTATEGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableGBTDCRSTATESetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableGBTIF(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableGBTIFGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableGBTIFSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableGBTPARDATA(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableGBTPARDATAGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableGBTPARDATASetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableGBTPARSENSOR(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableGBTPARSENSORGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableGBTPARSENSORSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableGBTSPDATA(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableGBTSPDATAGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableGBTSPDATASetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableGBTSPRECEIVER(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableGBTSPRECEIVERGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableGBTSPRECEIVERSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableGBTSPSTATE(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableGBTSPSTATEGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableGBTSPSTATESetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableOTFArrayGeom(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableOTFArrayGeomGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableOTFArrayGeomSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableOTFCal(inData,tabVer,access,tabName,numDet,numPoly,err)
+        [ returns ObitTable * ]
+
+TableOTFCalGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableOTFCalSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableOTFFlag(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableOTFFlagGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableOTFFlagSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableOTFIndex(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableOTFIndexGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableOTFIndexSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableOTFModel(inData,tabVer,access,tabName,numParm,err)
+        [ returns ObitTable * ]
+
+TableOTFModelGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableOTFModelSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableOTFScanData(inData,tabVer,access,tabName,numDet,err)
+        [ returns ObitTable * ]
+
+TableOTFScanDataGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableOTFScanDataSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableOTFSoln(inData,tabVer,access,tabName,numDet,numPoly,err)
+        [ returns ObitTable * ]
+
+TableOTFSolnGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableOTFSolnSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableOTFTarget(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableOTFTargetGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableOTFTargetSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+
+TableSkyModel(inData,tabVer,access,tabName,err)
+        [ returns ObitTable * ]
+
+TableSkyModelGetHeadKeys(inTab)
+        [ returns PyObject * ]
+
+TableSkyModelSetHeadKeys(inTab,inDict)
+        [ returns void  ]
+

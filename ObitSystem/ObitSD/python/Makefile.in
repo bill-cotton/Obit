@@ -1,0 +1,103 @@
+# $Id: Makefile.in,v 1.13 2008/05/12 14:54:27 bcotton Exp $
+#-----------------------------------------------------------------------
+#;  Copyright (C) 2004-2008
+#;  Associated Universities, Inc. Washington DC, USA.
+#;
+#;  This program is free software; you can redistribute it and/or
+#;  modify it under the terms of the GNU General Public License as
+#;  published by the Free Software Foundation; either version 2 of
+#;  the License, or (at your option) any later version.
+#;
+#;  This program is distributed in the hope that it will be useful,
+#;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#;  GNU General Public License for more details.
+#;
+#
+#;  You should have received a copy of the GNU General Public
+#;  License along with this program; if not, write to the Free
+#;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+#;  MA 02139, USA.
+#;
+#;  Correspondence concerning this software should be addressed as follows:
+#;         Internet email: bcotton@nrao.edu
+#;         Postal address: W. D. Cotton
+#;                         National Radio Astronomy Observatory
+#;                         520 Edgemont Road
+#;                         Charlottesville, VA 22903-2475 USA
+#-----------------------------------------------------------------------
+#    Makefile to build library routines
+#    Obit software
+#
+#------------------------------------------------------------------------
+
+top_srcdir = @top_srcdir@
+
+CPPFLAGS = @CPPFLAGS@
+CFLAGS = @CFLAGS@ -Wall -fno-strict-aliasing -DFASTOBITMEM
+LDFLAGS = @LDFLAGS@
+CC = @CC@
+
+CLIENT_CPPFLAGS = @XMLRPC_CLIENT_CPPFLAGS@
+CLIENT_CFLAGS = @ZLIB_CFLAGS@
+CLIENT_LDFLAGS = @OBIT_LDFLAGS@ @XMLRPC_CLIENT_LDFLAGS@ @ZLIB_LDFLAGS@ 
+CLIENT_LIBS = @OBIT_LIBS@ @XMLRPC_LIBS@   @GLIB_LIBS@ @GSL_LIBS@ @ZLIB_LIBS@  \
+        @XMLRPC_CLIENT_LIBS@ 
+
+SERVER_CPPFLAGS = @XMLRPC_SERVER_CPPFLAGS@
+SERVER_CFLAGS = 
+SERVER_LDFLAGS = $(LDFLAGS) @XMLRPC_SERVER_LDFLAGS@
+SERVER_LIBS =  @XMLRPC_SERVER_LIBS@ 
+
+ALL_CPPFLAGS = $(CPPFLAGS) -I$(top_srcdir)/include @CFITSIO_CPPFLAGS@ \
+	@OBIT_CPPFLAGS@ @FFTW_CPPFLAGS@ @FFTW3_CPPFLAGS@ @PYTHON_CPPFLAGS@ \
+	@PLPLOT_CPPFLAGS@ @PGPLOT_CPPFLAGS@ $(CLIENT_CPPFLAGS) $(SERVER_CPPFLAGS) @DEFS@
+ALL_CFLAGS = $(CFLAGS) @GLIB_CFLAGS@  @GSL_CFLAGS@ $(CLIENT_CFLAGS) $(SERVER_CFLAGS) \
+	 @PLPLOT_CFLAGS@ @PGPLOT_CFLAGS@ 
+ALL_LDFLAGS = $(LDFLAGS) @OBIT_LDFLAGS@ @CFITSIO_LDFLAGS@ @FFTW_LDFLAGS@ @FFTW3_LDFLAGS@ \
+	@GSL_LDFLAGS@  @PLPLOT_LDFLAGS@ @PGPLOT_LDFLAGS@ $(CLIENT_LDFLAGS) $(SERVER_LDFLAGS)
+
+LIBS = ../lib/libObitSD.a @OBIT_LDFLAGS@  @OBIT_LIBS@ @CFITSIO_LIBS@ @FFTW3_LIBS@ \
+	@GLIB_LIBS@ @GSL_LIBS@ $(CLIENT_LIBS) $(SERVER_LIBS) @PLPLOT_LIBS@ @PGPLOT_LIBS@ \
+	@LIBS@ @FLIBS@ 
+
+
+SWIG = @SWIG@
+
+# Libraries in case they've changed
+MYLIBS := $(wildcard ../lib/lib*.a)
+
+# Python is a real piece of work - do everything in one big module
+TARGETS := Obit.so 
+
+all: $(TARGETS)
+
+# Build shared library for python interface
+$(TARGETS): %.so: setupdata.py $(MYLIBS)
+	python makesetup.py
+	python setup.py build install --install-lib=.
+
+# Build python/Obit interface
+interface: Obit_wrap.c
+	echo "rebuild Obit/python interface"
+
+# Use Swig to build python/c interface if necessary
+Obit_wrap.c: *.inc 
+	echo "%module Obit" > Obit.i
+	cat ObitSD.swig >> Obit.i
+	cat @OBIT_DIR@/python/ObitTypeMaps.swig >> Obit.i
+	cat @OBIT_DIR@/python/*.inc >> Obit.i
+	cat *.inc >> Obit.i
+	$(SWIG) -python  $(INCDIR) Obit.i
+
+# Write compile/link info to setupdata.py
+setupdata.py: Makefile
+	echo "CFLAGS='$(ALL_CFLAGS)'">setupdata.py
+	echo "CPPFLAGS='$(ALL_CPPFLAGS)'">>setupdata.py
+	echo "LDFLAGS='$(ALL_LDFLAGS)'">>setupdata.py
+	echo "LIBS='$(LIBS)'">>setupdata.py
+
+clean:
+	rm -f Obit.i *.o *.so *.pyc 
+	rm -rf build
+

@@ -1,0 +1,58 @@
+; $Id: CCBFix.TDF,v 1.1 2008/03/11 15:52:09 bcotton Exp $
+; CCBFix
+;---------------------------------------------------------------
+;! Obit Strip bad data from post-lobotomy CCB data
+;# Task Obit single dish
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2008
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+CCBFix     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+CCBFix:    Strip bad data from post-lobotomy CCB data
+**PARAM** str 4 **DEF** FITS
+DataType                            type of output (Only FITS)
+**PARAM** str 48
+inFile                              Input FITS OTF file 
+**PARAM** int 1
+inDisk                              Input image disk drive #
+**PARAM** str 48
+outFile                             Output FITS OTF file 
+**PARAM** int 1
+outDisk                             Output image disk drive #
+----------------------------------------------------------------
+CCBFix Strip bad data from post-lobotomy CCB data
+Type:  Task
+ Use:  Remove 8 dead channels
+This if use when the CCB was mistakenly asked to record dead channels
+
+Adverbs:
+  DataType...Data type - only FITS alowed
+  inFile.....Output OTF data file name
+  inDisk.....Output OTF data file disk drive #. 
+             0=> current working directory
+  outFile....Output OTF data file name
+  outDisk....Output OTF data file disk drive #. 
+             0=> current working directory
+----------------------------------------------------------------

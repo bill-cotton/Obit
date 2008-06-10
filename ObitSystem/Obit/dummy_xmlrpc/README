@@ -1,0 +1,4 @@
+This directory contains a DUMMY version of the xmlrpc library which
+will allow compiling and linking software which call xmlrpc routines
+but these calls are NEVER made in operation (cause abort).
+A proper version may be obtained from http://xmlrpc-c.sourceforge.net

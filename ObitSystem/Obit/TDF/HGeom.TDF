@@ -1,0 +1,127 @@
+; $Id: HGeom.TDF,v 1.1 2005/09/23 14:09:33 bcotton Exp $
+; HGeom
+;---------------------------------------------------------------
+;! interpolates image to different gridding and/or geometry
+;# Task Obit
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2005
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: Bill Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+HGeom     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+HGeom     Task to make an image consistent with another image
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of file
+**PARAM** str 48
+inFile                             input Filename if FITS image
+**PARAM** str 12
+inName                             input AIPS Image name (name)
+**PARAM** str 6
+inClass                            input AIPS Image name (class)
+**PARAM** int 1
+inSeq            0         9999    input AIPS Image name (seq. #)
+**PARAM** int 1
+inDisk           0            9    input AIPS Disk drive #
+**PARAM** int 7
+BLC              0         4096    Bottom left corner of image
+                                     0=>entire image
+**PARAM** int 7
+TRC              0         4096    Top right corner of image
+                                     0=>entire image
+**PARAM** str 48
+in2File                            template Filename if FITS image
+**PARAM** str 12
+in2Name                            template AIPS Image name (name)
+**PARAM** str 6
+in2Class                           template AIPS Image name (class)
+**PARAM** int 1
+in2Seq           0         9999    template AIPS Image name (seq. #)
+**PARAM** int 1
+in2Disk          0            9    template AIPS Disk drive #
+**PARAM** str 48
+outFile                            output Filename if FITS image
+**PARAM** str 12
+outName                            output AIPS Image name (name)
+**PARAM** str 6
+outClass                           output AIPS Image name (class)
+**PARAM** int 1
+outSeq            0.0       9999.0 output AIPS Image name (seq. #)
+**PARAM** int 1
+outDisk           0          9     output AIPS Disk drive #
+**PARAM** int 2
+size              1               Output image size in pixels
+**PARAM** float 2 
+crpix                              Reference pixel in output
+**PARAM** int 1 **DEF** 2
+hwidth                             interpolation half width
+----------------------------------------------------------------
+HGeom
+Type: Task
+Use:  HGeom will compute a non-linear geometric transformation of an
+      input image using Lagrangian interpolation   The transformation 
+      is implicitly defined by the headers of the two images.  
+      In short, HGeom "makes this image look like that image".  
+      In other words, it transforms the first image so that its 
+      geometry as described by the header is consistent with that of 
+      the second "template" image.  Small blanked regions can be 
+      interpolated over.
+Adverbs:
+  DataType...."FITS" or "AIPS" data for all input and output
+  inFile......Input File name if a FITS file
+  inname.......Input map name.            AIPS name
+  inclass......Input map class.           AIPS class
+  inseq........Input map seq no.          0 => highest.
+  indisk.......Input map disk:            0 = any.
+  in2file......Input template File name if a FITS file
+  in2name......Input template map name.   AIPS name
+  in2class.....Input template map class.  AIPS class
+  in2seq.......Input template map seq no. 0 => highest.
+  in2disk......Input template map disk:   0 = any.
+  outFile......Output File name if a FITS file
+  outname......Output map name.           AIPS name
+  outclass.....Output map class.          AIPS class
+  outseq.......Output map seq no.       0 => highest unique.
+  outdisk......Output map disk.      0 => highest with room.
+  BLC..........The bottom left-hand pixel of the input image
+               which becomes the bottom left corner of the
+               input subimage.  The value (0,0) means (1,1).
+  TRC..........The top right-hand pixel of the input image
+               which becomes the top right corner of the
+               subimage.  The value (0,0) means take the top
+               right hand corner of the image.
+  size.........Output image size in pixels [1=columns, 2=rows]
+               Default is second input image size. The output size is
+               independent of the input size. 
+               default (0,0) => use template size
+  crpix........Reference pixel in output image, the one to be 
+               located at the coordinate values on the first two 
+               axes of the input image.  
+               Default (0.0,0.0) is the reference pixel of the 
+               template image.  If the size is changed using size
+               then the default reference pixel is the center of.
+               the output image.
+  hwidth.......Half width of interpolation kernal [1-4] in pixels.
+               Larger values give more accurate interpolation but
+               take longer to operate.
+----------------------------------------------------------------

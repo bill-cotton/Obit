@@ -1,0 +1,7 @@
+setenv PATH "$PATH/:/export/data_2/bcotton/fits/ObitTest/ObitSystem/bin"
+setenv LD_LIBRARY_PATH "$LD_LIBRARY_PATH/:/export/data_2/bcotton/fits/ObitTest/ObitSystem/other/lib"
+setenv PYTHONPATH /export/data_2/bcotton/fits/ObitTest/ObitSystem/Obit/python
+
+setenv BASE /export/data_2/fits/ObitTest/ObitSystem/
+setenv THIRD /export/data_2/fits/ObitTest/ObitSystem/other/
+setenv OBIT /export/data_2/fits/ObitTest/ObitSystem/Obit

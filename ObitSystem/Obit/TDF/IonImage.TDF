@@ -1,0 +1,773 @@
+; $Id: IonImage.TDF,v 1.17 2008/03/03 01:08:46 bcotton Exp $
+; IonImage 
+;---------------------------------------------------------------
+;! Obit interferometry imaging with ionospheric field-based cal
+;# Task Obit Imaging calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2006-2008
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+IonImage   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+IonImage:  Obit radio interferometry imaging software
+**PARAM** str 4
+DataType                            "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                              Input multisource UV data AIPS
+**PARAM** str 6
+inClass                             Input UV data (class)
+**PARAM** int 1
+inSeq                               Input UV data (seq. #)
+**PARAM** int 1
+inDisk                              Input UV data disk drive #
+**PARAM** str 16 30
+Sources                             Source (pointings) list
+**PARAM** float 2
+timeRange                           Time range to process.
+**PARAM** str 4
+Stokes                              Stokes to process
+**PARAM** int 1
+BChan            0.0     8192.0     Low freq. channel 0 for cont.
+**PARAM** int 1
+EChan            0.0     8192.0     Highest freq channel
+**PARAM** int 1
+RChan            0.0     8192.0     Channel to restart CLEAN
+**PARAM** int 1  **DEF** 1
+chInc                               Increment between channels
+**PARAM** int 1 
+chAvg                               No. ch to average, 0=>all
+**PARAM** int 1
+BIF                                 First IF in average.
+**PARAM** int 1
+EIF                                 Last IF in average.
+**PARAM** int 1
+subA                                Subarray
+**PARAM** int 1
+doCalib          -1         10      Apply calibration table
+**PARAM** int 1
+gainUse                             CL/SN table to apply
+**PARAM** int 1
+doBand           -1.0       10.0    If >0.5 apply bandpass cal.
+**PARAM** int 1
+BPVer                               Bandpass table version
+**PARAM** int 1
+flagVer                             Flag table version
+**PARAM** boo 1 **DEF** F
+doPol                               Apply polarization cal?
+**PARAM** str 48  **DEF** .fits
+outFile                             Output FITS image file ending
+**PARAM** str 12
+outName                             Output AIPS image name
+**PARAM** str 6
+outClass                            Output AIPS image class
+**PARAM** int 1
+outSeq          -1.0     9999.0     Output AIPS image seq. no.
+**PARAM** int 1
+outDisk                             Output image disk drive #
+**PARAM** int 1
+CCVer                               Output CC table version number
+**PARAM** str 48 **DEF** .uvtab
+out2File                            Output FITS uvdata file ending
+**PARAM** str 12
+out2Name                            Output AIPS uvdata name
+**PARAM** str 6
+out2Class                           Output AIPS uvdata class
+**PARAM** int 1
+out2Seq          -1.0     9999.0    Output AIPS uvdata seq. no.
+**PARAM** int 1
+out2Disk                            Output uvdata disk drive #
+
+                                       Imaging info
+**PARAM** float 1
+FOV             0.0       180.     Radius of field to image deg
+**PARAM** int 1
+NField                             Number of fields
+**PARAM** float 1
+xCells                             Image cell spacing in X in asec.
+**PARAM** float 1
+yCells                             Image cell spacing in Y in asec.
+**PARAM** int 64
+nx                                 Number of "X" (RA) pixels in image 
+                                   (per field)
+**PARAM** int 64
+ny                                 Number of "Y" (Dec) pixels in image. 
+                                   (per field)
+**PARAM** float 64
+RAShift                            Right ascension shift (AIPS convention) 
+                                   (asec) (per field)
+**PARAM** float 64
+DecShift                           Declination shift (AIPS convention)  
+                                   (asec) (per field)
+**PARAM** float 2
+UVTaper         0.                 (U,V) Gaussian taper klambda
+**PARAM** float 2
+UVRange         0.                 Min & max baseline (klambda)
+**PARAM** float 1
+Robust                             Robustness power: -5 -> pure
+                                   uniform weights, 5 => natural
+**PARAM** int 1
+WtBox           0.        128.     Additional rows and columns
+                                   used in weighting.
+**PARAM** int 1 **DEF** 1
+WtFunc                             Box function type when WtBox
+                                   > 0.  0 -> 1 round pill box.
+**PARAM** boo 1 **DEF** T
+doFull                             Make full field (flattened) image?
+**PARAM** boo 1  **DEF** T
+doRestore                          Restore CCs to images?
+**PARAM** str 48  **DEF** NVSSVZ.FIT
+Catalog                            Outlier catalog name (NVSSVZ.FIT)
+**PARAM** float 1 **DEF** 40.0
+OutlierDist                        Maximum distance to add outliers (deg)
+**PARAM** float 1 **DEF** 3.0
+OutlierFlux                        Minimum estimated outlier flux density (Jy)
+**PARAM** float 1   **DEF** -0.75
+OutlierSI                          Spectral index to estimate flux density
+**PARAM** int 1 **DEF** 100
+OutlierSize                        Size of outlier field in pixels
+**PARAM** int 4 50
+CLEANBox         -2.       8192.   Four coordinates for each box
+**PARAM** boo 1   **DEF** F
+autoWindow                         If true, automatically set windows
+**PARAM** float 1  **DEF** 0.1
+Gain     *         0.0         2.0 CLEAN loop gain
+**PARAM** float 1
+minFlux  *                         Minimum Clean component (Jy)
+**PARAM** int 1  **DEF** 100
+minPatch *        0.0              Min. BEAM half-width.
+**PARAM** int 1
+Niter    *         0.0             Maximum # of I CLEAN comp.
+**PARAM** float 3
+Beam     *      -999.9             Clean beam (maj, min, PA)
+**PARAM** float 1  **DEF** 1.0e20
+autoCen  *                         Auto center min flux density
+**PARAM** boo 1   **DEF** F
+PBCor                              Apply Frequency PB Corr?
+**PARAM** float 1
+antSize                            Diameter of ant. for PBCor (m)
+**PARAM** float 2
+CCFilter                           Clean component filter
+                                    (1) min. sum flux.
+                                    (2) radius of search
+**PARAM** int 1  **DEF** 50000
+maxPixel           0.0    500000   Maximum pixels searched
+**PARAM** int 1
+
+                                       Field-based cal info
+**PARAM** boo 1   **DEF** T
+doFCal                             If true, do field based calibration
+                                   else apply NI table ionVer
+**PARAM** int 1
+ionVer                             NI table version in lieu of new cal.
+**PARAM** float 1 **DEF** 0.05
+UpdateInt         0.0              Interval (min) between calibration 
+                                   updates
+**PARAM** float 1   **DEF** 1.0
+solInt            0.0              Solution interval (min)
+**PARAM** int 1   **DEF** 5
+nZern              2.0        17.0 Number Zernike terms
+**PARAM** float 1 **DEF** 600.0
+FitDist                            Max. dist, from expected location 
+                                   to search (asec)
+**PARAM** float 1 **DEF** 1.0
+MaxDist           0.1         2.0  Max. distance (deg/10) from pointing 
+                                   to accept calibrator
+**PARAM** float 1 **DEF** 1.0
+MinPeak                            Min. acceptable image peak (Jy)
+**PARAM** float 1 **DEF** 10.0
+MaxWt             0.1        999.0 Max. weight in fitting
+**PARAM** int 1 **DEF** 1
+MaxQual           0.0          5.0 Max. cal. quality code in fit
+**PARAM** boo 1   **DEF** T
+doINEdit                           If true flag solutions for which the seeing 
+                                   residual could not be determined or exceeds 
+                                   MaxRMS
+**PARAM** float 1 **DEF** 60.0
+MaxRMS            0.0              Target RMS residual ("seeing") (asec)
+**PARAM** float 1 **DEF** 0.5
+MinRat            0.0          2.0 Minimum acceptable ratio to average flux 
+**PARAM** int 1  **DEF** 200
+FCNiter                            Niter for field based cal.CLEAN
+**PARAM** float 1 **DEF** 0.1
+FCGain                             Loop gain for field based cal.CLEAN
+**PARAM** float 1 **DEF** 1.0
+FCminFlux                          Min. flux for field based cal. CLEAN
+
+                                       Peeling info
+**PARAM** float 1 **DEF** 1.0e20
+PeelFlux                           Min. flux for peeling
+**PARAM** int 1
+refAnt            0                Peel SC Reference antenna
+**PARAM** int 1  **DEF** 1
+PeelLoop                           Max. number of peeling SC loops
+**PARAM** float 1 **DEF** 5.0
+SNRMin           2.0               Min. allowed SNR in peel selfcal
+**PARAM** float 1  **DEF** 1.0
+PeelSolInt        0.0              Peel SC Solution interval (min)
+**PARAM** int 1  **DEF** 200
+PeelNiter                          Niter for peel.CLEAN
+**PARAM** float 1 **DEF** 1.0
+PeelMinFlux                        Minimum Peel Clean component (Jy)
+**PARAM** boo 1 **DEF** F
+AvgPol                             Avg. poln in peel self cal?
+**PARAM** boo 1 **DEF** F
+AvgIF                              Avg. IFs in peel self cal?
+
+**PARAM** int 1  **DEF** 1
+prtLv             0                Print level in selfcal
+**PARAM** str 48 **DEF** ObitView
+dispURL                            Display server URL
+**PARAM** int 10
+noScrat                            AIPS disk numbers for which
+                                   scratch files are disallowed
+----------------------------------------------------------------
+IonImage interferometry imaging with ionospheric field-based cal
+Type:  Task
+ Use:  Imaging low frequency radio astronomy interferometry data
+
+   This task uses the Field-Based calibration scheme to calibrate 
+the ionospheric corruptions to interferometry data in the imaging
+process.  The filed base calibration can be either performed by this 
+program (doFCal=True) or separately (IonCal) and applied here.
+This program is the Obit equivalent of the AIPSish VLAFM.
+
+   "Field-based" calibration of the ionosphere works in the regime
+that the wave front from an individual source is describable by a
+linear gradient across the interferometer array but with a potentially
+spatially and temporally variable gradient (refractive offset).  This
+task may generate an AIPS NI table giving series a Zernike polynomial
+describing the phase screen across the array.  Note: the "piston" term
+is assumed zero since the phase of an interferometer is insensitive to
+this Zernike term.
+
+   An prior specified calibration is applied and a series of snapshot
+images of the calibrator sources implied by Catalog and Outlier* at
+time intervals of solInt are made.  In each of the snapshot images,
+the relative position of the source, if above a detection threshold
+(OutlierFlux), is determined relative to the expected position.  This
+fitting process is two pass, one to make an estimate of the distortion
+field and the second to search a relatively restricted distance from
+where the source is expected.  After all snapshots are made and
+fitted, the position offset measurements are filtered to remove
+spurious points and a time sequence of Zernike polynomials fitted.
+Sources with quality codes larger than 0 and showing systematic
+offsets from the expected position are allowed to have an offset from
+the catalog position.  The fitted Zernike coefficients are written in
+an AIPS NI table attached to the input data.
+
+   The data are imaged applying either the NI table generated or a 
+previous such calibration table.  The calibration is applied to each 
+facet by computing the antenna-based phase corrections at the facet
+center and applying these corrections.  The CLEAN uses the visibility 
+based method and the ionospheric phase model in the NI table is
+used to compute a time variable correction of the component apparent
+locations.  The final image is the residuals corrected by the NI table 
+and the CLEAN components restored to their undistorted positions.
+
+   If an image is limited by residual artifacts from very bright sources,
+they may be "peeled" from the data.  In this process, a selfcalibration is 
+performed on the source and the self calibrated model is subtracted from
+the data after the self calibration solution has been applied.  This 
+calibration is then undone and the field-based CLEAN is redone.  
+Components from the Self-calibrated image are restored when the final 
+CLEAN is finished.
+
+   If Stokes=I or F and this is the only Stokes parameter to be imaged
+then the output UV data will have the model subtracted.
+
+   The products of this task are a CLEAN image and a corrected uvdata
+(of limited utility).  Unless otherwise specified, a fly's eye pattern of 
+fields with circular CLEAN boxes will be used to cover the specified
+field of view (FOV).  When processing is finished, the CLEAN images 
+are "flattened" onto a single image.
+
+   If multiple sources are being processed, some failures are allowed.
+In this case, the error messages will be displayed and the Status in
+the PS table set to "Failed  " rather than "Done    ".
+
+   Defaults are generally appropriate the the VLA at 74 MHz.
+
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input multisource UV data file
+  inClass....Input UV data file (class).      Standard defaults.
+  inSeq......Input UV data file (seq. #).     0 => highest.
+  inDisk.....Input UV data file disk drive #. 0 => any.
+
+       Data selection
+  Sources....List of sources (pointings) to be processed.
+             '*' or blank = all; a "-" before a source name
+             means all except ANY source named. 
+  timeRange..Time range of the data to be processed. In order:
+             Start and end times in days relative to ref. date.  
+             Use  dhms2day to convert from human readable form
+  Stokes.....Stokes parameters to process.
+             'I' = Stokes I only, 'IQU' = also Q, U
+             '    ' => I, Q, U
+             'F'=> formal I (both orthogonal Stokes needed)
+  BChan......First channel number to image, 0=>1.  Channel numbers are 1
+             relative as defined in the input data file.
+  EChan......Highest channel number to to include in image,
+             0 => max 
+  RChan......Channel number to restart CLEAN
+             0 => BChan
+  chInc......Increment between channels to image in spectral cube.
+  chAvg......Number of channels to average, 0=> all
+  subA.......Sub-array number to use. 0=>all.
+  doCalib....If true, apply SN or CL table
+  gainUse....CL/SN table version number to apply. 0=> highest.
+  doBand.....If true (>0) then correct the data for the shape of the
+             antenna bandpasses using the BP table specified by BPVer.
+             The correction has five modes:
+             (a) if DOBAND=1 all entries for an antenna in the table
+             are averaged together before correcting the data.
+             (b) if DOBAND=2 the entry nearest in time (including
+             solution weights) is used to correct the data.
+             (c) if DOBAND=3 the table entries are interpolated in
+             time (using solution weights) and the data are then
+             corrected.
+             (d) if DOBAND=4 the entry nearest in time (ignoring
+             solution weights) is used to correct the data.
+             (e) if DOBAND=5 the table entries are interpolated in
+             time (ignoring solution weights) and the data are then
+             corrected.
+             IMAGR uses DOBAND as the nearest integer; 0.1 is therefore
+             "False".
+  BPVer......Specifies the version of the BP table to be applied
+                0 => highest numbered table.
+               <0 => no bandpass correction to be applied.
+  flagVer....FG table to use for editing. 0 => highest.
+  doPol......If True, apply polarization calibration
+  doFull.....If True, make full field (flattened) image
+
+      Output files
+  outFile....Ending of output FITS image file name
+             filename = source_name+Stokes+outFile
+             For processing of Stokes I or F only, this will 
+             have the Stokes I model subtracted from the data
+             leaving only residual data.
+  outName....Ending of output AIPS Image Name, 
+             Name = source_name+Stokes+outName
+  outClass...Output image class.  Default = 'ICLEAN'
+             Only the last 5 characters given are used and the
+             first is replaced with the Stokes.
+             Output image name = pointing name (SOURCES)
+             The output CLEAN image will be used during
+             execution as the residual image.
+  outSeq.....Output image sequence number.
+  outDisk....The disk drive # of output images.  0 => highest
+             with space (note: map and Beam go on same disk.
+  outSeq.....Output sequence number.
+  CCVer......CC table version number for continuum data only.  
+             For line data the channel number is used for the 
+             version number.
+  out2File...Ending of output FITS UV data file name
+             filename = source_name+Stokes+out2File
+             Defaults to 'UV'
+             This file will contain the last selected data 
+             with any calibration tables.
+  out2Name...Ending of output AIPS UV data Name, 
+             Name = source_name+Stokes+out2Name
+             Defaults to 'UV'
+             This file will contain the last selected data 
+             with any calibration tables.
+  out2Class..Output uv data class.  Default = 'IMAGER'
+  out2Seq....Output AIPS uv data sequence number.
+  out2Disk...The disk drive # of output uv date.  0 => highest
+             with space. default  = outDisk
+
+   The following control imaging:
+  FOV........Radius of the desired field of view.
+  NField.....Optional parameter to specify fields and overrides
+             the FOV parameter.  Up to 64 may be specified as 
+             parameters; you should have a good reason for doing
+             this as the default behavior is usually what is
+             desired.
+  xCells.....[optional] Image cell spacing in X in asec.  
+             If left 0 then the program will compute the value 
+             from the data.  All fields use the same value.
+  yCells.....[optional] Image cell spacing in Y in asec. 
+             If left 0 then the program will compute the value 
+             from the data.  All fields use the same value.
+  nx.........[optional] Number of x pixels in each field specified.
+  ny.........[optional] Number of y pixels in each field specified.
+  RAShift....[optional] RA shift (asec) per field
+  DecShift...[optional] Dec shift (asec) per field
+  Catalog....Name of FITS file containing catalog
+             Default  NVSSVZ.FIT
+             This must be in the form of an "AIPS VZ" table.
+             'None' =. Use no outliers and no calibrators in Cal.
+  OutlierDist..max. distance from pointing to include (deg)
+               default = 10
+  OutlierFlux..min. estimated flux density (Jy)
+                 default = 0.05
+  OutlierSI....Spectral index to use,   default = -0.75
+  OutlierSize.. Size in pixels of confusing fields, default 100
+                NB: This should not be so large as to cause the 
+                outlying fields to be larger than the fields tiling
+                the FOV or the program may die.
+  UVTaper....(U,V) Gaussian taper (kilo-lambda) at 30% level
+  UVRange....(Minimum,Maximum) baseline (kilo-lambda) to
+             process. 
+  Robust.....Briggs' "robustness" parameter.  "Uniform" weights are
+             tempered by a constant being added to the local density of
+             weights.  Robust = -4 is nearly pure uniform weighting,
+             Robust = +4 is nearly pure natural weighting.  Use of this
+             option requires a second array in the memory and may
+             therefore force the data to be sorted.  The option is
+             turned off if Robust < -7 and uniform weighting is turned
+             off is Robust > 7.  
+  WtBox......(U,V) box size for weighting.  This is the support radius
+             over which a sample is counted.  I.e., the sample or its
+             weight is counted over an area 2*WtBox+1 cells on each side
+             in the UV plane, where the UV cell size is (after
+             correcting units) given by 1 / (UVsize(i) * Cellsize).
+  WtFunc.....If WtBox > 0, WtFunc controls how the samples are counted
+             as a function of u and v (WtFunc < 0) or of radius (WtFunc
+             > 0).  In the latter case, the function is 0 for radius >
+             WtBox.  Functions are pill box, linear, exponential, and
+             Gaussian for abs(WtFunc) = 1-4, resp.  0 -> 1.  
+  doFull.....Make full field (flattened) image?
+             Otherwise only make facets and leave them.
+  doRestore..Restore CCs to images?
+
+   The following control CLEANing:
+  CLEANBox...A 4x50 array with the specification of a search
+             area.
+              CLEANBox(1,i)=-1 indicates a circle of radius CLEANBox(2,i)
+             pixels centered on (CLEANBox(3,i), CLEANBox(4,i))
+              CLEANBox(1,i) >= 0 indicates a rectangular box.
+             0 => full and inner fields.
+             Note: the default boxes are set on the basis of (nx,ny). 
+  autoWindow.If true, automatically set boxes around significant 
+             emission.
+  Gain.......The CLEAN loop gain.  0 => 0.10.
+  minFlux....Stop Clean when abs(resid. image max) < minFlux (Jy)  
+             If minFlux < 0 then Clean stops at first negative 
+             Clean Component.
+  minPatch..Minimum half width of the portion of the beam
+            which is used in the minor CLEAN. Default 500
+  Niter.....CLEAN iteration limit.  0 => no CLEAN
+  Beam......CLEAN restoring beam major, minor axis size in asec and
+            the position angle.  If zeroes, fit beam.
+  autoCen...If the sum of the clean components within 1.5 pixels 
+            of any pixel exceeds autoCen and is not within 0.05 of a cell
+            of a pixel then the image is  remade and deconcolved with the 
+            bright sources (>autoCen, one per facet) on a pixel.
+            This is necessary to achieve high dynamic range.
+            If the initial dirty image has a pixel brighter than autoCen
+            then it presumes that the final image will need centering and
+            the initial CLEAN is stopped at minFlux=0.1*autoCen
+  PBCor......Apply Frequency dependent primary beam corrections?
+  antSize....Diameter of antenna for PBCor (m), default = 25
+
+  CCFilter...Clean component filtering parameters.
+             If (1) > 0.0 then for each CLEAN conponent, the
+             sum of all components within CCFILTER(2) cells
+             is determined, and if less than CCFILTER(1), the
+             component is rejected.
+  maxPixel...The maximum number of pixels that are searched for
+             components in each major cycle.  < 3000
+             => 20050.  This number affects the cpu usage significantly.
+             Too many causes the task to search over many points it will
+             never use.  Too few causes the task to do many more small
+             major cycles, also at great expense.  Use this with great
+             caution, but big wins are possible using larger sizes on
+             very large Cleans.
+
+                          Field based calibration info
+   The calibrator sources used are specified by the same parameters used 
+to specify outlier fields (Catalog, Outlier*).
+  doFCal......If True determine an ionospheric calibration from the
+              data using the parameters below.  if False use existing
+              NI table version ionVer
+  ionVer......Previous NI table to apply in stead of determining it here.
+  UpdateInt...Update interval of model in NI table,  Probably a good idea
+              to set this slightly less than the data integration time.
+  solInt......Interval (min) between snapshots
+  nZern.......Number of Zernike polynomial terms, def 5
+              It is best to include all terms of a given 
+              polynomial order 2(1), 5(2), 10(3), 17(4)
+              Allowed values 2, 5, 10, 17
+              Note: "piston" term (order zero) is ignored.
+  FitDist.....Distance (asec) to search from the expected positions
+              in the initial search for calibrator offsets.  
+              If a satisfactory fitting of the phase screen is made
+              on the first pass, the second search will be more
+              restricted so this may be fairly large (600 asec).
+              Default 600
+  MaxDist ....Max. distance (deg/10) from the pointing position to 
+              include calibrators in the phase screen fitting,
+              Default 1.0
+  MinPeak.....Minimum acceptable calibrtor peak brightness (Jy) to use
+              in fitting the ionospheric model.
+  MaxWt.......Max. Weight (peak brightness in Jy/bm) to use in fitting
+              phase screen,  This is to keep the brighter sources from 
+              dominating the solution
+  MaxQual.....Max. allowed calibrator quality code [def 1]
+              values 0-5, lower numbers indicate more isolation
+              from other emission
+  doINEdit....If True, enable editing on MaxRMS and MinRat [True]
+  MaxRMS .....If the rms residual exceeds this value in a solution 
+              interval then the most discrepant point will be 
+              iteratively flagged until either:
+              1) the rms residual is acceptable
+              2) no datum contributes more than twice the average
+                 variance (and the solution is flagged)
+              3) too few data are left for a solution. (flagged)
+              default = 60 asec.
+  MinRat......If doINEdit, the peak flux density for each calibrator
+              is averaged over the full set of snapshots and any 
+              measurements for which the ratio to the peak to the 
+              average is less than MinRat is ignored.  Default 0.5
+  FCNiter.....The number of iterations of CLEAN to use in each Field-
+              Based calibration snapshot CLEAN
+  FCGain......The CLEAN loop gain to use in each Field-Based 
+              calibration snapshot CLEAN
+  FCminFlux...The min. CLEAN flux density to use in each Field-Based 
+              calibration snapshot CLEAN
+
+                       Peeling
+  PeelFlux....Peeling is the procedure of doing a self calibration on 
+              a single source, removing it and reverting to the 
+              previous calibration.  This is useful for a very strong 
+              source whose artifacts disturb the other parts of the 
+              field.  If the maximum pixel value in any image 
+              (as defined by the CLEAN components) exceeds PeelFlux
+              then the facet in which the maximum value occured is
+              peeled.
+                 It is strongly recommended that autoCen be no larger 
+              than PeelFlux so that the source is properly centered in 
+              its facet.
+  PeelLoop....Maximum number of peeling self calibration loops
+  refAnt......Reference antenna number for Peel selfcal
+  SNRMin.. .  Min. allowed SNR in peeling self cal solution
+  PeelSolInt..Peel SC Solution interval (min)
+  PeelNiter...Max. number of components in Peel CLEAN
+  PeelMinFlux.Min. Peel CLEAN flux density
+  AvgPol......Average Polarizations in Peel self calibration? 
+  AvgIF ......Average IFs in Peel self calibration? 
+
+                       Diagnostic displays
+  prtLv.......Print level in selfcal, 0=>almost none, 5=> LOTS
+  dispURL.....The URL of the display server to use. "None"=>none
+              "ObitView" =  "http://localhost:8765/RPC2" 
+              This will display fields being CLEANed and allow
+              interactive editing of the CLEAN window.
+              If the display is running on a machine on which the
+              data is not visible, use "http://myhost:port/RPC2"
+              where myhost is the network name and port is the port
+              number (usually 8765), Example:
+              dispURL="http://canis.cv.nrao.edu:8765/RPC2"
+
+  noScrat.....A list of AIPS disk numbers on which you do not 
+              wish scratch files
+----------------------------------------------------------------
+NB: The following is not all yet implemented, it is copied from the 
+AIPSish VLAFM and expresses a vague intent more than being a 
+reflection of reality.
+IonImage Imaging task for low frequency interferometers
+Documenter:  W. D. Cotton,  NRAO
+Related Programs: IonCal, VLSSFix
+
+   IonImage has two major modes controled by IONPRM(1).  First is
+traditional self calibration (IONPRM(1)<=0).  In this case, 
+a simple ionospheric model (basically tip/tilt) is used as the 
+starting point of the self calibration.  This is appropriate for
+strong, relatively small (smaller than the iosplanatic patch) 
+sources. 
+
+   If the source or region of interest is larger than the 
+isoplanatic patch size (variable but of order 30') then the 
+second mode, ionospheric calibration (IONPRM(1)>0), is needed.  
+In this mode the regions around sources selected from the input 
+catalog (INFILE) are imaged and offsets from the expected 
+positions are determined.  This is done each SOLINT time interval.  
+A model to the ionospheric OPD (delay) screen is fitted to these 
+position offsets.  The ionospheric model is then used in the 
+imaging and deconvolution to remove the ionospheric distortions 
+due to ionospheric refraction.  Iteration is allowed using INXXX.
+
+   This technique cannot remove the effects of ionospheric delay
+fluctuations on size scales of the array being used or smaller.
+Due to the limited number of calibrator sources, the ionospheric 
+model is of limited order and cannot model severe ionospheric
+distortions. 
+   The various values in IONPRM can be used to control which 
+solutions are acceptable. This allows selection only the times 
+when the ionosphere was least disturbed.
+
+   The critical control parameters for IonImage are IONPRM, 
+ADDFIELD and APARM.  Cell spacing and placement of fields 
+can be specified but are generally best left to the program.
+
+   This task loops over selected pointings doing the following:
+
+   1) Calibrates data from multisource file and then 
+   2) Edit - essentially FLGIT (optional)
+   3) Average in frequency (optional)
+   4) Calculate ionospheric model from SOLINT snapshots.
+      For self calibration, this is converted into an SN table 
+      and used in the following imaging.  For ionosphere model 
+      calibration, the table is used directly in the following.
+   5) Image and deconvolve
+      - Imaging consists of a mosaic of fields covering FOV
+      - Additional fields are added for NVSS sources
+      - This step may be repeated if the peak in any of the fields
+        exceeds a specified limit (APARM(1)) then the images 
+        are remade, if necessary, to center the peaks on a pixel.
+   6) Self calibration if selectes or to remove outliers
+      - Use CLEAN model
+      - Phase self calibrate
+      - Image and deconvolve
+   7) Remove outlying fields, if any with components. (optional)
+      Fields whose centers have offsets in excess of APARM(10) 
+      have their components subtracted from the data.  
+      This allows removal of Cygnus A et al. when they are 
+      close to, but not in, the field of view.
+      Calibration is then reverted to the original.
+   8) More phase self calibration passes [not if ionospheric model used]
+      - Use CLEAN model
+      - Phase self calibrate
+      - Image and deconvolve
+   9) Ipol editing [Self cal only]
+      - Subtract latest CLEAN model
+      - Clip
+      - Add latest CLEAN model back
+  10) Final image and deconvolve
+  11) Reject weak isolated components (CCFILT), subtract
+       surviving components and restore.
+  12) "Flatten" the field images onto the output image.
+
+Note: all model calculation correct for frequency dependent primary beam
+effects. 
+
+   The products of this task are a CLEAN image and a calibrated
+set of uv data. The CLEAN image is the "flattened" version of 
+the CLEAN fields covering the specified field of view (FOV).
+
+   The results are summarized in a (PS) table attached to the
+input uv data.  This table can be used to determine the current
+processing status of a field as well as limited information and
+quality measures for the field.
+
+SEEING
+------
+   Ionospheric seeing is generally a problem at 74 MHz.  If the array is
+sufficiently small compared to the ionospheric fluctuations, the effect
+is a refractive wedge that moves the apparent positions of the sources.
+Since the field of view projected onto the ionosphere is much larger,
+this wedge can vary across the field of view.  The ionosphere varies
+with time causing apparent relative motions of the sources in the field
+of view. 
+   Using IONPRM(1)>0 uses a second order model of the ionospheric OPD
+(delay) screen which will reduce, but not eliminate the problem.
+The values of IONPRM can be used to edit data with residual seeing
+worse than some limit, as estimated from the RMS scatter to the
+ionospheric model fits.  When phase stability is bad, the peak flux
+densities will be reduced as well; periods of reduced peak fluxes can be
+removed using IONPRM(7).
+   The effect of seeing is to broaden the response to a source in ways
+that do not properly deconvolve because the timescale of the apparent
+position variations is not very short compared to the time for the array
+geometry to change.  The broadening will cause a reduction of the peak
+brightness of a point source by the same factor by which the beam area
+is broadened.  The beam broadening factor is given by:
+   Factor = (sigma**2 + seeing**2) / sigma**2
+where sigma = FWHM/2.355, seeing is the RMS seeing (limited by IONPRM(2))
+and FWHM is the FWHM size of the nominal synthesized beam.
+   The ionospheric model is obtained by imaging the regions around the
+bright sources in the field every SOLINT interval and measuring their
+apparent position after CLEANing.  An ionospheric model is fitted to the
+apparent position offsets and stored in the IoNospheric model table.
+This model is then used in the imaging and deconvolution to correct the
+ionospheric distortions.
+   The ionosphere is extermely variable on all time scales.  The seeing
+can range from very good when the ionospheric model is of limited use
+to extremely bad when delay fluctuations across the array decorrelate
+the snapshot images and it is not possible to fit a sensible 
+ionospheric model.
+
+IONOSPHERIC CALIBRATION SOURCES
+-------------------------------
+   The minimum estimated flux density for calibrator sources can be
+specified as ADDFIELD(2).  This is estimated from the input catalog
+(generally NVSS at 20 cm) and the extrapolation to 74 MHZ will
+not be extremely accurate.  Only if a peak in the snapshot image 
+exceeds this value will it be considered.  A number of sources is 
+needed for a good fit to the ionospheric model so ADDFIELD(2) should 
+be set low enough that a sufficient number of fields (>=4 have decent
+source detections).  IonImage does filtering on the fitted positions to
+separate to good measurments from those of noise bumps, sidelobes, etc.
+However, if there are too many bogus measurments, this process fails.
+Some sources make better calibrators than others, see the following.
+IonImage also looks for and fits systematic offsets of the source 
+position from the catalog position.
+   Alternately, a VZ table attached to the input uv data can be
+substituted as the input source catalog.  This is controlled by
+ADDFIELD(8).  INXXX can generate such a table from the output of
+IonImage (if IONPRM(5)=1).
+
+NVSS Quality (Crowding) codes
+-----------------------------
+   The standard version of the NVSS catalog used by IonImage 
+is created from the standard NVSS VL table into a VZ table by
+tasks VL2VZ and SELVZ.  SELVZ computes a "Quality" (or crowding)
+code that indicates how isolated each source is.  The maximum 
+value of this code can be set by IONPRM(6) [default 0].
+   The crowding codes depend on how much flux in other NVSS 
+catalog components is within 6' that is not part of the table 
+entry in question.  In general, these other sources will have 
+been removed from the table.
+
+     0 = nothing else within 6'
+     1 = >10% of source flux within 6'
+     2 = >30% of source flux within 6'
+     3 = >70% of source flux within 6'
+     4 = >100% of source flux within 6'
+     5 = >200% of source flux within 6'
+
+
+PS Table
+--------
+   The PS table giving the processing record has the following 
+entries.  Only the Stokes' I values are used for IonImage.
+     FIELD NAME Field name
+     OBSDATE    Observing reference date.
+     RA POINT   Pointing RA at epoch 2000 (deg)
+     DEC POINT  Pointing RA at epoch 2000 (deg)
+     STATUS     Processing status, left blank by IonImage
+     IQU        Flags for I, Q, U, true means processed
+     SPECIAL    Special processing applied, not used by IonImage
+     NO. FIELDS Number of sub fields
+     CC LIMIT   Flags to using all possible CC, not used by IonImage
+     PERCENT    % of visibility data remaining at end of precessing
+     PIX MAX    Pixel max (Jy)
+     PIX MIN    Pixel min (Jy)
+     QUALITY    Quality measure (Estimate of RMS noise)
+     COMMENTS   Comments, left blank by IonImage

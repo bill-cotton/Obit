@@ -1,0 +1,304 @@
+; SetJy
+;-----------------------------------------------------------------------
+;! Task to enter source info into the source (AIPS SU) table.
+;# TASK CALIBRATION
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: Bill Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+SetJy     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+SetJy     Task to enter source info into source (AIPS SU) table.
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                             FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                             AIPS uvdata name (name)
+**PARAM** str 6
+inClass                            AIPS uvdata name (class)
+**PARAM** int 1
+inSeq            0.0       9999.0  AIPS uvdata name (seq. #)
+**PARAM** int 1
+inDisk           0.0          9.0  Input Disk drive #
+**PARAM** str 16 30
+Sources                            Source list to modify
+**PARAM** int 1 **DEF** -1
+Qual            -10.0              Source qualifier -1=>all
+**PARAM** int 1 **DEF** 1
+BIF               0.0              Low IF # for flux density
+**PARAM** int 1
+EIF               0.0              High IF # for flux density
+**PARAM** float 4
+ZeroFlux                            I,Q,U,V flux density (Jy)
+**PARAM** str 4
+OPType                             '    ' => use other adverbs
+                                   for required operation
+                                   'CALC' => determine
+                                   3C286/3C48/1934 fluxes from
+                                   standard formulae
+                                   'REJY' => reset source
+                                   fluxes to zero.
+                                   'REVL' => reset velocity
+                                   to zero
+                                   'RESE' => reset fluxes &
+                                   velocities to zero.
+**PARAM** str 4
+calCode                            Calibrator code '    '=>all
+                                     '----' => change to blank
+**PARAM** float 1
+SysVel                             Velocity of source (km/s)
+**PARAM** dbl 1
+RestFreq                           Line rest frequency (Hz)
+**PARAM** str 8
+VelType                            Velocity type 'LSR,'HELIO'
+**PARAM** str 8
+VelDef                             Velocity definition 'RADIO',
+                                   'OPTICAL'
+**PARAM** int 1
+FreqID                             FQ table entry to use for
+                                   velocity information and
+                                   'CALC' option
+**PARAM** float 5
+Parms                              [0]: Pixel to which SysVel
+                                        refers ( 0=>1)
+                                   [1]: Only for 'CALC' option:
+                                     <= 0 => use latest VLA
+                                         values (1999.2) or,
+                                         for 1934-638, the
+                                         ATCA value of 30Jul94.
+                                        1 => use Baars values
+                                         or old ATCA/PKS values
+                                         for 1934-638
+                                        2 => use VLA 1995.2
+                                         values or for 1934-638
+                                         the ATCA value of
+                                         30Jul94.
+                                     >= 3 => use oldest VLA
+                                         values (1990) or,
+                                         for 1934-638, the
+                                         ATCA value of 30Jul94.
+                                   [2]: Only for 'CALC' option:
+                                        multiply the calculated
+                                        fluxes by Parms[2] with
+                                        0 -> 1
+----------------------------------------------------------------
+SetJy
+Note: Adopted from AIPS and may not be entirely correct
+Task:  SetJy enters source information into the source (SU) table.  If
+       a model for the source is available, it should be used.
+
+       CALIB now uses the "V polarization" flux when calibrating RR
+       (= I + V) and LL (= I - V) correlators.  This may be used for
+       instruments with circular polarization if the calibrator is
+       circularly polarized (not usually significant).  It may also be
+       used with equatorially mounted instruments having linearly
+       polarized feeds.  Such feeds do not rotate with parallactic
+       angle and so have XX = I-Q and YY = I+Q.  To calibrate these
+       instruments, relabel the Stokes from (-5 to -8) to (-1 to -4)
+       and put minus the Q flux into the V position (ZeroFlux[3]).
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input AIPS UV file name (name).      Standard defaults.
+  inClass....Input AIPS UV file name (class).     Standard defaults.
+  inSeq......Input AIPS UV file name (seq. #).    0 => highest.
+  inDisk.....Disk drive # of input UV file
+  Sources....List of sources whose SU table entries are to be
+             updated. All blank => all
+  BIF........The lowest IF number for which the given flux
+             densities are valid. 0 => 1.
+  EIF........The highest IF number for which the given flux
+             densities are valid. 0 => all.
+  ZeroFlux...The I, Q, U, and V flux densities in Jy.  If OPType=' ',
+             ZeroFlux is used to set the fluxes of all 4 polarizations
+             unless all 4 are zero - use REJY to do that.  If
+             ZeroFlux[0] < 0, then the I polarization flux is not
+             altered.  This allows you to CALC the I flux and set the
+             Q, U, and V fluxes.
+  OPType.....'   ' => use ZeroFlux values for the source flux
+                  densities and SysVel for source velocity.
+             'CALC' => use the standard Baars et al formulae
+                  and frequency information in the header to
+                  determine the flux densities of the primary
+                  calibrators 3C286, 3C48 and 3C147 (IAU style
+                  names in B1950 or J2000 are also recognized
+                  by SetJy).  Any selected sources with a
+                  recognized name will have fluxes calculated.
+                  Australia Telescope source 1934-638 is also
+                  recognized (J2000 only but can start with P).
+                  (see Parms[1] for polynomial selection).
+             'REJY' => reset source flux densities to zero
+                  for source(s) specified.
+             'REVL' => reset velocity to zero for source(s)
+                  specified.
+             'RESE' => do both 'REJY' and 'REVL' operations.
+  calCode....The 4 character calibrator code to be inserted.
+             '    ' => no change, '----' => change to blank,
+             '*' is not allowed.
+             NOTE that calCode is not part of the source
+             selection in SetJy as it is in other tasks.
+  SysVel.....The velocity of the source (in km/s)
+             per IF.
+             0 => no change.  If 0 is desired use 1.0E-10.
+  RestFreq...Rest frequency of line (Hz) per IF
+             0=>no change
+  VelType....Velocity system ('LSR','HELIO'); ' '=> no change.
+  VelDef.....Definition of velocity, 'RADIO' or 'OPTICAL';
+             ' ' = > no change.
+  FreqID.....Frequency identifier to select.
+  Parms......[0] The frequency pixel (or channel) to which the
+                 velocity refers. (0=>1)
+                 The velocity stored in the 'SU' table will be
+                 recalculated to refer to the reference pixel.
+             [1]: Only for 'CALC' option:
+                  <= 0 => use latest VLA values (1999.2) or,
+                          for 1934-638, the ATCA value of
+                          30Jul94.
+                     1 => use Baars values or old ATCA/PKS
+                          values for 1934-638
+                     2 => use mid-1990s VLA determined values
+                          (1995.2) or, for 1934-638, the ATCA
+                          value of 30Jul94.
+                  >= 3 => use oldest VLA determined values
+                          (1990) or, for 1934-638, the ATCA
+                          value of 30Jul94.
+             [2]: Only for 'CALC' option:
+                  You may wish to reduce the "official" flux computed
+                  from the VLA measurements to account for resolution
+                  effects.  If 0 < Parms[2] <= 2.0, the computed flux
+                  is multipled by Parms[2].
+----------------------------------------------------------------
+SetJy: Enter Source Flux Density and Calcode into the AIPS SU Table.
+       Other source parameters may also be entered.
+RELATED PROGRAMS: CALIB
+Adopted from the AIPSish
+
+                           PURPOSE
+
+ The flux density scale of radio interferometers is often determined by
+observations of radio sources of known brightness.  For interferometer
+observations, it is important that the standard sources used for this
+purpose be relatively compact. This is often at odds however with the
+requirement that the sources have very low variability over long
+timescales.
+
+ For calibration of observations with the VLA, the radio sources 3C48,
+3C138, 3C147, 3C286 and 3C295 are often used.  In the southern 
+hemisphere 1934-638 may also be used for this purpose.
+
+ The standard reference for the flux density of bright radio sources
+is the paper by Baars, Genzel, Pauliny-Toth, Witzel 1977, Astron.,
+Astrop. volume 61, page 99.  The flux density of the standard sources
+can be modelled as a polynomial expansion over frequency.  Polynomial
+coefficients have also been derived independently by R. Perley and
+G. Taylor as part of a long-term program to monitor the standard flux
+density calibrators at the VLA. These flux densities have been tied to
+3C295 as it is believed that the bulk of the emission from 3C295
+should remain constant over a timsecale of thousands of years.
+
+ SetJy will calculate the expected flux density of the standard
+calibrators using either the Baars etal. coefficients or those derived
+from the VLA observations in 1990, 1995.2, or 1999.2. This option is
+selected by setting OPtype to 'CALC'. The coefficient set to be used is
+selected using Parms[1], with the default giving the 1999.2 values.
+
+** NOTE 1: As of the end of 2000, there still is uncertainty in
+the absolute VLA flux scale at 43 GHz, with the planets and NGC 7027
+giving results that are discrepant by roughly 10%.  For further
+information, consult the VLA Observational Status Summary, available
+via the VLA web site at http://www.aoc.nrao.edu/vla.
+
+** NOTE 2: It was discovered several years ago that the existing 1990 VLA
+coefficients were rounded incorrectly in SetJy, introducing a positive
+bias of approximately 0.5%, 0.9%, 1.2%, 1.4% and 2.0% at P, L, C, X
+and U bands respectively for 3C286. The effect for other sources is
+less significant. This error affected AIPS versions up to and
+including 15JAN96. The 1990 coefficients implemented in subsequent
+versions have been corrected to remove the rounding error.
+
+ For more detailed information regarding the variability of the
+standard flux density calibrators at the VLA the user is referred to
+the VLA calibrator manual which is available on the WWW at
+http://www.nrao.edu/doc/vla/html/calib.shtml.
+
+ The source 1934-638 is the primary calibrator for the ATCA (Australia
+Telescope Compact Array).  The flux density scale for 1934-638 was
+re-determined by John Reynolds (jreynold@atnf.csiro.au, 30/jul/94) and
+implemented in SetJy as the default on 30 August 1994.  Changes in the
+flux density scale are significant at all frequencies.  The old scale
+can be obtained with OPType='CALC' by setting Parms[1]=1
+
+
+Frequency          New - Old
+  (MHz)               (%)
+---------------------------------
+408                 -1.9
+843                 -3.5
+1380                -7.9
+1413                -8.1
+1612                -9.3
+1660                -9.5
+1665                -9.5
+2295               -11.4
+2378               -11.5
+4800                -7.9
+4835                -7.8
+4850                -7.8
+8415                +8.5
+8420                +8.5
+8640                +9.8
+
+
+ The SetJy output in the SU table can be viewed with AIPS tasks
+LISTR or PRTAB.
+
+ There are now models of some calibrator sources shipped with AIPS.
+These models are read in with the AIPS task CALRD.  
+Available models are
+       OBJECT           BAND
+        3C48             K
+        3C48             Q
+        3C48             U
+        3C138            K
+        3C138            Q
+        3C138            U
+        3C147            K
+        3C147            Q
+        3C147            U
+        3C286            K
+        3C286            Q
+        3C286            U
+The above were all taken from Claire Chandler's web site although the
+history files have been removed and the images cropped.
+
+Note, to use these as calibrators, you must enter a total flux in the
+source table with SetJy or GetJy which is correct for your observing
+frequency.  Then Calib will scale the flux in these models to that
+total flux.
+
+These models are in J2000 coordinates.  If your data are in B1950,
+either change the uv data to J2000 with AIPS UVFIX or change the 
+images to B1950 with POPS EPOSWTCH.
+----------------------------------------------------------------

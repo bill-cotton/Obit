@@ -1,0 +1,152 @@
+# $Id: Makefile.in,v 1.12 2008/05/19 01:20:25 bcotton Exp $
+#-----------------------------------------------------------------------
+#;  Copyright (C) 2007,2008
+#;  Associated Universities, Inc. Washington DC, USA.
+#;
+#;  This program is free software; you can redistribute it and/or
+#;  modify it under the terms of the GNU General Public License as
+#;  published by the Free Software Foundation; either version 2 of
+#;  the License, or (at your option) any later version.
+#;
+#;  This program is distributed in the hope that it will be useful,
+#;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#;  GNU General Public License for more details.
+#;
+#
+#;  You should have received a copy of the GNU General Public
+#;  License along with this program; if not, write to the Free
+#;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+#;  MA 02139, USA.
+#;
+#;  Correspondence concerning this software should be addressed as follows:
+#;         Internet email: bcotton@nrao.edu
+#;         Postal address: W. D. Cotton
+#;                         National Radio Astronomy Observatory
+#;                         520 Edgemont Road
+#;                         Charlottesville, VA 22903-2475 USA
+#-----------------------------------------------------------------------
+#
+#    ObitView: Image viewer for Obit
+#
+#----------------------------------------------------
+CPPFLAGS = @CPPFLAGS@
+CC = @CC@
+
+# DEBUG is the debugger/optimizer flag, 
+#-------------------------------------
+# O is some general level of optimization
+DEBUG = -O
+OSFLAGS = 
+#DEBUG = -g   # debug
+
+# RANLIB = library "randomizer", ranlib if needed, else blank
+#-----------------------------------------------------------
+RANLIB = @RANLIB@
+
+# name of archive file
+ARCHIVE = @PACKAGE_TARNAME@Back@PACKAGE_VERSION@
+DISTRIB = @PACKAGE_TARNAME@@PACKAGE_VERSION@
+# Name of this directory
+DIRN = @PACKAGE_NAME@
+
+#------------------------------------------------------------------------
+TARGETS =  srcupdate ObitView 
+
+top_srcdir = @top_srcdir@
+
+CPPFLAGS = @CPPFLAGS@
+CFLAGS = @CFLAGS@  -Wall -DFASTOBITMEM -fno-strict-aliasing
+LDFLAGS = @LDFLAGS@
+OBIT = @OBIT@
+CC = @CC@
+
+SERVER_CPPFLAGS = $(CPPFLAGS) -I$(top_srcdir)/include @CFITSIO_CPPFLAGS@ \
+        @MOTIF_CPPFLAGS@ @FFTW_CPPFLAGS@ @FFTW3_CPPFLAGS@ @OBIT_CPPFLAGS@ \
+        @XMLRPC_SERVER_CPPFLAGS@ @DEFS@
+SERVER_CFLAGS = $(CFLAGS) @X_CFLAGS@ @GLIB_CFLAGS@ @GSL_CFLAGS@ @ZLIB_CFLAGS@
+SERVER_LDFLAGS = $(LDFLAGS) @OBIT_LDFLAGS@ @CFITSIO_LDFLAGS@ @FFTW_LDFLAGS@ @FFTW3_LDFLAGS@ \
+        @GSL_LDFLAGS@ @ZLIB_LDFLAGS@ @MOTIF_LDFLAGS@ @XMLRPC_SERVER_LDFLAGS@
+
+SERVER_LIBS = @MOTIF_LIBS@ @X_LIBS@ @OBIT_LIBS@ @GLIB_LIBS@ \
+        @CFITSIO_LIBS@ @FFTW_LIBS@ @FFTW3_LIBS@ @XMLRPC_LIBS@ @X_PRE_LIBS@ \
+        @GSL_LIBS@ @ZLIB_LIBS@  @XMLRPC_SERVER_LIBS@ 
+
+CLIENT_CPPFLAGS = $(CPPFLAGS) -I$(top_srcdir)/include @CFITSIO_CPPFLAGS@ \
+        @MOTIF_CPPFLAGS@ @FFTW_CPPFLAGS@ @FFTW3_CPPFLAGS@ @OBIT_CPPFLAGS@ \
+        @XMLRPC_CLIENT_CPPFLAGS@ @DEFS@
+CLIENT_CFLAGS = $(CFLAGS) @X_CFLAGS@ @GLIB_CFLAGS@ @GSL_CFLAGS@ @ZLIB_CFLAGS@
+CLIENT_LDFLAGS = $(LDFLAGS) @OBIT_LDFLAGS@ @CFITSIO_LDFLAGS@ @FFTW_LDFLAGS@ @FFTW3_LDFLAGS@ \
+        @GSL_LDFLAGS@ @ZLIB_LDFLAGS@ @MOTIF_LDFLAGS@ @XMLRPC_CLIENT_LDFLAGS@
+
+CLIENT_LIBS = @MOTIF_LIBS@ @X_LIBS@ @OBIT_LIBS@  @GLIB_LIBS@ \
+        @CFITSIO_LIBS@ @FFTW_LIBS@ @FFTW3_LIBS@ @XMLRPC_LIBS@ @X_PRE_LIBS@ \
+        @GSL_LIBS@ @ZLIB_LIBS@  \
+        @XMLRPC_CLIENT_LIBS@ -lpthread
+
+
+all:  $(TARGETS)
+
+# update source/object directory
+srcupdate: 
+	cd src; $(MAKE)
+
+# Link Obitview
+ObitView: src/*.c  srcupdate ObitView.c 
+	$(CC) ObitView.c -o ObitView  $(SERVER_CFLAGS) $(SERVER_CPPFLAGS) src/*.o \
+	$(SERVER_LDFLAGS) $(SERVER_LIBS) $(CLIENT_LIBS) 
+
+# Link clientTest
+clientTest:   clientTest.c 
+	$(CC) clientTest.c -o clientTest  -Iinclude $(CLIENT_CFLAGS) \
+	$(CLIENT_CPPFLAGS) $(CLIENT_LDFLAGS) \
+	$(CLIENT_LIBS)
+
+# Link clientFCopy
+clientFCopy:   clientFCopy.c 
+	$(CC) clientFCopy.c -o clientFCopy  -Iinclude $(CLIENT_CFLAGS) \
+	$(CLIENT_CPPFLAGS) $(CLIENT_LDFLAGS) \
+	$(CLIENT_LIBS)
+
+# test run
+test: 
+	ObitView someFile.fits
+
+# Copy to where it should go
+install: @exec_prefix@/bin
+	@install_sh@ -s ObitView @exec_prefix@/bin/
+
+@exec_prefix@/bin:
+	mkdir @exec_prefix@/bin
+
+# make gzipped tar backup of directory
+backup:	
+	cd ..;rm -f $(ARCHIVE).tgz
+	cd ..;gtar czvf $(ARCHIVE).tgz \
+		$(DIRN)/README $(DIRN)/LICENSE $(DIRN)/Makefile*  \
+		$(DIRN)/*.c  $(DIRN)/ObitView.hlp $(DIRN)/someFile.fits* \
+		$(DIRN)/config*  $(DIRN)/aclocal.m4  \
+		$(DIRN)/install-sh  $(DIRN)/missing $(DIRN)/mkinstalldirs  \
+		$(DIRN)/changes  $(DIRN)/Notes.text  $(DIRN)/notes.text  \
+		$(DIRN)/src/*.c  $(DIRN)/src/Makefile.in   $(DIRN)/src/Makefile \
+		$(DIRN)/include/*.h   \
+		$(DIRN)/m4/*.m4  \
+		$(DIRN)/CVS/* $(DIRN)/m4/CVS/* $(DIRN)/src/CVS/* \
+		$(DIRN)/include/CVS/*
+
+# make gzipped tar distribution
+distrib:	
+	cd ..;rm -f $(DISTRIB).tgz
+	cd ..;gtar czvf $(DISTRIB).tgz \
+		$(DIRN)/README $(DIRN)/LICENSE $(DIRN)/Makefile.in  \
+		$(DIRN)/ObitView.c  $(DIRN)/ObitView.hlp  $(DIRN)/someFile.fits* \
+		$(DIRN)/config*  $(DIRN)/aclocal.m4  \
+		$(DIRN)/install-sh  $(DIRN)/missing $(DIRN)/mkinstalldirs  \
+		$(DIRN)/changes  $(DIRN)/Notes.text  $(DIRN)/notes.text  \
+		$(DIRN)/src/*.c  $(DIRN)/src/Makefile.in \
+		$(DIRN)/m4/*.m4  \
+		$(DIRN)/include/*.h 
+clean:
+	cd src;      $(MAKE) clean
+	rm -f ObitView clientTest
+	rm -f *.o

@@ -1,0 +1,12 @@
+Makefile
+*.tgz
+*.pyc
+*.o
+*.so
+*.i
+*.backup
+*.save
+*_wrap.c
+*_wrap.doc
+junk.*
+work

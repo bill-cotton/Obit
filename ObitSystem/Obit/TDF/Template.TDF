@@ -1,0 +1,77 @@
+; Template
+;---------------------------------------------------------------
+;! Template task and performs IMEAN line function
+;# Task 
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2005
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: Bill Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+Template  LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+Template:  Task to print the mean, rms and extrema in an image
+**PARAM** str 4
+DataType                               "FITS" or "AIPS" type of input
+**PARAM** str 12
+inName                             Image name (name)
+**PARAM** str 6
+inClass                            Image name (class)
+**PARAM** int 1
+inSeq            0.0       9999.0  Image name (seq. #)
+**PARAM** int 1
+inDisk           0.0          9.0  Disk drive #
+**PARAM** int 7
+BLC              0.0       4096.0  Bottom left corner of image
+                                     0=>entire image
+**PARAM** int 7
+TRC              0.0       4096.0  Top right corner of image
+                                     0=>entire image
+**PARAM** float 1
+Mean     $                         Estimate of mean noise value
+**PARAM** float 1
+RMS      $                         Estimate of true noise rms
+**PARAM** str 48
+inFile                             Filename if FITS image
+----------------------------------------------------------------
+Template
+Type: Task
+Use:  Template will read a portion of an image and print the mean and rms
+      brightnesses found.  
+Adverbs:
+  Userid......User ID of owner of image.  0=>current user 32000=>all
+              users
+  DataType...."FITS" or "AIPS"
+  inName......Image name(name).         Standard defaults.
+  inClass.....Image name(class).        Standard defaults.
+  inSeq.......Image name(seq. #).       0 => highest.
+  inDisk......Disk drive # of image.    0 => any.
+  BLC.........The Bottom Left-hand pixel of the subarray of the image to
+              be analysed. The value (0,0) means (1,1).
+  TRC.........The Top Right-hand pixel of the subarray of the image to
+              be analysed.  The value (0,0) means the top right hand
+              corner of the entire image.
+  Mean........Mean value of the noise part of the image - an initial
+              guess to help Template fit a Gaussian to the noise.
+  RMS.........RMS of the noise portion of the image
+  Filename....Input File name if a FITS file
+----------------------------------------------------------------

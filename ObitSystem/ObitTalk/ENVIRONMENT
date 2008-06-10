@@ -1,0 +1,17 @@
+The Python interface needs the environment variables:
+
+AIPS_VERSION
+DA00
+LOAD
+VERSION
+
+These variables are normally set by $AIPS_ROOT/LOGIN.SH.
+
+To do anything useful with AIPS, one also needs to set:
+
+DA01
+DA02
+DA03
+DA04
+
+These are set by $AIPS_VERSION/SYSTEM/UNIX/DADEVS.SH.

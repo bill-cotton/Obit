@@ -1,0 +1,188 @@
+; $Id: IonMovie.TDF,v 1.2 2007/07/27 16:53:36 bcotton Exp $
+; IonMovie 
+;---------------------------------------------------------------
+;!  Make a movie from an SN table
+;# Task Obit Imaging calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+IonMovie   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+IonMovie: Make a movie from an SN table
+**PARAM** str 4
+DataType                            "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                              Input multisource UV data AIPS
+**PARAM** str 6
+inClass                             Input UV data (class)
+**PARAM** int 1
+inSeq                               Input UV data (seq. #)
+**PARAM** int 1
+inDisk                              Input UV data disk drive #
+**PARAM** str 16 
+Sources                             Source (pointing) only one
+**PARAM** int 1 **DEF** -1
+Qual            -10.0               Source qualifier -1=>any
+**PARAM** float 2
+timeRange                           Time range to process.
+**PARAM** str 4
+Stokes                              Stokes to process
+**PARAM** int 1
+FreqID                              Freq. ID to select.
+**PARAM** int 1
+BIF                                 First IF in average.
+**PARAM** int 1
+EIF                                 Last IF in average.
+**PARAM** int 1
+subA                                Subarray
+**PARAM** int 50
+Antennas         0.0     1000.0     List of antennas to include
+**PARAM** int 1
+solnVer                             SN table to use
+**PARAM** str 4
+outDType                           "FITS" or "AIPS" type of output
+**PARAM** str 48
+outFile                             Output FITS image file ending
+**PARAM** str 12
+outName                             Output AIPS image name
+**PARAM** str 6 **DEF** Movie
+outClass                            Output AIPS image class
+**PARAM** int 1
+outSeq          -1.0     9999.0     Output AIPS image seq. no.
+**PARAM** int 1
+outDisk                             Output image disk drive #
+**PARAM** float 1
+xCells                             Image cell spacing in X in m.
+**PARAM** float 1
+yCells                             Image cell spacing in Y in m.
+**PARAM** int 1
+nx                                 Number of "X" pixels in image 
+**PARAM** int 1
+ny                                 Number of "Y" pixels in image. 
+**PARAM** int 1
+refAnt            0                Reference antenna
+**PARAM** float 1
+solInt            0.0              SN averaging time (min)
+----------------------------------------------------------------
+IonMovie Make a movie of the ionosphere from an SN table
+Type:  Task
+
+   The output is an image of the phase over the array in the 
+form of a time movie.  Only the SN and AN tables are used from 
+the input data.
+See Explain for more details
+
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input multisource UV data file
+  inClass....Input UV data file (class).      Standard defaults.
+  inSeq......Input UV data file (seq. #).     0 => highest.
+  inDisk.....Input UV data file disk drive #. NO DEFAULT
+
+       Data selection
+  Sources....Source (pointing) to be processed.
+  Qual.......Only sources with a source qualifier number in the
+             SU table matching Qual will be used if Qual is not
+             -1.  Qual affects the selection of both the list of
+             sources and the list of calibrators.
+  timeRange..Time range of the data to be processed. In order:
+             Start and end times in days relative to ref. date.  
+             Use  dhms2day to convert from human readable form
+  Stokes.....Stokes parameters to process.
+             'RR' = RR, 'LL'= LL, '  ' = both
+  FreqID.....Frequency identifier to select , <=0=>any
+  BIF........First IF to include in average. 0=>1
+  EIF........Highest IF to include in average 0=> do BIF to 
+	     highest.
+  subA.......Sub-array number (AIPS AN table) to use. 0=>1.
+             The subarray number determines the geometry on the ground.
+  Antennas...A list of the antennas to include.
+             If any number is negative then all
+             antennas listed  are NOT to be used and all others are. 
+             All 0 => use all.
+  solnVer....SN table to use. 0=> highest.
+
+      Output files
+  outDType..'FITS' or 'AIPS'  type of output
+             Defaults to DataType.
+  outFile....Ending of output FITS image file name
+             filename = source_name+Stokes+outFile
+  outName....Ending of output AIPS Image Name, 
+             Name = source_name+Stokes+outName
+  outClass...Output image class.  Default = 'Movie'
+  outSeq.....Output image sequence number.
+  outDisk....The disk drive # of output image.  NO DEFAULT
+  outSeq.....Output sequence number.
+
+   The following control imaging:
+  xCells     Image cell spacing in X (East) in meters.  
+             If left 0, default values for the VLA will be used.
+  yCells     Image cell spacing in Y (North) in meters. 
+  nx.........Number of x pixels in x
+  ny.........Number of y pixels in y
+  refAnt.....Reference antenna number.
+             All phases are referred to this antenna
+             If zero, no rereferencing is done.
+  solInt.....Values in the SN table will be averaged to this 
+             time (min).
+----------------------------------------------------------------
+
+IonMovie  Create a time sequence movie from an AIPS SN table
+
+   The purpose of this program is to make a time sequence movie of
+the phases in an AIPS SN table projected onto the plane of the array.
+In the case of the VLA, this projection is onto the Plains of San
+Agustin, for other arrays it is the plane defined by the "X" and "Y"
+coordinates in the AIPS AN for each antenna.
+
+   Pixel values are the unweighted average of selected IFs and
+polarizations over time intervals solInt and are quantized at 0.1
+degree. If there are gaps in the selected SN table entries of more
+than twice solInt then two blank frames are inserted into the output.
+This will cause the "Time" axis to have incorrect values on subsequent
+planes.  In order to fix this problem, the end time in days is 
+written into into pixel (1,1) in each frame.
+
+   The imaging grid is defined by the parameters nx, ny, xCells,
+yCells. The default values (230, 230, 200, 200) are appropriate for
+the VLA in the A configuration.  For other configurations, scale the 
+x/yCells values to that appropriate for the configuration:
+A: xCells=200; yCells=200
+B: xCells=66;  yCells=66
+C: xCells=22;  yCells=22
+D: xCells=20;  yCells=20; nx = 64; ny=64
+
+   The intent of this program is to show the time dependent variation
+of phase across the array.  This is most useful for low frequencies
+where the phase variations are mostly due to the ionosphere.  For this
+to be meaningful, the instrumental phases and possibly an overall
+gradient must first be removed.  This can be done using Obit/SNFilt.
+Running SNFilt with  doRes=True gives the output AIPS SN table with
+the residual phases after estimating and removing instrumental phases.
+doGrad controls whether the time dependent gradient is included. 

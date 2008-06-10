@@ -1,0 +1,20 @@
+#! /bin/sh
+
+if test -z "$AIPS_ROOT"; then
+    exit 1
+fi
+
+# Automake sets VERSION to something that confuses us.
+# Anyway, we need 31DEC04 for the jmfit.py test.
+VERSION='31DEC04'
+
+DADEVS_QUIET=YES
+export DADEVS_QUIET
+
+. $AIPS_VERSION/SYSTEM/UNIX/DADEVS.SH
+. $AIPS_VERSION/SYSTEM/UNIX/PRDEVS.SH
+
+PYTHONPATH=@top_srcdir@/python:@OBIT_PYTHONPATH@
+export PYTHONPATH
+
+exec @PYTHON@ "$@"

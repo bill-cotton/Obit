@@ -1,0 +1,11 @@
+Makefile
+ObitAIPSdata
+FITSdata
+PythonData
+save
+testIt
+work
+*.tar
+*.tgz
+*.fits
+*.uvfits

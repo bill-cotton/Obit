@@ -1,0 +1,254 @@
+; $Id: SNCor.TDF,v 1.2 2007/06/15 16:24:28 bcotton Exp $
+; SNCor
+;---------------------------------------------------------------
+;! applies user-selected corrections to the calibration SN table
+;# Task Calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2006,2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning AIPS should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+SNCor     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+SNCor     Task which applies various corrections to SN tables.
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                             Input UV file name (name)
+**PARAM** str 6
+inClass                            Input UV file name (class)
+**PARAM** int 1
+inSeq             0.0     9999.0   Input UV file name (seq. #)
+**PARAM** int 1
+inDisk            0.0        9.0   Input UV file disk unit #
+**PARAM** str 16 30
+Sources                            Source list ' '=>all.
+**PARAM** str 4
+EditStokes                         Stokes type to process
+**PARAM** int 1
+FreqID                             Freq. ID to select, 0=>all
+**PARAM** int 1
+BIF               0.0      100.0   Lowest IF number 0=>all
+**PARAM** int 1
+EIF               0.0      100.0   Highest IF number 0=>all
+**PARAM** float 2
+timeRange                          Time range to process.
+**PARAM** int 50
+Antennas         0.0     1000.0    List of antennas to calibrate
+**PARAM** int 1
+subA                               Subarray
+**PARAM** int 1
+solnVer                            SN table to use
+**PARAM** str 4
+corMode                            Operation code.See HELP
+**PARAM** float 30 
+SNCParm                          Parameters (see HELP SNCor).
+**PARAM** float 30 
+PhasParm                           Parameters for corMode=XFER
+----------------------------------------------------------------
+SNCor
+Task:  This task makes a number of corrections to a SN table.
+       Documentation largely lifted from AIPS SNCOR.
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input UV file name (name).      Standard defaults.
+  inClass....Input UV file name (class).     Standard defaults.
+  inSeq......Input UV file name (seq. #).    0 => highest.
+  inDisk.....Disk drive # of input UV file.  
+  Sources....list of sources to process.
+             '*' = all; a "-" before a source name
+             means all except ANY source named.
+  EditStokes..The desired Stokes type to modify:
+             'R ', 'L ', 'RL', '  '=> 'RL'.
+  FreqID.....Frequency identifier to select (you may determine
+             which is applicable from the OPTYPE='SCAN' listing
+             produced by LISTR).
+  BIF........First IF to process. 0=>all.
+  EIF........Highest IF to process. 0=>all higher than BIF
+  timeRange..Start and end times (day) relative to ref. date.
+             Use  dhms2day to convert from human readable form
+  Antennas...A list of the antennas to be modified.  If any
+             number is negative then all antennas listed  are
+             NOT to be modified.  All 0 => use all.
+  subA.......The subarray to modify. Do only one at a time.
+  solnVer....The SN table version number which is to be updated.
+             NOTE: There is NO default value.
+  corMode.....Operation code (see also EXPLAIN SNCor):
+             'AVRT' => average selected fringe rates in a
+                       record.
+             'CLPA' => Flag amplitudes outside of the range
+                       SNCParm[0] (min) to SNCParm[1] (max).
+             'CLPP' => Flag phases outside of the range
+                       SNCParm[0] (min) to SNCParm[1] (max).
+             'CLPD' => Flag delays outside of the range (nsec)
+                       SNCParm[0] (min) to SNCParm[1] (max).
+             'CLPR' => Flag rates outside of the range (mHz)
+                       SNCParm[0] (min) to SNCParm[1] (max).
+             'CLPW' => Flag amplitudes, phases, rates and delays
+                       where the weight is outside the range
+                       SNCParm[0] (min) to SNCParm[1] (max).
+             'XFER' => Transfers phases between frequencies with
+                       scaling to compensate for ionospheric delays.
+                       Also allows instrumental phase offsets
+                       and new antenna amplitudes to be introduced.
+                       (See SNCParm, PHASParm below)
+             'ZPHS' => Zero phases of selected solutions
+             'ZRAT' => Zero residual fringe-rates of selected
+                       solutions.
+             'ZDEL' => Zero residual delays of selected
+                       solutions.
+             'MULA' => Multiply gain amplitudes by SNCParm[0]
+             'REFP' => Reference phases to IF SNCParm[0]
+             'CPRT' => Copy the residual fringe rate from IF
+                       denoted by SNCParm[0] to all specified
+                       IFs.
+             'CPSN' => Copy the whole solution from the IF
+                       denoted by SNCParm[0] to all specified
+                       IFs.
+             'PCOP' => Copy the whole solution from one
+                       polarization to the other (under
+                       control of SNCParm[0])
+             'PNEG' => Flip the sign of the gain phase for
+                       all selected solutions.
+             'NORM' => Normalize amplitudes to 1
+             'RSET' => Reset gains to (1,0), unblanks
+  SNCParm...Parameters: see above and below.
+  PhasParm....More parameters: see above and below
+             be placed.  This will not affect the output file.
+----------------------------------------------------------------
+Mostly copied from AIPS SNCOR
+SNCor:  Task to apply corrections to an SN table in a variety of
+        ways.
+Documentor: W. D. Cotton, W. C. Erickson (for "XFER")
+Related Programs: LISTR, SPLIT, TACOP, TABED
+
+This task will compute various corrections and apply them
+directly to a solution (SN) table.  The operation to be done
+is determined by corMode.  Details and/or additional information
+for the various models is given below.
+
+corMode='AVRT'
+     This option will cause all selected residual fringe rates
+to be averaged.
+
+corMode='CLPA'
+    This option flags any gain entries with an amplitude outside
+of the range given by SNCParm[0] (min) to SNCParm[1] (max).
+
+corMode='CLPP'
+    This option flags any gain entries with a phase outside
+of the range given by SNCParm[0] (min) to SNCParm[1] (max).
+
+corMode='CLPW'
+    This option flags any gain entries whose weight lies outside
+the range SNCParm[0] (min) to SNCParm[1] (max).
+
+corMode='XFER'
+    This option transfers phases between frequencies and also sets
+    antenna amplitudes.
+Antenna amplitudes: SNCParm[30]:
+    If left blank, the antenna amplitude gains will be unchanged.
+    To manually set the antenna amplitude gains, enter
+    the desired amplitudes strictly in order 1 to 28 into
+    SNCParm[0] to SNCParm[27] and set SNCParm[29] to -1.
+    To set all antenna amplitude gains to 1.0 set SNCParm[29]
+    to +1.
+Phase transfer parameters: PHASParm[30]
+    PhasParm[0] - PhasParm[27] are the instrumental phase offsets
+    at the two frequencies for Antennas 1 to 28 (in radians).
+    [They must be strictly in order 1 to 28.]
+    PhasParm(29) = The higher frequency in MHz.
+    PhasParm(30) = The lower frequency in MHz.
+
+corMode='CLPD'
+    This option flags any  entries with a delay whose value in
+nanoseconds is outside of the range given by SNCParm[0] (min) to
+SNCParm[1] (max).
+
+corMode='CLPR'
+    This option flags any  entries with a fringe rate whose
+value in milliHz is outside of the range given by SNCParm[0]
+(min) to SNCParm[1] (max).  The given fringe rate in mHz is at
+the reference frequency.
+
+corMode='ZPHS'
+    This option causes the phases of selected gaines to be set
+to zero.  This is useful for the calibration of amplitudes only.
+
+corMode='ZRAT'
+    This option will cause the residual fringe-rates of the
+selected solutions to be set to zero.
+
+corMode='ZDEL'
+    This option will cause the residual delays of the
+selected solutions to be set to zero.
+
+corMode='MULA'
+    This option will cause the amplitudes of the selected
+complex gains to be multiplied by SNCParm[0].
+
+corMode='REFP'
+    This option will reference all the phases to the IF
+specified by SNCParm[0].  If the phase for this IF is flagged
+all phases will be flagged. Default = IF 1.
+
+corMode='CPRT'
+    This option will copy the residual fringe-rate from the IF
+denoted by SNCParm[0] to all specified IFs.  Obviously If the
+rate for the reference IF is flagged all IFS will be flagged.
+Default = IF 1.
+
+corMode='CPSN'
+    This option will copy the whole solution from the IF
+denoted by SNCParm[0] to all specified IFs.  Obviously If the
+solution for the reference IF is flagged all IFS will be flagged.
+Default = IF 1.
+
+corMode='PCOP'
+    This option will copy the whole solution from one
+polarization to the other, for all specified IF's. The copy
+direction is specified by SNCParm[0]:
+    SNCParm[0] = 1   => Copy polzn. 1 (R) to 2 (L)
+                 = 2   => Copy polzn. 2 (L) to 1 (R)
+No action is taken if there is only one polarization in the
+SN table.
+
+corMode='PNEG'
+    This option will flip the sign of the gain phase for
+all selected SN solutions.
+
+corMode='NORM'
+    This option normalizes amplitudes to 1.
+
+
+corMode='RSET'
+    This option resets gains to (1,0) zero delay, rate
+    and weight = 1.0; even if previously blanked
+
+
+
+

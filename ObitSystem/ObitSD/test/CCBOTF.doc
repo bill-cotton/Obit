@@ -1,0 +1,74 @@
+/* $Id: CCBOTF.doc,v 1.2 2006/04/06 14:23:09 bcotton Exp $ */
+
+            CCB2OTF Convert GBT CCB data to OTF format FITS file
+               -----------------------------------------
+
+   CCB2OTF converts a GBT CCB (continuum) archive data file to an OTF
+data set. Control input is from a user edited file.  One scan is added
+to the output file per run.
+
+Usage: CCB2OTF -input file [-scan date/time]
+Convert an GBT CCB file format to Obit/OTF
+Arguments:
+  -input input parameter file, def CCB2OTF.in
+  -scan date/time used for form scan FITS file names
+        This is the string that forms the basename of the archive
+        files.  The OTF data file should be constructed in time order;
+        one way to do this is to use ls in the CCB directory to collect
+        a time ordered list and then edit this into a shell script.
+
+
+
+         CCB2OTF input file documentation
+
+   This describes the input file format for CCB2OTF.
+The input file is basically free format with a keyword=value syntax.  
+Comments follow a "#" symbol.
+
+
+   Entries not specified will assume their default values.  Parameters
+may be given in any order but only the recognized parameters given below
+are allowed. 
+
+An example follows:
+$Key = scan  Str (24)  # Date/time name of scan
+2003_06_27_04:05:50# Data
+$Key = outfile Str (48)
+TestCbandOTF.fits
+$Key = DataRoot Str (64)
+../GCCband/AGBT02C_019_04/
+$Key = doBS Boo (1)
+T
+
+ Variables possibly read from the input_file 
+scan:   input scan name (from names of archive files).  This will be
+        overridden by a command line value.
+     type: string
+     default: none
+     example: 2003_06_27_01:39:57
+
+DataRoot:  relative path for base of GBT archive directory structure.
+           This points to the directory that contains the CCB, Antenna
+           etc. subdirectories.
+     default: none
+     example: ../GCCband/AGBT02C_019_04/
+
+outfile:   output FITS image file name, will go into FITSdata/.
+     type: string
+     default: OTFTable.fits
+
+timeCorr:  Correction in sec. to add to GBT time labels
+     type: double
+     default: 0.0
+
+doBS:      If True then form beamswitched data with 1 state, otherwise
+           total power data with 4 states.
+     type: boolean
+     default: T
+
+dataNorm:  Normalization factor per detector/state.  This is needed
+           to get all the data on the same scale when doBS is True.
+           Values in OTF order rather than GBT.
+     type: float array, one value per detector/state (usually 64)
+     default: 1.0,  if a single value is given, use for all
+

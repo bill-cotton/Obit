@@ -1,0 +1,135 @@
+; $Id: Convol.TDF,v 1.4 2007/07/13 17:02:10 bcotton Exp $
+; Convol
+;---------------------------------------------------------------
+;! Convol together images
+;# Obit Task 
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2006,2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: Bill Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+Convol   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+Convol:  Obit Task to convolve an image with another or a model
+**PARAM** str 4
+DataType                          "FITS" or "AIPS" type of input
+**PARAM** str 12
+inName                             Image Name (Name) 1
+**PARAM** str 8
+inClass                            Image Name (Class) 1
+**PARAM** int   1
+inSeq             0         9999   Image Name (Seq. #) 1
+**PARAM** int   1
+inDisk            0            9   Disk drive # 1
+**PARAM** str 48
+inFile                             Filename 1 if FITS image
+**PARAM** int 7
+BLC              0.0       4096.0  Bottom left corner of image
+                                     0=>entire image
+**PARAM** int 7
+TRC              0.0       4096.0  Top right corner of image
+                                     0=>entire image
+**PARAM** str 4
+Opcode                             Operation desired:GAUS, IMAG, DCON, DGAU
+**PARAM** str 12
+in2Name                            Image Name (Name) 2
+**PARAM** str 8
+in2Class                           Image Name (Class) 2
+**PARAM** int   1
+in2Seq           0          9999   Image Name (Seq. #) 2
+**PARAM** int   1
+in2Disk           0            9   Disk drive # 2
+**PARAM** str 48
+in2File                            Filename 2 if FITS image
+**PARAM** float 3
+Beam     *      -999.9             Clean beam (maj, min, PA)
+**PARAM** float 1  **DEF** 0.0
+Factor   *                         Unit conversion factor;
+**PARAM** str 12
+outName                            Output Image Name
+**PARAM** str 8
+outClass                           Output Image Class
+**PARAM** int   1
+outSeq            0         9999   Output Image Seq. #
+**PARAM** int   1
+outDisk           0            9   output Disk drive
+**PARAM** str 48
+outFile                            Output Filename if FITS image
+**PARAM** int 10
+noScrat                            AIPS disk numbers for which
+                                   scratch files are disallowed
+----------------------------------------------------------------
+Convol
+Type: Task
+Use:     Obit program Convol will convolve an image with either another
+image or a specified Gaussian.  If the image is specified (AIPS Name or
+FITS file name given) then it is used.  
+output images must be the same type (AIPS or FITS).
+   History written to an output FITS image is into a History table.
+Adverbs:
+  DataType...."FITS" or AIPS
+  inName......Image to be convolved Name(Name). 
+  inClass.....Image to be convolved Class
+  inSeq.......Image to be convolved  Seq. #
+  inDisk......Image to be convolved disk drive # 
+  inFile......Input File Name if a FITS file
+  BLC.........The Bottom Left-hand pixel of the subarray of the image to
+              be analysed. The value (0,0) means (1,1). 1-rel
+  TRC.........The Top Right-hand pixel of the subarray of the image to
+              be analysed.  The value (0,0) means the top right hand
+              corner of the entire image.  1-rel
+  Opcode......A code indicating the desired operation.
+              'GAUS' => convolve the image with the specified Gaussian.
+              'IMAG' => convolve the image with the second image.
+              'DCON' => deconvolve the image from specified Gaussian.
+              'DGAU' => convolve the image with the deconvolution of the
+                    Gaussian and the second image (Gaussian divided by
+                    image in Fourier space)  NYI
+              blank => 'GAUS'
+  in2Name.....Convolution image if given, AIPS name
+  in2Class....Convolution image AIPS Class       
+  in2Seq......Convolution image AIPS Sequence
+  in2Disk.....Convolution image disk number
+  in2File.....Convolution image  File Name if a FITS file
+  Beam........Convolving Gaussian major, minor axis size in asec and
+           .. the position angle.  
+  Factor......All OPCODEs except DCON: the conversion factor for the
+              image units.  This value of Factor if specified should be
+              the ratio of the new beam area to the old beam area.  If
+              Factor is > 0.0, it will be used to convert from JY/(old
+              beam) to JY/(new beam).  If Factor is 0.0 or less, it will
+              be determined from the output beam size and any CLEAN beam
+              stored in the catalog.  If Factor is not given and cannot
+              be computed it is set to 1.0 and the map units are changed
+              to "UNDEFINE".  If flux per pixel output is desired then use
+              Factor=1.0.
+              DCON only: FACTOR is instead the limit in the value of
+              1/Gaussian.  <= 1.01 => 1000.
+  outName.....Output AIPS Name(Name).         
+  outClass....Output AIPS Name(Class).        
+  outSeq......Output AIPS Name(Seq. #).       0 => highest.
+  outDisk.....Output Disk drive # of image. 
+  outFile.....Output File Name if a FITS file
+  noScrat.....A list of AIPS disk numbers on which you do not 
+              wish scratch files
+----------------------------------------------------------------

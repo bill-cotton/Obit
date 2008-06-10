@@ -1,0 +1,2152 @@
+% $Id: ObitSD.tex,v 1.10 2008/02/20 21:27:38 bcotton Exp $ 
+%
+%  ObitSingle dish and OTF/GBT Tables class definitions
+%
+%\def\section #1.#2.{\medskip\leftline{\bf #1. #2.}\smallskip}
+%\def\bfitem #1#2{{{\bf (#1)}}{\it #2}}
+\def\bfi #1#2{{\bf #1:}{ #2}\par}
+\def\extname #1#2{ {\bf 1} Extension Name {\it #2}\smallskip}
+%\def\tabname #1#2{\bfitem 1{#1 Table Name #2}}
+\def\keyword {\leftline{\bf Keywords:}}
+%\def\table {\leftline{\bf Table Definition:}}
+\documentclass[11pt]{article}
+\usepackage{PennArrayDoc}
+\begin{document}
+\setcounter{section}{0}
+%  Title page
+
+\vskip 5cm
+\centerline{\ttlfont Single Dish Tables}
+\vskip 1cm
+\centerline{\ttlfont Obit: }
+\centerline{\ttlfont Merx mollis mortibus nuper}
+\vskip 3cm
+\centerline{\secfont version: 1.1.1 \today}
+\vskip 1cm
+\centerline{\secfont W. D. Cotton}
+\clearpage
+
+% Table Of Contents
+\tableofcontents
+\cleardoublepage
+
+\section {Introduction}
+   This document is intended to define the contents and meaning of the
+various tables developed for single dish radio astronomical data,
+especially ``On--the--fly'' (OTF) data from the Penn Array bolometer
+camera on the GBT.
+This software works inside the Obit software package.
+
+Usage documentation uses the doxygen system and is in separate
+documents.
+
+\section{Obit Tables}
+This document uses latex macroes which are translated by a perl
+script (bin/PennArrayTables.pl) into the c source code defining the
+classes used to access these tables.
+The tables defined in this document are both those needed for the OTF
+data structure and for reading the GBT archive data files.
+
+\subsection{LaTeX Macros}
+Tables used in Obit are defined in this document by using LaTeX
+macroes to formally define the table.
+These macroes are:
+\begin{itemize}
+\item tabletitle\{Title of table, e.g. ``OTFArrayGeom''\}
+\item tablename\{Name of table, e.g. ``OTFArrayGeom''\}
+\item tableintro\{Short description of class\}
+\item tableover\{Overview of usage of class\}
+\item tablekey[\{name\}\{type code\}\{ software name\} \{default value\}
+\{(range of indices)\} \{description\}]\\
+Defines Table keyword.
+\item tablecol[\{name\}\{units\}\{type code\} \{(dimensionality)\} \{software
+name\} \{description\}]\\
+Defines Table column..
+\end{itemize}
+
+\section{ObitOTF data}
+The ObitOTF data structure class and related classes are for storing
+``On--The--Fly'' single dish radio astronomy data.
+The data structure is patterned after the AIPS single dish data format
+but, due to AIPS table naming restrictions, only a FITS binary table
+implementation is currently supported.
+
+An ObitOTF data file can be thought of as a relational database.
+The measured sky brightness measurements are kept in the OTFScanData
+table together with some auxillary information such as the nominal sky
+pointing position, time etc.
+Other auxillary information and calibration and editing information is
+kept in other tables (see below).
+
+
+\subsection{ObitOTF tables}
+The basic calibration strategy is to manipulate tables which tell how
+to transform the data from ``raw'' data as tabulated to ``calibrated''
+data.
+There are two basic calibration tables, with the same internal
+structure.
+The OTFSoln table is a differential calibration relative to a
+potential prior calibration.
+A particular calibration operation determines a OTFSoln table.
+A OTFCal table is a cumulative table which is obtained from a
+(possible) prior calibration corrected by an OTFSoln table.
+
+The tables in an ObitOTF data file include:
+\begin{itemize}
+\item  OTFScanData\\
+Raw sky brightness data and auxillary information.
+\item  OTFArrayGeom\\
+Table giving the geometric offsets of a feed/detector array from the
+pointing axis of the telescope.
+\item  OTFTarget\\
+Table of sources or targets. 
+These are referred to in the OTFScanData table as an index into this table.
+\item  OTFIndex\\
+Scan table [optional] giving start and stop times and row numbers in
+the OTFScanData table as well as targets etc.
+This index is used to improve data access times.
+\item  OTFFlag\\
+Table describing ``flagged'' data - data to be ignored.
+\item  OTFCal\\
+Cumulative calibration table.
+This table gives multiplicative and additive corrections to the raw
+sky brightness measurements in the OTFScanData table as well as
+corrections to the nominal telescope pointing direction.
+\item  OTFSoln\\
+Differential calibration (``Solution'') table.
+\end{itemize}
+
+\subsection{ObitOTF Data Structure}
+Data in the OTFScanData table are stored in table records with a row
+corresponding to the data obtained in a given integration.
+The row contains a number of descriptive columns giving time,
+celestial pointing etc. followed by a column containing a regular data
+array.
+The data in the OTFScanData table are all stored as floats to increase
+access performance.
+
+In general, the data in the data array is a multidimensional array with
+different quanties along different axes (feed/detector, frequency,
+polarization). 
+The dimensionality, types and axis values are given in the header of
+the OTFScanData table as the TDIMn (dimensionality), mCTYPn (axis
+type), mCDLTn (increment in axis values between pixels), mCRPXn (axis
+reference pixel), mCROTn (axis rotation angle) and mCRVLn (coordinate
+on axis at reference pixel) keywords where m is the axis number and n
+is the data column in the table.
+(This is the standard FITS convention for conveying this information.)
+The following illustration is for the Penn Array with one Stokes
+(total power), 64 detectors (FEED) and 1 frequency; the data column is
+number 9.
+\begin{verbatim}
+TDIM9   = '(1,64,1)'           / size of the multidimensional array
+TZERO1  =   2.452814500000E+06 / Offset of Date from JD
+1CTYP9  = 'STOKES  '           / Stokes axis
+2CTYP9  = 'FEED    '           / Feed/detector axis
+3CTYP9  = 'FREQ    '           / Frequency axis
+1CDLT9  =         1.000000E+00 / Stokes ``increment''
+2CDLT9  =         1.000000E+00 / Feed ``increment''
+3CDLT9  =         1.000000E+00 / Frequency increment (Hz)
+1CRPX9  =         1.000000E+00 / Stokes reference pixel
+2CRPX9  =         1.000000E+00 / Feed reference pixel
+3CRPX9  =         1.000000E+00 / Frequency reference pixel
+1CROT9  =         0.000000E+00 / Stokes ``rotation'' (no meaning)
+2CROT9  =         0.000000E+00 / Feed ``rotation'' (no meaning)
+3CROT9  =         0.000000E+00 / Frequency ``rotation'' (no meaning)
+1CRVL9  =   1.000000000000E+00 / Stokes 'I'
+2CRVL9  =   1.000000000000E+00 / ``Feed'' 1
+3CRVL9  =   9.000000000000E+10 / Frequency in Hz
+\end{verbatim}
+
+
+\section{ObitSD software}
+The high level view of the Obit system is included in file
+OBITdoc.ps.
+The class documentation for the software for processing ObitOTF data
+is derived from the source code using doxygen and is available
+in html format starting at doc/doxygen/html/index.html.
+
+\section{Building ObitSD}
+The ObitSD package is an addon to the basic Obit package which should
+be installed first.
+See OBITdoc.ps for details.
+
+ObitSD comes with a configure script to construct the Makefiles to build
+ObitSD.
+Note: there are a number of third party packages as well as basic Obit
+that should be installed first.
+The basic installation is thus:
+\begin{verbatim}
+ % setenv OBIT /where/ever/you/installed/Obit 
+ % gtar xzvf ObitSD1.0.tgz
+ % cd ObitSD
+ % ./configure
+ % make
+\end{verbatim}
+For ``/where/ever/you/installed/Obit'' substitute the actual path of
+the Obit base directory.
+Alternatively, use the ``--with-obit=DIR'' option with configure.
+In addition to the packages used by basic Obit, ObitSD uses the GSL
+(GNU Scientific Library) package.
+The location of GSL can be specified to configure with the ''--with-gsl=DIR''
+configure option if configure cannot find it.
+
+When using ObitSD from python, specify the PYTHONPATH environment
+variable as ``ObitSD/python : Obit/python'' where for ObitSD and Obit
+substitute the base directories of the ObitSD and Obit packages.
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableOTFArrayGeom Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableOTFArrayGeom}]
+ObitTableOTFArrayGeom Class
+\tabletitle{OTFArrayGeom}
+% table name
+\tablename{OTFArrayGeom}
+\tableintro[
+{This class contains tabular data and allows access.
+"OTFArrayGeom" contains information about the locations and characteristics
+of detectors in the camera, the location of the telescope and time
+related information.}
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TELEX  "}{D}{TeleX}{0.0}{}
+{Telescope X coordinate. (meters, earth center)}
+]
+\tablekey[{"TELEY  "}{D}{TeleY}{0.0}{}
+{Telescope Y coordinate. (meters, earth center)}
+]
+\tablekey[{"TELEZ  "}{D}{TeleZ}{0.0}{}
+{Telescope Z coordinate. (meters, earth center)}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYYMMDD"}{}
+{Reference date as "YYYYMMDD"}
+]
+\tablekey[{"DEGPDY  "}{D}{DegDay}{360.0}{}
+{Earth rotation rate (deg/IAT day)}
+]
+\tablekey[{"POLARX  "}{E}{PolarX}{0.0}{}
+{Polar position X (meters) on ref. date}
+]
+\tablekey[{"POLARY  "}{E}{PolarY}{0.0}{}
+{Polar position Y (meters) on ref. date}
+]/** 
+\tablekey[{"GSTIA0 "}{D}{GSTiat0}{0.0}{}
+{GST at time=0 (degrees) on the reference date}
+]
+\tablekey[{"UT1UTC  "}{E}{ut1Utc}{}{}
+{UT1-UTC  (time sec.)  }
+]
+\tablekey[{"DATUTC  "}{E}{dataUtc}{}{}
+{data time-UTC  (time sec.)}
+]
+\tablekey[{"IATUTC  "}{E}{iatUtc}{}{}
+{IAT - UTC (sec).}
+]
+\tablekey[{"TIMSYS"}{A}{TimeSys}{"UTC"}{}
+{Time system, 'IAT' or 'UTC'}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"DETECTOR"}{"        " }{J}{(1)}{detector}
+{Detector number}
+] 
+\tablecol[{"AZ\_OFF"}{"DEGREE  " }{E}{(1)}{azOff}
+{``Azimuth'' offset from nominal pointing, this is formally ``cross
+elevation'' in GBT-speak and is the offset on the sky in the direction
+of azimuth.
+}
+] 
+\tablecol[{"EL\_OFF"}{"DEGREE  " }{E}{(1)}{elOff}
+{Elevation offset from nominal pointing}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{14/03/2003}{Revision 1: Initial definition}]
+\end{history}
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableOTFCal Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableOTFCal}]
+ObitTableOTFCal Class
+\tabletitle{OTFCal}
+% table name
+\tablename{OTFCal}
+\tableintro[
+{This class contains tabular data and allows access.
+"OTFCal" contains calibration information for OTF data.
+Calibrated data for each detector are:
+$${\rm cal\_data}\ = \ {\rm mult} ({\rm raw\_data}\ -\ {\rm cal}\ -\ 
+{\rm add}\ -\ {\rm poly})$$
+where cal is the calibration noise value for ``Cal on'' data and 0 for
+``Cal off'' date and poly is evaluated in the direction of the detector.
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"NO\_DETEC"}{J}{numDet}{1}{()}
+{Number of detectors)}
+]
+\tablekey[{"NO\_POLY"}{J}{numPoly}{1}{()}
+{Number of polynomial coefficients describing atmospheric emission.
+0 => no polynomial model.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{E}{(1)}{Time}
+{The center time.}
+] 
+\tablecol[{"TIME\_INT"}{"DAYS   " }{E}{(1)}{TimeI}
+{The integration time.}
+] 
+\tablecol[{"TARGET"}{"       " }{J}{(1)}{Target}
+{Celestial target, as index in target table.}
+] 
+\tablecol[{"DELTA\_AZ"}{"DEGREE  " }{E}{(1)}{dAz}
+{Correction to the ``Azimuth'' for all detectors.
+This is formally ``cross elevation'' in GBT-speak and is the offset on
+the sky in the direction of azimuth.}
+] 
+\tablecol[{"DELTA\_El"}{"DEGREE  " }{E}{(1)}{dEl}
+{Correction to the Elevation for all detectors.}
+] 
+\tablecol[{"CAL     "}{"        " }{E}{(numDet)}{cal}
+{Cal value in units of raw data per detector, to be subtracted from
+``Cal on'' data.}
+] 
+\tablecol[{"ADD     "}{"        " }{E}{(numDet)}{add}
+{Additive (subtractive actually) term per detector}
+] 
+\tablecol[{"MULT    "}{"        " }{E}{(numDet)}{mult}
+{Additive (subtractive actually) term per detector}
+] 
+\tablecol[{"WEIGHT  "}{"        " }{E}{(numDet)}{wt}
+{ Weight value per detector}
+] 
+\tablecol[{"POLY    "}{"        " }{E}{(numPoly)}{poly}
+{Polynomial atmosphere model, expansion in RA, dec about pointing position}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{03/04/2003}{Revision 1: Initial definition}]
+\end{history}
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableOTFModel Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableOTFModel}]
+ObitTableCC Class
+\tabletitle{CLEAN Components Table}
+% table name
+\tablename{OTFModel}
+\tableintro[
+{This class contains tabular data and allows access.
+"OTFModel" table contains image model components which may be derived
+via a CLEAN or other fitting process.
+An OTFModel is the front end to a persistent disk resident structure.
+Only FITS data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+A number of model types are supported as described with their
+parameters in the following:
+\begin{itemize}
+\item Point\\
+A Point model has a position and a flux but no extent on the sky.
+This model is indicated by the absence of the Type column or a value
+of 0.  
+No additional parameters are needed.
+\item Gaussian on Sky\\
+This is a Gaussian shaped model.
+This model is indicated by a value in the Type column of 1.
+The extra model parameters are:.
+\begin{enumerate}
+\item Major axis size in asec.
+\item Minor axis size in asec.
+\item position angle on sky in deg.
+\end{enumerate}
+\item Convolved Gaussian\\
+This is a Gaussian shaped model.
+This model is indicated by a value in the Type column of 2.
+The extra model parameters are:.
+\begin{enumerate}
+\item Major axis size in asec.
+\item Minor axis size in asec.
+\item position angle on sky in deg.
+\end{enumerate}
+\item Uniform optically thin sphere\\
+This corresponds to a uniformly filled sphere model which is optically
+thin.
+This model is indicated by a value in the Type column of 3.
+The extra model parameters are:.
+\begin{enumerate}
+\item Radius in aseconds.\\
+\end{enumerate}
+\end{itemize}
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"NO\_PARM"}{J}{numParm}{0}{()}
+{The number of IFs}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"X       "}{"Degree  " }{E}{(1)}{X}
+{``X'' position of component centroid as offset from reference position}
+] 
+\tablecol[{"Y       "}{"Degree  " }{E}{(1)}{Y}
+{``Y'' position of component centroid as offset from reference position}
+] 
+\tablecol[{"FLUX    "}{"Jansky  " }{E}{(1)}{Flux}
+{Flux density of component}
+] 
+\tablecol[{"TYPE    "}{"  " }{J}{(1)}{Type}
+{Component type: 0: (or not present) point, 1=Gaussian on sky, 2=
+convolved Gaussian, 3=Uniform optically thin sphere}
+] 
+\tablecol[{"PARMS   "}{"        " }{E}{(numParm)}{Parms}
+{Model components as needed by model}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{17/12/2003}{Revision 1: Initial definition}]
+\end{history}
+%
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableSkyModel Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableSkyModel}]
+ObitTableSkyModel Class
+\tabletitle{SkyModel}
+% table name
+\tablename{SkyModel}
+\tableintro[
+{This class contains tabular data and allows access.
+"SkyModel" contains a sky brightness model in terms of discrete components.}
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"RA  "}{E}{RA}{0.0}{}
+{Tangent point RA (deg)}
+]
+\tablekey[{"DEC  "}{E}{Dec}{0.0}{}
+{Tangent point Dec (deg)}
+]
+\tablekey[{"PROJ  "}{A}{Proj}{"-SIN"}{}
+{Projection code '-SIN', '-ARC', '-TAN'}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"RA\_OFF  "}{"DEGREE  " }{E}{(1)}{RAOff}
+{Right ascension offset from tangent point}
+] 
+\tablecol[{"DEC\_OFF "}{"DEGREE  " }{E}{(1)}{DecOff}
+{Declination offset from tangent point}
+] 
+\tablecol[{"FLUX    "}{"JY      " }{E}{(1)}{Flux}
+{Flux density}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{14/03/2003}{Revision 1: Initial definition}]
+\end{history}
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableOTFSoln Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableOTFSoln}]
+ObitTableOTFSoln Class
+\tabletitle{OTFSoln}
+% table name
+\tablename{OTFSoln}
+\tableintro[
+{This class contains tabular data and allows access.
+"OTFSoln" contains calibration solution information for OTF data.
+Calibrated data for each detector are:
+$${\rm cal\_data}\ = \ {\rm mult} ({\rm raw\_data}\ -\ {\rm cal}\ -\ 
+{\rm add}\ -\ {\rm poly})$$
+where cal is the calibration noise value for ``Cal on'' data and 0 for
+``Cal off'' date and poly is evaluated in the direction of the detector.
+OTFSoln tables may be applied to either an OTFCal table or directly
+the data in a self-cal mode.
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"NO\_DETEC"}{J}{numDet}{1}{()}
+{Number of detectors)}
+]
+\tablekey[{"NO\_POLY"}{J}{numPoly}{1}{()}
+{Number of polynomial coefficients describing atmospheric emission.
+0 => no polynomial model.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{E}{(1)}{Time}
+{The center time.}
+] 
+\tablecol[{"TIME\_INT"}{"DAYS   " }{E}{(1)}{TimeI}
+{The integration time.}
+] 
+\tablecol[{"TARGET"}{"       " }{J}{(1)}{Target}
+{Celestial target, as index in target table.}
+] 
+\tablecol[{"DELTA\_AZ"}{"DEGREE  " }{E}{(1)}{dAz}
+{Correction to the ``Azimuth'' for all detectors.
+This is formally ``cross elevation'' in GBT-speak and is the offset on
+the sky in the direction of azimuth.}
+] 
+\tablecol[{"DELTA\_EL"}{"DEGREE  " }{E}{(1)}{dEl}
+{Correction to the El for all detectors.}
+] 
+\tablecol[{"CAL     "}{"        " }{E}{(numDet)}{cal}
+{Cal value in units of raw data per detector, to be subtracted from
+``Cal on'' data.}
+] 
+\tablecol[{"ADD     "}{"        " }{E}{(numDet)}{add}
+{Additive (subtractive actually) term per detector}
+] 
+\tablecol[{"MULT    "}{"        " }{E}{(numDet)}{mult}
+{Additive (subtractive actually) term per detector}
+] 
+\tablecol[{"WEIGHT  "}{"        " }{E}{(numDet)}{wt}
+{ Weight value per detector}
+] 
+\tablecol[{"POLY    "}{"        " }{E}{(numPoly)}{poly}
+{Polynomial atmosphere model, expansion in RA, dec about pointing position}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{05/04/2003}{Revision 1: Initial definition}]
+\end{history}
+%
+%
+\clearpage
+%%%%%%%%%%%%%%% ScanData Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableOTFScanData}]
+ObitTableOTFScanData Class
+\tabletitle{OTFScan data}
+% table name
+\tablename{OTFScanData}
+\tableintro[
+{This class contains tabular data and allows access.
+An OTFScanData table has ``on the fly'' mode observational data from the
+bolometer array.}
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"NO\_DETEC"}{J}{numDet}{}{()}
+{The number of detectors.}
+]
+\tablekey[{"ORIGIN"}{A}{origin}{}{}
+{Originator of file}
+]
+\tablekey[{"OBJECT"}{A}{object}{}{}
+{Name of object}
+]
+\tablekey[{"TELESCOP"}{A}{teles}{}{}
+{Telescope used}
+]
+\tablekey[{"DATE-OBS"}{A}{obsdat}{}{}
+{Date (yyyy-mm-dd) of observation}
+]
+\tablekey[{"EPOCH"}{E}{epoch}{}{}
+{Celestial coordiate equinox}
+]
+\tablekey[{"BUNIT"}{A}{bunit}{}{}
+{Data units}
+]
+\tablekey[{"OBSRA"}{D}{obsra}{}{}
+{Observed Right Ascension in deg.}
+]
+\tablekey[{"OBSDEC"}{D}{obsdec}{}{}
+{Observed declination in deg.}
+]
+\tablekey[{"BEAMSIZE"}{E}{beamSize}{0.00111}{}
+{Gaussian FWHM of telescope beam size.}
+]
+\tablekey[{"DIAMETER"}{E}{diameter}{100.0}{}
+{Diameter of telescope in meters.}
+]
+\tablekey[{"OTFTYPE"}{A}{OTFType}{"Unknown"}{}
+{Type of data: ``DCR'': GBT DCR, ``SP'': GBT Spectral processor,
+``CCB'':CalTech Continuum Backend, ``PAR'':Penn Array Receiver}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{E}{(1)}{Time}
+{The center time.}
+] 
+\tablecol[{"TIME\_INT"}{"DAYS   " }{E}{(1)}{TimeI}
+{The integration time.}
+] 
+\tablecol[{"TARGET"}{"       " }{E}{(1)}{Target}
+{Celestial target, as index in target table.}
+] 
+\tablecol[{"Scan"}{"       " }{E}{(1)}{Scan}
+{Observing scan index.}
+] 
+\tablecol[{"RA  "}{"DEGREE  " }{E}{(1)}{RA}
+{Nominal RA of array center}
+] 
+\tablecol[{"DEC    "}{"DEGREE" }{E}{(1)}{Dec}
+{Nominal Dec of array center}
+] 
+\tablecol[{"ROTATE  "}{"        " }{E}{(1)}{rotate}
+{Rotation of array on sky (parallactic angle)}
+] 
+\tablecol[{"CAL    "}{"        " }{E}{(1)}{cal}
+{if > 0 then the cal source is on.}
+] 
+\tablecol[{"DATA    "}{"        " }{E}{(numDet)}{data}
+{Detector sample data per detector )}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{14/03/2003}{Revision 1: Initial definition}]
+\modhistory[{W. D. Cotton}{14/09/2003}{Added diameter, change name to
+OTFScanData}]
+\end{history}
+%
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableOTFTarget Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableOTFTarget}]
+ObitTableOTFTarget Class
+\tabletitle{Target table for OTF data documentation}
+% table name
+\tablename{OTFTarget}
+\tableintro[
+{This class contains tabular data and allows access.
+OTFTarget contains information about astronomical sources.
+An ObitTableOTFTarget is the front end to a persistent disk resident structure.
+Only FITS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"VELTYP  "}{A}{velType}{}{}
+{Velocity type,}
+]
+\tablekey[{"VELDEF  "}{A}{velDef}{}{}
+{Velocity definition 'RADIO' or 'OPTICAL'}
+]
+\tablekey[{"FREQID  "}{J}{FreqID}{0}{}
+{The Frequency ID for which the source parameters are relevant.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"ID. NO. "}{"       " }{J}{(1)}{TargID}
+{Target ID}
+] 
+\tablecol[{"TARGET  "}{"       " }{A}{(16)}{Target}
+{Target name }
+] 
+\tablecol[{"QUAL    "}{"       " }{J}{(1)}{Qual}
+{Target qualifier}
+] 
+\tablecol[{"CALCODE "}{"       " }{A}{(4)}{CalCode}
+{Calibrator code}
+] 
+\tablecol[{"IFLUX   "}{"JY     " }{E}{(1)}{IFlux}
+{Total Stokes I flux density}
+] 
+\tablecol[{"QFLUX   "}{"JY     " }{E}{(1)}{QFlux}
+{Total Stokes Q flux density}
+] 
+\tablecol[{"UFLUX   "}{"JY     " }{E}{(1)}{UFlux}
+{Total Stokes U flux density}
+] 
+\tablecol[{"VFLUX   "}{"JY     " }{E}{(1)}{VFlux}
+{Total Stokes V flux density}
+] 
+\tablecol[{"FREQOFF "}{"HZ     " }{D}{(1)}{FreqOff}
+{Frequency offset (Hz) from nominal}
+] 
+\tablecol[{"BANDWIDTH"}{"HZ     " }{D}{(1)}{Bandwidth}
+{Bandwidth}
+] 
+\tablecol[{"RAEPO   "}{"DEGREES " }{D}{(1)}{RAMean}
+{Right ascension at mean EPOCH (actually equinox) }
+] 
+\tablecol[{"DECEPO  "}{"DEGREES " }{D}{(1)}{DecMean}
+{Declination at mean EPOCH (actually equinox) }
+] 
+\tablecol[{"EPOCH   "}{"YEARS   " }{D}{(1)}{Epoch}
+{Mean Epoch (really equinox) for position in yr. since year 0.0}
+] 
+\tablecol[{"RAAPP   "}{"DEGREES " }{D}{(1)}{RAApp}
+{Apparent Right ascension }
+] 
+\tablecol[{"DECAPP  "}{"DEGREES " }{D}{(1)}{DecApp}
+{Apparent Declination}
+] 
+\tablecol[{"LSRVEL "}{"M/SEC    " }{D}{(1)}{LSRVel}
+{LSR velocity per IF }
+] 
+\tablecol[{"RESTFREQ"}{"HZ     " }{D}{(1)}{RestFreq}
+{Line rest frequency per IF }
+] 
+\tablecol[{"PMRA   "}{"DEG/DAY " }{D}{(1)}{PMRa}
+{Proper motion (deg/day) in RA}
+] 
+\tablecol[{"PMDEC  "}{"DEG/DAY " }{D}{(1)}{PMDec}
+{Proper motion (deg/day) in declination}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{10/07/2003}{Revision 1: Initial version}]
+\end{history}
+\clearpage
+
+%%%%%%%%%%%%%%% ObitTableOTFIndex Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableOTFIndex}]
+ObitTableOTFIndex Class
+\tabletitle{Index table for OTF data}
+% table name
+\tablename{OTFIndex}
+\tableintro[
+{This class contains tabular data and allows access.
+ObitTableOTFIndex contains an index for a OTF data file giving the times,
+target and datum range for a sequence of scans.
+A scan is a set of observations in the same mode and on the same target.
+An ObitTableOTFIndex is the front end to a persistent disk resident structure.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+No Keywords in table.
+%\begin{keywords}
+%\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"SCAN\_ID "}{"       " }{J}{(1)}{ScanID}
+{Scan ID number}
+] 
+\tablecol[{"TIME    "}{"DAYS   " }{E}{(1)}{Time}
+{The center time of the scan.}
+] 
+\tablecol[{"TIME\_INTERVAL "}{"DAYS   " }{E}{(1)}{TimeI}
+{Duration of scan}
+] 
+\tablecol[{"TARGET\_ID "}{"       " }{J}{(1)}{TargetID}
+{Target ID as defined in the OTFTarget table}
+] 
+\tablecol[{"START\_REC "}{"        "}{J}{(1)}{StartRec}
+{First record number (1-rel) in scan}
+] 
+\tablecol[{"END\_REC  "}{"        " }{J}{(1)}{EndRec}
+{Last record number (1-rel) in scan}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{08/06/2003}{Revision 1: Initial version}]
+\end{history}
+%
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableOTFFlag Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableOTFFlag}]
+ObitTableOTFFlag Class
+\tabletitle{Flag table for OTF data documentation}
+% table name
+\tablename{OTFFlag}
+\tableintro[
+{This class contains tabular data and allows access.
+{ObitTableOTFFlag contains descriptions of data to be ignored
+An {ObitTableOTFFlag is the front end to a persistent disk resident structure.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+No Keywords in table.
+%\begin{keywords}
+%\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TARGET  "}{"       " }{J}{(1)}{TargetID}
+{Target ID as defined in the OTFTarget table}
+] 
+\tablecol[{"FEED   "}{"       " }{J}{(1)}{Feed}
+{Feed number to flag, 0=$>$all}
+] 
+\tablecol[{"TIME RANGE "}{"DAYS    " }{E}{(2)}{TimeRange}
+{Start and end time of data to be flagged }
+] 
+\tablecol[{"FREQ   "}{"       " }{J}{(2)}{chans}
+{First and last frequency channel numbers to flag}
+] 
+\tablecol[{"PFLAGS  "}{"       " }{X}{(4)}{pFlags}
+{Polarization flags, same order as in data, T=$>$flagged}
+] 
+\tablecol[{"REASON  "}{"       " }{A}{(24)}{reason}
+{Reason for flagging}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{08/06/2003}{Revision 1: Initial}]
+\end{history}
+%
+
+% ++++++++++++++++++++++++++++++ GBT tables +++++++++++++++++++++++++++++++++++++=\
+\clearpage
+%%%%%%%%%%%%%%% GBT Antenna file %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%% ObitTableGBTBEAM\_OFFSETS Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGBTBEAM\_OFFSETS}]
+ObitTableGBTBEAM\_OFFSETS Class
+\tabletitle{Template ObitTableGBT document}
+% table name
+\tablename{BEAM\_OFFSETS}
+\tableintro[
+{Table in GBT archive/Antenna file.
+This class contains tabular data and allows access.
+
+This class is derived from the ObitTable class. }
+]
+\tableover{
+}
+% Table keyword description
+%
+% Table column description
+\begin{columns}
+\tablecol[{"NAME    "}{"        " }{A}{(32)}{Name}
+{}
+] 
+\tablecol[{"BEAMXELOFFSET"}{"DEGREE  " }{D}{(1)}{xeloff}
+{}
+] 
+\tablecol[{"BEAMELOFFSET"}{"DEGREE " }{D}{(1)}{eloff}
+{}
+] 
+\tablecol[{"SRFEED1  "}{"       " }{J}{(1)}{srfeed1}
+{}
+] 
+\tablecol[{"SRFEED2  "}{"       " }{J}{(1)}{srfeed2}
+{}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from GBT}]
+\end{history}
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableGBTANTPOSGR Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGBTANTPOSGR}]
+ObitTableGBTANTPOSGR Class
+\tabletitle{Template ObitTableGBT document}
+% table name
+\tablename{ANTPOSGR}
+\tableintro[
+{Table in GBT archive/Antenna file.
+This class contains tabular data and allows access.
+This class is derived from the ObitTable class.  
+Secondary Focus receivers.}
+]
+\tableover{
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+%
+% Table column description
+\begin{columns}
+\tablecol[{"DMJD    "}{"DAY    " }{D}{(1)}{dmjd}
+{}
+] 
+\tablecol[{"RAJ2000 "}{"DEGREE  " }{D}{(1)}{raj2000}
+{}
+] 
+\tablecol[{"DECJ2000"}{"DEGREE  " }{D}{(1)}{decj2000}
+{}
+] 
+\tablecol[{"MNT\_AZ "}{"DEGREE  " }{D}{(1)}{mntAaz}
+{}
+] 
+\tablecol[{"MNT\_EL  "}{"DEGREE  " }{D}{(1)}{mntEl}
+{}
+] 
+\tablecol[{"REFRACT "}{"DEGREE  " }{D}{(1)}{refract}
+{}
+] 
+\tablecol[{"MAJOR "}{"DEGREE  " }{D}{(1)}{major}
+{}
+] 
+\tablecol[{"MINOR "}{"DEGREE  " }{D}{(1)}{minor}
+{}
+] 
+\tablecol[{"SR\_XP"}{"MM      " }{D}{(1)}{srXp}
+{}
+] 
+\tablecol[{"SR\_YP"}{"MM      " }{D}{(1)}{srYp}
+{}
+] 
+\tablecol[{"SR\_ZP "}{"MM      " }{D}{(1)}{srZp}
+{}
+] 
+\tablecol[{"SR\_XT "}{"DEGREE  " }{D}{(1)}{srXt}
+{}
+] 
+\tablecol[{"SR\_YT "}{"DEGREE  " }{D}{(1)}{srYt}
+{}
+] 
+\tablecol[{"SR\_ZT "}{"DEGREE  " }{D}{(1)}{srZt}
+{}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from GBT}]
+\end{history}
+
+\clearpage
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableGBTANTPOSF Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGBTANTPOSPF}]
+ObitTableGBTANTPOSPF Class
+\tabletitle{Template ObitTableGBT document}
+% table name
+\tablename{ANTPOSPF}
+\tableintro[
+{Table in GBT archive/Antenna file.
+This class contains tabular data and allows access.
+This class is derived from the ObitTable class. 
+Prime Focus receivers.}
+]
+\tableover{
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+%
+% Table column description
+\begin{columns}
+\tablecol[{"DMJD    "}{"DAY    " }{D}{(1)}{dmjd}
+{}
+] 
+\tablecol[{"RAJ2000 "}{"DEGREE  " }{D}{(1)}{raj2000}
+{}
+] 
+\tablecol[{"DECJ2000"}{"DEGREE  " }{D}{(1)}{decj2000}
+{}
+] 
+\tablecol[{"MNT\_AZ "}{"DEGREE  " }{D}{(1)}{mntAaz}
+{}
+] 
+\tablecol[{"MNT\_EL  "}{"DEGREE  " }{D}{(1)}{mntEl}
+{}
+] 
+\tablecol[{"REFRACT "}{"DEGREE  " }{D}{(1)}{refract}
+{}
+] 
+\tablecol[{"MAJOR "}{"DEGREE  " }{D}{(1)}{major}
+{}
+] 
+\tablecol[{"MINOR "}{"DEGREE  " }{D}{(1)}{minor}
+{}
+] 
+\tablecol[{"PF\_FOCUS"}{"MM     " }{D}{(1)}{pfFocus}
+{Prime focus focus.}
+] 
+\tablecol[{"PF\_ROTATION"}{"DEGREE  " }{D}{(1)}{pfRotation}
+{Prime focus rotation}
+] 
+\tablecol[{"PF\_X  "}{"MM      " }{D}{(1)}{pfX}
+{}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from GBT}]
+\end{history}
+
+\clearpage
+
+%%%%%%%%%%%%%%% GBT DCR file %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%% ObitTableGBTDCRSTATE Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGBTDCRSTATE}]
+ObitTableGBTSTATE Class
+\tabletitle{ObitTableGBTDCRState document}
+% table name
+\tablename{STATE}
+\tableintro[
+{Table in GBT archive/DCR file.
+This class contains tabular data and allows access.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"MASTER "}{A}{master}{"DCR"}{}
+{Switching signals master
+}
+]
+\tablekey[{"SCAN "}{J}{scan}{}{}
+{Scan number
+}
+]
+\tablekey[{"UTDATE "}{J}{utdate}{}{}
+{MJD of start time
+}
+]
+\tablekey[{"UTCSTART "}{D}{utcstart}{}{}
+{Start time
+}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"BLANKTIM"}{"SECOND  " }{D}{(1)}{blanktim}
+{}
+] 
+\tablecol[{"PHASETIM"}{"SECOND  " }{D}{(1)}{phasetim}
+{}
+] 
+\tablecol[{"SIGREF"}{"" }{B}{(1)}{sigref}
+{}
+] 
+\tablecol[{"CAL"}{"" }{B}{(1)}{cal}
+{}
+] 
+\tablecol[{"SWSIG1 "}{"" }{B}{(1)}{swsig1}
+{}
+] 
+\tablecol[{"SWSIG2 "}{"" }{B}{(1)}{swsig2}
+{}
+] 
+\tablecol[{"SWSIG3 "}{"" }{B}{(1)}{swsig3}
+{}
+] 
+\tablecol[{"SWSIG4"}{"" }{B}{(1)}{swsig4}
+{}
+] 
+\tablecol[{"SWSIG5"}{"" }{B}{(1)}{swsig5}
+{}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from GBT}]
+\end{history}
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableGBTDCRRECEIVER  Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGBTDCRRECEIVER}]
+ObitTableGBTDCRRECEIVER Class
+\tabletitle{ObitTableGBTDCRRECEIVER document}
+% table name
+\tablename{RECEIVER}
+\tableintro[
+{Table in GBT archive/DCR file.
+This class contains tabular data and allows access.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+%
+% Table keyword description
+\begin{keywords}
+\tablekey[{"SCAN "}{J}{scan}{}{}
+{Scan number
+}
+]
+\tablekey[{"UTDATE "}{J}{utdate}{}{}
+{MJD of start time
+}
+]
+\tablekey[{"UTCSTART "}{D}{utcstart}{}{}
+{Start time
+}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"CHANNELID"}{"" }{I}{(1)}{channelid}
+{}
+] 
+\tablecol[{"TESTDATA"}{"" }{B}{(1)}{testdata}
+{}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from GBT}]
+\end{history}
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableGBTDCRDATA Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGBTDCRDATA}]
+ObitTableGBTDCRDATA  Class
+\tabletitle{ObitTableGBTDCRDATA document}
+% table name
+\tablename{DATA }
+\tableintro[
+{Table in GBT archive/DCR file.
+This class contains tabular data and allows access.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"SCAN "}{J}{scan}{}{}
+{Scan number
+}
+]
+\tablekey[{"UTDATE "}{J}{utdate}{}{}
+{MJD of start time
+}
+]
+\tablekey[{"UTCSTART "}{D}{utcstart}{}{}
+{Start time
+}
+]
+\tablekey[{"BACKEND"}{A}{backend}{"DCR"}{}
+{Which backend
+}
+]
+\tablekey[{"CTYPE1"}{A}{ctype1}{"STATE"}{}
+{First data axis is State
+}
+]
+\tablekey[{"CTYPE2"}{A}{ctype2}{"RECEIVER"}{}
+{Second data axis is Receiver
+}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"IFFLAG  "}{"CODE " }{I}{(1)}{ifflag}
+{}
+] 
+\tablecol[{"SUBSCAN "}{"CODE " }{J}{(1)}{subscan}
+{}
+] 
+\tablecol[{"TIMETAG "}{"DMJD" }{D}{(1)}{timetag}
+{}
+] 
+\tablecol[{"DATA "}{"COUNTS  " }{J}{(2,2))}{data}
+{}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from GBT}]
+\end{history}
+\clearpage
+
+
+%%%%%%%%%%%%%%% GBT CCB file %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%% ObitTableGBTCCBSTATE Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGBTCCBSTATE}]
+ObitTableGBTSTATE Class
+\tabletitle{ObitTableGBTCCBState document}
+% table name
+\tablename{STATE}
+\tableintro[
+{Table in GBT archive/CCB file.
+This class contains tabular data and allows access.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+A binary table extension called CCBSTATE records the physical
+definitions of the phases of the data. There are a number of rows
+equal to the number of phases NPHASES returned for each CCB input port
+for each integration.  Columns PHIA and PHIB records the values of the
+phase switches A \& B at each phase state. Valid values are 0 or 1. 
+Data type of each entry in the column is an unsigned byte.  The
+ordering of rows in the CCBSTATE table corresponds to ordering of the
+phase columns in the DATA table.  The number of rows in the CCBSTATE
+table is equal to the number of phases in the phase switch cycle
+(which is in turn equal to 2 to the power of the number of active
+phase switches hence 1,2, or 4). The number of phases in the
+phase switch cycle is referred to as NPHASES elsewhere in this
+document.\\
+Comments:
+\begin{itemize}
+\item NPHASES is equal to 2NACTPSW where NACTPSW is the number of active phase switches.
+Since NACTPSW has valid values of 0, 1, and 2, NPHASES can be 1, 2, or 4.
+%
+\item This table is analagous to GBT Backends' STATE tables but differs due to 
+the different implementations of CALs (individual integrations are Cal On or Cal off, 
+rather than having sub-integrations or ``phases'' be Cal On or Cal Off as for other 
+GBT backends) and SIGREF (next bullet point) for this backend.
+%
+\item  The REF state corresponds to ``PHIA XOR PHIB''. A SIG state is ``NOT(PHIA XOR PHIB)''. 
+With two phase switches active there will be two physically distinct rows of the 
+CCBSTATE table that correspond to SIG and two that correspond to REF.
+\end{itemize}
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"NPHASES"}{J}{nphases}{}{}
+{Scan number
+}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"PHIA"}{"state " }{J}{(1)}{phia}
+{Value of phase switch A}
+]
+\tablecol[{"PHIB"}{"state " }{J}{(1)}{phib}
+{Value of phase switch B}
+]
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from GBT}]
+\end{history}
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableGBTCCBRBPORT  Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGBTCCBPORT}]
+ObitTableGBTCCBPORT Class
+\tabletitle{ObitTableGBTCCBPORT document}
+% table name
+\tablename{RECEIVER}
+\tableintro[
+{Table in GBT archive/CCB file.
+This class contains tabular data and allows access.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+A standard (SPN/004) PORT binary table extension is recorded in order
+to allow the CCB inputs to be crossindexed with the physical
+descriptions provided in the IF manager IF table. 
+There are two columns: BANK (a character), and PORT (a non-zero integer). 
+A given value of PORT uniquely identifies a physical input to the CCB, 
+and may be used to index physical descriptions (frequency, feed, polarization 
+,etc) in the IF manager IF table. 
+It also uniquely defines a row in the PORT table. 
+The BANK column is retained for compliance with the GBT FITS standard 
+and are set to a fiducial value of 'A'. 
+Additionally there is a SLAVE column indicating which daughter card a 
+given input port is associated with. 
+Data are unsigned 8-bit integers with valid values 0,1,2,3. 
+The order of the rows of the PORT table correspond to the ordering of 
+PORT columns in the DATA table. The number of rows NPORTS of the PORT 
+table is equal to the number of ports input ports selected as active 
+in the manager for the given scan.  
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+%
+% Table keyword description
+%
+% Table column description
+\begin{columns} 
+\tablecol[{"BANK"}{" " }{A}{(1)}{bank}
+{Always has value of ``A'' but included for compliance with GBT standards.}
+] 
+\tablecol[{"PORT"}{" " }{I}{(1)}{port}
+{Identifier for a physical input to the CCB}
+] 
+\tablecol[{"SLAVE"}{" " }{I}{(1)}{slave}
+{Which daughter card a given input port is associated with.}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from GBT}]
+\end{history}
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableGBTCCBDATA Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGBTCCBDATA}]
+ObitTableGBTCCBDATA  Class
+\tabletitle{ObitTableGBTCCBDATA document}
+% table name
+\tablename{DATA }
+\tableintro[
+{Table in GBT archive/CCB file.
+This class contains tabular data and allows access.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+The DATA binary table extension contains raw accumulated total power
+integrations for each phase of each CCB input port that was used for a
+given scan.  The first (DMJD) column of the data array contains the
+MJD of the integration start.  The DATA column is a multidimensional
+column with dimensions (NPORTS,NPHASES). Each datum is recorded as a
+32 bit two's complement integer; subsequent transformation to unsigned
+values is facilitated by recording a TZERO keyword with a value of
+$2^31$. The order of the PORT and PHASE sub-columns should correspond to
+the order of the rows in the PORT and CCBSTATE tables
+respectively. The number of phases NPHASES is determined by the number
+of active switches and is 1, 2, or 4. The number of ports NPORTS is
+equal to the number of ports selected in the manager as active for the
+given scan.\\
+A second multi-dimensional OVRFLOW column, of the same dimensions as
+the DATA column, comprises LOGICAL data with 'T' indicating
+integrations that overflowed and 'F' indicating integrations that did
+not. The value at subcolumn M row N in the OVRFLOW column denotes the
+overflow status of the integration datum at subcolumn M row N of the
+DATA column.  One multi-dimensional LOGICAL column contains the four
+SLAVEOK flags. Two LOGICAL columns contain CAL A and CAL B ON flags
+indicating whether, for a given integration, a given call was on or
+not; the ``integration usable'' flag is a separate SHORT-INT column,
+indicating whether each integration is usable based on the cal diode
+rise and fall time flags applied by the CCB.\\
+Comments\\
+\begin{itemize}
+\item Integration data are returned by the CCB as unsigned 32 bit integers. Conversion from signed 
+32 bit two's complements values, to unsigned 32 bit values, may require use of double precision 
+on the data processing end.
+\item  The ``integration usable columns'' is short int not logical in order to more closely 
+line up the columns with machine byte boundaries, for better performance.
+\item  The SLAVEOK flags can be associated with individual columns of data 
+(ie input ports) using the information in the SLAVE column of the PORT table.
+\item  The cabling-dependent mapping of the CCB's ``Cal A'' and ``Cal B'' to a physical Cal diode 
+(nominally Left and Right, or perhaps, tags in the calibration FITS file database) is 
+presently unspecified.
+\end{itemize}
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+The ordering of ``PORTS'' is given in the IF table (Freq, feed, poln).
+CCBSTATE given in CCBSTATE table; guessing PHIA = sig/ref (ref state
+swap the two feeds), PHIB = cal, 1=on.
+}
+
+% Table keyword description
+% None
+%
+% Table column description
+\begin{columns}
+\tablecol[{"DMJD  "}{"d " }{D}{(1)}{dmjd}
+{MJD of the integration start.}
+] 
+\tablecol[{"SLAVEOK"}{"bool " }{L}{(4)}{slaveok}
+{Is each daughter card in an OK state?}
+] 
+\tablecol[{"USABLE "}{"status" }{I}{(1)}{usable}
+{}
+] 
+\tablecol[{"CALA "}{"status" }{L}{(1)}{cala}
+{Is Cal A ``on''?}
+] 
+\tablecol[{"CALB "}{"status" }{L}{(1)}{calb}
+{Is Cal B ``on''?}
+] 
+\tablecol[{"OVRFLOW "}{"bool  " }{L}{(16,4))}{ovrflow}
+{ DATA overflowed? - same order as DATA}
+] 
+\tablecol[{"DATA "}{"ulong " }{J}{(16,4))}{data}
+{unsigned (PORT,CCBSTATE)}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from GBT}]
+\end{history}
+\clearpage
+
+%%%%%%%%%%%%%%% GBT Penn Array Camera file %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%% ObitTableGBTPARDATA Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGBTPARDATA}]
+ObitTableGBTPARDATA  Class
+\tabletitle{ObitTableGBTPARDATA document}
+% table name
+\tablename{DATA }
+\tableintro[
+{Table in GBT archive/Penn Array Camera file.
+This class contains tabular data and allows access.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+The DATA binary table extension contains raw bolometer data.
+The ``TimeStamp'' column contains the number of seconds since the
+beginning of Unix Time (1 Jan 1976?).\\
+The main file HDU contains the following keywords:
+\begin{itemize}
+\item ``DATE-OBS''\\
+String in form yyyy-mm-dd giving UTC start date
+\item ``INSTRUME''\\
+String 'PennArrayReceiver' 
+\item ``UTCSTART''\\
+String: UTC start time in seconds since midnight
+\item ``UTDSTART''\\
+String: UTC starttime in MJD, ``unknown'' = unspecified
+\item ``UTCEND''\\
+String: UTC of exposure end, ``unknown'' = unspecified
+\item ``SCANNUM''\\
+Integer: scan number(?).
+\item ``PROJID''\\
+String: Project ID
+\end{itemize}
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"CFGVALID"}{L}{cfgvalid}{}{}
+{If true, configuration has not changed during scan}
+]
+\end{keywords}
+
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TimeStamp"}{"Second" }{D}{(1)}{TimeStamp}
+{Unix time in seconds.}
+] 
+\tablecol[{"daccounts"}{"Count" }{D}{(72)}{daccounts}
+{daccounts}
+] 
+\tablecol[{"saecounts"}{"Count" }{D}{(72)}{saecounts}
+{saecounts}
+] 
+\tablecol[{"DigInput"}{"bool" }{B}{(6)}{DigInput}
+{DigInput}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from GBT}]
+\end{history}
+\clearpage
+
+%%%%%%%%%%%%%%% ObitTableGBTCCBSTATE Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGBTPARSENSOR}]
+ObitTableGBTPARSENSOR Class
+\tabletitle{ObitTableGBTPARSensor document}
+% table name
+\tablename{Sensor}
+\tableintro[
+{Table in GBT archive/PAR file.
+This class contains tabular data and allows access.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+A binary table extension called PARSENSOR Gives the row and column
+numbers of each sensor.
+NB this does not appear to correspond to sky position.
+Eight of the sensors are ``dark'', i.e. don't see the sky.
+}
+% Table keyword description
+% none
+%
+% Table column description
+\begin{columns}
+\tablecol[{"Row"}{" " }{J}{(1)}{row}
+{Row number (0-rel) of corresponding sensor, row number=index in data arrays}
+]
+\tablecol[{"Col"}{" " }{J}{(1)}{col}
+{Column number (0-rel) of corresponding sensor, row number=index in data arrays}
+]
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from GBT}]
+\end{history}
+
+\clearpage
+
+%%%%%%%%%%%%%%% GBT SpectralProcessor file %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%1 ObitTableGBTSTATE Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGBTSPSTATE}]
+ObitTableGBTSTATE Class
+\tabletitle{ObitTableGBTSPSTATE document}
+% table name
+\tablename{STATE}
+\tableintro[
+{Table in GBT archive/SpectralProcessor file.
+This class contains tabular data and allows access.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"FORMATID"}{A}{formatid}{"GBSDD007"}{}
+{SDD\_FORMAT\_ID
+}
+]
+\tablekey[{"SCAN"}{J}{scan}{}{}
+{Scan number
+}
+]
+\tablekey[{"SUBSCAN"}{J}{subscan}{}{}
+{Scan record number
+}
+]
+\tablekey[{"UTDATE"}{J}{utdate}{}{}
+{MJD of start time
+}
+]
+\tablekey[{"UTCSTART"}{D}{utcstart}{}{}
+{UTC start time seconds.
+}
+]
+\tablekey[{"UTCSTOP"}{D}{utcstop}{}{}
+{Stop time seconds.
+}
+]
+\tablekey[{"RCVRS"}{J}{rcvrs}{}{}
+{Each item is index by RCVRS.
+}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"BLANKTIM"}{"SECOND  " }{E}{(2)}{blanktim}
+{}
+] 
+\tablecol[{"PHASETIM"}{"SECOND  " }{E}{(2)}{phasetim}
+{}
+] 
+\tablecol[{"SIGREF"}{"" }{B}{(2)}{sigref}
+{}
+] 
+\tablecol[{"CAL"}{"" }{B}{(2)}{cal}
+{}
+] 
+\tablecol[{"FFTS "}{"" }{J}{(2)}{ffts}
+{}
+] 
+\tablecol[{"DELETED "}{"" }{J}{(2)}{deleted}
+{}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from GBT}]
+\end{history}
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableGBTSPRECEIVER  Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGBTSPRECEIVER}]
+ObitTableGBTSPRECEIVER Class
+\tabletitle{ObitTableGBTSPRECEIVER document}
+% table name
+\tablename{RECEIVER}
+\tableintro[
+{Table in GBT archive/SpectralProcessor file.
+This class contains tabular data and allows access.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+%
+% Table keyword description
+\begin{keywords}
+\tablekey[{"SCAN "}{J}{scan}{}{}
+{Scan number
+}
+]
+\tablekey[{"UTDATE "}{J}{utdate}{}{}
+{MJD of start time
+}
+]
+\tablekey[{"UTCSTART "}{D}{utcstart}{}{}
+{Start time
+}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"RCVRID"}{" "}{J}{(1)}{rcvrid}
+{}
+] 
+\tablecol[{"TAPER"}{" "}{A}{(8)}{taper}
+{}
+] 
+\tablecol[{"OBSFREQ"}{"HZ"}{D}{(1)}{obsfreq}
+{}
+] 
+\tablecol[{"IFF"}{"HZ"}{D}{(1)}{iff}
+{}
+] 
+\tablecol[{"FREQRES"}{"HZ"}{D}{(1)}{freqres}
+{}
+] 
+\tablecol[{"BANDWD"}{"HZ"}{E}{(1)}{bandwd}
+{}
+] 
+\tablecol[{"TCAL"}{"DEGREE"}{E}{(1)}{tcal}
+{}
+] 
+\tablecol[{"TPLEVEL"}{" "}{E}{(1)}{tplevel}
+{}
+] 
+\tablecol[{"FASTTIM"}{"SECOND"}{E}{(1)}{fasttim}
+{}
+] 
+\tablecol[{"SLOWTIM"}{"SECOND"}{E}{(1)}{slowtim}
+{}
+] 
+\tablecol[{"CLIP"}{"SECOND"}{E}{(1)}{clip}
+{}
+] 
+\tablecol[{"THRESH"}{"SECOND"}{E}{(1)}{thresh}
+{}
+] 
+\tablecol[{"SYNTHL"}{"CODE"}{B}{(1)}{synthl}
+{}
+] 
+\tablecol[{"OVERL"}{"CODE"}{B}{(1)}{overl}
+{}
+] 
+\tablecol[{"IMODF"}{"CODE"}{B}{(1)}{imodf}
+{}
+] 
+\tablecol[{"IFSYNTH"}{"CODE"}{B}{(1)}{ifsynth}
+{}
+] 
+\tablecol[{"TAPEROFF"}{"CODE"}{B}{(1)}{taperoff}
+{}
+] 
+\tablecol[{"RFIEXC"}{"CODE"}{B}{(1)}{rfiexc}
+{}
+] 
+\tablecol[{"CLKSRC"}{"CODE"}{B}{(1)}{clksrc}
+{}
+] 
+\tablecol[{"IFLO"}{"CODE"}{B}{(1)}{iflo}
+{}
+] 
+\tablecol[{"IFSIDE"}{"CODE"}{B}{(1)}{ifside}
+{}
+] 
+\tablecol[{"RFSIDE"}{"CODE"}{B}{(1)}{rfside}
+{}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from GBT}]
+\end{history}
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableGBTSPDATA Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGBTSPDATA}]
+ObitTableGBTSPDATA  Class
+\tabletitle{Template ObitTableGBTSPDATA document}
+% table name
+\tablename{DATA}
+\tableintro[
+{Table in GBT archive/SpectralProcessor file.
+This class contains tabular data and allows access.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"OBJECT "}{A}{object}{}{}
+{Source name 
+}
+]
+\tablekey[{"SCAN "}{J}{scan}{}{}
+{Scan number 
+}
+]
+\tablekey[{"UTDATE "}{J}{utdate}{}{}
+{MJD of start time 
+}
+]
+\tablekey[{"UTCSTART "}{D}{utcstart}{}{}
+{Start time in seconds. 
+}
+]
+\tablekey[{"UTCSTOP "}{D}{utcstop}{}{}
+{Stop time in seconds. 
+}
+]
+\\tablekey[{"INTTIME "}{D}{inttime}{}{}
+{Integration time in seconds. 
+}
+]
+tablekey[{"BACKEND"}{A}{backend}{"DCR"}{}
+{Which backend 
+}
+]
+\tablekey[{"CTYPE1"}{A}{ctype1}{"STATE"}{}
+{First data axis is State 
+}
+]
+\tablekey[{"CTYPE2"}{A}{ctype2}{"RECEIVER"}{}
+{Second data axis is Receiver 
+}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"SUBSCAN "}{"CODE " }{J}{(1)}{subscan}
+{}
+] 
+\tablecol[{"UTDATE "}{"DAY" }{J}{(1)}{utdate}
+{}
+] 
+\tablecol[{"UTCSTART "}{"SECOND" }{D}{(1)}{utcstart}
+{}
+] 
+\tablecol[{"PSRPER "}{" " }{D}{(1)}{psrper}
+{Pulsar period.}
+] 
+\tablecol[{"DATA "}{"COUNT  " }{E}{(1024,2,2))}{data}
+{Data}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from GBT}]
+\end{history}
+\clearpage
+
+%%%%%%%%%%%%%%% GBT IF file %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%% ObitTableGBTIF Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGBTIF}]
+ObitTableGBTIF Class
+\tabletitle{ObitTableGBTIF document}
+% table name
+\tablename{IF }
+\tableintro[
+{Table in GBT archive/IF file.
+This class contains tabular data and allows access.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+IF controler information about frequency and polarization setup.
+Sky Frequency Formula:
+$$ sky = SFF\_SIDEBAND*IF + SFF\_MULTIPLIER*LO1 + SFF\_OFFSET $$
+Signed Sum of the LOs:
+$$  sum =  -(SFF\_MULTIPLIER*LO1 + SFF\_OFFSET)/SFF\_SIDEBAND $$
+}
+% Table keyword description
+%
+% Table column description
+\begin{columns}
+\tablecol[{"BACKEND"}{" " }{A}{(32)}{backend}
+{Name of the terminating backend.}
+] 
+\tablecol[{"BANK "}{" " }{A}{(2)}{bank}
+{Name of the backend's set of inputs.}
+] 
+\tablecol[{"PORT "}{" " }{J}{(1)}{port}
+{Index of the backend's input.}
+] 
+\tablecol[{"RECEIVER"}{" " }{A}{(32)}{receiver}
+{Name of the receiver of origin.}
+] 
+\tablecol[{"FEED"}{" " }{J}{(1)}{feed}
+{Index of receiver RF entry point (0 indicates none.}
+] 
+\tablecol[{"SRFEED1"}{" " }{J}{(1)}{srfeed1}
+{Index of first FEED of a sig/ref pair.}
+] 
+\tablecol[{"SRFEED2"}{" " }{J}{(1)}{srfeed2}
+{Index of second FEED of a sig/ref pair.}
+] 
+\tablecol[{"RECEPTOR"}{" " }{A}{(8)}{receptor}
+{Name of the receiver's detector.}
+] 
+\tablecol[{"LO\_CIRCUIT"}{" " }{A}{(32)}{loCircuit}
+{Circuit producing the tracking frequency.}
+] 
+\tablecol[{"LO\_COMPONENT"}{" " }{A}{(32)}{loComponent}
+{component producing the tracking frequency.}
+] 
+\tablecol[{"SIDEBAND"}{" " }{A}{(2)}{sideband}
+{Resulting sideband: upper or lower.}
+] 
+\tablecol[{"POLARIZE"}{" " }{A}{(2)}{polarize}
+{Resulting polarization ('X', 'Y', 'R', 'L').}
+] 
+\tablecol[{"CENTER\_IF"}{"HZ" }{E}{(1)}{CenterIF}
+{Approximate physical center frequency.}
+] 
+\tablecol[{"CENTER\_SKY"}{"HZ" }{E}{(1)}{CenterSky}
+{Approximate center frequency on the sky.}
+] 
+\tablecol[{"BANDWDTH"}{"HZ" }{E}{(1)}{bandwdth}
+{Approximate resulting bandwidth.
+BANDWDTH of 0 denotes the bandpass is outside the optimal range.
+}
+] 
+\tablecol[{"HIGH\_CAL"}{" " }{J}{(1)}{highCal}
+I{ndicates a high powered calibrator was used.}
+] 
+\tablecol[{"TEST\_TONE\_IF"}{"HZ" }{E}{(1)}{testToneIF}
+{Approximate physical test tone frequency, if any.}
+] 
+\tablecol[{"TEST\_TONE\_SKY"}{"HZ" }{E}{(1)}{YestToneSky}
+{Approximate test tone frequency on the sky, if any.}
+] 
+\tablecol[{"TEST\_TONE\_CIRCUIT"}{" " }{A}{(32)}{TestToneCircuit}
+{Circuit producing the test tone, if any.}
+] 
+\tablecol[{"TEST\_TONE\_COMPONENT"}{" " }{A}{(32)}{testToneComponent}
+{Component producing the test tone, if any.}
+] 
+\tablecol[{"SFF\_MULTIPLIER"}{" " }{D}{(1)}{sffMultiplier}
+{Sky Frequency Formula multiplier coefficient.}
+] 
+\tablecol[{"SFF\_SIDEBAND"}{" " }{D}{(1)}{sffSideband}
+{Sky Frequency Formula sideband coefficient.}
+] 
+\tablecol[{"SFF\_OFFSET"}{" " }{D}{(1)}{sffOffset}
+{Sky Frequency Formula offset coefficient.}
+] 
+\tablecol[{"TRANSFORM\_COUNT"}{" " }{J}{(1)}{transformCount}
+{Number of transform.}
+] 
+\tablecol[{"TRANSFORMS"}{" " }{A}{(4096)}{transforms}
+{Matrix of transform descriptions (frequencies in MHz).}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from GBT}]
+\end{history}
+\end{document}
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableXX Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableXX}]
+ObitTableXX Class
+\tabletitle{Template ObitTable document}
+% table name
+\tablename{XX}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS XX" contains highly secret information.
+An ObitTableXX is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"REVISION"}{J}{revision}{1}{}
+{Revision number of the table definition.
+}
+]
+\tablekey[{"NO\_SECRET"}{J}{numPol}{}{(1,2)}
+{The number of secrets.
+}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time of the secret.}
+] 
+\tablecol[{""}{"" }{}{()}{}
+{}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from AIPS}]
+\end{history}
+\end{document}
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableXX Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableXX}]
+ObitTableXX Class
+\tabletitle{Template ObitTable document}
+% table name
+\tablename{XX}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS XX" contains highly secret information.
+An ObitTableXX is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"REVISION"}{J}{revision}{1}{}
+{Revision number of the table definition.
+}
+]
+\tablekey[{"NO\_SECRET"}{J}{numPol}{}{(1,2)}
+{The number of secrets.
+}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time of the secret.}
+] 
+\tablecol[{""}{"" }{}{()}{}
+{}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from AIPS}]
+\end{history}
+\end{document}
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableXX Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableXX}]
+ObitTableXX Class
+\tabletitle{Template ObitTable document}
+% table name
+\tablename{XX}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS XX" contains highly secret information.
+An ObitTableXX is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"REVISION"}{J}{revision}{1}{}
+{Revision number of the table definition.
+}
+]
+\tablekey[{"NO\_SECRET"}{J}{numPol}{}{(1,2)}
+{The number of secrets.
+}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time of the secret.}
+] 
+\tablecol[{""}{"" }{}{()}{}
+{}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from AIPS}]
+\end{history}
+%

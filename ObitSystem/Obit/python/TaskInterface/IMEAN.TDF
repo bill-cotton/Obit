@@ -1,0 +1,152 @@
+**TYPE** AIPS
+; IMEAN
+;---------------------------------------------------------------
+;! displays the mean & extrema and plots histogram of an image
+;# Task Plot ANALYSIS
+;-----------------------------------------------------------------------
+;;  Copyright (C) 1995, 1999
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning AIPS should be addressed as follows:
+;;         Internet email: aipsmail@nrao.edu.
+;;         Postal address: AIPS Project Office
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+IMEAN     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+IMEAN:  Task to print the mean, rms and extrema in an image
+**PARAM** float 1
+DOHIST          -1.0         2.01  True (1.0) do histogram plot.
+                                   = 2 => flux on x axis
+**PARAM** float 1
+USERID      -32000.0      32000.0  User ID.  0=>current user
+                                     32000=>all users
+**PARAM** str 12
+INNAME                             Image name (name)
+**PARAM** str 8
+INCLASS                            Image name (class)
+**PARAM** float 1
+INSEQ            0.0       9999.0  Image name (seq. #)
+**PARAM** float 1
+INDISK           0.0          9.0  Disk drive #
+**PARAM** float 7
+BLC              0.0       4096.0  Bottom left corner of image
+                                     0=>entire image
+**PARAM** float 7
+TRC              0.0       4096.0  Top right corner of image
+                                     0=>entire image
+**PARAM** float 1
+NBOXES           0.0       1024.0  No. of ranges for histogram.
+**PARAM** float 2
+PIXRANGE                           Min and max range for hist.
+**PARAM** str 4
+FUNCTYPE                           'LG' => do log10 plot of #
+                                   samples, else linear
+**PARAM** float 1
+PIXAVG                             Estimate of mean noise value
+**PARAM** float 1
+PIXSTD                             Estimate of true noise rms
+                                      < 0 => don't do one
+                                      = 0 => 2-passes to get
+**PARAM** float 1
+DOCAT          -1.0         1.0    Put true RMS in header
+**PARAM** float 1
+LTYPE         -10.0        10.0    Type of labeling: 1 border,
+                                   2 no ticks, 3 - 6 standard,
+                                   7 - 10 only tick labels
+                                   <0 -> no date/time
+**PARAM** str 48
+OUTFILE                            Name of output log file,
+                                   No output to file if blank
+**PARAM** float 1
+DOTV           -1.0         1.0    > 0 Do plot on the TV, else
+                                   make a plot file
+**PARAM** float 1
+GRCHAN          0.0         8.0    Graphics channel 0 => 1.
+----------------------------------------------------------------
+IMEAN
+Type: Task
+Use:  IMEAN will read a portion of an image and print the mean and rms
+      brightnesses found.  It also prints the location and value of the
+      max and min brightnesses in that portion.  For clean maps, the
+      mean is converted into a total flux.  An option to generate a
+      histogram plot and/or print file is available.  It also computes
+      the peak and rms of the histogram of the image in an attempt to
+      determine the mean and rms of the noise part of the signal.  To do
+      this option requires either some help from you or a second pass
+      through the data.
+Adverbs:
+  DOHIST......True (>0) means plot the histogram, which is now always
+              computed.  If 0 < DOHIST <= 1, then the flux is plotted on
+              the Y axis and the counts on the X axis.  If DOHIST > 1,
+              the axes are reversed.
+  USERID......User ID of owner of image.  0=>current user 32000=>all
+              users
+  INNAME......Image name(name).         Standard defaults.
+  INCLASS.....Image name(class).        Standard defaults.
+  INSEQ.......Image name(seq. #).       0 => highest.
+  INDISK......Disk drive # of image.    0 => any.
+  BLC.........The Bottom Left-hand pixel of the subarray of the image to
+              be analysed. The value (0,0) means (1,1).
+  TRC.........The Top Right-hand pixel of the subarray of the image to
+              be analysed.  The value (0,0) means the top right hand
+              corner of the entire image.
+  NBOXES......Number of boxes used in computing histogram.
+              <= 1 => 101 boxes,  > 1024 => 512
+  PIXRANGE....Intensity range min/max over which histogram is computed.
+              Max <= min (i.e. 0) => full range.  This is used to set
+              the range between the center of box 1 and the center of
+              box NBOXES.
+  FUNCTYPE....Type of axis plot for number of samples in each box.  'LG'
+              => log base 10, else linear.
+  PIXAVG......Mean value of the noise part of the image - an initial
+              guess to help IMEAN fit a Gaussian to the noise.
+  PIXSTD......RMS of the noise portion of the image - an initial guess
+              to help IMEAN fit a Gaussian to the noise.
+              > 0 => use PIXSTD as an estimate and read the image only
+                     once.  It is taken as a source-free estimate of the
+                     rms.
+              = 0 => get the estimate from ACTNOISE in the image header
+                     (if present and positive) or from a first pass
+                     through the image.  A second pass is required in
+                     that case to get the correct result.
+              < 0 => do not fit the noise with a Gaussian.
+              You can use the verbs IMSTAT or TVSTAT to set these
+              adverbs.  Use a source-free region or it will not work in
+              all probability.
+  DOCAT.......> 0 => write the new actual noise estimate as keyword
+              ACTNOISE and the estimate zero level as ACTMEAN in the
+              image header.
+  LTYPE.......Labelling type: 1 = border, 2 = no ticks, 3 - 10 =
+              standard, with  7-10 all labels other than tick numbers
+              and axis type are omitted.  Less than 0 is the same except
+              that the plot file version number and create time are
+              omitted.
+  OUTFILE.....Output file to log measurements for later user processing.
+              File created if it does not exist and appended to if it
+              already exists.  Nothing is is written to a file if the
+              name is blank.  File name should contain directory and
+              file parts, i.e, "LOCAL:IMEAN.OUT" or
+              "RUNFIL:IMPORTANT.POINTS".  The histogram is printed into
+              the file.
+  DOTV........> 0 => plot directly on the TV device, otherwise make a
+              plot file for later display on one or more devices
+              (including the TV if desired).
+  GRCHAN......Graphics channel (1 - 7) to use for line drawing.  0 => 1.
+----------------------------------------------------------------

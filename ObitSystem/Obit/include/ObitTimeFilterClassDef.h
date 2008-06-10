@@ -1,0 +1,48 @@
+/* $Id: ObitTimeFilterClassDef.h,v 1.4 2008/01/29 02:25:34 bcotton Exp $ */
+/*--------------------------------------------------------------------*/
+/*;  Copyright (C) 2003,2008                                          */
+/*;  Associated Universities, Inc. Washington DC, USA.                */
+/*;  This program is free software; you can redistribute it and/or    */
+/*;  modify it under the terms of the GNU General Public License as   */
+/*;  published by the Free Software Foundation; either version 2 of   */
+/*;  the License, or (at your option) any later version.              */
+/*;                                                                   */
+/*;  This program is distributed in the hope that it will be useful,  */
+/*;  but WITHOUT ANY WARRANTY; without even the implied warranty of   */
+/*;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the    */
+/*;  GNU General Public License for more details.                     */
+/*;                                                                   */
+/*;  You should have received a copy of the GNU General Public        */
+/*;  License along with this program; if not, write to the Free       */
+/*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
+/*;  MA 02139, USA.                                                   */
+/*;                                                                   */
+/*;Correspondence about this software should be addressed as follows: */
+/*;         Internet email: bcotton@nrao.edu.                         */
+/*;         Postal address: William Cotton                            */
+/*;                         National Radio Astronomy Observatory      */
+/*;                         520 Edgemont Road                         */
+/*;                         Charlottesville, VA 22903-2475 USA        */
+/*--------------------------------------------------------------------*/
+/*  Define the basic components of the ObitTimeFilter ClassInfo structure*/
+/* This is intended to be included in a classInfo structure definition*/
+#include "ObitClassDef.h"  /* Parent class ClassInfo definition file  */
+/** Function pointer to constructor. */
+newObitTimeFilterFP newObitTimeFilter;
+/** Function pointer to construct regular time series. */
+ObitTimeFilterGridTimeFP ObitTimeFilterGridTime;
+/** Function pointer to copy to external time series. */
+ObitTimeFilterUngridTimeFP ObitTimeFilterUngridTime;
+/** Function pointer to Compute frequency series. */
+ObitTimeFilter2FreqFP ObitTimeFilter2Freq;
+/** Function pointer to Compute Time series. */
+ObitTimeFilter2TimeFP ObitTimeFilter2Time;
+/** Function pointer to Apply Filter to Frequency series. */
+ObitTimeFilterFilterFP ObitTimeFilterFilter;
+/** Function pointer to Apply Filter to Frequency series (physical inputs). */
+ObitTimeFilterDoFilterFP ObitTimeFilterDoFilter;
+/** Function pointer to Plot power spectrum. */
+ObitTimeFilterPlotPowerFP ObitTimeFilterPlotPower;
+/** Function pointer to Plot Time series. */
+ObitTimeFilterPlotTimeFP ObitTimeFilterPlotTime;
+

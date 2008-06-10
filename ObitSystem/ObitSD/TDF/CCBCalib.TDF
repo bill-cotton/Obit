@@ -1,0 +1,136 @@
+; $Id: CCBCalib.TDF,v 1.4 2008/01/26 18:57:09 bcotton Exp $
+; CCBCalib
+;---------------------------------------------------------------
+;! Obit Radio Single Disk CCB OTF calibration software
+;# Task Obit OTF cImaging calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2006-2008
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;---------------------------------------------------------------
+CCBCalib  LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+CCBCalib:  Obit GBT/CCB OTF calibration
+**PARAM** str 4  **DEF** FITS
+DataType                            This better be "FITS"
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** int 1
+inDisk                              Input data disk drive #
+**PARAM** str 16 30
+Targets                             List of target names to include
+**PARAM** int 2
+Scans                               Scan range to include, 0=>all
+**PARAM** float 2
+timeRange                           Time range to process. days
+**PARAM** int 1
+flagVer                             Flag table version
+**PARAM** float 1 **DEF** 1.0
+calInter                            Cal Table time increment (min)
+**PARAM** int 1
+NodScan                             Nodding Scan for calibration
+**PARAM** float 1
+NodFlux                             Flux density of nodding cal
+**PARAM** float 1  **DEF** -0.7
+NodIndex                            Spectral index of nodding cal
+**PARAM** float 16 **DEF** 1.0
+calJy                               cal in Jy (NodScan<=0)
+**PARAM** float 16 **DEF** 1.0
+tRx                                 Reciever temp in units of cal
+**PARAM** float 1
+tau0                                Zenith opacity to use 
+**PARAM** float 1
+RAoff                               Offset (deg) to add to RA 
+**PARAM** float 1
+Decoff                              Offset (deg) to add to Dec
+**PARAM** float 1
+minEl                               Min. el (deg) to use
+**PARAM** int 1 **DEF** 1
+Order             1.0       5.0     Order of baseline fit
+**PARAM** float 1 **DEF** 1.0
+solInt                              Interval of baseline fit (min)
+**PARAM** int 1
+prtLv             0.0               Print level in selfcal
+----------------------------------------------------------------
+CCBCalib 
+Type:  Task
+ Use:  Calibration of GBT CCB raster data
+
+   The following calibration steps are performed:
+1) Delete any extant Soln or Cal tables
+2) create initial Cal table #1 with no corrections.
+3) gain calibration using Nodding scan - get calJy
+4) atmospheric correction Tau0 - write Soln 1
+5) Apply Soln 1 to Cal 1 => Cal 2
+6) baseline correction to Soln 2
+7) Apply Soln 2 to Cal 2 => Cal 3
+
+Notes:
+   The baseline fitting should be on a fairly long interval, whole
+scans are best, to keep it from removing actual source structure.
+   Baseline fitting will do very bad things to nodding data - do not
+use Cal table 3 for such data.
+
+   After this calibration of CCB data use OTFImage to image.
+
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input CCB OTFdata
+  inDisk.....Input OTF data file disk drive #.
+
+       Data selection
+  Targets....List of targets to be processed. blank = all
+  Scans......Rance of scans to include in calibration
+  flagVer....FG table to use for editing. 0 => highest.
+  timeRange..Start and end times to include in calibration (day)
+  calInter...Interval (min) to use in Cal tables
+
+       Gain calibration
+  NodScan....If >0 Scan number of nodding scan on calibrator.
+             If this is epecified then the calibration is 
+             determined from this scan, otherwise the values
+             of calJy and tRx are used instead.
+  NodFlux....Flux density (Jy) of nodding calibrator at the 
+             reference frequency
+             If this values is <=0 then lookup in Target table.
+  NodIndex...Spectral index of nodding calibrator
+  calJy......The strength of the cal signal in units of Jy,
+             one per detector (16 in 2006, 8 later)
+             Used only if no nodding cal scan specified.
+  tRx........The strength of the cal signal in units of Jy,
+             one per detector (16 in 2006, 8 later)
+             Used only if no nodding cal scan specified.
+  tau0.......zenith opacity
+
+       Atmospheric/pointing calibration
+  RAoff......Offset to add to RA pointing (deg)
+  Decoff.....Offset to add to Dec pointing (deg)
+  minEl......Minimum elevation to accept.
+
+       Baseline fitting
+  Order......Order of baseline fit polynomial
+  solInt.....Time interval (min) to use for baseline fit
+             Shouldn't be less that calInter
+
+  prtLv......Print level 0=>none [def. 0]
+----------------------------------------------------------------

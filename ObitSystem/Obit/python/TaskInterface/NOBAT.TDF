@@ -1,0 +1,50 @@
+**TYPE** AIPS
+; NOBAT
+;---------------------------------------------------------------
+;! Task to lock lower priority users out of the AP
+;# TASK AP
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2004
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning AIPS should be addressed as follows:
+;;         Internet email: aipsmail@nrao.edu.
+;;         Postal address: AIPS Project Office
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+NOBAT     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+NOBAT:  Task to lock lower priority users out of the AP
+**PARAM** float 1
+DETIME           0.0      60.0     Length of time (min) to run.
+----------------------------------------------------------------
+NOBAT
+Type:  Task
+Use:   NOBAT is used to keep other AIPS users with higher AIPS
+       numbers from getting much time on the AP.  NOBAT is on
+       the list of AP tasks that the a task trying to get the
+       AP looks for.  If a NOBAT with a lower AIPS number is
+       running, an AP task will wait an amount of time
+       proportional to its AIPS number before making a request
+       for the AP.  NOTE: NOBAT isn't actually assigned the AP.
+       It does nothing but sit there in a hibernate state.
+Adverbs:
+  DETIME.....The length of time for NOBAT to run. (min.)
+----------------------------------------------------------------

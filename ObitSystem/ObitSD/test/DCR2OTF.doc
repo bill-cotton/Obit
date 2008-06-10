@@ -1,0 +1,61 @@
+/* $Id: DCR2OTF.doc,v 1.1.1.1 2004/07/19 17:04:43 bcotton Exp $ */
+
+            DCR2OTF Convert GBT DCR data to OTF format FITS file
+               -----------------------------------------
+
+   DCR2OTF converts a GBT DCR (continuum) archive data file to an OTF
+data set. Control input is from a user edited file.  One scan is added
+to the output file per run.
+
+Usage: DCR2OTF -input file [-scan date/time]
+Convert an GBT DCR file format to Obit/OTF
+Arguments:
+  -input input parameter file, def DCR2OTF.in
+  -scan date/time used for form scan FITS file names
+        This is the string that forms the basename of the archive
+        files.  The OTF data file should be constructed in time order;
+        one way to do this is to use ls in the DCR directory to collect
+        a time ordered list and then edit this into a shell script.
+
+
+
+         DCR2OTF input file documentation
+
+   This describes the input file format for DCR2OTF.
+The input file is basically free format with a keyword=value syntax.  
+Comments follow a "#" symbol.
+
+
+   Entries not specified will assume their default values.  Parameters
+may be given in any order but only the recognized parameters given below
+are allowed. 
+
+An example follows:
+$Key = scan  Str (24)  # Date/time name of scan
+2003_06_27_04:05:50# Data
+$Key = outfile Str (48)
+TestCbandOTF.fits
+$Key = DataRoot Str (64)
+../GCCband/AGBT02C_019_04/
+
+ Variables possibly read from the input_file 
+scan:   input scan name (from names of archive files).  This will be
+        overridden by a command line value.
+     type: string
+     default: none
+     example: 2003_06_27_01:39:57
+
+DataRoot:  relative path for base of GBT archive directory structure.
+           This points to the directory that contains the DCR, Antenna
+           etc. subdirectories.
+     default: none
+     example: ../GCCband/AGBT02C_019_04/
+
+outfile:   output FITS image file name, will go into FITSdata/.
+     type: string
+     default: OTFTable.fits
+
+timeCorr:  Correction in sec. to add to GBT time labels
+     type: double
+     default: 0.0
+

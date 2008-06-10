@@ -1,0 +1,34 @@
+/* $Id: X2OTF.doc,v 1.1.1.1 2004/07/19 17:04:43 bcotton Exp $ */
+
+               X2OTF Convert data to OTF format FITS file
+               -----------------------------------------
+
+   X2OTF Converts an external data set to an OTF data set.
+Control input is from a user edited file.
+
+         X2OTF input file documentation
+
+   This describes the input file format for X2OTF.
+The input file is basically free format with a keyword=value syntax.  
+Comments follow a "#" symbol.
+
+
+   Entries not specified will assume their default values.  Parameters
+may be given in any order but only the recognized parameters given below
+are allowed. 
+
+An example follows:
+# input file for X2OTF
+infile  = somefile.text
+outfile = !OTFtable.fits # the ! allows overwrite
+
+/* variables possibly read from the input_file */
+infile:   input FITS OTF file name
+     type: string
+     default: somefile.text
+
+outfile:   output FITS image file name
+     type: string
+     default: OTFTable.fits
+
+

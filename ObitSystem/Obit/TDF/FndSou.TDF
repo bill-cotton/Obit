@@ -1,0 +1,392 @@
+; $Id: FndSou.TDF,v 1.4 2007/07/20 21:04:10 bcotton Exp $
+; FndSou
+;---------------------------------------------------------------
+;! fits Gaussians to portions of an image
+;# Obit Task 
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2006
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: Bill Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+FndSou   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+FndSou:  Task to fit Gaussian models to an image by least-squares
+**PARAM** str 4
+DataType                          "FITS" or "AIPS" type of input
+**PARAM** str 12
+inName                             Image Name (Name) 1
+**PARAM** str 8
+inClass                            Image Name (Class) 1
+**PARAM** int   1
+inSeq             0         9999   Image Name (Seq. #) 1
+**PARAM** int   1
+inDisk            0            9   Disk drive # 1
+**PARAM** str 48
+inFITS                             Filename 1 if FITS image
+**PARAM** int 7
+BLC              0.0       4096.0  Bottom left corner of image
+                                     0=>entire image
+**PARAM** int 7
+TRC              0.0       4096.0  Top right corner of image
+                                     0=>entire image
+**PARAM** boo 1 
+doVL                               Convert to VL table?
+**PARAM** boo 1 
+doPBCorr                           PB correction to VL table?
+**PARAM** float 1 **DEF** 25.0
+asize           0.0      9999.0    antenna diam. for PB corr.
+**PARAM** boo 1 
+doResid                            Catalog residual map?
+**PARAM** str 12
+outName                            Output Image Name
+**PARAM** str 8
+outClass                           Output Image Class
+**PARAM** int   1
+outSeq            0         9999   Output Image Seq. #
+**PARAM** int   1
+outDisk           0            9   output Disk drive
+**PARAM** str 48
+outFITS                            Output Filename if FITS image
+**PARAM** int   1
+NGauss          0.0     10000.0    Max. Number of islands
+**PARAM** int   1 **DEF** 1
+NPass           0.0     10000.0    Number of passes through resid.
+**PARAM** float 1
+CutOff          0.0      9999.0    Flux cutoff level
+**PARAM** float 1
+Retry           0.0      9999.0    Retry level
+**PARAM** str 1
+Sort                               Sort Order of output ' '=RA
+**PARAM** str 128
+OutPrint                           Printer disk file to save
+**PARAM** boo 1 
+doMult         -1.0         1.0    >0 => fit multiple peaks
+**PARAM** boo 1 
+doWidth        -1.0         1.0    >0 => fit widths
+**PARAM** float 1  **DEF** 0.05
+Gain            0.0         1.0    Amp-dependent part of retry
+                                   and warning levels
+**PARAM** float 5
+Parms                              Components constraints
+                                   [0] flux < Parms[0]
+                                   [1] widths>Parms[1] cells
+                                   [2] peaks>Parms[2] cells
+                                   outside fitting region
+                                   [3] if >0 don't allow Gauss 
+                                   smaller than CLEAN beam
+**PARAM** int   1
+RMSsize                            Size of region to determine RMS
+**PARAM** int   1
+prtLv          0.0      1023.0     Debug print level
+
+----------------------------------------------------------------
+FndSou
+Type: Task
+Use:  Find, and fit Gaussians sources in a specified region of an
+      image producing a residual image and a list of fitted components.
+      The searching may be restarted with different parameters to remove
+      additional sources.  Only one plane of a cube is fit at
+      one time.  However, the MF file keeps track of the plane
+      number and may contain data for more than one plane.  
+      The display produced  shows the results of the
+      fitting, estimates of the uncertainties in the answers
+      (based on the actual noise and theory rather than the
+      quality of the fitting), and attempts to deconvolve the
+      clean beam from the fit sources.  When the residual image
+      near a source exceeds a limit controlled by the CutOff and
+      Gain parameters, an H, L, or S will be shown near the fit
+      peak value.  H is for a high point in the residual, L for
+      a rather negative point, and S for a large rms.  If the
+      width of the display allows, the max residual is displayed
+      with the deconvolution results and an * is placed near
+      excessive residuals.
+         In this version, components are not allowed to be
+      smaller thatn the CLEAN beam minor axis size.  If either
+      axis is too small the fit is redone freezing that
+      parameter at the minimum value.
+      NOTE: Only works for circular restoring beams
+         This task was translated from the AIPSish VSAD
+      by W. Cotton which was a reworking or E. Griesen's reworking 
+      of W. Jaffe's SAD.
+Adverbs:
+  DataType...."FITS" or AIPS
+  inName......Image to be convolved Name(Name). 
+  inClass.....Image to be convolved Class
+  inSeq.......Image to be convolved  Seq. #
+  inDisk......Image to be convolved disk drive # 
+  inFITS......Input File Name if a FITS file
+  BLC.........The Bottom Left-hand pixel of the subarray of the image to
+              be analysed. The value (0,0) means (1,1). 1-rel
+  TRC.........The Top Right-hand pixel of the subarray of the image to
+              be analysed.  The value (0,0) means the top right hand
+              corner of the entire image.  1-rel
+  doVL........If True, convert MF table to VL table # 1
+  doPBCorr....If True make primary beam correction when converting MF to
+              VL table [default False]
+  asize.......Antenna diameter (m) to use in primary beam correction.
+              [default 25]
+  doResid.....True -> Create a residual map of subimage
+  outName.....Output AIPS Name(Name).         
+  outClass....Output AIPS Name(Class).        
+  outSeq......Output AIPS Name(Seq. #).       0 => highest.
+  outDisk.....Output Disk drive # of image. 
+  outFITS.....Output File Name if a FITS file
+  NGauss......The maximum number of islands to search for
+              default 100.
+  NPass.......If NPass>1 then the residuals will be re-searched and
+              fitted iteratively for a total of NPass search/fit cycles
+  CutOff......Search for potential sources down to this level.
+              0 => 3 * true rms.
+  Retry......If the peak residual in an island, after fitting a
+              single Gaussian exceeds Retry adjusted in
+              quadrature by Gain*flux, then the program will
+              attempt a 2-Gaussian fit to the island.
+              0 => CutOff.
+  Sort........Sort order of output.
+              ' ' -> 'X'-> RA (Default)
+              'Y' -> DEC
+              'S' -> Flux
+  OutPrint....Disk file name in which to save the output.
+              ' ' => display on terminal.
+              When OutPrint is not blank, multiple outputs are
+              concatenated and the file is not actually printed.
+  doMult......True -> If an island has multiple (up to 10) peaks,
+              fit multiple gaussians.  Otherwise fit 1 gaussian
+              to each island.
+  doWidth.....>0 ->Let fit find size of source
+              <= 0 ->Fit all sources with clean beam
+  Gain........Retry, cutoff and warning levels are computed by
+              sqrt ( level**2 + (Gain*flux)**2 ) where the level
+              is the no-signal retry (Retry), cutoff (Parms([0])
+              or warning (CutOff) level and flux is the peak of
+              the component in question.  No default.
+  Parms.......Components are fit within islands that are
+              rectangular in shape.  Constraints may be imposed on
+              components with:
+              [0] peak > Parms[0].  No default; 0 or CutOff ok.
+                  Not enforces in fitting but component will be dropped.
+              [1] widths < Parms[1] cells
+                  This will be applied as a constraint on the
+                  solution. Default no constraint.
+              [2] peaks > Parms[2] cells outside the fitting
+                  area. No default; < 0 => inside the fitting 
+                  area required.
+                  This will be applied as a constraint on the
+                  solution. 
+              [3] If > 0.0 then disallow major axis sizes smaller
+                  than the clean beam major axis or minor axis size
+                  smaller than the clean beam minor axis
+                  This will be applied as a constraint on the
+                  solution. 
+  RMSsize.....If > 1, then the half width of a square box centered
+              on each source within which to determine the local 
+              noise.  This is used when an MF table is converted
+              to a VL table. 0=> use whole image.
+              The RMS is determined using a histogram analysis
+              which should be relatively insensitive to sources.
+              Values less than 10 are probably a bad idea.
+  prtLv.......Set level of output.
+              0 = none
+              >=1 progress, summary and listing on OutPrint of 
+                  components
+              >=2 list islands fitted
+              >=3 Fitting routine diagnostics (very large)
+----------------------------------------------------------------
+FndSOU EXPLAIN
+Mostly listed from AIPS Task VSAD and as such may not be a 
+completely accurate description of the Obit version.
+FndSou: Task to find potential sources and fit Gaussian models
+     to an image by least squares.
+DOCUMENTORS: W. Jaffe, Leiden
+RELATED PROGRAMS : 
+
+                      PURPOSE
+
+FndSou attempts to find all sources in a subimage whose peak is
+brighter than a given level.  It searches the subimage specified
+by BLC and TRC for all points above this level and merges such
+points in contiguous "islands".  For each island, initial
+estimates of the strength and size are generated.  Then a
+gaussian fitting algorithm is called to determine
+the least square gaussian fit.  If doMult is < 0., only one
+gaussian is fit per island, with initial estimates generated
+from 2nd moments.  If doMult is TRUE and multiple peaks (above
+CutOff) are found within the island, then up to 4 gaussians are
+fit.  If the peak residual of a single Gaussian fit exceeds Retry
+then a more complex 2-Gaussian fit ai attempted.  The results of
+the fit are printed on the screen or the line printer and
+written into a ModelFit (MF) extension table.  If DORESID is
+TRUE, the gaussians are subtracted from the input subimage, and
+a residual imageis cataloged, using OUTDISK, OUTNAME etc.  If
+doWidth(1) is negative, a gaussian with fixed size = CLEAN beam
+will be fit.
+
+                WARNING!!!
+
+Errors given in the MF table are not accurate.
+The list generated by FndSou is not COMPLETE in any statistical
+sense.  You will be warned about islands where the fitting
+algorithm failed.  Note that sizes etc. of sources near the
+noise are very unreliable.  For something approaching
+completeness Walter Jaffe recommends:
+
+    Start with a well cleaned map
+    Set doWidth = FALSE and only fit point sources.
+    Do a series of search on progressively more tapered maps
+       and compare results to determine flxes of extended
+       sources.
+    Make residual maps and inspect them to see where FndSou blew
+       it.
+
+Suggestion from Eric Greisen:
+    doWidth false always produces poor results even for only
+slightly extended objects.  For decent S/N, the width fitting is
+quite reliable.
+
+                COMMENTS ABOUT SOME PARAMETERS
+
+BLC, TRC:
+     These specify the area to be searched for sources.  If an
+residual file is requested, it covers the entire input image.
+
+NGauss:
+     The maximum number of sources to find.  Currently limited
+to 2000.
+
+CutOff:
+     Search for source peaks down to this level.  If specified
+as 0., FndSou will determine the real (i.e. source-free) R.M.S. in
+the full image area and take CutOff to be 3.0 times this value.
+If you make CutOff too small, you'll get lots of nonsense.
+
+doResid
+     Catalog the post-fit residual map.
+
+doWidth
+     If you think most sources are unresolved, use doWidth(1)
+= -1.0.  This will fit simple point sources to each peak (and do
+very badly on those few that are slightly resolved).
+
+RMSsize
+   If the rms in an image is spatially variable, a smaller region
+in which to determine the local rms for Stokes I, Q, and U (where 
+available) can be determined when the MF table is converted to a
+VL table (doVL=True).  If RMSsize>1 then the value is the half-width
+of a window around the position of the each source in which to 
+determine the local noise level.  The RMS is determined from a 
+histogram analysis making it relatively insensitive to sources.
+If no value is specified, the whole image is used.
+
+                 COMMENTS ON THE USE OF FndSou
+
+FLUX DENSITY DETERMINATION:
+     When attempting to obtain the flux density of a
+well-resolved source, the task IMEAN, which integrates the map
+values in a specified rectangle, is often more accurate than
+fitting the source with several Gaussian components and summing
+the integrated flux densities.  Of course for a well resolved
+source a gaussian fit is only a crude approximation in any case.
+
+PEAK FLUX DENSITY DETERMINATION:
+
+     The verb MAXFIT, a simple fitting of the peak of a
+component with a second degree interpolation, is much faster
+than JMFIT and useful to obtain the approximate peak and
+position of a component.
+
+ERRORS OF PARAMETERS:
+     The error estimates should be regarded as tentative, but
+more relaible than those from formal standard error estimates.
+The latter are meaningless since the objects are normally fit
+well fit using only 1-4 clean beam areas.  This means that the
+number of parameters fit exceeds the number of truly independent
+samples (neglecting the samples of 0 which were part of the
+selection of the island but not part of the formal fit of
+course).  The errors are produced by fitting the histogram of
+the image to determine a true rms R.  Using, John Ball's article
+in Method in Computational Physics, 14, 177, 1975, the noise in
+the peak of the fit Gaussian is estimated as:
+        Delta(P) = R * (clean-beam area) / (fit area)
+the noise in the widths as:
+        Delta(W) = Delta(p) / P * W
+the noise in the center positions as:
+        Delta(X) = Delta(W) / 2
+The noise in the total flux is found by the usual combinatorial
+formulae and the noise in the position angle is estimated from
+varying the widths by their uncertainties and seeing the affect
+on the position angle.
+
+DECONVOLUTION:
+     When fitting to a clean map, FndSou deconvolves the clean beam
+from the fitted component size.  The nominal deconvolution is
+obtained by deconvolving the fit from the clean beam.  A value
+of 0.0 means that the source is smaller than the clean beam in
+some dimension.  The minimum and maximum values are obtained by
+deconvolving the source beam parameters with all combinations of
+0.7 * error and listing the extreme values.
+
+ON THE MESSAGE OUTPUT FORMAT
+     For readability and compactness the message formats are
+chosen to fit in the width of the "printer" (real printer or CRT
+screen width given by DOCRT).  The UNITS of the printed flux are
+scaled so that the weakest found flux lies in the range 1.0 to
+999.0.  The UNIT will be Jy or milliJY or whatever (indicated in
+the header to the printout).  If another source has a flux
+greater than 999.999 in this UNIT, the flux will be divided by
+1000., before printing, and an asterisk "*" will be printed
+before the flux to indicate this.  A flux greater than
+999,999.999 will be divided by 1.e6 and be prefixed by a "#".
+
+     If non-point sources are fit (doWidth > 0), and a CLEAN
+beam size can be found in the header, the derived source sizes
+and are orientations are deconvolved, with the results printed
+in a second listing.  The numbers printed are the deconvolution
+of the best fit major axis, minor axis and position angle.
+(arcsec, arcsec, degrees), followed by the one-sigma lower
+limits on these quantities and the one sigma upper limits.
+
+ON THE MEANING OF BMAX, BMIN, AND BPA
+
+     Formally the position angle of anything, such as the major
+axis of a gaussian source, is defined as the angle of the thing
+East from North.  But the direction North only coincides with a
+column of the pixel array when you are on a meridian through the
+phase center.  Thus in general two different positional angles
+can be defined, either relative to local North, or relative to
+the local Y-direction of the pixel matrix.  Similar small
+differences can occur in the definition of an astronomical major
+axis versus a pixel-based major axis.  Note for example that the
+formal astronomical position angle of the point spread function
+of an unresolved source changes with position in the field, due
+to the curvature of the North/South coordinate system.
+
+Sooooooooo, following the convention in JMFIT, the extention
+parameters bpa, bmin, and bmax printed in the message file are
+the astronomical values, relative to local North etc., while the
+parameters put into the CC file are the pixel based values.
+This latter so that operations like UVSUB will work correctly.
+This has the consequence, for example, that for point sources
+the message file values differ from the values for the BEAM,
+whereas the CC file values should agree with the BEAM.  The MF
+file contains everything and the kitchen sink, so all parameters
+are present there.

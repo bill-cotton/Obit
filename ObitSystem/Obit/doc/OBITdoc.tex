@@ -1,0 +1,4783 @@
+% $Id: OBITdoc.tex,v 1.31 2008/01/22 12:33:36 bcotton Exp $ 
+%
+%  OBIT class definitions
+%
+%\def\section #1.#2.{\medskip\leftline{\bf #1. #2.}\smallskip}
+%\def\bfitem #1#2{{{\bf (#1)}}{\it #2}}
+\def\bfi #1#2{{\bf #1:}{ #2}\par}
+\def\extname #1#2{ {\bf 1} Extension Name {\it #2}\smallskip}
+%\def\tabname #1#2{\bfitem 1{#1 Table Name #2}}
+\def\keyword {\leftline{\bf Keywords:}}
+%\def\table {\leftline{\bf Table Definition:}}
+\documentclass[11pt]{article}
+\usepackage{OBITdoc}
+\begin{document}
+\setcounter{section}{0}
+%  Title page
+
+%\centerline{\ttlfont PRELIMINARY}
+\vskip 5cm
+\centerline{\ttlfont OBIT }
+\vskip 1cm
+\centerline{\ttlfont Merx mollis mortibus nuper}
+\vskip 3cm
+\centerline{\secfont Draft version: 1.0 \today}
+\vskip 1cm
+\centerline{\secfont W. D. Cotton}
+\clearpage
+
+% Table Of Contents
+\tableofcontents
+\cleardoublepage
+
+\section {Introduction}
+OBIT is a software library package intended for astronomical,
+especially radio--astronomical applications. 
+This document describes the high level view of the software system and
+is the fundamental definition of the tables  used in the Obit software
+package.  
+
+Obit is an object--oriented set of class and utility libraries
+allowing access to multiple disk--resident data formats.
+In particular, access to either AIPS disk data or FITS files.
+Documentation of the Obit classes uses the doxygen documentation
+system and can be accessed starting at doc/doxygen/html/index.html.
+
+\section {Design Objectives}
+The principle motivation for Obit is to provide a software environment
+where I can develop algorithms and develop targeted production
+software for particular projects, especially wide area sky surveys.
+AIPS has gotten too unwieldy for new development.
+However, there are a number of technical problems for which this can be
+considered exploratory.
+
+\subsection{Multiple Persistent ``Native'' Data Forms}
+With proper layering and inheritence strategies, multiple external data
+forms can be used as ``Native'' data, i.e. do not need to be
+translated to/from another persistent data system.
+This requires that there be a common data (including calibration)
+model and that the data models can all be mapped onto that of the
+software (and vice versa).
+For the interferometric and image applications in Obit, the current
+implementation supports both AIPS and FITS files as internal formats.
+At the applications level, the only time the distinction is made is
+when the object is associated with a particular external AIPS entry or
+FITS file.
+Derived IO classes translate the disk resident structures to Obit's
+memory resident forms and back again.
+
+\subsection{Flexible Class System in c}
+Medium to large scale software packages are much more tractable using
+object-oriented methodology.
+In practice this means a class system supporting inheritance and
+polymorphism.
+The obvious candidates for this are C++ and Java.
+In practice, C++ software has serious robustness problems and it
+appears beyond my ability to write (actually to debug) C++ code to a
+sufficient standard.
+Java is a much better designed language but has a performance penalty
+of a factor of several.
+
+   The fallback position is a ``roll my own'' class system in ANSCI
+c.
+This seems to be a reasonable compromize between robustness and
+performance.
+However, the c family has issues, especially with memory usage which
+have been only partially solved in Obit.
+
+Each Obit class has a global structure which contains class information,
+these include function pointers and a pointer to the parent class
+structure.
+
+In practice, the class and inheritence system is implemented using
+include files and the c preprocessor.
+Each class definition header recursively includes its parents object
+definition, making all data members effectively ``public''.
+Member functions of the class can be either those of the parent
+class, set to those specific to the derived class, set to NULL, or new
+class function added.
+Private member functions are allowed by declaring them ``static''
+inside the class implementation file.
+Class member functions can be invoked either explicitly or by
+referencing the function from the class structure.
+
+This implementation has the drawback that a object must be explicitly
+included as arguments in calls to its function, this makes the
+relationship less obvious.
+The convention has been adopted to make the ``self'' object the first
+argument in the call sequence.
+
+\subsection{Robust Object Managment}
+The c language family has no garbage collection meaning that
+applications must do their own memory managment.
+A further complication is that the c family memory managment tools are
+very unforgiving and errors are frequently very difficult to locate.
+E.g. a second ``free'' of a block of memory causes no immediate
+problem but at some later, and usually unrelated point, the program
+will abort.  Part of the solution is to adopt the glib memory
+managment routines - at least g\_free does not abort given a null
+pointer.
+
+   Many objects contain substantial resources, memory, open files etc.
+which would be expensive and risky to frequently copy.
+The usual solution to this problem is to allow multiple pointers to
+the same object; thus an object can serve as a member of another
+object(s) as well as stand on its own.
+This aggravates a further problem that each object must be destroyed
+and its resources released EXACTLY once.
+The standard solution to this problem is ``reference counting'', each
+object keeps a count of the current number of references.
+
+   This solution has yet further consequences, a great deal of
+discipline is required to keep the reference count correct.
+The Obit solution to this problem is a pair of member functions for
+each class to reference and unreference an object.
+The reference function increments the objects reference count and
+returns a pointer to the object.
+The unreference function decrements the reference count, destroying
+the object if it hits zero and returns a NULL pointer.
+There is no explicit object destructor.
+
+A further complication is that objects may be passed as a parent
+class.  
+To allow type checking, each class has an ``IsA'' function to
+determine if an object is of the correct type and is valid.
+This is usually wrapped into a glib assertion that can be turned off
+in production (debugged) software.
+
+\subsection{Parallelization}
+The use of Fortran named commons in AIPS makes high level
+parallelization difficult in that environment.
+The use of multiple objects with independent resources reduces the
+difficulty.
+In addition, most classes have the hooks to provide locking and
+synchronism mechanisms but at present, these are stubbed.
+cfitsio, which is used for I/O to FITS files, is not thread--safe which
+puts some limitations on parallel usage.
+
+\subsection{Portability}
+The glib library was intended to reduce portability problems and many
+of its features are adopted.
+
+\subsection{Name Space Control}
+The name space is controlled by including the class name at the
+beginning of all public function names.
+All begin with ``Obit''.
+
+\subsection{Passing Control Parameters}
+One of the great causes of instability in software is the changing of
+call sequences through which control parameters are passed when these
+are changed.
+This problem is dealt with in Obit by means of the ObitInfoList which
+is basically an associative array (labeled, arbitrary pieces of
+information). 
+Objects for which control parameters may be relevant have an
+ObitInfoList member.
+High level routines put control information into this container rather
+than passing it through call sequences. 
+Lower level routines can then take the appropriate response to a
+missing entry, either assume a default value or treat the absence as
+an error condition. 
+
+\subsection{Error handling}
+Trapping error conditions and giving a traceback to their cause is
+combined with informative and warning messages in the ObitErr class.
+An ObitErr has an error indication word and a message stack; each
+message has an associated error level.
+Utility macroes are provided such that when a routine detects a
+condition that it cannot handle, it set an error flag, registers an
+error message giving the software locations and returns.  
+The calling routine can, deal with the problem and remove the error
+condition and messages, add additional diagnostic information and
+return, or note its location in the error log and return.
+Routines with an ObitErr argument should check that no prior error
+condition exists and return if one does.
+At the appropriate level, the contents of the message log can be
+displayed and any error condition cleared.
+At present, the output is to stderr, but more formal logging, such as
+AIPS logging, is easily implemented.
+
+\section{Obit Software System}
+The Obit system maintains its basic information in global structures.
+These are initialized by a call to ObitSystemStartup and released by a
+call to ObitSystemShutdown.
+
+\subsection{General Software Issues}
+Obit is written in ANSI c of the glib dialect to assist in
+portability.  
+Thus most data types are declared with the ``g'' prefix (e.g. gfloat =
+float). 
+Also, g\_malloc and g\_free are used to allocate and free memory.
+
+Each class and structure in Obit has an ``IsA'' function to test that
+the pointer passed is to a valid instance of that structure or class.
+
+The glib library provides assertion macroes which are used to test for
+programming errors but the tests can be turned off in a production
+compilation.
+The assertion  g\_assert should be used with the class IsA test
+functions to assure that the inputs to each routine are valid.
+If the assertion fails, the program aborts and dumps core.
+
+\subsubsection{Obit Initialization/Shutdown}
+Persistent data forms are kept in a number of directories referenced
+by ``disk'' number.
+There are separate lists for AIPS and FITS data and these are
+initialized when Obit is initialized using the ObitSystemStartup
+function.
+If the relevant directories are given in standard Unix environment
+variables, they can be picked up automatically.
+This is illustrated in the following code fragment:
+\begin{verbatim}
+  ObitSystem *mySystem;
+  ObitErr *err;
+  gint pgmNumber = 1, user=100, nAIPS = 0, nFITS=0;
+
+  /* Initialize Obit */
+  err = newObitErr();  /* Create error/message structure*/
+  mySystem = ObitSystemStartup ("test", pgmNumber, user, nAIPS, NULL,
+                                nFITS, NULL, (oint)TRUE, (oint)FALSE, err);
+  ObitErrLog(err); /* show any error messages on err */
+\end{verbatim}
+Here the nAIPS and nFITS give the number of explicit AIPS of FITS
+directories. 
+The NULL following these arguments in the call sequence indicate that
+the standard defaults are to be used.
+If the directory name array passed is NULL, startup will search for
+standard environment names. 
+These are \$DA01, \$DA02 ... for AIPS and \$FITS, \$FITS01 ... for
+FITS.
+If given explicitly, the directories can be either absolute or
+relative.
+If the directory number for FITS files is 0, the name is assumed to be
+an adequate relative or absolute pathname.
+Also specified in the ObitSystemStartup call are the name of the
+program (here ``test'') and a program number, pgmNumber, which is the
+POPS number for AIPS usage.
+
+   Obit classes also need initialization .
+This is done automatically for a class and all its parents whenever
+an Obit object is created.
+
+Obit programs may generate scratch files which are recorded by the
+ObitSystem class.
+If these are not explicitly deleted (using the relevant Unref
+function) then they will be deleted by the ObitSystem shutdown:
+\begin{verbatim}
+    /* Shutdown Obit */
+    mySystem = ObitSystemShutdown (mySystem);
+\end{verbatim}
+
+\subsubsection{Memory}
+Use and misuse of memory is one of the biggest source of bugs in the c
+family of languages.
+Obit uses the glib memory allocation routines to avoid some of the
+spectacular failures of the c malloc/free routines.
+As an additional layer of security and as an aid in finding memory
+leaks, Obit contains an ObitMem class for allocation and maintaining
+blocks of memory.
+This class is used extensively in Obit and maintains a list of
+optionally named blocks of memory allocated.
+To be deallocated, the pointer must be in the currently active list.
+This list can be printed using ObitMemPrint.
+The class can also be queried if a given pointer is inside an
+allocated block.
+
+   Many memory related problems (leaks, array overruns, NULL
+allocations...) can also be diagnosed using the memwatch package (as
+modified for glib/Obit) from Johan Lindh (http://www.linkdata.se/)
+This option is invoked using the -DMEMWATCH compile option and
+compiling and linking all Obit code.  Very useful diagnostics are
+written into the file memwatch.log in the current working directory.
+This option overrides the ObitMem class usage.
+Don't forget to recompile/link without this option when through
+debugging as it incurs substantial overhead.
+It is important that all software linked togetheer is all compiled
+with or without the -DMEMWATCH option.
+
+\subsubsection{Messages and error handling}
+Messages and error handling is by means of the ObitErr class.
+An ObitErr has an error condition flag and a stack of messages each
+with a category, i.e. error, informative...
+Low level routines enter messages on the stack which is then
+explicitly logged and cleared using the ObitErrLog function.
+If an error is encountered, this condition is entered into the ObitErr
+structure and can be dealt with as appropriate by the calling
+routine.
+On entry, routines should check if an error condition exists and if so
+return.
+Tracebacks which are useful for debugging are obtained using the
+Obit\_traceback macros.
+
+Message logging can be customized by an application specific logging
+handler.
+Currently all messages are written to stderr.
+
+The most useful ways of entering information into an ObitErr are
+through macroes defined in the class:
+\begin{itemize}
+\item Obit\_log\_error(err,errCode,format...)\\
+log error message.
+\item Obit\_return\_if\_fail(expr,err,format...) \\
+Macro to evaluate expression, log in err and return on failure.
+\item Obit\_retval\_if\_fail(expr,err,out,format...) \\
+Macro to evaluate expression, log in err and return a value 
+on failure.
+\item Obit\_traceback\_msg(err,me,name)\\
+Macro for traceback when an error in a called routine is encountered.
+Writes traceback info and returns (no return value).
+Gives location (file, routine, line) where message generated.
+\item Obit\_traceback\_val(err,me,name,out)\\
+Macro for traceback logging with a return value
+Writes traceback info and returns, passing a value.
+Gives location (file, routine, line) where message generated.
+\item  Obit\_cfitsio(err)\_error\\
+Macro to dump cfitsio error stack to an ObitErr.
+\end{itemize}
+The traceback macroes should be used to check for errors in routines
+called which cannot be handled in the current level and need to be
+passed to higher levels.
+
+\subsection{Obit Classes}
+Many, but not all, of the structures in Obit are inherited from the
+basal Obit virtual class.
+Obit includes template versions (ObitTEMPLATE*) files to assist in
+generating new classes; these template files contain the basic parts
+needed for a new class.
+The Obit class system is described below.
+
+\subsubsection{Organization}
+The class name of the class being defined in a file begins with the
+name of the class and include the following files for class xxx.
+\begin{enumerate}
+\item include/xxx.h\\
+Class interface definition.  Defines structures, macroes and public
+functions.
+\item include/xxxDef.h\\
+File included in include/xxx.h which defines the object structure.
+It first includes the corresponding file from its parent class.
+\item include/xxxClassDef.h\\
+File included in include/xxx.h which defines the class structure.
+It first includes the corresponding file from its parent class.
+\item src/xxx.c\\
+File containing the source code for the class; including class initialization.
+\end{enumerate}
+Derived classes begin with the name of the parent class such that the
+inheritance is given in the class name.
+
+Obit objects are connected to their respective classes by a pointer to
+a global class structure which contains a pointer to the parent class
+structure and function pointers for the class.
+Class member functions may be invoked either explicitly or via the
+class function pointers.
+Class objects, and all parent classes are initialized upon the
+instantiation of the first object of that class.
+
+Obit objects have explicit creators but no explicit destructors.
+Instead, a referencing/defererencing system is used to destroy objects
+when the last reference to them is removed.
+A reference (pointer) is passed from the ObitRef (or class specific)
+function which increments the objects reference count.
+A reference is deleted using the ObitUnref (or class specific)
+function which decrements the object reference count, destroying it if
+it goes to zero and returns a null pointer.
+{\bf The integrity of Obit depends on strict adherence to this
+convention.}
+
+   There are also ``secret'' references to objects needed to avoid a
+cyclical set of references.
+These references should not be used to manage the object's reference
+count, i.e. should not be passed to Ref or Unref functions.
+Local, convenience, copies of object pointers should also be treated
+this way.
+
+The Obit virtual class object contains the following members:
+\begin{enumerate}
+\item gint32 ObitId;\\
+ Recognition bit pattern to identify the start of an Obit object.
+\item gpointer ClassInfo;\\
+ClassInfo pointer for class with name, base and function pointers.
+\item gint ReferenceCount;\\
+ Reference count for object (numbers of pointers attaching).
+\item gchar *name;\\
+ Name of object [Optional], this is used in error and informative messages.
+\end{enumerate}
+
+The Obit virtual class structure contains the following members:
+\begin{enumerate}
+\item gboolean initialized;\\
+Have I been initialized?
+\item gboolean hasScratch;\\
+ Are disk resident "scratch" objects of this class possible?
+\item gchar* ClassName;\\
+Name of class ("Obit")
+\item gconstpointer ParentClass;\\
+Pointer to parent class ClassInfo, Null if none.
+\item ObitClassInitFP ObitClassInit;\\
+ Function pointer to Class initializer
+\item newObitFP newObit;\\
+Function pointer to newObit (default constructor).
+Initializes class and parent if needed.
+\item ObitCopyFP ObitCopy;\\
+ Function pointer to shallow copy constructor.
+\item ObitCloneFP ObitClone;\\
+Function pointer to deep copy constructor
+\item ObitRefFP ObitRef;\\
+Function pointer to Object Reference
+\item ObitUnrefFP ObitUnref;\\
+Function pointer to Object Unreference
+\item ObitIsAFP ObitIsA;\\
+Function pointer to test if a class member.
+\item ObitClearFP ObitClear;\\
+Private Function pointer to deallocation function.
+\item ObitInitFP ObitInit;\\
+Private Function pointer to object initializer.
+\end{enumerate}
+
+\subsubsection{Inheritance}
+The object and class strucures are defined in the *Def.h and
+*ClassDef.h files as described above.
+Inheritance is by means of including the class object and class
+structure definition files (*Def.h and *ClassDef.h) at the beginning
+of the corresponding class files.
+This recursive include assures the full inherited structure is present
+in each object and class.
+
+   A template class, ObitTEMPLATE, is provided to simplify creating
+new classes.
+To create a new class copy the ObitTEMPLATE*.h and ObitTEMPLATE*.h to
+new files where TEMPLATE is replaced by the actual class name.
+Then, inside each of these files make the same substitutions.
+If the parent class is not the basic Obit class, then make the
+following changes:
+\begin{enumerate}
+\item Obit*.c;\\
+Near the top of the file change the valus of ObitParentGetClass to
+the Obit?GetClass function of the parent class.
+\item Obit*.h;\\
+Add an include to the Obit*.h file of the parent class.
+\item Obit*Def.h;\\
+Change include of ObitDef.h to the corresponding parent file,
+e.g. ObitTEMPLATEDef.h
+\item Obit*ClassDef.h;\\
+Change include of ObitClassDef.h to the corresponding parent file,
+e.g. ObitTEMPLATEClassDef.h
+\end{enumerate}
+
+\subsubsection{Constructors}
+Obit objects are explicitly created by a constructor.
+The default constructor has the name new[ObitClassname] and accepts an
+optional name for the object.
+This name is used in error and informative messages and should reflect
+its usage.
+Derived classes may have other constructors.
+
+\subsubsection{Reference/destructors}
+Obit classes have no explicit destructors.
+Instead, this is handled by the Obit reference scheme.
+Pointers to an object are assigned by means of the ObitRef (or class
+specific) method which increments the object reference count.
+The ObitUnref (or class specific) method removes a reference,
+decrementing the reference count and destroying the object when the
+count goes to zero.
+
+\subsubsection{ObitInfoList}
+Most Obit classes have an ObitInfoList member which is a container for
+labeled arrays of information.
+Most control information is passed to and stored by the object in this
+member.
+
+\subsection{Obit Interface to Persistent Data}
+Obit supports multiple disk-resident forms; currently AIPS and FITS
+images and UV data as binary tables.
+Interfaces to external data are via derivations from the ObitIO
+class.
+Explicit derived classes are needed for each data type (UV Image,
+table...) and for each form (AIPS, FITS).
+Except for associating an object with an explicit external source (data
+file), most of Obit should not be aware of the source of the data
+outside of the explicit IO classes.
+The cfitsio package is used for basic FITS I/O.
+\footnote{The fitsio library is a package of Fortran and c language
+callable routines and is available at 
+http://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html.
+This package takes care of most of the details of reading and writing
+FITS files, including binary tables, and is well documented.}
+
+Directories containing AIPS or FITS data files are registered with
+Obit in the ObitSystemStartup call.
+These directories are then referenced by a (1--rel) index.
+
+\subsubsection{Images}
+Images are accessed a plane (or row) at a time and are internally
+kept as a 1-D array of float.
+An ObitImage may have associated tables.
+A descriptor object (class ObitImageDesc) is used to describe the data.
+An ObitIO object is used to access the external data.
+
+\subsubsection{UV data}
+UV data is accessed as blocks of ``rows'' of visibility data which are
+internally kept as 1-D arrays of float for efficient access.
+The structure of UV data assumed is that of AIPS; ``Random'',
+descriptive data followed by a rectangular data array.
+``Compressed'' data is supported.
+UV data in FITS format use binary tables for the visibility data but
+these tables are handled differently from normal tables for increased
+performance.
+An ObitUV may have associated tables.
+A descriptor object (class ObitUVDesc) is used to describe the data.
+An ObitIO object is used to access the external data.
+
+\subsubsection{Tables}
+ObitTables are always associated with Image, UV data or other data.
+A ``row'' in a table corresponds to a row in a FITS binary table and
+consists of an array of arrays of data of the same native type.
+Access is a row at a time and row data are converted to/from explicit
+class structures.
+A descriptor object (class ObitTableDesc) is used to describe the data.
+An ObitIO object is used to access the external data.
+
+\subsection{Threading}
+The hooks for multithreaded operation (class ObitThread), e.g. mutexes
+and locking/unlocking are in place but not yet implemented.
+Note: cfitio is not thread--safe.
+
+\subsection{Documentation}
+Class documentation uses the doxygen system which uses specially coded
+comments in the code to generate documentation.
+The class documentation in html format starts at doc/doxygen/html/index.html.
+
+\subsection{History}
+Storing processing history is done principally via the ObitHistory class.
+Both FITS (as Tables) and AIPS cataloged data are supported.
+This class is derived from the Obit class.
+The AIPS conventions for history records are to give the program name followed
+by parameters in keyword=value form and to preceed any non parsable text
+by the FITS comment header comment delimiter '/'.
+
+History tables are accessed as tables although the AIPS implementation 
+is a pre-table version.  
+History records are blocked into 70 character  fixed strings althought
+AIPS internally uses 72. 
+
+History records are stored in a system dependent fashion.
+AIPS history records are stored in an AIPS HI* file with 72 characters 
+per record (Obit only uses 70).
+For FITS files, history records are normally kept in A History binary table
+but can be read or written to the more traditional HISTORY keywords using
+ObitHistoryCopyHeader, or ObitHistoryCopy2Header for entire collections
+or ObitFileFITS functions ObitFileFITSReadHistory and ObitFileFITSWriteHistory
+for individual records.
+Access to the history component of an object (e.g. Image, UV data) can
+be obtained using the ObitInfoList containing the information defining the 
+underlying file.
+This uses routine newObitHistoryValue.
+Then history lines can be read or written one at a time using ObitHistoryOpen, 
+ObitHistoryReadRec, ObitHistoryWriteRec, ObitHistoryTimeStamp, ObitHistoryClose.
+The contents of entire history files may be copied  using ObitHistoryCopy, or
+ObitHistoryCopyHeader to copy HISTORY records from a FITS header or
+ObitHistoryCopy2Header to copy a history file to a FITS header.
+
+\section{Interferometry Software}
+   Much Obit software  is designed to support radio interferometers.
+The ObitUV class represents an interface to radio interferometric
+data.
+The following sections describe some of the major classes for
+interferometry.
+Many of the algorithms used are adopted from AIPS.
+
+\subsection{UV Data Modeling}
+Lists of models or images can be Fourier transformed by the
+ObitSkyModel class and either divided into or subtracted from (added
+to) an ObitUV.
+
+\subsection{Imaging}
+   The basic interface to the imaging software is the ObitUVImager
+class. 
+Given an ObitUV with control parameters, this class can produce an
+ObitImageMosaic, an array of images that tile a region of the sky.
+Optionally, the array can be flattened into a single image.
+
+\subsection{Deconvolution}
+   There is a heirarchy of classes derived from the ObitDCon
+(Deconvolution) virtual base class.
+All current implementations are variants of the CLEAN algorithm.
+This heirarchy is currently (Jan. 2005) only partially implemented but
+the high level design is shown in the following:
+
+\begin{verbatim}
+
+ Deconvolution Class Hierarchy
+ =============================
+
+                          ObitDcon
+                              |
+                          ObitDconClean
+                              |
+                        ----------------
+                        |              |
+              ObitDconCleanImage  ObitDconCleanVis
+               (APCLN like)          (MX like)
+                                         |
+                           -------------------------
+                           |                       |
+                 ObitDconCleanVisSDI        ObitDconCleanVisMR
+                 (SDI-Greisen)               (multi resolution)
+
+\end{verbatim}
+
+These classes are described in the following:
+\begin{itemize}
+\item ObitDCon\\
+Virtual base class of all deconvolution methods.
+\begin{verbatim}
+Members:
+  ObitImageMosaic
+
+Functions:
+  Create, Copy, Clean, Deconvolve
+  Set Image Mosaic
+\end{verbatim}
+\item ObitDConClean\\
+Virtual base class of CLEAN although much functionality used by
+derived classes is defined here.
+\begin{verbatim}
+Major Members:
+   ObitDConCleanWindowList
+   ObitDConCleanBmHist
+   ObitDConCleanPxHist
+   ObitDConCleanPixelList
+   BeamPatch as FArray
+   CLEAN control parameters (as arrays per field):
+      Gain, Factor, Flux, Niter
+
+Functions: (Called from Deconvolve)
+   ObitDConCleanRestore     Restore subtracted components
+   ObitDConCleanXRestore    Restores components from one field
+                            appearing in another
+   ObitDConCleanFlatten     Flatten multiple facets to one 
+   ObitDConCleanSelect      Select components to be subtracted
+                            Load PixelList, BeamPatch, minor CLEANing
+   ObitDConCleanSub         Subtract components, produce new residual
+                            image(s),
+   ObitDConCleanPixelStats  Prepare for minor cycle:
+      ObitDConCleanPixelHist   Get image pixel histogram (one or more images)
+      ObitDConCleanBeamHist    Get beam histogram
+      ObitDConCleanDecide      Set Patch, min flux for next clean
+\end{verbatim}
+\item ObitDConCleanImage\\
+APCLN-like image only CLEAN.
+This implements a variation on the basic BGC CLEAN.
+This implementation is not limited to interferometry but can work on
+any image for which a stationary convolution (``Dirty Beam'') can be
+derived.
+\begin{verbatim}
+Major Members:
+   Transfer image (FFT of beam) as ObitCArray
+   FFT object(s)
+
+Functions:
+   derived versions of:
+   ObitDConCleanSub         Subtract components, produce new residual
+                            Use convolution.  Uses Fourier Convolution
+			    Theorem to convolve components with the
+			    dirty beam to subtract from the previous
+			    residual image.
+                            image(s)
+\end{verbatim}
+\item ObitDConCleanVis\\
+MX-like Cotton-Schwab CLEAN where components are subtracted from the
+visibility data which is reimaged to get the next round of residual
+images. Only support AIPS OVERLAP=3, DO3D=1 type.
+\begin{verbatim}
+Major Members:
+   ObitUVImager
+
+Functions:
+   ObitDConCleanVisPickNext   Selects next field to be cleaned
+
+   derived versions of:
+   ObitDConCleanDeconvolve  Control deconvolution algorithm.
+   ObitDConCleanSub         Subtract components, produce new residual
+                            Uses ObitSkyModel and ObitImager
+
+\end{verbatim}
+\item ObitDConCleanVisSDI\\
+Steer-Dwedney-Itio-Greisen CLEAN.
+NYI
+\item ObitDConCleanVisMR\\
+Multi-resolution CLEAN.
+NYI
+\end{itemize}
+ 
+A number of related classes are described in the following:
+\begin{itemize}
+\item ObitDConCleanWindow\\
+List of Windows for each field that describe the regions on which the
+CLEAN algorithm is to work.
+This list is expandable and hides the details of the window description
+by returning an image mask of the selected values.
+Initial implementation is for restangular and round windows.
+\item ObitDConCleanBmHist\\
+This class manages the beam histogram used in the B. G. Clark CLEAN
+algorithm which is used in Obit classes.
+\item ObitDConCleanPxHist\\
+This class manages the image pixel histogram used in the B. G. Clark
+CLEAN algorithm which is used in Obit classes.
+\item ObitDConCleanPxList\\
+This class manages lists of selected residuals from one or more images
+and implements the basic BGC CLEAN algorithm.
+\end{itemize}
+
+\section{Building Obit}
+Obit comes with a configure script to construct the Makefiles to build
+Obit.
+Note: there are a number of third party packages that Obit requires
+and these must be installed prior to Obit.
+The basic installation is thus:
+\begin{verbatim}
+ % gtar xzvf Obit1.0.tgz
+ % cd Obit
+ % ./configure
+ % make
+\end{verbatim}
+
+Several of the external packages are not critical and Obit will build
+without them.
+In particular, these are pgplot, cfitsio, GSL, and FFTW.
+However, if one of these is not installed or not found, then an attempt
+to use them will cause the program to abort.
+pgplot is used only in debugging and is not required for production use.
+The configure script searches in the standard places for external
+libraries and if they are in nonstandard places it will need some
+help.
+This help is provided in the form of arguments to the configure script:
+\begin{verbatim}
+  --with-x                use the X Window System (pgplot)
+  --with-pgplot=DIR       search for PGPLOT in DIR
+                          The libraries and header files are expected
+                          here
+  --with-cfitsio=DIR      search for CFITSIO in DIR/include and DIR/lib
+  --with-cfitsio-includes=DIR
+                          search for CFITSIO includes in DIR
+  --with-fftw=DIR         search for FFTW in DIR/include and DIR/lib
+  --with-fftw-includes=DIR
+                          search for FFTW includes in DIR
+  --with-gsl=DIR          search for GSL in DIR/include and DIR/lib
+  --with-gsl-includes=DIR search for GSL includes in DIR
+  --with-xmlrpc=DIR       search for XMLRPC in DIR/include and DIR/lib
+  --with-xmlrpc-includes=DIR
+                          search for XMLRPC includes in DIR
+  --with-www=DIR          search for WWW in DIR/include and DIR/lib
+  --with-www-includes=DIR search for WWW includes in DIR
+  --with-zlib=DIR         search for ZLIB in DIR/include and DIR/lib
+  --with-zlib-includes=DIR
+                          search for ZLIB includes in DIR
+\end{verbatim}
+
+The following gives an example of use when libraries are installed in
+\$HOME/opt/:
+\begin{verbatim}
+ % configure --with-pgplot=$HOME/opt/pgplot \
+--with-cfitsio=$HOME/opt/cfitsio \
+--with-fftw=$HOME/opt/fftw
+\end{verbatim}
+
+When using Obit from python, specify the PYTHONPATH environment
+variable as ``Obit/python'' where for Obit substitute the base
+directory of the Obit package. 
+
+
+\subsection{Changing the Structure of Obit}
+Changes in the structure of the package may require modifications to
+the configure script.
+This requires a number of stages:
+\begin{itemize}
+\item  aclocal \\
+This program generates an aclocal.m4 file as needed by autoconf.
+This is based on the configure.ac script and the files in the
+subdirectory m4 (needs -I m4 option)
+This utility is available from http://ftp.gnu.org.
+This needs the following files
+\begin{itemize}
+\item  configure.ac \\
+This files defines which libraries and features are needed and which
+Makefiles should be constructed
+\item  m4/cfitsio.m4\\
+This file contains macroes used in finding the cfitsio headers and
+library. 
+\item   m4/fftw.m4\\
+This file contains macroes used in finding the FFTW headers and
+library. 
+\item   m4/pgplot.m4\\
+This file contains macroes used in finding the pgplot headers and
+library. 
+\end{itemize}
+\item  autoconf \\
+This utility is available from http://ftp.gnu.org.
+This program generates the configure script and needs the following
+\begin{itemize}
+\item  configure.ac \\
+This files defines which libraries and features are needed and which
+Makefiles should be constructed
+\item  aclocal.m4 \\
+Generated by aclocal and contains the m4 macroes needed by autoconf
+\end{itemize}
+\item  configure \\
+This program (the configure script) generates the Makefiles specified
+in configure.ac based on the Makefile.in template files. 
+This operation is largely by string substitution of @xxx@ type
+symbols.
+The values substituted are mostly determined by the m4 macroes in the
+*.m4 files.
+Configure uses the following:
+\begin{itemize}
+\item  missing \\
+Common stub for a few missing GNU programs while installing.
+\item  config.guess \\
+Attempt to guess a canonical system name.
+\item  config.sub\\
+Configuration validation subroutine script.
+\item  install-sh \\
+install - install a program, script, or datafile.
+\item   mkinstalldirs\\ ???
+Doesn't seem to be needed.
+\item   py-compile\\ ??
+Doesn't seem to be needed.
+\end{itemize}
+\end{itemize}
+
+\section{External software}
+Obit uses the following external packages:
+\begin{itemize}
+\item  glib \\
+The gnu library for large scale software in ansci c.
+Available at http://www.gtk.org/.
+\item  doxygen \\
+System for generating human readable software documentation from
+comments in the software.
+Available at http://www.stack.nl/\~\ dimitri/doxygen/ .
+\item  cfitsio \\
+Basic FITS I/O package.
+Available at http://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html.
+\item  FFTW \\
+Fast Fourier Transform.
+If configure does not find the FFTW library, FFTs are done using the GSL library
+if that was found.
+Available at http://www.fftw.org/.
+Note: FFTW MUST be installed with the configure option --enable-float
+to be used by Obit.
+\item  GSL \\
+GNU Scientific Library.
+If configure does not find the GSL library, the functions using it are stubbed
+such that the software will compile and link but any attempt to use a function
+relying on gsl routines will fail.
+Available at http://www.gnu.org/software/gsl/.
+\item  Python \\
+Scripting language to which Obit has a binding.
+The binding interface is built using swig.
+(Note: use version 1.1? of swig. Although the output of swig is 
+distributed  so you don't need swig unless you want to modify the
+python interface. (http://www.swig.org/))
+Python is available from http://www.python.org/download/.
+Python 2.3 or later is needed.
+\item  xmlrpc \\
+Interprocess communications is via xmlrpc using the xmlrpc-c and libwww 
+libraries.\\
+xmlrpc-c-1.2 (http://download.sourceforge.net/xmlrpc-c/xmlrpc-c-\%\{ver\}.tar.gz),\\
+w3c-libwww-5.4.0 
+(http://www.w3.org/Library/Distribution/w3c-libwww-\%\{ver\}.tar.gz)
+\item  zlib \\
+Probably everywhere you want to be.
+(if not, http://www.gzip.org/zlib/)
+\end{itemize}
+
+\section{User interfaces}
+Currently only AIPS programs, user written c programs and python.
+
+\subsection{AIPS interface}
+A Fortran callable interface for Obit is defined in utility classes
+ObitAIPSFortran and ObitAIPSObject.
+Obit is only accessable from AIPS (POPS) in the form of tasks.
+For an example, see the OBTST task in subdirectory AIPS.
+
+\subsection{Python Interface}
+The intent of the Python interface is to allow scripting use of Obit.
+As such, the details of most data structures are not directly
+accessable from python but are manipulated at the file level by
+calling c routines.
+However, in order to allow proper scripting, some access to data
+members, especially the various descriptor classes is necessary.
+The contents of the various descriptors (e.g. ImageDesc, UVDesc) can
+be read and nonstructural values modified using an interface with a
+python dictionary object as an intermediary.
+Very rudimentary access is also provided for image pixel values and
+row data in tables.
+Images are accessed through FArray (arrays of floats) and many high
+level functions are available on FArrays.
+
+The python interface is defined in the python subdirectory.
+The swig utility is used to interface the c library to python.
+The swig interface is defined in the ObitTypeMaps.swig (defines
+interface types) and *.inc which defines a python callable interface.
+The ObitTypeMaps.swig and *.inc files are concatenated by the Makefile
+before running swig.
+This generates a single, large shared library module to be imported
+into python.
+However, this is necessary to get all the classes into the same
+address space as Obit is dependent on class structures defining
+function pointers.
+A more elegant solution may be possible.
+
+Note about swig.  The maintainers of swig have modified the interface 
+in more recent versions (after version 1.1?) so the output of swig, 
+python/Obit\_wrap.c, is distributed with other source code.  The Make 
+procedure will not attempt to run swig unless you've mofidied the interface
+(*.inc, *.swig).
+
+The python interface defines a python class for each visible Obit
+class in a separate *.py file.
+The python/Obit classes are thin objects with basically a pointer to
+the c structure (the ``me'' member) but this allows mapping the python
+memory usage scheme onto Obit's similar but less automatic scheme. 
+Thus the c objects created are automatically deleted when the python
+reference count drops to zero or the explicit destructor (del) is
+invoked.
+However, this operation in python is only performed during its
+occasional garbage collection; to ensure timely deallocation of large
+Obit objects use the explicit Unref function.
+All functions are implemented as nonclass member routines which take
+class arguments but many common functions (e.g. Open, Close, Read) are
+also implemented as class member functions.
+Class .py files are internally documented.
+
+The convention for the routine names on the c side of the swig
+interface is the same as the Obit name but droping the initial
+``Obit''.
+This adds another layer of routine call but allows translating the
+data types across the python/c divide.
+Swig (plus the type maps in swig and .inc files) helps but sometimes 
+this is insufficient; having a uniform way of dealing with the
+interface helps.
+Some of the functions defined in the *.inc files correspond to macro
+expansions or straight access to member values in c.
+
+   On the python side of the interface, a separate layer of routines
+is added although generally the swig defined c routines are avaliable
+and while more efficient, this may circumvent the automatic
+destruction feature.
+
+   Several of the python modules define functions that combine
+multiple basic Obit function into higher level functional units
+(closer to the equivalent of c programs).
+The more complicated of the higher level routines (e.g. UVImager.py
+member UVImageInput = imaging component of AIPS IMAGR) have input 
+structures containing defaults and which can be viewed using the class
+input function; this is similar in functionality to the AIPS
+``INPUT''.
+Routines defined in the *.py files should contain the necessary
+information in the python doc strings.
+
+\subsection{Obit usage from Python}
+Obit can be accessed from python scripts or interactively.
+A number of scripts are available in the python subdirectory 
+with names ``script*.py''.
+Either interactively or in a script, Obit needs to be initialized
+before usage:
+\begin{verbatim}
+import OTF, OErr, OSystem, Image
+err=OErr.OErr()
+userid = 100
+nAIPS = -1
+nFITS = 1
+ObitSys=OSystem.OSystem  ("Python", 1, userid, nAIPS, ["Def"], 
+nFITS, ["./"], 1, 0, err)
+OErr.printErrMsg(err, "Error with Obit startup")
+\end{verbatim}
+where nAIPS are the number of AIPS directories specified, nFITS are
+the number of FITS directories specified.
+If either of these values are -1 (and ``directory'' = ``Def'') then the
+startup will search for standard environment names.
+These are \$DA01, \$DA02 ... for AIPS and \$FITS,\$FITS01 ... for
+FITS.
+If given explicitly, the directories can be either absolute or
+relative.
+If the directory number for FITS files is 0, the name is assumed to be
+an adequate relative or absolute pathname.
+In the example above, all standard AIPS directories will be used by
+default and the current directory for FITS files.
+
+Functions in all *.py files should have documentation strings that can
+be accessed interactively as in the following example from UVImager.
+Note: help also works on entire python modules.
+\begin{verbatim}
+>>>  help(UVImager.UVImage)
+Help on function UVImage in module UVImager:
+
+UVImage(err, input={'Channel': 0, 'DoBeam': True, 'DoWeight': False, 'InData': None, 'OutImage
+s': None, 'Robust': 0.0, 'TimeRange': [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], 'UVTaper': [0.
+0, 0.0], 'WtBox': 0, 'WtFunc': 1, ...})
+    Image a uv data set.
+    
+    UV Data is weighted and imaged producing an array of images.
+    err     = Python Obit Error/message stack
+    input   = input parameter dictionary
+    
+    Input dictionary entries:
+    InData   = Input Python OTF to image
+    OutImages= Output image mosaic, image objects should be previously defined
+    DoBeam   = True if beams are to be made
+    DoWeight = If True apply uniform weighting corrections
+    Robust   = Briggs robust parameter. (AIPS definition)
+    UVTaper  = UV plane taper, sigma in klambda as [u,v]
+    WtSize   = Size of weighting grid in cells [same as image nx]
+    WtBox    = Size of weighting box in cells [def 1]
+    WtFunc   = Weighting convolution function [def. 1]
+               1=Pill box, 2=linear, 3=exponential, 4=Gaussian
+               if positive, function is of radius, negative in u and v.
+    WtPower  = Power to raise weights to.  [def = 1.0]
+               Note: a power of 0.0 sets all the output weights to 1 as modified
+               by uniform/Tapering weighting.
+               Applied in determing weights as well as after.
+    Channel  = Channel (1-rel) number to image, 0-> all.
+\end{verbatim}
+
+Many of the higher level functions have inputs in the form of a python dictionary
+whose current values can be displayed by the class input function, e.g.:
+\begin{verbatim}
+>>> UVImager.input(UVImager.UVImageInput)
+Inputs for  UVImage
+   InData  =  None  :  Input UV data
+   OutImages  =  None  :  Output image mosaic
+   DoBeam  =  True  :  True if beams are to be made
+   DoWeight  =  False  :  If True apply uniform weighting corrections to uvdata
+   Robust  =  0.0  :  Briggs robust parameter. (AIPS definition)
+   UVTaper  =  [0.0, 0.0]  :  UV plane taper, sigma in klambda as [u,v]
+   WtSize  =  -1  :  Size of weighting grid in cells [image]
+   WtBox  =  0  :  Size of weighting box in cells [def 0]
+   WtFunc  =  1  :  Weighting convolution function [def. 1]
+   WtPower  =  1.0  :  Power to raise weights to.  [def = 1.0]
+   Channel  =  0  :  Channel (1-rel) number to image, 0-> all.
+Note: the values displayed for Obit objects are the names you give
+them.
+\end{verbatim}
+
+   Obit messages and error handling is by means of the Obit type
+ObitErr which is an argument to most Obit routines.  This contains
+informative as well as error messages; its contents can be displayed
+using e.g.:
+\begin{verbatim}
+>>> OErr.printErr(err)
+** Message: information  : Hogbom CLEANed 300 components with 4.025047 Jy
+** Message: information  : Reached minimum flux density -0.335160 Jy
+** Message: information  : Scaling residuals by 1.079005
+** Message: information  : Restoring 300 components
+\end{verbatim}
+If  the err object indicates an error, OErr.printErr(err), will raise
+an exception.
+
+   If scratch files are created (see OTF.ResidCal for an example) then
+an Obit shutdown will delete them:
+\begin{verbatim}
+# Shutdown Obit
+OErr.printErr(err)
+OSystem.Shutdown(ObitSys)
+\end{verbatim}
+
+Note: AIPS files as well as FITS files can be accessed from python.
+However, OTF files have no equivalent in AIPS.
+An obscure problem of debugging Obit software running in python is
+getting the debuger to stop python when it knows about the Obit c
+code.
+The function Obit.Bomb() causes an abort (segmentation violation)
+which allows you to set breakpoints and restart.
+
+\section{Python script example}
+A python script that is the functional equivalent of the AIPS task
+HGEOM (as originally intended, interpolate the pixels of one image
+onto the grid defined by another) is shown in the following.
+The image is interpolated into a scratch image which is then copied to
+the output image as a quantized (1/4 RMS of noise) image , the old
+history is copied and new history records written.
+\begin{verbatim}
+
+# python/Obit equivalent of AIPSish HGEOM
+
+import Obit, Image, ImageUtil, OSystem, OErr
+
+# Init Obit
+err=OErr.OErr()
+
+# Use default directories
+user = 100
+pgmNumber = 1
+ObitSys=OSystem.OSystem ("HGeom", pgmNumber, user, -1, ["Def"], 
+-1, ["Def"], 1, 0, err)
+#  print any error messages and halt
+OErr.printErrMsg(err, "Error with Obit startup")
+
+# Define files (FITS)
+# Image to be interpolated onto the grid of tmplFile
+inDisk = 1
+inFile   = 'input.fits'     
+# Image defining the output grid
+tmplDisk = 1
+tmplFile = 'template.fits'
+# output file, the '!' allows overwriting an existing file
+outDisk = 1
+outFile  = '!HGeomOut.fits'
+
+# Create Python/Obit objects attached to the data files
+inImage   = Image.newPFImage("Input image",    inFile,   inDisk,   1, err)
+tmplImage = Image.newPFImage("Template image", tmplFile, tmplDisk, 1, err)
+outImage  = Image.newPFImage("Output image",   outFile,  outDisk,  0, err)
+Image.PClone(tmplImage, outImage, err)   # Same structure etc.
+OErr.printErrMsg(err, "Error initializing")
+
+# Generate scratch file from tmplFile
+tmpImage  = Image.PScratch(tmplImage, err)
+tmpImage.Open(Image.WRITEONLY, err)   # Open
+OErr.printErrMsg(err, "Error cloning template")
+
+# Interpolate pixels to temporary file
+ImageUtil.PInterpolateImage(inImage, tmpImage, err)
+OErr.printErrMsg(err, "Error interpolating")
+
+# Do history to scratch image as table
+inHistory  = History.History("history", inImage.List, err)
+outHistory = History.History("history", tmpImage.List, err)
+History.PCopyHeader(inHistory, outHistory, err)
+# Add this programs history
+outHistory.Open(History.READWRITE, err)
+outHistory.TimeStamp(" Start Obit "+ObitSys.pgmName,err)
+outHistory.WriteRec(-1,ObitSys.pgmName+" / input = "+inFile,err)
+outHistory.WriteRec(-1,ObitSys.pgmName+" / template = "+tmplFile,err)
+outHistory.Close(err)
+OErr.printErrMsg(err, "Error with history")
+
+# Copy to quantized integer image with history
+print "Write output image"
+inHistory  = History.History("history", tmpImage.List, err)
+Image.PCopyQuantizeFITS (tmpImage, outImage, err, inHistory=inHistory)
+
+# Say what happened
+print "Interpolated",inFile,"to",outFile,"a clone of ",tmplFile
+
+# Shutdown Obit
+OErr.printErr(err)  # Print any remaining Obit messages
+OSystem.Shutdown(ObitSys)
+\end{verbatim}
+
+\section {C Language Example}
+The template Obit program test/Template.c is both a template to use
+for writing new Obit c programs and as an example which computes the
+mean and RMS of a window in an image.
+This program reads its input from a structured text file and writes
+its output into a similar file.
+In addition, many parameters can be passed on the command line.
+The program and its inputs are described in the test/Template.doc
+(ascii, NOT MSWord) file.
+The following example is the main routine in this program which shows
+the major features of an Obit program.
+\begin{verbatim}
+
+/* Program globals */
+gchar *pgmName = "TEMPLATE";       /* Program name */
+gchar *infile  = "TEMPLATE.inp";   /* File with program inputs */
+gchar *outfile = "TEMPLATE.out";   /* File to contain program outputs */
+gint  pgmNumber;       /* Program number (like POPS no.) */
+gint  AIPSuser;        /* AIPS user number number (like POPS no.) */
+gint  nAIPS=0;         /* Number of AIPS directories */
+gchar **AIPSdirs=NULL; /* List of AIPS data directories */
+gint  nFITS=0;         /* Number of FITS directories */
+gchar **FITSdirs=NULL; /* List of FITS data directories */
+
+int main ( int argc, char **argv )
+/*----------------------------------------------------------------------- */
+/*   Template Obit program - compute mean and RMS of an image             */
+/*----------------------------------------------------------------------- */
+{
+  oint ierr = 0;
+  ObitInfoList *myInput = NULL, *myOutput = NULL;
+  ObitSystem   *mySystem= NULL;
+  ObitImage    *inImage= NULL;
+  ObitInfoType type;
+  ObitErr      *err= NULL;
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gint         blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
+  gint         trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  gint         i, Aseq, disk, cno;
+  gchar        *strTemp, inFile[128];
+  gchar        Aname[13], Aclass[7], *Atype = "MA";
+  gfloat       mean, rms;
+
+   /* Startup - parse command line */
+  err = newObitErr();
+  myInput = TEMPLATEIn (argc, argv, err);
+  if (err->error) ierr = 1;
+  ObitErrLog(err); /* show any error messages on err */
+  if (ierr!=0) return ierr;
+
+  /* Initialize Obit */
+  mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
+                                nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
+  if (err->error) ierr = 1;
+  ObitErrLog(err); /* show any error messages on err */
+  if (ierr!=0) return ierr;
+
+  /* Create basic input Image Object */
+  inImage = newObitImage("input Image");
+  
+  /* Get input parameters from myInput */
+  ObitInfoListGet(myInput, "blc", &type, dim, blc, err); /* BLC */
+  ObitInfoListGet(myInput, "trc", &type, dim, blc, err); /* TRC */
+
+  /* File type  - could be either AIPS or FITS */
+  ObitInfoListGetP (myInput, "Type", &type, dim, (gpointer)&strTemp);
+  if (!strncmp (strTemp, "AIPS", 4)) { /* AIPS input */
+    /* input AIPS disk */
+    ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
+    /* input AIPS name */
+    ObitInfoListGet(myInput, "inName", &type, dim, Aname, err);
+    /* input AIPS class */
+    ObitInfoListGet(myInput, "inClass", &type, dim, Aclass, err);
+    /* input AIPS sequence */
+    ObitInfoListGet(myInput, "inSeq", &type, dim, &Aseq, err);
+
+    /* Find catalog number */
+    cno = ObitAIPSDirFindCNO(disk, AIPSuser, Aname, Aclass, Atype, Aseq, err);
+    
+    /* define image */
+    ObitImageSetAIPS (inImage, OBIT_IO_byPlane, disk, cno, AIPSuser, blc, trc, err);
+    
+  } else if (!strncmp (strTemp, "FITS", 4)) {  /* FITS input */
+    /* input FITS file name */
+    for (i=0; i<128; i++) inFile[i] = 0;
+    ObitInfoListGet(myInput, "inFile", &type, dim, inFile, err);
+    
+    /* input FITS disk */
+    ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
+
+    /* define image */
+    ObitImageSetFITS (inImage, OBIT_IO_byPlane, disk, inFile, blc, trc, err);
+    
+  } else { /* Unknown type - barf and bail */
+    Obit_log_error(err, OBIT_Error, "%s: Unknown Image type %s", 
+                   pgmName, strTemp);
+    if (err->error) ierr = 1;
+    ObitErrLog(err); /* show error messages */
+    return ierr;
+  }
+
+  /* error check */
+  if (err->error) ierr = 1;
+  ObitErrLog(err); /* show any error messages on err */
+  if (ierr!=0) return ierr;
+
+  /* Open and read Image, image on member image, an ObitFArray */
+  ObitImageOpen (inImage, OBIT_IO_ReadOnly, err);
+  ObitImageRead (inImage, NULL, err);
+  if (err->error) ierr = 1;
+  ObitErrLog(err); /* show error messages */
+  if (ierr!=0) return ierr;
+
+  /* Get statistics from inImage FArray */
+  mean = ObitFArrayMean(inImage->image);
+  rms  = ObitFArrayRMS(inImage->image);
+
+  ObitImageClose (inImage, err); /* Close */
+  if (err->error) ierr = 1;
+  ObitErrLog(err); /* show error messages */
+  if (ierr!=0) return ierr;
+
+  /* Tell results */
+   Obit_log_error(err, OBIT_InfoErr, 
+		  "%s: mean %f RMS %f", pgmName, mean, rms);
+
+  /* Set up output */
+  myOutput = defaultOutputs(err);
+  dim[0] = 1; dim[1] = 1;
+  ObitInfoListPut (myOutput, "mean", OBIT_float, dim, &mean, err);
+  ObitInfoListPut (myOutput, "rms", OBIT_float, dim, &rms, err);
+  ObitReturnDump (outfile, myOutput, err);
+
+  /* show any messages and errors */
+  if (err->error) ierr = 1;
+  ObitErrLog(err);
+  if (ierr!=0) return ierr;
+  
+  /* cleanup */
+  myInput   = ObitInfoListUnref(myInput);    /* delete input list */
+  myOutput  = ObitInfoListUnref(myOutput);   /* delete output list */
+  inImage   = ObitUnref(inImage);
+  
+  /* Shutdown Obit */
+  mySystem = ObitSystemShutdown (mySystem);
+  
+  return ierr;
+} /* end of main */
+
+\end{verbatim}
+
+\section{Obit Tables}
+This document uses latex macroes which are translated by a perl
+script (ObitTables.pl) into the c source code.
+
+\subsection{LaTeX Macros}
+Tables used in Obit are defined in this document by using LaTeX
+macroes to formally define the table.
+These macroes are:
+\begin{itemize}
+\item tabletitle\{Title of table, e.g. ``Antenna table for uv data''\}
+\item tablename\{Name of table, e.g. ``AN''\}
+\item tableintro\{Short description of class\}
+\item tableover\{Overview of usage of class\}
+\item tablekey[\{name\}\{type code\}\{ software name\} \{default value\}
+\{(range of indices)\} \{description\}]\\
+Defines Table keyword, entries with a default value are not required to
+be present.
+\item tablecol[\{name\}\{units\}\{type code\} \{(dimensionality)\} \{software
+name\} \{description\}]\\
+Defines Table column.
+If the description contains the string ``[OPTIONAL]'' its presence
+will not be required; otherwise it will be checked.
+\end{itemize}
+
+
+%%%%%%%%%%%%%%% Obit Tables definition %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableHistory Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableHistory}]
+ObitTableHistory Class
+\tabletitle{Processing History for non-AIPS data}
+% table name
+\tablename{History}
+\tableintro[
+{This class contains tabular data and allows access.
+This file is used in NON-AIPS applications to store the processing
+history of the associated data.
+Entries consist of 70 character strings which should be self labeling.}
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+No Keywords in table.
+%\begin{keywords}
+%\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"ENTRY  "}{"        " }{A}{(70)}{entry}
+{Processing History entry}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{04/06/2004}{Revision 1: FOB}]
+\end{history}
+\clearpage
+%
+%%%%%%%%%%%%%%% ObitTableAN Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableAN}]
+ObitTableAN Class
+\tabletitle{Antenna table for uv data}
+% table name
+\tablename{AN}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS AN" contains information about the locations and characteristics
+of antennas in a UV data set.
+Also time information and the state of the Earth's orientation.
+Each subarray in a uv data set will have it's own AN table in version
+numbers the same order as the subarray.
+Polarization calibration information is included. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"ARRAYX  "}{D}{ArrayX}{0.0}{}
+{Array center X coord. (meters, earth center)}
+]
+\tablekey[{"ARRAYY  "}{D}{ArrayY}{0.0}{}
+{Array center Y coord. (meters, earth center)}
+]
+\tablekey[{"ARRAYZ  "}{D}{ArrayZ}{0.0}{}
+{Array center Z coord. (meters, earth center)}
+]
+\tablekey[{"GSTIA0 "}{D}{GSTiat0}{0.0}{}
+{GST at time=0 (degrees) on the reference date}
+]
+\tablekey[{"DEGPDY  "}{D}{DegDay}{360.0}{}
+{Earth rotation rate (deg/IAT day)}
+]
+\tablekey[{"FREQ    "}{D}{Freq}{1.0}{}
+{Obs. Reference Frequency for subarray(Hz)}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYYMMDD"}{}
+{Reference date as "YYYYMMDD"}
+]
+\tablekey[{"POLARX  "}{E}{PolarX}{0.0}{}
+{Polar position X (meters) on ref. date}
+]
+\tablekey[{"POLARY  "}{E}{PolarY}{0.0}{}
+{Polar position Y (meters) on ref. date}
+]
+\tablekey[{"UT1UTC  "}{E}{ut1Utc}{}{}
+{UT1-UTC  (time sec.)  }
+]
+\tablekey[{"DATUTC  "}{E}{dataUtc}{0.0}{}
+{data time-UTC  (time sec.)}
+]
+\tablekey[{"TIMSYS"}{A}{TimeSys}{"IAT"}{}
+{Time system, 'IAT' or 'UTC'}
+]
+\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
+{Array name}
+]
+\tablekey[{"NUMORB  "}{J}{numOrb}{0}{()}
+{Number of orbital parameters}
+]
+\tablekey[{"NOPCAL "}{J}{numPCal}{4}{()}
+{Number of polarization calibration constants}
+]
+\tablekey[{"FREQID  "}{J}{FreqID}{0}{}
+{Denotes the FQ ID for which the AN poln. parms have been modified.}
+]
+\tablekey[{"IATUTC  "}{E}{iatUtc}{0.0}{}
+{IAT - UTC (sec).}
+]
+\tablekey[{"POLTYPE "}{A}{polType}{"        "}{}
+{Polarization parameterazation type, 'APPR', 'RAPPR', 'ORI-ELP'}
+]
+\tablekey[{"P\_REFANT"}{J}{P\_Refant}{0}{}
+{Polarization reference antenna}
+]
+\tablekey[{"P\_DIFF01"}{E}{P\_Diff01}{0.0}{}
+{Right-Left Phase difference in radians IF 1}
+]
+\tablekey[{"P\_DIFF02"}{E}{P\_Diff02}{0.0}{}
+{Right-Left Phase difference in radians IF 2}
+]
+\tablekey[{"P\_DIFF03"}{E}{P\_Diff03}{0.0}{}
+{Right-Left Phase difference in radians IF 3}
+]
+\tablekey[{"P\_DIFF04"}{E}{P\_Diff04}{0.0}{}
+{Right-Left Phase difference in radians IF 4}
+]
+\tablekey[{"P\_DIFF05"}{E}{P\_Diff05}{0.0}{}
+{Right-Left Phase difference in radians IF 5}
+]
+\tablekey[{"P\_DIFF06"}{E}{P\_Diff06}{0.0}{}
+{Right-Left Phase difference in radians IF 6}
+]
+\tablekey[{"P\_DIFF07"}{E}{P\_Diff07}{0.0}{}
+{Right-Left Phase difference in radians IF 7}
+]
+\tablekey[{"P\_DIFF08"}{E}{P\_Diff08}{0.0}{}
+{Right-Left Phase difference in radians IF 8}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"ANNAME  "}{"        " }{A}{(8)}{AntName}
+{Station name}
+] 
+\tablecol[{"STABXYZ "}{"METERS " }{D}{(3)}{StaXYZ}
+{X,Y,Z offset from array center}
+] 
+\tablecol[{"ORBPARM "}{"       " }{D}{(numOrb)}{OrbParm}
+{Orbital parameters.}
+] 
+\tablecol[{"NOSTA   "}{"       " }{J}{(1)}{noSta}
+{Station number, used as an index in other tables, uv data}
+] 
+\tablecol[{"MNTSTA  "}{"       " }{J}{(1)}{mntSta}
+{Mount type, 0=altaz, 1=equatorial, 2=orbiting}
+] 
+\tablecol[{"STAXOF  "}{"METERS " }{E}{(1)}{staXof}
+{Axis offset}
+] 
+\tablecol[{"POLTYA  "}{"       " }{A}{(4)}{polTypeA}
+{Feed A feed poln. type 'R','L','X','Y', actually only one valid character.}
+] 
+\tablecol[{"POLAA   "}{"DEGREES " }{E}{(1)}{PolAngA}
+{Feed A feed position angle}
+] 
+\tablecol[{"POLCALA"}{"       " }{E}{(numPCal)}{PolCalA}
+{Feed A poln. cal parameter. }
+] 
+\tablecol[{"POLTYB "}{"       " }{A}{(4)}{polTypeB}
+{Feed B feed poln. type 'R','L','X','Y'}
+] 
+\tablecol[{"POLAB  "}{"DEGREES " }{E}{(1)}{PolAngB}
+{Feed B feed position angle}
+] 
+\tablecol[{"POLCALB"}{"       " }{E}{(numPCal)}{PolCalB}
+{Feed B poln. cal parameter}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/03/2003}{Revision 1: Copied from AIPS}]
+\end{history}
+\clearpage
+%%%%%%%%%%%%%%% ObitTableAT Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableAT}]
+ObitTableAT Class
+\tabletitle{ Antenna polarization table for uv data}
+% table name
+\tablename{AT}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS AT" contains Antenna polarization and something else.
+An ObitTableAT is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV"}{J}{revision}{3}{}
+{Revision number of the table definition.}
+]
+\tablekey[{"OBSCODE"}{A}{obscode}{"AA000"}{}
+{Observation code}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
+{Reference date as "YYYYMMDD"}
+]
+\tablekey[{"NO\_STKD "}{J}{numStkd}{}{}
+{The number of Stokes(?)}
+]
+\tablekey[{"STK\_1"}{J}{stk1}{}{}
+{First Stokes(?)}
+]
+\tablekey[{"NO\_BAND "}{J}{numBand}{}{()}
+{The number of Bands(?).}
+]
+\tablekey[{"NO\_CHAN"}{J}{numChan}{}{}
+{The number of spectral channels.}
+]
+\tablekey[{"REF\_FREQ"}{D}{refFreq}{}{}
+{Reference Frequency.}
+]
+\tablekey[{"CHAN\_BW "}{E}{chanBW}{}{}
+{Channel bandwidth.}
+]
+\tablekey[{"REF\_PIXL "}{E}{refPixl}{}{}
+{Reference Pixel..}
+]
+\tablekey[{"NOPCAL"}{J}{noPCal}{}{}
+{Number of polarization calibration parameters.}
+]
+\tablekey[{"POLTYPE"}{A}{polType}{"APPROX  "}{}
+{The Polarization calibration type.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time.}
+] 
+\tablecol[{"TIME\_INTERVAL "}{"DAYS   " }{E}{(1)}{TimeI}
+{Time interval of record }
+] 
+\tablecol[{"ANNAME  "}{"        " }{A}{(8)}{AntName}
+{Station name}
+] 
+\tablecol[{"ANTENNA\_NO"}{"        " }{J}{(1)}{antennaNo}
+{Antenna number}
+] 
+\tablecol[{"ARRAY      "}{"        " }{J}{(1)}{Array}
+{Array number}
+] 
+\tablekey[{"FREQID  "}{J}{FreqID}{0}{}
+{The frequency ID.}
+]
+\tablecol[{"NO\_LEVELS"}{"        " }{J}{(1)}{numLevels}
+{Number of levels of something(?)}
+] 
+\tablecol[{"POLTYA  "}{"       " }{A}{(1)}{polTypeA}
+{Feed A feed poln. type 'R','L','X','Y', actually only one valid character.}
+] 
+\tablecol[{"POLAA   "}{"DEGREES " }{E}{(numBand)}{PolAngA}
+{Feed A feed position angle}
+] 
+\tablecol[{"POLCALA"}{"       " }{E}{(numBand)}{PolCalA}
+{Feed A poln. cal parameter. }
+] 
+\tablecol[{"POLTYB "}{"       " }{A}{(1)}{polTypeB}
+{Feed B feed poln. type 'R','L','X','Y'}
+] 
+\tablecol[{"POLAB  "}{"DEGREES " }{E}{(numBand)}{PolAngB}
+{Feed B feed position angle}
+] 
+\tablecol[{"POLCALB"}{"       " }{E}{(numBand)}{PolCalB}
+{Feed B poln. cal parameter}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/22/2006}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableBL Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableBL}]
+ObitTableBL Class
+\tabletitle{Baseline dependent calibration for uv data}
+% table name
+\tablename{BL}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS BL" contains baseline dependent additive and multiplicative
+terms for the correction of UV data.
+Each table row contains is for a single baseline and has a correction
+for each IF. 
+An ObitTableBL is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"NO\_ANT "}{J}{numAnt}{}{}
+{The number of antennas.
+}
+]
+\tablekey[{"NO\_POL "}{J}{numPol}{}{(1,2)}
+{The number of polarizations.
+}
+]
+\tablekey[{"NO\_IF  "}{J}{numIF}{}{()}
+{The number of IFs.
+}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{E}{(1)}{Time}
+{The center time.}
+] 
+\tablecol[{"SOURCE ID  "}{"        " }{J}{(1)}{SourID}
+{Source ID number}
+] 
+\tablecol[{"SUBARRAY   "}{"        " }{J}{(1)}{SubA}
+{Subarray number}
+] 
+\tablecol[{"ANTENNA1   "}{"        " }{J}{(1)}{ant1}
+{First antenna number of baseline}
+] 
+\tablecol[{"ANTENNA2   "}{"        " }{J}{(1)}{ant2}
+{Second antenna number of baseline}
+] 
+\tablecol[{"FREQ ID    "}{"        " }{J}{(1)}{FreqID}
+{Freqid number}
+] 
+\tablecol[{"REAL M\#NO\_POL"}{"        " }{E}{(numIF)}{RealM}
+{Real (Multiplicative correction Poln \# NO\_POL )}
+] 
+\tablecol[{"IMAG M\#NO\_POL"}{"        " }{E}{(numIF)}{ImagM}
+{Imaginary (Multiplicative correction Poln \# NO\_POL )}
+] 
+\tablecol[{"REAL A\#NO\_POL"}{"        " }{E}{(numIF)}{RealA}
+{Real (Additive correction Poln \# NO\_POL )}
+] 
+\tablecol[{"IMAG A\#NO\_POL"}{"        " }{E}{(numIF)}{ImagA}
+{Imaginary (Additive correction Poln \# NO\_POL )}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{03/03/2003}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableBP Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableBP}]
+ObitTableBP Class
+\tabletitle{UV data BandPass calibration table}
+% table name
+\tablename{BP}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS BP" contains bandpass calibration informatioin for UV data.
+An ObitTableBP is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"NO\_ANT "}{J}{numAnt}{}{}
+{The number of antennas}
+]
+\tablekey[{"NO\_POL "}{J}{numPol}{}{(1,2)}
+{The number of antennas}
+]
+\tablekey[{"NO\_IF  "}{J}{numIF}{}{()}
+{The number of IFs}
+]
+\tablekey[{"NO\_CHAN"}{J}{numChan}{}{()}
+{Number of frequency channels}
+]
+\tablekey[{"STRT\_CHN"}{J}{startChan}{1}{}
+{Start channel number}
+]
+\tablekey[{"NO\_SHFTS"}{J}{numShifts}{1}{}
+{If numShifts = 1 BP entries are from cross-power data, if 2 are from total power, if 3 are a mixture, anything else then type is unknown and will assume cross-power}
+]
+\tablekey[{"LOW\_SHFT"}{J}{lowShift}{1}{}
+{Most negative shift}
+]
+\tablekey[{"SHFT\_INC"}{J}{shiftInc}{1}{}
+{Shift increment}
+]
+\tablekey[{"BP\_TYPE"}{A}{BPType}{}{}
+{BP type: ' ' => standard BP table, CHEBSHEV' => Chebyshev polynomial coeff.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time.}
+] 
+\tablecol[{"INTERVAL "}{"DAYS   " }{E}{(1)}{TimeI}
+{Time interval of record }
+] 
+\tablecol[{"SOURCE ID "}{"        " }{J}{(1)}{SourID}
+{Source ID number}
+] 
+\tablecol[{"SUBARRAY "}{"       " }{J}{(1)}{SubA}
+{Subarray number}
+] 
+\tablecol[{"ANTENNA "}{"       " }{J}{(1)}{antNo}
+{Antenna number}
+] 
+\tablecol[{"BANDWIDTH "}{"HZ     " }{E}{(1)}{BW}
+{andwidth of an individual channel}
+] 
+\tablecol[{"CHN\_SHIFT "}{"       " }{D}{(numIF)}{ChanShift}
+{Frequency shift for each IF}
+] 
+\tablecol[{"FREQ ID "}{"       " }{J}{(1)}{FreqID}
+{Freq. id number}
+] 
+\tablecol[{"REFANT \#NO\_POL"}{"       " }{J}{(1)}{RefAnt}
+{Reference Antenna}
+] 
+\tablecol[{"WEIGHT \#NO\_POL"}{"       " }{E}{(numIF)}{Weight}
+{Weights for complex bandpass}
+] 
+\tablecol[{"REAL \#NO\_POL"}{"       " }{E}{(numChan,numIF)}{Real}
+{Real (channel gain Poln \# NO\_POL )}
+] 
+\tablecol[{"IMAG \#NO\_POL"}{"       " }{E}{(numChan,numIF)}{Imag}
+{Imaginary (channel gain Poln \# NO\_POL)}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{03/03/2003}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableCC Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\ClassName[{ObitTableCC}]
+\tabletitle{Clean Components table.}
+
+% table name
+\tablename{CC}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS CC" contains sky model components obtained either by CLEANing or
+fitting.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+For non--point components, there are extra parameters:
+major axis size (deg), minor axis size (deg), position angle (deg) and
+model type (0 = point,1 = Gaussian on sky,2 = Convolved Gaussian,
+3 = Uniform optically thin sphere)
+}
+% Table keyword description
+No Keywords in table.
+\begin{keywords}
+\tablekey[{"NO\_PARMS"}{J}{noParms}{0}{(0,5)}
+{Number of parameters for non point components, usually 0 or 4}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"FLUX    "}{"JY     " }{E}{(1)}{Flux}
+{Component flux density}
+] 
+\tablecol[{"DELTAX  "}{"DEGREE  "}{E}{(1)}{DeltaX}
+{Component X position.}
+] 
+\tablecol[{"DELTAY  "}{"DEGREE  "}{E}{(1)}{DeltaY}
+{Component Y position.}
+] 
+\tablecol[{"PARMS   "}{"        "}{E}{(noParms)}{parms}
+{[OPTIONAL] Component parameters;}
+  parms[3] = type:\hfill\break
+    0 = point, no parameters\hfill\break
+    1 = Sky Gaussian, [0:3]=maj, min, PA\hfill\break
+    2 = Convolved Gaussian, [0:3]=maj axis, min axis, PA (all deg)\hfill\break
+    3 = Uniform Sphere [0] = radius (deg)\hfill\break
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{15/11/2004}{Revision 1: Copied from AIPS}]
+\end{history}
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableCL Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+\ClassName[{ObitTableCL}]
+\tabletitle{CaLibration table for uv data.}
+
+% table name
+\tablename{CL}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS CL" contains amplitude/phase/delay and rate calibration
+information to be applied to a multi source UV data set.
+An ObitTableCL is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"REVISION"}{J}{revision}{10}{}
+{Revision number of the table definition}
+]
+\tablekey[{"NO\_POL  "}{J}{numPol}{}{(1,2)}
+{The number of polarizations}
+]
+\tablekey[{"NO\_IF  "}{J}{numIF}{}{()}
+{The number of IFs}
+]
+\tablekey[{"NO\_ANT  "}{J}{numAnt}{}{}
+{The number of antennas in table}
+]
+\tablekey[{"NO\_TERM"}{J}{numTerm}{0}{()}
+{The number of terms in model polynomial}
+]
+\tablekey[{"MGMOD   "}{D}{mGMod}{1.0}{}
+{The Mean Gain modulus 
+}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time of the solution}
+] 
+\tablecol[{"TIME INTERVAL"}{"DAYS    "}{E}{(1)}{TimeI}
+{Solution interval.}
+] 
+\tablecol[{"SOURCE ID"}{"        "}{J}{(1)}{SourID}
+{Source Identifier number }
+] 
+\tablecol[{"ANTENNA NO."}{"       " }{J}{(1)}{antNo}
+{Antenna number }
+] 
+\tablecol[{"SUBARRAY"}{"        "}{J}{(1)}{SubA}
+{Subarray number.}
+] 
+\tablecol[{"FREQ ID"}{"        "}{J}{(1)}{FreqID}
+{Frequency ID}
+] 
+\tablecol[{"I.FAR.ROT"}{"RAD/M**2"}{E}{(1)}{IFR}
+{Ionospheric Faraday Rotation }
+] 
+\tablecol[{"GEODELAY "}{"SECONDS "}{D}{(numTerm)}{GeoDelay}
+{Geometric delay polynomial series at TIME}
+] 
+\tablecol[{"DOPPOFF  "}{"SEC/SEC "}{E}{(numIF)}{DopplerOff}
+{Doppler offset for each IF}
+] 
+\tablecol[{"ATMOS  "}{"SECONDS "}{E}{(1)}{atmos}
+{Atmospheric delay }
+] 
+\tablecol[{"DATMOS  "}{"SEC/SEC "}{E}{(1)}{Datmos}
+{Time derivative of ATMOS}
+] 
+\tablecol[{"MBDELAY\#NO\_POL"}{"SECONDS "}{E}{(1)}{MBDelay}
+{Multiband delay poln \# NO\_POL  }
+] 
+\tablecol[{"CLOCK \#NO\_POL"}{"SECONDS "}{E}{(1)}{clock}
+{"Clock" epoch error }
+] 
+\tablecol[{"DCLOCK \#NO\_POL"}{"SEC/SEC"}{E}{(1)}{Dclock}
+{Time derivative of CLOCK }
+] 
+\tablecol[{"DISP \#NO\_POL"}{"SECONDS "}{E}{(1)}{dispers}
+{Dispersive delay (sec at wavelength = 1m)for Poln \# NO\_POL}
+] 
+\tablecol[{"DDISP \#NO\_POL"}{"SEC/SEC"}{E}{(1)}{Ddispers}
+{Time derivative of DISPfor Poln \# NO\_POL}
+] 
+\tablecol[{"REAL\#NO\_POL"}{"       " }{E}{(numIF)}{Real}
+{Real (gain Poln \# NO\_POL )}
+] 
+\tablecol[{"IMAG\#NO\_POL"}{"        "}{E}{(numIF)}{Imag}
+{Imaginary (gain Poln \# NO\_POL)}
+] 
+\tablecol[{"RATE \#NO\_POL"}{"SEC/SEC "}{E}{(numIF)}{Rate}
+{Residual fringe rate  Poln \# NO\_POL}
+] 
+\tablecol[{"DELAY \#NO\_POL"}{"SECONDS "}{E}{(numIF)}{Delay}
+{ Residual group delay Poln \# NO\_POL}
+] 
+\tablecol[{"WEIGHT \#NO\_POL"}{"        "}{E}{(numIF)}{Weight}
+{Weight of soln. Poln \# NO\_POL}
+] 
+\tablecol[{"REFANT \#NO\_POL"}{"        "}{J}{(numIF)}{RefAnt}
+{Reference antenna Poln \# NO\_POL }
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{28/02/2003}{Revision 1: Copied from AIPS}]
+\end{history}
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableCQ Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableCQ}]
+ObitTableCQ Class
+\tabletitle{VLBA Correlator parameter frequency tablefor uv data }
+% table name
+\tablename{CQ}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS CQ" table contains VLBA-like correlation parameters which are
+used for making a number of instrumental corrections.
+An ObitTableCQ is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV"}{J}{revision}{1}{}
+{Revision number of the table definition}
+]
+\tablekey[{"NO\_IF"}{J}{numIF}{}{()}
+{The number of IFs}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"FRQSEL "}{"        " }{J}{(1)}{FrqSel}
+{Frequency ID \{IFQDCQ in AIPSish\}}
+] 
+\tablecol[{"SUBARRAY "}{"        " }{J}{(1)}{SubA}
+{Subarray number \{ISUBCQ\}}
+] 
+\tablecol[{"FFT\_SIZE "}{"        " }{J}{(numIF)}{FFTSize}
+{Size of FFT in correlator \{NFFTCQ\}}
+] 
+\tablecol[{"NO\_CHAN "}{"        " }{J}{(numIF)}{numChan}
+{No. of channels in correlator\{NCHCQ\}}
+] 
+\tablecol[{"SPEC\_AVG "}{"        " }{J}{(numIF)}{SpecAvg}
+{Spectral averaging factor\{NSAVCQ\}}
+] 
+\tablecol[{"EDGE\_FRQ "}{"HZ      " }{D}{(numIF)}{EdgeFreq}
+{Edge frequency \{DFRQCQ\}}
+] 
+\tablecol[{"CHAN\_BW "}{"HZ      " }{D}{(numIF)}{ChanBW}
+{Channel bandwidth \{DCBWCQ\}}
+] 
+\tablecol[{"TAPER\_FN "}{"        " }{A}{(8,numIF)}{TaperFn}
+{Taper function \{LTAPCQ\}}
+] 
+\tablecol[{"OVR\_SAMP "}{"        " }{J}{(numIF)}{OverSamp}
+{Oversampling factor \{NOVSCQ\}}
+] 
+\tablecol[{"ZERO\_PAD "}{"        " }{J}{(numIF)}{ZeroPad}
+{Zero-padding factor \{NZPDCQ\}}
+] 
+\tablecol[{"FILTER "}{"        " }{J}{(numIF)}{Filter}
+{Filter type \{IFLTCQ\}}
+] 
+\tablecol[{"TIME\_AVG "}{"SECONDS " }{E}{(numIF)}{TimeAvg}
+{Time averaging interval \{TAVGCQ\}}
+] 
+\tablecol[{"NO\_BITS "}{"        " }{J}{(numIF)}{numBits}
+{Quantization (no. of bits per recorded sample)\{NBITCQ\}}
+] 
+\tablecol[{"FFT\_OVLP "}{"        " }{J}{(numIF)}{FFTOverlap}
+{FFT overlap factor \{IOVLCQ\}}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{04/03/2003}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableCT Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableCT}]
+ObitTableCT Class
+\tabletitle{Earth orientation parameter table for uv data}
+% table name
+\tablename{CT}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS CT" contains Earth orientation model parameters.
+An ObitTableCT is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV"}{J}{revision}{2}{}
+{Revision number of the table definition.}
+]
+\tablekey[{"OBSCODE"}{A}{obscode}{"AA000"}{}
+{Observation code}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYYMMDD"}{}
+{Reference date as "YYYYMMDD"}
+]
+\tablekey[{"NO\_STKD "}{J}{numStkd}{}{}
+{The number of Stokes(?)}
+]
+\tablekey[{"STK\_1"}{J}{stk1}{}{}
+{First Stokes(?)}
+]
+\tablekey[{"NO\_BAND "}{J}{numBand}{}{()}
+{The number of Bands(?).}
+]
+\tablekey[{"NO\_CHAN"}{J}{numChan}{}{}
+{The number of spectral channels.}
+]
+\tablekey[{"REF\_FREQ"}{D}{refFreq}{}{}
+{Reference Frequency.}
+]
+\tablekey[{"CHAN\_BW "}{E}{chanBW}{}{}
+{Channel bandwidth.}
+]
+\tablekey[{"REF\_PIXL "}{E}{refPixl}{}{}
+{Reference Pixel..}
+]
+\tablekey[{"C\_SRVR "}{A}{CSrvr}{}{}
+{Who knows?}
+]
+\tablekey[{"C\_VERSN"}{A}{CVersn}{}{}
+{Who knows?}
+]
+\tablekey[{"A\_VERSN"}{A}{AVersn}{}{}
+{Who knows?}
+]
+\tablekey[{"I\_VERSN"}{A}{IVersn}{}{}
+{Who knows?}
+]
+\tablekey[{"E\_VERSN"}{A}{EVersn}{}{}
+{Who knows?}
+]
+\tablekey[{"ACCELGRV"}{D}{accelgrv}{}{}
+{Acceleration due to gravity m/s/s}
+]
+\tablekey[{"E-FLAT"}{D}{Eflat}{}{}
+{Earth Flattening???}
+]
+\tablekey[{"EARTHRAD"}{D}{earthrad}{}{}
+{Earth radius}
+]
+\tablekey[{"MMSEMS"}{D}{mmsems}{}{}
+{???}
+]
+\tablekey[{"EPHEPOC"}{J}{ephepoc}{}{}
+{Ephemeris epoch???}
+]
+\tablekey[{"TIDELAG"}{D}{tidelag}{}{}
+{TIDELAG}
+]
+\tablekey[{"GAUSS"}{D}{gauss}{}{}
+{GAUSS}
+]
+\tablekey[{"GMMOON"}{D}{gmmoon}{}{}
+{GMMOON }
+]
+\tablekey[{"GMSUN"}{D}{gmsun}{}{}
+{GMSUN}
+]
+\tablekey[{"LOVE\_H"}{D}{loveH}{}{}
+{LOVE\_H}
+]
+\tablekey[{"LOVE\_L"}{D}{loveL}{}{}
+{LOVE\_L }
+]
+\tablekey[{"PRE\_DATA"}{D}{preData}{}{}
+{PRE\_DATA}
+]
+\tablekey[{"REL\_DATA"}{D}{relData}{}{}
+{REL\_DATA}
+]
+\tablekey[{"TIDALUT1"}{J}{tidalut1}{}{}
+{TIDALUT1}
+]
+\tablekey[{"TSECAU"}{D}{tsecau}{}{}
+{TSECAU }
+]
+\tablekey[{"U-GRV-CN "}{J}{UGrvCn}{}{}
+{U-GRV-CN}
+]
+\tablekey[{"VLIGHT  "}{J}{vlight}{}{}
+{Speed of light m/s}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time.}
+] 
+\tablecol[{"UT1-UTC"}{"SECONDS " }{D}{(1)}{ut1utc}
+{UT1-UTC}
+] 
+\tablecol[{"IAT-UTC"}{"SECONDS " }{D}{(1)}{iatutc}
+{IAT-UTC}
+] 
+\tablecol[{"A1-UTC"}{"SECONDS " }{D}{(1)}{a1utc}
+{A1-UTC}
+] 
+\tablecol[{"UT1 TYPE"}{"        " }{A}{(1)}{ut1Type}
+{UT1 TYPE}
+] 
+\tablecol[{"WOBXY "}{"MILLIARC" }{D}{(2)}{wobXY}
+{Earth pole wobble}
+] 
+\tablecol[{"WOB TYPE"}{"        " }{A}{(1)}{wobType}
+{WOB TYPES}
+] 
+\tablecol[{"DPSI"}{"RAD     " }{D}{(1)}{dpsi}
+{DPSI}
+] 
+\tablecol[{"DDPSI"}{"RAD/SEC " }{D}{(1)}{ddpsi}
+{DDPSI }
+] 
+\tablecol[{"DEPS"}{"RAD     " }{D}{(1)}{deps}
+{DEPS}
+] 
+\tablecol[{"DDEPS "}{"RAD/SEC " }{D}{(1)}{ddeps}
+{DDEPS}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/22/2006}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableFG Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableFG}]
+ObitTableFG Class
+\tabletitle{Flag table for uv data documentation}
+% table name
+\tablename{FG}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS FG" contains descriptions of data to be ignored
+An ObitTableFG is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+No Keywords in table.
+%\begin{keywords}
+%\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"SOURCE  "}{"       " }{J}{(1)}{SourID}
+{Source ID as defined in the SOURCE table}
+] 
+\tablecol[{"SUBARRAY "}{"       " }{J}{(1)}{SubA}
+{Subarray number}
+] 
+\tablecol[{"FREQ ID "}{"       " }{J}{(1)}{freqID}
+{Frequency ID number}
+] 
+\tablecol[{"ANTS   "}{"       " }{J}{(2)}{ants}
+{first and secong antenna  numbers for a baseline, 0=$>$all}
+] 
+\tablecol[{"TIME RANGE "}{"DAYS    " }{E}{(2)}{TimeRange}
+{Start and end time of data to be flagged }
+] 
+\tablecol[{"IFS     "}{"       " }{J}{(2)}{ifs}
+{First and last IF numbers to flag}
+] 
+\tablecol[{"CHANS   "}{"       " }{J}{(2)}{chans}
+{First and last channel numbers to flag}
+] 
+\tablecol[{"PFLAGS  "}{"       " }{X}{(4)}{pFlags}
+{Polarization flags, same order as in data, T=$>$flagged}
+] 
+\tablecol[{"REASON  "}{"       " }{A}{(24)}{reason}
+{Reason for flagging}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/03/2003}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableFQ Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Obit base class
+%
+%\title fooey
+\ClassName[{ObitTableFQ}]
+%\ClassEnum[{obitObjType}
+%{Type of underlying data structures}]
+%\begin{ObitEnum}
+%\ObitEnumItem[{OBITTYPE\_FITS}{FITS file}]
+%\ObitEnumItem[{OBITTYPE\_AIPS}{AIPS catalog data}]
+%\end{ObitEnum}
+
+\tabletitle{UV data FreQuency Table}
+% table name
+\tablename{FQ}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS FQ" contains frequency related information for ``IF'' in uv
+data.
+An ``IF'' is a construct that allows sets of arbitrarily spaced frequencies.
+An ObitTableFQ is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class.}
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"NO\_IF  "}{J}{numIF}{}{()}
+{The number of IFs, used to dimension table column entries}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"FRQSEL  "}{"       " }{J}{(1)}{fqid}
+{Frequency ID number for row, this is a random parameter in the uv data}
+] 
+\tablecol[{"IF FREQ "}{"HZ     " }{D}{(numIF)}{freqOff}
+{Offset from reference frequency for each IF}
+] 
+\tablecol[{"CH WIDTH"}{"HZ     " }{E}{(numIF)}{chWidth}
+{Bandwidth of an individual channel, now always written and read as a signed value}
+] 
+\tablecol[{"TOTAL BANDWIDTH "}{"HZ     " }{E}{(numIF)}{totBW}
+{Total bandwidth of the IF, now written and read as an unsigned value}
+] 
+\tablecol[{"SIDEBAND "}{"       " }{J}{(numIF)}{sideBand}
+{Sideband of the IF (-1 =$>$ lower, +1 =$>$ upper), now always written and read as +1}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/03/2002}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableGC Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGC}]
+ObitTableGC Class
+\tabletitle{Gain curve table for uv data}
+% table name
+\tablename{GC}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS GC" contains Antenna gain curve information
+An ObitTableGC is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"NO\_BAND "}{J}{numBand}{}{()}
+{The number of Bands(?).}
+]
+\tablekey[{"NO\_POL"}{J}{numPol}{}{(1,2)}
+{The number of polarizations.}
+]
+\tablekey[{"NO\_TABS"}{J}{numTabs}{}{()}
+{The number of ??.}
+]
+\tablekey[{"TABREV"}{J}{revision}{3}{}
+{Revision number of the table definition.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"ANTENNA\_NO"}{"        " }{J}{(1)}{antennaNo}
+{Antenna number}
+]
+\tablecol[{"SUBARRAY "}{"        " }{J}{(1)}{SubArray}
+{Subarray number}
+] 
+\tablecol[{"FREQ ID  "}{"        " }{J}{(1)}{FreqID}
+{Frequency id of scan}
+] 
+\tablecol[{"TYPE\_\#NO\_POL"}{"        " }{J}{(numBand)}{Type}
+{TYPE\_\#NO\_POL}
+] 
+\tablecol[{"NTERM\_\#NO\_POL"}{"        " }{J}{(numBand)}{NTerm}
+{NTERM\_\#NO\_POL}
+] 
+\tablecol[{"X\_TYP\_\#NO\_POL"}{"        " }{J}{(numBand)}{XTyp}
+{X\_TYP\_\#NO\_POL}
+] 
+\tablecol[{"Y\_TYP\_\#NO\_POL"}{"        " }{J}{(numBand)}{YTyp}
+{Y\_TYP\_\#NO\_POL}
+] 
+\tablecol[{"X\_VAL\_\#NO\_POL"}{"        " }{E}{(numBand)}{XVal}
+{X\_TYP\_\#NO\_POL}
+] 
+\tablecol[{"Y\_VAL\_\#NO\_POL"}{"        " }{E}{(numTabs,numBand)}{YVal}
+{Y\_TYP\_\#NO\_POL}
+] 
+\tablecol[{"GAIN\_\#NO\_POL"}{"        " }{E}{(numTabs,numBand)}{gain}
+{GAIN\_\#NO\_POL}
+] 
+\tablecol[{"SENS\_\#NO\_POL"}{"K/JY    " }{E}{(numBand)}{sens}
+{X\_TYP\_\#NO\_POL}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/22/2006}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableIM Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableIM}]
+ObitTableIM Class
+\tabletitle{IM table for uv data}
+% table name
+\tablename{IM}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS IM" contains the correlator model.
+An ObitTableIM is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
+{Reference date as "YYYYMMDD"}
+]
+\tablekey[{"OBSCODE"}{A}{obscode}{"AA000"}{}
+{Observation code}
+]
+\tablekey[{"NO\_STKD "}{J}{numStkd}{}{}
+{The number of Stokes(?)}
+]
+\tablekey[{"NO\_BAND "}{J}{numBand}{}{()}
+{The number of Bands(?).}
+]
+\tablekey[{"NO\_CHAN"}{J}{numChan}{}{}
+{The number of spectral channels.}
+]
+\tablekey[{"REF\_FREQ"}{D}{refFreq}{}{}
+{Reference Frequency.}
+]
+\tablekey[{"CHAN\_BW "}{E}{chanBW}{}{}
+{Channel bandwidth.}
+]
+\tablekey[{"REF\_PIXL "}{E}{refPixl}{}{}
+{Reference Pixel..}
+]
+\tablekey[{"NO\_POL "}{J}{numPol}{}{(1,2)}
+{The number of polarizations.}
+]
+\tablekey[{"NPOLY "}{J}{npoly}{}{()}
+{The number of polynomial terms.}
+]
+\tablekey[{"TABREV"}{J}{tabrev}{2}{}
+{Revision number of the table definition.}
+]
+\tablekey[{"REVISION"}{E}{revision}{1.0}{}
+{Revision number of the table definition.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time.}
+] 
+\tablecol[{"TIME\_INTERVAL "}{"DAYS   " }{E}{(1)}{TimeI}
+{Time interval of record }
+] 
+\tablecol[{"SOURCE\_ID  "}{"        " }{J}{(1)}{SourID}
+{Source ID number}
+] 
+\tablecol[{"ANTENNA\_NO"}{"       " }{J}{(1)}{antennaNo}
+{Antenna number}
+] 
+\tablecol[{"ARRAY      "}{"        " }{J}{(1)}{Array}
+{Array number}
+] 
+\tablecol[{"FREQID"}{"        "}{J}{(1)}{FreqID}
+{Frequency ID}
+] 
+\tablecol[{"I.FAR.ROT"}{"RAD/M**2"}{E}{(1)}{IFR}
+{Ionospheric Faraday Rotation }
+] 
+\tablecol[{"FREQ.VAR"}{"HZ      "}{E}{(numBand)}{FreqVar}
+{FREQ.VAR (?) }
+] 
+\tablecol[{"PDELAY\_\#NO\_POL "}{"SECONDS "}{D}{(npoly,numBand)}{PDelay}
+{Phase delay }
+] 
+\tablecol[{"GDELAY\_\#NO\_POL "}{"SECONDS "}{D}{(npoly)}{GDelay}
+{Group delay }
+] 
+\tablecol[{"PRATE\_\#NO\_POL "}{"SECONDS "}{D}{(npoly,numBand)}{PRate}
+{Phase delay rate}
+] 
+\tablecol[{"GRATE\_\#NO\_POL "}{"SECONDS "}{D}{(npoly)}{GRate}
+{Group delay rate}
+] 
+\tablecol[{"DISP\_\#NO\_POL "}{"SECONDS "}{E}{(npoly,numBand)}{Disp}
+{Dispersion}
+] 
+\tablecol[{"DDISP\_\#NO\_POL "}{"SEC/SEC  "}{E}{(npoly)}{DRate}
+{Dispersion rate}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/22/2006}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableNI Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableNI}]
+ObitTableIN Class
+\tabletitle{Ionospheric calibration table class for uv data}
+% table name
+\tablename{NI}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS NI" contains the results of ionospheric modeling fits.
+The ionospheric phase screen over the array is modeled in terms of a
+Zernike polynomial.
+An ObitTableNI is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This was formerly the IN table but an AIPS bug does nasty things to
+``IN'' tables.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"REVISION"}{J}{revision}{1}{}
+{Revision number of the table definition.}
+]
+\tablekey[{"NUM\_COEF"}{J}{numCoef}{5}{()}
+{Number of Zernike coefficients}
+]
+\tablekey[{"H\_ION   "}{E}{heightIon}{1.0e10}{}
+{Height of the ionospheric phase screen (km?)}
+]
+\tablekey[{"REF\_FREQ"}{D}{refFreq}{}{}
+{Reference frequency for the phase screen model}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time}
+] 
+\tablecol[{"TIME INTERVAL"}{"DAYS   " }{E}{(1)}{TimeI}
+{ime interval of the solution}
+] 
+\tablecol[{"ANTENNA NO."}{"        " }{J}{(1)}{antNo}
+{Antenna number, 0=$>$ all}
+] 
+\tablecol[{"SOURCE ID"}{"        " }{J}{(1)}{SourId}
+{Source number, 0=$>$ all}
+] 
+\tablecol[{"SUBARRAY"}{"        " }{J}{(1)}{SubA}
+{Subarray number, 0=$>$ all}
+] 
+\tablecol[{"WEIGHT "}{"        " }{E}{(1)}{weight}
+{Weight}
+] 
+\tablecol[{"COEF   "}{"        " }{E}{(numCoef)}{coef}
+{Zernike model coeffients}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{28/02/2003}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableMC Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableMC}]
+ObitTableMC Class
+\tabletitle{ MC table for uv data}
+% table name
+\tablename{MC}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS MC" contains VLBA Correlator model calculations.
+An ObitTableMC is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"OBSCODE"}{A}{obscode}{"AA000"}{}
+{Observation code}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYYMMDD"}{}
+{Reference date as "YYYYMMDD"}
+]
+\tablekey[{"NO\_STKD "}{J}{numStkd}{}{}
+{The number of Stokes(?)}
+]
+\tablekey[{"STK\_1"}{J}{stk1}{}{}
+{First Stokes(?)}
+]
+\tablekey[{"NO\_BAND "}{J}{numBand}{}{()}
+{The number of Bands(?).}
+]
+\tablekey[{"NO\_CHAN"}{J}{numChan}{}{}
+{The number of spectral channels.}
+]
+\tablekey[{"REF\_FREQ"}{D}{refFreq}{}{}
+{Reference Frequency.}
+]
+\tablekey[{"CHAN\_BW "}{E}{chanBW}{}{}
+{Channel bandwidth.}
+]
+\tablekey[{"REF\_PIXL "}{E}{refPixl}{}{}
+{Reference Pixel..}
+]
+\tablekey[{"NO\_POL"}{J}{numPol}{}{(1,2)}
+{The number of polarizations.}
+]
+\tablekey[{"FFT\_SIZE"}{J}{FFTSize}{}{}
+{FFT size.}
+]
+\tablekey[{"OVERSAMP"}{J}{oversamp}{}{}
+{Oversampling factor}
+]
+\tablekey[{"ZERO\_PAD"}{J}{zeroPad}{}{}
+{Zero padding factor}
+]
+\tablekey[{"TAPER\_FN"}{A}{taperFn}{}{}
+{Tapering function}
+]
+\tablekey[{"TABREV"}{J}{revision}{1}{}
+{Revision number of the table definition.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time.}
+] 
+\tablecol[{"SOURCE\_ID  "}{"        " }{J}{(1)}{SourID}
+{Source ID number}
+] 
+\tablecol[{"ANTENNA\_NO"}{"        " }{J}{(1)}{antennaNo}
+{Antenna number}
+]
+\tablecol[{"ARRAY      "}{"        " }{J}{(1)}{Array}
+{Array number}
+] 
+\tablecol[{"FREQID"}{"        "}{J}{(1)}{FreqID}
+{Frequency ID}
+] 
+\tablecol[{"ATMOS  "}{"SECONDS "}{D}{(1)}{atmos}
+{Atmospheric delay }
+] 
+\tablecol[{"DATMOS  "}{"SEC/SEC "}{D}{(1)}{Datmos}
+{Time derivative of ATMOS}
+] 
+\tablecol[{"GDELAY"}{"SECONDS "}{D}{(1)}{GDelay}
+{Group delay }
+] 
+\tablecol[{"GRATE "}{"SECONDS "}{D}{(1)}{GRate}
+{Group delay rate}
+] 
+\tablecol[{"CLOCK\_\#NO\_POL"}{"SECONDS "}{D}{(1)}{clock}
+{"Clock" epoch error }
+] 
+\tablecol[{"DCLOCK\_\#NO\_POL"}{"SEC/SEC"}{D}{(1)}{Dclock}
+{Time derivative of CLOCK }
+] 
+\tablecol[{"LO\_OFFSET\_\#NO\_POL"}{"HZ      "}{E}{(1)}{LOOffset}
+{LO Offset }
+] 
+\tablecol[{"DLO\_OFFSET\_\#NO\_POL"}{"Hz/SEC  "}{E}{(1)}{DLOOffset}
+{Time derivative of LO offset }
+] 
+\tablecol[{"DISP \#NO\_POL"}{"SECONDS "}{E}{(1)}{disp}
+{Dispersive delay (sec at wavelength = 1m)for Poln \# NO\_POL}
+] 
+\tablecol[{"DDISP \#NO\_POL"}{"SEC/SEC"}{E}{(1)}{Ddisp}
+{Time derivative of DISPfor Poln \# NO\_POL}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/22/2006}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableMF Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableMF}]
+ObitTableMF Class
+\tabletitle{AIPS Model Fit Table}
+% table name
+\tablename{MF}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS MF" the results of a model fit to an image or uv data of the
+type produced by SAD/VSAD.
+An ObitTableMF is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"DEPTH1"}{E}{depth1}{1}{}
+{Dimensions 3 in image}
+]
+\tablekey[{"DEPTH2"}{E}{depth2}{1}{}
+{Dimensions 4 in image}
+]
+\tablekey[{"DEPTH3"}{E}{depth3}{1}{}
+{Dimensions 5 in image}1
+]
+\tablekey[{"DEPTH4"}{E}{depth4}{1}{}
+{Dimensions 6 in image}
+]
+\tablekey[{"DEPTH5"}{E}{depth5}{1}{}
+{Dimensions 7 in image}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"PLANE "}{"        "}{E}{(1)}{plane}
+{Plane number}
+] 
+\tablecol[{"PEAK INT"}{"JY/BEAM "}{E}{(1)}{Peak}
+{Peak Ipol}
+] 
+\tablecol[{"I FLUX "}{"JY      "}{E}{(1)}{IFlux}
+{Integrated Ipol flux}
+] 
+\tablecol[{"DELTAX "}{"DEGREE  "}{E}{(1)}{DeltaX}
+{X offset of center}
+] 
+\tablecol[{"DELTAY "}{"DEGREE  "}{E}{(1)}{DeltaY}
+{Y offset of center}
+] 
+\tablecol[{"MAJOR AX"}{"DEGREE  "}{E}{(1)}{MajorAx}
+{Fitted major axis size}
+] 
+\tablecol[{"MINOR AX"}{"DEGREE  "}{E}{(1)}{MinorAx}
+{Fitted minor axis size}
+] 
+\tablecol[{"POSANGLE"}{"DEGREE  "}{E}{(1)}{PosAngle}
+{Fitted PA}
+] 
+\tablecol[{"Q FLUX  "}{"JY      "}{E}{(1)}{QFlux}
+{Integrated Q flux density}
+] 
+\tablecol[{"U FLUX "}{"JY      "}{E}{(1)}{UFlux}
+{Integrated U flux density}
+] 
+\tablecol[{"V FLUX  "}{"JY      "}{E}{(1)}{VFlux}
+{Integrated Y flux density}
+] 
+\tablecol[{"ERR PEAK"}{"JY/BEAM "}{E}{(1)}{errPeak}
+{rror in Peak Ipol}
+] 
+\tablecol[{"ERR FLUX"}{"JY      "}{E}{(1)}{errIFlux}
+{rror in Integrated Ipol flux}
+] 
+\tablecol[{"ERR DLTX"}{"DEGREE  "}{E}{(1)}{errDeltaX}
+{Error in X offset of center}
+] 
+\tablecol[{"ERR DLTY"}{"DEGREE  "}{E}{(1)}{errDeltaY}
+{Error in Y offset of center}
+] 
+\tablecol[{"ERR MAJA"}{"DEGREE  "}{E}{(1)}{errMajorAx}
+{Error in Fitted major axis size}
+] 
+\tablecol[{"ERR MINA"}{"DEGREE  "}{E}{(1)}{errMinorAx}
+{Error in Fitted minor axis size}
+] 
+\tablecol[{"ERR PA "}{"DEGREE  " }{E}{(1)}{errPosAngle}
+{Error in Fitted PA}
+] 
+\tablecol[{"ERR QFLX"}{"JY      " }{E}{(1)}{errQFlux}
+{Error in Integrated Q flux density}
+] 
+\tablecol[{"ERR UFLX"}{"JY      " }{E}{(1)}{errUFlux}
+{Error in Integrated U flux density}
+] 
+\tablecol[{"ERR VFLX"}{"JY      " }{E}{(1)}{errVFlux}
+{Error in Integrated Y flux density}
+] 
+\tablecol[{"TYPE MOD"}{"        "}{E}{(1)}{TypeMod}
+{Model type 1 = Gaussian}
+] 
+\tablecol[{"D0 MAJOR"}{"DEGREE  "}{E}{(1)}{D0Major}
+{Deconvolved best major axis}
+] 
+\tablecol[{"D0 MINOR"}{"DEGREE  "}{E}{(1)}{D0Minor}
+{Deconvolved best minor axis}
+] 
+\tablecol[{"D0 POSANG"}{"DEGREE  "}{E}{(1)}{D0PosAngle}
+{Deconvolved best PA}
+] 
+\tablecol[{"D- MAJOR"}{"DEGREE  "}{E}{(1)}{DmMajor}
+{Deconvolved least major axis}
+] 
+\tablecol[{"D- MINOR"}{"DEGREE  "}{E}{(1)}{DmMinor}
+{econvolved least minor axis}
+] 
+\tablecol[{"D- POSAN"}{"DEGREE  "}{E}{(1)}{DmPosAngle}
+{Deconvolved least PA}
+] 
+\tablecol[{"D+ MAJOR"}{"DEGREE  "}{E}{(1)}{DpMajor}
+{Deconvolved most major axis}
+] 
+\tablecol[{"D+ MINOR"}{"DEGREE  "}{E}{(1)}{DpMinor}
+{Deconvolved most minor axis}
+] 
+\tablecol[{"D+ POSAN"}{"DEGREE  "}{E}{(1)}{DpPosAngle}
+{Deconvolved most PA}
+] 
+\tablecol[{"RES RMS "}{"JY/BEAM "}{E}{(1)}{ResRMS}
+{RMS of Ipol residual}
+] 
+\tablecol[{"RES PEAK"}{"JY/BEAM "}{E}{(1)}{ResPeak}
+{Peak in Ipol residual}
+] 
+\tablecol[{"RES FLUX"}{"JY      "}{E}{(1)}{ResFlux}
+{Integrated Ipol in residual}
+] 
+\tablecol[{"CENTER X"}{"PIXEL   "}{E}{(1)}{PixelCenterX}
+{Center x position in pixels}
+] 
+\tablecol[{"CENTER Y"}{"PIXEL  "}{E}{(1)}{PixelCenterY}
+{Center y position in pixels}
+] 
+\tablecol[{"MAJ AXIS"}{"PIXEL  "}{E}{(1)}{PixelMajorAxis}
+{Fitted major axis in pixels}
+] 
+\tablecol[{"MIN AXIS"}{"PIXEL  "}{E}{(1)}{PixelMinorAxis}
+{Fitted minor axis in pixels}
+] 
+\tablecol[{"PIXEL PA"}{"DEGREE  "}{E}{(1)}{PixelPosAngle}
+{Fitted PA(?)}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{03/03/2003}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableNX Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableNX}]
+ObitTableNX Class
+\tabletitle{iNdeX table for uv data}
+% table name
+\tablename{NX}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS NX" contains an index for a uv data file giving the times,
+source and visibility range for a sequence of scans.
+A scan is a set of observations in the same mode and on the same source.
+An ObitTableNX is the front end to a persistent disk resident structure.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+No Keywords in table.
+%\begin{keywords}
+%\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{E}{(1)}{Time}
+{The center time of the sscan.}
+] 
+\tablecol[{"TIME INTERVAL "}{"DAYS   " }{E}{(1)}{TimeI}
+{Duration of scan}
+] 
+\tablecol[{"SOURCE ID "}{"       " }{J}{(1)}{SourID}
+{Source ID as defined in then SOURCE table}
+] 
+\tablecol[{"SUBARRAY "}{"        " }{J}{(1)}{SubA}
+{Subarray number}
+] 
+\tablecol[{"START VIS "}{"        "}{J}{(1)}{StartVis}
+{First visibility number (1-rel) in scan}
+] 
+\tablecol[{"END VIS  "}{"        " }{J}{(1)}{EndVis}
+{Last visibility number (1-rel) in scan}
+] 
+\tablecol[{"FREQ ID  "}{"        " }{J}{(1)}{FreqID}
+{Frequency id of scan}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/03/2003}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableOB Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableOB}]
+ObitTableOB Class
+\tabletitle{ Orbital antenna table for uv data}
+% table name
+\tablename{OB}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS OB" contains Orbiting VLBI station parameters.
+An ObitTableOB is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV"}{J}{revision}{2}{}
+{Revision number of the table definition.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"ANTENNA\_NO"}{"       " }{J}{(1)}{antennaNo}
+{Antenna number}
+] 
+\tablecol[{"SUBARRAY   "}{"        " }{J}{(1)}{SubA}
+{Subarray number}
+] 
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time.}
+] 
+\tablecol[{"ORBXYZ    "}{"METERS  " }{D}{(3)}{orbXYZ}
+{Obital position }
+] 
+\tablecol[{"VELXYZ    "}{"M/SEC   " }{D}{(3)}{velXYZ}
+{Orbital velocity}
+] 
+\tablecol[{"SUN\_ANGLE "}{"DEGREES  " }{E}{(3)}{sunAngle}
+{Relative position of the Sun}
+] 
+\tablecol[{"ECLIPSE "}{"DAYS    " }{E}{(4)}{eclipse }
+{ECLIPSE }
+] 
+\tablecol[{"ORIENTATION "}{"DEGREES  " }{E}{(1)}{orientation}
+{ORIENTATION}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/22/2006}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+
+\clearpage
+%%%%%%%%%%%%%%% ObitTableOF Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableOF}]
+ObitTableOF Class
+\tabletitle{OF table for uv data}
+% table name
+\tablename{OF}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS OF" contains some sort of VLA operational information.
+An ObitTableOF is the front end to a persistent disk resident structure.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"REVISION"}{J}{revision}{10}{}
+{Revision number of the table definition}
+]
+\tablekey[{"OBSCODE"}{A}{obscode}{"AA000"}{}
+{Observation code}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYYMMDD"}{}
+{Reference date as "YYYYMMDD"}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{E}{(1)}{Time}
+{The center time of the sscan.}
+] 
+\tablecol[{"TIME INTERVAL "}{"DAYS   " }{E}{(1)}{TimeI}
+{Duration of scan}
+] 
+\tablecol[{"SOURCE ID "}{"       " }{J}{(1)}{SourID}
+{Source ID as defined in then SOURCE table}
+] 
+\tablecol[{"ANTENNA NO."}{"        " }{J}{(1)}{antNo}
+{Antenna number}
+]
+\tablecol[{"SUBARRAY "}{"        " }{J}{(1)}{SubA}
+{Subarray number}
+] 
+\tablecol[{"FREQ ID  "}{"        " }{J}{(1)}{FreqID}
+{Frequency id of scan}
+] 
+\tablecol[{"REFN PTG FLAG VA "}{"        "}{L}{(1)}{refPnt}
+{Reference pointing(?) flag}
+] 
+\tablecol[{"SHADOWED FLAG VA "}{"        "}{L}{(1)}{shadow}
+{Antenna shadowed(?) flag}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/03/2003}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTablePC Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTablePC}]
+ObitTablePC Class
+\tabletitle{Pulsed cal. table for uv data}
+% table name
+\tablename{PC}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS PC" contains pulsed phase cal. info
+An ObitTablePC is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV"}{J}{revision}{3}{}
+{Revision number of the table definition.}
+]
+\tablekey[{"NO\_POL"}{J}{numPol}{}{(1,2)}
+{The number of polarizations.}
+]
+\tablekey[{"NO\_BAND "}{J}{numBand}{}{()}
+{The number of Bands(?).}
+]
+\tablekey[{"NO\_TONES"}{J}{numTones}{}{()}
+{The number of Tones.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time.}
+] 
+\tablecol[{"SOURCE\_ID  "}{"        " }{J}{(1)}{SourID}
+{Source ID number}
+] 
+\tablecol[{"ANTENNA\_NO"}{"        " }{J}{(1)}{antennaNo}
+{Antenna number}
+]
+\tablecol[{"ARRAY      "}{"        " }{J}{(1)}{Array}
+{Array number}
+] 
+\tablecol[{"FREQID"}{"        "}{J}{(1)}{FreqID}
+{Frequency ID}
+] 
+\tablecol[{"CABLE\_CAL"}{"SECONDS "}{D}{(1)}{CableCal}
+{CABLE\_CAL }
+] 
+\tablecol[{"STATE\_\#NO\_POL "}{"PERCENT "}{E}{(8)}{State}
+{State counts(?)}
+] 
+\tablecol[{"PC\_FREQ\_\#NO\_POL "}{"HZ      "}{D}{(numTones)}{PCFreq}
+{Frequencies of the phase tones}
+] 
+\tablecol[{"PC\_REAL\_\#NO\_POL "}{"        "}{D}{(numTones)}{PCReal}
+{Real part of tone phase}
+] 
+\tablecol[{"PC\_IMAG\_\#NO\_POL "}{"        "}{D}{(numTones)}{PCImag}
+{Imaginary part of tone phase}
+] 
+\tablecol[{"PC\_RATE\_\#NO\_POL "}{"SEC/SEC "}{D}{(numTones)}{PCRate}
+{Tone rate phase}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/22/2006}{Revision 1: Copied from AIPS}]
+\end{history}
+
+\clearpage
+%
+%%%%%%%%%%%%%%% ObitTablePS Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTablePS}]
+ObitTablePS Class
+\tabletitle{Processing Summary}
+% table name
+\tablename{PS}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS PS" contains the summary of the processing of a source.
+An ObitTablePS is the front end to a persistent disk resident structure.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"REVISION"}{J}{revision}{1}{}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"FIELD NAME    "}{"       " }{A}{(16)}{FieldName}
+{Field name (source)}
+] 
+\tablecol[{"OBSDATE "}{"      " }{A}{(8)}{obsdate}
+{Observing ref. date.(YYYYMMDD)}
+] 
+\tablecol[{"RA POINT "}{"DEG    " }{D}{(1)}{RAPoint}
+{Pointing RA at epoch 2000 }
+] 
+\tablecol[{"DEC POINT"}{"DEG    " }{D}{(1)}{DecPoint}
+{Pointing Dec at epoch 2000}
+] 
+\tablecol[{"STATUS   "}{"        " }{A}{(8)}{Status}
+{Processing status}
+] 
+\tablecol[{"IQU      "}{"        "}{L}{(3)}{IQU}
+{IQU Flags True if processed}
+] 
+\tablecol[{"SPECIAL  "}{"        " }{L}{(1)}{Special}
+{Special processing applied}
+] 
+\tablecol[{"NO. FIELDS"}{"        " }{J}{(1)}{NoFields}
+{Number of sub fields}
+] 
+\tablecol[{"CC LIMIT  "}{"        " }{L}{(3)}{CCLimit}
+{Flags to using all possible CC.}
+] 
+\tablecol[{"PERCENT  "}{"        " }{E}{(3)}{PerCent}
+{Percent of visibility data I,Q,U}
+]
+\tablecol[{"PIX MAX  "}{"        " }{E}{(3)}{PixMax}
+{Pixel max (Jy) I,Q,U}
+] 
+\tablecol[{"PIX MIN  "}{"        " }{E}{(3)}{PixMin}
+{Pixel min (Jy) I,Q,U}
+] 
+\tablecol[{"QUALITY  "}{"        " }{E}{(3)}{Quality}
+{Quality measure, RMS I,Q,U}
+] 
+\tablecol[{"COMMENTS "}{"        " }{A}{(80)}{Comment}
+{Comments}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{03/15/2006}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+\clearpage
+
+%%%%%%%%%%%%%%% ObitTableSN Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Obit base class
+%
+\ClassName[{ObitTableSN}]
+{SolutioN table for UV data.}
+%\ClassEnum[{obitObjType}
+%{Type of underlying data structures}]
+%\begin{ObitEnum}
+%\ObitEnumItem[{OBITTYPE\_FITS}{FITS file}]
+%\ObitEnumItem[{OBITTYPE\_AIPS}{AIPS catalog data}]
+%\end{ObitEnum}
+
+\tabletitle{SolutioN table for UV data}
+% table name
+\tablename{SN}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS SN" amplitude/phase/delay and rate calibration information derived
+from a calibration solution and can be used either for "self calibration"
+or correction a multisource CaLibration table.
+An ObitTableSN is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"REVISION"}{J}{revision}{10}{}
+{Revision number of the table definition.
+}
+]
+\tablekey[{"NO\_POL  "}{J}{numPol}{}{(1,2)}
+{The number of polarizations.
+}
+]
+\tablekey[{"NO\_IF  "}{J}{numIF}{}{()}
+{The number of IFs
+}
+]
+\tablekey[{"NO\_ANT  "}{J}{numAnt}{}{}
+{The number of antennas in table.
+}
+]
+\tablekey[{"NO\_NODES"}{J}{numNodes}{0}{}
+{The number of interpolation nodes.
+}
+]
+\tablekey[{"MGMOD   "}{D}{mGMod}{1.0}{}
+{The Mean Gain modulus 
+}
+]
+\tablekey[{"APPLIED"}{L}{isApplied}{FALSE}{}
+{True if table has been applied to a CL table.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time of the solution}
+] 
+\tablecol[{"TIME INTERVAL"}{"DAYS    "}{E}{(1)}{TimeI}
+{Solution interval.}
+] 
+\tablecol[{"SOURCE ID"}{"        "}{J}{(1)}{SourID}
+{Source Identifier number }
+] 
+\tablecol[{"ANTENNA NO."}{"       " }{J}{(1)}{antNo}
+{Antenna number }
+] 
+\tablecol[{"SUBARRAY"}{"        "}{J}{(1)}{SubA}
+{Subarray number.}
+] 
+\tablecol[{"FREQ ID"}{"        "}{J}{(1)}{FreqID}
+{Frequency ID}
+] 
+\tablecol[{"I.FAR.ROT"}{"RAD/M**2"}{E}{(1)}{IFR}
+{Ionospheric Faraday Rotation }
+] 
+\tablecol[{"NODE NO."}{"        "}{J}{(1)}{NodeNo}
+{Node number }
+] 
+\tablecol[{"MBDELAY\#NO\_POL"}{"SECONDS "}{E}{(1)}{MBDelay}
+{Multiband delay poln \# NO\_POL  }
+] 
+\tablecol[{"REAL\#NO\_POL"}{"       " }{E}{(numIF)}{Real}
+{Real (gain Poln \# NO\_POL )}
+] 
+\tablecol[{"IMAG\#NO\_POL"}{"        "}{E}{(numIF)}{Imag}
+{Imaginary (gain Poln \# NO\_POL)}
+] 
+\tablecol[{"DELAY \#NO\_POL"}{"SECONDS "}{E}{(numIF)}{Delay}
+{ Residual group delay Poln \# NO\_POL}
+] 
+\tablecol[{"RATE \#NO\_POL"}{"SEC/SEC "}{E}{(numIF)}{Rate}
+{Residual fringe rate  Poln \# NO\_POL}
+] 
+\tablecol[{"WEIGHT \#NO\_POL"}{"        "}{E}{(numIF)}{Weight}
+{Weight of soln. Poln \# NO\_POL}
+] 
+\tablecol[{"REFANT \#NO\_POL"}{"        "}{J}{(numIF)}{RefAnt}
+{Reference antenna Poln \# NO\_POL }
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{28/02/2002}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableSU Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableSU}]
+ObitTableSU Class
+\tabletitle{SoUrce table for uv data}
+% table name
+\tablename{SU}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS SU" contains information about astronomical sources.
+An ObitTableSU is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"NO\_IF  "}{J}{numIF}{}{()}
+{The number of IFs}
+]
+\tablekey[{"VELTYP  "}{A}{velType}{"LSR"}{}
+{Velocity type}
+]
+\tablekey[{"VELDEF  "}{A}{velDef}{"RADIO"}{}
+{Velocity definition 'RADIO' or 'OPTICAL'}
+]
+\tablekey[{"FREQID  "}{J}{FreqID}{0}{}
+{The Frequency ID for which the source parameters are relevant.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"ID. NO. "}{"       " }{J}{(1)}{SourID}
+{Source ID}
+] 
+\tablecol[{"SOURCE  "}{"       " }{A}{(16)}{Source}
+{Source name }
+] 
+\tablecol[{"QUAL    "}{"       " }{J}{(1)}{Qual}
+{Source qualifier}
+] 
+\tablecol[{"CALCODE "}{"       " }{A}{(4)}{CalCode}
+{Calibrator code}
+] 
+\tablecol[{"IFLUX   "}{"JY     " }{E}{(numIF)}{IFlux}
+{Total Stokes I flux density per IF}
+] 
+\tablecol[{"QFLUX   "}{"JY     " }{E}{(numIF)}{QFlux}
+{Total Stokes Q flux density per IF}
+] 
+\tablecol[{"UFLUX   "}{"JY     " }{E}{(numIF)}{UFlux}
+{Total Stokes U flux density per IF}
+] 
+\tablecol[{"VFLUX   "}{"JY     " }{E}{(numIF)}{VFlux}
+{Total Stokes V flux densityper IF }
+] 
+\tablecol[{"FREQOFF "}{"HZ     " }{D}{(numIF)}{FreqOff}
+{Frequency offset (Hz) from IF nominal per IF}
+] 
+\tablecol[{"BANDWIDTH"}{"HZ     " }{D}{(1)}{Bandwidth}
+{Bandwidth}
+] 
+\tablecol[{"RAEPO   "}{"DEGREES " }{D}{(1)}{RAMean}
+{Right ascension at mean EPOCH (actually equinox) }
+] 
+\tablecol[{"DECEPO  "}{"DEGREES " }{D}{(1)}{DecMean}
+{Declination at mean EPOCH (actually equinox) }
+] 
+\tablecol[{"EPOCH   "}{"YEARS   " }{D}{(1)}{Epoch}
+{Mean Epoch (really equinox) for position in yr. since year 0.0}
+] 
+\tablecol[{"RAAPP   "}{"DEGREES " }{D}{(1)}{RAApp}
+{Apparent Right ascension }
+] 
+\tablecol[{"DECAPP  "}{"DEGREES " }{D}{(1)}{DecApp}
+{Apparent Declination}
+] 
+\tablecol[{"LSRVEL "}{"M/SEC    " }{D}{(numIF)}{LSRVel}
+{LSR velocity per IF }
+] 
+\tablecol[{"RESTFREQ"}{"HZ     " }{D}{(numIF)}{RestFreq}
+{Line rest frequency per IF }
+] 
+\tablecol[{"PMRA   "}{"DEG/DAY " }{D}{(1)}{PMRa}
+{Proper motion (deg/day) in RA}
+] 
+\tablecol[{"PMDEC  "}{"DEG/DAY " }{D}{(1)}{PMDec}
+{Proper motion (deg/day) in declination}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{09/03/2003}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableTY Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableTY}]
+ObitTableTY Class
+\tabletitle{ Temperature table for uv data}
+% table name
+\tablename{TY}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS TY" contains Antenna and system temperature information.
+An ObitTableTY is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"NO\_POL "}{J}{numPol}{}{(1,2)}
+{The number of polarizations.}
+]
+\tablekey[{"NO\_IF"}{J}{numIF}{}{()}
+{The number of IFs}
+]
+\tablekey[{"REVISION"}{J}{revision}{10}{}
+{Revision number of the table definition.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{E}{(1)}{Time}
+{The center time.}
+] 
+\tablecol[{"TIME INTERVAL "}{"DAYS   " }{E}{(1)}{TimeI}
+{Time interval of record }
+] 
+\tablecol[{"SOURCE ID  "}{"        " }{J}{(1)}{SourID}
+{Source ID number}
+] 
+\tablecol[{"ANTENNA NO."}{"        " }{J}{(1)}{antennaNo}
+{Antenna number}
+]
+\tablecol[{"SUBARRAY   "}{"        " }{J}{(1)}{SubA}
+{Subarray number}
+] 
+\tablecol[{"FREQ ID  "}{"        " }{J}{(1)}{FreqID}
+{Frequency id of scan}
+] 
+\tablecol[{"TSYS \#NO\_POL"}{"KELVINS " }{E}{(numIF)}{Tsys}
+{Real (gain Poln \# NO\_POL )}
+] 
+\tablecol[{"TANT \#NO\_POL"}{"KELVINS "}{E}{(numIF)}{Tant}
+{Imaginary (gain Poln \# NO\_POL)}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/22/2006}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableVL Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+\ClassName[{ObitTableVL}]
+ObitTableVL Class 
+\tabletitle{NVSS full format catalog file}
+% table name
+\tablename{VL}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS VL" contains a catalog of sources in the format produced for the
+NVSS survey.
+The table contains an index in the INDEX?? keywords that give the
+first table row number (1-rel) for a given hour of RA.
+An ObitTableVL is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"REVISION"}{J}{revision}{1}{}
+{Revision number of the table definition}
+]
+\tablekey[{"BM\_MAJOR"}{E}{BeamMajor}{}{}
+{Restoring beam major axis in deg.}
+]
+\tablekey[{"BM\_MINOR"}{E}{BeamMinor}{}{}
+{Restoring beam minor axis in deg.}
+]
+\tablekey[{"BM\_PA"}{E}{BeamPA}{}{}
+{Restoring beam position angle of major axis in deg.}
+]
+\tablekey[{"SORTORT"}{J}{SortOrder}{}{}
+{Column number for sort (neg -> descending)}
+]
+\tablekey[{"NUM\_INDE"}{J}{numIndexed}{1}{}
+{Number of rows in table when indexed}
+]
+\tablekey[{"INDEX00"}{J}{index00}{1}{}
+{First entry for RA=00 h}
+]
+\tablekey[{"INDEX01"}{J}{index01}{1}{}
+{First entry for RA=01 h}
+]
+\tablekey[{"INDEX02"}{J}{index02}1{}{}
+{First entry for RA=02 h}
+]
+\tablekey[{"INDEX03"}{J}{index03}{1}{}
+{First entry for RA=03 h}
+]
+\tablekey[{"INDEX04"}{J}{index04}{1}{}
+{First entry for RA=04 h}
+]
+\tablekey[{"INDEX05"}{J}{index05}{1}{}
+{First entry for RA=05 h}
+]
+\tablekey[{"INDEX06"}{J}{index06}{1}{}
+{First entry for RA=06 h}
+]
+\tablekey[{"INDEX07"}{J}{index07}{1}{}
+{First entry for RA=07 h}
+]
+\tablekey[{"INDEX08"}{J}{index08}{1}{}
+{First entry for RA=08 h}
+]
+\tablekey[{"INDEX09"}{J}{index09}{1}{}
+{First entry for RA=09 h}
+]
+\tablekey[{"INDEX10"}{J}{index10}{1}{}
+{First entry for RA=10 h}
+]
+\tablekey[{"INDEX11"}{J}{index11}{1}{}
+{First entry for RA=11 h}
+]
+\tablekey[{"INDEX12"}{J}{index12}{1}{}
+{First entry for RA=12 h}
+]
+\tablekey[{"INDEX13"}{J}{index13}{1}{}
+{First entry for RA=13 h}
+]
+\tablekey[{"INDEX14"}{J}{index14}{1}{}
+{First entry for RA=14 h}
+]
+\tablekey[{"INDEX15"}{J}{index15}{1}{}
+{First entry for RA=15 h}
+]
+\tablekey[{"INDEX16"}{J}{index16}{1}{}
+{First entry for RA=16 h}
+]
+\tablekey[{"INDEX17"}{J}{index17}{1}{}
+{First entry for RA=17 h}
+]
+\tablekey[{"INDEX18"}{J}{index18}{1}{}
+{First entry for RA=18 h}
+]
+\tablekey[{"INDEX19"}{J}{index19}{1}{}
+{First entry for RA=19 h}
+]
+\tablekey[{"INDEX20"}{J}{index20}{1}{}
+{First entry for RA=20 h}
+]
+\tablekey[{"INDEX21"}{J}{index21}{1}{}
+{First entry for RA=21 h}
+]
+\tablekey[{"INDEX22"}{J}{index22}{1}{}
+{First entry for RA=22 h}
+]
+\tablekey[{"INDEX23"}{J}{index23}{1}{}
+{First entry for RA=23 h}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+%] 
+\tablecol[{"RA(2000)"}{"DEGREE  " }{D}{(1)}{Ra2000}
+{RA (J2000)}
+] 
+\tablecol[{"DEC(2000)"}{"DEGREE  " }{D}{(1)}{Dec2000}
+{Dec (J2000)}
+] 
+\tablecol[{"PEAK INT  "}{"JY/BEAM " }{E}{(1)}{PeakInt}
+{Peak Ipol }
+] 
+\tablecol[{"MAJOR AX"}{"DEGREE  " }{E}{(1)}{MajorAxis}
+{Fitted major axis size}
+] 
+\tablecol[{"MINOR AX"}{"DEGREE  " }{E}{(1)}{MinorAxis}
+{Fitted minor axis siz}
+] 
+\tablecol[{"POSANGLE"}{"DEGREE  " }{E}{(1)}{PosAngle}
+{Fitted PA}
+] 
+\tablecol[{"Q CENTER"}{"JY/BEAM " }{E}{(1)}{QCenter}
+{Center Q flux density}
+] 
+\tablecol[{"U CENTER"}{"JY/BEAM " }{E}{(1)}{UCenter}
+{enter U flux density}
+] 
+\tablecol[{"P FLUX"}{"JY      " }{E}{(1)}{PFlux}
+{Integrated polarized flux density}
+] 
+\tablecol[{"I RMS "}{"JY/BEAM " }{E}{(1)}{IRMS}
+{Ipol RMS uncertainty }
+] 
+\tablecol[{"POL RMS "}{"JY/BEAM " }{E}{(1)}{PolRMS}
+{RMS (sigma) in Qpol and Upol}
+] 
+\tablecol[{"RES RMS"}{"JY/BEAM " }{E}{(1)}{ResRMS}
+{RMS of Ipol residual}
+] 
+\tablecol[{"RES PEAK"}{"JY/BEAM " }{E}{(1)}{ResPeak}
+{Peak in Ipol residual}
+] 
+\tablecol[{"RES FLUX"}{"JY      " }{E}{(1)}{ResFlux}
+{Integrated Ipol residual}
+] 
+\tablecol[{"CENTER X"}{"PIXEL   " }{E}{(1)}{CenterX}
+{Center x position in pixels in FIELD}
+] 
+\tablecol[{"CENTER Y"}{"PIXEL   " }{E}{(1)}{CenterY}
+{Center y position in pixels in FIELD}
+] 
+\tablecol[{"FIELD  "}{"       " }{A}{(8)}{Field}
+{Name of survey field}
+] 
+\tablecol[{"JD PROCESSED"}{"DAYS    " }{J}{(1)}{JDProcess}
+{Julian date on which entry was derived from image.}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/03/2003}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableVZ Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableVZ}]
+ObitTableVZ Class
+\tabletitle{NVSS short format catalog file}
+% table name
+\tablename{VZ}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS VZ" contains a catalog of sources.
+An ObitTableVZ is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"REVISION"}{J}{revision}{1}{}
+{Revision number of the table definition}
+]
+\tablekey[{"REF\_FREQ"}{D}{refFreq}{1.4e9}{}
+{The Reference frequency}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"RA(2000)"}{"DEGREE  " }{D}{(1)}{Ra2000}
+{RA (J2000)}
+] 
+\tablecol[{"DEC(2000)"}{"DEGREE  " }{D}{(1)}{Dec2000}
+{Dec (J2000)}
+] 
+\tablecol[{"PEAK INT  "}{"JY/BEAM " }{E}{(1)}{PeakInt}
+{Peak Ipol }
+] 
+\tablecol[{"QUAL  "}{"        " }{J}{(1)}{Quality}
+{Quality (crowding) measure, 0=> best, higher worse}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/03/2003}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+%
+\clearpage
+%%%%%%%%%%%%%%% ObitTableWX Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Obit base class
+%
+\ClassName[{ObitTableWX}]
+{Weather table for UV data.}
+
+\tabletitle{Weather table for UV data}
+% table name
+\tablename{WX}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS WX" tables contain weather information.
+An ObitTableWX is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV"}{J}{revision}{3}{}
+{Revision number of the table definition.}
+]
+\tablekey[{"OBSCODE"}{A}{obscode}{"AA000"}{}
+{Observation code}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYYMMDD"}{}
+{Reference date as "YYYYMMDD"}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time of the solution}
+] 
+\tablecol[{"TIME INTERVAL"}{"DAYS    "}{E}{(1)}{TimeI}
+{Solution interval.}
+] 
+\tablecol[{"ANTENNA NO."}{"       " }{J}{(1)}{antNo}
+{Antenna number }
+] 
+\tablecol[{"SUBARRAY"}{"        "}{J}{(1)}{SubA}
+{Subarray number.}
+] 
+\tablecol[{"TEMPERATURE"}{"CENTIGRA"}{E}{(1)}{temperature}
+{Temperature}
+] 
+\tablecol[{"PRESSURE"}{"MILLIBAR"}{E}{(1)}{pressure}
+{Pressure}
+] 
+\tablecol[{"DEWPOINT"}{"CENTIGRA"}{E}{(1)}{dewpoint}
+{Dew Point}
+] 
+\tablecol[{"WIND\_VELOCITY"}{"M/SEC  "}{E}{(1)}{windVelocity}
+{Wind velocity}
+] 
+\tablecol[{"WIND\_DIRECTION"}{"DEGREES "}{E}{(1)}{windDirection}
+{Wind direction (azimuth)}
+] 
+\tablecol[{"WVR\_H2O"}{"        "}{E}{(1)}{wvrH2O}
+{Water vapor radiometer}
+] 
+\tablecol[{"ONOS\_ELECTRON"}{"        "}{E}{(1)}{onosElectron}
+{Ionospheric electron something}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{22/02/2006}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+\clearpage
+%
+%%%%%%%%%%%%%%% ObitTableIDI_IARRAY_GEOMETRY Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableIDI\_ARRAY\_GEOMETRY}]
+ObitTableIDI\_ARRAY\_GEOMETRY Class
+\tabletitle{IDI Array geometry table for uv data}
+% table name
+\tablename{IDI\_ARRAY\_GEOMETRY}
+\tableintro[
+{This class contains tabular data and allows access.
+This table is part of the IDI uv data format.
+IDI\_ARRAY\_GEOMETRY contains information about the locations 
+of antennas in a UV data set.
+Also time information and the state of the Earth's orientation.
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV  "}{J}{tabrev}{1}{}
+{Table format revision number}
+]
+\tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
+{Number of Stokes parameters}
+]
+\tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
+{First Stokes parameter}
+]
+\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
+{Number of frequency bands (IF)}
+]
+\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
+{Number of frequency channels}
+]
+\tablekey[{"REF\_FREQ"}{D}{ref\_freq}{1.0}{}
+{Reference frequency (Hz)}
+]
+\tablekey[{"CHAN\_BW "}{D}{chan\_bw}{1.0}{}
+{Channel bandwidth (Hz)}
+]
+\tablekey[{"REF\_PIXL"}{J}{ref\_pixl}{1.0}{}
+{Reference frequency bin}
+]
+\tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
+{Observation project code}
+]
+\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
+{Array name}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
+{Reference date as "YYYY-MM-DD"}
+]
+\tablekey[{"FRAME   "}{A}{frame}{"GEOCENTRIC"}{}
+{Coordinate system}
+]
+\tablekey[{"NUMORB  "}{J}{numOrb}{0}{()}
+{Number of orbital parameters}
+]
+\tablekey[{"FREQ    "}{D}{Freq}{1.0}{}
+{Obs. Reference Frequency for subarray(Hz)}
+]
+\tablekey[{"TIMSYS"}{A}{TimeSys}{"IAT"}{}
+{Time system, 'IAT' or 'UTC'}
+]
+\tablekey[{"GSTIA0 "}{D}{GSTiat0}{0.0}{}
+{GST at time=0 (degrees) on the reference date}
+]
+\tablekey[{"DEGPDY  "}{D}{DegDay}{360.0}{}
+{Earth rotation rate (deg/IAT day)}
+]
+\tablekey[{"UT1UTC  "}{E}{ut1Utc}{}{}
+{UT1-UTC  (time sec.)  }
+]
+\tablekey[{"IATUTC  "}{E}{iatUtc}{0.0}{}
+{data time-UTC  (time sec.)}
+]
+\tablekey[{"POLARX  "}{E}{PolarX}{0.0}{}
+{Polar position X (meters) on ref. date}
+]
+\tablekey[{"POLARY  "}{E}{PolarY}{0.0}{}
+{Polar position Y (meters) on ref. date}
+]
+\tablekey[{"ARRAYX  "}{D}{ArrayX}{0.0}{}
+{Array center X coord. (meters, earth center)}
+]
+\tablekey[{"ARRAYY  "}{D}{ArrayY}{0.0}{}
+{Array center Y coord. (meters, earth center)}
+]
+\tablekey[{"ARRAYZ  "}{D}{ArrayZ}{0.0}{}
+{Array center Z coord. (meters, earth center)}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"ANNAME  "}{"        " }{A}{(8)}{AntName}
+{Station name}
+] 
+\tablecol[{"STABXYZ "}{"METERS " }{D}{(3)}{StaXYZ}
+{X,Y,Z offset from array center}
+] 
+\tablecol[{"DERXYZ  "}{"METERS " }{D}{(3)}{derXYZ}
+{look this up}
+] 
+\tablecol[{"ORBPARM "}{"       " }{D}{(numOrb)}{OrbParm}
+{Orbital parameters.}
+] 
+\tablecol[{"NOSTA   "}{"       " }{J}{(1)}{noSta}
+{Station number, used as an index in other tables, uv data}
+] 
+\tablecol[{"MNTSTA  "}{"       " }{J}{(1)}{mntSta}
+{Mount type, 0=altaz, 1=equatorial, 2=orbiting, 3=dipole}
+] 
+\tablecol[{"STAXOF  "}{"METERS " }{E}{(3)}{staXof}
+{Axis offset (in 3D???)}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{28/04/2007}{Revision 1: Initial definition}]
+\end{history}
+\clearpage
+%
+%%%%%%%%%%%%%%% ObitTableIDI_ANTENNA Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableIDI\_ANTENNA}]
+ObitTableAN Class
+\tabletitle{Antenna table for IDI uv data}
+% table name
+\tablename{IDI\_ANTENNA}
+\tableintro[
+{This class contains tabular data and allows access.
+This table is part of the IDI uv data format.
+"IDI\_ANTENNA" contains information about the characteristics
+of antennas in a UV data set.
+Polarization calibration information is included. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV  "}{J}{tabrev}{1}{}
+{Table format revision number}
+]
+\tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
+{Number of Stokes parameters}
+]
+\tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
+{First Stokes parameter}
+]
+\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
+{Number of frequency bands (IF)}
+]
+\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
+{Number of frequency channels}
+]
+\tablekey[{"REF\_FREQ"}{D}{ref\_freq}{1.0}{}
+{Reference frequency (Hz)}
+]
+\tablekey[{"CHAN\_BW "}{D}{chan\_bw}{1.0}{}
+{Channel bandwidth (Hz)}
+]
+\tablekey[{"REF\_PIXL"}{J}{ref\_pixl}{1.0}{}
+{Reference frequency bin}
+]
+\tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
+{Observation project code}
+]
+\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
+{Array name}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
+{Reference date as "YYYY-MM-DD"}
+]
+\tablekey[{"NOPCAL "}{J}{numPCal}{4}{()}
+{Number of polarization calibration constants}
+]
+\tablekey[{"POLTYPE "}{A}{polType}{"        "}{}
+{Polarization parameterazation type, 'APPR', 'RAPPR', 'ORI-ELP'}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAY    " }{D}{(1)}{time}
+{Time.}
+] 
+\tablecol[{"TIME\_INTERVAL"}{"DAY    " }{E}{(1)}{time\_interval}
+{Time interval over which antenna characteristics valid.}
+] 
+\tablecol[{"ANNAME  "}{"        " }{A}{(8)}{AntName}
+{Station name}
+] 
+\tablecol[{"ANTENNA\_NO"}{"       " }{J}{(1)}{antenna\_no}
+{Station number, used as an index in other tables, uv data}
+] 
+\tablecol[{"ARRAY"}{"       " }{J}{(1)}{array}
+{Subarray number}
+] 
+\tablecol[{"FREQID"}{"       " }{J}{(1)}{freqid}
+{Frequency group id}
+] 
+\tablecol[{"NO\_LEVELS"}{"       " }{J}{(1)}{no\_levels}
+{Quantization of data, no. levels.}
+] 
+\tablecol[{"POLTYA  "}{"       " }{A}{(4)}{polTypeA}
+{Feed A feed poln. type 'R','L','X','Y', actually only one valid character.}
+] 
+\tablecol[{"POLAA   "}{"DEGREES " }{E}{(1)}{PolAngA}
+{Feed A feed position angle}
+] 
+\tablecol[{"POLCALA"}{"       " }{E}{(numPCal)}{PolCalA}
+{Feed A poln. cal parameter. }
+] 
+\tablecol[{"POLTYB "}{"       " }{A}{(4)}{polTypeB}
+{Feed B feed poln. type 'R','L','X','Y'}
+] 
+\tablecol[{"POLAB  "}{"DEGREES " }{E}{(1)}{PolAngB}
+{Feed B feed position angle}
+] 
+\tablecol[{"POLCALB"}{"       " }{E}{(numPCal)}{PolCalB}
+{Feed B poln. cal parameter}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{28/04/2007}{Revision 1: Initial definition}]
+\end{history}
+\clearpage
+
+%%%%%%%%%%%%%%% ObitTableIDI\_FREQUENCY Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Obit base class
+%
+\ClassName[{ObitTableIDI\_FREQUENCY}]
+
+\tabletitle{IDI UV data Frequency Table}
+% table name
+\tablename{IDI\_FREQUENCY}
+\tableintro[
+{This class contains tabular data and allows access.
+This table is part of the IDI uv data format.
+"IDI\_FREQUENCY" contains frequency related information for ``IF'' in uv
+data.
+An ``IF'' is a construct that allows sets of arbitrarily spaced frequencies.
+An ObitTableIDI\_FREQUENCY is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class.}
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV  "}{J}{tabrev}{1}{}
+{Table format revision number}
+]
+\tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
+{Number of Stokes parameters}
+]
+\tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
+{First Stokes parameter}
+]
+\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
+{Number of frequency bands (IF)}
+]
+\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
+{Number of frequency channels}
+]
+\tablekey[{"REF\_FREQ"}{D}{ref\_freq}{1.0}{}
+{Reference frequency (Hz)}
+]
+\tablekey[{"CHAN\_BW "}{D}{chan\_bw}{1.0}{}
+{Channel bandwidth (Hz)}
+]
+\tablekey[{"REF\_PIXL"}{J}{ref\_pixl}{1.0}{}
+{Reference frequency bin}
+]
+\tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
+{Observation project code}
+]
+\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
+{Array name}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
+{Reference date as "YYYY-MM-DD"}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"FREQID  "}{"       " }{J}{(1)}{fqid}
+{Frequency ID number for row, this is a random parameter in the uv data}
+] 
+\tablecol[{"BANDFREQ"}{"HZ     " }{D}{(no\_band)}{bandfreq}
+{Offset from reference frequency for each Band}
+] 
+\tablecol[{"CH\_WIDTH"}{"HZ     " }{E}{(no\_band)}{chWidth}
+{Bandwidth of an individual channel, now always written and read as a signed value}
+] 
+\tablecol[{"TOTAL\_BANDWIDTH "}{"HZ     " }{E}{(no\_band)}{totBW}
+{Total bandwidth of the IF, now written and read as an unsigned value}
+] 
+\tablecol[{"SIDEBAND "}{"       " }{J}{(no\_band)}{sideBand}
+{Sideband of the IF (-1 =$>$ lower, +1 =$>$ upper), now always written and read as +1}
+] 
+\tablecol[{"BB\_CHAN "}{"       " }{J}{(no\_band)}{bb\_chan}
+{Look this one up1}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{28/04/2007}{Revision 1: Initial definition}]
+\end{history}
+%
+\clearpage
+
+%%%%%%%%%%%%%%% ObitTableIDI_SOURCE Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableIDI\_SOURCE}]
+ObitTableIDI\_SOURCE Class
+\tabletitle{IDI Source table for UV data}
+% table name
+\tablename{IDI\_SOURCE}
+\tableintro[
+{This class contains tabular data and allows access.
+This table is part of the IDI uv data format.
+"IDI\_SOURCE" contains information about astronomical sources.
+An ObitTableIDI\_SOURCE is the front end to a persistent disk resident structure.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV  "}{J}{tabrev}{1}{}
+{Table format revision number}
+]
+\tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
+{Number of Stokes parameters}
+]
+\tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
+{First Stokes parameter}
+]
+\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
+{Number of frequency bands (IF)}
+]
+\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
+{Number of frequency channels}
+]
+\tablekey[{"REF\_FREQ"}{D}{ref\_freq}{1.0}{}
+{Reference frequency (Hz)}
+]
+\tablekey[{"CHAN\_BW "}{D}{chan\_bw}{1.0}{}
+{Channel bandwidth (Hz)}
+]
+\tablekey[{"REF\_PIXL"}{J}{ref\_pixl}{1.0}{}
+{Reference frequency bin}
+]
+\tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
+{Observation project code}
+]
+\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
+{Array name}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
+{Reference date as "YYYY-MM-DD"}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"ID\_NO.  "}{"       " }{J}{(1)}{SourID}
+{Source ID}
+] 
+\tablecol[{"SOURCE  "}{"       " }{A}{(16)}{Source}
+{Source name }
+] 
+\tablecol[{"QUAL    "}{"       " }{J}{(1)}{Qual}
+{Source qualifier}
+] 
+\tablecol[{"CALCODE "}{"       " }{A}{(4)}{CalCode}
+{Calibrator code}
+] 
+\tablecol[{"FREQID  "}{"       " }{J}{(1)}{FreqID}
+{Frequency group (AKA Band) ID}
+] 
+\tablecol[{"IFLUX   "}{"JY     " }{E}{(no\_band)}{IFlux}
+{Total Stokes I flux density per IF}
+] 
+\tablecol[{"QFLUX   "}{"JY     " }{E}{(no\_band)}{QFlux}
+{Total Stokes Q flux density per IF}
+] 
+\tablecol[{"UFLUX   "}{"JY     " }{E}{(no\_band)}{UFlux}
+{Total Stokes U flux density per IF}
+] 
+\tablecol[{"VFLUX   "}{"JY     " }{E}{(no\_band)}{VFlux}
+{Total Stokes V flux density per IF }
+] 
+\tablecol[{"ALPHA   "}{"JY     " }{E}{(no\_band)}{alpha}
+{Spectral index per IF }
+] 
+\tablecol[{"FREQOFF "}{"HZ     " }{D}{(no\_band)}{FreqOff}
+{Frequency offset (Hz) from IF nominal per IF}
+] 
+\tablecol[{"RAEPO   "}{"DEGREES " }{D}{(1)}{RAMean}
+{Right ascension at mean EPOCH (actually equinox) }
+] 
+\tablecol[{"DECEPO  "}{"DEGREES " }{D}{(1)}{DecMean}
+{Declination at mean EPOCH (actually equinox) }
+] 
+\tablecol[{"EPOCH   "}{"YEARS   " }{D}{(1)}{Epoch}
+{Mean Epoch (really equinox) for position in yr. since year 0.0}
+] 
+\tablecol[{"RAAPP   "}{"DEGREES " }{D}{(1)}{RAApp}
+{Apparent Right ascension }
+] 
+\tablecol[{"DECAPP  "}{"DEGREES " }{D}{(1)}{DecApp}
+{Apparent Declination}
+] 
+\tablecol[{"SYSVEL "}{"M/SEC    " }{D}{(no\_band)}{SysVel}
+{Systemic velocity per Band (IF) }
+] 
+\tablecol[{"VELTYP  "}{"        " }{A}{(8)}{VelTyp}
+{Velocity type}
+] 
+\tablecol[{"VELDEF  "}{"        " }{A}{(8)}{VelDef}
+{Velocity definition 'RADIO' or 'OPTICAL'}
+] 
+\tablecol[{"RESTFREQ"}{"HZ     " }{D}{(no\_band)}{RestFreq}
+{Line rest frequency per Band (IF) }
+] 
+\tablecol[{"PMRA   "}{"DEG/DAY " }{D}{(1)}{PMRa}
+{Proper motion (deg/day) in RA}
+] 
+\tablecol[{"PMDEC  "}{"DEG/DAY " }{D}{(1)}{PMDec}
+{Proper motion (deg/day) in declination}
+] 
+\tablecol[{"PARALLAX"}{"ARCSEC  " }{E}{(1)}{parallax}
+{Parallax}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{28/04/2007}{Revision 1: Initial definition}]
+\end{history}
+%
+%
+\clearpage
+
+%%%%%%%%%%%%%%% IDI_UV_DATA Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableIDI\_UV\_DATA}]
+ObitTableIDI\_UV\_DATA Class
+\tabletitle{IDI UV data}
+% table name
+\tablename{IDI\_UV\_DATA}
+\tableintro[
+{This class contains tabular data and allows access.
+This table is part of the IDI uv data format.
+An IDI\_UV\_DATA table radio interferometer observational data.}
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV  "}{J}{tabrev}{1}{}
+{Table format revision number}
+]
+\tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
+{Number of Stokes parameters}
+]
+\tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
+{First Stokes parameter}
+]
+\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
+{Number of frequency bands (IF)}
+]
+\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
+{Number of frequency channels}
+]
+\tablekey[{"REF\_FREQ"}{D}{ref\_freq}{1.0}{}
+{Reference frequency (Hz)}
+]
+\tablekey[{"CHAN\_BW "}{D}{chan\_bw}{1.0}{}
+{Channel bandwidth (Hz)}
+]
+\tablekey[{"REF\_PIXL"}{J}{ref\_pixl}{1.0}{}
+{Reference frequency bin}
+]
+\tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
+{Observation project code}
+]
+\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
+{Array name}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
+{Reference date as "YYYY-MM-DD"}
+]
+\tablekey[{"NMATRIX "}{J}{nmatrix}{1}{}
+{Number of UV data matricies}
+]
+\tablekey[{"MAXIS   "}{J}{maxis}{1}{}
+{Number of UV data matrix axes}
+]
+\tablekey[{"TMATX01"}{L}{tmatx01}{FALSE}{}
+{[OPTIONAL] If TRUE col. 1 has the visibility matrix}
+]
+\tablekey[{"TMATX02"}{L}{tmatx02}{FALSE}{}
+{[OPTIONAL] If TRUE col. 2 has the visibility matrix}
+]
+\tablekey[{"TMATX03"}{L}{tmatx03}{FALSE}{}
+{[OPTIONAL] If TRUE col. 3 has the visibility matrix}
+]
+\tablekey[{"TMATX04"}{L}{tmatx04}{FALSE}{}
+{[OPTIONAL] If TRUE col. 4 has the visibility matrix}
+]
+\tablekey[{"TMATX05"}{L}{tmatx05}{FALSE}{}
+{[OPTIONAL] If TRUE col. 5 has the visibility matrix}
+]
+\tablekey[{"TMATX06"}{L}{tmatx06}{FALSE}{}
+{[OPTIONAL] If TRUE col. 6 has the visibility matrix}
+]
+\tablekey[{"TMATX07"}{L}{tmatx07}{FALSE}{}
+{[OPTIONAL] If TRUE col. 7 has the visibility matrix}
+]
+\tablekey[{"TMATX08"}{L}{tmatx08}{FALSE}{}
+{[OPTIONAL] If TRUE col. 8 has the visibility matrix}
+]
+\tablekey[{"TMATX09"}{L}{tmatx09}{FALSE}{}
+{[OPTIONAL] If TRUE col. 9 has the visibility matrix}
+]
+\tablekey[{"TMATX10"}{L}{tmatx10}{FALSE}{}
+{[OPTIONAL] If TRUE col. 10 has the visibility matrix}
+]
+\tablekey[{"TMATX11"}{L}{tmatx11}{FALSE}{}
+{[OPTIONAL] If TRUE col. 11 has the visibility matrix}
+]
+\tablekey[{"TMATX12"}{L}{tmatx12}{FALSE}{}
+{[OPTIONAL] If TRUE col. 12 has the visibility matrix}
+]
+\tablekey[{"TMATX13"}{L}{tmatx13}{FALSE}{}
+{[OPTIONAL] If TRUE col. 13 has the visibility matrix}
+]
+\tablekey[{"TMATX14"}{L}{tmatx14}{FALSE}{}
+{[OPTIONAL] If TRUE col. 14 has the visibility matrix}
+]
+\tablekey[{"TMATX15"}{L}{tmatx15}{FALSE}{}
+{[OPTIONAL] If TRUE col. 15 has the visibility matrix}
+]
+\tablekey[{"MAXIS1"}{J}{maxis1}{1}{()}
+{[OPTIONAL] Number of pixels on axis 1 }
+]
+\tablekey[{"CTYPE1"}{A}{ctype1}{}{}
+{[OPTIONAL] Type of data axis 1 }
+]
+\tablekey[{"CDELT1"}{D}{cdelt1}{0.0}{}
+{[OPTIONAL] Increment in coordinate between pixels on axis 1 }
+]
+\tablekey[{"CRPIX1"}{E}{crpix1}{1.0}{}
+{[OPTIONAL] Reference pixel on axis 1  }
+]
+\tablekey[{"CRVAL1"}{D}{crval1}{0.0}{}
+{[OPTIONAL] Reference coordinate on axis 1 }
+]
+\tablekey[{"MAXIS2"}{J}{maxis2}{1}{()}
+{[OPTIONAL] Number of pixels on axis 2 }
+]
+\tablekey[{"CTYPE2"}{A}{ctype2}{}{}
+{[OPTIONAL] Type of data axis 2 }
+]
+\tablekey[{"CDELT2"}{D}{cdelt2}{0.0}{}
+{[OPTIONAL] Increment in coordinate between pixels on axis 2 }
+]
+\tablekey[{"CRPIX2"}{E}{crpix2}{1.0}{}
+{[OPTIONAL] Reference pixel on axis 2  }
+]
+\tablekey[{"CRVAL2"}{D}{crval2}{0.0}{}
+{[OPTIONAL] Reference coordinate on axis 2 }
+]
+\tablekey[{"MAXIS3"}{J}{maxis3}{1}{()}
+{[OPTIONAL] Number of pixels on axis 3 }
+]
+\tablekey[{"CTYPE3"}{A}{ctype3}{}{}
+{[OPTIONAL] Type of data axis 3 }
+]
+\tablekey[{"CDELT3"}{D}{cdelt3}{0.0}{}
+{[OPTIONAL] Increment in coordinate between pixels on axis 3 }
+]
+\tablekey[{"CRPIX3"}{E}{crpix3}{1.0}{}
+{[OPTIONAL] Reference pixel on axis 3  }
+]
+\tablekey[{"CRVAL3"}{D}{crval3}{0.0}{}
+{[OPTIONAL] Reference coordinate on axis 3 }
+]
+\tablekey[{"MAXIS4"}{J}{maxis4}{1}{()}
+{[OPTIONAL] Number of pixels on axis 4 }
+]
+\tablekey[{"CTYPE4"}{A}{ctype4}{}{}
+{[OPTIONAL] Type of data axis 4 }
+]
+\tablekey[{"CDELT4"}{D}{cdelt4}{0.0}{}
+{[OPTIONAL] Increment in coordinate between pixels on axis 4 }
+]
+\tablekey[{"CRPIX4"}{E}{crpix4}{1.0}{}
+{[OPTIONAL] Reference pixel on axis 4  }
+]
+\tablekey[{"CRVAL4"}{D}{crval4}{0.0}{}
+{[OPTIONAL] Reference coordinate on axis 4 }
+]
+\tablekey[{"MAXIS5"}{J}{maxis5}{1}{()}
+{[OPTIONAL] Number of pixels on axis 5 }
+]
+\tablekey[{"CTYPE5"}{A}{ctype5}{}{}
+{[OPTIONAL] Type of data axis 5 }
+]
+\tablekey[{"CDELT5"}{D}{cdelt5}{0.0}{}
+{[OPTIONAL] Increment in coordinate between pixels on axis 5 }
+]
+\tablekey[{"CRPIX5"}{E}{crpix5}{1.0}{}
+{[OPTIONAL] Reference pixel on axis 5  }
+]
+\tablekey[{"CRVAL5"}{D}{crval5}{0.0}{}
+{[OPTIONAL] Reference coordinate on axis 5 }
+]
+\tablekey[{"MAXIS6"}{J}{maxis6}{1}{}
+{[OPTIONAL] Number of pixels on axis 6 }
+]
+\tablekey[{"CTYPE6"}{A}{ctype6}{}{}
+{[OPTIONAL] Type of data axis 6 }
+]
+\tablekey[{"CDELT6"}{D}{cdelt6}{0.0}{}
+{[OPTIONAL] Increment in coordinate between pixels on axis 6 }
+]
+\tablekey[{"CRPIX6"}{E}{crpix6}{1.0}{}
+{[OPTIONAL] Reference pixel on axis 6  }
+]
+\tablekey[{"CRVAL6"}{D}{crval6}{0.0}{}
+{[OPTIONAL] Reference coordinate on axis 6 }
+]
+\tablekey[{"MAXIS7"}{J}{maxis7}{1}{}
+{[OPTIONAL] Number of pixels on axis 7 }
+]
+\tablekey[{"CTYPE7"}{A}{ctype7}{}{}
+{[OPTIONAL] Type of data axis 7 }
+]
+\tablekey[{"CDELT7"}{D}{cdelt7}{0.0}{}
+{[OPTIONAL] Increment in coordinate between pixels on axis 7 }
+]
+\tablekey[{"CRPIX7"}{E}{crpix7}{1.0}{}
+{[OPTIONAL] Reference pixel on axis 7  }
+]
+\tablekey[{"CRVAL7"}{D}{crval7}{0.0}{}
+{[OPTIONAL] Reference coordinate on axis 7 }
+]
+\tablekey[{"TELESCOP"}{A}{teles}{}{}
+{Telescope used}
+]
+\tablekey[{"OBSERVER"}{A}{observer}{}{}
+{Observer making the observations}
+]
+\tablekey[{"SORT    "}{A}{sort}{}{}
+{Sort order of data}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"UU      "}{"SECONDS " }{E}{(1)}{uu}
+{U component of baseline.}
+] 
+\tablecol[{"VV      "}{"SECONDS " }{E}{(1)}{vv}
+{V component of baseline.}
+] 
+\tablecol[{"WW      "}{"SECONDS " }{E}{(1)}{ww}
+{W component of baseline.}
+] 
+\tablecol[{"DATE    "}{"DAYS    " }{D}{(1)}{date}
+{Julian Date}
+] 
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time.}
+] 
+\tablecol[{"BASELINE"}{"        " }{J}{(1)}{Baseline}
+{Interferometer baseline as ant 1*256+ant1 (1-rel).}
+] 
+\tablecol[{"FILTER  "}{"        " }{J}{(1)}{Filter}
+{Filter.}
+] 
+\tablecol[{"SOURCE  "}{"        " }{J}{(1)}{Source}
+{Source ID, index into SOURCE table.}
+] 
+\tablecol[{"FREQID  "}{"        " }{J}{(1)}{FreqID}
+{Frequency group ID, index into FREQUENCY table.}
+] 
+\tablecol[{"INTTIM"}{"SECONDS " }{E}{(1)}{IntTim}
+{The integration time.}
+] 
+\tablecol[{"WEIGHT"}{"       " }{E}{(maxis2,maxis3,maxis4,maxis5)}{Weight}
+{Weight per correlation, same order as data.}
+] 
+\tablecol[{"GATEID  "}{"       " }{J}{(1)}{GateID}
+{Gate ID.}
+] 
+\tablecol[{"FLUX    "}{"        " }{E}{(maxis1,maxis2,maxis3,maxis4,maxis5)}{Flux}
+{Visibility matrix}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{28/04/2007}{Revision 1: Initial definition}]
+\end{history}
+%
+
+\clearpage
+
+\begin{references}
+\reference{Cotton, W.~D., Tody, D., and Pence, W.~D.\ 1995, \aaps, 113,
+159--166.}
+\reference{Flatters, C., 1998, AIPS Memo No, 102, NRAO.}
+\reference{Wells, D.~C., Greisen, E.~W., and Harten, R.~H.\ 1981, \aaps, 44, 363.}
+\end{references} 
+
+\clearpage
+\end{document}
+\clearpage
+%%%%%%%%%%%%%%% ObitTableXX Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableXX}]
+ObitTableXX Class
+\tabletitle{Template ObitTable document}
+% table name
+\tablename{XX}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS XX" contains highly secret information.
+An ObitTableXX is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"REVISION"}{J}{revision}{1}{}
+{Revision number of the table definition.}
+]
+\tablekey[{"NO\_SECRET"}{J}{numSecret}{}{(1,2)}
+{The number of secrets.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time of the secret.}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from AIPS}]
+\end{history}
+%

@@ -1,0 +1,10 @@
+#! /bin/sh
+
+bindir=`dirname "$0"`
+if test -x $bindir/ObitTalk; then
+    obittalk=$bindir/ObitTalk
+else
+    obittalk=ObitTalk
+fi
+
+exec $obittalk @datadir@/python/XMLRPCServer.py

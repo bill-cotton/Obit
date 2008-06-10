@@ -1,0 +1,14 @@
+Makefile
+.nfs*
+*.tgz
+*.old
+*.oldSave
+save
+work
+aclocal.m4
+autom4te.cache
+config.log
+config.status
+*.tar
+*.tgz
+*.fits

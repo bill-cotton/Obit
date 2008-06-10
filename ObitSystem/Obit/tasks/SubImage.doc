@@ -1,0 +1,158 @@
+/* $Id: SubImage.doc,v 1.2 2005/06/15 14:16:11 bcotton Exp $ */
+
+               SubImage Obit task
+               -------------------------------------
+
+   Obit program SubImage copies a sub region of an image to another 
+image.  For image cubes where there is one CC table per channel (plane)
+the CC tables can also be selected and merged.
+Many control parameters can be passed either through an input text file
+or as command line arguments.  Command line values take precedence over
+those in the input file.
+
+   The default for directory names is to use AIPS directories $DA01...
+and for FITS, $FITS, $FITS01...
+
+ Usage: SubImage -input file -output ofile [args]
+ Copy a subregion of an image
+ Arguments:
+   -input input parameter file, def SubImage.in
+   -output output result file, def SubImage.out
+   -pgmNumber Program (POPS) number, def 1 
+   -DataType "AIPS" or "FITS" type for input image
+   -inFile input FITS Image file
+   -AIPSuser User AIPS number, def 2
+   -inName input AIPS file name
+   -inClass input AIPS file class
+   -inSeq input AIPS file sequence
+   -inDisk input (AIPS or FITS) disk number (1-rel) 
+   -BLC bottom-left (1-rel) pixel def. [1,1,..] 
+   -TRC top-right (1-rel) pixel def. [nx,ny,..]
+   -outFile output FITS Image file
+   -outName output AIPS file name [def inName]
+   -outClass output AIPS file class [def 'SUBIM']
+   -outSeq output AIPS file sequence
+   -outDisk output (AIPS or FITS) disk number (1-rel) 
+   -subCC  T/F to select CC table per selected plane [def. F]
+   -mrgCC  T/F to merge selected CC tables [def. F]
+
+         SubImage input file documentation
+
+   This describes the input file format for SubImage
+The input file is basically free format with a keyword=value syntax.  
+Comments follow a "#" symbol.  String keywords should have no leading or
+trailing blanks before the end of the line or a comment delimiter.
+If a numeric value is followed by a comment there should be at least one
+blank before the comment delimiter.
+
+   Entries not specified will assume their default values.  Parameters
+may be given in any order but only the recognized parameters given below
+are allowed. 
+
+An example follows:
+# Inputs for  Obit program SubImage
+$Key = DataType  Str (4) # Type, AIPS or FITS
+FITS
+$Key = inFile  Str (48)  # Input image FITS file name
+Image.fits
+$Key = inDisk  Int (1)   # Disk number
+1
+$Key = BLC     Int (7)   # blc (1-rel)
+1 1 1 1 1 1 1
+$Key = TRC     Int (7)   # trc (1-rel
+0 0 0 0 0 0 0
+$Key = outFile  Str (48)  # Input image FITS file name
+ImageOut.fits
+$Key = outDisk  Int (1)   # Disk number
+1
+
+
+Variables possibly read from the input_file
+pgmNumber:   Program number (like POPS number) 
+     type: integer
+     default: 1
+
+DataType:    "AIPS" or "FITS" [def {"FITS"}] 
+     type: string
+     default: FITS
+
+nFITS:       Number of FITS directories in FITSdirs
+     type: integer
+     default: number of $FITS, $FITS01... found
+
+FITSdirs:    Array of FITS directories  if Type ="FITS"
+     Put one directory name per line
+     type: string array
+     default: Values of environment variables $FITS, $FITS01... 
+
+AIPSuser:    AIPS user number
+     type: integer
+     default: 2
+
+nAIPS:       Number of AIPS directories in AIPSdirs
+     type: integer
+     default:  number of $DA01, $DA02... found
+
+AIPSdirs:    Array of AIPS directories if Type ="AIPS"
+     Put one directory name per line
+     type: string array
+     default:  Values of environment variables  $DA01, $DA02...
+
+inFile:      input FITS image file name if Type ="FITS"
+     type: string
+     default: Image.fits
+
+inName:      input AIPS image name  if Type ="AIPS"
+     type: string
+     default: None
+
+inClass:     input AIPS image class if Type ="AIPS"
+     type: string
+     default:  None
+
+inSeq:       input AIPS image sequence no if Type ="AIPS"
+     type: integer
+     default:  None
+
+inDisk:      input AIPS or FITS image disk
+     type: integer
+     default: 1
+
+BLC:         bottom-left (1-rel) corner
+     type: integer array
+     default: {1,1,1,1,1,1,1}
+
+TRC:         top-right (1-rel) corner
+     type: integer array
+     default: {0,0,0,0,0,0,0} = all
+
+outFile:     output FITS image file name if Type ="FITS"
+     type: string
+     default: Image.fits
+
+outName:     output AIPS image name  if Type ="AIPS"
+     type: string
+     default: None
+
+outClass:    output AIPS image class if Type ="AIPS"
+     type: string
+     default:  None
+
+outSeq:      output AIPS image sequence no if Type ="AIPS"
+     type: integer
+     default:  None
+
+outDisk:     output AIPS or FITS image disk
+     type: integer
+     default: 1
+
+subCC:       Select CC corresponding to plane
+     If T then input CC tables with version numbers
+     corresponding to the plane number (third entry in
+     BLC, TRC) are copied to output starting with version 1
+     type: boolean
+     default: F
+
+mrgCC:       Merge CC tables copied?
+     type: boolean
+     default: F

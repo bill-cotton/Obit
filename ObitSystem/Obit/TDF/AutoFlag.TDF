@@ -1,0 +1,305 @@
+; $Id: AutoFlag.TDF,v 1.9 2008/05/22 11:56:02 bcotton Exp $
+; AutoFlag
+;---------------------------------------------------------------
+;! Obit Radio interferometry data editing software
+;# Task Obit Imaging calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2005-2008
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+AutoFlag   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+AutoFlag:  Obit radio interferometry data editing software
+**PARAM** str 4
+DataType                            "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                              Input multisource UV data AIPS
+**PARAM** str 6
+inClass                             Input UV data (class)
+**PARAM** int 1
+inSeq                               Input UV data (seq. #)
+**PARAM** int 1
+inDisk                              Input UV data disk drive #
+**PARAM** str 16 30
+Sources                             Source (pointings) list
+**PARAM** float 2
+timeRange                           Time range to process.
+**PARAM** str 4
+Stokes                              Stokes to process
+**PARAM** int 1
+BChan            0.0     8192.0     Low freq. channel 0 for cont.
+**PARAM** int 1
+EChan            0.0     8192.0     Highest freq channel
+**PARAM** int 1
+BIF                                 First IF in average.
+**PARAM** int 1
+EIF                                 Last IF in average.
+**PARAM** int 1
+subA                                Subarray
+**PARAM** boo 1 **DEF** T
+doCalSelect                         Apply calibration/selection?
+**PARAM** int 1
+doCalib          -1         10      Apply calibration table
+**PARAM** int 1
+gainUse                             CL/SN table to apply
+**PARAM** int 1
+doBand           -1.0       10.0    If >0.5 apply bandpass cal.
+**PARAM** int 1
+BPVer                               Bandpass table version
+**PARAM** int 1 **DEF** -1
+flagVer                             Flag table version
+**PARAM** boo 1 **DEF** F
+doPol                               Apply polarization cal?
+**PARAM** str 48
+outFile                             FITS uvdata for output FG table
+**PARAM** str 12
+outName                             AIPS name for output FG table
+**PARAM** str 6
+outClass                            AIPS class for output FG table
+**PARAM** int 1   
+outSeq          -1.0     9999.0     AIPS seq for output FG table
+**PARAM** int 1
+outDisk                             Disk for output FG table
+**PARAM** int 1 **DEF** 1 
+flagTab                             Output Flagging table version 
+**PARAM** float 2
+VClip                               If > 0.0 VPol clipping level
+**PARAM** float 2
+IClip                               If > 0.0 IPol clipping level
+**PARAM**  float 2
+RMSClip                             Abs and fractional clip levels for 
+                                    Time domain RMS filtering
+**PARAM**  float 1
+RMSAvg                              Max RMS/Avg for time domain RMS 
+                                    filtering
+**PARAM** float 1  **DEF** 0.25
+maxBad                              Maximum fraction of baselines for 
+                                    correlator or antenna to be 
+                                    flagged before all are flagged
+**PARAM** float 1
+timeAvg                             Flagging interval (min)
+**PARAM** boo 1 **DEF** F
+doFD                                do frequency domain editing?
+**PARAM** float 1
+FDmaxAmp                            Maximum average amplitude
+**PARAM** float 1
+FDmaxV                              Maximum average VPol amp
+**PARAM** int 1 
+FDwidMW                             Width of the median window
+**PARAM** float 2
+FDmaxRMS                            Channel RMS limits
+**PARAM** float 1 **DEF** 6.0
+FDmaxRes                            Max. residual flux in sigma
+**PARAM** float 1 **DEF** 6.0
+FDmaxResBL                          Max. baseline residual
+**PARAM** int 4 20
+FDbaseSel                           Channels for baseline fit
+                                    (start, end, iincrement,IF)
+----------------------------------------------------------------
+AutoFlag Automated editing for radio Interferometry data
+Type:  Task
+ Use:  Batch processing of radio interferometry data
+
+   This program implements automated editing of radio interferometer 
+data.  Several editing modes are supported, 1) flagging by excessive 
+VPol and flagging by excessive IPol, 3) flagging by excessive RMS,
+fluctuations in the real and imaginary parts of visibility data,  
+and 4) Time domain filtering.  Any or all may be specified. 
+The result of this operation will be a FG (flag) table attached to 
+the "output" data.
+
+   Flagging is based on a combination of user supplied parameters
+(VClip, IClip, RMSClip, RMSAvg) and a statistical analysis of the 
+data in each averaging interval (timeAvg).  
+See EXPLAIN for more details.
+
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input multisource UV data file
+  inClass....Input UV data file (class).      Standard defaults.
+  inSeq......Input UV data file (seq. #).     0 => highest.
+  inDisk.....Input UV data file disk drive #. 0 => any.
+
+       Data selection
+  Sources....List of sources (pointings) to be processed.
+             '*' or blank = all; a "-" before a source name
+             means all except ANY source named. 
+  timeRange..Time range of the data to be processed. In order:
+             Start and end times in days relative to ref. date.  
+             Use  dhms2day to convert from human readable form
+  Stokes.....Stokes parameters to process.
+             'I' = Stokes I only, '    ' => as in data
+  BChan......First channel number to image, 0=>1.  Channel numbers are 1
+             relative as defined in the input data file.
+  EChan......Highest channel number to to include in image,
+             0 => max 
+  doCalSelect. If True apply calibration/selection
+             This should be True in most cases
+  doCalib....If true, apply SN or CL table
+  gainUse....CL/SN table version number to apply. 0=> highest.
+  doBand.....If true (>0) then correct the data for the shape of the
+             antenna bandpasses using the BP table specified by BPVer.
+             The correction has five modes:
+             (a) if DOBAND=1 all entries for an antenna in the table
+             are averaged together before correcting the data.
+             (b) if DOBAND=2 the entry nearest in time (including
+             solution weights) is used to correct the data.
+             (c) if DOBAND=3 the table entries are interpolated in
+             time (using solution weights) and the data are then
+             corrected.
+             (d) if DOBAND=4 the entry nearest in time (ignoring
+             solution weights) is used to correct the data.
+             (e) if DOBAND=5 the table entries are interpolated in
+             time (ignoring solution weights) and the data are then
+             corrected.
+  BPVer......Specifies the version of the BP table to be applied
+                0 => highest numbered table.
+               <0 => no bandpass correction to be applied.
+  flagVer....FG table to use for editing. 0 => highest.
+  doPol......>=1 apply polarization calibration
+
+      Output FG file
+  outFile....Output FITS uvdata for FG table file name
+  outName....Output AIPS uvdata for FG table Name, 
+  outClass...Output uvdata class.
+  outSeq.....Output uvdata sequence number.
+  outDisk....The disk drive # of output uvdata. No default
+
+      Flagging control
+  flagTab....Output Flagging table version.  This is the FG table 
+             out outName... to be written.  If the output uvdata
+             is the same as the input, it is a very bad idea for 
+             this to equal flagVer.  Default 1.
+  VClip......If [0]> 0.0 then flagging of data when averaged VPol 
+             amplitudes exceed VClip.  Default 0.0 = no flagging.
+             VClip[1]==0 => use statistical clipping
+             See EXPLAIN section for details.    
+  IClip......If [0]> 0.0 then flagging of data when averaged IPol 
+             amplitudes exceed IClip.  Default 0.0 = no flagging.
+             IClip[1]==0 => use statistical clipping
+             See HELP and EXPLAIN sections for details.    
+  RMSClip....Clip level for time domain (RMS editing) as
+             constant + proportional part, 
+             clip = RMSClip[0] + amp*RMSClip[1]
+             default = 0 => no time domain editing.
+             See EXPLAIN sections for details.    
+  RMSAvg.....Clip level for time domain RMS/average clipping
+  maxBad.....For VPol editing (VClip[0]>0) then if a fractions of
+             baselines using a given antenna/IF/channel larger 
+             than maxBad is flagged then all data using then
+             antenna/IF/channel are flagged.  Default 0.25
+             For time domain editing (RMSClip) then is a fraction
+             larger than maxBad of all baselines in a given 
+             correlator are flagged in a given interval, then all
+             baselines using that correlator are flagged in that
+             interval.
+  timeAvg....Flagging interval (min)
+             Interval over which data is vector averages for 
+             VPol flagging and over which RMS fluctuations are
+             determined for time domain flagging.  Each timeAvg
+             period is considered independently.
+             Default 1 min.
+doFD.........If True, do Time domain filtering
+             See Expalin AutoFlag for details
+FDmaxAmp.....Maximum average amplitude allowed in the spectrum  before
+             fitting.  Any channel exceeding this is flagged in
+             advance. default -> infinite  
+FDmaxV.......Maximum average amplitude allowed in V polarization; 
+             any channel exceeding this is flagged in advance of
+             the  baseline fitting or median filtering, 
+             Calculates V from difference in amplitudes
+FDwidMW......If > 0 the width of the median window in channels. 
+             An odd number (e.g. 5) is recommended,  
+             0 -> linear baseline 
+FDmaxRMS.....Flag all channels having RMS values > FDmaxRMS[0] of the
+             channel median sigma.[default => 6.] plus FDmaxRMS[1]
+             (default 0.1) of the channel average in quadrature 
+FDmaxRes.....Max. residual flux in sigma allowed for channels outside
+             the baseline fitting regions. default => 6.
+FDmaxResBL...Max. residual flux in sigma allowed for channels within
+             the baseline fitting regions.  Default = FDmaxRes
+FDbaseSel....Channel selection to define spectral baseline 
+             Used only for linear baseline fitting.
+             Select groups of channels/IF(s) to fit as sets 
+             of (Start,end,inc,IF), i.e., chanSel = 6,37,1,0, 
+             92,123,1,0 for two regions applying to all IFs.  
+             The first group for which the end channel == 0 terminates
+             the list, Channel increments defaults to 1
+             If the IF==0 then the group applies to all IF.
+             Default is channels 2 => nchan-1 all IFs
+----------------------------------------------------------------
+Automatic editing task for radio interferometer data
+Documenter:  W. D. Cotton,  NRAO
+Related Programs: 
+
+Time domain editing:
+Fill flagging table with clipping by RMS values of the real and 
+imaginary parts.  All correlations are clipped on each baseline 
+if the RMS is larger than  the maximum.  The clipping is done 
+independently in each time interval defined by timeAvg. 
+   The clipping level is given by MIN (A, MAX (B,C)) where:
+A = sqrt (RMSClip[0]**2 + (avg_amp * RMSClip[1])**2)
+    and avg_amp is the average amplitude on each baseline.
+B = median RMS + 3 * sigma of the RMS distribution.
+C = level corresponding to 3% of the data.
+   All data on a given baseline/correlator are flagged if the RMS
+exceeds the maxBad.  In addition, if the offending correlator is 
+a parallel-hand correlator then any corresponding cross-hand 
+correlations are also flagged.
+Results are unpredictable for uncalibrated data.
+
+
+VPol editing:
+   All data on a given baseline/correlator are flagged if the 
+amplitude of the Stokes 'V' exceeds VClip[0].  If VClip[1]==0.0
+then the actual clipping level is the lesser of VClip[0] and a 
+value determined from a statistical analysis of each interval 
+intended to flag the most discrepant 3 percent of the data.
+If a fraction of bad baselines on any antenna/channel/IF exceeds 
+maxBad, then all data to that correlator is flagged.  
+Results are unpredictable for uncalibrated data.
+
+IPol editing:
+   All data on a given baseline/correlator are flagged if the 
+amplitude of the Stokes 'I' exceeds IClip[0].  If IClip[1]==0.0
+then the actual clipping level is the lesser of IClip[0] and a 
+value determined from a statistical analysis of each interval 
+intended to flag the most discrepant 3 percent of the data.
+This is useful for editing really strong interference or data 
+with a model subtracted.
+Results are unpredictable for uncalibrated data.
+
+Frequency domain editing
+   Editing is done independently for each visibility measure.  First
+clipping is done on correlator and Vpol amplitudes. Following this, an
+average and RMS is determined for each channel in each timeAvg period
+and a spectral baseline is established for the average values, either
+using a  median window filter (FDwidMW>0) or a linear baseline fit
+(FDwidMW<=0) to specified channels.  Channels with excessive RMSes or
+residual amplitudes are flagged. 
+

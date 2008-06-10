@@ -1,0 +1,604 @@
+; $Id: Squint.TDF,v 1.23 2008/03/03 21:11:12 bcotton Exp $
+; Squint 
+;---------------------------------------------------------------
+;! Obit VLA Squint correcting Radio interferometry imaging software
+;# Task Obit self calibration Imaging
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2006,2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+Squint     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+Squint:   Obit VLA Beam Squint correcting imaging software
+**PARAM** str 4
+DataType                            "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                              Input multisource UV data AIPS
+**PARAM** str 6
+inClass                             Input UV data (class)
+**PARAM** int 1
+inSeq                               Input UV data (seq. #)
+**PARAM** int 1
+inDisk                              Input UV data disk drive #
+**PARAM** boo 1  **DEF** F
+doPS                                Do not reprocess sources from PS table
+**PARAM** str 16 30
+Sources                             Source (pointings) list
+**PARAM** int 1 **DEF** -1
+Qual            -10.0               Source qualifier -1=>any
+**PARAM** str 4
+souCode                             Calibrator code '    '=>any
+**PARAM** float 2
+timeRange                           Time range to process.
+**PARAM** str 4
+Stokes                              Stokes to process
+**PARAM** int 1
+BChan            0.0     8192.0     Low freq. channel 0 for cont.
+**PARAM** int 1
+EChan            0.0     8192.0     Highest freq channel
+**PARAM** int 1
+BIF                                 First IF in average.
+**PARAM** int 1
+EIF                                 Last IF in average.
+**PARAM** int 1
+subA                                Subarray
+**PARAM** int 4 20
+IChanSel                            Continuum channel selection
+**PARAM** boo 1 **DEF** T
+doCalSelect                         Apply calibration/selection?
+**PARAM** int 1
+doCalib          -1         10      Apply calibration table
+**PARAM** int 1
+gainUse                             CL/SN table to apply
+**PARAM** int 1
+doBand           -1.0       10.0    If >0.5 apply bandpass cal.
+**PARAM** int 1
+BPVer                               Bandpass table version
+**PARAM** int 1
+flagVer                             Flag table version
+**PARAM** boo 1 **DEF** F
+doPol                               Apply polarization cal?
+**PARAM** str 4
+outDType                           "FITS" or "AIPS" type of output
+**PARAM** str 48
+outFile                             Output FITS image file ending
+**PARAM** str 12
+outName                             Output AIPS image name
+**PARAM** str 6
+outClass                            Output AIPS image class
+**PARAM** int 1
+outSeq          -1.0     9999.0     Output AIPS image seq. no.
+**PARAM** int 1
+outDisk                             Output image disk drive #
+**PARAM** int 1 **DEF** 1
+CCVer                               Output CC table version number
+**PARAM** str 48
+out2File                            Output FITS uvdata file ending
+**PARAM** str 12
+out2Name                            Output AIPS uvdata name
+**PARAM** str 6
+out2Class                           Output AIPS uvdata class
+**PARAM** int 1
+out2Seq          -1.0     9999.0    Output AIPS uvdata seq. no.
+**PARAM** int 1
+out2Disk                            Output uvdata disk drive #
+
+                                       Imaging info
+**PARAM** float 1
+Threshold       0.0                Threshold for accurate model
+**PARAM** float 1
+FOV             0.0       180.     Radius of field to image deg
+**PARAM** int 1
+NField                             Number of fields
+**PARAM** float 1
+xCells                             Image cell spacing in X in asec.
+**PARAM** float 1
+yCells                             Image cell spacing in Y in asec.
+**PARAM** int 64
+nx                                 Number of "X" (RA) pixels in image 
+                                   (per field)
+**PARAM** int 64
+ny                                 Number of "Y" (Dec) pixels in image. 
+                                   (per field)
+**PARAM** float 64
+RAShift                            Right ascension shift (AIPS convention) 
+                                   (asec) (per field)
+**PARAM** float 64
+DecShift                           Declination shift (AIPS convention)  
+                                   (asec) (per field)
+
+
+**PARAM** float 2
+UVTaper         0.                 (U,V) Gaussian taper klambda
+**PARAM** float 2
+UVRange         0.                 Min & max baseline (klambda)
+**PARAM** float 1
+Robust                             Robustness power: -5 -> pure
+                                   uniform weights, 5 => natural
+**PARAM** boo 1 **DEF** T
+doFull                             Make full field (flattened) image?
+**PARAM** boo 1  **DEF** T
+doRestore                          Restore CCs to images?
+**PARAM** str 48  **DEF** NVSSVZ.FIT
+Catalog                            Outlier catalog name (NVSSVZ.FIT)
+**PARAM** float 1
+OutlierDist                        Maximum distance to add outliers (deg)
+**PARAM** float 1
+OutlierFlux                        Minimum estimated outlier flux density (Jy)
+**PARAM** float 1
+OutlierSI                          Spectral index to estimate flux density
+**PARAM** int 1
+OutlierSize                        Size of outlier field in pixels
+**PARAM** int 4 50
+CLEANBox          -2.0      8192.0 Four coordinates for each box
+**PARAM** boo 1   **DEF** F
+autoWindow                         If true, automatically set windows
+**PARAM** float 1  **DEF** 0.1
+Gain     *         0.0         2.0 CLEAN loop gain
+**PARAM** float 1
+minFlux  *                         Minimum Clean component (Jy)
+**PARAM** int 1  **DEF** 100
+minPatch *        0.0              Min. BEAM half-width.
+**PARAM** int 1
+Niter    *         0.0             Maximum # of I CLEAN comp.
+**PARAM** float 3
+Beam     *      -999.9             Clean beam (maj, min, PA)
+**PARAM** float 1  **DEF** 10.0
+Reuse    *                         Factor * RMS to reuse each cycle
+**PARAM** float 1  **DEF** 1.0e20
+autoCen  *                         Auto center min flux density
+**PARAM** str 4
+Cmethod                            Modeling method:
+                                   'DFT','GRID','    '
+**PARAM** boo 1   **DEF** F
+PBCor                              Apply Frequency PB Corr?
+**PARAM** float 1
+antSize                            Diameter of ant. for PBCor (m)
+**PARAM** float 1 **DEF** 0.05
+PBmin         0.01      0.90       min. beam gain for Squint correction 
+                                   [Jinc 0.05, Poly 0.01]
+**PARAM** float 2
+CCFilter                           Clean component filter
+                                    [0] min. sum flux.
+                                    [1] radius of search
+**PARAM** int 1  **DEF** 50000
+maxPixel           0.0    500000.0 Maximum pixels searched
+
+                                       Selfcal info
+**PARAM** float 1  
+modelFlux        0.0               Initial model flux density (Jy)
+**PARAM** float 2  
+modelPos        0.0                Initial position offset (asec)
+**PARAM** float 4  
+modelParm                          Initial parameters (maj, min, pa, type)
+**PARAM** int 1
+maxPSCLoop                         Max. number of phase selfcal loops
+**PARAM** float 1
+minFluxPSC        0.0              Min. peak phase self cal (Jy)
+**PARAM** float 1
+solPInt           0.0              phase SC Solution interval (min)
+**PARAM** str 4
+solPType                           phase SC Soln. Type: '  ', 'L1', 
+**PARAM** str 4 **DEF** P
+solPMode                           phase SC Soln. Mode:'A&P', 'P', 'P!A',
+**PARAM** int 1
+maxASCLoop                         Max. number of amp&ph selfcal loops
+**PARAM** float 1
+minFluxASC        0.0              Min. peak A&P self cal (Jy)
+**PARAM** float 1
+solAInt           0.0              A&P SC Solution interval (min)
+**PARAM** str 4
+solAType                           A&P SC Soln. Type: '  ', 'L1', 
+**PARAM** str 4 **DEF** A&P
+solAMode                           A&P SC Soln. Mode:'A&P', 'P', 'P!A',
+**PARAM** int 1
+refAnt            0                SC Reference antenna
+**PARAM** float 1  **DEF** 0.01
+WtUV              0.0              Weight outside full wt uvrange
+**PARAM** boo 1 **DEF** T
+avgPol                             Avg. poln?
+**PARAM** boo 1 **DEF** F
+avgIF                              Avg. IFs?
+**PARAM** boo 1  **DEF** F
+doMGM                              Apply mean gain modulus
+**PARAM** float 1  **DEF** 5.0
+minSNR                             Min. allowed SNR in selfcal
+**PARAM** int 1 **DEF** 3
+minNo             2                Min. no. antennas in selfcal
+**PARAM** boo 1 **DEF** F
+doSmoo                             Interpolate failed solutions?
+**PARAM** int 1
+prtLv             0.0              Print level in selfcal
+**PARAM** str 48 **DEF** ObitView
+dispURL                            Display server URL
+**PARAM** int 10
+noScrat                            AIPS disk numbers for which
+                                   scratch files are disallowed
+----------------------------------------------------------------
+Squint VLA Beam Squint correction imaging and Self calibration
+Type:  Task
+ Use:  Imaging of VLA data data
+
+   The products of this task are a CLEAN image and an improved 
+calibration. Unless otherwise specified, a fly's eye pattern of
+fields with circular CLEAN boxes will be used to cover the specified
+field of view (FOV).  When processing is finished, the CLEAN images 
+are "flattened" onto a single image and the (first) CLEAN model is 
+subtracted from the output data.  If a second Stokes (V only) is 
+specified it is imaged and CLEANed as well.
+   The imaging model corrects for the effects of "Beam squint" in the 
+VLA caused by the off axis feeds. When the maximum residual exceeds
+Threshold, a high accuracy model is used and a faster but less acurate
+method when the residuals drop below Threshold.  
+In any self calibration, components are first merged (those in same 
+image cell are combined) and then components stronger than Threshold 
+are modeled with the accurate method and the rest the faster method.
+   If multiple sources are being processed, some failures are allowed.
+In this case, the error messages will be displayed and the Status in
+the PS table set to "Failed  " rather than "Done    ".
+
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input/output
+  inFile.....FITS input uvdata if DataType=='FITS'
+  inName.....Input multisource (or single) UV data file
+  inClass....Input UV data file (class).      Standard defaults.
+  inSeq......Input UV data file (seq. #).     0 => highest.
+  inDisk.....Input UV data file disk drive #. 0 => any.
+
+       Data selection
+  doPS.......If true, the PS (Processing Summary) table,
+             if it exists, is searched and fields already processed,
+             present and Status 'Done' or 'Fail' will not be reprocessed.
+  Sources....List of sources (pointings) to be processed.
+             '*' or blank = all; a "-" before a source name
+             means all except ANY source named. 
+  Qual.......Only sources with a source qualifier number in the
+             SU table matching Qual will be used if Qual is not
+             -1.  Qual affects the selection of both the list of
+             sources and the list of calibrators.
+  souCode....Calibrators may be selected on the basis of the
+             calibrator code given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The souCode test is applied in addition to the
+             other tests, i.e. Sources and Qual, in the
+             selection of sources to process.
+  timeRange..Time range of the data to be processed. In order:
+             Start and end times in days relative to ref. date.  
+             Use  dhms2day to convert from human readable form
+  Stokes.....Stokes parameters to process.
+             'I' = Stokes I only, 'V' = Stokes V only (not recommend.)
+             'F'=> formal I (both orthogonal Stokes needed)
+             'IV' or 'FV' => I + V; First I imaged and subtracted,
+             then V imaged.
+  BChan......First channel number to include, 0=>1.  Channel numbers are 1
+             relative as defined in the input data file.
+  EChan......Highest channel number to to include,  
+             Channels BChan-EChan are averaged in the imaging and calibration
+             0 => max 
+  BIF........First IF to process. 0=>1
+  EIF........Highest IF to process 0=> do BIF to highest.
+             Note: not all data sets will have IFs.
+  subA.......Sub-array number to use. 0=>all.
+  IChanSel...Select channels to be used for imaging and calibration.
+             A subset of channels in the range BChan -> EChan can be 
+             selected to be used for imaging and calibration.
+             All channels in the range BChan to EChan will be in the 
+             output data with the IPol image subtracted.
+             Sets of channels are selected by groups of 4 parameters:
+             [0] 1-rel start channel number in block (def . 1)
+             [1] 1-rel end channel number, (def. to end)
+             [2] channel increment
+             [3] 1-rel IF number (def all)
+             [5,0,2,1] means every other channel from 5 to the highest
+             in IF 1.  All zeroes means all channels and all IFs 
+             selected by BChan, EChan, BIF, EIF.
+  doCalSelect. If True apply calibration/selection
+             This should be True in most cases
+  doCalib....If true, apply SN or CL table
+  gainUse....CL/SN table version number to apply. 0=> highest.
+  doBand.....If true (>0) then correct the data for the shape of the
+             antenna bandpasses using the BP table specified by BPVer.
+             The correction has five modes:
+             (a) if doBand=1 all entries for an antenna in the table
+             are averaged together before correcting the data.
+             (b) if doBand=2 the entry nearest in time (including
+             solution weights) is used to correct the data.
+             (c) if doBand=3 the table entries are interpolated in
+             time (using solution weights) and the data are then
+             corrected.
+             (d) if doBand=4 the entry nearest in time (ignoring
+             solution weights) is used to correct the data.
+             (e) if doBand=5 the table entries are interpolated in
+             time (ignoring solution weights) and the data are then
+             corrected.
+  BPVer......Specifies the version of the AIPS BP table to be applied
+                0 => highest numbered table.
+               <0 => no bandpass correction to be applied.
+  flagVer....AIPS FG table to use for editing. 0 => highest.
+  doPol......>=1 apply polarization calibration
+
+      Output files
+  outDType..'FITS' or 'AIPS'  type of output
+             Defaults to DataType.
+  outFile....Ending of output FITS image file name
+             filename = source_name+outFile
+             The Stokes I CLEAN model will have been subtracted.
+  outName....Ending of output AIPS Image Name, 
+             Name = source_name+outName
+             The Stokes I CLEAN model will have been subtracted.
+  outClass...Output image class.  Default = 'ICLEAN'
+             Only the last 5 characters given are used and the
+             first is replaced with "I".
+             Output image name = pointing name (SOURCES)
+             The output CLEAN image will be used during
+             execution as the residual image.
+  outSeq.....Output image sequence number.
+  outDisk....The disk drive # of output images.  0 => highest
+             with space (note: map and Beam go on same disk.
+  outSeq.....Output sequence number.
+  CCVer......CC table version number for continuum data only.  
+             For line data the channel number is used for the 
+             version number.
+  out2File...Ending of output FITS UV data file name
+             filename = source_name+out2File
+             Defaults to 'UV'
+             This file will contain the last selected data 
+             with any calibration tables.
+  out2Name...Ending of output AIPS UV data Name, 
+             Name = source_name+out2Name
+             Defaults to 'UV'
+             This file will contain the last selected data 
+             with any calibration tables.
+  out2Class..Output uv data class.  Default = 'IMAGER'
+  out2Seq....Output AIPS uv data sequence number.
+  out2Disk...The disk drive # of output uv date.  0 => highest
+             with space. default  = outDisk
+
+   The following control imaging:
+  Threshold..This value is used to control when the high accuracy 
+             beam squint model is used.  In CLEANing, whenever the 
+             peak residual is above this value the beam squint model 
+             is used for all components but when the residuals drop 
+             below this level a faster method is used.  
+             For self calibration, all merged components with a 
+             flux density above this value use the high accuracy 
+             model and those below a faster model.
+             If there are a large number of low level components 
+             then setting Threshold larger than zero will speed the
+             execution and if suitably chosen will not limit the
+             dynamic range of the image. 
+             (One percent of the peak would be a plausible value.)
+             USE 0.0 WHEN IMAGING STOKES V.
+  FOV........Radius of the desired field of view.
+  NField.....Optional parameter to specify fields and overrides
+             the FOV parameter.  Up to 64 may be specified as 
+             parameters; you should have a good reason for doing
+             this as the default behavior is usually what is
+             desired.
+  xCells     [optional] Image cell spacing in X in asec.  
+             If left 0 then the program will compute the value 
+             from the data.  All fields use the same value.
+  yCells     [optional] Image cell spacing in Y in asec. 
+             If left 0 then the program will compute the value 
+             from the data.  All fields use the same value.
+  nx.........[optional] Number of x pixels in each field specified.
+  ny.........[optional] Number of y pixels in each field specified.
+  RAShift....[optional] RA shift (asec) per field
+  DecShift...[optional] Dec shift (asec) per field
+  Catalog....Name of FITS file containing outlier catalog
+             Default  NVSSVZ.FIT
+             This must be in the form of an "AIPS VZ" table.
+             'None' =. Use no outliers
+  OutlierDist..max. distance from pointing to include (deg)
+               default = 10
+  OutlierFlux..min. estimated flux density (Jy)
+                 default = 0.05
+  OutlierSI....Spectral index to use,   default = -0.7
+  OutlierSize..Size in pixels of confusing fields, default 50
+               NB: This should not be so large as to cause the 
+               outlying fields to be larger than the fields tiling
+               the FOV or the program may die.
+  UVTaper....(U,V) Gaussian taper (kilo-lambda) at 30% level
+  UVRange....(Minimum,Maximum) baseline (kilo-lambda) to
+             process. 
+  Robust.....Briggs' "robustness" parameter.  "Uniform" weights are
+             tempered by a constant being added to the local density of
+             weights.  Robust = -4 is nearly pure uniform weighting,
+             Robust = +4 is nearly pure natural weighting.  Use of this
+             option requires a second array in the memory and may
+             therefore force the data to be sorted.  The option is
+             turned off if Robust < -7 and uniform weighting is turned
+             off is Robust > 7.  The Obit Robust differs numerically
+             from that of Briggs but is the same as the AIPS
+             implementation. 
+  doFull.....Make full field (flattened) image?
+             Otherwise only make facets and leave them.
+  doRestore..Restore CCs to images?
+
+   The following control CLEANing:
+  CLEANBox...A 4x50 array with the specification of a search
+             area.
+             Box(1,i)=-1 indicates a circle of radius Box(2,i)
+             pixels centered on (Box(3,i), Box(4,i))
+             Box(1,i) >= 0 indicates a rectangular box.
+             0 => full and inner fields.
+             Note: the default boxes are set on the basis of
+             the image size, tilling pattern and autoWindow.
+  autoWindow.If true, automatically set boxes around significant 
+             emission. (Highly recommended)
+  Gain......The CLEAN loop gain.  0 => 0.10.
+  minFlux...Stop Clean when abs(resid. image max) < minFlux (Jy)  
+            If minFlux < 0 then Clean stops at first negative Clean
+            Component. 
+  minPatch..Minimum half width of the portion of the beam
+            which is used in the minor CLEAN. Default 500
+  Niter.....CLEAN iteration limit.  0 => 1500
+  Beam......CLEAN restoring beam major, minor axis size in asec and
+            the position angle.  If zeroes, fit beam.
+  Reuse.....If >0 then each cycle of self cal after the first will
+            begin with all summed components whose abs value exceeds
+            Reuse*RMS(Field 1). Default 10
+  autoCen...If the sum of the clean components within 2.5 pixels 
+            of any pixel exceeds autoCen and is not within 0.01 of a cell
+            of the center  pixel then the image is  remade and deconvolved 
+            with the bright sources (>autoCen, one per facet) on a pixel.
+            This is necessary to achieve high dynamic range.
+            If the initial dirty image has a pixel brighter than autoCen
+            then it presumes that the final image will need centering and
+            the initial CLEAN is stopped at minFlux=0.1*autoCen.
+            Subsequent imagings, e.g. self calibration loops, the centroid 
+            of fields made with autoCen is check and possibly adjusted.
+  Cmethod...This determines the method used to compute the
+            model visibility values.
+            'DFT' uses the direct Fourier transform, this
+               method is the most accurate.
+            'GRID' does a gridded-FFT interpolation model
+               computation.
+            '    ' allows the program to use the fastest
+               method.
+  PBCor......Apply Frequency dependent primary beam corrections?
+  antSize....Diameter of antenna for PBCor (m), default = 25
+  PBmin......Min. beam gain for squint correction.
+             0=>0.05 for freq>1 GHz, else 0.01.
+
+  CCFilter...Clean component filtering parameters.
+             If [0] > 0.0 then for each CLEAN conponent, the
+             sum of all components within CCFilter[1] cells
+             is determined, and if less than CCFilter[0], the
+             component is rejected.
+             This is done after all self-calibration, CLEANing is done
+             and if necessary the residuals remade.
+  maxPixel...The maximum number of pixels that are searched for
+             components in each major cycle.  < 3000
+             => 20050.  This number affects the cpu usage significantly.
+             Too many causes the task to search over many points it will
+             never use.  Too few causes the task to do many more small
+             major cycles, also at great expense.  Use this with great
+             caution, but big wins are possible using larger sizes on
+             very large Cleans.
+
+                          Selfcal info
+              Either phase only or amplitude and phase or both types of
+              Self calibration can be performed.  If both are done, then
+              phase calibration is done first and applied to the data before
+              Amp & Phase self calibration.  In any case, there will be an 
+              SN table attached to the output uv data which is needed to
+              fully calibrate it.
+  modelFlux...If this value is larger than 0 then an initial calibration
+              using the model specified in modelFlux, modelPos, modelParm
+              is made.  modelFlux is the flux density of the model
+  modelPos....RA and Dec offset in the sky in asec
+  modelParm...Other model parameters Gaussian:
+              major_axis (asec),  minor_axis (asec),  position_angle (deg), 1
+  maxPSCLoop..Maximum number of phase self calibration loops
+  maxPSCLoop..Min. peak flux density required for phase self cal (Jy)
+  solPInt.....phase SC Solution interval (min)
+  solPType....phase SC Solution Type: '  ', 'L1', 
+  solPMode....phase SC Solution Mode:'A&P', 'P', 'P!A',
+  maxASCLoop..Maximum number of phase self calibration loops
+  maxASCLoop..Min. peak flux density required for phase self cal (Jy)
+  solAInt.....A&P SC Solution interval (min)
+  solAType....A&P SC Solution Type: '  ', 'L1', 
+  solAMode....A&P SC Solution Mode:'A&P', 'P', 'P!A',
+  refAnt......Reference antenna number for selfcal
+  WtUV........Weighting (wrt 1) to use outside of basic uv range in SC
+              [def 0.0]
+  avgPol......Average Polarizations in self calibration? [def True]
+              Note: Independent solution in R and L will tend to wipe
+              out any Stokes V in the data. 
+  avgIF.......Average IFs in self calibration? [def False]
+  doMGM.......Apply mean gain modulus to A&P selfcal soln.
+  minSNR......Min. allowed SNR in self cal solution [def 5]
+  minNo.......Min. allowed no. antennas in selfcal
+  doSmoo......If true interpolate failed solutions [def. False]
+  prtLv.......Print level in selfcal, 0=>none [def. 0]
+
+                          Interactive display
+  dispURL.....The URL of the display server to use. "None"=>none
+              "ObitView" =  "http://localhost:8765/RPC2" 
+              This will display fields being CLEANed and allow
+              interactive editing of the CLEAN window.
+              If the display is running on a machine on which the
+              data is not visible, use "http://myhost:port/RPC2"
+              where myhost is the network name and port is the port
+              number (usually 8765), Example:
+              dispURL="http://canis.cv.nrao.edu:8765/RPC2"
+
+  noScrat.....A list of AIPS disk numbers on which you do not 
+              wish scratch files
+----------------------------------------------------------------
+
+Frequency dependence of beam squint.
+-----------------------------------
+   The offset between the RCP and LCP beams is a constant fraction of
+the beam size of the VLA primary antenna pattern size (~5.5% FWHM) so
+may vary across wide band passes.  In order to partially compensate for
+this, the squint beam throw is calculated for the center frequency in
+the current frequency dependent primary beam correction (PBCor).  This
+makes it doubly important to turn on PBCor corrections for wide
+bandwidth data.  Note: the number of channels processed at a time
+while making the frequency dependent primary beam correction depends
+on the field of view.
+
+Notes on VLA beam squint:
+------------------------
+   Quality control for the beam squint of the VLA is not very good at
+the higher frequencies.  In particular, antennas 6, 14 and 22 have the
+X, K and Q band feeds at very different orientations from all the
+others.  If the beam squint correction is desired, these antennas
+should be flagged for these bands. (The EVLA should be more uniformly
+constructed). 
+   At Ku band, the antennas 1,2,3,4,6,7,9,10,12,14 differ from antennas
+5,8,11,16,17,18,19,20,21,22,23,24,25,26,27,28 by 14 degrees in the
+effective orientation of the beam squint.
+   At K band, antennas 1,2,3,16,18,24,27,28  differ from antennas
+4,7,8,9,10,11,12,15,17,19,20,21,23,25,26  by 20 degrees in the
+effective orientation of the beam squint.  Large changes for
+individual antennas have been noted.  Degraded performance of the beam
+squint corrections for the VLA at Ku and K band should be expected.
+
+PS Table
+--------
+   The PS table giving the processing record has the following 
+entries.  
+     FIELD NAME Field name
+     OBSDATE    Observing reference date.
+     RA POINT   Pointing RA at epoch 2000 (deg)
+     DEC POINT  Pointing RA at epoch 2000 (deg)
+     STATUS     Processing status, left blank by Squint
+     IQU        Flags for I, Q, U, true means processed
+     SPECIAL    Special processing applied, not used by Squint
+     NO. FIELDS Number of sub fields
+     CC LIMIT   Flags to using all possible CC, not used by Squint
+     PERCENT    % of visibility data remaining at end of precessing
+     PIX MAX    Pixel max (Jy)
+     PIX MIN    Pixel min (Jy)
+     QUALITY    Quality measure (Estimate of RMS noise)
+     COMMENTS   Comments, left blank by Squint
