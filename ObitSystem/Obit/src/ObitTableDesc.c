@@ -216,7 +216,6 @@ ObitTableDesc* ObitTableDescCopy (ObitTableDesc* in, ObitTableDesc* out,
 void ObitTableDescCopyDesc (ObitTableDesc* in, ObitTableDesc* out, 
 			    ObitErr *err)
 {
-
   /* error checks */
   g_assert (ObitErrIsA(err));
   if (err->error) return;
@@ -239,13 +238,13 @@ void ObitTableDescCopyDesc (ObitTableDesc* in, ObitTableDesc* out,
  */
 void ObitTableDescIndex (ObitTableDesc* in)
 {
-  olong i, j, size, nbytes, total, order, maxsize, nadd, it, nelem;
+  olong i, j, size, nbytes, total, order, maxsize, nadd, it, nelem, nf;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   /* OBIT_bits the same as OBIT_oint - DAMN AIPS */
   ObitInfoType otypes[10] = {OBIT_double, OBIT_float, OBIT_string, 
 			    OBIT_oint, OBIT_bits, OBIT_long, OBIT_bool,
 			    OBIT_int, OBIT_short, OBIT_ubyte};
-  gboolean damnit;
+  gboolean damnit, status_col=FALSE;
 
   /* error check */
   g_assert (ObitIsA(in, &myClassInfo));
@@ -269,11 +268,19 @@ void ObitTableDescIndex (ObitTableDesc* in)
 
   /* determine physical order - by AIPS order (size) of element */
   /* loop over possible types in AIPS order */
+  /* _status column is last */
+  if (in->FieldName && in->FieldName[in->nfield-1]) {
+    status_col = (!strncmp (in->FieldName[in->nfield-1], "_status", 7));
+  } else {
+    status_col = FALSE;
+  }
+  nf = in->nfield;
+  if (status_col) nf--;
   order = 1;
   maxsize = 1;  /* Maximum size of element in bytes */
   for (i=0; i<10; i++) {
     /* Loop over fields */
-    for (j=0; j<in->nfield; j++) {
+    for (j=0; j<nf; j++) {
       /* How big is an element of this one? */
       size = ObitInfoElemSize(in->type[j], dim);
       /* Want it? */
@@ -285,6 +292,8 @@ void ObitTableDescIndex (ObitTableDesc* in)
       }
     }
   }
+  /* AIPS Status column last */
+  if (status_col) in->order[in->nfield-1] = order;
 
   /* determine offsets from beginning of row (in units of that type) */
   total = 0;
