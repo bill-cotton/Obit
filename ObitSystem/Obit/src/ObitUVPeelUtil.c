@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007                                               */
+/*;  Copyright (C) 2007-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -43,29 +43,37 @@
 /*---------------Private function prototypes----------------*/
 /*----------------------Public functions---------------------------*/
 /**
- * Peel a strong source from a data set based on previous CLEAN.
- * Picks the strongest field with peak above PeelFlux and subtracts all
- * others using the SkyModel on myClean and then self calibrates the 
- * residual data to obtain a best model and calibration for that field.
- * A model uv data set derived from the selfcalibrated model and 
+ * Loops over sources to be peeled.
+ * This routine should only be run after all self-calibration and 
+ * autocentering has been done, at least one previous CLEAN is required.
+ * Each loop picks the strongest field with peak above PeelFlux and 
+ * subtracts all others using the SkyModel on myClean and then 
+ * self-calibrates the residual data to obtain a best model and 
+ * calibration for that field.
+ * A model uv data set derived from the self-calibrated model and 
  * inverse of the self cal calibration is used to corrupt the model 
- * data which is then subtracted from the  input data.
- * The imaging is then redone using the myClean setup .
- * The components peeled are written to CC Table 2 on the output Peeled image.
- * Note: If multiple peels are done, the components from previously peeled 
- * fields will not be in Table 1 and the components from any CC table 2 need 
- * to be copied to table 1 when the peeling is finished.
- * No restoration or flattening is done.
+ * data which is then permanently subtracted from the  input data.
+ * The imaging is then redone using the myClean setup.
+ * The components peeled are written to CC Table 2 on the output peeled image.
+ * After all peeling is done, the components on the CC tables 2 are 
+ * appended to CC tables 1 so that these tables contain all components 
+ * subtracted.
+ * On return, ncomp contains the number of components in each CC table 1
+ * which were NOT peeled, i.e. should be subtracted from inUV to produce a 
+ * residual data set.
+ * No component restoration or flattening is done.
  * \param myInput InfoList with control parameters (most have defaults):
  *  \li PeelFlux      f Minimum level for Peeling (peal in CCs)
  *  \li PeelLoop      i max. number of self cal loops
  *  \li PeelSolInt    f Peel SC Solution interval (min)
+ *  \li PeelType      s Peel SC Solution type '  ', 'L1'
+ *  \li PeelMode      s Peel SC Solution mode:'A&P', 'P', 'P!A',
  *  \li PeelNiter     i Niter for peel.CLEAN
  *  \li PeelMinFlux   f Minimum Peel Clean component (Jy)
- *  \li refAnt        i Peel SC Reference antenna
- *  \li SNRMin        f Min. allowed SNR in peel selfcal
- *  \li AvgPol        b Avg. poln in peel self cal?
- *  \li AvgIF         b Avg. IFs in peel self cal?
+ *  \li PeelRefAnt    i Peel SC Reference antenna
+ *  \li PeelSNRMin    f Min. allowed SNR in peel selfcal
+ *  \li PeelAvgPol    b Avg. poln in peel self cal?
+ *  \li PeelAvgIF     b Avg. IFs in peel self cal?
  *  \li PBCor         b Apply Frequency PB Corr?
  *  \li antSize       f Diameter of ant. for PBCor (m)
  *  \li Robust        f Robustness power
@@ -87,7 +95,149 @@
  *  \li minNo         i Min. allowed no. antennas in selfcal
  *  \li doSmoo        b If true interpolate failed solutions
  *  \li prtLv         i Print level in selfcal, 0=>none
- *  \li dispURL       s The URL of the display server to use
+ * \param inUV    Data to be peeled, on return all SN tables will be removed.
+ *                and peeled source will have been subtracted
+ * \param myClean Clean object which has previously been CLEANed and which 
+ *                has a field with a CC peak in excess of PeelFlux.
+ *                Need for peeling based on values of myClean->peakFlux and
+ *                PeelFlux.  The test for individual fields is the maximum as 
+ *                determined from the CLEAN components by 
+ *                #ObitImageMosaicMaxField
+ *                On output, this will include info on last CLEAN
+ * \param  nfield [out] Number of entries in ncomp
+ * \param  ncomp  [out] Array of number of components in data (i.e. after any peel)
+ *                per field,  this array should be g_freeed after use
+ * \param err     Error/message stack
+ */
+void ObitUVPeelUtilLoop (ObitInfoList* myInput, ObitUV* inUV, 
+			 ObitDConCleanVis *myClean, 
+			 olong *nfield, olong **ncomp,  ObitErr* err)
+{
+  ObitTableCC  *peelCCTable=NULL, *outCCTable=NULL;
+  ObitInfoType type;
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  oint         noParms;
+  olong        ver, peelfield, *peeled, i;
+  ofloat       PeelFlux;
+  gchar *routine = "ObitUVPeelUtilLoop";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitInfoListIsA(myInput));
+  g_assert (ObitUVIsA(inUV));
+
+  /* Initialize output - In case, free old ncomp */
+  if (*ncomp!=NULL) g_free(*ncomp); *ncomp = NULL;
+  *nfield = myClean->mosaic->numberImages;  /* Keep track of components not peeled */
+  *ncomp = g_malloc0((*nfield)*sizeof(olong));
+
+  /* Peeling trip level */
+  PeelFlux = 1.0e20;
+  ObitInfoListGetTest(myInput, "PeelFlux", &type, dim, &PeelFlux); 
+
+  /* Anything to do ? */
+  if (myClean->peakFlux<=PeelFlux) return;
+
+  /* To keep track of peeled fields */
+  peeled = g_malloc0(myClean->mosaic->numberImages*sizeof(olong));
+  for (i=0; i< myClean->mosaic->numberImages; i++) peeled[i] = 0;
+
+  /* Loop while sources still brighter than PeelFlux */
+  while (myClean->peakFlux>PeelFlux) {
+    peelfield = ObitUVPeelUtilPeel (myInput, inUV, myClean, err);
+    if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+    if (peelfield>0) {
+      peeled[peelfield-1] = 1;  /* keep track of peeled fields */
+    } else break;  
+  }
+
+  /* Loop appending components in CC Table 2 of peeled fields to Table 1 */
+  for (i=0; i<myClean->mosaic->numberImages; i++) {
+    /* Keep track of unpeeled components */
+    (*ncomp)[i] = myClean->skyModel->endComp[i];
+
+    if (peeled[i]<=0) continue;  /* ingnore fields not peeled */
+    /* Copy CCs from peeled table (CC 2)  to CC 1 on output image */
+    ver = 2;
+    noParms = 0;
+    peelCCTable = newObitTableCCValue ("Peeled CC", (ObitData*)myClean->mosaic->images[i],
+				       &ver, OBIT_IO_ReadOnly, noParms, 
+				       err);
+    /* Make sure  created */
+    if (peelCCTable==NULL) {
+      Obit_log_error(err, OBIT_Error, 
+		     "%s: No CC table 1 found on %s", routine, myClean->mosaic->images[i]->name);
+      return;
+    }
+    ver = 1;
+    outCCTable = newObitTableCCValue ("outCC", (ObitData*)myClean->mosaic->images[i],
+				      &ver, OBIT_IO_ReadWrite, peelCCTable->noParms, 
+				      err);
+    /* Make sure  object created */
+    if (outCCTable==NULL) {
+      Obit_log_error(err, OBIT_Error, 
+		     "%s: No CC table  found on %s", routine, 
+		     myClean->mosaic->images[i]->name);
+      return;
+    }
+
+    /* Append CCs */
+    ObitTableCCUtilAppend (peelCCTable, outCCTable, 1, 0, err);
+    if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+    peelCCTable = ObitTableCCUnref(peelCCTable);
+    outCCTable  = ObitTableCCUnref(outCCTable);
+    
+  } /* end loop copying peeled CCs */
+  if (peeled) g_free(peeled); peeled = NULL;  /* Done with array */
+
+} /* end ObitUVPeelUtilPeel */
+/**
+ * Peel a strong source from a data set based on previous CLEAN.
+ * Picks the strongest field with peak above PeelFlux and subtracts all
+ * others using the SkyModel on myClean and then self calibrates the 
+ * residual data to obtain a best model and calibration for that field.
+ * A model uv data set derived from the selfcalibrated model and 
+ * inverse of the self cal calibration is used to corrupt the model 
+ * data which is then subtracted from the  input data.
+ * The imaging is then redone using the myClean setup .
+ * The components peeled are written to CC Table 2 on the output Peeled image.
+ * Note: If multiple peels are done, the components from previously peeled 
+ * fields will not be in Table 1 and the components from any CC table 2 need 
+ * to be copied to table 1 when the peeling is finished.
+ * No restoration or flattening is done.
+ * \param myInput InfoList with control parameters (most have defaults):
+ *  \li PeelFlux      f Minimum level for Peeling (peal in CCs)
+ *  \li PeelLoop      i max. number of self cal loops
+ *  \li PeelSolInt    f Peel SC Solution interval (min)
+ *  \li PeelType      s Peel SC Solution type '  ', 'L1'
+ *  \li PeelMode      s Peel SC Solution mode:'A&P', 'P', 'P!A',
+ *  \li PeelNiter     i Niter for peel.CLEAN
+ *  \li PeelMinFlux   f Minimum Peel Clean component (Jy)
+ *  \li PeelRefAnt    i Peel SC Reference antenna
+ *  \li PeelSNRMin    f Min. allowed SNR in peel selfcal
+ *  \li PeelAvgPol    b Avg. poln in peel self cal?
+ *  \li PeelAvgIF     b Avg. IFs in peel self cal?
+ *  \li PBCor         b Apply Frequency PB Corr?
+ *  \li antSize       f Diameter of ant. for PBCor (m)
+ *  \li Robust        f Robustness power
+ *  \li nuGrid        i Size in u of weighting grid 
+ *  \li nvGrid        i Size in v of weighting grid 
+ *  \li WtBox         i Additional rows and columns in weighting
+ *  \li WtFunc        i Box function type when WtBox
+ *  \li UVTaper       f [2] (U,V) Gaussian taper klambda
+ *  \li WtPower       f Power to raise weights to
+ *  \li MaxBaseline   f maximum baseline length in wavelengths.
+ *  \li MinBaseline   f minimum baseline length in wavelengths.
+ *  \li rotate        f rotation of images
+ *  \li xCells        f Image cell spacing in X in asec.
+ *  \li yCells        f Image cell spacing in Y in asec.
+ *  \li Gain          f CLEAN loop gain
+ *  \li minPatch      i Min. BEAM half-width.
+ *  \li autoWindow    b If true, automatically set windows
+ *  \li WtUV          f Weighting to use outside of basic uv range
+ *  \li minNo         i Min. allowed no. antennas in selfcal
+ *  \li doSmoo        b If true interpolate failed solutions
+ *  \li prtLv         i Print level in selfcal, 0=>none
  * \param inUV    Data to be peeled, on return all SN tables will be removed.
  *                and peeled source will have been subtracted
  * \param myClean Clean object which has previously been CLEANed and which 
@@ -103,7 +253,7 @@
 olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV, 
 			 ObitDConCleanVis *myClean, ObitErr* err)
 {
-  olong              peeled=-1;
+  olong             peeled=-1;
   ObitInfoType      type;
   ObitUVImager      *tmpImager=NULL; 
   ObitImageMosaic   *tmpMosaic=NULL; 
@@ -111,38 +261,39 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
   ObitSkyModel      *tmpSkyModel=NULL; 
   ObitDConCleanVis  *tmpClean=NULL; 
   ObitUVSelfCal     *selfCal = NULL;
-  ObitTableCC       *peelCCTable=NULL, *outCCTable=NULL;
+  ObitTableCC       *peelCCTable=NULL, *outCCTable=NULL, *CCTab=NULL;
   ObitTableSN       *inSNTable=NULL, *outSNTable=NULL, *SNInver=NULL;
-  olong         i,  jtemp, peelField, *bcomp=NULL, *ecomp=NULL, ignore[1]={0};
-  olong         dft, iter, MaxSCLoop=1;
+  olong        i,  jtemp, peelField, *bcomp=NULL, *ecomp=NULL, ignore[1]={0};
+  olong        dft, iter, MaxSCLoop=1;
   oint         noParms, numPol, numIF;
   olong        ver;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat       PeelFlux, ftemp, xCells, yCells;
-  gboolean     converged, didSC=FALSE, Fl=FALSE, Tr=TRUE, init, noSCNeed; 
+  gboolean     converged, didSC=FALSE, Fl=FALSE, Tr=TRUE, init, noSCNeed, btemp; 
   gchar        stemp[5];
   gchar        *imgParms[] = {  /* Imaging, weighting parameters */
     "PBCor", "antSize", 
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
     "MaxBaseline", "MinBaseline", "rotate", "Beam",  "xCells", "yCells", 
-    "nx", "ny",  "nxBeam", "nyBeam", "dispURL",
+    "nx", "ny",  "nxBeam", "nyBeam", /*"dispURL",*/
     NULL
   };
   gchar        *CLEANParms[] = {  /* Clean parameters */
     "Gain", "minFlux", "Niter", "minPatch", "Beam", 
-    "Mode", "CCFilter", "maxPixel", "dispURL", "autoWindow",
+    "Mode", "CCFilter", "maxPixel", "autoWindow",
     NULL
   };
   gchar        *SCParms[] = {  /* Self cal parameters */
-    "refAnt", "WtUV", "avgPol", "avgIF", "doMGM", "SNRmin", 
+    "RefAnt", "WtUV", "avgPol", "avgIF", "doMGM", "SNRmin", 
     "minNo", "doSmoo", "modelFlux", "modelPos", "modelParm",
-    "dispURL", /* "prtLv", */
+    /* "dispURL", "prtLv", */
     NULL
   };
   gchar        *peelParms[] = {  /* peeling parameters */
     "PBCor", "antSize", 
+    NULL
   };
-  gchar *solmod = "P   ", *soltyp = "L1  ";
+  gchar solmod[5], soltyp[5];
   gchar *routine = "ObitPeelUtilPeel";
 
   /* error checks */
@@ -264,9 +415,13 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     
     /* Create self cal object */
     selfCal = ObitUVSelfCalCreate ("SelfCal", tmpSkyModel);
-    /* Set Parameters  */
-    dim[0] = 4;
+
+    /* Set Parameters  */   
+    strncpy (solmod, "P   ",4); dim[0] = 4; dim[1] = dim[2] = 1;
+    ObitInfoListGetTest (myInput, "PeelMode", &type, dim, solmod);
     ObitInfoListAlwaysPut(selfCal->info, "solMode", OBIT_string, dim, solmod);
+    strncpy (soltyp, "    ",4); dim[0] = 4; dim[1] = dim[2] = 1;
+    ObitInfoListGetTest (myInput, "PeelType", &type, dim, soltyp);
     ObitInfoListAlwaysPut(selfCal->info, "solType", OBIT_string, dim, soltyp);
     dim[0] = 1;
     /* Solution interval */
@@ -274,16 +429,32 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     ObitInfoListGetTest (myInput, "PeelSolInt", &type, dim, &ftemp);
     ObitInfoListAlwaysPut(selfCal->info, "solInt", OBIT_float, dim, &ftemp);
     /* Min acceptable peak for Self cal */
-    ftemp = PeelFlux*0.5;
+    ftemp = PeelFlux*0.5;dim[0] = dim[1] = dim[2] = 1;
     ObitInfoListPut (selfCal->info, "minFluxPSC", OBIT_float, dim, &ftemp, err);
+    ObitInfoListPut (selfCal->info, "minFluxASC", OBIT_float, dim, &ftemp, err);
     /* Minimum SNR */
-    ftemp = 3.0; dim[0] = dim[1]= dim[2] = 1;
-    ObitInfoListGetTest (myInput, "PeelSolInt", &type, dim, &ftemp);
+    ftemp = 3.0; dim[0] = dim[1] = dim[2] = 1;
+    ObitInfoListGetTest (myInput, "PeelSNRMin", &type, dim, &ftemp);
     ObitInfoListAlwaysPut(selfCal->info, "SNRMin", OBIT_float, dim, &ftemp);
-    ObitInfoListAlwaysPut(selfCal->info, "avgPol", OBIT_bool, dim, &Tr);
+    /* Average IF? */
+    btemp = FALSE; dim[0] = dim[1] = dim[2] = 1;
+    ObitInfoListGetTest (myInput, "PeelAvgIF", &type, dim, &btemp);
+    ObitInfoListAlwaysPut(selfCal->info, "avgIF", OBIT_bool, dim, &btemp);
+    /* Average Poln? */
+    btemp = FALSE; dim[0] = dim[1] = dim[2] = 1;
+    ObitInfoListGetTest (myInput, "PeelAvgPol", &type, dim, &btemp);
+    ObitInfoListAlwaysPut(selfCal->info, "avgPol", OBIT_bool, dim, &btemp);
+    /* reference antenna? */
+    jtemp = i; dim[0] = dim[1] = dim[2] = 1;
+    ObitInfoListGetTest (myInput, "PeelRefAnt", &type, dim, &jtemp);
+    ObitInfoListAlwaysPut(selfCal->info, "refAnt", OBIT_int, dim, &jtemp);
+    /* Always smooth */
     ObitInfoListAlwaysPut(selfCal->info, "doSmoo", OBIT_bool, dim, &Tr);
     /* Copy control info */
     ObitInfoListCopyList (myInput, selfCal->info, SCParms);
+
+    /* Link myClean display if given */
+    if (myClean->display) selfCal->display = ObitDisplayRef(myClean->display);
     
     /* Set vis vs baseline histogram */
     ObitUVSelfCalFluxHist(selfCal, scrUV, err);
@@ -429,6 +600,15 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     dim[0] = 1;dim[1] = 1;
     ObitInfoListAlwaysPut(myClean->info, "doBeam", OBIT_bool, dim, &Fl);
 
+    /* Delete CCs on peel image */
+    noParms = 0;
+    ver = 1;
+    CCTab = newObitTableCCValue ("Temp CC", (ObitData*)myClean->mosaic->images[peeled-1],
+				 &ver, OBIT_IO_ReadWrite, noParms, err);
+    ObitTableClearRows ((ObitTable*)CCTab, err); /* Remove the entries and redo */
+    CCTab = ObitTableCCUnref(CCTab);
+    if  (err->error) Obit_traceback_val (err, routine, myClean->mosaic->images[peeled-1]->name, peeled);
+
     /* reImage/Clean All*/
     Obit_log_error(err, OBIT_InfoErr, " ******  Reimage");
     ObitErrLog(err); 
@@ -485,6 +665,5 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
   
   return peeled;
 } /* end ObitUVPeelUtilPeel */
-
 
 /*----------------------Private functions---------------------------*/

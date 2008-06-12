@@ -221,21 +221,25 @@ FCminFlux                          Min. flux for field based cal. CLEAN
 **PARAM** float 1 **DEF** 1.0e20
 PeelFlux                           Min. flux for peeling
 **PARAM** int 1
-refAnt            0                Peel SC Reference antenna
+PeelRefAnt        0                Peel SC Reference antenna
 **PARAM** int 1  **DEF** 1
 PeelLoop                           Max. number of peeling SC loops
 **PARAM** float 1 **DEF** 5.0
-SNRMin           2.0               Min. allowed SNR in peel selfcal
+PeelSNRMin       2.0               Min. allowed SNR in peel selfcal
 **PARAM** float 1  **DEF** 1.0
 PeelSolInt        0.0              Peel SC Solution interval (min)
+**PARAM** str 4
+PeelType                           Peel Soln. Type: '  ', 'L1', 
+**PARAM** str 4 **DEF** A&P
+PeelMode                           Peel  Mode:'A&P', 'P', 'P!A',
 **PARAM** int 1  **DEF** 200
 PeelNiter                          Niter for peel.CLEAN
 **PARAM** float 1 **DEF** 1.0
 PeelMinFlux                        Minimum Peel Clean component (Jy)
 **PARAM** boo 1 **DEF** F
-AvgPol                             Avg. poln in peel self cal?
+PeelAvgPol                         Avg. poln in peel self cal?
 **PARAM** boo 1 **DEF** F
-AvgIF                              Avg. IFs in peel self cal?
+PeelAvgIF                          Avg. IFs in peel self cal?
 
 **PARAM** int 1  **DEF** 1
 prtLv             0                Print level in selfcal
@@ -565,13 +569,15 @@ to specify outlier fields (Catalog, Outlier*).
               than PeelFlux so that the source is properly centered in 
               its facet.
   PeelLoop....Maximum number of peeling self calibration loops
-  refAnt......Reference antenna number for Peel selfcal
-  SNRMin.. .  Min. allowed SNR in peeling self cal solution
+  PeelRefAnt..Reference antenna number for Peel selfcal
+  PeelSNRMin. Min. allowed SNR in peeling self cal solution
   PeelSolInt..Peel SC Solution interval (min)
+  PeelType....Peel SC Solution type '  ', 'L1'
+  PeelMode....Peel SC Solution mode:'A&P', 'P', 'P!A',
   PeelNiter...Max. number of components in Peel CLEAN
   PeelMinFlux.Min. Peel CLEAN flux density
-  AvgPol......Average Polarizations in Peel self calibration? 
-  AvgIF ......Average IFs in Peel self calibration? 
+  PeelAvgPol..Average Polarizations in Peel self calibration? 
+  PeelAvgIF ..Average IFs in Peel self calibration? 
 
                        Diagnostic displays
   prtLv.......Print level in selfcal, 0=>almost none, 5=> LOTS

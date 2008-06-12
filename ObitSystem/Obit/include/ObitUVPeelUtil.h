@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007                                               */
+/*;  Copyright (C) 2007-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -46,5 +46,10 @@
 /** Public: Peel strong source from UV data based on previous CLEAN */
 olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV, 
 			 ObitDConCleanVis *myClean, ObitErr* err);
+
+/** Public: Loop over sources to be peeled */
+void ObitUVPeelUtilLoop (ObitInfoList* myInput, ObitUV* inUV, 
+			 ObitDConCleanVis *myClean, 
+			 olong *nfield, olong **ncomp,  ObitErr* err);
 
 #endif /* OBITIUVPEELUTIL_H */ 

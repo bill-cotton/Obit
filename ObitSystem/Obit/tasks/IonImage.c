@@ -1754,11 +1754,8 @@ void doFieldImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 		   ObitDConCleanVis *myClean, olong *nfield, olong **ncomp, 
 		   ObitErr* err)
 {
-  ObitTableCC  *peelCCTable=NULL, *outCCTable=NULL;
   ObitInfoType type;
-  oint         noParms;
-  olong        ver;
-  olong         prtLv, peelfield, *peeled, i;
+  olong        prtLv;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat       autoCen, PeelFlux, ftemp;
   gboolean     Fl = FALSE, Tr = TRUE, doRestore, doFlatten, reimage;
@@ -1772,9 +1769,6 @@ void doFieldImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   if (err->error) return;
   g_assert (ObitInfoListIsA(myInput));
   g_assert (ObitUVIsA(inUV));
-
-  /* In case, free old ncomp */
-  if (*ncomp!=NULL) g_free(*ncomp); *ncomp = NULL;
 
   /* Don't restore and flatten before done */
   dim[0] = dim[1] = 1;
@@ -1843,56 +1837,9 @@ void doFieldImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
     autoCen = 1.0e20;  /* only once */
   } /* End auto center */
 
-  /* Need to peel  bright sources? */
-  peeled = g_malloc0(myClean->mosaic->numberImages*sizeof(olong));
-  while (myClean->peakFlux>PeelFlux) {
-    peelfield = ObitUVPeelUtilPeel (myInput, inUV, myClean, err);
-    if (err->error) Obit_traceback_msg (err, routine, myClean->name);
-    if (peelfield>0) {
-      peeled[peelfield-1] = 1;  /* keep track of peeled fields */
-    } else break;  
-  }
-
-  /* Loop appending components in CC Table 2 of peeled fields to Table 1 */
-  *nfield = myClean->mosaic->numberImages;  /* Keep track of components not peeled */
-  *ncomp = g_malloc0((*nfield)*sizeof(olong));
-  for (i=0; i<myClean->mosaic->numberImages; i++) {
-    /* Keep track of unpeeled components */
-    (*ncomp)[i] = myClean->skyModel->endComp[i];
-
-    if (peeled[i]<=0) continue;  /* ingnore fields not peeled */
-    /* Copy CCs from peeled table (CC 2)  to CC 1 on output image */
-    ver = 2;
-    noParms = 0;
-    peelCCTable = newObitTableCCValue ("Peeled CC", (ObitData*)myClean->mosaic->images[i],
-				       &ver, OBIT_IO_ReadOnly, noParms, 
-				       err);
-    /* Make sure  created */
-    if (peelCCTable==NULL) {
-      Obit_log_error(err, OBIT_Error, 
-		     "%s: No CC table 1 found on %s", routine, myClean->mosaic->images[i]->name);
-      return;
-    }
-    ver = 1;
-    outCCTable = newObitTableCCValue ("outCC", (ObitData*)myClean->mosaic->images[i],
-				      &ver, OBIT_IO_ReadWrite, peelCCTable->noParms, 
-				      err);
-    /* Make sure  object created */
-    if (outCCTable==NULL) {
-      Obit_log_error(err, OBIT_Error, 
-		     "%s: No CC table  found on %s", routine, 
-		     myClean->mosaic->images[i]->name);
-      return;
-    }
-
-    /* Append CCs */
-    ObitTableCCUtilAppend (peelCCTable, outCCTable, 1, 0, err);
-    if (err->error) Obit_traceback_msg (err, routine, myClean->name);
-    peelCCTable = ObitTableCCUnref(peelCCTable);
-    outCCTable  = ObitTableCCUnref(outCCTable);
-    
-  } /* end loop copying peelec CCs */
-  if (peeled) g_free(peeled); peeled = NULL;  /* Done with array */
+  /* Loop peeling sources */
+  ObitUVPeelUtilLoop (myInput, inUV, myClean, nfield, ncomp, err);
+  if (err->error) Obit_traceback_msg (err, routine, myClean->name);
 
   /* Restore if requested */
   doRestore = TRUE;
@@ -2055,8 +2002,8 @@ void IonImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "doFCal", "ionVer", "UpdateInt", "solInt", "nZern", "FitDist", "MaxDist", "MinPeak", 
     "MaxWt", "MaxQual", "MaxRMS", "MinRat", "FCNiter", "FCGain", "FCminFlux", 
     "seeing", "autoCen","PBCor", "antSize",
-    "PeelFlux", "refAnt", "SNRMin", "PeelSolInt", "PeelNiter", "PeelMinFlux",
-    "AvgPol", "AvgIF",
+    "PeelFlux", "PeelRefAnt", "PeelSNRMin", "PeelSolInt", "PeelNiter", "PeelMinFlux",
+    "PeelAvgPol", "PeelAvgIF", "PeelType", "PeelMode",
     NULL};
   gchar *routine = "IonImageHistory";
 
