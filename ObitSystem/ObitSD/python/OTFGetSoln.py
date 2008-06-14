@@ -245,6 +245,23 @@ def POTFGetSolnPARGain (inOTF, outOTF, err):
     Calibration parameters are on the inOTF info member.
     "calJy"     OBIT_float (*,1,1) Calibrator value in Jy per detector [def 1.0] .
                 Duplicates if only one given.
+
+    "doWate"    OBIT_boolean (1,1,1) If true determine Weights from RMS [def False]
+     "minSNR"    OBIT_float (1,1,1) Minimum SNR for acceptable cal (ratio cal/RMS)
+    If doWate is True then for each scan:
+       Remove variations in data, calculate cal delta and weight
+       from inverse variance of data.
+     Per detector:
+       1) Determined cal from averaging each segment and differencing transitions;
+       2) Corrects data for cal value
+       3) Fit polynomial (5th order) to data
+       4) Determine rms deviation
+       5) Clip points > 5 sigma from 0
+       6) Refit polynomial
+       7) redetermine rms deviation
+       8) Flag scans with weights with entries further than 10X low or
+          5X high from the median weight
+  
     returns OTFSoln table with solutions
     inOTF   = Python Obit OTF from which the solution is to be determined
               prior calibration/selection applied if requested

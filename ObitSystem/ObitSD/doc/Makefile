@@ -9,7 +9,7 @@
 #---------------------------------------------------
 #	 Process Tex/LaTeX files
 # get list of all document files (*.tex) files
-AllDoc = ObitSD.ps
+AllDoc = ObitSD.ps MustangObit.ps
 #
 # need this for the shell command syntax
 # May need to change these
@@ -29,6 +29,12 @@ ObitSD.ps: ObitSD.sty ObitSD.tex
 	$(LATEX) ObitSD
 	$(LATEX) ObitSD
 	$(DVIPS) -o ObitSD.ps ObitSD
+
+MustangObit.ps: MustangObit.tex
+	$(LATEX) MustangObit
+	$(LATEX) MustangObit
+	$(LATEX) MustangObit
+	$(DVIPS) -o MustangObit.ps MustangObit
 
 # always run as the dependencies are pretty fierce
 Doxygen:

@@ -155,4 +155,19 @@ $Key = beamOffset  Flt (2,71) # Beam offset, (cross el,elevation),  asec -9999.0
 $Key = BTime  Flt (1) # Time in sec to blank after cal switch
 2.50e-6
 
+Time stream filtering:
+1) First the data streams are time averaged using boxcar averaging
+   to the requested integration time.
+2) Remove jumps in baseline
+   Determines a 9 point running median and when there is a persistent
+   jump not associated with a cal  state change, then the following
+   data is adjusted by the difference.   Multiple jumps may be detected.
+3) Filter 1.4 Hz signal from refrigerators
+   If the requested averaging time is 50 or 100 msec, then a 
+   IIR notch filter is applied to the averaged data.
+   These filters use a third order Bessle bandstop filter between 
+   1.38 and 1.45 Hz. 
+   For other averaging times a notch filter using the 
+   ObitTimeFilter class is used to filter between 1.39 and 1.44 Hz.
+
 ----------------------------------------------------------------

@@ -3,7 +3,7 @@ import Image, ImageDesc, OSystem, OErr, FArray
 
 # Init Obit
 err=OErr.OErr()
-ObitSys=OSystem.OSystem ("MakeDBeam", 1, 103, 1, ["None"], 1, ["../FITSdata/"], 1, 0, err)
+ObitSys=OSystem.OSystem ("MakeDBeam", 1, 103, 1, ["None"], 1, ["./FITSdata/"], 1, 0, err)
 OErr.printErrMsg(err, "Error with Obit startup")
 
 # Files

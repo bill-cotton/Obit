@@ -4157,10 +4157,11 @@ static void PlotMBBL (olong npoly, ofloat *tpoly, ofloat *poly, ofloat *offset,
  * 2) Corrects data for cal value
  * 3) Fit polynomial (5th order) to data
  * 4) Determine rms deviation
- * 5) Clip points > 5 digma from 0
+ * 5) Clip points > 5 sigma from 0
  * 6) Refit polynomial
  * 7) redetermine rms deviation
- * 8) Flag entries further than 10X from the median weight
+ * 8) Flag scans with weights with entries further than 10X low or
+          5X high from the median weight
  * \param nDet        Number of detectors
  * \param nTime       Number of times
  * \param iCal        is Cal [nTime] 0 = cal off
