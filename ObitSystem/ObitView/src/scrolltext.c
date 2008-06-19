@@ -84,7 +84,8 @@ ScrollTextPtr ScrollTextMake (Widget Parent, char* Title)
 {
   ScrollTextPtr STextPtr;
   int loop;
-  Dimension text_width[5], text_height[5], scrollbar_width[5], butt_height[5];
+  Dimension text_width, text_height, scrollbar_width, butt_height;
+  int it[5];
   Widget form, DismissButton;
   XFontStruct *XFont;
   int value, increment, slider_size,page_increment;
@@ -138,12 +139,13 @@ ScrollTextPtr ScrollTextMake (Widget Parent, char* Title)
 		 (XtPointer)STextPtr);
   
   /* drawing area */
-  scrollbar_width[0] = 15;
-  text_width[0] = SCROLLBOX_WIDTH - scrollbar_width[0];
-  XtVaGetValues (DismissButton, XmNheight, &butt_height[0], NULL);
-  text_height[0] = SCROLLBOX_HEIGHT - butt_height[0];
-  STextPtr->TextDraw_wid = text_width[0];
-  STextPtr->TextDraw_hei = text_height[0];
+  scrollbar_width = 15;
+  text_width = SCROLLBOX_WIDTH - scrollbar_width;
+  XtVaGetValues (DismissButton, XmNheight, &it[0], NULL);
+  butt_height = (Dimension)it[0];
+  text_height = SCROLLBOX_HEIGHT - butt_height;
+  STextPtr->TextDraw_wid = text_width;
+  STextPtr->TextDraw_hei = text_height;
   value = 1;
   slider_size = 20;
   increment = 1;
@@ -153,8 +155,8 @@ ScrollTextPtr ScrollTextMake (Widget Parent, char* Title)
     XtVaCreateManagedWidget ("TextScrollBar", 
 			     xmScrollBarWidgetClass, 
 			     form,
-			     XmNheight,       text_height[0],
-			     XmNwidth,        scrollbar_width[0],
+			     XmNheight,       text_height,
+			     XmNwidth,        scrollbar_width,
 			     XmNmaximum,         200,
 			     XmNminimum,           1,
 			     XmNvalue,             1,
@@ -175,8 +177,8 @@ ScrollTextPtr ScrollTextMake (Widget Parent, char* Title)
   STextPtr->TextDraw = 
     XtVaCreateManagedWidget ("textdraw", xmDrawingAreaWidgetClass, 
 			     form, 
-			     XmNwidth,           text_width[0],
-			     XmNheight,          text_height[0],
+			     XmNwidth,           text_width,
+			     XmNheight,          text_height,
 			     XmNtopAttachment,   XmATTACH_FORM,
 			     XmNleftAttachment,  XmATTACH_FORM,
 			     XmNrightAttachment,  XmATTACH_WIDGET,
@@ -281,7 +283,8 @@ int ScrollTextFill (ScrollTextPtr STextPtr, TextFilePtr TFilePtr)
  */
 void ScrollTextInit (ScrollTextPtr STextPtr)
 {
-  Dimension cwid[5], chei[5];
+  Dimension cwid, chei;
+  int it[5];
   int number;
   int value, increment, slider_size,page_increment;
   
@@ -289,14 +292,16 @@ void ScrollTextInit (ScrollTextPtr STextPtr)
   
   /* find size */
   XtVaGetValues (STextPtr->TextDraw, /* get new size */
-		 XmNwidth,  &cwid[0],
-		 XmNheight, &chei[0],
+		 XmNwidth,  &it[0],
+		 XmNheight, &it[2],
 		 NULL);
-  STextPtr->TextDraw_hei = chei[0];
-  STextPtr->TextDraw_wid = cwid[0];
+  cwid = (Dimension)it[0];
+  chei = (Dimension)it[2];
+  STextPtr->TextDraw_hei = chei;
+  STextPtr->TextDraw_wid = cwid;
   
   /* number of lines shown*/
-  STextPtr->max_lines = (int)chei[0] / STextPtr->baseskip;
+  STextPtr->max_lines = (int)chei / STextPtr->baseskip;
   STextPtr->number = STextPtr->max_lines;
   
   /* set up for the expose callback to draw */
@@ -338,20 +343,23 @@ void ScrollTextInit (ScrollTextPtr STextPtr)
  */
 void ScrollTextBottom (ScrollTextPtr STextPtr)
 {
-  Dimension slider_size[5], slider_max[5];
+  Dimension slider_size, slider_max;
+  int it[5];
   if (!STextPtr) return; /* anybody home? */
 
   /* find slider size */
-  slider_size[0] = 0; slider_max[0] = 0;  
+  slider_size = 0; slider_max = 0;  
   XtVaGetValues (STextPtr->TextScrollBar,
-		 XmNsliderSize, &slider_size[0],
-		 XmNmaximum,    &slider_max[0],
+		 XmNsliderSize, &it[0],
+		 XmNmaximum,    &it[2],
 		 NULL);
+  slider_size = (Dimension)it[0];
+  slider_max  = (Dimension)it[2];
 
  /* need scroll bars? */
   if (STextPtr->num_lines > STextPtr->max_lines) {
     XmScrollBarSetValues (STextPtr->TextScrollBar,
-			  slider_max[0]-slider_size[0], 0, 0, 0, True);
+			  slider_max-slider_size, 0, 0, 0, True);
     
     STextPtr->first = STextPtr->num_lines-STextPtr->max_lines+1;
   }
@@ -442,7 +450,8 @@ void STextDismissButCB (Widget w, XtPointer clientData, XtPointer callData)
  */
 void STextResizeCB (Widget w, XtPointer clientData, XtPointer callData)
 {
-  Dimension cwid[5], chei[5];
+  Dimension cwid, chei;
+  int it[5];
   int number;
   int value, increment, slider_size,page_increment;
   ScrollTextPtr STextPtr = (ScrollTextPtr)clientData;
@@ -450,14 +459,16 @@ void STextResizeCB (Widget w, XtPointer clientData, XtPointer callData)
   
   /* find new size */
   XtVaGetValues (STextPtr->TextDraw, /* get new size */
-		 XmNwidth, &cwid[0],
-		 XmNheight, &chei[0],
+		 XmNwidth,  &it[0],
+		 XmNheight, &it[2],
 		 NULL);
-  STextPtr->TextDraw_hei = chei[0];
-  STextPtr->TextDraw_wid = cwid[0];
+  cwid = (Dimension)it[0];
+  chei = (Dimension)it[2];
+  STextPtr->TextDraw_hei = chei;
+  STextPtr->TextDraw_wid = cwid;
   
   /* new number of lines shown*/
-  STextPtr->max_lines = (int)chei[0] / STextPtr->baseskip;
+  STextPtr->max_lines = (int)chei / STextPtr->baseskip;
   STextPtr->number = STextPtr->max_lines;
   
   /* need scroll bars? */

@@ -71,13 +71,13 @@ void ZoomDisplay (ImageDisplay *IDdata, olong iXsize, olong iYsize, olong iXpos,
   
   /*  debug */
   /*
-    Dimension cwid[5],chei[5];
+    Dimension cwid,chei;
 
     XtVaGetValues (IDdata->canvas,
-    XmNwidth, &cwid[0],
-    XmNheight, &chei[0],
+    XmNwidth, &cwid,
+    XmNheight, &chei[,
     NULL);
-    fprintf (stderr," ZoomDisplay: canvas size: Width %d, Height %d\n",cwid[0],chei[0]);
+    fprintf (stderr," ZoomDisplay: canvas size: Width %d, Height %d\n",cwid,chei);
     fprintf (stderr," ZoomDisplay: iXpos %d, iYpos %d,  Width %d, Height %d\n",
     iXpos, iYpos, Width, Height);
   */
@@ -323,7 +323,8 @@ void ResetDisplay (ImageDisplay *IDdata)
 void SetDisplay (ImageDisplay* IDdata) 
 {
   olong iXHalf, iYHalf, inXZoom, inYZoom, iScrWid, iScrHei;
-  Dimension cwid[5], chei[5];
+  Dimension cwid, chei;
+  int it[5];
   olong iZoom;
   gchar *ZP = NULL;
   Display     *dpy = XtDisplay (IDdata->display);
@@ -351,12 +352,15 @@ void SetDisplay (ImageDisplay* IDdata)
   
   /*                    maximum display size */
   XtVaGetValues (IDdata->display,
-		 XmNwidth, &cwid[0],
-		 XmNheight, &chei[0],
+		 XmNwidth,  &it[0],
+		 XmNheight, &it[2],
 		 NULL);
+
+  cwid = (Dimension)it[0];
+  chei = (Dimension)it[2];
   /*     cwid = cwid - CONTROLWIDTH;  leave room for control panel */
-  IDdata->disp_wid = cwid[0];
-  IDdata->disp_hei = chei[0];
+  IDdata->disp_wid = cwid;
+  IDdata->disp_hei = chei;
   
   iZoom = IDdata->zoom; /* for convinence */
   
@@ -399,8 +403,8 @@ void SetDisplay (ImageDisplay* IDdata)
     {IDdata->disp_wid += iScrWid;  /* no scroll bars if no image */
     IDdata->disp_hei += iScrHei;} 
   /* leave at least the width of the scroll bars (SBAR_WIDTH) around the edge */
-  IDdata->disp_wid = min (IDdata->disp_wid, (olong)cwid[0]-sbar_width);
-  IDdata->disp_hei = min (IDdata->disp_hei, (olong)chei[0]-sbar_width);
+  IDdata->disp_wid = min (IDdata->disp_wid, (olong)cwid-sbar_width);
+  IDdata->disp_hei = min (IDdata->disp_hei, (olong)chei-sbar_width);
   /*                    display should have an even number  of rows */
   /*     IDdata->disp_hei = 2 * ((IDdata->disp_hei+1)/2); */
   
@@ -526,7 +530,7 @@ void PaintImage (ImageDisplay* IDdata)
 {
   olong nXDIB, nYDIB, iZoom, iSrcWid, iSrcHei, iXHalf, iYHalf;
   olong iXSize, iYSize, iXPos, iYPos, iXPage, iYPage;
-  Dimension cWidth[5], cHeight[5];
+  Dimension cWidth, cHeight;
   olong i, ch1;
   gchar TitleString[501], *cptr;
 
@@ -557,8 +561,8 @@ void PaintImage (ImageDisplay* IDdata)
 		  NULL);
   } /* end of label */
   
-  cWidth[0]  = IDdata->disp_wid;   /* current display size */
-  cHeight[0] = IDdata->disp_hei;
+  cWidth  = IDdata->disp_wid;   /* current display size */
+  cHeight = IDdata->disp_hei;
   
   nXDIB = image[CurImag].myDesc->inaxes[0];
   nYDIB = image[CurImag].myDesc->inaxes[1];
@@ -585,8 +589,8 @@ void PaintImage (ImageDisplay* IDdata)
   if (iZoom>1) {iYSize=iYSize*iZoom; iXSize=iXSize*iZoom;}
 
   /*  for negative zooms, iDisp* is set in SetDisplay */
-  iXSize = min (iXSize, (olong)cWidth[0]);
-  iYSize = min (iYSize, (olong)cHeight[0]);
+  iXSize = min (iXSize, (olong)cWidth);
+  iYSize = min (iYSize, (olong)cHeight);
   iXSize = max (iXSize, 1);
   iYSize = max (iYSize, 1);
   /* "page" size for scrolling */
@@ -752,7 +756,8 @@ ImageDisplay* MakeDisplay (Widget parent, Widget shell)
 {
   ImageDisplay *IDdata;     /* display data structure */
   olong          i;
-  Dimension     cwid[5], chei[5];
+  Dimension     cwid, chei;
+  int           it[5];
   olong          sbar_width = SBAR_WIDTH;
   
   IDdata = (ImageDisplay*) XtMalloc (sizeof (ImageDisplay));
@@ -760,14 +765,16 @@ ImageDisplay* MakeDisplay (Widget parent, Widget shell)
   /* set size */
   /*                    maximum display size */
   XtVaGetValues (parent,
-		 XmNwidth, &cwid[0],
-		 XmNheight, &chei[0],
+		 XmNwidth,  &it[0],
+		 XmNheight, &it[2],
 		 NULL);
-  cwid[0] = cwid[0] - CONTROLWIDTH; /* leave room for control panel */
-  /*  chei[0] = chei[0] - 40; */
+  cwid = (Dimension)it[0];
+  chei = (Dimension)it[2];
+  cwid = cwid - CONTROLWIDTH; /* leave room for control panel */
+  /*  chei = chei - 40; */
   
-  IDdata->disp_wid = cwid[0];
-  IDdata->disp_hei = chei[0];
+  IDdata->disp_wid = cwid;
+  IDdata->disp_hei = chei;
   
   /* save main window */
   IDdata->parent = parent;
