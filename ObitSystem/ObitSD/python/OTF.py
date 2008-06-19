@@ -842,7 +842,7 @@ def ResidCal (err, input=ResidCalInput):
              (solInt, minRMS, minEl, calJy)
        "Filter"  Additive terms from filters residuals to the model.
              (solInt, minEl)
-        "MultiBeam" Multibeam solution
+       "MultiBeam" Multibeam solution
              (solInt, minEl)
     minEl  = minimum elevation (deg)
     minRMS = Minimum RMS residual to solution
@@ -1114,7 +1114,7 @@ def makeImage (err, input=ImageInput):
             "beamNx" int scalar "X" size of Beam (pixels)
             "beamNy" int scalar "Y" size of Beam(pixels)
             "doScale" bool scalar If true, convolve/scale beam [def True]
-                      Only use this option is providing a dirty beam which already
+                      Only use False if providing a dirty beam which already
                       includes the effects of gridding.
             "deMode"  bool scalar Subtract image mode from image? [def False]
             "deBias"  bool scalar Subtract calibration bias from image? [def False]

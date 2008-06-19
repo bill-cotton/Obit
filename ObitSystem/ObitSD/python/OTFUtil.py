@@ -176,7 +176,7 @@ def PMakeImage (inOTF,  outImage, err, doBeam=True, Beam=None, Wt=None):
     "beamNx" int scalar "X" size of Beam (pixels)
     "beamNy" int scalar "Y" size of Beam (pixels)
     "doScale" bool scalar If true, convolve/scale beam [def True]
-              Only use this option is providing a dirty beam which already
+              Only use False if providing a dirty beam which already
               includes the effects of gridding.
     "deMode"  bool scalar Subtract image mode from image? [def False]
     "deBias"  bool scalar Subtract calibration bias from image? [def False]
@@ -211,7 +211,7 @@ def PMakeImage (inOTF,  outImage, err, doBeam=True, Beam=None, Wt=None):
         lWt = Wt   # Actual weight image given
     else:
         lWt = Image.Image("NoWt")  # Not given
-    Obit.ObitOTFUtilMakeImage(inOTF.me, outImage.me, doBeam, lbeam.me, lWt.me, err.me);
+    Obit.OTFUtilMakeImage(inOTF.me, outImage.me, doBeam, lbeam.me, lWt.me, err.me);
     # end PMakeImage
 
 
