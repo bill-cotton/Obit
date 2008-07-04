@@ -126,8 +126,11 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
 				ObitFArray *BeamPatch,
 				ObitErr *err);
 
-/** Public: Do minor cycle CLEANing. */
+/** Public: Do minor cycle BGC CLEANing. */
 gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err);
+
+/** Public: Do SDI CLEANing. */
+gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err);
 
 /** Public: Get results of CLEAN */
 olong ObitDConCleanPxListResult (ObitDConCleanPxList *in, olong *ncomp,

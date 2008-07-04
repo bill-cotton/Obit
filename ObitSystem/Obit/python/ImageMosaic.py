@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004,2005
+#  Copyright (C) 2004,2005,2008
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -190,6 +190,9 @@ def PSetImage (inImageM, number, image):
         raise TypeError,"inImageM MUST be a Python Obit ImageMosaic"
     if not Image.PIsA(image):
         raise TypeError,"array MUST be a Python Obit Image"
+    maximage = inImageM.Number
+    if not ((number>=0) and (number<maximage)):
+        raise RuntimeError,"number of of range [0,%d]"%(maximage-1)
     #
     Obit.ImageMosaicSetImage(inImageM.me, number, image.me, err.me)
     # end PSetImage
@@ -213,7 +216,7 @@ def PGetFullImage (inImageM, err):
     return out
     # end PGetFullImage
 
-def PSetFullImage (inImage, image):
+def PSetFullImage (inImageM, image):
     """ Replace the full field member Image in the Mosaic
 
     inImageM  = Python ImageMosaic object

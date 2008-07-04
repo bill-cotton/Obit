@@ -58,4 +58,6 @@ ofloat reuseFlux;
 /** autoCenter min flux density   */
 ofloat autoCen;
 /** Display server */
-ObitDisplay *display;;
+ObitDisplay *display;
+/** Copy of calibrated/weighted data if doing SDI clean */
+ObitUV *SDIdata;

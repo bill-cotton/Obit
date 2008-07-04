@@ -62,7 +62,7 @@ void  ObitDConCleanInit (gpointer in);
 /** Private: Deallocate members. */
 void  ObitDConCleanClear (gpointer in);
 
-/** Private: Set Beam patch, min. flux. */
+/** Private: Set Beam patch, min. flux, decide on SDI CLEAN. */
 void ObitDConCleanDecide (ObitDConClean* in, ObitErr *err);
 
 /** Private: Read Beam patch. */
@@ -363,7 +363,7 @@ void ObitDConCleanDeconvolve (ObitDCon *inn, ObitErr *err)
   /* Loop until Deconvolution done */
   done = FALSE;
   while (!done) {
-    /* Get image/beam statistics needed for this cycle */
+    /* Get image/beam statistics needed for this cycle, decide CLEAN type */
     inClass->ObitDConCleanPixelStats(in, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
@@ -419,6 +419,10 @@ void ObitDConCleanDeconvolve (ObitDCon *inn, ObitErr *err)
  *                                   If only one given it is used for all.
  * \li "Factor"  OBIT_float array  = CLEAN depth factor per field
  * \li "autoWindow" OBIT_boolean scalar = True if autoWindow feature wanted.
+ * \li "ccfLim"  OBIT_float        = Min. fraction of residual peak to CLEAN to
+ *                                   clipped to [0.0,0.9]
+ * \li "SDIGain" OBIT_float        = Fraction of pixels in the upper half of the pixel
+ *                                   histogram to trigger SDI mode. 
  * From Parent classes:
  * \li "Plane"   OBIT_long array    = Plane being processed, 1-rel indices of axes 3-?
  *                                   def (1,1,1,1,1)
@@ -505,6 +509,13 @@ void  ObitDConCleanGetParms (ObitDCon *inn, ObitErr *err)
   ObitInfoListGetTest(in->info, "autoWindow", &type, dim, &in->autoWindow);
   /* Set on window object */
   in->window->autoWindow = in->autoWindow;
+
+  /* Min fractional CLEAN */
+  ObitInfoListGetTest(in->info, "ccfLim", &type, dim, &in->ccfLim);
+  in->ccfLim = MAX (0.0, MIN (0.9, in->ccfLim)); /* to range */
+
+  /* SDI Trip level */
+  ObitInfoListGetTest(in->info, "SDIGain", &type, dim, &in->SDIGain);
 
 } /* end ObitDConCleanGetParms */
 
@@ -705,7 +716,7 @@ void ObitDConCleanPixelStats(ObitDConClean *in, ObitErr *err)
 			     in->window, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
-  /* Decide beamPatchSize, minFluxLoad */
+  /* Decide beamPatchSize, minFluxLoad, SDI Clean */
   ObitDConCleanDecide (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
   
@@ -879,8 +890,12 @@ gboolean ObitDConCleanSelect(ObitDConClean *in, ObitErr *err)
 			     in->window, in->BeamPatch, err);
   if (err->error) Obit_traceback_val (err, routine, in->name, done);
 
-  /* Clean */
-  done = ObitDConCleanPxListCLEAN (in->Pixels, err);
+  /* BGC or SDI Clean? */
+  if (in->doSDI) {
+    done = ObitDConCleanPxListSDI (in->Pixels, err);
+  } else {
+    done = ObitDConCleanPxListCLEAN (in->Pixels, err);
+  }
   if (err->error) Obit_traceback_val (err, routine, in->name, done);
 
   return done;
@@ -1490,15 +1505,18 @@ void ObitDConCleanInit  (gpointer inn)
   in->nfield    = 0;
   in->maxAbsRes = NULL;
   in->avgRes    = NULL;
-  in->CCver= 0;
-  in->bmaj = 0.0;
-  in->bmin = 0.0;
-  in->bpa  = 0.0;
-  in->niter = 0;
+  in->CCver     = 0;
+  in->bmaj      = 0.0;
+  in->bmin      = 0.0;
+  in->bpa       = 0.0;
+  in->niter     = 0;
   in->maxPixel     = 20000;
   in->minPatchSize = 100;
-  in->autoWindow   = FALSE;
   in->autoWinFlux  = -1.0e20;
+  in->ccfLim       = 0.0;
+  in->SDIGain      = 0.0;
+  in->doSDI        = FALSE;
+  in->autoWindow   = FALSE;
 
 } /* end ObitDConCleanInit */
 
@@ -1542,6 +1560,7 @@ void ObitDConCleanClear (gpointer inn)
  * of the brightest pixel value.
  * Output members are beamPatchSize, minFluxLoad and depend on the members
  * currentField, window, BeamHist and PixelHist being up to date.
+ * Member doSDI is set to TRUE iff SDI CLEAN is needed
  * If the histogram is too coarse (too many in top bin) then numberSkip
  * is set to decimate the residuals so that they will fit;
  * \param in   The object to deconvolve
@@ -1550,7 +1569,7 @@ void ObitDConCleanClear (gpointer inn)
 void ObitDConCleanDecide (ObitDConClean* in, ObitErr *err)
 {
   olong minPatch, maxPatch, Patch, i;
-  ofloat minFlux;
+  ofloat minFlux, fract;
   gchar *routine = "ObitDConCleanDecide";
 
   /* error checks */
@@ -1601,7 +1620,7 @@ void ObitDConCleanDecide (ObitDConClean* in, ObitErr *err)
   /* Find solution? */
   if (Patch>0) {
     in->beamPatchSize = Patch;
-    return;
+    goto doSDI;
   }
 
   /* Loop through histogram for lowest flux limit that fits */
@@ -1610,7 +1629,7 @@ void ObitDConCleanDecide (ObitDConClean* in, ObitErr *err)
      in->beamPatchSize = minPatch;
      in->minFluxLoad   = in->PixelHist->histMin + ((ofloat)(i+1)) * 
        ((in->PixelHist->histMax-in->PixelHist->histMin) / in->PixelHist->ncell);
-     return;
+     goto doSDI;
     }
   }
 
@@ -1625,10 +1644,41 @@ void ObitDConCleanDecide (ObitDConClean* in, ObitErr *err)
     MAX (1, in->maxPixel);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
-  /* Give warning */
-  if (in->prtLv>0) 
+  /* See if SDI CLEAN called for */
+ doSDI:
+  if (in->SDIGain>0.0) {
+    fract = (ofloat)in->PixelHist->hist[in->PixelHist->ncell/2] / MAX(1, in->PixelHist->hist[0]);
+    if (in->prtLv>1)
+      Obit_log_error(err, OBIT_InfoErr,"SDI fraction %f", fract);
+      
+    in->doSDI = fract>in->SDIGain;
+    if (in->doSDI) {
+      /* minFlux = in->PixelHist->histMax * MAX (0.3333, in->ccfLim) */
+      in->minFluxLoad = MAX (in->autoWinFlux, minFlux);
+      in->minFluxLoad = MAX (in->minFluxLoad, in->PixelHist->histMax * MAX (0.3333, in->ccfLim));
+      in->minFluxLoad = MAX (in->minFluxLoad, in->minFlux[in->currentField]);
+      in->numberSkip  = 0;
+      /* Find min. beam patch with exterior sidelobe <0.1 */
+      i = 0;
+      minFlux = 1.0;
+      while ((i<in->BeamHist->ncell) && (minFlux>0.1)) {
+	minFlux = ObitDConCleanBmHistPeak (in->BeamHist, i, err);
+	if (err->error) Obit_traceback_msg (err, routine, in->name);
+	i++;
+      }
+      in->beamPatchSize = i;
+    }
+  } else {
+    in->doSDI = FALSE;
+    /* Impose min fraction of initial residual */
+    in->minFluxLoad = MAX (in->minFluxLoad, in->PixelHist->histMax*in->ccfLim);
+  }
+
+  /* Give warning if skipping */
+  if ((in->numberSkip>=1) && (in->prtLv>0)) 
     Obit_log_error(err, OBIT_InfoWarn,"%s: Too many residuals, taking 1 of every  %d",
 		   routine, in->numberSkip+1);
+
 } /* end  ObitDConCleanDecide */
 
 /**

@@ -908,8 +908,8 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   if (ftemp<=0.0) itemp = MAX (1, itemp);
   ObitInfoListAlwaysPut (myInput, "NField", type, dim, &itemp);
 
-  /* If   NField=1 doFull = FALSE */
-  if (itemp==1) {
+  /* If   NField=1 and FOV not set, doFull = FALSE */
+  if ((itemp==1) && (ftemp<=0.0)) {
     btemp = FALSE; type = OBIT_bool; dim[0] = dim[1] = dim[2] = 1;
     ObitInfoListAlwaysPut (myInput, "doFull", type, dim, &btemp);
   }
@@ -1441,7 +1441,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   };
   gchar        *CLEANParms[] = {  /* Clean parameters */
     "CLEANBox", "autoWindow", "Gain", "minFlux", "Niter", "minPatch", "Beam", 
-    "Mode", "CCFilter", "maxPixel", "dispURL",
+    "Mode", "CCFilter", "maxPixel", "dispURL", "ccfLim", "SDIGain",
     NULL
   };
   olong MemCount, MemTotal; /* DEBUG */
@@ -2174,6 +2174,7 @@ void ImagerHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "doPol",  "doFull",  "Catalog", "OutlierDist",  "OutlierFlux", "OutlierSI",
     "FOV", "xCells", "yCells", "nx", "ny", "RAShift", "DecShift", "doRestore",
     "OutlierSize",  "CLEANBox", "Gain", "minFlux",  "Niter", "minPatch",
+    "ccfLim", "SDIGain",
     "Reuse", "autoCen", "Beam", "Cmethod", "CCFilter", "maxPixel", 
     "autoWindow", "subA", "maxSCLoop", "minFluxPSC", "minFluxASC",
     "refAnt", "solInt", "solType", "solMode", "WtUV", "avgPol", "avgIF", 

@@ -370,10 +370,12 @@ ObitDConCleanPxListCreate (gchar* name, ObitImageMosaic *mosaic,
  * \li "Factor"  OBIT_float array  = CLEAN depth factor per field
  *                                   If only one given it is used for all.
  * \li "fGauss"  OBIT_float array  = Gaussian size (deg) per field
- * \li "CCVer"   OBIT_long array    = CLEAN table version per field
+ * \li "CCVer"   OBIT_long array   = CLEAN table version per field
  *                                   If only one given it is used for all.
- * \li "prtLv"   OBIT_long          = message level  [def 2]
+ * \li "prtLv"   OBIT_long         = message level  [def 2]
  *               0=none, 1=summary, 2=normal, higher numbers for diagnostics
+ * \li "ccfLim"  OBIT_float        = Min. fraction of residual peak to CLEAN to
+ *                                   clipped to [0.0,0.9]
  * \param in  The Pixel list CLEAN object
  * \param err Obit error stack object.
  */
@@ -441,6 +443,10 @@ void  ObitDConCleanPxListGetParms (ObitDConCleanPxList *in, ObitErr *err)
   /* Print level */
   in->prtLv = 2;  /* default = normal */
   ObitInfoListGetTest(in->info, "prtLv", &type, dim, &in->prtLv);
+
+  /* Min fractional CLEAN */
+  ObitInfoListGetTest(in->info, "ccfLim", &type, dim, &in->ccfLim);
+  in->ccfLim = MAX (0.0, MIN (0.9, in->ccfLim)); /* to range */
 } /* end ObitDConCleanPxListGetParms */
 
 /**
@@ -666,9 +672,10 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
 {
   gboolean done = FALSE;
   olong iter, iresid, ipeak=0, field, iXres, iYres, beamPatch, iBeam, pos[2];
-  olong i, lpatch, ix, iy, irow, lastField=-1;
+  olong i, lpatch, irow, lastField=-1;
   ofloat peak, minFlux, factor, CCmin, atlim, xfac=1.0, resmax, xflux;
-  ofloat subval, *beam=NULL;
+  ofloat subval, ccfLim, *beam=NULL;
+  odouble totalFlux, *fieldFlux=NULL;
   gchar reason[51];
   ObitTableCCRow *CCRow = NULL;
   ObitImageDesc *desc = NULL;
@@ -704,11 +711,18 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
 
   /* Tell details */
   if (in->prtLv>1) {
-    Obit_log_error(err, OBIT_InfoErr,"Beam patch = %d cells, min. residual = %g Jy",
+    Obit_log_error(err, OBIT_InfoErr,"BGC CLEAN: Beam patch = %d cells, min. residual = %g Jy",
 		   2*beamPatch, in->minFluxLoad);
     Obit_log_error(err, OBIT_InfoErr," %d residuals loaded ",
 		   in->nPixel);
+    ObitErrLog(err);  /* Progress Report */
   }
+
+  /* Local accumulators for flux */
+  totalFlux = 0.0;
+  fieldFlux = g_malloc0(in->nfield*sizeof(odouble));
+  for (i=0; i<in->nfield; i++) fieldFlux[i] = 0.0;
+    
   /* CLEAN loop */
   while (!done) {
     
@@ -736,12 +750,13 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
     if (resmax < 0.0) {
       resmax = MAX (fabs(xflux), 1.0e-10);
       xfac = pow ((in->minFluxLoad / resmax), in->factor[field-1]);
+      ccfLim = resmax*in->ccfLim;  /* Fraction of peak limit */
     }
     
     /* Keep statistics */
     in->iterField[field-1]++;
-    in->fluxField[field-1] += subval;
-    in->totalFlux += subval;
+    fieldFlux[field-1] += subval;
+    totalFlux += subval;
     /* DEBUG 
        fprintf (stderr,"%s field %d flux %f total %f pos %d  %d\n",
        routine,  field, xflux, in->totalFlux, iXres, iYres);*/
@@ -749,14 +764,12 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
     /* Do subtraction */
     for (iresid=0; iresid<in->nPixel; iresid++) {
       /* Is this inside the Beam patch ? */
-      ix = in->pixelX[iresid];
-      iy = in->pixelY[iresid] ;
       if ((in->pixelFld[iresid]==field) &&
-	  (abs(ix-iXres) <= beamPatch) && 
-	  (abs(iy-iYres) <= beamPatch)) {
+	  (abs(in->pixelX[iresid]-iXres) <= beamPatch) && 
+	  (abs(in->pixelY[iresid]-iYres) <= beamPatch)) {
 	/* Index in beam patch array */
-	iBeam = (beamPatch + (iy - iYres)) * lpatch +
-	  (beamPatch + (ix - iXres));
+	iBeam = (beamPatch + (in->pixelY[iresid] - iYres)) * lpatch +
+	  (beamPatch + (in->pixelX[iresid] - iXres));
 	in->pixelFlux[iresid] -= subval * beam[iBeam];
       }
     }
@@ -831,11 +844,24 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
       g_snprintf (reason, 50, "Reached minimum autoWindow flux");
       break;  /* jump out of CLEAN loop */
     }
-    
+
+    /* Deep enough fraction of peak residual */
+    if (fabs(xflux)<ccfLim) {
+      g_snprintf (reason, 50, "Reached min fract of peak resid");
+      break;
+    }
+   
   } /* end CLEANing loop */
   
 
-    /* Loop over CC tables closing */
+   /* Keep statistics */
+  in->currentIter = iter;
+ /* Save accumulators for flux */
+  in->totalFlux += totalFlux;
+  for (i=0; i<in->nfield; i++) in->fluxField[i] += fieldFlux[i];
+  if (fieldFlux) g_free(fieldFlux);
+
+  /* Loop over CC tables closing */
   for (i=0; i<in->nfield; i++) {
     if (in->CCTable[i]->myStatus != OBIT_Inactive) {
       retCode = ObitTableCCClose (in->CCTable[i], err);
@@ -846,10 +872,7 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
   
     /* Cleanup */
   CCRow = ObitTableCCRowUnref(CCRow);  
-  
-  /* Keep statistics */
-  in->currentIter = iter;
-  
+   
   /* Tell about results */
   if (in->prtLv>1) {
     Obit_log_error(err, OBIT_InfoErr,"Clean stopped because: %s", reason);
@@ -868,6 +891,201 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
 
   return done;
 } /* end ObitDConCleanPxListCLEAN */
+
+/**
+ * Steer-Dewney-Ito-Greisen CLEAN on Pixel list
+ * Lifted from AIPS
+ * \param in    The Pixel list object 
+ * \param err   Obit error stack object.
+ * \return TRUE if hit limit of niter or min. flux density.
+ */
+gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
+{
+  gboolean done = FALSE;
+  olong iter, iresid, field, beamPatch, pos[2], lpatch, ipeak, iXres, iYres, iBeam;
+  olong lastField=-1, irow, i;
+  ofloat minFlux, xflux;
+  ofloat minVal=-1.0e20, sum, wt, mapLim, *beam=NULL;
+  odouble totalFlux, *fieldFlux=NULL;
+   gchar reason[51];
+  ObitTableCCRow *CCRow = NULL;
+  ObitImageDesc *desc = NULL;
+  ObitIOCode retCode;
+  gchar *routine = "ObitDConCleanPxListSDI";
+
+  /* error checks */
+  if (err->error) return done;
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* Check number of residuals - bail if none */
+  if (in->nPixel<=0) {
+    Obit_log_error(err, OBIT_InfoWarn,"%s NO Residuals to CLEAN in %s",
+		   routine, in->name);
+    return TRUE;
+  }
+
+   /* How many components already done? */
+  iter = MAX (0, in->currentIter);
+
+  /* Zero dirty beam values below 0.1 */
+  ObitFArrayClip (in->BeamPatch, 0.1, 1.1, 0.0);
+
+  /* Setup */
+  lpatch = in->BeamPatch->naxis[0];
+  beamPatch = (lpatch-1)/2;
+  pos[0] = pos[1] = 0;
+  beam = ObitFArrayIndex(in->BeamPatch, pos); /* Beam patch pointer */
+  mapLim  = in->minFluxLoad;
+
+  /* Adjust data array - amount in excess of mapLim */
+  for (iresid=0; iresid<in->nPixel; iresid++) {
+    if (in->pixelFlux[iresid]>mapLim) in->pixelFlux[iresid] -= mapLim;
+    else if (in->pixelFlux[iresid]<-mapLim) in->pixelFlux[iresid] += mapLim;
+    else in->pixelFlux[iresid] = 0.0;
+  } /* end loop over array */
+
+  /* Tell details */
+  if (in->prtLv>1) {
+    Obit_log_error(err, OBIT_InfoErr,"SDI CLEAN Beam patch = %d cells, CLEAN above = %g Jy",
+		   2*beamPatch, in->minFluxLoad);
+    Obit_log_error(err, OBIT_InfoErr," %d residuals loaded ",
+		   in->nPixel);
+    ObitErrLog(err);  /* Progress Report */
+  }
+
+  /* Local accumulators for flux */
+  totalFlux = 0.0;
+  fieldFlux = g_malloc0(in->nfield*sizeof(odouble));
+  for (i=0; i<in->nfield; i++) fieldFlux[i] = 0.0;
+    
+  /* Do outer loop over list */
+  for (ipeak=0; ipeak<in->nPixel; ipeak++) {
+    xflux = in->pixelFlux[ipeak];
+    if (fabs(xflux)<=0.0) continue;
+    iXres =  in->pixelX[ipeak];
+    iYres =  in->pixelY[ipeak];
+    field   = in->pixelFld[ipeak];
+    minFlux = in->minFlux[field-1];
+    
+    /* Determine weight factor for this pixel - 
+       dot product of beam and data array*/
+    sum = 0.0;
+    for (iresid=0; iresid<in->nPixel; iresid++) {
+      /* Is this inside the Beam patch ? */
+      if ((in->pixelFld[iresid]==field) &&
+	  (abs(in->pixelY[iresid]-iYres) <= beamPatch) && 
+	  (abs(in->pixelX[iresid]-iXres) <= beamPatch)) {
+	/* Index in beam patch array */
+	iBeam = (beamPatch + (in->pixelY[iresid] - iYres)) * lpatch +
+	  (beamPatch + (in->pixelX[iresid] - iXres));
+	sum += in->pixelFlux[iresid] * beam[iBeam];
+      }
+      if (in->pixelY[iresid]-iYres > beamPatch) break;/* No more in Y */
+    } /* end loop over array */
+    
+    /* Weight for this pixel */
+    if (sum!=0.0) wt = fabs(xflux/sum);
+    else wt = 1.0;
+    wt = MAX (0.001, MIN (0.5, wt));
+    xflux *= wt;
+    if (fabs(xflux)<=0.0) continue;
+    minVal = MAX (minVal, fabs(xflux)+mapLim);
+   
+    /* Keep statistics */
+    in->iterField[field-1]++;
+    fieldFlux[field-1] += xflux;
+    totalFlux += xflux;
+    
+    /* Write component to List */
+    /* Open table if not already open */
+    if (in->CCTable[field-1]->myStatus == OBIT_Inactive) {
+      retCode = ObitTableCCOpen (in->CCTable[field-1], OBIT_IO_ReadWrite, err);
+      if ((retCode != OBIT_IO_OK) || (err->error))
+	Obit_traceback_val (err, routine, in->name, done);
+    }
+    
+    /* Need Table Row - if different field then it may be different */
+    if (field!=lastField) CCRow = ObitTableCCRowUnref(CCRow);
+    lastField = field;
+    if (!CCRow) CCRow = newObitTableCCRow (in->CCTable[field-1]);
+    
+    /* Set value */
+    desc = in->mosaic->images[field-1]->myDesc;
+    /* What's in AIPS is a bit more complex and adds field offset from tangent */
+    CCRow->DeltaX = (iXres - desc->crpix[0]+1)*desc->cdelt[0];
+    CCRow->DeltaY = (iYres - desc->crpix[1]+1)*desc->cdelt[1];
+    CCRow->Flux = xflux;
+    /* May need Gaussian components */
+    if ((in->CCTable[field-1])->myDesc->dim[(in->CCTable[field-1])->parmsCol]<=0) {
+      if (in->circGaus[field-1]>0.0) {
+	CCRow->parms[0] = in->circGaus[field-1];
+	CCRow->parms[1] = in->circGaus[field-1];
+	CCRow->parms[2] = 0.0;
+	CCRow->parms[3] = 1;  /* type 1 = Gaussian */
+      } else { /* point */
+	CCRow->parms[0] = 0.0;
+	CCRow->parms[1] = 0.0;
+	CCRow->parms[2] = 0.0;
+	CCRow->parms[3] = 0;  /* type 0 = Point */
+      }
+    }
+    
+    irow = in->iterField[field-1];
+    retCode = ObitTableCCWriteRow (in->CCTable[field-1], irow, CCRow, err);
+    if ((retCode != OBIT_IO_OK) || (err->error)) 
+      Obit_traceback_val (err, routine, in->name, done);
+    
+    /* Test various stopping conditions */ 
+    iter++;  /* iteration count */
+    if (iter>=in->niter) break;
+     
+  } /* end loop over list */
+  
+  /* Keep statistics */
+  in->currentIter = iter;
+
+  /* Save accumulators for flux */
+  in->totalFlux += totalFlux;
+  for (i=0; i<in->nfield; i++) in->fluxField[i] += fieldFlux[i];
+  if (fieldFlux) g_free(fieldFlux);
+
+  /* Are we finished after this? */
+  done = (iter>=in->niter) || (fabs(minVal)<=minFlux);
+  g_snprintf (reason, 50, "Completed layer");
+  if (iter>=in->niter) g_snprintf (reason, 50, "Reached Iter. limit");
+  if (fabs(minVal)<=minFlux) g_snprintf (reason, 50, "Reached min. flux density");
+  
+  /* Loop over CC tables closing */
+  for (i=0; i<in->nfield; i++) {
+    if (in->CCTable[i]->myStatus != OBIT_Inactive) {
+      retCode = ObitTableCCClose (in->CCTable[i], err);
+      if ((retCode != OBIT_IO_OK) || (err->error))
+	Obit_traceback_val (err, routine, in->name, done);
+    }
+  } /* end loop closing tables */
+  
+  /* Cleanup */
+  CCRow = ObitTableCCRowUnref(CCRow);  
+  
+ 
+  /* Tell about results */
+  if (in->prtLv>1) {
+    Obit_log_error(err, OBIT_InfoErr,"Clean stopped because: %s", reason);
+    Obit_log_error(err, OBIT_InfoErr,"%s: Min. Flux density %f",
+		   routine, minVal);
+    if (in->nfield>1) /* Multiple fields? */
+      Obit_log_error(err, OBIT_InfoErr,"Field %d has %d CCs with %g Jy",
+		     field, in->iterField[field-1], 
+		     in->fluxField[field-1]);
+    
+    Obit_log_error(err, OBIT_InfoErr,"Total CLEAN %d CCs with %g Jy",
+		   in->currentIter, in->totalFlux);
+  }
+  /* Keep maximum abs residual */
+  in->maxResid = fabs(in->minFluxLoad);
+
+  return done;
+} /* end ObitDConCleanPxListSDI */
 
 /**
  * Tells results of CLEANing
@@ -981,7 +1199,7 @@ void ObitDConCleanPxListInit  (gpointer inn)
   in->CCTable   = NULL;
   for (i=0; i<IM_MAXDIM-2; i++) in->plane[i] = 1;
   in->autoWinFlux  = -1.0e20;
-
+  in->ccfLim    = 0.0;
 
 } /* end ObitDConCleanPxListInit */
 

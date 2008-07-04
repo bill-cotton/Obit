@@ -420,6 +420,13 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   if (in->doWeight) imagerClass->ObitUVImagerWeight (in->imager, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
+  /* If doing SDI Clean save copy of uvwork data */
+  if (in->SDIGain>0.0) {
+    in->SDIdata = newObitUVScratch (in->imager->uvwork, err);
+    in->SDIdata = ObitUVCopy (in->imager->uvwork, in->SDIdata, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+  }
+
   /* Create Pixel List if needed - has size changed? */
   if (in->Pixels && (in->Pixels->nfield!=in->mosaic->numberImages)) 
     in->Pixels = ObitDConCleanPxListUnref(in->Pixels);
@@ -700,11 +707,15 @@ void ObitDConCleanVisDefWindow(ObitDConClean *inn, ObitErr *err)
  */
 void ObitDConCleanVisSub(ObitDConCleanVis *in, ObitErr *err)
 {
-  olong i;
+  olong i, field, ver;
   ObitSkyModelType modelType = OBIT_SkyModel_Comps;
+  ObitTable *tempTable = NULL;
+  ObitTableCC *CCTable = NULL;
+  ObitIOCode retCode;
   gint32 dim[MAXINFOELEMDIM];
   ofloat ftemp;
   olong *itemp, jtemp, nfield;
+  gchar *tabType = "AIPS CC";
   gchar *routine = "ObitDConCleanVisSub";
 
   /* error checks */
@@ -723,12 +734,53 @@ void ObitDConCleanVisSub(ObitDConCleanVis *in, ObitErr *err)
   dim[0] = 1;dim[1] = 1;
   ObitInfoListAlwaysPut (in->skyModel->info, "minFlux", OBIT_float, dim, &ftemp);
 
+  /* IF this was an SDI Clean, compress CC's and restore data */
+  if (in->doSDI) {
+    /* restore initial data */
+    in->imager->uvwork = ObitUVCopy (in->SDIdata, in->imager->uvwork, err);
+    /* compress CCs */
+    if (in->currentField<=0) {
+      ObitSkyModelCompressCC (in->skyModel, err);  /* All */
+      nfield = in->mosaic->numberImages;
+      for (i=0; i<nfield; i++) in->skyModel->startComp[i] = 1;
+      for (i=0; i<nfield; i++) in->skyModel->endComp[i]   = 0;
+   } else { /* only in->currentField */
+
+      field = in->currentField-1;
+      /* Get CC table */
+      ver = in->skyModel->CCver[field];
+      tempTable = newObitImageTable (in->skyModel->mosaic->images[field],OBIT_IO_ReadOnly, 
+				     tabType, &ver, err);
+      if ((tempTable==NULL) || (err->error)) Obit_traceback_msg (err, routine, in->name);
+      CCTable = ObitTableCCConvert(tempTable);
+      tempTable = ObitTableUnref(tempTable);
+      
+      /* Merge */
+      retCode = ObitTableCCUtilMerge (CCTable, CCTable, err);
+      if ((retCode != OBIT_IO_OK) || (err->error))
+	Obit_traceback_msg (err, routine, in->skyModel->name);
+      in->Pixels->iterField[field] =  CCTable->myDesc->nrow;
+      in->skyModel->startComp[field] = 1;
+      for (i=0; i<nfield; i++) in->skyModel->startComp[i] = 1;
+      for (i=0; i<nfield; i++) in->skyModel->endComp[i]   = 0;
+      CCTable = ObitTableCCUnref (CCTable);
+   } /* End Merge field */
+    if (err->error) Obit_traceback_msg (err, routine, in->skyModel->name);
+  } /* end SDI */
+
   nfield = in->mosaic->numberImages;
   itemp = ObitMemAlloc(nfield*sizeof(olong));  /* temp. array */
   dim[0] = nfield;
   for (i=0; i<nfield; i++) itemp[i] = in->skyModel->startComp[i];
   ObitInfoListAlwaysPut(in->skyModel->info, "BComp", OBIT_long, dim, itemp);
-  for (i=0; i<nfield; i++) itemp[i] = in->Pixels->iterField[i];
+  if (in->doSDI) {
+    /* must subtract everything */
+    for (i=0; i<nfield; i++) itemp[i] = 1;
+    ObitInfoListAlwaysPut(in->skyModel->info, "BComp", OBIT_long, dim, itemp);
+    for (i=0; i<nfield; i++) itemp[i] = 0;
+  } else { /* normal CLEAN */
+    for (i=0; i<nfield; i++) itemp[i] = in->Pixels->iterField[i];
+  }
   ObitInfoListAlwaysPut(in->skyModel->info, "EComp", OBIT_long, dim, itemp);
   itemp = ObitMemFree(itemp);  /* Deallocate */
 
@@ -1534,6 +1586,7 @@ void ObitDConCleanVisInit  (gpointer inn)
   in->doBeam    = TRUE;
   in->quality   = NULL;
   in->display   = NULL;
+  in->SDIdata   = NULL;
   in->peakFlux  = -1000.0;
   in->reuseFlux = -1.0;
   in->autoCen   =  1.0e20;
@@ -1558,6 +1611,7 @@ void ObitDConCleanVisClear (gpointer inn)
   in->skyModel  = ObitSkyModelUnref(in->skyModel);
   in->quality   = ObitMemFree(in->quality);
   in->display   = ObitDisplayUnref(in->display);
+  in->SDIdata   = ObitUVUnref(in->SDIdata);
  
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

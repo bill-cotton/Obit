@@ -2059,6 +2059,7 @@ void ObitSkyModelCompressCC (ObitSkyModel *in, ObitErr *err)
     retCode = ObitTableCCUtilMerge (CCTable, CCTable, err);
     if ((retCode != OBIT_IO_OK) || (err->error))
       Obit_traceback_msg (err, routine, in->name);
+    CCTable = ObitTableCCUnref (CCTable);
 
     /* Use all components */
     in->startComp[field] = 1;

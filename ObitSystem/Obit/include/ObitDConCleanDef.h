@@ -71,7 +71,13 @@ olong CCver;
 ofloat *maxAbsRes;
 /** Average windowed residual per field, -1=> uninitialized */
 ofloat *avgRes;
-/** auto Window feature requested? */
-gboolean autoWindow;
 /** min. minor cycle flux for auto Window feature */
 ofloat autoWinFlux ;
+/** Min. fraction of residual peak to CLEAN to */
+ofloat ccfLim;
+/** SDI Trip level in pixel histogram, <=0 => no SDI CLEAN */
+ofloat SDIGain;
+/** Do SDI CLean? */
+gboolean doSDI;
+/** auto Window feature requested? */
+gboolean autoWindow;

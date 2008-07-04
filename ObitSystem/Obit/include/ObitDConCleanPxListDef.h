@@ -87,6 +87,8 @@ olong *pixelY;
 gshort *pixelFld;
 /** pixel flux density */
 ofloat *pixelFlux;
+/** Min. fraction of residual peak to CLEAN to */
+ofloat ccfLim;
 /** message level for deconvolution progress messages, 
     0=none, 1=summary, 2=normal, higher numbers for diagnostics */
 olong prtLv;

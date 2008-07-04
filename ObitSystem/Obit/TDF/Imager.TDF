@@ -175,6 +175,10 @@ minFlux  *                         Minimum Clean component (Jy)
 minPatch *        0.0              Min. BEAM half-width.
 **PARAM** int 1
 Niter    *         0.0             Maximum # of I CLEAN comp.
+**PARAM** float 1  
+ccfLim   *                         Min. fraction of residual peak to CLEAN
+**PARAM** float 1  
+SDIGain  *                         SDI trigger, <=0 -> no SDI Clean
 **PARAM** float 3
 Beam     *      -999.9             Clean beam (maj, min, PA)
 **PARAM** float 1  **DEF** 10.0
@@ -274,6 +278,8 @@ are "flattened" onto a single image.
    If multiple sources are being processed, some failures are allowed.
 In this case, the error messages will be displayed and the Status in
 the PS table set to "Failed  " rather than "Done    ".
+   Greisen variant of Steer-Dewdney-Ito CLEAN implemented via 
+SDIGain
 
 Adverbs:
   DataType..'FITS' or 'AIPS'  type of input
@@ -460,6 +466,18 @@ Adverbs:
   minPatch..Minimum half width of the portion of the beam
             which is used in the minor CLEAN. Default 500
   Niter.....CLEAN iteration limit.  0 => 1500
+  ccfLim....Limit CLEAN in each major cycle not to CLEAN below
+            ccfLim times the initial residual peak.
+            If using SDIGain set to the maximum value of 0.9.
+  SDIGain...Fraction of pixels in the upper half of the pixel
+            histogram to trigger SDI mode. <=0 -> no SDI CLEAN.
+            If this test is satisfied then all pixels above
+            a threshold determined will be the site of a new CLEAN
+            component with a value depending on the local density
+            of pixels above this threshold. 
+            This is the Greisen implementation of  Steer-Dewdney-Ito  
+            CLEAN.
+            A value of 0.1 is a reasonable initial value
   Beam......CLEAN restoring beam major, minor axis size in asec and
             the position angle.  If zeroes, fit beam.
   Reuse.....If >0 then each cycle of self cal after the first will
