@@ -357,8 +357,8 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
 {
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
-  ofloat temp, xCells, yCells, *fptr, farr[10];
-  olong   itemp, *iptr;
+  ofloat temp, xCells, yCells, farr[10], *fptr;
+  olong   itemp, *iptr, nfield;
   gboolean gotIt;
   gchar *routine = "ObitUVWeightInput";
 
@@ -395,6 +395,7 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
   }
   /* Should be odd */
   in->nvGrid = ((in->nvGrid-1)/2) * 2 + 1;
+  nfield = dim[0];   /* Number of fields */
   
   /* Image cell size */
   if (!ObitInfoListGetP(uvdata->info, "xCells", &type, dim, (gpointer*)&fptr)) {
@@ -402,14 +403,14 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
 		   "%s: MUST define cell spacing for %s", routine, uvdata->name);
     return;
   }
-  xCells = (*fptr)/3600.0;
+  xCells = (fptr[0])/3600.0;
 
   if (!ObitInfoListGetP(uvdata->info, "yCells", &type, dim, (gpointer*)&fptr)) {
     Obit_log_error(err, OBIT_Error, 
 		   "%s: MUST define cell spacing for %s", routine, uvdata->name);
     return;
   }
-  yCells = (*fptr)/3600.0;
+  yCells = (fptr[0])/3600.0;
 
   /* WtBox */
   itemp = 0;
@@ -948,7 +949,7 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
   olong ivis, nvis, ifreq, nfreq, iu, iv, lGridRow, lGridCol=0;
   olong istok, nstok;
   olong ifq, iif, nif, loFreq, hiFreq;
-  ofloat *grid, *u, *v, *w, *vis, *vvis, *fvis, *ifvis, *wt;
+  ofloat *grid=NULL, *u, *v, *w, *vis, *vvis, *fvis, *ifvis, *wt;
   ofloat tape, tfact, inWt, outWt, guardu, guardv, uf, vf, minWt;
   ofloat ucell, vcell, uucell, vvcell;
   olong pos[] = {0,0,0,0,0};
@@ -1085,7 +1086,7 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
 	      grid = ObitFArrayIndex (in->wtGrid, pos); /* pointer in weight grid */
 	      
 	      /* zero weight if not in grid */
-	      if (grid==NULL) {
+	      if ((grid==NULL) || (fabs(*grid)==0.0)) {
 		*wt = 0.0;
 	      } else {
 		/* Make weighting correction */

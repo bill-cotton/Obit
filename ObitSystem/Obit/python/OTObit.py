@@ -266,7 +266,7 @@ Note: these dict are independent of the underlying data structures.
 # Interactive routines to Obit use from ObitTalk
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2005-2007
+#  Copyright (C) 2005-2008
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -1590,6 +1590,9 @@ def imtab(inImage, filename, outDisk, err, fract=None, quant=None, \
     outImage = Image.newPFImage("FITS Image DATA", filename, outDisk, False, err)
     if err.isErr:
         OErr.printErrMsg(err, "Error creating FITS data")
+    # Check for valid pixels
+    if inImage.Desc.Dict["maxval"]<=inImage.Desc.Dict["minval"]:
+        fract=None; quant=None
     # Copy
     if fract or quant:
         Image.PCopyQuantizeFITS (inImage, outImage, err, fract=fract, quant=quant)

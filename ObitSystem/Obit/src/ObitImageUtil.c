@@ -1674,8 +1674,8 @@ void ObitImageUtilImagParm (ofloat MaxBL, ofloat MaxW,
   /* Set values if not defined */
   /* Cell spacing based on MAXBL */
   if (*Cells<=0.0) {
-    /* Maximum fringe spacing in asec */
-    fs = RAD2AS / MaxBL;
+    /* Maximum fringe spacing in asec - fudge a bit to avoid weighting problem */
+    fs = RAD2AS / (MaxBL*1.0001);
     *Cells = fs / 4.0;
   }
   

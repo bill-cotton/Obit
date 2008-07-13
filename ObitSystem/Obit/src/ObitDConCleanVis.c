@@ -714,7 +714,7 @@ void ObitDConCleanVisSub(ObitDConCleanVis *in, ObitErr *err)
   ObitIOCode retCode;
   gint32 dim[MAXINFOELEMDIM];
   ofloat ftemp;
-  olong *itemp, jtemp, nfield;
+  olong *itemp, jtemp, nfield=0;
   gchar *tabType = "AIPS CC";
   gchar *routine = "ObitDConCleanVisSub";
 
@@ -818,8 +818,9 @@ gboolean ObitDConCleanVisPickNext(ObitDConCleanVis *in, ObitErr *err)
   if (err->error) return done;
   g_assert (ObitDConCleanVisIsA(in));
 
-  /* Check if reached max number of components */
-  if (in->Pixels->currentIter >= in->Pixels->niter) return done;
+  /* Check if reached max number of components and some done */
+  if ((in->Pixels->currentIter >= in->Pixels->niter) && 
+      (in->Pixels->currentIter>0)) return done;
 
   fresh = ObitMemAlloc0(in->nfield*sizeof(gboolean));
   for (i=0; i<in->nfield; i++) fresh[i] = FALSE;
@@ -838,6 +839,9 @@ gboolean ObitDConCleanVisPickNext(ObitDConCleanVis *in, ObitErr *err)
       fresh[i] = TRUE;
     }
   } /* end loop initializing fields */
+
+  /* Check if reached max number of components */
+  if (in->Pixels->currentIter >= in->Pixels->niter) return done;
 
   /* Ignore fields already known to be finished, see if all done */
   done = TRUE;
