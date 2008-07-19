@@ -1051,6 +1051,8 @@ IslandList* Islands(ObitFArray *data, ofloat cutt)
   
     /* Loop over row */
     for (i=0; i<nx; i++) {
+      /* check if even close to fblank - rounding can screw up 32 bit integers */
+      if (fabs(row[i]-fblank)<0.00001*fblank) continue;
 
       /* Is point above cutoff? */
       if ((row[i] < cutt)  ||  (row[i] == fblank)) {
@@ -1077,15 +1079,17 @@ IslandList* Islands(ObitFArray *data, ofloat cutt)
 	
 	/* Totally new island */
       } else {
-	curr[i] = islands->maxIndex + 1;
-	blc[0] = i; blc[1] = j;
-	trc[0] = i; trc[1] = j;
-	elem = newIslandElem (curr[i], row[i], blc, trc);
-	IslandListAppend (islands, elem); /* add to list*/
+	if (row[i]!=fblank) {
+	  curr[i] = islands->maxIndex + 1;
+	  blc[0] = i; blc[1] = j;
+	  trc[0] = i; trc[1] = j;
+	  elem = newIslandElem (curr[i], row[i], blc, trc);
+	  IslandListAppend (islands, elem); /* add to list*/
+	}
       }
 
       /* New addition to old island */
-      if (curr[i] != 0) {
+      if ((curr[i] != 0) && (row[i]!=fblank)) {
 	IslandListExpand (islands, curr[i], row[i], i, j);
       }
     } /* end loop over row */

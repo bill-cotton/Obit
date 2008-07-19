@@ -29,6 +29,7 @@
 #include "ObitTableMFUtil.h"
 #include "ObitPosLabelUtil.h"
 #include "ObitPBUtil.h"
+#include "ObitUV.h"
 #include "ObitUVDesc.h"
 #include "ObitFInterpolate.h"
 
@@ -71,6 +72,7 @@ void ObitTableMFRegions2MF (ObitTableMF *MFTable, ObitFitRegionList *regList,
   ofloat fblank = ObitMagicF();
   ofloat beamarea, cells;
   ofloat bmaj, bmin, bpa, ebmaj, ebmin, ebpa, cbmaj, cbmin, cbpa, dgau[3][3];
+  gboolean bad;
   gchar *regname=NULL;
   gchar *routine = "ObitTableMFRegions2MF";
 
@@ -170,9 +172,14 @@ void ObitTableMFRegions2MF (ObitTableMF *MFTable, ObitFitRegionList *regList,
       row->PixelMinorAxis = reg->models[im]->parms[1];
       row->PixelPosAngle  = reg->models[im]->parms[2] * RAD2DG;
 
+      /* Reject screwy fits */
+      bad = FALSE;
+      bad = fabs(reg->peakResid) > 2.0*reg->peak;
+      bad = bad || fabs(reg->RMSResid) > 2.0*reg->peak;
+
       /* Write row */
       irow = -1;
-      ObitTableMFWriteRow (MFTable, irow, row, err);
+      if (!bad) ObitTableMFWriteRow (MFTable, irow, row, err);
       if (err->error) Obit_traceback_msg (err, routine, MFTable->name);
     } /* end loop over models */
   } /* end loop over regions */
@@ -213,7 +220,7 @@ void ObitTableMF2VL (ObitTableMF *MFTable, ObitTableVL *VLTable,
   olong i, irow, orow;
   ofloat pbf, asize, Gaus[3], fblank = ObitMagicF();
   ofloat beamarea, cells, IRMS, QRMS, URMS, QCen, UCen, PFlux;
-  gboolean doRMSbox, doPBCorr, GetQU, doJinc;
+  gboolean doRMSbox, doPBCorr, GetQU, doJinc, badGain;
   ofloat pixel[2];
   odouble jd, ra, dec, pos[2], zz, dist, raPnt, decPnt, Freq;
   gchar *fieldName, *today;
@@ -363,6 +370,10 @@ void ObitTableMF2VL (ObitTableMF *MFTable, ObitTableVL *VLTable,
       else pbf = 1.0e-20;
     } else pbf = 1.0;  /* No correction */
     
+    /* PB Gain out of bounds? (> 5% */
+    badGain = pbf > 20.0;
+    if (badGain) pbf = 1.0;
+
     /* Got Stokes? */
     if (GetQU) { 
       pixel[0] = MFrow->PixelCenterX; 
@@ -415,9 +426,9 @@ void ObitTableMF2VL (ObitTableMF *MFTable, ObitTableVL *VLTable,
     VLrow->JDProcess = jd;
     strncpy (VLrow->Field, fieldName, 8);
     
-    /* Write row */
+    /* Write row - don't write if bad gain */
     orow = -1;
-    ObitTableVLWriteRow (VLTable, orow, VLrow, err);
+    if (!badGain) ObitTableVLWriteRow (VLTable, orow, VLrow, err);
     if (err->error) goto cleanup;
   } /* end loop over  MF table */
 
@@ -750,3 +761,4 @@ static ofloat RMSbox (ObitFArray *Data, ofloat pixel[2], olong RMSsize,
   Box = ObitFArrayUnref(Box);  /* Cleanup */
   return out;
 } /* end RMSbox */
+
