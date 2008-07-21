@@ -170,7 +170,7 @@ void ObitPlotInitPlot (ObitPlot* in, gchar *output, olong color,
 /****************** plplot implementation *************************/
 #ifdef HAVE_PLPLOT  /* Only if plplot available */
   gchar *dev=NULL, *file=NULL;
-  PLINT r, g, b;
+  PLINT r, g, b, lcolor;
 #endif /* end HAVE_PLPLOT */
 
 /****************** pgplot implementation *************************/
@@ -210,13 +210,14 @@ void ObitPlotInitPlot (ObitPlot* in, gchar *output, olong color,
     if (file) g_free(file);
   }
   /* Set background color */
-  plgcol0(MAX(0, MIN(15,color)), &r, &g, &b);
+  lcolor = (PLINT)color; 
+  plgcol0(MAX(0, MIN(15,lcolor)), &r, &g, &b);
   plscolbg(r,g,b);
 
   plinit();   /* Init PLplot - it will ask if output not specified */
 
-  /* Reset black as color 0 */
-  plscolbg(0,0,0);
+  /* Reset black as color 0
+  plscolbg(0,0,0); apparently not */
 #endif /* HAVE_PLPLOT */
 
 /****************** pgplot implementation *************************/

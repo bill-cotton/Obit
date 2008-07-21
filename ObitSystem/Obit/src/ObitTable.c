@@ -718,6 +718,7 @@ ObitIOCode ObitTableClose (ObitTable *in, ObitErr *err)
   g_assert (ObitIsA((Obit*)in, &myClassInfo));
   /* Something going on? */
   if (in->myStatus == OBIT_Inactive) return OBIT_IO_OK;
+  if (in->myIO == NULL) return OBIT_IO_OK;
 
   /* flush buffer if writing */
   if (((in->myIO->access==OBIT_IO_ReadWrite) || 

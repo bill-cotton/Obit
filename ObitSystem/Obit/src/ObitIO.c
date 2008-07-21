@@ -312,6 +312,7 @@ ObitIOCode ObitIOClose (ObitIO *in, ObitErr *err)
   /* error checks */
   g_assert (ObitErrIsA(err));
   if (err->error) return retCode;
+  if (in==NULL) return OBIT_IO_OK;
   g_assert (ObitIsA(in, &myClassInfo));
   /* Something going on? */
   if (in->myStatus == OBIT_Inactive) return OBIT_IO_OK;

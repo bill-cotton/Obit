@@ -888,6 +888,7 @@ ObitIOCode ObitImageClose (ObitImage *in, ObitErr *err)
   g_assert (ObitIsA((Obit*)in, &myClassInfo));
   /* Something going on? */
   if (in->myStatus == OBIT_Inactive) return OBIT_IO_OK;
+  if (in->myIO == NULL) return OBIT_IO_OK;
   retCode = OBIT_IO_OK;
 
   /* Any actual I/O? */
