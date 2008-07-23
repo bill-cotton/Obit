@@ -237,7 +237,7 @@ def PPBCorr (inImage, pntImage, outImage, err,
     if len(outPlane) != 5:
         raise TypeError,"outPlane must have 5 elements"
     #
-    Obit.ImageUtilPBCorr(inImage.me, outImage.me, outImage.me,
+    Obit.ImageUtilPBCorr(inImage.me, pntImage.me, outImage.me,
                          inPlane, outPlane, antSize, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error making primary beam correction")
