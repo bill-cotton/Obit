@@ -239,6 +239,38 @@ ObitUVImagerIon* ObitUVImagerIonCreate (gchar* name, ObitUV *uvdata, ObitErr *er
 } /* end ObitUVImagerIonCreate */
 
 /**
+ * Creates an ObitUVImagerIon given an ObitUV with control information
+ * and a previously existing ImageMosaic
+ * The output ImageMosaic member is created
+ * \param name   An optional name for the object.
+ * \param uvdata ObitUV object with info member containng the output image
+ *               specifications and all processing parameters.
+ * \param mosaic ImageMosaic to use
+ * \param err Obit error stack object.
+ * \return the new object.
+ */
+ObitUVImagerIon* ObitUVImagerIonCreate2 (gchar* name, ObitUV *uvdata, 
+					 ObitImageMosaic *mosaic, ObitErr *err)
+{
+  ObitUVImagerIon* out=NULL;
+
+  /* Error checks */
+  if (err->error) return out;
+  g_assert(ObitUVIsA(uvdata));
+
+  /* Create basic structure */
+  out = newObitUVImagerIon (name);
+
+  /* Save uvdata */
+  out->uvdata = ObitUVRef(uvdata);
+
+  /* Save mosaic */
+  out->mosaic = ObitImageMosaicRef(mosaic);
+
+  return out;
+} /* end ObitUVImagerIonCreate2 */
+
+/**
  * Apply weighting to uvdata and write to uvwork member
  * \param in  The input object
  * \param err Obit error stack object.
@@ -483,7 +515,8 @@ static void ObitUVImagerIonClassInfoDefFn (gpointer inClass)
   theClass->ObitClone     = NULL;
   theClass->ObitClear     = (ObitClearFP)ObitUVImagerIonClear;
   theClass->ObitInit      = (ObitInitFP)ObitUVImagerIonInit;
-  theClass->ObitUVImagerCreate = NULL;
+  theClass->ObitUVImagerCreate = (ObitUVImagerCreateFP)ObitUVImagerIonCreate;
+  theClass->ObitUVImagerCreate2= (ObitUVImagerCreate2FP)ObitUVImagerIonCreate2;
   theClass->ObitUVImagerWeight = (ObitUVImagerWeightFP)ObitUVImagerIonWeight;
   theClass->ObitUVImagerImage  = (ObitUVImagerImageFP)ObitUVImagerIonImage;
 

@@ -240,6 +240,9 @@ void ObitUVImagerIonClone (ObitUVImagerIon *in, ObitUVImagerIon *out, ObitErr *e
 /** Public: Create/initialize ObitUVImagerIon structures */
 ObitUVImagerIon* ObitUVImagerIonCreate (gchar* name, ObitUV *uvdata, ObitErr *err);
 
+/** Public: Create/initialize ObitUVImager structures given mosaic */
+ObitUVImagerIon* ObitUVImagerIonCreate2 (gchar* name, ObitUV *uvdata, 
+					 ObitImageMosaic *mosaic, ObitErr *err);
 /** Public: Weight data */
  void ObitUVImagerIonWeight (ObitUVImager *in, ObitErr *err);
 

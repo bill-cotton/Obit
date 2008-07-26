@@ -1338,9 +1338,10 @@ ObitIOUVFITSWriteDescriptor (ObitIOUVFITS *in, ObitErr *err)
   gint32 nkey, dim[MAXINFOELEMDIM];
   union blobEquiv {
     gchar    s[21];
-    double   d;
-    float    f;
+    odouble   d;
+    ofloat    f;
     gboolean b;
+    oint     o;
     olong    i;
   } blob;
  gchar *routine = "ObitIOUVFITSWriteDescriptor";
@@ -1617,9 +1618,12 @@ ObitIOUVFITSWriteDescriptor (ObitIOUVFITS *in, ObitErr *err)
       fits_update_key_str (in->myFptr, (char*)keyName, (char*)blob.s, (char*)commnt, 
 			   &status);
     } else if (keyType==OBIT_oint) { 
+      fits_update_key_lng (in->myFptr, (char*)keyName, (long)blob.o, (char*)commnt, 
+			   &status);
+     } else if (keyType==OBIT_long) { 
       fits_update_key_lng (in->myFptr, (char*)keyName, (long)blob.i, (char*)commnt, 
 			   &status);
-    } else if (keyType==OBIT_bool) { 
+   } else if (keyType==OBIT_bool) { 
       fits_update_key_log (in->myFptr, (char*)keyName, (int)blob.b, (char*)commnt, 
 			   &status);
     }

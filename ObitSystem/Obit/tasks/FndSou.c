@@ -416,7 +416,7 @@ ObitInfoList* defaultInputs(ObitErr *err)
   strTemp = "undefn";
 
   /* input FITS file name */
-  g_snprintf (tname, 50, "inFITS");
+  g_snprintf (tname, 50, "inFile");
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, tname, OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
@@ -450,7 +450,7 @@ ObitInfoList* defaultInputs(ObitErr *err)
   /* Default output */
   /* FITS file name */
   dim[0] = strlen (strTemp); dim[1] = 1;
-  ObitInfoListPut (out, "outFITS", OBIT_string, dim, strTemp, err);
+  ObitInfoListPut (out, "outFile", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
   
   /* AIPS file name */
@@ -620,7 +620,7 @@ void FndSouGetImage(ObitInfoList *myInput, ObitErr *err)
   } else if (!strncmp (tname, "FITS", 4)) {  /* FITS input */
     /* input FITS file name */
     for (j=0; j<128; j++) inFile[j] = 0;
-        g_snprintf (tname, 100, "inFITS");
+        g_snprintf (tname, 100, "inFile");
     ObitInfoListGet(myInput, tname, &type, dim, inFile, err);
     if (err->error) Obit_traceback_msg (err, routine, routine);
     
@@ -702,7 +702,7 @@ void FndSouGetImage(ObitInfoList *myInput, ObitErr *err)
       /* Output image */ 
       /* FITS file name */
       for (j=0; j<128; j++) inFile[j] = 0;
-      ObitInfoListGet(myInput, "outFITS", &type, dim, inFile, err);
+      ObitInfoListGet(myInput, "outFile", &type, dim, inFile, err);
       if (err->error) Obit_traceback_msg (err, routine, routine);
       ObitTrimTrail(inFile);  /* remove trailing blanks */
      
@@ -754,7 +754,7 @@ void doHistory (ObitInfoList *myInput, ObitImage *inImage,
   ObitHistory *inHistory=NULL, *outHistory=NULL;
   gchar        hicard[81];
   gchar        *hiEntries[] = {
-    "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq", "inFITS",
+    "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq", "inFile",
     "BLC", "TRC", "doVL", "doResid", "NGauss", "CutOff",
     "Retry", "Sort", "doMult", "doWidth", "Gain", "Parms", "RMSsize",
     NULL};

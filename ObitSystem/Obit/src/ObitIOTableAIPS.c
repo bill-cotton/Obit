@@ -1040,6 +1040,7 @@ ObitIOCode ObitIOTableAIPSWriteDescriptor (ObitIOTableAIPS *in, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   AIPSint controlBlock[256], record[256];
   olong i, j, k, ip, ncol, icol, ndo, maxkey, ikey;
+  oint oitemp[4]={0,0,0,0};
   olong damn, kkol;
   olong  titleRec, unitRec, keyRec, nrec;
   ObitInfoType keyType;
@@ -1205,7 +1206,12 @@ ObitIOCode ObitIOTableAIPSWriteDescriptor (ObitIOTableAIPS *in, ObitErr *err)
 	for (k=0; k<8; k++) if (!g_ascii_isprint(ctemp[k])) ctemp[k]=' ';
 	record[ip+4] = 3;
       }
-      else if (keyType==OBIT_long)    record[ip+4] = 4;
+      else if (keyType==OBIT_long) { /* May have to convert long->oint */
+	record[ip+4] = 4;
+	oitemp[0] = (oint)*(olong*)blob;
+	g_memmove ((gchar*)&record[ip+2], oitemp, 8); blob[8] = 0;
+      }
+      else if (keyType==OBIT_long)   record[ip+4] = 4;
       else if (keyType==OBIT_long)   record[ip+4] = 4;
       else if (keyType==OBIT_oint)   record[ip+4] = 4;
       else if (keyType==OBIT_bool)   record[ip+4] = 5;

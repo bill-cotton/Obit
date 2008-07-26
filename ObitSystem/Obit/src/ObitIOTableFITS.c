@@ -1280,9 +1280,10 @@ ObitIOTableFITSWriteDescriptor (ObitIOTableFITS *in, ObitErr *err)
   ObitInfoType keyType;
   union blobEquiv {
     gchar    s[21];
-    double   d;
-    float    f;
+    odouble  d;
+    ofloat   f;
     gboolean b;
+    oint     o;
     olong    i;
   } blob;
   gchar *routine = "ObitIOTableFITSWriteDescriptor";
@@ -1452,6 +1453,9 @@ ObitIOTableFITSWriteDescriptor (ObitIOTableFITS *in, ObitErr *err)
       fits_update_key_str (in->myFptr, (char*)keyName, (char*)blob.s, (char*)commnt, 
 			   &status);
     } else if (keyType==OBIT_oint) { 
+      fits_update_key_lng (in->myFptr, (char*)keyName, (long)blob.o, (char*)commnt, 
+			   &status);
+    } else if (keyType==OBIT_long) { 
       fits_update_key_lng (in->myFptr, (char*)keyName, (long)blob.i, (char*)commnt, 
 			   &status);
     } else if (keyType==OBIT_bool) { 

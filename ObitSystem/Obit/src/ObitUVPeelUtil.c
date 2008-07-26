@@ -255,6 +255,8 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
 {
   olong             peeled=-1;
   ObitInfoType      type;
+  const ObitSkyModelClassInfo *skyModelClass;
+  const ObitUVImagerClassInfo *imagerClass;
   ObitUVImager      *tmpImager=NULL; 
   ObitImageMosaic   *tmpMosaic=NULL; 
   ObitUV            *scrUV=NULL, *tmpUV=NULL;
@@ -294,7 +296,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     NULL
   };
   gchar solmod[5], soltyp[5];
-  gchar *routine = "ObitPeelUtilPeel";
+  gchar *routine = "ObitUVPeelUtilPeel";
 
   /* error checks */
   if (err->error) return peeled;
@@ -372,11 +374,24 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     ObitInfoListAlwaysPut (scrUV->info, "ny",         OBIT_long, dim, tmpMosaic->ny);
 
     /* Temporary Imager */
-    tmpImager = ObitUVImagerCreate2("Peel imager", scrUV, tmpMosaic, err);
+    /* Trap VMSquint variations */
+    if (ObitUVImagerIsA(myClean->imager)) {
+      imagerClass = (const ObitUVImagerClassInfo*)myClean->imager->ClassInfo;
+    } else {
+      imagerClass = (const ObitUVImagerClassInfo*)ObitUVImagerGetClass();
+    }
+    tmpImager   = imagerClass->ObitUVImagerCreate2("Peel imager", scrUV, tmpMosaic, err);
     if (err->error) goto cleanup;
 
     /* Create temp SkyModel */
-    tmpSkyModel = ObitSkyModelCreate("Peel SkyModel", tmpMosaic);
+    /* Trap VMSquint variations */
+    if (ObitSkyModelIsA(myClean->skyModel)) {
+      skyModelClass = (const ObitSkyModelClassInfo*)myClean->skyModel->ClassInfo;
+    } else {
+      skyModelClass = (const ObitSkyModelClassInfo*)ObitSkyModelGetClass();
+    }
+    skyModelClass = (ObitSkyModelClassInfo*)myClean->skyModel->ClassInfo;
+    tmpSkyModel   = skyModelClass->ObitSkyModelCreate("Peel SkyModel", tmpMosaic);
     /* Use DFT model */
     dim[0] = dim[1] = 1;
     dft = (olong)OBIT_SkyModel_DFT;

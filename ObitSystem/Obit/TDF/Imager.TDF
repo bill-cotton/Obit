@@ -115,7 +115,7 @@ out2Disk                            Output uvdata disk drive #
 
                                        Imaging info
 **PARAM** float 1
-FOV             0.0       180.     Radius of field to image deg
+FOV             0.0       180.     Radius of field to image (deg)
 **PARAM** int 1
 NField                             Number of fields
 **PARAM** float 1
@@ -252,13 +252,13 @@ PeelType                           Peel Soln. Type: '  ', 'L1',
 PeelMode                           Peel  Mode:'A&P', 'P', 'P!A',
 **PARAM** int 1  **DEF** 200
 PeelNiter                          Niter for peel.CLEAN
-**PARAM** float 1 **DEF** 1.0
+**PARAM** float 1
 PeelMinFlux                        Minimum Peel Clean component (Jy)
 **PARAM** boo 1 **DEF** F
 PeelAvgPol                         Avg. poln in peel self cal?
 **PARAM** boo 1 **DEF** F
 PeelAvgIF                          Avg. IFs in peel self cal?
-
+**PARAM** int 1 
 prtLv             0                Print level in selfcal
 **PARAM** str 48 **DEF** ObitView
 dispURL                            Display server URL
@@ -266,7 +266,7 @@ dispURL                            Display server URL
 noScrat                            AIPS disk numbers for which
                                    scratch files are disallowed
 ----------------------------------------------------------------
-Imager Imaging task for radio Interferometry data
+Imager Imaging task for radio interferometry data
 Type:  Task
  Use:  Batch processing of radio interferometry data
 
@@ -468,7 +468,7 @@ Adverbs:
   Niter.....CLEAN iteration limit.  0 => 1500
   ccfLim....Limit CLEAN in each major cycle not to CLEAN below
             ccfLim times the initial residual peak.
-            If using SDIGain set to the maximum value of 0.9.
+            If using SDIGain, set to the maximum value of 0.9.
   SDIGain...Fraction of pixels in the upper half of the pixel
             histogram to trigger SDI mode. <=0 -> no SDI CLEAN.
             If this test is satisfied then all pixels above
@@ -551,9 +551,12 @@ Adverbs:
               previous calibration.  This is useful for a very strong 
               source whose artifacts disturb the other parts of the 
               field.  If the maximum pixel value in any image 
-              (as defined by the CLEAN components) exceeds PeelFlux
+              (as defined by the CLEAN components) exceeds PeelFlux,
               then the facet in which the maximum value occured is
-              peeled.
+              peeled.  This procedure is iterated until no facet has a 
+              pixel in excess of PeelFlux.
+                 NB: peeling of many sources will likely degrade the 
+              results.
                  It is strongly recommended that autoCen be no larger 
               than PeelFlux so that the source is properly centered in 
               its facet.
@@ -658,6 +661,7 @@ in
       Astron.Ap., 200, 312.
 IMAGR offers variants of both of these methods.
 
+See SDIGain:
 The SDI Clean proposes to avoid the bias against adjacent pixels by
 taking every pixel above a certain level as a component.  In the case
 of a completely uniform "plateau" in the residual image, this would
@@ -668,23 +672,21 @@ and so less is subtracted from them than from the central pixels.  The
 result is a bright edge around the plateau in the next residual image.
 The AIPS task SDCLN uses an iterative method to estimate the different
 loop gains to be applied to the pixels to avoid the bright edges.
-IMAGR uses a less expensive and somewhat less effective method.  The
-intent in IMAGR is to Clean with a normal Clark variant of the Hogbom
+Imager uses a less expensive and somewhat less effective method.  The
+intent in Imager is to Clean with a normal Clark variant of the Hogbom
 Clean until a significant number of pixels in the residual image are
 essentially "equal".  This is expressed as a crowding of the uppermost
 levels of the histogram so that the ratio of the peak residual flux to
 the lowest level that can be loaded by the BGC Clean is near 1.0.
-IMAGRPRM(4) > 0 specifies that SDI Clean will be used when this ratio
-is less than (1 + GAIN * IMAGRPRM(4)); a typical value might be
-IMAGRPRM(4) = 3.  If the ratio becomes greater than this limit at a
-later step, the BGC Clean will be used until the ratio again falls
-below the limit.  The TV allows you to force the Clean into either BGC
-or SDI if you started by giving IMAGRPRM(4) > 0.  Once forced, it
-remains in the chosen method until forced into the other.
+SDIGain > 0 specifies that SDI Clean will be used when this ratio
+is less than (1 + SDIGain).  If the ratio becomes greater than this 
+limit at a later step, the BGC Clean will be used until the ratio 
+again falls below the limit.  
 
+NYI:
 The MR Clean attempts to avoid the corrugation and S/N issues by using
 more than one component diameter in the modeling.  In the early 1970's
-I experimented with using a Gaussian as a component model.  This
+I (EWG) experimented with using a Gaussian as a component model.  This
 worked well so long as the image contained no sources smaller than the
 Gaussian.  Unfortunately, the sky always contains point sources and
 the method found these and "painted bulls eyes around them".  (The
@@ -792,14 +794,6 @@ The disables features include:
 2) Second stage RFI filtering (RFIFILT(3+4)).
 If these options are needed try using an SDI CLEAN first and then 
 feed the resultant uvdata back into Imager.
-
-AIPS BUGS, DESIGN FLAWS, AND GOTCHAS
-------------------------------------
-
-   Unless CMETHOD is set to 'DFT', the gridded subtraction may 
-fail if it tries to work on an image larger than the first one 
-it does.  Restarting the program will get around the problem. 
-Or specify, 'DFT'.
 
 PS Table
 --------

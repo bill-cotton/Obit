@@ -240,6 +240,10 @@ void ObitUVImagerSquintClone (ObitUVImagerSquint *in, ObitUVImagerSquint *out, O
 /** Public: Create/initialize ObitUVImagerSquint structures */
 ObitUVImagerSquint* ObitUVImagerSquintCreate (gchar* name, ObitUV *uvdata, ObitErr *err);
 
+/** Public: Create/initialize ObitUVImagerSquint structures given mosaic */
+ObitUVImagerSquint* ObitUVImagerSquintCreate2 (gchar* name, ObitUV *uvdata, 
+					       ObitImageMosaic *mosaic, ObitErr *err);
+
 /** Public: Weight data */
  void ObitUVImagerSquintWeight (ObitUVImager *in, ObitErr *err);
 

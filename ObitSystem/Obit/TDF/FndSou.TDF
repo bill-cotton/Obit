@@ -4,7 +4,7 @@
 ;! fits Gaussians to portions of an image
 ;# Obit Task 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006
+;;  Copyright (C) 2006,2008
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ inSeq             0         9999   Image Name (Seq. #) 1
 **PARAM** int   1
 inDisk            0            9   Disk drive # 1
 **PARAM** str 48
-inFITS                             Filename 1 if FITS image
+inFile                             Filename 1 if FITS image
 **PARAM** int 7
 BLC              0.0       4096.0  Bottom left corner of image
                                      0=>entire image
@@ -66,7 +66,7 @@ outSeq            0         9999   Output Image Seq. #
 **PARAM** int   1
 outDisk           0            9   output Disk drive
 **PARAM** str 48
-outFITS                            Output Filename if FITS image
+outFile                            Output Filename if FITS image
 **PARAM** int   1
 NGauss          0.0     10000.0    Max. Number of islands
 **PARAM** int   1 **DEF** 1
@@ -102,7 +102,7 @@ prtLv          0.0      1023.0     Debug print level
 ----------------------------------------------------------------
 FndSou
 Type: Task
-Use:  Find, and fit Gaussians sources in a specified region of an
+Use:  Find and fit Gaussians to sources in a specified region of an
       image producing a residual image and a list of fitted components.
       The searching may be restarted with different parameters to remove
       additional sources.  Only one plane of a cube is fit at
@@ -120,21 +120,16 @@ Use:  Find, and fit Gaussians sources in a specified region of an
       width of the display allows, the max residual is displayed
       with the deconvolution results and an * is placed near
       excessive residuals.
-         In this version, components are not allowed to be
-      smaller thatn the CLEAN beam minor axis size.  If either
-      axis is too small the fit is redone freezing that
-      parameter at the minimum value.
-      NOTE: Only works for circular restoring beams
          This task was translated from the AIPSish VSAD
-      by W. Cotton which was a reworking or E. Griesen's reworking 
+      by W. Cotton which was a reworking of E. Griesen's reworking 
       of W. Jaffe's SAD.
 Adverbs:
   DataType...."FITS" or AIPS
-  inName......Image to be convolved Name(Name). 
-  inClass.....Image to be convolved Class
-  inSeq.......Image to be convolved  Seq. #
-  inDisk......Image to be convolved disk drive # 
-  inFITS......Input File Name if a FITS file
+  inName......Image to be fitted Name(Name). 
+  inClass.....Image to be fitted Class
+  inSeq.......Image to be fitted  Seq. #
+  inDisk......Image to be fitted disk drive # 
+  inFile......Input File Name if a FITS file
   BLC.........The Bottom Left-hand pixel of the subarray of the image to
               be analysed. The value (0,0) means (1,1). 1-rel
   TRC.........The Top Right-hand pixel of the subarray of the image to
@@ -150,7 +145,7 @@ Adverbs:
   outClass....Output AIPS Name(Class).        
   outSeq......Output AIPS Name(Seq. #).       0 => highest.
   outDisk.....Output Disk drive # of image. 
-  outFITS.....Output File Name if a FITS file
+  outFile.....Output File Name if a FITS file
   NGauss......The maximum number of islands to search for
               default 100.
   NPass.......If NPass>1 then the residuals will be re-searched and
@@ -228,24 +223,23 @@ by BLC and TRC for all points above this level and merges such
 points in contiguous "islands".  For each island, initial
 estimates of the strength and size are generated.  Then a
 gaussian fitting algorithm is called to determine
-the least square gaussian fit.  If doMult is < 0., only one
-gaussian is fit per island, with initial estimates generated
+the least square Gaussian fit.  If doMult is < 0., only one
+Gaussian is fit per island, with initial estimates generated
 from 2nd moments.  If doMult is TRUE and multiple peaks (above
-CutOff) are found within the island, then up to 4 gaussians are
+CutOff) are found within the island, then up to 4 Gaussians are
 fit.  If the peak residual of a single Gaussian fit exceeds Retry
-then a more complex 2-Gaussian fit ai attempted.  The results of
+then a more complex 2-Gaussian fit is attempted.  The results of
 the fit are printed on the screen or the line printer and
 written into a ModelFit (MF) extension table.  If DORESID is
-TRUE, the gaussians are subtracted from the input subimage, and
-a residual imageis cataloged, using OUTDISK, OUTNAME etc.  If
-doWidth(1) is negative, a gaussian with fixed size = CLEAN beam
+TRUE, the Gaussians are subtracted from the input subimage, and
+a residual image is cataloged, using OUTDISK, OUTNAME etc.  If
+doWidth(1) is negative, a Gaussian with fixed size = CLEAN beam
 will be fit.
 
                 WARNING!!!
 
 Errors given in the MF table are not accurate.
-The list generated by FndSou is not COMPLETE in any statistical
-sense.  You will be warned about islands where the fitting
+You will be warned about islands where the fitting
 algorithm failed.  Note that sizes etc. of sources near the
 noise are very unreliable.  For something approaching
 completeness Walter Jaffe recommends:
@@ -259,7 +253,7 @@ completeness Walter Jaffe recommends:
        it.
 
 Suggestion from Eric Greisen:
-    doWidth false always produces poor results even for only
+    doWidth <= 0 always produces poor results even for only
 slightly extended objects.  For decent S/N, the width fitting is
 quite reliable.
 
@@ -270,8 +264,7 @@ BLC, TRC:
 residual file is requested, it covers the entire input image.
 
 NGauss:
-     The maximum number of sources to find.  Currently limited
-to 2000.
+     The maximum number of sources to find.  
 
 CutOff:
      Search for source peaks down to this level.  If specified
@@ -280,7 +273,7 @@ the full image area and take CutOff to be 3.0 times this value.
 If you make CutOff too small, you'll get lots of nonsense.
 
 doResid
-     Catalog the post-fit residual map.
+     Save the post-fit residual image.
 
 doWidth
      If you think most sources are unresolved, use doWidth(1)
@@ -305,7 +298,7 @@ well-resolved source, the task IMEAN, which integrates the map
 values in a specified rectangle, is often more accurate than
 fitting the source with several Gaussian components and summing
 the integrated flux densities.  Of course for a well resolved
-source a gaussian fit is only a crude approximation in any case.
+source a Gaussian fit is only a crude approximation in any case.
 
 PEAK FLUX DENSITY DETERMINATION:
 

@@ -4,7 +4,7 @@
 ;! Obit VLA Squint correcting Radio interferometry imaging software
 ;# Task Obit self calibration Imaging
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006,2007
+;;  Copyright (C) 2006,2007,2008
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -111,7 +111,7 @@ out2Disk                            Output uvdata disk drive #
 **PARAM** float 1
 Threshold       0.0                Threshold for accurate model
 **PARAM** float 1
-FOV             0.0       180.     Radius of field to image deg
+FOV             0.0       180.     Radius of field to image (deg)
 **PARAM** int 1
 NField                             Number of fields
 **PARAM** float 1
@@ -165,6 +165,10 @@ minFlux  *                         Minimum Clean component (Jy)
 minPatch *        0.0              Min. BEAM half-width.
 **PARAM** int 1
 Niter    *         0.0             Maximum # of I CLEAN comp.
+**PARAM** float 1  
+ccfLim   *                         Min. fraction of residual peak to CLEAN
+**PARAM** float 1  
+SDIGain  *                         SDI trigger, <=0 -> no SDI Clean
 **PARAM** float 3
 Beam     *      -999.9             Clean beam (maj, min, PA)
 **PARAM** float 1  **DEF** 10.0
@@ -232,6 +236,30 @@ minNo             2                Min. no. antennas in selfcal
 **PARAM** boo 1 **DEF** F
 doSmoo                             Interpolate failed solutions?
 **PARAM** int 1
+                                       Peeling info
+**PARAM** float 1 **DEF** 1.0e20
+PeelFlux                           Min. flux for peeling
+**PARAM** int 1
+PeelRefAnt        0                Peel SC Reference antenna
+**PARAM** int 1  **DEF** 1
+PeelLoop                           Max. number of peeling SC loops
+**PARAM** float 1 **DEF** 5.0
+PeelSNRMin       2.0               Min. allowed SNR in peel selfcal
+**PARAM** float 1  **DEF** 1.0
+PeelSolInt        0.0              Peel SC Solution interval (min)
+**PARAM** str 4
+PeelType                           Peel Soln. Type: '  ', 'L1', 
+**PARAM** str 4 **DEF** A&P
+PeelMode                           Peel  Mode:'A&P', 'P', 'P!A',
+**PARAM** int 1  **DEF** 200
+PeelNiter                          Niter for peel.CLEAN
+**PARAM** float 1 
+PeelMinFlux                        Minimum Peel Clean component (Jy)
+**PARAM** boo 1 **DEF** F
+PeelAvgPol                         Avg. poln in peel self cal?
+**PARAM** boo 1 **DEF** F
+PeelAvgIF                          Avg. IFs in peel self cal?
+**PARAM** int 1 
 prtLv             0.0              Print level in selfcal
 **PARAM** str 48 **DEF** ObitView
 dispURL                            Display server URL
@@ -260,6 +288,8 @@ are modeled with the accurate method and the rest the faster method.
    If multiple sources are being processed, some failures are allowed.
 In this case, the error messages will be displayed and the Status in
 the PS table set to "Failed  " rather than "Done    ".
+   Greisen variant of Steer-Dewdney-Ito CLEAN implemented via 
+SDIGain
 
 Adverbs:
   DataType..'FITS' or 'AIPS'  type of input/output
@@ -460,6 +490,21 @@ Adverbs:
   minPatch..Minimum half width of the portion of the beam
             which is used in the minor CLEAN. Default 500
   Niter.....CLEAN iteration limit.  0 => 1500
+  ccfLim....Limit CLEAN in each major cycle not to CLEAN below
+            ccfLim times the initial residual peak.
+            If using SDIGain, set to the maximum value of 0.9.
+  SDIGain...Fraction of pixels in the upper half of the pixel
+            histogram to trigger SDI mode. <=0 -> no SDI CLEAN.
+            If this test is satisfied then all pixels above
+            a threshold determined will be the site of a new CLEAN
+            component with a value depending on the local density
+            of pixels above this threshold. 
+              NB. this method can generate a very large number of CLEAN
+            components which can be VERY slow to compute.  A judicious
+            value of Threshold can dramatically improve performance.
+               This is the Greisen implementation of  Steer-Dewdney-Ito  
+            CLEAN.
+            A value of 0.1 is a reasonable initial value
   Beam......CLEAN restoring beam major, minor axis size in asec and
             the position angle.  If zeroes, fit beam.
   Reuse.....If >0 then each cycle of self cal after the first will
@@ -467,7 +512,7 @@ Adverbs:
             Reuse*RMS(Field 1). Default 10
   autoCen...If the sum of the clean components within 2.5 pixels 
             of any pixel exceeds autoCen and is not within 0.01 of a cell
-            of the center  pixel then the image is  remade and deconvolved 
+            of the center pixel, then the image is remade and deconvolved 
             with the bright sources (>autoCen, one per facet) on a pixel.
             This is necessary to achieve high dynamic range.
             If the initial dirty image has a pixel brighter than autoCen
@@ -475,12 +520,16 @@ Adverbs:
             the initial CLEAN is stopped at minFlux=0.1*autoCen.
             Subsequent imagings, e.g. self calibration loops, the centroid 
             of fields made with autoCen is check and possibly adjusted.
+                It is strongly recommended that autoCen be no larger 
+            than PeelFlux so that the source is properly centered in 
+            its facet.
   Cmethod...This determines the method used to compute the
             model visibility values.
             'DFT' uses the direct Fourier transform, this
-               method is the most accurate.
+               method is the most accurate; always used for high 
+               accuracy model
             'GRID' does a gridded-FFT interpolation model
-               computation.
+               computation.  Not used for high accuracy modeling.
             '    ' allows the program to use the fastest
                method.
   PBCor......Apply Frequency dependent primary beam corrections?
@@ -516,7 +565,7 @@ Adverbs:
               is made.  modelFlux is the flux density of the model
   modelPos....RA and Dec offset in the sky in asec
   modelParm...Other model parameters Gaussian:
-              major_axis (asec),  minor_axis (asec),  position_angle (deg), 1
+              major_axis (asec),  minor_axis (asec),  position_angle (deg),
   maxPSCLoop..Maximum number of phase self calibration loops
   maxPSCLoop..Min. peak flux density required for phase self cal (Jy)
   solPInt.....phase SC Solution interval (min)
@@ -531,14 +580,38 @@ Adverbs:
   WtUV........Weighting (wrt 1) to use outside of basic uv range in SC
               [def 0.0]
   avgPol......Average Polarizations in self calibration? [def True]
-              Note: Independent solution in R and L will tend to wipe
-              out any Stokes V in the data. 
   avgIF.......Average IFs in self calibration? [def False]
   doMGM.......Apply mean gain modulus to A&P selfcal soln.
   minSNR......Min. allowed SNR in self cal solution [def 5]
   minNo.......Min. allowed no. antennas in selfcal
   doSmoo......If true interpolate failed solutions [def. False]
   prtLv.......Print level in selfcal, 0=>none [def. 0]
+
+                       Peeling
+  PeelFlux....Peeling is the procedure of doing a self calibration on 
+              a single source, removing it and reverting to the 
+              previous calibration.  This is useful for a very strong 
+              source whose artifacts disturb the other parts of the 
+              field.  If the maximum pixel value in any image 
+              (as defined by the CLEAN components) exceeds PeelFlux,
+              then the facet in which the maximum value occured is
+              peeled.  This procedure is iterated until no facet has a 
+              pixel in excess of PeelFlux.
+                 NB: peeling of many sources will likely degrade the 
+              results.
+                 It is strongly recommended that autoCen be no larger 
+              than PeelFlux so that the source is properly centered in 
+              its facet.
+  PeelLoop....Maximum number of peeling self calibration loops
+  PeelRefAnt..Reference antenna number for Peel selfcal
+  PeelSNRMin..Min. allowed SNR in peeling self cal solution
+  PeelSolInt..Peel SC Solution interval (min)
+  PeelType....Peel SC Solution type '  ', 'L1'
+  PeelMode....Peel SC Solution mode:'A&P', 'P', 'P!A',
+  PeelNiter...Max. number of components in Peel CLEAN
+  PeelMinFlux.Min. Peel CLEAN flux density
+  PeelAvgPol..Average Polarizations in Peel self calibration? 
+  PeelAvgIF ..Average IFs in Peel self calibration? 
 
                           Interactive display
   dispURL.....The URL of the display server to use. "None"=>none

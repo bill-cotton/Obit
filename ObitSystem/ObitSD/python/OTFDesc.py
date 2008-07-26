@@ -4,7 +4,7 @@ structure of the data.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2007
+#  Copyright (C) 2004-2008
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -309,4 +309,56 @@ def PDec2DMS (dec):
     s = (p - m) * 60.0
     out = "%s%2.2d %2d %7.4f " % (sgn, d,m,s)
     return out
+    # end PDec2DMS
+
+def PHMS2RA (rast,  sep=":"):
+    """ Convert a right ascension string to degrees
+
+    return RA in degrees
+    rast      RA string as "hh:mm:ss.s"
+    sep       sympol to use to separate components instead of ":"
+    """
+    ################################################################
+    pp = rast.split(sep)
+    if len(pp)>0:
+        hour = int(pp[0])
+    else:
+        hour = 0
+    if len(pp)>1:
+        min = int(pp[1])
+    else:
+        min = 0
+    if len(pp)>2:
+        ssec = float(pp[2])
+    else:
+        ssec = 0.0
+    ra =  hour + min/60.0 + ssec/3600.0
+    return ra*15.0
+    # end PHMS2RA
+
+def PDMS2Dec (decst, sep=":"):
+    """ Convert a declination string to degrees
+
+    Returns dec in deg
+    decst     Dec string as "dd:mm:ss.s"
+    sep       sympol to use to separate components instead of ":"
+    """
+    ################################################################
+    pp = decst.split(sep)
+    if len(pp)>0:
+        deg = int(pp[0])
+    else:
+        deg = 0
+    if len(pp)>1:
+        min = int(pp[1])
+    else:
+        min = 0
+    if len(pp)>2:
+        ssec = float(pp[2])
+    else:
+        ssec = 0.0
+    dec =  abs(deg) + min/60.0 + ssec/3600.0
+    if pp[0].find("-") >=0:
+        dec = -dec
+    return dec
     # end PDec2DMS

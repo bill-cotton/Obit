@@ -1026,6 +1026,7 @@ ObitIOCode ObitIOUVAIPSWriteDescriptor (ObitIOUVAIPS *in, ObitErr *err)
   gchar *HeaderFile, keyName[FLEN_KEYWORD+1], *keyNameP, blob[256], *ctemp;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong i, ii, j, k, ip, ndo, nkey, ikey, nrec;
+  oint oitemp[4]={0,0,0,0};
   ObitFilePos wantPos;
   gsize size;
   gboolean doFill;
@@ -1161,7 +1162,12 @@ ObitIOCode ObitIOUVAIPSWriteDescriptor (ObitIOUVAIPS *in, ObitErr *err)
 	  for (k=0; k<8; k++) if (!g_ascii_isprint(ctemp[k])) ctemp[k]=' ';
 	  buffer[ip+4] = 3;
 	}
-	else if (keyType==OBIT_long)   buffer[ip+4] = 4;
+	  else if (keyType==OBIT_oint)   buffer[ip+4] = 4;
+	  else if (keyType==OBIT_long) { /* May have to convert long->oint */
+	    buffer[ip+4] = 4;
+	    oitemp[0] = (oint)*(olong*)blob;
+	    g_memmove ((gchar*)&buffer[ip+2], oitemp, 8); blob[8] = 0;
+	  }
 	else if (keyType==OBIT_bool)   buffer[ip+4] = 5;
 	ip +=5; /* next unit in buffer */
       }

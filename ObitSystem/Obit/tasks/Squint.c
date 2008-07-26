@@ -1,4 +1,4 @@
-/* $Id:   */
+/* $Id$ */
 /* Obit VLA Squint correcting Radio interferometry imaging software  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2008                                          */
@@ -45,6 +45,7 @@
 #include "ObitData.h"
 #include "ObitDisplay.h"
 #include "ObitTablePSUtil.h"
+#include "ObitUVPeelUtil.h"
 
 /* internal prototypes */
 /* Get inputs */
@@ -442,6 +443,7 @@ void Usage(void)
 /*     subA      Int (1)    Subarray, def=1                               */
 /*     minFluxPSC Flt(1)    min peak flux for phase selfcal               */
 /*     minFluxASC Flt(1)    min peak flux for A&P selfcal                 */
+/*     PeelFlux   Flt(1)    min peak flux peel (1.0e20)                   */
 /*     dispURL    Str(48)   Display derver URL                            */
 /*----------------------------------------------------------------------- */
 ObitInfoList* defaultInputs(ObitErr *err)
@@ -789,6 +791,12 @@ ObitInfoList* defaultInputs(ObitErr *err)
   dim[0] = 1;dim[1] = 1;
   ftemp = 1.0e20; 
   ObitInfoListPut (out, "minFluxASC", OBIT_float, dim, &ftemp, err);
+  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+
+  /* PeelFlux - min flux for peel */
+  dim[0] = 1;dim[1] = 1;
+  ftemp = 1.0e20; 
+  ObitInfoListPut (out, "PeelFlux", OBIT_float, dim, &ftemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* Display URL, def = "None" */
@@ -1394,7 +1402,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   };
   gchar        *CLEANParms[] = {  /* Clean parameters */
     "CLEANBox", "autoWindow", "Gain", "minFlux", "Niter", "minPatch", "Beam", 
-    "Mode", "CCFilter", "maxPixel", "dispURL", "Threshold", 
+    "Mode", "CCFilter", "maxPixel", "dispURL", "Threshold", "ccfLim", "SDIGain",
     NULL
   };
   gchar        *SkyParms[] = {  /* SkyModel parameters */
@@ -1657,9 +1665,9 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   ObitImage    *outImage=NULL;
   ObitInfoType type;
   oint         otemp;
-  olong         maxPSCLoop, maxASCLoop, SCLoop, jtemp;
+  olong        nfield, *ncomp=NULL, maxPSCLoop, maxASCLoop, SCLoop, jtemp;
   ofloat       minFluxPSC, minFluxASC, modelFlux, maxResid, reuse, ftemp, autoCen;
-  ofloat       solInt, CCFilter[2]={0.0,0.0};
+  ofloat       solInt, PeelFlux, CCFilter[2]={0.0,0.0};
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean     Fl = FALSE, Tr = TRUE, init=TRUE, doRestore, doFlatten, doSC;
   gboolean     noSCNeed, reimage, didSC=FALSE, imgOK, converged = FALSE;
@@ -1688,11 +1696,17 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   ObitInfoListGetTest(myInput, "Reuse",&type, dim, &reuse);
   autoCen = 1.0e20;
   ObitInfoListGetTest(myInput, "autoCen", &type, dim, &autoCen);
+
+  /* Peeling trip level */
+  PeelFlux = 1.0e20;
+  ObitInfoListGetTest(myInput, "PeelFlux", &type, dim, &PeelFlux); 
+  
   /* Recentering trip level in CLEAN */
   dim[0] = 1;dim[1] = 1;
-  ObitInfoListAlwaysPut (myClean->info, "autoCen", OBIT_float, dim, &autoCen);
+  ftemp = 1.1 * MIN (autoCen, PeelFlux); /* Fudge a bit due to shallow CLEAN */
+  ObitInfoListAlwaysPut (myClean->info, "autoCen", OBIT_float, dim, &ftemp);
   imgOK = FALSE;  /* Need new image */
-
+  
   /* Get Stokes being imaged */
   strncpy (Stokes, "F   ", 4); 
   ObitInfoListGetTest (inUV->info, "Stokes", &type, dim, Stokes);
@@ -1716,8 +1730,6 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   /* Allow recentering */
   ObitInfoListAlwaysPut(myClean->info, "doRecenter", OBIT_bool, dim, &Tr);
   
-
-
   /* Create selfCal if needed */
   doSC = ((maxPSCLoop>0) || (maxASCLoop>0));
   if (doSC>0) {
@@ -1804,6 +1816,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	if (reimage) {      
 	  /* Don't need to remake beams  */
 	  dim[0] = 1;dim[1] = 1;
+
 	  ObitInfoListAlwaysPut(myClean->info, "doBeam", OBIT_bool, dim, &Fl);
 	  Obit_log_error(err, OBIT_InfoErr, 
 			 "Redoing image/deconvolution to center strong source on pixel");
@@ -2019,6 +2032,12 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
     }  /* End Self cal loop **/
   } /* End Amp&Phase self cal */
 
+  /* Loop peeling sources */
+  ObitUVPeelUtilLoop (myInput, inUV, myClean, &nfield, &ncomp, err);
+  if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+
+  if (ncomp) g_free(ncomp);   ncomp  = NULL;  /* Done with array */
+
   /* Any final CC Filtering? */
   if (CCFilter[0]>0.0) {
     /* Compress CC files */
@@ -2193,6 +2212,7 @@ void SquintHistory (gchar *Source, ObitInfoList* myInput,
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
     "doPol",  "Catalog",  "OutlierDist",  "OutlierFlux",  "OutlierSI",
     "OutlierSize",  "CLEANBox",  "Gain",  "minFlux",  "Niter",  "minPatch",
+    "ccfLim", "SDIGain",
     "Reuse", "autoCen", "Beam",  "Cmethod",  "CCFilter",  "maxPixel", 
     "PBCor", "antSize", "doRestore", "doFull",  
     "autoWindow", "subA",  
@@ -2200,6 +2220,9 @@ void SquintHistory (gchar *Source, ObitInfoList* myInput,
     "maxPSCLoop", "minFluxPSC", "solPInt", "solPType", "solPMode", 
     "maxASCLoop", "minFluxASC", "solAInt", "solAType", "solAMode", 
     "avgPol", "avgIF", "doMGM", "minSNR", "minNo", "doSmoo",
+    "PeelFlux", "PeelLoop", "PeelRefAnt", "PeelSNRMin",
+    "PeelSolInt", "PeelType", "PeelMode", "PeelNiter",
+    "PeelMinFlux", "PeelAvgPol", "PeelAvgIF",
     NULL};
   gchar *routine = "SquintHistory";
 

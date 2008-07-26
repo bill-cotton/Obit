@@ -136,7 +136,7 @@ ObitIOCode ObitTableFQPutInfo (ObitTableFQ *in, oint fqid, oint nif,
    gint32 i, dim[MAXINFOELEMDIM] = {1,1,1,1,1};
    olong nRowPIO, *siRow;
    odouble *dRow;
-   oint   *iRow;
+   oint   *iRow, oitemp;
    ofloat *fRow;
    gchar *routine = "ObitTableFQPutInfo";
    
@@ -154,8 +154,9 @@ ObitIOCode ObitTableFQPutInfo (ObitTableFQ *in, oint fqid, oint nif,
      Obit_traceback_val (err, routine, in->name, retCode);
    
    /* Save on info */
-   ObitInfoListPut(in->myDesc->info, "NO_IF", OBIT_long, dim, 
-		   (gconstpointer)&in->numIF, err);
+   oitemp = (oint)in->numIF;
+   ObitInfoListPut(in->myDesc->info, "NO_IF", OBIT_oint, dim, 
+		   (gconstpointer)&oitemp, err);
    if (err->error) /* add traceback,return */
      Obit_traceback_val (err, routine, in->name, retCode);
    
