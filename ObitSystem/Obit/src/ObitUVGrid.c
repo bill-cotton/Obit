@@ -18,7 +18,7 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*;  Correspondence this software should be addressed as follows:     */
+/*;Correspondence about this software should be addressed as follows: */
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
@@ -68,10 +68,11 @@ void  ObitUVGridInit  (gpointer in);
 void  ObitUVGridClear (gpointer in);
 
 /** Private: Prepare visibility data for gridding */
-static void PrepBuffer (ObitUVGrid* in, ObitUV *uvdata);
+static void PrepBuffer (ObitUVGrid* in, ObitUV *uvdata, olong loVis, olong hiVis);
 
 /** Private: convolve a uv data buffer and sum to grid */
-static void GridBuffer (ObitUVGrid* in, ObitUV *uvdata);
+static void GridBuffer (ObitUVGrid* in, ObitUV *uvdata, olong loVis, olong hiVis, 
+			ObitCArray *grid);
 
 /** Private: Fill convolving function table */
 static void ConvFunc (ObitUVGrid* in, olong fnType);
@@ -86,6 +87,25 @@ static void GridCorrFn (ObitUVGrid* in, long n, olong icent,
 /** Private: Set Class function pointers. */
 static void ObitUVGridClassInfoDefFn (gpointer inClass);
 
+/** Private: Threaded prep/grid buffer */
+static gpointer ThreadUVGridBuffer (gpointer arg);
+
+/*---------------Private structures----------------*/
+/* FT threaded function argument */
+typedef struct {
+  /* SkyModel with model components loaded (ObitSkyModelLoad) */
+  ObitUVGrid *in;
+  /* UV data set to model and subtract from current buffer */
+  ObitUV       *UVin;
+  /* First (1-rel) vis in uvdata buffer to process this thread */
+  olong        first;
+  /* Highest (1-rel) vis in uvdata buffer to process this thread  */
+  olong        last;
+  /* thread number  */
+  olong        ithread;
+  /* Temporary gridding array for thread */
+  ObitCArray  *grid;
+} UVGridFuncArg;
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -311,9 +331,12 @@ void ObitUVGridReadUV (ObitUVGrid *in, ObitUV *UVin, ObitErr *err)
   ObitIOCode retCode = OBIT_IO_OK;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
-  ofloat temp;
+  ofloat temp, czero[2] = {0.0,0.0};
   olong   itemp;
-  gboolean doCalSelect;
+  olong i, nvis, lovis, hivis, nvisPerThread;
+  UVGridFuncArg *args=NULL;
+  ObitThreadFunc func=(ObitThreadFunc)ThreadUVGridBuffer ;
+  gboolean doCalSelect, OK;
   gchar *routine="ObitUVGridReadUV";
 
   /* error checks */
@@ -332,7 +355,7 @@ void ObitUVGridReadUV (ObitUVGrid *in, ObitUV *UVin, ObitErr *err)
 		     routine, UVin->myDesc->inaxes[UVin->myDesc->jlocs]);
   }
 
- /* get gridding information */
+  /* get gridding information */
   /* guardband */
   temp = 0.4;
   /* temp = 0.1; debug */
@@ -359,7 +382,32 @@ void ObitUVGridReadUV (ObitUVGrid *in, ObitUV *UVin, ObitErr *err)
   doCalSelect = FALSE;
   ObitInfoListGetTest(UVin->info, "doCalSelect", &type, (gint32*)dim, &doCalSelect);
 
- /* UVin should have been opened in  ObitUVGridSetup */
+  /* UVin should have been opened in  ObitUVGridSetup */
+  
+  /* How many threads? */
+  in->nThreads = MAX (1, ObitThreadNumProc(in->thread));
+
+  /* Initialize threadArg array  */
+  if (in->threadArgs==NULL) {
+    in->threadArgs = g_malloc0(in->nThreads*sizeof(UVGridFuncArg*));
+    for (i=0; i<in->nThreads; i++) 
+      in->threadArgs[i] = g_malloc0(sizeof(UVGridFuncArg)); 
+  } 
+  
+  /* Set up thread arguments */
+  for (i=0; i<in->nThreads; i++) {
+    args = (UVGridFuncArg*)in->threadArgs[i];
+    args->in   = in;
+    args->UVin = UVin;
+    if (i>0) {
+      /* Need new zeroed array */
+      args->grid = ObitCArrayCreate("Temp grid", in->grid->ndim,  in->grid->naxis);
+      ObitCArrayFill (args->grid, czero);
+    } else {
+      args->grid = ObitCArrayRef(in->grid);
+    }
+  }
+  /* end initialize */
 
   /* loop gridding data */
   while (retCode == OBIT_IO_OK) {
@@ -369,16 +417,60 @@ void ObitUVGridReadUV (ObitUVGrid *in, ObitUV *UVin, ObitErr *err)
     else retCode = ObitUVRead (UVin, NULL, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
     
-    /* prepare data */
-    PrepBuffer (in, UVin);
+    /* Divide up work */
+    nvis = UVin->myDesc->numVisBuff;
+    nvisPerThread = nvis/in->nThreads;
+    lovis = 1;
+    hivis = nvisPerThread;
+    hivis = MIN (hivis, nvis);
+
+    /* Set up thread arguments */
+    for (i=0; i<in->nThreads; i++) {
+      if (i==(in->nThreads-1)) hivis = nvis;  /* Make sure do all */
+      args = (UVGridFuncArg*)in->threadArgs[i];
+      args->first  = lovis;
+      args->last   = hivis;
+      /* Update which vis */
+      lovis += nvisPerThread;
+      hivis += nvisPerThread;
+      hivis = MIN (hivis, nvis);
+    }
+
+    /* Do operation on buffer possibly with threads */
+    OK = ObitThreadIterator (in->thread, in->nThreads, func, in->threadArgs);
     
-    /* grid */
-    GridBuffer (in, UVin);
+    /* Check for problems */
+    if (!OK) {
+      Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+      break;
+    }
   } /* end loop reading/gridding data */
+
+  /* Accumulate thread grids if more than one */
+  if (in->nThreads>1) {
+    for (i=1; i<in->nThreads; i++) {
+      args = (UVGridFuncArg*)in->threadArgs[i];
+      ObitCArrayAdd(in->grid, args->grid, in->grid);
+    }
+  } /* end accumulating grids */
+
+  /* Shut down any threading */
+  ObitThreadPoolFree (in->thread);
+  if (in->threadArgs) {
+    for (i=0; i<in->nThreads; i++) {
+      args = (UVGridFuncArg*)in->threadArgs[i];
+      if (args->grid) ObitCArrayUnref(args->grid);
+      g_free(in->threadArgs[i]);
+    }
+    g_free(in->threadArgs);
+  }
+  in->threadArgs = NULL;
+  in->nThreads   = 0;
 
   /* Close data */
   retCode = ObitUVClose (UVin, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
+
 } /* end ObitUVGridReadUV  */
 
 /**
@@ -611,9 +703,11 @@ void ObitUVGridInit  (gpointer inn)
   in->yCorrBeam    = NULL;
   in->xCorrImage   = NULL;
   in->yCorrImage   = NULL;
+  in->nThreads     = 0;
+  in->threadArgs   = NULL;
 
   /* initialize convolving function table */
-  /* pilbox (0) for testing (4=exp*sinc, 5=Spherodial wave) */
+  /* pillbox (0) for testing (4=exp*sinc, 5=Spherodial wave) */
   ConvFunc(in, 5);
 } /* end ObitUVGridInit */
 
@@ -626,6 +720,8 @@ void ObitUVGridInit  (gpointer inn)
  */
 void ObitUVGridClear (gpointer inn)
 {
+  olong i;
+  UVGridFuncArg *args;
   ObitClassInfo *ParentClass;
   ObitUVGrid *in = inn;
 
@@ -643,7 +739,15 @@ void ObitUVGridClear (gpointer inn)
   in->yCorrBeam = ObitFArrayUnref(in->yCorrBeam);
   in->xCorrImage= ObitFArrayUnref(in->xCorrImage);
   in->yCorrImage= ObitFArrayUnref(in->yCorrImage);
-  
+   if (in->threadArgs) {
+    for (i=0; i<in->nThreads; i++) {
+      args = (UVGridFuncArg*)in->threadArgs[i];
+      if (args->grid) ObitCArrayUnref(args->grid);
+      g_free(in->threadArgs[i]);
+    }
+    g_free(in->threadArgs);
+  }
+ 
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
   /* delete parent class members */
@@ -663,8 +767,10 @@ void ObitUVGridClear (gpointer inn)
  * \li All data  converted to the positive V half plane.
  * \param in      Object with grid to accumulate.
  * \param uvdata  Object with uvdata in buffer.
+ * \param loVis   (0-rel) first vis in buffer in uv data
+ * \param hiVis   (1-rel) highest vis in buffer in uv data
  */
-static void PrepBuffer (ObitUVGrid* in, ObitUV *uvdata)
+static void PrepBuffer (ObitUVGrid* in, ObitUV *uvdata, olong loVis, olong hiVis)
 {
   olong ivis, nvis, ifreq, nif, iif, nfreq, ifq, loFreq, hiFreq;
   ofloat *u, *v, *w, *vis, *ifvis, *vvis;
@@ -697,11 +803,11 @@ static void PrepBuffer (ObitUVGrid* in, ObitUV *uvdata)
   fincf  = MAX (1, (desc->incf  / 3) / desc->inaxes[desc->jlocs]);
   fincif = MAX (1, (desc->incif / 3) / desc->inaxes[desc->jlocs]);
 
- /* initialize data pointers */
-  u   = uvdata->buffer+desc->ilocu;
-  v   = uvdata->buffer+desc->ilocv;
-  w   = uvdata->buffer+desc->ilocw;
-  vis = uvdata->buffer+desc->nrparm;
+ /* initialize data pointers into buffer */
+  u   = uvdata->buffer+desc->lrec*loVis+desc->ilocu;
+  v   = uvdata->buffer+desc->lrec*loVis+desc->ilocv;
+  w   = uvdata->buffer+desc->lrec*loVis+desc->ilocw;
+  vis = uvdata->buffer+desc->lrec*loVis+desc->nrparm;
 
   /* what needed */
   doShift = (in->dxc!=0.0) || (in->dyc!=0.0) || (in->dzc!=0.0);
@@ -716,7 +822,7 @@ static void PrepBuffer (ObitUVGrid* in, ObitUV *uvdata)
   guardv = ((1.0-in->guardband) * ((ofloat)in->grid->naxis[1])/2) / fabs(in->VScale);
 
   /* Loop over visibilities */
-  for (ivis=0; ivis<nvis; ivis++) {
+  for (ivis=loVis; ivis<hiVis; ivis++) {
 
     /* check exterma */
     bl2 = (*u)*(*u) + (*v)*(*v);
@@ -803,17 +909,21 @@ static void PrepBuffer (ObitUVGrid* in, ObitUV *uvdata)
 } /* end PrepBuffer */
 
 /**
- * Convolves data in buffer on uvdata onto the grid member of in.
+ * Convolves data in buffer on uvdata onto accGrid
  * Rows in the grid are in U and the data should have all been converted to the 
  * positive U half plane.
  * U, V, and W should be in cells and data not to be included on the grid should 
  * have zero weight.  Convolution functions must be created.
- * Details of data organization are set by FFTW;, the zero v row is first and v=-1
+ * Details of data organization are set by FFTW, the zero v row is first and v=-1
  * row is last.
- * \param in      Object with grid to accumulate
+ * \param in      UVGrid Object 
  * \param uvdata  Object with uv data in buffer, prepared for gridding.
+ * \param loVis   (0-rel) first vis in buffer in uv data
+ * \param hiVis   (1-rel) highest vis in buffer in uv data
+ * \param accGrid Grid to accumulate onto
  */
-static void GridBuffer (ObitUVGrid* in, ObitUV *uvdata)
+static void GridBuffer (ObitUVGrid* in, ObitUV *uvdata, olong loVis, olong hiVis,
+			ObitCArray *accGrid)
 {
   olong ivis, nvis, ifreq, nfreq, ncol=0, iu, iv, iuu, ivv, icu, icv, lGridRow, lGridCol, itemp;
   olong iif, nif, ifq, loFreq, hiFreq;
@@ -827,12 +937,12 @@ static void GridBuffer (ObitUVGrid* in, ObitUV *uvdata)
   /* error checks */
   g_assert (ObitUVGridIsA(in));
   g_assert (ObitUVIsA(uvdata));
-  g_assert (in->grid != NULL);
+  g_assert (accGrid != NULL);
   g_assert (uvdata->myDesc != NULL);
   g_assert (uvdata->buffer != NULL);
 
     /* debug
-    rtemp = ObitCArrayMaxAbs(in->grid, pos);
+    rtemp = ObitCArrayMaxAbs(accGrid, pos);
     fprintf (stderr,"before grid buffer Beam grid max %f at %d  %d\n",rtemp, pos[0],pos[1]); */
 
   /* how much data? */
@@ -853,13 +963,13 @@ static void GridBuffer (ObitUVGrid* in, ObitUV *uvdata)
   fincif = MAX (1, (desc->incif / 3) / desc->inaxes[desc->jlocs]);
 
  /* initialize data pointers */
-  u   = uvdata->buffer+desc->ilocu;
-  v   = uvdata->buffer+desc->ilocv;
-  w   = uvdata->buffer+desc->ilocw;
-  vis = uvdata->buffer+desc->nrparm;
+  u   = uvdata->buffer+desc->lrec*loVis+desc->ilocu;
+  v   = uvdata->buffer+desc->lrec*loVis+desc->ilocv;
+  w   = uvdata->buffer+desc->lrec*loVis+desc->ilocw;
+  vis = uvdata->buffer+desc->lrec*loVis+desc->nrparm;
 
-  lGridRow = 2*in->grid->naxis[0]; /* length of row as floats */
-  lGridCol = in->grid->naxis[1];   /* length of column */
+  lGridRow = 2*accGrid->naxis[0]; /* length of row as floats */
+  lGridCol = accGrid->naxis[1];   /* length of column */
 
   /* convolution fn pointer */
   pos[0] = 0; pos[1] = 0;
@@ -867,13 +977,13 @@ static void GridBuffer (ObitUVGrid* in, ObitUV *uvdata)
 
   /* beginning of the grid */
   pos[0] = 0;  pos[1] = 0;
-  gridStart = ObitCArrayIndex (in->grid, pos); 
+  gridStart = ObitCArrayIndex (accGrid, pos); 
   /* beginning of highest row */
   pos[1] = lGridCol-1;
-  gridTop = ObitCArrayIndex (in->grid, pos); 
+  gridTop = ObitCArrayIndex (accGrid, pos); 
   
   /* Loop over visibilities */
-  for (ivis=0; ivis<nvis; ivis++) {
+  for (ivis=loVis; ivis<hiVis; ivis++) {
 
     /* loop over IFs */
     ifvis = vis;
@@ -939,7 +1049,7 @@ static void GridBuffer (ObitUVGrid* in, ObitUV *uvdata)
 	  /* Do v center at the edges */
 	  if (ivv>=0) pos[1] = ivv;
 	  else pos[1] = ivv + lGridCol;
-	  grid = ObitCArrayIndex (in->grid, pos); /* pointer in grid */
+	  grid = ObitCArrayIndex (accGrid, pos); /* pointer in grid */
 
 	  /* Ignore if outside grid */
 	  if (grid!=NULL) {
@@ -977,7 +1087,7 @@ static void GridBuffer (ObitUVGrid* in, ObitUV *uvdata)
 	} /* End of dealing with conjugate portion */
 	  
 	/* main loop gridding - only if in grid */
-	grid = ObitCArrayIndex (in->grid, pos); /* pointer in grid */
+	grid = ObitCArrayIndex (accGrid, pos); /* pointer in grid */
 	if (grid!=NULL) {
 	  for (icv=0; icv<in->convWidth; icv++) {
 	    cconvu = convu;
@@ -1357,11 +1467,6 @@ static void GridCorrFn (ObitUVGrid* in, long n, olong icent,
 {
   ofloat p1, p2, p3, p4, sumre, tr, ti, amp, phase; 
   olong i, j, size, bias;
-  /*gfloat shit[701]; DEBUG */
-
-
-  /* DEBUG  - fuck gdb
-  for (j=0; j<701; j++) shit[j] = in->convfn->array[j];*/
 
 /* Phases for ramp */
   size = in->convWidth * in->convNperCell + 1;
@@ -1411,4 +1516,35 @@ static void GridCorrFn (ObitUVGrid* in, long n, olong icent,
  
 } /* end GridCorrFn */
 
+/** 
+ * Prepare and Grid a portion of the data buffer
+ * Arguments are given in the structure passed as arg
+ * \param arg  Pointer to UVGridFuncArg argument with elements
+ * \li in     ObitUVGrid object
+ * \li UVin   UV data set to grid from current buffer
+ * \li first  First (1-rel) vis in UVin buffer to process this thread
+ * \li last   Highest (1-rel) vis in UVin buffer to process this thread
+ * \li ithread thread number
+ */
+static gpointer ThreadUVGridBuffer (gpointer arg)
+{
+  /* Get arguments from structure */
+  UVGridFuncArg *largs = (UVGridFuncArg*)arg;
+  ObitUVGrid *in   = largs->in;
+  ObitUV *UVin     = largs->UVin;
+  olong loVis      = largs->first-1;
+  olong hiVis      = largs->last;
+  ObitCArray *grid = largs->grid;
+
+  /* prepare data */
+  PrepBuffer (in, UVin, loVis, hiVis);
+  
+  /* grid */
+  GridBuffer (in, UVin, loVis, hiVis, grid);
+
+  /* Indicate completion */
+  ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+} /* end ThreadUVGridBuffer */
 

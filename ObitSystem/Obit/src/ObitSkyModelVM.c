@@ -26,8 +26,9 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
-#include "ObitTableCCUtil.h"
+#include "ObitThread.h"
 #include "ObitSkyModelVM.h"
+#include "ObitTableCCUtil.h"
 #include "ObitFFT.h"
 #include "ObitUVUtil.h"
 #include "ObitImageUtil.h"
@@ -58,6 +59,9 @@ static ObitSkyModelVMClassInfo myClassInfo = {FALSE};
 /** Private: FT by DFT, may be overridden in derived class */
 void ObitSkyModelVMFTDFT (ObitSkyModelVM *in, olong field, ObitUV *uvdata, ObitErr *err);
 
+/** Private: Threaded FTDFT */
+static gpointer ThreadSkyModelVMFTDFT (gpointer arg);
+
 /** Private: Initialize newly instantiated object. */
 static void  ObitSkyModelVMInit  (gpointer in);
 
@@ -77,6 +81,32 @@ gboolean ObitSkyModelVMLoadPoint (ObitSkyModel *in, ObitUV *uvdata, ObitErr *err
 gboolean ObitSkyModelVMLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata, 
 				  ObitErr *err);
 
+/*---------------Private structures----------------*/
+/* FT threaded function argument 
+ Note: Derived classes MUST have the following entries at the beginning 
+ of the corresponding structure */
+typedef struct {
+  /* type "vm" in this class */
+  gchar type[12];
+  /* SkyModel with model components loaded (ObitSkyModelLoad) */
+  ObitSkyModel *in;
+  /* Field number being processed (-1 => all) */
+  olong        field;
+  /* UV data set to model and subtract from current buffer */
+  ObitUV       *uvdata;
+  /* First (1-rel) vis in uvdata buffer to process this thread */
+  olong        first;
+  /* Highest (1-rel) vis in uvdata buffer to process this thread  */
+  olong        last;
+  /* thread number  */
+  olong        ithread;
+  /* Obit error stack object */
+  ObitErr      *err;
+  /* End time (days) of valildity of model */
+  ofloat endVMModelTime;
+  /* Thread copy of Components list */
+  ObitFArray *VMComps;
+} VMFTFuncArg;
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -183,6 +213,7 @@ void ObitSkyModelVMInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   ObitSkyModelVM *in = (ObitSkyModelVM*)inn;
   ObitTable *tempTable=NULL;
   ObitTableCC *CCTable = NULL;
+  VMFTFuncArg *args;
   ObitIOCode retCode;
   olong ver, i;
   gchar *tabType = "AIPS CC";
@@ -190,6 +221,9 @@ void ObitSkyModelVMInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
 
   /* initialize Base class */
   ObitSkyModelInitMod(inn, uvdata, err);
+
+  /* Fourier transform routines - DFT only */
+  in->DFTFunc  = (ObitThreadFunc)ThreadSkyModelVMFTDFT;
 
   /* Any initialization this class */
   /* Reset time of current model */
@@ -232,6 +266,27 @@ void ObitSkyModelVMInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
     CCTable = ObitTableUnref(CCTable);
   } /* End loop over images */
 
+  /* Setup for threading */
+  /* How many threads? */
+  in->nThreads = MAX (1, ObitThreadNumProc(in->thread));
+
+  /* Initialize threadArg array */
+  if (in->threadArgs==NULL) {
+    in->threadArgs = g_malloc0(in->nThreads*sizeof(VMFTFuncArg*));
+    for (i=0; i<in->nThreads; i++) 
+      in->threadArgs[i] = g_malloc0(sizeof(VMFTFuncArg)); 
+    
+    for (i=0; i<in->nThreads; i++) {
+      args = (VMFTFuncArg*)in->threadArgs[i];
+      strcpy (args->type, "vm");  /* Enter type as first entry */
+      args->in     = inn;
+      args->uvdata = uvdata;
+      args->ithread= i;
+      args->err    = err;
+      args->endVMModelTime = -1.0e20;
+      args->VMComps = NULL;
+    }/* end initialize */
+  }
 } /* end ObitSkyModelVMInitMod */
 
 /**
@@ -270,10 +325,11 @@ void ObitSkyModelVMInitModel (ObitSkyModel* inn, ObitErr *err)
  * \param time    current time (d)
  * \param suba    0-rel subarray number
  * \param uvdata  uv data being modeled.
+ * \param ithread which thread (0-rel)
  * \param err Obit error stack object.
  */
 void ObitSkyModelVMUpdateModel (ObitSkyModelVM *in, ofloat time, olong suba,
-				ObitUV *uvdata, ObitErr *err)
+				ObitUV *uvdata, olong ithread, ObitErr *err)
 {
   gchar *routine = "ObitSkyModelVMUpdateModel";
 
@@ -851,6 +907,70 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 
 /**
  * Do Fourier transform using a DFT for a buffer of data.
+ * If threading has been enabled by a call to ObitThreadAllowThreads 
+ * this routine will divide the buffer up amount the number of processors
+ * returned by ObitThreadNumProc.
+ * If doDivide member is true then FT of model is divided into the data,
+ * If doReplace member is true then FT of model replaces the data,
+ * else, it is subtracted.
+ * If doFlip member is true the Fourier transform is multiplied by sqrt(-1)
+ * (for Stokes RL and LR)
+ * After the AIPSish QXXPTS, QPTDIV and friends
+ * This function may be overridden in a derived class and 
+ * should always be called by its function pointer.
+ * \param in     SkyModel with model components loaded (ObitSkyModelLoad)
+ * \param field  Field number being processed (-1 => all)
+ * \param uvdata UV data set to model and subtract from current buffer
+ * \param err Obit error stack object.
+ */
+void ObitSkyModelVMFTDFT (ObitSkyModelVM *in, olong field, ObitUV *uvdata, ObitErr *err)
+{
+  olong i, nvis, lovis, hivis, nvisPerThread;
+  VMFTFuncArg *args;
+  gboolean OK = TRUE;
+  gchar *routine = "ObitSkyModelVMFTDFT";
+
+  /* error checks - assume most done at higher level */
+  if (err->error) return;
+
+  /* Divide up work */
+  nvis = uvdata->myDesc->numVisBuff;
+  nvisPerThread = nvis/in->nThreads;
+  lovis = 1;
+  hivis = nvisPerThread;
+  hivis = MIN (hivis, nvis);
+
+  /* Set up thread arguments */
+  for (i=0; i<in->nThreads; i++) {
+    if (i==(in->nThreads-1)) hivis = nvis;  /* Make sure do all */
+    args = (VMFTFuncArg*)in->threadArgs[i];
+    args->in     = (ObitSkyModel*)in;
+    args->field  = field;
+    args->uvdata = uvdata;
+    args->first  = lovis;
+    args->last   = hivis;
+    args->ithread= i;
+    args->err    = err;
+    args->endVMModelTime = -1.0e20;
+    if (args->VMComps==NULL) {
+      args->VMComps = ObitFArrayCreate("Temp grid", in->comps->ndim,  in->comps->naxis);
+      ObitFArrayFill (args->VMComps, 0.0);
+    }
+    /* Update which vis */
+    lovis += nvisPerThread;
+    hivis += nvisPerThread;
+    hivis = MIN (hivis, nvis);
+  }
+
+  /* Do operation */
+  OK = ObitThreadIterator (in->thread, in->nThreads, in->DFTFunc, in->threadArgs);
+
+  /* Check for problems */
+  if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+}  /* end ObitSkyModelVMFTDFT */
+
+/**
+ * Do Fourier transform using a DFT for a buffer of data.
  * Version for time/spatial dependent effects.
  * If doDivide member is true then FT of model is divided into the data,
  * If doReplace member is true then FT of model replaces the data,
@@ -860,14 +980,33 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
  * After the AIPSish QXXPTS, QPTDIV and friends
  * This function may be overridden in a derived class and 
  * should always be called by its function pointer.
- * \param in     SkyModelVM with model components loaded (ObitSkyModelLoad)
- * \param field  Field number being processed (-1 => all)
- * \param uvdata UV data set to model and subtract from current buffer
- * \param err Obit error stack object.
- * \return return code, OBIT_IO_OK=> OK
+ * Arguments are given in the VMFTFuncArg structure passed as arg starting 
+ * with the following:
+ * \li type   String identifying structure
+ * \li in     SkyModelVM with model components loaded (ObitSkyModelLoad)
+ * \li field  Field number being processed (-1 => all)
+ * \li uvdata UV data set to model and subtract from current buffer
+ * \li first  First (1-rel) vis in uvdata buffer to process this thread
+ * \li last   Highest (1-rel) vis in uvdata buffer to process this thread
+ * \li ithread thread number
+ * \li err    Obit error stack object.
+ * \li endVMModelTime End time (days) of validity of model
+ * \li VMComps Thread copy of Components list
+ * \return NULL
  */
-void ObitSkyModelVMFTDFT (ObitSkyModelVM *in, olong field, ObitUV *uvdata, ObitErr *err)
+static gpointer ThreadSkyModelVMFTDFT (gpointer args)
 {
+  /* Get arguments from structure */
+  VMFTFuncArg *largs = (VMFTFuncArg*)args;
+  ObitSkyModelVM *in = (ObitSkyModelVM*)largs->in;
+  /*olong field      = largs->field;*/
+  ObitUV *uvdata   = largs->uvdata;
+  olong loVis      = largs->first-1;
+  olong hiVis      = largs->last;
+  olong ithread    = largs->ithread;
+  ObitErr *err     = largs->err;
+  ObitFArray *VMComps = largs->VMComps;
+
   olong iVis, iIF, iChannel, iStoke, iComp, lcomp, ncomp;
   olong lrec, nrparm, naxis[2];
   olong startPoln, numberPoln, jincs, startChannel, numberChannel;
@@ -883,15 +1022,18 @@ void ObitSkyModelVMFTDFT (ObitSkyModelVM *in, olong field, ObitUV *uvdata, ObitE
   gchar *routine = "ObitSkyModelVMFTDFT";
 
   /* error checks - assume most done at higher level */
-  if (err->error) return;
+  if (err->error) goto finish;
 
-  /* Create buffer for VM model components if needbe */
-  if (in->VMComps==NULL) 
-    in->VMComps = ObitFArrayCopy (in->comps, in->VMComps, err);
-  /* Resize if necessary */
-  if (!ObitFArrayIsCompatable(in->comps, in->VMComps))
-    ObitFArrayClone (in->comps, in->VMComps, err);
-  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  /* Resize component if necessary */
+  if (!ObitFArrayIsCompatable(in->comps, VMComps))
+    ObitFArrayClone (in->comps, VMComps, err);
+  if (err->error) {
+    ObitThreadLock(in->thread);  /* Lock against other threads */
+    Obit_log_error(err, OBIT_Error,"%s Error cloning VMComps",
+		   routine);
+    ObitThreadUnlock(in->thread); 
+    goto finish;
+  }
   
   /* Visibility pointers */
   ilocu =  uvdata->myDesc->ilocu;
@@ -920,8 +1062,8 @@ void ObitSkyModelVMFTDFT (ObitSkyModelVM *in, olong field, ObitUV *uvdata, ObitE
 
   /* Get pointer for components */
   naxis[0] = 0; naxis[1] = 0; 
-  data = ObitFArrayIndex(in->VMComps, naxis);
-  lcomp = in->VMComps->naxis[0];  /* Length of row in comp table */
+  data = ObitFArrayIndex(VMComps, naxis);
+  lcomp = VMComps->naxis[0];      /* Length of row in comp table */
   ncomp = in->numComp;            /* Number of components */
 
   /* Get pointer for frequency correction tables */
@@ -929,20 +1071,26 @@ void ObitSkyModelVMFTDFT (ObitSkyModelVM *in, olong field, ObitUV *uvdata, ObitE
   freqArr = uvdata->myDesc->freqArr;
 
   /* Loop over vis in buffer */
-  visData = uvdata->buffer;         /* Buffer pointer */
-  lrec = uvdata->myDesc->lrec;      /* Length of record */
-  nrparm = uvdata->myDesc->nrparm;  /* Words of "random parameters" */
-  for (iVis=0; iVis<uvdata->myDesc->numVisBuff; iVis++) {
+  lrec    = uvdata->myDesc->lrec;         /* Length of record */
+  visData = uvdata->buffer+loVis*lrec;    /* Buffer pointer with appropriate offset */
+  nrparm  = uvdata->myDesc->nrparm;       /* Words of "random parameters" */
+  for (iVis=loVis; iVis<hiVis; iVis++) {
 
     /* Is current model still valid? */
-    if (visData[iloct] > in->endVMModelTime) {
+    if (visData[iloct] > largs->endVMModelTime) {
       /* Subarray 0-rel */
       itemp = (olong)visData[uvdata->myDesc->ilocb];
       suba = 100.0 * (visData[uvdata->myDesc->ilocb]-itemp) + 0.5; 
       /* Update */
-      myClass->ObitSkyModelVMUpdateModel (in, visData[iloct], suba, uvdata, err);
+      myClass->ObitSkyModelVMUpdateModel (in, visData[iloct], suba, uvdata, ithread, err);
     }
-    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    if (err->error) {
+      ObitThreadLock(in->thread);  /* Lock against other threads */
+      Obit_log_error(err, OBIT_Error,"%s Error updating VMComps",
+		     routine);
+      ObitThreadUnlock(in->thread); 
+      goto finish;
+    }
 
     /* Loop over IFs */
     for (iIF=startIF; iIF<startIF+numberIF; iIF++) {
@@ -1012,9 +1160,11 @@ void ObitSkyModelVMFTDFT (ObitSkyModelVM *in, olong field, ObitUV *uvdata, ObitE
 	  }  /* end loop over components */
 	  break;
 	default:
+	  ObitThreadLock(in->thread);  /* Lock against other threads */
 	  Obit_log_error(err, OBIT_Error,"%s Unknown Comp model type %d in %s",
 			 routine, in->modType, in->name);
-	  return;
+	  ObitThreadUnlock(in->thread); 
+	  goto finish;
 	}; /* end switch by model type */
 
 	/* Need to multiply model by sqrt(-1)? */
@@ -1071,5 +1221,9 @@ void ObitSkyModelVMFTDFT (ObitSkyModelVM *in, olong field, ObitUV *uvdata, ObitE
     visData += lrec; /* Update vis pointer */
   } /* end loop over visibilities */
 
-} /* ObitSkyModelVMFTDFT */
+  /* Indicate completion */
+ finish: ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+} /* ThreadSkyModelVMFTDFT */
 

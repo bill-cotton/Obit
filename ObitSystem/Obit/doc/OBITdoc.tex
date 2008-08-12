@@ -21,7 +21,7 @@
 \vskip 1cm
 \centerline{\ttlfont Merx mollis mortibus nuper}
 \vskip 3cm
-\centerline{\secfont Draft version: 1.0 \today}
+\centerline{\secfont Version: 1.1 \today}
 \vskip 1cm
 \centerline{\secfont W. D. Cotton}
 \clearpage
@@ -150,10 +150,10 @@ The use of Fortran named commons in AIPS makes high level
 parallelization difficult in that environment.
 The use of multiple objects with independent resources reduces the
 difficulty.
-In addition, most classes have the hooks to provide locking and
-synchronism mechanisms but at present, these are stubbed.
-cfitsio, which is used for I/O to FITS files, is not thread--safe which
-puts some limitations on parallel usage.
+In addition, most classes have an ObitThread member to provide
+multi--threaded operation, locking and synchronism mechanisms.
+cfitsio, which is used for I/O to FITS files, is not thread--safe
+which limits parallel, multi--threaded usage to in--memory applications.
 
 \subsection{Portability}
 The glib library was intended to reduce portability problems and many
@@ -538,9 +538,104 @@ A descriptor object (class ObitTableDesc) is used to describe the data.
 An ObitIO object is used to access the external data.
 
 \subsection{Threading}
-The hooks for multithreaded operation (class ObitThread), e.g. mutexes
-and locking/unlocking are in place but not yet implemented.
-Note: cfitio is not thread--safe.
+Multi--threaded executation in Obit is by means of the ObitThread
+class which uses the gthreads implementation of glib.
+Multi--threading is currently only supported for in--memory operations as
+cfitsio is not thread-safe.
+This class provides pools of threads to reduce the overhead of
+starting/stopping many threads doing the same operation.
+Multiple copies of a routine can be executed in parallel using
+ObitThreadIterator; the function to be run in multiple copies should
+have a signature of type ObitThreadFunc, e.g.:
+\begin{verbatim}
+gpointer ThreadFunction (gpointer arg);
+\end{verbatim}
+A simple demo program is the following:
+\begin{verbatim}
+/* Demo threading concepts */
+#include "Obit.h"
+#include "ObitThread.h"
+/* Function argument structure */
+typedef struct {
+  ObitThread *thread;  /* Threading control object 
+                          MUST be the same as passed to
+                          ObitThreadIterator */
+  olong      ithread;  /* Thread number */
+  olong      ndata;    /* Number of entries in data */
+  ofloat     *data;    /* data array */
+} FuncArg;
+
+/**
+ * Demo routine to run in parallel threads.
+ * Fills data values in array arg->data
+ * Arguments are given in the FuncArg structure passed as arg
+ * \param arg  Pointer to FuncArg argument with elements:
+ * \li thread  Thread control object
+ * \li ithread thread number
+ * \li ndata   number of entries in data
+ * \li data    data array
+ * \return NULL
+ */
+gpointer fn(gpointer arg) {
+  FuncArg  *farg = (FuncArg*)arg;
+  olong j;
+  
+  /* Say I'm alive */
+  fprintf (stdout," Running thread %d\n", farg->ithread);
+
+  /* Fill data array */
+  for (j=0; j<farg->ndata; j++) farg->data[j] = 0.01*j*farg->ithread;
+ 
+  /* Indicate completion */
+  ObitThreadPoolDone (farg->thread, (gpointer)&farg->ithread);
+  
+ return NULL;
+} /* end fn */
+
+/* Main program to demo threading */
+int main ( int argc, char **argv )
+{
+  ObitThread *th=NULL;
+  olong i, nThreads = 5;
+  ObitThreadFunc func=(ObitThreadFunc)fn;
+  gpointer *fargs[5];
+  FuncArg args[5];
+  
+  /* Enable threading on 5 processors/cores */
+  th = newObitThread();
+  ObitThreadAllowThreads(th, nThreads);
+
+  /* Initialize thread function argments */
+  for (i=0; i<nThreads; i++) {
+    args[i].thread  = th;
+    args[i].ithread = i;
+    args[i].ndata   = 1000;
+    args[i].data    = g_malloc0(1000*sizeof(ofloat));
+    fargs[i] = (gpointer)&args[i];
+  }
+
+  /* Execute - run 5 parallel copies of routine fn,
+     will return on completion of all threads */
+  ObitThreadIterator (th, nThreads, func, fargs);
+  
+  return 0;
+} /* end main */
+\end{verbatim}
+
+Synchronization of threads uses glib asynchronous message queues.
+Each copy of a threaded routine MUST call ObitThreadPoolDone to
+indicate it is completed (although there is a 1 minute timeout).
+
+The ObitThread class  provides mutexes for absolute 
+locking of associated resources as well as RWLocks to allow multiple
+read accesses but only a single write (and no concurrent reads).
+Usage of threading needs OBIT\_THREADS\_ENABLED defined at compile time and
+the output of  pkg-config --libs gthread-2.0 added to the libraries.
+
+Multi-threading in a task using a user--specified parameter
+(``nThreads'') given in the ObitInfoList myInput, is initialized by a
+call to ObitThreadInit (myInput).
+Alternatively, ObitThreadAllowThreads can be used as in the example above.
 
 \subsection{Documentation}
 Class documentation uses the doxygen system which uses specially coded

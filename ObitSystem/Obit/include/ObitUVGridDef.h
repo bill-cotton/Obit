@@ -1,6 +1,6 @@
-/* $Id$                            */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003                                               */
+/*;  Copyright (C) 2003,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -17,7 +17,7 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*;  Correspondence this software should be addressed as follows:     */
+/*; Correspondence about this software should be addressed as follows:*/
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
@@ -89,3 +89,7 @@ ObitFArray *yCorrBeam;
 ObitFArray *xCorrImage;
 /** "Y" gridding correction function for image */
 ObitFArray *yCorrImage;
+/** Number of threads (elements in threadArgs)  */
+olong nThreads;
+/** Array of FT Function structures  */
+gpointer **threadArgs;

@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE RANLIB ac_ct_RANLIB CPP EGREP X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS MOTIF_CPPFLAGS MOTIF_LDFLAGS MOTIF_LIBS GLIB_CONFIG GLIB_CFLAGS GLIB_LIBS PKG_CONFIG GLIB_GENMARSHAL GOBJECT_QUERY GLIB_MKENUMS OBIT_CPPFLAGS OBIT_LDFLAGS OBIT_LIBS OBIT_DIR OBIT PLPLOT_CPPFLAGS PLPLOT_CFLAGS PLPLOT_LDFLAGS PLPLOT_LIBS CFITSIO_CPPFLAGS CFITSIO_LDFLAGS CFITSIO_LIBS FFTW3_CPPFLAGS FFTW3_LDFLAGS FFTW3_LIBS FFTW_CPPFLAGS FFTW_LDFLAGS FFTW_LIBS GSL_CFLAGS GSL_LDFLAGS GSL_LIBS XMLRPC_SERVER_CPPFLAGS XMLRPC_SERVER_LDFLAGS XMLRPC_SERVER_LIBS XMLRPC_CLIENT_CPPFLAGS XMLRPC_CLIENT_LDFLAGS XMLRPC_CLIENT_LIBS XMLRPC_CPPFLAGS XMLRPC_LDFLAGS XMLRPC_LIBS WWWLIB_WL_RPATH WWW_LIBS ZLIB_CFLAGS ZLIB_LDFLAGS ZLIB_LIBS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE RANLIB ac_ct_RANLIB CPP EGREP X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS MOTIF_CPPFLAGS MOTIF_LDFLAGS MOTIF_LIBS GLIB_CONFIG GLIB_CFLAGS GLIB_LIBS PKG_CONFIG GLIB_GENMARSHAL GOBJECT_QUERY GLIB_MKENUMS PLPLOT_CPPFLAGS PLPLOT_CFLAGS PLPLOT_LDFLAGS PLPLOT_LIBS CFITSIO_CPPFLAGS CFITSIO_LDFLAGS CFITSIO_LIBS FFTW3_CPPFLAGS FFTW3_LDFLAGS FFTW3_LIBS FFTW_CPPFLAGS FFTW_LDFLAGS FFTW_LIBS GSL_CFLAGS GSL_LDFLAGS GSL_LIBS XMLRPC_SERVER_CPPFLAGS XMLRPC_SERVER_LDFLAGS XMLRPC_SERVER_LIBS XMLRPC_CLIENT_CPPFLAGS XMLRPC_CLIENT_LDFLAGS XMLRPC_CLIENT_LIBS XMLRPC_CPPFLAGS XMLRPC_LDFLAGS XMLRPC_LIBS WWWLIB_WL_RPATH WWW_LIBS ZLIB_CFLAGS ZLIB_LDFLAGS ZLIB_LIBS GTHREAD_LIBS OBIT_CPPFLAGS OBIT_LDFLAGS OBIT_LIBS OBIT_DIR OBIT LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -868,9 +868,6 @@ Optional Packages:
                           search for MOTIF includes in DIR
   --with-glib-prefix=PFX   Prefix where GLIB is installed (optional)
   --with-glib-exec-prefix=PFX Exec prefix where GLIB is installed (optional)
-  --with-obit=DIR         search for OBIT in DIR/include and DIR/lib
-  --with-obit-includes=DIR
-                          search for OBIT includes in DIR
   --with-plplot=DIR       search for PLPLOT in DIR
   --with-cfitsio=DIR      search for CFITSIO in DIR/include and DIR/lib
   --with-cfitsio-includes=DIR
@@ -891,6 +888,9 @@ Optional Packages:
   --with-zlib=DIR         search for ZLIB in DIR/include and DIR/lib
   --with-zlib-includes=DIR
                           search for ZLIB includes in DIR
+  --with-obit=DIR         search for OBIT in DIR/include and DIR/lib
+  --with-obit-includes=DIR
+                          search for OBIT includes in DIR
 
 Some influential environment variables:
   CC          C compiler command
@@ -6341,293 +6341,6 @@ rm -f conftest.err conftest.$ac_objext \
 
 #AC_CHECK_LIB(m pow strtol)
 
-# Default root of Obit directory is $OBIT
-	OBIT_DIR="$OBIT"
-	if test -d $OBIT_DIR/include; then
-	     OBIT_CPPFLAGS="$OBIT_CPPFLAGS -I$OBIT_DIR/include $GLIB_CFLAGS"
-	fi
-	if test -d $OBIT_DIR/lib/; then
-	     OBIT_LDFLAGS="$OBIT_LDFLAGS -L$OBIT_DIR/lib/ $GLIB_LIBS"
-	fi
-
-
-# Check whether --with-obit or --without-obit was given.
-if test "${with_obit+set}" = set; then
-  withval="$with_obit"
-  for dir in `echo "$withval" | tr : ' '`; do
-    if test -d $dir/include; then
-      OBIT_CPPFLAGS="$OBIT_CPPFLAGS -I$dir/include $GLIB_CFLAGS"
-      OBIT_DIR="$dir"
-      OBIT="$dir"
-    fi
-    if test -d $dir/lib/; then
-      OBIT_LDFLAGS="$OBIT_LDFLAGS -L$dir/lib/ $GLIB_LIBS"
-    fi
-  done
-fi;
-
-
-# Check whether --with-obit-includes or --without-obit-includes was given.
-if test "${with_obit_includes+set}" = set; then
-  withval="$with_obit_includes"
-  for dir in `echo "$withval" | tr : ' '`; do
-    if test -d $dir; then
-      OBIT_CPPFLAGS="$OBIT_CPPFLAGS -I$dir"
-    fi
-  done
-fi;
-
-ac_obit_saved_CPPFLAGS="$CPPFLAGS"
-ac_obit_saved_LDFLAGS="$LDFLAGS"
-ac_obit_saved_LIBS="$LIBS"
-CPPFLAGS="$CPPFLAGS $OBIT_CPPFLAGS"
-LDFLAGS="$LDFLAGS $OBIT_LDFLAGS"
-ac_have_obit=yes
-
-echo "$as_me:$LINENO: checking for newObit in -lObit" >&5
-echo $ECHO_N "checking for newObit in -lObit... $ECHO_C" >&6
-if test "${ac_cv_lib_Obit_newObit+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lObit  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any gcc2 internal prototype to avoid an error.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-/* We use char because int might match the return type of a gcc2
-   builtin and then its argument prototype would still apply.  */
-char newObit ();
-int
-main ()
-{
-newObit ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_Obit_newObit=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_cv_lib_Obit_newObit=no
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_Obit_newObit" >&5
-echo "${ECHO_T}$ac_cv_lib_Obit_newObit" >&6
-if test $ac_cv_lib_Obit_newObit = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_LIBOBIT 1
-_ACEOF
-
-  LIBS="-lObit $LIBS"
-
-else
-  ac_have_obit=no
-	             { { echo "$as_me:$LINENO: error: cannot find OBIT library" >&5
-echo "$as_me: error: cannot find OBIT library" >&2;}
-   { (exit 1); exit 1; }; }
-			$GLIB_LIBS -lglib-2.0
-fi
-
-        if test "${ac_cv_header_Obit_h+set}" = set; then
-  echo "$as_me:$LINENO: checking for Obit.h" >&5
-echo $ECHO_N "checking for Obit.h... $ECHO_C" >&6
-if test "${ac_cv_header_Obit_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_Obit_h" >&5
-echo "${ECHO_T}$ac_cv_header_Obit_h" >&6
-else
-  # Is the header compilable?
-echo "$as_me:$LINENO: checking Obit.h usability" >&5
-echo $ECHO_N "checking Obit.h usability... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-$ac_includes_default
-#include <Obit.h>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
-  (eval $ac_compile) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest.$ac_objext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_header_compiler=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-ac_header_compiler=no
-fi
-rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
-echo "${ECHO_T}$ac_header_compiler" >&6
-
-# Is the header present?
-echo "$as_me:$LINENO: checking Obit.h presence" >&5
-echo $ECHO_N "checking Obit.h presence... $ECHO_C" >&6
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <Obit.h>
-_ACEOF
-if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
-  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } >/dev/null; then
-  if test -s conftest.err; then
-    ac_cpp_err=$ac_c_preproc_warn_flag
-    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
-  else
-    ac_cpp_err=
-  fi
-else
-  ac_cpp_err=yes
-fi
-if test -z "$ac_cpp_err"; then
-  ac_header_preproc=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-  ac_header_preproc=no
-fi
-rm -f conftest.err conftest.$ac_ext
-echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
-echo "${ECHO_T}$ac_header_preproc" >&6
-
-# So?  What about this header?
-case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
-  yes:no: )
-    { echo "$as_me:$LINENO: WARNING: Obit.h: accepted by the compiler, rejected by the preprocessor!" >&5
-echo "$as_me: WARNING: Obit.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { echo "$as_me:$LINENO: WARNING: Obit.h: proceeding with the compiler's result" >&5
-echo "$as_me: WARNING: Obit.h: proceeding with the compiler's result" >&2;}
-    ac_header_preproc=yes
-    ;;
-  no:yes:* )
-    { echo "$as_me:$LINENO: WARNING: Obit.h: present but cannot be compiled" >&5
-echo "$as_me: WARNING: Obit.h: present but cannot be compiled" >&2;}
-    { echo "$as_me:$LINENO: WARNING: Obit.h:     check for missing prerequisite headers?" >&5
-echo "$as_me: WARNING: Obit.h:     check for missing prerequisite headers?" >&2;}
-    { echo "$as_me:$LINENO: WARNING: Obit.h: see the Autoconf documentation" >&5
-echo "$as_me: WARNING: Obit.h: see the Autoconf documentation" >&2;}
-    { echo "$as_me:$LINENO: WARNING: Obit.h:     section \"Present But Cannot Be Compiled\"" >&5
-echo "$as_me: WARNING: Obit.h:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { echo "$as_me:$LINENO: WARNING: Obit.h: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: Obit.h: proceeding with the preprocessor's result" >&2;}
-    { echo "$as_me:$LINENO: WARNING: Obit.h: in the future, the compiler will take precedence" >&5
-echo "$as_me: WARNING: Obit.h: in the future, the compiler will take precedence" >&2;}
-    (
-      cat <<\_ASBOX
-## ------------------------------- ##
-## Report this to bcotton@nrao.edu ##
-## ------------------------------- ##
-_ASBOX
-    ) |
-      sed "s/^/$as_me: WARNING:     /" >&2
-    ;;
-esac
-echo "$as_me:$LINENO: checking for Obit.h" >&5
-echo $ECHO_N "checking for Obit.h... $ECHO_C" >&6
-if test "${ac_cv_header_Obit_h+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_header_Obit_h=$ac_header_preproc
-fi
-echo "$as_me:$LINENO: result: $ac_cv_header_Obit_h" >&5
-echo "${ECHO_T}$ac_cv_header_Obit_h" >&6
-
-fi
-if test $ac_cv_header_Obit_h = yes; then
-  :
-else
-  ac_have_obit=no
-	                { { echo "$as_me:$LINENO: error: cannot find OBIT headers" >&5
-echo "$as_me: error: cannot find OBIT headers" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-
-if test $ac_have_obit = yes; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_OBIT 1
-_ACEOF
-
-fi
-OBIT_LIBS="$LIBS"
-CPPFLAGS="$ac_obit_saved_CPPFLAGS"
-LDFLAGS="$ac_obit_saved_LDFLAGS"
-LIBS="$ac_obit_saved_LIBS"
-
-
-
-
-
-
-
 
 
 # Check whether --with-plplot or --without-plplot was given.
@@ -10440,6 +10153,379 @@ if test $ac_have_xmlrpc = no; then
   WWW_LIBS=" "
 fi
 
+# GThread stuff - horrible hack for pkg-config bug
+GTHREAD_LIBS=""
+TGTHREAD_LIBS=`pkg-config --libs gthread-2.0 | sed -e 's/-pthread/-lpthread/g'`
+echo "$as_me:$LINENO: checking for g_thread_init in -lgthread-2.0" >&5
+echo $ECHO_N "checking for g_thread_init in -lgthread-2.0... $ECHO_C" >&6
+if test "${ac_cv_lib_gthread_2_0_g_thread_init+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lgthread-2.0 $TGTHREAD_LIBS $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char g_thread_init ();
+int
+main ()
+{
+g_thread_init ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_gthread_2_0_g_thread_init=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_gthread_2_0_g_thread_init=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_gthread_2_0_g_thread_init" >&5
+echo "${ECHO_T}$ac_cv_lib_gthread_2_0_g_thread_init" >&6
+if test $ac_cv_lib_gthread_2_0_g_thread_init = yes; then
+  ac_gthread=yes
+else
+  ac_gthread=no
+             { echo "$as_me:$LINENO: WARNING: cannot find GTHREAD library" >&5
+echo "$as_me: WARNING: cannot find GTHREAD library" >&2;}
+fi
+
+if test $ac_gthread = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define OBIT_THREADS_ENABLED 1
+_ACEOF
+
+	GTHREAD_LIBS=$TGTHREAD_LIBS
+
+fi
+
+# Check for Obit
+
+# Default root of Obit directory is $OBIT
+	OBIT_DIR="$OBIT"
+	if test -d $OBIT_DIR/include; then
+	     OBIT_CPPFLAGS="$OBIT_CPPFLAGS -I$OBIT_DIR/include $GLIB_CFLAGS"
+	fi
+	if test -d $OBIT_DIR/lib/; then
+	     OBIT_LDFLAGS="$OBIT_LDFLAGS -L$OBIT_DIR/lib/ $GLIB_LIBS $GTHREAD_LIBS"
+	fi
+
+
+# Check whether --with-obit or --without-obit was given.
+if test "${with_obit+set}" = set; then
+  withval="$with_obit"
+  for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir/include; then
+      OBIT_CPPFLAGS="$OBIT_CPPFLAGS -I$dir/include $GLIB_CFLAGS"
+      OBIT_DIR="$dir"
+      OBIT="$dir"
+    fi
+    if test -d $dir/lib/; then
+      OBIT_LDFLAGS="$OBIT_LDFLAGS -L$dir/lib/ $GLIB_LIBS $GTHREAD_LIBS"
+    fi
+  done
+fi;
+
+
+# Check whether --with-obit-includes or --without-obit-includes was given.
+if test "${with_obit_includes+set}" = set; then
+  withval="$with_obit_includes"
+  for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir; then
+      OBIT_CPPFLAGS="$OBIT_CPPFLAGS -I$dir"
+    fi
+  done
+fi;
+
+ac_obit_saved_CPPFLAGS="$CPPFLAGS"
+ac_obit_saved_LDFLAGS="$LDFLAGS"
+ac_obit_saved_LIBS="$LIBS"
+CPPFLAGS="$CPPFLAGS $OBIT_CPPFLAGS"
+LDFLAGS="$LDFLAGS $OBIT_LDFLAGS"
+ac_have_obit=yes
+
+echo "$as_me:$LINENO: checking for newObit in -lObit" >&5
+echo $ECHO_N "checking for newObit in -lObit... $ECHO_C" >&6
+if test "${ac_cv_lib_Obit_newObit+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lObit  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char newObit ();
+int
+main ()
+{
+newObit ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_Obit_newObit=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_Obit_newObit=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_Obit_newObit" >&5
+echo "${ECHO_T}$ac_cv_lib_Obit_newObit" >&6
+if test $ac_cv_lib_Obit_newObit = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBOBIT 1
+_ACEOF
+
+  LIBS="-lObit $LIBS"
+
+else
+  ac_have_obit=no
+	             { { echo "$as_me:$LINENO: error: cannot find OBIT library" >&5
+echo "$as_me: error: cannot find OBIT library" >&2;}
+   { (exit 1); exit 1; }; }
+			$GLIB_LIBS  $GTHREAD_LIBS -lglib-2.0
+fi
+
+        if test "${ac_cv_header_Obit_h+set}" = set; then
+  echo "$as_me:$LINENO: checking for Obit.h" >&5
+echo $ECHO_N "checking for Obit.h... $ECHO_C" >&6
+if test "${ac_cv_header_Obit_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_Obit_h" >&5
+echo "${ECHO_T}$ac_cv_header_Obit_h" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking Obit.h usability" >&5
+echo $ECHO_N "checking Obit.h usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <Obit.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking Obit.h presence" >&5
+echo $ECHO_N "checking Obit.h presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <Obit.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { echo "$as_me:$LINENO: WARNING: Obit.h: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: Obit.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: Obit.h: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: Obit.h: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { echo "$as_me:$LINENO: WARNING: Obit.h: present but cannot be compiled" >&5
+echo "$as_me: WARNING: Obit.h: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: Obit.h:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: Obit.h:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: Obit.h: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: Obit.h: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: Obit.h:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: Obit.h:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: Obit.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: Obit.h: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: Obit.h: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: Obit.h: in the future, the compiler will take precedence" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------- ##
+## Report this to bcotton@nrao.edu ##
+## ------------------------------- ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for Obit.h" >&5
+echo $ECHO_N "checking for Obit.h... $ECHO_C" >&6
+if test "${ac_cv_header_Obit_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_header_Obit_h=$ac_header_preproc
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_Obit_h" >&5
+echo "${ECHO_T}$ac_cv_header_Obit_h" >&6
+
+fi
+if test $ac_cv_header_Obit_h = yes; then
+  :
+else
+  ac_have_obit=no
+	                { { echo "$as_me:$LINENO: error: cannot find OBIT headers" >&5
+echo "$as_me: error: cannot find OBIT headers" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+
+if test $ac_have_obit = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_OBIT 1
+_ACEOF
+
+fi
+OBIT_LIBS="$LIBS"
+CPPFLAGS="$ac_obit_saved_CPPFLAGS"
+LDFLAGS="$ac_obit_saved_LDFLAGS"
+LIBS="$ac_obit_saved_LIBS"
+
+
+
+
+
+
 
                     ac_config_files="$ac_config_files Makefile src/Makefile"
 
@@ -11161,11 +11247,6 @@ s,@PKG_CONFIG@,$PKG_CONFIG,;t t
 s,@GLIB_GENMARSHAL@,$GLIB_GENMARSHAL,;t t
 s,@GOBJECT_QUERY@,$GOBJECT_QUERY,;t t
 s,@GLIB_MKENUMS@,$GLIB_MKENUMS,;t t
-s,@OBIT_CPPFLAGS@,$OBIT_CPPFLAGS,;t t
-s,@OBIT_LDFLAGS@,$OBIT_LDFLAGS,;t t
-s,@OBIT_LIBS@,$OBIT_LIBS,;t t
-s,@OBIT_DIR@,$OBIT_DIR,;t t
-s,@OBIT@,$OBIT,;t t
 s,@PLPLOT_CPPFLAGS@,$PLPLOT_CPPFLAGS,;t t
 s,@PLPLOT_CFLAGS@,$PLPLOT_CFLAGS,;t t
 s,@PLPLOT_LDFLAGS@,$PLPLOT_LDFLAGS,;t t
@@ -11196,6 +11277,12 @@ s,@WWW_LIBS@,$WWW_LIBS,;t t
 s,@ZLIB_CFLAGS@,$ZLIB_CFLAGS,;t t
 s,@ZLIB_LDFLAGS@,$ZLIB_LDFLAGS,;t t
 s,@ZLIB_LIBS@,$ZLIB_LIBS,;t t
+s,@GTHREAD_LIBS@,$GTHREAD_LIBS,;t t
+s,@OBIT_CPPFLAGS@,$OBIT_CPPFLAGS,;t t
+s,@OBIT_LDFLAGS@,$OBIT_LDFLAGS,;t t
+s,@OBIT_LIBS@,$OBIT_LIBS,;t t
+s,@OBIT_DIR@,$OBIT_DIR,;t t
+s,@OBIT@,$OBIT,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t
 CEOF

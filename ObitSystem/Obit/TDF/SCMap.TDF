@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry imaging software
 ;# Task Obit self calibration Imaging
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006,2007
+;;  Copyright (C) 2006-2008
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -227,6 +227,8 @@ doSmoo                             Interpolate failed solutions?
 prtLv             0.0              Print level in selfcal
 **PARAM** str 48 **DEF** ObitView
 dispURL                            Display server URL
+**PARAM** int 1 **DEF** 1
+nThreads            0              Number of threads to use
 **PARAM** int 10
 noScrat                            AIPS disk numbers for which
                                    scratch files are disallowed
@@ -462,6 +464,12 @@ Adverbs:
               "ObitView" =  "http://localhost:8765/RPC2" 
               This will display fields being CLEANed and allow
               interactive editing of the CLEAN window.
+  nThreads....If The Obit libraries are compiled with multiple
+              thread operation enabled, this parameter sets the 
+              number of threads that can be used for parallel 
+              operations. 
+              NB: This only improves performance if there are 
+              multiple processors and/or cores in the host.
   noScrat.....A list of AIPS disk numbers on which you do not 
               wish scratch files
 ----------------------------------------------------------------

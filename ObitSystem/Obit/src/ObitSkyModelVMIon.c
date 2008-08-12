@@ -26,8 +26,9 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
-#include "ObitTableCCUtil.h"
 #include "ObitSkyModelVMIon.h"
+#include "ObitTableCCUtil.h"
+#include "ObitTableNIUtil.h"
 #include "ObitSkyGeom.h"
 #include "ObitUVUtil.h"
 #include "ObitPBUtil.h"
@@ -71,6 +72,36 @@ static void ObitSkyModelVMIonClassInfoDefFn (gpointer inClass);
 /** Private: Get Inputs. */
 void  ObitSkyModelVMIonGetInput (ObitSkyModel* inn, ObitErr *err);
 
+/*---------------Private structures----------------*/
+/* FT threaded function argument 
+ Note: Derived classes MUST have the following entries at the beginning 
+ of the corresponding structure */
+typedef struct {
+  /* type "ion" in this class */
+  gchar type[12];
+  /* SkyModel with model components loaded (ObitSkyModelLoad) */
+  ObitSkyModel *in;
+  /* Field number being processed (-1 => all) */
+  olong        field;
+  /* UV data set to model and subtract from current buffer */
+  ObitUV       *uvdata;
+  /* First (1-rel) vis in uvdata buffer to process this thread */
+  olong        first;
+  /* Highest (1-rel) vis in uvdata buffer to process this thread  */
+  olong        last;
+  /* thread number  */
+  olong        ithread;
+  /* Obit error stack object */
+  ObitErr      *err;
+  /* End time (days) of valildity of model */
+  ofloat endVMModelTime;
+  /* Thread copy of Components list */
+  ObitFArray *VMComps;
+  /* Prior index in NIArray */
+  olong prior;
+  /* PFollowing index in NIArray */
+  olong follow;
+} VMIonFTFuncArg;
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -193,7 +224,41 @@ void ObitSkyModelVMIonInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   odouble raPnt, decPnt;
+  VMIonFTFuncArg *args;
   gchar *routine = "ObitSkyModelVMIonInitMod";
+
+   /* Setup for threading - delete existing threadArgs */
+  if (in->threadArgs) {
+    for (i=0; i<in->nThreads; i++) {
+      g_free(in->threadArgs[i]);
+    }
+    g_free(in->threadArgs);
+    in->threadArgs = NULL;
+  } 
+
+  /* How many threads? */
+  in->nThreads = MAX (1, ObitThreadNumProc(in->thread));
+  
+  /* Initialize threadArg array */
+  if (in->threadArgs==NULL) {
+    in->threadArgs = g_malloc0(in->nThreads*sizeof(VMIonFTFuncArg*));
+    for (i=0; i<in->nThreads; i++) 
+      in->threadArgs[i] = g_malloc0(sizeof(VMIonFTFuncArg)); 
+  } /* end initialize */
+  
+  /* Setup for threading */
+  for (i=0; i<in->nThreads; i++) {
+    args = (VMIonFTFuncArg*)in->threadArgs[i];
+    strcpy (args->type, "ion");  /* Enter type as first entry */
+    args->in     = inn;
+    args->uvdata = uvdata;
+    args->ithread= i;
+    args->err    = err;
+    args->VMComps= NULL;
+    args->endVMModelTime = -1.0e20;
+    args->prior  = -1;
+    args->follow = -1;
+  }
 
   /* Call parent initializer */
   ObitSkyModelVMInitMod(inn, uvdata, err);
@@ -279,9 +344,10 @@ void ObitSkyModelVMIonInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
     } /* end if got data */
   } /* end loop over fields */
 
-  /* Open NI table */
+  /* Swallow NI table */
+  /* Delete old */
   in->NITable  = ObitTableNIUnref(in->NITable);
-  in->NIRow    = ObitTableNIRowUnref(in->NIRow);
+  in->NIArray  = ObitFArrayUnref(in->NIArray);
 
   /* Create NI table Object */
   ver = 1;
@@ -289,18 +355,13 @@ void ObitSkyModelVMIonInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   in->NITable = newObitTableNIValue ("IonCal NI table", (ObitData*)uvdata, &ver, 
 				     OBIT_IO_ReadOnly, ncoef, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
-       Obit_return_if_fail((in->NITable!=NULL), err,
-			  "%s: NI Table not found on %s", routine, uvdata->name);
+  Obit_return_if_fail((in->NITable!=NULL), err,
+		      "%s: NI Table not found on %s", routine, uvdata->name);
 
-  /* Open */
-  ObitTableNIOpen(in->NITable, OBIT_IO_ReadOnly, err);
+  /* Swallow */
+  in->NIArray  = ObitTableNIUtilSwallow (in->NITable, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
-  in->NIRow = newObitTableNIRow(in->NITable);
-  in->ncoef = in->NITable->numCoef;
-  if (in->priorCoef)  g_free(in->priorCoef);  in->priorCoef  = NULL;
-  in->priorCoef  = g_malloc0(in->ncoef*sizeof(ofloat));
-  if (in->followCoef) g_free(in->followCoef); in->followCoef = NULL;
-  in->followCoef = g_malloc0(in->ncoef*sizeof(ofloat));
+  in->ncoef = in->NITable->numCoef;   /* Number of Zernike terms */
 
   /* Create arrays for Zernike gradient terms */
   ndim = 2;
@@ -361,6 +422,8 @@ void ObitSkyModelVMIonShutDownMod (ObitSkyModel* inn, ObitUV *uvdata,
 				   ObitErr *err)
 {
   ObitSkyModelVMIon *in = (ObitSkyModelVMIon*)inn;
+  olong i;
+  VMIonFTFuncArg *args;
 
   if (err->error) return; /* existing error */
 
@@ -368,18 +431,27 @@ void ObitSkyModelVMIonShutDownMod (ObitSkyModel* inn, ObitUV *uvdata,
   /* Call parent shutdown */
   ObitSkyModelVMShutDownMod(inn, uvdata, err);
 
+  if (in->threadArgs) {
+    /* Check type - only handle "ion" */
+    if (!strncmp((gchar*)in->threadArgs[0], "ion", 3)) {
+      for (i=0; i<in->nThreads; i++) {
+	args = (VMIonFTFuncArg*)in->threadArgs[i];
+	if (args->VMComps) ObitFArrayUnref(args->VMComps);
+	g_free(in->threadArgs[i]);
+      }
+      g_free(in->threadArgs);
+      in->threadArgs = NULL;
+    } /* end if this a "ion" threadArg */
+  }
   /* Free arrays */
   in->uRotTab  = ObitFArrayUnref(in->uRotTab);
   in->ZernX    = ObitFArrayUnref(in->ZernX);
   in->ZernY    = ObitFArrayUnref(in->ZernY);
   if (in->fieldIndex) g_free(in->fieldIndex); in->fieldIndex = NULL;
 
-  /* Close NI table */
-  ObitTableNIClose(in->NITable, err);
+  /* Delete NI data */
   in->NITable  = ObitTableNIUnref(in->NITable);
-  in->NIRow    = ObitTableNIRowUnref(in->NIRow);
-  if (in->priorCoef)  g_free(in->priorCoef);  in->priorCoef  = NULL;
-  if (in->followCoef) g_free(in->followCoef); in->followCoef = NULL;
+  in->NIArray  = ObitFArrayUnref(in->NIArray);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
 } /* end ObitSkyModelVMIonShutDownMod */
@@ -394,29 +466,25 @@ void ObitSkyModelVMIonInitModel (ObitSkyModel* inn, ObitErr *err)
 {
   ObitSkyModelVMIon *in = (ObitSkyModelVMIon*)inn;
   olong i;
-  gchar *routine = "ObitSkyModelVMIonInitModel";
+  VMIonFTFuncArg *args;
+  /*gchar *routine = "ObitSkyModelVMIonInitModel";*/
 
   /*  Reset time of current model */
   in->endVMModelTime = -1.0e20;
   in->curVMModelTime = -1.0e20;
 
-  /* Read, swallow first two Ion table entries */
-  in->lastNIRow = 0;
-  ObitTableNIReadRow (in->NITable, ++in->lastNIRow, in->NIRow, err);
-  if (err->error) Obit_traceback_msg (err, routine, in->name);
-  in->priorTime   = in->NIRow->Time;
-  in->priorWeight = in->NIRow->weight;
-  for (i=0; i<in->ncoef; i++) in->priorCoef[i] = in->NIRow->coef[i];
-  if (in->NITable->myDesc->nrow>1) {
-    ObitTableNIReadRow (in->NITable, ++in->lastNIRow, in->NIRow, err);
-    if (err->error) Obit_traceback_msg (err, routine, in->name);
-    in->followTime   = in->NIRow->Time;
-    in->followWeight = in->NIRow->weight;
-    for (i=0; i<in->ncoef; i++) in->followCoef[i] = in->NIRow->coef[i];
-  } else { /* only one entry */
-    in->priorTime   = in->NIRow->Time;
-    in->priorWeight = 0.0;
-    for (i=0; i<in->ncoef; i++) in->followCoef[i] = in->priorCoef[i];
+  /* Threading */
+  if (in->threadArgs) {
+    /* Check type - only handle "ion" */
+    if (!strncmp((gchar*)in->threadArgs[0], "ion", 6)) {
+      for (i=0; i<in->nThreads; i++) {
+	args = (VMIonFTFuncArg*)in->threadArgs[i];
+	args->endVMModelTime = -1.0e20;
+	ObitFArrayUnref(args->VMComps);
+	args->VMComps= ObitFArrayCreate("Temp grid", in->comps->ndim,  in->comps->naxis);
+	ObitFArrayFill (args->VMComps, 0.0);
+     }
+    } /* end if this a "ion" threadArg */
   }
 } /* end ObitSkyModelVMIonInitModel */
 
@@ -427,15 +495,21 @@ void ObitSkyModelVMIonInitModel (ObitSkyModel* inn, ObitErr *err)
  * \param inn      SkyModelVM 
  * \param time    current time (d)
  * \param suba    0-rel subarray number (not used here)
+ * \param uvdata  uv data being modeled.
+ * \param ithread which thread (0-rel)
  * \param err Obit error stack object.
  */
 void ObitSkyModelVMIonUpdateModel (ObitSkyModelVM *inn, 
 				   ofloat time, olong suba,
-				   ObitUV *uvdata, ObitErr *err)
+				   ObitUV *uvdata, olong ithread, 
+				   ObitErr *err)
 {
   ObitSkyModelVMIon *in = (ObitSkyModelVMIon*)inn;
-  olong i, field, itmp, icomp, ncomp, lcomp, naxis[2];
+  ObitFArray *VMComps;
+  VMIonFTFuncArg *args;
+  olong i, field, itmp, icomp, ncomp, lcomp, naxis[2], pos[2];
   ofloat dra, ddec, draP, draF, ddecP, ddecF, wtP, wtF;
+  ofloat *RowP, *RowF, priorTime, followTime, priorWeight, followWeight;
   ofloat konst, xyz[3]={0.0,0.0,0.0}, xp[2];
   ofloat *rotTable, *XTable, *YTable, *inData, *outData;
   gchar *routine = "ObitSkyModelVMIonUpdateModel";
@@ -443,34 +517,57 @@ void ObitSkyModelVMIonUpdateModel (ObitSkyModelVM *inn,
   /* Data in ccomps are per row:
      field number, DeltaX, DeltaY, amp, -2*pi*x, -2*pi*y, -2*pi*z */
 
+  /* Error Check */
+  if (err->error) return;
+
+  /* Array to update */
+  args = (VMIonFTFuncArg*)in->threadArgs[ithread];
+  g_assert (!strncmp(args->type,"ion",3));  /* Test arg */
+
+  VMComps = args->VMComps;
+
   /* Update coefficient tables */
-  while ((time>in->followTime) && (in->lastNIRow<in->NITable->myDesc->nrow)) {
-    /* Shuffle */
-    in->priorTime   = in->followTime;
-    in->priorWeight = in->followWeight;
-    for (i=0; i<in->ncoef; i++) in->priorCoef[i] = in->followCoef[i];
-    
-    /* Read next */
-    ObitTableNIReadRow (in->NITable, ++in->lastNIRow, in->NIRow, err);
-    if (err->error) Obit_traceback_msg (err, routine, in->name);
-    in->followTime   = in->NIRow->Time;
-    in->followWeight = in->NIRow->weight;
-    for (i=0; i<in->ncoef; i++) in->followCoef[i] = in->NIRow->coef[i];
-  } /* end updating coef. */
+  /* Initialize prior, follow? */
+  if (args->prior<0)  args->prior  = ObitTableNIUtilPrior  (in->NIArray, time, &args->prior);
+  if (args->follow<0) args->follow = ObitTableNIUtilFollow (in->NIArray, time, &args->follow);
+
+  /* Pointers into table */
+  pos[0] = 0; pos[1] = args->prior;
+  RowP   = ObitFArrayIndex (in->NIArray, pos);
+  pos[0] = 0; pos[1] = args->follow;
+  RowF   = ObitFArrayIndex (in->NIArray, pos);
+
+  /* Update times? */
+  if (time>=RowF[0]) {
+    args->prior  = ObitTableNIUtilPrior  (in->NIArray, time, &args->prior);
+    pos[0]  = 0; pos[1] = args->prior;
+    RowP    = ObitFArrayIndex (in->NIArray, pos);
+    args->follow = ObitTableNIUtilFollow (in->NIArray, time, &args->follow);
+    pos[0]  = 0; pos[1] = args->follow;
+    RowF    = ObitFArrayIndex (in->NIArray, pos);
+  }
 
   /*  Reset time of current model */
-  in->curVMModelTime = time;
-  in->endVMModelTime = in->curVMModelTime + in->updateInterval;
+  args->endVMModelTime = time + in->updateInterval;
+
+  /* Prior Time    = RowP[0]
+     Follow time   = RowF[0]
+     Prior Weight  = RowP[5]
+     Follow Weight = RowF[5] - see ObitTableNIUtilSwallow */
+  priorTime    = RowP[0];
+  followTime   = RowF[0];
+  priorWeight  = RowP[5];
+  followWeight = RowF[5];
 
   /* geometric constant */
   konst = DG2RAD * 2.0 * G_PI;
 
-  /* Loop through data in in->VMComps adding corruptions to in->comps */
-  lcomp = in->VMComps->naxis[0];
+ /* Loop through data in VMComps adding corruptions to in->comps */
+  lcomp = VMComps->naxis[0];
   ncomp = in->numComp;
   naxis[0] = 0; naxis[1] = 0;
   inData  = ObitFArrayIndex(in->comps, naxis);
-  outData = ObitFArrayIndex(in->VMComps, naxis);
+  outData = ObitFArrayIndex(VMComps, naxis);
   field = -1;
   for (icomp=0; icomp<ncomp; icomp++) {
 
@@ -490,32 +587,32 @@ void ObitSkyModelVMIonUpdateModel (ObitSkyModelVM *inn,
       
       draP  = 0.0;
       ddecP = 0.0;
-      if (in->priorWeight>0.0) {
+      if (priorWeight>0.0) {
 	for (i=0; i<in->ncoef; i++) {
-	  draP  += in->priorCoef[i]*XTable[i];
-	  ddecP += in->priorCoef[i]*YTable[i];
+	  draP  += RowP[6+i]*XTable[i];
+	  ddecP += RowP[6+i]*YTable[i];
 	} 
       }
       
       draF  = 0.0;
       ddecF = 0.0;
-      if (in->followWeight>0.0) {
+      if (followWeight>0.0) {
 	for (i=0; i<in->ncoef; i++) {
-	  draF  += in->followCoef[i]*XTable[i];
-	  ddecF += in->followCoef[i]*YTable[i];
+	  draF  += RowF[6+i]*XTable[i];
+	  ddecF += RowF[6+i]*YTable[i];
 	} 
       }
 
       /* Interpolate - before first? or following bad*/
-      if ((time<in->priorTime) || (in->followWeight<=0.0)) {
+      if ((time<priorTime) || (followWeight<=0.0)) {
 	dra  = draP;
 	ddec = ddecP;
-      } else if ((time>in->followTime) || (in->followWeight<=0.0)){ 
+      } else if ((time>followTime) || (priorWeight<=0.0)){ 
 	/* after last or preceeding bad */
 	dra  = draF;
 	ddec = ddecF;
       } else {  /* in between and both OK, interpolate */
-	wtF = (time - in->priorTime) / (in->followTime-in->priorTime+1.0e-10);
+	wtF = (time - priorTime) / (followTime-priorTime+1.0e-10);
 	wtP = 1.0 - wtF;
 	dra  = wtP*draP  + wtF*draF;
 	ddec = wtP*ddecP + wtF*ddecF;
@@ -638,9 +735,7 @@ void ObitSkyModelVMIonInit  (gpointer inn)
   in->ZernX      = NULL; 
   in->ZernY      = NULL; 
   in->NITable    = NULL;
-  in->NIRow      = NULL;
-  in->priorCoef  = NULL;
-  in->followCoef = NULL;
+  in->NIArray    = NULL;
   in->fieldIndex = NULL;
 } /* end ObitSkyModelVMIonInit */
 
@@ -655,6 +750,8 @@ void ObitSkyModelVMIonInit  (gpointer inn)
 void ObitSkyModelVMIonClear (gpointer inn)
 {
   ObitClassInfo *ParentClass;
+  olong i;
+  VMIonFTFuncArg *args;
   ObitSkyModelVMIon *in = inn;
 
   /* error checks */
@@ -665,11 +762,21 @@ void ObitSkyModelVMIonClear (gpointer inn)
   in->ZernX    = ObitFArrayUnref(in->ZernX);
   in->ZernY    = ObitFArrayUnref(in->ZernY);
   in->NITable  = ObitTableNIUnref(in->NITable);
-  in->NIRow    = ObitTableNIRowUnref(in->NIRow);
-  if (in->priorCoef)  g_free(in->priorCoef);
-  if (in->followCoef) g_free(in->followCoef);
+  in->NIArray  = ObitFArrayUnref(in->NIArray);
   if (in->fieldIndex) g_free(in->fieldIndex);
 
+  if (in->threadArgs) {
+    /* Check type - only handle "ion" */
+    if (!strncmp((gchar*)in->threadArgs[0], "ion", 3)) {
+      for (i=0; i<in->nThreads; i++) {
+	args = (VMIonFTFuncArg*)in->threadArgs[i];
+	if (args->VMComps) ObitFArrayUnref(args->VMComps);
+	g_free(in->threadArgs[i]);
+      }
+      g_free(in->threadArgs);
+    } /* end if this a "ion" threadArg */
+  }
+  
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
   /* delete parent class members */

@@ -471,6 +471,11 @@ def newPFImage(name, filename, disk, exists, err, verbose=True):
     elif err.isErr:
         out.isOK = False
         OErr.PClear(err)  # Clear unwanted messages
+    # Check if really uvtab data and not an image
+    outd = out.Desc.Dict
+    if outd["inaxes"][0]==777777701:
+        out.isOK = False
+        raise TypeError,"Error: Object probably uvtab (UV) data"
 
     # It work?
     if not out.isOK:

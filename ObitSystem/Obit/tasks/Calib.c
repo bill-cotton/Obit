@@ -579,7 +579,8 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   doCalSelect = doCalSelect || (doCalib>0);
   ObitInfoListAlwaysPut (myInput, "doCalSelect", OBIT_bool, dim, &doCalSelect);
  
-
+  /* Initialize Threading */
+  ObitThreadInit (myInput);
 
 } /* end digestInputs */
 
@@ -596,7 +597,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
 {
   ObitUV       *inData = NULL;
   ObitInfoType type;
-  olong         Aseq, disk, cno, nvis=1000;
+  olong         Aseq, disk, cno, nvis, nThreads;
   gchar        *Type, *strTemp, inFile[129];
   gchar        Aname[13], Aclass[7], *Atype = "UV";
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -650,6 +651,9 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
     
     /* define object */
+    nvis = 1000;
+    ObitInfoListGetTest(inData->info, "nThreads", &type, dim, &nThreads);
+    nvis *= nThreads;
     ObitUVSetAIPS (inData, nvis, disk, cno, AIPSuser, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
     
@@ -666,6 +670,9 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
 
     /* define object */
+    nvis = 1000;
+    ObitInfoListGetTest(inData->info, "nThreads", &type, dim, &nThreads);
+    nvis *= nThreads;
     ObitUVSetFITS (inData, nvis, disk, inFile,  err); 
     if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
     
@@ -977,7 +984,7 @@ void DivideSource (ObitUV *inUV, ObitUV *scrUV, ObitErr *err)
 } /* end DivideSource  */
 
 /**
- * Divide buffer load of data by recripricol of fluyx density in SourceList
+ * Divide buffer load of data by reciprocal of flux density in SourceList
  * \param sList   Source list with 1/flux densities
  * \param sourId  Source ID (0-rel) in sList is uvdata a siingle source file
  * \param uvdata  Object with uv data in buffer, prepared for correcrion.
@@ -1072,7 +1079,8 @@ void CalibHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "modelFlux", "modelPos", "modelParm", 
     "solInt", "solType", "solMode", "avgPol", "avgIF", "doMGM", "minSNR",
     "minNo", "prtLv",
-    NULL};
+    "nThreads",
+   NULL};
   gchar *routine = "CalibHistory";
 
   /* error checks */

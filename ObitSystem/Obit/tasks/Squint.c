@@ -27,6 +27,8 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitThread.h"
+#include "ObitSkyModelVMSquint.h"
 #include "ObitUV.h"
 #include "ObitImageMosaic.h"
 #include "ObitImageUtil.h"
@@ -40,7 +42,6 @@
 #include "ObitDConCleanVis.h"
 #include "ObitUVSelfCal.h"
 #include "ObitUVImagerSquint.h"
-#include "ObitSkyModelVMSquint.h"
 #include "ObitHistory.h"
 #include "ObitData.h"
 #include "ObitDisplay.h"
@@ -884,6 +885,9 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   dim[0] = 4; dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "Stokes", OBIT_string, dim, Stokes);
 
+  /* Initialize Threading */
+  ObitThreadInit (myInput);
+
 } /* end digestInputs */
 
 /*----------------------------------------------------------------------- */
@@ -899,7 +903,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
 {
   ObitUV       *inData = NULL;
   ObitInfoType type;
-  olong         Aseq, disk, cno, nvis=1000;
+  olong         Aseq, disk, cno, nvis, nThreads;
   gchar        *Type, *strTemp, inFile[129];
   oint         doCalib;
   gchar        Aname[37], Aclass[17], *Atype = "UV";
@@ -950,6 +954,9 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
     
     /* define object */
+    nvis = 1000;
+    ObitInfoListGetTest(inData->info, "nThreads", &type, dim, &nThreads);
+    nvis *= nThreads;
     ObitUVSetAIPS (inData, nvis, disk, cno, AIPSuser, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
     
@@ -965,6 +972,9 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
 
     /* define object */
+    nvis = 1000;
+    ObitInfoListGetTest(inData->info, "nThreads", &type, dim, &nThreads);
+    nvis *= nThreads;
     ObitUVSetFITS (inData, nvis, disk, inFile,  err); 
     if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
     
@@ -1074,6 +1084,7 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     
     /* define object */
     nvis = 1000;
+    ObitInfoListGetTest(inData->info, "nVisPIO", &type, dim, &nvis);
     ObitUVSetAIPS (outUV, nvis, disk, cno, AIPSuser, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
     Obit_log_error(err, OBIT_InfoErr, 
@@ -1100,6 +1111,7 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     
     /* define object */
     nvis = 1000;
+    ObitInfoListGetTest(inData->info, "nVisPIO", &type, dim, &nvis);
     ObitUVSetFITS (outUV, nvis, disk, out2File, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
     Obit_log_error(err, OBIT_InfoErr, 
@@ -2223,6 +2235,7 @@ void SquintHistory (gchar *Source, ObitInfoList* myInput,
     "PeelFlux", "PeelLoop", "PeelRefAnt", "PeelSNRMin",
     "PeelSolInt", "PeelType", "PeelMode", "PeelNiter",
     "PeelMinFlux", "PeelAvgPol", "PeelAvgIF",
+    "nThreads",
     NULL};
   gchar *routine = "SquintHistory";
 

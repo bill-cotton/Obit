@@ -184,7 +184,7 @@ void ObitSkyModelVMSquintClone (ObitSkyModelVMSquint *in, ObitSkyModelVMSquint *
 
 /** Public: Routine to update model */
 void ObitSkyModelVMSquintUpdateModel (ObitSkyModelVM *in, ofloat time, olong suba,
-				      ObitUV *uvdata, ObitErr *err);
+				      ObitUV *uvdata, olong ithread, ObitErr *err);
 
 /** Private: Chose model type */
 void  ObitSkyModelVMSquintChose (ObitSkyModel* in, ObitUV* uvdata);

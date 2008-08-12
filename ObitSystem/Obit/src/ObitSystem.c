@@ -196,9 +196,6 @@ ObitSystem* ObitSystemShutdown (ObitSystem* in)
    /* ignore if I haven't been started */
    if (!mySystemInfo) return NULL;
 
-  /* Lock object aginst other threads */
-  ObitThreadLock(mySystemInfo->thread);
-
   /* loop through scratchList  Unrefing elements */
   tmp = in->scratchList;
   while (tmp!=NULL) {
@@ -215,9 +212,14 @@ ObitSystem* ObitSystemShutdown (ObitSystem* in)
       }
     }
 
+    /* Lock object aginst other threads */
+    ObitThreadLock(in->thread);
+
     /* List not changed, remove this entry anyway */
     if (tmp==in->scratchList)  scratchListRemove (in, elem);
 
+    ObitThreadUnlock(in->thread);
+  
     tmp = in->scratchList; /* go to the new(?) head of the list */
   } /* end loop over scratch List */
 
@@ -227,7 +229,6 @@ ObitSystem* ObitSystemShutdown (ObitSystem* in)
   /* Shutdown FITS */
   ObitFITSShutdown();
 
-  ObitThreadUnlock(mySystemInfo->thread);
 
   /* Shutdown message if program name given */
   if ((strlen(in->pgmName)>0) && strncmp (in->pgmName, "NameLess", 8))

@@ -28,6 +28,7 @@
 #ifndef OBITSKYMODELVM_H 
 #define OBITSKYMODELVM_H 
 
+#include "ObitSkyModel.h"
 #include "Obit.h"
 #include "ObitErr.h"
 #include "ObitFArray.h"
@@ -152,10 +153,11 @@ ObitSkyModel* ObitSkyModelVMCopy  (ObitSkyModel *in, ObitSkyModel *out, ObitErr 
 
 /** Public: Routine to update model */
 void ObitSkyModelVMUpdateModel (ObitSkyModelVM *in, ofloat time, olong suba,
-				ObitUV *uvdata, ObitErr *err);
+				ObitUV *uvdata, olong ithread, ObitErr *err);
 typedef void (*ObitSkyModelVMUpdateModelFP) (ObitSkyModelVM *in, 
 					     ofloat time, olong suba,
-					     ObitUV *uvdata, ObitErr *err);
+					     ObitUV *uvdata, olong ithread, 
+					     ObitErr *err);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

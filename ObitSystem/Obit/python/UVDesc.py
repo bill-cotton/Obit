@@ -10,7 +10,7 @@
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2005,2007
+#  Copyright (C) 2005,2007,2008
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or

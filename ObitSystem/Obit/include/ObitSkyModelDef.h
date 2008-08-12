@@ -121,3 +121,11 @@ gboolean doGrid;
 /** message level for deconvolution progress messages, 
     0=none, 1=summary, 2=normal, higher numbers for diagnostics */
 olong prtLv;
+/** Number of threads (elements in threadArgs)  */
+olong nThreads;
+/** Array of FT Function structures  */
+gpointer **threadArgs;
+/** DFT Fourier transform routine  */
+ObitThreadFunc DFTFunc;
+/** Gridded Fourier transform routine  */
+ObitThreadFunc GridFunc;

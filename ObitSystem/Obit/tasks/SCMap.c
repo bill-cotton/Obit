@@ -847,6 +847,9 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   ObitInfoListGetP (myInput, "doFull", &type, dim, (gpointer)&booTemp);
   ObitInfoListAlwaysPut (myInput, "doFlatten", OBIT_bool, dim, booTemp);
 
+  /* Initialize Threading */
+  ObitThreadInit (myInput);
+
 } /* end digestInputs */
 
 /*----------------------------------------------------------------------- */
@@ -862,7 +865,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
 {
   ObitUV       *inData = NULL;
   ObitInfoType type;
-  olong         Aseq, disk, cno, nvis=1000;
+  olong         Aseq, disk, cno, nvis, nThreads;
   gchar        *Type, *strTemp, inFile[129];
   oint         doCalib;
   gchar        Aname[13], Aclass[7], *Atype = "UV";
@@ -913,6 +916,9 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
     
     /* define object */
+    nvis = 1000;
+    ObitInfoListGetTest(inData->info, "nThreads", &type, dim, &nThreads);
+    nvis *= nThreads;
     ObitUVSetAIPS (inData, nvis, disk, cno, AIPSuser, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
     
@@ -928,6 +934,9 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
 
     /* define object */
+    nvis = 1000;
+    ObitInfoListGetTest(inData->info, "nThreads", &type, dim, &nThreads);
+    nvis *= nThreads;
     ObitUVSetFITS (inData, nvis, disk, inFile,  err); 
     if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
     
@@ -1036,6 +1045,7 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     
     /* define object */
     nvis = 1000;
+    ObitInfoListGetTest(inData->info, "nVisPIO", &type, dim, &nvis);
     ObitUVSetAIPS (outUV, nvis, disk, cno, AIPSuser, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
     
@@ -1059,6 +1069,7 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     
     /* define object */
     nvis = 1000;
+    ObitInfoListGetTest(inData->info, "nVisPIO", &type, dim, &nvis);
     ObitUVSetFITS (outUV, nvis, disk, out2File, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
     
@@ -1843,7 +1854,8 @@ void SCMapHistory (gchar *Source, ObitInfoList* myInput,
     "autoWindow", "subA",
     "maxPSCLoop", "minFluxPSC", "solPInt", "solPType", "solPMode", 
     "maxASCLoop", "minFluxASC", "solAInt", "solAType", "solAMode", 
-   "oldSN", "modelFlux", "modelPos", "modelParm", 
+    "oldSN", "modelFlux", "modelPos", "modelParm", 
+    "nThreads",
     NULL};
   gchar *routine = "SCMapHistory";
 

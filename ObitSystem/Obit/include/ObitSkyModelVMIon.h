@@ -28,6 +28,7 @@
 #ifndef OBITSKYMODELVMION_H 
 #define OBITSKYMODELVMION_H 
 
+#include "ObitSkyModelVM.h"
 #include "Obit.h"
 #include "ObitErr.h"
 #include "ObitFArray.h"
@@ -35,7 +36,6 @@
 #include "ObitCInterpolate.h"
 #include "ObitImageMosaic.h"
 #include "ObitUV.h"
-#include "ObitSkyModelVM.h"
 #include "ObitTableNI.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
@@ -156,7 +156,7 @@ void ObitSkyModelVMIonClone (ObitSkyModelVMIon *in, ObitSkyModelVMIon *out,
 
 /** Public: Routine to update model */
 void ObitSkyModelVMIonUpdateModel (ObitSkyModelVM *in, ofloat time, olong suba,
-				   ObitUV *uvdata, ObitErr *err);
+				   ObitUV *uvdata, olong ithread, ObitErr *err);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

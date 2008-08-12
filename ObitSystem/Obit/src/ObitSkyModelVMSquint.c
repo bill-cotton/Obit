@@ -26,8 +26,9 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
-#include "ObitTableCCUtil.h"
+#include "ObitThread.h"
 #include "ObitSkyModelVMSquint.h"
+#include "ObitTableCCUtil.h"
 #include "ObitFFT.h"
 #include "ObitUVUtil.h"
 #include "ObitImageUtil.h"
@@ -42,7 +43,7 @@
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
  * \file ObitSkyModelVMSquint.c
- * ObitSkyModelVMIon class function definitions.
+ * ObitSkyModelVMSquint class function definitions.
  *
  * This class is derived from the #ObitSkyModelVM class
  *
@@ -79,6 +80,9 @@ static void ObitSkyModelVMSquintClassInfoDefFn (gpointer inClass);
 /** Private: Get Inputs. */
 void  ObitSkyModelVMSquintGetInput (ObitSkyModel* inn, ObitErr *err);
 
+/** Private: Threaded FTDFT */
+static gpointer ThreadSkyModelVMSquintFTDFT (gpointer arg);
+
 /** Private: Get Azimuth of feed for VLA */
 static ofloat FeedAz (ObitSkyModelVMSquint* in, ObitUV *uvdata, ofloat *squint);
 
@@ -87,6 +91,43 @@ static ofloat FeedAzE (ObitSkyModelVMSquint* in,  ObitUV *uvdata, ofloat *squint
 
 /** Private: Get Angle from center of the beam */
 ofloat BeamAngle (ObitImageDesc *in, ofloat x, ofloat y, ofloat offx, ofloat offy);
+
+/*---------------Private structures----------------*/
+/* FT threaded function argument 
+ Note: Derived classes MUST have the following entries at the beginning 
+ of the corresponding structure */
+typedef struct {
+  /* type "squint" in this class */
+  gchar type[12];
+  /* SkyModel with model components loaded (ObitSkyModelLoad) */
+  ObitSkyModel *in;
+  /* Field number being processed (-1 => all) */
+  olong        field;
+  /* UV data set to model and subtract from current buffer */
+  ObitUV       *uvdata;
+  /* First (1-rel) vis in uvdata buffer to process this thread */
+  olong        first;
+  /* Highest (1-rel) vis in uvdata buffer to process this thread  */
+  olong        last;
+  /* thread number  */
+  olong        ithread;
+  /* Obit error stack object */
+  ObitErr      *err;
+  /* End time (days) of validity of model */
+  ofloat endVMModelTime;
+  /* Thread copy of Components list - not used here */
+  ObitFArray *VMComps;
+  /** Dimension of Rgain...  */
+  olong dimGain;
+  /** Array of time/spatially variable VLA R component gain */
+  ofloat *Rgain;
+  /** Array of time/spatially variable VLA L component gain */
+  ofloat *Lgain;
+  /** Array of time/spatially variable EVLA R component gain */
+  ofloat *REgain;
+  /** Array of time/spatially variable EVLA L component gain */
+  ofloat *LEgain;
+} VMSquintFTFuncArg;
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -223,6 +264,8 @@ void ObitSkyModelVMSquintInitMod (ObitSkyModel* inn, ObitUV *uvdata,
   ObitTableAN *TableAN=NULL;
   ObitUVDesc *uvDesc;
   gchar *blank="    ";
+  olong i;
+  VMSquintFTFuncArg *args;
   gchar *routine = "ObitSkyModelVMSquintInitMod";
 
   if (err->error) return;
@@ -248,9 +291,47 @@ void ObitSkyModelVMSquintInitMod (ObitSkyModel* inn, ObitUV *uvdata,
   ObitUVClose (uvdata, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
+  /* Setup for threading - delete existing threadArgs */
+  if (in->threadArgs) {
+    for (i=0; i<in->nThreads; i++) {
+      g_free(in->threadArgs[i]);
+    }
+    g_free(in->threadArgs);
+    in->threadArgs = NULL;
+  } 
+
+  /* How many threads? */
+  in->nThreads = MAX (1, ObitThreadNumProc(in->thread));
+
+  /* Initialize threadArg array */
+  if (in->threadArgs==NULL) {
+    in->threadArgs = g_malloc0(in->nThreads*sizeof(VMSquintFTFuncArg*));
+    for (i=0; i<in->nThreads; i++) 
+      in->threadArgs[i] = g_malloc0(sizeof(VMSquintFTFuncArg)); 
+  } /* end initialize */
+  
+  for (i=0; i<in->nThreads; i++) {
+    args = (VMSquintFTFuncArg*)in->threadArgs[i];
+    strcpy (args->type, "squint");  /* Enter type as first entry */
+    args->in     = inn;
+    args->uvdata = uvdata;
+    args->ithread= i;
+    args->err    = err;
+    args->endVMModelTime = -1.0e20;
+    args->VMComps= NULL;
+    args->dimGain= 0;
+    args->Rgain  = NULL;
+    args->Lgain  = NULL;
+    args->REgain = NULL;
+    args->LEgain = NULL;
+  }
+
   /* Call parent initializer */
   ObitSkyModelVMInitMod(inn, uvdata, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Fourier transform routines - DFT only */
+  in->DFTFunc  = (ObitThreadFunc)ThreadSkyModelVMSquintFTDFT;
 
   /* Check requested Stokes
   Obit_return_if_fail((!strncmp(in->stokes,"    ",4)), err,
@@ -291,7 +372,6 @@ void ObitSkyModelVMSquintInitMod (ObitSkyModel* inn, ObitUV *uvdata,
   /* Precess to get Apparent position */
   ObitPrecessUVJPrecessApp (uvdata->myDesc, in->curSource);
 
-
 } /* end ObitSkyModelVMSquintInitMod */
 
 /**
@@ -306,9 +386,27 @@ void ObitSkyModelVMSquintShutDownMod (ObitSkyModel* inn, ObitUV *uvdata,
 {
   ObitSkyModelVMSquint *in = (ObitSkyModelVMSquint*)inn;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong i;
+  VMSquintFTFuncArg *args;
 
   /* Call parent shutdown */
   ObitSkyModelVMShutDownMod(inn, uvdata, err);
+
+  if (in->threadArgs) {
+    /* Check type - only handle "squint" */
+    if (!strncmp((gchar*)in->threadArgs[0], "squint", 6)) {
+      for (i=0; i<in->nThreads; i++) {
+	args = (VMSquintFTFuncArg*)in->threadArgs[i];
+	if (args->Rgain)  g_free(args->Rgain);
+	if (args->Lgain)  g_free(args->Lgain);
+	if (args->REgain) g_free(args->REgain);
+	if (args->LEgain) g_free(args->LEgain);
+	g_free(in->threadArgs[i]);
+      }
+      g_free(in->threadArgs);
+      in->threadArgs = NULL;
+    } /* end if this a "squint" threadArg */
+  }
 
   /* Restore calibration state */
   dim[0] = dim[1] = dim[2] = 1;
@@ -316,6 +414,7 @@ void ObitSkyModelVMSquintShutDownMod (ObitSkyModel* inn, ObitUV *uvdata,
   ObitInfoListAlwaysPut (uvdata->info, "doCalib", OBIT_long, dim, &in->saveDoCalib);
   dim[0] = 4; dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (uvdata->info, "Stokes", OBIT_string, dim, in->saveStokes);
+
 } /* end ObitSkyModelVMSquintShutDownMod */
 
 /**
@@ -327,10 +426,23 @@ void ObitSkyModelVMSquintShutDownMod (ObitSkyModel* inn, ObitUV *uvdata,
 void ObitSkyModelVMSquintInitModel (ObitSkyModel* inn, ObitErr *err)
 {
   ObitSkyModelVMSquint *in = (ObitSkyModelVMSquint*)inn;
+  olong i;
+  VMSquintFTFuncArg *args;
 
   /*  Reset time of current model */
   in->endVMModelTime = -1.0e20;
   in->curVMModelTime = -1.0e20;
+
+  /* Threading */
+  if (in->threadArgs) {
+    /* Check type - only handle "squint" */
+    if (!strncmp((gchar*)in->threadArgs[0], "squint", 6)) {
+      for (i=0; i<in->nThreads; i++) {
+	args = (VMSquintFTFuncArg*)in->threadArgs[i];
+	args->endVMModelTime = -1.0e20;
+      }
+    } /* end if this a "squint" threadArg */
+  }
 } /* end ObitSkyModelVMSquintInitModel */
 
 /**
@@ -343,11 +455,13 @@ void ObitSkyModelVMSquintInitModel (ObitSkyModel* inn, ObitErr *err)
  * \param time    current time (d)
  * \param suba    0-rel subarray number
  * \param uvdata  uv data being modeled.
+ * \param ithread which thread (0-rel)
  * \param err Obit error stack object.
  */
 void ObitSkyModelVMSquintUpdateModel (ObitSkyModelVM *inn, 
 				      ofloat time, olong suba,
-				      ObitUV *uvdata, ObitErr *err)
+				      ObitUV *uvdata, olong ithread, 
+				      ObitErr *err)
 {
   ObitSkyModelVMSquint *in = (ObitSkyModelVMSquint*)inn;
   odouble Freq, Angle, AngleRR, AngleLL;
@@ -356,20 +470,25 @@ void ObitSkyModelVMSquintUpdateModel (ObitSkyModelVM *inn,
   ofloat feedPA, squint, dx, dy, x, y, antsize = 24.5, pbmin = 0.0;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
+  VMSquintFTFuncArg *args;
   gchar *routine = "ObitSkyModelVMSquintUpdateModel";
 
   /* DEBUG
   ofloat RFact, LFact; */
   if (err->error) return;
 
+  /* Thread to update */
+  args = (VMSquintFTFuncArg*)in->threadArgs[ithread];
+  g_assert (!strncmp(args->type,"squint",6));  /* Test arg */
+
    /* Check subarray */
   Obit_return_if_fail(((suba>=0) && (suba<in->numAntList)), err,
 		      "%s: bad subarray number %d", routine, suba+1);
 
   /* Check gain array dimension */
-  Obit_return_if_fail((in->dimGain>=in->numComp), err,
+  Obit_return_if_fail((args->dimGain>=in->numComp), err,
     "%s:More components %d than allowed in gains  %d", 
-    routine, in->numComp, in->dimGain);
+    routine, in->numComp, args->dimGain);
 
   /* Min gain for squint correction - don't go below 1% */
   ObitInfoListGetTest(in->info, "PBmin", &type, dim, &pbmin);
@@ -381,8 +500,12 @@ void ObitSkyModelVMSquintUpdateModel (ObitSkyModelVM *inn,
   Freq = uvdata->myDesc->crval[uvdata->myDesc->jlocf];
 
   /* Which antennas are EVLA ? */
-  if (in->isEVLA) g_free(in->isEVLA); in->isEVLA = NULL;
-  in->isEVLA = g_malloc((1*in->AntList[suba]->number)*sizeof(gboolean));
+  if (in->isEVLA==NULL) {
+    ObitThreadLock(in->thread);  /* Lock against other threads */
+    if (in->isEVLA==NULL)   /* Still NULL? */
+      in->isEVLA = g_malloc((100+in->AntList[suba]->number)*sizeof(gboolean));
+    ObitThreadUnlock(in->thread); 
+  }
   for (i=0; i<in->AntList[suba]->number; i++) {
     in->isEVLA[i] = 
       (in->AntList[suba]->ANlist[i]->AntName[0]=='E') &&
@@ -410,8 +533,8 @@ void ObitSkyModelVMSquintUpdateModel (ObitSkyModelVM *inn,
 
   npos[0] = 0; npos[1] = 0; 
   ccData = ObitFArrayIndex(in->comps, npos);
-  Rgain = in->Rgain;
-  Lgain = in->Lgain;
+  Rgain = args->Rgain;
+  Lgain = args->Lgain;
   lcomp = in->comps->naxis[0];  /* Length of row in comp table */
   ncomp = in->numComp;  /* number of components */
 
@@ -469,8 +592,8 @@ void ObitSkyModelVMSquintUpdateModel (ObitSkyModelVM *inn,
 
   npos[0] = 0; npos[1] = 0; 
   ccData = ObitFArrayIndex(in->comps, npos);
-  Rgain = in->REgain;
-  Lgain = in->LEgain;
+  Rgain = args->REgain;
+  Lgain = args->LEgain;
   lcomp = in->comps->naxis[0];  /* Length of row in comp table */
   ncomp = in->numComp;          /* number of components */
 
@@ -519,7 +642,9 @@ void ObitSkyModelVMSquintUpdateModel (ObitSkyModelVM *inn,
     /* But not forever */
     if (tTime-time>0.25) break;
   }
-  in->endVMModelTime = tTime;
+
+  /* Time for next update */
+  args->endVMModelTime = tTime + 5.0*suba;
   
 } /* end ObitSkyModelVMSquintUpdateModel */
 
@@ -625,6 +750,7 @@ void ObitSkyModelVMSquintClear (gpointer inn)
 {
   ObitClassInfo *ParentClass;
   olong i;
+  VMSquintFTFuncArg *args;
   ObitSkyModelVMSquint *in = inn;
 
   /* error checks */
@@ -644,6 +770,23 @@ void ObitSkyModelVMSquintClear (gpointer inn)
     g_free(in->AntList); in->AntList = NULL;
   }
     
+  /* Thread stuff */
+  if (in->threadArgs) {
+    /* Check type - only handle "squint" */
+    if (!strncmp((gchar*)in->threadArgs[0], "squint", 6)) {
+      for (i=0; i<in->nThreads; i++) {
+	args = (VMSquintFTFuncArg*)in->threadArgs[i];
+	if (args->Rgain)  g_free(args->Rgain);
+	if (args->Lgain)  g_free(args->Lgain);
+	if (args->REgain) g_free(args->REgain);
+	if (args->LEgain) g_free(args->LEgain);
+	g_free(in->threadArgs[i]);
+      }
+      g_free(in->threadArgs);
+      in->threadArgs = NULL;
+    } /* end if this a "ion" threadArg */
+  }
+
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
   /* delete parent class members */
@@ -746,6 +889,86 @@ void  ObitSkyModelVMSquintChose (ObitSkyModel* inn, ObitUV* uvdata)
 
 /**
  * Do Fourier transform using a DFT for a buffer of data.
+ * If threading has been enabled by a call to ObitThreadAllowThreads 
+ * this routine will divide the buffer up amount the number of processors
+ * returned by ObitThreadNumProc.
+ * If doDivide member is true then FT of model is divided into the data,
+ * If doReplace member is true then FT of model replaces the data,
+ * else, it is subtracted.
+ * After the AIPSish QXXPTS, QPTDIV and friends
+ * This function may be overridden in a derived class and 
+ * should always be called by its function pointer.
+ * \param in     SkyModel with model components loaded (ObitSkyModelLoad)
+ * \param field  Field number being processed (-1 => all)
+ * \param uvdata UV data set to model and subtract from current buffer
+ * \param err Obit error stack object.
+ */
+void ObitSkyModelVMSquintFTDFT (ObitSkyModelVM *inn, olong field, ObitUV *uvdata, ObitErr *err)
+{
+  olong i, mcomp, iComp, pos[2], nvis, lovis, hivis, nvisPerThread;
+  ObitSkyModelVMSquint *in = (ObitSkyModelVMSquint*)inn;
+  VMSquintFTFuncArg *args;
+  ofloat *ddata;
+  gboolean OK = TRUE;
+  gchar *routine = "ObitSkyModelVMSquintFTDFT";
+
+  /* error checks - assume most done at higher level */
+  if (err->error) return;
+
+  /* Count number of actual components */
+  mcomp = 0;
+  pos[0] = 0; pos[1] = 0;
+  ddata = ObitFArrayIndex(in->comps, pos);
+  for (iComp=0; iComp<in->comps->naxis[1]; iComp++) {
+    if (ddata[3]!=0.0) mcomp = iComp+1;
+    ddata += in->comps->naxis[0];  /* update pointer */
+  } /* end loop over components */
+  in->numComp = mcomp;  /* Number of actual components */
+
+  /* Divide up work */
+  nvis = uvdata->myDesc->numVisBuff;
+  nvisPerThread = nvis/in->nThreads;
+  lovis = 1;
+  hivis = nvisPerThread;
+  hivis = MIN (hivis, nvis);
+
+  /* Set up thread arguments */
+  for (i=0; i<in->nThreads; i++) {
+    if (i==(in->nThreads-1)) hivis = nvis;  /* Make sure do all */
+    args = (VMSquintFTFuncArg*)in->threadArgs[i];
+    args->in     = (ObitSkyModel*)inn;
+    args->field  = field;
+    args->uvdata = uvdata;
+    args->first  = lovis;
+    args->last   = hivis;
+    args->ithread= i;
+    args->err    = err;
+    if (args->dimGain!=in->numComp) {
+      if (args->Rgain)  g_free(args->Rgain);
+      if (args->Lgain)  g_free(args->Lgain);
+      if (args->REgain) g_free(args->REgain);
+      if (args->LEgain) g_free(args->LEgain);
+      args->dimGain = in->numComp;
+      args->Rgain  = g_malloc0(args->dimGain*sizeof(ofloat));
+      args->Lgain  = g_malloc0(args->dimGain*sizeof(ofloat));
+      args->REgain = g_malloc0(args->dimGain*sizeof(ofloat));
+      args->LEgain = g_malloc0(args->dimGain*sizeof(ofloat));
+    }
+    /* Update which vis */
+    lovis += nvisPerThread;
+    hivis += nvisPerThread;
+    hivis = MIN (hivis, nvis);
+  }
+
+  /* Do operation */
+  OK = ObitThreadIterator (in->thread, in->nThreads, in->DFTFunc, in->threadArgs);
+
+  /* Check for problems */
+  if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+}  /* end ObitSkyModelVMSquintFTDFT */
+
+/**
+ * Do Fourier transform using a DFT for a buffer of data.
  * Version for time/spatial dependent effects.
  * If doDivide member is true then FT of model is divided into the data,
  * If doReplace member is true then FT of model replaces the data,
@@ -756,15 +979,42 @@ void  ObitSkyModelVMSquintChose (ObitSkyModel* inn, ObitUV* uvdata)
  * should always be called by its function pointer.
  * Method assumes same correction to all antennas.
  * After the AIPSish QXXPTS, QPTDIV and friends
- * \param in     SkyModelVM with model components loaded (ObitSkyModelLoad)
- * \param field  Field number being processed (-1 => all)
- * \param uvdata UV data set to model and subtract from current buffer
- * \param err Obit error stack object.
- * \return return code, OBIT_IO_OK=> OK
+ * Arguments are given in the VMSquintFTFuncArg structure passed as arg starting 
+ * with the following:
+ * \li type   String identifying structure
+ * \li in     SkyModelVM with model components loaded (ObitSkyModelLoad)
+ * \li field  Field number being processed (-1 => all)
+ * \li uvdata UV data set to model and subtract from current buffer
+ * \li first  First (1-rel) vis in uvdata buffer to process this thread
+ * \li last   Highest (1-rel) vis in uvdata buffer to process this thread
+ * \li ithread thread number
+ * \li err    Obit error stack object.
+ * \li endVMModelTime End time (days) of validity of model
+ * \li VMComps Thread copy of Components list - not used here
+ * \li dimGain Dimension of Rgain
+ * \li Rgain   Float array of time/spatially variable VLA R component gain
+ * \li Lgain   Float array of time/spatially variable VLA L component gain
+ * \li REgain  Float array of time/spatially variable EVLA R component gain
+ * \li LEgain  Float array of time/spatially variable EVLA L component gain
+ * \return NULL
  */
-void ObitSkyModelVMSquintFTDFT (ObitSkyModelVM *inn, olong field, ObitUV *uvdata, ObitErr *err)
+static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
 {
-  ObitSkyModelVMSquint *in = (ObitSkyModelVMSquint*)inn;
+  /* Get arguments from structure */
+  VMSquintFTFuncArg *largs = (VMSquintFTFuncArg*)args;
+  ObitSkyModelVMSquint *in = (ObitSkyModelVMSquint*)largs->in;
+  /*olong field      = largs->field;*/
+  ObitUV *uvdata   = largs->uvdata;
+  olong loVis      = largs->first-1;
+  olong hiVis      = largs->last;
+  olong ithread    = largs->ithread;
+  ObitErr *err     = largs->err;
+  /*olong dimGain    = largs->dimGain;*/
+  ofloat *Rgain    = largs->Rgain;
+  ofloat *Lgain    = largs->Lgain;
+  ofloat *REgain   = largs->REgain;
+  ofloat *LEgain   = largs->LEgain;
+
   olong iVis, iIF, iChannel, iStoke, iComp, lcomp, ncomp;
   olong lrec, nrparm, naxis[2];
   olong startPoln, numberPoln, jincs, startChannel, numberChannel;
@@ -782,9 +1032,9 @@ void ObitSkyModelVMSquintFTDFT (ObitSkyModelVM *inn, olong field, ObitUV *uvdata
   gchar *routine = "ObitSkyModelVMSquintFTDFT";
 
   /* error checks - assume most done at higher level */
-  if (err->error) return;
+  if (err->error) goto finish;
 
-  /* Visibility pointers */
+ /* Visibility pointers */
   ilocu =  uvdata->myDesc->ilocu;
   ilocv =  uvdata->myDesc->ilocv;
   ilocw =  uvdata->myDesc->ilocw;
@@ -813,49 +1063,35 @@ void ObitSkyModelVMSquintFTDFT (ObitSkyModelVM *inn, olong field, ObitUV *uvdata
   /* Get pointer for components */
   naxis[0] = 0; naxis[1] = 0; 
   Data = ObitFArrayIndex(in->comps, naxis);
-  lcomp = in->comps->naxis[0];  /* Length of row in comp table */
+  lcomp = in->comps->naxis[0];   /* Length of row in comp table */
   ncomp = in->comps->naxis[1];   /* Number of components */
-
-  /* Count number of actual components */
-  mcomp = 0;
-  ddata = Data;
-  for (iComp=0; iComp<ncomp; iComp++) {
-    if (ddata[3]!=0.0) mcomp = iComp+1;
-    ddata += lcomp;  /* update pointer */
-  } /* end loop over components */
-  in->numComp = mcomp;  /* Number of actual components */
-
-  /* Create/resize buffers for VM models (RR and LL + EVLA)  components if needbe */
-  if (mcomp>in->dimGain) {
-    in->dimGain = mcomp;
-    if (in->Rgain) g_free(in->Rgain);
-    in->Rgain = g_malloc0((in->dimGain)*sizeof(ofloat));
-    if (in->Lgain) g_free(in->Lgain);
-    in->Lgain = g_malloc0((in->dimGain)*sizeof(ofloat));
-    if (in->REgain) g_free(in->REgain);
-    in->REgain = g_malloc0((in->dimGain)*sizeof(ofloat));
-    if (in->LEgain) g_free(in->LEgain);
-    in->LEgain = g_malloc0((in->dimGain)*sizeof(ofloat));
-  }
+  mcomp = in->numComp;           /* Actual number */
 
   /* Get pointer for frequency correction tables */
   fscale  = uvdata->myDesc->fscale;
   freqArr = uvdata->myDesc->freqArr;
 
   /* Loop over vis in buffer */
-  visData = uvdata->buffer;         /* Buffer pointer */
-  lrec = uvdata->myDesc->lrec;      /* Length of record */
-  nrparm = uvdata->myDesc->nrparm;  /* Words of "random parameters" */
-  for (iVis=0; iVis<uvdata->myDesc->numVisBuff; iVis++) {
+  lrec    = uvdata->myDesc->lrec;         /* Length of record */
+  visData = uvdata->buffer+loVis*lrec;    /* Buffer pointer with appropriate offset */
+  nrparm  = uvdata->myDesc->nrparm;       /* Words of "random parameters" */
+
+  for (iVis=loVis; iVis<hiVis; iVis++) {
 
     /* Is current model still valid? */
-    if (visData[iloct] > in->endVMModelTime) {
+    if (visData[iloct] > largs->endVMModelTime) {
       /* Subarray 0-rel */
-      itemp = (olong)visData[uvdata->myDesc->ilocb];
-      suba = 100.0 * (visData[uvdata->myDesc->ilocb]-itemp) + 0.5; 
+      itemp = (olong)visData[ilocb];
+      suba = 100.0 * (visData[ilocb]-itemp) + 0.5; 
       /* Update */
-      myClass->ObitSkyModelVMUpdateModel (inn, visData[iloct], suba, uvdata, err);
-      if (err->error) Obit_traceback_msg (err, routine, in->name);
+      myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba, uvdata, ithread, err);
+      if (err->error) {
+	ObitThreadLock(in->thread);  /* Lock against other threads */
+	Obit_log_error(err, OBIT_Error,"%s Error updating VMComps",
+		       routine);
+	ObitThreadUnlock(in->thread); 
+	goto finish;
+      }
     }
 
     /* Need antennas numbers */
@@ -878,18 +1114,18 @@ void ObitSkyModelVMSquintFTDFT (ObitSkyModelVM *inn, olong field, ObitUV *uvdata
 	/* Set component gain lists by antenna and type */
 	ddata = Data;
 	if (in->isEVLA[ant1]) {
-	  rgain1 = in->REgain;
-	  lgain1 = in->LEgain;
+	  rgain1 = REgain;
+	  lgain1 = LEgain;
 	} else {
-	  rgain1 = in->Rgain;
-	  lgain1 = in->Lgain;
+	  rgain1 = Rgain;
+	  lgain1 = Lgain;
 	}
 	if (in->isEVLA[ant2]) {
-	  rgain2 = in->REgain;
-	  lgain2 = in->LEgain;
+	  rgain2 = REgain;
+	  lgain2 = LEgain;
 	} else {
-	  rgain2 = in->Rgain;
-	  lgain2 = in->Lgain;
+	  rgain2 = Rgain;
+	  lgain2 = Lgain;
 	}
 	
 	/* Sum by model type - assume phase same for RR, LL */
@@ -967,9 +1203,11 @@ void ObitSkyModelVMSquintFTDFT (ObitSkyModelVM *inn, olong field, ObitUV *uvdata
 	  }
 	  break;
 	default:
+	  ObitThreadLock(in->thread);  /* Lock against other threads */
 	  Obit_log_error(err, OBIT_Error,"%s Unknown Comp model type %d in %s",
 			 routine, in->modType, in->name);
-	  return;
+	  ObitThreadUnlock(in->thread); 
+	  goto finish;
 	}; /* end switch by model type */
 	
 	modRealRR = sumRealRR;
@@ -1040,6 +1278,10 @@ void ObitSkyModelVMSquintFTDFT (ObitSkyModelVM *inn, olong field, ObitUV *uvdata
     visData += lrec; /* Update vis pointer */
   } /* end loop over visibilities */
 
+  /* Indicate completion */
+ finish: ObitThreadPoolDone (in->thread, (gpointer)&ithread);
+  
+  return NULL;
 } /* ObitSkyModelVMquintFTDFT */
 
 /**

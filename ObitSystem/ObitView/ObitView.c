@@ -1,4 +1,4 @@
-/* $Id:     */
+/* $Id$ */
 /*    ObitView: image viewer for Obit */
 /* This program requires the Motif library */
 /* Cloned from ObitView */

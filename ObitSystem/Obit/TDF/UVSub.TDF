@@ -4,7 +4,7 @@
 ;! Subtracts/divides a model from/into a uv data base
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005,2007
+;;  Copyright (C) 2005-2008
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -137,6 +137,8 @@ PBCor                              If true, apply freq.
 **PARAM** float 1  **DEF** 25.0
 antSize                            Pri. antenna size (m) to use
                                    in PBCor
+**PARAM** int 1 **DEF** 1
+nThreads            0              Number of threads to use
 **PARAM** int 10
 noScrat                            AIPS disk numbers for which
                                    scratch files are disallowed
@@ -291,8 +293,14 @@ Adverbs:
   PBCor......If true, apply frequency dependent primary beam 
           .  corrections.  Default True
   antSize....Primary antenna size (m) to use for PBCor def. 25
-  noScrat.....A list of AIPS disk numbers on which you do not 
-              wish scratch files
+  nThreads...If The Obit libraries are compiled with multiple
+             thread operation enabled, this parameter sets the 
+             number of threads that can be used for parallel 
+             operations. 
+             NB: This only improves performance if there are 
+             multiple processors and/or cores in the host.
+  noScrat....A list of AIPS disk numbers on which you do not 
+             wish scratch files
 ---------------------------------------------------------------
 UVSub: task to subtract a clean model from a uv data base
 DOCUMENTOR: B.E.Turner  NRAO/Charlottesville (AIPS version)

@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry calibration software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006,2007
+;;  Copyright (C) 2006-2008
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -140,6 +140,8 @@ minSNR                              Min. allowed SNR in selfcal
 minNo             2                 Min. no. antennas in selfcal
 **PARAM** int 1
 prtLv             0.0               Print level in selfcal
+**PARAM** int 1 **DEF** 1
+nThreads            0              Number of threads to use
 **PARAM** int 10
 noScrat                            AIPS disk numbers for which
                                    scratch files are disallowed
@@ -291,6 +293,12 @@ Adverbs:
   minSNR.....Min. allowed SNR in self cal solution [def 5]
   minNo......Min. allowed no. antennas in solution
   prtLv......Print level in solution, 0=>none [def. 0]
-  noScrat.....A list of AIPS disk numbers on which you do not 
-              wish scratch files
+  nThreads...If the Obit libraries are compiled with multiple
+             thread operation enabled, this parameter sets the 
+             number of threads that can be used for parallel 
+             operations. 
+             NB: This only improves performance if there are 
+             multiple processors and/or cores in the host.
+  noScrat....A list of AIPS disk numbers on which you do not 
+             wish scratch files
 ----------------------------------------------------------------

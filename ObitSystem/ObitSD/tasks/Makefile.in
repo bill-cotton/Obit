@@ -61,7 +61,7 @@ ALL_LDFLAGS = $(LDFLAGS) @OBIT_LDFLAGS@ @CFITSIO_LDFLAGS@  \
 
 LIBS = ../lib/libObitSD.a @OBIT_LIBS@ @CFITSIO_LIBS@ @FFTW_LIBS@ @FFTW3_LIBS@ \
 	@GLIB_LIBS@ @GSL_LIBS@ $(CLIENT_LIBS) $(SERVER_LIBS) @PLPLOT_LIBS@ @PGPLOT_LIBS@ \
-	@LIBS@ @FLIBS@ 
+	@LIBS@ @FLIBS@ @GTHREAD_LIBS@
 
 # get list of all c source files (*.c) files
 AllC    := $(wildcard *.c)

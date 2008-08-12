@@ -1,7 +1,8 @@
-/* $Id$ */
+/* $Id:  $ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006,2008                                          */
+/*;  Copyright (C) 2008                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
+/*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
 /*;  published by the Free Software Foundation; either version 2 of   */
@@ -17,36 +18,34 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*;  Correspondence this software should be addressed as follows:     */
+/*; Correspondence about this software should be addressed as follows:*/
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitSkyModelIon structure      */
-/*  This class represents sky models and their Fourier transform      */
-/*  This is intended to be included in a class structure definition.  */
+#ifndef OBITTABLENIUTIL_H 
+#define OBITTABLENIUTIL_H 
+
+#include "Obit.h"
+#include "ObitErr.h"
+#include "ObitTableNI.h"
+#include "ObitFArray.h"
+/*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
- * \file ObitSkyModelVMIonDef.h
- * ObitSkyModel structure members for this and any derived classes.
+ * \file ObitTableNIUtil.h
+ * ObitTableNI class utility routine definition.
  */
-#include "ObitSkyModelVMDef.h"  /* Parent class definitions */
-/** Index table for fields with components */
-olong *fieldIndex;
-/** Table of rotation matrices for components 6 needed per row (field) */
-ObitFArray *uRotTab;
-/** Table of Zernike X gradient terms,  ncoef needed per row (field) */
-ObitFArray *ZernY;
-/** Table of Zernike Y gradient terms,  ncoef needed per row (field) */
-ObitFArray *ZernX;
-/** if true need 3D rotation multiply by matrix */
-gboolean do3Dmul;
-/** cosine, sine of rotation difference between uv, image */
-ofloat ccrot, ssrot;
-/** NI Table with ionospheric model */
-ObitTableNI *NITable;
-/** FArray with contents of NI Table */
-ObitFArray *NIArray;
-/** Number of coefficients */
-olong ncoef;
+
+/*---------------Public functions---------------------------*/
+/** Public: Swallow an NI table to an ObitFArray */
+ObitFArray* ObitTableNIUtilSwallow (ObitTableNI *in, ObitErr *err);
+
+/** Public: return index of row in NI Table FArray prior to a given time */
+olong ObitTableNIUtilPrior (ObitFArray* NIArray, ofloat time, olong *prior);
+
+/** Public: return index of row in NI Table FArray following a given time */
+olong ObitTableNIUtilFollow (ObitFArray* NIArray, ofloat time, olong *follow);
+
+#endif /* OBITTABLENIUTIL_H */ 

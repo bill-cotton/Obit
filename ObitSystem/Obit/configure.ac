@@ -112,6 +112,18 @@ if test $ac_have_xmlrpc = no; then
   WWW_CPPFLAGS=" "
   WWW_LIBS=" "
 fi
+
+# GThread stuff - horrible hack for pkg-config bug
+GTHREAD_LIBS=""
+TGTHREAD_LIBS=`pkg-config --libs gthread-2.0 | sed -e 's/-pthread/-lpthread/g'`
+AC_CHECK_LIB([gthread-2.0], g_thread_init, [ac_gthread=yes], [ac_gthread=no
+             AC_MSG_WARN([cannot find GTHREAD library])],[$TGTHREAD_LIBS])
+if test $ac_gthread = yes; then
+	AC_DEFINE(OBIT_THREADS_ENABLED, 1, [Define to 1 if you have gthreads.])
+	GTHREAD_LIBS=$TGTHREAD_LIBS
+	AC_SUBST(GTHREAD_LIBS)
+fi
+
 AC_CONFIG_FILES([dummy_cfitsio/Makefile])
 AC_CONFIG_FILES([dummy_xmlrpc/Makefile])
 AC_CONFIG_FILES([Makefile python/Makefile src/Makefile test/Makefile tasks/Makefile])

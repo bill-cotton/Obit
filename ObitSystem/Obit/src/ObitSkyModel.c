@@ -27,8 +27,9 @@
 /*--------------------------------------------------------------------*/
 
 #include <math.h>
-#include "ObitTableCCUtil.h"
+#include "ObitThread.h"
 #include "ObitSkyModel.h"
+#include "ObitTableCCUtil.h"
 #include "ObitFFT.h"
 #include "ObitUVUtil.h"
 #include "ObitImageUtil.h"
@@ -80,6 +81,35 @@ gboolean ObitSkyModelLoadPoint (ObitSkyModel *in, ObitUV *uvdata, ObitErr *err);
 /** Private: Load  Components model, may be overridden in derived class */
 gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata, 
 				  ObitErr *err);
+
+/** Private: Threaded FTDFT */
+static gpointer ThreadSkyModelFTDFT (gpointer arg);
+
+/** Private: Threaded FTGrid */
+static gpointer ThreadSkyModelFTGrid (gpointer arg);
+
+/*---------------Private structures----------------*/
+/* FT threaded function argument */
+typedef struct {
+  /* type "base" in this class */
+  gchar type[12];
+  /* SkyModel with model components loaded (ObitSkyModelLoad) */
+  ObitSkyModel *in;
+  /* Field number being processed (-1 => all) */
+  olong        field;
+  /* UV data set to model and subtract from current buffer */
+  ObitUV       *uvdata;
+  /* First (1-rel) vis in uvdata buffer to process this thread */
+  olong        first;
+  /* Highest (1-rel) vis in uvdata buffer to process this thread  */
+  olong        last;
+  /* thread number  */
+  olong        ithread;
+  /* Obit error stack object */
+  ObitErr      *err;
+  /* UV Interpolator for FTGrid */
+  ObitCInterpolate *Interp;
+} FTFuncArg;
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -277,7 +307,32 @@ ObitSkyModel* ObitSkyModelCreate (gchar* name, ObitImageMosaic* mosaic)
  */
 void ObitSkyModelInitMod (ObitSkyModel* in, ObitUV *uvdata, ObitErr *err)
 {
-  /* nothing this class */
+  olong i;
+  FTFuncArg *args;
+
+  /* Fourier transform threading routines */
+  in->DFTFunc  = (ObitThreadFunc)ThreadSkyModelFTDFT;
+  in->GridFunc = (ObitThreadFunc)ThreadSkyModelFTGrid;
+
+  /* Setup for threading */
+  /* How many threads? */
+  in->nThreads = MAX (1, ObitThreadNumProc(in->thread));
+
+  /* Initialize threadArg array */
+  if (in->threadArgs==NULL) {
+    in->threadArgs = g_malloc0(in->nThreads*sizeof(FTFuncArg*));
+    for (i=0; i<in->nThreads; i++) 
+      in->threadArgs[i] = g_malloc0(sizeof(FTFuncArg)); 
+  
+    for (i=0; i<in->nThreads; i++) {
+      args = (FTFuncArg*)in->threadArgs[i];
+      strcpy (args->type, "base");  /* Enter type as first entry */
+      args->in     = in;
+      args->uvdata = uvdata;
+      args->ithread= i;
+      args->err    = err;
+    }
+  } /* end initialize */
 
 } /* end ObitSkyModelInitMod */
 
@@ -290,9 +345,25 @@ void ObitSkyModelInitMod (ObitSkyModel* in, ObitUV *uvdata, ObitErr *err)
  */
 void ObitSkyModelShutDownMod (ObitSkyModel* in, ObitUV *uvdata, ObitErr *err)
 {
+  olong i;
+  FTFuncArg *args;
+
   in->myInterp = ObitCInterpolateUnref(in->myInterp);
   in->plane    = ObitFArrayUnref(in->plane);
-  /* nada */
+  ObitThreadPoolFree (in->thread);  /* Shut down any threading */
+  if (in->threadArgs) {
+    /* Check type - only handle "base" */
+    if (!strncmp((gchar*)in->threadArgs[0], "base", 4)) {
+      for (i=0; i<in->nThreads; i++) {
+	args = (FTFuncArg*)in->threadArgs[i];
+	if (args->Interp) ObitCInterpolateUnref(args->Interp);
+	g_free(in->threadArgs[i]);
+      }
+      g_free(in->threadArgs);
+      in->threadArgs = NULL;
+    } /* end if this a "base" threadArg */
+  }
+  in->nThreads   = 0;
 } /* end ObitSkyModelShutDownMod */
 
 /**
@@ -1459,6 +1530,9 @@ gboolean ObitSkyModelLoadImage (ObitSkyModel *in, olong n, ObitUV *uvdata,
 
 /**
  * Do Fourier transform using a DFT for a buffer of data.
+ * If threading has been enabled by a call to ObitThreadAllowThreads 
+ * this routine will divide the buffer up amount the number of processors
+ * returned by ObitThreadNumProc.
  * If doDivide member is true then FT of model is divided into the data,
  * If doReplace member is true then FT of model replaces the data,
  * else, it is subtracted.
@@ -1471,10 +1545,82 @@ gboolean ObitSkyModelLoadImage (ObitSkyModel *in, olong n, ObitUV *uvdata,
  * \param field  Field number being processed (-1 => all)
  * \param uvdata UV data set to model and subtract from current buffer
  * \param err Obit error stack object.
- * \return return code, OBIT_IO_OK=> OK
  */
 void ObitSkyModelFTDFT (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *err)
 {
+  olong i, nvis, lovis, hivis, nvisPerThread;
+  FTFuncArg *args;
+  gboolean OK = TRUE;
+  gchar *routine = "ObitSkyModelFTDFT";
+
+  /* error checks - assume most done at higher level */
+  if (err->error) return;
+
+  /* Divide up work */
+  nvis = uvdata->myDesc->numVisBuff;
+  nvisPerThread = nvis/in->nThreads;
+  lovis = 1;
+  hivis = nvisPerThread;
+  hivis = MIN (hivis, nvis);
+
+  /* Set up thread arguments */
+  for (i=0; i<in->nThreads; i++) {
+    if (i==(in->nThreads-1)) hivis = nvis;  /* Make sure do all */
+    args = (FTFuncArg*)in->threadArgs[i];
+    strcpy (args->type, "base");  /* Enter type as first entry */
+    args->in     = in;
+    args->field  = field;
+    args->uvdata = uvdata;
+    args->first  = lovis;
+    args->last   = hivis;
+    args->ithread= i;
+    args->err    = err;
+    args->Interp = NULL;
+    /* Update which vis */
+    lovis += nvisPerThread;
+    hivis += nvisPerThread;
+    hivis = MIN (hivis, nvis);
+  }
+
+  /* Do operation */
+  OK = ObitThreadIterator (in->thread, in->nThreads, in->DFTFunc, in->threadArgs);
+
+  /* Check for problems */
+  if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+}  /* end ObitSkyModelFTDFT */
+
+/**
+ * Do Fourier transform using a DFT for a buffer of data.
+ * Callable as thread
+ * If doDivide member is true then FT of model is divided into the data,
+ * If doReplace member is true then FT of model replaces the data,
+ * else, it is subtracted.
+ * If doFlip member is true the Fourier transform is multiplied by sqrt(-1)
+ * (for Stokes RL and LR)
+ * After the AIPSish QXXPTS, QPTDIV and friends
+ * Arguments are given in the structure passed as arg
+ * \param arg Pointer to FTFuncArg argument with elements:
+ * \li type   String identifying structure
+ * \li in     SkyModel with model components loaded (ObitSkyModelLoad)
+ * \li field  Field number being processed (-1 => all)
+ * \li uvdata UV data set to model and subtract from current buffer
+ * \li first  First (1-rel) vis in uvdata buffer to process this thread
+ * \li last   Highest (1-rel) vis in uvdata buffer to process this thread
+ * \li ithread thread number
+ * \li err Obit error stack object.
+ * \return NULL
+ */
+static gpointer ThreadSkyModelFTDFT (gpointer args)
+{
+  /* Get arguments from structure */
+  FTFuncArg *largs = (FTFuncArg*)args;
+  ObitSkyModel *in = largs->in;
+  /*olong field      = largs->field;*/
+  ObitUV *uvdata   = largs->uvdata;
+  olong loVis      = largs->first-1;
+  olong hiVis      = largs->last;
+  ObitErr *err     = largs->err;
+
   olong iVis, iIF, iChannel, iStoke, iComp, lcomp, ncomp, mcomp;
   olong lrec, nrparm, naxis[2];
   olong startPoln, numberPoln, jincs, startChannel, numberChannel;
@@ -1485,17 +1631,17 @@ void ObitSkyModelFTDFT (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *
   ofloat  modReal, modImag;
   ofloat amp, arg, freq2, freqFact, wt=0.0, temp;
   odouble phase, tx, ty, tz, sumReal, sumImag, *freqArr;
-  gchar *routine = "ObitSkyModelFTDFT";
+  gchar *routine = "ThreadSkyModelFTDFT";
 
   /* error checks - assume most done at higher level */
-  if (err->error) return;
+  if (err->error) goto finish;
 
   /* Get pointer for components */
   naxis[0] = 0; naxis[1] = 0; 
-  data = ObitFArrayIndex(in->comps, naxis);
+  data  = ObitFArrayIndex(in->comps, naxis);
   lcomp = in->comps->naxis[0];  /* Length of row in comp table */
   ncomp = in->comps->naxis[1];  /* number of components */
-  if (ncomp<=0) return; /* Anything? */
+  if (ncomp<=0) goto finish; /* Anything? */
 
   /* Count number of actual components */
   mcomp = 0;
@@ -1535,14 +1681,14 @@ void ObitSkyModelFTDFT (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *
   }
 
   /* Get pointer for frequency correction tables */
-  fscale = uvdata->myDesc->fscale;
+  fscale  = uvdata->myDesc->fscale;
   freqArr = uvdata->myDesc->freqArr;
 
   /* Loop over vis in buffer */
-  visData = uvdata->buffer;         /* Buffer pointer */
-  lrec = uvdata->myDesc->lrec;      /* Length of record */
-  nrparm = uvdata->myDesc->nrparm;  /* Words of "random parameters" */
-  for (iVis=0; iVis<uvdata->myDesc->numVisBuff; iVis++) {
+  lrec    = uvdata->myDesc->lrec;         /* Length of record */
+  visData = uvdata->buffer+loVis*lrec;    /* Buffer pointer with appropriate offset */
+  nrparm  = uvdata->myDesc->nrparm;       /* Words of "random parameters" */
+  for (iVis=loVis; iVis<hiVis; iVis++) {
     /* Loop over IFs */
     for (iIF=startIF; iIF<startIF+numberIF; iIF++) {
       offsetIF = nrparm + iIF*jincif; 
@@ -1552,7 +1698,7 @@ void ObitSkyModelFTDFT (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *
 
 	/* Sum over components */
 	sumReal = sumImag = 0.0;
-	ccData = data;
+	ccData  = data;
 	
 	/* Sum by model type */
 	switch (in->modType) {
@@ -1615,9 +1761,11 @@ void ObitSkyModelFTDFT (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *
 	  }  /* end loop over components */
 	  break;
 	default:
+	  ObitThreadLock(in->thread);  /* Lock against other threads */
 	  Obit_log_error(err, OBIT_Error,"%s Unknown Comp model type %d in %s",
 			 routine, in->modType, in->name);
-	  return;
+	  ObitThreadUnlock(in->thread); 
+	  goto finish;
 	}; /* end switch by model type */
 
 	/* Need to multiply model by sqrt(-1)? */
@@ -1674,7 +1822,87 @@ void ObitSkyModelFTDFT (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *
     visData += lrec; /* Update vis pointer */
   } /* end loop over visibilities */
 
+  /* Indicate completion */
+ finish: ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
 } /* ObitSkyModelFTDFT */
+
+/**
+ * Do Fourier transform using the a gridded image or set of components 
+ * for a buffer of data.
+ * If threading has been enabled by a call to ObitThreadAllowThreads 
+ * this routine will divide the buffer up amount the number of processors
+ * returned by ObitThreadNumProc.
+ * If doDivide member is true then FT of model is divided into the data,
+ * If doReplace member is true then FT of model replaces the data,
+ * else, it is subtracted.
+ * Adapted from the AIPSish ALGSTB, QUVINT, QINTP
+ * Note: Unlike AIPS, FFTw produces nontransposed images with half
+ * the first (U) axis.
+ * This function may be overridden in a derived class and 
+ * should always be called by its function pointer.
+ * \param in     SkyModel with model components loaded (ObitSkyModelLoad)
+ * \param field  Field number being processed (-1 => all)
+ * \param uvdata UV data set to model and subtract from current buffer
+ * \param err Obit error stack object.
+ */
+void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *err)
+{
+  olong i, nvis, lovis, hivis, nvisPerThread;
+  FTFuncArg *args;
+  gboolean OK = TRUE;
+  gchar *routine = "ObitSkyModelFTGrid";
+
+  /* error checks - assume most done at higher level */
+  if (err->error) return;
+
+  /* How many threads? */
+  in->nThreads = MAX (1, ObitThreadNumProc(in->thread));
+
+  /* Initialize threadArg array on first call */
+  if (in->threadArgs==NULL) {
+    in->threadArgs = g_malloc0(in->nThreads*sizeof(FTFuncArg*));
+    for (i=0; i<in->nThreads; i++) 
+      in->threadArgs[i] = g_malloc0(sizeof(FTFuncArg)); 
+  } /* end initialize */
+  
+  /* Divide up work */
+  nvis = uvdata->myDesc->numVisBuff;
+  nvisPerThread = nvis/in->nThreads;
+  lovis = 1;
+  hivis = nvisPerThread;
+  hivis = MIN (hivis, nvis);
+
+  /* Set up thread arguments */
+  for (i=0; i<in->nThreads; i++) {
+    if (i==(in->nThreads-1)) hivis = nvis;  /* Make sure do all */
+    args = (FTFuncArg*)in->threadArgs[i];
+    args->in     = in;
+    args->field  = field;
+    args->uvdata = uvdata;
+    args->first  = lovis;
+    args->last   = hivis;
+    args->ithread= i;
+    args->err    = err;
+    /* local copy of interpolator if needed */
+    if (i>0) 
+      args->Interp = ObitCInterpolateCopy(in->myInterp, NULL, err);
+    else
+      args->Interp = ObitCInterpolateRef(in->myInterp);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    /* Update which vis */
+    lovis += nvisPerThread;
+    hivis += nvisPerThread;
+    hivis = MIN (hivis, nvis);
+  }
+
+  /* Do operation */
+  OK = ObitThreadIterator (in->thread, in->nThreads, in->GridFunc, in->threadArgs);
+
+  /* Check for problems */
+  if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+}  /* end ObitSkyModelFTGrid */
 
 /**
  * Do Fourier transform using the a gridded image or set of components 
@@ -1687,13 +1915,32 @@ void ObitSkyModelFTDFT (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *
  * Adapted from the AIPSish ALGSTB, QUVINT, QINTP
  * Note: Unlike AIPS, FFTw produces nontransposed images with half
  * the first (U) axis.
- * \param in  SkyModel with model components loaded (ObitSkyModelLoad)
- * \param field  Field number being processed (-1 => all)
- * \param uvdata UV data set to model and subtract, current buffer.
- * \param err Obit error stack object.
+ * Arguments are given in the structure passed as arg
+ * \param arg  Pointer to FTFuncArg argument with elements
+ * \li type   String identifying structure
+ * \li in     SkyModel with model components loaded (ObitSkyModelLoad)
+ * \li field  Field number being processed (-1 => all)
+ * \li uvdata UV data set to model and subtract from current buffer
+ * \li first  First (1-rel) vis in uvdata buffer to process this thread
+ * \li last   Highest (1-rel) vis in uvdata buffer to process this thread
+ * \li ithread thread number
+ * \li err Obit error stack object.
+ * \li Interp UV Interpolator
+ * \return NULL
  */
-void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *err)
+gpointer ThreadSkyModelFTGrid (gpointer args)
 {
+  /* Get arguments from structure */
+  FTFuncArg *largs = (FTFuncArg*)args;
+  ObitSkyModel *in = largs->in;
+  olong field      = largs->field;
+  ObitUV *uvdata   = largs->uvdata;
+  olong loVis      = largs->first-1;
+  olong hiVis      = largs->last;
+  olong ithread    = largs->ithread;
+  ObitErr *err     = largs->err;
+  ObitCInterpolate *Interp = largs->Interp;
+
   ObitImageDesc *imDesc=NULL;
   ObitUVDesc *uvDesc=NULL;
   olong iVis, iIF, iChannel, iStoke;
@@ -1710,10 +1957,10 @@ void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr 
   ofloat PC, cosPC, sinPC, konst, maprot, uvrot, ssrot, ccrot;
   odouble *freqArr;
   gboolean doRot, doConjg, isBad, do3Dmul, doPC;
-  gchar *routine = "ObitSkyModelFTGrid";
+  gchar *routine = "ThreadSkyModelFTGrid";
 
   /* error checks - assume most done at higher level */
-  if (err->error) return;
+  if (err->error) goto finish;
 
   /* Visibility pointers */
   uvDesc = uvdata->myDesc;
@@ -1735,7 +1982,7 @@ void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr 
   if (uvdata->myDesc->jlocf<uvdata->myDesc->jlocif) { /* freq before IF */
     kincf = 1;
     kincif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
-  } else { /* IF beforefreq  */
+  } else { /* IF before freq  */
     kincif = 1;
     kincf = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
   }
@@ -1759,7 +2006,13 @@ void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr 
 
   /* Get position phase shift parameters */
   ObitUVDescShiftPhase(uvDesc, imDesc, dxyzc, err);
-  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  if (err->error) {
+    ObitThreadLock(in->thread);  /* Lock against other threads */
+    Obit_log_error(err, OBIT_Error,"%s: Error phase shifting %s",
+		   routine, uvdata->name);
+    ObitThreadUnlock(in->thread); 
+    goto finish;
+  }
   /* Phase shift for field offset? */
   doPC = (fabs(dxyzc[0])>1.0e-12) || (fabs(dxyzc[1])>1.0e-12) || 
     (fabs(dxyzc[2])>1.0e-12);
@@ -1795,10 +2048,10 @@ void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr 
   doRot = (fabs (ssrot)>1.0e-10) || (fabs (ccrot-1.0)>1.0e-4);
 
   /* Loop over vis in buffer */
-  visData = uvdata->buffer;         /* Buffer pointer */
-  lrec = uvdata->myDesc->lrec;      /* Length of record */
-  nrparm = uvdata->myDesc->nrparm;  /* Words of "random parameters" */
-  for (iVis=0; iVis<uvdata->myDesc->numVisBuff; iVis++) {
+  lrec    = uvdata->myDesc->lrec;         /* Length of record */
+  visData = uvdata->buffer+loVis*lrec;    /* Buffer pointer with appropriate offset */
+  nrparm  = uvdata->myDesc->nrparm;       /* Words of "random parameters" */
+  for (iVis=loVis; iVis<hiVis; iVis++) {
     /* Loop over IFs */
     for (iIF=startIF; iIF<startIF+numberIF; iIF++) {
       offsetIF = nrparm + iIF*jincif; 
@@ -1836,7 +2089,13 @@ void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr 
 	
 	/* Interpolate from UV grid */
 	ObitCInterpolateOffset (in->myInterp, uvw, vis, err);
-	if (err->error) Obit_traceback_msg (err, routine, in->name);
+	if (err->error) {
+	  ObitThreadLock(in->thread);  /* Lock against other threads */
+	  Obit_log_error(err, OBIT_Error,"%s: Error interpolatingFT of model",
+			 routine);
+	  ObitThreadUnlock(in->thread); 
+	  goto finish;
+	}
       
 	/* Blanked if outside grid  - zero data and weight */
 	isBad = (vis[0]==fblank);
@@ -1922,7 +2181,12 @@ void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr 
     visData += lrec; /* Update vis pointer */
   } /* end loop over visibilities */
 
-} /* ObitSkyModelFTGrid */
+  /* Indicate completion */
+ finish: ObitThreadPoolDone (in->thread, (gpointer)&ithread);
+  ObitCInterpolateUnref(Interp); /* Cleanup */
+  
+  return NULL;
+} /* ThreadSkyModelFTGrid */
 
 /**
  * Sum the fluxes of components defined by CCVer and endComp
@@ -3311,6 +3575,10 @@ void ObitSkyModelInit  (gpointer inn)
   in->maxGrid   = 1.0e20;
   in->doDFT     = FALSE;
   in->doGrid    = FALSE;
+  in->nThreads    = 0;
+  in->threadArgs= NULL;
+  in->DFTFunc   = NULL;
+  in->GridFunc  = NULL;
 
 } /* end ObitSkyModelInit */
 
@@ -3324,6 +3592,8 @@ void ObitSkyModelInit  (gpointer inn)
 void ObitSkyModelClear (gpointer inn)
 {
   ObitClassInfo *ParentClass;
+  olong i;
+  FTFuncArg *args;
   ObitSkyModel *in = inn;
 
   /* error checks */
@@ -3340,6 +3610,17 @@ void ObitSkyModelClear (gpointer inn)
   in->CCver     = ObitMemFree(in->CCver); 
   in->startComp = ObitMemFree(in->startComp); 
   in->endComp   = ObitMemFree(in->endComp); 
+  if (in->threadArgs) {
+    /* Check type - only handle "base" */
+    if (!strncmp((gchar*)in->threadArgs[0], "base", 4)) {
+      for (i=0; i<in->nThreads; i++) {
+	args = (FTFuncArg*)in->threadArgs[i];
+	if (args->Interp) ObitCInterpolateUnref(args->Interp);
+	g_free(in->threadArgs[i]);
+      }
+      g_free(in->threadArgs);
+    } /* end if this a "base" threadArg */
+  }
   
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
