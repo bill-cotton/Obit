@@ -647,7 +647,9 @@ def PlotData (inData, targets, scans, feeds, err, \
     """
     # Set selection
     inInfo = inData.List
-    inInfo.set("Targets", targets)       # select only target data
+    inInfo.set("doCalSelect",True)       # Do selection
+    if len(targets)>0:
+        inInfo.set("Targets", targets)   # select only target data
     if scans[0]>0 and scans[1]>0:
         lscans = scans
     else:

@@ -10,6 +10,10 @@ FITS = ["./FITSdata"]  # Where to put putput/scratch files
 ObitSys=OSystem.OSystem  ("Mustang", 1, 1, 1, ["None"], len(FITS), FITS, True, False, err)
 OErr.printErrMsg(err, "Error with Obit startup")
 
+# Allow multiple threads
+OSystem.PAllowThreads(2)  # 2 threads
+OSystem.PAllowThreads(1)  # 1 thread
+
 #######################################################################################
 # Define parameters
 
@@ -188,7 +192,9 @@ print "Write calibrated data "
 if FITSDir.PExist (outFile, outDisk, err):
     zapOTF = OTF.newPOTF("Output data", outFile, outDisk, True, err)
     zapOTF.Zap(err)
-outOTF = OTF.newPOTF("Output data", outFile, outDisk, False, err)
+# Set number of records depending on number of threads
+nrec = 1000*OSystem.PGetNoThreads()
+outOTF = OTF.newPOTF("Output data", outFile, outDisk, False, err, nrec=nrec)
 OTF.PClone(inOTF, outOTF, err)     # Same structure etc
 OErr.printErrMsg(err, "Error initializing output")
 

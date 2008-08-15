@@ -185,6 +185,157 @@ ofloat medianAvg (ofloat *array, olong incs, olong navg, gboolean doWt, olong n)
 } /* end medianAvg */
 
 /**
+ * Return the running median of an array
+ * \param n       Number of points
+ * \param wind    Width of median window in cells
+ * \param array   Array of values, fblank blanking supported
+ * \param alpha   0 -> 1 = pure boxcar -> pure MWF (Alpha of the 
+ *                data samples in a window are discarded and 
+ *                the rest averaged). 
+ * \param rms     RMS of array, median average sigma from each wind of data
+ * \param out     array of size of array to be with median values
+ * \param work    work array of size of array
+ */
+void RunningMedian (glong n, olong wind, ofloat *array, ofloat alpha, 
+		    ofloat *RMS, ofloat *out, ofloat *work)
+{
+  ofloat *lwork=NULL;
+  ofloat level, sigma, sigmaSum, sigmaCnt;
+  ofloat fblank = ObitMagicF();
+  olong i, j, k, op, ind, half, RMScnt=0;
+
+  /* Create array */
+  lwork = g_malloc0(wind*sizeof(ofloat));
+
+  half = wind/2;
+  ind  = 0;
+  op   = 0;
+  k    = 0;
+  sigmaSum = 0.0;
+  sigmaCnt = 1;
+
+  /* First half wind filled with median of first wind points */
+  for (j=ind; j<ind+wind; j++) lwork[k++] = array[j];
+  ind++;
+  level = MedianLevel (wind, lwork, alpha);
+  sigma = MedianSigma (wind, lwork, level);
+  if (sigma!=fblank) {
+    sigmaSum = sigma;
+    sigmaSum += sigma;
+    work[RMScnt++] = sigma;
+  }
+  for (k=0; k<half; k++) out[op++] = level;
+
+  /* Loop over middle of array */
+  for (i=half; i<n-half; i++) {
+    k = 0;
+    for (j=ind; j<ind+wind; j++) lwork[k++] = array[j];
+    ind++;
+    level = MedianLevel (wind, lwork, alpha);
+    sigma = MedianSigma (wind, lwork, level);
+    if (sigma!=fblank) {
+      sigmaSum += sigma;
+      sigmaCnt++;
+      work[RMScnt++] = sigma;
+    }
+    out[op++] = level;
+  } /* end loop over array */
+
+  /* Fill in bit at end */
+  while (op<n) {
+    out[op++] = level;
+  }
+
+  /* median Average sigmas */
+  *RMS = MedianLevel (RMScnt, work, alpha);
+
+  /* Cleanup */
+  if (lwork) g_free(lwork);
+
+} /* end RunningMedian */
+
+/**
+ * Determine alpha median value of a ofloat array
+ * \param n       Number of points
+ * \param value   Array of values
+ * \param alpha   0 -> 1 = pure boxcar -> pure MWF (ALPHA of the 
+ *                data samples are discarded and the rest averaged). 
+ * \return alpha median value
+ */
+ofloat MedianLevel (olong n, ofloat *value, ofloat alpha)
+{
+  ofloat out=0.0;
+  ofloat fblank = ObitMagicF();
+  ofloat beta, sum;
+  olong i, i1, i2, count;
+
+  if (n<=0) return out;
+
+  /* Sort to ascending order */
+  qsort ((void*)value, n, sizeof(ofloat), compare_gfloat);
+
+  out = value[n/2];
+
+  beta = MAX (0.05, MIN (0.95, alpha)) / 2.0; /*  Average around median factor */
+
+  /* Average around the center */
+  i1 = MAX (0, (n/2)-(olong)(beta*n+0.5));
+  i2 = MIN (n, (n/2)+(olong)(beta*n+0.5));
+
+  if (i2>i1) {
+    sum = 0.0;
+    count = 0;
+    for (i=i1; i<i2; i++) {
+      if (value[i]!=fblank) {
+	sum += value[i];
+	count++;
+      }
+    }
+    if (count>0) out = sum / count;
+  }
+   
+  return out;
+} /* end MedianLevel */
+
+/**
+ * Determine robust RMS value of a ofloat array about mean
+ * Use center 90% of points, excluding at least one point from each end
+ * \param n       Number of points, needs at least 4
+ * \param value   Array of values assumed sorted
+ * \param mean    Mean value of value
+ * \return RMS value, fblank if cannot determine
+ */
+ofloat MedianSigma (gint n, ofloat *value, ofloat mean)
+{
+  ofloat fblank = ObitMagicF();
+  ofloat out;
+  ofloat sum;
+  olong i, i1, i2, count;
+
+  out = fblank;
+  if (n<=4) return out;
+  if (mean==fblank) return out;
+
+  /* Get RMS around the center 90% */
+  i1 = MAX (1,   (n/2)-(olong)(0.45*n+0.5));
+  i2 = MIN (n-1, (n/2)+(olong)(0.45*n+0.5));
+
+  if (i2>i1) {
+    sum = 0.0;
+    count = 0;
+    for (i=i1; i<i2; i++) {
+      if (value[i]!=fblank) {
+	sum += (value[i]-mean)*(value[i]-mean);
+	count++;
+      }
+    }
+    if (count>1) out = sqrt(sum / (count-1));
+  }
+   
+  return out;
+} /* end MedianSigma */
+
+/**
  * Fit polynomial y = f(poly, x) with magic value blanking
  * Use gsl package.
  * \param poly   [out] polynomial coef in order of increasing power of x

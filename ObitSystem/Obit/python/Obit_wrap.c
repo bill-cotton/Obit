@@ -4115,6 +4115,7 @@ typedef struct {
 #include <stdio.h>
 #include "ObitSystem.h"
 #include "ObitMem.h"
+#include "ObitThread.h"
 
 
 extern ObitSystem* Startup (char *pgmName, int pgmNumber, int AIPSuser,
@@ -4176,6 +4177,27 @@ extern void MemPrint (void) {
   ObitMemPrint(stdout);
 } // end MemPrint
 
+extern void SystemAllowThreads (int nThreads) {
+  ObitThread *thread=NULL;
+ 
+  /* Create temporary thread */
+  thread = newObitThread ();
+  /* Init */
+  ObitThreadAllowThreads (thread, nThreads);
+  freeObitThread (thread);  /* Cleanup */
+ 
+} // end SystemAllowThreads
+
+extern int SystemGetNoThreads (void) {
+  ObitThread *thread=NULL;
+  int nThreads;
+
+  /* Create temporary thread */
+  thread = newObitThread ();
+  nThreads = (int)ObitThreadNumProc (thread);
+  freeObitThread (thread);  /* Cleanup */
+  return nThreads;
+} // end SystemGetNoThreads
 extern ObitSystem *Startup(char *,int ,int ,int ,char *[],int ,char *[],int ,int ,ObitErr *);
 extern ObitSystem *Shutdown(ObitSystem *);
 extern int SystemIsInit();
@@ -4187,6 +4209,8 @@ extern void SystemSetPgmNumber(int );
 extern int SystemGetAIPSuser();
 extern void SystemSetAIPSuser(int );
 extern void MemPrint();
+extern void SystemAllowThreads(int );
+extern int SystemGetNoThreads();
 
 typedef struct {
   ObitSystem *me;
@@ -24807,6 +24831,31 @@ static PyObject *_wrap_MemPrint(PyObject *self, PyObject *args) {
     MemPrint();
     Py_INCREF(Py_None);
     _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_SystemAllowThreads(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _arg0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"i:SystemAllowThreads",&_arg0)) 
+        return NULL;
+    SystemAllowThreads(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_SystemGetNoThreads(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,":SystemGetNoThreads")) 
+        return NULL;
+    _result = (int )SystemGetNoThreads();
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
@@ -47800,6 +47849,8 @@ static PyMethodDef ObitMethods[] = {
 	 { "ODataScratch", _wrap_ODataScratch, METH_VARARGS },
 	 { "ODataSetAIPS", _wrap_ODataSetAIPS, METH_VARARGS },
 	 { "ODataSetFITS", _wrap_ODataSetFITS, METH_VARARGS },
+	 { "SystemGetNoThreads", _wrap_SystemGetNoThreads, METH_VARARGS },
+	 { "SystemAllowThreads", _wrap_SystemAllowThreads, METH_VARARGS },
 	 { "MemPrint", _wrap_MemPrint, METH_VARARGS },
 	 { "SystemSetAIPSuser", _wrap_SystemSetAIPSuser, METH_VARARGS },
 	 { "SystemGetAIPSuser", _wrap_SystemGetAIPSuser, METH_VARARGS },

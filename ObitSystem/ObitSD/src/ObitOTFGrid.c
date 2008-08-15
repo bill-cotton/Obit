@@ -74,9 +74,6 @@ void  ObitOTFGridInit  (gpointer in);
 /** Private: Deallocate members. */
 void  ObitOTFGridClear (gpointer in);
 
-/** Private: convolve a data buffer and sum to grid */
-static void GridBuffer (ObitOTFGrid* in, ObitOTF *uvdata);
-
 /** Private: Fill convolving function table */
 static void ConvFunc (ObitOTFGrid* in, olong fnType, ofloat over, ofloat inParm[10]);
 
@@ -85,6 +82,30 @@ static ofloat sphfn (olong ialf, olong im, olong iflag, ofloat eta);
 
 /** Private: Set Class function pointers. */
 static void ObitOTFGridClassInfoDefFn (gpointer inClass);
+
+/** Private: Threaded prep/grid buffer */
+static gpointer ThreadGridBuffer (gpointer arg);
+
+/*---------------Private structures----------------*/
+/* Gridding threaded function argument */
+typedef struct {
+  /* Gridding object */
+  ObitOTFGrid *in;
+  /* OTF data set to grid from current buffer */
+  ObitOTF       *OTFin;
+  /* First (1-rel) vis in otfdata buffer to process this thread */
+  olong        first;
+  /* Highest (1-rel) vis in otfdata buffer to process this thread  */
+  olong        last;
+  /* thread number  */
+  olong        ithread;
+  /* Temporary gridding array for thread */
+  ObitFArray  *grid;
+  /* Temporary weight gridding array for thread */
+  ObitFArray  *wtgrid;
+  /* Work arrays the size of ndetect */
+  ofloat *xpos, *ypos;
+} OTFGridFuncArg;
 
 /*----------------------Public functions---------------------------*/
 /**
@@ -292,7 +313,10 @@ void ObitOTFGridSetup (ObitOTFGrid *in, ObitOTF *OTFin,
 void ObitOTFGridReadOTF (ObitOTFGrid *in, ObitOTF *OTFin, ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_OK;
-  gboolean done;
+  ObitThreadFunc func=(ObitThreadFunc)ThreadGridBuffer;
+  OTFGridFuncArg *args;
+  olong i, nrec, lorec, hirec, nrecPerThread, ndetect;
+  gboolean done, OK;
   olong count;
   gchar *routine = "ObitOTFGridReadOTF";
   
@@ -304,6 +328,37 @@ void ObitOTFGridReadOTF (ObitOTFGrid *in, ObitOTF *OTFin, ObitErr *err)
   g_assert (ObitOTFDescIsA(OTFin->myDesc));
 
  /* OTFin should have been opened in  ObitOTFGridSetup */
+  ndetect = OTFin->geom->numberDetect;    /* How many detectors */
+
+  /* How many threads? */
+  in->nThreads = MAX (1, ObitThreadNumProc(in->thread));
+
+  /* Initialize threadArg array  */
+  if (in->threadArgs==NULL) {
+    in->threadArgs = g_malloc0(in->nThreads*sizeof(OTFGridFuncArg*));
+    for (i=0; i<in->nThreads; i++) 
+      in->threadArgs[i] = g_malloc0(sizeof(OTFGridFuncArg)); 
+  } 
+  
+  /* Set up thread arguments */
+  for (i=0; i<in->nThreads; i++) {
+    args = (OTFGridFuncArg*)in->threadArgs[i];
+    args->in    = in;
+    args->OTFin = OTFin;
+    args->xpos  = g_malloc0(ndetect*sizeof(ofloat));
+    args->ypos  = g_malloc0(ndetect*sizeof(ofloat));
+    if (i>0) {
+      /* Need new zeroed arrays */
+      args->grid = ObitFArrayCreate("Temp grid", in->grid->ndim,  in->grid->naxis);
+      ObitFArrayFill (args->grid, 0.0);
+      args->wtgrid = ObitFArrayCreate("Temp grid", in->gridWt->ndim,  in->gridWt->naxis);
+      ObitFArrayFill (args->wtgrid, 0.0);
+    } else {  /* Reference will do */
+      args->grid   = ObitFArrayRef(in->grid);
+      args->wtgrid = ObitFArrayRef(in->gridWt);
+    }
+  }
+  /* end initialize */
 
   /* loop gridding data */
   done = (retCode != OBIT_IO_OK);
@@ -319,15 +374,65 @@ void ObitOTFGridReadOTF (ObitOTFGrid *in, ObitOTF *OTFin, ObitErr *err)
     if (err->error) 
       Obit_traceback_msg (err, routine, in->name);
     done = (retCode == OBIT_IO_EOF); /* done? */
-    count += OTFin->myDesc-> numRecBuff;
+    count += OTFin->myDesc->numRecBuff;
     
-    /* convolve and sum to grids */
-    GridBuffer (in, OTFin);
+    /* Divide up work */
+    nrec = OTFin->myDesc->numRecBuff;
+    nrecPerThread = nrec/in->nThreads;
+    lorec = 1;
+    hirec = nrecPerThread;
+    hirec = MIN (hirec, nrec);
+
+    /* Set up thread arguments */
+    for (i=0; i<in->nThreads; i++) {
+      if (i==(in->nThreads-1)) hirec = nrec;  /* Make sure do all */
+      args = (OTFGridFuncArg*)in->threadArgs[i];
+      args->first  = lorec;
+      args->last   = hirec;
+      /* Update which rec */
+      lorec += nrecPerThread;
+      hirec += nrecPerThread;
+      hirec = MIN (hirec, nrec);
+    }
+
+    /* Do  convolve and sum to grids operation on buffer possibly with threads */
+    OK = ObitThreadIterator (in->thread, in->nThreads, func, in->threadArgs);
+    
+    /* Check for problems */
+    if (!OK) {
+      Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+      break;
+    }
   } /* end loop reading/gridding data */
 
   /* Close data */
   retCode = ObitOTFClose (OTFin, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Accumulate thread grids if more than one */
+  if (in->nThreads>1) {
+    for (i=1; i<in->nThreads; i++) {
+      args = (OTFGridFuncArg*)in->threadArgs[i];
+      ObitFArrayAdd(in->grid, args->grid, in->grid);
+      ObitFArrayAdd(in->gridWt, args->wtgrid, in->gridWt);
+    }
+  } /* end accumulating grids */
+
+  /* Shut down any threading */
+  ObitThreadPoolFree (in->thread);
+  if (in->threadArgs) {
+    for (i=0; i<in->nThreads; i++) {
+      args = (OTFGridFuncArg*)in->threadArgs[i];
+      if (args->grid) ObitFArrayUnref(args->grid);
+      if (args->wtgrid) ObitFArrayUnref(args->wtgrid);
+      if (args->xpos) g_free(args->xpos);
+      if (args->ypos) g_free(args->ypos);
+      g_free(in->threadArgs[i]);
+    }
+    g_free(in->threadArgs);
+  }
+  in->threadArgs = NULL;
+  in->nThreads   = 0;
 
   /* Make sure some data processed */
   if (count<10) {
@@ -703,6 +808,8 @@ void ObitOTFGridInit  (gpointer inn)
   in->xpos         = NULL;
   in->ypos         = NULL;
   in->minWt        = 0.01;
+  in->nThreads     = 1;
+  in->threadArgs   = NULL;
   for (i=0; i<10; i++)in->convParm[i] = 0.0;
 
 } /* end ObitOTFGridInit */
@@ -717,7 +824,9 @@ void ObitOTFGridInit  (gpointer inn)
 void ObitOTFGridClear (gpointer inn)
 {
   ObitClassInfo *ParentClass;
+  olong i;
   ObitOTFGrid *in = inn;
+  OTFGridFuncArg *args;
 
   /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
@@ -730,6 +839,17 @@ void ObitOTFGridClear (gpointer inn)
   in->convfn    = ObitFArrayUnref(in->convfn);
   if (in->xpos) g_free (in->xpos); in->xpos = NULL;
   if (in->ypos) g_free (in->ypos); in->ypos = NULL;
+  if (in->threadArgs) {
+    for (i=0; i<in->nThreads; i++) {
+      args = (OTFGridFuncArg*)in->threadArgs[i];
+      if (args->grid)   ObitFArrayUnref(args->grid);
+      if (args->wtgrid) ObitFArrayUnref(args->wtgrid);
+      if (args->xpos) g_free(args->xpos);
+      if (args->ypos) g_free(args->ypos);
+      g_free(in->threadArgs[i]);
+    }
+    g_free(in->threadArgs);
+  }
   
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
@@ -739,203 +859,6 @@ void ObitOTFGridClear (gpointer inn)
   
 } /* end ObitOTFGridClear */
 
-
-/**
- * Convolves data in buffer on otfdata onto the grid members of in.
- * row is last.
- * \param in       Object with grid to accumulate
- * \param otfdata  Object with uv data in buffer, prepared for gridding.
- */
-static void GridBuffer (ObitOTFGrid* in, ObitOTF *otfdata)
-{
-  olong irec, nrec, ndet, idet, ncol, nrow, ix, iy, icx, icy;
-  olong lGridRow, lGridCol, itemp, i;
-  ofloat *grid, *gridWt, *gridStart, *gridTop, *gridWtStart, *gridWtTop;
-  ofloat *convfnp, *x, *y, *rot, *rec, *cal, rtemp, clip, dataVal;
-  ofloat xcell, ycell, wt, dataWt, fblank = ObitMagicF();
-  olong  convx, convy;
-  olong pos[] = {0,0,0,0,0};
-  olong incdatawt;
-  gboolean doDataWt;
-  ObitOTFDesc *desc;
-  ObitOTFArrayGeom *geom;
-
-  /* error checks */
-  g_assert (ObitOTFGridIsA(in));
-  g_assert (ObitOTFIsA(otfdata));
-  g_assert (in->grid != NULL);
-  g_assert (otfdata->myDesc != NULL);
-  g_assert (otfdata->buffer != NULL);
-
-   /* how much data? */
-  desc  = otfdata->myDesc;
-  geom  = otfdata->geom;
-  nrec  = desc->numRecBuff;   /* number of data records */
-  if (nrec<=0) return; /* need something */
-  /* number of detectors */
-  ndet = 1;
-  for (i=0; i<desc->naxis; i++) ndet *= MAX (1, desc->inaxes[i]);
-  incdatawt = MAX (1, desc->incdatawt); /* increment in data-wt axis */
-  ndet /= incdatawt;
-  doDataWt = incdatawt>1;      /* Have Data-Wt axis? */
-  clip = in->clip;             /* Clipping level */
-
-  /* initialize data pointers */
-  x   = otfdata->buffer+desc->ilocra;
-  y   = otfdata->buffer+desc->ilocdec;
-  cal = otfdata->buffer+desc->iloccal;
-  rot = otfdata->buffer+desc->ilocrot;
-  rec = otfdata->buffer+desc->ilocdata;
-  
-  lGridRow = in->grid->naxis[0];     /* length of grid row */
-  lGridCol = in->grid->naxis[1];     /* length of grid column */
-
-  /* beginning of the grids */
-  pos[0] = 0;  pos[1] = 0;
-  gridStart   = ObitFArrayIndex (in->grid, pos); 
-  gridWtStart = ObitFArrayIndex (in->gridWt, pos); 
-
-  /* beginning of highest row */
-  pos[1] = lGridCol-1;
-  gridTop   = ObitFArrayIndex (in->grid, pos); 
-  gridWtTop = ObitFArrayIndex (in->gridWt, pos); 
-  dataWt = 1.0;
-
-  ncol = in->convWidth;
-  nrow = in->convWidth;
-  
-  /* Loop over data records */
-  for (irec=0; irec<nrec; irec++) {
-
-    /* Get detector positions projected onto image */
-    ObitOTFArrayGeomProj (geom, *x, *y, *rot, in->raProj, in->decProj, in->Proj, 
-			  in->xpos, in->ypos);
-
-    /* debug 
-    if (irec==378) fprintf(stderr," %d ra %f dec %f\n",irec,in->xpos[2]*3600.0,in->ypos[2]*3600.0);
-    if (irec==375) fprintf(stderr," %d ra %f dec %f\n",irec,in->xpos[10]*3600.0,in->ypos[10]*3600.0);
-    if (irec==372) fprintf(stderr," %d ra %f dec %f\n",irec,in->xpos[18]*3600.0,in->ypos[18]*3600.0);
-    if (irec==368) fprintf(stderr," %d ra %f dec %f\n",irec,in->xpos[26]*3600.0,in->ypos[26]*3600.0);
-    if (irec==365) fprintf(stderr," %d ra %f dec %f\n",irec,in->xpos[34]*3600.0,in->ypos[34]*3600.0);
-    if (irec==362) fprintf(stderr," %d ra %f dec %f\n",irec,in->xpos[42]*3600.0,in->ypos[42]*3600.0);
-    if (irec==358) fprintf(stderr," %d ra %f dec %f\n",irec,in->xpos[50]*3600.0,in->ypos[50]*3600.0);
-    if (irec==355) fprintf(stderr," %d ra %f dec %f\n",irec,in->xpos[58]*3600.0,in->ypos[58]*3600.0);*/
-
-    /* loop over detectors */
-    for (idet = 0; idet<ndet; idet++) {
-      if ((rec[idet*incdatawt] == fblank) || (rec[idet*incdatawt+1]<=0.0)) continue;  /* flagged? */
-
-      /* Get grid coordinates for this datum */
-      xcell = in->xpos[idet] * in->XScale + in->icenxImage;
-      ycell = in->ypos[idet] * in->YScale + in->icenyImage;
-      /* DEBUG
-      if ((irec==355)&&(idet==58)) fprintf(stderr," %d cell %f  %f\n",irec,xcell,ycell);
-      if ((irec==378)&&(idet==2))  fprintf(stderr," %d cell %f  %f\n",irec,xcell,ycell); */
-
-      /* get center cell */
-      ix = (olong)(xcell + 0.5);
-      iy = (olong)(ycell + 0.5);
-
-      /* DEBUG 
-	 if (((ix==129)||(ix==129)) && (iy==129)) {
-	 fprintf (stdout,"DEBUG1 %d  %d %f %f %f\n", irec+(desc->firstRec), idet,
-	 xcell,  ycell, rec[idet*incdatawt]);
-	 }*/
-
-      /* Bail out if too close to edge */
-      if ((ix<in->convWidth) || (in->nxImage-ix<in->convWidth)) continue;
-      if ((iy<in->convWidth) || (in->nyImage-iy<in->convWidth)) continue;
-
-      /* back off half Kernel width */
-      ix -= in->convWidth/2;
-      iy -= in->convWidth/2;
-
-      /* Starting convolution location, table has in->convNperCell points per cell */
-      /* Determine fraction of the cell to get start location in convolving table. */
-      if (xcell > 0.0) itemp = (olong)(xcell + 0.5);
-      else itemp = ((olong)(xcell - 0.5));
-      rtemp = in->convNperCell*(xcell - itemp + 0.5);
-      if (rtemp > 0.0) rtemp += 0.5;
-      else rtemp -= 0.5;
-      convx = (olong)rtemp;
-      
-      /* now y convolving fn */
-      if (ycell > 0.0) itemp = (olong)(ycell + 0.5);
-      else itemp = ((olong)(ycell - 0.5));
-      rtemp = in->convNperCell*(ycell - itemp + 0.5);
-      if (rtemp > 0.0) rtemp += 0.5;
-      else rtemp -= 0.5;
-      convy = (olong)rtemp;
-     
-      /* Starting location in grids */
-      pos[0] = ix;
-      pos[1] = iy;
-      grid   = ObitFArrayIndex (in->grid, pos); 
-      gridWt = ObitFArrayIndex (in->gridWt, pos);
-
-      if (doDataWt) dataWt = rec[idet*incdatawt+1];
-      else dataWt = 1.0;
-      dataVal = rec[idet*incdatawt];
-      if (fabs(dataVal)>clip) dataWt = 0.0;  /* Clip? */
-
-      /* Do gridding */
-      for (icy=0; icy<nrow; icy++) { /* Loop over rows */
-
-	/* convolution fn pointer */
-	pos[0] = convx; pos[1] = convy;
-	convfnp = ObitFArrayIndex (in->convfn, pos);
-	
-	for (icx=0; icx<ncol; icx++) { /* Loop over columns */
-
-	  wt = (*convfnp) * dataWt;
-	  if (wt>0.0) {
-	    grid[icx]   += dataVal * wt;  /* sum data * wt */
-	    /* gridWt[icx] += fabs(wt);       sum wt - not sure about fabs  */
-	    gridWt[icx] += wt;         /* sum wt  */
-	    /* DEBUG
-	    if ( fabs(rec[idet*incdatawt]) > 10.0) 
-	      fprintf(stderr,"data %f cell %f  %f\n",rec[idet*incdatawt],xcell,ycell);
-	    if ( wt > 10.0) 
-	      fprintf(stderr,"wt %f cell %f  %f\n",wt,xcell,ycell); */
-	  }
-
-	  /* DEBUG */
-	  /*if (((ix+icx)==89) && ((iy+icy)==123) && (fabs(wt)>0.1)) {*/
-	  /* if (irec+(desc->firstRec)==19631) {*/
-	  /*   fprintf (stdout,"DEBUG %d %f %f %f %f %f %f %d  %d %d  %d %d  %d\n", */
-	  /* 	     irec+(desc->firstRec), rec[idet], */
-	  /* 	     xcell,  ycell, wt, grid[icx], gridWt[icx], icx, icy,*/
-	  /* 	     convx, convy, ix+icx, iy+icy);*/
-	  /*   }*/
-
-	  /* DEBUG */
-	  /* if (((ix+icx)==264) && ((iy+icy)==234)) {  */
-	  /*   fprintf (stdout,"DEBUG %d %f %f %f %f %f %f\n", irec+(desc->firstRec),  */
-	  /* 	     xcell,  ycell, rec[idet*incdatawt], wt, grid[icx], gridWt[icx]);  */
-	  /* }   */
-	  /* if (rec[idet*incdatawt]<-4.0) {  */
-	  /*   fprintf (stdout,"DEBUG %d %f %f %f %f %f %f\n", irec+(desc->firstRec),  */
-	  /* 	     xcell,  ycell, rec[idet], wt, grid[icx], gridWt[icx]);  */
-	  /* }   */
-	  convfnp  += in->convNperCell;
-	} /* end loop over columns */
-
-	grid   += lGridRow;
-	gridWt += lGridRow;
-	convy  += in->convNperCell;
-      } /* end loop over rows */
-	
-    } /* end loop over detectors */
-
-    /* update data pointers */
-    x   += desc->lrec;
-    y   += desc->lrec;
-    rot += desc->lrec;
-    cal += desc->lrec;
-    rec += desc->lrec;
-  } /* end loop over buffer */
-
-} /* end GridBuffer */
 
 /**
  * Calculates 2D circular convolving function and attaches it to in.
@@ -1637,4 +1560,176 @@ static ofloat sphfn (olong ialf, olong im, olong iflag, ofloat eta)
 
    return psi;
 } /* end sphfn */
+
+/** 
+ * Convolves data in buffer on otfdata onto the grids
+ * Arguments are given in the structure passed as arg
+ * Can Run in Thread.
+ * \param arg  Pointer to OTFGridFuncArg argument with elements
+ * \li in     ObitOTFGrid object
+ * \li OTFin   OTF data set to grid from current buffer
+ * \li first  First (1-rel) rec in OTFin buffer to process this thread
+ * \li last   Highest (1-rel) rec in OTFin buffer to process this thread
+ * \li ithread thread number
+ * \li grid   Data grid
+ * \li wtgrid Weight grid
+ * \li xpos, ypos, float arrays the size of ndetect
+ */
+static gpointer ThreadGridBuffer (gpointer arg)
+{
+  /* Get arguments from structure */
+  OTFGridFuncArg *largs = (OTFGridFuncArg*)arg;
+  ObitOTFGrid *in     = largs->in;
+  ObitOTF *otfdata    = largs->OTFin;
+  olong loRec         = largs->first-1;
+  olong hiRec         = largs->last;
+  ObitFArray *tgrid   = largs->grid;
+  ObitFArray *tgridWt = largs->wtgrid;
+  ofloat *xpos        = largs->xpos;
+  ofloat *ypos        = largs->ypos;
+
+  olong irec, nrec, ndet, idet, ncol, nrow, ix, iy, icx, icy;
+  olong lGridRow, lGridCol, itemp, i;
+  ofloat *grid, *gridWt, *gridStart, *gridTop, *gridWtStart, *gridWtTop;
+  ofloat *convfnp, *x, *y, *rot, *rec, *cal, rtemp, clip, dataVal;
+  ofloat xcell, ycell, wt, dataWt, fblank = ObitMagicF();
+  olong  convx, convy;
+  olong pos[] = {0,0,0,0,0};
+  olong incdatawt;
+  gboolean doDataWt;
+  ObitOTFDesc *desc;
+  ObitOTFArrayGeom *geom;
+
+   /* how much data? */
+  desc  = otfdata->myDesc;
+  geom  = otfdata->geom;
+  nrec  = hiRec - loRec + 1;;   /* number of data records */
+  if (nrec<=0) goto finish; /* need something */
+
+  /* number of detectors */
+  ndet = 1;
+  for (i=0; i<desc->naxis; i++) ndet *= MAX (1, desc->inaxes[i]);
+  incdatawt = MAX (1, desc->incdatawt); /* increment in data-wt axis */
+  ndet /= incdatawt;
+  doDataWt = incdatawt>1;      /* Have Data-Wt axis? */
+  clip = in->clip;             /* Clipping level */
+
+  /* initialize data pointers */
+  x   = otfdata->buffer+desc->ilocra +loRec*desc->lrec;
+  y   = otfdata->buffer+desc->ilocdec+loRec*desc->lrec;
+  cal = otfdata->buffer+desc->iloccal+loRec*desc->lrec;
+  rot = otfdata->buffer+desc->ilocrot+loRec*desc->lrec;
+  rec = otfdata->buffer+desc->ilocdata+loRec*desc->lrec;
+  
+  lGridRow = tgrid->naxis[0];     /* length of grid row */
+  lGridCol = tgrid->naxis[1];     /* length of grid column */
+
+  /* beginning of the grids */
+  pos[0] = 0;  pos[1] = 0;
+  gridStart   = ObitFArrayIndex (tgrid, pos); 
+  gridWtStart = ObitFArrayIndex (tgridWt, pos); 
+
+  /* beginning of highest row */
+  pos[1] = lGridCol-1;
+  gridTop   = ObitFArrayIndex (tgrid, pos); 
+  gridWtTop = ObitFArrayIndex (tgridWt, pos); 
+  dataWt = 1.0;
+
+  ncol = in->convWidth;
+  nrow = in->convWidth;
+  
+  /* Loop over data records */
+  for (irec=loRec; irec<hiRec; irec++) {
+
+    /* Get detector positions projected onto image */
+    ObitOTFArrayGeomProj (geom, *x, *y, *rot, in->raProj, in->decProj, in->Proj, 
+			  xpos, ypos);
+    /* loop over detectors */
+    for (idet = 0; idet<ndet; idet++) {
+      if ((rec[idet*incdatawt] == fblank) || (rec[idet*incdatawt+1]<=0.0)) continue;  /* flagged? */
+
+      /* Get grid coordinates for this datum */
+      xcell = xpos[idet] * in->XScale + in->icenxImage;
+      ycell = ypos[idet] * in->YScale + in->icenyImage;
+
+      /* get center cell */
+      ix = (olong)(xcell + 0.5);
+      iy = (olong)(ycell + 0.5);
+
+      /* Bail out if too close to edge */
+      if ((ix<in->convWidth) || (in->nxImage-ix<in->convWidth)) continue;
+      if ((iy<in->convWidth) || (in->nyImage-iy<in->convWidth)) continue;
+
+      /* back off half Kernel width */
+      ix -= in->convWidth/2;
+      iy -= in->convWidth/2;
+
+      /* Starting convolution location, table has in->convNperCell points per cell */
+      /* Determine fraction of the cell to get start location in convolving table. */
+      if (xcell > 0.0) itemp = (olong)(xcell + 0.5);
+      else itemp = ((olong)(xcell - 0.5));
+      rtemp = in->convNperCell*(xcell - itemp + 0.5);
+      if (rtemp > 0.0) rtemp += 0.5;
+      else rtemp -= 0.5;
+      convx = (olong)rtemp;
+      
+      /* now y convolving fn */
+      if (ycell > 0.0) itemp = (olong)(ycell + 0.5);
+      else itemp = ((olong)(ycell - 0.5));
+      rtemp = in->convNperCell*(ycell - itemp + 0.5);
+      if (rtemp > 0.0) rtemp += 0.5;
+      else rtemp -= 0.5;
+      convy = (olong)rtemp;
+     
+      /* Starting location in grids */
+      pos[0] = ix;
+      pos[1] = iy;
+      grid   = ObitFArrayIndex (tgrid, pos); 
+      gridWt = ObitFArrayIndex (tgridWt, pos);
+
+      if (doDataWt) dataWt = rec[idet*incdatawt+1];
+      else dataWt = 1.0;
+      dataVal = rec[idet*incdatawt];
+      if (fabs(dataVal)>clip) dataWt = 0.0;  /* Clip? */
+
+      /* Do gridding */
+      for (icy=0; icy<nrow; icy++) { /* Loop over rows */
+
+	/* convolution fn pointer */
+	pos[0] = convx; pos[1] = convy;
+	convfnp = ObitFArrayIndex (in->convfn, pos);
+	
+	for (icx=0; icx<ncol; icx++) { /* Loop over columns */
+
+	  wt = (*convfnp) * dataWt;
+	  if (wt>0.0) {
+	    grid[icx]   += dataVal * wt;  /* sum data * wt */
+	    /* gridWt[icx] += fabs(wt);       sum wt - not sure about fabs  */
+	    gridWt[icx] += wt;         /* sum wt  */
+	  }
+
+	  convfnp  += in->convNperCell;
+	} /* end loop over columns */
+
+	grid   += lGridRow;
+	gridWt += lGridRow;
+	convy  += in->convNperCell;
+      } /* end loop over rows */
+	
+    } /* end loop over detectors */
+
+    /* update data pointers */
+    x   += desc->lrec;
+    y   += desc->lrec;
+    rot += desc->lrec;
+    cal += desc->lrec;
+    rec += desc->lrec;
+  } /* end loop over buffer */
+
+  /* Indicate completion */
+ finish:
+  ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+} /* end ThreadGridBuffer */
 

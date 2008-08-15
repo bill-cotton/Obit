@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include "ObitSystem.h"
 #include "ObitMem.h"
+#include "ObitThread.h"
 %}
 
 %inline %{
@@ -95,6 +96,27 @@ extern void MemPrint (void) {
   ObitMemPrint(stdout);
 } // end MemPrint
 
+extern void SystemAllowThreads (int nThreads) {
+  ObitThread *thread=NULL;
+ 
+  /* Create temporary thread */
+  thread = newObitThread ();
+  /* Init */
+  ObitThreadAllowThreads (thread, nThreads);
+  freeObitThread (thread);  /* Cleanup */
+ 
+} // end SystemAllowThreads
+
+extern int SystemGetNoThreads (void) {
+  ObitThread *thread=NULL;
+  int nThreads;
+
+  /* Create temporary thread */
+  thread = newObitThread ();
+  nThreads = (int)ObitThreadNumProc (thread);
+  freeObitThread (thread);  /* Cleanup */
+  return nThreads;
+} // end SystemGetNoThreads
 %}
 
 /* Definitions for Python Shadow class */

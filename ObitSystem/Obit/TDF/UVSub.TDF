@@ -56,8 +56,6 @@ channel          -1.0     9999.0   Spectral channel (0=>all)
 BIF               0.0     9999.0   First IF (0=>1)
 **PARAM** int 1
 EIF               0.0     9999.0   Highest IF (0=>BIF to last)
-**PARAM** boo 1 **DEF** T
-doCalSelect                        Apply calibration/selection?
 **PARAM** int 1
 doCalib          -1.0        2.0   If >0 calibrate data
                                    = 2 calibrate weights
@@ -166,8 +164,6 @@ Adverbs:
   BIF........First IF to process. 0=>1
   EIF........Highest IF to process 0=> do BIF to highest.
              Note: not all data sets will have IFs.
-  doCalSelect.If True apply calibration/selection.
-             This should be True in most (all?) cases
   doCalib....If >0, calibrate the data using information in the
              specified Cal (CL) table for multi-source or SN table for
              single-source data.  If > 1.5, also calibrate the weights

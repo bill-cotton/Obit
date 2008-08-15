@@ -1496,6 +1496,10 @@ extern void FArrayCos (ObitFArray* in) {
    ObitFArrayCos(in);
 }
 
+extern void FArraySqrt (ObitFArray* in) {
+   ObitFArraySqrt(in);
+}
+
 extern float FArraySum (ObitFArray* in) {
    return ObitFArraySum(in);
 }
@@ -1681,6 +1685,7 @@ extern void FArrayFill(ObitFArray *,float );
 extern void FArrayNeg(ObitFArray *);
 extern void FArraySin(ObitFArray *);
 extern void FArrayCos(ObitFArray *);
+extern void FArraySqrt(ObitFArray *);
 extern float FArraySum(ObitFArray *);
 extern long FArrayCount(ObitFArray *);
 extern void FArraySAdd(ObitFArray *,float );
@@ -4128,6 +4133,7 @@ typedef struct {
 #include <stdio.h>
 #include "ObitSystem.h"
 #include "ObitMem.h"
+#include "ObitThread.h"
 
 
 extern ObitSystem* Startup (char *pgmName, int pgmNumber, int AIPSuser,
@@ -4189,6 +4195,27 @@ extern void MemPrint (void) {
   ObitMemPrint(stdout);
 } // end MemPrint
 
+extern void SystemAllowThreads (int nThreads) {
+  ObitThread *thread=NULL;
+ 
+  /* Create temporary thread */
+  thread = newObitThread ();
+  /* Init */
+  ObitThreadAllowThreads (thread, nThreads);
+  freeObitThread (thread);  /* Cleanup */
+ 
+} // end SystemAllowThreads
+
+extern int SystemGetNoThreads (void) {
+  ObitThread *thread=NULL;
+  int nThreads;
+
+  /* Create temporary thread */
+  thread = newObitThread ();
+  nThreads = (int)ObitThreadNumProc (thread);
+  freeObitThread (thread);  /* Cleanup */
+  return nThreads;
+} // end SystemGetNoThreads
 extern ObitSystem *Startup(char *,int ,int ,int ,char *[],int ,char *[],int ,int ,ObitErr *);
 extern ObitSystem *Shutdown(ObitSystem *);
 extern int SystemIsInit();
@@ -4200,6 +4227,8 @@ extern void SystemSetPgmNumber(int );
 extern int SystemGetAIPSuser();
 extern void SystemSetAIPSuser(int );
 extern void MemPrint();
+extern void SystemAllowThreads(int );
+extern int SystemGetNoThreads();
 
 typedef struct {
   ObitSystem *me;
@@ -4510,6 +4539,12 @@ extern void PlotContour (ObitPlot* in, char *label, ObitImage *image, float lev,
   ObitPlotContour (in, (gchar*)label, image, (ofloat)lev, (ofloat)cntfac, err);
 } // end PlotContour
 
+/** Public: Gray Scale plot of image. */
+extern void PlotGrayScale (ObitPlot* in, char *label, ObitImage *image, 
+	                 ObitErr *err) {
+  ObitPlotGrayScale (in, (gchar*)label, image, err);
+} // end PlotGrayScale
+
 /** Public: Mark positions on Contour plot of image. */
 extern void PlotMarkCross (ObitPlot* in, ObitImage *image, int n,
 		 	  double *ra, double *dec, float size, 
@@ -4627,6 +4662,7 @@ extern void PlotXYPlot(ObitPlot *,int ,int ,float *,float *,ObitErr *);
 extern void PlotXYOver(ObitPlot *,int ,int ,float *,float *,ObitErr *);
 extern void PlotXYErr(ObitPlot *,int ,int ,float *,float *,float *,ObitErr *);
 extern void PlotContour(ObitPlot *,char *,ObitImage *,float ,float ,ObitErr *);
+extern void PlotGrayScale(ObitPlot *,char *,ObitImage *,ObitErr *);
 extern void PlotMarkCross(ObitPlot *,ObitImage *,int ,double *,double *,float ,ObitErr *);
 extern void PlotSetPlot(ObitPlot *,float ,float ,float ,float ,int ,int ,ObitErr *);
 extern void PlotLabel(ObitPlot *,char *,char *,char *,ObitErr *);
@@ -16545,6 +16581,27 @@ static PyObject *_wrap_FArrayCos(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_FArraySqrt(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitFArray * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:FArraySqrt",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of FArraySqrt. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    FArraySqrt(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_FArraySum(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     float  _result;
@@ -27154,6 +27211,31 @@ static PyObject *_wrap_MemPrint(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_SystemAllowThreads(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _arg0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"i:SystemAllowThreads",&_arg0)) 
+        return NULL;
+    SystemAllowThreads(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_SystemGetNoThreads(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,":SystemGetNoThreads")) 
+        return NULL;
+    _result = (int )SystemGetNoThreads();
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_ODataSetFITS(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitData * _arg0;
@@ -28937,6 +29019,66 @@ static PyObject *_wrap_PlotContour(PyObject *self, PyObject *args) {
         }
     }
     PlotContour(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  free((char *) _arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_PlotGrayScale(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPlot * _arg0;
+    char * _arg1;
+    ObitImage * _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOO:PlotGrayScale",&_argo0,&_obj1,&_argo2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPlot_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PlotGrayScale. Expected _ObitPlot_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyString_Check(_obj1)) {
+    int size = PyString_Size(_obj1);
+    char *str;
+    int i = 0;
+    _arg1 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj1);
+    for (i = 0; i < size; i++) {
+      _arg1[i] = str[i];
+    }
+    _arg1[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of PlotGrayScale. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of PlotGrayScale. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    PlotGrayScale(_arg0,_arg1,_arg2,_arg3);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
 {
@@ -58920,6 +59062,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "PlotLabel", _wrap_PlotLabel, METH_VARARGS },
 	 { "PlotSetPlot", _wrap_PlotSetPlot, METH_VARARGS },
 	 { "PlotMarkCross", _wrap_PlotMarkCross, METH_VARARGS },
+	 { "PlotGrayScale", _wrap_PlotGrayScale, METH_VARARGS },
 	 { "PlotContour", _wrap_PlotContour, METH_VARARGS },
 	 { "PlotXYErr", _wrap_PlotXYErr, METH_VARARGS },
 	 { "PlotXYOver", _wrap_PlotXYOver, METH_VARARGS },
@@ -58961,6 +59104,8 @@ static PyMethodDef ObitMethods[] = {
 	 { "ODataScratch", _wrap_ODataScratch, METH_VARARGS },
 	 { "ODataSetAIPS", _wrap_ODataSetAIPS, METH_VARARGS },
 	 { "ODataSetFITS", _wrap_ODataSetFITS, METH_VARARGS },
+	 { "SystemGetNoThreads", _wrap_SystemGetNoThreads, METH_VARARGS },
+	 { "SystemAllowThreads", _wrap_SystemAllowThreads, METH_VARARGS },
 	 { "MemPrint", _wrap_MemPrint, METH_VARARGS },
 	 { "SystemSetAIPSuser", _wrap_SystemSetAIPSuser, METH_VARARGS },
 	 { "SystemGetAIPSuser", _wrap_SystemGetAIPSuser, METH_VARARGS },
@@ -59233,6 +59378,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "FArraySAdd", _wrap_FArraySAdd, METH_VARARGS },
 	 { "FArrayCount", _wrap_FArrayCount, METH_VARARGS },
 	 { "FArraySum", _wrap_FArraySum, METH_VARARGS },
+	 { "FArraySqrt", _wrap_FArraySqrt, METH_VARARGS },
 	 { "FArrayCos", _wrap_FArrayCos, METH_VARARGS },
 	 { "FArraySin", _wrap_FArraySin, METH_VARARGS },
 	 { "FArrayNeg", _wrap_FArrayNeg, METH_VARARGS },

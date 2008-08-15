@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry data editing software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2007
+;;  Copyright (C) 2005-2008
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -60,8 +60,6 @@ BIF                                 First IF in average.
 EIF                                 Last IF in average.
 **PARAM** int 1
 subA                                Subarray
-**PARAM** boo 1 **DEF** T
-doCalSelect                         Apply calibration/selection?
 **PARAM** int 1
 doCalib          -1         10      Apply calibration table
 **PARAM** int 1
@@ -147,8 +145,6 @@ Adverbs:
              are 1 relative as defined in the input data file.
   EChan......Highest channel number to to include in image,
              0 => max 
-  doCalSelect. If True apply calibration/selection
-             This should be True in most cases
   doCalib....If true, apply SN or CL table
   gainUse....CL/SN table version number to apply. 0=> highest.
   doBand.....If true (>0) then correct the data for the shape of the

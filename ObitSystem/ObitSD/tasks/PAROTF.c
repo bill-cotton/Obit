@@ -90,6 +90,12 @@ void deJumpDatum (gint ndata, ofloat *data, ofloat *cal);
 void IIRFilter10 (gint ndata, ofloat *data);
 /* IIR Filter for 1.4 Hz refrigerator hum, 20 Hz sampling */
 void IIRFilter20 (gint ndata, ofloat *data);
+/* Fit a given frequency to a set of time series */
+void FitFreq (ofloat freq, olong ntime, ofloat *Atime, 
+	      olong ndetect, ofloat **AData, gboolean *bad,  
+	      ObitErr *err);
+/* Average phase over detector */
+ofloat AveragePhase (olong ndetect, ofloat *amp, ofloat *phase, gboolean *bad);
 
 /* Program globals */
 gchar *pgmName = "PAROTF";       /* Program name */
@@ -1594,7 +1600,7 @@ void ProcessData (gchar *inscan, ofloat avgTime,
   gchar FullFile[128];
   ObitTableGBTPARDATA* PARtable;
   ObitTimeFilter *tFilt=NULL;
-  ofloat ffilt[2], *data[NUMDETECT], *cal, fblank=ObitMagicF();
+  ofloat freq, *data[NUMDETECT], *cal, fblank=ObitMagicF();
   odouble *time;
   gchar *tab;
   olong i, id, disk, ver, nrow, nraw;
@@ -1676,36 +1682,6 @@ void ProcessData (gchar *inscan, ofloat avgTime,
       }
     }
 
-    if (!bad[id] && !(calOn&&calOff)) {
-      /* If avgTime = 0.1 sec (10 Hz ) use 10 Hz IIF filter */
-      if (fabs((avgTime*86400.0)-0.1)<0.005) {
-	IIRFilter10 (*ntime, (*AData)[id]);
-	
-	/* If avgTime = 0.05 sec (20 Hz ) use 20 Hz IIF filter */
-      } else if (fabs((avgTime*86400.0)-0.05)<0.005) {
-	IIRFilter20 (*ntime, (*AData)[id]);
-	
-      } else { /* Different averaging, use TimeFilter */
-	/* Create TimeFilter as needed */
-	if (tFilt==NULL) tFilt = newObitTimeFilter ("Filter", ObitFFTSuggestSize(*ntime), 1);
-	/* Copy data to TimeFilter */
-	ObitTimeFilterGridTime (tFilt, 0, avgTime, *ntime, *ATime, (*AData)[id]);
-	ObitTimeFilter2Freq(tFilt); /* to Freq */
-	/* Kill lowest frequencies */
-	ffilt[0] = tFilt->dFreq*4.0;
-	ObitTimeFilterDoFilter (tFilt, 0, OBIT_TimeFilter_HighPass, ffilt, err); 
-	/*ObitTimeFilterPlotPower(tFilt, 0, "Power",err); */
-	if (err->error) Obit_traceback_msg (err, routine, tFilt->name);
-	/* 1.4 Hz notch filter for refrigerator*/
-	ffilt[0] = 1.39; ffilt[1] = 1.44;
-	ObitTimeFilterDoFilter (tFilt, 0, OBIT_TimeFilter_NotchBlock, ffilt, err);
-	if (err->error) Obit_traceback_msg (err, routine, tFilt->name); 
-	ObitTimeFilter2Time(tFilt); /* back to Time */
-	/* copy back to local data */
-	ObitTimeFilterUngridTime (tFilt, 0, *ntime, *ATime, (*AData)[id]); 
-      }
-    } /* End if OK and no cal switching */
-    
     /* Only save time and cal flag on the last detector */
     if (id<((*ndetect)-1)) {
       g_free(*ATime); *ATime = NULL;
@@ -1720,6 +1696,12 @@ void ProcessData (gchar *inscan, ofloat avgTime,
   /* Cleanup */
   PARtable = ObitTableGBTPARDATAUnref(PARtable);
   tFilt    = ObitTimeFilterUnref(tFilt);
+
+  /* Fit/remove power at freq if not using cal */
+  if (!(calOn&&calOff)) {
+    freq = 1.41170; /* Hz   */
+    FitFreq (freq, *ntime, *ATime, *ndetect, *AData, bad, err);
+  }
 
   /* Free raw arrays */
   if (time)  g_free(time);
@@ -2234,4 +2216,196 @@ void IIRFilter20 (gint ndata, ofloat *data)
 
 } /* end IIRFilter20 */
 
+/**
+ * Estimate amplitude and phase of a given frequency for each detector 
+ * and remove from data stream.
+ * Filter 10 sigma deviations from an alpha=0.5 50 cell running median average
+ * \param  freq       Frequency to remove (Hz)
+ * \param  ntime      Length of arrays ATime, AData
+ * \param  ATime      Pointer to  array filled with time values (day)
+ * \param  ndetect    Number of detectors in AData
+ * \param  AData      Pointer to  array of data entries
+ *                    [detector][time], detector in order in FITS table.
+ *                    Modified on output
+ * \param  bad        Array of detector valid flags 
+ * \param  err        Obit Error/message stack  
+ */
+void FitFreq (ofloat freq, olong ntime, ofloat *Atime, 
+	      olong ndetect, ofloat **AData, gboolean *bad, ObitErr *err)
+{
+  ofloat fblank = ObitMagicF();
+  olong i, j, k, wind;
+  ofloat time, phase, dphase, avgPhs, *fdata;
+  ofloat ss, cs, cr, cnt, alpha, RMS;
+  ofloat *sine=NULL, *cosine=NULL, *amp=NULL, *phs=NULL, *work1=NULL, *work2=NULL;
 
+  work1 = g_malloc0(ntime*sizeof(ofloat));
+  work2 = g_malloc0(ntime*sizeof(ofloat));
+
+  /* Generate sine, cosine patterns */
+  sine   = g_malloc0(ntime*sizeof(ofloat));
+  cosine = g_malloc0(ntime*sizeof(ofloat));
+  dphase = 2.0 * G_PI * freq * 86400.0;
+  for (i=0; i<ntime; i++) {
+    time = Atime[i] - Atime[0];
+    phase = time*dphase;
+    sine[i]   = sin(phase);
+    cosine[i] = cos(phase);
+  } /* end loop filling arrays */
+
+  /* Subtract first point from each series */
+  for (j=0; j<ndetect; j++) {
+    fdata = AData[j];
+    for (i=1; i<ntime; i++) {
+      if (fdata[i]!=fblank) {
+	fdata[i] -= fdata[0];
+      }
+    } /* end loop over time */
+    fdata[0] = 0.0;
+  } /* end loop over detector */
+
+  wind  = 50;
+  alpha = 0.5;
+
+  /* Loop over detectors getting dot product */
+  amp = g_malloc0(ndetect*sizeof(ofloat));
+  phs = g_malloc0(ndetect*sizeof(ofloat));
+  for (j=0; j<ndetect; j++) {
+    if (bad[j]) continue;  /* Known to be bad? */
+    fdata = AData[j];
+
+    /* Filter data stream - Running median in work1 */
+    RunningMedian (ntime, wind, fdata, alpha, &RMS, work1, work2);
+    /* Filter data to work2 */
+    for (k=0; k<ntime; k++) {
+      /* Flagged or deviant? */
+      if ((fdata[k]==fblank) || (work1[k]==fblank) || 
+	  (fabs(fdata[k]-work1[k])>10.0*RMS)) {
+	work2[k] = fblank;
+	/* DEBUG
+	if ((fdata[k]!=fblank) && (work1[k]!=fblank) &&
+	    (fabs(fdata[k]-work1[k])>10.0*RMS))
+	  fprintf (stdout,"det %d pt %d %f %f %f\n",j,k,fdata[k],work1[k],10.0*RMS); */
+	/* DEBUG */
+      } else 
+	work2[k] = fdata[k];  /* OK */
+    }
+
+    ss = cs = cnt = 0.0;
+    for (i=0; i<ntime; i++) {
+      if (work2[i]!=fblank) {
+	cnt += 0.5;
+	ss  += work2[i] * sine[i];
+	cs  += work2[i] * cosine[i];
+      }
+    } /* end loop over time */
+    
+    /* Normalize */
+    if (cnt!=0.0) {
+      ss /= cnt;
+      cs /= cnt;
+      amp[j] = sqrt(ss*ss + cs*cs);
+      phs[j] = atan2(ss, cs+1.0e-20);
+      /* Tell
+      fprintf (stdout, "detector %d amp %f phase %f ss %f cs %f\n",
+	       j, amp[j], 57.296*phs[j], ss, cs); */
+    }
+  } /* end loop over detector */
+
+  avgPhs = AveragePhase (ndetect, amp, phs, bad); 
+  Obit_log_error(err, OBIT_InfoErr, "Avgerage PT phase %f", avgPhs*57.296);
+  ObitErrLog(err);
+ 
+  /* Correct using average phase */
+  for (j=0; j<ndetect; j++) {
+    /* DEBUG
+    amp[j] = fabs(amp[j]); avgPhs = phs[j];
+    fprintf (stdout, "det %d amp %f avgPhas %f\n", j+1, amp[j], avgPhs*57.296); */
+    /* DEBUG */
+    cs = amp[j] * cos(avgPhs);
+    ss = amp[j] * sin(avgPhs);
+    fdata = AData[j];
+    for (i=0; i<ntime; i++) {
+      if (fdata[i]!=fblank) {
+	cr = cs * cosine[i] + ss * sine[i];
+	fdata[i] -= cr;
+      }
+    } /* end time loop */
+  } /* end loop over detector */
+ 
+  /* Cleanup*/
+  if (sine)   g_free(sine);
+  if (cosine) g_free(cosine);
+  if (amp)    g_free(amp);
+  if (phs)    g_free(phs);
+  if (work1)  g_free(work1);
+  if (work2)  g_free(work2);
+  
+} /* end FitFreq */
+
+/**
+ * Average phases and adjust sign of the amplitude
+ * \param ndetect  Number of detectors in amp, phase
+ * \param amp      Amplitudes, on output may be negative
+ * \param phase    Phases (radians)
+ * \param bad      Array of detector valid flags 
+ * \return average phase (radians)
+ */
+ofloat AveragePhase (olong ndetect, ofloat *amp, ofloat *phase, gboolean *bad)
+{
+  olong i, id, best, dist[30], ndist=30;
+  ofloat tphs, roughPhase, sum, sumwt, avgPhase;
+
+  /* Get distribution in range 0-pi */
+  for (i=0; i<ndist; i++) dist[i] = 0;
+  for (i=8; i<ndetect; i++) {
+    if ((amp[i]>1.0) && !bad[i]) {  /* ignore poor detectors */
+      tphs = phase[i];
+      if (tphs<0.0) tphs += G_PI; /* Fold to positive */
+      id = (olong)(0.5 + ndist * tphs/G_PI);
+      id = MAX (0, MIN (ndist-1, id));
+      dist[id]++;
+    } /* end if good detector */
+  } /* end loop over detectors */
+
+  /* Find mode of distribution */
+  best = dist[0];
+  id = 0;
+  for (i=1; i<ndist; i++) {
+    if (dist[i]>best) {
+      best = dist[i];
+      id = i;
+    }
+  }
+  roughPhase = id * G_PI/ndist;
+
+  /* Average phases flipping amplitudes and phases depending 
+     on whether the phase is within pi of roughPhase */
+  sum = sumwt = 0.0;
+  for (i=0; i<ndetect; i++) {
+    if ((amp[i]>1.0) && !bad[i]) {  /* ignore poor detectors */
+      tphs = phase[i];
+      /* Work out relative sign of gain - more than half turn? */
+      if (fabs(tphs-roughPhase)>0.5*G_PI) { 
+	/* Is the difference closer to a turn than half? */
+	if ((tphs-roughPhase)>1.5*G_PI) {
+	  tphs -= 2.0*G_PI;
+	} else if ((tphs-roughPhase)<(-1.5*G_PI)) {
+	  tphs += 2.0*G_PI;
+	} else {  /* other sign */
+	  amp[i] = -fabs(amp[i]);
+	  if (tphs>roughPhase) tphs -= G_PI;
+	  else tphs += G_PI;
+	}
+      }
+      sum   += fabs(amp[i])*tphs;
+      sumwt += fabs(amp[i]);
+    } /* end if good detector */
+  } /* end loop over detectors */
+  
+  /* Get average */
+  if (sumwt>0.0) avgPhase = sum / sumwt;
+  else avgPhase = 0.0;
+  
+  return avgPhase;
+} /* end AveragePhase */

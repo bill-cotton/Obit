@@ -515,7 +515,7 @@ def input(inputDict):
         
     # end input
 
-def newPOTF(name, filename, disk, exists, err, nrec=1):
+def newPOTF(name, filename, disk, exists, err, nrec=1000):
     """ Create and initialize an OTF structure
 
     Create, set initial access information (nrec records)

@@ -68,8 +68,6 @@ EIF                                 Last IF in average.
 subA                                Subarray
 **PARAM** int 4 20
 IChanSel                            Continuum channel selection
-**PARAM** boo 1 **DEF** T
-doCalSelect                         Apply calibration/selection?
 **PARAM** int 1
 doCalib          -1         10      Apply calibration table
 **PARAM** int 1
@@ -351,8 +349,6 @@ Adverbs:
              [5,0,2,1] means every other channel from 5 to the highest
              in IF 1.  All zeroes means all channels and all IFs 
              selected by BChan, EChan, BIF, EIF.
-  doCalSelect. If True apply calibration/selection
-             This should be True in most cases
   doCalib....If true, apply SN or CL table
   gainUse....CL/SN table version number to apply. 0=> highest.
   doBand.....If true (>0) then correct the data for the shape of the

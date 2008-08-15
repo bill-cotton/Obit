@@ -64,8 +64,6 @@ EChan            0.0     8192.0     Highest freq channel
 subA                                Subarray
 **PARAM** int 50
 Antennas         0.0     1000.0     List of antennas to calibrate
-**PARAM** boo 1  **DEF** T
-doCalSelect                         Apply calibration/selection?
 **PARAM** int 1
 doCalib          -1         10      Apply calibration table
 **PARAM** int 1
@@ -197,7 +195,6 @@ Adverbs:
              determined. If any number is negative then all
              antennas listed  are NOT to be used to determine
              solutions and all others are. All 0 => use all.
-  doCalSelect. If True apply calibration/selection
   doCalib....If true, apply SN or CL table
   gainUse....CL/SN table version number to apply. 0=> highest.
   doBand.....If true (>0) then correct the data for the shape of the

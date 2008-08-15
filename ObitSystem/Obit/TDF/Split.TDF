@@ -3,7 +3,7 @@
 ;!  Obit Radio interferometry software
 ;# Task Obit UV Calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007
+;;  Copyright (C) 2007,2008
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -65,8 +65,6 @@ BChan             0.0     2048.0   Lowest channel number 0=>all
 EChan             0.0     2048.0   Highest channel number
 **PARAM** int 1
 subA          0.0     1000.0       Subarray, 0=>all
-**PARAM** boo 1 **DEF** T
-doCalSelect                        Apply calibration/selection?
 **PARAM** int 1
 doCalib          -1.0        2.0   If >0 calibrate data
                                    = 2 calibrate weights
@@ -182,8 +180,6 @@ Adverbs:
              into the output and is the highest output channel only if
              chAvg and chInc are 1.
   subA.......Subarray number to copy. 0=>all.
-  doCalSelect.If True apply calibration/selection.  
-             This should be True in most cases
   doCalib....If > 0, calibrate the data using information in the
              specified Cal (CL) table for multi-source or SN table for
              single-source data.  If > 1.5, also calibrate the weights

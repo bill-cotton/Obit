@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2007
+#  Copyright (C) 2004-2008
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -195,4 +195,22 @@ def PMemPrint ():
     #
     Obit.MemPrint()
     # end PMemPrint
+
+def PAllowThreads (nThreads):
+    """ Sets maximum number of threads in an Obit thread pool
+    
+    nThreads maximum number of threads in an Obit thread pool
+    """
+    ################################################################
+    Obit.SystemAllowThreads(nThreads)
+    # end PAllowThreads
+
+def PGetNoThreads ():
+    """ Tells Number of Threads enabled in Obit
+
+    returns number
+    """
+    ################################################################
+    return Obit.SystemGetNoThreads()
+    # end PGetNoThreads
 

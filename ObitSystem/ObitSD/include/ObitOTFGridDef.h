@@ -77,3 +77,7 @@ ofloat beamSize;
 ofloat fitBeamSize;
 /** Clipping level */
 ofloat clip;
+/** Number of threads (elements in threadArgs)  */
+olong nThreads;
+/** Array of FT Function structures  */
+gpointer **threadArgs;

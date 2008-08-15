@@ -28,6 +28,7 @@
 
 #include <time.h>
 #include <gsl/gsl_randist.h>
+#include "ObitThread.h"
 #include "ObitOTFUtil.h"
 #include "ObitOTFGetSoln.h"
 #include "ObitTableOTFIndex.h"
@@ -39,7 +40,32 @@
  * ObitOTF class utility function definitions.
  */
 
+/*---------------Private structures----------------*/
+/* SubImage threaded function argument */
+typedef struct {
+  /* OTF data set to model and subtract from current buffer */
+  ObitOTF       *otfdata;
+  /* First (1-rel) record in otfdata buffer to process this thread */
+  olong        first;
+  /* Highest (1-rel) record in otfdata buffer to process this thread  */
+  olong        last;
+  /* thread number  */
+  olong        ithread;
+  /* Obit error stack object */
+  ObitErr      *err;
+  /* Image Interpolator */
+  ObitFInterpolate *Interp;
+  /* Scaling factor for model */
+  ofloat factor;
+  /* Work arrays the size of ndetect */
+  ofloat *xpos, *ypos;
+} SubImageFuncArg;
+
 /*---------------Private function prototypes----------------*/
+/** Private: Subtract an image interpolator from a buffer of data. */
+void ObitOTFUtilSubImageBuff (ObitOTF *in, ObitFInterpolate *image, ofloat factor, 
+			      olong nThread, SubImageFuncArg **args, ObitErr *err);
+
 /** Private: Convert an ObitOTFDesc to an ObitImageDesc */
 static void 
 ObitOTFUtilOTF2ImageDesc(ObitOTFDesc *OTFDesc, ObitImageDesc *imageDesc, 
@@ -47,6 +73,16 @@ ObitOTFUtilOTF2ImageDesc(ObitOTFDesc *OTFDesc, ObitImageDesc *imageDesc,
 
 /** Private: Get Date string for current date */
 static void ObitOTFUtilCurDate (gchar *date, olong len);
+
+/** Private: Threaded OTFUtilSubImageBuff */
+static gpointer ThreadOTFUtilSubImageBuff (gpointer arg);
+
+/** Private: Make arguments for Threaded OTFUtilSubImageBuff */
+static glong MakeOTFUtilSubImageArgs (ObitOTF *in, ObitErr *err, 
+				      SubImageFuncArg ***args);
+
+/** Private: Delete arguments for Threaded OTFUtilSubImageBuff */
+static void KillOTFUtilSubImageArgs (olong nargs, SubImageFuncArg **args);
 
 #define MAXSAMPLE 10000   /* Maximum number of samples in a scan */
 
@@ -70,7 +106,8 @@ void ObitOTFUtilSubImage(ObitOTF *inOTF, ObitOTF *outOTF, ObitFArray *image,
   ObitIOAccess access;
   gint32 dim[MAXINFOELEMDIM];
   ofloat scale = 1.0;
-  olong NPIO;
+  olong NPIO, nThreads;
+  SubImageFuncArg **targs=NULL;
   /* Don't copy Cal and Soln or data or flag tables */
   gchar *exclude[]={"OTFSoln", "OTFCal", "OTFScanData", "OTFFlag", NULL};
   gchar *routine = "ObitOTFUtilSubImage";
@@ -139,6 +176,9 @@ void ObitOTFUtilSubImage(ObitOTF *inOTF, ObitOTF *outOTF, ObitFArray *image,
   scale = scale * scale;
   /*fprintf (stderr,"Scaling image to data by %f\n",scale); *//*debug */
 
+  /* Setup Threading */
+  nThreads = MakeOTFUtilSubImageArgs (inOTF, err, &targs);
+
   /* Loop over data */
   done = (retCode != OBIT_IO_OK);
   while (!done) {
@@ -155,7 +195,7 @@ void ObitOTFUtilSubImage(ObitOTF *inOTF, ObitOTF *outOTF, ObitFArray *image,
 
      if (outOTF->myDesc->numRecBuff>0) {
        /* Subtract image from this buffer */
-       ObitOTFUtilSubImageBuff (outOTF, imageInt, scale, err);
+       ObitOTFUtilSubImageBuff (outOTF, imageInt, scale, nThreads, targs, err);
        
        /* Write buffer */
        retCode = ObitOTFWrite (outOTF, NULL, err);
@@ -184,6 +224,8 @@ void ObitOTFUtilSubImage(ObitOTF *inOTF, ObitOTF *outOTF, ObitFArray *image,
   /* cleanup */
   imageInt = ObitFInterpolateUnref(imageInt);
   if (err->error) Obit_traceback_msg (err, routine, inOTF->name);
+  /* Shutdown Threading */
+  KillOTFUtilSubImageArgs (nThreads, targs);
 
 } /* end ObitOTFUtilSubImage */
 
@@ -691,152 +733,62 @@ void ObitOTFUtilSubSkyModelBuff (ObitOTF *in, ObitOTFSkyModel *sky, ofloat facto
   /* cleanup */
   if (xpos) g_free(xpos);
   if (ypos) g_free(ypos);
-} /* end ObitOTFUtilSubSkyModel */
+} /* end ObitOTFUtilSubSkyModelBuff */
 
 /**
  * Subtract the values in an image from a buffer full of OTF data.
  * For CCB beamswitched data (OTFType=OBIT_GBTOTF_CCB, no. States=1)
+ * If threading has been enabled by a call to ObitThreadAllowThreads 
+ * this routine will divide the buffer up amount the number of processors
+ * returned by ObitThreadNumProc.
  * \param in         OTF with internal buffer to be modified.
  * \param image      Image interpolator
  * \param factor     Scaling factor for model.
+ * \param nThreads   Number of elements in args
+ * \param args       Threaded function argument structs
  * \param err        Error stack
  */
 void ObitOTFUtilSubImageBuff (ObitOTF *in, ObitFInterpolate *image, 
-			      ofloat factor, ObitErr *err)
+			      ofloat factor, olong nThreads, SubImageFuncArg **args, 
+			      ObitErr *err)
 {
-  ofloat *xpos, *ypos, *data, ffact, value, RACenter, DecCenter;
-  ObitOTFProj proj;
-  odouble coord[IM_MAXDIM];
-  olong  ndetect, ndata, i, j;
-  olong incfeed, itemp,incdatawt ;
-  gboolean CCBBS, isRef;
-  ObitOTFDesc* desc;
-  ObitOTFArrayGeom* geom;
-  ofloat fblank = ObitMagicF();
-  gchar Proj[5];
+  olong i, nrec, lorec, hirec, nTh, nrecPerThread;
+  gboolean OK = TRUE;
+  gchar *routine = "ObitOTFUtilSubImageBuff";
 
-  /* Error checks */
-  g_assert (ObitOTFIsA(in));
-  g_assert (ObitFInterpolateIsA(image));
+  /* error checks - assume most done at higher level */
+  if (err->error) return;
 
-  /* Local pointers */
-  desc = in->myDesc;
-  geom = in->geom;
-  data = in->buffer;
-  ndetect = geom->numberDetect;    /* How many detectors */
-  ndata   = desc->numRecBuff;      /* How many data records */
-  if (in->myDesc->jlocfeed>=0) 
-    incfeed = in->myDesc->incfeed / in->myDesc->incdatawt;
-  else incfeed = 1;  /* This is probably a bad sign */
+  /* Divide up work */
+  nrec = in->myDesc->numRecBuff;
+  nrecPerThread = nrec/nThreads;
+  nTh = nThreads;
+  if (nrec<100) {nrecPerThread = nrec; nTh = 1;}
+  lorec = 1;
+  hirec = nrecPerThread;
+  hirec = MIN (hirec, nrec);
 
-  /* Get Model center */
-  RACenter  = image->myDesc->crval[0];
-  DecCenter = image->myDesc->crval[1];
-  strncpy (Proj, &image->myDesc->ctype[0][4], 5);
-  proj      = ObitOTFSkyModelProj (Proj);
-  incdatawt = desc->incdatawt; /* increment in data-wt axis */
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hirec = nrec;  /* Make sure do all */
+    args[i]->otfdata = in;
+    args[i]->first  = lorec;
+    args[i]->last   = hirec;
+    args[i]->Interp = image;
+    args[i]->factor = factor;
+    /* Update which rec */
+    lorec += nrecPerThread;
+    hirec += nrecPerThread;
+    hirec = MIN (hirec, nrec);
+  }
 
-  /* Is this CCB beamswitched data? */
-  CCBBS = (in->myDesc->OTFType==OBIT_GBTOTF_CCB) &&
-    (in->myDesc->jlocstate>=0) &&
-    (in->myDesc->inaxes[in->myDesc->jlocstate]==1);
+  /* Do operation */
+  OK = ObitThreadIterator (in->thread, nTh, 
+			   (ObitThreadFunc)ThreadOTFUtilSubImageBuff, 
+			   (gpointer**)args);
 
-  /* Allocate temporary arrays */
-  /* Projected data locations */
-  xpos = g_malloc0(ndetect*sizeof(float));
-  ypos = g_malloc0(ndetect*sizeof(float));
-  ffact = factor;
-
-  /* Loop over data records */
-  for (i=0; i<ndata; i++) {
-
-    /* Get Sky locations of the data projected onto the image */
-    ObitOTFArrayGeomProj(geom, data[desc->ilocra], data[desc->ilocdec], 
-			 data[desc->ilocrot], RACenter, DecCenter, proj, 
-			 xpos, ypos);
-
-    /* Loop over the array */
-    for (j=0; j<ndetect; j++) {
-      
-     /* Interpolate - use coordinates on a flat plane at the tangent point of the image 
-	 xpos and ypos are offsets from the image center projected onto the plane 
-	 of the image, ObitFInterpolateOffset does a linear approximation. */
-       coord[0] = xpos[j];  /* + RACenter; */
-       coord[1] = ypos[j];  /* + DecCenter; */
-       value = ObitFInterpolateOffset (image, coord, err); 
-
-       /* debug 
-       if ((fabs(data[desc->ilocdata+j]-value*ffact)>1.0)  && (j<=3)) {
-	 fprintf (stderr,"debugSig: val %g pos %lf %lf in data %f %f pos %f %f\n", 
-		 value, coord[0]*3600.0, coord[1]*3600.0, 
-		 data[desc->ilocdata+j*incdatawt], (data[desc->ilocdata+j*incdatawt]-value*ffact),
-		 data[desc->ilocra], data[desc->ilocdec]);
-       } */
-       /* debug  
-       if ((fabs(coord[0])<0.0014) && (fabs(coord[1])<0.0014) && (j<=3)) {
-	 fprintf (stderr,"debugSig: val %g pos %lf %lf in data %f %f pos %f %f\n", 
-		 value, coord[0]*3600.0, coord[1]*3600.0, 
-		 data[desc->ilocdata+j*incdatawt], (data[desc->ilocdata+j*incdatawt]-value*ffact),
-		 data[desc->ilocra], data[desc->ilocdec]);
-      }*/
-      /* debug  
-      if (value>0.2) {
-	fprintf (stderr,"debug: val %g pos %lf %lf in data %f %f pos %f %f\n", 
-		 value, coord[0]*3600.0, coord[1]*3600.0, 
-		 data[desc->ilocdata], factor*(data[desc->ilocdata]-value),
-		 data[desc->ilocra], data[desc->ilocdec]);
-      }*/
-
-      /* Subtract */
-      if ((value!=fblank) && (data[desc->ilocdata+j*incdatawt]!=fblank))
-	data[desc->ilocdata+j*incdatawt] -= value * ffact;
-      else {
-	data[desc->ilocdata+j*incdatawt] = fblank;
-      }
-
-      /* For CCB beamswitched data add value corresponding to this feeds
-       reference beam */
-      if (CCBBS) {
-	/* is this the reference or signal beam? */
-	itemp = j / incfeed;
-	/* itemp odd means reference beam */
-	isRef = itemp != 2*(itemp/2);
-	/* Use feed offset for feed 1 if this is reference, else feed 2 */
-	if (isRef) itemp = 0;
-	else itemp = incfeed;
-	/* interpolate */
-	coord[0] = xpos[itemp]; /* + RACenter; */
-	coord[1] = ypos[itemp]; /* + DecCenter; */
-	value = ObitFInterpolateOffset (image, coord, err);
-       /* debug 
-       if ((fabs(data[desc->ilocdata+j*incdatawt]+value*ffact)>1.0)  && (j<=3)) {
-	 fprintf (stderr,"debugRef: val %g pos %lf %lf in data %f %f pos %f %f\n", 
-		 value, coord[0]*3600.0, coord[1]*3600.0, 
-		 data[desc->ilocdata+j*incdatawt], (data[desc->ilocdata+j*incdatawt]+value*ffact),
-		 data[desc->ilocra], data[desc->ilocdec]);
-       } */
-       /* debug 
-       if ((fabs(coord[0])<0.0014) && (fabs(coord[1])<0.0014) && (j<=3)) {
-	 fprintf (stderr,"debugRef: val %g pos %lf %lf in data %f %f pos %f %f\n", 
-		 value, coord[0]*3600.0, coord[1]*3600.0, 
-		 data[desc->ilocdata+j*incdatawt], (data[desc->ilocdata+j*incdatawt]+value*ffact),
-		 data[desc->ilocra], data[desc->ilocdec]);
-       } */
-       /* Add */
-       if ((value!=fblank) && (data[desc->ilocdata+j*incdatawt]!=fblank))
-	 data[desc->ilocdata+j*incdatawt] += value * ffact;
-       else {
-	 data[desc->ilocdata+j*incdatawt] = fblank;
-       }
-      }  /* end adding to reference beam position */
-      
-    } /* end loop over array */
-    data += desc->lrec; /* update buffer pointer */
-  } /* end loop over buffer */
-  
-  /* cleanup */
-  if (xpos) g_free(xpos);
-  if (ypos) g_free(ypos);
+  /* Check for problems */
+  if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
 } /* end ObitOTFUtilSubImageBuff */
 
 /**
@@ -848,7 +800,7 @@ void ObitOTFUtilSubImageBuff (ObitOTF *in, ObitFInterpolate *image,
  * \param err        Error stack
  */
 void ObitOTFUtilModelImageBuff (ObitOTF *in, ObitFInterpolate *image, 
-			      ofloat factor, ObitErr *err)
+				ofloat factor, ObitErr *err)
 {
   ofloat *xpos, *ypos, *data, ffact, value, RACenter, DecCenter;
   ObitOTFProj proj;
@@ -1883,3 +1835,220 @@ static void ObitOTFUtilCurDate (gchar *date, olong len)
 	      lp->tm_year, lp->tm_mon, lp->tm_mday);
 } /* end ObitOTFUtilCurDate */
 
+/**
+ * Subtract the values in an image from a portion of a buffer of OTF data.
+ * For CCB beamswitched data (OTFType=OBIT_GBTOTF_CCB, no. States=1)
+ * Callable as thread
+ * Arguments are given in the structure passed as arg
+ * \param arg Pointer to SubImageFuncArg argument with elements:
+ * \li sky     OTFSkyModel 
+ * \li otfdata OTF data set to model and subtract from current buffer
+ * \li first  First (1-rel) rec in otfdata buffer to process this thread
+ * \li last   Highest (1-rel) rec inotfdata buffer to process this thread
+ * \li ithread thread number
+ * \li err Obit error stack object.
+ * \li factor  Scaling factor for sky model
+ * \li Interp  Image Interpolator
+ * \li xpos, ypos, float arrays the size of ndetect
+ * \return NULL
+ */
+gpointer ThreadOTFUtilSubImageBuff (gpointer args)
+{
+  SubImageFuncArg *largs  = (SubImageFuncArg*)args;
+  ObitOTF *in             = largs->otfdata;
+  olong loRec             = largs->first-1;
+  olong hiRec             = largs->last;
+  ofloat factor           = largs->factor;
+  ObitFInterpolate *image = largs->Interp;
+  ofloat *xpos            = largs->xpos;
+  ofloat *ypos            = largs->ypos;
+  ObitErr *err            = largs->err;
+
+  ofloat *data, ffact, value, RACenter, DecCenter;
+  ObitOTFProj proj;
+  odouble coord[IM_MAXDIM];
+  olong  ndetect, ndata, i, j;
+  olong incfeed, itemp,incdatawt ;
+  gboolean CCBBS, isRef;
+  ObitOTFDesc* desc;
+  ObitOTFArrayGeom* geom;
+  ofloat fblank = ObitMagicF();
+  gchar Proj[5];
+
+  /* Error checks */
+  if (err->error) goto finish;
+
+  /* Local pointers */
+  desc = in->myDesc;
+  geom = in->geom;
+  data = in->buffer+loRec*desc->lrec;  /* Appropriate offset in buffer */
+  ndetect = geom->numberDetect;        /* How many detectors */
+  ndata   = desc->numRecBuff;          /* How many data records */
+  if (in->myDesc->jlocfeed>=0) 
+    incfeed = in->myDesc->incfeed / in->myDesc->incdatawt;
+  else incfeed = 1;  /* This is probably a bad sign */
+
+  /* Get Model center */
+  RACenter  = image->myDesc->crval[0];
+  DecCenter = image->myDesc->crval[1];
+  strncpy (Proj, &image->myDesc->ctype[0][4], 5);
+  proj      = ObitOTFSkyModelProj (Proj);
+  incdatawt = desc->incdatawt; /* increment in data-wt axis */
+
+  /* Is this CCB beamswitched data? */
+  CCBBS = (in->myDesc->OTFType==OBIT_GBTOTF_CCB) &&
+    (in->myDesc->jlocstate>=0) &&
+    (in->myDesc->inaxes[in->myDesc->jlocstate]==1);
+
+  ffact = factor;
+
+  /* Loop over data records */
+  for (i=loRec; i<hiRec; i++) {
+
+    /* Get Sky locations of the data projected onto the image */
+    ObitOTFArrayGeomProj(geom, data[desc->ilocra], data[desc->ilocdec], 
+			 data[desc->ilocrot], RACenter, DecCenter, proj, 
+			 xpos, ypos);
+
+    /* Loop over the array */
+    for (j=0; j<ndetect; j++) {
+      
+     /* Interpolate - use coordinates on a flat plane at the tangent point of the image 
+	 xpos and ypos are offsets from the image center projected onto the plane 
+	 of the image, ObitFInterpolateOffset does a linear approximation. */
+       coord[0] = xpos[j];  /* + RACenter; */
+       coord[1] = ypos[j];  /* + DecCenter; */
+       value = ObitFInterpolateOffset (image, coord, err); 
+
+       /* debug 
+       if ((fabs(data[desc->ilocdata+j]-value*ffact)>1.0)  && (j<=3)) {
+	 fprintf (stderr,"debugSig: val %g pos %lf %lf in data %f %f pos %f %f\n", 
+		 value, coord[0]*3600.0, coord[1]*3600.0, 
+		 data[desc->ilocdata+j*incdatawt], (data[desc->ilocdata+j*incdatawt]-value*ffact),
+		 data[desc->ilocra], data[desc->ilocdec]);
+       } */
+       /* debug  
+       if ((fabs(coord[0])<0.0014) && (fabs(coord[1])<0.0014) && (j<=3)) {
+	 fprintf (stderr,"debugSig: val %g pos %lf %lf in data %f %f pos %f %f\n", 
+		 value, coord[0]*3600.0, coord[1]*3600.0, 
+		 data[desc->ilocdata+j*incdatawt], (data[desc->ilocdata+j*incdatawt]-value*ffact),
+		 data[desc->ilocra], data[desc->ilocdec]);
+      }*/
+      /* debug  
+      if (value>0.2) {
+	fprintf (stderr,"debug: val %g pos %lf %lf in data %f %f pos %f %f\n", 
+		 value, coord[0]*3600.0, coord[1]*3600.0, 
+		 data[desc->ilocdata], factor*(data[desc->ilocdata]-value),
+		 data[desc->ilocra], data[desc->ilocdec]);
+      }*/
+
+      /* Subtract */
+      if ((value!=fblank) && (data[desc->ilocdata+j*incdatawt]!=fblank))
+	data[desc->ilocdata+j*incdatawt] -= value * ffact;
+      else {
+	data[desc->ilocdata+j*incdatawt] = fblank;
+      }
+
+      /* For CCB beamswitched data add value corresponding to this feeds
+       reference beam */
+      if (CCBBS) {
+	/* is this the reference or signal beam? */
+	itemp = j / incfeed;
+	/* itemp odd means reference beam */
+	isRef = itemp != 2*(itemp/2);
+	/* Use feed offset for feed 1 if this is reference, else feed 2 */
+	if (isRef) itemp = 0;
+	else itemp = incfeed;
+	/* interpolate */
+	coord[0] = xpos[itemp]; /* + RACenter; */
+	coord[1] = ypos[itemp]; /* + DecCenter; */
+	value = ObitFInterpolateOffset (image, coord, err);
+       /* debug 
+       if ((fabs(data[desc->ilocdata+j*incdatawt]+value*ffact)>1.0)  && (j<=3)) {
+	 fprintf (stderr,"debugRef: val %g pos %lf %lf in data %f %f pos %f %f\n", 
+		 value, coord[0]*3600.0, coord[1]*3600.0, 
+		 data[desc->ilocdata+j*incdatawt], (data[desc->ilocdata+j*incdatawt]+value*ffact),
+		 data[desc->ilocra], data[desc->ilocdec]);
+       } */
+       /* debug 
+       if ((fabs(coord[0])<0.0014) && (fabs(coord[1])<0.0014) && (j<=3)) {
+	 fprintf (stderr,"debugRef: val %g pos %lf %lf in data %f %f pos %f %f\n", 
+		 value, coord[0]*3600.0, coord[1]*3600.0, 
+		 data[desc->ilocdata+j*incdatawt], (data[desc->ilocdata+j*incdatawt]+value*ffact),
+		 data[desc->ilocra], data[desc->ilocdec]);
+       } */
+       /* Add */
+       if ((value!=fblank) && (data[desc->ilocdata+j*incdatawt]!=fblank))
+	 data[desc->ilocdata+j*incdatawt] += value * ffact;
+       else {
+	 data[desc->ilocdata+j*incdatawt] = fblank;
+       }
+      }  /* end adding to reference beam position */
+      
+    } /* end loop over array */
+    data += desc->lrec; /* update buffer pointer */
+  } /* end loop over buffer */
+  
+  /* Indicate completion */
+ finish: ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
+  return NULL;
+} /* end ThreadOTFUtilSubImageBuff */
+
+/**
+ * Make arguments for Threaded OTFUtilSubImageBuff
+ * \param in         OTF with internal buffer to be modified.
+ * \param sky        OTFSkyModel to subtract.
+ * \param factor     Scaling factor for sky model.
+ * \param err        Obit error stack object.
+ * \param args       Created array of SubImageFuncArg, 
+ *                   delete with KillOTFUtilSubImageArgs
+ * \return number of elements in args.
+ */
+static glong MakeOTFUtilSubImageArgs (ObitOTF *in, ObitErr *err, 
+				      SubImageFuncArg ***args)
+{
+  olong i, nThreads, ndetect;
+
+  /* Setup for threading */
+  /* How many threads? */
+  nThreads = MAX (1, ObitThreadNumProc(in->thread));
+
+  /* Initialize threadArg array */
+  *args = g_malloc0(nThreads*sizeof(SubImageFuncArg*));
+  for (i=0; i<nThreads; i++) 
+    (*args)[i] = g_malloc0(sizeof(SubImageFuncArg)); 
+  
+  ndetect = in->geom->numberDetect;    /* How many detectors */
+
+  for (i=0; i<nThreads; i++) {
+    (*args)[i]->otfdata = in;
+    (*args)[i]->ithread = i;
+    (*args)[i]->err     = err;
+    (*args)[i]->Interp  = NULL;
+    (*args)[i]->factor  = 1.0;
+    (*args)[i]->xpos    = g_malloc0(ndetect*sizeof(ofloat));
+    (*args)[i]->ypos    = g_malloc0(ndetect*sizeof(ofloat));
+  }
+
+  return nThreads;
+} /*  end MakeOTFUtilSubImageArgs */
+
+/**
+ * Delete arguments for Threaded OTFUtilSubImageBuff
+ * \param nargs      number of elements in args.
+ * \param args       Array of SubImageFuncArg, type SubImageFuncArg
+ */
+static void KillOTFUtilSubImageArgs (olong nargs, SubImageFuncArg **args)
+{
+  olong i;
+
+  if (args==NULL) return;
+  for (i=0; i<nargs; i++) {
+    if (args[i]) {
+      if (args[i]->xpos) g_free (args[i]->xpos);
+      if (args[i]->ypos) g_free (args[i]->ypos);
+      g_free(args[i]);
+    }
+  }
+  g_free(args);
+} /*  end KillOTFUtilSubImageArgs */

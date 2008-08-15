@@ -48,11 +48,21 @@ ofloat medianValue (ofloat *array, olong incs, olong n);
     with magic value blanking */
 ofloat medianAvg (ofloat *array, olong incs, olong navg, gboolean doWt, olong n);
 
+
+/** Public: Determine running median and sigma of a float array */ 
+void RunningMedian (glong n, olong wind, ofloat *array, ofloat alpha, 
+		    ofloat *RMS, ofloat *out, ofloat *work);
+
+/** Public: Median value of an array */
+ofloat MedianLevel (olong n, ofloat *value, ofloat alpha);
+
+/** Public: Median sigma of an array */
+ofloat MedianSigma (gint n, ofloat *value, ofloat mean);
+
 /** Public: Fit polynomial with magic value blanking */
 void  FitPoly (ofloat *poly, olong order, ofloat *x, ofloat *y, ofloat *wt, 
 	       olong n);
 
 /** Public: Evaluate polynomial */
 ofloat  EvalPoly (olong order, ofloat *poly, ofloat x);
-
 #endif /* OBITUTIL_H */ 

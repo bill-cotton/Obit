@@ -70,9 +70,6 @@
  */
 
 /*---------------Public functions---------------------------*/
-/** Public: Subtract a sky model from a buffer of data. */
-void ObitOTFUtilSubSkyModelBuff (ObitOTF *in, ObitOTFSkyModel *sky, ofloat factor);
-
 /** Public: Subtract an image (ObitFarray) from an ObitOTF. */
 void ObitOTFUtilSubImage(ObitOTF *inOTF, ObitOTF *outOTF, ObitFArray *image, 
 			 ObitImageDesc *desc, ObitErr *err);
@@ -89,13 +86,12 @@ void ObitOTFUtilScale(ObitOTF *inOTF, ObitOTF *outOTF, ofloat scale, ofloat offs
 void ObitOTFUtilNoise(ObitOTF *inOTF, ObitOTF *outOTF, ofloat scale, ofloat offset,
 		      ofloat sigma, ObitErr *err);
 
-/** Public: Subtract an image interpolator from a buffer of data. */
-void ObitOTFUtilSubImageBuff (ObitOTF *in, ObitFInterpolate *image, ofloat factor, 
-			      ObitErr *err);
-
 /** Public: Replace data with a sky model in a buffer of data. */
 void ObitOTFUtilModelImageBuff (ObitOTF *in, ObitFInterpolate *image, ofloat factor, 
 				ObitErr *err);
+
+/** Public: Subtract a sky model from a buffer of data. */
+void ObitOTFUtilSubSkyModelBuff (ObitOTF *in, ObitOTFSkyModel *sky, ofloat factor);
 
 /** Public: Create an Image Object from an OTF */
 ObitImage* ObitOTFUtilCreateImage (ObitOTF *inOTF, ObitErr *err);

@@ -51,6 +51,25 @@ static ObitDConCleanPxListClassInfo myClassInfo = {FALSE};
 
 /*--------------- File Global Variables  ----------------*/
 
+/*---------------Private structures----------------*/
+/* CLEAN threaded function argument */
+typedef struct {
+  /* PixelList object */
+  ObitDConCleanPxList    *PixelList;
+  /* First (1-rel) record in otfdata buffer to process this thread */
+  olong        first;
+  /* Highest (1-rel) record in otfdata buffer to process this thread  */
+  olong        last;
+  /* thread number  */
+  olong        ithread;
+  /* Pixel number of peak */
+  olong       ipeak;
+  /* Peak flux to subtract */
+  ofloat       peak;
+  /* Sum for SDI CLEAN */
+  ofloat       sum;
+} CLEANFuncArg;
+
 /*---------------Private function prototypes----------------*/
 /** Private: Initialize newly instantiated object. */
 void  ObitDConCleanPxListInit  (gpointer in);
@@ -60,6 +79,19 @@ void  ObitDConCleanPxListClear (gpointer in);
 
 /** Private: Set Class function pointers. */
 static void ObitDConCleanPxListClassInfoDefFn (gpointer inClass);
+
+/** Private: Threaded CLEAN */
+static gpointer ThreadCLEAN (gpointer arg);
+
+/** Private: Threaded SDI CLEAN */
+static gpointer ThreadSDICLEAN (gpointer arg);
+
+/** Private: Make arguments for Threaded CLEAN */
+static glong MakeCLEANArgs (ObitDConCleanPxList *in, olong maxThread,
+			    CLEANFuncArg ***args);
+
+/** Private: Delete arguments for Threaded CLEAN */
+static void KillCLEANArgs (olong nargs, CLEANFuncArg **args);
 
 /*----------------------Public functions---------------------------*/
 /**
@@ -671,15 +703,19 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
 gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
 {
   gboolean done = FALSE;
-  olong iter, iresid, ipeak=0, field, iXres, iYres, beamPatch, iBeam, pos[2];
+  olong iter, ipeak=0, field, iXres, iYres, beamPatch, tipeak=0;
   olong i, lpatch, irow, lastField=-1;
-  ofloat peak, minFlux, factor, CCmin, atlim, xfac=1.0, resmax, xflux;
-  ofloat subval, ccfLim, *beam=NULL;
+  ofloat peak, tpeak, minFlux=0.0, factor, CCmin, atlim, xfac=1.0, resmax, xflux;
+  ofloat subval, ccfLim=0.5;
   odouble totalFlux, *fieldFlux=NULL;
   gchar reason[51];
   ObitTableCCRow *CCRow = NULL;
   ObitImageDesc *desc = NULL;
   ObitIOCode retCode;
+  olong ithread, maxThread, nThreads;
+  CLEANFuncArg **targs=NULL;
+  olong npix, lopix, hipix, npixPerThread;
+  gboolean OK = TRUE;
   gchar *routine = "ObitDConCleanPxListCLEAN";
 
   /* error checks */
@@ -699,15 +735,9 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
   /* Setup */
   lpatch = in->BeamPatch->naxis[0];
   beamPatch = (lpatch-1)/2;
-  pos[0] = pos[1] = 0;
-  beam = ObitFArrayIndex(in->BeamPatch, pos); /* Beam patch pointer */
   CCmin = 1.0e20;
   atlim = 0.0;
   resmax = -1.0e20;
-
-  /* DEBUG
-  in->minFluxLoad = 0.01;
-  in->niter = 4; */
 
   /* Tell details */
   if (in->prtLv>1) {
@@ -718,70 +748,120 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
     ObitErrLog(err);  /* Progress Report */
   }
 
+  /* Setup Threading */
+  /* Only thread large cases */
+  if (in->nPixel>1000) maxThread = 1000;
+  else maxThread = 1;
+  /* Threading doesn't seem to help much */
+  maxThread = 1;
+  nThreads = MakeCLEANArgs (in, maxThread, &targs);
+
+  /* Divide up work */
+  npix = in->nPixel;
+  npixPerThread = npix/nThreads;
+  lopix = 1;
+  hipix = npixPerThread;
+  hipix = MIN (hipix, npix);
+
+  /* Set up thread arguments */
+  for (ithread=0; ithread<nThreads; ithread++) {
+    if (ithread==(nThreads-1)) hipix = npix;  /* Make sure to do all */
+    targs[ithread]->PixelList = in;
+    targs[ithread]->first     = lopix;
+    targs[ithread]->last      = hipix;
+    targs[ithread]->ithread   = ithread;
+    targs[ithread]->ipeak     = 0;
+    targs[ithread]->peak      = 0.0;
+    /* Update which pix */
+    lopix += npixPerThread;
+    hipix += npixPerThread;
+    hipix = MIN (hipix, npix);
+  }
+
   /* Local accumulators for flux */
   totalFlux = 0.0;
   fieldFlux = g_malloc0(in->nfield*sizeof(odouble));
   for (i=0; i<in->nfield; i++) fieldFlux[i] = 0.0;
-    
+
+  /* Find first component */
+  OK = ObitThreadIterator (in->thread, nThreads, 
+			   (ObitThreadFunc)ThreadCLEAN, 
+			   (gpointer**)targs);
+  /* Check for problems */
+  if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+  
+  
   /* CLEAN loop */
   while (!done) {
     
-    /* Find peak abs residual */
-    peak = -1.0;
-    for (iresid=0; iresid<in->nPixel; iresid++) {
-      xflux = fabs(in->pixelFlux[iresid]);
-      if (xflux>peak) {
-	peak = xflux;
-	ipeak = iresid;
+    /* Get  peak info */
+    peak  = fabs(targs[0]->peak);
+    ipeak = targs[0]->ipeak;
+    for (ithread=1; ithread<nThreads; ithread++) {
+      if (fabs(targs[ithread]->peak)>peak) {
+	peak  = fabs(targs[ithread]->peak);
+	ipeak = targs[ithread]->ipeak;
       }
     }
     
-    /* Setup for subtraction */
+    /* Save info */
     field   = in->pixelFld[ipeak];
     minFlux = in->minFlux[field-1];
     factor  = in->factor[field-1];
-    xflux = in->pixelFlux[ipeak];
-    subval = xflux * in->gain[field-1];
-    iXres =  in->pixelX[ipeak];
-    iYres =  in->pixelY[ipeak];
-    CCmin = MIN (CCmin, peak);
+    xflux   = in->pixelFlux[ipeak];
+    subval  = xflux * in->gain[field-1];
+    iXres   = in->pixelX[ipeak];
+    iYres   = in->pixelY[ipeak];
+    CCmin   = MIN (CCmin, peak);
+
+    /* Do subtraction/ find next peak  */
+    OK = ObitThreadIterator (in->thread, nThreads, 
+			     (ObitThreadFunc)ThreadCLEAN, 
+			     (gpointer**)targs);
+
+    /* Check for problems */
+    if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+    
+    /* Get  next peak info */
+    tpeak  = fabs(targs[0]->peak);
+    tipeak = targs[0]->ipeak;
+    for (ithread=1; ithread<nThreads; ithread++) {
+      if (fabs(targs[ithread]->peak)>tpeak) {
+	tpeak  = fabs(targs[ithread]->peak);
+	tipeak = targs[ithread]->ipeak;
+      }
+    }
+    /* Set up thread arguments for next subtraction */
+    for (ithread=0; ithread<nThreads; ithread++) {
+      targs[ithread]->ipeak = tipeak;
+      targs[ithread]->peak  = tpeak;
+    }
     
     /* If first pass set up stopping criteria */
     if (resmax < 0.0) {
       resmax = MAX (fabs(xflux), 1.0e-10);
       xfac = pow ((in->minFluxLoad / resmax), in->factor[field-1]);
       ccfLim = resmax*in->ccfLim;  /* Fraction of peak limit */
-    }
-    
+    }      
     /* Keep statistics */
     in->iterField[field-1]++;
+    iter++;  /* iteration count */
     fieldFlux[field-1] += subval;
     totalFlux += subval;
+    atlim += xfac / (ofloat)iter;   /* update BGC stopping criterion */
+
     /* DEBUG 
        fprintf (stderr,"%s field %d flux %f total %f pos %d  %d\n",
        routine,  field, xflux, in->totalFlux, iXres, iYres);*/
     
-    /* Do subtraction */
-    for (iresid=0; iresid<in->nPixel; iresid++) {
-      /* Is this inside the Beam patch ? */
-      if ((in->pixelFld[iresid]==field) &&
-	  (abs(in->pixelX[iresid]-iXres) <= beamPatch) && 
-	  (abs(in->pixelY[iresid]-iYres) <= beamPatch)) {
-	/* Index in beam patch array */
-	iBeam = (beamPatch + (in->pixelY[iresid] - iYres)) * lpatch +
-	  (beamPatch + (in->pixelX[iresid] - iXres));
-	in->pixelFlux[iresid] -= subval * beam[iBeam];
-      }
-    }
-
-    /* Write component to List */
+    /* Write component to Table */    
     /* Open table if not already open */
     if (in->CCTable[field-1]->myStatus == OBIT_Inactive) {
       retCode = ObitTableCCOpen (in->CCTable[field-1], OBIT_IO_ReadWrite, err);
       if ((retCode != OBIT_IO_OK) || (err->error))
 	Obit_traceback_val (err, routine, in->name, done);
     }
-  
+    
     /* Need Table Row - if different field then it may be different */
     if (field!=lastField) CCRow = ObitTableCCRowUnref(CCRow);
     lastField = field;
@@ -814,7 +894,6 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
       Obit_traceback_val (err, routine, in->name, done);
     
     /* Test various stopping conditions */ 
-    iter++;  /* iteration count */
     /* Are we finished after this? */
     done = done || (iter>=in->niter) || (fabs(xflux)<minFlux);
     if (done) {  /* set completion reason string */
@@ -837,7 +916,6 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
       g_snprintf (reason, 50, "Reached minimum algorithm flux");
       break;  /* jump out of CLEAN loop */
     }
-    atlim += xfac / (ofloat)iter;   /* update BGC stopping criterion */
    
     /* autoWindow tests to tell if we should quit now */
     if (fabs (xflux) < in->autoWinFlux) {
@@ -872,6 +950,7 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
   
     /* Cleanup */
   CCRow = ObitTableCCRowUnref(CCRow);  
+  KillCLEANArgs (nThreads, targs);
    
   /* Tell about results */
   if (in->prtLv>1) {
@@ -902,15 +981,19 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
 gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
 {
   gboolean done = FALSE;
-  olong iter, iresid, field, beamPatch, pos[2], lpatch, ipeak, iXres, iYres, iBeam;
+  olong iter, iresid, field=0, beamPatch, lpatch, ipeak, iXres, iYres;
   olong lastField=-1, irow, i;
-  ofloat minFlux, xflux;
-  ofloat minVal=-1.0e20, sum, wt, mapLim, *beam=NULL;
+  ofloat minFlux=0.0, xflux;
+  ofloat minVal=-1.0e20, sum, wt, mapLim;
   odouble totalFlux, *fieldFlux=NULL;
-   gchar reason[51];
+  gchar reason[51];
   ObitTableCCRow *CCRow = NULL;
   ObitImageDesc *desc = NULL;
   ObitIOCode retCode;
+  olong ithread, maxThread, nThreads;
+  CLEANFuncArg **targs=NULL;
+  olong npix, lopix, hipix, npixPerThread;
+  gboolean OK = TRUE;
   gchar *routine = "ObitDConCleanPxListSDI";
 
   /* error checks */
@@ -933,8 +1016,6 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
   /* Setup */
   lpatch = in->BeamPatch->naxis[0];
   beamPatch = (lpatch-1)/2;
-  pos[0] = pos[1] = 0;
-  beam = ObitFArrayIndex(in->BeamPatch, pos); /* Beam patch pointer */
   mapLim  = in->minFluxLoad;
 
   /* Adjust data array - amount in excess of mapLim */
@@ -953,6 +1034,38 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
     ObitErrLog(err);  /* Progress Report */
   }
 
+
+  /* Setup Threading */
+  /* Only thread large cases */
+  if (in->nPixel>1000) maxThread = 1000;
+  else maxThread = 1;
+  nThreads = MakeCLEANArgs (in, maxThread, &targs);
+
+  /* Threading doesn't seem to help much */
+  maxThread = 1;
+
+  /* Divide up work */
+  npix = in->nPixel;
+  npixPerThread = npix/nThreads;
+  lopix = 1;
+  hipix = npixPerThread;
+  hipix = MIN (hipix, npix);
+
+  /* Set up thread arguments */
+  for (ithread=0; ithread<nThreads; ithread++) {
+    if (ithread==(nThreads-1)) hipix = npix;  /* Make sure to do all */
+    targs[ithread]->PixelList = in;
+    targs[ithread]->first     = lopix;
+    targs[ithread]->last      = hipix;
+    targs[ithread]->ithread   = ithread;
+    targs[ithread]->ipeak     = 0;
+    targs[ithread]->sum       = 0.0;
+    /* Update which pix */
+    lopix += npixPerThread;
+    hipix += npixPerThread;
+    hipix = MIN (hipix, npix);
+  }
+
   /* Local accumulators for flux */
   totalFlux = 0.0;
   fieldFlux = g_malloc0(in->nfield*sizeof(odouble));
@@ -968,20 +1081,23 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
     minFlux = in->minFlux[field-1];
     
     /* Determine weight factor for this pixel - 
-       dot product of beam and data array*/
-    sum = 0.0;
-    for (iresid=0; iresid<in->nPixel; iresid++) {
-      /* Is this inside the Beam patch ? */
-      if ((in->pixelFld[iresid]==field) &&
-	  (abs(in->pixelY[iresid]-iYres) <= beamPatch) && 
-	  (abs(in->pixelX[iresid]-iXres) <= beamPatch)) {
-	/* Index in beam patch array */
-	iBeam = (beamPatch + (in->pixelY[iresid] - iYres)) * lpatch +
-	  (beamPatch + (in->pixelX[iresid] - iXres));
-	sum += in->pixelFlux[iresid] * beam[iBeam];
-      }
-      if (in->pixelY[iresid]-iYres > beamPatch) break;/* No more in Y */
-    } /* end loop over array */
+       dot product of beam and data array */
+    /* Set up thread arguments */
+    for (ithread=0; ithread<nThreads; ithread++) {
+      targs[ithread]->ipeak = ipeak;
+      targs[ithread]->sum   = 0.0;
+    }
+    /* operation possibly in threads */
+    OK = ObitThreadIterator (in->thread, nThreads, 
+			     (ObitThreadFunc)ThreadSDICLEAN, 
+			     (gpointer**)targs);
+
+    /* Check for problems */
+    if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+    
+    /* sum */
+    sum  = targs[0]->sum;
+    for (ithread=1; ithread<nThreads; ithread++) sum += targs[ithread]->sum;
     
     /* Weight for this pixel */
     if (sum!=0.0) wt = fabs(xflux/sum);
@@ -996,7 +1112,7 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
     fieldFlux[field-1] += xflux;
     totalFlux += xflux;
     
-    /* Write component to List */
+    /* Write component to Table */
     /* Open table if not already open */
     if (in->CCTable[field-1]->myStatus == OBIT_Inactive) {
       retCode = ObitTableCCOpen (in->CCTable[field-1], OBIT_IO_ReadWrite, err);
@@ -1066,6 +1182,7 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
   
   /* Cleanup */
   CCRow = ObitTableCCRowUnref(CCRow);  
+  KillCLEANArgs (nThreads, targs);
   
  
   /* Tell about results */
@@ -1248,3 +1365,184 @@ void ObitDConCleanPxListClear (gpointer inn)
 } /* end ObitDConCleanPxListClear */
 
 
+/**
+ * Inner loop BGC CLEAN
+ * Subtracts component from residuals using beam patch and
+ * returns largest residual in region cleaned
+ * Callable as thread
+ * Arguments are given in the structure passed as arg
+ * \param arg Pointer to CLEANFuncArg argument with elements:
+ * \li PixelList PixelList object
+ * \li first   First (1-rel) pixel no. to process this thread
+ * \li last    Highest (1-rel) pixel no. to process this thread
+ * \li ithread thread number
+ * \li ipeak   [in/out] Pixel number of peak
+ * \li peak;   [in/out] Peak flux to subtract
+ * \return NULL
+ */
+gpointer ThreadCLEAN (gpointer args)
+{
+  CLEANFuncArg *largs  = (CLEANFuncArg*)args;
+  ObitDConCleanPxList *in = largs->PixelList;
+  olong  loPix            = largs->first-1;
+  olong  hiPix            = largs->last;
+  olong  ipeak            = largs->ipeak;
+  ofloat peak             = largs->peak;
+
+  ofloat xflux, subval, *beam=NULL;
+  olong iresid, iXres, iYres, lpatch, beamPatch, iBeam, field, pos[2];
+ 
+  /* Do subtraction if peak non zero */
+  if (fabs(peak)>0.0) {
+    lpatch = in->BeamPatch->naxis[0];
+    beamPatch = (lpatch-1)/2;
+    pos[0] = pos[1] = 0;
+    beam = ObitFArrayIndex(in->BeamPatch, pos); /* Beam patch pointer */
+    field   = in->pixelFld[ipeak];
+    xflux = in->pixelFlux[ipeak];
+    subval = xflux * in->gain[field-1];
+    iXres =  in->pixelX[ipeak];
+    iYres =  in->pixelY[ipeak];
+    for (iresid=loPix; iresid<hiPix; iresid++) {
+      /* Is this inside the Beam patch ? */
+      if ((abs(in->pixelX[iresid]-iXres) <= beamPatch) && 
+	  (abs(in->pixelY[iresid]-iYres) <= beamPatch) &&
+	  (in->pixelFld[iresid]==field)) {
+	/* Index in beam patch array */
+	iBeam = (beamPatch + (in->pixelY[iresid] - iYres)) * lpatch +
+	  (beamPatch + (in->pixelX[iresid] - iXres));
+	in->pixelFlux[iresid] -= subval * beam[iBeam];
+      }
+      if (in->pixelY[iresid]-iYres > (beamPatch+5)) break; /* No more in Y? */
+    } /* end loop over array */
+  }
+    
+  /* Find peak abs residual */
+  peak  = -1.0;
+  xflux = 0.0;
+  for (iresid=loPix; iresid<hiPix; iresid++) {
+    xflux = fabs(in->pixelFlux[iresid]);
+    if (xflux>peak) {
+      peak = xflux;
+      ipeak = iresid;
+    }
+  }
+  
+  /* Return values */
+  largs->peak  = peak;
+  largs->ipeak = ipeak;
+  
+  /* Indicate completion */
+  ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
+  return NULL;
+} /* end ThreadCLEAN */
+
+/**
+ * Inner loop SDI CLEAN
+ * Gets dot product of beam with residuals
+ * Callable as thread
+ * Arguments are given in the structure passed as arg
+ * \param arg Pointer to CLEANFuncArg argument with elements:
+ * \li PixelList PixelList object
+ * \li first   First (1-rel) pixel no. to process this thread
+ * \li last    Highest (1-rel) pixel no. to process this thread
+ * \li ithread thread number
+ * \li sum;    [out] dot product returned
+ * \return NULL
+ */
+gpointer ThreadSDICLEAN (gpointer args)
+{
+  CLEANFuncArg *largs  = (CLEANFuncArg*)args;
+  ObitDConCleanPxList *in = largs->PixelList;
+  olong  loPix            = largs->first-1;
+  olong  hiPix            = largs->last;
+  olong  ipeak            = largs->ipeak;
+  ofloat sum              = largs->sum;
+
+  ofloat *beam=NULL;
+  olong iresid, iXres, iYres, lpatch, beamPatch, iBeam, field, pos[2];
+ 
+  /* Setup */
+  sum    = 0.0;
+  iXres  =  in->pixelX[ipeak];
+  iYres  =  in->pixelY[ipeak];
+  lpatch = in->BeamPatch->naxis[0];
+  beamPatch = (lpatch-1)/2;
+  pos[0]  = pos[1] = 0;
+  beam    = ObitFArrayIndex(in->BeamPatch, pos); /* Beam patch pointer */
+  field   = in->pixelFld[ipeak];
+
+  /* Determine weight factor for this pixel - 
+     dot product of beam and data array*/
+  for (iresid=loPix; iresid<hiPix; iresid++) {
+    /* Is this inside the Beam patch ? */
+    if ((abs(in->pixelY[iresid]-iYres) <= beamPatch) && 
+	(abs(in->pixelX[iresid]-iXres) <= beamPatch) &&
+	(in->pixelFld[iresid]==field)) {
+      /* Index in beam patch array */
+      iBeam = (beamPatch + (in->pixelY[iresid] - iYres)) * lpatch +
+	(beamPatch + (in->pixelX[iresid] - iXres));
+      sum += in->pixelFlux[iresid] * beam[iBeam];
+    }
+    if (in->pixelY[iresid]-iYres > (beamPatch+5)) break;/* No more in Y? */
+  } /* end loop over array */
+
+  /* return value */
+  largs->sum = sum;
+  
+  /* Indicate completion */
+  ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
+  return NULL;
+} /* end ThreadSDICLEAN */
+
+/**
+ * Make arguments for Threaded CLEAN
+ * \param in         OTF with internal buffer to be modified.
+ * \param maxThread  Maximum desirable no. threads
+ * \param args       Created array of CLEANFuncArg, 
+ *                   delete with KillCLEANArgs
+ * \return number of elements in args.
+ */
+static glong MakeCLEANArgs (ObitDConCleanPxList *in, olong maxThread,
+			    CLEANFuncArg ***args)
+{
+  olong i, nThreads;
+
+  /* Setup for threading */
+  /* How many threads? */
+  nThreads = MAX (1, ObitThreadNumProc(in->thread));
+  nThreads = MIN (nThreads, maxThread);
+
+  /* Initialize threadArg array */
+  *args = g_malloc0(nThreads*sizeof(CLEANFuncArg*));
+  for (i=0; i<nThreads; i++) 
+    (*args)[i] = g_malloc0(sizeof(CLEANFuncArg)); 
+  
+  for (i=0; i<nThreads; i++) {
+    (*args)[i]->PixelList = in;
+    (*args)[i]->first     = 1;
+    (*args)[i]->last      = 0;
+    (*args)[i]->ithread   = i;
+    (*args)[i]->ipeak     = 0;
+    (*args)[i]->peak      = 0.0;
+    (*args)[i]->sum      = 0.0;
+  }
+
+  return nThreads;
+} /*  end MakeCLEANArgs */
+
+/**
+ * Delete arguments for Threaded CLEAN
+ * \param nargs      number of elements in args.
+ * \param args       Array of CLEANFuncArg, type CLEANFuncArg
+ */
+static void KillCLEANArgs (olong nargs, CLEANFuncArg **args)
+{
+  olong i;
+
+  if (args==NULL) return;
+  for (i=0; i<nargs; i++) {
+    if (args[i]) g_free(args[i]);
+  }
+  g_free(args);
+} /*  end KillCLEANArgs */
