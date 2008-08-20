@@ -342,6 +342,7 @@ ObitUV* ObitUVCopy (ObitUV *in, ObitUV *out, ObitErr *err)
   ObitIOCode iretCode, oretCode;
   gboolean oldExist, doCalSelect;
   ObitInfoType type;
+  olong NPIO;
   gint32 dim[MAXINFOELEMDIM];
   ObitHistory *inHist=NULL, *outHist=NULL;
   olong count;
@@ -405,13 +406,19 @@ ObitUV* ObitUVCopy (ObitUV *in, ObitUV *out, ObitErr *err)
     Obit_traceback_val (err, routine,in->name, out);
 
   /* copy Descriptor - this time with full information */
- 
- out->myDesc = ObitUVDescCopy(in->myDesc, out->myDesc, err);
+  out->myDesc = ObitUVDescCopy(in->myDesc, out->myDesc, err);
   /* Creation date today */
   today = ObitToday();
   strncpy (out->myDesc->date, today, UVLEN_VALUE-1);
   if (today) g_free(today);
  
+  /* Copy number of records per IO to output */
+  NPIO = 1000;
+  type = OBIT_long;
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListGetTest   (in->info,  "nVisPIO", &type,      dim,  &NPIO);
+  ObitInfoListAlwaysPut (out->info, "nVisPIO",  type, dim,  &NPIO);
+
   /* use same data buffer on input and output 
      so don't assign buffer for output */
   if (out->buffer) ObitIOFreeBuffer(out->buffer); /* free existing */
@@ -521,6 +528,9 @@ void ObitUVClone  (ObitUV *in, ObitUV *out, ObitErr *err)
   ObitIOAccess access;
   ObitIOCode iretCode, oretCode;
   ObitHistory *inHist=NULL, *outHist=NULL;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM];
+  olong NPIO;
   gboolean doClose;
   gchar *today=NULL;
   gchar *routine = "ObitUVClone";
@@ -562,6 +572,13 @@ void ObitUVClone  (ObitUV *in, ObitUV *out, ObitErr *err)
   strncpy (out->myDesc->date, today, UVLEN_VALUE-1);
   if (today) g_free(today);
  
+  /* Copy number of records per IO to output */
+  NPIO = 1000;
+  type = OBIT_long;
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListGetTest   (in->info,  "nVisPIO", &type,      dim,  &NPIO);
+  ObitInfoListAlwaysPut (out->info, "nVisPIO",  type, dim,  &NPIO);
+
   /* Open output */
   access = OBIT_IO_WriteOnly;
   oretCode = ObitUVOpen (out, access, err);

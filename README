@@ -46,7 +46,7 @@ using command line -without options to InstallObit.sh;  -help gives:
 	    ZLIB    - Compression library
 	    MOTIF   - Motif graphics library
 	    PYTHON  - Python
-	    WWW     - Internet protocol library
+	    WWW     - Internet protocol library - best to avoid this one
 	    CURL    - Internet URL library (only one of WWW or CURL needed)
 	    XMLRPC  - XMLRPC network protocol library
     
@@ -65,10 +65,8 @@ Motif, python and GNU Scientific library:
 the c implementation, this uses the xmlrpc-c library which in turn,
 depends on other packages for the actual communications. Xmlrpc-c can
 use either libwww or the curl package and both are distributed here.
-It's not clear what the relative merits/capabilities of these are, but
-either appears sufficient.  Libwww is composed of a large number of
-libraries and the linking can be simplified using only curl.  This can
-be done using the -without WWW option when executing InstallObit.sh.
+Libwww is not thread-safe so curl is greatly preferred.  The WWW option
+has been disabled in InstallObit.sh.
 
    To use the installed software, you have to tell your system where
 to look for it.  If you've installed it in a directory whose path is

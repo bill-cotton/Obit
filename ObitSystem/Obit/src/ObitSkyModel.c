@@ -331,6 +331,7 @@ void ObitSkyModelInitMod (ObitSkyModel* in, ObitUV *uvdata, ObitErr *err)
       args->uvdata = uvdata;
       args->ithread= i;
       args->err    = err;
+      if (args->Interp) args->Interp = ObitCInterpolateUnref(args->Interp);
     }
   } /* end initialize */
 
@@ -356,7 +357,7 @@ void ObitSkyModelShutDownMod (ObitSkyModel* in, ObitUV *uvdata, ObitErr *err)
     if (!strncmp((gchar*)in->threadArgs[0], "base", 4)) {
       for (i=0; i<in->nThreads; i++) {
 	args = (FTFuncArg*)in->threadArgs[i];
-	if (args->Interp) ObitCInterpolateUnref(args->Interp);
+	if (args->Interp) args->Interp = ObitCInterpolateUnref(args->Interp);
 	g_free(in->threadArgs[i]);
       }
       g_free(in->threadArgs);
@@ -1548,7 +1549,7 @@ gboolean ObitSkyModelLoadImage (ObitSkyModel *in, olong n, ObitUV *uvdata,
  */
 void ObitSkyModelFTDFT (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *err)
 {
-  olong i, nvis, lovis, hivis, nvisPerThread;
+  olong i, nvis, lovis, hivis, nvisPerThread, nThreads;
   FTFuncArg *args;
   gboolean OK = TRUE;
   gchar *routine = "ObitSkyModelFTDFT";
@@ -1556,16 +1557,18 @@ void ObitSkyModelFTDFT (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *
   /* error checks - assume most done at higher level */
   if (err->error) return;
 
-  /* Divide up work */
+  /* Divide up work - single threaded if too little data per call */
   nvis = uvdata->myDesc->numVisBuff;
-  nvisPerThread = nvis/in->nThreads;
+  if (nvis<1000) nThreads = 1;
+  else nThreads = in->nThreads;
+  nvisPerThread = MAX (1, nvis/nThreads);
   lovis = 1;
   hivis = nvisPerThread;
   hivis = MIN (hivis, nvis);
 
   /* Set up thread arguments */
-  for (i=0; i<in->nThreads; i++) {
-    if (i==(in->nThreads-1)) hivis = nvis;  /* Make sure do all */
+  for (i=0; i<nThreads; i++) {
+    if (i==(nThreads-1)) hivis = nvis;  /* Make sure do all */
     args = (FTFuncArg*)in->threadArgs[i];
     strcpy (args->type, "base");  /* Enter type as first entry */
     args->in     = in;
@@ -1583,7 +1586,7 @@ void ObitSkyModelFTDFT (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (in->thread, in->nThreads, in->DFTFunc, in->threadArgs);
+  OK = ObitThreadIterator (in->thread, nThreads, in->DFTFunc, in->threadArgs);
 
   /* Check for problems */
   if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
@@ -1849,7 +1852,7 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
  */
 void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *err)
 {
-  olong i, nvis, lovis, hivis, nvisPerThread;
+  olong i, nvis, lovis, hivis, nvisPerThread, nThreads;
   FTFuncArg *args;
   gboolean OK = TRUE;
   gchar *routine = "ObitSkyModelFTGrid";
@@ -1867,16 +1870,18 @@ void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr 
       in->threadArgs[i] = g_malloc0(sizeof(FTFuncArg)); 
   } /* end initialize */
   
-  /* Divide up work */
+  /* Divide up work - single threaded if too little data per call */
   nvis = uvdata->myDesc->numVisBuff;
-  nvisPerThread = nvis/in->nThreads;
+  if (nvis<1000) nThreads = 1;
+  else nThreads = in->nThreads;
+  nvisPerThread = MAX (1, nvis/nThreads);
   lovis = 1;
   hivis = nvisPerThread;
   hivis = MIN (hivis, nvis);
 
   /* Set up thread arguments */
-  for (i=0; i<in->nThreads; i++) {
-    if (i==(in->nThreads-1)) hivis = nvis;  /* Make sure do all */
+  for (i=0; i<nThreads; i++) {
+    if (i==(nThreads-1)) hivis = nvis;  /* Make sure do all */
     args = (FTFuncArg*)in->threadArgs[i];
     args->in     = in;
     args->field  = field;
@@ -1886,11 +1891,13 @@ void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr 
     args->ithread= i;
     args->err    = err;
     /* local copy of interpolator if needed */
-    if (i>0) 
-      args->Interp = ObitCInterpolateCopy(in->myInterp, NULL, err);
-    else
-      args->Interp = ObitCInterpolateRef(in->myInterp);
-    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    if (!args->Interp) {
+      if (i>0) 
+	args->Interp = ObitCInterpolateCopy(in->myInterp, NULL, err);
+      else
+	args->Interp = ObitCInterpolateRef(in->myInterp);
+      if (err->error) Obit_traceback_msg (err, routine, in->name);
+    } /* end local copy of interpolator */
     /* Update which vis */
     lovis += nvisPerThread;
     hivis += nvisPerThread;
@@ -1898,7 +1905,7 @@ void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr 
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (in->thread, in->nThreads, in->GridFunc, in->threadArgs);
+  OK = ObitThreadIterator (in->thread, nThreads, in->GridFunc, in->threadArgs);
 
   /* Check for problems */
   if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
@@ -2088,7 +2095,7 @@ gpointer ThreadSkyModelFTGrid (gpointer args)
 	}
 	
 	/* Interpolate from UV grid */
-	ObitCInterpolateOffset (in->myInterp, uvw, vis, err);
+	ObitCInterpolateOffset (Interp, uvw, vis, err);
 	if (err->error) {
 	  ObitThreadLock(in->thread);  /* Lock against other threads */
 	  Obit_log_error(err, OBIT_Error,"%s: Error interpolatingFT of model",
@@ -2183,7 +2190,6 @@ gpointer ThreadSkyModelFTGrid (gpointer args)
 
   /* Indicate completion */
  finish: ObitThreadPoolDone (in->thread, (gpointer)&ithread);
-  ObitCInterpolateUnref(Interp); /* Cleanup */
   
   return NULL;
 } /* ThreadSkyModelFTGrid */

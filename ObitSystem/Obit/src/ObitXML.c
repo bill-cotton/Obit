@@ -64,10 +64,13 @@ void  ObitXMLInit  (gpointer in);
 void  ObitXMLClear (gpointer in);
 
 /** Convert InfoList to XML */
-static void encodeInfoList (ObitInfoList *desc, ObitXML  *xml, ObitErr *err);
+static void encodeInfoList (ObitInfoList *desc, 
+			    ObitXMLEnv *envP, ObitXMLValue *parmP, 
+			    ObitErr *err);
 
-/** Convert XML to InfoList */
-static void decodeInfoList (ObitXML  *xml, ObitInfoList **desc, ObitErr *err);
+/** Convert ObitXMLValue to InfoList */
+static void decodeInfoList (ObitXMLEnv *envP, ObitXMLValue *parmP, 
+			    ObitInfoList **out,  ObitErr *err);
 
 /** Private: Set Class function pointers. */
 static void ObitXMLClassInfoDefFn (gpointer inClass);
@@ -115,6 +118,116 @@ gconstpointer ObitXMLGetClass (void)
 } /* end ObitXMLGetClass */
 
 /**
+ * Create an XML from PRC call arguments received to be sent from client end
+ * type = OBIT_XML_RPCCallArg
+ * \param func         Name of function to be called
+ * \param argList      InfoList with call arguments
+ * \param err     Obit Error message
+ * \return new ObitXML object suitable to be passed to ObitRPCCall
+ */
+ObitXML* 
+ObitXMLSetCallArg (gchar* func, ObitInfoList *argList, ObitErr *err)
+{
+  ObitXML  *out=NULL;
+  xmlrpc_value *v;
+  gchar *routine = "ObitXMLSetCallArg";
+
+  /* error checks */
+  if (err->error) return out;
+
+  /* initialize structure */
+  out = newObitXML(routine);
+  out->type = OBIT_XML_RPCCallArg;
+  out->name = g_strdup(routine);
+  out->func = g_strdup(func);
+  out->parmP = xmlrpc_struct_new(&out->envP);
+
+   /* ObitXML type */
+  v = xmlrpc_build_value(&out->envP, "i", (xmlrpc_int32)OBIT_XML_InfoList);
+  xmlrpc_struct_set_value(&out->envP, out->parmP, "XMLType", v);
+  xmlrpc_DECREF(v);
+ 
+  /* number of entries */
+  v = xmlrpc_build_value(&out->envP, "i", (xmlrpc_int32)argList->number);
+  xmlrpc_struct_set_value(&out->envP, out->parmP, "number", v);
+  xmlrpc_DECREF(v);
+  XMLRPC_FAIL_IF_FAULT(&out->envP);
+
+  /* Extract from argList and encode */
+  encodeInfoList (argList, (ObitXMLEnv*)&out->envP, (ObitXMLValue*)out->parmP, err);
+  if (err->error) Obit_traceback_val (err, routine, out->name, out);  
+
+  /* Make sure everything is cool */
+ cleanup:
+  if (out->envP.fault_occurred) {
+    Obit_log_error(err, OBIT_Error, "%s:XML-RPC Fault: %s (%d)",
+		   routine, out->envP.fault_string, out->envP.fault_code);
+  }
+  
+  return out;
+} /* end ObitXMLSetCallArg */
+
+/**
+ * Convert call arguments received on server end to an InfoList
+ * type = OBIT_XML_RPCCallArg
+ * \param envP         Environment, structure copied
+ * \param paramArrayP  Parameter array, structure NOT copied
+ * \param err     Obit Error message
+ * \return new ObitInfoList object
+ */
+ObitInfoList* 
+ObitXMLGetCallArg (ObitXMLEnv * const envP, ObitXMLValue * const paramArrayP,
+		   ObitErr *err)
+{
+  ObitInfoList  *out=newObitInfoList();
+  xmlrpc_value *v;
+  gchar *routine = "ObitXMLGetCallArg";
+
+  /* error checks */
+  if (err->error) return out;
+
+  /* Data comes packed into an array */
+  xmlrpc_decompose_value(envP, paramArrayP, "(S)", &v);
+
+  /* Convert v to the InfoList */
+  decodeInfoList (envP, (ObitXMLValue*)v, &out, err);
+  if (err->error) Obit_traceback_val (err, routine, routine, out);  
+  xmlrpc_DECREF(v);
+  XMLRPC_FAIL_IF_FAULT(envP);
+ 
+  /* Make sure everything is cool */
+ cleanup:
+  if (envP->fault_occurred) {
+    Obit_log_error(err, OBIT_Error, "%s:XML-RPC Fault: %s (%d)",
+		   routine, envP->fault_string, envP->fault_code);
+  }
+  
+  return out;
+} /* end ObitXMLGetCallArg */
+
+/**
+ * Give the XML Environment
+ * \param in    XML object
+ * \return pointer to XML Environment
+ */
+ObitXMLEnv ObitXMLGetEnv (ObitXML* in)
+{
+  return (ObitXMLEnv)in->envP;
+} /* end ObitXMLGetEnv */
+
+/**
+ * Give the XML Value
+ * \param in    XML object
+ * \return pointer to XML Value
+ */
+ObitXMLValue* ObitXMLGetValue (ObitXML* in)
+{
+  xmlrpc_INCREF(in->parmP);
+  return (ObitXMLValue*)in->parmP;
+} /* end ObitXMLGetValue */
+
+
+/**
  * Convert ping data to XML
  * Intended for RPC function "ping"
  * A ping call is just passed an arbitrary gint, use 42
@@ -154,7 +267,7 @@ ObitXMLPing2XML (ObitErr *err)
  * \param err     Obit Error message
  * \return the random gint
  */
-gint
+olong
 ObitXMLXML2Ping (ObitXML* xml, ObitErr *err)
 {
   xmlrpc_int32 out = -1;
@@ -196,7 +309,6 @@ ObitXMLInfoList2XML (ObitInfoList *list, ObitErr *err)
   gchar *routine = "ObitXMLInfoList2XML";
   
   /* error checks */
-  g_assert (ObitErrIsA(err));
   if (err->error) return out;
   g_assert (ObitInfoListIsA(list));
 
@@ -218,7 +330,7 @@ ObitXMLInfoList2XML (ObitInfoList *list, ObitErr *err)
   XMLRPC_FAIL_IF_FAULT(&out->envP);
 
   /* Extract from Obit Object and encode */
-  encodeInfoList (list, out, err);
+  encodeInfoList (list, (ObitXMLEnv*)&out->envP, (ObitXMLValue*)out->parmP, err);
   if (err->error) Obit_traceback_val (err, routine, out->name, out);  
 
     /* Make sure everything is cool */
@@ -261,14 +373,13 @@ ObitXMLXML2InfoList (ObitXML *xml, ObitErr *err)
   g_assert (ObitErrIsA(err));
   if (err->error) return out;
   g_assert (ObitXMLIsA(xml));
-  Obit_retval_if_fail((xml->type == OBIT_XML_InfoList), err, out,
+
+  /* Be sure xml->parmP a struct */
+  xmlType = xmlrpc_value_type (xml->parmP);
+  Obit_retval_if_fail(((xml->type == OBIT_XML_InfoList) || 
+		       (xml->type == OBIT_XML_RPCCallArg)), err, out,
 		      "%s: xml wrong type %d != %d", 
 		      routine, xml->type, OBIT_XML_InfoList);
-
-  /* Be sure out->parmP a struct */
-  xmlType = xmlrpc_value_type (xml->parmP);
-  Obit_retval_if_fail((xmlType==XMLRPC_TYPE_STRUCT), err, out,
-		      "%s: Input xml NOT a struct", routine);
   
   /* initial structure */
   out = newObitInfoList();
@@ -434,11 +545,12 @@ ObitXMLXMLInfo2List (ObitXML *xml, ObitErr *err)
   g_assert (ObitErrIsA(err));
   if (err->error) return out;
   g_assert (ObitXMLIsA(xml));
-  Obit_retval_if_fail((xml->type == OBIT_XML_InfoList), err, out,
+  Obit_retval_if_fail(((xml->type == OBIT_XML_InfoList) || 
+		       (xml->type == OBIT_XML_RPCCallArg)), err, out,
 		      "%s: xml wrong type %d != %d", 
 		      routine, xml->type, OBIT_XML_InfoList);
 
-  /* Be sure out->parmP a struct of correct type */
+  /* Be sure xml->parmP a struct of correct type */
   xmlType = xmlrpc_value_type (xml->parmP);
   if (xmlType==XMLRPC_TYPE_STRUCT) {
     if (xmlrpc_struct_has_key(&xml->envP,xml->parmP,"XMLType")) {
@@ -455,7 +567,7 @@ ObitXMLXMLInfo2List (ObitXML *xml, ObitErr *err)
  }
   
   /* Convert */
-  decodeInfoList (xml, &out, err);
+  decodeInfoList ((ObitXMLEnv*)&xml->envP, (ObitXMLValue*)xml->parmP, &out, err);
   if (err->error) Obit_traceback_val (err, routine, xml->name, out);  
 
     /* Make sure everything is cool */
@@ -909,7 +1021,7 @@ ObitXMLBlob2XML (gpointer blob, ObitInfoList *desc, ObitErr *err)
   xmlrpc_DECREF(v);
  
   /* Copy description */
-  encodeInfoList (desc, out, err);
+  encodeInfoList (desc, (ObitXMLEnv*)&out->envP, (ObitXMLValue*)out->parmP, err);
   if (err->error) Obit_traceback_val (err, routine, out->name, out);  
 
   /* get size of blob */
@@ -967,7 +1079,7 @@ ObitXMLXML2Blob (ObitXML *xml, ObitInfoList **desc, ObitErr *err)
   XMLRPC_FAIL_IF_FAULT(&xml->envP);
  
   /* Parse descriptive info */
-  decodeInfoList (xml, desc, err);
+  decodeInfoList ((ObitXMLEnv*)&xml->envP, (ObitXMLValue*)xml->parmP, desc, err);
   if (err->error) Obit_traceback_val (err, routine, xml->name, out); 
 
   /* How big is the blob */
@@ -1027,13 +1139,18 @@ ObitXMLReturn (gchar *name, gpointer parmP, ObitErr *err)
   /* initial structure */
   out = newObitXML(name);
   out->type  = OBIT_XML_Reply;
-  out->func  = g_strdup("nothing");
+  out->func  = g_strdup(routine);
   out->parmP = (xmlrpc_value*)parmP;
+  xmlrpc_INCREF(out->parmP);
 
   /* See if xml type in xml */
   /* Be sure out->parmP a struct of correct type */
   xmlType = xmlrpc_value_type (out->parmP);
   if (xmlType==XMLRPC_TYPE_STRUCT) {
+    if (xmlrpc_struct_has_key(&out->envP,out->parmP,"Result")) {
+      /* DEBUG */
+      out->type  = OBIT_XML_Reply;
+    }
     if (xmlrpc_struct_has_key(&out->envP,out->parmP,"XMLType")) {
       xmlrpc_decompose_value(&out->envP, out->parmP, "{s:i,*}",
 			     "XMLType", &XMLType);
@@ -1051,6 +1168,94 @@ ObitXMLReturn (gchar *name, gpointer parmP, ObitErr *err)
   
   return out;
 } /* end ObitXMLReturn */
+
+/**
+ * Create an ObitXML for the return value from an server RPC call
+ * \param list    Info list to be written as xml entry "Result"
+ * \param err     Obit Error message
+ * \return new ObitXML object
+ */
+ObitXML* 
+ObitXMLServerReturn (ObitInfoList *list, ObitErr *err)
+{
+  ObitXML  *out=NULL;
+  xmlrpc_value *v;
+  gchar *routine = "ObitXMLServerReturn";
+
+  /* error checks */
+  if (err->error) return out;
+  g_assert (ObitInfoListIsA(list));
+
+  /* initial structure */
+  out = newObitXML(routine);
+  out->type  = OBIT_XML_InfoList;
+  out->func  = g_strdup(routine);
+  out->parmP = xmlrpc_struct_new(&out->envP);
+
+  /* ObitXML type */
+  v = xmlrpc_build_value(&out->envP, "i", (xmlrpc_int32)OBIT_XML_InfoList);
+  xmlrpc_struct_set_value(&out->envP, out->parmP, "XMLType", v);
+  xmlrpc_DECREF(v);
+
+  /* Extract from Obit Object and encode */
+  v = xmlrpc_struct_new(&out->envP);
+  encodeInfoList (list, (ObitXMLEnv*)&out->envP, (ObitXMLValue*)v, err);
+  if (err->error) Obit_traceback_val (err, routine, out->name, out);  
+  
+  /* Add to out */
+  xmlrpc_struct_set_value(&out->envP, out->parmP, "Result", v);
+  xmlrpc_DECREF(v);
+
+  /* Make sure everything is cool */
+  if (out->envP.fault_occurred) {
+    Obit_log_error(err, OBIT_Error, "%s:XML-RPC Fault: %s (%d)",
+		   routine, out->envP.fault_string, out->envP.fault_code);
+  }
+  
+  return out;
+} /* end ObitXMLServerReturn */
+
+/**
+ * Extract InfoList from "Result" in XML object from ObitRPCCall
+ * This to be used on the client side to extract the returned data.
+ * \param xml   Object from which result to be extracted
+ * \param err   Obit Error message
+ * \return new  Info 
+ */
+ObitInfoList* 
+ObitXMLGetServerResult (ObitXML *xml,  ObitErr *err)
+{
+  ObitInfoList  *out=NULL;
+  xmlrpc_type xmlType;
+  gchar *routine = "ObitXMLGetServerResult";
+
+  /* error checks */
+  if (err->error) return out;
+  g_assert (ObitXMLIsA(xml));
+  
+    /* Be sure xml->parmP a struct */
+  xmlType = xmlrpc_value_type (xml->parmP);
+  Obit_retval_if_fail(((xml->type == OBIT_XML_InfoList) || 
+		       (xml->type == OBIT_XML_Reply)), err, out,
+		      "%s: xml wrong type %d != %d", 
+		      routine, xml->type, OBIT_XML_InfoList);
+  
+  /* initial structure */
+  out = newObitInfoList();
+
+  decodeInfoList (&xml->envP, xml->parmP, &out, err);
+  XMLRPC_FAIL_IF_FAULT(&xml->envP);
+  if (err->error) Obit_traceback_val (err, routine, xml->name, out); 
+
+  /* Make sure everything is cool */
+ cleanup:
+  if (xml->envP.fault_occurred) {
+    Obit_log_error(err, OBIT_Error, "%s:XML-RPC Fault: %s (%d)",
+		   routine, xml->envP.fault_string, xml->envP.fault_code);
+  }
+  
+  return out;
+} /* end ObitXMLGetServerResult */
 
 /**
  * Initialize global ClassInfo Structure.
@@ -1162,10 +1367,13 @@ void ObitXMLClear (gpointer inn)
  * Note: Can only translate structures with only data types
  * directly translatable into XML.
  * \param list    List to convert
- * \param xml     XML to add to
+ * \param envP    XML environment
+ * \param parmP   XML value
  * \param err     Obit Error message
  */
-static void encodeInfoList (ObitInfoList *list, ObitXML  *xml, ObitErr *err)
+static void encodeInfoList (ObitInfoList *list, 
+			    ObitXMLEnv *envP, ObitXMLValue *parmP,
+			    ObitErr *err)
 {
   gchar *nameP;
   ObitInfoType infoType;
@@ -1188,29 +1396,29 @@ static void encodeInfoList (ObitInfoList *list, ObitXML  *xml, ObitErr *err)
   if (err->error) return;
 
   /* number of entries */
-  v = xmlrpc_build_value(&xml->envP, "i", (xmlrpc_int32)list->number);
-  xmlrpc_struct_set_value(&xml->envP, xml->parmP, "number", v);
+  v = xmlrpc_build_value(envP, "i", (xmlrpc_int32)list->number);
+  xmlrpc_struct_set_value(envP, parmP, "number", v);
   xmlrpc_DECREF(v);
-  XMLRPC_FAIL_IF_FAULT(&xml->envP);
+  XMLRPC_FAIL_IF_FAULT(envP);
 
   /* Extract from Obit Object and encode */
   for (i=1; i<=list->number; i++) {
     if (ObitInfoListGetNumberP(list, (olong)i, &nameP, &infoType, dim, &data)) {
       /* Header for entry */
-      v = xmlrpc_build_value(&xml->envP, "{s:s,s:i,s:(iiiii)}", 
+      v = xmlrpc_build_value(envP, "{s:s,s:i,s:(iiiii)}", 
 			     "name",nameP,
 			     "type",(xmlrpc_int32)infoType,
 			     "dim",(xmlrpc_int32)dim[0],(xmlrpc_int32)dim[1],
 			     (xmlrpc_int32)dim[2],(xmlrpc_int32)dim[3], (xmlrpc_int32)dim[4]);
-      XMLRPC_FAIL_IF_FAULT(&xml->envP);
+      XMLRPC_FAIL_IF_FAULT(envP);
 
       /* How much data? */
       num = MAX (1, dim[0]);
       for (j=1; j<MAXINFOELEMDIM; j++) num *= MAX (1,dim[j]);
 
       /* create array to add */
-      d = xmlrpc_array_new(&xml->envP);
-      XMLRPC_FAIL_IF_FAULT(&xml->envP);
+      d = xmlrpc_array_new(envP);
+      XMLRPC_FAIL_IF_FAULT(envP);
 
       /* Add data by type */
       switch (infoType) { 
@@ -1220,32 +1428,32 @@ static void encodeInfoList (ObitInfoList *list, ObitXML  *xml, ObitErr *err)
       case OBIT_short:
 	shortP = (gshort*)data;
 	for (j=0; j<num; j++) {
-	  e = xmlrpc_build_value(&xml->envP, "i", (xmlrpc_int32)(*shortP++));
-	  xmlrpc_array_append_item (&xml->envP, d, e);
+	  e = xmlrpc_build_value(envP, "i", (xmlrpc_int32)(*shortP++));
+	  xmlrpc_array_append_item (envP, d, e);
 	  xmlrpc_DECREF(e);
 	}
 	break;
       case OBIT_int:
 	intP = (olong*)data;
 	for (j=0; j<num; j++) {
-	  e = xmlrpc_build_value(&xml->envP, "i", (xmlrpc_int32)(*intP++));
-	  xmlrpc_array_append_item (&xml->envP, d, e);
+	  e = xmlrpc_build_value(envP, "i", (xmlrpc_int32)(*intP++));
+	  xmlrpc_array_append_item (envP, d, e);
 	  xmlrpc_DECREF(e);
 	}
 	break;
       case OBIT_oint:
 	ointP = (oint*)data;
 	for (j=0; j<num; j++) {
-	  e = xmlrpc_build_value(&xml->envP, "i", (xmlrpc_int32)(*ointP++));
-	  xmlrpc_array_append_item (&xml->envP, d, e);
+	  e = xmlrpc_build_value(envP, "i", (xmlrpc_int32)(*ointP++));
+	  xmlrpc_array_append_item (envP, d, e);
 	  xmlrpc_DECREF(e);
 	}
 	break;
       case OBIT_long:
 	longP = (olong*)data;
 	for (j=0; j<num; j++) {
-	  e = xmlrpc_build_value(&xml->envP, "i", (xmlrpc_int32)(*longP++));
-	  xmlrpc_array_append_item (&xml->envP, d, e);
+	  e = xmlrpc_build_value(envP, "i", (xmlrpc_int32)(*longP++));
+	  xmlrpc_array_append_item (envP, d, e);
 	  xmlrpc_DECREF(e);
 	}
 	break;
@@ -1264,45 +1472,45 @@ static void encodeInfoList (ObitInfoList *list, ObitXML  *xml, ObitErr *err)
       case OBIT_float:
 	floatP = (ofloat*)data;
 	for (j=0; j<num; j++) {
-	  e = xmlrpc_build_value(&xml->envP, "d", (xmlrpc_double)(*floatP++));
-	  xmlrpc_array_append_item (&xml->envP, d, e);
+	  e = xmlrpc_build_value(envP, "d", (xmlrpc_double)(*floatP++));
+	  xmlrpc_array_append_item (envP, d, e);
 	  xmlrpc_DECREF(e);
 	}
 	break;
       case OBIT_double:
 	doubleP = (odouble*)data;
 	for (j=0; j<num; j++) {
-	  e = xmlrpc_build_value(&xml->envP, "d", (xmlrpc_double)(*doubleP++));
-	  xmlrpc_array_append_item (&xml->envP, d, e);
+	  e = xmlrpc_build_value(envP, "d", (xmlrpc_double)(*doubleP++));
+	  xmlrpc_array_append_item (envP, d, e);
 	  xmlrpc_DECREF(e);
 	}
 	break;
       case OBIT_complex:
 	floatP = (ofloat*)data;
 	for (j=0; j<num*2-1; j++) {
-	  e = xmlrpc_build_value(&xml->envP, "d", (xmlrpc_double)(*floatP++));
-	  xmlrpc_array_append_item (&xml->envP, d, e);
+	  e = xmlrpc_build_value(envP, "d", (xmlrpc_double)(*floatP++));
+	  xmlrpc_array_append_item (envP, d, e);
 	  xmlrpc_DECREF(e);
 	}
 	break;
       case OBIT_dcomplex:
 	doubleP = (odouble*)data;
 	for (j=0; j<num*2-1; j++) {
-	  e = xmlrpc_build_value(&xml->envP, "d", (xmlrpc_double)(*doubleP++));
-	  xmlrpc_array_append_item (&xml->envP, d, e);
+	  e = xmlrpc_build_value(envP, "d", (xmlrpc_double)(*doubleP++));
+	  xmlrpc_array_append_item (envP, d, e);
 	  xmlrpc_DECREF(e);
 	}
 	break;
       case OBIT_string:
-	e = xmlrpc_build_value(&xml->envP, "s#", (char*)data, num);
-	xmlrpc_array_append_item (&xml->envP, d, e);
+	e = xmlrpc_build_value(envP, "s#", (char*)data, num);
+	xmlrpc_array_append_item (envP, d, e);
 	xmlrpc_DECREF(e);
 	break;
       case OBIT_bool:
 	booleanP = (gboolean*)data;
 	for (j=0; j<num; j++) {
-	  e = xmlrpc_build_value(&xml->envP, "b", (xmlrpc_bool)(*booleanP++));
-	  xmlrpc_array_append_item (&xml->envP, d, e);
+	  e = xmlrpc_build_value(envP, "b", (xmlrpc_bool)(*booleanP++));
+	  xmlrpc_array_append_item (envP, d, e);
 	  xmlrpc_DECREF(e);
 	}
 	break;
@@ -1311,18 +1519,18 @@ static void encodeInfoList (ObitInfoList *list, ObitXML  *xml, ObitErr *err)
       default:
 	g_assert_not_reached(); /* unknown, barf */
       }; /* end switch  */
-      XMLRPC_FAIL_IF_FAULT(&xml->envP);
+      XMLRPC_FAIL_IF_FAULT(envP);
 
       /* Add data */
-      xmlrpc_struct_set_value(&xml->envP, v, "data", d);
+      xmlrpc_struct_set_value(envP, v, "data", d);
       xmlrpc_DECREF(d);
-      XMLRPC_FAIL_IF_FAULT(&xml->envP);
+      XMLRPC_FAIL_IF_FAULT(envP);
 
       /* Add entry to output */
       sprintf (bname, "entry%4.4d", i);
-      xmlrpc_struct_set_value(&xml->envP, xml->parmP, bname, v);
+      xmlrpc_struct_set_value(envP, parmP, bname, v);
       xmlrpc_DECREF(v);
-      XMLRPC_FAIL_IF_FAULT(&xml->envP);
+      XMLRPC_FAIL_IF_FAULT(envP);
     } /* end if found */
 
     /* Unsupported data type? */
@@ -1334,9 +1542,9 @@ static void encodeInfoList (ObitInfoList *list, ObitXML  *xml, ObitErr *err)
   
   /* Make sure everything is cool */
   cleanup:
-  if (xml->envP.fault_occurred) {
+  if (envP->fault_occurred) {
     Obit_log_error(err, OBIT_Error, "%s:XML-RPC Fault: %s (%d)",
-		   routine, xml->envP.fault_string, xml->envP.fault_code);
+		   routine, envP->fault_string, envP->fault_code);
   }
   
   
@@ -1344,11 +1552,13 @@ static void encodeInfoList (ObitInfoList *list, ObitXML  *xml, ObitErr *err)
 
 /**
  * Low level convert XML to ObitInfoList
- * \param xml     XML to parse
- * \param out     [out]List to accept values
+ * \param envP    XML environment
+ * \param parmP   XML value
+ * \param out     [out]List to accept values (created here)
  * \param err     Obit Error message
  */
-static void decodeInfoList (ObitXML  *xml, ObitInfoList **out, ObitErr *err)
+static void decodeInfoList (ObitXMLEnv *envP, ObitXMLValue *parmP, 
+			    ObitInfoList **out, ObitErr *err)
 {
   gchar *name;
   ObitInfoType infoType;
@@ -1376,10 +1586,10 @@ static void decodeInfoList (ObitXML  *xml, ObitInfoList **out, ObitErr *err)
 
   /* How many entries? All may not be from an InfoList */
   number = 0;
-  if (xmlrpc_struct_has_key(&xml->envP,xml->parmP,"number")) {
-    xmlrpc_decompose_value(&xml->envP, xml->parmP, "{s:i,*}",
+  if (xmlrpc_struct_has_key(envP,parmP,"number")) {
+    xmlrpc_decompose_value(envP, parmP, "{s:i,*}",
 			   "number", &i32temp);
-    XMLRPC_FAIL_IF_FAULT(&xml->envP);
+    XMLRPC_FAIL_IF_FAULT(envP);
     number = i32temp;
    }
 
@@ -1389,18 +1599,18 @@ static void decodeInfoList (ObitXML  *xml, ObitInfoList **out, ObitErr *err)
   /* Extract from XML Object and copy to InfoList */
   for (i=1; i<=number; i++) {
     sprintf (bname, "entry%4.4d", i);
-    indx = xmlrpc_struct_has_key(&xml->envP,xml->parmP,bname);
+    indx = xmlrpc_struct_has_key(envP,parmP,bname);
     if (indx!=-1) { /* it exists */
-      xmlrpc_struct_find_value (&xml->envP, xml->parmP, bname, &v);
-      XMLRPC_FAIL_IF_FAULT(&xml->envP);
+      xmlrpc_struct_find_value (envP, parmP, bname, &v);
+      XMLRPC_FAIL_IF_FAULT(envP);
       /* xmlrpc_struct_has_key may lie */
       if (v) {
 	/* Header */
-	xmlrpc_decompose_value(&xml->envP, v, "{s:s,s:i,s:(iiiii),*}", 
+	xmlrpc_decompose_value(envP, v, "{s:s,s:i,s:(iiiii),*}", 
 			       "name", &xmlChar,
 			       "type", &i32infoType,
 			       "dim", &i32dim[0],&i32dim[1],&i32dim[2],&i32dim[3],&i32dim[4]);
-	XMLRPC_FAIL_IF_FAULT(&xml->envP);
+	XMLRPC_FAIL_IF_FAULT(envP);
 	name = (gchar*)xmlChar;
 	infoType = (ObitInfoType)i32infoType;
 	dim[0] = (olong)i32dim[0]; dim[1] = (olong)i32dim[1]; dim[2] = (olong)i32dim[2]; 
@@ -1411,7 +1621,7 @@ static void decodeInfoList (ObitXML  *xml, ObitInfoList **out, ObitErr *err)
 	for (j=1; j<MAXINFOELEMDIM; j++) num *= MAX (1,dim[j]);
 
 	/* Get data array */
-	xmlrpc_struct_find_value (&xml->envP, v, "data", &d);
+	xmlrpc_struct_find_value (envP, v, "data", &d);
 	
 	/* Get data by type */
 	switch (infoType) { 
@@ -1422,10 +1632,10 @@ static void decodeInfoList (ObitXML  *xml, ObitInfoList **out, ObitErr *err)
 	  data = g_malloc (num*sizeof(gshort));
 	  shortP = (gshort*)data;
 	  for (j=0; j<num; j++) {
-	    e = xmlrpc_array_get_item(&xml->envP, d, (int)j);
-	    XMLRPC_FAIL_IF_FAULT(&xml->envP);
-	    xmlrpc_read_int (&xml->envP, e, &i32temp);
-	    XMLRPC_FAIL_IF_FAULT(&xml->envP);
+	    e = xmlrpc_array_get_item(envP, d, (int)j);
+	    XMLRPC_FAIL_IF_FAULT(envP);
+	    xmlrpc_read_int (envP, e, &i32temp);
+	    XMLRPC_FAIL_IF_FAULT(envP);
 	    (*shortP++) = (gshort)i32temp;
 	    xmlrpc_DECREF(e);
 	  }
@@ -1434,10 +1644,10 @@ static void decodeInfoList (ObitXML  *xml, ObitInfoList **out, ObitErr *err)
 	  data = g_malloc (num*sizeof(olong));
 	  intP = (olong*)data;
 	  for (j=0; j<num; j++) {
-	    e = xmlrpc_array_get_item(&xml->envP, d, (int)j);
-	    XMLRPC_FAIL_IF_FAULT(&xml->envP);
-	    xmlrpc_read_int (&xml->envP, e, &i32temp);
-	    XMLRPC_FAIL_IF_FAULT(&xml->envP);
+	    e = xmlrpc_array_get_item(envP, d, (int)j);
+	    XMLRPC_FAIL_IF_FAULT(envP);
+	    xmlrpc_read_int (envP, e, &i32temp);
+	    XMLRPC_FAIL_IF_FAULT(envP);
 	    (*intP++) = (olong)i32temp;
 	    xmlrpc_DECREF(e);
 	  }
@@ -1446,10 +1656,10 @@ static void decodeInfoList (ObitXML  *xml, ObitInfoList **out, ObitErr *err)
 	  data = g_malloc (num*sizeof(oint));
 	  ointP = (oint*)data;
 	  for (j=0; j<num; j++) {
-	    e = xmlrpc_array_get_item(&xml->envP, d, (int)j);
-	    XMLRPC_FAIL_IF_FAULT(&xml->envP);
-	    xmlrpc_read_int (&xml->envP, e, &i32temp);
-	    XMLRPC_FAIL_IF_FAULT(&xml->envP);
+	    e = xmlrpc_array_get_item(envP, d, (int)j);
+	    XMLRPC_FAIL_IF_FAULT(envP);
+	    xmlrpc_read_int (envP, e, &i32temp);
+	    XMLRPC_FAIL_IF_FAULT(envP);
 	    (*ointP++) = (olong)i32temp;
 	    xmlrpc_DECREF(e);
 	  }
@@ -1458,10 +1668,10 @@ static void decodeInfoList (ObitXML  *xml, ObitInfoList **out, ObitErr *err)
 	  data = g_malloc (num*sizeof(olong));
 	  longP = (olong*)data;
 	  for (j=0; j<num; j++) {
-	    e = xmlrpc_array_get_item(&xml->envP, d, (int)j);
-	    XMLRPC_FAIL_IF_FAULT(&xml->envP);
-	    xmlrpc_read_int (&xml->envP, e, &i32temp);
-	    XMLRPC_FAIL_IF_FAULT(&xml->envP);
+	    e = xmlrpc_array_get_item(envP, d, (int)j);
+	    XMLRPC_FAIL_IF_FAULT(envP);
+	    xmlrpc_read_int (envP, e, &i32temp);
+	    XMLRPC_FAIL_IF_FAULT(envP);
 	    (*longP++) = (olong)i32temp;
 	    xmlrpc_DECREF(e);
 	  }
@@ -1482,10 +1692,10 @@ static void decodeInfoList (ObitXML  *xml, ObitInfoList **out, ObitErr *err)
 	  data = g_malloc (num*sizeof(ofloat));
 	  floatP = (ofloat*)data;
 	  for (j=0; j<num; j++) {
-	    e = xmlrpc_array_get_item(&xml->envP, d, (int)j);
-	    XMLRPC_FAIL_IF_FAULT(&xml->envP);
-	    xmlrpc_read_double (&xml->envP, e, &xmlDouble);
-	    XMLRPC_FAIL_IF_FAULT(&xml->envP);
+	    e = xmlrpc_array_get_item(envP, d, (int)j);
+	    XMLRPC_FAIL_IF_FAULT(envP);
+	    xmlrpc_read_double (envP, e, &xmlDouble);
+	    XMLRPC_FAIL_IF_FAULT(envP);
 	    (*floatP++) = (ofloat)xmlDouble;
 	    xmlrpc_DECREF(e);
 	  }
@@ -1494,10 +1704,10 @@ static void decodeInfoList (ObitXML  *xml, ObitInfoList **out, ObitErr *err)
 	  data = g_malloc (num*sizeof(odouble));
 	  doubleP = (odouble*)data;
 	  for (j=0; j<num; j++) {
-	    e = xmlrpc_array_get_item(&xml->envP, d, (int)j);
-	    XMLRPC_FAIL_IF_FAULT(&xml->envP);
-	    xmlrpc_read_double (&xml->envP, e, &xmlDouble);
-	    XMLRPC_FAIL_IF_FAULT(&xml->envP);
+	    e = xmlrpc_array_get_item(envP, d, (int)j);
+	    XMLRPC_FAIL_IF_FAULT(envP);
+	    xmlrpc_read_double (envP, e, &xmlDouble);
+	    XMLRPC_FAIL_IF_FAULT(envP);
 	    (*doubleP++) = (odouble)xmlDouble;
 	    xmlrpc_DECREF(e);
 	  }
@@ -1506,10 +1716,10 @@ static void decodeInfoList (ObitXML  *xml, ObitInfoList **out, ObitErr *err)
 	  data = g_malloc (2*num*sizeof(ofloat));
 	  floatP = (ofloat*)data;
 	  for (j=0; j<num*2-1; j++) {
-	    e = xmlrpc_array_get_item(&xml->envP, d, (int)j);
-	    XMLRPC_FAIL_IF_FAULT(&xml->envP);
-	    xmlrpc_read_double (&xml->envP, e, &xmlDouble);
-	    XMLRPC_FAIL_IF_FAULT(&xml->envP);
+	    e = xmlrpc_array_get_item(envP, d, (int)j);
+	    XMLRPC_FAIL_IF_FAULT(envP);
+	    xmlrpc_read_double (envP, e, &xmlDouble);
+	    XMLRPC_FAIL_IF_FAULT(envP);
 	    (*floatP++) = (ofloat)xmlDouble;
 	    xmlrpc_DECREF(e);
 	  }
@@ -1518,10 +1728,10 @@ static void decodeInfoList (ObitXML  *xml, ObitInfoList **out, ObitErr *err)
 	  data = g_malloc (2*num*sizeof(ofloat));
 	  doubleP = (odouble*)data;
 	  for (j=0; j<num*2-1; j++) {
-	    e = xmlrpc_array_get_item(&xml->envP, d, (int)j);
-	    XMLRPC_FAIL_IF_FAULT(&xml->envP);
-	    xmlrpc_read_double (&xml->envP, e, &xmlDouble);
-	    XMLRPC_FAIL_IF_FAULT(&xml->envP);
+	    e = xmlrpc_array_get_item(envP, d, (int)j);
+	    XMLRPC_FAIL_IF_FAULT(envP);
+	    xmlrpc_read_double (envP, e, &xmlDouble);
+	    XMLRPC_FAIL_IF_FAULT(envP);
 	    (*doubleP++) = (odouble)xmlDouble;
 	    xmlrpc_DECREF(e);
 	  }
@@ -1529,20 +1739,20 @@ static void decodeInfoList (ObitXML  *xml, ObitInfoList **out, ObitErr *err)
 	case OBIT_string:
 	  data = g_malloc (num*sizeof(gchar)+3);
 	  /* all one big happy string */
-	  e = xmlrpc_array_get_item(&xml->envP, d, (int)0);
-	  xmlrpc_read_string (&xml->envP, e, &xmlChar);
+	  e = xmlrpc_array_get_item(envP, d, (int)0);
+	  xmlrpc_read_string (envP, e, &xmlChar);
 	  strncpy ((char*)data, xmlChar, num);
-	  XMLRPC_FAIL_IF_FAULT(&xml->envP);
+	  XMLRPC_FAIL_IF_FAULT(envP);
 	  xmlrpc_DECREF(e);
 	  break;
 	case OBIT_bool:
 	  data = g_malloc (num*sizeof(gboolean));
 	  booleanP = (gboolean*)data;
 	  for (j=0; j<num; j++) {
-	    e = xmlrpc_array_get_item(&xml->envP, d, (int)j);
-	    XMLRPC_FAIL_IF_FAULT(&xml->envP);
-	    xmlrpc_read_bool (&xml->envP, e, &xmlBool);
-	    XMLRPC_FAIL_IF_FAULT(&xml->envP);
+	    e = xmlrpc_array_get_item(envP, d, (int)j);
+	    XMLRPC_FAIL_IF_FAULT(envP);
+	    xmlrpc_read_bool (envP, e, &xmlBool);
+	    XMLRPC_FAIL_IF_FAULT(envP);
 	    (*booleanP++) = (olong)xmlBool;
 	    xmlrpc_DECREF(e);
 	  }
@@ -1553,7 +1763,7 @@ static void decodeInfoList (ObitXML  *xml, ObitInfoList **out, ObitErr *err)
 	default:
 	  g_assert_not_reached(); /* unknown, barf */
 	}; /* end switch  */
-	XMLRPC_FAIL_IF_FAULT(&xml->envP);
+	XMLRPC_FAIL_IF_FAULT(envP);
 	
 	/* Unsupported data type? */
 	Obit_return_if_fail((!badType), err,
@@ -1572,9 +1782,9 @@ static void decodeInfoList (ObitXML  *xml, ObitInfoList **out, ObitErr *err)
     
   /* Make sure everything is cool */
  cleanup:
-  if (xml->envP.fault_occurred) {
+  if (envP->fault_occurred) {
     Obit_log_error(err, OBIT_Error, "%s:XML-RPC Fault: %s (%d)",
-		   routine, xml->envP.fault_string, xml->envP.fault_code);
+		   routine, envP->fault_string, envP->fault_code);
   }
   
 } /*  end decodeInfoList */

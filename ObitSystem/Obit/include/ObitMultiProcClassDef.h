@@ -1,6 +1,6 @@
-/* $Id$  */
+/* $Id:  $  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005,2008                                          */
+/*;  Copyright (C) 2008                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -17,24 +17,26 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*; Correspondence about this software should be addressed as follows:*/
+/*;Correspondence about this software should be addressed as follows: */
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitRPC ClassInfo structure */
+/*  Define the basic components of the ObitMultiProc ClassInfo structure*/
 /* This is intended to be included in a classInfo structure definition  */
 /* and to be used as the template for generating new classes derived    */
-/* from Obit.                                                           */
 #include "ObitClassDef.h"  /* Parent class ClassInfo definition file */
-/** Function pointer to Client Constructor. */
-ObitRPCCreateClientFP ObitRPCCreateClient;
-/** Function pointer to Server Constructor. */
-ObitRPCCreateServerFP ObitRPCCreateServer;
-/** Total number of active clients (1 allowed) */
-olong numberClient;
-/** Total number of active servers (1 allowed) */
-olong numberServer;
-
+/** Function pointer to Constructor. */
+ObitMultiProcCreateFP ObitMultiProcCreate;
+/** Are multiple asynchronous processes allowed? */
+gboolean haveAsynchProc;
+/** Number of asynchronous processes running FuncContainer */
+olong nProcessor;
+/** URLs of asynchronous processes running FuncContainer */
+gchar **URL;
+/** Threads in which asynchronous processes are running */
+ObitThread **ASThreads;
+/** Command lines starting process */
+gchar **cmd_lines;

@@ -461,7 +461,6 @@ void ObitThreadPoolInit (ObitThread* in, olong nthreads,
 {
 #ifdef OBIT_THREADS_ENABLED
   in->pool  = g_thread_pool_new ((GFunc)func, args, nthreads, FALSE, NULL);
-  /*in->pool  = g_thread_pool_new ((GFunc)func, args, -1, FALSE, NULL);*/
   in->queue = g_async_queue_new ();
 #endif  /* OBIT_THREADS_ENABLED */
 } /* end ObitThreadPoolInit */
@@ -540,7 +539,6 @@ gboolean ObitThreadIterator (ObitThread* in, olong nthreads,
   return out;
 } /* end ObitThreadIterator */
 
-
 /** 
  * Indicates that a thread function is done by sending a message to the 
  * asynchronous queue on in
@@ -570,3 +568,74 @@ void ObitThreadPoolFree (ObitThread* in)
   in->queue = NULL;
 #endif  /* OBIT_THREADS_ENABLED */
 } /* end ObitThreadPoolFree */
+
+/** 
+ * Waits for single thread 
+ * Noop unless compiled with OBIT_THREADS_ENABLED
+ * \param in        Pointer to Thread object
+ * \param func      Function to call to start thread
+ * \param arg       Function argument pointer
+ */
+void ObitThreadStart1 (ObitThread* in, ObitThreadFunc func, gpointer args)
+{
+#ifdef OBIT_THREADS_ENABLED
+  in->singleThread = (GThread*)g_thread_create ((GThreadFunc)func, args, TRUE, NULL);
+#endif  /* OBIT_THREADS_ENABLED */
+} /* end ObitThreadStart1 */
+
+/** 
+ * Waits for single thread 
+ * Noop unless compiled with OBIT_THREADS_ENABLED
+ * \param in        Pointer to Thread object
+ * \return pointer to object returned by function
+ */
+gpointer ObitThreadJoin1 (ObitThread* in)
+{
+#ifdef OBIT_THREADS_ENABLED
+  return g_thread_join(in->singleThread);
+#endif  /* OBIT_THREADS_ENABLED */
+} /* end ObitThreadJoin1 */
+
+/** 
+ * Initializes Thread asynchronous queue
+ * Noop unless compiled with OBIT_THREADS_ENABLED
+ * \param in        Pointer to Thread object
+*/
+void ObitThreadQueueInit (ObitThread* in)
+{
+#ifdef OBIT_THREADS_ENABLED
+  in->queue = g_async_queue_new ();
+#endif  /* OBIT_THREADS_ENABLED */
+} /* end ObitThreadQueueInit */
+
+/** 
+ * Check for messages in queue
+ * Noop unless compiled with OBIT_THREADS_ENABLED
+ * \param in        Pointer to Thread object
+ * \param add_time  timeout in  microseconds, <= -> forever
+ */
+gpointer ObitThreadQueueCheck (ObitThread* in, olong add_time)
+{
+#ifdef OBIT_THREADS_ENABLED
+  GTimeVal end_time;
+  
+  g_get_current_time (&end_time);
+  g_time_val_add (&end_time, add_time);
+  if (add_time>0) return g_async_queue_timed_pop (in->queue, &end_time); 
+  else return g_async_queue_pop (in->queue);
+#endif  /* OBIT_THREADS_ENABLED */
+} /* end ObitThreadQueueInit */
+
+/** 
+ * Shuts down asynchronous queue on in
+ * Noop unless compiled with OBIT_THREADS_ENABLED
+ * \param in        Pointer to Thread object
+ */
+void ObitThreadQueueFree (ObitThread* in)
+{
+#ifdef OBIT_THREADS_ENABLED
+  if (in->queue) g_async_queue_unref (in->queue);
+  in->queue = NULL;
+#endif  /* OBIT_THREADS_ENABLED */
+} /* end ObitThreadQueueFree */
+

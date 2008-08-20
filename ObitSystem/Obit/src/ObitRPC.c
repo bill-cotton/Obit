@@ -49,7 +49,6 @@ static ObitRPCClassInfo myClassInfo = {FALSE};
 
 /*--------------- File Global Variables  ----------------*/
 
-
 /*---------------Private function prototypes----------------*/
 /** Private: Initialize newly instantiated object. */
 void  ObitRPCInit  (gpointer in);
@@ -60,6 +59,14 @@ void  ObitRPCClear (gpointer in);
 /** Private: Set Class function pointers. */
 static void ObitRPCClassInfoDefFn (gpointer inClass);
 
+static void 
+die_if_fault_occurred (xmlrpc_env * const envP) {
+    if (envP->fault_occurred) {
+        fprintf(stderr, "Something failed. %s (XML-RPC fault code %d)\n",
+                envP->fault_string, envP->fault_code);
+        exit(1);
+    }
+}
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -116,9 +123,9 @@ ObitRPC* ObitRPCCreateClient (gchar* name, ObitErr *err)
   /* Only initialize actual client once - there is only one
    probably need locking for multi threaded operation */
   if (myClassInfo.numberClient<1) {
-    /* Start up our XML-RPC client library. */
+    /* Start up our XML-RPC client library.
     xmlrpc_client_init(XMLRPC_CLIENT_NO_FLAGS, "Obit XML client", 
-		       VERSION);
+		       VERSION);  done in ClassInit */
     
   }
   
@@ -166,7 +173,7 @@ ObitRPC* ObitRPCCreateServer (gchar* name, ObitErr *err)
 } /* end ObitRPCCreateServer */
 
 /**
- * Make remote procedure call
+ * Make synchronous remote procedure call
  * Return value from RPC Call expects an xml struct with up to 3 parts:
  * \li "Status", 
  *       "code" an integer code (0=OK) 
@@ -227,6 +234,7 @@ ObitXML* ObitRPCCall (ObitRPC* client, gchar *serverURL, ObitXML* arg,
  
   /* Construct return object */
   out = ObitXMLReturn (arg->func, tempP, err);
+  xmlrpc_DECREF(tempP);
 
   /* Get status if requested */
   if (status) {
@@ -234,6 +242,7 @@ ObitXML* ObitRPCCall (ObitRPC* client, gchar *serverURL, ObitXML* arg,
       xmlrpc_struct_find_value (&client->envP, returnP, "Status", &tempP);
       XMLRPC_FAIL_IF_FAULT(&client->envP);
       tempXML = ObitXMLReturn (arg->func, tempP, err);
+      xmlrpc_DECREF(tempP);
       tempXML->type = OBIT_XML_InfoList;
       *status = ObitXMLXML2InfoList (tempXML, err);
       tempXML = ObitXMLUnref(tempXML);
@@ -247,6 +256,7 @@ ObitXML* ObitRPCCall (ObitRPC* client, gchar *serverURL, ObitXML* arg,
       xmlrpc_struct_find_value (&client->envP, returnP, "Request", &tempP);
       XMLRPC_FAIL_IF_FAULT(&client->envP);
       tempXML = ObitXMLReturn (arg->func, tempP, err);
+      xmlrpc_DECREF(tempP);
       tempXML->type = OBIT_XML_InfoList;
       *request = ObitXMLXMLInfo2List (tempXML, err);
       tempXML = ObitXMLUnref(tempXML);
@@ -265,6 +275,147 @@ ObitXML* ObitRPCCall (ObitRPC* client, gchar *serverURL, ObitXML* arg,
 
   return out;
 } /* end ObitRPCCall */
+
+/**
+ * Make asynchronous remote procedure call request
+ * Request is aynchronously sent; the reply will be to callback
+ * \param client     Client ObitRPC
+ * \param serverURL  URL of service, e.g. "http://localhost:8765/RPC2"
+ * \param arg        Argument of call (includes method name )
+ * \param callback   Callback function
+ * typedef void (*xmlrpc_response_handler) (const char *server_url,
+ *                                          const char *method_name,
+ *                                          xmlrpc_value *param_array,
+ *                                          void *user_data,
+ *                                          xmlrpc_env *fault,
+ *                                          xmlrpc_value *result);
+ * \param user_data  Pointer to be passed to Callback with result
+ * \param err        Obit Error message
+ * \return XML object returned, NULL on communications failure,
+ *            even if this is defined the function may have failed.
+ */
+void ObitRPCCallSnd (ObitRPC* client, gchar *serverURL, ObitXML* arg, 
+		     ObitRPC_response_handler callback, gpointer user_data,
+		     ObitErr *err)
+{
+  gchar *routine = "ObitRPCCallSnd";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  Obit_return_if_fail((client->type==OBIT_RPC_Client), 
+		      err, "%s: RPC NOT a client", routine);
+  XMLRPC_FAIL_IF_FAULT(&client->envP);
+
+  /* Make asynchronous call */
+  xmlrpc_client_call_asynch (serverURL, arg->func, callback, user_data,
+    "(V)", arg->parmP);
+
+cleanup:
+  if (client->envP.fault_occurred) {
+    Obit_log_error(err, OBIT_StrongError, "XML-RPC Fault: %s (%d)",
+		   client->envP.fault_string, client->envP.fault_code);
+  } 
+} /* end ObitRPCCallSnd */
+
+/**
+ * Process response from asynchronous call
+ * Also kills xmlrpc_client_event_loop
+ * Return value from RPC Call expects an xml struct with up to 3 parts:
+ * \li "Status", 
+ *       "code" an integer code (0=OK) 
+ *       "reason" a status string
+ * \li "Result" any result, depends on call
+ * \li "Request", a request to the client
+ *       "code" obitRPCRequestType
+ *        parameters as needed for request
+ * \param client     Client ObitRPC
+ * \param result     Response from callback as gpointer
+ * \param status     [out] if non NULL, Status in form of Info list, 
+ *                   entries "code", "reason"
+ *                   Should be Unrefed when done
+ * \param request    [out] if non NULL, Any in form of Info list, 
+ *                   entries "code", and case dependent parameters.
+ *                   Returns NULL if no request
+ *                   Should be Unrefed when done
+ * \param err        Obit Error message
+ * \return XML object returned, NULL on communications failure,
+ *            even if this is defined the function may have failed.
+ */
+ObitXML* ObitRPCCallRcv (ObitRPC* client, ObitXMLValue *result, 
+			 ObitInfoList **status, ObitInfoList **request,
+			 ObitErr *err)
+{
+  ObitXML* out=NULL, *tempXML=NULL;
+  xmlrpc_value *returnP=NULL, *tempP;
+  xmlrpc_type xmlType;
+  gchar *routine = "ObitRPCCallRcv";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return out;
+
+  returnP = (xmlrpc_value*)result;
+  
+  /* Make sure it worked */
+  Obit_retval_if_fail((!client->envP.fault_occurred && (returnP!=NULL)),
+		      err, out, "%s: XML-RPC Fault: %s (%d)",
+		      routine, client->envP.fault_string, 
+		      client->envP.fault_code);
+
+  /* Get returned result - better be a struc with key "Result" */
+  xmlType = xmlrpc_value_type (returnP);
+  Obit_retval_if_fail((xmlType==XMLRPC_TYPE_STRUCT),
+		      err, out, "%s: return NOT a struct", routine);
+  Obit_retval_if_fail((xmlrpc_struct_has_key(&client->envP, returnP, "Result")),
+		      err, out, "%s: return has no Result member", routine);
+
+  xmlrpc_struct_find_value (&client->envP, returnP, "Result", &tempP);
+  XMLRPC_FAIL_IF_FAULT(&client->envP);
+ 
+  /* Construct return object */
+  out = ObitXMLReturn ("XMLReturn", tempP, err);
+  xmlrpc_DECREF(tempP);
+
+  /* Get status if requested */
+  if (status) {
+    if (xmlrpc_struct_has_key(&client->envP, returnP, "Status")) {
+      xmlrpc_struct_find_value (&client->envP, returnP, "Status", &tempP);
+      XMLRPC_FAIL_IF_FAULT(&client->envP);
+      tempXML = ObitXMLReturn ("XMLReturn", tempP, err);
+      xmlrpc_DECREF(tempP);
+      tempXML->type = OBIT_XML_InfoList;
+      *status = ObitXMLXML2InfoList (tempXML, err);
+      tempXML = ObitXMLUnref(tempXML);
+    }
+    if (err->error) Obit_traceback_val (err, routine, "Get status", out);  
+  } /* end get status */
+
+  /* Get request if requested - should be an InfoList on the other end */
+  if (request) {
+    if (xmlrpc_struct_has_key(&client->envP, returnP, "Request")) {
+      xmlrpc_struct_find_value (&client->envP, returnP, "Request", &tempP);
+      XMLRPC_FAIL_IF_FAULT(&client->envP);
+      tempXML = ObitXMLReturn ("XMLReturn", tempP, err);
+      xmlrpc_DECREF(tempP);
+      tempXML->type = OBIT_XML_InfoList;
+      *request = ObitXMLXMLInfo2List (tempXML, err);
+      tempXML = ObitXMLUnref(tempXML);
+    }
+  } /* end get request */
+
+
+  /* Make sure everything is cool */
+  cleanup:
+  if (client->envP.fault_occurred) {
+    Obit_log_error(err, OBIT_StrongError, "XML-RPC Fault: %s (%d)",
+		   client->envP.fault_string, client->envP.fault_code);
+  } else {
+    xmlrpc_DECREF(returnP);
+  }
+
+  return out;
+} /* end ObitRPCCallRcv */
 
 /**
  * Adds method callback to server
@@ -319,11 +470,27 @@ void  ObitRPCServerLoop (ObitRPC* server, olong port, gchar *log_file)
   
 } /* end ObitRPCServerLoop */
 
+/** 
+ * Run client async event loop
+ * \param timeout  timeout in  microseconds, <= -> forever
+ */
+void  ObitRPCClientAsyncLoop (olong timeout)
+{
+  unsigned long RPCtimeout = (unsigned long)timeout;
+  
+  if (timeout>0) xmlrpc_client_event_loop_finish_asynch_timeout(RPCtimeout); 
+  else xmlrpc_client_event_loop_finish_asynch();
+} /* end ObitRPCClientAsyncLoop */
+
+
+
 /**
  * Initialize global ClassInfo Structure.
  */
 void ObitRPCClassInit (void)
 {
+  xmlrpc_env env;
+
   if (myClassInfo.initialized) return;  /* only once */
   
   /* Set name and parent for this class */
@@ -334,7 +501,16 @@ void ObitRPCClassInit (void)
   ObitRPCClassInfoDefFn ((gpointer)&myClassInfo);
  
   myClassInfo.initialized = TRUE; /* Now initialized */
- 
+
+  /* Initialize our error environment variable */
+  xmlrpc_env_init(&env);
+
+  /* Init global xmlrpc client stuff -
+     Required before any use of Xmlrpc-c client library: */
+  xmlrpc_client_init2(&env, XMLRPC_CLIENT_NO_FLAGS, 
+		     "Obit", "0.0", NULL, 0);
+  die_if_fault_occurred(&env);
+  
 } /* end ObitRPCClassInit */
 
 /**

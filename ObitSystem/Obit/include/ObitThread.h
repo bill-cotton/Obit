@@ -76,6 +76,8 @@ typedef struct {
 #ifdef OBIT_THREADS_ENABLED
   /** Pool of threads */
   GThreadPool *pool;
+  /** Single thread */
+  GThread *singleThread;
   /** Asynchronous message queue */
   GAsyncQueue *queue;
   /** Mutex to lock object */
@@ -161,13 +163,28 @@ void ObitThreadPoolInit (ObitThread* in, olong nthreads,
 
 /** Public: Runs multiple copies of a function in different threads */
 gboolean ObitThreadIterator (ObitThread* in, olong nthreads,
-			     ObitThreadFunc func, gpointer **args);
+			     ObitThreadFunc func, gpointer **arg);
 
 /** Public: Indicates that a thread function is done */
 void ObitThreadPoolDone (ObitThread* in, gpointer arg);
 
 /** Public: Shuts down Thread Pool */
 void ObitThreadPoolFree (ObitThread* in);
+
+/** Public: Starts single thread */
+void ObitThreadStart1 (ObitThread* in, ObitThreadFunc func, gpointer args);
+
+/** Public: Waits for single thread */
+gpointer ObitThreadJoin1 (ObitThread* in);
+
+/** Public: Initializes Thread message queue */
+void ObitThreadQueueInit (ObitThread* in);
+
+/** Public: Check for messages in queue */
+gpointer ObitThreadQueueCheck (ObitThread* in, olong add_time);
+
+/** Public: Shuts down message queue */
+void ObitThreadQueueFree (ObitThread* in);
 
 #endif /* OBITTHREAD_H */ 
 

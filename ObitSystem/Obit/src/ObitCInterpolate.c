@@ -235,6 +235,7 @@ ObitCInterpolate* ObitCInterpolateCopy (ObitCInterpolate *in, ObitCInterpolate *
   /* copy/set this classes additions */
   out->myArray = ObitCArrayCopy(in->myArray, out->myArray, err);
   out->myKernal= ObitFArrayCopy(in->myKernal, out->myKernal, err);
+  out->myDesc  = ObitImageDescCopy(in->myDesc, out->myDesc, err);
   out->array   = out->myArray->array;
   out->nx      = out->myArray->naxis[0];
   out->ny      = out->myArray->naxis[1];
@@ -286,8 +287,10 @@ ObitCInterpolate* ObitCInterpolateClone  (ObitCInterpolate *in, ObitCInterpolate
    /* copy/set this classes additions */
    out->myArray = ObitCArrayUnref(out->myArray);
    out->myArray = ObitCArrayRef(in->myArray);
-   out->myKernal = ObitCArrayUnref(out->myKernal);
-   out->myKernal = ObitCArrayRef(in->myKernal);
+   out->myKernal= ObitCArrayUnref(out->myKernal);
+   out->myKernal= ObitCArrayRef(in->myKernal);
+   out->myDesc  = ObitImageDescUnref(out->myDesc);
+   out->myDesc  = ObitImageDescRef(in->myDesc);
    out->array = in->array;
    out->nx    = in->nx;
    out->ny    = in->ny;

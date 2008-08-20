@@ -31,10 +31,10 @@
 #include <xmlrpc_client.h>
 #include <xmlrpc_server.h>
 #include <xmlrpc_server_abyss.h>
-/*#include <xmlrpc-c/base.h>
-  #include <xmlrpc-c/client.h>
-  #include <xmlrpc-c/server.h>
-  #include <xmlrpc-c/server_abyss.h>*/
+#include <xmlrpc-c/base.h>
+#include <xmlrpc-c/client.h>
+#include <xmlrpc-c/server.h>
+#include <xmlrpc-c/server_abyss.h>
 #include "Obit.h"
 #include "ObitErr.h"
 #include "ObitXML.h"
@@ -103,6 +103,8 @@ enum obitRPCRequestType {
 /** typedef for enum for ObitRPCRequestType  */
 typedef enum obitRPCRequestType ObitRPCRequestType;
 
+typedef xmlrpc_response_handler ObitRPC_response_handler;
+
 /*--------------Class definitions-------------------------------------*/
 /** ObitRPC Class structure. */
 typedef struct {
@@ -152,10 +154,20 @@ typedef ObitRPC* (*ObitRPCCreateServerFP) (gchar* name, ObitErr *err);
 /** Public: ClassInfo pointer */
 gconstpointer ObitRPCGetClass (void);
 
-/** Public: Send RPC request */
+/** Public: Send synchronous RPC request */
 ObitXML* ObitRPCCall (ObitRPC* client, gchar *serverURL, ObitXML* arg, 
 		      ObitInfoList **status, ObitInfoList **request,
 		      ObitErr *err);
+
+/** Public: Send asynchronous RPC request */
+void ObitRPCCallSnd (ObitRPC* client, gchar *serverURL, ObitXML* arg, 
+		     ObitRPC_response_handler callback, gpointer user_data,
+		     ObitErr *err);
+
+/** Public: Process asynchronous RPC response */
+ObitXML* ObitRPCCallRcv (ObitRPC* client, ObitXMLValue *result, 
+			 ObitInfoList **status, ObitInfoList **request,
+			 ObitErr *err);
 
 /** Add method callback to server */
 void  ObitRPCAddMethod (ObitRPC* server, gchar *method_name, 
@@ -164,6 +176,9 @@ void  ObitRPCAddMethod (ObitRPC* server, gchar *method_name,
 
 /** Start Server loop */
 void  ObitRPCServerLoop (ObitRPC* server, olong port, gchar *log_file);
+
+/** Run client async event loop */
+void  ObitRPCClientAsyncLoop (olong timeout);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

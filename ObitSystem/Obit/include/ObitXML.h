@@ -78,6 +78,8 @@ enum obitXMLType {
   OBIT_XML_EditWindow,
   /** Binary blob */
   OBIT_XML_BinBlob,
+  /** RPC Call argument */
+  OBIT_XML_RPCCallArg,
   /** Unknown */
   OBIT_XML_Unknown
 }; /* end enum obitXMLType */
@@ -90,6 +92,12 @@ typedef enum obitXMLType ObitXMLType;
 typedef struct {
 #include "ObitXMLDef.h"   /* this class definition */
 } ObitXML;
+
+/** Environment structure */
+typedef xmlrpc_env ObitXMLEnv;
+
+/** Parameter array structure */
+typedef xmlrpc_value ObitXMLValue;
 
 /*----------------- Macroes ---------------------------*/
 /** 
@@ -124,12 +132,27 @@ ObitXML* newObitXML (gchar* name);
 /** Public: ClassInfo pointer */
 gconstpointer ObitXMLGetClass (void);
 
+/** Public: Constructor from RPC Call arguments to be sent */
+ObitXML* 
+ObitXMLSetCallArg (gchar* func, ObitInfoList *argList, ObitErr *err);
+
+/** Public: Convert RPC Call arguments received to an InfoList */
+ObitInfoList* 
+ObitXMLGetCallArg (ObitXMLEnv * const envP, ObitXMLValue * const paramArrayP,
+		   ObitErr *err);
+
+/** Public: Give XML Environment */
+ObitXMLEnv ObitXMLGetEnv (ObitXML* in);
+
+/** Public: Give XML Value */
+ObitXMLValue* ObitXMLGetValue (ObitXML* in);
+
 /** Public: Constructor for ping. */
 ObitXML* 
 ObitXMLPing2XML (ObitErr *err);
 
 /** Public: Convert to ping info. */
-gint
+olong
 ObitXMLXML2Ping (ObitXML *xml, ObitErr *err);
 
 /** Public: Constructor from ObitInfoList. */
@@ -178,6 +201,15 @@ ObitXMLXML2Blob (ObitXML *xml, ObitInfoList **desc, ObitErr *err);
 /** Public: Constructor for return object */
 ObitXML* 
 ObitXMLReturn (gchar *name, gpointer parmP,  ObitErr *err);
+
+/** Public: Constructor for ServerReturn object */
+ObitXML* 
+ObitXMLServerReturn (ObitInfoList *list, ObitErr *err);
+
+/** Public: Get "Result" InfoList from  ServerReturn object */
+ObitInfoList* 
+ObitXMLGetServerResult (ObitXML *xml,  ObitErr *err);
+
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

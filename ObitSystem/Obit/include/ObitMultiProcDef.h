@@ -1,6 +1,6 @@
-/* $Id$  */
+/* $Id:  $ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005,2008                                          */
+/*;  Copyright (C) 2008                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -17,24 +17,31 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*; Correspondence about this software should be addressed as follows:*/
+/*;Correspondence about this software should be addressed as follows: */
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitRPC ClassInfo structure */
-/* This is intended to be included in a classInfo structure definition  */
-/* and to be used as the template for generating new classes derived    */
-/* from Obit.                                                           */
-#include "ObitClassDef.h"  /* Parent class ClassInfo definition file */
-/** Function pointer to Client Constructor. */
-ObitRPCCreateClientFP ObitRPCCreateClient;
-/** Function pointer to Server Constructor. */
-ObitRPCCreateServerFP ObitRPCCreateServer;
-/** Total number of active clients (1 allowed) */
-olong numberClient;
-/** Total number of active servers (1 allowed) */
-olong numberServer;
-
+/*  Define the basic components of the ObitMultiProc structure        */
+/*  This is intended to be included in a class structure definition   */
+/* and to be used as the template for generating new classes derived  */
+/* from Obit.                                                         */
+/**
+ * \file ObitMultiProcDef.h
+ * ObitMultiProc structure members for this and any derived classes.
+ */
+#include "ObitDef.h"  /* Parent class instance definitions */
+/** Thread to use to control multiprocessing */
+ObitThread *thread;
+/** Number of jobs in lists */
+olong njobs;
+/** Remote function name  */
+gchar *MPfunc;
+/** Local function pointer */
+ObitMultiProcFunc localFunc;
+/** Array of Function arguments */
+ObitMultiProcFuncArg **args;
+/** Array of flags indicating which jobs are to be executed */
+gboolean *doJob;

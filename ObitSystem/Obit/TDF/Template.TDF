@@ -39,7 +39,7 @@ inClass                            Image name (class)
 **PARAM** int 1
 inSeq            0.0       9999.0  Image name (seq. #)
 **PARAM** int 1
-inDisk           0.0          9.0  Disk drive #
+inDisk           0.0               Disk drive #
 **PARAM** int 7
 BLC              0.0       4096.0  Bottom left corner of image
                                      0=>entire image
