@@ -1791,7 +1791,7 @@ static void GaussTaper (ObitCArray* uvGrid, ObitImageDesc *imDesc,
 {
   ofloat dU, dV, UU, VV, texp;
   ofloat konst, xmaj, xmin, cpa, spa, b1, b2, b3, bb2, bb3;
-  ofloat taper, norm, *grid;
+  ofloat taper, norm, *grid, tx, ty;
   olong i, j, nx, ny, ndim, naxis[2];
 
   /* Image info - descriptor should still be valid */
@@ -1800,8 +1800,10 @@ static void GaussTaper (ObitCArray* uvGrid, ObitImageDesc *imDesc,
   
   /* Normalization factor */
   norm = ((ofloat)nx) * ((ofloat)ny);
-  norm = 1.1331 * ((gparm[0]/fabs(imDesc->cdelt[imDesc->jlocr])) * 
-		   (gparm[1]/fabs(imDesc->cdelt[imDesc->jlocd]))) / norm;
+  tx = MAX (1.0/sqrt(1.1331), gparm[0]/fabs(imDesc->cdelt[imDesc->jlocr]));
+  ty = MAX (1.0/sqrt(1.1331), gparm[1]/fabs(imDesc->cdelt[imDesc->jlocd]));
+
+  norm = 1.1331 * tx * ty / norm;
 
   /* UV cell spacing */
   dU = RAD2DG /  (nx * fabs(imDesc->cdelt[imDesc->jlocr]));

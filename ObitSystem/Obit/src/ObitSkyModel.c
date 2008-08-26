@@ -1893,7 +1893,7 @@ void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr 
     /* local copy of interpolator if needed */
     if (!args->Interp) {
       if (i>0) 
-	args->Interp = ObitCInterpolateCopy(in->myInterp, NULL, err);
+	args->Interp = ObitCInterpolateClone(in->myInterp, NULL);
       else
 	args->Interp = ObitCInterpolateRef(in->myInterp);
       if (err->error) Obit_traceback_msg (err, routine, in->name);

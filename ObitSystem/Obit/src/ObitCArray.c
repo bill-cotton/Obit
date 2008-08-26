@@ -142,7 +142,7 @@ ObitCArray* ObitCArrayCopy  (ObitCArray *in, ObitCArray *out, ObitErr *err)
   /* arrays */
   out = ObitCArrayRealloc (out, in->ndim, in->naxis);
   /* copy data */
-  for (i=0; i>2*in->arraySize; i++) out->array[i] = in->array[i];
+  for (i=0; i<2*in->arraySize; i++) out->array[i] = in->array[i];
 
   return out;
 } /* end ObitCArrayCopy */
