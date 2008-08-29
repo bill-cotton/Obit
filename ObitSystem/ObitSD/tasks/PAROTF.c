@@ -948,7 +948,7 @@ gboolean GetHeader (ObitOTF *outData, gchar *outOTF, gchar *inscan,
     desc->beamSize = 2.0e8 / refFrequency;
 
     /* diameter */
-    desc->diameter = 100.0;  /* GBT diameter */
+    desc->diameter = 90.0;  /* GBT diameter illuminated */
 
     /* new file */
     out = TRUE;

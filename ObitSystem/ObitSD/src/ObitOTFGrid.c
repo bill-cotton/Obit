@@ -278,8 +278,9 @@ void ObitOTFGridSetup (ObitOTFGrid *in, ObitOTF *OTFin,
   if (diam<1.0) diam = 100.0; /* default = 100 m */
   lambda = VELIGHT / OTFin->myDesc->crval[OTFin->myDesc->jlocf]; /* wavelength in meters */
   cells_rad = DG2RAD * fabs (imageDesc->cdelt[0]); /* cell spacing in image in radians */
-  /* over = (lambda / (4.0 * diam)) / cells_rad;  Over sampling factor */
-  over = (lambda / (2.0 * diam)) / cells_rad;  /* ???Over sampling factor */
+  /*over = (lambda / (4.0 * diam)) / cells_rad;   Over sampling factor */
+  over = (lambda / (2.0 * diam)) / cells_rad;  /*??Over sampling factor */
+  /* DEBUG  over = (lambda / (3.0 * 90.0)) / cells_rad;  DEBUG Over sampling factor */
 
   /* initialize convolving function table */
   /* pilbox (0) for testing (3 = Gaussian squared, 4=exp*sinc, 5=Spherodial wave) */
@@ -503,7 +504,7 @@ void ObitOTFGridNorm (ObitOTFGrid *in, ObitFArray *array,  ObitImageDesc *imageD
   minWt = in->minWt * ObitFArrayMax(in->gridWt, pos);  /* Min wrt max */
   minWt = MAX (0.000001, minWt);
   for (i=0; i<array->arraySize; i++) {
-    if (fabs(weight[i]) > minWt) { 
+    if (weight[i] > minWt) { 
       sumWt += weight[i];
       image[i] =  BMcorr * grid[i] / weight[i];
     } else { /* Low weight - blank */
@@ -677,6 +678,11 @@ void ObitOTFGridMakeBeam (ObitOTFGrid* in, ObitImage *image,
   in->fitBeamSize = fitFWHM * fabs(image->myDesc->cdelt[0]);
   dim[0] = dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut(image->info, "fitBeamSize", OBIT_float, dim, &in->fitBeamSize);
+
+  /* DEBUG - use raw beam rather than convolved one */
+  beamArray = ObitFArrayRef(beamArray);
+  beamArray = ObitFArrayRef(rawBeam);
+  /*  end DEBUG */
 
   /* Create/write "Beam" */
   if (!ObitImageIsA((ObitImage*)image->myBeam)) {
@@ -876,7 +882,7 @@ void ObitOTFGridClear (gpointer inn)
  *	 	     inParm[1] = Expansion factor
  *                \li 3 = Gaussian,
  *                   inParm[0] = halfwidth in cells,[def 3.0]
- *	 	     inParm[1] = Gaussian with as fraction or raw beam [def 1.0]
+ *	 	     inParm[1] = Gaussian width as fraction of raw beam [def 1.0]
  *                \li 4 = Exp*Sinc
  *                   inParm[0] = halfwidth in cells, [def 2.0]
  *	 	     inParm[1] = 1/sinc factor (cells) [def 1.55]
@@ -905,6 +911,7 @@ static void ConvFunc (ObitOTFGrid* in, olong fnType, ofloat over, ofloat inParm[
   
   /*+++++++++++++++++ Pillbox ++++++++++++++++++++++++++++++++++++++++*/
   if (fnType==0) {
+    over = 1.0; /* DEBUG */
     in->addBM = 1.1864/over; /* heuristic value for beam broadening in pixels */
     in->addBM = 0.691; /* heuristic value for beam broadening in pixels */
     /* set parameters */
@@ -1614,6 +1621,9 @@ static gpointer ThreadGridBuffer (gpointer arg)
   doDataWt = incdatawt>1;      /* Have Data-Wt axis? */
   clip = in->clip;             /* Clipping level */
 
+  /* DEBUG
+  doDataWt = FALSE; */
+
   /* initialize data pointers */
   x   = otfdata->buffer+desc->ilocra +loRec*desc->lrec;
   y   = otfdata->buffer+desc->ilocdec+loRec*desc->lrec;
@@ -1702,10 +1712,19 @@ static gpointer ThreadGridBuffer (gpointer arg)
 	for (icx=0; icx<ncol; icx++) { /* Loop over columns */
 
 	  wt = (*convfnp) * dataWt;
-	  if (wt>0.0) {
+          if (dataWt<=0.0) wt = 0.0;
+	  if (fabs(wt)>0.0) {
 	    grid[icx]   += dataVal * wt;  /* sum data * wt */
 	    /* gridWt[icx] += fabs(wt);       sum wt - not sure about fabs  */
 	    gridWt[icx] += wt;         /* sum wt  */
+
+	    /* DEBUG - look at values being put into a particular cell  
+	    if (((ix+icx)==251) && ((iy+icy)==148)) {  
+	      fprintf (stdout,"DEBUG %8d %2.2d %7.2f %7.2f d %6.2f w %8.2f dw %6.1f cf %7.3f g %9.2f gwt %9.2f f %6.2f\n", 
+		       irec+(desc->firstRec), idet, 
+		       xcell,  ycell, rec[idet*incdatawt], wt, dataWt, *convfnp, 
+		       grid[icx], gridWt[icx], grid[icx]/gridWt[icx]);  
+	    }  *//* end DEBUG */
 	  }
 
 	  convfnp  += in->convNperCell;

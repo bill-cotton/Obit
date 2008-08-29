@@ -707,6 +707,10 @@ ObitIOCode ObitOTFCalUtilFlag (ObitOTF *inOTF, ObitErr *err)
   ObitTableOTFFlagSetRow (FlagTable, FlagRow, err);
   if (err->error) Obit_traceback_val (err, routine, inOTF->name, retCode);
 
+  /* If there are entries in the table, mark it unsorted */
+  if (FlagTable->myDesc->nrow>0) 
+    {FlagTable->myDesc->sort[0]=0; FlagTable->myDesc->sort[1]=0;}
+  
   /* Fill in Flag row */
   FlagRow->TargetID = TargID;
   FlagRow->Feed     = feed;

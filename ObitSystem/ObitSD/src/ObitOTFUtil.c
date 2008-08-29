@@ -774,7 +774,8 @@ void ObitOTFUtilSubImageBuff (ObitOTF *in, ObitFInterpolate *image,
     args[i]->otfdata = in;
     args[i]->first  = lorec;
     args[i]->last   = hirec;
-    args[i]->Interp = image;
+    if (i==0) args[i]->Interp = ObitFInterpolateRef(image);
+    else args[i]->Interp = ObitFInterpolateClone(image, NULL);
     args[i]->factor = factor;
     /* Update which rec */
     lorec += nrecPerThread;
@@ -2045,6 +2046,7 @@ static void KillOTFUtilSubImageArgs (olong nargs, SubImageFuncArg **args)
   if (args==NULL) return;
   for (i=0; i<nargs; i++) {
     if (args[i]) {
+      if (args[i]->Interp) ObitFInterpolateUnref(args[i]->Interp);
       if (args[i]->xpos) g_free (args[i]->xpos);
       if (args[i]->ypos) g_free (args[i]->ypos);
       g_free(args[i]);

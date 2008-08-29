@@ -939,7 +939,7 @@ void ObitImageMosaicDefine (ObitImageMosaic *in, ObitUV *uvData, gboolean doBeam
   }    /* end loop over images */
 
  /* Create full field image if needed */
-  if (in->doFull && (in->nInit<=0)) { 
+  if (in->doFull && (in->nInit<=0) && (in->numberImages>1)) { 
     /* Basic structure of field 1 */
     in->FullField = ObitImageUtilCreateImage(uvData, 1, FALSE, err);
     /* Replace name */

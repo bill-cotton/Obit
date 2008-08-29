@@ -1140,7 +1140,7 @@ void ObitDConCleanFlatten(ObitDConClean *in, ObitErr *err)
   if (err->error) return;
   g_assert (ObitDConCleanIsA(in));
 
-  if (in->mosaic->FullField!=NULL) {
+  if ((in->mosaic->FullField!=NULL) && (in->mosaic->numberImages>1)) {
     /* Tell user */
     if (in->prtLv>1) {
       Obit_log_error(err, OBIT_InfoErr,"Flattening images");

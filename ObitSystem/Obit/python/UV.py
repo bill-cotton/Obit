@@ -445,12 +445,12 @@ READONLY  = OData.READONLY  # 1
 WRITEONLY = OData.WRITEONLY # 2
 READWRITE = OData.READWRITE # 3
 
-def newPFUV(name, filename, disk, exists, err, verbose=True):
+def newPFUV(name, filename, disk, exists, err, verbose=True, nvis=1000):
     """ Create and initialize an FITS based UV structure
     
     Create, set initial access information (full image, plane at a time)
     and if exists verifies the file.
-    Sets buffer to hold 1000 vis.
+    Sets buffer to hold nvis vis.
     Returns the Python UV object
     isOK member set to indicate success
     name     = name desired for object (labeling purposes)
@@ -459,13 +459,14 @@ def newPFUV(name, filename, disk, exists, err, verbose=True):
     exists   = if true then the file is opened and closed to verify
     err      = Python Obit Error/message stack
     verbose  = If true any give error messages, else suppress
+    nvis     = Number of visibilities read/written per call
     """
     ################################################################
     out = UV (name)
     out.isOK = True  # until proven otherwise
     # Does it really previously exist?
     out.exist = FITSDir.PExist(filename, disk, err)
-    Obit.UVSetFITS(out.me, 1000, disk, filename, err.me)
+    Obit.UVSetFITS(out.me, nvis, disk, filename, err.me)
     if exists:
         Obit.UVfullInstantiate (out.me, 1, err.me)
         if err.isErr:
@@ -491,7 +492,7 @@ def newPFUV(name, filename, disk, exists, err, verbose=True):
     # end newPFUV
     
     
-def newPAUV(name, Aname, Aclass, disk, seq, exists, err, verbose=True, nvis=1):
+def newPAUV(name, Aname, Aclass, disk, seq, exists, err, verbose=True, nvis=1000):
     """ Create and initialize an AIPS based UV structure
     
     Create, set initial access information (full image, plane at a time)
@@ -546,7 +547,7 @@ def newPAUV(name, Aname, Aclass, disk, seq, exists, err, verbose=True, nvis=1):
     return out
     # end newPAUV
 
-def newPACNO(disk, cno, exists, err, verbose=True, nvis=1):
+def newPACNO(disk, cno, exists, err, verbose=True, nvis=1000):
     """ Create and initialize an AIPS based UV structure
 
     Create, set initial access information 

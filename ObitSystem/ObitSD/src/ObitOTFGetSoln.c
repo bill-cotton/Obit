@@ -35,6 +35,7 @@
 #include "ObitPennArrayAtmFit.h"
 #include "ObitPlot.h"
 #include "ObitUtil.h"
+#include "ObitTableOTFTargetUtil.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -85,7 +86,8 @@ static void PlotMBBL (olong npoly, ofloat *tpoly, ofloat *poly, ofloat *offset,
 
 /** Private: Flatten curves, determine cal and Weights */
 static void doPARCalWeight (gint nDet, olong nTime, ofloat *iCal, ofloat **accum, 
-			    ofloat *time, ofloat *lastCal, ofloat *lastWeight);
+			    ofloat *time, ofloat *lastCal, ofloat *lastWeight, 
+			    gboolean fitWate);
 
 /** Private: qsort ofloat comparison */
 static int compare_gfloat  (const void* arg1,  const void* arg2);
@@ -95,6 +97,10 @@ static ofloat getTau0 (ofloat time, gint32 taudim[], ofloat *taudata);
 
 /** return RMS of an array (with blanking) */
 static ofloat RMSValue (ofloat *array, olong n);
+
+/** return ID of "Blank" Scan  */
+static ofloat FindBlankID (ObitOTF *inOTF, ObitErr *err);
+
 /*----------------------Public functions---------------------------*/
 /**
  * Determine offset calibration for an OTF residual for multibeam
@@ -2395,11 +2401,11 @@ ObitTableOTFSoln* ObitOTFGetSolnPARGain (ObitOTF *inOTF, ObitOTF *outOTF, ObitEr
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   ObitIOAccess access;
-  ofloat *iCal, **accum, *time;
+  ofloat *iCal, **accum, *time, blankID;
   ofloat *rec, *calJy=NULL, minsnr, fblank = ObitMagicF();
   ofloat t0, sumTime, lastTarget=-1.0, lastScan=-1.0, lastTime=-1.0;
   ofloat snr, *lastCal=NULL, *lastWeight=NULL;
-  gboolean doCalSelect, doWate, someData=FALSE, gotCal=FALSE;
+  gboolean doCalSelect, doWate, fitWate, someData=FALSE, gotCal=FALSE;
 
   olong iRow, ver, i, j, lrec, ncoef;
   olong  npoly, nDet, nTime, incdatawt;
@@ -2422,6 +2428,11 @@ ObitTableOTFSoln* ObitOTFGetSolnPARGain (ObitOTF *inOTF, ObitOTF *outOTF, ObitEr
   /* Weights wanted? */ 
   doWate = FALSE;
   ObitInfoListGetTest(inOTF->info, "doWate", &type, dim, &doWate);
+
+  /* If weights are wanted lookup ID of "Blank" scans */
+  if (doWate) blankID = FindBlankID(inOTF, err);
+  else blankID = -1.0;
+  if (err->error) Obit_traceback_val (err, routine, inOTF->name, outSoln);
 
   /* min SNR */ 
   minsnr = 10.0;
@@ -2525,7 +2536,9 @@ ObitTableOTFSoln* ObitOTFGetSolnPARGain (ObitOTF *inOTF, ObitOTF *outOTF, ObitEr
 	  row->TimeI = 2.0 * (row->Time - t0);
 
 	  /* Flatten curves, estimate cal, Weights */
-	  doPARCalWeight(nDet, nTime, iCal, accum, time, lastCal, lastWeight);
+	  /* Is this a "Blank Scan? */
+	  fitWate = (fabs(lastTarget-blankID)<0.1) || (blankID<0.0);
+	  doPARCalWeight(nDet, nTime, iCal, accum, time, lastCal, lastWeight, fitWate);
 	  
 	  /* Propagate last good cals if needed */
 	  for (j=0; j<nDet; j++ ) {
@@ -2601,7 +2614,8 @@ ObitTableOTFSoln* ObitOTFGetSolnPARGain (ObitOTF *inOTF, ObitOTF *outOTF, ObitEr
     row->TimeI = 2.0 * (row->Time - t0);
     
     /* Flatten curves, estimate cal, Weights */
-    doPARCalWeight(nDet, nTime, iCal, accum, time, lastCal, lastWeight);
+    fitWate = (fabs(lastTarget-blankID)<0.1) || (blankID<0.0);
+    doPARCalWeight(nDet, nTime, iCal, accum, time, lastCal, lastWeight, fitWate);
 	  
     /* Propagate last good cals if needed */
     for (j=0; j<nDet; j++ ) {
@@ -4169,9 +4183,11 @@ static void PlotMBBL (olong npoly, ofloat *tpoly, ofloat *poly, ofloat *offset,
  * \param time        time per datum[time]  modified on output
  * \param lastCal     [out] Cal signal difference per detector
  * \param lastWeight  [out] Weight per detector (1/variance)
+ * \param fitWate     if TRUE then determine weight from this scan, else keep last
  */
 static void doPARCalWeight (gint nDet, olong nTime, ofloat *iCal, ofloat **accum, 
-			    ofloat *time, ofloat *lastCal, ofloat *lastWeight)
+			    ofloat *time, ofloat *lastCal, ofloat *lastWeight, 
+			    gboolean fitWate)
 {
   olong i, j, which, other;
   olong naxis[1], pos[1], msample, order;
@@ -4262,7 +4278,7 @@ static void doPARCalWeight (gint nDet, olong nTime, ofloat *iCal, ofloat **accum
     if (flipCnt>0) { /* Need both cal on and cal off */
       cal = flipSum/flipCnt;
       lastCal[j] = cal; 
-      
+
       /* Correct cal on to cal off */
       for (i=0; i<nTime; i++) {
 	if ((accum[j][i] != fblank) && (iCal[i]!=0.0)) accum[j][i] -= cal;
@@ -4275,6 +4291,9 @@ static void doPARCalWeight (gint nDet, olong nTime, ofloat *iCal, ofloat **accum
       else wt[i] = 0.0;
     }
 
+    /* Need to determine weight? */
+    if (!fitWate) continue;
+      
     /* Flatten curve - first fit 5th order polynomial */
     msample = nTime;
     FitBLPoly (poly, order, time, accum[j], wt, msample); 
@@ -4307,7 +4326,7 @@ static void doPARCalWeight (gint nDet, olong nTime, ofloat *iCal, ofloat **accum
       }
     }
 
-    if(redo) {
+    if (redo) {
       /* Refit curve */
       FitBLPoly (poly, order, time, accum[j], wt, msample); 
       
@@ -4443,3 +4462,38 @@ static ofloat RMSValue (ofloat *array, olong n)
   return rawRMS;
 } /* end RMSValue */
 
+/**
+ * Lookup the ID number of Target named "Blank"
+ * \param inOTF    Input OTF data
+ * \param err      Error stack, returns if not empty.
+ * \return "Blank" Target ID if found, else -1.0
+ */
+static ofloat FindBlankID (ObitOTF *inOTF, ObitErr *err)
+{
+  ofloat out = -1.0;
+  ObitTableOTFTarget *TarTable=NULL;
+  gint32 dim[2];
+  olong iver, target[2];
+  gchar *Blank = "Blank";
+  gchar *routine = "FindBlankID";
+ 
+
+  if (err->error) return out; /* existing error? */
+
+     iver = 1;
+    TarTable = newObitTableOTFTargetValue (inOTF->name, (ObitData*)inOTF, &iver, 
+					   OBIT_IO_ReadOnly, err);
+    if (err->error) Obit_traceback_val (err, routine, inOTF->name, out);
+    if (TarTable==NULL) {/*No Target table */
+      out = -1.0;
+    } else {  /* Table exists */
+      dim[0] = strlen(Blank);
+      dim[1] = 1;
+       /* Do lookup */
+      ObitTableOTFTargetLookup (TarTable, dim, Blank, target, err);
+      if(err->error)  Obit_traceback_val (err, routine, inOTF->name, out);
+      TarTable = ObitTableOTFTargetUnref(TarTable); /* release table */
+      out = (ofloat)target[0];
+   }
+ return out;
+} /* end FindBlankID */
