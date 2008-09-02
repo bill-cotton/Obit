@@ -43,6 +43,7 @@
 #include "ObitData.h"
 #include "ObitDisplay.h"
 #include "ObitTableOTFTargetUtil.h"
+#include "ObitThread.h"
 
 /* internal prototypes */
 /* Get inputs */
@@ -581,6 +582,9 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   ftemp = -fabs(ftemp);
   ObitInfoListAlwaysPut(myInput, "xCells",  OBIT_float, dim, &ftemp);
 
+  /* Initialize Threading */
+  ObitThreadInit (myInput);
+
 } /* end digestInputs */
 
 /*----------------------------------------------------------------------- */
@@ -596,7 +600,7 @@ ObitOTF* getInputData (ObitInfoList *myInput, ObitErr *err)
 {
   ObitOTF       *inData = NULL;
   ObitInfoType type;
-  olong         disk, nrec=1000;
+  olong         disk, nrec, nThreads;
   gchar        *strTemp, inFile[129];
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *routine = "getInputData";
@@ -620,6 +624,10 @@ ObitOTF* getInputData (ObitInfoList *myInput, ObitErr *err)
   ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
 
   /* define object */
+  nrec = 5000;
+  nThreads = 1;
+  ObitInfoListGetTest(myInput, "nThreads", &type, dim, &nThreads);
+  nrec *= nThreads;
   ObitOTFSetFITS (inData, nrec, disk, inFile,  err); 
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
   
@@ -661,7 +669,7 @@ void doChan (ObitInfoList* myInput, ObitOTF* inData, ObitErr* err)
   gchar        *imgparms[] = {  /* Imaging parameters */
     "RA", "Dec", "xCells", "yCells", 
     "nx", "ny", "minWt", "deMode", "deBias", "Proj", "ConvType", "ConvParm",
-    "outName", "outDisk", 
+    "outName", "outDisk", "doScale", "doFilter",
     NULL
   };
   gchar        *CLEANParms[] = {  /* Clean parameters */
@@ -871,10 +879,10 @@ void OTFImageHistory (ObitInfoList* myInput, ObitOTF* inData,
     "inFile",  "inDisk", 
     "outDType", "outName", "outClass", "out2Class", "outSeq", "outFile",  "outDisk", 
     "Targets", "Scans", "Feeds", "timeRange",  "keepCal", "minWt", "deMode", "deBias",
-    "doCalSelect",  "doCalib",  "gainUse", "flagVer", 
+    "doScale", "doFilter", "doCalSelect",  "doCalib",  "gainUse", "flagVer", 
     "CLEANBox",  "Gain",  "minFlux",  "Niter",  "Patch",
     "BeamSize",  "fracPeak", "noResid", "doRestore", "fracPeak", 
-    "autoWindow", 
+    "autoWindow", "nThreads",
     NULL};
   gchar *routine = "OTFImageHistory";
 

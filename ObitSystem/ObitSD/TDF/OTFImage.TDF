@@ -99,7 +99,7 @@ deMode                              If true, Subtract mode
 deBias                              If true, Subtract calibration bias
 **PARAM** str 4   **DEF** -SIN
 Proj                                Projection string "-SIN", "-ARC", "-TAN"
-**PARAM** int 1  **DEF** 5
+**PARAM** int 1  **DEF** 4
 ConvType                            Convolving function type
                                     0 = pillbox, 3 = Gaussian, 4 = Exp*Sinc, 
                                     5 = Spherodial wave
@@ -123,6 +123,10 @@ Niter    *         0.0              Maximum # of I CLEAN comp.
 BeamSize *      -999.9              Clean beam 
 **PARAM** int 1  **DEF** 50000
 maxPixel           0.0    500000    Maximum pixels searched
+**PARAM** boo 1   **DEF** T
+doScale                             If true, Scale flux by beamarea
+**PARAM** boo 1   **DEF** T
+doFilter                            If true, Filter out-of-band noise.
 **PARAM** boo 1   **DEF** F
 noResid                             If true, do not add residuals
 **PARAM** boo 1   **DEF** T
@@ -131,6 +135,8 @@ doRestore                           If true, Restore CLEAN model.
 prtLv             0                 Print level
 **PARAM** str 48 **DEF** ObitView
 dispURL                             Display server URL
+**PARAM** int 1 **DEF** 1
+nThreads            0              Number of threads to use
 ----------------------------------------------------------------
 OTFImage Imaging task for radio OTF data
 Type:  Task
@@ -239,13 +245,13 @@ Adverbs:
              NB: this doesn't have quite the intended effect
   Proj.......Projection string "-SIN", "-ARC", "-TAN", [def "-SIN"]
   ConvType...Convolving function type: [def 5]
-             0 = pillbox, 3 = Gaussian, 4 = Exp*Sinc, 
+             0 = pillbox, 2 = Sinc, 3 = Gaussian, 4 = Exp*Sinc, 
              5 = Spherodial wave
   ConvParm...Convolving function parameters:
              Pillbox,: no parameters
              Sinc, 
-               ConvParm[0] = halfwidth in cells,
-               ConvParm[1] = Expansion factor
+               ConvParm[0] = halfwidth in cells,[def 3.0]
+               ConvParm[1] = Expansion factor [def 1.55]
              Gaussian,
                ConvParm[0] = halfwidth in cells,[def 3.0]
                ConvParm[1] = Gaussian with as fraction or raw beam [def 1.0]
@@ -287,6 +293,12 @@ Adverbs:
              major cycles, also at great expense.  Use this with great
              caution, but big wins are possible using larger sizes on
              very large Cleans.
+  doScale....If True, then scale image by ratio of beam areas determined 
+             from convolving the Gridding function with the assumed
+             telescope psf.
+  doFilter...If True, filter out of band noise, i.e. spatial frequencies that
+             correspond to power outsize the physical aperture of the
+             instrument.  This should generally be left on.
   noResid....If True, do not include residuals in resultant images.
   doRestore..Restore CCs to images?
 
@@ -297,4 +309,10 @@ Adverbs:
               "ObitView" =  "http://localhost:8765/RPC2" 
               This will display image being CLEANed and allow
               interactive editing of the CLEAN window.
+  nThreads....If The Obit libraries are compiled with multiple
+              thread operation enabled, this parameter sets the 
+              number of threads that can be used for parallel 
+              operations. 
+              NB: This only improves performance if there are 
+              multiple processors and/or cores in the host.
 ----------------------------------------------------------------

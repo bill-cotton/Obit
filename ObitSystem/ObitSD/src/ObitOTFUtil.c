@@ -33,6 +33,7 @@
 #include "ObitOTFGetSoln.h"
 #include "ObitTableOTFIndex.h"
 #include "ObitTableOTFTargetUtil.h"
+#include "ObitImageUtil.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -1011,6 +1012,8 @@ ObitImage* ObitOTFUtilCreateImage (ObitOTF *inOTF, ObitErr *err)
  * \li "deMode"    OBIT_bool scalar = Subtract image mode from image? [def False]
  * \li "minWt"     OBIT_float (1,1,1) Minimum summed gridding convolution weight 
  *                 as a fraction of the maximum [def 0.01]
+ * \li "doScale"   OBIT_bool scalar If true, convolve/scale beam [def TRUE]
+ * \li "doFilter"  OBIT_bool scalar If true, filter out of band noise[def TRUE]
  * \param inOTF    Input OTF data. 
  * \param outImage Image to be written.  Must be previously instantiated.
  * \param doBeam   If TRUE also make convolved beam.  
@@ -1030,9 +1033,9 @@ void ObitOTFUtilMakeImage (ObitOTF *inOTF, ObitImage *outImage, gboolean doBeam,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong blc[IM_MAXDIM] = {1,1,1,1,1};
   olong trc[IM_MAXDIM] = {0,0,0,0,0};
-  ofloat parms[10], xparms[10], mode;
+  ofloat parms[10], xparms[10], mode, radius;
   olong i, nparms, cType, tcType;
-  gboolean deBias, replCal, tbool, deMode;
+  gboolean deBias, replCal, tbool, deMode, doFilter;
   gchar *parmList[] = {"minWt","Clip","beamNx","beamNy","doScale",NULL};
   gchar *routine = "ObitOTFUtilMakeImage";
 
@@ -1181,6 +1184,15 @@ void ObitOTFUtilMakeImage (ObitOTF *inOTF, ObitImage *outImage, gboolean doBeam,
   
   /* Close Image */
   ObitImageClose (outImage, err);
+  if (err->error) Obit_traceback_msg (err, routine, outImage->name);
+
+  /* Filter if requested */
+  doFilter = TRUE;
+  ObitInfoListGetTest(inOTF->info, "doFilter", &type, dim, &doFilter);
+  radius = 0.5* inOTF->myDesc->diameter;
+  if (radius<=0.0) radius = 50.0;  /* Default = GBT */
+  if (doFilter) 
+    ObitImageUtilUVFilter(outImage, outImage, radius, err);
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
 
   /* Save Weight image? */

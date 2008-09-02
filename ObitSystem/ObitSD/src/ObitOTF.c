@@ -1263,6 +1263,7 @@ ObitIOCode ObitOTFReadSelect (ObitOTF *in, ofloat *data, ObitErr *err)
   ObitIOAccess access;
   ofloat *myBuf = data;
   olong need;
+  gboolean done;
   gchar *routine = "ObitOTFReadSelect";
 
   /* error checks */
@@ -1292,9 +1293,15 @@ ObitIOCode ObitOTFReadSelect (ObitOTF *in, ofloat *data, ObitErr *err)
   } 
   g_assert (myBuf != NULL); /* check it */
 
-  retCode = ObitIOReadSelect (in->myIO, myBuf, err);
-  if ((retCode > OBIT_IO_EOF) || (err->error)) /* add traceback,return */
-    Obit_traceback_val (err, routine, in->name, retCode);
+  /* Loop until something found */
+  done = FALSE;
+  while (!done) {
+    retCode = ObitIOReadSelect (in->myIO, myBuf, err);
+    if ((retCode > OBIT_IO_EOF) || (err->error)) /* add traceback,return */
+      Obit_traceback_val (err, routine, in->name, retCode);
+    done = ((ObitOTFDesc*)in->myIO->myDesc)->numRecBuff>0; /* Find something? */
+    done = done || (retCode==OBIT_IO_EOF);
+  }
 
   /* save current location */
   in->myDesc->firstRec   = ((ObitOTFDesc*)in->myIO->myDesc)->firstRec;

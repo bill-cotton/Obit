@@ -278,9 +278,7 @@ void ObitOTFGridSetup (ObitOTFGrid *in, ObitOTF *OTFin,
   if (diam<1.0) diam = 100.0; /* default = 100 m */
   lambda = VELIGHT / OTFin->myDesc->crval[OTFin->myDesc->jlocf]; /* wavelength in meters */
   cells_rad = DG2RAD * fabs (imageDesc->cdelt[0]); /* cell spacing in image in radians */
-  /*over = (lambda / (4.0 * diam)) / cells_rad;   Over sampling factor */
   over = (lambda / (2.0 * diam)) / cells_rad;  /*??Over sampling factor */
-  /* DEBUG  over = (lambda / (3.0 * 90.0)) / cells_rad;  DEBUG Over sampling factor */
 
   /* initialize convolving function table */
   /* pilbox (0) for testing (3 = Gaussian squared, 4=exp*sinc, 5=Spherodial wave) */
@@ -668,8 +666,8 @@ void ObitOTFGridMakeBeam (ObitOTFGrid* in, ObitImage *image,
   /*peak =  ObitFArraySum(beamArray); */
   /*fprintf (stderr,"DEBUG sum of normalized PSF %f\n", peak); */
   
-  /* Don't decrease raw resolution */
-  fitFWHM = MAX (fitFWHM, FWHM);
+  /* Don't decrease raw resolution 
+  fitFWHM = MAX (fitFWHM, FWHM);Not really */
 
   /* Save fitted beam */
   image->myDesc->beamMaj = fitFWHM * fabs(image->myDesc->cdelt[0]);
@@ -679,10 +677,10 @@ void ObitOTFGridMakeBeam (ObitOTFGrid* in, ObitImage *image,
   dim[0] = dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut(image->info, "fitBeamSize", OBIT_float, dim, &in->fitBeamSize);
 
-  /* DEBUG - use raw beam rather than convolved one */
+  /* DEBUG - use raw beam rather than convolved one 
   beamArray = ObitFArrayRef(beamArray);
   beamArray = ObitFArrayRef(rawBeam);
-  /*  end DEBUG */
+  *//*  end DEBUG */
 
   /* Create/write "Beam" */
   if (!ObitImageIsA((ObitImage*)image->myBeam)) {
@@ -878,8 +876,8 @@ void ObitOTFGridClear (gpointer inn)
  * \param fnType  Function type
  *                \li 0 = pillbox, 
  *                \li 2 = Sinc, 
- *                   inParm[0] = halfwidth in cells,
- *	 	     inParm[1] = Expansion factor
+ *                   inParm[0] = halfwidth in cells,[def 3.0]
+ *	 	     inParm[1] = Expansion factor [def 1.55]
  *                \li 3 = Gaussian,
  *                   inParm[0] = halfwidth in cells,[def 3.0]
  *	 	     inParm[1] = Gaussian width as fraction of raw beam [def 1.0]
@@ -911,7 +909,6 @@ static void ConvFunc (ObitOTFGrid* in, olong fnType, ofloat over, ofloat inParm[
   
   /*+++++++++++++++++ Pillbox ++++++++++++++++++++++++++++++++++++++++*/
   if (fnType==0) {
-    over = 1.0; /* DEBUG */
     in->addBM = 1.1864/over; /* heuristic value for beam broadening in pixels */
     in->addBM = 0.691; /* heuristic value for beam broadening in pixels */
     /* set parameters */
@@ -937,7 +934,7 @@ static void ConvFunc (ObitOTFGrid* in, olong fnType, ofloat over, ofloat inParm[
     convfnp = ObitFArrayIndex (in->convfn, naxis);
     
     /* fill function */
-    xinc = 1.0 / (over * (ofloat)in->convNperCell);
+    xinc = 1.0 / ((over*0.5)*(ofloat)in->convNperCell); 
     umax = 1.0;
     bias = lim/2;
     for (iy=0; iy<lim; iy++) {
@@ -961,9 +958,9 @@ static void ConvFunc (ObitOTFGrid* in, olong fnType, ofloat over, ofloat inParm[
     else
       parm[0] = inParm[0];
 
-    if (inParm[1]<=0.0) 
-      parm[1] = 1.55;
-    else
+    if (inParm[1]<=0.0) {
+      parm[1] = 1.55; 
+    } else
       parm[1] = inParm[1];
 
     in->addBM = 0.00;   /* heuristic value for beam broadening in pixels */
@@ -973,13 +970,13 @@ static void ConvFunc (ObitOTFGrid* in, olong fnType, ofloat over, ofloat inParm[
     /* constrain range */
     imeff = MAX (4, MIN (8, imeff));  
     parm[0] = (imeff - 1.0) / 2.0;
-    im = imeff * over + 0.5;   /* Actual number of cells */
+    im = imeff  + 0.5;   /* Actual number of cells */
     im = 2 * (im / 2) + 1;     /* make odd */
     in->convWidth    = im;     /* Width of convolving kernel in cells */
     in->convNperCell = 20;     /* Number of of tabulated points per cell in convfn */
-    p1 = G_PI / (parm[1]);
+    p1 = G_PI / (over*parm[1]);
     
-    /* allocate array*/
+    /* allocate array */
     lim = in->convWidth * in->convNperCell + 1;
     size = lim;
     naxis[0] = naxis[1] = size;
@@ -991,8 +988,8 @@ static void ConvFunc (ObitOTFGrid* in, olong fnType, ofloat over, ofloat inParm[
     
     /* fill function */
     bias = lim/2;
-    xinc = 1.0 / (over * (ofloat)in->convNperCell);
-    umax = parm[0];
+    xinc = 1.0 / ((over*0.5)*(ofloat)in->convNperCell); 
+    umax = parm[0]*over; 
     for (iy=0; iy<lim; iy++) {
       uy = (iy-bias) * xinc;
       iaddr = iy * size;
@@ -1055,8 +1052,8 @@ static void ConvFunc (ObitOTFGrid* in, olong fnType, ofloat over, ofloat inParm[
     
     /* fill function */
     bias = lim/2;
-    umax = parm[0];
-    xinc = 1.0 / (over * (ofloat)in->convNperCell);
+    xinc = 1.0 / ((over*0.5)*(ofloat)in->convNperCell);
+    umax = parm[0]*over; 
     for (iy=0; iy<lim; iy++) {
       uy = (iy-bias) * xinc;
       iaddr = iy * size;
@@ -1108,7 +1105,7 @@ static void ConvFunc (ObitOTFGrid* in, olong fnType, ofloat over, ofloat inParm[
     /*   fprintf (stderr," DEBUG beamsize %f %f %f\n",in->beamSize,in->addBM,width ); DEBUG */
     /*fprintf (stderr," DEBUG oversampling %f CF width  %d\n",over, im );   DEBUG */
     
-    /* allocate array*/
+    /* allocate array */
     lim = in->convWidth * in->convNperCell + 1;
     size = lim;
     naxis[0] = naxis[1] = size;
@@ -1120,8 +1117,8 @@ static void ConvFunc (ObitOTFGrid* in, olong fnType, ofloat over, ofloat inParm[
     convfnp = ObitFArrayIndex (in->convfn, naxis);
     
     /* fill function */
-    xinc = 1.0 / (over * (ofloat)in->convNperCell);
-    umax = parm[0];
+    xinc = 1.0 / ((over*0.5)*(ofloat)in->convNperCell); 
+    umax = parm[0]*over; 
     bias = lim/2;
     for (iy=0; iy<lim; iy++) {
       uy = (iy-bias) * xinc;
@@ -1182,8 +1179,8 @@ static void ConvFunc (ObitOTFGrid* in, olong fnType, ofloat over, ofloat inParm[
     naxis[0] = naxis[1] = 0;
     convfnp = ObitFArrayIndex (in->convfn, naxis);
     
-    xinc = 1.0 / (over * (ofloat)in->convNperCell);
-    umax = parm[0];
+    xinc = 1.0 / ((over*0.5)*(ofloat)in->convNperCell);
+    umax = parm[0]*over; 
     iumax = 1.0 / parm[0];
     bias = lim/2;
     ialf =  (olong)parm[1];
@@ -1690,7 +1687,7 @@ static gpointer ThreadGridBuffer (gpointer arg)
       if (rtemp > 0.0) rtemp += 0.5;
       else rtemp -= 0.5;
       convy = (olong)rtemp;
-     
+    
       /* Starting location in grids */
       pos[0] = ix;
       pos[1] = iy;
