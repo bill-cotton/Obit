@@ -34,8 +34,10 @@
 #include "ObitFInterpolate.h"
 #include "ObitPBUtil.h"
 #include "ObitIOImageFITS.h"
+#include "ObitFArray.h"
 #include "ObitFArrayUtil.h"
 #include "ObitConvUtil.h"
+#include "ObitFeatherUtil.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -2633,6 +2635,177 @@ ObitImageUtilSelCopy (ObitImage *inImage, ObitImage *outImage, ObitErr *err)
   outImage->image = ObitFArrayUnref(outImage->image);
 
 } /* end  ObitImageUtilSelCopy */
+
+/**
+ * Filter an image outside of a radius from the origin in FT space.
+ * Intended to filter out out of band noise in single dish images.
+ * Filters by a function with 1.0/(nx*ny) inside radius and outside tapers
+ * by an exponential with scale distance 10 pixels.
+ * \param inImage  Input Image
+ * \param outImage Output image, may be inImage
+ * \param radius   distance from origin in uv space (m)
+ * \param err      Error stack, returns if not empty.
+ */
+void ObitImageUtilUVFilter (ObitImage *inImage, ObitImage *outImage, ofloat radius, 
+			    ObitErr *err)
+{
+  olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
+  olong trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitIOSize IOBy;
+  gchar *today=NULL;
+  gfloat Lambda, dx, dy, dist, xcenter, ycenter, val, radius2, arg;
+  olong FFTdim[2], cen[2], ix, iy;
+  ObitFArray *inFArray=NULL, *outFArray=NULL, *inFArrayCopy=NULL, *maskArray=NULL;
+  ObitCArray *inCArray=NULL, *outCArray=NULL;
+  ObitFFT *FFTfor=NULL, *FFTrev=NULL;
+  gchar *routine = "ObitImageUtilUVFilter";
+    
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitImageIsA(inImage));
+  g_assert (ObitImageIsA(outImage));
+
+ /* Do I/O by plane and all of plane */
+  IOBy = OBIT_IO_byPlane;
+  dim[0] = 1;
+  ObitInfoListAlwaysPut (inImage->info, "IOBy", OBIT_long, dim, (gpointer)&IOBy);
+  ObitInfoListAlwaysPut (outImage->info,"IOBy", OBIT_long, dim, (gpointer)&IOBy);
+  dim[0] = IM_MAXDIM;
+  ObitInfoListAlwaysPut (inImage->info, "BLC",  OBIT_long, dim, blc); 
+  ObitInfoListAlwaysPut (inImage->info, "TRC",  OBIT_long, dim, trc);
+
+  /* Open input */
+  ObitImageOpen(inImage, OBIT_IO_ReadOnly, err);
+  if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+
+  /* Read input plane */
+  ObitImageRead (inImage, NULL, err) ;
+  if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+
+  /* FFT size */
+  FFTdim[0] = ObitFFTSuggestSize(inImage->myDesc->inaxes[0]);
+  FFTdim[1] = ObitFFTSuggestSize(inImage->myDesc->inaxes[1]);
+
+  /* Create float arrays for FFT size */
+  inFArray  = ObitFArrayCreate("input",  2, FFTdim);
+  outFArray = ObitFArrayCreate("output", 2, FFTdim);
+    
+  /* Save input for blanking in case overwritten */
+  if (ObitImageSame(inImage, outImage, err)) {
+    inFArrayCopy =  ObitFArrayCopy(inImage->image, inFArrayCopy, err);
+  } else inFArrayCopy =  ObitFArrayRef(inImage->image);
+
+  /* Pad input into work FArray */
+  ObitFArrayPad(inImage->image, inFArray, 1.0);
+  /* and God said "The center of an FFT will be at the corners"*/
+  ObitFArray2DCenter (inFArray);
+  /* Zero output FArray and use as imaginary part */
+  ObitFArrayFill(outFArray, 0.0);
+  
+  /* Create FFT for full complex FFT */
+  FFTfor = newObitFFT("Forward FFT", OBIT_FFT_Forward, OBIT_FFT_FullComplex, 2, FFTdim);
+    
+  /* Create complex arrays for FFT size */
+  inCArray  = ObitCArrayCreate("input", 2, FFTdim);
+  outCArray = ObitCArrayCreate("output", 2, FFTdim);
+    
+  /* Copy input to scratch CArray */
+  ObitCArrayComplex(inFArray, outFArray, inCArray);
+
+  /* close input */  
+  ObitImageClose (inImage, err) ;
+  if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+
+  /* Forward FFT */
+  ObitFFTC2C (FFTfor, inCArray, outCArray);
+    
+  /* Create aperature mask */
+  maskArray = ObitCArrayMakeF (outCArray);
+  /* Scaling for FFT */
+  ObitFArrayFill (maskArray, 1.0/(FFTdim[0]*FFTdim[1]));
+  /* Wavelength */
+  Lambda = 2.997924562e8 / inImage->myDesc->crval[inImage->myDesc->jlocf];
+  /* Pixel size in uv plane in m */
+  dx = fabs((FFTdim[0]*0.25*inImage->myDesc->cdelt[0]/57.296) / Lambda);
+  dy = fabs((FFTdim[1]*0.25*inImage->myDesc->cdelt[1]/57.296) / Lambda);
+
+  /* Form mask */
+  xcenter = (ofloat)(FFTdim[0]/2); 
+  ycenter = (ofloat)(FFTdim[1]/2);
+  radius2 = radius*radius;
+  for (iy=0; iy<FFTdim[1]; iy++) {
+    for (ix=0; ix<FFTdim[1]; ix++) {
+      dist = dx*(ix-xcenter)*dx*(ix-xcenter) + dy*(iy-ycenter)*dy*(iy-ycenter);
+      /* Add exp taper outside of radius */
+      if (dist>radius2) {
+	dist = sqrt(dist);
+	val = maskArray->array[iy*FFTdim[0]+ix];
+	arg = -(dist-radius)/(10.0*dx);
+	if (arg>-14.0) val *= exp(arg);
+	else val = 0.0;
+	maskArray->array[iy*FFTdim[0]+ix] = val;
+      } /* End outside radius */
+    } /* end loop in x */
+  } /* end loop in y */
+  
+  /* Mask*/
+  ObitFArray2DCenter(maskArray); /* Swaparonie */
+  ObitCArrayFMul (outCArray, maskArray, outCArray);
+
+  /* Create FFT for back FFT */
+  FFTrev = newObitFFT("Forward FFT", OBIT_FFT_Reverse, OBIT_FFT_FullComplex, 2, FFTdim);
+
+  /* Back FFT */
+  ObitFFTC2C(FFTrev, outCArray, inCArray);
+    
+  /* Extract Real */
+  ObitCArrayReal (inCArray, outFArray);
+  /* and God said "The center of an FFT will be at the corners" */
+  ObitFArray2DCenter(outFArray);
+    
+  /* Setup output */
+  /* If input not output, clone */
+  if (!ObitImageSame(inImage, outImage, err)) {
+    ObitImageClone (inImage, outImage, err);
+  }
+  ObitImageOpen (outImage, OBIT_IO_WriteOnly, err);
+  if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+  /* Creation date today */
+  today = ObitToday();
+  strncpy (outImage->myDesc->date, today, IMLEN_VALUE-1);
+  if (today) g_free(today);
+  
+  /* Extract output portion */
+  cen[0] = FFTdim[0]/2; cen[1] = FFTdim[1]/2;
+  blc[0] = cen[0] - inFArrayCopy->naxis[0] / 2; 
+  trc[0] = cen[0] - 1 + inFArrayCopy->naxis[0] / 2;
+  blc[1] = cen[1] - inFArrayCopy->naxis[1] / 2; 
+  trc[1] = cen[1] - 1 + inFArrayCopy->naxis[1] / 2;
+  ObitImageUnref(outImage->image);
+  outImage->image = ObitFArraySubArr(outFArray, blc, trc, err);
+  if (err->error) Obit_traceback_msg (err, routine, inImage->name);
+
+  /* Blank output where input blanked */
+  ObitFArrayBlank (outImage->image, inFArrayCopy, outImage->image);
+
+  /* Write */
+  ObitImageWrite (outImage, outImage->image->array, err);
+  ObitImageClose (outImage,err);
+  if (err->error) Obit_traceback_msg (err, routine, outImage->name);
+
+  /* Cleanup */
+  if (inImage->image)  inImage->image  = ObitFArrayUnref(inImage->image);
+  if (outImage->image) outImage->image = ObitFArrayUnref(outImage->image);
+  if (inFArray)     ObitFArrayUnref(inFArray);
+  if (outFArray)    ObitFArrayUnref(outFArray);
+  if (inFArrayCopy) ObitFArrayUnref(inFArrayCopy);
+  if (maskArray)    ObitFArrayUnref(maskArray);
+  if (inCArray)     ObitCArrayUnref(inCArray);
+  if (outCArray)    ObitCArrayUnref(outCArray);
+  if (FFTfor)       ObitFFTUnref(FFTfor);
+  if (FFTrev)       ObitFFTUnref(FFTrev);
+} /* end ObitImageUtilUVFilter */
 
 /*----------------------Private functions---------------------------*/
 

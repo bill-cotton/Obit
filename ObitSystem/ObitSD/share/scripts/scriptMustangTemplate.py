@@ -11,7 +11,7 @@ ObitSys=OSystem.OSystem  ("Mustang", 1, 1, 1, ["None"], len(FITS), FITS, True, F
 OErr.printErrMsg(err, "Error with Obit startup")
 
 # Allow multiple threads
-OSystem.PAllowThreads(2)  # 2 threads
+#OSystem.PAllowThreads(2)  # 2 threads
 OSystem.PAllowThreads(1)  # 1 thread
 
 #######################################################################################
@@ -68,7 +68,7 @@ minFlux = 0.001                   # Minimum image brightness to CLEAN
 minWt   = 0.00001                 # Minimum weight in imaging wrt maximum
 CLEANbox=[[-1,10, nx/2+1,ny/2+1]] # Clean window, circular at center
 convType = 4                      # Gridding fn  Exp*sinc
-convParm = [5.0, 1.65, 2.52, 2.0, 0.,0.,  0.,0., 0.,0.] # Gridding fn  params
+convParm = [0.0, 0.0, 0.0, 0.0, 0.0,0.0, 0.0,0.0, 0.0,0.0] # Gridding fn  params
 
 # Default Calibration info
 CalJy = [38.5]                  # Cal values in Jy, one for all or per detector
@@ -193,7 +193,7 @@ if FITSDir.PExist (outFile, outDisk, err):
     zapOTF = OTF.newPOTF("Output data", outFile, outDisk, True, err)
     zapOTF.Zap(err)
 # Set number of records depending on number of threads
-nrec = 1000*OSystem.PGetNoThreads()
+nrec = 5000*OSystem.PGetNoThreads()
 outOTF = OTF.newPOTF("Output data", outFile, outDisk, False, err, nrec=nrec)
 OTF.PClone(inOTF, outOTF, err)     # Same structure etc
 OErr.printErrMsg(err, "Error initializing output")
@@ -223,13 +223,14 @@ inInfo = outOTF.List
 print "Atmospheric emission"
 solint = solInt/86400.0
 inInfo.set("Tau0", 0.2)                   # Opacity table
-inInfo.set("AtmEm", AtmEm)                 # Zenith emission in Jy
+inInfo.set("AtmEm", AtmEm)                # Zenith emission in Jy
 inInfo.set("solInt", solint)
 inInfo.set("doCalSelect", True)
 inInfo.set("flagVer", flagver)
 gainuse = 0
 inInfo.set("gainUse", gainuse)
 inInfo.set("doCalib", 1)
+inInfo.set("doFilter", True)
 OTFGetAtmCor.PAtmEm(outOTF, outOTF, err)
 OErr.printErrMsg(err, "Error with Baseline calibration")
 

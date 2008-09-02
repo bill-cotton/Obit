@@ -174,4 +174,7 @@ void ObitImageUtilVel (ObitImage *inImage, ObitImage *outImage, ObitErr *err);
 /** Public: Copy with selection by pixel increment. */
 void ObitImageUtilSelCopy (ObitImage *inImage, ObitImage *outImage, ObitErr *err);
 
+/** Public: Filter out of band noise. */
+void ObitImageUtilUVFilter (ObitImage *inImage, ObitImage *outImage, ofloat radius, 
+			    ObitErr *err);
 #endif /* OBITIMAGEUTIL_H */ 
