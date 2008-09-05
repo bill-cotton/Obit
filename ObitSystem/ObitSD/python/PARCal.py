@@ -79,13 +79,14 @@ FitCalInput={'structure':['FitCal',[('InData','Input OTF'),
                                     ('BeamSize','Restoring beam FWHM (deg)'),
                                     ('Gain','CLEAN loop gain def [0.1]'),
                                     ('autoWindow','Automatically set Windows? [False]'),
+                                    ('doFilter','Filter out of band noise? [True]'),
                                     ('solType','Soln type, Common, Detector, Both'),
                                     ('solInt','Min Solution interval(sec)'),
                                     ('soln','Array of multiples of solInt for cal')]],
              'InData':None, 'scrDisk':1, 'PSF':None, "scanList":[["All",1]],
-             'nx':100, 'ny':100, 'xCells':2.0, 'yCells':2.0, 'minWt':0.0001,
+             'nx':100, 'ny':100, 'xCells':2.0, 'yCells':2.0, 'minWt':0.01,
              'ConvParm':[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0], 'ConvType':5,
-             'gainUse':-1, 'flagVer':-1,'disp':None, 'save':False,
+             'gainUse':-1, 'flagVer':-1,'disp':None, 'save':False, 'doFilter':True,
              'Niter':100, 'Patch':100, 'BeamSize':0.0, 'Gain':0.1, 'autoWindow':False,
              'solType':"Both", 'solInt':1.0, 'soln':[3.,1.] }
 def FitCal (err, input=FitCalInput):
@@ -149,7 +150,8 @@ def FitCal (err, input=FitCalInput):
     Patch       = Beam patch in pixels [def 100]
     BeamSize    = Restoring beam (deg)
     Gain        = CLEAN loop gain
-    autoWindow  = True if autoWindow feature wanted.
+    autoWindow  = True if autoWindow feature desired
+    doFilter    = Filter out of band noise?
     solInt      = solution interval (sec)
     solType     = solution type:
        "Common"   solve for common mode.additive effects on timescales longer
@@ -201,6 +203,7 @@ def FitCal (err, input=FitCalInput):
     OTF.ImageInput["minWt"]   = input["minWt"]
     OTF.ImageInput["ConvType"]  = input["ConvType"]
     OTF.ImageInput["ConvParm"]  = input["ConvParm"]
+    OTF.ImageInput["doFilter"]  = input["doFilter"]
     
     # Calibration parameters (some reset in loop)
     OTF.ResidCalInput["solType"] = "MultiBeam"
@@ -368,7 +371,7 @@ def FitCal (err, input=FitCalInput):
         fitinput["MaxIter"]   = 100
         fitinput["prtLv"]     = 0
         fitinput["PosGuard"]  = 1.
-
+        print "Initial guess Corner=",corner,"Peak=",fm.Peak
         # Fit
         imf.Fit(err, fitinput)
 
@@ -402,7 +405,7 @@ def FitCal (err, input=FitCalInput):
         # Gaussian parameters to asec
         gparm = [fm.parms[0]*abs(d["cdelt"][0])*3600.0, \
                  fm.parms[1]*abs(d["cdelt"][1])*3600.0,
-                 fm.parms[2]]
+                 fm.parms[2]*57.296]
 
         # Rotate to az, el
         azOff = raOff*math.cos(pa)  - decOff*math.sin(pa)

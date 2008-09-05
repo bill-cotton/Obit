@@ -1191,10 +1191,12 @@ void ObitOTFUtilMakeImage (ObitOTF *inOTF, ObitImage *outImage, gboolean doBeam,
   ObitInfoListGetTest(inOTF->info, "doFilter", &type, dim, &doFilter);
   radius = 0.5* inOTF->myDesc->diameter;
   if (radius<=0.0) radius = 50.0;  /* Default = GBT */
-  if (doFilter) 
+  if (doFilter) {
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "Filtering out of band noise for for %s", outImage->name);
     ObitImageUtilUVFilter(outImage, outImage, radius, err);
-  if (err->error) Obit_traceback_msg (err, routine, outImage->name);
-
+    if (err->error) Obit_traceback_msg (err, routine, outImage->name);
+  }
   /* Save Weight image? */
   if (Wt!=NULL) {
     ObitImageClone (outImage, Wt, err);   /* Looks like outImage */

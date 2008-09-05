@@ -1091,6 +1091,7 @@ ImageInput={'structure':['Image',[('InData','Input OTF'),
                                   ('ConvType','Conv. fn type, 0=pillbox,3=Gaussian,4=exp*sinc,5=Sph wave'),
                                   ('ConvParm','Conv. fn parameters'),
                                   ('gainUse','cal. table version, -1=none'),
+                                  ('doFilter','Filter out of band noise? [True]'),
                                   ('doBeam','Convolved Beam image desired? [def True]'),
                                   ('Beam','Instrumental response beam [def None]'),
                                   ('Wt','Image to save gridding weight array [def None], overrides OutWeight'),
@@ -1098,7 +1099,7 @@ ImageInput={'structure':['Image',[('InData','Input OTF'),
             'InData':None, 'OutName':None, 'OutWeight':None, 'Disk':1,
             'ra':0.0, 'dec':0.0, 'nx':100, 'ny':100,
             'xCells':0.001, 'yCells':0.001, 'minWt':0.01, 'Clip':1.0e19,
-            'ConvParm':[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0], 'ConvType':3,
+            'ConvParm':[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0], 'ConvType':3, 'doFilter':True,
             'gainUse':-1, 'doBeam':True, 'Beam':None, 'Wt':None, 'flagVer':-1};
 def makeImage (err, input=ImageInput):
     """ Image an OTF.
@@ -1150,6 +1151,7 @@ def makeImage (err, input=ImageInput):
 
     gainUse = version number of prior table (Soln or Cal) to apply, -1 is none
     flagVer = version number of flagging table to apply, -1 is none
+    doFilter= Filter out of band noise?
     doBeam  = Beam convolved with convolving Fn image desired? [def True]
     Beam    = Actual instrumental Beam to use, else Gaussian [def None]
     Wt      = Image to save gridding weight array [def None], overrides OutWeight
@@ -1174,7 +1176,8 @@ def makeImage (err, input=ImageInput):
     flagVer = input["flagVer"]
     doBeam  = input["doBeam"]
     Beam    = input["Beam"] 
-    Wt      = input["Wt"] 
+    Wt      = input["Wt"]
+    doFilter=  input["doFilter"]
    # Default table versions (the Obit routines will do this as well)
     if gainUse == 0:   # Get highest numbered OTFCal table
         gainUse = Obit.OTFGetHighVer(inData.me, "OTFCal")
@@ -1208,6 +1211,7 @@ def makeImage (err, input=ImageInput):
     InfoList.PAlwaysPutFloat(inInfo, "Clip",        dim, [Clip])
     docal = gainUse >= 0
     InfoList.PAlwaysPutBoolean(inInfo, "doCalSelect", dim, [True])
+    InfoList.PAlwaysPutBoolean(inInfo, "doFilter",    dim, [doFilter])
     dim[0] = len(ConvParm)
     InfoList.PAlwaysPutFloat(inInfo, "ConvParm",  dim, ConvParm)
     dim[0] = 1

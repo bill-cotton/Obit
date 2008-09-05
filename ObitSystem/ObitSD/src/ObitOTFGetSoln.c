@@ -4357,20 +4357,22 @@ static void doPARCalWeight (gint nDet, olong nTime, ofloat *iCal, ofloat **accum
     for (j=0; j<nDet; j++) {
       if ((fabs(lastCal[j])<0.1*medWt) || (fabs(lastCal[j])>10.0*medWt)) {
 	/* Bad */
-	lastWeight[j] = 0.0;
+	/* lastCal will blank lastWeight[j] = 0.0;*/
 	lastCal[j]    = fblank;
       }
     }
   }
 
   /* flag  weights more than 10 X low or 5 X high from median */
-  for (j=0; j<nDet; j++) wt[j] = lastWeight[j];
-  medWt = medianValue (wt, 1, (olong)nDet);
-  if (medWt!=fblank) {
-    for (j=0; j<nDet; j++) {
-      if ((lastWeight[j]<0.1*medWt) || (lastWeight[j]>5.0*medWt)) {
-	/* Bad */
-	lastWeight[j] = 0.0;
+  if (fitWate){
+    for (j=0; j<nDet; j++) wt[j] = lastWeight[j];
+    medWt = medianValue (wt, 1, (olong)nDet);
+    if (medWt!=fblank) {
+      for (j=0; j<nDet; j++) {
+	if ((lastWeight[j]<0.1*medWt) || (lastWeight[j]>5.0*medWt)) {
+	  /* Bad */
+	  lastWeight[j] = 0.0;
+	}
       }
     }
   }
