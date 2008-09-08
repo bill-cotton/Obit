@@ -60,7 +60,7 @@ typedef struct {
   olong        first;
   /* Highest (1-rel) record in otfdata buffer to process this thread  */
   olong        last;
-  /* thread number  */
+  /* thread number , >0 -> no threading  */
   olong        ithread;
   /* Pixel number of peak */
   olong       ipeak;
@@ -414,7 +414,7 @@ ObitDConCleanPxListCreate (gchar* name, ObitImageMosaic *mosaic,
 void  ObitDConCleanPxListGetParms (ObitDConCleanPxList *in, ObitErr *err)
 {
   ObitInfoType type;
-  gint32 dim[MAXINFOELEMDIM];
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong i, itemp, *ipnt=NULL;
   olong jtemp=0;
   union ObitInfoListEquiv InfoReal; 
@@ -769,7 +769,8 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
     targs[ithread]->PixelList = in;
     targs[ithread]->first     = lopix;
     targs[ithread]->last      = hipix;
-    targs[ithread]->ithread   = ithread;
+    if (nThreads>1) targs[ithread]->ithread = ithread;
+    else targs[ithread]->ithread = -1;
     targs[ithread]->ipeak     = 0;
     targs[ithread]->peak      = 0.0;
     /* Update which pix */
@@ -1057,7 +1058,8 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
     targs[ithread]->PixelList = in;
     targs[ithread]->first     = lopix;
     targs[ithread]->last      = hipix;
-    targs[ithread]->ithread   = ithread;
+    if (nThreads>1) targs[ithread]->ithread = ithread;
+    else targs[ithread]->ithread = -1;
     targs[ithread]->ipeak     = 0;
     targs[ithread]->sum       = 0.0;
     /* Update which pix */
@@ -1375,7 +1377,7 @@ void ObitDConCleanPxListClear (gpointer inn)
  * \li PixelList PixelList object
  * \li first   First (1-rel) pixel no. to process this thread
  * \li last    Highest (1-rel) pixel no. to process this thread
- * \li ithread thread number
+ * \li ithread thread number, <0-> no threads
  * \li ipeak   [in/out] Pixel number of peak
  * \li peak;   [in/out] Peak flux to subtract
  * \return NULL
@@ -1433,7 +1435,8 @@ gpointer ThreadCLEAN (gpointer args)
   largs->ipeak = ipeak;
   
   /* Indicate completion */
-  ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
   return NULL;
 } /* end ThreadCLEAN */
 
@@ -1446,7 +1449,7 @@ gpointer ThreadCLEAN (gpointer args)
  * \li PixelList PixelList object
  * \li first   First (1-rel) pixel no. to process this thread
  * \li last    Highest (1-rel) pixel no. to process this thread
- * \li ithread thread number
+ * \li ithread thread number, <0-> no threads
  * \li sum;    [out] dot product returned
  * \return NULL
  */
@@ -1491,7 +1494,8 @@ gpointer ThreadSDICLEAN (gpointer args)
   largs->sum = sum;
   
   /* Indicate completion */
-  ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
   return NULL;
 } /* end ThreadSDICLEAN */
 

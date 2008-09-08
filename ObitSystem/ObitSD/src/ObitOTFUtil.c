@@ -50,7 +50,7 @@ typedef struct {
   olong        first;
   /* Highest (1-rel) record in otfdata buffer to process this thread  */
   olong        last;
-  /* thread number  */
+  /* thread number, <0 -> no threading  */
   olong        ithread;
   /* Obit error stack object */
   ObitErr      *err;
@@ -105,7 +105,7 @@ void ObitOTFUtilSubImage(ObitOTF *inOTF, ObitOTF *outOTF, ObitFArray *image,
   olong firstRec;
   ObitInfoType type;
   ObitIOAccess access;
-  gint32 dim[MAXINFOELEMDIM];
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat scale = 1.0;
   olong NPIO, nThreads;
   SubImageFuncArg **targs=NULL;
@@ -381,7 +381,7 @@ void ObitOTFUtilScale(ObitOTF *inOTF, ObitOTF *outOTF, ofloat scale, ofloat offs
   gboolean doCalSelect, done;
   ObitInfoType type;
   ObitIOAccess access;
-  gint32 dim[MAXINFOELEMDIM];
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat *data, fblank = ObitMagicF();
   olong i, j, ndetect, ndata;
   olong incdatawt;
@@ -525,7 +525,7 @@ void ObitOTFUtilNoise(ObitOTF *inOTF, ObitOTF *outOTF, ofloat scale, ofloat offs
   gboolean doCalSelect, done;
   ObitInfoType type;
   ObitIOAccess access;
-  gint32 dim[MAXINFOELEMDIM];
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat *data, fblank = ObitMagicF();
   odouble dsigma = sigma;
   olong i, j, ndetect, ndata;
@@ -778,6 +778,8 @@ void ObitOTFUtilSubImageBuff (ObitOTF *in, ObitFInterpolate *image,
     if (i==0) args[i]->Interp = ObitFInterpolateRef(image);
     else args[i]->Interp = ObitFInterpolateClone(image, NULL);
     args[i]->factor = factor;
+    if (nTh>1) args[i]->ithread = i;
+    else args[i]->ithread = -1;
     /* Update which rec */
     lorec += nrecPerThread;
     hirec += nrecPerThread;
@@ -1860,7 +1862,7 @@ static void ObitOTFUtilCurDate (gchar *date, olong len)
  * \li otfdata OTF data set to model and subtract from current buffer
  * \li first  First (1-rel) rec in otfdata buffer to process this thread
  * \li last   Highest (1-rel) rec inotfdata buffer to process this thread
- * \li ithread thread number
+ * \li ithread thread number, >0 -> no threading
  * \li err Obit error stack object.
  * \li factor  Scaling factor for sky model
  * \li Interp  Image Interpolator
@@ -2005,7 +2007,10 @@ gpointer ThreadOTFUtilSubImageBuff (gpointer args)
   } /* end loop over buffer */
   
   /* Indicate completion */
- finish: ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
+ finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
+
   return NULL;
 } /* end ThreadOTFUtilSubImageBuff */
 

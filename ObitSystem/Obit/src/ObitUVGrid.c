@@ -101,7 +101,7 @@ typedef struct {
   olong        first;
   /* Highest (1-rel) vis in uvdata buffer to process this thread  */
   olong        last;
-  /* thread number  */
+  /* thread number, >0 -> no threading   */
   olong        ithread;
   /* Temporary gridding array for thread */
   ObitCArray  *grid;
@@ -333,7 +333,7 @@ void ObitUVGridReadUV (ObitUVGrid *in, ObitUV *UVin, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM];
   ofloat temp, czero[2] = {0.0,0.0};
   olong   itemp;
-  olong i, nvis, lovis, hivis, nvisPerThread;
+  olong i, nvis, lovis, hivis, nvisPerThread, nThreads;
   UVGridFuncArg *args=NULL;
   ObitThreadFunc func=(ObitThreadFunc)ThreadUVGridBuffer ;
   gboolean doCalSelect, OK;
@@ -419,25 +419,29 @@ void ObitUVGridReadUV (ObitUVGrid *in, ObitUV *UVin, ObitErr *err)
     
     /* Divide up work */
     nvis = UVin->myDesc->numVisBuff;
-    nvisPerThread = nvis/in->nThreads;
+    if (nvis<1000) nThreads = 1;
+    else nThreads = in->nThreads;
+    nvisPerThread = nvis/nThreads;
     lovis = 1;
     hivis = nvisPerThread;
     hivis = MIN (hivis, nvis);
 
     /* Set up thread arguments */
-    for (i=0; i<in->nThreads; i++) {
-      if (i==(in->nThreads-1)) hivis = nvis;  /* Make sure do all */
+    for (i=0; i<nThreads; i++) {
+      if (i==(nThreads-1)) hivis = nvis;  /* Make sure do all */
       args = (UVGridFuncArg*)in->threadArgs[i];
       args->first  = lovis;
       args->last   = hivis;
-      /* Update which vis */
+      if (nThreads>1) args->ithread = i;
+      else args->ithread = -1;
+     /* Update which vis */
       lovis += nvisPerThread;
       hivis += nvisPerThread;
       hivis = MIN (hivis, nvis);
     }
 
     /* Do operation on buffer possibly with threads */
-    OK = ObitThreadIterator (in->thread, in->nThreads, func, in->threadArgs);
+    OK = ObitThreadIterator (in->thread, nThreads, func, in->threadArgs);
     
     /* Check for problems */
     if (!OK) {
@@ -457,7 +461,7 @@ void ObitUVGridReadUV (ObitUVGrid *in, ObitUV *UVin, ObitErr *err)
   /* Shut down any threading */
   ObitThreadPoolFree (in->thread);
   if (in->threadArgs) {
-    for (i=0; i<in->nThreads; i++) {
+    for (i=0; i<nThreads; i++) {
       args = (UVGridFuncArg*)in->threadArgs[i];
       if (args->grid) ObitCArrayUnref(args->grid);
       g_free(in->threadArgs[i]);
@@ -1524,7 +1528,7 @@ static void GridCorrFn (ObitUVGrid* in, long n, olong icent,
  * \li UVin   UV data set to grid from current buffer
  * \li first  First (1-rel) vis in UVin buffer to process this thread
  * \li last   Highest (1-rel) vis in UVin buffer to process this thread
- * \li ithread thread number
+ * \li ithread thread number, >0 -> no threading 
  */
 static gpointer ThreadUVGridBuffer (gpointer arg)
 {
@@ -1543,7 +1547,8 @@ static gpointer ThreadUVGridBuffer (gpointer arg)
   GridBuffer (in, UVin, loVis, hiVis, grid);
 
   /* Indicate completion */
-  ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
   
   return NULL;
 } /* end ThreadUVGridBuffer */

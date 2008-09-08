@@ -1,7 +1,7 @@
 /* $Id$  */
 /*  MCube: put together images into a cube                            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007                                               */
+/*;  Copyright (C) 2007,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -310,7 +310,6 @@ void Usage(void)
 {
     fprintf(stderr, "Usage: MCube -input file -output ofile [args]\n");
     fprintf(stderr, "MCube Obit task = combine images into a cube\n");
-    fprintf(stderr, "Images must be given in order of decreasing resolution\n");
     fprintf(stderr, "Arguments:\n");
     fprintf(stderr, "  -input input parameter file, def MCube.in\n");
     fprintf(stderr, "  -output output result file, def MCube.out\n");
@@ -476,7 +475,7 @@ ObitInfoList* defaultOutputs(ObitErr *err)
 
 /*----------------------------------------------------------------------- */
 /*  Digest inputs                                                         */
-/*   Makes sure only one plane selected                                   */
+/*   Set default input BLC, TRC = all                                     */
 /*   Input:                                                               */
 /*      myInput   Input parameters on InfoList                            */
 /*   Output:                                                              */
@@ -500,14 +499,12 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   ObitInfoListGetTest(myInput, "BLC", &type, dim, blc); /* BLC */
   ObitInfoListGetTest(myInput, "TRC", &type, dim, trc); /* TRC */
   
-  /* Make sure only one plane - Set defaults BLC, TRC */
+  /* Set default input BLC, TRC */
   desc = (ObitImageDesc*)inImage->myIO->myDesc;
   for (i=0; i<IM_MAXDIM; i++) {
-    if (blc[i]<=0) blc[i] = 1;
     blc[i] = MAX (1,  blc[i]);
     if (trc[i]<=0) trc[i] = desc->inaxes[i];
     trc[i] = MIN (trc[i], desc->inaxes[i]);
-    if (i>1) trc[i] = MIN (trc[i],blc[i]);  /* Only one plane */
   }
 
   /* Save blc, trc */
@@ -531,22 +528,22 @@ void GetImages(ObitInfoList *myInput, gboolean *isNew, ObitErr *err)
 {
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong         blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
-  olong         trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
-  olong         j, k, Aseq, disk, cno;
+  olong        blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
+  olong        trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  olong        j, k, Aseq, disk, cno;
   gboolean     exist;
   gchar        *strTemp=NULL, inFile[128], *FITS="FITS";
   gchar        iAname[13], iAclass[7];
   gchar        Aname[13], Aclass[7], *Atype = "MA";
   gchar        tname[101], *Type = NULL;
-  olong         axNum=3, axDim=1, axPix=1;
+  olong        axNum=3, axDim=1, axPix=1;
   ofloat       axCRPix=1.0, axCDelt=-1000.0;
   odouble      axCRVal=-1000.0;
   gchar *routine = "GetImage";
 
   if (err->error) return;  /* existing error? */
 
-  /* Get region from myInput */
+  /* Get input region from myInput */
   ObitInfoListGetTest(myInput, "BLC", &type, dim, blc); /* BLC */
   ObitInfoListGetTest(myInput, "TRC", &type, dim, trc); /* TRC */
 
@@ -788,7 +785,7 @@ void doMCube (ObitInfoList *myInput, ObitImage *inImage, ObitImage *outImage,
 	      ObitErr *err)
 {
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  oint         noParms;
+  oint         noParms=0;
   gboolean     copyCC=FALSE;
   ObitTableCC  *inCC=NULL, *outCC=NULL;
   ObitInfoType type;
@@ -807,10 +804,10 @@ void doMCube (ObitInfoList *myInput, ObitImage *inImage, ObitImage *outImage,
   plane[axNum-3] = axPix;
 
   /* Insert */
-  InsertPlane (inImage, outImage, plane, err);
+  ObitImageUtilInsertCube (inImage, outImage, plane, axNum, err);
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
 
-  /* Copy CC Table? */
+  /* Copy CC Tables? */
   ObitInfoListGetTest(myInput, "copyCC", &type, dim, &copyCC); 
   if (copyCC) {
     ObitInfoListGetTest(myInput, "BLC", &type, dim, blc);
@@ -818,7 +815,7 @@ void doMCube (ObitInfoList *myInput, ObitImage *inImage, ObitImage *outImage,
     inVer   = MAX (1, blc[axNum-1]);
     outVer  = MAX (1, axPix);
     highVer = ObitTableListGetHigh (inImage->tableList, tabType);
-    if (inVer<=highVer) {
+    while (inVer<=highVer) {
       inCC = newObitTableCCValue ("inCC", (ObitData*)inImage, &inVer, 
 				  OBIT_IO_ReadOnly, noParms, err);
       if (inCC==NULL) return;
@@ -836,7 +833,9 @@ void doMCube (ObitInfoList *myInput, ObitImage *inImage, ObitImage *outImage,
       /* Tell about it */
       Obit_log_error(err, OBIT_InfoErr, "Copied CC table %d to  %d",
 		     inVer, outVer);
-    } /* end version OK */
+      inVer++;
+      outVer++;
+    } /* end copy loop */
   } /* End of copy CC table */
 } /* end doMCube */
 
@@ -961,81 +960,4 @@ void MakeCubeDesc (ObitImageDesc *inDesc, ObitImageDesc *outDesc,
 
   return;
 } /* end MakeCubeDesc */
-
-/**
- * Write the (first) plane from image in to a plane in out.
- * \param in        Input image with plane to copy
- * \param out       Output cube to accept plane
- * \param plane     (1-rel) pixel indices for planes 3-7 in out.
- */
-void InsertPlane (ObitImage *in, ObitImage *out, olong *plane, 
-		  ObitErr *err)
-{
-  ObitIOSize IOBy = OBIT_IO_byPlane;
-  ObitImageDesc *inDesc=NULL, *outDesc=NULL;
-  olong i;
-  olong blc[IM_MAXDIM] = {1,1,1,1,1};
-  olong trc[IM_MAXDIM] = {1,1,1,1,1};
-  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar *routine = "InsertPlane";
-
-  /* error checks */
-  if (err->error) return;
-  g_assert (ObitImageIsA(in));
-  g_assert (ObitImageIsA(out));
-  g_assert (plane!=NULL);
-
-  inDesc = in->myDesc;
-  outDesc = out->myDesc;
-  /* Check size of planes */
-  Obit_return_if_fail(((inDesc->inaxes[0]==outDesc->inaxes[0]) && 
-		       (inDesc->inaxes[1]==outDesc->inaxes[1])), err,
-		      "%s: Image planes incompatible  %d!= %d or  %d!= %d", 
-		      routine, inDesc->inaxes[0], outDesc->inaxes[0], 
-		      inDesc->inaxes[1], outDesc->inaxes[1]) ;
- 
-  Obit_return_if_fail(((plane[0]<=outDesc->inaxes[2]) && 
-		       (plane[1]<=outDesc->inaxes[3])), err,
-		      "%s: Output does not have plane %d  %d", 
-		      routine, plane[0], plane[1]);
-
-  /* Read input plane */
-  dim[0] = 1;
-  ObitInfoListPut (in->info, "IOBy", OBIT_long, dim, &IOBy, err);
-  dim[0] = 7;
-  ObitImageOpen (in, OBIT_IO_ReadOnly, err);
-  ObitImageRead (in, NULL, err);
-  ObitImageClose (in, err);
-  if (err->error) Obit_traceback_msg (err, routine, in->name);
-
-  /* Write to output */
-  /* Set blc, trc */
-  for (i=0; i<2; i++) blc[i] = 1;
-  for (i=2; i<IM_MAXDIM; i++) blc[i] = MAX (1,plane[i-2]);
-  for (i=0; i<2; i++) trc[i] = outDesc->inaxes[i];
-  for (i=2; i<IM_MAXDIM; i++) trc[i] = MAX (1,plane[i-2]);
-  dim[0] = 1;
-  ObitInfoListPut (out->info, "IOBy", OBIT_long, dim, &IOBy, err);
-  dim[0] = 7;
-  ObitInfoListPut (out->info, "BLC", OBIT_long, dim, blc, err); 
-  ObitInfoListPut (out->info, "TRC", OBIT_long, dim, trc, err);
-  out->extBuffer = TRUE;  /* Don't need output buffer */
-  ObitImageOpen (out, OBIT_IO_ReadWrite, err);
-  ObitImageWrite (out, in->image->array, err);
-  /* Copy Beam information if needed */
-  if ((out->myDesc->beamMaj<=0.0) || (out->myDesc->beamMin<=0.0)) {
-    out->myDesc->beamMaj = in->myDesc->beamMaj;
-    out->myDesc->beamMin = in->myDesc->beamMin;
-    out->myDesc->beamPA  = in->myDesc->beamPA;
-    out->myDesc->niter = 1;
-  }
-  ObitImageClose (out, err);
-  if (err->error) Obit_traceback_msg (err, routine, out->name);
-  out->extBuffer = FALSE;  /* May need buffer later */
-
-  /* free image memory if not memory resident */
-  if (in->mySel->FileType!=OBIT_IO_MEM) 
-    in->image = ObitFArrayUnref(in->image);
-
-} /* end InsertPlane */
 

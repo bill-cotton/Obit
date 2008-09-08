@@ -51,6 +51,12 @@ static void AvgFAver (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
 		      olong *corChan, olong *corIF, olong *corStok, gboolean *corMask,
 		      ofloat *inBuffer, ofloat *outBuffer, ofloat *work, 
 		      ObitErr *err);
+
+/** Copy selected channels */
+static void FreqSel (ObitUVDesc *inDesc, ObitUVDesc *outDesc, 
+		     olong BChan, olong EChan, olong chinc,
+		     olong BIF, olong EIF,
+		     ofloat *inBuffer, ofloat *outBuffer);
 /*----------------------Public functions---------------------------*/
 
 /**
@@ -1889,6 +1895,220 @@ ObitInfoList* ObitUVUtilCount (ObitUV *inUV, ofloat timeInt, ObitErr *err)
   return outList;
 } /* end ObitUVUtilAvgT  */
 
+/**
+ * Copy blocks of channels from one UV to a set of output UVs..
+ * All selected IFs and polarizationa are also copied
+ * \param inUV     Input uv data to average, 
+ *                 Any request for calibration, editing and selection honored
+ * \param nOut   Number of outout images
+ * \param outUV  Array of previously defined but not yet instantiated 
+ *               (never opened) UV data objects to receive 1/nOut 
+ *               of the data channels in inUV.
+ * \param err    Error stack, returns if not empty.
+ */
+void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV, 
+			ObitErr *err)
+{
+  ObitIOCode iretCode, oretCode;
+  gboolean doCalSelect;
+  gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
+		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
+		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
+		    "AIPS PL","AIPS NI","AIPS BP","AIPS OF","AIPS PS",
+		    NULL};
+  gchar *sourceInclude[] = {"AIPS SU", NULL};
+  olong *BChan=NULL, *numChan=NULL;
+  olong chinc=1, BIF, EIF, nchan, nchOut, ich, NPIO;
+  olong i, j, indx, jndx, ivis;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM]={1,1,1,1,1};
+  ObitIOAccess access;
+  ObitUVDesc *inDesc, *outDesc;
+  gchar *today=NULL;
+  ofloat *scale = NULL;
+  gchar *routine = "ObitUVUtilSplitCh";
+ 
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitUVIsA(inUV));
+  for (i=0; i<nOut; i++) {
+    if (!ObitUVIsA(outUV[i])) {
+      Obit_log_error(err, OBIT_Error,"%s Output %d MUST be defined for non scratch files",
+		     routine, i);
+      return;
+    }
+  }
+
+  /* Selection/calibration/editing of input? */
+  doCalSelect = FALSE;
+  ObitInfoListGetTest(inUV->info, "doCalSelect", &type, dim, &doCalSelect);
+  if (doCalSelect) access = OBIT_IO_ReadCal;
+  else access = OBIT_IO_ReadOnly;
+
+  /* test open to fully instantiate input and see if it's OK */
+  ObitUVFullInstantiate (inUV, TRUE, err);
+  iretCode = ObitUVOpen (inUV, access, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error))
+    Obit_traceback_msg (err, routine, inUV->name);
+
+  /* Get descriptor */
+  inDesc  = inUV->myDesc;
+
+  /* Allocate work arrays */
+  scale   = g_malloc(nOut*sizeof(ofloat));
+  BChan   = g_malloc(nOut*sizeof(olong));
+  numChan = g_malloc(nOut*sizeof(olong));
+
+  /* Divvy up channels */
+  nchan = inDesc->inaxes[inDesc->jlocf];
+  if (nOut>nchan) {
+    Obit_log_error(err, OBIT_Error,"%s Fewer channels, %d than output files %d",
+		   routine, nchan, nOut);
+    return;
+  }
+  nchOut = (glong) (0.999 + (nchan / (ofloat)nOut)); 
+  nchOut = MAX (1, nchOut);
+  for (i=0; i<nOut; i++) {
+    BChan[i]   = 1 + i*nchOut;
+    numChan[i] = MIN (nchOut, nchan-BChan[i]+1);
+  }
+
+  /* All selected IFs */
+  BIF = 1;
+  if (inDesc->jlocif>=0) EIF = inDesc->inaxes[inDesc->jlocif];
+  else EIF = 1;
+
+  /* Set up output UV data */
+  for (i=0; i<nOut; i++) {
+    /* UVW scaling parameter */
+    ich = (BChan[i]-1)*(inDesc->incf/3);
+    if (inDesc->jlocif>=0) ich += (BIF-1)* (inDesc->incif/3);
+    scale[i] = inDesc->fscale[ich];
+
+    /* copy Descriptor */
+    outUV[i]->myDesc = ObitUVDescCopy(inUV->myDesc, outUV[i]->myDesc, err);
+    
+    /* Creation date today */
+    today = ObitToday();
+    strncpy (outUV[i]->myDesc->date, today, UVLEN_VALUE-1);
+    if (today) g_free(today);
+    
+    /* Get descriptor */
+    outDesc = outUV[i]->myDesc;
+
+    /* Set output frequency info */
+    outDesc->crval[outDesc->jlocf]  = inDesc->crval[outDesc->jlocf] + 
+      (BChan[i]-inDesc->crpix[inDesc->jlocf]) * inDesc->cdelt[inDesc->jlocf];
+    outDesc->inaxes[outDesc->jlocf] = numChan[i];
+    outDesc->crpix[outDesc->jlocf]  = 1.0;
+    outDesc->cdelt[outDesc->jlocf]  = inDesc->cdelt[inDesc->jlocf] * chinc;
+    /* Alternate frequency/vel */
+    outDesc->altCrpix = inDesc->altCrpix - (BChan[i] + 1.0)/chinc;
+    outDesc->altRef   = inDesc->altRef;
+
+    /* Copy number of records per IO to output */
+    ObitInfoListGet (inUV->info, "nVisPIO", &type, dim, (gpointer)&NPIO, err);
+    ObitInfoListAlwaysPut (outUV[i]->info, "nVisPIO", type, dim, (gpointer)&NPIO);
+    if (err->error) goto cleanup;
+
+    /* test open output */
+    oretCode = ObitUVOpen (outUV[i], OBIT_IO_WriteOnly, err);
+    /* If this didn't work try OBIT_IO_ReadWrite */
+    if ((oretCode!=OBIT_IO_OK) || (err->error)) {
+      ObitErrClear(err);
+      oretCode = ObitUVOpen (outUV[i], OBIT_IO_ReadWrite, err);
+    }
+    /* if it didn't work bail out */
+    if ((oretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+
+    /* Copy tables before data */
+    iretCode = ObitUVCopyTables (inUV, outUV[i], exclude, NULL, err);
+    /* If multisource out then copy SU table, multiple sources selected or
+       sources deselected suggest MS out */
+    if ((inUV->mySel->numberSourcesList>1) || (!inUV->mySel->selectSources))
+      iretCode = ObitUVCopyTables (inUV, outUV[i], NULL, sourceInclude, err);
+    if (err->error) goto cleanup;
+    
+    /* reset to beginning of uv data */
+    iretCode = ObitIOSet (inUV->myIO,  inUV->info, err);
+    oretCode = ObitIOSet (outUV[i]->myIO, outUV[i]->info, err);
+    if (err->error) goto cleanup;
+
+    /* Close and reopen input to init calibration which will have been disturbed 
+       by the table copy */
+    iretCode = ObitUVClose (inUV, err);
+    if ((iretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+    
+    iretCode = ObitUVOpen (inUV, access, err);
+    if ((iretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+    
+  } /* end loop over output files */
+
+  /* we're in business, copy data */
+  while ((iretCode==OBIT_IO_OK) && (oretCode==OBIT_IO_OK)) {
+    if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
+    else iretCode = ObitUVRead (inUV, inUV->buffer, err);
+    if (iretCode!=OBIT_IO_OK) break;
+
+    /* How many */
+    for (i=0; i<nOut; i++) {
+      outUV[i]->myDesc->numVisBuff = inDesc->numVisBuff;
+    }
+
+    /* Copy data */
+    for (ivis=0; ivis<inDesc->numVisBuff; ivis++) { /* loop over visibilities */
+      /* Copy random parameters */
+      indx = ivis*inDesc->lrec;
+      for (i=0; i<nOut; i++) {
+	jndx = ivis*outUV[i]->myDesc->lrec;
+	for (j=0; j<inDesc->nrparm; j++) 
+	  outUV[i]->buffer[jndx+j] =  inUV->buffer[indx+j];
+ 
+	/* Scale u,v,w for new reference frequency */
+	outUV[i]->buffer[jndx+inDesc->ilocu] *= scale[i];
+	outUV[i]->buffer[jndx+inDesc->ilocv] *= scale[i];
+	outUV[i]->buffer[jndx+inDesc->ilocw] *= scale[i];
+     }
+
+      /* Copy visibility */
+      indx += inDesc->nrparm;
+      for (i=0; i<nOut; i++) {
+	jndx = ivis*outUV[i]->myDesc->lrec + outUV[i]->myDesc->nrparm;
+	FreqSel (inUV->myDesc, outUV[i]->myDesc, 
+		 BChan[i], BChan[i]+numChan[i]-1, chinc, BIF, EIF,
+		 &inUV->buffer[indx], &outUV[i]->buffer[jndx]);
+      }
+    } /* end loop over visibilities */
+
+    /* Write outputs */
+   for (i=0; i<nOut; i++) {
+     oretCode = ObitUVWrite (outUV[i], outUV[i]->buffer, err);
+     if (err->error) goto cleanup;
+   }
+  } /* end loop processing data */
+  
+  /* check for errors */
+  if ((iretCode > OBIT_IO_EOF) || (oretCode > OBIT_IO_EOF) ||
+      (err->error)) goto cleanup;
+
+  /* Cleanup */
+ cleanup:
+  if (scale)   g_free(scale);
+  if (BChan)   g_free(BChan);
+  if (numChan) g_free(numChan);
+  
+  /* close files */
+  iretCode = ObitUVClose (inUV, err);
+  for (i=0; i<nOut; i++) {
+    oretCode = ObitUVClose (outUV[i], err);
+    if ((iretCode!=OBIT_IO_OK) || (oretCode!=OBIT_IO_OK) || (err->error))
+      Obit_traceback_msg (err, routine, inUV->name);
+  }
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  
+  return;
+} /* end ObitUVUtilSplitCh */
+
 /*----------------------Private functions---------------------------*/
 /**
  * Count channels after selection and averaging and modify descriptor.
@@ -2171,3 +2391,51 @@ static void AvgFAver (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
   } /* end Stokes loop */
 
 } /* end AvgFAver */
+
+/**
+ * Select visibility in frequency
+ * \param inDesc    Input UV descriptor
+ * \param outDesc   Output UV descriptor
+ * \param BChan     First (1-rel) input channel selected
+ * \param EChan     Highest (1-rel) channel selected
+ * \param chinc     Increment of channels selected
+ * \param BIF       First IF (1-rel) selected
+ * \param EIF       Highest IF selected
+ * \param inBuffer  Input buffer (data matrix)
+ * \param outBuffer Output buffer (data matrix)
+ */
+static void FreqSel (ObitUVDesc *inDesc, ObitUVDesc *outDesc, 
+		     olong BChan, olong EChan, olong chinc,
+		     olong BIF, olong EIF,
+		     ofloat *inBuffer, ofloat *outBuffer)
+{
+  olong indx, jndx, jf, jif, js, ojf, ojif;
+  olong nstok, iincs, iincf, iincif, oincs, oincf, oincif;
+  olong bchan=BChan-1, echan=EChan-1, bif=BIF-1, eif=EIF-1;
+
+  /* Data increments */
+  nstok  = outDesc->inaxes[outDesc->jlocs];
+  iincs  = outDesc->incs;
+  iincf  = outDesc->incf;
+  iincif = outDesc->incif;
+  oincs  = outDesc->incs;
+  oincf  = outDesc->incf;
+  oincif = outDesc->incif;
+
+  /* Copy to output */
+  /* Loop over Stokes */
+  for (js=0; js<nstok; js++) {  /* Stokes loop */
+    for (jif=bif; jif<=eif; jif++) {  /* IF loop */
+      for (jf=bchan; jf<=echan; jf+=chinc) {  /* Frequency loop */
+	jndx = js*iincs + jif*iincif + jf*iincf;
+	ojf  = jf  - bchan;
+	ojif = jif - bif;
+	indx = js*oincs + ojif*oincif + ojf*oincf;
+	outBuffer[indx]   = inBuffer[jndx];
+	outBuffer[indx+1] = inBuffer[jndx+1];
+	outBuffer[indx+2] = inBuffer[jndx+2];
+      } /* end Frequency loop */
+    } /* end IF loop */
+  } /* end Stokes loop */
+
+} /* end FreqSel */

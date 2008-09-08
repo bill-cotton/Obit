@@ -954,7 +954,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
     
     /* define object */
-    nvis = 1000;
+    nvis = 10000;
     nThreads = 1;
     ObitInfoListGetTest(myInput, "nThreads", &type, dim, &nThreads);
     nvis *= nThreads;
@@ -973,7 +973,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
 
     /* define object */
-    nvis = 1000;
+    nvis = 10000;
     ObitInfoListGetTest(inData->info, "nThreads", &type, dim, &nThreads);
     nvis *= nThreads;
     ObitUVSetFITS (inData, nvis, disk, inFile,  err); 
@@ -1084,7 +1084,7 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
     
     /* define object */
-    nvis = 1000;
+    nvis = 10000;
     ObitInfoListGetTest(inData->info, "nVisPIO", &type, dim, &nvis);
     ObitUVSetAIPS (outUV, nvis, disk, cno, AIPSuser, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
@@ -1111,7 +1111,7 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
       ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
     
     /* define object */
-    nvis = 1000;
+    nvis = 10000;
     ObitInfoListGetTest(inData->info, "nVisPIO", &type, dim, &nvis);
     ObitUVSetFITS (outUV, nvis, disk, out2File, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);

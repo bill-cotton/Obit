@@ -1995,8 +1995,7 @@ ObitImage* ObitImageUtilQuanFITS (ObitImage *inImage, gchar *fileName,
  * \param bchan     first (1-rel) channel in UVDesc
  * \param echan     highest (1-rel) channel in UVDesc
  * \param incr      channel increment in input
- * \param nchavg    How many uv channels to average per image channel.
- *                  Ignored if uv data has multiple IFs.
+ * \param err       Error stack, returns if not empty.
  */
 void 
 ObitImageUtilMakeCube (ObitImageDesc *inDesc, ObitUVDesc *UVDesc, 
@@ -2054,6 +2053,7 @@ ObitImageUtilMakeCube (ObitImageDesc *inDesc, ObitUVDesc *UVDesc,
  * \param in        Input image with plane to copy
  * \param out       Output cube to accept plane
  * \param plane     (1-rel) pixel indices for planes 3-7 in out.
+ * \param err       Error stack, returns if not empty.
  */
 void ObitImageUtilInsertPlane (ObitImage *in, ObitImage *out, olong *plane, 
 			       ObitErr *err)
@@ -2132,6 +2132,122 @@ void ObitImageUtilInsertPlane (ObitImage *in, ObitImage *out, olong *plane,
     in->image = ObitFArrayUnref(in->image);
 
 } /* end ObitImageUtilInsertPlane */
+
+/**
+ * Insert multiple planes from image in starting at plane in out.
+ * \param in        Input image cube with planes to copy
+ *                  Any BLC, TRC are honored
+ * \param out       Output cube to accept planes
+ * \param plane     (1-rel) pixel indices for planes 3-7 in out.
+ * \param axExp     (1-rel) axis number being expanded (usually 3)
+ * \param err       Error stack, returns if not empty.
+ */
+void ObitImageUtilInsertCube (ObitImage *in, ObitImage *out, olong *plane, 
+			      olong axExp, ObitErr *err)
+{
+  ObitIOSize IOBy = OBIT_IO_byPlane;
+  ObitImageDesc *inDesc=NULL, *outDesc=NULL;
+  olong i, iplane, nplane;
+  olong inblc[IM_MAXDIM]={1,1,1,1,1,1,1}, blc[IM_MAXDIM]={1,1,1,1,1,1,1};
+  olong intrc[IM_MAXDIM]={0,0,0,0,0,0,0}, trc[IM_MAXDIM]={0,0,0,0,0,0,0};
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  gchar *routine = "ObitImageUtilInsertPlane";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitImageIsA(in));
+  g_assert (ObitImageIsA(out));
+  g_assert (plane!=NULL);
+
+  /* Access images a plane at a time */
+  dim[0] = 1;
+  ObitInfoListPut (in->info, "IOBy", OBIT_long, dim, &IOBy, err);
+  ObitInfoListPut (out->info, "IOBy", OBIT_long, dim, &IOBy, err);
+
+  inDesc  = in->myDesc;
+  outDesc = out->myDesc;
+
+  /* Open input to ensure size set OK */
+  ObitImageOpen (in, OBIT_IO_ReadOnly, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Get selected input size */
+  ObitInfoListGetTest (in->info, "BLC", &type, dim, inblc); 
+  ObitInfoListGetTest (in->info, "TRC", &type, dim, intrc);
+  for (i=0; i<IM_MAXDIM; i++) {
+    inblc[i] = MAX(1, MIN(inblc[i],inDesc->inaxes[i]));
+    if (intrc[i]<=0) intrc[i] = inDesc->inaxes[i];
+    intrc[i] = MAX(1, MIN(intrc[i],inDesc->inaxes[i]));
+  }
+
+  /* Check size of planes */
+  Obit_return_if_fail(((inDesc->inaxes[0]==outDesc->inaxes[0]) && 
+		       (inDesc->inaxes[1]==outDesc->inaxes[1])), err,
+		      "%s: Image planes incompatible  %d!= %d or  %d!= %d", 
+		      routine, inDesc->inaxes[0], outDesc->inaxes[0], 
+		      inDesc->inaxes[1], outDesc->inaxes[1]) ;
+ 
+  Obit_return_if_fail(((axExp>2) && (axExp<=IM_MAXDIM)), err,
+		      "%s: Illegal axis to expand %d",  routine, axExp);
+ 
+  Obit_return_if_fail(((plane[0]<=outDesc->inaxes[2]) && 
+		       (plane[1]<=outDesc->inaxes[3])), err,
+		      "%s: Output does not have plane %d  %d", 
+		      routine, plane[0], plane[1]);
+
+  /* How many input planes? */
+  nplane = inDesc->inaxes[2];
+
+  /* Loop over output planes */
+  for (iplane=0; iplane<nplane; iplane++) {
+
+    /* Read input plane */
+    ObitImageRead (in, NULL, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+    /* Open output - Set blc, trc */
+    for (i=0; i<2; i++) blc[i] = 1;
+    for (i=2; i<IM_MAXDIM; i++) blc[i] = MAX (1,plane[i-2]);
+    blc[axExp-1] += iplane;
+    for (i=0; i<2; i++) trc[i] = outDesc->inaxes[i];
+    for (i=2; i<IM_MAXDIM; i++) trc[i] = MAX (1,plane[i-2]);
+    trc[axExp-1] += iplane;
+    dim[0] = 7;
+    ObitInfoListPut (out->info, "BLC", OBIT_long, dim, blc, err); 
+    ObitInfoListPut (out->info, "TRC", OBIT_long, dim, trc, err);
+    out->extBuffer = TRUE;  /* Don't need output buffer */
+    ObitImageOpen (out, OBIT_IO_ReadWrite, err);
+  
+   /* Write to output */
+    ObitImageWrite (out, in->image->array, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    /* Copy Beam information if needed */
+    if ((out->myDesc->beamMaj<=0.0) || (out->myDesc->beamMin<=0.0)) {
+      out->myDesc->beamMaj = in->myDesc->beamMaj;
+      out->myDesc->beamMin = in->myDesc->beamMin;
+      out->myDesc->beamPA  = in->myDesc->beamPA;
+      out->myDesc->niter = 1;
+    }
+    ObitImageClose (out, err);
+    if (err->error) Obit_traceback_msg (err, routine, out->name);
+    out->extBuffer = FALSE;  /* May need buffer later */
+  } /* end loop over planes */
+
+  /* Close input */
+  ObitImageClose (in, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Reset input BLC, TRC */
+  dim[0] = 7;
+  ObitInfoListAlwaysPut (in->info, "BLC", OBIT_long, dim, inblc); 
+  ObitInfoListAlwaysPut (in->info, "TRC", OBIT_long, dim, intrc);
+
+  /* free image memory if not memory resident */
+  if (in->mySel->FileType!=OBIT_IO_MEM) 
+    in->image = ObitFArrayUnref(in->image);
+
+} /* end ObitImageUtilInsertCube */
 
 /**
  * Fill in an image Descriptor from a UV Descriptor.

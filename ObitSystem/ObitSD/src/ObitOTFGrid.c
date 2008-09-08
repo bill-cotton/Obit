@@ -97,7 +97,7 @@ typedef struct {
   olong        first;
   /* Highest (1-rel) vis in otfdata buffer to process this thread  */
   olong        last;
-  /* thread number  */
+  /* thread number , >0 -> no threading */
   olong        ithread;
   /* Temporary gridding array for thread */
   ObitFArray  *grid;
@@ -194,7 +194,7 @@ void ObitOTFGridSetup (ObitOTFGrid *in, ObitOTF *OTFin,
   ofloat over, diam, lambda, cells_rad, temp, farr[10];
   olong i, convType;
   ObitInfoType type;
-  gint32 dim[MAXINFOELEMDIM];
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean doCal, doCalSelect;
   ObitIOAccess access;
   gchar *routine = "ObitOTFGridSetup";
@@ -314,7 +314,7 @@ void ObitOTFGridReadOTF (ObitOTFGrid *in, ObitOTF *OTFin, ObitErr *err)
   ObitIOCode retCode = OBIT_IO_OK;
   ObitThreadFunc func=(ObitThreadFunc)ThreadGridBuffer;
   OTFGridFuncArg *args;
-  olong i, nrec, lorec, hirec, nrecPerThread, ndetect;
+  olong i, nrec, lorec, hirec, nrecPerThread, nThreads, ndetect;
   gboolean done, OK;
   olong count;
   gchar *routine = "ObitOTFGridReadOTF";
@@ -377,17 +377,21 @@ void ObitOTFGridReadOTF (ObitOTFGrid *in, ObitOTF *OTFin, ObitErr *err)
     
     /* Divide up work */
     nrec = OTFin->myDesc->numRecBuff;
-    nrecPerThread = nrec/in->nThreads;
+    if (nrec<1000) nThreads = 1;
+    else nThreads = in->nThreads;
+    nrecPerThread = nrec/nThreads;
     lorec = 1;
     hirec = nrecPerThread;
     hirec = MIN (hirec, nrec);
 
     /* Set up thread arguments */
-    for (i=0; i<in->nThreads; i++) {
-      if (i==(in->nThreads-1)) hirec = nrec;  /* Make sure do all */
+    for (i=0; i<nThreads; i++) {
+      if (i==(nThreads-1)) hirec = nrec;  /* Make sure do all */
       args = (OTFGridFuncArg*)in->threadArgs[i];
       args->first  = lorec;
       args->last   = hirec;
+      if (nThreads>1) args->ithread = i;
+      else args->ithread = -1;
       /* Update which rec */
       lorec += nrecPerThread;
       hirec += nrecPerThread;
@@ -395,7 +399,7 @@ void ObitOTFGridReadOTF (ObitOTFGrid *in, ObitOTF *OTFin, ObitErr *err)
     }
 
     /* Do  convolve and sum to grids operation on buffer possibly with threads */
-    OK = ObitThreadIterator (in->thread, in->nThreads, func, in->threadArgs);
+    OK = ObitThreadIterator (in->thread, nThreads, func, in->threadArgs);
     
     /* Check for problems */
     if (!OK) {
@@ -674,7 +678,7 @@ void ObitOTFGridMakeBeam (ObitOTFGrid* in, ObitImage *image,
   image->myDesc->beamMin = fitFWHM * fabs(image->myDesc->cdelt[0]);
   image->myDesc->beamPA  = 0.0;
   in->fitBeamSize = fitFWHM * fabs(image->myDesc->cdelt[0]);
-  dim[0] = dim[1] = dim[2] = 1;
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
   ObitInfoListAlwaysPut(image->info, "fitBeamSize", OBIT_float, dim, &in->fitBeamSize);
 
   /* DEBUG - use raw beam rather than convolved one 
@@ -1571,10 +1575,10 @@ static ofloat sphfn (olong ialf, olong im, olong iflag, ofloat eta)
  * Can Run in Thread.
  * \param arg  Pointer to OTFGridFuncArg argument with elements
  * \li in     ObitOTFGrid object
- * \li OTFin   OTF data set to grid from current buffer
+ * \li OTFin   OTF data set to grid from current buffer 
  * \li first  First (1-rel) rec in OTFin buffer to process this thread
  * \li last   Highest (1-rel) rec in OTFin buffer to process this thread
- * \li ithread thread number
+ * \li ithread thread number, >0 -> no threading
  * \li grid   Data grid
  * \li wtgrid Weight grid
  * \li xpos, ypos, float arrays the size of ndetect
@@ -1744,7 +1748,8 @@ static gpointer ThreadGridBuffer (gpointer arg)
 
   /* Indicate completion */
  finish:
-  ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
   
   return NULL;
 } /* end ThreadGridBuffer */

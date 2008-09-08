@@ -103,7 +103,7 @@ typedef struct {
   olong        first;
   /* Highest (1-rel) vis in uvdata buffer to process this thread  */
   olong        last;
-  /* thread number  */
+  /* thread number, >0 -> no threading  */
   olong        ithread;
   /* Obit error stack object */
   ObitErr      *err;
@@ -393,7 +393,7 @@ ObitIOCode ObitSkyModelSubUV (ObitSkyModel *in, ObitUV *indata, ObitUV *outdata,
   const ObitSkyModelClassInfo 
     *myClass=(const ObitSkyModelClassInfo*)in->ClassInfo;
   ObitInfoType type;
-  gint32 dim[MAXINFOELEMDIM];
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitUV *inUV;
   ObitIOAccess access;
   gboolean same, doCalSelect, gotSome, done, isFirst;
@@ -628,7 +628,7 @@ ObitIOCode ObitSkyModelDivUV (ObitSkyModel *in, ObitUV *indata, ObitUV *outdata,
   gboolean saveDoDivide, gotSome;
   ofloat saveFactor, *Buffer;
   ObitInfoType type;
-  gint32 dim[MAXINFOELEMDIM];
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitIOAccess access;
   gboolean same, doCalSelect, doScratch, done, isFirst;
   olong i, image, nimage, nload;
@@ -1576,7 +1576,8 @@ void ObitSkyModelFTDFT (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *
     args->uvdata = uvdata;
     args->first  = lovis;
     args->last   = hivis;
-    args->ithread= i;
+    if (nThreads>1) args->ithread = i;
+    else args->ithread = -1;
     args->err    = err;
     args->Interp = NULL;
     /* Update which vis */
@@ -1609,7 +1610,7 @@ void ObitSkyModelFTDFT (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr *
  * \li uvdata UV data set to model and subtract from current buffer
  * \li first  First (1-rel) vis in uvdata buffer to process this thread
  * \li last   Highest (1-rel) vis in uvdata buffer to process this thread
- * \li ithread thread number
+ * \li ithread thread number, <0-> no threads
  * \li err Obit error stack object.
  * \return NULL
  */
@@ -1826,7 +1827,9 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
   } /* end loop over visibilities */
 
   /* Indicate completion */
- finish: ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
   
   return NULL;
 } /* ObitSkyModelFTDFT */
@@ -1888,7 +1891,8 @@ void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr 
     args->uvdata = uvdata;
     args->first  = lovis;
     args->last   = hivis;
-    args->ithread= i;
+    if (nThreads>1) args->ithread= i;
+    else args->ithread = -1;
     args->err    = err;
     /* local copy of interpolator if needed */
     if (!args->Interp) {
@@ -1930,7 +1934,7 @@ void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr 
  * \li uvdata UV data set to model and subtract from current buffer
  * \li first  First (1-rel) vis in uvdata buffer to process this thread
  * \li last   Highest (1-rel) vis in uvdata buffer to process this thread
- * \li ithread thread number
+ * \li ithread thread number, <0-> no threads
  * \li err Obit error stack object.
  * \li Interp UV Interpolator
  * \return NULL
@@ -2189,7 +2193,10 @@ gpointer ThreadSkyModelFTGrid (gpointer args)
   } /* end loop over visibilities */
 
   /* Indicate completion */
- finish: ObitThreadPoolDone (in->thread, (gpointer)&ithread);
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
   
   return NULL;
 } /* ThreadSkyModelFTGrid */
@@ -2211,7 +2218,7 @@ ofloat ObitSkyModelSum (ObitSkyModel *in, ObitErr *err)
   gchar *tabType = "AIPS CC";
   olong ver, irow;
   ObitInfoType type;
-  gint32 dim[MAXINFOELEMDIM];
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   union ObitInfoListEquiv InfoReal; 
   gchar *routine = "ObitSkyModelSum";
 
@@ -2348,7 +2355,7 @@ void ObitSkyModelCompressCC (ObitSkyModel *in, ObitErr *err)
 void ObitSkyModelGetInput (ObitSkyModel* in, ObitErr *err)
 {
   ObitInfoType type;
-  gint32 i, dim[MAXINFOELEMDIM];
+  gint32 i, dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat rtemp[10];
   olong itemp, *iptr, num;
   gchar tempStr[5];

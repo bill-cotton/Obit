@@ -460,7 +460,7 @@ void  ObitSkyModelVMGetInput (ObitSkyModel* inn, ObitErr *err)
 {
   ObitSkyModelVM *in = (ObitSkyModelVM*)inn;
   ObitInfoType type;
-  gint32 dim[MAXINFOELEMDIM];
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   union ObitInfoListEquiv InfoReal; 
   gchar *routine = "ObitSkyModelVMGetInput";
 
@@ -925,7 +925,7 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
  */
 void ObitSkyModelVMFTDFT (ObitSkyModelVM *in, olong field, ObitUV *uvdata, ObitErr *err)
 {
-  olong i, nvis, lovis, hivis, nvisPerThread;
+  olong i, nvis, lovis, hivis, nvisPerThread, nThreads;
   VMFTFuncArg *args;
   gboolean OK = TRUE;
   gchar *routine = "ObitSkyModelVMFTDFT";
@@ -935,21 +935,24 @@ void ObitSkyModelVMFTDFT (ObitSkyModelVM *in, olong field, ObitUV *uvdata, ObitE
 
   /* Divide up work */
   nvis = uvdata->myDesc->numVisBuff;
-  nvisPerThread = nvis/in->nThreads;
+  if (nvis<1000) nThreads = 1;
+  else nThreads = in->nThreads;
+  nvisPerThread = nvis/nThreads;
   lovis = 1;
   hivis = nvisPerThread;
   hivis = MIN (hivis, nvis);
 
   /* Set up thread arguments */
-  for (i=0; i<in->nThreads; i++) {
-    if (i==(in->nThreads-1)) hivis = nvis;  /* Make sure do all */
+  for (i=0; i<nThreads; i++) {
+    if (i==(nThreads-1)) hivis = nvis;  /* Make sure do all */
     args = (VMFTFuncArg*)in->threadArgs[i];
     args->in     = (ObitSkyModel*)in;
     args->field  = field;
     args->uvdata = uvdata;
     args->first  = lovis;
     args->last   = hivis;
-    args->ithread= i;
+    if (nThreads>1) args->ithread= i;
+    else args->ithread = -1;
     args->err    = err;
     args->endVMModelTime = -1.0e20;
     if (args->VMComps==NULL) {
@@ -963,7 +966,7 @@ void ObitSkyModelVMFTDFT (ObitSkyModelVM *in, olong field, ObitUV *uvdata, ObitE
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (in->thread, in->nThreads, in->DFTFunc, in->threadArgs);
+  OK = ObitThreadIterator (in->thread, nThreads, in->DFTFunc, in->threadArgs);
 
   /* Check for problems */
   if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
@@ -988,7 +991,7 @@ void ObitSkyModelVMFTDFT (ObitSkyModelVM *in, olong field, ObitUV *uvdata, ObitE
  * \li uvdata UV data set to model and subtract from current buffer
  * \li first  First (1-rel) vis in uvdata buffer to process this thread
  * \li last   Highest (1-rel) vis in uvdata buffer to process this thread
- * \li ithread thread number
+ * \li ithread thread number, <0-> no threads
  * \li err    Obit error stack object.
  * \li endVMModelTime End time (days) of validity of model
  * \li VMComps Thread copy of Components list
@@ -1222,7 +1225,9 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
   } /* end loop over visibilities */
 
   /* Indicate completion */
- finish: ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (in->thread, (gpointer)&ithread);
   
   return NULL;
 } /* ThreadSkyModelVMFTDFT */

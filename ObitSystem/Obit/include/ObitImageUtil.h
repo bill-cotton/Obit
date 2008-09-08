@@ -168,6 +168,10 @@ void ObitImageUtilMakeCube (ObitImageDesc *inDesc, ObitUVDesc *uvDesc,
 void ObitImageUtilInsertPlane (ObitImage *in, ObitImage *out, olong *plane, 
 			       ObitErr *err);
 
+/** Public: Insert multiple planes from image in starting at plane in out. */
+void ObitImageUtilInsertCube (ObitImage *in, ObitImage *out, olong *plane, 
+			      olong axExp, ObitErr *err);
+
 /** Public: Flux weighted velocity image from Cube. */
 void ObitImageUtilVel (ObitImage *inImage, ObitImage *outImage, ObitErr *err);
 

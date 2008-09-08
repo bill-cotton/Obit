@@ -4,7 +4,7 @@
 ;! MCube:  put together images into a cube
 ;# Obit Task 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007
+;;  Copyright (C) 2007,2008
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -79,7 +79,7 @@ copyCC                             Copy CC table
 MCube
 Type: Task
 Use:     Obit program MCube will create a multi plane output
-image and insert the selected plane into the cube.
+image and insert the selected planes into the cube.
 The program assumes that one axis of the input image will be 
 expanded.  Planes should be inserted in order beginning with 
 the first image on the expanded plane.
@@ -98,7 +98,7 @@ Adverbs:
               image to be included.
               The value (0,0) means the top right hand corner 
               of the entire image.  1-rel
-              Only a single plane is allowed at a time.
+              Multiple planes on dimension 3 are allowed
 
               Define output cube
   axNum.......1-rel axis number of input image which is to 
@@ -106,7 +106,7 @@ Adverbs:
               Frequency or Stokes axis.
   axDim.......The output dimensionality of axis axNum.
   axPix.......Which pixel (1-rel) on axis axNum.is the
-              input plane to be inserted?
+              first input plane to be inserted?
   axCRPix.....Reference pixel on axis axNum.
               Used for output creation, 
               If -1000 -> use input value+blc-1
@@ -123,7 +123,7 @@ Adverbs:
               Must be specified after first accumulation
   outDisk.....Output Disk drive # of image. 
   outFile.....Output File Name if a FITS file
-  copyCC......If True copy the Clean component table version
+  copyCC......If True copy the Clean component tables version
               given by the value of BLC on axis axNum on the 
-              input image to table axPix on the output.
+              input image to table axPix... on the output.
 ----------------------------------------------------------------
