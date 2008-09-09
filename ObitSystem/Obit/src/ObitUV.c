@@ -1645,7 +1645,7 @@ void  ObitUVGetSouInfo (ObitUV *uvdata, ObitErr *err)
   }
 
   /* Update I/O headers */
-  ((ObitUVDesc*)uvdata->myIO->myDesc)->equinox = uvdata->myDesc->equinox = source->equinox;
+  ((ObitUVDesc*)uvdata->myIO->myDesc)->equinox = uvdata->myDesc->equinox;
   ((ObitUVDesc*)uvdata->myIO->myDesc)->crval[((ObitUVDesc*)uvdata->myIO->myDesc)->jlocr] = ra;
   ((ObitUVDesc*)uvdata->myIO->myDesc)->crval[((ObitUVDesc*)uvdata->myIO->myDesc)->jlocd] = dec;
   ((ObitUVDesc*)uvdata->myIO->myDesc)->restFreq = RestFreq;

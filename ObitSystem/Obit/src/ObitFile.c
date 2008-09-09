@@ -892,7 +892,7 @@ ObitIOCode
 ObitFilePadFile (ObitFile *in, olong blksize, ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
-  gchar *tmpBuff;
+  gchar *tmpBuff=NULL;
   size_t size, nBlocks, nWrit;
   ObitFilePos wantPos;
   struct stat stbuf;
@@ -951,6 +951,7 @@ ObitFilePadFile (ObitFile *in, olong blksize, ObitErr *err)
     Obit_log_error(err, OBIT_Error, 
 		   "ERROR Positioning file %s", in->name);
     ObitFileErrMsg(err);     /* system error message*/
+    if (tmpBuff) g_free(tmpBuff); tmpBuff = NULL;
     return OBIT_IO_OpenErr;
   }
 
@@ -970,6 +971,7 @@ ObitFilePadFile (ObitFile *in, olong blksize, ObitErr *err)
     retCode = OBIT_IO_WriteErr;
     if (feof(in->myFile)) retCode = OBIT_IO_EOF;
     in->status = OBIT_ErrorExist;
+    if (tmpBuff) g_free(tmpBuff); tmpBuff = NULL;
     return retCode;
   }
   
@@ -982,6 +984,7 @@ ObitFilePadFile (ObitFile *in, olong blksize, ObitErr *err)
      END DEBUG */
 
   if (in->filePos>=0) in->filePos += size;  /* update file position */
+  if (tmpBuff) g_free(tmpBuff); tmpBuff = NULL;
 
   return OBIT_IO_OK;
 } /* end ObitFilePadFile */

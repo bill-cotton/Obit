@@ -288,10 +288,10 @@ ObitSkyModel* ObitSkyModelCreate (gchar* name, ObitImageMosaic* mosaic)
   out->mosaic = ObitImageMosaicRef(mosaic);
   if ((out->mosaic) && (out->mosaic->numberImages>0)) {
     number = out->mosaic->numberImages;
-    out->CCver = ObitMemAlloc0 (sizeof(olong)*number);
+    out->CCver = ObitMemRealloc (out->CCver, sizeof(olong)*number);
     for (i=0; i<number; i++) out->CCver[i] = 0;
-    out->startComp = ObitMemAlloc0 (sizeof(olong)*number);
-    out->endComp   = ObitMemAlloc0 (sizeof(olong)*number);
+    out->startComp = ObitMemRealloc (out->startComp, sizeof(olong)*number);
+    out->endComp   = ObitMemRealloc (out->endComp, sizeof(olong)*number);
     for (i=0; i<number; i++) out->startComp[i] = 1;
     for (i=0; i<number; i++) out->endComp[i] = 0;
   }
@@ -1948,7 +1948,6 @@ gpointer ThreadSkyModelFTGrid (gpointer args)
   ObitUV *uvdata   = largs->uvdata;
   olong loVis      = largs->first-1;
   olong hiVis      = largs->last;
-  olong ithread    = largs->ithread;
   ObitErr *err     = largs->err;
   ObitCInterpolate *Interp = largs->Interp;
 

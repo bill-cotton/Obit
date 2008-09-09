@@ -629,7 +629,7 @@ ObitInfoList* defaultInputs(ObitErr *err)
 
   /*  Apply calibration/selection?, def=False */
   dim[0] = 1; dim[1] = 1;
-  btemp = FALSE;
+  btemp = TRUE;
   ObitInfoListPut (out, "doCalSelect", OBIT_bool, dim, &btemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 

@@ -1981,8 +1981,8 @@ void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV,
   /* Set up output UV data */
   for (i=0; i<nOut; i++) {
     /* UVW scaling parameter */
-    ich = (BChan[i]-1)*(inDesc->incf/3);
-    if (inDesc->jlocif>=0) ich += (BIF-1)* (inDesc->incif/3);
+    ich = (BChan[i]-1)*(inDesc->incf/(3*inDesc->incs));
+    if (inDesc->jlocif>=0) ich += (BIF-1)* (inDesc->incif/(3*inDesc->incs));
     scale[i] = inDesc->fscale[ich];
 
     /* copy Descriptor */

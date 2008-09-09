@@ -504,10 +504,11 @@ gboolean ObitUVCalWant (ObitUVCal *in, ofloat time, olong ant1, olong ant2,
   if ((sel->FreqID > 0) && (sel->FreqID != FQID)) return FALSE;
 
   /* Source ID */
-  if (desc->ilocsu >= 0) SourID = RP[desc->ilocsu] + 0.1;
-  else SourID = 0;
-  /* Is this source wanted */
-  if (!ObitUVSelWantSour(sel, SourID)) return FALSE;
+  if (desc->ilocsu >= 0) {
+    SourID = RP[desc->ilocsu] + 0.1;
+    /* Is this source wanted */
+    if (!ObitUVSelWantSour(sel, SourID)) return FALSE;
+  }
 
   /* Check UV range */
   uvmin2 = sel->UVRange[0] * sel->UVRange[0];

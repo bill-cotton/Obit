@@ -681,7 +681,7 @@ ObitUV** setOutputData (ObitInfoList *myInput, ObitUV* inData, olong *nout,
       for (i=0; i<MIN(12,nameDim[0]); i++) Aname[i] = ANames[i+id*nameDim[0]];
       
       /* Output class */
-      for (i=0; i<6; i++) Aname[i] = ' ';  Aclass[i] = 0;
+      for (i=0; i<6; i++) Aclass[i] = ' ';  Aclass[i] = 0;
       for (i=0; i<MIN(6,classDim[0]); i++) Aclass[i] = AClasss[i+id*classDim[0]];
 
       /* Sequence */

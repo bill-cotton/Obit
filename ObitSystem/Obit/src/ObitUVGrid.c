@@ -461,7 +461,7 @@ void ObitUVGridReadUV (ObitUVGrid *in, ObitUV *UVin, ObitErr *err)
   /* Shut down any threading */
   ObitThreadPoolFree (in->thread);
   if (in->threadArgs) {
-    for (i=0; i<nThreads; i++) {
+    for (i=0; i<in->nThreads; i++) {
       args = (UVGridFuncArg*)in->threadArgs[i];
       if (args->grid) ObitCArrayUnref(args->grid);
       g_free(in->threadArgs[i]);
