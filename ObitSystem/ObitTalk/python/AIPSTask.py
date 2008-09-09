@@ -83,6 +83,40 @@ from Task import Task, List
 # Generic Python stuff.
 import glob, os, pickle, sys
 
+def count_entries(l):
+    """Count numbr of non blank/zero entries in list l"""
+    count = 0
+    if type(l[0])==int:  # integers
+        for elem in l:
+            if (elem==None) or (elem!=0):
+                count += 1
+            else:
+                break
+        count = max(4,count) # At least 4
+    elif type(l[0])==float:  # float
+        for elem in l:
+            if (elem==None) or (elem!=0.0):
+                count += 1
+            else:
+                break
+        count = max(2,count)  # At least 2
+                    
+    elif type(l[0])==str:  # string
+        for elem in l:
+            if (elem==None) or ((len(elem)>0) and (not elem.isspace())):
+                count += 1
+            else:
+                break
+        count = max(1,count)  # At least 1
+    else:           # Something else
+        count = len(l)
+
+    count = min (count, len(l))
+    # Trap AIPS lists
+    if l[0]==None:
+        count -= 1
+    return count
+#  end count_entries
 
 class AIPSTask(Task):
 
@@ -253,7 +287,7 @@ class AIPSTask(Task):
         inpList = inpList + "Adverbs     Values                        "+\
                   "           Comments\n"
         inpList = inpList + "------------------------------------------"+\
-                  "--------------------------------------\n"
+                  "-----------------------------------------------------\n"
 
         for adverb in adverbs:
             #if self.__dict__[adverb] == '':
@@ -271,18 +305,21 @@ class AIPSTask(Task):
             s1 = str(adverb)+"             "
             # Python is SO hateful
             if str(value).startswith('['):  # list
+                # How many nonzero/nonblank entries
+                ecount = count_entries(value)
                 s2=""
-                while i<len(value) and 2+len(s2)+len(str(value[i]))<40:
-                    s2 = s2 + str(value[i])+", "
+                while i<ecount and 2+len(s2)+len(str(value[i])[:47])<50:
+                    s2 = s2 + str(value[i])[:47]+", "
                     i = i+1
                 # remove final comma
-                if i==len(value):
+                if i==ecount:
                     s2 = s2[:len(s2)-2]
                 # Left justify
                 s2 = s2 + "                                         "
-                inpList = inpList + "%12s%40s%s\n" % (s1[:11], s2[:39], hlp)
+                inpList = inpList + "%12s%50s%s\n" % (s1[:11], s2[:49], hlp)
                 # Loop until done with values
-                while i<len(value):
+                doh = 0
+                while i<ecount:
                     # continuation of description?
                     j = j+1
                     if j<len(hlps):
@@ -290,18 +327,21 @@ class AIPSTask(Task):
                     else:
                         hlp = " "
                     s2=""
-                    while i<len(value) and 2+len(s2)+len(str(value[i]))<40:
-                        s2 = s2 + str(value[i])+", "
+                    while i<ecount and 2+len(s2)+len(str(value[i])[:47])<50:
+                        s2 = s2 + str(value[i])[:47]+", "
                         i = i+1
                     # remove final comma
-                    if i==len(value):
+                    if i==ecount:
                         s2 = s2[:len(s2)-2]
                     # Left justify
                     s2 = s2 + "                                         "
-                    inpList = inpList + "            %40s%s\n" % (s2[:39], hlp)
+                    inpList = inpList + "            %50s%s\n" % (s2[:49], hlp)
+                    doh += 1;
+                    if doh>ecount:
+                        break
             else:  # Scalar
                 s2 = str(value)+"                                   "
-                inpList = inpList + "%12s%40s%s\n" % (s1[:11], s2[:39], hlp)
+                inpList = inpList + "%12s%50s%s\n" % (s1[:11], s2[:49], hlp)
                     
             # Any more parameter description lines?
             s1 = "     "
@@ -310,7 +350,7 @@ class AIPSTask(Task):
             while j<len(hlps):
                 hlp =  hlps[j]
                 j = j + 1
-                inpList = inpList + "%12s%40s%s\n" % (s1, s2, hlp)
+                inpList = inpList + "%12s%50s%s\n" % (s1, s2, hlp)
                   
         pydoc.ttypager(inpList)
         del inpList

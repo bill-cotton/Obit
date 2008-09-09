@@ -32,21 +32,21 @@
 SplitCh    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 SplitCh    Split UV data channels to multiple output files
 **PARAM** str 4
-DataType                           "FITS" or "AIPS" type of input
+DataType                            "FITS" or "AIPS" type of input
 **PARAM** str 48
-inFile                             FITS input uvdata if Type=='FITS'
+inFile                              FITS input uvdata if Type=='FITS'
 **PARAM** str 12
-inName                             Input UV file name (name)
+inName                              Input UV file name (name)
 **PARAM** str 6
-inClass                            Input UV file name (class)
+inClass                             Input UV file name (class)
 **PARAM** int 1
-inSeq             0.0     9999.0   Input UV file name (seq. #)
+inSeq             0.0     9999.0    Input UV file name (seq. #)
 **PARAM** int 1
-inDisk                             Input UV file disk unit #
+inDisk                              Input UV file disk unit #
 **PARAM** str 16 30
-Sources                            Sources to copy
+Sources                             Sources to copy
 **PARAM** int 1 **DEF** -1
-Qual            -10.0              Source qualifier -1=>any
+Qual            -10.0               Source qualifier -1=>any
 **PARAM** str 4
 souCode                             Calibrator code '    '=>any
 **PARAM** float 2
@@ -60,44 +60,44 @@ BChan            0.0     8192.0     Low freq. channel
 **PARAM** int 1
 EChan            0.0     8192.0     Highest freq channel
 **PARAM** int 1
-BIF               0.0     9999.0   First IF (0=>1)
+BIF               0.0     9999.0    First IF (0=>1)
 **PARAM** int 1
-EIF               0.0     9999.0   Highest IF (0=>BIF to last)
+EIF               0.0     9999.0    Highest IF (0=>BIF to last)
 **PARAM** int 1
 subA                                Subarray
 **PARAM** int 50
 Antennas         0.0     1000.0     List of antennas to calibrate
 **PARAM** int 1
-doCalib          -1.0        2.0   If >0 calibrate data
-                                   = 2 calibrate weights
+doCalib          -1.0        2.0    If >0 calibrate data
+                                    = 2 calibrate weights
 **PARAM** int 1
-gainUse                            CL (or SN) table to apply
+gainUse                             CL (or SN) table to apply
 **PARAM** boo 1 **DEF** F
-doPol            -1.0       10.0   If >0 correct polarization.
+doPol            -1.0       10.0    If >0 correct polarization.
 **PARAM** int 1
-flagVer                            Flag table version
+flagVer                             Flag table version
 **PARAM** int 1
-doBand           -1.0       10.0   If >0 apply bandpass cal.
-                                   Method used depends on value
-                                   of doBand (see Help).
+doBand           -1.0       10.0    If >0 apply bandpass cal.
+                                    Method used depends on value
+                                    of doBand (see Help).
 **PARAM** int 1
-BPVer                              Bandpass table version
+BPVer                               Bandpass table version
 **PARAM** float 3
-Smooth                             Smoothing function. 
+Smooth                              Smoothing function. 
 **PARAM** boo 1 
-Compress                           True => write compressed data
+Compress                            True => write compressed data
 **PARAM** str 4
-outDType                           "FITS" or "AIPS" type of output
-**PARAM** str 36 16
-outFiles                           FITS output uvdata if Type=='FITS'
-**PARAM** str 12 16
-outNames                           Output UV AIPS file name
-**PARAM** str 6 16
-outClasss                          Output UV AIPS file class
-**PARAM** int 1 16
-outSeqs           -1.0     9999.0  Output UV AIPS file seq. #
-**PARAM** int 1 16
-outDisks          -1.0     9999.0  Output AIPS or FITS disk #
+outDType                            "FITS" or "AIPS" type of output
+**PARAM** str 48 64
+outFiles                            FITS output uvdata if Type=='FITS'
+**PARAM** str 12 64
+outNames                            Output UV AIPS file name
+**PARAM** str 6 64
+outClasss                           Output UV AIPS file class
+**PARAM** int 1 64
+outSeqs           -1.0     9999.0   Output UV AIPS file seq. #
+**PARAM** int 1 64
+outDisks          -1.0     9999.0   Output AIPS or FITS disk #
 ----------------------------------------------------------------
 SplitCh
 Task:  Split up uv data into multiple files
