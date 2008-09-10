@@ -201,7 +201,7 @@ class AIPSTask(Task):
         self._input_list = []
         self._output_list = []
         self._message_list = []
-
+        self._remainder = ""     # Partial message buffer
         # Optional arguments.
         if 'version' in kwds:
             self.version = kwds['version']
@@ -447,7 +447,9 @@ class AIPSTask(Task):
             return self._message_list
 
         inst = getattr(proxy, self.__class__.__name__)
-        messages = inst.messages(tid)
+        messbuff = inst.messages(tid)
+        # Parse messages into complete lines
+        messages = self.parseMessage(messbuff)
         if not messages:
             return None
         for message in messages:
@@ -466,7 +468,8 @@ class AIPSTask(Task):
        """
 
         while not self.finished(proxy, tid):
-            self.messages(proxy, tid)
+            pass
+            #self.messages(proxy, tid)
         inst = getattr(proxy, self.__class__.__name__)
         output_dict = inst.wait(tid)
         for adverb in self._output_list:

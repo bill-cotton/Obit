@@ -62,7 +62,7 @@ class Task:
         # Check that tid in bounds
         #if tid>len(self._pid):
         #    return True   # finished one way or another
-
+        time.sleep(0.5)
         return self._pid[tid] == 0
 
     def messages(self, tid):
@@ -81,16 +81,15 @@ class Task:
             try:
                 # hang 10 - don't get ahead of yourself
                 #time.sleep(0.010)
-                messbuff = os.read(tid, 1024)
-                # Parse messages into complete lines
-                messages = parseMessage(messbuff)
+                messages = os.read(tid, 1024)
                 # Test for task completion here - Macs never fail on read
                 (pid, status) = os.waitpid(self._pid[tid], os.WNOHANG)
                 if pid:
                     assert(pid == self._pid[tid])
                     if os.WIFEXITED(status) or os.WIFSIGNALED(status):
                         self._pid[tid] = 0
-                return [msg for msg in messages if msg]
+                #return [msg for msg in messages if msg]
+                return [messages]
             except:
                 # If reading failed, it's (probably) because the child
                 # process died.
@@ -140,43 +139,4 @@ class Task:
         return
     # End Class Task
 
-# Initialization
-remainder = ""
 
-# Utility routines
-def parseMessage(inMess):
-    """
-    Repackage messages to prevent line breaks
-
-    Given the message buffer including line break characters, return
-    an array of strings containing full lines (originally terminated
-    by line break character).  Partial lines are saved in variable
-    remainder and are prepended to the next input message buffer
-    """
-    global remainder
-    outMess=[]
-    mess = remainder+inMess
-    remainder=""
-    while len(mess)>0:
-        # Look for newline or carrage return, either or both may be
-        # end of line marker
-        lf = mess.find("\n")
-        cr = mess.find("\r")
-        es = max (lf, cr)
-        # Find one?
-        if es<0:
-            # No - keep rest in remainder
-            remainder = mess
-            mess = ""
-            break
-        # Copy line (minus end of line characters) to outMess
-        if cr>0 and cr<lf:
-            es = cr
-        outMess.append(mess[0:es])
-        # Drop line through end of line character(s)
-        es = max (cr, lf) + 1
-        es = max (es,1)
-        mess = mess[es:]
-
-    return outMess
-    # end parseMessage

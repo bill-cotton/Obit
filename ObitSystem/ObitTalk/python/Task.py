@@ -186,6 +186,7 @@ class Task(MinimalMatch):
         self._short_help = ''
         self._help_string = ''
         self._explain_string = ''
+        self._remainder = ""   # Partial message buffer
 
     def help(self):
         """Display help for this task."""
@@ -285,8 +286,55 @@ class Task(MinimalMatch):
         if name=="w":
             return self.wait()
 
+    def parseMessage(self, inMess):
+        """
+        Repackage messages to prevent line breaks
+        
+        Given the message buffer including line break characters, return
+        an array of strings containing full lines (originally terminated
+        by line break character).  Partial lines are saved in variable
+        remainder and are prepended to the next input message buffer
+        """
+        outMess=[]
+        #print "inMess=",inMess,"\n\n"
+        for msg in inMess:
+            prio = msg[0]
+            mess = self._remainder+msg[1]
+            #print "mess=",mess,"\n\n"
+            self._remainder=""
+            while len(mess)>0:
+                # Look for newline or carrage return, either or both may be
+                # end of line marker
+                lf = mess.find("\n")
+                cr = mess.find("\r")
+                es = max (lf, cr)
+                # Find one?
+                if es<0:
+                    # No - keep rest in remainder
+                    self._remainder = mess
+                    mess = ""
+                    break
+                # Copy line (minus end of line characters) to outMess
+                if cr>0 and cr<lf:
+                    es = cr
+                omess = mess[0:es].strip("\n\r")
+                outMess.append((prio,omess))
+                # Drop line through end of line character(s)
+                es = max (cr, lf) + 1
+                es = max (es,1)
+                mess = mess[es:]
+                #print "save msg",mess[0:es],"\n\n"
+       # End loop over entries in inMess
+                
+        #print "outMess=",outMess,"\n\n"
+        return outMess
+    # end parseMessage
+# End class Task
+
 # Tests.
 if __name__ == '__main__':
     import doctest, sys
     results = doctest.testmod(sys.modules[__name__])
     sys.exit(results[0])
+
+

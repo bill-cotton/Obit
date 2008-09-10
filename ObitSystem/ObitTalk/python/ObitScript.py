@@ -130,6 +130,7 @@ class ObitScript(Task):
         self.AIPSDirs = []
         self.FITSDirs = []
         self.script   = []
+        self._remainder = ""   # Partial message buffer
         
         # Optional arguments.
         if 'URL' in kwds:
@@ -252,15 +253,17 @@ class ObitScript(Task):
             return self._message_list
 
         inst = getattr(proxy, self.__class__.__name__)
-        messages = inst.messages(tid)
+        messbuff = inst.messages(tid)
+        # Parse messages into complete lines
+        messages = self.parseMessage(messbuff)
         if not messages:
             return None
         for message in messages:
             self._message_list.append(message[1])
-            if message[0] > abs(self.msgkill):
-                #print message[1]
-                pass
-            continue
+             #    if message[0] > abs(self.msgkill):
+             #        #print message[1]
+             #        pass
+             #    continue
         return [message[1] for message in messages]
 
     def wait(self, proxy, tid):
@@ -271,7 +274,8 @@ class ObitScript(Task):
        """
 
         while not self.finished(proxy, tid):
-            self.messages(proxy, tid)
+            pass
+            #self.messages(proxy, tid)
         inst = getattr(proxy, self.__class__.__name__)
         inst.wait(tid)
         return
@@ -423,3 +427,4 @@ if __name__ == '__main__':
     import doctest, sys
     results = doctest.testmod(sys.modules[__name__])
     sys.exit(results[0])
+

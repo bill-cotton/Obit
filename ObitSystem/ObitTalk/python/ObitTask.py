@@ -133,6 +133,7 @@ class ObitTask(AIPSTask):
         Current parameter values are given as class members.
         """
         AIPSTask.__init__(self, name)
+        self._remainder = ""   # Partial message buffer
         if self.userno == 0:
             self.userno = 1
 
@@ -303,7 +304,9 @@ class ObitTask(AIPSTask):
             return self._message_list
 
         inst = getattr(proxy, self.__class__.__name__)
-        messages = inst.messages(tid)
+        messbuff = inst.messages(tid)
+        # Parse messages into complete lines
+        messages = self.parseMessage(messbuff)
         if not messages:
             return None
         self._message_list.extend(messages)
