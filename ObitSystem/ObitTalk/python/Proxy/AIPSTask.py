@@ -455,7 +455,7 @@ class AIPSTask(Task):
                    self.__read_message(ms_file, self._msgno[tid])
             # Filter
             if popsno == self._popsno[tid]:
-                messages.append((priority, '%-5s%d: %s' % (task, popsno, msg)))
+                messages.append((priority, '%-5s%d: %s\n' % (task, popsno, msg)))
                 pass
             self._msgno[tid] += 1
             continue
