@@ -432,17 +432,30 @@ class AIPSTask(Task):
         # Make sure we read the messages, even if we throw them away
         # later to prevent the task from blocking.
         messages = Task.messages(self, tid)
+        #print "Raw",messages
 
         # Check that tid in bounds
         #if tid>len(self._popsno):
         #    print "DEBUG Proxy/AIPSTask", messages, tid, len(self._popsno)
         #    return messages
 
+        # Convert into list of lines
+        tmessage = []
+        for msg in messages:
+            lmess = msg.splitlines(True)
+            for mm in lmess:
+                tmessage.append(mm)
+
         # Strip out all formal messages.
         start = '%-5s%d' % (self._params[tid].name.upper(), self._popsno[tid])
-        messages = [msg for msg in messages if not msg.startswith(start)]
+        lmessages = [msg for msg in tmessage if msg.startswith(start)]
+        #print "Filtered",lmessages
+        pmessages = [msg for msg in tmessage if not msg.startswith(start)]
+        #print "Print",pmessages
 
-        messages = [(1, msg) for msg in messages]
+        # These messages will be looked up in the AIPS message log
+        #messages = [(1, msg) for msg in lmessages]
+        messages = []
 
         user = ehex(self._userno[tid], 3, 0)
         ms_name = os.environ['DA01'] + '/MS' + AIPS.revision \
@@ -461,6 +474,11 @@ class AIPSTask(Task):
             continue
 
         ms_file.close()
+        # Add "print" messages
+        if len(pmessages)>0:
+            for msg in pmessages:
+                messages.append((1,msg))
+        #print "returned messages",messages
         return messages
 
     def wait(self, tid):

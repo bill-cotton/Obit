@@ -543,6 +543,7 @@ def newPAUV(name, Aname, Aclass, disk, seq, exists, err, verbose=True, nvis=1000
     out.Aclass = Aclass
     out.Aseq   = seq 
     out.Otype  = "UV"
+    out.Atype  = "UV"
     out.Acno   = cno
     return out
     # end newPAUV

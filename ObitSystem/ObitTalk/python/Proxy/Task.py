@@ -62,7 +62,7 @@ class Task:
         # Check that tid in bounds
         #if tid>len(self._pid):
         #    return True   # finished one way or another
-        time.sleep(0.5)
+        time.sleep(0.1)
         return self._pid[tid] == 0
 
     def messages(self, tid):

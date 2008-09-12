@@ -448,6 +448,7 @@ class AIPSTask(Task):
 
         inst = getattr(proxy, self.__class__.__name__)
         messbuff = inst.messages(tid)
+        #print "MessBuff",messbuff
         # Parse messages into complete lines
         messages = self.parseMessage(messbuff)
         if not messages:

@@ -284,7 +284,7 @@ ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV,
   olong *ant1=NULL, *ant2=NULL, *count=NULL;
   ofloat *antwt=NULL, *creal=NULL, *cimag=NULL, *cwt=NULL;
   ofloat *avgVis=NULL, *gain=NULL, *snr=NULL;
-  gboolean avgpol, avgif, domgm, dol1, ampScalar;
+  gboolean avgpol, avgif, domgm, dol1, ampScalar, empty;
   gboolean done, good, oldSN, *gotAnt;
   gchar soltyp[5], solmod[5];
   odouble timec=0.0, timex;
@@ -440,8 +440,12 @@ ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV,
   /* Open output table */
   retCode = ObitTableSNOpen (outSoln, OBIT_IO_ReadWrite, err);
   if (err->error) goto cleanup;
-  outSoln->numAnt = numAnt;  /* Number of antennas */
-  outSoln->mGMod  = 1.0;     /* initial mean gain modulus */
+  /* Anything already there? */
+  empty = outSoln->myDesc->nrow==0;
+  if (empty) {  /* Init if empty */
+    outSoln->numAnt = numAnt;  /* Number of antennas */
+    outSoln->mGMod  = 1.0;     /* initial mean gain modulus */
+  }
   
   /* Create Row */
   row = newObitTableSNRow (outSoln);
@@ -598,8 +602,9 @@ ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV,
     outSoln->mGMod  = summgm / cntmgm;
   }
   
-  /* If suba>1 mark as unsorted */
-  if (suba == 1) {  /* IF subarray 1 the sort is time, antenna */
+  /* If suba>1 or not empty at start mark as unsorted */
+  if ((suba == 1) && empty) {  
+    /* IF subarray 1, new table the sort is time, antenna */
     outSoln->myDesc->sort[0] = outSoln->TimeCol+1;
     outSoln->myDesc->sort[1] = outSoln->antNoCol+1; 
   } else { /* otherwise unsorted */

@@ -729,13 +729,13 @@ def setname (inn, out):
     # AIPS or Obit?
     if out.__class__ == ObitTask:
         out.DataType = inn.FileType
-        out.inDisk   = inn.Disk
+        out.inDisk   = int(inn.Disk)
         if inn.FileType == 'FITS':
             out.inFile = inn.Fname
         else:   # AIPS
             out.inName  = inn.Aname
             out.inClass = inn.Aclass
-            out.inSeq   = inn.Aseq
+            out.inSeq   = int(inn.Aseq)
     else:  # AIPS
         out.inname  = inn.Aname
         out.inclass = inn.Aclass
@@ -755,13 +755,13 @@ def set2name (in2, out):
     # AIPS or Obit?
     if out.__class__ == ObitTask:
         out.DataType  = in2.FileType
-        out.in2Disk   = in2.Disk
+        out.in2Disk   = int(in2.Disk)
         if in2.FileType == 'FITS':
             out.in2File = in2.Fname
         else:   # AIPS
             out.in2Name  = in2.Aname
             out.in2Class = in2.Aclass
-            out.in2Seq   = in2.Aseq
+            out.in2Seq   = int(in2.Aseq)
     else: # AIPS
         out.in2name  = in2.Aname
         out.in2class = in2.Aclass
@@ -781,13 +781,13 @@ def set3name (in3, out):
     # AIPS or Obit?
     if out.__class__ == ObitTask:
         out.DataType  = in3.FileType
-        out.in3Disk   = in3.Disk
+        out.in3Disk   = int(in3.Disk)
         if in3.FileType == 'FITS':
             out.in3File = in3.Fname
         else:   # AIPS
             out.in3Name  = in3.Aname
             out.in3Class = in3.Aclass
-            out.in3Seq   = in3.Aseq
+            out.in3Seq   = int(in3.Aseq)
     else: # AIPS
         out.in3name  = in3.Aname
         out.in3class = in3.Aclass
@@ -807,13 +807,13 @@ def set4name (in4, out):
     # AIPS or Obit?
     if out.__class__ == ObitTask:
         out.DataType  = in4.FileType
-        out.in4Disk   = in4.Disk
+        out.in4Disk   = int(in4.Disk)
         if in4.FileType == 'FITS':
             out.in4File = in4.Fname
         else:   # AIPS
             out.in4Name  = in4.Aname
             out.in4Class = in4.Aclass
-            out.in4Seq   = in4.Aseq
+            out.in4Seq   = int(in4.Aseq)
     else: # AIPS
         out.in4name  = in4.Aname
         out.in4class = in4.Aclass
@@ -833,13 +833,13 @@ def setoname (inn, out):
     # AIPS or Obit?
     if out.__class__ == ObitTask:
         out.DataType  = inn.FileType
-        out.outDisk   = inn.Disk
+        out.outDisk   = int(inn.Disk)
         if inn.FileType == 'FITS':
             out.outFile = inn.Fname
         else:   # AIPS
             out.outName  = inn.Aname
             out.outClass = inn.Aclass
-            out.outSeq   = inn.Aseq
+            out.outSeq   = int(inn.Aseq)
     else:  # AIPS
         out.outname  = inn.Aname
         out.outclass = inn.Aclass

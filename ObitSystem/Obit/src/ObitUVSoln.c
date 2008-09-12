@@ -591,6 +591,7 @@ void ObitUVSolnRefAnt (ObitTableSN *SNTab, olong isuba, olong* refant, ObitErr* 
   if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
 
   /* Create work arrays */
+  numtime += 10;  /* Fudge a bit */
   wrkTime = g_malloc0(numtime*sizeof(ofloat));
   work1   = g_malloc0(numtime*sizeof(ofloat));
   work2   = g_malloc0(numtime*sizeof(ofloat));
@@ -751,6 +752,7 @@ void ObitUVSolnSNSmo (ObitTableSN *SNTab, olong isuba, ObitErr* err)
   retCode = ObitTableSNOpen (SNTab, OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
   antuse = refCount (SNTab, isub, &mxtime, err);
+  mxtime += 10;  /* Fudge a bit on the number of times */
   g_free(antuse);  /* don't need */
   retCode = ObitTableSNClose (SNTab, err);
   if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
@@ -2628,8 +2630,8 @@ static olong *refCount (ObitTableSN *SNTab, olong isub,
     if (err->error) break;
     if (row->status<0) continue;  /* Skip deselected record */
 
-    /* Count times */
-    if (row->Time>(lastTime+0.5*row->TimeI)) {
+    /* Count times - only allow epsilon time difference */
+    if (row->Time>(lastTime+0.0005*row->TimeI)) {
       lastTime = row->Time;
       count ++;
     }
