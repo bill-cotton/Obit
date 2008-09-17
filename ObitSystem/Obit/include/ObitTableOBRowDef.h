@@ -38,16 +38,16 @@ oint  antennaNo;
 /** Subarray number */
 oint  SubA;
 /** The center time. */
-gdouble  Time;
+odouble  Time;
 /** ORIENTATION */
-gfloat  orientation;
+ofloat  orientation;
 /** Obital position */
-gdouble*  orbXYZ;
+odouble*  orbXYZ;
 /** Orbital velocity */
-gdouble*  velXYZ;
+odouble*  velXYZ;
 /** Relative position of the Sun */
-gfloat*  sunAngle;
+ofloat*  sunAngle;
 /** ECLIPSE */
-gfloat*  eclipse;
+ofloat*  eclipse;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

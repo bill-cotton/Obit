@@ -34,12 +34,12 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** Component flux density */
-gfloat  Flux;
+ofloat  Flux;
 /** Component X position. */
-gfloat  DeltaX;
+ofloat  DeltaX;
 /** Component Y position. */
-gfloat  DeltaY;
+ofloat  DeltaY;
 /** [OPTIONAL] Component parameters; */
-gfloat*  parms;
+ofloat*  parms;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

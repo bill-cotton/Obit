@@ -34,26 +34,26 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** The center time. */
-gdouble  Time;
+odouble  Time;
 /** UT1-UTC */
-gdouble  ut1utc;
+odouble  ut1utc;
 /** IAT-UTC */
-gdouble  iatutc;
+odouble  iatutc;
 /** A1-UTC */
-gdouble  a1utc;
+odouble  a1utc;
 /** UT1 TYPE */
 gchar  ut1Type;
 /** WOB TYPES */
 gchar  wobType;
 /** DPSI */
-gdouble  dpsi;
+odouble  dpsi;
 /** DDPSI */
-gdouble  ddpsi;
+odouble  ddpsi;
 /** DEPS */
-gdouble  deps;
+odouble  deps;
 /** DDEPS */
-gdouble  ddeps;
+odouble  ddeps;
 /** Earth pole wobble */
-gdouble*  wobXY;
+odouble*  wobXY;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

@@ -42,23 +42,23 @@ oint  srfeed1;
 /** Index of second FEED of a sig/ref pair. */
 oint  srfeed2;
 /** Approximate physical center frequency. */
-gfloat  CenterIF;
+ofloat  CenterIF;
 /** Approximate center frequency on the sky. */
-gfloat  CenterSky;
+ofloat  CenterSky;
 /** Approximate resulting bandwidth */
-gfloat  bandwdth;
+ofloat  bandwdth;
 /** ndicates a high powered calibrator was used. */
 oint  highCal;
 /** Approximate physical test tone frequency, if any. */
-gfloat  testToneIF;
+ofloat  testToneIF;
 /** Approximate test tone frequency on the sky, if any. */
-gfloat  YestToneSky;
+ofloat  YestToneSky;
 /** Sky Frequency Formula multiplier coefficient. */
-gdouble  sffMultiplier;
+odouble  sffMultiplier;
 /** Sky Frequency Formula sideband coefficient. */
-gdouble  sffSideband;
+odouble  sffSideband;
 /** Sky Frequency Formula offset coefficient. */
-gdouble  sffOffset;
+odouble  sffOffset;
 /** Number of transform. */
 oint  transformCount;
 /** Name of the terminating backend. */

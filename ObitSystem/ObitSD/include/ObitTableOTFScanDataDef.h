@@ -44,17 +44,17 @@ gchar  teles[MAXKEYCHARTABLEOTFScanData];
 /** Date (yyyy-mm-dd) of observation */
 gchar  obsdat[MAXKEYCHARTABLEOTFScanData];
 /** Celestial coordiate equinox */
-gfloat  epoch;
+ofloat  epoch;
 /** Data units */
 gchar  bunit[MAXKEYCHARTABLEOTFScanData];
 /** Observed Right Ascension in deg. */
-gdouble  obsra;
+odouble  obsra;
 /** Observed declination in deg. */
-gdouble  obsdec;
+odouble  obsdec;
 /** Gaussian FWHM of telescope beam size. */
-gfloat  beamSize;
+ofloat  beamSize;
 /** Diameter of telescope in meters. */
-gfloat  diameter;
+ofloat  diameter;
 /** Type of data: ``DCR'': GBT DCR, ``SP'': GBT Spectral processor */
 gchar  OTFType[MAXKEYCHARTABLEOTFScanData];
 /** Column offset for The center time. in table record */

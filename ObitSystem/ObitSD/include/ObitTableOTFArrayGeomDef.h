@@ -34,27 +34,27 @@
  */
 #include "ObitTableDef.h"  /* Parent class definitions */
 /** Telescope X coordinate. (meters, earth center) */
-gdouble  TeleX;
+odouble  TeleX;
 /** Telescope Y coordinate. (meters, earth center) */
-gdouble  TeleY;
+odouble  TeleY;
 /** Telescope Z coordinate. (meters, earth center) */
-gdouble  TeleZ;
+odouble  TeleZ;
 /** Reference date as "YYYYMMDD" */
 gchar  RefDate[MAXKEYCHARTABLEOTFArrayGeom];
 /** Earth rotation rate (deg/IAT day) */
-gdouble  DegDay;
+odouble  DegDay;
 /** Polar position X (meters) on ref. date */
-gfloat  PolarX;
+ofloat  PolarX;
 /** Polar position Y (meters) on ref. date */
-gfloat  PolarY;
+ofloat  PolarY;
 /** GST at time=0 (degrees) on the reference date */
-gdouble  GSTiat0;
+odouble  GSTiat0;
 /** UT1-UTC  (time sec.) */
-gfloat  ut1Utc;
+ofloat  ut1Utc;
 /** data time-UTC  (time sec.) */
-gfloat  dataUtc;
+ofloat  dataUtc;
 /** IAT - UTC (sec). */
-gfloat  iatUtc;
+ofloat  iatUtc;
 /** Time system, 'IAT' or 'UTC' */
 gchar  TimeSys[MAXKEYCHARTABLEOTFArrayGeom];
 /** Column offset for Detector number in table record */

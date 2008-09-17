@@ -564,7 +564,7 @@ ObitFArray* ObitFArrayRealloc (ObitFArray* in, olong ndim, olong *naxis)
  * \param pos     array of 0-rel pixel numbers on each axis
  * \return pointer to specified cell; NULL if illegal pixel.
  */
-gfloat*  ObitFArrayIndex (ObitFArray *in, olong *pos)
+ofloat*  ObitFArrayIndex (ObitFArray *in, olong *pos)
 {
   ofloat *out = NULL;
   olong i, indx, previous;
@@ -962,7 +962,7 @@ ofloat ObitFArrayRMSQuant (ObitFArray* in)
   olong icell, modeCell=0, imHalf=0, ipHalf=0, numCell;
   olong i1, i2, ic, it;
   ofloat amax, amin, tmax, sum, sum2, x, count, mean, arg, cellFact=1.0;
-  gfloat*histo = NULL;
+  ofloat *histo = NULL;
 
    /* error checks */
   g_assert (ObitFArrayIsA(in));

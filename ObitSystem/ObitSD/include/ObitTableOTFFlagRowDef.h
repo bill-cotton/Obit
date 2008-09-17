@@ -38,7 +38,7 @@ oint  TargetID;
 /** Feed number to flag, 0=$>$all */
 oint  Feed;
 /** Start and end time of data to be flagged */
-gfloat*  TimeRange;
+ofloat*  TimeRange;
 /** First and last frequency channel numbers to flag */
 oint*  chans;
 /** Polarization flags, same order as in data, T=$>$flagged */

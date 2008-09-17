@@ -40,44 +40,44 @@ oint  Qual;
 /** Frequency group (AKA Band) ID */
 oint  FreqID;
 /** Right ascension at mean EPOCH (actually equinox) */
-gdouble  RAMean;
+odouble  RAMean;
 /** Declination at mean EPOCH (actually equinox) */
-gdouble  DecMean;
+odouble  DecMean;
 /** Mean Epoch (really equinox) for position in yr. since year 0.0 */
-gdouble  Epoch;
+odouble  Epoch;
 /** Apparent Right ascension */
-gdouble  RAApp;
+odouble  RAApp;
 /** Apparent Declination */
-gdouble  DecApp;
+odouble  DecApp;
 /** Proper motion (deg/day) in RA */
-gdouble  PMRa;
+odouble  PMRa;
 /** Proper motion (deg/day) in declination */
-gdouble  PMDec;
+odouble  PMDec;
 /** Parallax */
-gfloat  parallax;
+ofloat  parallax;
 /** Source name */
 gchar*  Source;
 /** Calibrator code */
 gchar*  CalCode;
 /** Total Stokes I flux density per IF */
-gfloat*  IFlux;
+ofloat*  IFlux;
 /** Total Stokes Q flux density per IF */
-gfloat*  QFlux;
+ofloat*  QFlux;
 /** Total Stokes U flux density per IF */
-gfloat*  UFlux;
+ofloat*  UFlux;
 /** Total Stokes V flux density per IF */
-gfloat*  VFlux;
+ofloat*  VFlux;
 /** Spectral index per IF */
-gfloat*  alpha;
+ofloat*  alpha;
 /** Frequency offset (Hz) from IF nominal per IF */
-gdouble*  FreqOff;
+odouble*  FreqOff;
 /** Systemic velocity per Band (IF) */
-gdouble*  SysVel;
+odouble*  SysVel;
 /** Velocity type */
 gchar*  VelTyp;
 /** Velocity definition 'RADIO' or 'OPTICAL' */
 gchar*  VelDef;
 /** Line rest frequency per Band (IF) */
-gdouble*  RestFreq;
+odouble*  RestFreq;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

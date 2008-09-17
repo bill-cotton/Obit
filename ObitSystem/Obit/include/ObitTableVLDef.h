@@ -36,11 +36,11 @@
 /** Revision number of the table definition */
 oint  revision;
 /** Restoring beam major axis in deg. */
-gfloat  BeamMajor;
+ofloat  BeamMajor;
 /** Restoring beam minor axis in deg. */
-gfloat  BeamMinor;
+ofloat  BeamMinor;
 /** Restoring beam position angle of major axis in deg. */
-gfloat  BeamPA;
+ofloat  BeamPA;
 /** Column number for sort (neg -> descending) */
 oint  SortOrder;
 /** Number of rows in table when indexed */

@@ -44,7 +44,7 @@ oint  numAnt;
 /** The number of interpolation nodes */
 oint  numNodes;
 /** The Mean Gain modulus */
-gdouble  mGMod;
+odouble  mGMod;
 /** True if table has been applied to a CL table. */
 gboolean  isApplied;
 /** Column offset for The center time of the solution in table record */

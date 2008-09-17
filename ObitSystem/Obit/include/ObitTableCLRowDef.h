@@ -34,9 +34,9 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** The center time of the solution */
-gdouble  Time;
+odouble  Time;
 /** Solution interval. */
-gfloat  TimeI;
+ofloat  TimeI;
 /** Source Identifier number */
 oint  SourID;
 /** Antenna number */
@@ -46,57 +46,57 @@ oint  SubA;
 /** Frequency ID */
 oint  FreqID;
 /** Ionospheric Faraday Rotation */
-gfloat  IFR;
+ofloat  IFR;
 /** Atmospheric delay */
-gfloat  atmos;
+ofloat  atmos;
 /** Time derivative of ATMOS */
-gfloat  Datmos;
+ofloat  Datmos;
 /** Geometric delay polynomial series at TIME */
-gdouble*  GeoDelay;
+odouble*  GeoDelay;
 /** Doppler offset for each IF */
-gfloat*  DopplerOff;
+ofloat*  DopplerOff;
 /** Multiband delay poln # 1 */
-gfloat  MBDelay1;
+ofloat  MBDelay1;
 /** "Clock" epoch error */
-gfloat  clock1;
+ofloat  clock1;
 /** Time derivative of CLOCK */
-gfloat  Dclock1;
+ofloat  Dclock1;
 /** Dispersive delay (sec at wavelength = 1m)for Poln # 1 */
-gfloat  dispers1;
+ofloat  dispers1;
 /** Time derivative of DISPfor Poln # 1 */
-gfloat  Ddispers1;
+ofloat  Ddispers1;
 /** Real (gain Poln # 1 ) */
-gfloat*  Real1;
+ofloat*  Real1;
 /** Imaginary (gain Poln # 1) */
-gfloat*  Imag1;
+ofloat*  Imag1;
 /** Residual fringe rate  Poln # 1 */
-gfloat*  Rate1;
+ofloat*  Rate1;
 /** Residual group delay Poln # 1 */
-gfloat*  Delay1;
+ofloat*  Delay1;
 /** Weight of soln. Poln # 1 */
-gfloat*  Weight1;
+ofloat*  Weight1;
 /** Reference antenna Poln # 1 */
 oint*  RefAnt1;
 /** Multiband delay poln # 2 */
-gfloat  MBDelay2;
+ofloat  MBDelay2;
 /** "Clock" epoch error */
-gfloat  clock2;
+ofloat  clock2;
 /** Time derivative of CLOCK */
-gfloat  Dclock2;
+ofloat  Dclock2;
 /** Dispersive delay (sec at wavelength = 1m)for Poln # 2 */
-gfloat  dispers2;
+ofloat  dispers2;
 /** Time derivative of DISPfor Poln # 2 */
-gfloat  Ddispers2;
+ofloat  Ddispers2;
 /** Real (gain Poln # 2 ) */
-gfloat*  Real2;
+ofloat*  Real2;
 /** Imaginary (gain Poln # 2) */
-gfloat*  Imag2;
+ofloat*  Imag2;
 /** Residual fringe rate  Poln # 2 */
-gfloat*  Rate2;
+ofloat*  Rate2;
 /** Residual group delay Poln # 2 */
-gfloat*  Delay2;
+ofloat*  Delay2;
 /** Weight of soln. Poln # 2 */
-gfloat*  Weight2;
+ofloat*  Weight2;
 /** Reference antenna Poln # 2 */
 oint*  RefAnt2;
 /** status 0=normal, 1=modified, -1=flagged */

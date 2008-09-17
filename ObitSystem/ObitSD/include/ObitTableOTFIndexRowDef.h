@@ -36,9 +36,9 @@
 /** Scan ID number */
 oint  ScanID;
 /** The center time of the scan. */
-gfloat  Time;
+ofloat  Time;
 /** Duration of scan */
-gfloat  TimeI;
+ofloat  TimeI;
 /** Target ID as defined in the OTFTarget table */
 oint  TargetID;
 /** First record number (1-rel) in scan */

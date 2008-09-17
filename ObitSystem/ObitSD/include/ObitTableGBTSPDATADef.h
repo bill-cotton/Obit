@@ -40,11 +40,11 @@ oint  scan;
 /** MJD of start time */
 oint  utdate;
 /** Start time in seconds. */
-gdouble  utcstart;
+odouble  utcstart;
 /** Stop time in seconds. */
-gdouble  utcstop;
+odouble  utcstop;
 /** Integration time in seconds. */
-gdouble  inttime;
+odouble  inttime;
 /** First data axis is State */
 gchar  ctype1[MAXKEYCHARTABLEDATA];
 /** Second data axis is Receiver */

@@ -38,38 +38,38 @@ oint  SourID;
 /** Source qualifier */
 oint  Qual;
 /** Bandwidth */
-gdouble  Bandwidth;
+odouble  Bandwidth;
 /** Right ascension at mean EPOCH (actually equinox) */
-gdouble  RAMean;
+odouble  RAMean;
 /** Declination at mean EPOCH (actually equinox) */
-gdouble  DecMean;
+odouble  DecMean;
 /** Mean Epoch (really equinox) for position in yr. since year 0.0 */
-gdouble  Epoch;
+odouble  Epoch;
 /** Apparent Right ascension */
-gdouble  RAApp;
+odouble  RAApp;
 /** Apparent Declination */
-gdouble  DecApp;
+odouble  DecApp;
 /** Proper motion (deg/day) in RA */
-gdouble  PMRa;
+odouble  PMRa;
 /** Proper motion (deg/day) in declination */
-gdouble  PMDec;
+odouble  PMDec;
 /** Source name */
 gchar*  Source;
 /** Calibrator code */
 gchar*  CalCode;
 /** Total Stokes I flux density per IF */
-gfloat*  IFlux;
+ofloat*  IFlux;
 /** Total Stokes Q flux density per IF */
-gfloat*  QFlux;
+ofloat*  QFlux;
 /** Total Stokes U flux density per IF */
-gfloat*  UFlux;
+ofloat*  UFlux;
 /** Total Stokes V flux densityper IF */
-gfloat*  VFlux;
+ofloat*  VFlux;
 /** Frequency offset (Hz) from IF nominal per IF */
-gdouble*  FreqOff;
+odouble*  FreqOff;
 /** LSR velocity per IF */
-gdouble*  LSRVel;
+odouble*  LSRVel;
 /** Line rest frequency per IF */
-gdouble*  RestFreq;
+odouble*  RestFreq;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

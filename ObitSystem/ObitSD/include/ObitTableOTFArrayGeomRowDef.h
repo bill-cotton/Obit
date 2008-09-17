@@ -36,8 +36,8 @@
 /** Detector number */
 oint  detector;
 /** ``Azimuth'' offset from nominal pointing, this is formally ``cros */
-gfloat  azOff;
+ofloat  azOff;
 /** Elevation offset from nominal pointing */
-gfloat  elOff;
+ofloat  elOff;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

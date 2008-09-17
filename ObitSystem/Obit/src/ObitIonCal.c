@@ -87,7 +87,7 @@ typedef struct {
 static CalListElem* 
 newCalListElem (odouble ra, odouble dec, ofloat ZernXy[2], ofloat shift[2],
 		ofloat pixel[2], ofloat flux, ofloat offset[2],
-		ofloat peak, ofloat fint,gfloat wt, olong qual,
+		ofloat peak, ofloat fint,ofloat wt, olong qual,
 		gint calNo, olong epoch); 
 
 /**  Private: Update contents of an CalListElem */
@@ -165,7 +165,7 @@ FindCalImage (ObitImage *image, gchar *Catalog, olong catDisk,
 	      CalList *calList, olong prtLv, ObitErr *err);
 
 /** Private: Fit Zernike model for single time */
-static gfloat
+static ofloat
 IonFit1 (gint nobs, olong* isou, ofloat* x, ofloat* y, 
 	 ofloat* dx, ofloat* dy, ofloat* w, 
 	 olong* ncoef, ofloat* coef, olong prtLv, ObitErr *err);
@@ -214,7 +214,7 @@ static gboolean
 initIonModel (gint nobs, olong nsou, olong nTime, olong maxcoe, olong* isou, 
 	      olong* iTime, ofloat*  x, ofloat* y, ofloat* dx, ofloat* dy, 
 	      ofloat* w, olong*  flqual, olong* ncoef, gboolean* gotsou, 
-	      gboolean* fitsou, ofloat* soffx, ofloat* soffy, gfloat** coef, 
+	      gboolean* fitsou, ofloat* soffx, ofloat* soffy, ofloat** coef, 
 	      olong prtLv, ObitErr* err);
 
 /* Private: Least Squares Fit Zernike time series and source offsets */
@@ -222,14 +222,14 @@ static void
 FitIonSeries (gint nobs, olong nsou, olong nTime, olong maxcoe, olong* isou, olong* iTime, 
 	      ofloat*  x, ofloat* y, ofloat* dx, ofloat* dy, ofloat* w, olong*  ncoef, 
 	      gboolean* gotsou, gboolean* fitsou, ofloat* soffx, ofloat* soffy, 
-	      gfloat** coef, ofloat* trms, olong prtLv, ObitErr* err) ;
+	      ofloat** coef, ofloat* trms, olong prtLv, ObitErr* err) ;
 
 /* Private: Edit data based on Zernike time series  */
 static gboolean 
 IonEditSeries (gint nobs, olong nsou, olong nTime, 
 	       olong maxcoe, olong* isou, olong* iTime, ofloat*  x, ofloat* y, 
 	       ofloat* dx, ofloat* dy, ofloat* w, ofloat MaxRMS, olong* ncoef, 
-	       ofloat* soffx, ofloat* soffy, gfloat** coef, olong prtLv, ObitErr* err);
+	       ofloat* soffx, ofloat* soffy, ofloat** coef, olong prtLv, ObitErr* err);
 
 /* Private: Time series editing based on amplitudes */
 static gboolean 
@@ -242,7 +242,7 @@ static void
 IonEditSource (gint source, olong nobs, olong nTime, olong maxcoe, olong nsou, 
 	       olong* isou, olong* iTime, ofloat*  x, ofloat* y, 
 	       ofloat* dx, ofloat* dy, ofloat* w, ofloat MaxRMS, olong* ncoef, 
-	       ofloat* soffx, ofloat* soffy, gfloat** coef, 
+	       ofloat* soffx, ofloat* soffy, ofloat** coef, 
 	       ofloat *gdx, ofloat *gdy, olong* stoss, olong prtLv, ObitErr* err);
 
 
@@ -2783,7 +2783,7 @@ static gboolean
 initIonModel (gint nobs, olong nsou, olong nTime, olong maxcoe, olong* isou, 
 	      olong* iTime, ofloat*  x, ofloat* y, ofloat* dx, ofloat* dy, 
 	      ofloat* w, olong*  flqual, olong* ncoef, gboolean* gotsou, 
-	      gboolean* fitsou, ofloat* soffx, ofloat* soffy, gfloat** coef, 
+	      gboolean* fitsou, ofloat* soffx, ofloat* soffy, ofloat** coef, 
 	      olong prtLv, ObitErr* err) 
 {
   gboolean out=FALSE;
@@ -3069,7 +3069,7 @@ static void
 finalIonModel (gint nobs, olong nsou, olong nTime, olong maxcoe, olong* isou, 
 	       olong* iTime, ofloat*  x, ofloat* y, ofloat* dx, ofloat* dy, 
 	       ofloat* w, olong* ncoef, gboolean* fitsou, 
-	       ofloat* soffx, ofloat* soffy, gfloat** coef, 
+	       ofloat* soffx, ofloat* soffy, ofloat** coef, 
 	       olong prtLv, ObitErr* err) 
 {
   olong   i, j, k, it, is, itim, rmscnt, numobs, numprm, itlast, itb, ite, js, ntgood;
@@ -3288,7 +3288,7 @@ static void
 FitIonSeries (gint nobs, olong nsou, olong nTime, olong maxcoe, olong* isou, olong* iTime, 
 	      ofloat*  x, ofloat* y, ofloat* dx, ofloat* dy, ofloat* w, olong*  ncoef, 
 	      gboolean* gotsou, gboolean* fitsou, ofloat* soffx, ofloat* soffy, 
-	      gfloat** coef, ofloat* trms, olong prtLv, ObitErr* err) 
+	      ofloat** coef, ofloat* trms, olong prtLv, ObitErr* err) 
 {
   olong   i, j, it, is, itim, rmscnt, numobs, numprm, iter;
   gboolean   convgd, OK;
@@ -3669,7 +3669,7 @@ static gboolean
 IonEditSeries (gint nobs, olong nsou, olong nTime, 
 	gint maxcoe, olong* isou, olong* iTime, ofloat*  x, ofloat* y, 
 	ofloat* dx, ofloat* dy, ofloat* w, ofloat MaxRMS, olong* ncoef, 
-	ofloat* soffx, ofloat* soffy, gfloat** coef, olong prtLv, ObitErr* err) 
+	ofloat* soffx, ofloat* soffy, ofloat** coef, olong prtLv, ObitErr* err) 
 {
   gboolean out=FALSE;
   olong   i, j, it, itlast, itb, ite, count, ntoss, stoss, numt;
@@ -3962,7 +3962,7 @@ IonEditAmp (gint nobs, olong nsou, olong nTime, olong* isou, olong* iTime,
 static void IonEditSource (gint source, olong nobs, olong nTime, olong maxcoe, olong nsou, 
 			   olong* isou, olong* iTime, ofloat*  x, ofloat* y, 
 			   ofloat* dx, ofloat* dy, ofloat* w, ofloat MaxRMS, olong* ncoef, 
-			   ofloat* soffx, ofloat* soffy, gfloat** coef, 
+			   ofloat* soffx, ofloat* soffy, ofloat** coef, 
 			   ofloat *gdx, ofloat *gdy, olong* stoss, olong prtLv, ObitErr* err) 
 {
   olong   i, j, k, it, rmscnt, js, numt, *ktime, count, i1, i2, wid, idt, nt, *iobs;
@@ -4096,7 +4096,7 @@ static void IonEditSource (gint source, olong nobs, olong nTime, olong maxcoe, o
  * \param err   Error stack
  * \return RMS residual (deg) -1 on failure
  */
-static gfloat
+static ofloat
 IonFit1 (gint nobs, olong* isou, ofloat* x, ofloat* y, 
 	 ofloat* dx, ofloat* dy, ofloat* w, 
 	 olong* ncoef, ofloat* coef, olong prtLv, ObitErr* err)

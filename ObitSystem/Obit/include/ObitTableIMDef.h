@@ -44,11 +44,11 @@ oint  numBand;
 /** The number of spectral channels. */
 oint  numChan;
 /** Reference Frequency. */
-gdouble  refFreq;
+odouble  refFreq;
 /** Channel bandwidth. */
-gfloat  chanBW;
+ofloat  chanBW;
 /** Reference Pixel.. */
-gfloat  refPixl;
+ofloat  refPixl;
 /** The number of polarizations. */
 oint  numPol;
 /** The number of polynomial terms. */
@@ -56,7 +56,7 @@ oint  npoly;
 /** Revision number of the table definition. */
 oint  tabrev;
 /** Revision number of the table definition. */
-gfloat  revision;
+ofloat  revision;
 /** Column offset for The center time. in table record */
 olong  TimeOff;
 /** Physical column number for The center time. in table record */

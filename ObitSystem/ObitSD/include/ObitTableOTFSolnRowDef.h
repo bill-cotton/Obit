@@ -34,24 +34,24 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** The center time. */
-gfloat  Time;
+ofloat  Time;
 /** The integration time. */
-gfloat  TimeI;
+ofloat  TimeI;
 /** Celestial target, as index in target table. */
 oint  Target;
 /** Correction to the ``Azimuth'' for all detectors */
-gfloat  dAz;
+ofloat  dAz;
 /** Correction to the El for all detectors. */
-gfloat  dEl;
+ofloat  dEl;
 /** Cal value in units of raw data per detector, to be subtracted fro */
-gfloat*  cal;
+ofloat*  cal;
 /** Additive (subtractive actually) term per detector */
-gfloat*  add;
+ofloat*  add;
 /** Additive (subtractive actually) term per detector */
-gfloat*  mult;
+ofloat*  mult;
 /** Weight value per detector */
-gfloat*  wt;
+ofloat*  wt;
 /** Polynomial atmosphere model, expansion in RA, dec about pointing position */
-gfloat*  poly;
+ofloat*  poly;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

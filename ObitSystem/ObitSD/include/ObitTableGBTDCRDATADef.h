@@ -38,7 +38,7 @@ oint  scan;
 /** MJD of start tim */
 oint  utdate;
 /** Start tim */
-gdouble  utcstart;
+odouble  utcstart;
 /** Which backen */
 gchar  backend[MAXKEYCHARTABLEDATA];
 /** First data axis is Stat */

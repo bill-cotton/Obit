@@ -42,9 +42,9 @@ oint  subscan;
 /** MJD of start tim */
 oint  utdate;
 /** UTC start time seconds */
-gdouble  utcstart;
+odouble  utcstart;
 /** Stop time seconds */
-gdouble  utcstop;
+odouble  utcstop;
 /** Each item is index by RCVRS */
 oint  rcvrs;
 /** Column offset for  in table record */

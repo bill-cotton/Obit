@@ -34,11 +34,11 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** RA (J2000) */
-gdouble  Ra2000;
+odouble  Ra2000;
 /** Dec (J2000) */
-gdouble  Dec2000;
+odouble  Dec2000;
 /** Peak Ipol */
-gfloat  PeakInt;
+ofloat  PeakInt;
 /** Quality (crowding) measure, 0=> best, higher worse */
 oint  Quality;
 /** status 0=normal, 1=modified, -1=flagged */

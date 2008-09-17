@@ -44,9 +44,9 @@ oint  no_band;
 /** Number of frequency channels */
 oint  no_chan;
 /** Reference frequency (Hz) */
-gdouble  ref_freq;
+odouble  ref_freq;
 /** Channel bandwidth (Hz) */
-gdouble  chan_bw;
+odouble  chan_bw;
 /** Reference frequency bin */
 oint  ref_pixl;
 /** Observation project code */

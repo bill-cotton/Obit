@@ -81,8 +81,8 @@ typedef gdouble odouble;
   union ObitInfoListEquiv { 
     olong   otg;
     oint    itg;
-    gfloat  flt;
-    gdouble dbl;
+    ofloat  flt;
+    odouble dbl;
   };
 
 /*-------------- enumerations -------------------------------------*/

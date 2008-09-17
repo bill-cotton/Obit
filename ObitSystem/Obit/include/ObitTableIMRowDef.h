@@ -34,9 +34,9 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** The center time. */
-gdouble  Time;
+odouble  Time;
 /** Time interval of record */
-gfloat  TimeI;
+ofloat  TimeI;
 /** Source ID number */
 oint  SourID;
 /** Antenna number */
@@ -46,32 +46,32 @@ oint  Array;
 /** Frequency ID */
 oint  FreqID;
 /** Ionospheric Faraday Rotation */
-gfloat  IFR;
+ofloat  IFR;
 /** FREQ.VAR (?) */
-gfloat*  FreqVar;
+ofloat*  FreqVar;
 /** Phase delay */
-gdouble*  PDelay1;
+odouble*  PDelay1;
 /** Group delay */
-gdouble*  GDelay1;
+odouble*  GDelay1;
 /** Phase delay rate */
-gdouble*  PRate1;
+odouble*  PRate1;
 /** Group delay rate */
-gdouble*  GRate1;
+odouble*  GRate1;
 /** Dispersion */
-gfloat*  Disp1;
+ofloat*  Disp1;
 /** Dispersion rate */
-gfloat*  DRate1;
+ofloat*  DRate1;
 /** Phase delay */
-gdouble*  PDelay2;
+odouble*  PDelay2;
 /** Group delay */
-gdouble*  GDelay2;
+odouble*  GDelay2;
 /** Phase delay rate */
-gdouble*  PRate2;
+odouble*  PRate2;
 /** Group delay rate */
-gdouble*  GRate2;
+odouble*  GRate2;
 /** Dispersion */
-gfloat*  Disp2;
+ofloat*  Disp2;
 /** Dispersion rate */
-gfloat*  DRate2;
+ofloat*  DRate2;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

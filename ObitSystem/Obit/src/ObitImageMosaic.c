@@ -76,7 +76,7 @@ void  ObitImageMosaicInit  (gpointer in);
 void  ObitImageMosaicClear (gpointer in);
 
 /** Private: Cover specified field of view */
-static gfloat
+static ofloat
 FlyEye (ofloat radius, olong imsize, ofloat cells[2], olong ovrlap,
 	ofloat shift[2], double ra0, double dec0, 
 	gint *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, olong *flqual,
@@ -1798,7 +1798,7 @@ void ObitImageMosaicClear (gpointer inn)
  * \param  err     Error stack, returns if not empty.
  * \return radius of zone of avoidence for externals (deg)
  */
-static gfloat
+static ofloat
 FlyEye (ofloat radius, olong imsize, ofloat cells[2], olong overlap,
 	ofloat shift[2], odouble ra0, odouble dec0, 
 	gint *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, olong *flqual,

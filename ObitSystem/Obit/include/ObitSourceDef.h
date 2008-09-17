@@ -56,18 +56,18 @@ odouble  PMRa;
 /** Proper motion (deg/day) in declination */
 odouble  PMDec;
 /** Total Stokes I flux density per IF */
-gfloat*  IFlux;
+ofloat*  IFlux;
 /** Total Stokes Q flux density per IF */
-gfloat*  QFlux;
+ofloat*  QFlux;
 /** Total Stokes U flux density per IF */
-gfloat*  UFlux;
+ofloat*  UFlux;
 /** Total Stokes V flux densityper IF */
-gfloat*  VFlux;
+ofloat*  VFlux;
 /** Frequency offset (Hz) from IF nominal per IF */
-gdouble*  FreqOff;
+odouble*  FreqOff;
 /** Bandwidth */
 odouble  Bandwidth;
 /** LSR velocity per IF */
-gdouble*  LSRVel;
+odouble*  LSRVel;
 /** Line rest frequency per IF */
-gdouble*  RestFreq;
+odouble*  RestFreq;

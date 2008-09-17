@@ -38,24 +38,24 @@ oint  noSta;
 /** Mount type, 0=altaz, 1=equatorial, 2=orbiting */
 oint  mntSta;
 /** Axis offset */
-gfloat  staXof;
+ofloat  staXof;
 /** Feed A feed position angle */
-gfloat  PolAngA;
+ofloat  PolAngA;
 /** Feed B feed position angle */
-gfloat  PolAngB;
+ofloat  PolAngB;
 /** Station name */
 gchar*  AntName;
 /** X,Y,Z offset from array center */
-gdouble*  StaXYZ;
+odouble*  StaXYZ;
 /** Orbital parameters. */
-gdouble*  OrbParm;
+odouble*  OrbParm;
 /** Feed A feed poln. type 'R','L','X','Y', actually only one valid character. */
 gchar*  polTypeA;
 /** Feed A poln. cal parameter. */
-gfloat*  PolCalA;
+ofloat*  PolCalA;
 /** Feed B feed poln. type 'R','L','X','Y' */
 gchar*  polTypeB;
 /** Feed B poln. cal parameter */
-gfloat*  PolCalB;
+ofloat*  PolCalB;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

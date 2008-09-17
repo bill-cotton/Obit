@@ -34,9 +34,9 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** Time. */
-gdouble  time;
+odouble  time;
 /** Time interval over which antenna characteristics valid. */
-gfloat  time_interval;
+ofloat  time_interval;
 /** Station number, used as an index in other tables, uv data */
 oint  antenna_no;
 /** Subarray number */
@@ -46,18 +46,18 @@ oint  freqid;
 /** Quantization of data, no. levels. */
 oint  no_levels;
 /** Feed A feed position angle */
-gfloat  PolAngA;
+ofloat  PolAngA;
 /** Feed B feed position angle */
-gfloat  PolAngB;
+ofloat  PolAngB;
 /** Station name */
 gchar*  AntName;
 /** Feed A feed poln. type 'R','L','X','Y', actually only one valid character. */
 gchar*  polTypeA;
 /** Feed A poln. cal parameter. */
-gfloat*  PolCalA;
+ofloat*  PolCalA;
 /** Feed B feed poln. type 'R','L','X','Y' */
 gchar*  polTypeB;
 /** Feed B poln. cal parameter */
-gfloat*  PolCalB;
+ofloat*  PolCalB;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

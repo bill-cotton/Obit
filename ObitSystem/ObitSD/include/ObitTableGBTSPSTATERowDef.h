@@ -34,9 +34,9 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /**  */
-gfloat*  blanktim;
+ofloat*  blanktim;
 /**  */
-gfloat*  phasetim;
+ofloat*  phasetim;
 /**  */
 guint8*  sigref;
 /**  */

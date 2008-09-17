@@ -38,35 +38,35 @@ oint  TargID;
 /** Target qualifier */
 oint  Qual;
 /** Total Stokes I flux density */
-gfloat  IFlux;
+ofloat  IFlux;
 /** Total Stokes Q flux density */
-gfloat  QFlux;
+ofloat  QFlux;
 /** Total Stokes U flux density */
-gfloat  UFlux;
+ofloat  UFlux;
 /** Total Stokes V flux density */
-gfloat  VFlux;
+ofloat  VFlux;
 /** Frequency offset (Hz) from nominal */
-gdouble  FreqOff;
+odouble  FreqOff;
 /** Bandwidth */
-gdouble  Bandwidth;
+odouble  Bandwidth;
 /** Right ascension at mean EPOCH (actually equinox) */
-gdouble  RAMean;
+odouble  RAMean;
 /** Declination at mean EPOCH (actually equinox) */
-gdouble  DecMean;
+odouble  DecMean;
 /** Mean Epoch (really equinox) for position in yr. since year 0.0 */
-gdouble  Epoch;
+odouble  Epoch;
 /** Apparent Right ascension */
-gdouble  RAApp;
+odouble  RAApp;
 /** Apparent Declination */
-gdouble  DecApp;
+odouble  DecApp;
 /** LSR velocity per IF */
-gdouble  LSRVel;
+odouble  LSRVel;
 /** Line rest frequency per IF */
-gdouble  RestFreq;
+odouble  RestFreq;
 /** Proper motion (deg/day) in RA */
-gdouble  PMRa;
+odouble  PMRa;
 /** Proper motion (deg/day) in declination */
-gdouble  PMDec;
+odouble  PMDec;
 /** Target name */
 gchar*  Target;
 /** Calibrator code */

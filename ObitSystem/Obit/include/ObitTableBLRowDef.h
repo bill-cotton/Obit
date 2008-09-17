@@ -34,7 +34,7 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** The center time. */
-gfloat  Time;
+ofloat  Time;
 /** Source ID number */
 oint  SourID;
 /** Subarray number */
@@ -46,20 +46,20 @@ oint  ant2;
 /** Freqid number */
 oint  FreqID;
 /** Real (Multiplicative correction Poln # 1 ) */
-gfloat*  RealM1;
+ofloat*  RealM1;
 /** Imaginary (Multiplicative correction Poln # 1 ) */
-gfloat*  ImagM1;
+ofloat*  ImagM1;
 /** Real (Additive correction Poln # 1 ) */
-gfloat*  RealA1;
+ofloat*  RealA1;
 /** Imaginary (Additive correction Poln # 1 ) */
-gfloat*  ImagA1;
+ofloat*  ImagA1;
 /** Real (Multiplicative correction Poln # 2 ) */
-gfloat*  RealM2;
+ofloat*  RealM2;
 /** Imaginary (Multiplicative correction Poln # 2 ) */
-gfloat*  ImagM2;
+ofloat*  ImagM2;
 /** Real (Additive correction Poln # 2 ) */
-gfloat*  RealA2;
+ofloat*  RealA2;
 /** Imaginary (Additive correction Poln # 2 ) */
-gfloat*  ImagA2;
+ofloat*  ImagA2;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

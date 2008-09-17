@@ -114,7 +114,7 @@ ObitCArray* ObitCArrayRealloc (ObitCArray* in, olong ndim, olong *naxis);
 typedef void (*ObitCArrayReallocFP) (ObitCArray* in, olong ndim, olong *naxis);
 
 /** Public: return pointer to a specified element */
-gfloat* ObitCArrayIndex (ObitCArray* in, olong *pos);
+ofloat* ObitCArrayIndex (ObitCArray* in, olong *pos);
 typedef ofloat* (*ObitCArrayIndexFP) (ObitCArray* in, olong *pos);
 
 /** Public: Find Maximum abs value in an ObitCArray */

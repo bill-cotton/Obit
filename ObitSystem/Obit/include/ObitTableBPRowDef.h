@@ -34,9 +34,9 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** The center time. */
-gdouble  Time;
+odouble  Time;
 /** Time interval of record */
-gfloat  TimeI;
+ofloat  TimeI;
 /** Source ID number */
 oint  SourID;
 /** Subarray number */
@@ -44,26 +44,26 @@ oint  SubA;
 /** Antenna number */
 oint  antNo;
 /** andwidth of an individual channel */
-gfloat  BW;
+ofloat  BW;
 /** Freq. id number */
 oint  FreqID;
 /** Frequency shift for each IF */
-gdouble*  ChanShift;
+odouble*  ChanShift;
 /** Reference Antenna */
 oint  RefAnt1;
 /** Weights for complex bandpass */
-gfloat*  Weight1;
+ofloat*  Weight1;
 /** Real (channel gain Poln # 1 ) */
-gfloat*  Real1;
+ofloat*  Real1;
 /** Imaginary (channel gain Poln # 1) */
-gfloat*  Imag1;
+ofloat*  Imag1;
 /** Reference Antenna */
 oint  RefAnt2;
 /** Weights for complex bandpass */
-gfloat*  Weight2;
+ofloat*  Weight2;
 /** Real (channel gain Poln # 2 ) */
-gfloat*  Real2;
+ofloat*  Real2;
 /** Imaginary (channel gain Poln # 2) */
-gfloat*  Imag2;
+ofloat*  Imag2;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

@@ -34,14 +34,14 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** ``X'' position of component centroid as offset from reference position */
-gfloat  X;
+ofloat  X;
 /** ``Y'' position of component centroid as offset from reference position */
-gfloat  Y;
+ofloat  Y;
 /** Flux density of component */
-gfloat  Flux;
+ofloat  Flux;
 /** Component type: 0: (or not present) point, 1=Gaussian on sky, 2 */
 oint  Type;
 /** Model components as needed by model */
-gfloat*  Parms;
+ofloat*  Parms;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

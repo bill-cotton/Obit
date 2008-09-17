@@ -36,11 +36,11 @@
 /** Frequency ID number for row, this is a random parameter in the uv data */
 oint  fqid;
 /** Offset from reference frequency for each Band */
-gdouble*  bandfreq;
+odouble*  bandfreq;
 /** Bandwidth of an individual channel, now always written and read as a signed value */
-gfloat*  chWidth;
+ofloat*  chWidth;
 /** Total bandwidth of the IF, now written and read as an unsigned value */
-gfloat*  totBW;
+ofloat*  totBW;
 /** Sideband of the IF (-1 =$>$ lower, +1 =$>$ upper), now always written and read as +1 */
 oint*  sideBand;
 /** Look this one up1 */

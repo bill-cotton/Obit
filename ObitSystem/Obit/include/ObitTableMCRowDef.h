@@ -34,7 +34,7 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** The center time. */
-gdouble  Time;
+odouble  Time;
 /** Source ID number */
 oint  SourID;
 /** Antenna number */
@@ -44,36 +44,36 @@ oint  Array;
 /** Frequency ID */
 oint  FreqID;
 /** Atmospheric delay */
-gdouble  atmos;
+odouble  atmos;
 /** Time derivative of ATMOS */
-gdouble  Datmos;
+odouble  Datmos;
 /** Group delay */
-gdouble  GDelay;
+odouble  GDelay;
 /** Group delay rate */
-gdouble  GRate;
+odouble  GRate;
 /** "Clock" epoch error */
-gdouble  clock1;
+odouble  clock1;
 /** Time derivative of CLOCK */
-gdouble  Dclock1;
+odouble  Dclock1;
 /** LO Offset */
-gfloat  LOOffset1;
+ofloat  LOOffset1;
 /** Time derivative of LO offset */
-gfloat  DLOOffset1;
+ofloat  DLOOffset1;
 /** Dispersive delay (sec at wavelength = 1m)for Poln # 1 */
-gfloat  disp1;
+ofloat  disp1;
 /** Time derivative of DISPfor Poln # 1 */
-gfloat  Ddisp1;
+ofloat  Ddisp1;
 /** "Clock" epoch error */
-gdouble  clock2;
+odouble  clock2;
 /** Time derivative of CLOCK */
-gdouble  Dclock2;
+odouble  Dclock2;
 /** LO Offset */
-gfloat  LOOffset2;
+ofloat  LOOffset2;
 /** Time derivative of LO offset */
-gfloat  DLOOffset2;
+ofloat  DLOOffset2;
 /** Dispersive delay (sec at wavelength = 1m)for Poln # 2 */
-gfloat  disp2;
+ofloat  disp2;
 /** Time derivative of DISPfor Poln # 2 */
-gfloat  Ddisp2;
+ofloat  Ddisp2;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

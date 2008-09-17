@@ -44,7 +44,7 @@ oint  numAnt;
 /** The number of terms in model polynomial */
 oint  numTerm;
 /** The Mean Gain modulus */
-gdouble  mGMod;
+odouble  mGMod;
 /** Column offset for The center time of the solution in table record */
 olong  TimeOff;
 /** Physical column number for The center time of the solution in table record */

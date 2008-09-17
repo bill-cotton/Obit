@@ -261,8 +261,8 @@ sub DclTypeCode {
   if ($larg eq 'I') {$ltype = 'gshort';}
   elsif ($larg eq 'J') {$ltype = 'oint';}
   elsif ($larg eq 'K') {$ltype = 'oint';}
-  elsif ($larg eq 'E') {$ltype = 'gfloat';}
-  elsif ($larg eq 'D') {$ltype = 'gdouble';}
+  elsif ($larg eq 'E') {$ltype = 'ofloat';}
+  elsif ($larg eq 'D') {$ltype = 'odouble';}
   elsif ($larg eq 'A') {$ltype = 'gchar';}
   elsif ($larg eq 'L') {$ltype = 'gboolean';}
   elsif ($larg eq 'C') {$ltype = 'OBIT_complex';}

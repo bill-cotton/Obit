@@ -34,11 +34,11 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** Unix time in seconds. */
-gdouble  TimeStamp;
+odouble  TimeStamp;
 /** daccounts */
-gdouble*  daccounts;
+odouble*  daccounts;
 /** saecounts */
-gdouble*  saecounts;
+odouble*  saecounts;
 /** DigInput */
 guint8*  DigInput;
 /** status 0=normal, 1=modified, -1=flagged */

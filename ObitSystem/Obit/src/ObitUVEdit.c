@@ -84,10 +84,10 @@ static void EditFDEdit(gint numChan, olong numIF, olong numPol, olong numBL,
 static ofloat medianVal (ofloat *array, olong incs, olong n);
 
 /** Private: qsort ofloat comparison */
-static int compare_gfloat  (const void* arg1,  const void* arg2);
+static int compare_ofloat  (const void* arg1,  const void* arg2);
 
 /** Private: Fit linear slope with mask */
-static void EditFDBLFit (gfloat* x, ofloat* y, gboolean *m, olong ndata, 
+static void EditFDBLFit (ofloat* x, ofloat* y, gboolean *m, olong ndata, 
 			 ofloat *a, ofloat *b);
 
 /** Private: Determine deviations from Median */
@@ -3903,7 +3903,7 @@ static ofloat medianVal (ofloat *array, olong incs, olong n)
   if (n<=0) return out;
 
   /* Sort to ascending order */
-  qsort ((void*)array, n, MIN(2,incs)*sizeof(ofloat), compare_gfloat);
+  qsort ((void*)array, n, MIN(2,incs)*sizeof(ofloat), compare_ofloat);
 
   out = array[n/2];
 
@@ -3917,7 +3917,7 @@ static ofloat medianVal (ofloat *array, olong incs, olong n)
  * \return negative if arg1 is less than arg2, zero if equal
  *  and positive if arg1 is greater than arg2.
  */
-static int compare_gfloat  (const void* arg1,  const void* arg2)
+static int compare_ofloat  (const void* arg1,  const void* arg2)
 {
   int out = 0;
   ofloat larg1, larg2;
@@ -3927,7 +3927,7 @@ static int compare_gfloat  (const void* arg1,  const void* arg2)
   if (larg1<larg2) out = -1;
   else if (larg1>larg2) out = 1;
   return out;
-} /* end compare_gfloat */
+} /* end compare_ofloat */
 
 /**
  * Routine to fit Linear slope:  
@@ -3941,7 +3941,7 @@ static int compare_gfloat  (const void* arg1,  const void* arg2)
  *              -1000.0 if no data
  * \param b     [out] First order polynomial coefficient 
  */
-static void EditFDBLFit (gfloat* x, ofloat* y, gboolean *m, olong ndata, 
+static void EditFDBLFit (ofloat* x, ofloat* y, gboolean *m, olong ndata, 
 			 ofloat *a, ofloat *b) 
 {
   odouble sx, sy, sxy, syy, sxx;
@@ -4134,7 +4134,7 @@ static ofloat MedianLevel (gint n, ofloat *value, ofloat alpha)
   if (n<=0) return out;
 
   /* Sort to ascending order */
-  qsort ((void*)value, n, sizeof(ofloat), compare_gfloat);
+  qsort ((void*)value, n, sizeof(ofloat), compare_ofloat);
 
   out = value[n/2];
 

@@ -38,7 +38,7 @@ gshort  ifflag;
 /**  */
 oint  subscan;
 /**  */
-gdouble  timetag;
+odouble  timetag;
 /**  */
 oint*  data;
 /** status 0=normal, 1=modified, -1=flagged */

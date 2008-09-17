@@ -136,7 +136,7 @@ ObitFArray* ObitFArrayRealloc (ObitFArray* in, olong ndim, olong *naxis);
 typedef void (*ObitFArrayReallocFP) (ObitFArray* in, olong ndim, olong *naxis);
 
 /** Public: return pointer to a specified element */
-gfloat* ObitFArrayIndex (ObitFArray* in, olong *pos);
+ofloat* ObitFArrayIndex (ObitFArray* in, olong *pos);
 typedef ofloat* (*ObitFArrayIndexFP) (ObitFArray* in, olong *pos);
 
 /** Public: Find Maximum value in an ObitFArray */
@@ -224,12 +224,12 @@ void ObitFArraySDiv (ObitFArray* in, ofloat scalar);
 typedef void (*ObitFArraySDivFP) (ObitFArray* in, ofloat scalar);
 
 /** Public: Clip elements of an FArray outside of a given range */
-void ObitFArrayClip (ObitFArray* in, ofloat minVal,gfloat maxVal, ofloat newVal);
+void ObitFArrayClip (ObitFArray* in, ofloat minVal, ofloat maxVal, ofloat newVal);
 typedef void (*ObitFArrayClipFP) (ObitFArray* in, ofloat minVal, ofloat maxVal, 
 				  ofloat newVal);
 
 /** Public: Clip elements of an FArray inside of a given range */
-void ObitFArrayInClip (ObitFArray* in, ofloat minVal,gfloat maxVal, ofloat newVal);
+void ObitFArrayInClip (ObitFArray* in, ofloat minVal, ofloat maxVal, ofloat newVal);
 typedef void (*ObitFArrayInClipFP) (ObitFArray* in, ofloat minVal, ofloat maxVal, 
 				    ofloat newVal);
 

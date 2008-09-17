@@ -34,9 +34,9 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** The center time of the sscan. */
-gfloat  Time;
+ofloat  Time;
 /** Duration of scan */
-gfloat  TimeI;
+ofloat  TimeI;
 /** Source ID as defined in then SOURCE table */
 oint  SourID;
 /** Antenna number */

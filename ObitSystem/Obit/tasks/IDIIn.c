@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read IDI format data                               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007                                               */
+/*;  Copyright (C) 2007,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -74,7 +74,7 @@ void GetSourceInfo (ObitData *inData, ObitUV *outData, gboolean isNew,
 /* Read data */
 void ProcessData (gchar *inscan, ofloat avgTime,
 		  olong *ndetect, olong *ntime, ofloat *refDate,
-		  gfloat** ATime, gfloat*** AData, gfloat** ACal, 
+		  ofloat** ATime, ofloat*** AData, ofloat** ACal, 
 		  ObitErr *err);
 /* Write history */
 void IDIInHistory (ObitInfoList* myInput, ObitUV* outData, ObitErr* err);
@@ -435,7 +435,7 @@ ObitInfoList* defaultInputs(ObitErr *err)
 ObitInfoList* defaultOutputs(ObitErr *err)
 {
   /*gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};*/
-  /*gfloat ftemp;*/
+  /*ofloat ftemp;*/
   ObitInfoList *out = newObitInfoList();
   /*gchar *routine = "defaultOutputs";*/
 

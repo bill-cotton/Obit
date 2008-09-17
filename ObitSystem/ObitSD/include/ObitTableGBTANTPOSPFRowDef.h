@@ -34,26 +34,26 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /**  */
-gdouble  dmjd;
+odouble  dmjd;
 /**  */
-gdouble  raj2000;
+odouble  raj2000;
 /**  */
-gdouble  decj2000;
+odouble  decj2000;
 /**  */
-gdouble  mntAaz;
+odouble  mntAaz;
 /**  */
-gdouble  mntEl;
+odouble  mntEl;
 /**  */
-gdouble  refract;
+odouble  refract;
 /**  */
-gdouble  major;
+odouble  major;
 /**  */
-gdouble  minor;
+odouble  minor;
 /** Prime focus focus. */
-gdouble  pfFocus;
+odouble  pfFocus;
 /** Prime focus rotation */
-gdouble  pfRotation;
+odouble  pfRotation;
 /**  */
-gdouble  pfX;
+odouble  pfX;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

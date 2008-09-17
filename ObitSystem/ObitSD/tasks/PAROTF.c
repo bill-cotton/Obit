@@ -74,11 +74,11 @@ void SetScan (ObitOTF *outData, odouble startTime, odouble endTime,
 /* Read, filter, average data */
 void ProcessData (gchar *inscan, ofloat avgTime,
 		  olong *ndetect, olong *ntime, ofloat *refDate,
-		  gfloat** ATime, gfloat*** AData, gfloat** ACal, 
+		  ofloat** ATime, ofloat*** AData, ofloat** ACal, 
 		  ObitErr *err);
 /* Read data for a single detector */
 void ReadDatum (ObitTableGBTPARDATA* PARtable, olong ndetect, gboolean *bad, 
-		gint *ntime, gdouble** time, gfloat** data, gfloat** cal, 
+		gint *ntime, odouble** time, ofloat** data, ofloat** cal, 
 		ObitErr *err);
 /* Average data a single detector */
 void AverageDatum (gboolean bad, olong detector, olong nraw, odouble *time, 
@@ -576,7 +576,7 @@ ObitInfoList* defaultInputs(ObitErr *err)
 ObitInfoList* defaultOutputs(ObitErr *err)
 {
   /*gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};*/
-  /*gfloat ftemp;*/
+  /*ofloat ftemp;*/
   ObitInfoList *out = newObitInfoList();
   /*gchar *routine = "defaultOutputs";*/
 
@@ -1570,7 +1570,7 @@ void SetScan (ObitOTF *outData, odouble startTime, odouble endTime,
 
 void ProcessData (gchar *inscan, ofloat avgTime,
 		  olong *ndetect, olong *ntime, ofloat *refDate,
-		  gfloat** ATime, gfloat*** AData, gfloat** ACal, 
+		  ofloat** ATime, ofloat*** AData, ofloat** ACal, 
 		  ObitErr *err)
 /*----------------------------------------------------------------------- */
 /*  Read data for detectors from GB FITS and return arrays of:            */
@@ -1636,7 +1636,7 @@ void ProcessData (gchar *inscan, ofloat avgTime,
   *ndetect = PARtable->myDesc->repeat[PARtable->daccountsCol];
 
   /* Allocate output detector array */
-  *AData = g_malloc0((*ndetect)*sizeof(gfloat**));
+  *AData = g_malloc0((*ndetect)*sizeof(ofloat**));
 
   /* Init detectors arrays */
   for (id=0; id<(*ndetect); id++) {
@@ -1711,7 +1711,7 @@ void ProcessData (gchar *inscan, ofloat avgTime,
 } /* end ProcessData  */
 
   void ReadDatum (ObitTableGBTPARDATA* PARtable, olong ndetect, gboolean *bad, 
-		  olong *ntime, gdouble** time, gfloat** data, gfloat** cal, 
+		  olong *ntime, odouble** time, ofloat** data, ofloat** cal, 
 		  ObitErr *err)
 /*----------------------------------------------------------------------- */
 /*  Read data for a single detector from GB FITS and return arrays of:    */

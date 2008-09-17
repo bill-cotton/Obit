@@ -38,9 +38,9 @@ oint  revision;
 /** Number of Zernike coefficients */
 oint  numCoef;
 /** Height of the ionospheric phase screen (km?) */
-gfloat  heightIon;
+ofloat  heightIon;
 /** Reference frequency for the phase screen model */
-gdouble  refFreq;
+odouble  refFreq;
 /** Column offset for The center time in table record */
 olong  TimeOff;
 /** Physical column number for The center time in table record */

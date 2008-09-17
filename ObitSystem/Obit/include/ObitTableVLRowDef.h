@@ -34,37 +34,37 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** RA (J2000) */
-gdouble  Ra2000;
+odouble  Ra2000;
 /** Dec (J2000) */
-gdouble  Dec2000;
+odouble  Dec2000;
 /** Peak Ipol */
-gfloat  PeakInt;
+ofloat  PeakInt;
 /** Fitted major axis size */
-gfloat  MajorAxis;
+ofloat  MajorAxis;
 /** Fitted minor axis siz */
-gfloat  MinorAxis;
+ofloat  MinorAxis;
 /** Fitted PA */
-gfloat  PosAngle;
+ofloat  PosAngle;
 /** Center Q flux density */
-gfloat  QCenter;
+ofloat  QCenter;
 /** enter U flux density */
-gfloat  UCenter;
+ofloat  UCenter;
 /** Integrated polarized flux density */
-gfloat  PFlux;
+ofloat  PFlux;
 /** Ipol RMS uncertainty */
-gfloat  IRMS;
+ofloat  IRMS;
 /** RMS (sigma) in Qpol and Upol */
-gfloat  PolRMS;
+ofloat  PolRMS;
 /** RMS of Ipol residual */
-gfloat  ResRMS;
+ofloat  ResRMS;
 /** Peak in Ipol residual */
-gfloat  ResPeak;
+ofloat  ResPeak;
 /** Integrated Ipol residual */
-gfloat  ResFlux;
+ofloat  ResFlux;
 /** Center x position in pixels in FIELD */
-gfloat  CenterX;
+ofloat  CenterX;
 /** Center y position in pixels in FIELD */
-gfloat  CenterY;
+ofloat  CenterY;
 /** Julian date on which entry was derived from image. */
 oint  JDProcess;
 /** Name of survey field */

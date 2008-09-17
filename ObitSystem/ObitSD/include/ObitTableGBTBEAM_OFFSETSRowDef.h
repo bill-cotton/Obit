@@ -34,9 +34,9 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /**  */
-gdouble  xeloff;
+odouble  xeloff;
 /**  */
-gdouble  eloff;
+odouble  eloff;
 /**  */
 oint  srfeed1;
 /**  */

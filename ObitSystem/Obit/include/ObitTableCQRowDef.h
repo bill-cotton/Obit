@@ -44,9 +44,9 @@ oint*  numChan;
 /** Spectral averaging factor{NSAVCQ */
 oint*  SpecAvg;
 /** Edge frequency {DFRQCQ */
-gdouble*  EdgeFreq;
+odouble*  EdgeFreq;
 /** Channel bandwidth {DCBWCQ */
-gdouble*  ChanBW;
+odouble*  ChanBW;
 /** Taper function {LTAPCQ */
 gchar*  TaperFn;
 /** Oversampling factor {NOVSCQ */
@@ -56,7 +56,7 @@ oint*  ZeroPad;
 /** Filter type {IFLTCQ */
 oint*  Filter;
 /** Time averaging interval {TAVGCQ */
-gfloat*  TimeAvg;
+ofloat*  TimeAvg;
 /** Quantization (no. of bits per recorded sample){NBITCQ */
 oint*  numBits;
 /** FFT overlap factor {IOVLCQ */

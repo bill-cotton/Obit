@@ -34,9 +34,9 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** The center time of the solution */
-gdouble  Time;
+odouble  Time;
 /** Solution interval. */
-gfloat  TimeI;
+ofloat  TimeI;
 /** Source Identifier number */
 oint  SourID;
 /** Antenna number */
@@ -46,35 +46,35 @@ oint  SubA;
 /** Frequency ID */
 oint  FreqID;
 /** Ionospheric Faraday Rotation */
-gfloat  IFR;
+ofloat  IFR;
 /** Node number */
 oint  NodeNo;
 /** Multiband delay poln # 1 */
-gfloat  MBDelay1;
+ofloat  MBDelay1;
 /** Real (gain Poln # 1 ) */
-gfloat*  Real1;
+ofloat*  Real1;
 /** Imaginary (gain Poln # 1) */
-gfloat*  Imag1;
+ofloat*  Imag1;
 /** Residual group delay Poln # 1 */
-gfloat*  Delay1;
+ofloat*  Delay1;
 /** Residual fringe rate  Poln # 1 */
-gfloat*  Rate1;
+ofloat*  Rate1;
 /** Weight of soln. Poln # 1 */
-gfloat*  Weight1;
+ofloat*  Weight1;
 /** Reference antenna Poln # 1 */
 oint*  RefAnt1;
 /** Multiband delay poln # 2 */
-gfloat  MBDelay2;
+ofloat  MBDelay2;
 /** Real (gain Poln # 2 ) */
-gfloat*  Real2;
+ofloat*  Real2;
 /** Imaginary (gain Poln # 2) */
-gfloat*  Imag2;
+ofloat*  Imag2;
 /** Residual group delay Poln # 2 */
-gfloat*  Delay2;
+ofloat*  Delay2;
 /** Residual fringe rate  Poln # 2 */
-gfloat*  Rate2;
+ofloat*  Rate2;
 /** Weight of soln. Poln # 2 */
-gfloat*  Weight2;
+ofloat*  Weight2;
 /** Reference antenna Poln # 2 */
 oint*  RefAnt2;
 /** status 0=normal, 1=modified, -1=flagged */

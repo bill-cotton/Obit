@@ -1086,7 +1086,7 @@ ObitIOCode ObitIOImageFITSReadDescriptor (ObitIOImageFITS *in, ObitErr *err)
   fits_read_keys_flt (in->myFptr, "CDELT", 1, IM_MAXDIM, farr,
 		      &nfound, &status);
   if (status==KEY_NO_EXIST) status = 0;
-  for (i=0; i<IM_MAXDIM; i++) desc->cdelt[i] = (gfloat)farr[i];
+  for (i=0; i<IM_MAXDIM; i++) desc->cdelt[i] = (ofloat)farr[i];
 
   for (i=0; i<IM_MAXDIM; i++) farr[i] = 0.0;
   fits_read_keys_flt (in->myFptr, "CRPIX", 1, IM_MAXDIM, farr, 

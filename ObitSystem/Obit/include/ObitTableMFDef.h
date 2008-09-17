@@ -34,15 +34,15 @@
  */
 #include "ObitTableDef.h"  /* Parent class definitions */
 /** Dimensions 3 in image */
-gfloat  depth1;
+ofloat  depth1;
 /** Dimensions 4 in image */
-gfloat  depth2;
+ofloat  depth2;
 /** Dimensions 5 in image */
-gfloat  depth3;
+ofloat  depth3;
 /** Dimensions 6 in image */
-gfloat  depth4;
+ofloat  depth4;
 /** Dimensions 7 in image */
-gfloat  depth5;
+ofloat  depth5;
 /** Column offset for Plane number in table record */
 olong  planeOff;
 /** Physical column number for Plane number in table record */

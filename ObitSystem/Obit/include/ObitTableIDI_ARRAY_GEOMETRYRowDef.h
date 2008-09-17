@@ -40,12 +40,12 @@ oint  mntSta;
 /** Station name */
 gchar*  AntName;
 /** X,Y,Z offset from array center */
-gdouble*  StaXYZ;
+odouble*  StaXYZ;
 /** look this up */
-gdouble*  derXYZ;
+odouble*  derXYZ;
 /** Orbital parameters. */
-gdouble*  OrbParm;
+odouble*  OrbParm;
 /** Axis offset (in 3D???) */
-gfloat*  staXof;
+ofloat*  staXof;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

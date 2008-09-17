@@ -34,9 +34,9 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** Pointing RA at epoch 2000 */
-gdouble  RAPoint;
+odouble  RAPoint;
 /** Pointing Dec at epoch 2000 */
-gdouble  DecPoint;
+odouble  DecPoint;
 /** Special processing applied */
 gboolean  Special;
 /** Number of sub fields */
@@ -52,13 +52,13 @@ gboolean*  IQU;
 /** Flags to using all possible CC. */
 gboolean*  CCLimit;
 /** Percent of visibility data I,Q,U */
-gfloat*  PerCent;
+ofloat*  PerCent;
 /** Pixel max (Jy) I,Q,U */
-gfloat*  PixMax;
+ofloat*  PixMax;
 /** Pixel min (Jy) I,Q,U */
-gfloat*  PixMin;
+ofloat*  PixMin;
 /** Quality measure, RMS I,Q,U */
-gfloat*  Quality;
+ofloat*  Quality;
 /** Comments */
 gchar*  Comment;
 /** status 0=normal, 1=modified, -1=flagged */

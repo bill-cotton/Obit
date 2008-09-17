@@ -34,15 +34,15 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** U component of baseline. */
-gfloat  uu;
+ofloat  uu;
 /** V component of baseline. */
-gfloat  vv;
+ofloat  vv;
 /** W component of baseline. */
-gfloat  ww;
+ofloat  ww;
 /** Julian Date */
-gdouble  date;
+odouble  date;
 /** The center time. */
-gdouble  Time;
+odouble  Time;
 /** Interferometer baseline as ant 1*256+ant1 (1-rel). */
 oint  Baseline;
 /** Filter. */
@@ -52,12 +52,12 @@ oint  Source;
 /** Frequency group ID, index into FREQUENCY table. */
 oint  FreqID;
 /** The integration time. */
-gfloat  IntTim;
+ofloat  IntTim;
 /** Gate ID. */
 oint  GateID;
 /** Weight per correlation, same order as data. */
-gfloat*  Weight;
+ofloat*  Weight;
 /** Visibility matrix */
-gfloat*  Flux;
+ofloat*  Flux;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

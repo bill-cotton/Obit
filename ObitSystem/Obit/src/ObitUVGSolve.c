@@ -75,7 +75,7 @@ NextAvg (ObitUV *inUV, ofloat interv,
 
 /** Private: Solve for Gains for a solution interval */
 static void 
-doSolve (gfloat* vobs, olong *ant1, olong *ant2, olong numAnt, olong numIF, 
+doSolve (ofloat* vobs, olong *ant1, olong *ant2, olong numAnt, olong numIF, 
 	 olong numPol, olong refant, gboolean avgif, gboolean avgpol, gboolean dol1, 
 	 olong mode, olong minno, ofloat snrmin, olong prtlv, 
 	 ofloat* creal, ofloat* cimag, ofloat* cwt, olong* refan, 
@@ -83,19 +83,19 @@ doSolve (gfloat* vobs, olong *ant1, olong *ant2, olong numAnt, olong numIF,
 
 /** Private: Determine SNR of solution */
 static void   
-calcSNR (gfloat* vobs, olong *ant1, olong *ant2, olong numBL, olong numAnt, 
+calcSNR (ofloat* vobs, olong *ant1, olong *ant2, olong numBL, olong numAnt, 
 	 ofloat* gain, ofloat* snr, ofloat closer[2][2], ofloat snrmin, odouble time, 
 	 olong iif, olong ist, olong* count, olong prtlv, gchar* prtsou, ObitErr *err);  
 
 /** Private: Gain Soln: Compute least squares gains */
 static void 
-gainCalc (gfloat* vobs, olong *ant1, olong *ant2, olong numBL, olong numAnt, olong refant, 
+gainCalc (ofloat* vobs, olong *ant1, olong *ant2, olong numBL, olong numAnt, olong refant, 
 	  olong mode, olong minno, ofloat* g, olong* nref, olong prtlv, 
 	  olong* ierr, ObitErr* err);
 
 /** Private: Gain Soln: Does L1 solution for gains  */
 static void 
-gainCalcL1 (gfloat* vobs, olong *ant1, olong *ant2, olong numBL, olong numAnt, olong refant, 
+gainCalcL1 (ofloat* vobs, olong *ant1, olong *ant2, olong numBL, olong numAnt, olong refant, 
 	    olong mode, olong minno, ofloat* g, olong* nref, olong prtlv, 
 	    olong* ierr, ObitErr* err);
 
@@ -1061,7 +1061,7 @@ NextAvg (ObitUV* inUV, ofloat interv,
  * \param err    Error/message stack, returns if error.
  */
 static void 
-doSolve (gfloat* vobs, olong *ant1, olong *ant2, olong numAnt, olong numIF, 
+doSolve (ofloat* vobs, olong *ant1, olong *ant2, olong numAnt, olong numIF, 
 	 olong numPol, olong refant, gboolean avgif, 
 	 gboolean avgpol, gboolean dol1, olong mode, olong minno, ofloat snrmin, 
 	 olong prtlv, float* creal, ofloat* cimag, ofloat* cwt, olong* refan, 
@@ -1226,7 +1226,7 @@ doSolve (gfloat* vobs, olong *ant1, olong *ant2, olong numAnt, olong numIF,
  * \param err     Error/message stack, returns if error.
  */
 static void 
-calcSNR (gfloat* vobs, olong *ant1, olong *ant2, olong numBL, 
+calcSNR (ofloat* vobs, olong *ant1, olong *ant2, olong numBL, 
 	 olong numAnt, ofloat* gain, ofloat* snr, ofloat closer[2][2], 
 	 ofloat snrmin, odouble time, olong iif, olong ist, olong* count, 
 	 olong prtlv, gchar* prtsou, ObitErr *err) 
@@ -1457,7 +1457,7 @@ calcSNR (gfloat* vobs, olong *ant1, olong *ant2, olong numBL,
  * \param err     Error/message stack, returns if error.
  */
 static void 
-gainCalc (gfloat* vobs, olong *ant1, olong *ant2, olong numBL, olong numAnt,
+gainCalc (ofloat* vobs, olong *ant1, olong *ant2, olong numBL, olong numAnt,
 	  olong refant, olong mode, olong minno, ofloat *g, olong* nref,
 	  olong prtlv, olong *ierr, ObitErr* err) 
 {
@@ -1795,7 +1795,7 @@ gainCalc (gfloat* vobs, olong *ant1, olong *ant2, olong numBL, olong numAnt,
  * \param err     Error/message stack, returns if error.
  */
 static void 
-gainCalcL1 (gfloat* vobs, olong *ant1, olong *ant2, olong numBL, 
+gainCalcL1 (ofloat* vobs, olong *ant1, olong *ant2, olong numBL, 
 	    olong numAnt, olong refant, olong mode, olong minno, ofloat *g, olong* nref, 
 	    olong prtlv, olong *ierr, ObitErr* err) 
 {

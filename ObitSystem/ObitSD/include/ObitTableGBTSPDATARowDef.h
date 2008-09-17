@@ -38,10 +38,10 @@ oint  subscan;
 /**  */
 oint  utdate;
 /**  */
-gdouble  utcstart;
+odouble  utcstart;
 /** Pulsar period. */
-gdouble  psrper;
+odouble  psrper;
 /** Data */
-gfloat*  data;
+ofloat*  data;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

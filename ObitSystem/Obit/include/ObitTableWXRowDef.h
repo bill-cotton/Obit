@@ -34,26 +34,26 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** The center time of the solution */
-gdouble  Time;
+odouble  Time;
 /** Solution interval. */
-gfloat  TimeI;
+ofloat  TimeI;
 /** Antenna number */
 oint  antNo;
 /** Subarray number. */
 oint  SubA;
 /** Temperature */
-gfloat  temperature;
+ofloat  temperature;
 /** Pressure */
-gfloat  pressure;
+ofloat  pressure;
 /** Dew Point */
-gfloat  dewpoint;
+ofloat  dewpoint;
 /** Wind velocity */
-gfloat  windVelocity;
+ofloat  windVelocity;
 /** Wind direction (azimuth) */
-gfloat  windDirection;
+ofloat  windDirection;
 /** Water vapor radiometer */
-gfloat  wvrH2O;
+ofloat  wvrH2O;
 /** Ionospheric electron something */
-gfloat  onosElectron;
+ofloat  onosElectron;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

@@ -40,7 +40,7 @@ oint  scan;
 /** MJD of start tim */
 oint  utdate;
 /** Start tim */
-gdouble  utcstart;
+odouble  utcstart;
 /** Column offset for  in table record */
 olong  blanktimOff;
 /** Physical column number for  in table record */

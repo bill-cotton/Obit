@@ -34,22 +34,22 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** The center time. */
-gfloat  Time;
+ofloat  Time;
 /** The integration time. */
-gfloat  TimeI;
+ofloat  TimeI;
 /** Celestial target, as index in target table. */
-gfloat  Target;
+ofloat  Target;
 /** Observing scan index. */
-gfloat  Scan;
+ofloat  Scan;
 /** Nominal RA of array center */
-gfloat  RA;
+ofloat  RA;
 /** Nominal Dec of array center */
-gfloat  Dec;
+ofloat  Dec;
 /** Rotation of array on sky (parallactic angle) */
-gfloat  rotate;
+ofloat  rotate;
 /** if > 0 then the cal source is on. */
-gfloat  cal;
+ofloat  cal;
 /** Detector sample data per detector ) */
-gfloat*  data;
+ofloat*  data;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

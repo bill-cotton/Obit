@@ -44,9 +44,9 @@ oint  no_band;
 /** Number of frequency channels */
 oint  no_chan;
 /** Reference frequency (Hz) */
-gdouble  ref_freq;
+odouble  ref_freq;
 /** Channel bandwidth (Hz) */
-gdouble  chan_bw;
+odouble  chan_bw;
 /** Reference frequency bin */
 oint  ref_pixl;
 /** Observation project code */
@@ -94,71 +94,71 @@ oint  maxis1;
 /** [OPTIONAL] Type of data axis 1 */
 gchar  ctype1[MAXKEYCHARTABLEIDI_UV_DATA];
 /** [OPTIONAL] Increment in coordinate between pixels on axis 1 */
-gdouble  cdelt1;
+odouble  cdelt1;
 /** [OPTIONAL] Reference pixel on axis 1 */
-gfloat  crpix1;
+ofloat  crpix1;
 /** [OPTIONAL] Reference coordinate on axis 1 */
-gdouble  crval1;
+odouble  crval1;
 /** [OPTIONAL] Number of pixels on axis 2 */
 oint  maxis2;
 /** [OPTIONAL] Type of data axis 2 */
 gchar  ctype2[MAXKEYCHARTABLEIDI_UV_DATA];
 /** [OPTIONAL] Increment in coordinate between pixels on axis 2 */
-gdouble  cdelt2;
+odouble  cdelt2;
 /** [OPTIONAL] Reference pixel on axis 2 */
-gfloat  crpix2;
+ofloat  crpix2;
 /** [OPTIONAL] Reference coordinate on axis 2 */
-gdouble  crval2;
+odouble  crval2;
 /** [OPTIONAL] Number of pixels on axis 3 */
 oint  maxis3;
 /** [OPTIONAL] Type of data axis 3 */
 gchar  ctype3[MAXKEYCHARTABLEIDI_UV_DATA];
 /** [OPTIONAL] Increment in coordinate between pixels on axis 3 */
-gdouble  cdelt3;
+odouble  cdelt3;
 /** [OPTIONAL] Reference pixel on axis 3 */
-gfloat  crpix3;
+ofloat  crpix3;
 /** [OPTIONAL] Reference coordinate on axis 3 */
-gdouble  crval3;
+odouble  crval3;
 /** [OPTIONAL] Number of pixels on axis 4 */
 oint  maxis4;
 /** [OPTIONAL] Type of data axis 4 */
 gchar  ctype4[MAXKEYCHARTABLEIDI_UV_DATA];
 /** [OPTIONAL] Increment in coordinate between pixels on axis 4 */
-gdouble  cdelt4;
+odouble  cdelt4;
 /** [OPTIONAL] Reference pixel on axis 4 */
-gfloat  crpix4;
+ofloat  crpix4;
 /** [OPTIONAL] Reference coordinate on axis 4 */
-gdouble  crval4;
+odouble  crval4;
 /** [OPTIONAL] Number of pixels on axis 5 */
 oint  maxis5;
 /** [OPTIONAL] Type of data axis 5 */
 gchar  ctype5[MAXKEYCHARTABLEIDI_UV_DATA];
 /** [OPTIONAL] Increment in coordinate between pixels on axis 5 */
-gdouble  cdelt5;
+odouble  cdelt5;
 /** [OPTIONAL] Reference pixel on axis 5 */
-gfloat  crpix5;
+ofloat  crpix5;
 /** [OPTIONAL] Reference coordinate on axis 5 */
-gdouble  crval5;
+odouble  crval5;
 /** [OPTIONAL] Number of pixels on axis 6 */
 oint  maxis6;
 /** [OPTIONAL] Type of data axis 6 */
 gchar  ctype6[MAXKEYCHARTABLEIDI_UV_DATA];
 /** [OPTIONAL] Increment in coordinate between pixels on axis 6 */
-gdouble  cdelt6;
+odouble  cdelt6;
 /** [OPTIONAL] Reference pixel on axis 6 */
-gfloat  crpix6;
+ofloat  crpix6;
 /** [OPTIONAL] Reference coordinate on axis 6 */
-gdouble  crval6;
+odouble  crval6;
 /** [OPTIONAL] Number of pixels on axis 7 */
 oint  maxis7;
 /** [OPTIONAL] Type of data axis 7 */
 gchar  ctype7[MAXKEYCHARTABLEIDI_UV_DATA];
 /** [OPTIONAL] Increment in coordinate between pixels on axis 7 */
-gdouble  cdelt7;
+odouble  cdelt7;
 /** [OPTIONAL] Reference pixel on axis 7 */
-gfloat  crpix7;
+ofloat  crpix7;
 /** [OPTIONAL] Reference coordinate on axis 7 */
-gdouble  crval7;
+odouble  crval7;
 /** Telescope used */
 gchar  teles[MAXKEYCHARTABLEIDI_UV_DATA];
 /** Observer making the observations */

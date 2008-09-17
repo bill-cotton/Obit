@@ -34,27 +34,27 @@
  */
 #include "ObitTableDef.h"  /* Parent class definitions */
 /** Array center X coord. (meters, earth center) */
-gdouble  ArrayX;
+odouble  ArrayX;
 /** Array center Y coord. (meters, earth center) */
-gdouble  ArrayY;
+odouble  ArrayY;
 /** Array center Z coord. (meters, earth center) */
-gdouble  ArrayZ;
+odouble  ArrayZ;
 /** GST at time=0 (degrees) on the reference date */
-gdouble  GSTiat0;
+odouble  GSTiat0;
 /** Earth rotation rate (deg/IAT day) */
-gdouble  DegDay;
+odouble  DegDay;
 /** Obs. Reference Frequency for subarray(Hz) */
-gdouble  Freq;
+odouble  Freq;
 /** Reference date as "YYYYMMDD" */
 gchar  RefDate[MAXKEYCHARTABLEAN];
 /** Polar position X (meters) on ref. date */
-gfloat  PolarX;
+ofloat  PolarX;
 /** Polar position Y (meters) on ref. date */
-gfloat  PolarY;
+ofloat  PolarY;
 /** UT1-UTC  (time sec.) */
-gfloat  ut1Utc;
+ofloat  ut1Utc;
 /** data time-UTC  (time sec.) */
-gfloat  dataUtc;
+ofloat  dataUtc;
 /** Time system, 'IAT' or 'UTC' */
 gchar  TimeSys[MAXKEYCHARTABLEAN];
 /** Array name */
@@ -66,27 +66,27 @@ oint  numPCal;
 /** Denotes the FQ ID for which the AN poln. parms have been modified. */
 oint  FreqID;
 /** IAT - UTC (sec). */
-gfloat  iatUtc;
+ofloat  iatUtc;
 /** Polarization parameterazation type, 'APPR', 'RAPPR', 'ORI-ELP' */
 gchar  polType[MAXKEYCHARTABLEAN];
 /** Polarization reference antenna */
 oint  P_Refant;
 /** Right-Left Phase difference in radians IF 1 */
-gfloat  P_Diff01;
+ofloat  P_Diff01;
 /** Right-Left Phase difference in radians IF 2 */
-gfloat  P_Diff02;
+ofloat  P_Diff02;
 /** Right-Left Phase difference in radians IF 3 */
-gfloat  P_Diff03;
+ofloat  P_Diff03;
 /** Right-Left Phase difference in radians IF 4 */
-gfloat  P_Diff04;
+ofloat  P_Diff04;
 /** Right-Left Phase difference in radians IF 5 */
-gfloat  P_Diff05;
+ofloat  P_Diff05;
 /** Right-Left Phase difference in radians IF 6 */
-gfloat  P_Diff06;
+ofloat  P_Diff06;
 /** Right-Left Phase difference in radians IF 7 */
-gfloat  P_Diff07;
+ofloat  P_Diff07;
 /** Right-Left Phase difference in radians IF 8 */
-gfloat  P_Diff08;
+ofloat  P_Diff08;
 /** Column offset for Station number, used as an index in other tables, uv data in table record */
 olong  noStaOff;
 /** Physical column number for Station number, used as an index in other tables, uv data in table record */

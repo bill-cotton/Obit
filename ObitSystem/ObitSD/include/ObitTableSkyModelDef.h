@@ -34,9 +34,9 @@
  */
 #include "ObitTableDef.h"  /* Parent class definitions */
 /** Tangent point RA (deg) */
-gfloat  RA;
+ofloat  RA;
 /** Tangent point Dec (deg) */
-gfloat  Dec;
+ofloat  Dec;
 /** Projection code '-SIN', '-ARC', '-TAN' */
 gchar  Proj[MAXKEYCHARTABLESkyModel];
 /** Column offset for Right ascension offset from tangent point in table record */

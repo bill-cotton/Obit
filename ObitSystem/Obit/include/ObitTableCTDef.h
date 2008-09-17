@@ -48,11 +48,11 @@ oint  numBand;
 /** The number of spectral channels. */
 oint  numChan;
 /** Reference Frequency. */
-gdouble  refFreq;
+odouble  refFreq;
 /** Channel bandwidth. */
-gfloat  chanBW;
+ofloat  chanBW;
 /** Reference Pixel.. */
-gfloat  refPixl;
+ofloat  refPixl;
 /** Who knows? */
 gchar  CSrvr[MAXKEYCHARTABLECT];
 /** Who knows? */
@@ -64,35 +64,35 @@ gchar  IVersn[MAXKEYCHARTABLECT];
 /** Who knows? */
 gchar  EVersn[MAXKEYCHARTABLECT];
 /** Acceleration due to gravity m/s/s */
-gdouble  accelgrv;
+odouble  accelgrv;
 /** Earth Flattening??? */
-gdouble  Eflat;
+odouble  Eflat;
 /** Earth radius */
-gdouble  earthrad;
+odouble  earthrad;
 /** ??? */
-gdouble  mmsems;
+odouble  mmsems;
 /** Ephemeris epoch??? */
 oint  ephepoc;
 /** TIDELAG */
-gdouble  tidelag;
+odouble  tidelag;
 /** GAUSS */
-gdouble  gauss;
+odouble  gauss;
 /** GMMOON */
-gdouble  gmmoon;
+odouble  gmmoon;
 /** GMSUN */
-gdouble  gmsun;
+odouble  gmsun;
 /** LOVE_H */
-gdouble  loveH;
+odouble  loveH;
 /** LOVE_L */
-gdouble  loveL;
+odouble  loveL;
 /** PRE_DATA */
-gdouble  preData;
+odouble  preData;
 /** REL_DATA */
-gdouble  relData;
+odouble  relData;
 /** TIDALUT1 */
 oint  tidalut1;
 /** TSECAU */
-gdouble  tsecau;
+odouble  tsecau;
 /** U-GRV-CN */
 oint  UGrvCn;
 /** Speed of light m/s */

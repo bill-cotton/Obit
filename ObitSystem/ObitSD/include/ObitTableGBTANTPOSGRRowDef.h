@@ -34,32 +34,32 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /**  */
-gdouble  dmjd;
+odouble  dmjd;
 /**  */
-gdouble  raj2000;
+odouble  raj2000;
 /**  */
-gdouble  decj2000;
+odouble  decj2000;
 /**  */
-gdouble  mntAaz;
+odouble  mntAaz;
 /**  */
-gdouble  mntEl;
+odouble  mntEl;
 /**  */
-gdouble  refract;
+odouble  refract;
 /**  */
-gdouble  major;
+odouble  major;
 /**  */
-gdouble  minor;
+odouble  minor;
 /**  */
-gdouble  srXp;
+odouble  srXp;
 /**  */
-gdouble  srYp;
+odouble  srYp;
 /**  */
-gdouble  srZp;
+odouble  srZp;
 /**  */
-gdouble  srXt;
+odouble  srXt;
 /**  */
-gdouble  srYt;
+odouble  srYt;
 /**  */
-gdouble  srZt;
+odouble  srZt;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

@@ -34,7 +34,7 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** MJD of the integration start. */
-gdouble  dmjd;
+odouble  dmjd;
 /**  */
 gshort  usable;
 /** Is Cal A ``on''? */

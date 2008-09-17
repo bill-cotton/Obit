@@ -34,9 +34,9 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** The center time. */
-gfloat  Time;
+ofloat  Time;
 /** Time interval of record */
-gfloat  TimeI;
+ofloat  TimeI;
 /** Source ID number */
 oint  SourID;
 /** Antenna number */
@@ -46,12 +46,12 @@ oint  SubA;
 /** Frequency id of scan */
 oint  FreqID;
 /** Real (gain Poln # 1 ) */
-gfloat*  Tsys1;
+ofloat*  Tsys1;
 /** Imaginary (gain Poln # 1) */
-gfloat*  Tant1;
+ofloat*  Tant1;
 /** Real (gain Poln # 2 ) */
-gfloat*  Tsys2;
+ofloat*  Tsys2;
 /** Imaginary (gain Poln # 2) */
-gfloat*  Tant2;
+ofloat*  Tant2;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

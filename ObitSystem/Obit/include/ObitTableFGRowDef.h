@@ -42,7 +42,7 @@ oint  freqID;
 /** first and secong antenna  numbers for a baseline, 0=$>$all */
 oint*  ants;
 /** Start and end time of data to be flagged */
-gfloat*  TimeRange;
+ofloat*  TimeRange;
 /** First and last IF numbers to flag */
 oint*  ifs;
 /** First and last channel numbers to flag */

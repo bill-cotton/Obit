@@ -2770,7 +2770,7 @@ void ObitImageUtilUVFilter (ObitImage *inImage, ObitImage *outImage, ofloat radi
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitIOSize IOBy;
   gchar *today=NULL;
-  gfloat Lambda, dx, dy, dist, xcenter, ycenter, val, radius2, arg;
+  ofloat Lambda, dx, dy, dist, xcenter, ycenter, val, radius2, arg;
   olong FFTdim[2], cen[2], ix, iy;
   ObitFArray *inFArray=NULL, *outFArray=NULL, *inFArrayCopy=NULL, *maskArray=NULL;
   ObitCArray *inCArray=NULL, *outCArray=NULL;

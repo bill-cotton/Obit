@@ -34,82 +34,82 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** Plane number */
-gfloat  plane;
+ofloat  plane;
 /** Peak Ipol */
-gfloat  Peak;
+ofloat  Peak;
 /** Integrated Ipol flux */
-gfloat  IFlux;
+ofloat  IFlux;
 /** X offset of center */
-gfloat  DeltaX;
+ofloat  DeltaX;
 /** Y offset of center */
-gfloat  DeltaY;
+ofloat  DeltaY;
 /** Fitted major axis size */
-gfloat  MajorAx;
+ofloat  MajorAx;
 /** Fitted minor axis size */
-gfloat  MinorAx;
+ofloat  MinorAx;
 /** Fitted PA */
-gfloat  PosAngle;
+ofloat  PosAngle;
 /** Integrated Q flux density */
-gfloat  QFlux;
+ofloat  QFlux;
 /** Integrated U flux density */
-gfloat  UFlux;
+ofloat  UFlux;
 /** Integrated Y flux density */
-gfloat  VFlux;
+ofloat  VFlux;
 /** rror in Peak Ipol */
-gfloat  errPeak;
+ofloat  errPeak;
 /** rror in Integrated Ipol flux */
-gfloat  errIFlux;
+ofloat  errIFlux;
 /** Error in X offset of center */
-gfloat  errDeltaX;
+ofloat  errDeltaX;
 /** Error in Y offset of center */
-gfloat  errDeltaY;
+ofloat  errDeltaY;
 /** Error in Fitted major axis size */
-gfloat  errMajorAx;
+ofloat  errMajorAx;
 /** Error in Fitted minor axis size */
-gfloat  errMinorAx;
+ofloat  errMinorAx;
 /** Error in Fitted PA */
-gfloat  errPosAngle;
+ofloat  errPosAngle;
 /** Error in Integrated Q flux density */
-gfloat  errQFlux;
+ofloat  errQFlux;
 /** Error in Integrated U flux density */
-gfloat  errUFlux;
+ofloat  errUFlux;
 /** Error in Integrated Y flux density */
-gfloat  errVFlux;
+ofloat  errVFlux;
 /** Model type 1 = Gaussian */
-gfloat  TypeMod;
+ofloat  TypeMod;
 /** Deconvolved best major axis */
-gfloat  D0Major;
+ofloat  D0Major;
 /** Deconvolved best minor axis */
-gfloat  D0Minor;
+ofloat  D0Minor;
 /** Deconvolved best PA */
-gfloat  D0PosAngle;
+ofloat  D0PosAngle;
 /** Deconvolved least major axis */
-gfloat  DmMajor;
+ofloat  DmMajor;
 /** econvolved least minor axis */
-gfloat  DmMinor;
+ofloat  DmMinor;
 /** Deconvolved least PA */
-gfloat  DmPosAngle;
+ofloat  DmPosAngle;
 /** Deconvolved most major axis */
-gfloat  DpMajor;
+ofloat  DpMajor;
 /** Deconvolved most minor axis */
-gfloat  DpMinor;
+ofloat  DpMinor;
 /** Deconvolved most PA */
-gfloat  DpPosAngle;
+ofloat  DpPosAngle;
 /** RMS of Ipol residual */
-gfloat  ResRMS;
+ofloat  ResRMS;
 /** Peak in Ipol residual */
-gfloat  ResPeak;
+ofloat  ResPeak;
 /** Integrated Ipol in residual */
-gfloat  ResFlux;
+ofloat  ResFlux;
 /** Center x position in pixels */
-gfloat  PixelCenterX;
+ofloat  PixelCenterX;
 /** Center y position in pixels */
-gfloat  PixelCenterY;
+ofloat  PixelCenterY;
 /** Fitted major axis in pixels */
-gfloat  PixelMajorAxis;
+ofloat  PixelMajorAxis;
 /** Fitted minor axis in pixels */
-gfloat  PixelMinorAxis;
+ofloat  PixelMinorAxis;
 /** Fitted PA(?) */
-gfloat  PixelPosAngle;
+ofloat  PixelPosAngle;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

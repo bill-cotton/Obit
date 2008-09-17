@@ -48,13 +48,13 @@ oint*  XTyp1;
 /** Y_TYP_#1 */
 oint*  YTyp1;
 /** X_TYP_#1 */
-gfloat*  XVal1;
+ofloat*  XVal1;
 /** Y_TYP_#1 */
-gfloat*  YVal1;
+ofloat*  YVal1;
 /** GAIN_#1 */
-gfloat*  gain1;
+ofloat*  gain1;
 /** X_TYP_#1 */
-gfloat*  sens1;
+ofloat*  sens1;
 /** TYPE_#2 */
 oint*  Type2;
 /** NTERM_#2 */
@@ -64,12 +64,12 @@ oint*  XTyp2;
 /** Y_TYP_#2 */
 oint*  YTyp2;
 /** X_TYP_#2 */
-gfloat*  XVal2;
+ofloat*  XVal2;
 /** Y_TYP_#2 */
-gfloat*  YVal2;
+ofloat*  YVal2;
 /** GAIN_#2 */
-gfloat*  gain2;
+ofloat*  gain2;
 /** X_TYP_#2 */
-gfloat*  sens2;
+ofloat*  sens2;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

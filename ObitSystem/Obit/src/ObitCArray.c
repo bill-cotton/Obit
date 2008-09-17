@@ -286,7 +286,7 @@ ObitCArray* ObitCArrayRealloc (ObitCArray* in, olong ndim, olong *naxis)
  * \param pos     array of 0-rel pixel numbers on each axis
  * \return pointer to specified object; NULL if illegal pixel.
  */
-gfloat*  ObitCArrayIndex (ObitCArray *in, olong *pos)
+ofloat*  ObitCArrayIndex (ObitCArray *in, olong *pos)
 {
   ofloat *out = NULL;
   olong i, indx, previous;

@@ -46,11 +46,11 @@ oint  numBand;
 /** The number of spectral channels. */
 oint  numChan;
 /** Reference Frequency. */
-gdouble  refFreq;
+odouble  refFreq;
 /** Channel bandwidth. */
-gfloat  chanBW;
+ofloat  chanBW;
 /** Reference Pixel.. */
-gfloat  refPixl;
+ofloat  refPixl;
 /** The number of polarizations. */
 oint  numPol;
 /** FFT size. */

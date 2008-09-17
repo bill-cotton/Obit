@@ -36,7 +36,7 @@
 /** Revision number of the table definition */
 oint  revision;
 /** The Reference frequency */
-gdouble  refFreq;
+odouble  refFreq;
 /** Column offset for RA (J2000) in table record */
 olong  Ra2000Off;
 /** Physical column number for RA (J2000) in table record */

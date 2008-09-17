@@ -34,7 +34,7 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** The center time. */
-gdouble  Time;
+odouble  Time;
 /** Source ID number */
 oint  SourID;
 /** Antenna number */
@@ -44,26 +44,26 @@ oint  Array;
 /** Frequency ID */
 oint  FreqID;
 /** CABLE_CAL */
-gdouble  CableCal;
+odouble  CableCal;
 /** State counts(?) */
-gfloat*  State1;
+ofloat*  State1;
 /** Frequencies of the phase tones */
-gdouble*  PCFreq1;
+odouble*  PCFreq1;
 /** Real part of tone phase */
-gdouble*  PCReal1;
+odouble*  PCReal1;
 /** Imaginary part of tone phase */
-gdouble*  PCImag1;
+odouble*  PCImag1;
 /** Tone rate phase */
-gdouble*  PCRate1;
+odouble*  PCRate1;
 /** State counts(?) */
-gfloat*  State2;
+ofloat*  State2;
 /** Frequencies of the phase tones */
-gdouble*  PCFreq2;
+odouble*  PCFreq2;
 /** Real part of tone phase */
-gdouble*  PCReal2;
+odouble*  PCReal2;
 /** Imaginary part of tone phase */
-gdouble*  PCImag2;
+odouble*  PCImag2;
 /** Tone rate phase */
-gdouble*  PCRate2;
+odouble*  PCRate2;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

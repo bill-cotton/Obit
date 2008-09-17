@@ -34,9 +34,9 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** The center time */
-gdouble  Time;
+odouble  Time;
 /** ime interval of the solution */
-gfloat  TimeI;
+ofloat  TimeI;
 /** Antenna number, 0=$>$ all */
 oint  antNo;
 /** Source number, 0=$>$ all */
@@ -44,8 +44,8 @@ oint  SourId;
 /** Subarray number, 0=$>$ all */
 oint  SubA;
 /** Weight */
-gfloat  weight;
+ofloat  weight;
 /** Zernike model coeffients */
-gfloat*  coef;
+ofloat*  coef;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

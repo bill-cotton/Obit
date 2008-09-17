@@ -44,9 +44,9 @@ oint  no_band;
 /** Number of frequency channels */
 oint  no_chan;
 /** Reference frequency (Hz) */
-gdouble  ref_freq;
+odouble  ref_freq;
 /** Channel bandwidth (Hz) */
-gdouble  chan_bw;
+odouble  chan_bw;
 /** Reference frequency bin */
 oint  ref_pixl;
 /** Observation project code */
@@ -60,27 +60,27 @@ gchar  frame[MAXKEYCHARTABLEIDI_ARRAY_GEOMETRY];
 /** Number of orbital parameters */
 oint  numOrb;
 /** Obs. Reference Frequency for subarray(Hz) */
-gdouble  Freq;
+odouble  Freq;
 /** Time system, 'IAT' or 'UTC' */
 gchar  TimeSys[MAXKEYCHARTABLEIDI_ARRAY_GEOMETRY];
 /** GST at time=0 (degrees) on the reference date */
-gdouble  GSTiat0;
+odouble  GSTiat0;
 /** Earth rotation rate (deg/IAT day) */
-gdouble  DegDay;
+odouble  DegDay;
 /** UT1-UTC  (time sec.) */
-gfloat  ut1Utc;
+ofloat  ut1Utc;
 /** data time-UTC  (time sec.) */
-gfloat  iatUtc;
+ofloat  iatUtc;
 /** Polar position X (meters) on ref. date */
-gfloat  PolarX;
+ofloat  PolarX;
 /** Polar position Y (meters) on ref. date */
-gfloat  PolarY;
+ofloat  PolarY;
 /** Array center X coord. (meters, earth center) */
-gdouble  ArrayX;
+odouble  ArrayX;
 /** Array center Y coord. (meters, earth center) */
-gdouble  ArrayY;
+odouble  ArrayY;
 /** Array center Z coord. (meters, earth center) */
-gdouble  ArrayZ;
+odouble  ArrayZ;
 /** Column offset for Station number, used as an index in other tables, uv data in table record */
 olong  noStaOff;
 /** Physical column number for Station number, used as an index in other tables, uv data in table record */

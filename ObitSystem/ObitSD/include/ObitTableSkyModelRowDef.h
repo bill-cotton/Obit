@@ -34,10 +34,10 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** Right ascension offset from tangent point */
-gfloat  RAOff;
+ofloat  RAOff;
 /** Declination offset from tangent point */
-gfloat  DecOff;
+ofloat  DecOff;
 /** Flux density */
-gfloat  Flux;
+ofloat  Flux;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

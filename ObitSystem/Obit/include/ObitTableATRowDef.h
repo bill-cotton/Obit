@@ -34,9 +34,9 @@
  */
 #include "ObitTableRowDef.h"  /* Parent class definitions */
 /** The center time. */
-gdouble  Time;
+odouble  Time;
 /** Time interval of record */
-gfloat  TimeI;
+ofloat  TimeI;
 /** Antenna number */
 oint  antennaNo;
 /** Array number */
@@ -50,12 +50,12 @@ gchar  polTypeB;
 /** Station name */
 gchar*  AntName;
 /** Feed A feed position angle */
-gfloat*  PolAngA;
+ofloat*  PolAngA;
 /** Feed A poln. cal parameter. */
-gfloat*  PolCalA;
+ofloat*  PolCalA;
 /** Feed B feed position angle */
-gfloat*  PolAngB;
+ofloat*  PolAngB;
 /** Feed B poln. cal parameter */
-gfloat*  PolCalB;
+ofloat*  PolCalB;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;
