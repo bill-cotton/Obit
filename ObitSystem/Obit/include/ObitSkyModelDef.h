@@ -121,6 +121,8 @@ gboolean doGrid;
 /** message level for deconvolution progress messages, 
     0=none, 1=summary, 2=normal, higher numbers for diagnostics */
 olong prtLv;
+/** Number of spectral terms  */
+olong nSpecTerm;
 /** Number of threads (elements in threadArgs)  */
 olong nThreads;
 /** Array of FT Function structures  */

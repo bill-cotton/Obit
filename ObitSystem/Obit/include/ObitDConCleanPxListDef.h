@@ -79,6 +79,8 @@ ObitTableCC **CCTable;
 olong maxPixel;
 /** number of pixels */
 olong nPixel;
+/** Number of spectral terms */
+olong nSpecTerm;
 /** pixel x coordinate (0-rel) */
 olong *pixelX;
 /** pixel y coordinate (0-rel) */
@@ -87,6 +89,8 @@ olong *pixelY;
 gshort *pixelFld;
 /** pixel flux density */
 ofloat *pixelFlux;
+/** pixelspectral turns */
+ofloat **pixelSpectra;
 /** Min. fraction of residual peak to CLEAN to */
 ofloat ccfLim;
 /** message level for deconvolution progress messages, 
