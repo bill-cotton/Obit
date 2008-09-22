@@ -496,7 +496,7 @@ void ObitSkyModelVMIonInitModel (ObitSkyModel* inn, ObitErr *err)
  * \param time    current time (d)
  * \param suba    0-rel subarray number (not used here)
  * \param uvdata  uv data being modeled.
- * \param ithread which thread (0-rel)
+ * \param ithread which thread (0-rel),  <0-> no threads
  * \param err Obit error stack object.
  */
 void ObitSkyModelVMIonUpdateModel (ObitSkyModelVM *inn, 
@@ -507,7 +507,7 @@ void ObitSkyModelVMIonUpdateModel (ObitSkyModelVM *inn,
   ObitSkyModelVMIon *in = (ObitSkyModelVMIon*)inn;
   ObitFArray *VMComps;
   VMIonFTFuncArg *args;
-  olong i, field, itmp, icomp, ncomp, lcomp, naxis[2], pos[2];
+  olong i, field, itmp, icomp, ncomp, lcomp, naxis[2], pos[2], lithread;
   ofloat dra, ddec, draP, draF, ddecP, ddecF, wtP, wtF;
   ofloat *RowP, *RowF, priorTime, followTime, priorWeight, followWeight;
   ofloat konst, xyz[3]={0.0,0.0,0.0}, xp[2];
@@ -521,7 +521,8 @@ void ObitSkyModelVMIonUpdateModel (ObitSkyModelVM *inn,
   if (err->error) return;
 
   /* Array to update */
-  args = (VMIonFTFuncArg*)in->threadArgs[ithread];
+  lithread = MAX (0, ithread);
+  args = (VMIonFTFuncArg*)in->threadArgs[lithread];
   g_assert (!strncmp(args->type,"ion",3));  /* Test arg */
 
   VMComps = args->VMComps;
