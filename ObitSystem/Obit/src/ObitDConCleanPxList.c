@@ -149,7 +149,7 @@ ObitDConCleanPxListCopy  (ObitDConCleanPxList *in, ObitDConCleanPxList *out,
   const ObitClassInfo *ParentClass;
   gboolean oldExist;
   gchar *outName;
-  olong i, nfield=0;
+  olong i, j, nfield=0;
   gchar *routine = "ObitDConCleanPxListCopy";
 
   /* error checks */
@@ -218,6 +218,18 @@ ObitDConCleanPxListCopy  (ObitDConCleanPxList *in, ObitDConCleanPxList *out,
     out->pixelFlux[i] = in->pixelFlux[i];
   }
 
+  /* Spectra if exist */
+  out->nSpecTerm = in->nSpecTerm; 
+  if (out->nSpecTerm>0) {
+    out->pixelSpectra = ObitMemAlloc0Name (out->nSpecTerm*sizeof(ofloat*), "PxList pixel Spectra Array");
+    for (j=0; j<out->nSpecTerm; j++) {
+      out->pixelSpectra[j] = ObitMemAlloc0Name (out->maxPixel*sizeof(ofloat), "PxList pixel Spectra");
+      for (i=0; i<out->maxPixel; i++) {
+	out->pixelSpectra[j][i] = in->pixelSpectra[j][i];
+      }
+    }
+  } /* End copy spectra */
+
   /* Per field */
   out->fluxField = ObitMemAlloc0Name (nfield*sizeof(ofloat), "PxList Clean Flux");
   out->circGaus  = ObitMemAlloc0Name (nfield*sizeof(ofloat), "PxList Gaussian");
@@ -251,7 +263,7 @@ ObitDConCleanPxListCopy  (ObitDConCleanPxList *in, ObitDConCleanPxList *out,
 void ObitDConCleanPxListClone  (ObitDConCleanPxList *in, ObitDConCleanPxList *out, ObitErr *err)
 {
   const ObitClassInfo *ParentClass;
-  olong i, nfield;
+  olong i, j, nfield;
   gchar *routine = "ObitDConCleanPxListClone";
 
   /* error checks */
@@ -309,6 +321,18 @@ void ObitDConCleanPxListClone  (ObitDConCleanPxList *in, ObitDConCleanPxList *ou
     out->pixelFld[i]  = in->pixelFld[i];
     out->pixelFlux[i] = in->pixelFlux[i];
   }
+
+  /* Spectra if exist */
+  out->nSpecTerm = in->nSpecTerm; 
+  if (out->nSpecTerm>0) {
+    out->pixelSpectra = ObitMemAlloc0Name (out->nSpecTerm*sizeof(ofloat*), "PxList pixel Spectra Array");
+    for (j=0; j<out->nSpecTerm; j++) {
+      out->pixelSpectra[j] = ObitMemAlloc0Name (out->maxPixel*sizeof(ofloat), "PxList pixel Spectra");
+      for (i=0; i<out->maxPixel; i++) {
+	out->pixelSpectra[j][i] = in->pixelSpectra[j][i];
+      }
+    }
+  } /* End copy spectra */
 
   /* Per field */
   nfield = in->mosaic->numberImages;
@@ -511,7 +535,9 @@ void ObitDConCleanPxListReset (ObitDConCleanPxList *in, ObitErr *err)
     /* Get CC table if not defined */
     if (in->CCTable[i]==NULL) {
       /* Are these Gaussians or point? */
-      if (in->circGaus[i]>0.0) noParms = 4;
+      noParms = in->nSpecTerm;     /* Possible spectra */
+      /* If adding spectra, also need type parameters even for point */
+      if ((in->circGaus[i]>0.0) || (in->nSpecTerm>0)) noParms += 4;
       else noParms = 0;
       ver = MAX (ver, in->CCver[i]);  /* Use last if not defined */
       in->CCTable[i] = 
@@ -540,6 +566,7 @@ void ObitDConCleanPxListReset (ObitDConCleanPxList *in, ObitErr *err)
 void ObitDConCleanPxListResize (ObitDConCleanPxList *in, olong maxPixel, 
 				ObitErr *err)
 {
+  olong i;
   /*gchar *routine = " ObitDConCleanPxListResize";*/
 
   /* error checks */
@@ -553,11 +580,18 @@ void ObitDConCleanPxListResize (ObitDConCleanPxList *in, olong maxPixel,
   in->pixelY    = ObitMemRealloc (in->pixelY,    maxPixel*sizeof(olong));
   in->pixelFld  = ObitMemRealloc (in->pixelFld,  maxPixel*sizeof(gshort));
   in->pixelFlux = ObitMemRealloc (in->pixelFlux, maxPixel*sizeof(ofloat));
+  for (i=0; i<in->nSpecTerm; i++)
+      in->pixelSpectra[i] = ObitMemRealloc (in->pixelSpectra[i], maxPixel*sizeof(ofloat));
+
 
 } /* end ObitDConCleanPxListResize */
 
 /**
  * Update pixel list and window
+ * If the frequency axis has ctype "SPECLOGF" and if "NTERM" exists in the first image 
+ * descriptor InfoList and is > 0 and there are at least nterm planes in the image, 
+ * then the subsequent planes are used as spectral terms and incorporated into the 
+ * PixelList.
  * \param in          The Pixel List object 
  * \param fields      Which fields? (1-rel) as zero terminated list
  * \param nSkip       Number of residuals to skip between ones accepted
@@ -577,12 +611,15 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
 {
   ObitIOCode retCode;
   ObitImage *image=NULL;
+  ObitFArray *inFArrays[10]={NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,};
   ObitIOSize IOsize = OBIT_IO_byPlane;
+  ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong  blc[IM_MAXDIM], trc[IM_MAXDIM];
-  olong i, field,  ifld, number, excess, ix, iy, nx, ny, pos[2], skipCnt;
-  ofloat *data, fblank =  ObitMagicF();
-  gboolean blewIt=FALSE, *mask=NULL;
+  olong i, j, field,  ifld, number, excess, ix, iy, nx, ny, pos[2], skipCnt;
+  olong nterm, nplanes, iplane, naxis[2], iterm, nfield, nCCparms, parmoff;
+  ofloat *data, *spec[20], fblank =  ObitMagicF();
+  gboolean blewIt=FALSE, *mask=NULL, rebuild=FALSE;
   gchar *routine = "ObitDConCleanPxListUpdate";
 
   /* error checks */
@@ -620,6 +657,45 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
     /* Which image? */
     image = in->mosaic->images[field-1];
     
+    /* Check for spectra - add if necessary */
+    if (in->pixelSpectra==NULL) {
+      if (!strncmp (image->myDesc->ctype[image->myDesc->jlocf], "SPECLOGF", 8)) {
+	nterm = image->myDesc->inaxes[image->myDesc->jlocf];
+	ObitInfoListGetTest (image->myDesc->info, "NTERM", &type, dim, &nterm);
+	/* Only want higher order than flux terms */
+	if (nterm>1) {
+	  in->nSpecTerm = nterm-1;
+	  in->pixelSpectra = ObitMemAlloc0Name (in->nSpecTerm*sizeof(ofloat*), "PxList pixel Spectra Array");
+	  for (j=0; j<in->nSpecTerm; j++) {
+	    in->pixelSpectra[j] = ObitMemAlloc0Name (in->maxPixel*sizeof(ofloat), "PxList pixel Spectra");
+	  }
+	}
+      }
+
+      /* May need to rebuild CC Tables since their definitions were just changed */
+      nfield = in->mosaic->numberImages;
+      rebuild = FALSE;
+      for (i=0; i<nfield; i++) {
+	if (in->CCTable[i]->parmsCol>=0)
+	  nCCparms = in->CCTable[i]->myDesc->dim[in->CCTable[i]->parmsCol][0];
+	else nCCparms = 0;
+	if (in->circGaus[i]>0.0) parmoff = 4;
+	else parmoff = 0;
+	if (nCCparms<parmoff+in->nSpecTerm) {
+	  rebuild = TRUE;
+	  in->CCTable[i] = ObitTableCCUnref(in->CCTable[i]);
+	  ObitImageZapTable (in->mosaic->images[i], "AIPS CC", in->CCver[i], err);
+	  if (err->error) Obit_traceback_msg (err, routine, in->name);
+	}
+      }
+      if (rebuild) {
+	Obit_log_error(err, OBIT_InfoWarn,"%s: Rebuilding CC Tables to add spectral terms",
+		       routine);
+	ObitDConCleanPxListReset (in, err);
+	if (err->error) Obit_traceback_msg (err, routine, in->name);
+      }
+    } /* End add spectra */
+
     /* Set output to full image, plane at a time */
     image->extBuffer = FALSE;
     dim[0] = IM_MAXDIM;
@@ -627,20 +703,36 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
     for (i=0; i<IM_MAXDIM-2; i++) blc[i+2] = in->plane[i];
     ObitInfoListPut (image->info, "BLC", OBIT_long, dim, blc, err); 
     trc[0] = trc[1] = 0;
-    for (i=0; i<IM_MAXDIM-2; i++) trc[i+2] = in->plane[i];
+    trc[2] = 1 + in->nSpecTerm;
+    for (i=0; i<IM_MAXDIM-3; i++) trc[i+3] = in->plane[i];
     ObitInfoListPut (image->info, "TRC", OBIT_long, dim, trc, err); 
     dim[0] = 1;
     ObitInfoListPut (image->info, "IOBy", OBIT_long, dim, &IOsize, err);
+    image->extBuffer = TRUE;   /* Using inFArrays as I/O buffer */
     
     retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
     if (err->error) Obit_traceback_msg (err, routine, image->name);
-    
-    retCode = ObitImageRead (image, image->image->array, err);
-    if (err->error) Obit_traceback_msg (err, routine, image->name);
-    
+
+    /* Loop over planes of flux, spectra (if given) and save in inFArray[*] */
+    nplanes = 1 + in->nSpecTerm;
+    naxis[0] = image->myDesc->inaxes[0];
+    naxis[1] = image->myDesc->inaxes[1];
+    for (iplane=0; iplane<nplanes; iplane++) {
+      inFArrays[iplane]  = ObitFArrayCreate (NULL, 2, naxis);
+      
+      retCode = ObitImageRead (image, inFArrays[iplane]->array, err);
+      if (err->error) Obit_traceback_msg (err, routine, image->name);
+      if (retCode==OBIT_IO_EOF) 
+	Obit_log_error(err, OBIT_InfoWarn,"%s: Spectral plans not read",
+		       routine);
+   
+    } /* end loop reading planes */
+
     /* pointer to data */
     pos[0] = pos[1] = 0;
-    data = ObitFArrayIndex(image->image, pos);
+    data = ObitFArrayIndex(inFArrays[0], pos);
+    for (iterm=0; iterm<in->nSpecTerm; iterm++) 
+      spec[iterm] = ObitFArrayIndex(inFArrays[iterm+1], pos);
     
     /* Loop over image saving selected values */
     nx = image->myDesc->inaxes[0];
@@ -662,6 +754,12 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
 		in->pixelY[number]    = iy;
 		in->pixelFld[number]  = field;
 		in->pixelFlux[number] = data[ix];
+		/* Spectral terms if given */
+		if (in->nSpecTerm>0) {
+		  for (iterm=0; iterm<in->nSpecTerm; iterm++) {
+		    in->pixelSpectra[iterm][number] = spec[iterm][ix];
+		  }
+		}
 		number++;
 	      }
 	    } else { /* skip this one to make them fit */
@@ -670,15 +768,20 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
 	  }
         }
       }
+      /* Update pointers to next row */
       data += nx;
-    }
+      for (iterm=0; iterm<in->nSpecTerm; iterm++) spec[iterm] += nx;
+    } /* end loop in  y */
+
     in->nPixel = number;   /* Save actual number */
 
     retCode = ObitImageClose (image, err);
     if (err->error) Obit_traceback_msg (err, routine, image->name);
+    image->extBuffer = FALSE;   /* May need I/O buffer later */
     
-    /* Free Image array */
-    image->image = ObitFArrayUnref(image->image);
+    /* Free Image data arrays */
+    for (iplane=0; iplane<nplanes; iplane++) 
+      inFArrays[iplane]  = ObitFArrayUnref(inFArrays[iplane]);
     
     /* Cleanup - next field may have different size */
     if ((mask) && (ObitMemValid (mask))) mask = ObitMemFree (mask);
@@ -704,7 +807,7 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
 {
   gboolean done = FALSE;
   olong iter, ipeak=0, field, iXres, iYres, beamPatch, tipeak=0;
-  olong i, lpatch, irow, lastField=-1;
+  olong i, j, lpatch, irow, lastField=-1;
   ofloat peak, tpeak, minFlux=0.0, factor, CCmin, atlim, xfac=1.0, resmax, xflux;
   ofloat subval, ccfLim=0.5;
   odouble totalFlux, *fieldFlux=NULL;
@@ -712,9 +815,9 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
   ObitTableCCRow *CCRow = NULL;
   ObitImageDesc *desc = NULL;
   ObitIOCode retCode;
-  olong ithread, maxThread, nThreads;
+  olong ithread, maxThread, nThreads, nCCparms;
   CLEANFuncArg **targs=NULL;
-  olong npix, lopix, hipix, npixPerThread;
+  olong npix, lopix, hipix, npixPerThread, parmoff;
   gboolean OK = TRUE;
   gchar *routine = "ObitDConCleanPxListCLEAN";
 
@@ -875,18 +978,32 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
     CCRow->DeltaY = (iYres - desc->crpix[1]+1)*desc->cdelt[1];
     CCRow->Flux = subval;
     /* May need Gaussian components */
-    if ((in->CCTable[field-1])->myDesc->dim[(in->CCTable[field-1])->parmsCol]<=0) {
+    parmoff = 0;
+    if (in->CCTable[field-1]->parmsCol>=0)
+      nCCparms = in->CCTable[field-1]->myDesc->dim[in->CCTable[field-1]->parmsCol][0];
+    else nCCparms = 0;
+    if (nCCparms>=4) {
       if (in->circGaus[field-1]>0.0) {
 	CCRow->parms[0] = in->circGaus[field-1];
 	CCRow->parms[1] = in->circGaus[field-1];
 	CCRow->parms[2] = 0.0;
 	CCRow->parms[3] = 1;  /* type 1 = Gaussian */
-      } else { /* point */
+	parmoff = 4;
+      } else if (nCCparms>=(in->nSpecTerm+4)) { /* point */
 	CCRow->parms[0] = 0.0;
 	CCRow->parms[1] = 0.0;
 	CCRow->parms[2] = 0.0;
 	CCRow->parms[3] = 0;  /* type 0 = Point */
+	parmoff = 4;
       }
+    } /* end add Gaussian components */
+
+    /* May need Spectral components */
+    if (nCCparms>=(parmoff+in->nSpecTerm)) {
+      if (in->nSpecTerm>0) {
+	CCRow->parms[3] += 10.0;  /* mark as also having spectrum */
+	for (j=0; j<in->nSpecTerm; j++) CCRow->parms[j+parmoff] = in->pixelSpectra[j][ipeak];
+      } /* end add Spectral components */
     }
 
     irow = in->iterField[field-1];
@@ -983,7 +1100,7 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
 {
   gboolean done = FALSE;
   olong iter, iresid, field=0, beamPatch, lpatch, ipeak, iXres, iYres;
-  olong lastField=-1, irow, i;
+  olong lastField=-1, irow, i, j;
   ofloat minFlux=0.0, xflux;
   ofloat minVal=-1.0e20, sum, wt, mapLim;
   odouble totalFlux, *fieldFlux=NULL;
@@ -991,9 +1108,9 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
   ObitTableCCRow *CCRow = NULL;
   ObitImageDesc *desc = NULL;
   ObitIOCode retCode;
-  olong ithread, maxThread, nThreads;
+  olong ithread, maxThread, nThreads, nCCparms;
   CLEANFuncArg **targs=NULL;
-  olong npix, lopix, hipix, npixPerThread;
+  olong npix, lopix, hipix, npixPerThread, parmoff;
   gboolean OK = TRUE;
   gchar *routine = "ObitDConCleanPxListSDI";
 
@@ -1134,13 +1251,17 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
     CCRow->DeltaY = (iYres - desc->crpix[1]+1)*desc->cdelt[1];
     CCRow->Flux = xflux;
     /* May need Gaussian components */
-    if ((in->CCTable[field-1])->myDesc->dim[(in->CCTable[field-1])->parmsCol]<=0) {
+    parmoff = 0;
+    if (in->CCTable[field-1]->parmsCol>=0)
+      nCCparms = in->CCTable[field-1]->myDesc->dim[in->CCTable[field-1]->parmsCol][0];
+    else nCCparms = 0;
+    if (nCCparms>=4) {
       if (in->circGaus[field-1]>0.0) {
 	CCRow->parms[0] = in->circGaus[field-1];
 	CCRow->parms[1] = in->circGaus[field-1];
 	CCRow->parms[2] = 0.0;
 	CCRow->parms[3] = 1;  /* type 1 = Gaussian */
-      } else { /* point */
+      } else if (nCCparms>=(in->nSpecTerm+4)) { /* point */
 	CCRow->parms[0] = 0.0;
 	CCRow->parms[1] = 0.0;
 	CCRow->parms[2] = 0.0;
@@ -1148,6 +1269,14 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
       }
     }
     
+    /* May need Spectral components */
+    if (nCCparms>=(parmoff+in->nSpecTerm)) {
+      if (in->nSpecTerm>0) {
+	CCRow->parms[3] += 10.0;  /* mark as also having spectrum */
+	for (j=0; j<in->nSpecTerm; j++) CCRow->parms[j+parmoff] = in->pixelSpectra[j][ipeak];
+      } /* end add Spectral components */
+    }
+
     irow = in->iterField[field-1];
     retCode = ObitTableCCWriteRow (in->CCTable[field-1], irow, CCRow, err);
     if ((retCode != OBIT_IO_OK) || (err->error)) 
@@ -1316,6 +1445,8 @@ void ObitDConCleanPxListInit  (gpointer inn)
   in->minFlux   = NULL;
   in->factor    = NULL;
   in->CCTable   = NULL;
+  in->pixelSpectra = NULL;
+  in->nSpecTerm = 0;
   for (i=0; i<IM_MAXDIM-2; i++) in->plane[i] = 1;
   in->autoWinFlux  = -1.0e20;
   in->ccfLim    = 0.0;
@@ -1357,6 +1488,10 @@ void ObitDConCleanPxListClear (gpointer inn)
   if (in->gain)      in->gain     =  ObitMemFree (in->gain);
   if (in->minFlux)   in->minFlux  =  ObitMemFree (in->minFlux);
   if (in->factor)    in->factor   =  ObitMemFree (in->factor);
+  if (in->pixelSpectra) {
+    for (i=0; i<in->nSpecTerm; i++) g_free(in->pixelSpectra[i]);
+    g_free(in->pixelSpectra);
+  }
 
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

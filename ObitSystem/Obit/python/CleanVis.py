@@ -354,7 +354,7 @@ CleanInput={'structure':['Clean',[('Niter','Maximum number of CLEAN iterations')
                                   ('DoWeight', 'If True apply uniform weighting corrections to uvdata'),
                                   ('PBCor',    'If True make freq. dependent rel. pri. beam corr.'),
                                   ('Robust',   'Briggs robust parameter. (AIPS definition)'),
-                                  ('UVTaper',  'UV plane taper, sigma in klambda as [u,v]'),
+                                  ('UVTaper',  'UV plane taper, sigma in klambda, deg as [maj, min, pa]'),
                                   ('WtSize',   'Size of weighting grid in cells [image]'),
                                   ('WtBox',    'Size of weighting box in cells [def 0]'),
                                   ('WtFunc',   'Weighting convolution function [def. 1]'),
@@ -419,7 +419,7 @@ CleanInput={'structure':['Clean',[('Niter','Maximum number of CLEAN iterations')
             'DoWeight': True,                                   
             'PBCor': True,                                   
             'Robust': 0.0,                                   
-            'UVTaper': [0.0,0.0],
+            'UVTaper': [0.0,0.0,0.0],
             'WtSize':-1,
             'WtBox':0,
             'WtFunc':1,
@@ -492,7 +492,7 @@ def PCreate (name, uvdata, err, input=CleanInput):
     DoWeight = True if Weighting to be applied
     PBCor    = If True make freq. dependent rel. pri. beam corr.
     Robust   = Briggs robust parameter. (AIPS definition)
-    UVTaper  = UV plane taper, sigma in klambda as [u,v]
+    UVTaper  = UV plane taper, sigma in klambda,deg as [maj, min, pa]
     WtSize   = Size of weighting grid in cells [same as image nx]
     WtBox    = Size of weighting box in cells [def 1]
     WtFunc   = Weighting convolution function [def. 1]
@@ -580,7 +580,7 @@ def PCreate (name, uvdata, err, input=CleanInput):
     InfoList.PPutInt    (inInfo, "WtBox",  dim, [input["WtBox"]],   err)
     InfoList.PPutInt    (inInfo, "WtFunc", dim, [input["WtFunc"]],  err)
     InfoList.PPutFloat  (inInfo, "WtPower",dim, [input["WtPower"]], err)
-    dim[1] = 2
+    dim[1] = len(input["UVTaper"])
     InfoList.PPutFloat  (inInfo, "Taper",  dim, input["UVTaper"],   err)
     WtSize   = input["WtSize"]
     if (WtSize>0):

@@ -35,7 +35,7 @@
 #include "ObitThread.h"
 #include "ObitInfoList.h"
 #ifdef HAVE_GSL
-#include <gsl/gsl_multifit.h>
+#include <gsl/gsl_multifit_nlin.h>
 #endif /* HAVE_GSL */ 
 
 /*-------- Obit:  Merx mollis mortibus nuper ------------------*/
@@ -103,7 +103,8 @@ ObitSpectrumFit* newObitSpectrumFit (gchar* name);
 /** Public: Create/initialize ObitSpectrumFit structures */
 ObitSpectrumFit* ObitSpectrumFitCreate (gchar* name, olong nterm);
 /** Typedef for definition of class pointer structure */
-typedef ObitSpectrumFit* (*ObitSpectrumFitCreateFP) (gchar* name, olong nterm);
+typedef ObitSpectrumFit* (*ObitSpectrumFitCreateFP) (gchar* name, 
+						     olong nterm);
 
 /** Public: ClassInfo pointer */
 gconstpointer ObitSpectrumFitGetClass (void);
@@ -139,10 +140,10 @@ typedef void(*ObitSpectrumFitEvalFP) (ObitSpectrumFit* in, ObitImage *inImage,
 				      odouble outFreq, ObitImage *outImage, 
 				      ObitErr *err);
 /** Public: Fit single spectrum */
-gfloat* ObitSpectrumFitSingle (gint nfreq, olong nterm, odouble *freq, 
+ofloat* ObitSpectrumFitSingle (gint nfreq, olong nterm, odouble *freq, 
 			       ofloat *flux, ofloat *sigma, ObitErr *err);
 /** Typedef for definition of class pointer structure */
-typedef gfloat*(*ObitSpectrumFitSingleFP) (gint nfreq, olong nterm, odouble *freq, 
+typedef ofloat*(*ObitSpectrumFitSingleFP) (gint nfreq, olong nterm, odouble *freq, 
 					   ofloat *flux, ofloat *sigma, 
 					   ObitErr *err);
 

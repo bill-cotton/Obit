@@ -29,6 +29,7 @@
 /*--------------------------------------------------------------------*/
 
 %{
+#include "ObitDConClean.h"
 #include "ObitDConCleanImage.h"
 %}
 
@@ -107,6 +108,10 @@ extern ObitDConCleanImage* CleanImageCreate (char *name, ObitImageMosaic* mosaic
 
 extern void CleanImageDeconvolve (ObitDConCleanImage* in, ObitErr *err) {
  ObitDConCleanImageDeconvolve((ObitDCon*)in, err);
+}
+
+extern void CleanImageRestore (ObitDConCleanImage* in, ObitErr *err) {
+ ObitDConCleanRestore ((ObitDConClean*)in, err);
 }
 
 extern void CleanImageDefWindow (ObitDConCleanImage* in, ObitErr *err) {

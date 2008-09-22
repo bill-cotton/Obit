@@ -134,7 +134,15 @@ enum obitSkyModelCompType {
   /** Uniform sphere */
   OBIT_SkyModel_USphereMod, 
   /** Unknown */
-  OBIT_SkyModel_Unknown 
+  OBIT_SkyModel_Unknown,
+  /** Point + spectrum */
+  OBIT_SkyModel_PointModSpec = OBIT_SkyModel_PointMod+10,
+  /** Gaussian on sky + spectrum */
+  OBIT_SkyModel_GaussModSpec = OBIT_SkyModel_GaussMod+10,  
+  /** Convolved Gaussian + spectrum */
+  OBIT_SkyModel_CGaussModSpec = OBIT_SkyModel_CGaussMod+10,  
+  /** Uniform sphere + spectrum */
+  OBIT_SkyModel_USphereModSpec = OBIT_SkyModel_USphereMod+10 
 }; /* end enum obitSkyModelCompType */
 /** typedef for enum for ObitSkyModelCompType. */
 typedef enum obitSkyModelCompType ObitSkyModelCompType;

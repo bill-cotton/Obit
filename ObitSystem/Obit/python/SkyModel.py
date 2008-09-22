@@ -446,6 +446,7 @@ def PSubUV (err, input=UVSubInput):
 
     A SkyModel is Fourier transformed and subtracted 
     from InData and written to outData.
+    If doCalSelect, selection by channel/IF will specify the output
     err     = Python Obit Error/message stack
     input   = input parameter dictionary
     
@@ -519,10 +520,17 @@ def PSubUV (err, input=UVSubInput):
     uvInfo = inData.List    # 
     InfoList.PPutBoolean (uvInfo, "doCalSelect",  dim, [input["doCalSelect"]], err)
     InfoList.PPutBoolean (inInfo, "REPLACE",      dim, [input["REPLACE"]], err)
-    InfoList.PPutInt  (uvInfo, "BChan",           dim, [input["BChan"]],       err)
-    InfoList.PPutInt  (uvInfo, "EChan",           dim, [input["EChan"]],       err)
-    InfoList.PPutInt  (uvInfo, "BIF",             dim, [input["BIF"]],         err)
-    InfoList.PPutInt  (uvInfo, "EIF",             dim, [input["EIF"]],         err)
+    # Put channel selection on uvdata or skymodel depending on doCalSelect
+    if input["doCalSelect"]:
+        InfoList.PPutInt  (uvInfo, "BChan",           dim, [input["BChan"]],       err)
+        InfoList.PPutInt  (uvInfo, "EChan",           dim, [input["EChan"]],       err)
+        InfoList.PPutInt  (uvInfo, "BIF",             dim, [input["BIF"]],         err)
+        InfoList.PPutInt  (uvInfo, "EIF",             dim, [input["EIF"]],         err)
+    else:
+        InfoList.PPutInt  (inInfo, "BChan",           dim, [input["BChan"]],       err)
+        InfoList.PPutInt  (inInfo, "EChan",           dim, [input["EChan"]],       err)
+        InfoList.PPutInt  (inInfo, "BIF",             dim, [input["BIF"]],         err)
+        InfoList.PPutInt  (inInfo, "EIF",             dim, [input["EIF"]],         err)
     itemp = int(input["doPol"])
     InfoList.PPutInt  (uvInfo, "doPol",           dim, [itemp],                err)
     InfoList.PPutInt  (uvInfo, "doCalib",         dim, [input["doCalib"]],     err)
@@ -586,6 +594,7 @@ def PDivUV (err, input=UVDivInput):
 
     A SkyModel is Fourier transformed and divided into
     InData and written to outData.
+    If doCalSelect, selection by channel/IF will specify the output
     err     = Python Obit Error/message stack
     input   = input parameter dictionary
     
@@ -660,10 +669,17 @@ def PDivUV (err, input=UVDivInput):
     uvInfo = inData.List   # 
     InfoList.PPutBoolean (uvInfo, "doCalSelect",  dim, [input["doCalSelect"]], err)
     InfoList.PPutBoolean (inInfo, "REPLACE",      dim, [input["REPLACE"]], err)
-    InfoList.PPutInt  (uvInfo, "BChan",           dim, [input["BChan"]],       err)
-    InfoList.PPutInt  (uvInfo, "EChan",           dim, [input["EChan"]],       err)
-    InfoList.PPutInt  (uvInfo, "BIF",             dim, [input["BIF"]],         err)
-    InfoList.PPutInt  (uvInfo, "EIF",             dim, [input["EIF"]],         err)
+    # Put channel selection on uvdata or skymodel depending on doCalSelect
+    if input["doCalSelect"]:
+        InfoList.PPutInt  (uvInfo, "BChan",           dim, [input["BChan"]],       err)
+        InfoList.PPutInt  (uvInfo, "EChan",           dim, [input["EChan"]],       err)
+        InfoList.PPutInt  (uvInfo, "BIF",             dim, [input["BIF"]],         err)
+        InfoList.PPutInt  (uvInfo, "EIF",             dim, [input["EIF"]],         err)
+    else:
+        InfoList.PPutInt  (inInfo, "BChan",           dim, [input["BChan"]],       err)
+        InfoList.PPutInt  (inInfo, "EChan",           dim, [input["EChan"]],       err)
+        InfoList.PPutInt  (inInfo, "BIF",             dim, [input["BIF"]],         err)
+        InfoList.PPutInt  (inInfo, "EIF",             dim, [input["EIF"]],         err)
     itemp = int(input["doPol"])
     InfoList.PPutInt  (uvInfo, "doPol",           dim, [itemp],                err)
     InfoList.PPutInt  (uvInfo, "doCalib",         dim, [input["doCalib"]],     err)
@@ -724,7 +740,7 @@ def PDivUV (err, input=UVDivInput):
 def PCompressCC (inSkyModel, err):
     """ Compress CC tables
 
-    Compresses CC tables on all CC tables
+    Compresses CC tables on all Images in mosaic
     inSkyModel  = Python SkyModel object to compress
     err         = Python Obit Error/message stack
     """

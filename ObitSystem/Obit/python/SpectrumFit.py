@@ -4,8 +4,10 @@ Class for fitting spectra to image pixels
 This class does least squares fitting of log(s) as a polynomial in log($\nu$).
 Either an image cube or a set of single plane images at arbitrary 
 frequencies may be fitted.
-The result is an image cube of Log(S) with multiples of powers of log($\nu$)
-as the planes.
+Model: S = S_0 exp (alpha*ln(nu/nu_0) + beta*ln(nu/nu_0)**2+...)
+The result is an image cube with planes, S_0, alpha, beta,...
+as the planes, if doErr requested, the statistical errors of these planes
+and the Chi Squared is also returned.
 The function ObitSpectrumFitEval will evaluate this fit and return an image
 with the flux densities at the desired frequencies.
 """
@@ -105,8 +107,13 @@ class SpectrumFit(SpectrumFitPtr):
         """ Fit spectra to an image cube
         
         Fitted spectral polynomials returned in outImage
+        Can run with multiple threads if enabled:
+        OSystem.PAllowThreads(2)  # 2 threads
         self     = SpectrumFit object, parameters on List:
-            minSNR    float scalar Minimum SNR for fitting spectrum [def 3.0]
+            refFreq   double scalar Reference frequency for fit [def ref for inImage]
+            maxChi2   float scalar Max. Chi Sq for accepting a partial spectrum [def 2.0]
+            doError   boolean scalar If true do error analysis [def False]
+            doPBCor   boolean scalar If true do primary beam correction. [def False]
             calFract  float (?,1,1) Calibration error as fraction of flux
                       One per frequency or one for all, def 0.05
             PBmin     float (?,1,1) Minimum beam gain correction
@@ -138,8 +145,13 @@ class SpectrumFit(SpectrumFitPtr):
         """ Fit spectra to an array of images
         
         Fitted spectral polynomials returned in outImage
+        Can run with multiple threads if enabled:
+        OSystem.PAllowThreads(2)  # 2 threads
         self     = SpectrumFit object, parameters on List:
-            minSNR    float scalar Minimum SNR for fitting spectrum [def 3.0]
+            refFreq   double scalar Reference frequency for fit [def average of inputs]
+           maxChi2    float scalar Max. Chi Sq for accepting a partial spectrum [def 2.0]
+            doError   boolean scalar If true do error analysis [def False]
+            doPBCor   boolean scalar If true do primary beam correction. [def False]
             calFract  float (?,1,1) Calibration error as fraction of flux
                       One per frequency or one for all, def 0.05
             PBmin     float (?,1,1) Minimum beam gain correction
@@ -231,9 +243,10 @@ def PSingle (nterm, freq, flux, sigma, err):
     """  Fit single spectrum to flux measurements
     
     Reference frequency of fit is 1 GHz.
+    Does error analysis and makes primary beam correction
     Returns  array of fitter parameters, errors for each and Chi Squares of fit
-             Initial terms are in Jy, other in log10.
-    nterm   = Number of coefficients of powers of log10(nu) to fit
+             Initial terms are in Jy, other in log.
+    nterm   = Number of coefficients of powers of log(nu) to fit
     freq    = Frequency (Hz)
     flux    = Flux (Jy)
     sigma   = Errors (Jy)

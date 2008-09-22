@@ -470,6 +470,8 @@ void ObitTableConcat (ObitTable *in, ObitTable *out, ObitErr *err)
 {
   ObitIOCode iretCode, oretCode;
   olong outRec;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong nRowPIO;
   gchar *routine = "ObitTableConcat";
 
   /* error checks */
@@ -477,6 +479,11 @@ void ObitTableConcat (ObitTable *in, ObitTable *out, ObitErr *err)
   if (err->error) return;
   g_assert (ObitIsA(in, &myClassInfo));
   if (out) g_assert (ObitIsA(out, &myClassInfo));
+
+  /* Only works one row at a time */
+  nRowPIO = 1;
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut(in->info, "nRowPIO", OBIT_long, dim, &nRowPIO);
 
   /* test open to fully instantiate input and see if it's OK */
   iretCode = ObitTableOpen (in, OBIT_IO_ReadOnly, err);
@@ -1421,7 +1428,7 @@ static void ObitTableGetSelect (ObitInfoList *info, ObitTableSel *sel,
 		sel->name);
   }
 
-  /* Maximum number of visibilities per read/write? [default 1] */
+  /* Maximum number of rows per read/write? [default 1] */
   sel->nRowPIO = 1;
   ObitInfoListGetTest(info, "nRowPIO", &type, (gint32*)dim, &sel->nRowPIO);
   sel->nRowPIO = MAX (1, sel->nRowPIO); /* no fewer than 1 */

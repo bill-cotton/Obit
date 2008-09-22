@@ -9,7 +9,7 @@ mosaic    - ImageMosaic, use PGetMosaic, PSetMosaic
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2007
+#  Copyright (C) 2004-2008
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -97,7 +97,7 @@ class CleanImage(CleanImagePtr):
         PDefWindow(self, err)
         # end DefWindow
 
-    def AddWindow(self, window, err):
+    def AddWindow(self, window, err, field=1):
         """ Add a  window
         
         self   = Python OTF object
@@ -107,8 +107,9 @@ class CleanImage(CleanImagePtr):
                  else rectangular and
                  blc=(window[0],window[1]), trc= blc=(window[2],window[3])
         err    = Python Obit Error/message stack
+        field  = Which field (1-rel)is the window in?
         """
-        PAddWindow(self, window, err)
+        PAddWindow(self, field, window, err)
         # end AddWindow
 
 # Commonly used, dangerous variables
@@ -175,7 +176,7 @@ def PCopy (inCleanImage, outCleanImage, err):
     #
     Obit.CleanImageCopy (inCleanImage.me, outCleanImage.me, err.me)
     if err.isErr:
-        printErrMsg(err, "Error copyint CleanImage")
+        OErr.printErrMsg(err, "Error copyint CleanImage")
     # end PCopy
 
 def PGetList (inCleanImage):
@@ -263,7 +264,7 @@ def PAddWindow (inCleanImage, field, window, err):
     """ Add a window to a field to be CLEANed
 
     inCleanImage  = Python CleanImage object
-    field         = Which field is the window in?
+    field         = Which field (1-rel)is the window in?
     window        = set of 4 integers:
                     if window[0]<0 box is round and
                     window[1]=radius, [2,3] = center
@@ -277,7 +278,7 @@ def PAddWindow (inCleanImage, field, window, err):
     #
     Obit.CleanImageAddWindow(inCleanImage.me, field, window, err.me)
     if err.isErr:
-        printErrMsg(err, "Error adding window")
+        OErr.printErrMsg(err, "Error adding window")
     # end PAddWindow
 
 def PCreate (name, mosaic, err):
@@ -300,7 +301,7 @@ def PCreate (name, mosaic, err):
     out = CleanImage(name);
     out.me = Obit.CleanImageCreate(name, mosaic.me,  err.me)
     if err.isErr:
-        printErrMsg(err, "Error creating CleanImage")
+        OErr.printErrMsg(err, "Error creating CleanImage")
     return out
     # end PCreate
 
@@ -323,7 +324,7 @@ def PDefWindow (clean, err):
     #
     Obit.CleanImageDefWindow(clean.me,  err.me)
     if err.isErr:
-        printErrMsg(err, "Error defining window")
+        OErr.printErrMsg(err, "Error defining window")
     # end PDefWindow
 
 # Perform Clean
@@ -338,6 +339,7 @@ CleanInput={'structure':['Clean',[('CleanImage','CleanImage Object'),
                                   ('minFlux','Minimun flux density (Jy)'),
                                   ('Factor','CLEAN depth factor'),
                                   ('Plane','Plane being processed, 1-rel indices of axes 3-?'),
+                                  ('doRestore','Restore components when done [def. True]'),
                                   ('CCVer','CC table version number [0 => highest]')]],
             # defaults
             'CleanImage':None,
@@ -351,6 +353,7 @@ CleanInput={'structure':['Clean',[('CleanImage','CleanImage Object'),
             'minFlux':0.0,
             'Factor':0.0,
             'Plane':[1,1,1,1,1],
+            'doRestore':True,
             'CCVer':0}
 def PClean (err, input=CleanInput):
     """ Performs image based CLEAN
@@ -380,6 +383,7 @@ def PClean (err, input=CleanInput):
     minFlux     = Minimun flux density (Jy)
     Factor      = CLEAN depth factor
     Plane       = Plane being processed, 1-rel indices of axes 3-?
+    doRestore   = Restore components when done [def. True]
     CCVer       = CC table version number
 
     """
@@ -405,6 +409,7 @@ def PClean (err, input=CleanInput):
     InfoList.PPutFloat (inInfo, "Gain",     dim, [input["Gain"]],     err)
     InfoList.PPutFloat (inInfo, "minFlux",  dim, [input["minFlux"]],  err)
     InfoList.PPutFloat (inInfo, "Factor",   dim, [input["Factor"]],   err)
+    InfoList.PPutBoolean (inInfo, "doRestore", dim, [input["doRestore"]],   err)
     dim[0] = len(input["Plane"])
     InfoList.PPutInt   (inInfo, "Plane",    dim, input["Plane"],      err)
     #
@@ -414,8 +419,26 @@ def PClean (err, input=CleanInput):
     # Do operation
     Obit.CleanImageDeconvolve(inCleanImage.me, err.me)
     if err.isErr:
-        printErrMsg(err, "Error deconvolving")
+        OErr.printErrMsg(err, "Error deconvolving")
     # end PClean
+
+def PRestore (clean, err):
+    """ Restore subtracted CLEAN components to residual image
+
+    clean     = Clean object containing mosaic
+    err       = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not PIsA(clean):
+        raise TypeError,"mosaic MUST be a Python Obit CleanImage"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    Obit.CleanImageRestore(clean.me,  err.me)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error defining window")
+    # end PRestore
 
 def PGetName (inCleanImage):
     """ Tells Image object name (label)

@@ -134,7 +134,7 @@ DecShift                           Declination shift (AIPS convention)
                                    (asec) (per field)
 
 
-**PARAM** float 2
+**PARAM** float 3
 UVTaper         0.                 (U,V) Gaussian taper klambda
 **PARAM** float 2
 UVRange         0.                 Min & max baseline (klambda)
@@ -422,6 +422,7 @@ Adverbs:
                 outlying fields to be larger than the fields tiling
                 the FOV or the program may die.
   UVTaper....(U,V) Gaussian taper (kilo-lambda) at 30% level
+             as (major, minor axis, position angle)
   UVRange....(Minimum,Maximum) baseline (kilo-lambda) to
              process. 
   Robust.....Briggs' "robustness" parameter.  "Uniform" weights are

@@ -269,7 +269,7 @@ ObitIOCode ObitTableCCUtilGrid (ObitTableCC *in, olong OverSample,
  * overlapping component.  (X cell (0-rel), Y cell (0-rel), flux).  
  * CCs on cells within 0.5 pixels of outDesc are included.
  * Components in the same cell are combined.
- * If the components are Gaussians, their parameters are returned in gaus.
+ * If the components are Gaussians, their parameters are returned in gparm.
  * \param in         Table of CCs
  * \param inDesc     Descriptor for image from which components derived
  * \param outDesc    Descriptor for output image 
@@ -350,14 +350,16 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
     if (modType == OBIT_CC_Unknown) {
       modType = (olong)(CCRow->parms[3] + 0.5);
       /* If Gaussian take model */
-      if ((modType==OBIT_CC_GaussMod) || (modType==OBIT_CC_CGaussMod)) {
+      if ((modType==OBIT_CC_GaussMod)     || (modType==OBIT_CC_CGaussMod) ||
+	  (modType==OBIT_CC_GaussModSpec) || (modType==OBIT_CC_CGaussModSpec)) {
 	gparm[0] = CCRow->parms[0];
 	gparm[1] = CCRow->parms[1];
 	gparm[2] = CCRow->parms[2];
       }
       /* If neither a point nor Gaussian - barf */
       if ((modType!=OBIT_CC_GaussMod) && (modType!=OBIT_CC_CGaussMod) && 
-	  (modType!=OBIT_CC_PointMod)) {
+	  (modType!=OBIT_CC_PointMod) && (modType!=OBIT_CC_GaussModSpec) && 
+	  (modType!=OBIT_CC_CGaussModSpec) && (modType!=OBIT_CC_PointModSpec)) {
 	Obit_log_error(err, OBIT_Error,
 		       "%s: Model type %d neither point nor Gaussian in %s",
 		       routine, modType, inCC->name);
@@ -544,6 +546,7 @@ ObitIOCode ObitTableCCUtilMerge (ObitTableCC *in, ObitTableCC *out,
  *                  3 = Uniform Sphere [0] = radius (deg)
  * \param err       ObitErr error stack.
  * \return FArray containing merged CC table contents; MUST be Unreffed.
+ *                Will contain flux, X, Y, + any spectral terms
  * \li Flux
  * \li Delta X
  * \li Delta Y
@@ -553,9 +556,9 @@ ObitFArray* ObitTableCCUtilMergeSel (ObitTableCC *in, olong startComp,
 				     ObitErr *err)
 {
   ObitFArray *out = NULL;
-  olong i, count, lout, nout, ndim, naxis[2];
+  olong i, j, count, lout, nout, ndim, naxis[2];
   ObitIOCode retCode;
-  olong size, fsize, number=0, ncomp;
+  olong size, fsize, number=0, ncomp, nterms;
   ofloat lparms[20];
   ofloat *entry, *outArray, *SortStruct = NULL;
   gchar *routine = "ObitTableCCUtilMergeSel";
@@ -612,6 +615,11 @@ ObitFArray* ObitTableCCUtilMergeSel (ObitTableCC *in, olong startComp,
 
   /* Create output Array */
   lout = 3;
+  /* Need room for spectral terms? */
+  if (in->noParms>4)  nterms = in->noParms-4;
+  else nterms = 0;
+  if (in->noParms>4) lout += nterms;
+
   ndim = 2; naxis[0] = lout; naxis[1] = count;
   nout = count;
   out      = ObitFArrayCreate ("MergedCC", ndim, naxis);
@@ -620,7 +628,7 @@ ObitFArray* ObitTableCCUtilMergeSel (ObitTableCC *in, olong startComp,
 
   /* Any model parameters */
   for (i=0; i<4; i++) parms[i] = 0.0;
-  for (i=0; i<in->noParms; i++) parms[i] = lparms[i];
+  for (i=0; i<MIN (4,in->noParms); i++) parms[i] = lparms[i];
 
   /* Copy structure to output array */
   entry = SortStruct;
@@ -639,6 +647,7 @@ ObitFArray* ObitTableCCUtilMergeSel (ObitTableCC *in, olong startComp,
       outArray[0] = entry[2];
       outArray[1] = entry[0];
       outArray[2] = entry[1];
+      for (j=0; j<nterms; j++) outArray[3+j] = entry[3+j];
       outArray += lout;
       count++;
     } /* end of contains value */
@@ -989,7 +998,8 @@ gboolean ObitTableCCUtilFiltCC (ObitTableCC *CCTab, ofloat radius, ofloat minFlu
  * The sort structure has one "entry" per row which contains 
  * \li Delta X
  * \li Delta Y
- * \li Delta Flux
+ * \li Flux
+ * \li [optional] spectral terms +
  *
  * Each valid row in the table has an entry.
  * \param in     Table to sort, assumed already open;
@@ -1008,8 +1018,8 @@ MakeCCSortStruct (ObitTableCC *in, olong *size, olong *number, olong *ncomp,
   ofloat *out = NULL;
   ObitTableCCRow *row = NULL;
   ofloat *entry;
-  olong irow, nrow, tsize, count, i;
-  olong fsize;
+  olong irow, nrow, tsize, count, i, j;
+  olong nterms, fsize;
   gchar *routine = "MakeCCSortStruct";
 
   /* error checks */
@@ -1022,6 +1032,10 @@ MakeCCSortStruct (ObitTableCC *in, olong *size, olong *number, olong *ncomp,
 
   /* element size */
   fsize = 3;
+  /* Need room for spectral terms? */
+  if (in->noParms>4)  nterms = in->noParms-4;
+  else nterms = 0;
+  fsize += nterms;
   *size = fsize * sizeof(ofloat);
 
   /* Total size of structure in case all rows valid */
@@ -1052,10 +1066,12 @@ MakeCCSortStruct (ObitTableCC *in, olong *size, olong *number, olong *ncomp,
     entry[0] = row->DeltaX;
     entry[1] = row->DeltaY;
     entry[2] = row->Flux;
+    /* First 4 parms are model, following are spectral parameters */
+    for (j=0; j<nterms; j++) entry[3+j] = row->parms[4+j];
 
     /* Save parms if any for first record */
     if ((count<=0) && (in->noParms>0)) {
-      for (i=0; i<in->noParms; i++) parms[i] = row->parms[i];
+      for (i=0; i<MIN (4,in->noParms); i++) parms[i] = row->parms[i];
     }
     
     count++;  /* How many valid */
@@ -1101,8 +1117,8 @@ MakeCCSortStructSel (ObitTableCC *in, olong startComp, olong endComp,
   ofloat *out = NULL;
   ObitTableCCRow *row = NULL;
   ofloat *entry;
-  olong irow, nrow, tsize, count, i;
-  olong fsize;
+  olong irow, nrow, tsize, count, i, j;
+  olong nterms, fsize;
   gchar *routine = "MakeCCSortStruct";
 
   /* error checks */
@@ -1115,6 +1131,10 @@ MakeCCSortStructSel (ObitTableCC *in, olong startComp, olong endComp,
 
   /* element size */
   fsize = 3;
+  /* Need room for spectral terms? */
+  if (in->noParms>4)  nterms = in->noParms-4;
+  else nterms = 0;
+  fsize += nterms;
   *size = fsize * sizeof(ofloat);
 
   /* Total size of structure in case all rows valid */
@@ -1145,10 +1165,12 @@ MakeCCSortStructSel (ObitTableCC *in, olong startComp, olong endComp,
     entry[0] = row->DeltaX;
     entry[1] = row->DeltaY;
     entry[2] = row->Flux;
+    /* First 4 parms are model, following are spectral parameters */
+    for (j=0; j<nterms; j++) entry[3+j] = row->parms[4+j];
 
-    /* Save parms if any for first record */
+    /* Save 1st 4 parms if any for first record */
     if ((count<=0) && (in->noParms>0)) {
-      for (i=0; i<in->noParms; i++) parms[i] = row->parms[i];
+      for (i=0; i<MIN (4,in->noParms); i++) parms[i] = row->parms[i];
     }
     
     count++;  /* How many valid */
@@ -1266,7 +1288,7 @@ ReWriteTable(ObitTableCC *out, ofloat *base, olong size, olong number,
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitTableCCRow *row = NULL;
   ofloat *entry;
-  olong irow, i, count;
+  olong irow, i, nterms, count;
   gchar *routine = "ReWriteTable";
 
   /* error checks */
@@ -1287,6 +1309,9 @@ ReWriteTable(ObitTableCC *out, ofloat *base, olong size, olong number,
  ((ObitTableDesc*)out->myIO->myDesc)->sort[0] = -(out->FluxCol+257);
   ((ObitTableDesc*)out->myIO->myDesc)->sort[1] = 0;
   
+  /* Need to copy any  spectral terms? */
+  if (out->noParms>4) nterms = out->noParms-4;
+  else nterms = 0;
 
   /* Create row structure */
   row = newObitTableCCRow (out);
@@ -1305,11 +1330,13 @@ ReWriteTable(ObitTableCC *out, ofloat *base, olong size, olong number,
       row->DeltaX = entry[0];
       row->DeltaY = entry[1];
       row->Flux   = entry[2];
-            /* copy any parms */
+            /* copy any model parms - only one of these */
       if (out->noParms>0) {
-	for (i=0; i<out->noParms; i++) row->parms[i] = parms[i];
+	for (i=0; i<MAX(4, out->noParms); i++) row->parms[i] = parms[i];
       }
-      
+      /* any spectral terms - one per entry */
+      for (i=0; i<nterms; i++) row->parms[4+i] = entry[3+i];
+
       /* Write */
       irow++;
       retCode = ObitTableCCWriteRow (out, irow, row, err);

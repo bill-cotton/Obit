@@ -231,6 +231,7 @@ ObitDConCleanImage* ObitDConCleanImageCreate (gchar* name, ObitImageMosaic *mosa
   out->gain    = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean Loop gain");
   out->minFlux = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean minFlux");
   out->factor  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean factor");
+  out->nfield  = nfield;
 
   return out;
 } /* end ObitDConCleanImageCreate */
@@ -312,7 +313,8 @@ void ObitDConCleanImageDeconvolve (ObitDCon *inn, ObitErr *err)
   } /* end clean loop */
 
   /* Restore */
-  inClass->ObitDConCleanRestore((ObitDConClean*)in, err);
+  if (in->doRestore)
+    inClass->ObitDConCleanRestore((ObitDConClean*)in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
 } /* end ObitDConCleanImageDeconvolve */
@@ -320,6 +322,8 @@ void ObitDConCleanImageDeconvolve (ObitDCon *inn, ObitErr *err)
 /**
  * Read any base class parameters and then
  * read CLEAN control parameters from the ObitInfoList member:
+ * \li "doRestore" OBIT_bool       = Restore image when done? [def TRUE]
+ *
  * From Parent classes:
  * \li "Niter"   OBIT_long scalar   = Maximum number of CLEAN iterations
  * \li "maxPixel" OBIT_long scalar  = Maximum number of residuals [def 20000]
@@ -340,10 +344,10 @@ void  ObitDConCleanImageGetParms (ObitDCon *inn, ObitErr *err)
 {
   ObitDConCleanImage *in = (ObitDConCleanImage*)inn;  /* as this class */
   ObitDConClassInfo *ParentClass;
-  /*  ObitInfoType type;
-      gint32 dim[MAXINFOELEMDIM];
-      olong itemp;
-      union ObitInfoListEquiv InfoReal; */
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM];
+  /*    olong itemp;
+	union ObitInfoListEquiv InfoReal; */
   gchar *routine = "ObitDConCleanImageGetParms";
 
   /* error checks */
@@ -355,6 +359,9 @@ void  ObitDConCleanImageGetParms (ObitDCon *inn, ObitErr *err)
   ParentClass = (ObitDConClassInfo*)myClassInfo.ParentClass;
   ParentClass->ObitDConGetParms(inn, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Restore image when done? */
+  ObitInfoListGetTest(in->info, "doRestore", &type, dim, &in->doRestore);
 
 } /* end ObitDConCleanImageGetParms */
 
@@ -589,9 +596,10 @@ void ObitDConCleanImageInit  (gpointer inn)
     ParentClass->ObitInit (inn);
 
   /* set members in this class */
-  in->transfer = NULL;
-  in->forFFT   = NULL;
-  in->revFFT   = NULL;
+  in->transfer  = NULL;
+  in->forFFT    = NULL;
+  in->revFFT    = NULL;
+  in->doRestore = TRUE;
 
 } /* end ObitDConCleanImageInit */
 

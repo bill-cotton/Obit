@@ -357,7 +357,7 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
 {
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
-  ofloat temp, xCells, yCells, farr[10], *fptr;
+  ofloat temp, xCells, yCells, farr[10], *fptr, sigma2u, sigma2v, cpa, spa;
   olong   itemp, *iptr, nfield;
   gboolean gotIt;
   gchar *routine = "ObitUVWeightInput";
@@ -417,13 +417,13 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
   ObitInfoListGetTest(uvdata->info, "WtBox", &type, dim, &itemp);
   in->WtBox = itemp;
  
- /* WtFunc */
+  /* WtFunc */
   itemp = 1;
   ObitInfoListGetTest(uvdata->info, "WtFunc", &type, dim, &itemp);
   if (itemp<1) itemp = 1;
   in->WtFunc = itemp;
  
- /* Robust */
+  /* Robust */
   temp = 0.0;
   ObitInfoListGetTest(uvdata->info, "Robust", &type, dim, &temp);
   in->Robust = temp;
@@ -446,16 +446,22 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
   in->VScale = in->nvGrid * (DG2RAD * fabs(yCells));
 
   /* Taper [default none] */
-  farr[0] = farr[1] = 0.0;
+  farr[0] = farr[1] = farr[2] = 0.0;
   ObitInfoListGetTest(uvdata->info, "UVTaper", &type, dim, farr);
   if ((farr[0]>0.0) || (farr[1]>0.0)) {
     farr[0] *= 1.0e3;  /* To lambdas */
     farr[1] *= 1.0e3;  /* To lambdas */
-    in->sigma2u = log(0.3)/(farr[0]*farr[0]);
-    in->sigma2v = log(0.3)/(farr[1]*farr[1]);
+    sigma2u = log(0.3)/(farr[0]*farr[0]);
+    sigma2v = log(0.3)/(farr[1]*farr[1]);
+    cpa = cos(farr[2]*DG2RAD);
+    spa = sin(farr[2]*DG2RAD);
+    in->sigma1 = (cpa*cpa*sigma2v + spa*spa*sigma2u);
+    in->sigma2 = (spa*spa*sigma2v + cpa*cpa*sigma2u);
+    in->sigma3 = 2.0*cpa*spa*(sigma2v - sigma2u);
   } else {
-    in->sigma2u = 0.0;
-    in->sigma2v = 0.0;
+    in->sigma1 = 0.0;
+    in->sigma2 = 0.0;
+    in->sigma3 = 0.0;
   }
 
 } /* end ObitUVWeightInput */
@@ -467,7 +473,7 @@ void ObitUVWeightInput (ObitUVWeight *in, ObitUV *uvdata, ObitErr *err)
  * The UVin object will be closed at the termination of this routine.
  * Requires setup by #ObitUVWeightCreate.
  * The gridding information should have been stored in the ObitInfoList on in:
- * \li "UVTaper" OBIT_float scalar = UV taper width in kilowavelengths.
+ * \li "UVTaper" OBIT_float [3] = UV taper (maj, min, pa) in kilowavelengths, deg.
  *             Default = no taper.
  * \li "Guardband" OBIT_float scalar = maximum fraction of U or v range allowed in grid.
  *             Default = 0.4.
@@ -1002,7 +1008,7 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
 
   /* what needed */
   /* Need taper? */
-  doTaper = (in->sigma2u!=0.0) || (in->sigma2v!=0.0);
+  doTaper = (in->sigma1!=0.0) || (in->sigma2!=0.0);
   /* Raising weight to a power? */
   doPower = (fabs (in->WtPower-1.0) > 0.01) && (in->WtPower > 0.01);
   /* Replacing weights with 1.0? */
@@ -1102,7 +1108,7 @@ static void WeightBuffer (ObitUVWeight* in, ObitUV *uvdata)
 	      uf = *u * desc->fscale[ifq];
 	      vf = *v * desc->fscale[ifq];
 	      
-	      tape = ((uf)*(uf)*in->sigma2u + (vf)*(vf)*in->sigma2v);
+	      tape = ((uf)*(uf)*in->sigma2 + (vf)*(vf)*in->sigma1 + (uf)*(vf)*in->sigma3);
 	      if (tape<-14.0) tfact = 0.0; /* underflow */
 	      else tfact = exp(tape);
 	      *wt *= tfact;

@@ -51,8 +51,8 @@ ofloat Robust;
 ofloat WtPower;
 /** Scaling from wavelength to cells for u, v at reference frequency */
 ofloat UScale, VScale;
-/** -sigma,u,v for taper (in cells) */
-ofloat sigma2u, sigma2v;
+/** -sigma,uu,vv,uv for taper (in cells) */
+ofloat sigma1, sigma2, sigma3;
 /** max, min baseline lengths (wavelengths) */
 ofloat blmax, blmin;
 /** Robust temperance value */

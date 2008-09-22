@@ -884,12 +884,12 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
   ObitTableCC *inCC=NULL;
   gboolean     mrgCC=FALSE;
   oint         noParms, CCVer;
-  olong         Aseq, disk, cno,i, nmaps;
+  olong        Aseq, disk, cno,i, nmaps, channel;
   gchar        *Type, *strTemp, inFile[129], inRoot[129];
   gchar        Aname[13], Aclass[7], Aroot[7], *Atype = "MA";
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong         blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
-  olong         trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  olong        blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
+  olong        trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   ofloat       modelFlux, modelPos[2], *modelParm=NULL;
   ofloat       modptflx,  modptxof, modptyof, modptypm[4];
   olong        inVer;
@@ -897,6 +897,7 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Control parameters */
     "CCVer",  "BComp",  "EComp",  "Flux", "PBCor", "antSize", "Factor", 
     "minFlux", "Mode", "ModelType", "REPLACE", "Stokes", 
+    "BIF", "EIF", "BCHAN", "ECHAN",
     "MODPTFLX", "MODPTXOF", "MODPTYOF", "MODPTYPM", 
     NULL};
   gchar *routine = "getInputSkyModel";
@@ -1081,6 +1082,15 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
   /* Get input parameters from myInput, copy to skyModel */
   ObitInfoListCopyList (myInput, skyModel->info, dataParms);
   if (err->error) Obit_traceback_val (err, routine, skyModel->name, skyModel);
+
+  /* If channel given, select by channel */
+  channel = 0;
+  ObitInfoListGetTest (myInput, "channel", &type, dim, &channel);
+  if (channel>0) {
+    dim[0] = dim[1] = dim[2] = dim[3] = 1;
+    ObitInfoListAlwaysPut (skyModel->info, "BChan", OBIT_oint, dim, &channel);
+    ObitInfoListAlwaysPut (skyModel->info, "EChan", OBIT_oint, dim, &channel);
+  }
   
   return skyModel;
 } /* end getInputSkyModel */

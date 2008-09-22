@@ -1011,6 +1011,7 @@ ObitTable* TableVZSel (ObitTable *in, ObitData *data,
 
 
 
+#include "ObitDConClean.h"
 #include "ObitDConCleanImage.h"
 
 extern ObitDConCleanImage* newCleanImage (char* name) {
@@ -1088,6 +1089,10 @@ extern void CleanImageDeconvolve (ObitDConCleanImage* in, ObitErr *err) {
  ObitDConCleanImageDeconvolve((ObitDCon*)in, err);
 }
 
+extern void CleanImageRestore (ObitDConCleanImage* in, ObitErr *err) {
+ ObitDConCleanRestore ((ObitDConClean*)in, err);
+}
+
 extern void CleanImageDefWindow (ObitDConCleanImage* in, ObitErr *err) {
  ObitDConCleanDefWindow((ObitDConClean*)in, err);
 }
@@ -1116,6 +1121,7 @@ extern void CleanImageSetWindow(ObitDConCleanImage *,ObitDConCleanWindow *);
 extern void CleanImageAddWindow(ObitDConCleanImage *,int ,int *,ObitErr *);
 extern ObitDConCleanImage *CleanImageCreate(char *,ObitImageMosaic *,ObitErr *);
 extern void CleanImageDeconvolve(ObitDConCleanImage *,ObitErr *);
+extern void CleanImageRestore(ObitDConCleanImage *,ObitErr *);
 extern void CleanImageDefWindow(ObitDConCleanImage *,ObitErr *);
 extern char *CleanImageGetName(ObitDConCleanImage *);
 extern int CleanImageIsA(ObitDConCleanImage *);
@@ -1124,6 +1130,7 @@ typedef struct {
   ObitDConCleanImage *me;
 } CleanImage;
 
+#include "ObitDConClean.h"
 #include "ObitDConCleanVis.h"
 
 extern ObitDConCleanVis* newCleanVis (char* name) {
@@ -1210,6 +1217,10 @@ extern void CleanVisDeconvolve (ObitDConCleanVis* in, ObitErr *err) {
  ObitDConCleanVisDeconvolve((ObitDCon*)in, err);
 }
 
+extern void CleanVisRestore (ObitDConCleanVis* in, ObitErr *err) {
+ ObitDConCleanRestore ((ObitDConClean*)in, err);
+}
+
 extern void CleanVisDefWindow (ObitDConCleanVis* in, ObitErr *err) {
  ObitDConCleanVisDefWindow((ObitDConClean*)in, err);
 }
@@ -1250,6 +1261,7 @@ extern void CleanVisSetWindow(ObitDConCleanVis *,ObitDConCleanWindow *);
 extern void CleanVisAddWindow(ObitDConCleanVis *,int ,int *,ObitErr *);
 extern ObitDConCleanVis *CleanVisCreate(char *,ObitUV *,ObitErr *);
 extern void CleanVisDeconvolve(ObitDConCleanVis *,ObitErr *);
+extern void CleanVisRestore(ObitDConCleanVis *,ObitErr *);
 extern void CleanVisDefWindow(ObitDConCleanVis *,ObitErr *);
 extern int CleanVisReimage(ObitDConCleanVis *,ObitUV *,ObitErr *);
 extern char *CleanVisGetName(ObitDConCleanVis *);
@@ -1261,7 +1273,7 @@ typedef struct {
 
 #include "ObitConvUtil.h"
 
-void ConvUtilConv (ObitImage *inImage, ObitFArray *convFn, 
+extern void ConvUtilConv (ObitImage *inImage, ObitFArray *convFn, 
 		   int doDivide, float rescale,
 		   ObitImage *outImage, ObitErr *err) {
   gboolean ldoDivide;
@@ -1270,14 +1282,36 @@ void ConvUtilConv (ObitImage *inImage, ObitFArray *convFn,
   ObitConvUtilConv (inImage, convFn, ldoDivide, lrescale, outImage, err);
 } // end ConvUtilConv 
 
-ObitFArray* ConvUtilGaus (ObitImage *inImage, float Maj, float Min, float PA) {
+extern ObitFArray* ConvUtilGaus (ObitImage *inImage, float Maj, float Min, float PA) {
   ofloat Beam[3];
   Beam[0] = Maj;
-  Beam[0] = Min;
-  Beam[0] = PA;
+  Beam[1] = Min;
+  Beam[2] = PA;
   return ObitConvUtilGaus (inImage, Beam);
 } // end ConvUtilGaus
 
+extern PyObject* ConvUtilDeconv (float fMaj,  float fMin,  float fPA, 
+                            float cMaj,  float cMin,  float cPA) {
+  ofloat rMaj, rMin, rPA;
+  PyObject *outList=NULL, *o=NULL;
+
+  ObitConvUtilDeconv (fMaj, fMin, fPA, cMaj, cMin, cPA, &rMaj, &rMin, &rPA);
+
+  // Package results into output list
+  outList = PyList_New(3); 
+  o = PyFloat_FromDouble((double)rMaj);
+  PyList_SetItem(outList, 0, o);
+  o = PyFloat_FromDouble((double)rMin);
+  PyList_SetItem(outList, 1, o);
+  o = PyFloat_FromDouble((double)rPA);
+  PyList_SetItem(outList, 2, o);
+
+  return outList;
+} // end ConvUtilGaus
+
+extern void ConvUtilConv(ObitImage *,ObitFArray *,int ,float ,ObitImage *,ObitErr *);
+extern ObitFArray *ConvUtilGaus(ObitImage *,float ,float ,float );
+extern PyObject *ConvUtilDeconv(float ,float ,float ,float ,float ,float );
 
 
 #include "ObitFArray.h"
@@ -12502,6 +12536,36 @@ static PyObject *_wrap_CleanImageDeconvolve(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_CleanImageRestore(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitDConCleanImage * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:CleanImageRestore",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitDConCleanImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of CleanImageRestore. Expected _ObitDConCleanImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of CleanImageRestore. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    CleanImageRestore(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_CleanImageDefWindow(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitDConCleanImage * _arg0;
@@ -13062,6 +13126,36 @@ static PyObject *_wrap_CleanVisDeconvolve(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_CleanVisRestore(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitDConCleanVis * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:CleanVisRestore",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitDConCleanVis_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of CleanVisRestore. Expected _ObitDConCleanVis_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of CleanVisRestore. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    CleanVisRestore(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_CleanVisDefWindow(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitDConCleanVis * _arg0;
@@ -13251,6 +13345,32 @@ static PyObject *_wrap_ConvUtilGaus(PyObject *self, PyObject *args) {
         Py_INCREF(Py_None);
         _resultobj = Py_None;
     }
+    return _resultobj;
+}
+
+static PyObject *_wrap_ConvUtilDeconv(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    float  _arg0;
+    float  _arg1;
+    float  _arg2;
+    float  _arg3;
+    float  _arg4;
+    float  _arg5;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ffffff:ConvUtilDeconv",&_arg0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5)) 
+        return NULL;
+    _result = (PyObject *)ConvUtilDeconv(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
     return _resultobj;
 }
 
@@ -48148,12 +48268,14 @@ static PyMethodDef ObitMethods[] = {
 	 { "FArrayGetBlank", _wrap_FArrayGetBlank, METH_VARARGS },
 	 { "FArrayGetVal", _wrap_FArrayGetVal, METH_VARARGS },
 	 { "FArrayCreate", _wrap_FArrayCreate, METH_VARARGS },
+	 { "ConvUtilDeconv", _wrap_ConvUtilDeconv, METH_VARARGS },
 	 { "ConvUtilGaus", _wrap_ConvUtilGaus, METH_VARARGS },
 	 { "ConvUtilConv", _wrap_ConvUtilConv, METH_VARARGS },
 	 { "CleanVisIsA", _wrap_CleanVisIsA, METH_VARARGS },
 	 { "CleanVisGetName", _wrap_CleanVisGetName, METH_VARARGS },
 	 { "CleanVisReimage", _wrap_CleanVisReimage, METH_VARARGS },
 	 { "CleanVisDefWindow", _wrap_CleanVisDefWindow, METH_VARARGS },
+	 { "CleanVisRestore", _wrap_CleanVisRestore, METH_VARARGS },
 	 { "CleanVisDeconvolve", _wrap_CleanVisDeconvolve, METH_VARARGS },
 	 { "CleanVisCreate", _wrap_CleanVisCreate, METH_VARARGS },
 	 { "CleanVisAddWindow", _wrap_CleanVisAddWindow, METH_VARARGS },
@@ -48171,6 +48293,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "CleanImageIsA", _wrap_CleanImageIsA, METH_VARARGS },
 	 { "CleanImageGetName", _wrap_CleanImageGetName, METH_VARARGS },
 	 { "CleanImageDefWindow", _wrap_CleanImageDefWindow, METH_VARARGS },
+	 { "CleanImageRestore", _wrap_CleanImageRestore, METH_VARARGS },
 	 { "CleanImageDeconvolve", _wrap_CleanImageDeconvolve, METH_VARARGS },
 	 { "CleanImageCreate", _wrap_CleanImageCreate, METH_VARARGS },
 	 { "CleanImageAddWindow", _wrap_CleanImageAddWindow, METH_VARARGS },

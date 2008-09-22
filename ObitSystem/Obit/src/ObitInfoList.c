@@ -572,7 +572,7 @@ ObitInfoListGetNumber (ObitInfoList *in,  olong number,
 
   /* look up */
   tmp = in->list;
-  for (i=1; i<number; i++) {
+  for (i=0; i<number-1; i++) {
     tmp = g_slist_next(tmp);
     if (tmp==NULL) break;  /* problem? */
   }
@@ -633,7 +633,7 @@ ObitInfoListGetNumberP (ObitInfoList *in,  olong number,
 
   /* look up */
   tmp = in->list;
-  for (i=1; i<number; i++) {
+  for (i=0; i<number-1; i++) {
     tmp = g_slist_next(tmp);
     if (tmp==NULL) break;  /* problem? */
   }

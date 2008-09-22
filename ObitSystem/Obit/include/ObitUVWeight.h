@@ -60,8 +60,8 @@
  *              if positive, function is of radius, negative in u and v.
  * \li "xCells" OBIT_float scalar = Image cell spacing in X in asec.
  * \li "yCells" OBIT_float scalar = Image cell spacing in Y in asec.
- * \li "UVTaper"OBIT_float scalar = UV taper width in kilowavelengths. [def. no taper].
- *              NB: If the taper is applied her is should not also be applied
+ * \li "UVTaper"OBIT_float [3]  = UV taper (maj, min, PA) in kilowavelengths, deg. [def. no taper].
+ *              NB: If the taper is applied here it should not also be applied
  *              in the imaging step as the taper will be applied to the
  *              output data.
  * \li "Robust" OBIT_float scalar = Briggs robust parameter. [def. 0.0]

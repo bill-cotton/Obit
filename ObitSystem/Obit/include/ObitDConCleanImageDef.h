@@ -41,3 +41,5 @@ ObitFFT *revFFT;
 olong startComp;
 /** Highest component for next subtract */
 olong endComp;
+/** Restore image when done? */
+gboolean doRestore;

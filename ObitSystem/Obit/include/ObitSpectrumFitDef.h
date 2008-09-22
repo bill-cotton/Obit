@@ -38,35 +38,27 @@ ObitInfoList *info;
 olong nterm;
 /** Number of frequency data points to be fitted */
 olong nfreq;
+/** Do Error analysis: */
+gboolean doError;
+/** make Primary beam correction? */
+gboolean doPBCorr;
 /** Size of planes in pixels */
 olong nx, ny;
-/** Minimum pixel SNR to fit */
-ofloat minSNR;
+/** Maximum Chi square to accept a partial fit */
+ofloat maxChi2;
 /** Output Image descriptor */
 ObitImageDesc *outDesc;
 /** Array of pixel arrays for input data (nfreq) */
 ObitFArray **inFArrays;
 /** Array of BeamShape objects for input planes (nfreq) */
 ObitBeamShape **BeamShapes;
-/** Array of RMSes per inFArrays */
+/** Array of RMSes per inFArrays (nfreq) */
 ofloat *RMS;
 /** Array of calibration fractional error per inFArrays */
 ofloat *calFract;
+/** reference frequency */
+odouble refFreq;
+/** Array of frequencies (nfreq) */
+odouble *freqs;
 /** Array of pixel arrays for output data (2*nterm) */
 ObitFArray **outFArrays;
-
-/* GSL fitting stuff */
-#ifdef HAVE_GSL
-/** Matrix of powers of log(nu) per datum */
-gsl_matrix *X;
-/** Vector of log(S)=data to be fitted */
-gsl_vector *y;
-/** Data weights */
-gsl_vector *w;
-/** Vector of fitted coeffieients */
-gsl_vector *coef;
-/** Covariance matrix from fitting */
-gsl_matrix *covar;
-/** Fitting work space */
-gsl_multifit_linear_workspace *work;
-#endif /* HAVE_GSL */ 

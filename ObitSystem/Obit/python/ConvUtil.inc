@@ -34,7 +34,7 @@
 
 
 %inline %{
-void ConvUtilConv (ObitImage *inImage, ObitFArray *convFn, 
+extern void ConvUtilConv (ObitImage *inImage, ObitFArray *convFn, 
 		   int doDivide, float rescale,
 		   ObitImage *outImage, ObitErr *err) {
   gboolean ldoDivide;
@@ -43,12 +43,31 @@ void ConvUtilConv (ObitImage *inImage, ObitFArray *convFn,
   ObitConvUtilConv (inImage, convFn, ldoDivide, lrescale, outImage, err);
 } // end ConvUtilConv 
 
-ObitFArray* ConvUtilGaus (ObitImage *inImage, float Maj, float Min, float PA) {
+extern ObitFArray* ConvUtilGaus (ObitImage *inImage, float Maj, float Min, float PA) {
   ofloat Beam[3];
   Beam[0] = Maj;
-  Beam[0] = Min;
-  Beam[0] = PA;
+  Beam[1] = Min;
+  Beam[2] = PA;
   return ObitConvUtilGaus (inImage, Beam);
+} // end ConvUtilGaus
+
+extern PyObject* ConvUtilDeconv (float fMaj,  float fMin,  float fPA, 
+                            float cMaj,  float cMin,  float cPA) {
+  ofloat rMaj, rMin, rPA;
+  PyObject *outList=NULL, *o=NULL;
+
+  ObitConvUtilDeconv (fMaj, fMin, fPA, cMaj, cMin, cPA, &rMaj, &rMin, &rPA);
+
+  // Package results into output list
+  outList = PyList_New(3); 
+  o = PyFloat_FromDouble((double)rMaj);
+  PyList_SetItem(outList, 0, o);
+  o = PyFloat_FromDouble((double)rMin);
+  PyList_SetItem(outList, 1, o);
+  o = PyFloat_FromDouble((double)rPA);
+  PyList_SetItem(outList, 2, o);
+
+  return outList;
 } // end ConvUtilGaus
 
 %}

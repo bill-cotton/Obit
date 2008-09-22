@@ -505,7 +505,7 @@ void ObitImageMosaicSetFiles  (ObitImageMosaic *in, gboolean doBeam, ObitErr *er
   gchar *routine = "ObitImageMosaicSetFiles";
 
  /* Create full field image if needed */
-  if (in->doFull && (in->FOV>0.0) && (in->numberImages>=1) && (in->nInit<=0)) {
+  if (in->doFull && (in->FOV>0.0) && (in->numberImages>1) && (in->nInit<=0)) {
     image = in->FullField;
 
     /* AIPS file */
@@ -669,14 +669,15 @@ ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *er
   ObitImageMosaic *out = NULL;
   ObitInfoType type;
   ObitIOType Type;
+  ObitIOAccess access;
   gint32 i, nf, nif, nfif, dim[MAXINFOELEMDIM];
   olong Seq, Disk, NField, nx[MAXFLD], ny[MAXFLD], catDisk;
   olong overlap, imsize, fldsiz[MAXFLD], flqual[MAXFLD];
   ofloat FOV=0.0, xCells, yCells, RAShift[MAXFLD], DecShift[MAXFLD], MaxBL, MaxW, Cells;
   ofloat *farr, Radius = 0.0, maxScale;
   ofloat shift[2] = {0.0,0.0}, cells[2], bmaj, bmin, bpa, beam[3];
-  odouble ra0, dec0;
-  gboolean doJ2B, doFull;
+  odouble ra0, dec0, refFreq1, refFreq2;
+  gboolean doJ2B, doFull, doCalSelect;
   ofloat equinox, minRad, ratio, OutlierFlux, OutlierDist, OutlierSI;
   olong  itemp, OutlierSize=0, nFlyEye = 0;
   union ObitInfoListEquiv InfoReal; 
@@ -729,10 +730,32 @@ ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *er
   /* Beam given in asec - convert to degrees */
   bmaj /= 3600.0; bmin /=3600.0;
 
-  /* Get extrema */
+  /* Get extrema - note: this has no selection */
   ObitUVUtilUVWExtrema (uvData, &MaxBL, &MaxW, err);
   if (err->error) Obit_traceback_val (err, routine, uvData->name, out);
-   /* Find maximum uv scaling */
+
+  /* Get reference frequency without freq selection */
+  refFreq1 = uvData->myDesc->crval[uvData->myDesc->jlocf];
+
+  /* Open with any selection of input */
+  doCalSelect = FALSE;
+  ObitInfoListGetTest(uvData->info, "doCalSelect", &type, dim, &doCalSelect);
+  if (doCalSelect) access = OBIT_IO_ReadCal;
+  else access = OBIT_IO_ReadOnly;
+  if (doCalSelect) {
+    ObitUVOpen (uvData, access, err);
+    ObitUVClose (uvData, err);
+    if (err->error) Obit_traceback_val (err, routine, uvData->name, out);
+  }
+
+  /* Get reference frequency with freq selection */
+  refFreq2 = uvData->myDesc->crval[uvData->myDesc->jlocf];
+
+  /* Scale MaxBL, MaxW for selection */
+  MaxBL *= refFreq2/refFreq1;
+  MaxW  *= refFreq2/refFreq1;
+
+  /* Find maximum uv scaling */
   maxScale = 0.0;
   /* how big is table */
   nf = 1;
@@ -778,7 +801,7 @@ ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *er
   overlap = 7;
   imsize = (olong)(2.0*Radius + 0.5);
   /* Not bigger than FOV */
-  imsize = MIN (imsize, ((2.0*3600.0*FOV/Cells)+10.99));
+  imsize = MIN (imsize, ((2.0*3600.0*FOV/fabs(xCells))+10.99));
   cells[0] = xCells; cells[1] = yCells;
   ObitUVGetRADec (uvData, &ra0, &dec0, err);
   if (err->error) Obit_traceback_val (err, routine, uvData->name, out);

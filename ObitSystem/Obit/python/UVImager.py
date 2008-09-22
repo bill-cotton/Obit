@@ -133,7 +133,7 @@ UVCreateImagerInput={
                                    ('Smooth',   'Specifies the type of spectral smoothing'),
                                    ('DoWeight', 'If True apply uniform weighting corrections to uvdata'),
                                    ('Robust',   'Briggs robust parameter. (AIPS definition)'),
-                                   ('UVTaper',  'UV plane taper, sigma in klambda as [u,v]'),
+                                   ('UVTaper',  'UV plane taper, sigma in klambda,deg as [maj, min, pa]'),
                                    ('WtSize',   'Size of weighting grid in cells [image]'),
                                    ('WtBox',    'Size of weighting box in cells [def 0]'),
                                    ('WtFunc',   'Weighting convolution function [def. 1]'),
@@ -160,7 +160,7 @@ UVCreateImagerInput={
                                    ('OutlierSize', 'Size of outlyer field (pixels)')]],
     # defaults
     'InData':None,
-    'doCalSelect':False,
+    'doCalSelect':True,
     'Stokes':'FULL',
     'BChan':0,
     'EChan':0,
@@ -183,7 +183,7 @@ UVCreateImagerInput={
     'Smooth':[0.0, 0.0, 0.0],
     'DoWeight': True,                                   
     'Robust': 0.0,                                   
-    'UVTaper': [0.0,0.0],
+    'UVTaper': [0.0,0.0,0.0],
     'WtSize':-1,
     'WtBox':0,
     'WtFunc':1,
@@ -242,7 +242,7 @@ def PUVCreateImager (err, name = 'myUVImager', input=UVCreateImagerInput):
     Smooth   = Specifies the type of spectral smoothing [three floats]
     DoWeight = True if Weighting to be applied
     Robust   = Briggs robust parameter. (AIPS definition)
-    UVTaper  = UV plane taper, sigma in klambda as [u,v]
+    UVTaper  = UV plane taper, sigma in klambda,deg as [maj, min, pa]
     WtSize   = Size of weighting grid in cells [same as image nx]
     WtBox    = Size of weighting box in cells [def 1]
     WtFunc   = Weighting convolution function [def. 1]
@@ -290,67 +290,67 @@ def PUVCreateImager (err, name = 'myUVImager', input=UVCreateImagerInput):
     if not UV.PIsA(InData):
         raise TypeError, 'UVCreateImage: Bad input UV data'
     # Set control values on UV 
-    dim[0] = 1;
+    dim[0] = 1; dim[1] = 1; dim[2] = 1; dim[3] = 1; dim[4] = 1
     inInfo = UV.PGetList(InData)  # Add control to UV data
     # Calibration/editing/selection
-    InfoList.PPutBoolean (inInfo, "doCalSelect",  dim, [input["doCalSelect"]], err)
+    InfoList.PAlwaysPutBoolean (inInfo, "doCalSelect",  dim, [input["doCalSelect"]])
     dim[0] = 4;
     InfoList.PAlwaysPutString (inInfo, "Stokes",   dim, [input["Stokes"]])
     dim[0] = 1;
-    InfoList.PPutInt  (inInfo, "BChan",      dim, [input["BChan"]],    err)
-    InfoList.PPutInt  (inInfo, "EChan",      dim, [input["EChan"]],    err)
-    InfoList.PPutInt  (inInfo, "BIF",        dim, [input["BIF"]],      err)
-    InfoList.PPutInt  (inInfo, "EIF",        dim, [input["EIF"]],      err)
+    InfoList.PAlwaysPutInt  (inInfo, "BChan",      dim, [input["BChan"]])
+    InfoList.PAlwaysPutInt  (inInfo, "EChan",      dim, [input["EChan"]])
+    InfoList.PAlwaysPutInt  (inInfo, "BIF",        dim, [input["BIF"]])
+    InfoList.PAlwaysPutInt  (inInfo, "EIF",        dim, [input["EIF"]])
     itemp = int(input["doPol"])
-    InfoList.PPutInt  (inInfo, "doPol",      dim, [itemp],             err)
-    InfoList.PPutInt  (inInfo, "doCalib",    dim, [input["doCalib"]],  err)
-    InfoList.PPutInt  (inInfo, "doBand",     dim, [input["doBand"]],   err)
-    InfoList.PPutInt  (inInfo, "gainUse",    dim, [input["gainUse"]],  err)
-    InfoList.PPutInt  (inInfo, "flagVer",    dim, [input["flagVer"]],  err)
-    InfoList.PPutInt  (inInfo, "BLVer",      dim, [input["BLVer"]],    err)
-    InfoList.PPutInt  (inInfo, "BPVer",      dim, [input["BPVer"]],    err)
-    InfoList.PPutInt  (inInfo, "Subarray",   dim, [input["Subarray"]], err)
-    InfoList.PPutInt  (inInfo, "freqID",     dim, [input["freqID"]],   err)
-    InfoList.PPutInt  (inInfo, "corrType",   dim, [input["corrType"]], err)
+    InfoList.PAlwaysPutInt  (inInfo, "doPol",      dim, [itemp])
+    InfoList.PAlwaysPutInt  (inInfo, "doCalib",    dim, [input["doCalib"]])
+    InfoList.PAlwaysPutInt  (inInfo, "doBand",     dim, [input["doBand"]])
+    InfoList.PAlwaysPutInt  (inInfo, "gainUse",    dim, [input["gainUse"]])
+    InfoList.PAlwaysPutInt  (inInfo, "flagVer",    dim, [input["flagVer"]])
+    InfoList.PAlwaysPutInt  (inInfo, "BLVer",      dim, [input["BLVer"]])
+    InfoList.PAlwaysPutInt  (inInfo, "BPVer",      dim, [input["BPVer"]])
+    InfoList.PAlwaysPutInt  (inInfo, "Subarray",   dim, [input["Subarray"]])
+    InfoList.PAlwaysPutInt  (inInfo, "freqID",     dim, [input["freqID"]])
+    InfoList.PAlwaysPutInt  (inInfo, "corrType",   dim, [input["corrType"]])
     dim[0] = 2
-    InfoList.PPutFloat (inInfo, "UVRange",   dim, input["UVRange"],    err)
+    InfoList.PAlwaysPutFloat (inInfo, "UVRange",   dim, input["UVRange"])
     dim[0] = 3
-    InfoList.PPutFloat (inInfo, "Smooth",    dim, input["Smooth"],     err)
+    InfoList.PAlwaysPutFloat (inInfo, "Smooth",    dim, input["Smooth"])
     dim[0] = 2
-    InfoList.PPutFloat (inInfo, "timeRange", dim, input["timeRange"],  err)
+    InfoList.PAlwaysPutFloat (inInfo, "timeRange", dim, input["timeRange"])
     dim[0] = len(input["Antennas"])
-    InfoList.PPutInt  (inInfo, "Antennas",   dim, input["Antennas"],   err)
+    InfoList.PAlwaysPutInt  (inInfo, "Antennas",   dim, input["Antennas"])
     dim[0] = 16; dim[1] = len(input["Sources"])
     InfoList.PAlwaysPutString  (inInfo, "Sources", dim, input["Sources"])
     # Weighting parameters
     dim[0] = 1; dim[1] = 1;
-    InfoList.PPutFloat  (inInfo, "Robust", dim, [input["Robust"]],  err)
-    InfoList.PPutInt    (inInfo, "WtBox",  dim, [input["WtBox"]],   err)
-    InfoList.PPutInt    (inInfo, "WtFunc", dim, [input["WtFunc"]],  err)
-    InfoList.PPutFloat  (inInfo, "WtPower",dim, [input["WtPower"]], err)
-    dim[1] = 2
-    InfoList.PPutFloat  (inInfo, "Taper",  dim, input["UVTaper"],   err)
+    InfoList.PAlwaysPutFloat  (inInfo, "Robust", dim, [input["Robust"]])
+    InfoList.PAlwaysPutInt    (inInfo, "WtBox",  dim, [input["WtBox"]])
+    InfoList.PAlwaysPutInt    (inInfo, "WtFunc", dim, [input["WtFunc"]])
+    InfoList.PAlwaysPutFloat  (inInfo, "WtPower",dim, [input["WtPower"]])
+    dim[0] = len(input["UVTaper"])
+    InfoList.PAlwaysPutFloat  (inInfo, "UVTaper",  dim, input["UVTaper"])
     WtSize   = input["WtSize"]
     if (WtSize>0):
         print "WtSize", WtSize
         # Change name for C routine.
         dim[0] = 1;
-        InfoList.PPutInt  (inInfo, "nuGrid",  dim, [WtSize], err)
-        InfoList.PPutInt  (inInfo, "nvGrid",  dim, [WtSize], err)
+        InfoList.PAlwaysPutInt  (inInfo, "nuGrid",  dim, [WtSize])
+        InfoList.PAlwaysPutInt  (inInfo, "nvGrid",  dim, [WtSize])
     # Define image
     dim[0] = 1; dim[1] = 1;
-    InfoList.PPutInt    (inInfo, "imFileType",dim, [input["Type"]],   err)
-    InfoList.PPutInt    (inInfo, "imSeq",    dim, [input["Seq"]],    err)
-    InfoList.PPutInt    (inInfo, "imDisk",   dim, [input["Disk"]],   err)
-    InfoList.PPutFloat  (inInfo, "FOV",      dim, [input["FOV"]],    err)
-    InfoList.PPutBoolean (inInfo, "doFull",  dim, [input["doFull"]], err)
-    InfoList.PPutInt    (inInfo, "NField",   dim, [input["NField"]], err)
-    InfoList.PPutFloat  (inInfo, "xCells",   dim, [input["xCells"]], err)
-    InfoList.PPutFloat  (inInfo, "yCells",   dim, [input["yCells"]], err)
-    InfoList.PPutFloat  (inInfo, "OutlierFlux", dim, [input["OutlierFlux"]], err)
-    InfoList.PPutFloat  (inInfo, "OutlierDist", dim, [input["OutlierDist"]], err)
-    InfoList.PPutFloat  (inInfo, "OutlierSI",   dim, [input["OutlierSI"]],   err)
-    InfoList.PPutInt    (inInfo, "OutlierSize", dim, [input["OutlierSize"]], err)
+    InfoList.PAlwaysPutInt    (inInfo, "imFileType",dim, [input["Type"]])
+    InfoList.PAlwaysPutInt    (inInfo, "imSeq",    dim, [input["Seq"]])
+    InfoList.PAlwaysPutInt    (inInfo, "imDisk",   dim, [input["Disk"]])
+    InfoList.PAlwaysPutFloat  (inInfo, "FOV",      dim, [input["FOV"]])
+    InfoList.PAlwaysPutBoolean (inInfo, "doFull",  dim, [input["doFull"]])
+    InfoList.PAlwaysPutInt    (inInfo, "NField",   dim, [input["NField"]])
+    InfoList.PAlwaysPutFloat  (inInfo, "xCells",   dim, [input["xCells"]])
+    InfoList.PAlwaysPutFloat  (inInfo, "yCells",   dim, [input["yCells"]])
+    InfoList.PAlwaysPutFloat  (inInfo, "OutlierFlux", dim, [input["OutlierFlux"]])
+    InfoList.PAlwaysPutFloat  (inInfo, "OutlierDist", dim, [input["OutlierDist"]])
+    InfoList.PAlwaysPutFloat  (inInfo, "OutlierSI",   dim, [input["OutlierSI"]])
+    InfoList.PAlwaysPutInt    (inInfo, "OutlierSize", dim, [input["OutlierSize"]])
     dim[0] = len(input["Name"])
     InfoList.PAlwaysPutString (inInfo, "imName",   dim, [input["Name"]])
     dim[0] = len(input["Class"])
@@ -437,7 +437,7 @@ def PGetUV (InImager):
 # Define UVWeight input dictionary
 UVWeightInput={'structure':['UVWeight',[('InImager','Input UVImager'),
                                         ('Robust',   'Briggs robust parameter. (AIPS definition)'),
-                                        ('UVTaper',  'UV plane taper, sigma in klambda as [u,v]'),
+                                        ('UVTaper',  'UV plane taper, sigma in klambda,deg as [maj, min, pa]'),
                                         ('WtSize',   'Size of weighting grid in cells [image]'),
                                         ('WtBox',    'Size of weighting box in cells [def 0]'),
                                         ('WtFunc',   'Weighting convolution function [def. 1]'),
@@ -447,7 +447,7 @@ UVWeightInput={'structure':['UVWeight',[('InImager','Input UVImager'),
                'InImager':None,
                'DoWeight': True,                                   
                'Robust': 0.0,                                   
-               'UVTaper': [0.0,0.0],
+               'UVTaper': [0.0,0.0,0.0],
                'WtSize':-1,
                'WtBox':0,
                'WtFunc':1,
@@ -464,7 +464,7 @@ def PUVWeight (InImager, err, input=UVWeightInput):
     Input dictionary entries:
     InImager   = Input Python UVImager to image
     Robust   = Briggs robust parameter. (AIPS definition)
-    UVTaper  = UV plane taper, sigma in klambda as [u,v]
+    UVTaper  = UV plane taper, sigma in klambda,deg as [maj, min, pa]
     WtSize   = Size of weighting grid in cells [same as image nx]
     WtBox    = Size of weighting box in cells [def 1]
     WtFunc   = Weighting convolution function [def. 1]
@@ -486,20 +486,20 @@ def PUVWeight (InImager, err, input=UVWeightInput):
         raise TypeError, 'PUVWeight: Bad input UVImager'
 
     # Set control values on UV 
-    dim[0] = 1;
+    dim[0] = 1; dim[1] = 1; dim[2] = 1; dim[3] = 1; dim[4] = 1
     inInfo = UV.PGetList(PGetUV(InImager))
-    InfoList.PPutFloat  (inInfo, "Robust", dim, [input["Robust"]],  err)
-    InfoList.PPutInt    (inInfo, "WtBox",  dim, [input["WtBox"]],   err)
-    InfoList.PPutInt    (inInfo, "WtFunc", dim, [input["WtFunc"]],  err)
-    InfoList.PPutFloat  (inInfo, "WtPower",dim, [input["WtPower"]], err)
-    dim[1] = 2
-    InfoList.PPutFloat  (inInfo, "Taper",  dim, input["UVTaper"],   err)
+    InfoList.PAlwaysPutFloat  (inInfo, "Robust", dim, [input["Robust"]])
+    InfoList.PAlwaysPutInt    (inInfo, "WtBox",  dim, [input["WtBox"]])
+    InfoList.PAlwaysPutInt    (inInfo, "WtFunc", dim, [input["WtFunc"]])
+    InfoList.PAlwaysPutFloat  (inInfo, "WtPower",dim, [input["WtPower"]])
+    dim[1] = len(input["UVTaper"])
+    InfoList.PAlwaysPutFloat  (inInfo, "Taper",  dim, input["UVTaper"])
     if (WtSize>0):
         print "WtSize", WtSize
         # Change name for C routine.
         dim[0] = 1;
-        InfoList.PPutInt  (inInfo, "nuGrid",  dim, [WtSize], err.me)
-        InfoList.PPutInt  (inInfo, "nvGrid",  dim, [WtSize], err.me)
+        InfoList.PAlwaysPutInt  (inInfo, "nuGrid",  dim, [WtSize])
+        InfoList.PAlwaysPutInt  (inInfo, "nvGrid",  dim, [WtSize])
     #
     Obit.UVImagerWeight (InImager.me, err.me)
     if err.isErr:

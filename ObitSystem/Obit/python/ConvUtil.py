@@ -76,7 +76,21 @@ def PGaus(inImage, Beam):
     if len(Beam) < 3:
         raise TypeError,"Beam MUST have 3 elements"
     #
-    outFA = FArray("None")
+    outFA = FArray.FArray("None")
     outFA.me = Obit.ConvUtilGaus (inImage.me, Beam[0], Beam[1], Beam[2])
     return outFA
+    # end PGaus
+
+def Deconv(fBeam, cBeam):
+    """ Deconvolves a Gaussian "beam" from a Gaussian component. 
+
+    Returns list of deconvolved [Maj, Min, PA], Maj,Min=0 -> unable to fit
+    Can also be used to determine the Gaussian parameters which when
+    convolved with (cMaj, cMin, cPA) gives fMaj, fMin, fPA).
+    fBeam = Convolved [major axis, minor axis, position angle of major axis]
+    cBeam = Beam [major axis, minor axis, position angle of major axis]
+    """
+    ################################################################
+    return Obit.ConvUtilDeconv (fBeam[0], fBeam[1], fBeam[2], \
+                                cBeam[0], cBeam[1], cBeam[2])
     # end PGaus

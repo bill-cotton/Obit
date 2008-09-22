@@ -1614,7 +1614,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       /* More Output image stuff */ 
       if (ichan==BChan) {
 	/* Create output image(s) */
-	if (doFlat) 
+	if (doFlat && (myClean->mosaic->numberImages>1)) 
 	  outField = ObitImageMosaicGetFullImage (myClean->mosaic, err);
 	else
 	  outField = ObitImageMosaicGetImage (myClean->mosaic, 0, err);
@@ -1647,7 +1647,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 
       /* Copy result to output */
       plane[0] = ochan;
-      if (doFlat) 
+      if ((doFlat)  && (myClean->mosaic->numberImages>1)) 
 	outField = ObitImageMosaicGetFullImage (myClean->mosaic, err);
       else { /* Copy the first image */
 	outField = ObitImageMosaicGetImage (myClean->mosaic, 0, err);
@@ -1710,7 +1710,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     /* Leave facet images if not myClean->mosaic->doFull and myClean->mosaic->numberImages >1 */
     if (!(!myClean->mosaic->doFull && (myClean->mosaic->numberImages>1)))
       ObitImageMosaicZapImage (myClean->mosaic, -1, err); /* Delete mosaic members */
-    if (doFlat) {  /* Delete flattened as well if not output */
+    if (doFlat && (myClean->mosaic->numberImages>1)) {  /* Delete flattened as well if not output */
       outField = ObitImageMosaicGetFullImage (myClean->mosaic, err);
       outField = ObitImageZap(outField, err);
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);

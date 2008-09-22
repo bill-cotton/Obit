@@ -102,12 +102,9 @@ ObitImage* ObitImageUtilCreateImage (ObitUV *inUV, olong fieldNo,
     if (err->error) Obit_traceback_val (err, routine, inUV->name, outImage);
   }
 
-  /* frequency tables if not defined */
-  if ((inUV->myDesc->freqArr==NULL) || (inUV->myDesc->fscale==NULL)) {
-    ObitUVGetFreq (inUV, err);
-    if (err->error) 
-      Obit_traceback_val (err, routine, inUV->name, outImage);
- } /* end setup frequency table */
+  /* frequency tables - always refresh in case selection redefined */
+  ObitUVGetFreq (inUV, err);
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, outImage);
 
  /* Create output - name to include field name */
   g_snprintf (outName, 120, "%s Field  %d",inUV->name, fieldNo);

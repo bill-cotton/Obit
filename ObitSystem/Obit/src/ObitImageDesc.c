@@ -392,9 +392,10 @@ void ObitImageDescIndex (ObitImageDesc* in)
       in->coordType = OBIT_Ecliptic;
     }
     if (!strncmp (in->ctype[i], "STOKES", 6)) in->jlocs = i;
-    if (!strncmp (in->ctype[i], "FREQ",   4)) in->jlocf = i;
-    if (!strncmp (in->ctype[i], "VELO",   4)) in->jlocf = i;
-    if (!strncmp (in->ctype[i], "FELO",   4)) in->jlocf = i;
+    if (!strncmp (in->ctype[i], "FREQ",     4)) in->jlocf = i;
+    else if (!strncmp (in->ctype[i], "VELO",     4)) in->jlocf = i;
+    else if (!strncmp (in->ctype[i], "FREQ",     4)) in->jlocf = i;
+    else if (!strncmp (in->ctype[i], "SPECLOGF", 8)) in->jlocf = i;
   }
   /* Make sure equinox set if epoch set */
   if ((in->equinox<0.1) && (in->epoch>0.1)) in->equinox = in->epoch;

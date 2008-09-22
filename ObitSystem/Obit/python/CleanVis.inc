@@ -29,6 +29,7 @@
 /*--------------------------------------------------------------------*/
 
 %{
+#include "ObitDConClean.h"
 #include "ObitDConCleanVis.h"
 %}
 
@@ -116,6 +117,10 @@ extern ObitDConCleanVis* CleanVisCreate (char *name, ObitUV* uvdata,
 
 extern void CleanVisDeconvolve (ObitDConCleanVis* in, ObitErr *err) {
  ObitDConCleanVisDeconvolve((ObitDCon*)in, err);
+}
+
+extern void CleanVisRestore (ObitDConCleanVis* in, ObitErr *err) {
+ ObitDConCleanRestore ((ObitDConClean*)in, err);
 }
 
 extern void CleanVisDefWindow (ObitDConCleanVis* in, ObitErr *err) {
