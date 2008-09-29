@@ -863,6 +863,7 @@ void ObitImageDescInit  (gpointer inn)
 {
   ObitClassInfo *ParentClass;
   ObitImageDesc *in = inn;
+  olong i, j;
 
   /* error checks */
   g_assert (in != NULL);
@@ -881,6 +882,13 @@ void ObitImageDescInit  (gpointer inn)
   in->row     = 0;
   in->areBlanks = FALSE;
   in->info      = newObitInfoList();
+  for (i=0; i<IM_MAXDIM; i++) {
+    in->inaxes[i] = 0;
+    in->cdelt[i]  = 0.0;
+    in->crpix[i]  = 0.0;
+    in->crota[i]  = 0.0;
+     for (j=0; j<IMLEN_KEYWORD; j++) in->ctype[i][j] = ' ';
+  }
 } /* end ObitImageDescInit */
 
 /**

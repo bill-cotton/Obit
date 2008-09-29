@@ -231,8 +231,9 @@ void ObitUVCalStart (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
     return;
  }
 
-  /* Reference descriptor */
-  in->myDesc = ObitUVDescCopy(inDesc,in->myDesc, err);
+  /* Copy descriptor */
+  in->myDesc = ObitUVDescCopy(inDesc, in->myDesc, err);
+  ObitUVDescCopyFreq(inDesc, in->myDesc, err);  /* Frequency arrays too */
   /* Needs update if data compressed */
   if (in->myDesc->inaxes[0]==1) {
     in->myDesc->inaxes[0] *= 3;

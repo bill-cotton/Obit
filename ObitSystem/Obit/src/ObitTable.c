@@ -266,8 +266,8 @@ ObitTable* ObitTableZap (ObitTable *in, ObitErr *err)
   in->myIO = ObitIOUnref(in->myIO);       /*  delete IO */
   in->info = ObitInfoListUnref(in->info);  /* delete infoList */
 
-  /* Get memory resident bits as well - loop until truely deleted*/
-  while (in->ReferenceCount>1) ObitTableUnref(in);
+  /* Get memory resident bits as well - loop until truely deleted
+  Bad Idea while (in->ReferenceCount>1) ObitTableUnref(in);*/
   in = ObitTableUnref(in);
 
   return in;

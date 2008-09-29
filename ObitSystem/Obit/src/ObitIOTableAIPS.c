@@ -1039,7 +1039,7 @@ ObitIOCode ObitIOTableAIPSWriteDescriptor (ObitIOTableAIPS *in, ObitErr *err)
   gchar keyName[22], *keyNameP, blob[256], *ctemp;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   AIPSint controlBlock[256], record[256];
-  olong i, j, k, ip, ncol, icol, ndo, maxkey, ikey;
+  olong i, j, k, ii, ip, ncol, icol, ndo, maxkey, ikey;
   oint oitemp[4]={0,0,0,0};
   olong damn, kkol;
   olong  titleRec, unitRec, keyRec, nrec;
@@ -1290,7 +1290,11 @@ ObitIOCode ObitIOTableAIPSWriteDescriptor (ObitIOTableAIPS *in, ObitErr *err)
 	kkol = -1;
 	for (damn=0; damn<desc->nfield; damn++) 
 	  if (desc->order[damn]==(icol+1)) kkol = damn;
-	g_memmove ((gchar*)&record[ip], desc->FieldUnit[kkol], 8);
+	/* blank fill units */
+	for (ii=0; ii<8; ii++) temp[i] = ' ';
+	strncpy(temp, desc->FieldUnit[kkol], 8);
+	for (ii=0; ii<8; ii++) if (temp[i]==0) temp[i] = ' ';
+	g_memmove ((gchar*)&record[ip], temp, 8);
 	icol++;
 	ip +=2; /* next unit in record */
       }

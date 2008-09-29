@@ -109,6 +109,10 @@ gconstpointer ObitUVDescGetClass (void);
 void ObitUVDescCopyDesc (ObitUVDesc* in, ObitUVDesc* out,
 			 ObitErr *err);
 
+/** Public: Copy Frequency information arrays. */
+void ObitUVDescCopyFreq (ObitUVDesc* in, ObitUVDesc* out,
+			 ObitErr *err);
+
 /** Public: Index for easier access */
 void ObitUVDescIndex (ObitUVDesc* in);
 

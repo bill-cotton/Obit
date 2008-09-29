@@ -121,6 +121,8 @@ gconstpointer ObitUVDescGetClass (void)
  * The output descriptor will have the size and reference pixel
  * modified to reflect subimaging on the input, i.e. the output
  * descriptor describes the input.
+ * Output will have frequency arrays deallocated, if necessary use
+ * ObitUVDescGetFreq to rebuild.
  * \param in Pointer to object to be copied.
  * \param out Pointer to object to be written.  
  *            If NULL then a new structure is created.
@@ -132,7 +134,7 @@ ObitUVDesc* ObitUVDescCopy (ObitUVDesc* in, ObitUVDesc* out, ObitErr *err)
   const ObitClassInfo *ParentClass;
   gboolean oldExist;
   gchar *outName;
-  olong i,j, size, nif, nfreq;
+  olong i, j;
 
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -207,43 +209,13 @@ ObitUVDesc* ObitUVDescCopy (ObitUVDesc* in, ObitUVDesc* out, ObitErr *err)
     out->info = ObitInfoListCopy (in->info);
   }
 
-  /* Frequency related arrays - how big? */
-  nfreq = 1;
-  if (in->jlocf>=0) nfreq = MAX (1, in->inaxes[in->jlocf]);
-  nif = 1;
-  if (in->jlocif>=0) nif = MAX (1, in->inaxes[in->jlocif]);
-  size = nfreq*nif;
- 
-  /* Frequencies */
-  if (in->freqArr) {
-    out->freqArr = g_realloc(out->freqArr, size*sizeof(odouble));
-    for (i=0; i<size; i++) out->freqArr[i] = in->freqArr[i];
-  }
-  
-  /* Frequency Scaling */
-  if (in->fscale) {
-    out->fscale = g_realloc(out->fscale, size*sizeof(ofloat));
-    for (i=0; i<size; i++) out->fscale[i] = in->fscale[i];
-  }
-  
-  /* IF frequency */
-  if (in->freqIF) {
-    out->freqIF = g_realloc(out->freqIF, nif*sizeof(odouble));
-    for (i=0; i<nif; i++) out->freqIF[i] = in->freqIF[i];
-  }
-  
-  /* IF channel bandwidths */
-  if (in->chIncIF) {
-    out->chIncIF = g_realloc(out->chIncIF, nif*sizeof(ofloat));
-    for (i=0; i<nif; i++) out->chIncIF[i] = in->chIncIF[i];
-  }
-  
-  /* IF sidebands */
-  if (in->sideband) {
-    out->sideband = g_realloc(out->sideband, nif*sizeof(olong));
-    for (i=0; i<nif; i++) out->sideband[i] = in->sideband[i];
-  }
-  
+  /* Release frequency related arrays - use ObitUVDescGetFreq to rebuild */
+  if (out->freqArr)  g_free(out->freqArr);  out->freqArr = NULL;
+  if (out->fscale)   g_free(out->fscale);   out->fscale = NULL;
+  if (out->freqIF)   g_free(out->freqIF);   out->freqIF = NULL;
+  if (out->chIncIF)  g_free(out->chIncIF);  out->chIncIF = NULL;
+  if (out->sideband) g_free(out->sideband); out->sideband = NULL;
+
   /* index output */
   ObitUVDescIndex (out);
   
@@ -310,6 +282,76 @@ void ObitUVDescCopyDesc (ObitUVDesc* in, ObitUVDesc* out,
 
   return;
 } /* end ObitUVDescCopyDesc */
+
+/**
+ * Copy frequency information arrays not copied by Copy
+ * \param in  Pointer to object to be copied.
+ * \param out Pointer to object to be written.  
+ * \param err ObitErr error stack
+ */
+void ObitUVDescCopyFreq (ObitUVDesc* in, ObitUVDesc* out, 
+			 ObitErr *err)
+{
+  olong nfreq, nif, size, i;
+
+  /* error checks */
+  if (err->error) return;
+
+  /* Frequency related arrays - how big? */
+  nfreq = 1;
+  if (in->jlocf>=0) nfreq = MAX (1, in->inaxes[in->jlocf]);
+  nif = 1;
+  if (in->jlocif>=0) nif = MAX (1, in->inaxes[in->jlocif]);
+  size = nfreq*nif;
+  if (size<=0) return;
+ 
+  /* Frequencies */
+  if (in->freqArr) {
+    if (out->freqArr)
+      out->freqArr = g_realloc(out->freqArr, size*sizeof(odouble));
+    else
+      out->freqArr = g_malloc0(size*sizeof(odouble));
+    for (i=0; i<size; i++) out->freqArr[i] = in->freqArr[i];
+  }
+  
+  /* Frequency Scaling */
+  if (in->fscale) {
+    if (out->fscale)
+      out->fscale = g_realloc(out->fscale, size*sizeof(odouble));
+    else
+      out->fscale = g_malloc0(size*sizeof(odouble));
+    for (i=0; i<size; i++) out->fscale[i] = in->fscale[i];
+  }
+  
+  /* IF frequency */
+  if (in->freqIF) {
+    if (out->freqIF)
+      out->freqIF = g_realloc(out->freqIF, size*sizeof(odouble));
+    else
+      out->freqIF = g_malloc0(size*sizeof(odouble));
+    for (i=0; i<nif; i++) out->freqIF[i] = in->freqIF[i];
+  }
+  
+  /* IF channel bandwidths */
+  if (in->chIncIF) {
+    if (out->chIncIF)
+      out->chIncIF = g_realloc(out->chIncIF, size*sizeof(ofloat));
+    else
+      out->chIncIF = g_malloc0(size*sizeof(ofloat));
+    for (i=0; i<nif; i++) out->chIncIF[i] = in->chIncIF[i];
+  }
+  
+  /* IF sidebands */
+  if (in->sideband) {
+    if (out->sideband)
+      out->sideband = g_realloc(out->sideband, size*sizeof(olong));
+    else
+      out->sideband = g_malloc0(size*sizeof(olong));
+    for (i=0; i<nif; i++) out->sideband[i] = in->sideband[i];
+  }
+  
+  return;
+} /* end ObitUVDescCopyFreq */
 
 /**
  * Set axis, random parameter order indicators and data increments.

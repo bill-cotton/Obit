@@ -68,6 +68,7 @@ ObitIOCode ObitTableSNSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   g_assert (ObitUVIsA(outUV));
 
   /* Calibration selected? */
+  type = OBIT_float; InfoReal.flt = 0.0;
   ObitInfoListGetTest(inUV->info, "doCalib", &type, (gint32*)dim, &InfoReal);
   if (type==OBIT_float) itemp = InfoReal.flt + 0.5;
   else itemp = InfoReal.itg;
