@@ -82,4 +82,8 @@ ObitInfoList* ObitUVUtilCount (ObitUV *inUV, ofloat timeInt, ObitErr *err);
 /** Public: Copy data by channel to multiple output UV  */
 void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV, 
 			ObitErr *err);
+
+/** Public: Add Gaussian noise to a UV data set */
+void ObitUVUtilNoise(ObitUV *inUV, ObitUV *outUV, ofloat scale, ofloat sigma, 
+		     ObitErr *err);
 #endif /* OBITIUVUTIL_H */ 

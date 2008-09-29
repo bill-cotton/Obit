@@ -125,8 +125,9 @@ Opcode                             'DIV ' => divide visibility
 modelFlux        0.0               Model flux density (Jy)
 **PARAM** float 2  
 modelPos        0.0                Model position offset (asec)
-**PARAM** float 4  
+**PARAM** float 8  
 modelParm                          Model parameters (maj, min, pa, type)
+                                   alpha, beta...
 **PARAM** boo 1
 mrgCC                              Merge CC table CCVer?
 **PARAM** boo 1  **DEF** T
@@ -282,6 +283,8 @@ Adverbs:
                position_angle (deg),
              modelParm[3] = 3; Uniform sphere:
                [0] =  radius (asec)
+             modelParm[4+] = spectral index, curvature...
+             If giving spectral terms, add 10 to  modelParm[3]
   mrgCC......If True, then merge each CC table CCVer before 
            . subtracting (one per field). In each table, all 
            . components on a given cell have their fluxes summed 

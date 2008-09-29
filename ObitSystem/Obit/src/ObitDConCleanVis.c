@@ -1732,6 +1732,7 @@ static void WhosBest (ObitDConCleanVis *in, olong *bbest, olong *ssecond)
  * Resets the number of components
  * the reuseFlux option uses the Pixels member and the list of CC Tables
  * which must be fully instantiated.
+ * Sets BChan, EChan, BIF, EIF to default
  * \param in   The Clean object
  * \param err Obit error stack object.
  * \return true if components in the sky model need to be subtracted
@@ -1741,7 +1742,7 @@ static gboolean ResetSkyModel(ObitDConCleanVis *in, ObitErr *err)
   gboolean doSub=FALSE;
   olong ncomp;
   ofloat sum;
-  olong i, irow;
+  olong i, irow, it;
   gint32 dim[MAXINFOELEMDIM];
   olong *itemp=NULL, nfield;
   ObitTableCCRow *CCRow = NULL;
@@ -1767,6 +1768,15 @@ static gboolean ResetSkyModel(ObitDConCleanVis *in, ObitErr *err)
   dim[0] = nfield;
   for (i=0; i<nfield; i++) itemp[i] = 1;
   ObitInfoListAlwaysPut(in->skyModel->info, "BComp", OBIT_long, dim, itemp);
+
+  /* Channel/IF selection */
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  it = 1;
+  ObitInfoListAlwaysPut(in->skyModel->info, "BChan", OBIT_long, dim, &it);
+  ObitInfoListAlwaysPut(in->skyModel->info, "BIF",   OBIT_long, dim, &it);
+  it = 0;
+  ObitInfoListAlwaysPut(in->skyModel->info, "EChan", OBIT_long, dim, &it);
+  ObitInfoListAlwaysPut(in->skyModel->info, "EIF",   OBIT_long, dim, &it);
 
   for (i=0; i<nfield; i++) itemp[i] = 0;  /* initial number to subtract */
 

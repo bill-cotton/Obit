@@ -77,7 +77,7 @@ ofloat pointFlux;
 ofloat pointXOff, pointYOff;
 /** Other (non-point)model components:
     major_axis (deg),  minor_axis (deg),  position_angle (deg),
-    type (ObitSkyModelCompType as gint);
+    type (ObitSkyModelCompType as gint), spectral terms;
  */
 ofloat pointParms[10];
 /** Antennna diameter for rel. PB corrections*/

@@ -379,6 +379,7 @@ CleanInput={'structure':['Clean',[('Niter','Maximum number of CLEAN iterations')
                                   ('OutlierDist', 'Maximum distance to add outlyers (deg)'),
                                   ('OutlierSI',   'Spectral index to estimate flux density'),
                                   ('OutlierSize', 'Size of outlyer field (pixels)'),
+                                  ('dispURL', 'URL of display server'),
                                   ('doRestore', 'Restore image when done? [def True]'),
                                   ('doFlatten', 'Flatten image when done? [def True]')]],
             # defaults
@@ -444,6 +445,7 @@ CleanInput={'structure':['Clean',[('Niter','Maximum number of CLEAN iterations')
             'OutlierDist':1.0,
             'OutlierSI':-0.75,
             'OutlierSize':50,
+            'dispURL':'None',
             'doRestore':True,
             'doFlatten':True }
 def PCreate (name, uvdata, err, input=CleanInput):
@@ -529,6 +531,7 @@ def PCreate (name, uvdata, err, input=CleanInput):
     OutlierDist = Maximum distance to add outlyers (deg)
     OutlierSI   = Spectral index to estimate flux density
     OutlierSize = Size of outlyer field (pixels)
+    dispURL     = URL of display server
     doRestore   = Restore image when done? [def True]
     doFlatten   = Flatten image when done? [def True]
     """
@@ -646,6 +649,8 @@ def PCreate (name, uvdata, err, input=CleanInput):
     InfoList.PPutBoolean (inInfo, "autoWindow", dim, [input["autoWindow"]],err)
     dim[0] = len(input["Plane"])
     InfoList.PAlwaysPutInt   (inInfo, "Plane",    dim, input["Plane"])
+    dim[0] = len(input["dispURL"])
+    InfoList.PAlwaysPutString (inInfo, "dispURL",   dim, [input["dispURL"]])
     # show any errors 
     #OErr.printErrMsg(err, "CleanVisCreate: Error setting parameters")
     #

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006                                               */
+/*;  Copyright (C) 2006,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -18,7 +18,7 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*;  Correspondence this software should be addressed as follows:     */
+/*; Correspondence about this software should be addressed as follows:*/
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
@@ -64,6 +64,8 @@ void ObitConvUtilConv (ObitImage *inImage, ObitFArray *convFn,
 {
   ObitIOCode   iretCode, oretCode;
   olong      ndim=2, naxis[2], blc[2], trc[2], cen[2];
+  olong tblc[IM_MAXDIM] = {1,1,1,1,1,1,1};
+  olong ttrc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   ofloat Beam[3];
   ObitFFT    *FFTfor=NULL, *FFTrev=NULL;
   ObitFArray *padConvFn=NULL, *padImage=NULL, *tmpArray=NULL;
@@ -71,6 +73,15 @@ void ObitConvUtilConv (ObitImage *inImage, ObitFArray *convFn,
   gchar *routine = "ObitConvUtilConv";
 
   if (err->error) return;  /* existing error? */
+
+  /* Reset any selection on images */
+  ObitImageSetSelect (inImage,  OBIT_IO_byPlane, tblc, ttrc, err);
+  ObitImageSetSelect (outImage, OBIT_IO_byPlane, tblc, ttrc, err);
+  if (err->error) Obit_traceback_msg (err, routine, outImage->name);
+
+  /* Copy header info */
+  ObitImageDescCopyDesc (inImage->myDesc, outImage->myDesc, err);
+  if (err->error) Obit_traceback_msg (err, routine, outImage->name);
 
   /* Create FFTs */
   FFTfor = ObitFeatherUtilCreateFFT(inImage, OBIT_FFT_Forward);

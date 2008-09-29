@@ -599,12 +599,12 @@ void ObitRPCClear (gpointer inn)
 
   /* Update type dependent stuff */
   if (in->type==OBIT_RPC_Client) {
-    myClassInfo.numberClient--;
+    /*  NO myClassInfo.numberClient--;*/
     /* Shutdown our XML-RPC client library. */
-    if (myClassInfo.numberClient==0) xmlrpc_client_cleanup();
+    /*  NO if (myClassInfo.numberClient==0) xmlrpc_client_cleanup();*/
   }
   if (in->type==OBIT_RPC_Server) {
-    xmlrpc_registry_free(in->registryP);
+    /*  NO xmlrpc_registry_free(in->registryP);*/
     /* There seems to be no way to delete the server structures */
   }
 

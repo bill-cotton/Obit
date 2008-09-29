@@ -1011,7 +1011,7 @@ gboolean ObitSkyModelLoadPoint (ObitSkyModel *in, ObitUV *uvdata, ObitErr *err)
 {
   gboolean gotSome = FALSE;
   ObitIOCode retCode = OBIT_IO_SpecErr;
-  olong ndim, naxis[2];
+  olong i, cnt, ndim, naxis[2];
   ofloat *table, const2, ccrot, ssrot, cpa, spa, uvrot, xmaj, xmin;
   ofloat dxyzc[3], xxoff, yyoff, zzoff;
   gchar *routine = "ObitSkyModelLoadPoint";
@@ -1025,7 +1025,7 @@ gboolean ObitSkyModelLoadPoint (ObitSkyModel *in, ObitUV *uvdata, ObitErr *err)
 
   /* Get position phase shift parameters */
   ObitUVDescShiftPosn(uvdata->myDesc, -in->pointXOff, -in->pointYOff, 
-		       dxyzc, err);
+		      dxyzc, err);
   if (err->error) Obit_traceback_val (err, routine, in->name, gotSome);
  
   /* Set field center offsets */
@@ -1037,6 +1037,14 @@ gboolean ObitSkyModelLoadPoint (ObitSkyModel *in, ObitUV *uvdata, ObitErr *err)
   zzoff = dxyzc[2];
    
   in->modType = in->pointParms[3] + 0.5;  /* Model component type */
+
+  /* Include spectrum? */
+  if (in->modType>=10) {
+    /* Get number */
+    cnt = 0;
+    for (i=4; i<10; i++) if (in->pointParms[3+i]!=0.0) cnt++;
+    in->nSpecTerm = cnt;
+  }
 
  /* (re)allocate structure */
   ndim = 2;
@@ -1055,10 +1063,11 @@ gboolean ObitSkyModelLoadPoint (ObitSkyModel *in, ObitUV *uvdata, ObitErr *err)
   table[1] = xxoff;
   table[2] = yyoff;
   table[3] = zzoff;
+  for (i=0; i<in->nSpecTerm; i++) table[i+4] = in->pointParms[i+4];
 
   /* Gaussian */
   if (in->modType==OBIT_SkyModel_GaussMod) {
-    /* const2 converts FWHM(deg) to coefficients for u*u, v*v, u*v */
+    /* const2 converts FWHM(asec) to coefficients for u*u, v*v, u*v */
     const2 = DG2RAD * (G_PI / 1.17741022) * sqrt (0.5) * 2.77777778e-4;
     cpa = cos (DG2RAD * in->pointParms[2]);
     spa = sin (DG2RAD * in->pointParms[2]);
@@ -1131,7 +1140,7 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
 
   konst = DG2RAD * 2.0 * G_PI;
   /* konst2 converts FWHM(deg) to coefficients for u*u, v*v, u*v */
-  konst2 = DG2RAD * (G_PI / 1.17741022) * sqrt (0.5) * 2.77777778e-4;
+  konst2 = DG2RAD * (G_PI / 1.17741022) * sqrt (0.5);
 
   /* Loop over images counting CCs */
   count = 0;
@@ -1388,7 +1397,7 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
 	  table[5] = -(((spa * xmaj)*(spa * xmaj)) + (cpa * xmin)*(cpa * xmin));
 	  table[6] = -2.0 *  cpa * spa * (xmaj*xmaj - xmin*xmin);
 	  /*  spectrum */
-	  for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+6] = array[iterm+3];
+	  for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+7] = array[iterm+3];
 	  
 	/* Uniform sphere */
 	} else if (in->modType==OBIT_SkyModel_USphereMod) {
@@ -1804,7 +1813,7 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	      lll = ll = log(freqFact);
 	      arg = 0.0;
 	      for (iterm=0; iterm<nterm; iterm++) {
-		arg += ccData[4+iterm] * ll;
+		arg += ccData[4+iterm] * lll;
 		lll *= ll;
 	      }
 	      specFact = exp(arg);
@@ -1844,7 +1853,7 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	      lll = ll = log(freqFact);
 	      arg = 0.0;
 	      for (iterm=0; iterm<nterm; iterm++) {
-		arg += ccData[7+iterm] * ll;
+		arg += ccData[7+iterm] * lll;
 		lll *= ll;
 	      }
 	      specFact = exp(arg);
@@ -1867,9 +1876,8 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	  /* From the AIPSish QSPSUB.FOR  */
 	  for (iComp=0; iComp<mcomp; iComp++) {
 	    if (ccData[0]!=0.0) {  /* valid? */
-	      /* THIS DOESN't USE THE DISK SIZE - CANNOT BE RIGHT */
 	      arg = freqFact * sqrt(visData[ilocu]*visData[ilocu] +
-				    visData[ilocv]*visData[ilocv]);
+				    visData[ilocv]*visData[ilocv]) * ccData[4];
 	      arg = MAX (arg, 0.1);
 	      amp = ccData[0] * ((sin(arg)/(arg*arg*arg)) - cos(arg)/(arg*arg));
 	      tx = ccData[1]*(odouble)visData[ilocu];
@@ -1885,17 +1893,16 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	case OBIT_SkyModel_USphereModSpec:    /* Uniform sphere + spectrum*/
 	  for (iComp=0; iComp<mcomp; iComp++) {
 	    if (ccData[0]!=0.0) {  /* valid? */
-	      /* THIS DOESN't USE THE DISK SIZE - CANNOT BE RIGHT */
 	      /* Frequency dependent term */
 	      lll = ll = log(freqFact);
 	      arg = 0.0;
 	      for (iterm=0; iterm<nterm; iterm++) {
-		arg += ccData[4+iterm] * ll;
+		arg += ccData[4+iterm] * lll;
 		lll *= ll;
 	      }
 	      specFact = exp(arg);
 	      arg = freqFact * sqrt(visData[ilocu]*visData[ilocu] +
-				    visData[ilocv]*visData[ilocv]);
+				    visData[ilocv]*visData[ilocv]) * ccData[4];
 	      arg = MAX (arg, 0.1);
 	      amp = specFact * ccData[0] * ((sin(arg)/(arg*arg*arg)) - cos(arg)/(arg*arg));
 	      tx = ccData[1]*(odouble)visData[ilocu];
@@ -2040,10 +2047,11 @@ void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr 
     args->err    = err;
     /* local copy of interpolator if needed */
     if (!args->Interp) {
-      if (i>0) 
+      if (i>0) {
 	args->Interp = ObitCInterpolateClone(in->myInterp, NULL);
-      else
+      } else {
 	args->Interp = ObitCInterpolateRef(in->myInterp);
+      }
       if (err->error) Obit_traceback_msg (err, routine, in->name);
     } /* end local copy of interpolator */
     /* Update which vis */
@@ -2054,7 +2062,7 @@ void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr 
 
   /* Do operation */
   OK = ObitThreadIterator (in->thread, nThreads, in->GridFunc, in->threadArgs);
-
+  
   /* Check for problems */
   if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
 }  /* end ObitSkyModelFTGrid */
@@ -3692,7 +3700,7 @@ void ObitSkyModelInit  (gpointer inn)
 {
   ObitClassInfo *ParentClass;
   ObitSkyModel *in = inn;
-  olong number;
+  olong number, i;
 
   /* error checks */
   g_assert (in != NULL);
@@ -3746,6 +3754,7 @@ void ObitSkyModelInit  (gpointer inn)
   in->DFTFunc   = NULL;
   in->GridFunc  = NULL;
   in->nSpecTerm = 0;
+  for (i=0; i<10; i++) in->pointParms[i] = 0.0;
 
 } /* end ObitSkyModelInit */
 

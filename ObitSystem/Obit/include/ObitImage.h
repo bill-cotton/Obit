@@ -341,6 +341,10 @@ void ObitImageWriteKeyword (ObitImage *in,
 void ObitImageReadKeyword (ObitImage *in, 
 			   gchar* name, ObitInfoType *type, gint32 *dim, 
 			   gpointer data, ObitErr *err);
+/** Public: Set selection */
+void ObitImageSetSelect (ObitImage *in, ObitIOSize IOBy, 
+			 olong blc[IM_MAXDIM], olong trc[IM_MAXDIM],
+			 ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 
 /**

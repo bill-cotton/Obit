@@ -9195,7 +9195,11 @@ extern ObitUV* UVEditClipStokes(ObitUV* in, int scratch, ObitUV *out, ObitErr *e
   gboolean lscratch;
   lscratch = scratch!=0;
   return ObitUVEditClipStokes (in, lscratch, out, err);
-} // end UVUtilClipStokes
+} // end UVEditClipStokes
+
+extern void UVUtilNoise(ObitUV* in, ObitUV *out, float scale, float sigma, ObitErr *err) {
+  return ObitUVUtilNoise (in, out, (ofloat)scale, (ofloat)sigma, err);
+} // end UVUtilNoise
 
 
 extern void UVSetFITS(ObitUV *,long ,int ,char *,ObitErr *);
@@ -9247,6 +9251,7 @@ extern void UVEditFD(ObitUV *,ObitUV *,ObitErr *);
 extern void UVEditStokes(ObitUV *,ObitUV *,ObitErr *);
 extern ObitUV *UVEditClip(ObitUV *,int ,ObitUV *,ObitErr *);
 extern ObitUV *UVEditClipStokes(ObitUV *,int ,ObitUV *,ObitErr *);
+extern void UVUtilNoise(ObitUV *,ObitUV *,float ,float ,ObitErr *);
 
 typedef struct {
   ObitUV *me;
@@ -41399,6 +41404,47 @@ static PyObject *_wrap_UVEditClipStokes(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_UVUtilNoise(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUV * _arg0;
+    ObitUV * _arg1;
+    float  _arg2;
+    float  _arg3;
+    ObitErr * _arg4;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo4 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOffO:UVUtilNoise",&_argo0,&_argo1,&_arg2,&_arg3,&_argo4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVUtilNoise. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of UVUtilNoise. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of UVUtilNoise. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    UVUtilNoise(_arg0,_arg1,_arg2,_arg3,_arg4);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_newUVSelfCal(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitUVSelfCal * _result;
@@ -44253,7 +44299,7 @@ static PyObject *_wrap_new_Image(PyObject *self, PyObject *args) {
 }
 
 static void delete_Image(Image *self) { /* Scratch files may be deleted separately */
-  if (self) {
+  if (self && (self->me)) {
     if (self->me->ReferenceCount>0) 
        self->me = ImageUnref(self->me);
     free(self);
@@ -47279,9 +47325,11 @@ static PyObject *_wrap_new_UV(PyObject *self, PyObject *args) {
 }
 
 static void delete_UV(UV *self) { /* Scratch files may be deleted separately*/
-   if (self->me->ReferenceCount>0) 
-      self->me = ObitUVUnref(self->me);
-   free(self);
+   if (self && (self->me)) {
+     if (self->me->ReferenceCount>0) 
+        self->me = ObitUVUnref(self->me);
+     free(self);
+    }
   }
 static PyObject *_wrap_delete_UV(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -47606,6 +47654,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "UVSelfCalCopy", _wrap_UVSelfCalCopy, METH_VARARGS },
 	 { "UVSelfCalCreate", _wrap_UVSelfCalCreate, METH_VARARGS },
 	 { "newUVSelfCal", _wrap_newUVSelfCal, METH_VARARGS },
+	 { "UVUtilNoise", _wrap_UVUtilNoise, METH_VARARGS },
 	 { "UVEditClipStokes", _wrap_UVEditClipStokes, METH_VARARGS },
 	 { "UVEditClip", _wrap_UVEditClip, METH_VARARGS },
 	 { "UVEditStokes", _wrap_UVEditStokes, METH_VARARGS },

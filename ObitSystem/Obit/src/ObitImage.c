@@ -1014,8 +1014,11 @@ ObitIOCode ObitImageRead (ObitImage *in, ofloat *data, ObitErr *err)
   }
 
   /* select internal or external buffer */
-  if (buffer==NULL) buffer = in->image->array;
-  g_assert (buffer != NULL);
+  if ((buffer==NULL) && (in->image!=NULL)) buffer = in->image->array;
+
+  /* Check buffer */
+  Obit_retval_if_fail((buffer != NULL), err, retCode,
+ 		      "%s: No buffer allocated for %s", routine, in->name);
 
   retCode = ObitIORead (in->myIO, buffer, err);
   if ((retCode > OBIT_IO_EOF) || (err->error)) /* add traceback,return */
@@ -1066,8 +1069,11 @@ ObitIOCode ObitImageWrite (ObitImage *in, ofloat *data, ObitErr *err)
   }
 
   /* select internal or external buffer */
-  if (buffer==NULL) buffer = in->image->array;
-  g_assert (buffer != NULL);
+  if ((buffer==NULL)&& (in->image!=NULL)) buffer = in->image->array;
+
+  /* Check buffer */
+  Obit_retval_if_fail((buffer != NULL), err, retCode,
+ 		      "%s: No buffer allocated for %s", routine, in->name);
 
   /* most of the instructions for the I/O are in the ObitInfoList */
   retCode = ObitIOWrite (in->myIO, buffer, err);
@@ -1136,8 +1142,11 @@ ObitIOCode ObitImageGetPlane (ObitImage *in, ofloat *data, olong plane[5], ObitE
   in->myDesc->IOsize= ((ObitImageDesc*)in->myIO->myDesc)->IOsize = OBIT_IO_byPlane;
 
   /* select internal or external buffer */
-  if (buffer==NULL) buffer = in->image->array;
-  g_assert (buffer != NULL);
+  if ((buffer==NULL) && (in->image!=NULL)) buffer = in->image->array;
+
+  /* Check buffer */
+  Obit_retval_if_fail((buffer != NULL), err, retCode,
+ 		      "%s: No buffer allocated for %s", routine, in->name);
 
   retCode = ObitIORead (in->myIO, buffer, err);
   if ((retCode > OBIT_IO_EOF) || (err->error)) /* add traceback,return */
@@ -1205,8 +1214,11 @@ ObitIOCode ObitImagePutPlane (ObitImage *in, ofloat *data, olong plane[5], ObitE
   in->myDesc->IOsize= ((ObitImageDesc*)in->myIO->myDesc)->IOsize = OBIT_IO_byPlane;
 
   /* select internal or external buffer */
-  if (buffer==NULL) buffer = in->image->array;
-  g_assert (buffer != NULL);
+  if ((buffer==NULL) && (in->image!=NULL)) buffer = in->image->array;
+
+  /* Check buffer */
+  Obit_retval_if_fail((buffer != NULL), err, retCode,
+  		      "%s: No buffer allocated for %s", routine, in->name);
 
   retCode = ObitIOWrite (in->myIO, buffer, err);
   if ((retCode > OBIT_IO_EOF) || (err->error)) /* add traceback,return */
@@ -1452,6 +1464,65 @@ void ObitImageReadKeyword (ObitImage *in,
 		  name, type, dim, data, err);
 } /* end ObitImageReadKeyword */
 
+
+/**
+ * Set size of data read/write and window in image
+ * sets extBuffer to FALSE.
+ * \param in   object to update, must be fully instantiated
+ *             Will be opened and closed to get descriptor.
+ * \param IOBy Size of I/O (OBIT_IO_byPlane or OBIT_IO_byRow).
+ * \param blc  Array giving bottom left corner (1-rel)
+ *             if zeroes, use descriptor to get actual value
+ *             for whole image.  Actual values returned
+ * \param trc  Array giving top right corner (1-rel)
+ *             if zeroes, read descriptor to get actual value
+ *             for whole image. Actual values returned
+ * \param err  ObitErr for reporting errors.
+ */
+void ObitImageSetSelect (ObitImage *in, ObitIOSize IOBy, 
+			 olong blc[IM_MAXDIM], olong trc[IM_MAXDIM],
+			 ObitErr *err)
+{
+   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+   olong i;
+   olong tblc[IM_MAXDIM] = {1,1,1,1,1,1,1};
+   olong ttrc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+   gchar *routine = "ObitImageSetSelect";
+ 
+  /*  Open image ReadOnly to get proper descriptor */
+  dim[0] = IM_MAXDIM;
+  for (i=0; i<IM_MAXDIM; i++) {tblc[i] = 1; ttrc[i] = 0;}
+  ObitInfoListPut (in->info, "BLC", OBIT_long, dim, blc, err); 
+  ObitInfoListPut (in->info, "TRC", OBIT_long, dim, trc, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  if ((ObitImageOpen (in, OBIT_IO_ReadOnly, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, 
+		   "ERROR opening image %s", in->name);
+    return;
+  }
+  ObitImageClose (in, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Set limits/real values */
+  for (i=0; i<in->myDesc->naxis; i++) {
+    if (blc[i]<=0) blc[i] = 1;
+    blc[i] = MIN (blc[i], in->myDesc->inaxes[i]);
+    if (trc[i]<=0) trc[i] = in->myDesc->inaxes[i];
+    trc[i] = MAX (trc[i], blc[i]);
+    trc[i] = MIN (trc[i], in->myDesc->inaxes[i]);
+  }
+
+  /* Set selection values */
+  dim[0] = 1;
+  ObitInfoListAlwaysPut (in->info, "IOBy", OBIT_long, dim,  &IOBy);
+  dim[0] = IM_MAXDIM;
+  ObitInfoListAlwaysPut (in->info, "BLC", OBIT_long, dim, blc); 
+  ObitInfoListAlwaysPut (in->info, "TRC", OBIT_long, dim, trc);
+
+  in->extBuffer = FALSE;  /* May need buffer */
+  
+} /* end ObitImageSetSelect */
 
 /*-------Private functions called by ObitData class ------*/
 /** Private:  Copy Constructor for scratch file*/

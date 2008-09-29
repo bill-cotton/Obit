@@ -353,7 +353,11 @@ extern ObitUV* UVEditClipStokes(ObitUV* in, int scratch, ObitUV *out, ObitErr *e
   gboolean lscratch;
   lscratch = scratch!=0;
   return ObitUVEditClipStokes (in, lscratch, out, err);
-} // end UVUtilClipStokes
+} // end UVEditClipStokes
+
+extern void UVUtilNoise(ObitUV* in, ObitUV *out, float scale, float sigma, ObitErr *err) {
+  return ObitUVUtilNoise (in, out, (ofloat)scale, (ofloat)sigma, err);
+} // end UVUtilNoise
 
 
 %}
@@ -379,9 +383,11 @@ typedef struct {
      return out;
    }
   ~UV() { /* Scratch files may be deleted separately*/
-   if (self->me->ReferenceCount>0) 
-      self->me = ObitUVUnref(self->me);
-   free(self);
+   if (self && (self->me)) {
+     if (self->me->ReferenceCount>0) 
+        self->me = ObitUVUnref(self->me);
+     free(self);
+    }
   }
 };
 

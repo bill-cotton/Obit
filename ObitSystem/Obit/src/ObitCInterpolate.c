@@ -239,6 +239,14 @@ ObitCInterpolate* ObitCInterpolateCopy (ObitCInterpolate *in, ObitCInterpolate *
   out->array   = out->myArray->array;
   out->nx      = out->myArray->naxis[0];
   out->ny      = out->myArray->naxis[1];
+  out->numConjCol  = in->numConjCol;
+  out->kernalSpace = in->kernalSpace;
+  out->numKTab = in->numKTab;
+  out->xPixel  = in->xPixel;
+  out->yPixel  = in->yPixel;
+  out->yStart  = in->yStart;
+  out->xNterm  = in->xNterm;
+  out->yNterm  = in->yNterm;
   out->hwidth  = in->hwidth;
   for (i=0; i<40; i++) out->denom[i] = in->denom[i];
   
@@ -258,6 +266,7 @@ ObitCInterpolate* ObitCInterpolateClone  (ObitCInterpolate *in, ObitCInterpolate
   const ObitClassInfo *myClass, *ParentClass;
   gboolean oldExist;
   olong i;
+  ObitErr *err= NULL;
   gchar *outName;
 
   /* error checks */
@@ -285,17 +294,28 @@ ObitCInterpolate* ObitCInterpolateClone  (ObitCInterpolate *in, ObitCInterpolate
    }
      
    /* copy/set this classes additions */
+   err = newObitErr();
    out->myArray = ObitCArrayUnref(out->myArray);
    out->myArray = ObitCArrayRef(in->myArray);
-   out->myKernal= ObitCArrayUnref(out->myKernal);
-   out->myKernal= ObitCArrayRef(in->myKernal);
+   out->myKernal= ObitFArrayUnref(out->myKernal);
+   out->myKernal= ObitFArrayCopy(in->myKernal, out->myKernal, err);
    out->myDesc  = ObitImageDescUnref(out->myDesc);
-   out->myDesc  = ObitImageDescRef(in->myDesc);
-   out->array = in->array;
-   out->nx    = in->nx;
-   out->ny    = in->ny;
+   out->myDesc  = ObitImageDescCopy(in->myDesc, out->myDesc, err);
+   out->array   = out->myArray->array;
+   out->nx      = out->myArray->naxis[0];
+   out->ny      = out->myArray->naxis[1];
+   out->numConjCol  = in->numConjCol;
+   out->kernalSpace = in->kernalSpace;
+   out->numKTab   = in->numKTab;
+   out->xPixel    = in->xPixel;
+   out->yPixel    = in->yPixel;
+   out->yStart    = in->yStart;
+   out->xNterm    = in->xNterm;
+   out->yNterm    = in->yNterm;
    out->hwidth= in->hwidth;
    for (i=0; i<40; i++) out->denom[i] = in->denom[i];
+   ObitErrLog(err); /* Print any error messages */
+   err = ObitErrUnref (err);
    
   return out;
 } /* end ObitCInterpolateClone */

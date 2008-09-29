@@ -423,7 +423,7 @@ def PClean (err, input=CleanInput):
     dim[0] = len(input["Proj"])
     InfoList.PAlwaysPutInt   (OTFInfo, "Proj",     dim, [input["Proj"]])
     dim[0] = len(input["dispURL"])
-    InfoList.PAlwaysPutFloat (inInfo, "dispURL",   dim, input["dispURL"])
+    InfoList.PAlwaysPutString (inInfo, "dispURL",   dim, [input["dispURL"]])
     dim[0] = 16; dim[1] = len(input["TARGETS"])
     InfoList.PAlwaysPutString  (OTFInfo, "Targets",dim, input["Targets"])
     #

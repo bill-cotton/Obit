@@ -32,6 +32,9 @@
 #include "ObitTablePSUtil.h"
 #include "ObitTableAN.h"
 #include "ObitPrecess.h"
+#if HAVE_GSL==1  /* GSL stuff */
+#include <gsl/gsl_randist.h>
+#endif /* HAVE_GSL */
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
  * \file ObitUVUtil.c
@@ -2108,6 +2111,168 @@ void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV,
   
   return;
 } /* end ObitUVUtilSplitCh */
+
+/**
+ * Add Gaussian noise to an UV
+ * out = in*scale +  noise (sigma), real, imag, each vis
+ * Note: This uses the GSL random number generator, if this is not available
+ * then only the scaling is done.
+ * \param inUV  Input UV 
+ * \param outUV Output UV, must already be defined
+ * \param scale  scaling factor for data
+ * \param sigma  Standard deviation of Gaussian noise .
+ * \param err    Error stack
+ */
+void ObitUVUtilNoise(ObitUV *inUV, ObitUV *outUV, ofloat scale, ofloat sigma, 
+		     ObitErr *err)
+{
+  ObitIOCode retCode;
+  gboolean doCalSelect, done;
+  ObitInfoType type;
+  ObitIOAccess access;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ofloat val, fblank = ObitMagicF();
+  odouble dsigma = sigma;
+  olong i, j, indx;
+  ObitUVDesc *inDesc, *outDesc;
+  /* Don't copy Cal and Soln or data or flag tables */
+  gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
+		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
+		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
+		    "AIPS PL", "AIPS NI",
+		    NULL};
+#if HAVE_GSL==1  /* GSL stuff */
+  gsl_rng *ran=NULL;
+#endif /* HAVE_GSL */
+  gchar *routine = "ObitUVUtilNoise";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitUVIsA(inUV));
+  g_assert (ObitUVIsA(outUV));
+
+  /* Local pointers */
+  inDesc  = inUV->myDesc;
+  outDesc = outUV->myDesc;
+
+  /* Calibration wanted? */ 
+  doCalSelect = FALSE;
+  ObitInfoListGetTest(inUV->info, "doCalSelect", &type, (gint32*)dim, &doCalSelect);
+  if (doCalSelect) access = OBIT_IO_ReadCal;
+  else access = OBIT_IO_ReadWrite;
+
+ /* Open Input Data */
+  retCode = ObitUVOpen (inUV, access, err);
+  if ((retCode != OBIT_IO_OK) || (err->error>0)) 
+    Obit_traceback_msg (err, routine, inUV->name);
+
+  /* use same data buffer on input and output 
+     so don't assign buffer for output */
+  if (outUV->buffer) ObitIOFreeBuffer(outUV->buffer); /* free existing */
+  outUV->buffer     = inUV->buffer;
+  outUV->bufferSize = inUV->bufferSize;
+
+  /* Open Output Data */
+  retCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err) ;
+  if ((retCode != OBIT_IO_OK) || (err->error>0)) {
+    outUV->buffer = NULL; /* remove pointer to inUV buffer */
+    outUV->bufferSize = 0;
+    Obit_traceback_msg (err, routine, outUV->name);
+  }
+
+  /* Copy tables before data */
+  retCode = ObitUVCopyTables (inUV, outUV, exclude, NULL, err);
+  if (err->error) {/* add traceback,return */
+    outUV->buffer = NULL;
+    outUV->bufferSize = 0;
+    Obit_traceback_msg (err, routine, inUV->name);
+  }
+
+  /* Close and reopen input to init calibration which will have been disturbed 
+     by the table copy */
+  retCode = ObitUVClose (inUV, err);
+  if (err->error) {
+    outUV->buffer = NULL; outUV->bufferSize = 0;
+    Obit_traceback_msg (err, routine, inUV->name);
+  }
+  
+  retCode = ObitUVOpen (inUV, access, err);
+  if ((retCode != OBIT_IO_OK) || (err->error>0)) {
+    outUV->buffer = NULL; outUV->bufferSize = 0;
+    Obit_traceback_msg (err, routine, inUV->name);
+  }
+
+  /* Init random number generator */
+#if HAVE_GSL==1  /* GSL stuff */
+  ran = gsl_rng_alloc(gsl_rng_taus);
+#endif /* HAVE_GSL */
+  
+  /* Loop over data */
+  done = (retCode != OBIT_IO_OK);
+  while (!done) {
+    
+    /* read buffer */
+    retCode = ObitUVRead (inUV, NULL, err);
+    if (err->error) {
+      outUV->buffer = NULL; outUV->bufferSize = 0;
+      Obit_traceback_msg (err, routine, inUV->name);
+    }
+    done = (retCode == OBIT_IO_EOF); /* done? */
+    if (done) break;
+
+    /* How many? */
+    outDesc->numVisBuff = inDesc->numVisBuff;
+
+    /* Modify data */
+    for (i=0; i<inDesc->numVisBuff; i++) { /* loop over visibilities */
+      indx = i*inDesc->lrec + inDesc->nrparm;
+      for (j=0; j<inDesc->ncorr; j++) { /* loop over correlations */
+	if (inUV->buffer[indx]!=fblank) {
+	  val = inUV->buffer[indx]*scale;
+#if HAVE_GSL==1  /* GSL stuff */
+	  val += (ofloat)gsl_ran_gaussian (ran, dsigma);
+#endif /* HAVE_GSL */
+	  inUV->buffer[indx]  = val;
+	}
+	if (inUV->buffer[indx+1]!=fblank) {
+	  val = inUV->buffer[indx+1]*scale;
+#if HAVE_GSL==1  /* GSL stuff */
+	  val += (ofloat)gsl_ran_gaussian (ran, dsigma);
+#endif /* HAVE_GSL */
+	  inUV->buffer[indx+1]  = val;
+	}
+	indx += inDesc->inaxes[0];
+      } /* end loop over correlations */
+    } /* end loop over visibilities */
+
+    
+    /* Write buffer */
+    retCode = ObitUVWrite (outUV, NULL, err);
+    if (err->error) {
+      outUV->buffer = NULL; outUV->bufferSize = 0;
+      Obit_traceback_msg (err, routine, outUV->name);
+    }
+  } /* end loop over data */
+  
+  /* unset output buffer (may be multiply deallocated ;'{ ) */
+  outUV->buffer = NULL;
+  outUV->bufferSize = 0;
+  
+  /* Free random number generator */
+#if HAVE_GSL==1  /* GSL stuff */
+  gsl_rng_free(ran);
+#endif /* HAVE_GSL */
+  
+  /* Close input */
+  retCode = ObitUVClose (inUV, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  
+  /* Close output */
+  retCode = ObitUVClose (outUV, err);
+  if (err->error) Obit_traceback_msg (err, routine, outUV->name);
+
+} /* end ObitUVUtilNoise */
 
 /*----------------------Private functions---------------------------*/
 /**

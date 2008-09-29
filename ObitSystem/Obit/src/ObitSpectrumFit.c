@@ -1025,8 +1025,8 @@ ofloat* ObitSpectrumFitSingle (gint nfreq, olong nterm, odouble *freq,
 #ifdef HAVE_GSL
   if (arg->solver2)   gsl_multifit_fdfsolver_free (arg->solver2);
   if (arg->solver3)   gsl_multifit_fdfsolver_free (arg->solver3);
-  if (arg->solver4)   gsl_multifit_fdfsolver_free (arg->solver3);
-  if (arg->solver4)   gsl_multifit_fdfsolver_free (arg->solver3);
+  if (arg->solver4)   gsl_multifit_fdfsolver_free (arg->solver4);
+  if (arg->solver5)   gsl_multifit_fdfsolver_free (arg->solver5);
   if (arg->work2)     gsl_vector_free(arg->work2);
   if (arg->work3)     gsl_vector_free(arg->work3);
   if (arg->work4)     gsl_vector_free(arg->work4);
@@ -1496,6 +1496,14 @@ static gpointer ThreadNLFit (gpointer arg)
 	  }
       } /* end loop over frequencies */
       
+      /* initialize with values from last time */
+      if (doError) {
+	for (i=0; i<nOut-1; i++) 
+	  larg->coef[i] = in->outFArrays[i]->array[indx];
+      } else { /* only values */
+ 	for (i=0; i<in->nterm; i++) 
+	  larg->coef[i] = in->outFArrays[i]->array[indx];
+      }
       /* Fit */
       NLFit(larg);
       
@@ -1529,7 +1537,9 @@ static void NLFit (NLFitArg *arg)
 {
   olong iter=0, i, nterm, nvalid;
   ofloat avg, delta, chi2Test, sigma, fblank = ObitMagicF();
-  odouble sum, sumwt;
+  ofloat meanSNR, SNRperTerm=10.0;
+  odouble sum, sumwt, sum2;
+  gboolean isDone;
   int status;
 #ifdef HAVE_GSL
   gsl_multifit_fdfsolver *solver;
@@ -1542,7 +1552,7 @@ static void NLFit (NLFitArg *arg)
     for (i=0; i<2*arg->nterm; i++) arg->coef[i] = 0.0;
   else
     for (i=0; i<arg->nterm; i++) arg->coef[i] = 0.0;
-
+  
   /* determine weighted average, count valid data */
   sum = sumwt = 0.0;
   nvalid = 0;
@@ -1562,26 +1572,38 @@ static void NLFit (NLFitArg *arg)
   /* Initial fit */
   arg->coef[0] = avg;
   
-  /* determine chi squared */
-  sum = sumwt = 0.0;
+  /* determine chi squared, mean SNR */
+  sum = sum2 = sumwt = 0.0;
   for (i=0; i<arg->nfreq; i++) {
     if ((arg->obs[i]!=fblank) && (arg->weight[i]>0.0)) {
       delta = (arg->obs[i]-avg);
-      sumwt   += arg->weight[i] * delta*delta;
+      sumwt += arg->weight[i] * delta*delta;
       sum   += delta*delta;
+      sum2  += arg->obs[i]*sqrt(arg->weight[i]);
     }
   }
 
   /* normalized Chi squares */
-  if (nvalid>1)
+  if (nvalid>1) {
     arg->ChiSq = sumwt/(nvalid-1);
-  else arg->ChiSq = -1.0;
+    meanSNR    = sum2/nvalid; /* mean SNR */
+  } else {
+    arg->ChiSq = -1.0;
+    meanSNR    = 0.0; /* Only one value - don't need mean SNR */
+  }
 
   /* Errors wanted? */
   if (arg->doError) arg->coef[arg->nterm] = sum/nvalid;
 
   /* Is this good enough? */
-  if ((arg->ChiSq>0.0) && (arg->ChiSq<=arg->maxChiSq)) return;
+  isDone = (arg->ChiSq<0.0) || (arg->ChiSq<=arg->maxChiSq);
+  if (meanSNR>(SNRperTerm*2.0)) isDone = FALSE;  /* Always try for high SNR */
+  if (isDone) return;
+
+  /* DEBUG 
+     if (avg>3.1) {
+     fprintf (stderr, "Found one %f\n", avg);
+     } */
 
   /* Higher order terms do nonlinear least-squares fit */
   nterm = 2;
@@ -1656,11 +1678,14 @@ static void NLFit (NLFitArg *arg)
       }
     } /* end of get errors */
 
-    /* Sanity check on spectral parameters [-5,5] */
-    for (i=1; i<nterm; i++) arg->coef[i] = MAX(-5.0, MIN(5.0,arg->coef[i]));
+    /* Sanity check on spectral parameters [-3,3] */
+    for (i=1; i<nterm; i++) arg->coef[i] = MAX(-3.0, MIN(3.0,arg->coef[i]));
     
     /* Is this good enough? */
-    if ((arg->ChiSq>0.0) && (arg->ChiSq<=arg->maxChiSq)) goto done;
+    isDone = (arg->ChiSq<0.0) || (arg->ChiSq<=arg->maxChiSq);
+    if (meanSNR>(SNRperTerm*nterm)) isDone = FALSE;  /* Always try for high SNR */
+    if (isDone) return;
+    /*    if ((arg->ChiSq>0.0) && (arg->ChiSq<=arg->maxChiSq)) goto done;*/
 
     nterm++;  /* next term */
   } /* end loop over adding terms */

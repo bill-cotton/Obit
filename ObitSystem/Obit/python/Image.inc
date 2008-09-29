@@ -400,7 +400,7 @@ typedef struct {
      return out;
    }
   ~Image() { /* Scratch files may be deleted separately */
-  if (self) {
+  if (self && (self->me)) {
     if (self->me->ReferenceCount>0) 
        self->me = ImageUnref(self->me);
     free(self);

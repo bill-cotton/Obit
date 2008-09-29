@@ -729,6 +729,10 @@ ObitIOCode ObitUVOpen (ObitUV *in, ObitIOAccess access, ObitErr *err)
     ObitUVSetupCal (in, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
   }
+
+  /* Initialize frequency arrays if not done */
+  if (in->myDesc->freqArr==NULL) ObitUVGetFreq (in, err);
+  if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
   
   /* Allocate buffer - resize if necessary */
   /* buffer size < 0 => no buffer desired */
@@ -929,7 +933,10 @@ ObitIOCode ObitUVRead (ObitUV *in, ofloat *data, ObitErr *err)
       return retCode;
     }
   } 
-  g_assert (myBuf != NULL); /* check it */
+
+  /* Check buffer */
+  Obit_retval_if_fail((myBuf != NULL), err, retCode,
+ 		      "%s: No buffer allocated for %s", routine, in->name);
 
   retCode = ObitIORead (in->myIO, myBuf, err);
   if ((retCode > OBIT_IO_EOF) || (err->error)) /* add traceback,return */
@@ -987,7 +994,10 @@ ObitIOCode ObitUVReadSelect (ObitUV *in, ofloat *data, ObitErr *err)
       return retCode;
     }
   } 
-  g_assert (myBuf != NULL); /* check it */
+  /* Check buffer */
+  Obit_retval_if_fail((myBuf != NULL), err, retCode,
+ 		      "%s: No buffer allocated for %s", routine, in->name);
+
 
   retCode = ObitIOReadSelect (in->myIO, myBuf, err);
   if ((retCode > OBIT_IO_EOF) || (err->error)) /* add traceback,return */
@@ -1048,7 +1058,10 @@ ObitIOCode ObitUVWrite (ObitUV *in, ofloat *data, ObitErr *err)
       return retCode;
     }
   } 
-  g_assert (myBuf != NULL); /* check it */
+  /* Check buffer */
+  Obit_retval_if_fail((myBuf != NULL), err, retCode,
+ 		      "%s: No buffer allocated for %s", routine, in->name);
+
 
   /* set number and location to write on myIO descriptor */
   in->myDesc->firstVis = MAX (1, in->myDesc->firstVis);

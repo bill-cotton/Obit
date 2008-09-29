@@ -1500,7 +1500,7 @@ def PEditClip (inUV, scratch, outUV, err):
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
-    if ((not scratch) and (notoutUV.UVIsA())):
+    if ((not scratch) and (not outUV.UVIsA())):
         raise TypeError,"outUV MUST be a Python Obit UV"
     if not OErr.OErrIsA(err):
         raise TypeError,"err MUST be an OErr"
@@ -1557,4 +1557,29 @@ def PEditClipStokes (inUV, scratch, outUV, err):
         PUVInfo (outUV, err)
     return outUV
     # end PEditClipStokes
+
+def PNoise(inUV, outUV, scale, sigma, err):
+    """ Scale and add Gaussian noise to data in a UV dataset
+
+    out = in*scale + noise(sigma) for each real,imag
+    inUV    = input Python Obit UV
+    outUV   = output Python Obit UV, must be previously defined
+    scale   = multiplicative term
+    sigma   = Std. deviation of noise to be added
+    err     = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not inUV.UVIsA():
+        raise TypeError,"inUV MUST be a Python Obit UV"
+    if not outUV.UVIsA():
+        raise TypeError,"outUV MUST be a Python Obit UV"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+
+    if err.isErr: # existing error?
+        return
+    #
+    Obit.UVUtilNoise(inUV.me, outUV.me, scale, sigma, err.me)
+    # end PNoise
 
