@@ -3,6 +3,7 @@ import OSystem, OErr, InfoList, Image, Table, TableUtil, History, ODisplay
 import OTF, OTFUtil, CleanOTF, OTFGetSoln, OTF, OTFGetAtmCor
 import GBTUtil, FITSDir
 import PARCal
+import math
 
 # Init Obit
 err=OErr.OErr()
@@ -69,6 +70,8 @@ minWt   = 0.00001                 # Minimum weight in imaging wrt maximum
 CLEANbox=[[-1,10, nx/2+1,ny/2+1]] # Clean window, circular at center
 convType = 4                      # Gridding fn  Exp*sinc
 convParm = [0.0, 0.0, 0.0, 0.0, 0.0,0.0, 0.0,0.0, 0.0,0.0] # Gridding fn  params
+pointOff= [0.0,0.0]               # RA, Dec Offset in cells to add to position
+                                  # This is the uncorrected part of the pointing error
 
 # Default Calibration info
 CalJy = [38.5]                  # Cal values in Jy, one for all or per detector
@@ -246,6 +249,9 @@ OErr.printErrMsg(err, "Error updating Cal table with Soln")
 pos =  GBTUtil.GetTargetPos(inOTF, target[0], err)
 ra  = pos[0]                      # ra of center
 dec = pos[1]                      # dec of center
+# Fudge pointing if needed
+ra  += math.cos(dec/57.296)*pointOff[0]*cells/3600.0
+dec += pointOff[1]*cells/3600.0
 
 # Imaging parameters
 OTF.ImageInput["InData"]  = outOTF
@@ -416,6 +422,15 @@ cctab = CleanImg.NewTable(Table.READWRITE, "AIPS CC", 1, err)
 TableUtil.PCCMerge(cctab, cctab, err)
 OErr.printErrMsg(err, "Error merging CC table")
 
+############################## Remove pointing offset #################################
+for img in [DirtyImg, CleanImg]:
+    head = img.Desc.Dict
+    head["crval"][0] -= math.cos(dec/57.296)*pointOff[0]*cells/3600.0
+    head["crval"][1] -= pointOff[1]*cells/3600.0
+    img.Desc.Dict = head
+    img.UpdateDesc(err)
+    OErr.printErrMsg(err, "Error updating header")
+
 ##################################### History #########################################
 print "Copy history"
 # Loop over dirty, clean images, output data
@@ -440,6 +455,7 @@ for img in [DirtyImg, CleanImg, outOTF]:
     outHistory.WriteRec(-1,ObitSys.pgmName+" convType = "+str(convType),err)
     line = ObitSys.pgmName+"convParm = [%f,%f,%f,%f]"%(convParm[0],convParm[1],convParm[2],convParm[3] )
     outHistory.WriteRec(-1,line,err)
+    outHistory.WriteRec(-1,ObitSys.pgmName+" pointOff = "+str(pointOff),err)
     # Clean
     outHistory.WriteRec(-1,ObitSys.pgmName+" niter = "+str(niter),err)
     outHistory.WriteRec(-1,ObitSys.pgmName+" gain = "+str(gain),err)

@@ -73,13 +73,14 @@ extern void SpectrumFitEval (ObitSpectrumFit* in, ObitImage *inImage,
   ObitSpectrumFitEval(in, inImage, (odouble)outFreq, outImage, err);
 }
 
-extern PyObject* SpectrumFitSingle (int nfreq, int nterm, double *freq, float *flux, float *sigma,
-                                 ObitErr *err) {
+extern PyObject* SpectrumFitSingle (int nfreq, int nterm, double refFreq, double *freq, float *flux, 
+                                    float *sigma, ObitErr *err) {
   ofloat *out=NULL;
   olong i, n;
   PyObject *outList=NULL, *o=NULL;
 
-  out = ObitSpectrumFitSingle((olong)nfreq, (olong)nterm, (odouble*)freq, (ofloat*)flux, (ofloat*)sigma, err);
+  out = ObitSpectrumFitSingle((olong)nfreq, (olong)nterm, (odouble)refFreq, (odouble*)freq, 
+                              (ofloat*)flux, (ofloat*)sigma, err);
   if (err->error) {
         ObitErrLog(err);
         PyErr_SetString(PyExc_TypeError,"Spectral Fit failed");

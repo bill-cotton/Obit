@@ -1029,6 +1029,7 @@ ObitTable* TableVZSel (ObitTable *in, ObitData *data,
 
 
 
+#include "ObitDConClean.h"
 #include "ObitDConCleanImage.h"
 
 extern ObitDConCleanImage* newCleanImage (char* name) {
@@ -1106,6 +1107,10 @@ extern void CleanImageDeconvolve (ObitDConCleanImage* in, ObitErr *err) {
  ObitDConCleanImageDeconvolve((ObitDCon*)in, err);
 }
 
+extern void CleanImageRestore (ObitDConCleanImage* in, ObitErr *err) {
+ ObitDConCleanRestore ((ObitDConClean*)in, err);
+}
+
 extern void CleanImageDefWindow (ObitDConCleanImage* in, ObitErr *err) {
  ObitDConCleanDefWindow((ObitDConClean*)in, err);
 }
@@ -1134,6 +1139,7 @@ extern void CleanImageSetWindow(ObitDConCleanImage *,ObitDConCleanWindow *);
 extern void CleanImageAddWindow(ObitDConCleanImage *,int ,int *,ObitErr *);
 extern ObitDConCleanImage *CleanImageCreate(char *,ObitImageMosaic *,ObitErr *);
 extern void CleanImageDeconvolve(ObitDConCleanImage *,ObitErr *);
+extern void CleanImageRestore(ObitDConCleanImage *,ObitErr *);
 extern void CleanImageDefWindow(ObitDConCleanImage *,ObitErr *);
 extern char *CleanImageGetName(ObitDConCleanImage *);
 extern int CleanImageIsA(ObitDConCleanImage *);
@@ -1142,6 +1148,7 @@ typedef struct {
   ObitDConCleanImage *me;
 } CleanImage;
 
+#include "ObitDConClean.h"
 #include "ObitDConCleanVis.h"
 
 extern ObitDConCleanVis* newCleanVis (char* name) {
@@ -1228,6 +1235,10 @@ extern void CleanVisDeconvolve (ObitDConCleanVis* in, ObitErr *err) {
  ObitDConCleanVisDeconvolve((ObitDCon*)in, err);
 }
 
+extern void CleanVisRestore (ObitDConCleanVis* in, ObitErr *err) {
+ ObitDConCleanRestore ((ObitDConClean*)in, err);
+}
+
 extern void CleanVisDefWindow (ObitDConCleanVis* in, ObitErr *err) {
  ObitDConCleanVisDefWindow((ObitDConClean*)in, err);
 }
@@ -1268,6 +1279,7 @@ extern void CleanVisSetWindow(ObitDConCleanVis *,ObitDConCleanWindow *);
 extern void CleanVisAddWindow(ObitDConCleanVis *,int ,int *,ObitErr *);
 extern ObitDConCleanVis *CleanVisCreate(char *,ObitUV *,ObitErr *);
 extern void CleanVisDeconvolve(ObitDConCleanVis *,ObitErr *);
+extern void CleanVisRestore(ObitDConCleanVis *,ObitErr *);
 extern void CleanVisDefWindow(ObitDConCleanVis *,ObitErr *);
 extern int CleanVisReimage(ObitDConCleanVis *,ObitUV *,ObitErr *);
 extern char *CleanVisGetName(ObitDConCleanVis *);
@@ -1279,7 +1291,7 @@ typedef struct {
 
 #include "ObitConvUtil.h"
 
-void ConvUtilConv (ObitImage *inImage, ObitFArray *convFn, 
+extern void ConvUtilConv (ObitImage *inImage, ObitFArray *convFn, 
 		   int doDivide, float rescale,
 		   ObitImage *outImage, ObitErr *err) {
   gboolean ldoDivide;
@@ -1288,14 +1300,36 @@ void ConvUtilConv (ObitImage *inImage, ObitFArray *convFn,
   ObitConvUtilConv (inImage, convFn, ldoDivide, lrescale, outImage, err);
 } // end ConvUtilConv 
 
-ObitFArray* ConvUtilGaus (ObitImage *inImage, float Maj, float Min, float PA) {
+extern ObitFArray* ConvUtilGaus (ObitImage *inImage, float Maj, float Min, float PA) {
   ofloat Beam[3];
   Beam[0] = Maj;
-  Beam[0] = Min;
-  Beam[0] = PA;
+  Beam[1] = Min;
+  Beam[2] = PA;
   return ObitConvUtilGaus (inImage, Beam);
 } // end ConvUtilGaus
 
+extern PyObject* ConvUtilDeconv (float fMaj,  float fMin,  float fPA, 
+                            float cMaj,  float cMin,  float cPA) {
+  ofloat rMaj, rMin, rPA;
+  PyObject *outList=NULL, *o=NULL;
+
+  ObitConvUtilDeconv (fMaj, fMin, fPA, cMaj, cMin, cPA, &rMaj, &rMin, &rPA);
+
+  // Package results into output list
+  outList = PyList_New(3); 
+  o = PyFloat_FromDouble((double)rMaj);
+  PyList_SetItem(outList, 0, o);
+  o = PyFloat_FromDouble((double)rMin);
+  PyList_SetItem(outList, 1, o);
+  o = PyFloat_FromDouble((double)rPA);
+  PyList_SetItem(outList, 2, o);
+
+  return outList;
+} // end ConvUtilGaus
+
+extern void ConvUtilConv(ObitImage *,ObitFArray *,int ,float ,ObitImage *,ObitErr *);
+extern ObitFArray *ConvUtilGaus(ObitImage *,float ,float ,float );
+extern PyObject *ConvUtilDeconv(float ,float ,float ,float ,float ,float );
 
 
 #include "ObitFArray.h"
@@ -5227,13 +5261,14 @@ extern void SpectrumFitEval (ObitSpectrumFit* in, ObitImage *inImage,
   ObitSpectrumFitEval(in, inImage, (odouble)outFreq, outImage, err);
 }
 
-extern PyObject* SpectrumFitSingle (int nfreq, int nterm, double *freq, float *flux, float *sigma,
-                                 ObitErr *err) {
+extern PyObject* SpectrumFitSingle (int nfreq, int nterm, double refFreq, double *freq, float *flux, 
+                                    float *sigma, ObitErr *err) {
   ofloat *out=NULL;
   olong i, n;
   PyObject *outList=NULL, *o=NULL;
 
-  out = ObitSpectrumFitSingle((olong)nfreq, (olong)nterm, (odouble*)freq, (ofloat*)flux, (ofloat*)sigma, err);
+  out = ObitSpectrumFitSingle((olong)nfreq, (olong)nterm, (odouble)refFreq, (odouble*)freq, 
+                              (ofloat*)flux, (ofloat*)sigma, err);
   if (err->error) {
         ObitErrLog(err);
         PyErr_SetString(PyExc_TypeError,"Spectral Fit failed");
@@ -5274,7 +5309,7 @@ extern ObitSpectrumFit *SpectrumFitCreate(char *,int );
 extern void SpectrumFitCube(ObitSpectrumFit *,ObitImage *,ObitImage *,ObitErr *);
 extern void SpectrumFitImArr(ObitSpectrumFit *,int ,ObitImage **,ObitImage *,ObitErr *);
 extern void SpectrumFitEval(ObitSpectrumFit *,ObitImage *,double ,ObitImage *,ObitErr *);
-extern PyObject *SpectrumFitSingle(int ,int ,double *,float *,float *,ObitErr *);
+extern PyObject *SpectrumFitSingle(int ,int ,double ,double *,float *,float *,ObitErr *);
 extern ObitInfoList *SpectrumFitGetList(ObitSpectrumFit *);
 extern char *SpectrumFitGetName(ObitSpectrumFit *);
 extern int SpectrumFitIsA(ObitSpectrumFit *);
@@ -9179,7 +9214,11 @@ extern ObitUV* UVEditClipStokes(ObitUV* in, int scratch, ObitUV *out, ObitErr *e
   gboolean lscratch;
   lscratch = scratch!=0;
   return ObitUVEditClipStokes (in, lscratch, out, err);
-} // end UVUtilClipStokes
+} // end UVEditClipStokes
+
+extern void UVUtilNoise(ObitUV* in, ObitUV *out, float scale, float sigma, ObitErr *err) {
+  return ObitUVUtilNoise (in, out, (ofloat)scale, (ofloat)sigma, err);
+} // end UVUtilNoise
 
 
 extern void UVSetFITS(ObitUV *,long ,int ,char *,ObitErr *);
@@ -9231,6 +9270,7 @@ extern void UVEditFD(ObitUV *,ObitUV *,ObitErr *);
 extern void UVEditStokes(ObitUV *,ObitUV *,ObitErr *);
 extern ObitUV *UVEditClip(ObitUV *,int ,ObitUV *,ObitErr *);
 extern ObitUV *UVEditClipStokes(ObitUV *,int ,ObitUV *,ObitErr *);
+extern void UVUtilNoise(ObitUV *,ObitUV *,float ,float ,ObitErr *);
 
 typedef struct {
   ObitUV *me;
@@ -14879,6 +14919,36 @@ static PyObject *_wrap_CleanImageDeconvolve(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_CleanImageRestore(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitDConCleanImage * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:CleanImageRestore",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitDConCleanImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of CleanImageRestore. Expected _ObitDConCleanImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of CleanImageRestore. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    CleanImageRestore(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_CleanImageDefWindow(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitDConCleanImage * _arg0;
@@ -15439,6 +15509,36 @@ static PyObject *_wrap_CleanVisDeconvolve(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_CleanVisRestore(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitDConCleanVis * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:CleanVisRestore",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitDConCleanVis_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of CleanVisRestore. Expected _ObitDConCleanVis_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of CleanVisRestore. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    CleanVisRestore(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_CleanVisDefWindow(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitDConCleanVis * _arg0;
@@ -15628,6 +15728,32 @@ static PyObject *_wrap_ConvUtilGaus(PyObject *self, PyObject *args) {
         Py_INCREF(Py_None);
         _resultobj = Py_None;
     }
+    return _resultobj;
+}
+
+static PyObject *_wrap_ConvUtilDeconv(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    float  _arg0;
+    float  _arg1;
+    float  _arg2;
+    float  _arg3;
+    float  _arg4;
+    float  _arg5;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"ffffff:ConvUtilDeconv",&_arg0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5)) 
+        return NULL;
+    _result = (PyObject *)ConvUtilDeconv(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
     return _resultobj;
 }
 
@@ -33676,49 +33802,30 @@ static PyObject *_wrap_SpectrumFitSingle(PyObject *self, PyObject *args) {
     PyObject * _result;
     int  _arg0;
     int  _arg1;
-    double * _arg2;
-    float * _arg3;
+    double  _arg2;
+    double * _arg3;
     float * _arg4;
-    ObitErr * _arg5;
-    PyObject * _obj2 = 0;
+    float * _arg5;
+    ObitErr * _arg6;
     PyObject * _obj3 = 0;
     PyObject * _obj4 = 0;
-    PyObject * _argo5 = 0;
+    PyObject * _obj5 = 0;
+    PyObject * _argo6 = 0;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"iiOOOO:SpectrumFitSingle",&_arg0,&_arg1,&_obj2,&_obj3,&_obj4,&_argo5)) 
+    if(!PyArg_ParseTuple(args,"iidOOOO:SpectrumFitSingle",&_arg0,&_arg1,&_arg2,&_obj3,&_obj4,&_obj5,&_argo6)) 
         return NULL;
-{
-  if (PyList_Check(_obj2)) {
-    int size = PyList_Size(_obj2);
-    int i = 0;
-    _arg2 = (double*) malloc((size+1)*sizeof(double));
-    for (i = 0; i < size; i++) {
-      PyObject *o = PyList_GetItem(_obj2,i);
-      if (PyFloat_Check(o))
-         _arg2[i] = (double)((PyFloatObject*)o)->ob_fval;
-      else {
-         PyErr_SetString(PyExc_TypeError,"list must contain doubles");
-         free(_arg2);
-         return NULL;
-      }
-    }
-  } else {
-    PyErr_SetString(PyExc_TypeError,"not a list");
-    return NULL;
-  }
-}
 {
   if (PyList_Check(_obj3)) {
     int size = PyList_Size(_obj3);
     int i = 0;
-    _arg3 = (float*) malloc((size+1)*sizeof(float));
+    _arg3 = (double*) malloc((size+1)*sizeof(double));
     for (i = 0; i < size; i++) {
       PyObject *o = PyList_GetItem(_obj3,i);
       if (PyFloat_Check(o))
-         _arg3[i] = (float)((PyFloatObject*)o)->ob_fval;
+         _arg3[i] = (double)((PyFloatObject*)o)->ob_fval;
       else {
-         PyErr_SetString(PyExc_TypeError,"list must contain floats");
+         PyErr_SetString(PyExc_TypeError,"list must contain doubles");
          free(_arg3);
          return NULL;
       }
@@ -33748,14 +33855,34 @@ static PyObject *_wrap_SpectrumFitSingle(PyObject *self, PyObject *args) {
     return NULL;
   }
 }
-    if (_argo5) {
-        if (_argo5 == Py_None) { _arg5 = NULL; }
-        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of SpectrumFitSingle. Expected _ObitErr_p.");
+{
+  if (PyList_Check(_obj5)) {
+    int size = PyList_Size(_obj5);
+    int i = 0;
+    _arg5 = (float*) malloc((size+1)*sizeof(float));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj5,i);
+      if (PyFloat_Check(o))
+         _arg5[i] = (float)((PyFloatObject*)o)->ob_fval;
+      else {
+         PyErr_SetString(PyExc_TypeError,"list must contain floats");
+         free(_arg5);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+    if (_argo6) {
+        if (_argo6 == Py_None) { _arg6 = NULL; }
+        else if (SWIG_GetPtrObj(_argo6,(void **) &_arg6,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 7 of SpectrumFitSingle. Expected _ObitErr_p.");
         return NULL;
         }
     }
-    _result = (PyObject *)SpectrumFitSingle(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    _result = (PyObject *)SpectrumFitSingle(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
 {
   if (PyList_Check(_result) || PyDict_Check(_result)
       || PyString_Check(_result) || PyBuffer_Check(_result)) {
@@ -33766,13 +33893,13 @@ static PyObject *_wrap_SpectrumFitSingle(PyObject *self, PyObject *args) {
   }
 }
 {
-  free((double *) _arg2);
-}
-{
-  free((float *) _arg3);
+  free((double *) _arg3);
 }
 {
   free((float *) _arg4);
+}
+{
+  free((float *) _arg5);
 }
     return _resultobj;
 }
@@ -43653,6 +43780,47 @@ static PyObject *_wrap_UVEditClipStokes(PyObject *self, PyObject *args) {
         Py_INCREF(Py_None);
         _resultobj = Py_None;
     }
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVUtilNoise(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUV * _arg0;
+    ObitUV * _arg1;
+    float  _arg2;
+    float  _arg3;
+    ObitErr * _arg4;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo4 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOffO:UVUtilNoise",&_argo0,&_argo1,&_arg2,&_arg3,&_argo4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVUtilNoise. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of UVUtilNoise. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of UVUtilNoise. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    UVUtilNoise(_arg0,_arg1,_arg2,_arg3,_arg4);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
     return _resultobj;
 }
 
@@ -54418,7 +54586,7 @@ static PyObject *_wrap_new_Image(PyObject *self, PyObject *args) {
 }
 
 static void delete_Image(Image *self) { /* Scratch files may be deleted separately */
-  if (self) {
+  if (self && (self->me)) {
     if (self->me->ReferenceCount>0) 
        self->me = ImageUnref(self->me);
     free(self);
@@ -57444,9 +57612,11 @@ static PyObject *_wrap_new_UV(PyObject *self, PyObject *args) {
 }
 
 static void delete_UV(UV *self) { /* Scratch files may be deleted separately*/
-   if (self->me->ReferenceCount>0) 
-      self->me = ObitUVUnref(self->me);
-   free(self);
+   if (self && (self->me)) {
+     if (self->me->ReferenceCount>0) 
+        self->me = ObitUVUnref(self->me);
+     free(self);
+    }
   }
 static PyObject *_wrap_delete_UV(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -58741,6 +58911,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "UVSelfCalCopy", _wrap_UVSelfCalCopy, METH_VARARGS },
 	 { "UVSelfCalCreate", _wrap_UVSelfCalCreate, METH_VARARGS },
 	 { "newUVSelfCal", _wrap_newUVSelfCal, METH_VARARGS },
+	 { "UVUtilNoise", _wrap_UVUtilNoise, METH_VARARGS },
 	 { "UVEditClipStokes", _wrap_UVEditClipStokes, METH_VARARGS },
 	 { "UVEditClip", _wrap_UVEditClip, METH_VARARGS },
 	 { "UVEditStokes", _wrap_UVEditStokes, METH_VARARGS },
@@ -59403,12 +59574,14 @@ static PyMethodDef ObitMethods[] = {
 	 { "FArrayGetBlank", _wrap_FArrayGetBlank, METH_VARARGS },
 	 { "FArrayGetVal", _wrap_FArrayGetVal, METH_VARARGS },
 	 { "FArrayCreate", _wrap_FArrayCreate, METH_VARARGS },
+	 { "ConvUtilDeconv", _wrap_ConvUtilDeconv, METH_VARARGS },
 	 { "ConvUtilGaus", _wrap_ConvUtilGaus, METH_VARARGS },
 	 { "ConvUtilConv", _wrap_ConvUtilConv, METH_VARARGS },
 	 { "CleanVisIsA", _wrap_CleanVisIsA, METH_VARARGS },
 	 { "CleanVisGetName", _wrap_CleanVisGetName, METH_VARARGS },
 	 { "CleanVisReimage", _wrap_CleanVisReimage, METH_VARARGS },
 	 { "CleanVisDefWindow", _wrap_CleanVisDefWindow, METH_VARARGS },
+	 { "CleanVisRestore", _wrap_CleanVisRestore, METH_VARARGS },
 	 { "CleanVisDeconvolve", _wrap_CleanVisDeconvolve, METH_VARARGS },
 	 { "CleanVisCreate", _wrap_CleanVisCreate, METH_VARARGS },
 	 { "CleanVisAddWindow", _wrap_CleanVisAddWindow, METH_VARARGS },
@@ -59426,6 +59599,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "CleanImageIsA", _wrap_CleanImageIsA, METH_VARARGS },
 	 { "CleanImageGetName", _wrap_CleanImageGetName, METH_VARARGS },
 	 { "CleanImageDefWindow", _wrap_CleanImageDefWindow, METH_VARARGS },
+	 { "CleanImageRestore", _wrap_CleanImageRestore, METH_VARARGS },
 	 { "CleanImageDeconvolve", _wrap_CleanImageDeconvolve, METH_VARARGS },
 	 { "CleanImageCreate", _wrap_CleanImageCreate, METH_VARARGS },
 	 { "CleanImageAddWindow", _wrap_CleanImageAddWindow, METH_VARARGS },

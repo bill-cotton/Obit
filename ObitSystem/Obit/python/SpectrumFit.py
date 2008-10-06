@@ -149,7 +149,7 @@ class SpectrumFit(SpectrumFitPtr):
         OSystem.PAllowThreads(2)  # 2 threads
         self     = SpectrumFit object, parameters on List:
             refFreq   double scalar Reference frequency for fit [def average of inputs]
-           maxChi2    float scalar Max. Chi Sq for accepting a partial spectrum [def 2.0]
+            maxChi2   float scalar Max. Chi Sq for accepting a partial spectrum [def 2.0]
             doError   boolean scalar If true do error analysis [def False]
             doPBCor   boolean scalar If true do primary beam correction. [def False]
             calFract  float (?,1,1) Calibration error as fraction of flux
@@ -239,23 +239,23 @@ def PCreate (name, nterm):
     return out;
     # end PCreate
 
-def PSingle (nterm, freq, flux, sigma, err):
+def PSingle (nterm, refFreq, freq, flux, sigma, err):
     """  Fit single spectrum to flux measurements
     
-    Reference frequency of fit is 1 GHz.
     Does error analysis and makes primary beam correction
     Returns  array of fitter parameters, errors for each and Chi Squares of fit
              Initial terms are in Jy, other in log.
     nterm   = Number of coefficients of powers of log(nu) to fit
-    freq    = Frequency (Hz)
-    flux    = Flux (Jy)
-    sigma   = Errors (Jy)
+    refFreq = Reference frequency for fit (Hz)
+    freq    = Array of Frequencies (Hz)
+    flux    = Array of fluxes (Jy) same dim as freq
+    sigma   = Array of errors (Jy) same dim as freq
     err     = Obit error stack
     """
     ################################################################
     #
     nfreq = len(freq)
-    ret = Obit.SpectrumFitSingle(nfreq, nterm, freq, flux, sigma, err.me)
+    ret = Obit.SpectrumFitSingle(nfreq, nterm, refFreq, freq, flux, sigma, err.me)
     OErr.printErr(err)
     OErr.printErrMsg(err,"Fitting failed")
     return ret

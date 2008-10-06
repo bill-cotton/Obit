@@ -1495,14 +1495,18 @@ void ObitImageSetSelect (ObitImage *in, ObitIOSize IOBy,
   ObitInfoListPut (in->info, "BLC", OBIT_long, dim, blc, err); 
   ObitInfoListPut (in->info, "TRC", OBIT_long, dim, trc, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
-  if ((ObitImageOpen (in, OBIT_IO_ReadOnly, err) 
-       != OBIT_IO_OK) || (err->error>0)) { /* error test */
-    Obit_log_error(err, OBIT_Error, 
-		   "ERROR opening image %s", in->name);
-    return;
+
+  /* If it has an IO open and close */
+  if (in->myIO) {
+    if ((ObitImageOpen (in, OBIT_IO_ReadOnly, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, 
+		     "ERROR opening image %s", in->name);
+      return;
+    }
+    ObitImageClose (in, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
   }
-  ObitImageClose (in, err);
-  if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Set limits/real values */
   for (i=0; i<in->myDesc->naxis; i++) {

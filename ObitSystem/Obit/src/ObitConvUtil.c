@@ -175,6 +175,9 @@ void ObitConvUtilConv (ObitImage *inImage, ObitFArray *convFn,
     /* rescale units */
     ObitFArraySMul (tmpArray, rescale);
 
+    /* Blank output where input blanked */
+    ObitFArrayBlank (tmpArray, inImage->image, tmpArray);
+
     /* DEBUG
     ObitImageUtilArray2Image ("ConvolDebug1.fits",1,tmpArray, err); */
 

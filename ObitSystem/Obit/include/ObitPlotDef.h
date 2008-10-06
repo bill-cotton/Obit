@@ -41,7 +41,7 @@ ObitImage *myImage;
 ObitErr *myErr;
 /** Are x and y axes log? */
 gboolean xLog, yLog;
-/** Scaling for coordinates offsets */
-ofloat scale;
+/** Scalings for coordinates offsets */
+ofloat scalex, scaley;
 /** Number of panels in x, y */
 olong nx, ny;

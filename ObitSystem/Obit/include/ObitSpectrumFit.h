@@ -140,11 +140,11 @@ typedef void(*ObitSpectrumFitEvalFP) (ObitSpectrumFit* in, ObitImage *inImage,
 				      odouble outFreq, ObitImage *outImage, 
 				      ObitErr *err);
 /** Public: Fit single spectrum */
-ofloat* ObitSpectrumFitSingle (gint nfreq, olong nterm, odouble *freq, 
+ofloat* ObitSpectrumFitSingle (gint nfreq, olong nterm, odouble refFreq, odouble *freq, 
 			       ofloat *flux, ofloat *sigma, ObitErr *err);
 /** Typedef for definition of class pointer structure */
-typedef ofloat*(*ObitSpectrumFitSingleFP) (gint nfreq, olong nterm, odouble *freq, 
-					   ofloat *flux, ofloat *sigma, 
+typedef ofloat*(*ObitSpectrumFitSingleFP) (gint nfreq, olong nterm, odouble refFreq, 
+					   odouble *freq, ofloat *flux, ofloat *sigma, 
 					   ObitErr *err);
 
 /*----------- ClassInfo Structure -----------------------------------*/

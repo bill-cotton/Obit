@@ -1115,20 +1115,29 @@ void ObitPlotContour (ObitPlot* in, gchar *label, ObitImage *image,
   if (id->inaxes[0]*fabs(id->cdelt[0])>1.0) {
     /* degrees */
     strcpy (units,"deg");
-    in->scale = 1.0;
+    in->scalex = 1.0;
+    in->scaley = 1.0;
   } else if (id->inaxes[0]*fabs(id->cdelt[0])>0.016667) {
     /* arcmin */
     strcpy (units,"amin");
-    in->scale = 60.0;
+    in->scalex = 60.0;
+    in->scaley = 60.0;
   } else if (id->inaxes[0]*fabs(id->cdelt[0])>0.0027778) {
     /* arcsec */
     strcpy (units,"asec");
-    in->scale = 3600.0;
+    in->scalex = 3600.0;
+    in->scaley = 3600.0;
   } else {
     /* milliarcsec  */
     strcpy (units,"mas");
-    in->scale = 3600000.0;
+    in->scalex = 3600000.0;
+    in->scaley = 3600000.0;
   }
+
+  /* Correct X scaling for the artificial effect of declination */
+  if (id->jlocd>=0) 
+    in->scalex *= cos(DG2RAD*id->crval[id->jlocd]);
+
 
   nx = image->myDesc->inaxes[0];
   ny = image->myDesc->inaxes[1];
@@ -1597,20 +1606,28 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
   if (id->inaxes[0]*fabs(id->cdelt[0])>1.0) {
     /* degrees */
     strcpy (units,"deg");
-    in->scale = 1.0;
+    in->scalex = 1.0;
+    in->scaley = 1.0;
   } else if (id->inaxes[0]*fabs(id->cdelt[0])>0.016667) {
     /* arcmin */
     strcpy (units,"amin");
-    in->scale = 60.0;
+    in->scalex = 60.0;
+    in->scaley = 60.0;
   } else if (id->inaxes[0]*fabs(id->cdelt[0])>0.0027778) {
     /* arcsec */
     strcpy (units,"asec");
-    in->scale = 3600.0;
+    in->scalex = 3600.0;
+    in->scaley = 3600.0;
   } else {
     /* milliarcsec  */
     strcpy (units,"mas");
-    in->scale = 3600000.0;
+    in->scalex = 3600000.0;
+    in->scaley = 3600000.0;
   }
+
+  /* Correct X scaling for the artificial effect of declination */
+  if (id->jlocd>=0) 
+    in->scalex *= cos(DG2RAD*id->crval[id->jlocd]);
 
   nx = image->myDesc->inaxes[0];
   ny = image->myDesc->inaxes[1];
@@ -2524,8 +2541,8 @@ void ObitPlotMarkCross (ObitPlot* in, ObitImage *image, olong n,
 		      &xpixo, &ypixo);
 #ifdef HAVE_PLPLOT  /* Only if plplot available */
     plplotCoord (xpixo, ypixo, &xcen, &ycen, (PLPointer)in);
-    dx = size * image->myDesc->cdelt[0] * in->scale;
-    dy = size * image->myDesc->cdelt[1] * in->scale;
+    dx = size * image->myDesc->cdelt[0] * in->scalex;
+    dy = size * image->myDesc->cdelt[1] * in->scaley;
 #endif /* HAVE_PLPLOT */
 #ifdef HAVE_PGPLOT  /* Only if pgplot available */
     /* Get plot coordinates */
@@ -3373,14 +3390,14 @@ static void plplotCoord (PLFLT px, PLFLT py, PLFLT* wx, PLFLT *wy,
   if (ObitSkyGeomXYPixLM (pos[0], pos[1], id->crval[0], id->crval[1],
 			  id->cdelt[0], id->cdelt[1],id->crota[1],
 			  id->ctype[0], &xo, &yo)==0) {
-    *wx = (PLFLT)xo*((ObitPlot*)OP)->scale;
-    *wy = (PLFLT)yo*((ObitPlot*)OP)->scale;
+    *wx = (PLFLT)xo*((ObitPlot*)OP)->scalex;
+    *wy = (PLFLT)yo*((ObitPlot*)OP)->scaley;
   } else { /* out of bounds */
     
     *wx = (PLFLT)pos[0] - ((ObitPlot*)OP)->myImage->myDesc->crval[0];
     *wy = (PLFLT)pos[1] - ((ObitPlot*)OP)->myImage->myDesc->crval[1];
-    *wx *= ((ObitPlot*)OP)->scale;
-    *wy *= ((ObitPlot*)OP)->scale;
+    *wx *= ((ObitPlot*)OP)->scalex;
+    *wy *= ((ObitPlot*)OP)->scaley;
   }
 } /* end plplotCoord */
 

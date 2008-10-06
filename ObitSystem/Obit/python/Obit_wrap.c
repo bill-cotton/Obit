@@ -5243,13 +5243,14 @@ extern void SpectrumFitEval (ObitSpectrumFit* in, ObitImage *inImage,
   ObitSpectrumFitEval(in, inImage, (odouble)outFreq, outImage, err);
 }
 
-extern PyObject* SpectrumFitSingle (int nfreq, int nterm, double *freq, float *flux, float *sigma,
-                                 ObitErr *err) {
+extern PyObject* SpectrumFitSingle (int nfreq, int nterm, double refFreq, double *freq, float *flux, 
+                                    float *sigma, ObitErr *err) {
   ofloat *out=NULL;
   olong i, n;
   PyObject *outList=NULL, *o=NULL;
 
-  out = ObitSpectrumFitSingle((olong)nfreq, (olong)nterm, (odouble*)freq, (ofloat*)flux, (ofloat*)sigma, err);
+  out = ObitSpectrumFitSingle((olong)nfreq, (olong)nterm, (odouble)refFreq, (odouble*)freq, 
+                              (ofloat*)flux, (ofloat*)sigma, err);
   if (err->error) {
         ObitErrLog(err);
         PyErr_SetString(PyExc_TypeError,"Spectral Fit failed");
@@ -5290,7 +5291,7 @@ extern ObitSpectrumFit *SpectrumFitCreate(char *,int );
 extern void SpectrumFitCube(ObitSpectrumFit *,ObitImage *,ObitImage *,ObitErr *);
 extern void SpectrumFitImArr(ObitSpectrumFit *,int ,ObitImage **,ObitImage *,ObitErr *);
 extern void SpectrumFitEval(ObitSpectrumFit *,ObitImage *,double ,ObitImage *,ObitErr *);
-extern PyObject *SpectrumFitSingle(int ,int ,double *,float *,float *,ObitErr *);
+extern PyObject *SpectrumFitSingle(int ,int ,double ,double *,float *,float *,ObitErr *);
 extern ObitInfoList *SpectrumFitGetList(ObitSpectrumFit *);
 extern char *SpectrumFitGetName(ObitSpectrumFit *);
 extern int SpectrumFitIsA(ObitSpectrumFit *);
@@ -31424,49 +31425,30 @@ static PyObject *_wrap_SpectrumFitSingle(PyObject *self, PyObject *args) {
     PyObject * _result;
     int  _arg0;
     int  _arg1;
-    double * _arg2;
-    float * _arg3;
+    double  _arg2;
+    double * _arg3;
     float * _arg4;
-    ObitErr * _arg5;
-    PyObject * _obj2 = 0;
+    float * _arg5;
+    ObitErr * _arg6;
     PyObject * _obj3 = 0;
     PyObject * _obj4 = 0;
-    PyObject * _argo5 = 0;
+    PyObject * _obj5 = 0;
+    PyObject * _argo6 = 0;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"iiOOOO:SpectrumFitSingle",&_arg0,&_arg1,&_obj2,&_obj3,&_obj4,&_argo5)) 
+    if(!PyArg_ParseTuple(args,"iidOOOO:SpectrumFitSingle",&_arg0,&_arg1,&_arg2,&_obj3,&_obj4,&_obj5,&_argo6)) 
         return NULL;
-{
-  if (PyList_Check(_obj2)) {
-    int size = PyList_Size(_obj2);
-    int i = 0;
-    _arg2 = (double*) malloc((size+1)*sizeof(double));
-    for (i = 0; i < size; i++) {
-      PyObject *o = PyList_GetItem(_obj2,i);
-      if (PyFloat_Check(o))
-         _arg2[i] = (double)((PyFloatObject*)o)->ob_fval;
-      else {
-         PyErr_SetString(PyExc_TypeError,"list must contain doubles");
-         free(_arg2);
-         return NULL;
-      }
-    }
-  } else {
-    PyErr_SetString(PyExc_TypeError,"not a list");
-    return NULL;
-  }
-}
 {
   if (PyList_Check(_obj3)) {
     int size = PyList_Size(_obj3);
     int i = 0;
-    _arg3 = (float*) malloc((size+1)*sizeof(float));
+    _arg3 = (double*) malloc((size+1)*sizeof(double));
     for (i = 0; i < size; i++) {
       PyObject *o = PyList_GetItem(_obj3,i);
       if (PyFloat_Check(o))
-         _arg3[i] = (float)((PyFloatObject*)o)->ob_fval;
+         _arg3[i] = (double)((PyFloatObject*)o)->ob_fval;
       else {
-         PyErr_SetString(PyExc_TypeError,"list must contain floats");
+         PyErr_SetString(PyExc_TypeError,"list must contain doubles");
          free(_arg3);
          return NULL;
       }
@@ -31496,14 +31478,34 @@ static PyObject *_wrap_SpectrumFitSingle(PyObject *self, PyObject *args) {
     return NULL;
   }
 }
-    if (_argo5) {
-        if (_argo5 == Py_None) { _arg5 = NULL; }
-        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of SpectrumFitSingle. Expected _ObitErr_p.");
+{
+  if (PyList_Check(_obj5)) {
+    int size = PyList_Size(_obj5);
+    int i = 0;
+    _arg5 = (float*) malloc((size+1)*sizeof(float));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj5,i);
+      if (PyFloat_Check(o))
+         _arg5[i] = (float)((PyFloatObject*)o)->ob_fval;
+      else {
+         PyErr_SetString(PyExc_TypeError,"list must contain floats");
+         free(_arg5);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+    if (_argo6) {
+        if (_argo6 == Py_None) { _arg6 = NULL; }
+        else if (SWIG_GetPtrObj(_argo6,(void **) &_arg6,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 7 of SpectrumFitSingle. Expected _ObitErr_p.");
         return NULL;
         }
     }
-    _result = (PyObject *)SpectrumFitSingle(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    _result = (PyObject *)SpectrumFitSingle(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
 {
   if (PyList_Check(_result) || PyDict_Check(_result)
       || PyString_Check(_result) || PyBuffer_Check(_result)) {
@@ -31514,13 +31516,13 @@ static PyObject *_wrap_SpectrumFitSingle(PyObject *self, PyObject *args) {
   }
 }
 {
-  free((double *) _arg2);
-}
-{
-  free((float *) _arg3);
+  free((double *) _arg3);
 }
 {
   free((float *) _arg4);
+}
+{
+  free((float *) _arg5);
 }
     return _resultobj;
 }

@@ -4,8 +4,8 @@ Create a plot object using newOPlot which allows specifying the output
 and background color.  If no output is specified this information
 will be prompted.
    Next, the plotting region must be specified using either PSetPlot,
-one of the XY plotting routines (PXYPlot, PXYOver, or PXYErr) or
-PContour.  Then additional lines, curves, text or symbols may be added.
+one of the XY plotting routines (PXYPlot, PXYOver, or PXYErr)
+PGrayScale, or PContour.  Then additional lines, curves, text or symbols may be added.
 When all has been added to the plot, use PShow to finalize it.
 
    Notes: on text strings in PLPlot installations
@@ -306,7 +306,7 @@ def PContour (plot, label, image, lev, cntfac, err):
     Plot should be finalized and displayed with PShow
     plot     = plot
     label    = Label for plot
-    image    = ObitImage to plot
+    image    = ObitImage to plot, BLC, TRC on info member honored
     lev      = basic contour level (def 0.1 peak)
     cntfac   = factor for spacing between contours (def sqrt(2)
     err      =    ObitErr error stack
@@ -332,6 +332,44 @@ def PContour (plot, label, image, lev, cntfac, err):
         raise TypeError,"image MUST be a Python Obit Image"
     Obit.PlotContour (plot.me, label, image.me, lev, cntfac, err.me)
     # end PContour
+
+
+def PGrayScale (plot, label, image, err):
+    """ Gray Scale plot of image
+
+    Gray Scales plot of image
+    Plot should be finalized and displayed with PShow
+    plot     = plot
+    label    = Label for plot
+    image    = ObitImage to plot, BLC, TRC on info member honored
+    err      =    ObitErr error stack
+    
+    Optional parameters on plot InfoList
+    XTICK (float) world coordinate interval between major tick marks
+          on X axis. If xtick=0.0 [def], the interval is chosen.
+    NXSUB (int) the number of subintervals to divide the major
+          coordinate interval into. If xtick=0.0 or nxsub=0,
+          the number is chosen. [def 0]
+    YTICK  (float)  like xtick for the Y axis.
+    NYSUB  (int)    like nxsub for the Y axis
+    CSIZE  (int)    Scaling factor for characters(default = 1)
+    SQRT   (bool)   If present and true plot sqrt (pixel_value)
+    INVERT (bool)   If present and true ionvert colors
+    COLOR  (string) Color scheme 'GRAY', 'CONTOUR', 'PHLAME'
+                    default 'GRAY'
+    PIX_MAX (float) maximum pixel value [def min in image]
+    PIX_MIN (float) minimum pixel value [def max in image]
+    """
+    ################################################################
+    # Checks
+    if not PIsA(plot):
+        print "Actually ",plot.__class__
+        raise TypeError,"plot MUST be a Python Obit Plot"
+    if not Image.PIsA(image):
+        print "Actually ",image.__class__
+        raise TypeError,"image MUST be a Python Obit Image"
+    Obit.PlotGrayScale (plot.me, label, image.me, err.me)
+    # end PGrayScale
 
 
 def PMarkCross (plot, image, ra, dec, err, size=5.0):

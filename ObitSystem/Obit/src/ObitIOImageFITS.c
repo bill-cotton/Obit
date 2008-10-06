@@ -1287,7 +1287,7 @@ ObitIOImageFITSWriteDescriptor (ObitIOImageFITS *in, ObitErr *err)
   strncpy (commnt, "Observer/project", FLEN_COMMENT);
   fits_update_key_str (in->myFptr, "OBSERVER", (char*)desc->observer,  commnt, 
 		       &status);
-  strncpy (commnt, "Date (yyyy-mm-dd) of observ(char*)ation", FLEN_COMMENT);
+  strncpy (commnt, "Date (yyyy-mm-dd) of observation", FLEN_COMMENT);
   fits_update_key_str (in->myFptr, "DATE-OBS", desc->obsdat, (char*)commnt, 
 		       &status);
   strncpy (commnt, "Date (yyyy-mm-dd) created ", FLEN_COMMENT);
