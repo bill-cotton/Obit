@@ -712,6 +712,116 @@ def PlotData (inData, targets, scans, feeds, err, \
     OErr.printErrMsg(err, "Error plotting OTF data")
    # end PlotData
 
+import TimeFilter
+def PlotPower (inData, targets, scans, feeds, err, \
+              output="None", bgcolor=0, nx=1, ny=1):
+    """ Plot power spectrum of selected data
+
+    Plot data in inData selected by targets and scans
+    inData  = OTF data set to be plotted, any calibration and editing will be applied
+    targets = list of target names, empty list = all
+    scans   = Range of scan number, 0's => all
+    feeds   = list of feeds to plot
+    err     = Python Obit Error/message stack
+    output  = name and type of output device:
+              "None"  interactive prompt
+              "xwin"  X-Window (Xlib)
+              "gcw"   Gnome Canvas Widget (interacts with ObitTalk)
+              "ps"    PostScript File (monochrome)
+              "psc"   PostScript File (color)
+              "xfig"  Fig file
+              "png"   PNG file
+              "jpeg"  JPEG file
+              "gif"   GIF file
+              "null"  Null device
+    bgcolor   = background color index (1-15), symbolic names:
+                BLACK, RED(default), YELLOW, GREEN, 
+                AQUAMARINE, PINK, WHEAT, GRAY, BROWN,
+                BLUE, BLUEVIOLET, CYAN, TURQUOISE,
+                MAGENTA, SALMON, WHITE
+    nx        = Number of horizontal subpages
+    ny        = Number of vertical subpages
+    """
+    # Set selection
+    inInfo = inData.List
+    inInfo.set("doCalSelect",True)       # Do selection
+    if len(targets)>0:
+        inInfo.set("Targets", targets)   # select only target data
+    if scans[0]>0 and scans[1]>0:
+        lscans = scans
+    else:
+        lscans = [1,10000000]
+    inInfo.set("Scans",lscans)
+    if len(feeds)>0 and feeds[0]>0:
+        lfeeds = feeds
+    else:
+        lfeeds = []
+        naxis = inData.Desc.Dict["inaxes"]
+        nfeed = naxis[1]*max(naxis[2],1)*max(naxis[3],1)*max(naxis[4],1)
+        for i in range(0,nfeed):
+            lfeeds.append(i+1)
+  
+    inData.Open(OTF.READONLY,err)
+    nrec = inData.Desc.Dict["nrecord"]
+    plotdata = [[]]       # time
+    datagood = [False]    # data validity
+    for j in lfeeds:
+        plotdata.append([])
+        datagood.append(False)
+    # Loop over data
+    for i in range(1,nrec+1):
+        rec=inData.ReadRec (err)
+        # eod of file?
+        eof = 'EOF' in rec.__dict__
+        if eof:
+            break
+        OErr.printErrMsg(err, "Error reading OTF data")
+        plotdata[0].append(rec.time*24.0)  # Save time
+        k = 1
+        for j in  lfeeds:
+            if rec.data[j-1][1]!=0.0:
+                plotdata[k].append(rec.data[j-1][0])
+                datagood[k] = rec.data[j-1][0]!=0.0
+            else:
+                plotdata[k].append(FArray.fblank)
+            k += 1
+    
+    inData.Close(err)
+
+    # Create/populate TimeSeries
+    ts = TimeFilter.newTimeFilter ("timeSeries", len(plotdata[0]), len(lfeeds))
+    k = 1
+    nTime = len(plotdata[0])
+    dTime = (plotdata[0][nTime-1] - plotdata[0][0]) / nTime
+    for j in lfeeds:
+        TimeFilter.PGridTime(ts, k-1, dTime, nTime, plotdata[0], plotdata[k])
+        k += 1
+    # Determine spectra
+    TimeFilter.P2Freq (ts)
+
+    # Anything selected
+    if len(plotdata[0])<=0:
+        raise RuntimeError,'No data selected to plot'
+    # plot
+    plot = OPlot.newOPlot("plot", err, nx=nx, ny=ny, output=output, bgcolor=bgcolor)
+    plotInfo = plot.List
+    plotInfo.set("XLABEL","Frequency (Hz)")
+    plotInfo.set("YLABEL","Spectral Power")
+    plotInfo.set("YOPT", "BCTSL")
+    nplot = len(plotdata)-1
+    for i in range(0,nplot):
+        # Get power spectra
+        powerDict = TimeFilter.PGetPower(ts, i)
+        # Zero first term
+        powerDict["data"][0] = powerDict["data"][1]
+        plotInfo.set("TITLE","Detector "+str(lfeeds[i]))
+        if datagood[i+1] and max(plotdata[i+1])>min(plotdata[i+1]):
+            OPlot.PXYPlot(plot, 2, powerDict["freq"], powerDict["data"], err)
+        OErr.printErrMsg(err, "Error plotting OTF data")
+    OPlot.PShow(plot,err)
+    OErr.printErrMsg(err, "Error plotting OTF data")
+   # end PlotPower
+
 # Define CleanSkyModel input dictionary
 CleanSkyModelInput={'structure':['CleanSkyModel',[('InData','Input OTF'),
                                            ('DirtyName','Dirty image name, None = scratch'),

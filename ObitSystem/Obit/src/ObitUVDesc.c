@@ -529,9 +529,16 @@ void ObitUVDescGetFreq (ObitUVDesc* in, Obit *fqtab, odouble *SouIFOff,
     fqid = 1; /* may need more */
     retCode = ObitTableFQGetInfo (FQtable, fqid, &tnif, &freqOff, &sideBand, 
 				  &chBandw, err);
+    /* Ignore missing table */
+    if (retCode==OBIT_IO_OpenErr) {
+      ObitErrClear(err); 
+      retCode = OBIT_IO_OK;
+      FQtable = NULL;
+    }
+  }
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   /* Fake FQ info */
-  } else {
+   if (FQtable==NULL) {
     freqOff = g_malloc0(nif*sizeof(odouble));
     chBandw = g_malloc0(nif*sizeof(ofloat));
     sideBand = g_malloc0(nif*sizeof(oint));

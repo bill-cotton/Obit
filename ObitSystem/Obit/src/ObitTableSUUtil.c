@@ -64,7 +64,7 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitTableSURow *row;
-  olong i, j, l, maxNum, ncheck;
+  olong i, j, l, maxNum, ncheck, *cross;
   gboolean select, gotSome, want, match;
   gchar tempName[101], temp2Name[101]; /* should always be big enough */
   gchar *routine = "ObitTableSULookup";
@@ -90,12 +90,18 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
   /* Create table row */
   row = newObitTableSURow (in);
 
+  /* Cross list of sources */
+  cross = g_malloc0(maxNum*sizeof(olong));
+  for (i=0; i<MIN (maxNum,dim[1]); i++) cross[i] = -1;
+
   /* loop over table */
   while (retCode==OBIT_IO_OK) {
     retCode = ObitTableSUReadRow (in, -1, row, err);
     if (retCode == OBIT_IO_EOF) break;
-    if ((retCode != OBIT_IO_OK) || (err->error)) 
+    if ((retCode != OBIT_IO_OK) || (err->error)) {
+      g_free(cross);
       Obit_traceback_val (err, routine,in->name, retCode);
+    }
     /* Blank fill Source to dim[0], in temp2Name */
     for (i=0; i<dim[0]; i++) temp2Name[i] = ' ';  temp2Name[i] = 0;
     l = MIN (in->myDesc->repeat[in->SourceCol], strlen(row->Source));
@@ -142,6 +148,7 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
     if (want) {  /* Save number if wanted */
       if ((*Number)<maxNum) { /* array full? */
 	outlist[(*Number)] = row->SourID;
+	cross[i] = row->SourID;
 	(*Number)++;   /* Count how many actually found */
       } else { /* Full */
 	ObitTrimTrail(tempName);
@@ -153,22 +160,26 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
   } /* End loop over table */
   
   /* check for errors */
-  if ((retCode > OBIT_IO_EOF) || (err->error))
+  if ((retCode > OBIT_IO_EOF) || (err->error)) {
+    g_free(cross);
     Obit_traceback_val (err, routine,in->name, retCode);
+  }
   
   /* Release table row */
   row = ObitTableSURowUnref (row);
 
   /* Close table */
   retCode = ObitTableSUClose (in, err);
-  if ((retCode != OBIT_IO_OK) || (err->error))
+  if ((retCode != OBIT_IO_OK) || (err->error)) {
+    g_free(cross);
     Obit_traceback_val (err, routine,in->name, retCode);
+  }
 
   /* Be sure all nonblank entries found else issue warning */
   gotSome = FALSE;  /* Any matches */
   for (i=0; i<dim[1]; i++) {
     gotSome = gotSome || (outlist[i]>=0);
-    if (outlist[i]<0) {/* Not found */
+    if (cross[i]<0) {/* Not found */
       /* get name from list */
       for (j=0; j<dim[0]; j++) tempName[j] = inlist[i*dim[0]+j]; tempName[j] = 0;
       /* Have an initial '-'? */
@@ -178,7 +189,7 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
       if (strncmp(tempName, "                ", dim[0])) {
 	ObitTrimTrail(tempName);
 	Obit_log_error(err, OBIT_InfoWarn, 
-		       "%s: Warning: Source %s :%4.4d not found in source table", 
+		       "%s: Source %s :%4.4d not found in source table or dup in list", 
 		       routine, tempName, Qual);
       }
     }
@@ -186,6 +197,7 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
 
   /* Anything selected? */
   if (!gotSome) *xselect = FALSE;
+  g_free(cross);  /* Free */
 
   return retCode;
 } /* end ObitTableSULookup */

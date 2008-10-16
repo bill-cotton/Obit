@@ -521,6 +521,7 @@ ObitImageUtilInterpolateImage (ObitImage *inImage, ObitImage *outImage,
   ObitInfoType type;
   olong i, j, ix, iy, indx, pos[2];
   ofloat inPixel[2], outPixel[2], *out, fblank =  ObitMagicF();
+  odouble RAPnt, DecPnt;
   gboolean OK;
   gchar *today=NULL;
   gchar *routine = "ObitImageUtilInterpolateImage";
@@ -575,6 +576,19 @@ ObitImageUtilInterpolateImage (ObitImage *inImage, ObitImage *outImage,
     today = ObitToday();
     strncpy (outImage->myDesc->date, today, IMLEN_VALUE-1);
     if (today) g_free(today);
+
+    /* Precess pointing position if necessary */
+    if (inImage->myDesc->equinox!=tmpDesc->equinox) {
+      ObitImageDescGetPoint (inImage->myDesc, &RAPnt, &DecPnt);
+      if ((fabs(inImage->myDesc->equinox-1950.0)<0.01) && 
+	  (fabs(tmpDesc->equinox-2000.0)<0.01))
+	ObitSkyGeomBtoJ (&RAPnt, &DecPnt);
+      else if ((fabs(inImage->myDesc->equinox-2000.0)<0.01) && 
+	       (fabs(tmpDesc->equinox-1950.0)<0.01))
+	ObitSkyGeomJtoB (&RAPnt, &DecPnt);
+      outImage->myDesc->obsra  = RAPnt;
+      outImage->myDesc->obsdec = DecPnt;
+    }
 
     /* restore first two planes geometry */
     outImage->myDesc->epoch   = tmpDesc->epoch;

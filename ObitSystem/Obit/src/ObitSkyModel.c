@@ -2038,6 +2038,7 @@ void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr 
     if (i==(nThreads-1)) hivis = nvis;  /* Make sure do all */
     args = (FTFuncArg*)in->threadArgs[i];
     args->in     = in;
+    if (args->field!=field) args->Interp = ObitCInterpolateUnref(args->Interp);
     args->field  = field;
     args->uvdata = uvdata;
     args->first  = lovis;

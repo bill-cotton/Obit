@@ -1135,8 +1135,8 @@ void UpdateInfo (ImageDisplay *IDdata)
 			   &pos[0], &pos[1]);
     /* Need to precess? */
     if ((usr_equinox > 0.0) && (usr_equinox != image[CurImag].myDesc->equinox))
-      {if (usr_equinox==1950.0) ObitSkyGeomBtoJ (&pos[0], &pos[1]);
-      if (usr_equinox==2000.0) ObitSkyGeomJtoB (&pos[0], &pos[1]);}
+      {if (usr_equinox==1950.0) ObitSkyGeomJtoB (&pos[0], &pos[1]);
+      if (usr_equinox==2000.0) ObitSkyGeomBtoJ (&pos[0], &pos[1]);}
 
     /* Third axis - assume linear - descriptor has been sub imaged -> plane 1*/
     pos[2] =  desc->crval[2] + desc->cdelt[2]*(1.0 - desc->crpix[2]);

@@ -266,8 +266,26 @@ def PGetFreq (filter, seriesNo):
     if not PIsA(filter):
         raise TypeError,"filter MUST be a Python Obit filter"
     #
-    Obit.TimeFilterGetFreq(filter.me, seriesNo)
-    # end  PGetTime
+    return Obit.TimeFilterGetFreq(filter.me, seriesNo)
+    # end  PGetFreq
+
+def PGetPower (filter, seriesNo):
+    """ Returns power spectra for a selected series
+
+    Returns dict with members:
+        "dFreq" = frequency increment in Hz
+        "freq"  = array of frequencies in Hz
+        "data"  = array of power data corresponding to "freq"
+    filter   = Python TimeFilter object
+    seriesNo = Which time/frequency series to return (0-rel)
+    """
+    ################################################################
+     # Checks
+    if not PIsA(filter):
+        raise TypeError,"filter MUST be a Python Obit filter"
+    #
+    return Obit.TimeFilterGetPower(filter.me, seriesNo)
+    # end  PGetPower
 
 def PSetTime (filter, seriesNo, inDict):
     """ Sets time data for a selected series
@@ -287,12 +305,11 @@ def PSetTime (filter, seriesNo, inDict):
     Obit.TimeFilterGetTime(filter.me, seriesNo, inDict)
     # end  PSetTime
 
-def PSetFreq (filter, seriesNo, inDict):
+def PGetFreq (filter, seriesNo):
     """ Returns frequency spectra for a selected series
 
     filter   = Python TimeFilter object
     seriesNo = Which time/frequency series to return (0-rel)
-    inDict   = dict with members: (as returned by PGetTime)
     Returns dict with members:
         "dFreq" = frequency increment in Hz
         "freq"  = array of frequencies in Hz
@@ -304,7 +321,7 @@ def PSetFreq (filter, seriesNo, inDict):
         raise TypeError,"filter MUST be a Python Obit filter"
     #
     Obit.TimeFilterGetFreq(filter.me, seriesNo)
-    # end  PSetTime
+    # end  PGetFreq
 
 def PIsA (filter):
     """ Tells if the input is a Python ObitTimeFilter

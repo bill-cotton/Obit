@@ -158,7 +158,7 @@ int main ( int argc, char **argv )
 
   /* Do solution */
   SNTable = ObitUVGSolveCal (solver, scrData, inData, inData->mySel, err);
-  if (err->error) ierr = 1;   ObitErrLog(err);  if (ierr!=0) return ierr;
+  if (err->error) ierr = 1;   ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Write history */
   CalibHistory (myInput, inData, err); 

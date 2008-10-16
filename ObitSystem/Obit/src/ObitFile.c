@@ -442,6 +442,9 @@ ObitIOCode ObitFileClose (ObitFile *in, ObitErr *err)
       && (in->status!=OBIT_ErrorExist)) 
     return OBIT_IO_OK;
 
+  /* Don't bother if myFile NULL*/
+  if (in->myFile==NULL) return OBIT_IO_OK;
+
   /* if writing flush buffer */
   flush = (in->status==OBIT_Modified);
   if (flush) {

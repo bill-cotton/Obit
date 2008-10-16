@@ -419,6 +419,14 @@ ObitUV* ObitUVCopy (ObitUV *in, ObitUV *out, ObitErr *err)
   ObitInfoListGetTest   (in->info,  "nVisPIO", &type,      dim,  &NPIO);
   ObitInfoListAlwaysPut (out->info, "nVisPIO",  type, dim,  &NPIO);
 
+  /* Copy tables before data */
+  iretCode = CopyTablesSelect (in, out, err);
+  if (err->error) {/* add traceback,return */
+    out->buffer = NULL;
+    out->bufferSize = 0;
+    Obit_traceback_val (err, routine,in->name, out);
+  }
+
   /* use same data buffer on input and output 
      so don't assign buffer for output */
   if (out->buffer) ObitIOFreeBuffer(out->buffer); /* free existing */
@@ -484,14 +492,6 @@ ObitUV* ObitUVCopy (ObitUV *in, ObitUV *out, ObitErr *err)
     if (err->error) Obit_traceback_val (err, routine, in->name, out);
     inHist  = ObitHistoryUnref(inHist);
     outHist = ObitHistoryUnref(outHist);
-  }
-
-  /* Copy tables before data */
-  iretCode = CopyTablesSelect (in, out, err);
-  if (err->error) {/* add traceback,return */
-    out->buffer = NULL;
-    out->bufferSize = 0;
-    Obit_traceback_val (err, routine,in->name, out);
   }
 
   /* unset input buffer (may be multiply deallocated ;'{ ) */
@@ -580,6 +580,7 @@ void ObitUVClone  (ObitUV *in, ObitUV *out, ObitErr *err)
   ObitInfoListAlwaysPut (out->info, "nVisPIO",  type, dim,  &NPIO);
 
   /* Open output */
+  ObitErrLog(err); /* Show any pending messages as they may get lost */
   access = OBIT_IO_WriteOnly;
   oretCode = ObitUVOpen (out, access, err);
   /* If this didn't work try OBIT_IO_ReadWrite */
@@ -592,6 +593,8 @@ void ObitUVClone  (ObitUV *in, ObitUV *out, ObitErr *err)
   if ((oretCode!=OBIT_IO_OK) || (err->error)) {
     Obit_traceback_msg (err, routine, out->name);
   }
+  /* Ignore any non error messages */
+  if (!err->error) ObitErrClear(err); 
 
   /* Copy any history unless Scratch */
   if (!in->isScratch && !out->isScratch) {
@@ -1241,6 +1244,7 @@ void ObitUVGetFreq (ObitUV* in, ObitErr *err)
   } else fqtab = NULL;
   
   /* update descriptors */
+  ObitErrLog(err); /* Show any pending messages as they may get lost */
   desc = in->myDesc;
   ObitUVDescGetFreq (desc, (Obit*)fqtab, SouIFOff, err);
   if (err->error) goto cleanup;
@@ -1308,6 +1312,7 @@ ObitIOCode ObitUVGetSubA (ObitUV *in, ObitErr *err)
   IOdesc->numSubA = highANver;
   if (IOdesc->numAnt) g_free(IOdesc->numAnt);
   IOdesc->numAnt = g_malloc0(highANver*sizeof(oint*));
+  ObitErrLog(err); /* Show any pending messages as they may get lost */
 
   /* Loop over AN tables */
   for (iANver=1; iANver<=highANver; iANver++) {
@@ -1315,10 +1320,21 @@ ObitIOCode ObitUVGetSubA (ObitUV *in, ObitErr *err)
     /* Get table */
     ANTable = 
       newObitTableANValue (in->name, (ObitData*)in, &iANver, OBIT_IO_ReadOnly, 0, 0, err);
-    if ((err->error) || (ANTable==NULL)) goto cleanup;
+    /* Ignore missing table */
+    if (ANTable==NULL) {
+      ObitErrClear(err); 
+      continue;
+    }
+    if (err->error) goto cleanup;
 
     /* Get info from table */
     retCode = ObitTableANGetInfo (ANTable, &(desc->numAnt[iANver-1]), NULL, NULL, err);
+    /* Ignore missing table */
+    if (retCode==OBIT_IO_OpenErr) {
+      ObitErrClear(err); 
+      retCode = OBIT_IO_OK;
+      continue;
+    }
     if ((err->error) || (retCode!=OBIT_IO_OK)) goto cleanup;
  
     /* save to I/O descriptor */

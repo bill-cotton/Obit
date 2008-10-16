@@ -228,7 +228,6 @@ ObitIOCode ObitTableFQSelect (ObitUV *inUV, ObitUV *outUV, odouble *SouIFOff,
   gchar *routine = "ObitTableFQSelect";
 
   /* error checks */
-  g_assert (ObitErrIsA(err));
   if (err->error) return retCode;
   g_assert (ObitUVIsA(inUV));
   g_assert (ObitUVIsA(outUV));
@@ -236,8 +235,10 @@ ObitIOCode ObitTableFQSelect (ObitUV *inUV, ObitUV *outUV, odouble *SouIFOff,
   /* Fully instantiate UV files */
   ObitUVFullInstantiate (inUV, TRUE, err);
   if (err->error )Obit_traceback_val (err, routine, inUV->name, retCode);
+  /* Ignore any problems */
+  ObitErrLog(err); /* Show any pending messages as they may get lost */
   ObitUVFullInstantiate (outUV, FALSE, err);
-  if (err->error )Obit_traceback_val (err, routine, outUV->name, retCode);
+  ObitErrClear(err); 
 
   /* How many FQ tables  */
   highFQver = ObitTableListGetHigh (inUV->tableList, FQType);

@@ -83,7 +83,7 @@ int main ( int argc, char **argv )
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *FDParms[] = {
-    "flagTab", "timeAvg",
+    "flagTab", "timeAvg", "doHiEdit", 
     "doFD", "FDmaxAmp", "FDmaxV", "FDwidMW", "FDmaxRMS", 
     "FDmaxRes", "FDmaxResBL", "FDbaseSel",
     NULL};
@@ -954,7 +954,7 @@ void AutoFlagHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "Sources", "Stokes", "timeRange",  "subA",
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
     "doPol",  
-    "flagTab", "VClip", "IClip", "RMSClip", "RMSAvg", "maxBad",  "timeAvg", 
+    "flagTab", "VClip", "IClip", "RMSClip", "doHiEdit", "RMSAvg", "maxBad", "timeAvg", 
     "doFD", "FDmaxAmp", "FDmaxV", "FDwidMW", "FDmaxRMS", 
     "FDmaxRes", "FDmaxResBL", "FDbaseSel",
     NULL};

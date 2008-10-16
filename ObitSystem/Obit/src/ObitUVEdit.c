@@ -138,6 +138,7 @@ static void T2String (ofloat time, gchar *msgBuf);
  *     and avg_amp is the average amplitude on each baseline.
  * B = median RMS + 3 * sigma of the RMS distribution.
  * C = level corresponding to 3% of the data.
+ * Usage of C is controlled by doHiEdit
  *    All data on a given baseline/correlator are flagged if the RMS
  * exceeds the limit.  If a fraction of bad baselines on any correlator
  * exceeds maxBad, then all data to that correlator is flagged.  In
@@ -154,7 +155,8 @@ static void T2String (ofloat time, gchar *msgBuf);
  * \li "maxBad"  OBIT_float (1,1,1) Fraction of allowed flagged baselines 
  *               to a poln/channel/IF above which all baselines are flagged.
  *               [default 0.25]
- *
+ * \li "doHiEdit" OBIT_boolean (1,1,1) If present and TRUE, flag based 
+ *                on statistics [def FALSE]
  * Routine adapted from the AIPSish TDEDIT.FOR/TDEDIT
  * \param inUV     Input uv data to edit. 
  * \param outUV    UV data onto which the FG table is to be attached.
@@ -166,7 +168,7 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitIOCode iretCode, oretCode;
   ObitTableFG *outFlag=NULL;
   ObitTableFGRow *row=NULL;
-  gboolean doCalSelect;
+  gboolean doCalSelect, doHiEdit;
   olong i, j, k, jj, kk, firstVis, startVis, suba, iFGRow, ver;
   olong countAll, countBad;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
@@ -215,7 +217,9 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* max. fraction bad baselines */
   maxBad = 0.25;           /* default 0.25 */
   ObitInfoListGetTest(inUV->info, "maxBad", &type, dim,  &maxBad);  
-  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  /* Edit by histogram? */
+  doHiEdit = FALSE;
+  ObitInfoListGetTest(inUV->info, "doHiEdit", &type, dim,  &doHiEdit);  
 
    /* Data Selection */
   BIF = 1;
@@ -451,11 +455,11 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  } /* end loop  L160: */
 	} /* end loop  L170: */
 
+	if (doHiEdit) {
 	/* Set histogram clipping levels. */
-	editHist (ncorr, numCell, hisinc, hissig, hiClip);
-
-	/* No histogram flagging if clip level exceeds 10. */
-	if (maxRMS[0] >= 10.0) {
+	  editHist (ncorr, numCell, hisinc, hissig, hiClip);
+	} else {
+	  /* No histogram flagging  */
 	  for (j=0; j<ncorr; j++) { /* loop 180 */
             hiClip[j] = maxRMS[0] * maxRMS[0];
 	  } /* end loop  L180: */;

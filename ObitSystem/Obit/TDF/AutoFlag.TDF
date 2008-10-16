@@ -91,6 +91,8 @@ IClip                               If > 0.0 IPol clipping level
 **PARAM**  float 2
 RMSClip                             Abs and fractional clip levels for 
                                     Time domain RMS filtering
+**PARAM** boo 1 **DEF** F
+doHiEdit                            RMS editing based on statistics?
 **PARAM**  float 1
 RMSAvg                              Max RMS/Avg for time domain RMS 
                                     filtering
@@ -204,6 +206,9 @@ Adverbs:
              clip = RMSClip[0] + amp*RMSClip[1]
              default = 0 => no time domain editing.
              See EXPLAIN sections for details.    
+  doHiEdit...Flag to control RMS editing based on a histogram 
+             analysis.  Should flag the most discrepant 3% of data.
+             Use with caution.
   RMSAvg.....Clip level for time domain RMS/average clipping
   maxBad.....For VPol editing (VClip[0]>0) then if a fractions of
              baselines using a given antenna/IF/channel larger 

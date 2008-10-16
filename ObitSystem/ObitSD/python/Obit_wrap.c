@@ -8449,7 +8449,7 @@ extern PyObject* TimeFilterGetTime (ObitTimeFilter* in, int seriesNo) {
   PyDict_SetItemString(outDict, "dTime", PyFloat_FromDouble((double)in->dTime));
   time = PyList_New(in->nTime);
   data = PyList_New(in->nTime);
-  for (i=0; i<in->nTime++; i++) {
+  for (i=0; i<in->nTime; i++) {
     PyList_SetItem(time, i, PyFloat_FromDouble((double)in->times[i]));
     PyList_SetItem(data, i, PyFloat_FromDouble((double)in->timeData[seriesNo][i]));
   }
@@ -8469,8 +8469,8 @@ extern PyObject* TimeFilterGetFreq (ObitTimeFilter* in, int seriesNo) {
   freq = PyList_New(in->nFreq);
   data = PyList_New(in->nFreq);
 
-  for (i=0; i<in->nFreq++; i++) {
-    PyList_SetItem(freq, i, PyFloat_FromDouble((double)in->freqs[i]));
+  for (i=0; i<in->nFreq; i++) {
+    PyList_SetItem(freq, i, PyFloat_FromDouble((double)(24.0*in->freqs[i])));
     PyList_SetItem(data, i, PyComplex_FromDoubles((double)in->freqData[seriesNo][i*2], 
                                                    (double)in->freqData[seriesNo][i*2+1]));
   }
@@ -8479,6 +8479,31 @@ extern PyObject* TimeFilterGetFreq (ObitTimeFilter* in, int seriesNo) {
    
   return outDict;
 } // end  TimeFilterGetFreq
+
+// return dict with {"dFreq", "freq", "data"}
+// Power spectra
+extern PyObject* TimeFilterGetPower (ObitTimeFilter* in, int seriesNo) {
+  PyObject *outDict = PyDict_New();
+  PyObject *freq, *data;
+  double val, vr, vi;
+  olong i;
+
+  PyDict_SetItemString(outDict, "dFreq", PyFloat_FromDouble((double)in->dFreq));
+  freq = PyList_New(in->nFreq);
+  data = PyList_New(in->nFreq);
+
+  for (i=0; i<in->nFreq; i++) {
+    PyList_SetItem(freq, i, PyFloat_FromDouble((double)(24.0*in->freqs[i])));
+    vr = (double)in->freqData[seriesNo][i*2];
+    vi = (double)in->freqData[seriesNo][i*2+1];
+    val = vr*vr + vi*vi;
+    PyList_SetItem(data, i, PyFloat_FromDouble(val));
+  }
+  PyDict_SetItemString(outDict, "freq", freq);
+  PyDict_SetItemString(outDict, "data", data);
+   
+  return outDict;
+} // end  TimeFilterGetPower
 
 // expect dict with {"dTime", "time", "data"}
 extern void TimeFilterSetTime (ObitTimeFilter* in, int seriesNo,
@@ -8500,7 +8525,7 @@ extern void TimeFilterSetTime (ObitTimeFilter* in, int seriesNo,
     return;
   }
 
-  for (i=0; i<in->nTime++; i++) {
+  for (i=0; i<in->nTime; i++) {
     in->times[i]              = (ofloat)PyFloat_AsDouble(PyList_GetItem(time, i));
     in->timeData[seriesNo][i] = (ofloat)PyFloat_AsDouble(PyList_GetItem(data, i));
   }
@@ -8526,7 +8551,7 @@ extern void TimeFilterSetFreq (ObitTimeFilter* in, int seriesNo,
     return;
   }
 
-  for (i=0; i<in->nTime++; i++) {
+  for (i=0; i<in->nTime; i++) {
     in->freqs[i] = (ofloat)PyFloat_AsDouble(PyList_GetItem(freq, i));
     cx = PyList_GetItem(data, i);
     in->freqData[seriesNo][i*2]   = (ofloat)PyComplex_RealAsDouble(cx);
@@ -8551,6 +8576,7 @@ extern ObitTimeFilter *TimeFilterUnref(ObitTimeFilter *);
 extern char *TimeFilterGetName(ObitTimeFilter *);
 extern PyObject *TimeFilterGetTime(ObitTimeFilter *,int );
 extern PyObject *TimeFilterGetFreq(ObitTimeFilter *,int );
+extern PyObject *TimeFilterGetPower(ObitTimeFilter *,int );
 extern void TimeFilterSetTime(ObitTimeFilter *,int ,PyObject *);
 extern void TimeFilterSetFreq(ObitTimeFilter *,int ,PyObject *);
 
@@ -40803,6 +40829,36 @@ static PyObject *_wrap_TimeFilterGetFreq(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_TimeFilterGetPower(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTimeFilter * _arg0;
+    int  _arg1;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Oi:TimeFilterGetPower",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTimeFilter_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TimeFilterGetPower. Expected _ObitTimeFilter_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TimeFilterGetPower(_arg0,_arg1);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
 static PyObject *_wrap_TimeFilterSetTime(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitTimeFilter * _arg0;
@@ -58993,6 +59049,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "UVDescCreate", _wrap_UVDescCreate, METH_VARARGS },
 	 { "TimeFilterSetFreq", _wrap_TimeFilterSetFreq, METH_VARARGS },
 	 { "TimeFilterSetTime", _wrap_TimeFilterSetTime, METH_VARARGS },
+	 { "TimeFilterGetPower", _wrap_TimeFilterGetPower, METH_VARARGS },
 	 { "TimeFilterGetFreq", _wrap_TimeFilterGetFreq, METH_VARARGS },
 	 { "TimeFilterGetTime", _wrap_TimeFilterGetTime, METH_VARARGS },
 	 { "TimeFilterGetName", _wrap_TimeFilterGetName, METH_VARARGS },

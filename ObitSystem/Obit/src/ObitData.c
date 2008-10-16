@@ -576,10 +576,13 @@ newObitDataTable (ObitData *in, ObitIOAccess access,
   if (access!=OBIT_IO_ReadOnly) {
     /* Open if not */
     if (in->myStatus==OBIT_Inactive) {
+      ObitErrLog(err); /* Show any pending messages as they may get lost */
       doClose = TRUE;
       /* Don't need to assign image buffer here */
       if (isImage) ((ObitImage*)in)->extBuffer = TRUE;  
       ObitDataOpen(in, OBIT_IO_ReadWrite, err);
+      /* Ignore any non error messages */
+      if (!err->error) ObitErrClear(err); 
     } else doClose = FALSE;
     if (in->myStatus != OBIT_Inactive) in->myStatus = OBIT_Modified;
     if (doClose) {
