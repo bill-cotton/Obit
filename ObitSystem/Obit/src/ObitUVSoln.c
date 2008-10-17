@@ -2245,9 +2245,9 @@ static void ObitUVSolnUpdate (ObitUVSoln *in, ofloat time, olong SourID, ObitErr
 	  case OBIT_UVSolnInterPOLY:
 	  case OBIT_UVSolnInterSIMP:
 	    /* resolve phase ambiguity by disallowing phase jumps of >180 deg */
-	    if (fabs(g2p-g1p)> 2.0 * G_PI) {
-	      if ((g2p-g1p)> 0.0) g2p +=  2.0 * G_PI;
-	      else g2p -=  2.0 * G_PI;
+	    if (fabs(g2p-g1p)> G_PI) {
+	      if ((g2p-g1p)> 0.0) g2p -=  2.0 * G_PI;
+	      else g2p +=  2.0 * G_PI;
 	    }
 	    phase = g1p + (g2p - g1p) * dt1 / dt;
 	    break;
