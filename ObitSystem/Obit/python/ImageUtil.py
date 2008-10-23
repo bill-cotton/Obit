@@ -1,6 +1,8 @@
+""" Python Obit Image utility module
+"""
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2007
+#  Copyright (C) 2004-2008
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -28,6 +30,7 @@
 
 # Python interface to ObitImageUtil utilities
 import Obit, Image, ImageDesc, FArray, UV, Table, History, OErr
+import OSystem
 
 def PICreateImage (inUV, fieldNo, doBeam, err):
     """ Create an image from information on an ObitUV
@@ -343,4 +346,264 @@ def PCCScale (inCCTab, startComp, endComp, scale, err):
     if err.isErr:
         OErr.printErrMsg(err, "Error scaling CC table")
     # end PCCScale
+
+def PImageAdd (in1Image, in2Image, outImage, err, \
+               chkPos=False, factor1=1.0, factor2=1.0):
+    """ Adds Pixels in in2Image from in1Image and write to outImage
+
+    Adds scaled pixel values, writes history
+    in1Image  input Obit Python Image 1
+    in2Image  input Obit Python Image 2
+    outImage  output Obit Python Image, must be defined but not instantiated
+    err       Python Obit Error/message stack
+    chkPos    If true also check the coordinates on each axis
+              Check is if pixels are within 0.01 of a pixel
+    factor1   Scaling factor for in1Image
+    factor2   Scaling factor for in2Image
+    """
+    ################################################################
+    # Checks
+    if not Image.PIsA(in1Image):
+        raise TypeError,"in1Image MUST be a Python Obit Image"
+    if not Image.PIsA(in2Image):
+        raise TypeError,"in2Image MUST be a Python Obit Image"
+    if not Image.PIsA(outImage):
+        raise TypeError,"outImage MUST be a Python Obit Image"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    # Clone output from input 1
+    in1Image.Clone (outImage, err)
+    # Open images
+    Image.POpen (in1Image, Image.READONLY, err)
+    Image.POpen (in2Image, Image.READONLY, err)
+    Image.POpen (outImage, Image.WRITEONLY, err)
+    #  Get input descriptor to see how many planes
+    in1Desc = in1Image.Desc
+    in2Desc = in2Image.Desc
+    # Check compatibility
+    ImageDesc.PCheckCompat (in1Desc, in2Desc, chkPos=chkPos)
+    inDescDict = in1Desc.Dict
+    ndim  = inDescDict["naxis"]
+    inNaxis = inDescDict["inaxes"]
+    # Work buffer
+    inImageArray = Image.PGetFArray(in1Image)
+    ImageBuffer1 = FArray.PCopy(inImageArray, err)
+    ImageBuffer2 = FArray.PCopy(inImageArray, err)
+
+    # list of planes to loop over (0-rel)
+    if (ndim>0) and (inNaxis[2]>0):  
+        planes = range(inNaxis[2])
+    else:
+        planes = [0]
+    
+    # Loop over planes
+    for iPlane in planes:
+        doPlane = [iPlane+1,1,1,1,1]
+        # Get image planes
+        Image.PGetPlane (in1Image, ImageBuffer1, doPlane, err)
+        Image.PGetPlane (in2Image, ImageBuffer2, doPlane, err)
+
+        # Scale
+        FArray.PSMul(ImageBuffer1, factor1)
+        FArray.PSMul(ImageBuffer2, factor2)
+
+        # Add
+        FArray.PAdd(ImageBuffer1, ImageBuffer2, ImageBuffer2)
+
+        # Write output
+        Image.PPutPlane (outImage, ImageBuffer2, doPlane, err)
+
+        # end loop over planes
+    # Close
+    in2Image.Close(err)
+    in2Image.Close(err)
+    outImage.Close(err)
+    # Error?
+    if err.isErr:
+        OErr.printErrMsg(err, "Error subtracting Images")
+    # Write history
+    in1History  = History.History("history", in1Image.List, err)
+    in2History  = History.History("history", in2Image.List, err)
+    outHistory  = History.History("history", outImage.List, err)
+    # Copy Histories
+    outHistory.Open(History.READWRITE, err)
+    outHistory.TimeStamp(" Start Obit PImageAdd",err)
+    outHistory.WriteRec(-1, "/ PImageAdd Input 1 History",err)
+    outHistory.Close(err)
+    info = in1Image.List.Dict
+    # FITS? - copy header
+    if ("FileType" in info) and (info["FileType"][2][0]==0):
+        History.PCopyHeader(in1History, outHistory, err)
+    #Not needed History.PCopy(in1History, outHistory, err)
+    outHistory.Open(History.READWRITE, err)
+    outHistory.WriteRec(-1, "/      ",err)
+    outHistory.WriteRec(-1, "/ ******   PImageAdd Input 2 History",err)
+    outHistory.Close(err)
+    info = in2Image.List.Dict
+    # FITS? - copy header
+    if ("FileType" in info) and (info["FileType"][2][0]==0):
+        History.PCopyHeader(in2History, outHistory, err)
+    History.PCopy(in2History, outHistory, err)
+    # Add this programs history
+    outHistory.Open(History.READWRITE, err)
+    outHistory.TimeStamp(" Start Obit PImageAdd",err)
+    outHistory.WriteRec(-1,OSystem.PGetPgmName()+" factor1 = "+str(factor1),err)
+    outHistory.WriteRec(-1,OSystem.PGetPgmName()+" factor2 = "+str(factor2),err)
+    outHistory.Close(err)
+# end PImageAdd
+
+def FFTHeaderUpdate(inIm, naxis, err):
+    """ Fix Image header for an image being FFTed
+
+    Update first two axes for the effect of FFT
+    inID  = image with descriptor to update
+    naxis = dimensionality of array being FFTed (not size in inID)
+    err   = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not Image.PIsA(inIm):
+        raise TypeError,"inIm MUST be a Python Obit Image"
+    header = inIm.Desc.Dict
+    # Image to uv plane
+    if header["ctype"][0][0:8]=="RA---SIN":
+        header["ctype"][0] = "UU-L"+header["ctype"][0][4:]
+        header["ctype"][1] = "VV-L"+header["ctype"][0][4:]
+        dx = header["cdelt"][0]/57.296
+        header["cdelt"][0] = 1.0 / (naxis[0]*dx)
+        dy = header["cdelt"][1]/57.296
+        header["cdelt"][1] = 1.0 / (naxis[1]*dy)
+        header["crpix"][0] = 1.0 + header["inaxes"][0]/2.0
+        header["crpix"][1] = 1.0 + header["inaxes"][1]/2.0
+        header["crval"][0] = 0.0
+        header["crval"][1] = 0.0
+    # end image to uv plane
+    inIm.Desc.Dict = header
+    inIm.UpdateDesc(err)
+
+    #  end FFTHeaderUpdate
+
+import FFT, CArray, FeatherUtil
+def PImageFFT (inImage, outAImage, outPImage, err):
+    """ FFTs an Image
+
+    FFT inImage and write as real and imaginary as full plane (hermetian) 
+    inImage   input Obit Python Image 1
+              Any BLC and/or TRC set will be honored
+    outAImage output Obit Python Amplitude image of FFT
+              must be defined but not instantiated
+    outPImage output Obit Python Phase (deg) image of FFT
+              must be defined but not instantiated
+    err       Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not Image.PIsA(inImage):
+        raise TypeError,"inImage MUST be a Python Obit Image"
+    if not Image.PIsA(outAImage):
+        raise TypeError,"outAImage MUST be a Python Obit Image"
+    if not Image.PIsA(outPImage):
+        raise TypeError,"outPImage MUST be a Python Obit Image"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    # Clone output images
+    inImage.Clone(outAImage,err)
+    inImage.Clone(outPImage,err)
+    OErr.printErrMsg(err, "Error initializing images")
+
+    # Size of FFT
+    inImage.Open(Image.READONLY, err)
+    inImage.Read(err)
+    OErr.printErrMsg(err, "Error reading input")
+    inHead = inImage.Desc.Dict
+    FFTdim = [FFT.PSuggestSize(inHead["inaxes"][0]), FFT.PSuggestSize(inHead["inaxes"][1])]
+
+    # Create float arrays for FFT size
+    inFArray  = FArray.FArray("inF",  naxis=FFTdim)
+    outFArray = FArray.FArray("outF", naxis=FFTdim)
+
+    # Pad input into work FArray
+    FArray.PPad(inImage.FArray, inFArray, 1.0)
+    # and God said "The center of an FFT will be at the corners"
+    FArray.PCenter2D(inFArray)
+    # Zero output FArray and use as imaginary part
+    FArray.PFill(outFArray, 0.0)
+    
+    # Create FFT for full complex FFT
+    FFTfor = FFT.FFT("FFT", 1, 1, 2, FFTdim)
+    
+    # Create complex arrays for FFT size
+    inCArray  = CArray.CArray("inC", naxis=FFTdim)
+    outCArray = CArray.CArray("outC", naxis=FFTdim)
+    
+    # Copy input to scratch CArray
+    CArray.PComplex(inFArray, outFArray, inCArray)
+    
+    # FFT
+    FFT.PC2C(FFTfor, inCArray, outCArray)
+    
+    # Extract amplitude
+    CArray.PAmp(outCArray, outFArray)
+    # and God said "The center of an FFT will be at the corners"
+    FArray.PCenter2D(outFArray)
+    
+    # Extract output portion and write
+    outAImage.Open(Image.WRITEONLY,err)
+    outAImage.FArray = FeatherUtil.PExtract (FFTfor, outFArray, outAImage.FArray, err)
+    OErr.printErrMsg(err, "Error extracting output amplitude image")
+    outAImage.WriteFA(outAImage.FArray, err)
+    # Fix header
+    FFTHeaderUpdate(outAImage, FFTdim, err)
+    outAImage.Close(err)
+    OErr.printErrMsg(err, "Error writing output amplitude image")
+    
+    # Extract phase
+    CArray.PPhase(outCArray, outFArray)
+    # To degrees
+    FArray.PSMul(outFArray, 57.2956)
+    # and God said "The center of an FFT will be at the corners"
+    FArray.PCenter2D(outFArray)
+
+    # Extract output portion and write
+    outPImage.Open(Image.WRITEONLY,err)
+    outPImage.FArray = FeatherUtil.PExtract (FFTfor, outFArray, outPImage.FArray, err)
+    OErr.printErrMsg(err, "Error extracting output phase image")
+    outPImage.WriteFA(outPImage.FArray, err)
+    # Fix header
+    FFTHeaderUpdate(outPImage, FFTdim, err)
+    outPImage.Close(err)
+    # Error?
+    OErr.printErrMsg(err, "Error writing output phase image")
+
+    # get any BLC, TRC for history
+    info = inImage.List.Dict
+    blc = [1,1,1,1,1,1,1]
+    if 'BLC' in info:
+        blc = info["BLC"][2]
+    trc = [0,0,0,0,0,0,0]
+    if 'TRC' in info:
+        trc = info["TRC"][2]
+
+    # Write history
+    i = 0
+    imtype = ("Amplitude","Phase")
+    for outImage in (outAImage, outPImage):
+        inHistory  = History.History("history", inImage.List, err)
+        outHistory = History.History("history", outImage.List, err)
+        # Copy History
+        # FITS? - copy header
+        if ("FileType" in info) and (info["FileType"][2][0]==0):
+            History.PCopyHeader(inHistory, outHistory, err)
+        #Not needed History.PCopy(inHistory, outHistory, err)
+        # Add this programs history
+        outHistory.Open(History.READWRITE, err)
+        outHistory.TimeStamp(" Start Obit PImageFFT",err)
+        outHistory.WriteRec(-1,OSystem.PGetPgmName()+" BLC = "+str(blc),err)
+        outHistory.WriteRec(-1,OSystem.PGetPgmName()+" TRC = "+str(trc),err)
+        outHistory.WriteRec(-1,OSystem.PGetPgmName()+" type = "+imtype[i],err)
+        i += 1
+        outHistory.Close(err)
+# end PImageFFT
 

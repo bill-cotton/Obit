@@ -321,6 +321,40 @@ def PGetList (inDesc):
     return out
     # end PGetList 
 
+def PCheckCompat (in1Desc, in2Desc, chkPos=False):
+    """  Checks compatibility of two image descriptors
+
+    Raises error condition if  images do not have the same geometry
+    in1Desc  = Python Obit input ImageDesc 1
+    in2Desc  = Python Obit input ImageDesc 2
+    chkPos   = If true also check the coordinates on each axis
+               Check is if pixels are within 0.01 of a pixel
+    """
+    ################################################################
+    # Checks
+    if not PIsA(in1Desc):
+        raise TypeError,"in1Desc MUST be a Python Obit ImageDesc"
+    if not PIsA(in2Desc):
+        raise TypeError,"in2Desc MUST be a Python Obit ImageDesc"
+    #
+    # Get as dicts
+    d1 = in1Desc.Dict
+    d2 = in2Desc.Dict
+    n = max(d1["naxis"], d2["naxis"])
+    for i in range (0,n):
+        if max(1,d1["inaxes"][i]) != max(1,d2["inaxes"][i]):
+            raise RuntimeError,"in1Desc and in2Desc geometries axis "+str(i+1)+" are incompatible"
+    # Need to also check positions?
+    if chkPos:
+        for i in range (0,n):
+            if abs(d1["crval"][i]-d2["crval"][i]) > 0.01*abs(d1["cdelt"][i]):
+                raise RuntimeError,"in1Desc and in2Desc coordinates axis "+str(i+1)+" are incompatible"
+            if abs(d1["crpix"][i]-d2["crpix"][i]) > 0.01:
+                raise RuntimeError,"in1Desc and in2Desc ref. pixel axis "+str(i+1)+" are incompatible"
+            if abs(d1["cdelt"][i]-d2["cdelt"][i]) > 0.01*abs(d1["cdelt"][i]):
+                raise RuntimeError,"in1Desc and in2Desc increments axis "+str(i+1)+" are incompatible"
+    # end PCheckCompat 
+
 def PIsA (inID):
     """ Tells if the input really is a Python Obit ImageDesc
 

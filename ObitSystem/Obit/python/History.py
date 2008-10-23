@@ -12,7 +12,7 @@ List  - used to pass instructions to processing (file info)
 # Python/Obit History class
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2007
+#  Copyright (C) 2004-2008
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -117,7 +117,7 @@ class History(HistoryPtr):
         
         returns string
         self  = input Python History
-        recno = desirec record
+        recno = desired record
         err   = Python Obit Error/message stack
         """
         return PReadRec (self, recno, err)
@@ -128,7 +128,7 @@ class History(HistoryPtr):
         
         return 0 on success, else failure
         self   = input Python History
-        recno  = desirec record
+        recno  = desired record, -1 => end of table
         hiCard = input history record
         err    = Python Obit Error/message stack
         """

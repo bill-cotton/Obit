@@ -856,7 +856,7 @@ static void ObitUVCalBandpassNewTime (ObitUVCalBandpassS *in, ofloat time,
 	wt1 = BPTableRow->Weight1[IFoff];
 	/* loop over channels */
 	for (ichan=in->bChan; ichan<=in->eChan; ichan++) {
-	  if ((wt1>0.0) &&  (BPTableRow->Real1[IFoff+ichan]!=fblank)) {
+	  if ((wt1>0.0) &&  (BPTableRow->Real1[IFoff+ichan-1]!=fblank)) {
 	    in->BPPrior[indx]   += BPTableRow->Real1[IFoff+ichan-1];
 	    in->BPPrior[indx+1] += BPTableRow->Imag1[IFoff+ichan-1];
 	    in->BPFollow[indx]++;
@@ -869,7 +869,7 @@ static void ObitUVCalBandpassNewTime (ObitUVCalBandpassS *in, ofloat time,
 	  wt2 = BPTableRow->Weight2[IFoff];
 	  /* loop over channels */
 	  for (ichan=in->bChan; ichan<=in->eChan; ichan++) {
-	    if ((wt2>0.0) &&  (BPTableRow->Real2[IFoff+ichan]!=fblank)) {
+	    if ((wt2>0.0) &&  (BPTableRow->Real2[IFoff+ichan-1]!=fblank)) {
 	      in->BPPrior[indx]   += BPTableRow->Real2[IFoff+ichan-1];
 	      in->BPPrior[indx+1] += BPTableRow->Imag2[IFoff+ichan-1];
 	      in->BPFollow[indx]++;

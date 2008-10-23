@@ -987,6 +987,8 @@ void HGeomHistory (ObitInfoList* myInput, ObitImage* inImage,
   /* If FITS copy header */
   if (inHistory->FileType==OBIT_IO_FITS) {
     ObitHistoryCopyHeader (inHistory, outHistory, err);
+    /* and also any history table */
+     ObitHistoryCopy (inHistory, outHistory, err);
   } else { /* simply copy history */
      ObitHistoryCopy (inHistory, outHistory, err);
   }
