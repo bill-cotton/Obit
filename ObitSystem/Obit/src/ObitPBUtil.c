@@ -1,4 +1,6 @@
 /* $Id$  */
+/* this version        2008-10-01 20:20:00  juan.uson      */
+/* J1 extended with large angle approximation              */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2004-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
@@ -112,8 +114,8 @@ ofloat ObitPBUtilPoly (odouble Angle, odouble Freq, ofloat pbmin)
  * VLA primary beamwidth, which is assumed to scale as 1./freq. 
  * vscale = 4.487e-9 corresponds to a 29.4 arcmin fwhm at 1.47 ghz. 
  * the actual scale is determined from the antenna size (antSize). 
- * xmax = value of x yielding pb = pbmin, beyond which the 
- * series approximation loses accuracy. 
+ * xmax = value of x where the series approximation to the J1 goes from the
+ * small angle approximation to the large angle approximation.
  * Note: this routine is probably only useful for the VLA but might 
  * be ok for a homogenous array of uniformly illuminated antennas where 
  * the beam scales from the VLA beam by the ratio of antenna diameters. 
@@ -128,18 +130,36 @@ ofloat ObitPBUtilJinc (odouble Angle, odouble Freq, ofloat antSize,
 		       ofloat pbmin)
 {
   ofloat bmfact = 1.0;
-  ofloat  x, u, scale, pb, asize;
+  ofloat  x, u, scale, pb, asize, xx, f, t;
   /* coefficients c from Abramowitz and Stegun, eq. 9.4.4 */
   static ofloat c1 = -0.56249985;
   static ofloat c2 =  0.21093573;
   static ofloat c3 = -0.03954289;
   static ofloat c4 =  0.00443319;
   static ofloat c5 = -0.00031761;
-  static ofloat c6 =  0.0000110;
-  static ofloat vscale=  4.487e-9; 
-  /*static ofloat xmax = 3.00751; min 5% */
-  static ofloat xmax = 4.0; /* down to 0.1% */
+  static ofloat c6 =  0.00001109;
+  /* coefficients d and e from Abramowitz and Stegun, eq. 9.4.6 */
   
+  static ofloat d1 =  0.79788456;
+  static ofloat d2 =  0.00000156;
+  static ofloat d3 =  0.01659667;
+  static ofloat d4 =  0.00017105;
+  static ofloat d5 = -0.00249511;
+  static ofloat d6 =  0.00113653;
+  static ofloat d7 = -0.00020033;
+
+  static ofloat e1 = -2.35619449;
+  static ofloat e2 =  0.12499612;
+  static ofloat e3 =  0.00005650;
+  static ofloat e4 = -0.00637879;
+  static ofloat e5 =  0.00074348;
+  static ofloat e6 =  0.00079824;
+  static ofloat e7 = -0.00029166;
+
+  static ofloat vscale=  4.487e-9;
+  
+  /* transition to large angle J1 */
+  static ofloat xmax = 3.0;
 
   /* default antenna size */
   asize = antSize;
@@ -152,11 +172,21 @@ ofloat ObitPBUtilJinc (odouble Angle, odouble Freq, ofloat antSize,
   if (x  <  xmax) {
     u = x * x / 9.0;
     pb = 0.5 + u*(c1 + u*(c2 + u*(c3 + u*(c4 + u*(c5 + u*c6)))));
-    if (pbmin<=0.0) pbmin = 0.05;  /* Minimum gain */
-    bmfact = MAX (pbmin, 4.* pb * pb);
   } else {
-    bmfact = pbmin;
-  } 
+    xx = x / 3.0;
+    u = 3.0 / x;
+    f = d1 + xx*(d2 + xx*(d3 + xx*(d4 + xx*(d5 + xx*(d6 + xx*d7)))));
+    t = x + e1 + u*(e2 + u*(e3 + u*(e4 + u*(e5 + u*(e6 + u*e7)))));
+    pb = f * cos(t) / (pow(x,1.5));
+  }	
+
+  /* Allow going to 0.001 if using J1 beam */
+  bmfact = MAX (0.001, 4.* pb * pb);
+
+  /* here, make some "reasonable" estimate on the rumbling around 
+     in far sidelobes, and the depths of the nulls... */
+  if (pbmin<=0.0) pbmin = 0.01;
+  bmfact = MIN (1.0, MAX (bmfact, pbmin));
 
   return bmfact;
 } /*  end ObitPBUtilJinc */

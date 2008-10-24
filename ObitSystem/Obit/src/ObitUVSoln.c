@@ -2074,13 +2074,14 @@ static void ObitUVSolnUpdate (ObitUVSoln *in, ofloat time, olong SourID, ObitErr
 
   /* interpolate current calibration to time */
   in->CalTime = time;
-  /* initialize indices for CalApply (index),  CalPrior and CalFollow (jndex)*/
-  index = 0;
-  jndex = 0;
 
   /* loop thru antennas */
   for (iant=0; iant<in->numAnt; iant++) { /* loop 500 */
-    if (in->MissAnt[iant]) continue;  /* Nothing for this antenna */
+    /* initialize indices for CalApply (index),  CalPrior and CalFollow (jndex)*/
+    index = iant * in->numIF * in->numPol * in->lenCalArrayEntry;
+    jndex = iant * in->numIF * in->numPol * in->lenCalArrayEntry;
+
+    if (in->MissAnt[iant]) goto badant;  /* Nothing for this antenna */
 
     /* set interpolation weights proportional to time difference. */
     dt  = in->FollowAntTime[iant] - in->PriorAntTime[iant] + 1.0e-20;
@@ -2320,6 +2321,7 @@ static void ObitUVSolnUpdate (ObitUVSoln *in, ofloat time, olong SourID, ObitErr
 	} /* end of only valid solutions section */
 
 	/* update indices */
+      badant:
         index += in->lenCalArrayEntry;
 	jndex += in->lenCalArrayEntry;
 
