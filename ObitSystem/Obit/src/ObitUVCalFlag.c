@@ -170,7 +170,7 @@ void ObitUVCalFlag (ObitUVCal *in, float time, olong ant1, olong ant2,
   sel  = in->mySel;
 
   /* see if new time - update cal. */
-  if ((time > me->flagTime) && (me->LastRowRead < me->numRow)) {
+  if (time > me->flagTime) {
     ObitUVCalFlagUpdate (me, sel, time, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   }

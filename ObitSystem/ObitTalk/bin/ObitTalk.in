@@ -1,7 +1,7 @@
 #! /bin/sh
 
 # Check whether AIPS is available.
-if test -z "$AIPS_ROOT"; then
+if test -z "$AIPS_VERSION"; then
     echo "$0: AIPS Unavailable"
 else
 # Make AIPS data disks and printers available.

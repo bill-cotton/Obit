@@ -1230,8 +1230,11 @@ void ObitUVGetFreq (ObitUV* in, ObitErr *err)
   if (err->error) return;
   g_assert (ObitIsA(in, &myClassInfo));
 
+  desc = in->myDesc;
   /* Source info available? */
   ObitInfoListGetP    (in->info, "SouIFOff",  &type, dim, (gpointer)&SouIFOff);
+  /* consistency check - expected number of values? */
+  if ((desc->jlocif>=0) && desc->inaxes[desc->jlocif]>dim[0]) SouIFOff = NULL;
   ObitInfoListGetTest (in->info, "SouBW",     &type, dim, &SouBW);
   
   /* get FQ table if one exists */
@@ -1245,7 +1248,6 @@ void ObitUVGetFreq (ObitUV* in, ObitErr *err)
   
   /* update descriptors */
   ObitErrLog(err); /* Show any pending messages as they may get lost */
-  desc = in->myDesc;
   ObitUVDescGetFreq (desc, (Obit*)fqtab, SouIFOff, err);
   if (err->error) goto cleanup;
 

@@ -113,32 +113,24 @@ These software packages come with installation instructions and config
 scripts to build them.
 
 \section {Starting ObitTalk}
-Before starting ObitTalk, the environment variables OBIT and PYTHONPATH
-need to be set.
-The variable OBIT tells ObitTalk where to find the Obit task parameter
-definition (TDF) files and executables and should point to the base of
-the Obit directory tree.
-In particular, \$OBIT/TDF should point to the directory with the TDF
-files and \$OBIT/bin/ should give the directory with the
-executables.
-In tcsh, if Obit is installed in your home directory in subdirectory
-Obit you could use:
+The operation of ObitTalk is influenced by the values of a number of
+environment variables to specify the locations of directories with
+python modules, data directories and Obit and AIPS task documentation
+and executable files.
+These are mostly set to standard values by the ObitTalk startup script
+with the exception of the AIPS startup values.
+If the AIPS shell variables AIPS\_ROOT and AIPS\_VERSION are
+previously set by an AIPS startup script no further action needs to be
+taken to use AIPS.
+If you wish to use python modules not in one of the standard location,
+set PYTHONPATH to include the directories.
+For example, using tcsh and setting PYTHONPATH to use modules in both
+directories pointed to by myPython1 and myPython2:
 \begin{verbatim}
- % setenv OBIT "$HOME/Obit"
+ % setenv PYTHONPATH "$myPython1":"$myPython2"
 \end{verbatim}
-Set PYTHONPATH to the standard Obit python directories and any
-directories in which you want to put your own python modules.
-For example, using tcsh and setting PYTHONPATH to use both ObitSD and
-Obit modules:
-\begin{verbatim}
- % setenv PYTHONPATH "$OBITSD/python":"$OBIT/python"
-\end{verbatim}
-Note the colon separating the directory names.
-If the ObitSD modules are to be used they must appear in PYTHONPATH
-before the Obit directory.
-
-If AIPS data or tasks are to be used, then the standard setup for AIPS
-is needed before starting ObitTalk.
+Custom setups can be implemented using an ObitTalk startup script as
+discussed below.
 
 If you wish to use the ObitView image display, you can start it before
 ObitTalk.
@@ -154,8 +146,9 @@ Then, if the script ObitTalk is in your path:
  % ObitTalk [scriptname]
 \end{verbatim}
 should start ObitTalk.
-If the environment variable AIPS\_ROOT is defined, ObitTalk will
-make AIPS tasks and data available.
+If the environment variables AIPS\_ROOT and AIPS\_VERSION are
+defined, or an .obitrc.py startup script file is found, ObitTalk will
+make AIPS tasks and data available. 
 If the optional scriptname is given, then the python interpreter will
 do some simple AIPS initialization and execute the python script
 ``scriptname''. 
@@ -163,6 +156,60 @@ If no script is specified then ObitTalk will ask for your AIPS number
 and do its AIPS initialization (if AIPS is available) and go into an
 interactive python session.
 The python prompts are: \begin{verbatim}>>> \end{verbatim}
+
+\subsection{Startup Script}
+When ObitTalk starts it looks for a startup script named .obitrc.py in
+either the users home directory or the current working directory (the
+latter has priority).
+If found, it is executed as python code.
+This can be used to define the AIPS and Obit setups.
+The following startup script fragment shows how to define AIPS tasks
+and data, Obit tasks and FITS data directories.
+This can be used to define both local and remote data directories; see
+section \ref{remote_data} for a discussion of defining data
+directories on remote systems.
+This example startup script can be found in \$OBIT/share/scripts/obitrc.py.
+\begin{verbatim}
+# Startup script .obitrc.py
+print "Executing startup script "
+import ObitTalkUtil
+
+###################### Define ###################################
+# Define AIPS_ROOT and AIPS_VERSION for access to AIPS Software
+AIPS_ROOT    = "/export/users/aips/"
+AIPS_VERSION = "/export/users/aips/31DEC07/"
+# Define OBIT_EXEC for access to Obit Software 
+OBIT_EXEC    = None  # (def /usr/lib/obit/bin)
+OBIT_EXEC    = "/export/users/bcotton/Software.dir/SVN/ObitInstall/ObitSystem/Obit/"
+
+# Define AIPS directories (URL, disk name)
+# URL = None for local disks
+aipsdirs = [ \
+    (None, "/export/data_1/GOLLUM_1"), \
+    (None, "/export/data_1/GOLLUM_2"), \
+    (None, "/export/data_1/GOLLUM_3"), \
+    (None, "/export/data_1/GOLLUM_4"), \
+    (None, "/export/data_2/GOLLUM_5"), \
+    (None, "/export/data_2/GOLLUM_6"), \
+    (None, "/export/data_2/GOLLUM_7"), \
+    (None, "/export/data_2/GOLLUM_8")]
+
+# Define FITS directories (URL, disk name)
+# URL = None for local disks
+fitsdirs = [ \
+    (None, "/export/data_1/users/bcotton/Software.dir/AIPS/FITS")]
+
+# setup environment
+ObitTalkUtil.SetEnviron(AIPS_ROOT=AIPS_ROOT, AIPS_VERSION=AIPS_VERSION, \
+                        OBIT_EXEC=OBIT_EXEC, \
+                        aipsdirs=aipsdirs, fitsdirs=fitsdirs)
+
+# List directories
+ObitTalkUtil.ListAIPSDirs()
+ObitTalkUtil.ListFITSDirs()
+
+# Any other customization goes here
+\end{verbatim}
 
 \section {Object--orientation for POPS users}
 Many of the differences between AIPS/POPS and ObitTalk are because the
@@ -2487,7 +2534,7 @@ this is likely to seldom be the desired effect so you should use the
 second form and give the url of you ObitView as seen by the  
 remote server.
 
-\subsection{Remote data directories}
+\subsection{Remote data directories\label{remote_data}}
 The set of AIPS data directories on a machine depends on a number of
 factors, login name, user number, system configuration files as well
 as command line arguments.

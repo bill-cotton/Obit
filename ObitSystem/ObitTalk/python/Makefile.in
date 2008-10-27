@@ -54,6 +54,7 @@ PYTHONTAR := $(DESTDIR)$(PYTHONDIR)/AIPSData.py \
 	$(DESTDIR)$(PYTHONDIR)/LocalProxy.py \
 	$(DESTDIR)$(PYTHONDIR)/MinimalMatch.py \
 	$(DESTDIR)$(PYTHONDIR)/ObitTalk.py \
+	$(DESTDIR)$(PYTHONDIR)/ObitTalkUtil.py \
 	$(DESTDIR)$(PYTHONDIR)/ObitTask.py \
 	$(DESTDIR)$(PYTHONDIR)/ObitScript.py \
 	$(DESTDIR)$(PYTHONDIR)/otcompleter.py \
@@ -132,6 +133,9 @@ $(DESTDIR)$(PYTHONDIR)/MinimalMatch.py: MinimalMatch.py
 
 $(DESTDIR)$(PYTHONDIR)/ObitTalk.py: ObitTalk.py
 	cp ObitTalk.py $@
+
+$(DESTDIR)$(PYTHONDIR)/ObitTalkUtil.py: ObitTalkUtil.py
+	cp ObitTalkUtil.py $@
 
 $(DESTDIR)$(PYTHONDIR)/ObitTask.py: ObitTask.py
 	cp ObitTask.py $@

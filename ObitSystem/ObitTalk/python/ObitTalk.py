@@ -3,7 +3,7 @@ This module provides support for starting an interactive ObitTalk
 session.
 
 """
-# Copyright (C) 2006,2007 Associated Universities, Inc.
+# Copyright (C) 2006-2008 Associated Universities, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,9 +42,16 @@ AIPSTask.isbatch = 0
 # Separate the blurb below from what the Python interpreter spits out.
 print ""
 
+# Is there any startup script in $HOME/.obitrc.py or ./.obitrc.py
+path = ".obitrc.py"
+if (not os.path.exists(path)) and ("HOME" in os.environ):
+    path = os.environ["HOME"]+"/.obitrc.py"
+
+
 print "Welcome to ObitTalk"
 # Using AIPS?
-if "AIPS_ROOT" in os.environ:
+if (("AIPS_ROOT" in os.environ) and ("AIPS_VERSION" in os.environ)) \
+       or (os.path.exists(path)):
     while True:
         try:
             input = raw_input("Please enter your AIPS user ID number: ")
@@ -77,3 +84,13 @@ import OTObit
 
 # Set Task Name
 OSystem.PSetPgmName("ObitTalk")
+
+# Execute startup script
+if os.path.exists(path):
+    try:
+        execfile (path)
+    except Exception, exception:
+        print exception
+    else:
+        pass
+

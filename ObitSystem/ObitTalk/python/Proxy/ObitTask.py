@@ -72,7 +72,9 @@ class _ObitTaskParams:
         short_help = None
 
         path = name + '.TDF'
-        if os.getenv("OBIT") != None:
+        if (not os.access(path,os.F_OK)) and  (os.getenv("OBITEXEC") != None):
+            path = os.environ['OBITEXEC'] + '/TDF/' + name + '.TDF'
+        if (not os.access(path,os.F_OK)) and  (os.getenv("OBIT") != None):
             path = os.environ['OBIT'] + '/TDF/' + name + '.TDF'
         # Check OBITSD if needbe
         if  (not os.access(path,os.F_OK)) and (os.getenv('OBITSD') != None):
@@ -81,6 +83,13 @@ class _ObitTaskParams:
         if  (not os.access(path,os.F_OK)):
             path = '/usr/lib/obit/tdf/' + '/' + name+ '.TDF'
         
+        # Better have found it by here
+        if  (not os.access(path,os.F_OK)):
+            # Oh bugger
+            msg = "Task '%s' task definition file not found" % (name)
+            print msg
+            raise RuntimeError, msg
+
         input = open(path)
         line = " "
         while (line):
@@ -542,19 +551,17 @@ class ObitTask(Task):
             print "Saving copy of Obit task input in " + tmpDebug
 
         path = name
-        if (os.getenv("OBIT") != None):
+        if (not os.access(path,os.F_OK)) and  (os.getenv("OBITEXEC") != None):
+            path = os.environ['OBITEXEC'] + '/bin/' + name
+        if (not os.access(path,os.F_OK)) and (os.getenv("OBIT") != None):
             path = os.environ['OBIT'] +'/bin/' + name
         # Check OBITSD if needbe
         if  (not os.access(path,os.F_OK)) and (os.getenv('OBITSD') != None):
             path = os.getenv('OBITSD') +'/bin/' +  name
         
         # Check standard linux directory if needbe
-        # $OBITEXEC or /usr/lib/obit/bin/
         if  (not os.access(path,os.F_OK)):
-            obitexec = '/usr/lib/obit/bin/'
-            if (os.getenv("OBITEXEC") != None):
-                obitexec = os.getenv('OBITEXEC')
-            path = obitexec + '/' + name
+            path = "/usr/lib/obit/bin/"+ name
 
         # Better have found it by here
         if  (not os.access(path,os.F_OK)):
