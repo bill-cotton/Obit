@@ -168,36 +168,36 @@ and data, Obit tasks and FITS data directories.
 This can be used to define both local and remote data directories; see
 section \ref{remote_data} for a discussion of defining data
 directories on remote systems.
-This example startup script can be found in \$OBIT/share/scripts/obitrc.py.
+This example startup script can be found in
+\$OBIT/share/scripts/obitrc.py or /usr/share/obit/scripts/.
 \begin{verbatim}
-# Startup script .obitrc.py
+# Startup script
 print "Executing startup script "
 import ObitTalkUtil
 
 ###################### Define ###################################
 # Define AIPS_ROOT and AIPS_VERSION for access to AIPS Software
-AIPS_ROOT    = "/export/users/aips/"
-AIPS_VERSION = "/export/users/aips/31DEC07/"
+AIPS_ROOT    = "/export/data_1/users/aips/"
+AIPS_VERSION = "31DEC06/"
 # Define OBIT_EXEC for access to Obit Software 
 OBIT_EXEC    = None  # (def /usr/lib/obit/bin)
-OBIT_EXEC    = "/export/users/bcotton/Software.dir/SVN/ObitInstall/ObitSystem/Obit/"
+OBIT_EXEC    = "/export/data_1/users/bcotton/Software.dir/SVN/ObitInstall/ObitSystem/Obit/"
 
 # Define AIPS directories (URL, disk name)
 # URL = None for local disks
 aipsdirs = [ \
-    (None, "/export/data_1/GOLLUM_1"), \
-    (None, "/export/data_1/GOLLUM_2"), \
-    (None, "/export/data_1/GOLLUM_3"), \
-    (None, "/export/data_1/GOLLUM_4"), \
-    (None, "/export/data_2/GOLLUM_5"), \
-    (None, "/export/data_2/GOLLUM_6"), \
-    (None, "/export/data_2/GOLLUM_7"), \
-    (None, "/export/data_2/GOLLUM_8")]
+    (None, "/export/data_1/aips/DATA/SMEAGLE_1"), \
+    (None, "/export/data_1/aips/DATA/SMEAGLE_2"), \
+    (None, "/export/data_1/aips/DATA/SMEAGLE_3"), \
+    (None, "/export/data_2/aips/DATA/SMEAGLE_4"), \
+    (None, "/export/data_2/aips/DATA/SMEAGLE_5"), \
+    (None, "/export/data_2/aips/DATA/SMEAGLE_6"), \
+    (None, "/export/data_2/bcotton/SMEAGLE_7")]
 
 # Define FITS directories (URL, disk name)
 # URL = None for local disks
 fitsdirs = [ \
-    (None, "/export/data_1/users/bcotton/Software.dir/AIPS/FITS")]
+    (None, "//export/data_1/users/bcotton/Software.dir/AIPS/FITS")]
 
 # setup environment
 ObitTalkUtil.SetEnviron(AIPS_ROOT=AIPS_ROOT, AIPS_VERSION=AIPS_VERSION, \

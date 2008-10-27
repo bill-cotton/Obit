@@ -205,6 +205,9 @@ class AIPSTask(Task):
         # Optional arguments.
         if 'version' in kwds:
             self.version = kwds['version']
+        else:
+            if 'AIPS_VERSION' in os.environ:
+                self.version = os.environ["AIPS_VERSION"]
 
         # Update default user number.
         if self.__class__.userno == 0:

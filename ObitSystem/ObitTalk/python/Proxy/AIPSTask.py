@@ -46,6 +46,7 @@ class _AIPSTaskParams:
         short_help = None
 
         popsdat = Popsdat(self.version)
+        print "AIPS version",self.version
 
         path = self.version + '/HELP/' + name.upper() + '.HLP'
         input = open(path)
@@ -195,6 +196,7 @@ class _AIPSTaskParams:
             self.version = os.environ['AIPS_ROOT'] + '/' + version
             pass
 
+        #print "Request version",version#, self.version
         # Bad juju
         #path = os.environ['HOME'] + '/.ObitTalk/' \
         #       + os.path.basename(self.version) + '/' \
@@ -351,7 +353,7 @@ class AIPSTask(Task):
             # Send output to the TV running on this machine.
             env['TVDEV' + ehex(ntvdev, 2, 0)] = 'sssin:localhost'
             # DEBUG
-            # print "aips environment",env
+            #print "aips environment",env
             
             td_name = os.environ['DA00'] + '/TD' + AIPS.revision + '000004;'
             td_file = open(td_name, mode='r+b')

@@ -25,6 +25,9 @@ import AIPSUtil
 # Global FITS defaults
 from FITS import FITS
 from FITS import FITSDisk
+import AIPSDir, FITSDir
+import OErr
+err = OErr.OErr()
 
 def SetEnviron(AIPS_ROOT=None, AIPS_VERSION=None, OBIT_EXEC=None, \
                aipsdirs=None, fitsdirs=None):
@@ -73,45 +76,51 @@ def SetEnviron(AIPS_ROOT=None, AIPS_VERSION=None, OBIT_EXEC=None, \
             if not known:
                 # New local or remote AIPS disk
                 disk = len(AIPS.disks)
-                AIPS.disks.append(AIPSDisk(url, disk, dirname[1]))
+                AIPS.disks.append(AIPSDisk(url, disk, dirname[1]+'/'))
+                AIPSDir.PSetDir(disk, dirname[1]+'/', err, URL=url)
                 # Define environment variable for local disks
                 if url==None:
                     dskno = "DA"+AIPSUtil.ehex(disk,width=2,padding='0')
-                    os.environ[dskno] = dirname[1]          # Python environment
-                    cmd = "export "+dskno+"="+dirname[1]   # shell environment
+                    os.environ[dskno] = dirname[1]+'/'        # Python environment
+                    cmd = "export "+dskno+"="+dirname[1]+'/'  # shell environment
                     #print cmd
                     z=os.system(cmd)
-    
+
+    # Set NVOL so AIPS Tasks will know how many AIPS disks
+    naips = len(AIPS.disks)-1
+    os.environ['NVOL'] = str(naips)   # Python evironment
+
     # Set FITS directories (URL, disk name)
     if fitsdirs:
         from FITS import FITSDisk
         # First is $FITS
         if len(fitsdirs)>0:
-            cmd = "export FITS="+fitsdirs[0][1]
+            cmd = "export FITS="+fitsdirs[0][1]+'/'
             z=os.system(cmd)                         # shell environment
-            os.environ["FITS"] = fitsdirs[0][1]      # Python environment
+            os.environ["FITS"] = fitsdirs[0][1]+'/'  # Python environment
             # Override previous?
             if len(FITS.disks)>1:
-                FITS.disks[1].dirname     = fitsdirs[0][1]
+                FITS.disks[1].dirname = fitsdirs[0][1]+'/'
                 # Other FITS directories
             for dirname in fitsdirs[1:]:
                 url  = dirname[0]
                 # Already known?
                 known = False
                 for fdisk in FITS.disks[1:]:
-                    print fdisk.url, url, fdisk.dirname,dirname[1]
+                    print fdisk.url, url, fdisk.dirname,dirname[1]+'/'
                     if (fdisk.url==url) and (fdisk.dirname==dirname[1]):
                         known = True
                         break
                 if not known:
                     # New local or remote AIPS disk
                     disk = len(FITS.disks)
-                    FITS.disks.append(FITSDisk(url, disk, dirname[1]))
+                    FITS.disks.append(FITSDisk(url, disk, dirname[1]+'/'))
+                    FITSDir.PAddDir(disk, dirname[1]+'/', err, URL=url)
                     # Define environment variable for local disks
                     if url==None:
                         dskno = "FITS"+AIPSUtil.ehex(disk-1,width=2,padding='0')
-                        os.environ[dskno] = dirname[1]           # Python environment
-                        cmd = "export "+dskno+"="+dirname[1]     # shell environment
+                        os.environ[dskno] = dirname[1]+'/'           # Python environment
+                        cmd = "export "+dskno+"="+dirname[1]+'/'     # shell environment
                         #print cmd
                         z=os.system(cmd)
     # end SetEnviron
