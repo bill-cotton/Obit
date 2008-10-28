@@ -46,7 +46,7 @@ class _AIPSTaskParams:
         short_help = None
 
         popsdat = Popsdat(self.version)
-        print "AIPS version",self.version
+        #print "AIPS version",self.version
 
         path = self.version + '/HELP/' + name.upper() + '.HLP'
         input = open(path)

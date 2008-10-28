@@ -892,13 +892,19 @@ ObitAIPSDirOpen (gint disk, olong user, ObitErr *err)
   /* Set file name */
   out->CatFile = 
     ObitAIPSFilename (OBIT_AIPS_Catalog, disk, 0, user, NULL, 0, err);
-  if (err->error) Obit_traceback_val (err, routine, "Catalog search", NULL);
+  if (err->error) {
+    ObitThreadUnlock(myLock);
+    Obit_traceback_val (err, routine, "Catalog search", NULL);
+  }
 
   /* Does it currently exist? */
   if (out->myFile) ObitFileUnref(out->myFile);
   out->myFile = newObitFile("Catalog search");
   exist = ObitFileExist (out->CatFile, err);
-  if (err->error) Obit_traceback_val (err, routine, "Catalog search", NULL);
+  if (err->error) {
+    ObitThreadUnlock(myLock);
+    Obit_traceback_val (err, routine, "Catalog search", NULL);
+  }
 
   /* open */
   size = 256 * sizeof(AIPSint);
@@ -908,6 +914,7 @@ ObitAIPSDirOpen (gint disk, olong user, ObitErr *err)
 		   "ERROR opening AIPS catalog file disk %d", out->disk);
     g_free(out->CatFile); /* going up in flames - clean up */
     g_free(out);  
+    ObitThreadUnlock(myLock);
     Obit_traceback_val (err, routine, "Catalog search", NULL);
   }
 
@@ -922,6 +929,7 @@ ObitAIPSDirOpen (gint disk, olong user, ObitErr *err)
     if ((status!=OBIT_IO_OK) || (err->error)) {/* add traceback on error */
       Obit_log_error(err, OBIT_Error, 
 		     "Status %d reading AIPS catalog file disk %d", status, out->disk);
+      ObitThreadUnlock(myLock);
       Obit_traceback_val (err, routine, "Catalog search", NULL);
     }
   } /* end init/read header */
@@ -940,12 +948,17 @@ ObitAIPSDirOpen (gint disk, olong user, ObitErr *err)
 
   /* write */
   status = ObitFileWrite (out->myFile, wantPos, size, (gchar*)buffer, err);
-  if ((status!=OBIT_IO_OK) || (err->error)) /* add traceback on error */
+  if ((status!=OBIT_IO_OK) || (err->error)) {/* add traceback on error */
+    ObitThreadUnlock(myLock);
     Obit_traceback_val (err, routine, "Catalog search", NULL);
+  }
 
   /* If it didn't previously exist - add a block */
   if (!exist) ObitAIPSDirExtend (out, err);
-  if (err->error)  Obit_traceback_val (err, routine, "Catalog extend", out);
+  if (err->error)  {
+    ObitThreadUnlock(myLock);
+    Obit_traceback_val (err, routine, "Catalog extend", out);
+  }
 
   out->flush = TRUE; /* something in buffer to write */
   return out;
@@ -967,8 +980,10 @@ ObitAIPSDirClose (ObitAIPSDir* in, ObitErr *err)
   if (in!=NULL) {
     /* close file */
     status = ObitFileClose (in->myFile, err);
-    if ((status!=OBIT_IO_OK) || (err->error)) /* add traceback on error */
+    if ((status!=OBIT_IO_OK) || (err->error)) { /* add traceback on error */
+      ObitThreadUnlock(myLock);
       Obit_traceback_msg (err, routine, "Catalog search");
+    }
 
     /* delete */
     in->myFile = ObitFileUnref(in->myFile);

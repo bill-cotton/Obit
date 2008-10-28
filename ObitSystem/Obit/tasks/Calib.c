@@ -572,7 +572,7 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   ObitInfoListAlwaysPut (myInput, "ModelType", OBIT_long, dim, &modelType);
 
   /* Make sure doCalSelect set properly */
-  doCalSelect = FALSE;
+  doCalSelect = TRUE;
   ObitInfoListGetTest(myInput, "doCalSelect",  &type, dim, &doCalSelect);
   doCalib = -1;
   ObitInfoListGetTest(myInput, "doCalib",  &type, dim, &doCalib);
