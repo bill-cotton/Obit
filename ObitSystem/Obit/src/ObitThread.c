@@ -514,6 +514,7 @@ gboolean ObitThreadIterator (ObitThread* in, olong nthreads,
   /* Make sure pool is using the correct function */
   if ((in->pool) && (((GFunc)in->pool->func)!=((GFunc)func))) {
      g_thread_pool_free(in->pool, FALSE, TRUE);  /* Be patient */
+     in->pool = NULL;
      if (in->queue) g_async_queue_unref (in->queue);
      in->queue = NULL;
   }

@@ -89,6 +89,7 @@ calIn                              Input Cal table 0=>1
 calOut                             Output CAL table 0=>2
 **PARAM** int 1
 refAnt                             Reference antenna 0=>pick.
+                                   <0 => don't rereference
 ----------------------------------------------------------------
 CLCal
 Task:  Applies solutions from an SN to selected entries in
@@ -235,8 +236,10 @@ Adverbs:
              in the CL table will be replaced.  Note: modifying version
              1 is disallowed.
   refAnt.....Reference antenna to use.  All phase-like values in the
-             combined SN table will be referenced to this antenna. 0=>
-             use the one used in the most solutions.
+             combined SN table will be referenced to this antenna. 
+             0 => use the one used in the most solutions.
+             <0 => do not rereference phases, this is needed
+             for applying R-L polarization corrections
 ----------------------------------------------------------------
 
 

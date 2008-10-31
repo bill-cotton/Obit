@@ -30,12 +30,14 @@ import OErr
 err = OErr.OErr()
 
 def SetEnviron(AIPS_ROOT=None, AIPS_VERSION=None, OBIT_EXEC=None, \
-               aipsdirs=None, fitsdirs=None):
+               DA00=None, ARCH="LINUX", aipsdirs=None, fitsdirs=None):
     """ Set environment variables for AIPS, Obit and data access
 
     AIPS_ROOT    = name of the directory at the root of the AIPS directories
     AIPS_VERSION = name of the directory at root of specific AIPS version
     OBIT_EXEC    = name of directory with Obit bin and TDF directories
+    DA00         = name of directory for AIPS DA00
+    ARCH         = AIPS architecture string
     aipsdirs     = list of tuples defining AIPS data directories
                    first element is url, None = local,
                        for remote data use form 'http://mymachine.org:8000/RPC2'
@@ -60,6 +62,20 @@ def SetEnviron(AIPS_ROOT=None, AIPS_VERSION=None, OBIT_EXEC=None, \
     if OBIT_EXEC:
         os.environ["OBITEXEC"] = OBIT_EXEC  # python environment
         cmd = "export OBITEXEC="+OBIT_EXEC   # shell environment
+        #print cmd
+        z=os.system(cmd)
+
+    # Set AIPS DA00
+    if DA00:
+        os.environ["DA00"] = DA00   # python environment
+        cmd = "export DA00="+DA00   # shell environment
+        #print cmd
+        z=os.system(cmd)
+
+    # Set AIPS DA00
+    if ARCH:
+        os.environ["ARCH"] = ARCH   # python environment
+        cmd = "export ARCH="+ARCH   # shell environment
         #print cmd
         z=os.system(cmd)
 
@@ -91,6 +107,7 @@ def SetEnviron(AIPS_ROOT=None, AIPS_VERSION=None, OBIT_EXEC=None, \
     os.environ['NVOL'] = str(naips)   # Python evironment
 
     # Set FITS directories (URL, disk name)
+    import FITSDir  # Need Obit/python
     if fitsdirs:
         from FITS import FITSDisk
         # First is $FITS
@@ -101,7 +118,11 @@ def SetEnviron(AIPS_ROOT=None, AIPS_VERSION=None, OBIT_EXEC=None, \
             # Override previous?
             if len(FITS.disks)>1:
                 FITS.disks[1].dirname = fitsdirs[0][1]+'/'
-                # Other FITS directories
+                FITSDir.FITSdisks[0] = fitsdirs[0][1]
+            else:
+                url = fitsdirs[0][0]
+                FITSDir.PAddDir(fitsdirs[0][1]+'/', err, URL=url)
+            # Other FITS directories
             for dirname in fitsdirs[1:]:
                 url  = dirname[0]
                 # Already known?
@@ -114,7 +135,6 @@ def SetEnviron(AIPS_ROOT=None, AIPS_VERSION=None, OBIT_EXEC=None, \
                 if not known:
                     # New local or remote AIPS disk
                     disk = len(FITS.disks)
-                    FITS.disks.append(FITSDisk(url, disk, dirname[1]+'/'))
                     FITSDir.PAddDir(disk, dirname[1]+'/', err, URL=url)
                     # Define environment variable for local disks
                     if url==None:

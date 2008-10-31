@@ -113,6 +113,8 @@ typedef struct {
   olong        ithread;
   /* Obit error stack object */
   ObitErr      *err;
+  /* UV Interpolator for FTGrid */
+  ObitCInterpolate *Interp;
   /* End time (days) of validity of model */
   ofloat endVMModelTime;
   /* Thread copy of Components list - not used here */
@@ -312,7 +314,7 @@ void ObitSkyModelVMSquintInitMod (ObitSkyModel* inn, ObitUV *uvdata,
   
   for (i=0; i<in->nThreads; i++) {
     args = (VMSquintFTFuncArg*)in->threadArgs[i];
-    strcpy (args->type, "squint");  /* Enter type as first entry */
+    strcpy (args->type, "vmsquint");  /* Enter type as first entry */
     args->in     = inn;
     args->uvdata = uvdata;
     args->ithread = i;
@@ -331,7 +333,7 @@ void ObitSkyModelVMSquintInitMod (ObitSkyModel* inn, ObitUV *uvdata,
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Fourier transform routines - DFT only */
-  in->DFTFunc  = (ObitThreadFunc)ThreadSkyModelVMSquintFTDFT;
+  in->DFTFunc   = (ObitThreadFunc)ThreadSkyModelVMSquintFTDFT;
 
   /* Check requested Stokes
   Obit_return_if_fail((!strncmp(in->stokes,"    ",4)), err,
@@ -432,11 +434,12 @@ void ObitSkyModelVMSquintInitModel (ObitSkyModel* inn, ObitErr *err)
   /*  Reset time of current model */
   in->endVMModelTime = -1.0e20;
   in->curVMModelTime = -1.0e20;
+  in->modelMode = OBIT_SkyModel_DFT;  /* Only can do DFT */
 
   /* Threading */
   if (in->threadArgs) {
     /* Check type - only handle "squint" */
-    if (!strncmp((gchar*)in->threadArgs[0], "squint", 6)) {
+    if (!strncmp((gchar*)in->threadArgs[0], "vmsquint", 8)) {
       for (i=0; i<in->nThreads; i++) {
 	args = (VMSquintFTFuncArg*)in->threadArgs[i];
 	args->endVMModelTime = -1.0e20;
@@ -480,7 +483,7 @@ void ObitSkyModelVMSquintUpdateModel (ObitSkyModelVM *inn,
   /* Thread to update */
   lithread = MAX (0, ithread);
   args = (VMSquintFTFuncArg*)in->threadArgs[lithread];
-  g_assert (!strncmp(args->type,"squint",6));  /* Test arg */
+  g_assert (!strncmp(args->type,"vmsquint",8));  /* Test arg */
 
    /* Check subarray */
   Obit_return_if_fail(((suba>=0) && (suba<in->numAntList)), err,
@@ -915,6 +918,13 @@ void ObitSkyModelVMSquintFTDFT (ObitSkyModelVM *inn, olong field, ObitUV *uvdata
 
   /* error checks - assume most done at higher level */
   if (err->error) return;
+
+  /* Check */
+  args = (VMSquintFTFuncArg*)in->threadArgs[0];
+  if (strncmp (args->type, "vmsquint", 8)) {
+    Obit_log_error(err, OBIT_Error,"%s: Wrong type FuncArg %s", routine,args->type);
+    return;
+  }
 
   /* Count number of actual components */
   mcomp = 0;

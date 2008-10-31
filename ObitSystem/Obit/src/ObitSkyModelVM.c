@@ -102,6 +102,8 @@ typedef struct {
   olong        ithread;
   /* Obit error stack object */
   ObitErr      *err;
+  /* UV Interpolator for FTGrid */
+  ObitCInterpolate *Interp;
   /* End time (days) of valildity of model */
   ofloat endVMModelTime;
   /* Thread copy of Components list */
@@ -223,7 +225,7 @@ void ObitSkyModelVMInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   ObitSkyModelInitMod(inn, uvdata, err);
 
   /* Fourier transform routines - DFT only */
-  in->DFTFunc  = (ObitThreadFunc)ThreadSkyModelVMFTDFT;
+  in->DFTFunc   = (ObitThreadFunc)ThreadSkyModelVMFTDFT;
 
   /* Any initialization this class */
   /* Reset time of current model */
@@ -316,6 +318,7 @@ void ObitSkyModelVMInitModel (ObitSkyModel* inn, ObitErr *err)
   /* Reset time of current model */
   in->endVMModelTime = -1.0e20;
   in->curVMModelTime = -1.0e20;
+  in->modelMode = OBIT_SkyModel_DFT;  /* Only can do DFT */
 } /* end ObitSkyModelVMInitModel */
 
 /**
@@ -470,6 +473,9 @@ void  ObitSkyModelVMGetInput (ObitSkyModel* inn, ObitErr *err)
   /* Call base class version */
   ObitSkyModelGetInput (inn, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Must be DFT */
+  in->modelMode = OBIT_SkyModel_DFT;
 
   /* Model update interval - default 1 min */
   if (in->updateInterval<=0.0) in->updateInterval = 1.0;
@@ -932,6 +938,13 @@ void ObitSkyModelVMFTDFT (ObitSkyModelVM *in, olong field, ObitUV *uvdata, ObitE
 
   /* error checks - assume most done at higher level */
   if (err->error) return;
+
+  /* Check */
+  args = (VMFTFuncArg*)in->threadArgs[0];
+  if (strncmp (args->type, "vm", 2)) {
+    Obit_log_error(err, OBIT_Error,"%s: Wrong type FuncArg %s", routine,args->type);
+    return;
+  }
 
   /* Divide up work */
   nvis = uvdata->myDesc->numVisBuff;

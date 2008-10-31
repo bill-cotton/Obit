@@ -455,6 +455,39 @@ ObitIOCode ObitTableUtilSort2f (ObitTable *in,
 } /* end ObitTableUtilSort2f */
 
 
+/**
+ * Truncate the size of a table to a given number of rows.
+ * \param in     Pointer to object
+ * \param nrows  Number of rows desired
+ * \param err    ObitErr for reporting errors.
+ * \return error code, OBIT_IO_OK=> OK
+ */
+void ObitTableUtilTruncate (ObitTable *in, olong nrows, ObitErr *err)
+{
+  gchar *routine = "ObitTableUtilTruncate";
+
+  /* error checks */
+  g_assert(ObitErrIsA(err));
+  if (err->error) return;
+
+  in->bufferSize = -1;  /* Don't need to assign buffer here */
+
+  /* Open and close */
+  ObitTableOpen(in, OBIT_IO_ReadWrite, err);
+  if (err->error)Obit_traceback_msg (err, routine, in->name);
+
+  /* reset count */
+  in->myDesc->nrow = MIN (nrows, in->myDesc->nrow);
+  /* The one that counts is in the IO */
+  ((ObitTableDesc*)(in->myIO->myDesc))->nrow = in->myDesc->nrow;
+  /* Mark as changed */
+  in->myStatus = OBIT_Modified;
+  
+  ObitTableClose(in, err);
+  if (err->error)Obit_traceback_msg (err, routine, in->name);
+  in->bufferSize = 0;  /* May need buffer later */
+} /* end ObitTableUtilTruncate */
+
 /*----------------------Private functions---------------------------*/
 /**
  * Create/fill sort structure for a table

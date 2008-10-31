@@ -554,6 +554,7 @@ void ObitUVSolnShutDown (ObitUVSoln *in, ObitErr *err)
  * \param isuba  Desired subarray, 0=> 1 
  * \param refant Reference antenna, if 0 then the most commonly used 
  *               reference antenna is picked. 
+ *               If <0 then only sort and not reference table
  * \param err    Error/message stack, returns if error.
  */
 void ObitUVSolnRefAnt (ObitTableSN *SNTab, olong isuba, olong* refant, ObitErr* err) 
@@ -561,6 +562,7 @@ void ObitUVSolnRefAnt (ObitTableSN *SNTab, olong isuba, olong* refant, ObitErr* 
   ObitIOCode retCode;
   olong   ant, iif, isub, numif, numpol, numant, numtime, iref, crefa, *antuse=NULL;
   ofloat *wrkTime=NULL, *work1=NULL, *work2=NULL, *work3=NULL, *work4=NULL, *work5=NULL;
+  gboolean noReRef = FALSE;
   gchar msgtxt[81];
   gchar *routine = "ObitUVSolnRefAnt";
   
@@ -571,12 +573,16 @@ void ObitUVSolnRefAnt (ObitTableSN *SNTab, olong isuba, olong* refant, ObitErr* 
  
   /* Subarray */
   isub = MAX (1, isuba);
-  
+
   /* Must be antenna-time order */
   ObitTableUtilSort2f ((ObitTable*)SNTab , "TIME  ", 1, FALSE, "ANTENNA",
 		       1, FALSE, err);
   if (err->error) Obit_traceback_msg (err, routine, SNTab->name);
 
+  /* Do we really want to rereference? */
+  noReRef = ((*refant)<0);
+  if (noReRef) return;
+  
   /* Open table */
   retCode = ObitTableSNOpen (SNTab, OBIT_IO_ReadWrite, err);
   if (err->error) Obit_traceback_msg (err, routine, SNTab->name);

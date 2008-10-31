@@ -47,6 +47,7 @@
 #include "ObitDisplay.h"
 #include "ObitTablePSUtil.h"
 #include "ObitUVPeelUtil.h"
+#include "ObitTableUtil.h"
 
 /* internal prototypes */
 /* Get inputs */
@@ -1385,7 +1386,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong         i, chInc, BChan, EChan, BIF, nchan, ipoln, npoln, *IChanSel;
   gboolean     doFlat, autoWindow, Tr=TRUE;
-  olong        inver, outver, selFGver, plane[5] = {0,1,1,1,1};
+  olong        inver, outver, selFGver, *unpeeled=NULL, plane[5] = {0,1,1,1,1};
   oint         otemp;
   gchar        Stokes[5],  IStokes[5], *CCType = "AIPS CC";
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
@@ -1572,6 +1573,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     
     /* Get output image(s) */
+    if (myClean->mosaic->numberImages<=1) doFlat = FALSE; /* Something to flatten? */
     if (doFlat) 
       outField = ObitImageMosaicGetFullImage (myClean->mosaic, err);
     else
@@ -1601,6 +1603,12 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     IStokes[0] = ' ';
     dim[0] = 4;
     ObitInfoListAlwaysPut (outData->info, "Stokes", OBIT_string, dim, IStokes);
+
+    /* Ignore any peeled components in the subtraction */
+    if (ObitInfoListGetP(myClean->info, "UnPeeledComps",  &type, dim, (gpointer)&unpeeled)) {
+      if (unpeeled) 
+	ObitInfoListAlwaysPut (skyModel->info, "UnPeeledComps", OBIT_long, dim, unpeeled);
+    }
 
     /* Subtract sky model from outData for I  */
     if (ipoln==0) subIPolModel (outData, skyModel, &selFGver, err);
@@ -1666,6 +1674,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 /*      myInput    Input parameters on InfoList                           */
 /*      inUV       ObitUV to image                                        */
 /*      myClean    CLEAN object                                           */
+/*         Leave list of unpeeled comps on info member "UnPeeledComps"    */
 /*      selFGver   Continuum channel selection FG flag, -1 if none        */
 /*   Output:                                                              */
 /*      err    Obit Error stack                                           */
@@ -2049,6 +2058,10 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   ObitUVPeelUtilLoop (myInput, inUV, myClean, &nfield, &ncomp, err);
   if (err->error) Obit_traceback_msg (err, routine, myClean->name);
 
+  /* Save number of unpeeled comps */
+  dim[0] = nfield;
+  ObitInfoListAlwaysPut (myClean->info, "UnPeeledComps", OBIT_long, dim, ncomp);
+
   if (ncomp) g_free(ncomp);   ncomp  = NULL;  /* Done with array */
 
   /* Any final CC Filtering? */
@@ -2130,9 +2143,11 @@ void subIPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver,
 		   ObitErr* err)
 {
   ObitUV *scrUV = NULL;
-  oint otemp;
-  olong i, jtemp, nfield, *itemp=NULL;
+  ObitTableCC  *CCTable=NULL;
+  oint otemp, noParms;
+  olong i, ver, jtemp, nfield, *unpeeled=NULL, *itemp=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
   gchar IStokes[5];
   gchar *include[] = {"AIPS FG", NULL};
   gchar *routine = "subIPolModel";
@@ -2146,8 +2161,24 @@ void subIPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver,
   otemp = -1;
   ObitInfoListAlwaysPut (outData->info, "flagVer", OBIT_oint, dim, &otemp);
  
-    /* Reset Sky Model to use all components */
+  /* Remove any peeled components from the subtraction */
   nfield = skyModel->mosaic->numberImages;
+  if (ObitInfoListGetP(skyModel->info, "UnPeeledComps",  &type, dim, (gpointer)&unpeeled)) {
+    if (unpeeled) {
+      for (i=0; i<nfield; i++) {
+	ver = skyModel->CCver[i];
+	noParms = 0;
+	CCTable = newObitTableCCValue ("Peeled CC", (ObitData*)skyModel->mosaic->images[i],
+				       &ver, OBIT_IO_ReadWrite, noParms, 
+				       err);
+	ObitTableUtilTruncate ((ObitTable*)CCTable, unpeeled[i], err);
+	CCTable  = ObitTableCCUnref(CCTable);
+	if (err->error) goto cleanup;
+      }
+    }
+  }
+
+  /* Reset Sky Model to use all components */
   itemp = ObitMemAlloc(nfield*sizeof(olong));  /* temp. array */
   dim[0] = nfield;
   for (i=0; i<nfield; i++) itemp[i] = 1;

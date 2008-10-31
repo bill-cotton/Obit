@@ -93,6 +93,8 @@ typedef struct {
   olong        ithread;
   /* Obit error stack object */
   ObitErr      *err;
+  /* UV Interpolator for FTGrid */
+  ObitCInterpolate *Interp;
   /* End time (days) of valildity of model */
   ofloat endVMModelTime;
   /* Thread copy of Components list */
@@ -249,7 +251,7 @@ void ObitSkyModelVMIonInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   /* Setup for threading */
   for (i=0; i<in->nThreads; i++) {
     args = (VMIonFTFuncArg*)in->threadArgs[i];
-    strcpy (args->type, "ion");  /* Enter type as first entry */
+    strcpy (args->type, "vmion");  /* Enter type as first entry */
     args->in     = inn;
     args->uvdata = uvdata;
     args->ithread= i;
@@ -472,6 +474,7 @@ void ObitSkyModelVMIonInitModel (ObitSkyModel* inn, ObitErr *err)
   /*  Reset time of current model */
   in->endVMModelTime = -1.0e20;
   in->curVMModelTime = -1.0e20;
+  in->modelMode = OBIT_SkyModel_DFT;  /* Only can do DFT */
 
   /* Threading */
   if (in->threadArgs) {
@@ -523,7 +526,7 @@ void ObitSkyModelVMIonUpdateModel (ObitSkyModelVM *inn,
   /* Array to update */
   lithread = MAX (0, ithread);
   args = (VMIonFTFuncArg*)in->threadArgs[lithread];
-  g_assert (!strncmp(args->type,"ion",3));  /* Test arg */
+  g_assert (!strncmp(args->type,"vmion",5));  /* Test arg */
 
   VMComps = args->VMComps;
 

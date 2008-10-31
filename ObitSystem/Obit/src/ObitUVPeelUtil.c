@@ -190,7 +190,7 @@ void ObitUVPeelUtilLoop (ObitInfoList* myInput, ObitUV* inUV,
   } /* end loop copying peeled CCs */
   if (peeled) g_free(peeled); peeled = NULL;  /* Done with array */
 
-} /* end ObitUVPeelUtilPeel */
+} /* end ObitUVPeelUtilLoop */
 /**
  * Peel a strong source from a data set based on previous CLEAN.
  * Picks the strongest field with peak above PeelFlux and subtracts all
@@ -654,6 +654,11 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
 		     myClean->mosaic->images[peelField-1]->name);
       goto cleanup;
     }
+
+    /* Clear any existing entries in output table */
+    ObitTableClearRows(outCCTable, err);
+    if (err->error) goto cleanup;
+
     ObitTableCCUtilAppend (peelCCTable, outCCTable, 1, 0, err);
     peelCCTable = ObitTableCCUnref(peelCCTable);
     outCCTable  = ObitTableCCUnref(outCCTable);

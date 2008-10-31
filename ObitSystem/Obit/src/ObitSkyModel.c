@@ -1716,6 +1716,14 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
   /* error checks - assume most done at higher level */
   if (err->error) goto finish;
 
+  /* Check */
+  if (strncmp (largs->type, "base", 4)) {
+    ObitThreadLock(in->thread);  /* Lock against other threads */
+    Obit_log_error(err, OBIT_Error,"%s: Wrong type FuncArg %s", routine, largs->type);
+    ObitThreadUnlock(in->thread);
+    goto finish;
+  }
+
   /* Get pointer for components */
   naxis[0] = 0; naxis[1] = 0; 
   data  = ObitFArrayIndex(in->comps, naxis);
@@ -2020,8 +2028,11 @@ void ObitSkyModelFTGrid (ObitSkyModel *in, olong field, ObitUV *uvdata, ObitErr 
   /* Initialize threadArg array on first call */
   if (in->threadArgs==NULL) {
     in->threadArgs = g_malloc0(in->nThreads*sizeof(FTFuncArg*));
-    for (i=0; i<in->nThreads; i++) 
+    for (i=0; i<in->nThreads; i++) {
       in->threadArgs[i] = g_malloc0(sizeof(FTFuncArg)); 
+      args = (FTFuncArg*)in->threadArgs[i];
+      strcpy (args->type, "base");  /* Enter type as first entry */
+     }
   } /* end initialize */
   
   /* Divide up work - single threaded if too little data per call */
@@ -2124,6 +2135,8 @@ gpointer ThreadSkyModelFTGrid (gpointer args)
 
   /* error checks - assume most done at higher level */
   if (err->error) goto finish;
+
+  /* Any "type" arg list allowed */
 
   /* Visibility pointers */
   uvDesc = uvdata->myDesc;
@@ -2344,7 +2357,6 @@ gpointer ThreadSkyModelFTGrid (gpointer args)
     visData += lrec; /* Update vis pointer */
   } /* end loop over visibilities */
 
-  /* Indicate completion */
   /* Indicate completion */
   finish: 
   if (largs->ithread>=0)

@@ -51,4 +51,7 @@ ObitIOCode ObitTableUtilSort2f (ObitTable *in,
 				gchar *colName2, olong cell2, gboolean desc2, 
 				ObitErr *err);
 
+/** Truncate table. */
+void ObitTableUtilTruncate (ObitTable *in, olong nrows, ObitErr *err);
+
 #endif /* OBITTABLEUTIL_H */ 
