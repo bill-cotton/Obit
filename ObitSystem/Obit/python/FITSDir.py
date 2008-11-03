@@ -107,6 +107,36 @@ def PAddDir(newDir, err, URL=None):
     else:
         pass
     return retDisk;
+    # end PAddDir
+
+
+def PSetDir(newDir, disk, err, URL=None):
+    """ replace FITS directory
+
+    returns FITS disk number
+    newDir   = new directory path
+    err      = Python Obit Error/message stack
+    URL      = URL if on a remote host (Only if using OTObit/ParselTongue)
+    """
+    ################################################################
+    global FITSdisks, nFITS
+    # Checks
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    retDisk = Obit.FITSSetDir(newDir, disk, err.me)
+    FITSdisks[disk] = newDir
+    nFITS = len(FITSdisks)
+    #print "DEBUG nFITS",nFITS
+    if err.isErr:
+        OErr.printErrMsg(err, "Error replacinging FITS directory")
+        # Update ObitTalk stuff
+    try:
+        FITS.FITS.disks[disk] = FITS.FITSDisk(URL, disk, newDir)
+    except:
+        pass
+    else:
+        pass
     # end PSetDir
 
 

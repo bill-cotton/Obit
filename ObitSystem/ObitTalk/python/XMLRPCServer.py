@@ -1,5 +1,5 @@
 # Copyright (C) 2005, 2006 Joint Institute for VLBI in Europe
-# Copyright (C) 2007  Associated Universities, Inc
+# Copyright (C) 2007,2008 Associated Universities, Inc
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@ import OSystem
 import Proxy.ObitTask
 import Proxy.AIPSTask
 import Proxy.AIPSData
+import Proxy.FITSData
 import Proxy.ObitScriptP
 ObitScript = Proxy.ObitScriptP.ObitScript()
 
@@ -60,6 +61,9 @@ class ServerFuncs:
         self.AIPSUVData = Proxy.AIPSData.AIPSUVData()
         self.AIPSImage  = Proxy.AIPSData.AIPSImage()
         self.AIPSCat    = Proxy.AIPSData.AIPSCat()
+        self.FITSUVData = Proxy.FITSData.FITSUVData()
+        self.FITSImage  = Proxy.FITSData.FITSImage()
+        self.FITSCat    = Proxy.FITSData.FITSCat()
         self.ObitScript = Proxy.ObitScriptP.ObitScript()
         return
 
@@ -69,7 +73,7 @@ class ServerFuncs:
         # here we explicitly accept names starting with 'AIPS'
         # or 'Obit' and containing a single dot; that should be safe enough. 
         #print "received call ",name,args
-        if (name.startswith('AIPS') or name.startswith('Obit')) \
+        if (name.startswith('AIPS') or name.startswith('FITS') or name.startswith('Obit')) \
                and name.count('.') == 1:
             name = name.split('.')
             inst = getattr(self, name[0])

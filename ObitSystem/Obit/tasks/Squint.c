@@ -975,7 +975,8 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
 
     /* define object */
     nvis = 10000;
-    ObitInfoListGetTest(inData->info, "nThreads", &type, dim, &nThreads);
+    nThreads = 1;
+    ObitInfoListGetTest(myInput, "nThreads", &type, dim, &nThreads);
     nvis *= nThreads;
     ObitUVSetFITS (inData, nvis, disk, inFile,  err); 
     if (err->error) Obit_traceback_val (err, routine, "myInput", inData);

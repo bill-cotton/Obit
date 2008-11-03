@@ -155,6 +155,30 @@ olong ObitFITSAddDir (gchar* dir, ObitErr *err)
 } /* end ObitFITSAddDir */
 
 /**
+ * Replace directory path
+ * Limit of MAXFITSDISK (20) total disks 
+ * #ObitFITSClassInit must have been used to initialize.
+ * \param dir   name of the directory 
+ * \param disk      FITS "disk" number. 1-rel, =0 => ignore directory
+ * \param err   Error stack for any error messages.
+ * \return new 1-rel disk number, -1 on failure
+ */
+void ObitFITSSetDir (gchar* dir, gint disk, ObitErr *err)
+{
+
+  if (err->error) return;
+  if (myFITSInfo->NumberDisks<disk) {
+    /* Must already be there */
+    Obit_log_error(err, OBIT_Error, "FITS directory %d not yet defined", disk);
+    return;
+  }
+
+  /* add to list */
+  if (myFITSInfo->FITSdir[disk]) g_free(myFITSInfo->FITSdir[disk]);
+  myFITSInfo->FITSdir[disk] = g_strconcat(dir, "/", NULL);
+} /* end ObitFITSSetDir */
+
+/**
  * Forms file name from the various parts.
  * #ObitFITSClassInit must have been used to initialize.
  * \param disk      FITS "disk" number. 1-rel, =0 => ignore directory

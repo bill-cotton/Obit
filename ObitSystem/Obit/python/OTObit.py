@@ -302,6 +302,7 @@ except:
 else:
     pass
 import os, AIPS, pickle, string, pydoc
+import FITS
 # ObitTalk classes
 import AIPSData, FITSData, AIPSTask, ObitTask
 from AIPSTask import AIPSTask
@@ -363,7 +364,9 @@ def Acat(disk=None, first=1, last=1000, Aname=None, Aclass=None, Aseq=0,
         disk = Adisk
     else:
         Adisk = disk
-    olist=AIPSDir.PListDir(disk, err, first=first, last=last,
+    # Get catalog
+    cat = AIPSData.AIPSCat(disk)    
+    olist=AIPSDir.PListCat(cat.catalog, disk, first=first, last=last,
                            Aname=Aname, Aclass=Aclass, Aseq=Aseq,
                            giveList=giveList)
     OErr.printErrMsg(err, "Error with AIPS catalog")
@@ -386,7 +389,15 @@ def Fdir(disk=None, dir=None):
         Fdisk = disk
     if dir==None:
         dir = "./"
-    FITSDir.PListDir(disk,dir=dir)
+    # Get catalog
+    cat = FITSData.FITSCat(disk, dir=dir)
+    if disk==0:
+        catList = "Catalog for FITS disk "+dir+"\n"
+    else:
+        catList = "Catalog for FITS disk "+str(disk)+"\n"
+    for entry in cat.catalog:
+        catList = catList+("%d %s" % (entry[0],entry[1]))+"\n"
+    pydoc.ttypager(catList)
     # end Fdir
 
 def AMcat(disk=None, first=1, last=1000, Aname=None, Aclass=None, Aseq=0,
@@ -412,7 +423,9 @@ def AMcat(disk=None, first=1, last=1000, Aname=None, Aclass=None, Aseq=0,
         disk = Adisk
     else:
         Adisk = disk
-    olist=AIPSDir.PListDir(disk, err, type="MA", first=first, last=last,
+    # Get catalog
+    cat = AIPSData.AIPSCat(disk)    
+    olist=AIPSDir.PListCat(cat.catalog, disk, type="MA", first=first, last=last,
                            Aname=Aname, Aclass=Aclass, Aseq=Aseq,
                            giveList=giveList)
     OErr.printErrMsg(err, "Error with AIPS catalog")
@@ -442,7 +455,9 @@ def AUcat(disk=None, first=1, last=1000, Aname=None, Aclass=None, Aseq=0,
         disk = Adisk
     else:
         Adisk = disk
-    olist = AIPSDir.PListDir(disk, err, type="UV", first=first, last=last,
+    # Get catalog
+    cat = AIPSData.AIPSCat(disk)    
+    olist = AIPSDir.PListCat(cat.catalog, disk, type="UV", first=first, last=last,
                              Aname=Aname, Aclass=Aclass, Aseq=Aseq,
                              giveList=giveList)
     OErr.printErrMsg(err, "Error with AIPS catalog")
@@ -495,8 +510,10 @@ def getname(cno, disk=None):
     else:
         Adisk = disk
     user =  AIPS.AIPS.userno
-    s = AIPSDir.PInfo(disk, user, cno, err)
-    OErr.printErrMsg(err, "Error with AIPS catalog")
+    #s = AIPSDir.PInfo(disk, user, cno, err)
+    #OErr.printErrMsg(err, "Error with AIPS catalog")
+    cat = AIPSData.AIPSCat(disk)
+    s = cat.info(cno)
     if not s:   # Not found
         raise RuntimeError,"Cannot find slot "+str(cno)+",disk "+str(disk)+",user "+str(user)
     # parse returned string
@@ -505,12 +522,24 @@ def getname(cno, disk=None):
     Aseq = int(s[20:25])
     Atype = s[26:28]
     if Atype == 'MA':
-        out = Image.newPAImage("AIPS image", Aname, Aclass, disk, Aseq, True, err, \
-                               verbose=False)
+        # Create AIPSData or ObitTalk if remote/local
+        if AIPS.AIPS.disks[disk].url:
+            out = AIPSData.AIPSImage(Aname, Aclass, disk, Aseq)
+            out.Otype  = 'Image'
+            out.isOK   = True
+        else:
+            out = Image.newPAImage("AIPS image", Aname, Aclass, disk, Aseq, True, err, \
+                                   verbose=False)
         print "AIPS Image",Aname, Aclass, disk, Aseq
     elif Atype == 'UV':
-        out = UV.newPAUV("AIPS UV data", Aname, Aclass, disk, Aseq, True, err, \
-                         verbose=False)
+         # Create AIPSData or ObitTalk if remote/local
+        if AIPS.AIPS.disks[disk].url:
+            out = AIPSData.AIPSUVData(Aname, Aclass, disk, Aseq)
+            out.Otype  = 'UV'
+            out.isOK   = True
+        else:
+            out = UV.newPAUV("AIPS UV data", Aname, Aclass, disk, Aseq, True, err, \
+                             verbose=False)
         print "AIPS UV",Aname, Aclass, disk, Aseq
     out.Aname  = Aname
     out.Aclass = Aclass
@@ -533,9 +562,16 @@ def getFITS(file, disk=None, Ftype='Image'):
     if disk==None:
         disk = Fdisk
     if Ftype == 'Image':
-        out = Image.newPFImage("FITS image", file, disk, True, err)
+        # ObitTalk (local) or AIPSData (remote)?
+        if (disk>0) and FITS.FITS.disks[disk].url:
+            out = FITSData.FITSImage(file, disk)
+        else:
+            out = Image.newPFImage("FITS image", file, disk, True, err)
     elif Ftype == 'UV':
-        out = UV.newPFUV("FITS UV data", file, disk, True, err)
+        if (disk>0) and FITS.FITS.disks[disk].url:
+            out = FITSData.FITSUVData(file, disk)
+        else:
+            out = UV.newPFUV("FITS UV data", file, disk, True, err)
     out.Fname  = file
     out.Disk   = disk 
     out.Otype  = Ftype
@@ -692,26 +728,16 @@ def imhead (ObitObj):
     ################################################################
     if ObitObj.__class__==AIPSData.AIPSImage:
         # AIPS Image
-        tmp = Image.newPAImage("AIPS Image",ObitObj.name, ObitObj.klass, ObitObj.disk, \
-                               ObitObj.seq, True, err)
-        tmp.Header(err)
-        del tmp
+        Image.PHeader(ObitObj, err)
     elif ObitObj.__class__==FITSData.FITSImage:
         # FITS Image
-        tmp = Image.newPFImage("FITS Image",ObitObj.filename, ObitObj.disk, True, err)
-        tmp.Header(err)
-        del tmp
+        Image.PHeader(ObitObj, err)
     elif ObitObj.__class__==AIPSData.AIPSUVData:
         # AIPS UVData
-        tmp = UV.newPAImage("AIPS UVData",ObitObj.name, ObitObj.klass, ObitObj.disk, \
-                               ObitObj.seq, True, err)
-        tmp.Header(err)
-        del tmp
+        UV.PHeader(ObitObj, err)
     elif ObitObj.__class__==FITSData.FITSUVData:
         # FITS UVData
-        tmp = UV.newPFImage("FITS UVData",ObitObj.filename, ObitObj.disk, True, err)
-        tmp.Header(err)
-        del tmp
+        UV.PHeader(ObitObj, err)
     else:
         # Presume it's an Obit object
         ObitObj.Header(err)
@@ -881,8 +907,16 @@ def zap (o):
     o    = Obit Data object to delete
     """
     ################################################################
-    o.Zap(err)
-    ShowErr()
+    if o.__class__==AIPSData.AIPSImage:
+        # AIPS Image
+        o.zap()
+    elif o.__class__==AIPSData.AIPSUVData:
+        # AIPS UVData
+        o.zap()
+    else:
+        # Presume it's an Obit object
+        o.Zap(err)
+        ShowErr()
     # end zap
    
 def clearstat (o, code=4):
@@ -905,14 +939,10 @@ def clearstat (o, code=4):
     user =  AIPS.AIPS.userno
     if o.__class__==AIPSData.AIPSImage:
         # AIPS Image
-        cno = AIPSDir.PTestCNO (o.disk, user, o.name, o.klass, "MA", o.seq, err)
-        if cno>0:
-            adisk = o.disk
+        o.clearstat(code)
     elif o.__class__==AIPSData.AIPSUVData:
         # AIPS UVData
-        cno = AIPSDir.PTestCNO (o.disk, user, o.name, o.klass, "UV", o.seq, err)
-        if cno>0:
-            adisk = o.disk
+        o.clearstat(code)
     else:
         # Presume it's an Obit object
         if o.FileType == "AIPS":

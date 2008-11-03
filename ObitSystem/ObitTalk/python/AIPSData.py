@@ -29,7 +29,7 @@ from AIPS import AIPS
 # Generic Python stuff.
 import sys
 
-# This code is way to clever.  Instead of implementing each and every
+# This code is way too clever.  Instead of implementing each and every
 # function call provided by a proxy, class _Method implements a
 # callable object that invokes a named method of a proxy, passing a
 # description of the AIPS data it should operate on as the first
@@ -146,6 +146,15 @@ class _AIPSData:
         self.desc.dirs = dirs
         return self._method(_whoami())(self.desc)
 
+    def clearstat(self, code=4):
+        """Clear any AIPS status
+
+        Returns the header as a dictionary."""
+        (thedisk,dirs) = adjust_disk(self.disk, self.url)
+        self.desc.disk = thedisk
+        self.desc.dirs = dirs
+        return self._method(_whoami())(self.desc, code)
+
     def tables(self):
         """Get the list of extension tables."""
         (thedisk,dirs) = adjust_disk(self.disk, self.url)
@@ -205,6 +214,22 @@ class _AIPSData:
 class AIPSImage(_AIPSData):
 
     """This class describes an AIPS image."""
+    def __init__(self, name, klass, disk, seq):
+        self.desc    = _AIPSDataDesc(name, klass, AIPS.disks[disk].disk, seq)
+        self.proxy   = AIPS.disks[disk].proxy()
+        self.disk    = disk
+        self.url     = AIPS.disks[disk].url
+        self.dirs    = None  # AIPS data directories
+        self.myClass = "AIPSImage"
+        self.FileType= "AIPS"
+        self.Aname   = name
+        self.Aclass  = klass
+        self.Aseq    = seq
+        self.Disk    = disk
+        self.Atype   = "MA"
+        self.Otype   = "Image"
+        return
+
     def display(self, dispURL="http://localhost:8765/RPC2"):
         """Display an image.
 
@@ -222,7 +247,21 @@ class AIPSImage(_AIPSData):
 class AIPSUVData(_AIPSData):
 
     """This class describes an AIPS UV data set."""
-    pass
+    def __init__(self, name, klass, disk, seq):
+        self.desc    = _AIPSDataDesc(name, klass, AIPS.disks[disk].disk, seq)
+        self.proxy   = AIPS.disks[disk].proxy()
+        self.disk    = disk
+        self.url     = AIPS.disks[disk].url
+        self.dirs    = None  # AIPS data directories
+        self.myClass = "AIPSUVData"
+        self.FileType= "AIPS"
+        self.Aname   = name
+        self.Aclass  = klass
+        self.Aseq    = seq
+        self.Disk    = disk
+        self.Atype   = "UV"
+        self.Otype   = "UV"
+        return
 
 
 class _AIPSTableMethod(_AIPSDataMethod):
@@ -265,8 +304,22 @@ class AIPSCat:
         if len(self.catalog) == 0:
             return 'Empty'
 
-        return ''.join (['%s\n' % entry for entry in self.catalog]).strip()
+        return ''.join (['%d %s\n' % entry for entry in self.catalog]).strip()
 
+    def info(self, slot):
+        """ Returns information on catalog slot slot
+
+        Returns None if not found
+        slot = catalog slot number in AIPS catalog self
+        """
+        out = None
+        if len(self.catalog) == 0:
+            return out
+        for entry in self.catalog:
+            if slot==entry[0]:
+                return entry[1]
+        return out   # Failed to find
+    # end info
 
 
 def adjust_disk(disk, url):

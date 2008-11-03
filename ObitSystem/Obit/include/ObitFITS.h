@@ -77,6 +77,9 @@ void ObitFITSShutdown (void);
 /** Public: Add FITS data directory. */
 olong ObitFITSAddDir (gchar* dir, ObitErr *err);
 
+/** Public: Replace FITS data directory path. */
+void ObitFITSSetDir (gchar* dir, gint disk, ObitErr *err);
+
 /** Public: Generate name of FITS file */
 gchar* 
 ObitFITSFilename (gint disk, gchar* fileName, ObitErr *err);

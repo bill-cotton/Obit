@@ -121,6 +121,7 @@ Data selection, calibration and editing parameters on List member:
 import OErr, InfoList, Table, AIPSDir, FITSDir, OSystem
 import Obit, TableList,  UVDesc, string, UVVis
 import OData
+#import AIPSData
 
 # class name in C
 myClass = "ObitUV"
@@ -830,7 +831,44 @@ def PHeader (inUV, err):
     err       = Python Obit Error/message stack
     """
     ################################################################
-    # Checks
+    # ObitTalk or AIPSUVData data?
+    if inUV.myClass == 'AIPSUVData':
+        dict = inUV.header()
+        UVDesc.PHeaderDict(dict)
+        # tablelist
+        Tlist = inUV.tables()
+        Tdict = {}
+        # Once to find everything
+        for item in Tlist:
+            Tdict[item[1]] = item[0]
+        # Again to get Max
+        for item in Tlist:
+            count = max (Tdict[item[1]], item[0])
+            Tdict[item[1]] = count
+        for item,count in Tdict.items():
+            print "Maximum version number of %s tables is %d " % \
+                  (item, count)
+        return
+        # end  AIPSUVData
+    elif inUV.myClass == 'FITSUVData':
+        dict = inUV.header()
+        UVDesc.PHeaderDict(dict)
+        # tablelist
+        Tlist = inUV.tables()
+        Tdict = {}
+        # Once to find everything
+        for item in Tlist:
+            Tdict[item[1]] = item[0]
+        # Again to get Max
+        for item in Tlist:
+            count = max (Tdict[item[1]], item[0])
+            Tdict[item[1]] = count
+        for item,count in Tdict.items():
+            print "Maximum version number of %s tables is %d " % \
+                  (item, count)
+        return
+        # end  FITSUVData
+    # ObitTalk Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV data"
     #

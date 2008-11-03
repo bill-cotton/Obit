@@ -23,7 +23,7 @@ AIPSUVData objects.
 """
 
 # Bits from Obit.
-import OErr, OSystem, ODisplay
+import Obit, OErr, OSystem, ODisplay
 import AIPSDir
 import Image, UV
 import TableList
@@ -87,6 +87,19 @@ class AIPSData:
             OSystem.Shutdown(self.ObitSys)
             self.doInit = False
         OErr.printErrMsg(self.err, "Error with Descriptor")
+        return retval
+
+    def clearstat(self, desc, code):
+        data = self._verify(desc)
+        retval = data.Desc.Dict
+        if self.doInit:   # Initialized Obit?
+            OSystem.Shutdown(self.ObitSys)
+            self.doInit = False
+        OErr.printErrMsg(self.err, "Error with Descriptor")
+        userno = desc["userno"]
+        adisk  = desc['disk']
+        cno = data.Acno
+        e = Obit.AIPSDirStatus(adisk, userno, cno, code, self.err.me)
         return retval
 
     def tables(self, desc):
@@ -262,7 +275,7 @@ class AIPSCat:
         for slot in xrange(1, num_slots):
             entry = AIPSDir.PInfo(disk, userno, slot, self.err)
             if entry:
-                catalog.append('%d %s' % (slot, entry))
+                catalog.append((slot, entry))
                 pass
             continue
         # Restore Obit to initial state

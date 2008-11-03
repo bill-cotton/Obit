@@ -52,7 +52,7 @@ def ehex(n, width=0, padding=None):
         pass
 
     return result
-# ens ehex
+# end ehex
 
 # Python interface to AIPS directory utilities
 import Obit, OSystem, OErr, pydoc, string, sre, os, Image, UV
@@ -107,7 +107,7 @@ def Amatch(tmpl, strn):
 def WantDir(line, type='  ', Aname=None, Aclass=None, Aseq=0):
     """ Test if Catalog entry desired
 
-    Compare PInfo catalot entry to see if it's selected
+    Compare PInfo catalog entry to see if it's selected
     Strings use AIPS wild cards:
         blank => any
         '?'   => one of any character
@@ -376,6 +376,49 @@ def PListDir(disk, err, type = "  ", first=1, last=1000,
     pydoc.ttypager(dirlist)
     return olist
     # end PListDir
+
+def PListCat(cat, disk, type = "  ", first=1, last=1000,
+             Aname=None, Aclass=None, Aseq=0, giveList=False):
+    """ List AIPS directory given as entries in cat
+
+    Entries can be selected using Aname, Aclass, Aseq, using AIPS wildcards
+    A "?" matches one of any character, "*" matches any string
+    all blanks matches anything
+    If giveList then return list of CNOs
+    cat      = list of catalog entries as (cno,s)
+               s is a string consisting of:
+               Aname  = s[0:12]
+               Aclass = s[13:19]
+               Aseq   = int(s[20:25])
+               Atype  = s[26:28]
+    disk     = AIPS disk number
+    type     = optional file type
+    Aname    = desired name, using AIPS wildcards, None -> don't check
+    Aclass   = desired class, using AIPS wildcards, None -> don't check
+    Aseq     = desired sequence, 0=> any
+    first    = optional first slot number (1-rel)
+    last     = optional last slot number
+    giveList = If true, return list of CNOs matching
+    """
+    ################################################################
+    # Init output
+    if giveList:
+        olist = []
+    else:
+        olist = None
+    ncno = len(cat)
+    mincno = first;
+    maxcno = min (ncno, last)
+    dirlist = "AIPS Directory listing for disk "+str(disk)+"\n"
+    for (cno,line) in cat:
+        if WantDir(line, type=type, Aname=Aname, Aclass=Aclass, Aseq=Aseq):
+            dirlist = dirlist+string.rjust(str(cno),3)+" "+line+"\n"
+            if giveList:
+                olist.append(cno)
+    # User pager
+    pydoc.ttypager(dirlist)
+    return olist
+    # end PListCat
 
 def PAllDest(disk, err, Atype = "  ",  Aname=None, Aclass=None, Aseq=0):
     """ Delete selected AIPS catalog entries

@@ -1337,7 +1337,7 @@ ObitIOUVFITSWriteDescriptor (ObitIOUVFITS *in, ObitErr *err)
   ObitInfoType keyType;
   gint32 nkey, dim[MAXINFOELEMDIM];
   union blobEquiv {
-    gchar    s[21];
+    gchar    s[201];
     odouble   d;
     ofloat    f;
     gboolean b;

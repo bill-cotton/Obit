@@ -116,9 +116,11 @@ def SetEnviron(AIPS_ROOT=None, AIPS_VERSION=None, OBIT_EXEC=None, \
             z=os.system(cmd)                         # shell environment
             os.environ["FITS"] = fitsdirs[0][1]+'/'  # Python environment
             # Override previous?
-            if len(FITS.disks)>1:
+            if len(FITS.disks)>0:
                 FITS.disks[1].dirname = fitsdirs[0][1]+'/'
                 FITSDir.FITSdisks[0] = fitsdirs[0][1]
+                disk = 0
+                FITSDir.PSetDir(fitsdirs[0][1]+'/', disk, err, URL=url)
             else:
                 url = fitsdirs[0][0]
                 FITSDir.PAddDir(fitsdirs[0][1]+'/', err, URL=url)
@@ -128,14 +130,13 @@ def SetEnviron(AIPS_ROOT=None, AIPS_VERSION=None, OBIT_EXEC=None, \
                 # Already known?
                 known = False
                 for fdisk in FITS.disks[1:]:
-                    print fdisk.url, url, fdisk.dirname,dirname[1]+'/'
                     if (fdisk.url==url) and (fdisk.dirname==dirname[1]):
                         known = True
                         break
                 if not known:
                     # New local or remote AIPS disk
                     disk = len(FITS.disks)
-                    FITSDir.PAddDir(disk, dirname[1]+'/', err, URL=url)
+                    FITSDir.PAddDir(dirname[1]+'/', err, URL=url)
                     # Define environment variable for local disks
                     if url==None:
                         dskno = "FITS"+AIPSUtil.ehex(disk-1,width=2,padding='0')

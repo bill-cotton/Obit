@@ -1279,7 +1279,7 @@ ObitIOTableFITSWriteDescriptor (ObitIOTableFITS *in, ObitErr *err)
   ObitTableSel* sel;
   ObitInfoType keyType;
   union blobEquiv {
-    gchar    s[21];
+    gchar    s[201];
     odouble  d;
     ofloat   f;
     gboolean b;

@@ -419,14 +419,6 @@ ObitUV* ObitUVCopy (ObitUV *in, ObitUV *out, ObitErr *err)
   ObitInfoListGetTest   (in->info,  "nVisPIO", &type,      dim,  &NPIO);
   ObitInfoListAlwaysPut (out->info, "nVisPIO",  type, dim,  &NPIO);
 
-  /* Copy tables before data */
-  iretCode = CopyTablesSelect (in, out, err);
-  if (err->error) {/* add traceback,return */
-    out->buffer = NULL;
-    out->bufferSize = 0;
-    Obit_traceback_val (err, routine,in->name, out);
-  }
-
   /* use same data buffer on input and output 
      so don't assign buffer for output */
   if (out->buffer) ObitIOFreeBuffer(out->buffer); /* free existing */
@@ -446,6 +438,14 @@ ObitUV* ObitUVCopy (ObitUV *in, ObitUV *out, ObitErr *err)
     out->buffer = NULL;
     out->bufferSize = 0;
     return out;
+  }
+
+  /* Copy tables before data */
+  iretCode = CopyTablesSelect (in, out, err);
+  if (err->error) {/* add traceback,return */
+    out->buffer = NULL;
+    out->bufferSize = 0;
+    Obit_traceback_val (err, routine,in->name, out);
   }
 
   /* reset to beginning of uv data */

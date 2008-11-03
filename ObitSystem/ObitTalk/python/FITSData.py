@@ -28,6 +28,7 @@ from FITS import FITS
 
 # Generic Python stuff.
 import sys
+import LocalProxy
 
 # This code is way too clever.  Instead of implementing each and every
 # function call provided by a proxy, class _Method implements a
@@ -62,9 +63,9 @@ class _FITSDataDesc:
     """This class implements the description of FITS data that is used
        when dispatching function calls to a proxy."""
 
-    def __init__(self, filename, disk):
+    def __init__(self, filename, dirname):
         self.filename = filename
-        self.disk = disk
+        self.dirname  = dirname
 
     # Provide a dictionary-like interface to deal with the
     # idiosyncrasies of XML-RPC.
@@ -77,7 +78,7 @@ class _FITSData:
     """This class describes generic FITS data."""
 
     def __init__(self, name, disk):
-        self.desc = _FITSDataDesc(name, FITS.disks[disk].disk)
+        self.desc = _FITSDataDesc(name, FITS.disks[disk].dirname)
         self.proxy = FITS.disks[disk].proxy()
         self.disk = disk
         return
@@ -95,16 +96,16 @@ class _FITSData:
     def __str__(self):
         return self.__repr__()
 
-    def __getattr__(self, filename):
-        if filename in self.desc.__dict__:
-            return self.desc.__dict__[filename]
-        return _FITSDataMethod(self, filename)
+    def __getattr__(self, name):
+        if name in self.desc.__dict__:
+            return self.desc.__dict__[name]
+        return _FITSDataMethod(self, name)
 
     def table(self, type, version):
         return _FITSTable(self, type, version)
 
     def _method(self, name):
-        return getattr(getattr(self.proxy), filename)
+        return getattr(getattr(self.proxy, self.__class__.__name__), name)
 
     def exists(self):
         """Check whether this image or data set exists.
@@ -163,13 +164,59 @@ class _FITSData:
 class FITSImage(_FITSData):
 
     """This class describes an FITS image."""
-    pass
+    def __init__(self, filename, disk):
+        if disk==0:
+            proxy   = LocalProxy
+            dirname = "./"
+        else:
+            proxy = FITS.disks[disk].proxy()
+            dirname = FITS.disks[disk].dirname
+        self.desc     = _FITSDataDesc(filename, dirname)
+        self.proxy    = proxy
+        self.filename = filename
+        self.FileName = filename
+        self.Fname    = filename
+        self.disk     = disk
+        self.Disk     = disk
+        self.myClass  = "FITSImage"
+        self.FileType = "FITS"
+        self.Otype    = "Image"
+        return
+
+    def display(self, dispURL="http://localhost:8765/RPC2"):
+        """Display an image.
+
+        Displays image on ObitView server on dispURL
+        dispURL = URL of ObitView server on which to display
+        Returns True if successful
+        """
+        (thedisk,dirs) = adjust_disk(self.disk, self.url)
+        self.desc.disk = thedisk
+        self.desc.dirs = dirs
+        return self._method(_whoami())(self.desc, dispURL)
 
 
 class FITSUVData(_FITSData):
 
     """This class describes an FITS UV data set."""
-    pass
+    def __init__(self, filename, disk):
+        if disk==0:
+            proxy   = LocalProxy
+            dirname = "./"
+        else:
+            proxy = FITS.disks[disk].proxy()
+            dirname = FITS.disks[disk].dirname
+        self.desc     = _FITSDataDesc(filename, dirname)
+        self.proxy    = FITS.disks[disk].proxy()
+        self.filename = filename
+        self.FileName = filename
+        self.Fname    = filename
+        self.disk     = disk
+        self.Disk     = disk
+        self.myClass  = "FITSUVData"
+        self.FileType = "FITS"
+        self.Otype    = "UV"
+        return
 
 
 class _FITSTableMethod(_FITSDataMethod):
@@ -197,3 +244,69 @@ class _FITSTable:
 
     def __getattr__(self, name):
         return _FITSTableMethod(self, name)
+
+class FITSCat:
+    def __init__(self, disk, dir=None):
+        if disk==0:
+            proxy = LocalProxy
+            url   = " "
+        else:
+            proxy = FITS.disks[disk].proxy()
+            url   = FITS.disks[disk].url
+        userno = 1
+        (thedisk,dirs) = adjust_disk(disk, url)
+        self.catalog = proxy.FITSCat.cat(thedisk,dir, userno, url, dirs)
+        return
+
+    def __repr__(self):
+        # Print something useful if the catalog is empty.
+        if len(self.catalog) == 0:
+            return 'Empty'
+
+        return ''.join (['%d %s\n' % entry for entry in self.catalog]).strip()
+
+    def info(self, slot):
+        """ Returns information on catalog slot slot
+
+        Returns None if not found
+        slot = catalog slot number in FITS catalog self
+        """
+        out = None
+        if len(self.catalog) == 0:
+            return out
+        for entry in self.catalog:
+            if slot==entry[0]:
+                return entry[1]
+        return out   # Failed to find
+    # end info
+
+
+def adjust_disk(disk, url):
+    """Adjusts disk numbers and sets list of directories on url
+    
+    Returns (outdisk, dirs)
+    where outdisk is the disk number of disk on url and dirs is
+    the list of FITS directories
+    disk = Disk number to be converted
+    url  = url of proxy, None = local
+    """
+    
+    # FITS data directories
+    FITSdirs = []
+    for x in FITS.disks:
+        if x!=None and x.url==url:
+            FITSdirs.append(x.dirname)
+    
+    # Adjust disk number
+    i = 1;
+    outdisk = 0
+    ldisk = int(disk)
+    # Look for matching FITS directory name
+    for y in FITSdirs:
+        if FITS.disks[ldisk] and y==FITS.disks[ldisk].dirname:
+            outdisk = i
+            break
+        i = i+1
+    
+    return (outdisk, FITSdirs)
+# end adjust_disk

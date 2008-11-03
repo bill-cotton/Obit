@@ -47,3 +47,12 @@ else:
     AIPSImage  = Proxy.AIPSData.AIPSImage(None)
     AIPSUVData = Proxy.AIPSData.AIPSUVData(None)
     AIPSCat    = Proxy.AIPSData.AIPSCat()
+# FITS
+try:
+    import Proxy.FITSData
+except:
+    pass
+else:
+    FITSImage  = Proxy.FITSData.FITSImage(None)
+    FITSUVData = Proxy.FITSData.FITSUVData(None)
+    FITSCat    = Proxy.FITSData.FITSCat()

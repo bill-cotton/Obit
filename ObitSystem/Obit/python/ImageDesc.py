@@ -260,6 +260,15 @@ def PHeader (inID):
         raise TypeError,"inID MUST be a Python Obit ImageDesc"
     #
     dict = inID.Dict
+    PHeaderDict(dict)
+    # end PHeader
+
+def PHeaderDict (dict):
+    """ Print the contents of a descriptor as python dict
+
+    dict   = Python ImageDesc to print as python dict
+    """
+    ################################################################
     print "Object: %8s" % dict["object"] #"date"
     print "Observed: %8s Telescope:  %8s Created: %8s" % \
           (dict["obsdat"],dict["teles"],dict["date"])
@@ -302,7 +311,7 @@ def PHeader (inID):
           (dict["restFreq"], VelDefStr[VelDef-1], VelTypeStr[VelType])
     print "Alt ref value %12.5g  wrt pixel %8.2f" % \
           (dict["altRef"], dict["altCrpix"])
-    # end PHeader
+    # end PHeaderDict
 
 def PGetList (inDesc):
     """  Get InfoList from ImageDesc

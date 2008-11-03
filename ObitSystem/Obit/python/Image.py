@@ -49,6 +49,7 @@ Additional Functions are available in ImageUtil.
 import Obit, Table, FArray, OErr, ImageDesc, InfoList, History, AIPSDir, OSystem
 import TableList, AIPSDir, FITSDir
 import OData
+#import AIPSData
 
 # Python shadow class to ObitImage class
  
@@ -911,7 +912,47 @@ def PHeader (inImage, err):
     err       = Python Obit Error/message stack
     """
     ################################################################
-    # Checks
+    # ObitTalk or AIPSImage data?
+    if inImage.myClass == 'AIPSImage':
+        # header
+        dict = inImage.header()
+        ImageDesc.PHeaderDict(dict)
+        # tablelist
+        Tlist = inImage.tables()
+        Tdict = {}
+        # Once to find everything
+        for item in Tlist:
+            Tdict[item[1]] = item[0]
+        # Again to get Max
+        for item in Tlist:
+            count = max (Tdict[item[1]], item[0])
+            Tdict[item[1]] = count
+        for item,count in Tdict.items():
+            print "Maximum version number of %s tables is %d " % \
+                  (item, count)
+        return
+        # End AIPSImage
+    elif inImage.myClass == 'FITSImage':
+        # header
+        dict = inImage.header()
+        ImageDesc.PHeaderDict(dict)
+        # tablelist
+        Tlist = inImage.tables()
+        Tdict = {}
+        # Once to find everything
+        for item in Tlist:
+            Tdict[item[1]] = item[0]
+        # Again to get Max
+        for item in Tlist:
+            count = max (Tdict[item[1]], item[0])
+            Tdict[item[1]] = count
+        for item,count in Tdict.items():
+            print "Maximum version number of %s tables is %d " % \
+                  (item, count)
+        return
+        # End FITSImage
+    
+    # ObitTalk Image Checks
     if not inImage.ImageIsA():
         raise TypeError,"inImage MUST be a Python Obit Image"
     #

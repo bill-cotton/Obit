@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for FITS file utilities                    */
 /*                                                                    */
-/*;  Copyright (C) 2007                                               */
+/*;  Copyright (C) 2007,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -63,6 +63,11 @@ extern int FITSFileExist(int disk, char *filename, ObitErr *err)
 extern int FITSAddDir(char *dir, ObitErr *err)
 {
    return ObitFITSAddDir(dir, err);
+} /* end FITSAddDirname */
+
+extern void FITSSetDir(char *dir, int disk, ObitErr *err)
+{
+   ObitFITSSetDir(dir, (gint)disk, err);
 } /* end FITSSetDirname */
 
 %}
