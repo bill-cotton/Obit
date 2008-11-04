@@ -116,9 +116,9 @@ def SetEnviron(AIPS_ROOT=None, AIPS_VERSION=None, OBIT_EXEC=None, \
             z=os.system(cmd)                         # shell environment
             os.environ["FITS"] = fitsdirs[0][1]+'/'  # Python environment
             # Override previous?
-            if len(FITS.disks)>0:
+            if len(FITS.disks)>1:
                 FITS.disks[1].dirname = fitsdirs[0][1]+'/'
-                FITSDir.FITSdisks[0] = fitsdirs[0][1]
+                FITSDir.FITSdisks[0]  = fitsdirs[0][1]
                 disk = 0
                 FITSDir.PSetDir(fitsdirs[0][1]+'/', disk, err, URL=url)
             else:

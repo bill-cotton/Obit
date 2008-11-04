@@ -2399,10 +2399,16 @@ extern int FITSFileExist(int disk, char *filename, ObitErr *err)
 extern int FITSAddDir(char *dir, ObitErr *err)
 {
    return ObitFITSAddDir(dir, err);
+} /* end FITSAddDirname */
+
+extern void FITSSetDir(char *dir, int disk, ObitErr *err)
+{
+   ObitFITSSetDir(dir, (gint)disk, err);
 } /* end FITSSetDirname */
 
 extern int FITSFileExist(int ,char *,ObitErr *);
 extern int FITSAddDir(char *,ObitErr *);
+extern void FITSSetDir(char *,int ,ObitErr *);
 
 #include "ObitHistory.h"
 
@@ -20547,6 +20553,49 @@ static PyObject *_wrap_FITSAddDir(PyObject *self, PyObject *args) {
     }
     _result = (int )FITSAddDir(_arg0,_arg1);
     _resultobj = Py_BuildValue("i",_result);
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_FITSSetDir(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _arg0;
+    int  _arg1;
+    ObitErr * _arg2;
+    PyObject * _obj0 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OiO:FITSSetDir",&_obj0,&_arg1,&_argo2)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of FITSSetDir. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    FITSSetDir(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
 {
   free((char *) _arg0);
 }
@@ -59490,6 +59539,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "HistoryCopy", _wrap_HistoryCopy, METH_VARARGS },
 	 { "HistoryZap", _wrap_HistoryZap, METH_VARARGS },
 	 { "HistoryCreate", _wrap_HistoryCreate, METH_VARARGS },
+	 { "FITSSetDir", _wrap_FITSSetDir, METH_VARARGS },
 	 { "FITSAddDir", _wrap_FITSAddDir, METH_VARARGS },
 	 { "FITSFileExist", _wrap_FITSFileExist, METH_VARARGS },
 	 { "FitRegionIsA", _wrap_FitRegionIsA, METH_VARARGS },
