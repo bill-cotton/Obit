@@ -49,11 +49,11 @@ MakeCCSortStructSel (ObitTableCC *in, olong startComp, olong endComp,
 		     ObitErr *err);
 
 /** Private: Sort comparison function for positions */
-static olong CCComparePos (gconstpointer in1, gconstpointer in2, 
-		     gpointer ncomp);
+static gint CCComparePos (gconstpointer in1, gconstpointer in2, 
+			  gpointer ncomp);
 
 /** Private: Sort comparison function for Flux density */
-static olong CCCompareFlux (gconstpointer in1, gconstpointer in2, 
+static gint CCCompareFlux (gconstpointer in1, gconstpointer in2, 
 		     gpointer ncomp);
 
 /** Private: Merge entries in Sort structure */
@@ -1197,10 +1197,10 @@ MakeCCSortStructSel (ObitTableCC *in, olong startComp, olong endComp,
  * \param ncomp Number of values to compare (2)
  * \return <0 -> in1 < in2; =0 -> in1 == in2; >0 -> in1 > in2; 
  */
-static olong CCComparePos (gconstpointer in1, gconstpointer in2, 
+static gint CCComparePos (gconstpointer in1, gconstpointer in2, 
 			  gpointer ncomp)
 {
-  olong out = 0;
+  gint out = 0;
   ofloat *float1, *float2;
 
   /* get correctly typed local values */
@@ -1228,10 +1228,10 @@ static olong CCComparePos (gconstpointer in1, gconstpointer in2,
  * \param ncomp Number of values to compare (1)
  * \return <0 -> in1 < in2; =0 -> in1 == in2; >0 -> in1 > in2; 
  */
-static olong CCCompareFlux (gconstpointer in1, gconstpointer in2, 
+static gint CCCompareFlux (gconstpointer in1, gconstpointer in2, 
 			   gpointer ncomp)
 {
-  olong out = 0;
+  gint out = 0;
   ofloat *float1, *float2;
 
   /* get correctly typed local values */

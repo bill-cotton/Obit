@@ -42,11 +42,13 @@
 /*-------------------- unions -------------------------------------*/
 /** Equivalence for Sort key arrays */
   union ObitSortEquiv { 
-    olong    itg;
+    olong   itg;
     ofloat  flt;
     odouble dbl;
-    gchar   str;
+    gchar   str[8];
+    olong   itg2[2];
     ofloat  flt2[2];
+    odouble dbl2[2];
   };
 /*-------------------- structure -------------------------------------*/
 /** Sort Index plus sort key */
@@ -70,44 +72,44 @@ MakeSortStruct2f (ObitTable *in, olong which[4], gboolean desc1,
 		  ObitInfoType *type, ObitErr *err);
 
 /** Private: Sort comparison function for  integers */
-static olong CompareInt (gconstpointer in1, gconstpointer in2, 
-		     gpointer ncomp);
+static gint CompareInt (gconstpointer in1, gconstpointer in2, 
+			gpointer ncomp);
 
 /** Private: Sort abs ascending comparison function for  integers */
-static olong CompareAAInt (gconstpointer in1, gconstpointer in2, 
-		     gpointer ncomp);
+static gint CompareAAInt (gconstpointer in1, gconstpointer in2, 
+			  gpointer ncomp);
 
 /** Private: Sort abs descending comparison function for  integers */
-static olong CompareADInt (gconstpointer in1, gconstpointer in2, 
-		     gpointer ncomp);
+static gint CompareADInt (gconstpointer in1, gconstpointer in2, 
+			  gpointer ncomp);
 
 /** Private: Sort comparison function for floats */
-static olong CompareFloat (gconstpointer in1, gconstpointer in2, 
-		     gpointer ncomp);
+static gint CompareFloat (gconstpointer in1, gconstpointer in2, 
+			  gpointer ncomp);
 
 /** Private: Sort abs ascending comparison function for floats */
-static olong CompareAAFloat (gconstpointer in1, gconstpointer in2, 
-		     gpointer ncomp);
+static gint CompareAAFloat (gconstpointer in1, gconstpointer in2, 
+			    gpointer ncomp);
 
 /** Private: Sort abs descending ccomparison function for floats */
-static olong CompareADFloat (gconstpointer in1, gconstpointer in2, 
-		     gpointer ncomp);
+static gint CompareADFloat (gconstpointer in1, gconstpointer in2, 
+			    gpointer ncomp);
 
 /** Private: Sort comparison function for doubles */
-static olong CompareDouble (gconstpointer in1, gconstpointer in2, 
-		     gpointer ncomp);
+static gint CompareDouble (gconstpointer in1, gconstpointer in2, 
+			   gpointer ncomp);
 
 /** Private: Sort abs ascending comparison function for doubles */
-static olong CompareAADouble (gconstpointer in1, gconstpointer in2, 
-		     gpointer ncomp);
+static gint CompareAADouble (gconstpointer in1, gconstpointer in2, 
+			     gpointer ncomp);
 
 /** Private: Sort abs descending ccomparison function for doubles */
-static olong CompareADDouble (gconstpointer in1, gconstpointer in2, 
-		     gpointer ncomp);
+static gint CompareADDouble (gconstpointer in1, gconstpointer in2, 
+			     gpointer ncomp);
 
 /** Private: Sort comparison function for string */
-static olong CompareString (gconstpointer in1, gconstpointer in2, 
-		     gpointer ncomp);
+static gint CompareString (gconstpointer in1, gconstpointer in2, 
+			   gpointer ncomp);
 
 /** Private: reorder table based on Sort structure */
 static ObitIOCode 
@@ -561,7 +563,7 @@ MakeSortStruct (ObitTable *in, olong which[2], gboolean desc,
   dim[0] = 1; dim[1] = 1;dim[2] = 1;dim[3] = 1;dim[4] = 1;
   /* string size - one element of everything else */
   if (*type == OBIT_string) 
-    dim[0] = in->myDesc->dim[col][0];
+    dim[0] = MIN(8,in->myDesc->dim[col][0]);
   *size = sizeof(olong) + ObitInfoElemSize(*type, dim);
 
   /* Total size of structure in case all rows valid */
@@ -607,7 +609,7 @@ MakeSortStruct (ObitTable *in, olong which[2], gboolean desc,
     case OBIT_string:
       ptrchar = (gchar*)(row->myRowData+byteOffset);
       ptrchar += cell*dim[0];  /* Entry in column */
-      optr = &entry->key.str;
+      optr = entry->key.str;
       for (i=0; i<dim[0]; i++) { /* copy string */
 	optr[i] = ptrchar[i];
       }
@@ -767,7 +769,7 @@ MakeSortStruct2f (ObitTable *in, olong which[4], gboolean desc1,
 
   /* element size */
   dim[0] = 2; dim[1] = 1;dim[2] = 1;dim[3] = 1;dim[4] = 1;
-  *size = sizeof(olong) + ObitInfoElemSize(*type, dim);
+  *size = MAX ((sizeof(olong) + ObitInfoElemSize(*type, dim)), sizeof(ObitSortStruct));
 
   /* Total size of structure in case all rows valid */
   tsize = (*size) * (nrow);
@@ -951,26 +953,27 @@ MakeSortStruct2f (ObitTable *in, olong which[4], gboolean desc1,
  * Conformant to function type GCompareDataFunc
  * \param in1   First list, preceeded by olong index
  * \param in2   Second list, preceeded by olong index
- * \param ncomp Number of values to compare
+ * \param ncomp Number of values to compare, only does 1
  * \return <0 -> in1 < in2; =0 -> in1 == in2; >0 -> in1 > in2; 
  */
-static olong CompareInt (gconstpointer in1, gconstpointer in2, 
+static gint CompareInt (gconstpointer in1, gconstpointer in2, 
 			gpointer ncomp)
 {
-  olong out = 0;
-  olong *int1, *int2, nc, i;
-
+  gint out = 0;
+  olong nc, i;
+  ObitSortStruct *int1, *int2;
+  
   /* get correctly typed local values */
-  int1 = (olong*)(in1 + sizeof(olong));
-  int2 = (olong*)(in2 + sizeof(olong));
+  int1 = (ObitSortStruct*)in1;
+  int2 = (ObitSortStruct*)in2;
   nc = *(olong*)ncomp;
-
+  
   /* List or single value? */
   if (nc==1) {
-    out = *int1 - *int2;
+    out = int1->key.itg - int2->key.itg;
   } else { /* list */
     for (i=0; i<nc; i++) {
-      out = int1[i] - int2[i];
+      out = int1->key.itg2[i] - int2->key.itg2[i];
       if (out) break;   /* stop at first not equal */
     }
   }
@@ -986,23 +989,24 @@ static olong CompareInt (gconstpointer in1, gconstpointer in2,
  * \param ncomp Number of values to compare
  * \return <0 -> in1 < in2; =0 -> in1 == in2; >0 -> in1 > in2; 
  */
-static olong CompareAAInt (gconstpointer in1, gconstpointer in2, 
+static gint CompareAAInt (gconstpointer in1, gconstpointer in2, 
 			gpointer ncomp)
 {
-  olong out = 0;
-  olong *int1, *int2, nc, i;
+  gint out = 0;
+  olong nc, i;
+  ObitSortStruct *int1, *int2;
 
   /* get correctly typed local values */
-  int1 = (olong*)(in1 + sizeof(olong));
-  int2 = (olong*)(in2 + sizeof(olong));
+  int1 = (ObitSortStruct*)in1;
+  int2 = (ObitSortStruct*)in2;
   nc = *(olong*)ncomp;
 
   /* List or single value? */
   if (nc==1) {
-    out = abs(*int1) - abs(*int2);
+    out = abs(int1->key.itg) - abs(int2->key.itg);
   } else { /* list */
     for (i=0; i<nc; i++) {
-      out = abs(int1[i]) - abs(int2[i]);
+      out = abs(int1->key.itg2[i]) - abs(int2->key.itg2[i]);
       if (out) break;   /* stop at first not equal */
     }
   }
@@ -1019,23 +1023,24 @@ static olong CompareAAInt (gconstpointer in1, gconstpointer in2,
  * \param ncomp Number of values to compare
  * \return <0 -> in1 < in2; =0 -> in1 == in2; >0 -> in1 > in2; 
  */
-static olong CompareADInt (gconstpointer in1, gconstpointer in2, 
+static gint CompareADInt (gconstpointer in1, gconstpointer in2, 
 			gpointer ncomp)
 {
-  olong out = 0;
-  olong *int1, *int2, nc, i;
+  gint out = 0;
+  olong nc, i;
+  ObitSortStruct *int1, *int2;
 
   /* get correctly typed local values */
-  int1 = (olong*)(in1 + sizeof(olong));
-  int2 = (olong*)(in2 + sizeof(olong));
+  int1 = (ObitSortStruct*)in1;
+  int2 = (ObitSortStruct*)in2;
   nc = *(olong*)ncomp;
 
   /* List or single value? */
   if (nc==1) {
-    out = abs(*int2) - abs(*int1);
+    out = abs(int2->key.itg) - abs(int1->key.itg);
   } else { /* list */
     for (i=0; i<nc; i++) {
-      out = abs(int2[i]) - abs(int1[i]);
+      out = abs(int2->key.itg2[i]) - abs(int2->key.itg2[i]);
       if (out) break;   /* stop at first not equal */
     }
   }
@@ -1051,28 +1056,28 @@ static olong CompareADInt (gconstpointer in1, gconstpointer in2,
  * \param ncomp Number of values to compare
  * \return <0 -> in1 < in2; =0 -> in1 == in2; >0 -> in1 > in2; 
  */
-static olong CompareFloat (gconstpointer in1, gconstpointer in2, 
+static gint CompareFloat (gconstpointer in1, gconstpointer in2, 
 			  gpointer ncomp)
 {
-  olong out = 0;
+  gint out = 0;
   olong nc, i;
-  ofloat *float1, *float2;
+  ObitSortStruct *float1, *float2;
 
   /* get correctly typed local values */
-  float1 = (float*)(in1 + sizeof(olong));
-  float2 = (float*)(in2 + sizeof(olong));
+  float1 = (ObitSortStruct*)in1;
+  float2 = (ObitSortStruct*)in2;
   nc = *(olong*)ncomp;
 
   /* List or single value? */
   if (nc==1) {
-    if (*float1<*float2)      out = -1;
-    else if (*float1>*float2) out = 1;
-    else                      out = 0;
+    if (float1->key.flt<float2->key.flt)      out = -1;
+    else if (float1->key.flt>float2->key.flt) out = 1;
+    else                                      out = 0;
   } else { /* list */
     for (i=0; i<nc; i++) {
-      if (float1[i]<float2[i])      out = -1;
-      else if (float1[i]>float2[i]) out = 1;
-      else                          out = 0;
+      if (float1->key.flt2[i]<float2->key.flt2[i])      out = -1;
+      else if (float1->key.flt2[i]>float2->key.flt2[i]) out = 1;
+      else                                              out = 0;
       if (out) break;   /* stop at first not equal */
     }
   }
@@ -1088,28 +1093,28 @@ static olong CompareFloat (gconstpointer in1, gconstpointer in2,
  * \param ncomp Number of values to compare
  * \return <0 -> in1 < in2; =0 -> in1 == in2; >0 -> in1 > in2; 
  */
-static olong CompareAAFloat (gconstpointer in1, gconstpointer in2, 
+static gint CompareAAFloat (gconstpointer in1, gconstpointer in2, 
 			  gpointer ncomp)
 {
-  olong out = 0;
+  gint out = 0;
   olong nc, i;
-  ofloat *float1, *float2;
+  ObitSortStruct *float1, *float2;
 
   /* get correctly typed local values */
-  float1 = (float*)(in1 + sizeof(olong));
-  float2 = (float*)(in2 + sizeof(olong));
+  float1 = (ObitSortStruct*)in1;
+  float2 = (ObitSortStruct*)in2;
   nc = *(olong*)ncomp;
 
   /* List or single value? */
   if (nc==1) {
-    if (fabs(*float1)<fabs(*float2))      out = -1;
-    else if (fabs(*float1)>fabs(*float2)) out = 1;
-    else                      out = 0;
+    if (fabs(float1->key.flt)<fabs(float2->key.flt))      out = -1;
+    else if (fabs(float1->key.flt)>fabs(float2->key.flt)) out = 1;
+    else                                                  out = 0;
   } else { /* list */
     for (i=0; i<nc; i++) {
-      if (fabs(float1[i])<fabs(float2[i]))      out = -1;
-      else if (fabs(float1[i])>fabs(float2[i])) out = 1;
-      else                          out = 0;
+      if (fabs(float1->key.flt2[i])<fabs(float2->key.flt2[i]))      out = -1;
+      else if (fabs(float1->key.flt2[i])>fabs(float2->key.flt2[i])) out = 1;
+      else                                                          out = 0;
       if (out) break;   /* stop at first not equal */
     }
   }
@@ -1125,28 +1130,28 @@ static olong CompareAAFloat (gconstpointer in1, gconstpointer in2,
  * \param ncomp Number of values to compare
  * \return <0 -> in1 < in2; =0 -> in1 == in2; >0 -> in1 > in2; 
  */
-static olong CompareADFloat (gconstpointer in1, gconstpointer in2, 
+static gint CompareADFloat (gconstpointer in1, gconstpointer in2, 
 			  gpointer ncomp)
 {
-  olong out = 0;
+  gint out = 0;
   olong nc, i;
-  ofloat *float1, *float2;
+  ObitSortStruct *float1, *float2;
 
   /* get correctly typed local values */
-  float1 = (float*)(in1 + sizeof(olong));
-  float2 = (float*)(in2 + sizeof(olong));
+  float1 = (ObitSortStruct*)in1;
+  float2 = (ObitSortStruct*)in2;
   nc = *(olong*)ncomp;
 
   /* List or single value? */
   if (nc==1) {
-    if (fabs(*float1)<fabs(*float2))      out =  1;
-    else if (fabs(*float1)>fabs(*float2)) out = -1;
-    else                      out = 0;
+    if (fabs(float1->key.flt)<fabs(float2->key.flt))      out =  1;
+    else if (fabs(float1->key.flt)>fabs(float2->key.flt)) out = -1;
+    else                                                  out = 0;
   } else { /* list */
     for (i=0; i<nc; i++) {
-      if (fabs(float1[i])<fabs(float2[i]))      out =  1;
-      else if (fabs(float1[i])>fabs(float2[i])) out = -1;
-      else                          out = 0;
+      if (fabs(float1->key.flt2[i])<fabs(float2->key.flt2[i]))      out =  1;
+      else if (fabs(float1->key.flt2[i])>fabs(float2->key.flt2[i])) out = -1;
+      else                                                          out = 0;
       if (out) break;   /* stop at first not equal */
     }
   }
@@ -1162,28 +1167,28 @@ static olong CompareADFloat (gconstpointer in1, gconstpointer in2,
  * \param ncomp Number of values to compare
  * \return <0 -> in1 < in2; =0 -> in1 == in2; >0 -> in1 > in2; 
  */
-static olong CompareDouble (gconstpointer in1, gconstpointer in2, 
+static gint CompareDouble (gconstpointer in1, gconstpointer in2, 
 			   gpointer ncomp)
 {
-  olong out = 0;
+  gint out = 0;
   olong nc, i;
-  odouble *double1, *double2;
+  ObitSortStruct *double1, *double2;
 
   /* get correctly typed local values */
-  double1 = (double*)(in1 + sizeof(olong));
-  double2 = (double*)(in2 + sizeof(olong));
+  double1 = (ObitSortStruct*)in1;
+  double2 = (ObitSortStruct*)in2;
   nc = *(olong*)ncomp;
 
   /* List or single value? */
   if (nc==1) {
-    if (*double1<*double2)      out = -1;
-    else if (*double1>*double2) out = 1;
-    else                      out = 0;
+    if (double1->key.dbl<double2->key.dbl)      out = -1;
+    else if (double1->key.dbl>double2->key.dbl) out = 1;
+    else                                        out = 0;
   } else { /* list */
     for (i=0; i<nc; i++) {
-      if (double1[i]<double2[i])      out = -1;
-      else if (double1[i]>double2[i]) out = 1;
-      else                          out = 0;
+      if (double1->key.dbl2[i]<double2->key.dbl2[i])      out = -1;
+      else if (double1->key.dbl2[i]>double2->key.dbl2[i]) out = 1;
+      else                                                out = 0;
       if (out) break;   /* stop at first not equal */
     }
   }
@@ -1199,28 +1204,28 @@ static olong CompareDouble (gconstpointer in1, gconstpointer in2,
  * \param ncomp Number of values to compare
  * \return <0 -> in1 < in2; =0 -> in1 == in2; >0 -> in1 > in2; 
  */
-static olong CompareAADouble (gconstpointer in1, gconstpointer in2, 
-			   gpointer ncomp)
+static gint CompareAADouble (gconstpointer in1, gconstpointer in2, 
+			     gpointer ncomp)
 {
-  olong out = 0;
+  gint out = 0;
   olong nc, i;
-  odouble *double1, *double2;
+  ObitSortStruct *double1, *double2;
 
   /* get correctly typed local values */
-  double1 = (double*)(in1 + sizeof(olong));
-  double2 = (double*)(in2 + sizeof(olong));
+  double1 = (ObitSortStruct*)in1;
+  double2 = (ObitSortStruct*)in2;
   nc = *(olong*)ncomp;
 
   /* List or single value? */
   if (nc==1) {
-    if (fabs(*double1)<fabs(*double2))      out = -1;
-    else if (fabs(*double1)>fabs(*double2)) out = 1;
-    else                      out = 0;
+    if (fabs(double1->key.dbl)<fabs(double2->key.dbl))      out = -1;
+    else if (fabs(double1->key.dbl)>fabs(double2->key.dbl)) out = 1;
+    else                                                    out = 0;
   } else { /* list */
     for (i=0; i<nc; i++) {
-      if (fabs(double1[i])<fabs(double2[i]))      out = -1;
-      else if (fabs(double1[i])>fabs(double2[i])) out = 1;
-      else                          out = 0;
+      if (fabs(double1->key.dbl2[i])<fabs(double2->key.dbl2[i]))      out = -1;
+      else if (fabs(double1->key.dbl2[i])>fabs(double2->key.dbl2[i])) out = 1;
+      else                                                            out = 0;
       if (out) break;   /* stop at first not equal */
     }
   }
@@ -1236,28 +1241,28 @@ static olong CompareAADouble (gconstpointer in1, gconstpointer in2,
  * \param ncomp Number of values to compare
  * \return <0 -> in1 < in2; =0 -> in1 == in2; >0 -> in1 > in2; 
  */
-static olong CompareADDouble (gconstpointer in1, gconstpointer in2, 
-			   gpointer ncomp)
+static gint CompareADDouble (gconstpointer in1, gconstpointer in2, 
+			     gpointer ncomp)
 {
-  olong out = 0;
+  gint out = 0;
   olong nc, i;
-  odouble *double1, *double2;
+  ObitSortStruct *double1, *double2;
 
   /* get correctly typed local values */
-  double1 = (double*)(in1 + sizeof(olong));
-  double2 = (double*)(in2 + sizeof(olong));
+  double1 = (ObitSortStruct*)in1;
+  double2 = (ObitSortStruct*)in2;
   nc = *(olong*)ncomp;
 
   /* List or single value? */
   if (nc==1) {
-    if (fabs(*double1)<fabs(*double2))      out =  1;
-    else if (fabs(*double1)>fabs(*double2)) out = -1;
-    else                      out = 0;
+    if (fabs(double1->key.dbl)<fabs(double2->key.dbl))      out =  1;
+    else if (fabs(double1->key.dbl)>fabs(double2->key.dbl)) out = -1;
+    else                                                    out = 0;
   } else { /* list */
     for (i=0; i<nc; i++) {
-      if (fabs(double1[i])<fabs(double2[i]))      out =  1;
-      else if (fabs(double1[i])>fabs(double2[i])) out = -1;
-      else                          out = 0;
+      if (fabs(double1->key.dbl2[i])<fabs(double2->key.dbl2[i]))      out =  1;
+      else if (fabs(double1->key.dbl2[i])>fabs(double2->key.dbl2[i])) out = -1;
+      else                                                            out = 0;
       if (out) break;   /* stop at first not equal */
     }
   }
@@ -1273,24 +1278,24 @@ static olong CompareADDouble (gconstpointer in1, gconstpointer in2,
  * \param ncomp Number of characters to compare
  * \return <0 -> in1 < in2; =0 -> in1 == in2; >0 -> in1 > in2; 
  */
-static olong CompareString (gconstpointer in1, gconstpointer in2, 
+static gint CompareString (gconstpointer in1, gconstpointer in2, 
 			   gpointer ncomp)
 {
-  olong out = 0;
+  gint out = 0;
   olong nc, i;
-  gchar *string1, *string2;
+  ObitSortStruct *string1, *string2;
 
   /* get correctly typed local values */
-  string1 = (gchar*)(in1 + sizeof(olong));
-  string2 = (gchar*)(in2 + sizeof(olong));
+  string1 = (ObitSortStruct*)in1;
+  string2 = (ObitSortStruct*)in2;
   nc = *(olong*)ncomp;
 
   /* List or single value? */
   if (nc==1) {
-    out = *string1 - *string2;
+    out = string1->key.str[0] - string2->key.str[0];
   } else { /* list */
     for (i=0; i<nc; i++) {
-      out = string1[i] - string2[i];
+      out = string1->key.str[i] - string2->key.str[i];
       if (out) break;   /* stop at first not equal */
     }
   }

@@ -615,8 +615,8 @@ ObitIOCode ObitIOTableFITSReadRow (ObitIOTableFITS *in, olong rowno,
 				   ofloat *data, ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
-  int anynull, ftype, izero = 0, status = 0;
-  long iRow, iCol, ndo, iElem;
+  int anynull, iCol, ftype, izero = 0, status = 0;
+  long iRow, ndo, iElem;
   olong len, ilen, offset, nleft, i, j, ioff, nRows, row;
   ObitTableDesc* desc;
   ObitTableSel* sel;
@@ -703,9 +703,30 @@ ObitIOCode ObitIOTableFITSReadRow (ObitIOTableFITS *in, olong rowno,
       /* Strings,bit arrays need to be handled differently */
       if (ftype==TSTRING) { /* strings done last loop */
       } else if (ftype==TFLOAT) { /* float allow conversion from Nan to fblank */
-	fits_read_col(in->myFptr, ftype, 
-		      iCol, iRow, 1, (long)desc->repeat[iCol-1], &fblank, 
-		      &cdata[offset+desc->byteOffset[iCol-1]], &anynull, &status);
+	/* NOTE: this is documented incorrectlyy in the cfitsio docs */
+	fits_read_colnull_flt(in->myFptr, 
+			      iCol, iRow, 1, (long)desc->repeat[iCol-1], 
+			      (void*)&cdata[offset+desc->byteOffset[iCol-1]], (void*)&fblank, &anynull, &status);
+      } else if (ftype==TDOUBLE) { /* double */
+	fits_read_col_dbl(in->myFptr,
+			  iCol, iRow, 1, (long)desc->repeat[iCol-1], 0.0,
+			  (void*)&cdata[offset+desc->byteOffset[iCol-1]], &anynull, &status);
+      } else if (ftype==TBYTE) { /* byte */
+	fits_read_col_byt(in->myFptr, 
+			  iCol, iRow, 1, (long)desc->repeat[iCol-1], 0,
+			  (void*)&cdata[offset+desc->byteOffset[iCol-1]], &anynull, &status);
+      } else if (ftype==TSHORT) { /* short integer */
+	fits_read_col_sht(in->myFptr,
+			  iCol, iRow, 1, (long)desc->repeat[iCol-1], 0,
+			  (void*)&cdata[offset+desc->byteOffset[iCol-1]], &anynull, &status);
+      } else if (ftype==TINT) { /* int */
+	fits_read_col_int(in->myFptr,
+			  iCol, iRow, 1, (long)desc->repeat[iCol-1], 0,
+			  (void*)&cdata[offset+desc->byteOffset[iCol-1]], &anynull, &status);
+      } else if (ftype==TLONG) { /* long */
+	fits_read_col_lng(in->myFptr,
+			  iCol, iRow, 1, (long)desc->repeat[iCol-1], 0,
+			  (void*)&cdata[offset+desc->byteOffset[iCol-1]], &anynull, &status);
       } else if (ftype==TLOGICAL) { /* boolean - stored as char in FITS */
 	 /* use bitarray buffer */
 	 outBool = (gboolean*)&cdata[offset+desc->byteOffset[iCol-1]];
@@ -713,8 +734,8 @@ ObitIOCode ObitIOTableFITSReadRow (ObitIOTableFITS *in, olong rowno,
 	 iElem = 1;
 	 while (nleft>0) {
 	   ndo = MIN (32, nleft);
-	   fits_read_col(in->myFptr, ftype, 
-			 iCol, iRow, iElem, ndo, NULL, bitarr, &anynull, &status);
+	   fits_read_col_log(in->myFptr,
+			 iCol, iRow, iElem, ndo, 0, bitarr, &anynull, &status);
 	   for (i=0; i<ndo; i++) { /* Copy to output as gboolean */
 	     if (bitarr[i]) *outBool++ = TRUE;
 	     else *outBool++ = FALSE;
@@ -968,8 +989,9 @@ ObitIOCode ObitIOTableFITSWriteRow (ObitIOTableFITS *in, olong rowno,
   ObitTableSel* sel;
   ofloat fblank = ObitMagicF();
   gboolean  *inBool;
-  int ftype, status = 0;
-  olong len, offset, iRow, iCol, nRows, nleft, iElem, ndo, i, row;
+  int ftype, iCol, status = 0;
+  long iRow, iElem, ndo;
+  olong len, offset, nRows, nleft, i, row;
   gchar bitarr[32], *grumble[1], *cdata = (gchar*)data;
 
   /* error checks */
@@ -1007,11 +1029,31 @@ ObitIOCode ObitIOTableFITSWriteRow (ObitIOTableFITS *in, olong rowno,
 	  grumble[0] = &cdata[offset+desc->byteOffset[iCol-1]];
 	  fits_write_col_str(in->myFptr, iCol, iRow, 1, 1,
 			     grumble, &status);
+	} else if (ftype==TBYTE) { /* bytes */
+	  fits_write_col_byt(in->myFptr, iCol, iRow, 1,
+			 (long)desc->repeat[iCol-1], (void*)&cdata[offset+desc->byteOffset[iCol-1]],
+			  &status);
+	} else if (ftype==TINT) { /* int */
+	  fits_write_col_int(in->myFptr, iCol, iRow, 1,
+			 (long)desc->repeat[iCol-1], (void*)&cdata[offset+desc->byteOffset[iCol-1]],
+			  &status);
+	} else if (ftype==TSHORT) { /* short integer */
+	  fits_write_col_sht(in->myFptr, iCol, iRow, 1,
+			 (long)desc->repeat[iCol-1], (void*)&cdata[offset+desc->byteOffset[iCol-1]],
+			  &status);
+	} else if (ftype==TLONG) { /* long integer */
+	  fits_write_col_lng(in->myFptr, iCol, iRow, 1,
+			 (long)desc->repeat[iCol-1], (void*)&cdata[offset+desc->byteOffset[iCol-1]],
+			  &status);
 	} else if (ftype==TFLOAT) { /* float */
 	  /* Allow conversion from fblank to NaN */
-	  fits_write_colnull(in->myFptr, ftype, iCol, iRow, 1,
-			 (long)desc->repeat[iCol-1], &cdata[offset+desc->byteOffset[iCol-1]],
-			 &fblank, &status);
+	  fits_write_colnull_flt(in->myFptr, iCol, iRow, 1,
+				 (long)desc->repeat[iCol-1], (void*)&cdata[offset+desc->byteOffset[iCol-1]],
+				 fblank, &status);
+	} else if (ftype==TDOUBLE) { /* double */
+	  fits_write_col_dbl(in->myFptr, iCol, iRow, 1,
+			     (long)desc->repeat[iCol-1], (void*)&cdata[offset+desc->byteOffset[iCol-1]],
+			     &status);
        } else if (ftype==TLOGICAL) { /* boolean - stored as char in FITS */
 	 /* use bitarray buffer */
 	 inBool = (gboolean*)&cdata[offset+desc->byteOffset[iCol-1]];
@@ -1023,8 +1065,7 @@ ObitIOCode ObitIOTableFITSWriteRow (ObitIOTableFITS *in, olong rowno,
 	     if (inBool[i]) bitarr[i] = 1;
 	     else bitarr[i] = 0;
 	   }
-	   fits_write_col(in->myFptr, ftype, 
-			 iCol, iRow, iElem, ndo, bitarr, &status);
+	   fits_write_col_log(in->myFptr, iCol, iRow, iElem, ndo, bitarr, &status);
 	   iElem += ndo;
 	   nleft -= ndo;
 	 } /* end loop writing */
@@ -1099,8 +1140,8 @@ ObitIOCode ObitIOTableFITSReadDescriptor (ObitIOTableFITS *in, ObitErr *err)
   ObitIOCode retCode = OBIT_IO_SpecErr;
   gchar commnt[FLEN_COMMENT];
   gchar typechar[4], cdata[FLEN_CARD], unit[FLEN_CARD];
-  int nhdu, hdutype, naxis, ncol, status = 0;
-  olong i, j, nfield;
+  int i, j, nhdu, hdutype, naxis, ncol, status = 0;
+  olong nfield;
   long  extver, ltemp, repeat, sorto, naxes[10];
   double scale, zero;
   ObitTableDesc* desc;
