@@ -79,7 +79,7 @@ static void ObitOTFUtilCurDate (gchar *date, olong len);
 static gpointer ThreadOTFUtilSubImageBuff (gpointer arg);
 
 /** Private: Make arguments for Threaded OTFUtilSubImageBuff */
-static glong MakeOTFUtilSubImageArgs (ObitOTF *in, ObitErr *err, 
+static olong MakeOTFUtilSubImageArgs (ObitOTF *in, ObitErr *err, 
 				      SubImageFuncArg ***args);
 
 /** Private: Delete arguments for Threaded OTFUtilSubImageBuff */
@@ -2024,7 +2024,7 @@ gpointer ThreadOTFUtilSubImageBuff (gpointer args)
  *                   delete with KillOTFUtilSubImageArgs
  * \return number of elements in args.
  */
-static glong MakeOTFUtilSubImageArgs (ObitOTF *in, ObitErr *err, 
+static olong MakeOTFUtilSubImageArgs (ObitOTF *in, ObitErr *err, 
 				      SubImageFuncArg ***args)
 {
   olong i, nThreads, ndetect;

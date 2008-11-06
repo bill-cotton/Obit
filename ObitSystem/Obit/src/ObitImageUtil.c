@@ -28,6 +28,7 @@
 
 #include <sys/types.h>
 #include <time.h>
+#include "ObitThread.h"
 #include "ObitImageUtil.h"
 #include "ObitUVWeight.h"
 #include "ObitSkyGeom.h"
@@ -45,6 +46,41 @@
  * ObitImageUtil module function definitions for ObitImage class.
  */
 
+/*---------------Private structures----------------*/
+/* Image interpolation threaded function argument */
+typedef struct {
+  /* Input descriptor */
+  ObitImageDesc *inDesc;
+  /* Input plane pixel data */
+  ObitFArray *inData;
+  /* Output descriptor */
+  ObitImageDesc *outDesc;
+  /* Output plane pixel data */
+  ObitFArray *outData;
+  /* Also do Weights? */
+  gboolean   doWeight;
+  /* Output weight plane pixel data */
+  ObitFArray *wtData;
+  /* Radius in pixels of weighting circle */
+  olong      radius;
+  /* Number of Zernike corrections */
+  olong      nZern;
+  /* Zernike coefficients */
+  ofloat     *ZCoef;
+  /* First (1-rel) row in image to process this thread */
+  olong      first;
+  /* Highest (1-rel) row in image to process this thread  */
+  olong      last;
+  /* thread number, <0 -> no threading  */
+  olong      ithread;
+  /* Obit Thread object */
+  ObitThread  *thread;
+  /* Obit error stack object */
+  ObitErr    *err;
+  /* Input Image Interpolator */
+  ObitFInterpolate *Interp;
+} InterpFuncArg;
+
 /*---------------Private function prototypes----------------*/
 /** Private: Get Date string for current date */
 static void ObitImageUtilCurDate (gchar *date, olong len);
@@ -52,6 +88,18 @@ static void ObitImageUtilCurDate (gchar *date, olong len);
 /** Private: Fit Beam size to dirty beam */
 static void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err);
 
+/** Private: Threaded Image interpolator */
+static gpointer ThreadImageInterp (gpointer arg);
+
+/** Private: Make Threaded Image interpolator args */
+static olong MakeInterpFuncArgs (ObitThread *thread, olong radius,
+				 olong nZern, ofloat *ZCoef,
+				 ObitImageDesc *inDesc, ObitImageDesc *outDesc, 
+				 ObitFInterpolate *Interp,
+				 ObitErr *err, InterpFuncArg ***ThreadArgs);
+
+/** Private: Delete Threaded Image interpolator args */
+static void KillInterpFuncArgs (olong nargs, InterpFuncArg **ThreadArgs);
 /*----------------------Public functions---------------------------*/
 
 /**
@@ -519,9 +567,10 @@ ObitImageUtilInterpolateImage (ObitImage *inImage, ObitImage *outImage,
   olong otrc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  olong i, j, ix, iy, indx, pos[2];
-  ofloat inPixel[2], outPixel[2], *out, fblank =  ObitMagicF();
+  olong i, j;
   odouble RAPnt, DecPnt;
+  olong nTh, nrow, lorow, hirow, nrowPerThread, nThreads;
+  InterpFuncArg **threadArgs;
   gboolean OK;
   gchar *today=NULL;
   gchar *routine = "ObitImageUtilInterpolateImage";
@@ -616,40 +665,49 @@ ObitImageUtilInterpolateImage (ObitImage *inImage, ObitImage *outImage,
   interp = newObitFInterpolateCreate ("Interpolator", inImage->image, 
 				      inImage->myDesc, hwidth);
 
-  /* Get output aray pointer */
-  pos[0] = pos[1] = 0;
-  out = ObitFArrayIndex (outImage->image, pos);
+   /* Initialize Threading */
+  nThreads = MakeInterpFuncArgs (inImage->thread, -1, 0, NULL,
+				 inImage->myDesc, outImage->myDesc, 
+				 interp, err, &threadArgs);
 
-  /* Loop over image interpolating */
-  for (iy = 1; iy<=outImage->myDesc->inaxes[1]; iy++) { /* loop in y */
-    outPixel[1] = (ofloat)iy;
-    for (ix = 1; ix<=outImage->myDesc->inaxes[0]; ix++) {/* loop in x */
-      outPixel[0] = (ofloat)ix;
+  /* Divide up work */
+  nrow = inImage->myDesc->inaxes[1];
+  nrowPerThread = nrow/nThreads;
+  nTh = nThreads;
+  if (nrow<64) {nrowPerThread = nrow; nTh = 1;}
+  lorow = 1;
+  hirow = nrowPerThread;
+  hirow = MIN (hirow, nrow);
 
-      /* Get pixel in input image */
-      OK = ObitImageDescCvtPixel (outImage->myDesc, inImage->myDesc, outPixel, inPixel, err);
-      if (err->error) {
-	interp = ObitFInterpolateUnref(interp); /* Free interpolator */
-	Obit_traceback_msg (err, routine, inImage->name);
-      }
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hirow = nrow;  /* Make sure do all */
+    threadArgs[i]->inData  = ObitFArrayRef(inImage->image);
+    threadArgs[i]->outData = ObitFArrayRef(outImage->image);
+    threadArgs[i]->first   = lorow;
+    threadArgs[i]->last    = hirow;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which row */
+    lorow += nrowPerThread;
+    hirow += nrowPerThread;
+    hirow = MIN (hirow, nrow);
+  }
 
-      indx = (iy-1) * outImage->myDesc->inaxes[0] + (ix-1);
-      if (OK) { /* In image? */
-	/* interpolate */
-	out[indx] = ObitFInterpolatePixel (interp, inPixel, err);
-	if (err->error) Obit_traceback_msg (err, routine, inImage->name);
-      } else { /* not in input */
-	out[indx] = fblank;
-      }
+  /* Do operation */
+  OK = ObitThreadIterator (inImage->thread, nThreads, 
+			   (ObitThreadFunc)ThreadImageInterp,
+			   (gpointer**)threadArgs);
 
-    } /* end loop over x */
-  } /* end loop over y */
-  
+  /* Check for problems */
+  if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+  /* */
 
-  /* Free interpolator */
+  /* Free local objects */
   interp = ObitFInterpolateUnref(interp);
+  KillInterpFuncArgs(nThreads, threadArgs);
 
-  /* Write output */
+ /* Write output */
   if ((ObitImageWrite (outImage, NULL, err) 
        != OBIT_IO_OK) || (err->error>0)) { /* error test */
     Obit_log_error(err, OBIT_Error, "%s: ERROR writing image %s", 
@@ -707,10 +765,11 @@ ObitImageUtilInterpolateImageZern (ObitImage *inImage, ObitImage *outImage,
   olong otrc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  olong i, j, ix, iy, indx, pos[2];
-  ofloat inPixel[2], outPixel[2], *out, fblank =  ObitMagicF();
-  gboolean OK;
+  olong i, j;
   gchar *today=NULL;
+  olong nTh, nrow, lorow, hirow, nrowPerThread, nThreads;
+  InterpFuncArg **threadArgs;
+  gboolean OK;
   gchar *routine = "ObitImageUtilInterpolateImageZern";
 
   /* error checks */
@@ -778,37 +837,48 @@ ObitImageUtilInterpolateImageZern (ObitImage *inImage, ObitImage *outImage,
   /* Make interpolator */
   interp = newObitFInterpolateCreate ("Interpolator", inImage->image, 
 				      inImage->myDesc, hwidth);
-
-  /* Get output aray pointer */
-  pos[0] = pos[1] = 0;
-  out = ObitFArrayIndex (outImage->image, pos);
-
-  /* Loop over image interpolating */
-  for (iy = 1; iy<=outImage->myDesc->inaxes[1]; iy++) { /* loop in y */
-    outPixel[1] = (ofloat)iy;
-    for (ix = 1; ix<=outImage->myDesc->inaxes[0]; ix++) {/* loop in x */
-      outPixel[0] = (ofloat)ix;
-
-      /* Get pixel in input image */
-      OK = ObitImageDescCvtZern (outImage->myDesc, inImage->myDesc, nZern, ZCoef, 
-				 outPixel, inPixel, err);
-      if (err->error) Obit_traceback_msg (err, routine, inImage->name);
-
-      indx = (iy-1) * outImage->myDesc->inaxes[0] + (ix-1);
-      if (OK) { /* In image? */
-	/* interpolate */
-	out[indx] = ObitFInterpolatePixel (interp, inPixel, err);
-	if (err->error) Obit_traceback_msg (err, routine, inImage->name);
-      } else { /* not in input */
-	out[indx] = fblank;
-      }
-
-    } /* end loop over x */
-  } /* end loop over y */
   
+  /* Initialize Threading */
+  nThreads = MakeInterpFuncArgs (inImage->thread, -1, nZern, ZCoef,
+				 inImage->myDesc, outImage->myDesc, 
+				 interp, err, &threadArgs);
 
-  /* Free interpolator */
+  /* Divide up work */
+  nrow = inImage->myDesc->inaxes[1];
+  nrowPerThread = nrow/nThreads;
+  nTh = nThreads;
+  if (nrow<64) {nrowPerThread = nrow; nTh = 1;}
+  lorow = 1;
+  hirow = nrowPerThread;
+  hirow = MIN (hirow, nrow);
+
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hirow = nrow;  /* Make sure do all */
+    threadArgs[i]->inData  = ObitFArrayRef(inImage->image);
+    threadArgs[i]->outData = ObitFArrayRef(outImage->image);
+    threadArgs[i]->first   = lorow;
+    threadArgs[i]->last    = hirow;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which row */
+    lorow += nrowPerThread;
+    hirow += nrowPerThread;
+    hirow = MIN (hirow, nrow);
+  }
+
+  /* Do operation */
+  OK = ObitThreadIterator (inImage->thread, nThreads, 
+			   (ObitThreadFunc)ThreadImageInterp,
+			   (gpointer**)threadArgs);
+
+  /* Check for problems */
+  if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+  /* */
+
+  /* Free local objects */
   interp = ObitFInterpolateUnref(interp);
+  KillInterpFuncArgs(nThreads, threadArgs);
 
   /* Write output */
   ObitImageWrite (outImage, NULL, err);
@@ -833,8 +903,8 @@ ObitImageUtilInterpolateImageZern (ObitImage *inImage, ObitImage *outImage,
 /**
  * Fill the pixels in outImage by interpolation to the corresponding locations
  * in inImage.
- * Also calculates a weight based on a circle defined by radius; this is 1.0 
- * in the center and tapers with distance^2 to 0.0 outside.
+ * Also calculates a weight based on a circle defined by radiusfrom the center; 
+ * this is 1.0 in the center and tapers with distance^2 to 0.0 outside.
  * If memOnly then the input image plane is assumed in inImage and only memory
  * resident parts of outImage and outWeight are modified.
  * There is no interpolation between planes
@@ -853,7 +923,7 @@ ObitImageUtilInterpolateImageZern (ObitImage *inImage, ObitImage *outImage,
 void 
 ObitImageUtilInterpolateWeight (ObitImage *inImage, ObitImage *outImage, 
 				ObitImage *outWeight, gboolean memOnly,
-				gint radius, olong *inPlane, olong *outPlane,
+				olong radius, olong *inPlane, olong *outPlane,
 				olong hwidth, ObitErr *err)
 {
   ObitIOSize IOBy;
@@ -861,9 +931,8 @@ ObitImageUtilInterpolateWeight (ObitImage *inImage, ObitImage *outImage,
   olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   gint32 i, dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong ix, iy, indx, pos[2];
-  ofloat inPixel[2], outPixel[2], *out, *outWt, rad2, dist2, irad2;
-  ofloat *crpix, wt, val, fblank =  ObitMagicF();
+  olong nTh, nrow, lorow, hirow, nrowPerThread, nThreads;
+  InterpFuncArg **threadArgs;
   gboolean OK;
   gchar *routine = "ObitImageUtilInterpolateImage";
 
@@ -876,10 +945,6 @@ ObitImageUtilInterpolateWeight (ObitImage *inImage, ObitImage *outImage,
   g_assert (inPlane!=NULL);
   g_assert (outPlane!=NULL);
  
-  /* Working version of radius */
-  rad2 = radius * radius;
-  irad2 = 1.0 / rad2;
-
   /* Do I/O by plane and all of plane */
   if (!memOnly) {
     IOBy = OBIT_IO_byPlane;
@@ -930,67 +995,48 @@ ObitImageUtilInterpolateWeight (ObitImage *inImage, ObitImage *outImage,
   interp = newObitFInterpolateCreate ("Interpolator", inImage->image, 
 				      inImage->myDesc, hwidth);
 
-  /* Get output aray pointer */
-  pos[0] = pos[1] = 0;
-  out   = ObitFArrayIndex (outImage->image, pos);
-  outWt = ObitFArrayIndex (outWeight->image, pos);
+  /* Initialize Threading */
+  nThreads = MakeInterpFuncArgs (inImage->thread, radius, 0, NULL,
+				 inImage->myDesc, outImage->myDesc, 
+				 interp, err, &threadArgs);
 
-  /* Coordinate reference pixel of input */
-  crpix = inImage->myDesc->crpix;
+  /* Divide up work */
+  nrow = inImage->myDesc->inaxes[1];
+  nrowPerThread = nrow/nThreads;
+  nTh = nThreads;
+  if (nrow<64) {nrowPerThread = nrow; nTh = 1;}
+  lorow = 1;
+  hirow = nrowPerThread;
+  hirow = MIN (hirow, nrow);
 
-  /* Loop over image interpolating */
-  for (iy = 1; iy<=outImage->myDesc->inaxes[1]; iy++) { /* loop in y */
-    outPixel[1] = (ofloat)iy;
-    for (ix = 1; ix<=outImage->myDesc->inaxes[0]; ix++) {/* loop in x */
-      outPixel[0] = (ofloat)ix;
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hirow = nrow;  /* Make sure do all */
+    threadArgs[i]->inData  = ObitFArrayRef(inImage->image);
+    threadArgs[i]->outData = ObitFArrayRef(outImage->image);
+    threadArgs[i]->wtData  = ObitFArrayRef(outWeight->image);
+    threadArgs[i]->first   = lorow;
+    threadArgs[i]->last    = hirow;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which row */
+    lorow += nrowPerThread;
+    hirow += nrowPerThread;
+    hirow = MIN (hirow, nrow);
+  }
 
-     /* Get pixel in input image */
-      OK = ObitImageDescCvtPixel (outImage->myDesc, inImage->myDesc, outPixel, inPixel, err);
-      if (err->error) {
-	interp = ObitFInterpolateUnref(interp);
-	Obit_traceback_msg (err, routine, inImage->name);
-      }
+  /* Do operation */
+  OK = ObitThreadIterator (inImage->thread, nThreads, 
+			   (ObitThreadFunc)ThreadImageInterp,
+			   (gpointer**)threadArgs);
 
-      if (OK) { /* In image? */
-	/* weight based on distance from center of inImage */
-	dist2 = (crpix[0]-inPixel[0])*(crpix[0]-inPixel[0]) + 
-	  (crpix[1]-inPixel[1])*(crpix[1]-inPixel[1]);
-	/*dist2 = (crpix[0]-xyzi[0])**2 + (crpix[1]-xyzi[1])**2;*/
-	if (dist2 <= rad2) {
-	  wt = 1.0 - dist2 * irad2;
-	  wt = MAX (0.001, wt);
-	} else {
-	  wt = fblank;
-	}
-      } else {
-	wt = fblank;  /* don't bother */
-      }
-      
-      /* interpolate */
-      /* array index in out for this pixel */
-      indx = (iy-1) * outImage->myDesc->inaxes[0] + (ix-1);
-      if (wt != fblank ) {
-	val = ObitFInterpolatePixel (interp, inPixel, err);
-	if (val != fblank ) val *= wt;
-	out[indx] = val;
-	if (err->error) {
-	  interp = ObitFInterpolateUnref(interp);
-	  Obit_traceback_msg (err, routine, inImage->name);
-	}
-	/* debug
-	   if (out[indx] >1.0e5) fprintf (stderr,"bad int %d  %d %g %g \n",
-					  ix,iy,out[indx], wt); */
-	outWt[indx] = wt;
-      } else {
-	out[indx]   = fblank;
-	outWt[indx] = fblank;
-      }
-      
-    } /* end loop over x */
-  } /* end loop over y */
-  
-  /* Free interpolator */
+  /* Check for problems */
+  if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+  /* */
+
+  /* Free local objects */
   interp = ObitFInterpolateUnref(interp);
+  KillInterpFuncArgs(nThreads, threadArgs);
 
   if (!memOnly) {
     /* Write output */
@@ -3168,3 +3214,225 @@ static void ObitImageUtilFitBeam (ObitImage *beam, ObitErr *err)
 
 } /* end ObitImageUtilFitBeam */
 
+/**
+ * Interpolate selected rows from one image onto another, 
+ * possibly including weighting across the image
+ * If doWeight, outData will be filled with the pixel values
+ * interpolated from inData multiplied by a weight based on a 
+ * circle defined by radius from the center; this is 1.0 
+ * in the center and tapers with distance^2 to 0.0 outside
+ * and the primary beam gains are written into wtData.
+ * Magic value blanking supported.
+ * Callable as thread
+ * \param arg Pointer to InterpFuncArg argument with elements:
+ * \li inDesc   Image Descriptor for input image
+ * \li inData   ObitFArray with input plane pixel data
+ * \li outDesc  Image Descriptor for output image
+ * \li outData  ObitFArray for output plane pixel data
+ * \li doWeight gboolean if TRUE, also do primary beam weighting
+ * \li wtData   ObitFArray for output weight plane pixel data
+ *              only used if doWeight
+ * \li radius   Radius in pixels of weighting circle
+ *              only used if doWeight
+ * \li nZern    If>0 apply cernike corrections to position
+ *              nZern is the number of terms in ZCoef
+ * \li zCoef    Zernike correction coefficients
+ *              only used if zCoef>0
+ * \li first    First (1-rel) row in image to process this thread
+ * \li last     Highest (1-rel) row in image to process this thread
+ * \li ithread  thread number, <0 -> no threading
+ * \li err      ObitErr Obit error stack object
+ * \li thread   thread Object
+ * \li Interp   ObitFInterpolate Input Image Interpolator
+ * \return NULL
+ */
+static gpointer ThreadImageInterp (gpointer args)
+{
+  /* Get arguments from structure */
+  InterpFuncArg *largs = (InterpFuncArg*)args;
+  ObitImageDesc *inDesc = largs->inDesc;
+  /* ObitFArray *inData    = largs->inData;*/
+  ObitImageDesc *outDesc= largs->outDesc;
+  ObitFArray *outData   = largs->outData;
+  gboolean   doWeight   = largs->doWeight;
+  ObitFArray *wtData    = largs->wtData;
+  olong      radius     = largs->radius;
+  olong      nZern      = largs->nZern;
+  ofloat     *ZCoef     = largs->ZCoef;
+  olong      loRow      = largs->first;
+  olong      hiRow      = largs->last;
+  ObitErr    *err       = largs->err;
+  ObitThread *thread    = largs->thread;
+  ObitFInterpolate *interp = largs->Interp;
+  /* local */
+  olong ix, iy, indx, pos[2];
+  ofloat inPixel[2], outPixel[2], *out, *outWt, rad2, dist2, irad2;
+  ofloat *crpix, wt, val, fblank =  ObitMagicF();
+  gboolean OK;
+  gchar *routine = "ThreadImageInterp";
+
+  /* Get output aray pointer */
+  pos[0] = pos[1] = 0;
+  out   = ObitFArrayIndex (outData, pos);
+
+  /* Coordinate reference pixel of input */
+  crpix = inDesc->crpix;
+
+  /* if weighting */
+  if (doWeight) {
+    /* Working version of radius */
+    rad2 = radius * radius;
+    irad2 = 1.0 / rad2;
+    outWt = ObitFArrayIndex (wtData, pos);
+  }
+
+  /* Loop over image interpolating */
+  for (iy = loRow; iy<=hiRow; iy++) { /* loop in y */
+    outPixel[1] = (ofloat)iy;
+    for (ix = 1; ix<=outDesc->inaxes[0]; ix++) {/* loop in x */
+      outPixel[0] = (ofloat)ix;
+
+     /* Get pixel in input image - Zernike correction?*/
+      if (nZern>0) { /* yes */
+	OK = ObitImageDescCvtZern (outDesc, inDesc, nZern, ZCoef, 
+				 outPixel, inPixel, err);
+      } else {       /* no */
+	OK = ObitImageDescCvtPixel (outDesc, inDesc, outPixel, inPixel, err);
+      }
+      if (err->error) {
+	ObitThreadLock(thread);  /* Lock against other threads */
+	Obit_log_error(err, OBIT_Error,"%s: Error projecting pixel",
+		       routine);
+	ObitThreadUnlock(thread); 
+	goto finish;
+      }
+
+      if (doWeight) { /* weighting? */
+	if (OK) { /* In image? */
+	  /* weight based on distance from center of inImage */
+	  dist2 = (crpix[0]-inPixel[0])*(crpix[0]-inPixel[0]) + 
+	    (crpix[1]-inPixel[1])*(crpix[1]-inPixel[1]);
+	  /*dist2 = (crpix[0]-xyzi[0])**2 + (crpix[1]-xyzi[1])**2;*/
+	  if (dist2 <= rad2) {
+	    wt = 1.0 - dist2 * irad2;
+	    wt = MAX (0.001, wt);
+	  } else {
+	    wt = fblank;
+	  }
+	} else {
+	  wt = fblank;  /* don't bother */
+	}
+      } else wt = 1.0;
+      
+      /* interpolate */
+      /* array index in out for this pixel */
+      indx = (iy-1) * outDesc->inaxes[0] + (ix-1);
+      if (wt != fblank ) {
+	val = ObitFInterpolatePixel (interp, inPixel, err);
+	if (doWeight & (val != fblank )) val *= wt;
+	out[indx] = val;
+	if (err->error) {
+	  ObitThreadLock(thread);  /* Lock against other threads */
+	  Obit_log_error(err, OBIT_Error,"%s: Error interpolating pixel in %s",
+			 routine, interp->name);
+	  ObitThreadUnlock(thread); 
+	  goto finish;
+	}
+	if (doWeight) outWt[indx] = wt;
+      } else {
+	out[indx]   = fblank;
+	if (doWeight) outWt[indx] = fblank;
+      }
+      
+    } /* end loop over x */
+  } /* end loop over y */
+  
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+} /* ThreadImageInterp */
+
+/**
+ * Make arguments for Threaded ThreadImageInterp
+ * \param thread     ObitThread object to be used for interpolator
+ * \param radius     if > 0 then the radius for weighting
+ * \param nZern      Number of Zernike coefficients in ZCoef
+ *                   <=0 -> no Zernike corrections
+ * \param ZCoef      Zernike coefficients
+ * \param inDesc     input image descriptor
+ * \param outDesc    output image descriptor
+ * \param Interp     interpolator for input image
+ *                   Cloned for multiple threads
+ * \param err        Obit error stack object.
+ * \param ThreadArgs[out] Created array of InterpFuncArg, 
+ *                   delete with KillInterpFuncArgs
+ * \return number of elements in args (number of allowed threads).
+ */
+static olong MakeInterpFuncArgs (ObitThread *thread, olong radius,
+				 olong nZern, ofloat *ZCoef,
+				 ObitImageDesc *inDesc, ObitImageDesc *outDesc, 
+				 ObitFInterpolate *Interp,
+				 ObitErr *err, InterpFuncArg ***ThreadArgs)
+{
+  olong i, j, nThreads;
+
+  /* Setup for threading */
+  /* How many threads? */
+  nThreads = MAX (1, ObitThreadNumProc(thread));
+
+  /* Initialize threadArg array */
+  *ThreadArgs = g_malloc0(nThreads*sizeof(InterpFuncArg*));
+  for (i=0; i<nThreads; i++) 
+    (*ThreadArgs)[i] = g_malloc0(sizeof(InterpFuncArg)); 
+  for (i=0; i<nThreads; i++) {
+    (*ThreadArgs)[i]->inDesc   = ObitImageDescRef(inDesc);
+    (*ThreadArgs)[i]->inData   = NULL;
+    (*ThreadArgs)[i]->outDesc  = ObitImageDescRef(outDesc);
+    (*ThreadArgs)[i]->outData  = NULL;
+    (*ThreadArgs)[i]->doWeight = radius>0;
+    (*ThreadArgs)[i]->wtData   = NULL;
+    (*ThreadArgs)[i]->radius   = radius;
+    (*ThreadArgs)[i]->nZern    = nZern;
+    if (nZern>0) {
+      (*ThreadArgs)[i]->ZCoef = g_malloc0(nZern*sizeof(ofloat));
+      for (j=0; j<nZern; j++) (*ThreadArgs)[i]->ZCoef[j] = ZCoef[j];
+    } else (*ThreadArgs)[i]->ZCoef = NULL;
+    (*ThreadArgs)[i]->first    = 1;
+    (*ThreadArgs)[i]->last     = inDesc->inaxes[1];
+    if (i==0) (*ThreadArgs)[i]->Interp = ObitFInterpolateRef(Interp);
+    else (*ThreadArgs)[i]->Interp      = ObitFInterpolateClone(Interp, NULL);
+    (*ThreadArgs)[i]->ithread  = i;
+    (*ThreadArgs)[i]->thread   = thread;
+    (*ThreadArgs)[i]->err      = err;
+  }
+
+  return nThreads;
+} /*  end MakeInterpImageArgs */
+
+/**
+ * Delete arguments for ThreadImageInterp
+ * \param nargs      number of elements in args.
+ * \param ThreadArgs Array of InterpFuncArg
+ */
+static void KillInterpFuncArgs (olong nargs, InterpFuncArg **ThreadArgs)
+{
+  olong i;
+
+  if (ThreadArgs==NULL) return;
+  for (i=0; i<nargs; i++) {
+    if (ThreadArgs[i]) {
+      if (ThreadArgs[i]->inDesc)  ObitImageDescUnref(ThreadArgs[i]->inDesc);
+      if (ThreadArgs[i]->inData)  ObitFArrayUnref(ThreadArgs[i]->inData);
+      if (ThreadArgs[i]->outDesc) ObitImageDescUnref(ThreadArgs[i]->outDesc);
+      if (ThreadArgs[i]->outData) ObitFArrayUnref(ThreadArgs[i]->outData);
+      if (ThreadArgs[i]->wtData)  ObitFArrayUnref(ThreadArgs[i]->wtData);
+      if (ThreadArgs[i]->Interp)  ObitFInterpolateUnref(ThreadArgs[i]->Interp);
+      if (ThreadArgs[i]->ZCoef)   g_free(ThreadArgs[i]->ZCoef);
+      g_free(ThreadArgs[i]);
+    }
+  }
+  g_free(ThreadArgs);
+} /*  end KillInterpFuncArgs */

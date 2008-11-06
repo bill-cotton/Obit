@@ -65,15 +65,15 @@ gchar *outfile = "HGeom.out";   /* File to contain program outputs */
 olong  pgmNumber;       /* Program number (like POPS no.) */
 olong  AIPSuser;        /* AIPS user number number (like POPS no.) */
 olong  nAIPS=0;         /* Number of AIPS directories */
-gchar **AIPSdirs=NULL; /* List of AIPS data directories */
+gchar **AIPSdirs=NULL;  /* List of AIPS data directories */
 olong  nFITS=0;         /* Number of FITS directories */
-gchar **FITSdirs=NULL; /* List of FITS data directories */
+gchar **FITSdirs=NULL;  /* List of FITS data directories */
 ObitInfoList *myInput  = NULL; /* Input parameter list */
 ObitInfoList *myOutput = NULL; /* Output parameter list */
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
-/*   Obit program - extract a subregion of an image                       */
+/*   Interpolate pixels in one image to the geometry of another           */
 /*----------------------------------------------------------------------- */
 {
   oint ierr = 0;
@@ -92,6 +92,9 @@ int main ( int argc, char **argv )
   mySystem = ObitSystemStartup (pgmName, pgmNumber, AIPSuser, nAIPS, AIPSdirs, 
 				nFITS, FITSdirs, (oint)TRUE, (oint)FALSE, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+
+  /* Initialize Threading */
+  ObitThreadInit (myInput);
 
   /* Get input Image Object */
   inImage = getInputImage (myInput, err);
@@ -837,12 +840,12 @@ ObitImage* getOutputImage (ObitInfoList *myInput, ObitImage *tmplImage,
     /* output AIPS class */
     if  (ObitInfoListGetP(myInput, "outClass", &type, dim, (gpointer)&strTemp)) {
       strncpy (Aclass, strTemp, 7);
-    } else { /* Didn't find - use "SUBIM"*/
-      strncpy (Aclass, "SUBIM ", 7);
+    } else { /* Didn't find - use "HGeom"*/
+      strncpy (Aclass, "HGeom ", 7);
     }
     /* Default if output class blank */
     if ((Aclass[0]==' ') && (Aclass[1]==' ') && (Aclass[2]==' '))
-      strncpy (Aclass, "SUBIM ", 7);
+      strncpy (Aclass, "HGeom ", 7);
     Aclass[6] = 0;
     /* output AIPS sequence */
     Aseq = 1;
@@ -969,7 +972,7 @@ void HGeomHistory (ObitInfoList* myInput, ObitImage* inImage,
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq",
     "in2File",  "in2Disk", "in2Name", "in2Class", "in2Seq",
-    "BLC",  "TRC",  "size", "crpix", "hwidth", 
+    "BLC",  "TRC",  "size", "crpix", "hwidth", "nThreads",
     NULL};
   gchar *routine = "HGeomHistory";
 

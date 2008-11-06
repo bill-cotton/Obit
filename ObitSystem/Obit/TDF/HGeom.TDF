@@ -4,7 +4,7 @@
 ;! interpolates image to different gridding and/or geometry
 ;# Task Obit
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005
+;;  Copyright (C) 2005,2008
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -75,6 +75,8 @@ size              1               Output image size in pixels
 crpix                              Reference pixel in output
 **PARAM** int 1 **DEF** 2
 hwidth                             interpolation half width
+**PARAM** int 1 **DEF** 1
+nThreads            0              Number of threads to use
 ----------------------------------------------------------------
 HGeom
 Type: Task
@@ -87,8 +89,8 @@ Use:  HGeom will compute a non-linear geometric transformation of an
       the second "template" image.  Small blanked regions can be 
       interpolated over.
 Adverbs:
-  DataType...."FITS" or "AIPS" data for all input and output
-  inFile......Input File name if a FITS file
+  DataType....."FITS" or "AIPS" data for all input and output
+  inFile.......Input File name if a FITS file
   inname.......Input map name.            AIPS name
   inclass......Input map class.           AIPS class
   inseq........Input map seq no.          0 => highest.
@@ -124,4 +126,10 @@ Adverbs:
   hwidth.......Half width of interpolation kernal [1-4] in pixels.
                Larger values give more accurate interpolation but
                take longer to operate.
+  nThreads.....If the Obit libraries are compiled with multiple
+               thread operation enabled, this parameter sets the 
+               number of threads that can be used for parallel 
+               operations. 
+               NB: This only improves performance if there are 
+               multiple processors and/or cores in the host.
 ----------------------------------------------------------------
