@@ -33,23 +33,27 @@ class Task:
     def spawn(self, path, args, env=None):
         """Spawn the task.
          
+        There appears to be two calls, the first in this something undocumented
+        is done to the terminal and the sceond to actually start the function
         Returns tid
         path   path to executable
         args   arguments to task
         env    environment dictionary
       `  """
 
+        # Fork
         (pid, tid) = pty.fork()
-        if pid == 0:
+        if pid == 0:   # Actually start function
             try:
                 if env:
                     os.execvpe(path, args, env)
                 else:
                     os.execv(path, args)
-            finally:
-                os._exit(1)
+            except Exception, exception:
+                print exception
+            os._exit(1)
         else:
-            # What does this do?
+            # Setup terminal
             fcntl.fcntl(tid, fcntl.F_SETFL, os.O_NONBLOCK)
             self._pid[tid] = pid
             return tid
@@ -76,7 +80,10 @@ class Task:
         #if tid>len(self._pid):
         #    return []
 
-        (iwtd, owtd, ewtd) = select.select([tid], [], [], 0.25)
+        try:
+            (iwtd, owtd, ewtd) = select.select([tid], [], [], 0.25)
+        except:
+            return []
         if tid in iwtd:
             try:
                 # hang 10 - don't get ahead of yourself

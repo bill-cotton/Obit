@@ -362,7 +362,7 @@ ObitFileOpen (ObitFile *in, gchar *fileName, ObitIOAccess access,
     in->myFile = fopen (in->fileName, ft);
     if (in->myFile==NULL) {
       Obit_log_error(err, OBIT_Error,
-		     "ERROR opening file %s", in->name);
+		     "ERROR opening file %s", in->fileName);
       ObitFileErrMsg(err);     /* system error message*/
       return OBIT_IO_OpenErr;
     }
@@ -378,7 +378,7 @@ ObitFileOpen (ObitFile *in, gchar *fileName, ObitIOAccess access,
     in->myFile = fopen (in->fileName, ft);
     if (in->myFile==NULL) {
       Obit_log_error(err, OBIT_Error,
-		     "ERROR opening file %s", in->name);
+		     "ERROR opening file %s", in->fileName);
       ObitFileErrMsg(err);     /* system error message*/
       return OBIT_IO_OpenErr;
     }
@@ -397,7 +397,7 @@ ObitFileOpen (ObitFile *in, gchar *fileName, ObitIOAccess access,
     in->myFile = fopen (in->fileName, ft);
     if (in->myFile==NULL) {
       Obit_log_error(err, OBIT_Error,
-		     "ERROR opening file %s", in->name);
+		     "ERROR opening file %s", in->fileName);
       ObitFileErrMsg(err);     /* system error message*/
       return OBIT_IO_OpenErr;
     }

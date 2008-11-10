@@ -77,6 +77,8 @@ ObitIOCode ObitParserParse(gchar *infile, ObitInfoList *list, ObitErr *err)
   while (retCode==OBIT_IO_OK) {
     retCode = ObitParserEntry(myFile, name, &type, dim, &data, err);
     if (retCode!=OBIT_IO_OK) break;
+    /* No entry? */
+    if ((dim[0]==0) || (dim[1]==0)) continue;
 
     /* save to InfoList */
     ObitInfoListAlwaysPut (list, name, type, dim, (gconstpointer)data);
@@ -117,7 +119,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
 {
   gchar line[2049], typeStr[20], temp[60];
   olong size, i, j, i1, i2, iStart, iEnd, nread, idim, iout,  nvalue;
-  ObitIOCode retCode = OBIT_IO_SpecErr;
+  ObitIOCode retCode = OBIT_IO_OK;
   gboolean done, areMore;
   gchar *cdata=NULL, **carray=NULL;
   ofloat ftemp, *fdata;
@@ -223,6 +225,7 @@ static ObitIOCode ObitParserEntry(ObitFile *myFile, gchar* name, ObitInfoType *t
   *data = g_malloc0(size+16);
 
   /* How many values to parse? */
+  if ((dim[0]==0) || (dim[1]==0)) return retCode; /* None - return */
   nvalue = 1;
   for (i=0; i<MAXINFOELEMDIM; i++) nvalue *= MAX (1, dim[i]);
 

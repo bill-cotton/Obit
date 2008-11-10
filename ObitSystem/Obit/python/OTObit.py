@@ -295,6 +295,7 @@ import Obit, Table, FArray, OErr, InfoList, History, OSystem
 #import FITSDir, AIPSDir
 import Image, ImageDesc, ImageUtil, TableList, ODisplay, UV, OWindow
 import re
+import TaskMsgBuffer
 try:
     import TaskWindow
 except:
@@ -644,25 +645,37 @@ def window (image):
     return OWindow.PCreate1("Window", naxis, err)
     # end window
 
-def go (TaskObj):
+def go (TaskObj, MsgBuf=False):
     """ Execute task or script
 
     Returns TaskWindow object if run asynchronously (doWait=True)
     or the task message log if run synchronously (doWait=False)
-    The wait() function on the TaskWindow will hang until the task finishes
+    The wait() function on the TaskWindow or TaskMsgBuffer will hang
+    until the task finishes.
+    Returns either a TaskWindow or TaskMsgBuffer depending on MsgBuf
     TaskObj    = Task object to execute
                  If doWait member is true run synchronously,
                  else run with messages in a separate Message window
+    MsgBuf     = if true and  TaskObj.doWait=False run asynchronously
+                 using a TaskMsgBuffer
     """
     ################################################################
     import OTWindow
+
     if TaskObj.doWait:
         return TaskObj.go()
     else:
-        tw = TaskWindow.TaskWindow(TaskObj)
-        OTWindow.newMsgWin(tw)
-        tw.start()
-        return tw
+        if MsgBuf:
+            # use TaskMsgBuffer
+            tb = TaskMsgBuffer.TaskMsgBuffer(TaskObj)
+            tb.start()
+            return tb
+        else:
+            # use TaskWindow
+            tw = TaskWindow.TaskWindow(TaskObj)
+            OTWindow.newMsgWin(tw)
+            tw.start()
+            return tw
     # end go
    
 def inputs (TaskObj):
@@ -686,7 +699,7 @@ def explain (TaskObj):
 def AIPSHelp (Task):
     """ Give Help for AIPS task Task
 
-    Task    = AIPSTask name to give (e.g. "IMEAN")
+    Task    = AIPSTask name to give (e.g. "imean")
     """
     ################################################################
     t=AIPSTask(Task)

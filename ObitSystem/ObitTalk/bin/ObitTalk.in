@@ -9,8 +9,12 @@ else
 	DADEVS_QUIET=YES
 	export DADEVS_QUIET
     fi
-    . $AIPS_VERSION/SYSTEM/UNIX/DADEVS.SH
-    . $AIPS_VERSION/SYSTEM/UNIX/PRDEVS.SH
+    if test -f $AIPS_VERSION/SYSTEM/UNIX/DADEVS.SH; then
+        . $AIPS_VERSION/SYSTEM/UNIX/DADEVS.SH
+    fi
+    if test -f $AIPS_VERSION/SYSTEM/UNIX/PRDEVS.SH; then
+        . $AIPS_VERSION/SYSTEM/UNIX/PRDEVS.SH
+    fi
 fi
 
 # Make sure Python can find the ObitTalk modules.

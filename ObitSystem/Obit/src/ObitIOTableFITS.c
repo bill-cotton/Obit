@@ -703,10 +703,10 @@ ObitIOCode ObitIOTableFITSReadRow (ObitIOTableFITS *in, olong rowno,
       /* Strings,bit arrays need to be handled differently */
       if (ftype==TSTRING) { /* strings done last loop */
       } else if (ftype==TFLOAT) { /* float allow conversion from Nan to fblank */
-	/* NOTE: this is documented incorrectlyy in the cfitsio docs */
-	fits_read_colnull_flt(in->myFptr, 
-			      iCol, iRow, 1, (long)desc->repeat[iCol-1], 
-			      (void*)&cdata[offset+desc->byteOffset[iCol-1]], (void*)&fblank, &anynull, &status);
+	fits_read_col_flt(in->myFptr, 
+			  iCol, iRow, 1, (long)desc->repeat[iCol-1], fblank, 
+			  (void*)&cdata[offset+desc->byteOffset[iCol-1]], 
+			  &anynull, &status); 
       } else if (ftype==TDOUBLE) { /* double */
 	fits_read_col_dbl(in->myFptr,
 			  iCol, iRow, 1, (long)desc->repeat[iCol-1], 0.0,
