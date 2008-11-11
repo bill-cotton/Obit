@@ -161,6 +161,10 @@ void ObitIOTableAIPSCreateBuffer (ofloat **data, olong *size,
 				  ObitIOTableAIPS *in, ObitInfoList *info, 
 				  ObitErr *err);
 
+/** Public: Extract information about underlying file */
+void ObitIOTableAIPSGetFileInfo (ObitIO *in, ObitInfoList *myInfo, 
+				 gchar *prefix, ObitInfoList *outList, 
+				 ObitErr *err);
 /*---------------Class Info--------------------------*/
 /**
  * ClassInfo Structure.

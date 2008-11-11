@@ -1,4 +1,4 @@
-/* $Id$                            */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2002-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
@@ -67,3 +67,5 @@ ObitIOFreeBufferFP ObitIOFreeBuffer;
 newObitIOTableFP newObitIOTable;
 /** Function pointer to update table info. */
 ObitIOUpdateTablesFP ObitIOUpdateTables;
+/** Function pointer to  Extract information about underlying file */
+ObitIOGetFileInfoFP ObitIOGetFileInfo;

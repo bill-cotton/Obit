@@ -168,6 +168,11 @@ ObitIOCode ObitIOImageFITSUpdateTables (ObitIOImageFITS *in, ObitInfoList *info,
 /** Public: Update header BSCALE,BZERO */
 void ObitIOImageFITSUpdateScale (ObitIOImageFITS *in, ofloat quant,
 				       ObitErr *err);
+
+/** Public: Extract information about underlying file */
+void ObitIOImageFITSGetFileInfo (ObitIO *in, ObitInfoList *myInfo, 
+				 gchar *prefix, ObitInfoList *outList, 
+				 ObitErr *err);
 /*---------------Class Info--------------------------*/
 /**
  * ClassInfo Structure.

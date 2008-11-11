@@ -1453,6 +1453,99 @@ ObitIOCode ObitIOOTFFITSUpdateTables (ObitIOOTFFITS *in, ObitInfoList *info,
 } /* end ObitIOOTFFITSUpdateTables */
 
 /**
+ * Get underlying file information in entries to an ObitInfoList
+ * Following entries for AIPS files ("xxx" = prefix):
+ * \param in      Object of interest.
+ * \param myInfo  InfoList on basic object with selection
+ * \param prefix  If NonNull, string to be added to beginning of outList entry name
+ * \param outList InfoList to write entries into
+ *
+ * Following entries for FITS files ("xxx" = prefix):
+ * \li xxxFileName OBIT_string  FITS file name
+ * \li xxxDisk     OBIT_oint    FITS file disk number
+ * \li xxxDir      OBIT_string  Directory name for xxxDisk
+ *
+ * For all File types types:
+ * \li xxxFileType OBIT_string "UV" = UV data, "MA"=>image, "Table"=Table, 
+ *                "OTF"=OTF, etc
+ * \li xxxDataType OBIT_string "AIPS", "FITS"
+ *
+ * For xxxDataType = "OTF"
+ * \li xxxnRecPIO OBIT_int (1,1,1) Number of vis. records per IO call
+ * \param err     ObitErr for reporting errors.
+ */
+void ObitIOOTFFITSGetFileInfo (ObitIO *in, ObitInfoList *myInfo, gchar *prefix, 
+			       ObitInfoList *outList, ObitErr *err)
+{
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *keyword=NULL, *FileType="OTF", *DataType="FITS", *dirname;
+  gchar tempStr[201], *here="./";
+  olong disk, i;
+  gpointer listPnt;
+  gchar *parm[] = {"nRecPIO", "doCalSelect", "doCalib", "gainUse", "flagVer",
+		   "BChan", "EChan", "Targets", "timeRange", "Scans",
+		   "Feeds", "keepCal", "replCal",
+		   NULL};
+  gchar *routine = "ObitIOOTFFITSGetFileInfo";
+
+  if (err->error) return;
+
+  /* Set basic information */
+  if (prefix) keyword =  g_strconcat (prefix, "FileType", NULL);
+  else keyword =  g_strdup ("FileType");
+  dim[0] = strlen(FileType);
+  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, FileType);
+  g_free(keyword);
+  
+   /* FITS */
+  if (prefix) keyword =  g_strconcat (prefix, "DataType", NULL);
+  else keyword =  g_strdup ("DataType");
+  dim[0] = strlen(DataType);
+  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, DataType);
+  g_free(keyword);
+  
+  /* Filename */
+  if (!ObitInfoListGet(myInfo, "FileName", &type, dim, tempStr, err)) 
+      Obit_traceback_msg (err, routine, in->name);
+  if (prefix) keyword =  g_strconcat (prefix, "FileName", NULL);
+  else keyword =  g_strdup ("FileName");
+  ObitInfoListAlwaysPut (outList, keyword, type, dim, tempStr);
+  g_free(keyword);
+
+  /* Disk number */
+  if (!ObitInfoListGet(myInfo, "Disk", &type, dim, &disk, err)) 
+      Obit_traceback_msg (err, routine, in->name);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  if (prefix) keyword =  g_strconcat (prefix, "Disk", NULL);
+  else keyword =  g_strdup ("Disk");
+  ObitInfoListAlwaysPut (outList, keyword, type, dim, &disk);
+  g_free(keyword);
+ 
+  /* Disk directory if disk>0 */
+  if (disk>0) dirname = ObitFITSDirname(disk, err); 
+  else dirname = here;
+  dim[0] = strlen(dirname);
+  if (prefix) keyword =  g_strconcat (prefix, "Dir", NULL);
+  else keyword =  g_strdup ("Dir");
+  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, dirname);
+  g_free(keyword);
+
+
+  /* Selection/calibration */
+  i = 0;
+  while (parm[i]) {
+    if (prefix) keyword = g_strconcat (prefix, parm[i], NULL);
+    else        keyword = g_strdup(parm[i]);
+    if (ObitInfoListGetP(myInfo, parm[i], &type, dim, (gpointer*)&listPnt)) {
+      ObitInfoListAlwaysPut(outList, keyword, type, dim, listPnt);
+    }
+    i++;
+    g_free(keyword);
+  }
+} /* end ObitIOOTFFITSGetFileInfo */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitIOOTFFITSClassInit (void)

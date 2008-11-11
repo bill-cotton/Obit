@@ -827,7 +827,7 @@ ObitIOCode ObitIOImageFITSWrite (ObitIOImageFITS *in, ofloat *data,
   gboolean windowed;
   gpointer wbuff=NULL;
   int outType;
-  gchar outBlank[12];  /* Blob of unspecified type for type dependent blanking value */
+  gchar outBlank[20];  /* Blob of unspecified type for type dependent blanking value */
   gchar *routine = "ObitIOImageFITSWrite";
 
   /* error checks */
@@ -1612,7 +1612,8 @@ void ObitIOImageFITSUpdateScale (ObitIOImageFITS *in, ofloat quant,
   case 32:
     bscale =  (desc->maxval-desc->minval) / 2147483600.0;
     bzero = desc->minval;
-    magic = -2147483648L; 
+    magic = 2147483648L; 
+    magic = -magic; 
     /* quantizing? */
     if (quant>0.0) { 
       bzero = 0.0;
@@ -1665,6 +1666,96 @@ void ObitIOImageFITSUpdateScale (ObitIOImageFITS *in, ofloat quant,
     ObitFileErrMsg(err);     /* system error message*/
   }
 } /* end ObitIOImageFITSUpdateScale */
+
+/**
+ * Get underlying file information in entries to an ObitInfoList
+ * Following entries for AIPS files ("xxx" = prefix):
+ * \param in      Object of interest.
+ * \param myInfo  InfoList on basic object with selection
+  * \param prefix  If NonNull, string to be added to beginning of outList entry name
+ * \param outList InfoList to write entries into
+ *
+ * Following entries for FITS files ("xxx" = prefix):
+ * \li xxxFileName OBIT_string  FITS file name
+ * \li xxxDisk     OBIT_oint    FITS file disk number
+ * \li xxxDir      OBIT_string  Directory name for xxxDisk
+ *
+ * For all File types types:
+ * \li xxxDataType OBIT_string "UV" = UV data, "MA"=>image, "Table"=Table, 
+ *                "OTF"=OTF, etc
+ * \li xxxFileType OBIT_oint File type as ObitIOType, OBIT_IO_FITS, OBIT_IO_AIPS
+ *    
+ * For xxxDataType = "MA"
+ * \li xxxBLC   OBIT_oint[7] (Images only) 1-rel bottom-left corner pixel
+ * \li xxxTRC   OBIT_oint[7] (Images Only) 1-rel top-right corner pixel
+ * \param err     ObitErr for reporting errors.
+ */
+void ObitIOImageFITSGetFileInfo (ObitIO *in, ObitInfoList *myInfo, gchar *prefix, 
+				 ObitInfoList *outList, ObitErr *err)
+{
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *keyword=NULL, *FileType="Image", *DataType="FITS", *dirname;
+  gchar tempStr[201], *here="./";
+  olong disk, i;
+  gpointer listPnt;
+  gchar *parm[] = {"BLC", "TRC", NULL};
+  gchar *routine = "ObitIOImageFITSGetFileInfo";
+
+  if (err->error) return;
+
+  /* Set basic information */
+  if (prefix) keyword =  g_strconcat (prefix, "FileType", NULL);
+  else keyword =  g_strdup ("FileType");
+  dim[0] = strlen(FileType);
+  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, FileType);
+  g_free(keyword);
+  
+   /* FITS */
+  if (prefix) keyword =  g_strconcat (prefix, "DataType", NULL);
+  else keyword =  g_strdup ("DataType");
+  dim[0] = strlen(DataType);
+  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, DataType);
+  g_free(keyword);
+  
+  /* Filename */
+  if (!ObitInfoListGet(myInfo, "FileName", &type, dim, tempStr, err)) 
+      Obit_traceback_msg (err, routine, in->name);
+  if (prefix) keyword =  g_strconcat (prefix, "FileName", NULL);
+  else keyword =  g_strdup ("FileName");
+  ObitInfoListAlwaysPut (outList, keyword, type, dim, tempStr);
+  g_free(keyword);
+
+  /* Disk number */
+  if (!ObitInfoListGet(myInfo, "Disk", &type, dim, &disk, err)) 
+      Obit_traceback_msg (err, routine, in->name);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  if (prefix) keyword =  g_strconcat (prefix, "Disk", NULL);
+  else keyword =  g_strdup ("Disk");
+  ObitInfoListAlwaysPut (outList, keyword, type, dim, &disk);
+  g_free(keyword);
+ 
+  /* Disk directory if disk>0 */
+  if (disk>0) dirname = ObitFITSDirname(disk, err); 
+  else dirname = here;
+  dim[0] = strlen(dirname);
+  if (prefix) keyword =  g_strconcat (prefix, "Dir", NULL);
+  else keyword =  g_strdup ("Dir");
+  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, dirname);
+  g_free(keyword);
+
+  /* Selection/calibration */
+  i = 0;
+  while (parm[i]) {
+    if (prefix) keyword = g_strconcat (prefix, parm[i], NULL);
+    else        keyword = g_strdup(parm[i]);
+    if (ObitInfoListGetP(myInfo, parm[i], &type, dim, (gpointer*)&listPnt)) {
+      ObitInfoListAlwaysPut(outList, keyword, type, dim, listPnt);
+    }
+    i++;
+    g_free(keyword);
+  }
+} /* end ObitIOImageFITSGetFileInfo */
 
 /**
  * Initialize global ClassInfo Structure.
@@ -2176,22 +2267,28 @@ static gpointer WriteQuantInit (ObitIOImageFITS *in, olong size,
   double scale, zero;
   int status = 0;
   ObitImageDesc *desc = (ObitImageDesc*)in->myDesc;
+  unsigned char btemp[4]={0,0,0,0};
+  short stemp[2] = {0,0};
+  int itemp[2] = {0,0};
 
   /* By output type */
   if (desc->bitpix<0) {  /* Float */
     memcpy (outBlank, &fblank, sizeof(ofloat));
     *outType = TFLOAT;
   } else if (desc->bitpix==8)  {  /* 8-bit integer */
-    memcpy (outBlank, &in->magic, sizeof(olong));
+    btemp[0] = (unsigned char)in->magic;
+    memcpy (outBlank, btemp, sizeof(olong));
     *outType = TBYTE;
     out = g_malloc0(size*sizeof(gchar));
   } else if (desc->bitpix==16) {  /* 16-bit integer */
-    memcpy (outBlank, &in->magic, sizeof(olong));
+    stemp[0] = (short)in->magic;
+    memcpy (outBlank, stemp, sizeof(olong));
     *outType = TSHORT;
     out = g_malloc0(size*sizeof(gshort));
   } else if (desc->bitpix==32) {  /* 32-bit integer */
-    memcpy (outBlank, &in->magic, sizeof(olong));
-    *outType = TLONG;
+    itemp[0] = (int)in->magic;
+    memcpy (outBlank, &itemp, sizeof(olong));
+    *outType = TINT32BIT;
     out = g_malloc0(size*sizeof(olong));
   } else  {  /* Shouldn't happen - pretend float */
     memcpy (outBlank, &fblank, sizeof(ofloat));
@@ -2235,7 +2332,7 @@ static void WriteQuantCopy (ObitIOImageFITS *in, olong size, gpointer *wbuff,
     cblank = (gchar)in->magic;
     for (i=0; i<size; i++) {
       val = 0.5 + (data[i]-zero) * iscale;
-      if (val==fblank) {
+      if (data[i]==fblank) {
 	cbuff[i] = cblank;
       } else {
 	cbuff[i] = (gchar)(MAX (0.0, MIN (val,255.0)));
@@ -2245,7 +2342,7 @@ static void WriteQuantCopy (ObitIOImageFITS *in, olong size, gpointer *wbuff,
     sblank = (gshort)in->magic;
     for (i=0; i<size; i++) {
       val = (data[i]-zero) * iscale;
-      if (val==fblank) {
+      if (data[i]==fblank) {
 	sbuff[i] = sblank;
       } else {
 	if (val>0.0) sbuff[i] = (gshort)(val + 0.5);
@@ -2256,7 +2353,7 @@ static void WriteQuantCopy (ObitIOImageFITS *in, olong size, gpointer *wbuff,
     lblank = (olong)in->magic;
     for (i=0; i<size; i++) {
       val = (data[i]-zero) * iscale;
-      if (val==fblank) {
+      if (data[i]==fblank) {
 	lbuff[i] = lblank;
       } else {
 	if (val>0.0) lbuff[i] = (olong)(val + 0.5);

@@ -140,6 +140,117 @@ ObitOTF* newObitOTF (gchar* name)
 } /* end newObitOTF */
 
 /**
+ * Create an OTF object with selection parameters set from an InfoList
+ * \param prefix  If NonNull, string to be added to beginning of outList entry name
+ *                "xxx" in the following
+ * \param inList InfoList to extract object information from
+ * Following entries for FITS files ("xxx" = prefix):
+ * \li xxxFileName OBIT_string  FITS file name
+ * \li xxxDisk     OBIT_oint    FITS file disk number
+ * \li xxxDir      OBIT_string  Directory name for xxxDisk
+ *
+ * For all File types types:
+ * \li xxxDataType OBIT_string "UV" = UV data, "MA"=>image, "Table"=Table, 
+ *                "OTF"=OTF, etc
+ * \li xxxFileType OBIT_oint File type as ObitIOType, OBIT_IO_FITS, OBIT_IO_AIPS
+ *
+ * For xxxDataType = "OTF"
+ * \li xxxnRecPIO OBIT_int (1,1,1) Number of vis. records per IO call
+ * \param err     ObitErr for reporting errors.
+ * \return new data object with selection parameters set
+ */
+ObitOTF* ObitOTFFromFileInfo (gchar *prefix, ObitInfoList *inList, 
+			      ObitErr *err)
+{
+  ObitOTF      *out = NULL;
+  ObitInfoType type;
+  olong        disk, i, nrec, nThreads;
+  gchar        *strTemp, inFile[129];
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gpointer     listPnt;
+  gchar        *keyword=NULL, *DataTypeKey = "DataType", *DataType=NULL;
+  gchar        *parm[] = {"doCalSelect", "doCalib", "gainUse", "flagVer",
+			  "BChan", "EChan", "Targets", "timeRange", "Scans",
+			  "Feeds", "keepCal", "replCal",
+			  NULL};
+  gchar *routine = "ObiOTFFromFileInfo";
+
+
+  if (err->error) return out;  /* Previous error? */
+
+  /* Create output */
+  out = newObitOTF (prefix);
+
+  /* Number of Rec per IO  */
+  nrec = 1000;
+  nThreads = ObitThreadNumProc (out->thread);
+  nrec *= MAX (1, nThreads);
+  if (prefix) keyword = g_strconcat (prefix, "nRecPIO", NULL);
+  else        keyword = g_strdup("nRecPIO");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &nrec);
+  g_free(keyword);
+
+  /* File type - could be FITS */
+  if (prefix) keyword =  g_strconcat (prefix, DataTypeKey, NULL);
+  else keyword =  g_strconcat (DataTypeKey, NULL);
+  if (!ObitInfoListGetP (inList, keyword, &type, dim, (gpointer)&DataType)) {
+    /* Try "DataType" */
+    if (!ObitInfoListGetP(inList, "DataType", &type, dim, (gpointer)&DataType)) {
+      /* couldn't find it - add message to err and return */
+      Obit_log_error(err, OBIT_Error, 
+		     "%s: entry %s not in InfoList", routine, keyword);
+      g_free(keyword);
+      return out;
+    }
+  }
+  g_free(keyword);
+
+  if (!strncmp (DataType, "FITS", 4)) {  /* FITS input */
+    /* input FITS file name */
+    if (prefix) keyword = g_strconcat (prefix, "File", NULL);
+    else        keyword = g_strdup("File");
+    if (ObitInfoListGetP(inList, keyword, &type, dim, (gpointer)&strTemp)) {
+      strncpy (inFile, strTemp, 128);
+    } else { 
+      strncpy (inFile, "No_Filename_Given", 128);
+    }
+    g_free(keyword);
+    
+    /* input FITS disk */
+    if (prefix) keyword = g_strconcat (prefix, "Disk", NULL);
+    else        keyword = g_strdup("Disk");
+    ObitInfoListGet(inList, keyword, &type, dim, &disk, err);
+    g_free(keyword);
+
+    /* define object */
+    ObitOTFSetFITS (out, nrec, disk, inFile, err);
+    if (err->error) Obit_traceback_val (err, routine, "inList", out);
+    
+  } else { /* Unknown type - barf and bail */
+    Obit_log_error(err, OBIT_Error, "%s: Unknown Data type %s", 
+                   routine, DataType);
+    return out;
+  }
+
+  /* Selection/calibration */
+  i = 0;
+  while (parm[i]) {
+    if (prefix) keyword = g_strconcat (prefix, parm[i], NULL);
+    else        keyword = g_strdup(parm[i]);
+    if (ObitInfoListGetP(inList, keyword, &type, dim, (gpointer*)&listPnt)) {
+      ObitInfoListAlwaysPut(out->info, parm[i], type, dim, (gpointer*)&listPnt);
+    }
+    g_free(keyword);
+  } /* end loop copying parameters */
+  
+  /* Ensure out fully instantiated and OK */
+  ObitOTFFullInstantiate (out, TRUE, err);
+  if (err->error) Obit_traceback_val (err, routine, "inList", out);
+
+  return out;
+} /* end ObitOTFFromFileInfo */
+
+/**
  * Create a scratch file suitable for accepting the data to be read from in.
  * A scratch OTF is more or less the same as a normal OTF except that it is
  * automatically deleted on the final unreference.

@@ -241,6 +241,13 @@ void ObitImageClassInit (void);
 /** Public: Constructor. */
 ObitImage* newObitImage (gchar* name);
 
+/** Public: Create Image object from description in an ObitInfoList */
+ObitImage* ObitImageFromFileInfo (gchar *prefix, ObitInfoList *inList, 
+                                  ObitErr *err);
+typedef ObitImage*
+(*ObitImageFromFileInfoFP) (gchar *prefix, ObitInfoList *inList, 
+                            ObitErr *err);
+
 /** Public: Copy Constructor for scratch file. */
 ObitImage* newObitImageScratch (ObitImage *in, ObitErr *err);
 /** Typedef for definition of class pointer structure */

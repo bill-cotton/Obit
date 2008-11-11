@@ -457,6 +457,61 @@ void ObitMultiProcStart (ObitInfoList *myInput, ObitErr *err)
 } /* end ObitMultiProcStart */
 
 /**
+ * Disables multiprocessing in auxillary FuncContainer processes.
+ * Sequential processing using the ObitMultiProc will still be supported.
+ * \param err Obit error stack object.
+ * \return NULL
+ */
+void ObitMultiProcShutdown (ObitErr *err)
+{ 
+  olong i;
+  ObitXML *arg=NULL, *reply=NULL;
+  ObitInfoList *argList=NULL;
+  ObitRPC *client=NULL;
+  gchar *routine = "ObitMultiProcShutdown";
+  
+  /* Class initialization if needed - then clearly nothing to shutdown */
+  if (!myClassInfo.initialized) {
+    ObitMultiProcClassInit();
+    return;
+  }
+  
+  /* ObitRPC client for all */
+  client =  ObitRPCCreateClient ("ShutdownClient", err);
+  if (err->error) goto done;
+
+  /* Send processes the "terminate" command */
+  for (i=0; i<myClassInfo.nProcessor; i++) {
+    
+    /* Create argument */
+    argList = newObitInfoList();
+    arg = ObitXMLSetCallArg ("terminate", argList, err);
+    if (err->error) goto done;
+
+    /* termination call */
+    reply = ObitRPCCall (client, myClassInfo.URL[i], arg, NULL, NULL, err);
+    if (err->error) goto done;
+
+    /* cleanup */
+    argList = ObitInfoListUnref(argList);
+    reply   = ObitXMLUnref(reply);
+    arg     = ObitXMLUnref(arg);
+    myClassInfo.ASThreads[i] = ObitThreadUnref(myClassInfo.ASThreads[i]);
+    if (myClassInfo.URL[i]) g_free(myClassInfo.URL[i]);
+  } /* end loop over remote processes */
+
+ done:
+   ObitRPCUnref(client);  /* Cleanup */
+  
+  /* No longer allow use of asynchronous processes */
+  myClassInfo.haveAsynchProc = FALSE; 
+
+  /* Something go wrong? */
+  if (err->error) Obit_traceback_msg (err, routine, routine); 
+  
+} /* end ObitMultiProcShutdown */
+
+/**
  * Copies argument values for a given job
  * of threading 
  * \param in     MultiProc object

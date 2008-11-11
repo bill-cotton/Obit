@@ -109,6 +109,186 @@ ObitImage* newObitImage (gchar* name)
 } /* end newObitImage */
 
 /**
+ * Create an Image object with selection parameters set from an InfoList
+ * \param prefix  If NonNull, string to be added to beginning of outList entry name
+ *                "xxx" in the following
+ * \param inList InfoList to extract object information from
+ * Following InfoList entries for AIPS files ("xxx" = prefix):
+ * \li xxxName  OBIT_string  AIPS file name
+ * \li xxxClass OBIT_string  AIPS file class
+ * \li xxxDisk  OBIT_oint    AIPS file disk number
+ * \li xxxSeq   OBIT_oint    AIPS file Sequence number
+ * \li AIPSUser OBIT_oint    AIPS User number
+ * \li xxxCNO   OBIT_oint    AIPS Catalog slot number
+ * \li xxxDir   OBIT_string  Directory name for xxxDisk
+ *
+ * Following entries for FITS files ("xxx" = prefix):
+ * \li xxxFile  OBIT_string  FITS file name
+ * \li xxxDisk  OBIT_oint    FITS file disk number
+ * \li xxxDir   OBIT_string  Directory name for xxxDisk
+ *
+ * For all File types:
+ * \li xxxFileType OBIT_string "UV" = UV data, "MA"=>image, "Table"=Table, 
+ *                "OTF"=OTF, etc
+ * \li xxxDataType OBIT_string "AIPS", "FITS"
+ *                 Defaults to value of "DataType"
+ *    
+ * For xxxDataType = "MA"
+ * \li xxxBLC   OBIT_oint[7] (Images only) 1-rel bottom-left corner pixel
+ * \li xxxTRC   OBIT_oint[7] (Images Only) 1-rel top-right corner pixel
+ * \param err     ObitErr for reporting errors.
+ * \return new data object with selection parameters set
+ */
+ObitImage* ObitImageFromFileInfo (gchar *prefix, ObitInfoList *inList, 
+				  ObitErr *err)
+{
+  ObitImage    *out = NULL;
+  ObitInfoType type;
+  olong        Aseq, AIPSuser, disk, cno, i;
+  gchar        *strTemp, inFile[129];
+  gchar        Aname[13], Aclass[7], *Atype = "MA";
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong        blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
+  olong        trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  gchar        *keyword=NULL, *DataTypeKey = "DataType", *DataType=NULL;
+  gchar        *routine = "ObitImageFromFileInfo";
+
+  if (err->error) return out;  /* Previous error? */
+
+  /* Create output */
+  out = newObitImage (prefix);
+
+  /* BLC */
+  if (prefix) keyword = g_strconcat (prefix, "BLC", NULL);
+  else        keyword = g_strdup("BLC");
+  ObitInfoListGetTest(inList, keyword, &type, dim, blc); /* BLC */
+  g_free(keyword);
+  
+  /* BLC */
+  if (prefix) keyword = g_strconcat (prefix, "TRC", NULL);
+  else        keyword = g_strdup("TRC");
+  ObitInfoListGetTest(inList, keyword, &type, dim, trc); /* TRC */
+  g_free(keyword);
+
+  /* File type - could be either AIPS or FITS */
+  if (prefix) keyword =  g_strconcat (prefix, DataTypeKey, NULL);
+  else keyword =  g_strconcat (DataTypeKey, NULL);
+  if (!ObitInfoListGetP (inList, keyword, &type, dim, (gpointer)&DataType)) {
+    /* Try "DataType" */
+    if (!ObitInfoListGetP(inList, "DataType", &type, dim, (gpointer)&DataType)) {
+      /* couldn't find it - add message to err and return */
+      Obit_log_error(err, OBIT_Error, 
+		     "%s: entry %s not in InfoList", routine, keyword);
+      g_free(keyword);
+      return out;
+    }
+  }
+  g_free(keyword);
+
+  if (!strncmp (DataType, "AIPS", 4)) { /* AIPS */
+    /* AIPS disk */
+    if (prefix) keyword = g_strconcat (prefix, "Disk", NULL);
+    else        keyword = g_strdup("Disk");
+    ObitInfoListGet(inList, keyword, &type, dim, &disk, err);
+    g_free(keyword);
+
+    /* AIPS name */
+    if (prefix) keyword = g_strconcat (prefix, "Name", NULL);
+    else        keyword = g_strdup("Name");
+    if (ObitInfoListGetP(inList, keyword, &type, dim, (gpointer)&strTemp)) {
+      strncpy (Aname, strTemp, 13);
+    } else { /* Didn't find */
+      strncpy (Aname, "No Name ", 13);
+    } 
+    Aname[12] = 0;
+    g_free(keyword);
+
+    /* AIPS class */
+    if (prefix) keyword = g_strconcat (prefix, "Class", NULL);
+    else        keyword = g_strdup("Class");
+    if  (ObitInfoListGetP(inList, keyword, &type, dim, (gpointer)&strTemp)) {
+      strncpy (Aclass, strTemp, 7);
+    } else { /* Didn't find */
+      strncpy (Aclass, "NoClas", 7);
+    }
+    Aclass[6] = 0;
+    g_free(keyword);
+
+    /* input AIPS sequence */
+    if (prefix) keyword = g_strconcat (prefix, "Seq", NULL);
+    else        keyword = g_strdup("Seq");
+    ObitInfoListGet(inList, keyword, &type, dim, &Aseq, err);
+    g_free(keyword);
+
+    /* if ASeq==0 want highest existing sequence */
+    if (Aseq<=0) {
+      Aseq = ObitAIPSDirHiSeq(disk, AIPSuser, Aname, Aclass, Atype, TRUE, err);
+      if (err->error) Obit_traceback_val (err, routine, "inList", out);
+      /* Save on inList*/
+      dim[0] = dim[1] = 1;
+      ObitInfoListAlwaysPut(inList, "inSeq", OBIT_oint, dim, &Aseq);
+    } 
+
+    /* AIPS User no. */
+    ObitInfoListGet(inList, "AIPSuser", &type, dim, &AIPSuser, err);
+    if (err->error) Obit_traceback_val (err, routine, "inList", out);    
+
+    /* Find catalog number */
+    cno = ObitAIPSDirFindCNO(disk, AIPSuser, Aname, Aclass, Atype, Aseq, err);
+    if (err->error) Obit_traceback_val (err, routine, "inList", out);
+    
+    /* define object */
+    ObitImageSetAIPS (out, OBIT_IO_byPlane, disk, cno, AIPSuser, blc, trc, err);
+    if (err->error) Obit_traceback_val (err, routine, "inList", out);
+    
+  } else if (!strncmp (DataType, "FITS", 4)) {  /* FITS input */
+    /* input FITS file name */
+    if (prefix) keyword = g_strconcat (prefix, "File", NULL);
+    else        keyword = g_strdup("File");
+    if (ObitInfoListGetP(inList, keyword, &type, dim, (gpointer)&strTemp)) {
+      strncpy (inFile, strTemp, 128);
+    } else { 
+      strncpy (inFile, "No_Filename_Given", 128);
+    }
+    g_free(keyword);
+    
+    /* input FITS disk */
+    if (prefix) keyword = g_strconcat (prefix, "Disk", NULL);
+    else        keyword = g_strdup("Disk");
+    ObitInfoListGet(inList, keyword, &type, dim, &disk, err);
+    g_free(keyword);
+
+    /* define object */
+    ObitImageSetFITS (out, OBIT_IO_byPlane, disk, inFile, blc, trc, err);
+    if (err->error) Obit_traceback_val (err, routine, "inList", out);
+    
+  } else { /* Unknown type - barf and bail */
+    Obit_log_error(err, OBIT_Error, "%s: Unknown Data type %s", 
+                   routine, DataType);
+    return out;
+  }
+
+  /* Ensure out fully instantiated and OK */
+  ObitImageFullInstantiate (out, TRUE, err);
+  if (err->error) Obit_traceback_val (err, routine, "inList", out);
+
+  /* Set defaults BLC, TRC - use size on myIO as blc, trc incorporated into myDesc */
+  for (i=0; i<IM_MAXDIM; i++) {
+    if (blc[i]<=0) blc[i] = 1;
+    blc[i] = MAX (1,  blc[i]);
+    if (trc[i]<=0) trc[i] = ((ObitImageDesc*)out->myIO->myDesc)->inaxes[i];
+    trc[i] = MIN (trc[i], ((ObitImageDesc*)out->myIO->myDesc)->inaxes[i]);
+  }
+
+  /* Save blc, trc */
+  dim[0] = IM_MAXDIM;
+  ObitInfoListAlwaysPut (out->info, "BLC", OBIT_long, dim, blc);
+  ObitInfoListAlwaysPut (out->info, "TRC", OBIT_long, dim, trc);
+
+  return out;
+} /* end ObitImageFromFileInfo */
+
+/**
  * Create a scratch file suitable for accepting the data to be read from in.
  * A scratch Image is more or less the same as a normal Image except that it is
  * automatically deleted on the final unreference.

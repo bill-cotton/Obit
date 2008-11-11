@@ -154,6 +154,9 @@ typedef ObitMultiProc* (*ObitMultiProcCreateFP) (gchar* name, olong njobs,
 /** Start auxillary FuncContainer processes based on values in Inputs list */
 void ObitMultiProcStart(ObitInfoList *myInput, ObitErr *err);
 
+/** Shutdown auxillary FuncContainer processes  */
+void ObitMultiProcShutdown(ObitErr *err);
+
 /* Set argument for a given job */
 void ObitMultiProcSetFuncArg(ObitMultiProc* in, glong jobNo, ObitInfoList *arg);
 

@@ -27,6 +27,8 @@
 /*  Define the basic components of the ObitData ClassInfo structure     */
 /* This is intended to be included in a classInfo structure definition*/
 #include "ObitClassDef.h"  /* Parent class ClassInfo definition file */
+/** Function pointer to Create Data object from description in an ObitInfoList. */
+ObitDataFromFileInfoFP ObitDataFromFileInfo;
 /** Function pointer to scratch copy constructor. */
 newObitDataScratchFP newObitDataScratch;
 /** Function pointer to are two ObitDatas the same. */
@@ -63,5 +65,7 @@ ObitDataCopyTableFP ObitDataCopyTable;
 newObitDataHistoryFP newObitDataHistory;
 /** Function pointer to Write header keyword */
 ObitDataWriteKeywordFP ObitDataWriteKeyword;
-/** Function pointer to  Read header keyword*/
+/** Function pointer to  Read header keyword */
 ObitDataReadKeywordFP ObitDataReadKeyword;
+/** Function pointer to Extract information about underlying file*/
+ObitDataGetFileInfoFP ObitDataGetFileInfo;

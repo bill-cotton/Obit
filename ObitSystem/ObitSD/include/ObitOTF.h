@@ -168,6 +168,10 @@ void ObitOTFClassInit (void);
 /** Public: Constructor. */
 ObitOTF* newObitOTF (gchar* name);
 
+/** Public: Create OTF object from description in an ObitInfoList */
+ObitOTF* ObitOTFFromFileInfo (gchar *prefix, ObitInfoList *inList, 
+			      ObitErr *err);
+
 /** Public: Copy Constructor for scratch file. */
 ObitOTF* newObitOTFScratch (ObitOTF *in, ObitErr *err);
 /** Typedef for definition of class pointer structure */

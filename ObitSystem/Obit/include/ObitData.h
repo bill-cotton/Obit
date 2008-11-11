@@ -196,6 +196,13 @@ void ObitDataClassInit (void);
 /** Public: Constructor. */
 ObitData* newObitData (gchar* name);
 
+/** Public: Create Data object from description in an ObitInfoList */
+ObitData* ObitDataFromFileInfo (gchar *prefix, ObitInfoList *inList, 
+				ObitErr *err);
+typedef ObitData*
+(*ObitDataFromFileInfoFP) (gchar *prefix, ObitInfoList *inList, 
+			   ObitErr *err);
+
 /** Public: Copy Constructor for scratch file. */
 ObitData* newObitDataScratch (ObitData *in, ObitErr *err);
 typedef ObitData* (*newObitDataScratchFP) (ObitData *in, ObitErr *err);
@@ -306,6 +313,13 @@ typedef void
 (*ObitDataReadKeywordFP) (ObitData *in, 
 			  gchar* name, ObitInfoType *type, gint32 *dim, 
 			  gpointer data, ObitErr *err);
+
+/** Public: Extract information about underlying file */
+void ObitDataGetFileInfo (ObitData *in, gchar *prefix, ObitInfoList *outList, 
+			  ObitErr *err);
+typedef void 
+(*ObitDataGetFileInfoFP) (ObitData *in, gchar *prefix, ObitInfoList *outList, 
+			  ObitErr *err);
 
 /*----------- ClassInfo Structure -------------------------------------*/
 

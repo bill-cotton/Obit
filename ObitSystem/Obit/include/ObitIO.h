@@ -195,6 +195,13 @@ ObitIOCode ObitIOUpdateTables (ObitIO *in, ObitInfoList *info, ObitErr *err);
 typedef ObitIOCode (*ObitIOUpdateTablesFP) (ObitIO *in, ObitInfoList *info, 
 					    ObitErr *err);
 
+/** Public: Extract information about underlying file */
+void ObitIOGetFileInfo (ObitIO *in, ObitInfoList *myInfo, gchar *prefix, 
+			ObitInfoList *outList, ObitErr *err);
+typedef void 
+(*ObitIOGetFileInfoFP) (ObitIO *in, ObitInfoList *myInfo, gchar *prefix, 
+			ObitInfoList *outList, ObitErr *err);
+
 /*-------------------Class Info--------------------------*/
 
 /**

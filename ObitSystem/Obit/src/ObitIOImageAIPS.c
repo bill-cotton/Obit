@@ -1197,6 +1197,136 @@ ObitIOCode ObitIOImageAIPSUpdateTables (ObitIOImageAIPS *in,
 } /* end ObitIOImageAIPSUpdateTables */
 
 /**
+ * Get underlying file information in entries to an ObitInfoList
+ * Following entries for AIPS files ("xxx" = prefix):
+ * \param in      Object of interest.
+ * \param myInfo  InfoList on basic object with selection
+ * \param prefix  If NonNull, string to be added to beginning of outList entry name
+ * \param outList InfoList to write entries into
+ * Following entries for AIPS files ("xxx" = prefix):
+ * \li xxxName  OBIT_string  AIPS file name
+ * \li xxxClass OBIT_string  AIPS file class
+ * \li xxxDisk  OBIT_oint    AIPS file disk number
+ * \li xxxSeq   OBIT_oint    AIPS file Sequence number
+ * \li AIPSuser OBIT_oint    AIPS User number
+ * \li xxxCNO   OBIT_oint    AIPS Catalog slot number
+ * \li xxxDir   OBIT_string  Directory name for xxxDisk
+ *
+ * For all File types types:
+ * \li xxxDataType OBIT_string "UV" = UV data, "MA"=>image, "Table"=Table, 
+ *                "OTF"=OTF, etc
+ * \li xxxFileType OBIT_oint File type as ObitIOType, OBIT_IO_FITS, OBIT_IO_AIPS
+ *    
+ * For xxxDataType = "MA"
+ * \li xxxBLC   OBIT_oint[7] (Images only) 1-rel bottom-left corner pixel
+ * \li xxxTRC   OBIT_oint[7] (Images Only) 1-rel top-right corner pixel
+ * \param err     ObitErr for reporting errors.
+ */
+void ObitIOImageAIPSGetFileInfo (ObitIO *in, ObitInfoList *myInfo, gchar *prefix, 
+				 ObitInfoList *outList, ObitErr *err)
+{
+  ObitInfoType type;
+  ObitAIPSDirCatEntry *entry=NULL;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *keyword=NULL, *FileType="Image", *DataType="AIPS", *dirname;
+  olong disk, user, cno, seq, i;
+  gpointer     listPnt;
+  gchar *parm[] = {"BLC", "TRC", NULL};
+  gchar *routine = "ObitIOImageAIPSGetFileInfo";
+
+  if (err->error) return;
+
+  /* Set basic information */
+  if (prefix) keyword =  g_strconcat (prefix, "FileType", NULL);
+  else keyword =  g_strdup ("FileType");
+  dim[0] = strlen(FileType);
+  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, FileType);
+  g_free(keyword);
+  
+   /* AIPS */
+  if (prefix) keyword =  g_strconcat (prefix, "DataType", NULL);
+  else keyword =  g_strdup ("DataType");
+  dim[0] = strlen(DataType);
+  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, DataType);
+  g_free(keyword);
+  
+  /* Disk number */
+  if (!ObitInfoListGet(myInfo, "Disk", &type, dim, &disk, err)) 
+      Obit_traceback_msg (err, routine, in->name);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  if (prefix) keyword =  g_strconcat (prefix, "Disk", NULL);
+  else keyword =  g_strdup ("Disk");
+  ObitInfoListAlwaysPut (outList, keyword, type, dim, &disk);
+  g_free(keyword);
+ 
+  /* AIPS user number */
+  if (!ObitInfoListGet(myInfo, "User", &type, dim, &user, err)) 
+      Obit_traceback_msg (err, routine, in->name);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  if (prefix) keyword =  g_strconcat (prefix, "User", NULL);
+  else keyword =  g_strdup ("User");
+  ObitInfoListAlwaysPut (outList, keyword, type, dim, &user);
+  ObitInfoListAlwaysPut (outList, "AIPSuser", type, dim, &user);
+  g_free(keyword);
+ 
+  /* Catalog slot number */
+  if (!ObitInfoListGet(myInfo, "CNO", &type, dim, &cno, err)) 
+      Obit_traceback_msg (err, routine, in->name);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  if (prefix) keyword =  g_strconcat (prefix, "CNO", NULL);
+  else keyword =  g_strdup ("CNO");
+  ObitInfoListAlwaysPut (outList, keyword, type, dim, &disk);
+  g_free(keyword);
+
+  /* Look up info */
+  entry = ObitAIPSDirGetEntry (disk, user, cno, err);
+
+  /*  AIPS name */
+  if (prefix) keyword =  g_strconcat (prefix, "Name", NULL);
+  else keyword =  g_strdup ("Name");
+  dim[0] = 12;
+  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, entry->name);
+  g_free(keyword);
+
+  /*  AIPS class */
+  if (prefix) keyword =  g_strconcat (prefix, "Class", NULL);
+  else keyword =  g_strdup ("Class");
+  dim[0] = 6;
+  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, entry->class);
+  g_free(keyword);
+
+  /*  AIPS sequence */
+  seq = (olong)entry->seq;
+  if (prefix) keyword =  g_strconcat (prefix, "Seq", NULL);
+  else keyword =  g_strdup ("Seq");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut (outList, keyword, OBIT_long, dim, &seq);
+  g_free(keyword);
+  if (entry) g_free(entry);
+ 
+  /* Disk directory  */
+  dirname = ObitAIPSFilename (OBIT_AIPS_Image, disk, cno, 
+			      user, NULL, 0, err);
+  dim[0] = strlen(dirname);
+  if (prefix) keyword =  g_strconcat (prefix, "Dir", NULL);
+  else keyword =  g_strdup ("Dir");
+  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, dirname);
+  g_free(keyword);
+
+  /* Selection/calibration */
+  i = 0;
+  while (parm[i]) {
+    if (prefix) keyword = g_strconcat (prefix, parm[i], NULL);
+    else        keyword = g_strdup(parm[i]);
+    if (ObitInfoListGetP(myInfo, parm[i], &type, dim, (gpointer*)&listPnt)) {
+      ObitInfoListAlwaysPut(outList, keyword, type, dim, listPnt);
+    }
+    i++;
+    g_free(keyword);
+  }
+} /* end ObitIOImageAIPSGetFileInfo */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitIOImageAIPSClassInit (void)

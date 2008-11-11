@@ -162,6 +162,10 @@ ObitIOCode ObitIOImageAIPSUpdateTables (ObitIOImageAIPS *in,
 					ObitInfoList *info, 
 					ObitErr *err);
 
+/** Public: Extract information about underlying file */
+void ObitIOImageAIPSGetFileInfo (ObitIO *in, ObitInfoList *myInfo, 
+				 gchar *prefix, ObitInfoList *outList, 
+				 ObitErr *err);
 /*---------------Class Info--------------------------*/
 
 /**

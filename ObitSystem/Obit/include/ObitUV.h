@@ -272,6 +272,10 @@ void ObitUVClassInit (void);
 /** Public: Constructor. */
 ObitUV* newObitUV (gchar* name);
 
+/** Public: Create UV object from description in an ObitInfoList */
+ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList, 
+			    ObitErr *err);
+
 /** Public: Copy Constructor for scratch file. */
 ObitUV* newObitUVScratch (ObitUV *in, ObitErr *err);
 typedef ObitUV* (*newObitUVScratchFP) (ObitUV *in, ObitErr *err);

@@ -156,6 +156,10 @@ newObitIOOTFFITSTable (ObitIOOTFFITS *in, ObitIOAccess access,
 ObitIOCode ObitIOOTFFITSUpdateTables (ObitIOOTFFITS *in,  ObitInfoList *info,
 				     ObitErr *err);
 
+/** Public: Extract information about underlying file */
+void ObitIOOTFFITSGetFileInfo (ObitIO *in, ObitInfoList *myInfo, 
+			       gchar *prefix, ObitInfoList *outList, 
+			       ObitErr *err);
 /*---------------Class Info--------------------------*/
 /**
  * ClassInfo Structure.
