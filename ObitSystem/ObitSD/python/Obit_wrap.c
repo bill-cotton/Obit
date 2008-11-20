@@ -3406,6 +3406,18 @@ ImageUtilCCScale (ObitTable *inCCTab, int startComp, int endComp, double scale,
   CCTab = ObitTableCCUnref(CCTab);
 } // end ImageUtilCCScale
 
+void 
+ImageUtilUVFilter (ObitImage *inImage, ObitImage *outImage, double radius, 
+	          ObitErr *err)
+{
+  ofloat lradius;
+
+  if (err->error) return;  // error check 
+
+  lradius   = (ofloat)radius;
+  ObitImageUtilUVFilter (inImage, outImage, lradius, err);
+} // end ImageUtilUVFilter
+
 
 #include "ObitInfoList.h"
 
@@ -24722,6 +24734,46 @@ static PyObject *_wrap_ImageUtilCCScale(PyObject *self, PyObject *args) {
         }
     }
     ImageUtilCCScale(_arg0,_arg1,_arg2,_arg3,_arg4);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageUtilUVFilter(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImage * _arg0;
+    ObitImage * _arg1;
+    double  _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo3 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOdO:ImageUtilUVFilter",&_argo0,&_argo1,&_arg2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageUtilUVFilter. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageUtilUVFilter. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of ImageUtilUVFilter. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    ImageUtilUVFilter(_arg0,_arg1,_arg2,_arg3);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
     return _resultobj;
@@ -59436,6 +59488,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "InfoListCreate", _wrap_InfoListCreate, METH_VARARGS },
 	 { "freeInfoListBlob", _wrap_freeInfoListBlob, METH_VARARGS },
 	 { "makeInfoListBlob", _wrap_makeInfoListBlob, METH_VARARGS },
+	 { "ImageUtilUVFilter", _wrap_ImageUtilUVFilter, METH_VARARGS },
 	 { "ImageUtilCCScale", _wrap_ImageUtilCCScale, METH_VARARGS },
 	 { "ImageUtilQuanFITS", _wrap_ImageUtilQuanFITS, METH_VARARGS },
 	 { "ImageUtilPBCorr", _wrap_ImageUtilPBCorr, METH_VARARGS },

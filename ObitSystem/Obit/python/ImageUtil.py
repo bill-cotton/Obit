@@ -332,8 +332,8 @@ def PCCScale (inCCTab, startComp, endComp, scale, err):
     inCCTab   = Input Python TableCC
     startComp = first (1-rel) component
     endComp   = highest component [1-rel= 0=> all
-    scale     = flux densiti scaling factor
-    err      = Python Obit Error/message stack
+    scale     = flux density scaling factor
+    err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -346,6 +346,31 @@ def PCCScale (inCCTab, startComp, endComp, scale, err):
     if err.isErr:
         OErr.printErrMsg(err, "Error scaling CC table")
     # end PCCScale
+
+def PUVFilter (inImage, outImage, radius, err):
+    """ Filter an image outside of a radius from the origin in FT space.
+
+    Intended to filter out out of band noise in single dish images.
+    Filters by a function with 1.0/(nx*ny) inside radius and outside tapers
+    by an exponential with scale distance 10 pixels.
+    inImage   = Input Image
+    outImage  = Output image, may be inImage
+    radius    = distance from origin in uv space (m)
+    err       = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not Image.PIsA(inImage):
+        raise TypeError,"inImage MUST be a Python Obit Image"
+    if not Image.PIsA(outImage):
+        raise TypeError,"outImage MUST be a Python Obit Image"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    Obit.ImageUtilUVFilter(inImage.me, outImage.me, radius, err.me)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error UV Filtering image")
+    # end PUVFilter
 
 def PImageAdd (in1Image, in2Image, outImage, err, \
                chkPos=False, factor1=1.0, factor2=1.0):

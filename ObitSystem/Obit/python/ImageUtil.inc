@@ -103,4 +103,16 @@ ImageUtilCCScale (ObitTable *inCCTab, int startComp, int endComp, double scale,
   CCTab = ObitTableCCUnref(CCTab);
 } // end ImageUtilCCScale
 
+void 
+ImageUtilUVFilter (ObitImage *inImage, ObitImage *outImage, double radius, 
+	          ObitErr *err)
+{
+  ofloat lradius;
+
+  if (err->error) return;  // error check 
+
+  lradius   = (ofloat)radius;
+  ObitImageUtilUVFilter (inImage, outImage, lradius, err);
+} // end ImageUtilUVFilter
+
 %}

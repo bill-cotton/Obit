@@ -2902,6 +2902,8 @@ void ObitImageUtilUVFilter (ObitImage *inImage, ObitImage *outImage, ofloat radi
   /* Pixel size in uv plane in m */
   dx = fabs((FFTdim[0]*0.25*inImage->myDesc->cdelt[0]/57.296) / Lambda);
   dy = fabs((FFTdim[1]*0.25*inImage->myDesc->cdelt[1]/57.296) / Lambda);
+  dx = 0.25*Lambda / fabs(FFTdim[0]*0.25*inImage->myDesc->cdelt[0]/57.296);
+  dy = 0.25*Lambda / fabs(FFTdim[1]*0.25*inImage->myDesc->cdelt[1]/57.296);
 
   /* Form mask */
   xcenter = (ofloat)(FFTdim[0]/2); 
@@ -3266,7 +3268,7 @@ static gpointer ThreadImageInterp (gpointer args)
   ObitFInterpolate *interp = largs->Interp;
   /* local */
   olong ix, iy, indx, pos[2];
-  ofloat inPixel[2], outPixel[2], *out, *outWt, rad2, dist2, irad2;
+  ofloat inPixel[2], outPixel[2], *out, *outWt=NULL, rad2=0.0, dist2, irad2=0.0;
   ofloat *crpix, wt, val, fblank =  ObitMagicF();
   gboolean OK;
   gchar *routine = "ThreadImageInterp";
