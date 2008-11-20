@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006                                               */
+/*;  Copyright (C) 2006,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -230,7 +230,7 @@ void ObitPosLabelUtilDecDMS (odouble dec, olong *d, olong *m, ofloat *s)
  * \param  ra  [out] RA in degrees 
  * \return 0 if in 0-24 hours else 1
  */
-olong ObitPosLabelUtilHMSRA (gint h, olong m, ofloat s, odouble *ra)
+olong ObitPosLabelUtilHMSRA (olong h, olong m, ofloat s, odouble *ra)
 {
   *ra = h + m/60.0 + s/3600.0;
   *ra = *ra * 15.0;
@@ -247,7 +247,7 @@ olong ObitPosLabelUtilHMSRA (gint h, olong m, ofloat s, odouble *ra)
  * \param  ra  [out] RA in degrees 
  * \return 0 if in range +/-360 else 1 
  */
-olong ObitPosLabelUtilDMSDec (gint d, olong m, ofloat s, odouble *dec)
+olong ObitPosLabelUtilDMSDec (olong d, olong m, ofloat s, odouble *dec)
 {
   olong absdec = d;
   

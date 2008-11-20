@@ -91,13 +91,13 @@ void ObitAIPSCatInitDHDR(void);
 olong ObitAIPSCatOffset (gchar *keyword);
 
 /** Public: Write dummy AIPS header */
-void ObitAIPSCatDummy (gint disk, olong user, 
+void ObitAIPSCatDummy (olong disk, olong user, 
 		       gchar Aname[13], gchar Aclass[7], gchar Atype[3], 
 		       olong seq, olong cno, ObitErr *err);
 
 /** Public: Rename cataloged name, class, seq */
-void ObitAIPSCatRename(gint disk, olong user,  olong cno, gchar *newName, 
-		      gchar *newClass, olong newSeq, ObitErr *err);
+void ObitAIPSCatRename(olong disk, olong user,  olong cno, gchar *newName, 
+		       gchar *newClass, olong newSeq, ObitErr *err);
 
 #endif /* OBITAIPSCAT_H */ 
 

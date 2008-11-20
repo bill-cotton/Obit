@@ -78,18 +78,18 @@ void ProcessData (gchar *inscan, ofloat avgTime,
 		  ObitErr *err);
 /* Read data for a single detector */
 void ReadDatum (ObitTableGBTPARDATA* PARtable, olong ndetect, gboolean *bad, 
-		gint *ntime, odouble** time, ofloat** data, ofloat** cal, 
+		olong *ntime, odouble** time, ofloat** data, ofloat** cal, 
 		ObitErr *err);
 /* Average data a single detector */
 void AverageDatum (gboolean bad, olong detector, olong nraw, odouble *time, 
 		   ofloat *data, ofloat *cal, ofloat avgTime, olong *ntime, 
 		   ofloat *refDate, ofloat **ATime, ofloat **AData, ofloat **ACal);
 /* Remove baseline jumps for a single detector */
-void deJumpDatum (gint ndata, ofloat *data, ofloat *cal);
+void deJumpDatum (olong ndata, ofloat *data, ofloat *cal);
 /* IIR Filter for 1.4 Hz refrigerator hum, 10 Hz sampling */
-void IIRFilter10 (gint ndata, ofloat *data);
+void IIRFilter10 (olong ndata, ofloat *data);
 /* IIR Filter for 1.4 Hz refrigerator hum, 20 Hz sampling */
-void IIRFilter20 (gint ndata, ofloat *data);
+void IIRFilter20 (olong ndata, ofloat *data);
 /* Fit a given frequency to a set of time series */
 void FitFreq (ofloat freq, olong ntime, ofloat *Atime, 
 	      olong ndetect, ofloat **AData, gboolean *bad,  
@@ -2012,7 +2012,7 @@ void AverageDatum (gboolean bad,  olong detector, olong nraw, odouble *time,
 
 } /* end AverageDatum  */
 
-void deJumpDatum (gint ndata, ofloat *data, ofloat *cal)
+void deJumpDatum (olong ndata, ofloat *data, ofloat *cal)
 /*----------------------------------------------------------------------- */
 /*  Remove jumps in data baseline                                         */
 /*  Determines a 9 point running median and when there is a persistent    */
@@ -2104,7 +2104,7 @@ void deJumpDatum (gint ndata, ofloat *data, ofloat *cal)
  * \param ndata    Length of data
  * \param data     data to be filtered, may be magic value blanked
  */
-void IIRFilter10 (gint ndata, ofloat *data)
+void IIRFilter10 (olong ndata, ofloat *data)
 {
 #define NZEROES 6
 #define NPOLES  6
@@ -2164,7 +2164,7 @@ void IIRFilter10 (gint ndata, ofloat *data)
  * \param ndata    Length of data
  * \param data     data to be filtered, may be magic value blanked
  */
-void IIRFilter20 (gint ndata, ofloat *data)
+void IIRFilter20 (olong ndata, ofloat *data)
 {
 #define NZEROES2 6
 #define NPOLES2  6

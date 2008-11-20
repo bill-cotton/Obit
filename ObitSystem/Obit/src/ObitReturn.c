@@ -52,7 +52,7 @@ static ObitIOCode ObitReturnEntry(ObitFile *myFile, gchar* name, ObitInfoType ty
  * \param err     ObitErr for reporting errors.
  * \return return code, OBIT_IO_OK => OK
  */
-ObitIOCode ObitReturnDumpRetCode (gint retCode, gchar *outfile, 
+ObitIOCode ObitReturnDumpRetCode (olong retCode, gchar *outfile, 
 				  ObitInfoList *list, ObitErr *err)
 {
   ObitIOCode ret = OBIT_IO_SpecErr;
@@ -199,7 +199,7 @@ static ObitIOCode ObitReturnEntry(ObitFile *myFile, gchar* name, ObitInfoType ty
     break;
   }; /* end switch by type */
   /* Write it */
-  sprintf (line,"$Key  %s %s %d %d %d\n", 
+  sprintf (line,"$Key = %s %s (%d,%d,%d)\n", 
 	     name, typeStr, dim[0], dim[1], dim[2]);
   retCode = ObitFileWriteLine (myFile, line, err);
   if (err->error) Obit_traceback_val (err, routine, "Output Dumper", retCode);
@@ -214,7 +214,7 @@ static ObitIOCode ObitReturnEntry(ObitFile *myFile, gchar* name, ObitInfoType ty
     lstr =  MAX (1, dim[0]);
     nstr = size/lstr;
     for (i=0; i<nstr; i++) {
-      for (j=0; j<lstr; j++) line[j] = cdata[j];  line[j] = 0;
+      for (j=0; j<lstr; j++) line[j] = cdata[j];  line[j] = '\n'; line[j+1] = 0;
       cdata += lstr;
       retCode = ObitFileWriteLine (myFile, line, err);
       if (err->error) Obit_traceback_val (err, routine, "Output Dumper", retCode);

@@ -153,7 +153,7 @@ typedef ObitFFT* (*newObitFFTFP) (gchar *name, ObitFFTdir dir,
 gconstpointer ObitFFTGetClass (void);
 
 /** Public: Suggest efficient size for a transform */
-olong ObitFFTSuggestSize (gint length);
+olong ObitFFTSuggestSize (olong length);
 
 /** Public: Real to half Complex. */
 void ObitFFTR2C (ObitFFT *in, ObitFArray *inArray, ObitCArray *outArray);

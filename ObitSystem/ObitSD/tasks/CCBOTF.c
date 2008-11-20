@@ -80,8 +80,8 @@ void InitScan (ObitOTF *outData, gboolean isNewFile, ofloat scan, ofloat target,
 void SetScan (ObitOTF *outData, odouble startTime, odouble endTime, 
 	      olong startRec, olong endRec, ObitErr *err);
 /* Reordering indices */
-void SetReorderNew (gint *reorder);
-void SetReorderOld (gint *reorder);
+void SetReorderNew (olong *reorder);
+void SetReorderOld (olong *reorder);
 
 
 /* Program globals */
@@ -2359,7 +2359,7 @@ void SetScan (ObitOTF *outData, odouble startTime, odouble endTime,
 
 } /* end  SetScan */
 
-void SetReorderNew (gint *reorder)
+void SetReorderNew (olong *reorder)
 /*----------------------------------------------------------------------- */
 /*  Fills index array for reordering of data from GBT FITS to OTF         */
 /*   Output order:                                                        */
@@ -2401,7 +2401,7 @@ void SetReorderNew (gint *reorder)
 
 } /* end  SetReorderNew */
 
-void SetReorderOld (gint *reorder)
+void SetReorderOld (olong *reorder)
 /*----------------------------------------------------------------------- */
 /*  Fills index array for reordering of data from GBT FITS to OTF         */
 /*   Output order:                                                        */

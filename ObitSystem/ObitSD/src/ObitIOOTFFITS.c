@@ -79,10 +79,10 @@ void  ObitIOOTFFITSClear (gpointer in);
 static gboolean ObitIOOTFFITSNext (ObitIOOTFFITS *in, ObitErr *err);
 
 /** Private: Copy Floats with byte swap to FITS order */
-static void ObitIOOTFFITSfH2F (gint n, ofloat *in, ofloat *out);
+static void ObitIOOTFFITSfH2F (olong n, ofloat *in, ofloat *out);
 
 /** Private: Copy Floats with byte swap to host order */
-static void ObitIOOTFFITSfF2H (gint n, ofloat *in, ofloat *out);
+static void ObitIOOTFFITSfF2H (olong n, ofloat *in, ofloat *out);
 
 /** Private: Read Sort Order. */
 static void  ObitIOOTFFITSSortRead(ObitIOOTFFITS *in, olong *lstatus);
@@ -1614,6 +1614,8 @@ static void ObitIOOTFFITSClassInfoDefFn (gpointer inClass)
     (newObitIOTableFP)newObitIOOTFFITSTable; 
   theClass->ObitIOUpdateTables   = 
     (ObitIOUpdateTablesFP)ObitIOOTFFITSUpdateTables;
+  theClass->ObitIOGetFileInfo   =
+    (ObitIOGetFileInfoFP)ObitIOOTFFITSGetFileInfo;
 
 } /* end ObitIOOTFFITSClassDefFn */
 
@@ -1710,7 +1712,7 @@ static gboolean ObitIOOTFFITSNext (ObitIOOTFFITS *in, ObitErr *err)
  * \param  in   Array of input floats in host byte order.
  * \param  out  Array of output floats in FITS order
  */
-static void ObitIOOTFFITSfH2F (gint n, ofloat *in, ofloat *out)
+static void ObitIOOTFFITSfH2F (olong n, ofloat *in, ofloat *out)
 {
   olong i;
   union fequiv inu, outu;
@@ -1757,7 +1759,7 @@ static void ObitIOOTFFITSfH2F (gint n, ofloat *in, ofloat *out)
  * \param  in   Array of input floats in FITS order
  * \param  out  Array of output floats in host byte order.
  */
-static void ObitIOOTFFITSfF2H (gint n, ofloat *in, ofloat *out)
+static void ObitIOOTFFITSfF2H (olong n, ofloat *in, ofloat *out)
 {
   olong i;
   union fequiv inu, outu;

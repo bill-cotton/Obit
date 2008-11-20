@@ -99,7 +99,7 @@ typedef struct {
 
 /*---------------Public functions---------------------------*/
 /** Public: Class initializer. */
-void ObitAIPSClassInit (gint number, gchar* dir[], oint F_TRUE, oint F_FALSE);
+void ObitAIPSClassInit (olong number, gchar* dir[], oint F_TRUE, oint F_FALSE);
 
 /** Public: Shutdown. */
 void ObitAIPSShutdown (void);
@@ -110,16 +110,16 @@ ObitAIPSFilename (ObitAIPSFileType type, olong disk, olong cno,
 		  olong userid, gchar *tabType, olong tabVer, ObitErr *err);
 
 /** Public: Set directory string */
-olong ObitAIPSSetDirname (gint disk, gchar* dir, ObitErr *err);
+olong ObitAIPSSetDirname (olong disk, gchar* dir, ObitErr *err);
 
 /** Public: Get directory string */
-gchar* ObitAIPSDirname (gint disk, ObitErr *err);
+gchar* ObitAIPSDirname (olong disk, ObitErr *err);
 
 /** Public: Get number of AIPS disks */
 olong ObitAIPSGetNumDisk (ObitErr *err);
 
 /** Public: Determine file position offset in an image */
-ObitFilePos ObitAIPSImageFileOffset (gint naxis, olong *naxes, olong *pos);
+ObitFilePos ObitAIPSImageFileOffset (olong naxis, olong *naxes, olong *pos);
 
 /** Public: Determine file position offset in a table */
 ObitFilePos ObitAIPSTableFileOffset (ObitFilePos start, olong lrow, olong row);
@@ -131,7 +131,7 @@ ObitFilePos ObitAIPSTableEOF (ObitFilePos start, olong lrow, olong nrow);
 ObitFilePos ObitAIPSUVWonkyPad (ObitFilePos curPos);
 
 /** Public: Convert a olong to EHex */
-void ObitAIPSEHex (gint in, gchar *out);
+void ObitAIPSEHex (olong in, gchar *out);
 
 /** Public: Assign a scratch file info */
 void ObitAIPSAssign(gchar *pgmName, olong pgmNumber, gchar *type,
@@ -148,10 +148,10 @@ gboolean ObitAIPSBooleanF2C (oint logical);
 oint ObitAIPSBooleanC2F (gboolean bool);
 
 /** Public: Mark/Unmark AIPS directory as noScrat */
-void ObitAIPSnoScrat(gint disk, gboolean noScrat, ObitErr *err);
+void ObitAIPSnoScrat(olong disk, gboolean noScrat, ObitErr *err);
 
 /** Public: Tell if AIPS directory is noScrat */
-gboolean ObitAIPSisNoScrat(gint disk);
+gboolean ObitAIPSisNoScrat(olong disk);
 
 /** Public: Check for "noScrat" AIPS disks */
 void ObitAIPSSetnoScrat(ObitInfoList *info, ObitErr *err);

@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006                                               */
+/*;  Copyright (C) 2006,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -258,12 +258,12 @@ ObitFitRegionCreate (gchar* name, olong corner[2], olong dim[2],
  * \param index  index number of region
  * \return name, should be g_freeed when done
  */
-gchar* ObitFitRegionName (gint indx)
+gchar* ObitFitRegionName (olong indx)
 {
   gchar *out=NULL;
   
   out = g_malloc0 (10);
-  sprintf (out, "reg%6.6d", indx);
+  sprintf (out, "reg%6.6d", (gint)indx);
   return out;
   
 } /* end ObitFitRegionName */

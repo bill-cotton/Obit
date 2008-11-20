@@ -80,25 +80,25 @@ static gboolean ObitIOUVFITSNext (ObitIOUVFITS *in, ObitErr *err);
 
 /** Private: Compress visibilities. */
 static void 
-ObitIOUVFITSCompress (gint ncorr, const ofloat *visin, ofloat *wtscl, 
+ObitIOUVFITSCompress (olong ncorr, const ofloat *visin, ofloat *wtscl, 
 		      ofloat *visout);
 
 /** Private: Uncompress visibilities. */
 static void 
-ObitIOUVFITSUncompress (gint ncorr, const ofloat *visin, 
+ObitIOUVFITSUncompress (olong ncorr, const ofloat *visin, 
 			const ofloat *wtscl, ofloat *visout);
 
 /** Private: Copy Floats with byte swap to FITS order */
-static void ObitIOUVFITSfH2F (gint n, ofloat *in, ofloat *out);
+static void ObitIOUVFITSfH2F (olong n, ofloat *in, ofloat *out);
 
 /** Private: Copy Floats with byte swap to host order */
-static void ObitIOUVFITSfF2H (gint n, ofloat *in, ofloat *out);
+static void ObitIOUVFITSfF2H (olong n, ofloat *in, ofloat *out);
 
 /** Private: Copy Shorts with byte swap to FITS order */
-static void ObitIOUVFITSsH2F (gint n, gshort *in, gshort *out);
+static void ObitIOUVFITSsH2F (olong n, gshort *in, gshort *out);
 
 /** Private: Copy Shorts with byte swap to host order */
-static void ObitIOUVFITSsF2H (gint n, gshort *in, gshort *out);
+static void ObitIOUVFITSsF2H (olong n, gshort *in, gshort *out);
 
 /** Private: Read AIPS (and other) Sort Order. */
 static void  ObitIOUVFITSSortRead(ObitIOUVFITS *in, olong *lstatus);
@@ -2039,6 +2039,8 @@ static void ObitIOUVFITSClassInfoDefFn (gpointer inClass)
     (newObitIOTableFP)newObitIOUVFITSTable; 
   theClass->ObitIOUpdateTables   = 
     (ObitIOUpdateTablesFP)ObitIOUVFITSUpdateTables;
+  theClass->ObitIOGetFileInfo   =
+    (ObitIOGetFileInfoFP)ObitIOUVFITSGetFileInfo;
 
 } /* end ObitIOUVFITSClassDefFn */
 
@@ -2145,7 +2147,7 @@ static gboolean ObitIOUVFITSNext (ObitIOUVFITS *in, ObitErr *err)
  * \param  visout (out) Compressed visibility array.
  */
 static void 
-ObitIOUVFITSCompress (gint ncorr, const ofloat *visin, ofloat *wtscl, 
+ObitIOUVFITSCompress (olong ncorr, const ofloat *visin, ofloat *wtscl, 
 		      ofloat *visout)
 {
   olong i;
@@ -2222,7 +2224,7 @@ ObitIOUVFITSCompress (gint ncorr, const ofloat *visin, ofloat *wtscl,
  * \param  visout (out) Expanded visibility array.
  */
 static void 
-ObitIOUVFITSUncompress (gint ncorr, const ofloat *visin, 
+ObitIOUVFITSUncompress (olong ncorr, const ofloat *visin, 
 			const ofloat *wtscl, ofloat *visout)
 {
   olong i;
@@ -2264,7 +2266,7 @@ ObitIOUVFITSUncompress (gint ncorr, const ofloat *visin,
  * \param  in   Array of input floats in host byte order.
  * \param  out  Array of output floats in FITS order
  */
-static void ObitIOUVFITSfH2F (gint n, ofloat *in, ofloat *out)
+static void ObitIOUVFITSfH2F (olong n, ofloat *in, ofloat *out)
 {
   olong i;
   union fequiv inu, outu;
@@ -2298,7 +2300,7 @@ static void ObitIOUVFITSfH2F (gint n, ofloat *in, ofloat *out)
  * \param  in   Array of input floats in FITS order
  * \param  out  Array of output floats in host byte order.
  */
-static void ObitIOUVFITSfF2H (gint n, ofloat *in, ofloat *out)
+static void ObitIOUVFITSfF2H (olong n, ofloat *in, ofloat *out)
 {
   olong i;
   union fequiv inu, outu;
@@ -2332,7 +2334,7 @@ static void ObitIOUVFITSfF2H (gint n, ofloat *in, ofloat *out)
  * \param  in   Array of input shorts in host byte order.
  * \param  out  Array of output shorts in FITS order
  */
-static void ObitIOUVFITSsH2F (gint n, gshort *in, gshort *out)
+static void ObitIOUVFITSsH2F (olong n, gshort *in, gshort *out)
 {
   olong i;
   union sequiv inu, outu;
@@ -2364,7 +2366,7 @@ static void ObitIOUVFITSsH2F (gint n, gshort *in, gshort *out)
  * \param  in   Array of input shorts in FITS order
  * \param  out  Array of output shorts in host byte order.
  */
-static void ObitIOUVFITSsF2H (gint n, gshort *in, gshort *out)
+static void ObitIOUVFITSsF2H (olong n, gshort *in, gshort *out)
 {
   olong i;
   union sequiv inu, outu;

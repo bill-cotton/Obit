@@ -66,7 +66,7 @@ typedef struct {
 
 /*---------------Public functions---------------------------*/
 /** Public: Class initializer. */
-void ObitFITSClassInit (gint number, gchar* dir[]);
+void ObitFITSClassInit (oint number, gchar* dir[]);
 
 /** Public: Constructor. */
 ObitFITS* newObitFITS (void);
@@ -78,14 +78,14 @@ void ObitFITSShutdown (void);
 olong ObitFITSAddDir (gchar* dir, ObitErr *err);
 
 /** Public: Replace FITS data directory path. */
-void ObitFITSSetDir (gchar* dir, gint disk, ObitErr *err);
+void ObitFITSSetDir (gchar* dir, olong disk, ObitErr *err);
 
 /** Public: Generate name of FITS file */
 gchar* 
-ObitFITSFilename (gint disk, gchar* fileName, ObitErr *err);
+ObitFITSFilename (olong disk, gchar* fileName, ObitErr *err);
 
 /** Public: Get directory string */
-gchar* ObitFITSDirname (gint disk, ObitErr *err);
+gchar* ObitFITSDirname (olong disk, ObitErr *err);
 
 /** Public: Assign a scratch file info */
 void ObitFITSAssign(gchar *pgmName, olong pgmNumber, 

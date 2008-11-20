@@ -67,7 +67,7 @@ static void BPCCShift (ObitCArray *Spectrum,  ObitCArray *Work, ObitFFT *FFTFor,
 		       olong sideband, olong nchan, ofloat shift);
 
 /* Private: Interpolate flagged spectral channels */
-static void BPinterpol (gint numCh, float *spectrum, float *weight, float *newWeight, 
+static void BPinterpol (olong numCh, float *spectrum, float *weight, float *newWeight, 
 			gboolean *allFlag);
 
 /* Private: Read BP table entry */
@@ -76,7 +76,7 @@ static void BPGetNext (ObitUVCalBandpassS *in, ObitTableBP *BPTable, olong  irow
 			
 /* Private: Expand polynomial representation */
 static void BPExpnPoly (ObitTableBP *BPTable, ObitTableBPRow *BPTableRow, 
-			gint type, ofloat *in1, ofloat *out1, 
+			olong type, ofloat *in1, ofloat *out1, 
 			ofloat *in2, ofloat *out2, gboolean isAuto, ObitErr *err);
 			
 /* Private: Get Chebyshev polynomials terms */
@@ -1344,7 +1344,7 @@ static void BPCCShift (ObitCArray *Spectrum,  ObitCArray *Work,
  * \param newWeight  Output Weight array for spectrum, 1=good, -1=bad
  * \param allFlag    On output set to TRUE if the whole spectrum is flagged.
  */
-static void BPinterpol (gint numCh, float *spectrum, float *weight, float *newWeight, 
+static void BPinterpol (olong numCh, float *spectrum, float *weight, float *newWeight, 
 			gboolean *allFlag)
 {
   ofloat  mxwt, wt1, wt2, avgwts, v1r, v2r, v1i, v2i, navg; 
@@ -1624,7 +1624,7 @@ static void BPGetNext (ObitUVCalBandpassS *in, ObitTableBP *BPTable, olong  irow
    * \param err        Error Stack
    */
 static void BPExpnPoly (ObitTableBP *BPTable, ObitTableBPRow *BPTableRow, 
-			gint type, ofloat *in1, ofloat *out1, 
+			olong type, ofloat *in1, ofloat *out1, 
 			ofloat *in2, ofloat *out2, gboolean isAuto, ObitErr *err)
 {
   olong  nchan, nmax;

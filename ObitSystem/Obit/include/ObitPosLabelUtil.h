@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006                                               */
+/*;  Copyright (C) 2006,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -52,8 +52,8 @@ void ObitPosLabelUtilRAHMS (odouble ra, olong *h, olong *m, ofloat *s);
 void ObitPosLabelUtilDecDMS (odouble dec, int *d, olong *m, ofloat *s);
 
 /** Public: Convert RA in hours min and seconds to degrees*/
-olong ObitPosLabelUtilHMSRA (gint h, olong m, ofloat s, odouble *ra);
+olong ObitPosLabelUtilHMSRA (olong h, olong m, ofloat s, odouble *ra);
 
 /** Public: convert dec in degrees, min, sec  to degrees */
-olong ObitPosLabelUtilDMSDec (gint d, olong m, ofloat s, odouble *dec);
+olong ObitPosLabelUtilDMSDec (olong d, olong m, ofloat s, odouble *dec);
 #endif /* OBITPOSLABELUTIL */ 

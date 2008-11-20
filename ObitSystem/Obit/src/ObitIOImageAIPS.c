@@ -1397,6 +1397,8 @@ static void ObitIOImageAIPSClassInfoDefFn (gpointer inClass)
     (newObitIOTableFP)newObitIOImageAIPSTable;
   theClass->ObitIOUpdateTables   = 
     (ObitIOUpdateTablesFP)ObitIOImageAIPSUpdateTables;
+  theClass->ObitIOGetFileInfo   =
+    (ObitIOGetFileInfoFP)ObitIOImageAIPSGetFileInfo;
 } /* end ObitIOImageAIPSClassDefFn */
 
 /*--------------- Private functions --------------------------*/

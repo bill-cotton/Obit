@@ -87,7 +87,7 @@ static gpointer ThreadCLEAN (gpointer arg);
 static gpointer ThreadSDICLEAN (gpointer arg);
 
 /** Private: Make arguments for Threaded CLEAN */
-static glong MakeCLEANArgs (ObitDConCleanPxList *in, olong maxThread,
+static olong MakeCLEANArgs (ObitDConCleanPxList *in, olong maxThread,
 			    CLEANFuncArg ***args);
 
 /** Private: Delete arguments for Threaded CLEAN */
@@ -1642,7 +1642,7 @@ gpointer ThreadSDICLEAN (gpointer args)
  *                   delete with KillCLEANArgs
  * \return number of elements in args.
  */
-static glong MakeCLEANArgs (ObitDConCleanPxList *in, olong maxThread,
+static olong MakeCLEANArgs (ObitDConCleanPxList *in, olong maxThread,
 			    CLEANFuncArg ***args)
 {
   olong i, nThreads;

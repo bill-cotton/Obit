@@ -1,6 +1,6 @@
-/* $Id$                            */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003                                               */
+/*;  Copyright (C) 2003,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -43,6 +43,6 @@
 
 /*---------------Public functions---------------------------*/
 /** Public: return Legendre polynomial term */
-float Obit2DLegendre (gint n, ofloat x, ofloat y);
+ofloat Obit2DLegendre (olong n, ofloat x, ofloat y);
 
 #endif /* OBIT2DLEGENDRE_H */ 

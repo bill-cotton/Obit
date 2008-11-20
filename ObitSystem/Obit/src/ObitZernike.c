@@ -1,6 +1,6 @@
-/* $Id$                            */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003                                               */
+/*;  Copyright (C) 2003,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -43,7 +43,7 @@
  * \param Y  "Y" rectangular coordinate on unit circle
  * \return Zernike term
  */
-ofloat ObitZernike (gint n, ofloat x, ofloat y)
+ofloat ObitZernike (olong n, ofloat x, ofloat y)
 {
   ofloat r, out = 0.0;
   
@@ -108,7 +108,7 @@ ofloat ObitZernike (gint n, ofloat x, ofloat y)
  * \param Y  "Y" rectangular coordinate on unit circle
  * \return Zernike term
  */
-ofloat ObitZernikeGradX (gint n, ofloat x, ofloat y)
+ofloat ObitZernikeGradX (olong n, ofloat x, ofloat y)
 {
   ofloat r=0.0, out = 0.0;
 
@@ -171,7 +171,7 @@ ofloat ObitZernikeGradX (gint n, ofloat x, ofloat y)
  * \param Y  "Y" rectangular coordinate on unit circle
  * \return Zernike term
  */
-ofloat ObitZernikeGradY (gint n, ofloat x, ofloat y)
+ofloat ObitZernikeGradY (olong n, ofloat x, ofloat y)
 {
   ofloat r, out = 0.0;
 
@@ -234,7 +234,7 @@ ofloat ObitZernikeGradY (gint n, ofloat x, ofloat y)
  * \param phi azimuthal coordinate on unit circle (radian)
  * \return Zernike term
  */
-ofloat ObitZernikePolar (gint n, ofloat rho, ofloat phi)
+ofloat ObitZernikePolar (olong n, ofloat rho, ofloat phi)
 {
   ofloat out = 0.0;
 

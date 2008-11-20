@@ -121,7 +121,7 @@ gconstpointer ObitFFTGetClass (void)
  * \return a number equal or larger than length that will have an efficient 
  *  transform. 
  */
-olong ObitFFTSuggestSize (gint length)
+olong ObitFFTSuggestSize (olong length)
 {
   olong i, out = length;
   /* Array of good values , even powers of 2, 3, 5 and small multiples */

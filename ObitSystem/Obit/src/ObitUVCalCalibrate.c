@@ -68,11 +68,11 @@ ObitUVCalCalibrateVLBAInit (ObitUVCal *in, ObitUVCalCalibrateS *out,
 
 /** Private: calculate the VLBA segmentation loss factor */
 static double 
-ObitUVCalCalibrateSegLoss (gint lFunc, olong nfft, odouble dbits, olong *rc);
+ObitUVCalCalibrateSegLoss (olong lFunc, olong nfft, odouble dbits, olong *rc);
 
 /** Private: calculate rate decorrelation loss factor */
 static float 
-ObitUVCalCalibrateRateDecorr (gint filter, ofloat rate, ofloat TimeI, ObitErr *err);
+ObitUVCalCalibrateRateDecorr (olong filter, ofloat rate, ofloat TimeI, ObitErr *err);
 
 /*----------------------Public functions---------------------------*/
 /**
@@ -1415,7 +1415,7 @@ ObitUVCalCalibrateVLBAInit (ObitUVCal *in, ObitUVCalCalibrateS *out,
  * \return the loss correction factor.
  */
 static double 
-ObitUVCalCalibrateSegLoss (gint lFunc, olong nfft, odouble dbits, olong *rc)
+ObitUVCalCalibrateSegLoss (olong lFunc, olong nfft, odouble dbits, olong *rc)
 {
   gboolean wvalid;
   odouble dfact=0.0, dfrac, dslope, doffst;
@@ -2553,7 +2553,7 @@ ObitUVCalCalibrateSegLoss (gint lFunc, olong nfft, odouble dbits, olong *rc)
  * \return the decorrelation correction factor.
  */
 static float 
-ObitUVCalCalibrateRateDecorr (gint filter, ofloat rate, ofloat TimeI, ObitErr *err) 
+ObitUVCalCalibrateRateDecorr (olong filter, ofloat rate, ofloat TimeI, ObitErr *err) 
 {
 /* polynomial order for	VLBA filter corrections */
 #define N32D4 14

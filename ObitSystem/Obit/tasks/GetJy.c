@@ -67,7 +67,7 @@ void  ReadSN (ObitTableSN* SNTab, ObitUV *inData, olong CalSrc,
 	      ofloat *offCnt, ofloat *offCnt2, ofloat *offSum, ofloat *offSum2, 
 	      olong *offCalSrc, ObitErr* err);
 /* Determine flux densities */
-void DetFlux (gint maxIF, olong maxAnt, olong maxSou, ofloat *offCnt, ofloat *offCnt2, 
+void DetFlux (olong maxIF, olong maxAnt, olong maxSou, ofloat *offCnt, ofloat *offCnt2, 
 	      ofloat *offSum, ofloat *offSum2, olong *offCalSou, ofloat *oldFlux, 
 	      ofloat *souFlux, ofloat *souErr, ObitErr* err);
 /* Update SN table */
@@ -991,7 +991,7 @@ void  ReadSN (ObitTableSN* SNTab, ObitUV *inData, olong CalSou,
 /*     souErr    Error in derived flux density  (source, IF)              */
 /*      err     Obit Error stack                                          */
 /*----------------------------------------------------------------------- */
-void DetFlux (gint maxIF, olong maxAnt, olong maxSou, ofloat *offCnt, ofloat *offCnt2, 
+void DetFlux (olong maxIF, olong maxAnt, olong maxSou, ofloat *offCnt, ofloat *offCnt2, 
 	      ofloat *offSum, ofloat *offSum2, olong *offCalSou, ofloat *oldFlux, 
 	      ofloat *souFlux, ofloat *souErr, ObitErr* err)
 {

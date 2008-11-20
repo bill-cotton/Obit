@@ -46,7 +46,7 @@ static void jpreces(double JD, ofloat equin, double deldat, olong dir,
 		    odouble *RAMean, odouble *DecMean, odouble *RAApp, odouble *DecApp);
 
 /** Private: Compute the rotation matrix for precession */
-static void jprenu(gint dir, double JD, ofloat equinox, gboolean doNut, 
+static void jprenu(olong dir, double JD, ofloat equinox, gboolean doNut, 
 		   odouble rotMat[3][3]);
 
 /** Private: Compute aberation and GR light bending */
@@ -55,7 +55,7 @@ static void jaber(odouble JD, ofloat equin, gboolean diurn,
 		  odouble poso[3], double velo[3]);
 
 /** Private:  Correct rectangular position for polar motion */
-static void jpolar(gint dir, ofloat polarx, ofloat polary, odouble pos[3]);
+static void jpolar(olong dir, ofloat polarx, ofloat polary, odouble pos[3]);
 
 /** Private:  Computes nutation from IAU 1980 series */
 static void jnut(odouble JD, odouble *delPsi, odouble *delEps);
@@ -282,7 +282,7 @@ static void jpreces(double JD, ofloat equin, double deldat, olong dir,
  * \param doNut   If true include nutation terms.
  * \param rotMat  Rotation matrix
  */
-static void jprenu(gint dir, double JD, ofloat equin, gboolean doNut, 
+static void jprenu(olong dir, double JD, ofloat equin, gboolean doNut, 
 		   odouble rotMat[3][3])
 {
   odouble delpsi, deleps, pr[3][3], nr[3][3], zeta,
@@ -431,7 +431,7 @@ static void jaber(odouble JD, ofloat equin, gboolean diurn,
  * \param polary Polar "Y" position (arcsec)
  * \param pos    Position in rectangular coordinates (angle cosines)
  */
-static void jpolar(gint dir, ofloat polarx, ofloat polary, odouble pos[3])
+static void jpolar(olong dir, ofloat polarx, ofloat polary, odouble pos[3])
 {
   odouble cc, cx, sx, cy, sy, t1, t2;
 

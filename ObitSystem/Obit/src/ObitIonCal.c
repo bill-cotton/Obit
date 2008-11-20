@@ -88,7 +88,7 @@ static CalListElem*
 newCalListElem (odouble ra, odouble dec, ofloat ZernXy[2], ofloat shift[2],
 		ofloat pixel[2], ofloat flux, ofloat offset[2],
 		ofloat peak, ofloat fint,ofloat wt, olong qual,
-		gint calNo, olong epoch); 
+		olong calNo, olong epoch); 
 
 /**  Private: Update contents of an CalListElem */
 static void
@@ -156,7 +156,7 @@ static void CalPosFit (ObitImage *image, ofloat inPixel[2], olong* imsi,
 
 /** Private: CLEAN failed - mark observations bad. */
 static void CalBadTime (ObitIonCal *in, ObitImageMosaic* mosaic, 
-			gint epoch, ObitErr *err);
+			olong epoch, ObitErr *err);
 
 /** Private: Lookup calibrators in an image from a catalog. */
 static void 
@@ -166,13 +166,13 @@ FindCalImage (ObitImage *image, gchar *Catalog, olong catDisk,
 
 /** Private: Fit Zernike model for single time */
 static ofloat
-IonFit1 (gint nobs, olong* isou, ofloat* x, ofloat* y, 
+IonFit1 (olong nobs, olong* isou, ofloat* x, ofloat* y, 
 	 ofloat* dx, ofloat* dy, ofloat* w, 
 	 olong* ncoef, ofloat* coef, olong prtLv, ObitErr *err);
 
 /** Private: Edit data for single time */
 static gboolean
-IonEdit1 (gint nobs, olong* isou, ofloat* x, ofloat* y, 
+IonEdit1 (olong nobs, olong* isou, ofloat* x, ofloat* y, 
 	  ofloat* dx, ofloat* dy, ofloat* w, 
 	  ofloat MaxRMS, olong ncoef, ofloat* coef, olong prtLv, 
 	  ObitErr *err);
@@ -194,7 +194,7 @@ LookupCals (ObitIonCal *in, ObitImageMosaic *mosaic, CalList *calList,
 /** Private: Filter and fit multiepoch offset measurements */
 static ObitTableNI* 
 FitAll (ObitIonCal *in, olong ncoef, 
-	gint nEpoch, ofloat *timeEpoch, ofloat *timeIEpoch, olong *subaEpoch, 
+	olong nEpoch, ofloat *timeEpoch, ofloat *timeIEpoch, olong *subaEpoch, 
 	odouble refFreq, ofloat *seeing, ObitErr* err); 
 
 /** Private: convert timerange to a printable string. */
@@ -211,7 +211,7 @@ static void TR2String (ofloat timer[2], gchar *msgBuf);
 
 /* Private: Initilize Zernike time series */
 static gboolean 
-initIonModel (gint nobs, olong nsou, olong nTime, olong maxcoe, olong* isou, 
+initIonModel (olong nobs, olong nsou, olong nTime, olong maxcoe, olong* isou, 
 	      olong* iTime, ofloat*  x, ofloat* y, ofloat* dx, ofloat* dy, 
 	      ofloat* w, olong*  flqual, olong* ncoef, gboolean* gotsou, 
 	      gboolean* fitsou, ofloat* soffx, ofloat* soffy, ofloat** coef, 
@@ -219,27 +219,27 @@ initIonModel (gint nobs, olong nsou, olong nTime, olong maxcoe, olong* isou,
 
 /* Private: Least Squares Fit Zernike time series and source offsets */
 static void 
-FitIonSeries (gint nobs, olong nsou, olong nTime, olong maxcoe, olong* isou, olong* iTime, 
+FitIonSeries (olong nobs, olong nsou, olong nTime, olong maxcoe, olong* isou, olong* iTime, 
 	      ofloat*  x, ofloat* y, ofloat* dx, ofloat* dy, ofloat* w, olong*  ncoef, 
 	      gboolean* gotsou, gboolean* fitsou, ofloat* soffx, ofloat* soffy, 
 	      ofloat** coef, ofloat* trms, olong prtLv, ObitErr* err) ;
 
 /* Private: Edit data based on Zernike time series  */
 static gboolean 
-IonEditSeries (gint nobs, olong nsou, olong nTime, 
+IonEditSeries (olong nobs, olong nsou, olong nTime, 
 	       olong maxcoe, olong* isou, olong* iTime, ofloat*  x, ofloat* y, 
 	       ofloat* dx, ofloat* dy, ofloat* w, ofloat MaxRMS, olong* ncoef, 
 	       ofloat* soffx, ofloat* soffy, ofloat** coef, olong prtLv, ObitErr* err);
 
 /* Private: Time series editing based on amplitudes */
 static gboolean 
-IonEditAmp (gint nobs, olong nsou, olong nTime, olong* isou, olong* iTime, 
+IonEditAmp (olong nobs, olong nsou, olong nTime, olong* isou, olong* iTime, 
 	    ofloat MinRat, ofloat*  flux, olong* ncoef, ofloat* wt, 
 	    olong prtLv, ObitErr* err);
 
 /* Private: Edit data for a given source based on Zernike time series */
 static void 
-IonEditSource (gint source, olong nobs, olong nTime, olong maxcoe, olong nsou, 
+IonEditSource (olong source, olong nobs, olong nTime, olong maxcoe, olong nsou, 
 	       olong* isou, olong* iTime, ofloat*  x, ofloat* y, 
 	       ofloat* dx, ofloat* dy, ofloat* w, ofloat MaxRMS, olong* ncoef, 
 	       ofloat* soffx, ofloat* soffy, ofloat** coef, 
@@ -1829,7 +1829,7 @@ FindCalImage (ObitImage *image, gchar *Catalog, olong catDisk,
  * \return True if data was edited 
  */
 static gboolean
-IonEdit1 (gint nobs, olong* isou, ofloat* x, ofloat* y, ofloat* dx, ofloat* dy, 
+IonEdit1 (olong nobs, olong* isou, ofloat* x, ofloat* y, ofloat* dx, ofloat* dy, 
 	  ofloat* w, ofloat MaxRMS, olong ncoef, ofloat* coef, olong prtLv, 
 	  ObitErr* err) 
 {
@@ -2780,7 +2780,7 @@ FitAll (ObitIonCal *in, olong ncoef, olong nEpoch,
  * \return TRUE if data OK, else too little data
  */
 static gboolean 
-initIonModel (gint nobs, olong nsou, olong nTime, olong maxcoe, olong* isou, 
+initIonModel (olong nobs, olong nsou, olong nTime, olong maxcoe, olong* isou, 
 	      olong* iTime, ofloat*  x, ofloat* y, ofloat* dx, ofloat* dy, 
 	      ofloat* w, olong*  flqual, olong* ncoef, gboolean* gotsou, 
 	      gboolean* fitsou, ofloat* soffx, ofloat* soffy, ofloat** coef, 
@@ -3066,7 +3066,7 @@ initIonModel (gint nobs, olong nsou, olong nTime, olong maxcoe, olong* isou,
  * \return TRUE if data OK, else too little data
  */
 static void
-finalIonModel (gint nobs, olong nsou, olong nTime, olong maxcoe, olong* isou, 
+finalIonModel (olong nobs, olong nsou, olong nTime, olong maxcoe, olong* isou, 
 	       olong* iTime, ofloat*  x, ofloat* y, ofloat* dx, ofloat* dy, 
 	       ofloat* w, olong* ncoef, gboolean* fitsou, 
 	       ofloat* soffx, ofloat* soffy, ofloat** coef, 
@@ -3285,7 +3285,7 @@ finalIonModel (gint nobs, olong nsou, olong nTime, olong maxcoe, olong* isou,
  * \param err       Error stack
  */
 static void 
-FitIonSeries (gint nobs, olong nsou, olong nTime, olong maxcoe, olong* isou, olong* iTime, 
+FitIonSeries (olong nobs, olong nsou, olong nTime, olong maxcoe, olong* isou, olong* iTime, 
 	      ofloat*  x, ofloat* y, ofloat* dx, ofloat* dy, ofloat* w, olong*  ncoef, 
 	      gboolean* gotsou, gboolean* fitsou, ofloat* soffx, ofloat* soffy, 
 	      ofloat** coef, ofloat* trms, olong prtLv, ObitErr* err) 
@@ -3666,8 +3666,8 @@ FitIonSeries (gint nobs, olong nsou, olong nTime, olong maxcoe, olong* isou, olo
  * \return TRUE if data edited.
  */
 static gboolean 
-IonEditSeries (gint nobs, olong nsou, olong nTime, 
-	gint maxcoe, olong* isou, olong* iTime, ofloat*  x, ofloat* y, 
+IonEditSeries (olong nobs, olong nsou, olong nTime, 
+	olong maxcoe, olong* isou, olong* iTime, ofloat*  x, ofloat* y, 
 	ofloat* dx, ofloat* dy, ofloat* w, ofloat MaxRMS, olong* ncoef, 
 	ofloat* soffx, ofloat* soffy, ofloat** coef, olong prtLv, ObitErr* err) 
 {
@@ -3808,7 +3808,7 @@ IonEditSeries (gint nobs, olong nsou, olong nTime,
  * \return TRUE if data edited.
  */
 static gboolean 
-IonEditAmp (gint nobs, olong nsou, olong nTime, olong* isou, olong* iTime, 
+IonEditAmp (olong nobs, olong nsou, olong nTime, olong* isou, olong* iTime, 
 	    ofloat MinRat, ofloat*  flux, olong* ncoef, ofloat* wt, 
 	    olong prtLv, ObitErr* err) 
 {
@@ -3959,7 +3959,7 @@ IonEditAmp (gint nobs, olong nsou, olong nTime, olong* isou, olong* iTime,
  * \param prtLv     Print level >=1 => give fitting diagnostics
  * \param err       Error stack
  */
-static void IonEditSource (gint source, olong nobs, olong nTime, olong maxcoe, olong nsou, 
+static void IonEditSource (olong source, olong nobs, olong nTime, olong maxcoe, olong nsou, 
 			   olong* isou, olong* iTime, ofloat*  x, ofloat* y, 
 			   ofloat* dx, ofloat* dy, ofloat* w, ofloat MaxRMS, olong* ncoef, 
 			   ofloat* soffx, ofloat* soffy, ofloat** coef, 
@@ -4097,7 +4097,7 @@ static void IonEditSource (gint source, olong nobs, olong nTime, olong maxcoe, o
  * \return RMS residual (deg) -1 on failure
  */
 static ofloat
-IonFit1 (gint nobs, olong* isou, ofloat* x, ofloat* y, 
+IonFit1 (olong nobs, olong* isou, ofloat* x, ofloat* y, 
 	 ofloat* dx, ofloat* dy, ofloat* w, 
 	 olong* ncoef, ofloat* coef, olong prtLv, ObitErr* err)
 {
@@ -4464,7 +4464,7 @@ static CalListElem*
 newCalListElem (odouble ra, odouble dec, ofloat ZernXY[2], ofloat shift[2],
 		ofloat pixel[2], ofloat flux, ofloat offset[2],
 		ofloat peak, ofloat fint, ofloat wt,  olong qual,
-		gint calNo, olong epoch)
+		olong calNo, olong epoch)
 {
   CalListElem *out=NULL;
 
@@ -4790,7 +4790,7 @@ void  FitZernike (olong nobs, olong* isou, ofloat *x, ofloat *y,
  * \param epoch   Epoch number
  */
 static void CalBadTime (ObitIonCal *in, ObitImageMosaic* mosaic, 
-			gint epoch, ObitErr* err)  
+			olong epoch, ObitErr* err)  
 {
   olong   field;
   ofloat offset[2], peak, fint, wt;

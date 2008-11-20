@@ -62,7 +62,7 @@ ObitTableOTFSoln* ObitOTFGetSolnPolyBL (ObitOTF *in, ObitOTF *out, ObitErr *err)
 ObitTableOTFSoln* ObitOTFGetSolnMBBase (ObitOTF *in, ObitOTF *out, ObitErr *err);
 
 /** Public: Determine median value of the cal from a set of data. */
-ofloat ObitOTFGetSolnAvgCal (gint n, gboolean *isCal, ofloat *data);
+ofloat ObitOTFGetSolnAvgCal (olong n, gboolean *isCal, ofloat *data);
 
 /** Public: Determine instrumental calibration. */
 ObitTableOTFSoln* ObitOTFGetInstCal (ObitOTF *in, ObitOTF *out, ObitErr *err);

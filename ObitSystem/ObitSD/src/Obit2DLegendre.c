@@ -1,6 +1,6 @@
-/* $Id$                            */
+/* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003                                               */
+/*;  Copyright (C) 2003,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -18,7 +18,7 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*;  Correspondence this software should be addressed as follows:     */
+/*;Correspondence aboutthis software should be addressed as follows:  */
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
@@ -52,7 +52,7 @@
  * \param x  Location on "X" dimension
  * \param y  Location on "Y" dimension
  */
-float Obit2DLegendre (gint n, ofloat x, ofloat y)
+ofloat Obit2DLegendre (olong n, ofloat x, ofloat y)
 {
   ofloat out = 0.0;
   

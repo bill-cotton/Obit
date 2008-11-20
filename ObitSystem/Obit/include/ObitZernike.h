@@ -42,15 +42,15 @@
 
 /*---------------Public functions---------------------------*/
 /** Return Zernike term N for X and Y */
-ofloat ObitZernike (gint n, ofloat x, ofloat y);
+ofloat ObitZernike (olong n, ofloat x, ofloat y);
 
 /** Return Zernike term N gradient in X for X and Y */
-ofloat ObitZernikeGradX (gint n, ofloat x, ofloat y);
+ofloat ObitZernikeGradX (olong n, ofloat x, ofloat y);
 
 /** Return Zernike term N gradient in Y for X and Y */
-ofloat ObitZernikeGradY (gint n, ofloat x, ofloat y);
+ofloat ObitZernikeGradY (olong n, ofloat x, ofloat y);
 
 /** Return Zernike term N for Polar coordinates rho and phi */
-ofloat ObitZernikePolar (gint n, ofloat rho, ofloat phi);
+ofloat ObitZernikePolar (olong n, ofloat rho, ofloat phi);
 
 #endif /* ZERNIKE_H */ 

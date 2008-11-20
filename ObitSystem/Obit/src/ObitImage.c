@@ -70,7 +70,7 @@ static void ObitImageGetSelect (ObitInfoList *info, ObitImageDesc* desc,
 				ObitImageSel *sel, ObitErr *err);
 
 /** Private: Determine overall plane number. */
-static int PlaneNumber (gint plane[5], olong naxis, olong *inaxes);
+static olong PlaneNumber (olong plane[5], olong naxis, olong *inaxes);
 
 /** Private: Assign myIO object */
 static void ObitImageSetupIO (ObitImage *in, ObitErr *err);
@@ -1982,7 +1982,7 @@ static void ObitImageGetSelect (ObitInfoList *info, ObitImageDesc* desc,
  * \param inaxes Array of axis dimentions
  * \return the 1-rel overall plane number
  */
-static int PlaneNumber (gint plane[5], olong naxis, olong *inaxes)
+static olong PlaneNumber (olong plane[5], olong naxis, olong *inaxes)
 {
   int i, prev, plNumber = 1;
 

@@ -43,39 +43,39 @@
  * Private: Determine minimum clipping levels based on histogram of baseline  
  * RMSes. for TD
  */
-static void editHist (gint ncorr, olong numCell, ofloat hisinc, olong *hissig, 
+static void editHist (olong ncorr, olong numCell, ofloat hisinc, olong *hissig, 
 		      ofloat* hiclip);
 
 /** Digest correlator information for TD */
 static void digestCorr (ObitUVDesc *inDesc, ofloat *maxRMS, ofloat *maxRMS2, 
-			gint *crossBL1, olong *crossBL2, 
-			gint *corChan, olong *corIF, olong *corStok);
+			olong *crossBL1, olong *crossBL2, 
+			olong *corChan, olong *corIF, olong *corStok);
 
 /** Digest correlator information for TDRMSAvg */
 static void digestCorrTDRMSAvg (ObitUVDesc *inDesc, ofloat maxRMSAvg, ofloat *maxRMS2, 
-				gint *crossBL1, olong *crossBL2, 
-				gint *corChan, olong *corIF, olong *corStok);
+				olong *crossBL1, olong *crossBL2, 
+				olong *corChan, olong *corIF, olong *corStok);
 
 /**Private:  Digest  some correlator information for FD */
 static void digestCorrFD (ObitUVDesc *inDesc, olong *corChan, olong *corIF, 
 			 olong *corStok, olong *corV);
 
 /** Private: FD spectral baseline mask  */
-static void EditFDChanMask(gint numChan, olong numIF, olong numPol, olong *chanSel, 
+static void EditFDChanMask(olong numChan, olong numIF, olong numPol, olong *chanSel, 
 			   gboolean *chanMask);
 
 /** Private: Average for FD, get RMSes  */
-static void EditFDAvg(gint numChan, olong numIF, olong numPol, olong numBL, olong *count, 
+static void EditFDAvg(olong numChan, olong numIF, olong numPol, olong numBL, olong *count, 
 		      ofloat *sumA, ofloat *sumA2, ofloat maxAmp, 
 		      ofloat maxV, olong *corV);
 
 /** Private: Fit baselines  for FD to averages, subtract */
-static void EditFDBaseline(gint numChan, olong numIF, olong numPol, olong numBL, 
+static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL, 
 			   olong *count, ofloat *avg, ofloat *RMS, 
 			   olong widMW, gboolean *chanMask, ObitErr* err);
 	    
 /** Private: Do editing for FD */
-static void EditFDEdit(gint numChan, olong numIF, olong numPol, olong numBL, 
+static void EditFDEdit(olong numChan, olong numIF, olong numPol, olong numBL, 
 		       olong *count, ofloat *avg, ofloat *RMS, 
 		       ofloat *maxRMS, ofloat maxRes, ofloat maxResBL, 
 		       gboolean *chanMask);
@@ -100,17 +100,17 @@ static olong MedianDev (ofloat *amps, olong itime, ofloat *times,
 static ofloat MedianUVInt (ObitUV *inUV, ObitErr *err);
 
 /** Private: Determine average level for Median */
-static ofloat MedianLevel (gint n, ofloat *value, ofloat alpha);
+static ofloat MedianLevel (olong n, ofloat *value, ofloat alpha);
 
 /** Private: Determine sigma for Median */
-static ofloat MedianSigma (gint n, ofloat *value, ofloat mean);
+static ofloat MedianSigma (olong n, ofloat *value, ofloat mean);
 
 /** Private: Median flagging */
 static olong MedianFlag (ofloat *devs, ofloat flagSig, 
-			gint numBL, olong numCorr,
+			olong numBL, olong numCorr,
 			ofloat time, ofloat timeInt,
-			gint *BLAnt1, olong *BLAnt2, 
-			gint *Chan, olong *IFs, olong *Stoke,
+			olong *BLAnt1, olong *BLAnt2, 
+			olong *Chan, olong *IFs, olong *Stoke,
 			ObitTableFG *FGtab, ObitTableFGRow *FGRow, 
 			ObitErr *err);
 
@@ -3244,7 +3244,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
  *        On output, the histogram is integrated.
  * \param hiClip  [out] Clipping level in amp**2 units per correlator. 
  */
-static void editHist (gint ncorr, olong numCell, ofloat hisinc, olong *hissig, 
+static void editHist (olong ncorr, olong numCell, ofloat hisinc, olong *hissig, 
 		      ofloat* hiClip) 
 {
   olong   icorr, count, i, j, ihalf, i6, i16, i56;
@@ -3321,8 +3321,8 @@ static void editHist (gint ncorr, olong numCell, ofloat hisinc, olong *hissig,
  *                        1=I, 2=Q, 2=U, 4=V
  */
 static void digestCorr (ObitUVDesc *inDesc, ofloat *maxRMS, ofloat *maxRMS2, 
-			gint *crossBL1, olong *crossBL2, 
-			gint *corChan, olong *corIF, olong *corStok) 
+			olong *crossBL1, olong *crossBL2, 
+			olong *corChan, olong *corIF, olong *corStok) 
 {
   olong ichan, iif, istok, nchan, nif, nstok, kstoke0;
   olong incs, incf, incif, jstok, ioff, lfoff, soff;
@@ -3422,8 +3422,8 @@ static void digestCorr (ObitUVDesc *inDesc, ofloat *maxRMS, ofloat *maxRMS2,
  *                        1=I, 2=Q, 2=U, 4=V
  */
 static void digestCorrTDRMSAvg (ObitUVDesc *inDesc, ofloat maxRMSAvg, ofloat *maxRMS2, 
-				gint *crossBL1, olong *crossBL2, 
-				gint *corChan, olong *corIF, olong *corStok) 
+				olong *crossBL1, olong *crossBL2, 
+				olong *corChan, olong *corIF, olong *corStok) 
 {
   olong ichan, iif, istok, nchan, nif, nstok, kstoke0;
   olong incs, incf, incif, jstok, ioff, lfoff, soff;
@@ -3579,7 +3579,7 @@ static void digestCorrFD (ObitUVDesc *inDesc, olong *corChan, olong *corIF, olon
  *                 end channel==0 terminates list
  * \param chanMask [out] TRUE if corresponding freq, IF, pol is in baseline
  */
-static void EditFDChanMask(gint numChan, olong numIF, olong numPol, olong *chanSel, 
+static void EditFDChanMask(olong numChan, olong numIF, olong numPol, olong *chanSel, 
 			   gboolean *chanMask)
 {
   olong js, jf, jif, indx;
@@ -3645,7 +3645,7 @@ static void EditFDChanMask(gint numChan, olong numIF, olong numPol, olong *chanS
  * \param corV    Entry per element of sumA which if >0 is the 0-rel index of the 
  *                corresponding Stokes RR for a Stokes LL measurement, used with maxV
  */
-static void EditFDAvg(gint numChan, olong numIF, olong numPol, olong numBL, olong *count, 
+static void EditFDAvg(olong numChan, olong numIF, olong numPol, olong numBL, olong *count, 
 		      ofloat *sumA, ofloat *sumA2, ofloat maxAmp, 
 		      ofloat maxV, olong *corV)
 {
@@ -3713,7 +3713,7 @@ static void EditFDAvg(gint numChan, olong numIF, olong numPol, olong numBL, olon
  * \param chanMask Mask, True if channel is to be used in baseline fit
  * \param err      Error stack, returns if not empty.
  */
-static void EditFDBaseline(gint numChan, olong numIF, olong numPol, olong numBL, 
+static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL, 
 			   olong *count, ofloat *avg, ofloat *RMS, 
 			   olong widMW, gboolean *chanMask, ObitErr* err)
 {
@@ -3821,7 +3821,7 @@ static void EditFDBaseline(gint numChan, olong numIF, olong numPol, olong numBL,
  *                 the baseline fitting regions. 
  * \param chanMask Mask, True if channel is to be used in baseline fit
  */
-static void EditFDEdit(gint numChan, olong numIF, olong numPol, olong numBL, 
+static void EditFDEdit(olong numChan, olong numIF, olong numPol, olong numBL, 
 		       olong *count, ofloat *avg, ofloat *RMS, 
 		       ofloat *maxRMS, ofloat maxRes, ofloat maxResBL, 
 		       gboolean *chanMask)
@@ -4065,7 +4065,7 @@ static ofloat MedianUVInt (ObitUV *inUV, ObitErr *err)
  * \return number of baselines/correlations with valid data
  */
 static olong MedianDev (ofloat *amps, olong itime, ofloat *times,
-			gint numBL, olong numCorr, olong numTime, olong ntime,
+			olong numBL, olong numCorr, olong numTime, olong ntime,
 			ofloat alpha, ofloat *devs, 
 			ofloat *work)
 {
@@ -4128,7 +4128,7 @@ static olong MedianDev (ofloat *amps, olong itime, ofloat *times,
  *                data samples are discarded and the rest averaged). 
  * \return alpha median value
  */
-static ofloat MedianLevel (gint n, ofloat *value, ofloat alpha)
+static ofloat MedianLevel (olong n, ofloat *value, ofloat alpha)
 {
   ofloat out=0.0;
   ofloat fblank = ObitMagicF();
@@ -4171,7 +4171,7 @@ static ofloat MedianLevel (gint n, ofloat *value, ofloat alpha)
  * \param mean    Mean value of value
  * \return RMS value, fblank if cannot determine
  */
-static ofloat MedianSigma (gint n, ofloat *value, ofloat mean)
+static ofloat MedianSigma (olong n, ofloat *value, ofloat mean)
 {
   ofloat fblank = ObitMagicF();
   ofloat out;
@@ -4223,10 +4223,10 @@ static ofloat MedianSigma (gint n, ofloat *value, ofloat mean)
  * \return number of baselines/correlations flagged
  */
 static olong MedianFlag (ofloat *devs, ofloat flagSig, 
-			gint numBL, olong numCorr,
+			olong numBL, olong numCorr,
 			ofloat time, ofloat timeInt,
-			gint *BLAnt1, olong *BLAnt2, 
-			gint *Chan, olong *IFs, olong *Stoke,
+			olong *BLAnt1, olong *BLAnt2, 
+			olong *Chan, olong *IFs, olong *Stoke,
 			ObitTableFG *FGtab, ObitTableFGRow *FGrow, 
 			ObitErr *err)
 {

@@ -196,7 +196,7 @@ ofloat medianAvg (ofloat *array, olong incs, olong navg, gboolean doWt, olong n)
  * \param out     array of size of array to be with median values
  * \param work    work array of size of array
  */
-void RunningMedian (glong n, olong wind, ofloat *array, ofloat alpha, 
+void RunningMedian (olong n, olong wind, ofloat *array, ofloat alpha, 
 		    ofloat *RMS, ofloat *out, ofloat *work)
 {
   ofloat *lwork=NULL;
@@ -305,7 +305,7 @@ ofloat MedianLevel (olong n, ofloat *value, ofloat alpha)
  * \param mean    Mean value of value
  * \return RMS value, fblank if cannot determine
  */
-ofloat MedianSigma (gint n, ofloat *value, ofloat mean)
+ofloat MedianSigma (olong n, ofloat *value, ofloat mean)
 {
   ofloat fblank = ObitMagicF();
   ofloat out;

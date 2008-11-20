@@ -434,7 +434,7 @@ olong ObitSystemGetPgmNumber (void)
  * Set program number
  * \param pgmNumber Program number
  */
-void ObitSystemSetPgmNumber (gint pgmNumber)
+void ObitSystemSetPgmNumber (olong pgmNumber)
 {
   if (mySystemInfo==NULL) {
     g_warning ("Obit not initialized");
@@ -461,7 +461,7 @@ olong ObitSystemGetAIPSuser (void)
  * Set AIPS User ID member
  * \param AIPSuser       AIPS user number
  */
-void ObitSystemSetAIPSuser (gint AIPSuser)
+void ObitSystemSetAIPSuser (olong AIPSuser)
 {
   if (mySystemInfo==NULL) {
     g_warning ("Obit not initialized");

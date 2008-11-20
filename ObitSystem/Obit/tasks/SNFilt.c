@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Filter SN table phases to remove peculiar phases  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007                                               */
+/*;  Copyright (C) 2007,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -69,9 +69,9 @@ void ReadSNTab (ObitTableSN *SNTab, ObitErr* err);
 /* Fit model */
 void FitSNData (gboolean init, ofloat maxRMS, ObitErr* err);
 /* Initial Gradient from FT */
-void GradFT (gint itime, ofloat *phase, ofloat *gradX, ofloat *gradY, ofloat *resid);
+void GradFT (olong itime, ofloat *phase, ofloat *gradX, ofloat *gradY, ofloat *resid);
 /* Gradient from Least Squares fit */
-void GradFit (gint itime, ofloat *phase, ofloat *gradX, ofloat *gradY, ofloat *resid, ofloat *rms);
+void GradFit (olong itime, ofloat *phase, ofloat *gradX, ofloat *gradY, ofloat *resid, ofloat *rms);
 /* Edit data */
 gboolean EditSNData (ofloat maxRMS, gboolean *allBad, ObitErr *err);
 /* Write output */
@@ -1335,7 +1335,7 @@ void FitSNData (gboolean init, ofloat maxRMS, ObitErr* err)   {
  * \param gradY     Y Phase gradient rad/m, FBLANK if none 
  * \param resid     Residuals (ant,IF,poln) from model (not used)
  */
-void GradFT (gint itime, ofloat *phase, ofloat *gradX, ofloat *gradY, ofloat *resid)
+void GradFT (olong itime, ofloat *phase, ofloat *gradX, ofloat *gradY, ofloat *resid)
 {
   olong   i, j, iant, jant, ipol, iif, ibase, nbase, xmax, ymax, vcount, indx, jndx;
   gboolean   good;
@@ -1451,7 +1451,7 @@ void GradFT (gint itime, ofloat *phase, ofloat *gradX, ofloat *gradY, ofloat *re
  * \param gradY     Y Phase gradient rad/m, FBLANK if none 
  * \param resid     [out] Residuals (ant,IF,poln) from model
  */
-void GradFit (gint itime, ofloat *phase, ofloat *gradX, ofloat *gradY, 
+void GradFit (olong itime, ofloat *phase, ofloat *gradX, ofloat *gradY, 
 	      ofloat *resid, ofloat *rms)
 {
   gboolean   convgd;

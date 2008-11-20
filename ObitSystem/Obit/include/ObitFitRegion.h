@@ -99,7 +99,7 @@ typedef ObitFitRegion*
 			  ofloat fluxResid, olong nmodel, ObitFitModel **models);
 
 /** Public: Generate the region name from an index. */
-gchar* ObitFitRegionName(gint indx);
+gchar* ObitFitRegionName(olong indx);
 
 /** Public: ClassInfo pointer */
 gconstpointer ObitFitRegionGetClass (void);

@@ -65,7 +65,7 @@ static union FBLANKequiv {
  * \param F_TRUE   Value of Fortran TRUE (used in Fortran interface)
  * \param F_FALSE  Value of Fortran FALSE
  */
-void ObitAIPSClassInit (gint number, gchar* dir[], oint F_TRUE, oint F_FALSE)
+void ObitAIPSClassInit (olong number, gchar* dir[], oint F_TRUE, oint F_FALSE)
 {
   olong i;
   gchar daxx[5], *ev;
@@ -228,7 +228,7 @@ ObitAIPSFilename (ObitAIPSFileType type, olong disk, olong cno,
  * \param dir   new name of the directory
  * \return disk number assigned
  */
-olong ObitAIPSSetDirname (gint disk, gchar* dir, ObitErr *err)
+olong ObitAIPSSetDirname (olong disk, gchar* dir, ObitErr *err)
 {
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -258,7 +258,7 @@ olong ObitAIPSSetDirname (gint disk, gchar* dir, ObitErr *err)
  * \return directory name string, this is a pointer into a global 
  *         class structure and should not be g_freeed.
  */
-gchar* ObitAIPSDirname (gint disk, ObitErr *err)
+gchar* ObitAIPSDirname (olong disk, ObitErr *err)
 {
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -317,7 +317,7 @@ olong ObitAIPSGetNumDisk (ObitErr *err)
  * \param pos   1-rel pixel position
  * \return byte offset from beginning of image file 
  */
-ObitFilePos ObitAIPSImageFileOffset (gint naxis, olong *naxes, olong *pos)
+ObitFilePos ObitAIPSImageFileOffset (olong naxis, olong *naxes, olong *pos)
 {
   ObitFilePos nspp, nrps, nspr, np, ns, filePos=0;
 
@@ -477,7 +477,7 @@ ObitFilePos ObitAIPSUVWonkyPad (ObitFilePos curPos)
  * \param out preexisting string into which to write value
  *            must be at least 4 characters.
  */
-void ObitAIPSEHex (gint in, gchar *out)
+void ObitAIPSEHex (olong in, gchar *out)
 {
   gchar *hexc = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
   olong i, j, iv, jv, work = in;
@@ -711,7 +711,7 @@ gboolean ObitAIPSBooleanF2C (oint logical)
  *                   else allow.
  * \param err  Error stack for any error messages.
  */
-void ObitAIPSnoScrat(gint disk, gboolean noScrat, ObitErr *err)
+void ObitAIPSnoScrat(olong disk, gboolean noScrat, ObitErr *err)
 {
   gchar *routine = "ObitAIPSnoScrat";
   Obit_return_if_fail (((disk>0) && (disk<=myAIPSInfo->NumberDisks)), err,
@@ -725,7 +725,7 @@ void ObitAIPSnoScrat(gint disk, gboolean noScrat, ObitErr *err)
  * \param disk       AIPS disk number.
  * \return True if scratch files disallowed or invalid disk
  */
-gboolean ObitAIPSisNoScrat(gint disk)
+gboolean ObitAIPSisNoScrat(olong disk)
 {
   if ((disk<=0) || (disk>myAIPSInfo->NumberDisks)) return TRUE;
   return myAIPSInfo->noScrat[disk-1];

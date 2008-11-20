@@ -194,12 +194,12 @@ void ObitUVSolnSNSmo (ObitTableSN *SNTab, olong isuba, ObitErr* err);
 
 /** Deselect records in an SN table */
 void ObitUVSolnDeselSN (ObitTableSN *SNTab, olong isuba, olong fqid, 
-			gint nantf, olong *ants, olong nsou, olong *sources,
+			olong nantf, olong *ants, olong nsou, olong *sources,
 			ofloat timerange[2], ObitErr* err);
 
 /** Deselect records in a CL table */
 void ObitUVSolnDeselCL (ObitTableCL *CLTab, olong isuba, olong fqid, 
-			gint nantf, olong *ants, olong nsou, olong *sources,
+			olong nantf, olong *ants, olong nsou, olong *sources,
 			ofloat timerange[2], ObitErr* err);
 
 /** Smooth solutions for a given IF and subarray  */

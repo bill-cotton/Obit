@@ -97,7 +97,7 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
 /* Get initial model for an Island/Region */
  void  GetInitialModel (IslandElem* isElem,  ObitImage *image, gboolean doMulti,
 			ofloat cutt, gboolean doPoint, gboolean doPA, 
-			gint *nmodel, ObitFitModel *models[], 
+			olong *nmodel, ObitFitModel *models[], 
 			ObitErr *err);
 /* Initial single model using moments */
 void snglDef (ObitFArray *pixels, gboolean doPoint, gboolean doPA,
@@ -107,7 +107,7 @@ void snglDef (ObitFArray *pixels, gboolean doPoint, gboolean doPA,
 void scdmom (ofloat dmax, ofloat* sum2, ofloat* sumd2, ofloat* sum4, 
 	     ofloat* a, ofloat* b, ofloat* theta, gboolean* singul) ;
 /* Initial multiple component model */
-void multDef (gint peakNo, gboolean doPA, olong* xpk, olong* ypk, 
+void multDef (olong peakNo, gboolean doPA, olong* xpk, olong* ypk, 
 	      ofloat* spk, ofloat cb[3], ObitFitModel *models[]);
 /* Split island in two */
 void fitTwo (ObitFArray *pixels, ObitFitRegion *reg, ObitFitRegion *oldreg, 
@@ -115,7 +115,7 @@ void fitTwo (ObitFArray *pixels, ObitFitRegion *reg, ObitFitRegion *oldreg,
 
 /*------------  IslandElem Function protptypes  ----------*/
 /** Private: Create a IslandElem. */
-static IslandElem* newIslandElem (gint index, ofloat peak, 
+static IslandElem* newIslandElem (olong index, ofloat peak, 
 				  olong blc[2], olong trc[2]);
 
 /** Private: Delete a IslandElem. */
@@ -1242,7 +1242,7 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
  */
  void  GetInitialModel (IslandElem* isElem,  ObitImage *image, gboolean doMult,
 			ofloat cutt, gboolean doPoint, gboolean doPA, 
-			gint *nmodel, ObitFitModel *models[], 
+			olong *nmodel, ObitFitModel *models[], 
 			ObitErr *err)
 {
   olong blc[2], trc[2], pos[2];
@@ -1758,7 +1758,7 @@ void scdmom (ofloat dmax, ofloat* sum2, ofloat* sumd2, ofloat* sum4,
  * \param cb      Clean beam parameters (pix, pix, rad)
  * \param model   Array of model parameters, entries created
  */
-void multDef (gint peakNo, gboolean doPA, olong* xpk, olong* ypk, ofloat* spk, ofloat cb[3], 
+void multDef (olong peakNo, gboolean doPA, olong* xpk, olong* ypk, ofloat* spk, ofloat cb[3], 
 	      ObitFitModel *models[]) 
 {
   olong i;
@@ -1876,7 +1876,7 @@ void fitTwo (ObitFArray *pixels, ObitFitRegion *reg, ObitFitRegion *oldReg,
  * \param trc   TRC corner of island (0-rel)
  * \return the new  object.
  */
-static IslandElem* newIslandElem (gint index, ofloat peak, 
+static IslandElem* newIslandElem (olong index, ofloat peak, 
 				  olong blc[2], olong trc[2])
 {
   IslandElem *out=NULL;

@@ -1621,7 +1621,7 @@ olong ObitAIPSCatOffset (gchar *keyword)
  * \param cno    AIPS catalog slot number
  * \param err    Obit error stack.
  */
-void ObitAIPSCatDummy (gint disk, olong user, 
+void ObitAIPSCatDummy (olong disk, olong user, 
 		       gchar Aname[13], gchar Aclass[7], gchar Atype[3], 
 		       olong seq, olong cno, ObitErr *err)
 {
@@ -1725,7 +1725,7 @@ void ObitAIPSCatDummy (gint disk, olong user,
  * \param newSeq   New AIPS sequence
  * \param err      Obit error stack.
  */
-void ObitAIPSCatRename(gint disk, olong user,  olong cno, gchar *newName, 
+void ObitAIPSCatRename(olong disk, olong user,  olong cno, gchar *newName, 
 		      gchar *newClass, olong newSeq, ObitErr *err)
 {
   ObitIOCode retCode;

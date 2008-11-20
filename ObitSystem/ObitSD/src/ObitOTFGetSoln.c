@@ -85,7 +85,7 @@ static void PlotMBBL (olong npoly, ofloat *tpoly, ofloat *poly, ofloat *offset,
 		      olong plotDetect, ofloat t0, ObitErr *err);
 
 /** Private: Flatten curves, determine cal and Weights */
-static void doPARCalWeight (gint nDet, olong nTime, ofloat *iCal, ofloat **accum, 
+static void doPARCalWeight (olong nDet, olong nTime, ofloat *iCal, ofloat **accum, 
 			    ofloat *time, ofloat *lastCal, ofloat *lastWeight, 
 			    gboolean fitWate);
 
@@ -2088,7 +2088,7 @@ ObitTableOTFSoln* ObitOTFGetSolnMBBase (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
  *               by the sequence of valid estimates of the cal.
  * \return       Median Cal value or fblank if not possible
  */
-ofloat ObitOTFGetSolnAvgCal (gint n, gboolean *isCal, ofloat *data)
+ofloat ObitOTFGetSolnAvgCal (olong n, gboolean *isCal, ofloat *data)
 {
   olong i, j, prior, follow, ngood=0;
   ofloat fblank = ObitMagicF();
@@ -4185,7 +4185,7 @@ static void PlotMBBL (olong npoly, ofloat *tpoly, ofloat *poly, ofloat *offset,
  * \param lastWeight  [out] Weight per detector (1/variance)
  * \param fitWate     if TRUE then determine weight from this scan, else keep last
  */
-static void doPARCalWeight (gint nDet, olong nTime, ofloat *iCal, ofloat **accum, 
+static void doPARCalWeight (olong nDet, olong nTime, ofloat *iCal, ofloat **accum, 
 			    ofloat *time, ofloat *lastCal, ofloat *lastWeight, 
 			    gboolean fitWate)
 {

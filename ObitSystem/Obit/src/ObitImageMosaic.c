@@ -79,7 +79,7 @@ void  ObitImageMosaicClear (gpointer in);
 static ofloat
 FlyEye (ofloat radius, olong imsize, ofloat cells[2], olong ovrlap,
 	ofloat shift[2], double ra0, double dec0, 
-	gint *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, olong *flqual,
+	olong *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, olong *flqual,
 	ObitErr *err);
 
 /** Private: Add field to list */
@@ -1824,7 +1824,7 @@ void ObitImageMosaicClear (gpointer inn)
 static ofloat
 FlyEye (ofloat radius, olong imsize, ofloat cells[2], olong overlap,
 	ofloat shift[2], odouble ra0, odouble dec0, 
-	gint *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, olong *flqual,
+	olong *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, olong *flqual,
 	ObitErr *err) 
 {
   ofloat out = 0.0;

@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006                                               */
+/*;  Copyright (C) 2006,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -63,9 +63,9 @@ static void ObitImageFitClassInfoDefFn (gpointer inClass);
 /** Private: Do fitting. */
 static void 
 dvdmin (ObitImageFitDataFuncFP fx, gpointer data,  odouble* xi, odouble *xerr, 
-	gint n, odouble eps, olong itmax, odouble *fopt, odouble *gnopt, 
-	gint *ier, olong npr, ObitErr *err);
-static odouble dmachx(gint job);
+	olong n, odouble eps, olong itmax, odouble *fopt, odouble *gnopt, 
+	olong *ier, olong npr, ObitErr *err);
+static odouble dmachx(olong job);
 
 /*----------------------Public functions---------------------------*/
 /**
@@ -528,8 +528,8 @@ void ObitImageFitClear (gpointer inn)
  */
 static void
 dvdmin (ObitImageFitDataFuncFP fx, gpointer data,  odouble *xi, odouble *xerr, 
-	gint n, odouble eps, olong itmax, odouble *fopt, odouble *gnopt, 
-	gint *ier, olong npr, ObitErr *err) 
+	olong n, odouble eps, olong itmax, odouble *fopt, odouble *gnopt, 
+	olong *ier, olong npr, ObitErr *err) 
 {
   olong   nf, ng, it, i, j, l, iflag, lcount;
   odouble lambda, msq, mu, nsq, nu, **xj=NULL, *x0=NULL, *x=NULL, *k0=NULL, *k=NULL, 
@@ -832,7 +832,7 @@ dvdmin (ObitImageFitDataFuncFP fx, gpointer data,  odouble *xi, odouble *xerr,
  *   3 => return a very large number
  * \return the requested value
  */ 
-static odouble dmachx (gint job)
+static odouble dmachx (olong job)
 {
   odouble eps, teps, tiny, huge, s;
  

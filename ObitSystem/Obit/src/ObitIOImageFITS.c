@@ -1821,6 +1821,8 @@ static void ObitIOImageFITSClassInfoDefFn (gpointer inClass)
     (newObitIOTableFP)newObitIOImageFITSTable; 
   theClass->ObitIOUpdateTables   = 
     (ObitIOUpdateTablesFP)ObitIOImageFITSUpdateTables;
+  theClass->ObitIOGetFileInfo   =
+    (ObitIOGetFileInfoFP)ObitIOImageFITSGetFileInfo;
 } /* end ObitIOImageFITSClassDefFn */
 
 /*--------------- Private functions --------------------------*/

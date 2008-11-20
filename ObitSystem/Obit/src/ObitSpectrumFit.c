@@ -922,7 +922,7 @@ void ObitSpectrumFitEval (ObitSpectrumFit* in, ObitImage *inImage,
  * \return  Array of fitter parameters, errors for each and Chi Squares of fit
  *          Initial terms are in Jy, other in log.
  */
-ofloat* ObitSpectrumFitSingle (gint nfreq, olong nterm, odouble refFreq, 
+ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq, 
 			       odouble *freq, ofloat *flux, ofloat *sigma, 
 			       ObitErr *err)
 {
@@ -1616,10 +1616,10 @@ static void NLFit (NLFitArg *arg)
   if (meanSNR>(SNRperTerm*2.0)) isDone = FALSE;  /* Always try for high SNR */
   if (isDone) goto done;
 
-  /* DEBUG 
-  if avg>15.2) {
+  /* DEBUG
+  if (avg>5.0) {
     fprintf (stderr, "Found one %f\n", avg);
-  } */
+  }  */
 
   /* Higher order terms do nonlinear least-squares fit */
   nterm = 2;

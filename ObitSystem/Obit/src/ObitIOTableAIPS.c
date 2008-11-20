@@ -1618,6 +1618,8 @@ static void ObitIOTableAIPSClassInfoDefFn (gpointer inClass)
     (ObitIOCreateBufferFP)ObitIOTableAIPSCreateBuffer;
   theClass->ObitIOFreeBuffer   = 
     (ObitIOFreeBufferFP)ObitIOFreeBuffer;
+  theClass->ObitIOGetFileInfo   =
+    (ObitIOGetFileInfoFP)ObitIOTableAIPSGetFileInfo;
 
 } /* end ObitIOTableAIPSClassDefFn */
 

@@ -64,12 +64,12 @@ static gboolean ObitIOUVAIPSNext (ObitIOUVAIPS *in, ObitErr *err);
 
 /** Private: Compress visibilities. */
 static void 
-ObitIOUVAIPSCompress (gint ncorr, const ofloat *visin, ofloat *wtscl, 
+ObitIOUVAIPSCompress (olong ncorr, const ofloat *visin, ofloat *wtscl, 
 		      ofloat *visout);
 
 /** Private: Uncompress visibilities. */
 static void 
-ObitIOUVAIPSUncompress (gint ncorr, const ofloat *visin, 
+ObitIOUVAIPSUncompress (olong ncorr, const ofloat *visin, 
 			const ofloat *wtscl, ofloat *visout);
 
 /** Private: Set Class function pointers. */
@@ -1669,6 +1669,8 @@ static void ObitIOUVAIPSClassInfoDefFn (gpointer inClass)
     (newObitIOTableFP)newObitIOUVAIPSTable;
   theClass->ObitIOUpdateTables   = 
     (ObitIOUpdateTablesFP)ObitIOUVAIPSUpdateTables;
+  theClass->ObitIOGetFileInfo   =
+    (ObitIOGetFileInfoFP)ObitIOUVAIPSGetFileInfo;
 
 } /* end ObitIOUVAIPSClassDefFn */
 
@@ -1778,7 +1780,7 @@ static gboolean ObitIOUVAIPSNext (ObitIOUVAIPS *in, ObitErr *err)
  * \param  visout (out) Compressed visibility array.
  */
 static void 
-ObitIOUVAIPSCompress (gint ncorr, const ofloat *visin, ofloat *wtscl, 
+ObitIOUVAIPSCompress (olong ncorr, const ofloat *visin, ofloat *wtscl, 
 		      ofloat *visout)
 {
   olong i;
@@ -1837,7 +1839,7 @@ ObitIOUVAIPSCompress (gint ncorr, const ofloat *visin, ofloat *wtscl,
  * \param  visout (out) Expanded visibility array.
  */
 static void 
-ObitIOUVAIPSUncompress (gint ncorr, const ofloat *visin, 
+ObitIOUVAIPSUncompress (olong ncorr, const ofloat *visin, 
 			const ofloat *wtscl, ofloat *visout)
 {
   olong i;

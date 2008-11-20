@@ -846,7 +846,7 @@ cleanup:
  * \param err        Error/message stack, returns if error.
  */
 void ObitUVSolnDeselSN (ObitTableSN *SNTab, olong isuba, olong fqid, 
-			gint nantf, olong *ants, olong nsou, olong *sources,
+			olong nantf, olong *ants, olong nsou, olong *sources,
 			ofloat timerange[2], ObitErr* err)
 {
   ObitIOCode retCode;

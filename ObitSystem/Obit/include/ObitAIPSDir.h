@@ -1,6 +1,6 @@
-/* $Id$                            */
+/* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003                                               */
+/*;  Copyright (C) 2003-2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -105,40 +105,40 @@ typedef enum _ObitAIPSDirStatusError ObitAIPSDirStatusError;
 
 /*---------------Public functions---------------------------*/
 /** Public: Find AIPS Catalog for a given AIPS name ... */
-olong ObitAIPSDirFindCNO(gint disk, olong user, 
+olong ObitAIPSDirFindCNO(olong disk, olong user, 
 		     gchar Aname[13], gchar Aclass[7], gchar Atype[3], 
 		     olong seq, ObitErr *err);
 
 /** Public: Allocate AIPS directory slot an fill it in. */
-olong ObitAIPSDirAlloc(gint disk, olong user, 
+olong ObitAIPSDirAlloc(olong disk, olong user, 
 		     gchar Aname[13], gchar Aclass[7], gchar Atype[3], 
 		     olong seq, gboolean *exist, ObitErr *err);
 
 /** Public: Remove Catalog directory entry */
-void ObitAIPSDirRemoveEntry(gint disk, olong user, olong cno, ObitErr *err);
+void ObitAIPSDirRemoveEntry(olong disk, olong user, olong cno, ObitErr *err);
 
 /** Public: Determine maximum catalog slot number occupied */
-olong ObitAIPSDirNumber(gint disk, olong user, ObitErr *err);
+olong ObitAIPSDirNumber(olong disk, olong user, ObitErr *err);
 
 /** Public: Determine maximum sequence number used */
-olong ObitAIPSDirHiSeq(gint disk, olong user, gchar Aname[13], 
+olong ObitAIPSDirHiSeq(olong disk, olong user, gchar Aname[13], 
 		      gchar Aclass[7], gchar Atype[3], 
 		      gboolean exist, ObitErr *err);
 
 /** Public: Rename entry */
-void ObitAIPSDirRename(gint disk, olong user,  olong cno, gchar *newName, 
+void ObitAIPSDirRename(olong disk, olong user,  olong cno, gchar *newName, 
 		      gchar *newClass, olong newSeq, ObitErr *err);
 
 /** Public: Get Catalog directory entry */
 ObitAIPSDirCatEntry* 
-ObitAIPSDirGetEntry(gint disk, olong user, olong cno, ObitErr *err);
+ObitAIPSDirGetEntry(olong disk, olong user, olong cno, ObitErr *err);
 
 /** Public: Get last access */
 void ObitAIPSDirGetAccess(ObitAIPSDirCatEntry* entry, gchar *timeDate);
 
 /** Public: Change status of Catalog directory entry */
 ObitAIPSDirStatusError
-ObitAIPSDirStatus(gint disk, olong user, olong cno, 
+ObitAIPSDirStatus(olong disk, olong user, olong cno, 
 		  ObitAIPSDirStatusCode code, ObitErr *err);
 
 #endif /* OBITAIPSDIR_H */ 

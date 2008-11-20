@@ -87,7 +87,7 @@ typedef struct {
 /*---------------Private function prototypes----------------*/
 /** Private: Open catalog directory. */
 static ObitAIPSDir* 
-ObitAIPSDirOpen (gint disk, olong user, ObitErr *err);
+ObitAIPSDirOpen (olong disk, olong user, ObitErr *err);
 
 /** Private: Close catalog directory. */
 static void 
@@ -151,7 +151,7 @@ static void ObitAIPSDirUnpackDate (AIPSint pack, olong unpack[3]);
 static void ObitAIPSDirPackDate (AIPSint *pack, olong unpack[3]);
 
 /** Private: Class initializer. */
-void ObitAIPSDirClassInit (gint number, gchar* dir[]);
+void ObitAIPSDirClassInit (olong number, gchar* dir[]);
 
 /*---------------Public functions---------------------------*/
 /**
@@ -166,7 +166,7 @@ void ObitAIPSDirClassInit (gint number, gchar* dir[]);
  * \param err   Obit error stack
  * \return the catalog slot number or -1 if it was not found.
  */
-olong ObitAIPSDirFindCNO(gint disk, olong user, 
+olong ObitAIPSDirFindCNO(olong disk, olong user, 
 		     gchar Aname[13], gchar Aclass[7], 
 		     gchar Atype[3], olong seq, ObitErr *err)
 {
@@ -255,7 +255,7 @@ olong ObitAIPSDirFindCNO(gint disk, olong user,
  * \param err    Obit error stack.
  * \return the catalog slot number or -1 if it was not found.
  */
-olong ObitAIPSDirAlloc(gint disk, olong user, 
+olong ObitAIPSDirAlloc(olong disk, olong user, 
 		     gchar Aname[13], gchar Aclass[7], gchar Atype[3], 
 		     olong seq, gboolean *exist, ObitErr *err)
 {
@@ -359,7 +359,7 @@ olong ObitAIPSDirAlloc(gint disk, olong user,
  * \param cno    Catalog slot number.
  * \param err    Obit error stack.
  */
-void ObitAIPSDirRemoveEntry(gint disk, olong user, olong cno, ObitErr *err)
+void ObitAIPSDirRemoveEntry(olong disk, olong user, olong cno, ObitErr *err)
 {
   ObitAIPSDir         *myDir = NULL;
   ObitAIPSDirCatEntry entry;
@@ -425,7 +425,7 @@ void ObitAIPSDirRemoveEntry(gint disk, olong user, olong cno, ObitErr *err)
  * \param err    Obit error stack.
  * \return highest catalog slot number in directory
  */
-olong ObitAIPSDirNumber(gint disk, olong user, ObitErr *err)
+olong ObitAIPSDirNumber(olong disk, olong user, ObitErr *err)
 {
   olong                ndisk, out = 0;
   ObitAIPSDir         *myDir = NULL;
@@ -472,7 +472,7 @@ olong ObitAIPSDirNumber(gint disk, olong user, ObitErr *err)
  * \param err    Obit error stack.
  * \return the desired AIPS sequence number, -1 on error
  */
-olong ObitAIPSDirHiSeq(gint disk, olong user, gchar Aname[13], gchar Aclass[7], 
+olong ObitAIPSDirHiSeq(olong disk, olong user, gchar Aname[13], gchar Aclass[7], 
 		      gchar Atype[3], gboolean exist, ObitErr *err)
 {
   olong i, outSeq = -1;
@@ -552,7 +552,7 @@ olong ObitAIPSDirHiSeq(gint disk, olong user, gchar Aname[13], gchar Aclass[7],
  * \param newSeq   New AIPS sequence
  * \param err      Obit error stack.
  */
-void ObitAIPSDirRename(gint disk, olong user,  olong cno, gchar *newName, 
+void ObitAIPSDirRename(olong disk, olong user,  olong cno, gchar *newName, 
 			gchar newClass[7], olong newSeq, ObitErr *err)
 {
   ObitAIPSDir   *myDir = NULL;
@@ -613,7 +613,7 @@ void ObitAIPSDirRename(gint disk, olong user,  olong cno, gchar *newName,
  *         NULL on failure, this must be freed (g_free).
  */
 ObitAIPSDirCatEntry* 
-ObitAIPSDirGetEntry(gint disk, olong user, olong cno, ObitErr *err)
+ObitAIPSDirGetEntry(olong disk, olong user, olong cno, ObitErr *err)
 {
   ObitAIPSDir         *myDir = NULL;
   olong ndisk;
@@ -708,7 +708,7 @@ void ObitAIPSDirGetAccess(ObitAIPSDirCatEntry* entry, gchar *timeDate)
  *         OBIT_AIPS_Dir_StatusOK on success.
  */
 ObitAIPSDirStatusError
-ObitAIPSDirStatus(gint disk, olong user, olong cno, 
+ObitAIPSDirStatus(olong disk, olong user, olong cno, 
 		  ObitAIPSDirStatusCode code, ObitErr *err)
 {
   ObitAIPSDir         *myDir = NULL;
@@ -855,7 +855,7 @@ ObitAIPSDirStatus(gint disk, olong user, olong cno,
  *         this must be freed by a call to ObitAIPSDirClose.
  */
 static ObitAIPSDir* 
-ObitAIPSDirOpen (gint disk, olong user, ObitErr *err)
+ObitAIPSDirOpen (olong disk, olong user, ObitErr *err)
 {
   ObitAIPSDir         *out = NULL;
   ObitAIPSDirCatHead  *head=NULL;

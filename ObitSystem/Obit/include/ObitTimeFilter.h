@@ -126,7 +126,7 @@ ObitTimeFilter* newObitTimeFilter (gchar* name, olong nTime, olong nSeries);
 
 /** Typedef for definition of class pointer structure */
 typedef ObitTimeFilter* (*newObitTimeFilterFP) (gchar *name, 
-						gint nTime, olong nFilter);
+						olong nTime, olong nFilter);
 
 /** Public: ClassInfo pointer */
 gconstpointer ObitTimeFilterGetClass (void);

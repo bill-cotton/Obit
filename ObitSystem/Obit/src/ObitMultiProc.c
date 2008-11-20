@@ -518,7 +518,7 @@ void ObitMultiProcShutdown (ObitErr *err)
  * \param jobNo  0-rel job number 
  * \param arg    Argument list to copy
  */
-void ObitMultiProcSetFuncArg(ObitMultiProc* in, glong jobNo, ObitInfoList *arg)
+void ObitMultiProcSetFuncArg(ObitMultiProc* in, olong jobNo, ObitInfoList *arg)
 { 
   /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
@@ -535,7 +535,7 @@ void ObitMultiProcSetFuncArg(ObitMultiProc* in, glong jobNo, ObitInfoList *arg)
  *               ObitMultiProcExecute, otherwise, not.
  */
 /* Set execute flag for a given job */
-void ObitMultiProcSetExecFlag(ObitMultiProc* in, glong jobNo, gboolean flag)
+void ObitMultiProcSetExecFlag(ObitMultiProc* in, olong jobNo, gboolean flag)
 { 
   /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
@@ -613,7 +613,7 @@ void ObitMultiProcExecute (ObitMultiProc* in, ofloat timeout, ObitErr *err)
  * \param  jobNo  0-rel job number 
  * \return pointer to return value ObitInfoList, NULL on error
  */
-ObitInfoList* ObitMultiProcGetFuncRet(ObitMultiProc* in, glong jobNo)
+ObitInfoList* ObitMultiProcGetFuncRet(ObitMultiProc* in, olong jobNo)
 { 
   /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
@@ -920,7 +920,7 @@ static void MultiProcRcv (const char *server_url,
  */
 static void splitURL (const gchar *RPCURL, gchar *host, olong *port)
 {
-  glong i, j, n, doubleslash=0, colon=0, singleslash=0;
+  olong i, j, n, doubleslash=0, colon=0, singleslash=0;
   gchar temp[20];
 
   /* find double slash */

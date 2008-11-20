@@ -158,16 +158,16 @@ void ObitMultiProcStart(ObitInfoList *myInput, ObitErr *err);
 void ObitMultiProcShutdown(ObitErr *err);
 
 /* Set argument for a given job */
-void ObitMultiProcSetFuncArg(ObitMultiProc* in, glong jobNo, ObitInfoList *arg);
+void ObitMultiProcSetFuncArg(ObitMultiProc* in, olong jobNo, ObitInfoList *arg);
 
 /* Set execute flag for a given job */
-void ObitMultiProcSetExecFlag(ObitMultiProc* in, glong jobNo, gboolean flag);
+void ObitMultiProcSetExecFlag(ObitMultiProc* in, olong jobNo, gboolean flag);
 
 /* Execute selected jobs */
 void ObitMultiProcExecute (ObitMultiProc* in, ofloat timeout, ObitErr *err);
 
 /* Get pointer to return values for a given job */
-ObitInfoList* ObitMultiProcGetFuncRet(ObitMultiProc* in, glong jobNo);
+ObitInfoList* ObitMultiProcGetFuncRet(ObitMultiProc* in, olong jobNo);
 
 /** Public: ClassInfo pointer */
 gconstpointer ObitMultiProcGetClass (void);

@@ -1757,6 +1757,8 @@ static void ObitIOTableFITSClassInfoDefFn (gpointer inClass)
     (ObitIOCreateBufferFP)ObitIOTableFITSCreateBuffer;
   theClass->ObitIOFreeBuffer   = 
     (ObitIOFreeBufferFP)ObitIOFreeBuffer;
+  theClass->ObitIOGetFileInfo   =
+    (ObitIOGetFileInfoFP)ObitIOTableFITSGetFileInfo;
 
 } /* end ObitIOTableFITSClassDefFn */
 

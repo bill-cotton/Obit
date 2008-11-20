@@ -83,9 +83,9 @@ ObitSystemStartup (gchar *pgmName, olong pgmNumber,
 /** define type for ClassInfo structure */
 typedef ObitSystem* 
 (*ObitSystemStartupFP) (gchar *pgmName, olong pgmNumber, 
-			gint AIPSuser,
-			gint numberAIPSdisk, gchar* AIPSdir[], 
-			gint numberFITSdisk, gchar* FITSdir[], 
+			olong AIPSuser,
+			olong numberAIPSdisk, gchar* AIPSdir[], 
+			olong numberFITSdisk, gchar* FITSdir[], 
 			ObitErr *err);
 
 /** Public: Return class pointer. */
@@ -122,13 +122,13 @@ void ObitSystemSetPgmName (gchar *pgmName);
 olong ObitSystemGetPgmNumber (void);
 
 /** Public: Reset Program Number */
-void ObitSystemSetPgmNumber (gint pgmNumber);
+void ObitSystemSetPgmNumber (olong pgmNumber);
 
 /** Public: Tell AIPS user ID */
 olong ObitSystemGetAIPSuser (void);
 
 /** Public: Reset AIPS user ID */
-void ObitSystemSetAIPSuser (gint AIPSuser);
+void ObitSystemSetAIPSuser (olong AIPSuser);
 
 /*-------------------Class Info--------------------------*/
 /**

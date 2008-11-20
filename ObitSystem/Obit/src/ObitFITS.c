@@ -51,7 +51,7 @@ static ObitFITS *myFITSInfo = &ObitFITSInfo;
  * \param dir the names of the directories
  *    If NULL then look for environment variables FITS, FITS01, FITS02...
  */
-void ObitFITSClassInit (gint number, gchar* dir[])
+void ObitFITSClassInit (oint number, gchar* dir[])
 {
   olong i;
   gchar fitsxx[8], *ev;
@@ -163,7 +163,7 @@ olong ObitFITSAddDir (gchar* dir, ObitErr *err)
  * \param err   Error stack for any error messages.
  * \return new 1-rel disk number, -1 on failure
  */
-void ObitFITSSetDir (gchar* dir, gint disk, ObitErr *err)
+void ObitFITSSetDir (gchar* dir, olong disk, ObitErr *err)
 {
 
   if (err->error) return;
@@ -187,7 +187,7 @@ void ObitFITSSetDir (gchar* dir, gint disk, ObitErr *err)
  * \return full path name string, should be deallocated when done
  */
 gchar* 
-ObitFITSFilename (gint disk, gchar* fileName, ObitErr *err)
+ObitFITSFilename (olong disk, gchar* fileName, ObitErr *err)
 {
   gchar *out;
   
@@ -228,7 +228,7 @@ ObitFITSFilename (gint disk, gchar* fileName, ObitErr *err)
  * \return directory name string, this is a pointer into a global 
  *         class structure and should not be g_freeed.
  */
-gchar* ObitFITSDirname (gint disk, ObitErr *err)
+gchar* ObitFITSDirname (olong disk, ObitErr *err)
 {
 
   /* error checks */
