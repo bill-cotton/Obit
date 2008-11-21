@@ -160,7 +160,9 @@ def PCreate (name, dirty, beam, clean, err):
             raise TypeError,"beam MUST be a Python Obit Image"
         lbeam = beam
     out = CleanOTF(name, dirty.me, lbeam.me, clean.me, err.me)
-    
+    if beam:
+        dirty.Beam = beam
+  
     return out
     # end PCreate
 
@@ -249,6 +251,7 @@ CleanInput={'structure':['Clean',[('CleanOTF','CleanOTF Object'),
                                   ('Gain','CLEAN loop gain'),
                                   ('minFlux','Minimun flux density (Jy)'),
                                   ('noResid','If True do not include residuals in restored image'),
+                                  ('doRestore','If True restore components'),
                                   ('doScale','If True scale residuals in restored image by beam areas'),
                                   ('Factor','CLEAN depth factor'),
                                   ('Plane','Plane being processed, 1-rel indices of axes 3-?'),
@@ -264,6 +267,7 @@ CleanInput={'structure':['Clean',[('CleanOTF','CleanOTF Object'),
             'Gain':0.1,
             'minFlux':0.0,
             'noResid':False,
+            'doRestore':True,
             'doScale':True,
             'Factor':0.0,
             'Plane':[1,1,1,1,1],
@@ -288,6 +292,7 @@ def PClean (err, input=CleanInput):
     Gain        = CLEAN loop gain
     minFlux     = Minimun flux density (Jy)
     noResid     = If True do not include residuals in restored image
+    doRestore   = If True restore components
     doScale     = If True scale residuals in restored image by beam areas
     Factor      = CLEAN depth factor
     Plane       = Plane being processed, 1-rel indices of axes 3-?
@@ -318,6 +323,7 @@ def PClean (err, input=CleanInput):
     InfoList.PAlwaysPutFloat (inInfo, "minFlux",  dim, [input["minFlux"]])
     InfoList.PAlwaysPutFloat (inInfo, "Factor",   dim, [input["Factor"]])
     InfoList.PAlwaysPutBoolean (inInfo, "noResid",    dim, [input["noResid"]])
+    InfoList.PAlwaysPutBoolean (inInfo, "doRestore",  dim, [input["doRestore"]])
     InfoList.PAlwaysPutBoolean (inInfo, "doScale",    dim, [input["doScale"]])
     InfoList.PAlwaysPutBoolean (inInfo, "doScaleCC",  dim, [input["scale"]])
     InfoList.PAlwaysPutBoolean (inInfo, "autoWindow", dim, [input["autoWindow"]])
@@ -334,6 +340,9 @@ def PClean (err, input=CleanInput):
         ODisplay.PImage(disp, inCleanOTF.Dirty, err, window=window)
         OErr.printErrMsg(err, "Error editing CLEAN boxes")
     #
+    # if Beam Given set on dirty image
+    if inCleanOTF.Beam:
+        dirty.Beam = inCleanOTF.Beam
     # Do operation
     Obit.CleanOTFClean(inCleanOTF.me, err.me)
     # end PClean

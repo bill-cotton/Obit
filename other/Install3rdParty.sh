@@ -94,7 +94,7 @@ if test $doCFITSIO = yes; then
 # cleanup
     cd $BASE3
     rm -f -r cfitsio
-    tar xzvf tarballs/cfitsio2490.tar.gz
+    tar xzvf tarballs/cfitsio3100.tar.gz
     cd cfitsio
     ./configure --prefix=$BASE3/ 
     make clean all install

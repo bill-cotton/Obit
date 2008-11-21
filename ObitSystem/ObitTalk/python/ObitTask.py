@@ -357,12 +357,13 @@ class ObitTask(AIPSTask):
                                 break
                         i = i+1
                 elif DataType=="FITS":
-                    i = 1;
+                    i = 0;
                     # Look for matching FITS directory name
                     if FITS.disks[diskno]:
                         for y in FITSdirs:
                             if y==FITS.disks[diskno].dirname:
-                                dict[x] = i
+                                if dict[x]>0: # Don't translate disk 0 => CWD
+                                    dict[x] = i
                                 break
                             i = i+1
         # DEBUG

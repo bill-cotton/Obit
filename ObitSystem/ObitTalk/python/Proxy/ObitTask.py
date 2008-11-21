@@ -433,7 +433,12 @@ class ObitTask(Task):
             # DEBUG
             #print line
             # Look for header for parameter
-            if line.startswith("$Key  " + adverb):
+            if line.startswith("$Key = " + adverb):
+                # remove unwanted symbols
+                line = line.replace('=',' ')
+                line = line.replace('(',' ')
+                line = line.replace(',',' ')
+                line = line.replace(')',' ')
                 gotIt = True
                 parts = string.split(line)
                 # How many values
