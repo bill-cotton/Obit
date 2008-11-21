@@ -342,6 +342,7 @@ def PClean (err, input=CleanInput):
     #
     # if Beam Given set on dirty image
     if inCleanOTF.Beam:
+        dirty = inCleanOTF.Dirty
         dirty.Beam = inCleanOTF.Beam
     # Do operation
     Obit.CleanOTFClean(inCleanOTF.me, err.me)
