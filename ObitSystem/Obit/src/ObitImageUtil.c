@@ -671,7 +671,7 @@ ObitImageUtilInterpolateImage (ObitImage *inImage, ObitImage *outImage,
 				 interp, err, &threadArgs);
 
   /* Divide up work */
-  nrow = inImage->myDesc->inaxes[1];
+  nrow = outImage->myDesc->inaxes[1];
   nrowPerThread = nrow/nThreads;
   nTh = nThreads;
   if (nrow<64) {nrowPerThread = nrow; nTh = 1;}
@@ -844,7 +844,7 @@ ObitImageUtilInterpolateImageZern (ObitImage *inImage, ObitImage *outImage,
 				 interp, err, &threadArgs);
 
   /* Divide up work */
-  nrow = inImage->myDesc->inaxes[1];
+  nrow = outImage->myDesc->inaxes[1];
   nrowPerThread = nrow/nThreads;
   nTh = nThreads;
   if (nrow<64) {nrowPerThread = nrow; nTh = 1;}
@@ -1001,7 +1001,7 @@ ObitImageUtilInterpolateWeight (ObitImage *inImage, ObitImage *outImage,
 				 interp, err, &threadArgs);
 
   /* Divide up work */
-  nrow = inImage->myDesc->inaxes[1];
+  nrow = outImage->myDesc->inaxes[1];
   nrowPerThread = nrow/nThreads;
   nTh = nThreads;
   if (nrow<64) {nrowPerThread = nrow; nTh = 1;}
