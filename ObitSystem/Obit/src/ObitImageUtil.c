@@ -1026,7 +1026,7 @@ ObitImageUtilInterpolateWeight (ObitImage *inImage, ObitImage *outImage,
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (inImage->thread, nThreads, 
+  OK = ObitThreadIterator (inImage->thread, nTh, 
 			   (ObitThreadFunc)ThreadImageInterp,
 			   (gpointer**)threadArgs);
 

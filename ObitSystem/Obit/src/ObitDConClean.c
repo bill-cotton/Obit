@@ -31,6 +31,7 @@
 #include "ObitFFT.h"
 #include "ObitTableCCUtil.h"
 #include "ObitImageUtil.h"
+#include "ObitThread.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -55,6 +56,33 @@ static ObitDConCleanClassInfo myClassInfo = {FALSE};
 /*--------------- File Global Variables  ----------------*/
 
 
+/*---------------Private structures----------------*/
+/* Image statistics threaded function argument */
+typedef struct {
+  /* Input plane pixel data */
+  ObitFArray *inData;
+  /* Input Window */
+  ObitDConCleanWindow *window;
+  /* Field number (1-rel) */
+  olong      field;
+  /* First (1-rel) row in image to process this thread */
+  olong      first;
+  /* Highest (1-rel) row in image to process this thread  */
+  olong      last;
+  /* thread number, <0 -> no threading  */
+  olong      ithread;
+  /* Obit Thread object */
+  ObitThread  *thread;
+  /* Obit error stack object */
+  ObitErr    *err;
+  /* Number of values in window [out] */
+  olong count;
+  /* Maximum value [out] */
+  ofloat tmax;
+  /* Sum of values [out] */
+  ofloat sum;
+} StatsFuncArg;
+
 /*---------------Private function prototypes----------------*/
 /** Private: Deallocate members. */
 void  ObitDConCleanInit (gpointer in);
@@ -75,6 +103,16 @@ static void GaussTaper (ObitCArray* uvGrid,  ObitImageDesc *imDesc,
 /** Private: Set Class function pointers. */
 static void ObitDConCleanClassInfoDefFn (gpointer inClass);
 
+/** Private: Threaded Image interpolator */
+static gpointer ThreadImageStats (gpointer arg);
+
+/** Private: Make Threaded Image interpolator args */
+static olong MakeStatsFuncArgs (ObitThread *thread,
+				ObitDConCleanWindow *window,
+				ObitErr *err, StatsFuncArg ***ThreadArgs);
+
+/** Private: Delete Threaded Image interpolator args */
+static void KillStatsFuncArgs (olong nargs, StatsFuncArg **ThreadArgs);
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -741,9 +779,11 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, ObitErr *err)
   ObitIOSize IOsize = OBIT_IO_byPlane;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong  blc[IM_MAXDIM], trc[IM_MAXDIM];
-  olong lo, hi, i, ix, iy, nx, ny, count, pos[2];
-  ofloat *data, tmax, sum;
-  gboolean *umask=NULL, *mask=NULL, isUnbox;
+  olong nThreads, i, it, nTh, nrow, nrowPerThread, hirow, lorow, count;
+  olong  lo, hi;
+  ofloat tmax, sum;
+  gboolean OK;
+  StatsFuncArg **threadArgs;
   gchar *routine = "ObitDConCleanImageStats";
 
   /* error checks */
@@ -765,6 +805,9 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, ObitErr *err)
     lo = 0;
     hi = in->nfield-1;
   }
+
+   /* Initialize Threading */
+  nThreads = MakeStatsFuncArgs (in->thread, in->window, err, &threadArgs);
 
   /* Set output to full image, plane at a time */
   blc[0] = blc[1] = 1;
@@ -791,58 +834,52 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, ObitErr *err)
     retCode = ObitImageRead (image, image->image->array, err);
     if (err->error) Obit_traceback_msg (err, routine, image->name);
 
-    /* Loop over image getting statistics in window */
-    nx = image->myDesc->inaxes[0];
-    ny = image->myDesc->inaxes[1];
-    count = 0;
-    sum = 0.0;
-    tmax = -1.0e20;
-    pos[0] = pos[1] = 0;
-    data = ObitFArrayIndex(image->image, pos);
-    for (iy=0; iy<ny; iy++) {   /* loop over rows */
-      /* Use inner or outer window? */
-      if (in->autoWindow) { /* autoWindow mode outer window */
-	/* Get mask for unwindows */
-	isUnbox = ObitDConCleanWindowUnrow(in->window, i+1, iy+1, &umask, err);
-	if (ObitDConCleanWindowOuterRow(in->window, i+1, iy+1, &mask, err)) {
-	  if (isUnbox) {
-	    for (ix=0; ix<nx; ix++) {
-	      if (mask[ix] && (!umask[ix])) {
-		count++;
-		sum += data[ix];
-		tmax = MAX (tmax, fabs(data[ix]));
-	      }
-	    }
-	  } else { /* no unboxes */
-	    for (ix=0; ix<nx; ix++) {
-	      if (mask[ix]) {
-		count++;
-		sum += data[ix];
-		tmax = MAX (tmax, fabs(data[ix]));
-	      }
-	    }
-	  }
-	}
-      } else { /* use inner window */
-	/* Get window mask */
-	if (ObitDConCleanWindowRow(in->window, i+1, iy+1, &mask, err)) {
-	  for (ix=0; ix<nx; ix++) {
-	    if (mask[ix]) {
-	      count++;
-	      sum += data[ix];
-	      tmax = MAX (tmax, fabs(data[ix]));
-	    }
-	  }
-	}
-      } /* end branch for inner or outer window */
-      data += nx;
-    } /* end loop over rows */
+    /* Divide up work */
+    nrow = image->myDesc->inaxes[1];
+    nrowPerThread = nrow/nThreads;
+    nTh = nThreads;
+    if (nrow<64) {nrowPerThread = nrow; nTh = 1;}
+    lorow = 1;
+    hirow = nrowPerThread;
+    hirow = MIN (hirow, nrow);
     
+    /* Set up thread arguments */
+    for (it=0; it<nTh; it++) {
+      if (it==(nTh-1)) hirow = nrow;  /* Make sure do all */
+      if (threadArgs[it]->inData)  ObitFArrayUnref(threadArgs[i]->inData);
+      threadArgs[it]->inData  = ObitFArrayRef(image->image);
+      threadArgs[it]->field   = i+1;
+      threadArgs[it]->first   = lorow;
+      threadArgs[it]->last    = hirow;
+      if (nTh>1) threadArgs[it]->ithread = it;
+      else threadArgs[it]->ithread = -1;
+      /* Update which row */
+      lorow += nrowPerThread;
+      hirow += nrowPerThread;
+      hirow = MIN (hirow, nrow);
+    }
+    
+    /* Do operation */
+    OK = ObitThreadIterator (in->thread, nTh, 
+			   (ObitThreadFunc)ThreadImageStats,
+			   (gpointer**)threadArgs);
+
+    /* Check for problems */
+    if (!OK) Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+
     /* save statistics */
+    count = 0;
+    tmax  = 0.0;
+    sum   = 0.0;
+    for (it=0; it<nTh; it++) {
+      tmax   = MAX (tmax,  threadArgs[it]->tmax);
+      count += threadArgs[it]->count;
+      sum   += threadArgs[it]->sum;
+    }    
     in->maxAbsRes[i] = MAX (tmax, 0.0);
     if (count>0) in->avgRes[i] = sum/count;
     else in->avgRes[i] = 0.0;
-    
+
     /* Save max residual on image */
     dim[0] = 1;
     ObitInfoListPut (image->info, "maxAbsResid", OBIT_long, dim, &tmax, err); 
@@ -853,10 +890,10 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, ObitErr *err)
     /* Free Image array? */
     image->image = ObitFArrayUnref(image->image);
     
-    /* Cleanup */
-    if (mask)  mask  = ObitMemFree (mask);
-    if (umask) umask = ObitMemFree (umask);
   } /* end loop over fields */
+
+  /* cleanup */
+  KillStatsFuncArgs (nThreads, threadArgs);
 
 } /* end  ObitDConCleanImageStats */
 
@@ -1841,3 +1878,156 @@ static void GaussTaper (ObitCArray* uvGrid, ObitImageDesc *imDesc,
   }
 
 } /* end GaussTaper */
+
+/**
+ * Get image statistics for portion of an image in a thread
+ * \param arg Pointer to StatsFuncArg argument with elements:
+ * \li inData   ObitFArray with input plane pixel data
+ * \li window   Clean Window
+ * \li first    First (1-rel) row in image to process this thread
+ * \li last     Highest (1-rel) row in image to process this thread
+ * \li ithread  thread number, <0 -> no threading
+ * \li err      ObitErr Obit error stack object
+ * \li thread   thread Object
+ * \li Stats   ObitFStatsolate Input Image Statsolator
+ * \return NULL
+ */
+static gpointer ThreadImageStats (gpointer args)
+{
+  /* Get arguments from structure */
+  StatsFuncArg *largs = (StatsFuncArg*)args;
+  ObitFArray *inData    = largs->inData;
+  ObitDConCleanWindow *window = largs->window;
+  gboolean   autoWindow = window->autoWindow;
+  olong      field      = largs->field;
+  olong      loRow      = largs->first-1;
+  olong      hiRow      = largs->last-1;
+  ObitErr    *err       = largs->err;
+  ObitThread *thread    = largs->thread;
+  /* local */
+  olong ix, iy, nx, ny, count, pos[2];
+  ofloat *data, tmax, sum;
+  gboolean *umask=NULL, *mask=NULL, isUnbox;
+  /*gchar *routine = "ThreadImageStats";*/
+
+  /* Get array pointer */
+  pos[0] = pos[1] = 0;
+  data = ObitFArrayIndex(inData, pos);
+
+  /* init */
+  nx = inData->naxis[0];
+  ny = inData->naxis[1];
+  count = 0;
+  sum = 0.0;
+  tmax = -1.0e20;
+
+  for (iy = loRow; iy<=hiRow; iy++) { /* loop in y */
+    /* Use inner or outer window? */
+    if (autoWindow) { /* autoWindow mode outer window */
+      /* Get mask for unwindows */
+      isUnbox = ObitDConCleanWindowUnrow(window, field, iy+1, &umask, err);
+      if (ObitDConCleanWindowOuterRow(window, field, iy+1, &mask, err)) {
+	if (isUnbox) {
+	  for (ix=0; ix<nx; ix++) {
+	    if (mask[ix] && (!umask[ix])) {
+	      count++;
+	      sum += data[ix];
+	      tmax = MAX (tmax, fabs(data[ix]));
+	    }
+	  }
+	} else { /* no unboxes */
+	  for (ix=0; ix<nx; ix++) {
+	    if (mask[ix]) {
+	      count++;
+	      sum += data[ix];
+	      tmax = MAX (tmax, fabs(data[ix]));
+	    }
+	  }
+	}
+      }
+    } else { /* use inner window */
+      /* Get window mask */
+      if (ObitDConCleanWindowRow(window, field, iy+1, &mask, err)) {
+	for (ix=0; ix<nx; ix++) {
+	  if (mask[ix]) {
+	    count++;
+	    sum += data[ix];
+	    tmax = MAX (tmax, fabs(data[ix]));
+	  }
+	}
+      }
+    } /* end branch for inner or outer window */
+    data += nx;
+  } /* end loop over rows */
+  
+  /* save statistics */
+  largs->count = count;
+  largs->sum   = sum;
+  largs->tmax  = tmax;
+      
+  /* Cleanup */
+  if (mask)  mask  = ObitMemFree (mask);
+  if (umask) umask = ObitMemFree (umask);
+  
+  /* Indicate completion */
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+} /* ThreadImageStats */
+
+/**
+ * Make arguments for Threaded ThreadImageStats
+ * \param thread     ObitThread object to be used for interpolator
+ * \param inData     Input plane pixel data
+ * \param window     Input Window
+ * \param err        Obit error stack object.
+ * \param ThreadArgs[out] Created array of StatsFuncArg, 
+ *                   delete with KillStatsFuncArgs
+ * \return number of elements in args (number of allowed threads).
+ */
+static olong MakeStatsFuncArgs (ObitThread *thread, 
+				ObitDConCleanWindow *window,
+				ObitErr *err, StatsFuncArg ***ThreadArgs)
+{
+  olong i, nThreads;
+
+  /* Setup for threading */
+  /* How many threads? */
+  nThreads = MAX (1, ObitThreadNumProc(thread));
+
+  /* Initialize threadArg array */
+  *ThreadArgs = g_malloc0(nThreads*sizeof(StatsFuncArg*));
+  for (i=0; i<nThreads; i++) 
+    (*ThreadArgs)[i] = g_malloc0(sizeof(StatsFuncArg)); 
+  for (i=0; i<nThreads; i++) {
+    (*ThreadArgs)[i]->field      = 0;
+    (*ThreadArgs)[i]->inData     = NULL;
+    (*ThreadArgs)[i]->window     = ObitDConCleanWindowRef(window);
+    (*ThreadArgs)[i]->ithread    = i;
+    (*ThreadArgs)[i]->thread     = thread;
+    (*ThreadArgs)[i]->err        = err;
+  }
+
+  return nThreads;
+} /*  end MakeStatsImageArgs */
+
+/**
+ * Delete arguments for ThreadImageStats
+ * \param nargs      number of elements in args.
+ * \param ThreadArgs Array of StatsFuncArg
+ */
+static void KillStatsFuncArgs (olong nargs, StatsFuncArg **ThreadArgs)
+{
+  olong i;
+
+  if (ThreadArgs==NULL) return;
+  for (i=0; i<nargs; i++) {
+    if (ThreadArgs[i]) {
+      if (ThreadArgs[i]->inData)  ObitFArrayUnref(ThreadArgs[i]->inData);
+      if (ThreadArgs[i]->window)  ObitDConCleanWindowUnref(ThreadArgs[i]->window);
+      g_free(ThreadArgs[i]);
+    }
+  }
+  g_free(ThreadArgs);
+} /*  end KillStatsFuncArgs */
