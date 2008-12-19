@@ -111,6 +111,9 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
 			     olong channel, gboolean doBeam, 
 			     gboolean doWeight, ObitErr *err);
 
+/** Public: Make an image from from uv data, info in ObitInfoList. */
+void ObitImageUtilMakeImageFileInfo (ObitInfoList *inList,ObitErr *err);
+
 /** Public: Convert an ObitUVDesc to an ObitImageDesc */
 void 
 ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,

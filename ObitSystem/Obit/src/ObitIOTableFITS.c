@@ -31,6 +31,8 @@
 #include "ObitMem.h"
 #include "ObitFile.h"
 #include <errno.h>
+#include "ObitUVDesc.h"
+#include "ObitImageDesc.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -1586,9 +1588,10 @@ ObitIOTableFITSCreateBuffer (ofloat **data, olong *size,
  * For all File types types:
  * \li xxxDataType OBIT_string "UV" = UV data, "MA"=>image, "Table"=Table, 
  *                "OTF"=OTF, etc
- * \li xxxFileType OBIT_oint File type as ObitIOType, OBIT_IO_FITS, OBIT_IO_AIPS
+ * \li xxxFileType OBIT_oint File type as "FITS"
  *    
  * For xxxDataType = "Table"
+ * \li xxxTableParent OBIT_string  Table parent type (e.g. "MA", "UV")
  * \li xxxTab   OBIT_string  (Tables only) Table type (e.g. "AIPS CC")
  * \li xxxVer   OBIT_oint    (Tables Only) Table version number
  *    
@@ -1599,29 +1602,40 @@ void ObitIOTableFITSGetFileInfo (ObitIO *in, ObitInfoList *myInfo, gchar *prefix
 {
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar *keyword=NULL, *FileType="Table", *DataType="FITS", *dirname;
+  gchar *keyword=NULL, *FileType="FITS", *dirname;
+  gchar *DataType[]={"Table","UV","MA"};
   gchar tempStr[201], *here="./";
   gpointer listPnt;
-  olong disk, ver, i;
+  olong disk, ver, i, ptype;
   gchar *parm[] = {NULL};
   gchar *routine = "ObitIOTableFITSGetFileInfo";
 
   if (err->error) return;
 
   /* Set basic information */
+  /* FITS */
   if (prefix) keyword =  g_strconcat (prefix, "FileType", NULL);
   else keyword =  g_strdup ("FileType");
   dim[0] = strlen(FileType);
   ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, FileType);
   g_free(keyword);
   
-   /* FITS */
+   /* type - Table */
   if (prefix) keyword =  g_strconcat (prefix, "DataType", NULL);
   else keyword =  g_strdup ("DataType");
-  dim[0] = strlen(DataType);
-  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, DataType);
+  dim[0] = strlen(DataType[0]);
+  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, DataType[0]);
   g_free(keyword);
   
+  /* parent type */
+  if (ObitUVDescIsA(in->myDesc))    ptype = 1;
+  if (ObitImageDescIsA(in->myDesc)) ptype = 2;
+  if (prefix) keyword =  g_strconcat (prefix, "TableParent", NULL);
+  else keyword =  g_strdup ("TableParent");
+  dim[0] = strlen(DataType[ptype]);
+  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, DataType[ptype]);
+  g_free(keyword);
+
   /* Filename */
   if (!ObitInfoListGet(myInfo, "FileName", &type, dim, tempStr, err)) 
       Obit_traceback_msg (err, routine, in->name);

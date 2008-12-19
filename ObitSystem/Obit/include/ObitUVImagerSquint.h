@@ -228,17 +228,25 @@ void ObitUVImagerSquintClassInit (void);
 /** Public: Default Constructor. */
 ObitUVImagerSquint* newObitUVImagerSquint (gchar* name);
 
+/** Public: Init UVImager object from description in an ObitInfoList */
+void ObitUVImagerSquintFromInfo (ObitUVImager *out, gchar *prefix, 
+				 ObitInfoList *inList, ObitErr *err);
+
 /** Public: ClassInfo pointer */
 gconstpointer ObitUVImagerSquintGetClass (void);
 
 /** Public: Copy (deep) constructor. */
-ObitUVImagerSquint* ObitUVImagerSquintCopy  (ObitUVImagerSquint *in, ObitUVImagerSquint *out, ObitErr *err);
+ObitUVImagerSquint* ObitUVImagerSquintCopy  (ObitUVImagerSquint *in, 
+					     ObitUVImagerSquint *out, 
+					     ObitErr *err);
 
 /** Public: Copy structure. */
-void ObitUVImagerSquintClone (ObitUVImagerSquint *in, ObitUVImagerSquint *out, ObitErr *err);
+void ObitUVImagerSquintClone (ObitUVImagerSquint *in, ObitUVImagerSquint *out, 
+			      ObitErr *err);
 
 /** Public: Create/initialize ObitUVImagerSquint structures */
-ObitUVImagerSquint* ObitUVImagerSquintCreate (gchar* name, ObitUV *uvdata, ObitErr *err);
+ObitUVImagerSquint* ObitUVImagerSquintCreate (gchar* name, ObitUV *uvdata, 
+					      ObitErr *err);
 
 /** Public: Create/initialize ObitUVImagerSquint structures given mosaic */
 ObitUVImagerSquint* ObitUVImagerSquintCreate2 (gchar* name, ObitUV *uvdata, 
@@ -251,6 +259,10 @@ ObitUVImagerSquint* ObitUVImagerSquintCreate2 (gchar* name, ObitUV *uvdata,
 void ObitUVImagerSquintImage (ObitUVImager *in, olong field, gboolean doWeight, 
 			      gboolean doBeam, gboolean doFlatten, ObitErr *err);
 
+/** Public: Extract information about underlying structures to ObitInfoList */
+void ObitUVImagerSquintGetInfo (ObitUVImager *in, gchar *prefix, 
+				ObitInfoList *outList, 
+				ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

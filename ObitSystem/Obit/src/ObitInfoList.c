@@ -251,19 +251,176 @@ void  ObitInfoListCopyList (ObitInfoList* in, ObitInfoList* out, gchar **list)
       if (xelem==NULL) { /* not there */
 	/* make copy to attach to list */
 	telem = ObitInfoElemCopy(elem);
-	out->list = g_slist_prepend(out->list, telem); /* add to new list */
+	out->list = g_slist_prepend(out->list, telem); /* add to output list */
       } else { /* already there - replace*/
 	/* Delete Old */
 	ObitInfoListRemove (out, xelem->iname);
 	
 	/* make copy to attach to list */
 	telem = ObitInfoElemCopy(elem);
-	out->list = g_slist_prepend(out->list, telem); /* add to new list */
+	out->list = g_slist_prepend(out->list, telem); /* add to output list */
       }
     }
     tmp = g_slist_next(tmp);
   }
 } /* end ObitInfoListCopyList */
+
+/**
+ * opy entries from one list to another controlled by a list with rename.
+ * \param in      The input object to copy
+ * \param out     The output object
+ * \param inList  NULL terminated list of element names
+ * \param outList NULL terminated list of element names, entries must correspond to inList
+ */
+void ObitInfoListCopyListRename(ObitInfoList* in, ObitInfoList* out, 
+				gchar **inList, gchar **outList)
+{
+  GSList  *tmp;
+  olong i;
+  gboolean wanted;
+  ObitInfoElem *elem, *telem, *xelem;
+
+  /* error checks */
+  g_assert (ObitInfoListIsA(in));
+  g_assert (ObitInfoListIsA(out));
+
+  /* loop through list copying elements */
+  tmp = in->list;
+  while (tmp!=NULL) {
+    elem = (ObitInfoElem*)tmp->data;
+    
+    /* Is this one on the list */
+    wanted = FALSE;
+    i = 0;
+    while (inList[i] && outList[i]) {
+      if (!strcmp(elem->iname, inList[i])) { wanted = TRUE; break;};
+      i++;
+    }
+    
+    if (wanted) { /* copy */
+      out->number++; /* number of elements */
+      /* Check if it's already there and is so just update */
+      xelem = ObitInfoListFind(out, outList[i]);
+      if (xelem==NULL) { /* not there */
+	/* make copy with rename to attach to list */
+	telem = newObitInfoElem(outList[i], elem->itype, elem->idim, elem->data);
+	out->list = g_slist_prepend(out->list, telem); /* add to output list */
+      } else { /* already there - replace*/
+	/* Delete Old */
+	ObitInfoListRemove (out, xelem->iname);
+	
+	/* make copy with rename to attach to list */
+	telem = newObitInfoElem(outList[i], elem->itype, elem->idim, elem->data);
+	out->list = g_slist_prepend(out->list, telem); /* add to output list */
+      }
+    }
+    tmp = g_slist_next(tmp);
+  }
+} /* end ObitInfoListCopyListRename */
+
+
+/**
+ * Copy entries from one list to another adding a prefix
+ * \param in     The input object to copy
+ * \param out    The output object
+ * \param prefix Prefix to add
+ */
+void ObitInfoListCopyAddPrefix(ObitInfoList* in, ObitInfoList* out, 
+			       gchar *prefix)
+{
+  GSList  *tmp;
+  ObitInfoElem *elem, *telem, *xelem;
+  gchar *newName = NULL;
+
+  /* error checks */
+  g_assert (ObitInfoListIsA(in));
+  g_assert (ObitInfoListIsA(out));
+
+  /* loop through list copying elements */
+  tmp = in->list;
+  while (tmp!=NULL) {
+    elem = (ObitInfoElem*)tmp->data;
+    /* New name */
+    newName = g_strconcat(prefix, elem->iname, NULL);
+    
+    out->number++; /* number of elements */
+    /* Check if it's already there and is so just update */
+    xelem = ObitInfoListFind(out, newName);
+    if (xelem==NULL) { /* not there */
+      /* make copy to attach to list */
+      telem = newObitInfoElem(newName, elem->itype, elem->idim, elem->data);
+      out->list = g_slist_prepend(out->list, telem); /* add to output list */
+    } else { /* already there - replace*/
+      /* Delete Old */
+      ObitInfoListRemove (out, xelem->iname);
+      
+      /* make copy to attach to list */
+      telem = newObitInfoElem(newName, elem->itype, elem->idim, elem->data);
+      out->list = g_slist_prepend(out->list, telem); /* add to output list */
+    }
+    g_free(newName);
+    tmp = g_slist_next(tmp);
+  }
+} /* end ObitInfoListCopyAddPrefix */
+
+
+/**
+ * Copy entries with a given prefix from one list to another
+ * \param in     The input object to copy
+ * \param out    The output object
+ * \param prefix Prefix to look for
+ * \param strip  If TRUE then remove prefix in output list
+ */
+void ObitInfoListCopyWithPrefix(ObitInfoList* in, ObitInfoList* out, 
+				gchar *prefix, gboolean strip)
+{
+  GSList  *tmp;
+  olong nchk;
+  ObitInfoElem *elem, *telem, *xelem;
+  gboolean wanted;
+  gchar *newName = NULL;
+
+  /* error checks */
+  g_assert (ObitInfoListIsA(in));
+  g_assert (ObitInfoListIsA(out));
+
+  /* How many characters to compare? */
+  nchk = strlen(prefix);
+
+  /* loop through list copying elements */
+  tmp = in->list;
+  while (tmp!=NULL) {
+    elem = (ObitInfoElem*)tmp->data;
+
+    /* Does this begin with the prefix? */
+    wanted = !strncmp(prefix, elem->iname, nchk);     
+
+    if(wanted) {
+      /* New name */
+      if (strip) newName = g_strdup(&elem->iname[nchk]);
+      else newName = g_strdup(elem->iname);
+
+      out->number++; /* number of output elements */
+      /* Check if it's already there and is so just update */
+      xelem = ObitInfoListFind(out, newName);
+      if (xelem==NULL) { /* not there */
+	/* make copy to attach to list */
+	telem = newObitInfoElem(newName, elem->itype, elem->idim, elem->data);
+	out->list = g_slist_prepend(out->list, telem); /* add to output list */
+      } else { /* already there - replace*/
+	/* Delete Old */
+	ObitInfoListRemove (out, xelem->iname);
+	
+	/* make copy to attach to list */
+	telem = newObitInfoElem(newName, elem->itype, elem->idim, elem->data);
+	out->list = g_slist_prepend(out->list, telem); /* add to output list */
+      }
+      g_free(newName);
+    } /* end if wanted */
+    tmp = g_slist_next(tmp);
+  }
+} /* end ObitInfoListCopyWithPrefix */
+
 
 /**
  * Store information in the infoList.

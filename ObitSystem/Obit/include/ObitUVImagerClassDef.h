@@ -27,6 +27,8 @@
 /*  Define the basic components of the ObitUVImager ClassInfo structure */
 /* This is intended to be included in a classInfo structure definition  */
 #include "ObitClassDef.h"  /* Parent class ClassInfo definition file */
+/** Function pointer to Constructor from ObitInfo. */
+ObitUVImagerFromInfoFP ObitUVImagerFromInfo;
 /** Function pointer to Constructor. */
 ObitUVImagerCreateFP ObitUVImagerCreate;
 /** Function pointer to Constructor.given mosaic  */
@@ -39,3 +41,6 @@ ObitUVImagerImageFP ObitUVImagerImage;
 ObitUVImagerFlattenFP ObitUVImagerFlatten;
 /** Function pointer to get ImageMosaic function. */
 ObitUVImagerGetMosaicFP ObitUVImagerGetMosaic;
+/** Function pointer to Extract information about underlying structures 
+    to ObitInfoList. */
+ObitUVImagerGetInfoFP ObitUVImagerGetInfo;

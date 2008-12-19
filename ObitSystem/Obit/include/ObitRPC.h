@@ -138,6 +138,9 @@ typedef struct {
 /** Public: Class initializer. */
 void ObitRPCClassInit (void);
 
+/** Public: Class shutdown. */
+void ObitRPCClassShutdown (void);
+
 /** Public: Default Constructor. */
 ObitRPC* newObitRPC (gchar* name);
 

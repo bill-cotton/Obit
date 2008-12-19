@@ -132,7 +132,7 @@ if test $doFFTW = yes; then
     tar xzvf tarballs/fftw-3.1.2.tar.gz
     cd fftw-3.1.2
 # Use --enable-threads for multithreaded
-    ./configure --prefix=$BASE3/ --with-gcc --enable-shared --enable-float
+    ./configure --prefix=$BASE3/ --with-gcc --enable-shared --enable-float --enable-threads
     make clean all install
 fi
 

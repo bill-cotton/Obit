@@ -210,7 +210,7 @@ ObitAIPSFilename (ObitAIPSFileType type, olong disk, olong cno,
   file[9] = '.';        file[10] = idEhex[0];
   file[11] = idEhex[1]; file[12] = idEhex[2];
   
-  /* Top it all off with a VAXish */
+  /* Top it all off with a VAXism */
   file[13] = ';';         file[14] = 0;
   
   /* put it all together */
@@ -221,7 +221,7 @@ ObitAIPSFilename (ObitAIPSFileType type, olong disk, olong cno,
 
 /**
  * Change directory name
- * Note, the maximum number of AIPS disks is MAXAIPSDisk (35), new disks up to this 
+ * Note, the maximum number of AIPS disks is MAXAIPSDISK  new disks up to this 
  * max can be assigned.
  * \param disk  disk (1-rel) to be changed, must have been assigned at startup
  *              if <=0 then add new disk, up to MAXAIPSDISK
@@ -250,6 +250,52 @@ olong ObitAIPSSetDirname (olong disk, gchar* dir, ObitErr *err)
 
   return disk;
 } /* end ObitAIPSSetDirname */
+
+/**
+ * Lookup and possibly add a directory.
+ * Searches the current list of directories for directory name dir,
+ * if it exists, its disk number is returned.  Otherwise the directory
+ * is added and its number is returned.
+ * Note, the maximum number of AIPS disks is MAXAIPSDISK  new disks up to this 
+ * max can be assigned.
+ * \param disk  disk (1-rel) to be changed, must have been assigned at startup
+ *              if <=0 then add new disk, up to MAXAIPSDISK
+ * \param dir   name of the directory to be located or added
+ * \return disk number assigned
+ */
+olong ObitAIPSFindDirname (gchar* dir, ObitErr *err)
+{
+  olong disk=0;
+
+  /* error checks */
+  if (err->error) return disk;
+
+  if (!myAIPSInfo->initialized) { /* AIPS directories un initialized */
+    Obit_log_error(err, OBIT_Error, "AIPS directories uninitialized");
+    return disk;
+  }
+
+  /* See if it is currently defined */
+  for (disk=1; disk<=myAIPSInfo->NumberDisks; disk++) {
+    if (!strcmp(dir, myAIPSInfo->AIPSdir[disk-1])) return disk;
+  }
+
+    /* Nope - add */
+    disk = myAIPSInfo->NumberDisks+1;  /* Add directory */
+    if ((disk<1) || (disk>MAXAIPSDISK)) /* Disk number out of range? */
+      Obit_log_error(err, OBIT_Error, 
+		     "AIPS disk number %d out of range [%d,%d]", 
+		     disk, 1, myAIPSInfo->NumberDisks);
+    if (err->error) return  disk;
+
+  /* Add directory name */
+  if (myAIPSInfo->AIPSdir[disk-1]) g_free(myAIPSInfo->AIPSdir[disk-1]);
+  myAIPSInfo->AIPSdir[disk-1] =  g_strdup(dir);
+  myAIPSInfo->noScrat[disk-1] = FALSE;
+  myAIPSInfo->NumberDisks = MAX (myAIPSInfo->NumberDisks, disk);
+
+  return disk;
+} /* end ObitAIPSFindDirname */
 
 /**
  * Returns pointer to directory string by AIPS disk.

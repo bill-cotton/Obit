@@ -157,6 +157,10 @@ void ObitSkyModelVMSquintClassInit (void);
 /** Public: Default Constructor. */
 ObitSkyModelVMSquint* newObitSkyModelVMSquint (gchar* name);
 
+/** Public: Init SkyModel object from description in an ObitInfoList */
+void ObitSkyModelVMSquintFromInfo (ObitSkyModel *out, gchar *prefix, 
+				   ObitInfoList *inList, ObitErr *err);
+
 /** Public: Create/initialize ObitSkyModelVMSquint structures */
 ObitSkyModelVMSquint* ObitSkyModelVMSquintCreate (gchar* name, ObitImageMosaic* mosaic);
 
@@ -189,6 +193,10 @@ void ObitSkyModelVMSquintUpdateModel (ObitSkyModelVM *in, ofloat time, olong sub
 /** Private: Chose model type */
 void  ObitSkyModelVMSquintChose (ObitSkyModel* in, ObitUV* uvdata);
 
+/** Public: Extract information about underlying structures to ObitInfoList */
+void ObitSkyModelVMSquintGetInfo (ObitSkyModel *in, gchar *prefix, 
+				  ObitInfoList *outList, 
+				  ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

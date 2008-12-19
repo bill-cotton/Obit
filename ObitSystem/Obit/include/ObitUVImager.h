@@ -224,6 +224,13 @@ void ObitUVImagerClassInit (void);
 /** Public: Default Constructor. */
 ObitUVImager* newObitUVImager (gchar* name);
 
+/** Public: Create UVImager object from description in an ObitInfoList */
+ObitUVImager* ObitUVImagerFromInfo (gchar *prefix, ObitInfoList *inList, 
+				    ObitErr *err);
+typedef ObitUVImager* (*ObitUVImagerFromInfoFP) (gchar *prefix, 
+						 ObitInfoList *inList, 
+						 ObitErr *err);
+
 /** Public: ClassInfo pointer */
 gconstpointer ObitUVImagerGetClass (void);
 
@@ -268,6 +275,12 @@ ObitImageMosaic* ObitUVImagerGetMosaic (ObitUVImager *in, ObitErr *err);
 /** Typedef for definition of class pointer structure */
 typedef ObitImageMosaic* (*ObitUVImagerGetMosaicFP) (ObitUVImager *in, ObitErr *err);
 
+/** Public: Extract information about underlying structures to ObitInfoList */
+void ObitUVImagerGetInfo (ObitUVImager *in, gchar *prefix, ObitInfoList *outList, 
+			  ObitErr *err);
+typedef void 
+(*ObitUVImagerGetInfoFP) (ObitUVImager *in, gchar *prefix, ObitInfoList *outList, 
+			  ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005                                               */
+/*;  Copyright (C) 2005,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -17,17 +17,15 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*;  Correspondence this software should be addressed as follows:     */
+/*;Correspondence about this software should be addressed as follows: */
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitRPC structure         */
-/*  This is intended to be included in a class structure definition   */
-/* and to be used as the template for generating new classes derived  */
-/* from Obit.                                                         */
+/*  Define the basic components of the ObitRPC structure              */
+
 /**
  * \file ObitRPCDef.h
  * ObitRPC structure members for this and any derived classes.
@@ -43,3 +41,6 @@ xmlrpc_env envP;
 xmlrpc_registry* registryP;
 /** xmlrpc server parameters  */
 xmlrpc_server_abyss_parms serverparm;
+/** xmlrpc client  */
+xmlrpc_client* clientP;
+

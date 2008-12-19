@@ -100,8 +100,20 @@ ObitInfoList* ObitInfoListUnref (ObitInfoList* in);
 /** Public: Copy entries from one list to another. */
 ObitInfoList* ObitInfoListCopyData (ObitInfoList* in, ObitInfoList* out);
 
-/** Public: Copy entries from one list to another controled by a list . */
+/** Public: Copy entries from one list to another controlled by a list. */
 void ObitInfoListCopyList(ObitInfoList* in, ObitInfoList* out, gchar **list);
+
+/** Public: Copy entries from one list to another controlled by a list with rename. */
+void ObitInfoListCopyListRename(ObitInfoList* in, ObitInfoList* out, 
+				gchar **inList, gchar **outList);
+
+/** Public: Copy entries from one list to another adding a prefix. */
+void ObitInfoListCopyAddPrefix(ObitInfoList* in, ObitInfoList* out, 
+			       gchar *prefix);
+
+/** Public: Copy entries with a given prefix from one list to another. */
+void ObitInfoListCopyWithPrefix(ObitInfoList* in, ObitInfoList* out, 
+				gchar *prefix, gboolean strip);
 
 /** Public: Store item to InfoList. */
 void ObitInfoListPut(ObitInfoList *in, 

@@ -78,7 +78,7 @@ typedef enum obitAIPSFileType ObitAIPSFileType;
 
 /*------------------  Macros    -------------------------------------*/
 /** The maximum number of AIPS "disks" */ 
-#define MAXAIPSDISK 35
+#define MAXAIPSDISK 300
 
 /*--------------Class definitions-------------------------------------*/
 /** ObitAIPS Class Structure. */  
@@ -111,6 +111,9 @@ ObitAIPSFilename (ObitAIPSFileType type, olong disk, olong cno,
 
 /** Public: Set directory string */
 olong ObitAIPSSetDirname (olong disk, gchar* dir, ObitErr *err);
+
+/** Public: Find/Add directory  */
+olong ObitAIPSFindDirname (gchar* dir, ObitErr *err);
 
 /** Public: Get directory string */
 gchar* ObitAIPSDirname (olong disk, ObitErr *err);

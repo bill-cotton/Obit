@@ -94,6 +94,45 @@ ObitUVImagerSquint* newObitUVImagerSquint (gchar* name)
 } /* end newObitUVImagerSquint */
 
 /**
+ * Initializes from ObitInfoList.
+ * Initializes class if needed on first call.
+ * \param out     the new object.to be initialized
+ * \param prefix  If NonNull, string to be added to beginning of inList entry name
+ *                "xxx" in the following
+ * \param inList  InfoList to extract object information from 
+ *      \li "xxxClassType" string UVImager type, "Squint" for this class
+ *      \li "xxxUVData" prefix for uvdata member, entry with value "None" => doesn't exist
+ *      \li "xxxUVWork" prefix for uvwork member, entry with value "None" => doesn't exist
+ *      \li "xxxMosaic" prefix for mosaic member, entry with value "None" => doesn't exist
+ * \param err     ObitErr for reporting errors.
+ */
+void ObitUVImagerSquintFromInfo (ObitUVImager *out, gchar *prefix, ObitInfoList *inList, 
+				 ObitErr *err)
+{ 
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *keyword=NULL, *value=NULL;
+  gboolean missing;
+  gchar *Type = "Squint";
+  gchar *routine = "ObitUVImagerSquintFromInfo";
+  
+  /* Class initialization if needed */
+  if (!myClassInfo.initialized) ObitUVImagerSquintClassInit();
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitIsA(out, &myClassInfo));
+
+  /* check class type */
+  missing = ObitInfoListGetP(inList, keyword, &type, dim, (gpointer*)&value);
+  if ((missing) || (type!=OBIT_string) || (!strncmp(Type,value,dim[0]))) {
+    Obit_log_error(err, OBIT_Error,"%s Wrong class type %s!=%s", routine, value, Type);
+    return;
+  }
+
+} /* end ObitUVImagerSquintFromInfo */
+
+/**
  * Returns ClassInfo pointer for the class.
  * \return pointer to the class structure.
  */
@@ -329,6 +368,42 @@ ObitImageMosaic* ObitUVImagerSquintGetMosaic (ObitUVImager *in, ObitErr *err)
 } /* end ObitUVImagerSquintGetMosaic */
 
 /**
+ * Convert structure information to entries in an ObitInfoList
+ * \param in      Object of interest.
+ * \param prefix  If NonNull, string to be added to beginning of outList entry name
+ *                "xxx" in the following
+ * \param outList InfoList to write entries into
+ *      \li "xxxClassType" string UVImager type, "Squint" for this class
+ *      \li "xxxUVData" prefix for uvdata member, entry with value "None" => doesn't exist
+ *      \li "xxxUVWork" prefix for uvwork member, entry with value "None" => doesn't exist
+ *      \li "xxxMosaic" prefix for mosaic member, entry with value "None" => doesn't exist
+ * \param err     ObitErr for reporting errors.
+ */
+void ObitUVImagerSquintGetInfo (ObitUVImager *inn, gchar *prefix, 
+				ObitInfoList *outList, ObitErr *err)
+{ 
+  ObitUVImagerSquint *in = (ObitUVImagerSquint*)inn;
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *keyword=NULL, *Type="Squint";
+  gchar *routine = "ObitUVImagerSquintGetInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* Use Base class */
+  ObitUVImagerGetInfo(inn, prefix, outList, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* set Class type */
+  if (prefix) keyword = g_strconcat (prefix, "ClassType", NULL);
+  else        keyword = g_strdup("ClassType");
+  dim[0] = strlen(Type);
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, Type);
+
+} /* end ObitUVImagerSquintGetInfo */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitUVImagerSquintClassInit (void)
@@ -376,6 +451,7 @@ static void ObitUVImagerSquintClassInfoDefFn (gpointer inClass)
   theClass->ObitUVImagerCreate = (ObitUVImagerCreateFP)ObitUVImagerSquintCreate;
   theClass->ObitUVImagerCreate2= (ObitUVImagerCreate2FP)ObitUVImagerSquintCreate2;
   theClass->ObitUVImagerWeight = (ObitUVImagerWeightFP)ObitUVImagerSquintWeight;
+  theClass->ObitUVImagerGetInfo= (ObitUVImagerGetInfoFP)ObitUVImagerSquintGetInfo;
   /*theClass->ObitUVImagerImage  = (ObitUVImagerImageFP)ObitUVImagerSquintImage;*/
 
 } /* end ObitUVImagerSquintClassDefFn */

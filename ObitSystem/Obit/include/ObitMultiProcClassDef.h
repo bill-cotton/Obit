@@ -36,6 +36,8 @@ gboolean haveAsynchProc;
 olong nProcessor;
 /** URLs of asynchronous processes running FuncContainer */
 gchar **URL;
+/** RPC client for each entry in URL */
+ObitRPC **clients;
 /** Threads in which asynchronous processes are running */
 ObitThread **ASThreads;
 /** Command lines starting process */

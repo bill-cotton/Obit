@@ -465,6 +465,12 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
     ObitInfoListAlwaysPut(in->info, "CCVer", OBIT_long, dim, &jtemp);
   }
 
+  /* Make initial images */
+  MakeAllResiduals (in, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  if (in->prtLv>1) ObitErrLog(err);  /* Progress Report */
+  else ObitErrClear(err);
+
   /* Loop until Deconvolution done */
   done = FALSE;
   while (!done) {
@@ -823,7 +829,11 @@ gboolean ObitDConCleanVisPickNext(ObitDConCleanVis *in, ObitErr *err)
       (in->Pixels->currentIter>0)) return done;
 
   fresh = ObitMemAlloc0(in->nfield*sizeof(gboolean));
-  for (i=0; i<in->nfield; i++) fresh[i] = FALSE;
+  /* First time? */
+  if (in->Pixels->currentIter<=0)
+    for (i=0; i<in->nfield; i++) fresh[i] = TRUE;
+  else
+    for (i=0; i<in->nfield; i++) fresh[i] = FALSE;
 
   /* Make sure all fields initialized */
   for (i=0; i<in->nfield; i++) {
@@ -1677,6 +1687,9 @@ static void  MakeAllResiduals (ObitDConCleanVis *in, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *routine = "MakeAllResiduals";
 
+
+  /*g_error("MODIFY TO USE multiProc");*/
+
   /* Loop over fields */
   for (i=0; i<in->nfield; i++) {
     /* Need to make beam? */
@@ -1687,7 +1700,7 @@ static void  MakeAllResiduals (ObitDConCleanVis *in, ObitErr *err)
     MakeResidual(in, i+1, doBeam, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   } /* end loop over field */
-} /* end MakeAllRestestiduals */
+} /* end MakeAllResiduals */
 
 /**
  * Find current estimates best and second field

@@ -292,6 +292,13 @@ void ObitTableClassInit (void);
 /** Public: Default constructor. */
 ObitTable* newObitTable (gchar* name);
 
+/** Public: Create Table object from description in an ObitInfoList */
+ObitTable* ObitTableFromFileInfo (gchar *prefix, ObitInfoList *inList, 
+				  ObitErr *err);
+typedef ObitTable*
+(*ObitTableFromFileInfoFP) (gchar *prefix, ObitInfoList *inList, 
+			    ObitErr *err);
+
 /** Public: Fully instantiate. */
 void ObitTableFullInstantiate (ObitTable *in, gboolean exist, ObitErr *err);
 typedef void (*ObitTableFullInstantiateFP) (ObitTable *in, gboolean exist, 
@@ -374,6 +381,12 @@ typedef gchar* (*ObitTableGetTypeFP) (ObitTable *in, ObitErr *err);
 olong ObitTableGetVersion (ObitTable *in, ObitErr *err);
 typedef olong (*ObitTableGetVersionFP) (ObitTable *in, ObitErr *err);
 
+/** Public: Extract information about underlying file */
+void ObitTableGetFileInfo (ObitTable *in, gchar *prefix, ObitInfoList *outList, 
+			   ObitErr *err);
+typedef void 
+(*ObitTableGetFileInfoFP) (ObitTable *in, gchar *prefix, ObitInfoList *outList, 
+			   ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure For Table.

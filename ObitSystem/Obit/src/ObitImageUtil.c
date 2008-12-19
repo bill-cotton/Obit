@@ -39,6 +39,7 @@
 #include "ObitFArrayUtil.h"
 #include "ObitConvUtil.h"
 #include "ObitFeatherUtil.h"
+#include "ObitUVImager.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -287,6 +288,130 @@ ObitImage* ObitImageUtilCreateImage (ObitUV *inUV, olong fieldNo,
 } /* end ObitImageUtilCreateImage */
 
 /**
+ *  Make an image from from uv data, info in ObitInfoList.
+ * Grids, FFTs and makes corrections for the gridding convolution.
+ * This interface allows multi-processing and/or multi-threading.
+ * \param inList  Input File InfoList
+ *  Input UV data prefix = "ImgUV"
+ *      Input uv data. Should be in form of stokes to be imaged
+ *      will all calibration and selection applied and any 
+ *      weighting applied.
+ * Weighting/Imaging parameters on inList copied to uvdata:
+ * \li "nuGrid" OBIT_long scalar = Number of "U" pixels in weighting grid.
+ *              [defaults to "nx"]
+ * \li "nvGrid" OBIT_long scalar = Number of "V" pixels in weighting grid.
+ * \li "WtBox"  OBIT_long scalar = Size of weighting box in cells [def 1]
+ * \li "WtFunc" OBIT_long scalar = Weighting convolution function [def. 1]
+ *              1=Pill box, 2=linear, 3=exponential, 4=Gaussian
+ *              if positive, function is of radius, negative in u and v.
+ * \li "xCells" OBIT_float scalar = Image cell spacing in X in asec.
+ * \li "yCells" OBIT_float scalar = Image cell spacing in Y in asec.
+ * \li "UVTaper" OBIT_float scalar = UV taper width in kilowavelengths. [def. no taper].
+ *              NB: If the taper is applied her is should not also be applied
+ *              in the imaging step as the taper will be applied to the
+ *              output data.
+ * \li "Robust" OBIT_float scalar = Briggs robust parameter. [def. 0.0]
+ *              < -7 -> Pure Uniform weight, >7 -> Pure natural weight.
+ *              Uses AIPS rather than Briggs definition of Robust.
+ * \li "WtPower" OBIT_float scalar = Power to raise weights to.  [def = 1.0]
+ *              Note: a power of 0.0 sets all the output weights to 1 as modified
+ *              by uniform/Tapering weighting.  Applied in determinng weights 
+ *              as well as after.
+ *
+ *  Output Image prefix = "OutImg" Image to be written.  Must be previously defined.
+ *      Beam normalization factor is written to output Beam
+ *      infoList as SUMWTS
+ *    "doBeam"  gboolean if TRUE also make beam.  Will make the myBeam member of [Def F]
+ *               outImage.
+ *               If FALSE, and myGrid->BeamNorm 0.0 then reads SUMWTS value 
+ *               from beam infolist
+ *    "doWeight" gboolean if TRUE Apply uniform weighting corrections to uvdata
+ *                 before imaging. [Def F]
+ *    "doFlatten" gboolean if TRUE Flatten mosaic when done [Def F]
+ *    "field" olong  Which field (1-rel) to Image, 0=> all [def 0]
+ *
+ *  Output Beam prefix (if doBeam) = "OutBeam" Image to be written.  
+ *      Must be previously defined.
+ *      If doBeam=FALSE, the following must be given in inList:
+ *     "SUMWTSnnnn" float Beam normalization factor where nn is the 1-rel field number - 
+ *      returned if doBeam=TRUE
+ * \param err      Error stack, returns if not empty.
+ */
+void ObitImageUtilMakeImageFileInfo (ObitInfoList *inList, ObitErr *err)
+{
+  ObitUVImager *myUVImager = NULL;
+  gboolean doBeam, doWeight, doFlatten;
+  ObitImage *theBeam;
+  olong field, ifield, lofield, hifield;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar strsumwt[16];
+  ofloat sumwts;
+  ObitUVImagerClassInfo *imgClass;
+  gchar *routine = "ObitImageUtilMakeImageFileInfo";
+
+  /* error checks */
+  if (err->error) return;
+
+  /* Control */
+  doBeam  = FALSE;
+  ObitInfoListGetTest (inList, "doBeam",   &type, dim, &doBeam); 
+  doWeight  = FALSE;
+  ObitInfoListGetTest (inList, "doWeight", &type, dim, &doWeight); 
+  doFlatten = FALSE;
+  ObitInfoListGetTest (inList, "doFlatten", &type, dim, &doFlatten); 
+  field     = 0;
+  ObitInfoListGetTest (inList, "field", &type, dim, &field); 
+
+  /* Build object */
+  myUVImager = ObitUVImagerFromInfo("ImgUV", inList, err);
+  if (err->error) Obit_traceback_msg (err, routine, myUVImager->name);
+
+  /* Which fields */
+  if (field>0) {
+    lofield = field;
+    hifield = field;
+  } else {
+    lofield = 1;
+    hifield = myUVImager->mosaic->numberImages;
+  }
+
+  /* If not making beam copy SUMWTS */
+  if (!doBeam) {
+    for (ifield=lofield; ifield<=hifield; ifield++) {
+      sprintf (strsumwt,"SUMWTS%5.5d",ifield);
+      sumwts = 0.0;
+      ObitInfoListGetTest(inList, strsumwt, &type, dim, &sumwts);
+      dim[0] = 1;
+      if (myUVImager->mosaic->images[ifield-1]->myBeam) {
+	theBeam = (ObitImage*)myUVImager->mosaic->images[ifield-1]->myBeam;
+	ObitInfoListAlwaysPut(theBeam->info, "SUMWTS", OBIT_float, dim, &sumwts);
+      }
+    }
+  }
+
+  /* Make image */
+  imgClass = (ObitUVImagerClassInfo*)myUVImager->ClassInfo;  
+  imgClass->ObitUVImagerImage (myUVImager, field, doWeight, doBeam, doFlatten, err);
+  if (err->error) Obit_traceback_msg (err, routine, myUVImager->name);
+
+  /* Made beam? Copy SUMWTS */
+  if (doBeam) {
+    for (ifield=lofield; ifield<=hifield; ifield++) {
+      sprintf (strsumwt,"SUMWTS%5.5d",ifield);
+      sumwts = 0.0;
+      if (myUVImager->mosaic->images[ifield-1]->myBeam) {
+	theBeam = (ObitImage*)myUVImager->mosaic->images[ifield-1]->myBeam;
+	ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, &sumwts);
+      }
+      dim[0] = 1;
+      ObitInfoListAlwaysPut(inList, strsumwt, OBIT_float, dim, &sumwts);
+    }
+  }
+
+} /* end ObitImageUtilMakeImageFileInfo */
+
+/**
  * Grids, FFTs and makes corrections for the gridding convolution.
  * Uses (creating if necessary) the myGrid member of out.
  * \param inUV     Input uv data. Should be in form of stokes to be imaged
@@ -340,8 +465,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *routine = "ObitImageUtilMakeImage";
 
-   /* error checks */
-  g_assert (ObitErrIsA(err));
+  /* error checks */
   if (err->error) return;
   g_assert (ObitUVIsA(inUV));
   g_assert (ObitImageIsA(outImage));
@@ -1026,7 +1150,7 @@ ObitImageUtilInterpolateWeight (ObitImage *inImage, ObitImage *outImage,
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (inImage->thread, nTh, 
+  OK = ObitThreadIterator (inImage->thread, nThreads, 
 			   (ObitThreadFunc)ThreadImageInterp,
 			   (gpointer**)threadArgs);
 

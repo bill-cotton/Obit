@@ -136,6 +136,224 @@ ObitImageMosaic* newObitImageMosaic (gchar* name, olong number)
 } /* end newObitImageMosaic */
 
 /**
+ * Constructor from ObitInfoList.
+ * Initializes class if needed on first call.
+ * Also works for derived classes.
+ * \param prefix  If NonNull, string to be added to beginning of inList entry name
+ *                "xxx" in the following
+ * \param inList  InfoList to extract object information from 
+ *      \li "xxxnumberImages" olong Number of images in Mosaic
+ *      \li "xxxnFlyEye"      olong Number of images already initialized
+ *      \li "xxxImagennnnn"   string Prefix for each image nnnnn (1-rel) in images
+ *      \li "xxxFullField"    string Prefix for Full field image
+ *      \li "xxxFOV"          ofloat Field of view as radius (deg)
+ *      \li "xxxRadius"       ofloat Radius of the usable region of a given tile (cells)
+ *      \li "xxxxCells"       ofloat Cell Spacing in X (deg)
+ *      \li "xxxyCells"       ofloat Cell Spacing in Y (deg)
+ *      \li "xxxOutlierSize"  olong requested size (CLEAN window) of outliers
+ *      \li "xxxnx"           olong* Number of pixels in X for each image
+ *      \li "xxxny"           olong* Number of pixels in Y for each image
+ *      \li "xxxnplane"       olong* Number of planes for each image
+ *      \li "xxxRAShift"      ofloat* RA shift (deg) for each image
+ *      \li "xxxDecShift"     ofloat* Dec shift (deg) for each image
+ *      \li "xxxfileType"     olong Are image OBIT_IO_AIPS or OBIT_IO_FITS?
+ *      \li "xxximName"       string Name of Mosaic images
+ *      \li "xxximClass"      string Class of Mosaic images
+ *      \li "xxximSeq"        olong Sequence number of Mosaic images
+ *      \li "xxximDisk"       olong* Disk numbers of Mosaic images
+ *      \li "xxxdoFull"       boolean Is a full field image desired?
+ *      \li "xxxbmaj"         ofloat Restoring beam major axis in deg.
+ *      \li "xxxbmin"         ofloat Restoring beam minor axis in deg.
+ *      \li "xxxbpa"          ofloat Restoring beam PA in deg.
+ * \param err     ObitErr for reporting errors.
+ * \return the new object.
+ */
+ObitImageMosaic* ObitImageMosaicFromInfo (gchar *prefix, ObitInfoList *inList, 
+				    ObitErr *err)
+{ 
+  ObitImageMosaic *out = NULL;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *keyword=NULL, *None = "None", *value=NULL;
+  olong i, numberImages, otemp;
+  gboolean missing;
+  gchar *routine = "ObitImageMosaicFromInfo";
+
+  /* Class initialization if needed */
+  if (!myClassInfo.initialized) ObitImageMosaicClassInit();
+
+  /* error checks */
+  if (err->error) return out;
+
+  /* "xxxnumberImages" olong Number of images in Mosaic; */
+  if (prefix) keyword = g_strconcat (prefix, "numberImages", NULL);
+  else        keyword = g_strdup("numberImages");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &numberImages);
+  g_free(keyword);
+
+  /* Create output */
+  out = newObitImageMosaic (prefix, numberImages);
+
+  /* Copy any InfoList Parameters */
+  if (prefix) keyword = g_strconcat (prefix, "Info", NULL);
+  else        keyword = g_strdup("Info");
+  ObitInfoListCopyWithPrefix (inList, out->info, keyword, TRUE);
+  
+  /* "xxxnFlyEye"      olong Number of images already initialized */
+  if (prefix) keyword = g_strconcat (prefix, "nFlyEye", NULL);
+  else        keyword = g_strdup("nFlyEye");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->nFlyEye);
+  g_free(keyword);
+
+  /* "xxxImagennnnn"  string Prefix for each image nnnnn (1-rel) in images */
+  for (i=0; i<out->numberImages; i++) {
+    /* Prefix for each entry in images */
+    if (prefix) sprintf(keyword, "%sImage%5.5d", prefix, i+1);
+    else        sprintf(keyword, "Image%5.5d",   i+1);
+    missing = ObitInfoListGetP(inList, keyword, &type, dim, (gpointer)&value);
+    /* Does it exist? */
+    if ((missing) || (type!=OBIT_string) || (!strncmp(None,value,dim[0]))) {
+      Obit_log_error(err, OBIT_Error,"%s image %s not defined i", routine, keyword);
+      return out;
+    } else { /* exists*/
+      out->images[i] = (ObitImage*)ObitDataFromFileInfo(keyword, inList, err);
+      if (err->error) Obit_traceback_val (err, routine, keyword, out);
+    }
+    g_free(keyword);
+  } /* end loop over images */
+
+  /* "xxxFullField"    string prefix for Full field image */
+  if (prefix) keyword = g_strconcat (prefix, "FullField", NULL);
+  else        keyword = g_strdup("FullField");
+  missing = ObitInfoListGetP(inList, keyword, &type, dim, (gpointer)&value);
+  /* Does it exist? */
+  if ((missing) || (type!=OBIT_string) || (!strncmp(None,value,dim[0]))) {
+    out->FullField = NULL;
+  } else { /* exists*/
+    out->FullField = (ObitImage*)ObitDataFromFileInfo(keyword, inList, err);
+    if (err->error) Obit_traceback_val (err, routine, keyword, out);
+  }
+
+  /* "xxxFOV"          ofloat Field of view as radius (deg) */
+  if (prefix) keyword = g_strconcat (prefix, "FOV", NULL);
+  else        keyword = g_strdup("FOV");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->FOV);
+  g_free(keyword);
+
+  /* "xxxRadius"       ofloat Radius of the usable region of a given tile (cells) */
+  if (prefix) keyword = g_strconcat (prefix, "Radius", NULL);
+  else        keyword = g_strdup("Radius");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->Radius);
+  g_free(keyword);
+
+  /* "xxxxCells"       ofloat Cell Spacing in X (deg) */
+  if (prefix) keyword = g_strconcat (prefix, "xCells", NULL);
+  else        keyword = g_strdup("xCells");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->xCells);
+  g_free(keyword);
+
+  /* "xxxyCells"       ofloat Cell Spacing in Y (deg) */
+  if (prefix) keyword = g_strconcat (prefix, "yCells", NULL);
+  else        keyword = g_strdup("yCells");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->yCells);
+  g_free(keyword);
+
+  /* "xxxOutlierSize"  olong requested size (CLEAN window) of outliers */
+  if (prefix) keyword = g_strconcat (prefix, "OutlierSize", NULL);
+  else        keyword = g_strdup("OutlierSize");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->OutlierSize);
+  g_free(keyword);
+
+  /* "xxxnx"           olong* Number of pixels in X for each image; */
+  if (prefix) keyword = g_strconcat (prefix, "nx", NULL);
+  else        keyword = g_strdup("nx");
+  ObitInfoListGetTest(inList, keyword, &type, dim, out->nx);
+  g_free(keyword);
+
+  /* "xxxny"           olong* Number of pixels in Y for each image */
+  if (prefix) keyword = g_strconcat (prefix, "ny", NULL);
+  else        keyword = g_strdup("ny");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->ny);
+  g_free(keyword);
+
+  /* "xxxnplane"       olong* Number of planes for each image */
+  if (prefix) keyword = g_strconcat (prefix, "nplane", NULL);
+  else        keyword = g_strdup("nplane");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->nplane);
+  g_free(keyword);
+
+  /* "xxxRAShift"      ofloat* RA shift (deg) for each image */
+  if (prefix) keyword = g_strconcat (prefix, "RAShift", NULL);
+  else        keyword = g_strdup("RAShift");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->RAShift);
+  g_free(keyword);
+
+  /* "xxxDecShift"     ofloat* Dec shift (deg) for each image */
+  if (prefix) keyword = g_strconcat (prefix, "DecShift", NULL);
+  else        keyword = g_strdup("DecShift");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->DecShift);
+  g_free(keyword);
+
+  /* "xxxfileType"     olong Are image OBIT_IO_AIPS or OBIT_IO_FITS? */
+  if (prefix) keyword = g_strconcat (prefix, "fileType", NULL);
+  else        keyword = g_strdup("fileType");
+  otemp = 1;
+  ObitInfoListGetTest(inList, keyword, &type, dim, &otemp);
+  out->fileType = (ObitIOType)otemp;
+  g_free(keyword);
+
+  /* "xxximName"       string* Name of Mosaic images */
+  if (prefix) keyword = g_strconcat (prefix, "imName", NULL);
+  else        keyword = g_strdup("imName");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->imName);
+  g_free(keyword);
+
+  /* "xxximClass"      string* Class of Mosaic images */
+  if (prefix) keyword = g_strconcat (prefix, "imClass", NULL);
+  else        keyword = g_strdup("imClass");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->imClass);
+  g_free(keyword);
+
+  /* "xxximSeq"        olong Sequence number of Mosaic images */
+  if (prefix) keyword = g_strconcat (prefix, "imSeq", NULL);
+  else        keyword = g_strdup("imSeq");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->imSeq);
+  g_free(keyword);
+
+  /* "xxximDisk"       olong Disk number of Mosaic images  FIX THIS */
+  if (prefix) keyword = g_strconcat (prefix, "imDisk", NULL);
+  else        keyword = g_strdup("imDisk");
+  ObitInfoListGetTest(inList, keyword, &type, dim, out->imDisk);
+  g_free(keyword);
+
+  /* "xxxdoFull"       boolean Is a full field image desired? */
+  if (prefix) keyword = g_strconcat (prefix, "doFull", NULL);
+  else        keyword = g_strdup("doFull");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->doFull);
+  g_free(keyword);
+
+  /* "xxxbmaj"         ofloat Restoring beam major axis in deg. */
+  if (prefix) keyword = g_strconcat (prefix, "bmaj", NULL);
+  else        keyword = g_strdup("bmaj");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->bmaj);
+  g_free(keyword);
+
+  /* "xxxbmin"         ofloat Restoring beam minor axis in deg. */
+  if (prefix) keyword = g_strconcat (prefix, "bmin", NULL);
+  else        keyword = g_strdup("bmin");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->bmin);
+  g_free(keyword);
+
+  /* "xxxbpa"          ofloat Restoring beam PA in deg. */
+  if (prefix) keyword = g_strconcat (prefix, "bpa", NULL);
+  else        keyword = g_strdup("bpa");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->bpa);
+  g_free(keyword);
+
+  return out;
+} /* end ObitImageMosaicFromInfo */
+
+/**
  * Returns ClassInfo pointer for the class.
  * \return pointer to the class structure.
  */
@@ -447,7 +665,6 @@ ObitImageMosaic* ObitImageMosaicCopy (ObitImageMosaic *in, ObitImageMosaic *out,
   out->yCells   = in->yCells;
   out->fileType = in->fileType;
   out->imSeq    = in->imSeq;
-  out->imDisk   = in->imDisk;
   if (out->imName) g_free(out->imName);
   out->imName = g_strdup(in->imName);
   if (out->imClass) g_free(out->imClass);
@@ -457,6 +674,7 @@ ObitImageMosaic* ObitImageMosaicCopy (ObitImageMosaic *in, ObitImageMosaic *out,
   out->bpa     = in->bpa;
   for (i=0; i<in->numberImages; i++) {
     ObitImageMosaicSetImage(out, i, in->images[i], err);
+    out->imDisk[i]   = in->imDisk[i];
     out->nx[i]       = in->nx[i];
     out->ny[i]       = in->ny[i];
     out->nplane[i]   = in->nplane[i];
@@ -490,7 +708,7 @@ ObitImageMosaic* ObitImageMosaicCopy (ObitImageMosaic *in, ObitImageMosaic *out,
  * \li imName   - Name of Mosaic images
  * \li imClass  - imClass
  * \li imSeq    - imSeq
- * \li imDisk   - imDisk
+ * \li imDisk   - imDisk one per image
  * \param doBeam  If true, make beam as well.
  * \param err     Error stack, returns if not empty.
  */
@@ -518,14 +736,14 @@ void ObitImageMosaicSetFiles  (ObitImageMosaic *in, gboolean doBeam, ObitErr *er
       Aclass[5] = 'F';
       strncpy (Aname,  in->imName, 12); Aname[12] = 0;
       /* allocate */
-      cno = ObitAIPSDirAlloc(in->imDisk, user, Aname, Aclass, Atype, in->imSeq, &exist, err);
+      cno = ObitAIPSDirAlloc(in->imDisk[0], user, Aname, Aclass, Atype, in->imSeq, &exist, err);
       /* Set info */
-      ObitImageSetAIPS(image,OBIT_IO_byPlane,in->imDisk,cno,user,blc,trc,err);
+      ObitImageSetAIPS(image,OBIT_IO_byPlane,in->imDisk[0],cno,user,blc,trc,err);
       /*DEBUG */
       Obit_log_error(err, OBIT_InfoErr, "Making AIPS image %s %s %d on disk %d cno %d",
-		     Aname, Aclass, in->imSeq, in->imDisk, cno);
+		     Aname, Aclass, in->imSeq, in->imDisk[0], cno);
       /* fprintf (stderr,"Making AIPS image %s %s on disk %d cno %d\n",
-	 Aname, Aclass, in->imDisk, cno);*/
+	 Aname, Aclass, in->imDisk[0], cno);*/
 
     /* FITS file */
     } else if (in->fileType==OBIT_IO_FITS) {
@@ -533,7 +751,7 @@ void ObitImageMosaicSetFiles  (ObitImageMosaic *in, gboolean doBeam, ObitErr *er
       sprintf(strTemp, "MA%s.%sFulldseq%d", in->imName, in->imClass, in->imSeq);
       /* replace blanks with underscores */
       for (j=0; j<strlen(strTemp); j++) if (strTemp[j]==' ') strTemp[j]='_';
-      ObitImageSetFITS(image,OBIT_IO_byPlane,in->imDisk,strTemp,blc,trc,err);
+      ObitImageSetFITS(image,OBIT_IO_byPlane,in->imDisk[0],strTemp,blc,trc,err);
     }
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
@@ -558,21 +776,21 @@ void ObitImageMosaicSetFiles  (ObitImageMosaic *in, gboolean doBeam, ObitErr *er
       strncpy (Aclass, strTemp,    6);  Aclass[6] = 0;
       strncpy (Aname,  in->imName, 12); Aname[12] = 0;
       /* allocate */
-      cno = ObitAIPSDirAlloc(in->imDisk, user, Aname, Aclass, Atype, in->imSeq, &exist, err);
+      cno = ObitAIPSDirAlloc(in->imDisk[i], user, Aname, Aclass, Atype, in->imSeq, &exist, err);
       /* Set info */
-      ObitImageSetAIPS(image,OBIT_IO_byPlane,in->imDisk,cno,user,blc,trc,err);
+      ObitImageSetAIPS(image,OBIT_IO_byPlane,in->imDisk[i],cno,user,blc,trc,err);
       /*DEBUG */
       Obit_log_error(err, OBIT_InfoErr, "Making AIPS image %s %s %d on disk %d cno %d",
-		     Aname, Aclass, in->imSeq, in->imDisk, cno);
+		     Aname, Aclass, in->imSeq, in->imDisk[i], cno);
       /* fprintf (stderr,"Making AIPS image %s %s on disk %d cno %d\n",
-	 Aname, Aclass, in->imDisk, cno);*/
+	 Aname, Aclass, in->imDisk[i], cno);*/
     } else if (in->fileType==OBIT_IO_FITS) {
       /* set filename - derive from field */
       Atclass[0] = in->imClass[0]; Atclass[1] =  'M'; Atclass[2] = 0;
       sprintf(strTemp, "MA%s.%s%4.4dseq%d", in->imName, Atclass, i, in->imSeq);
       /* replace blanks with underscores */
       for (j=0; j<strlen(strTemp); j++) if (strTemp[j]==' ') strTemp[j]='_';
-      ObitImageSetFITS(image,OBIT_IO_byPlane,in->imDisk,strTemp,blc,trc,err);
+      ObitImageSetFITS(image,OBIT_IO_byPlane,in->imDisk[i],strTemp,blc,trc,err);
     }
     /* fully instantiate */
     ObitImageFullInstantiate (image, FALSE, err);
@@ -588,9 +806,9 @@ void ObitImageMosaicSetFiles  (ObitImageMosaic *in, gboolean doBeam, ObitErr *er
 	/* set class */
 	Aclass[1] = 'B';
 	/* allocate */
-	cno = ObitAIPSDirAlloc(in->imDisk, user, Aname, Aclass, Atype, in->imSeq, &exist, err);
+	cno = ObitAIPSDirAlloc(in->imDisk[i], user, Aname, Aclass, Atype, in->imSeq, &exist, err);
 	/* Set info */
-	ObitImageSetAIPS(image,OBIT_IO_byPlane,in->imDisk,cno,user,blc,trc,err);
+	ObitImageSetAIPS(image,OBIT_IO_byPlane,in->imDisk[i],cno,user,blc,trc,err);
 	
       } else if (in->fileType==OBIT_IO_FITS) {
 	/* set filename - derive from field - insure uniqueness */
@@ -602,7 +820,7 @@ void ObitImageMosaicSetFiles  (ObitImageMosaic *in, gboolean doBeam, ObitErr *er
 	/* replace blanks with underscores */
 	for (j=0; j<strlen(strTemp); j++) if (strTemp[j]==' ') strTemp[j]='_';
 	in->imClass[1] = ct;
-	ObitImageSetFITS(image,OBIT_IO_byPlane,in->imDisk,strTemp,blc,trc,err);
+	ObitImageSetFITS(image,OBIT_IO_byPlane,in->imDisk[i],strTemp,blc,trc,err);
       }
       /* Open and close to fully instantiate */
       ObitImageOpen(image, OBIT_IO_WriteOnly, err);
@@ -671,7 +889,7 @@ ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *er
   ObitIOType Type;
   ObitIOAccess access;
   gint32 i, nf, nif, nfif, dim[MAXINFOELEMDIM];
-  olong Seq, Disk, NField, nx[MAXFLD], ny[MAXFLD], catDisk;
+  olong Seq, *Disk=NULL, NField, nx[MAXFLD], ny[MAXFLD], catDisk, nDisk;
   olong overlap, imsize, fldsiz[MAXFLD], flqual[MAXFLD];
   ofloat FOV=0.0, xCells, yCells, RAShift[MAXFLD], DecShift[MAXFLD], MaxBL, MaxW, Cells;
   ofloat *farr, Radius = 0.0, maxScale;
@@ -679,19 +897,26 @@ ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *er
   odouble ra0, dec0, refFreq1, refFreq2;
   gboolean doJ2B, doFull, doCalSelect;
   ofloat equinox, minRad, ratio, OutlierFlux, OutlierDist, OutlierSI;
-  olong  itemp, OutlierSize=0, nFlyEye = 0;
+  olong  itemp, OutlierSize=0, nFlyEye = 0, *iarr=NULL;
   union ObitInfoListEquiv InfoReal; 
   gchar Catalog[100], Aname[100], Aclass[100];
   gchar *routine = "ObitImageMosaicCreate";
 
   /* Get inputs with plausible defaults */
-  NField = 0;
+  NField = 1;
   ObitInfoListGetTest(uvData->info, "NField",  &type, dim,  &NField);
   ObitInfoListGet(uvData->info, "imFileType",&type, dim,  &Type,     err);
   ObitInfoListGet(uvData->info, "imName",    &type, dim,  Aname,     err);
   ObitInfoListGet(uvData->info, "imClass",   &type, dim,  Aclass,    err);
   ObitInfoListGet(uvData->info, "imSeq",     &type, dim,  &Seq,      err);
-  ObitInfoListGet(uvData->info, "imDisk",    &type, dim,  &Disk,     err);
+  nDisk = MAX(1,NField);
+  Disk = g_malloc(nDisk*sizeof(olong));
+  ObitInfoListGetP(uvData->info, "imDisk",    &type, dim, (gpointer)&iarr);
+  /* If only one disk given - use for all */
+  Disk[0] = iarr[0];
+  if (dim[0]<=1) {
+    for (i=1; i<nDisk; i++) Disk[i] = Disk[0];
+  }
   ObitInfoListGet(uvData->info, "FOV",     &type, dim,  &InfoReal, err);
   if (type==OBIT_float) FOV = InfoReal.flt;
   else if (type==OBIT_double)  FOV = InfoReal.dbl;
@@ -861,7 +1086,6 @@ ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *er
   out->imName  = g_strdup(Aname);
   out->imClass = g_strdup(Aclass);
   out->imSeq   = Seq;
-  out->imDisk  = Disk;
   out->xCells  = -fabs(xCells)/3600.0;  /* to Deg*/
   out->yCells  = yCells/3600.0;         /* to deg */
   out->FOV     = FOV;
@@ -873,11 +1097,16 @@ ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *er
   out->nFlyEye = nFlyEye;
   out->OutlierSize  = OutlierSize;
   for (i=0; i<NField; i++) {
+    if (i<nDisk) out->imDisk[i]   = Disk[i];
+    else out->imDisk[i]   = Disk[0];
     out->nx[i]       = nx[i];
     out->ny[i]       = ny[i];
     out->RAShift[i]  = RAShift[i]/3600.0;   /* to Deg*/
     out->DecShift[i] = DecShift[i]/3600.0;  /* to Deg*/
   }
+
+  /* Cleanup */
+  if (Disk) g_free(Disk);
 
   return out;
 } /* end ObitImageMosaicCreate */
@@ -1671,6 +1900,233 @@ ObitImageMosaic* ObitImageMosaicMaxField (ObitImageMosaic *mosaic,
 } /* end of routine ObitImageMosaicMaxField */ 
 
 /**
+ * Convert structure information to entries in an ObitInfoList
+ * \param in      Object of interest.
+ * \param prefix  If NonNull, string to be added to beginning of outList entry name
+ *                "xxx" in the following
+ * \param outList InfoList to write entries into
+ *      \li "xxxnumberImages" olong Number of images in Mosaic
+ *      \li "xxxnFlyEye"      olong Number of images already initialized
+ *      \li "xxxImagennnnn"   string Prefix for each image nnnnn (1-rel) in images
+ *      \li "xxxFullField"    string Prefix for Full field image
+ *      \li "xxxFOV"          ofloat Field of view as radius (deg)
+ *      \li "xxxRadius"       ofloat Radius of the usable region of a given tile (cells)
+ *      \li "xxxxCells"       ofloat Cell Spacing in X (deg)
+ *      \li "xxxyCells"       ofloat Cell Spacing in Y (deg)
+ *      \li "xxxOutlierSize"  olong requested size (CLEAN window) of outliers
+ *      \li "xxxnx"           olong* Number of pixels in X for each image
+ *      \li "xxxny"           olong* Number of pixels in Y for each image
+ *      \li "xxxnplane"       olong* Number of planes for each image
+ *      \li "xxxRAShift"      ofloat* RA shift (deg) for each image
+ *      \li "xxxDecShift"     ofloat* Dec shift (deg) for each image
+ *      \li "xxxfileType"     olong Are image OBIT_IO_AIPS or OBIT_IO_FITS?
+ *      \li "xxximName"       string Name of Mosaic images
+ *      \li "xxximClass"      string Class of Mosaic images
+ *      \li "xxximSeq"        olong Sequence number of Mosaic images
+ *      \li "xxximDisk"       olong* Disk number of Mosaic images
+ *      \li "xxxdoFull"       boolean Is a full field image desired?
+ *      \li "xxxbmaj"         ofloat Restoring beam major axis in deg.
+ *      \li "xxxbmin"         ofloat Restoring beam minor axis in deg.
+ *      \li "xxxbpa"          ofloat Restoring beam PA in deg.
+ * \param err     ObitErr for reporting errors.
+ */
+void ObitImageMosaicGetInfo (ObitImageMosaic *in, gchar *prefix, ObitInfoList *outList, 
+			     ObitErr *err)
+{ 
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *keyword=NULL, *None = "None", *OK="OK";
+  olong i, otemp;
+  /*gchar *routine = "ObitImageMosaicGetInfo";*/
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitIsA(in, &myClassInfo));
+
+   /* Copy any InfoList keywords */
+  if (prefix) keyword = g_strconcat (prefix, "Info", NULL);
+  else       keyword = g_strdup("Info");
+  ObitInfoListCopyAddPrefix (in->info, outList, keyword);
+
+  /* "xxxnumberImages" olong Number of images in Mosaic; */
+  if (prefix) keyword = g_strconcat (prefix, "numberImages", NULL);
+  else        keyword = g_strdup("numberImages");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->numberImages);
+  g_free(keyword);
+
+  /* "xxxnFlyEye"      olong Number of images already initialized */
+  if (prefix) keyword = g_strconcat (prefix, "nFlyEye", NULL);
+  else        keyword = g_strdup("nFlyEye");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->nFlyEye);
+  g_free(keyword);
+
+  /* "xxxImagennnnn"  string Prefix for each image nnnnn (1-rel) in images */
+  for (i=0; i<in->numberImages; i++) {
+    if (in->images[i]) {
+      /* Prefix for each entry in images */
+      if (prefix) sprintf(keyword, "%sImage%5.5d", prefix, i+1);
+      else        sprintf(keyword, "Image%5.5d", i+1);
+      ObitDataGetFileInfo((ObitData*)in->images[i], keyword, outList, err);
+      dim[0] = strlen(OK);
+      ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, OK);
+    } else {
+      dim[0] = strlen(None);
+      ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, None);
+    }
+    g_free(keyword);
+  }
+
+  /* "xxxFullField"    string prefix for Full field image */
+  if (prefix) keyword = g_strconcat (prefix, "FullField", NULL);
+  else        keyword = g_strdup("FullField");
+  if (in->FullField) {
+    ObitDataGetFileInfo((ObitData*)in->FullField, keyword, outList, err);
+    dim[0] = strlen(OK);
+    ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, OK);
+  } else {
+    dim[0] = strlen(None);
+    ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, None);
+  }
+  g_free(keyword);
+
+  /* "xxxFOV"          ofloat Field of view as radius (deg) */
+  if (prefix) keyword = g_strconcat (prefix, "FOV", NULL);
+  else        keyword = g_strdup("FOV");
+  dim[0] = 1; dim[1] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->FOV);
+  g_free(keyword);
+
+  /* "xxxRadius"       ofloat Radius of the usable region of a given tile (cells) */
+  if (prefix) keyword = g_strconcat (prefix, "Radius", NULL);
+  else        keyword = g_strdup("Radius");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->Radius);
+  g_free(keyword);
+
+  /* "xxxxCells"       ofloat Cell Spacing in X (deg) */
+  if (prefix) keyword = g_strconcat (prefix, "xCells", NULL);
+  else        keyword = g_strdup("xCells");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->xCells);
+  g_free(keyword);
+
+  /* "xxxyCells"       ofloat Cell Spacing in Y (deg) */
+  if (prefix) keyword = g_strconcat (prefix, "yCells", NULL);
+  else        keyword = g_strdup("yCells");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->yCells);
+  g_free(keyword);
+
+  /* "xxxOutlierSize"  olong requested size (CLEAN window) of outliers */
+  if (prefix) keyword = g_strconcat (prefix, "OutlierSize", NULL);
+  else        keyword = g_strdup("OutlierSize");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->OutlierSize);
+  g_free(keyword);
+
+  /* "xxxnx"           olong* Number of pixels in X for each image; */
+  if (prefix) keyword = g_strconcat (prefix, "nx", NULL);
+  else        keyword = g_strdup("nx");
+  dim[0] = in->numberImages; dim[1] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, in->nx);
+  g_free(keyword);
+
+  /* "xxxny"           olong* Number of pixels in Y for each image */
+  if (prefix) keyword = g_strconcat (prefix, "ny", NULL);
+  else        keyword = g_strdup("ny");
+  dim[0] = in->numberImages; dim[1] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->ny);
+  g_free(keyword);
+
+  /* "xxxnplane"       olong* Number of planes for each image */
+  if (prefix) keyword = g_strconcat (prefix, "nplane", NULL);
+  else        keyword = g_strdup("nplane");
+  dim[0] = in->numberImages; dim[1] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->nplane);
+  g_free(keyword);
+
+  /* "xxxRAShift"      ofloat* RA shift (deg) for each image */
+  if (prefix) keyword = g_strconcat (prefix, "RAShift", NULL);
+  else        keyword = g_strdup("RAShift");
+  dim[0] = in->numberImages; dim[1] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->RAShift);
+  g_free(keyword);
+
+  /* "xxxDecShift"     ofloat* Dec shift (deg) for each image */
+  if (prefix) keyword = g_strconcat (prefix, "DecShift", NULL);
+  else        keyword = g_strdup("DecShift");
+  dim[0] = in->numberImages; dim[1] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->DecShift);
+  g_free(keyword);
+
+  /* "xxxfileType"     olong Are image OBIT_IO_AIPS or OBIT_IO_FITS? */
+  if (prefix) keyword = g_strconcat (prefix, "fileType", NULL);
+  else        keyword = g_strdup("fileType");
+  dim[0] = 1;
+  otemp = (olong)in->fileType;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &otemp);
+  g_free(keyword);
+
+  /* "xxximName"       string* Name of Mosaic images */
+  if (prefix) keyword = g_strconcat (prefix, "imName", NULL);
+  else        keyword = g_strdup("imName");
+  dim[0] = strlen(in->imName);
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, &in->imName);
+  g_free(keyword);
+
+  /* "xxximClass"      string* Class of Mosaic images */
+  if (prefix) keyword = g_strconcat (prefix, "imClass", NULL);
+  else        keyword = g_strdup("imClass");
+  dim[0] = strlen(in->imClass);
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, &in->imClass);
+  g_free(keyword);
+
+  /* "xxximSeq"        olong Sequence number of Mosaic images */
+  if (prefix) keyword = g_strconcat (prefix, "imSeq", NULL);
+  else        keyword = g_strdup("imSeq");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->imSeq);
+  g_free(keyword);
+
+  /* "xxximDisk"       olong Disk number of Mosaic images  */
+  if (prefix) keyword = g_strconcat (prefix, "imDisk", NULL);
+  else        keyword = g_strdup("imDisk");
+  dim[0] = in->numberImages; dim[1] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, in->imDisk);
+  g_free(keyword);
+
+  /* "xxxdoFull"       boolean Is a full field image desired? */
+  if (prefix) keyword = g_strconcat (prefix, "doFull", NULL);
+  else        keyword = g_strdup("doFull");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_bool, dim, &in->doFull);
+  g_free(keyword);
+
+  /* "xxxbmaj"         ofloat Restoring beam major axis in deg. */
+  if (prefix) keyword = g_strconcat (prefix, "bmaj", NULL);
+  else        keyword = g_strdup("bmaj");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->bmaj);
+  g_free(keyword);
+
+  /* "xxxbmin"         ofloat Restoring beam minor axis in deg. */
+  if (prefix) keyword = g_strconcat (prefix, "bmin", NULL);
+  else        keyword = g_strdup("bmin");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->bmin);
+  g_free(keyword);
+
+  /* "xxxbpa"          ofloat Restoring beam PA in deg. */
+  if (prefix) keyword = g_strconcat (prefix, "bpa", NULL);
+  else        keyword = g_strdup("bpa");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->bpa);
+  g_free(keyword);
+ 
+} /* end ObitImageMosaicGetInfo */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitImageMosaicClassInit (void)
@@ -1715,6 +2171,8 @@ static void ObitImageMosaicClassInfoDefFn (gpointer inClass)
   theClass->ObitClone     = NULL;  /* Different call */
   theClass->ObitClear     = (ObitClearFP)ObitImageMosaicClear;
   theClass->ObitInit      = (ObitInitFP)ObitImageMosaicInit;
+  theClass->ObitImageMosaicFromInfo = (ObitImageMosaicFromInfoFP)ObitImageMosaicFromInfo;
+  theClass->ObitImageMosaicGetInfo  = (ObitImageMosaicGetInfoFP)ObitImageMosaicGetInfo;
 
 } /* end ObitImageMosaicClassDefFn */
 
@@ -1747,6 +2205,7 @@ void ObitImageMosaicInit  (gpointer inn)
   in->doFull    = FALSE;
   in->images    = ObitMemAlloc0Name(in->numberImages*sizeof(ObitImage*),"ImageMosaic images");
   for (i=0; i<in->numberImages; i++) in->images[i] = NULL;
+  in->imDisk    = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaic imDisk");
   in->nx        = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaic nx");
   in->ny        = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaic ny");
   in->nplane    = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaic nplane");
@@ -1786,6 +2245,7 @@ void ObitImageMosaicClear (gpointer inn)
       in->images[i] = ObitUnref(in->images[i]);
     in->images = ObitMemFree(in->images); 
   }
+  if (in->imDisk)   ObitMemFree(in->imDisk);
   if (in->nx)       ObitMemFree(in->nx);
   if (in->ny)       ObitMemFree(in->ny);
   if (in->nplane)   ObitMemFree(in->nplane);

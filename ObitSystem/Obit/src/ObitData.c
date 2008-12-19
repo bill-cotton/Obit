@@ -1243,6 +1243,7 @@ void ObitDataGetFileInfo (ObitData *in, gchar *prefix, ObitInfoList *outList,
 			  ObitErr *err)
 {
   const ObitIOClassInfo *myIOClass;
+  gchar *keyword=NULL;
   gchar *routine = "ObitDataGetFileInfo";
 
   /* Cannot do for generic ObitData */
@@ -1260,6 +1261,11 @@ void ObitDataGetFileInfo (ObitData *in, gchar *prefix, ObitInfoList *outList,
     myIOClass = in->myIO->ClassInfo;
     myIOClass->ObitIOGetFileInfo (in->myIO, in->info, prefix, outList, err);
   }
+
+  /* Copy any InfoList keywords */
+  if (prefix) keyword = g_strconcat (prefix, "Info", NULL);
+  else       keyword = g_strdup("Info");
+  ObitInfoListCopyAddPrefix (in->info, outList, keyword);
 
 } /* end ObitDataGetFileInfo */
 
@@ -1388,7 +1394,7 @@ ObitData* ObitDataFromFileInfo (gchar *prefix, ObitInfoList *inList,
   /* Get basic information */
   if (prefix) keyword =  g_strconcat (prefix, DataTypeKey, NULL);
   else keyword =  g_strconcat (DataTypeKey, NULL);
-  if (!ObitInfoListGetP(inList, keyword, &type, dim, (gpointer*)&DataType)) {
+  if (!ObitInfoListGetP(inList, keyword, &type, dim, (gpointer)&DataType)) {
     /* couldn't find it - add message to err and return */
     Obit_log_error(err, OBIT_Error, 
 		   "%s: entry %s not in InfoList", routine, keyword);
@@ -1396,6 +1402,20 @@ ObitData* ObitDataFromFileInfo (gchar *prefix, ObitInfoList *inList,
     return out;
   }
   g_free(keyword);
+
+  /* For Tables lookup parent type */
+  if (!strcmp(DataType, "Table")) { 
+    if (prefix) keyword =  g_strconcat (prefix, "TableParent", NULL);
+    else keyword =  g_strconcat ("TableParent", NULL);
+    if (!ObitInfoListGetP(inList, keyword, &type, dim, (gpointer)&DataType)) {
+      /* couldn't find it - add message to err and return */
+      Obit_log_error(err, OBIT_Error, 
+		     "%s: entry %s not in InfoList", routine, keyword);
+      g_free(keyword);
+      return out;
+    }
+    g_free(keyword);
+  }
 
   /* Call relevant Function in derived type class */ 
   if (!strcmp(DataType, "MA")) { /* Image */

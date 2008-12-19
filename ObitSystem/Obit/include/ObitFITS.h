@@ -49,7 +49,7 @@ typedef gint32 FITSint;
 /*-------------- enumerations -------------------------------------*/
 /*------------------  Macros    -------------------------------------*/
 /** The maximum number of FITS "disks" */ 
-#define MAXFITSDISK 20
+#define MAXFITSDISK 200
 
 /*--------------Class definitions-------------------------------------*/
 /** ObitFITS Class Structure. */  
@@ -79,6 +79,9 @@ olong ObitFITSAddDir (gchar* dir, ObitErr *err);
 
 /** Public: Replace FITS data directory path. */
 void ObitFITSSetDir (gchar* dir, olong disk, ObitErr *err);
+
+/** Public: Find/Add directory  */
+olong ObitFITSFindDir (gchar* dir, ObitErr *err);
 
 /** Public: Generate name of FITS file */
 gchar* 

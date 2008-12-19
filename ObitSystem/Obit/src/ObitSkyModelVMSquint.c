@@ -161,6 +161,49 @@ ObitSkyModelVMSquint* newObitSkyModelVMSquint (gchar* name)
 } /* end newObitSkyModelVMSquint */
 
 /**
+ * Initializes from ObitInfoList.
+ * Initializes class if needed on first call.
+ * \param out     the new object.to be initialized
+ * \param prefix  If NonNull, string to be added to beginning of inList entry name
+ *                "xxx" in the following
+ * \param inList  InfoList to extract object information from 
+ *      \li "xxxClassType" string SkyModel type, "Squint" for this class
+ *      \li "xxxThreshold" ofloat Threshold flux density for doing high accuracy DFT model
+ * \param err     ObitErr for reporting errors.
+ */
+void ObitSkyModelVMSquintFromInfo (ObitSkyModel *out, gchar *prefix, ObitInfoList *inList, 
+				   ObitErr *err)
+{ 
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *keyword=NULL, *value=NULL;
+  gboolean missing;
+  gchar *Type = "Squint";
+  gchar *routine = "ObitSkyModelVMSquintFromInfo";
+  
+  /* Class initialization if needed */
+  if (!myClassInfo.initialized) ObitSkyModelVMSquintClassInit();
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitIsA(out, &myClassInfo));
+
+  /* check class type */
+  missing = ObitInfoListGetP(inList, keyword, &type, dim, (gpointer*)&value);
+  if ((missing) || (type!=OBIT_string) || (!strncmp(Type,value,dim[0]))) {
+    Obit_log_error(err, OBIT_Error,"%s Wrong class type %s!=%s", routine, value, Type);
+    return;
+  }
+
+  /* "xxxThreshold" ofloat Threshold flux density for doing high accuracy DFT model */
+  if (prefix) keyword = g_strconcat (prefix, "Threshold", NULL);
+  else        keyword = g_strdup("Threshold");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->maxGrid);
+  g_free(keyword);
+
+} /* end ObitSkyModelVMSquintFromInfo */
+
+/**
  * Returns ClassInfo pointer for the class.
  * \return pointer to the class structure.
  */
@@ -653,6 +696,47 @@ void ObitSkyModelVMSquintUpdateModel (ObitSkyModelVM *inn,
 } /* end ObitSkyModelVMSquintUpdateModel */
 
 /**
+ * Convert structure information to entries in an ObitInfoList
+ * \param in      Object of interest.
+ * \param prefix  If NonNull, string to be added to beginning of outList entry name
+ *                "xxx" in the following
+ * \param outList InfoList to write entries into
+ *      \li "xxxClassType" string SkyModel type, "Squint" for this class
+ *      \li "xxxThreshold" ofloat Threshold flux density for doing high accuracy DFT model
+ * \param err     ObitErr for reporting errors.
+ */
+void ObitSkyModelVMSquintGetInfo (ObitSkyModel *inn, gchar *prefix, 
+				  ObitInfoList *outList, ObitErr *err)
+{ 
+  ObitSkyModelVMSquint *in = (ObitSkyModelVMSquint*)inn;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *keyword=NULL, *Type="Squint";
+  gchar *routine = "ObitSkyModelVMSquintGetInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* Use Base class */
+  ObitSkyModelGetInfo(inn, prefix, outList, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* set Class type */
+  if (prefix) keyword = g_strconcat (prefix, "ClassType", NULL);
+  else        keyword = g_strdup("ClassType");
+  dim[0] = strlen(Type);
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, Type);
+
+  /* "xxxThreshold" ofloat Threshold flux density for doing high accuracy DFT model */
+  if (prefix) keyword = g_strconcat (prefix, "Threshold", NULL);
+  else        keyword = g_strdup("Threshold");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->Threshold);
+  g_free(keyword);
+
+} /* end ObitSkyModelVMSquintGetInfo */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitSkyModelVMSquintClassInit (void)
@@ -705,6 +789,7 @@ static void ObitSkyModelVMSquintClassInfoDefFn (gpointer inClass)
   theClass->ObitSkyModelChose        = (ObitSkyModelChoseFP)ObitSkyModelVMSquintChose;
   theClass->ObitSkyModelVMUpdateModel=
     (ObitSkyModelVMUpdateModelFP)ObitSkyModelVMSquintUpdateModel;
+  theClass->ObitSkyModelGetInfo= (ObitSkyModelGetInfoFP)ObitSkyModelVMSquintGetInfo;
 
 } /* end ObitSkyModelVMSquintClassDefFn */
 

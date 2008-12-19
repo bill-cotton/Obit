@@ -32,6 +32,7 @@
 #include "ObitTableDesc.h"
 #include "ObitTableSel.h"
 #include "ObitMem.h"
+#include "ObitData.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -1212,6 +1213,133 @@ olong ObitTableGetVersion (ObitTable *in, ObitErr *err)
 } /* end ObitTableGetVersion */
 
 /**
+ * Get underlying file information to entries in an ObitInfoList
+ * \param in      Object of interest.
+ * \param prefix  If NonNull, string to be added to beginning of outList entry name
+ *                "xxx" in the following
+ * \param outList InfoList to write entries into
+ * Following entries for AIPS files ("xxx" = prefix):
+ * \li xxxName  OBIT_string  AIPS file name
+ * \li xxxClass OBIT_string  AIPS file class
+ * \li xxxDisk  OBIT_oint    AIPS file disk number
+ * \li xxxSeq   OBIT_oint    AIPS file Sequence number
+ * \li AIPSuser OBIT_oint    AIPS User number
+ * \li xxxCNO   OBIT_oint    AIPS Catalog slot number
+ * \li xxxDir   OBIT_string  Directory name for xxxDisk
+ *
+ * Following entries for FITS files ("xxx" = prefix):
+ * \li xxxFileName OBIT_string  FITS file name
+ * \li xxxDisk     OBIT_oint    FITS file disk number
+ * \li xxxDir      OBIT_string  Directory name for xxxDisk
+ *
+ * For all File types types:
+ * \li xxxDataType OBIT_string "UV" = UV data, "MA"=>image, "Table"=Table, 
+ *                "OTF"=OTF, etc
+ * \li xxxFileType OBIT_string "AIPS", "FITS"
+ *    
+ * For xxxDataType = "Table"
+ * \li xxxTab   OBIT_string  (Tables only) Table type (e.g. "AIPS CC")
+ * \li xxxVer   OBIT_oint    (Tables Only) Table version number
+ *    
+ * \param err     ObitErr for reporting errors.
+ */
+void ObitTableGetFileInfo (ObitTable *in, gchar *prefix, ObitInfoList *outList, 
+			  ObitErr *err)
+{
+  const ObitIOClassInfo *myIOClass;
+  gchar *routine = "ObitTableGetFileInfo";
+
+  /* Fully instantiate */
+  ObitTableFullInstantiate(in, TRUE, err);
+  if (err->error)Obit_traceback_msg (err, routine, in->name);
+
+  /* use class function on myIo */
+  myIOClass = in->myIO->ClassInfo;
+  myIOClass->ObitIOGetFileInfo (in->myIO, in->info, prefix, outList, err);
+
+} /* end ObitTableGetFileInfo */
+
+/**
+ * Create a data object with selection parameters set from an InfoList
+ * \param prefix  If NonNull, string to be added to beginning of outList entry name
+ *                "xxx" in the following
+ * \param inList InfoList to extract object information from
+ * Following InfoList entries for AIPS files ("xxx" = prefix):
+ * \li xxxName  OBIT_string  AIPS file name
+ * \li xxxClass OBIT_string  AIPS file class
+ * \li xxxDisk  OBIT_oint    AIPS file disk number
+ * \li xxxSeq   OBIT_oint    AIPS file Sequence number
+ * \li AIPSuser OBIT_oint    AIPS User number
+ * \li xxxCNO   OBIT_oint    AIPS Catalog slot number
+ * \li xxxDir   OBIT_string  Directory name for xxxDisk
+ *
+ * Following entries for FITS files ("xxx" = prefix):
+ * \li xxxFileName OBIT_string  FITS file name
+ * \li xxxDisk     OBIT_oint    FITS file disk number
+ * \li xxxDir      OBIT_string  Directory name for xxxDisk
+ *
+ * For all File types:
+ * \li xxxFileType OBIT_string "AIPS", "FITS"
+ *    
+ * For xxxDataType = "Table"
+ * \li xxxTableParent OBIT_string  (Tables only) Table parent type (e.g. "MA")
+ * \li xxxTab   OBIT_string  (Tables only) Table type (e.g. "AIPS CC")
+ * \li xxxVer   OBIT_oint    (Tables Only) Table version number
+ *    
+ * \param err     ObitErr for reporting errors.
+ * \return new data object with selection parameters set
+ */
+ObitTable* ObitTableFromFileInfo (gchar *prefix, ObitInfoList *inList, 
+				  ObitErr *err)
+{
+  ObitTable *out = NULL;
+  ObitData  *parent = NULL;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong tabVer;
+  gchar *keyword=NULL, *tabType=NULL;
+  gchar *routine = "ObitTableFromFileInfo";
+
+  /* GetParent File */ 
+  parent = ObitDataFromFileInfo(prefix, inList, err);
+  if (err->error) Obit_traceback_val (err, routine, routine, out);
+
+  /* Get basic information - table type */
+  if (prefix) keyword =  g_strconcat (prefix, "Tab", NULL);
+  else keyword =  g_strconcat ("Tab", NULL);
+  if (!ObitInfoListGetP(inList, keyword, &type, dim, (gpointer*)&tabType)) {
+    /* couldn't find it - add message to err and return */
+    Obit_log_error(err, OBIT_Error, 
+		   "%s: entry %s not in InfoList", routine, keyword);
+    g_free(keyword);
+    goto finish;
+  }
+  g_free(keyword);
+
+  /* Table version number */
+  if (prefix) keyword =  g_strconcat (prefix, "Ver", NULL);
+  else keyword =  g_strconcat ("Ver", NULL);
+  tabVer = 0;
+  if (!ObitInfoListGetTest(inList, keyword, &type, dim, &tabVer)) {
+    /* couldn't find it - add message to err and return */
+    Obit_log_error(err, OBIT_Error, 
+		   "%s: entry %s not in InfoList", routine, keyword);
+    g_free(keyword);
+    goto finish;
+  }
+  g_free(keyword);
+
+  /* Get Table */
+  if (parent)
+    out = newObitDataTable (parent, OBIT_IO_ReadWrite, tabType, &tabVer, err);
+ finish:
+  parent = ObitDataUnref(parent);
+  if (err->error) Obit_traceback_val (err, routine, routine, out);
+
+  return out;
+} /* end ObitTableFromFileInfo */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitTableClassInit (void)
@@ -1252,6 +1380,7 @@ static void ObitTableClassInfoDefFn (gpointer inClass)
   theClass->ObitClassInfoDefFn = (ObitClassInfoDefFnFP)ObitTableClassInfoDefFn;
   theClass->ObitGetClass  = (ObitGetClassFP)ObitTableGetClass;
   theClass->newObit       = (newObitFP)newObitTable;
+  theClass->ObitTableFromFileInfo = (ObitTableFromFileInfoFP)ObitTableFromFileInfo;
   theClass->ObitTableZap  = (ObitTableZapFP)ObitTableZap;
   theClass->ObitCopy      = (ObitCopyFP)ObitTableCopy;
   theClass->ObitClone     = (ObitCloneFP)ObitTableClone;
@@ -1278,6 +1407,8 @@ static void ObitTableClassInfoDefFn (gpointer inClass)
     (ObitTableGetTypeFP)ObitTableGetType;
   theClass->ObitTableGetVersion = 
     (ObitTableGetVersionFP)ObitTableGetVersion;
+  theClass->ObitTableGetFileInfo = 
+    (ObitTableGetFileInfoFP)ObitTableGetFileInfo;
 
 } /* end ObitTableClassDefFn */
 

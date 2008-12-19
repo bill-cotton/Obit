@@ -95,6 +95,76 @@ ObitUVImagerIon* newObitUVImagerIon (gchar* name)
 } /* end newObitUVImagerIon */
 
 /**
+ * Initializes from ObitInfoList.
+ * Initializes class if needed on first call.
+ * \param out     the new object.to be initialized
+ * \param prefix  If NonNull, string to be added to beginning of inList entry name
+ *                "xxx" in the following
+ * \param inList  InfoList to extract object information from
+ *      \li "xxxClassType" string UVImager type, "Ion" for this class
+ *      \li "xxxUVData" prefix for uvdata member, entry with value "None" => doesn't exist
+ *      \li "xxxUVWork" prefix for uvwork member, entry with value "None" => doesn't exist
+ *      \li "xxxMosaic" prefix for mosaic member, entry with value "None" => doesn't exist
+ *      \li "xxxIonTab" prefix for ionTab member, entry with value "None" => doesn't exist
+ *      \li "xxxsnVer"  olong SN table version to use, 0> add new
+ * \param err     ObitErr for reporting errors.
+ * \return the new object.
+ */
+void ObitUVImagerIonFromInfo (ObitUVImager *out, gchar *prefix, 
+			      ObitInfoList *inList, ObitErr *err)
+{ 
+  ObitUVImagerIon *ionout = NULL;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *keyword=NULL, *None = "None", *value=NULL, *Type = "Ion";;
+  gboolean missing;
+  gchar *routine = "ObitUVImagerIonFromInfo";
+
+  /* Class initialization if needed */
+  if (!myClassInfo.initialized) ObitUVImagerClassInit();
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitIsA(out, &myClassInfo));
+ 
+  /* check class type */
+  if (prefix) keyword = g_strconcat (prefix, "ClassType", NULL);
+  else        keyword = g_strdup("ClassType");
+  missing = ObitInfoListGetP(inList, keyword, &type, dim, (gpointer*)&value);
+  if ((missing) || (type!=OBIT_string) || (!strncmp(Type,value,dim[0]))) {
+    Obit_log_error(err, OBIT_Error,"%s Wrong class type %s!=%s", routine, value, Type);
+    return;
+  }
+  g_free(keyword);
+
+  /* pointer to this class type */
+  ionout = (ObitUVImagerIon*)out;
+
+  /* Add things for this class */
+  /* ionTab */
+  if (prefix) keyword = g_strconcat (prefix, "IonTab", NULL);
+  else        keyword = g_strdup("IonTab");
+  missing = ObitInfoListGetP(inList, keyword, &type, dim, (gpointer*)&value);
+  /* Does it exist? */
+  if ((missing) || (type!=OBIT_string) || (!strncmp(None,value,dim[0]))) {
+    Obit_log_error(err, OBIT_Error,"%s Ion model table not defined in %s", routine, keyword);
+    return;
+  } else { /* exists*/
+    ionout->ionTab = (ObitTableNI*)ObitTableFromFileInfo(keyword, inList, err);
+    if (err->error) Obit_traceback_msg (err, routine, keyword);
+  }
+  g_free(keyword);
+
+ /* snVer */
+  if (prefix) keyword = g_strconcat (prefix, "snVer", NULL);
+  else        keyword = g_strdup("snVer");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(inList, keyword, OBIT_long, dim, &ionout->snVer);
+  g_free(keyword);
+
+} /* end ObitUVImagerIonFromInfo */
+
+/**
  * Returns ClassInfo pointer for the class.
  * \return pointer to the class structure.
  */
@@ -471,6 +541,66 @@ ObitImageMosaic* ObitUVImagerIonGetMosaic (ObitUVImager *in, ObitErr *err)
 } /* end ObitUVImagerIonGetMosaic */
 
 /**
+ * Convert structure information to entries in an ObitInfoList
+ * \param in      Object of interest.
+ * \param prefix  If NonNull, string to be added to beginning of outList entry name
+ *                "xxx" in the following
+ * \param outList InfoList to write entries into
+ *      \li "xxxClassType" string UVImager type, "Ion" for this class
+ *      \li "xxxUVData" prefix for uvdata member, entry with value "None" => doesn't exist
+ *      \li "xxxUVWork" prefix for uvwork member, entry with value "None" => doesn't exist
+ *      \li "xxxMosaic" prefix for mosaic member, entry with value "None" => doesn't exist
+ *      \li "xxxIonTab" prefix for ionTab member, entry with value "None" => doesn't exist
+ *      \li "xxxsnVer"  olong SN table version to use, 0> add new
+ * \param err     ObitErr for reporting errors.
+ */
+void ObitUVImagerIonGetInfo (ObitUVImager *inn, gchar *prefix, ObitInfoList *outList, 
+			     ObitErr *err)
+{ 
+  ObitUVImagerIon *in = (ObitUVImagerIon*)inn;
+   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *keyword=NULL, *None = "None", *OK="OK", *Type="Ion";
+  gchar *routine = "ObitUVImagerIonGetInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* Use Base class */
+  ObitUVImagerGetInfo(inn, prefix, outList, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Add things for this class */
+  /* ionTab */
+  if (prefix) keyword = g_strconcat (prefix, "IonTab", NULL);
+  else        keyword = g_strdup("IonTab");
+  if (in->ionTab) {
+    ObitTableGetFileInfo((ObitTable*)in->ionTab, keyword, outList, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    dim[0] = strlen(OK);
+    ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, OK);
+  } else {
+    dim[0] = strlen(None);
+    ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, None);
+  }
+  g_free(keyword);
+
+  /* snVer */
+  if (prefix) keyword = g_strconcat (prefix, "snVer", NULL);
+  else        keyword = g_strdup("snVer");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->snVer);
+  g_free(keyword);
+
+  /* set Class type */
+  if (prefix) keyword = g_strconcat (prefix, "ClassType", NULL);
+  else        keyword = g_strdup("ClassType");
+  dim[0] = strlen(Type);
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, Type);
+
+} /* end ObitUVImagerIonGetInfo */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitUVImagerIonClassInit (void)
@@ -519,6 +649,7 @@ static void ObitUVImagerIonClassInfoDefFn (gpointer inClass)
   theClass->ObitUVImagerCreate2= (ObitUVImagerCreate2FP)ObitUVImagerIonCreate2;
   theClass->ObitUVImagerWeight = (ObitUVImagerWeightFP)ObitUVImagerIonWeight;
   theClass->ObitUVImagerImage  = (ObitUVImagerImageFP)ObitUVImagerIonImage;
+  theClass->ObitUVImagerGetInfo= (ObitUVImagerGetInfoFP)ObitUVImagerIonGetInfo;
 
 } /* end ObitUVImagerIonClassDefFn */
 

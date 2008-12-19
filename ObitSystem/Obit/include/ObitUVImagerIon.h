@@ -228,6 +228,10 @@ void ObitUVImagerIonClassInit (void);
 /** Public: Default Constructor. */
 ObitUVImagerIon* newObitUVImagerIon (gchar* name);
 
+/** Public: Init UVImager object from description in an ObitInfoList */
+void ObitUVImagerIonFromInfo (ObitUVImager *out,gchar *prefix, 
+			      ObitInfoList *inList, ObitErr *err);
+
 /** Public: ClassInfo pointer */
 gconstpointer ObitUVImagerIonGetClass (void);
 
@@ -256,6 +260,10 @@ void ObitUVImagerIonFlatten (ObitUVImager *in, ObitErr *err);
 /** Public: return ImageMosaic member */
 ObitImageMosaic* ObitUVImagerIonGetMosaic (ObitUVImager *in, ObitErr *err);
 
+/** Public: Extract information about underlying structures to ObitInfoList */
+void ObitUVImagerIonGetInfo (ObitUVImager *in, gchar *prefix, 
+			     ObitInfoList *outList, 
+			     ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

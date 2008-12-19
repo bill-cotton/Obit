@@ -71,10 +71,10 @@ ObitIOType fileType;
 gchar *imName;
 /** Class of Mosaic images, 2 char if AIPS */
 gchar *imClass;
+/** Disk numbers of Mosaic images */
+olong *imDisk;
 /** Sequence number of Mosaic images */
 olong imSeq;
-/** Disk number of Mosaic images */
-olong imDisk;
 /** Is a full field image desired? */
 gboolean doFull;
 /** Restoring beam, values in deg*/

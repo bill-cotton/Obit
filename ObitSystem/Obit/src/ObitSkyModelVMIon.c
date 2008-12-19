@@ -27,6 +27,7 @@
 /*--------------------------------------------------------------------*/
 
 #include "ObitSkyModelVMIon.h"
+#include "ObitTable.h"
 #include "ObitTableCCUtil.h"
 #include "ObitTableNIUtil.h"
 #include "ObitSkyGeom.h"
@@ -133,6 +134,83 @@ ObitSkyModelVMIon* newObitSkyModelVMIon (gchar* name)
 
  return out;
 } /* end newObitSkyModelVMIon */
+
+/**
+ * Initializes from ObitInfoList.
+ * Initializes class if needed on first call.
+ * \param out     the new object.to be initialized
+ * \param prefix  If NonNull, string to be added to beginning of inList entry name
+ *                "xxx" in the following
+ * \param inList  InfoList to extract object information from
+ *      \li "xxxClassType" string SkyModel type, "Ion" for this class
+ *      \li "xxxNITable" string prefix for NI table
+ *      \li "xxxdo3Dmul" boolean if true need 3D rotation multiply by matrix
+ *      \li "xxxncoef"   olong Number of coefficients
+ * \param err     ObitErr for reporting errors.
+ * \return the new object.
+ */
+void ObitSkyModelVMIonFromInfo (ObitSkyModel *out, gchar *prefix, 
+				ObitInfoList *inList, ObitErr *err)
+{ 
+  ObitSkyModelVMIon *ionout = NULL;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *keyword=NULL, *None = "None", *value=NULL, *Type = "Ion";;
+  gboolean missing;
+  gchar *routine = "ObitSkyModelVMIonFromInfo";
+
+  /* Class initialization if needed */
+  if (!myClassInfo.initialized) ObitSkyModelVMClassInit();
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitIsA(out, &myClassInfo));
+ 
+  /* check class type */
+  if (prefix) keyword = g_strconcat (prefix, "ClassType", NULL);
+  else        keyword = g_strdup("ClassType");
+  missing = ObitInfoListGetP(inList, keyword, &type, dim, (gpointer*)&value);
+  if ((missing) || (type!=OBIT_string) || (!strncmp(Type,value,dim[0]))) {
+    Obit_log_error(err, OBIT_Error,"%s Wrong class type %s!=%s", routine, value, Type);
+    return;
+  }
+  g_free(keyword);
+
+  /* pointer to this class type */
+  ionout = (ObitSkyModelVMIon*)out;
+
+  /* Add things for this class */
+  /* "xxxNITable" string prefix for NI table */
+  if (prefix) keyword = g_strconcat (prefix, "NITable", NULL);
+  else        keyword = g_strdup("NITable");
+  missing = ObitInfoListGetP(inList, keyword, &type, dim, (gpointer*)&value);
+  /* Does it exist? */
+  if ((missing) || (type!=OBIT_string) || (!strncmp(None,value,dim[0]))) {
+    Obit_log_error(err, OBIT_Error,"%s Ion model table not defined in %s", routine, keyword);
+    return;
+  } else { /* exists*/
+    ionout->NITable = (ObitTableNI*)ObitTableFromFileInfo(keyword, inList, err);
+    if (err->error) Obit_traceback_msg (err, routine, keyword);
+  }
+  g_free(keyword);
+
+  /* "xxxdo3Dmul" boolean if true need 3D rotation multiply by matrix */
+  if (prefix) keyword = g_strconcat (prefix, "do3Dmul", NULL);
+  else        keyword = g_strdup("do3Dmul");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &ionout->do3Dmul);
+  g_free(keyword);
+
+  /* "xxxncoef"   olong Number of coefficients */
+  if (prefix) keyword = g_strconcat (prefix, "ncoef", NULL);
+  else        keyword = g_strdup("ncoef");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(inList, keyword, OBIT_long, dim, &ionout->ncoef);
+  g_free(keyword);
+
+  /* error checks */
+  if (err->error) return;
+
+} /* end ObitSkyModelVMIonFromInfo */
 
 /**
  * Returns ClassInfo pointer for the class.
@@ -660,6 +738,71 @@ void ObitSkyModelVMIonUpdateModel (ObitSkyModelVM *inn,
 } /* end ObitSkyModelVMIonUpdateModel */
 
 /**
+ * Convert structure information to entries in an ObitInfoList
+ * \param in      Object of interest.
+ * \param prefix  If NonNull, string to be added to beginning of outList entry name
+ *                "xxx" in the following
+ * \param outList InfoList to write entries into
+ *      \li "xxxClassType" string SkyModel type, "Ion" for this class
+ *      \li "xxxNITable" string prefix for NI table
+ *      \li "xxxdo3Dmul" boolean if true need 3D rotation multiply by matrix
+ *      \li "xxxncoef"   olong Number of coefficients
+ * \param err     ObitErr for reporting errors.
+ */
+void ObitSkyModelVMIonGetInfo (ObitSkyModel *inn, gchar *prefix, ObitInfoList *outList, 
+			       ObitErr *err)
+{ 
+  ObitSkyModelVMIon *in = (ObitSkyModelVMIon*)inn;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *keyword=NULL, *None = "None", *OK="OK",*Type="Ion";
+  gchar *routine = "ObitSkyModelVMIonGetInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* Use Base class */
+  ObitSkyModelGetInfo(inn, prefix, outList, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* set Class type */
+  if (prefix) keyword = g_strconcat (prefix, "ClassType", NULL);
+  else        keyword = g_strdup("ClassType");
+  dim[0] = strlen(Type);
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, Type);
+
+  /* Add things for this class */
+  /* "xxxNITable" string prefix for NI table */
+  if (prefix) keyword = g_strconcat (prefix, "NITable", NULL);
+  else        keyword = g_strdup("NITable");
+  if (in->NITable) {
+    ObitTableGetFileInfo((ObitTable*)in->NITable, keyword, outList, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    dim[0] = strlen(OK);
+    ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, OK);
+  } else {
+    dim[0] = strlen(None);
+    ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, None);
+  }
+  g_free(keyword);
+
+  /* "xxxdo3Dmul" boolean if true need 3D rotation multiply by matrix*/
+  if (prefix) keyword = g_strconcat (prefix, "do3Dmul", NULL);
+  else        keyword = g_strdup("do3Dmul");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_bool, dim, &in->do3Dmul);
+  g_free(keyword);
+  
+  /* "xxxncoef"   olong Number of coefficients */
+  if (prefix) keyword = g_strconcat (prefix, "ncoef", NULL);
+  else        keyword = g_strdup("ncoef");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->ncoef);
+  g_free(keyword);
+
+} /* end ObitSkyModelVMIonGetInfo */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitSkyModelVMIonClassInit (void)
@@ -710,6 +853,7 @@ static void ObitSkyModelVMIonClassInfoDefFn (gpointer inClass)
   theClass->ObitSkyModelGetInput     = (ObitSkyModelGetInputFP)ObitSkyModelVMIonGetInput;
   theClass->ObitSkyModelVMUpdateModel=
     (ObitSkyModelVMUpdateModelFP)ObitSkyModelVMIonUpdateModel;
+  theClass->ObitSkyModelGetInfo= (ObitSkyModelGetInfoFP)ObitSkyModelVMIonGetInfo;
 
 } /* end ObitSkyModelVMIonClassDefFn */
 

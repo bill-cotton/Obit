@@ -132,6 +132,10 @@ void ObitSkyModelVMIonClassInit (void);
 /** Public: Default Constructor. */
 ObitSkyModelVMIon* newObitSkyModelVMIon (gchar* name);
 
+/** Public: Init SkyModel object from description in an ObitInfoList */
+void ObitSkyModelVMIonFromInfo (ObitSkyModel *out, gchar *prefix, 
+				ObitInfoList *inList, ObitErr *err);
+
 /** Public: Create/initialize ObitSkyModelVMIon structures */
 ObitSkyModelVMIon* ObitSkyModelVMIonCreate (gchar* name, ObitImageMosaic* mosaic);
 
@@ -148,7 +152,8 @@ void ObitSkyModelVMInitModel (ObitSkyModel* in, ObitErr *err);
 gconstpointer ObitSkyModelVMIonGetClass (void);
 
 /** Public: Copy (deep) constructor. */
-ObitSkyModelVMIon* ObitSkyModelVMIonCopy  (ObitSkyModelVMIon *in, ObitSkyModelVMIon *out, ObitErr *err);
+ObitSkyModelVMIon* ObitSkyModelVMIonCopy  (ObitSkyModelVMIon *in, 
+					   ObitSkyModelVMIon *out, ObitErr *err);
 
 /** Public: Copy structure. */
 void ObitSkyModelVMIonClone (ObitSkyModelVMIon *in, ObitSkyModelVMIon *out, 
@@ -158,6 +163,10 @@ void ObitSkyModelVMIonClone (ObitSkyModelVMIon *in, ObitSkyModelVMIon *out,
 void ObitSkyModelVMIonUpdateModel (ObitSkyModelVM *in, ofloat time, olong suba,
 				   ObitUV *uvdata, olong ithread, ObitErr *err);
 
+/** Public: Extract information about underlying structures to ObitInfoList */
+void ObitSkyModelVMIonGetInfo (ObitSkyModel *in, gchar *prefix, 
+			       ObitInfoList *outList, 
+			       ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

@@ -179,6 +179,55 @@ void ObitFITSSetDir (gchar* dir, olong disk, ObitErr *err)
 } /* end ObitFITSSetDir */
 
 /**
+ * Lookup and possibly add a directory.
+ * Searches the current list of directories for directory name dir,
+ * if it exists, its disk number is returned.  
+ * Otherwise the directory is added and its number is returned.
+ * Note, the maximum number of FITS disks is MAXFITSDISK  new disks up to this 
+ * max can be assigned.
+ * \param disk  disk (1-rel) to be changed, must have been assigned at startup
+ *              if <=0 then add new disk, up to MAXFITSDISK
+ * \param dir   name of the directory to be located or added
+ *              if dir="." or "./" then disk = 0 
+ * \return disk number assigned
+ */
+olong ObitFITSFindDir (gchar* dir, ObitErr *err)
+{
+  olong disk=0;
+
+  /* error checks */
+  if (err->error) return disk;
+
+  if (!myFITSInfo->initialized) { /* FITS directories un initialized */
+    Obit_log_error(err, OBIT_Error, "FITS directories uninitialized");
+    return disk;
+  }
+
+  /* No need to lookup CWD */
+  if ((!strcmp(dir,".")) || (!strcmp(dir,"./"))) return disk;
+
+  /* See if it is currently defined */
+  for (disk=1; disk<=myFITSInfo->NumberDisks; disk++) {
+    if (!strcmp(dir, myFITSInfo->FITSdir[disk-1])) return disk;
+  }
+
+    /* Nope - add */
+    disk = myFITSInfo->NumberDisks+1;  /* Add directory */
+    if ((disk<1) || (disk>MAXFITSDISK)) /* Disk number out of range? */
+      Obit_log_error(err, OBIT_Error, 
+		     "FITS disk number %d out of range [%d,%d]", 
+		     disk, 1, myFITSInfo->NumberDisks);
+    if (err->error) return  disk;
+
+  /* Add directory name */
+  if (myFITSInfo->FITSdir[disk-1]) g_free(myFITSInfo->FITSdir[disk-1]);
+  myFITSInfo->FITSdir[disk-1] =  g_strdup(dir);
+  myFITSInfo->NumberDisks = MAX (myFITSInfo->NumberDisks, disk);
+
+  return disk;
+} /* end ObitFITSFindDir */
+
+/**
  * Forms file name from the various parts.
  * #ObitFITSClassInit must have been used to initialize.
  * \param disk      FITS "disk" number. 1-rel, =0 => ignore directory

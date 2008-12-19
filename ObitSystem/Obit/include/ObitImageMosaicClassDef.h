@@ -1,6 +1,6 @@
-/* $Id$                            */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004                                               */
+/*;  Copyright (C) 2004,2008                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -17,7 +17,7 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*;  Correspondence this software should be addressed as follows:     */
+/*;Correspondence about this software should be addressed as follows: */
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
@@ -27,3 +27,8 @@
 /*  Define the basic components of the ObitImageMosaic ClassInfo structure  */
 /* This is intended to be included in a classInfo structure definition*/
 #include "ObitClassDef.h"  /* Parent class ClassInfo definition file */
+/** Function pointer to Constructor from ObitInfo. */
+ObitImageMosaicFromInfoFP ObitImageMosaicFromInfo;
+/** Function pointer to Extract information about underlying structures 
+    to ObitInfoList. */
+ObitImageMosaicGetInfoFP ObitImageMosaicGetInfo;

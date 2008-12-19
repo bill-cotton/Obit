@@ -75,14 +75,6 @@ static void ObitMultiProcClassInfoDefFn (gpointer inClass);
 /** Private: Threaded multiprocessing send */
 static gpointer MultiProcSnd (gpointer arg);
 
-/** Private: Threaded multiprocessing receive */
-static void MultiProcRcv (const char *server_url,
-				const char *method_name,
-				ObitXMLValue *param_array,
-				void *user_data,
-				ObitXMLEnv  *fault,
-				ObitXMLValue *result);
-
 /** Private: Split RPC URL into host and port */
 static void splitURL (const gchar *RPCURL, gchar *host, olong *port);
 
@@ -297,9 +289,8 @@ ObitMultiProc* ObitMultiProcCreate (gchar* name, olong njobs,
 				    ObitErr *err)
 {
   ObitMultiProc* out;
-  ObitRPC *client=NULL;
   olong i;
-  gchar *routine = "ObitMultiProcCreate";
+  /*gchar *routine = "ObitMultiProcCreate";*/
 
   /* Create basic structure */
   out = newObitMultiProc (name);
@@ -315,16 +306,12 @@ ObitMultiProc* ObitMultiProcCreate (gchar* name, olong njobs,
   /* Arrays */
   out->doJob = g_malloc0(out->njobs*sizeof(gboolean));
   out->args  = g_malloc0(out->njobs*sizeof(ObitMultiProcFuncArg*));
-
-  /* ObitRPC client for all */
-  client =  ObitRPCCreateClient ("RPCclient", err);
-  if (err->error) Obit_traceback_val (err, routine, "Create", out); 
-
+  
   /* Initialize arrays */
   for (i=0; i<out->njobs; i++) {
     out->doJob[i] = TRUE;   /* Until indicated otherwise */
     out->args[i]  = g_malloc0(sizeof(ObitMultiProcFuncArg));
-    out->args[i]->client    = ObitRPCRef(client);
+    out->args[i]->client    = NULL;
     out->args[i]->URL       = NULL;
     out->args[i]->MPfunc    = g_strdup(MPfunc);
     out->args[i]->localfunc = localFunc;
@@ -368,6 +355,9 @@ void ObitMultiProcStart (ObitInfoList *myInput, ObitErr *err)
   olong pgmNumber, port;
   ObitInfoList *taskList=NULL;
   gchar tempURL[300], cmd_line[300], host[300], taskFile[300];
+  gboolean OK, local=FALSE;
+  ObitFile *parmFile=NULL;
+  gint status;
   gchar        *taskParms[] = {  /* task parameters */
     "AIPSuser", "nAIPS", "AIPSdirs", "nFITS", "FITSdirs", 
     "nThreads", "noScrat", "prtLv",
@@ -388,12 +378,14 @@ void ObitMultiProcStart (ObitInfoList *myInput, ObitErr *err)
       /* Something here? */     
       if (strTemp[0]!=' ') {
 	if (!myClassInfo.URL) myClassInfo.URL = g_malloc0(dim[1]*sizeof(gchar*));
+	if (!myClassInfo.clients) myClassInfo.clients = g_malloc0(dim[1]*sizeof(ObitRPC*));
 	for (j=0; j<dim[0]; j++) {
 	  if (strTemp[j]==' ') break;  /* drop blanks */
 	  tempURL[j] = strTemp[j];
 	}
 	tempURL[j] = 0;
-	myClassInfo.URL[nURL] = g_strdup(tempURL);
+	myClassInfo.URL[nURL]     = g_strdup(tempURL);
+	myClassInfo.clients[nURL] = ObitRPCCreateClient ("RPCclient", err);
 	nURL++;
 	strTemp += dim[0];
       } else break;
@@ -406,13 +398,16 @@ void ObitMultiProcStart (ObitInfoList *myInput, ObitErr *err)
       for (i=0; i<dim[0]; i++) { /* loop over array */
 	if (itemp[i]<=0) break;
 	if (!myClassInfo.URL) myClassInfo.URL = g_malloc0(dim[0]*sizeof(gchar*));
+	if (!myClassInfo.clients) myClassInfo.clients = g_malloc0(dim[1]*sizeof(ObitRPC*));
 	sprintf (tempURL,"http://localhost:%d/RPC2",itemp[i]);
-	myClassInfo.URL[nURL] = g_strdup(tempURL);
+	myClassInfo.URL[nURL]     = g_strdup(tempURL);
+	myClassInfo.clients[nURL] = ObitRPCCreateClient ("RPCclient", err);
  	nURL++;
      }
     }
   } /* End get URL from local port number */
   
+  if (err->error) Obit_traceback_msg (err, routine, "Starting MultiProcs");
   if (nURL<=0) return;  /* Nothing to do */
   
   myClassInfo.nProcessor = nURL;  /* save Number found */
@@ -436,23 +431,67 @@ void ObitMultiProcStart (ObitInfoList *myInput, ObitErr *err)
     /* Get port and host URL */
     splitURL (myClassInfo.URL[i], host, &port);
     ObitInfoListAlwaysPut (taskList, "port", OBIT_int, dim, &port);
+
+    /* Local or remote? */
+    local = !strcmp(host, "localhost");
     /* write parameter file */
-    sprintf (taskFile, "/tmp/FuncContainerInput%d.inp", pgmNumber);
-    ObitReturnDumpRetCode (0, taskFile, taskList, err);  
-    if (err->error) Obit_traceback_msg (err, routine, "Starting MultiProcs");
+    if (local) {  /* Local */
+      sprintf (taskFile, "/tmp/FuncContainerInput%d.inp", pgmNumber);
+      ObitReturnDumpRetCode (0, taskFile, taskList, err);  
+      if (err->error) Obit_traceback_msg (err, routine, "Starting writing FuncContainer input");
+    } else { /* remote */
+      sprintf (taskFile, "/tmp/FuncContainerInput%d.inp", pgmNumber);
+      ObitReturnDumpRetCode (0, taskFile, taskList, err);  
+      if (err->error) Obit_traceback_msg (err, routine, "Writing FuncContainer input");
+      sprintf (cmd_line, "scp -q %s %s:/tmp/FuncContainerInput%d.tmp", taskFile, host, pgmNumber);
+      /* DEBUG */
+      fprintf (stderr, "%s\n", cmd_line);
+      OK = g_spawn_command_line_sync (cmd_line, NULL, NULL, &status, NULL);
+    } /* end write task parameters */
 
     /* set command line */
-    sprintf (cmd_line, "FuncContainer -input %s -port %d", taskFile, port);
-    myClassInfo.cmd_lines[i] = g_strdup(cmd_line);
-    if (!spawn (myClassInfo.ASThreads[i], myClassInfo.cmd_lines[i])) {
-      Obit_log_error(err, OBIT_InfoWarn, "Error starting process port %d on %s - already running?", 
-		     port, host);
-    }
+    if (local) {  /* Local */
+      sprintf (cmd_line, "FuncContainer -input %s -port %d", taskFile, port);
+      myClassInfo.cmd_lines[i] = g_strdup(cmd_line);
+      if (!spawn (myClassInfo.ASThreads[i], myClassInfo.cmd_lines[i])) {
+	Obit_log_error(err, OBIT_InfoWarn, "Error starting process port %d on %s - already running?", 
+		       port, host);
+      }
+    } else { /* remote */
+      sprintf (taskFile, "/tmp/FuncContainerInput%d.tmp", pgmNumber);
+      sprintf (cmd_line, "ssh %s /tmp/FuncContainer -input %s -port %d", host, taskFile, port);
+      /* DEBUG */
+      fprintf (stderr, "%s\n", cmd_line);
+      myClassInfo.cmd_lines[i] = g_strdup(cmd_line);
+      if (!spawn (myClassInfo.ASThreads[i], myClassInfo.cmd_lines[i])) {
+	Obit_log_error(err, OBIT_InfoWarn, "Error starting process port %d on %s - already running?", 
+		       port, host);
+      }
+    } /* end start FuncContainer */
   } /* end loop over processes */
-  
+
   /* If successful */
   myClassInfo.haveAsynchProc = TRUE;  
   ObitErrLog(err); /* show any error messages on err */
+
+  /* Wait a bit for things to actually start */
+  usleep(2000000);  /* 2 sec */
+  
+  /* delete temporary (remote) input files */
+  for (i=0; i<nURL; i++) { /* loop over processes */
+    pgmNumber = i+1; /* Program number */
+    /* Local or remote? */
+    local = !strcmp(host, "localhost");
+    if (!local) { /* remote */
+      sprintf (taskFile, "/tmp/FuncContainerInput%d.inp", pgmNumber);
+      /* delete temp taskFile */
+      parmFile = newObitFile(taskFile);
+      ObitFileOpen (parmFile, taskFile, OBIT_IO_ReadWrite, OBIT_IO_Text, 0, err);
+      ObitFileClose(parmFile, err);
+      /*ObitFileZap(parmFile, err); DEBUG*/
+      if (err->error) Obit_traceback_msg (err, routine, "Zapping FuncContainer input");
+    }
+  }
   
 } /* end ObitMultiProcStart */
 
@@ -546,6 +585,8 @@ void ObitMultiProcSetExecFlag(ObitMultiProc* in, olong jobNo, gboolean flag)
 
 /**
  * Execute selected jobs
+ * If the URLs are specified in in->args[*]->URL, they are used, otherwise the
+ * first myClassInfo.nProcessor are assigned the list of URL in the class global structure.
  * Can run synchronously or asynchronously if enabled.
  * \param in      MultiProc object to execute
  * \param timeout Timeout (min) per function call, <= 0 -> forever 
@@ -570,13 +611,13 @@ void ObitMultiProcExecute (ObitMultiProc* in, ofloat timeout, ObitErr *err)
   /* Is MultiProcessing with asynchronous processes enabled? */
   if (myClassInfo.haveAsynchProc) { /* do asynchronously */
 
-    /* Assign URLs to first nstreams */
+    /* Assign URL/RPC clientss to first nstreams if not given */
     nstreams = myClassInfo.nProcessor;
     ndo = 0;
     for (i=0; i<in->njobs; i++) {
-      if (in->doJob[i]) {
-	if (in->args[i]->URL) g_free(in->args[i]->URL);
-	in->args[i]->URL = g_strdup(myClassInfo.URL[ndo]);
+      if ((in->doJob[i]) && (in->args[i]->URL==NULL)) {
+	in->args[i]->URL    = g_strdup(myClassInfo.URL[ndo]);
+	in->args[i]->client = ObitRPCRef(myClassInfo.clients[ndo]);
 	ndo++;
 	if (ndo>= nstreams) break;
       }
@@ -589,8 +630,8 @@ void ObitMultiProcExecute (ObitMultiProc* in, ofloat timeout, ObitErr *err)
     if (!OK) {  /* Something went wrong */
       /* Error checks */
       for (i=0; i<in->njobs; i++) {
-	if ((err->error) || (in->args[i]->retVal==NULL))
-	  Obit_traceback_msg (err, routine, in->name);  
+	Obit_return_if_fail(((!err->error) && (in->args[i]->retVal!=NULL)), 
+			    err, "%s: MultiProcExec RPC Call %d failed", routine, i);
       }
     }
     
@@ -750,7 +791,7 @@ void ObitMultiProcClear (gpointer inn)
 /** 
  * Multiprocessing call passed through thread
  * This will forward the processing request to the FuncContainer
- * asynchronously with arguments specified in args.
+ * with arguments specified in args.
  * Arguments are given in the structure passed as arg
  * \param arg  Pointer to ObitMultiProcFuncArg argument with elements:
  * \li client     RPC client
@@ -761,6 +802,7 @@ void ObitMultiProcClear (gpointer inn)
  * \li retVal     Return values as InfoList
  * \li thread     thread object
  * \li ithread    thread number
+ * \li ijob       job number
  * \li err        Obit error/logging object
  *  \return NULL
  */
@@ -776,95 +818,23 @@ static gpointer MultiProcSnd (gpointer arg)
   olong ithread        = largs->ithread;
   ObitErr *err         = largs->err;
 
-  ObitXML *XMLarg=NULL;
-  gboolean doCall;
+  ObitXML *XMLarg=NULL, *XMLreply=NULL;
   ObitErr *terr = newObitErr();
-  gchar *routine = "ThreadMultProcSnd";
- 
-  doCall = FALSE;
-   
-  /* Create XML argument */
-  XMLarg = ObitXMLSetCallArg(MPfunc, args, terr);
-  if (terr->error) goto done;
-  
-  /* Do call  */
-  ObitRPCCallSnd (client, URL, XMLarg, 
-		  (ObitRPC_response_handler)MultiProcRcv, 
-		  (gpointer)arg, terr);
-   if (terr->error) goto done;
-   else   doCall = TRUE;
-
-  ObitThreadUnlock(thread);
-
-  /* finished */
- done:
-  
-  if (terr->error) {
-    ObitErrLog(err); /* show any error messages on err */
-    Obit_log_error(terr, OBIT_Error,   "%s %d: Error making RPC call", routine, ithread);
-}
-
-  /* Cleanup */
-  if (XMLarg) ObitXMLUnref(XMLarg);
-
-  /* If something went wrong indicate completion */
-  if (!doCall)  ObitThreadPoolDone (thread, (gpointer)&URL);
-  return NULL;
-
-} /* end MultiProcSnd */
-
-/** 
- * Multiprocessing call passed through thread
- * This callback function processed the result of the resuest.
- * Logging messages are extracted from the return InfoList
- * and added to the arg-err member.
- * If the return value is other than "OK" and error is indicated in arg->err.
- * Arguments are given in the structure passed as arg
- * At completion, sends URL of the FuncContainer used to ObitThreadPoolDone.
- * \param server_url   Server called
- * \param method_name  Function called 
- * \param param_array  Request sent
- * \param user_data  Pointer to ObitMultiProcFuncArg argument with elements:
- * \li client     RPC client
- * \li URL        URL for FuncContainer
- * \li MPfunc     Function name to call in FuncContainer for remote RPC call
- * \li localfunc  Function pointer to call in local address space (unused here)
- * \li args       Arguments as InfoList 
- * \li retVal     Return values as InfoList
- * \li thread     thread object
- * \li ithread    thread number
- * \li err        Obit error/logging object
- * \li user_data  Unused
- * \param fault   RPC environment
- * \param result  Result of RPC call
- */
-static void MultiProcRcv (const char *server_url,
-				const char *method_name,
-				ObitXMLValue *param_array,
-				void *user_data,
-				ObitXMLEnv  *fault,
-				ObitXMLValue *result)
-{
-  /* Get arguments from structure */
-  ObitMultiProcFuncArg *largs = (ObitMultiProcFuncArg*)user_data;
-  ObitRPC *client      = largs->client;
-  gchar *URL           = largs->URL;
-  ObitThread *thread   = largs->thread;
-  olong ithread        = largs->ithread;
-  ObitErr *err         = largs->err;
-
-  ObitXML *XMLreply=NULL;
   ObitInfoType type;
   olong nlog, ilog;
   gint32 dim[MAXINFOELEMDIM]={1,1,1,1,1};
   gchar *strTemp, mlabel[40];
   ObitErrCode ECode;
-  ObitErr *terr = newObitErr();
-  gchar *routine = "ThreadMultProcRcv";
-
-  /* Convert reply to XML object */
-  XMLreply = ObitRPCCallRcv (client, result, NULL, NULL, terr);
-
+  gchar *routine = "MultProcSnd";
+  
+  /* Create XML argument */
+  XMLarg = ObitXMLSetCallArg(MPfunc, args, terr);
+  if (terr->error) goto done;
+  
+  /* Do call  */
+  XMLreply = ObitRPCCall (client, URL, XMLarg, NULL, NULL, terr);
+  if (terr->error) goto done;
+  
   /* Convert reply to InfoList */
   largs->retVal = ObitXMLGetServerResult(XMLreply, terr);
   if (terr->error) goto done;
@@ -895,21 +865,30 @@ static void MultiProcRcv (const char *server_url,
    if ((strTemp==NULL) || (strTemp[0]!='O') || (strTemp[1]!='K') || (strTemp[2]!=0)) {
      /* Oh Bother! it failed */
      ObitThreadLock(thread);
-     Obit_log_error(err, OBIT_Error,   "%s %d: Error in RPC call, status %s", routine, ithread, strTemp);
+     Obit_log_error(err, OBIT_Error,   "%s %d: Error in RPC call, status %s", \
+		    routine, ithread, strTemp);
      ObitThreadUnlock(thread);
   }
  
   /* finished */
  done:
   
-  /* Cleanup */
-  if (XMLreply)  ObitXMLUnref(XMLreply);
-  if (client)    ObitRPCUnref(client);
+   if (terr->error) {
+     ObitThreadLock(thread);
+     ObitErrLog(terr); /* show any error messages on terr */
+     Obit_log_error(err, OBIT_Error,   "%s %d: Error making RPC call", routine, ithread);
+     ObitThreadUnlock(thread);
+   }
 
+   /* Cleanup */
+   if (XMLarg)   ObitXMLUnref(XMLarg);
+   if (XMLreply) ObitXMLUnref(XMLreply);
+   
   /* Indicate completion */
-  ObitThreadPoolDone (thread, (gpointer)URL);
-  
-} /* end MultiProcRcv */
+  ObitThreadPoolDone (thread, (gpointer)&largs->ijob);
+   return NULL;
+   
+} /* end MultiProcSnd */
 
 /**
  * Extract host URL and port number from RPCURL
@@ -991,9 +970,10 @@ static gpointer ThreadSpawn (gpointer arg)
  * Loops over a set of function calls in a limited number of job streams.
  * The functions are intended to contain an ObitRPCCall to an asynchronous 
  * process.  The URL/port numbers of the first nstreams elements of args
- * are recycled as previous jobs are completed.
+ * should be set.  If subsequent jobs must be performed on a particular URL,
+ * their URLs should be set, otherwise the next available URL will be used.
  * If nstreams=1 routine called directly.
- * Waits for operations to finish before returning, 1 min timeout.
+ * Waits for operations to finish before returning,
  * Initializes asynchronous queue (ObitThreadPoolInit) if not already done.
  * When threaded operations are finished, call ObitThreadPoolFree to release
  * Thread pool.
@@ -1002,7 +982,7 @@ static gpointer ThreadSpawn (gpointer arg)
  * \param timeout    Timeout (min) per function call, <= 0 -> forever NYI
  * \param func       Function to call to start thread
  *                   func should call ObitThreadPoolDone to indicate completion 
- *                   and return the URL used for the RPC operation.
+ *                   and return the job number used for the RPC operation.
  * \param njobs      Number of executions of func each with a separate args[i].
  * \param doJob      Array of flags indicating which of njobs are desired
  * \param args       Array of argument function pointers, njob elements
@@ -1015,10 +995,11 @@ static gboolean MultiProcExec (ObitThread* thread, olong nstreams,
 {
   gboolean out = TRUE;
   glong add_time;
-  olong i, j, k, nsubmit, isub, ndo, ndone=0;
+  olong i, j, k, nsubmit, isub, jsub, ndo, ijob, ndone=0;
   gpointer retVal;
   gchar *URL;
-  olong RPCtimeout;
+  olong myTimeout, istream=0;
+  gboolean *done;
   gchar *routine = "MultiProcExec";
 
   /* error checks */
@@ -1055,39 +1036,60 @@ static gboolean MultiProcExec (ObitThread* thread, olong nstreams,
     return out;
   }
 
-  /* Submit the first nstreams jobs - asynchronous RPC calls */
+  /* Make sure pool is using the correct function */
+  if ((thread->pool) && (((GFunc)thread->pool->func)!=((GFunc)func))) {
+     g_thread_pool_free(thread->pool, FALSE, TRUE);  /* Be patient */
+     thread->pool = NULL;
+     if (thread->queue) g_async_queue_unref (thread->queue);
+     thread->queue = NULL;
+  }
+   
+  /* Threading allowed - has the Thread Pool been started? */
+  if (thread->pool==NULL) ObitThreadPoolInit (thread, nstreams, func, (gpointer**)args);
+
+  /* Start asynchronous message queue */
+  ObitThreadQueueInit (thread);
+
+  /* Array of flags for jobs done */
+  done = g_malloc(njobs*sizeof(gboolean));
+  for (i=0; i<njobs; i++) done[i] = !doJob[i];
+
+  /* Submit the first nstreams jobs -  RPC calls in threads */
   nsubmit = 0;
   isub    = 0;
   for (i=0; i<nstreams; i++) {
     if (doJob[i]) {
-      func (args[i]);
+      args[i]->ijob    = i;
+      args[i]->ithread = i;
+      g_thread_pool_push (thread->pool, args[i], NULL);
+      fprintf (stderr, "Start job %d on thread %d\n",i,i);
+      done[i] = TRUE;
       isub = i;
       nsubmit++;
     }
   }
  
-  /* Start asynchronous message queue */
-  ObitThreadQueueInit (thread);
-
   /* Wait for them to finish, expects each to send a message to the asynchronous 
      queue iff they finish giving the URL actually used */
   /* set timeouts */
-  RPCtimeout = 50;            /* RPC event queue timeout 50 msec */
-  add_time = 0.05 * 1000000;  /* async_queue timeout 50 msec */
+  myTimeout = timeout;   /* event queue timeout */
+  if(myTimeout<=0.0) myTimeout = 10.0;
   while (ndone<njobs) {  /* Loop until all done */
     
     /* Impatiently wait for one to finish - run RPC event queue 
        then check async_queue */
-    if (nsubmit>=ndo) RPCtimeout = 0;   /* If Done - wait for all */
-    ObitRPCClientAsyncLoop (RPCtimeout);                     /* RPC */
-    retVal = ObitThreadQueueCheck(thread, add_time);         /* Completion queue */
+    if (nsubmit>=ndo) myTimeout = 1000000000;            /* If Done - wait for all */
+    add_time = (glong)(myTimeout * 1000000);
+    retVal = ObitThreadQueueCheck(thread, add_time); /* Completion queue */
     
     /* if retVal is nonNULL, something finished */
     if (retVal) ndone++;
     else continue;
+    ijob = *(olong*)retVal;
+    istream = args[ijob]->ithread;
       
     /* More to submit? */
-    if (retVal && (nsubmit<ndo)) {
+    if (nsubmit<ndo) {
       /* find next to submit */
       for (j=isub+1; j<njobs; j++) {
 	if (doJob[j]) {
@@ -1095,19 +1097,35 @@ static gboolean MultiProcExec (ObitThread* thread, olong nstreams,
 	  break;
 	}
       }
-      /* Recycle URL */
-      URL = (gchar*)retVal;
-      if (args[isub]->URL) g_free(args[isub]->URL);
-      args[isub]->URL = g_strdup(URL);
+      /* Recycle URL if any more work for it */
+      URL = myClassInfo.URL[istream];
+      /* Find next job for URL */
+      jsub = -1;
+      for (k=isub; k<ndo; k++) {
+	/* If URL not give or matches use URL and dispatch this job */
+	if (((args[k]->URL==NULL) || !strcmp(URL, args[k]->URL)) &&
+	(!done[k])) {
+	  jsub = k;
+	  if (args[jsub]->URL==NULL) args[jsub]->URL = g_strdup(URL);
+	  args[jsub]->client =  myClassInfo.clients[istream];
+	  break;
+	}
+      }
 
       /* Stick next into the queue */
-      func (args[isub]);
-     nsubmit++;
+      if (jsub>=0) {
+	args[jsub]->ijob    = jsub;
+	args[jsub]->ithread = istream;
+	g_thread_pool_push (thread->pool, args[jsub], NULL);
+	fprintf (stderr, "Start job %d on thread %d\n",jsub,istream);
+	done[jsub] = TRUE;
+	nsubmit++;
+      }
     } /* End finding next to submit */
     
     /* error check on jobs already finished */
-    for (k=0; k<i; k++) {
-      /* Only want to wait on the actual number submitted */
+    for (k=0; k<isub; k++) {
+      /* Only want to check on the actual number submitted */
       if (doJob[k]) {
 	if (args[k]->retVal==NULL) out = FALSE;
 	if (args[k]->err->error)   {
@@ -1118,7 +1136,7 @@ static gboolean MultiProcExec (ObitThread* thread, olong nstreams,
     } /* end loop over jobs error check */
   } /* end loop till all jobs done*/
 
-  /* Start asynchronous message queue */
+  /* Stop asynchronous message queue */
   ObitThreadQueueFree (thread);
 
   return out;

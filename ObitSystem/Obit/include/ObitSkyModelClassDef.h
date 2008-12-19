@@ -27,6 +27,8 @@
 /*  Define the basic components of the ObitSkyModel ClassInfo structure */
 /* This is intended to be included in a classInfo structure definition  */
 #include "ObitClassDef.h"  /* Parent class ClassInfo definition file */
+/** Function pointer to Create SkyModel object from description in an ObitInfoList. */
+ObitSkyModelFromInfoFP ObitSkyModelFromInfo;
 /** Function pointer to Constructor. */
 ObitSkyModelCreateFP ObitSkyModelCreate;
 /** Function pointer to Initializer. */
@@ -80,3 +82,5 @@ ObitSkyModelLoadGridCompsFP ObitSkyModelLoadGridComps;
 ObitSkyModelFTImageFP ObitSkyModelFTImage;
 /** Function pointer to AddField  */
 ObitSkyModelAddFieldFP ObitSkyModelAddField;
+/** Function pointer to Extract information about underlying structures to ObitInfoList */
+ObitSkyModelGetInfoFP ObitSkyModelGetInfo;

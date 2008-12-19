@@ -2167,6 +2167,7 @@ void subIPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver,
   if (ObitInfoListGetP(skyModel->info, "UnPeeledComps",  &type, dim, (gpointer)&unpeeled)) {
     if (unpeeled) {
       for (i=0; i<nfield; i++) {
+	if (unpeeled[i]<=0) continue;  /* Ignore unpeeled sources */
 	ver = skyModel->CCver[i];
 	noParms = 0;
 	CCTable = newObitTableCCValue ("Peeled CC", (ObitData*)skyModel->mosaic->images[i],
@@ -2207,6 +2208,14 @@ void subIPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver,
   /* Subtract */
   ObitSkyModelSubUV (skyModel, scrUV, outData, err);
   if (err->error) goto cleanup;
+
+  /* Make sure something copied */
+  if (outData->myDesc->nvis<=0) {
+    Obit_log_error(err, OBIT_Error, "%s: No data left after subtraction of IPol model", 
+                   routine);
+    goto cleanup;
+  }
+
 
   /* Copy any selection flagging table back */
   if (*selFGver>=0) {

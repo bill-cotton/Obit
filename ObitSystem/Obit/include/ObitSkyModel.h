@@ -183,6 +183,13 @@ void ObitSkyModelClassInit (void);
 /** Public: Default Constructor. */
 ObitSkyModel* newObitSkyModel (gchar* name);
 
+/** Public: Create SkyModel object from description in an ObitInfoList */
+ObitSkyModel* ObitSkyModelFromInfo (gchar *prefix, ObitInfoList *inList, 
+				    ObitErr *err);
+typedef ObitSkyModel* (*ObitSkyModelFromInfoFP) (gchar *prefix, 
+						 ObitInfoList *inList, 
+						 ObitErr *err);
+
 /** Public: Create/initialize ObitSkyModel structures */
 ObitSkyModel* ObitSkyModelCreate (gchar* name, ObitImageMosaic* mosaic);
 /** Typedef for definition of class pointer structure */
@@ -331,6 +338,13 @@ typedef void (*ObitSkyModelFTImageFP) (ObitSkyModel* in, ObitFArray *inArray,
 /** Public: Add field to mosaic */
 void ObitSkyModelAddField (ObitSkyModel *in, ObitErr *err);
 typedef void (*ObitSkyModelAddFieldFP) (ObitSkyModel* in, ObitErr *err);
+
+/** Public: Extract information about underlying structures to ObitInfoList */
+void ObitSkyModelGetInfo (ObitSkyModel *in, gchar *prefix, ObitInfoList *outList, 
+			  ObitErr *err);
+typedef void 
+(*ObitSkyModelGetInfoFP) (ObitSkyModel *in, gchar *prefix, ObitInfoList *outList, 
+			  ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

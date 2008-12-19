@@ -102,6 +102,12 @@ void ObitImageMosaicClassInit (void);
 /** Public: Constructor. */
 ObitImageMosaic* newObitImageMosaic (gchar* name, olong number);
 
+/** Public: Create ImageMosaic object from description in an ObitInfoList */
+ObitImageMosaic* ObitImageMosaicFromInfo (gchar *prefix, ObitInfoList *inList, 
+					  ObitErr *err);
+typedef ObitImageMosaic* (*ObitImageMosaicFromInfoFP) (gchar *prefix, 
+						       ObitInfoList *inList, 
+						       ObitErr *err);
 /** Public: ClassInfo pointer */
 gconstpointer ObitImageMosaicGetClass (void);
 
@@ -152,9 +158,6 @@ void ObitImageMosaicDefine (ObitImageMosaic *in, ObitUV *uvData, gboolean doBeam
 /** Public: Flatten tiles onto full field image */
 void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err);
 
-/** Public: Flatten tiles onto full field image */
-void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err);
-
 /** Public: Give field of view */
 ofloat ObitImageMosaicFOV (ObitImageMosaic *in, ObitErr *err);
 
@@ -179,6 +182,12 @@ ObitImageMosaic* ObitImageMosaicMaxField (ObitImageMosaic *mosaic,
 					  ofloat MinFlux, olong *ignore, olong *field,
 					  ObitErr* err); 
 
+/** Public: Extract information about underlying structures to ObitInfoList */
+void ObitImageMosaicGetInfo (ObitImageMosaic *in, gchar *prefix, ObitInfoList *outList, 
+			     ObitErr *err);
+typedef void 
+(*ObitImageMosaicGetInfoFP) (ObitImageMosaic *in, gchar *prefix, ObitInfoList *outList, 
+			     ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

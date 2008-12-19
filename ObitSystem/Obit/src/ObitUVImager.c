@@ -29,6 +29,8 @@
 #include "ObitUVImager.h"
 #include "ObitUVWeight.h"
 #include "ObitImageUtil.h"
+#include "ObitUVImagerIon.h"
+#include "ObitUVImagerSquint.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -91,6 +93,141 @@ ObitUVImager* newObitUVImager (gchar* name)
 
  return out;
 } /* end newObitUVImager */
+
+/**
+ * Constructor from ObitInfoList.
+ * Initializes class if needed on first call.
+ * Also works for derived classes.
+ * \param prefix  If NonNull, string to be added to beginning of inList entry name
+ *                "xxx" in the following
+ * \param inList  InfoList to extract object information from 
+ *      \li "xxxClassType" string UVImager type, "Base" for base class
+ *      \li "xxxUVData" prefix for uvdata member, entry with value "None" => doesn't exist
+ *      \li "xxxUVWork" prefix for uvwork member, entry with value "None" => doesn't exist
+ *      \li "xxxMosaic" prefix for mosaic member, entry with value "None" => doesn't exist
+ *      \li various weighting parameters
+ * \param err     ObitErr for reporting errors.
+ * \return the new object.
+ */
+ObitUVImager* ObitUVImagerFromInfo (gchar *prefix, ObitInfoList *inList, 
+				    ObitErr *err)
+{ 
+  ObitUVImager *out = NULL;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *keyword=NULL, *None = "None", *value=NULL, *classType=NULL;
+  ObitUV *uvdata=NULL, *uvwork=NULL;
+  ObitImageMosaic *mosaic=NULL;
+  olong classCnt, i;
+  gboolean missing;
+  gpointer listPnt;
+  gchar *parm[] = 
+    {"FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
+     "RAShift", "DecShift", "Sources", 
+     "Catalog",  "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
+     "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
+     NULL};
+  gchar ctemp[50];
+  gchar *routine = "ObitUVImagerFromInfo";
+
+  /* Class initialization if needed */
+  if (!myClassInfo.initialized) ObitUVImagerClassInit();
+
+  /* error checks */
+  if (err->error) return out;
+
+  /* check class type */
+  if (prefix) keyword = g_strconcat (prefix, "ClassType", NULL);
+  else        keyword = g_strdup("ClassType");
+  missing = ObitInfoListGetP(inList, keyword, &type, dim, (gpointer*)&classType);
+  if ((missing) || (type!=OBIT_string)) {
+    Obit_log_error(err, OBIT_Error,"%s No class type", routine);
+    return out;
+  }
+  classCnt = dim[0]; /* How many characters in name */
+  g_free(keyword);
+
+  /* uv data */
+  if (prefix) keyword = g_strconcat (prefix, "UVData", NULL);
+  else        keyword = g_strdup("UVData");
+  missing = ObitInfoListGetP(inList, keyword, &type, dim, (gpointer*)&value);
+  /* Does it exist? */
+  if ((missing) || (type!=OBIT_string) || (!strncmp(None,value,dim[0]))) {
+    Obit_log_error(err, OBIT_Error,"%s UV data not defined in %s", routine, keyword);
+    return out;
+  } else { /* exists*/
+    uvdata = (ObitUV*)ObitDataFromFileInfo(keyword, inList, err);
+    if (err->error) Obit_traceback_val (err, routine, keyword, out);
+  }
+  g_free(keyword);
+
+  /* uv data */
+  if (prefix) keyword = g_strconcat (prefix, "UVWork", NULL);
+  else        keyword = g_strdup("UVWork");
+  missing = ObitInfoListGetP(inList, keyword, &type, dim, (gpointer*)&value);
+  /* Does it exist? */
+  if ((missing) || (type!=OBIT_string) || (!strncmp(None,value,dim[0]))) {
+    uvwork = NULL;
+  } else { /* exists*/
+    uvwork = (ObitUV*)ObitDataFromFileInfo(keyword, inList, err);
+    if (err->error) Obit_traceback_val (err, routine, keyword, out);
+  }
+  g_free(keyword);
+
+  /* ImageMosaic */
+  if (prefix) keyword = g_strconcat (prefix, "Mosaic", NULL);
+  else        keyword = g_strdup("Mosaic");
+  missing = ObitInfoListGetP(inList, keyword, &type, dim, (gpointer*)&value);
+  /* Does it exist? */
+  if ((missing) || (type!=OBIT_string) || (!strncmp(None,value,dim[0]))) {
+    Obit_log_error(err, OBIT_Error,"%s ImageMosaic not defined in %s", 
+		   routine, keyword);
+    return out;
+  } else { /* exists*/
+    mosaic = (ObitImageMosaic*)ObitImageMosaicFromInfo(keyword, inList, err);
+    if (err->error) Obit_traceback_val (err, routine, keyword, out);
+  }
+  g_free(keyword);
+
+  /* Create output - by type */
+  if (!strncmp("Base", classType, classCnt)) {
+    out = ObitUVImagerCreate2(prefix, uvdata, mosaic, err);
+  } else if (!strncmp("Squint", classType, classCnt)) {
+    out = (ObitUVImager*)ObitUVImagerSquintCreate2(prefix, uvdata, mosaic, err);
+    ObitUVImagerSquintFromInfo(out, prefix, inList, err);
+  } else if (!strncmp("Ion", classType, classCnt)) {
+    out = (ObitUVImager*)ObitUVImagerIonCreate2(prefix, uvdata, mosaic, err);
+    ObitUVImagerIonFromInfo(out, prefix, inList, err);
+ } else {  /* Assume base and hope for the best */
+    out = ObitUVImagerCreate2(prefix, uvdata, mosaic, err);
+    /* Note problem in log */
+    strncpy (ctemp, classType, MIN (48,classCnt)); ctemp[MIN (49,classCnt+1)] = 0;
+    Obit_log_error(err, OBIT_InfoWarn, "%s: Unknown type %s using base class",
+		   routine, ctemp);
+  }
+
+  /* Weighting/Imaging parameters */
+  i = 0;
+  while (parm[i]) {
+    if (prefix) keyword = g_strconcat (prefix, parm[i], NULL);
+    else        keyword = g_strdup(parm[i]);
+    if (ObitInfoListGetP(inList, parm[i], &type, dim, (gpointer*)&listPnt)) {
+      ObitInfoListAlwaysPut(uvdata->info, keyword, type, dim, listPnt);
+    }
+    i++;
+    g_free(keyword);
+  }
+
+  if (err->error) Obit_traceback_val (err, routine, "Output", out);
+  out->uvwork = ObitUVRef(uvwork);
+
+  /* cleanup */
+  uvdata = ObitUVUnref(uvdata);
+  uvwork = ObitUVUnref(uvwork);
+  mosaic = ObitImageMosaicUnref(mosaic);
+
+  return out;
+} /* end ObitUVImagerFromInfo */
 
 /**
  * Returns ClassInfo pointer for the class.
@@ -315,7 +452,7 @@ void ObitUVImagerImage (ObitUVImager *in,  olong field, gboolean doWeight,
     return;
   }
 
-  /* Which field numbers (0-re) */
+  /* Which field numbers (0-rel) */
   if (field>0) {
     loField = field-1;
     hiField = loField;
@@ -408,6 +545,102 @@ ObitImageMosaic* ObitUVImagerGetMosaic (ObitUVImager *in, ObitErr *err)
 } /* end ObitUVImagerGetMosaic */
 
 /**
+ * Convert structure information to entries in an ObitInfoList
+ * \param in      Object of interest.
+ * \param prefix  If NonNull, string to be added to beginning of outList entry name
+ *                "xxx" in the following
+ * \param outList InfoList to write entries into
+ *      \li "xxxClassType" string UVImager type, "Base" for base class
+ *      \li "xxxUVData" prefix for uvdata member, entry with value "None" => doesn't exist
+ *      \li "xxxUVWork" prefix for uvwork member, entry with value "None" => doesn't exist
+ *      \li "xxxMosaic" prefix for mosaic member, entry with value "None" => doesn't exist
+ *      \li various weighting parameters
+ * \param err     ObitErr for reporting errors.
+ */
+void ObitUVImagerGetInfo (ObitUVImager *in, gchar *prefix, ObitInfoList *outList, 
+			  ObitErr *err)
+{ 
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *keyword=NULL, *None = "None", *OK="OK", *Type="Base";
+  olong i;
+  gpointer listPnt;
+  gchar *parm[] = 
+    {"FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
+     "RAShift", "DecShift", "Sources", 
+     "Catalog",  "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
+     "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
+     NULL};
+  gchar *routine = "ObitUVImagerGetInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* Class Type */
+  if (prefix) keyword = g_strconcat (prefix, "ClassType", NULL);
+  else        keyword = g_strdup("ClassType");
+  dim[0] = strlen(Type);
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, Type);
+  g_free(keyword);
+
+  /* uv data */
+  if (prefix) keyword = g_strconcat (prefix, "UVData", NULL);
+  else        keyword = g_strdup("UVData");
+  if (in->uvdata) {
+    ObitDataGetFileInfo((ObitData*)in->uvdata, keyword, outList, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    dim[0] = strlen(OK);
+    ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, OK);
+  } else {
+    dim[0] = strlen(None);
+    ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, None);
+  }
+  g_free(keyword);
+
+  /* uv work */
+  if (prefix) keyword = g_strconcat (prefix, "UVWork", NULL);
+  else        keyword = g_strdup("UVWork");
+  if (in->uvdata) {
+    ObitDataGetFileInfo((ObitData*)in->uvwork, keyword, outList, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    dim[0] = strlen(OK);
+    ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, OK);
+  } else {
+    dim[0] = strlen(None);
+    ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, None);
+  }
+  g_free(keyword);
+
+  /* ImageMosaic */
+  if (prefix) keyword = g_strconcat (prefix, "Mosaic", NULL);
+  else        keyword = g_strdup("Mosaic");
+  if (in->mosaic) {
+    ObitImageMosaicGetInfo(in->mosaic, keyword, outList, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    dim[0] = strlen(OK);
+    ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, OK);
+  } else {
+    dim[0] = strlen(None);
+    ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, None);
+  }
+  g_free(keyword);
+
+  /* Weighting/Imaging parameters */
+  i = 0;
+  while (parm[i]) {
+    if (prefix) keyword = g_strconcat (prefix, parm[i], NULL);
+    else        keyword = g_strdup(parm[i]);
+    if (ObitInfoListGetP(in->uvdata->info, parm[i], &type, dim, (gpointer*)&listPnt)) {
+      ObitInfoListAlwaysPut(outList, keyword, type, dim, listPnt);
+    }
+    i++;
+    g_free(keyword);
+  }
+
+} /* end ObitUVImagerGetInfo */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitUVImagerClassInit (void)
@@ -448,6 +681,7 @@ static void ObitUVImagerClassInfoDefFn (gpointer inClass)
   theClass->ObitClassInfoDefFn = (ObitClassInfoDefFnFP)ObitUVImagerClassInfoDefFn;
   theClass->ObitGetClass  = (ObitGetClassFP)ObitUVImagerGetClass;
   theClass->newObit       = (newObitFP)newObitUVImager;
+  theClass->ObitUVImagerFromInfo= (ObitUVImagerFromInfoFP)ObitUVImagerFromInfo;
   theClass->ObitCopy      = (ObitCopyFP)ObitUVImagerCopy;
   theClass->ObitClone     = NULL;
   theClass->ObitClear     = (ObitClearFP)ObitUVImagerClear;
@@ -459,6 +693,7 @@ static void ObitUVImagerClassInfoDefFn (gpointer inClass)
   theClass->ObitUVImagerFlatten= (ObitUVImagerFlattenFP)ObitUVImagerFlatten;
   theClass->ObitUVImagerGetMosaic = 
     (ObitUVImagerGetMosaicFP)ObitUVImagerGetMosaic;
+  theClass->ObitUVImagerGetInfo= (ObitUVImagerGetInfoFP)ObitUVImagerGetInfo;
 
 } /* end ObitUVImagerClassDefFn */
 

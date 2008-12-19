@@ -27,6 +27,8 @@
 /*  Define the basic components of the ObitTable  ClassInfo structure */
 /* This is intended to be included in a classInfo structure definition*/
 #include "ObitClassDef.h"  /* Parent class ClassInfo definition file */
+/** Function pointer to Create Table object from description in an ObitInfoList. */
+ObitTableFromFileInfoFP ObitTableFromFileInfo;
 /** Fully instantiate. */
 ObitTableFullInstantiateFP ObitTableFullInstantiate;
 /** Remove previous entries */
@@ -55,3 +57,5 @@ ObitTableSetRowFP ObitTableSetRow ;
 ObitTableGetTypeFP ObitTableGetType ;
 /** Function pointer to Return table version. */
 ObitTableGetVersionFP ObitTableGetVersion;
+/** Function pointer to Extract information about underlying file*/
+ObitTableGetFileInfoFP ObitTableGetFileInfo;

@@ -28,8 +28,10 @@
 /*--------------------------------------------------------------------*/
 
 #include <unistd.h>
+#include "ObitImage.h"
 #include "ObitXML.h"
 #include "ObitRPC.h"
+#include "ObitData.h"
 #include "ObitFile.h"
 #include "ObitSystem.h"
 #include "ObitParser.h"
@@ -87,9 +89,9 @@ gchar *outfile = "FuncCont.out";   /* File to contain program outputs */
 olong  pgmNumber;       /* Program number (like POPS no.) */
 olong  AIPSuser;        /* AIPS user number number (like POPS no.) */
 olong  nAIPS=0;         /* Number of AIPS directories */
-gchar **AIPSdirs=NULL; /* List of AIPS data directories */
+gchar **AIPSdirs=NULL;  /* List of AIPS data directories */
 olong  nFITS=0;         /* Number of FITS directories */
-gchar **FITSdirs=NULL; /* List of FITS data directories */
+gchar **FITSdirs=NULL;  /* List of FITS data directories */
 ObitInfoList *myInput  = NULL; /* Input parameter list */
 ObitInfoList *myLog    = NULL; /* Message log list */
 
@@ -261,7 +263,7 @@ ObitInfoList* FuncContIn (int argc, char **argv, ObitErr *err)
       dim[0] = 1;
       itemp = strtol(argv[++ax], NULL, 0);
       ObitInfoListAlwaysPut (list, "port", OBIT_oint, dim, &itemp);
-      fprintf (stdout,"port %d\n",itemp);
+      /*fprintf (stdout,"port %d\n",itemp);*/
       
     } else if (strcmp(arg, "-pgmNumber") == 0) { /* Program number */
       dim[0] = 1;
@@ -452,7 +454,7 @@ gpointer shutdownContainer (gpointer arg)
 
   /* Wait a decent interval */
   usleep(2000000);  /* 2 sec */
-  fprintf (stderr, "I am shutting down\n");
+  fprintf (stderr, "%s on Port %d: I am shutting down\n", pgmName, port);
 
   /* Yeah - I'm free - kill everything in sight */
   shutdownObit (largs->mySystem, largs->err);
@@ -614,7 +616,9 @@ test(ObitXMLEnv *   const envP,
   ObitXMLValue *outXMLValue=NULL;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *OK = "OK", *failed="Failed";
+  gboolean bfailed=TRUE;
   olong nlog;
+  ObitImage *outImage=NULL;
   gchar *routine = "test";
 
   /* testing */
@@ -631,6 +635,12 @@ test(ObitXMLEnv *   const envP,
   if (err->error) goto finish;
 
   /* Do operation here */
+  /* Create test image */
+  outImage = ObitImageFromFileInfo("out", myInput, err);
+  ObitImageOpen (outImage, OBIT_IO_ReadWrite, err);
+  ObitImageClose (outImage, err);
+  if (err->error) goto finish;
+
   /* Do something that takes a while */
   fprintf (stderr,"Start on port %d\n",port);
   nwork = 10000;
@@ -657,6 +667,7 @@ test(ObitXMLEnv *   const envP,
   if (!err->error) {
     dim[0] = strlen(OK);
     ObitInfoListAlwaysPut (outList, "Status", OBIT_string, dim, OK);
+    bfailed = FALSE;
   }
 
   /* Done */
@@ -664,6 +675,9 @@ test(ObitXMLEnv *   const envP,
   ObitErrLog(err); /* show any error messages on err */
   /* Move Logging messages to outList */
   nlog = myLog->number;
+  if (bfailed) { /* DEBUG */
+    ObitInfoListPrint (myLog, stdout);
+  }    
   dim[0] = 1;
   ObitInfoListAlwaysPut (outList, "NumMessage",  OBIT_long, dim, &nlog);
   outList = ObitInfoListCopyData (myLog, outList);

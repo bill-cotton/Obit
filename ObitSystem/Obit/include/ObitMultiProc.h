@@ -98,8 +98,10 @@ typedef struct {
   ObitInfoList *retVal;
   /** thread object  */
   ObitThread *thread;
-  /** thread number  */
+  /** thread/stream number  */
   olong ithread;
+  /** job number  */
+  olong ijob;
   /** Obit error/logging object */
   ObitErr *err;
   /** Arbitrary user data */

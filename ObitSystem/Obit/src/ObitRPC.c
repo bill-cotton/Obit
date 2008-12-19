@@ -118,7 +118,8 @@ gconstpointer ObitRPCGetClass (void)
 ObitRPC* ObitRPCCreateClient (gchar* name, ObitErr *err)
 {
   ObitRPC* out;
-  /*gchar *routine = "ObitRPCCreateClient";*/
+  struct xmlrpc_clientparms clientparmsP;
+  gchar *routine = "ObitRPCCreateClient";
 
   /* Only initialize actual client once - there is only one
    probably need locking for multi threaded operation */
@@ -133,7 +134,19 @@ ObitRPC* ObitRPCCreateClient (gchar* name, ObitErr *err)
   out = newObitRPC (name);
   
   /* Type dependent initialization */
-  out->type = OBIT_RPC_Client;
+  out->type    = OBIT_RPC_Client;
+
+  /* Create private client */
+  clientparmsP.transport = "curl";  /* Force using cUrl */
+  xmlrpc_client_create(&out->envP, XMLRPC_CLIENT_NO_FLAGS, "Obit", "1.0", 
+		       &clientparmsP, sizeof(clientparmsP.transport),   /* Force transport */ 
+		       &out->clientP);
+  /* Make sure it worked */
+  Obit_retval_if_fail((!out->envP.fault_occurred ),
+		      err, out, "%s: XML-RPC Fault: %s (%d)",
+		      routine, out->envP.fault_string, 
+		      out->envP.fault_code);
+
   
   myClassInfo.numberClient++;  /* Keep track */
   
@@ -174,6 +187,7 @@ ObitRPC* ObitRPCCreateServer (gchar* name, ObitErr *err)
 
 /**
  * Make synchronous remote procedure call
+ * Uses private client
  * Return value from RPC Call expects an xml struct with up to 3 parts:
  * \li "Status", 
  *       "code" an integer code (0=OK) 
@@ -212,10 +226,10 @@ ObitXML* ObitRPCCall (ObitRPC* client, gchar *serverURL, ObitXML* arg,
 		      err, out, "%s: RPC NOT a client", routine);
   XMLRPC_FAIL_IF_FAULT(&client->envP);
 
-  /* Make call */
-  returnP = xmlrpc_client_call(&client->envP, serverURL, arg->func, 
-			       "(V)", arg->parmP);
-  
+  /* Make the remote procedure call */
+  xmlrpc_client_call2f(&client->envP, client->clientP, serverURL, 
+		       arg->func, &returnP, "(V)", arg->parmP);
+
   /* Make sure it worked */
   Obit_retval_if_fail((!client->envP.fault_occurred && (returnP!=NULL)),
 		      err, out, "%s: XML-RPC Fault: %s (%d)",
@@ -278,6 +292,7 @@ ObitXML* ObitRPCCall (ObitRPC* client, gchar *serverURL, ObitXML* arg,
 
 /**
  * Make asynchronous remote procedure call request
+ * Uses global client.
  * Request is aynchronously sent; the reply will be to callback
  * \param client     Client ObitRPC
  * \param serverURL  URL of service, e.g. "http://localhost:8765/RPC2"
@@ -507,11 +522,25 @@ void ObitRPCClassInit (void)
 
   /* Init global xmlrpc client stuff -
      Required before any use of Xmlrpc-c client library: */
-  xmlrpc_client_init2(&env, XMLRPC_CLIENT_NO_FLAGS, 
-		     "Obit", "0.0", NULL, 0);
+  xmlrpc_client_setup_global_const(&env);
   die_if_fault_occurred(&env);
   
 } /* end ObitRPCClassInit */
+
+/**
+ * Shutdown global ClassInfo Structure.
+ */
+void ObitRPCClassShutdown (void)
+{
+
+  if (!myClassInfo.initialized) return;  /* only once */
+  
+  myClassInfo.initialized = FALSE; /* Deinitialized */
+
+  /* shutdown global xmlrpc client stuff */
+  xmlrpc_client_teardown_global_const();
+   
+} /* end ObitRPCClassShutdown */
 
 /**
  * Initialize global ClassInfo Function pointers.
@@ -571,8 +600,9 @@ void ObitRPCInit  (gpointer inn)
     ParentClass->ObitInit (inn);
 
   /* set members in this class */
-  in->thread = newObitThread();
+  in->thread    = newObitThread();
   in->registryP = NULL;
+  in->clientP   = NULL;
 
   /* Initialize our error-handling environment. */
   xmlrpc_env_init(&in->envP);
@@ -596,6 +626,8 @@ void ObitRPCClear (gpointer inn)
   /* delete this class members */
   in->thread  = ObitThreadUnref(in->thread);
   xmlrpc_env_clean(&in->envP);
+  if (in->clientP) xmlrpc_client_destroy(in->clientP);
+  in->clientP = NULL;
 
   /* Update type dependent stuff */
   if (in->type==OBIT_RPC_Client) {

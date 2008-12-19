@@ -1305,8 +1305,7 @@ void ObitIOImageAIPSGetFileInfo (ObitIO *in, ObitInfoList *myInfo, gchar *prefix
   if (entry) g_free(entry);
  
   /* Disk directory  */
-  dirname = ObitAIPSFilename (OBIT_AIPS_Image, disk, cno, 
-			      user, NULL, 0, err);
+  dirname = ObitAIPSDirname (disk, err);
   dim[0] = strlen(dirname);
   if (prefix) keyword =  g_strconcat (prefix, "Dir", NULL);
   else keyword =  g_strdup ("Dir");
