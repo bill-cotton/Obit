@@ -145,7 +145,7 @@ ObitImage* ObitImageFromFileInfo (gchar *prefix, ObitInfoList *inList,
   ObitImage    *out = NULL;
   ObitInfoType type;
   olong        Aseq, AIPSuser, disk, cno, i;
-  gchar        *strTemp, inFile[129];
+  gchar        *strTemp, inFile[129], stemp[256];
   gchar        Aname[13], Aclass[7], *Atype = "MA";
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong        blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
@@ -190,6 +190,17 @@ ObitImage* ObitImageFromFileInfo (gchar *prefix, ObitInfoList *inList,
     if (prefix) keyword = g_strconcat (prefix, "Disk", NULL);
     else        keyword = g_strdup("Disk");
     ObitInfoListGet(inList, keyword, &type, dim, &disk, err);
+    g_free(keyword);
+
+    /* If prefixDir given, lookup disk number */
+    if (prefix) keyword = g_strconcat (prefix, "Dir", NULL);
+    else        keyword = g_strdup("Dir");
+    if (ObitInfoListGetP(inList, keyword, &type, dim, (gpointer)&strTemp)) {
+      /* make sure NULL terminated */
+      strncpy (stemp, strTemp, MIN(255,dim[0])); stemp[MIN(255,dim[0])] = 0;
+      disk = ObitAIPSFindDirname (stemp, err);
+      if (err->error) Obit_traceback_val (err, routine, routine, out);
+    }
     g_free(keyword);
 
     /* AIPS name */
@@ -258,6 +269,17 @@ ObitImage* ObitImageFromFileInfo (gchar *prefix, ObitInfoList *inList,
     ObitInfoListGet(inList, keyword, &type, dim, &disk, err);
     g_free(keyword);
 
+    /* If prefixDir given, lookup disk number */
+    if (prefix) keyword = g_strconcat (prefix, "Dir", NULL);
+    else        keyword = g_strdup("Dir");
+    if (ObitInfoListGetP(inList, keyword, &type, dim, (gpointer)&strTemp)) {
+      /* make sure NULL terminated */
+      strncpy (stemp, strTemp, MIN(255,dim[0])); stemp[MIN(255,dim[0])] = 0;
+      disk = ObitFITSFindDir (stemp, err);
+      if (err->error) Obit_traceback_val (err, routine, routine, out);
+    }
+    g_free(keyword);
+
     /* define object */
     ObitImageSetFITS (out, OBIT_IO_byPlane, disk, inFile, blc, trc, err);
     if (err->error) Obit_traceback_val (err, routine, "inList", out);
@@ -285,6 +307,11 @@ ObitImage* ObitImageFromFileInfo (gchar *prefix, ObitInfoList *inList,
   ObitInfoListAlwaysPut (out->info, "BLC", OBIT_long, dim, blc);
   ObitInfoListAlwaysPut (out->info, "TRC", OBIT_long, dim, trc);
 
+  /* Copy any InfoList Parameters */
+  if (prefix) keyword = g_strconcat (prefix, "Info", NULL);
+  else        keyword = g_strdup("Info");
+  ObitInfoListCopyWithPrefix (inList, out->info, keyword, TRUE);
+  
   return out;
 } /* end ObitImageFromFileInfo */
 

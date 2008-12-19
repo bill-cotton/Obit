@@ -29,6 +29,9 @@
 #include <math.h>
 #include "ObitThread.h"
 #include "ObitSkyModel.h"
+#include "ObitSkyModelVMSquint.h"
+#include "ObitSkyModelVMIon.h"
+#include "ObitImageMosaic.h"
 #include "ObitTableCCUtil.h"
 #include "ObitFFT.h"
 #include "ObitUVUtil.h"
@@ -139,6 +142,386 @@ ObitSkyModel* newObitSkyModel (gchar* name)
 
  return out;
 } /* end newObitSkyModel */
+
+/**
+ * Constructor from ObitInfoList.
+ * Initializes class if needed on first call.
+ * Also works for derived classes.
+ * \param prefix  If NonNull, string to be added to beginning of inList entry name
+ *                "xxx" in the following
+ * \param inList  InfoList to extract object information from 
+ *      \li "xxxClassType" string SkyModel type, "Base" for base class
+ *      \li "xxxmosaic"    string prefix of ObitImageMosaic mosaic
+ *      \li "xxxmodelType" olong Model type (ObitSkyModelType)
+ *      \li "xxxmodType"   olong Component model type (ObitSkyModelCompType)
+ *      \li "xxxmodelMode" olong Model calculation mode for components (ObitSkyModelCompType)
+ *      \li "xxxCCver"     olong* List of AIPSCC table versions per image in mosaic 
+ *                                there are mosaic->numberImages of these
+ *      \li "xxxstartComp" olong* List of beginning component per image in mosaic (1-rel)
+ *      \li "xxxendComp"   olong* List of highest component per image in mosaic (1-rel)
+ *      \li "xxxfactor"    ofloat Factor to multiply times model
+ *      \li "xxxminFlux"   ofloat Minimum flux density model or pixel
+ *      \li "xxxstokFactor"ofloat Factor to multiply times second Stokes of model
+ *      \li "xxxpointFlux" ofloat Point model flux density (Jy)
+ *      \li "xxxpointXOff" ofloat Point, x (ra)offset in deg.
+ *      \li "xxxpointYOff" ofloat Point, y (dec) offset in deg.
+ *      \li "xxxpointParms"ofloat[10] Other (non-point)model components:
+ *                                major_axis (deg),  minor_axis (deg),  position_angle (deg),
+ *                                type (ObitSkyModelCompType as gint), spectral terms;
+ *      \li "xxxantSize"   ofloat Antennna diameter (m) for rel. PB corrections
+ *      \li "xxxdo3D"            boolean Apply 3D imaging corrections?
+ *      \li "xxxdoDivide"        boolean Divide model into data?
+ *      \li "xxxdoReplace"       boolean Replace data with model?
+ *      \li "xxxdoPBCor"         boolean Make relative Primary Beam corrections?
+ *      \li "xxxstartChannel"    olong   Selected start channel[1-rel]
+ *      \li "xxxnumberChannel"   olong   Selected channel and number 
+ *      \li "xxxstartIF"         olong   Selected start IF [1-rel]
+ *      \li "xxxnumberIF"        olong   Selected IF number
+ *      \li "xxxstartChannelPB"  olong   Selected start rel. PB correction channel[1-rel]
+ *      \li "xxxnumberChannelPB" olong   Selected PB correction channel number
+ *      \li "xxxstartIFPB"       olong   Selected start rel. PB correction IF[1-rel]
+ *      \li "xxxnumberIFPB"      olong   Selected PB correction IF number
+ *      \li "xxxnfreqPB"         olong   number of frequency channels for PB correction
+ *      \li "xxxPBFreq"          odouble Reference frequency (Hz) for this block of channels 
+ *                                       for PB corrections
+ *      \li "xxxstokes"          gchar[5] Selected Stokes
+ *      \li "xxxstartPoln"       olong   Selected start Poln [1-rel]
+ *      \li "xxxnumberPoln"      olong   Selected Poln number
+ *      \li "xxxdoFlip"          boolean True if need to multiply the FT by sqrt(-1) before applying
+ *      \li "xxxnoNeg"           boolean True if only positive flux components are to be used
+ *      \li "xxxminDFT"          ofloat  Minimum absolute component flux to use in DFT
+ *      \li "xxxmaxGrid"         ofloat  Maximum absolute component flux to use in Gridded model 
+ *      \li "xxxdoDFT"           boolean Something to do for DFT model?
+ *      \li "xxxdoGrid"          boolean Something to do for Grid model?
+ *      \li "xxxprtLv"           olong   message level for progress messages
+ *      \li "xxxnSpecTerm"       olong   Number of spectral terms
+ *      \li "xxxnThreads"        olong   Number of threads
+ * \param err     ObitErr for reporting errors.
+ * \return the new object.
+ */
+ObitSkyModel* ObitSkyModelFromInfo (gchar *prefix, ObitInfoList *inList, 
+				    ObitErr *err)
+{ 
+  ObitSkyModel *out = NULL;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *keyword=NULL, *None = "None", *value=NULL, *classType=NULL;
+  ObitImageMosaic *mosaic=NULL;
+  olong classCnt, otemp;
+  gboolean missing;
+  gchar ctemp[50];
+  gchar *routine = "ObitSkyModelFromInfo";
+
+  /* Class initialization if needed */
+  if (!myClassInfo.initialized) ObitSkyModelClassInit();
+
+  /* error checks */
+  if (err->error) return out;
+
+  /* check class type */
+  if (prefix) keyword = g_strconcat (prefix, "ClassType", NULL);
+  else        keyword = g_strdup("ClassType");
+  missing = ObitInfoListGetP(inList, keyword, &type, dim, (gpointer*)&classType);
+  if ((missing) || (type!=OBIT_string)) {
+    Obit_log_error(err, OBIT_Error,"%s No class type", routine);
+    return out;
+  }
+  classCnt = dim[0]; /* How many characters in name */
+  g_free(keyword);
+
+  /* "xxxmosaic" string prefix of ObitImageMosaic mosaic */
+  if (prefix) keyword = g_strconcat (prefix, "mosaic", NULL);
+  else        keyword = g_strdup("mosaic");
+  missing = ObitInfoListGetP(inList, keyword, &type, dim, (gpointer*)&value);
+  /* Does it exist? */
+  if ((missing) || (type!=OBIT_string) || (!strncmp(None,value,dim[0]))) {
+    Obit_log_error(err, OBIT_Error,"%s ImageMosaic not defined in %s", 
+		   routine, keyword);
+    return out;
+  } else { /* exists*/
+    mosaic = (ObitImageMosaic*)ObitImageMosaicFromInfo(keyword, inList, err);
+    if (err->error) Obit_traceback_val (err, routine, keyword, out);
+  }
+  g_free(keyword);
+
+  /* Create output - by type */
+  if (!strncmp("Base", classType, classCnt)) {
+    out = ObitSkyModelCreate(prefix, mosaic);
+  } else if (!strncmp("Squint", classType, classCnt)) {
+    out = (ObitSkyModel*)ObitSkyModelVMSquintCreate(prefix, mosaic);
+    ObitSkyModelVMSquintFromInfo(out, prefix, inList, err);
+  } else if (!strncmp("Ion", classType, classCnt)) {
+    out = (ObitSkyModel*)ObitSkyModelVMIonCreate(prefix, mosaic);
+    ObitSkyModelVMIonFromInfo(out, prefix, inList, err);
+ } else {  /* Assume base and hope for the best */
+    out = ObitSkyModelCreate(prefix, mosaic);
+    /* Note problem in log */
+    strncpy (ctemp, classType, MIN (48,classCnt)); ctemp[MIN (49,classCnt+1)] = 0;
+    Obit_log_error(err, OBIT_InfoWarn, "%s: Unknown type %s using base class",
+		   routine, ctemp);
+  }
+
+  /* Copy any InfoList Parameters */
+  if (prefix) keyword = g_strconcat (prefix, "Info", NULL);
+  else        keyword = g_strdup("Info");
+  ObitInfoListCopyWithPrefix (inList, out->info, keyword, TRUE);
+  
+  /* "xxxmodelType" olong Model type (ObitSkyModelType) */
+  if (prefix) keyword = g_strconcat (prefix, "modelType", NULL);
+  else        keyword = g_strdup("modelType");
+  otemp = 0;
+  ObitInfoListGetTest(inList, keyword, &type, dim, &otemp);
+  out->modelType = (ObitSkyModelType)otemp;
+  g_free(keyword);
+
+  /* "xxxmodType"   olong Component model type (ObitSkyModelCompType) */
+  if (prefix) keyword = g_strconcat (prefix, "modType", NULL);
+  else        keyword = g_strdup("modType");
+  otemp = 0;
+  ObitInfoListGetTest(inList, keyword, &type, dim, &otemp);
+  out->modType = (ObitSkyModelCompType)otemp;
+  g_free(keyword);
+
+  /* "xxxmodelMode" olong Model calculation mode for components (ObitSkyModelCompType) */
+  if (prefix) keyword = g_strconcat (prefix, "modelMode", NULL);
+  else        keyword = g_strdup("modelMode");
+  otemp = 0;
+  ObitInfoListGetTest(inList, keyword, &type, dim, &otemp);
+  out->modelMode = (ObitSkyModelCompType)otemp;
+  g_free(keyword);
+
+  /* "xxxCCver"     olong* List of AIPSCC table versions per image in mosaic 
+     there are mosaic->numberImages of these */
+  if (prefix) keyword = g_strconcat (prefix, "CCver", NULL);
+  else        keyword = g_strdup("CCver");
+  ObitInfoListGetTest(inList, keyword, &type, dim, out->CCver);
+  g_free(keyword);
+
+  /* "xxxstartComp" olong* List of beginning component per image in mosaic (1-rel) */
+  if (prefix) keyword = g_strconcat (prefix, "startComp", NULL);
+  else        keyword = g_strdup("startComp");
+  ObitInfoListGetTest(inList, keyword, &type, dim, out->startComp);
+  g_free(keyword);
+
+  /* "xxxendComp"   olong* List of highest component per image in mosaic (1-rel) */
+  if (prefix) keyword = g_strconcat (prefix, "endComp", NULL);
+  else        keyword = g_strdup("endComp");
+  ObitInfoListGetTest(inList, keyword, &type, dim, out->endComp);
+  g_free(keyword);
+
+  /* "xxxfactor"    ofloat Factor to multiply times model */
+  if (prefix) keyword = g_strconcat (prefix, "factor", NULL);
+  else        keyword = g_strdup("factor");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->factor);
+  g_free(keyword);
+
+  /* "xxxminFlux"   ofloat Minimum flux density model or pixel */
+  if (prefix) keyword = g_strconcat (prefix, "minFlux", NULL);
+  else        keyword = g_strdup("minFlux");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->minFlux);
+  g_free(keyword);
+
+  /* "xxxstokFactor"ofloat Factor to multiply times second Stokes of model */
+  if (prefix) keyword = g_strconcat (prefix, "stokFactor", NULL);
+  else        keyword = g_strdup("stokFactor");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->stokFactor);
+  g_free(keyword);
+
+  /* "xxxpointFlux" ofloat Point model flux density (Jy) */
+  if (prefix) keyword = g_strconcat (prefix, "pointFlux", NULL);
+  else        keyword = g_strdup("pointFlux");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->pointFlux);
+  g_free(keyword);
+
+  /* "xxxpointXOff" ofloat Point, x (ra)offset in deg. */
+  if (prefix) keyword = g_strconcat (prefix, "pointXOff", NULL);
+  else        keyword = g_strdup("pointXOff");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->pointXOff);
+  g_free(keyword);
+
+  /* "xxxpointYOff" ofloat Point, y (dec) offset in deg. */
+  if (prefix) keyword = g_strconcat (prefix, "pointYOff", NULL);
+  else        keyword = g_strdup("pointYOff");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->pointYOff);
+  g_free(keyword);
+
+  /* "xxxpointParms"ofloat[10] Other (non-point)model components: */
+  if (prefix) keyword = g_strconcat (prefix, "pointParms", NULL);
+  else        keyword = g_strdup("pointParms");
+  ObitInfoListGetTest(inList, keyword, &type, dim, out->pointParms);
+  g_free(keyword);
+
+  /* "xxxantSize"   ofloat Antennna diameter (m) for rel. PB corrections */
+  if (prefix) keyword = g_strconcat (prefix, "antSize", NULL);
+  else        keyword = g_strdup("antSize");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->antSize);
+  g_free(keyword);
+
+  /* "xxxdo3D"            boolean Apply 3D imaging corrections? */
+  if (prefix) keyword = g_strconcat (prefix, "do3D", NULL);
+  else        keyword = g_strdup("do3D");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->do3D);
+  g_free(keyword);
+
+  /* "xxxdoDivide"        boolean Divide model into data? */
+  if (prefix) keyword = g_strconcat (prefix, "doDivide", NULL);
+  else        keyword = g_strdup("doDivide");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->doDivide);
+  g_free(keyword);
+
+  /* "xxxdoReplace"       boolean Replace data with model? */
+  if (prefix) keyword = g_strconcat (prefix, "doReplace", NULL);
+  else        keyword = g_strdup("doReplace");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->doReplace);
+  g_free(keyword);
+
+  /* "xxxdoPBCor"         boolean Make relative Primary Beam corrections? */
+  if (prefix) keyword = g_strconcat (prefix, "doPBCor", NULL);
+  else        keyword = g_strdup("doPBCor");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->doPBCor);
+  g_free(keyword);
+
+  /* "xxxstartChannel"    olong   Selected start channel[1-rel] */
+  if (prefix) keyword = g_strconcat (prefix, "startChannel", NULL);
+  else        keyword = g_strdup("startChannel");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->startChannel);
+  g_free(keyword);
+
+  /* "xxxnumberChannel"   olong   Selected channel and number  */
+  if (prefix) keyword = g_strconcat (prefix, "numberChannel", NULL);
+  else        keyword = g_strdup("numberChannel");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->numberChannel);
+  g_free(keyword);
+
+  /* "xxxstartIF"         olong   Selected start IF [1-rel] */
+  if (prefix) keyword = g_strconcat (prefix, "startIF", NULL);
+  else        keyword = g_strdup("startIF");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->startIF);
+  g_free(keyword);
+
+  /* "xxxnumberIF"        olong   Selected IF number */
+  if (prefix) keyword = g_strconcat (prefix, "numberIF", NULL);
+  else        keyword = g_strdup("numberIF");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->numberIF);
+  g_free(keyword);
+
+  /* "xxxstartChannelPB"  olong   Selected start rel. PB correction channel[1-rel] */
+  if (prefix) keyword = g_strconcat (prefix, "startChannelPB", NULL);
+  else        keyword = g_strdup("startChannelPB");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->startChannelPB);
+  g_free(keyword);
+
+  /* "xxxnumberChannelPB" olong   Selected PB correction channel number */
+  if (prefix) keyword = g_strconcat (prefix, "numberChannelPB", NULL);
+  else        keyword = g_strdup("numberChannelPB");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->numberChannelPB);
+  g_free(keyword);
+
+  /* "xxxstartIFPB"       olong   Selected start rel. PB correction IF[1-rel] */
+  if (prefix) keyword = g_strconcat (prefix, "startIFPB", NULL);
+  else        keyword = g_strdup("startIFPB");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->startIFPB);
+  g_free(keyword);
+
+  /* "xxxnumberIFPB"      olong   Selected PB correction IF number */
+  if (prefix) keyword = g_strconcat (prefix, "numberIFPB", NULL);
+  else        keyword = g_strdup("numberIFPB");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->numberIFPB);
+  g_free(keyword);
+
+  /* "xxxnfreqPB"         olong   number of frequency channels for PB correction */
+  if (prefix) keyword = g_strconcat (prefix, "nfreqPB", NULL);
+  else        keyword = g_strdup("nfreqPB");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->nfreqPB);
+  g_free(keyword);
+
+  /* "xxxPBFreq"          odouble Reference frequency (Hz) for this block of 
+     channels for PB corrections  */
+  if (prefix) keyword = g_strconcat (prefix, "PBFreq", NULL);
+  else        keyword = g_strdup("PBFreq");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->PBFreq);
+  g_free(keyword);
+
+  /* "xxxstokes"          gchar[5] Selected Stokes */
+  if (prefix) keyword = g_strconcat (prefix, "stokes", NULL);
+  else        keyword = g_strdup("stokes");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->stokes);
+  g_free(keyword);
+
+  /* "xxxstartPoln"       olong   Selected start Poln [1-rel] */
+  if (prefix) keyword = g_strconcat (prefix, "startPoln", NULL);
+  else        keyword = g_strdup("startPoln");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->startPoln);
+  g_free(keyword);
+
+  /* "xxxnumberPoln"      olong   Selected Poln number */
+  if (prefix) keyword = g_strconcat (prefix, "numberPoln", NULL);
+  else        keyword = g_strdup("numberPoln");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->numberPoln);
+  g_free(keyword);
+
+  /* "xxxdoFlip"          boolean True if need to multiply the FT by sqrt(-1) 
+     before applying */
+  if (prefix) keyword = g_strconcat (prefix, "doFlip", NULL);
+  else        keyword = g_strdup("doFlip");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->doFlip);
+  g_free(keyword);
+
+  /* "xxxnoNeg"           boolean True if only positive flux components are to be used */
+  if (prefix) keyword = g_strconcat (prefix, "noNeg", NULL);
+  else        keyword = g_strdup("noNeg");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->noNeg);
+  g_free(keyword);
+
+  /* "xxxminDFT"          ofloat  Minimum absolute component flux to use 
+     in DFT */
+  if (prefix) keyword = g_strconcat (prefix, "minDFT", NULL);
+  else        keyword = g_strdup("minDFT");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->minDFT);
+  g_free(keyword);
+
+  /* "xxxmaxGrid"         ofloat  Maximum absolute component flux to use 
+     in Gridded model  */
+  if (prefix) keyword = g_strconcat (prefix, "maxGrid", NULL);
+  else        keyword = g_strdup("maxGrid");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->maxGrid);
+  g_free(keyword);
+
+  /* "xxxdoDFT"           boolean Something to do for DFT model? */
+  if (prefix) keyword = g_strconcat (prefix, "doDFT", NULL);
+  else        keyword = g_strdup("doDFT");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->doDFT);
+  g_free(keyword);
+
+  /* "xxxdoGrid"          boolean Something to do for Grid model? */
+  if (prefix) keyword = g_strconcat (prefix, "doGrid", NULL);
+  else        keyword = g_strdup("doGrid");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->doGrid);
+  g_free(keyword);
+
+  /* "xxxprtLv"           olong   message level for progress messages */
+  if (prefix) keyword = g_strconcat (prefix, "prtLv", NULL);
+  else        keyword = g_strdup("prtLv");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->prtLv);
+  g_free(keyword);
+
+  /* "xxxnSpecTerm"       olong   Number of spectral terms */
+  if (prefix) keyword = g_strconcat (prefix, "nSpecTerm", NULL);
+  else        keyword = g_strdup("nSpecTerm");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->nSpecTerm);
+  g_free(keyword);
+
+  /* "xxxnThreads"        olong   Number of threads */
+  if (prefix) keyword = g_strconcat (prefix, "nThreads", NULL);
+  else        keyword = g_strdup("nThreads");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->nThreads);
+  g_free(keyword);
+
+  /* Cleanup */
+  mosaic = ObitImageMosaicUnref(mosaic);
+
+  return out;
+} /* end ObitSkyModelFromInfo */
 
 /**
  * Returns ClassInfo pointer for the class.
@@ -387,7 +770,7 @@ void ObitSkyModelInitModel (ObitSkyModel* in, ObitErr *err)
  * \return return code, OBIT_IO_OK=> OK
  */
 ObitIOCode ObitSkyModelSubUV (ObitSkyModel *in, ObitUV *indata, ObitUV *outdata, 
-				ObitErr *err)
+			      ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
   const ObitSkyModelClassInfo 
@@ -3628,6 +4011,390 @@ void  ObitSkyModelAddField (ObitSkyModel* in, ObitErr *err)
 } /* end ObitSkyModelAddField */
 
 /**
+ * Convert structure information to entries in an ObitInfoList
+ * \param in      Object of interest.
+ * \param prefix  If NonNull, string to be added to beginning of outList entry name
+ *                "xxx" in the following
+ * \param outList InfoList to write entries into
+ *      \li "xxxClassType" string SkyModel type, "Base" for base class
+ *      \li "xxxmosaic"    string prefix of ObitImageMosaic mosaic
+ *      \li "xxxmodelType" olong Model type (ObitSkyModelType)
+ *      \li "xxxmodType"   olong Component model type (ObitSkyModelCompType)
+ *      \li "xxxmodelMode" olong Model calculation mode for components (ObitSkyModelCompType)
+ *      \li "xxxCCver"     olong* List of AIPSCC table versions per image in mosaic 
+ *                                there are mosaic->numberImages of these
+ *      \li "xxxstartComp" olong* List of beginning component per image in mosaic (1-rel)
+ *      \li "xxxendComp"   olong* List of highest component per image in mosaic (1-rel)
+ *      \li "xxxfactor"    ofloat Factor to multiply times model
+ *      \li "xxxminFlux"   ofloat Minimum flux density model or pixel
+ *      \li "xxxstokFactor"ofloat Factor to multiply times second Stokes of model
+ *      \li "xxxpointFlux" ofloat Point model flux density (Jy)
+ *      \li "xxxpointXOff" ofloat Point, x (ra)offset in deg.
+ *      \li "xxxpointYOff" ofloat Point, y (dec) offset in deg.
+ *      \li "xxxpointParms"ofloat[10] Other (non-point)model components:
+ *                                major_axis (deg),  minor_axis (deg),  position_angle (deg),
+ *                                type (ObitSkyModelCompType as gint), spectral terms;
+ *      \li "xxxantSize"   ofloat Antennna diameter (m) for rel. PB corrections
+ *      \li "xxxdo3D"            boolean Apply 3D imaging corrections?
+ *      \li "xxxdoDivide"        boolean Divide model into data?
+ *      \li "xxxdoReplace"       boolean Replace data with model?
+ *      \li "xxxdoPBCor"         boolean Make relative Primary Beam corrections?
+ *      \li "xxxstartChannel"    olong   Selected start channel[1-rel]
+ *      \li "xxxnumberChannel"   olong   Selected channel and number 
+ *      \li "xxxstartIF"         olong   Selected start IF [1-rel]
+ *      \li "xxxnumberIF"        olong   Selected IF number
+ *      \li "xxxstartChannelPB"  olong   Selected start rel. PB correction channel[1-rel]
+ *      \li "xxxnumberChannelPB" olong   Selected PB correction channel number
+ *      \li "xxxstartIFPB"       olong   Selected start rel. PB correction IF[1-rel]
+ *      \li "xxxnumberIFPB"      olong   Selected PB correction IF number
+ *      \li "xxxnfreqPB"         olong   number of frequency channels for PB correction
+ *      \li "xxxPBFreq"          odouble Reference frequency (Hz) for this block of channels 
+ *                                       for PB corrections
+ *      \li "xxxstokes"          gchar[5] Selected Stokes
+ *      \li "xxxstartPoln"       olong   Selected start Poln [1-rel]
+ *      \li "xxxnumberPoln"      olong   Selected Poln number
+ *      \li "xxxdoFlip"          boolean True if need to multiply the FT by sqrt(-1) before applying
+ *      \li "xxxnoNeg"           boolean True if only positive flux components are to be used
+ *      \li "xxxminDFT"          ofloat  Minimum absolute component flux to use in DFT
+ *      \li "xxxmaxGrid"         ofloat  Maximum absolute component flux to use in Gridded model 
+ *      \li "xxxdoDFT"           boolean Something to do for DFT model?
+ *      \li "xxxdoGrid"          boolean Something to do for Grid model?
+ *      \li "xxxprtLv"           olong   message level for progress messages
+ *      \li "xxxnSpecTerm"       olong   Number of spectral terms
+ *      \li "xxxnThreads"        olong   Number of threads
+ * \param err     ObitErr for reporting errors.
+ */
+void ObitSkyModelGetInfo (ObitSkyModel *in, gchar *prefix, ObitInfoList *outList, 
+			  ObitErr *err)
+{ 
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *keyword=NULL, *None = "None", *OK="OK", *Type="Base";
+  olong otemp, numberImages=0;
+  gchar *routine = "ObitSkyModelGetInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* Copy any InfoList keywords */
+  if (prefix) keyword = g_strconcat (prefix, "Info", NULL);
+  else       keyword = g_strdup("Info");
+  ObitInfoListCopyAddPrefix (in->info, outList, keyword);
+
+  /* Class Type */
+  if (prefix) keyword = g_strconcat (prefix, "ClassType", NULL);
+  else        keyword = g_strdup("ClassType");
+  dim[0] = strlen(Type);
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, Type);
+  g_free(keyword);
+
+  /* "xxxmosaic" string prefix of ObitImageMosaic mosaic */
+  if (prefix) keyword = g_strconcat (prefix, "mosaic", NULL);
+  else        keyword = g_strdup("mosaic");
+  if (in->mosaic) {
+    ObitImageMosaicGetInfo(in->mosaic, keyword, outList, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    numberImages = in->mosaic->numberImages;
+    dim[0] = strlen(OK);
+    ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, OK);
+  } else {
+    dim[0] = strlen(None);
+    ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, None);
+  }
+  g_free(keyword);
+
+  /* "xxxmodelType" olong Model type (ObitSkyModelType) */
+  if (prefix) keyword = g_strconcat (prefix, "modelType", NULL);
+  else        keyword = g_strdup("modelType");
+  dim[0] = 1;
+  otemp = (olong)in->modelType;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &otemp);
+  g_free(keyword);
+
+  /* "xxxmodType"   olong Component model type (ObitSkyModelCompType) */
+  if (prefix) keyword = g_strconcat (prefix, "modType", NULL);
+  else        keyword = g_strdup("modType");
+  dim[0] = 1;
+  otemp = (olong)in->modType;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &otemp);
+  g_free(keyword);
+
+  /* "xxxmodelMode" olong Model calculation mode for components (ObitSkyModelCompType) */
+  if (prefix) keyword = g_strconcat (prefix, "modelMode", NULL);
+  else        keyword = g_strdup("modelMode");
+  dim[0] = 1;
+  otemp = (olong)in->modelMode;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &otemp);
+  g_free(keyword);
+
+  /* "xxxCCver"     olong* List of AIPSCC table versions per image in mosaic 
+     there are mosaic->numberImages of these */
+  if (prefix) keyword = g_strconcat (prefix, "CCver", NULL);
+  else        keyword = g_strdup("CCver");
+  dim[0] = numberImages;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, in->CCver);
+  g_free(keyword);
+
+  /* "xxxstartComp" olong* List of beginning component per image in mosaic (1-rel) */
+  if (prefix) keyword = g_strconcat (prefix, "startComp", NULL);
+  else        keyword = g_strdup("startComp");
+  dim[0] = numberImages;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, in->startComp);
+  g_free(keyword);
+
+  /* "xxxendComp"   olong* List of highest component per image in mosaic (1-rel) */
+  if (prefix) keyword = g_strconcat (prefix, "endComp", NULL);
+  else        keyword = g_strdup("endComp");
+  dim[0] = numberImages;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, in->endComp);
+  g_free(keyword);
+
+  /* "xxxfactor"    ofloat Factor to multiply times model */
+  if (prefix) keyword = g_strconcat (prefix, "factor", NULL);
+  else        keyword = g_strdup("factor");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->factor);
+  g_free(keyword);
+
+  /* "xxxminFlux"   ofloat Minimum flux density model or pixel */
+  if (prefix) keyword = g_strconcat (prefix, "minFlux", NULL);
+  else        keyword = g_strdup("minFlux");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->minFlux);
+  g_free(keyword);
+
+  /* "xxxstokFactor"ofloat Factor to multiply times second Stokes of model */
+  if (prefix) keyword = g_strconcat (prefix, "stokFactor", NULL);
+  else        keyword = g_strdup("stokFactor");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->stokFactor);
+  g_free(keyword);
+
+  /* "xxxpointFlux" ofloat Point model flux density (Jy) */
+  if (prefix) keyword = g_strconcat (prefix, "pointFlux", NULL);
+  else        keyword = g_strdup("pointFlux");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->pointFlux);
+  g_free(keyword);
+
+  /* "xxxpointXOff" ofloat Point, x (ra)offset in deg. */
+  if (prefix) keyword = g_strconcat (prefix, "pointXOff", NULL);
+  else        keyword = g_strdup("pointXOff");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->pointXOff);
+  g_free(keyword);
+
+  /* "xxxpointYOff" ofloat Point, y (dec) offset in deg. */
+  if (prefix) keyword = g_strconcat (prefix, "pointYOff", NULL);
+  else        keyword = g_strdup("pointYOff");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->pointYOff);
+  g_free(keyword);
+
+  /* "xxxpointParms"ofloat[10] Other (non-point)model components: */
+  if (prefix) keyword = g_strconcat (prefix, "pointParms", NULL);
+  else        keyword = g_strdup("pointParms");
+  dim[0] = 10;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, in->pointParms);
+  g_free(keyword);
+
+  /* "xxxantSize"   ofloat Antennna diameter (m) for rel. PB corrections */
+  if (prefix) keyword = g_strconcat (prefix, "antSize", NULL);
+  else        keyword = g_strdup("antSize");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->antSize);
+  g_free(keyword);
+
+  /* "xxxdo3D"            boolean Apply 3D imaging corrections? */
+  if (prefix) keyword = g_strconcat (prefix, "do3D", NULL);
+  else        keyword = g_strdup("do3D");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_bool, dim, &in->do3D);
+  g_free(keyword);
+
+  /* "xxxdoDivide"        boolean Divide model into data? */
+  if (prefix) keyword = g_strconcat (prefix, "doDivide", NULL);
+  else        keyword = g_strdup("doDivide");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_bool, dim, &in->doDivide);
+  g_free(keyword);
+
+  /* "xxxdoReplace"       boolean Replace data with model? */
+  if (prefix) keyword = g_strconcat (prefix, "doReplace", NULL);
+  else        keyword = g_strdup("doReplace");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_bool, dim, &in->doReplace);
+  g_free(keyword);
+
+  /* "xxxdoPBCor"         boolean Make relative Primary Beam corrections? */
+  if (prefix) keyword = g_strconcat (prefix, "doPBCor", NULL);
+  else        keyword = g_strdup("doPBCor");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_bool, dim, &in->doPBCor);
+  g_free(keyword);
+
+  /* "xxxstartChannel"    olong   Selected start channel[1-rel] */
+  if (prefix) keyword = g_strconcat (prefix, "startChannel", NULL);
+  else        keyword = g_strdup("startChannel");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->startChannel);
+  g_free(keyword);
+
+  /* "xxxnumberChannel"   olong   Selected channel and number  */
+  if (prefix) keyword = g_strconcat (prefix, "numberChannel", NULL);
+  else        keyword = g_strdup("numberChannel");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->numberChannel);
+  g_free(keyword);
+
+  /* "xxxstartIF"         olong   Selected start IF [1-rel] */
+  if (prefix) keyword = g_strconcat (prefix, "startIF", NULL);
+  else        keyword = g_strdup("startIF");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->startIF);
+  g_free(keyword);
+
+  /* "xxxnumberIF"        olong   Selected IF number */
+  if (prefix) keyword = g_strconcat (prefix, "numberIF", NULL);
+  else        keyword = g_strdup("numberIF");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->numberIF);
+  g_free(keyword);
+
+  /* "xxxstartChannelPB"  olong   Selected start rel. PB correction channel[1-rel] */
+  if (prefix) keyword = g_strconcat (prefix, "startChannelPB", NULL);
+  else        keyword = g_strdup("startChannelPB");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->startChannelPB);
+  g_free(keyword);
+
+  /* "xxxnumberChannelPB" olong   Selected PB correction channel number */
+  if (prefix) keyword = g_strconcat (prefix, "numberChannelPB", NULL);
+  else        keyword = g_strdup("numberChannelPB");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->numberChannelPB);
+  g_free(keyword);
+
+  /* "xxxstartIFPB"       olong   Selected start rel. PB correction IF[1-rel] */
+  if (prefix) keyword = g_strconcat (prefix, "startIFPB", NULL);
+  else        keyword = g_strdup("startIFPB");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->startIFPB);
+  g_free(keyword);
+
+  /* "xxxnumberIFPB"      olong   Selected PB correction IF number */
+  if (prefix) keyword = g_strconcat (prefix, "numberIFPB", NULL);
+  else        keyword = g_strdup("numberIFPB");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->numberIFPB);
+  g_free(keyword);
+
+  /* "xxxnfreqPB"         olong   number of frequency channels for PB correction */
+  if (prefix) keyword = g_strconcat (prefix, "nfreqPB", NULL);
+  else        keyword = g_strdup("nfreqPB");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->nfreqPB);
+  g_free(keyword);
+
+  /* "xxxPBFreq"          odouble Reference frequency (Hz) for this block of 
+     channels for PB corrections  */
+  if (prefix) keyword = g_strconcat (prefix, "PBFreq", NULL);
+  else        keyword = g_strdup("PBFreq");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_double, dim, &in->PBFreq);
+  g_free(keyword);
+
+  /* "xxxstokes"          gchar[5] Selected Stokes */
+  if (prefix) keyword = g_strconcat (prefix, "stokes", NULL);
+  else        keyword = g_strdup("stokes");
+  dim[0] = 5;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_string, dim, &in->stokes);
+  g_free(keyword);
+
+  /* "xxxstartPoln"       olong   Selected start Poln [1-rel] */
+  if (prefix) keyword = g_strconcat (prefix, "startPoln", NULL);
+  else        keyword = g_strdup("startPoln");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->startPoln);
+  g_free(keyword);
+
+  /* "xxxnumberPoln"      olong   Selected Poln number */
+  if (prefix) keyword = g_strconcat (prefix, "numberPoln", NULL);
+  else        keyword = g_strdup("numberPoln");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->numberPoln);
+  g_free(keyword);
+
+  /* "xxxdoFlip"          boolean True if need to multiply the FT by sqrt(-1) 
+     before applying */
+  if (prefix) keyword = g_strconcat (prefix, "doFlip", NULL);
+  else        keyword = g_strdup("doFlip");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_bool, dim, &in->doFlip);
+  g_free(keyword);
+
+  /* "xxxnoNeg"           boolean True if only positive flux components are to be used */
+  if (prefix) keyword = g_strconcat (prefix, "noNeg", NULL);
+  else        keyword = g_strdup("noNeg");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_bool, dim, &in->noNeg);
+  g_free(keyword);
+
+  /* "xxxminDFT"          ofloat  Minimum absolute component flux to use 
+     in DFT */
+  if (prefix) keyword = g_strconcat (prefix, "minDFT", NULL);
+  else        keyword = g_strdup("minDFT");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->minDFT);
+  g_free(keyword);
+
+  /* "xxxmaxGrid"         ofloat  Maximum absolute component flux to use 
+     in Gridded model  */
+  if (prefix) keyword = g_strconcat (prefix, "maxGrid", NULL);
+  else        keyword = g_strdup("maxGrid");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->maxGrid);
+  g_free(keyword);
+
+  /* "xxxdoDFT"           boolean Something to do for DFT model? */
+  if (prefix) keyword = g_strconcat (prefix, "doDFT", NULL);
+  else        keyword = g_strdup("doDFT");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_bool, dim, &in->doDFT);
+  g_free(keyword);
+
+  /* "xxxdoGrid"          boolean Something to do for Grid model? */
+  if (prefix) keyword = g_strconcat (prefix, "doGrid", NULL);
+  else        keyword = g_strdup("doGrid");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_bool, dim, &in->doGrid);
+  g_free(keyword);
+
+  /* "xxxprtLv"           olong   message level for progress messages */
+  if (prefix) keyword = g_strconcat (prefix, "prtLv", NULL);
+  else        keyword = g_strdup("prtLv");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->prtLv);
+  g_free(keyword);
+
+  /* "xxxnSpecTerm"       olong   Number of spectral terms */
+  if (prefix) keyword = g_strconcat (prefix, "nSpecTerm", NULL);
+  else        keyword = g_strdup("nSpecTerm");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->nSpecTerm);
+  g_free(keyword);
+
+  /* "xxxnThreads"        olong   Number of threads */
+  if (prefix) keyword = g_strconcat (prefix, "nThreads", NULL);
+  else        keyword = g_strdup("nThreads");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->nThreads);
+  g_free(keyword);
+
+
+} /* end ObitSkyModelGetInfo */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitSkyModelClassInit (void)
@@ -3668,6 +4435,7 @@ static void ObitSkyModelClassInfoDefFn (gpointer inClass)
   theClass->ObitClassInfoDefFn = (ObitClassInfoDefFnFP)ObitSkyModelClassInfoDefFn;
   theClass->ObitGetClass  = (ObitGetClassFP)ObitSkyModelGetClass;
   theClass->newObit       = (newObitFP)newObitSkyModel;
+  theClass->ObitSkyModelFromInfo = (ObitSkyModelFromInfoFP)ObitSkyModelFromInfo;
   theClass->ObitCopy      = (ObitCopyFP)ObitSkyModelCopy;
   theClass->ObitClone     = NULL;
   theClass->ObitClear     = (ObitClearFP)ObitSkyModelClear;
@@ -3698,6 +4466,7 @@ static void ObitSkyModelClassInfoDefFn (gpointer inClass)
   theClass->ObitSkyModelLoadGridComps = (ObitSkyModelLoadGridCompsFP)ObitSkyModelLoadGridComps;
   theClass->ObitSkyModelFTImage       = (ObitSkyModelFTImageFP)ObitSkyModelFTImage;
   theClass->ObitSkyModelAddField      = (ObitSkyModelAddFieldFP)ObitSkyModelAddField;
+  theClass->ObitSkyModelGetInfo       = (ObitSkyModelGetInfoFP)ObitSkyModelGetInfo;
 
 } /* end ObitSkyModelClassDefFn */
 

@@ -62,7 +62,7 @@ typedef struct {
 /** Private: Form sort structure for a table */
 static gpointer 
 MakeSortStruct (ObitTable *in, olong which[2], gboolean desc,
-		gint *size, olong *number, olong *ncomp,
+		olong *size, olong *number, olong *ncomp,
 		ObitInfoType *type, ObitErr *err);
 
 /** Private: Form sort structure for a table for 2 float sort */
@@ -128,7 +128,7 @@ ReorderTable(ObitTable *in, gpointer base, olong size, olong number,
  * \return I/O Code  OBIT_IO_OK = OK.
  */
 ObitIOCode ObitTableUtilSort (ObitTable *in, gchar *colName, gboolean desc,
-			     ObitErr *err)
+			      ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
   olong i, size, number=0, ncomp, which[2], colNo;

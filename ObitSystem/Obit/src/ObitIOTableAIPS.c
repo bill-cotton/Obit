@@ -30,6 +30,8 @@
 #include "ObitAIPSCat.h"
 #include "ObitAIPS.h"
 #include "ObitMem.h"
+#include "ObitUVDesc.h"
+#include "ObitImageDesc.h"
 
 /*-------- ObitIO: Merx mollis mortibus nuper ------------------*/
 /**
@@ -1419,15 +1421,13 @@ ObitIOTableAIPSCreateBuffer (ofloat **data, olong *size,
  * For all File types types:
  * \li xxxDataType OBIT_string "UV" = UV data, "MA"=>image, "Table"=Table, 
  *                "OTF"=OTF, etc
- * \li xxxFileType OBIT_oint File type as ObitIOType, OBIT_IO_FITS, OBIT_IO_AIPS
+ * \li xxxFileType OBIT_oint File type as "AIPS
  *    
  * For xxxDataType = "Table"
+ * \li xxxTableParent OBIT_string  Table parent type (e.g. "MA", "UV")
  * \li xxxType  OBIT_string  (Tables only) Table type (e.g. "AIPS CC")
  * \li xxxVer   OBIT_oint    (Tables Only) Table version number
  *    
- * For xxxDataType = "MA"
- * \li xxxBLC   OBIT_oint[7] (Images only) 1-rel bottom-left corner pixel
- * \li xxxTRC   OBIT_oint[7] (Images Only) 1-rel top-right corner pixel
  * \param err     ObitErr for reporting errors.
  */
 void ObitIOTableAIPSGetFileInfo (ObitIO *in, ObitInfoList *myInfo, gchar *prefix, 
@@ -1436,27 +1436,38 @@ void ObitIOTableAIPSGetFileInfo (ObitIO *in, ObitInfoList *myInfo, gchar *prefix
   ObitInfoType type;
   ObitAIPSDirCatEntry *entry=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar *keyword=NULL, *FileType="UV", *DataType="AIPS", *dirname;
+  gchar *keyword=NULL, *FileType="AIPS", *dirname;
+  gchar *DataType[]={"Table","UV","MA"};
   gchar tempStr[201];
-  olong disk, user, cno, seq, ver;
+  olong disk, user, cno, seq, ver, ptype=1;
   gchar *routine = "ObitIOTableAIPSGetFileInfo";
 
   if (err->error) return;
 
   /* Set basic information */
+  /* AIPS */
   if (prefix) keyword =  g_strconcat (prefix, "FileType", NULL);
   else keyword =  g_strdup ("FileType");
   dim[0] = strlen(FileType);
   ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, FileType);
   g_free(keyword);
   
-   /* AIPS */
+   /* type - Table */
   if (prefix) keyword =  g_strconcat (prefix, "DataType", NULL);
   else keyword =  g_strdup ("DataType");
-  dim[0] = strlen(DataType);
-  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, DataType);
+  dim[0] = strlen(DataType[0]);
+  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, DataType[0]);
   g_free(keyword);
   
+  /* parent type */
+  if (ObitUVDescIsA(in->myDesc))    ptype = 1;
+  if (ObitImageDescIsA(in->myDesc)) ptype = 2;
+  if (prefix) keyword =  g_strconcat (prefix, "TableParent", NULL);
+  else keyword =  g_strdup ("TableParent");
+  dim[0] = strlen(DataType[ptype]);
+  ObitInfoListAlwaysPut (outList, keyword, OBIT_string, dim, DataType[ptype]);
+  g_free(keyword);
+
   /* Disk number */
   if (!ObitInfoListGet(myInfo, "Disk", &type, dim, &disk, err)) 
       Obit_traceback_msg (err, routine, in->name);
@@ -1530,8 +1541,7 @@ void ObitIOTableAIPSGetFileInfo (ObitIO *in, ObitInfoList *myInfo, gchar *prefix
   if (entry) g_free(entry);
  
   /* Disk directory  */
-  dirname = ObitAIPSFilename (OBIT_AIPS_Image, disk, cno, 
-			      user, NULL, 0, err);
+  dirname =  ObitAIPSDirname (disk, err);
   dim[0] = strlen(dirname);
   if (prefix) keyword =  g_strconcat (prefix, "Dir", NULL);
   else keyword =  g_strdup ("Dir");

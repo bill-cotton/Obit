@@ -224,12 +224,12 @@ ObitUV* newObitUV (gchar* name)
  * \return new data object with selection parameters set
  */
 ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList, 
-			      ObitErr *err)
+			    ObitErr *err)
 {
   ObitUV       *out = NULL;
   ObitInfoType type;
   olong        Aseq, AIPSuser, disk, cno, i, nvis, nThreads;
-  gchar        *strTemp, inFile[129];
+  gchar        *strTemp, inFile[129], stemp[256];
   gchar        Aname[13], Aclass[7], *Atype = "UV";
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gpointer     listPnt;
@@ -276,6 +276,17 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
     if (prefix) keyword = g_strconcat (prefix, "Disk", NULL);
     else        keyword = g_strdup("Disk");
     ObitInfoListGet(inList, keyword, &type, dim, &disk, err);
+    g_free(keyword);
+
+    /* If prefixDir given, lookup disk number */
+    if (prefix) keyword = g_strconcat (prefix, "Dir", NULL);
+    else        keyword = g_strdup("Dir");
+    if (ObitInfoListGetP(inList, keyword, &type, dim, (gpointer)&strTemp)) {
+      /* make sure NULL terminated */
+      strncpy (stemp, strTemp, MIN(255,dim[0])); stemp[MIN(255,dim[0])] = 0;
+      disk = ObitAIPSFindDirname (stemp, err);
+      if (err->error) Obit_traceback_val (err, routine, routine, out);
+    }
     g_free(keyword);
 
     /* AIPS name */
@@ -344,6 +355,17 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
     ObitInfoListGet(inList, keyword, &type, dim, &disk, err);
     g_free(keyword);
 
+    /* If prefixDir given, lookup disk number */
+    if (prefix) keyword = g_strconcat (prefix, "Dir", NULL);
+    else        keyword = g_strdup("Dir");
+    if (ObitInfoListGetP(inList, keyword, &type, dim, (gpointer)&strTemp)) {
+      /* make sure NULL terminated */
+      strncpy (stemp, strTemp, MIN(255,dim[0])); stemp[MIN(255,dim[0])] = 0;
+      disk = ObitFITSFindDir (stemp, err);
+      if (err->error) Obit_traceback_val (err, routine, routine, out);
+    }
+    g_free(keyword);
+
     /* define object */
     ObitUVSetFITS (out, nvis, disk, inFile, err);
     if (err->error) Obit_traceback_val (err, routine, "inList", out);
@@ -364,6 +386,11 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
     }
     g_free(keyword);
   } /* end loop copying parameters */
+
+  /* Copy any InfoList Parameters */
+  if (prefix) keyword = g_strconcat (prefix, "Info", NULL);
+  else        keyword = g_strdup("Info");
+  ObitInfoListCopyWithPrefix (inList, out->info, keyword, TRUE);
   
   /* Ensure out fully instantiated and OK */
   ObitUVFullInstantiate (out, TRUE, err);
