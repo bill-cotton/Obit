@@ -226,7 +226,7 @@ void ObitUVCalCalibrateInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
  * \param visIn 1 visibility as an array of floats
  * \param err   ObitError stack.
  */
-void ObitUVCalCalibrate (ObitUVCal *in, float time, olong ant1, olong ant2, 
+void ObitUVCalCalibrate (ObitUVCal *in, ofloat time, olong ant1, olong ant2, 
 			 ofloat *RP, ofloat *visIn, ObitErr *err)
 {
   olong   indxa1, indxa2, asize, iif, ipol, ifreq, ioff, joff, index, 
@@ -456,6 +456,12 @@ void ObitUVCalCalibrate (ObitUVCal *in, float time, olong ant1, olong ant2,
 	  visIn[index]   = 0.0;
 	  visIn[index+1] = 0.0;
 	  visIn[index+2] = 0.0;
+	}
+
+	/* DEBUG */
+	if ((fabs(visIn[index])>10000.0) || (fabs(visIn[index+1])>10000.0)) {
+	  fprintf (stderr,"DEBUG Bad data vis %f %d %d %f %f\n",
+		   time,ant1, ant2,visIn[index],visIn[index+1]);
 	}
 
 	/* rotate phase correction for next if we have delay corrections */

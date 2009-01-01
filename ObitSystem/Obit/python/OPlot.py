@@ -526,7 +526,7 @@ def PSetLineWidth (plot, lwidth, err):
 
     plot   = Python Plot object
     lwidth = Width of line (integer multiple of the default size).
-    err    =    ObitErr error stack
+    err    = ObitErr error stack
     """
     ################################################################
      # Checks
@@ -535,6 +535,23 @@ def PSetLineWidth (plot, lwidth, err):
     #
     Obit.PlotSetLineWidth(plot.me, lwidth, err.me)
     # end  PetLineWidth
+
+def PSetLineStyle (plot, lstyle, err):
+    """ Set line style
+
+    plot   = Python Plot object
+    lstyle = Style of line (integer multiple of the default size).
+             1 = continious, 2 = dashed, 3=dot dash  4 = dotted,
+             5 = dash dot dot dot
+    err    = ObitErr error stack
+    """
+    ################################################################
+     # Checks
+    if not PIsA(plot):
+        raise TypeError,"plot MUST be a Python Obit plot"
+    #
+    Obit.PlotSetLineStyle(plot.me, lstyle, err.me)
+    # end  PetLineStyle
 
 def PSetColor (plot, color, err):
     """ Set foreground color

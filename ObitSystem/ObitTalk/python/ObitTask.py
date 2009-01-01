@@ -247,6 +247,11 @@ class ObitTask(AIPSTask):
         url = None
         found = False
         allLocal = True # Local FITS files?
+        # Get input and output data types
+        iDataType =  self.__dict__['DataType']
+        oDataType =  self.__dict__['DataType']
+        if "outDType" in self.__dict__:
+            oDataType =  self.__dict__['outDType']
         proxy = None
         for adverb in self._disk_adverbs:
             if adverb in input_dict:
@@ -254,23 +259,43 @@ class ObitTask(AIPSTask):
                 if disk == 0:
                     continue
                 if not url and not proxy:
-                    if self.__dict__['DataType'] == 'AIPS':
-                        url = AIPS.disks[disk].url
-                        proxy = AIPS.disks[disk].proxy()
-                        found = True
-                        if AIPS.disks[disk].url != url:
-                            raise RuntimeError, \
-                                  "AIPS disks are not on the same machine"
-                        input_dict[adverb] = int(AIPS.disks[disk].disk)
-                    elif self.__dict__['DataType'] == 'FITS':
-                        url = FITS.disks[disk].url
-                        proxy = FITS.disks[disk].proxy()
-                        found = True
-                        allLocal = allLocal and (url==None) # Local?
-                        if FITS.disks[disk].url != url:
-                            raise RuntimeError, \
-                                  "FITS disks are not on the same machine"
-                        input_dict[adverb] = int(FITS.disks[disk].disk)
+                    # output disk?
+                    if adverb in self._outdisk_adverbs:
+                        if oDataType == 'AIPS':
+                            url = AIPS.disks[disk].url
+                            proxy = AIPS.disks[disk].proxy()
+                            found = True
+                            if AIPS.disks[disk].url != url:
+                                raise RuntimeError, \
+                                      "AIPS disks are not on the same machine"
+                            input_dict[adverb] = int(AIPS.disks[disk].disk)
+                        elif oDataType == 'FITS':
+                            url = FITS.disks[disk].url
+                            proxy = FITS.disks[disk].proxy()
+                            found = True
+                            allLocal = allLocal and (url==None) # Local?
+                            if FITS.disks[disk].url != url:
+                                raise RuntimeError, \
+                                      "FITS disks are not on the same machine"
+                            input_dict[adverb] = int(FITS.disks[disk].disk)
+                    else:  # Assume an input dataset
+                        if iDataType == 'AIPS':
+                            url = AIPS.disks[disk].url
+                            proxy = AIPS.disks[disk].proxy()
+                            found = True
+                            if AIPS.disks[disk].url != url:
+                                raise RuntimeError, \
+                                      "AIPS disks are not on the same machine"
+                            input_dict[adverb] = int(AIPS.disks[disk].disk)
+                        elif iDataType == 'FITS':
+                            url = FITS.disks[disk].url
+                            proxy = FITS.disks[disk].proxy()
+                            found = True
+                            allLocal = allLocal and (url==None) # Local?
+                            if FITS.disks[disk].url != url:
+                                raise RuntimeError, \
+                                      "FITS disks are not on the same machine"
+                            input_dict[adverb] = int(FITS.disks[disk].disk)
         # If FITS and all disks=0, run locally
         if (self.__dict__['DataType'] == 'FITS') and allLocal:
             found = True
@@ -336,15 +361,20 @@ class ObitTask(AIPSTask):
         dict["FITSdirs"] = FITSdirs
         dict["AIPSdirs"] = AIPSdirs
         
+        # Get input and output data types
+        iDataType =  self.__dict__['DataType']
+        DataType = iDataType
+        oDataType =  self.__dict__['DataType']
+        if "outDType" in self.__dict__:
+            oDataType =  self.__dict__['outDType']
+
         # Adjust disk numbers
-        DataType = dict["DataType"]
         for x in self._disk_adverbs:
             # Input or output data
             if x in self._indisk_adverbs:
-                DataType = dict["DataType"]
+                DataType = iDataType
             if x in self._outdisk_adverbs:
-                if "outDType" in dict:
-                    DataType = dict["outDType"]
+                DataType = oDataType
             if x in dict:
                 diskno = dict[x]
                 if DataType=="AIPS":
@@ -357,7 +387,7 @@ class ObitTask(AIPSTask):
                                 break
                         i = i+1
                 elif DataType=="FITS":
-                    i = 0;
+                    i = 1;
                     # Look for matching FITS directory name
                     if FITS.disks[diskno]:
                         for y in FITSdirs:

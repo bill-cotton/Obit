@@ -1315,9 +1315,6 @@ def altswitch(inImage):
     """
     ################################################################
     # Get Header dictionary
-    inImage.Open(Image.READWRITE, err)
-    if err.isErr:
-        OErr.printErrMsg(err, "Error Reading Image")
     hd = inImage.Desc.Dict 
     velite = 2.997924562e8   # Speed of light
     
@@ -1338,6 +1335,9 @@ def altswitch(inImage):
             hd["ctype"][i] = ctype+"-HEL"
         elif hd["VelReference"]==3:
             hd["ctype"][i] = ctype+"-OBS"
+        else:
+            hd["ctype"][i] = ctype+"-LSR"
+            hd["VelReference"] = 1  # Fix?
         tCrpix = hd["crpix"][i]
         tCrval = hd["crval"][i]
         hd["crpix"][i] = hd["altCrpix"]
@@ -1350,10 +1350,6 @@ def altswitch(inImage):
                          (refnu + delnu * (frline - tCrpix))
         hd["altCrpix"] = tCrpix
         hd["altRef"]   = tCrval
-        if Image.PIsA(inImage):
-            Image.PDirty (inImage)  # Header now modified
-        elif UV.PIsA(inImage):
-            UV.PDirty (inImage)     # Header now modified
         
     # Look for velocity
     if (frqType[0:4]=="VELO") or (frqType[0:4]=="FELO"):
@@ -1373,13 +1369,9 @@ def altswitch(inImage):
         hd["altCrpix"] = tCrpix
         hd["altRef"]   = tCrval
         hd["cdelt"][i] = delnu
-        if Image.PIsA(inImage):
-            Image.PDirty (inImage)  # Header now modified
-        elif UV.PIsA(inImage):
-            UV.PDirty (inImage)     # Header now modified
 
     inImage.Desc.Dict = hd     # Update header
-    inImage.Close(err)
+    inImage.UpdateDesc(err)
     if err.isErr:
         OErr.printErrMsg(err, "Error updating Image descriptor")
     return

@@ -101,13 +101,14 @@ extern void UVSolnDeselCL (ObitTable *CLTab, int isuba, int fqid, int nantf,
 } // end UVSolnDeselCL
 
 extern ObitTable* SNInvert (ObitTable *inSN, ObitData *outData, long tabVer,
-                            ObitErr* err)
+                            int doRepl, ObitErr* err)
 {
   olong ltabVer = tabVer;
+  gboolean ldoRepl = (gboolean)doRepl;
   ObitTable *outSN=NULL;
 
   outSN = (ObitTable*)ObitTableSNUtilInvert ((ObitTableSN*)inSN, outData, 
-    &ltabVer, err);
+    &ltabVer, ldoRepl, err);
 
   return outSN;
 } // end SNInvert

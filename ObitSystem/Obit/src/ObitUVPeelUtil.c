@@ -29,8 +29,10 @@
 #include "ObitUVPeelUtil.h"
 #include "ObitUVUtil.h"
 #include "ObitUVImager.h"
+#include "ObitUVImagerIon.h"
 #include "ObitImageMosaic.h"
 #include "ObitSkyModel.h"
+#include "ObitSkyModelVM.h"
 #include "ObitUVSelfCal.h"
 #include "ObitTableCCUtil.h"
 #include "ObitTableSNUtil.h"
@@ -374,23 +376,22 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     ObitInfoListAlwaysPut (scrUV->info, "ny",         OBIT_long, dim, tmpMosaic->ny);
 
     /* Temporary Imager */
-    /* Trap VMSquint variations */
-    if (ObitUVImagerIsA(myClean->imager)) {
-      imagerClass = (const ObitUVImagerClassInfo*)myClean->imager->ClassInfo;
-    } else {
+    /* Trap Ion variation */
+    if (ObitUVImagerIonIsA(myClean->imager)) {
       imagerClass = (const ObitUVImagerClassInfo*)ObitUVImagerGetClass();
+    } else {
+      imagerClass = (const ObitUVImagerClassInfo*)myClean->imager->ClassInfo;
     }
     tmpImager   = imagerClass->ObitUVImagerCreate2("Peel imager", scrUV, tmpMosaic, err);
     if (err->error) goto cleanup;
 
-    /* Create temp SkyModel */
+    /* Create temp SkyModel - use regular basal */
     /* Trap VMSquint variations */
-    if (ObitSkyModelIsA(myClean->skyModel)) {
-      skyModelClass = (const ObitSkyModelClassInfo*)myClean->skyModel->ClassInfo;
-    } else {
+    if (ObitSkyModelVMIsA(myClean->skyModel)) {
       skyModelClass = (const ObitSkyModelClassInfo*)ObitSkyModelGetClass();
+    } else {
+      skyModelClass = (const ObitSkyModelClassInfo*)myClean->skyModel->ClassInfo;
     }
-    skyModelClass = (ObitSkyModelClassInfo*)myClean->skyModel->ClassInfo;
     tmpSkyModel   = skyModelClass->ObitSkyModelCreate("Peel SkyModel", tmpMosaic);
     /* Use DFT model */
     dim[0] = dim[1] = 1;
@@ -581,7 +582,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     
     /* Invert SN table from self cal */
     ver = 0;
-    SNInver = ObitTableSNUtilInvert (outSNTable, (ObitData*)tmpUV, &ver, err);
+    SNInver = ObitTableSNUtilInvert (outSNTable, (ObitData*)tmpUV, &ver, TRUE, err);
     if (err->error) goto cleanup;
 
     /* Subtract tmpUV from inUV applying inverse of selfcalibration to corrupt */
@@ -656,7 +657,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     }
 
     /* Clear any existing entries in output table */
-    ObitTableClearRows(outCCTable, err);
+    ObitTableClearRows((ObitTable*)outCCTable, err);
     if (err->error) goto cleanup;
 
     ObitTableCCUtilAppend (peelCCTable, outCCTable, 1, 0, err);

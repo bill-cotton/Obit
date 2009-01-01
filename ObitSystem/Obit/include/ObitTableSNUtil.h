@@ -46,6 +46,6 @@ ObitIOCode ObitTableSNSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err);
 
 /** Public: Invert gains in a Solution table (to revert calibration). */
 ObitTableSN* ObitTableSNUtilInvert (ObitTableSN *inSN, ObitData *outData, olong *outVer, 
-				    ObitErr *err);
+				    gboolean doRepl, ObitErr *err);
 
 #endif /* OBITTABLESNUTIL_H */ 

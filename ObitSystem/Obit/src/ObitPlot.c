@@ -2819,6 +2819,68 @@ void  ObitPlotSetLineWidth (ObitPlot* in, olong lwidth, ObitErr *err)
 } /* end ObitPlotSetLineWidth */
 
 /** 
+ * Set line style, stays in effect until another call
+ * \param in      Pointer to Plot object. Actually applies to all
+ * \param lstyle  Style of line, 
+ *                1 = continious, 2 = dashed, 3=dot dash
+ *                4 = dotted, 5 = dash dot dot dot
+ * \param err     ObitErr error stack
+ */
+void  ObitPlotSetLineStyle (ObitPlot* in, olong lstyle, ObitErr *err)
+{
+#ifdef HAVE_PLPLOT  /* Only if plplot available */
+  PLINT n1=0;
+  PLINT mark1[1]={0};
+  PLINT space1[1]={0};
+  PLINT n2=1;
+  PLINT mark2[1]={1000};
+  PLINT space2[1]={1000};
+  PLINT n3=2;
+  PLINT mark3[2]={200,1000};
+  PLINT space3[2]={500,500};
+  PLINT n4=1;
+  PLINT mark4[1]={200};
+  PLINT space4[1]={500};
+  PLINT n5=4;
+  PLINT mark5[4]={1000,200,200,200};
+  PLINT space5[4]={500,500,500,500};
+#endif /* HAVE_PLPLOT */
+  gchar *routine = "ObitPlotSetLineStyle";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitIsA(in, &myClassInfo));
+  if ((lstyle<1) || (lstyle>5)) {
+    Obit_log_error(err, OBIT_Error, "%s ERROR invalud line style %d", 
+		   routine, lstyle);
+    return;
+  }
+/****************** plplot implementation *************************/
+#ifdef HAVE_PLPLOT  /* Only if plplot available */
+  /* Call plplot routine by style */
+  if (lstyle==1) { /* continuous */
+    plstyl (n1, mark1, space1);
+  } else if (lstyle==2) {   /* dash */
+    plstyl (n2, mark2, space2);
+  } else if (lstyle==3) {   /* dot dash */
+    plstyl (n3, mark3, space3);
+  } else if (lstyle==4) {   /* dot */
+    plstyl (n4, mark4, space4);
+  } else if (lstyle==5) {   /* dash dot dot dot */
+    plstyl (n5, mark5, space5);
+  }
+#endif /* HAVE_PLPLOT */
+
+/****************** pgplot implementation *************************/
+#ifdef HAVE_PGPLOT  /* Only if pgplot available */
+  /* Call pgplot routine */
+  cpgssls ((int)lstyle);
+#endif /* HAVE_PGPLOT */
+
+} /* end ObitPlotSetLineStyle */
+
+/** 
  * Set foreground color
  * \param in      Pointer to Plot object.
  * \param color   color index (1-15)

@@ -9454,13 +9454,14 @@ extern void UVSolnDeselCL (ObitTable *CLTab, int isuba, int fqid, int nantf,
 } // end UVSolnDeselCL
 
 extern ObitTable* SNInvert (ObitTable *inSN, ObitData *outData, long tabVer,
-                            ObitErr* err)
+                            int doRepl, ObitErr* err)
 {
   olong ltabVer = tabVer;
+  gboolean ldoRepl = (gboolean)doRepl;
   ObitTable *outSN=NULL;
 
   outSN = (ObitTable*)ObitTableSNUtilInvert ((ObitTableSN*)inSN, outData, 
-    &ltabVer, err);
+    &ltabVer, ldoRepl, err);
 
   return outSN;
 } // end SNInvert
@@ -9470,7 +9471,7 @@ extern int UVSolnRefAnt(ObitTable *,int ,int ,ObitErr *);
 extern void UVSolnSNSmo(ObitTable *,int ,ObitErr *);
 extern void UVSolnDeselSN(ObitTable *,int ,int ,int ,int *,int ,int *,float [2],ObitErr *);
 extern void UVSolnDeselCL(ObitTable *,int ,int ,int ,int *,int ,int *,float [2],ObitErr *);
-extern ObitTable *SNInvert(ObitTable *,ObitData *,long ,ObitErr *);
+extern ObitTable *SNInvert(ObitTable *,ObitData *,long ,int ,ObitErr *);
 
 #include "ObitUV.h"
 #include "ObitUVDesc.h"
@@ -44621,14 +44622,15 @@ static PyObject *_wrap_SNInvert(PyObject *self, PyObject *args) {
     ObitTable * _arg0;
     ObitData * _arg1;
     long  _arg2;
-    ObitErr * _arg3;
+    int  _arg3;
+    ObitErr * _arg4;
     PyObject * _argo0 = 0;
     PyObject * _argo1 = 0;
-    PyObject * _argo3 = 0;
+    PyObject * _argo4 = 0;
     char _ptemp[128];
 
     self = self;
-    if(!PyArg_ParseTuple(args,"OOlO:SNInvert",&_argo0,&_argo1,&_arg2,&_argo3)) 
+    if(!PyArg_ParseTuple(args,"OOliO:SNInvert",&_argo0,&_argo1,&_arg2,&_arg3,&_argo4)) 
         return NULL;
     if (_argo0) {
         if (_argo0 == Py_None) { _arg0 = NULL; }
@@ -44644,14 +44646,14 @@ static PyObject *_wrap_SNInvert(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    if (_argo3) {
-        if (_argo3 == Py_None) { _arg3 = NULL; }
-        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of SNInvert. Expected _ObitErr_p.");
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of SNInvert. Expected _ObitErr_p.");
         return NULL;
         }
     }
-    _result = (ObitTable *)SNInvert(_arg0,_arg1,_arg2,_arg3);
+    _result = (ObitTable *)SNInvert(_arg0,_arg1,_arg2,_arg3,_arg4);
     if (_result) {
         SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
         _resultobj = Py_BuildValue("s",_ptemp);

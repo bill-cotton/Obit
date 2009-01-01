@@ -134,6 +134,11 @@ extern  void PlotSetLineWidth (ObitPlot* in, int lwidth, ObitErr *err) {
    ObitPlotSetLineWidth (in, (olong)lwidth, err);
 } // end PlotSetLineWidth
 
+/** Public: Set line style */
+extern  void PlotSetLineStyle (ObitPlot* in, int lstyle, ObitErr *err) {
+   ObitPlotSetLineStyle (in, (olong)lstyle, err);
+} // end PlotSetLineStyle
+
 /** Public: Set foreground color */
 extern  void PlotSetColor (ObitPlot* in, int color, ObitErr *err) {
    ObitPlotSetColor (in, (olong)color, err);

@@ -682,7 +682,7 @@ ofloat ObitFArrayMax (ObitFArray *in, olong *pos)
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (in->thread, nThreads, 
+  OK = ObitThreadIterator (in->thread, nTh, 
 			   (ObitThreadFunc)ThreadFAMax,
 			   (gpointer**)threadArgs);
 
@@ -752,7 +752,7 @@ ofloat ObitFArrayMaxAbs (ObitFArray *in, olong *pos)
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (in->thread, nThreads, 
+  OK = ObitThreadIterator (in->thread, nTh, 
 			   (ObitThreadFunc)ThreadFAAbsMax,
 			   (gpointer**)threadArgs);
 
@@ -823,7 +823,7 @@ ofloat ObitFArrayMin (ObitFArray *in, olong *pos)
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (in->thread, nThreads, 
+  OK = ObitThreadIterator (in->thread, nTh, 
 			   (ObitThreadFunc)ThreadFAMin,
 			   (gpointer**)threadArgs);
 
@@ -961,7 +961,7 @@ ofloat ObitFArrayRMS (ObitFArray* in)
     }
 
     /* Do Form Histogram */
-    OK = ObitThreadIterator (in->thread, nThreads, 
+    OK = ObitThreadIterator (in->thread, nTh, 
 			   (ObitThreadFunc)ThreadFAHisto,
 			   (gpointer**)threadArgs);
 
@@ -1122,7 +1122,7 @@ ofloat ObitFArrayRawRMS (ObitFArray* in)
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (in->thread, nThreads, 
+  OK = ObitThreadIterator (in->thread, nTh, 
 			   (ObitThreadFunc)ThreadFARMSSum,
 			   (gpointer**)threadArgs);
 
@@ -1199,7 +1199,7 @@ ofloat ObitFArrayRMS0 (ObitFArray* in)
   }
 
   /* Do operation */
-  OK = ObitThreadIterator (in->thread, nThreads, 
+  OK = ObitThreadIterator (in->thread, nTh, 
 			   (ObitThreadFunc)ThreadFARMSSum,
 			   (gpointer**)threadArgs);
 

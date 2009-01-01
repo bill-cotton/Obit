@@ -43,7 +43,7 @@
  * If calibration is selected on inUV, no tables are copied
  * \param inUV     Input UV to copy from
  * \param outUV    Output UV to copy to
- * \param *err     ObitErr error stack.
+ * \param err      ObitErr error stack.
  * \return I/O Code  OBIT_IO_OK = OK.
  */
 ObitIOCode ObitTableSNSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
@@ -228,15 +228,18 @@ ObitIOCode ObitTableSNSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
  * \param inSN     The Table to invert
  * \param outData  The data object to which to attach the output table
  * \param outVer   Output SN table version, 0=> create new
+ * \param doRepl   If True replace failed solutions with (1,0)
+ * \param err      ObitErr error stack.
  * \return pointer to the new object.
  */
 ObitTableSN* ObitTableSNUtilInvert (ObitTableSN *inSN, ObitData *outData, olong *outVer, 
-				    ObitErr *err)
+				    gboolean doRepl, ObitErr *err)
 {
   ObitIOCode iretCode, oretCode;
   ObitTableSN    *outSN=NULL;
   ObitTableSNRow *inRow=NULL, *outRow=NULL;
   ofloat amp, phase, fblank = ObitMagicF();
+  ofloat replReal, replImag, replDelay, replRate, replWeight;
   olong inSNRow, outSNRow, oif, iif;
   gchar *routine = "ObitTableSNUtilInvert";
   
@@ -244,6 +247,21 @@ ObitTableSN* ObitTableSNUtilInvert (ObitTableSN *inSN, ObitData *outData, olong 
   if (err->error) return outSN;
   g_assert (ObitTableSNIsA(inSN));
   g_assert (ObitDataIsA(outData));
+
+  /* Replacement for flagged solutions */
+  if (doRepl) {
+    replReal   = 1.0;
+    replImag   = 0.0;
+    replDelay  = 0.0;
+    replRate   = 0.0;
+    replWeight = 1.0;
+  } else { /* leave flagged */
+    replReal   = fblank;
+    replImag   = fblank;
+    replDelay  = fblank;
+    replRate   = fblank;
+    replWeight = 0.0;
+  }
   
   /* Open input table */
   iretCode = ObitTableSNOpen (inSN, OBIT_IO_ReadOnly, err);
@@ -299,7 +317,8 @@ ObitTableSN* ObitTableSNUtilInvert (ObitTableSN *inSN, ObitData *outData, olong 
       outRow->MBDelay1 = -inRow->MBDelay1;
       oif = 0;
       for (iif=0; iif<inSN->numIF; iif++) {
-	if ((inRow->Real1[iif]!=fblank) && (inRow->Imag1[iif]!=fblank)) {
+	if ((inRow->Weight1[iif]>0.0) && 
+	    (inRow->Real1[iif]!=fblank)  && (inRow->Imag1[iif]!=fblank)) {
 	  amp = sqrt (inRow->Real1[iif]*inRow->Real1[iif] + 
 		      inRow->Imag1[iif]*inRow->Imag1[iif]);
 	  if (amp>0.0) {
@@ -312,13 +331,14 @@ ObitTableSN* ObitTableSNUtilInvert (ObitTableSN *inSN, ObitData *outData, olong 
 	  outRow->Imag1[oif]   = amp * sin (phase);
 	  outRow->Delay1[oif]  = -inRow->Delay1[iif];
 	  outRow->Rate1[oif]   = -inRow->Rate1[iif];
+	  outRow->Weight1[oif] =  inRow->Weight1[iif];
 	} else { /* blanked */
-	  outRow->Real1[oif]   = fblank;
-	  outRow->Imag1[oif]   = fblank;
-	  outRow->Delay1[oif]  = fblank;
-	  outRow->Rate1[oif]   = fblank;
+	  outRow->Real1[oif]   = replReal;
+	  outRow->Imag1[oif]   = replImag;
+	  outRow->Delay1[oif]  = replDelay;
+	  outRow->Rate1[oif]   = replRate;
+	  outRow->Weight1[oif] = replWeight;
 	}
-	outRow->Weight1[oif] = inRow->Weight1[iif];
 	outRow->RefAnt1[oif] = inRow->RefAnt1[iif];
 	oif++;
       }
@@ -326,7 +346,8 @@ ObitTableSN* ObitTableSNUtilInvert (ObitTableSN *inSN, ObitData *outData, olong 
 	outRow->MBDelay2 = -inRow->MBDelay2;
 	oif = 0;
 	for (iif=0; iif<inSN->numIF; iif++) {
-	  if ((inRow->Real2[iif]!=fblank) && (inRow->Imag2[iif]!=fblank)) {
+	  if ((inRow->Weight2[iif]>0.0) && 
+	      (inRow->Real2[iif]!=fblank) && (inRow->Imag2[iif]!=fblank)) {
 	    amp = sqrt (inRow->Real2[iif]*inRow->Real2[iif] + 
 			inRow->Imag2[iif]*inRow->Imag2[iif]);
 	    if (amp>0.0) {
@@ -339,13 +360,14 @@ ObitTableSN* ObitTableSNUtilInvert (ObitTableSN *inSN, ObitData *outData, olong 
 	    outRow->Imag2[oif]   =  amp * sin (phase);
 	    outRow->Delay2[oif]  = -inRow->Delay2[iif];
 	    outRow->Rate2[oif]   = -inRow->Rate2[iif];
+	    outRow->Weight2[oif] =  inRow->Weight2[iif];	
 	  } else { /* blanked */
-	    outRow->Real2[oif]   = fblank;
-	    outRow->Imag2[oif]   = fblank;
-	    outRow->Delay2[oif]  = fblank;
-	    outRow->Rate2[oif]   = fblank;
+	    outRow->Real2[oif]   = replReal;
+	    outRow->Imag2[oif]   = replImag;
+	    outRow->Delay2[oif]  = replDelay;
+	    outRow->Rate2[oif]   = replRate;
+	    outRow->Weight2[oif] = replWeight;
 	  }
-	  outRow->Weight2[oif] = inRow->Weight2[iif];
 	  outRow->RefAnt2[oif] = inRow->RefAnt2[iif];
 	  oif++;
 	}

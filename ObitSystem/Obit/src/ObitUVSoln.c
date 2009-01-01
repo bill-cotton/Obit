@@ -1220,7 +1220,7 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 	  work1[2*nxt+numtim] = fblank;
 	} 
 	/* First polarization */
-	if (work1[2*nxt+numtim] > 0.0) {
+	if ((work1[2*nxt+numtim] > 0.0) && (work1[2*nxt+numtim]!=fblank)) {
 	  work1[0*nxt+numtim]  = row->Real1[iif] / work1[2*nxt+numtim];
 	  work1[1*nxt+numtim]  = row->Imag1[iif] / work1[2*nxt+numtim];
 	  work1[3*nxt+numtim]  = row->Weight1[iif];
@@ -1244,7 +1244,7 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 	  } else {
 	    work1[6*nxt+numtim] = fblank;
 	  } 
-	  if (work1[6*nxt+numtim] > 0.0) {
+	  if ((work1[6*nxt+numtim] > 0.0) && (work1[6*nxt+numtim]!=fblank)) {
 	    work1[4*nxt+numtim]  = row->Real2[iif] / work1[6*nxt+numtim];
 	    work1[5*nxt+numtim]  = row->Imag2[iif] / work1[6*nxt+numtim];
 	    work1[7*nxt+numtim]  = row->Weight2[iif];
@@ -1362,7 +1362,13 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 	(*gncnt) += + 1.0;
 	(*gnsum) += work1[2*nxt+itime];
 	if (row->RefAnt1[iif] == 0) row->RefAnt1[iif] = refa1;
-      } 
+      } else {  /* Datum bad */
+	row->Real1[iif]   = fblank;
+	row->Imag1[iif]   = fblank;
+	row->Weight1[iif] = 0.0;
+	row->Delay1[iif]  = fblank;
+	row->Rate1[iif]   = fblank;
+      }
       if (need2) {
 	if (work1[7*nxt+itime] > 0.0) {
 	  amp = sqrt (work1[4*nxt+itime]*work1[4*nxt+itime] + 
@@ -1376,7 +1382,13 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 	  (*gncnt) += 1.0;
 	  (*gnsum) += work1[6*nxt+itime];
 	  if (row->RefAnt2[iif] == 0) row->RefAnt2[iif] = refa2;
-	} 
+	} else {  /* Datum bad */
+	  row->Real2[iif]   = fblank;
+	  row->Imag2[iif]   = fblank;
+	  row->Weight2[iif] = 0.0;
+	  row->Delay2[iif]  = fblank;
+	  row->Rate2[iif]   = fblank;
+	}
       }
       
       /* Rewrite record */

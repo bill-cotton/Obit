@@ -504,7 +504,7 @@ def PDeselSN (inSC, SNTab, isuba, fgid, ants, timerange, err):
         printErrMsg(err, "Error deselecting solutions")
     # end PDeselSN
 
-def PInvertSN (SNTab, outUV, outVer, err):
+def PInvertSN (SNTab, outUV, outVer, doRepl, err):
     """ Invert the calibration in an SN table
 
     Routine to reverse the effects of the calibration in the
@@ -513,6 +513,7 @@ def PInvertSN (SNTab, outUV, outVer, err):
     SNTab     = Input Python AIPS SN Table to invert
     outUV     = output UV data to which to attach the new SN table
     outVer    = Output SN table version number, 0=> create new
+    doRepl    = If True, replace failed solutions with (1,0)
     err       = Python Obit Error/message stack
     """
     ################################################################
@@ -529,7 +530,7 @@ def PInvertSN (SNTab, outUV, outVer, err):
     # Cast uv to Data
     outData = Obit.UVCastData(outUV.me)
     # invert table
-    outSN.me = Obit.SNInvert (SNTab.me, outData, outVer, err.me)
+    outSN.me = Obit.SNInvert (SNTab.me, outData, outVer, doRepl, err.me)
     if err.isErr:
         printErrMsg(err, "Error inverting solutions")
     return outSN

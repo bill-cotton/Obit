@@ -4619,6 +4619,11 @@ extern  void PlotSetLineWidth (ObitPlot* in, int lwidth, ObitErr *err) {
    ObitPlotSetLineWidth (in, (olong)lwidth, err);
 } // end PlotSetLineWidth
 
+/** Public: Set line style */
+extern  void PlotSetLineStyle (ObitPlot* in, int lstyle, ObitErr *err) {
+   ObitPlotSetLineStyle (in, (olong)lstyle, err);
+} // end PlotSetLineStyle
+
 /** Public: Set foreground color */
 extern  void PlotSetColor (ObitPlot* in, int color, ObitErr *err) {
    ObitPlotSetColor (in, (olong)color, err);
@@ -4703,6 +4708,7 @@ extern void PlotLabel(ObitPlot *,char *,char *,char *,ObitErr *);
 extern void PlotDrawAxes(ObitPlot *,char *,float ,int ,char *,float ,int ,ObitErr *);
 extern void PlotSetCharSize(ObitPlot *,float ,ObitErr *);
 extern void PlotSetLineWidth(ObitPlot *,int ,ObitErr *);
+extern void PlotSetLineStyle(ObitPlot *,int ,ObitErr *);
 extern void PlotSetColor(ObitPlot *,int ,ObitErr *);
 extern void PlotSetPage(ObitPlot *,int ,ObitErr *);
 extern void PlotText(ObitPlot *,float ,float ,float ,float ,float ,char *,ObitErr *);
@@ -9436,13 +9442,14 @@ extern void UVSolnDeselCL (ObitTable *CLTab, int isuba, int fqid, int nantf,
 } // end UVSolnDeselCL
 
 extern ObitTable* SNInvert (ObitTable *inSN, ObitData *outData, long tabVer,
-                            ObitErr* err)
+                            int doRepl, ObitErr* err)
 {
   olong ltabVer = tabVer;
+  gboolean ldoRepl = (gboolean)doRepl;
   ObitTable *outSN=NULL;
 
   outSN = (ObitTable*)ObitTableSNUtilInvert ((ObitTableSN*)inSN, outData, 
-    &ltabVer, err);
+    &ltabVer, ldoRepl, err);
 
   return outSN;
 } // end SNInvert
@@ -9452,7 +9459,7 @@ extern int UVSolnRefAnt(ObitTable *,int ,int ,ObitErr *);
 extern void UVSolnSNSmo(ObitTable *,int ,ObitErr *);
 extern void UVSolnDeselSN(ObitTable *,int ,int ,int ,int *,int ,int *,float [2],ObitErr *);
 extern void UVSolnDeselCL(ObitTable *,int ,int ,int ,int *,int ,int *,float [2],ObitErr *);
-extern ObitTable *SNInvert(ObitTable *,ObitData *,long ,ObitErr *);
+extern ObitTable *SNInvert(ObitTable *,ObitData *,long ,int ,ObitErr *);
 
 #include "ObitUV.h"
 #include "ObitUVDesc.h"
@@ -27321,6 +27328,37 @@ static PyObject *_wrap_PlotSetLineWidth(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_PlotSetLineStyle(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPlot * _arg0;
+    int  _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OiO:PlotSetLineStyle",&_argo0,&_arg1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPlot_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PlotSetLineStyle. Expected _ObitPlot_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of PlotSetLineStyle. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    PlotSetLineStyle(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_PlotSetColor(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitPlot * _arg0;
@@ -42244,14 +42282,15 @@ static PyObject *_wrap_SNInvert(PyObject *self, PyObject *args) {
     ObitTable * _arg0;
     ObitData * _arg1;
     long  _arg2;
-    ObitErr * _arg3;
+    int  _arg3;
+    ObitErr * _arg4;
     PyObject * _argo0 = 0;
     PyObject * _argo1 = 0;
-    PyObject * _argo3 = 0;
+    PyObject * _argo4 = 0;
     char _ptemp[128];
 
     self = self;
-    if(!PyArg_ParseTuple(args,"OOlO:SNInvert",&_argo0,&_argo1,&_arg2,&_argo3)) 
+    if(!PyArg_ParseTuple(args,"OOliO:SNInvert",&_argo0,&_argo1,&_arg2,&_arg3,&_argo4)) 
         return NULL;
     if (_argo0) {
         if (_argo0 == Py_None) { _arg0 = NULL; }
@@ -42267,14 +42306,14 @@ static PyObject *_wrap_SNInvert(PyObject *self, PyObject *args) {
         return NULL;
         }
     }
-    if (_argo3) {
-        if (_argo3 == Py_None) { _arg3 = NULL; }
-        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of SNInvert. Expected _ObitErr_p.");
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of SNInvert. Expected _ObitErr_p.");
         return NULL;
         }
     }
-    _result = (ObitTable *)SNInvert(_arg0,_arg1,_arg2,_arg3);
+    _result = (ObitTable *)SNInvert(_arg0,_arg1,_arg2,_arg3,_arg4);
     if (_result) {
         SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
         _resultobj = Py_BuildValue("s",_ptemp);
@@ -48130,6 +48169,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "PlotText", _wrap_PlotText, METH_VARARGS },
 	 { "PlotSetPage", _wrap_PlotSetPage, METH_VARARGS },
 	 { "PlotSetColor", _wrap_PlotSetColor, METH_VARARGS },
+	 { "PlotSetLineStyle", _wrap_PlotSetLineStyle, METH_VARARGS },
 	 { "PlotSetLineWidth", _wrap_PlotSetLineWidth, METH_VARARGS },
 	 { "PlotSetCharSize", _wrap_PlotSetCharSize, METH_VARARGS },
 	 { "PlotDrawAxes", _wrap_PlotDrawAxes, METH_VARARGS },

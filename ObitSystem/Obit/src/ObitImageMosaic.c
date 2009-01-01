@@ -1251,6 +1251,13 @@ void ObitImageMosaicAddField (ObitImageMosaic *in, ObitUV *uvData,
   in->images = ObitMemFree(in->images);
   in->images = imtemp;
 
+  /* Disk array - add new images on same disk as first */
+  itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaic imDisk");
+  for (i=in->nInit; i<in->numberImages; i++) itemp[i] = in->imDisk[0]; 
+  for (i=0; i<in->nInit; i++) itemp[i] = in->imDisk[i]; 
+  in->imDisk = ObitMemFree(in->imDisk);
+  in->imDisk = itemp;
+ 
   /* Image size */
   itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaic nx");
   for (i=0; i<in->nInit; i++) itemp[i] = in->nx[i]; 

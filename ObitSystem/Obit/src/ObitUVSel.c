@@ -177,6 +177,7 @@ ObitUVSel* ObitUVSelCopy (ObitUVSel* in, ObitUVSel* out,
   out->calVersion  = in->calVersion;
   out->doFlag      = in->doFlag;
   out->FGversion   = in->FGversion;
+  out->passAll     = in->passAll;
   for (i=0; i<5; i++) out->Stokes[i] = in->Stokes[i];
   for (i=0; i<3; i++) out->smooth[i] = in->smooth[i];
 

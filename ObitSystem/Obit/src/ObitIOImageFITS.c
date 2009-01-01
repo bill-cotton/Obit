@@ -912,8 +912,9 @@ ObitIOCode ObitIOImageFITSWrite (ObitIOImageFITS *in, ofloat *data,
     WriteQuantCopy (in, size, &wbuff, &data[offset], outBlank);
 
     /* write image data */
-    if (fits_write_pixnull (in->myFptr, outType, fpixel, size,
-			    (void*)wbuff, (void*)outBlank, &status)) {
+    fits_write_pixnull (in->myFptr, outType, fpixel, size,
+			(void*)wbuff, (void*)outBlank, &status);
+    if (status!=0) {
       Obit_log_error(err, OBIT_Error, 
 		     "ERROR %d writing output FITS file %s plane %d row  %d", 
 		     status, in->FileName, plane, row);

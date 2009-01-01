@@ -164,6 +164,9 @@ void  ObitPlotSetCharSize (ObitPlot* in, ofloat cscale, ObitErr *err);
 /** Public: Set line width */
 void  ObitPlotSetLineWidth (ObitPlot* in, olong lwidth, ObitErr *err);
 
+/** Public: Set line style */
+void  ObitPlotSetLineStyle (ObitPlot* in, olong lstyle, ObitErr *err);
+
 /** Public: Set foreground color */
 void  ObitPlotSetColor (ObitPlot* in, olong color, ObitErr *err);
 

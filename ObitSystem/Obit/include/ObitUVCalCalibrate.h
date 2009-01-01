@@ -60,7 +60,7 @@ ObitUVCalCalibrateInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
 		     ObitErr *err);
 
 /** Public: Calibrate data for amp/phase/delay/rate */
-void ObitUVCalCalibrate (ObitUVCal *in, float time, olong ant1, 
+void ObitUVCalCalibrate (ObitUVCal *in, ofloat time, olong ant1, 
 			 olong ant2, ofloat *RP, ofloat *visIn, ObitErr *err);
 
 /** Public: Shutdown Calibration */
