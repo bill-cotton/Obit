@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -846,7 +846,7 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, ObitErr *err)
     /* Set up thread arguments */
     for (it=0; it<nTh; it++) {
       if (it==(nTh-1)) hirow = nrow;  /* Make sure do all */
-      if (threadArgs[it]->inData)  ObitFArrayUnref(threadArgs[i]->inData);
+      if (threadArgs[it]->inData)  ObitFArrayUnref(threadArgs[it]->inData);
       threadArgs[it]->inData  = ObitFArrayRef(image->image);
       threadArgs[it]->field   = i+1;
       threadArgs[it]->first   = lorow;
@@ -1884,6 +1884,7 @@ static void GaussTaper (ObitCArray* uvGrid, ObitImageDesc *imDesc,
  * \param arg Pointer to StatsFuncArg argument with elements:
  * \li inData   ObitFArray with input plane pixel data
  * \li window   Clean Window
+ * \li field    Field number (1-rel)
  * \li first    First (1-rel) row in image to process this thread
  * \li last     Highest (1-rel) row in image to process this thread
  * \li ithread  thread number, <0 -> no threading
@@ -1911,7 +1912,7 @@ static gpointer ThreadImageStats (gpointer args)
   /*gchar *routine = "ThreadImageStats";*/
 
   /* Get array pointer */
-  pos[0] = pos[1] = 0;
+  pos[0] = 0; pos[1] = loRow;
   data = ObitFArrayIndex(inData, pos);
 
   /* init */

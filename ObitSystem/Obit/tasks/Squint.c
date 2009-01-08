@@ -1,7 +1,7 @@
 /* $Id$ */
 /* Obit VLA Squint correcting Radio interferometry imaging software  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1235,8 +1235,8 @@ void setOutputData (gchar *Source, olong iStoke, ObitInfoList *myInput,
     for (i=0; i<n; i++) tname[i] = outF[i]; tname[i] = 0;
     /* Something in source name? */
     if ((Source[0]==' ') || (Source[0]==0)) 
-      g_snprintf (outFile, 120, "I%s", tname);
-    else g_snprintf (outFile, 120, "%sI%s", Source, tname);
+      g_snprintf (outFile, 120, "%c%s", chStokes[iStoke],tname);
+    else g_snprintf (outFile, 120, "%s%c%s", Source, chStokes[iStoke],tname);
     ObitTrimTrail(outFile);  /* remove trailing blanks */
 	   
     IOType = OBIT_IO_FITS;  /* Save file type */
