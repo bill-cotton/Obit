@@ -1,0 +1,34 @@
+The configuration process is:
+automake
+autoconf
+# gollum
+configure
+# lusus
+unsetenv PYTHON
+
+configure --prefix=$HOME/opt/ObitTalk --exec-prefix=$HOME
+
+# This will put executables in $HOME/bin, move to bin/linux
+# Valen
+configure --prefix=$WDC_ROOT/opt/ObitTalk --exec-prefix=$WDC_ROOT
+make all install
+
+configure may need to be given a --PREFIX=xxx to say where things are
+to be installed
+
+# Test startup Obit task - should start and complain
+from PTObit import *
+AMcat(2)
+fe=ObitTask("Feather")
+fe.DataType='AIPS'
+fe.numImage=-1
+fe.inName='Booger'
+fe.inDisk=1
+fe.outDisk=1
+fe.inputs()
+log=fe.go()
+
+im=ObitTask("Imager")
+im.inputs()
+im=AIPSTask("IMEAN")
+im.inputs()

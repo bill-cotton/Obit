@@ -1,0 +1,106 @@
+; Squish
+;---------------------------------------------------------------
+;! Compress image cube along third axis
+;# Task Obit
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2005
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning this software should be addressed as
+;;  follows: 
+;;         Internet email: bcotton@nrao.edu
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+Squish    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+Squish:  Compress image cube along third axis
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of file
+**PARAM** str 48
+inFile                             input Filename if FITS image
+**PARAM** str 12
+inName                             Input image name
+**PARAM** str 8
+inClass                            Input image class.
+**PARAM** int 1
+inSeq           0.0      9999.0    Input image seq. #. 0=>high
+**PARAM** int 1
+inDisk                             Input disk drive #. 0=>any
+**PARAM** int 7
+BLC             0.0      4096.0    Bottom left corner of image
+                                     0=>entire image
+**PARAM** int 7
+TRC             0.0      4096.0    Top right corner of image
+                                     0=>entire image
+**PARAM** str 48
+outFile                            output Filename if FITS image
+**PARAM** str 12
+outName                            Output name.
+**PARAM** str 6
+outClass                           Output image class.
+**PARAM** int 1
+outSeq         -1.0      9999.0    Output image seq. #.
+                                     0 => highest unique
+**PARAM** int 1
+outDisk                            Output disk drive #
+                                     0 => highest with room
+**PARAM** float 5
+Parms           0.0      9999.0    (1) = 1 sum, 2 max,  3 min
+                                   (2) min. RMS 
+                                   (3) min. peak
+                                   (4) >0.5 => blank fill
+----------------------------------------------------------------
+Squish
+Type: Task
+Use:  Squish will compress an image cube along the third axis.
+All CC tables with version numbers corresponding to planes 
+selected will be copied to the output.  Output version numbers 
+will start at 1.
+Adverbs:
+  DataType...."FITS" or "AIPS" data for all input and output
+  inFile......Input File name if a FITS file
+  inName......Input image name.
+  inClass.....Input image class.    Standard defaults.
+  inSeq.......Input image seq. #.   0 => highest.
+  inDisk......input Disk drive # of image.  0 => any.
+  BLC.........The bottom left-hand pixel of the input image
+              which becomes the bottom left corner of the
+              subimage.  The value (0,0) means (1,1).
+  TRC.........The top right-hand pixel of the input image
+              which becomes the top right corner of the
+              subimage.  The value (0,0) means take the top
+              right hand corner of the image.
+  outFile.....Output File name if a FITS file
+  outName.....Output image name. default = 'AVERAGE'
+  outClass....Output image class.   default='?Squish'
+              Where ? is the first character of INCLASS
+  outSeq.......Output image seq. #.  0 => highest unique
+  outDisk.....Disk drive # of output.  0 => highest with
+              space.
+  Parms.......Control flags:
+              (1) 1: sum; 2: maximum; 3: minimum
+              (2) The minimum acceptable abs. pixel value in 
+                  units of RMS in the plane.
+              (3) The minimum acceptable abs. pixel value as 
+                  a fraction of the peak in the plane.
+              (4) If > 0.5 then blank fill output otherwise 
+                  zero fill. 
+----------------------------------------------------------------

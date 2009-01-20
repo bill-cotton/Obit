@@ -1,0 +1,15 @@
+# Inputs for Template Obit program Template
+$Key = Type  Str (4) # Type, AIPS or FITS
+FITS
+$Key = nFITS Int (1) # Number of FITS directories
+1
+$Key = FITSdirs Str (48) # Directories of FITS "disks"
+./
+$Key = inFile  Str (48)  # Input image FITS file name
+Image.fits
+$Key = blc     Int (7)   # blc (1-rel)
+1 1 1 1 1 1 1
+$Key = trcc     Int (7)   # trc (1-rel
+0 0 0 0 0 0 0
+
+

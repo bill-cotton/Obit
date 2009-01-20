@@ -1,0 +1,129 @@
+# Inputs for Obit program Imager
+$Key = DataType  Str (4) # Type, AIPS or FITS
+AIPS
+$Key = nFITS Int (1) # Number of FITS directories
+1
+$Key = FITSdirs Str (48)   # Directories of FITS "disks"
+../testIt
+$Key = nAIPS Int (1) # Number of FITS directories
+1
+$Key = AIPSdirs Str (48)   # Directories of FITS "disks"
+../AIPSdata
+$Key = AIPSuser Int (1)    # AIPS user number
+105
+$Key = inDisk     Int (1)  # input file disk number
+1
+$Key = inName  Str (12)    # Input name
+R_CNC
+$Key = inClass  Str (6)    # Input class
+CVel
+$Key = inSeq      Int (1)  # input Sequence number
+2
+$Key = outDisk    Int (1)  # output file disk number
+1
+$Key = outName  Str (12)    # Output name
+ImagerObit
+$Key = outClass  Str (6)    # Output class
+XOBIT1
+$Key = outSeq      Int (1)  # output Sequence number
+510
+$Key = BIF     Int (1)     # Start IF
+1
+$Key = EIF     Int (1)     # End IF
+1
+$Key = BChan   Int (1)     # Start Channel
+20
+$Key = EChan   Int (1)     # End Channel
+100
+$Key = RChan   Int (1)     # Restart Channel
+0
+$Key = chAvg   Int (1)     # Number of channels to average
+1
+$Key = Sources  Str (16,1) # Sources selected, blank = all
+R_CNC
+$Key = Stokes  Str (4)     # Stokes parameter to image
+IQU
+#$Key = FOV     Flt (1)     # Field of view in deg
+#0.000014 #  51 mas
+$Key = NField   Int (1)     # Number of fields
+1
+$Key = nx   Int (1)         # Number of "X" (RA) pixels in image
+1024
+$Key = ny   Int (1)         # Number of "y" (RA) pixels in image
+1024
+$Key = xCells   Flt (1)     # Image cell spacing in X in asec
+50.0e-6                     # 50 uas
+$Key = yCells   Flt (1)     # Image cell spacing in Y in asec
+50.0e-6                     # 50 uas
+$Key = RAShift  Flt (1)     # Right ascension shift (asec)
+0.007                       # 7 mas
+$Key = DecShift  Flt (1)    # Right ascension shift  (asec)
+0.015                       # 15 mas
+$Key = doFlatten Boo (1)   # Flatten?
+F
+$Key = doFull Boo (1)      # Make full field (flattened) image?
+F
+$Key =  UVRange Flt (2)    # range n uv plane in klambda
+0.0 0.0
+$Key =  TimeRange Flt (2)  # Timerange in days
+0.0 10.0
+$Key = Robust  Flt (1)     # Briggs robust factor (AIPS version)
+0.0
+$Key = UVTaper  Flt (2)    # Taper in uv plane in klambda in u, v
+0.0 0.0
+$Key = doCalSelect Boo (1) # Apply calibration/selection?
+T
+$Key =  doCalib Int (1)    # >0 => apply calibration, 2=> cal. wt
+-1
+$Key =  gainUse Int (1)    # Gain table (CL/SN) table to apply, 0=> highest
+0
+$Key =  doBand  Int (1)    # If >0.5 apply bandpass cal.
+-1
+$Key =  BPver Int (1)      # Bandpass table version
+1
+$Key =  flagVer Int (1)    # Flagging table version
+-1
+$Key = doPol Boo (1)       # Apply polarization calibration?
+F
+$Key = Catalog  Str (48)    # Outlier catalog name
+None
+$Key =  OutlierDist Flt (1) # Maximum distance to add outlyers (deg)
+0.0
+$Key = OutlierFlux Flt (1)  # Minimum estimated outlier flux density (Jy)
+1000.0
+$Key = OutlierSI  Flt (1)   # Spectral index to estimate flux density
+-1.0
+$Key =  OutlierSize Int (1) # Size of outlyer field 
+500
+$Key = Gain  Flt (1)        # Clean gain
+0.1
+$Key = minFlux  Flt (1)     # Clean minimum flux density
+0.05
+$Key = Niter  Int (1)       # Maximum # of CLEAN comp.
+1000
+$Key = minPatch  Int (1)    # Clean Min. BEAM half-width
+200
+$Key = Beam   Flt (3)       # Clean beam maj, min, PA (asec, asec, deg)
+0.0 0.0 0.0
+$Key = Cmethod Str (4)      # Modeling method: 'DFT','GRID','    '
+     
+$Key = CCFilter Flt (2)     # CC filter, [min. sum flux, radius in pixels]
+0.0 0.0                     # 0s => no filtering
+$Key = maxPixel Int (1)     # Maximum pixels searched in inner cycle
+50000
+$Key = solType  Str (6)    # Output class
+L1
+$Key = solInt Flt (1)       # Solution interval min
+0.5                    #
+$Key = maxSCLoop Int (1)    # Maximum number SC iterations
+0
+$Key = maxPSCLoop Flt (1)   # Min. peak flux density required for phase self cal 
+0.03
+#$Key = CLEANBox  Int (4,1)  # Clean box
+#  -1  352 555  441
+$Key = autoWindow Boo (1)   # auto set windows?
+T
+#$Key = nuGrid Int (1)       # Size of weighting grid in u
+#2048
+#$Key = nvGrid Int (1)       # Size of weighting grid in v
+#2048

@@ -1,0 +1,111 @@
+; TabCopy
+;---------------------------------------------------------------
+;!  Task to copy tables
+;# Obit Task 
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2006
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+TabCopy   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+TabCopy   Task to copy tables
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                             FITS input data if Type=='FITS'
+**PARAM** str 12
+inName                             Input AIPS file name (name)
+**PARAM** str 6
+inClass                            Input AIPS file name (class)
+**PARAM** int 1
+inSeq             0.0     9999.0   Input AIPS file name (seq. #)
+**PARAM** int 1
+inDisk            0.0        9.0   Input AIPS file disk unit #
+**PARAM** str 24
+inTab                              Input Table Type (e.g. "AIPS CC")
+**PARAM** int 1
+inVer            0.0               Input Table version
+**PARAM** int 1  **DEF** 1
+nCopy                              Number of tables to copy
+**PARAM** str 48
+outFile                            Output FITS file
+**PARAM** str 12
+outName                            Output AIPS name
+**PARAM** str 6
+outClass                           Output AIPS class
+**PARAM** int 1
+outSeq          -1.0     9999.0    Output AIPS seq. no.
+**PARAM** int 1
+outDisk                            Output disk drive #
+**PARAM** int 1
+outVer                             Output first table version
+**PARAM** str 8
+KeyWord                            Table header keyword to test
+**PARAM** float 2
+KeyRange                           Min, max keyword values
+**PARAM** str 8
+KeyString                          String keyword
+----------------------------------------------------------------
+TabCopy
+Task: Copies tables. The output tables should not exist prior to
+      the execution of TabCopy.  Multiple tables may be copied 
+      and copying  may be conditioned on the value of a specified 
+      table header keyword.
+         Mostly lifted from AIPS.
+
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input if Type=='FITS'
+  inName.....Input AIPS file name (name).      Standard defaults.
+  inClass....Input AIPS file name (class).     Standard defaults.
+  inSeq......Input AIPS file name (seq. #).    0 => highest.
+  inDisk.....Disk drive # of input file.  Must specify
+  inTab......Input table type.  
+             Note AIPS tables, even on FITS files begin with
+             "AIPS ", e.g. "AIPS SN".
+             AIPS PL and SL extensions are NOT tables.
+  inVer......First version number to copy
+  nCopy......Number of tables of type inTab to copy
+  outFile....Name of output FITS file
+  outName....Output AIPS Name, 
+  outClass...Output AIPS class.
+  outSeq.....Output AIPS sequence number.
+  outDisk....The disk (AIPS or FITS) of output. Specify
+  outVer.....Output table version number.  If multiple tables
+             are copied, then this is the first in the sequence.
+  KeyWord....If KeyWord is non blank then the specified table(s)
+             is copied only if the value associated with that
+             keyword is in the range specified by KeyRange or
+             the character string in KeyString. If the specified
+             keyword is not present then the table is not
+             copied.
+  KeyRange...The minimum and maximum keyword values allowed for
+             the table to be copied.  If KeyRange[0] is larger
+             than  KeyRange[1] then the table is copied if the
+             specified keyword value if NOT in the range
+             KeyRange[1] to  KeyRange[0].    No defaults.
+  KeyString..A character string required to match the value of
+             a character keyword.
+----------------------------------------------------------------

@@ -1,0 +1,243 @@
+<HTML>
+<HEAD>
+<TITLE> Obit home page</TITLE>
+</HEAD>
+<BODY BGCOLOR = "ffffcc" TEXT = "000000" LINK="ff5500">
+<!--  Holy Shit, Batman, what an awful syntax for comments -->
+<H1>  Obit - Astronomy Software for the Recently Deceased </H1>
+<H2>  <FONT COLOR="ff0000">Overview</FONT></H2>
+Obit is a group of software packages for handling radio astronomy
+data, especially interferometric and single dish OTF imaging.
+This software is made available inder the GNU General Public License
+in the hope that it might be useful but "as is" with NO GUARANTEE OR
+ASSURANCE of suitability, usability or correctness for any purpose.
+Obit is developed and maintained by Bill Cotton at The National
+Radio Astronomy Observatory in Charlottesville, Virginia, USA.
+<P>
+Obit is a Unix software environment with a limited set of developed
+applications. 
+It is an object--oriented set of class and utility libraries
+allowing access to multiple disk--resident data formats.
+In particular, access to either AIPS disk data or FITS files.
+A number of low level applications are inplemented such as imaging and
+deconvolving interferometer or OTF data,
+High-level applications may be either compiled c programs or python
+scripts; most of the high-level operations have bindings to python.
+
+<H2>  <FONT COLOR="ff0000">Obit Components</FONT></H2>
+There are several components of Obit and related software.
+Obit software can be obtained either as gzipped tarballs (links below)
+or a more up-to-date version from the anonymous cvs server
+cvs.cv.nrao.edu:home/cvs from repository bcotton/Obit, bcotton/ObitSD or
+bcotton/ObitView.
+Use user :pserver:anonymous.
+
+<UL>
+<LI><H3> Obit </H3>
+This is the basic Obit package containing astronomical images and
+radio interferometry data and applications.
+A gzipped tarball is available
+<A HREF="ftp://ftp.cv.nrao.edu/NRAO-staff/bcotton/Obit/Obit.tgz">
+here </a>
+
+<LI><H3>ObitSD </H3>
+Ths is a single dish "On-the-fly" (OTF) imaging addon to Obit.
+Only FITS format files are supported.
+A gzipped tarball is available
+<A HREF="ftp://ftp.cv.nrao.edu/NRAO-staff/bcotton/Obit/ObitSD.tgz">
+here </a>
+
+<LI><H3>ObitView</H3>
+This is a Unix/X-Windows program that serves as an Image display
+server.
+Communications is through the xmlrpc protocol but only a local
+implementation is currently supported.
+It is currently usable by Obit and ObitSD to display images and
+interactively select CLEAN windows.
+ObitView can browse and display FITS images or local AIPS images can
+be displayed if requested via the xmlrpc interface.
+A gzipped tarball is available
+<A HREF="ftp://ftp.cv.nrao.edu/NRAO-staff/bcotton/Obit/obitview.tgz">
+here </a>
+
+<LI><H3>ParselTongue</H3>
+ParselTongue is a python-based scripting and interactive command line
+interface to astronomical data processing packages.
+ParselTongue can execute Obit tasks (compiled programs) and use the
+Obit python interface in a script.
+ParselTongue is an EU funded component of RadioNet and is being
+developed by the Joint Institute for VLBI in Europe (JIVE).
+ParselTongue documentation is available
+<A HREF="http://www.jive.nl/~kettenis/ParselTongue/cookbook.html">
+here </a>
+</UL>
+
+<H2>  <FONT COLOR="ff0000">Installing the Software</FONT></H2>
+Obit software uses a variety of third party software packages.
+Some are standard parts of Unix installations and some are not.
+Many of the third party software packages use the configure/make
+installation. 
+If you're not allowed to install software in the proper location
+(aren't allowed root privilege) then you can install them in an
+alternale location, e.g. $HOME/opt.  
+The configure script allows this using the option
+"--prefix=$HOME/opt".
+This location will then need to be given to the Obit configure scripts
+as described below.
+The following list these external libraries and describe access.
+<UL>
+<LI><H3>python</H3>
+Python is used as the scripting and interactive interface to Obit.
+Python 2.3 or later is needed.
+Get python
+<A HREF="http://www.python.org/download/"> here.</A>
+
+<LI><H3>cfitsio</H3>
+Basic FITS I/O package, used for all access to FITS files.
+If not found, a stubbed version will be used but all access to FITS
+files will fail.
+Available 
+<A HREF="http://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html"> here.</A>
+You'll need to create include and lib directories and put the header
+files and library there.
+
+<LI><H3>glib</H3>
+The gnu library for large scale software in ansci c.
+Available <A HREF=" http://www.gtk.org/"> here.</A>
+
+<LI><H3>FFTW</H3>
+Fast Fourier Transform.
+Available <A HREF="http://www.fftw.org/"> here.</A>
+Note: FFTW MUST be installed with the configure option --enable-float
+to be used by Obit.
+
+<LI><H3>gsl</H3>
+GNU Scientific Library.
+Available <A HREF="http://www.gnu.org/software/gsl/."> here.</A>
+
+<LI><H3>pgplot</H3>
+Fortran based graphics package.
+This is not widely used in Obit and if not found in the installation
+procedures, calls to pgplot routines are stubbed.
+Available <A HREF="http://www.astro.caltech.edu/~tjp/pgplot">
+here.</A>
+
+<LI><H3>xmlrpl</H3>
+Interprocess communications software used to communicate between c
+software and ObitView.
+If this is not found by the installation software, a stubbed version
+will be used but the interprocess communication ability is lost.
+Available <A HREF="http://xmlrpc-c.sourceforge.net/"> here.</A>
+Build and installation procedures may fail prior to completion but
+this doesn't seem to matter.
+
+<LI><H3>www</H3>
+Used by xmlrpl.
+Available <A HREF="http://www.w3.org/Library/"> here.</A>
+An earlier but defective version is widespread.  You may need in get a
+recent version and install it separately.
+Build and installation procedures may fail prior to completion but
+this doesn't seem to matter.
+There are a LARGE number of libraries involved.
+There may be a problem with libwwwzip.a, I had to copy this from an
+older installation.
+
+<LI><H3>zlib</H3>
+Gzip compressed file IO used by ObitView.
+Available <A HREF="http://www.zlib.net/"> here.</A>
+
+<LI><H3>motif</H3>
+ObitView uses the Motif library.  A freebee plug-compatible
+replacement is LessTif, available 
+<A HREF="ftp://ftp.hungry.com/pub/hungry/lesstif/"> here.</A>
+</UL>
+<P>
+Obit software comes with a configuration procedure; in the simplest
+case, installation from a tarball consists of: <br>
+% gtar xzvf Obit.tgz <br>
+% ./configure <br>
+% make <br>
+This will install Obit in directory Obit of the current directory.
+<P>
+If you've installed third party software in a nonstandard location (or
+to tell configure where you've installed the basic Obit) you'll need
+to tell configure, e.g.:<br>
+% configure --with-obit=$OBIT --with-pgplot=$HOME/opt/pgplot \<br>
+--with-cfitsio=$HOME/opt/cfitsio --with-fftw=$HOME/opt/fftw \<br>
+--with-xmlrpc=$HOME/opt/xmlrpc --with-www=$HOME/opt/WWW \<br>
+CC=/usr/bin/gcc<br>
+<P>
+To use Python, you'll need to set the environment variable PYTHONPATH
+to include the Obit/python (and ObitSD/python if it is to be
+accessable).  Ecample for tcsh:<br>
+setenv PYTHONPATH "$OBITSD/python":"$OBIT/python"
+where $OBIT is set to the base address of the Obit software and
+$OBITSD to the base address of the ObitSD software (if needed).
+<P>
+
+<H2>  <FONT COLOR="ff0000">Running Obit Software</FONT></H2>
+Obit software is available either from python of as standalone
+compiled programs.
+In the latter case, the input parameters can be provided through a
+combination of command line arguments and/or parameters in an input
+file.
+Obit tasks are kept in the bin/OS_Type/ directory and simple
+instructions are given is the program is executed with no arguments.
+Program documentation is in task/program_name.doc and a more extensive
+AIPS Helpfile like form in TDF/program_name.TDF (defines the
+ParselTongue interface).
+Documentation for Obit is in Obit/doc/OBITdoc.ps and for ObitSD in
+ObitSD/doc/OBITSDdoc.ps. 
+<P>
+Some setup is needed for Obit python scripts, there are examples in
+the python/script*.py files.
+Online help is available for the Obit python classes through the
+python Help facility.
+<P>
+ObitView must be started independently and can be used as an
+independent FITS image browser. 
+FITS files can be downloaded from the internet by giving a full URL.
+If ObitView has been built using xmlrpc only one version is allowed to
+run at a time.
+<P>
+ObitView can be told to display AIPS images as seen in the following
+python code fragment which lists the AIPS files in directory
+/DATA/LUSUS_1/ and then selects one and has ObitView display it.<br>
+<br>
+import Obit, OSystem, OErr, AIPSDir, Image, ODisplay<br>
+<br>
+# Init Obit - defining AIPS directory <br>
+err=OErr.OErr()<br>
+ObitSys=OSystem.OSystem ("Display", 1, 100, 1, ["/DATA/LUSUS_1/"], 1, ["."], 1, 0, err)<br>
+OErr.printErrMsg(err, "Error with Obit startup")<br>
+<br>
+# list AIPS directory<br>
+disk=1<br>
+AIPSDir.PListDir(disk, err)<br>
+<br>
+# Display image in catalog slot 4<br>
+a=Image.newPACNO(1,4,True,err)                 # create image object<br>
+d=ODisplay.ODisplay("ObitView","ObitView",err) # create display client<br>
+ODisplay.PImage(d,a,err)                       # display<br>
+<br>
+# Shutdown Obit<br>
+OErr.printErr(err)<br>
+del ObitSys<br>
+<P>
+<HR>
+The (USA) National Radio Astronomy Observatory
+<A HREF="http://www.nrao.edu/">(NRAO)</A>
+is operated by Associated Universities, Inc. and is a Facility of
+the (USA) <A HREF="http://www.nsf.gov/"> National Science Foundation</A>.
+</P>
+Comments?  Questions?  Problems?
+<form action="http://orangutan.cv.nrao.edu/cgi-bin/contact" method="post">
+<input type="HIDDEN" name="key" value="bill+cotton">
+<input type="HIDDEN" name="tomail" value="yes">
+<input type="SUBMIT" value="Contact info for Bill Cotton">
+</form>
+<form action="/cgi-bin/contact" method="post">
+</P>
+
+</BODY>
+</HTML>

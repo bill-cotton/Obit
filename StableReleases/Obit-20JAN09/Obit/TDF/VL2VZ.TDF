@@ -1,0 +1,138 @@
+;VL2VZ
+;---------------------------------------------------------------
+;! Convert VL table to VZ table
+;# Task Obit Table 
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+VL2VZ     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+VL2VZ     Convert VL table to VZ table, filter
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input image if Type=='FITS'
+**PARAM** str 12
+inName                             Input image file name (name)
+**PARAM** str 6
+inClass                            Input image file name (class)
+**PARAM** int 1
+inSeq             0.0     9999.0   Input image file name (seq. #)
+**PARAM** int 1
+inDisk            0.0        9.0   Input image file disk unit #
+**PARAM** int 1  **DEF** 1
+inVL                               Input VL table; 0=>highest
+**PARAM** float 1
+minFlux                            Minimum flux density to accept from VL
+**PARAM** boo 1 **DEF** F
+doClip                             If true, Clipping by minPeak 
+**PARAM** boo 1 **DEF** F
+doIsol                             If true, Select isolated entries 
+**PARAM** boo 1 **DEF** F
+doAver                             If true, Average entries within distAvg
+**PARAM** float 1
+clip                               Minimum acceptable for clipping (Jy)
+                                   used if doClip, no default
+**PARAM** float 1
+nearest                            Minimum nearest neighbor to be 
+                                   considered isolated (deg)
+                                   used if doIsol, doAver, no default
+**PARAM** float 1
+distAvg                            Distance within to average sources (deg)
+                                   used if doAver, no default
+**PARAM** float 1
+ignore                             Minimum acceptable flux density (Jy) 
+                                   used if doAver, doIsol, no default
+**PARAM** float 1
+crowd                              Distance (deg) for crowding test
+                                   used if doAver, default=nearest
+----------------------------------------------------------------
+VL2VZ
+Task:  This task Converts a VL table to a VZ table suitable for
+use as an input Catalog defining outliers or low frequency 
+calibrators.  The minimum flux density acceptable from the VL
+table is set by minFlux.
+   If the VZ table is to be used for low frequency calibration
+then it needs to be further filtered.  This filtering is 
+controlled by the parameters doClip, doIsol and doAver.
+The doClip option is functionally equivalent to the operation of
+minFlux in the conversion of the VL table to the VZ table.
+  doIsol selects only catalog entries for which there are no other 
+sources within nearest which are brighter than ignore.
+  doAver averages entries within distAvg.  If the brightest 
+source within nearest is fainter than ignore then the source 
+is passed, else:
+    If a component is the brightest within nearest then all 
+       components within distAvg are merged.
+    If the source has no companions within nearest, it is passed.
+    If the component has brighter companions within nearest, 
+       it is dropped.
+
+   The doAver mode also calculates a crowding quality code:
+     0 = nothing else within nearest
+     1 = >10% of peak other flux within nearest
+     2 = >30% of peak other flux within nearest
+     3 = >70% of peak other flux within nearest
+     4 = >100% of peak other flux within nearest
+     5 = >200% of peak other flux within nearest
+   In general, these other sources will have been removed from 
+the output table. 
+
+   The final VZ table will be the highest numbered one on the input 
+data file.
+
+Adverbs:
+  inName.....Input UV file name (name).      Standard defaults.
+  inClass....Input UV file name (class).     Standard defaults.
+  inSeq......Input UV file name (seq. #).    0 => highest.
+  inDisk.....Disk drive # of input UV file.  0 => any.
+  inVL.......Input VL table version number to process.
+             0 => highest number
+  minFlux....All entries in the input VL table fainter than 
+             minFlux are dropped in the conversion to a VZ table.
+             50 mJy for NVSS, 1 Jy for VLSS
+  doClip.....Values below clip are dropped - same affect as minFlux
+  doIsol.....Select only isolated components, those with no other
+             entries within nearest and brighter than ignore
+  doAver.....Average nearby entries, reject outliers, 
+             determine crowding quality code
+             doIsol and doAver are mutually exclusive and doIsol 
+             has priority
+  clip.......Minimum allowed peak brightness for doClip, 
+             (Jy) no default
+             50 mJy for NVSS, 1 Jy for VLSS
+  nearest....Distance (deg) for nearest allowable neighbor
+             for doIsol and doAver, no default
+             5' good for NVSS, 10' VLSS
+  distAvg....Distance to which to average components (doAver)
+             1' good for NVSS, 2' VLSS
+  ignore.....Minimum acceptable flux density (Jy)
+             for doAver, doIsol, no defaults
+             50 mJy good for NVSS, 1 Jy for VLSS
+  crowd......Distance (deg) for crowding test
+             for doAver, default=nearest
+             same value as nearest OK
+----------------------------------------------------------------

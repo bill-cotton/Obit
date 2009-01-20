@@ -1,0 +1,3 @@
+This directory contains a DUMMY version of the cfitsio library which
+will allow compiling and linking software which call cfitsio routines
+but these calls are NEVER made in operation.

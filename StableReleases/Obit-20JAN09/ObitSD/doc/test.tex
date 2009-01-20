@@ -1,0 +1,78 @@
+%%%%%%%%%%%%%%% ObitTableGBTSPDATA Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGBTSPDATA}]
+ObitTableGBTSPDATA  Class
+\tabletitle{Template ObitTableGBTSPDATA document}
+% table name
+\tablename{DATA}
+\tableintro[
+{Table in GBT archive/SpectralProcessor file.
+This class contains tabular data and allows access.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"OBJECT "}{A}{object}{}{}
+{Source name 
+}
+]
+\tablekey[{"SCAN "}{J}{scan}{}{}
+{Scan number 
+}
+]
+\tablekey[{"UTDATE "}{J}{utdate}{}{}
+{MJD of start time 
+}
+]
+\tablekey[{"UTCSTART "}{D}{utcstart}{}{}
+{Start time in seconds. 
+}
+]
+\tablekey[{"UTCSTOP "}{D}{utcstop}{}{}
+{Stop time in seconds. 
+}
+]
+\tablekey[{"BACKEND"}{A}{backend}{"DCR"}{}
+{Which backend 
+}
+]
+\tablekey[{"CTYPE1"}{A}{ctype1}{"STATE"}{}
+{First data axis is State 
+}
+]
+\tablekey[{"CTYPE2"}{A}{ctype2}{"RECEIVER"}{}
+{Second data axis is Receiver 
+}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"SUBSCAN "}{"CODE " }{J}{(1)}{subscan}
+{}
+] 
+\tablecol[{"UTDATE "}{"DAY" }{J}{(1)}{utdate}
+{}
+] 
+\tablecol[{"UTCSTART "}{"SECOND" }{D}{(1)}{utstart}
+{}
+] 
+\tablecol[{"PSRPER "}{" " }{D}{(1)}{psrper}
+{Pulsar period.}
+] 
+\tablecol[{"DATA "}{"COUNT  " }{E}{(1024,2,2))}{data}
+{Data}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from GBT}]
+\end{history}
+\clearpage
+

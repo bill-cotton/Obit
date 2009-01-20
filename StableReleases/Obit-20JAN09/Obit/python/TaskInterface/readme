@@ -1,0 +1,86 @@
+            Python Task Interface
+
+   The python module TaskInterface.py contains a tasking interface
+that can execute AIPS tasks and potentially those of other packages.
+This module replaces the following AIPS/POPS functions:
+ - Define task interface including input, help, explain
+ - Allow setting and retrieving task parameters
+ - Execute task synchronously on local host in batch (no TV) mode.
+ - Retrieve returned parameters and return code
+ - Check parameters for range (also type and dimension)
+
+This module is completely self contained.
+This module was developed and tested only under Python 2.3.3
+
+Issues:
+-------
+
+   There are a number of unsettled issues.
+
+- Data reduction packages supported
+   Currently this package supports AIPS and (partly) Obit.  Others
+which follow the task/parameter model (e.g. MIRIAD) could potentially
+be added.
+
+- Task interface definition
+   The current model is that the task interface is defined externally
+in a text file patterened strongly on the AIPS HELP file.  This is the
+Task Definition File (TDF).  It is the AIPS HELP file with a few lines
+added to complete the definition.  The principle difficulty with this
+scheme as applied to AIPS is that the AIPS HELP file is insufficient,
+the parameter is only specified by name and POPS is expected to know
+the type and dimensionality.  This information must be added to the
+AIPS HELP file.  For standard distribution AIPS tasks these could be
+generated automatically or on-the-fly from the task HELP file and the
+POPSDAT.HLP file but this does not work for tasks in AIPS add-on
+packages (e.g. 4MASS) for which some adverbs are not defined in
+POPSDAT.HLP.  Thus, the current hand job.  This solution may not be
+acceptable for a MIRIAD, or other, implementation.
+   A further complication is that the task parameters in AIPS can
+change between releases.  There may need to be a release specific set
+of TDF files for standard AIPS tasks.
+
+- POPS number (AIPS)
+   AIPS POPS and tasks have a concept of POPS number which essentially
+define which portions of the TD (binary task iterface) file are used.
+In this package, the POPS number is arbitrary and this may lead to
+conflicts in the usage of the TD file.
+
+- Auxillary file storage.
+   The TaskInterface class uses a number of auxillary files, (TDF
+files, execution scripts and saved copies of task inputs).  These are
+currently expected and saved in the current working directory.
+A more systematic storage is needed.
+    The time dependent nature of the AIPS HELP files may require a
+release dependent storage of the TDF files.
+
+- Run time environment
+   For AIPS tasks to execute, a number of environment variables are
+needed to specify directories.  Some of these (e.g. $LOAD, $DA00) are
+defined in the usual AIPS startup functions but the data directories
+are define when POPS starts.  An automated way of defining these is
+needed (basically running the AIPS start up scripts).
+
+- Parallel execution
+   The current execution is strictly synchronous on the current host
+and hence does not support parallelism.  Extension with a proper
+execution framework could cure this.
+
+- Data access
+   The TaskInterface class provides no direct access to data or headers.
+
+Files:
+------
+readme                This documentation file
+TaskInterface.py      TaskInterface module python source file
+testScript.py         Test python script
+IMEAN.TDF             TDF file for AIPS task IMEAN (DEC99)
+NOBAT.TDF             TDF file for AIPS task NOBAT (DEC99)
+StartAIPSTask         Shell script needed to run AIPS tasks
+IMEAN.inp             python "pickle" of IMEAN object
+NOBAT.inp             python "pickle" of NOBAT object
+
+
+W. Cotton
+July 2004
+

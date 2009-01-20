@@ -1,0 +1,76 @@
+                          ObitView
+-----------------------------------------------------------------------
+  Copyright (C) 2005
+  Associated Universities, Inc. Washington DC, USA.
+  This program is free software; you can redistribute it and/or
+  modify it under the terms of the GNU General Public License as
+  published by the Free Software Foundation; either version 2 of
+  the License, or (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  Correspondence concerning ObitView should be addressed as follows:
+         Internet email: bcotton@nrao.edu.
+         Postal address: William Cotton
+                         National Radio Astronomy Observatory
+                         520 Edgemont Road
+                         Charlottesville, VA 22903-2475 USA
+-----------------------------------------------------------------------*/
+
+   ObitView is a viewer for for Obit of FITS format and other images
+for unix/X-Windows systems.  ObitView will display images allowing
+zooming, scrolling, modifying the brightness, contrast and color and
+allow determination of celestial positions in the image.  Positions
+and brightnesses of selected pixels may be logged to a text file.
+Specified positions in the image may be marked.  Images may be
+compared by "blinking" them and 3 dimensional images may be viewed in
+the form of a movie.  The program contains extensive online
+documentation.  Blanked pixels and all defined FITS image data types
+are supported.  Normal or gzip compressed files may be used.
+
+ Installation
+ ------------
+   
+    Installation of ObitView requires an ansi c compiler and the
+Motif package of software for the X-Windows system (not included in
+this distribution).  If Motif is not available on your system, LessTif
+is a freeware alternative (ftp://ftp.hungry.com/pub/hungry/lesstif/).
+You must install Motif (and X-windows) before installing ObitView.
+To install:
+
+gtar xzvf obitview??.tgz
+cd ObitView
+./configure
+make
+
+and this should build the executable XFITSview.  Move this to somewhere 
+in your path ($PATH).  If this procedure doesn't work, the most likely reason 
+is that the MOTIF directories weren't located. If the libraries are in a
+nonstandard place then you must tell configure must tell with command line 
+options:
+  --with-motif=DIR        search for MOTIF in DIR/include and DIR/lib
+  --with-motif-includes=DIR
+
+Some influential environment variables for configure:
+  CC          C compiler command
+  CFLAGS      C compiler flags
+  LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
+              nonstandard directory <lib dir>
+  CPPFLAGS    C/C++ preprocessor flags, e.g. -I<include dir> if you have
+              headers in a nonstandard directory <include dir>
+  CPP         C preprocessor
+
+     Questions and comments should be directed to Bill Cotton
+at the National Radio Astronomy Observatory (bcotton@nrao.edu).
+
+Usage
+-----
+
+   ObitView may be started with the name of a FITS format file as a
+command line argument.  Either the initial or subsequent files may be
+selected using the "Open" item in the "File" menu.  Consult the "Help
+Me" item in the "Help" menu for further details.  Each menu column has
+a separate help item.

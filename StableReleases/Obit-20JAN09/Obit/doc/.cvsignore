@@ -1,0 +1,6 @@
+doxygen
+*.aux
+*.dvi
+*.log
+*.ps
+*.toc
