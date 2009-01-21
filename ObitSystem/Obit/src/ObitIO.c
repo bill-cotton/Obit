@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -384,6 +384,66 @@ ObitIOCode ObitIORead (ObitIO *in, ofloat *data, ObitErr *err)
 } /* end ObitIORead */
 
 /**
+ * Read data from disk to multiple buffers .
+ * \param nBuff Number of buffers to be filled
+ * \param in    Array of pointers to to object to be read; 
+ *              must all be to same underlying data set but with 
+ *              independent calibration
+ * \param data  array of pointers to buffers to write results.
+ * \param err   ObitErr for reporting errors.
+ * \return return code, OBIT_IO_OK=> OK
+ */
+ObitIOCode ObitIOReadMulti (olong nBuff, ObitIO **in, ofloat **data, 
+			    ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  const ObitIOClassInfo *myClass;
+
+  /* error checks */
+  if (err->error) return retCode;
+
+  /* this is a virtual function, see if actual one defined */
+  myClass = in[0]->ClassInfo;
+  g_assert (myClass->ObitIOReadMulti != NULL);
+
+  /* call actual function */
+  retCode = myClass->ObitIOReadMulti (nBuff, in, data, err);
+
+  return retCode;
+} /* end ObitIOReadMulti */
+
+/**
+ * Reread data from disk to multiple buffers.
+ * Retreives data read in a previous call to ObitIOReadMulti
+ * NOTE: this depends on retreiving the data from the first element in in
+ * \param nBuff Number of buffers to be filled
+ * \param in    Array of pointers to to object to be read; 
+ *              must all be to same underlying data set but with 
+ *              independent calibration
+ * \param data  array of pointers to buffers to write results.
+ * \param err   ObitErr for reporting errors.
+ * \return return code, OBIT_IO_OK=> OK
+ */
+ObitIOCode ObitIOReReadMulti (olong nBuff, ObitIO **in, ofloat **data, 
+			    ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  const ObitIOClassInfo *myClass;
+
+  /* error checks */
+  if (err->error) return retCode;
+
+  /* this is a virtual function, see if actual one defined */
+  myClass = in[0]->ClassInfo;
+  g_assert (myClass->ObitIOReadMulti != NULL);
+
+  /* call actual function */
+  retCode = myClass->ObitIOReReadMulti (nBuff, in, data, err);
+
+  return retCode;
+} /* end ObitIOReReadMulti */
+
+/**
  * Read data from disk specifying starting row.
  * \param in Pointer to object to be read.
  * \param rowno Starting row number (1-rel) -1=> next.
@@ -439,6 +499,69 @@ ObitIOCode ObitIOReadSelect (ObitIO *in, ofloat *data, ObitErr *err)
 
   return retCode;
 } /* end ObitIOReadSelect */
+
+/**
+ * Read data from disk applying selection to multiple buffers .
+ * \param nBuff Number of buffers to be filled
+ * \param in    Array of pointers to to object to be read; 
+ *              must all be to same underlying data set but with 
+ *              independent calibration
+ * \param data  array of pointers to buffers to write results.
+ * \param err   ObitErr for reporting errors.
+ * \return return code, OBIT_IO_OK=> OK
+ */
+ObitIOCode ObitIOReadMultiSelect (olong nBuff, ObitIO **in, ofloat **data, 
+				  ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  const ObitIOClassInfo *myClass;
+
+  /* error checks */
+  if (err->error) return retCode;
+
+  g_assert (data != NULL);
+
+  /* this is a virtual function, see if actual one defined */
+  myClass = in[0]->ClassInfo;
+  g_assert (myClass->ObitIOReadMultiSelect != NULL);
+
+  /* call actual function */
+  retCode = myClass->ObitIOReadMultiSelect (nBuff, in, data, err);
+
+  return retCode;
+} /* end ObitIOReadMultiSelect */
+
+/**
+ * Reread data from disk applying selection to multiple buffers .
+ * Retreives data read in a previous call to ObitIOReadMultiSelect
+ * possibly applying new calibration.
+ * \param nBuff Number of buffers to be filled
+ * \param in    Array of pointers to to object to be read; 
+ *              must all be to same underlying data set but with 
+ *              independent calibration
+ * \param data  array of pointers to buffers to write results.
+ * \param err   ObitErr for reporting errors.
+ * \return return code, OBIT_IO_OK=> OK
+ */
+ObitIOCode ObitIOReReadMultiSelect (olong nBuff, ObitIO **in, ofloat **data, 
+				    ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  const ObitIOClassInfo *myClass;
+
+  /* error checks */
+  if (err->error) return retCode;
+  g_assert (data != NULL);
+
+  /* this is a virtual function, see if actual one defined */
+  myClass = in[0]->ClassInfo;
+  g_assert (myClass->ObitIOReReadMultiSelect != NULL);
+
+  /* call actual function */
+  retCode = myClass->ObitIOReReadMultiSelect (nBuff, in, data, err);
+
+  return retCode;
+} /* end ObitIOReReadMultiSelect */
 
 /**
  * Read data from disk specifying start row and applying selection.
@@ -941,9 +1064,15 @@ static void ObitIOClassInfoDefFn (gpointer inClass)
   theClass->ObitIOClose   = (ObitIOCloseFP)ObitIOClose;
   theClass->ObitIOSet     = (ObitIOSetFP)ObitIOSet;
   theClass->ObitIORead    = (ObitIOReadFP)ObitIORead;
+  theClass->ObitIOReadMulti = (ObitIOReadMultiFP)ObitIOReadMulti;
+  theClass->ObitIOReReadMulti = (ObitIOReReadMultiFP)ObitIOReReadMulti;
   theClass->ObitIOReadRow = (ObitIOReadRowFP)ObitIOReadRow;
   theClass->ObitIOReadSelect = 
     (ObitIOReadSelectFP)ObitIOReadSelect;
+  theClass->ObitIOReadMultiSelect = 
+    (ObitIOReadMultiSelectFP)ObitIOReadMultiSelect;
+  theClass->ObitIOReReadMultiSelect = 
+    (ObitIOReReadMultiSelectFP)ObitIOReReadMultiSelect;
   theClass->ObitIOReadRowSelect = 
     (ObitIOReadRowSelectFP)ObitIOReadRowSelect;
   theClass->ObitIOWriteRow= (ObitIOWriteRowFP)ObitIOWriteRow;

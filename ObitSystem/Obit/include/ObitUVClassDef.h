@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2008                                          */
+/*;  Copyright (C) 2002-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -33,8 +33,16 @@ newObitUVScratchFP newObitUVScratch;
 ObitUVSameFP ObitUVSame;
 /** Function pointer to Read. */
 ObitUVReadFP ObitUVRead;
+/** Function pointer to Read multi buffer. */
+ObitUVReadMultiFP ObitUVReadMulti;
+/** Function pointer to Reread multi buffer. */
+ObitUVReReadMultiFP ObitUVReReadMulti;
 /** Function pointer to Read with selection/calibration. */
 ObitUVReadSelectFP ObitUVReadSelect;
+/** Function pointer to Read with selection/calibration multi buffer. */
+ObitUVReadMultiSelectFP ObitUVReadMultiSelect;
+/** Function pointer to Reread with selection/calibration multi buffer. */
+ObitUVReReadMultiSelectFP ObitUVReReadMultiSelect;
 /** Function pointer to Write. */
 ObitUVWriteFP ObitUVWrite;
 /** Function pointer to Create an associated table. */

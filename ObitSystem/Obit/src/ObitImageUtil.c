@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include "ObitThread.h"
+#include "ObitUVGrid.h"
 #include "ObitImageUtil.h"
 #include "ObitUVWeight.h"
 #include "ObitSkyGeom.h"
@@ -485,7 +486,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   /* Need new gridding member? */
   outName = g_strconcat ("UVGrid for: ",inUV->name,NULL);
   if (outImage->myGrid == NULL) outImage->myGrid = newObitUVGrid(outName);
-  g_free(outName);
+  if (outName) g_free(outName); outName = NULL;
 
   /*  Open image ReadOnly to get proper descriptor */
   dim[0] = 7;
@@ -508,8 +509,8 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
     theBeam = (ObitImage*)outImage->myBeam;
     g_assert (ObitImageIsA(theBeam));
 
-    ObitInfoListGet(theBeam->info, "SUMWTS", &type, dim, (gpointer)&sumwts, err);
-    if (err->error) Obit_traceback_msg (err, routine, theBeam->name);
+    sumwts = 0.0;
+    ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, (gpointer)&sumwts);
     outImage->myGrid->BeamNorm = sumwts;
   }    
 
@@ -665,6 +666,389 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
     
   } /* end loop over channels */
 }  /* end ObitImageUtilMakeImage */
+
+/**
+ * Parallel Grids, FFTs and makes corrections for the gridding convolution
+ * for a set of images with a single read of the uv data.
+ * Uses (creating if necessary) the myGrid member of out.
+ * If calibration is being applied, a UV data opject will be open for each
+ * image and beam; this may blow the limit on open file descriptors.
+ * Images all channels selected together.
+ * \param inUV     Input uv data. Should be in form of stokes to be imaged
+ *                 will all calibration and selection applied and any 
+ *                 weighting applied.  If calibration is specified then
+ *                 infoList element "ParGainUse" (int), if present gives image
+ *                 specifies calibration table numbers.  
+ *                 One value is used for all or oner per image
+ * \param outImage Array of Images to be written.  Must be previously instantiated.
+ *                 Beam normalization factor is written to output Beam
+ *                 infoList as "SUMWTS"
+ * \param doBeam   if TRUE also make beam.  Will make the myBeam member of 
+ *                 outImage.
+ *                 If FALSE, and myGrid->BeamNorm 0.0 then reads SUMWTS value 
+ *                 from beam infolist
+ *                 If an image does not have a beam one is always made.
+ * \param doWeight if TRUE Apply uniform weighting corrections to uvdata
+ *                 before imaging.
+ * Weighting parameters on inUV:
+ * \li "nuGrid" OBIT_long scalar = Number of "U" pixels in weighting grid.
+ *              [defaults to "nx"]
+ * \li "nvGrid" OBIT_long scalar = Number of "V" pixels in weighting grid.
+ * \li "WtBox"  OBIT_long scalar = Size of weighting box in cells [def 1]
+ * \li "WtFunc" OBIT_long scalar = Weighting convolution function [def. 1]
+ *              1=Pill box, 2=linear, 3=exponential, 4=Gaussian
+ *              if positive, function is of radius, negative in u and v.
+ * \li "xCells" OBIT_float scalar = Image cell spacing in X in asec.
+ * \li "yCells" OBIT_float scalar = Image cell spacing in Y in asec.
+ * \li "UVTaper" OBIT_float scalar = UV taper width in kilowavelengths. [def. no taper].
+ *              NB: If the taper is applied her is should not also be applied
+ *              in the imaging step as the taper will be applied to the
+ *              output data.
+ * \li "Robust" OBIT_float scalar = Briggs robust parameter. [def. 0.0]
+ *              < -7 -> Pure Uniform weight, >7 -> Pure natural weight.
+ *              Uses AIPS rather than Briggs definition of Robust.
+ * \li "WtPower" OBIT_float scalar = Power to raise weights to.  [def = 1.0]
+ *              Note: a power of 0.0 sets all the output weights to 1 as modified
+ *              by uniform/Tapering weighting.  Applied in determinng weights 
+ *              as well as after.
+ * \param err      Error stack, returns if not empty.
+ */
+void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage, 
+				gboolean doBeam, gboolean doWeight,
+				ObitErr *err)
+{
+  ObitImage *theBeam=NULL;
+  ObitIOCode retCode;
+  ObitIOSize IOBy;
+  ofloat sumwts, imMax, imMin;
+  gchar *outName=NULL;
+  olong i, j, ip, pos[5], nImage, nGain=0, *gainUse=NULL, gain;
+  olong doCalib = 0;
+  olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
+  olong trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  gboolean forceBeam, doCalSelect=FALSE, Fl=FALSE;
+  ObitIOAccess access;
+  ObitUV    **data  =NULL;
+  ObitUVGrid **grids=NULL;
+  ObitFArray **array=NULL;
+  gchar *routine = "ObitImageUtilMakeImagePar";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitUVIsA(inUV));
+
+  /* Apply uniform weighting? */
+  if (doWeight) ObitUVWeightData (inUV, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
+  /* How many to do */
+  nImage = nPar;
+  if (doBeam) nImage *= 2;  /* Doing Beams as well? */
+  else {
+    /* Add number of images without a beam  */
+    for (j=0; j<nPar; j++) {
+      sumwts = 0.0;
+      theBeam = (ObitImage*)outImage[j]->myBeam;
+      if ((theBeam==NULL) ||
+	  !ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, &sumwts)) {
+	nImage++;
+      }
+    }
+  }
+
+  /* Calibration */
+  doCalib = 0;
+  ObitInfoListGetTest(inUV->info, "doCalib", &type, dim, &doCalib);
+  doCalSelect = FALSE;
+  ObitInfoListGetTest(inUV->info, "doCalSelect", &type, dim, &doCalSelect);
+  dim[0] = 0;
+  ObitInfoListGetP(inUV->info, "ParGainUse", &type, dim, (gpointer*)&gainUse);
+  nGain = dim[0];
+
+  /* Create work arrays */
+  data  = g_malloc0(nImage*sizeof(ObitUV*));
+  grids = g_malloc0(nImage*sizeof(ObitUVGrid*));
+  array = g_malloc0(nImage*sizeof(ObitFArray*));
+
+  /* Loop over images creating things */
+  ip = 0;
+  for (j=0; j<nPar; j++) {
+    /*  Open image ReadOnly to get proper descriptor, pixel array */
+    dim[0] = 7;
+    for (i=0; i<IM_MAXDIM; i++) {blc[i] = 1; trc[i] = 0;}
+    ObitInfoListPut (outImage[j]->info, "BLC", OBIT_long, dim, blc, err); 
+    ObitInfoListPut (outImage[j]->info, "TRC", OBIT_long, dim, trc, err);
+    if (err->error) Obit_traceback_msg (err, routine, outImage[j]->name);
+    if ((ObitImageOpen (outImage[j], OBIT_IO_ReadOnly, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, 
+		     "ERROR opening image %s", outImage[j]->name);
+      goto cleanup;
+    }
+     ObitImageClose (outImage[j], err);
+ 
+    /* Need new gridding member? */
+    outName = g_strconcat ("UVGrid for: ",outImage[j]->name,NULL);
+    if (outImage[j]->myGrid == NULL) outImage[j]->myGrid = newObitUVGrid(outName);
+    if (outName) g_free(outName); outName = NULL;
+
+    /* Get Beam member from outImage[j] */
+    theBeam = (ObitImage*)outImage[j]->myBeam;
+    /* Need to force making a beam? */
+    forceBeam = (theBeam==NULL) ||
+      !ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, (gpointer)&sumwts);
+    /* Arrays -  Need set for the Beam? */
+    if (doBeam || forceBeam) {
+      outName = g_strconcat ("UV for Beam: ",outImage[j]->name,NULL);
+      data[ip]  = newObitUV(outName);
+      if (outName) g_free(outName); outName = NULL;
+      /* Copy controls */
+      data[ip]->info  = ObitInfoListCopyData(inUV->info, data[ip]->info);
+      dim[0] = 1; dim[1] = 1; dim[2] = 1; /* No cal for now */
+      ObitInfoListAlwaysPut(data[ip]->info, "doCalib", OBIT_int, dim, &Fl);
+     /* Ensure out fully instantiated and OK */
+      ObitUVFullInstantiate (data[ip], TRUE, err);
+      if (err->error) goto cleanup;
+      array[ip] = theBeam->image;
+      outName = g_strconcat ("UVGrid for Beam: ",outImage[j]->name,NULL);
+      grids[ip] = newObitUVGrid(outName);
+      if (outName) g_free(outName); outName = NULL;
+      /* Any calibration setup */
+      if (doCalib>0) {
+	gain = 0;
+	if (nGain==1)    gain = gainUse[0];
+	if (nGain>=nPar) gain = gainUse[j];
+	dim[0] = 1; dim[1] = 1; dim[2] = 1;
+	ObitInfoListAlwaysPut(data[ip]->info, "gainUse", OBIT_int, dim, &gain);
+	ObitInfoListAlwaysPut(data[ip]->info, "doCalib", OBIT_int, dim, &doCalib);
+      }
+      /* Gridding setup */
+      ObitUVGridSetup (grids[ip], data[ip], theBeam->myDesc, outImage[j]->myDesc, 
+		       TRUE, err);
+      if (doCalib<=0) {  /* Need files open for calibration */
+	ObitUVClose(data[ip], err);
+	if (err->error) goto cleanup;
+      }
+      ip++;
+      if (err->error) goto cleanup;
+    }
+
+    /* Image grid */
+    outName = g_strconcat ("UV for image: ",outImage[j]->name,NULL);
+    data[ip]  = newObitUV(outName);
+    if (outName) g_free(outName); outName = NULL;
+    /* Copy controls */
+    data[ip]->info  = ObitInfoListCopyData(inUV->info, data[ip]->info);
+    dim[0] = 1; dim[1] = 1; dim[2] = 1; /* No cal for now */
+    ObitInfoListAlwaysPut(data[ip]->info, "doCalib", OBIT_int, dim, &Fl);
+    /* Ensure out fully instantiated and OK */
+    ObitUVFullInstantiate (data[ip], TRUE, err);
+    if (err->error) goto cleanup;
+    array[ip] = outImage[j]->image;
+    grids[ip] = ObitUVGridRef(outImage[j]->myGrid);
+    /* Any calibration setup */
+    if (doCalib>0) {
+      gain = 0;
+      if (nGain==1)    gain = gainUse[0];
+      if (nGain>=nPar) gain = gainUse[j];
+      dim[0] = 1; dim[1] = 1; dim[2] = 1;
+      ObitInfoListAlwaysPut(data[ip]->info, "gainUse", OBIT_int, dim, &gain);
+      ObitInfoListAlwaysPut(data[ip]->info, "doCalib", OBIT_int, dim, &doCalib);
+    }
+    /* Gridding setup */
+    ObitUVGridSetup (grids[ip], data[ip], theBeam->myDesc, outImage[j]->myDesc, 
+		     FALSE, err);
+    if (doCalib<=0) {  /* Need files open for calibration */
+      ObitUVClose(data[ip], err);
+      if (err->error) goto cleanup;
+    }
+    ip++;
+    if (err->error) goto cleanup;
+
+  } /* end loop over images */
+
+  /* get any previous normalization  */
+  for (j=0; j<nPar; j++) {
+    sumwts = 0.0;
+    if (!outImage[j]->myGrid->doBeam) {
+      theBeam = (ObitImage*)outImage[j]->myBeam;
+      if ((theBeam!=NULL) &&
+	  ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, &sumwts)) {
+	/* Save beam normalization in Beam */
+	outImage[j]->myGrid->BeamNorm = sumwts;
+      }
+    }
+  }  /* end loop over images */
+
+  /* Applying calibration or selection? */
+  if (doCalSelect) access = OBIT_IO_ReadCal;
+  else access = OBIT_IO_ReadOnly;
+
+  /*  Open uv data for first if needed */
+  if ((data[0]->myStatus!=OBIT_Active) && (data[0]->myStatus!=OBIT_Modified)) {
+    retCode = ObitUVOpen (data[0], access, err);
+    if (err->error) goto cleanup;
+  }
+
+  /* Make images 
+     Grid  */
+  ObitUVGridReadUVPar (nImage, grids, data, err);
+  if (err->error) goto cleanup;
+  
+  /* Close uv data files if needed */
+  if (doCalib>0) {  /* Need files open for calibration */
+    for (ip=0; ip<nImage; ip++) {
+     ObitUVClose(data[ip], err);
+     if (err->error) goto cleanup;
+    }
+  }
+
+  /* FFT, Gridding correction */
+  ObitUVGridFFT2ImPar (nImage, grids, array, err);
+  if (err->error) goto cleanup;
+  
+  /* Loop over images writing */
+  IOBy = OBIT_IO_byPlane;
+  ip = 0;
+  for (j=0; j<nPar; j++) {
+
+    /* Get Beam member from outImage[j], test if already made */
+    theBeam = (ObitImage*)outImage[j]->myBeam;
+    forceBeam = (theBeam==NULL) ||
+      !ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, (gpointer)&sumwts);
+
+    /* Next a beam? */
+    if (doBeam || forceBeam) {
+      /* Set blc, trc */
+      blc[2] = 1;
+      trc[0] = theBeam->myDesc->inaxes[0];
+      trc[1] = theBeam->myDesc->inaxes[1];
+      trc[2] = 1;
+      dim[0] = 1;
+      ObitInfoListPut (theBeam->info, "IOBy", OBIT_long, dim,
+		       (gpointer)&IOBy, err);
+      dim[0] = 7;
+      ObitInfoListPut (theBeam->info, "BLC", OBIT_long, dim,
+		       (gpointer)blc, err); 
+      ObitInfoListPut (theBeam->info, "TRC", OBIT_long, dim,
+		       (gpointer)trc, err);
+      /* Open output beam */
+      theBeam->extBuffer = TRUE;  /* Use separate buffer */
+      if ((ObitImageOpen (theBeam, OBIT_IO_ReadWrite, err) 
+	   != OBIT_IO_OK) || (err->error>0)) { /* error test */
+	Obit_log_error(err, OBIT_Error, 
+		       "ERROR opening image %s", theBeam->name);
+      }
+      /* Write image */
+      ObitImageWrite (theBeam, array[ip]->array, err);
+      if (err->error) goto cleanup;
+      
+      /* Tell Sum of gridding weights */
+      Obit_log_error(err, OBIT_InfoErr, 
+		     "Sum of Weights %g for %s",
+		     outImage[j]->myGrid->BeamNorm,outImage[j]->name);
+
+      /* tell Max/Min */
+      imMax = ObitFArrayMax (array[ip], pos);
+      imMin = ObitFArrayMin (array[ip], pos);
+      Obit_log_error(err, OBIT_InfoErr, 
+		     "Beam max %g, min %g for %s", imMax, imMin, theBeam->name);
+
+      /* Fit beam */
+      ObitImageUtilFitBeam (theBeam, err);
+      if (err->error) goto cleanup;
+
+      /* Close Image */
+      ObitImageClose (theBeam, err);
+      theBeam->extBuffer = FALSE;  /* Use internal buffer */
+      if (err->error) goto cleanup;
+
+      /* Free image buffer */
+      theBeam->image = ObitFArrayUnref(theBeam->image);
+
+      /* Save last beam normalization in Beam infoList as "SUMWTS" */
+      sumwts = outImage[j]->myGrid->BeamNorm;
+      dim[0] = 1; dim[1] = 1;
+      ObitInfoListAlwaysPut(theBeam->info, "SUMWTS", OBIT_float, dim, (gpointer)&sumwts);
+      ip++;
+    } /* end if doBeam */
+
+    /* Now image */
+    /* Set blc, trc */
+    blc[2] = 1;
+    trc[0] = outImage[j]->myDesc->inaxes[0];
+    trc[1] = outImage[j]->myDesc->inaxes[1];
+    trc[2] = 1;
+    dim[0] = 1;
+    ObitInfoListPut (outImage[j]->info, "IOBy", OBIT_long, dim,
+		     (gpointer)&IOBy, err);
+    dim[0] = 7;
+    ObitInfoListPut (outImage[j]->info, "BLC", OBIT_long, dim,
+		     (gpointer)blc, err); 
+    ObitInfoListPut (outImage[j]->info, "TRC", OBIT_long, dim,
+		     (gpointer)trc, err);
+    /* Open output beam */
+    outImage[j]->extBuffer = TRUE;  /* Use separate buffer */
+    if ((ObitImageOpen (outImage[j], OBIT_IO_ReadWrite, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, 
+		     "ERROR opening image %s", outImage[j]->name);
+    }
+    /* Write image */
+    ObitImageWrite (outImage[j], array[ip]->array, err);
+    if (err->error) goto cleanup;
+    
+    /* tell Max/Min */
+    imMax = ObitFArrayMax (array[ip], pos);
+    imMin = ObitFArrayMin (array[ip], pos);
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "Image max %g, min %g for %s", imMax, imMin,  outImage[j]->name);
+    
+     /* Copy Gaussian beam fit */
+    outImage[j]->myDesc->beamMaj = theBeam->myDesc->beamMaj;
+    outImage[j]->myDesc->beamMin = theBeam->myDesc->beamMin;
+    outImage[j]->myDesc->beamPA  = theBeam->myDesc->beamPA;
+    
+    /* Make sure Stokes correct */
+    outImage[j]->myDesc->crval[outImage[j]->myDesc->jlocs] = 
+      inUV->myDesc->crval[inUV->myDesc->jlocs];
+
+    /* Close Image */
+    ObitImageClose (outImage[j], err);
+    outImage[j]->extBuffer = FALSE;  /* Use internal buffer */
+    if (err->error) goto cleanup;
+    
+    /* Free image buffer */
+    outImage[j]->image = ObitFArrayUnref(outImage[j]->image);
+    ip++;
+  } /* end loop writing output */
+
+    /* Cleanup */
+ cleanup:
+    
+  /* Free gridding objects */
+  ip = 0;
+  if (grids) {
+    for (j=0; j<nImage; j++) {
+      grids[j] = ObitUVGridUnref(grids[j]);
+    }
+  } /* end if grids */
+  for (j=0; j<nPar; j++) {
+    outImage[j]->myGrid = ObitUVGridUnref(outImage[j]->myGrid);
+  }
+
+  /* Free uv objects */
+  if (data) {
+    for (j=0; j<nImage; j++) data[j] = ObitUVUnref(data[j]);
+    g_free(data);
+  } /* end if data */
+
+  g_free(array); /* Pixel arrays already deleted */
+
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+}  /* end ObitImageUtilMakeImagePar */
 
 /**
  * Fill the pixels in outImage by interpolation to the corresponding locations

@@ -1029,8 +1029,6 @@ ObitTableDesc.
 \end{history}
 
 \clearpage
-
-\clearpage
 %%%%%%%%%%%%%%% ObitTableGBTANTPOSF Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 %
@@ -1085,6 +1083,74 @@ ObitTableDesc.
 ] 
 \tablecol[{"PF\_X  "}{"MM      " }{D}{(1)}{pfX}
 {}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from GBT}]
+\end{history}
+
+\clearpage
+%%%%%%%%%%%%%%% GBT Quadrant detector file %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%% ObitTableGBTQUADDETECTOR Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGBTQUADDETECTOR}]
+ObitTableGBTQUADDETECTOR Class
+\tabletitle{ObitTableGBTQUADDETECTOR document}
+% table name
+\tablename{QuadrantDetectorData}
+\tableintro[
+{Table in GBT archive/Quadrent detector file.
+File in directory QuadrantDetector-QuadrantDetector-QuadrantDetectorData.
+This class contains tabular data and allows access.
+
+This class is derived from the ObitTable class. }
+]
+\tableover{
+The quadrant detector measures motions of the GBT Feed arm resulting 
+in pointing errors.
+}
+% Table keyword description
+%
+% Table column description
+\begin{columns}
+\tablecol[{"DMJD    "}{"DAY    " }{D}{(1)}{dmjd}
+{Modified Julian Date of time sample taken;}
+] 
+\tablecol[{"ch1Voltage"}{"VOLT    " }{E}{(1)}{ch1Voltage}
+{Channel 1 raw voltage}
+] 
+\tablecol[{"ch3Voltage"}{"VOLT    " }{E}{(1)}{ch3Voltage}
+{Channel 3 raw voltage}
+] 
+\tablecol[{"ch4Voltage"}{"VOLT    " }{E}{(1)}{ch4Voltage}
+{Channel 4 raw voltage}
+] 
+\tablecol[{"ch5Voltage"}{"VOLT    " }{E}{(1)}{ch5Voltage}
+{Channel 5 raw voltage}
+] 
+\tablecol[{"X_Axis"}{"        " }{E}{(1)}{X_Axis}
+{Calculated feed-arm motion in the X Axis, in arcseconds}
+] 
+\tablecol[{"Z_Axis"}{"        " }{E}{(1)}{Z_Axis}
+{Calculated feed-arm motion in the Z Axis, in arcseconds}
+] 
+\tablecol[{"T1      "}{"DAY    " }{D}{(1)}{T1}
+{Sample time-stamp for channel 1 data, as MJD}
+] 
+\tablecol[{"T3      "}{"DAY    " }{D}{(1)}{T3}
+{Sample time-stamp for channel 3 data, as MJD}
+] 
+\tablecol[{"T4      "}{"DAY    " }{D}{(1)}{T4}
+{Sample time-stamp for channel 4 data, as MJD}
+] 
+\tablecol[{"T5      "}{"DAY    " }{D}{(1)}{T5}
+{Sample time-stamp for channel 5 data, as MJD}
+] 
+\tablecol[{"MedianClockOffset"}{"SECOND  " }{D}{(1)}{MedianClockOffset}
+{Median estimate of GDAQ clock offset}
 ] 
 \end{columns}
 %
@@ -1521,8 +1587,8 @@ This class is derived from the ObitTable class. }
 ]
 \tableover{
 The DATA binary table extension contains raw bolometer data.
-The ``TimeStamp'' column contains the number of seconds since the
-beginning of Unix Time (1 Jan 1976?).\\
+The ``TimeStamp'' column contains the modified Julian day number
+in spite of any indications from the name and Units .\\
 The main file HDU contains the following keywords:
 \begin{itemize}
 \item ``DATE-OBS''\\
@@ -1543,7 +1609,7 @@ String: Project ID
 }
 % Table keyword description
 \begin{keywords}
-\tablekey[{"CFGVALID"}{L}{cfgvalid}{}{}
+\tablekey[{"CFGVALID"}{L}{cfgvalid}{TRUE}{}
 {If true, configuration has not changed during scan}
 ]
 \end{keywords}
@@ -1571,7 +1637,74 @@ String: Project ID
 \end{history}
 \clearpage
 
-%%%%%%%%%%%%%%% ObitTableGBTCCBSTATE Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%% GBT Penn Array Camera file %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%% ObitTableGBTPARDATA2 Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableGBTPARDATA2}]
+ObitTableGBTPARDATA  Class
+\tabletitle{ObitTableGBTPARDATA2 document}
+% table name
+\tablename{DATA }
+\tableintro[
+{Table in GBT archive/Penn Array Camera file.
+This class contains tabular data and allows access.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+The DATA binary table extension contains raw bolometer data.
+The ``TimeStamp'' column contains the number of seconds since the
+beginning of Unix Time (1 Jan 1976?).\\
+The main file HDU contains the following keywords:
+\begin{itemize}
+\item ``DATE-OBS''\\
+String in form yyyy-mm-dd giving UTC start date
+\item ``INSTRUME''\\
+String 'PennArrayReceiver' 
+\item ``UTCSTART''\\
+String: UTC start time in seconds since midnight
+\item ``UTDSTART''\\
+String: UTC starttime in MJD, ``unknown'' = unspecified
+\item ``UTCEND''\\
+String: UTC of exposure end, ``unknown'' = unspecified
+\item ``SCANNUM''\\
+Integer: scan number(?).
+\item ``PROJID''\\
+String: Project ID
+\end{itemize}
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"CFGVALID"}{L}{cfgvalid}{TRUE}{}
+{If true, configuration has not changed during scan}
+]
+\end{keywords}
+
+%
+% Table column description
+\begin{columns}
+\tablecol[{"DMJD"}{"Day" }{D}{(1)}{DMJD}
+{MJD.}
+] 
+\tablecol[{"daccounts"}{"Count" }{E}{(72)}{daccounts}
+{daccounts}
+] 
+\tablecol[{"saecounts"}{"Count" }{E}{(72)}{saecounts}
+{saecounts}
+] 
+\tablecol[{"DigInput"}{"bool" }{B}{(6)}{DigInput}
+{DigInput}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{A. N. Author}{99/99/9999}{Revision 1: Copied from GBT}]
+\modhistory[{A. N. Author}{99/99/9999}{Revision 2: GBT changed format}]
+\end{history}
+\clearpage
+
+%%%%%%%%%%%%%%% ObitTableGBTPARSENSOR Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 %
 \ClassName[{ObitTableGBTPARSENSOR}]

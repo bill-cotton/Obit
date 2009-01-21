@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -436,9 +436,14 @@ void ObitUVImagerImage (ObitUVImager *in,  olong field, gboolean doWeight,
 			gboolean doBeam, gboolean doFlatten, ObitErr *err)
 { 
   ObitUV *data=NULL;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitUVDesc *UVDesc;
   ObitImageDesc *imageDesc;
   olong ifield, hiField, loField, channel=0;
+  ofloat sumwts;
+  ObitImage *theBeam=NULL;
+  gboolean *forceBeam=NULL, needBeam;
   gchar *routine = "ObitUVImagerImage";
 
   /* error checks */
@@ -452,21 +457,14 @@ void ObitUVImagerImage (ObitUVImager *in,  olong field, gboolean doWeight,
     return;
   }
 
-  /* Which field numbers (0-rel) */
-  if (field>0) {
-    loField = field-1;
-    hiField = loField;
-  } else {  /* All */
-    loField = 0;
-    hiField = in->mosaic->numberImages-1;
-  }
+  /* List of need to force making beam */
+  forceBeam = g_malloc0(in->mosaic->numberImages*sizeof(gboolean));
 
-  /* DEBUG 
-  fprintf (stderr," %g doBeam %d field %d\n",in->mosaic->bmaj, doBeam, field);*/
-  /* Loop over fields Imaging */
-  for (ifield=loField; ifield<=hiField; ifield++) {
-    /* Set Stokes */
+ /* Single or multiple images (including beams) */
+  if ((!doBeam) && ((field>0) || (in->mosaic->numberImages==1))) {
+    /* single - no beam */
     UVDesc    = data->myDesc;
+    ifield = MAX (0, (field-1));
     imageDesc = in->mosaic->images[ifield]->myDesc;
     imageDesc->crval[imageDesc->jlocs] = UVDesc->crval[UVDesc->jlocs];
 
@@ -474,11 +472,19 @@ void ObitUVImagerImage (ObitUVImager *in,  olong field, gboolean doWeight,
     imageDesc->maxval    = -1.0e20;
     imageDesc->minval    =  1.0e20;
 
-    /* Image */
+    /* Need to force beam? */
+    theBeam = (ObitImage*)in->mosaic->images[ifield]->myBeam;
+    forceBeam[0] = (theBeam==NULL) ||
+      !ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, (gpointer)&sumwts);
+    needBeam = (doBeam || forceBeam[0]);
+
+   /* Image */
     ObitImageUtilMakeImage (data, in->mosaic->images[ifield], channel, 
-			    doBeam, doWeight, err);
-    /* If it made a beam check the beam size */
-    if (doBeam) {
+			    needBeam, doWeight, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+ 
+   /* Made beam? */
+    if (doBeam || forceBeam[0]) {
       /* If no beam size given take this one */
       if (in->mosaic->bmaj==0.0) {
 	in->mosaic->bmaj = in->mosaic->images[ifield]->myDesc->beamMaj;
@@ -497,12 +503,67 @@ void ObitUVImagerImage (ObitUVImager *in,  olong field, gboolean doWeight,
 	}
       }
     }
-  } /* End loop over fields */
+
+    return;
+  } /* end single */
+
+  /* Multiple (including beams) - do in parallel */
+  loField = 0;
+  hiField = in->mosaic->numberImages-1;
+
+  /* Loop over fields initializing */
+  for (ifield=loField; ifield<=hiField; ifield++) {
+    /* Set Stokes */
+    UVDesc    = data->myDesc;
+    imageDesc = in->mosaic->images[ifield]->myDesc;
+    imageDesc->crval[imageDesc->jlocs] = UVDesc->crval[UVDesc->jlocs];
+
+    /* reset image max/min */
+    imageDesc->maxval    = -1.0e20;
+    imageDesc->minval    =  1.0e20;
+ 
+    /* Need to force beam? */
+    theBeam = (ObitImage*)in->mosaic->images[ifield]->myBeam;
+    forceBeam[ifield-loField] = (theBeam==NULL) ||
+      !ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, (gpointer)&sumwts);
+
+  } /* end loop initializing */
+
+  /* Image */
+  ObitImageUtilMakeImagePar (data, in->mosaic->numberImages, in->mosaic->images,
+			     doBeam, doWeight, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Loop over fields finalizing */
+  for (ifield=loField; ifield<=hiField; ifield++) {
+    /* If it made a beam check the beam size */
+    if (doBeam || forceBeam[ifield-loField]) {
+      /* If no beam size given take this one */
+      if (in->mosaic->bmaj==0.0) {
+	in->mosaic->bmaj = in->mosaic->images[ifield]->myDesc->beamMaj;
+	in->mosaic->bmin = in->mosaic->images[ifield]->myDesc->beamMin;
+	in->mosaic->bpa  = in->mosaic->images[ifield]->myDesc->beamPA;
+      } else if (in->mosaic->bmaj>0.0) { /* beam forced */
+	in->mosaic->images[ifield]->myDesc->beamMaj = in->mosaic->bmaj;
+	in->mosaic->images[ifield]->myDesc->beamMin = in->mosaic->bmin;
+	in->mosaic->images[ifield]->myDesc->beamPA  = in->mosaic->bpa;
+	/* Tell if field 1 */
+	if (ifield==0) {
+	  Obit_log_error(err, OBIT_InfoErr, 
+			 "Using Beamsize %f x %f asec PA=%f",
+			 in->mosaic->bmaj*3600.0, in->mosaic->bmin*3600.0, 
+			 in->mosaic->bpa);
+	}
+      }
+    }
+  } /* End loop over fields finalizing*/
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Need to flatten? */
   if (doFlatten) ObitUVImagerFlatten (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
+  /* Cleanup */
+  if (forceBeam) g_free(forceBeam);
 } /* end ObitUVImagerImage */
 
 /**

@@ -30,6 +30,7 @@ extern ObitTable* TableGBTPARDATA (ObitData *inData, long *tabVer,
 extern PyObject* TableGBTPARDATAGetHeadKeys (ObitTable *inTab) {
   PyObject *outDict=PyDict_New();
   ObitTableGBTPARDATA *lTab = (ObitTableGBTPARDATA*)inTab;
+ PyDict_SetItemString(outDict, "cfgvalid",  PyInt_FromLong((long)lTab->cfgvalid));
 
   return outDict;
 } 
@@ -39,6 +40,7 @@ extern void TableGBTPARDATASetHeadKeys (ObitTable *inTab, PyObject *inDict) {
   char *tstr;
   int lstr=MAXKEYCHARTABLEDATA;
 
+  lTab->cfgvalid = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "cfgvalid"));
 
   if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
     lTab->myStatus = OBIT_Modified;

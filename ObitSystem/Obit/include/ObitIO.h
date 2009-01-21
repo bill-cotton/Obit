@@ -1,6 +1,6 @@
 /* $Id$              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -136,6 +136,12 @@ typedef ObitIOCode (*ObitIOSetFP) (ObitIO *in, ObitInfoList *info,
 ObitIOCode ObitIORead (ObitIO *in, ofloat *data, ObitErr *err);
 typedef ObitIOCode (*ObitIOReadFP) (ObitIO *in, ofloat *data, ObitErr *err);
 
+/** Public:  Read to multiple buffers */
+ObitIOCode ObitIOReadMulti (olong nBuff, ObitIO **in, ofloat **data, 
+			    ObitErr *err);
+typedef ObitIOCode (*ObitIOReadMultiFP) (olong nBuff, ObitIO **in, ofloat **data, 
+					 ObitErr *err);
+
 /** Public:  Read Row */
 ObitIOCode ObitIOReadRow (ObitIO *in, olong rowno, ofloat *data, ObitErr *err);
 typedef ObitIOCode (*ObitIOReadRowFP) (ObitIO *in, olong rowno, ofloat *data, 
@@ -145,6 +151,24 @@ typedef ObitIOCode (*ObitIOReadRowFP) (ObitIO *in, olong rowno, ofloat *data,
 ObitIOCode ObitIOReadSelect (ObitIO *in, ofloat *data, ObitErr *err);
 typedef ObitIOCode (*ObitIOReadSelectFP) (ObitIO *in, ofloat *data, 
 					  ObitErr *err);
+
+/** Public:  Read with selection to multiple buffers */
+ObitIOCode ObitIOReadMultiSelect (olong nBuff, ObitIO **in, ofloat **data, 
+				  ObitErr *err);
+typedef ObitIOCode (*ObitIOReadMultiSelectFP) (olong nBuff, ObitIO **in, ofloat* *data, 
+					       ObitErr *err);
+
+/** Public:  Reread with selection */
+ObitIOCode ObitIOReReadMulti (olong nBuff, ObitIO **in, ofloat **data, 
+			      ObitErr *err);
+typedef ObitIOCode (*ObitIOReReadMultiFP) (olong nBuff, ObitIO **in, ofloat* *data,
+					   ObitErr *err);
+
+/** Public:  Reread with selection to multiple buffers */
+ObitIOCode ObitIOReReadMultiSelect (olong nBuff, ObitIO **in, ofloat **data, 
+				    ObitErr *err);
+typedef ObitIOCode (*ObitIOReReadMultiSelectFP) (olong nBuff, ObitIO **in, ofloat* *data, 
+						 ObitErr *err);
 
 /** Public:  Read Row with selection */
 ObitIOCode ObitIOReadRowSelect (ObitIO *in, olong rowno, ofloat *data, ObitErr *err);

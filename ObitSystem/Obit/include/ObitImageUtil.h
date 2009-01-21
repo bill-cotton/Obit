@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -110,6 +110,10 @@ ObitImage* ObitImageUtilCreateImage (ObitUV *inUV, olong fieldNo,
 void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage, 
 			     olong channel, gboolean doBeam, 
 			     gboolean doWeight, ObitErr *err);
+
+/** Public: Parallel fill images with those image made from from uv data. */
+void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage, 
+			     gboolean doBeam, gboolean doWeight, ObitErr *err);
 
 /** Public: Make an image from from uv data, info in ObitInfoList. */
 void ObitImageUtilMakeImageFileInfo (ObitInfoList *inList,ObitErr *err);

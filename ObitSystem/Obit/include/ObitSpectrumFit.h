@@ -1,6 +1,6 @@
-/* $Id$        */
+/* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008                                               */
+/*;  Copyright (C) 2008-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -141,11 +141,12 @@ typedef void(*ObitSpectrumFitEvalFP) (ObitSpectrumFit* in, ObitImage *inImage,
 				      ObitErr *err);
 /** Public: Fit single spectrum */
 ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq, odouble *freq, 
-			       ofloat *flux, ofloat *sigma, ObitErr *err);
+			       ofloat *flux, ofloat *sigma, gboolean doBrokePow, 
+			       ObitErr *err);
 /** Typedef for definition of class pointer structure */
 typedef ofloat*(*ObitSpectrumFitSingleFP) (olong nfreq, olong nterm, odouble refFreq, 
 					   odouble *freq, ofloat *flux, ofloat *sigma, 
-					   ObitErr *err);
+					   gboolean doBrokePow, ObitErr *err);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -46,6 +46,8 @@ void ObitOTFSolnCopyCal (ObitTableOTFSoln *inSoln, ObitTableOTFCal *outCal,
  * If an input Cal table is given then apply Solutions in this routine,
  * if no input Cal table, then copy the Soln table to a new Cal table
  * in ObitOTFSolnCopyCal.
+ * If the number of detectors in the OTFSoln table is 1 and less than the
+ * number in the input OTFCal table, no detector specific values are applied.
  * \li "solnUse"   OBIT_int (1,1,1) Input Solution table version 
  * \li "calIn"     OBIT_int (1,1,1) Input Cal table version 
  *                 iff <0 then no input Cal table, copy Soln records to output.
@@ -65,8 +67,9 @@ ObitTableOTFCal* ObitOTFSoln2Cal (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   ofloat Wtp, Wtf, minMult, fblank = ObitMagicF();
-  olong iRow, sRow, ver, i, j, npoly, inpoly, ndetect, limitS, limitC;
+  olong iRow, sRow, ver, i, j, npoly, mpoly, inpoly, ndetect, mdetect, limitS, limitC;
   olong  solnuse, calin, calout, iPr, iFl;
+  gboolean doDetCor;
   ObitIOCode retCode;
   ObitOTFArrayGeom* geom;
   ofloat SolnTime[2], SolndAz[2], SolndEl[2];
@@ -196,6 +199,8 @@ ObitTableOTFCal* ObitOTFSoln2Cal (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr *err)
   inpoly  = inCal->myDesc->repeat[inCal->polyCol];
   npoly   = inSoln->myDesc->repeat[inSoln->polyCol];
   ndetect = inSoln->myDesc->repeat[inSoln->addCol];
+  mpoly   = inCal->myDesc->repeat[inSoln->polyCol];
+  mdetect = inCal->myDesc->repeat[inSoln->addCol];
 
   /* Create arrays to store Soln solutions to be interpolated */
   SolnCal[0]  = g_malloc0(ndetect*sizeof(ofloat));
@@ -213,15 +218,18 @@ ObitTableOTFCal* ObitOTFSoln2Cal (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr *err)
   outCalRow->dAz = 0.0;  /* no pointing corrections */
   outCalRow->dEl = 0.0; /* no pointing corrections */
   outCalRow->Target = 0;
-  for (j=0; j<npoly; j++)   outCalRow->poly[j] = 0.0;
-  for (j=0; j<ndetect; j++) outCalRow->mult[j] = 1.0;
-  for (j=0; j<ndetect; j++) outCalRow->wt[j]   = 1.0;
-  for (j=0; j<ndetect; j++) outCalRow->add[j]  = 0.0;
-  for (j=0; j<ndetect; j++) outCalRow->cal[j]  = 0.0;
+  for (j=0; j<mpoly; j++)   outCalRow->poly[j] = 0.0;
+  for (j=0; j<mdetect; j++) outCalRow->mult[j] = 1.0;
+  for (j=0; j<mdetect; j++) outCalRow->wt[j]   = 1.0;
+  for (j=0; j<mdetect; j++) outCalRow->add[j]  = 0.0;
+  for (j=0; j<mdetect; j++) outCalRow->cal[j]  = 0.0;
 
   retCode = OBIT_IO_OK;
   limitS = inSoln->myDesc->nrow; /* how many Soln rows to read */
   limitC = inCal->myDesc->nrow;  /* how many Cal rows to read */
+
+  /* Check for pointing only OTFSoln table */
+  doDetCor = !((ndetect==1) && (ndetect<mdetect));
 
   /* read first two Soln rows */
   sRow = 1;
@@ -275,10 +283,10 @@ ObitTableOTFCal* ObitOTFSoln2Cal (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr *err)
     outCalRow->dEl   = inCalRow->dEl;
     outCalRow->Target = inCalRow->Target;
     for (j=0; j<inpoly; j++)  outCalRow->poly[j] = inCalRow->poly[j];
-    for (j=0; j<ndetect; j++) outCalRow->mult[j] = inCalRow->mult[j];
-    for (j=0; j<ndetect; j++) outCalRow->wt[j]   = inCalRow->wt[j];
-    for (j=0; j<ndetect; j++) outCalRow->add[j]  = inCalRow->add[j];
-    for (j=0; j<ndetect; j++) outCalRow->cal[j]  = inCalRow->cal[j];
+    for (j=0; j<mdetect; j++) outCalRow->mult[j] = inCalRow->mult[j];
+    for (j=0; j<mdetect; j++) outCalRow->wt[j]   = inCalRow->wt[j];
+    for (j=0; j<mdetect; j++) outCalRow->add[j]  = inCalRow->add[j];
+    for (j=0; j<mdetect; j++) outCalRow->cal[j]  = inCalRow->cal[j];
 
     /* Find solution bracketing the Cal entry */
     while ((outCalRow->Time > SolnTime[iFl]) && (sRow<=limitS)) {
@@ -329,71 +337,73 @@ ObitTableOTFCal* ObitOTFSoln2Cal (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr *err)
     else
       outCalRow->dEl = fblank;
 
-     /* Additive term */
-    for (i=0; i<ndetect; i++) {
-      if ((outCalRow->add[i]!=fblank) && (SolnAdd[iPr][i]!=fblank) && (SolnAdd[iFl][i]!=fblank)) {
-	if (fabs(outCalRow->mult[i]) > 1.0e-10) minMult= outCalRow->mult[i];
-	else minMult = 1.0e-10;
-	outCalRow->add[i]  +=  (Wtp * SolnAdd[iPr][i]+ Wtf * SolnAdd[iFl][i]) / minMult;
+    if (doDetCor) {
+      /* Additive term */
+      for (i=0; i<ndetect; i++) {
+	if ((outCalRow->add[i]!=fblank) && (SolnAdd[iPr][i]!=fblank) && (SolnAdd[iFl][i]!=fblank)) {
+	  if (fabs(outCalRow->mult[i]) > 1.0e-10) minMult= outCalRow->mult[i];
+	  else minMult = 1.0e-10;
+	  outCalRow->add[i]  +=  (Wtp * SolnAdd[iPr][i]+ Wtf * SolnAdd[iFl][i]) / minMult;
+	}
+	else
+	  outCalRow->add[i] = fblank;
+	/* Debug Mack Hack Hack
+	   if (outCalRow->add[i] != fblank) {
+	   outCalRow->add[i] = MIN (outCalRow->add[i],  0.2);
+	   outCalRow->add[i] = MAX (outCalRow->add[i], -0.2);
+	   } */
       }
-      else
-	outCalRow->add[i] = fblank;
-      /* Debug Mack Hack Hack
-	 if (outCalRow->add[i] != fblank) {
-	 outCalRow->add[i] = MIN (outCalRow->add[i],  0.2);
-	 outCalRow->add[i] = MAX (outCalRow->add[i], -0.2);
+      
+      /* Cal value */
+      for (i=0; i<ndetect; i++) {
+	if ((outCalRow->cal[i]!=fblank) && (SolnCal[iPr][i]!=fblank) && (SolnCal[iFl][i]!=fblank)) {
+	  if (fabs(outCalRow->mult[i]) > 1.0e-10) minMult= outCalRow->mult[i];
+	  else minMult = 1.0e-10;
+	  outCalRow->cal[i]  +=  (Wtp * SolnCal[iPr][i]+ Wtf * SolnCal[iFl][i]) / minMult;
+	}
+	else {
+	  outCalRow->cal[i] = fblank;
+	  outCalRow->add[i] = fblank;
+	}
+      }
+      
+      /* Polynomial term */
+      for (i=0; i<npoly; i++) {
+	if ((outCalRow->poly[i]!=fblank) && (SolnPoly[iPr][i]!=fblank) && (SolnPoly[iFl][i]!=fblank)) {
+	  outCalRow->poly[i] += (Wtp * SolnPoly[iPr][i] + Wtf * SolnPoly[iFl][i]);
+	} else {
+	  outCalRow->poly[i] = fblank;
+	}
+      }
+      
+      /* Multiplicative term */
+      for (i=0; i<ndetect; i++) {
+	if ((outCalRow->mult[i]!=fblank) && (SolnMult[iPr][i]!=fblank) && (SolnMult[iFl][i]!=fblank))
+	  outCalRow->mult[i] *= (Wtp * SolnMult[iPr][i]+ Wtf * SolnMult[iFl][i]);
+	else {
+	  outCalRow->mult[i] = fblank;
+	  outCalRow->add[i] = fblank;
+	}
+      }
+      
+      /* Weight */
+      for (i=0; i<ndetect; i++) {
+	if ((outCalRow->mult[i]!=fblank) && (SolnWt[iPr][i]!=fblank) && (SolnWt[iFl][i]!=fblank))
+	  outCalRow->wt[i] *= (Wtp * SolnWt[iPr][i]+ Wtf * SolnWt[iFl][i]);
+	else {
+	  outCalRow->wt[i] = fblank;
+	  outCalRow->add[i] = fblank;
+	}
+      }
+      
+      /* debug
+	 if ((outCalRow->Time>2.0210e-4)&&(outCalRow->Time<2.0250e-4)) {
+	 fprintf (stderr, "S2C: time %e prior %e %e follow %e %e\n",
+	 outCalRow->Time, SolnTime[iPr], Wtp, SolnTime[iFl], Wtf);
 	 } */
-    }
+    } /* end if doDetCor */
 
-    /* Cal value */
-    for (i=0; i<ndetect; i++) {
-      if ((outCalRow->cal[i]!=fblank) && (SolnCal[iPr][i]!=fblank) && (SolnCal[iFl][i]!=fblank)) {
-	if (fabs(outCalRow->mult[i]) > 1.0e-10) minMult= outCalRow->mult[i];
-	else minMult = 1.0e-10;
-	outCalRow->cal[i]  +=  (Wtp * SolnCal[iPr][i]+ Wtf * SolnCal[iFl][i]) / minMult;
-      }
-      else {
-	outCalRow->cal[i] = fblank;
-	outCalRow->add[i] = fblank;
-      }
-    }
-    
-    /* Polynomial term */
-    for (i=0; i<npoly; i++) {
-      if ((outCalRow->poly[i]!=fblank) && (SolnPoly[iPr][i]!=fblank) && (SolnPoly[iFl][i]!=fblank)) {
-	outCalRow->poly[i] += (Wtp * SolnPoly[iPr][i] + Wtf * SolnPoly[iFl][i]);
-      } else {
-	outCalRow->poly[i] = fblank;
-      }
-    }
-
-    /* Multiplicative term */
-     for (i=0; i<ndetect; i++) {
-      if ((outCalRow->mult[i]!=fblank) && (SolnMult[iPr][i]!=fblank) && (SolnMult[iFl][i]!=fblank))
-	outCalRow->mult[i] *= (Wtp * SolnMult[iPr][i]+ Wtf * SolnMult[iFl][i]);
-      else {
-	outCalRow->mult[i] = fblank;
- 	outCalRow->add[i] = fblank;
-      }
-   }
-
-    /* Weight */
-     for (i=0; i<ndetect; i++) {
-      if ((outCalRow->mult[i]!=fblank) && (SolnWt[iPr][i]!=fblank) && (SolnWt[iFl][i]!=fblank))
-	outCalRow->wt[i] *= (Wtp * SolnWt[iPr][i]+ Wtf * SolnWt[iFl][i]);
-      else {
-	outCalRow->wt[i] = fblank;
- 	outCalRow->add[i] = fblank;
-      }
-   }
-
-     /* debug
-	if ((outCalRow->Time>2.0210e-4)&&(outCalRow->Time<2.0250e-4)) {
-	fprintf (stderr, "S2C: time %e prior %e %e follow %e %e\n",
-	outCalRow->Time, SolnTime[iPr], Wtp, SolnTime[iFl], Wtf);
-	} */
-     
-   outCalRow->status = 1;
+    outCalRow->status = 1;
 
     /* write row */
     retCode = ObitTableOTFCalWriteRow (outCal, iRow, outCalRow, err);

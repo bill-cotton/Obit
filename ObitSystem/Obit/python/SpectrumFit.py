@@ -13,7 +13,7 @@ with the flux densities at the desired frequencies.
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2008
+#  Copyright (C) 2008-2009
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -114,6 +114,7 @@ class SpectrumFit(SpectrumFitPtr):
             maxChi2   float scalar Max. Chi Sq for accepting a partial spectrum [def 2.0]
             doError   boolean scalar If true do error analysis [def False]
             doPBCor   boolean scalar If true do primary beam correction. [def False]
+            doBrokePow boolean scalar If true do broken power law (3 terms). [def False]
             calFract  float (?,1,1) Calibration error as fraction of flux
                       One per frequency or one for all, def 0.05
             PBmin     float (?,1,1) Minimum beam gain correction
@@ -152,6 +153,7 @@ class SpectrumFit(SpectrumFitPtr):
             maxChi2   float scalar Max. Chi Sq for accepting a partial spectrum [def 2.0]
             doError   boolean scalar If true do error analysis [def False]
             doPBCor   boolean scalar If true do primary beam correction. [def False]
+            doBrokePow boolean scalar If true do broken power law (3 terms). [def False]
             calFract  float (?,1,1) Calibration error as fraction of flux
                       One per frequency or one for all, def 0.05
             PBmin     float (?,1,1) Minimum beam gain correction
@@ -239,7 +241,7 @@ def PCreate (name, nterm):
     return out;
     # end PCreate
 
-def PSingle (nterm, refFreq, freq, flux, sigma, err):
+def PSingle (nterm, refFreq, freq, flux, sigma, err, doBrokePow=False):
     """  Fit single spectrum to flux measurements
     
     Does error analysis and makes primary beam correction
@@ -251,11 +253,13 @@ def PSingle (nterm, refFreq, freq, flux, sigma, err):
     flux    = Array of fluxes (Jy) same dim as freq
     sigma   = Array of errors (Jy) same dim as freq
     err     = Obit error stack
+    doBrokePow = If true do broken power law (3 terms)
     """
     ################################################################
     #
     nfreq = len(freq)
-    ret = Obit.SpectrumFitSingle(nfreq, nterm, refFreq, freq, flux, sigma, err.me)
+    ret = Obit.SpectrumFitSingle(nfreq, nterm, refFreq, freq, flux, sigma, \
+                                 doBrokePow, err.me)
     OErr.printErr(err)
     OErr.printErrMsg(err,"Fitting failed")
     return ret

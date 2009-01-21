@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for SpectrumFit type                       */
 /*                                                                    */
-/*;  Copyright (C) 2008                                               */
+/*;  Copyright (C) 2008-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -74,13 +74,15 @@ extern void SpectrumFitEval (ObitSpectrumFit* in, ObitImage *inImage,
 }
 
 extern PyObject* SpectrumFitSingle (int nfreq, int nterm, double refFreq, double *freq, float *flux, 
-                                    float *sigma, ObitErr *err) {
+                                    float *sigma, int doBrokePow, ObitErr *err) {
   ofloat *out=NULL;
   olong i, n;
+  gboolean ldoBrokePow;
   PyObject *outList=NULL, *o=NULL;
 
+  ldoBrokePow = doBrokePow!=0;
   out = ObitSpectrumFitSingle((olong)nfreq, (olong)nterm, (odouble)refFreq, (odouble*)freq, 
-                              (ofloat*)flux, (ofloat*)sigma, err);
+                              (ofloat*)flux, (ofloat*)sigma, ldoBrokePow, err);
   if (err->error) {
         ObitErrLog(err);
         PyErr_SetString(PyExc_TypeError,"Spectral Fit failed");

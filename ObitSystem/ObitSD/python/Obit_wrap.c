@@ -4637,6 +4637,11 @@ extern  void PlotSetLineWidth (ObitPlot* in, int lwidth, ObitErr *err) {
    ObitPlotSetLineWidth (in, (olong)lwidth, err);
 } // end PlotSetLineWidth
 
+/** Public: Set line style */
+extern  void PlotSetLineStyle (ObitPlot* in, int lstyle, ObitErr *err) {
+   ObitPlotSetLineStyle (in, (olong)lstyle, err);
+} // end PlotSetLineStyle
+
 /** Public: Set foreground color */
 extern  void PlotSetColor (ObitPlot* in, int color, ObitErr *err) {
    ObitPlotSetColor (in, (olong)color, err);
@@ -4721,6 +4726,7 @@ extern void PlotLabel(ObitPlot *,char *,char *,char *,ObitErr *);
 extern void PlotDrawAxes(ObitPlot *,char *,float ,int ,char *,float ,int ,ObitErr *);
 extern void PlotSetCharSize(ObitPlot *,float ,ObitErr *);
 extern void PlotSetLineWidth(ObitPlot *,int ,ObitErr *);
+extern void PlotSetLineStyle(ObitPlot *,int ,ObitErr *);
 extern void PlotSetColor(ObitPlot *,int ,ObitErr *);
 extern void PlotSetPage(ObitPlot *,int ,ObitErr *);
 extern void PlotText(ObitPlot *,float ,float ,float ,float ,float ,char *,ObitErr *);
@@ -5280,13 +5286,15 @@ extern void SpectrumFitEval (ObitSpectrumFit* in, ObitImage *inImage,
 }
 
 extern PyObject* SpectrumFitSingle (int nfreq, int nterm, double refFreq, double *freq, float *flux, 
-                                    float *sigma, ObitErr *err) {
+                                    float *sigma, int doBrokePow, ObitErr *err) {
   ofloat *out=NULL;
   olong i, n;
+  gboolean ldoBrokePow;
   PyObject *outList=NULL, *o=NULL;
 
+  ldoBrokePow = doBrokePow!=0;
   out = ObitSpectrumFitSingle((olong)nfreq, (olong)nterm, (odouble)refFreq, (odouble*)freq, 
-                              (ofloat*)flux, (ofloat*)sigma, err);
+                              (ofloat*)flux, (ofloat*)sigma, ldoBrokePow, err);
   if (err->error) {
         ObitErrLog(err);
         PyErr_SetString(PyExc_TypeError,"Spectral Fit failed");
@@ -5327,7 +5335,7 @@ extern ObitSpectrumFit *SpectrumFitCreate(char *,int );
 extern void SpectrumFitCube(ObitSpectrumFit *,ObitImage *,ObitImage *,ObitErr *);
 extern void SpectrumFitImArr(ObitSpectrumFit *,int ,ObitImage **,ObitImage *,ObitErr *);
 extern void SpectrumFitEval(ObitSpectrumFit *,ObitImage *,double ,ObitImage *,ObitErr *);
-extern PyObject *SpectrumFitSingle(int ,int ,double ,double *,float *,float *,ObitErr *);
+extern PyObject *SpectrumFitSingle(int ,int ,double ,double *,float *,float *,int ,ObitErr *);
 extern ObitInfoList *SpectrumFitGetList(ObitSpectrumFit *);
 extern char *SpectrumFitGetName(ObitSpectrumFit *);
 extern int SpectrumFitIsA(ObitSpectrumFit *);
@@ -11217,6 +11225,55 @@ extern void TableGBTIFSetHeadKeys(ObitTable *,PyObject *);
 
 #include "Obit.h"
 #include "ObitData.h"
+#include "ObitTableGBTPARDATA2.h"
+
+ 
+extern ObitTable* TableGBTPARDATA2 (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                          
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableGBTPARDATA2Value ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                          
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableGBTPARDATA2GetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableGBTPARDATA2 *lTab = (ObitTableGBTPARDATA2*)inTab;
+ PyDict_SetItemString(outDict, "cfgvalid",  PyInt_FromLong((long)lTab->cfgvalid));
+
+  return outDict;
+} 
+
+extern void TableGBTPARDATA2SetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableGBTPARDATA2 *lTab = (ObitTableGBTPARDATA2*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEDATA;
+
+  lTab->cfgvalid = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "cfgvalid"));
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+extern ObitTable *TableGBTPARDATA2(ObitData *,long *,int ,char *,ObitErr *);
+extern PyObject *TableGBTPARDATA2GetHeadKeys(ObitTable *);
+extern void TableGBTPARDATA2SetHeadKeys(ObitTable *,PyObject *);
+
+#include "Obit.h"
+#include "ObitData.h"
 #include "ObitTableGBTPARDATA.h"
 
  
@@ -11244,6 +11301,7 @@ extern ObitTable* TableGBTPARDATA (ObitData *inData, long *tabVer,
 extern PyObject* TableGBTPARDATAGetHeadKeys (ObitTable *inTab) {
   PyObject *outDict=PyDict_New();
   ObitTableGBTPARDATA *lTab = (ObitTableGBTPARDATA*)inTab;
+ PyDict_SetItemString(outDict, "cfgvalid",  PyInt_FromLong((long)lTab->cfgvalid));
 
   return outDict;
 } 
@@ -11253,6 +11311,7 @@ extern void TableGBTPARDATASetHeadKeys (ObitTable *inTab, PyObject *inDict) {
   char *tstr;
   int lstr=MAXKEYCHARTABLEDATA;
 
+  lTab->cfgvalid = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "cfgvalid"));
 
   if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
     lTab->myStatus = OBIT_Modified;
@@ -11308,6 +11367,53 @@ extern void TableGBTPARSENSORSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 extern ObitTable *TableGBTPARSENSOR(ObitData *,long *,int ,char *,ObitErr *);
 extern PyObject *TableGBTPARSENSORGetHeadKeys(ObitTable *);
 extern void TableGBTPARSENSORSetHeadKeys(ObitTable *,PyObject *);
+
+#include "Obit.h"
+#include "ObitData.h"
+#include "ObitTableGBTQUADDETECTOR.h"
+
+ 
+extern ObitTable* TableGBTQUADDETECTOR (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                          
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableGBTQUADDETECTORValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                          
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableGBTQUADDETECTORGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableGBTQUADDETECTOR *lTab = (ObitTableGBTQUADDETECTOR*)inTab;
+
+  return outDict;
+} 
+
+extern void TableGBTQUADDETECTORSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableGBTQUADDETECTOR *lTab = (ObitTableGBTQUADDETECTOR*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEQuadrantDetectorData;
+
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+extern ObitTable *TableGBTQUADDETECTOR(ObitData *,long *,int ,char *,ObitErr *);
+extern PyObject *TableGBTQUADDETECTORGetHeadKeys(ObitTable *);
+extern void TableGBTQUADDETECTORSetHeadKeys(ObitTable *,PyObject *);
 
 #include "Obit.h"
 #include "ObitData.h"
@@ -29699,6 +29805,37 @@ static PyObject *_wrap_PlotSetLineWidth(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_PlotSetLineStyle(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPlot * _arg0;
+    int  _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OiO:PlotSetLineStyle",&_argo0,&_arg1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPlot_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PlotSetLineStyle. Expected _ObitPlot_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of PlotSetLineStyle. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    PlotSetLineStyle(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_PlotSetColor(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitPlot * _arg0;
@@ -33934,14 +34071,15 @@ static PyObject *_wrap_SpectrumFitSingle(PyObject *self, PyObject *args) {
     double * _arg3;
     float * _arg4;
     float * _arg5;
-    ObitErr * _arg6;
+    int  _arg6;
+    ObitErr * _arg7;
     PyObject * _obj3 = 0;
     PyObject * _obj4 = 0;
     PyObject * _obj5 = 0;
-    PyObject * _argo6 = 0;
+    PyObject * _argo7 = 0;
 
     self = self;
-    if(!PyArg_ParseTuple(args,"iidOOOO:SpectrumFitSingle",&_arg0,&_arg1,&_arg2,&_obj3,&_obj4,&_obj5,&_argo6)) 
+    if(!PyArg_ParseTuple(args,"iidOOOiO:SpectrumFitSingle",&_arg0,&_arg1,&_arg2,&_obj3,&_obj4,&_obj5,&_arg6,&_argo7)) 
         return NULL;
 {
   if (PyList_Check(_obj3)) {
@@ -34003,14 +34141,14 @@ static PyObject *_wrap_SpectrumFitSingle(PyObject *self, PyObject *args) {
     return NULL;
   }
 }
-    if (_argo6) {
-        if (_argo6 == Py_None) { _arg6 = NULL; }
-        else if (SWIG_GetPtrObj(_argo6,(void **) &_arg6,"_ObitErr_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 7 of SpectrumFitSingle. Expected _ObitErr_p.");
+    if (_argo7) {
+        if (_argo7 == Py_None) { _arg7 = NULL; }
+        else if (SWIG_GetPtrObj(_argo7,(void **) &_arg7,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 8 of SpectrumFitSingle. Expected _ObitErr_p.");
         return NULL;
         }
     }
-    _result = (PyObject *)SpectrumFitSingle(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
+    _result = (PyObject *)SpectrumFitSingle(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7);
 {
   if (PyList_Check(_result) || PyDict_Check(_result)
       || PyString_Check(_result) || PyBuffer_Check(_result)) {
@@ -50623,6 +50761,155 @@ static PyObject *_wrap_TableGBTIFSetHeadKeys(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_TableGBTPARDATA2(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitData * _arg0;
+    long * _arg1;
+    int  _arg2;
+    char * _arg3;
+    ObitErr * _arg4;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo4 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiOO:TableGBTPARDATA2",&_argo0,&_obj1,&_arg2,&_obj3,&_argo4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTPARDATA2. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of TableGBTPARDATA2. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableGBTPARDATA2(_arg0,_arg1,_arg2,_arg3,_arg4);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((long *) _arg1);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTPARDATA2GetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTable * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:TableGBTPARDATA2GetHeadKeys",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTPARDATA2GetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TableGBTPARDATA2GetHeadKeys(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTPARDATA2SetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableGBTPARDATA2SetHeadKeys",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTPARDATA2SetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    TableGBTPARDATA2SetHeadKeys(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
 static PyObject *_wrap_TableGBTPARDATA(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitTable * _result;
@@ -50913,6 +51200,155 @@ static PyObject *_wrap_TableGBTPARSENSORSetHeadKeys(PyObject *self, PyObject *ar
   }
 }
     TableGBTPARSENSORSetHeadKeys(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTQUADDETECTOR(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitData * _arg0;
+    long * _arg1;
+    int  _arg2;
+    char * _arg3;
+    ObitErr * _arg4;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo4 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiOO:TableGBTQUADDETECTOR",&_argo0,&_obj1,&_arg2,&_obj3,&_argo4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTQUADDETECTOR. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of TableGBTQUADDETECTOR. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableGBTQUADDETECTOR(_arg0,_arg1,_arg2,_arg3,_arg4);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((long *) _arg1);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTQUADDETECTORGetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTable * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:TableGBTQUADDETECTORGetHeadKeys",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTQUADDETECTORGetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TableGBTQUADDETECTORGetHeadKeys(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableGBTQUADDETECTORSetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableGBTQUADDETECTORSetHeadKeys",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableGBTQUADDETECTORSetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    TableGBTQUADDETECTORSetHeadKeys(_arg0,_arg1);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
 {
@@ -58893,12 +59329,18 @@ static PyMethodDef ObitMethods[] = {
 	 { "TableGBTSPDATASetHeadKeys", _wrap_TableGBTSPDATASetHeadKeys, METH_VARARGS },
 	 { "TableGBTSPDATAGetHeadKeys", _wrap_TableGBTSPDATAGetHeadKeys, METH_VARARGS },
 	 { "TableGBTSPDATA", _wrap_TableGBTSPDATA, METH_VARARGS },
+	 { "TableGBTQUADDETECTORSetHeadKeys", _wrap_TableGBTQUADDETECTORSetHeadKeys, METH_VARARGS },
+	 { "TableGBTQUADDETECTORGetHeadKeys", _wrap_TableGBTQUADDETECTORGetHeadKeys, METH_VARARGS },
+	 { "TableGBTQUADDETECTOR", _wrap_TableGBTQUADDETECTOR, METH_VARARGS },
 	 { "TableGBTPARSENSORSetHeadKeys", _wrap_TableGBTPARSENSORSetHeadKeys, METH_VARARGS },
 	 { "TableGBTPARSENSORGetHeadKeys", _wrap_TableGBTPARSENSORGetHeadKeys, METH_VARARGS },
 	 { "TableGBTPARSENSOR", _wrap_TableGBTPARSENSOR, METH_VARARGS },
 	 { "TableGBTPARDATASetHeadKeys", _wrap_TableGBTPARDATASetHeadKeys, METH_VARARGS },
 	 { "TableGBTPARDATAGetHeadKeys", _wrap_TableGBTPARDATAGetHeadKeys, METH_VARARGS },
 	 { "TableGBTPARDATA", _wrap_TableGBTPARDATA, METH_VARARGS },
+	 { "TableGBTPARDATA2SetHeadKeys", _wrap_TableGBTPARDATA2SetHeadKeys, METH_VARARGS },
+	 { "TableGBTPARDATA2GetHeadKeys", _wrap_TableGBTPARDATA2GetHeadKeys, METH_VARARGS },
+	 { "TableGBTPARDATA2", _wrap_TableGBTPARDATA2, METH_VARARGS },
 	 { "TableGBTIFSetHeadKeys", _wrap_TableGBTIFSetHeadKeys, METH_VARARGS },
 	 { "TableGBTIFGetHeadKeys", _wrap_TableGBTIFGetHeadKeys, METH_VARARGS },
 	 { "TableGBTIF", _wrap_TableGBTIF, METH_VARARGS },
@@ -59387,6 +59829,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "PlotText", _wrap_PlotText, METH_VARARGS },
 	 { "PlotSetPage", _wrap_PlotSetPage, METH_VARARGS },
 	 { "PlotSetColor", _wrap_PlotSetColor, METH_VARARGS },
+	 { "PlotSetLineStyle", _wrap_PlotSetLineStyle, METH_VARARGS },
 	 { "PlotSetLineWidth", _wrap_PlotSetLineWidth, METH_VARARGS },
 	 { "PlotSetCharSize", _wrap_PlotSetCharSize, METH_VARARGS },
 	 { "PlotDrawAxes", _wrap_PlotDrawAxes, METH_VARARGS },

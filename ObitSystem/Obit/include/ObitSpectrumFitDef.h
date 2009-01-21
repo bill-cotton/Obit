@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008                                               */
+/*;  Copyright (C) 2008-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -42,6 +42,8 @@ olong nfreq;
 gboolean doError;
 /** make Primary beam correction? */
 gboolean doPBCorr;
+/** Do broken power law ? */
+gboolean doBrokePow;
 /** Size of planes in pixels */
 olong nx, ny;
 /** Maximum Chi square to accept a partial fit */

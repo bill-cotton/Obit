@@ -1,0 +1,171 @@
+; $Id:  $
+; PAROTF
+;---------------------------------------------------------------
+;! Obit GBT/PAR to OTF conversion
+;# Task Obit single dish
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2009
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+PAROTF2     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+PAROTF2    GBT/Mustang 2009+ to OTF format conversion
+**PARAM** str 4 **DEF** FITS
+DataType                            type of output (Only FITS)
+**PARAM** str 24
+Scan                                Scan for GBT/PAR FITS file
+**PARAM** str 64
+DataRoot                            Root Directory for input
+**PARAM** str 48
+outOTF                              Output FITS OTF file 
+**PARAM** int 1
+outDisk                             Output image disk drive #
+**PARAM** float 1
+avgTime                             Averaging time (sec)
+**PARAM** float 1
+offTime                             Time offset (sec)
+**PARAM** int 1
+scanNo                              Scan number, 0=default
+**PARAM** boo 1   **DEF** F
+doQuadD                             Apply Quadrent detector offset
+**PARAM** str 48 **DEF** None
+config                              Configuration file
+----------------------------------------------------------------
+PAROTF GBT/Mustang to OTF format conversion post 2009
+Type:  Task
+ Use:  Convert archive format to Obit/OTF
+
+Adverbs:
+  Scan.......Name of scan (e.g."2006_03_08_09:10:07")
+  DataRoot...Root of GBT archive directory for project
+  outOTF.....Output OTF data file name
+  outDisk....Output OTF data file disk drive #. 
+             0=> current working directory
+  avgTime....Data averaging time in seconds
+  offTime....Offset in sec to be added to time
+  scanNo.....Scan number, 0=> Use GBT scan no.
+  doQuadD....Determine and apply pointing corrections from the
+             Quadrant Detector data
+  config.....If neither blank nore "None" then this file gives
+             configuration information
+             The config file is basically free format with a
+             keyword=value syntax. Comments follow a "#" symbol.
+             String keywords should have no leading or 
+             trailing blanks before the end of the line or a comment
+             delimiter. 
+             If a numeric value is followed by a comment there should
+             be at least one blank before the comment delimiter.
+
+             Entries not specified will assume their default values.
+             Parameters may be given in any order.
+
+             An example follows:
+
+# Configuration for 2009
+$Key = BTime  Flt (1) # Time in sec to blank after cal switch
+2.50e-6
+$Key = beamOffset  Flt (4,72) # Beam offset, (cross el,elevation,col,row),  asec -9999.0 => no data
+  17.37   -4.48,  0.00, 0.00, # 08 
+  -0.90   -3.47,  1.00, 0.00, # 09 
+  -4.48  -17.37,  2.00, 0.00, # 10 
+ -12.21   -4.25,  3.00, 0.00, # 11 
+ -24.31    6.28,  4.00, 0.00, # 12 
+   0.90    3.47,  5.00, 0.00, # 13 
+   4.48   17.37,  6.00, 0.00, # 14 
+   3.47   -0.90,  7.00, 0.00, # 15 
+  19.95   -8.86,  0.00, 1.00, # 16 
+   1.68   -7.85,  1.00, 1.00, # 17 
+  -8.86  -19.95,  2.00, 1.00, # 18 
+ -16.58   -6.84,  3.00, 1.00, # 19 
+ -19.95    8.86,  4.00, 1.00, # 20 
+  -1.68    7.85,  5.00, 1.00, # 21 
+   8.86   19.95,  6.00, 1.00, # 22 
+   7.85    1.68,  7.00, 1.00, # 23 
+  10.42   -2.69,  0.00, 2.00, # 24 
+   6.84  -16.58,  1.00, 2.00, # 25 
+  -2.69  -10.42,  2.00, 2.00, # 26 
+  -7.85   -1.68,  3.00, 2.00, # 27 
+ -13.00    7.06,  4.00, 2.00, # 28 
+  -6.84   16.58,  5.00, 2.00, # 29 
+   2.69   10.42,  6.00, 2.00, # 30 
+  16.58    6.84,  7.00, 2.00, # 31 
+  13.00   -7.06,  0.00, 3.00, # 32 
+   4.25  -12.21,  1.00, 3.00, # 33 
+  -7.06  -13.00,  2.00, 3.00, # 34 
+ -19.16   -2.47,  3.00, 3.00, # 35 
+ -15.58   11.43,  4.00, 3.00, # 36 
+  -4.25   12.21,  5.00, 3.00, # 37 
+   7.06   13.00,  6.00, 3.00, # 38 
+  12.21    4.25,  7.00, 3.00, # 39 
+  15.58  -11.43,  0.00, 4.00, # 40 
+   2.47  -19.16,  1.00, 4.00, # 41 
+ -11.43  -15.58,  2.00, 4.00, # 42 
+ -14.79    0.11,  3.00, 4.00, # 43 
+  -8.63    9.63,  4.00, 4.00, # 44 
+   0.11   14.79,  5.00, 4.00, # 45 
+  11.43   15.58,  6.00, 4.00, # 46 
+  19.16    2.47,  7.00, 4.00, # 47 
+   6.05   -5.27,  0.00, 5.00, # 48 
+  -0.11  -14.79,  1.00, 5.00, # 49 
+  -5.27   -6.05,  2.00, 5.00, # 50 
+ -10.42    2.69,  3.00, 5.00, # 51 
+ -11.20   14.01,  4.00, 5.00, # 52 
+  -2.47   19.16,  5.00, 5.00, # 53 
+   5.27    6.05,  6.00, 5.00, # 54 
+  14.79   -0.11,  7.00, 5.00, # 55 
+  11.20  -14.01,  0.00, 6.00, # 56 
+  -1.91  -21.74,  1.00, 6.00, # 57 
+ -14.01  -11.20,  2.00, 6.00, # 58 
+ -21.74    1.91,  3.00, 6.00, # 59 
+  -6.05    5.27,  4.00, 6.00, # 60 
+   1.91   21.74,  5.00, 6.00, # 61 
+  14.01   11.20,  6.00, 6.00, # 62 
+  21.74   -1.91,  7.00, 6.00, # 63 
+   8.63   -9.63,  0.00, 7.00, # 64 
+  -6.28  -24.31,  1.00, 7.00, # 65 
+  -9.63   -8.63,  2.00, 7.00, # 66 
+ -17.37    4.48,  3.00, 7.00, # 67 
+  -3.47    0.90,  4.00, 7.00, # 68 
+   6.28   24.31,  5.00, 7.00, # 69 
+   9.63    8.63,  6.00, 7.00, # 70 
+  24.31   -6.28,  7.00, 7.00, # 71 
+  -9999.  -9999.,   0.00,    8.00, #  00 Dark pixel, 
+  -9999.  -9999,    1.00,    8.00, #  01 Dark pixel 
+  -9999.  -9999.,   2.00,    8.00, #  02 Dark pixel 
+  -9999.  -9999.,   3.00,    8.00, #  03 Dark pixel 
+  -9999.  -9999.,   4.00,    8.00, #  04 Dark pixel 
+  -9999.  -9999.,   5.00,    8.00, #  05 Dark pixel 
+  -9999.  -9999.,   6.00,    8.00, #  06 Dark pixel 
+  -9999.  -9999.,   7.00,    8.00  #  07 Dark pixel 
+
+Time stream filtering:
+1) First the data streams are time averaged using boxcar averaging
+   to the requested integration time.
+2) Remove jumps in baseline
+   Determines a 9 point running median and when there is a persistent
+   jump not associated with a cal  state change, then the following
+   data is adjusted by the difference.   Multiple jumps may be detected.
+3) Filter common mode 1.4 Hz signal from refrigerators
+
+----------------------------------------------------------------

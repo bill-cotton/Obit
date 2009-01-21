@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008                                               */
+/*;  Copyright (C) 2008-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -82,6 +82,18 @@ static int SpecFitJac (const gsl_vector *x, void *params,
 /** Private: Solver function + Jacobian evaluation */
 static int SpecFitFuncJac (const gsl_vector *x, void *params, 
 			gsl_vector *f, gsl_matrix *J);
+
+/** Private: Solver function evaluation - broken power law */
+static int SpecFitFuncBP (const gsl_vector *x, void *params, 
+			  gsl_vector *f);
+
+/** Private: Solver Jacobian evaluation - broken power law */
+static int SpecFitJacBP (const gsl_vector *x, void *params, 
+			 gsl_matrix *J);
+
+/** Private: Solver function + Jacobian evaluation - broken power law */
+static int SpecFitFuncJacBP (const gsl_vector *x, void *params, 
+			     gsl_vector *f, gsl_matrix *J);
 #endif /* HAVE_GSL */ 
 
 /** Private: Threaded fitting */
@@ -106,6 +118,8 @@ typedef struct {
   olong        fitTerm;
   /** number of frequencies  */
   olong        nfreq;
+  /** Array of Nu per frequency point - broken power law */
+  ofloat *nu;
   /** Array of log (Nu/Nu_0) per frequency point */
   ofloat *logNuOnu0;
   /** Array of weights (1/RMS**2) per inFArrays (nfreq) */
@@ -120,12 +134,16 @@ typedef struct {
   odouble minDelta;
   /** max acceptable normalized chi squares */
   ofloat maxChiSq;
+  /** Reference frequency */
+  ofloat refFreq;
   /** Vector of guess/fitted coefficients, optional errors */
   ofloat *coef;
   /** Chi squared of fit */
   ofloat ChiSq;
   /** Do error analysis? */
   gboolean doError;
+  /** Do broken power law ? */
+  gboolean doBrokePow;
   /** Do Primary beam correction? */
   gboolean doPBCorr;
 #ifdef HAVE_GSL
@@ -160,6 +178,10 @@ typedef struct {
 
 /** Private: Actual fitting */
 static void NLFit (NLFitArg *arg);
+
+/** Private: Actual fitting broken power */
+static void NLFitBP (NLFitArg *arg);
+
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -370,6 +392,7 @@ ObitSpectrumFit* ObitSpectrumFitCreate (gchar* name, olong nterm)
  * planes are spectral fit parameters.  The "CRVAL" on this axis will be the reference 
  * Frequency for the fitting.
  * Item "NTERM" is added to the output image descriptor to give the maximum number 
+ * Item ""BROKENPO" is added to the output image descriptor if fit is a broken power law
  * of terms fitted
  * \param in       Spectral fitting object
  *                 Potential parameters on in->info:
@@ -377,6 +400,7 @@ ObitSpectrumFit* ObitSpectrumFitCreate (gchar* name, olong nterm)
  * \li "maxChi2" OBIT_float scalar Max. Chi Sq for accepting a partial spectrum [def 1.5]
  * \li "doError" OBIT_boolean scalar If true do error analysis [def False]
  * \li "doPBCor" OBIT_boolean scalar If true do primary beam correction. [def False]
+ * \li "doBrokePow" OBIT_boolean scalar If true do broken power law (3 terms). [def False]
  * \li "calFract" OBIT_float (?,1,1) Calibration error as fraction of flux
  *              One per frequency or one for all, def 1.0e-5
  * \li "PBmin"  OBIT_float (?,1,1) Minimum beam gain correction
@@ -431,6 +455,11 @@ void ObitSpectrumFitCube (ObitSpectrumFit* in, ObitImage *inImage,
   InfoReal.itg = (olong)FALSE; type = OBIT_bool;
   ObitInfoListGetTest(in->info, "doPBCor", &type, dim, &InfoReal);
   in->doPBCorr = InfoReal.itg;
+
+  /* Want Broken power law ? */
+  InfoReal.itg = (olong)FALSE; type = OBIT_bool;
+  ObitInfoListGetTest(in->info, "doBrokePow", &type, dim, &InfoReal);
+  in->doBrokePow = InfoReal.itg;
 
   /* Min PB gain */
   ObitInfoListGetP(in->info, "PBmin", &type, PBdim, (gpointer)&PBmin);
@@ -565,11 +594,13 @@ void ObitSpectrumFitCube (ObitSpectrumFit* in, ObitImage *inImage,
  * Frequency for the fitting.
  * Item "NTERM" is added to the output image descriptor to give the maximum number 
  * of terms fitted
+ * Item ""BROKENPO" is added to the output image descriptor if fit is a broken power law
  * \param in       Spectral fitting object
  * \li "refFreq" OBIT_double scalar Reference frequency for fit [def average of inputs]
  * \li "maxChi2" OBIT_float scalar Max. Chi Sq for accepting a partial spectrum [def 1.5]
  * \li "doError" OBIT_boolean scalar If true do error analysis [def False]
  * \li "doPBCor" OBIT_boolean scalar If true do primary beam correction.[def False]
+ * \li "doBrokePow" OBIT_boolean scalar If true do broken power law (3 terms). [def False]
  * \li "calFract" OBIT_float (?,1,1) Calibration error as fraction of flux
  *              One per frequency or one for all, def 0.05
  * \li "PBmin"  OBIT_float (?,1,1) Minimum beam gain correction
@@ -624,6 +655,11 @@ void ObitSpectrumFitImArr (ObitSpectrumFit* in, olong nimage, ObitImage **imArr,
   InfoReal.itg = (olong)FALSE; type = OBIT_bool;
   ObitInfoListGetTest(in->info, "doPBCor", &type, dim, &InfoReal);
   in->doPBCorr = InfoReal.itg;
+
+  /* Want Broken power law ? */
+  InfoReal.itg = (olong)FALSE; type = OBIT_bool;
+  ObitInfoListGetTest(in->info, "doBrokePow", &type, dim, &InfoReal);
+  in->doBrokePow = InfoReal.itg;
 
   /* Min PB gain */
   ObitInfoListGetP(in->info, "PBmin", &type, PBdim, (gpointer)&PBmin);
@@ -839,7 +875,7 @@ void ObitSpectrumFitEval (ObitSpectrumFit* in, ObitImage *inImage,
   outImage->myDesc->bitpix = -32;  /* Float it */
 
   /* Determine number of frequency terms and initialize storage arrays 
-   get nterm from input image descriptor wit default number of pixels on
+   get nterm from input image descriptor with default number of pixels on
    SPECLOGF" axis */
   nterm = inImage->myDesc->inaxes[jlocspec];
   ObitInfoListGetTest (outImage->myDesc->info, "NTERM", &type, dim, &nterm);
@@ -918,13 +954,14 @@ void ObitSpectrumFitEval (ObitSpectrumFit* in, ObitImage *inImage,
  * \param freq     Array of Frequencies (Hz)
  * \param flux     Array of fluxes (Jy) same dim as freq
  * \param sigma    Array of errors (Jy) same dim as freq
+ * \param doBrokePow  TRUE if a broken power law fit is desired (3 terms)
  * \param err      Obit error stack object.
  * \return  Array of fitter parameters, errors for each and Chi Squares of fit
  *          Initial terms are in Jy, other in log.
  */
 ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq, 
 			       odouble *freq, ofloat *flux, ofloat *sigma, 
-			       ObitErr *err)
+			       gboolean doBrokePow, ObitErr *err)
 {
   ofloat *out = NULL;
   olong i, j;
@@ -942,6 +979,14 @@ ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq,
       Obit_log_error(err, OBIT_InfoWarn, 
 		    "%s: Asked for %d terms, will limit to 5", routine, nterm);
   }
+
+  /* Warn if incorrect number of terms */
+  if (doBrokePow && (nterm!=3)) {
+      Obit_log_error(err, OBIT_InfoWarn, 
+		    "%s: Must have three terms for broken power law, not %d", 
+		     routine, nterm);
+  }
+
   /* Warn if ref. freq <= 0, set to 1.0e9 */
   if (refFreq<=0.0) {
     refFreq = 1.0e9;
@@ -955,19 +1000,23 @@ ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq,
   arg->nfreq          = nfreq;
   arg->nterm          = nterm;
   arg->doError        = TRUE;
+  arg->doBrokePow     = doBrokePow;
   arg->doPBCorr       = FALSE;
   arg->maxIter        = 100;
   arg->minDelta       = 1.0e-5;  /* Min step size */
   arg->maxChiSq       = 1.5;     /* max acceptable normalized chi squares */
+  arg->refFreq        = refFreq; /* Reference Frequency */
   arg->weight         = g_malloc0(arg->nfreq*sizeof(ofloat));
   arg->isigma         = g_malloc0(arg->nfreq*sizeof(ofloat));
   arg->obs            = g_malloc0(arg->nfreq*sizeof(ofloat));
+  arg->nu             = g_malloc0(arg->nfreq*sizeof(ofloat));
   arg->logNuOnu0      = g_malloc0(arg->nfreq*sizeof(ofloat));
   arg->coef           = g_malloc0(2*arg->nterm*sizeof(ofloat));
   for (i=0; i<nfreq; i++) {
     arg->isigma[i]    = 1.0 / sigma[i];
     arg->weight[i]    = arg->isigma[i]*arg->isigma[i];
     arg->obs[i]       = flux[i];
+    arg->nu[i]        = freq[i];
     arg->logNuOnu0[i] = log(freq[i]/refFreq);
   }
 
@@ -989,9 +1038,15 @@ ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq,
 
   /* Fitting function info */
   arg->funcStruc = g_malloc0(sizeof(gsl_multifit_function_fdf));
-  arg->funcStruc->f      = &SpecFitFunc;
-  arg->funcStruc->df     = &SpecFitJac;
-  arg->funcStruc->fdf    = &SpecFitFuncJac;
+  if (doBrokePow) {
+    arg->funcStruc->f      = &SpecFitFuncBP;
+    arg->funcStruc->df     = &SpecFitJacBP;
+    arg->funcStruc->fdf    = &SpecFitFuncJacBP;
+  } else {
+    arg->funcStruc->f      = &SpecFitFunc;
+    arg->funcStruc->df     = &SpecFitJac;
+    arg->funcStruc->fdf    = &SpecFitFuncJac;
+  }
   arg->funcStruc->n      = arg->nfreq;
   arg->funcStruc->p      = arg->nterm;
   arg->funcStruc->params = arg;
@@ -1015,8 +1070,23 @@ ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq,
   }
 #endif /* HAVE_GSL */ 
 
-  /* Fit */
-  NLFit(arg);
+  /* Fit - poly power or broken power */
+  if (arg->doBrokePow) {
+    /* Broken power law */
+    arg->nterm = 2;  /* simple power law */
+    arg->funcStruc->f      = &SpecFitFunc;
+    arg->funcStruc->df     = &SpecFitJac;
+    arg->funcStruc->fdf    = &SpecFitFuncJac;
+    NLFit(arg);
+    arg->nterm = 3;  /* broken power law */
+    arg->funcStruc->f      = &SpecFitFuncBP;
+    arg->funcStruc->df     = &SpecFitJacBP;
+    arg->funcStruc->fdf    = &SpecFitFuncJacBP;
+    NLFitBP(arg);
+  } else {
+    /* multi term power */
+    NLFit(arg);
+  }
   
   /* get results parameters + errors */
   out = g_malloc0((2*arg->nterm+1)*sizeof(ofloat));
@@ -1028,6 +1098,7 @@ ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq,
   if (arg->weight)    g_free(arg->weight);
   if (arg->isigma)    g_free(arg->isigma);
   if (arg->obs)       g_free(arg->obs);
+  if (arg->nu)        g_free(arg->nu);
   if (arg->logNuOnu0) g_free(arg->logNuOnu0);
   if (arg->coef)      g_free(arg->coef);
 #ifdef HAVE_GSL
@@ -1127,7 +1198,8 @@ void ObitSpectrumFitInit  (gpointer inn)
   in->info       = newObitInfoList(); 
   in->nterm      = 0;
   in->nfreq      = 0;
-  in->maxChi2     = 1.5;
+  in->doBrokePow = FALSE;
+  in->maxChi2    = 1.5;
   in->RMS        = NULL;
   in->calFract   = NULL;
   in->outDesc    = NULL;
@@ -1243,6 +1315,7 @@ static void Fitter (ObitSpectrumFit* in, ObitErr *err)
     args->nfreq       = in->nfreq;
     args->nterm       = in->nterm;
     args->doError     = in->doError;
+    args->doBrokePow  = in->doBrokePow;
     args->doPBCorr    = in->doPBCorr;
     args->maxIter     = 100;
     args->minDelta    = 1.0e-2;          /* Min step size */
@@ -1250,6 +1323,7 @@ static void Fitter (ObitSpectrumFit* in, ObitErr *err)
     args->weight      = g_malloc0(args->nfreq*sizeof(ofloat));
     args->isigma      = g_malloc0(args->nfreq*sizeof(ofloat));
     args->obs         = g_malloc0(args->nfreq*sizeof(ofloat));
+    args->nu          = g_malloc0(args->nfreq*sizeof(ofloat));
     args->logNuOnu0   = g_malloc0(args->nfreq*sizeof(ofloat));
     if (args->doError)
       args->coef      = g_malloc0(2*args->nterm*sizeof(ofloat));
@@ -1273,9 +1347,15 @@ static void Fitter (ObitSpectrumFit* in, ObitErr *err)
     
     /* Fitting function info */
     args->funcStruc = g_malloc0(sizeof(gsl_multifit_function_fdf));
-    args->funcStruc->f      = &SpecFitFunc;
-    args->funcStruc->df     = &SpecFitJac;
-    args->funcStruc->fdf    = &SpecFitFuncJac;
+    if (in->doBrokePow) {
+      args->funcStruc->f      = &SpecFitFuncBP;
+      args->funcStruc->df     = &SpecFitJacBP;
+      args->funcStruc->fdf    = &SpecFitFuncJacBP;
+    } else {
+      args->funcStruc->f      = &SpecFitFunc;
+      args->funcStruc->df     = &SpecFitJac;
+      args->funcStruc->fdf    = &SpecFitFuncJac;
+    }
     args->funcStruc->n      = args->nfreq;
     args->funcStruc->p      = args->nterm;
     args->funcStruc->params = args;
@@ -1337,6 +1417,7 @@ static void Fitter (ObitSpectrumFit* in, ObitErr *err)
       if (args->weight)    g_free(args->weight);
       if (args->isigma)    g_free(args->isigma);
       if (args->obs)       g_free(args->obs);
+      if (args->nu)        g_free(args->nu);
       if (args->logNuOnu0) g_free(args->logNuOnu0);
       if (args->coef)      g_free(args->coef);
 #ifdef HAVE_GSL
@@ -1422,6 +1503,14 @@ static void WriteOutput (ObitSpectrumFit* in, ObitImage *outImage,
   ObitInfoListAlwaysPut (((ObitImageDesc*)outImage->myIO->myDesc)->info, "NTERM", 
     OBIT_long, dim, &in->nterm);
 
+  /* If doBrokePow set "BROKENPO" to TRUE on output descriptor */
+  if (in->doBrokePow) {
+    dim[0] = dim[1] = dim[2] = 1;
+    ObitInfoListAlwaysPut (outImage->myDesc->info, "BROKENPO", OBIT_bool, dim, &in->doBrokePow);
+    ObitInfoListAlwaysPut (((ObitImageDesc*)outImage->myIO->myDesc)->info, "BROKENPO", 
+			   OBIT_bool, dim, &in->doBrokePow);
+  }
+
   /* Close output */
   retCode = ObitImageClose (outImage, err);
   outImage->extBuffer = FALSE;   /* May need I/O buffer later */
@@ -1457,8 +1546,11 @@ static gpointer ThreadNLFit (gpointer arg)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* Set up frequency info */
-  for (i=0; i<in->nfreq; i++) 
+  larg->refFreq = in->refFreq;
+  for (i=0; i<in->nfreq; i++) {
     larg->logNuOnu0[i] = log(in->freqs[i]/in->refFreq);
+    larg->nu[i] = in->freqs[i];
+  }
 
   /* How many output planes */
   if (in->doError) nOut = 1+in->nterm*2;
@@ -1519,8 +1611,23 @@ static gpointer ThreadNLFit (gpointer arg)
  	for (i=0; i<in->nterm; i++) 
 	  larg->coef[i] = in->outFArrays[i]->array[indx];
       }
-      /* Fit */
-      NLFit(larg);
+      /* Fit - poly power or broken power */
+      if (larg->doBrokePow) {
+	/* Broken power law */
+	in->nterm = 2;  /* simple power law */
+	larg->funcStruc->f      = &SpecFitFunc;
+	larg->funcStruc->df     = &SpecFitJac;
+	larg->funcStruc->fdf    = &SpecFitFuncJac;
+	NLFit(larg);
+	in->nterm = 3;  /* broken power law */
+	larg->funcStruc->f      = &SpecFitFuncBP;
+	larg->funcStruc->df     = &SpecFitJacBP;
+	larg->funcStruc->fdf    = &SpecFitFuncJacBP;
+	NLFitBP(larg);
+      } else {
+	/* multi term power */
+ 	NLFit(larg);
+      }
       
       /* Save to output */
       if (doError) {
@@ -1722,6 +1829,135 @@ static void NLFit (NLFitArg *arg)
 
 } /* end NLFit */
 
+/**
+ * Do non linear fit to a broken power law spectrum
+ * Only fits 3 terms
+ * Broken power law version, above nv_b the spectrum steepens by half
+ * Parameters:
+ *   S_0   = Flux density at frequency nu_0
+ *   alpha = spectral index
+ *   nu_b  = Break frequency
+ * When called the S_O and the alpha terms should have been estimated
+ * (call to NLFit with 2 terms); the initial break frequency is set to 
+ * the reference frequency. 
+ * \param arg      NLFitArg structure
+ *                 fitted parameters returned in arg->in->coef
+ */
+static void NLFitBP (NLFitArg *arg)
+{
+  olong iter=0, i, nterm, nvalid;
+  ofloat avg, chi2Test, sigma, fblank = ObitMagicF();
+  odouble sum, sumwt;
+  int status;
+#ifdef HAVE_GSL
+  gsl_multifit_fdfsolver *solver;
+  gsl_matrix *covar;
+  gsl_vector *work;
+#endif /* HAVE_GSL */ 
+ 
+  /* determine weighted average, count valid data */
+  sum = sumwt = 0.0;
+  nvalid = 0;
+  for (i=0; i<arg->nfreq; i++) {
+    if ((arg->obs[i]!=fblank) && (arg->weight[i]>0.0)) {
+      sum   += arg->weight[i] * arg->obs[i];
+      sumwt += arg->weight[i];
+      nvalid++;
+    }
+  }
+  if (nvalid<=(arg->nterm)) return;  /* enough good data? */
+  avg = sum/sumwt;
+      
+  /* Estimate of noise */
+  sigma = 1.0 / sqrt(sumwt);
+
+  /* Do nonlinear least-squares fit */
+  nterm = 3;
+  arg->fitTerm = nterm;  /* How many actually being fitted */
+#ifdef HAVE_GSL
+
+  /* Set solver and covar */
+  solver = arg->solver3;
+  covar  = arg->covar3;
+  work   = arg->work3;
+         
+  /* set initial guess - start with lower order fit */
+  /* Initial break frequency is reference freq */
+  arg->coef[2] = arg->refFreq;
+  for (i=0; i<nterm; i++) gsl_vector_set(work, i, (double)arg->coef[i]);
+  arg->funcStruc->n      = arg->nfreq;
+  arg->funcStruc->p      = nterm;
+  arg->funcStruc->params = arg;
+  gsl_multifit_fdfsolver_set (solver, arg->funcStruc, work);
+  iter = 0;
+      
+  /* iteration loop */
+  do {
+    iter++;
+    status = gsl_multifit_fdfsolver_iterate(solver);
+    /*if (status) break;???*/
+    
+    status = gsl_multifit_test_delta (solver->dx, solver->x, 
+				      (double)arg->minDelta, 
+				      (double)arg->minDelta);
+  } while ((status==GSL_CONTINUE) && (iter<arg->maxIter));
+  
+  /* If it didn't work - bail */
+  if ((status!=GSL_SUCCESS) && (status!=GSL_CONTINUE)) {
+    fprintf (stderr, "Failed, status = %s\n", gsl_strerror(status));
+    return;
+  }
+  
+  /* normalized Chi squares */
+  if (nvalid>nterm) {
+    sumwt = (ofloat)gsl_blas_dnrm2(solver->f);
+    chi2Test = (sumwt*sumwt)/(nvalid-nterm);
+  } else chi2Test = -1.0;
+
+  /* Is this better than a simple power law? */
+  /*if (chi2Test<arg->ChiSq) {*/
+  arg->ChiSq = chi2Test;
+  
+  /* Get fitted values */
+  for (i=0; i<nterm; i++) arg->coef[i] = (ofloat)gsl_vector_get(solver->x, i);
+
+  /* DEBUG 
+  if (arg->coef[0]>50.0*sigma) {
+    fprintf (stdout, "DEBUG %f %f %f \n",arg->coef[0], arg->coef[1], arg->coef[2]);
+  }*/
+  
+  /* Errors wanted? */
+  if (arg->doError) {
+    gsl_multifit_covar (solver->J, 0.0, covar);
+    for (i=0; i<nterm; i++) {
+      arg->coef[arg->nterm+i] = sqrt(gsl_matrix_get(covar, i, i));
+      /* Clip to sanity range
+      arg->coef[arg->nterm+i] = MAX (-1.0e5, MIN (1.0e5, arg->coef[arg->nterm+i])); */
+    }
+  } /* end of get errors */
+  
+  
+    /* Sanity check on spectral parameters [-3,3]
+       for (i=1; i<nterm; i++) arg->coef[i] = MAX(-3.0, MIN(3.0,arg->coef[i])); */
+    /* End if better than simple power law */
+    /*} else {*/
+    /* Worse, use simple power law Make break very high */
+    /*    arg->coef[2] = 1.0e20;*/
+    /*}*/
+  
+#endif /* HAVE_GSL */ 
+  /* sanity check, if flux < sigma, don't include higher order terms */
+  if (fabs(arg->coef[0])<sigma)  
+    for (i=1; i<arg->nterm; i++) arg->coef[i] = 0.0; 
+
+  /*  Gonzo higher order fit 
+  if ((fabs(arg->coef[1])>3.0) || (arg->coef[2]>arg->nu[arg->nfreq-1])) {
+    arg->coef[0] = avg;
+    for (i=1; i<arg->nterm; i++) arg->coef[i] = 0.0; 
+  }*/
+
+} /* end NLFitBP */
+
 #ifdef HAVE_GSL
 /**
  * Function evaluator for spectral fitting solver
@@ -1883,4 +2119,229 @@ static int SpecFitFuncJac (const gsl_vector *x, void *params,
 
   return GSL_SUCCESS;
 } /*  end SpecFitFuncJac */
+/**
+ * Function evaluator for spectral fitting solver
+ * Broken power law version, above nv_b the spectrum steepens by half
+ * Parameters:
+ *   S_0   = Flux density at frequency nu_0
+ *   alpha = spectral index
+ *   nu_b  = Break frequency
+ * Evaluates (model-observed) / sigma
+ * \param x       Vector of parameters to be fitted
+ *                Flux,array_of spectral_terms
+ * \param param   Function parameter structure (NLFitArg)
+ * \param f       Vector of (model-obs)/sigma for data points
+ * \return completion code GSL_SUCCESS=OK
+ */
+static int SpecFitFuncBP (const gsl_vector *x, void *params, 
+			  gsl_vector *f)
+{
+  NLFitArg *args = (NLFitArg*)params;
+  ofloat fblank = ObitMagicF();
+  double flux, spec[10], func;
+  odouble model, fluxb, arg, isigma, spect;
+  size_t i, j;
+
+  /* get model parameters */
+  flux = gsl_vector_get(x, 0);
+  /* Spectral terms  - alpha, nu_b */
+  for (j=1; j<args->fitTerm; j++) spec[j-1] = gsl_vector_get(x, j);
+
+  /* Loop over spectral points */
+  for (i=0; i<args->nfreq; i++) {
+    if ((args->obs[i]!=fblank) && (args->isigma[i]>0.0)) {
+      /* Above or below the break? */
+      if (args->nu[i]<spec[1]) { /* Below - simple power law */
+	arg = spec[0] *  args->logNuOnu0[i];
+	spect = exp(arg);
+	model = flux * spect;
+      } else { /* above */
+      /* Get the flux density at the break */
+	arg = spec[0] * log (spec[1] / args->refFreq);
+	spect = exp(arg);
+	fluxb = flux * spect;
+	/* Flux density at frequency */
+	arg = (spec[0]-0.5) * log (args->nu[i] / spec[1]);
+	spect = exp(arg);
+	model = fluxb * spect;
+      } /* End of above or below the break */
+      isigma = args->isigma[i];
+      func =  (model - args->obs[i]) * isigma;
+      gsl_vector_set(f, i, func);  /* Save function residual */
+    } else {  /* Invalid data */
+      func = 0.0;
+      gsl_vector_set(f, i, func);     /* Save function residual */
+    }
+ } /* End loop over spectral points */
+
+  return GSL_SUCCESS;
+} /*  end SpecFitFuncBP */
+
+/**
+ * Jacobian evaluator for spectral fitting solver
+ * Broken power law version, above nv_b the spectrum steepens by half
+ * Parameters:
+ *   S_0   = Flux density at frequency nu_0
+ *   alpha = spectral index
+ *   nu_b  = Break frequency
+ * Evaluates partial derivatives of model wrt each parameter
+ * \param x       Vector of parameters to be fitted
+ *                Flux,array_of spectral_terms
+ * \param param   Function parameter structure (NLFitArg)
+ * \param J       Jacobian matrix J[data_point, parameter]
+ * \return completion code GSL_SUCCESS=OK
+ */
+static int SpecFitJacBP (const gsl_vector *x, void *params, 
+			 gsl_matrix *J)
+{
+  NLFitArg *args = (NLFitArg*)params;
+  ofloat fblank = ObitMagicF();
+  double flux, spec[10], jac;
+  odouble model, fluxb, arg, isigma, spect, spect2;
+  odouble logNubONu0, logNuONub;
+  size_t i, j;
+
+  /* get model parameters */
+  flux = gsl_vector_get(x, 0);
+  /* Spectral terms - alpha, nu_b */
+  for (j=1; j<args->fitTerm; j++) spec[j-1] = gsl_vector_get(x, j);
+
+  /* Loop over spectral points */
+  for (i=0; i<args->nfreq; i++) {
+    if ((args->obs[i]!=fblank) && (args->isigma[i]>0.0)) {
+      isigma = args->isigma[i];
+      /* Above or below the break? */
+      if (args->nu[i]<spec[1]) { /* Below - simple power law */
+	arg = spec[0] *  args->logNuOnu0[i];
+	spect = exp(arg);
+	model = flux * spect;
+	/* Jacobian terms - first flux */
+	jac = spect * isigma;
+	gsl_matrix_set(J, i, 0, jac);   /* Save flux Jacobian */
+	/* Spectral index */
+	jac = model * isigma * args->logNuOnu0[i];
+	gsl_matrix_set(J, i, 1, jac);  /* Save spectral index Jacobian */
+	/* Break frequency - no dependency */
+	jac = 0.0;
+	gsl_matrix_set(J, i, 2, jac);  /* Save spectral index Jacobian */
+      } else { /* above */
+	/* Get the flux density at the break */
+	logNubONu0 = log (spec[1] / args->refFreq);
+	arg = spec[0] * logNubONu0;
+	spect = exp(arg);
+	fluxb = flux * spect;
+	/* Flux density at frequency */
+	logNuONub = log (args->nu[i] / spec[1]);
+	arg = (spec[0]-0.5) * logNuONub;
+	spect2 = exp(arg);
+	model  = fluxb * spect2;
+	/* Jacobian terms - first flux */
+	jac = spect * spect2 * isigma;
+	gsl_matrix_set(J, i, 0, jac);   /* Save flux Jacobian */
+	/* Spectral index */
+	jac = (fluxb*logNubONu0 + model*logNuONub) * isigma;
+	gsl_matrix_set(J, i, 1, jac);  /* Save spectral index Jacobian */
+	/* Break frequency */
+	jac = isigma * (fluxb*spec[0] - model*(spec[0]-0.5)) / spec[1];
+	gsl_matrix_set(J, i, 2, jac);  /* Save break frequency Jacobian */
+      } /* End of above or below the break */
+    } else {  /* Invalid data */
+      jac = 0.0;
+      gsl_matrix_set(J, i, 0, jac);  /* Save flux Jacobian */
+      for  (j=1; j<args->fitTerm; j++) {
+	gsl_matrix_set(J, i, j, jac); /* Save Jacobian */
+      }
+    }
+  } /* End loop over spectral points */
+
+  return GSL_SUCCESS;
+} /*  end SpecFitJacBP */
+
+/**
+ * Function and Jacobian evaluator for spectral fitting solver
+ * Broken power law version, above nv_b the spectrum steepens by half
+ * Parameters:
+ *   S_0   = Flux density at frequency nu_0
+ *   alpha = spectral index
+ *   nu_b  = Break frequency
+ * Function = (model-observed) / sigma
+ * Jacobian =  partial derivatives of model wrt each parameter
+ * \param x       Vector of parameters to be fitted
+ *                Flux,array_of spectral_terms
+ * \param param   Function parameter structure (NLFitArg)
+ * \param f       Vector of (model-obs)/sigma for data points
+ * \param J       Jacobian matrix J[data_point, parameter]
+ * \return completion code GSL_SUCCESS=OK
+ */
+static int SpecFitFuncJacBP (const gsl_vector *x, void *params, 
+			   gsl_vector *f, gsl_matrix *J)
+{
+  NLFitArg *args = (NLFitArg*)params;
+  ofloat fblank = ObitMagicF();
+  double flux, spec[10], func, jac;
+  odouble model, arg, fluxb, isigma, spect, spect2;
+  odouble logNubONu0, logNuONub;
+  size_t i, j;
+
+  /* get model parameters */
+  flux = gsl_vector_get(x, 0);
+  /* Spectral terms - alpha, nu_b */
+  for (j=1; j<args->fitTerm; j++) spec[j-1] = gsl_vector_get(x, j);
+
+  /* Loop over spectral points */
+  for (i=0; i<args->nfreq; i++) {
+    if ((args->obs[i]!=fblank) && (args->isigma[i]>0.0)) {
+      isigma = args->isigma[i];
+      /* Above or below the break? */
+      if (args->nu[i]<spec[1]) { /* Below - simple power law */
+	arg = spec[0] *  args->logNuOnu0[i];
+	spect = exp(arg);
+	model = flux * spect;
+	func =  (model - args->obs[i]) * isigma;
+	gsl_vector_set(f, i, func);  /* Save function residual */
+	/* Jacobian terms - first flux */
+	jac = spect * isigma;
+	gsl_matrix_set(J, i, 0, jac);   /* Save flux Jacobian */
+	/* Spectral index */
+	jac = model * isigma * args->logNuOnu0[i];
+	gsl_matrix_set(J, i, 1, jac);  /* Save spectral index Jacobian */
+	/* Break frequency - no dependency */
+	jac = 0.0;
+	gsl_matrix_set(J, i, 2, jac);  /* Save spectral index Jacobian */
+      } else { /* above */
+	/* Get the flux density at the break */
+	logNubONu0 = log (spec[1] / args->refFreq);
+	arg = spec[0] * logNubONu0;
+	spect = exp(arg);
+	fluxb = flux * spect;
+	/* Flux density at frequency */
+	logNuONub = log (args->nu[i] / spec[1]);
+	arg = (spec[0]-0.5) * logNuONub;
+	spect2 = exp(arg);
+	model  = fluxb * spect2;
+	func =  (model - args->obs[i]) * isigma;
+	gsl_vector_set(f, i, func);  /* Save function residual */
+	/* Jacobian terms - first flux */
+	jac = spect * spect2 * isigma;
+	gsl_matrix_set(J, i, 0, jac);   /* Save flux Jacobian */
+	/* Spectral index */
+	jac = (fluxb*logNubONu0 + model*logNuONub) * isigma;
+	gsl_matrix_set(J, i, 1, jac);  /* Save spectral index Jacobian */
+	/* Break frequency */
+	jac = isigma * (fluxb*spec[0] - model*(spec[0]-0.5)) / spec[1];
+	gsl_matrix_set(J, i, 2, jac);  /* Save break frequency Jacobian */
+      } /* End of above or below the break */
+    } else {  /* Invalid data */
+      func = 0.0;
+      gsl_vector_set(f, i, func);     /* Save function residual */
+      jac = 0.0;
+      gsl_matrix_set(J, i, 0, jac);  /* Save flux Jacobian */
+      for  (j=1; j<args->fitTerm; j++) {
+	gsl_matrix_set(J, i, j, jac); /* Save Jacobian */
+      }
+    }
+  } /* End loop over spectral points */
+
+  return GSL_SUCCESS;
+} /*  end SpecFitFuncJacBP */
 #endif /* HAVE_GSL */ 

@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -135,9 +135,33 @@ ObitIOCode ObitIOUVAIPSSet (ObitIOUVAIPS *in, ObitInfoList *info,
 ObitIOCode ObitIOUVAIPSRead (ObitIOUVAIPS *in, ofloat *data, 
 				ObitErr *err);
 
+/** Public:  Read/cal/select */
+ObitIOCode 
+ObitIOUVAIPSReadSelect (ObitIOUVAIPS *in, ofloat *data, ObitErr *err);
+
+/** Public:  Read to multiple buffers */
+ObitIOCode 
+ObitIOUVAIPSReadMulti (olong nBuff, ObitIOUVAIPS **in, ofloat **data, 
+		       ObitErr *err);
+
+/** Public:  Reread to multiple buffers */
+ObitIOCode 
+ObitIOUVAIPSReReadMulti (olong nBuff, ObitIOUVAIPS **in, ofloat **data, 
+			 ObitErr *err);
+
+/** Public:  Read/cal/select multiple buffers */
+ObitIOCode 
+ObitIOUVAIPSReadMultiSelect (olong nBuff, ObitIOUVAIPS **in, ofloat **data, 
+			     ObitErr *err);
+
+/** Public:  Reread/cal/select multiple buffers */
+ObitIOCode 
+ObitIOUVAIPSReReadMultiSelect (olong nBuff, ObitIOUVAIPS **in, ofloat **data, 
+			       ObitErr *err);
+
 /** Public:  Write */
 ObitIOCode ObitIOUVAIPSWrite (ObitIOUVAIPS *in, ofloat *data, 
-				 ObitErr *err);
+			      ObitErr *err);
 
 /** Public:  Flush */
 ObitIOCode ObitIOUVAIPSFlush (ObitIOUVAIPS *in, ObitErr *err);

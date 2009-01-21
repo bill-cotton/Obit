@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -718,6 +718,8 @@ void ObitDConCleanVisSub(ObitDConCleanVis *in, ObitErr *err)
   ObitTable *tempTable = NULL;
   ObitTableCC *CCTable = NULL;
   ObitIOCode retCode;
+  gboolean Fl=FALSE, doCalSelect;
+  ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   ofloat ftemp;
   olong *itemp, jtemp, nfield=0;
@@ -791,8 +793,14 @@ void ObitDConCleanVisSub(ObitDConCleanVis *in, ObitErr *err)
   itemp = ObitMemFree(itemp);  /* Deallocate */
 
   /* Subtract Current model */
+  ObitInfoListGetTest (in->imager->uvwork->info, "doCalSelect", &type, dim, &doCalSelect);
+  dim[0] = dim[1] = dim[2] = 1;  /* Grumble, grumble  */
+  ObitInfoListAlwaysPut (in->imager->uvwork->info, "doCalSelect",OBIT_bool, dim, &Fl);
   ObitSkyModelSubUV(in->skyModel, in->imager->uvwork, in->imager->uvwork, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  dim[0] = dim[1] = dim[2] = 1;  /* Grumble, grumble  */
+  ObitInfoListAlwaysPut (in->imager->uvwork->info, "doCalSelect",OBIT_bool, dim, &doCalSelect);
 
   /* Update CC counts */
   for (i=0; i<in->mosaic->numberImages; i++) {
@@ -1680,26 +1688,32 @@ static void  MakeResidual (ObitDConCleanVis *in, olong field,
 static void  MakeAllResiduals (ObitDConCleanVis *in, ObitErr *err)
 {
   gboolean doBeam= FALSE;
-  ObitImage *theBeam=NULL;
+  gboolean doWeight, doFlatten;
   olong i;
-  ofloat sumwts;
-  ObitInfoType type;
-  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitUVImagerClassInfo *imgClass = 
+    (ObitUVImagerClassInfo*)in->imager->ClassInfo;
+  const ObitDConCleanVisClassInfo *inClass;
   gchar *routine = "MakeAllResiduals";
+  
+  inClass = (ObitDConCleanVisClassInfo*)in->ClassInfo; /* class structure */
 
+  /* Turn off things not needed */
+  doWeight  = FALSE;
+  doFlatten = FALSE;
 
-  /*g_error("MODIFY TO USE multiProc");*/
-
-  /* Loop over fields */
+  /* Parallel Image images without needing beam */
+  imgClass->ObitUVImagerImage (in->imager, 0,  doWeight, doBeam, doFlatten, err);
+  
+  /* Loop over fields getting statistics */
   for (i=0; i<in->nfield; i++) {
-    /* Need to make beam? */
-    theBeam = (ObitImage*)in->imager->mosaic->images[i]->myBeam;
-    doBeam = (theBeam==NULL) ||
-      !ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, (gpointer)&sumwts);
-    /* Make residual image - get statistics */
-    MakeResidual(in, i+1, doBeam, err);
+    inClass->ObitDConCleanImageStats ((ObitDConClean*)in, i+1, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+    /* Quality measure */
+    in->quality[i] = ObitDConCleanVisQuality((ObitDConCleanVis*)in, i+1, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   } /* end loop over field */
+
 } /* end MakeAllResiduals */
 
 /**

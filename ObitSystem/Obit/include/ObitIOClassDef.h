@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2008                                          */
+/*;  Copyright (C) 2002-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -43,10 +43,18 @@ ObitIOCloseFP ObitIOClose;
 ObitIOSetFP ObitIOSet;
 /** Function pointer to  Read */
 ObitIOReadFP ObitIORead;
+/** Function pointer to  Read to multiple buffers */
+ObitIOReadMultiFP ObitIOReadMulti;
+/** Function pointer to  Reread to multiple buffers */
+ObitIOReReadMultiFP ObitIOReReadMulti;
 /** Function pointer to  Read specifying start row */
 ObitIOReadRowFP ObitIOReadRow;
 /** Function pointer to  Read with selection */
 ObitIOReadSelectFP ObitIOReadSelect;
+/** Function pointer to  Read with selection to multiple buffers */
+ObitIOReadMultiSelectFP ObitIOReadMultiSelect;
+/** Function pointer to Reread with selection to multiple buffers */
+ObitIOReReadMultiSelectFP ObitIOReReadMultiSelect;
 /** Function pointer to  Read with selection specifying start row */
 ObitIOReadRowSelectFP ObitIOReadRowSelect;
 /** Function pointer to  Write */

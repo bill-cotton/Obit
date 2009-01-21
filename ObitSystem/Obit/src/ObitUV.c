@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -30,6 +30,7 @@
 #include "ObitIOUVFITS.h"
 #include "ObitIOUVAIPS.h"
 #include "ObitAIPSDir.h"
+#include "ObitFITS.h"
 #include "ObitUVDesc.h"
 #include "ObitUVSel.h"
 #include "ObitTableFQ.h"
@@ -269,14 +270,14 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
       return out;
     }
   }
-  g_free(keyword);
+  if (keyword) g_free(keyword); keyword = NULL;
 
   if (!strncmp (DataType, "AIPS", 4)) { /* AIPS */
     /* AIPS disk */
     if (prefix) keyword = g_strconcat (prefix, "Disk", NULL);
     else        keyword = g_strdup("Disk");
     ObitInfoListGet(inList, keyword, &type, dim, &disk, err);
-    g_free(keyword);
+    if (keyword) g_free(keyword); keyword = NULL;
 
     /* If prefixDir given, lookup disk number */
     if (prefix) keyword = g_strconcat (prefix, "Dir", NULL);
@@ -287,7 +288,7 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
       disk = ObitAIPSFindDirname (stemp, err);
       if (err->error) Obit_traceback_val (err, routine, routine, out);
     }
-    g_free(keyword);
+    if (keyword) g_free(keyword); keyword = NULL;
 
     /* AIPS name */
     if (prefix) keyword = g_strconcat (prefix, "Name", NULL);
@@ -298,7 +299,7 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
       strncpy (Aname, "No Name ", 13);
     } 
     Aname[12] = 0;
-    g_free(keyword);
+    if (keyword) g_free(keyword); keyword = NULL;
 
     /* AIPS class */
     if (prefix) keyword = g_strconcat (prefix, "Class", NULL);
@@ -309,13 +310,13 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
       strncpy (Aclass, "NoClas", 7);
     }
     Aclass[6] = 0;
-    g_free(keyword);
+    if (keyword) g_free(keyword); keyword = NULL;
 
     /* input AIPS sequence */
     if (prefix) keyword = g_strconcat (prefix, "Seq", NULL);
     else        keyword = g_strdup("Seq");
     ObitInfoListGet(inList, keyword, &type, dim, &Aseq, err);
-    g_free(keyword);
+    if (keyword) g_free(keyword); keyword = NULL;
 
     /* if ASeq==0 want highest existing sequence */
     if (Aseq<=0) {
@@ -347,13 +348,13 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
     } else { 
       strncpy (inFile, "No_Filename_Given", 128);
     }
-    g_free(keyword);
+    if (keyword) g_free(keyword); keyword = NULL;
     
     /* input FITS disk */
     if (prefix) keyword = g_strconcat (prefix, "Disk", NULL);
     else        keyword = g_strdup("Disk");
     ObitInfoListGet(inList, keyword, &type, dim, &disk, err);
-    g_free(keyword);
+    if (keyword) g_free(keyword); keyword = NULL;
 
     /* If prefixDir given, lookup disk number */
     if (prefix) keyword = g_strconcat (prefix, "Dir", NULL);
@@ -364,7 +365,7 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
       disk = ObitFITSFindDir (stemp, err);
       if (err->error) Obit_traceback_val (err, routine, routine, out);
     }
-    g_free(keyword);
+    if (keyword) g_free(keyword); keyword = NULL;
 
     /* define object */
     ObitUVSetFITS (out, nvis, disk, inFile, err);
@@ -1231,6 +1232,176 @@ ObitIOCode ObitUVRead (ObitUV *in, ofloat *data, ObitErr *err)
 } /* end ObitUVRead */
 
 /**
+ * Read uv data data from disk to multiple buffers.
+ * If amp/phase calibration being applied, it is done independently
+ * for each buffer using the myCal in the associated in,
+ * otherwise, the first buffer is processed and copied to the others.
+ * All buffers must be the same size and the underlying dataset the same.
+ * The ObitUVDesc maintains the current location in the file.
+ * The number read will be mySel->nVisPIO (until the end of the selected
+ * range of visibilities in which case it will be smaller).
+ * The first visibility number after a read is myDesc->firstVis
+ * and the number of visibilities is myDesc->numVisBuff.
+ * When OBIT_IO_EOF is returned all data has been read (then is no new
+ * data in data)
+ * \param nBuff Number of buffers to be filled
+ * \param in    Array of pointers to to object to be read; 
+ *              must all be to same underlying data set.
+ * \param data  Array of pointers to buffers to write results.
+ *              If NULL, use buffers on in elements (must be open)
+ * \param err   ObitErr for reporting errors.
+ * \return return code, OBIT_IO_OK => OK
+ */
+ObitIOCode ObitUVReadMulti (olong nBuff, ObitUV **in, ofloat **data, 
+			    ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  olong need, ib;
+  gchar *routine = "ObitUVReadMulti";
+
+  /* error checks */
+  if (err->error) return retCode;
+  if (nBuff<=0)   return retCode;
+
+  /* Setup for multiple buffers on first in */
+  if (in[0]->nParallel!=nBuff) {
+    /* Out with any old */
+    if (in[0]->multiBuf) g_free(in[0]->multiBuf);
+    if (in[0]->multiBufIO) {
+      for (ib=0; ib<in[0]->nParallel; ib++) 
+	in[0]->multiBufIO[ib] = ObitIOUnref(in[0]->multiBufIO[ib]);
+    }
+    /* In with the new */
+    in[0]->nParallel  = nBuff;
+    in[0]->multiBuf   = g_malloc0(nBuff*sizeof(ofloat*));
+    in[0]->multiBufIO = g_malloc0(nBuff*sizeof(ObitIO*));
+    /* Fill multi buff values */
+    for (ib=0; ib<nBuff; ib++) {  
+      in[0]->multiBuf[ib]   = in[ib]->buffer;
+      in[0]->multiBufIO[ib] = ObitIORef(in[ib]->myIO);
+    }
+  } /* end allocate for multiple buffers */
+
+  /* Loop over buffers */
+  for (ib=0; ib<nBuff; ib++) {  
+    /* select internal or external buffer */
+    if ((data==NULL) || (data[ib]==NULL)) {
+      in[0]->multiBuf[ib] = in[ib]->buffer;
+      /* Check that internal buffer ( defined in gfloats) large enough */
+      need = in[ib]->mySel->nVisPIO*in[0]->myDesc->lrec;
+      if (need > in[ib]->bufferSize) {
+	Obit_log_error(err, OBIT_Error, 
+		       "IO buffer ( %d) too small, need %d for %s buff %d", 
+		       in[ib]->bufferSize, need, in[ib]->name, ib);
+	return retCode;
+      }
+    } else {  /* Use passed buffer */
+      in[0]->multiBuf[ib] = data[ib];
+    }
+    
+    /* Check buffer */
+    Obit_retval_if_fail((in[0]->multiBuf[ib] != NULL), err, retCode,
+			"%s: No buffer allocated for %s", routine, in[ib]->name);
+  } /* End loop over buffers */
+
+  /* Do IO */
+  retCode = ObitIOReadMulti (nBuff, in[0]->multiBufIO, in[0]->multiBuf, err);
+  if ((retCode > OBIT_IO_EOF) || (err->error)) /* add traceback,return */
+    Obit_traceback_val (err, routine, in[0]->name, retCode);
+
+  /* save current location */
+  for (ib=0; ib<nBuff; ib++) {
+    in[ib]->myDesc->firstVis   = ((ObitUVDesc*)in[0]->myIO->myDesc)->firstVis;
+    in[ib]->myDesc->numVisBuff = ((ObitUVDesc*)in[0]->myIO->myDesc)->numVisBuff;
+    ((ObitUVDesc*)in[ib]->myIO->myDesc)->firstVis = 
+      ((ObitUVDesc*)in[0]->myIO->myDesc)->firstVis;
+    ((ObitUVDesc*)in[ib]->myIO->myDesc)->numVisBuff = 
+      ((ObitUVDesc*)in[0]->myIO->myDesc)->numVisBuff;
+  }
+
+  return retCode;
+} /* end ObitUVReadMulti */
+
+/**
+ * Reread uv data data from disk to multiple buffers.
+ * Retreives data read in a previous call to ObitUVReadMulti.
+ * in which in[0] should be the same as in the call to ObitUVReadMulti
+ * If amp/phase calibration being applied, it is done independently
+ * for each buffer using the myCal in the associated in,
+ * otherwise, data from the first buffer copied to the others.
+ * NOTE: this depends on retreiving the data from the first element in 
+ * All buffers must be the same size and the underlying dataset the same.
+ * The ObitUVDesc maintains the current location in the file.
+ * The first visibility number after a read is myDesc->firstVis
+ * and the number of visibilities is myDesc->numVisBuff.
+ * When OBIT_IO_EOF is returned all data has been read (then is no new
+ * data in data)
+ * \param nBuff Number of buffers to be filled
+ * \param in    Array of pointers to to object to be read; 
+ *              must all be to same underlying data set.
+ * \param data  Array of pointers to buffers to write results.
+ *              If NULL, use buffers on in elements (must be open)
+ * \param err   ObitErr for reporting errors.
+ * \return return code, OBIT_IO_OK => OK
+ */
+ObitIOCode ObitUVReReadMulti (olong nBuff, ObitUV **in, ofloat **data, 
+			      ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  olong need, ib;
+  gchar *routine = "ObitUVReReadMulti";
+
+  /* error checks */
+  if (err->error) return retCode;
+  if (nBuff<=0)   return retCode;
+
+  /* Check buffer assignment */
+  Obit_retval_if_fail((in[0]->nParallel>=nBuff), err, retCode,
+ 		      "%s: Buffer assignment error %d %d", 
+		      routine, in[0]->nParallel, nBuff);
+
+  /* Loop over buffers */
+  for (ib=0; ib<nBuff; ib++) {  
+
+    /* select internal or external buffer */
+    if ((data==NULL) || (data[ib]==NULL)) {
+      in[0]->multiBuf[ib] = in[ib]->buffer;
+      /* Check that internal buffer ( defined in gfloats) large enough */
+      need = in[ib]->mySel->nVisPIO*in[0]->myDesc->lrec;
+      if (need > in[ib]->bufferSize) {
+	Obit_log_error(err, OBIT_Error, 
+		       "IO buffer ( %d) too small, need %d for %s buff %d", 
+		       in[ib]->bufferSize, need, in[ib]->name, ib);
+	return retCode;
+      }
+    } else {  /* Use passed buffer */
+      in[0]->multiBuf[ib] = data[ib];
+    }
+    
+    /* Check buffer */
+    Obit_retval_if_fail((in[0]->multiBuf[ib] != NULL), err, retCode,
+			"%s: No buffer allocated for %s", routine, in[ib]->name);
+  } /* End loop over buffers */
+
+  /* Retrieve old data */
+  retCode = ObitIOReReadMulti (nBuff, in[0]->multiBufIO, in[0]->multiBuf, err);
+  if ((retCode > OBIT_IO_EOF) || (err->error)) /* add traceback,return */
+    Obit_traceback_val (err, routine, in[0]->name, retCode);
+
+  /* save current location */
+  for (ib=0; ib<nBuff; ib++) {
+    in[ib]->myDesc->firstVis   = ((ObitUVDesc*)in[0]->myIO->myDesc)->firstVis;
+    in[ib]->myDesc->numVisBuff = ((ObitUVDesc*)in[0]->myIO->myDesc)->numVisBuff;
+    ((ObitUVDesc*)in[ib]->myIO->myDesc)->firstVis = 
+      ((ObitUVDesc*)in[0]->myIO->myDesc)->firstVis;
+    ((ObitUVDesc*)in[ib]->myIO->myDesc)->numVisBuff = 
+      ((ObitUVDesc*)in[0]->myIO->myDesc)->numVisBuff;
+  }
+
+  return retCode;
+} /* end ObitUVReReadMulti */
+
+/**
  * Read data from disk applying selection.
  * The number read will be mySel->nVisPIO (until the end of the selected
  * range of visibilities in which case it will be smaller).
@@ -1290,6 +1461,171 @@ ObitIOCode ObitUVReadSelect (ObitUV *in, ofloat *data, ObitErr *err)
 
   return retCode;
 } /* end ObitUVReadSelect */
+
+/**
+ * Read data from disk applying selection to multiple buffers.
+ * The number read will be mySel->nVisPIO (until the end of the selected
+ * range of visibilities in which case it will be smaller).
+ * The first visibility number after a read is myDesc->firstVis
+ * and the number of visibilities is myDesc->numVisBuff.
+ * When OBIT_IO_EOF is returned all data has been read (then is no new
+ * data in data)
+ * \param nBuff Number of buffers to be filled
+ * \param in    Array of pointers to to object to be read; 
+ *              must all be to same underlying data set but with 
+ *              possible independent calibration
+ * \param data  array of pointers to buffers to write results.
+ *              If NULL, use buffers on in elements (must be open)
+ * \param err ObitErr for reporting errors.
+ * \return return code, OBIT_IO_OK => OK
+ */
+ObitIOCode ObitUVReadMultiSelect (olong nBuff, ObitUV **in, ofloat **data, 
+				  ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  olong need, ib;
+  gchar *routine = "ObitUVReadMultiSelect";
+
+  /* error checks */
+  if (err->error) return retCode;
+  if (nBuff<=0)   return retCode;
+
+  /* Setup for multiple buffers on first in */
+  if (in[0]->nParallel!=nBuff) {
+    /* Out with any old */
+    if (in[0]->multiBuf) g_free(in[0]->multiBuf);
+    if (in[0]->multiBufIO) {
+      for (ib=0; ib<in[0]->nParallel; ib++) 
+	in[0]->multiBufIO[ib] = ObitIOUnref(in[0]->multiBufIO[ib]);
+    }
+    /* In with the new */
+    in[0]->nParallel  = nBuff;
+    in[0]->multiBuf   = g_malloc0(nBuff*sizeof(ofloat*));
+    in[0]->multiBufIO = g_malloc0(nBuff*sizeof(ObitIO*));
+      
+    /* Fill multi buff values */
+    for (ib=0; ib<nBuff; ib++) {  
+      in[0]->multiBuf[ib]   = in[ib]->buffer;
+      in[0]->multiBufIO[ib] = ObitIORef(in[ib]->myIO);
+    }
+  } /* end allocate for multiple buffers */
+
+
+  /* Loop over buffers */
+  for (ib=0; ib<nBuff; ib++) {  
+
+    /* select internal or external buffer */
+    if ((data==NULL) || (data[ib]==NULL)) {
+      in[0]->multiBuf[ib] = in[ib]->buffer;
+      /* Check that internal buffer ( defined in gfloats) large enough */
+      need = in[0]->mySel->nVisPIO*in[0]->myDesc->lrec;
+      if (need > in[ib]->bufferSize) {
+	Obit_log_error(err, OBIT_Error, 
+		       "IO buffer ( %d) too small, need %d for %s", 
+		       in[0]->bufferSize, need, in[ib]->name);
+	return retCode;
+      }
+    } else {  /* Use passed buffer */
+      in[0]->multiBuf[ib] = data[ib];
+    }
+    
+    /* Check buffer */
+    Obit_retval_if_fail((in[0]->multiBuf[ib] != NULL), err, retCode,
+			"%s: No buffer allocated for %s %d", routine, in[ib]->name, ib);
+  } /* End loop over buffers */
+    
+    retCode = ObitIOReadMultiSelect (nBuff, in[0]->multiBufIO, in[0]->multiBuf, err);
+    if ((retCode > OBIT_IO_EOF) || (err->error)) /* add traceback,return */
+      Obit_traceback_val (err, routine, in[0]->name, retCode);
+
+  /* save current location */
+  for (ib=0; ib<nBuff; ib++) {
+    in[ib]->myDesc->firstVis   = ((ObitUVDesc*)in[0]->myIO->myDesc)->firstVis;
+    in[ib]->myDesc->numVisBuff = ((ObitUVDesc*)in[0]->myIO->myDesc)->numVisBuff;
+    ((ObitUVDesc*)in[ib]->myIO->myDesc)->firstVis = 
+      ((ObitUVDesc*)in[0]->myIO->myDesc)->firstVis;
+    ((ObitUVDesc*)in[ib]->myIO->myDesc)->numVisBuff = 
+      ((ObitUVDesc*)in[0]->myIO->myDesc)->numVisBuff;
+  }
+
+  return retCode;
+} /* end ObitUVReadMultiSelect */
+
+/**
+ * Reread data from disk applying selection to multiple buffers.
+ * Retreives data read in a previous call to ObitUVReadMultiSelect
+ * possibly applying new calibration.
+ * NOTE: this depends on retreiving the data from the first element in 
+ * in which should be the same as in the call to ObitUVReadMultiSelect
+ * The first visibility number after a read is myDesc->firstVis
+ * and the number of visibilities is myDesc->numVisBuff.
+ * When OBIT_IO_EOF is returned all data has been read (then is no new
+ * data in data)
+ * \param nBuff Number of buffers to be filled
+ * \param in    Array of pointers to to object to be read; 
+ *              must all be to same underlying data set but with 
+ *              possible independent calibration
+ * \param data  array of pointers to buffers to write results.
+ *              If NULL, use buffers on in elements (must be open)
+ * \param err ObitErr for reporting errors.
+ * \return return code, OBIT_IO_OK => OK
+ */
+ObitIOCode ObitUVReReadMultiSelect (olong nBuff, ObitUV **in, ofloat **data, 
+				    ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  olong need, ib;
+  gchar *routine = "ObitUVReReadMultiSelect";
+
+  /* error checks */
+  if (err->error) return retCode;
+  if (nBuff<=0)   return retCode;
+
+  /* Check buffer assignment */
+  Obit_retval_if_fail((in[0]->nParallel>=nBuff), err, retCode,
+ 		      "%s: Buffer assignment error %d %d", 
+		      routine, in[0]->nParallel, nBuff);
+
+  /* Loop over buffers */
+  for (ib=0; ib<nBuff; ib++) {  
+
+    /* select internal or external buffer */
+    if ((data==NULL) || (data[ib]==NULL)) {
+      in[0]->multiBuf[ib] = in[ib]->buffer;
+      /* Check that internal buffer ( defined in gfloats) large enough */
+      need = in[0]->mySel->nVisPIO*in[0]->myDesc->lrec;
+      if (need > in[ib]->bufferSize) {
+	Obit_log_error(err, OBIT_Error, 
+		       "IO buffer ( %d) too small, need %d for %s", 
+		       in[0]->bufferSize, need, in[ib]->name);
+	return retCode;
+      }
+    } else {  /* Use passed buffer */
+      in[0]->multiBuf[ib] = data[ib];
+    }
+    
+    /* Check buffer */
+    Obit_retval_if_fail((in[0]->multiBuf[ib] != NULL), err, retCode,
+			"%s: No buffer allocated for %s", routine, in[ib]->name);
+  } /* End loop over buffers */
+    
+  /* Fetch data from buffer */
+    retCode = ObitIOReReadMultiSelect (nBuff, in[0]->multiBufIO, in[0]->multiBuf, err);
+    if ((retCode > OBIT_IO_EOF) || (err->error)) /* add traceback,return */
+      Obit_traceback_val (err, routine, in[0]->name, retCode);
+
+  /* save current location */
+  for (ib=0; ib<nBuff; ib++) {
+    in[ib]->myDesc->firstVis   = ((ObitUVDesc*)in[0]->myIO->myDesc)->firstVis;
+    in[ib]->myDesc->numVisBuff = ((ObitUVDesc*)in[0]->myIO->myDesc)->numVisBuff;
+    ((ObitUVDesc*)in[ib]->myIO->myDesc)->firstVis = 
+      ((ObitUVDesc*)in[0]->myIO->myDesc)->firstVis;
+    ((ObitUVDesc*)in[ib]->myIO->myDesc)->numVisBuff = 
+      ((ObitUVDesc*)in[0]->myIO->myDesc)->numVisBuff;
+  }
+
+  return retCode;
+} /* end ObitUVReReadMultiSelect */
 
 /**
  * Write information to disk.
@@ -2031,7 +2367,7 @@ void ObitUVReadKeyword (ObitUV *in,
 olong ObitUVChanSel (ObitUV *in, gint32 *dim, olong *IChanSel, 
 		    ObitErr *err)
 {
-  olong BChan=0, EChan=0, BIF=0, EIF=0, nChan, nIF;
+  olong BChan=0, EChan=0, BIF=0, EIF=0, nChan, nIF=1;
   olong i, j, k, is, ie, ii, iif;
   olong oldFGver, newFGver=-1, iFGRow;
   ObitTableFG *inFGTable=NULL, *outFGTable=NULL;
@@ -2298,7 +2634,13 @@ static void ObitUVClassInfoDefFn (gpointer inClass)
   theClass->ObitClear     = (ObitClearFP)ObitUVClear;
   theClass->ObitInit      = (ObitInitFP)ObitUVInit;
   theClass->ObitUVRead    = (ObitUVReadFP)ObitUVRead;
+  theClass->ObitUVReadMulti= (ObitUVReadMultiFP)ObitUVReadMulti;
+  theClass->ObitUVReReadMulti= (ObitUVReReadMultiFP)ObitUVReReadMulti;
   theClass->ObitUVReadSelect = (ObitUVReadSelectFP)ObitUVReadSelect;
+  theClass->ObitUVReadMultiSelect = 
+    (ObitUVReadMultiSelectFP)ObitUVReadMultiSelect;
+  theClass->ObitUVReReadMultiSelect = 
+    (ObitUVReReadMultiSelectFP)ObitUVReReadMultiSelect;
   theClass->ObitUVWrite   = (ObitUVWriteFP)ObitUVWrite;
   theClass->newObitUVTable= (newObitUVTableFP)newObitUVTable;
   theClass->ObitUVZapTable= (ObitUVZapTableFP)ObitUVZapTable;
@@ -2354,6 +2696,9 @@ void ObitUVInit  (gpointer inn)
   in->myStatus  = OBIT_Defined;
   in->buffer    = NULL;
   in->bufferSize= 0;
+  in->nParallel = 0;
+  in->multiBufIO= NULL;
+  in->multiBuf  = NULL;
   in->isScratch = FALSE;
 
 } /* end ObitUVInit */
@@ -2369,6 +2714,7 @@ void ObitUVClear (gpointer inn)
 {
   ObitClassInfo *ParentClass;
   ObitUV *in = inn;
+  olong ib;
   ObitErr *err;
 
   /* error checks */
@@ -2393,6 +2739,11 @@ void ObitUVClear (gpointer inn)
   in->mySel     = ObitUVSelUnref(in->mySel);
   in->tableList = ObitUnref(in->tableList);
   if (in->buffer) ObitIOFreeBuffer(in->buffer); 
+  if (in->multiBuf) g_free(in->multiBuf);
+  if ((in->nParallel>0) && (in->multiBufIO)) {
+    for (ib=0; ib<in->nParallel; ib++) 
+      in->multiBufIO[ib] = ObitIOUnref(in->multiBufIO[ib]);
+  }
   
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

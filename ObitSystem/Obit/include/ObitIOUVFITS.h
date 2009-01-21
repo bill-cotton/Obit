@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -131,6 +131,30 @@ ObitIOCode ObitIOUVFITSSet (ObitIOUVFITS *in, ObitInfoList *info,
 /** Public:  Read */
 ObitIOCode ObitIOUVFITSRead (ObitIOUVFITS *in, ofloat *data, 
 				ObitErr *err);
+
+/** Public:  Read/cal/select */
+ObitIOCode 
+ObitIOUVFITSReadSelect (ObitIOUVFITS *in, ofloat *data, ObitErr *err);
+
+/** Public:  Read to multiple buffers */
+ObitIOCode 
+ObitIOUVFITSReadMulti (olong nBuff, ObitIOUVFITS **in, ofloat **data, 
+		       ObitErr *err);
+
+/** Public:  Reread to multiple buffers */
+ObitIOCode 
+ObitIOUVFITSReReadMulti (olong nBuff, ObitIOUVFITS **in, ofloat **data, 
+			 ObitErr *err);
+
+/** Public:  Read/cal/select multiple buffers */
+ObitIOCode 
+ObitIOUVFITSReadMultiSelect (olong nBuff, ObitIOUVFITS **in, ofloat **data, 
+			     ObitErr *err);
+
+/** Public:  Reread/cal/select multiple buffers */
+ObitIOCode 
+ObitIOUVFITSReReadMultiSelect (olong nBuff, ObitIOUVFITS **in, ofloat **data, 
+			       ObitErr *err);
 
 /** Public:  Write */
 ObitIOCode ObitIOUVFITSWrite (ObitIOUVFITS *in, ofloat *data, 

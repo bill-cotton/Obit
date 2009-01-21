@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -320,10 +320,34 @@ ObitIOCode ObitUVRead (ObitUV *in, ofloat *data, ObitErr *err);
 typedef ObitIOCode (*ObitUVReadFP) (ObitUV *in, ofloat *data, 
 				    ObitErr *err);
 
+/** Public:  Read to multiple buffers */
+ObitIOCode ObitUVReadMulti (olong nBuff, ObitUV **in, ofloat **data, 
+			    ObitErr *err);
+typedef ObitIOCode (*ObitUVReadMultiFP) (olong nBuff, ObitUV **in, ofloat **data, 
+					 ObitErr *err);
+
+/** Public:  Reread to multiple buffers */
+ObitIOCode ObitUVReReadMulti (olong nBuff, ObitUV **in, ofloat **data, 
+			      ObitErr *err);
+typedef ObitIOCode (*ObitUVReReadMultiFP) (olong nBuff, ObitUV **in, ofloat **data, 
+					   ObitErr *err);
+
 /** Public: Read select, edit, calibrate specified data */
 ObitIOCode ObitUVReadSelect (ObitUV *in, ofloat *data, ObitErr *err);
 typedef ObitIOCode (*ObitUVReadSelectFP) (ObitUV *in, ofloat *data, 
 					  ObitErr *err);
+
+/** Public:  Read with selection to multiple buffers */
+ObitIOCode ObitUVReadMultiSelect (olong nBuff, ObitUV **in, ofloat **data, 
+				  ObitErr *err);
+typedef ObitIOCode (*ObitUVReadMultiSelectFP) (olong nBuff, ObitUV **in, ofloat* *data, 
+					       ObitErr *err);
+
+/** Public:  Reread with selection to multiple buffers */
+ObitIOCode ObitUVReReadMultiSelect (olong nBuff, ObitUV **in, ofloat **data, 
+				    ObitErr *err);
+typedef ObitIOCode (*ObitUVReReadMultiSelectFP) (olong nBuff, ObitUV **in, ofloat* *data, 
+						 ObitErr *err);
 
 /** Public: Write specified data */
 ObitIOCode ObitUVWrite (ObitUV *in, ofloat *data, ObitErr *err);

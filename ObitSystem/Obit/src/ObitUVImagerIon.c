@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -371,7 +371,7 @@ void ObitUVImagerIonWeight (ObitUVImager *in, ObitErr *err)
  * \param err       Obit error stack object.
  */
 void ObitUVImagerIonImage (ObitUVImager *inn,  olong field, gboolean doWeight, 
-			gboolean doBeam, gboolean doFlatten, ObitErr *err)
+			   gboolean doBeam, gboolean doFlatten, ObitErr *err)
 { 
   ObitUVImagerIon *in=(ObitUVImagerIon*)inn;
   ObitUV *data=NULL;
@@ -379,10 +379,11 @@ void ObitUVImagerIonImage (ObitUVImager *inn,  olong field, gboolean doWeight,
   ObitUVDesc *UVDesc;
   ObitImageDesc *imageDesc;
   ObitInfoType type;
+  ObitImage *theBeam=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong itemp, prtLv;
-  gboolean Tr=TRUE, Fl=FALSE;
-  ofloat shift[2];
+  gboolean Tr=TRUE, Fl=FALSE, needBeam, forceBeam;
+  ofloat shift[2], sumwts;
   olong ifield, hiField, loField, channel=0, lver;
   gchar *tabtype=NULL;
   gchar *NIlist[] = {"AIPS NI", NULL};
@@ -395,7 +396,7 @@ void ObitUVImagerIonImage (ObitUVImager *inn,  olong field, gboolean doWeight,
 
   /* Weighting? */
   if (doWeight) {
-    ObitUVImagerWeight (inn, err);
+    ObitUVImagerIonWeight (inn, err);
     /* Copy NI Table */
     ObitUVCopyTables (in->uvdata, in->uvwork, NULL, NIlist, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
@@ -456,9 +457,17 @@ void ObitUVImagerIonImage (ObitUVImager *inn,  olong field, gboolean doWeight,
 		       routine, ifield+1, in->ionTab->tabVer, shift[0], shift[1]);
     }
 
+
+    /* Need to force beam? */
+    theBeam = (ObitImage*)in->mosaic->images[ifield]->myBeam;
+    forceBeam = (theBeam==NULL) ||
+      !ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, &sumwts);
+    needBeam = doBeam || forceBeam;
+
     /* Image */
     ObitImageUtilMakeImage (data, in->mosaic->images[ifield], channel, 
-			    doBeam, Fl, err);
+			    needBeam, Fl, err);
+
     /* If it made a beam check the beam size */
     if (doBeam) {
       /* If no beam size given take this one */

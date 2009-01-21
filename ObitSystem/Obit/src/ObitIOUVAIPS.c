@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -540,7 +540,7 @@ ObitIOCode ObitIOUVAIPSSet (ObitIOUVAIPS *in, ObitInfoList *info,
  * \return return code, 0=> OK
  */
 ObitIOCode ObitIOUVAIPSRead (ObitIOUVAIPS *in, ofloat *data, 
-				ObitErr *err)
+			     ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitUVDesc* desc;
@@ -647,10 +647,10 @@ ObitIOCode ObitIOUVAIPSRead (ObitIOUVAIPS *in, ofloat *data,
  * \param in Pointer to object to be read.
  * \param data pointer to buffer to write results.
  * \param err ObitErr for reporting errors.
- * \return return code, 0=> OK
+ * \return return code, OBIT_IO_OK => OK
  */
 ObitIOCode ObitIOUVAIPSReadSelect (ObitIOUVAIPS *in, ofloat *data, 
-				ObitErr *err)
+				   ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitUVDesc* desc;
@@ -669,8 +669,8 @@ ObitIOCode ObitIOUVAIPSReadSelect (ObitIOUVAIPS *in, ofloat *data,
   /* Make sure access was set correctly */
   if (in->access!=OBIT_IO_ReadCal) {
     Obit_log_error(err, OBIT_Error, 
-		   "ObitIOUVAIPSReadSelect: access not ReadCal for %s", 
-		   in->name);
+		   "%s: access not ReadCal for %s", 
+		   routine, in->name);
     return retCode;
   }
   g_assert (ObitUVCalIsA((ObitUVCal*)in->myCal));
@@ -769,11 +769,463 @@ ObitIOCode ObitIOUVAIPSReadSelect (ObitIOUVAIPS *in, ofloat *data,
       op += sel->lrecUC;  /* index in output array */
       numVisBuff++;       /* count number */
     }
-  } /* end compression */
+  } /* end loop over visibilities */
 
   desc->numVisBuff =  numVisBuff; /* How many good */
   return  OBIT_IO_OK;
 } /* end ObitIOUVAIPSReadSelect */
+
+/**
+ * Read data from disk to multiple buffers.
+ * All buffers must be the same size and the underlying dataset the same.
+ * The number read will be mySel->nVisPIO (until the end of the selected
+ * range of visibilities in which case it will be smaller).
+ * The first visibility number after a read is myDesc->firstVis
+ * and the number of visibilities attempted is mySel->numVisRead; 
+ * actual value saved as myDesc->numVisBuff.
+ * When OBIT_IO_EOF is returned all data has been read (then is no new
+ * data in data)
+ * \param nBuff Number of buffers to be filled
+ * \param in    Array of pointers to to object to be read; 
+ *              must all be to same underlying data set but with 
+ *              independent calibration
+ * \param data  array of pointers to buffers to write results.
+ * \param err   ObitErr for reporting errors.
+ * \return return code, OBIT_IO_OK=> OK
+ */
+ObitIOCode 
+ObitIOUVAIPSReadMulti (olong nBuff, ObitIOUVAIPS **in, ofloat **data, 
+		       ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  ObitUVDesc* desc;
+  ObitUVSel* sel;
+  gsize size;
+  olong len, i, j, ip, op, need, ib;
+  ObitFilePos wantPos;
+  gboolean done, compressed;
+  ofloat *wtscl, *IOBuff = data[0];
+  gchar *routine = "ObitIOUVAIPSReadMulti";
+
+  /* error checks */
+  if (err->error) return retCode;
+  if (nBuff<=0)   return retCode;
+
+  desc = in[0]->myDesc; /* UV descriptor pointer */
+  sel  = in[0]->mySel;  /* selector pointer */
+
+  /* what next ? */
+  done = ObitIOUVAIPSNext (in[0], err);
+  if (err->error) Obit_traceback_val (err, routine, in[0]->name, retCode);
+
+  /* check if done - all visibilities read */
+  if (done) {
+    /* ObitIOUVAIPSClose (in[0], err);  Close */
+    desc->numVisBuff = 0; /* no data in buffer*/
+    return OBIT_IO_EOF;
+  }
+
+  /* Is the data compressed? If so need to uncompress */
+  compressed = sel->Compress;
+  if (compressed) {
+    /* buffer if necessary create */
+    if (in[0]->compBuff==NULL) {
+      in[0]->compBuffSize = desc->lrec*sel->nVisPIO*sizeof(ofloat);
+      in[0]->compBuff = ObitMemAllocName (in[0]->compBuffSize, "UVAIPS comp. buf");
+
+      /* check that weight and scale are available */
+      if (desc->ilocws < 0) {
+       Obit_log_error(err, OBIT_Error, 
+		     "UV data does not have weight and scale %s", 
+		      in[0]->name);
+       return retCode;
+     }
+    }
+    IOBuff = in[0]->compBuff; /* Use for I/O */
+    /* Make sure compression buffer large enough (sel->nVisPIO) */
+    need = desc->lrec*sel->numVisRead*sizeof(ofloat); 
+    if (need > in[0]->compBuffSize) {
+      Obit_log_error(err, OBIT_Error, 
+		     "Decompression buffer ( %d) too small, need %d for %s", 
+		     in[0]->compBuffSize, need, in[0]->name);
+      return retCode;
+    }
+  } /* end of compressed data set up */
+
+  len = desc->lrec; /* How big is a visibility */
+
+  /* read block of sel->numVisRead visibilities at a time  */
+  /* get file position offset */
+  wantPos = (ObitFilePos)(desc->firstVis-1) * desc->lrec * sizeof(ofloat);
+  /* transfer size in bytes */
+  size = sel->numVisRead * len * sizeof(ofloat); 
+
+  /* Read */
+  retCode = ObitFileRead (in[0]->myFile, wantPos, size, 
+			  (gchar*)IOBuff, err);
+  if ((retCode!=OBIT_IO_OK) || (err->error)) /* add traceback on error */
+    Obit_traceback_val (err, routine, in[0]->name, retCode);
+  in[0]->filePos = in[0]->myFile->filePos; /* remember current file position */
+  
+  /* if compressed data uncompress to output buffer */
+  if (compressed) {
+    ip = op = 0; /* array pointers */
+    for (i=0; i<sel->numVisRead; i++) {
+      /* Copy random parameters */
+      for (j=0; j<sel->nrparmUC; j++) data[0][op+j] = IOBuff[ip+j];
+      
+      /* uncompress data */
+      wtscl = &IOBuff[ip+desc->ilocws]; /* weight and scale array */
+      ObitIOUVAIPSUncompress (desc->ncorr, &IOBuff[ip+desc->nrparm], 
+			      wtscl, &data[0][op+sel->nrparmUC]);
+      ip += desc->lrec;   /* index in i/O array */
+      op += sel->lrecUC;  /* index in output array */
+    } /* end loop decompressing vis */
+  }  /* end decompression */
+  
+  /* transfer size in bytes */
+  size = sel->numVisRead * sel->lrecUC * sizeof(ofloat); 
+
+  /* Loop copying buffers */
+  for (ib=1; ib<nBuff; ib++) {
+    memcpy (data[ib], data[0], size);
+  } /* end loop over buffer */
+  
+  desc->numVisBuff = sel->numVisRead; /* How many read */
+  return  OBIT_IO_OK;
+} /* end ObitIOUVAIPSReadMulti */
+
+/**
+ * Reread data from disk to multiple buffers.
+ * Retreives data read in a previous call to ObitIOUVAIPSReadMulti
+ * NOTE: this depends on retreiving the data from the first element in 
+ * in which should be the same as in the call to ObitIOUVAIPSReadMulti
+ * All buffers must be the same size and the underlying dataset the same.
+ * The number read will be mySel->nVisPIO (until the end of the selected
+ * range of visibilities in which case it will be smaller).
+ * The first visibility number after a read is myDesc->firstVis
+ * and the number of visibilities attempted is mySel->numVisRead; 
+ * actual value saved as myDesc->numVisBuff.
+ * When OBIT_IO_EOF is returned all data has been read (then is no new
+ * data in data)
+ * \param nBuff Number of buffers to be filled
+ * \param in    Array of pointers to to object to be read; 
+ *              must all be to same underlying data set but with 
+ *              independent calibration
+ * \param data  array of pointers to buffers to write results.
+ * \param err   ObitErr for reporting errors.
+ * \return return code, OBIT_IO_OK=> OK
+ */
+ObitIOCode 
+ObitIOUVAIPSReReadMulti (olong nBuff, ObitIOUVAIPS **in, ofloat **data, 
+			 ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  ObitUVDesc* desc;
+  ObitUVSel* sel;
+  gsize size;
+  olong ib;
+  /* gchar *routine = "ObitIOUVAIPSReReadMulti";*/
+
+  /* error checks */
+  if (err->error) return retCode;
+  if (nBuff<=0)   return retCode;
+
+  desc = in[0]->myDesc; /* UV descriptor pointer */
+  sel  = in[0]->mySel;  /* selector pointer */
+
+  /* transfer size in bytes */
+  size = desc->numVisBuff * sel->lrecUC * sizeof(ofloat); 
+
+  /* Loop copying buffers */
+  for (ib=1; ib<nBuff; ib++) {
+    memcpy (data[ib], data[0], size);
+  } /* end loop over buffer */
+  
+  desc->numVisBuff = sel->numVisRead; /* How many read */
+  return  OBIT_IO_OK;
+} /* end ObitIOUVAIPSReReadMulti */
+
+/**
+ * Read data from disk applying selection to multiple buffers 
+ * and any (output dependent) calibration.
+ * If amp/phase calibration being applied, it is done independently
+ * for each buffer using the myCal in the associated in,
+ * otherwise, the first buffer is processed and copied to the others.
+ * All selected buffer sizes etc must be the same.
+ * The number read will be mySel->nVisPIO (until the end of the selected
+ * range of visibilities in which case it will be smaller).
+ * The first visibility number after a read is myDesc->firstVis
+ * and the number of visibilities is myDesc->numVisBuff (which
+ * may be zero).
+ * The number attempted in a read is mySel->numVisRead.
+ * When OBIT_IO_EOF is returned all data has been read (then is no new
+ * data in data) and the I/O has been closed.
+ * \param nBuff Number of buffers to be filled
+ * \param in    Array of pointers to to object to be read; 
+ *              must all be to same underlying data set but with 
+ *              independent calibration
+ * \param data  array of pointers to buffers to write results.
+ * \param err   ObitErr for reporting errors.
+ * \return return code, OBIT_IO_OK=> OK
+ */
+ObitIOCode 
+ObitIOUVAIPSReadMultiSelect (olong nBuff, ObitIOUVAIPS **in, ofloat **data, 
+			     ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  ObitUVDesc* desc;
+  ObitUVSel* sel;
+  gsize size;
+  olong i, k, ip, op, ib,  need, numVisBuff, nFull;
+  ObitFilePos wantPos;
+  gboolean done, compressed, OK=FALSE;
+  ofloat *workVis, *wtscl, *IOBuff = NULL;
+  gchar *routine = "ObitIOUVAIPSReadMultiSelect";
+
+  /* error checks */
+  if (err->error) return retCode;
+  if (nBuff<=0)   return retCode;
+
+  /* Make sure access was set correctly */
+  if (in[0]->access!=OBIT_IO_ReadCal) {
+    Obit_log_error(err, OBIT_Error, 
+		   "%s: access not ReadCal for %s", 
+		   routine, in[0]->name);
+    return retCode;
+  }
+  desc = in[0]->myDesc; /* UV descriptor pointer */
+  sel  = in[0]->mySel;  /* selector pointer */
+  desc->numVisBuff = 0; /* no data in buffer yet */
+
+  /* what next ? */
+  done = ObitIOUVAIPSNext (in[0], err);
+  if (err->error) Obit_traceback_val (err, routine, in[0]->name, retCode);
+
+  /* check if done - all visibilities read */
+  if (done) {
+    /* ObitIOUVAIPSClose (in[0], err); Close */
+    return OBIT_IO_EOF;
+  }
+
+  /* Is the data compressed? If so need to uncompress */
+  compressed = sel->Compress;
+
+  /* Always use compression buffer as the output vis may have a 
+     different size from the input */
+  if (in[0]->compBuff==NULL) {
+    in[0]->compBuffSize = desc->lrec*sel->nVisPIO*sizeof(ofloat);
+    in[0]->compBuff = ObitMemAllocName (in[0]->compBuffSize, "UVAIPS comp. buf");
+    
+    /* check that weight and scale are available if decompressing */
+    if (compressed && (desc->ilocws < 0)) {
+      Obit_log_error(err, OBIT_Error, 
+		     "UV data does not have weight and scale %s", 
+		     in[0]->name);
+      return retCode;
+    }
+  }
+
+  IOBuff = in[0]->compBuff; /* Use for I/O */
+  /* Make sure buffer large enough (sel->nVisPIO) */
+  need = desc->lrec*sel->numVisRead*sizeof(ofloat);
+  if (need > in[0]->compBuffSize) {
+    Obit_log_error(err, OBIT_Error, 
+		   "Decompression buffer ( %d) too small, need %d for %s", 
+		   in[0]->compBuffSize, need, in[0]->name);
+    return retCode;
+  }
+  
+  /* Visibility decompression buffer */
+  if (compressed && (in[0]->decompVis==NULL)) 
+    /* Add some extra in buffer - sometimes overrun */
+    in[0]->decompVis = 
+      ObitMemAllocName ((sel->nrparmUC+5+3*desc->lrec)*sizeof(ofloat), 
+			"UVAIPS comp. vis");
+
+  /* read block of sel->numVisRead visibilities at a time  */
+  /* get file position offset */
+  wantPos = (ObitFilePos)(desc->firstVis-1) * desc->lrec * sizeof(ofloat);
+  /* transfer size in bytes */
+  size = sel->numVisRead * desc->lrec * sizeof(ofloat); 
+
+  /* Read use work buffers on first in */
+  retCode = ObitFileRead (in[0]->myFile, wantPos, size, (gchar*)IOBuff, err);
+  if ((retCode!=OBIT_IO_OK) || (err->error)) /* add traceback on error */
+    Obit_traceback_val (err, routine, in[0]->name, retCode);
+  in[0]->filePos = in[0]->myFile->filePos; /* remember current file position */
+
+  /* How many buffers need the full treatment?
+     none unless sel->doCal - just copy if all the same */
+  if (sel->doCal) nFull = nBuff;
+  else  nFull = 1;
+
+  /* uncompress/calibrate/edit/select transform... to output */
+  ip = op = 0;          /* array pointers */
+  numVisBuff = 0;       /* How many valid visibilities */
+  for (i=0; i<sel->numVisRead; i++) {
+
+    /* Loop over buffers being calibrated independently */
+    for (ib=0; ib<nFull; ib++) {
+      
+      /* Decompress */
+      if (compressed) {
+	/* copy random parameters to visibility work buffer */
+	for (k=0; k<sel->nrparmUC; k++) in[0]->decompVis[k] = IOBuff[ip+k];
+	
+	/* uncompress data */
+	wtscl = &IOBuff[ip+desc->ilocws]; /* weight and scale array */
+	ObitIOUVAIPSUncompress (desc->ncorr, &IOBuff[ip+desc->nrparm], 
+				wtscl, &in[0]->decompVis[sel->nrparmUC]);
+	workVis = in[0]->decompVis; /* working visibility pointer */
+	
+      } else {
+	/* Data not compressed - work out of I/O buffer */
+	workVis = &IOBuff[ip];
+      }
+      
+      /* Calibrate and transform to individual buffer */
+      OK = ObitUVCalApply ((ObitUVCal*)in[ib]->myCal, workVis, &data[ib][op], err);
+      if (err->error) /* add traceback,return on error */
+	Obit_traceback_val (err, routine, in[ib]->name, retCode);
+      
+    } /* end loop over buffer */
+    ip += desc->lrec;   /* index in i/O array */
+    if (OK) { /* at least some of the data unflagged - increment output */
+      op += sel->lrecUC;  /* index in output array */
+      numVisBuff++;       /* count number */
+    }
+  } /* end loop over visibilities */
+  
+  /* transfer size in bytes */
+  size = numVisBuff * sel->lrecUC * sizeof(ofloat); 
+
+  /* May need to copy the rest */
+  for (ib=nFull; ib<nBuff; ib++) {
+    memcpy (data[ib], data[0], size);
+  }
+  
+  desc->numVisBuff =  numVisBuff; /* How many good */
+  return  OBIT_IO_OK;
+} /* end ObitIOUVAIPSReadMultiSelect */
+
+/**
+ * Reread data from disk applying selection to multiple buffers 
+ * and any (output dependent) calibration.
+ * Retreives data read in a previous call to ObitIOUVAIPSReadMultiSelect
+ * possibly applying new calibration.
+ * If amp/phase calibration being applied, it is done independently
+ * for each buffer using the myCal in the associated in,
+ * otherwise, data from the first buffer copied to the others.
+ * NOTE: this depends on retrieving the data from the first element in 
+ * in which should be the same as in the call to ObitIOUVAIPSReadMultiSelect
+ * All selected buffer sizes etc must be the same.
+ * The number read will be mySel->nVisPIO (until the end of the selected
+ * range of visibilities in which case it will be smaller).
+ * The first visibility number after a read is myDesc->firstVis
+ * and the number of visibilities is myDesc->numVisBuff (which
+ * may be zero).
+ * The number attempted in a read is mySel->numVisRead.
+ * When OBIT_IO_EOF is returned all data has been read (then is no new
+ * data in data) and the I/O has been closed.
+ * \param nBuff Number of buffers to be filled
+ * \param in    Array of pointers to to object to be read; 
+ *              must all be to same underlying data set but with 
+ *              independent calibration
+ * \param data  array of pointers to buffers to write results.
+ * \param err   ObitErr for reporting errors.
+ * \return return code, OBIT_IO_OK=> OK
+ */
+ObitIOCode 
+ObitIOUVAIPSReReadMultiSelect (olong nBuff, ObitIOUVAIPS **in, ofloat **data, 
+			       ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  ObitUVDesc* desc;
+  ObitUVSel* sel;
+  olong i, k, ip, op, ib, numVisBuff, nFull;
+  gboolean compressed, OK=FALSE;
+  ofloat *workVis, *wtscl, *IOBuff = NULL;
+  gsize size;
+  gchar *routine = "ObitIOUVAIPSReReadMultiSelect";
+
+  /* error checks */
+  if (err->error) return retCode;
+  if (nBuff<=0)   return retCode;
+
+  /* Make sure access was set correctly */
+  if (in[0]->access!=OBIT_IO_ReadCal) {
+    Obit_log_error(err, OBIT_Error, 
+		   "%s: access not ReadCal for %s", 
+		   routine, in[0]->name);
+    return retCode;
+  }
+  desc = in[0]->myDesc; /* UV descriptor pointer */
+  sel  = in[0]->mySel;  /* selector pointer */
+
+  IOBuff = in[0]->compBuff; /* Use for I/O */
+
+  /* How many buffers need the full treatment?
+     none unless sel->doCal - just copy if all the same */
+  if (sel->doCal) nFull = nBuff;
+  else  nFull = 0;
+
+   /* Is the data compressed? If so need to uncompress */
+  compressed = sel->Compress;
+
+  /* uncompress/calibrate/edit/select transform... to output */
+  ip = op = 0;          /* array pointers */
+  if (nFull>0) numVisBuff = 0;       /* How many valid visibilities */
+  else numVisBuff         = desc->numVisBuff;
+
+  if (nFull>0) { /* calibrate something? */
+    for (i=0; i<sel->numVisRead; i++) {
+      
+      /* Loop over buffers being calibrated independently */
+      for (ib=0; ib<nFull; ib++) {
+	
+	/* Decompress */
+	if (compressed) {
+	  /* copy random parameters to visibility work buffer */
+	  for (k=0; k<sel->nrparmUC; k++) in[0]->decompVis[k] = IOBuff[ip+k];
+	  
+	  /* uncompress data */
+	  wtscl = &IOBuff[ip+desc->ilocws]; /* weight and scale array */
+	  ObitIOUVAIPSUncompress (desc->ncorr, &IOBuff[ip+desc->nrparm], 
+				  wtscl, &in[0]->decompVis[sel->nrparmUC]);
+	  workVis = in[0]->decompVis; /* working visibility pointer */
+	  
+	} else {
+	  /* Data not compressed - work out of I/O buffer */
+	  workVis = &IOBuff[ip];
+	}
+	
+	/* Calibrate and transform to individual buffer */
+	OK = ObitUVCalApply ((ObitUVCal*)in[ib]->myCal, workVis, &data[ib][op], err);
+	if (err->error) /* add traceback,return on error */
+	  Obit_traceback_val (err, routine, in[ib]->name, retCode);
+	
+      } /* end loop over buffer */
+      ip += desc->lrec;   /* index in i/O array */
+      if (OK) { /* at least some of the data unflagged - increment output */
+	op += sel->lrecUC;  /* index in output array */
+	numVisBuff++;       /* count number */
+      }
+    } /* end loop over visibilities */
+  } /* end if calibrate something */
+
+  /* transfer size in bytes */
+  size = numVisBuff * sel->lrecUC * sizeof(ofloat); 
+
+  /* May need to copy the rest */
+  nFull = MAX (1, nFull); /* Don't copy to itself */
+  for (ib=nFull; ib<nBuff; ib++) {
+    memcpy (data[ib], data[0], size);
+  }
+  
+  desc->numVisBuff =  numVisBuff; /* How many good */
+  return  OBIT_IO_OK;
+} /* end ObitIOUVAIPSReReadMultiSelect */
 
 /**
  * Write information to disk.
@@ -1650,8 +2102,14 @@ static void ObitIOUVAIPSClassInfoDefFn (gpointer inClass)
   theClass->ObitIOClose= (ObitIOCloseFP)ObitIOUVAIPSClose;
   theClass->ObitIOSet  = (ObitIOSetFP)ObitIOUVAIPSSet;
   theClass->ObitIORead = (ObitIOReadFP)ObitIOUVAIPSRead;
+  theClass->ObitIOReReadMulti = (ObitIOReReadMultiFP)ObitIOUVAIPSReReadMulti;
+  theClass->ObitIOReadMulti = (ObitIOReadMultiFP)ObitIOUVAIPSReadMulti;
   theClass->ObitIOReadSelect = 
     (ObitIOReadSelectFP)ObitIOUVAIPSReadSelect;
+  theClass->ObitIOReadMultiSelect = 
+    (ObitIOReadMultiSelectFP)ObitIOUVAIPSReadMultiSelect;
+  theClass->ObitIOReReadMultiSelect = 
+    (ObitIOReReadMultiSelectFP)ObitIOUVAIPSReReadMultiSelect;
   theClass->ObitIOWrite   = 
     (ObitIOWriteFP)ObitIOUVAIPSWrite;
   theClass->ObitIOFlush   = 

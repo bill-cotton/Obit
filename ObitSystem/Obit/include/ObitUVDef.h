@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -39,3 +39,9 @@ ObitUVSel* mySel;
 ofloat *buffer;
 /** uv data buffer size in floats */
 olong bufferSize;
+/** Number of parallel buffers */
+olong nParallel;
+/** Array of IOs for parallel buffers */
+ObitIO** multiBufIO;
+/** Array of parallel buffers */
+ofloat** multiBuf;
