@@ -10,7 +10,7 @@ doGSL=yes
 doZLIB=yes
 doMOTIF=yes
 doPYTHON=yes
-doWWW=yes
+doWWW=no
 doCURL=yes
 doXMLRPC=yes
 
@@ -43,7 +43,6 @@ if test $arg = -help; then
     echo "ZLIB - Compression library"
     echo "MOTIF - Motif graphics library"
     echo "PYTHON - Python"
-    echo "WWW - Internet protocol library"
     echo "CURL - Internet URL library"
     echo "XMLRPC - XMLRPC network protocol library"
 fi
@@ -55,7 +54,6 @@ echo "doGSL $doGSL"
 echo "doZLIB $doZLIB"
 echo "doMOTIF $doMOTIF"
 echo "doPYTHON $doPYTHON"
-echo "doWWW $doWWW"
 echo "doCURL $doCURL"
 echo "doXMLRPC $doXMLRPC"
 
