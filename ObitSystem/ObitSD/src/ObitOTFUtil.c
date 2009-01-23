@@ -1191,7 +1191,7 @@ void ObitOTFUtilMakeImage (ObitOTF *inOTF, ObitImage *outImage, gboolean doBeam,
   /* Filter if requested */
   doFilter = TRUE;
   ObitInfoListGetTest(inOTF->info, "doFilter", &type, dim, &doFilter);
-  radius = 0.5* inOTF->myDesc->diameter;
+  radius = 0.5 * inOTF->myDesc->diameter;
   if (radius<=0.0) radius = 50.0;  /* Default = GBT */
   if (doFilter) {
     Obit_log_error(err, OBIT_InfoErr, 
