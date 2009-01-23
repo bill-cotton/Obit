@@ -1,6 +1,6 @@
-/* $Id$                            */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2003                                          */
+/*;  Copyright (C) 2002-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -17,7 +17,7 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*;  Correspondence this software should be addressed as follows:     */
+/*; Correspondence about this software should be addressed as follows:*/
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
@@ -31,5 +31,9 @@
 ObitUVGridSetupFP ObitUVGridSetup;
 /** Function pointer to Read/grid uv data. */
 ObitUVGridReadUVFP ObitUVGridReadUV;
+/** Function pointer to Parallel Read/grid uv data. */
+ObitUVGridReadUVParFP ObitUVGridReadUVPar;
 /** Function pointer to transform/correct. */
 ObitUVGridFFT2ImFP ObitUVGridFFT2Im;
+/** Function pointer to Parallel transform/correct. */
+ObitUVGridFFT2ImParFP ObitUVGridFFT2ImPar;
