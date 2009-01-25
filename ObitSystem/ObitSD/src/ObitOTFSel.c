@@ -409,7 +409,7 @@ gboolean ObitOTFSelNext (ObitOTFSel *in, ObitOTFDesc *desc, ObitErr *err)
 	/* Is this one wanted? */
 	/* Any overlap with time range? */
 	if (row->Time+row->TimeI < in->timeRange[0]) continue;
-	if (row->Time > in->timeRange[1]) continue;
+	if (row->Time-row->TimeI > in->timeRange[1]) break;
 
 	/* A selected scan? */
 	if ((row->ScanID<in->scans[0]) || (row->ScanID>in->scans[1])) continue;

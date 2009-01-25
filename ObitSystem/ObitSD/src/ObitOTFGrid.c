@@ -438,7 +438,7 @@ void ObitOTFGridReadOTF (ObitOTFGrid *in, ObitOTF *OTFin, ObitErr *err)
   in->nThreads   = 0;
 
   /* Make sure some data processed */
-  if (count<10) {
+  if (count<1) {
     Obit_log_error(err, OBIT_Error, 
 		   "%s: NO data selected for imaging %s",
 		   routine,OTFin->myDesc->name);
