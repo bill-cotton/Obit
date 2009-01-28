@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -166,6 +166,8 @@ ObitUVDesc* ObitUVDescCopy (ObitUVDesc* in, ObitUVDesc* out, ObitErr *err)
   out->nrparm  = in->nrparm;
   out->epoch   = in->epoch;
   out->equinox = in->equinox;
+  out->maxBL   = in->maxBL;
+  out->maxW    = in->maxW;
   out->JDObs   = in->JDObs;
   out->obsra   = in->obsra;
   out->obsdec  = in->obsdec;
@@ -242,6 +244,8 @@ void ObitUVDescCopyDesc (ObitUVDesc* in, ObitUVDesc* out,
   /* initialize/copy */
   out->epoch   = in->epoch;
   out->equinox = in->equinox;
+  out->maxBL   = in->maxBL;
+  out->maxW    = in->maxW;
   out->JDObs   = in->JDObs;
   out->obsra   = in->obsra;
   out->obsdec  = in->obsdec;
@@ -1204,6 +1208,8 @@ void ObitUVDescInit  (gpointer inn)
   in->nrparm     = -1;
   in->firstVis   = 0;
   in->numVisBuff = 0;
+  in->maxBL      = -1.0;
+  in->maxW       = -1.0;
   in->maxAnt     = 0;
   in->info       = newObitInfoList();
   in->freqArr    = NULL;

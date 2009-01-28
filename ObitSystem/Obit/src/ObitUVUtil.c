@@ -83,6 +83,13 @@ void ObitUVUtilUVWExtrema (ObitUV *inUV, ofloat *MaxBL, ofloat *MaxW, ObitErr *e
   if (err->error) return;
   g_assert (ObitUVIsA(inUV));
 
+  /* See if values are already in the descriptor */
+  if ((inUV->myDesc->maxBL>0.0) && (inUV->myDesc->maxW>0.0)) {
+    *MaxBL = inUV->myDesc->maxBL;
+    *MaxW  = inUV->myDesc->maxW;
+    return;
+  }
+
   /* Open uv data if not already open */
   if (inUV->myStatus==OBIT_Inactive) {
     retCode = ObitUVOpen (inUV, OBIT_IO_ReadOnly, err);
@@ -117,6 +124,10 @@ void ObitUVUtilUVWExtrema (ObitUV *inUV, ofloat *MaxBL, ofloat *MaxW, ObitErr *e
     /* Close */
   retCode = ObitUVClose (inUV, err);
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
+  /* Save values in the descriptor */
+  inUV->myDesc->maxBL = maxbl;
+  inUV->myDesc->maxW  = maxw;
 
   *MaxBL = maxbl;
   *MaxW  = maxw;

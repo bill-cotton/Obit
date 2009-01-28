@@ -626,6 +626,8 @@ ObitUV* ObitUVCopy (ObitUV *in, ObitUV *out, ObitErr *err)
   ObitHistory *inHist=NULL, *outHist=NULL;
   olong count;
   ObitIOAccess access;
+  olong i;
+  ofloat bl, maxbl, maxw, *u, *v, *w;
   gchar *outName=NULL, *today=NULL;
   gchar *routine = "ObitUVCopy";
  
@@ -748,16 +750,41 @@ ObitUV* ObitUVCopy (ObitUV *in, ObitUV *out, ObitErr *err)
 
   /* we're in business, copy */
   count = 0;
+  maxbl = -1.0;
+  maxw  = -1.0;
   while ((iretCode==OBIT_IO_OK) && (oretCode==OBIT_IO_OK)) {
     if (doCalSelect) iretCode = ObitUVReadSelect (in, in->buffer, err);
     else iretCode = ObitUVRead (in, in->buffer, err);
     if (iretCode!=OBIT_IO_OK) break;
+
+    /* Baseline statistics */
+    u   = in->buffer+in->myDesc->ilocu;
+    v   = in->buffer+in->myDesc->ilocv;
+    w   = in->buffer+in->myDesc->ilocw;
+    for (i=0; i<in->myDesc->numVisBuff; i++) { /* loop over buffer */
+      /* Get statistics */
+      bl = ((*u)*(*u) + (*v)*(*v));
+      maxbl = MAX (maxbl, bl);
+      maxw = MAX (fabs(*w), maxw);
+      
+      /* update data pointers */
+      u += in->myDesc->lrec;
+      v += in->myDesc->lrec;
+      w += in->myDesc->lrec;
+    } /* end loop over buffer */
+
    /* How many */
     out->myDesc->numVisBuff = in->myDesc->numVisBuff;
     count += out->myDesc->numVisBuff;
     oretCode = ObitUVWrite (out, in->buffer, err);
   }
   
+  /* Save baseline statistics in the descriptor */
+  in->myDesc->maxBL  = sqrt(fabs(maxbl));
+  in->myDesc->maxW   = maxw;
+  out->myDesc->maxBL = sqrt(fabs(maxbl));
+  out->myDesc->maxW  = maxw;
+
   /* check for errors */
   if ((iretCode > OBIT_IO_EOF) || (oretCode > OBIT_IO_EOF) ||
       (err->error)) /* add traceback,return */

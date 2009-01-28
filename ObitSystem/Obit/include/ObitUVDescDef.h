@@ -90,6 +90,10 @@
   ofloat  epoch;
   /** Mean Equinox of celestial coordinates (e.g. 2000) */
   ofloat  equinox;
+  /** Maximum baseline length if > 0 */
+  ofloat maxBL;
+  /** Maximum abs(W) if > 0 */
+  ofloat maxW;
   /** Julian date of observations */
   odouble JDObs;
   /** Axis coordinate values at reference pixel. */

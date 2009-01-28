@@ -1297,8 +1297,6 @@ ObitIOCode ObitIOUVFITSReReadMultiSelect (olong nBuff, ObitIOUVFITS **in, ofloat
   desc = in[0]->myDesc; /* UV descriptor pointer */
   sel  = in[0]->mySel;  /* selector pointer */
 
-  desc->numVisBuff = 0; /* no data in buffer yet */
-  
   len = desc->lrec; /* How big is a visibility */
 
   /* process block of sel->numVisRead visibilities at a time  */
