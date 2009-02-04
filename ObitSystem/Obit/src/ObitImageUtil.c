@@ -460,6 +460,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   ObitInfoType type;
   ofloat sumwts, imMax, imMin;
   gchar *outName=NULL;
+  olong NPIO, oldNPIO;
   olong i, ichannel, icLo, icHi, pos[5];
   olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
@@ -513,6 +514,16 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
     ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, (gpointer)&sumwts);
     outImage->myGrid->BeamNorm = sumwts;
   }    
+
+  /* Reset UV buffer size to at least 2 MByte per thread */
+  oldNPIO  = 1000;
+  ObitInfoListGetTest (inUV->info, "nVisPIO", &type, dim,  (gpointer)&oldNPIO);
+  /* How many threads? */
+  outImage->myGrid->nThreads = MAX (1, ObitThreadNumProc(outImage->thread));
+  NPIO = outImage->myGrid->nThreads * 
+    (olong) (0.5 + MAX (2.0, 2.0/(inUV->myDesc->lrec*4.0/(1024.0*1024.0))));
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (inUV->info, "nVisPIO",  OBIT_int, dim,  (gpointer)&NPIO);
 
   /* Loop over channels selected */
   icLo = 1; 
@@ -587,7 +598,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
       /* Free image buffer */
       theBeam->image = ObitFArrayUnref(theBeam->image);
 
-   } /* end making beam */
+    } /* end making beam */
     
     /* Now make image */
     /* Set blc, trc */
@@ -665,6 +676,10 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
     outImage->myGrid = ObitUVGridUnref(outImage->myGrid);
     
   } /* end loop over channels */
+  /* Reset NPIO */
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (inUV->info, "nVisPIO",  OBIT_int, dim,  (gpointer)&oldNPIO);
+
 }  /* end ObitImageUtilMakeImage */
 
 /**
@@ -723,6 +738,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   ofloat sumwts, imMax, imMin;
   gchar *outName=NULL;
   olong i, j, ip, pos[5], nImage, nGain=0, *gainUse=NULL, gain;
+  olong NPIO, oldNPIO;
   olong doCalib = 0;
   olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
@@ -885,6 +901,16 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   /* Applying calibration or selection? */
   if (doCalSelect) access = OBIT_IO_ReadCal;
   else access = OBIT_IO_ReadOnly;
+
+  /* Reset UV buffer size to at least 2 MByte per thread */
+  oldNPIO  = 1000;
+  ObitInfoListGetTest (data[0]->info, "nVisPIO", &type, dim,  (gpointer)&oldNPIO);
+  /* How many threads? */
+  grids[0]->nThreads = MAX (1, ObitThreadNumProc(grids[0]->thread));
+  NPIO = grids[0]->nThreads * 
+    (olong) (0.5 + MAX (2.0, 2.0/(data[0]->myDesc->lrec*4.0/(1024.0*1024.0))));
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (data[0]->info, "nVisPIO",  OBIT_int, dim,  (gpointer)&NPIO);
 
   /*  Open uv data for first if needed */
   if ((data[0]->myStatus!=OBIT_Active) && (data[0]->myStatus!=OBIT_Modified)) {

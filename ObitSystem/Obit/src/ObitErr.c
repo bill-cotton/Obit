@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2008                                          */
+/*;  Copyright (C) 2002-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -356,6 +356,43 @@ void ObitErrTimeStamp  (ObitErr *in)
 		 datea[0],datea[1],datea[2],timea[0], timea[1],timea[2]);
 
 } /* end ObitErrTimeStamp */
+
+/**
+ * Adds a log message with the current data and time
+ * \param in       Input ObitErr.
+ * \param errMsg   Message string
+ */
+void ObitErrTimeLog  (ObitErr *in, gchar *errMsg)
+{
+  struct tm *lp;
+  time_t clock;
+  olong timea[3], datea[3];
+
+  /* error checks */
+  g_assert (ObitErrIsA(in));
+
+  /* date and time info */
+ /* Get time since 00:00:00 GMT, Jan. 1, 1970 in seconds. */
+  time (&clock);
+
+  /* Convert to  broken-down time. */
+  lp = localtime (&clock);
+
+  /* to local arrays */
+  datea[0] = lp->tm_year;
+  if (datea[0]<1000) datea[0] += 1900; /* full year */
+  datea[1] = lp->tm_mon+1; /* For some bizzare reason, month is 0-rel */
+  datea[2] = lp->tm_mday;
+  timea[0] = lp->tm_hour;
+  timea[1] = lp->tm_min;
+  timea[2] = lp->tm_sec;
+
+  /* Compose  */
+  Obit_log_error(in, OBIT_InfoErr, 
+		 "%4d-%2.2d-%2.2d  %2.2d:%2.2d:%2.2d %s",
+		 datea[0],datea[1],datea[2],timea[0],timea[1],timea[2],errMsg);
+
+} /* end ObitErrTimeLog */
 
 /**
  * Determines if the input object is a member of this class

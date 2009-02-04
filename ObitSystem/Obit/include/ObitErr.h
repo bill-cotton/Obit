@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2008                                          */
+/*;  Copyright (C) 2002-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -258,6 +258,9 @@ void ObitErrLog  (ObitErr *in);
 
 /** Public: Add timestamp message. */
 void ObitErrTimeStamp  (ObitErr *in);
+
+/** Public: Add message with timestamp. */
+void ObitErrTimeLog  (ObitErr *in, gchar *errMsg);
 
 /** Public: Returns true if input is a  ObitErr* */
 gboolean ObitErrIsA (ObitErr* in);
