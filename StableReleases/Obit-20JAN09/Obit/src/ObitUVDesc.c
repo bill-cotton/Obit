@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -547,8 +547,10 @@ void ObitUVDescGetFreq (ObitUVDesc* in, Obit *fqtab, odouble *SouIFOff,
       chBandw[j]  = in->cdelt[in->jlocf];
       sideBand[j] = 0;
     }
-    /* Warn if more than 1 IF */
-    if (nif>1) Obit_log_error(err, OBIT_InfoWarn, "Missing Frequency (FQ) information");
+    /* Warn if more than 1 IF and likely to need this information */
+    if ((nif>1) && ((in->access==OBIT_IO_ReadCal)||in->access==OBIT_IO_ReadOnly)) {
+      Obit_log_error(err, OBIT_InfoWarn, "Missing Frequency (FQ) information");
+    }
  }
 
   /* Make sure reference frequency set */

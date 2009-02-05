@@ -551,9 +551,11 @@ void ObitUVDescGetFreq (ObitUVDesc* in, Obit *fqtab, odouble *SouIFOff,
       chBandw[j]  = in->cdelt[in->jlocf];
       sideBand[j] = 0;
     }
-    /* Warn if more than 1 IF */
-    if (nif>1) Obit_log_error(err, OBIT_InfoWarn, "Missing Frequency (FQ) information");
- }
+    /* Warn if more than 1 IF and likely to need this information */
+    if ((nif>1) && ((in->access==OBIT_IO_ReadCal)||in->access==OBIT_IO_ReadOnly)) {
+      Obit_log_error(err, OBIT_InfoWarn, "Missing Frequency (FQ) information");
+    }
+   }
 
   /* Make sure reference frequency set */
   in->freq = in->crval[in->jlocf];
