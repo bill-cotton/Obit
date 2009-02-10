@@ -107,11 +107,6 @@ PATH=$BASE/bin:$PATH;export PATH
 # install Third party software
 if test $doTHIRD = yes; then
     ./build3rdParty.sh $@
-    # Add link to python executable if built
-    if test $doPYTHON  = yes; then 
-	rm -f $BASE/bin/python
-	ln -s $BASE/other/bin/python $BASE/bin/python
-    fi
 fi
 
 PLPLOT="--with-plplot=$THIRD"
@@ -147,11 +142,13 @@ if test $doObit = yes; then
     echo ./configure --exec_prefix=$BASE --with-obit=$OBIT PATH=$BASE/other/bin:$PATH \
 	$PLPLOT $GSL $GLIB $FFTW $CFITSIO $WWW $CURL $XMLRPC $ZLIB $PYTHON \
 	OBIT=$OBIT  OBITINSTALL=$BASE LD_LIBRARY_PATH=$LD_LIBRARY_PATH \
-	PKG_CONFIG_PATH=$BASE/other/lib/pkgconfig/
+	PKG_CONFIG_PATH=$BASE/other/lib/pkgconfig/ \
+	CPPFLAGS=-I$BASE/other/include/python2.5
     ./configure --exec_prefix=$BASE --with-obit=$OBIT PATH=$BASE/other/bin:$PATH \
 	$PLPLOT $GSL $GLIB $FFTW $CFITSIO $WWW $CURL $XMLRPC $ZLIB $PYTHON \
 	OBIT=$OBIT  OBITINSTALL=$BASE LD_LIBRARY_PATH=$LD_LIBRARY_PATH \
-	PKG_CONFIG_PATH=$BASE/other/lib/pkgconfig/
+	PKG_CONFIG_PATH=$BASE/other/lib/pkgconfig/ \
+	CPPFLAGS=-I$BASE/other/include/python2.5
     make clean all 
 #make clean
 fi
@@ -195,11 +192,13 @@ if test $doObitSD = yes; then
     echo ./configure --exec_prefix=$BASE --with-obit=$OBIT PATH=$BASE/other/bin:$PATH \
 	$PLPLOT $GSL $GLIB $FFTW $CFITSIO $WWW $CURL $XMLRPC $ZLIB $PYTHON \
 	OBIT=$OBIT OBITINSTALL=$BASE LD_LIBRARY_PATH=$LD_LIBRARY_PATH \
-	PKG_CONFIG_PATH=$BASE/other/lib/pkgconfig/
+	PKG_CONFIG_PATH=$BASE/other/lib/pkgconfig/ \
+	CPPFLAGS=-I$BASE/other/include/python2.5
     ./configure --exec_prefix=$BASE --with-obit=$OBIT PATH=$BASE/other/bin:$PATH \
 	$PLPLOT $GSL $GLIB $FFTW $CFITSIO $WWW $CURL $XMLRPC $ZLIB $PYTHON \
 	OBIT=$OBIT OBITINSTALL=$BASE LD_LIBRARY_PATH=$LD_LIBRARY_PATH \
-	PKG_CONFIG_PATH=$BASE/other/lib/pkgconfig/
+	PKG_CONFIG_PATH=$BASE/other/lib/pkgconfig/ \
+	CPPFLAGS=-I$BASE/other/include/python2.5
     make clean all 
     make install
 #make clean

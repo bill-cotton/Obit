@@ -81,49 +81,6 @@ if !(test -d other/tarballs); then
 fi
 
 # Third party software:
-#plplot
-cd $BASE
-if test $doPLPLOT = yes; then
-    plplotdir=plplot-5.8.0
-    plplottar=$plplotdir".tar.gz"
-    # Copy tarball if necssary
-    if !(test -f other/tarballs/$plplottar); then
-	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$plplottar
-	mv $plplottar other/tarballs/
-    fi
-    cd $BASE3
-# cleanup
-    rm -f -r $plplotdir
-    tar xzvf tarballs/$plplottar
-    cd  $plplotdir
-    ./configure --prefix=$BASE3/ -enable-java=no --enable-tcl=no \
-	--without--python --with-double=no
-    make clean all
-    make install
-    make clean
-fi
-
-# cfitsio
-cd $BASE
-if test $doCFITSIO = yes; then
-# cleanup
-    cfitsiodir=cfitsio
-    cfitsiotar=$cfitsiodir"3100.tar.gz"
-    # Copy tarball if necssary
-    if !(test -f other/tarballs/$cfitsiotar); then
-	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$cfitsiotar
-	mv $cfitsiotar other/tarballs/
-    fi
-    cd $BASE3
-    rm -f -r $cfitsiodir
-    tar xzvf tarballs/$cfitsiotar
-    cd $cfitsiodir
-    ./configure --prefix=$BASE3/ 
-    make clean all install
-    make clean
-fi
-
-
 # glib , needs pkgconfig
 cd $BASE
 if test $doGLIB = yes; then
@@ -145,7 +102,7 @@ if test $doGLIB = yes; then
     cd $BASE
     glibdir=glib-2.2.0
     glibtar=$glibdir".tar.gz"
-    # Copy tarball if necssary
+    # Copy tarball if necessary
     if !(test -f other/tarballs/$glibtar); then
 	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$glibtar
 	mv $glibtar other/tarballs/
@@ -162,12 +119,82 @@ if test $doGLIB = yes; then
 #    make clean
 fi
 
+# Python
+cd $BASE
+if test $doPYTHON = yes; then
+    Pythondir=Python-2.5.1
+    Pythontar=$Pythondir".tgz"
+    Pythonlib=libpython2.5.so.1.0
+    # Copy tarball if necessary
+    if !(test -f other/tarballs/$Pythontar); then
+	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$Pythontar
+	mv $Pythontar other/tarballs/$Pythontar
+    fi
+    cd $BASE3
+
+# cleanup
+    rm -f -r $Pythondir
+    tar xzvf tarballs/$Pythontar
+    cd $Pythondir
+    ./configure --prefix=$BASE3 --exec-prefix=$BASE3/../ --enable-shared 
+    make clean all 
+    make install
+    # Install doesn't seem to copy library
+    if !(test -f ../lib/$Pythonlib); then
+	cp $Pythonlib ../lib
+    fi
+    make clean
+fi
+
+#plplot
+cd $BASE
+if test $doPLPLOT = yes; then
+    plplotdir=plplot-5.8.0
+    plplottar=$plplotdir".tar.gz"
+    # Copy tarball if necessary
+    if !(test -f other/tarballs/$plplottar); then
+	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$plplottar
+	mv $plplottar other/tarballs/
+    fi
+    cd $BASE3
+# cleanup
+    rm -f -r $plplotdir
+    tar xzvf tarballs/$plplottar
+    cd  $plplotdir
+    ./configure --prefix=$BASE3/ -enable-java=no --enable-tcl=no \
+	--enable--python=no --with-double=no
+    make clean all
+    make install
+    make clean
+fi
+
+# cfitsio
+cd $BASE
+if test $doCFITSIO = yes; then
+# cleanup
+    cfitsiodir=cfitsio
+    cfitsiotar=$cfitsiodir"3100.tar.gz"
+    # Copy tarball if necessary
+    if !(test -f other/tarballs/$cfitsiotar); then
+	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$cfitsiotar
+	mv $cfitsiotar other/tarballs/
+    fi
+    cd $BASE3
+    rm -f -r $cfitsiodir
+    tar xzvf tarballs/$cfitsiotar
+    cd $cfitsiodir
+    ./configure --prefix=$BASE3/ 
+    make clean all install
+    make clean
+fi
+
+
 # fftw3
 cd $BASE
 if test $doFFTW = yes; then
     fftw3dir=fftw-3.1.2
     fftw3tar=$fftw3dir".tar.gz"
-    # Copy tarball if necssary
+    # Copy tarball if necessary
     if !(test -f other/tarballs/$fftw3tar); then
 	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$fftw3tar
 	mv $fftw3tar other/tarballs/
@@ -207,7 +234,7 @@ cd $BASE
 if test $doZLIB = yes; then
     zlibdir=zlib-1.2.3
     zlibtar=$zlibdir".tar.gz"
-    # Copy tarball if necssary
+    # Copy tarball if necessary
     if !(test -f other/tarballs/$zlibtar); then
 	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$zlibtar
 	mv $zlibtar other/tarballs/
@@ -228,7 +255,7 @@ cd $BASE
 if test $doMOTIF = yes; then
     openmotifdir=openmotif-2.3.0
     openmotiftar=$openmotifdir".tar.gz"
-    # Copy tarball if necssary
+    # Copy tarball if necessary
     if !(test -f other/tarballs/$openmotiftar); then
 	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$openmotiftar
 	mv $openmotiftar other/tarballs/$openmotiftar
@@ -238,29 +265,7 @@ if test $doMOTIF = yes; then
     rm -f -r $openmotifdir
     tar xzvf tarballs/$openmotiftar
     cd $openmotifdir
-    ./configure --prefix=$BASE3
-    make clean all 
-    make install
-    make clean
-fi
-
-# Python
-cd $BASE
-if test $doPYTHON = yes; then
-    Pythondir=Python-2.5.1
-    Pythontar=$Pythondir".tar.gz"
-    # Copy tarball if necssary
-    if !(test -f other/tarballs/$Pythontar); then
-	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$Pythontar
-	mv $Pythontar other/tarballs/$Pythontar
-    fi
-    cd $BASE3
-    cd $BASE3
-# cleanup
-    rm -f -r $Pythondir
-    tar xzvf tarballs/$Pythontar
-    cd Pythondir
-    ./configure --prefix=$BASE3 --exec-prefix=$BASE3/../ --enable-shared 
+    ./configure --prefix=$BASE3 CPPFLAGS=-I/usr/include/freetype2
     make clean all 
     make install
     make clean
@@ -272,7 +277,7 @@ cd $BASE
 if test $doWWW = yes; then
     wwwdir=w3c-libwww-5.4.0
     wwwtar=$wwwdir".tgz"
-    # Copy tarball if necssary
+    # Copy tarball if necessary
     if !(test -f other/tarballs/$wwwtar); then
 	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$wwwtar
 	mv $wwwtar other/tarballs/$wwwtar
