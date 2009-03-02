@@ -9255,6 +9255,13 @@ extern void UVUtilNoise(ObitUV* in, ObitUV *out, float scale, float sigma, ObitE
 } // end UVUtilNoise
 
 
+extern int UVUtilFlag (ObitUV *inUV, ObitErr *err) {
+  ObitIOCode ret;
+  ret = ObitUVUtilFlag (inUV, err);
+  if (ret==OBIT_IO_OK) return 0;
+  else return 1;
+}  // end UVUtilFlag
+
 extern void UVSetFITS(ObitUV *,long ,int ,char *,ObitErr *);
 extern void UVSetAIPS(ObitUV *,long ,int ,int ,int ,ObitErr *);
 extern ObitData *UVCastData(ObitUV *);
@@ -9305,6 +9312,7 @@ extern void UVEditStokes(ObitUV *,ObitUV *,ObitErr *);
 extern ObitUV *UVEditClip(ObitUV *,int ,ObitUV *,ObitErr *);
 extern ObitUV *UVEditClipStokes(ObitUV *,int ,ObitUV *,ObitErr *);
 extern void UVUtilNoise(ObitUV *,ObitUV *,float ,float ,ObitErr *);
+extern int UVUtilFlag(ObitUV *,ObitErr *);
 
 typedef struct {
   ObitUV *me;
@@ -41645,6 +41653,36 @@ static PyObject *_wrap_UVUtilNoise(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_UVUtilFlag(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitUV * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:UVUtilFlag",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVUtilFlag. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of UVUtilFlag. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (int )UVUtilFlag(_arg0,_arg1);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_newUVSelfCal(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitUVSelfCal * _result;
@@ -47855,6 +47893,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "UVSelfCalCopy", _wrap_UVSelfCalCopy, METH_VARARGS },
 	 { "UVSelfCalCreate", _wrap_UVSelfCalCreate, METH_VARARGS },
 	 { "newUVSelfCal", _wrap_newUVSelfCal, METH_VARARGS },
+	 { "UVUtilFlag", _wrap_UVUtilFlag, METH_VARARGS },
 	 { "UVUtilNoise", _wrap_UVUtilNoise, METH_VARARGS },
 	 { "UVEditClipStokes", _wrap_UVEditClipStokes, METH_VARARGS },
 	 { "UVEditClip", _wrap_UVEditClip, METH_VARARGS },

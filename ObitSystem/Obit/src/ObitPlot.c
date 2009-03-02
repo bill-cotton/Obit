@@ -1668,9 +1668,9 @@ void ObitPlotGrayScale (ObitPlot* in, gchar *label, ObitImage *image,
   ObitPlotDrawAxes (in, xopt_def, xtick, nxsub, yopt_def, ytick, nysub, err);
 
   /* Set pixel range */
-  if (pixmax<1.0e19) maxval = ObitFArrayMax (image->image, pos);
+  if (pixmax<-1.0e19) maxval = ObitFArrayMax (image->image, pos);
   else maxval = pixmax;
-  if (pixmin<1.0e19) minval = ObitFArrayMin (image->image, pos);
+  if (pixmin<-1.0e19) minval = ObitFArrayMin (image->image, pos);
   else minval = pixmin;
 
   /* Set plotting info line */

@@ -824,8 +824,12 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
       data[ip]->info  = ObitInfoListCopyData(inUV->info, data[ip]->info);
       dim[0] = 1; dim[1] = 1; dim[2] = 1; /* No cal for now */
       ObitInfoListAlwaysPut(data[ip]->info, "doCalib", OBIT_int, dim, &Fl);
-     /* Ensure out fully instantiated and OK */
+      /* Ensure out fully instantiated and OK */
       ObitUVFullInstantiate (data[ip], TRUE, err);
+      if (err->error) goto cleanup;
+      /* Ensure beam image OK */
+      ObitImageOpen (theBeam, OBIT_IO_WriteOnly, err);
+      ObitImageClose (theBeam, err);
       if (err->error) goto cleanup;
       array[ip] = theBeam->image;
       outName = g_strconcat ("UVGrid for Beam: ",outImage[j]->name,NULL);
@@ -876,7 +880,8 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
     /* Gridding setup */
     ObitUVGridSetup (grids[ip], data[ip], theBeam->myDesc, outImage[j]->myDesc, 
 		     FALSE, err);
-    if (doCalib<=0) {  /* Need files open for calibration */
+    if (doCalib<=0) {  /* Need files open for calibration - 
+			  this may blow limit on open files */
       ObitUVClose(data[ip], err);
       if (err->error) goto cleanup;
     }

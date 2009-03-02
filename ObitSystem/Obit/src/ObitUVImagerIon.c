@@ -397,8 +397,8 @@ void ObitUVImagerIonImage (ObitUVImager *inn,  olong field, gboolean doWeight,
   /* Weighting? */
   if (doWeight) {
     ObitUVImagerIonWeight (inn, err);
-    /* Copy NI Table */
-    ObitUVCopyTables (in->uvdata, in->uvwork, NULL, NIlist, err);
+    /* Copy NI Table
+    ObitUVCopyTables (in->uvdata, in->uvwork, NULL, NIlist, err); */
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   }
 

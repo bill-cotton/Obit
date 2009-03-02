@@ -470,6 +470,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, in->name);
   if (in->prtLv>1) ObitErrLog(err);  /* Progress Report */
   else ObitErrClear(err);
+  in->doBeam = FALSE;  /* Shouldn't need again */
 
   /* Loop until Deconvolution done */
   done = FALSE;
@@ -793,6 +794,7 @@ void ObitDConCleanVisSub(ObitDConCleanVis *in, ObitErr *err)
   itemp = ObitMemFree(itemp);  /* Deallocate */
 
   /* Subtract Current model */
+  doCalSelect = FALSE;
   ObitInfoListGetTest (in->imager->uvwork->info, "doCalSelect", &type, dim, &doCalSelect);
   dim[0] = dim[1] = dim[2] = 1;  /* Grumble, grumble  */
   ObitInfoListAlwaysPut (in->imager->uvwork->info, "doCalSelect",OBIT_bool, dim, &Fl);
@@ -1687,7 +1689,7 @@ static void  MakeResidual (ObitDConCleanVis *in, olong field,
  */
 static void  MakeAllResiduals (ObitDConCleanVis *in, ObitErr *err)
 {
-  gboolean doBeam= FALSE;
+  gboolean doBeam = in->doBeam;
   gboolean doWeight, doFlatten;
   olong i;
   ObitUVImagerClassInfo *imgClass = 
