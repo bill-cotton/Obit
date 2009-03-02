@@ -458,11 +458,11 @@ void ObitUVCalCalibrate (ObitUVCal *in, ofloat time, olong ant1, olong ant2,
 	  visIn[index+2] = 0.0;
 	}
 
-	/* DEBUG */
+	/* DEBUG 
 	if ((fabs(visIn[index])>10000.0) || (fabs(visIn[index+1])>10000.0)) {
 	  fprintf (stderr,"DEBUG Bad data vis %f %d %d %f %f\n",
 		   time,ant1, ant2,visIn[index],visIn[index+1]);
-	}
+	}*/
 
 	/* rotate phase correction for next if we have delay corrections */
 	if (me->doDelayRate) {

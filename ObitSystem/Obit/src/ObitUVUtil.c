@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -31,6 +31,7 @@
 #include "ObitTableNXUtil.h"
 #include "ObitTablePSUtil.h"
 #include "ObitTableAN.h"
+#include "ObitTableFG.h"
 #include "ObitPrecess.h"
 #if HAVE_GSL==1  /* GSL stuff */
 #include <gsl/gsl_randist.h>
@@ -1923,7 +1924,7 @@ ObitInfoList* ObitUVUtilCount (ObitUV *inUV, ofloat timeInt, ObitErr *err)
 void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV, 
 			ObitErr *err)
 {
-  ObitIOCode iretCode, oretCode;
+  ObitIOCode iretCode=OBIT_IO_SpecErr, oretCode=OBIT_IO_SpecErr;
   gboolean doCalSelect;
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
@@ -2284,6 +2285,182 @@ void ObitUVUtilNoise(ObitUV *inUV, ObitUV *outUV, ofloat scale, ofloat sigma,
   if (err->error) Obit_traceback_msg (err, routine, outUV->name);
 
 } /* end ObitUVUtilNoise */
+
+/**
+ * Adds flagging entry to associated flag table
+ * Input values on inUV
+ * \li "flagVer"   OBIT_Int (1,1,1) Flagging table version, default = 1
+ * \li "subA"      OBIT_Int (1,1,1) Subarray, default = 0
+ * \li "freqID"    OBIT_Int (1,1,1) Frequency ID, default = 0
+ * \li "timeRange" OBIT_float (2,1,1) Start and stop times to flag (days) def, 0s=all
+ * \li "Chans"     OBIT_Int (2,1,1) First and highest channels to flag (1-rel), def, 0=>all
+ * \li "IFs"       OBIT_Int (2,1,1) First and highest IF to flag (1-rel), def, 0=>all
+ * \li "Ants"      OBIT_Int (2,1,1) first and second antenna  numbers for a baseline, 0=$>$all
+ * \li "Source"    OBIT_string (?,1,1) Name of source, def, "Any" => all
+ * \li "Stokes"    OBIT_string (?,1,1) Stokes to flag, def " " = flag all
+ *                 "FFFF"  where F is '1' to flag corresponding Stokes, '0' not.
+ *                 Stokes order 'R', 'L', 'RL' 'LR' or 'X', 'Y', 'XY', 'YX'
+ * \li "Reason"    OBIT_string (?,1,1) reason string for flagging (max. 24 char).
+ * \param inUV   Input UV data
+ * \param err     Error stack, returns if not empty.
+ * \return IO return code, OBIT_IO_OK = OK
+ */
+ObitIOCode ObitUVUtilFlag (ObitUV *inUV, ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  oint iarr[2];
+  olong flagVer, subA, freqID, chans[2], ifs[2], ants[2], SouID;
+  ofloat timerange[2];
+  gchar source[49], stokes[10], reason[49];
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  ObitTableFG    *FlagTable=NULL;
+  ObitTableFGRow *FlagRow=NULL;
+  ObitTableSU    *SourceTable=NULL;
+  gchar *tname, souCode[5];
+  olong ver, iRow, Qual, Number;
+  gboolean xselect;
+  oint numIF;
+  gchar *routine = "ObitUVUtilFlag";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return retCode;
+  g_assert (ObitUVIsA(inUV));
+
+  /* Get parameters */
+  flagVer = 1;
+  ObitInfoListGetTest(inUV->info, "flagVer", &type, dim, &flagVer);
+
+  subA = 0;
+  ObitInfoListGetTest(inUV->info, "subA", &type, dim, &subA);
+
+  freqID = 0;
+  ObitInfoListGetTest(inUV->info, "freqID", &type, dim, &freqID);
+
+  chans[0] = 1; chans[0] = 0;
+  ObitInfoListGetTest(inUV->info, "Chans", &type, dim, chans);
+
+  ifs[0] = 1; ifs[0] = 0;
+  ObitInfoListGetTest(inUV->info, "IFs", &type, dim, ifs);
+
+  ants[0] = 1; ants[0] = 0;
+  ObitInfoListGetTest(inUV->info, "Ants", &type, dim, ants);
+
+  timerange[0] = -1.0e20;  timerange[1] = 1.0e20;
+  ObitInfoListGetTest(inUV->info, "timeRange", &type, dim, timerange);
+  /* default */
+  if ((timerange[0]==0.0) && (timerange[1]==0.0)) {
+    timerange[0] = -1.0e20;
+    timerange[1] =  1.0e20;
+  }
+
+  g_snprintf (source, 48, "Any");
+  ObitInfoListGetTest(inUV->info, "Source", &type, dim, source);
+  source[dim[0]] = 0;   /* terminate */
+
+  g_snprintf (stokes, 9, " ");
+  ObitInfoListGetTest(inUV->info, "Stokes", &type, dim, stokes);
+  stokes[dim[0]] = 0;   /* terminate */
+
+  g_snprintf (reason, 48, " ");
+  ObitInfoListGetTest(inUV->info, "Reason", &type, dim, reason);
+  reason[dim[0]] = 0;   /* terminate */
+
+  /* Open/close input UV to fully instantiate */
+  retCode = ObitUVOpen (inUV, OBIT_IO_ReadWrite, err);
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, retCode);
+  
+  /* Close */
+  retCode = ObitUVClose (inUV, err);
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, retCode);
+
+  /* Look up Source number if needed */
+  if (strncmp ("Any", source, 3)) {
+    /* Instantiate/Create Source Table */
+    retCode = OBIT_IO_ReadErr;
+    tname = g_strconcat ("SU table for: ",inUV->name, NULL);
+    ver = 1;
+    if (inUV->myDesc->jlocif>=0) numIF = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
+    else numIF = 1;
+    SourceTable = newObitTableSUValue(tname, (ObitData*)inUV, &ver, 
+				      OBIT_IO_ReadWrite, numIF, err);
+    dim[0] = strlen(source);
+    dim[1] = 1;
+    Number = 1;
+    Qual   = -1;
+    sprintf (souCode, "    ");
+    ObitTableSULookup (SourceTable, dim, source, Qual, souCode, iarr, 
+		       &xselect, &Number, err);
+    if (err->error) Obit_traceback_val (err, routine, inUV->name, retCode);
+    SouID = iarr[0];  /* Source ID */
+    SourceTable = ObitTableSUUnref(SourceTable);
+    g_free (tname);
+  } else { /* flag all sources */
+    SouID = 0;
+  }
+
+  /* Instantiate/Create output Flag Table */
+  tname = g_strconcat ("FG table for: ", inUV->name, NULL);
+  ver = flagVer;
+  FlagTable = newObitTableFGValue(tname, (ObitData*)inUV, &ver, 
+				       OBIT_IO_ReadWrite, err);
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, retCode);
+  g_free (tname);
+
+  /* Open table */
+  retCode = ObitTableFGOpen (FlagTable, OBIT_IO_ReadWrite, err);
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, retCode);
+
+  /* Create Table Row */
+  FlagRow = newObitTableFGRow (FlagTable);
+  
+  /* Attach  row to output buffer */
+  ObitTableFGSetRow (FlagTable, FlagRow, err);
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, retCode);
+
+  /* If there are entries in the table, mark it unsorted */
+  if (FlagTable->myDesc->nrow>0) 
+    {FlagTable->myDesc->sort[0]=0; FlagTable->myDesc->sort[1]=0;}
+  
+  /* Fill in Flag row */
+  FlagRow->SourID = SouID;
+  FlagRow->SubA   = subA;
+  FlagRow->freqID = freqID;
+  FlagRow->TimeRange[0] = timerange[0];
+  FlagRow->TimeRange[1] = timerange[1];
+  FlagRow->ants[0]  = ants[0];
+  FlagRow->ants[1]  = ants[1];
+  FlagRow->chans[0] = chans[0];
+  FlagRow->chans[1] = chans[1];
+  FlagRow->ifs[0]   = ifs[0];
+  FlagRow->ifs[1]   = ifs[1];
+  FlagRow->pFlags[0] = 0;
+  strncpy (FlagRow->reason, reason, 24);
+  if (stokes[0]==' ') {
+    FlagRow->pFlags[0] = 15;
+  } else {
+    if (stokes[0]!='0') FlagRow->pFlags[0] += 1;
+    if (stokes[1]!='0') FlagRow->pFlags[0] += 2;
+    if (stokes[2]!='0') FlagRow->pFlags[0] += 4;
+    if (stokes[4]!='0') FlagRow->pFlags[0] += 8;
+  }
+  
+  /* write row */
+  iRow = FlagTable->myDesc->nrow+1;
+  retCode =  ObitTableFGWriteRow (FlagTable, iRow, FlagRow, err);
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, retCode);
+   
+  /* Close Flag table */
+  retCode =  ObitTableFGClose (FlagTable, err);
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, retCode);
+
+  /* Cleanup */
+  FlagTable = ObitTableFGUnref(FlagTable);
+  FlagRow   = ObitTableFGRowUnref(FlagRow);
+
+  return retCode;
+} /* end ObitUVUtilFlag */
 
 /*----------------------Private functions---------------------------*/
 /**

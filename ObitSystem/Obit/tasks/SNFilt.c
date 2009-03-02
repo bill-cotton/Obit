@@ -1690,8 +1690,10 @@ void WriteSNTab (ObitTableSN *inTab, ObitTableSN *outTab,
   if (!doRes) {
     for (ipol=0; ipol<numpol; ipol++) { /* loop 30 */
       for (iif=0; iif<numIF; iif++) { /* loop 25 */
-	refiph = insphs[ARR_INDEX(0,refant,iif,ipol)];
-	for (i= 1; i<=numant; i++) { /* loop 20 */
+	antno = refant-1;
+	jndx = ARR_INDEX(0,antno,iif,ipol);
+	refiph = insphs[jndx];
+	for (i=0; i<numant; i++) { /* loop 20 */
 	  jndx = ARR_INDEX(0,i,iif,ipol);
 	  if (insphs[jndx] != fblank) {
 	    insphs[jndx] -= refiph;

@@ -1200,6 +1200,13 @@ void GetPoint (odouble time, ofloat *ra, ofloat *dec)
   odouble test, delta;
   ofloat w1, w2;
   
+  /* Initial values */
+  *ra  = 0.0;
+  *dec = -90.0;
+
+  /* If before first or after last return dec=-90 */
+  if ((time<AntDMJD[0]) || (time>AntDMJD[nAntTime-1])) return;
+
   /* Find closest */
   best = -1;
   delta = 1.0e20;

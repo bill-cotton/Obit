@@ -1621,3 +1621,61 @@ def PNoise(inUV, outUV, scale, sigma, err):
     Obit.UVUtilNoise(inUV.me, outUV.me, scale, sigma, err.me)
     # end PNoise
 
+def PFlag (inUV, err,
+           flagVer=1, timeRange=[0.0,1.0e20], Ants=[0,0], Source="Any",
+           Chans=[1,0], IFs=[1,0], freqID=0, subA=0, Stokes="1111", Reason=" "):
+    """ Adds entry to flag table
+
+    Adds flagging table entry.
+    Note: there is currently no sorting so the flagging entries must be
+    added in time order
+    inUV      = Python Obit UV on which to write flags
+    err       = Python Obit Error/message stack
+    flagVer   = flagging table version number
+    timeRange = pair of floats giving the beginning and end time in days,
+                inclusive, of the data to be flagged
+    Source    = Source name, "Any" => all sources.
+    Chans     = pair of ints giving first and last spectral channel numbers
+                (1-rel) to be flagged; 0s => all
+    IFs       = pair of ints giving first and last IF numbers
+                (1-rel) to be flagged; 0s => all
+    Ants      = first and second antenna  numbers for a baseline, 0=>all
+    Stokes    = String giving stokes to be flagged, 
+                "FFFF"  where F is '1' to flag corresponding Stokes, '0' not.
+                Stokes order 'R', 'L', 'RL' 'LR' or 'X', 'Y', 'XY', 'YX'
+    subA      = Subarray
+    freqID    = Frequency ID
+    Reason    = reason string for flagging (max 24 char)
+    """
+    ################################################################
+    # Checks
+    if not PIsA(inUV):
+        raise TypeError,"inUV MUST be a Python Obit UV"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be a Python ObitErr"
+    if err.isErr: # existing error?
+        return
+    #
+    # Set flagging parameters 
+    inInfo = inUV.List
+    dim = InfoList.dim
+    dim[0] = 1; dim[1] = 1; dim[2] = 1
+    InfoList.PAlwaysPutInt(inInfo, "flagVer", dim, [flagVer])
+    InfoList.PAlwaysPutInt(inInfo, "subA",    dim, [subA])
+    InfoList.PAlwaysPutInt(inInfo, "freqID",  dim, [freqID])
+    dim[0] = 2
+    InfoList.PAlwaysPutInt(inInfo, "Ants",  dim, Ants)
+    InfoList.PAlwaysPutInt(inInfo, "IFs",   dim, IFs)
+    InfoList.PAlwaysPutInt(inInfo, "Chans", dim, Chans)
+    dim[0] = 2
+    InfoList.PAlwaysPutFloat(inInfo, "timeRange", dim, timeRange)
+    dim[0] = len(Source)
+    InfoList.PAlwaysPutString(inInfo, "Source", dim, [Source])
+    dim[0] = len(Stokes)
+    InfoList.PAlwaysPutString(inInfo, "Stokes", dim, [Stokes])
+    dim[0] = len(Reason)
+    InfoList.PAlwaysPutString(inInfo, "Reason", dim, [Reason])
+    #
+    Obit.UVUtilFlag (inUV.me, err.me)
+    # end PFlag
+

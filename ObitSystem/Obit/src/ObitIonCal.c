@@ -909,6 +909,14 @@ void ObitIonCaldoCal (ObitIonCal*in, ObitErr* err)
   dim[0] = 1;
   ObitInfoListAlwaysPut(myClean->info, "doFlatten", OBIT_bool, dim, &Fl);
 
+  /* Make beam each time */
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(myClean->info, "doBeam", OBIT_bool, dim, &Tr);
+
+  /* ... and weight data */
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(myClean->info, "doWeight", OBIT_bool, dim, &Tr);
+
   /* Copy CLEAN control parameters */
   ObitInfoListCopyList (inUV->info, myClean->info, ParmList);
 
@@ -2574,7 +2582,7 @@ FitAll (ObitIonCal *in, olong ncoef, olong nEpoch,
   if (err->error) goto cleanup;
 
   /* If only one source dummy rms at 1 asec */
-  if (nsou==1) {
+  if (ngood==1) {
     for (i=0; i<nTime; i++) rms[i] = 1.0/ 3600.0;
   }
 

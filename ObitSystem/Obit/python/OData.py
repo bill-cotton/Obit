@@ -355,6 +355,11 @@ class OData(ODataPtr):
         if not OErr.OErrIsA(err):
             raise TypeError,"err MUST be an OErr"
         #
+        # Open/Close to (re)Read header to be sure it's up to date
+        inOData.Open(READONLY,err)
+        inOData.Close(err)
+        
+        # delete table
         ret = Obit.ODataZapTable(inOData.cast(myClass), tabType, tabVer, err.me)
         if err.isErr:
             OErr.printErrMsg(err, "Error Zapping OData data Table")

@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for UV  type                               */
 /*                                                                    */
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -359,6 +359,13 @@ extern void UVUtilNoise(ObitUV* in, ObitUV *out, float scale, float sigma, ObitE
   return ObitUVUtilNoise (in, out, (ofloat)scale, (ofloat)sigma, err);
 } // end UVUtilNoise
 
+
+extern int UVUtilFlag (ObitUV *inUV, ObitErr *err) {
+  ObitIOCode ret;
+  ret = ObitUVUtilFlag (inUV, err);
+  if (ret==OBIT_IO_OK) return 0;
+  else return 1;
+}  // end UVUtilFlag
 
 %}
 

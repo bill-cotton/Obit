@@ -237,7 +237,7 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitInfoListAlwaysPut(inUV->info, "nVisPIO", OBIT_long, dim, &itemp);
 
   /* Selection of input? */
-  doCalSelect = FALSE;
+  doCalSelect = TRUE;
   ObitInfoListGetTest(inUV->info, "doCalSelect", &type, dim, &doCalSelect);
   if (doCalSelect) access = OBIT_IO_ReadCal;
   else access = OBIT_IO_ReadOnly;
@@ -763,7 +763,7 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitInfoListAlwaysPut(inUV->info, "nVisPIO", OBIT_long, dim, &itemp);
 
   /* Selection of input? */
-  doCalSelect = FALSE;
+  doCalSelect = TRUE;
   ObitInfoListGetTest(inUV->info, "doCalSelect", &type, dim, &doCalSelect);
   if (doCalSelect) access = OBIT_IO_ReadCal;
   else access = OBIT_IO_ReadOnly;
@@ -1312,7 +1312,7 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   ObitInfoListAlwaysPut(inUV->info, "nVisPIO", OBIT_long, dim, &itemp);
 
   /* Selection of input? */
-  doCalSelect = FALSE;
+  doCalSelect = TRUE;
   ObitInfoListGetTest(inUV->info, "doCalSelect", &type, dim, &doCalSelect);
   if (doCalSelect) access = OBIT_IO_ReadCal;
   else access = OBIT_IO_ReadOnly;
@@ -2235,7 +2235,7 @@ ObitUV* ObitUVEditClip (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   if (err->error) Obit_traceback_val (err, routine, inUV->name, outUV);
 
   /* Selection of input? */
-  doCalSelect = FALSE;
+  doCalSelect = TRUE;
   ObitInfoListGetTest(inUV->info, "doCalSelect", &type, (gint32*)dim, &doCalSelect);
   if (doCalSelect) access = OBIT_IO_ReadCal;
   else access = OBIT_IO_ReadOnly;
@@ -2458,7 +2458,7 @@ ObitUV* ObitUVEditClipStokes (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   if (err->error) Obit_traceback_val (err, routine, inUV->name, outUV);
 
   /* Selection of input? */
-  doCalSelect = FALSE;
+  doCalSelect = TRUE;
   ObitInfoListGetTest(inUV->info, "doCalSelect", &type, (gint32*)dim, &doCalSelect);
   if (doCalSelect) access = OBIT_IO_ReadCal;
   else access = OBIT_IO_ReadOnly;
@@ -2860,7 +2860,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitInfoListAlwaysPut(inUV->info, "passAll", OBIT_bool, dim, &btemp);
   
   /* Selection of input? */
-  doCalSelect = FALSE;
+  doCalSelect = TRUE;
   ObitInfoListGetTest(inUV->info, "doCalSelect", &type, dim, &doCalSelect);
   if (doCalSelect) access = OBIT_IO_ReadCal;
   else access = OBIT_IO_ReadOnly;
@@ -4006,7 +4006,7 @@ static ofloat MedianUVInt (ObitUV *inUV, ObitErr *err)
   g_assert (ObitUVIsA(inUV));
 
   /* Selection of input? */
-  doCalSelect = FALSE;
+  doCalSelect = TRUE;
   ObitInfoListGetTest(inUV->info, "doCalSelect", &type, dim, &doCalSelect);
   if (doCalSelect) access = OBIT_IO_ReadCal;
   else access = OBIT_IO_ReadOnly;

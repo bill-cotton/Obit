@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -86,4 +86,7 @@ void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV,
 /** Public: Add Gaussian noise to a UV data set */
 void ObitUVUtilNoise(ObitUV *inUV, ObitUV *outUV, ofloat scale, ofloat sigma, 
 		     ObitErr *err);
+
+/** Public: Add a flag entry */
+ObitIOCode ObitUVUtilFlag(ObitUV *inUV, ObitErr *err);
 #endif /* OBITIUVUTIL_H */ 

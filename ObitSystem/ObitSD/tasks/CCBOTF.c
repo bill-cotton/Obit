@@ -2053,6 +2053,13 @@ void GetPoint (odouble time, ofloat *ra, ofloat *dec)
   olong i, best;
   odouble test, delta;
   ofloat w1, w2;
+
+  /* If before first or after last return dec=-90 */
+  if ((time<AntDMJD[0]) || (time>AntDMJD[nAntTime-1])) {
+    *ra = 0.0;
+    *dec = -90.0;
+    return;
+  }
   
   /* Find closest */
   best = -1;
