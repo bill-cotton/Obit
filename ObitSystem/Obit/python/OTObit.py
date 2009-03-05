@@ -645,7 +645,7 @@ def window (image):
     return OWindow.PCreate1("Window", naxis, err)
     # end window
 
-def go (TaskObj, MsgBuf=False):
+def go (TaskObj, MsgBuf=False, URL="http://localhost:8777/RPC2"):
     """ Execute task or script
 
     Returns TaskWindow object if run asynchronously (doWait=True)
@@ -658,6 +658,7 @@ def go (TaskObj, MsgBuf=False):
                  else run with messages in a separate Message window
     MsgBuf     = if true and  TaskObj.doWait=False run asynchronously
                  using a TaskMsgBuffer
+    URL        = URL of ObitMess message server if MsgBuf=False
     """
     ################################################################
     import OTWindow
@@ -672,8 +673,8 @@ def go (TaskObj, MsgBuf=False):
             return tb
         else:
             # use TaskWindow
-            tw = TaskWindow.TaskWindow(TaskObj)
-            OTWindow.newMsgWin(tw)
+            tw = TaskWindow.TaskWindow(TaskObj,URL=URL)
+            #OTWindow.newMsgWin(tw)
             tw.start()
             return tw
     # end go

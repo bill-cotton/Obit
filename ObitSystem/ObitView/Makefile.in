@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#;  Copyright (C) 2007,2008
+#;  Copyright (C) 2007-2009
 #;  Associated Universities, Inc. Washington DC, USA.
 #;
 #;  This program is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ DISTRIB = @PACKAGE_TARNAME@@PACKAGE_VERSION@
 DIRN = @PACKAGE_NAME@
 
 #------------------------------------------------------------------------
-TARGETS =  srcupdate ObitView 
+TARGETS =  srcupdate libupdate ObitView ObitMess
 
 top_srcdir = @top_srcdir@
 
@@ -68,7 +68,7 @@ SERVER_CFLAGS = $(CFLAGS) @X_CFLAGS@ @GLIB_CFLAGS@ @GSL_CFLAGS@ @ZLIB_CFLAGS@
 SERVER_LDFLAGS = $(LDFLAGS) @OBIT_LDFLAGS@ @CFITSIO_LDFLAGS@ @FFTW_LDFLAGS@ @FFTW3_LDFLAGS@ \
         @GSL_LDFLAGS@ @ZLIB_LDFLAGS@ @MOTIF_LDFLAGS@ @XMLRPC_SERVER_LDFLAGS@
 
-SERVER_LIBS = @MOTIF_LIBS@ @X_LIBS@ @OBIT_LIBS@ @GLIB_LIBS@ \
+SERVER_LIBS = lib/libObitView.a @MOTIF_LIBS@ @X_LIBS@ @OBIT_LIBS@ @GLIB_LIBS@ \
         @CFITSIO_LIBS@ @FFTW_LIBS@ @FFTW3_LIBS@ @XMLRPC_LIBS@ @X_PRE_LIBS@ \
         @GSL_LIBS@ @ZLIB_LIBS@  @XMLRPC_SERVER_LIBS@ @GTHREAD_LIBS@
 
@@ -79,7 +79,7 @@ CLIENT_CFLAGS = $(CFLAGS) @X_CFLAGS@ @GLIB_CFLAGS@ @GSL_CFLAGS@ @ZLIB_CFLAGS@
 CLIENT_LDFLAGS = $(LDFLAGS) @OBIT_LDFLAGS@ @CFITSIO_LDFLAGS@ @FFTW_LDFLAGS@ @FFTW3_LDFLAGS@ \
         @GSL_LDFLAGS@ @ZLIB_LDFLAGS@ @MOTIF_LDFLAGS@ @XMLRPC_CLIENT_LDFLAGS@
 
-CLIENT_LIBS = @MOTIF_LIBS@ @X_LIBS@ @OBIT_LIBS@  @GLIB_LIBS@ \
+CLIENT_LIBS = lib/libObitView.a @MOTIF_LIBS@ @X_LIBS@ @OBIT_LIBS@  @GLIB_LIBS@ \
         @CFITSIO_LIBS@ @FFTW_LIBS@ @FFTW3_LIBS@ @XMLRPC_LIBS@ @X_PRE_LIBS@ \
         @GSL_LIBS@ @ZLIB_LIBS@  \
         @XMLRPC_CLIENT_LIBS@ -lpthread @GTHREAD_LIBS@
@@ -91,9 +91,18 @@ all:  $(TARGETS)
 srcupdate: 
 	cd src; $(MAKE)
 
-# Link Obitview
+# update library directory
+libupdate: 
+	cd lib; $(MAKE) RANLIB="$(RANLIB)"
+
+# Link ObitView
 ObitView: src/*.c  srcupdate ObitView.c 
 	$(CC) ObitView.c -o ObitView  $(SERVER_CFLAGS) $(SERVER_CPPFLAGS) src/*.o \
+	$(SERVER_LDFLAGS) $(SERVER_LIBS) $(CLIENT_LIBS) 
+
+# Link ObitMess
+ObitMess: src/*.c  srcupdate ObitMess.c 
+	$(CC) ObitMess.c -o ObitMess  $(SERVER_CFLAGS) $(SERVER_CPPFLAGS) \
 	$(SERVER_LDFLAGS) $(SERVER_LIBS) $(CLIENT_LIBS) 
 
 # Link clientTest
@@ -108,13 +117,20 @@ clientFCopy:   clientFCopy.c
 	$(CLIENT_CPPFLAGS) $(CLIENT_LDFLAGS) \
 	$(CLIENT_LIBS)
 
-# test run
-test: 
-	ObitView someFile.fits
+# test run ObitView
+testObitView: 
+	ObitView aaaSomeFile.fits
+
+# test run ObitMess
+testObitMess: 
+	ObitMess &
+	# Need to wait to start
+	python testObitMess.py
 
 # Copy to where it should go
 install: @exec_prefix@/bin
 	@install_sh@ -s ObitView @exec_prefix@/bin/
+	@install_sh@ -s ObitMess @exec_prefix@/bin/
 
 @exec_prefix@/bin:
 	mkdir @exec_prefix@/bin
@@ -148,5 +164,5 @@ distrib:
 		$(DIRN)/include/*.h 
 clean:
 	cd src;      $(MAKE) clean
-	rm -f ObitView clientTest
+	rm -f ObitView ObitMess clientTest
 	rm -f *.o

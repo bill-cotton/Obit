@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#;  Copyright (C) 2005
+#;  Copyright (C) 2005,2009
 #;  Associated Universities, Inc. Washington DC, USA.
 #;
 #;  This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #------------------------------------------------------------------------
 
 top_srcdir = @top_srcdir@
+LIBDIR = $(top_srcdir)/lib/
 CC = @CC@
 CPPFLAGS = @CPPFLAGS@
 CFLAGS = @CFLAGS@ -Wall -DFASTOBITMEM -fno-strict-aliasing
@@ -56,6 +57,7 @@ CLIENT_CFLAGS = $(CFLAGS) @X_CFLAGS@ @GLIB_CFLAGS@ @GSL_CFLAGS@ @ZLIB_CFLAGS@
 # teach how to compile
 .c.o:	
 	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $<
+	mv $@.o $(LIBDIR)
 
 # get list of all c source files (*.c) files
 AllC := $(wildcard *.c)
@@ -64,23 +66,25 @@ OBJECTS := $(patsubst %.c,%.o, $(AllC))
 # get list of all c header files (*.h) files
 HEADERS := $(wildcard ../include/*.h)
 
-CTARGETS := $(addprefix $(OBJDIR),$(OBJECTS))
+CTARGETS := $(addprefix $(LIBDIR),$(OBJECTS))
 
 
 all:  $(CTARGETS) 
 
 # generic C compile
-$(CTARGETS): $(OBJDIR)%.o: %.c $(wildcard ../include/%*.h)
+$(CTARGETS):  $(LIBDIR)%.o: %.c $(wildcard ../include/%*.h)
 	$(CC) -c $(ALL_CPPFLAGS) $(ALL_CFLAGS) $*.c
-	#mv ./$*.o $@
+	mv ./$*.o $@
 
 # RPC server interface
-XMLRPCserver.o: $(OBJDIR)%.o: %.c $(wildcard ../include/%*.h)
+../lib/XMLRPCserver.o: $(LIBDIR)%.o: %.c $(wildcard ../include/%*.h)
 	$(CC) -c $(SERVER_CPPFLAGS) $(SERVER_CFLAGS) XMLRPCserver.c
+	mv XMLRPCserver.o $(LIBDIR)
 
 # need server interface
-requestbox.o: $(OBJDIR)%.o: %.c $(wildcard ../include/%*.h)
+../lib/requestbox.o: $(LIBDIR)%.o: %.c $(wildcard ../include/%*.h)
 	$(CC) -c $(SERVER_CPPFLAGS) $(SERVER_CFLAGS) requestbox.c
+	mv requestbox.o $(LIBDIR)
 
 clean:
 	rm -f $(CTARGETS)

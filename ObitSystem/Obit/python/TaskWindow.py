@@ -1,13 +1,11 @@
-""" TaskWindow executes a task asynchronously
+""" TaskWindow executes a task asynchronously, messages in ObitMess Window
 
-More thoughts:
-- how to extract task object from event
-- what happens when task wants to talk to user and ask input?
+ObitMess must be started independently of python
 """
 # Task Window for running tasks asynchronously
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2006
+#  Copyright (C) 2006,2009
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -34,55 +32,61 @@ More thoughts:
 #-----------------------------------------------------------------------
 
 # Task window class
-import thread, threading, wx, time
-import OTWindow
+import thread, threading, time
+from xmlrpclib import ServerProxy
 
 
 class TaskWindow(threading.Thread):
-    """ TaskWindow executes a task asynchronously
+    """ TaskWindow executes a task asynchronously, messages displayed
     
     Create a thread and execute a task.
     To use, create object and then call it's start() member
     a call to the wait() function will wait for program to finish
-    Messages are displayed in a ScrolledText window
-    NB: The root Tk window should not be closed until you are through with tasks
+    Messages are displayed in a ObitMess window
     """
     
-    def __init__(self, TaskObj):
+    def __init__(self, TaskObj, URL="http://localhost:8777/RPC2"):
         """ Create and initialize Task Window
         
         TaskObj  = Obit or AIPS or similar task object of the task to execute
         """
         self.myTask        = TaskObj
         self.number        = 1
-        self.MsgWinId      = -1  # wxPython ID of message window
-        self.scrollTextId  = -1  # wxPython ID of message text
-        self.commandId     = -1  # wxPython ID of command window
-        self.statusId      = -1  # wxPython ID of status label
-        self.abortButtonId = -1  # wxPython ID of abort/close button
+        self.taskID        = -1  # ObitMess task ID
+        self.done          = False
         self.proxy         = None  
         self.tid           = None
-        self.done          = False
         self.Failed        = False
         self.Started       = False
+        self.url           = URL
         threading.Thread.__init__(self)
         # end __init__
         
     def run(self):
         """ Execute and manage task
 
-        Note: must send info for Message window through events
         """
         ################################################################
-        import MsgWin
         TaskWin           = self
         myTask            = self.myTask
         TaskWin.done      = False
+
+        # Start ObitMess Window for task myTask._name
+        try:
+            server = ServerProxy(self.url)
+            answer = server.CreateWindow(myTask._name)
+            self.taskID = answer["taskID"]
+        except Exception, e:
+            print "Failed to talk to ObitMess",e
+            raise RuntimeError,"Cannot talk to ObitMess - start it "
+        
         # Hang around until gui is started
-        while TaskWin.statusId==-1:
-            time.sleep(0.2)
+        time.sleep(1.)
         TaskWin.Started   = True
-        OTWindow.CallSetLabel (TaskWin.statusId, "Task Running")
+        deadGUI = False  # has GUI died? May want to keep running/logging.
+        arg = {"taskID":self.taskID, "status":"Task Running"}
+        answer = server.SetStatus(arg)
+        deadGUI = deadGUI or (answer['Status']['code']!=0)
         (TaskWin.proxy, TaskWin.tid) = myTask.spawn()
         # Logging to file?
         if len(myTask.logFile)>0:
@@ -94,7 +98,47 @@ class TaskWindow(threading.Thread):
             while not myTask.finished(TaskWin.proxy, TaskWin.tid):
                 messages = myTask.messages(TaskWin.proxy, TaskWin.tid)
                 if messages:
-                    OTWindow.CallMessage(self.scrollTextId, messages)
+                    if not deadGUI:
+                        msg = ""
+                        # Bundle messages
+                        for message in messages:
+                            if type(message)==str:
+                                msg += message+'\n'
+                            else:
+                                msg += message[1]+'\n'                       
+                        arg = {"taskID":self.taskID, "message":msg}
+                        answer  = server.DisplayMessage(arg)
+                        # loop if busy
+                        while answer['Status']['reason']=="Busy":
+                            answer  = server.DisplayMessage(arg)
+                        deadGUI = deadGUI or (answer['Status']['code']!=0)
+                        # Abort request?
+                        doAbort = answer["Abort"]
+                        # Input (AIPS) request in message?
+                        if (msg.__contains__("** press RETURN for more") or
+                            msg.__contains__("just hit RETURN to continue ")):
+                            answer  = server.UserResponse(self.taskID)
+                            # loop if busy
+                            while answer['Status']['reason']=="Busy":
+                                answer  = server.UserResponse(self.taskID)
+                            deadGUI = deadGUI or (answer['Status']['code']!=0)
+                            doAbort = doAbort or answer["Abort"]
+                            reply   = answer["Result"]
+                            if not TaskWin.done:
+                                # Feed the task the command
+                                myTask.feed(TaskWin.proxy, TaskWin.tid, reply+"\n")
+                            else: # Task finished
+                                arg = {"taskID":self.taskID, "message":"Task already finished\n"}
+                                answer = server.DisplayMessage(arg)
+                        # Now abort if requested
+                        if doAbort:
+                            time.sleep(1.)  # time to shutdown if requested
+                            if not myTask.finished(self.proxy, self.tid):
+                                # this seems to leave the task in an undead state
+                                self.myTask.abort(self.proxy, self.tid)
+                            TaskWin.Failed = True
+                            TaskWin.done   = True
+                        # end if GUI alive
                     if TaskLog:
                         for message in messages:
                             if type(message)==str:
@@ -104,33 +148,25 @@ class TaskWindow(threading.Thread):
                         TaskLog.flush()
                 continue
         except KeyboardInterrupt, exception:
+            print "Something went wrong:",exception
             myTask.abort(TaskWin.proxy, TaskWin.tid)
             raise exception
-        except:   # Aborts throw exceptions that get caught here
+        except Exception, e:   # Aborts throw exceptions that get caught here
             TaskWin.Failed = True
-            #print "DEBUG in go - an exception thrown"
-        #print "DEBUG in go, finished", myTask.myTask.finished(myTask.proxy, myTask.tid)
+            TaskWin.done   = True
+            #print "An exception was thrown, task aborted:",e
 
         if not TaskWin.Failed:
             TaskWin.wait()
-            OTWindow.CallSetLabel(TaskWin.statusId, "Task Finished")
-            OTWindow.CallUpdate(TaskWin.MsgWinId);
+            arg = {"taskID":self.taskID, "status":"Task Finished"}
+            answer = server.SetStatus(arg)
         else:
-            OTWindow.CallSetLabel(TaskWin.statusId, "Task Failed")
-            OTWindow.CallUpdate(TaskWin.MsgWinId);
-            pass
+            arg = {"taskID":self.taskID, "status":"Task Failed"}
+            answer = server.SetStatus(arg)
         TaskWin.done = True
-        # Turn Abort button into Close
-        OTWindow.CallSetLabel(TaskWin.abortButtonId, "Close")
-        OTWindow.CallBind(TaskWin.abortButtonId, MsgWin.delete)
-        OTWindow.CallUpdate(TaskWin.MsgWinId);
+
         if TaskLog:
             TaskLog.close()
-        #if AIPS.log:
-        #    for message in log:
-        #        AIPS.log.write('%s\n' % message)
-        #        continue
-        #    pass
         # end run
         
     def wait(self):
@@ -161,12 +197,12 @@ class TaskWindow(threading.Thread):
         self.done = True
         
         # Update message window
-        OTWindow.CallMessage(self.scrollTextId, "Task aborted")
-        OTWindow.CallSetLabel(self.statusId, "Task Aborted")
-        
-        # Turn "Abort" button into "Close"
-        OTWindow.CallSetLabel(self.abortButtonId, "Close")
-        OTWindow.CallBind(self.abortButtonId, MsgWin.delete)
+        server = ServerProxy(self.url)
+        arg = {"taskID":self.taskID, "message":"Task Aborted\n"}
+        answer = server.DisplayMessage(arg)
+        arg = {"taskID":self.taskID, "status":"Task Aborted"}
+        answer = server.SetStatus(arg)
+
         # end abort
     # end TaskWindow class
 

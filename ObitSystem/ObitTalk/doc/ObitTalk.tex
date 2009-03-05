@@ -26,7 +26,7 @@
 \vskip 1cm
 \centerline{\LARGE\it Obit: Merx mollis mortibus nuper}
 \vskip 3cm
-\centerline{\secfont Draft version: 1.3.5 \today}
+\centerline{\secfont Version: 1.4 \today}
 \vskip 1cm
 
 % Abstract
@@ -71,9 +71,11 @@ Many of these functions have equivalents in POPS although adapted to
 python. 
 
    AIPS tasks will use the AIPS XAS TV which must be started separately.
-Obit tasks and ObitTalk use the ObitView image display which must also
-be started independently.  
-If AIPS is not available, ObitTalk will work using FITS files only.
+Obit tasks and ObitTalk use the ObitView image display and/or the
+ObitMess task message server each of which must also be started
+independently. 
+If AIPS is not available, ObitTalk still can work using FITS or AIPS
+files. 
 
    ObitTalk can start tasks or scripts either locally or on a remote
 machine  which has an ObitTalkServer process running.  
@@ -106,6 +108,8 @@ Basic Obit package and the support for radio interferometry
 Obit ``On The Fly'' (OTF) single dish imaging package.
 \item ObitView\\
 Image display used by Obit.
+\item ObitMess\\
+Task message display server used by ObitTalk.
 \item ObitTalk\\
 Scripting and interactive interface to Obit software.
 \end{itemize}
@@ -139,13 +143,17 @@ If ObitView is in your path:
  % ObitView &
 \end{verbatim}
 will start the display server.
-If this fails to start the display, see the discussion of ObitView below.
+If this fails to start the display, see the discussion of ObitView
+below.
 
 Then, if the script ObitTalk is in your path:
 \begin{verbatim}
  % ObitTalk [scriptname]
 \end{verbatim}
 should start ObitTalk.
+Likewise, for asynchronous display of task messages the ObitMess
+server must also be started.
+
 If the environment variables AIPS\_ROOT and AIPS\_VERSION are
 defined, or an .obitrc.py startup script file is found, ObitTalk will
 make AIPS tasks and data available. 
@@ -554,7 +562,7 @@ file in its current working directory as ObitDisplayFITS.fits.gz.
 It is useful to start ObitView from a directory where it is both
 possible and desirable to write these temporary files.
 
-If there is trouble connecting between to the display server port
+If there is trouble connecting to the display server port
 (e.g. firewall, address translation) and you have ssh login access
 between the relevant hosts then it is possible to use ssh port
 forwarding through the secure connection.
@@ -573,7 +581,7 @@ file to be transmitted.
 For instance if the result of the shell ``hostname'' command is
 ``smeagle'' create an ObitTalk display:
 \begin{verbatim}
->>> newDisplay(URL="http:/smeagle:8765/RPC2")
+>>> newDisplay(URL="http://smeagle:8765/RPC2")
 \end{verbatim}
 A tvlod should then cause to image to be displayed on the host
 specified in the ssh command.
@@ -659,6 +667,49 @@ period.
 The actual minimum is 5 seconds to give time to actually respond
 interactively and any activity on the editing dialog disables the
 timeout for that instance.
+
+\section{ObitMess Task Message Display}
+The ObitMess server is used in order to display task messages and to
+provide user input for tasks running asynchronous.
+Use of this faculity is described in Section \ref{asynctasks}.
+To be used in an ObitTalk session, is must be started independently.
+
+Like ObitView, ObitMess uses the xmlrpc protocols to communicate
+with ObitTalk and as such allows communication between different
+computers by means of the internet.
+Parts of this protocol involve fixed port numbers which means that only
+a single ObitMess can run on a given computer using a given port
+number.
+An attempt to start a second will fail with a ``can't bind'' message.
+By default port 8777 is used but others may be used as well.
+For instance to use port 8889, start ObitMess as follows
+\begin{verbatim}
+% ObitMess -port 8889 &
+\end{verbatim}
+Then ObitTalk can be told to use this port when starting a task
+(myTask) by:
+\begin{verbatim}
+>>> tw=go(mytask, URL="http://localhost:8889/RPC2")
+\end{verbatim}
+
+If there is trouble connecting between ObitTalk and the message server
+port (e.g. firewall, address translation) and you have ssh login access
+between the relevant hosts then it is possible to use ssh port
+forwarding through the secure connection.
+From the command shell on the client side (as seen by ObitMess)
+issue:
+\begin{verbatim}
+ % ssh -L localport:host:hostport user@host
+\end{verbatim}
+where localport is the local port number (typically 8777 for
+ObitMess), host is the host on which the ObitMess process is running
+and host port is the port on host that the target ObitMess is
+watching.
+
+When ObitMess is started a window will appear with the label ``Obit
+task message server'' and a Quit button.
+Additional windows will be produced as needed.
+Only hit the ``Quit'' button when you are through with the message server.
 
 \section {ObitTalk Basics}
    Obit consists of class libraries and a number of prepackaged
@@ -870,37 +921,38 @@ Obit tasks have an output parameter ``retCode'' which will have a
 value of -999 until the task completes without detecting a problem
 After such a completion, the value will be 0.
 
-\subsection{Asynchronous Tasks}
-If the wxPython package is available on your python and the doWait
-parameter on the task object is set to False, it is possible to
-run tasks asynchronously:
+\subsection{Asynchronous Tasks \label{asynctasks}}
+If the ObitMess message server is running and the doWait
+parameter on the task (or script) object is set to False, it is
+possible to execute asynchronously:
 \begin{verbatim}
 >> window = go(TaskObj)
 \end{verbatim}
 If TaskObj.doWait==True, the task is run synchronously with messages
-written to the python window.
-When a task is run asynchronously,  a new scrolling text window will
-appear on the screen; the task messages will appear in this window and
-the task can be controlled from this window.
+written to the python command window.
+When a task is run asynchronously (TaskObj.doWait=False),  a new
+ObitMess window with a scrolling text box will appear on the screen;
+the task messages will appear in this window and the task can be
+controlled from this window. 
 If the task accepts terminal input, then this text can be entered into
-the text window below the message window, one line at a time and
-hitting the ``Send'' button.
-The bottom of this window gives the task status, ``Running'',
-``Finished'' and has buttons that allow aborting the task, saving
-the messages in a text file or closing the window when the task
-completes. 
+the text box below the message box, one line at a time and
+hitting the Enter key.
+If the window is expecting user input, the status becones ``Awaiting
+user input'' and the task will suspend until the response is types
+into the response line and the Enter key hit.
+The task status shown at the bottom of this window gives  ``Running'',
+``Finished'' and there are buttons that allow aborting the task, saving
+the messages in a text file or closing the window.
 
-A screen shot of the message window is shown in Figure
+A screen shot of a message window is shown in Figure
 \ref{MessWinFig}.
 \begin{figure}
-\centerline{\psfig{figure=MessWin.eps,height=3in}}
+\centerline{\psfig{figure=ObitMessScreen.eps,height=3in}}
 \caption{ 
-Message window for AIPS task IMEAN after completion.
-While the task is running the ``Close'' button is ``Abort''.
+Message window for Obit task Template after completion.
 }
 \label{MessWinFig}
 \end{figure}
-
 
 The TaskWindow object returned when an asynchrous task is started can
 be used to suspend python operations until the task completes:
@@ -911,6 +963,20 @@ or abort the task:
 \begin{verbatim}
 >> window.abort()
 \end{verbatim}
+
+Tasks (or scripts) can also be run asynchronously without a runtime
+display of the messages.
+This is done using the  MsgBuf argument to the go function which will then
+execute the task (or script) and save the messages.
+In this case the go function returns a TaskMsgBuffer.
+The task messages can be saved to a logfile or obtained from the 
+TaskMsgBuffer object:
+\begin{verbatim}
+>> buffer = go(myTask,MsgBuf=True)
+>> buffer.wait()
+>> messages = buffer.Messages()
+\end{verbatim}
+TaskMsgBuffer objects also have an abort function.
 
 \subsection{Disk Numbers and Task Executation}
 ``Data disks'' as defined in ObitTalk include the information about
@@ -2202,7 +2268,7 @@ getname(cno, disk=1)
 
 \subsection{go}
 \begin{verbatim}
-go(TaskObj)
+go(TaskObj, MsgBuf=False, URL="http://localhost:8777/RPC2")
     Execute task
     
     Returns TaskWindow object if run asynchronously (doWait=True)
@@ -2211,6 +2277,9 @@ go(TaskObj)
     TaskObj    = Task object to execute
                  If doWait member is true run synchronously,
                  else run with messages in a separate Message window
+    MsgBuf     = if true and  TaskObj.doWait=False run asynchronously
+                 using a TaskMsgBuffer
+    URL        = URL of ObitMess message server if MsgBuf=False
 \end{verbatim}
 
 \subsection{imhead}

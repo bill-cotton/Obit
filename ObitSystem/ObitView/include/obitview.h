@@ -20,10 +20,11 @@
 #include <stdio.h>
 #include "glib.h"
 #include "FStrng.h"
-#include "ObitImageDesc.h"
-#include "ObitFArray.h"
 #include "ObitErr.h"
 #include "ObitTypes.h"
+#include "ObitImageDesc.h"
+#include "ObitFArray.h"
+#include "ObitInfoList.h"
 #ifndef OBITVIEW
 #define OBITVIEW
 #define MAXCOLOR 128     /* number of colors in display  
