@@ -883,7 +883,7 @@ def ResidCal (err, input=ResidCalInput):
     doClaSelect = True
     inInfo.set("doCalSelect", doCalSelect)
     #
-    if model != "None":
+    if model != None:
         zapIt = True     #  A scratch file - delete
         # clip image below minFlux
         print "Clip model below ", minFlux

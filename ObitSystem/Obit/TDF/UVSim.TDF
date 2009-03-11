@@ -1,0 +1,275 @@
+; UVSim
+;---------------------------------------------------------------
+;! Generate sample UV coverage given a user defined array layout
+;# TASK ANALYSIS UV
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2009
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+UVSim     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+UVSim     Task to generate specimen u-v coverage.
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type
+**PARAM** str 10  **DEF** 2000-01-01
+refDate                            reference day YYYY-MM-DD
+**PARAM** float 2
+timeRange                          Time range to add.
+**PARAM** float 1 **DEF** 1.0
+delTime                            Time increment (sec)
+**PARAM** str 16  **DEF** Target
+Source                             Source name
+**PARAM** dbl 1
+RA                                 Source RA (2000) (deg)
+**PARAM** dbl 1
+Dec                                Source Dec (2000) (deg)
+**PARAM** float 1 **DEF** 10.0
+minEl                              Minimum elevation (deg)
+**PARAM** dbl 1   **DEF** 1.4e9
+refFreq                            Reference Frequency (Hz)
+**PARAM** int 1   **DEF** 128
+nFreq                              Number of frequency channels
+**PARAM** float 1 **DEF** 1.0e6
+delFreq                            Channel Width Frequency (Hz)
+**PARAM** int 1   **DEF** 10
+nIF                                Number of IFs
+**PARAM** float 1 **DEF** 1.28e6 
+delIF                              Separation between IFs (Hz)
+**PARAM** dbl 3 
+arrayXYZ                           Array Earth centered XYZ
+**PARAM** int 1   **DEF** 29
+nAnts                              Number of Antennas
+**PARAM** dbl 3 80
+antXYZ                             Antenna XYZ from ArrayXYZ
+**PARAM** str 4
+outDType                           "FITS" or "AIPS" type of output
+**PARAM** str 48
+outFile                            FITS output uvdata if Type=='FITS'
+**PARAM** str 12
+outName                            Output UV AIPS file name
+**PARAM** str 6
+outClass                           Output UV AIPS file class
+**PARAM** int 1
+outSeq           -1.0     9999.0   Output UV AIPS fileseq. #
+**PARAM** int 1
+outDisk                            Output UV file disk unit #.
+**PARAM** boo 1 
+Compress                           True => write compressed data
+----------------------------------------------------------------
+UVSim
+Task:
+   Create a UV data set with specified parameters.  If the output 
+file exists, new entries will be appended to the end of the file.
+Data are given zero visibility and unit weight.
+A run of UVSim essentially creates a single scan, multiple scans 
+with different multiple sources are allowed.
+    NOTE: This does not rotate in [u,v] such that north of the 
+standard equinox (J2000.0) is aligned with the v axis.  
+If this matters, use refDate="2000-01-01"
+   If multiple scans are included, they should be added strictly in 
+time order, else the data should be sorted.  
+For true multisource files, the data should be indexed.
+Adverbs:
+  refDate....Reference day as "YYYY-MM-DD", best if "2000-01-01"
+  timeRange..Time range of the data to be simulated. In order:
+             Start and end times in days relative to ref. date.  
+             Use  dhms2day to convert from human readable form
+             Times are wrt 0 UT on refDate
+  delTime....Time increment between data samples (sec)
+  Source.....Name of source
+  RA.........J2000 Right ascension of source (deg)
+             Use UVDesc.PHMS2RA to convert from human form
+  Dec........J2000 Declination of source (deg)
+             Use UVDesc.PDMS2Dec to convert from human form
+  minEl......Minimum elevation (deg) to include
+  refFreq....Number of frequency channels
+  nFreq .....Reference Frequency (Hz) at Ch 1
+  delFreq....Channel bandwidth
+  nIF .......Number of IFs
+  delIF......Frequency increment between IFs
+  arrayXYZ...Earth centered XYZ (m) of array center, default=VLA:
+             [-1.601185365e+06,-5.041977547e+06,3.554875870e+06]
+  nAnts......Number of antennas in AntXYZ
+  antXYZ.....Array of XYZ (m) offsets from ArrayXYZ
+             See Explain for some samples
+  
+  outDType..'FITS' or 'AIPS'  type of output
+  outName....Output UV AIPS file name    Standard defaults.
+  outClass...Output UV AIPS file class.  Standard defaults.
+  outSeq.....Output UV AIPS file seq. #. 0 => highest unique.
+  outDisk....Disk drive # of output UV (FITS or AIPS) NO default
+             0 FITS => current directory
+  Compress...If True  the output data is written in
+             compressed format which can result in a substantial
+             reduction in disk space needed.  
+----------------------------------------------------------------
+UVSim:
+
+                          PURPOSE
+
+     This task is used to generate specimen u-v coverage for
+an interferometric array, given an array configuration
+specified by the user.  
+                           LIMITATIONS
+
+    At present, the program is mainly applicable only to compact
+array configurations - as opposed, say, to VLBI arrays.  It
+assumes, for example, that the elevation angles of all array
+elements are identical.  However, it is expected that minor
+embellishments will be added to UVSim, removing such
+restrictions as the need arises.
+
+                 VLA Antenna locations
+
+# VLA A configuration: 1 missing
+uvsim.nAnts=26
+uvsim.arrayXYZ = [-1.601185365e+06,-5.041977547e+06,3.554875870e+06]
+uvsim.antXYZ = [ \
+ -10577.4465 ,  -1651.4898 ,  15618.8354, \
+   1836.9848 ,   6942.0883 ,  -2665.1917, \
+   3242.0079 ,  12366.0699 ,  -4767.4174, \
+   1005.4658 ,  -2642.9940 ,  -1472.1762, \
+  -8642.1073 ,  -1349.2745 ,  12760.7237, \
+    152.7719 ,   -401.2756 ,   -223.3878, \
+   4857.9405 ,  19090.2991 ,  -7275.8373, \
+   3275.1757 ,  -8682.4843 ,  -4854.8454, \
+   -243.5707 ,    -38.0432 ,    360.0683, \
+   5349.1927 , -14224.3335 ,  -7964.4512, \
+   2394.9882 ,  -6350.0140 ,  -3550.9598, \
+   4083.2632 ,  15550.4716 ,  -5990.4377, \
+   4259.0322 , -11311.4724 ,  -6330.0044, \
+  -2629.0842 ,   -410.6900 ,   3885.6318, \
+   2495.7864 ,   9491.9196 ,  -3654.6512, \
+  -3854.6611 ,   -602.3057 ,   5698.9363, \
+  -5271.2704 ,   -823.5763 ,   7791.9868, \
+    499.8678 ,  -1317.9892 ,   -735.1819, \
+   1253.2737 ,   4733.6305 ,  -1816.9039, \
+   6536.2953 , -17410.1698 ,  -9755.5295, \
+   1640.0547 ,  -4329.9410 ,  -2416.7002, \
+    765.2475 ,   2889.4489 ,  -1108.8703, \
+  -1660.4443 ,   -259.4071 ,   2454.4650, \
+   -801.3897 ,   -124.9614 ,   1182.1372, \
+  -6870.9088 ,  -1072.9460 ,  10148.7744, \
+    377.0253 ,   1440.9950 ,   -556.1007
+]
+
+# VLA B configuration:
+uvsim.nAnts=27
+uvsim.arrayXYZ = [-1.601185365e+06,-5.041977547e+06,3.554875870e+06]
+uvsim.antXYZ = [ \
+   -3217.5611 ,   -502.6561 ,   4756.1486, \
+    -801.3765 ,   -124.9634 ,   1182.1330, \
+     -74.7738 ,    -11.7642 ,    111.6307, \
+     998.6885 ,   3764.3286 ,  -1443.4370, \
+     114.4582 ,    438.6920 ,   -169.4598, \
+     377.0138 ,   1440.9986 ,   -556.0993, \
+    -243.5732 ,    -38.0377 ,    360.0674, \
+   -1660.4424 ,   -259.4055 ,   2454.4706, \
+    1005.4526 ,  -2643.0090 ,  -1472.1602, \
+    1640.0438 ,  -4329.9487 ,  -2416.6938, \
+     560.1301 ,   2113.2402 ,   -810.6614, \
+    2000.0969 ,  -5299.7823 ,  -2962.8613, \
+      35.6570 ,    133.6496 ,    -51.0682, \
+     765.2420 ,   2889.4443 ,  -1108.8804, \
+     306.2086 ,   -804.5630 ,   -448.0830, \
+    1534.5962 ,   5793.8966 ,  -2223.4635, \
+    -489.2698 ,    -76.3170 ,    721.5282, \
+   -1174.2759 ,   -183.3309 ,   1734.2316, \
+    1253.2710 ,   4733.6263 ,  -1816.8921, \
+      46.9538 ,   -122.0062 ,    -67.5933, \
+     152.7782 ,   -401.2547 ,   -223.3981, \
+     499.8570 ,  -1317.9902 ,   -735.1997, \
+     733.3805 ,  -1932.9750 ,  -1078.0972, \
+   -2629.0753 ,   -410.6669 ,   3885.6271, \
+    1316.4566 ,  -3443.3143 ,  -1913.5336, \
+   -2091.4340 ,   -326.6029 ,   3089.4287, \
+     229.4939 ,    879.5950 ,   -339.8485
+]
+
+# VLA C configuration:  1 missing
+uvsim.nAnts=26
+uvsim.arrayXYZ = [-1.601185365e+06,-5.041977547e+06,3.554875870e+06]
+uvsim.antXYZ = [ \
+   -357.6659 ,      0.0000 ,    527.8260, \
+    223.9773 ,   -588.4632 ,   -327.6884, \
+   -801.4043 ,   -124.9802 ,   1182.1236, \
+     93.5248 ,   -244.9877 ,   -136.2203, \
+    306.1735 ,   -804.5809 ,   -448.0776, \
+     46.9103 ,   -122.0392 ,    -67.6047, \
+     14.7699 ,    -37.1317 ,    -20.2138, \
+    611.7688 ,  -1613.2995 ,   -899.9988, \
+    152.7598 ,   -401.2719 ,   -223.4056, \
+    299.6950 ,   1145.9177 ,   -442.2658, \
+   -489.3108 ,    -76.2825 ,    721.5120, \
+    464.0856 ,   1763.7486 ,   -678.8806, \
+    499.8440 ,  -1317.9851 ,   -735.2095, \
+   -637.5117 ,    -99.3965 ,    939.9327, \
+    -30.0572 ,     -4.8033 ,     45.7094, \
+    229.4504 ,    879.5782 ,   -339.8561, \
+     11.3010 ,     40.6734 ,    -15.1929, \
+    167.3765 ,    643.3078 ,   -248.8691, \
+     70.6521 ,    267.7614 ,   -102.8906, \
+   -243.6045 ,    -38.0461 ,    360.0346, \
+    -74.8225 ,    -11.7603 ,    111.6133, \
+    114.4365 ,    438.6881 ,   -169.4949, \
+    376.9899 ,   1440.9908 ,   -556.1276, \
+     35.6144 ,    133.6478 ,    -51.0924, \
+   2495.7479 ,   9491.9223 ,  -3654.6949, \
+    398.2386 ,  -1048.1359 ,   -584.1735
+]
+
+# VLA D configuration:
+uvsim.nAnts=27
+uvsim.arrayXYZ = [-1.601185365e+06,-5.041977547e+06,3.554875870e+06]
+uvsim.antXYZ = [ \
+   -148.4695 ,    -23.2243 ,    219.9841, \
+    121.6138 ,   -319.1300 ,   -177.5794, \
+     51.8719 ,    195.8316 ,    -75.1046, \
+     14.7867 ,    -37.1284 ,    -20.2165, \
+     68.6063 ,   -179.2495 ,    -99.5131, \
+     46.9103 ,   -122.0392 ,    -67.6047, \
+     93.5089 ,   -244.9958 ,   -136.2176, \
+    186.8100 ,   -491.1257 ,   -273.5405, \
+    152.7598 ,   -401.2719 ,   -223.4056, \
+     21.9946 ,     81.5319 ,    -30.9473, \
+     35.5896 ,    133.6463 ,    -51.0933, \
+     35.5896 ,    133.6463 ,    -51.0933, \
+     91.5248 ,    348.8928 ,   -134.4470, \
+     22.9971 ,      3.5052 ,    -32.4942, \
+      0.6601 ,      0.0078 ,      0.4887, \
+   -108.4265 ,    -17.0117 ,    161.0185, \
+     45.3412 ,      6.9765 ,    -65.4789, \
+     11.3010 ,     40.6734 ,    -15.1929, \
+     70.6497 ,    267.7602 ,   -102.9017, \
+    139.6532 ,    536.9016 ,   -207.7388, \
+    -30.0482 ,     -4.7850 ,     45.7010, \
+    -30.0482 ,     -4.7850 ,     45.7010, \
+    114.4365 ,    438.6881 ,   -169.4949, \
+   -193.6120 ,    -30.2536 ,    286.4598, \
+    -74.8135 ,    -11.7504 ,    111.6187, \
+    -52.4484 ,     -8.2548 ,     78.6568, \
+     28.9315 ,    -74.4789 ,    -41.0539
+]
+

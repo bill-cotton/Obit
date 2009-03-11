@@ -76,6 +76,10 @@ ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 			ObitErr *err);
 
+/** Public: Average a data set in time and/or frequency */
+ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
+			   ObitErr *err);
+
 /** Public: Count good data by time segment  */
 ObitInfoList* ObitUVUtilCount (ObitUV *inUV, ofloat timeInt, ObitErr *err);
 
@@ -89,4 +93,7 @@ void ObitUVUtilNoise(ObitUV *inUV, ObitUV *outUV, ofloat scale, ofloat sigma,
 
 /** Public: Add a flag entry */
 ObitIOCode ObitUVUtilFlag(ObitUV *inUV, ObitErr *err);
+
+/** Public: Calculate visibility uvw */
+void ObitUVUtilUVW(const ofloat b[3], odouble dec, ofloat ha, ofloat uvw[3]);
 #endif /* OBITIUVUTIL_H */ 

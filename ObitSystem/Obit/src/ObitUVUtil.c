@@ -33,6 +33,7 @@
 #include "ObitTableAN.h"
 #include "ObitTableFG.h"
 #include "ObitPrecess.h"
+#include "ObitUVSortBuffer.h"
 #if HAVE_GSL==1  /* GSL stuff */
 #include <gsl/gsl_randist.h>
 #endif /* HAVE_GSL */
@@ -61,6 +62,9 @@ static void FreqSel (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
 		     olong BChan, olong EChan, olong chinc,
 		     olong BIF, olong EIF,
 		     ofloat *inBuffer, ofloat *outBuffer);
+
+/** Low accuracy inverse Sinc function */
+static ofloat InvSinc(ofloat arg);
 /*----------------------Public functions---------------------------*/
 
 /**
@@ -1712,7 +1716,7 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   if (accVis)   g_free(accVis);   accVis   = NULL;
   if (accRP)    g_free(accRP);    accRP    = NULL;
   if (blLookup) g_free(blLookup); blLookup = NULL;
-  
+
   /* close files */
   iretCode = ObitUVClose (inUV, err);
   oretCode = ObitUVClose (outUV, err);
@@ -1721,6 +1725,495 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   
   return outUV;
 } /* end ObitUVUtilAvgT */
+
+/**
+ * Temporally average in a baseline dependent fashion the data in a ObitUV.
+ * Also optionally average in frequency.
+ * Time average UV data with averaging times depending
+ * on time and baseline.  The averaging time is the greater of
+ * maxInt and the time it takes for time smearing to reduce the 
+ * visibility amplitude by maxFact.
+ * \param inUV     Input uv data to average, 
+ *                 Any request for calibration, editing and selection honored
+ * Control parameters on info element of inUV:
+ * \li "FOV"      OBIT_float  (1,1,1) Field of view (radius, deg)
+ * \li "maxInt"   OBIT_float  (1,1,1) Maximum integration (min)
+ * \li "maxFact"  OBIT_float  (1,1,1) Maximum time smearing factor
+ * \li "NumChAvg" OBIT_long scalar Number of channels to average, [def. = all]
+ * \li "doAvgAll" OBIT_bool Scalar, if TRUE then average all channels and 
+ *                IF. default = FALSE
+ * \li "ChanSel"  OBIT_int (4,*) Groups of channels to consider (relative to
+ *                channels & IFs selected by BChan, EChan, BIF, EIF)
+ *                (start, end, increment, IF) where start and end at the 
+ *                beginning and ending channel numbers (1-rel) of the group
+ *                to be included, increment is the increment between
+ *                selected channels and IF is the IF number (1-rel)
+ *                default increment is 1, IF=0 means all IF.
+ *                The list of groups is terminated by a start <=0
+ *                Default is all channels in each IF.
+ *              
+ * \param scratch  True if scratch file desired, will be same type as inUV.
+ * \param outUV    If not scratch, then the previously defined output file
+ *                 May be NULL for scratch only
+ *                 If it exists and scratch, it will be Unrefed
+ * \param err      Error stack, returns if not empty.
+ * \return the frequency averaged ObitUV.
+ */
+ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV, 
+			  ObitErr *err)
+{
+  ObitIOCode iretCode, oretCode;
+  gboolean doCalSelect;
+  gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
+		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
+		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
+		    "AIPS PL", "AIPS NI","AIPS BP","AIPS OF","AIPS PS",
+		    NULL};
+  gchar *sourceInclude[] = {"AIPS SU", NULL};
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM];
+  olong ncorr, nrparm, numAnt, numBL;
+  ObitIOAccess access;
+  ObitUVDesc *inDesc, *outDesc;
+  olong suba, lastSourceID, curSourceID, lastSubA, lastFQID=-1;
+  gchar *today=NULL;
+  ofloat cbase, curTime, startTime;
+  ofloat *accVis=NULL, *accRP=NULL, *lsBlTime=NULL, *stBlTime=NULL, *stBlU=NULL, *stBlV=NULL;
+  ofloat *tVis=NULL, *ttVis=NULL;
+  ofloat *inBuffer;
+  ObitUVSortBuffer *outBuffer=NULL;
+  ofloat FOV, maxTime, maxInt, maxFact, UVDist2, maxUVDist2;
+  olong ant1, ant2, blindx, *blLookup=NULL;
+  olong i, j, nvis, ivis=0, iindx, jndx, indx, NPIO, itemp, blLo, blHi, count=0;
+  gboolean done, gotOne, doAllBl, sameInteg;
+  ofloat *work=NULL, scale;
+  olong NumChAvg, *ChanSel=NULL;
+  gboolean doAvgAll, doAvgFreq;
+  olong defSel[] = {1,1000000000,1,0, 0,0,0,0};
+  olong *corChan=NULL, *corIF=NULL, *corStok=NULL;
+  gboolean *corMask=NULL;
+  gchar *routine = "ObitUVUtilAvgTF";
+ 
+  /* error checks */
+  if (err->error) return outUV;
+  g_assert (ObitUVIsA(inUV));
+  if (!scratch && (outUV==NULL)) {
+    Obit_log_error(err, OBIT_Error,"%s Output MUST be defined for non scratch files",
+		   routine);
+      return outUV;
+  }
+
+  /* Get Parameters - radius of field of view */
+  FOV = 20.0/60.0;  /* default 20 amin */
+  ObitInfoListGetTest(inUV->info, "FOV", &type, dim, &FOV);
+  /* to radians */
+  FOV = MAX(FOV,1.0e-4) * DG2RAD;
+
+  /* max. integration default 1 min */
+  maxInt = 1.0;  
+  ObitInfoListGetTest(inUV->info, "maxInt", &type, dim, &maxInt);
+  if (maxInt<=(1.0e-2/60.0)) maxInt = 1.0;
+  maxInt /= 1440.0;  /* convert to days */
+
+  /* max amplitude loss default 1.01 */
+  maxFact = 1.01;
+  ObitInfoListGetTest(inUV->info, "maxFact", &type, dim, &maxFact);
+  if (maxFact<0.99)  maxFact = 1.01;
+  maxFact = MIN(MAX(maxFact,1.0), 10.0);
+
+  /* Maximum UV distance squared to allow */
+  maxUVDist2 = (InvSinc(1.0/maxFact) / FOV);
+
+  /* Get Frequency Parameters */
+  NumChAvg = 0;
+  ObitInfoListGetTest(inUV->info, "NumChAvg", &type, dim, &NumChAvg);
+  NumChAvg = MAX(1, NumChAvg);
+  doAvgAll = FALSE;
+  ObitInfoListGetTest(inUV->info, "doAvgAll", &type, dim, &doAvgAll);
+  ChanSel = NULL;
+  if (!ObitInfoListGetP(inUV->info, "ChanSel", &type, dim, (gpointer)&ChanSel)) {
+    ChanSel = defSel;  /* Use default = channels 1 => n */
+  }
+  /* ChanSel all zero? => default */
+  if ((ChanSel[0]<=0) && (ChanSel[1]<=0) && (ChanSel[2]<=0) && (ChanSel[3]<=0)) {
+    ChanSel = defSel;  /* Use default = channels 1 => n */
+  }
+
+  /* Averaging in frequency? */
+  doAvgFreq = (NumChAvg>1) || doAvgAll;
+
+  /* Is scratch? */
+  if (scratch) {
+    if (outUV) outUV = ObitUVUnref(outUV);
+    outUV = newObitUVScratch (inUV, err);
+  } else { /* non scratch output must exist - clone from inUV */
+    ObitUVClone (inUV, outUV, err);
+  }
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, outUV);
+
+  /* Selection/calibration/editing of input? */
+  doCalSelect = FALSE;
+  ObitInfoListGetTest(inUV->info, "doCalSelect", &type, dim, &doCalSelect);
+  if (doCalSelect) access = OBIT_IO_ReadCal;
+  else             access = OBIT_IO_ReadOnly;
+
+  /* test open to fully instantiate input and see if it's OK */
+  iretCode = ObitUVOpen (inUV, access, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
+    Obit_traceback_val (err, routine, inUV->name, outUV);
+
+  inDesc  = inUV->myDesc;
+  /* Create work array for frequency averaging */
+  if (doAvgFreq) {
+    work = g_malloc(2*inDesc->lrec*sizeof(ofloat));
+    /* Work arrays defining data */
+    corChan = g_malloc(inDesc->ncorr*sizeof(olong));
+    corIF   = g_malloc(inDesc->ncorr*sizeof(olong));
+    corStok = g_malloc(inDesc->ncorr*sizeof(olong));
+    corMask = g_malloc(inDesc->ncorr*sizeof(gboolean));
+
+    /* Modify descriptor for affects of frequency averaging, get u,v,w scaling */
+    scale = AvgFSetDesc (inUV->myDesc, outUV->myDesc, NumChAvg, ChanSel, doAvgAll, 
+			 corChan, corIF, corStok, corMask, err);
+    if (err->error) goto cleanup;
+    
+  } else { /* Only time averaging */   
+    /* copy Descriptor */
+    outUV->myDesc = ObitUVDescCopy(inUV->myDesc, outUV->myDesc, err);
+  }
+
+  /* Add integration time if not present */
+  if (outUV->myDesc->ilocit<0) {
+    strncpy (outUV->myDesc->ptype[outUV->myDesc->nrparm], 
+	     "INTTIM", UVLEN_KEYWORD-1);
+    outUV->myDesc->ilocit = outUV->myDesc->nrparm;
+    outUV->myDesc->nrparm++;
+  }
+
+  /* Output creation date today */
+  today = ObitToday();
+  strncpy (outUV->myDesc->date, today, UVLEN_VALUE-1);
+  if (today) g_free(today);
+  
+  /* Set number of output vis per write to nvis */
+  NPIO = 1;
+  nvis = 50000;  /* Make sort buffer big */
+  ObitInfoListGetTest(inUV->info, "nVisPIO", &type, dim, &NPIO);
+  itemp = 1000;  /* Internal IO buffer */
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut(outUV->info, "nVisPIO", OBIT_long, dim, &itemp);
+
+  /* test open output */
+  oretCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err);
+  /* If this didn't work try OBIT_IO_ReadWrite */
+  if ((oretCode!=OBIT_IO_OK) || (err->error)) {
+    ObitErrClear(err);
+    oretCode = ObitUVOpen (outUV, OBIT_IO_ReadWrite, err);
+  }
+  /* if it didn't work bail out */
+  if ((oretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  /* Create sort buffer */
+  outBuffer = ObitUVSortBufferCreate ("Buffer", outUV, nvis, err);
+  if ((oretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  /* Get descriptors */
+  inDesc  = inUV->myDesc;
+  outDesc = outUV->myDesc;
+
+  /* Create work arrays for time averaging */
+  suba    = 1;
+  numAnt  = inDesc->numAnt[suba-1]; /* actually highest antenna number */
+  numBL   = (numAnt*(numAnt+1))/2;  /* Include auto correlations */
+  ncorr   = inDesc->ncorr;
+  nrparm  = inDesc->nrparm;
+  accVis  = g_malloc0(4*numBL*ncorr*sizeof(ofloat));    /* Vis accumulator */
+  tVis    = g_malloc0((inDesc->lrec+5)*sizeof(ofloat)); /* Temp Vis */
+  ttVis   = g_malloc0((inDesc->lrec+5)*sizeof(ofloat)); /* Temp Vis */
+  accRP   = g_malloc0(numBL*(nrparm+1)*sizeof(ofloat)); /* Rand. parm */
+  stBlTime= g_malloc0(numBL*sizeof(ofloat));   /* Baseline start time */
+  lsBlTime= g_malloc0(numBL*sizeof(ofloat));   /* Baseline last time */
+  stBlU   = g_malloc0(numBL*sizeof(ofloat));   /* Baseline start U */
+  stBlV   = g_malloc0(numBL*sizeof(ofloat));   /* Baseline start V */
+
+  /* Baseline lookup table */
+  blLookup = g_malloc0 (numAnt* sizeof(olong));
+  blLookup[0] = 0;
+  /* Include autocorr */
+  for (i=1; i<numAnt; i++) blLookup[i] = blLookup[i-1] + numAnt-i+1; 
+
+  /* Copy tables before data */
+  iretCode = ObitUVCopyTables (inUV, outUV, exclude, NULL, err);
+  /* If multisource out then copy SU table, multiple sources selected or
+   sources deselected suggest MS out */
+  if ((inUV->mySel->numberSourcesList>1) || (!inUV->mySel->selectSources))
+    iretCode = ObitUVCopyTables (inUV, outUV, NULL, sourceInclude, err);
+  if (err->error) goto cleanup;
+
+  /* reset to beginning of uv data */
+  iretCode = ObitIOSet (inUV->myIO,  inUV->info, err);
+  oretCode = ObitIOSet (outUV->myIO, outUV->info, err);
+  if (err->error) goto cleanup;
+
+  /* Close and reopen input to init calibration which will have been disturbed 
+     by the table copy */
+  iretCode = ObitUVClose (inUV, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  iretCode = ObitUVOpen (inUV, access, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  /* Initialize things */
+  startTime    = -1.0e20;
+  lastSourceID = -1;
+  curSourceID  = 0;
+  outDesc->numVisBuff = 0;
+  inBuffer     = inUV->buffer;   /* Local copy of buffer pointer */
+
+  /* Loop over intervals */
+  done   = FALSE;
+  gotOne = FALSE;
+
+  /* we're in business, average data */
+  while ((iretCode==OBIT_IO_OK) && (oretCode==OBIT_IO_OK)) {
+    if ((!gotOne) || (inUV->myDesc->numVisBuff<=0)) { /* need to read new record? */
+      if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
+      else iretCode = ObitUVRead (inUV, inUV->buffer, err);
+    }
+
+    /* Are we there yet??? */
+    done = (inDesc->firstVis >= inDesc->nvis) || (iretCode==OBIT_IO_EOF);
+    if (done && (startTime>0.0)) {doAllBl=TRUE; goto process;} /* Final? */
+
+    /* Make sure valid data found */
+    if (inUV->myDesc->numVisBuff<=0) continue;
+
+    /* loop over visibilities */
+    for (ivis=0; ivis<inDesc->numVisBuff; ivis++) { 
+
+      gotOne = FALSE;
+      
+      /* Which data is this? */
+      iindx = ivis*inDesc->lrec;
+      cbase = inBuffer[iindx+inUV->myDesc->ilocb]; /* Baseline */
+      ant1 = (cbase / 256.0) + 0.001;
+      ant2 = (cbase - ant1 * 256) + 0.001;
+      lastSubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 0.5);
+      /* Baseline index this assumes a1<=a2 always */
+      blindx =  blLookup[ant1-1] + ant2-ant1;
+      if (inDesc->ilocfq>=0) lastFQID = (olong)(inBuffer[iindx+inDesc->ilocfq]+0.5);
+      else lastFQID = 0;
+      curTime = inBuffer[iindx+inDesc->iloct]; /* Time */
+      if (inDesc->ilocsu>=0) curSourceID = inBuffer[iindx+inDesc->ilocsu];
+
+      /* Set time window etc. if needed */
+      if (startTime < -1000.0) {  
+	startTime    = curTime;
+	lastSourceID = curSourceID;
+      }
+
+      /* If end of data, new scan, source, etc., finish all accumulations */
+      doAllBl = 
+	(curSourceID != lastSourceID) ||        /* Same source */
+	(inDesc->firstVis>inDesc->nvis) ||      /* Not end of data */
+	(iretCode!=OBIT_IO_OK);                 /* Not end of data */
+      lastSourceID = curSourceID;
+      
+      /* Reset baseline start on first accumulation */
+      jndx = blindx*(1+nrparm);
+      if (accRP[jndx]<1.0) { 
+	stBlTime[blindx] = inBuffer[iindx+inDesc->iloct];
+	stBlU[blindx]    = inBuffer[iindx+inDesc->ilocu];
+	stBlV[blindx]    = inBuffer[iindx+inDesc->ilocv];
+      }
+	
+      /* Compute square of UV distance since start of integration */
+      UVDist2 = 
+	(inBuffer[iindx+inDesc->ilocu]-stBlU[blindx])*(inBuffer[iindx+inDesc->ilocu]-stBlU[blindx]) +
+	(inBuffer[iindx+inDesc->ilocv]-stBlV[blindx])*(inBuffer[iindx+inDesc->ilocv]-stBlV[blindx]);
+
+      /* Still in current baseline integration? */
+      sameInteg = ((!doAllBl) &&                           /* Not end of scan or data */
+		   ((curTime-stBlTime[blindx])<maxInt) &&  /* Max. integration */
+		   (UVDist2<maxUVDist2));                  /* Max. smearing */
+      if (!sameInteg) {  /* Write */
+	
+      process:
+	/* Now may have the next record in the IO Buffer */
+	if ((iretCode==OBIT_IO_OK) && (ivis<(inDesc->numVisBuff-1))) gotOne = TRUE;
+	/* Finish this or all baselines? */
+	if (doAllBl) {
+	  blLo = 0;
+	  blHi = numBL-1;
+	} else { /* only this one */
+	  blLo = blindx;
+	  blHi = blindx;
+	}
+	/* Loop over this or all baselines */
+	for (blindx=blLo; blindx<=blHi; blindx++) { 
+	  /* Anything this baseline? */
+	  jndx = blindx*(1+nrparm);
+	  if (accRP[jndx]>0.0) {
+	    /* Average u, v, w, time random parameters */
+	    indx = 0;
+	    for (i=0; i<nrparm; i++) { 
+	      /* Average known parameters */
+	      if ((i==inDesc->ilocu) || (i==inDesc->ilocv) || (i==inDesc->ilocw) ||
+		  (i==inDesc->iloct)) 
+		accRP[jndx+i+1] /= accRP[jndx];
+	      /* Copy to output buffer */
+	      ttVis[indx++] = accRP[jndx+i+1];
+	    } /* End random parameter loop */
+	    
+	    /* Average vis data in time */
+	    indx = outDesc->nrparm;
+	    for (j=0; j<ncorr; j++) {
+	      jndx = j*4 + blindx*4*ncorr;
+	      if (accVis[jndx]>0.0) {
+		accVis[jndx+1] /= accVis[jndx];
+		accVis[jndx+2] /= accVis[jndx];
+	      }
+	      /* Copy to tempory vis */
+	      tVis[indx++] = accVis[jndx+1];
+	      tVis[indx++] = accVis[jndx+2];
+	      tVis[indx++] = accVis[jndx+3];
+	      
+	    } /* end loop over correlators */
+	    
+	    if (doAvgFreq) {
+	      /* Average data in frequency to output buffer */
+	      AvgFAver (inDesc, outDesc, NumChAvg, ChanSel, doAvgAll, 
+			corChan, corIF, corStok, corMask,
+			&tVis[outDesc->nrparm], &ttVis[outDesc->nrparm], work, err);
+	      if (err->error) goto cleanup;
+
+	      /* Scale u,v,w for new reference frequency */
+	      ttVis[outDesc->ilocu] *= scale;
+	      ttVis[outDesc->ilocv] *= scale;
+	      ttVis[outDesc->ilocw] *= scale;
+	    } else { /* only time averaging */
+	      /* Copy to output buffer */
+	      indx = outDesc->nrparm;
+	      jndx = outDesc->nrparm;
+	      for (j=0; j<ncorr; j++) {
+		ttVis[indx++] = tVis[jndx++];
+		ttVis[indx++] = tVis[jndx++];
+		ttVis[indx++] = tVis[jndx++];
+	      }
+	    }
+	    
+	    /* Set integration time */
+	    if (inDesc->ilocit>=0)
+	      ttVis[outDesc->ilocit] = 
+		MAX (lsBlTime[blindx]-stBlTime[blindx],ttVis[outDesc->ilocit]);
+	    else
+	      ttVis[outDesc->ilocit] = lsBlTime[blindx]-stBlTime[blindx];
+	    
+	    /* Copy to Sort Buffer (Sorts and writes when full) */
+	    count++;
+	    maxTime = curTime - 0.6*maxInt;
+	    ObitUVSortBufferAddVis(outBuffer, ttVis, maxTime, err);
+	    if (err->error) goto cleanup;
+	    
+	    /* Reinitialize baseline */
+	    jndx = blindx*(1+nrparm);
+	    for (i=0; i<=nrparm; i++) accRP[jndx+i]  = 0.0;
+	    jndx = blindx*4*ncorr;
+	    for (i=0; i<4*ncorr; i++) accVis[jndx+i] = 0.0;
+	    lsBlTime[blindx] = 0.0;
+	    stBlTime[blindx] = 0.0;
+	  } /* End any data this baseline */
+	  
+	} /* end loop over baseline */
+      }  /* end process interval */
+      
+      /* accumulate */
+      blindx =  blLookup[ant1-1] + ant2-ant1;
+      jndx = blindx*(1+nrparm);
+      if (accRP[jndx]<1.0) { /* starting conditions */
+	stBlTime[blindx] = inBuffer[iindx+inDesc->iloct];
+	stBlU[blindx]    = inBuffer[iindx+inDesc->ilocu];
+	stBlV[blindx]    = inBuffer[iindx+inDesc->ilocv];
+      }
+      lsBlTime[blindx] = inBuffer[iindx+inDesc->iloct]; /* Highest time */
+      /* Accumulate RP
+	 (1,*)    =  count 
+	 (2...,*) =  Random parameters, sum u, v, w, time, int. */
+      accRP[jndx]++;
+      for (i=0; i<nrparm; i++) { 
+	/* Sum known parameters to average */
+	if ((i==inDesc->ilocu) || (i==inDesc->ilocv) || (i==inDesc->ilocw) ||
+	    (i==inDesc->iloct) || (i==inDesc->ilocit)) {
+	  accRP[jndx+i+1] += inBuffer[iindx+i];
+	} else { /* merely keep the rest */
+	  accRP[jndx+i+1]  = inBuffer[iindx+i];
+	}
+      } /* end loop over parameters */
+	/* Accumulate Vis
+	   (1,*) =  count 
+	   (2,*) =  sum Real
+	   (3,*) =  sum Imag
+	   (4,*) =  Sum Wt     */
+      indx = iindx+inDesc->nrparm; /* offset of start of vis data */
+      for (i=0; i<ncorr; i++) {
+	if (inBuffer[indx+2] > 0.0) {
+	  jndx = i*4 + blindx*4*ncorr;
+	  accVis[jndx]   += 1.0;
+	  accVis[jndx+1] += inBuffer[indx];
+	  accVis[jndx+2] += inBuffer[indx+1];
+	  accVis[jndx+3] += inBuffer[indx+2];
+	} 
+	indx += 3;
+      } /* end loop over correlations */;
+      
+    } /* end loop processing buffer of input data */
+  } /* End loop over input file */
+  
+  /* End of processing */
+
+  /* check for errors */
+  if ((iretCode > OBIT_IO_EOF) || (oretCode > OBIT_IO_EOF) ||
+      (err->error)) goto cleanup;
+  
+  /* Restore no vis per read in output */
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (outUV->info, "nVisPIO", OBIT_long, dim, &NPIO);
+
+  /* Cleanup */
+ cleanup:
+  if (accVis)   g_free(accVis);   accVis   = NULL;
+  if (accRP)    g_free(accRP);    accRP    = NULL;
+  if (tVis)     g_free(tVis);     tVis     = NULL;
+  if (ttVis)    g_free(ttVis);    ttVis    = NULL;
+  if (blLookup) g_free(blLookup); blLookup = NULL;
+  if (lsBlTime) g_free(lsBlTime); lsBlTime = NULL;
+  if (stBlTime) g_free(stBlTime); stBlTime = NULL;
+  if (stBlU)    g_free(stBlU);    stBlU    = NULL;
+  if (stBlV)    g_free(stBlV);    stBlV    = NULL;
+  if (work)     g_free(work);     work     = NULL;
+  if (corChan)  g_free(corChan);  corChan  = NULL;
+  if (corIF)    g_free(corIF);    corIF    = NULL;
+  if (corStok)  g_free(corStok);  corStok  = NULL;
+  if (corMask)  g_free(corMask);  corMask  = NULL;
+  
+  /* Flush Sort Buffer */
+  ObitUVSortBufferFlush (outBuffer, err);
+  if (err->error) Obit_traceback_val (err, routine, outUV->name, outUV);
+  outBuffer = ObitUVSortBufferUnref(outBuffer);
+ 
+  /* close files */
+  iretCode = ObitUVClose (inUV, err);
+  oretCode = ObitUVClose (outUV, err);
+  if ((oretCode!=OBIT_IO_OK) || (iretCode!=OBIT_IO_OK) || (err->error))
+    Obit_traceback_val (err, routine, outUV->name, outUV);
+
+  /* Give report */  
+  Obit_log_error(err, OBIT_InfoErr, 
+		 "Wrote %d averaged visibilities",count);
+  ObitErrLog(err); 
+
+  return outUV;
+} /* end ObitUVUtilBlAvgTF */
 
 /**
  * Count number of good correlations per time interval
@@ -2462,6 +2955,28 @@ ObitIOCode ObitUVUtilFlag (ObitUV *inUV, ObitErr *err)
   return retCode;
 } /* end ObitUVUtilFlag */
 
+/**
+ * Compute low precision  visibility uvw
+ * \param b    Baseline vector
+ * \param dec  Pointing declination (rad)
+ * \param ha   Pointing hour angle (rad)
+ * \param uvw  [out] baseline u,v,w in units of b
+ */
+void ObitUVUtilUVW(const ofloat b[3], odouble dec, ofloat ha, ofloat uvw[3])
+{
+  odouble cosdec, sindec;
+  ofloat     sinha, cosha, vw;
+
+  cosdec = cos (dec);
+  sindec = sin (dec);
+  cosha = cos (ha);
+  sinha = sin (ha);
+  vw = b[0]*cosha - b[1]*sinha;
+  uvw[0] =  b[0]*sinha + b[1]*cosha;
+  uvw[1] = -vw*sindec + b[2]*cosdec;
+  uvw[2] =  vw*cosdec + b[2]*sindec;
+} /* end  ObitUVUtilUVW */
+
 /*----------------------Private functions---------------------------*/
 /**
  * Count channels after selection and averaging and modify descriptor.
@@ -2515,7 +3030,7 @@ static ofloat AvgFSetDesc (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
   if (inDesc->jlocs>=0) nstok = inDesc->inaxes[inDesc->jlocs];
   else nstok = 1;
 
-  numChan = nchan / NumChAvg;  /* Number of output channels */
+  numChan = nchan / MAX (1, NumChAvg);  /* Number of output channels */
   /* IF averaging */
   NumIFAvg   = 1;
   if (doAvgAll) NumIFAvg   = nif;
@@ -2792,3 +3307,25 @@ static void FreqSel (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
   } /* end Stokes loop */
 
 } /* end FreqSel */
+
+/**
+ * Low accuracy inverse Sinc function
+ * \param arg Argument
+ * \return angle in radians
+ */
+static ofloat InvSinc(ofloat arg)
+{
+  odouble x0, x1, a;
+  olong i, n=1000;
+
+  /* Some iterations of Newton-Raphson starting with the value near 1.0 */
+  x1 = 0.001;
+  for (i=0; i<n; i++) {
+    x0 = x1;
+    a = x0 * G_PI;
+    x1 = x0 - ((sin(a)/a) - arg) / ((a*cos(a) - G_PI*sin(a))/(a*a));
+    if (fabs(x1-x0)<1.0e-6) break;  /* Convergence test */
+  }
+
+  return (ofloat)x1;
+} /* end InvSinc */

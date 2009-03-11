@@ -559,6 +559,7 @@ setStatus(xmlrpc_env *   const envP,
   xmlrpc_value *strt;
   xmlrpc_type xmlType;
   xmlrpc_int32 xmlTaskID;
+  char *xmlMessage;
   gboolean ldoAbort;
   glong status=0;
   
@@ -575,11 +576,11 @@ setStatus(xmlrpc_env *   const envP,
   xmlrpc_decompose_value(envP, paramArrayP, "(S)", &strt);
   /* Be sure paramArrayP an array */
   xmlType = xmlrpc_value_type (strt);
-  xmlStatus = 0;
+  xmlMessage = NULL;
   if (xmlType==XMLRPC_TYPE_STRUCT) {
     xmlrpc_decompose_value(envP, strt, "{s:i,s:s,*}",
 			   "taskID", &xmlTaskID,
-			   "status", &xmlStatus);
+			   "status", &xmlMessage);
   } 
 
   if (envP->fault_occurred) {
@@ -599,6 +600,7 @@ setStatus(xmlrpc_env *   const envP,
   pthread_mutex_lock(&request_lock);      /* lock mutex */
   receive_flag = 1;                       /* now have a request */
   taskID = (glong)xmlTaskID;              /* TaskID */
+  xmlrpcData   = xmlMessage;              /* pass message */
   xmlrpcTWFunc = XMLRPC_SetStatus;        /* Function called */
   pthread_mutex_unlock(&request_lock);    /* unlock mutex */
 

@@ -1,6 +1,6 @@
-/* $Id$                            */
+/* $Id$            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003                                               */
+/*;  Copyright (C) 2003,2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -18,7 +18,7 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*;  Correspondence this software should be addressed as follows:     */
+/*; Correspondence about this software should be addressed as follows:*/
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
@@ -46,6 +46,9 @@
 /*---------------Public functions---------------------------*/
 /** Public: Precess source position from standard Epoch to apparent. */
 void ObitPrecessUVJPrecessApp (ObitUVDesc *desc, ObitSource *source);
+
+/** Public: Predict GST at UTC=0 and Earth rotation rate. */
+void ObitPrecessGST0 (odouble JD, odouble *GSTUTC0, odouble *Rate);
 
 
 #endif /* OBITPRECESS_H */ 
