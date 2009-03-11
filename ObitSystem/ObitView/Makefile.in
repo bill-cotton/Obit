@@ -97,7 +97,7 @@ libupdate:
 
 # Link ObitView
 ObitView: src/*.c  srcupdate ObitView.c 
-	$(CC) ObitView.c -o ObitView  $(SERVER_CFLAGS) $(SERVER_CPPFLAGS) src/*.o \
+	$(CC) ObitView.c -o ObitView  $(SERVER_CFLAGS) $(SERVER_CPPFLAGS) \
 	$(SERVER_LDFLAGS) $(SERVER_LIBS) $(CLIENT_LIBS) 
 
 # Link ObitMess
