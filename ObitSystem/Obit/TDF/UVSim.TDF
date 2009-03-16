@@ -30,7 +30,7 @@
 ;-----------------------------------------------------------------------
 ;---------------------------------------------------------------
 UVSim     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-UVSim     Task to generate specimen u-v coverage.
+UVSim     Task to generate simulates UV data
 **PARAM** str 4
 DataType                           "FITS" or "AIPS" type
 **PARAM** str 10  **DEF** 2000-01-01
@@ -63,6 +63,54 @@ arrayXYZ                           Array Earth centered XYZ
 nAnts                              Number of Antennas
 **PARAM** dbl 3 80
 antXYZ                             Antenna XYZ from ArrayXYZ
+**PARAM** float 1 
+Noise                              Gaussian noise sigma to add to vis.
+
+                                   Source model to add
+**PARAM** str 48
+in2File                            FITS input image if Type=='FITS'
+**PARAM** str 12
+in2Name                            Cleaned map AIPS name
+**PARAM** str 6
+in2Class                           Cleaned map AIPS class
+**PARAM** int 1
+in2Seq            0.0     9999.0   Cleaned AIPS seq. #
+**PARAM** int 1
+in2Disk                            Cleaned map disk unit #
+**PARAM** int 1   **DEF** 0
+nmaps             0.0     4192.0   No. fields to use for model.
+**PARAM** int 1
+CCVer            -1.0    46655.0   CC file version #.
+**PARAM** int 64
+BComp                              First CLEAN comp to add.
+                                   1 per field.
+**PARAM** int 64
+EComp                              Last CLEAN comp to add
+                                   to use (0 => all)
+**PARAM** float 1
+Flux                               Lowest summed CC component to use
+**PARAM** str 4
+Cmethod                            Modeling method:
+                                   'DFT','GRID','    '
+**PARAM** str 4
+Cmodel                             Model type: 'COMP','IMAG'
+                                   (see Help re images)
+**PARAM** float 1 **DEF** 1.0
+Factor                             Factor times CLEAN fluxes.
+**PARAM** float 1  
+modelFlux        0.0               Model flux density (Jy)
+**PARAM** float 2  
+modelPos        0.0                Model position offset (asec)
+**PARAM** float 8  
+modelParm                          Model parameters (maj, min, pa, type)
+**PARAM** boo 1
+mrgCC                              Merge CC table CCVer?
+**PARAM** boo 1  **DEF** T
+PBCor                              If true, apply freq. 
+                                   dep. pri. beam corr
+**PARAM** float 1  **DEF** 24.5
+antSize                            Pri. antenna size (m) to use
+                                   alpha, beta...
 **PARAM** str 4
 outDType                           "FITS" or "AIPS" type of output
 **PARAM** str 48
@@ -77,6 +125,11 @@ outSeq           -1.0     9999.0   Output UV AIPS fileseq. #
 outDisk                            Output UV file disk unit #.
 **PARAM** boo 1 
 Compress                           True => write compressed data
+**PARAM** int 1 **DEF** 1
+nThreads            0              Number of threads to use
+**PARAM** int 10
+noScrat                            AIPS disk numbers for which
+                                   scratch files are disallowed
 ----------------------------------------------------------------
 UVSim
 Task:
@@ -91,6 +144,7 @@ If this matters, use refDate="2000-01-01"
    If multiple scans are included, they should be added strictly in 
 time order, else the data should be sorted.  
 For true multisource files, the data should be indexed.
+   Optionally noise and a source model can be added.
 Adverbs:
   refDate....Reference day as "YYYY-MM-DD", best if "2000-01-01"
   timeRange..Time range of the data to be simulated. In order:
@@ -114,6 +168,70 @@ Adverbs:
   nAnts......Number of antennas in AntXYZ
   antXYZ.....Array of XYZ (m) offsets from ArrayXYZ
              See Explain for some samples
+
+  Noise......Gaussian sigma of noise to add to each visibility
+
+                  Source model
+  in2Name....Model AIPS name .      Standard defaults.
+  in2Class...Model AIPS class .     Standard defaults.
+  in2Seq.....Model AIPS seq. # .    0 => highest.
+  in2Disk....Disk drive # of model (FITS or AIPS). NO default
+  in2File....FITS input root if Type=='FITS'
+             Any digits should be left off the end of the name as 
+             the 0-rel field number is added (no leading zeroes).
+  nmaps......Number of image files to use for model.  If more than one
+             file is to be used, the Name, Class, Disk and Seq of the
+             subsequent image files will be the same as the first file
+             except that the LAST two characters of the Class will be
+             '01' thru 'E7' for files number 2 thru 4192.  Maximum 4192.
+  CCVer......CC file ver. number.          0 => highest.
+  BComp......The first clean component to process. One value is
+             specified for each field used.
+  EComp......highest CLEAN comps. to use for model. ALL 0 => all.
+             This array has one value per field up to 64 fields.  All
+             components are used for fields > 64.
+             If any EComp[i] < 0, then components are only used up to
+             the first negative in each field.
+  Flux.......Only components > Flux are used in the model.
+  Cmethod....This determines the method used to compute the
+             model visibility values.
+             'DFT' uses the direct Fourier transform, this
+             method is the most accurate.
+             'GRID' does a gridded-FFT interpolation model
+             computation.
+             '    ' allows the program to use the fastest
+             method.
+  Cmodel.....This indicates the type of input model; 'COMP' means that
+             the input model consists of Clean components, 'IMAG'
+             indicates that the input model consists of images.  If
+             Cmodel is '   ' Clean components will be used if present
+             and the image if not.  Note that Clean images do not make
+             good models.  The Clean components have been convolved with
+             the Gaussian Clean beam making their Fourier transform be
+             rather tapered compared to the original uv data.
+  Factor.....This value will be multiplied times the CLEAN component
+             flux densities before subtraction. 
+             If the image is not in Jy/pixel, Factor should be
+             used to convert to those units.  Note that a Gaussian beam
+             has area 1.1331 * Major_axis * Minor_axis / (axis_incr)**2
+             pixels for square pixels.  
+  modelParm..Other model parameters 
+             modelParm[3] = 0; Point - no other parameters
+             modelParm[3] = 1; Gaussian on sky:
+               [0:2] = major_axis (asec),  minor_axis (asec),  
+               position_angle (deg),
+             modelParm[3] = 3; Uniform sphere:
+               [0] =  radius (asec)
+             modelParm[4+] = spectral index, curvature...
+             If giving spectral terms, add 10 to  modelParm[3]
+  mrgCC......If True, then merge each CC table CCVer before 
+           . subtracting (one per field). In each table, all 
+           . components on a given cell have their fluxes summed 
+          .  resulting in a single entry per cell,
+  PBCor......If true, apply frequency dependent primary beam 
+          .  corrections.  Default True
+  antSize....Primary antenna size (m) to use for PBCor def. 25
+
   
   outDType..'FITS' or 'AIPS'  type of output
   outName....Output UV AIPS file name    Standard defaults.
@@ -124,6 +242,14 @@ Adverbs:
   Compress...If True  the output data is written in
              compressed format which can result in a substantial
              reduction in disk space needed.  
+  nThreads...If the Obit libraries are compiled with multiple
+             thread operation enabled, this parameter sets the 
+             number of threads that can be used for parallel 
+             operations. 
+             NB: This only improves performance if there are 
+             multiple processors and/or cores in the host.
+  noScrat....A list of AIPS disk numbers on which you do not 
+             wish scratch files
 ----------------------------------------------------------------
 UVSim:
 

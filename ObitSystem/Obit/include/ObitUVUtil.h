@@ -96,4 +96,8 @@ ObitIOCode ObitUVUtilFlag(ObitUV *inUV, ObitErr *err);
 
 /** Public: Calculate visibility uvw */
 void ObitUVUtilUVW(const ofloat b[3], odouble dec, ofloat ha, ofloat uvw[3]);
+
+/** Public: Append the contents of one UV data onto another */
+void ObitUVUtilAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err);
+
 #endif /* OBITIUVUTIL_H */ 

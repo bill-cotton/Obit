@@ -9238,9 +9238,29 @@ extern ObitUV* UVUtilAvgT(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
   return ObitUVUtilAvgT (in, lscratch, out, err);
 } // end UVUtilAvgT
 
+extern ObitUV* UVUtilAvgTF(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
+  gboolean lscratch;
+  lscratch = scratch!=0;
+  return ObitUVUtilBlAvgTF (in, lscratch, out, err);
+} // end UVUtilAvgTF
+
 extern ObitInfoList* UVUtilCount (ObitUV *inUV, float timeInt, ObitErr *err) {
   return ObitUVUtilCount (inUV, (ofloat)timeInt, err);
 } // end UVUtilCount
+
+// How to pass array of ObitUV*???
+extern void UVUtilSplitCh (ObitUV *inUV, long nOut, ObitUV **outUV, ObitErr *err) {
+  return ObitUVUtilSplitCh (inUV, (olong)nOut, outUV, err);
+} // end UVUtilSplitCh
+
+extern void UVUtilNoise (ObitUV *inUV, ObitUV *outUV, 
+                         float scale, float sigma, ObitErr *err) {
+  return ObitUVUtilNoise (inUV, outUV, (ofloat)scale, (ofloat)sigma, err);
+} // end UVUtilNoise
+
+extern void UVUtilAppend (ObitUV *inUV, ObitUV *outUV, ObitErr *err) {
+  return ObitUVUtilAppend (inUV, outUV, err);
+} // end UVUtilAppend
 
 /* UV Edit Utility functions */
 
@@ -9268,17 +9288,18 @@ extern ObitUV* UVEditClipStokes(ObitUV* in, int scratch, ObitUV *out, ObitErr *e
   return ObitUVEditClipStokes (in, lscratch, out, err);
 } // end UVEditClipStokes
 
-extern void UVUtilNoise(ObitUV* in, ObitUV *out, float scale, float sigma, ObitErr *err) {
-  return ObitUVUtilNoise (in, out, (ofloat)scale, (ofloat)sigma, err);
-} // end UVUtilNoise
-
-
 extern int UVUtilFlag (ObitUV *inUV, ObitErr *err) {
   ObitIOCode ret;
   ret = ObitUVUtilFlag (inUV, err);
   if (ret==OBIT_IO_OK) return 0;
   else return 1;
 }  // end UVUtilFlag
+
+/* Cal table Utility functions */
+
+extern ObitTable* TableCLGetDummy (ObitUV *inUV,  ObitUV *outUV, long ver, ObitErr *err) {
+  return (ObitTable*)ObitTableCLGetDummy (inUV, outUV, (olong)ver, err);
+} // end TableCLGetDummy
 
 extern void UVSetFITS(ObitUV *,long ,int ,char *,ObitErr *);
 extern void UVSetAIPS(ObitUV *,long ,int ,int ,int ,ObitErr *);
@@ -9323,14 +9344,18 @@ extern float UVUtilVisCompare(ObitUV *,ObitUV *,ObitErr *);
 extern void UVUtilIndex(ObitUV *,ObitErr *);
 extern ObitUV *UVUtilAvgF(ObitUV *,int ,ObitUV *,ObitErr *);
 extern ObitUV *UVUtilAvgT(ObitUV *,int ,ObitUV *,ObitErr *);
+extern ObitUV *UVUtilAvgTF(ObitUV *,int ,ObitUV *,ObitErr *);
 extern ObitInfoList *UVUtilCount(ObitUV *,float ,ObitErr *);
+extern void UVUtilSplitCh(ObitUV *,long ,ObitUV **,ObitErr *);
+extern void UVUtilNoise(ObitUV *,ObitUV *,float ,float ,ObitErr *);
+extern void UVUtilAppend(ObitUV *,ObitUV *,ObitErr *);
 extern void UVEditTD(ObitUV *,ObitUV *,ObitErr *);
 extern void UVEditFD(ObitUV *,ObitUV *,ObitErr *);
 extern void UVEditStokes(ObitUV *,ObitUV *,ObitErr *);
 extern ObitUV *UVEditClip(ObitUV *,int ,ObitUV *,ObitErr *);
 extern ObitUV *UVEditClipStokes(ObitUV *,int ,ObitUV *,ObitErr *);
-extern void UVUtilNoise(ObitUV *,ObitUV *,float ,float ,ObitErr *);
 extern int UVUtilFlag(ObitUV *,ObitErr *);
+extern ObitTable *TableCLGetDummy(ObitUV *,ObitUV *,long ,ObitErr *);
 
 typedef struct {
   ObitUV *me;
@@ -43838,6 +43863,53 @@ static PyObject *_wrap_UVUtilAvgT(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_UVUtilAvgTF(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUV * _result;
+    ObitUV * _arg0;
+    int  _arg1;
+    ObitUV * _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OiOO:UVUtilAvgTF",&_argo0,&_arg1,&_argo2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVUtilAvgTF. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of UVUtilAvgTF. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of UVUtilAvgTF. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitUV *)UVUtilAvgTF(_arg0,_arg1,_arg2,_arg3);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUV_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
 static PyObject *_wrap_UVUtilCount(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitInfoList * _result;
@@ -43873,6 +43945,126 @@ static PyObject *_wrap_UVUtilCount(PyObject *self, PyObject *args) {
         Py_INCREF(Py_None);
         _resultobj = Py_None;
     }
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVUtilSplitCh(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUV * _arg0;
+    long  _arg1;
+    ObitUV ** _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OlOO:UVUtilSplitCh",&_argo0,&_arg1,&_argo2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVUtilSplitCh. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitUV_pp")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of UVUtilSplitCh. Expected _ObitUV_pp.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of UVUtilSplitCh. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    UVUtilSplitCh(_arg0,_arg1,_arg2,_arg3);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVUtilNoise(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUV * _arg0;
+    ObitUV * _arg1;
+    float  _arg2;
+    float  _arg3;
+    ObitErr * _arg4;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo4 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOffO:UVUtilNoise",&_argo0,&_argo1,&_arg2,&_arg3,&_argo4)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVUtilNoise. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of UVUtilNoise. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of UVUtilNoise. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    UVUtilNoise(_arg0,_arg1,_arg2,_arg3,_arg4);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVUtilAppend(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUV * _arg0;
+    ObitUV * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:UVUtilAppend",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVUtilAppend. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of UVUtilAppend. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of UVUtilAppend. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    UVUtilAppend(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
     return _resultobj;
 }
 
@@ -44087,47 +44279,6 @@ static PyObject *_wrap_UVEditClipStokes(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
-static PyObject *_wrap_UVUtilNoise(PyObject *self, PyObject *args) {
-    PyObject * _resultobj;
-    ObitUV * _arg0;
-    ObitUV * _arg1;
-    float  _arg2;
-    float  _arg3;
-    ObitErr * _arg4;
-    PyObject * _argo0 = 0;
-    PyObject * _argo1 = 0;
-    PyObject * _argo4 = 0;
-
-    self = self;
-    if(!PyArg_ParseTuple(args,"OOffO:UVUtilNoise",&_argo0,&_argo1,&_arg2,&_arg3,&_argo4)) 
-        return NULL;
-    if (_argo0) {
-        if (_argo0 == Py_None) { _arg0 = NULL; }
-        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVUtilNoise. Expected _ObitUV_p.");
-        return NULL;
-        }
-    }
-    if (_argo1) {
-        if (_argo1 == Py_None) { _arg1 = NULL; }
-        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitUV_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of UVUtilNoise. Expected _ObitUV_p.");
-        return NULL;
-        }
-    }
-    if (_argo4) {
-        if (_argo4 == Py_None) { _arg4 = NULL; }
-        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitErr_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of UVUtilNoise. Expected _ObitErr_p.");
-        return NULL;
-        }
-    }
-    UVUtilNoise(_arg0,_arg1,_arg2,_arg3,_arg4);
-    Py_INCREF(Py_None);
-    _resultobj = Py_None;
-    return _resultobj;
-}
-
 static PyObject *_wrap_UVUtilFlag(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
@@ -44155,6 +44306,53 @@ static PyObject *_wrap_UVUtilFlag(PyObject *self, PyObject *args) {
     }
     _result = (int )UVUtilFlag(_arg0,_arg1);
     _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableCLGetDummy(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitUV * _arg0;
+    ObitUV * _arg1;
+    long  _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo3 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOlO:TableCLGetDummy",&_argo0,&_argo1,&_arg2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableCLGetDummy. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of TableCLGetDummy. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of TableCLGetDummy. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableCLGetDummy(_arg0,_arg1,_arg2,_arg3);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
     return _resultobj;
 }
 
@@ -59550,14 +59748,18 @@ static PyMethodDef ObitMethods[] = {
 	 { "UVSelfCalCopy", _wrap_UVSelfCalCopy, METH_VARARGS },
 	 { "UVSelfCalCreate", _wrap_UVSelfCalCreate, METH_VARARGS },
 	 { "newUVSelfCal", _wrap_newUVSelfCal, METH_VARARGS },
+	 { "TableCLGetDummy", _wrap_TableCLGetDummy, METH_VARARGS },
 	 { "UVUtilFlag", _wrap_UVUtilFlag, METH_VARARGS },
-	 { "UVUtilNoise", _wrap_UVUtilNoise, METH_VARARGS },
 	 { "UVEditClipStokes", _wrap_UVEditClipStokes, METH_VARARGS },
 	 { "UVEditClip", _wrap_UVEditClip, METH_VARARGS },
 	 { "UVEditStokes", _wrap_UVEditStokes, METH_VARARGS },
 	 { "UVEditFD", _wrap_UVEditFD, METH_VARARGS },
 	 { "UVEditTD", _wrap_UVEditTD, METH_VARARGS },
+	 { "UVUtilAppend", _wrap_UVUtilAppend, METH_VARARGS },
+	 { "UVUtilNoise", _wrap_UVUtilNoise, METH_VARARGS },
+	 { "UVUtilSplitCh", _wrap_UVUtilSplitCh, METH_VARARGS },
 	 { "UVUtilCount", _wrap_UVUtilCount, METH_VARARGS },
+	 { "UVUtilAvgTF", _wrap_UVUtilAvgTF, METH_VARARGS },
 	 { "UVUtilAvgT", _wrap_UVUtilAvgT, METH_VARARGS },
 	 { "UVUtilAvgF", _wrap_UVUtilAvgF, METH_VARARGS },
 	 { "UVUtilIndex", _wrap_UVUtilIndex, METH_VARARGS },

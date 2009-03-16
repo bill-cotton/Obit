@@ -1304,6 +1304,64 @@ def PUtilAvgT (inUV, outUV, err, scratch=False, timeAvg=1.0):
     return outUV
     # end PUtilAvgT
 
+def PUtilAvgTF (inUV, outUV, err, scratch=False, \
+                FOV=0.333, maxInt=1., maxFact=1.01, \
+                NumChAvg=1, doAvgAll=False, ChanSel=[1,0,1,1]):
+    """ Average A UV data set in Time and or frequency
+
+    Time averaging is baseline dependent
+    inUV   = Python UV object to copy
+             Any selection editing and calibration applied before average.
+    outUV  = Predefined UV data if scratch is False, ignored if
+             scratch is True.
+    err    = Python Obit Error/message stack
+    scratch = True if this is to be a scratch file (same type as inUV)
+    FOV     = Field of view (radius, deg)
+    maxInt  = Maximum integration (min)
+    maxFact = Maximum time smearing factor
+    NumChAvg= Number of channels to average, [0 = all]
+    doAvgAll= If TRUE then average all channels and IFs
+    ChanSel = Groups of channels to consider (relative to
+              channels & IFs selected by BChan, EChan, BIF, EIF)
+              (start, end, increment, IF) where start and end at the 
+              beginning and ending channel numbers (1-rel) of the group
+              to be included, increment is the increment between
+              selected channels and IF is the IF number (1-rel)
+              default increment is 1, IF=0 means all IF.
+              The list of groups is terminated by a start <=0
+              """
+    ################################################################
+    # Checks
+    if not inUV.UVIsA():
+        raise TypeError,"inUV MUST be a Python Obit UV"
+    if ((not scratch) and (notoutUV.UVIsA())):
+        raise TypeError,"outUV MUST be a Python Obit UV"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    # Save parameters
+    dim = [1,1,1,1,1]
+    inInfo = PGetList(inUV) 
+    InfoList.PAlwaysPutFloat   (inInfo, "FOV",      dim, [FOV])
+    InfoList.PAlwaysPutFloat   (inInfo, "maxInt",   dim, [maxInt])
+    InfoList.PAlwaysPutFloat   (inInfo, "maxFact",  dim, [maxFact])
+    InfoList.PAlwaysPutFloat   (inInfo, "NumChAvg", dim, [NumChAvg])
+    InfoList.PAlwaysPutBoolean (inInfo, "doAvgAll", dim, [doAvgAll])
+    dim[0] = 4; dim[1] = len(ChanSel)/4
+    InfoList.PAlwaysPutInt     (inInfo, "ChanSel",  dim, ChanSel)
+    
+    # Create output for scratch
+    if scratch:
+        outUV = UV("None")
+    outUV.me = Obit.UVUtilAvgTF(inUV.cast(myClass), scratch, outUV.cast(myClass), err.me)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error averaging UV data")
+    # Get scratch file info
+    if scratch:
+        PUVInfo (outUV, err)
+    return outUV
+    # end PUtilAvgTF
+
 def PUtilCount (inUV, err, timeInt=1440.0):
     """ Count data values by interval in a UV dataset
 
@@ -1621,6 +1679,28 @@ def PNoise(inUV, outUV, scale, sigma, err):
     Obit.UVUtilNoise(inUV.me, outUV.me, scale, sigma, err.me)
     # end PNoise
 
+def PAppend(inUV, outUV, err):
+    """ Append the contents of inUV to the end of outUV
+
+    inUV    = input Python Obit UV
+    outUV   = output Python Obit UV, must be previously defined
+    err     = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not inUV.UVIsA():
+        raise TypeError,"inUV MUST be a Python Obit UV"
+    if not outUV.UVIsA():
+        raise TypeError,"outUV MUST be a Python Obit UV"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+
+    if err.isErr: # existing error?
+        return
+    #
+    Obit.UVUtilAppend(inUV.me, outUV.me, err.me)
+    # end PAppend
+
 def PFlag (inUV, err,
            flagVer=1, timeRange=[0.0,1.0e20], Ants=[0,0], Source="Any",
            Chans=[1,0], IFs=[1,0], freqID=0, subA=0, Stokes="1111", Reason=" "):
@@ -1678,4 +1758,36 @@ def PFlag (inUV, err,
     #
     Obit.UVUtilFlag (inUV.me, err.me)
     # end PFlag
+
+def PTableCLGetDummy (inUV, outUV, ver, err, solInt=10.):
+    """ Create dummy CL table table (applying will not modify data)
+
+    Create and return a dummy CL table
+    inUV    = input Python Obit UV
+    outUV   = output Python Obit UV, must be previously defined
+    ver     = version number of new table, 0=> create new
+    err     = Python Obit Error/message stack
+    solint  = time interval (min) of table
+    """
+    ################################################################
+    # Checks
+    if not inUV.UVIsA():
+        raise TypeError,"inUV MUST be a Python Obit UV"
+    if not outUV.UVIsA():
+        raise TypeError,"outUV MUST be a Python Obit UV"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+
+    if err.isErr: # existing error?
+        return
+    
+    # Interval
+    inInfo = PGetList(inUV)    # 
+    dim = [1,1,1,1,1]
+    InfoList.PAlwaysPutFloat (inInfo, "solInt", dim, [solInt])
+    #
+    outTable    = Table.Table("None")
+    outTable.me = Obit.TableCLGetDummy(inUV.me, outUV.me, ver, err.me)
+    return outTable
+    # end PDummyCL
 

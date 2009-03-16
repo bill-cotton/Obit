@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005                                               */
+/*;  Copyright (C) 2005,2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -18,7 +18,7 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*;  Correspondence this software should be addressed as follows:     */
+/*;Correspondence about this software should be addressed as follows: */
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
@@ -42,5 +42,9 @@
 /*---------------Public functions---------------------------*/
 /** Public: Copy CL tables with selection */
 ObitIOCode ObitTableCLSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err);
+
+/** Public: Create Dummy Cal table. */
+ObitTableCL* ObitTableCLGetDummy (ObitUV *in, ObitUV *out, olong ver, 
+				  ObitErr *err);
 
 #endif /* OBITTABLECLUTIL_H */ 

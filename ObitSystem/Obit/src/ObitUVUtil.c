@@ -2405,14 +2405,14 @@ ObitInfoList* ObitUVUtilCount (ObitUV *inUV, ofloat timeInt, ObitErr *err)
 
 /**
  * Copy blocks of channels from one UV to a set of output UVs..
- * All selected IFs and polarizationa are also copied
+ * All selected IFs and polarizations are also copied
  * \param inUV     Input uv data to average, 
  *                 Any request for calibration, editing and selection honored
- * \param nOut   Number of outout images
- * \param outUV  Array of previously defined but not yet instantiated 
- *               (never opened) UV data objects to receive 1/nOut 
- *               of the data channels in inUV.
- * \param err    Error stack, returns if not empty.
+ * \param nOut     Number of outout images
+ * \param outUV    Array of previously defined but not yet instantiated 
+ *                 (never opened) UV data objects to receive 1/nOut 
+ *                 of the data channels in inUV.
+ * \param err      Error stack, returns if not empty.
  */
 void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV, 
 			ObitErr *err)
@@ -2623,7 +2623,7 @@ void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV,
  * Note: This uses the GSL random number generator, if this is not available
  * then only the scaling is done.
  * \param inUV  Input UV 
- * \param outUV Output UV, must already be defined
+ * \param outUV Output UV, must already be defined but may be inUV
  * \param scale  scaling factor for data
  * \param sigma  Standard deviation of Gaussian noise .
  * \param err    Error stack
@@ -2632,13 +2632,13 @@ void ObitUVUtilNoise(ObitUV *inUV, ObitUV *outUV, ofloat scale, ofloat sigma,
 		     ObitErr *err)
 {
   ObitIOCode retCode;
-  gboolean doCalSelect, done;
+  gboolean doCalSelect, done, same;
   ObitInfoType type;
-  ObitIOAccess access;
+  ObitIOAccess access, oaccess;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat val, fblank = ObitMagicF();
   odouble dsigma = sigma;
-  olong i, j, indx;
+  olong i, j, indx, NPIO, firstVis;
   ObitUVDesc *inDesc, *outDesc;
   /* Don't copy Cal and Soln or data or flag tables */
   gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
@@ -2657,6 +2657,10 @@ void ObitUVUtilNoise(ObitUV *inUV, ObitUV *outUV, ofloat scale, ofloat sigma,
   g_assert (ObitUVIsA(inUV));
   g_assert (ObitUVIsA(outUV));
 
+  /* Are input and output the same file? */
+  same = ObitUVSame(inUV, outUV, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
   /* Local pointers */
   inDesc  = inUV->myDesc;
   outDesc = outUV->myDesc;
@@ -2672,14 +2676,27 @@ void ObitUVUtilNoise(ObitUV *inUV, ObitUV *outUV, ofloat scale, ofloat sigma,
   if ((retCode != OBIT_IO_OK) || (err->error>0)) 
     Obit_traceback_msg (err, routine, inUV->name);
 
-  /* use same data buffer on input and output 
-     so don't assign buffer for output */
-  if (outUV->buffer) ObitIOFreeBuffer(outUV->buffer); /* free existing */
-  outUV->buffer     = inUV->buffer;
-  outUV->bufferSize = inUV->bufferSize;
+  /* use same data buffer on input and output.
+     If multiple passes are made the input files will be closed
+     which deallocates the buffer, use output buffer.
+     so free input buffer */
+  if (!same) {
+    /* use same data buffer on input 1 and output 
+       so don't assign buffer for output */
+    if (outUV->buffer) ObitIOFreeBuffer(outUV->buffer); /* free existing */
+    outUV->buffer = inUV->buffer;
+    outUV->bufferSize = -1;
+  }
+
+   /* Copy number of records per IO to output */
+  ObitInfoListGet (inUV->info, "nVisPIO", &type, dim,   (gpointer)&NPIO, err);
+  ObitInfoListPut (outUV->info, "nVisPIO",  type, dim,  (gpointer)&NPIO, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
 
   /* Open Output Data */
-  retCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err) ;
+  if (same) oaccess = OBIT_IO_ReadWrite;
+  else      oaccess = OBIT_IO_WriteOnly;
+  retCode = ObitUVOpen (outUV, oaccess, err) ;
   if ((retCode != OBIT_IO_OK) || (err->error>0)) {
     outUV->buffer = NULL; /* remove pointer to inUV buffer */
     outUV->bufferSize = 0;
@@ -2687,26 +2704,28 @@ void ObitUVUtilNoise(ObitUV *inUV, ObitUV *outUV, ofloat scale, ofloat sigma,
   }
 
   /* Copy tables before data */
-  retCode = ObitUVCopyTables (inUV, outUV, exclude, NULL, err);
-  if (err->error) {/* add traceback,return */
-    outUV->buffer = NULL;
-    outUV->bufferSize = 0;
-    Obit_traceback_msg (err, routine, inUV->name);
-  }
-
-  /* Close and reopen input to init calibration which will have been disturbed 
-     by the table copy */
-  retCode = ObitUVClose (inUV, err);
-  if (err->error) {
-    outUV->buffer = NULL; outUV->bufferSize = 0;
-    Obit_traceback_msg (err, routine, inUV->name);
-  }
-  
-  retCode = ObitUVOpen (inUV, access, err);
-  if ((retCode != OBIT_IO_OK) || (err->error>0)) {
-    outUV->buffer = NULL; outUV->bufferSize = 0;
-    Obit_traceback_msg (err, routine, inUV->name);
-  }
+  if (!same) {
+    retCode = ObitUVCopyTables (inUV, outUV, exclude, NULL, err);
+    if (err->error) {/* add traceback,return */
+      outUV->buffer = NULL;
+      outUV->bufferSize = 0;
+      Obit_traceback_msg (err, routine, inUV->name);
+    }
+    
+    /* Close and reopen input to init calibration which will have been disturbed 
+       by the table copy */
+    retCode = ObitUVClose (inUV, err);
+    if (err->error) {
+      outUV->buffer = NULL; outUV->bufferSize = 0;
+      Obit_traceback_msg (err, routine, inUV->name);
+    }
+    
+    retCode = ObitUVOpen (inUV, access, err);
+    if ((retCode != OBIT_IO_OK) || (err->error>0)) {
+      outUV->buffer = NULL; outUV->bufferSize = 0;
+      Obit_traceback_msg (err, routine, inUV->name);
+    }
+  } /* end if not same */
 
   /* Init random number generator */
 #if HAVE_GSL==1  /* GSL stuff */
@@ -2752,8 +2771,13 @@ void ObitUVUtilNoise(ObitUV *inUV, ObitUV *outUV, ofloat scale, ofloat sigma,
     } /* end loop over visibilities */
 
     
-    /* Write buffer */
+    /* Write buffer - if same as input, fiddle first vis value */
+    firstVis = outDesc->firstVis;
     retCode = ObitUVWrite (outUV, NULL, err);
+    if (same) {
+      outDesc->firstVis = firstVis;
+      ((ObitUVDesc*)(outUV->myIO->myDesc))->firstVis = firstVis;
+    }
     if (err->error) {
       outUV->buffer = NULL; outUV->bufferSize = 0;
       Obit_traceback_msg (err, routine, outUV->name);
@@ -2976,6 +3000,106 @@ void ObitUVUtilUVW(const ofloat b[3], odouble dec, ofloat ha, ofloat uvw[3])
   uvw[1] = -vw*sindec + b[2]*cosdec;
   uvw[2] =  vw*cosdec + b[2]*sindec;
 } /* end  ObitUVUtilUVW */
+
+/**
+ * Append the contents of one UV onto the end of another
+ * \param inUV  Input UV 
+ * \param outUV Output UV, must already be defined
+ * \param err    Error stack
+ */
+void ObitUVUtilAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
+{
+  ObitIOCode retCode;
+  gboolean doCalSelect, done;
+  ObitInfoType type;
+  ObitIOAccess access;
+  gboolean incompatible;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitUVDesc *inDesc, *outDesc;
+  gchar *routine = "ObitUVUtilAppend";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitUVIsA(inUV));
+  g_assert (ObitUVIsA(outUV));
+
+  /* Get input descriptors */
+  inDesc  = inUV->myDesc;
+  outDesc = outUV->myDesc;
+
+  /* Check compatability between inUV, outUV */
+  incompatible = (inDesc->ncorr!=outDesc->ncorr);
+  incompatible = incompatible || (inDesc->jlocs!=outDesc->jlocs);
+  incompatible = incompatible || (inDesc->jlocf!=outDesc->jlocf);
+  incompatible = incompatible || (inDesc->jlocif!=outDesc->jlocif);
+  if (incompatible) {
+     Obit_log_error(err, OBIT_Error,"%s inUV and outUV have incompatible structures",
+		   routine);
+      return ;
+ }
+  /* Calibration wanted? */ 
+  doCalSelect = FALSE;
+  ObitInfoListGetTest(inUV->info, "doCalSelect", &type, dim, &doCalSelect);
+  if (doCalSelect) access = OBIT_IO_ReadCal;
+  else access = OBIT_IO_ReadWrite;
+
+  /* Open Input Data */
+  retCode = ObitUVOpen (inUV, access, err);
+  if ((retCode != OBIT_IO_OK) || (err->error>0)) 
+    Obit_traceback_msg (err, routine, inUV->name);
+  
+  /* use same data buffer on input and output 
+     so don't assign buffer for output */
+  if (outUV->buffer) ObitIOFreeBuffer(outUV->buffer); /* free existing */
+  outUV->buffer     = inUV->buffer;
+  outUV->bufferSize = inUV->bufferSize;
+
+  /* Open Output Data */
+  retCode = ObitUVOpen (outUV, OBIT_IO_ReadWrite, err) ;
+  if ((retCode != OBIT_IO_OK) || (err->error>0)) {
+    outUV->buffer = NULL; /* remove pointer to inUV buffer */
+    outUV->bufferSize = 0;
+    Obit_traceback_msg (err, routine, outUV->name);
+  }
+  outDesc->firstVis = outDesc->nvis+1; /* Write to end */
+
+  /* Loop over data */
+  done = (retCode != OBIT_IO_OK);
+  while (!done) {
+    
+    /* read buffer */
+    retCode = ObitUVRead (inUV, NULL, err);
+    if (err->error) {
+      outUV->buffer = NULL; outUV->bufferSize = 0;
+      Obit_traceback_msg (err, routine, inUV->name);
+    }
+    done = (retCode == OBIT_IO_EOF); /* done? */
+    if (done) break;
+
+    /* How many? */
+    outDesc->numVisBuff = inDesc->numVisBuff;
+   
+    /* Write buffer */
+    retCode = ObitUVWrite (outUV, NULL, err);
+    if (err->error) {
+      outUV->buffer = NULL; outUV->bufferSize = 0;
+      Obit_traceback_msg (err, routine, outUV->name);
+    }
+  } /* end loop over data */
+  
+  /* unset output buffer (may be multiply deallocated ;'{ ) */
+  outUV->buffer = NULL;
+  outUV->bufferSize = 0;
+  
+  /* Close input */
+  retCode = ObitUVClose (inUV, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  
+  /* Close output */
+  retCode = ObitUVClose (outUV, err);
+  if (err->error) Obit_traceback_msg (err, routine, outUV->name);
+
+} /* end ObitUVUtilAppend */
 
 /*----------------------Private functions---------------------------*/
 /**

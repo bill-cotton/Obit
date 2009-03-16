@@ -325,9 +325,29 @@ extern ObitUV* UVUtilAvgT(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
   return ObitUVUtilAvgT (in, lscratch, out, err);
 } // end UVUtilAvgT
 
+extern ObitUV* UVUtilAvgTF(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
+  gboolean lscratch;
+  lscratch = scratch!=0;
+  return ObitUVUtilBlAvgTF (in, lscratch, out, err);
+} // end UVUtilAvgTF
+
 extern ObitInfoList* UVUtilCount (ObitUV *inUV, float timeInt, ObitErr *err) {
   return ObitUVUtilCount (inUV, (ofloat)timeInt, err);
 } // end UVUtilCount
+
+// How to pass array of ObitUV*???
+extern void UVUtilSplitCh (ObitUV *inUV, long nOut, ObitUV **outUV, ObitErr *err) {
+  return ObitUVUtilSplitCh (inUV, (olong)nOut, outUV, err);
+} // end UVUtilSplitCh
+
+extern void UVUtilNoise (ObitUV *inUV, ObitUV *outUV, 
+                         float scale, float sigma, ObitErr *err) {
+  return ObitUVUtilNoise (inUV, outUV, (ofloat)scale, (ofloat)sigma, err);
+} // end UVUtilNoise
+
+extern void UVUtilAppend (ObitUV *inUV, ObitUV *outUV, ObitErr *err) {
+  return ObitUVUtilAppend (inUV, outUV, err);
+} // end UVUtilAppend
 
 /* UV Edit Utility functions */
 
@@ -355,17 +375,18 @@ extern ObitUV* UVEditClipStokes(ObitUV* in, int scratch, ObitUV *out, ObitErr *e
   return ObitUVEditClipStokes (in, lscratch, out, err);
 } // end UVEditClipStokes
 
-extern void UVUtilNoise(ObitUV* in, ObitUV *out, float scale, float sigma, ObitErr *err) {
-  return ObitUVUtilNoise (in, out, (ofloat)scale, (ofloat)sigma, err);
-} // end UVUtilNoise
-
-
 extern int UVUtilFlag (ObitUV *inUV, ObitErr *err) {
   ObitIOCode ret;
   ret = ObitUVUtilFlag (inUV, err);
   if (ret==OBIT_IO_OK) return 0;
   else return 1;
 }  // end UVUtilFlag
+
+/* Cal table Utility functions */
+
+extern ObitTable* TableCLGetDummy (ObitUV *inUV,  ObitUV *outUV, long ver, ObitErr *err) {
+  return (ObitTable*)ObitTableCLGetDummy (inUV, outUV, (olong)ver, err);
+} // end TableCLGetDummy
 
 %}
 
