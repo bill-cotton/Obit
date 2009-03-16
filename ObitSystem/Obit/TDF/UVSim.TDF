@@ -55,7 +55,7 @@ nFreq                              Number of frequency channels
 delFreq                            Channel Width Frequency (Hz)
 **PARAM** int 1   **DEF** 10
 nIF                                Number of IFs
-**PARAM** float 1 **DEF** 1.28e6 
+**PARAM** float 1 **DEF** 1.28e8 
 delIF                              Separation between IFs (Hz)
 **PARAM** dbl 3 
 arrayXYZ                           Array Earth centered XYZ

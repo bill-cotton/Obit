@@ -149,8 +149,15 @@ int main ( int argc, char **argv )
   GetHeader (outData, myInput, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
-  /* Open output data */
+  /* Open output data - use scrData */
   scrData = newObitUVScratch (outData, err);
+  /* Get source, frequency information */
+  ObitUVOpen (scrData, OBIT_IO_ReadWrite, err);
+  GetFrequencyInfo (myInput, scrData, err);
+  GetSourceInfo (myInput, scrData, TRUE, err);
+  ObitUVClose (scrData, err);
+  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+
   if ((ObitUVOpen (scrData, OBIT_IO_WriteOnly, err) 
        != OBIT_IO_OK) || (err->error>0))  /* error test */
     Obit_log_error(err, OBIT_Error, "ERROR opening output FITS file %s", 
