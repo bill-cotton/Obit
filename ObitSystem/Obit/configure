@@ -311,7 +311,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE RANLIB ac_ct_RANLIB PYTHON PYTHON_VERSION PYTHON_PREFIX PYTHON_EXEC_PREFIX PYTHON_PLATFORM pythondir pkgpythondir pyexecdir pkgpyexecdir SWIG CPP EGREP GLIB_CONFIG GLIB_CFLAGS GLIB_LIBS PKG_CONFIG GLIB_GENMARSHAL GOBJECT_QUERY GLIB_MKENUMS CFITSIO_CPPFLAGS CFITSIO_LDFLAGS CFITSIO_LIBS FFTW3_CPPFLAGS FFTW3_LDFLAGS FFTW3_LIBS FFTW_CPPFLAGS FFTW_LDFLAGS FFTW_LIBS GSL_CFLAGS GSL_LDFLAGS GSL_LIBS XMLRPC_SERVER_CPPFLAGS XMLRPC_SERVER_LDFLAGS XMLRPC_SERVER_LIBS XMLRPC_CLIENT_CPPFLAGS XMLRPC_CLIENT_LDFLAGS XMLRPC_CLIENT_LIBS XMLRPC_CPPFLAGS XMLRPC_LDFLAGS XMLRPC_LIBS WWWLIB_WL_RPATH WWW_LIBS ZLIB_CFLAGS ZLIB_LDFLAGS ZLIB_LIBS PLPLOT_CPPFLAGS PLPLOT_CFLAGS PLPLOT_LDFLAGS PLPLOT_LIBS F77 FFLAGS ac_ct_F77 FLIBS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS PGPLOT_CPPFLAGS PGPLOT_CFLAGS PGPLOT_LDFLAGS PGPLOT_LIBS PYTHON_CPPFLAGS PYTHON_LDFLAGS GTHREAD_LIBS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA CYGPATH_W PACKAGE VERSION ACLOCAL AUTOCONF AUTOMAKE AUTOHEADER MAKEINFO install_sh STRIP ac_ct_STRIP INSTALL_STRIP_PROGRAM mkdir_p AWK SET_MAKE am__leading_dot AMTAR am__tar am__untar CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT DEPDIR am__include am__quote AMDEP_TRUE AMDEP_FALSE AMDEPBACKSLASH CCDEPMODE am__fastdepCC_TRUE am__fastdepCC_FALSE RANLIB ac_ct_RANLIB SWIG CPP EGREP PKG_CONFIG GLIB_CFLAGS GLIB_LIBS GLIB_GENMARSHAL GOBJECT_QUERY GLIB_MKENUMS CFITSIO_CPPFLAGS CFITSIO_LDFLAGS CFITSIO_LIBS FFTW3_CPPFLAGS FFTW3_LDFLAGS FFTW3_LIBS FFTW_CPPFLAGS FFTW_LDFLAGS FFTW_LIBS GSL_CFLAGS GSL_LDFLAGS GSL_LIBS XMLRPC_SERVER_CPPFLAGS XMLRPC_SERVER_LDFLAGS XMLRPC_SERVER_LIBS XMLRPC_CLIENT_CPPFLAGS XMLRPC_CLIENT_LDFLAGS XMLRPC_CLIENT_LIBS XMLRPC_CPPFLAGS XMLRPC_LDFLAGS XMLRPC_LIBS WWWLIB_WL_RPATH WWW_LIBS ZLIB_CFLAGS ZLIB_LDFLAGS ZLIB_LIBS PLPLOT_CPPFLAGS PLPLOT_CFLAGS PLPLOT_LDFLAGS PLPLOT_LIBS F77 FFLAGS ac_ct_F77 FLIBS X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS PGPLOT_CPPFLAGS PGPLOT_CFLAGS PGPLOT_LDFLAGS PGPLOT_LIBS PYTHON_CPPFLAGS PYTHON_LDFLAGS PYTHON_LIBS GTHREAD_LIBS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -863,15 +863,12 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
-  --disable-glibtest       Do not try to compile and run a test GLIB program
   --disable-glibtest      do not try to compile and run a test GLIB program
   --disable-largefile     omit support for large files
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-glib-prefix=PFX   Prefix where GLIB is installed (optional)
-  --with-glib-exec-prefix=PFX Exec prefix where GLIB is installed (optional)
   --with-cfitsio=DIR      search for CFITSIO in DIR/include and DIR/lib
   --with-cfitsio-includes=DIR
                           search for CFITSIO includes in DIR
@@ -894,6 +891,9 @@ Optional Packages:
   --with-plplot=DIR       search for PLPLOT in DIR
   --with-x                use the X Window System
   --with-pgplot=DIR       search for PGPLOT in DIR
+  --with-python=DIR       search for PYTHON in DIR/include and DIR/lib
+  --with-python-includes=DIR
+                          search for PYTHON includes in DIR
 
 Some influential environment variables:
   CC          C compiler command
@@ -2979,191 +2979,7 @@ else
   RANLIB="$ac_cv_prog_RANLIB"
 fi
 
-
-
-
-
-        if test -n "$PYTHON"; then
-      # If the user set $PYTHON, use it and don't search something else.
-      echo "$as_me:$LINENO: checking whether $PYTHON version >= 2.2" >&5
-echo $ECHO_N "checking whether $PYTHON version >= 2.2... $ECHO_C" >&6
-      prog="import sys, string
-# split strings by '.' and convert to numeric.  Append some zeros
-# because we need at least 4 digits for the hex conversion.
-minver = map(int, string.split('2.2', '.')) + [0, 0, 0]
-minverhex = 0
-for i in xrange(0, 4): minverhex = (minverhex << 8) + minver[i]
-sys.exit(sys.hexversion < minverhex)"
-  if { echo "$as_me:$LINENO: $PYTHON -c "$prog"" >&5
-   ($PYTHON -c "$prog") >&5 2>&5
-   ac_status=$?
-   echo "$as_me:$LINENO: \$? = $ac_status" >&5
-   (exit $ac_status); }; then
-  echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-else
-  { { echo "$as_me:$LINENO: error: too old" >&5
-echo "$as_me: error: too old" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-      am_display_PYTHON=$PYTHON
-    else
-      # Otherwise, try each interpreter until we find one that satisfies
-      # VERSION.
-      echo "$as_me:$LINENO: checking for a Python interpreter with version >= 2.2" >&5
-echo $ECHO_N "checking for a Python interpreter with version >= 2.2... $ECHO_C" >&6
-if test "${am_cv_pathless_PYTHON+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-
-	for am_cv_pathless_PYTHON in python python2 python2.4 python2.3 python2.2 python2.1 python2.0 python1.6 python1.5 none; do
-	  test "$am_cv_pathless_PYTHON" = none && break
-	  prog="import sys, string
-# split strings by '.' and convert to numeric.  Append some zeros
-# because we need at least 4 digits for the hex conversion.
-minver = map(int, string.split('2.2', '.')) + [0, 0, 0]
-minverhex = 0
-for i in xrange(0, 4): minverhex = (minverhex << 8) + minver[i]
-sys.exit(sys.hexversion < minverhex)"
-  if { echo "$as_me:$LINENO: $am_cv_pathless_PYTHON -c "$prog"" >&5
-   ($am_cv_pathless_PYTHON -c "$prog") >&5 2>&5
-   ac_status=$?
-   echo "$as_me:$LINENO: \$? = $ac_status" >&5
-   (exit $ac_status); }; then
-  break
-fi
-
-	done
-fi
-echo "$as_me:$LINENO: result: $am_cv_pathless_PYTHON" >&5
-echo "${ECHO_T}$am_cv_pathless_PYTHON" >&6
-      # Set $PYTHON to the absolute path of $am_cv_pathless_PYTHON.
-      if test "$am_cv_pathless_PYTHON" = none; then
-	PYTHON=:
-      else
-        # Extract the first word of "$am_cv_pathless_PYTHON", so it can be a program name with args.
-set dummy $am_cv_pathless_PYTHON; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_PYTHON+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $PYTHON in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PYTHON="$PYTHON" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PYTHON="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  ;;
-esac
-fi
-PYTHON=$ac_cv_path_PYTHON
-
-if test -n "$PYTHON"; then
-  echo "$as_me:$LINENO: result: $PYTHON" >&5
-echo "${ECHO_T}$PYTHON" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-      fi
-      am_display_PYTHON=$am_cv_pathless_PYTHON
-    fi
-
-
-  if test "$PYTHON" = :; then
-      { { echo "$as_me:$LINENO: error: no suitable Python interpreter found" >&5
-echo "$as_me: error: no suitable Python interpreter found" >&2;}
-   { (exit 1); exit 1; }; }
-  else
-
-
-  echo "$as_me:$LINENO: checking for $am_display_PYTHON version" >&5
-echo $ECHO_N "checking for $am_display_PYTHON version... $ECHO_C" >&6
-if test "${am_cv_python_version+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  am_cv_python_version=`$PYTHON -c "import sys; print sys.version[:3]"`
-fi
-echo "$as_me:$LINENO: result: $am_cv_python_version" >&5
-echo "${ECHO_T}$am_cv_python_version" >&6
-  PYTHON_VERSION=$am_cv_python_version
-
-
-
-  PYTHON_PREFIX='${prefix}'
-
-  PYTHON_EXEC_PREFIX='${exec_prefix}'
-
-
-
-  echo "$as_me:$LINENO: checking for $am_display_PYTHON platform" >&5
-echo $ECHO_N "checking for $am_display_PYTHON platform... $ECHO_C" >&6
-if test "${am_cv_python_platform+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  am_cv_python_platform=`$PYTHON -c "import sys; print sys.platform"`
-fi
-echo "$as_me:$LINENO: result: $am_cv_python_platform" >&5
-echo "${ECHO_T}$am_cv_python_platform" >&6
-  PYTHON_PLATFORM=$am_cv_python_platform
-
-
-
-
-                echo "$as_me:$LINENO: checking for $am_display_PYTHON script directory" >&5
-echo $ECHO_N "checking for $am_display_PYTHON script directory... $ECHO_C" >&6
-if test "${am_cv_python_pythondir+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  am_cv_python_pythondir=`$PYTHON -c "from distutils import sysconfig; print sysconfig.get_python_lib(0,0,prefix='$PYTHON_PREFIX')" 2>/dev/null ||
-     echo "$PYTHON_PREFIX/lib/python$PYTHON_VERSION/site-packages"`
-fi
-echo "$as_me:$LINENO: result: $am_cv_python_pythondir" >&5
-echo "${ECHO_T}$am_cv_python_pythondir" >&6
-  pythondir=$am_cv_python_pythondir
-
-
-
-  pkgpythondir=\${pythondir}/$PACKAGE
-
-
-            echo "$as_me:$LINENO: checking for $am_display_PYTHON extension module directory" >&5
-echo $ECHO_N "checking for $am_display_PYTHON extension module directory... $ECHO_C" >&6
-if test "${am_cv_python_pyexecdir+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  am_cv_python_pyexecdir=`$PYTHON -c "from distutils import sysconfig; print sysconfig.get_python_lib(1,0,prefix='$PYTHON_EXEC_PREFIX')" 2>/dev/null ||
-     echo "${PYTHON_EXEC_PREFIX}/lib/python${PYTHON_VERSION}/site-packages"`
-fi
-echo "$as_me:$LINENO: result: $am_cv_python_pyexecdir" >&5
-echo "${ECHO_T}$am_cv_python_pyexecdir" >&6
-  pyexecdir=$am_cv_python_pyexecdir
-
-
-
-  pkgpyexecdir=\${pyexecdir}/$PACKAGE
-
-
-
-  fi
-
-
+#AM_PATH_PYTHON(2.5)
 # Extract the first word of "swig", so it can be a program name with args.
 set dummy swig; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -4082,321 +3898,7 @@ echo "${ECHO_T}$use_fPIC" >&6
 
 
 # Checks for libraries.
-
-# Check whether --with-glib-prefix or --without-glib-prefix was given.
-if test "${with_glib_prefix+set}" = set; then
-  withval="$with_glib_prefix"
-  glib_config_prefix="$withval"
-else
-  glib_config_prefix=""
-fi;
-
-# Check whether --with-glib-exec-prefix or --without-glib-exec-prefix was given.
-if test "${with_glib_exec_prefix+set}" = set; then
-  withval="$with_glib_exec_prefix"
-  glib_config_exec_prefix="$withval"
-else
-  glib_config_exec_prefix=""
-fi;
-# Check whether --enable-glibtest or --disable-glibtest was given.
-if test "${enable_glibtest+set}" = set; then
-  enableval="$enable_glibtest"
-
-else
-  enable_glibtest=yes
-fi;
-
-  if test x$glib_config_exec_prefix != x ; then
-     glib_config_args="$glib_config_args --exec-prefix=$glib_config_exec_prefix"
-     if test x${GLIB_CONFIG+set} != xset ; then
-        GLIB_CONFIG=$glib_config_exec_prefix/bin/glib-config
-     fi
-  fi
-  if test x$glib_config_prefix != x ; then
-     glib_config_args="$glib_config_args --prefix=$glib_config_prefix"
-     if test x${GLIB_CONFIG+set} != xset ; then
-        GLIB_CONFIG=$glib_config_prefix/bin/glib-config
-     fi
-  fi
-
-  for module in .
-  do
-      case "$module" in
-         gmodule)
-             glib_config_args="$glib_config_args gmodule"
-         ;;
-         gthread)
-             glib_config_args="$glib_config_args gthread"
-         ;;
-      esac
-  done
-
-  # Extract the first word of "glib-config", so it can be a program name with args.
-set dummy glib-config; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_path_GLIB_CONFIG+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  case $GLIB_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_GLIB_CONFIG="$GLIB_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_GLIB_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-  test -z "$ac_cv_path_GLIB_CONFIG" && ac_cv_path_GLIB_CONFIG="no"
-  ;;
-esac
-fi
-GLIB_CONFIG=$ac_cv_path_GLIB_CONFIG
-
-if test -n "$GLIB_CONFIG"; then
-  echo "$as_me:$LINENO: result: $GLIB_CONFIG" >&5
-echo "${ECHO_T}$GLIB_CONFIG" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-  min_glib_version=0.99.7
-  echo "$as_me:$LINENO: checking for GLIB - version >= $min_glib_version" >&5
-echo $ECHO_N "checking for GLIB - version >= $min_glib_version... $ECHO_C" >&6
-  no_glib=""
-  if test "$GLIB_CONFIG" = "no" ; then
-    no_glib=yes
-  else
-    GLIB_CFLAGS=`$GLIB_CONFIG $glib_config_args --cflags`
-    GLIB_LIBS=`$GLIB_CONFIG $glib_config_args --libs`
-    glib_config_major_version=`$GLIB_CONFIG $glib_config_args --version | \
-           sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\1/'`
-    glib_config_minor_version=`$GLIB_CONFIG $glib_config_args --version | \
-           sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\2/'`
-    glib_config_micro_version=`$GLIB_CONFIG $glib_config_args --version | \
-           sed 's/\([0-9]*\).\([0-9]*\).\([0-9]*\)/\3/'`
-    if test "x$enable_glibtest" = "xyes" ; then
-      ac_save_CFLAGS="$CFLAGS"
-      ac_save_LIBS="$LIBS"
-      CFLAGS="$CFLAGS $GLIB_CFLAGS"
-      LIBS="$GLIB_LIBS $LIBS"
-      rm -f conf.glibtest
-      if test "$cross_compiling" = yes; then
-  echo $ac_n "cross compiling; assumed OK... $ac_c"
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-#include <glib.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-int
-main ()
-{
-  int major, minor, micro;
-  char *tmp_version;
-
-  system ("touch conf.glibtest");
-
-  /* HP/UX 9 (%@#!) writes to sscanf strings */
-  tmp_version = g_strdup("$min_glib_version");
-  if (sscanf(tmp_version, "%d.%d.%d", &major, &minor, &micro) != 3) {
-     printf("%s, bad version string\n", "$min_glib_version");
-     exit(1);
-   }
-
-  if ((glib_major_version != $glib_config_major_version) ||
-      (glib_minor_version != $glib_config_minor_version) ||
-      (glib_micro_version != $glib_config_micro_version))
-    {
-      printf("\n*** 'glib-config --version' returned %d.%d.%d, but GLIB (%d.%d.%d)\n",
-             $glib_config_major_version, $glib_config_minor_version, $glib_config_micro_version,
-             glib_major_version, glib_minor_version, glib_micro_version);
-      printf ("*** was found! If glib-config was correct, then it is best\n");
-      printf ("*** to remove the old version of GLIB. You may also be able to fix the error\n");
-      printf("*** by modifying your LD_LIBRARY_PATH enviroment variable, or by editing\n");
-      printf("*** /etc/ld.so.conf. Make sure you have run ldconfig if that is\n");
-      printf("*** required on your system.\n");
-      printf("*** If glib-config was wrong, set the environment variable GLIB_CONFIG\n");
-      printf("*** to point to the correct copy of glib-config, and remove the file config.cache\n");
-      printf("*** before re-running configure\n");
-    }
-  else if ((glib_major_version != GLIB_MAJOR_VERSION) ||
-	   (glib_minor_version != GLIB_MINOR_VERSION) ||
-           (glib_micro_version != GLIB_MICRO_VERSION))
-    {
-      printf("*** GLIB header files (version %d.%d.%d) do not match\n",
-	     GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION);
-      printf("*** library (version %d.%d.%d)\n",
-	     glib_major_version, glib_minor_version, glib_micro_version);
-    }
-  else
-    {
-      if ((glib_major_version > major) ||
-        ((glib_major_version == major) && (glib_minor_version > minor)) ||
-        ((glib_major_version == major) && (glib_minor_version == minor) && (glib_micro_version >= micro)))
-      {
-        return 0;
-       }
-     else
-      {
-        printf("\n*** An old version of GLIB (%d.%d.%d) was found.\n",
-               glib_major_version, glib_minor_version, glib_micro_version);
-        printf("*** You need a version of GLIB newer than %d.%d.%d. The latest version of\n",
-	       major, minor, micro);
-        printf("*** GLIB is always available from ftp://ftp.gtk.org.\n");
-        printf("***\n");
-        printf("*** If you have already installed a sufficiently new version, this error\n");
-        printf("*** probably means that the wrong copy of the glib-config shell script is\n");
-        printf("*** being found. The easiest way to fix this is to remove the old version\n");
-        printf("*** of GLIB, but you can also set the GLIB_CONFIG environment to point to the\n");
-        printf("*** correct copy of glib-config. (In this case, you will have to\n");
-        printf("*** modify your LD_LIBRARY_PATH enviroment variable, or edit /etc/ld.so.conf\n");
-        printf("*** so that the correct libraries are found at run-time))\n");
-      }
-    }
-  return 1;
-}
-
-_ACEOF
-rm -f conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  :
-else
-  echo "$as_me: program exited with status $ac_status" >&5
-echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-( exit $ac_status )
-no_glib=yes
-fi
-rm -f core *.core gmon.out bb.out conftest$ac_exeext conftest.$ac_objext conftest.$ac_ext
-fi
-       CFLAGS="$ac_save_CFLAGS"
-       LIBS="$ac_save_LIBS"
-     fi
-  fi
-  if test "x$no_glib" = x ; then
-     echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
-     :
-  else
-     echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-     if test "$GLIB_CONFIG" = "no" ; then
-       echo "*** The glib-config script installed by GLIB could not be found"
-       echo "*** If GLIB was installed in PREFIX, make sure PREFIX/bin is in"
-       echo "*** your path, or set the GLIB_CONFIG environment variable to the"
-       echo "*** full path to glib-config."
-     else
-       if test -f conf.glibtest ; then
-        :
-       else
-          echo "*** Could not run GLIB test program, checking why..."
-          CFLAGS="$CFLAGS $GLIB_CFLAGS"
-          LIBS="$LIBS $GLIB_LIBS"
-          cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-#include <glib.h>
-#include <stdio.h>
-
-int
-main ()
-{
- return ((glib_major_version) || (glib_minor_version) || (glib_micro_version));
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag"
-			 || test ! -s conftest.err'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-   echo "*** The test program compiled, but did not run. This usually means"
-          echo "*** that the run-time linker is not finding GLIB or finding the wrong"
-          echo "*** version of GLIB. If it is not finding GLIB, you'll need to set your"
-          echo "*** LD_LIBRARY_PATH environment variable, or edit /etc/ld.so.conf to point"
-          echo "*** to the installed location  Also, make sure you have run ldconfig if that"
-          echo "*** is required on your system"
-	  echo "***"
-          echo "*** If you have an old version installed, it is best to remove it, although"
-          echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH"
-          echo "***"
-          echo "*** If you have a RedHat 5.0 system, you should remove the GTK package that"
-          echo "*** came with the system with the command"
-          echo "***"
-          echo "***    rpm --erase --nodeps gtk gtk-devel"
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
- echo "*** The test program failed to compile or link. See the file config.log for the"
-          echo "*** exact error that occured. This usually means GLIB was incorrectly installed"
-          echo "*** or that you have moved GLIB since it was installed. In the latter case, you"
-          echo "*** may want to edit the glib-config script: $GLIB_CONFIG"
-fi
-rm -f conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-          CFLAGS="$ac_save_CFLAGS"
-          LIBS="$ac_save_LIBS"
-       fi
-     fi
-     GLIB_CFLAGS=""
-     GLIB_LIBS=""
-     :
-  fi
-
-
-  rm -f conf.glibtest
-
+#AM_PATH_GLIB
 # Check whether --enable-glibtest or --disable-glibtest was given.
 if test "${enable_glibtest+set}" = set; then
   enableval="$enable_glibtest"
@@ -8307,7 +7809,7 @@ fi
 
 
 # Provide some information about the compiler.
-echo "$as_me:8310:" \
+echo "$as_me:7812:" \
      "checking for Fortran 77 compiler version" >&5
 ac_compiler=`set X $ac_compile; echo $2`
 { (eval echo "$as_me:$LINENO: \"$ac_compiler --version </dev/null >&5\"") >&5
@@ -8503,7 +8005,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FFLAGS
 FFLAGS="$FFLAGS $ac_verb"
-(eval echo $as_me:8506: \"$ac_link\") >&5
+(eval echo $as_me:8008: \"$ac_link\") >&5
 ac_f77_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_f77_v_output" >&5
 FFLAGS=$ac_save_FFLAGS
@@ -8581,7 +8083,7 @@ _ACEOF
 # flags.
 ac_save_FFLAGS=$FFLAGS
 FFLAGS="$FFLAGS $ac_cv_prog_f77_v"
-(eval echo $as_me:8584: \"$ac_link\") >&5
+(eval echo $as_me:8086: \"$ac_link\") >&5
 ac_f77_v_output=`eval $ac_link 5>&1 2>&1 | grep -v 'Driving:'`
 echo "$ac_f77_v_output" >&5
 FFLAGS=$ac_save_FFLAGS
@@ -8848,7 +8350,7 @@ ac_x_header_dirs='
 /usr/openwin/share/include'
 
 if test "$ac_x_includes" = no; then
-  # Guess where to find include files, by looking for Intrinsic.h.
+  # Guess where to find include files, by looking for Xlib.h.
   # First, try using that file with no special directory specified.
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -8856,7 +8358,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <X11/Intrinsic.h>
+#include <X11/Xlib.h>
 _ACEOF
 if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
   (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
@@ -8883,7 +8385,7 @@ else
 sed 's/^/| /' conftest.$ac_ext >&5
 
   for ac_dir in $ac_x_header_dirs; do
-  if test -r "$ac_dir/X11/Intrinsic.h"; then
+  if test -r "$ac_dir/X11/Xlib.h"; then
     ac_x_includes=$ac_dir
     break
   fi
@@ -8897,18 +8399,18 @@ if test "$ac_x_libraries" = no; then
   # See if we find them without any special options.
   # Don't add to $LIBS permanently.
   ac_save_LIBS=$LIBS
-  LIBS="-lXt $LIBS"
+  LIBS="-lX11 $LIBS"
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <X11/Intrinsic.h>
+#include <X11/Xlib.h>
 int
 main ()
 {
-XtMalloc (0)
+XrmInitialize ()
   ;
   return 0;
 }
@@ -10613,26 +10115,102 @@ LIBS="$ac_pgplot_saved_LIBS"
 
 
 
-# Python stuff - standard python found?
-if test "x$PYTHON" = x; then
-   PYTHON=`pwd`/../other/bin/python
-fi
+
+# Check whether --with-python or --without-python was given.
+if test "${with_python+set}" = set; then
+  withval="$with_python"
+  for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir/include/; then
+      PYTHON_CPPFLAGS="$PYTHON_CPPFLAGS -I$dir/include/"
+    fi
+    if test -d $dir/lib; then
+      PYTHON_LDFLAGS="$PYTHON_LDFLAGS -L$dir/lib"
+    fi
+  done
+fi;
+
+
+# Check whether --with-python-includes or --without-python-includes was given.
+if test "${with_python_includes+set}" = set; then
+  withval="$with_python_includes"
+  for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir; then
+      PYTHON_CPPFLAGS="$PYTHON_CPPFLAGS -I$dir"
+    fi
+  done
+fi;
+
+# If not given, look in standard places
+# Includes
+if test "x$PYTHON_CPPFLAGS" = x; then
+    if test "x$PYTHON" = x; then
+        PYTHON=`pwd`/../../bin/python
+    fi
 cat <<_ACEOF >conftest.py
 import distutils.sysconfig
 print distutils.sysconfig.get_python_inc()
 _ACEOF
-ac_python_inc=`$PYTHON conftest.py`
-# Use python installed in other to
-PYTHON_CPPFLAGS="-I$ac_python_inc"
-
+    ac_python_inc=`$PYTHON conftest.py`
+    # Use python installed in other to
+    PYTHON_CPPFLAGS="-I$ac_python_inc"
+fi
 
 # Python libs
+if test "x$PYTHON_LD_FLAGS" = x; then
+    if test "x$PYTHON" = x; then
+        PYTHON=`pwd`/../../bin/python
+    fi
 cat <<_ACEOF >conftest.py
 import distutils.sysconfig
 print distutils.sysconfig.get_python_lib()
 _ACEOF
-ac_python_lib=`$PYTHON conftest.py`
-PYTHON_LDFLAGS="-I$ac_python_inc"
+    ac_python_lib=`$PYTHON conftest.py`
+    PYTHON_LDFLAGS="-L$ac_python_lib"
+fi
+
+# Found it?
+ac_have_pythonh=yes
+if test "x$PYTHON_CPPFLAGS" = x; then
+  { echo "$as_me:$LINENO: WARNING: cannot find PYTHON headers" >&5
+echo "$as_me: WARNING: cannot find PYTHON headers" >&2;}
+  ac_have_pythonh=no
+fi
+ac_have_python=yes
+if test "x$PYTHON_LDFLAGS" = x; then
+  { echo "$as_me:$LINENO: WARNING: cannot find PYTHON library" >&5
+echo "$as_me: WARNING: cannot find PYTHON library" >&2;}
+  ac_have_python=no
+fi
+
+ac_python_saved_CPPFLAGS="$CPPFLAGS"
+ac_python_saved_LDFLAGS="$LDFLAGS"
+ac_python_saved_LIBS="$LIBS"
+CPPFLAGS="$CPPFLAGS $PYTHON_CPPFLAGS"
+LDFLAGS="$LDFLAGS $PYTHON_LDFLAGS"
+PYTHON_LIBS="$LIBS"
+
+if test $ac_have_pythonh = no; then
+	ac_have_python=no
+fi
+if test $ac_have_python = no; then
+	ac_have_python=no
+	PYTHON_CPPFLAGS=""
+	PYTHON_LDFLAGS=""
+	PYTHON_LIBS=""
+fi
+if test $ac_have_python = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_PYTHON 1
+_ACEOF
+
+fi
+CPPFLAGS="$ac_python_saved_CPPFLAGS"
+LDFLAGS="$ac_python_saved_LDFLAGS"
+LIBS="$ac_python_saved_LIBS"
+
+
+
 
 
 # Checks for library functions
@@ -11996,22 +11574,12 @@ s,@am__fastdepCC_TRUE@,$am__fastdepCC_TRUE,;t t
 s,@am__fastdepCC_FALSE@,$am__fastdepCC_FALSE,;t t
 s,@RANLIB@,$RANLIB,;t t
 s,@ac_ct_RANLIB@,$ac_ct_RANLIB,;t t
-s,@PYTHON@,$PYTHON,;t t
-s,@PYTHON_VERSION@,$PYTHON_VERSION,;t t
-s,@PYTHON_PREFIX@,$PYTHON_PREFIX,;t t
-s,@PYTHON_EXEC_PREFIX@,$PYTHON_EXEC_PREFIX,;t t
-s,@PYTHON_PLATFORM@,$PYTHON_PLATFORM,;t t
-s,@pythondir@,$pythondir,;t t
-s,@pkgpythondir@,$pkgpythondir,;t t
-s,@pyexecdir@,$pyexecdir,;t t
-s,@pkgpyexecdir@,$pkgpyexecdir,;t t
 s,@SWIG@,$SWIG,;t t
 s,@CPP@,$CPP,;t t
 s,@EGREP@,$EGREP,;t t
-s,@GLIB_CONFIG@,$GLIB_CONFIG,;t t
+s,@PKG_CONFIG@,$PKG_CONFIG,;t t
 s,@GLIB_CFLAGS@,$GLIB_CFLAGS,;t t
 s,@GLIB_LIBS@,$GLIB_LIBS,;t t
-s,@PKG_CONFIG@,$PKG_CONFIG,;t t
 s,@GLIB_GENMARSHAL@,$GLIB_GENMARSHAL,;t t
 s,@GOBJECT_QUERY@,$GOBJECT_QUERY,;t t
 s,@GLIB_MKENUMS@,$GLIB_MKENUMS,;t t
@@ -12059,6 +11627,7 @@ s,@PGPLOT_LDFLAGS@,$PGPLOT_LDFLAGS,;t t
 s,@PGPLOT_LIBS@,$PGPLOT_LIBS,;t t
 s,@PYTHON_CPPFLAGS@,$PYTHON_CPPFLAGS,;t t
 s,@PYTHON_LDFLAGS@,$PYTHON_LDFLAGS,;t t
+s,@PYTHON_LIBS@,$PYTHON_LIBS,;t t
 s,@GTHREAD_LIBS@,$GTHREAD_LIBS,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
 s,@LTLIBOBJS@,$LTLIBOBJS,;t t

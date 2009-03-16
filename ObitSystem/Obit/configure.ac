@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#;  Copyright (C) 2007,2008
+#;  Copyright (C) 2007-2009
 #;  Associated Universities, Inc. Washington DC, USA.
 #;
 #;  This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@ AC_CONFIG_SRCDIR(src/Obit.c)
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_RANLIB
-AM_PATH_PYTHON(2.2)
+#AM_PATH_PYTHON(2.5)
 AC_PATH_PROG(SWIG, swig)
 
 # Checks for header files.
@@ -53,7 +53,6 @@ AC_TYPE_SIZE_T
 AC_CHECK_FPIC
 
 # Checks for libraries.
-AM_PATH_GLIB
 AM_PATH_GLIB_2_0
 AC_CHECK_LIB(m, pow strtol)
 AC_PATH_CFITSIO
@@ -64,28 +63,7 @@ AC_PATH_XMLRPC
 AC_PATH_ZLIB
 AC_PATH_PLPLOT
 AM_PATH_PGPLOT
-
-# Python stuff - standard python found?
-if test "x$PYTHON" = x; then
-   PYTHON=`pwd`/../other/bin/python
-fi
-cat <<_ACEOF >conftest.py
-import distutils.sysconfig
-print distutils.sysconfig.get_python_inc()
-_ACEOF
-ac_python_inc=`$PYTHON conftest.py`
-# Use python installed in other to 
-PYTHON_CPPFLAGS="-I$ac_python_inc"
-AC_SUBST(PYTHON_CPPFLAGS)
-
-# Python libs
-cat <<_ACEOF >conftest.py
-import distutils.sysconfig
-print distutils.sysconfig.get_python_lib()
-_ACEOF
-ac_python_lib=`$PYTHON conftest.py`
-PYTHON_LDFLAGS="-I$ac_python_inc"
-AC_SUBST(PYTHON_LDFLAGS)
+AC_PATH_PYTHON2_5
 
 # Checks for library functions
 AC_FUNC_FSEEKO

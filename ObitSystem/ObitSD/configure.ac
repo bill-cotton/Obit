@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#;  Copyright (C) 2007,2008
+#;  Copyright (C) 2007-2009
 #;  Associated Universities, Inc. Washington DC, USA.
 #;
 #;  This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@ AC_CONFIG_SRCDIR(src/ObitOTF.c)
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_RANLIB
-AM_PATH_PYTHON(2.2)
+#AM_PATH_PYTHON(2.5)
 AC_PATH_PROG(SWIG, swig)
 
 # Checks for header files.
@@ -63,6 +63,7 @@ AC_PATH_XMLRPC
 AC_PATH_ZLIB
 AC_PATH_PLPLOT
 AM_PATH_PGPLOT
+AC_PATH_PYTHON2_5
 
 # Python stuff - standard python found?
 cat <<_ACEOF >conftest.py

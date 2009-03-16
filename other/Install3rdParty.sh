@@ -132,7 +132,7 @@ if test $doFFTW = yes; then
     tar xzvf tarballs/fftw-3.1.2.tar.gz
     cd fftw-3.1.2
 # Use --enable-threads for multithreaded
-    ./configure --prefix=$BASE3/ --with-gcc --enable-shared --enable-float --enable-threads
+    ./configure --prefix=$BASE3/ --with-gcc --enable-shared --enable-float
     make clean all install
 fi
 
@@ -181,9 +181,11 @@ if test $doPYTHON = yes; then
     rm -f -r Python-2.5.1
     tar xzvf tarballs/Python-2.5.1.tgz
     cd Python-2.5.1
-    ./configure --prefix=$BASE3 --exec-prefix=$BASE3/../ --enable-shared 
+    ./configure --prefix=$BASE3 --exec-prefix=$BASE3 --enable-shared 
     make clean all 
     make install
+# Move Python executable
+    mv $BASE3/bin/python $BASE3/../bin/python 
     make clean
 fi
 

@@ -126,7 +126,7 @@ WWW="--with-www=$THIRD"
 CURL="--with-curl=$THIRD"
 XMLRPC="--with-xmlrpc=$THIRD"
 ZLIB="--with-zlib=$THIRD"
-PYTHON="--with-python=$THIRD"
+PYTHON="--with-python=$THIRD -with-python-includes=$THIRD/include/python2.5"
 
 # Which ones wanted?
 if test $doPLPLOT  = no; then PLPLOT= ; fi
@@ -140,6 +140,14 @@ if test $doXMLRPC  = no; then XMLRPC= ; fi
 if test $doZLIB    = no; then ZLIB= ; fi
 if test $doMOTIF   = no; then MOTIF= ; fi
 if test $doPYTHON  = no; then PYTHON= ; fi
+
+# Set LD_LIBRARY_PATH for configure
+if test \"x$LD_LIBRARY_PATH\"=\"x\"; then
+  LD_LIBRARY_PATH=$LD_LIBRARY_PATH; export LD_LIBRARY_PATH
+else
+  LD_LIBRARY_PATH=$LD_LIBRARY_PATH:\$LD_LIBRARY_PATH; export LD_LIBRARY_PATH
+fi
+
 
 # Obit
 if test $doObit = yes; then
