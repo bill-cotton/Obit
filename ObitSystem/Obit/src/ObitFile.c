@@ -373,6 +373,7 @@ ObitFileOpen (ObitFile *in, gchar *fileName, ObitIOAccess access,
     temp = stat(in->fileName, &stbuf);
     in->exist = (temp==0);
     ft[0] = 'r'; ft[1]='+'; ft[2]=0; ft[3]=0;
+    if (type==OBIT_IO_Text) ft[0]='a'; /* Append for text files */
     if (!in->exist) ft[0] = 'w'; 
     if (type==OBIT_IO_Binary) ft[2]='b';
     in->myFile = fopen (in->fileName, ft);

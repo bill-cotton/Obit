@@ -458,7 +458,7 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
   olong      i, n, Aseq, disk, cno, lType;
   gchar     *Type, *strTemp, outFile[129];
   gchar     Aname[13], Aclass[7], *Atype = "UV";
-  olong      nvis;
+  olong      nvis, nThreads;
   gint32    dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean  exist;
   gchar     tname[129], *fullname=NULL;
@@ -523,7 +523,10 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
     isNew = !exist;
     
     /* define object */
-    nvis = 100;
+    nvis = 2000;
+    nThreads = 1;
+    ObitInfoListGetTest(myInput, "nThreads", &type, dim, &nThreads);
+    nvis *= nThreads;
     ObitUVSetAIPS (outUV, nvis, disk, cno, AIPSuser, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
     
@@ -556,7 +559,10 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
     isNew = !exist;
     
     /* define object */
-    nvis = 100;
+    nvis = 2000;
+    nThreads = 1;
+    ObitInfoListGetTest(myInput, "nThreads", &type, dim, &nThreads);
+    nvis *= nThreads;
     ObitUVSetFITS (outUV, nvis, disk, outFile, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
     

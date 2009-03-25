@@ -116,7 +116,7 @@ class TaskWindow(threading.Thread):
                         doAbort = answer["Abort"]
                         # Input (AIPS) request in message?
                         if (msg.__contains__("** press RETURN for more") or
-                            msg.__contains__("just hit RETURN to continue ")):
+                            msg.__contains__("just hit RETURN to continue")):
                             answer  = server.UserResponse(self.taskID)
                             # loop if busy
                             while answer['Status']['reason']=="Busy":

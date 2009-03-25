@@ -707,7 +707,10 @@ def PlotData (inData, targets, scans, feeds, err, \
         plotInfo.set("TITLE","Detector "+str(lfeeds[i]))
         if datagood[i+1] and max(plotdata[i+1])>min(plotdata[i+1]):
             OPlot.PXYPlot(plot, 2, plotdata[0], plotdata[i+1], err)
-        OErr.printErrMsg(err, "Error plotting OTF data")
+        # Tolerate error and keep going
+        if err.isErr:
+            err.Clear()
+            print "ERROR occured in plotting detector",i+1
     OPlot.PShow(plot,err)
     OErr.printErrMsg(err, "Error plotting OTF data")
    # end PlotData

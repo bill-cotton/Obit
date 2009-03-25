@@ -35,7 +35,7 @@ import OTF, Image, Table, ObitTask, FITSDir, OErr
 # Routine to update OTF
 def UpdateOTF (OTFTask, Rcvr, outFile, outDisk, DataRoot, err, \
                scanList=None, offTime=None, avgTime=None, config=None, \
-               scanNo=None, doQuadD=False, doBS=None, dataNorm=None):
+               scanNo=None, doBS=None, dataNorm=None):
     """ Update OTF and return object
 
     return Python OTF object
@@ -65,7 +65,6 @@ def UpdateOTF (OTFTask, Rcvr, outFile, outDisk, DataRoot, err, \
     avgTime  = PAR Data averaging time in seconds
     config   = PAR  path of configuration file
     scanNo   = PAR, CCB, replace GBT scan number with this value
-    doQuadD  = PAR, Use Quadrant Detector offsets
     doBS     = CCB, output beamswitched data
     dataNorm = CCB normalization factors for beamswitched data
     """
@@ -114,8 +113,6 @@ def UpdateOTF (OTFTask, Rcvr, outFile, outDisk, DataRoot, err, \
         otf.config = config
     if scanNo:
         otf.scanNo = scanNo
-    if doQuadD:
-        otf.doQuadD = doQuadD
     if doBS:
         otf.doBS = doBS
     if dataNorm:
@@ -151,7 +148,7 @@ def UpdateOTF (OTFTask, Rcvr, outFile, outDisk, DataRoot, err, \
                 # Run PAROTF to append this scan
                 otf.Scan=scanstr
                 try:
-                    #otf.debug=True
+                    otf.debug = True # DEBUG
                     otf.g
                 except:
                     print "failed on scan",scanstr

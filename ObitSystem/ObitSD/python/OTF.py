@@ -811,12 +811,13 @@ ResidCalInput={'structure':['ResidCal',[('InData','Input OTF'),
                                         ('minEl','Minimum elev (deg)'),
                                         ('minRMS','min. RMS residual (gain)'),
                                         ('minFlux','Minimum flux density in Model to use'),
+                                        ('maxFlux','Maximum flux density in Model to use'),
                                         ('Clip','Clipping level for residuals'),
                                         ('calJy','Cal. signal in Jy'),
                                         ('gainUse','cal. table version, -1=none'),
                                         ('flagVer','flag table version, -1=none')]],
                'InData':None, 'Model':None, 'ModelDesc':None, 'solType':"Filter",
-               'solInt':10000.0, 'minEl':0.0, 'minRMS':0.0, 'minFlux':-10000.0,
+               'solInt':10000.0, 'minEl':0.0, 'minRMS':0.0, 'minFlux':-10000.0,'maxFlux':None,
                'Clip':1.0e20,'calJy':[1.0,1.0], 'gainUse':-1, 'flagVer':-1};
 def ResidCal (err, input=ResidCalInput):
     """ Determine residual calibration for an OTF.
@@ -860,6 +861,7 @@ def ResidCal (err, input=ResidCalInput):
     minEl   = input["minEl"]
     minRMS  = input["minRMS"]
     minFlux = input["minFlux"]
+    maxFlux = input["maxFlux"]
     Clip    = input["Clip"]
     calJy   = input["calJy"]
     gainUse = input["gainUse"]
@@ -887,7 +889,10 @@ def ResidCal (err, input=ResidCalInput):
         zapIt = True     #  A scratch file - delete
         # clip image below minFlux
         print "Clip model below ", minFlux
-        FArray.PClip (model, minFlux, 1.0e20, 0.0)
+        FArray.PClip (model, minFlux, 1.0e20, minFlux)
+        if maxFlux:
+            print "Clip model above ", maxFlux
+            FArray.PClip (model, -1.0e20, maxFlux, maxFlux)
         # Scratch file for residual data 
         scrData = PScratch (inData, err)
         OErr.printErrMsg(err, "ResidCal: Error creating scratch file")

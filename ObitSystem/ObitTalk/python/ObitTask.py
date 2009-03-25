@@ -61,7 +61,7 @@ from FITS import FITS
 from Task import Task, List
 
 # Generic Python stuff.
-import glob, os, pickle, sys, signal
+import glob, os, pickle, sys, select, fcntl, signal
 
 class ObitTask(AIPSTask):
 
@@ -208,7 +208,16 @@ class ObitTask(AIPSTask):
                     # Boo-hiss sys.stdout.write(rotator[count % 4])
                     # sys.stdout.flush()
                     pass
-                count += 1
+                events = select.select([sys.stdin.fileno()], [], [], 0)
+                if sys.stdin.fileno() in events[0]:
+                    flags = fcntl.fcntl(sys.stdin.fileno(), fcntl.F_GETFL)
+                    flags |= os.O_NONBLOCK
+                    fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, flags)
+                    message = sys.stdin.read(1024)
+                    flags &= ~os.O_NONBLOCK
+                    fcntl.fcntl(sys.stdin.fileno(), fcntl.F_SETFL, flags)
+                    self.feed(proxy, tid, message)
+                    pass
                 continue
         except KeyboardInterrupt, exception:
             #self.abort(proxy, tid, sig=signal.SIGKILL)

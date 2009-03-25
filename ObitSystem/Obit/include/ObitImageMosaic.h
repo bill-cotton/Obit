@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -160,6 +160,10 @@ void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err);
 
 /** Public: Give field of view */
 ofloat ObitImageMosaicFOV (ObitImageMosaic *in, ObitErr *err);
+
+/** Public: Give max. field of view in current model */
+ofloat ObitImageMosaicMaxFOV (ObitImageMosaic *in, olong *startCC, olong *endCC, 
+			      ObitErr *err);
 
 /** Public: Reimaging needed to center strong source on pixel? */
 gboolean ObitImageMosaicReimage (ObitImageMosaic *mosaic, ObitErr* err);

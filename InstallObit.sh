@@ -225,6 +225,7 @@ echo "setenv LD_LIBRARY_PATH $LD_LIBRARY_PATH:\$LD_LIBRARY_PATH" >> setup.csh
 echo "setenv PYTHONPATH $OBITSD/python:$OBIT/python:$BASE/opt/share/obittalk/python/" >> setup.csh
 echo "setenv PATH $BASE/bin:\$PATH" >> setup.csh
 echo "setenv OBITINSTALL $BASE" >> setup.csh
+if test $x = PLPLOT;  then echo "setenv PLPLOT_DRV_DIR $THIRD/lib/plplot5.8.0/drivers" >> setup.csh;fi
 chmod +x setup.csh
 
 # Write setup scripts
@@ -240,5 +241,6 @@ echo "fi" >> setup.sh
 echo "PYTHONPATH=$OBITSD/python:$OBIT/python:$BASE/opt/share/obittalk/python/; export PYTHONPATH" >> setup.sh
 echo "PATH=$BASE/bin:\$PATH; export PATH" >> setup.sh
 echo "OBITINSTALL=$BASE; export OBITINSTALL" >> setup.sh
+if test $x = PLPLOT;  then echo "PLPLOT_DRV_DIR=$THIRD/lib/plplot5.8.0/drivers; export PLPLOT_DRV_DIR" >> setup.sh;fi
 chmod +x setup.sh
 

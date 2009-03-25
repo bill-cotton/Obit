@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-200                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -3465,8 +3465,8 @@ gboolean ObitSkyModelsetPBChans(ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
     FOV = sqrt (in->pointXOff*in->pointXOff + in->pointYOff*in->pointYOff);
     FOV = MAX (FOV, 0.1/3600.0);
   } else {
-    /* Get from mosaic */
-    FOV = ObitImageMosaicFOV(in->mosaic, err);
+    /* Get Actual current from mosaic */
+    FOV = ObitImageMosaicMaxFOV(in->mosaic, in->startComp, in->endComp, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, done);
   }
   Angle = FOV;  /* Field of view = max angle from point */

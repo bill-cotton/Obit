@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1545,7 +1545,7 @@ ofloat ObitImageMosaicFOV (ObitImageMosaic *in, ObitErr *err)
     /* Get separation */
     ObitSkyGeomShiftXY (pos0[0], pos0[1], rotate, pos[0], pos[1], 
 			&xshift, &yshift);
-    shift = MAX (fabs(xshift), fabs(yshift));
+    shift = sqrt (xshift*xshift + yshift*yshift);
     FOV = MAX (FOV, shift);
 
     pixel[0] = desc->inaxes[0]; pixel[1] = desc->inaxes[1];
@@ -1554,7 +1554,7 @@ ofloat ObitImageMosaicFOV (ObitImageMosaic *in, ObitErr *err)
     /* Get separation */
     ObitSkyGeomShiftXY (pos0[0], pos0[1], rotate, pos[0], pos[1], 
 			&xshift, &yshift);
-    shift = MAX (fabs(xshift), fabs(yshift));
+    shift = sqrt (xshift*xshift + yshift*yshift);
     FOV = MAX (FOV, shift);
 
     pixel[0] = desc->inaxes[0]; pixel[1] = 1;
@@ -1563,7 +1563,7 @@ ofloat ObitImageMosaicFOV (ObitImageMosaic *in, ObitErr *err)
     /* Get separation */
     ObitSkyGeomShiftXY (pos0[0], pos0[1], rotate, pos[0], pos[1], 
 			&xshift, &yshift);
-    shift = MAX (fabs(xshift), fabs(yshift));
+    shift = sqrt (xshift*xshift + yshift*yshift);
     FOV = MAX (FOV, shift);
 
     pixel[0] = 1; pixel[1] = desc->inaxes[1];
@@ -1572,7 +1572,7 @@ ofloat ObitImageMosaicFOV (ObitImageMosaic *in, ObitErr *err)
     /* Get separation */
     ObitSkyGeomShiftXY (pos0[0], pos0[1], rotate, pos[0], pos[1], 
 			&xshift, &yshift);
-    shift = MAX (fabs(xshift), fabs(yshift));
+    shift = sqrt (xshift*xshift + yshift*yshift);
     FOV = MAX (FOV, shift);
   } /* end loop over images */
 
@@ -1580,6 +1580,93 @@ ofloat ObitImageMosaicFOV (ObitImageMosaic *in, ObitErr *err)
 
   return in->FOV;
 } /* end ObitImageMosaicFOV */
+
+/**
+ * Return the maximum Field of View of a Mosaic
+ * Searches list of images for which startCC[i]>endCC[i] and returns
+ * the maximum distance of any corner from the pointing center.
+ * Default is the mosaic FOV (if given)
+ * \param in      The object with images
+ * \param startCC Array of starting component numbers
+ * \param endCC   Array of ending component numbers
+ * \param err     Error stack, returns if not empty.
+ * \return the full width of the field of view in deg.
+ */
+ofloat ObitImageMosaicMaxFOV (ObitImageMosaic *in, olong *startCC, olong *endCC, 
+			      ObitErr *err)
+{
+  ofloat FOV = -1.0;
+  ofloat pixel[2], xshift, yshift, shift, rotate=0.0;
+  odouble pos[2], pos0[2];
+  olong i, n;
+  ObitImageDesc *desc=NULL;
+  gchar *routine = "ObitImageMosaicFOV";
+
+  /* error checks */
+  if (err->error) return 0.0;
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* No images? We're wasting time */
+  if (in->numberImages<=0) return 0.0;
+
+  /* Use the pointing of the first image as the reference position */
+  desc = in->images[0]->myDesc;
+  ObitImageDescGetPoint (desc, &pos0[0], &pos0[1]); 
+  
+  /* Loop over images */
+  n = in->numberImages;
+  for (i=0; i<n; i++) {
+    /* Pay attention to this one? (components in model?) */
+    if (startCC[i]>endCC[i]) continue;
+
+    desc = in->images[i]->myDesc;
+    /* All four corners */
+    pixel[0] = 1; pixel[1] = 1;
+    ObitImageDescGetPos (desc, pixel, pos, err);
+    if (err->error) Obit_traceback_val (err, routine, in->name, FOV);
+    /* Get separation */
+    ObitSkyGeomShiftXY (pos0[0], pos0[1], rotate, pos[0], pos[1], 
+			&xshift, &yshift);
+    shift = sqrt (xshift*xshift + yshift*yshift);
+    FOV = MAX (FOV, shift);
+
+    pixel[0] = desc->inaxes[0]; pixel[1] = desc->inaxes[1];
+    ObitImageDescGetPos (desc, pixel, pos, err);
+    if (err->error) Obit_traceback_val (err, routine, in->name, FOV);
+    /* Get separation */
+    ObitSkyGeomShiftXY (pos0[0], pos0[1], rotate, pos[0], pos[1], 
+			&xshift, &yshift);
+    shift = sqrt (xshift*xshift + yshift*yshift);
+    FOV = MAX (FOV, shift);
+
+    pixel[0] = desc->inaxes[0]; pixel[1] = 1;
+    ObitImageDescGetPos (desc, pixel, pos, err);
+    if (err->error) Obit_traceback_val (err, routine, in->name, FOV);
+    /* Get separation */
+    ObitSkyGeomShiftXY (pos0[0], pos0[1], rotate, pos[0], pos[1], 
+			&xshift, &yshift);
+    shift = sqrt (xshift*xshift + yshift*yshift);
+    FOV = MAX (FOV, shift);
+
+    pixel[0] = 1; pixel[1] = desc->inaxes[1];
+    ObitImageDescGetPos (desc, pixel, pos, err);
+    if (err->error) Obit_traceback_val (err, routine, in->name, FOV);
+    /* Get separation */
+    ObitSkyGeomShiftXY (pos0[0], pos0[1], rotate, pos[0], pos[1], 
+			&xshift, &yshift);
+    shift = sqrt (xshift*xshift + yshift*yshift);
+    FOV = MAX (FOV, shift);
+  } /* end loop over images */
+
+  /* Got something */
+  if (FOV>=0.0) return FOV;
+
+  /* If previous has failed and FOV given, return it */
+  if (in->FOV>0.0) return in->FOV;
+
+
+  return in->FOV;
+} /* end ObitImageMosaicMaxFOV */
 
 /**
  * Finds peak summed component within a given radius.  
