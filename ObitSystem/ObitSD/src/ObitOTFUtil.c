@@ -107,7 +107,7 @@ void ObitOTFUtilSubImage(ObitOTF *inOTF, ObitOTF *outOTF, ObitFArray *image,
   ObitIOAccess access;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat scale = 1.0;
-  olong NPIO, nThreads;
+  olong NPIO, nThreads=1;
   SubImageFuncArg **targs=NULL;
   /* Don't copy Cal and Soln or data or flag tables */
   gchar *exclude[]={"OTFSoln", "OTFCal", "OTFScanData", "OTFFlag", NULL};
@@ -1193,6 +1193,7 @@ void ObitOTFUtilMakeImage (ObitOTF *inOTF, ObitImage *outImage, gboolean doBeam,
   ObitInfoListGetTest(inOTF->info, "doFilter", &type, dim, &doFilter);
   radius = 0.5 * inOTF->myDesc->diameter;
   if (radius<=0.0) radius = 50.0;  /* Default = GBT */
+  radius *= 0.25; /* Factor of two squared somewhere */
   if (doFilter) {
     Obit_log_error(err, OBIT_InfoErr, 
 		   "Filtering out of band noise for for %s", outImage->name);
