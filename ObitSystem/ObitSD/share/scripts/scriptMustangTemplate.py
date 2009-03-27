@@ -72,6 +72,7 @@ solInt    = 1.0                    # Min solint in seconds
 BLInt     = 30.0                   # Baseline filter time in sec
 AtmInt    = 20.0                   # Atmospheric filter time in sec
 CommonInt = None                   # Common mode filtering? Time is sec if desired.
+PriorInt  = None                   # Common mode filtering? Time is sec if desired.
 tau0      = 0.1                    # Zenith opacity
 AtmEm     = 290.0                  # Zenith atmosphetic temperature eq. in Jy
 
@@ -242,6 +243,46 @@ if (CommonInt):
     OErr.printErrMsg(err, "Error in initial commonMode calibration")
     baseCal = 2
     # End common mode
+
+############################ Initial prior residual filter ########################
+if (priorInt):
+    print "Initial prior calibration, si=",priorInt
+    gainuse = 0
+    inInfo.set("gainUse", gainuse)
+    inInfo.set("doCalib", 1)
+    inInfo.set("flagVer", flagver)
+    if priorModel:
+        # Use CC table
+        resid = OTFUtil.PSubModel(outOTF, None, prior, PSF, err)
+    else:
+        # Use Image
+        prior.Open(Image.READONLY,err)
+        prior.Read(err)
+        prior.Close(err)
+        resid = OTF.PScratch (outOTF, err)
+        OTFUtil.PSubImage(outOTF, resid, prior.FArray, prior.Desc, err)
+        OErr.printErrMsg(err, "Error with residial data")
+        
+    # residual calibration
+    scrInfo = resid.List
+    scrInfo.set("solInt", priorInt/86400.0)
+    scrInfo.set("calJy", CalJy)
+    scrInfo.set("calType", "MultiBeam")   # Common mode
+    solnTable = Obit.OTFGetSolnCal (resid.me, outOTF.me, err.me)
+    #scrInfo.set("calType", "Offset")      # Detector offsets
+    #solnTable = Obit.OTFGetSolnGain (resid.me, outOTF.me, err.me)
+    #del resid
+    OErr.printErrMsg(err, "Error in initial commonMode")
+    # Apply calibration
+    Soln2CalInput = OTF.Soln2CalInput
+    Soln2CalInput["InData"]  = outOTF      # Input data object
+    Soln2CalInput["oldCal"]  = baseCal     # Input cal table
+    Soln2CalInput["newCal"]  = baseCal+1   # New cal table 
+    Soln2CalInput["soln"]    = 0           # highest
+    OTF.Soln2Cal(err, input=Soln2CalInput)
+    OErr.printErrMsg(err, "Error in initial commonMode calibration")
+    baseCal += 1
+    # End prior cal
 
 ################################## Set parameters ##############################
 # Get position from OTF
@@ -465,6 +506,10 @@ for img in [DirtyImg, CleanImg, outOTF]:
     outHistory.WriteRec(-1,ObitSys.pgmName+" maxResidFlux = "+str(maxResidFlux),err)
     outHistory.WriteRec(-1,ObitSys.pgmName+" BLInt = "+str(BLInt),err)
     outHistory.WriteRec(-1,ObitSys.pgmName+" AtmInt = "+str(AtmInt),err)
+    if priorFile and FITSDir.PExist(priorFile, inDisk, err):
+        outHistory.WriteRec(-1,ObitSys.pgmName+" priorFile = "+priorFile,err)
+    if priorInt:
+        outHistory.WriteRec(-1,ObitSys.pgmName+" priorInt = "+str(priorInt),err)
     if CommonInt:
         outHistory.WriteRec(-1,ObitSys.pgmName+" CommonInt(CM) = "+str(CommonInt),err)
     i = 0

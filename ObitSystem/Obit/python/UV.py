@@ -1707,8 +1707,6 @@ def PFlag (inUV, err,
     """ Adds entry to flag table
 
     Adds flagging table entry.
-    Note: there is currently no sorting so the flagging entries must be
-    added in time order
     inUV      = Python Obit UV on which to write flags
     err       = Python Obit Error/message stack
     flagVer   = flagging table version number

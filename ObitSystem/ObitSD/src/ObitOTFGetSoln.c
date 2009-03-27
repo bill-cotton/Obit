@@ -1057,8 +1057,8 @@ ObitTableOTFSoln* ObitOTFGetSolnFilter (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
 	if (someOK) {
 	  
 	  /* Filter data */
-	  /* Get optimum filter length */
-	  nTime = ObitFFTSuggestSize (nsample);
+	  /* Get optimum filter length - zero pad */
+	  nTime = ObitFFTSuggestSize (nsample*2);
 	  
 	  /* Create or resize filter as needed */
 	  if (filter==NULL) {
@@ -1188,8 +1188,8 @@ ObitTableOTFSoln* ObitOTFGetSolnFilter (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
     if (someOK) {
 
       /* Filter data */
-      /* Get optimum filter length */
-      nTime = ObitFFTSuggestSize (nsample);
+      /* Get optimum filter length - zero pad */
+      nTime = ObitFFTSuggestSize (nsample*2);
       
       /* Create or resize filter as needed */
       if (filter==NULL) {
