@@ -2,7 +2,7 @@
 import OSystem, OErr, InfoList, Image, Table, TableUtil, History, ODisplay
 import OTF, OTFUtil, CleanOTF, OTFGetSoln, OTF, OTFGetAtmCor
 import GBTUtil, FITSDir
-import PARCal
+import PARCal, Obit
 
 # Init Obit
 err=OErr.OErr()
@@ -20,13 +20,13 @@ DataRoot="/home/gbtdata/TPAR21/"
 DataRoot = None  # To suppress attempt to update from archive
 
 # Target to image and range of scans
+ScanList = None     # If given, a list of scans rather than scan range in scans
 target=["casa"]
 scans = [77,104]
 target=["A1835"]   # Cluster
 scans = [20,1000]
 target=["CRL2688"]   # calibrator
-scans = [65,65]      # In focus OOF
-scans = [72,72]      # In focus OOF
+ScanList = [65,72]   # List of in focus OOF scans
 
 # Define data
 # OTF file
@@ -44,6 +44,7 @@ cleanFile= "!"+target[0]+session+"Clean.fits"     # Final CLEAN output image
 wtFile   = "!"+target[0]+session+"Wt.fits"        # Weighting image
 BeamFile = "PARGaussBeam.fits"                    # Dirty Gaussian beam
 priorFile= target[0]+session+"Clean.fits"         # Prior model?
+priorModel = True                         # Use prior CC model
 BeamSize = 8.0                            # Beam size in asec
 doScale = True                            # Do scaling by beam ratios
 
@@ -72,7 +73,7 @@ solInt    = 1.0                    # Min solint in seconds
 BLInt     = 30.0                   # Baseline filter time in sec
 AtmInt    = 20.0                   # Atmospheric filter time in sec
 CommonInt = None                   # Common mode filtering? Time is sec if desired.
-PriorInt  = None                   # Common mode filtering? Time is sec if desired.
+priorInt  = None                   # Prior model filtering? Time is sec if desired
 tau0      = 0.1                    # Zenith opacity
 AtmEm     = 290.0                  # Zenith atmosphetic temperature eq. in Jy
 
@@ -108,7 +109,13 @@ deMode   = True    # Subtract the mode of the image when forming
 if target[0]=="A1835":
     BLInt  = 20.0                   # Baseline filter time in sec
     AtmInt = 20.0                   # Atmospheric filter time in sec
-    CommonInt = 6.                  # Common mode
+    if priorFile and FITSDir.PExist(priorFile, inDisk, err):
+        priorModel = False          # Use prior image
+        BLInt  = 10.0               # Baseline filter time in sec with prior
+        AtmInt = 10.0               # Atmospheric filter time in sec with prior
+        priorInt  = 3.0             # If defined the prior calibration time
+    CommonInt = 3.                  # Common mode
+    CommonInt = None                # Common mode
     nx = 400; ny=400
     solInt  = 0.5
     niter   = 50000
@@ -168,7 +175,10 @@ inOTF = GBTUtil.UpdateOTF ("PAROTF","Rcvr_PAR",inFile, inDisk, DataRoot, err, \
 OErr.printErrMsg(err, "Error creating/updating input data object")
 inInfo = inOTF.List
 
-print "Processing", target, "scans", scans
+if ScanList:
+    print "Processing", target, "scans", ScanList
+else:
+    print "Processing", target, "scans", scans
 
 ########################### If prior model given #############################
 # dirty beam
@@ -186,7 +196,7 @@ else:
 ################################## Initial calibration #############################
 PARCal.InitCal(inOTF, target, err,\
                flagver=flagver, CalJy=CalJy, BLInt=BLInt, AtmInt=AtmInt,tau0=tau0, \
-               prior=prior, PSF=PSF, PointTab=PointTab)
+               prior=prior, priorModel=priorModel, PSF=PSF, PointTab=PointTab)
 
 ############################### Write calibrated output ###############################
 # Apply current calibration and use result for remaining calibration
@@ -209,8 +219,12 @@ gainuse=0
 inInfo.set("gainUse", gainuse)
 inInfo.set("doCalib", 1)
  
-# Copy/calibrate
-OTF.PCopy(inOTF, outOTF,  err)
+# Copy/calibrate  Scan list or range?
+if ScanList:
+    inOTF.CopyList(outOTF, ScanList, err)
+else:
+    inOTF.Copy(outOTF, err)
+# Index
 OTFUtil.PIndex(outOTF, err)
 OErr.printErrMsg(err, "Error selecting data")
 # Create an initial dummy table with a interval 1/4 of the shortest

@@ -226,14 +226,15 @@ class FitModel(FitModelPtr):
                 modelInfo += "Integrated Flux density %8.3g (%8.3g) %s\n" % \
                              (self.Peak*ratio, self.ePeak*ratio, "Jy")
                 
-                modelInfo += "Fitted Major axis %8.3f (%8.3g) asec, %8.3f (%8.3g) pixels\n" % \
-                             (parms[0]*abs(id["cdelt"][0])*3600.0, eparms[0]*abs(id["cdelt"][0])*3600.0, \
-                              parms[0], eparms[1])
-                modelInfo += "Fitted Minor axis %8.3f (%8.3g) asec, %8.3f (%8.3g) pixels\n" % \
-                             (parms[1]*abs(id["cdelt"][1])*3600.0, eparms[1]*abs(id["cdelt"][1])*3600.0, \
-                              parms[1], eparms[1])
-                modelInfo += "Fitted Position angle %8.5g (%8.3g) deg\n" % \
-                             (parms[2]*57.296, eparms[2]*57.296)
+            modelInfo += "Fitted Major axis %8.3f (%8.3g) asec, %8.3f (%8.3g) pixels\n" % \
+                         (parms[0]*abs(id["cdelt"][0])*3600.0, eparms[0]*abs(id["cdelt"][0])*3600.0, \
+                          parms[0], eparms[1])
+            modelInfo += "Fitted Minor axis %8.3f (%8.3g) asec, %8.3f (%8.3g) pixels\n" % \
+                         (parms[1]*abs(id["cdelt"][1])*3600.0, eparms[1]*abs(id["cdelt"][1])*3600.0, \
+                          parms[1], eparms[1])
+            modelInfo += "Fitted Position angle %8.5g (%8.3g) deg\n" % \
+                         (parms[2]*57.296, eparms[2]*57.296)
+            if (id["beamMaj"]>0.0) and (id["beamMin"]>0.0):
                 # Deconvolve
                 deconMod = self.DeconGau(ImDesc)
                 if PIsA(deconMod) and deconMod.type>0:

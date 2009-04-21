@@ -1193,7 +1193,8 @@ void ObitOTFUtilMakeImage (ObitOTF *inOTF, ObitImage *outImage, gboolean doBeam,
   ObitInfoListGetTest(inOTF->info, "doFilter", &type, dim, &doFilter);
   radius = 0.5 * inOTF->myDesc->diameter;
   if (radius<=0.0) radius = 50.0;  /* Default = GBT */
-  radius *= 0.25; /* Factor of two squared somewhere */
+   /* radius *= 0.25;Factor of two squared somewhere? */
+   radius *= 0.5;/* Factor of two somewhere? */
   if (doFilter) {
     Obit_log_error(err, OBIT_InfoErr, 
 		   "Filtering out of band noise for for %s", outImage->name);

@@ -3439,10 +3439,10 @@ void ObitImageUtilUVFilter (ObitImage *inImage, ObitImage *outImage, ofloat radi
   /* Wavelength */
   Lambda = 2.997924562e8 / inImage->myDesc->crval[inImage->myDesc->jlocf];
   /* Pixel size in uv plane in m */
-  dx = fabs((FFTdim[0]*0.25*inImage->myDesc->cdelt[0]/57.296) / Lambda);
-  dy = fabs((FFTdim[1]*0.25*inImage->myDesc->cdelt[1]/57.296) / Lambda);
-  /*dx = 0.25*Lambda / fabs(FFTdim[0]*inImage->myDesc->cdelt[0]/57.296);
-    dy = 0.25*Lambda / fabs(FFTdim[1]*inImage->myDesc->cdelt[1]/57.296);*/
+  /*dx = fabs((FFTdim[0]*0.25*inImage->myDesc->cdelt[0]/57.296) / Lambda);
+    dy = fabs((FFTdim[1]*0.25*inImage->myDesc->cdelt[1]/57.296) / Lambda);*/
+  dx = 0.25*Lambda / fabs(FFTdim[0]*inImage->myDesc->cdelt[0]/57.296);
+  dy = 0.25*Lambda / fabs(FFTdim[1]*inImage->myDesc->cdelt[1]/57.296);
 
   /* Form mask */
   xcenter = (ofloat)(FFTdim[0]/2); 

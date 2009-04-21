@@ -361,6 +361,39 @@ class OTF(OData.OData):
             OErr.printErrMsg(err, "Error copying OTF data")
     # end Copy
 
+    def CopyList (self, outOTF, ScanList, err):
+        """ Make a deep copy of input object with a list of scans.
+        
+        Makes structure the same as self, copies data, tables
+        self     = Python OTF object to copy
+        outOTF   = Output Python OTF object, must be defined
+        ScanList = List of scan numbers to copy
+        err      = Python Obit Error/message stack
+        """
+        # Checks
+        if not self.OTFIsA():
+            raise TypeError,"self MUST be a Python Obit OTF"
+        if not outOTF.OTFIsA():
+            raise TypeError,"outOTF MUST be a Python Obit OTF"
+        if not OErr.OErrIsA(err):
+            raise TypeError,"err MUST be an OErr"
+        #
+        # copy first scan
+        inInfo = self.List
+        inInfo.set("Scans",[ScanList[0],ScanList[0]])
+        self.Copy(outOTF, err)
+        if err.isErr:
+            OErr.printErrMsg(err, "Error copying OTF data")
+        # Concatenate rest
+        ConcatInput["InData"]  = self
+        ConcatInput["OutData"] = outOTF
+        for scan in ScanList[1:]:
+            inInfo.set("Scans",[scan,scan])
+            Concat(err, ConcatInput)
+        if err.isErr:
+            OErr.printErrMsg(err, "Error copying OTF data")
+    # end CopyList
+
     def Clone (self, outOTF, err):
         """ Make a copy of a object but do not copy the actual data
         

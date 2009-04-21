@@ -121,9 +121,9 @@ outDisk                             Output UV file disk unit #.
 **PARAM** boo 1  
 Compress                            True => write compressed data
 ----------------------------------------------------------------
-UVCopy
+UVBlAvg
 Task:  Frequency and time average UV data with averaging times 
-depending on time and baseline.  The averaging time is the greater 
+depending on time and baseline.  The averaging time is the lesser
 of maxInt and the time it takes for time smearing to reduce the 
 visibility amplitude by maxFact.
 

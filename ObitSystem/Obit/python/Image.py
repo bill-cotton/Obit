@@ -19,7 +19,7 @@ Additional Functions are available in ImageUtil.
 # Python/Obit Astronomical Image class
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2008
+#  Copyright (C) 2004-2009
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ Additional Functions are available in ImageUtil.
 
 # Obit Image manupulation
 import Obit, Table, FArray, OErr, ImageDesc, InfoList, History, AIPSDir, OSystem
-import TableList, AIPSDir, FITSDir
+import TableList, AIPSDir, FITSDir, ImageFit, FitRegion, FitModel
 import OData
 #import AIPSData
 
@@ -128,7 +128,7 @@ class Image(OData.OData):
         toClass  = Class string to cast to ("ObitImage")
         """
         # Get pointer with type of this class
-        out =  self.me
+        out = self.me
         out = out.replace(self.myClass, toClass)
         return out
     # end cast
@@ -140,9 +140,9 @@ class Image(OData.OData):
         access    = access READONLY (1), WRITEONLY (2), READWRITE(3)
         err       = Python Obit Error/message stack
         blc       = if given and a list of integers (min 2) giving
-        bottom left corner (1-rel) of subimage
+                    bottom left corner (1-rel) of subimage
         trc       = if given and a list of integers (min 2) giving
-        top right corner (1-rel) of subimage
+                    top right corner (1-rel) of subimage
         """
         POpen(self, access, err, blc=blc, trc=trc)
         # end Open
@@ -157,7 +157,7 @@ class Image(OData.OData):
         # end Close
 
     def Read (self, err):
-        """ Read an image  persistent (disk) form
+        """ Read an image persistent (disk) form
         
         The data to be read is specified in the InfoList mamber
         Uses FArray member as buffer.
@@ -230,7 +230,7 @@ class Image(OData.OData):
         # end PWritePlane
 
     def GetPlane (self, array, plane, err):
-        """ Read an image  persistent (disk) form to an (optional) specified FArray
+        """ Read an image persistent (disk) form to an (optional) specified FArray
         
         The data to be read is specified in the InfoList member as modified by plane
         self   = Python Image object
@@ -364,14 +364,90 @@ class Image(OData.OData):
         ################################################################
         # Allow derived types
         return Obit.ImageIsA(self.cast(myClass))
-    # End of class member functions (i.e. involed by x.func()(
+
+    def TVFit (self, disp, err, file=None):
+        """ Fit Gaussian models. setting initial model from the TV display
+
+        Returns FitModel object after fitting
+        self      = Python Image object
+        disp      = Display to use to interactively set initial model
+        err       = Python Obit Error/message stack
+        file      = If given, the file to write the results to, else terminal
+        """
+        # Interactively set initial model
+        fr = FitRegion.PSetup(self,disp,err)
+        # Setup for fitting - define parameters
+        imf = ImageFit.ImageFit("ImageFit")
+        input = ImageFit.FitInput
+        input["fitImage"]  = self
+        input["fitRegion"] = fr
+        input["MaxIter"]   = 100
+        input["prtLv"]     = 0
+        input["PosGuard"]  = 1.
+        # Fit
+        imf.Fit(err,input)
+        # Show results
+        fr.Print(self.Desc,file=file)
+        return fr
+        # end TVFit
+
+    def GaussFit (self, err, \
+                  cen=None, dim=[10,10], x=[0.0], y=[0.0], flux=[100.0], gparm=[[3.,3.,0.]],\
+                  file=None):
+        """ Fit Gaussian models, setting initial model from parameters
+
+        The initial model is defined by x,y,flux, gparm, all lists of the same dimension
+        giving the location, fluxes and sizes of the initial models.
+        Defaults OK for single source at reference pixel in image.
+        Returns FitModel object after fitting
+        self      = Python Image object
+        err       = Python Obit Error/message stack
+        cen       = If given the 1-rel center pixel of the region to be fit
+                    If not given, the reference pixel of the image is used
+        dim       = dimension in pixels of the region to be fit
+        x         = offset in x (pixels) of initial Gaussians from cen
+        y         = offset in y (pixels) of initial Gaussians from cen
+        flux      = fluxes of initial Gaussians
+        gparm     = Initial Gaussian size [major, minor, PA] (pixel,pixel,deg)
+        file      = If given, the file to write the results to, else terminal
+        """
+        # Fitting region
+        d = self.Desc.Dict
+        if cen==None:
+            cen = [d["crpix"][0], d["crpix"][1]]
+        corner = [int(cen[0]-dim[0]/2), int(cen[1]-dim[1]/2)]
+        # set initial model
+        i=0
+        fm = []
+        for i in range(0,len(x)):
+            flx = min(flux[i],d["maxval"])
+            fm.append(FitModel.FitModel(type=FitModel.GaussMod, Peak=flx, \
+                                        parms=gparm[i], \
+                                        DeltaX=x[i]+dim[0]/2, DeltaY=y[i]+dim[1]/2));
+        fr = FitRegion.FitRegion(corner=corner,dim=dim,models=fm)
+        # Setup for fitting - define parameters
+        imf = ImageFit.ImageFit("ImageFit")
+        input = ImageFit.FitInput
+        input["fitImage"]  = self
+        input["fitRegion"] = fr
+        input["MaxIter"]   = 100
+        input["prtLv"]     = 0
+        input["PosGuard"]  = 1.
+        # Fit
+        imf.Fit(err,input)
+        # Show results
+        fr.Print(self.Desc,file=file)
+        return fr
+        # end GaussFit
+
+    # End of class member functions (i.e. invoked by x.func()(
 
 
 # Commonly used, dangerous variables
-dim=[1,1,1,1,1]
-blc=[1,1,1,1,1,1,1]
-trc=[0,0,0,0,0,0,0]
-err=OErr.OErr()
+dim = [1,1,1,1,1]
+blc = [1,1,1,1,1,1,1]
+trc = [0,0,0,0,0,0,0]
+err = OErr.OErr()
 
 # Symbolic names for access codes
 READONLY  = OData.READONLY  # 1
