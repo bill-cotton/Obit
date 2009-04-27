@@ -145,16 +145,16 @@ int main ( int argc, char **argv )
   outData = setOutputData (myInput, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
    
-  /* Get header info, array geometry, initialize output if necessary */
+  /* Get source, header info, array geometry, initialize output if necessary */
   GetHeader (outData, myInput, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Open output data - use scrData */
   scrData = newObitUVScratch (outData, err);
-  /* Get source, frequency information */
+
+  /* Get frequency information */
   ObitUVOpen (scrData, OBIT_IO_ReadWrite, err);
   GetFrequencyInfo (myInput, scrData, err);
-  GetSourceInfo (myInput, scrData, TRUE, err);
   ObitUVClose (scrData, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
@@ -1534,7 +1534,7 @@ void GetSourceInfo (ObitInfoList *myInput, ObitUV *outData, gboolean isNew,
     strncpy (outRow->CalCode, "    ", 4);
     /* Precess */
     source = newObitSource(NULL);
-    source->equinox= outRow->Epoch;
+    source->equinox = outRow->Epoch;
     source->RAMean  = outRow->RAMean;
     source->DecMean = outRow->DecMean;
     ObitPrecessUVJPrecessApp (outData->myDesc, source);
