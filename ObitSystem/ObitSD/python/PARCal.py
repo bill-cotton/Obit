@@ -434,8 +434,8 @@ def FitCal (err, input=FitCalInput):
     # end FitCal
 
 def InitCal (inData, targets, err, \
-            flagver=1, CalJy=[38.5], BLInt=30., AtmInt=20.,tau0=0.1, 
-            PointTab=None, prior=None, PSF=None):
+             flagver=1, CalJy=[38.5], BLInt=30., AtmInt=20.,tau0=0.1, 
+             PointTab=None, prior=None, priorModel = True, PSF=None):
     """ Initial calibration of Mustang (PAR) data
 
     Any prior calibration tables are removed and then does the following:
@@ -487,6 +487,8 @@ def InitCal (inData, targets, err, \
             "Baseline" and "Atmosphere" calibration
             If this option is used the instrumental PSF must also be provided
             in PSF.
+    priorModel  = If prior defined then priorModel is true if the model (CC table)
+            is to be used, if False then the image itself is used.
     PSF     = If prior is given, this is the instrumental PSF to use in the
             subtraction.
     """
@@ -532,12 +534,21 @@ def InitCal (inData, targets, err, \
     ########################### Residual data from prior model #############################
     # Get prior model, if any and compute residual OTF
     if prior!=None:
-        print "Using prior model"
+        print "Using prior model, priorModel=",priorModel
         gainuse = 0
         inInfo.set("gainUse", gainuse)
         inInfo.set("doCalib", 1)
         inInfo.set("flagVer", flagver)
-        resid = OTFUtil.PSubModel(inData, None, prior, PSF, err)
+        if priorModel:
+            # Use CC table
+            resid = OTFUtil.PSubModel(inData, None, prior, PSF, err)
+        else:
+            # Use Image
+            prior.Open(Image.READONLY,err)
+            prior.Read(err)
+            prior.Close(err)
+            resid = OTF.PScratch (inData, err)
+            OTFUtil.PSubImage(inData, resid, prior.FArray, prior.Desc, err)
         OErr.printErrMsg(err, "Error with residial data")
     else:
         print "No prior model used"
@@ -565,12 +576,21 @@ def InitCal (inData, targets, err, \
     ########################### Residual data from prior model #############################
     # Get prior model, if any and compute residual OTF
     if prior!=None:
-        print "Using prior model"
+        print "Using prior model, priorModel=",priorModel
         gainuse = 0
         inInfo.set("gainUse", gainuse)
         inInfo.set("doCalib", 1)
         inInfo.set("flagVer", flagver)
-        resid = OTFUtil.PSubModel(inData, None, prior, PSF, err)
+        if priorModel:
+            # Use CC table
+            resid = OTFUtil.PSubModel(inData, None, prior, PSF, err)
+        else:
+            # Use Image
+            prior.Open(Image.READONLY,err)
+            prior.Read(err)
+            prior.Close(err)
+            resid = OTF.PScratch (inData, err)
+            OTFUtil.PSubImage(inData, resid, prior.FArray, prior.Desc, err)
         OErr.printErrMsg(err, "Error with residial data")
     else:
         print "No prior model used"
