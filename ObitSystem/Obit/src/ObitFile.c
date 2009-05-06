@@ -107,7 +107,7 @@ gconstpointer ObitFileGetClass (void)
 } /* end ObitGetIOClass */
 
 /**
- * Delete the file.
+ * Delete the ObitFile.
  * \param in Pointer to object to be zapped.
  * \param err ObitErr for reporting errors.
  * \return NULL as value of pointer to in, on failure returns in.
@@ -147,6 +147,35 @@ ObitFile* ObitFileZap (ObitFile *in, ObitErr *err)
   in = ObitFileUnref(in); 
   return in;
 } /* end ObitFileZap */
+
+/**
+ * Delete a file
+ * \param fileName Name of file to delete
+ * \param err      ObitErr for reporting errors.
+ */
+void ObitFileZapFile (gchar *fileName, ObitErr *err)
+{
+  olong status;
+  /*gchar *routine = "ObitFileZap";*/
+
+  /* error checks */
+  if (err->error) return;
+  if (fileName==NULL) return;
+  errno = 0;  /* reset any system error */
+
+  /* Make sure it exists */
+  if (!ObitFileExist(fileName, err)) return ;
+
+  /* Zap file */
+  status = remove (fileName);
+  if (status) {             /* it went wrong */
+    Obit_log_error(err, OBIT_Error, 
+		   "ERROR deleting file %s", fileName);
+    ObitFileErrMsg(err); /* Existing system error? */
+    return;
+  }
+  
+} /* end ObitFileZapFile */
 
 /**
  * Rename a file.
@@ -1097,6 +1126,7 @@ static void ObitFileClassInfoDefFn (gpointer inClass)
   theClass->ObitClear     = (ObitClearFP)ObitFileClear;
   theClass->ObitInit      = (ObitInitFP)ObitFileInit;
   theClass->ObitFileZap   = (ObitFileZapFP)ObitFileZap;
+  theClass->ObitFileZapFile= (ObitFileZapFileFP)ObitFileZapFile;
   theClass->ObitFileRename= (ObitFileRenameFP)ObitFileRename;
   theClass->ObitCopy      = (ObitCopyFP)ObitFileCopy;
   theClass->ObitClone     = NULL;

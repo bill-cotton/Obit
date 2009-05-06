@@ -9977,6 +9977,203 @@ typedef struct {
   ObitGBTDCROTF *me;
 } GBTDCROTF;
 
+#include "ObitOTFArrayGeom.h"
+#include "ObitOTFSkyModel.h"
+
+ObitOTFArrayGeom* OTFArrayGeomCreate (gchar *name) {
+  return newObitOTFArrayGeom (name);
+} // end OTFArrayGeomCreate
+
+ObitOTFArrayGeom* OTFArrayGeomCopy (ObitOTFArrayGeom* in, 
+		              ObitOTFArrayGeom* out, ObitErr *err) {
+  return ObitOTFArrayGeomCopy (in, out, err);
+} // end OTFArrayGeomCopy
+
+extern ObitInfoList* OTFArrayGeomGetList (ObitOTFArrayGeom* in) {
+  return ObitInfoListRef(in->info);
+}
+
+extern PyObject *OTFArrayGeomGetDict (ObitOTFArrayGeom* in) {
+  PyObject *outDict = PyDict_New();
+  PyObject *list1, *list2;
+  int i;
+
+  PyDict_SetItemString(outDict, "numberDetect", PyInt_FromLong((long)in->numberDetect));
+  PyDict_SetItemString(outDict, "RefDate",      PyString_InternFromString(in->RefDate));
+  PyDict_SetItemString(outDict, "TimeSys",      PyString_InternFromString(in->TimeSys));
+  PyDict_SetItemString(outDict, "TeleX",        PyFloat_FromDouble((double)in->TeleX));
+  PyDict_SetItemString(outDict, "TeleY",        PyFloat_FromDouble((double)in->TeleY));
+  PyDict_SetItemString(outDict, "TeleZ",        PyFloat_FromDouble((double)in->TeleZ));
+  PyDict_SetItemString(outDict, "DegDay",       PyFloat_FromDouble((double)in->DegDay));
+  PyDict_SetItemString(outDict, "GSTiat0",      PyFloat_FromDouble((double)in->GSTiat0));
+  PyDict_SetItemString(outDict, "PolarX",       PyFloat_FromDouble((double)in->PolarX));
+  PyDict_SetItemString(outDict, "PolarY",       PyFloat_FromDouble((double)in->PolarY));
+  PyDict_SetItemString(outDict, "ut1Utc",       PyFloat_FromDouble((double)in->ut1Utc));
+  PyDict_SetItemString(outDict, "dataUtc",      PyFloat_FromDouble((double)in->dataUtc));
+  PyDict_SetItemString(outDict, "iatUtc",       PyFloat_FromDouble((double)in->iatUtc));
+  PyDict_SetItemString(outDict, "lat",          PyFloat_FromDouble((double)in->lat));
+  PyDict_SetItemString(outDict, "lon",          PyFloat_FromDouble((double)in->lon));
+  PyDict_SetItemString(outDict, "LSTiat0",      PyFloat_FromDouble((double)in->LSTiat0));
+  PyDict_SetItemString(outDict, "RadDay",       PyFloat_FromDouble((double)in->RadDay));
+  PyDict_SetItemString(outDict, "dataIat",      PyFloat_FromDouble((double)in->dataIat));
+
+  // Offsets
+  list1 = PyList_New((long)in->numberDetect);
+  for (i=0; i<in->numberDetect; i++) PyList_SetItem(list1, i, PyFloat_FromDouble((double)in->azOffset[i]));
+  PyDict_SetItemString(outDict, "azOffset", list1);
+  list2 = PyList_New((long)in->numberDetect);
+  for (i=0; i<in->numberDetect; i++) PyList_SetItem(list2, i, PyFloat_FromDouble((double)in->elOffset[i]));
+  PyDict_SetItemString(outDict, "elOffset", list2);
+  return outDict;
+} // end OTFArrayGeomGetDict
+
+extern void OTFArrayGeomSetDict (ObitOTFArrayGeom* in, PyObject *inDict) {
+  PyObject *list1, *list2;
+  char *tstr;
+  int i;
+
+  if (!PyDict_Check(inDict)) PyErr_SetString(PyExc_TypeError,"Input not a Dict");
+
+  // Strings
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
+  strncpy (in->RefDate, tstr, 12); in->RefDate[11]=0;
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "TimeSys"));
+  strncpy (in->TimeSys, tstr, 4); in->TimeSys[3]=0;
+
+   // offsets
+  list1 = PyDict_GetItemString(inDict, "azOffset");
+  for (i=0; i<in->numberDetect; i++) {
+    in->azOffset[i] = (ofloat)PyFloat_AsDouble(PyList_GetItem(list1, i));
+  }
+  Py_DECREF(list1);
+  list2 = PyDict_GetItemString(inDict, "elOffset");
+  for (i=0; i<in->numberDetect; i++) {
+    in->elOffset[i] = (ofloat)PyFloat_AsDouble(PyList_GetItem(list2, i));
+  }
+  Py_DECREF(list2);
+
+  // other stuff
+  in->TeleX =   (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "TeleX"));
+  in->TeleY =   (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "TeleY"));
+  in->TeleZ =   (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "TeleZ"));
+  in->DegDay =  (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "DegDay"));
+  in->GSTiat0 = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "GSTiat0"));
+  in->PolarX =  (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "PolarX"));
+  in->PolarY =  (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "PolarY"));
+  in->ut1Utc =  (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ut1Utc"));
+  in->dataUtc = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "dataUtc"));
+  in->iatUtc =  (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "iatUtc"));
+  in->lat =     (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "lat"));
+  in->lon =     (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "lon"));
+  in->LSTiat0 = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "LSTiat0"));
+  in->RadDay =  (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "RadDay"));
+  in->dataIat = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "dataIat"));
+} // end OTFArrayGeomSetDict
+
+/** Public: Get Parallactic angle for a given time and direction */
+extern float OTFArrayGeomParAng (ObitOTFArrayGeom *in, float time, float ra, float dec) {
+  return (float)ObitOTFArrayGeomParAng (in, (ofloat)time, (ofloat)ra, (ofloat)dec);
+} // end OTFArrayGeomParAng 
+
+/** Public: Get Elevation for a given time and direction */
+extern float OTFArrayGeomElev (ObitOTFArrayGeom *in, float time, float ra, float dec) {
+  return (float)ObitOTFArrayGeomElev (in, (ofloat)time, (ofloat)ra, (ofloat)dec);
+} // end OTFArrayGeomElev 
+
+/** Public: Get detector coordinates on sky, return (x,y) as list of lists */
+extern PyObject *OTFArrayGeomCoord (ObitOTFArrayGeom *in, float raPoint, float decPoint, float rot) {
+  ofloat *x=NULL, *y=NULL;
+  PyObject *list1, *list2, *outList;
+  int i;
+
+  x = g_malloc0(in->numberDetect*sizeof(ofloat));
+  y = g_malloc0(in->numberDetect*sizeof(ofloat));
+  ObitOTFArrayGeomCoord (in, (ofloat)raPoint, (ofloat)decPoint, (ofloat)rot, x, y);
+  list1   = PyList_New(in->numberDetect);
+  list2   = PyList_New(in->numberDetect);
+  for (i=0; i<in->numberDetect; i++) {
+    PyList_SetItem(list1, i, PyFloat_FromDouble((double)x[i]));
+    PyList_SetItem(list2, i, PyFloat_FromDouble((double)y[i]));
+  }
+  outList = PyList_New(2);
+  PyList_SetItem(outList, 0, list1);
+  PyList_SetItem(outList, 1, list2);
+  if (x)  g_free(x);
+  if (y)  g_free(y);
+  return outList;
+} // end  OTFArrayGeomCoord
+
+/** Public: Get detector locations projected onto a plane, return (x,y) as list of lists */
+// ProjCode 0=-SIN , 1=-ARC, 2=-TAN
+extern PyObject *OTFArrayGeomProj (ObitOTFArrayGeom *in, float raPoint, float decPoint, float rot,
+		      float raProj, float decProj, int ProjCode) {
+  ofloat *x=NULL, *y=NULL;
+  PyObject *list1, *list2, *outList;
+  ObitOTFProj Proj = OBIT_OTF_SIN;
+  int i;
+  
+  if (ProjCode==0)      Proj = OBIT_OTF_SIN;
+  else if (ProjCode==1) Proj = OBIT_OTF_ARC;
+  else if (ProjCode==2) Proj = OBIT_OTF_TAN;
+  else                  Proj = OBIT_OTF_SIN;
+
+  x = g_malloc0(in->numberDetect*sizeof(ofloat));
+  y = g_malloc0(in->numberDetect*sizeof(ofloat));
+  ObitOTFArrayGeomProj (in, (ofloat)raPoint, (ofloat)decPoint, (ofloat)rot, 
+      (ofloat)raProj, (ofloat)decProj,  Proj, x, y);
+  list1   = PyList_New(in->numberDetect);
+  list2   = PyList_New(in->numberDetect);
+  for (i=0; i<in->numberDetect; i++) {
+    PyList_SetItem(list1, i, PyFloat_FromDouble((double)x[i]));
+    PyList_SetItem(list2, i, PyFloat_FromDouble((double)y[i]));
+  }
+  outList = PyList_New(2);
+  PyList_SetItem(outList, 0, list1);
+  PyList_SetItem(outList, 1, list2);
+  if (x)  g_free(x);
+  if (y)  g_free(y);
+  return outList;
+} // end  OTFArrayGeomProj
+
+/** Public: Offset a celestial position in az, el, return (raPoint, decPoint) as list */
+extern PyObject *OTFArrayGeomCorrPoint (float azOff, float elOff, float pa) {
+  ofloat x, y;
+  PyObject *list1;
+
+  ObitOTFArrayGeomCorrPoint ((ofloat)azOff, (ofloat)elOff, (ofloat)pa, &x, &y);
+  list1 = PyList_New(2);
+  PyList_SetItem(list1, 0, PyFloat_FromDouble((double)x));
+  PyList_SetItem(list1, 1, PyFloat_FromDouble((double)y));
+  return list1;
+} // end  OTFArrayGeomCorrPoint
+
+ObitOTFArrayGeom* OTFArrayGeomRef (ObitOTFArrayGeom* in) {
+  return ObitOTFArrayGeomRef (in);
+} // end OTFArrayGeomRef
+
+ObitOTFArrayGeom* OTFArrayGeomUnref (ObitOTFArrayGeom* in) {
+  if (!ObitOTFArrayGeomIsA(in)) return NULL;
+  return ObitOTFArrayGeomUnref (in);
+} // end OTFArrayGeomUnref
+
+extern int OTFArrayGeomIsA (ObitOTFArrayGeom* in) {
+  return ObitOTFArrayGeomIsA(in);
+}
+
+extern ObitInfoList *OTFArrayGeomGetList(ObitOTFArrayGeom *);
+extern PyObject *OTFArrayGeomGetDict(ObitOTFArrayGeom *);
+extern void OTFArrayGeomSetDict(ObitOTFArrayGeom *,PyObject *);
+extern float OTFArrayGeomParAng(ObitOTFArrayGeom *,float ,float ,float );
+extern float OTFArrayGeomElev(ObitOTFArrayGeom *,float ,float ,float );
+extern PyObject *OTFArrayGeomCoord(ObitOTFArrayGeom *,float ,float ,float );
+extern PyObject *OTFArrayGeomProj(ObitOTFArrayGeom *,float ,float ,float ,float ,float ,int );
+extern PyObject *OTFArrayGeomCorrPoint(float ,float ,float );
+extern int OTFArrayGeomIsA(ObitOTFArrayGeom *);
+
+typedef struct {
+  ObitOTFArrayGeom *me;
+} OTFArrayGeom;
+
 #include "ObitOTFDesc.h"
 
 ObitOTFDesc* OTFDescCreate (gchar *name) {
@@ -10448,6 +10645,10 @@ extern ObitOTFDesc* OTFGetDesc (ObitOTF* in) {
   return ObitOTFDescRef(in->myDesc);
 }
 
+extern ObitOTFArrayGeom* OTFGetArrayGeom (ObitOTF* in) {
+  return ObitOTFArrayGeomRef(in->geom);
+}
+
 extern ObitInfoList* OTFGetList (ObitOTF* in) {
   return ObitInfoListRef(in->info);
 }
@@ -10497,6 +10698,7 @@ extern void OTFSetTarget(ObitOTF *,char *,float ,double ,double ,ObitErr *);
 extern ObitOTF *OTFUnref(ObitOTF *);
 extern ObitOTF *OTFRef(ObitOTF *);
 extern ObitOTFDesc *OTFGetDesc(ObitOTF *);
+extern ObitOTFArrayGeom *OTFGetArrayGeom(ObitOTF *);
 extern ObitInfoList *OTFGetList(ObitOTF *);
 extern ObitTableList *OTFGetTableList(ObitOTF *);
 extern long OTFGetHighVer(ObitOTF *,char *);
@@ -46730,6 +46932,388 @@ static PyObject *_wrap_GBTDCROTFIsA(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_OTFArrayGeomCreate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitOTFArrayGeom * _result;
+    gchar * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OTFArrayGeomCreate",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_gchar_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OTFArrayGeomCreate. Expected _gchar_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitOTFArrayGeom *)OTFArrayGeomCreate(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitOTFArrayGeom_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_OTFArrayGeomCopy(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitOTFArrayGeom * _result;
+    ObitOTFArrayGeom * _arg0;
+    ObitOTFArrayGeom * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:OTFArrayGeomCopy",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitOTFArrayGeom_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OTFArrayGeomCopy. Expected _ObitOTFArrayGeom_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitOTFArrayGeom_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OTFArrayGeomCopy. Expected _ObitOTFArrayGeom_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of OTFArrayGeomCopy. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitOTFArrayGeom *)OTFArrayGeomCopy(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitOTFArrayGeom_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_OTFArrayGeomGetList(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitInfoList * _result;
+    ObitOTFArrayGeom * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OTFArrayGeomGetList",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitOTFArrayGeom_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OTFArrayGeomGetList. Expected _ObitOTFArrayGeom_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitInfoList *)OTFArrayGeomGetList(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitInfoList_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_OTFArrayGeomGetDict(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitOTFArrayGeom * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OTFArrayGeomGetDict",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitOTFArrayGeom_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OTFArrayGeomGetDict. Expected _ObitOTFArrayGeom_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OTFArrayGeomGetDict(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OTFArrayGeomSetDict(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitOTFArrayGeom * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:OTFArrayGeomSetDict",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitOTFArrayGeom_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OTFArrayGeomSetDict. Expected _ObitOTFArrayGeom_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    OTFArrayGeomSetDict(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OTFArrayGeomParAng(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    float  _result;
+    ObitOTFArrayGeom * _arg0;
+    float  _arg1;
+    float  _arg2;
+    float  _arg3;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Offf:OTFArrayGeomParAng",&_argo0,&_arg1,&_arg2,&_arg3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitOTFArrayGeom_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OTFArrayGeomParAng. Expected _ObitOTFArrayGeom_p.");
+        return NULL;
+        }
+    }
+    _result = (float )OTFArrayGeomParAng(_arg0,_arg1,_arg2,_arg3);
+    _resultobj = Py_BuildValue("f",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OTFArrayGeomElev(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    float  _result;
+    ObitOTFArrayGeom * _arg0;
+    float  _arg1;
+    float  _arg2;
+    float  _arg3;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Offf:OTFArrayGeomElev",&_argo0,&_arg1,&_arg2,&_arg3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitOTFArrayGeom_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OTFArrayGeomElev. Expected _ObitOTFArrayGeom_p.");
+        return NULL;
+        }
+    }
+    _result = (float )OTFArrayGeomElev(_arg0,_arg1,_arg2,_arg3);
+    _resultobj = Py_BuildValue("f",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_OTFArrayGeomCoord(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitOTFArrayGeom * _arg0;
+    float  _arg1;
+    float  _arg2;
+    float  _arg3;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Offf:OTFArrayGeomCoord",&_argo0,&_arg1,&_arg2,&_arg3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitOTFArrayGeom_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OTFArrayGeomCoord. Expected _ObitOTFArrayGeom_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OTFArrayGeomCoord(_arg0,_arg1,_arg2,_arg3);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OTFArrayGeomProj(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitOTFArrayGeom * _arg0;
+    float  _arg1;
+    float  _arg2;
+    float  _arg3;
+    float  _arg4;
+    float  _arg5;
+    int  _arg6;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Offfffi:OTFArrayGeomProj",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_arg5,&_arg6)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitOTFArrayGeom_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OTFArrayGeomProj. Expected _ObitOTFArrayGeom_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)OTFArrayGeomProj(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OTFArrayGeomCorrPoint(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    float  _arg0;
+    float  _arg1;
+    float  _arg2;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"fff:OTFArrayGeomCorrPoint",&_arg0,&_arg1,&_arg2)) 
+        return NULL;
+    _result = (PyObject *)OTFArrayGeomCorrPoint(_arg0,_arg1,_arg2);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_OTFArrayGeomRef(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitOTFArrayGeom * _result;
+    ObitOTFArrayGeom * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OTFArrayGeomRef",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitOTFArrayGeom_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OTFArrayGeomRef. Expected _ObitOTFArrayGeom_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitOTFArrayGeom *)OTFArrayGeomRef(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitOTFArrayGeom_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_OTFArrayGeomUnref(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitOTFArrayGeom * _result;
+    ObitOTFArrayGeom * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OTFArrayGeomUnref",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitOTFArrayGeom_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OTFArrayGeomUnref. Expected _ObitOTFArrayGeom_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitOTFArrayGeom *)OTFArrayGeomUnref(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitOTFArrayGeom_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_OTFArrayGeomIsA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitOTFArrayGeom * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OTFArrayGeomIsA",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitOTFArrayGeom_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OTFArrayGeomIsA. Expected _ObitOTFArrayGeom_p.");
+        return NULL;
+        }
+    }
+    _result = (int )OTFArrayGeomIsA(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_OTFDescCreate(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitOTFDesc * _result;
@@ -48564,6 +49148,34 @@ static PyObject *_wrap_OTFGetDesc(PyObject *self, PyObject *args) {
     _result = (ObitOTFDesc *)OTFGetDesc(_arg0);
     if (_result) {
         SWIG_MakePtr(_ptemp, (char *) _result,"_ObitOTFDesc_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_OTFGetArrayGeom(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitOTFArrayGeom * _result;
+    ObitOTF * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OTFGetArrayGeom",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitOTF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OTFGetArrayGeom. Expected _ObitOTF_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitOTFArrayGeom *)OTFGetArrayGeom(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitOTFArrayGeom_p");
         _resultobj = Py_BuildValue("s",_ptemp);
     } else {
         Py_INCREF(Py_None);
@@ -59088,6 +59700,146 @@ static PyObject *_wrap_delete_GBTDCROTF(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+#define OTFArrayGeom_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
+static PyObject *_wrap_OTFArrayGeom_me_set(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitOTFArrayGeom * _result;
+    OTFArrayGeom * _arg0;
+    ObitOTFArrayGeom * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:OTFArrayGeom_me_set",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_OTFArrayGeom_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OTFArrayGeom_me_set. Expected _OTFArrayGeom_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitOTFArrayGeom_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of OTFArrayGeom_me_set. Expected _ObitOTFArrayGeom_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitOTFArrayGeom *)OTFArrayGeom_me_set(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitOTFArrayGeom_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+#define OTFArrayGeom_me_get(_swigobj) ((ObitOTFArrayGeom *) _swigobj->me)
+static PyObject *_wrap_OTFArrayGeom_me_get(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitOTFArrayGeom * _result;
+    OTFArrayGeom * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:OTFArrayGeom_me_get",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_OTFArrayGeom_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of OTFArrayGeom_me_get. Expected _OTFArrayGeom_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitOTFArrayGeom *)OTFArrayGeom_me_get(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitOTFArrayGeom_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static OTFArrayGeom *new_OTFArrayGeom(char *name) {
+     OTFArrayGeom *out;
+     out = (OTFArrayGeom *) malloc(sizeof(OTFArrayGeom));
+     if (strcmp(name, "None")) out->me = OTFArrayGeomCreate(name);
+     else  out->me = NULL;
+     return out;
+   }
+
+static PyObject *_wrap_new_OTFArrayGeom(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OTFArrayGeom * _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:new_OTFArrayGeom",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (OTFArrayGeom *)new_OTFArrayGeom(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_OTFArrayGeom_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static void delete_OTFArrayGeom(OTFArrayGeom *self) {
+    self->me = OTFArrayGeomUnref(self->me);
+    free(self);
+  }
+static PyObject *_wrap_delete_OTFArrayGeom(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    OTFArrayGeom * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:delete_OTFArrayGeom",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_OTFArrayGeom_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of delete_OTFArrayGeom. Expected _OTFArrayGeom_p.");
+        return NULL;
+        }
+    }
+    delete_OTFArrayGeom(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 #define OTFDesc_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
 static PyObject *_wrap_OTFDesc_me_set(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -59378,6 +60130,10 @@ static PyMethodDef ObitMethods[] = {
 	 { "new_OTFDesc", _wrap_new_OTFDesc, METH_VARARGS },
 	 { "OTFDesc_me_get", _wrap_OTFDesc_me_get, METH_VARARGS },
 	 { "OTFDesc_me_set", _wrap_OTFDesc_me_set, METH_VARARGS },
+	 { "delete_OTFArrayGeom", _wrap_delete_OTFArrayGeom, METH_VARARGS },
+	 { "new_OTFArrayGeom", _wrap_new_OTFArrayGeom, METH_VARARGS },
+	 { "OTFArrayGeom_me_get", _wrap_OTFArrayGeom_me_get, METH_VARARGS },
+	 { "OTFArrayGeom_me_set", _wrap_OTFArrayGeom_me_set, METH_VARARGS },
 	 { "delete_GBTDCROTF", _wrap_delete_GBTDCROTF, METH_VARARGS },
 	 { "new_GBTDCROTF", _wrap_new_GBTDCROTF, METH_VARARGS },
 	 { "GBTDCROTF_me_get", _wrap_GBTDCROTF_me_get, METH_VARARGS },
@@ -59632,6 +60388,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "OTFGetHighVer", _wrap_OTFGetHighVer, METH_VARARGS },
 	 { "OTFGetTableList", _wrap_OTFGetTableList, METH_VARARGS },
 	 { "OTFGetList", _wrap_OTFGetList, METH_VARARGS },
+	 { "OTFGetArrayGeom", _wrap_OTFGetArrayGeom, METH_VARARGS },
 	 { "OTFGetDesc", _wrap_OTFGetDesc, METH_VARARGS },
 	 { "OTFRef", _wrap_OTFRef, METH_VARARGS },
 	 { "OTFUnref", _wrap_OTFUnref, METH_VARARGS },
@@ -59677,6 +60434,19 @@ static PyMethodDef ObitMethods[] = {
 	 { "OTFDescCopyDesc", _wrap_OTFDescCopyDesc, METH_VARARGS },
 	 { "OTFDescCopy", _wrap_OTFDescCopy, METH_VARARGS },
 	 { "OTFDescCreate", _wrap_OTFDescCreate, METH_VARARGS },
+	 { "OTFArrayGeomIsA", _wrap_OTFArrayGeomIsA, METH_VARARGS },
+	 { "OTFArrayGeomUnref", _wrap_OTFArrayGeomUnref, METH_VARARGS },
+	 { "OTFArrayGeomRef", _wrap_OTFArrayGeomRef, METH_VARARGS },
+	 { "OTFArrayGeomCorrPoint", _wrap_OTFArrayGeomCorrPoint, METH_VARARGS },
+	 { "OTFArrayGeomProj", _wrap_OTFArrayGeomProj, METH_VARARGS },
+	 { "OTFArrayGeomCoord", _wrap_OTFArrayGeomCoord, METH_VARARGS },
+	 { "OTFArrayGeomElev", _wrap_OTFArrayGeomElev, METH_VARARGS },
+	 { "OTFArrayGeomParAng", _wrap_OTFArrayGeomParAng, METH_VARARGS },
+	 { "OTFArrayGeomSetDict", _wrap_OTFArrayGeomSetDict, METH_VARARGS },
+	 { "OTFArrayGeomGetDict", _wrap_OTFArrayGeomGetDict, METH_VARARGS },
+	 { "OTFArrayGeomGetList", _wrap_OTFArrayGeomGetList, METH_VARARGS },
+	 { "OTFArrayGeomCopy", _wrap_OTFArrayGeomCopy, METH_VARARGS },
+	 { "OTFArrayGeomCreate", _wrap_OTFArrayGeomCreate, METH_VARARGS },
 	 { "GBTDCROTFIsA", _wrap_GBTDCROTFIsA, METH_VARARGS },
 	 { "GBTDCROTFUnref", _wrap_GBTDCROTFUnref, METH_VARARGS },
 	 { "GBTDCROTFRef", _wrap_GBTDCROTFRef, METH_VARARGS },

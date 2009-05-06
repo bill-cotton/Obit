@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -102,6 +102,10 @@ gconstpointer ObitFileGetClass (void);
 /** Public:  destroy */
 ObitFile* ObitFileZap (ObitFile *in, ObitErr *err);
 typedef ObitFile* (*ObitFileZapFP) (ObitFile *in, ObitErr *err);
+
+/** Public:  destroy file */
+void ObitFileZapFile (gchar *fileName, ObitErr *err);
+typedef void (*ObitFileZapFileFP) (gchar *fileName, ObitErr *err);
 
 /** Public:  rename */
 void ObitFileRename (gchar *oldName, gchar *newName, ObitErr *err);

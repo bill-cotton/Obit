@@ -39,7 +39,7 @@ Data selection, calibration and editing parameters on List member
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2008
+#  Copyright (C) 2004-2009
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ Data selection, calibration and editing parameters on List member
 # Obit On the Fly (OTF) calibration and Imaging
 import Obit, OErr, Image, ImageDesc, FArray, Table, InfoList, OTFDesc, types
 import CleanOTF, OTFUtil, OTFRec, TableList, string
-import OData
+import OData, OTFArrayGeom
 
 # Python shadow class to ObitOTF class
 # class name in C
@@ -126,6 +126,12 @@ class OTF(OData.OData):
                 raise TypeError,"input MUST be a Python Obit OTF"
             out    = OTFDesc.OTFDesc("None")
             out.me = Obit.OTFGetDesc(self.cast(myClass))
+            return out
+        if name=="ArrayGeom":
+            if not self.OTFIsA():
+                raise TypeError,"input MUST be a Python Obit OTF"
+            out    = OTFArrayGeom.OTFArrayGeom("None")
+            out.me = Obit.OTFGetArrayGeom(self.cast(myClass))
             return out
         if name=="RecBuf":
             if not self.OTFIsA():
@@ -1633,6 +1639,16 @@ def PGetDesc (inOTF):
     ################################################################
     return inOTD.Desc
     # end PGetDesc
+
+def PGetArrayGeom (inOTF):
+    """ Return the member OTFArrayGeom
+
+    returns OTFArrayGeom as a Python Dictionary
+    inOTF   = Python OTF object
+    """
+    ################################################################
+    return inOTD.ArrayGeom
+    # end PGetArrayGeom
 
 def PUpdateDesc (inOTF, err, Desc=None):
     """ Update external representation of descriptor

@@ -1621,6 +1621,8 @@ ObitTableOTFSoln* ObitOTFGetSolnPolyBL (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
  * Either detector offsets, common mode variations or both may be selected to Soln.
  * Calibration parameters are on the inOTF info member.
  * \li "solInt"    OBIT_float (1,1,1) Solution interval in days [def 10 sec].
+ * \li "maxInt"    OBIT_float (1,1,1) max. Interval in days [def 10 min].
+ *                 Scans longer than this will be broken into pieces
  * \li "Tau0"      OBIT_float (?,?,1) Zenith opacity in nepers [def 0].
  *                 Can be passed as either a constant scalar or
  *                 an array of (time, tau0) pairs.
@@ -1647,7 +1649,7 @@ ObitTableOTFSoln* ObitOTFGetSolnMBBase (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
   ObitIOAccess access;
   ofloat *tau0, tMult, airmass;
   ofloat lastScan=-1.0, lastTarget=-1.0, lastTime=-1000.0;
-  ofloat *rec=NULL, solInt, minEl, el, t0, fblank = ObitMagicF();
+  ofloat *rec=NULL, solInt, maxInt, minEl, el, t0, fblank = ObitMagicF();
   ofloat *time=NULL, *data=NULL, *poly=NULL, *tpoly=NULL, *offset=NULL, *wt=NULL, clipsig;
   olong iRow, ver, i, j, k, ibuf, lrec, nsample, npoly, off;
   olong  mpoly, ndetect, plotDetect, incdatawt;
@@ -1691,12 +1693,17 @@ ObitTableOTFSoln* ObitOTFGetSolnMBBase (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
   offset  = g_malloc0(ndetect*sizeof(ofloat));
   nsample = 0;
   t0      = -1.0e20;  lastScan = -1000.0;
+  time[0] = 1.0e20;                     /* No data yet */
   incdatawt = inOTF->myDesc->incdatawt; /* increment in data-wt axis */
 
   /* Get parameters for calibration */
   /* Solution interval default 10 sec */
   solInt = 10.0 / 86400.0;
   ObitInfoListGetTest(inOTF->info, "solInt", &type, dim, (gpointer*)&solInt);
+
+  /* maximum interval default 10 min */
+  maxInt = 10.0 * 60.0 / 86400.0;
+  ObitInfoListGetTest(inOTF->info, "solInt", &type, dim, (gpointer*)&maxInt);
 
   /* minimum allowed elevation for solution */
   minEl = 1.0;
@@ -1706,7 +1713,7 @@ ObitTableOTFSoln* ObitOTFGetSolnMBBase (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
   clipsig = 1.0e20;
   ObitInfoListGetTest(inOTF->info, "clipSig",  &type, dim, (gpointer*)&clipsig);
   if (clipsig<1.0e19) 
-    Obit_log_error(err, OBIT_InfoErr, "%s: Clipping residuals at %f sigma", 
+    Obit_log_error(err, OBIT_InfoErr, "%s: Clipping residuals at %7.2f sigma", 
 		   routine, clipsig);
 
   /* Opacity */
@@ -1744,7 +1751,7 @@ ObitTableOTFSoln* ObitOTFGetSolnMBBase (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
 
   /* Initialize solution row */
   row->dAz = 0.0;  /* no pointing corrections */
-  row->dEl = 0.0; /* no pointing corrections */
+  row->dEl = 0.0;  /* no pointing corrections */
   row->Target = 0;
   for (j=0; j<ndetect; j++) row->mult[j] = 1.0;
   for (j=0; j<ndetect; j++) row->wt[j]   = 1.0;
@@ -1753,7 +1760,7 @@ ObitTableOTFSoln* ObitOTFGetSolnMBBase (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
   flag     = FALSE;
   someOK   = FALSE;
   someData = FALSE;
-
+  
   /* loop over input data */
   retCode = OBIT_IO_OK;
   while (retCode == OBIT_IO_OK) {
@@ -1776,8 +1783,9 @@ ObitTableOTFSoln* ObitOTFGetSolnMBBase (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
     /* Loop over buffer */
     for (ibuf=0; ibuf<inOTF->myDesc->numRecBuff; ibuf++) {
 
-      /* Scan read? If so, compute solution and write. Also if work arrays full */
-      if (( rec[inOTF->myDesc->ilocscan] != lastScan) || /* new scan */
+      /* Scan read? maxInt? If so, compute solution and write. Also if work arrays full */
+      if (( rec[inOTF->myDesc->ilocscan] != lastScan)  || /* new scan */
+	  ((rec[inOTF->myDesc->iloct]-time[0])>maxInt) || /* or maxInt Done */
 	  (nsample>=MAXSAMPSCAN) || done) {   /* or exceed limit on number of samples, or done */
 	
 	/* Any good data to process? */
@@ -3949,7 +3957,7 @@ static void  FitMBBLOut (olong npoly, ofloat *tpoly, ofloat *poly, ofloat *offse
   off = 0;
   for (i=0; i<n; i++) {
     /* Find and evaluate time segment */
-    while ((tpoly[off+1]<x[i]) || (off<(npoly+1))) {off++;}
+    while ((tpoly[off+1]<x[i]) && (off<(npoly+1))) {off++;}
     /*atm = poly[2*off] + poly[2*off+1]*(x[i] - tpoly[off]);*/
     atm = poly[2*off] + poly[2*off+1]*(x[i]);
     for (j=0; j<ndetect; j++) {
@@ -3969,7 +3977,7 @@ static void  FitMBBLOut (olong npoly, ofloat *tpoly, ofloat *poly, ofloat *offse
   off = 0;
   for (i=0; i<n; i++) {
     /* Find and evaluate time segment */
-    while ((tpoly[off+1]<x[i]) || (off<(npoly+1))) {off++;}
+    while ((tpoly[off+1]<x[i]) && (off<(npoly+1))) {off++;}
     /*atm = poly[2*off] + poly[2*off+1]*(x[i] - tpoly[off]);*/
     atm = poly[2*off] + poly[2*off+1]*(x[i]);
     for (j=0; j<ndetect; j++) {
@@ -3996,7 +4004,7 @@ static void  FitMBBLOut (olong npoly, ofloat *tpoly, ofloat *poly, ofloat *offse
   off = 0;
   for (i=0; i<n; i++) {
     /* Find and evaluate time segment */
-    while ((tpoly[off+1]<x[i]) || (off<(npoly+1))) {off++;}
+    while ((tpoly[off+1]<x[i]) && (off<(npoly+1))) {off++;}
     /*atm = poly[2*off] + poly[2*off+1]*(x[i] - tpoly[off]);*/
     atm = poly[2*off] + poly[2*off+1]*(x[i]);
     for (j=0; j<ndetect; j++) {
@@ -4113,7 +4121,7 @@ static void PlotMBBL (olong npoly, ofloat *tpoly, ofloat *poly, ofloat *offset,
   off = 0;
   for (i=0; i<n; i++) {
     /* Find and evaluate time segment */
-    while ((tpoly[off+1]<x[i]) || (off<(npoly+1))) {off++;}
+    while ((tpoly[off+1]<x[i]) && (off<(npoly+1))) {off++;}
     /*atm = poly[2*off] + poly[2*off+1]*(x[i] - tpoly[off]);*/
     atm = poly[2*off] + poly[2*off+1]*(x[i]);
     ptime[nplot] = x[i]+t0;

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -101,7 +101,7 @@ void ObitOTFUtilSubImage(ObitOTF *inOTF, ObitOTF *outOTF, ObitFArray *image,
 {
   ObitFInterpolate *imageInt=NULL;
   ObitIOCode retCode;
-  gboolean doCalSelect, done, same;
+  gboolean doCalSelect, done, same, doScale;
   olong firstRec;
   ObitInfoType type;
   ObitIOAccess access;
@@ -173,8 +173,14 @@ void ObitOTFUtilSubImage(ObitOTF *inOTF, ObitOTF *outOTF, ObitFArray *image,
 
   /* Scaling if needed to convert from image brightness to data 
      square of ratio of beam areas */
-  scale = inOTF->myDesc->beamSize / desc->beamMaj;
-  scale = scale * scale;
+  doScale = TRUE;
+  ObitInfoListGetTest(inOTF->info, "doScale", &type, dim, &doScale);
+  if (doScale) {
+    scale = inOTF->myDesc->beamSize / desc->beamMaj;
+    scale = scale * scale;
+  } else {
+    scale = 1.0;
+  }
   /*fprintf (stderr,"Scaling image to data by %f\n",scale); *//*debug */
 
   /* Setup Threading */
@@ -243,7 +249,7 @@ void ObitOTFUtilModelImage(ObitOTF *inOTF, ObitOTF *outOTF, ObitFArray *image,
 {
   ObitFInterpolate *imageInt=NULL;
   ObitIOCode retCode;
-  gboolean doCalSelect, done, same;
+  gboolean doCalSelect, done, same, doScale;
   olong firstRec;
   ObitInfoType type;
   ObitIOAccess access;
@@ -313,8 +319,12 @@ void ObitOTFUtilModelImage(ObitOTF *inOTF, ObitOTF *outOTF, ObitFArray *image,
 
   /* Scaling if needed to convert from image brightness to data 
      square of ratio of beam areas */
-  scale = inOTF->myDesc->beamSize / desc->beamMaj;
-  scale = scale * scale;
+  doScale = TRUE;
+  ObitInfoListGetTest(inOTF->info, "doScale", &type, dim, &doScale);
+  if (doScale) {
+    scale = inOTF->myDesc->beamSize / desc->beamMaj;
+    scale = scale * scale;
+  }
   /*fprintf (stderr,"Scaling image to data by %f\n",scale); *//*debug */
 
   /* Loop over data */
@@ -1015,6 +1025,7 @@ ObitImage* ObitOTFUtilCreateImage (ObitOTF *inOTF, ObitErr *err)
  * \li "minWt"     OBIT_float (1,1,1) Minimum summed gridding convolution weight 
  *                 as a fraction of the maximum [def 0.01]
  * \li "doScale"   OBIT_bool scalar If true, convolve/scale beam [def TRUE]
+ * \li "doConvBeam"  OBIT_bool scalar If true, convolve beam [def FALSE]
  * \li "doFilter"  OBIT_bool scalar If true, filter out of band noise[def TRUE]
  * \param inOTF    Input OTF data. 
  * \param outImage Image to be written.  Must be previously instantiated.
@@ -1038,7 +1049,8 @@ void ObitOTFUtilMakeImage (ObitOTF *inOTF, ObitImage *outImage, gboolean doBeam,
   ofloat parms[10], xparms[10], mode, radius;
   olong i, nparms, cType, tcType;
   gboolean deBias, replCal, tbool, deMode, doFilter;
-  gchar *parmList[] = {"minWt","Clip","beamNx","beamNy","doScale",NULL};
+  gchar *parmList[] = {"minWt","Clip","beamNx","beamNy","doScale","doConvBeam", 
+		       NULL};
   gchar *routine = "ObitOTFUtilMakeImage";
 
    /* error checks */
@@ -1722,6 +1734,159 @@ ObitFArray* ObitOTFUtilConvBeam (ObitTableCC *CCTab, ObitImage *Beam,
   row        = ObitTableCCRowUnref(row);
   return out;
 } /* end ObitOTFUtilConvBeam */
+
+/**
+ * Determine an OTFSoln residual calibration table
+ * If a model is given, a residual timestream data set is generated
+ * by subtracting the model from the input data to a scratch file.
+ * The scratch file (or input if no model given) is low pass filtered to 
+ * generate the solution table.
+ * Calibration parameters are on the inOTF info member.
+ * \li "calType"   OBIT_string (*,1,1) Calibration type desired
+ *                 "Both" => Detector offsets (per scan/maxInt) and common mode poly
+ *                 "Common" => common mode poly
+ *                 "Offset" Detector offsets 
+ *                 "Gain" => Gain (multiplicative, cal) solution only
+ *                 "Offset" => Offset (additive) solution only
+ *                 "GainOffset" both gain and offset calibration (probably bad idea).
+ *                 "Filter" detector offsets from FFT low pass filter
+ * \li "minResFlx" OBIT_float (1,1,1) Min. model value, [ def -1.0e20]
+ * \li "maxResFlx" OBIT_float (1,1,1) Max. model value [def 1.0e20]
+ * \li "solInt"    OBIT_float (1,1,1) Solution interval in days [def 1 sec].
+ * \li "maxInt"    OBIT_float (1,1,1) max. Interval in days [def 10 min].
+ *                 Scans longer than this will be broken into pieces,
+ *                 for offset determination in calType "Both" only.
+ * \li "minEl"     OBIT_float (1,1,1) Minimum elevation allowed (deg)
+ * \li "Clip"      OBIT_float (1,1,1) data outside of range +/- Clip are replaced by
+ *                 + or - Clip. [Def 1.0e20]
+ * \li "doScale"   OBIT_bool scalar If true, convolve/scale beam [def TRUE]
+ * \param inOTF    Input OTF data. 
+ * \param outOTF   OTF with which the output  OTFSoln is to be associated
+ * \param model    If given the image to use as a model
+ * \param doCC     If true use CC model, else pixels  [def FALSE]
+ * \param PSF      PSF of instrument to use in generating model from CC table
+ * \param err      Error stack, returns if not empty.
+ * \return Pointer to the newly created OTFSoln object which is 
+ * associated with outOTF.
+ */
+ObitTableOTFSoln* ObitOTFUtilResidCal (ObitOTF *inOTF, ObitOTF *outOTF, 
+				       ObitImage *model, gboolean doModel,
+				       ObitImage *PSF, ObitErr *err)
+{
+  ObitTableOTFSoln *outSoln=NULL;
+  ObitOTF          *residOTF=NULL;  
+  ObitTableCC      *CCTab=NULL;
+  ObitFArray *modPix;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  ObitIOAccess access;
+  gboolean doCalSelect;
+  gchar calType[50];
+  olong  i, ver, noParms;
+  ofloat maxResFlx, minResFlx;
+  gchar *SolnParms[] = {  /* Solution parameters */
+    "calType", "solInt", "maxInt", "minEl", "clipSig", "doScale",
+    NULL
+  };
+  gchar *routine = "ObitOTFUtilResidCal";
+ 
+   /* error checks */
+  if (err->error) return outSoln;
+  g_assert (ObitOTFIsA(inOTF));
+
+  /* Calibration wanted? */ 
+  doCalSelect = FALSE;
+  ObitInfoListGetTest(inOTF->info, "doCalSelect", &type, dim, &doCalSelect);
+  if (doCalSelect) access = OBIT_IO_ReadCal;
+  else access = OBIT_IO_ReadWrite;
+
+  /* Control parameters */
+  minResFlx = -1.0e20;
+  ObitInfoListGetTest(inOTF->info, "minResFlx",  &type, dim, &minResFlx);
+  maxResFlx = 1.0e20;
+  ObitInfoListGetTest(inOTF->info, "maxResFlx",  &type, dim, &maxResFlx);
+
+  /* calibration type */
+  for (i=0; i<50; i++) calType[i] = 0;
+  strcpy (calType, "Both");
+  ObitInfoListGetTest(inOTF->info, "calType", &type, dim, calType);
+
+  /* Using model? */
+  if (model) { /* Have model */
+    residOTF = newObitOTFScratch(inOTF, err); /* Scratch file for residual */
+
+    /* Read model Image */
+    ObitImageOpen (model, OBIT_IO_ReadOnly, err);
+    ObitImageRead (model, NULL, err);
+    modPix = model->image;
+    ObitImageClose (model, err);
+    if (err->error) Obit_traceback_val (err, routine, model->name, outSoln);
+
+    /* Replace pixels with CC model? */
+    if (doModel) {
+      /* Get CC table */
+      noParms = 0;
+      ver = 1;
+      CCTab = newObitTableCCValue ("Temp CC", (ObitData*)model,
+				   &ver, OBIT_IO_ReadOnly, noParms, err);
+      if (err->error) Obit_traceback_val (err, routine, model->name, outSoln);
+     
+      modPix = ObitOTFUtilConvBeam (CCTab, PSF, model->image, err);
+      if (err->error) Obit_traceback_val (err, routine, model->name, outSoln);
+      CCTab = ObitTableCCUnref(CCTab); 
+    } else {
+      modPix = ObitFArrayRef(model->image);
+    }
+
+    /* Clip model */
+    if ((minResFlx>-1.0e19) || (minResFlx<1.0e19)) {
+      ObitFArrayClip (modPix, -1.0e20, maxResFlx, maxResFlx);
+      ObitFArrayClip (modPix, minResFlx, 1.0e20, minResFlx);
+      Obit_log_error(err, OBIT_InfoErr, "Clip model to range %12.4g %12.4g", 
+		     minResFlx, maxResFlx);
+    }
+
+
+    /* Subtract to form residuals */
+    ObitOTFUtilSubImage (inOTF, residOTF, modPix, model->myDesc, err);
+    if (err->error) Obit_traceback_val (err, routine, model->name, outSoln);
+
+    /* Copy soln parameters to residOTF */
+    ObitInfoListCopyList (inOTF->info, residOTF->info, SolnParms);
+
+    /* DEBUG write as FITS 
+    ObitImageUtilFArray2FITS(modPix, "ModelImage.fits", 0, model->myDesc, err);*/
+
+    /* Cleanup */
+    modPix       = ObitUnref(modPix); 
+    model->image = ObitUnref(model->image);
+  } else { /* no model */
+    residOTF = ObitOTFRef(inOTF);
+  }
+
+  /* Do solutions */
+  if (!strncmp(calType, "Common",4)) 
+    outSoln = ObitOTFGetSolnMBBase (residOTF, outOTF, err);
+  else if (!strncmp(calType, "Offset",6)) 
+    outSoln = ObitOTFGetSolnMBBase (residOTF, outOTF, err);
+  else if (!strncmp(calType, "Both",10)) 
+    outSoln = ObitOTFGetSolnMBBase (residOTF, outOTF, err);
+  else if (!strncmp(calType, "Gain",10)) 
+    outSoln = ObitOTFGetSolnGain (residOTF, outOTF, err);
+  else if (!strncmp(calType, "Offset",10)) 
+    outSoln = ObitOTFGetSolnGain (residOTF, outOTF, err);
+  else if (!strncmp(calType, "GainOffset",10)) 
+    outSoln = ObitOTFGetSolnGain (residOTF, outOTF, err);
+  else if (!strncmp(calType, "Filter",10)) 
+    outSoln = ObitOTFGetSolnCal (residOTF, outOTF, err);
+  if (err->error) Obit_traceback_val (err, routine, inOTF->name, outSoln);
+
+  /* Cleanup */
+  residOTF = ObitOTFUnref(residOTF);
+  
+  return outSoln;
+
+ } /* end  ObitOTFUtilResidCal */
 
 /*----------------------Private functions---------------------------*/
 

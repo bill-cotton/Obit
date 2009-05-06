@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -37,6 +37,8 @@ ObitFileNameFP ObitFileName;
 ObitFileRenameFP ObitFileRename;
 /** Function pointer to Zap */
 ObitFileZapFP ObitFileZap;
+/** Function pointer to ZapFile */
+ObitFileZapFileFP ObitFileZapFile;
 /** Function pointer to  Open */
 ObitFileOpenFP ObitFileOpen;
 /** Function pointer to  Close */

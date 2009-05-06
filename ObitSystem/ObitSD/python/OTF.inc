@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for OTF type                               */
 /*                                                                    */
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -235,6 +235,10 @@ extern ObitOTF*  OTFRef (ObitOTF* in) {
 
 extern ObitOTFDesc* OTFGetDesc (ObitOTF* in) {
   return ObitOTFDescRef(in->myDesc);
+}
+
+extern ObitOTFArrayGeom* OTFGetArrayGeom (ObitOTF* in) {
+  return ObitOTFArrayGeomRef(in->geom);
 }
 
 extern ObitInfoList* OTFGetList (ObitOTF* in) {

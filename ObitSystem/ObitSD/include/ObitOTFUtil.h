@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -40,6 +40,7 @@
 #include "ObitOTFGrid.h"
 #include "ObitFInterpolate.h"
 #include "ObitTableCC.h"
+#include "ObitTableOTFSoln.h"
 
 /*-------- Obit:  Merx mollis mortibus nuper ------------------*/
 /**
@@ -115,4 +116,8 @@ ObitOTFUtilMakeCube (ObitImageDesc *inDesc, ObitOTFDesc *OTFDesc,
 /** Public:  Utility to convolve CCs with a beam */
 ObitFArray* ObitOTFUtilConvBeam (ObitTableCC *CCTab, ObitImage *Beam, 
 				 ObitFArray *Template, ObitErr *err);
+/** Public:  Residual calibration */
+ObitTableOTFSoln* ObitOTFUtilResidCal (ObitOTF *inOTF, ObitOTF *outOTF, 
+				       ObitImage *model, gboolean doModel,
+				       ObitImage *PSF, ObitErr *err);
 #endif /* OBITOTFUTIL_H */ 

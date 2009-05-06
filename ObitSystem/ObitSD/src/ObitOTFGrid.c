@@ -496,10 +496,12 @@ void ObitOTFGridNorm (ObitOTFGrid *in, ObitFArray *array,  ObitImageDesc *imageD
     BMout = in->fitBeamSize /  (2.355 * fabs (imageDesc->cdelt[imageDesc->jlocr]));
   else /* Use estimates of output size */
     BMout = sqrt (BMnat*BMnat + in->addBM*in->addBM);
-  if (doScale) BMcorr = (BMout*BMout) / (BMnat*BMnat);
+  if (doScale) {
+    BMcorr = (BMout*BMout) / (BMnat*BMnat);
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "Correcting image by %f for new resolution",BMcorr);
+  }
   else  BMcorr = 1.0;
-  Obit_log_error(err, OBIT_InfoErr, 
-		 "Correcting image by %f for new resolution",BMcorr);
 
   /* Loop over grid normalizing to output array */ 
   sumWt = 0.0;
@@ -532,6 +534,8 @@ void ObitOTFGridNorm (ObitOTFGrid *in, ObitFArray *array,  ObitImageDesc *imageD
  * \li "beamNx"   OBIT_int scalar Number of "x" pixels [def 32]
  * \li "beamNy"   OBIT_int scalar Number of "y" pixels [def 32]
  * \li "doScale"  OBIT_bool scalar If true, convolve/scale beam [def TRUE]
+ * \li "doConvBeam"  OBIT_bool scalar If true, convolve beam [def FALSE]
+ *                Note: doScale ORed with doConvBeam
  *
  * \param image   Image to attach beam to,  Also fills in Beam size
  * \param Beam     If non NULL use as instrumental response beam 
@@ -546,7 +550,7 @@ void ObitOTFGridMakeBeam (ObitOTFGrid* in, ObitImage *image,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong naxis[2], center[2], nxCF, nyCF, ix, iy, ia, oa, ioff, ooff;
   olong ablc[2], atrc[2];
-  gboolean odd, doScale;
+  gboolean odd, doScale, doConvBeam;
   olong nx, ny;
   ObitIOSize IOBy;
   olong blc[IM_MAXDIM] = {1,1,1,1,1};
@@ -562,6 +566,8 @@ void ObitOTFGridMakeBeam (ObitOTFGrid* in, ObitImage *image,
   ObitInfoListGetTest(in->info, "beamNy", &type, dim, &ny);
   doScale = TRUE;
   ObitInfoListGetTest(in->info, "doScale", &type, dim, &doScale);
+  doConvBeam = FALSE;
+  ObitInfoListGetTest(in->info, "doConvBeam", &type, dim, &doConvBeam);
   
   /* Make beam at least as big as convolving func */
   nxCF = (in->convfn->naxis[0]-1) / in->convNperCell; 
@@ -631,7 +637,7 @@ void ObitOTFGridMakeBeam (ObitOTFGrid* in, ObitImage *image,
 
 
   /* Convolve if needed */
-  if (doScale) {
+  if (doScale || doConvBeam) {
     beamArray = ObitFArrayUtilConvolve (rawBeam, convFunc, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   } else { /* Keep raw Beam */

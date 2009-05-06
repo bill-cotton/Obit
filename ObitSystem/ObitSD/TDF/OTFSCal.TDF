@@ -1,0 +1,430 @@
+; $Id:  $
+; OTFSCal  
+;---------------------------------------------------------------
+;! Obit Radio Single dish On The Fly imaging software
+;# Task Obit Imaging calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2009
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+OTFSCal    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+OTFSCal :  Obit Radio Single dish On The Fly self cal/imaging 
+**PARAM** str 4   **DEF** FITS
+DataType                            This better be "FITS"
+**PARAM** str 48
+inOTF                               FITS input OTFdata
+**PARAM** int 1
+inDisk                              Input data disk drive #
+**PARAM** str 48
+PSFFile                             FITS PSF (dirty beam) image
+**PARAM** int 1
+PSFDisk                             PSF disk drive #
+**PARAM** str 16 30
+Targets                             List of target names to include
+**PARAM** int 2
+Scans                               Scan range to include, 0=>all
+**PARAM** int 64
+Feeds                               List of detectors, 0=>all
+**PARAM** float 2
+timeRange                           Time range to include
+**PARAM** int 1
+BChan            0.0     8192.0     Low freq. channel 0 for cont.
+**PARAM** int 1
+EChan            0.0     8192.0     Highest freq channel
+**PARAM** int 1
+RChan            0.0     8192.0     Channel to restart CLEAN
+**PARAM** int 1  **DEF** 0
+chInc                               Increment between channels
+**PARAM** int 1  **DEF** 0
+chAvg                               No. ch to average, 0=>all
+**PARAM** int 1
+doCalib          -1         10      Apply calibration table
+**PARAM** boo 1  **DEF** F
+keepCal                             Keep "cal-on" data
+**PARAM** int 1
+gainUse                             Cal/Soln table to apply
+**PARAM** int 1
+flagVer                             Flag table version
+**PARAM** str 4  **DEF** FITS
+
+                                    Imaging
+outDType                            "FITS" or "AIPS" type of output
+**PARAM** str 48
+outOTF                              FITS output/calibrated OTFdata
+**PARAM** int 1
+outOTFdsk                           Output OTF disk number
+**PARAM** str 48
+outFile                             Output FITS image/weight file ending
+**PARAM** str 12
+outName                             Output AIPS image name
+**PARAM** str 6
+outClass                            Output AIPS image class
+**PARAM** str 6
+out2Class                           Output AIPS weight class
+**PARAM** int 1
+outSeq          -1.0     9999.0     Output AIPS image seq. no.
+**PARAM** int 1
+outDisk                             Output image disk drive #
+                                    ===============================
+                                    Imaging parameters
+**PARAM** float 1
+RACenter                            RA (deg) of center of field
+**PARAM** float 1
+DecCenter                           Dec (deg) of center of field
+**PARAM** float 1
+xCells                              Image cell spacing in X in asec.
+**PARAM** float 1
+yCells                              Image cell spacing in Y in asec.
+**PARAM** int 1
+nx                                  Number of "X" (RA) pixels in image 
+**PARAM** int 1
+ny                                  Number of "Y" (Dec) pixels in image. 
+**PARAM** float 1  **DEF** 10000.0
+ClipData                            Flag data outside +/- ClipData
+**PARAM** float 1  **DEF** 0.0001
+minWt            0.0001      10.0   Min. summed convolution weight
+**PARAM** str 4   **DEF** -SIN
+Proj                                Projection string "-SIN", "-ARC", "-TAN"
+**PARAM** int 1  **DEF** 4
+ConvType                            Convolving function type
+                                    0 = pillbox, 3 = Gaussian, 4 = Exp*Sinc, 
+                                    5 = Spherodial wave
+**PARAM** float 10
+ConvParm                            Convolving function parameters
+**PARAM** boo 1   **DEF** T
+deMode                              If true, Subtract mode
+**PARAM** boo 1   **DEF** F
+deBias                              If true, Subtract calibration bias
+**PARAM** boo 1   **DEF** F
+doScale                             If true, Scale flux by beamarea
+**PARAM** boo 1   **DEF** T
+doFilter                            If true, Filter out-of-band noise.
+                                    ===============================
+                                    CLEAN parameters
+**PARAM** int 1
+CCVer                               Output CC table version number
+**PARAM** int 4 50
+CLEANBox        -2.0       8192.    Four coordinates for each box
+**PARAM** boo 1   **DEF** F
+autoWindow                          If true, automatically set windows
+**PARAM** float 1  **DEF** 0.1
+Gain     *         0.0         2.0  CLEAN loop gain
+**PARAM** float 1
+minFlux  *                          Minimum Clean component (Jy)
+**PARAM** int 1  **DEF** 100
+Patch    *        0.0               Min. BEAM half-width.
+**PARAM** int 1
+Niter    *         0.0              Maximum # of I CLEAN comp.
+**PARAM** float 1
+BeamSize *      -999.9              Clean beam 
+**PARAM** int 1  **DEF** 50000
+maxPixel           0.0    500000    Maximum pixels searched
+**PARAM** boo 1   **DEF** F
+noResid                             If true, do not add residuals
+**PARAM** boo 1   **DEF** T
+doRestore                           If true, Restore CLEAN model.
+                                    ===============================
+                                    (Self) calibration parameters
+**PARAM** str 48 **DEF** None
+priorFile                           FITS prior image file
+**PARAM** int 1
+priorDisk                           Prior disk drive #
+**PARAM** boo 1  **DEF** T
+priorMod                            Use CC model?
+**PARAM** float 1
+priorInt                            Solution interval for Prior (s)
+**PARAM** float 1 **DEF** -1.0
+commonInt                           If >0.0, common model filter
+**PARAM** float 1 **DEF** 1.0
+solnInt                             Min solution interval (sec)
+**PARAM** float 10
+solnMult   0.0          1000.0      Multiple of solnInt per cycle
+**PARAM** float 1 **DEF** 0.0
+minResFlx                           Min Selfcal Residual
+**PARAM** float 1 **DEF** 1000.0
+maxResFlx                           Max Selfcal Residual
+**PARAM** boo 1  **DEF** T
+doOffset                            If True fit for detector offsets
+**PARAM** float 1 **DEF** 10.0
+offsetFact                          Timescale factor for offset fit
+                                    in each cycle.
+                                    ===============================
+                                    Auto Editing
+**PARAM** boo 1   **DEF** F
+doEdit                              Want editing?
+**PARAM** int 1 **DEF** 1
+flagver                             Flag table (OTFFlag) version
+**PARAM** float 1 **DEF** 1.0
+flagInt                             Flagging interval (sec)
+**PARAM** float 1 **DEF** 0.2
+maxRMS                              Max. detector  RMS in Jy
+**PARAM** float 1 **DEF** 6.0
+maxRatio                            Max. allowable ratio 
+                                    ===============================
+**PARAM** int 1
+prtLv             0                 Print level
+**PARAM** str 48 **DEF** ObitView
+dispURL                             Display server URL
+**PARAM** int 1 **DEF** 1
+nThreads            0               Number of threads to use
+----------------------------------------------------------------
+OTFSCal  Imaging/selfcal task for radio OTF data
+Type:  Task
+ Use:  Processing of radio single dish imaging data allowing
+       "self-calibration" of atmospheric/instrumental effects
+
+   The following operations are performed:
+1) Selected data are copied to outOTF applying and calibration and 
+   selection.
+2) [optional] common mode calibration wrt a prior model.
+3) [optional] common mode calibration assuming flat (zero) sky
+4) Self calibration cycle:
+   The data is imaged applying the current calibration, 
+   deconvolved and a common mode calibration is made wrt the
+   CLEAN model for time scales longer than the solution 
+   interval for that cycle (solnInt*solnMult[i]).
+   The solution type, determined by doOffset, is either "Common"
+   (common mode only) or "Both" (common mode and detector offsets)
+   Details are given below.
+5) [optional] Data are flagged by comparison with last CLEAN model.
+6) Final imaging using final calibration and any editing.
+
+Adverbs:
+  DataType...Only 'FITS' is supported
+  inOTF .....FITS input OTFdata
+  inDisk.....Input OTF data file disk drive #
+  PSFFile....FITS file containing instrumental PSF
+  PSFDisk....Disk # for PSF file
+
+       Data selection
+  Targets....List of targets (pointings) to be include.
+             blank is all.
+  Scans......Beginning and ending scan numbers to include
+             0 => all
+  Feeds......List of detector numbers to include, 0=> all
+  timeRange..Time range of the data to be included 
+             Start time (days), end time relative to ref. date
+             Use  dhms2day to convert from human readable form
+  BChan......First channel number to image, 0=>1.  Channel numbers are 1
+             relative as defined in the input data file.
+  EChan......Highest channel number to to include in image,
+             0 => max 
+  RChan......Channel number to restart CLEAN
+             0 => BChan
+  chInc......Increment between channels to image in spectral cube.
+  chAvg......Number of channels to average, 0=> all
+  doCalib....If true, apply Cal or Soln table, Cal used if exists
+  keepCal....if True, include "cal-on" data in image
+             For CCB data, use FALSE
+  gainUse....Cal/Soln table version number to apply. 0=> highest.
+  flagVer....FG table to use for editing. 0 => highest.
+
+      Output files
+  outDType..'FITS' or 'AIPS'  type of image output
+             Defaults to 'FITS'.
+  outOTF.....Output OTF data file, any existing file deleted
+  outOTFdsk..Output OTF disk number
+  outFile....Ending of output FITS image file name
+             Dirty image file name will end in "Dirty.fits"
+             Clean image file name will end in "Clean.fits"
+             Image output weight file name will end in "Wt.fits"
+  outName....Ending of output AIPS Image Name, 
+             Name = source_name+Stokes+outName
+  outClass...Output image class.  Default = 'Map'
+  out2Class...Output gridding class.  Default = 'Wt'
+  outSeq.....Output image sequence number.
+  outDisk....The disk drive # of output images.  0 => highest
+             with space (note: map and Beam go on same disk.
+             with space. default  = outDisk
+
+   The following control imaging:
+   This task images selected single dish calibrated data in
+Obit OTF format (FITS only).  The data are convolved onto the 
+specified grid and "CLEANed" using a data-based method.
+A Hogbom CLEAN is performed until the peak abs. residual drops below
+minFlux or the number of iterations reaches Niter.
+
+  RACenter...Center of the field in RA to image (deg)
+             If RACenter and DecCenter are both 0, the position of the
+             first entry in Targets is substituted.
+             Note: the image should be defined with sufficient
+             regions around the edge for the convolution 
+             function.  Pixels with less that minWt convolution
+             weight will be magic value blanked in the output.
+  DecCenter..Center of the field in Dec to image (deg)
+  xCells ....Cell spacing (asec) in RA
+  yCells.....Cell spacing (asec) in Dec 
+             (xCells would be a good idea)
+  nx.........Number of cells in RA
+  ny.........Number of cells in Dec
+  clipData...Data values with abs value greater than clipData are flagged
+             (not included) in the imaging
+  minWt......Minimum sum of convolution weights as a fraction of the 
+             maximum.  This is used to exclude regions at the edge 
+             of the region covered which are poorly sampled.
+  Proj.......Projection string "-SIN", "-ARC", "-TAN", [def "-SIN"]
+  ConvType...Convolving function type: [def 5]
+             0 = pillbox, 2 = Sinc, 3 = Gaussian, 4 = Exp*Sinc, 
+             5 = Spherodial wave
+  ConvParm...Convolving function parameters:
+             Pillbox,: no parameters
+             Sinc, 
+               ConvParm[0] = halfwidth in cells,[def 3.0]
+               ConvParm[1] = Expansion factor [def 1.55]
+             Gaussian,
+               ConvParm[0] = halfwidth in cells,[def 3.0]
+               ConvParm[1] = Gaussian with as fraction or raw beam [def 1.0]
+             Exp*Sinc
+               ConvParm[0] = halfwidth in cells, [def 2.0]
+               ConvParm[1] = 1/sinc factor (cells) [def 1.55]
+               ConvParm[2] = 1/exp factor (cells) [def 2.52]
+               ConvParm[3] = exp power [def 2.0]
+             Spherodial wave
+               ConvParm[0] = halfwidth in cells [def 3.0]
+               ConvParm[1] = Alpha [def 5.0]
+               ConvParm[2] = Expansion factor [not used]
+  deMode.....If True, then subtract the mode of the pixel distribution
+             when forming the dirty image. The intent is to remove 
+             any residual image wide calibration biases.
+  deBias.....If True, subtract calibration bias from image when forming 
+             the dirty image.
+             This consists of imaging the calibration correctsions with a 
+             much wider gridding function and then subtracting the image.
+             The intent is that it corrects for spatially variant 
+             calibration biases.
+             NB: this doesn't have quite the intended effect
+  doScale....If True, then scale image by ratio of beam areas determined 
+             from convolving the Gridding function with the assumed
+             telescope psf.
+  doFilter...If True, filter out of band noise, i.e. spatial frequencies that
+             correspond to power outsize the physical aperture of the
+             instrument.  This should generally be left on.
+
+     The following control CLEANing:
+  CLEAN boxes can be specified by either CLEANbox, autoWindow
+  or interactively using dispURL.
+
+  CCVer......Output CC table version number, 0=> add new
+  CLEANBox...A 4x50 array with the specification of a search
+             area.
+             BOX(1,i)=-1 indicates a circle of radius BOX(2,i)
+             pixels centered on (BOX(3,i), BOX(4,i))
+             BOX(1,i) >= 0 indicates a rectangular box.
+             0 => full and inner fields.
+             Note: the default box is the entire image
+  autoWindow.If true, automatically set boxes around significant 
+             emission.
+  Gain.......The CLEAN loop gain.  0 => 0.10.
+  minFlux....Stop Clean when abs(resid. image max) < Flux (Jy) 
+  Patch......Minimum half width of the portion of the beam
+             which is used in the minor CLEAN. Default all
+  Niter... ..CLEAN iteration limit. If 0, the dirty image is produced.
+  BeamSize...CLEAN restoring beam size in asec.  If zero,
+             Use estimated instrumental resolution
+  maxPixel...The maximum number of pixels that are searched for
+             components in each major cycle.  < 3000
+             => 20050.  This number affects the cpu usage significantly.
+             Too many causes the task to search over many points it will
+             never use.  Too few causes the task to do many more small
+             major cycles, also at great expense.  Use this with great
+             caution, but big wins are possible using larger sizes on
+             very large Cleans.
+  noResid....If True, do not include residuals in resultant images.
+  doRestore..Restore CCs to images?
+
+   The following control the initial and self-calibration.  An initial
+common model calibration using either a flat (zero) or given prior can 
+be done followed by an iterative imaging/deconvolution/recalibration scheme.
+In each cycle, the previous best estimate of the sky model (CLEAN model)
+is used as the prior which is used to generate a model timestream for each
+detector.  The model timestreams are subtracted from the observed 
+timestreams to generate a set of residual timestreams.  These residual 
+timestreams are fitted to derive a new set of estimates of the 
+background signals to be subtracted.  In general, the timescale should be
+reduced in this sequence of iterations.
+   If doOffset=True:
+   In each scan or offsetFact*solution interval, whichever is shorter, 
+the median residual for each detector is taken as its offset and the median 
+of the remaining residuals for all detectors in each integration is fitted 
+with piecewise linear terms of length the solution interval.
+   If doOffset=False:
+   In each scan , the median of the residuals for all detectors in each 
+integration is fitted with piecewise linear terms of length the solution 
+interval.
+
+  priorFile...if not "None" the FITS file name of the image to be
+              used as the prior for the calibration.  This model is used
+              to compute model and residual timestreams and of which the
+              high pass time-filtered median residual ("common mode") 
+              is entered into the calibration tables to be subtracted 
+              from all subsequent processing.
+  priorDisk...Disk number of prior FITS file; 0=cwd
+  priorMod....If True, use the CC table as the prior model, else, the
+              pixels.
+  priorInt....Shortest timescale (sec) to pass in the residual filtering
+  commonInt...If > 0.0 then do a common model initial calibration similar
+              to that with the prior model except using a flat, zero sky as 
+              the prior.
+  solnInt.....Minimum timescale for low-pass filtering of residual data.
+  solnMult....For each non zero entry a pass of self calibration is done
+              using a shortest timescale ("solution interval") of residual 
+              filtering of solInt*solnMult[i].  
+              This should probably be a monotonically decreasing series
+              such as [5.0,3.0,2.0,1.0].
+  minResFlx...Pixel values below minResFlx in the model used for each
+              residual calibration are set to this value.
+  maxResFlx...Pixel values above maxResFlx in the model used for each
+              residual calibration are set to this value.
+  doOffset....If True then in each cycle of self-calibration detetor
+              offsets are determined from the median residuals for times
+              offsetFact times longer than the solution interval in addition 
+              to the common mode fitting.
+  offsetFact..Multiplicative factor times current solution interval for the 
+              offset solution timescale.
+              NOTE: This should always be significantly larger than 1.
+
+   The following control automatic editing:
+  doEdit......If True apply automated editing.  In each flagInt, each
+              detector timestream is compared with the model timestream
+              and data with an RMS in excess of max(maxRMS, 
+              maxRatio*model_RMS) is flagged
+  flagver.....flag table on outOTF to use
+  flagInt.....Flagging interval (sec)
+  maxRMS......Maximum allowable detector residual RMS in Jy
+  maxRatio....Max. allowable ratio to equivalent model RMS
+
+  prtLv.......Print level, 0=>none
+                          Interactive display
+  dispURL.....The URL of the display server to use. "None"=>none
+              "ObitView" =  "http://localhost:8765/RPC2" 
+              This will display image being CLEANed and allow
+              interactive editing of the CLEAN window.
+  nThreads....If The Obit libraries are compiled with multiple
+              thread operation enabled, this parameter sets the 
+              number of threads that can be used for parallel 
+              operations. 
+              NB: This only improves performance if there are 
+              multiple processors and/or cores in the host.
+----------------------------------------------------------------
