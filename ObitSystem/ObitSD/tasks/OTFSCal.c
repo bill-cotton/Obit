@@ -1238,7 +1238,7 @@ void InitCal (ObitInfoList* myInput, ObitOTF* OTFData, ObitErr* err)
   gboolean     btemp, doPrior, priorMod=FALSE, doOffset=TRUE;
   gchar        *strTemp, priorFile[256], tstring[100];
   gchar        *calParms[] = {  /* Parameters to calibrate data */
-    "minResFlx", "maxResFlux", "minEl", "Clip", "doScale",
+    "minResFlx", "maxResFlx", "minEl", "Clip", "doScale",
     NULL };
   gchar        *routine = "InitCal";
 
