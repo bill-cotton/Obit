@@ -388,11 +388,15 @@ interval.
               to that with the prior model except using a flat, zero sky as 
               the prior.
   solnInt.....Minimum timescale for low-pass filtering of residual data.
+              This is actually the time increment in the OTFCal table.
+              Actual solution intervals should be no less than this and 
+              twice this value is fairly conservative.
   solnMult....For each non zero entry a pass of self calibration is done
               using a shortest timescale ("solution interval") of residual 
-              filtering of solInt*solnMult[i].  
+              filtering of solInt*solnMult[i]. 
+              A value less than 1.0 terminates the sequence. 
               This should probably be a monotonically decreasing series
-              such as [5.0,3.0,2.0,1.0].
+              such as [5.0,3.0,2.0].
   minResFlx...Pixel values below minResFlx in the model used for each
               residual calibration are set to this value.
   maxResFlx...Pixel values above maxResFlx in the model used for each

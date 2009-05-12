@@ -462,6 +462,8 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
   gint32    dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean  exist;
   gchar     tname[129], *fullname=NULL;
+  gchar     *outParms[] = {  /* Parameters for output data */
+    "Compress", NULL};
   gchar     *routine = "setOutputData";
 
   /* error checks */
@@ -572,6 +574,10 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
     return outUV;
   }
   
+  /* Copy control parameters if this is a new file */
+  if (isNew) ObitInfoListCopyList (myInput, outUV->info, outParms);
+  if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
+
   return outUV;
 } /* end setOutputUV */
 
@@ -1592,7 +1598,7 @@ void UVSimHistory (ObitInfoList* myInput, ObitUV* outData, ObitErr* err)
     "refDate", "timeRange", "delTime", 
     "Source", "RA", "Dec", "minEl",
     "refFreq", "nFreq", "delFreq", "nIF", "delIF",
-    "arrayXYZ", "nAnts", "antXYZ", "Noise",
+    "arrayXYZ", "nAnts", "antXYZ", "Noise", "Compress",
     NULL};
   gchar        *hiEntriesOld[] = {
     "timeRange", "delTime",  "Source", "RA", "Dec", "minEl", "Noise",

@@ -565,7 +565,7 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   olong        i, ii, indx, jndx, count, bPrint, nPrint, doCrt=1, lenLine=0;
   ofloat       u, v, w, cbase, re, im, amp, phas, wt;
   ofloat       maxBL=0.0, maxWt=0.0, minWt=1.0e20, maxAmp=0.0;
-  ofloat       blscale, wtscale, ampscale;
+  ofloat       blscale=1., wtscale=1., ampscale=1.;
   olong        start, ic, ncor, mcor, maxcor, ant1, ant2, souID, SubA, inc=2;
   olong        bif=1, bchan=1, ichan, doCalib, gainUse, flagVer;
   gchar        *prtFile=NULL, timeString[25];
@@ -785,9 +785,9 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
       for (ichan=0; ichan<mcor; ichan++) {  /* Freq loop */
 	for (ic=0; ic<ncor; ic++) {  /* Stokes loop */
 	  /* Visibilities */
-	  re = inData->buffer[jndx+ic*inDesc->incs+inDesc->incf];
-	  im = inData->buffer[jndx+1+ic*inDesc->incs+inDesc->incf];
-	  wt   = wtscale * inData->buffer[jndx+2+ic*inDesc->incs*ichan+inDesc->incf];
+	  re = inData->buffer[jndx  + ic*inDesc->incs + ichan*inDesc->incf];
+	  im = inData->buffer[jndx+1+ ic*inDesc->incs + ichan*inDesc->incf];
+	  wt   = wtscale * inData->buffer[jndx+2+ic*inDesc->incs + ichan*inDesc->incf];
 	  amp  = ampscale*sqrt(re*re + im*im);
 	  phas = RAD2DG * atan2(im, re+1.0e-20);
 	  start = strlen(line);
@@ -1146,7 +1146,7 @@ void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     for (iif=0; iif<FQTable->numIF; iif++) {
       /* Frequency */
       if (inDesc->jlocif>=0) 
-	freq = inDesc->freqIF[iif] + FQRow->freqOff[iif];
+	freq = inDesc->freqIF[iif]; /* + FQRow->freqOff[iif];*/
       else
 	freq = inDesc->freq + FQRow->freqOff[iif];
       /* Format line  */
@@ -1215,8 +1215,8 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   oint         numPol, numIF, numTerm, numPCal, numOrb;
   olong        BIF, i, ia, dt, ipass, npass, ndig, nfit, lenLine, LinesPerPage = 0;
   olong        ver, iRow, maxAnt, nAnt, mAnt, iif, ipol, start, gainVer, doCrt=1;
-  olong        loAnt, hiAnt, nrow, souID, SubA, antNo, freqID, lastSouID, lastSou;
-  ofloat       time, lasttime, value, *valueArr=NULL, fblank = ObitMagicF();
+  olong        loAnt, hiAnt, nrow, souID=0, SubA, antNo=0, freqID, lastSouID, lastSou;
+  ofloat       time=0., lasttime, value=0., *valueArr=NULL, fblank = ObitMagicF();
   ofloat       scale = 1.0;
   gchar        *prtFile=NULL, timeString[25], inTab[24], dispType[10], source[20];
   gchar        *dTypes[] = {"AMP     ","PHASE   ","WT      ","DELAY   ","RATE    "};
@@ -1758,7 +1758,7 @@ ofloat getSNGainScale (ObitUVSel *sel, ObitTableSN *SNTable, ObitTableSNRow *SNR
 		       ObitErr *err)
 {
   ofloat out = 1.0;
-  ofloat value, maxValue, ftest, ratio, fblank = ObitMagicF();
+  ofloat value, maxValue=-1.0e20, ftest, ratio, fblank = ObitMagicF();
   olong nrow, iRow, count=0, antNo, souID, SubA, freqID, ilog;
   gboolean isNeg = FALSE;
   ObitIOCode   iretCode;
@@ -1838,7 +1838,7 @@ ofloat getCLGainScale (ObitUVSel *sel, ObitTableCL *CLTable, ObitTableCLRow *CLR
 		       ObitErr *err)
 {
   ofloat out = 1.0;
-  ofloat value, maxValue, ftest, ratio, fblank = ObitMagicF();
+  ofloat value, maxValue=-1.0e20, ftest, ratio, fblank = ObitMagicF();
   olong nrow, iRow, count=0, antNo, souID, SubA, freqID, ilog;
   gboolean isNeg = FALSE;
   ObitIOCode   iretCode;

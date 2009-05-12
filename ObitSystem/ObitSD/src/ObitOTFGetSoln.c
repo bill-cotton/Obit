@@ -1703,7 +1703,7 @@ ObitTableOTFSoln* ObitOTFGetSolnMBBase (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
 
   /* maximum interval default 10 min */
   maxInt = 10.0 * 60.0 / 86400.0;
-  ObitInfoListGetTest(inOTF->info, "solInt", &type, dim, (gpointer*)&maxInt);
+  ObitInfoListGetTest(inOTF->info, "maxInt", &type, dim, (gpointer*)&maxInt);
 
   /* minimum allowed elevation for solution */
   minEl = 1.0;
@@ -1713,7 +1713,7 @@ ObitTableOTFSoln* ObitOTFGetSolnMBBase (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
   clipsig = 1.0e20;
   ObitInfoListGetTest(inOTF->info, "clipSig",  &type, dim, (gpointer*)&clipsig);
   if (clipsig<1.0e19) 
-    Obit_log_error(err, OBIT_InfoErr, "%s: Clipping residuals at %7.2f sigma", 
+    Obit_log_error(err, OBIT_InfoErr, "%s: Clipping outliers at %7.2f sigma", 
 		   routine, clipsig);
 
   /* Opacity */
@@ -1824,14 +1824,14 @@ ObitTableOTFSoln* ObitOTFGetSolnMBBase (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
 	
 	/* Loop over time segments */
 	off = 0;
-	if (tpoly==NULL) npoly = 1;  /* In case no good data */
+	if (tpoly==NULL) npoly = 0;  /* In case no good data */
 	for (k=0; k<npoly; k++) {
 
 	  /* Set descriptive info on Row */
 	  row->TimeI = solInt;  /* time interval*/
 	  row->Target = (oint)(lastTarget+0.5);
 	  
-	  row->Time  = t0;      /* start time */
+	  row->Time  = tpoly[k] + t0;      /* start time */
 
 	  /* Opacity correction */
 	  el = ObitOTFArrayGeomElev (inOTF->geom, row->Time, 
@@ -1846,7 +1846,6 @@ ObitTableOTFSoln* ObitOTFGetSolnMBBase (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
 	
 	  /* solution (as correction) */
 	  if (someOK && (poly[2*k]!=fblank)) {  /* Some data and fit OK */
-	    row->Time  = tpoly[k] + t0;      /* start time */
 	    /* Find and evaluate time segment */
 	    while ((tpoly[k+1]>time[off]) && (off<nsample)) {off++;}
 	    if (doCommon) row->poly[0] = -(poly[2*k] + poly[2*k+1]*(tpoly[k]));
@@ -1987,17 +1986,16 @@ ObitTableOTFSoln* ObitOTFGetSolnMBBase (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
     
     /* Loop over time segments */
     off = 0;
-    if (tpoly==NULL) npoly = 1;  /* In case no good data */
+    if (tpoly==NULL) npoly = 0;  /* In case no good data */
     for (k=0; k<npoly; k++) {
       
       /* Set descriptive info on Row */
       row->TimeI = 0.5*solInt;     /* time interval*/
       row->Target = (oint)(lastTarget+0.5);
       
-      row->Time  = t0;      /* start time */
+      row->Time  = tpoly[k] + t0;      /* start time */
       /* solution (as correction) */
       if (someOK && (poly[2*k]!=fblank)) {  /* Some data OK */
-	row->Time  = tpoly[k] + t0;      /* start time */
 	/* Find and evaluate time segment */
 	while ((tpoly[k+1]>time[off]) && (off<nsample)) {off++;}
 	if (doCommon) row->poly[0] = -(poly[2*k] + poly[2*k+1]*(tpoly[k]));
@@ -2053,7 +2051,7 @@ ObitTableOTFSoln* ObitOTFGetSolnMBBase (ObitOTF *inOTF, ObitOTF *outOTF, ObitErr
 	Obit_log_error(err, OBIT_Error, "%s ERROR writing OTFSoln Table file", routine);
 	goto cleanup;
       } /* end loop over time segments */
-    }
+    } /* end loop over polynomials */
   } /* end finish up data in arrays */
     
   
@@ -3854,6 +3852,11 @@ static void  FitMBBLPoly (ofloat solint, olong *npoly, ofloat **tpoly, ofloat **
   ofloat *array=NULL, *tarray=NULL, *wwt=NULL;
   ofloat si, tnext, fblank = ObitMagicF();
 
+  /* Init output */
+  *npoly = 0;
+  *poly  = NULL;
+  *tpoly = NULL;
+
   /* Median values for each detector */
   tarray = g_malloc0(n*sizeof(ofloat));
   wwt    = g_malloc0(n*sizeof(ofloat));
@@ -3884,18 +3887,19 @@ static void  FitMBBLPoly (ofloat solint, olong *npoly, ofloat **tpoly, ofloat **
 
   /* Create output arrays */
   np = 5.999 + (x[n-1] - x[0]) / solint;  /* How many segments possible? */
+  np = MAX (np, 6);
   si = (x[n-1] - x[0]) / (np - 5.0);      /* Make intervals equal */
   *tpoly = g_malloc0(np*sizeof(ofloat));
   *poly  = g_malloc0(2*np*sizeof(ofloat));
 
   /* Loop over list */
   off   = 0;
-  tnext = x[0] + si;
+  tnext = x[0] + si; /* end of segment */
   nseg  = 0;
-  while (off<(n-1)) {
+  while ((off<(n-1)) && ((nseg+1)<np)) {
     first = off;
     /* Find end of segment */
-    while ((x[off+1]<tnext) && (off<(n-1))) {off++;}
+    while ((x[off+1]<=tnext) && (off<(n-1))) {off++;}
     /* Fit time seqment */
     FitBLPoly (&(*poly)[2*nseg], 1, &x[first], &tarray[first], &wwt[first], off-first);
     /* DEBUG * No common mode
@@ -3903,6 +3907,8 @@ static void  FitMBBLPoly (ofloat solint, olong *npoly, ofloat **tpoly, ofloat **
     (*tpoly)[nseg] = x[first];
     tnext = x[off+1] + si;  /* end of next segment */
     nseg++;
+    /* Ignore orphans */
+    if (off>(n-2)) break;
     g_assert (nseg<np); /* Trap overflow */
   } /* end loop over list */
 

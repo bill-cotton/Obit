@@ -789,7 +789,7 @@ ObitImage* getPSF (ObitInfoList *myInput, ObitErr *err)
 
 /*----------------------------------------------------------------------- */
 /*  Get output data                                                       */
-/*  Create file anc copy/calibrate selected data from inData              */
+/*  Create file and copy/calibrate selected data from inData              */
 /*   Input:                                                               */
 /*      myInput   Input parameters on InfoList                            */
 /*      inData    input data to copy from                                 */
@@ -846,6 +846,8 @@ ObitOTF* setOutputData (ObitInfoList *myInput, ObitOTF *inData,
   nrec *= nThreads;
   ObitOTFSetFITS (outData, nrec, disk, outFile,  err); 
   if (err->error) Obit_traceback_val (err, routine, "myInput", outData);
+  Obit_log_error(err, OBIT_InfoErr, 
+		 "Making output OTF file %s on disk %d", outFile, disk);
 
    /* Copy from inData */  
   ObitOTFCopy (inData, outData, err);
@@ -940,16 +942,13 @@ ObitImage* setOutputDirty (ObitInfoList *myInput, ObitOTF *outData,
     if (err->error) Obit_traceback_val (err, routine, "myInput", outImage);
     
     /* Tell about it */
-    Obit_log_error(err, OBIT_InfoErr, "Output AIPS image %s %s %d on disk %d cno %d",
+    Obit_log_error(err, OBIT_InfoErr, "Output AIPS dirty image %s %s %d on disk %d cno %d",
 		   Aname, Aclass, Aseq, disk, cno);
 
     /* define object */
     ObitImageSetAIPS (outImage, OBIT_IO_byPlane, disk, cno, AIPSuser, 
 		      blc, trc, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", outImage);
-    Obit_log_error(err, OBIT_InfoErr, 
-		   "Making output AIPS image %s %s %d on disk %d cno %d",
-		   Aname, Aclass, Aseq, disk, cno);
     
   } else if (!strncmp (Type, "FITS", 4)) {  /* FITS output */
 
@@ -971,6 +970,8 @@ ObitImage* setOutputDirty (ObitInfoList *myInput, ObitOTF *outData,
     /* define object */
     ObitImageSetFITS (outImage, OBIT_IO_byPlane, disk, outFile, blc, trc, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", outImage);
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "Making output FITS dirty Image %s on disk %d", outFile, disk);
   } /* End FITS output image */
 
   /* Instantiate */ 
@@ -1056,16 +1057,13 @@ ObitImage* setOutputClean (ObitInfoList *myInput, ObitImage *dirty,
     if (err->error) Obit_traceback_val (err, routine, "myInput", outImage);
     
     /* Tell about it */
-    Obit_log_error(err, OBIT_InfoErr, "Output AIPS image %s %s %d on disk %d cno %d",
+    Obit_log_error(err, OBIT_InfoErr, "Output AIPS CLEAN image %s %s %d on disk %d cno %d",
 		   Aname, Aclass, Aseq, disk, cno);
 
     /* define object */
     ObitImageSetAIPS (outImage, OBIT_IO_byPlane, disk, cno, AIPSuser, 
 		      blc, trc, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", outImage);
-    Obit_log_error(err, OBIT_InfoErr, 
-		   "Making output AIPS image %s %s %d on disk %d cno %d",
-		   Aname, Aclass, Aseq, disk, cno);
     
   } else if (!strncmp (Type, "FITS", 4)) {  /* FITS output */
 
@@ -1087,6 +1085,8 @@ ObitImage* setOutputClean (ObitInfoList *myInput, ObitImage *dirty,
     /* define object */
     ObitImageSetFITS (outImage, OBIT_IO_byPlane, disk, outFile, blc, trc, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", outImage);
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "Making output FITS CLEAN Image %s on disk %d", outFile, disk);
   } /* End FITS output image */
 
   /* Clone from dirty */
@@ -1202,6 +1202,8 @@ ObitImage* setOutputWeight (ObitInfoList *myInput, ObitImage *dirty,
     /* define object */
     ObitImageSetFITS (outImage, OBIT_IO_byPlane, disk, outFile, blc, trc, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", outImage);
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "Making output FITS Weight Image %s on disk %d", outFile, disk);
   } /* End FITS output weight image */
  
   /* Clone from dirty */
@@ -1432,7 +1434,7 @@ gboolean doSelfCal (ObitInfoList* myInput, ObitOTF* outData, ObitImage* dirty,
   n = MIN(100,dim[0]);
   nloop = 0;
   for (i=0; i<n; i++) {
-    if (solnMult[i]<=0.0) break;
+    if (solnMult[i]<1.0) break;
     nloop = i+1;
   }
 

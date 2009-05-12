@@ -3521,6 +3521,56 @@ void ObitImageUtilUVFilter (ObitImage *inImage, ObitImage *outImage, ofloat radi
   if (FFTrev)       ObitFFTUnref(FFTrev);
 } /* end ObitImageUtilUVFilter */
 
+/**
+ * Write the contents of an ObitFArray in a rudimentary FITS image
+ * \param array    Array to write
+ * \param FITSFile Name of FITS file
+ * \param FITSdisk FITS disk number
+ * \param desc     If nonNULL, use to derive the output header
+ * \param err      Error stack, returns if not empty.
+ * \return ObitImage* of output 
+ */
+ObitImage* ObitImageUtilFArray2FITS (ObitFArray *array, 
+				     gchar *FITSFile, olong FITSdisk,
+				     ObitImageDesc *desc, ObitErr *err)
+{
+  ObitImage  *outImage=NULL;
+  olong      blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
+  olong      trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  gchar      *routine = "ObitImageUtilFArray2FITS";
+
+  /* error checks */
+  if (err->error) return outImage;
+  g_assert (ObitFArrayIsA(array));
+  g_assert (FITSFile!=NULL);
+
+  /* Create basic output Image Object */
+  outImage = newObitImage("Output FITS Image");
+  
+  /* define object */
+  ObitImageSetFITS (outImage, OBIT_IO_byPlane, FITSdisk, FITSFile, 
+		    blc, trc, err);
+  if (err->error) Obit_traceback_val (err, routine, FITSFile, outImage);
+
+  /* Copy any descriptive material */
+  if (desc) ObitImageDescCopyDesc (desc, outImage->myDesc, err);
+  if (err->error) Obit_traceback_val (err, routine, FITSFile, outImage);
+
+  /* Set Size */
+  outImage->myDesc->bitpix    = -32;
+  outImage->myDesc->naxis     = 2;
+  outImage->myDesc->inaxes[0] = array->naxis[0];
+  outImage->myDesc->inaxes[1] = array->naxis[1];
+
+  /* Write */
+  Obit_log_error(err, OBIT_InfoErr, "Write FITS image %d/ %s", FITSdisk,FITSFile);
+  ObitImageOpen (outImage, OBIT_IO_WriteOnly, err);
+  ObitImageWrite(outImage, array->array, err);
+  ObitImageClose (outImage, err);
+  if (err->error) Obit_traceback_val (err, routine, FITSFile, outImage);
+  
+  return outImage;
+} /* end ObitImageUtilFArray2FITS */
 /*----------------------Private functions---------------------------*/
 
 /**

@@ -188,4 +188,9 @@ void ObitImageUtilSelCopy (ObitImage *inImage, ObitImage *outImage, ObitErr *err
 /** Public: Filter out of band noise. */
 void ObitImageUtilUVFilter (ObitImage *inImage, ObitImage *outImage, ofloat radius, 
 			    ObitErr *err);
+
+/** Public: Write ObitFArray as a FITS image. */
+ObitImage* ObitImageUtilFArray2FITS (ObitFArray *array, 
+				     gchar *FITSFile, olong FITSdisk,
+				     ObitImageDesc *desc, ObitErr *err);
 #endif /* OBITIMAGEUTIL_H */ 

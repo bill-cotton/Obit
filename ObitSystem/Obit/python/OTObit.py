@@ -266,7 +266,7 @@ Note: these dict are independent of the underlying data structures.
 # Interactive routines to Obit use from ObitTalk
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2005-2008
+#  Copyright (C) 2005-2009
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -1216,6 +1216,8 @@ def tvstat (inImage):
         MaxPos  = pixel of maximum value
         Min     = minimum value
         MinPos  = pixel of minimum value
+        Flux    = Flux density if CLEAN beam given, else -1
+        BeamArea= CLEAN Beam area in pixels
     inImage   = Python Image object, created with getname, getFITS
     """
     ################################################################
@@ -1231,8 +1233,9 @@ def tvstat (inImage):
     trc = [max(l[0][2]+1, l[0][4]+1), max(l[0][3]+1, l[0][5]+1)]
     
     # Read plane
-    p=Image.PReadPlane(inImage,err,blc=blc,trc=trc)
+    p    = Image.PReadPlane(inImage,err,blc=blc,trc=trc)
     ShowErr()
+    head = inImage.Desc.Dict  # Header
 
     # Get statistics
     Mean = p.Mean
@@ -1246,9 +1249,16 @@ def tvstat (inImage):
     Min = FArray.PMin(p, MinPos)
     MinPos[0] = MinPos[0]+blc[0]
     MinPos[1] = MinPos[1]+blc[1]
+    # Integrated flux density
+    Flux = -1.0
+    if (head["beamMaj"]>0.0) :
+        beamarea = 1.1331*(head["beamMaj"]/abs(head["cdelt"][0])) * \
+                   (head["beamMin"]/abs(head["cdelt"][1]))
+        Flux = p.Sum/beamarea
     print "Region Mean %g, RMSHist %g RMS %g" % (Mean, RMS, RawRMS)
     print "  Max %g @ pixel " % Max, MaxPos
     print "  Min %g @ pixel " % Min, MinPos
+    print "  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea)
     
     # Reset BLC, TRC
     blc = [1,1,1,1,1]
@@ -1258,7 +1268,9 @@ def tvstat (inImage):
     ShowErr()
     
     del w, p, blc, trc
-    return {"Mean":Mean,"RMSHist":RMS,"RMS":RawRMS,"Max":Max,"MaxPos":MaxPos,"Min":Min,"MinPos":MinPos}
+    return {"Mean":Mean,"RMSHist":RMS,"RMS":RawRMS,"Max":Max, \
+            "MaxPos":MaxPos,"Min":Min,"MinPos":MinPos,"Flux":Flux,
+            "BeamArea":beamarea}
     # end tvstat
    
 
@@ -1273,12 +1285,15 @@ def imstat (inImage, blc=[1,1,1,1,1], trc=[0,0,0,0,0]):
         MaxPos  = pixel of maximum value
         Min     = minimum value
         MinPos  = pixel of minimum value
+        Flux    = Flux density if CLEAN beam given, else -1
+        BeamArea= CLEAN Beam area in pixels
     inImage   = Python Image object, created with getname, getFITS
     """
     ################################################################
     # Read plane
-    p=Image.PReadPlane(inImage,err,blc=blc,trc=trc)
+    p    = Image.PReadPlane(inImage,err,blc=blc,trc=trc)
     ShowErr()
+    head = inImage.Desc.Dict  # Header
 
     # Get statistics
     Mean = p.Mean
@@ -1292,10 +1307,17 @@ def imstat (inImage, blc=[1,1,1,1,1], trc=[0,0,0,0,0]):
     Min = FArray.PMin(p, MinPos)
     MinPos[0] = MinPos[0]+blc[0]
     MinPos[1] = MinPos[1]+blc[1]
+    # Integrated flux density
+    Flux = -1.0
+    if (head["beamMaj"]>0.0) :
+        beamarea = 1.1331*(head["beamMaj"]/abs(head["cdelt"][0])) * \
+                   (head["beamMin"]/abs(head["cdelt"][1]))
+        Flux = p.Sum/beamarea
     print "Region Mean %g, RMSHist %g RMS %g" % (Mean, RMS, RawRMS)
     print "  Max %g @ pixel " % Max, MaxPos
     print "  Min %g @ pixel " % Min, MinPos
-    
+    print "  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea)
+   
     # Reset BLC, TRC
     blc = [1,1,1,1,1]
     trc = [0,0,0,0,0]
@@ -1304,7 +1326,9 @@ def imstat (inImage, blc=[1,1,1,1,1], trc=[0,0,0,0,0]):
     ShowErr()
     
     del p, blc, trc
-    return {"Mean":Mean,"RMSHist":RMS,"RMS":RawRMS,"Max":Max,"MaxPos":MaxPos,"Min":Min,"MinPos":MinPos}
+    return {"Mean":Mean,"RMSHist":RMS,"RMS":RawRMS,"Max":Max, \
+            "MaxPos":MaxPos,"Min":Min,"MinPos":MinPos,"Flux":Flux,
+            "BeamArea":beamarea}
     # end imstat
    
 
