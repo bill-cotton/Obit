@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -37,6 +37,45 @@
  * ObitUVEdit module function definitions.
  * Routines for automatically editing data.
  */
+
+/*----------------- Macroes ---------------------------*/
+/*---------------Private structures----------------*/
+/* Median editing threaded function argument */
+typedef struct {
+  /* ObitThread with restart queue */
+  ObitThread *thread;
+  /* thread number, <0 -> no threading   */
+  olong        ithread;
+  /* First (1-rel) baseline to process this thread */
+  olong        first;
+  /* Highest (1-rel) baseline to process this thread  */
+  olong        last;
+  /* Circular amplitude storage (baseline,correlator,time) */
+  ofloat *amps;
+  /*  time slice of interest */
+  olong itime;  
+  /* times of data samples, <-1000 => ignore */
+  ofloat* times;   
+  /*  Number of baselines */
+  olong numBL;
+  /* Number of correlations */
+  olong numCorr; 
+  /* Number of allocated time slices in amps */
+  olong numTime; 
+  /*  Number of actual time slices */
+  olong ntime;  
+  /* Controls averaging 
+     0 -> 1 = pure boxcar -> pure MWF (alpha of the 
+     center data samples are ignored and the rest averaged).
+  */
+  ofloat alpha;   
+  /* [out] Deviations in sigma per baseline/correlator, fblank => not determined */
+  ofloat* devs;   
+  /* Work array at least the size of ntime */
+  ofloat* work;
+  /* [out] number of baselines/correlations with valid data */
+  olong number; 
+} UVMednEditFuncArg;
 
 /*---------------Private function prototypes----------------*/
 /** 
@@ -92,10 +131,14 @@ static void EditFDBLFit (ofloat* x, ofloat* y, gboolean *m, olong ndata,
 
 /** Private: Determine deviations from Median */
 static olong MedianDev (ofloat *amps, olong itime, ofloat *times,
-		       olong numBL, olong ncorr, olong numTime, olong ntime,
-		       ofloat alpha, ofloat *devs, 
-		       ofloat *work);
+			olong numBL, olong ncorr, olong numTime, olong ntime,
+			ofloat alpha, ofloat *devs, 
+			ofloat *work, olong nThread, UVMednEditFuncArg** args,
+			ObitErr *err);
 
+/** Private: Return single uv vis with buffered read */
+static ObitIOCode ReadOne (ObitUV *inUV, gboolean doCalSelect, ofloat** Buffer, 
+			   olong *visNo, ObitErr *err);
 /** Private: Determine data integration */
 static ofloat MedianUVInt (ObitUV *inUV, ObitErr *err);
 
@@ -115,16 +158,18 @@ static olong MedianFlag (ofloat *devs, ofloat flagSig,
 			ObitErr *err);
 
 /** Private: Get array of channel ranges for median flagging */
-static olong* medianChan (ObitUVDesc *inDesc, ObitUVDesc *outDesc);
+static olong* medianChan (ObitUVDesc *inDesc, ObitUVDesc *outDesc, olong begChan);
 
 /** Private: Get array of IF ranges for median flagging */
-static olong* medianIFs (ObitUVDesc *inDesc, ObitUVDesc *outDesc);
+static olong* medianIFs (ObitUVDesc *inDesc, ObitUVDesc *outDesc, olong begIF);
 
 /** Private: Get array of Poln flags for median flagging */
 static olong* medianPoln (ObitUVDesc *inDesc, ObitUVDesc *outDesc);
 /** Private: Time to String */
 static void T2String (ofloat time, gchar *msgBuf);
-/*----------------- Macroes ---------------------------*/
+/** Private: Threaded MedianDev */
+static gpointer ThreadMedianDev (gpointer arg);
+
 
 /*----------------------Public functions---------------------------*/
 /**
@@ -2770,6 +2815,9 @@ ObitUV* ObitUVEditClipStokes (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
  *                medians, RMSes [1 min]
  * \li "timeAvg"  OBIT_float (1,1,1) Previous averaging time in min
  *                if defaulted, determined from data.
+ * \li "begIF"    OBIT_int    (1,1,1) First IF in data [ def. 1]
+ *                This takes into account any previous selection
+ * \li "begChan"  OBIT_int    (1,1,1) First channel in data [ def. 1]
  *
  * \param inUV    Input uv data to edit. Any prior selection/calibration applied.
  * \param outUV   UV data onto which the FG table is to be attached.
@@ -2782,11 +2830,13 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitIOCode iretCode, oretCode;
   ObitTableFG *outFlag=NULL;
   ObitTableFGRow *row=NULL;
+  UVMednEditFuncArg** args=NULL;
+  ObitThread *myThread=NULL;
   ofloat  flagSig, alpha, timeWind, timeAvg;
-  olong flagTab; 
+  olong flagTab, begIF, begChan; 
   gboolean doCalSelect;
   olong i, j, k, firstVis, startVis, suba, ver;
-  olong countAll, countBad, checked;
+  olong countAll, countBad, checked, nThread;
   olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
@@ -2795,12 +2845,12 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ofloat lastTime=-1.0, tInt, cbase, tWind=0.0;
   olong *blLookup=NULL;
   olong *BLAnt1=NULL, *BLAnt2=NULL;
-  olong indx, jndx,nVisPIO, itemp;
+  olong indx, jndx;
   olong numCell, ncorr, numAnt, numBL, blindx, ant1, ant2;
   gboolean gotOne, done, scanDone, scanStartDone, newTime, bufferFull, btemp;
   ofloat *times=NULL, *devs=NULL, *amps=NULL, *Buffer, fblank = ObitMagicF();
   ofloat *work=NULL;
-  olong *Chan=NULL, *IFs=NULL, *Stoke=NULL;
+  olong *Chan=NULL, *IFs=NULL, *Stoke=NULL, visNo=-1;
   olong itime=0, ntime, numTime, nextTime, it, itDone, ndata, ndevs;
   ofloat startTime, endTime, curTime=0.0, tTime, scanTime=0.0;
   ofloat sec;
@@ -2824,6 +2874,10 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* Get control parameters */
   flagTab = 1;
   ObitInfoListGetTest(inUV->info, "flagTab", &type, dim, &flagTab);
+  begIF = 1;
+  ObitInfoListGetTest(inUV->info, "begIF", &type, dim, &begIF);
+  begChan = 1;
+  ObitInfoListGetTest(inUV->info, "begChan", &type, dim, &begChan);
   /* Window Time interval */
   timeWind = 1.0;  /* default 1 min */
   ObitInfoListGetTest(inUV->info, "timeWind", &type, dim, &timeWind);
@@ -2835,6 +2889,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* flagging sigma */
   flagSig = 10.0;
   ObitInfoListGetTest(inUV->info, "flagSig", &type, dim,  &flagSig);  
+  flagSig = flagSig*flagSig;  /* to variance */
   /* Previous averaging time */
   timeAvg = 0.0;
   ObitInfoListGetTest(inUV->info, "timeAvg", &type, dim,  &timeAvg);  
@@ -2846,13 +2901,19 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* Not less that prior averaging if given */
   timeAvg = MAX (tInt, timeAvg);
   numTime = 1 + (olong)(0.5+timeWind/tInt);
- 
-  /* Set number of vis per read to 1 */
-  nVisPIO = 1;
-  ObitInfoListGetTest(inUV->info, "nVisPIO", &type, dim, &nVisPIO);
-  itemp = 1;
-  dim[0] = dim[1] = dim[2] = 1;
-  ObitInfoListAlwaysPut(inUV->info, "nVisPIO", OBIT_long, dim, &itemp);
+
+  /* How many Threads? */
+  myThread = newObitThread();
+  nThread = MAX (1, ObitThreadNumProc(myThread));
+
+  /* Create Thread object arrays */
+  args = g_malloc0(nThread*sizeof(UVMednEditFuncArg*));
+  for (i=0; i<nThread; i++) {
+    args[i] = g_malloc0(sizeof(UVMednEditFuncArg));
+    args[i]->thread = myThread;
+    if (nThread>1) args[i]->ithread = i;
+    else           args[i]->ithread = -1;
+  }
 
   /* Look at all data */
   btemp = TRUE;
@@ -2894,7 +2955,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ndevs   = ncorr * numBL;
   devs    = g_malloc0 (ndevs * sizeof(ofloat));
   /* Work array for median filtering */
-  work    = g_malloc0 (numTime * sizeof(ofloat));
+  work    = g_malloc0 (nThread*(numTime+3)*sizeof(ofloat));
 
   /* Baseline tables */
   blLookup = g_malloc0(numAnt*sizeof(olong));
@@ -2910,8 +2971,8 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 
   /* determine channel, IF and Poln ranges for correlations 
    Descriptor on outUV->myIO more accurate */
-  Chan  = medianChan (inUV->myDesc, (ObitUVDesc*)outUV->myIO->myDesc);
-  IFs   = medianIFs  (inUV->myDesc, (ObitUVDesc*)outUV->myIO->myDesc);
+  Chan  = medianChan (inUV->myDesc, (ObitUVDesc*)outUV->myIO->myDesc, begChan);
+  IFs   = medianIFs  (inUV->myDesc, (ObitUVDesc*)outUV->myIO->myDesc, begIF);
   Stoke = medianPoln (inUV->myDesc, (ObitUVDesc*)outUV->myIO->myDesc);
 
   /* Initialize things */
@@ -2990,8 +3051,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
     /* we're in business - loop through data - one vis per read */
     while ((iretCode==OBIT_IO_OK) && (oretCode==OBIT_IO_OK)) {
       if ((!gotOne) || (inUV->myDesc->numVisBuff<=0)) { /* need to read new record? */
-	if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
-	else iretCode = ObitUVRead (inUV, inUV->buffer, err);
+	iretCode = ReadOne (inUV, doCalSelect, &Buffer, &visNo, err);
 	if (err->error) goto cleanup;
 	/*if (iretCode!=OBIT_IO_OK) break;*/
 	firstVis = inDesc->firstVis;
@@ -3057,7 +3117,8 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  itDone = ntime/2;    /* only do first half */
 	  /* Loop over times */
 	  for (it=0; it<=itDone; it++) {
-	    checked  += MedianDev (amps, it, times, numBL, ncorr, numTime, ntime, alpha, devs, work);
+	    checked  += MedianDev (amps, it, times, numBL, ncorr, numTime, ntime, alpha, devs, work,
+				   nThread, args, err);
 	    countBad += MedianFlag (devs, flagSig, numBL, ncorr, times[it], timeAvg, 
 				    BLAnt1, BLAnt2, Chan, IFs, Stoke, outFlag, row, err);
 	    if (err->error) goto cleanup;
@@ -3070,7 +3131,8 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  /* Loop over times doing all later than last one done */
 	  for (it=0; it<ntime; it++) {
 	    if (times[it]>times[itDone]) {
-	      checked  += MedianDev (amps, it, times, numBL, ncorr, numTime, ntime, alpha, devs, work);
+	      checked  += MedianDev (amps, it, times, numBL, ncorr, numTime, ntime, alpha, devs, work,
+				     nThread, args, err);
 	      countBad += MedianFlag (devs, flagSig, numBL, ncorr, times[it], timeAvg, 
 				      BLAnt1, BLAnt2, Chan, IFs, Stoke, outFlag, row, err);
 	      if (err->error) goto cleanup;
@@ -3090,7 +3152,8 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	} else {  /* just do center time (next undone */
 	  itDone++;  /* Highest done in current scan */
 	  if (itDone>=ntime) itDone = 0;
-	  checked  += MedianDev (amps, itDone, times, numBL, ncorr, numTime, ntime, alpha, devs, work);
+	  checked  += MedianDev (amps, itDone, times, numBL, ncorr, numTime, ntime, alpha, devs, work,
+				 nThread, args, err);
 	  countBad += MedianFlag (devs, flagSig, numBL, ncorr, times[itDone], timeAvg, 
 				  BLAnt1, BLAnt2, Chan, IFs, Stoke, outFlag, row, err);
 	  if (err->error) goto cleanup;
@@ -3163,7 +3226,9 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	for (i=0; i<ncorr; i++) { /* loop 120 */
 	  jndx = numTime * (i + blindx*ncorr) + it;
 	  if (Buffer[indx+2] > 0.0) {
-	    amps[jndx] = sqrt (Buffer[indx]*Buffer[indx] + Buffer[indx+1]*Buffer[indx+1]);
+	    /*amps[jndx] = sqrt (Buffer[indx]*Buffer[indx] + Buffer[indx+1]*Buffer[indx+1]);*/
+	    /* Use amp squared */
+	    amps[jndx] = (Buffer[indx]*Buffer[indx] + Buffer[indx+1]*Buffer[indx+1]);
 	    countAll++;
 	  } else {
 	    amps[jndx] = fblank;
@@ -3188,10 +3253,6 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   if ((iretCode > OBIT_IO_EOF) || (oretCode > OBIT_IO_EOF) ||
       (err->error)) goto cleanup;
   
-  /* Reset number of vis per read to original value */
-  dim[0] = dim[1] = dim[2] = 1;
-  ObitInfoListAlwaysPut(inUV->info, "nVisPIO", OBIT_long, dim, &nVisPIO);
-
   /* Reset passAll */
   btemp = FALSE;
   dim[0] = dim[1] = dim[2] = 1;
@@ -3206,8 +3267,8 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   oretCode = ObitTableFGClose (outFlag, err);
   
   /* Deallocate arrays */
-  row     = ObitTableFGRowUnref(row);
-  outFlag = ObitTableFGUnref(outFlag);
+  row      = ObitTableFGRowUnref(row);
+  outFlag  = ObitTableFGUnref(outFlag);
   if (amps)     g_free(amps);
   if (times)    g_free(times);
   if (devs)     g_free(devs);
@@ -3218,6 +3279,13 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   if (Chan)     g_free(Chan);
   if (IFs)      g_free(IFs);
   if (Stoke)    g_free(Stoke);
+  /* Shut down any threading */
+  ObitThreadPoolFree (myThread);
+  if (args) {
+    for (i=0; i<nThread; i++) if (args[i]) g_free(args[i]);
+    g_free(args);
+  }
+  myThread = ObitThreadUnref(myThread);
   if (err->error)  Obit_traceback_msg (err, routine, inUV->name);
 
   /* Give report */
@@ -3928,7 +3996,7 @@ static int compare_ofloat  (const void* arg1,  const void* arg2)
 
   larg1 = *(ofloat*)arg1;
   larg2 = *(ofloat*)arg2;
-  if (larg1<larg2) out = -1;
+  if (larg1<larg2)      out = -1;
   else if (larg1>larg2) out = 1;
   return out;
 } /* end compare_ofloat */
@@ -4057,69 +4125,119 @@ static ofloat MedianUVInt (ObitUV *inUV, ObitErr *err)
  * \param numTime number of allocated time slices in amps
  * \param ntime   number of actual time slices
  * \param alpha   controls averaging
- * \param devs   [out] Deviations in sigma per baseline/correlator
- *               fblank => not determined
  *               0 -> 1 = pure boxcar -> pure MWF (alpha of the 
  *               center data samples are ignored and the rest averaged).
+ * \param devs   [out] Deviations in sigma per baseline/correlator
+ *               fblank => not determined
  * \param work   work array at least the size of ntime
+ * \param nThread Number of threads to use
+ * \param args    Array of thread arguments
+ * \param err     Error stack, returns if  error.
  * \return number of baselines/correlations with valid data
  */
 static olong MedianDev (ofloat *amps, olong itime, ofloat *times,
 			olong numBL, olong numCorr, olong numTime, olong ntime,
 			ofloat alpha, ofloat *devs, 
-			ofloat *work)
+			ofloat *work, olong nThread, UVMednEditFuncArg** args,
+			ObitErr *err)
 {
   olong out = 0;
-  olong  iBL, icorr, it, count, jndx, indx;
-  ofloat delta, sigma, level, fblank = ObitMagicF();
-  /*gchar tString[25];
-    olong i;*/
+  ObitThreadFunc func=(ObitThreadFunc)ThreadMedianDev;
+  olong  i, nBLPerThread, loBL, hiBL;
+  gboolean OK;
+  gchar *routine = "MedianDev";
 
-  /* Loop over baselines */
-  for (iBL=0; iBL<numBL; iBL++) {
-    /* Loop over correlator */
-    for (icorr=0; icorr<numCorr; icorr++) {
+  /* error checks */
+  if (err->error) return out;
 
-      /* Copy valid data to work */
-      count = 0;
-      for (it=0; it<ntime; it++) {
-	if (times[it]<-1000.0) continue; /* ignore blanked times */
-	jndx = numTime * (icorr + iBL*numCorr) + it;
-	if (amps[jndx]!=fblank) work[count++] = amps[jndx];
-      } /* end loop over time */
-
-      indx = icorr + iBL*numCorr;
-      jndx = numTime * (icorr + iBL*numCorr) + itime;
-
-      /* any data? */
-      if ((count<=3) || (amps[jndx]==fblank)) {  /* no */
-	devs[indx] = fblank;
-      } else {         /* yes */
-	level = MedianLevel (count, work, alpha);
-	delta = fabs(amps[jndx] - level);
-	sigma = MedianSigma (count, work, level);
-	/* Don't go overboard - min 0.1% */
-	sigma = MAX (0.001*level, sigma);
-	if (sigma>0.0) {
-	  devs[indx] = delta/sigma;
-	  out++;   /* Count valid data */
-	  /* DEBUG 
-	  if (devs[indx]>10.0) {
-	    fprintf (stdout,"Fooey %d  \n",iBL);
-	    for (i=0; i<ntime; i++) {
-	      if (times[i]>-1000.0) {
-		T2String (times[i], tString);
-		fprintf (stdout,"Time %d %s\n",i,tString);
-	      }
-	    }
-	  } */
-	} else devs[indx] = fblank;
-      }
-    } /* end loop over correlator  */
-  } /* end loop over baseline */
+  /* Divide up work */
+  nBLPerThread = numBL/nThread;
+  loBL = 1;
+  hiBL = nBLPerThread;
+  hiBL = MIN (hiBL, numBL);
+  
+  /* Set up thread arguments */
+  for (i=0; i<nThread; i++) {
+    if (i==(nThread-1)) hiBL = numBL;  /* Make sure do all */
+    args[i]->first  = loBL;
+    args[i]->last   = hiBL;
+    if (nThread>1) args[i]->ithread =  i;
+    else           args[i]->ithread = -1;
+    /* Other stuff */
+    args[i]->amps    = amps;
+    args[i]->itime   = itime;  
+    args[i]->times   = times;   
+    args[i]->numBL   = hiBL-loBL+1;;
+    args[i]->numCorr = numCorr; 
+    args[i]->numTime = numTime; 
+    args[i]->ntime   = ntime;  
+    args[i]->alpha   = alpha;   
+    args[i]->devs    = devs;   
+    args[i]->work    = &work[i*ntime+2];
+    args[i]->number  = 0; 
+    /* Update which BL range */
+    loBL += nBLPerThread;
+    hiBL += nBLPerThread;
+    hiBL = MIN (hiBL, numBL);
+  }
+  
+  /* Do operation on buffer possibly with threads */
+  OK = ObitThreadIterator (args[0]->thread, nThread, func, (gpointer**)args);
+  
+  /* Check for problems */
+  if (!OK) {
+    Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+  }
+  
+  /* Sum counts */
+  for (i=0; i<nThread; i++) out += args[i]->number;
+  
   return out;
 } /* end MedianDev */ 
 
+/**
+ * Return a single visibility from a buffer read
+ * Modified descriptor values  firstVis and numVisBuff.
+ * \param inUV    Input uv data to read. Any prior selection/calibration applied.
+ * \param doCalSelect If TRUE apply calibration/selection
+ * \param Buffer  [out] pointer to start of vis
+ * \param visNo   [in/out] Visibility number (1-rel) in buffer for read
+ *                on input the number of the last read
+ * \param err     Error stack, returns if  error.
+ * \return return code, OBIT_IO_OK => OK
+ */
+static ObitIOCode ReadOne (ObitUV *inUV, gboolean doCalSelect, ofloat** Buffer, 
+			   olong *visNo, ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_OK;
+  gchar *routine = "ReadOne";
+
+  /* error checks */
+  if (err->error) return retCode;
+
+  /* Data still in buffer? */
+  if (((*visNo)>0) && ((*visNo)<=((ObitUVDesc*)inUV->myIO->myDesc)->numVisBuff)) {
+    /* Yes */
+    *Buffer = inUV->buffer + (*visNo)*inUV->myDesc->lrec;
+    inUV->myDesc->firstVis   = ((ObitUVDesc*)inUV->myIO->myDesc)->firstVis + (*visNo);
+    inUV->myDesc->numVisBuff = ((ObitUVDesc*)inUV->myIO->myDesc)->numVisBuff - (*visNo);
+    (*visNo)++;
+    return retCode;
+  }
+  /* Must read */
+  /* Restore state */
+  inUV->myDesc->firstVis   = ((ObitUVDesc*)inUV->myIO->myDesc)->firstVis;
+  inUV->myDesc->numVisBuff = ((ObitUVDesc*)inUV->myIO->myDesc)->numVisBuff;
+  /* Read */
+  if (doCalSelect) retCode = ObitUVReadSelect (inUV, inUV->buffer, err);
+  else retCode = ObitUVRead (inUV, inUV->buffer, err);
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, retCode);
+
+  /* Set output */
+  *Buffer = inUV->buffer;
+  *visNo  = 1;
+  return retCode;
+} /* end ReadOne */
 /**
  * Determine alpha median value of a ofloat array
  * \param n       Number of points
@@ -4289,10 +4407,11 @@ static olong MedianFlag (ofloat *devs, ofloat flagSig,
  * described by outDesc.
  * \param inDesc   Descriptor for data being flagged
  * \param outDesc  Descriptor for data before averaging.
+ * \param begChan  Actual 1st Channel (1-rel) after prior selection
  * \return array of (start,stop) channels for each correlation in inDesc
  *  Should be g_freed when done.
  */
-static olong* medianChan (ObitUVDesc *inDesc, ObitUVDesc *outDesc)
+static olong* medianChan (ObitUVDesc *inDesc, ObitUVDesc *outDesc, olong begChan)
 {
   olong *out=NULL;
   olong i, jincs, jincf, jincif, nif;
@@ -4314,12 +4433,15 @@ static olong* medianChan (ObitUVDesc *inDesc, ObitUVDesc *outDesc)
   /* Number of channels averaged */
   nchAvg = outDesc->inaxes[outDesc->jlocf] /  inDesc->inaxes[inDesc->jlocf];
   nchAvg = MAX (1, nchAvg);  
+  /* If selection - assume no averaging */
+  if (begChan>1) nchAvg = 1;
 
   /* Loop over channels */
   for (ichan=0; ichan<inDesc->inaxes[inDesc->jlocf]; ichan++) {
-    bch = ichan*nchAvg;
-    ech = (ichan+1)*nchAvg;
+    bch = (begChan-1) + ichan*nchAvg;
+    ech = bch + nchAvg;
     if (nchAvg==outDesc->inaxes[outDesc->jlocf]) ech = 0;  /* All? */
+    if (inDesc->inaxes[outDesc->jlocf]==1) ech = bch+1;
     /* Loop over IF */
     for (iif=0; iif<nif; iif++) {
       /* Loop over poln */
@@ -4340,10 +4462,11 @@ static olong* medianChan (ObitUVDesc *inDesc, ObitUVDesc *outDesc)
  * described by outDesc.
  * \param inDesc   Descriptor for data being flagged
  * \param outDesc  Descriptor for data before averaging.
+ * \param begIF    Actual 1st IF (1-rel) after prior selection
  * \return array of (start,stop) IFs for each correlation in inDesc
  *  Should be g_freed when done.
  */
-static olong* medianIFs (ObitUVDesc *inDesc, ObitUVDesc *outDesc)
+static olong* medianIFs (ObitUVDesc *inDesc, ObitUVDesc *outDesc, olong begIF)
 {
   olong *out=NULL;
   olong i, jincs, jincf, jincif, nif;
@@ -4365,12 +4488,15 @@ static olong* medianIFs (ObitUVDesc *inDesc, ObitUVDesc *outDesc)
   /* Number of IFs averaged */
   nifAvg = outDesc->inaxes[outDesc->jlocif] /  inDesc->inaxes[inDesc->jlocif];
   nifAvg = MAX (1, nifAvg);  
+  /* If selection - assume no averaging */
+  if (begIF>1) nifAvg = 1;
  
   /* Loop over IF */
   for (iif=0; iif<nif; iif++) {
-    bif = iif*nifAvg;
-    eif = (iif+1)*nifAvg;
+    bif = (begIF-1) + iif*nifAvg;
+    eif = (begIF-1) + (iif+1)*nifAvg;
     if (nifAvg==outDesc->inaxes[outDesc->jlocif]) eif = 0;  /* All? */
+    if (inDesc->inaxes[outDesc->jlocif]==1) eif = bif+1;
     /* Loop over channels */
     for (ichan=0; ichan<inDesc->inaxes[inDesc->jlocf]; ichan++) {
       /* Loop over poln */
@@ -4450,4 +4576,88 @@ static void T2String (ofloat time, gchar *msgBuf)
   g_snprintf (msgBuf, 30, "%2.2d/%2.2d:%2.2d:%5.2f",
 	      id1, it1, it2, rt1);
 } /* end of routine T2String   */ 
+
+/** 
+ * Determine MedianDev function in a possibly threaded fashion
+ * Arguments are given in the structure passed as arg
+ * \param arg  Pointer to UVMednEditFuncArg argument with elements
+ * \li thread  Thread with restart queue
+ * \li ithread Thread number, >0 -> no threading 
+ * \li first   First (1-rel) baseline to process this thread 
+ * \li last    Highest (1-rel) baseline to process this thread 
+ * \li amps    Circular amplitude storage (baseline,correlator,time)
+ * \li itime   Time slice of interest 
+ * \li times   Times of data samples, <-1000 => ignore
+ * \li numBL   Number of baselines
+ * \li numCorr Number of correlations
+ * \li numTime Number of allocated time slices in amps
+ * \li ntime   Number of actual time slices
+ * \li alpha   Controls averaging
+ *               0 -> 1 = pure boxcar -> pure MWF (alpha of the center data samples 
+ *               are ignored and the rest averaged). 
+ * \li devs    [out] Deviations in sigma per baseline/correlator, fblank => not determined 
+ * \li work    Work array at least the size of ntime
+ * \li number  [out] number of baselines/correlations with valid data 
+ */
+static gpointer ThreadMedianDev (gpointer arg)
+{
+  /* Get arguments from structure */
+  UVMednEditFuncArg *largs = (UVMednEditFuncArg*)arg;
+  olong loBL      = largs->first-1;
+  olong hiBL      = largs->last;
+  ofloat *amps    = largs->amps;
+  olong itime     = largs->itime;  
+  ofloat* times   = largs->times;   
+  olong numCorr   = largs->numCorr; 
+  olong numTime   = largs->numTime; 
+  olong ntime     = largs->ntime;  
+  ofloat alpha    = largs->alpha;   
+  ofloat* devs    = largs->devs;   
+  ofloat* work    = largs->work;
+
+  olong out = 0;
+  olong  iBL, icorr, it, count, jndx, indx;
+  ofloat delta, sigma, level, fblank = ObitMagicF();
+
+  /* Loop over baselines */
+  for (iBL=loBL; iBL<hiBL; iBL++) {
+    /* Loop over correlator */
+    for (icorr=0; icorr<numCorr; icorr++) {
+
+      /* Copy valid data to work */
+      count = 0;
+      for (it=0; it<ntime; it++) {
+	if (times[it]<-1000.0) continue; /* ignore blanked times */
+	jndx = numTime * (icorr + iBL*numCorr) + it;
+	if (amps[jndx]!=fblank) work[count++] = amps[jndx];
+      } /* end loop over time */
+
+      indx = icorr + iBL*numCorr;
+      jndx = numTime * (icorr + iBL*numCorr) + itime;
+
+      /* any data? */
+      if ((count<=3) || (amps[jndx]==fblank)) {  /* no */
+	devs[indx] = fblank;
+      } else {         /* yes */
+	level = MedianLevel (count, work, alpha);
+	delta = fabs(amps[jndx] - level);
+	sigma = MedianSigma (count, work, level);
+	/* Don't go overboard - min 0.1% */
+	sigma = MAX (0.001*level, sigma);
+	if (sigma>0.0) {
+	  devs[indx] = delta/sigma;
+	  out++;   /* Count valid data */
+	} else devs[indx] = fblank;
+      }
+    } /* end loop over correlator  */
+  } /* end loop over baseline */
+
+  largs->number = out;  /* Save number */
+
+  /* Indicate completion */
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (largs->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+} /* end ThreadMedianDev */
 

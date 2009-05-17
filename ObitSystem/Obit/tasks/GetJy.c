@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -952,7 +952,7 @@ void  ReadSN (ObitTableSN* SNTab, ObitUV *inData, olong CalSou,
     for (iif=BIF-1; iif<EIF; iif++) {
       if ((SNrow->Weight1[iif]>0.0) && (SNrow->Real1[iif]!=fblank)) {
 	amp = 1.0 / (SNrow->Real1[iif]*SNrow->Real1[iif] + SNrow->Imag1[iif]*SNrow->Imag1[iif]);
-	if (oldFlux[offset2+iif]>0.0) amp *= oldFlux[offset2+iif];
+	if (oldFlux[offset+iif]>0.0) amp *= oldFlux[offset+iif];
 	offCnt[offset+iif]++;
 	offSum[offset+iif] += amp;
       }

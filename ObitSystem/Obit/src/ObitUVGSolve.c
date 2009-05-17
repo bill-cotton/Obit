@@ -899,7 +899,6 @@ NextAvg (ObitUV* inUV, ofloat interv,
     if (inUV->myDesc->ilocsu>=0) csid  = (olong)visPnt[inUV->myDesc->ilocsu]; /* Source */
     else csid  = 0;
     if (timeCount==0) *sid = csid;  /* Set output source id first vis */
-    else csid = *sid;
     if (inUV->myDesc->ilocfq>=0) cfqid = (olong)visPnt[inUV->myDesc->ilocfq]; /* FQid */
     else cfqid  = 0;
     if (*fqid<0) *fqid = cfqid;  /* Set output fq id first vis */

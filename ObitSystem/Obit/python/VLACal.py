@@ -60,7 +60,8 @@ def VLAClearCal(uv, err, doGain=True, doBP=False, doFlag=False):
 
 def VLAMedianFlag(uv, target, err, \
                   flagTab=1, flagSig=10.0, alpha=0.5, timeWind=2.0,
-                  doCalib=0, gainUse=0, doBand=0, BPVer=0, flagVer=-1):
+                  doCalib=0, gainUse=0, doBand=0, BPVer=0, flagVer=-1,
+                  nThreads=1, noScrat=[]):
     """ Does Median window flagging
 
     Flag data based on deviations from a running median
@@ -77,6 +78,8 @@ def VLAMedianFlag(uv, target, err, \
     doBand   = If >0.5 apply bandpass cal.
     BPVer    = Bandpass table version
     flagVer  = Input Flagging table version
+    nThreads = Number of threads to use
+    noScrat  = list of disks to avoid for scratch files
     """
     ################################################################
     medn=ObitTask.ObitTask("MednFlag")
@@ -94,6 +97,8 @@ def VLAMedianFlag(uv, target, err, \
     medn.doBand   = doBand
     medn.BPVer    = BPVer
     medn.flagVer  = flagVer
+    medn.nThreads = nThreads
+    medn.noScrat  = noScrat
     medn.g
     # end VLAMedianFlag
     
@@ -167,7 +172,8 @@ def VLAAutoFlag(uv, target, err, \
 def VLACal(uv, target, ACal, err, \
            PCal=None, FQid=1, calFlux=None, \
            calModel=None, calDisk=0, \
-           solnVer=1, solInt=10.0, nThreads=1, refAnt=0, ampScalar=False):
+           solnVer=1, solInt=10.0, nThreads=1, refAnt=0, ampScalar=False,
+           noScrat=[]):
     """ Basic Amplitude and phase cal for VLA data
 
     Amplitude calibration can be based either on a point flux
@@ -189,6 +195,7 @@ def VLACal(uv, target, ACal, err, \
     nThreads = Number of threads to use
     refAnt   = Reference antenna
     ampScalar= If true, scalar average data in calibration
+    noScrat  = list of disks to avoid for scratch files
     """
     ################################################################
 
@@ -210,6 +217,7 @@ def VLACal(uv, target, ACal, err, \
         else:
             setjy.Sources=[PCal]
         setjy.OPType="REJY"
+        #setjy.debug = True # DEBUG
         setjy.g
     # Calib on Amp cal
     calib = ObitTask.ObitTask("Calib")
@@ -223,6 +231,7 @@ def VLACal(uv, target, ACal, err, \
     calib.nThreads = nThreads
     calib.solInt   = solInt
     calib.refAnt   = refAnt
+    calib.noScrat  = noScrat
     # Given model?
     if calModel:
         calib.DataType2 = "FITS"
@@ -232,6 +241,8 @@ def VLACal(uv, target, ACal, err, \
         calib.CCVer     = 0
         calib.Cmethod   = "DFT"
         calib.Cmodel    = "COMP"
+    #calib.prtLv = 5  # DEBUG
+    #calib.debug    = True  # DEBUG
     calib.g
 
     # ClCal CL1 + SN1 => Cl2
@@ -261,7 +272,7 @@ def VLACal(uv, target, ACal, err, \
         calib.in2File   = "    "
         calib.nfield    = 0
         calib.flagVer   = 1
-        calib.ampScalar = True
+        calib.ampScalar = ampScalar
         calib.doCalib   = 2
         calib.solMode   = "A&P"
         calib.Cmethod   = "DFT"
@@ -274,6 +285,7 @@ def VLACal(uv, target, ACal, err, \
         getjy.calSour=[ACal]
         getjy.Sources=[PCal]
         getjy.FreqID = FQid
+        #getjy.debug = True # DEBUG
         getjy.g
 
         # Set up for CLCal
@@ -289,7 +301,8 @@ def VLACal(uv, target, ACal, err, \
 
 def VLABPCal(uv, BPCal, err, newBPVer=1,
              doCalib=2, gainUse=0, doBand=0, BPVer=0, flagVer=-1, \
-             solInt=0.0, refAnt=0, ampScalar=False, specIndex=0.0):
+             solInt=0.0, refAnt=0, ampScalar=False, specIndex=0.0,
+             noScrat=[]):
     """ Bandbass calibration
 
     Do bandbass calibration, write BP table
@@ -306,6 +319,7 @@ def VLABPCal(uv, BPCal, err, newBPVer=1,
     refAnt   = Reference antenna
     ampScalar= If true, scalar average data in calibration
     specIndex= spectral index of calibrator (steep=-0.70)
+    noScrat  = list of disks to avoid for scratch files
     """
     ################################################################
     bpass = AIPSTask.AIPSTask("bpass")
@@ -323,6 +337,7 @@ def VLABPCal(uv, BPCal, err, newBPVer=1,
     bpass.solint  = solInt
     bpass.specindx= specIndex
     bpass.refant  = refAnt
+    bpass.baddisk[1:] = noScrat
     if ampScalar:
         bpass.bpassprm[8] = 1.0
     bpass.g
@@ -352,7 +367,7 @@ def VLASplit(uv, target, err, FQid=1, outClass="      "):
     split.g
     # end VLAsplit
 
-def VLASetImager (uv, target, outIclass="", nThreads=1):
+def VLASetImager (uv, target, outIclass="", nThreads=1, noScrat=[]):
     """ Setup to run Imager
 
     return Imager task interface object
@@ -361,6 +376,7 @@ def VLASetImager (uv, target, outIclass="", nThreads=1):
     outIclass= output class
     FQid     = Frequency Id to process
     nThreads = Number of threads to use
+    noScrat  = list of disks to avoid for scratch files
     """
     ################################################################
     img = ObitTask.ObitTask("Imager")
@@ -391,5 +407,6 @@ def VLASetImager (uv, target, outIclass="", nThreads=1):
     img.avgPol=True
     img.avgIF=True
     img.nThreads = nThreads
+    img.noScrat  = noScrat
     return img
 # end VLASetImager

@@ -2729,7 +2729,7 @@ void ObitUVUtilNoise(ObitUV *inUV, ObitUV *outUV, ofloat scale, ofloat sigma,
 
   /* Init random number generator */
 #if HAVE_GSL==1  /* GSL stuff */
-  ran = gsl_rng_alloc(gsl_rng_taus);
+  ran = gsl_rng_alloc(gsl_rng_default);
 #endif /* HAVE_GSL */
   
   /* Loop over data */

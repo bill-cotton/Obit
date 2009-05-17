@@ -33,6 +33,7 @@
 #include "ObitUVSel.h"
 #include "ObitUVUtil.h"
 #include "ObitTable.h"
+#include "ObitTableUtil.h"
 #include "ObitTableCL.h"
 #include "ObitTableSN.h"
 #include "ObitTableSU.h"
@@ -203,8 +204,9 @@ ObitInfoList* ListerIn (int argc, char **argv, ObitErr *err)
   ObitInfoList* list;
   gchar *routine = "ListerIn";
 
-  /* Make default inputs InfoList */
+  /* Make default inputs, outputs InfoList */
   list = defaultInputs(err);
+  myOutput = defaultOutputs(err);
 
   /* command line arguments */
   if (argc<=1) Usage(); /* must have arguments */
@@ -307,7 +309,6 @@ ObitInfoList* ListerIn (int argc, char **argv, ObitErr *err)
   }
 
   /* Initialize output */
-  myOutput = defaultOutputs(err);
   ObitReturnDumpRetCode (-999, outfile, myOutput, err);
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
@@ -320,7 +321,7 @@ void Usage(void)
 /*----------------------------------------------------------------------- */
 {
     fprintf(stderr, "Usage: Lister -input file -output ofile [args]\n");
-    fprintf(stderr, "List UV relzted data in various forms\n");
+    fprintf(stderr, "List UV related data in various forms\n");
     fprintf(stderr, "Arguments:\n");
     fprintf(stderr, "  -input input parameter file, def Lister.in\n");
     fprintf(stderr, "  -output output result file, def Lister.out\n");
@@ -693,7 +694,7 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
     /* On first pass get scaling */
-    if (first) {
+    if (first && (inDesc->numVisBuff>1)) {
       first = FALSE;
       for (i=0; i<inDesc->numVisBuff; i++) { /* loop over visibilities */
 	indx = i*inDesc->lrec;
@@ -728,7 +729,7 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
       if (maxWt<1.0e-3) wtscale = 1.0e4;
       if (maxWt<1.0e-4) wtscale = 1.0e5;
       if (maxWt<1.0e-5) wtscale = 1.0e6;
-      if (maxWt<1.0e-6) wtscale = 1.0e7;
+      if (maxWt<1.0e-6) wtscale = 1.0;
       sprintf( line, "   u,v,w scaled by %8.2g  weights scaled by  %8.2g",
 	       blscale, wtscale);
       ObitPrinterWrite (myPrint, line,   &quit, err);
@@ -1038,7 +1039,7 @@ void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     ObitPosLabelUtilRA2HMS  (SouList->SUlist[i]->RAMean,  inDesc->ctype[inDesc->jlocr], RAString);
     ObitPosLabelUtilDec2DMS (SouList->SUlist[i]->DecMean, inDesc->ctype[inDesc->jlocd], DecString);
     /* Loop over IFs */
-    for (iif=0; iif<numIF; iif++) {
+    for (iif=0; iif<SouList->SUlist[i]->numIF; iif++) {
       /* Format line  */
       if (iif==0) { /* Only 1st IF */
 	sprintf(line,"%4d %16s : %4.4d %4s %13s %13s ",
@@ -1081,7 +1082,7 @@ void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   /* Loop over sources */
   for (i=0; i<SouList->number; i++) {
      /* Loop over IFs */
-    for (iif=0; iif<numIF; iif++) {
+    for (iif=0; iif<SouList->SUlist[i]->numIF; iif++) {
       if (inDesc->jlocif>=0) 
 	freq = inDesc->freqIF[iif] + SouList->SUlist[i]->FreqOff[iif];
       else
@@ -1218,7 +1219,7 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   olong        loAnt, hiAnt, nrow, souID=0, SubA, antNo=0, freqID, lastSouID, lastSou;
   ofloat       time=0., lasttime, value=0., *valueArr=NULL, fblank = ObitMagicF();
   ofloat       scale = 1.0;
-  gchar        *prtFile=NULL, timeString[25], inTab[24], dispType[10], source[20];
+  gchar        *prtFile=NULL, timeString[25], inTab[28], dispType[10], source[20];
   gchar        *dTypes[] = {"AMP     ","PHASE   ","WT      ","DELAY   ","RATE    "};
   gchar        *dLabel[] = {"Amplitude","Phase","Weight/SNR","Delay","Rate"};
   ObitInfoType type;
@@ -1254,6 +1255,8 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ndig = MAX(4, MIN(8, ndig));
   ObitInfoListGet(myInput, "inTab",     &type, dim, inTab, err);
   inTab[dim[0]] = 0;
+  /* Default "AIPS CL" */
+  if (!strncmp (inTab, "    ", 4)) sprintf (inTab, "AIPS CL");
   ObitTrimTrail(inTab);
   ObitInfoListGet(myInput, "dispType",  &type, dim, dispType, err);
   dispType[dim[0]] = 0;
@@ -1323,8 +1326,12 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   if (doSN) {  /* SN table */
     SNTable = newObitTableSNValue (inData->name, (ObitData*)inData, &ver, OBIT_IO_ReadOnly, 
 				   numPol, numIF, err);
+    gainVer = ver;
     /* Should be there */
     Obit_return_if_fail((SNTable!=NULL), err, "SN table %d does not exist", gainVer);
+    /* Sort input SN if needed */
+    ObitTableUtilSort ((ObitTable*)SNTable, "TIME    ", FALSE, err);
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
     /* Open  table  */
     iretCode = ObitTableSNOpen (SNTable, OBIT_IO_ReadOnly, err);
     if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback, return */
@@ -1335,6 +1342,7 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   } else { /* CL table */
     CLTable = newObitTableCLValue (inData->name, (ObitData*)inData, &ver, OBIT_IO_ReadOnly, 
 				   numPol, numIF, numTerm, err);
+    gainVer = ver;
     /* Should be there */
     Obit_return_if_fail((CLTable!=NULL), err, "CL table %d does not exist", gainVer);
     /* Open  table  */
@@ -1572,6 +1580,12 @@ void day2dhms(ofloat time, gchar *timeString)
 {
   olong day, thour, tmin;
   ofloat ttim, ssec;
+
+  /* Trap bad times */
+  if ((time<-100.0) || (time>1000.0)) {
+    sprintf (timeString, "Bad time");
+    return;
+  }
 
   day   = (olong)(time);
   ttim  = 24.0*(time - day);

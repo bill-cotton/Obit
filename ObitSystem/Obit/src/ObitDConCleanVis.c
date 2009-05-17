@@ -539,7 +539,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   else ObitErrClear(err);
 
   /* Make final residuals */
-  if (!bail) MakeAllResiduals (in, err);
+  if ((!bail) && (in->niter>0)) MakeAllResiduals (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
   if (in->prtLv>1) ObitErrLog(err);  /* Progress Report */
   else ObitErrClear(err);

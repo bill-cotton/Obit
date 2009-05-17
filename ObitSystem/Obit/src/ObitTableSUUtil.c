@@ -212,7 +212,7 @@ ObitSourceList* ObitTableSUGetList (ObitTableSU *in, ObitErr *err) {
   ObitSourceList *out=NULL;
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitTableSURow *row;
-  olong maxSUid, sid;
+  olong maxSUid, nsid, sid;
   olong i, irow;
   gchar tempName[101]; /* should always be big enough */
   gchar *routine = "ObitTableSUGetList";
@@ -232,6 +232,7 @@ ObitSourceList* ObitTableSUGetList (ObitTableSU *in, ObitErr *err) {
 
   /* loop over table looking for highest number */
   maxSUid = -1;
+  nsid = 0;
   irow = 0;
   while (retCode==OBIT_IO_OK) {
     irow++;
@@ -241,7 +242,7 @@ ObitSourceList* ObitTableSUGetList (ObitTableSU *in, ObitErr *err) {
       Obit_traceback_val (err, routine, in->name, out);
     
     maxSUid = MAX (maxSUid, row->SourID);
-
+    nsid++;
   } /* end loop over file */
   
   /* check for errors */
@@ -305,8 +306,22 @@ ObitSourceList* ObitTableSUGetList (ObitTableSU *in, ObitErr *err) {
     strncpy (tempName, row->Source, 100);
     tempName[in->myDesc->repeat[in->SourceCol]] = 0; /* Null terminate */
     out->SUlist[sid]->name = g_strdup(tempName);
-
+    
   } /* end second loop over table */
+
+  /* Dummy any missing sources */
+  for (sid=0; sid<maxSUid; sid++) {
+    if (out->SUlist[sid]->numIF<=0) {
+      out->SUlist[sid]->numIF     = 0;
+      out->SUlist[sid]->IFlux     = g_malloc0(sizeof(ofloat));
+      out->SUlist[sid]->QFlux     = g_malloc0(sizeof(ofloat));
+      out->SUlist[sid]->UFlux     = g_malloc0(sizeof(ofloat));
+      out->SUlist[sid]->VFlux     = g_malloc0(sizeof(ofloat));
+      out->SUlist[sid]->FreqOff   = g_malloc0(sizeof(odouble));
+      out->SUlist[sid]->LSRVel    = g_malloc0(sizeof(odouble));
+      out->SUlist[sid]->RestFreq  = g_malloc0(sizeof(odouble));
+    }
+  } /* end dummy missing Sources */
 
  /* Release table row */
   row = ObitTableSURowUnref (row);

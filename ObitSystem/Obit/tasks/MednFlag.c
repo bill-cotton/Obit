@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to automatically edit visibility data                    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007                                               */
+/*;  Copyright (C) 2007,2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -80,7 +80,7 @@ int main ( int argc, char **argv )
   ObitUV       *inData = NULL,*outData = NULL;
   ObitUV       *scrData=NULL, *avgData=NULL;
   ofloat       timeAvg;
-  olong        avgFreq, nchAvg;
+  olong        avgFreq, nchAvg, BChan, BIF;
   gboolean     isScratch, doAvgAll;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -116,10 +116,14 @@ int main ( int argc, char **argv )
   /* Make scratch file, possibly with time and freq averaging */
   avgFreq = 0;
   ObitInfoListGetTest(myInput, "avgFreq",  &type, dim, &avgFreq);
+  BChan = 1;
+  ObitInfoListGetTest(myInput, "BChan",  &type, dim, &BChan);
+  BIF = 1;
+  ObitInfoListGetTest(myInput, "BIF",    &type, dim, &BIF);
   nchAvg = 1;
   ObitInfoListGetTest(myInput, "chAvg",  &type, dim, &nchAvg);
   timeAvg = 0.0;
-  ObitInfoListGetTest(myInput, "timeFlag",  &type, dim, &timeAvg);
+  ObitInfoListGetTest(myInput, "avgTime",  &type, dim, &timeAvg);
 
   /* Average all channels/IFs? */
   doAvgAll = (avgFreq==3);
@@ -171,6 +175,10 @@ int main ( int argc, char **argv )
   /* Then time */
   dim[0] = 1;
   ObitInfoListAlwaysPut (avgData->info, "timeAvg", OBIT_float, dim, &timeAvg);
+  /* What's already been done to it */
+  dim[0] = dim[1] = 1;
+  ObitInfoListAlwaysPut (avgData->info, "begChan", OBIT_long, dim, &BChan);
+  ObitInfoListAlwaysPut (avgData->info, "begIF",   OBIT_long, dim, &BIF);
 
   /* Do editing */
   ObitUVEditMedian (avgData, outData, err);
@@ -220,19 +228,16 @@ ObitInfoList* MednFlagIn (int argc, char **argv, ObitErr *err)
   gchar *routine = "MednFlagIn";
 
   /* error checks */
-  g_assert(ObitErrIsA(err));
   if (err->error) return list;
 
   /* Make default inputs InfoList */
   list = defaultInputs(err);
 
   /* command line arguments */
-  /* fprintf (stderr,"DEBUG arg %d %s\n",argc,argv[0]); DEBUG */
   if (argc<=1) Usage(); /* must have arguments */
   /* parse command line */
   for (ax=1; ax<argc; ax++) {
 
-     /*fprintf (stderr,"DEBUG next arg %s %s\n",argv[ax],argv[ax+1]); DEBUG */
     arg = argv[ax];
     if (strcmp(arg, "-input") == 0){ /* input parameters */
       infile = argv[++ax];
@@ -370,7 +375,7 @@ void Usage(void)
     fprintf(stderr, "MednFlag Obit task to flag by differences with running mean\n");
     fprintf(stderr, "Arguments:\n");
     fprintf(stderr, "  -input input parameter file, def MednFlag.in\n");
-    fprintf(stderr, "  -output uv data onto which to attach FG table, def MednFlag.out\n");
+    fprintf(stderr, "  -output parameter file, def MednFlag.out\n");
     fprintf(stderr, "  -pgmNumber Program (POPS) number, def 1 \n");
     fprintf(stderr, "  -DataType AIPS or FITS type for input image\n");
     fprintf(stderr, "  -AIPSuser User AIPS number, def 2\n");
@@ -432,7 +437,6 @@ ObitInfoList* defaultInputs(ObitErr *err)
   gchar *routine = "defaultInputs";
 
   /* error checks */
-  g_assert(ObitErrIsA(err));
   if (err->error) return out;
 
   /* add parser items */
@@ -494,40 +498,34 @@ ObitInfoList* defaultInputs(ObitErr *err)
   ObitInfoListPut (out, "inDisk", OBIT_oint, dim, &itemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
-  /* output FITS Image file name */
+  /* output FITS  file name */
   strTemp = "MednFlagOut.fits";
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, "outFile", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
-  /* Output AIPS Image file name */
+  /* Output AIPS file name */
   strTemp = "MednFlagOut";
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, "outName", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
-  /* Output AIPS Image file class */
+  /* Output AIPS file class */
   strTemp = "Class ";
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, "outClass", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
-  /* Output AIPS Image sequence */
+  /* Output AIPS sequence */
   dim[0] = 1;dim[1] = 1;
   itemp = 0; 
   ObitInfoListPut (out, "outSeq", OBIT_oint, dim, &itemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
-  /* output AIPS or FITS Image disk number */
+  /* output AIPS or FITS disk number */
   dim[0] = 1;dim[1] = 1;
   itemp = 1; 
   ObitInfoListPut (out, "outDisk", OBIT_oint, dim, &itemp, err);
-  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
-
-  /* output FITS UV file name */
-  strTemp = "        ";
-  dim[0] = strlen (strTemp); dim[1] = 1;
-  ObitInfoListPut (out, "out2File", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* Sources selected, blank = all */
@@ -548,9 +546,9 @@ ObitInfoList* defaultInputs(ObitErr *err)
   ObitInfoListPut (out, "timeRange", OBIT_float, dim, farray, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
-  /*  Apply calibration/selection?, def=False */
+  /*  Apply calibration/selection?, def=True */
   dim[0] = 1; dim[1] = 1;
-  btemp = FALSE;
+  btemp = TRUE;
   ObitInfoListPut (out, "doCalSelect", OBIT_bool, dim, &btemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
@@ -619,7 +617,6 @@ ObitInfoList* defaultOutputs(ObitErr *err)
       gchar *routine = "defaultOutputs";"*/
 
   /* error checks */
-  g_assert(ObitErrIsA(err));
   if (err->error) return out;
 
   /* add parser items - nothing */
@@ -642,7 +639,6 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   gchar *routine = "digestInputs";
 
   /* error checks */
-  g_assert(ObitErrIsA(err));
   if (err->error) return;
   g_assert (ObitInfoListIsA(myInput));
 
@@ -659,6 +655,9 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   dim[0] = dim[1] = 1;
   ObitInfoListAlwaysPut (myInput, "doCalSelect", OBIT_bool, dim, &doCalSelect);
  
+  /* Initialize Threading */
+  ObitThreadInit (myInput);
+
 } /* end digestInputs */
 
 /*----------------------------------------------------------------------- */
@@ -681,12 +680,11 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "BChan", "EChan",   "BIF", "EIF", "subA",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "doPol",
-    "timeFlag",  "avgFreq",  "chAvg", "ChanSel", 
+    "avgTime",  "avgFreq",  "chAvg", "ChanSel", 
     NULL};
   gchar *routine = "getInputData";
 
   /* error checks */
-  g_assert(ObitErrIsA(err));
   if (err->error) return inData;
   g_assert (ObitInfoListIsA(myInput));
 
@@ -787,7 +785,6 @@ ObitUV* setOutputUV (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   gchar     *routine = "setOutputUV";
 
   /* error checks */
-  g_assert(ObitErrIsA(err));
   if (err->error) return outUV;
   g_assert (ObitInfoListIsA(myInput));
   g_assert (ObitUVIsA(inData));
@@ -905,13 +902,12 @@ void MednFlagHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "Sources", "Stokes", "timeRange",  "subA",
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
     "doPol",  
-    "flagTab", "flagSig", "alpha", "timeFlag", "timeWind", 
-    "avgFreq", "chAvg", "ChanSel", 
+    "flagTab", "flagSig", "alpha", "avgTime", "timeWind", 
+    "avgFreq", "chAvg", "ChanSel", "nThreads",
     NULL};
   gchar *routine = "MednFlagHistory";
 
   /* error checks */
-  g_assert(ObitErrIsA(err));
   if (err->error) return;
   g_assert (ObitInfoListIsA(myInput));
   g_assert (ObitUVIsA(inData));

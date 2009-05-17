@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry data editing software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2008
+;;  Copyright (C) 2005-2009
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 ;-----------------------------------------------------------------------
 ;---------------------------------------------------------------
 MednFlag   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-MednFlag:  Obit radio interferometry data editing software
+MednFlag:  Edit UV data by deviations from a running median
 **PARAM** str 4
 DataType                            "FITS" or "AIPS" type of input
 **PARAM** str 48
@@ -89,9 +89,9 @@ flagSig                             Flagging level (sigma)
 **PARAM** float 1 **DEF** 0.5
 alpha                               Smoothing parameter.
 **PARAM** float 1
-timeFlag                            Flagging interval (min)
+timeWind                            Sliding window interval (min)
 **PARAM** float 1
-timeWind                            Averaging window (min)
+avgTime                             preaveraging time (min)
 **PARAM** int 1
 avgFreq          0.0        9.0     Frequency averaging control
                                      1 => avg. freq. in IF
@@ -108,31 +108,40 @@ ChanSel                             Array of channel start, stop,
                                     and increment numbers and IF
                                     number to be used when
                                     averaging in frequency.
+**PARAM** int 1 **DEF** 1
+nThreads            0               Number of threads to use
 **PARAM** int 10
 noScrat                             AIPS disk numbers for which
                                     scratch files are disallowed
 ----------------------------------------------------------------
 MednFlag Automated editing for radio interferometry data
 Type:  Task
- Use:  Batch processing of radio interferometry data
+ Use:  Batch editing of radio interferometry data
 
    This program implements automated editing of radio interferometer 
 data by comparing data, possibly averaged in time and/or frequency, 
 with the average value in a sliding window and flagging data whose
 amplitudes are mode discrepant than a given number of sigma.  
 The averging is a hybrid median window/averaging (see alpha)
-The result of this operation will be a FG (flag) table attached to 
-the "output" data.
+The result of this operation will be a FG (FlaG) table attached to 
+the "output" data.  Each polarization and frequency channel/IF are
+processed independently.
+   This process should help in the removal of interference or similar 
+problems which are impulsive in time, that is, occasionally cause 
+deviations from the typical amplitude on a given baseline/poln/channel
+that are several times the standard deviation (sigma) of the fluctuations 
+due to noise.  Sensitivity to broadband signals may be improved by 
+averaging in frequency.
 
 Adverbs:
   DataType..'FITS' or 'AIPS'  type of input
   inFile.....FITS input uvdata if Type=='FITS'
-  inName.....Input multisource UV data file
+  inName.....Input multisource AIPS UV data file
   inClass....Input UV data file (class).      Standard defaults.
   inSeq......Input UV data file (seq. #).     0 => highest.
   inDisk.....Input UV data file disk drive #. 0 => any.
 
-       Data selection
+       Data selection/calibration
   Sources....List of sources (pointings) to be processed.
              '*' or blank = all; a "-" before a source name
              means all except ANY source named. 
@@ -166,31 +175,31 @@ Adverbs:
                 0 => highest numbered table.
                <0 => no bandpass correction to be applied.
   flagVer....FG table to apply prior to  editing. 0 => highest.
-  doPol......>=1 apply polarization calibration
+  doPol......True -> apply polarization calibration
 
-      Output FG files
+      Output FG files, may be the same at the input
   outFile....Output FITS uvdata for FG table file name
   outName....Output AIPS uvdata for FG table Name, 
-  outClass...Output uvdata class.  Default = 'ICLEAN'
+  outClass...Output uvdata class.
   outSeq.....Output image sequence number.
-  outDisk....The disk drive # of output images.  0 => highest
-             with space (note: map and Beam go on same disk.
+  outDisk....The disk drive # of FG table
   outSeq.....Output sequence number.
 
       Flagging control
   flagTab....Output Flagging table version.  This is the FG table 
-             out outName... to be written.  If the output uvdata
-             is the same as the input, it is a very bad idea for 
-             this to equal flagVer.  Default 1.
+             on outName... to be written. 
   flagSig....Number of sigma from average value in window to flag
   alpha......Controls the averaging process.
-             0 -> 1 = pure boxcar -> pure MWF (alpha of the 
-             center data samples are ignored and the rest 
-             averaged). 
-  timeFlag...Interval (min) over which data is vector preaveraged.
+             The data are first sorted and the most extreme alpha/2
+             values are ignored and the rest averaged.
+             0 -> 1 = pure boxcar -> pure median window filter.
   timeWind...Sliding window width (min) over which each timeFlag
              averaged sample is compared with the window average.
              Must be several times timeAvg.
+
+      Averaging control
+  avgTime....Interval (min) over which data is vector preaveraged
+             prior to looking for outliers.
   avgFreq....If 0 < avgFreq <= 1, then spectral channels in the 
              range from BChan to EChan are averaged in blocks of
              chAvg channels subject to further selection by
@@ -217,6 +226,12 @@ Adverbs:
              If you only wished to use every other channel from the 
              second group then you would set ChanSel = 11, 55, 0, 0, 
              81, 121, 2, 0.
+  nThreads...If The Obit libraries are compiled with multiple
+             thread operation enabled, this parameter sets the 
+             number of threads that can be used for parallel 
+             operations. 
+             NB: This only improves performance if there are 
+             multiple processors and/or cores in the host.
   noScrat....A list of AIPS disk numbers on which you do not 
              wish scratch files
 ----------------------------------------------------------------

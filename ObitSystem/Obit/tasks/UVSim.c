@@ -890,6 +890,12 @@ void GetHeader (ObitUV *outData, ObitInfoList *myInput, ObitErr *err)
   g_assert (ObitUVIsA(outData));
   g_assert(myInput!=NULL);
 
+  /* Get position of this target */
+  ObitInfoListGet(myInput, "RA", &type, dim, &RA, err);
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  ObitInfoListGet(myInput, "Dec", &type, dim, &Dec, err);
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  
   /* Define output descriptor if isNew */
   if (isNew) {
     desc = outData->myDesc;
@@ -1005,8 +1011,6 @@ void GetHeader (ObitUV *outData, ObitInfoList *myInput, ObitErr *err)
     ncol++;
 
     /* RA */
-    ObitInfoListGet(myInput, "RA", &type, dim, &RA, err);
-    if (err->error) Obit_traceback_msg (err, routine, outData->name);
     strncpy (desc->ctype[ncol], "RA      ", UVLEN_KEYWORD);
     desc->inaxes[ncol] = 1;
     desc->cdelt[ncol]  = 1.0;
@@ -1016,8 +1020,6 @@ void GetHeader (ObitUV *outData, ObitInfoList *myInput, ObitErr *err)
     ncol++;
 
     /* Dec */
-    ObitInfoListGet(myInput, "Dec", &type, dim, &Dec, err);
-    if (err->error) Obit_traceback_msg (err, routine, outData->name);
     strncpy (desc->ctype[ncol], "DEC", UVLEN_KEYWORD);
     desc->inaxes[ncol] = 1;
     desc->cdelt[ncol]  = 1.0;
@@ -1067,9 +1069,9 @@ void GetHeader (ObitUV *outData, ObitInfoList *myInput, ObitErr *err)
   return;
 } /* end GetHeader */
 
-void GetData (ObitUV *outData,  ObitInfoList *myInput,   ObitErr *err)
+void GetData (ObitUV *outData, ObitInfoList *myInput, ObitErr *err)
 /*----------------------------------------------------------------------- */
-/*  Read data from myInput, write outData                                 */
+/*  Read description from myInput, write scratch uv data                  */
 /*      outData  Output UV Data object, open on input                     */
 /*      myInput  parser object                                            */
 /*   Output:                                                              */
@@ -1117,6 +1119,10 @@ void GetData (ObitUV *outData,  ObitInfoList *myInput,   ObitErr *err)
     AntList->ANlist[i]->AntXYZ[1] *= refFrequency/VELIGHT;
     AntList->ANlist[i]->AntXYZ[2] *= refFrequency/VELIGHT;
   }
+
+  /* Set position in header */
+  outData->myDesc->crval[outData->myDesc->jlocr] = RA;
+  outData->myDesc->crval[outData->myDesc->jlocd] = Dec;
 
   /* Position in radians */
   RAR      = RA*DG2RAD;

@@ -386,6 +386,7 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
       ObitInfoListAlwaysPut(out->info, parm[i], type, dim, (gpointer*)&listPnt);
     }
     g_free(keyword);
+    i++;
   } /* end loop copying parameters */
 
   /* Copy any InfoList Parameters */
