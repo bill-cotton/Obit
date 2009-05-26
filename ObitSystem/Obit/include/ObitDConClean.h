@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -148,17 +148,20 @@ void ObitDConCleanDefWindow(ObitDConClean *in, ObitErr *err);
 typedef void (*ObitDConCleanDefWindowFP) (ObitDConClean *in, ObitErr *err);
 
 /** Public:  Prepare for minor cycle. */
-void ObitDConCleanPixelStats(ObitDConClean *in, ObitErr *err);
-typedef void (*ObitDConCleanPixelStatsFP) (ObitDConClean *in, ObitErr *err);
+gboolean ObitDConCleanPixelStats(ObitDConClean *in, ObitFArray *pixarray,
+				 ObitErr *err);
+typedef gboolean (*ObitDConCleanPixelStatsFP) (ObitDConClean *in, ObitFArray *pixarray,
+					       ObitErr *err);
 
 /** Public:  Determine image statistics. */
 void ObitDConCleanImageStats(ObitDConClean *in, olong field, ObitErr *err);
 typedef void (*ObitDConCleanImageStatsFP) (ObitDConClean *in, olong field, 
 					   ObitErr *err);
-
+ 
 /** Public:Select components to be subtracted . */
-gboolean ObitDConCleanSelect(ObitDConClean *in, ObitErr *err);
-typedef gboolean (*ObitDConCleanSelectFP) (ObitDConClean *in, ObitErr *err);
+gboolean ObitDConCleanSelect(ObitDConClean *in, ObitFArray *pixarray, ObitErr *err);
+typedef gboolean (*ObitDConCleanSelectFP) (ObitDConClean *in, ObitFArray *pixarray,
+					   ObitErr *err);
 
 /** Public: Subtract components and generate new residual image(s). */
 void ObitDConCleanSub(ObitDConClean *in, ObitErr *err);
@@ -177,9 +180,10 @@ void ObitDConCleanFlatten(ObitDConClean *in, ObitErr *err);
 typedef void (*ObitDConCleanFlattenFP) (ObitDConClean *in, ObitErr *err);
 
 /** Public: Automatically add window. */
-void ObitDConCleanAutoWindow(ObitDConClean *in, olong field, ObitErr *err);
-typedef void (*ObitDConCleanAutoWindowFP) (ObitDConClean *in, olong field, 
-					   ObitErr *err);
+gboolean ObitDConCleanAutoWindow(ObitDConClean *in, olong field, ObitFArray *pixarray,
+				 ObitErr *err);
+typedef gboolean (*ObitDConCleanAutoWindowFP) (ObitDConClean *in, olong field, 
+					       ObitFArray *pixarray, ObitErr *err);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

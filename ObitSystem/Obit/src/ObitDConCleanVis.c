@@ -76,9 +76,16 @@ static void  WhosBest (ObitDConCleanVis *in, olong *best, olong *second);
 /** Private: Set Class function pointers. */
 static void ObitDConCleanVisClassInfoDefFn (gpointer inClass);
 
-/** Private: Set Class function pointers. */
+/** Private: reset sky model. */
 static gboolean ResetSkyModel (ObitDConCleanVis *in, ObitErr *err);
 
+/** Private: Get pixel array for a given field. */
+static ObitFArray* GetFieldPixArray (ObitDConCleanVis *in, olong field, 
+				     ObitErr *err);
+
+/** Private: Low accuracy subtract pixels for a given field. */
+static void SubNewCCs (ObitDConCleanVis *in, olong field, olong newCC, 
+		       ObitFArray *pixarray, ObitErr *err);
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -383,8 +390,9 @@ ObitDConCleanVisCreate2 (gchar* name, ObitUV *uvdata,
 void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
 {
   ObitDConCleanVis *in;
-  gboolean done, fin, quit, doSub, bail;
-  olong jtemp, i, startCC;
+  ObitFArray *pixarray=NULL;
+  gboolean done, fin, quit, doSub, bail, newWin, moreClean;
+  olong jtemp, i, startCC, newCC, count;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   const ObitDConCleanVisClassInfo *inClass;
   const ObitUVImagerClassInfo *imagerClass;
@@ -438,7 +446,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
 
   /* No more fields than in mosaic */
   Obit_return_if_fail ((in->nfield == in->mosaic->numberImages),
-		       err, "%s: CLEAN and mosaic differnet number of fields %d %d",
+		       err, "%s: CLEAN and mosaic different number of fields %d %d",
 		       routine, in->nfield, in->mosaic->numberImages);
 
   /* Copy control info to PixelList */
@@ -507,17 +515,50 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
       if (quit) {done=TRUE; break;}
     }
 
+    /* If using autoWindow, iterate until clean not limited by autoWindow flux */
+    startCC   = in->Pixels->iterField[in->currentField-1];  /* no. at start */
+    moreClean = TRUE;
+    /* Pixel array for field */
+    pixarray  = GetFieldPixArray (in, in->currentField, err);  
+
     /* Get image/beam statistics needed for this cycle */
-    inClass->ObitDConCleanPixelStats((ObitDConClean*)in, err);
+    newWin = inClass->ObitDConCleanPixelStats((ObitDConClean*)in, pixarray, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
+    
+    count = 0;
+    while (moreClean) {
+      /* Check if new box added to window after first pass */
+      if ((count>0) && in->autoWindow) 
+      newWin = inClass->ObitDConCleanAutoWindow ((ObitDConClean*)in, in->currentField, 
+						 pixarray, err);
+      else {
+	newWin = in->autoWindow;  /* pretend on the first pass */
+      }
+      if (err->error) Obit_traceback_msg (err, routine, in->name);
+     
 
-    /* Pick components for this major cycle */
-    startCC = in->Pixels->iterField[in->currentField-1];  /* no. at start */
-    fin = inClass->ObitDConCleanSelect((ObitDConClean*)in, err);
-    if (err->error) Obit_traceback_msg (err, routine, in->name);
+      /* Pick components for this major cycle */
+      newCC = in->Pixels->iterField[in->currentField-1];  /* no. at start */
+      if ((count==0) || newWin) 
+	fin   = inClass->ObitDConCleanSelect((ObitDConClean*)in, pixarray, err);
+      if (err->error) Obit_traceback_msg (err, routine, in->name);
+      
+      if (in->prtLv>1) ObitErrLog(err);  /* Progress Report */
+      else ObitErrClear(err);
 
-    if (in->prtLv>1) ObitErrLog(err);  /* Progress Report */
-    else ObitErrClear(err);
+      /* Did it just  stop because of autoWindow? */
+      moreClean = (in->Pixels->complCode==OBIT_CompReasonAutoWin);
+      /* Done do this forever */
+      if ((count>0) && !newWin) moreClean = FALSE;
+      if (count>10) moreClean = FALSE;
+      if (!moreClean) break;
+
+      /* Subtract these CCs */
+      SubNewCCs(in, in->currentField, newCC+1, pixarray, err);
+      if (err->error) Obit_traceback_msg (err, routine, in->name);
+      count++;
+    }
+    pixarray = ObitFArrayUnref(pixarray);  /* Release working pixel array */
 
     /* Update quality list for new max value on field just CLEANed */
     if (fin) in->maxAbsRes[in->currentField-1] = 0.0;
@@ -1864,4 +1905,128 @@ static gboolean ResetSkyModel(ObitDConCleanVis *in, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, in->name, doSub);
    return doSub;
 } /* end ResetSkyModel */
+
+/**
+ * Get pixel array for a given field
+ * \param in     The Clean object
+ * \param field  Field number (1-rel) in ImageMosaic
+ * \param err    Obit error stack object.
+ * \return true if components in the sky model need to be subtracted
+ */
+static ObitFArray* GetFieldPixArray (ObitDConCleanVis *in, olong field, 
+				     ObitErr *err)
+{
+  ObitFArray *usePixels=NULL;
+  ObitImage *image=NULL;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong  i, blc[IM_MAXDIM], trc[IM_MAXDIM];
+  ObitIOCode retCode;
+  ObitIOSize IOsize = OBIT_IO_byPlane;
+  gchar *routine = "GetFieldPixArray";
+  
+  /* error checks */
+  if (err->error) return usePixels;
+  g_assert (ObitDConCleanIsA(in));
+
+  /* Set output to full image, plane at a time */
+  blc[0] = blc[1] = 1;
+  for (i=0; i<IM_MAXDIM-2; i++) blc[i+2] = in->plane[i];
+  trc[0] = trc[1] = 0;
+  for (i=0; i<IM_MAXDIM-2; i++) trc[i+2] = in->plane[i];
+
+  /* Get image */
+  image = in->mosaic->images[field-1];
+  
+  /* Set input to full image, plane at a time */
+  dim[0] = IM_MAXDIM;
+  ObitInfoListAlwaysPut (image->info, "BLC", OBIT_long, dim, blc); 
+  ObitInfoListAlwaysPut (image->info, "TRC", OBIT_long, dim, trc); 
+  dim[0] = 1;
+  ObitInfoListAlwaysPut (image->info, "IOBy", OBIT_long, dim, &IOsize);
+  
+  retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
+  if (err->error) Obit_traceback_val (err, routine, image->name, usePixels);
+  
+  retCode = ObitImageRead (image, image->image->array, err);
+  if (err->error) Obit_traceback_val (err, routine, image->name, usePixels);
+  
+  retCode = ObitImageClose (image, err);
+  if (err->error) Obit_traceback_val (err, routine, image->name, usePixels);
+
+  /* Make copy */
+  usePixels    = ObitFArrayCopy(image->image, NULL, err);
+  image->image = ObitFArrayUnref(image->image);  /* Free buffer */
+  if (err->error) Obit_traceback_val (err, routine, image->name, usePixels);
+ 
+  return usePixels;
+} /* end GetFieldPixArray */
+
+/**
+ * Low accuracy subtract pixels from image for a given field.
+ * Uses BeamPatch to subtract list of components
+ * \param in       The Clean object
+ * \param field    Field number (1-rel) in ImageMosaic
+ * \param newCC    Start CC for subtraction
+ * \param pixarray pixelarray to subtract from
+ * \param err    Obit error stack object.
+ */
+static void SubNewCCs (ObitDConCleanVis *in, olong field, olong newCC, 
+		       ObitFArray *pixarray, ObitErr *err)
+{
+  olong i, ver, ncc, pos1[2], pos2[2], offset[2], len;
+  ObitTable *tempTable = NULL;
+  ObitTableCC *CCTable = NULL;
+  ObitImageDesc *imDesc;
+  ObitFArray *comps=NULL;
+  ofloat ftemp, parms[20], flux;
+  gchar *tabType = "AIPS CC";
+  gchar *routine = "SubNewCCs";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitDConCleanIsA(in));
+
+  /* Something to do? */
+  ncc     =  in->Pixels->iterField[field-1];
+  if (newCC>=ncc) return;
+
+  /* Get CC table */
+  ver = in->skyModel->CCver[field-1];
+  tempTable = newObitImageTable (in->skyModel->mosaic->images[field-1],OBIT_IO_ReadOnly, 
+				 tabType, &ver, err);
+  if ((tempTable==NULL) || (err->error)) Obit_traceback_msg (err, routine, in->name);
+  CCTable = ObitTableCCConvert(tempTable);
+  tempTable = ObitTableUnref(tempTable);
+
+  /* Get selected CCs after compression */
+  comps   = ObitTableCCUtilMergeSel (CCTable, newCC, ncc, parms, err);
+  CCTable = ObitTableUnref(CCTable);
+  Obit_return_if_fail ((comps!=NULL),
+		       err, "%s: Error merging CLEAN components for field %d",
+		       routine, in->nfield);
+
+  /* Loop over CCs - assumes all points */
+  len       = comps->naxis[0];
+  pos2[0]   = in->BeamPatch->naxis[0]/2; 
+  pos2[1]   = in->BeamPatch->naxis[1]/2;  /* Center of beam patch */
+  offset[0] = pixarray->naxis[0]/2; 
+  offset[1] = pixarray->naxis[1]/2;       /* Center of image */
+  imDesc  = in->mosaic->images[field-1]->myDesc;
+  for (i=0; i<comps->naxis[1]; i++) {
+    /* Get 0-rel pixel numbers */
+    ftemp = comps->array[1+i*len]/imDesc->cdelt[0];
+    if (ftemp>0.0) ftemp += 0.5;
+    else           ftemp -= 0.5;
+    pos1[0] = offset[0] + (olong)(ftemp); 
+    ftemp = comps->array[2+i*len]/imDesc->cdelt[1];
+    if (ftemp>0.0) ftemp += 0.5;
+    else           ftemp -= 0.5;
+    pos1[1] = offset[1] + (olong)(ftemp); 
+    flux = comps->array[i*len];
+    ObitFArrayShiftAdd(pixarray, pos1, in->BeamPatch, pos2, -flux, pixarray);
+  }
+
+  comps = ObitFArrayUnref(comps); /* Cleanup */
+  
+} /* end SubNewCCs */
 

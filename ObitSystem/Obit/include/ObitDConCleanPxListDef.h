@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -89,11 +89,12 @@ olong *pixelY;
 gshort *pixelFld;
 /** pixel flux density */
 ofloat *pixelFlux;
-/** pixelspectral turns */
+/** pixel spectral turns */
 ofloat **pixelSpectra;
 /** Min. fraction of residual peak to CLEAN to */
 ofloat ccfLim;
 /** message level for deconvolution progress messages, 
     0=none, 1=summary, 2=normal, higher numbers for diagnostics */
 olong prtLv;
-
+/** CLEAN conpletion code - why terminated */
+ObitCLEANCompletionReason complCode;

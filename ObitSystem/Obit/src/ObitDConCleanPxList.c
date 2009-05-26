@@ -599,6 +599,8 @@ void ObitDConCleanPxListResize (ObitDConCleanPxList *in, olong maxPixel,
  * \param autoWinFlux min. residual flux allowed for auto Window
  * \param window      Windows object corresponding to Image Mosaic being CLEANED
  *                    Only pixels inside of the CLEAN window are used.
+ * \param BeamPatch   Dirty beam patch to use
+ * \param pixarray    If NonNULL use instead of the flux densities from the image file.
  * \param err Obit error stack object.
  */
 void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in, 
@@ -607,6 +609,7 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
 				ofloat autoWinFlux,
 				ObitDConCleanWindow *window, 
 				ObitFArray *BeamPatch,
+				ObitFArray *pixarray,
 				ObitErr *err)
 {
   ObitIOCode retCode;
@@ -721,6 +724,11 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
       inFArrays[iplane]  = ObitFArrayCreate (NULL, 2, naxis);
       
       retCode = ObitImageRead (image, inFArrays[iplane]->array, err);
+      /* IF pixarray given use it instrad of the flux plane */
+      if (pixarray && (iplane==0)) {
+	inFArrays[iplane]  = ObitFArrayUnref(inFArrays[iplane]);
+	inFArrays[iplane]  = ObitFArrayRef(pixarray);
+      }
       if (err->error) Obit_traceback_msg (err, routine, image->name);
       if (retCode==OBIT_IO_EOF) 
 	Obit_log_error(err, OBIT_InfoWarn,"%s: Spectral plans not read",
@@ -836,11 +844,12 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
   iter = MAX (0, in->currentIter);
 
   /* Setup */
-  lpatch = in->BeamPatch->naxis[0];
-  beamPatch = (lpatch-1)/2;
-  CCmin = 1.0e20;
-  atlim = 0.0;
-  resmax = -1.0e20;
+  lpatch        = in->BeamPatch->naxis[0];
+  beamPatch     = (lpatch-1)/2;
+  CCmin         = 1.0e20;
+  atlim         = 0.0;
+  resmax        = -1.0e20;
+  in->complCode = OBIT_CompReasonUnknown;  /* No reason for completion yet */
 
   /* Tell details */
   if (in->prtLv>1) {
@@ -1016,7 +1025,9 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
     done = done || (iter>=in->niter) || (fabs(xflux)<minFlux);
     if (done) {  /* set completion reason string */
       if (iter>=in->niter)     g_snprintf (reason, 50, "Reached Iter. limit");
+      if (iter>=in->niter)     in->complCode = OBIT_CompReasonNiter; 
       if (fabs(xflux)<minFlux) g_snprintf (reason, 50, "Reached min Clean flux");
+      if (fabs(xflux)<minFlux) in->complCode = OBIT_CompReasonMinFlux;
       break;
     } 
 
@@ -1026,24 +1037,28 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
       Obit_log_error(err, OBIT_InfoWarn,"%s: Clean has begun to diverge, Stopping",
 		     routine);
       g_snprintf (reason, 50, "Solution diverging");
+      in->complCode = OBIT_CompReasonDiverge;
       break;
     }
   
     /* BGC tests to tell if we should quit now */
     if (fabs (xflux) < in->minFluxLoad * (1.0 + atlim)) {
       g_snprintf (reason, 50, "Reached minimum algorithm flux");
+      in->complCode = OBIT_CompReasonBGCLimit;
       break;  /* jump out of CLEAN loop */
     }
    
     /* autoWindow tests to tell if we should quit now */
     if (fabs (xflux) < in->autoWinFlux) {
       g_snprintf (reason, 50, "Reached minimum autoWindow flux");
+      in->complCode = OBIT_CompReasonAutoWin;
       break;  /* jump out of CLEAN loop */
     }
 
     /* Deep enough fraction of peak residual */
     if (fabs(xflux)<ccfLim) {
       g_snprintf (reason, 50, "Reached min fract of peak resid");
+      in->complCode = OBIT_CompReasonMinFract;
       break;
     }
    
@@ -1132,9 +1147,10 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
   ObitFArrayClip (in->BeamPatch, 0.1, 1.1, 0.0);
 
   /* Setup */
-  lpatch = in->BeamPatch->naxis[0];
-  beamPatch = (lpatch-1)/2;
-  mapLim  = in->minFluxLoad;
+  lpatch        = in->BeamPatch->naxis[0];
+  beamPatch     = (lpatch-1)/2;
+  mapLim        = in->minFluxLoad;
+  in->complCode = OBIT_CompReasonUnknown;  /* No reason for completion yet */
 
   /* Adjust data array - amount in excess of mapLim */
   for (iresid=0; iresid<in->nPixel; iresid++) {
@@ -1284,7 +1300,10 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
     
     /* Test various stopping conditions */ 
     iter++;  /* iteration count */
-    if (iter>=in->niter) break;
+    if (iter>=in->niter) {
+      in->complCode = OBIT_CompReasonNiter; 
+      break;
+    }
      
   } /* end loop over list */
   
@@ -1299,8 +1318,15 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
   /* Are we finished after this? */
   done = (iter>=in->niter) || (fabs(minVal)<=minFlux);
   g_snprintf (reason, 50, "Completed layer");
-  if (iter>=in->niter) g_snprintf (reason, 50, "Reached Iter. limit");
-  if (fabs(minVal)<=minFlux) g_snprintf (reason, 50, "Reached min. flux density");
+  in->complCode = OBIT_CompReasonSDILayer;
+  if (iter>=in->niter) {
+    g_snprintf (reason, 50, "Reached Iter. limit");
+    in->complCode = OBIT_CompReasonNiter; 
+  }
+  if (fabs(minVal)<=minFlux) {
+    g_snprintf (reason, 50, "Reached min. flux density");
+    in->complCode = OBIT_CompReasonMinFlux;
+  }
   
   /* Loop over CC tables closing */
   for (i=0; i<in->nfield; i++) {

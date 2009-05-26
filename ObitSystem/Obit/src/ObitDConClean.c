@@ -357,7 +357,7 @@ ObitDConClean* ObitDConCleanCreate (gchar* name, ObitImageMosaic *mosaic,
 void ObitDConCleanDeconvolve (ObitDCon *inn, ObitErr *err)
 {
   ObitDConClean *in;
-  gboolean done;
+  gboolean done, newWin;
   olong jtemp;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   const ObitDConCleanClassInfo *inClass;
@@ -402,11 +402,11 @@ void ObitDConCleanDeconvolve (ObitDCon *inn, ObitErr *err)
   done = FALSE;
   while (!done) {
     /* Get image/beam statistics needed for this cycle, decide CLEAN type */
-    inClass->ObitDConCleanPixelStats(in, err);
+    newWin = inClass->ObitDConCleanPixelStats(in, NULL, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
     /* Pick components for this major cycle, tells if finished CLEAN */
-    done = inClass->ObitDConCleanSelect(in, err);
+    done = inClass->ObitDConCleanSelect(in, NULL, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
     if (in->prtLv>1) ObitErrLog(err);  /* Progress Report */
@@ -710,19 +710,22 @@ void ObitDConCleanDefWindow(ObitDConClean *in, ObitErr *err)
 /**
  * Get image and beam statistics and prepare to deconvolve
  * If autoWindow option is selected then windows may be added 
- * \param in   The object to deconvolve
- * \param err Obit error stack object.
+ * \param in        The object to deconvolve
+ * \param pixarray  If NonNULL use instead of the flux densities from the image file.
+ * \param err       Obit error stack object.
+ * \return TRUE is a new window added
  */
-void ObitDConCleanPixelStats(ObitDConClean *in, ObitErr *err)
+gboolean ObitDConCleanPixelStats(ObitDConClean *in, ObitFArray *pixarray, 
+				 ObitErr *err)
 {
+  gboolean newWin = FALSE;
   olong field;
   ObitImage *Beam=NULL;
   const ObitDConCleanClassInfo *inClass;
   gchar *routine = "ObitDConCleanPixelStats";
 
   /* error checks */
-  g_assert (ObitErrIsA(err));
-  if (err->error) return;
+  if (err->error) return newWin;
   g_assert (ObitDConCleanIsA(in));
 
   inClass = (ObitDConCleanClassInfo*)in->ClassInfo; /* class structure */
@@ -740,24 +743,27 @@ void ObitDConCleanPixelStats(ObitDConClean *in, ObitErr *err)
   if (in->BeamHist->field != in->currentField) 
       ObitDConCleanBmHistUpdate(in->BeamHist, Beam, in->plane, err);
   in->BeamHist->field = in->currentField;
-  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  if (err->error) Obit_traceback_val (err, routine, in->name, newWin);
 
   /* Adjust window if autoWindow */
   if (in->autoWindow) 
-    inClass->ObitDConCleanAutoWindow (in, in->currentField, err);
-  else 
+    newWin = inClass->ObitDConCleanAutoWindow (in, in->currentField, pixarray, err);
+  else {
     in->autoWinFlux = -1.0e20; 
-  if (err->error) Obit_traceback_msg (err, routine, in->name);
+    newWin = FALSE;
+  }
+  if (err->error) Obit_traceback_val (err, routine, in->name, newWin);
 
   /* Get Pixel histogram */
   ObitDConCleanPxHistUpdate (in->PixelHist, field, in->plane, in->mosaic, 
 			     in->window, err);
-  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  if (err->error) Obit_traceback_val (err, routine, in->name, newWin);
 
   /* Decide beamPatchSize, minFluxLoad, SDI Clean */
   ObitDConCleanDecide (in, err);
-  if (err->error) Obit_traceback_msg (err, routine, in->name);
-  
+  if (err->error) Obit_traceback_val (err, routine, in->name, newWin);
+
+  return newWin;
 } /* end ObitDConCleanPixelStats */
 
 /**
@@ -900,10 +906,12 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, ObitErr *err)
 /**
  * Select components to be subtracted
  * \param in   The object to deconvolve
+ * \param pixarray    If NonNULL use instead of the flux densities from the image file.
  * \param err Obit error stack object.
  * \return TRUE if deconvolution is complete
  */
-gboolean ObitDConCleanSelect(ObitDConClean *in, ObitErr *err)
+gboolean ObitDConCleanSelect(ObitDConClean *in, ObitFArray *pixarray, 
+			     ObitErr *err)
 {
   gboolean done = FALSE;
   olong fields[20];
@@ -924,7 +932,7 @@ gboolean ObitDConCleanSelect(ObitDConClean *in, ObitErr *err)
   fields[0] = in->currentField; fields[1] = 0;
   ObitDConCleanPxListUpdate (in->Pixels, fields, in->numberSkip,
 			     in->minFluxLoad, in->autoWinFlux, 
-			     in->window, in->BeamPatch, err);
+			     in->window, in->BeamPatch, pixarray, err);
   if (err->error) Obit_traceback_val (err, routine, in->name, done);
 
   /* BGC or SDI Clean? */
@@ -1368,13 +1376,18 @@ void ObitDConCleanXRestore(ObitDConClean *in, ObitErr *err)
  * inner window and > 5 sigma, a new round box  is added 
  * to the window.  Cleaning in each cycle will stop when the peak residual 
  * drops to the level of the highest value outside the CLEAN window.
- * \param in    The object to restore
- * \param field Field number (1-rel) in ImageMosaic
- * \param err   Obit error stack object.
+ * \param in       The object to restore
+ * \param field    Field number (1-rel) in ImageMosaic
+ * \param pixarray If nonNULL, then use this array of pixels rather than in the ImageMosaic
+ * \param err      Obit error stack object.
+ * \return TRUE is a new window added
  */
-void ObitDConCleanAutoWindow(ObitDConClean *in, olong field, ObitErr *err)
+gboolean ObitDConCleanAutoWindow(ObitDConClean *in, olong field, ObitFArray *pixarray, 
+				 ObitErr *err)
 {
+  gboolean newWin = FALSE;
   ObitImage *image=NULL;
+  ObitFArray *usePixels;
   ObitIOCode retCode;
   ObitIOSize IOsize = OBIT_IO_byPlane;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -1385,8 +1398,7 @@ void ObitDConCleanAutoWindow(ObitDConClean *in, olong field, ObitErr *err)
   gchar *routine = "ObitDConCleanAutoWindow";
 
  /* error checks */
-  g_assert (ObitErrIsA(err));
-  if (err->error) return;
+  if (err->error) return newWin;
   g_assert (ObitDConCleanIsA(in));
 
   /* Set output to full image, plane at a time */
@@ -1395,37 +1407,43 @@ void ObitDConCleanAutoWindow(ObitDConClean *in, olong field, ObitErr *err)
   trc[0] = trc[1] = 0;
   for (i=0; i<IM_MAXDIM-2; i++) trc[i+2] = in->plane[i];
 
-  /* get image */
+  /* Use passed pixel array or get image */
   image = in->mosaic->images[field-1];
+  if (pixarray==NULL) {
+    
+    /* Set input to full image, plane at a time */
+    dim[0] = IM_MAXDIM;
+    ObitInfoListAlwaysPut (image->info, "BLC", OBIT_long, dim, blc); 
+    ObitInfoListAlwaysPut (image->info, "TRC", OBIT_long, dim, trc); 
+    dim[0] = 1;
+    ObitInfoListAlwaysPut (image->info, "IOBy", OBIT_long, dim, &IOsize);
+    
+    retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
+    if (err->error) Obit_traceback_val (err, routine, image->name, newWin);
+    
+    retCode = ObitImageRead (image, image->image->array, err);
+    if (err->error) Obit_traceback_val (err, routine, image->name, newWin);
+    
+    retCode = ObitImageClose (image, err);
+    if (err->error) Obit_traceback_val (err, routine, image->name, newWin);
+    usePixels = image->image;  /* Pointer to image buffer */
 
-  /* Set input to full image, plane at a time */
-  dim[0] = IM_MAXDIM;
-  ObitInfoListPut (image->info, "BLC", OBIT_long, dim, blc, err); 
-  ObitInfoListPut (image->info, "TRC", OBIT_long, dim, trc, err); 
-  dim[0] = 1;
-  ObitInfoListPut (image->info, "IOBy", OBIT_long, dim, &IOsize, err);
-  
-  retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
-  if (err->error) Obit_traceback_msg (err, routine, image->name);
-  
-  retCode = ObitImageRead (image, image->image->array, err);
-  if (err->error) Obit_traceback_msg (err, routine, image->name);
-  
-  retCode = ObitImageClose (image, err);
-  if (err->error) Obit_traceback_msg (err, routine, image->name);
-
+  } else { /* Use array passed */
+    usePixels = ObitFArrayRef(pixarray);
+  }
+    
   /* Allow negative for Stokes other than I */
   doAbs = fabs (image->myDesc->crval[image->myDesc->jlocs]-1.0) > 0.1;
   
   /* Get field info - set new box if needed */
-  ObitDConCleanWindowAutoWindow (in->window, field, image->image,
-				 doAbs,
-				 &PeakIn, &PeakInPos[0], &PeakOut, 
-				 &RMS, err);
-  if (err->error) Obit_traceback_msg (err, routine, image->name);
+  newWin = ObitDConCleanWindowAutoWindow (in->window, field, usePixels,
+					  doAbs,
+					  &PeakIn, &PeakInPos[0], &PeakOut, 
+					  &RMS, err);
+  if (err->error) Obit_traceback_val (err, routine, image->name, newWin);
 
   /* Free Image array? */
-  image->image = ObitFArrayUnref(image->image);
+  usePixels = ObitFArrayUnref(usePixels);
   
   /* Set flux limit for next cycle */
   in->autoWinFlux = MAX (PeakOut-5.0*RMS, 0.5*RMS);
@@ -1446,7 +1464,7 @@ void ObitDConCleanAutoWindow(ObitDConClean *in, olong field, ObitErr *err)
 		      RMS);
      }
   }
-
+  return newWin;
 } /* end ObitDConCleanAutoWindow */
 
 /**
@@ -1606,7 +1624,7 @@ void ObitDConCleanClear (gpointer inn)
 void ObitDConCleanDecide (ObitDConClean* in, ObitErr *err)
 {
   olong minPatch, maxPatch, Patch, i;
-  ofloat minFlux, fract;
+  ofloat minFlux=0.0, fract;
   gchar *routine = "ObitDConCleanDecide";
 
   /* error checks */

@@ -1531,6 +1531,7 @@ gboolean ObitDConCleanWindowAutoWindow (ObitDConCleanWindow *in,
 {
   gboolean addWin = FALSE;
   gboolean noWin = FALSE, *mask=NULL;
+  ObitFArray *tmpImage=NULL;
   olong ix, iy, nx, ny, pos[2];
   olong window[4];
   ofloat *data, minFlux, fblank =  ObitMagicF();
@@ -1553,11 +1554,15 @@ gboolean ObitDConCleanWindowAutoWindow (ObitDConCleanWindow *in,
 		       err, addWin, "%s: Window and image different sizes ( %d  %d) ( %d  %d)",
 		       routine, nx, ny, image->naxis[0], image->naxis[1]);
   
-  /* blank image outside of outer window or in unboxes */
+  /* Copy of image for statistics  */
+  tmpImage = ObitFArrayCopy(image, tmpImage, err);
+  if (err->error) Obit_traceback_val (err, routine, image->name, addWin);
+
+  /* blank tmpImage outside of outer window or in unboxes */
   for (iy=0; iy<ny; iy++) {
     /* pointer to data */
     pos[0] = 0; pos[1] = iy;
-    data = ObitFArrayIndex(image, pos);
+    data = ObitFArrayIndex(tmpImage, pos);
     /* Get and apply window mask */
     if (ObitDConCleanWindowOuterRow(in, field, iy+1, &mask, err)) {
       for (ix=0; ix<nx; ix++) if (!mask[ix]) data[ix] = fblank;
@@ -1568,33 +1573,34 @@ gboolean ObitDConCleanWindowAutoWindow (ObitDConCleanWindow *in,
     if (ObitDConCleanWindowUnrow(in, field, iy+1, &mask, err)) {
       for (ix=0; ix<nx; ix++) if (mask[ix]) data[ix] = fblank;
     }
+    if (err->error) goto clean;
   } /* end loop blanking array */
-
-  /* Find RMS, peak and pos in image = RMS, PeakIn, PeakInPos */
-  *RMS = ObitFArrayRMS (image);
+  
+  /* Find RMS, peak and pos in tmpImage = RMS, PeakIn, PeakInPos */
+  *RMS = ObitFArrayRMS (tmpImage);
   if (doAbs) 
-    *PeakIn = ObitFArrayMaxAbs (image, PeakInPos);
+    *PeakIn = ObitFArrayMaxAbs (tmpImage, PeakInPos);
   else
-    *PeakIn = ObitFArrayMax (image, PeakInPos);
+    *PeakIn = ObitFArrayMax (tmpImage, PeakInPos);
 
   /* Blank inside the inner window  - if there is one */
   if (in->Lists[field-1]) {
     for (iy=0; iy<ny; iy++) {
       /* pointer to data */
       pos[0] = 0; pos[1] = iy;
-      data = ObitFArrayIndex(image, pos);
+      data = ObitFArrayIndex(tmpImage, pos);
       /* Get, invert, and apply window mask */
       if (ObitDConCleanWindowInnerRow(in, field, iy+1, &mask, err)) {
 	for (ix=0; ix<nx; ix++) if (mask[ix]) data[ix] = fblank;
       }
     } /* end loop blanking array */
-    if (err->error) Obit_traceback_val (err, routine, image->name, addWin);
+    if (err->error) goto clean;
   } else { /* No previous windows - add one */
     addWin = TRUE;
   }
 
   /* if PeakInPos not blanked and > 4 RMS  addWin = TRUE; */
-  data = ObitFArrayIndex(image, PeakInPos);
+  data = ObitFArrayIndex(tmpImage, PeakInPos);
   addWin = addWin || ((*data)!=fblank);
   /* Reduce threshold for more extended regions */
   window[0] = GetWindowSize(image, PeakInPos, *RMS);
@@ -1603,7 +1609,7 @@ gboolean ObitDConCleanWindowAutoWindow (ObitDConCleanWindow *in,
   else
     minFlux = 3.0*(*RMS);
   /* Window not set because peak too close to noise? */
-  noWin = (fabs(*data) < minFlux); 
+  noWin  = (fabs(*data) < minFlux); 
   addWin = addWin && (!noWin);
 
   /* Add new clean box? */
@@ -1612,34 +1618,40 @@ gboolean ObitDConCleanWindowAutoWindow (ObitDConCleanWindow *in,
     window[2] = PeakInPos[1]+1;
     ObitDConCleanWindowAdd (in, field, OBIT_DConCleanWindow_round, 
 			    window, err);
-    if (err->error) Obit_traceback_val (err, routine, image->name, addWin);
+    if (err->error) goto clean;
 
-    /* Debug */
+    /* inform user */
     Obit_log_error(err, OBIT_InfoErr,"Added round box radius= %d ( %d, %d) to field  %d",
 		   window[0], window[1], window[2], field);
+
 
     /* Need stats - blank with new window */
     for (iy=0; iy<ny; iy++) {
       /* pointer to data */
       pos[0] = 0; pos[1] = iy;
-      data = ObitFArrayIndex(image, pos);
+      data = ObitFArrayIndex(tmpImage, pos);
       /* Get, invert, and apply window mask */
       if (ObitDConCleanWindowRow(in, field, iy+1, &mask, err)) {
 	for (ix=0; ix<nx; ix++) if (mask[ix]) data[ix] = fblank;
       }
     } /* end loop blanking array */
-    if (err->error) Obit_traceback_val (err, routine, image->name, addWin);
-  } /* end add new box */
+    if (err->error) goto clean;
+     /* end add new box */
+  } 
   
   /* find peak PeakOut - this is used to set min CLEAN; 
      make small if peak is in the noise */
-  *PeakOut = ObitFArrayMax (image, pos);
+  *PeakOut = ObitFArrayMax (tmpImage, pos);
   if (doAbs)  *PeakOut = fabs (*PeakOut);
   if (fabs(*PeakOut)<=minFlux)  *PeakOut = 0.0;
   /* If no window set because peak too close to noise, set to zero */
   if (noWin)  *PeakOut = 0.0;
+
   /* Cleanup */
-  ObitMemFree (mask);
+ clean:
+  if (mask) ObitMemFree (mask);
+  tmpImage = ObitFArrayUnref(tmpImage);
+  if (err->error) Obit_traceback_val (err, routine, image->name, addWin);
 
   return addWin;
 } /* end ObitDConCleanWindowAutoWindow */

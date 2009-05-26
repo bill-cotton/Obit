@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -485,11 +485,11 @@ void ObitDConCleanOTFRecDeconvolve (ObitDCon *inn, ObitErr *err)
     in->minFlux[0] = in->fracPeak * peakFlux;
 
     /* Get image/beam statistics needed for this cycle */
-    inClass->ObitDConCleanPixelStats((ObitDConClean*)in, err);
+    inClass->ObitDConCleanPixelStats((ObitDConClean*)in, NULL, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
     /* Pick components */
-    done = inClass->ObitDConCleanSelect((ObitDConClean*)in, err);
+    done = inClass->ObitDConCleanSelect((ObitDConClean*)in, NULL, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   
     peakFlux = in->Pixels->maxResid;  /* Peak residual in window */
@@ -863,11 +863,13 @@ void ObitDConCleanOTFRecRestore (ObitDConClean *inn, ObitErr *err)
 
 /**
  * Select/subtract components from PxList
- * \param in   The object to deconvolve
- * \param err Obit error stack object.
+ * \param in          The object to deconvolve
+ * \param pixarray    If NonNULL use instead of the flux densities from the image file.
+ * \param err         Obit error stack object.
  * \return TRUE if deconvolution is complete
  */
-gboolean ObitDConCleanOTFRecSelect(ObitDConClean *inn, ObitErr *err)
+gboolean ObitDConCleanOTFRecSelect(ObitDConClean *inn, ObitFArray *pixarray, 
+				   ObitErr *err)
 {
   ObitDConCleanOTFRec *in;
   gboolean done = FALSE;
@@ -895,7 +897,7 @@ gboolean ObitDConCleanOTFRecSelect(ObitDConClean *inn, ObitErr *err)
   
   /* Load PxList */
   ObitDConCleanPxListUpdate (in->Pixels, fields, 0, 0.0, in->autoWinFlux,
-			     in->window, in->BeamPatch, err);
+			     in->window, in->BeamPatch, pixarray, err);
   if (err->error) Obit_traceback_val (err, routine, in->name, done);
 
   /* Set min. flux this major cycle */
@@ -914,10 +916,12 @@ gboolean ObitDConCleanOTFRecSelect(ObitDConClean *inn, ObitErr *err)
 
 /**
  * Get image and beam statistics 
- * \param in   The object to deconvolve
- * \param err Obit error stack object.
+ * \param in       The object to deconvolve
+ * \param pixarray If NonNULL use instead of the flux densities from the image file.
+ * \param err      Obit error stack object.
  */
-void ObitDConCleanOTFRecPixelStats(ObitDConClean *in, ObitErr *err)
+void ObitDConCleanOTFRecPixelStats(ObitDConClean *in,  ObitFArray *pixarray, 
+				   ObitErr *err)
 {
   const ObitDConCleanClassInfo *inClass;
   gchar *routine = "ObitDConCleanOTFRecPixelStats";
@@ -926,7 +930,7 @@ void ObitDConCleanOTFRecPixelStats(ObitDConClean *in, ObitErr *err)
 
   /* Adjust window if autoWindow */
   if (in->autoWindow) 
-    inClass->ObitDConCleanAutoWindow (in, in->currentField, err);
+    inClass->ObitDConCleanAutoWindow (in, in->currentField, pixarray, err);
   else 
     in->autoWinFlux = -1.0e20; 
   if (err->error) Obit_traceback_msg (err, routine, in->name);

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -318,7 +318,7 @@ void ObitDConCleanOTFDeconvolve (ObitDCon *inn, ObitErr *err)
 
   /*Only one pass deconvolution needed */
   /* Pick components */
-  done = inClass->ObitDConCleanSelect((ObitDConClean*)in, err);
+  done = inClass->ObitDConCleanSelect((ObitDConClean*)in, NULL, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
   
   /* Make residual image */
@@ -704,10 +704,11 @@ void ObitDConCleanOTFScaleCC (ObitDConCleanOTF *in, ObitErr *err)
 /**
  * Select/subtract components from PxList
  * \param in   The object to deconvolve
+ * \param pixarray    If NonNULL use instead of the flux densities from the image file.
  * \param err Obit error stack object.
  * \return TRUE if deconvolution is complete
  */
-gboolean ObitDConCleanOTFSelect(ObitDConClean *inn, ObitErr *err)
+gboolean ObitDConCleanOTFSelect(ObitDConClean *inn, ObitFArray *pixarray, ObitErr *err)
 {
   ObitDConCleanOTF *in;
   gboolean done = FALSE;
@@ -735,7 +736,7 @@ gboolean ObitDConCleanOTFSelect(ObitDConClean *inn, ObitErr *err)
   
  /* Load PxList */
   ObitDConCleanPxListUpdate (in->Pixels, fields, 0, 0.0, in->autoWinFlux,
-			     in->window, in->BeamPatch, err);
+			     in->window, in->BeamPatch, pixarray, err);
   if (err->error) Obit_traceback_val (err, routine, in->name, done);
 
   /* Clean */
@@ -748,9 +749,11 @@ gboolean ObitDConCleanOTFSelect(ObitDConClean *inn, ObitErr *err)
 /**
  * Get image and beam statistics 
  * \param in   The object to deconvolve
+ * \param pixarray    If NonNULL use instead of the flux densities from the image file.
  * \param err Obit error stack object.
  */
-void ObitDConCleanOTFPixelStats(ObitDConClean *in, ObitErr *err)
+void ObitDConCleanOTFPixelStats(ObitDConClean *in, ObitFArray *pixarray, 
+				ObitErr *err)
 {
   const ObitDConCleanClassInfo *inClass;
   gchar *routine = "ObitDConCleanOTFPixelStats";
@@ -759,7 +762,7 @@ void ObitDConCleanOTFPixelStats(ObitDConClean *in, ObitErr *err)
 
   /* Adjust window if autoWindow */
   if (in->autoWindow) 
-    inClass->ObitDConCleanAutoWindow (in, in->currentField, err);
+    inClass->ObitDConCleanAutoWindow (in, in->currentField, pixarray, err);
   else 
     in->autoWinFlux = -1.0e20; 
   if (err->error) Obit_traceback_msg (err, routine, in->name);

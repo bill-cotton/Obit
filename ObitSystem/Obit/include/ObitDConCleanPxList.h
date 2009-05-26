@@ -53,6 +53,32 @@
  * There is no explicit destructor.
  */
 
+/*-------------- enumerations -------------------------------------*/
+/**
+ * \enum obitCLEANCompletionReason
+ * enum for CLEAN completion codes
+ */
+enum obitCLEANCompletionReason {
+  /** Undefined reason type */
+  OBIT_CompReasonUnknown=0, 
+  /** Finished total number of iteration */
+  OBIT_CompReasonNiter,
+  /** Reached minFlux */
+  OBIT_CompReasonMinFlux,
+  /** Clean diverging */
+  OBIT_CompReasonDiverge,
+  /** BGC iteration limit */
+  OBIT_CompReasonBGCLimit,
+  /** autoWindow minimum */
+  OBIT_CompReasonAutoWin,
+  /** min fraction of peak */
+  OBIT_CompReasonMinFract,
+  /** Complete SDI Layer */
+  OBIT_CompReasonSDILayer
+}; /* end enum obitIOStatus */
+/** typedef for enum for CLEAN completion codes */
+typedef enum obitCLEANCompletionReason ObitCLEANCompletionReason;
+
 /*--------------Class definitions-------------------------------------*/
 /** ObitDConCleanPxList Class structure. */
 typedef struct {
@@ -124,6 +150,7 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
 				ofloat autoWinFlux,
 				ObitDConCleanWindow *window, 
 				ObitFArray *BeamPatch,
+				ObitFArray *pixarray,
 				ObitErr *err);
 
 /** Public: Do minor cycle BGC CLEANing. */

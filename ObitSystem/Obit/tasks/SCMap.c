@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set             */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1661,7 +1661,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	/* Auto Windowing? */
 	if (autoWindow) {
 	  myCleanClass->ObitDConCleanAutoWindow ((ObitDConClean*)myClean, 
-						 myClean->currentField, err);
+						 myClean->currentField, NULL, err);
 	  if (err->error) Obit_traceback_msg (err, routine, myClean->name);
 	}
 	
@@ -1788,7 +1788,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	/* Auto Windowing? */
 	if (autoWindow) {
 	  myCleanClass->ObitDConCleanAutoWindow ((ObitDConClean*)myClean, 
-						 myClean->currentField, err);
+						 myClean->currentField, NULL, err);
 	  if (err->error) Obit_traceback_msg (err, routine, myClean->name);
 	}
 	

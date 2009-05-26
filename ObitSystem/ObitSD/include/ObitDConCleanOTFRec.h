@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -187,7 +187,8 @@ void  ObitDConCleanOTFRecGetParms (ObitDCon *in, ObitErr *err);
 void ObitDConCleanOTFRecSub(ObitDConClean *in, ObitErr *err);
 
 /** Public:Select components  . */
-gboolean ObitDConCleanOTFRecSelect(ObitDConClean *in, ObitErr *err);
+gboolean ObitDConCleanOTFRecSelect(ObitDConClean *in, ObitFArray *pixarray, 
+				   ObitErr *err);
 
 /** Public: Subtract components and generate new residual image(s). */
 void ObitDConCleanOTFRecSub(ObitDConClean *in, ObitErr *err);
@@ -196,7 +197,8 @@ void ObitDConCleanOTFRecSub(ObitDConClean *in, ObitErr *err);
 void ObitDConCleanOTFRecRestore(ObitDConClean *in, ObitErr *err);
 
 /** Public:  Prepare for minor cycle. */
-void ObitDConCleanOTFRecPixelStats(ObitDConClean *in, ObitErr *err);
+void ObitDConCleanOTFRecPixelStats(ObitDConClean *in, ObitFArray *pixarray, 
+				   ObitErr *err);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

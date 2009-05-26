@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -299,11 +299,11 @@ void ObitDConCleanImageDeconvolve (ObitDCon *inn, ObitErr *err)
   while (!done) {
     in->currentField = 1;  /* Can only do oone */
     /* Get image/beam statistics needed for this cycle */
-    inClass->ObitDConCleanPixelStats((ObitDConClean*)in, err);
+    inClass->ObitDConCleanPixelStats((ObitDConClean*)in, NULL, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
     /* Pick components for this major cycle, tells if finished CLEAN */
-    done = inClass->ObitDConCleanSelect((ObitDConClean*)in, err);
+    done = inClass->ObitDConCleanSelect((ObitDConClean*)in, NULL, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
     /* Subtract components and make new residual(s) */
