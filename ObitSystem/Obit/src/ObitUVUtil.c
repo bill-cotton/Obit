@@ -30,6 +30,7 @@
 #include "ObitTableSUUtil.h"
 #include "ObitTableNXUtil.h"
 #include "ObitTablePSUtil.h"
+#include "ObitTableFQUtil.h"
 #include "ObitTableAN.h"
 #include "ObitTableFG.h"
 #include "ObitPrecess.h"
@@ -2405,7 +2406,8 @@ ObitInfoList* ObitUVUtilCount (ObitUV *inUV, ofloat timeInt, ObitErr *err)
 
 /**
  * Copy blocks of channels from one UV to a set of output UVs..
- * All selected IFs and polarizations are also copied
+ * All selected IFs and polarizations are also copied, there must be
+ * an integran number of IFs per output.
  * \param inUV     Input uv data to average, 
  *                 Any request for calibration, editing and selection honored
  * \param nOut     Number of outout images
@@ -2425,9 +2427,9 @@ void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV,
 		    "AIPS PL","AIPS NI","AIPS BP","AIPS OF","AIPS PS",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
-  olong *BChan=NULL, *numChan=NULL;
-  olong chinc=1, BIF, EIF, nchan, nchOut, ich, NPIO;
-  olong i, j, indx, jndx, ivis;
+  olong *BChan=NULL, *numChan=NULL, *BIF=NULL, *numIF=NULL;
+  olong chinc=1, nchan, nif, nstok, nchOut, NPIO;
+  olong i, j, indx, jndx, ivis, nIFperOut, oldNumberIF, oldStartIF;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM]={1,1,1,1,1};
   ObitIOAccess access;
@@ -2466,33 +2468,39 @@ void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV,
   scale   = g_malloc(nOut*sizeof(ofloat));
   BChan   = g_malloc(nOut*sizeof(olong));
   numChan = g_malloc(nOut*sizeof(olong));
+  BIF     = g_malloc(nOut*sizeof(olong));
+  numIF   = g_malloc(nOut*sizeof(olong));
 
-  /* Divvy up channels */
+  /* Divvy up channels - must be an integran number of IFs per output */
   nchan = inDesc->inaxes[inDesc->jlocf];
-  if (nOut>nchan) {
+  if (inDesc->jlocif>=0) nif = inDesc->inaxes[inDesc->jlocif];
+  else                   nif = 1;
+  if (inDesc->jlocs>=0) nstok = inDesc->inaxes[inDesc->jlocs];
+  else                  nstok= 1;
+  nIFperOut = (glong) (0.9999 + (nif / (ofloat)nOut));
+   if (fabs(((ofloat)nIFperOut)-(nif / (ofloat)nOut))>0.001) {
+    Obit_log_error(err, OBIT_Error,"%s Not an equal number of IFs per output",
+		   routine);
+    return;
+  }
+ if (nOut>(nchan* nIFperOut)) {
     Obit_log_error(err, OBIT_Error,"%s Fewer channels, %d than output files %d",
 		   routine, nchan, nOut);
     return;
   }
-  nchOut = (glong) (0.999 + (nchan / (ofloat)nOut)); 
+  nchOut = (glong) (0.999 + ((nchan*nif) / (ofloat)nOut)); 
   nchOut = MAX (1, nchOut);
+  nchOut = MIN (nchOut, nchan);
   for (i=0; i<nOut; i++) {
-    BChan[i]   = 1 + i*nchOut;
+    BIF[i]     = 1 + i*nIFperOut;
+    numIF[i]   = nIFperOut;
+    BChan[i]   = 1 + i*nchOut - (BIF[i]-1)*nchan;
     numChan[i] = MIN (nchOut, nchan-BChan[i]+1);
   }
 
-  /* All selected IFs */
-  BIF = 1;
-  if (inDesc->jlocif>=0) EIF = inDesc->inaxes[inDesc->jlocif];
-  else EIF = 1;
-
   /* Set up output UV data */
   for (i=0; i<nOut; i++) {
-    /* UVW scaling parameter */
-    ich = (BChan[i]-1)*(inDesc->incf/(3*inDesc->incs));
-    if (inDesc->jlocif>=0) ich += (BIF-1)* (inDesc->incif/(3*inDesc->incs));
-    scale[i] = inDesc->fscale[ich];
-
+ 
     /* copy Descriptor */
     outUV[i]->myDesc = ObitUVDescCopy(inUV->myDesc, outUV[i]->myDesc, err);
     
@@ -2506,10 +2514,21 @@ void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV,
 
     /* Set output frequency info */
     outDesc->crval[outDesc->jlocf]  = inDesc->crval[outDesc->jlocf] + 
-      (BChan[i]-inDesc->crpix[inDesc->jlocf]) * inDesc->cdelt[inDesc->jlocf];
+      (BChan[i]-inDesc->crpix[inDesc->jlocf]) * inDesc->cdelt[inDesc->jlocf] +
+      (inDesc->freqIF[BIF[i]-1] - inDesc->freqIF[0]);
     outDesc->inaxes[outDesc->jlocf] = numChan[i];
-    outDesc->crpix[outDesc->jlocf]  = 1.0;
+    /*outDesc->crpix[outDesc->jlocf]  = 1.0;*/
     outDesc->cdelt[outDesc->jlocf]  = inDesc->cdelt[inDesc->jlocf] * chinc;
+    /* UVW scaling parameter */
+    scale[i] = outDesc->crval[outDesc->jlocf]/inDesc->freq;
+    /* IFs */
+    if (outDesc->jlocif>=0) {
+      outDesc->crval[outDesc->jlocif]  = inDesc->crval[outDesc->jlocif] + 
+	(BIF[i]-inDesc->crpix[inDesc->jlocif]) * inDesc->cdelt[inDesc->jlocif];
+      outDesc->inaxes[outDesc->jlocif] = numIF[i];
+      outDesc->crpix[outDesc->jlocif]  = 1.0;
+      outDesc->cdelt[outDesc->jlocif]  = inDesc->cdelt[inDesc->jlocif] * chinc;
+    }
     /* Alternate frequency/vel */
     outDesc->altCrpix = inDesc->altCrpix - (BChan[i] + 1.0)/chinc;
     outDesc->altRef   = inDesc->altRef;
@@ -2535,8 +2554,17 @@ void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV,
        sources deselected suggest MS out */
     if ((inUV->mySel->numberSourcesList>1) || (!inUV->mySel->selectSources))
       iretCode = ObitUVCopyTables (inUV, outUV[i], NULL, sourceInclude, err);
+    /* Fiddle IF selection */
+    oldNumberIF = inUV->mySel->numberIF;
+    oldStartIF  = inUV->mySel->startIF;
+    inUV->mySel->numberIF = nIFperOut;
+    inUV->mySel->startIF  = BIF[i];
+    ObitTableFQSelect (inUV, outUV[i], NULL, 0.0, err);
+    /* reset IF selection */
+    inUV->mySel->numberIF = oldNumberIF;
+    inUV->mySel->startIF  = oldStartIF;
     if (err->error) goto cleanup;
-    
+   
     /* reset to beginning of uv data */
     iretCode = ObitIOSet (inUV->myIO,  inUV->info, err);
     oretCode = ObitIOSet (outUV[i]->myIO, outUV[i]->info, err);
@@ -2583,7 +2611,7 @@ void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV,
       for (i=0; i<nOut; i++) {
 	jndx = ivis*outUV[i]->myDesc->lrec + outUV[i]->myDesc->nrparm;
 	FreqSel (inUV->myDesc, outUV[i]->myDesc, 
-		 BChan[i], BChan[i]+numChan[i]-1, chinc, BIF, EIF,
+		 BChan[i], BChan[i]+numChan[i]-1, chinc, BIF[i], BIF[i]+nIFperOut-1,
 		 &inUV->buffer[indx], &outUV[i]->buffer[jndx]);
       }
     } /* end loop over visibilities */
@@ -2604,7 +2632,9 @@ void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV,
   if (scale)   g_free(scale);
   if (BChan)   g_free(BChan);
   if (numChan) g_free(numChan);
-  
+  if (BIF)     g_free(BIF);
+  if (numIF)   g_free(numIF);
+ 
   /* close files */
   iretCode = ObitUVClose (inUV, err);
   for (i=0; i<nOut; i++) {

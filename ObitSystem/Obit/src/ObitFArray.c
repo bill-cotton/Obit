@@ -2343,9 +2343,9 @@ void ObitFArray2DEGauss (ObitFArray *array, ofloat amp, ofloat Cen[2], ofloat Ga
  * NB: this works better if the alignment point is near the center of in2
  *  out = in1 + scalar x in2 in overlap, else in1
  * \param in1     First input object with data, may be blanked
- * \param pos1    Alignment pixel in in1
+ * \param pos1    Alignment pixel in in1 (0-rel)
  * \param in2     Second input object with data, blanked pixels ignored
- * \param pos2    Alignment pixel in in2
+ * \param pos2    Alignment pixel in in2  (0-rel)
  * \param scalar  factor to be multiplied times in2
  * \param out     Output array, may be an input array and MUST 
  *                have the same the same geometry.
