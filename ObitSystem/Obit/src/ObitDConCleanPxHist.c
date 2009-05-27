@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -208,7 +208,7 @@ void ObitDConCleanPxHistUpdate (ObitDConCleanPxHist *in, olong field,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong  blc[IM_MAXDIM], trc[IM_MAXDIM];
   olong i, ix, iy, icell, nx, ny, pos[2];
-  ofloat *data, tmax, tmin, tfact;
+  ofloat *data, tmax, tmin, tfact, fblank = ObitMagicF();
   gboolean *mask=NULL;
   gchar *routine = "ObitDConCleanPxHistUpdate";
 
@@ -261,7 +261,7 @@ void ObitDConCleanPxHistUpdate (ObitDConCleanPxHist *in, olong field,
     /* Get window mask */
     if (ObitDConCleanWindowRow(window, field, iy+1, &mask, err)) {
       for (ix=0; ix<nx; ix++) {
-	if (mask[ix]) {
+	if ((mask[ix]) && (data[ix]!=fblank)) {
 	  tmax = MAX (tmax, fabs(data[ix]));
 	  tmin = MIN (tmin, data[ix]);
 	}
