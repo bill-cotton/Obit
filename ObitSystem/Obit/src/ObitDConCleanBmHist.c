@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -228,7 +228,7 @@ void ObitDConCleanBmHistUpdate (ObitDConCleanBmHist *in, ObitImage *Beam,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong  blc[IM_MAXDIM], trc[IM_MAXDIM];
   olong i, ix, iy, icenx, iceny, irad, nx, ny, pos[2];
-  ofloat *data, beamMax, last=0;
+  ofloat *data, beamMax, last=0.0, fblank = ObitMagicF();
   gchar *routine = "ObitDConCleanBmHistUpdate";
 
   /* Set output to full image, plane at a time */
@@ -271,9 +271,11 @@ void ObitDConCleanBmHistUpdate (ObitDConCleanBmHist *in, ObitImage *Beam,
   ny = Beam->myDesc->inaxes[1];
   for (iy=5; iy<ny-5; iy++) {
     for (ix=5; ix<nx-5; ix++) {
-      irad = MAX (abs(ix-icenx), abs (iy-iceny));
-      if (irad>=in->ncell) irad = in->ncell - 1;
-      in->hist[irad] = MAX (in->hist[irad], data[ix]);
+      if (data[ix]!=fblank) {
+	irad = MAX (abs(ix-icenx), abs (iy-iceny));
+	if (irad>=in->ncell) irad = in->ncell - 1;
+	in->hist[irad] = MAX (in->hist[irad], data[ix]);
+      }
     }
     data += nx;
   }
