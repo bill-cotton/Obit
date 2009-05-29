@@ -851,6 +851,9 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
   resmax        = -1.0e20;
   in->complCode = OBIT_CompReasonUnknown;  /* No reason for completion yet */
 
+  /* Remove any blanks from beam patch */
+  ObitFArrayDeblank (in->BeamPatch, 0.0);
+
   /* Tell details */
   if (in->prtLv>1) {
     Obit_log_error(err, OBIT_InfoErr,"BGC CLEAN: Beam patch = %d cells, min. residual = %g Jy",
@@ -1145,6 +1148,9 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
 
   /* Zero dirty beam values below 0.1 */
   ObitFArrayClip (in->BeamPatch, 0.1, 1.1, 0.0);
+
+  /* Remove any blanks from beam patch */
+  ObitFArrayDeblank (in->BeamPatch, 0.0);
 
   /* Setup */
   lpatch        = in->BeamPatch->naxis[0];
