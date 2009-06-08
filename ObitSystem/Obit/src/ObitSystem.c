@@ -25,7 +25,11 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 #include <errno.h>
+#include <time.h>
 #include <sys/times.h>
+#  ifndef CLK_TCK
+#   define CLK_TCK  CLOCKS_PER_SEC
+# endif
 #include "Obit.h"
 #include "ObitSystem.h"
 #include "ObitAIPS.h"
