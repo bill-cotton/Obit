@@ -440,7 +440,7 @@ void ObitUVImagerImage (ObitUVImager *in,  olong field, gboolean doWeight,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitUVDesc *UVDesc;
   ObitImageDesc *imageDesc;
-  olong ifield, hiField, loField, channel=0;
+  olong ifield, hiField, loField, channel=0, nDo, nLeft;
   ofloat sumwts;
   ObitImage *theBeam=NULL;
   gboolean *forceBeam=NULL, needBeam;
@@ -529,10 +529,17 @@ void ObitUVImagerImage (ObitUVImager *in,  olong field, gboolean doWeight,
 
   } /* end loop initializing */
 
-  /* Image */
-  ObitImageUtilMakeImagePar (data, in->mosaic->numberImages, in->mosaic->images,
-			     doBeam, doWeight, err);
-  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  /* Image - don't do more than 8 at a time */
+  nLeft = in->mosaic->numberImages;
+  ifield = 0;
+  while (nLeft>0) {
+    nDo = MIN (8, nLeft);
+    ObitImageUtilMakeImagePar (data, nDo, &in->mosaic->images[ifield],
+			       doBeam, doWeight, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    ifield += nDo;
+    nLeft  -= nDo;
+  } /* End loop gridding */
 
   /* Loop over fields finalizing */
   for (ifield=loField; ifield<=hiField; ifield++) {

@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -25,6 +25,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 #include <errno.h>
+#include <sys/times.h>
 #include "Obit.h"
 #include "ObitSystem.h"
 #include "ObitAIPS.h"
@@ -151,6 +152,8 @@ ObitSystemStartup (gchar *pgmName, olong pgmNumber,
   out->AIPSuser  = AIPSuser;
   out->numberAIPSdisk = numberAIPSdisk;
   out->numberFITSdisk = numberFITSdisk;
+  /* Start time */
+  time(&out->startTime);
 
   /* make global pointer */
   mySystemInfo = (ObitSystem*)ObitRef(out);
@@ -165,6 +168,7 @@ ObitSystemStartup (gchar *pgmName, olong pgmNumber,
   if ((strlen(out->pgmName)>0) && strncmp (out->pgmName, "NameLess", 8))
     Obit_log_error(out->err, OBIT_InfoErr, "%s Begins", out->pgmName);
   ObitErrTimeStamp(out->err);  /* Add Timestamp */
+ 
   ObitErrLog(out->err);
 
   return out;
@@ -196,6 +200,9 @@ ObitSystem* ObitSystemShutdown (ObitSystem* in)
    ObitClassInfo *myClass;
    Obit *tst;
    GSList *tmp;
+   struct tms buf;
+   time_t endTime;
+   ofloat cputim, realtim;
 
    /* ignore if I haven't been started */
    if (!mySystemInfo) return NULL;
@@ -240,6 +247,18 @@ ObitSystem* ObitSystemShutdown (ObitSystem* in)
   if ((strlen(in->pgmName)>0) && strncmp (in->pgmName, "NameLess", 8))
     Obit_log_error(in->err, OBIT_InfoErr, "%s Ends", in->pgmName);
   ObitErrTimeStamp(in->err);  /* Add Timestamp */
+
+  /* CPU Usage */
+  times (&buf);
+  cputim = (buf.tms_utime + buf.tms_stime) / (ofloat) CLK_TCK;
+
+  /* Real time */
+  time(&endTime);
+  realtim = (ofloat)(endTime - in->startTime);
+  Obit_log_error(in->err, OBIT_InfoErr, 
+		 "%s Runtime = %8.0f sec. CPU usage = %8.3f sec.", 
+		 in->pgmName, realtim, cputim);
+
   ObitErrLog(in->err);
 
   /* delete object */

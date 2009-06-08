@@ -1824,6 +1824,7 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 
   /* Maximum UV distance squared to allow */
   maxUVDist2 = (InvSinc(1.0/maxFact) / FOV);
+  maxUVDist2 = maxUVDist2*maxUVDist2; /* Square */
 
   /* Get Frequency Parameters */
   NumChAvg = 0;
@@ -3046,6 +3047,7 @@ void ObitUVUtilAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   gboolean incompatible;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitUVDesc *inDesc, *outDesc;
+  olong inNPIO, outNPIO, NPIO;
   gchar *routine = "ObitUVUtilAppend";
 
   /* error checks */
@@ -3072,6 +3074,15 @@ void ObitUVUtilAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitInfoListGetTest(inUV->info, "doCalSelect", &type, dim, &doCalSelect);
   if (doCalSelect) access = OBIT_IO_ReadCal;
   else access = OBIT_IO_ReadWrite;
+
+  /* Set number of vis per I/O */
+  inNPIO = 1000;
+  ObitInfoListGetTest (inUV->info, "nVisPIO", &type, dim, &inNPIO);
+  outNPIO = 1000;
+  ObitInfoListGetTest (outUV->info, "nVisPIO", &type, dim, &outNPIO);
+  NPIO = 1000; dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (inUV->info,  "nVisPIO", OBIT_long, dim,  &NPIO);
+  ObitInfoListAlwaysPut (outUV->info, "nVisPIO", OBIT_long, dim,  &NPIO);
 
   /* Open Input Data */
   retCode = ObitUVOpen (inUV, access, err);
@@ -3128,6 +3139,10 @@ void ObitUVUtilAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* Close output */
   retCode = ObitUVClose (outUV, err);
   if (err->error) Obit_traceback_msg (err, routine, outUV->name);
+
+  /* Reset number of vis per I/O */
+  ObitInfoListAlwaysPut (inUV->info,  "nVisPIO", OBIT_long, dim,  &inNPIO);
+  ObitInfoListAlwaysPut (outUV->info, "nVisPIO", OBIT_long, dim,  &outNPIO);
 
 } /* end ObitUVUtilAppend */
 

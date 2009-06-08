@@ -25,13 +25,15 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 #include <sys/types.h>
-#include <time.h>
 #include <string.h>
 #include "ObitErr.h"
 #include "ObitMem.h"
 
 /** name of the class defined in this file */
 static gchar *myClassName = "ObitErr";
+
+/** Has the default message log handler been set? */
+static gboolean defaultHandler = FALSE;
 
 /**
  * \file ObitErr.c
@@ -72,6 +74,12 @@ static ObitErrElem* freeObitErrElem (ObitErrElem *in);
 /** Private: Destructor. */
 static ObitErr* freeObitErr (ObitErr *in);
 
+/** Private: default log handler */
+static void DefaultLogHandler (const gchar *log_domain,
+			       GLogLevelFlags log_level,
+			       const gchar *message,
+			       gpointer user_data);
+
 /*---------------Public functions---------------------------*/
 /* constructor */
 /**
@@ -91,6 +99,17 @@ ObitErr* newObitErr (void)
   me->error     = FALSE;
   me->stack     = g_queue_new();
   me->ReferenceCount = 1;
+
+  /* Set default handler if not done yet */
+  if (!defaultHandler) {
+    defaultHandler = TRUE;
+    g_log_set_handler (NULL,  G_LOG_LEVEL_WARNING | G_LOG_FLAG_FATAL |
+		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_MESSAGE |
+		       G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG |
+		       G_LOG_FLAG_RECURSION, 
+		       (GLogFunc)DefaultLogHandler, NULL);
+  }
+
 
   return me;
 } /* end newObitErr */
@@ -242,12 +261,14 @@ void ObitErrPush (ObitErr *in, ObitErrCode errLevel, gchar *errMsg)
 /**
  * Fetch the top item on the stack.
  * This item is then removed.
- * \param in       Input ObitErr.
- * \param errLevel (output) Error level code.
- * \param errMsg   (output) Error message (deallocate with g_free when done).
- *                 NULL if there are no more messages.
+ * \param in         Input ObitErr.
+ * \param errLevel   (output) Error level code.
+ * \param errMsg     (output) Error message (deallocate with g_free when done).
+ *                   NULL if there are no more messages.
+ * \param errTimeTag (output) Error message (deallocate with g_free when done).
  */
-void ObitErrPop  (ObitErr *in, ObitErrCode *errLevel, gchar **errMsg)
+void ObitErrPop  (ObitErr *in, ObitErrCode *errLevel, gchar **errMsg, 
+		  time_t *errTimeTag)
 {
   ObitErrElem* elem;
 
@@ -255,8 +276,9 @@ void ObitErrPop  (ObitErr *in, ObitErrCode *errLevel, gchar **errMsg)
   g_assert (ObitErrIsA(in));
 
   /* default output */
-   *errLevel = OBIT_None;
-   *errMsg = NULL;
+   *errLevel   = OBIT_None;
+   *errMsg     = NULL;
+   *errTimeTag = 0;
 
   /* anything there */
   if (in->number <1) return;
@@ -269,8 +291,9 @@ void ObitErrPop  (ObitErr *in, ObitErrCode *errLevel, gchar **errMsg)
   if (elem==NULL) return; /* nothing in the stack */
 
   /* set output */
-  *errLevel = elem->errLevel;
-  *errMsg = g_strdup(elem->errMsg);
+  *errLevel   = elem->errLevel;
+  *errMsg     = g_strdup(elem->errMsg);
+  *errTimeTag = elem->timeTag;
 
   /* deallocate ObitErrElem */
   freeObitErrElem(elem);
@@ -287,33 +310,42 @@ void ObitErrLog  (ObitErr *in)
 {
   ObitErrCode errLevel;
   gchar *errMsg, *errLevelStr;
+  time_t timeTag;
+  struct tm *lp;
 /*
  * Human readable versions of the ObitErr codes.
  * Should be coordinated with enum definition.
  */
 gchar *ObitErrorLevelString[] = {
-  "no message",    /* OBIT_None        */
-  "info      ",    /* OBIT_InfoErr     */
-  "warning   ",    /* OBIT_InfoWarn    */
-  "traceback ",    /* OBIT_Traceback   */
-  "Mild error",    /* OBIT_MildError   */
-  "Error     ",    /* OBIT_Error       */
-  "Serious error", /* OBIT_StrongError */
-  "Fatal error",   /* OBIT_Fatal       */
+  "no msg ",    /* OBIT_None        */
+  "info   ",    /* OBIT_InfoErr     */
+  "warn   ",    /* OBIT_InfoWarn    */
+  "trace  ",    /* OBIT_Traceback   */
+  "MildErr",    /* OBIT_MildError   */
+  "Error  ",    /* OBIT_Error       */
+  "Serious",    /* OBIT_StrongError */
+  "Fatal  ",    /* OBIT_Fatal       */
 };
 
   /* error checks */
   g_assert (ObitErrIsA(in));
 
   /* loop logging messages */
-  ObitErrPop (in, &errLevel, &errMsg);
+  ObitErrPop (in, &errLevel, &errMsg, &timeTag);
   while (errMsg!=NULL) {
     /* convert error level to something human readable */
     errLevelStr = ObitErrorLevelString[errLevel];
+    /* Time */
+    lp = localtime (&timeTag);
+    if (lp->tm_year<1000) lp->tm_year += 1900;
     g_log (NULL,G_LOG_LEVEL_MESSAGE,
-		"%s: %s", errLevelStr, errMsg);
+	   "%s %4d%2.2d%2.2dT%2.2d%2.2d%2.2d %s", 
+	   errLevelStr, 
+	   lp->tm_year, lp->tm_mon+1, lp->tm_mday,
+	   lp->tm_hour, lp->tm_min, lp->tm_sec,
+	   errMsg);
     if (errMsg) g_free(errMsg); errMsg=NULL;
-    ObitErrPop (in, &errLevel, &errMsg);
+    ObitErrPop (in, &errLevel, &errMsg, &timeTag);
   }
   if (errMsg) g_free(errMsg); errMsg=NULL;
 
@@ -432,7 +464,8 @@ ObitErrElem*  newObitErrElem (ObitErrCode errLevel, gchar *errMsg)
 
   /* initialize values */
   me->errLevel = errLevel;
-  me->errMsg = g_strdup(errMsg);
+  me->errMsg   = g_strdup(errMsg);
+  time(&me->timeTag); /* Get time since 00:00:00 GMT, Jan. 1, 1970 in seconds. */
 
   return me;
 } /* end newObitErrElem */
@@ -454,3 +487,15 @@ ObitErrElem* freeObitErrElem (ObitErrElem *in)
   return NULL;
 } /* end freeObitErrElem */
 
+/**
+ * Default log handler
+ * \param message message to log
+ */
+/** Private: default log handler */
+static void DefaultLogHandler (const gchar *log_domain,
+			       GLogLevelFlags log_level,
+			       const gchar *message,
+			       gpointer user_data)
+{
+  fprintf (stdout, "Obit: %s\n", message);
+} /* end DefaultLogHandler */

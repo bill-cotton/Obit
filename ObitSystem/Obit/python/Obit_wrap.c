@@ -4114,6 +4114,7 @@ extern char *OErrMsg(ObitErr *in)
 {
   ObitErrCode errLevel;
   gchar *errMsg, *errLevelStr;
+  time_t errTimeTag;
 
 /*
  * Human readable versions of the ObitErr codes.
@@ -4133,7 +4134,7 @@ gchar *ObitErrorLevelString[] = {
   /* error checks */
   g_assert (ObitErrIsA(in));
 
-  ObitErrPop (in, &errLevel, &errMsg);
+  ObitErrPop (in, &errLevel, &errMsg, &errTimeTag);
   if(errMsg) {
     gchar *str;
     /* convert error level to something human readable */

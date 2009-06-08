@@ -27,6 +27,7 @@
 #ifndef OBITERR_H 
 #define OBITERR_H 
 #include <glib.h>
+#include <time.h>
 #include "ObitTypes.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
@@ -227,6 +228,8 @@ typedef struct {
   ObitErrCode errLevel;
   /** Error message string. */
   gchar *errMsg;
+  /** Time tag Unix seconds */
+  time_t timeTag;
 } ObitErrElem;
 
 /* Private functions defined only in ObitErr.c */
@@ -251,7 +254,8 @@ void ObitErrClearErr (ObitErr* in);
 void ObitErrPush (ObitErr *in, ObitErrCode errLevel, gchar *errMsg);
 
 /** Public: Pop last entry from top of stack. */
-void ObitErrPop  (ObitErr *in, ObitErrCode *errLevel, gchar **errMsg);
+void ObitErrPop  (ObitErr *in, ObitErrCode *errLevel, gchar **errMsg, 
+		  time_t *errTimeTag);
 
 /** Public: Write all entries in log file. */
 void ObitErrLog  (ObitErr *in);

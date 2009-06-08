@@ -695,6 +695,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
  *                 infoList element "ParGainUse" (int), if present gives image
  *                 specifies calibration table numbers.  
  *                 One value is used for all or oner per image
+ * \param nPar     Number of parallel images
  * \param outImage Array of Images to be written.  Must be previously instantiated.
  *                 Beam normalization factor is written to output Beam
  *                 infoList as "SUMWTS"
@@ -738,7 +739,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   ofloat sumwts, imMax, imMin;
   gchar *outName=NULL;
   olong i, j, ip, pos[5], nImage, nGain=0, *gainUse=NULL, gain;
-  olong NPIO, oldNPIO;
+  olong NPIO, oldNPIO, naxis[2], *arrayNx=NULL, *arrayNy=NULL;
   olong doCalib = 0;
   olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
@@ -784,9 +785,11 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   nGain = dim[0];
 
   /* Create work arrays */
-  data  = g_malloc0(nImage*sizeof(ObitUV*));
-  grids = g_malloc0(nImage*sizeof(ObitUVGrid*));
-  array = g_malloc0(nImage*sizeof(ObitFArray*));
+  data    = g_malloc0(nImage*sizeof(ObitUV*));
+  grids   = g_malloc0(nImage*sizeof(ObitUVGrid*));
+  array   = g_malloc0(nImage*sizeof(ObitFArray*));
+  arrayNx = g_malloc0(nImage*sizeof(olong));
+  arrayNy = g_malloc0(nImage*sizeof(olong));
 
   /* Loop over images creating things */
   ip = 0;
@@ -797,6 +800,8 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
     ObitInfoListPut (outImage[j]->info, "BLC", OBIT_long, dim, blc, err); 
     ObitInfoListPut (outImage[j]->info, "TRC", OBIT_long, dim, trc, err);
     if (err->error) Obit_traceback_msg (err, routine, outImage[j]->name);
+    outImage[j]->extBuffer = TRUE;  /* Use separate buffer */
+    outImage[j]->image = ObitImageUnref(outImage[j]->image);  /* No buffer needed here */
     if ((ObitImageOpen (outImage[j], OBIT_IO_ReadOnly, err) 
 	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
       Obit_log_error(err, OBIT_Error, 
@@ -828,10 +833,14 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
       ObitUVFullInstantiate (data[ip], TRUE, err);
       if (err->error) goto cleanup;
       /* Ensure beam image OK */
+      theBeam->extBuffer = TRUE;  /* Use separate buffer */
+      theBeam->image = ObitImageUnref(theBeam->image);  /* No buffer needed here */
       ObitImageOpen (theBeam, OBIT_IO_WriteOnly, err);
       ObitImageClose (theBeam, err);
       if (err->error) goto cleanup;
-      array[ip] = theBeam->image;
+      /*array[ip] = theBeam->image;*/
+      arrayNx[ip] = theBeam->myDesc->inaxes[0];
+      arrayNy[ip] = theBeam->myDesc->inaxes[1];
       outName = g_strconcat ("UVGrid for Beam: ",outImage[j]->name,NULL);
       grids[ip] = newObitUVGrid(outName);
       if (outName) g_free(outName); outName = NULL;
@@ -866,8 +875,10 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
     /* Ensure out fully instantiated and OK */
     ObitUVFullInstantiate (data[ip], TRUE, err);
     if (err->error) goto cleanup;
-    array[ip] = outImage[j]->image;
-    grids[ip] = ObitUVGridRef(outImage[j]->myGrid);
+    arrayNx[ip] = theBeam->myDesc->inaxes[0];
+    arrayNy[ip] = theBeam->myDesc->inaxes[1];
+    /*array[ip] = outImage[j]->image;*/
+    grids[ip]   = ObitUVGridRef(outImage[j]->myGrid);
     /* Any calibration setup */
     if (doCalib>0) {
       gain = 0;
@@ -936,6 +947,12 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
     }
   }
 
+  /* Create output image grids */
+  for (ip=0; ip<nImage; ip++) {
+    naxis[0]  = arrayNx[ip]; naxis[1]  = arrayNy[ip]; 
+    array[ip] = ObitFArrayCreate("Temp image", 2, naxis);
+  }
+
   /* FFT, Gridding correction */
   ObitUVGridFFT2ImPar (nImage, grids, array, err);
   if (err->error) goto cleanup;
@@ -988,6 +1005,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
 		     "Beam max %g, min %g for %s", imMax, imMin, theBeam->name);
 
       /* Fit beam */
+      theBeam->image = ObitImageRef(array[ip]);
       ObitImageUtilFitBeam (theBeam, err);
       if (err->error) goto cleanup;
 
@@ -997,7 +1015,8 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
       if (err->error) goto cleanup;
 
       /* Free image buffer */
-      theBeam->image = ObitFArrayUnref(theBeam->image);
+      theBeam->image = ObitImageUnref(array[ip]);
+      array[ip] = ObitFArrayUnref(array[ip]);
 
       /* Save last beam normalization in Beam infoList as "SUMWTS" */
       sumwts = outImage[j]->myGrid->BeamNorm;
@@ -1052,7 +1071,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
     if (err->error) goto cleanup;
     
     /* Free image buffer */
-    outImage[j]->image = ObitFArrayUnref(outImage[j]->image);
+    array[ip] = ObitFArrayUnref(array[ip]);
     ip++;
   } /* end loop writing output */
 
@@ -1077,6 +1096,8 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   } /* end if data */
 
   g_free(array); /* Pixel arrays already deleted */
+  g_free(arrayNx);
+  g_free(arrayNy);
 
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
 }  /* end ObitImageUtilMakeImagePar */
