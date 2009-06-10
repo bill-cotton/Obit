@@ -27,9 +27,12 @@
 #include <errno.h>
 #include <time.h>
 #include <sys/times.h>
+/* Bah humbug */
 #  ifndef CLK_TCK
-#   define CLK_TCK  CLOCKS_PER_SEC
-# endif
+#   include <bits/types.h>
+extern long int __sysconf (int);
+#   define CLK_TCK ((__clock_t) __sysconf (2))  /* 2 is _SC_CLK_TCK */
+#  endif
 #include "Obit.h"
 #include "ObitSystem.h"
 #include "ObitAIPS.h"
