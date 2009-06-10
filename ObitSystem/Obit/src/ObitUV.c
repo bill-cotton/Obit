@@ -215,6 +215,7 @@ ObitUV* newObitUV (gchar* name)
  *         Smooth(3) = the diameter over which the convolving
  *           function has value - in channels.
  *           Defaults: 1, 3, 1, 4 times Smooth(2) used when
+ * \li xxxAlpha  OBIT_float (1,1,1) Spectral index to apply, 0=none
  * \li xxxSubScanTime Obit_float scalar [Optional] if given, this is the 
  *          desired time (days) of a sub scan.  This is used by the 
  *          selector to suggest a value close to this which will
@@ -239,7 +240,8 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
 			  "doPol", "doCalib", "gainUse", "flagVer", "BLVer", "BPVer",
 			  "Subarray", "dropSubA", "FreqID", "timeRange", "UVRange",
 			  "InputAvgTime", "Sources", "souCode", "Qual", "Antennas",
-			  "corrType", "passAll", "doBand", "Smooth", "SubScanTime",
+			  "corrType", "passAll", "doBand", "Smooth", "Alpha", 
+			  "SubScanTime",
 			  NULL};
   gchar *routine = "ObiUVFromFileInfo";
 
@@ -2795,7 +2797,7 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   gint32 i, dim[MAXINFOELEMDIM];
   olong itemp, *iptr, Qual;
   olong iver, j, count=0;
-  ofloat ftempArr[10];
+  ofloat ftempArr[10], fblank = ObitMagicF();
   ObitTableSU *SUTable=NULL;
   union ObitInfoListEquiv InfoReal; 
   gchar tempStr[5], souCode[5], *sptr;
@@ -2959,19 +2961,24 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
 
   /* Bandpass calibration */
   InfoReal.itg = 0; type = OBIT_oint;
-  ObitInfoListGetTest(info, "doBand", &type, (gint32*)dim, &InfoReal);
+  ObitInfoListGetTest(info, "doBand", &type, dim, &InfoReal);
   if (type==OBIT_float) itemp = InfoReal.flt + 0.5;
   else itemp = InfoReal.itg;
   sel->doBPCal = itemp > 0;
   sel->doBand = itemp;
   itemp = 0;
-  ObitInfoListGetTest(info, "BPVer", &type, (gint32*)dim, &InfoReal);
+  ObitInfoListGetTest(info, "BPVer", &type, dim, &InfoReal);
   sel->BPversion = itemp;
 
   /* Spectral smoothing */
   for (i=0; i<3; i++) ftempArr[i] = 0.0; 
-  ObitInfoListGetTest(info, "Smooth", &type, (gint32*)dim, &ftempArr);
+  ObitInfoListGetTest(info, "Smooth", &type, dim, &ftempArr);
   for (i=0; i<3; i++) sel->smooth[i] = ftempArr[i];
+
+  /* Spectral index to apply */
+  ftempArr[0] = 0.0;
+  ObitInfoListGetTest(info, "Alpha", &type, dim, ftempArr);
+  sel->alpha = ftempArr[0];
 
   /* Data averaging time */
   if (ObitInfoListGetTest(info, "InputAvgTime", &type, (gint32*)dim, 

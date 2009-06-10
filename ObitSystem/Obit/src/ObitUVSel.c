@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -178,6 +178,7 @@ ObitUVSel* ObitUVSelCopy (ObitUVSel* in, ObitUVSel* out,
   out->doFlag      = in->doFlag;
   out->FGversion   = in->FGversion;
   out->passAll     = in->passAll;
+  out->alpha       = in->alpha;
   for (i=0; i<5; i++) out->Stokes[i] = in->Stokes[i];
   for (i=0; i<3; i++) out->smooth[i] = in->smooth[i];
 
@@ -817,6 +818,7 @@ static void ObitUVSelClassInfoDefFn (gpointer inClass)
 void ObitUVSelInit  (gpointer inn)
 {
   ObitClassInfo *ParentClass;
+  ofloat fblank = ObitMagicF();
   ObitUVSel *in = inn;
 
   /* error checks */
@@ -846,6 +848,7 @@ void ObitUVSelInit  (gpointer inn)
   in->UVRange[0]    = 0.0;
   in->UVRange[1]    = 1.0e20;
   in->smooth[0]     = 0.0;
+  in->alpha         = fblank;
   in->corrType      = 1;
   in->doBand        = FALSE;
   in->doCal         = FALSE;

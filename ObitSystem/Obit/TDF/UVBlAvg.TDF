@@ -84,11 +84,11 @@ doBand           -1.0       10.0    If >0 apply bandpass cal.
 BPVer                               Bandpass table version
 **PARAM** float 3
 Smooth                              Smoothing function. 
-**PARAM** float 1 **DEF** 0.333
+**PARAM** float 1 **DEF** 0.25
 FOV                                 Field of view (deg)
-**PARAM** float 1 **DEF** 0.3333
+**PARAM** float 1 **DEF** 0.25
 maxInt                              Maximum integration (min)
-**PARAM** float 1 **DEF** 1.01
+**PARAM** float 1 **DEF** 1.004
 maxFact                             Maximum time smearing factor
 **PARAM** int 1
 avgFreq          0.0        9.0     Frequency averaging control
@@ -126,6 +126,9 @@ Task:  Frequency and time average UV data with averaging times
 depending on time and baseline.  The averaging time is the lesser
 of maxInt and the time it takes for time smearing to reduce the 
 visibility amplitude by maxFact.
+
+A description of this task can be found in
+ftp://ftp.cv.nrao.edu/NRAO-staff/bcotton/Obit/BLAverage.pdf
 
 Adverbs:
   DataType..'FITS' or 'AIPS'  type of input
@@ -258,4 +261,33 @@ Adverbs:
   Compress...If True  the output data is written in
              compressed format which can result in a substantial
              reduction in disk space needed.  
+
+VLA Beam sizes
+--------------
+Freq (GHz)  FOV of full beam(deg)
+   0.074           5.00
+   0.330           1.25
+   1.4             0.25
+   5.0             0.075
+   8.              0.045
+  15               0.025
+  22               0.01667
+  45               0.00833
+
+Recommended Parameters
+----------------------
+maxFact
+For undistorted imaging with a field of view half of the primary 
+beam size, a maxFact=1.0025 or maxFact=1.004 for a FOV of the full 
+primary beam will result in a reduction in the data volume of 5-6
+with a limit on the dynamic range near bright sources at the edge 
+of the field of view of about 10^5.3 and a reduction in the peak 
+brightness at the edge of the field of view of no more than 0.3%.
+
+maxInt
+A value of maxInt=0.25 (15 seconds) has minimal impact on the 
+size of the output data set for VLA A and B configuration data 
+and allows subsequent self calibration with a solution interval 
+of 15 seconds or longer.
+
 ----------------------------------------------------------------

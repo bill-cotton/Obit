@@ -316,9 +316,9 @@ ObitImage* ObitImageUtilCreateImage (ObitUV *inUV, olong fieldNo,
  *              Uses AIPS rather than Briggs definition of Robust.
  * \li "WtPower" OBIT_float scalar = Power to raise weights to.  [def = 1.0]
  *              Note: a power of 0.0 sets all the output weights to 1 as modified
- *              by uniform/Tapering weighting.  Applied in determinng weights 
+ *              by uniform/Tapering weighting.  Applied in determining weights 
  *              as well as after.
- *
+ * 
  *  Output Image prefix = "OutImg" Image to be written.  Must be previously defined.
  *      Beam normalization factor is written to output Beam
  *      infoList as SUMWTS

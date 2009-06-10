@@ -446,6 +446,7 @@ void Usage(void)
 /*     minFluxPSC Flt(1)    min peak flux for phase selfcal               */
 /*     minFluxASC Flt(1)    min peak flux for A&P selfcal                 */
 /*     PeelFlux   Flt(1)    min peak flux peel (1.0e20)                   */
+/*     Alpha      Flt(1)    default spectral index (0)                    */
 /*     dispURL    Str(48)   Display derver URL                            */
 /*----------------------------------------------------------------------- */
 ObitInfoList* defaultInputs(ObitErr *err)
@@ -801,6 +802,12 @@ ObitInfoList* defaultInputs(ObitErr *err)
   ObitInfoListPut (out, "PeelFlux", OBIT_float, dim, &ftemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
+  /* default Spectral index */
+  dim[0] = 1;dim[1] = 1;
+  ftemp = 0.0; 
+  ObitInfoListPut (out, "Alpha", OBIT_float, dim, &ftemp, err);
+  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  
   /* Display URL, def = "None" */
   strTemp = "None";
   dim[0] = strlen (strTemp); dim[1] = 1;
@@ -988,7 +995,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   }
 
   /* Make sure doCalSelect set properly */
-  doCalSelect = FALSE;
+  doCalSelect = TRUE;
   ObitInfoListGetTest(myInput, "doCalSelect",  &type, dim, &doCalSelect);
   doCalib = -1;
   ObitInfoListGetTest(myInput, "doCalib",  &type, dim, &doCalib);
@@ -1403,7 +1410,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
     "MaxBaseline", "MinBaseline", "rotate", "Beam",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
-    "nxBeam", "nyBeam",
+    "nxBeam", "nyBeam", "Alpha", "doCalSelect", 
     NULL
   };
   gchar        *saveParms[] = {  /* Imaging, weighting parameters to save*/
@@ -2269,7 +2276,7 @@ void SquintHistory (gchar *Source, ObitInfoList* myInput,
     "ccfLim", "SDIGain",
     "Reuse", "autoCen", "Beam",  "Cmethod",  "CCFilter",  "maxPixel", 
     "PBCor", "antSize", "doRestore", "doFull",  
-    "autoWindow", "subA",  
+    "autoWindow", "subA",  "Alpha",
     "modelFlux", "modelPos", "modelParm",
     "maxPSCLoop", "minFluxPSC", "solPInt", "solPType", "solPMode", 
     "maxASCLoop", "minFluxASC", "solAInt", "solAType", "solAMode", 

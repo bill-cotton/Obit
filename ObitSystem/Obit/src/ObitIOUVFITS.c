@@ -2370,6 +2370,7 @@ ObitIOCode ObitIOUVFITSUpdateTables (ObitIOUVFITS *in, ObitInfoList *info,
  *         Smooth(3) = the diameter over which the convolving
  *           function has value - in channels.
  *           Defaults: 1, 3, 1, 4 times Smooth(2) used when
+ * \li xxxAlpha  OBIT_float (1,1,1) Spectral index to apply, 0=none
  * \li xxxSubScanTime Obit_float scalar [Optional] if given, this is the 
  *          desired time (days) of a sub scan.  This is used by the 
  *          selector to suggest a value close to this which will
@@ -2391,7 +2392,7 @@ void ObitIOUVFITSGetFileInfo (ObitIO *in, ObitInfoList *myInfo, gchar *prefix,
 		   "doPol", "doCalib", "gainUse", "flagVer", "BLVer", "BPVer",
 		   "Subarray", "dropSubA", "FreqID", "timeRange", "UVRange",
 		   "InputAvgTime", "Sources", "souCode", "Qual", "Antennas",
-		   "corrType", "passAll", "doBand", "Smooth", "SubScanTime",
+		   "corrType", "passAll", "doBand", "Smooth", "Alpha", "SubScanTime",
 		   NULL};
   gchar *routine = "ObitIOUVFITSGetFileInfo";
   

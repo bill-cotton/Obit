@@ -153,7 +153,7 @@ int main ( int argc, char **argv )
   scrData = newObitUVScratch (outData, err);
 
   /* Get frequency information */
-  ObitUVOpen (scrData, OBIT_IO_ReadWrite, err);
+  ObitUVOpen (scrData, OBIT_IO_WriteOnly, err);
   GetFrequencyInfo (myInput, scrData, err);
   ObitUVClose (scrData, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;

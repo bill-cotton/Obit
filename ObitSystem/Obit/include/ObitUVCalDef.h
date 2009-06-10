@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -94,6 +94,8 @@ ofloat selFact[4][2];
  *            Defaults: 1, 3, 1, 4 times SMOOTH(2) used when
  */
 ofloat smooth[3];
+/** Spectral index to apply to data (wrt ref Freq) */
+ofloat alpha;
 /** Start channel number for smoothing (1-rel) {BCHANS}*/
 olong bChanSmo;
 /** highest channel for smoothing (1-rel) {ECHANS} */
@@ -104,6 +106,8 @@ olong SmoothWidth;
 ofloat *SmoothConvFn;
 /** Spectral smoothing work array */
 ofloat *SmoothWork;
+/** Spectral Index work array */
+ofloat *SpecIndxWork;
 /** SourceList with source info */
 ObitSourceList *sourceList;
 /** Array of AntennaLists one per subarray */

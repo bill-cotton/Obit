@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN a uv data set with field-based cal        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -445,6 +445,7 @@ void Usage(void)
 /*     solInt    Flt (1)    Solution interval [1 min]                     */
 /*     MaxRMS    Flt (1)    Target RMS residual [30]                      */
 /*     UpdateInt Flt (1)    Interval (min) between cal. updates in apply  */
+/*     Alpha     Flt (1)    default spectral index (0)                    */
 /*     dispURL   Str(48)    Display derver URL                            */
 /*----------------------------------------------------------------------- */
 ObitInfoList* defaultInputs(ObitErr *err)
@@ -786,6 +787,12 @@ ObitInfoList* defaultInputs(ObitErr *err)
   dim[0] = 1;dim[1] = 1;
   ftemp = 30.0; 
   ObitInfoListPut (out, "MaxRMS", OBIT_float, dim, &ftemp, err);
+  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+
+  /* default Spectral index */
+  dim[0] = 1;dim[1] = 1;
+  ftemp = 0.0; 
+  ObitInfoListPut (out, "Alpha", OBIT_float, dim, &ftemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* Display URL, def = "None" */
@@ -1359,7 +1366,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
     "MaxBaseline", "MinBaseline", "rotate", "Beam",
     "NField", "xCells", "yCells", "nx", "ny", "RAShift", "DecShift",
-    "nxBeam", "nyBeam", "dispURL",
+    "nxBeam", "nyBeam", "dispURL", "Alpha", "doCalSelect", 
     NULL
   };
   gchar        *saveParms[] = {  /* Imaging, weighting parameters to save*/
@@ -2015,7 +2022,7 @@ void IonImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "Beam",  "CCFilter",  "maxPixel", "autoWindow", "subA",
     "doFCal", "ionVer", "UpdateInt", "solInt", "nZern", "FitDist", "MaxDist", "MinPeak", 
     "MaxWt", "MaxQual", "MaxRMS", "MinRat", "FCNiter", "FCGain", "FCminFlux", 
-    "seeing", "autoCen","PBCor", "antSize",
+    "seeing", "autoCen","PBCor", "antSize", "Alpha",
     "PeelFlux", "PeelRefAnt", "PeelSNRMin", "PeelSolInt", "PeelNiter", "PeelMinFlux",
     "PeelAvgPol", "PeelAvgIF", "PeelType", "PeelMode",
     "nThreads",

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -106,6 +106,8 @@ ofloat UVRange[2];
  *            Defaults: 1, 3, 1, 4 times SMOOTH(2) used when
  */
 ofloat smooth[3];
+/** Spectral index to apply to data (wrt ref Freq) */
+ofloat alpha;
 /** do Polarization Calibration? */
 gboolean doPolCal;
 /** do Baseline dependent calibration? */

@@ -82,6 +82,8 @@ Data selection, calibration and editing parameters on List member:
       Smooth(3) = the diameter over which the convolving
         function has value - in channels.
         Defaults: 1, 3, 1, 4 times Smooth(2) used when
+ "Alpha" float scalar If != 0.0 then correct data by spectral index Alpha
+        -0.7 is typical for synchrotron.
  "SubScanTime" float scalar [Optional] if given, this is the 
       desired time (days) of a sub scan.  This is used by the 
       selector to suggest a value close to this which will
@@ -91,7 +93,7 @@ Data selection, calibration and editing parameters on List member:
 """
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2007
+#  Copyright (C) 2004-2009
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or

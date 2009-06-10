@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry calibration software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006-2008
+;;  Copyright (C) 2006-2009
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -76,6 +76,8 @@ BPVer                               Bandpass table version
 flagVer                             Flag table version
 **PARAM** boo 1 **DEF** F
 doPol                               Apply polarization cal?
+**PARAM** float 1  **DEF** 0.0
+Alpha           -20.       20.      Spectral Index to correct
 **PARAM** str 4
 DataType2                           "FITS" or "AIPS" type of model
 **PARAM** str 48
@@ -219,6 +221,9 @@ Adverbs:
                <0 => no bandpass correction to be applied.
   flagVer....FG table to use for editing. 0 => highest.
   doPol......>=1 apply polarization calibration
+  Alpha......If != 0.0 then correct data by spectral index Alpha before 
+             calibration. 
+             -0.7 is typical for synchrotron.
 
       Model
   DataType2.'FITS' or 'AIPS'  type of input, defaults to DataType

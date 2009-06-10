@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -368,13 +368,14 @@ void Usage(void)
 /*     flagVer   Int (1)    Flagging table version, def=0                 */
 /*     BPVer     Int (1)    Bandpass table version, 0=highest, def=0      */
 /*     doPol     Boo (1)    Apply polarization calibration?, def=False    */
+/*     Alpha      Flt(1)    default spectral index (0)                    */
 /*----------------------------------------------------------------------- */
 ObitInfoList* defaultInputs(ObitErr *err)
 {
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *strTemp;
   oint   itemp;
-  ofloat farray[3];
+  ofloat ftemp, farray[3];
   gboolean btemp;
   ObitInfoList *out = newObitInfoList();
   gchar *routine = "defaultInputs";
@@ -501,6 +502,12 @@ ObitInfoList* defaultInputs(ObitErr *err)
   ObitInfoListPut (out, "subA", OBIT_oint, dim, &itemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
+  /* default Spectral index */
+  dim[0] = 1;dim[1] = 1;
+  ftemp = 0.0; 
+  ObitInfoListPut (out, "Alpha", OBIT_float, dim, &ftemp, err);
+  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+
   return out;
 } /* end defaultInputs */
 
@@ -604,7 +611,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "BChan", "EChan",   "BIF", "EIF", "subA",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "doPol",
-    "Antennas", "Mode", "ModelType", 
+    "Antennas", "Mode", "ModelType", "Alpha",
      NULL};
   gchar *routine = "getInputData";
 
@@ -1078,7 +1085,7 @@ void CalibHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "doPol", "Antennas",  "refAnt", 
     "DataType2", "in2File", "in2Disk", "in2Name", "in2Class", "in2Seq", 
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
-    "modelFlux", "modelPos", "modelParm", 
+    "modelFlux", "modelPos", "modelParm", "Alpha",
     "solInt", "solType", "solMode", "avgPol", "avgIF", "doMGM", "minSNR",
     "minNo", "prtLv",
     "nThreads",

@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1231,6 +1231,7 @@ void ObitDataReadKeyword (ObitData *in,
  *         Smooth(3) = the diameter over which the convolving
  *           function has value - in channels.
  *           Defaults: 1, 3, 1, 4 times Smooth(2) used when
+ * \li xxxAlpha  OBIT_float (1,1,1) Spectral index to apply, 0=none
  * \li xxxSubScanTime Obit_float scalar [Optional] if given, this is the 
  *          desired time (days) of a sub scan.  This is used by the 
  *          selector to suggest a value close to this which will
@@ -1373,6 +1374,7 @@ void ObitDataGetFileInfo (ObitData *in, gchar *prefix, ObitInfoList *outList,
  *         Smooth(3) = the diameter over which the convolving
  *           function has value - in channels.
  *           Defaults: 1, 3, 1, 4 times Smooth(2) used when
+ * \li xxxAlpha  OBIT_float (1,1,1) Spectral index to apply, 0=none
  * \li xxxSubScanTime Obit_float scalar [Optional] if given, this is the 
  *          desired time (days) of a sub scan.  This is used by the 
  *          selector to suggest a value close to this which will

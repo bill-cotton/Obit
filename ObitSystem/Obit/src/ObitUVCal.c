@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -66,13 +66,16 @@ void  ObitUVCalInit  (gpointer in);
 /** Private: Deallocate members. */
 void  ObitUVCalClear (gpointer in);
 
-/** Public: Init Smoothing */
+/** Private: Init Smoothing */
 static void 
 ObitUVCalSmoothInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc, 
 		     ObitErr *err);
 
 /** Private: Set Class function pointers. */
 static void ObitUVCalClassInfoDefFn (gpointer inClass);
+
+/** Private: Apply spectral index corrections. */
+static void ApplySpecIndex (ObitUVCal *in, ofloat *vis);
 
 /*----------------------Public functions---------------------------*/
 /**
@@ -212,7 +215,8 @@ ObitUVCal* ObitUVCalClone  (ObitUVCal *in, ObitUVCal *out)
 void ObitUVCalStart (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc, 
 		     ObitUVDesc *outDesc, ObitErr *err)
 {
-  olong i, sid;
+  olong i, ichan, ifreq, iif, istok, nfreq, nif, nstok, sid;
+  olong incs, incf, incif;
   gchar *routine = "ObitUVCalStart";
 
   /* error checks */
@@ -268,6 +272,7 @@ void ObitUVCalStart (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
   in->bIF       = sel->startIF;
   in->eIF       = sel->startIF + sel->numberIF - 1;
   in->dropSubA  = sel->dropSubA;
+  in->alpha     = sel->alpha;
 
   /* Get source information - is there a source table, or get from header? */
   if (in->SUTable) { /* Read table */
@@ -295,6 +300,34 @@ void ObitUVCalStart (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
 
   /* Create AntennaLists */
   in->antennaLists = g_malloc0(in->numSubA*sizeof(ObitAntennaList*));
+
+  /* Setup spectral index correction if needed */
+  if (fabs(in->alpha)>0.0) {
+    if (in->SpecIndxWork) g_free(in->SpecIndxWork);  /* Delete old one */
+    in->SpecIndxWork = g_malloc0(in->myDesc->ncorr*sizeof(ofloat));
+    nstok = in->myDesc->inaxes[in->myDesc->jlocs];
+    nfreq = in->myDesc->inaxes[in->myDesc->jlocf];
+    if (in->myDesc->jlocif>=0)  nif = in->myDesc->inaxes[in->myDesc->jlocif];
+    else nif = 1;
+    incs  = in->myDesc->incs / 3;
+    incf  = in->myDesc->incf / 3;
+    incif = in->myDesc->incif / 3;
+    for (istok=0; istok<nstok; istok++) {
+      for (iif=0; iif<nif; iif++) {
+	for (ifreq=0; ifreq<nfreq; ifreq++) {
+	  /* Get frequency for this correlation */
+	  if (in->myDesc->jlocf<in->myDesc->jlocif)
+	    ichan = iif*nfreq + ifreq;
+	  else
+	    ichan = iif + ifreq*nif;
+	  /* Which correlation? */
+	  i = iif*incif + ifreq*incf + istok*incs;
+	  in->SpecIndxWork[i] = (ofloat)pow((double)(in->myDesc->freqArr[ichan]/in->myDesc->freq), 
+					    -(double)in->alpha);
+	}
+      }
+    }
+  } /* end spectral index setup */
 
   /* Read Polarization calibration from AN tables  */
   if ((sel->doPolCal)  || (sel->doBPCal)) {
@@ -393,6 +426,7 @@ gboolean  ObitUVCalApply (ObitUVCal *in, ofloat *recIn,
   if (in->doCal)  ObitUVCalCalibrate(in, time, ant1, ant2, recIn, visIn, err);
   if (in->doBP)   ObitUVCalBandpass(in, time, ant1, ant2, recIn, visIn, err);
   if (in->doPol)  ObitUVCalPolarization(in, time, ant1, ant2, recIn, visIn, err);
+  if (in->SpecIndxWork!=NULL) ApplySpecIndex(in, visIn); /* Spectral index? */
   OK = ObitUVCalSelect(in, recIn, visIn, visOut,err);
 
   /* If selecting in IF, scale U,V.W */
@@ -703,6 +737,7 @@ void ObitUVCalInit  (gpointer inn)
   in->SNTable     = NULL;
   in->SmoothConvFn= NULL;
   in->SmoothWork  = NULL;
+  in->SpecIndxWork= NULL;
   in->sourceList  = NULL;
   in->antennaLists= NULL;
 
@@ -745,7 +780,8 @@ void ObitUVCalClear (gpointer inn)
     if (in->ANTables) g_free(in->ANTables);
   }
   if (in->SmoothConvFn) g_free(in->SmoothConvFn);
-  if (in->SmoothWork) g_free(in->SmoothWork);
+  if (in->SmoothWork)   g_free(in->SmoothWork);
+  if (in->SpecIndxWork) g_free(in->SpecIndxWork);
   in->sourceList = ObitSourceListUnref(in->sourceList);
   if (in->antennaLists) {
     for (i=0; i<in->numSubA; i++) 
@@ -769,13 +805,13 @@ void ObitUVCalClear (gpointer inn)
  * \li (2) = width of function in channels
  * \li (3) = support of function in channels 
  * Adapted from the AIPS SETSM.FOR
- * \param in   Flag Object.
+ * \param in   UVCal Object.
  * \param sel  Data selector.
  * \param desc Data descriptor.
  * \param err  ObitError stack.
  */
 void ObitUVCalSmoothInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc, 
-		    ObitErr *err)
+			  ObitErr *err)
 {
   olong   i, n, lspect, iType, suprad;
   ofloat  fx, x, w;
@@ -890,8 +926,29 @@ void ObitUVCalSmoothInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
   if (w <= 0.0) w = 1.0;
   for (i= 0; i<n; i++)  in->SmoothConvFn[i] /=  w;
   
-} /*  end ObitUVCalFlagInit */
+} /*  end ObitUVCalSmoothInit */
 
+/**
+ * Applys spectral index correction
+ * Correction factors in in->SpecIndxWork, 1 per correlation
+ * \param in   UVCal Object.
+ * \param vis  [in/out] visibility array
+ */
+static void ApplySpecIndex (ObitUVCal *in, ofloat *vis)
+{
+  olong   i, ncorr;
+  
+  /* Are we doing it? -  to be sure check parameters */
+  if (in->SpecIndxWork==NULL) return;
 
-
+  /* Loop */
+  ncorr = in->myDesc->ncorr;
+  for (i=0; i<ncorr; i++) {
+    if (vis[3*i+2]>0.0) {
+      vis[3*i+0] *= in->SpecIndxWork[i];
+      vis[3*i+1] *= in->SpecIndxWork[i];
+      vis[3*i+2] /= in->SpecIndxWork[i];
+    }
+  }
+} /*  ApplySpecIndex */
 

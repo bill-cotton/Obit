@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to subtract CLEAN components from uvdata.                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -418,6 +418,7 @@ void Usage(void)
 /*     mrgCC     Boo [1]    Merge CC tables                               */
 /*     PBCor     Boo [1]    pri. beam corr?, def=True                     */
 /*     antSize   Flt [1]    effective diameter (m) of primary, def=25     */
+/*     Alpha     Flt (1)    default spectral index (0)                    */
 /*----------------------------------------------------------------------- */
 ObitInfoList* defaultInputs(ObitErr *err)
 {
@@ -654,6 +655,12 @@ ObitInfoList* defaultInputs(ObitErr *err)
   ObitInfoListPut (out, "Stokes", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
+  /* default Spectral index */
+  dim[0] = 1;dim[1] = 1;
+  ftemp = 0.0; 
+  ObitInfoListPut (out, "Alpha", OBIT_float, dim, &ftemp, err);
+  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+
   return out;
 } /* end defaultInputs */
 
@@ -766,7 +773,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "BChan", "EChan",  "BIF", "EIF", "subA",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "doPol",
-    "Smooth", "Antennas",  "Sources",  "souCode", "Qual", 
+    "Smooth", "Antennas",  "Sources",  "souCode", "Qual", "Alpha", 
      NULL};
   gchar *routine = "getInputData";
 
@@ -1242,7 +1249,7 @@ void UVSubHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     "outFile",  "outDisk",  "outName", "outClass", "outSeq",
     "Cmethod", "Cmodel", "Factor",  "Opcode", 
     "modelFlux", "modelPos", "modelParm",
-    "mrgCC", "PBCor", "antSize",
+    "mrgCC", "PBCor", "antSize", "Alpha",
     "nThreads",
     NULL};
   gchar *routine = "UVSubHistory";
