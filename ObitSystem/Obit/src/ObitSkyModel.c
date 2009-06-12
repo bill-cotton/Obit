@@ -1429,11 +1429,13 @@ gboolean ObitSkyModelLoadPoint (ObitSkyModel *in, ObitUV *uvdata, ObitErr *err)
     in->nSpecTerm = cnt;
   }
 
- /* (re)allocate structure */
+  /* (re)allocate structure */
   ndim = 2;
   naxis[0] = 4; naxis[1] = 1;
-  if (in->pointParms[3]==1.) naxis[0] += 3; /* Gaussian */
-  if (in->pointParms[3]==2.) naxis[0] += 2; /* Uniform sphere */
+  if (in->modType==OBIT_SkyModel_GaussMod)       naxis[0] += 3; /* Gaussian */
+  if (in->modType==OBIT_SkyModel_GaussModSpec)   naxis[0] += 3; /* Gaussian */
+  if (in->modType==OBIT_SkyModel_USphereMod)     naxis[0] += 2; /* Uniform sphere */
+  if (in->modType==OBIT_SkyModel_USphereModSpec) naxis[0] += 2; /* Uniform sphere */
   /* Any spectral terms */
   naxis[0] += in->nSpecTerm;
   if (in->comps!=NULL) in->comps = ObitFArrayRealloc(in->comps, ndim, naxis);
@@ -1446,7 +1448,6 @@ gboolean ObitSkyModelLoadPoint (ObitSkyModel *in, ObitUV *uvdata, ObitErr *err)
   table[1] = xxoff;
   table[2] = yyoff;
   table[3] = zzoff;
-  for (i=0; i<in->nSpecTerm; i++) table[i+4] = in->pointParms[i+4];
 
   /* Gaussian */
   if (in->modType==OBIT_SkyModel_GaussMod) {
@@ -1461,11 +1462,32 @@ gboolean ObitSkyModelLoadPoint (ObitSkyModel *in, ObitUV *uvdata, ObitErr *err)
     table[6] = -2.0 *  cpa * spa * (xmaj*xmaj - xmin*xmin);
   }
 
+  /* Gaussian + spectrum */
+  if (in->modType==OBIT_SkyModel_GaussModSpec) {
+    /* const2 converts FWHM(asec) to coefficients for u*u, v*v, u*v */
+    const2 = DG2RAD * (G_PI / 1.17741022) * sqrt (0.5) * 2.77777778e-4;
+    cpa = cos (DG2RAD * in->pointParms[2]);
+    spa = sin (DG2RAD * in->pointParms[2]);
+    xmaj = in->pointParms[0] * const2;
+    xmin = in->pointParms[1] * const2;
+    table[4] = -(((cpa * xmaj)*(cpa * xmaj)) + (spa * xmin)*(spa * xmin));
+    table[5] = -(((spa * xmaj)*(spa * xmaj)) + (cpa * xmin)*(cpa * xmin));
+    table[6] = -2.0 *  cpa * spa * (xmaj*xmaj - xmin*xmin);
+    for (i=0; i<in->nSpecTerm; i++) table[i+7] = in->pointParms[i+4];
+  }
+
   /* Uniform sphere */
   if (in->modType==OBIT_SkyModel_USphereMod) {
     table[0] = 3.0 * in->pointFlux * in->factor;
     table[4] = in->pointParms[1]  * 0.109662271 * 2.7777778e-4;
     table[5] = 0.1;
+ }
+  /* Uniform sphere + spectrum*/
+  if (in->modType==OBIT_SkyModel_USphereModSpec) {
+    table[0] = 3.0 * in->pointFlux * in->factor;
+    table[4] = in->pointParms[1]  * 0.109662271 * 2.7777778e-4;
+    table[5] = 0.1;
+    for (i=0; i<in->nSpecTerm; i++) table[i+6] = in->pointParms[i+4];
  }
 
   return gotSome;
@@ -1614,8 +1636,10 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
   /* (re)allocate structure */
   ndim = 2;
   naxis[0] = 4; naxis[1] = count;
-  if (in->modType==OBIT_SkyModel_GaussMod)   naxis[0] += 3; /* Gaussian */
-  if (in->modType==OBIT_SkyModel_USphereMod) naxis[0] += 2; /* Uniform sphere */
+  if (in->modType==OBIT_SkyModel_GaussMod)       naxis[0] += 3; /* Gaussian */
+  if (in->modType==OBIT_SkyModel_GaussModSpec)   naxis[0] += 3; /* Gaussian */
+  if (in->modType==OBIT_SkyModel_USphereMod)     naxis[0] += 2; /* Uniform sphere */
+  if (in->modType==OBIT_SkyModel_USphereModSpec) naxis[0] += 2; /* Uniform sphere */
 
   /* Any spectral terms */
   naxis[0] += in->nSpecTerm;

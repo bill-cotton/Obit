@@ -149,8 +149,8 @@ ObitImageFitDataCreate (gchar* name, ObitFitRegion *reg,
   doGMinLow  = ObitInfoListGetTest(bounds, "GMinLow",  &type, dim, &GMinLow);
 
   /* Avoid crazy values */
-  GMajLow = MAX(1.0e-20, GMajLow); doGMajLow = TRUE;
-  GMinLow = MAX(1.0e-20, GMinLow); doGMinLow = TRUE;
+  GMajLow = MAX(0.5, GMajLow); doGMajLow = TRUE;
+  GMinLow = MAX(0.5, GMinLow); doGMinLow = TRUE;
 
   /* Create basic structure */
   out = newObitImageFitData (name);
@@ -264,7 +264,8 @@ ObitImageFitDataCreate (gchar* name, ObitFitRegion *reg,
   /* Fill Values - keep away from lower bound */
   for (i=0; i<out->ncomp; i++) {
     if (out->type[i] == OBIT_FitModel_GaussMod) {
-      out->p[i][0]  = out->rscale * reg->models[i]->Peak;
+      /* Initial peak is no more than max in image */
+      out->p[i][0]  = out->rscale * MIN (rmax, reg->models[i]->Peak);
       out->p[i][1]  = reg->models[i]->DeltaX;
       out->p[i][2]  = reg->models[i]->DeltaY;
       /* internal and external different maj, min */
