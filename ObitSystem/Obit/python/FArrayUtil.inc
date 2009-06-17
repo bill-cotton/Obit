@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitFarray type                        */
 /*                                                                    */
-/*;  Copyright (C) 2005                                               */
+/*;  Copyright (C) 2005,2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -59,6 +59,19 @@ ObitFArray* FArrayUtilConvolve (ObitFArray *in1, ObitFArray *in2,
 	 		        ObitErr *err)
 {
   return ObitFArrayUtilConvolve (in1, in2, err);
+}  // end FArrayUtilConvolve
+ 
+// Gaussian UV Taper 
+ObitFArray* FArrayUtilUVGaus (int *naxis, float *cells, float maprot,
+			      float Gaumaj, float Gaumin, float GauPA)
+{
+  olong lnaxis[2];
+  ofloat lcells[2];
+
+  lnaxis[0] = (olong)naxis[0];  lnaxis[1] = (olong)naxis[1]; 
+  lcells[0] = (ofloat)cells[0]; lcells[1] = (ofloat)cells[1]; 
+  return ObitFArrayUtilUVGaus (&lnaxis[0], &lcells[0], (ofloat)maprot, 
+                               (ofloat)Gaumaj, (ofloat)Gaumin, (ofloat)GauPA);
 }  // end FArrayUtilConvolve
 %}
 

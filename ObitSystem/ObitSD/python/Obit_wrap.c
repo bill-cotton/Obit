@@ -1300,6 +1300,13 @@ extern void ConvUtilConv (ObitImage *inImage, ObitFArray *convFn,
   ObitConvUtilConv (inImage, convFn, ldoDivide, lrescale, outImage, err);
 } // end ConvUtilConv 
 
+extern void ConvUtilConvGauss (ObitImage *inImage, float maj, float min, float pa, float rescale,
+		               ObitImage *outImage, ObitErr *err) {
+
+  ObitConvUtilConvGauss (inImage, (ofloat)maj, (ofloat)min, (ofloat)pa, (ofloat)rescale, 
+                         outImage, err);
+} // end ConvUtilConvGauss
+
 extern ObitFArray* ConvUtilGaus (ObitImage *inImage, float Maj, float Min, float PA) {
   ofloat Beam[3];
   Beam[0] = Maj;
@@ -1328,6 +1335,7 @@ extern PyObject* ConvUtilDeconv (float fMaj,  float fMin,  float fPA,
 } // end ConvUtilGaus
 
 extern void ConvUtilConv(ObitImage *,ObitFArray *,int ,float ,ObitImage *,ObitErr *);
+extern void ConvUtilConvGauss(ObitImage *,float ,float ,float ,float ,ObitImage *,ObitErr *);
 extern ObitFArray *ConvUtilGaus(ObitImage *,float ,float ,float );
 extern PyObject *ConvUtilDeconv(float ,float ,float ,float ,float ,float );
 
@@ -1784,6 +1792,19 @@ ObitFArray* FArrayUtilConvolve (ObitFArray *in1, ObitFArray *in2,
 {
   return ObitFArrayUtilConvolve (in1, in2, err);
 }  // end FArrayUtilConvolve
+ 
+// Gaussian UV Taper 
+ObitFArray* FArrayUtilUVGaus (int *naxis, float *cells, float maprot,
+			      float Gaumaj, float Gaumin, float GauPA)
+{
+  olong lnaxis[2];
+  ofloat lcells[2];
+
+  lnaxis[0] = (olong)naxis[0];  lnaxis[1] = (olong)naxis[1]; 
+  lcells[0] = (ofloat)cells[0]; lcells[1] = (ofloat)cells[1]; 
+  return ObitFArrayUtilUVGaus (&lnaxis[0], &lcells[0], (ofloat)maprot, 
+                               (ofloat)Gaumaj, (ofloat)Gaumin, (ofloat)GauPA);
+}  // end FArrayUtilConvolve
 extern PyObject *FArrayUtilFitCGauss(ObitFArray *,float ,float [2],float ,ObitErr *);
 
 #include "ObitFFT.h"
@@ -2224,8 +2245,7 @@ extern ObitFitRegion*  FitRegionRef (ObitFitRegion* in) {
 extern ObitFitRegion* FitRegionCreate (char *name, int corner[2], int dim[2],
 		     float peak, float peakResid, float RMSResid,
 		     float fluxResid) {
-  olong i, lcorner[2], ldim[2];
-  ObitFitModel **lmodels=NULL;
+  olong lcorner[2], ldim[2];
 
   lcorner[0] = (olong)corner[0];
   lcorner[1] = (olong)corner[1];
@@ -9526,7 +9546,7 @@ extern PyObject* UVVisGet (ObitUV* inUV, ObitErr *err) {
   ofloat cbase, *visp=NULL;
   olong ant1, ant2, suid, fqid, icorr;
   PyObject *vis;
-  PyObject *vList, *cvis, *cx, *tup;
+  PyObject *vList, *Cvis, *cx, *tup;
 
    vis = PyDict_New();
 
@@ -9582,7 +9602,7 @@ extern void UVVisSet (PyObject* vis, ObitUV* outUV, ObitErr *err) {
   ObitIOCode oretCode;
   ofloat *visp=NULL;
   olong ant1, ant2, icorr, len;
-  PyObject *vList, *cvis, *cx, *tup;
+  PyObject *vList, *cx, *tup;
 
 
     ant1 = (olong)PyInt_AsLong(PyDict_GetItemString(vis, "ant1"));
@@ -16087,6 +16107,49 @@ static PyObject *_wrap_ConvUtilConv(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_ConvUtilConvGauss(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImage * _arg0;
+    float  _arg1;
+    float  _arg2;
+    float  _arg3;
+    float  _arg4;
+    ObitImage * _arg5;
+    ObitErr * _arg6;
+    PyObject * _argo0 = 0;
+    PyObject * _argo5 = 0;
+    PyObject * _argo6 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OffffOO:ConvUtilConvGauss",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_argo5,&_argo6)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ConvUtilConvGauss. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of ConvUtilConvGauss. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo6) {
+        if (_argo6 == Py_None) { _arg6 = NULL; }
+        else if (SWIG_GetPtrObj(_argo6,(void **) &_arg6,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 7 of ConvUtilConvGauss. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    ConvUtilConvGauss(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_ConvUtilGaus(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitFArray * _result;
@@ -18415,6 +18478,79 @@ static PyObject *_wrap_FArrayUtilConvolve(PyObject *self, PyObject *args) {
         Py_INCREF(Py_None);
         _resultobj = Py_None;
     }
+    return _resultobj;
+}
+
+static PyObject *_wrap_FArrayUtilUVGaus(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitFArray * _result;
+    int * _arg0;
+    float * _arg1;
+    float  _arg2;
+    float  _arg3;
+    float  _arg4;
+    float  _arg5;
+    PyObject * _obj0 = 0;
+    PyObject * _obj1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOffff:FArrayUtilUVGaus",&_obj0,&_obj1,&_arg2,&_arg3,&_arg4,&_arg5)) 
+        return NULL;
+{
+  if (PyList_Check(_obj0)) {
+    int size = PyList_Size(_obj0);
+    int i = 0;
+    _arg0 = (int*) malloc((size+1)*sizeof(int));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj0,i);
+      if (PyInt_Check(o)) {
+         _arg0[i] = (int)((PyIntObject*)o)->ob_ival;
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain ints");
+         free(_arg0);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (float*) malloc((size+1)*sizeof(float));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyFloat_Check(o))
+         _arg1[i] = (float)((PyFloatObject*)o)->ob_fval;
+      else {
+         PyErr_SetString(PyExc_TypeError,"list must contain floats");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+    _result = (ObitFArray *)FArrayUtilUVGaus(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitFArray_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((int *) _arg0);
+}
+{
+  free((float *) _arg1);
+}
     return _resultobj;
 }
 
@@ -61131,6 +61267,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "FFTR2C", _wrap_FFTR2C, METH_VARARGS },
 	 { "FFTSuggestSize", _wrap_FFTSuggestSize, METH_VARARGS },
 	 { "FFTCreate", _wrap_FFTCreate, METH_VARARGS },
+	 { "FArrayUtilUVGaus", _wrap_FArrayUtilUVGaus, METH_VARARGS },
 	 { "FArrayUtilConvolve", _wrap_FArrayUtilConvolve, METH_VARARGS },
 	 { "FArrayUtilFitCGauss", _wrap_FArrayUtilFitCGauss, METH_VARARGS },
 	 { "FArrayUnref", _wrap_FArrayUnref, METH_VARARGS },
@@ -61193,6 +61330,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "FArrayCreate", _wrap_FArrayCreate, METH_VARARGS },
 	 { "ConvUtilDeconv", _wrap_ConvUtilDeconv, METH_VARARGS },
 	 { "ConvUtilGaus", _wrap_ConvUtilGaus, METH_VARARGS },
+	 { "ConvUtilConvGauss", _wrap_ConvUtilConvGauss, METH_VARARGS },
 	 { "ConvUtilConv", _wrap_ConvUtilConv, METH_VARARGS },
 	 { "CleanVisIsA", _wrap_CleanVisIsA, METH_VARARGS },
 	 { "CleanVisGetName", _wrap_CleanVisGetName, METH_VARARGS },

@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -46,6 +46,11 @@
 void ObitConvUtilConv (ObitImage *inImage, ObitFArray *convFn, 
 		       gboolean doDivide, ofloat rescale,
 		       ObitImage *outImage, ObitErr *err);
+
+/*  Public: Convolve all planes of an image with a Gaussian */
+void ObitConvUtilConvGauss (ObitImage *inImage, ofloat Gaumaj,ofloat Gaumin,  
+			    ofloat GauPA,  ofloat rescale,
+			    ObitImage *outImage, ObitErr *err);
 
 /*  Public: Create Gaussian array */
 ObitFArray* ObitConvUtilGaus (ObitImage *inImage, ofloat Beam[3]);

@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for Convolution utilities                  */
 /*                                                                    */
-/*;  Copyright (C) 2006                                               */
+/*;  Copyright (C) 2006,2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -42,6 +42,13 @@ extern void ConvUtilConv (ObitImage *inImage, ObitFArray *convFn,
   ldoDivide = doDivide != 0;
   ObitConvUtilConv (inImage, convFn, ldoDivide, lrescale, outImage, err);
 } // end ConvUtilConv 
+
+extern void ConvUtilConvGauss (ObitImage *inImage, float maj, float min, float pa, float rescale,
+		               ObitImage *outImage, ObitErr *err) {
+
+  ObitConvUtilConvGauss (inImage, (ofloat)maj, (ofloat)min, (ofloat)pa, (ofloat)rescale, 
+                         outImage, err);
+} // end ConvUtilConvGauss
 
 extern ObitFArray* ConvUtilGaus (ObitImage *inImage, float Maj, float Min, float PA) {
   ofloat Beam[3];

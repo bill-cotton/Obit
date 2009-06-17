@@ -221,11 +221,14 @@ echo "# c shell version" > setup.csh
 echo "# Setup environment to run Obit software" >> setup.csh
 echo "setenv OBIT $OBIT" >> setup.csh
 echo "setenv OBITSD $OBITSD" >> setup.csh
-echo "setenv LD_LIBRARY_PATH $LD_LIBRARY_PATH:\$LD_LIBRARY_PATH" >> setup.csh
-echo "setenv PYTHONPATH $OBITSD/python:$OBIT/python:$BASE/opt/share/obittalk/python/" >> setup.csh
-echo "setenv PATH $BASE/bin:\$PATH" >> setup.csh
+tstring="\"$LD_LIBRARY_PATH:\$LD_LIBRARY_PATH\""
+echo "setenv LD_LIBRARY_PATH $tstring" >> setup.csh
+tstring="\"$OBITSD/python:$OBIT/python:$BASE/opt/share/obittalk/python/\""
+echo "setenv PYTHONPATH $tstring" >> setup.csh
+tstring="\"$BASE/bin:\$PATH\""
+echo "setenv PATH $tstring" >> setup.csh
 echo "setenv OBITINSTALL $BASE" >> setup.csh
-if test $x = PLPLOT;  then echo "setenv PLPLOT_DRV_DIR $THIRD/lib/plplot5.8.0/drivers" >> setup.csh;fi
+if test $doPLPLOT  = yes;  then echo "setenv PLPLOT_DRV_DIR $THIRD/lib/plplot5.8.0/drivers" >> setup.csh;fi
 chmod +x setup.csh
 
 # Write setup scripts
@@ -233,14 +236,17 @@ echo "#!/bin/sh" > setup.sh
 echo "# Setup environment to run Obit software" >> setup.sh
 echo "OBIT=$OBIT; export OBIT" >> setup.sh
 echo "OBITSD=$OBITSD; export OBITSD" >> setup.sh
-echo "if test \"x$LD_LIBRARY_PATH\"=\"x\"; then" >> setup.sh
-echo "  LD_LIBRARY_PATH=$LD_LIBRARY_PATH; export LD_LIBRARY_PATH" >> setup.sh
+echo "if test \"x\$LD_LIBRARY_PATH\"=\"x\"; then" >> setup.sh
+echo  "  LD_LIBRARY_PATH=$LD_LIBRARY_PATH; export LD_LIBRARY_PATH" >> setup.sh
 echo "else" >> setup.sh
-echo "  LD_LIBRARY_PATH=$LD_LIBRARY_PATH:\$LD_LIBRARY_PATH; export LD_LIBRARY_PATH" >> setup.sh
+tstring="\"$LD_LIBRARY_PATH:\$LD_LIBRARY_PATH\""
+echo  "  LD_LIBRARY_PATH=$tstring; export LD_LIBRARY_PATH" >> setup.sh
 echo "fi" >> setup.sh
-echo "PYTHONPATH=$OBITSD/python:$OBIT/python:$BASE/opt/share/obittalk/python/; export PYTHONPATH" >> setup.sh
-echo "PATH=$BASE/bin:\$PATH; export PATH" >> setup.sh
+tstring="\"$OBITSD/python:$OBIT/python:$BASE/opt/share/obittalk/python/\""
+echo "PYTHONPATH=$tstring; export PYTHONPATH" >> setup.sh
+tstring="\"$BASE/bin:\$PATH\""
+echo "PATH=$tstring; export PATH" >> setup.sh
 echo "OBITINSTALL=$BASE; export OBITINSTALL" >> setup.sh
-if test $x = PLPLOT;  then echo "PLPLOT_DRV_DIR=$THIRD/lib/plplot5.8.0/drivers; export PLPLOT_DRV_DIR" >> setup.sh;fi
+if test $doPLPLOT  = yes;  then echo "PLPLOT_DRV_DIR=$THIRD/lib/plplot5.8.0/drivers; export PLPLOT_DRV_DIR" >> setup.sh;fi
 chmod +x setup.sh
 

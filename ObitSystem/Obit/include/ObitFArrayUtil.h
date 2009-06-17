@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -50,4 +50,7 @@ ofloat ObitFArrayUtilFitCGauss (ObitFArray *in, ofloat *FWHM, ofloat *center,
 /** Public: Convolve two arrays */
 ObitFArray* ObitFArrayUtilConvolve (ObitFArray *in1, ObitFArray *in2, 
 				    ObitErr *err);
+/** Public: Create Gaussian UV Taper*/
+ObitFArray* ObitFArrayUtilUVGaus (olong *naxis, ofloat *cells, ofloat maprot,
+				  ofloat Gaumaj, ofloat Gaumin, ofloat GauPA);
 #endif /* OBITFARRAYUTIL_H */ 

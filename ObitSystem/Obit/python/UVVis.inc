@@ -42,7 +42,7 @@ extern PyObject* UVVisGet (ObitUV* inUV, ObitErr *err) {
   ofloat cbase, *visp=NULL;
   olong ant1, ant2, suid, fqid, icorr;
   PyObject *vis;
-  PyObject *vList, *cvis, *cx, *tup;
+  PyObject *vList, *Cvis, *cx, *tup;
 
    vis = PyDict_New();
 
@@ -98,7 +98,7 @@ extern void UVVisSet (PyObject* vis, ObitUV* outUV, ObitErr *err) {
   ObitIOCode oretCode;
   ofloat *visp=NULL;
   olong ant1, ant2, icorr, len;
-  PyObject *vList, *cvis, *cx, *tup;
+  PyObject *vList, *cx, *tup;
 
 
     ant1 = (olong)PyInt_AsLong(PyDict_GetItemString(vis, "ant1"));

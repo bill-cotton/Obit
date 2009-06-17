@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2006
+#  Copyright (C) 2006,2009
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #-----------------------------------------------------------------------
 
 # Python utility package for convolving images
-import Obit, Image, FArray, OErr
+import Obit, Image, FArray, FArrayUtil, OErr
 
 def PConv(inImage, convFn, doDivide, rescale, outImage, err):
     """ (de)Convolve an Image with an FArray and write outImage
@@ -59,6 +59,34 @@ def PConv(inImage, convFn, doDivide, rescale, outImage, err):
     #
     Obit.ConvUtilConv (inImage.me, convFn.me, doDivide, rescale, outImage.me, err.me)
     # end PConv
+
+def PConvGauss(inImage, maj, min, pa, rescale, outImage, err):
+    """ Convolve an Image with a Gaussian and write outImage
+
+    This routine convolves all selected planes in inImage with a Gaussian
+    Operations are performed using FFTs 
+    inImage  = Obit Image to be convolved
+    maj      = Major axis of Gaussian in image plane (arcsec)
+    min      = Minor axis of Gaussian in image plane  (arcsec)
+    pa       = Position angle of Gaussian in image plane, from N thru E, (deg)
+    rescale  = Multiplication factor to scale output to correct units
+    outImage = Output ObitImage must be a clone of inImage
+               Actual convolution size must be set externally 
+    err      = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not Image.PIsA(inImage):
+        print "Actually ",inImage.__class__
+        raise TypeError,"inImage MUST be a Python Obit Image"
+    if not Image.PIsA(outImage):
+        print "Actually ",outImage.__class__
+        raise TypeError,"outImage MUST be a Python Obit Image"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    Obit.ConvUtilConvGauss (inImage.me, maj, min, pa, rescale, outImage.me, err.me)
+    # end PConvGauss
 
 def PGaus(inImage, Beam):
     """ Create an ObitFArray containing a unit area Gaussian in the center

@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2005
+#  Copyright (C) 2005,2009
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -75,3 +75,20 @@ def PConvolve(inFA1, inFA2, err):
     return outFA
     # end PConvolve
 
+def PUVGaus(naxis, cells, maprot, maj, min, pa):
+    """ Create a Gaussian UV tapering image corresponding to an image plane Gaussian
+    
+    Returns an FArray with a Gaussian taper, as [u,v]
+    naxis  = dimension as [nx,ny]
+    cells  = cell spacing in x and y in units of maj,min (asec)
+    maprot = Map rotation (deg)
+    maj    = Major axis of Gaussian in image plane (same units as cells)
+    min    = Minor axis of Gaussian in image plane (same units as cells)
+    pa     = Position angle of Gaussian in image plane, from N thru E, (deg)
+    """
+    ################################################################
+    # Create output
+    outFA = FArray.FArray("UVpix",naxis)
+    outFA.me = Obit.FArrayUtilUVGaus (naxis, cells, maprot, maj, min, pa)
+    return outFA
+    # end PUVGaus

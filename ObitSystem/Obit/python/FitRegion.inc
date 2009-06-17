@@ -1,8 +1,8 @@
 /* $Id$    */  
 /*--------------------------------------------------------------------*/
-/* Swig module description for FitRegion type                          */
+/* Swig module description for FitRegion type                         */
 /*                                                                    */
-/*;  Copyright (C) 2007                                               */
+/*;  Copyright (C) 2007,2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -56,8 +56,7 @@ extern ObitFitRegion*  FitRegionRef (ObitFitRegion* in) {
 extern ObitFitRegion* FitRegionCreate (char *name, int corner[2], int dim[2],
 		     float peak, float peakResid, float RMSResid,
 		     float fluxResid) {
-  olong i, lcorner[2], ldim[2];
-  ObitFitModel **lmodels=NULL;
+  olong lcorner[2], ldim[2];
 
   lcorner[0] = (olong)corner[0];
   lcorner[1] = (olong)corner[1];

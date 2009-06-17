@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -171,7 +171,6 @@ ObitFArray* ObitFArrayUtilConvolve (ObitFArray *in1, ObitFArray *in2,
   Obit_retval_if_fail(ObitFArrayIsCompatable(in1, in2),  err, out,
 		      "%s: FArrays %s and %s incompatible", 
 		      routine, in1->name, in2->name);
-
   Obit_retval_if_fail((in1->ndim==2),  err, out,
 		      "%s: FArrays %s and %s NOT 2-D", 
 		      routine, in1->name, in2->name);
@@ -239,6 +238,57 @@ ObitFArray* ObitFArrayUtilConvolve (ObitFArray *in1, ObitFArray *in2,
 
   return out;
 } /* end ObitFArrayUtilConvolve */
+
+/**
+ * Create a Gaussian UV tapering array corresponding to an image plane Gaussian
+ *  Lifted from AIPS/CONVL.FOR
+ * \param naxis   Dimension of image as [nx,ny]
+ * \param cells   Cell spacing in x and y in units of maj,min (asec)
+ * \param maprot  Map rotation (deg)
+ * \param maj     Major axis of Gaussian in image plane (same units as cells)
+ * \param min     Minor axis of Gaussian in image plane (same units as cells)
+ * \param pa      Position angle of Gaussian in image plane, from N thru E, (deg)
+ * \return ObitFArray, should be unReffed when done, as [u,v]
+ */
+ObitFArray* ObitFArrayUtilUVGaus (olong *naxis, ofloat *cells, ofloat maprot,
+				  ofloat Gaumaj, ofloat Gaumin, ofloat GauPA)
+{
+  ObitFArray* outFA = NULL;
+  ofloat ta, tb, am, an, xnx2, xny2, xnxny, gausaa, gausbb, gauscc;
+  ofloat arg, varg, amp, u, v;
+  olong iu, iv, ucen, vcen;
+
+  /* Create output */
+  outFA = ObitFArrayCreate("UVpix",2, naxis);
+
+  ta = Gaumaj * G_PI / 1.1774;
+  tb = Gaumin * G_PI / 1.1774;
+  am = cos((GauPA+maprot-90.)*DG2RAD);
+  an = sin((GauPA+maprot-90.)*DG2RAD);
+  xnx2 = naxis[0] * cells[0];
+  xny2 = naxis[1] * cells[1];
+  xnxny = fabsf (xnx2 * xny2);
+  xnx2 *= xnx2;
+  xny2 *= xny2;
+  gausaa = 0.5*(ta*ta*am*am + tb*tb*an*an) / (xny2);
+  gausbb = ((tb*tb-ta*ta) * an*am) / (xnxny);
+  gauscc = 0.5*(ta*ta*an*an + tb*tb*am*am) / (xnx2);
+
+  ucen = naxis[0]/2;
+  vcen = naxis[1]/2;
+  /* Loop computing Gaussian */
+  for (iv=0; iv<naxis[1]; iv++) {
+    v = (iv - vcen);
+    varg = v*v*gauscc;
+    for (iu=0; iu<naxis[0]; iu++) {
+      u = (iu - ucen);
+      arg = -(u*u*gausaa + u*v*gausbb + varg);
+      amp = expf(arg);
+      outFA->array[iv*naxis[0]+iu] = amp;
+    }
+  }
+  return outFA;
+} /* end ObitFArrayUtilUVGaus */
 
 /*---------------Private functions--------------------------*/
 
