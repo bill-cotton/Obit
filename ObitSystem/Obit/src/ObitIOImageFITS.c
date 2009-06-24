@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -778,7 +778,10 @@ ObitIOCode ObitIOImageFITSRead (ObitIOImageFITS *in, ofloat *data,
   /* set plane */
   bblc[2] = plane;
   ttrc[2] = plane;
-  for (i=3;i<desc->naxis;i++) {ttrc[i] = 1; bblc[i] = 1;}
+  for (i=3;i<desc->naxis;i++) {
+    ttrc[i] = (long)sel->trc[i]; 
+    bblc[i] = (long)sel->blc[i];
+  }
   for (i=0; i<desc->naxis; i++) inaxes[i] = (long)desc->inaxes[i];
 
   /*  Read selected portion of input */
@@ -885,12 +888,25 @@ ObitIOCode ObitIOImageFITSWrite (ObitIOImageFITS *in, ofloat *data,
   fpixel[0] = sel->blc[0];
   fpixel[1] = row;
   fpixel[2] = plane;
+  if (fpixel[2]>desc->inaxes[2]) {
+    fpixel[3] = MAX (1, 1 + (fpixel[2]-1)/desc->inaxes[2]);
+    fpixel[2] = MAX (1, 1 + (fpixel[2]-1)%desc->inaxes[2]);
+  }
+  if (fpixel[3]>desc->inaxes[3]) {
+    fpixel[4] = MAX (1, 1 + (fpixel[3]-1)/desc->inaxes[3]);
+    fpixel[3] = MAX (1, 1 + (fpixel[3]-1)%desc->inaxes[3]);
+  }
+  if (fpixel[4]>desc->inaxes[4]) {
+    fpixel[5] = MAX (1, 1 + (fpixel[4]-1)/desc->inaxes[4]);
+    fpixel[4] = MAX (1, 1 + (fpixel[4]-1)%desc->inaxes[4]);
+  }
 
   desc->row   = row;
   desc->plane = plane;
 
    /* check if done - starting on the plane past the highest. */
-  if (plane > sel->trc[2]) {
+  if ((fpixel[2]>sel->trc[2]) || (fpixel[3]>sel->trc[3]) 
+      || (fpixel[4]>sel->trc[4]) || (fpixel[5]>sel->trc[5])) {
     /* ObitIOImageFITSClose (in, err); Close */
     Obit_log_error(err, OBIT_Error, 
 		   "%s: Attempt to write past end of %s", 

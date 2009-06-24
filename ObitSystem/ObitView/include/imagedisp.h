@@ -1,7 +1,7 @@
 /* $Id$ */
 /* imagedisp (image display widget) header file */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1999-2008
+*  Copyright (C) 1996,1999-2009
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -29,20 +29,20 @@ typedef struct {
   Widget         goober;    /* widget the size of the full window */
   Cursor         cursor;    /* Cursor for image display, Null = standard */
   XImage         *work;     /* ZPixmap for zooming current screen */
-  olong           workNx;    /* X dimension of work ZPixmap  */
-  olong           workNy;    /* Y dimension of work ZPixmap  */
+  olong          workNx;    /* X dimension of work ZPixmap  */
+  olong          workNy;    /* Y dimension of work ZPixmap  */
   Widget         hscroll;   /* horizonal scroll scale */
-  olong           hscr_vis;  /* 1=> hscroll visible, 0=not */
-  olong           hscr_max;  /* hscroll maximum value   */
-  olong           hscr_min;  /* hscroll minimum value   */
-  olong           hscr_half; /* half width of display in x (im. pixels)*/
+  olong          hscr_vis;  /* 1=> hscroll visible, 0=not */
+  olong          hscr_max;  /* hscroll maximum value   */
+  olong          hscr_min;  /* hscroll minimum value   */
+  olong          hscr_half; /* half width of display in x (im. pixels)*/
   Widget         vscroll;   /* vertical scroll scale */
-  olong           vscr_vis;  /* 1=> vscroll visible, 0=not */
-  olong           vscr_max;  /* hscroll maximum value   */
-  olong           vscr_min;  /* hscroll minimum value   */
-  olong           vscr_half; /* half width of display in y */
-  olong           disp_wid;  /* display width */
-  olong           disp_hei;  /* display height */
+  olong          vscr_vis;  /* 1=> vscroll visible, 0=not */
+  olong          vscr_max;  /* hscroll maximum value   */
+  olong          vscr_min;  /* hscroll minimum value   */
+  olong          vscr_half; /* half width of display in y */
+  olong          disp_wid;  /* display width */
+  olong          disp_hei;  /* display height */
   
   /* image information */
   olong            zoom;      /* zoom factor, neg = zoom out */
@@ -50,6 +50,7 @@ typedef struct {
   olong            scrolly;   /* center "y" pixel in display */
   olong            iXCorn;    /* x corner pixel in display */
   olong            iYCorn;    /* y corner pixel in display */
+
   /* color mapping information */
   olong            depth;     /* number of bits in display */
   olong            ncolors;   /* number of colors in color table */

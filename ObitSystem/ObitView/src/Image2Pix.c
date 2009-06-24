@@ -1,7 +1,7 @@
 /* $Id$  */
 /* routines to load a FITS file to a ZPixmap for ObitView*/
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996-2008
+*  Copyright (C) 1996-2009
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -464,6 +464,9 @@ void* ReadImage (void *arg)
 
   /* Set plane */
   blc[2] = trc[2] = data->PlaneNo+1;
+  blc[3] = trc[3] = data->hiDim[0]+1;
+  blc[4] = trc[4] = data->hiDim[1]+1;
+  blc[5] = trc[5] = data->hiDim[2]+1;
 
   /* Attach to external form by data type */
   if (data->DataType==OBIT_IO_FITS) {   /* FITS */

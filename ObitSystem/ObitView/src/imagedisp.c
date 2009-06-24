@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Display widget for images for ObitView allows zoom and scroll       */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1997,1999,2002-2008
+*  Copyright (C) 1996,1997,1999,2002-2009
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -550,7 +550,18 @@ void PaintImage (ImageDisplay* IDdata)
     ch1 = 0;
     for (i=0; i<image[CurImag].FileName->length;i++)
       if (cptr[i]=='/') ch1 = i+1;
-    if (image[CurImag].myDesc->inaxes[2]>1)
+    /* 5 dimensions? */
+    if (image[CurImag].myDesc->inaxes[4]>1)
+      {g_snprintf (TitleString,500, "%s, plane %d %d %d",
+		   &cptr[ch1],image[CurImag].PlaneNo+1,
+		   image[CurImag].hiDim[0]+1,image[CurImag].hiDim[0]+1);}
+    /* 4 dimensions? */
+    else if (image[CurImag].myDesc->inaxes[3]>1)
+      {g_snprintf (TitleString,500, "%s, plane %d, %d",
+		&cptr[ch1],
+		image[CurImag].PlaneNo+1, image[CurImag].hiDim[0]+1);}
+    /* 3 dimensions? */
+    else if (image[CurImag].myDesc->inaxes[2]>1)
       {g_snprintf (TitleString,500, "%s, plane %d",
 		&cptr[ch1],
 		image[CurImag].PlaneNo+1);}
@@ -1053,7 +1064,11 @@ void UpdateInfo (ImageDisplay *IDdata)
   /* make sure hourglass cursor initialized */
   if (!cursor) cursor = XCreateFontCursor(dpy, XC_watch);
   /*  fitted or current */
-  if (ndim>2)
+  if (image[CurImag].myDesc->inaxes[3]>1)
+    g_snprintf (jerkstring, 100, "(%7.2f,%7.2f, %d, %d)",
+	     image[CurImag].fXpixel+1.0, image[CurImag].fYpixel+1.0,
+	     image[CurImag].PlaneNo+1,image[CurImag].hiDim[0]+1);
+  else if (image[CurImag].myDesc->inaxes[2]>1)
     g_snprintf (jerkstring, 100, "(%7.2f,%7.2f, %d)",
 	     image[CurImag].fXpixel+1.0, image[CurImag].fYpixel+1.0,
 	     image[CurImag].PlaneNo+1);

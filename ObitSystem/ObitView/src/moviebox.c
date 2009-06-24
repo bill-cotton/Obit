@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Movie control box  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,1997,1999, 2002-2008-2008
+*  Copyright (C) 1996,1997,1999, 2002-2009
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -37,6 +37,11 @@
  * displays "movie" dialog.
  */
 
+/** Prototypes from optionbox */
+void ReadDim4CB (Widget w, XtPointer clientData, XtPointer callData);
+void ReadDim5CB (Widget w, XtPointer clientData, XtPointer callData);
+void ReadDim6CB (Widget w, XtPointer clientData, XtPointer callData);
+
 /*--------------- file global data ----------------*/
 /** is the movie box active? */
 int MovieBoxActive = 0;
@@ -48,6 +53,7 @@ typedef struct {
   int    Stop;                /* if true stop button hit */
   float  Dwell;
   Widget dialog, start, end;  /* box, start, end planes */
+  Widget dim4, dim5, dim6;    /*  higher dimensions  */
   Widget dwell;               /* Dwell time */
   Widget PlaneScroll;         /* plane select/display scroll */
   Widget PlaneScrollLabel;    /* label for plane number */
@@ -283,6 +289,9 @@ void MovieScrollPlaneCB (Widget w, XtPointer clientData, XtPointer callData)
   
   /* read value of scrollbar */
   MovieDia.CurPlane = call_data->value-1; /* 0 rel */
+  ReadDim4CB (MovieDia.dim4, (XtPointer)MovieDia.BoxData, NULL);
+  ReadDim5CB (MovieDia.dim5, (XtPointer)MovieDia.BoxData, NULL);
+  ReadDim6CB (MovieDia.dim6, (XtPointer)MovieDia.BoxData, NULL);
   
   /* Show selected plane */
   MovieLoadPlane();
@@ -345,6 +354,9 @@ void MoviePlayButCB (Widget w, XtPointer clientData, XtPointer callData)
   ReadStartPlaneCB (MovieDia.start, (XtPointer)MovieDia.BoxData, NULL);
   ReadEndPlaneCB (MovieDia.end, (XtPointer)MovieDia.BoxData, NULL);
   ReadDwellCB (MovieDia.dwell, (XtPointer)MovieDia.BoxData, NULL);
+  ReadDim4CB (MovieDia.dim4, (XtPointer)MovieDia.BoxData, NULL);
+  ReadDim5CB (MovieDia.dim5, (XtPointer)MovieDia.BoxData, NULL);
+  ReadDim6CB (MovieDia.dim6, (XtPointer)MovieDia.BoxData, NULL);
   
   /* see if any of the read routines has turned off the movie */
   if (MovieDia.Stop) {
@@ -393,12 +405,12 @@ void MovieStopButCB (Widget w, XtPointer clientData, XtPointer callData)
  */
 void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 {
-  Widget form, label1, label2, label3;
+  Widget form, label1, label2, label3, label4;
   Widget PlayButton, QuitButton;
   XmString     StartLab = NULL;
   XmString     EndLab   = NULL;
   XmString     DwellLab = NULL;
-  XmString     WierdString = NULL;
+  XmString     WierdString = NULL, higher = NULL;
   char         valuestr[30];
   ImageDisplay *IDdata = (ImageDisplay*)clientData;
   int          hiPlane;
@@ -442,6 +454,13 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
     sprintf (valuestr, "%f", MovieDia.Dwell);
     XmTextSetString (MovieDia.dwell, valuestr);
     
+    /* higher plane numbers */
+    g_snprintf (valuestr, 60, "%d", image[CurImag].hiDim[0]+1);
+    XmTextSetString (MovieDia.dim4, valuestr);
+    g_snprintf (valuestr, 60, "%d", image[CurImag].hiDim[1]+1);
+    XmTextSetString (MovieDia.dim5, valuestr);
+    g_snprintf (valuestr, 60, "%d", image[CurImag].hiDim[2]+1);
+    XmTextSetString (MovieDia.dim6, valuestr);
     /* update labels */
     sprintf (valuestr, "    Plane no. %d", MovieDia.CurPlane+1);
     WierdString = XmStringCreateSimple (valuestr);
@@ -477,14 +496,17 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   StartLab = XmStringCreateSimple ("Planes");
   EndLab   = XmStringCreateSimple ("to");
   DwellLab = XmStringCreateSimple ("Dwell (sec)");
-  /* mark as active */
+  higher   = XmStringCreateSimple ("Higher dimensions");
+   /* mark as active */
   MovieBoxActive = 1;
   
   
   /* other initialization */
   MovieDia.CurPlane = image[CurImag].PlaneNo;
   MovieDia.StartPlane = 1;
-  MovieDia.EndPlane = image[CurImag].myDesc->inaxes[2];
+  if (image[CurImag].myDesc)
+    MovieDia.EndPlane = image[CurImag].myDesc->inaxes[2];
+  else MovieDia.EndPlane = 1;
   if (MovieDia.EndPlane<MovieDia.StartPlane) 
     MovieDia.EndPlane = MovieDia.StartPlane;
   MovieDia.Dwell = 1.0;
@@ -506,7 +528,7 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 				  MovieDia.dialog,
 				  XmNautoUnmanage, False,
 				  XmNwidth,     150,
-				  XmNheight,    230,
+				  XmNheight,    270,
 				  XmNx,           0,
 				  XmNy,           0,
 				  NULL);
@@ -593,6 +615,44 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
                                     XmNtopWidget,      MovieDia.end,
 				    XmNleftAttachment,  XmATTACH_FORM,
 				    NULL);
+  /* Higher dimensions */
+  label4 = XtVaCreateManagedWidget ("OptionLabel4", xmLabelWidgetClass,
+				    form,
+				    XmNwidth,           150,
+				    XmNlabelString,   higher,
+				    XmNtopAttachment, XmATTACH_WIDGET,
+				    XmNtopWidget,     MovieDia.dwell,
+				    XmNleftAttachment,  XmATTACH_FORM,
+				    NULL);
+   g_snprintf (valuestr, 60, "%d", image[CurImag].hiDim[0]+1);
+   MovieDia.dim4 = XtVaCreateManagedWidget ("OptionDim4", xmTextFieldWidgetClass, 
+				       form, 
+				       XmNwidth,           40,
+				       XmNvalue,   valuestr,
+				       XmNtopAttachment, XmATTACH_WIDGET,
+				       XmNtopWidget,     label4,
+				       XmNleftAttachment,  XmATTACH_FORM,
+				       NULL);
+   g_snprintf (valuestr, 60, "%d", image[CurImag].hiDim[1]+1);
+   MovieDia.dim5 = XtVaCreateManagedWidget ("OptionDim5", xmTextFieldWidgetClass, 
+				       form, 
+				       XmNwidth,           40,
+				       XmNvalue,   valuestr,
+				       XmNtopAttachment, XmATTACH_WIDGET,
+				       XmNtopWidget,     label4,
+				       XmNleftAttachment,  XmATTACH_WIDGET,
+				       XmNleftWidget,     MovieDia.dim4,
+ 				       NULL);
+  g_snprintf (valuestr, 60, "%d", image[CurImag].hiDim[2]+1);
+   MovieDia.dim6 = XtVaCreateManagedWidget ("OptionDim5", xmTextFieldWidgetClass, 
+				       form, 
+				       XmNwidth,           40,
+				       XmNvalue,   valuestr,
+				       XmNtopAttachment, XmATTACH_WIDGET,
+				       XmNtopWidget,     label4,
+				       XmNleftAttachment,  XmATTACH_WIDGET,
+				       XmNleftWidget,     MovieDia.dim5,
+				       NULL);
   /* plane scroll */
   slider_size = hiPlane/10; if (slider_size<1) slider_size = 1;
   value = MovieDia.CurPlane+1;
@@ -611,7 +671,7 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 						  XmNprocessingDirection, XmMAX_ON_RIGHT,
 						  XmNleftAttachment,  XmATTACH_FORM,
 						  XmNtopAttachment, XmATTACH_WIDGET,
-						  XmNtopWidget,     MovieDia.dwell,
+						  XmNtopWidget,     MovieDia.dim5,
 						  XmNtopOffset,            10,
 						  NULL);
   XmScrollBarSetValues (MovieDia.PlaneScroll, value, slider_size, 
@@ -664,6 +724,7 @@ void MovieBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   if (StartLab) XmStringFree(StartLab); StartLab = NULL;
   if (EndLab) XmStringFree(EndLab); EndLab = NULL;
   if (DwellLab) XmStringFree(DwellLab); DwellLab = NULL;
+  if (higher) XmStringFree(higher); higher = NULL;
   
   /* set it up */
   XtManageChild (MovieDia.dialog);

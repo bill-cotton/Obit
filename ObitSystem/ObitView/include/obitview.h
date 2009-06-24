@@ -1,7 +1,7 @@
 /* $Id$ */
 /* ObitView header file */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005-2008
+*  Copyright (C) 2005-2009
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -55,15 +55,16 @@ typedef struct {
   ofloat usr_equinox;/* User specified equinox */
   ofloat maxVal;     /* Maximum pixel value in plane */
   ofloat minVal;     /* Minimum pixel value in plane */
-  olong iXPixel;      /* Cursor X pixel (in image) */
-  olong iYPixel;      /* Cursor Y pixel (in image) */
+  olong iXPixel;     /* Cursor X pixel (in image) */
+  olong iYPixel;     /* Cursor Y pixel (in image) */
   gboolean iFitted;  /* TRUE if position fitted else FALSE */
   ofloat fXpixel;    /* fitted X pixel number 1-rel */
   ofloat fYpixel;    /* fitted Y pixel number 1-rel*/
   ofloat fBpixel;    /* fitted peak brightness */
   ofloat PixRange[2];/* range of pixel values to display */
-  olong   mapFunc   ; /* mapping: 0=>linear, 1=>sqrt, 2=>histo. Eq. */
-  olong PlaneNo;      /* image plane number to display 0 rel */
+  olong   mapFunc;   /* mapping: 0=>linear, 1=>sqrt, 2=>histo. Eq. */
+  olong PlaneNo;     /* image plane to display 0 rel */
+  olong hiDim[3];    /* image dimensions 4-6 to display 0 rel */
 } ImageData;
 
 /* global data structures */

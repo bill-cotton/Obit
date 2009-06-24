@@ -3,7 +3,7 @@
 /* This program requires the Motif library */
 /* Cloned from ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005-2008
+*  Copyright (C) 2005-2009
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -305,6 +305,9 @@ void InitImage (ImageDisplay *IDdata, olong narg, gchar *filename)
     image[j].fBpixel     = 0;
     image[j].mapFunc     = 0;
     image[j].PlaneNo     = 0;
+    image[j].hiDim[0]    = 0;
+    image[j].hiDim[1]    = 0;
+    image[j].hiDim[2]    = 0;
   } /* end of loop over ImageData structures */
 
   /* was a FITS file name passed as an argument? */

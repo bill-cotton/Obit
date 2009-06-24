@@ -3,7 +3,7 @@
 /* adopted from "Power programming Motif" by E. F. Johnson and
    K. Reichard, 1993, MIS Press, New York */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1998-2008
+*  Copyright (C) 1998-2009
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -381,14 +381,14 @@ void InitHelpText(void) {
     "*** FINISHED ***"}; /* end of text */
   
   static  char *intro_text[] = {
-    "                         ObitView 0.1\n",
+    "                         ObitView 1.0\n",
     "  \n",
     "Please relay comments and/or suggestions to Bill Cotton at NRAO \n ",
     "(bcotton@nrao.edu) \n",
     " \n",
     "This program is a viewer for astronomical images in FITS (Flexible \n",
     "Image Transport System) or AIPS format.  FITS Images in normal or\n",
-    " gzip compressed form may be viewed.  An image can be displayed in a \n",
+    "gzip compressed form may be viewed.  An image can be displayed in a \n",
     "number of ways including colorizing the display, zoom and scroll.  \n",
     "In addition, celestial positions can be determined for locations in \n",
     "the image by clicking the left mouse button when the cursor is over \n",
@@ -468,7 +468,9 @@ void InitHelpText(void) {
     "file can be determined using the Image Info item in the File menu.  A \n",
     "cube can be displayed as a movie (using the 'Movie' item in the Movie \n",
     "menu) to show a range of planes in sequence or by selecting planes at \n",
-    "random. \n",
+    "random. Locations in dimensions higher than 3 can be selected on either \n",
+    "the Option or Movie dialogs using the text fields labeled   \n",
+    "'Higher dimensions' \n",
     "   \n",
     "     An image can be zoomed in or out using the Zoom menu and \n",
     "selecting the desired magnification factor.  Zooming in (factor > \n",
@@ -644,6 +646,12 @@ void InitHelpText(void) {
     "the File menu.  Planes are numbered 1 relative. \n",
     "If many planes are to be viewed, use Movie from the Movie menu.\n",
     "   \n",
+    "Higher Dimensions \n",
+    "     If the image contains more than three non degenerate (dimension > 1) \n",
+    "axes, the (1-rel) location on dimensions 4-6 can be entered in the boxes   \n",
+    "labeled 'Higher dimensions'.  The window label also indicates the location  \n",
+    "on higher dimensions. \n",
+    "   \n",
     "Linear display (radio button) \n",
     "     This option specifies a linear mapping of image pixel values to \n",
     "display colors.  \n",
@@ -811,7 +819,7 @@ void InitHelpText(void) {
     "in the file that are out of the image then the number of these \n",
     "positions are reported and the remainder marked.  \n",
     "   \n",
-    "   Note: if.the inner size of the cross is -1 a circle is drawn and the  \n",
+    "   Note: if the inner size of the cross is -1 a circle is drawn and the  \n",
     "window editing function is entered.   \n",
     "*** FINISHED ***"} ; /* end of text */   
   
@@ -940,6 +948,9 @@ void InitHelpText(void) {
     "controlled manually using the scroll bar.  The selected plane will \n",
     "remain displayed until another plane is selected.  The 'Quit' button \n",
     "exits movie mode and resumes the normal display. \n",
+    "   Looping is always over the third dimension but the (1-rel) location\n",
+    "on dimensions 4-6 can be entered in the boxes labeled 'Higher dimensions'.\n",
+    "The window label also indicates the location on higher dimensions.   \n",
     "   \n",
     "*** FINISHED ***"} ; /* end of text */   
   
@@ -1170,7 +1181,7 @@ void InitHelpText(void) {
   
   /* Browser */
   static char *browser_text[] = {
-    "    File Browser \n",
+    "    File Browser (FITS) \n",
     "   \n",
     "File selection uses a standard file browser dialog box.  The selected \n",
     "file should be entered into the item labeled 'Selection'.  This can be \n",
@@ -1221,7 +1232,7 @@ void InitHelpText(void) {
     "corresponds to latitude.  Declination is measured in degrees north \n",
     "and south of the celestial equator, the projection of the earth's \n",
     "equator onto the sky.  Right Ascension is measured in time units, \n",
-    "hours, minutes and seconds of sidereal time. \n",
+    "hours, minutes and seconds of sidereal time of transit at Greenwich. \n",
     "     The Earth's rotation axis wobbles with a 25,000 year period due \n",
     "to precession which causes the apparent position of a object to change \n",
     "with time.  Celestial positions are therefore usually expressed in \n",

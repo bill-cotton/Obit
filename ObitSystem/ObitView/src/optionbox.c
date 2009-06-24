@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Option dialog box  for ObitView */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 1996,2002-2008-2008
+*  Copyright (C) 1996,2002-2009
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -45,7 +45,8 @@ typedef struct {
   ImageDisplay *BoxData;
   Widget dialog, pixran1, pixran2, planelab, data1, data2;/* box, min, max */
   Widget ERtimeout; /* Edit request timeout (sec) */
-  Widget plane; /* Plane Number */
+  Widget plane;            /* Plane Number */
+  Widget dim4, dim5, dim6; /* higher dimensions */
   short  xpos, ypos; /* location of the box */
 } OptionBoxStuff;
 OptionBoxStuff dia;
@@ -140,7 +141,7 @@ void ReadERTimeoutCB (Widget w, XtPointer clientData, XtPointer callData)
 } /* end ReadERTimeoutCB */
 
 /**
- * Callback for read Plane numbe
+ * Callback for read Plane number
  * \param w           widget activated
  * \param clientData  client data
  * \param callData    call data
@@ -179,6 +180,123 @@ void ReadPlaneCB (Widget w, XtPointer clientData, XtPointer callData)
 } /* end ReadPlaneCB */
 
 /**
+ * Callback for read Dimension 4 number
+ * \param w           widget activated
+ * \param clientData  client data
+ * \param callData    call data
+ */
+void ReadDim4CB (Widget w, XtPointer clientData, XtPointer callData)
+{
+  /*ImageDisplay *IDdata = (ImageDisplay *)clientData;*/
+  char     *value=NULL;
+  int      itemp;
+  
+  /* read value */
+  value = XmTextGetString (w);
+  if (!value) /* error */
+    {MessageShow ("Error reading dimension 4 number");
+    return;}
+  if (!sscanf (value, "%d", &itemp))
+    { /* error */
+      MessageShow ("Error reading dimension 4 number");
+      if (value) XtFree(value); value = NULL;
+      return;}
+  if (value) XtFree(value); value = NULL;
+  
+  /* internally 0 rel; externally 1 rel */
+  itemp--;
+  
+  /* check value */
+  if ((image[CurImag].valid) && 
+      ((itemp<0) || (itemp>=image[CurImag].myDesc->inaxes[3])))
+    { /* error */
+      MessageShow ("Error: dimension 4 out of range");
+      return;}
+  
+  /* OK, save value */
+  image[CurImag].hiDim[0] = itemp;
+  
+} /* end ReadDim4CB */
+
+/**
+ * Callback for read Dimension 5 number
+ * \param w           widget activated
+ * \param clientData  client data
+ * \param callData    call data
+ */
+void ReadDim5CB (Widget w, XtPointer clientData, XtPointer callData)
+{
+  /*ImageDisplay *IDdata = (ImageDisplay *)clientData;*/
+  char     *value=NULL;
+  int      itemp;
+  
+  /* read value */
+  value = XmTextGetString (w);
+  if (!value) /* error */
+    {MessageShow ("Error reading dimension 5 number");
+    return;}
+  if (!sscanf (value, "%d", &itemp))
+    { /* error */
+      MessageShow ("Error reading dimension 5 number");
+      if (value) XtFree(value); value = NULL;
+      return;}
+  if (value) XtFree(value); value = NULL;
+  
+  /* internally 0 rel; externally 1 rel */
+  itemp--;
+  
+  /* check value */
+  if ((image[CurImag].valid) && 
+      ((itemp<0) || (itemp>=image[CurImag].myDesc->inaxes[4])))
+    { /* error */
+      MessageShow ("Error: dimension 5 out of range");
+      return;}
+  
+  /* OK, save value */
+  image[CurImag].hiDim[1] = itemp;
+  
+} /* end ReadDim5CB */
+
+/**
+ * Callback for read Dimension 6 number
+ * \param w           widget activated
+ * \param clientData  client data
+ * \param callData    call data
+ */
+void ReadDim6CB (Widget w, XtPointer clientData, XtPointer callData)
+{
+  /*ImageDisplay *IDdata = (ImageDisplay *)clientData;*/
+  char     *value=NULL;
+  int      itemp;
+  
+  /* read value */
+  value = XmTextGetString (w);
+  if (!value) /* error */
+    {MessageShow ("Error reading dimension 6 number");
+    return;}
+  if (!sscanf (value, "%d", &itemp))
+    { /* error */
+      MessageShow ("Error reading dimension 6 number");
+      if (value) XtFree(value); value = NULL;
+      return;}
+  if (value) XtFree(value); value = NULL;
+  
+  /* internally 0 rel; externally 1 rel */
+  itemp--;
+  
+  /* check value */
+  if ((image[CurImag].valid) && 
+      ((itemp<0) || (itemp>=image[CurImag].myDesc->inaxes[5])))
+    { /* error */
+      MessageShow ("Error: dimension 6 out of range");
+      return;}
+  
+  /* OK, save value */
+  image[CurImag].hiDim[2] = itemp;
+  
+} /* end ReadDim6CB */
+
+/**
  * Callback for mapping function type
  * \param w      widget activated
  * \param which  =0=>linear, 1=>nonlinear, 2=>hist. eq.
@@ -202,6 +320,9 @@ void OptOKButCB (Widget w, XtPointer clientData, XtPointer callData)
   ReadMinCB (dia.data1, (XtPointer)dia.BoxData, NULL);
   ReadMaxCB (dia.data2, (XtPointer)dia.BoxData, NULL);
   ReadPlaneCB (dia.plane, (XtPointer)dia.BoxData, NULL);
+  ReadDim4CB (dia.dim4, (XtPointer)dia.BoxData, NULL);
+  ReadDim5CB (dia.dim5, (XtPointer)dia.BoxData, NULL);
+  ReadDim6CB (dia.dim6, (XtPointer)dia.BoxData, NULL);
   ReadERTimeoutCB (dia.ERtimeout, (XtPointer)dia.BoxData, NULL);
   
   /* make it disappear but still exist */
@@ -236,6 +357,9 @@ void OptRefreshButCB (Widget w, XtPointer clientData, XtPointer callData)
   ReadMinCB (dia.data1, (XtPointer)dia.BoxData, NULL);
   ReadMaxCB (dia.data2, (XtPointer)dia.BoxData, NULL);
   ReadPlaneCB (dia.plane, (XtPointer)dia.BoxData, NULL);
+  ReadDim4CB (dia.dim4, (XtPointer)dia.BoxData, NULL);
+  ReadDim5CB (dia.dim5, (XtPointer)dia.BoxData, NULL);
+  ReadDim6CB (dia.dim6, (XtPointer)dia.BoxData, NULL);
   
   /* reload current file info pixarray */
   if (!image[CurImag].valid) return;  /* tests for valid image */
@@ -277,6 +401,9 @@ void OptReloadButCB (Widget w, XtPointer clientData, XtPointer callData)
   ReadMinCB (dia.data1, (XtPointer)dia.BoxData, NULL);
   ReadMaxCB (dia.data2, (XtPointer)dia.BoxData, NULL);
   ReadPlaneCB (dia.plane, (XtPointer)dia.BoxData, NULL);
+  ReadDim4CB (dia.dim4, (XtPointer)dia.BoxData, NULL);
+  ReadDim5CB (dia.dim5, (XtPointer)dia.BoxData, NULL);
+  ReadDim6CB (dia.dim6, (XtPointer)dia.BoxData, NULL);
   
   /* reload current file info pixarray */
   if (!image[CurImag].valid) return;  /* tests for valid image */
@@ -315,10 +442,10 @@ void OptReloadButCB (Widget w, XtPointer clientData, XtPointer callData)
  */
 void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 {
-  Widget form=NULL, label1=NULL, label1a=NULL, label2=NULL, label3=NULL;
+  Widget form=NULL, label1=NULL, label1a=NULL, label2=NULL, label3=NULL, label4=NULL;
   Widget radio=NULL, sep=NULL;
   Widget OKbutton=NULL, CancelButton=NULL, RefreshButton=NULL, ReloadButton=NULL;
-  XmString     label = NULL, minpix = NULL, maxpix = NULL, pixran = NULL;
+  XmString     label = NULL, minpix = NULL, maxpix = NULL, pixran = NULL, higher = NULL;
   XmString     labelto = NULL, linear = NULL, nonlinear = NULL, histEq=NULL;
   XmString     plalab = NULL, PixelStr = NULL, wierdstring = NULL;
   char         valuestr[61];
@@ -326,7 +453,7 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   int          start;
   Arg          wargs[5]; 
 #define OPTIONBOX_WIDTH 205
-#define OPTIONBOX_HEIGHT 360
+#define OPTIONBOX_HEIGHT 400
   
   
   /* register IDdata */
@@ -378,6 +505,12 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
     /* current plane number */
     g_snprintf (valuestr, 60, "%d", image[CurImag].PlaneNo+1);
     XmTextSetString (dia.plane, valuestr);
+    g_snprintf (valuestr, 60, "%d", image[CurImag].hiDim[0]+1);
+    XmTextSetString (dia.dim4, valuestr);
+    g_snprintf (valuestr, 60, "%d", image[CurImag].hiDim[1]+1);
+    XmTextSetString (dia.dim5, valuestr);
+    g_snprintf (valuestr, 60, "%d", image[CurImag].hiDim[2]+1);
+    XmTextSetString (dia.dim6, valuestr);
     
     /* current ER timeout */
     g_snprintf (valuestr, 60, "%g", ERtime_out);
@@ -386,14 +519,15 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
     return;
   } /* end of update dialog */
   
-  label  = XmStringCreateSimple ("Options panel");
-  labelto = XmStringCreateSimple ("Edit timeout (sec) <0 = forever");
-  minpix = XmStringCreateSimple ("Minimum pixel value");
-  maxpix = XmStringCreateSimple ("Maximum pixel value");
-  pixran = XmStringCreateSimple ("Pixel range in plane");
-  linear = XmStringCreateSimple ("linear");
+  label     = XmStringCreateSimple ("Options panel");
+  labelto   = XmStringCreateSimple ("Edit timeout (sec) <0 = forever");
+  minpix    = XmStringCreateSimple ("Minimum pixel value");
+  maxpix    = XmStringCreateSimple ("Maximum pixel value");
+  pixran    = XmStringCreateSimple ("Pixel range in plane");
+  linear    = XmStringCreateSimple ("linear");
   nonlinear = XmStringCreateSimple ("nonlinear");
-  histEq = XmStringCreateSimple ("Histogram Equalization");
+  histEq    = XmStringCreateSimple ("Histogram Equalization");
+  higher    = XmStringCreateSimple ("Higher dimensions");
   /* mark as active */
   OptionBoxActive = 1;
   
@@ -528,12 +662,50 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
 				       XmNtopWidget,     dia.planelab,
 				       XmNleftAttachment,  XmATTACH_FORM,
 				       NULL);
-  /* separator */
+  /* Higher dimensions */
+  label4 = XtVaCreateManagedWidget ("OptionLabel4", xmLabelWidgetClass,
+				    form,
+				    XmNwidth,           OPTIONBOX_WIDTH,
+				    XmNlabelString,   higher,
+				    XmNtopAttachment, XmATTACH_WIDGET,
+				    XmNtopWidget,     dia.plane,
+				    XmNleftAttachment,  XmATTACH_FORM,
+				    NULL);
+   g_snprintf (valuestr, 60, "%d", image[CurImag].hiDim[0]+1);
+   dia.dim4 = XtVaCreateManagedWidget ("OptionDim4", xmTextFieldWidgetClass, 
+				       form, 
+				       XmNwidth,           OPTIONBOX_WIDTH/4,
+				       XmNvalue,   valuestr,
+				       XmNtopAttachment, XmATTACH_WIDGET,
+				       XmNtopWidget,     label4,
+				       XmNleftAttachment,  XmATTACH_FORM,
+				       NULL);
+   g_snprintf (valuestr, 60, "%d", image[CurImag].hiDim[1]+1);
+   dia.dim5 = XtVaCreateManagedWidget ("OptionDim5", xmTextFieldWidgetClass, 
+				       form, 
+				       XmNwidth,           OPTIONBOX_WIDTH/4,
+				       XmNvalue,   valuestr,
+				       XmNtopAttachment, XmATTACH_WIDGET,
+				       XmNtopWidget,     label4,
+				       XmNleftAttachment,  XmATTACH_WIDGET,
+				       XmNleftWidget,     dia.dim4,
+ 				       NULL);
+  g_snprintf (valuestr, 60, "%d", image[CurImag].hiDim[2]+1);
+   dia.dim6 = XtVaCreateManagedWidget ("OptionDim5", xmTextFieldWidgetClass, 
+				       form, 
+				       XmNwidth,           OPTIONBOX_WIDTH/3,
+				       XmNvalue,   valuestr,
+				       XmNtopAttachment, XmATTACH_WIDGET,
+				       XmNtopWidget,     label4,
+				       XmNleftAttachment,  XmATTACH_WIDGET,
+				       XmNleftWidget,     dia.dim5,
+				       NULL);
+ /* separator */
   sep = XtVaCreateManagedWidget ("sep", xmSeparatorWidgetClass,
 				 form, 
 				 XmNwidth,           OPTIONBOX_WIDTH,
 				 XmNtopAttachment, XmATTACH_WIDGET,
-				 XmNtopWidget,     dia.plane,
+				 XmNtopWidget,     dia.dim5,
 				 XmNleftAttachment,  XmATTACH_FORM,
 				 NULL);
   /* linear/nonlinear/histogram eq. radio buttons */
@@ -599,6 +771,7 @@ void OptionBoxCB (Widget parent, XtPointer clientData, XtPointer callData)
   if (histEq) XmStringFree(histEq); histEq = NULL;
   if (plalab) XmStringFree(plalab); plalab = NULL;
   if (PixelStr) XmStringFree(PixelStr); PixelStr = NULL;
+  if (higher) XmStringFree(higher); higher = NULL;
   
   /* set it up */
   XtManageChild (dia.dialog);
