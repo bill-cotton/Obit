@@ -1309,6 +1309,7 @@ def imstat (inImage, blc=[1,1,1,1,1], trc=[0,0,0,0,0]):
     MinPos[1] = MinPos[1]+blc[1]
     # Integrated flux density
     Flux = -1.0
+    beamarea = 1.0
     if (head["beamMaj"]>0.0) :
         beamarea = 1.1331*(head["beamMaj"]/abs(head["cdelt"][0])) * \
                    (head["beamMin"]/abs(head["cdelt"][1]))
@@ -1316,7 +1317,8 @@ def imstat (inImage, blc=[1,1,1,1,1], trc=[0,0,0,0,0]):
     print "Region Mean %g, RMSHist %g RMS %g" % (Mean, RMS, RawRMS)
     print "  Max %g @ pixel " % Max, MaxPos
     print "  Min %g @ pixel " % Min, MinPos
-    print "  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea)
+    if (head["beamMaj"]>0.0) :
+        print "  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea)
    
     # Reset BLC, TRC
     blc = [1,1,1,1,1]
