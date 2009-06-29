@@ -1,6 +1,6 @@
 """ Functions for calibrating and editing VLA data
 """
-import UV, UVDesc, ObitTask, AIPSTask, OErr
+import UV, UVDesc, Image, ImageDesc, FArray, ObitTask, AIPSTask, OErr
 from AIPS import AIPS
 from FITS import FITS
 from AIPSDir import AIPSdisks, nAIPS
@@ -31,6 +31,68 @@ def setname (inn, out):
         out.indisk  = inn.Disk
     # end setname
     
+def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0]):
+    """ Get statistics in a specified region of an image plane
+
+    Returns dictionary with statistics of selected region with entries:
+        Mean    = Mean value
+        RMSHist = RMS value from a histogram analysis
+        RMS     = Simple RMS value
+        Max     = maximum value
+        MaxPos  = pixel of maximum value
+        Min     = minimum value
+        MinPos  = pixel of minimum value
+        Flux    = Flux density if CLEAN beam given, else -1
+        BeamArea= CLEAN Beam area in pixels
+    inImage   = Python Image object, created with getname, getFITS
+    err      = Obit error/message stack
+    blc      = bottom left corner pixel (1-rel)
+    trc      = top right corner pixel (1-rel)
+    """
+    ################################################################
+    # Read plane
+    p    = Image.PReadPlane(inImage,err,blc=blc,trc=trc)
+    OErr.printErrMsg(err, "Error with input image")
+    head = inImage.Desc.Dict  # Header
+
+    # Get statistics
+    Mean = p.Mean
+    RMS  = p.RMS
+    RawRMS  = p.RawRMS
+    MaxPos=[0,0]
+    Max = FArray.PMax(p, MaxPos)
+    MaxPos[0] = MaxPos[0]+blc[0]
+    MaxPos[1] = MaxPos[1]+blc[1]
+    MinPos=[0,0]
+    Min = FArray.PMin(p, MinPos)
+    MinPos[0] = MinPos[0]+blc[0]
+    MinPos[1] = MinPos[1]+blc[1]
+    # Integrated flux density
+    Flux = -1.0
+    beamarea = 1.0
+    if (head["beamMaj"]>0.0) :
+        beamarea = 1.1331*(head["beamMaj"]/abs(head["cdelt"][0])) * \
+                   (head["beamMin"]/abs(head["cdelt"][1]))
+        Flux = p.Sum/beamarea
+    print "Region Mean %g, RMSHist %g RMS %g" % (Mean, RMS, RawRMS)
+    print "  Max %g @ pixel " % Max, MaxPos
+    print "  Min %g @ pixel " % Min, MinPos
+    if (head["beamMaj"]>0.0) :
+        print "  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea)
+   
+    # Reset BLC, TRC
+    blc = [1,1,1,1,1]
+    trc = [0,0,0,0,0]
+    Image.POpen(inImage, Image.READONLY, err, blc=blc, trc=trc)
+    Image.PClose (inImage, err)
+    OErr.printErrMsg(err, "Error with input image")
+    
+    del p, blc, trc
+    return {"Mean":Mean,"RMSHist":RMS,"RMS":RawRMS,"Max":Max, \
+            "MaxPos":MaxPos,"Min":Min,"MinPos":MinPos,"Flux":Flux,
+            "BeamArea":beamarea}
+    # end imstat
+   
 def VLAClearCal(uv, err, doGain=True, doBP=False, doFlag=False):
     """ Clear previous calibration
 
@@ -181,7 +243,7 @@ def VLACal(uv, target, ACal, err, \
     If neither calFlux nor calModel is given, an attempt is made
     to use the setjy.OPType="CALC" option.
     uv       = UV data object to calibrate
-    target   = Target source name or list of names
+    target   = Target source name or list of names to calibrate
     ACal     = Amp calibrator
     err      = Obit error/message stack
     PCal     = if given, the phase calibrator name
@@ -209,9 +271,11 @@ def VLACal(uv, target, ACal, err, \
         setjy.ZeroFlux=[calFlux]
     elif calModel==None:
         setjy.OPType="CALC"
+    else:
+        setjy.ZeroFlux=[1.0,0.0,0.0,0.0]
     setjy.g
     if PCal:
-        setjy.ZeroFlux=[0.0,0.0,0.0,0.0]
+        setjy.ZeroFlux=[1.0,0.0,0.0,0.0]
         if type(PCal)==list:
             setjy.Sources=PCal
         else:
@@ -254,14 +318,6 @@ def VLACal(uv, target, ACal, err, \
     clcal.calOut  = clcal.calIn+1
     clcal.interMode="2PT"
     clcal.FreqID = FQid
-    # Accumulate full list of sources to calibrate
-    if type(target)==list:
-        tarlist=[]
-        for tar in target:
-            tarlist.append(tar)
-    else:
-        tarlist=[target]
-    tarlist.append(ACal)
 
     # Calib on phase reference if given
     if PCal:
@@ -283,17 +339,25 @@ def VLACal(uv, target, ACal, err, \
         getjy = ObitTask.ObitTask("GetJy")
         setname(uv,getjy)
         getjy.calSour=[ACal]
-        getjy.Sources=[PCal]
+        if type(PCal)==list:
+            getjy.Sources=PCal
+        else:
+            getjy.Sources=[PCal]
         getjy.FreqID = FQid
         #getjy.debug = True # DEBUG
         getjy.g
 
-        # Set up for CLCal
-        tarlist.append(PCal)
-        clcal.calSour = [PCal]
+        # Set up for CLCal - only use phase calibrators
+        if type(PCal)==list:
+            clcal.calSour=PCal
+        else:
+            clcal.calSour=[PCal]
         
-    clcal.Sources = tarlist
-    print "Apply calibration for",tarlist
+    if type(target)==list:
+        clcal.Sources=target
+    else:
+        clcal.Sources=[target]
+    print "Apply calibration for",target
     clcal.g
     
     # end PCal calibration
@@ -410,3 +474,221 @@ def VLASetImager (uv, target, outIclass="", nThreads=1, noScrat=[]):
     img.noScrat  = noScrat
     return img
 # end VLASetImager
+
+def VLAPolCal(uv, InsCals, RLCal, RLPhase, err, RM=0.0, \
+              doCalib=2, gainUse=0, flagVer=-1, \
+              soltype="APPR", fixPoln=False, avgIF=False, \
+              solInt=0.0, refAnt=0, \
+              pmodel=[0.0,0.0,0.0,0.0,0.0,0.0,0.0], \
+              FOV=0.05, niter = 100, \
+              nThreads=1, noScrat=[]):
+    """ Polarization calibration, both instrumental and orientation
+
+    Do Instrumental and R-L calibration
+    Instrumental cal uses PCAL, R-L cal is done by imaging each IF in Q and U
+    and summing the CLEAN components.
+    uv       = UV data object to calibrate
+    InsCals  = Instrumental poln calibrators, name or list of names
+               If None no instrumental cal
+    RLCal    = R-L (polarization angle) calibrator,
+               If None no R-L cal
+    RLPhase  = R-L phase of RLCal (deg) at 1 GHz
+    err      = Obit error/message stack
+    RM       = Rotation measure of RLCal
+    doCalib  = Apply prior calibration table, positive=>calibrate
+    gainUse  = CL/SN table to apply
+    flagVer  = Input Flagging table version
+    soltype  = solution type
+    fixPoln  = if True, don't solve for source polarization in ins. cal
+    avgIF    = if True, average IFs in ins. cal.
+    solInt   = instrumental solution interval (min), 0=> scan average
+    refAnt   = Reference antenna
+    pmodel   = Instrumental poln cal source poln model.
+               pmodel[0] = I flux density (Jy)
+               pmodel[1] = Q flux density (Jy)
+               pmodel[2] = U flux density (Jy)
+               pmodel[3] = V flux density (Jy)
+               pmodel[4] = X offset in sky (arcsec)
+               pmodel[5] = Y offset in sky (arcsec)
+    FOV      = field of view radius (deg) needed to image RLCal
+    niter    = Number  of iterations of CLEAN in R-L cal
+    nThreads = Number of threads to use in imaging
+    noScrat  = list of disks to avoid for scratch files
+    """
+    ################################################################
+    # Instrumental calibrtation
+    if InsCals!=None:
+        pcal = AIPSTask.AIPSTask("pcal")
+        setname(uv,pcal)
+        if type(InsCals)==list:
+            pcal.calsour[1:] = InsCals
+        else:
+            pcal.calsour[1:] = [InsCals]
+        pcal.docalib = doCalib
+        pcal.gainuse = gainUse
+        pcal.flagver = flagVer
+        pcal.soltype = soltype
+        pcal.solint  = solInt
+        pcal.refant  = refAnt
+        if fixPoln:
+            pcal.bparm[10]=1.0
+        if avgIF:
+            pcal.cparm[1]=1.0
+        pcal.pmodel[1:]  = pmodel
+        pcal.baddisk[1:] = noScrat
+        pcal.g
+        # end instrumental poln cal
+
+    # R-L phase cal
+    if RLCal!=None:
+        img = ObitTask.ObitTask("Imager")
+        setname(uv,img)
+        img.doCalib    = doCalib
+        img.gainUse    = gainUse
+        img.flagVer    = flagVer
+        img.doPol      = True
+        img.Sources[0] = RLCal
+        img.Stokes     = "IQU"
+        img.FOV        = FOV
+        img.Niter      = niter
+        img.autoWindow = True
+        img.dispURL    = "None"
+        img.Catalog    = "None"
+        img.nThreads   = nThreads
+        img.noScrat    = noScrat
+        # Temporary output files
+        if img.DataType=="AIPS":
+            img.outName = "TEMP"
+            img.outClass= "IPOLCL"
+            img.outDisk = img.inDisk
+            img.outSeq  = 6666
+            img.out2Name = "TEMP"
+            img.out2Class= "IPOLCL"
+            img.out2Disk = img.inDisk
+            img.out2Seq  = 7777
+        elif img.DataType=="FITS":
+            img.outFile  = "TEMPPOLCAL.fits"
+            img.outDisk  = img.inDisk
+            img.out2File = "TEMPPOLCAL2.uvtab"
+            img.out2Disk = img.inDisk
+       # How many IFs?
+        h = uv.Desc.Dict
+        if h["jlocif"]>=0:
+            nif = h["inaxes"][h["jlocif"]]
+        else:
+            nif = 1
+
+        # Lists of flux densities and RMSes
+        IFlux = []
+        IRMS  = []
+        QFlux = []
+        QRMS  = []
+        UFlux = []
+        URMS  = []
+        
+        # Loop over IF imaging I,Q, U
+        for iif in range (1, nif+1):
+            img.BIF = iif
+            img.EIF = iif
+            img.g
+            
+            # Get fluxes from inner quarter of images
+            if img.DataType=="AIPS":
+                outName = (img.Sources[0].strip()+"TEMP")[0:12]
+                outDisk = img.outDisk
+                outSeq  = 6666
+                # Stokes I
+                outClass="IPOLCL"
+                x =  Image.newPAImage("I",outName, outClass, outDisk,outSeq,True,err)
+                h = x.Desc.Dict
+                blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
+                trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
+                stat = imstat(x, err, blc=blc,trc=trc)
+                IFlux.append(stat["Flux"])
+                IRMS.append(stat["RMSHist"])
+                x.Zap(err)  # Cleanup
+                del x
+                # Stokes Q
+                outClass="QPOLCL"
+                x =  Image.newPAImage("Q",outName, outClass, outDisk,outSeq,True,err)
+                stat = imstat(x, err, blc=blc,trc=trc)
+                QFlux.append(stat["Flux"])
+                QRMS.append(stat["RMSHist"])
+                x.Zap(err)  # Cleanup
+                del x
+                # Stokes U
+                outClass="UPOLCL"
+                x =  Image.newPAImage("U",outName, outClass, outDisk,outSeq,True,err)
+                stat = imstat(x, err, blc=blc,trc=trc)
+                UFlux.append(stat["Flux"])
+                URMS.append(stat["RMSHist"])
+                x.Zap(err)  # Cleanup
+                del x
+                # Delete UV output
+                out2Name = (img.Sources[0].strip()+"TEMP")[0:12]
+                out2Class="IPOLCL"
+                out2Disk = img.inDisk
+                out2Seq  = 7777
+                u =  UV.newPAUV("UV",out2Name,out2Class,out2Disk,out2Seq,True,err)
+                u.Zap(err)
+                del u
+            elif img.DataType=="FITS":
+                # Stokes I
+                outFile  = img.Sources[0].strip()+"ITEMPPOLCAL.fits"
+                x =  Image.newPFImage("I",outFile,img.outDisk,True,err)
+                h = x.Desc.Dict
+                blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
+                trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
+                stat = imstat(x, err, blc=blc,trc=trc)
+                IFlux.append(stat["Flux"])
+                IRMS.append(stat["RMSHist"])
+                x.Zap(err)  # Cleanup
+                del x
+                # Stokes Q
+                outFile  = img.Sources[0].strip()+"ITEMPPOLCAL.fits"
+                x =  Image.newPFImage("Q",outFile,img.outDisk,True,err)
+                stat = imstat(x, err, blc=blc,trc=trc)
+                IFlux.append(stat["Flux"])
+                IRMS.append(stat["RMSHist"])
+                x.Zap(err)  # Cleanup
+                del x
+                # Stokes U
+                outFile  = img.Sources[0].strip()+"ITEMPPOLCAL.fits"
+                x =  Image.newPFImage("Q",outFile,img.outDisk,True,err)
+                stat = imstat(x, err, blc=blc,trc=trc)
+                IFlux.append(stat["Flux"])
+                IRMS.append(stat["RMSHist"])
+                x.Zap(err)  # Cleanup
+                del x
+                out2File = img.Sources[0].strip()+"TEMPPOLCAL2.uvtab"
+                u =  UV.newPFUV("UV",outFile,img.outDisk,True,err)
+                u.Zap(err)
+                del u
+           # End accumulate statistics by file type
+        # End loop over IF
+
+        # Give results, compute R-L correction
+        RLCor = []
+        import math
+        print " IF     IFlux    IRMS    QFlux   QRMS    UFlux  URMS  R-L Corr"
+        for i in range (0,len(IFlux)):
+            # REALLY NEED RM Correction!!!!!
+            cor = RLPhase - 57.296 * math.atan2(UFlux[i],QFlux[i])
+            RLCor.append(cor)
+            print "%3d  %8.2f %8.2f %7.2f %7.2f %7.2f %7.2f %7.2f "%\
+                  (i+1, IFlux[i], IRMS[i], QFlux[i], QRMS[i], UFlux[i], URMS[i], cor)
+        
+        # Copy highest CL table
+        hiCL = uv.GetHighVer("AIPS CL")
+
+        # Apply R-L phase corrections
+        clcor = AIPSTask.AIPSTask("clcor")
+        setname(uv,clcor)
+        clcor.opcode   = "POLR"
+        clcor.gainver  = hiCL
+        clcor.gainuse  = hiCL+1
+        clcor.clcorprm[1:] = RLCor
+        clcor.g
+        # end R-L Cal
+    # End VLAPolCal
+

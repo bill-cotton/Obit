@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Feather Obit task - Feathers together images            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -52,8 +52,8 @@ ObitInfoList* defaultOutputs(ObitErr *err);
 void featherGetImage(ObitInfoList *myInput, olong *numImage, 
 		     ObitErr *err);
 /* Feather images together to outImage */
-void doFeather (olong numImage, ObitImage *inImage[], ObitImage *outImage, 
-		ObitErr *err);
+void doFeather (ObitInfoList *myInput, olong numImage, ObitImage *inImage[], 
+		ObitImage *outImage, ObitErr *err);
 /* Write History */
 void doHistory (olong numImage, ObitImage *inImage[], ObitImage *outImage, 
 		ObitErr *err);
@@ -103,7 +103,7 @@ int main ( int argc, char **argv )
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Feather them together */
-  doFeather (numImage, inImage, outImage, err);
+  doFeather (myInput, numImage, inImage, outImage, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* History */
@@ -182,6 +182,11 @@ ObitInfoList* FeatherIn (int argc, char **argv, ObitErr *err)
       dim[0] = strlen (strTemp);
       ObitInfoListAlwaysPut (list, "DataType", OBIT_string, dim, strTemp);
       
+     } else if (strcmp(arg, "-outDType") == 0) { /* Image type AIPS or FITS */
+      strTemp = argv[++ax];
+      dim[0] = strlen (strTemp);
+      ObitInfoListAlwaysPut (list, "DataType", OBIT_string, dim, strTemp);
+      
     } else { /* unknown argument */
       Usage();
     }
@@ -247,6 +252,7 @@ void Usage(void)
     fprintf(stderr, "  -output output result file, def Feather.out\n");
     fprintf(stderr, "  -pgmNumber Program (POPS) number, def 1 \n");
     fprintf(stderr, "  -DataType AIPS or FITS type for input image\n");
+    fprintf(stderr, "  -outDType AIPS or FITS type for output\n");
     fprintf(stderr, "  -AIPSuser User AIPS number, def 2 \n");
     
     /*/exit(1);  bail out */
@@ -263,12 +269,13 @@ void Usage(void)
 /*     AIPSuser  Int        AIPS user number [def 2}]                     */
 /*     nAIPS     Int        Number of AIPS directories [def. 1]           */
 /*     AIPSdirs  Str [?,?]  AIPS directories [def std. AIPS]              */
-/*     DataType  Str [4]    "AIPS" or "FITS" [def {"FITS"}]               */
-/*     inFile?   Str [?]    input FITS image file name [no def]           */
-/*     inName?   Str [12]   input AIPS image name  [no def]               */
-/*     inClass?  Str [6]    input AIPS image class  [no def]              */
-/*     inSeq?    Int        input AIPS image sequence no  [no def]        */
-/*     inDisk?   Int        input AIPS or FITS image disk no  [def 1]     */
+/*     DataType  Str [4]    input "AIPS" or "FITS" [def {"FITS"}]         */
+/*     outDType  Str [4]    output "AIPS" or "FITS" [def {"FITS"}]        */
+/*     in?File   Str [?]    input FITS image file name [no def]           */
+/*     in?Name   Str [12]   input AIPS image name  [no def]               */
+/*     in?Class  Str [6]    input AIPS image class  [no def]              */
+/*     in?Seq    Int        input AIPS image sequence no  [no def]        */
+/*     in?Disk   Int        input AIPS or FITS image disk no  [def 1]     */
 /*----------------------------------------------------------------------- */
 ObitInfoList* defaultInputs(ObitErr *err)
 {
@@ -310,6 +317,7 @@ ObitInfoList* defaultInputs(ObitErr *err)
   strTemp = "FITS";
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, "DataType", OBIT_string, dim, strTemp, err);
+  ObitInfoListPut (out, "outDType", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   strTemp = "undefn";
@@ -434,7 +442,7 @@ void featherGetImage(ObitInfoList *myInput, olong *numImage,
   gboolean     exist;
   gchar        *strTemp=NULL, inFile[128];
   gchar        Aname[13], Aclass[7], *Atype = "MA";
-  gchar        tname[101];
+  gchar        tname[101], *Type, *FITS="FITS";
   gchar *routine = "featherGetImage";
 
   if (err->error) return;  /* existing error? */
@@ -503,21 +511,6 @@ void featherGetImage(ObitInfoList *myInput, olong *numImage,
       if (err->error) Obit_traceback_msg (err, routine, routine);
     } /* End loop over inputs */
 
-    /* Output image */
-    /* AIPS disk */
-    ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
-    /* AIPS name */
-    for (k=0; k<12; k++) Aname[k] = ' '; Aname[k] = 0;
-    ObitInfoListGet(myInput, "outName", &type, dim, Aname, err);
-    Aname[dim[0]] = 0;
-    /* AIPS class */
-    for (k=0; k<6; k++) Aclass[k] = ' '; Aclass[k] = 0;
-    ObitInfoListGet(myInput, "outClass", &type, dim, Aclass, err);
-    Aclass[dim[0]] = 0;
-    /* AIPS sequence */
-    ObitInfoListGet(myInput, "outSeq", &type, dim, &Aseq, err);
-    if (err->error) Obit_traceback_msg (err, routine, routine);
-    
    /* if ASeq==0 create new, high+1 */
     if (Aseq<=0) {
       Aseq = ObitAIPSDirHiSeq(disk, AIPSuser, Aname, Aclass, Atype, FALSE, err);
@@ -549,13 +542,14 @@ void featherGetImage(ObitInfoList *myInput, olong *numImage,
     for (i=0; i<number; i++) {
       /* input FITS file name */
       for (j=0; j<128; j++) inFile[j] = 0;
-      if (i==0) g_snprintf (tname, 50, "inFITS");
-      else g_snprintf (tname, 100, "in%dFITS", i+1);
+      if (i==0) g_snprintf (tname, 50, "inFile");
+      else g_snprintf (tname, 100, "in%dFile", i+1);
       ObitInfoListGet(myInput, tname, &type, dim, inFile, err);
       if (err->error) Obit_traceback_msg (err, routine, routine);
       
       /* input FITS disk */
-      g_snprintf (tname, 100, "inDisk%d", i+1);
+      if (i==0) g_snprintf (tname, 50, "inDisk");
+      else g_snprintf (tname, 100, "in%dDisk", i+1);
       ObitInfoListGet(myInput, tname, &type, dim, &ftemp, err);
       if (err->error) Obit_traceback_msg (err, routine, routine);
       disk = ftemp + 0.5;
@@ -573,10 +567,71 @@ void featherGetImage(ObitInfoList *myInput, olong *numImage,
       if (err->error) Obit_traceback_msg (err, routine, routine);
     } /* end loop over inputs */
     
+  } else { /* Unknown type - barf and bail */
+    Obit_log_error(err, OBIT_Error, "%s: Unknown Image type %s", 
+                   pgmName, strTemp);
+  }
+  if (err->error) Obit_traceback_msg (err, routine, routine);
+
+  /* Output image */
+  /* File type - could be either AIPS or FITS */
+  ObitInfoListGetP (myInput, "outDType", &type, dim, (gpointer)&Type);
+  if ((Type==NULL) || (!strncmp(Type,"    ",4)))
+    ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
+  if ((Type==NULL) || (!strncmp(Type,"    ",4))) Type = FITS;
+
+  if (!strncmp (Type, "AIPS", 4)) { 
+    /* AIPS file */
+    /* AIPS disk */
+    ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
+    /* AIPS name */
+    for (k=0; k<12; k++) Aname[k] = ' '; Aname[k] = 0;
+    ObitInfoListGet(myInput, "outName", &type, dim, Aname, err);
+    Aname[dim[0]] = 0;
+    /* AIPS class */
+    for (k=0; k<6; k++) Aclass[k] = ' '; Aclass[k] = 0;
+    ObitInfoListGet(myInput, "outClass", &type, dim, Aclass, err);
+    Aclass[dim[0]] = 0;
+    /* AIPS sequence */
+    ObitInfoListGet(myInput, "outSeq", &type, dim, &Aseq, err);
+    if (err->error) Obit_traceback_msg (err, routine, routine);
+   /* if ASeq==0 create new, high+1 */
+    if (Aseq<=0) {
+      Aseq = ObitAIPSDirHiSeq(disk, AIPSuser, Aname, Aclass, Atype, FALSE, err);
+      if (err->error) Obit_traceback_msg (err, routine, "myInput");
+      /* Save on myInput*/
+      dim[0] = dim[1] = 1;
+      ObitInfoListAlwaysPut(myInput, "outSeq", OBIT_oint, dim, &Aseq);
+    } 
+
+   /* Find catalog number */
+    cno = ObitAIPSDirAlloc(disk, AIPSuser, Aname, Aclass, Atype, Aseq, 
+			   &exist, err);
+    if (err->error) Obit_traceback_msg (err, routine, routine);
+    
+    /* Generate Object name from AIPS name */
+    g_snprintf (tname, 100, "%s.%s:%d.%d", Aname, Aclass, Aseq, disk);
+    outImage = newObitImage(tname);
+    
+    /* reset BLC, TRC */
+    for (j=0; j<IM_MAXDIM; j++)  {blc[j] = 1; trc[j] = 0;}
+    
+    /* Tell about it */
+    Obit_log_error(err, OBIT_InfoErr, "Output AIPS image %s %s %d on disk %d cno %d",
+		   Aname, Aclass, Aseq, disk, cno);
+
+    /* define image */
+    ObitImageSetAIPS (outImage, OBIT_IO_byPlane, disk, cno, AIPSuser, 
+		      blc, trc, err);
+    if (err->error) Obit_traceback_msg (err, routine, routine);
+    
+  } else if (!strncmp (Type, "FITS", 4)){ 
+
+    /* FITS file */  
     /* Output image */ 
     /* FITS file name */
     for (i=0; i<128; i++) inFile[i] = 0;
-    ObitInfoListGet(myInput, "outFITS", &type, dim, inFile, err);
+    ObitInfoListGet(myInput, "outFile", &type, dim, inFile, err);
     if (err->error) Obit_traceback_msg (err, routine, routine);
     
     /*  FITS disk */
@@ -589,6 +644,10 @@ void featherGetImage(ObitInfoList *myInput, olong *numImage,
     /* reset BLC, TRC */
     for (j=0; j<IM_MAXDIM; j++)  {blc[j] = 1; trc[j] = 0;}
     
+    /* Give output Image name */
+    Obit_log_error(err, OBIT_InfoErr, "Output FITS image %s on disk %d ",
+		   inFile, disk);
+
     /* define image */
     ObitImageSetFITS (outImage, OBIT_IO_byPlane, disk, inFile, blc, trc, err);
     if (err->error) Obit_traceback_msg (err, routine, routine);
@@ -598,7 +657,6 @@ void featherGetImage(ObitInfoList *myInput, olong *numImage,
                    pgmName, strTemp);
   }
   if (err->error) Obit_traceback_msg (err, routine, routine);
-
 } /* end featherGetImage */
 
 /*----------------------------------------------------------------------- */
@@ -609,21 +667,30 @@ void featherGetImage(ObitInfoList *myInput, olong *numImage,
 /*      outImage  Output ObitImage pointer                                */
 /*      err       Obit error/message stack                                */
 /*----------------------------------------------------------------------- */
-void doFeather (olong numImage, ObitImage *inImage[], ObitImage *outImage, 
-		ObitErr *err)
+void doFeather (ObitInfoList *myInput, olong numImage, ObitImage *inImage[], 
+		ObitImage *outImage, ObitErr *err)
 {
-  olong       i;
+  ObitInfoType type;
+  gint32     dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong      i;
   olong      ndim=2, naxis[2], pos[2];
-  ofloat     cmplx[2], peak, norm;
+  ofloat     cmplx[2], peak, norm, *weights, tweight[100];
   ObitFFT    *FFTfor=NULL, *FFTrev=NULL;
   ObitImage  *padImage[MAXINPUT];
   ObitImage  *tmplImage=NULL, *tmpImage=NULL;
   ObitFArray *wtArray[MAXINPUT], *resultArray=NULL, *workArray2=NULL;
   ObitCArray *accArray=NULL, *workArray=NULL;
-  /* ObitFArray *tArr;  DEBUG */
+  /* ObitFArray *tArr;       DEBUG */
+  /* gchar debugFile[200];   DEBUG */
   gchar *routine = "doFeather";
 
   if (err->error) return;  /* existing error? */
+
+  /* Get weight array - default = all 1.0 */
+  if (!ObitInfoListGetP (myInput, "weight", &type, dim, (gpointer)&weights)) {
+    for (i=0; i<100; i++) tweight[i] = 1.0;
+    weights = tweight;
+  }
 
   /* Create FFTs */
   FFTfor = ObitFeatherUtilCreateFFT(inImage[0], OBIT_FFT_Forward);
@@ -648,12 +715,6 @@ void doFeather (olong numImage, ObitImage *inImage[], ObitImage *outImage,
     if (err->error) Obit_traceback_msg (err, routine, inImage[i]->name);
   } /* end loop creating padded images */
   
-  /* DEBUG */
-  /*tArr = ObitCArrayMakeF(accArray);*/
-  /*ObitCArrayReal (accArray, tArr);*/
-  /* ObitImageUtilArray2Image ("FeatherDebug1.fits",1,padImage[0]->image, err);*/
-  /*tArr = ObitFArrayUnref(tArr);*/
-
   /* Create masks in FArrays, first get weights from restoring beams/resolution */
   Obit_log_error(err, OBIT_InfoErr,"Create weighting masks");
   ObitErrLog(err);
@@ -661,6 +722,13 @@ void doFeather (olong numImage, ObitImage *inImage[], ObitImage *outImage,
   for (i=0; i<numImage; i++) {
     wtArray[i] =  ObitFeatherUtilMakeBeamMask (padImage[i],  FFTfor, err);
     if (err->error) Obit_traceback_msg (err, routine, inImage[0]->name);
+    /* DEBUG
+       ObitImageOpen (padImage[i], OBIT_IO_ReadWrite, err);
+       ObitImageRead (padImage[i], NULL, err);
+       ObitImageClose (padImage[i],err);
+       if (err->error) Obit_traceback_msg (err, routine, padImage[i]->name);
+       g_snprintf (debugFile,200,"debugPad%d.fits",i+1);
+       ObitImageUtilArray2Image (debugFile,0,padImage[i]->image, err); */
   } /* end loop creating weighting masks */
 
   /* derive weight masks from FT of beams, Weights are 1 with a Gaussian 
@@ -671,6 +739,11 @@ void doFeather (olong numImage, ObitImage *inImage[], ObitImage *outImage,
     /* If this is not the lowest resolution image, subtract next lowest */
     if (i<numImage-1) 
       ObitFArraySub (wtArray[i], wtArray[i+1], wtArray[i]);
+    /* Scale by weights */
+    ObitFArraySMul (wtArray[i], weights[i]);
+    /* DEBUG 
+       g_snprintf (debugFile,200,"debugWeight%d.fits",i+1);
+       ObitImageUtilArray2Image (debugFile,0,wtArray[i], err);*/
   }  
 
   /* Make accumulation array and work array */
@@ -686,7 +759,19 @@ void doFeather (olong numImage, ObitImage *inImage[], ObitImage *outImage,
     ObitFeatherUtilAccumImage(FFTfor, padImage[i], wtArray[i], 
 			      accArray, workArray, err);
     if (err->error) Obit_traceback_msg (err, routine, inImage[0]->name);
+    /* DEBUG
+       tArr = ObitCArrayMakeF(accArray);
+       ObitCArrayAmp (workArray, tArr);
+       g_snprintf (debugFile,200,"debugFT%d.fits",i+1);
+       ObitImageUtilArray2Image (debugFile,0,tArr, err);
+       tArr = ObitFArrayUnref(tArr); */
   } /* end loop accumulating images */
+
+  /* DEBUG
+     tArr = ObitCArrayMakeF(accArray);
+     ObitCArrayReal (accArray, tArr);
+     ObitImageUtilArray2Image ("FeatherDebug1.fits",0,tArr, err);
+     tArr = ObitFArrayUnref(tArr); */
 
   /* FFT back to image domain */
   Obit_log_error(err, OBIT_InfoErr,"FFT back to image domain");
@@ -776,6 +861,9 @@ void doHistory (olong numImage, ObitImage *inImage[], ObitImage *outImage,
   ObitHistory *inHistory=NULL, *outHistory=NULL;
   olong         i;
   gchar        hicard[81];
+  gchar        *hiEntries[] = {
+    "weight", 
+    NULL};
   gchar *routine = "doHistory";
 
   if (err->error) return;  /* existing error? */
@@ -800,6 +888,9 @@ void doHistory (olong numImage, ObitImage *inImage[], ObitImage *outImage,
     ObitHistoryWriteRec (outHistory, -1, hicard, err);
     if (err->error) Obit_traceback_msg (err, routine, outImage->name);
   } /* end loop adding input file names */
+
+  /* Copy selected values from myInput */
+  ObitHistoryCopyInfoList (outHistory, pgmName, hiEntries, myInput, err);
   ObitHistoryClose (outHistory, err);
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
 
