@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Ionospheric calibration of uv data              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -36,6 +36,7 @@
 #include "ObitAIPSDir.h"
 #include "ObitHistory.h"
 #include "ObitData.h"
+#include "ObitThread.h"
 
 /* internal prototypes */
 /* Get inputs */
@@ -591,6 +592,9 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   ObitAIPSSetnoScrat(myInput, err);
   if (err->error) Obit_traceback_msg (err, routine, "task Input");
 
+  /* Initialize Threading */
+  ObitThreadInit (myInput);
+
 } /* end digestInputs */
 
 /*----------------------------------------------------------------------- */
@@ -607,7 +611,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   ObitUV       *inData = NULL;
   ObitInfoType type;
   ObitIOType   IOType;
-  olong         Aseq, disk, cno, nvis=1000;
+  olong         Aseq, disk, cno, nvis, nThreads;
   gchar        *Type, *strTemp, inFile[129];
   gchar        Aname[13], Aclass[7], Tname[13], Tclass[7], *Atype = "UV";
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -659,6 +663,10 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
     
     /* define object */
+    nvis = 1000;
+    nThreads = 1;
+    ObitInfoListGetTest(myInput, "nThreads", &type, dim, &nThreads);
+    nvis *= nThreads;
     ObitUVSetAIPS (inData, nvis, disk, cno, AIPSuser, err);
     if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
     
@@ -677,6 +685,10 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
     ObitInfoListGet(myInput, "inDisk", &type, dim, &disk, err);
 
     /* define object */
+    nvis = 1000;
+    nThreads = 1;
+    ObitInfoListGetTest(myInput, "nThreads", &type, dim, &nThreads);
+    nvis *= nThreads;
     ObitUVSetFITS (inData, nvis, disk, inFile,  err); 
     if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
     

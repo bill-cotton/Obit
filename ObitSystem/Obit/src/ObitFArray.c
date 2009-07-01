@@ -774,7 +774,7 @@ ofloat ObitFArrayMaxAbs (ObitFArray *in, olong *pos)
   /* Free local objects */
   KillFAFuncArgs(nThreads, threadArgs);
 
-  return maxVal;
+  return MAX (0.0, maxVal);
 } /* end  ObitFArrayMaxAbs */
 
 /**

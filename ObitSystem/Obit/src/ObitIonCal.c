@@ -897,7 +897,7 @@ void ObitIonCaldoCal (ObitIonCal*in, ObitErr* err)
   if (err->error) goto cleanup;
 
   /* Only summary CLEAN messages */
-  cprtLv = 1; dim[0] = dim[1] = 1;
+  cprtLv = 0; dim[0] = dim[1] = 1;
   if (prtLv>=4) cprtLv = prtLv;
   ObitInfoListAlwaysPut (myClean->info, "prtLv", OBIT_long, dim, &cprtLv);
 

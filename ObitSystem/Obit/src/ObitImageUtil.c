@@ -108,16 +108,16 @@ static void KillInterpFuncArgs (olong nargs, InterpFuncArg **ThreadArgs);
  * Create basic ObitImage structure and fill out descriptor.
  * Imaging parameters are on the inUV info member as arrays for a number 
  * of fields.
- * \li "nChAvg" OBIT_int (1,1,1) number of channels to average.
+ * \li "nChAvg" OBIT_long (1,1,1) number of channels to average.
  *              This is for spectral line observations and is ignored
  *              if the IF axis on the uv data has more than one IF.
  *              Default is continuum = average all freq/IFs. 0=> all.
  * \li "rotate" OBIT_float (?,1,1) Desired rotation on sky (from N thru E) in deg. [0]
- * \li "nx"     OBIT_int (?,1,1) Dimension of image in RA [no default].
+ * \li "nx"     OBIT_long (?,1,1) Dimension of image in RA [no default].
  *              This and the following are arrays with one entry per field.
- * \li "nxBeam" OBIT_int (?,1,1) Dimension of beam in RA, [def. nx]
- * \li "ny"     OBIT_int (?,1,1) Dimension of image in declination[no default]
- * \li "nyBeam" OBIT_int (?,1,1) Dimension of beam in declination, [def. ny]
+ * \li "nxBeam" OBIT_long (?,1,1) Dimension of beam in RA, [def. nx]
+ * \li "ny"     OBIT_long (?,1,1) Dimension of image in declination[no default]
+ * \li "nyBeam" OBIT_long (?,1,1) Dimension of beam in declination, [def. ny]
  * \li "xCells" OBIT_float (?,1,1) X (=RA) cell spacing in asec [no default]
  * \li "yCells" OBIT_float (?,1,1) Y (=dec) cell spacing in asec [no default]
  * \li "xShift" OBIT_float (?,1,1) Desired shift in X (=RA) in degrees. [0]
@@ -523,7 +523,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   NPIO = outImage->myGrid->nThreads * 
     (olong) (0.5 + MAX (2.0, 2.0/(inUV->myDesc->lrec*4.0/(1024.0*1024.0))));
   dim[0] = dim[1] = dim[2] = 1;
-  ObitInfoListAlwaysPut (inUV->info, "nVisPIO",  OBIT_int, dim,  (gpointer)&NPIO);
+  ObitInfoListAlwaysPut (inUV->info, "nVisPIO",  OBIT_long, dim,  (gpointer)&NPIO);
 
   /* Loop over channels selected */
   icLo = 1; 
@@ -678,7 +678,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   } /* end loop over channels */
   /* Reset NPIO */
   dim[0] = dim[1] = dim[2] = 1;
-  ObitInfoListAlwaysPut (inUV->info, "nVisPIO",  OBIT_int, dim,  (gpointer)&oldNPIO);
+  ObitInfoListAlwaysPut (inUV->info, "nVisPIO",  OBIT_long, dim,  (gpointer)&oldNPIO);
 
 }  /* end ObitImageUtilMakeImage */
 
@@ -828,7 +828,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
       /* Copy controls */
       data[ip]->info  = ObitInfoListCopyData(inUV->info, data[ip]->info);
       dim[0] = 1; dim[1] = 1; dim[2] = 1; /* No cal for now */
-      ObitInfoListAlwaysPut(data[ip]->info, "doCalib", OBIT_int, dim, &Fl);
+      ObitInfoListAlwaysPut(data[ip]->info, "doCalib", OBIT_long, dim, &Fl);
       /* Ensure out fully instantiated and OK */
       ObitUVFullInstantiate (data[ip], TRUE, err);
       if (err->error) goto cleanup;
@@ -850,8 +850,8 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
 	if (nGain==1)    gain = gainUse[0];
 	if (nGain>=nPar) gain = gainUse[j];
 	dim[0] = 1; dim[1] = 1; dim[2] = 1;
-	ObitInfoListAlwaysPut(data[ip]->info, "gainUse", OBIT_int, dim, &gain);
-	ObitInfoListAlwaysPut(data[ip]->info, "doCalib", OBIT_int, dim, &doCalib);
+	ObitInfoListAlwaysPut(data[ip]->info, "gainUse", OBIT_long, dim, &gain);
+	ObitInfoListAlwaysPut(data[ip]->info, "doCalib", OBIT_long, dim, &doCalib);
       }
       /* Gridding setup */
       ObitUVGridSetup (grids[ip], data[ip], theBeam->myDesc, outImage[j]->myDesc, 
@@ -871,7 +871,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
     /* Copy controls */
     data[ip]->info  = ObitInfoListCopyData(inUV->info, data[ip]->info);
     dim[0] = 1; dim[1] = 1; dim[2] = 1; /* No cal for now */
-    ObitInfoListAlwaysPut(data[ip]->info, "doCalib", OBIT_int, dim, &Fl);
+    ObitInfoListAlwaysPut(data[ip]->info, "doCalib", OBIT_long, dim, &Fl);
     /* Ensure out fully instantiated and OK */
     ObitUVFullInstantiate (data[ip], TRUE, err);
     if (err->error) goto cleanup;
@@ -885,8 +885,8 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
       if (nGain==1)    gain = gainUse[0];
       if (nGain>=nPar) gain = gainUse[j];
       dim[0] = 1; dim[1] = 1; dim[2] = 1;
-      ObitInfoListAlwaysPut(data[ip]->info, "gainUse", OBIT_int, dim, &gain);
-      ObitInfoListAlwaysPut(data[ip]->info, "doCalib", OBIT_int, dim, &doCalib);
+      ObitInfoListAlwaysPut(data[ip]->info, "gainUse", OBIT_long, dim, &gain);
+      ObitInfoListAlwaysPut(data[ip]->info, "doCalib", OBIT_long, dim, &doCalib);
     }
     /* Gridding setup */
     ObitUVGridSetup (grids[ip], data[ip], theBeam->myDesc, outImage[j]->myDesc, 
@@ -926,7 +926,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   NPIO = grids[0]->nThreads * 
     (olong) (0.5 + MAX (2.0, 2.0/(data[0]->myDesc->lrec*4.0/(1024.0*1024.0))));
   dim[0] = dim[1] = dim[2] = 1;
-  ObitInfoListAlwaysPut (data[0]->info, "nVisPIO",  OBIT_int, dim,  (gpointer)&NPIO);
+  ObitInfoListAlwaysPut (data[0]->info, "nVisPIO",  OBIT_long, dim,  (gpointer)&NPIO);
 
   /*  Open uv data for first if needed */
   if ((data[0]->myStatus!=OBIT_Active) && (data[0]->myStatus!=OBIT_Modified)) {
@@ -936,7 +936,10 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
 
   /* Make images 
      Grid  */
-  ObitUVGridReadUVPar (nImage, grids, data, err);
+  if (nImage>1) 
+    ObitUVGridReadUVPar (nImage, grids, data, err);
+  else /* Only one */
+    ObitUVGridReadUV (grids[0], data[0], err);
   if (err->error) goto cleanup;
   
   /* Close uv data files if needed */
@@ -3030,8 +3033,8 @@ ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
  * Convolution of each plane by Parms[3] cells used to mask image
  * \param inImage  Input velocity cube image
  * Parameters in info:
- * \li "BLC"     OBIT_int (7) Lowest x,y,v pixel number selected [def 1,1,1]
- * \li "TRC"     OBIT_int (7) Highest x,y,v pixel number selected [def all]
+ * \li "BLC"     OBIT_long (7) Lowest x,y,v pixel number selected [def 1,1,1]
+ * \li "TRC"     OBIT_long (7) Highest x,y,v pixel number selected [def all]
  *      Note: the first two output axes will have an even number of pixels.
  * \li "Parms"   OBIT_float (4) Parameters
  *     [0] min. RMS (convolved image)
@@ -3241,9 +3244,9 @@ ObitImageUtilVel (ObitImage *inImage, ObitImage *outImage, ObitErr *err)
  * Copy an image with selection by BLC, TRC, inc
  * \param inImage  Input image
  * Parameters in info:
- * \li "BLC"     OBIT_int (7) Lowest x,y,v pixel number selected [def 1,1,1]
- * \li "TRC"     OBIT_int (7) Highest x,y,v pixel number selected [def all]
- * \li "inc"     OBIT_int (7) Pixel increment on each axis [def all 1]
+ * \li "BLC"     OBIT_long (7) Lowest x,y,v pixel number selected [def 1,1,1]
+ * \li "TRC"     OBIT_long (7) Highest x,y,v pixel number selected [def all]
+ * \li "inc"     OBIT_long (7) Pixel increment on each axis [def all 1]
  * \param outImage Image to be written.  Must be previously instantiated.
  * \param err      Error stack, returns if not empty.
  */

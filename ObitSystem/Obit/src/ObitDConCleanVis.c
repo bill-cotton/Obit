@@ -1736,6 +1736,7 @@ static void  MakeAllResiduals (ObitDConCleanVis *in, ObitErr *err)
   ObitUVImagerClassInfo *imgClass = 
     (ObitUVImagerClassInfo*)in->imager->ClassInfo;
   const ObitDConCleanVisClassInfo *inClass;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *routine = "MakeAllResiduals";
   
   inClass = (ObitDConCleanVisClassInfo*)in->ClassInfo; /* class structure */
@@ -1743,6 +1744,10 @@ static void  MakeAllResiduals (ObitDConCleanVis *in, ObitErr *err)
   /* Turn off things not needed */
   doWeight  = FALSE;
   doFlatten = FALSE;
+
+  /* Copy prtLv to in->mosaic->info */
+  dim[0] = 1;dim[1] = 1;
+  ObitInfoListAlwaysPut (in->mosaic->info, "prtLv", OBIT_long, dim, &in->prtLv);
 
   /* Parallel Image images without needing beam */
   imgClass->ObitUVImagerImage (in->imager, 0,  doWeight, doBeam, doFlatten, err);

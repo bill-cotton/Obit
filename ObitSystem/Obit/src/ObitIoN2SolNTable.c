@@ -283,7 +283,7 @@ ObitTableSN* ObitIoN2SolNTableConvert (ObitUV *inUV, ObitTableNI *NITable,
 				off, do3Dmul, doAntOff, URot3D, SNRow, err);
 
 	/* write it */
- 	retCode = ObitTableSNReadRow (outSN, iSNRow, SNRow, err);
+ 	retCode = ObitTableSNWriteRow (outSN, iSNRow, SNRow, err);
       }
       if (err->error) goto cleanup;
 

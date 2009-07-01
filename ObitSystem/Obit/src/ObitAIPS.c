@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -603,13 +603,13 @@ void ObitAIPSAssign(gchar *pgmName, olong pgmNumber, gchar *type,
  * Renames a AIPS file
  * \param in   ObitIO on AIPS file
  * \param info Associated ObitInfoList
- * \li "Disk" OBIT_int (1,1,1)           Disk number
- * \li "CNO" OBIT_int (1,1,1)            Catalog slot number
+ * \li "Disk" OBIT_long (1,1,1)           Disk number
+ * \li "CNO" OBIT_long (1,1,1)            Catalog slot number
  * \li "newName" OBIT_string (12,1,1) New AIPS Name 
  *      absent or Blank = don't change
  * \li "newClass" OBIT_string (6,1,1) New AIPS Class
  *      absent or Blank = don't changeO
- * \li "newSeq" OBIT_int (1,1,1) New AIPS Sequence
+ * \li "newSeq" OBIT_long (1,1,1) New AIPS Sequence
  *      0 => unique value
  * \param err  Error stack for any error messages.
  */
@@ -779,7 +779,7 @@ gboolean ObitAIPSisNoScrat(olong disk)
 
 /**
  * Check for "noScrat" entry in info and set all positive integer 
- * values (OBIT_int or OBIT_oint) as noScratch disks.
+ * values (OBIT_int,OBIT_long or OBIT_oint) as noScratch disks.
  * \param info   List to check
  * \param err  Error stack for any error messages.
  */
@@ -793,7 +793,8 @@ void ObitAIPSSetnoScrat(ObitInfoList *info, ObitErr *err)
   if (err->error) return;
 
   ObitInfoListGetP(info, "noScrat",  &type, dim, (gpointer)&iarr);
-  if ((iarr==NULL) || (dim[0]<=0) || ((type!=OBIT_int) && (type!=OBIT_oint))) return;
+  if ((iarr==NULL) || (dim[0]<=0) || ((type!=OBIT_int) && (type!=OBIT_long) && 
+				      (type!=OBIT_oint))) return;
 
   for (i=0; i<dim[0]; i++) {
     if ((iarr[i]>0) && (iarr[i]<=myAIPSInfo->NumberDisks))

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -194,6 +194,7 @@ ObitIOCode ObitTableUtilSort (ObitTable *in, gchar *colName, gboolean desc,
   /* Sort keys by key type */
   switch (type) { 
   case OBIT_int:
+  case OBIT_long:
     g_qsort_with_data (SortStruct, number, size, CompareInt, &ncomp);
     break;
   case OBIT_float:
@@ -298,6 +299,7 @@ ObitIOCode ObitTableUtilAbsSort (ObitTable *in, gchar *colName, gboolean desc,
   /* Sort keys by key type */
   switch (type) { 
   case OBIT_int:
+  case OBIT_long:
     if (desc) g_qsort_with_data (SortStruct, number, size, CompareADInt, &ncomp);
     else g_qsort_with_data (SortStruct, number, size, CompareAAInt, &ncomp);
     break;
@@ -522,7 +524,7 @@ MakeSortStruct (ObitTable *in, olong which[2], gboolean desc,
   /* Pointers for row data */
   gint8   *ptrint8;
   gint16  *ptrint16;
-  olong    *ptrint;
+  olong   *ptrint;
   oint    *ptroint;
   olong   *ptrlong=NULL;
   guint8  *ptruint8;
@@ -719,7 +721,7 @@ MakeSortStruct2f (ObitTable *in, olong which[4], gboolean desc1,
   /* Pointers for row data */
   gint8   *ptrint8;
   gint16  *ptrint16;
-  olong    *ptrint;
+  olong   *ptrint;
   oint    *ptroint;
   olong   *ptrlong=NULL;
   guint8  *ptruint8;

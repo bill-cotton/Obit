@@ -440,7 +440,7 @@ void ObitUVImagerImage (ObitUVImager *in,  olong field, gboolean doWeight,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitUVDesc *UVDesc;
   ObitImageDesc *imageDesc;
-  olong ifield, hiField, loField, channel=0, nDo, nLeft;
+  olong ifield, hiField, loField, channel=0, nDo, nLeft, prtLv;
   ofloat sumwts;
   ObitImage *theBeam=NULL;
   gboolean *forceBeam=NULL, needBeam;
@@ -456,6 +456,10 @@ void ObitUVImagerImage (ObitUVImager *in,  olong field, gboolean doWeight,
     Obit_log_error(err, OBIT_Error,"%s UV data not defined in %s", routine, data->name);
     return;
   }
+
+  /* get prtLv */
+  prtLv = 1;
+  ObitInfoListGetTest(in->mosaic->info, "prtLv", &type, dim, &prtLv);
 
   /* List of need to force making beam */
   forceBeam = g_malloc0(in->mosaic->numberImages*sizeof(gboolean));
@@ -539,6 +543,8 @@ void ObitUVImagerImage (ObitUVImager *in,  olong field, gboolean doWeight,
     if (err->error) Obit_traceback_msg (err, routine, in->name);
     ifield += nDo;
     nLeft  -= nDo;
+    if (prtLv>1) ObitErrLog(err);  /* Progress Report */
+    else ObitErrClear(err);
   } /* End loop gridding */
 
   /* Loop over fields finalizing */

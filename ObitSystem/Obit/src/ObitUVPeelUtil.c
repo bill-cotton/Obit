@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2008                                          */
+/*;  Copyright (C) 2007-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -463,7 +463,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     /* reference antenna? */
     jtemp = i; dim[0] = dim[1] = dim[2] = 1;
     ObitInfoListGetTest (myInput, "PeelRefAnt", &type, dim, &jtemp);
-    ObitInfoListAlwaysPut(selfCal->info, "refAnt", OBIT_int, dim, &jtemp);
+    ObitInfoListAlwaysPut(selfCal->info, "refAnt", OBIT_long, dim, &jtemp);
     /* Always smooth */
     ObitInfoListAlwaysPut(selfCal->info, "doSmoo", OBIT_bool, dim, &Tr);
     /* Copy control info */

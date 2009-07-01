@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -1188,7 +1188,7 @@ ObitAIPSCatTableGetDesc (ObitTableDesc *desc,
 
   /* Add "_status" column - this corresponds to the AIPS select column
      but with slightly different meanings. */
-  desc->type[desc->nfield-1] = OBIT_int;
+  desc->type[desc->nfield-1] = OBIT_oint;
   for (j=0; j<MAXINFOELEMDIM; j++) desc->dim[desc->nfield-1][j] = 1;
 
   /* index */

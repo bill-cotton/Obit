@@ -1,6 +1,6 @@
 /* $Id:  $        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008                                               */
+/*;  Copyright (C) 2008,2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -426,11 +426,11 @@ void ObitMultiProcStart (ObitInfoList *myInput, ObitErr *err)
   for (i=0; i<nURL; i++) { /* loop over processes */
     pgmNumber = i+1; /* Program number */
     dim[0] = dim[1] = dim[2] = 1;
-    ObitInfoListAlwaysPut (taskList, "pgmNumber", OBIT_int, dim, &pgmNumber);
+    ObitInfoListAlwaysPut (taskList, "pgmNumber", OBIT_long, dim, &pgmNumber);
     
     /* Get port and host URL */
     splitURL (myClassInfo.URL[i], host, &port);
-    ObitInfoListAlwaysPut (taskList, "port", OBIT_int, dim, &port);
+    ObitInfoListAlwaysPut (taskList, "port", OBIT_long, dim, &port);
 
     /* Local or remote? */
     local = !strcmp(host, "localhost");
