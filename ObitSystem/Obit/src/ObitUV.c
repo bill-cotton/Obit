@@ -982,6 +982,7 @@ ObitIOCode ObitUVOpen (ObitUV *in, ObitIOAccess access, ObitErr *err)
   /* set Status */
   in->myStatus = OBIT_Active;
 
+  /* Initial selection */
   ObitUVGetSelect (in, in->info, in->mySel, err);
   if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
 
@@ -1007,6 +1008,10 @@ ObitIOCode ObitUVOpen (ObitUV *in, ObitIOAccess access, ObitErr *err)
     /* read header info */
     retCode = ObitIOReadDescriptor(in->myIO, err);
     if ((retCode!=OBIT_IO_OK) || (err->error)) Obit_traceback_val (err, routine, in->name, retCode);
+
+    /* Do selection again - this time with the actual descriptor */
+    ObitUVGetSelect (in, in->info, in->mySel, err);
+    if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
 
     /* Set descriptors for the output on in to reflect the selection
        by in->mySel,  the descriptors on in->myIO will still describe
@@ -2797,7 +2802,7 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   gint32 i, dim[MAXINFOELEMDIM];
   olong itemp, *iptr, Qual;
   olong iver, j, count=0;
-  ofloat ftempArr[10], fblank = ObitMagicF();
+  ofloat ftempArr[10];/* fblank = ObitMagicF();*/
   ObitTableSU *SUTable=NULL;
   union ObitInfoListEquiv InfoReal; 
   gchar tempStr[5], souCode[5], *sptr;
@@ -2834,7 +2839,7 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   sel->Compress = FALSE;
   ObitInfoListGetTest(info, "Compress", &type, dim, &sel->Compress);
 
-  /* Following only needed for ReadCal */
+  /* Following only needed for other than ReadCal */
   if (in->myDesc->access != OBIT_IO_ReadCal) {
     /* Default selection */
     sel->SubA         = 0;

@@ -633,7 +633,7 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 
   /* If more room available, loop in freq */
   if ((maxcor-ncor)>=2) {
-    mcor = maxcor/ncor;   /* Number freq */
+    mcor = MIN (inDesc->inaxes[inDesc->jlocf], (maxcor/ncor));   /* Number freq */
   } else mcor = 1;
 
   /* Add visibility labels */

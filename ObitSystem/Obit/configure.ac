@@ -35,6 +35,7 @@ AM_INIT_AUTOMAKE([-Wall -Werror foreign])
 AC_CONFIG_SRCDIR(src/Obit.c)
 
 # Checks for programs.
+CFLAGS="-g -O3"
 AC_PROG_CC
 AC_PROG_RANLIB
 #AM_PATH_PYTHON(2.5)
@@ -51,6 +52,8 @@ AC_TYPE_SIZE_T
 # Compiler options
 # hack for -fPIC
 AC_CHECK_FPIC
+# Check for SSE
+AC_CHECK_SSE
 
 # Checks for libraries.
 AM_PATH_GLIB_2_0
@@ -104,5 +107,5 @@ fi
 
 AC_CONFIG_FILES([dummy_cfitsio/Makefile])
 AC_CONFIG_FILES([dummy_xmlrpc/Makefile])
-AC_CONFIG_FILES([Makefile python/Makefile src/Makefile test/Makefile tasks/Makefile])
+AC_CONFIG_FILES([Makefile python/Makefile src/Makefile tasks/Makefile])
 AC_OUTPUT

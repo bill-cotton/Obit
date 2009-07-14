@@ -220,7 +220,7 @@ Adverbs:
   in2Disk....Disk drive # of model (FITS or AIPS). NO default
   in2File....FITS input root if Type=='FITS'
              Any digits should be left off the end of the name as 
-             the 0-rel field number is added (no leading zeroes).
+             the 0-rel field number is added (padded to 4 digits).
   nmaps......Number of image files to use for model.  If more than one
              file is to be used, the Name, Class, Disk and Seq of the
              subsequent image files will be the same as the first file

@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-200                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -38,6 +38,7 @@
 #include "ObitImageUtil.h"
 #include "ObitPBUtil.h"
 #include "ObitMem.h"
+#include "ObitSinCos.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -691,6 +692,7 @@ ObitSkyModel* ObitSkyModelCreate (gchar* name, ObitImageMosaic* mosaic)
 void ObitSkyModelInitMod (ObitSkyModel* in, ObitUV *uvdata, ObitErr *err)
 {
   olong i;
+  ofloat phase=0.5, cp, sp;
   FTFuncArg *args;
 
   /* Fourier transform threading routines */
@@ -717,6 +719,9 @@ void ObitSkyModelInitMod (ObitSkyModel* in, ObitUV *uvdata, ObitErr *err)
       if (args->Interp) args->Interp = ObitCInterpolateUnref(args->Interp);
     }
   } /* end initialize */
+
+  /* Init Sine/Cosine calculator - just to be sure about threading */
+  ObitSinCosCalc(phase, &sp, &cp);
 
 } /* end ObitSkyModelInitMod */
 
@@ -2115,9 +2120,12 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
   olong offset, offsetChannel, offsetIF;
   olong ilocu, ilocv, ilocw;
   ofloat *visData, *ccData, *data, *fscale, specFact;
-  ofloat  modReal, modImag;
+  ofloat modReal, modImag;
   ofloat amp, arg, freq2, freqFact, wt=0.0, temp, ll, lll;
-  odouble phase, tx, ty, tz, sumReal, sumImag, *freqArr;
+#define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
+  ofloat AmpArr[FazArrSize], FazArr[FazArrSize], CosArr[FazArrSize], SinArr[FazArrSize];
+  olong it, jt, itcnt;
+  odouble tx, ty, tz, sumReal, sumImag, *freqArr;
   gchar *routine = "ThreadSkyModelFTDFT";
 
   /* error checks - assume most done at higher level */
@@ -2200,135 +2208,201 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	switch (in->modType) {
 	case OBIT_SkyModel_PointMod:     /* Point */
 	  /* From the AIPSish QXXPTS.FOR  */
-	  for (iComp=0; iComp<mcomp; iComp++) {
-	    if (ccData[0]!=0.0) {  /* valid? */
-	      tx = ccData[1]*(odouble)visData[ilocu];
-	      ty = ccData[2]*(odouble)visData[ilocv];
-	      tz = ccData[3]*(odouble)visData[ilocw];
-	      phase = freqFact * (tx + ty + tz);
-	      sumReal += ccData[0]*cos(phase);
-	      sumImag += ccData[0]*sin(phase);
-	      /* DEBUG
-		 if (iVis==0) {
-		 fprintf (stderr,"%s: comp %d real %f imag %f phase %f sum %f %f \n",
-		 routine, iComp, ccData[0]*cos(phase), ccData[0]*sin(phase),
-		 57.296*phase, sumReal, sumImag); 
-		 } */
-	    }  /* end if valid */
-	    ccData += lcomp;  /* update pointer */
-	  } /* end loop over components */
+	  /* outer loop */
+	  for (it=0; it<mcomp; it+=FazArrSize) {
+	    itcnt = 0;
+	    for (iComp=it; iComp<mcomp; iComp++) {
+	      if (ccData[0]!=0.0) {  /* valid? */
+		tx = ccData[1]*(odouble)visData[ilocu];
+		ty = ccData[2]*(odouble)visData[ilocv];
+		tz = ccData[3]*(odouble)visData[ilocw];
+		FazArr[itcnt] = freqFact * (tx + ty + tz);
+		AmpArr[itcnt] = ccData[0];
+	      }  /* end if valid */
+	      ccData += lcomp;  /* update pointer */
+	      itcnt++;          /* Count in amp/phase buffers */
+	      if (itcnt>=FazArrSize) break;
+	    } /* end inner loop over components */
+
+	    /* Convert phases to sin/cos */
+	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	    /* Accumulate real and imaginary parts */
+	    for (jt=0; jt<itcnt; jt++) {
+	      sumReal += AmpArr[jt]*CosArr[jt];
+	      sumImag += AmpArr[jt]*SinArr[jt];
+	    }
+	  } /*end outer loop over components */
 	  break;
 	case OBIT_SkyModel_PointModSpec:     /* Point + spectrum */
-	  for (iComp=0; iComp<mcomp; iComp++) {
-	    if (ccData[0]!=0.0) {  /* valid? */
-	      tx = ccData[1]*(odouble)visData[ilocu];
-	      ty = ccData[2]*(odouble)visData[ilocv];
-	      tz = ccData[3]*(odouble)visData[ilocw];
-	      /* Frequency dependent term */
-	      lll = ll = log(freqFact);
-	      arg = 0.0;
-	      for (iterm=0; iterm<nterm; iterm++) {
-		arg += ccData[4+iterm] * lll;
-		lll *= ll;
-	      }
-	      specFact = exp(arg);
-	      phase = freqFact * (tx + ty + tz);
-	      amp = specFact * ccData[0];
-	      sumReal += amp*cos(phase);
-	      sumImag += amp*sin(phase);
-	    }  /* end if valid */
-	    ccData += lcomp;  /* update pointer */
-	  } /* end loop over components */
+	  for (it=0; it<mcomp; it+=FazArrSize) {
+	    itcnt = 0;
+	    for (iComp=it; iComp<mcomp; iComp++) {
+	      if (ccData[0]!=0.0) {  /* valid? */
+		tx = ccData[1]*(odouble)visData[ilocu];
+		ty = ccData[2]*(odouble)visData[ilocv];
+		tz = ccData[3]*(odouble)visData[ilocw];
+		/* Frequency dependent term */
+		lll = ll = log(freqFact);
+		arg = 0.0;
+		for (iterm=0; iterm<nterm; iterm++) {
+		  arg += ccData[4+iterm] * lll;
+		  lll *= ll;
+		}
+		specFact = exp(arg);
+		FazArr[itcnt] = freqFact * (tx + ty + tz);
+		AmpArr[itcnt] = specFact * ccData[0];
+	      }  /* end if valid */
+	      ccData += lcomp;  /* update pointer */
+	      itcnt++;          /* Count in amp/phase buffers */
+	      if (itcnt>=FazArrSize) break;
+	    } /* end inner loop over components */
+	    
+	    /* Convert phases to sin/cos */
+	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	    /* Accumulate real and imaginary parts */
+	    for (jt=0; jt<itcnt; jt++) {
+	      sumReal += AmpArr[jt]*CosArr[jt];
+	      sumImag += AmpArr[jt]*SinArr[jt];
+	    }
+	  } /*end outer loop over components */
 	  break;
 	case OBIT_SkyModel_GaussMod:     /* Gaussian on sky */
 	  /* From the AIPSish QGASUB.FOR  */
 	  freq2 = freqFact*freqFact;    /* Frequency factor squared */
-	  for (iComp=0; iComp<mcomp; iComp++) {
-	    if (ccData[0]!=0.0) {  /* valid? */
-	      arg = freq2 * (ccData[4]*visData[ilocu]*visData[ilocu] +
-			     ccData[5]*visData[ilocv]*visData[ilocv] +
-			     ccData[6]*visData[ilocu]*visData[ilocv]);
-	      if (arg<-1.0e-5) amp = ccData[0] * exp (arg);
-	      else amp = ccData[0];
-	      tx = ccData[1]*(odouble)visData[ilocu];
-	      ty = ccData[2]*(odouble)visData[ilocv];
-	      tz = ccData[3]*(odouble)visData[ilocw];
-	      phase = freqFact * (tx + ty + tz);
-	      sumReal += amp*cos(phase);
-	      sumImag += amp*sin(phase);
-	    } /* end if valid */
-	    ccData += lcomp;  /* update pointer */
-	  }  /* end loop over components */
+	  for (it=0; it<mcomp; it+=FazArrSize) {
+	    itcnt = 0;
+	    for (iComp=it; iComp<mcomp; iComp++) {
+	      if (ccData[0]!=0.0) {  /* valid? */
+		arg = freq2 * (ccData[4]*visData[ilocu]*visData[ilocu] +
+			       ccData[5]*visData[ilocv]*visData[ilocv] +
+			       ccData[6]*visData[ilocu]*visData[ilocv]);
+		if (arg<-1.0e-5) amp = ccData[0] * exp (arg);
+		else amp = ccData[0];
+		tx = ccData[1]*(odouble)visData[ilocu];
+		ty = ccData[2]*(odouble)visData[ilocv];
+		tz = ccData[3]*(odouble)visData[ilocw];
+		FazArr[itcnt] = freqFact * (tx + ty + tz);
+		AmpArr[itcnt] = amp;
+	      } /* end if valid */
+	      ccData += lcomp;  /* update pointer */
+	      itcnt++;          /* Count in amp/phase buffers */
+	      if (itcnt>=FazArrSize) break;
+	    }  /* end inner loop over components */
+	    
+	    /* Convert phases to sin/cos */
+	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	    /* Accumulate real and imaginary parts */
+	    for (jt=0; jt<itcnt; jt++) {
+	      sumReal += AmpArr[jt]*CosArr[jt];
+	      sumImag += AmpArr[jt]*SinArr[jt];
+	    }
+	  } /*end outer loop over components */
 	  break;
 	case OBIT_SkyModel_GaussModSpec:     /* Gaussian on sky + spectrum*/
 	  freq2 = freqFact*freqFact;    /* Frequency factor squared */
-	  for (iComp=0; iComp<mcomp; iComp++) {
-	    if (ccData[0]!=0.0) {  /* valid? */
-	      /* Frequency dependent term */
-	      lll = ll = log(freqFact);
-	      arg = 0.0;
-	      for (iterm=0; iterm<nterm; iterm++) {
-		arg += ccData[7+iterm] * lll;
-		lll *= ll;
-	      }
-	      specFact = exp(arg);
-	      arg = freq2 * (ccData[4]*visData[ilocu]*visData[ilocu] +
-			     ccData[5]*visData[ilocv]*visData[ilocv] +
-			     ccData[6]*visData[ilocu]*visData[ilocv]);
-	      if (arg<-1.0e-5) amp = specFact * ccData[0] * exp (arg);
-	      else amp = specFact * ccData[0];
-	      tx = ccData[1]*(odouble)visData[ilocu];
-	      ty = ccData[2]*(odouble)visData[ilocv];
-	      tz = ccData[3]*(odouble)visData[ilocw];
-	      phase = freqFact * (tx + ty + tz);
-	      sumReal += amp*cos(phase);
-	      sumImag += amp*sin(phase);
-	    } /* end if valid */
-	    ccData += lcomp;  /* update pointer */
-	  }  /* end loop over components */
+	  for (it=0; it<mcomp; it+=FazArrSize) {
+	    itcnt = 0;
+	    for (iComp=it; iComp<mcomp; iComp++) {
+	      if (ccData[0]!=0.0) {  /* valid? */
+		/* Frequency dependent term */
+		lll = ll = log(freqFact);
+		arg = 0.0;
+		for (iterm=0; iterm<nterm; iterm++) {
+		  arg += ccData[7+iterm] * lll;
+		  lll *= ll;
+		}
+		specFact = exp(arg);
+		arg = freq2 * (ccData[4]*visData[ilocu]*visData[ilocu] +
+			       ccData[5]*visData[ilocv]*visData[ilocv] +
+			       ccData[6]*visData[ilocu]*visData[ilocv]);
+		if (arg<-1.0e-5) amp = specFact * ccData[0] * exp (arg);
+		else amp = specFact * ccData[0];
+		tx = ccData[1]*(odouble)visData[ilocu];
+		ty = ccData[2]*(odouble)visData[ilocv];
+		tz = ccData[3]*(odouble)visData[ilocw];
+		FazArr[itcnt] = freqFact * (tx + ty + tz);
+		AmpArr[itcnt] = amp;
+	      } /* end if valid */
+	      ccData += lcomp;  /* update pointer */
+	      itcnt++;          /* Count in amp/phase buffers */
+	      if (itcnt>=FazArrSize) break;
+	    }  /* end inner loop over components */
+	    
+	    /* Convert phases to sin/cos */
+	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	    /* Accumulate real and imaginary parts */
+	    for (jt=0; jt<itcnt; jt++) {
+	      sumReal += AmpArr[jt]*CosArr[jt];
+	      sumImag += AmpArr[jt]*SinArr[jt];
+	    }
+	  } /* end outer loop over components */
 	  break;
 	case OBIT_SkyModel_USphereMod:    /* Uniform sphere */
 	  /* From the AIPSish QSPSUB.FOR  */
-	  for (iComp=0; iComp<mcomp; iComp++) {
-	    if (ccData[0]!=0.0) {  /* valid? */
-	      arg = freqFact * sqrt(visData[ilocu]*visData[ilocu] +
-				    visData[ilocv]*visData[ilocv]) * ccData[4];
-	      arg = MAX (arg, 0.1);
-	      amp = ccData[0] * ((sin(arg)/(arg*arg*arg)) - cos(arg)/(arg*arg));
-	      tx = ccData[1]*(odouble)visData[ilocu];
-	      ty = ccData[2]*(odouble)visData[ilocv];
-	      tz = ccData[3]*(odouble)visData[ilocw];
-	      phase = freqFact * (tx + ty + tz);
-	      sumReal += amp*cos(phase);
-	      sumImag += amp*sin(phase);
-	    } /* end if valid */
-	    ccData += lcomp;  /* update pointer */
-	  }  /* end loop over components */
+	  for (it=0; it<mcomp; it+=FazArrSize) {
+	    itcnt = 0;
+	    for (iComp=it; iComp<mcomp; iComp++) {
+	      if (ccData[0]!=0.0) {  /* valid? */
+		arg = freqFact * sqrt(visData[ilocu]*visData[ilocu] +
+				      visData[ilocv]*visData[ilocv]) * ccData[4];
+		arg = MAX (arg, 0.1);
+		amp = ccData[0] * ((sin(arg)/(arg*arg*arg)) - cos(arg)/(arg*arg));
+		tx = ccData[1]*(odouble)visData[ilocu];
+		ty = ccData[2]*(odouble)visData[ilocv];
+		tz = ccData[3]*(odouble)visData[ilocw];
+		FazArr[itcnt] = freqFact * (tx + ty + tz);
+		AmpArr[itcnt] = amp;
+	      } /* end if valid */
+	      ccData += lcomp;  /* update pointer */
+	      itcnt++;          /* Count in amp/phase buffers */
+	      if (itcnt>=FazArrSize) break;
+	    }  /* end inner ver components */
+	    
+	    /* Convert phases to sin/cos */
+	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	    /* Accumulate real and imaginary parts */
+	    for (jt=0; jt<itcnt; jt++) {
+	      sumReal += AmpArr[jt]*CosArr[jt];
+	      sumImag += AmpArr[jt]*SinArr[jt];
+	    }
+	  } /* end outer loop over components */
 	  break;
 	case OBIT_SkyModel_USphereModSpec:    /* Uniform sphere + spectrum*/
-	  for (iComp=0; iComp<mcomp; iComp++) {
-	    if (ccData[0]!=0.0) {  /* valid? */
-	      /* Frequency dependent term */
-	      lll = ll = log(freqFact);
-	      arg = 0.0;
-	      for (iterm=0; iterm<nterm; iterm++) {
-		arg += ccData[4+iterm] * lll;
-		lll *= ll;
-	      }
-	      specFact = exp(arg);
-	      arg = freqFact * sqrt(visData[ilocu]*visData[ilocu] +
-				    visData[ilocv]*visData[ilocv]) * ccData[4];
-	      arg = MAX (arg, 0.1);
-	      amp = specFact * ccData[0] * ((sin(arg)/(arg*arg*arg)) - cos(arg)/(arg*arg));
-	      tx = ccData[1]*(odouble)visData[ilocu];
-	      ty = ccData[2]*(odouble)visData[ilocv];
-	      tz = ccData[3]*(odouble)visData[ilocw];
-	      phase = freqFact * (tx + ty + tz);
-	      sumReal += amp*cos(phase);
-	      sumImag += amp*sin(phase);
-	    } /* end if valid */
-	    ccData += lcomp;  /* update pointer */
-	  }  /* end loop over components */
+	  for (it=0; it<mcomp; it+=FazArrSize) {
+	    itcnt = 0;
+	    for (iComp=it; iComp<mcomp; iComp++) {
+	      if (ccData[0]!=0.0) {  /* valid? */
+		/* Frequency dependent term */
+		lll = ll = log(freqFact);
+		arg = 0.0;
+		for (iterm=0; iterm<nterm; iterm++) {
+		  arg += ccData[4+iterm] * lll;
+		  lll *= ll;
+		}
+		specFact = exp(arg);
+		arg = freqFact * sqrt(visData[ilocu]*visData[ilocu] +
+				      visData[ilocv]*visData[ilocv]) * ccData[4];
+		arg = MAX (arg, 0.1);
+		amp = specFact * ccData[0] * ((sin(arg)/(arg*arg*arg)) - cos(arg)/(arg*arg));
+		tx = ccData[1]*(odouble)visData[ilocu];
+		ty = ccData[2]*(odouble)visData[ilocv];
+		tz = ccData[3]*(odouble)visData[ilocw];
+		FazArr[itcnt] = freqFact * (tx + ty + tz);
+		AmpArr[itcnt] = amp;
+	      } /* end if valid */
+	      ccData += lcomp;  /* update pointer */
+	      itcnt++;          /* Count in amp/phase buffers */
+	      if (itcnt>=FazArrSize) break;
+	    }  /* end inner loop over components */
+	    
+	    /* Convert phases to sin/cos */
+	    ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	    /* Accumulate real and imaginary parts */
+	    for (jt=0; jt<itcnt; jt++) {
+	      sumReal += AmpArr[jt]*CosArr[jt];
+	      sumImag += AmpArr[jt]*SinArr[jt];
+	    }
+	  } /*end outer loop over components */
 	  break;
 	default:
 	  ObitThreadLock(in->thread);  /* Lock against other threads */

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2008                                          */
+/*;  Copyright (C) 2002-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -87,7 +87,9 @@ ObitCArrayImagFP ObitCArrayImag;
 ObitCArrayAmpFP ObitCArrayAmp;
 /** Public: Return the phases of a CArray in an FArray */
 ObitCArrayPhaseFP ObitCArrayPhase;
-/** Function pointer to  Convert a 2D "center at edges" array to proper order  */
+/** Function pointer to  Convert a half plane 2D "center at edges" array to proper order  */
 ObitCArray2DCenterFP ObitCArray2DCenter;
+/** Function pointer to  Convert a full plane 2D "center at edges" array to proper order  */
+ObitCArray2DCenterFullFP ObitCArray2DCenterFull;
 /** Function pointer to Add conjugate rows to half plane complex image  */
 ObitCArrayAddConjgFP ObitCArrayAddConjg;

@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -985,7 +985,7 @@ void ObitCArrayPhase (ObitCArray* in, ObitFArray* out)
 }  /* end ObitCArrayPhase */
 
 /**
- * In-place rearrangement of a center-at-the edges array to 
+ * In-place rearrangement of a half plane center-at-the edges array to 
  * center at the center, or the other way around.
  * The first and second halves of each column are swaped.
  * This is needed for the peculiar order of FFTs.
@@ -1029,6 +1029,72 @@ void ObitCArray2DCenter (ObitCArray* in)
 
   
 } /* end ObitCArray2DCenter */
+
+/**
+ * In-place rearrangement of a full plane center-at-the edges array to 
+ * center at the center, or the other way around.
+ * The first and second halves of each column are swaped.
+ * This is needed for the peculiar order of FFTs.
+ * This uses the FFTW convention that half plane complex arrays
+ * have the "short" (i.e. n/2+1) dimension first.  
+ * \param in   Full plane complex 2D array to reorder
+ * \return the new object.
+ */
+void ObitCArray2DCenterFull (ObitCArray* in)
+{
+  olong i, j, pos[2], nx, ny;
+  ofloat temp, *inp, *outp;
+
+  /* error checks */
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* ... and God sayeth unto FFT: 
+     "The middle shall be first and the last shall be the middle." */
+
+  /* swap first and fourth quadrents */
+  nx = in->naxis[0];
+  ny = in->naxis[1];
+  pos[0] = 0; pos[1] = 0;
+  inp = ObitCArrayIndex (in, pos);
+  pos[0] = nx/2; pos[1] = ny/2;
+  outp = ObitCArrayIndex (in, pos);
+
+  for (j=0; j<ny/2; j++) {
+    for (i=0; i<nx; i+=2) {
+      temp = outp[i];
+      outp[i] = inp[i];
+      inp[i] = temp;
+      temp = outp[i+1];
+      outp[i+1] = inp[i+1];
+      inp[i+1] = temp;
+    }
+    /* next rwo */
+    inp  += nx*2;
+    outp += nx*2;
+  }
+
+  /* swap second and third quadrents */
+  nx = in->naxis[0];
+  ny = in->naxis[1];
+  pos[0] = nx/2; pos[1] = 0;
+  inp = ObitCArrayIndex (in, pos);
+  pos[0] = 0; pos[1] = ny/2;
+  outp = ObitCArrayIndex (in, pos);
+
+  for (j=0; j<ny/2; j++) {
+    for (i=0; i<nx; i+=2) {
+      temp = outp[i];
+      outp[i] = inp[i];
+      inp[i] = temp;
+      temp = outp[i+1];
+      outp[i+1] = inp[i+1];
+      inp[i+1] = temp;
+    }
+    /* next row */
+    inp  += nx*2;
+    outp += nx*2;
+  }
+} /* end ObitCArray2DCenterFull */
 
 /**
  * Create a new ObitCArray which is a copy of the input array

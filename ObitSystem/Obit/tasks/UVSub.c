@@ -1011,7 +1011,7 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
       
     } else if (!strncmp (Type, "FITS", 4)) {  /* FITS input */
       /* input FITS file name */
-      if (ObitInfoListGetP(myInput, "inFile", &type, dim, (gpointer)&strTemp)) {
+      if (ObitInfoListGetP(myInput, "in2File", &type, dim, (gpointer)&strTemp)) {
 	strncpy (inRoot, strTemp, 128);
       } else { 
 	strncpy (inRoot, "No_Filename_Given", 128);
@@ -1023,7 +1023,7 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
       /* Loop over fields */
       for (i=0; i<nmaps; i++) {
 	/* Set file name */
-	if (nmaps>1) g_snprintf (inFile, 128, "%s%d",inRoot,i);
+	if (nmaps>1) g_snprintf (inFile, 128, "%s%4.4d",inRoot,i);
 	else g_snprintf (inFile, 128, "%s",inRoot);
 
  	/* define object */

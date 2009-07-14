@@ -43,8 +43,8 @@ CC = @CC@
 # RANLIB = library "randomizer", ranlib if needed, else blank
 RANLIB = @RANLIB@
 
-# LIBS = locations of libraries and libraries to link demo/test programs
-LIBS = @LIBS@
+# LIBS = locations of libraries and libraries to link programs
+LIBS = @LIBS@ @GTHREAD_LIBS@
 
 # DOCS = LaTeX Documentation file
 DOCS = $t(op_srcdir)/doc/obitdoc.tex
@@ -206,6 +206,5 @@ copy:
 clean:
 	cd src;  $(MAKE) clean
 	cd lib;  $(MAKE) clean
-	cd test; $(MAKE) clean
 	cd tasks; $(MAKE) clean
 	cd python; $(MAKE) clean

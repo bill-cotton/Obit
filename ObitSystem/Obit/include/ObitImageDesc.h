@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -126,10 +126,6 @@ void ObitImageDescCopyDesc (ObitImageDesc* in, ObitImageDesc* out,
 
 /** Public: Default ImageDesc */
 ObitImageDesc* ObitImageDescDefault (gchar *name);
-
-/** Public: Transform pixel in one image to another */
-void ObitImageDescCo (ObitImageDesc* in, ObitImageDesc* out,
-			 ObitErr *err);
 
 /** Public: Index for easier access */
 void ObitImageDescIndex (ObitImageDesc* in);

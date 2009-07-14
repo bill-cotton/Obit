@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -27,6 +27,7 @@
 #include "Obit.h"
 #include "ObitImageSel.h"
 #include "ObitMem.h"
+#include "ObitTableFQUtil.h"
 
 /*-------------- Obit: Merx mollis mortibus nuper ------------*/
 /**
@@ -238,6 +239,7 @@ void ObitImageSelSetDesc (ObitImageDesc* in, ObitImageSel* sel,
 			  ObitImageDesc* out, ObitErr *err)
 {
   olong i;
+  gchar *routine = "ObitImageSelSetDesc";
 
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -251,9 +253,7 @@ void ObitImageSelSetDesc (ObitImageDesc* in, ObitImageSel* sel,
 
   /* copy most values */
   ObitImageDescCopy (in, out, err);
-  if (err->error) /* add traceback, return on error */
-      Obit_traceback_msg (err, "ObitImageSelSetDesc", 
-			  in->name);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   out->naxis = in->naxis;
   /* apply sel->blc, sel->trc */
@@ -270,6 +270,56 @@ void ObitImageSelSetDesc (ObitImageDesc* in, ObitImageSel* sel,
   }
 
 } /* end ObitImageSelSetDesc */
+
+/**
+ * Correct frequency for any selection by IF
+ * \param in      Pointer to input descriptor.
+ * \param sel     Image selector
+ * \param inImage Pointer to image (as ObitData*)
+ * \param err     Obit error stack
+ */
+void ObitImageSelSetIF (ObitImageDesc* in, ObitImageSel* sel,
+			ObitData* inImage, ObitErr *err)
+{
+  olong highVer, fqid=1, nif=1;
+  oint  *sideBand;
+  ofloat *chBandW;
+  odouble *freqOff;
+  ObitTableFQ *FQTab=NULL;
+  ObitErr *lerr=NULL;
+  gchar *routine = "ObitImageSelSetIF";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitImageDescIsA(in));
+  g_assert (ObitIsA(sel, &myClassInfo));
+  g_assert (ObitDataIsA(inImage));
+
+  /* If selection by IF correct frequency */
+  if ((in->jlocif>=0) && (sel->blc[in->jlocif]>1)) {
+    /* See if FQ table given */
+    highVer = ObitTableListGetHigh (inImage->tableList, "AIPS FQ");
+    if (highVer>=1) {
+      lerr = newObitErr();
+      highVer = 1;
+      FQTab = newObitTableFQValue (inImage->name, inImage, &highVer, 
+				   OBIT_IO_ReadOnly,  nif, lerr);
+      ObitTableFQGetInfo (FQTab, fqid, &nif, &freqOff, &sideBand, &chBandW, lerr);
+      /* Find it? */
+      if (lerr->error) 
+	Obit_log_error(err, OBIT_InfoWarn, "%s: Could not find/read FQ table", routine);
+
+      lerr = ObitErrUnref(lerr);        /* Cleanup */
+      FQTab = ObitTableFQUnref(FQTab);
+
+      /* Update frequency */
+      in->crval[in->jlocf] += freqOff[sel->blc[in->jlocif]-1];
+	
+   } /* end FQ table exists */
+  }
+
+} /* end ObitImageSelSetIF */
 
 /**
  * Initialize global ClassInfo Structure.

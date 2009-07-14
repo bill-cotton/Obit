@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -181,6 +181,7 @@ ObitImageDesc* ObitImageDescCopy (ObitImageDesc* in, ObitImageDesc* out,
   out->jlocd   = in->jlocd;
   out->jlocs   = in->jlocs;
   out->jlocf   = in->jlocf;
+  out->jlocif  = in->jlocif;
   for (i=0; i<IMLEN_VALUE; i++) out->object[i] = in->object[i];
   for (i=0; i<IMLEN_VALUE; i++) out->teles[i]  = in->teles[i];
   for (i=0; i<IMLEN_VALUE; i++) out->instrument[i] = in->instrument[i];
@@ -322,6 +323,7 @@ ObitImageDesc* ObitImageDescDefault (gchar *name)
   out->jlocd   = 0;
   out->jlocs   = 0;
   out->jlocf   = 0;
+  out->jlocif  = -1;
   for (i=0; i<IMLEN_VALUE; i++) blank[i] = ' ';
   for (i=0; i<IMLEN_VALUE; i++) out->object[i] = blank[i];
   for (i=0; i<IMLEN_VALUE; i++) out->teles[i]  = blank[i];
@@ -357,10 +359,11 @@ void ObitImageDescIndex (ObitImageDesc* in)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* initialize */
-  in->jlocr =  0;
-  in->jlocd =  1;
-  in->jlocs = -1;
-  in->jlocf = -1;
+  in->jlocr  =  0;
+  in->jlocd  =  1;
+  in->jlocs  = -1;
+  in->jlocf  = -1;
+  in->jlocif = -1;
 
   /* loop over axes looking for labels */
   for (i=0; i<in->naxis; i++) {
@@ -396,6 +399,7 @@ void ObitImageDescIndex (ObitImageDesc* in)
     else if (!strncmp (in->ctype[i], "VELO",     4)) in->jlocf = i;
     else if (!strncmp (in->ctype[i], "FREQ",     4)) in->jlocf = i;
     else if (!strncmp (in->ctype[i], "SPECLOGF", 8)) in->jlocf = i;
+    if (!strncmp (in->ctype[i], "IF",       2)) in->jlocif = i;
   }
   /* Make sure equinox set if epoch set */
   if ((in->equinox<0.1) && (in->epoch>0.1)) in->equinox = in->epoch;

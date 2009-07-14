@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -228,9 +228,13 @@ typedef void (*ObitCArrayAmpFP) (ObitCArray* in, ObitCArray* out);
 void ObitCArrayPhase (ObitCArray* in, ObitFArray* out);
 typedef void (*ObitCArrayPhaseFP) (ObitCArray* in, ObitCArray* out);
 
-/** Public: Convert a 2D "center at edges" array to proper order */
+/** Public: Convert a half plane 2D "center at edges" array to proper order */
 void ObitCArray2DCenter (ObitCArray* in);
 typedef void (*ObitCArray2DCenterFP) (ObitCArray* in);
+
+/** Public: Convert a full plane 2D "center at edges" array to proper order */
+void ObitCArray2DCenterFull (ObitCArray* in);
+typedef void (*ObitCArray2DCenterFullFP) (ObitCArray* in);
 
 
 /** Public: Add conjugate columns to half plane complex image */

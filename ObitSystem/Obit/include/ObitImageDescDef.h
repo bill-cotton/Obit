@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -117,5 +117,7 @@
   olong jlocs;
   /** 0-rel axis order: Frequency. -1 means not present. */
   olong jlocf;
+  /** 0-rel axis order: IF */
+  olong jlocif;
   /** InfoList for other keywords */
   ObitInfoList *info;

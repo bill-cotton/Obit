@@ -825,9 +825,9 @@ ofloat ObitUVUtilVisCompare (ObitUV *inUV1, ObitUV *inUV2, ObitErr *err)
 	  inUV2->buffer[indx+1]*inUV2->buffer[indx+1];
 	if ((inUV1->buffer[indx+2]>0.0) && (inUV2->buffer[indx+2]>0.0) && (amp>0.0)) {
 	  amp = sqrt(amp);
-	  sum += ((inUV1->buffer[indx] - inUV2->buffer[indx]) + 
+	  sum += ((inUV1->buffer[indx] - inUV2->buffer[indx]) * 
 	    (inUV1->buffer[indx] - inUV2->buffer[indx])) / amp;
-	  sum += ((inUV1->buffer[indx+1] - inUV2->buffer[indx+1]) + 
+	  sum += ((inUV1->buffer[indx+1] - inUV2->buffer[indx+1]) * 
 	    (inUV1->buffer[indx+1] - inUV2->buffer[indx+1])) / amp;
 	  count += 2;
 	}
@@ -856,7 +856,7 @@ ofloat ObitUVUtilVisCompare (ObitUV *inUV1, ObitUV *inUV2, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, inUV2->name, rms);
 
   /* Get RMS to return */
-  if (count>0) rms = sum / count;
+  if (count>0) rms = sqrt(sum / count);
   else rms = -1.0;
 
   return rms;

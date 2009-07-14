@@ -26,9 +26,12 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitImageDesc.h"
+#include "ObitImageSel.h"
 #include "ObitImage.h"
 #include "ObitIOImageFITS.h"
 #include "ObitIOImageAIPS.h"
+#include "ObitFITS.h"
 #include "ObitAIPSDir.h"
 #include "ObitSystem.h"
 #include "ObitMem.h"
@@ -1051,10 +1054,13 @@ ObitIOCode ObitImageOpen (ObitImage *in, ObitIOAccess access,
     /* if ReadOnly Set descriptors for the output on in to reflect the selection
        by in->mySel,  the descriptors on in->myIO will still describe
        the external representation */
-    if (access == OBIT_IO_ReadOnly)
+    if (access == OBIT_IO_ReadOnly) {
       ObitImageSelSetDesc ((ObitImageDesc*)in->myIO->myDesc,
 			  (ObitImageSel*)in->myIO->mySel, in->myDesc, err);
-    else if (access == OBIT_IO_ReadWrite) 
+      /* Update IF selection */
+      if (in->myDesc->jlocif>=0) 
+	ObitImageSelSetIF (in->myDesc, (ObitImageSel*)in->myIO->mySel, (ObitData*)in, err);
+    } else if (access == OBIT_IO_ReadWrite) 
     /* copy actual descriptor */
       in->myDesc = ObitImageDescCopy ((ObitImageDesc*)in->myIO->myDesc, in->myDesc, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, retCode);

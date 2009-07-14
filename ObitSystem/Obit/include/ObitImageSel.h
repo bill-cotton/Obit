@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -31,6 +31,7 @@
 #include "ObitInfoList.h"
 #include "ObitImageDesc.h"
 #include "ObitFArray.h"
+#include "ObitData.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -111,6 +112,10 @@ void ObitImageSelDefault (ObitImageDesc* in,
 /** Public: Applies selection to a Descriptor */
 void ObitImageSelSetDesc (ObitImageDesc* in, ObitImageSel* sel,
 			  ObitImageDesc* out, ObitErr *err);
+
+/** Public: Applies selection in IF to a Descriptor */
+void ObitImageSelSetIF (ObitImageDesc* in, ObitImageSel* sel,
+			ObitData* inImage, ObitErr *err);
 /*-------------------Class Info--------------------------*/
 /**
  * ClassInfo Structure.
