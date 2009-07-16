@@ -156,6 +156,12 @@ typedef struct {
     olong  KIVER;
     /** UV weight normalization */
     olong  KRWTN;
+    /** I 3D type, 1=>DO3D=FALSE; 2=>DO3D=TRUE */
+    olong  KIITY;
+    /**  R "X" pixel offset */
+    olong  KRXPO;
+    /**  R "Y" pixel offset */
+    olong  KRYPO;
     /** Reserved  */
     olong  KIRES;
     /** Reserved */
@@ -440,6 +446,13 @@ void ObitAIPSCatImageSetDesc (ObitImageDesc *desc, gchar *buffer,
 
     /* UV weight normalization */
     fheader[myDHDR.KRWTN] = 0.0;
+
+    /* 3D type [True]  */
+    header[myDHDR.KIITY] = 2;
+
+    /* Pixel offsets */
+    fheader[myDHDR.KRXPO] = 0.0;
+    fheader[myDHDR.KRYPO] = 0.0;
 
     /* set extension files */
     for (i=0; i<myDHDR.KIEXTN; i++) {
@@ -1546,10 +1559,14 @@ void ObitAIPSCatInitDHDR(void) {
   /* myDHDR.KRPCM = PI */
   /* UV weight normalization */
   myDHDR.KRWTN = PI;
+  /* Imaging type, xpoff, ypoff */
+  myDHDR.KIITY = PI + 1;
+  myDHDR.KRXPO = PI + 2;
+  myDHDR.KRYPO = PI + 3;
 
   /* residual space */
-  myDHDR.KIRES = PI + 1 - 1;
-  myDHDR.KIRESN = 257 - myDHDR.KIRES - 1;
+  myDHDR.KIRES = PI + 4;
+  myDHDR.KIRESN = 257 - myDHDR.KIRES;
 
 } /* end  ObitAIPSCatInitDHDR */
 

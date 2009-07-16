@@ -2009,6 +2009,7 @@ void  ObitIOImageAIPSCLEANWrite (ObitIOImageFITS *in, olong *lstatus)
   gchar commnt[FLEN_COMMENT+1], card[FLEN_CARD+1];
   int  status=0;
   long ltemp;
+  float rtemp1, rtemp2;
   ObitImageDesc *desc;
 
   /* error checks */
@@ -2055,7 +2056,17 @@ void  ObitIOImageAIPSCLEANWrite (ObitIOImageFITS *in, olong *lstatus)
     g_snprintf (card, FLEN_COMMENT,
 		"AIPS   CLEAN NITER=%9d", desc->niter);
     fits_write_history (in->myFptr, (char*)card, &status);
-  }
+   }
+
+   /* Image 3D type - stubbed for now */
+   ltemp  = 2;
+   rtemp1 = 0.0;
+   rtemp2 = 0.0;
+   g_snprintf (card, FLEN_COMMENT,
+	       "AIPS   IMAGE ITYPE=%1ld XPOFF=%16.8f YPOFF=%16.8f",
+	       ltemp, rtemp1, rtemp2);
+    fits_write_history (in->myFptr, (char*)card, &status);
+
 } /* end ObitIOImageAIPSCLEANWrite */
 
 /**
@@ -2203,6 +2214,7 @@ static void PurgeAIPSHistory(ObitIOImageFITS *in, olong *lstatus)
 0123456789012345678901234567890123456789012345678901234567890123456789
 HISTORY AIPS   CLEAN BMAJ=  1.3432E-07 BMIN=  4.3621E-08 BPA= -43.11  
 HISTORY AIPS   CLEAN NITER=     1000 PRODUCT=1   / NORMAL   
+HISTORY AIPS   IMAGE ITYPE=2 XPOFF=  0.00000000E+00 YPOFF=  0.00000000E+00
   */
 
   /* how many keywords to look at? */
@@ -2212,6 +2224,9 @@ HISTORY AIPS   CLEAN NITER=     1000 PRODUCT=1   / NORMAL
     if (status==0) {
       if (!strncmp ("HISTORY AIPS   CLEAN BMAJ", card, 25)) {
 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY AIPS   IMAGE ITYPE", (char*)card, 26)) {
+ 	/* Delete card */
 	fits_delete_record (in->myFptr, k, &status);
       } else if (!strncmp ("HISTORY AIPS   CLEAN NITER", (char*)card, 26)) {
  	/* Delete card */
