@@ -79,7 +79,7 @@ ofloat pointXOff, pointYOff;
     major_axis (deg),  minor_axis (deg),  position_angle (deg),
     type (ObitSkyModelCompType as gint), spectral terms;
  */
-ofloat pointParms[10];
+ofloat pointParms[16];
 /** Antennna diameter for rel. PB corrections*/
 ofloat antSize;
 /** Apply 3D imaging corrections */

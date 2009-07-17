@@ -184,23 +184,28 @@ if test $doPYTHON = yes; then
     ./configure --prefix=$BASE3 --exec-prefix=$BASE3 --enable-shared 
     make clean all 
     make install
-# Move Python executable
-    mv $BASE3/bin/python $BASE3/../bin/python 
+# Link Python executable
+    if test -f $BASE3/bin/python2.5; then
+        ln -s $BASE3/bin/python2.5 $BASE3/../bin/python
+    fi
+    if test -f $BASE3/bin/python; then
+       ln -s  $BASE3/bin/python $BASE3/../bin/python
+    fi
     make clean
 fi
 
 # WWW (must have zlib installed in a standard location)
-if test $doWWW = yes; then
-    cd $BASE3
-# cleanup
-    rm -f -r w3c-libwww-5.4.0
-    tar xzvf tarballs/w3c-libwww-5.4.0.tgz
-    cd w3c-libwww-5.4.0
-    ./configure --prefix=$BASE3 --with-zlib=$BASE3/lib/libz.a
-    make clean all 
-    make install
-    make clean
-fi
+#if test $doWWW = yes; then
+#    cd $BASE3
+## cleanup
+#    rm -f -r w3c-libwww-5.4.0
+#    tar xzvf tarballs/w3c-libwww-5.4.0.tgz
+#    cd w3c-libwww-5.4.0
+#    ./configure --prefix=$BASE3 --with-zlib=$BASE3/lib/libz.a
+#    make clean all 
+#    make install
+#    make clean
+#fi
 
 # curl
 if test $doCURL = yes; then

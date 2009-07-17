@@ -123,7 +123,52 @@ the installation) and :
    The distributed (most recent) version of zlib doesn't build a shared
 library or generate code that can be linked with.  If your systen has
 a libz - then use it and specify -without ZLIB to InstallObit.sh
-   The distributed Motic doesn't appear to build correctly on a 64 bit 
+   The distributed Motif doesn't appear to build correctly on a 64 bit 
 system.
+
+UBUNTU Notes:
+------------
+Glib, Motif
+   The distributed versions of glib and openmotif do to seem to build correctly,
+These need to be installed separately.  You'll need the development
+versions (gthread also with glib). If you don't have the development
+version of the basic X windows, you'll need that as well.
+
+Python readline
+   If readline is not installed on your system, when you start
+ObitTalk you'll get a message like 
+.Traceback (most recent call last):
+  File "/export/users/bcotton/ObitInstall/opt/share/obittalk/python/ObitTalk.py", line 36, in <module>
+    import readline, otcompleter
+ImportError: No module named readline
+You can install it; if you can find a readline.so, copy or link it to
+ $OBITINSTALL/other/lib/python2.5/site-packages/.
+Otherwise, grit your teeth and try to live without this,  edit the file 
+/export/users/bcotton/ObitInstall/opt/share/obittalk/python/ObitTalk.py 
+(using its name on your system) to comment out the readline lines:
+
+# Use our own, somewhat restricted rlcompleter.
+#import readline, otcompleter
+#readline.parse_and_bind("tab: complete")
+
+Unfortunately, this means you don't have command line editing.
+
+Packages loaded to make a virgin UBUNTU system working::
+	aptitude install libmotif-dev
+	aptitude install libglib-dev
+	aptitude install libglib2.0-dev
+	aptitude install libmotif3
+	aptitude install libreadline-dev
+	aptitude install libx11-dev
+	aptitude install libxt-dev
+	aptitude install libxext-dev
+	aptitude install libxext6
+	aptitude install x11proto-print-dev
+
+ObitTalk Documentation
+   If your system doesn't have latex, the install of ObitTalk will not build the 
+documentation,  Install latex and then in $OBITINSTALL/ObitSystem/ObitTalk/doc
+issue "make all install"
+
 
 Bill Cotton (bcotton@nrao.edu)
