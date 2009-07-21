@@ -97,6 +97,8 @@ opType                             Print type:
                                    "DATA": Basic UV data listing
                                    "SCAN": Scan listing
                                    "GAIN": Contents of gain table.
+**PARAM** boo 1 **DEF** F
+doReal                             If True show real/imaginary
 **PARAM** int 1 **DEF** 1
 bPrint                             First line to print
 **PARAM** int 1 **DEF** 1000
@@ -231,6 +233,8 @@ Adverbs:
                     Dataset must have iNdeX table, 
                     use UV.PUtilIndex to create if needed
              "GAIN" Contents of a gain table
+  doReal.....(opType="DATA") If True, shoe real and imaginary, else
+             Amplitude/phase.
   bPrint.....First selected entry to print
   nPrint.....Number of lines to print
   inc........Increment between selected entries to print.

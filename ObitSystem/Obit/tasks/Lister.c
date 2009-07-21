@@ -560,7 +560,7 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ObitIOCode   iretCode;
   ObitUVDesc   *inDesc;
   FILE         *outStream = NULL;
-  gboolean     isInteractive = FALSE, quit = FALSE, first=TRUE;
+  gboolean     isInteractive = FALSE, quit = FALSE, first=TRUE, doReal=FALSE;
   gchar        line[1024], Title1[1024], Title2[1024];
   olong        LinesPerPage = 0;
   olong        i, ii, indx, jndx, count, bPrint, nPrint, doCrt=1, lenLine=0;
@@ -592,6 +592,7 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   nPrint *= inc;   /* Correct for increment */
   ObitInfoListGetTest(myInput, "BIF",   &type, dim, &bif);
   ObitInfoListGetTest(myInput, "BChan", &type, dim, &bchan);
+  ObitInfoListGet(myInput, "doReal",    &type, dim, &doReal, err);
   ObitInfoListGet(myInput, "doCrt",     &type, dim, &doCrt,  err);
   isInteractive = doCrt>0;
   if (isInteractive) { /* interactive, write to stdout */
@@ -640,7 +641,10 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   for (ichan=0; ichan<mcor; ichan++) {  /* Freq loop */
     for (ic=0; ic<ncor; ic++) {  /* Stokes loop */
       start = strlen(Title2);
-      sprintf (&Title2[start], "    Amp  Phase  Wt");
+      if (doReal) 
+	sprintf (&Title2[start], "   Real   Imag  Wt");
+      else /* Amp/phase */
+	sprintf (&Title2[start], "    Amp  Phase  Wt");
       start = strlen(Title1);
       ii = (olong)(fabs(inDesc->crval[inDesc->jlocs]) - 0.9);
       if (inDesc->crval[inDesc->jlocs]>0.0)
@@ -714,22 +718,30 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
       }
       /* Scalings */
       blscale = 1;
-      if (maxBL>1.0e3) blscale = 1.0e-3;
-      if (maxBL>1.0e6) blscale = 1.0e-6;
-      if (maxBL>1.0e9) blscale = 1.0e-9;
+      if (maxBL>1.0e3) blscale = 1.0e-1;
+      if (maxBL>1.0e4) blscale = 1.0e-2;
+      if (maxBL>1.0e5) blscale = 1.0e-3;
+      if (maxBL>1.0e6) blscale = 1.0e-4;
+      if (maxBL>1.0e7) blscale = 1.0e-5;
+      if (maxBL>1.0e7) blscale = 1.0e-6;
+      if (maxBL>1.0e9) blscale = 1.0e-7;
+      if (maxBL>1.0e10) blscale = 1.0e-8;
+      if (maxBL>1.0e11) blscale = 1.0e-9;
       wtscale = 1.0;
-      if (maxWt>1.0e6)  wtscale = 1.0e-5;
-      if (maxWt>1.0e5)  wtscale = 1.0e-4;
-      if (maxWt>1.0e4)  wtscale = 1.0e-3;
-      if (maxWt>1.0e3)  wtscale = 1.0e-2;
-      if (maxWt>1.0e2)  wtscale = 1.0e-1;
-      if (maxWt<1.0)    wtscale = 1.0e1;
-      if (maxWt<1.0e-1) wtscale = 1.0e2;
-      if (maxWt<1.0e-2) wtscale = 1.0e3;
-      if (maxWt<1.0e-3) wtscale = 1.0e4;
-      if (maxWt<1.0e-4) wtscale = 1.0e5;
-      if (maxWt<1.0e-5) wtscale = 1.0e6;
-      if (maxWt<1.0e-6) wtscale = 1.0;
+      if (maxWt>1.0e2)  wtscale = 1.0e1;
+      if (maxWt>1.0e3)  wtscale = 1.0;
+      if (maxWt>1.0e4)  wtscale = 1.0e-1;
+      if (maxWt>1.0e5)  wtscale = 1.0e-2;
+      if (maxWt>1.0e6)  wtscale = 1.0e-3;
+      if (maxWt<1.0e2)  wtscale = 1.0e3;
+      if (maxWt<1.0e-1) wtscale = 1.0e4;
+      if (maxWt<1.0e-2) wtscale = 1.0e5;
+      if (maxWt<1.0e-3) wtscale = 1.0e6;
+      if (maxWt<1.0e-4) wtscale = 1.0e7;
+      if (maxWt<1.0e-5) wtscale = 1.0e7;
+      if (maxWt<1.0e-6) wtscale = 1.0e9;
+      if (maxWt<1.0e-7) wtscale = 1.0e10;
+      if (maxWt<1.0e-8) wtscale = 1.0;
       sprintf( line, "   u,v,w scaled by %8.2g  weights scaled by  %8.2g",
 	       blscale, wtscale);
       ObitPrinterWrite (myPrint, line,   &quit, err);
@@ -737,15 +749,20 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 
       ampscale = 1.0;
       maxAmp = sqrt(maxAmp);
-      if (maxAmp>1.0e6) ampscale = 1.0e-6;
-      if (maxAmp>1.0e3) ampscale = 1.0e-3;
-      if (maxAmp<1.0e0) ampscale = 1.0e3;
-      if (maxAmp<1.0e0) ampscale = 1.0e3;
-      if (maxAmp<1.0e-1) ampscale = 1.0e3;
-      if (maxAmp<1.0e-2) ampscale = 1.0e4;
-      if (maxAmp<1.0e-3) ampscale = 1.0e5;
-      if (maxAmp<1.0e-4) ampscale = 1.0e6;
-      if (maxAmp<1.0e-5) ampscale = 1.0e7;
+      if (maxAmp>=1.3e0) ampscale = 1.0e1;
+      if (maxAmp>=1.3e1) ampscale = 1.0e0;
+      if (maxAmp>=1.3e2) ampscale = 1.0e-1;
+      if (maxAmp>=1.3e3) ampscale = 1.0e-2;
+      if (maxAmp>=1.3e4) ampscale = 1.0e-3;
+      if (maxAmp>=1.3e5) ampscale = 1.0e-2;
+      if (maxAmp>=1.3e6) ampscale = 1.0e-5;
+      if (maxAmp<1.3e0)  ampscale = 1.0e2;
+      if (maxAmp<=1.0e-1) ampscale = 1.0e3;
+      if (maxAmp<=1.0e-2) ampscale = 1.0e4;
+      if (maxAmp<=1.0e-3) ampscale = 1.0e5;
+      if (maxAmp<=1.0e-4) ampscale = 1.0e6;
+      if (maxAmp<=1.0e-5) ampscale = 1.0e7;
+      if (maxAmp<=1.0e-6) ampscale = 1.0e8;
       if (ampscale!=1.0) {
 	sprintf( line, "   Amplitudes scaled by %8.2g",ampscale);
 	ObitPrinterWrite (myPrint, line,   &quit, err);
@@ -792,7 +809,11 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 	  amp  = ampscale*sqrt(re*re + im*im);
 	  phas = RAD2DG * atan2(im, re+1.0e-20);
 	  start = strlen(line);
-	  sprintf(&line[start]," %7.3f %4.0f %4.0f", amp,phas,wt);
+	  if (doReal) 
+	    sprintf(&line[start]," %6.2f %6.2f %3.0f", re*ampscale,im*ampscale,wt);
+	  else /* Amp/phase */
+	    sprintf(&line[start]," %7.3f %4.0f %4.0f", amp,phas,wt);
+
 	}
       }
 
