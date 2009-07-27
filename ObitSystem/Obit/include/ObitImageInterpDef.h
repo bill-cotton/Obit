@@ -24,57 +24,24 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitSkyModelVMBeam structure   */
-/*  This class represents sky models and their Fourier transform      */
-/*  This is intended to be included in a class structure definition.  */
+/*  Define the basic components of the ObitImageInterp structure      */
+/*  This is intended to be included in a class structure definition   */
 /**
- * \file ObitSkyModelVMBeamDef.h
- * ObitSkyModel structure members for this and any derived classes.
+ * \file ObitImageInterpDef.h
+ * ObitImageInterp structure members for this and any derived classes.
  */
-#include "ObitSkyModelVMDef.h"  /* Parent class definitions */
-/** Threshold flux density for doing high accuracy DFT model */
-ofloat Threshold;
-/** Current maximum residual  */
-ofloat maxResid;
-/** Beginning time (d) for validity of model model in VMComps */
-ofloat begVMModelTime;
-/** Dimension of Rgain...  */
-olong dimGain;
-/** Array of time/spatially variable R component gain */
-ofloat *Rgain;
-/** Array of time/spatially variable L component gain */
-ofloat *Lgain;
-/** Array of time/spatially variable Stokes Q component gain */
-ofloat *Qgain;
-/** Array of time/spatially variable Stokes U component gain */
-ofloat *Ugain;
-/** Array booleans, TRUE if corresponding antenna (0-rel) is EVLA */
-gboolean *isEVLA;
-/** Number of subarrays */
-olong numAntList;
-/** Antenna List for parallactic angle */
-ObitAntennaList **AntList;
-/** Current source */
-ObitSource *curSource;
-/** I Beam image */
-ObitImageInterp *IBeam;
-/** V Beam image */
-ObitImageInterp *VBeam;
-/** Q Beam image if doCrossPol */
-ObitImageInterp *QBeam;
-/** U Beam image if doCrossPol */
-ObitImageInterp *UBeam;
-/** Array booleans, TRUE if corresponding antenna (0-rel) is EVLA */
-gboolean doCrossPol;
-/** Number of Beam planes */
-olong numPlane;
-/** Number of UV channels */
-olong numUVChann;
-/** Plane for each frequency in corresponding UV data  dim numUVChann */
-olong *FreqPlane;
-/** Save Stokes request */
-gchar saveStokes[8];
-/** Save doCalSelect */
-gboolean saveDoCalSelect;
-/** Save doCalib */
-olong saveDoCalib;
+#include "ObitDef.h"  /* Parent class instance definitions */
+/** Threading info member object  */
+ObitThread *thread;
+/** Linked list of arrays of data.  */
+ObitInfoList *info;
+/**  Image descriptor */
+ObitImageDesc *ImgDesc;
+/** Pixel data all planes  */
+ObitFArray *ImgPixels;
+/** Interpolator */
+ObitFInterpolate *myInterp;
+/** List of frequencies corresponding to planes in ImgPixels */
+odouble *freqs;
+/** How many planes in ImgPixels? */
+olong nplanes;

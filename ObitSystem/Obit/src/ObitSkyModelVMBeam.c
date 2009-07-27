@@ -1,10 +1,4 @@
 /* $Id:  $ */
-/* TO DO:
-1) Figure out why ObitSkyModelVMBeamInitMod (from Squint) was always 
-   turning off calibration and selection. Stubbed this out.
-2) Voltage gain for Q,U???
-4) FullBeam should keep data in order channels(fastest), IF (slowest)
- */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2009                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
@@ -314,31 +308,31 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
   ObitUVFullInstantiate (uvData, TRUE, err);
   if (err->error) Obit_traceback_val (err, routine, uvData->name, out);
 
- /* Swallow Beam images */
+/* Swallow Beam images */
   out->doCrossPol = TRUE;
-  out->IBeam = ObitFullBeamCreate("IBeam", NULL, IBeam, uvData, err);
-  out->VBeam = ObitFullBeamCreate("VBeam", NULL, VBeam, uvData, err);
+  out->IBeam = ObitImageInterpCreate("IBeam", IBeam, err);
+  out->VBeam = ObitImageInterpCreate("VBeam", VBeam, err);
   if (QBeam)
-    out->QBeam = ObitFullBeamCreate("QBeam", NULL, QBeam, uvData, err);
+    out->QBeam = ObitImageInterpCreate("QBeam", QBeam, err);
   else
     out->doCrossPol = FALSE;
   if (QBeam)
-    out->UBeam = ObitFullBeamCreate("UBeam", NULL, UBeam, uvData, err);
+    out->UBeam = ObitImageInterpCreate("UBeam", UBeam, err);
   else
     out->doCrossPol = FALSE;
   if (err->error) Obit_traceback_val (err, routine, name, out);
   out->numPlane = out->IBeam->nplanes;
 
   /* Make sure they are all consistent */
-  Obit_retval_if_fail ((ObitFArrayIsCompatable(out->IBeam->BeamPixels, 
-					       out->VBeam->BeamPixels)), err, out,
+  Obit_retval_if_fail ((ObitFArrayIsCompatable(out->IBeam->ImgPixels, 
+					       out->VBeam->ImgPixels)), err, out,
 		       "%s: Incompatable R, L beam arrays", routine);
   if (out->doCrossPol) {
-    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->IBeam->BeamPixels, 
-						 out->QBeam->BeamPixels)), err, out,
+    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->IBeam->ImgPixels, 
+						 out->QBeam->ImgPixels)), err, out,
 			 "%s: Incompatable R, Q beam arrays", routine);
-    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->IBeam->BeamPixels, 
-						 out->UBeam->BeamPixels)), err, out,
+    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->IBeam->ImgPixels, 
+						 out->UBeam->ImgPixels)), err, out,
 		       "%s: Incompatable R, U beam arrays", routine);
   }
 
@@ -351,7 +345,7 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
   out->FreqPlane  = g_malloc0(out->numUVChann*sizeof(olong));
   for (i=0; i<out->numUVChann; i++) 
     out->FreqPlane[i] = MAX(0, MIN (out->numPlane-1, 
-				    ObitFullBeamFindPlane(out->IBeam, uvData->myDesc->freqArr[i])));
+				    ObitImageInterpFindPlane(out->IBeam, uvData->myDesc->freqArr[i])));
   /* Release beam buffers */
   if (IBeam && (IBeam->image)) IBeam->image = ObitImageUnref(IBeam->image);
   if (QBeam && (QBeam->image)) QBeam->image = ObitImageUnref(QBeam->image);
@@ -437,10 +431,10 @@ void ObitSkyModelVMBeamInitMod (ObitSkyModel* inn, ObitUV *uvdata,
     args->uvdata = uvdata;
     args->ithread = i;
     args->err    = err;
-    if (in->IBeam) args->BeamIInterp = ObitFullBeamCloneInterp(in->IBeam,err);
-    if (in->VBeam) args->BeamVInterp = ObitFullBeamCloneInterp(in->VBeam,err);
-    if (in->QBeam) args->BeamQInterp = ObitFullBeamCloneInterp(in->QBeam,err);
-    if (in->UBeam) args->BeamUInterp = ObitFullBeamCloneInterp(in->UBeam,err);
+    if (in->IBeam) args->BeamIInterp = ObitImageInterpCloneInterp(in->IBeam,err);
+    if (in->VBeam) args->BeamVInterp = ObitImageInterpCloneInterp(in->VBeam,err);
+    if (in->QBeam) args->BeamQInterp = ObitImageInterpCloneInterp(in->QBeam,err);
+    if (in->UBeam) args->BeamUInterp = ObitImageInterpCloneInterp(in->UBeam,err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
     args->begVMModelTime = -1.0e20;
     args->endVMModelTime = -1.0e20;
@@ -628,7 +622,7 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   olong npos[2], lcomp, ncomp, i, ifield, lithread, plane;
   ofloat *ccData=NULL, *Rgain=NULL, *Lgain=NULL, *Qgain=NULL, *Ugain=NULL;
   ofloat curPA, tPA, tTime, bTime;
-  ofloat Ipol, Vpol;
+  ofloat Ipol, Vpol, fblank = ObitMagicF();
   odouble x, y;
   VMBeamFTFuncArg *args;
   gchar *routine = "ObitSkyModelVMBeamUpdateModel";
@@ -718,13 +712,20 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
 
     /* Interpolate gains -RR and LL as voltage gains */
     plane = in->FreqPlane[args->channel];
-    Ipol = ObitFullBeamValueInt (in->IBeam, args->BeamIInterp, x, y, curPA, plane, err);
-    Vpol = ObitFullBeamValueInt (in->VBeam, args->BeamVInterp, x, y, curPA, plane, err);
-    Lgain[i] = MAX (0.001, (Ipol + Vpol)/Ipol);
-    Rgain[i] = MAX (0.001, (Ipol - Vpol)/Ipol);
+    Ipol = ObitImageInterpValueInt (in->IBeam, args->BeamIInterp, x, y, curPA, plane, err);
+    Vpol = ObitImageInterpValueInt (in->VBeam, args->BeamVInterp, x, y, curPA, plane, err);
+    if (Ipol!=fblank) {
+      Lgain[i] = MAX (0.001, (Ipol + Vpol)/Ipol);
+      Rgain[i] = MAX (0.001, (Ipol - Vpol)/Ipol);
+    } else {
+      Lgain[i] = 0.001;
+      Rgain[i] = 0.001;
+    }
     if (in->doCrossPol) {
-      Qgain[i] = ObitFullBeamValueInt (in->QBeam, args->BeamQInterp, x, y, curPA, plane, err);
-      Ugain[i] = ObitFullBeamValueInt (in->UBeam, args->BeamUInterp, x, y, curPA, plane, err);
+      Qgain[i] = ObitImageInterpValueInt (in->QBeam, args->BeamQInterp, x, y, curPA, plane, err);
+      if (Qgain[i]==fblank) Qgain[i] = 0.0;
+      Ugain[i] = ObitImageInterpValueInt (in->UBeam, args->BeamUInterp, x, y, curPA, plane, err);
+      if (Ugain[i]==fblank) Ugain[i] = 0.0;
     }
     
   } /* end loop over components */
@@ -891,10 +892,10 @@ void ObitSkyModelVMBeamClear (gpointer inn)
   if (in->Lgain)  g_free(in->Lgain);  in->Lgain  = NULL;
   if (in->Qgain)  g_free(in->Qgain);  in->Qgain  = NULL;
   if (in->Ugain)  g_free(in->Ugain);  in->Ugain  = NULL;
-  in->IBeam     = ObitFullBeamUnref(in->IBeam);
-  in->QBeam     = ObitFullBeamUnref(in->QBeam);
-  in->UBeam     = ObitFullBeamUnref(in->UBeam);
-  in->VBeam     = ObitFullBeamUnref(in->VBeam);
+  in->IBeam     = ObitImageInterpUnref(in->IBeam);
+  in->QBeam     = ObitImageInterpUnref(in->QBeam);
+  in->UBeam     = ObitImageInterpUnref(in->UBeam);
+  in->VBeam     = ObitImageInterpUnref(in->VBeam);
   in->curSource = ObitSourceUnref(in->curSource);
   if (in->AntList)  {
     for (i=0; i<in->numAntList; i++) { 
@@ -1190,7 +1191,7 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
   /* error checks - assume most done at higher level */
   if (err->error) goto finish;
 
- /* Visibility pointers */
+  /* Visibility pointers */
   ilocu =  uvdata->myDesc->ilocu;
   ilocv =  uvdata->myDesc->ilocv;
   ilocw =  uvdata->myDesc->ilocw;
@@ -1685,7 +1686,7 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 	  offsetChannel += jincf;
 	  channel++; /* Finished another channel */
 	  /* Have we finished this plane in the correction cubes? */
-	  if (plane!=in->FreqPlane[channel]) {
+	  if (plane!=in->FreqPlane[MIN(channel, (in->numUVChann-1))]) {
 	    /* Reset gains & channels if this the last vis */
 	    if (iVis>=(hiVis-1)) {
 	      largs->endVMModelTime = -1.0e20;  
@@ -1696,6 +1697,7 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 		lstartIF++;
 	      }
 	    }
+	    plane   = in->FreqPlane[MIN(channel, (in->numUVChann-1))];  /* Which plane in correction cube */
 	    goto newPlane;
 	  } /* end if new channel */
 	} /* end loop over Channel */
@@ -1706,6 +1708,7 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
     newPlane:
       visData += lrec; /* Update vis pointer */
     } /* end loop over visibilities */
+    iStoke = 0;  /* DEBUG */
   } /* end outer frequency loop */
 
   /* Indicate completion */

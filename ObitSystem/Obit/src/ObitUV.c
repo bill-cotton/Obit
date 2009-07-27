@@ -3164,7 +3164,7 @@ static void ObitUVSetupCal (ObitUV *in, ObitErr *err)
   if (sel->doBLCal) {
     /* if sel->BLversion ==0 use highest */
     highVer = ObitTableListGetHigh (in->tableList, "AIPS BL");
-    if (sel->BLversion==0) useVer = highVer;
+    if (sel->BLversion==0) {sel->BLversion = useVer = highVer;}
     else useVer = sel->BLversion;
     cal->BLTable = 
       (Obit*)newObitTableBLValue (in->name, (ObitData*)in, &useVer, OBIT_IO_ReadOnly, 0, 0, err);
@@ -3180,7 +3180,7 @@ static void ObitUVSetupCal (ObitUV *in, ObitErr *err)
   if (sel->doBPCal) {
     /* if sel->BLversion ==0 use highest */
     highVer = ObitTableListGetHigh (in->tableList, "AIPS BP");
-    if (sel->BPversion==0) useVer = highVer;
+    if (sel->BPversion==0) {sel->BPversion = useVer = highVer;}
     else useVer = sel->BPversion;
     cal->BPTable = 
       (Obit*)newObitTableBPValue (in->name, (ObitData*)in, &useVer, OBIT_IO_ReadOnly, 0, 0, 0, err);
@@ -3222,7 +3222,7 @@ static void ObitUVSetupCal (ObitUV *in, ObitErr *err)
     highVer = ObitTableListGetHigh (in->tableList, "AIPS CL");
     if (highVer > 0) {
       /* if calVersion ==0 use highest */
-      if (sel->calVersion==0) useVer = highVer;
+      if (sel->calVersion==0) {sel->calVersion = useVer = highVer;}
       else useVer = sel->calVersion;
       cal->CLTable =
 	(Obit*) newObitTableCLValue (in->name, (ObitData*)in, &useVer, OBIT_IO_ReadOnly, 0, 0, 0, err);
@@ -3235,7 +3235,7 @@ static void ObitUVSetupCal (ObitUV *in, ObitErr *err)
 
       /* No CL table - Use SN table */
       highVer = ObitTableListGetHigh (in->tableList, "AIPS SN");
-      if (sel->calVersion==0) useVer = highVer;
+      if (sel->calVersion==0) {sel->calVersion = useVer = highVer;}
       else useVer = sel->calVersion;
       cal->SNTable =
 	(Obit*) newObitTableSNValue (in->name, (ObitData*)in, &useVer, OBIT_IO_ReadOnly, 0, 0, err);

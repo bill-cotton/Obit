@@ -25,56 +25,53 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-#ifndef OBITUVFULLBEAM_H 
-#define OBITUVFULLBEAM_H 
+#ifndef OBITIMAGEINTERP_H
+#define OBITIMAGEINTERP_H
 
 #include "Obit.h"
 #include "ObitErr.h"
 #include "ObitImage.h"
-#include "ObitUV.h"
 #include "ObitFArray.h"
 #include "ObitFInterpolate.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
- * \file ObitFullBeam.h
+ * \file ObitImageInterp.h
  *
- * ObitFullBeam Class to generate full beam corrections from beam images
- * An ObitFullBeam takes images or (hyper)cubes  of a primary beam in a given
- * Stokes parameter and assists in image plane corrections
+ * ObitImageInterp Class to interpolate  pixel values in images
  * 
- * \section ObitFullBeamaccess Creators and Destructors
- * An ObitFullBeam will usually be created using ObitFullBeamCreate which allows 
+ * \section ObitImageInterpaccess Creators and Destructors
+ * An ObitImageInterp will usually be created using ObitImageInterpCreate which allows 
  * specifying a name for the object as well as other information.
  *
- * A copy of a pointer to an ObitFullBeam should always be made using the
- * #ObitFullBeamRef function which updates the reference count in the object.
- * Then whenever freeing an ObitFullBeam or changing a pointer, the function
- * #ObitFullBeamUnref will decrement the reference count and destroy the object
+ * A copy of a pointer to an ObitImageInterp should always be made using the
+ * #ObitImageInterpRef function which updates the reference count in the object.
+ * Then whenever freeing an ObitImageInterp or changing a pointer, the function
+ * #ObitImageInterpUnref will decrement the reference count and destroy the object
  * when the reference count hits 0.
  * There is no explicit destructor.
  */
 
 /*--------------Class definitions-------------------------------------*/
-/** ObitFullBeam Class structure. */
+/** ObitImageInterp Class structure. */
 typedef struct {
-#include "ObitFullBeamDef.h"   /* this class definition */
-} ObitFullBeam;
+#include "ObitImageInterpDef.h"   /* this class definition */
+} ObitImageInterp;
 
 /*----------------- Macroes ---------------------------*/
 /** 
- * Macro to unreference (and possibly destroy) an ObitFullBeam
- * returns a ObitFullBeam*.
+ * Macro to unreference (and possibly destroy) an ObitImageInterp
+ * returns a ObitImageInterp*.
  * in = object to unreference
  */
-#define ObitFullBeamUnref(in) ObitUnref (in)
+#define ObitImageInterpUnref(in) ObitUnref (in)
 
 /** 
- * Macro to reference (update reference count) an ObitFullBeam.
- * returns a ObitFullBeam*.
+ * Macro to reference (update reference count) an ObitImageInterp.
+ * returns a ObitImageInterp*.
  * in = object to reference
  */
-#define ObitFullBeamRef(in) ObitRef (in)
+#define ObitImageInterpRef(in) ObitRef (in)
 
 /** 
  * Macro to determine if an object is the member of this or a 
@@ -82,73 +79,72 @@ typedef struct {
  * Returns TRUE if a member, else FALSE
  * in = object to reference
  */
-#define ObitFullBeamIsA(in) ObitIsA (in, ObitFullBeamGetClass())
+#define ObitImageInterpIsA(in) ObitIsA (in, ObitImageInterpGetClass())
 
 /*---------------Public functions---------------------------*/
 /** Public: Class initializer. */
-void ObitFullBeamClassInit (void);
+void ObitImageInterpClassInit (void);
 
 /** Public: Default Constructor. */
-ObitFullBeam* newObitFullBeam (gchar* name);
+ObitImageInterp* newObitImageInterp (gchar* name);
 
 /** Public: ClassInfo pointer */
-gconstpointer ObitFullBeamGetClass (void);
+gconstpointer ObitImageInterpGetClass (void);
 
 /** Public: Copy (deep) constructor. */
-ObitFullBeam* ObitFullBeamCopy  (ObitFullBeam *in, 
-				     ObitFullBeam *out, 
-				     ObitErr *err);
-
-/** Public: Copy structure. */
-void ObitFullBeamClone (ObitFullBeam *in, 
-			  ObitFullBeam *out, 
-			  ObitErr *err);
-
-/** Public: Create/initialize ObitFullBeam structures */
-ObitFullBeam* ObitFullBeamCreate (gchar* name, ObitInfoList *myInput,
-				  ObitImage *image, ObitErr *err);
-/** Typedef for definition of class pointer structure */
-typedef 
-ObitFullBeam* (*ObitFullBeamCreateFP) (gchar* name, 
-				       ObitInfoList *myInput,
-				       ObitImage *image, 
+ObitImageInterp* ObitImageInterpCopy  (ObitImageInterp *in, 
+				       ObitImageInterp *out, 
 				       ObitErr *err);
 
-/** Public: Get beam value */
-ofloat ObitFullBeamValue (ObitFullBeam* in, 
-			  odouble RA, odouble Dec, 
-			  ofloat PAngle, olong plane,
-			  ObitErr *err);
+/** Public: Copy structure. */
+void ObitImageInterpClone (ObitImageInterp *in, 
+			   ObitImageInterp *out, 
+			   ObitErr *err);
+
+/** Public: Create/initialize ObitImageInterp structures */
+ObitImageInterp* ObitImageInterpCreate (gchar* name, 
+					ObitImage *image, ObitErr *err);
 /** Typedef for definition of class pointer structure */
 typedef 
-ofloat (*ObitFullBeamValueFP) (ObitFullBeam* in,
+ObitImageInterp* (*ObitImageInterpCreateFP) (gchar* name, 
+					     ObitImage *image, 
+					     ObitErr *err);
+
+/** Public: Get pixel value at a position */
+ofloat ObitImageInterpValue (ObitImageInterp* in, 
 			     odouble RA, odouble Dec, 
-			     ofloat PAngle, olong plane,
+			     ofloat Angle, olong plane,
 			     ObitErr *err);
+/** Typedef for definition of class pointer structure */
+typedef 
+ofloat (*ObitImageInterpValueFP) (ObitImageInterp* in,
+				  odouble RA, odouble Dec, 
+				  ofloat Angle, olong plane,
+				  ObitErr *err);
 
 /** Public: Get beam value providing interpolator */
-ofloat ObitFullBeamValueInt (ObitFullBeam* in, ObitFInterpolate* interp,
-			  odouble RA, odouble Dec, 
-			  ofloat PAngle, olong plane,
-			  ObitErr *err);
+ofloat ObitImageInterpValueInt (ObitImageInterp* in, ObitFInterpolate* interp,
+				odouble RA, odouble Dec, 
+				ofloat PAngle, olong plane,
+				ObitErr *err);
 /** Typedef for definition of class pointer structure */
 typedef 
-ofloat (*ObitFullBeamValueIntFP) (ObitFullBeam* in, ObitFInterpolate* interp,
-			     odouble RA, odouble Dec, 
-			     ofloat PAngle, olong plane,
-			     ObitErr *err);
+ofloat (*ObitImageInterpValueIntFP) (ObitImageInterp* in, ObitFInterpolate* interp,
+				     odouble RA, odouble Dec, 
+				     ofloat PAngle, olong plane,
+				     ObitErr *err);
 
 /** Public: Lookup plane for frequency */
-olong ObitFullBeamFindPlane (ObitFullBeam* in, odouble freq);
+olong ObitImageInterpFindPlane (ObitImageInterp* in, odouble freq);
 /** Typedef for definition of class pointer structure */
 typedef 
-olong (*ObitFullBeamFindPlaneFP) (ObitFullBeam* in, odouble freq);
+olong (*ObitImageInterpFindPlaneFP) (ObitImageInterp* in, odouble freq);
 
 /** Public: Get clone of interpolator */
-ObitFInterpolate*  ObitFullBeamCloneInterp (ObitFullBeam* in, ObitErr *err);
+ObitFInterpolate*  ObitImageInterpCloneInterp (ObitImageInterp* in, ObitErr *err);
 /** Typedef for definition of class pointer structure */
 typedef 
-ObitFInterpolate* (*ObitFullBeamCloneInterpFP) (ObitFullBeam* in, ObitErr *err);
+ObitFInterpolate* (*ObitImageInterpCloneInterpFP) (ObitImageInterp* in, ObitErr *err);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
@@ -157,7 +153,7 @@ ObitFInterpolate* (*ObitFullBeamCloneInterpFP) (ObitFullBeam* in, ObitErr *err);
  * (NULL if none) and function pointers.
  */
 typedef struct  {
-#include "ObitFullBeamClassDef.h"
-} ObitFullBeamClassInfo; 
+#include "ObitImageInterpClassDef.h"
+} ObitImageInterpClassInfo; 
 
-#endif /* OBITFUVFULLBEAM_H */ 
+#endif /* OBITIMAGEINTERP_H */ 

@@ -1201,7 +1201,7 @@ ObitAIPSCatTableGetDesc (ObitTableDesc *desc,
 
   /* Add "_status" column - this corresponds to the AIPS select column
      but with slightly different meanings. */
-  desc->type[desc->nfield-1] = OBIT_oint;
+  desc->type[desc->nfield-1] = OBIT_int;
   for (j=0; j<MAXINFOELEMDIM; j++) desc->dim[desc->nfield-1][j] = 1;
 
   /* index */

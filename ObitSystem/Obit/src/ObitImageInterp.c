@@ -27,7 +27,7 @@
 /*--------------------------------------------------------------------*/
 
 #include "ObitImageDesc.h"
-#include "ObitFullBeam.h"
+#include "ObitImageInterp.h"
 #include "ObitFInterpolate.h"
 #include "ObitThread.h"
 #include "ObitImageUtil.h"
@@ -35,42 +35,40 @@
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
- * \file ObitFullBeam.c
- * ObitFullBeam class function definitions.
+ * \file ObitImageInterp.c
+ * ObitImageInterp class function definitions.
  * This class is derived from the Obit base class.
  *
- * ObitFullBeam Class to generate full beam corrections from beam images
- * An ObitFullBeam takes images or (hyper)cubes  of a primary beam in a given
- * Stokes parameter and assists in image plane corrections
+ * ObitImageInterp Class to nterpolate  pixel values in images
  */
 
 /** name of the class defined in this file */
-static gchar *myClassName = "ObitFullBeam";
+static gchar *myClassName = "ObitImageInterp";
 
 /** Function to obtain parent ClassInfo */
 static ObitGetClassFP ObitParentGetClass = ObitGetClass;
 
 /**
- * ClassInfo structure ObitFullBeamClassInfo.
+ * ClassInfo structure ObitImageInterpClassInfo.
  * This structure is used by class objects to access class functions.
  */
-static ObitFullBeamClassInfo myClassInfo = {FALSE};
+static ObitImageInterpClassInfo myClassInfo = {FALSE};
 
 /*--------------- File Global Variables  ----------------*/
 
 
 /*---------------Private function prototypes----------------*/
 /** Private: Initialize newly instantiated object. */
-void  ObitFullBeamInit  (gpointer in);
+void  ObitImageInterpInit  (gpointer in);
 
 /** Private: Deallocate members. */
-void  ObitFullBeamClear (gpointer in);
+void  ObitImageInterpClear (gpointer in);
 
 /** Private: Set Class function pointers. */
-static void ObitFullBeamClassInfoDefFn (gpointer inClass);
+static void ObitImageInterpClassInfoDefFn (gpointer inClass);
 
-/** Private: Read Beam. */
-static void  ReadBeam  (ObitFullBeam *in, ObitImage *image, 
+/** Private: Read Image. */
+static void  ReadImage  (ObitImageInterp *in, ObitImage *image, 
 		      olong iFreq, olong iIF, olong iplane, 
 		      ObitErr *err);
 
@@ -81,15 +79,15 @@ static void  ReadBeam  (ObitFullBeam *in, ObitImage *image,
  * \param name An optional name for the object.
  * \return the new object.
  */
-ObitFullBeam* newObitFullBeam (gchar* name)
+ObitImageInterp* newObitImageInterp (gchar* name)
 {
-  ObitFullBeam* out;
+  ObitImageInterp* out;
 
   /* Class initialization if needed */
-  if (!myClassInfo.initialized) ObitFullBeamClassInit();
+  if (!myClassInfo.initialized) ObitImageInterpClassInit();
 
   /* allocate/init structure */
-  out = g_malloc0(sizeof(ObitFullBeam));
+  out = g_malloc0(sizeof(ObitImageInterp));
 
   /* initialize values */
   if (name!=NULL) out->name = g_strdup(name);
@@ -99,31 +97,31 @@ ObitFullBeam* newObitFullBeam (gchar* name)
   out->ClassInfo = (gpointer)&myClassInfo;
 
   /* initialize other stuff */
-  ObitFullBeamInit((gpointer)out);
+  ObitImageInterpInit((gpointer)out);
 
  return out;
-} /* end newObitFullBeam */
+} /* end newObitImageInterp */
 
 /**
  * Returns ClassInfo pointer for the class.
  * \return pointer to the class structure.
  */
-gconstpointer ObitFullBeamGetClass (void)
+gconstpointer ObitImageInterpGetClass (void)
 {
   /* Class initialization if needed */
-  if (!myClassInfo.initialized) ObitFullBeamClassInit();
+  if (!myClassInfo.initialized) ObitImageInterpClassInit();
 
   return (gconstpointer)&myClassInfo;
-} /* end ObitFullBeamGetClass */
+} /* end ObitImageInterpGetClass */
 
 /**
- * Make a deep copy of an ObitFullBeam.
+ * Make a deep copy of an ObitImageInterp.
  * \param in  The object to copy
  * \param out An existing object pointer for output or NULL if none exists.
  * \param err Obit error stack object.
  * \return pointer to the new object.
  */
-ObitFullBeam* ObitFullBeamCopy  (ObitFullBeam *in, ObitFullBeam *out, 
+ObitImageInterp* ObitImageInterpCopy  (ObitImageInterp *in, ObitImageInterp *out, 
 				     ObitErr *err)
 {
   const ObitClassInfo *ParentClass;
@@ -142,7 +140,7 @@ ObitFullBeam* ObitFullBeamCopy  (ObitFullBeam *in, ObitFullBeam *out,
   if (!oldExist) {
     /* derive object name */
     outName = g_strconcat ("Copy: ",in->name,NULL);
-    out = newObitFullBeam(outName);
+    out = newObitImageInterp(outName);
     g_free(outName);
   }
 
@@ -152,29 +150,29 @@ ObitFullBeam* ObitFullBeamCopy  (ObitFullBeam *in, ObitFullBeam *out,
   ParentClass->ObitCopy (in, out, err);
 
   /*  copy this class */
-  out->BeamDesc   = ObitImageDescUnref(out->BeamDesc);
-  out->BeamDesc   = ObitImageDescCopy (in->BeamDesc, out->BeamDesc, err);
-  out->BeamPixels = ObitFArrayUnref(out->BeamPixels);
-  out->BeamPixels = ObitFArrayCopy (in->BeamPixels, out->BeamPixels, err);
-  out->myInterp   = ObitFArrayUnref(out->myInterp);
-  out->myInterp   = ObitFInterpolateCopy (in->myInterp, out->myInterp, err);
-  out->nplanes    = in->nplanes;
+  out->ImgDesc   = ObitImageDescUnref(out->ImgDesc);
+  out->ImgDesc   = ObitImageDescCopy (in->ImgDesc, out->ImgDesc, err);
+  out->ImgPixels = ObitFArrayUnref(out->ImgPixels);
+  out->ImgPixels = ObitFArrayCopy (in->ImgPixels, out->ImgPixels, err);
+  out->myInterp  = ObitFArrayUnref(out->myInterp);
+  out->myInterp  = ObitFInterpolateCopy (in->myInterp, out->myInterp, err);
+  out->nplanes   = in->nplanes;
   if (out->freqs) g_free(out->freqs);
-  nfreq = out->BeamPixels->naxis[2];
+  nfreq = out->ImgPixels->naxis[2];
   out->freqs = g_malloc0(nfreq*sizeof(odouble));
   for (i=0; i<nfreq; i++) out->freqs[i] = in->freqs[i];
 
   return out;
-} /* end ObitFullBeamCopy */
+} /* end ObitImageInterpCopy */
 
 /**
  * Make a copy of a object but do not copy the actual data
- * This is useful to create an FullBeam similar to the input one.
+ * This is useful to create an ImageInterp similar to the input one.
  * \param in  The object to copy
  * \param out An existing object pointer for output, must be defined.
  * \param err Obit error stack object.
  */
-void ObitFullBeamClone  (ObitFullBeam *in, ObitFullBeam *out, ObitErr *err)
+void ObitImageInterpClone  (ObitImageInterp *in, ObitImageInterp *out, ObitErr *err)
 {
   const ObitClassInfo *ParentClass;
 
@@ -190,51 +188,43 @@ void ObitFullBeamClone  (ObitFullBeam *in, ObitFullBeam *out, ObitErr *err)
   ParentClass->ObitCopy (in, out, err);
 
   /*  copy this class */
-  out->BeamDesc   = ObitImageDescUnref(out->BeamDesc);
-  out->BeamDesc   = ObitImageDescCopy (in->BeamDesc, out->BeamDesc, err);
-  out->BeamPixels = ObitFArrayUnref(out->BeamPixels);
-  ObitFArrayClone (in->BeamPixels, out->BeamPixels, err);
-  out->myInterp   = ObitFArrayUnref(out->myInterp);
-  out->myInterp   = ObitFInterpolateClone (in->myInterp, out->myInterp);
-  out->freqs      = in->freqs;
-  out->nplanes    = in->nplanes;
-} /* end ObitFullBeamClone */
+  out->ImgDesc   = ObitImageDescUnref(out->ImgDesc);
+  out->ImgDesc   = ObitImageDescCopy (in->ImgDesc, out->ImgDesc, err);
+  out->ImgPixels = ObitFArrayUnref(out->ImgPixels);
+  ObitFArrayClone (in->ImgPixels, out->ImgPixels, err);
+  out->myInterp  = ObitFArrayUnref(out->myInterp);
+  out->myInterp  = ObitFInterpolateClone (in->myInterp, out->myInterp);
+  out->freqs     = in->freqs;
+  out->nplanes   = in->nplanes;
+} /* end ObitImageInterpClone */
 
 /**
- * Creates an ObitFullBeam, the order of planes in the output object 
+ * Creates an ObitImageInterp, the order of planes in the output object 
  * is channels vary fastest, then IFs.
  * \param name    An optional name for the object.
- * \param myInput InfoList with optional control parameters (may be NULL):
- * \li "antSize" OBIT_float scalar Diameter of antennas for gain. [def 24.5]
- * \li "minGain" OBIT_float scalar  Min. allowed antenna gain, [def 0.02]
  * \param image   Image from which to derive object 
  * \return the new object.
  */
-ObitFullBeam* ObitFullBeamCreate (gchar* name, ObitInfoList *myInput,
-				  ObitImage *image, ObitErr *err)
+ObitImageInterp* ObitImageInterpCreate (gchar* name, ObitImage *image, 
+					ObitErr *err)
 {
-  ObitFullBeam* out=NULL;
+  ObitImageInterp* out=NULL;
   olong nImgFreq, nImgIF, nChIF, naxis[5], nx, ny;
   olong iplane, iFreq, iIF;
-  gchar *dataParms[] = {"antSize","minGain",NULL};
   gchar *tname;
-  gchar *routine = "ObitFullBeamCreate";
+  gchar *routine = "ObitImageInterpCreate";
 
   /* Error tests */
   g_assert(ObitImageIsA(image));
   if (err->error) return out;  /* Previous error */
 
   /* Create basic structure */
-  out = newObitFullBeam (name);
+  out = newObitImageInterp (name);
 
   /* Ensure image fully instantiated and OK */
   ObitImageOpen(image, OBIT_IO_ReadOnly, err);
   ObitImageClose(image, err);
   if (err->error) Obit_traceback_val (err, routine, image->name, out);
-
-  /* Save any control parameters */
-  if (myInput)
-    ObitInfoListCopyList (myInput, out->info, dataParms);
 
   /* How big?  */
   nImgFreq = image->myDesc->inaxes[image->myDesc->jlocf];
@@ -248,56 +238,56 @@ ObitFullBeam* ObitFullBeamCreate (gchar* name, ObitInfoList *myInput,
   naxis[0] = nx; naxis[1] = ny; naxis[2] = nChIF;
   out->nplanes = nChIF;    /* Number of planes in output */
 
-  /* Save image Beam header */
-  out->BeamDesc = ObitImageDescCopy (image->myDesc, out->BeamDesc, err);
+  /* Save image header */
+  out->ImgDesc = ObitImageDescCopy (image->myDesc, out->ImgDesc, err);
   if (err->error) Obit_traceback_val (err, routine, image->name, out);
 
-  /* Create BeamPixels array - big enought for all planes */
-  if (name) tname = g_strconcat (name, ":BeamPixels", NULL);
-  else tname = g_strdup("BeamPixels") ;
-  out->BeamPixels = ObitFArrayCreate (tname, 3, naxis);
+  /* Create ImgPixels array - big enought for all planes */
+  if (name) tname = g_strconcat (name, ":ImgPixels", NULL);
+  else tname = g_strdup("ImgPixels") ;
+  out->ImgPixels = ObitFArrayCreate (tname, 3, naxis);
   g_free(tname);
 
-  /* Frequency array - filled in in ReadBeam */
+  /* Frequency array - filled in in ReadImage */
   out->freqs = g_malloc0(out->nplanes*sizeof(odouble));
 
   /* Create interpolator */
   out->myInterp = newObitFInterpolateCreate ("Interpolator", 
-					     out->BeamPixels, out->BeamDesc, 2);
+					     out->ImgPixels, out->ImgDesc, 2);
 
   /* Loop over planes in order they appear in the UV data */
   iplane = 0;
   for (iIF=0; iIF<nImgIF; iIF++) {
     for (iFreq=0; iFreq<nImgFreq; iFreq++) {
-      ReadBeam (out, image, iFreq, iIF, iplane, err);
+      ReadImage (out, image, iFreq, iIF, iplane, err);
       iplane++;
     } /* end loop over channel */
   } /* end loop over IF */
 
  return out;
-} /* end ObitFullBeamCreate */
+} /* end ObitImageInterpCreate */
 
 /**
  * Interpolate requested beam value
  * Locks in->thread for multithreading
  * \param in      Object to interpolate
- * \param dRA     Right Ascension offset desired (deg) @ std. equinox
- * \param dDec    Declination offset (deg) desired @ std. equinox
- * \param PAngle  Parallactic Angle  (deg)
+ * \param RA      Right Ascension desired (deg) @ std. equinox
+ * \param Dec     Declination deg) desired @ std. equinox
+ * \param Angle   (Parallactic) Angle to rotate image  (deg)
  * \param plane   Image plane 0-rel (frequency) to use
- *                Can be obtained from ObitFullBeamFindPlane
+ *                Can be obtained from ObitImageInterpFindPlane
  * \param err     Obit error stack object.
  * \return interpolated beam value -  may be fblank
  */
-ofloat ObitFullBeamValue (ObitFullBeam* in, 
-			  odouble dRA, odouble dDec, 
-			  ofloat PAngle, olong plane,
-			  ObitErr *err)
+ofloat ObitImageInterpValue (ObitImageInterp* in, 
+			     odouble RA, odouble Dec, 
+			     ofloat Angle, olong plane,
+			     ObitErr *err)
 {
   ofloat beamValue=0.0;
   ofloat pixel[3], fblank = ObitMagicF();
   odouble coord[2];
-  gchar *routine = "ObitFullBeamValue";
+  gchar *routine = "ObitImageInterpValue";
 
   if (err->error) return beamValue;  /* Previous error? */
 
@@ -306,11 +296,11 @@ ofloat ObitFullBeamValue (ObitFullBeam* in,
   ObitThreadLock(in->thread);
 
   /* Modify header for parallactic angle */
-  in->BeamDesc->crota[1] = PAngle; 
+  in->ImgDesc->crota[1] = Angle; 
 
   /* Convert position to pixels */
-  coord[0] = dRA; coord[1] = dDec;
-  if (ObitPositionXYpix(coord, in->BeamDesc, pixel)) {
+  coord[0] = RA; coord[1] = Dec;
+  if (ObitPositionXYpix(coord, in->ImgDesc, pixel)) {
     Obit_log_error(err, OBIT_Error, 
 		   "%s: error converting coordinates", routine);
     beamValue = fblank;
@@ -326,42 +316,42 @@ ofloat ObitFullBeamValue (ObitFullBeam* in,
   ObitThreadUnlock(in->thread);
 
   return beamValue;
-} /* end ObitFullBeamValue */
+} /* end ObitImageInterpValue */
 
 /**
  * Interpolate requested beam value given the interpolator
  * This allows non blocking interpolation in a multithreaded environment.
  * Locks in->thread for multithreading
- * Use this routine for best multi-threaded performance.
+ * Use this routine for best multi-threaded performance and in most useful
+ * for interpolating beam images (x=azimuth, y=elevation)
  * \param in      Object to interpolate
  * \param interp  Interpolator
- * \param dRA     Right Ascension offset desired (deg) @ std. equinox
- * \param dDec    Declination offset (deg) desired @ std. equinox
- * \param PAngle  Parallactic Angle  (deg)
+ * \param RA      X or Right Ascension desired (deg) @ std. equinox
+ * \param Dec     Y or Declination deg) desired @ std. equinox
+ * \param Angle   (Parallactic) Angle to rotate  (deg)
  * \param plane   Image plane 0-rel (frequency) to use
- *                Can be obtained from ObitFullBeamFindPlane
+ *                Can be obtained from ObitImageInterpFindPlane
  * \param err     Obit error stack object.
  * \return interpolated beam value -  may be fblank
  */
-ofloat ObitFullBeamValueInt (ObitFullBeam* in,  ObitFInterpolate* interp,
-			     odouble dRA, odouble dDec, 
-			     ofloat PAngle, olong plane,
-			     ObitErr *err)
+ofloat ObitImageInterpValueInt (ObitImageInterp* in,  ObitFInterpolate* interp,
+				odouble RA, odouble Dec, 
+				ofloat Angle, olong plane,
+				ObitErr *err)
 {
   ofloat beamValue=0.0;
   ofloat pixel[3], fblank = ObitMagicF();
   odouble coord[2];
-  gchar *routine = "ObitFullBeamValue";
+  gchar *routine = "ObitImageInterpValue";
 
   if (err->error) return beamValue;  /* Previous error? */
-
-
+  
+  
   /* Modify header for parallactic angle */
-  interp->myDesc->crota[1] = PAngle; 
-
+  interp->myDesc->crota[1] = Angle; 
 
   /* Convert position to pixels */
-  coord[0] = dRA; coord[1] = dDec;
+  coord[0] = RA; coord[1] = Dec;
   if (ObitPositionXYpix(coord, interp->myDesc, pixel)) {
     Obit_log_error(err, OBIT_Error, 
 		   "%s: error converting coordinates", routine);
@@ -376,7 +366,7 @@ ofloat ObitFullBeamValueInt (ObitFullBeam* in,  ObitFInterpolate* interp,
   cleanup:
 
   return beamValue;
-} /* end ObitFullBeamValueInt */
+} /* end ObitImageInterpValueInt */
 
 /**
  * Find closest beam image plane to a given frequency
@@ -384,7 +374,7 @@ ofloat ObitFullBeamValueInt (ObitFullBeam* in,  ObitFInterpolate* interp,
  * \param freq    Frequency (Ha) to lookup
  * \return closest 0-rel plane number
  */
-olong ObitFullBeamFindPlane (ObitFullBeam* in, odouble freq)
+olong ObitImageInterpFindPlane (ObitImageInterp* in, odouble freq)
 {
   olong close = 0;
   olong i;
@@ -399,7 +389,7 @@ olong ObitFullBeamFindPlane (ObitFullBeam* in, odouble freq)
   }
 
   return close;
-} /* end ObitFullBeamFindPlane */
+} /* end ObitImageInterpFindPlane */
 
 /**
  * Returns clone of interpolator allowing nonblocking interpolation
@@ -408,7 +398,7 @@ olong ObitFullBeamFindPlane (ObitFullBeam* in, odouble freq)
  * \param in      Object to whose interpolator to clone
  * \return interpolator, Unref wnen done
  */
-ObitFInterpolate*  ObitFullBeamCloneInterp (ObitFullBeam* in, ObitErr *err)
+ObitFInterpolate*  ObitImageInterpCloneInterp (ObitImageInterp* in, ObitErr *err)
 {
   ObitFInterpolate* out=NULL;
 
@@ -419,12 +409,12 @@ ObitFInterpolate*  ObitFullBeamCloneInterp (ObitFullBeam* in, ObitErr *err)
   out->myDesc = ObitImageDescCopy(in->myInterp->myDesc, out->myDesc, err);
 
   return out;
-} /* end ObitFullBeamCloneInterp */
+} /* end ObitImageInterpCloneInterp */
 
 /**
  * Initialize global ClassInfo Structure.
  */
-void ObitFullBeamClassInit (void)
+void ObitImageInterpClassInit (void)
 {
   if (myClassInfo.initialized) return;  /* only once */
   
@@ -433,18 +423,18 @@ void ObitFullBeamClassInit (void)
   myClassInfo.ParentClass = ObitParentGetClass();
 
   /* Set function pointers */
-  ObitFullBeamClassInfoDefFn ((gpointer)&myClassInfo);
+  ObitImageInterpClassInfoDefFn ((gpointer)&myClassInfo);
  
   myClassInfo.initialized = TRUE; /* Now initialized */
  
-} /* end ObitFullBeamClassInit */
+} /* end ObitImageInterpClassInit */
 
 /**
  * Initialize global ClassInfo Function pointers.
  */
-static void ObitFullBeamClassInfoDefFn (gpointer inClass)
+static void ObitImageInterpClassInfoDefFn (gpointer inClass)
 {
-  ObitFullBeamClassInfo *theClass = (ObitFullBeamClassInfo*)inClass;
+  ObitImageInterpClassInfo *theClass = (ObitImageInterpClassInfo*)inClass;
   ObitClassInfo *ParentClass = (ObitClassInfo*)myClassInfo.ParentClass;
 
   if (theClass->initialized) return;  /* only once */
@@ -458,23 +448,23 @@ static void ObitFullBeamClassInfoDefFn (gpointer inClass)
     ParentClass->ObitClassInfoDefFn(theClass);
 
   /* function pointers defined or overloaded this class */
-  theClass->ObitClassInit = (ObitClassInitFP)ObitFullBeamClassInit;
-  theClass->newObit       = (newObitFP)newObitFullBeam;
-  theClass->ObitClassInfoDefFn = (ObitClassInfoDefFnFP)ObitFullBeamClassInfoDefFn;
-  theClass->ObitGetClass  = (ObitGetClassFP)ObitFullBeamGetClass;
-  theClass->ObitCopy      = (ObitCopyFP)ObitFullBeamCopy;
+  theClass->ObitClassInit = (ObitClassInitFP)ObitImageInterpClassInit;
+  theClass->newObit       = (newObitFP)newObitImageInterp;
+  theClass->ObitClassInfoDefFn = (ObitClassInfoDefFnFP)ObitImageInterpClassInfoDefFn;
+  theClass->ObitGetClass  = (ObitGetClassFP)ObitImageInterpGetClass;
+  theClass->ObitCopy      = (ObitCopyFP)ObitImageInterpCopy;
   theClass->ObitClone     = NULL;
-  theClass->ObitClear     = (ObitClearFP)ObitFullBeamClear;
-  theClass->ObitInit      = (ObitInitFP)ObitFullBeamInit;
-  theClass->ObitFullBeamCreate = (ObitFullBeamCreateFP)ObitFullBeamCreate;
-  theClass->ObitFullBeamValue  = (ObitFullBeamValueFP)ObitFullBeamValue;
-  theClass->ObitFullBeamValueInt  = 
-    (ObitFullBeamValueIntFP)ObitFullBeamValueInt;
-  theClass->ObitFullBeamFindPlane = 
-    (ObitFullBeamFindPlaneFP)ObitFullBeamFindPlane;
-  theClass->ObitFullBeamCloneInterp = 
-    (ObitFullBeamCloneInterpFP)ObitFullBeamCloneInterp;
-} /* end ObitFullBeamClassDefFn */
+  theClass->ObitClear     = (ObitClearFP)ObitImageInterpClear;
+  theClass->ObitInit      = (ObitInitFP)ObitImageInterpInit;
+  theClass->ObitImageInterpCreate = (ObitImageInterpCreateFP)ObitImageInterpCreate;
+  theClass->ObitImageInterpValue  = (ObitImageInterpValueFP)ObitImageInterpValue;
+  theClass->ObitImageInterpValueInt  = 
+    (ObitImageInterpValueIntFP)ObitImageInterpValueInt;
+  theClass->ObitImageInterpFindPlane = 
+    (ObitImageInterpFindPlaneFP)ObitImageInterpFindPlane;
+  theClass->ObitImageInterpCloneInterp = 
+    (ObitImageInterpCloneInterpFP)ObitImageInterpCloneInterp;
+} /* end ObitImageInterpClassDefFn */
 
 /*---------------Private functions--------------------------*/
 
@@ -483,10 +473,10 @@ static void ObitFullBeamClassInfoDefFn (gpointer inClass)
  * Parent classes portions are (recursively) initialized first
  * \param inn Pointer to the object to initialize.
  */
-void ObitFullBeamInit  (gpointer inn)
+void ObitImageInterpInit  (gpointer inn)
 {
   ObitClassInfo *ParentClass;
-  ObitFullBeam *in = inn;
+  ObitImageInterp *in = inn;
 
   /* error checks */
   g_assert (in != NULL);
@@ -499,24 +489,24 @@ void ObitFullBeamInit  (gpointer inn)
   /* set members in this class */
   in->thread     = newObitThread();
   in->info       = newObitInfoList(); 
-  in->BeamDesc   = NULL;
-  in->BeamPixels = NULL;
+  in->ImgDesc   = NULL;
+  in->ImgPixels = NULL;
   in->myInterp   = NULL;
   in->freqs      = NULL;
   in->nplanes    = 0;
 
-} /* end ObitFullBeamInit */
+} /* end ObitImageInterpInit */
 
 /**
  * Deallocates member objects.
  * Does (recursive) deallocation of parent class members.
  * \param  inn Pointer to the object to deallocate.
- *           Actually it should be an ObitFullBeam* cast to an Obit*.
+ *           Actually it should be an ObitImageInterp* cast to an Obit*.
  */
-void ObitFullBeamClear (gpointer inn)
+void ObitImageInterpClear (gpointer inn)
 {
   ObitClassInfo *ParentClass;
-  ObitFullBeam *in = inn;
+  ObitImageInterp *in = inn;
 
   /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
@@ -524,8 +514,8 @@ void ObitFullBeamClear (gpointer inn)
   /* delete this class members */
   in->info       = ObitInfoListUnref(in->info);
   in->thread     = ObitThreadUnref(in->thread);
-  in->BeamDesc   = ObitImageDescUnref(in->BeamDesc);
-  in->BeamPixels = ObitFArrayUnref(in->BeamPixels);
+  in->ImgDesc   = ObitImageDescUnref(in->ImgDesc);
+  in->ImgPixels = ObitFArrayUnref(in->ImgPixels);
   in->myInterp   = ObitFInterpolateUnref(in->myInterp);
   if (in->freqs) g_free(in->freqs);
  
@@ -535,33 +525,27 @@ void ObitFullBeamClear (gpointer inn)
   if ((ParentClass!=NULL) && ( ParentClass->ObitClear!=NULL)) 
     ParentClass->ObitClear (inn);
   
-} /* end ObitFullBeamClear */
+} /* end ObitImageInterpClear */
 
 /**
- * Read and pad Beam
- * Reads  image and leaves in in->BeamPixels
- * For Stokes I the image is normalized by a symmetric function.
- * \param in     Object to rotate, info member may contain:
- * \li "antSize" OBIT_float scalar Diameter of antennas for gain. [def 24.5]
- * \li "minGain" OBIT_float scalar  Min. allowed antenna gain, [def 0.02]
+ * Read Image
+ * Reads  image and leaves in in->ImgPixels
+ * \param in     Object to load image into
  * \param image  Image from which to derive object 
  * \param iFreq  0-rel freq number in image
  * \param iIF    0-rel IF number in image
- * \param iplane 0-rel plane number in in->BeamPixels
+ * \param iplane 0-rel plane number in in->ImgPixels
  * \param err Obit error stack object.
  */
-static void  ReadBeam  (ObitFullBeam *in, ObitImage *image, 
+static void  ReadImage  (ObitImageInterp *in, ObitImage *image, 
 			olong iFreq, olong iIF, olong iplane, 
 			ObitErr *err) 
 {
-  ObitImage *scrImage=NULL;
-  ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong i, ipos[3], jlocf, jlocif;
   olong blc[7] = {1,1,1,1,1,1,1}, trc[7] = {0,0,0,0,0,0,0};
-  olong outPlane[5] = {1,1,1,1,1};
-  ofloat *inArr, *outArr, antSize=24.5, minGain = 0.02; 
-  gchar *routine = "ObitFullBeam:ReadBeam";
+  ofloat *inArr, *outArr; 
+  gchar *routine = "ObitImageInterp:ReadImage";
 
   if (err->error) return;  /* Previous error? */
 
@@ -587,36 +571,10 @@ static void  ReadBeam  (ObitFullBeam *in, ObitImage *image,
   /* Set plane frequency */
   in->freqs[iplane] = image->myDesc->crval[image->myDesc->jlocf];
 
-  /* If Stokes I Divide by symmetric beam */
-  /* DISABLED (crval==10.0 test, I=1.0) */
-  if (image->myDesc->crval[image->myDesc->jlocs]==10.0) {
-
-    /* Scratch Memory only image for symmetric beam */
-    scrImage = newObitImage ("Beam");
-    ObitImageCloneMem (image, scrImage, err);
-    if (err->error) Obit_traceback_msg (err, routine, image->name);
-    /* One plane */
-    scrImage->myDesc->inaxes[2] = scrImage->myDesc->inaxes[3] = 1;
-    
-    /* Control parameters */
-    ObitInfoListGetTest(in->info, "antSize", &type, dim, &antSize);
-    ObitInfoListGetTest(in->info, "mingain", &type, dim, &minGain);
-   
-    /* Create Beam image */
-    ObitImageUtilPBImage (image, scrImage, outPlane, antSize, minGain, err);
-    if (err->error) Obit_traceback_msg (err, routine, image->name);
-
-    /* Normalize */
-    ObitFArrayDiv (image->image, scrImage->image, image->image);
-
-    /* Cleanup */
-    scrImage = ObitImageUnref(scrImage);
-  } /* End normalize by Stokes I symmetric beam */
-
-  /* Copy to in->BeamPixels */
+  /* Copy to in->ImgPixels */
   ipos[0] = ipos[1] = ipos[2] = 0;
   inArr = ObitFArrayIndex (image->image, ipos);
   ipos[0] = ipos[1] = 0; ipos[2] = iplane;
-  outArr = ObitFArrayIndex (in->BeamPixels, ipos);
+  outArr = ObitFArrayIndex (in->ImgPixels, ipos);
   for (i=0; i<image->image->arraySize; i++) *outArr++ = *inArr++;
-} /* end ReadBeam */
+} /* end ReadImage */

@@ -193,9 +193,14 @@ class _AIPSTaskParams:
         if version in os.environ:
             self.version = os.environ[version]
         else:
-            self.version = os.environ['AIPS_ROOT'] + '/' + version
+            # If version is a path, use it
+            if os.path.isdir(version):
+                self.version = version
+            else:
+                # Add to AIPS_ROOT
+                self.version = os.environ['AIPS_ROOT'] + '/' + version
             pass
-
+        
         #print "Request version",version#, self.version
         # Bad juju
         #path = os.environ['HOME'] + '/.ObitTalk/' \
@@ -380,10 +385,28 @@ class AIPSTask(Task):
 
             td_file.close()
 
+            # Pass aips directories
+            i = 0;
+            for dir in input_dict["AIPSdirs"]:
+                i += 1;
+                daname = "DA"+ehex(i,2,0)
+                if not name in env:
+                    env[daname] = dir
+            
             # Create the message file if necessary and record the
             # number of messages currently in it.
             user = ehex(userno, 3, 0)
-            ms_name = os.environ['DA01'] + '/MS' + AIPS.revision \
+            if 'DA01' in os.environ:
+                # Use DA01 from environment if given
+                da01 = os.environ['DA01']
+            else: # Else from AIPSdirs passed.
+                da01 = input_dict["AIPSdirs"][0]
+                # Grumble, grumble
+                os.environ['DA01'] = da01
+                cmd = "export DA01="+da01  # shell environment
+                z=os.system(cmd)
+
+            ms_name = da01 + '/MS' + AIPS.revision \
                       + user + '000.' + user + ';'
             if not os.path.exists(ms_name):
                 ms_file = open(ms_name, mode='w')

@@ -679,6 +679,7 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 
   /* calibration */
   if (doCalib>0) {
+    if (gainUse<=0) gainUse = inData->mySel->calVersion;
     sprintf(line,"   Calibrating data with gain table %d", gainUse);
     ObitPrinterWrite (myPrint, line, &quit, err);
     if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
@@ -728,19 +729,20 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
       if (maxBL>1.0e10) blscale = 1.0e-8;
       if (maxBL>1.0e11) blscale = 1.0e-9;
       wtscale = 1.0;
-      if (maxWt>1.0e2)  wtscale = 1.0e1;
-      if (maxWt>1.0e3)  wtscale = 1.0;
-      if (maxWt>1.0e4)  wtscale = 1.0e-1;
-      if (maxWt>1.0e5)  wtscale = 1.0e-2;
-      if (maxWt>1.0e6)  wtscale = 1.0e-3;
-      if (maxWt<1.0e2)  wtscale = 1.0e3;
-      if (maxWt<1.0e-1) wtscale = 1.0e4;
-      if (maxWt<1.0e-2) wtscale = 1.0e5;
-      if (maxWt<1.0e-3) wtscale = 1.0e6;
-      if (maxWt<1.0e-4) wtscale = 1.0e7;
+      if (maxWt>1.0e2)  wtscale = 1.0;
+      if (maxWt>1.0e3)  wtscale = 1.0e-1;
+      if (maxWt>1.0e4)  wtscale = 1.0e-2;
+      if (maxWt>1.0e5)  wtscale = 1.0e-3;
+      if (maxWt>1.0e6)  wtscale = 1.0e-4;
+      if (maxWt<1.0e2)  wtscale = 1.0e1;
+      if (maxWt<1.0e1)  wtscale = 1.0e2;
+      if (maxWt<1.0e-1) wtscale = 1.0e3;
+      if (maxWt<1.0e-2) wtscale = 1.0e4;
+      if (maxWt<1.0e-3) wtscale = 1.0e5;
+      if (maxWt<1.0e-4) wtscale = 1.0e6;
       if (maxWt<1.0e-5) wtscale = 1.0e7;
-      if (maxWt<1.0e-6) wtscale = 1.0e9;
-      if (maxWt<1.0e-7) wtscale = 1.0e10;
+      if (maxWt<1.0e-6) wtscale = 1.0e8;
+      if (maxWt<1.0e-7) wtscale = 1.0e9;
       if (maxWt<1.0e-8) wtscale = 1.0;
       sprintf( line, "   u,v,w scaled by %8.2g  weights scaled by  %8.2g",
 	       blscale, wtscale);

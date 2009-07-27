@@ -28,7 +28,7 @@
 /* Utility routine for fast sine/cosine calculation                   */
 #include "ObitSinCos.h"
 
-#define OBITSINCOSNTAB  1024  /* size of table -1 */
+#define OBITSINCOSNTAB  1024  /* tabulated points per turn */
 #define OBITSINCOSNTAB4 256   /* 1/4 size of table */
 /** Is initialized? */
 gboolean isInit = FALSE;
@@ -75,6 +75,7 @@ _PS_CONST(Obit_twopi,  6.2831853071795862);    /* 2pi */
 _PS_CONST(Obit_itwopi,0.63661977236758138 );   /* 1/2pi */
 _PS_CONST(Obit_delta, 0.0061359231515425647);  /* table spacing = 2pi/Obit_NTAB */
 _PS_CONST(Obit_NTAB,  1024.0);                 /* size of table -1 */
+_PS_CONST(Obit_HALF,  0.5);                    /* 0.5 */
 _PI32_CONST(Obit_NTAB4,  256);                 /* 1/4 size of table */
 #define _OBIT_TWOPI  6.2831853071795862     /* 2pi */
 #define _OBIT_ITWOPI 0.15915494309189535    /* 1/2pi */
@@ -140,12 +141,12 @@ void fast_sincos_ps(v4sf angle, float *table, v4sf *s, v4sf *c) {
   temp   = _mm_set_ps1 (_OBIT_DELTA);
   d      = _mm_mul_ps (it, temp);               /* tabulated phase */
   d      = _mm_sub_ps (anglet, d);              /* actual-tabulated phase */
-  /* Sine */
-  temp   = _mm_mul_ps (cosine,d);
-  *s     = _mm_add_ps (sine, temp);
   /* Cosine */
   temp   = _mm_mul_ps (sine,d);
   *c     = _mm_sub_ps (cosine, temp);
+  /* Sine */
+  temp   = _mm_mul_ps (cosine,d);
+  *s     = _mm_add_ps (sine, temp);
 
   _mm_empty();  /* wait for operations to finish */
   return ;

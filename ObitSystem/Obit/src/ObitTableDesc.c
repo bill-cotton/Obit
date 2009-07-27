@@ -242,8 +242,8 @@ void ObitTableDescIndex (ObitTableDesc* in)
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   /* OBIT_bits the same as OBIT_oint - DAMN AIPS */
   ObitInfoType otypes[10] = {OBIT_double, OBIT_float, OBIT_string, 
-			    OBIT_oint, OBIT_bits, OBIT_long, OBIT_int, 
-			    OBIT_bool, OBIT_short, OBIT_ubyte};
+			    OBIT_oint, OBIT_bits, OBIT_long, OBIT_bool, 
+			    OBIT_int, OBIT_short, OBIT_ubyte};
   gboolean damnit, status_col=FALSE;
 
   /* error check */

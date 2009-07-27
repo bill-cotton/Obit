@@ -3235,6 +3235,67 @@ typedef struct {
   ObitImage *me;
 } Image;
 
+#include "ObitImageInterp.h"
+#include "ObitImage.h"
+
+extern ObitImageInterp* newImageInterp (char* name) {
+  return newObitImageInterp (name);
+} // end  newImageInterp
+
+extern ObitImageInterp* ImageInterpCopy  (ObitImageInterp *in, ObitImageInterp *out, 
+				    ObitErr *err) {
+  return ObitImageInterpCopy (in, out, err);
+} // end  ImageInterpCopy
+
+extern ObitImageInterp* ImageInterpUnref (ObitImageInterp* in) {
+  if (!ObitImageInterpIsA(in)) return NULL;
+  return ObitImageInterpUnref(in);
+}
+
+extern ObitImageInterp*  ImageInterpRef (ObitImageInterp* in) {
+  return ObitImageInterpRef(in);
+}
+
+extern ObitImageInterp* ImageInterpCreate (char *name, ObitImage *image, 
+				     ObitErr *err) {
+  return ObitImageInterpCreate((gchar*)name, image, err);
+} // end ImageInterpCreate
+
+extern float ImageInterpValue (ObitImageInterp* in, double ra, double dec,
+		            float parAng, int plane, ObitErr *err) {
+  return ObitImageInterpValue(in, (odouble)ra, (odouble)dec, (ofloat)parAng, (olong)plane, err);
+} // end ImageInterpValue
+
+extern long ImageInterpFindPlane (ObitImageInterp* in, double freq) {
+  return (long)ObitImageInterpFindPlane(in, (odouble)freq);
+} // end ImageInterpFindPlane
+
+extern char* ImageInterpGetName (ObitImageInterp* in) {
+  if (ObitImageInterpIsA(in)) {
+    return in->name;
+  } else {
+    return NULL;
+  }
+}
+
+extern int ImageInterpIsA (ObitImageInterp* in) {
+  return ObitImageInterpIsA(in);
+}
+
+extern ObitImageInterp *newImageInterp(char *);
+extern ObitImageInterp *ImageInterpCopy(ObitImageInterp *,ObitImageInterp *,ObitErr *);
+extern ObitImageInterp *ImageInterpUnref(ObitImageInterp *);
+extern ObitImageInterp *ImageInterpRef(ObitImageInterp *);
+extern ObitImageInterp *ImageInterpCreate(char *,ObitImage *,ObitErr *);
+extern float ImageInterpValue(ObitImageInterp *,double ,double ,float ,int ,ObitErr *);
+extern long ImageInterpFindPlane(ObitImageInterp *,double );
+extern char *ImageInterpGetName(ObitImageInterp *);
+extern int ImageInterpIsA(ObitImageInterp *);
+
+typedef struct {
+  ObitImageInterp *me;
+} ImageInterp;
+
 #include "ObitImageMosaic.h"
 
 extern ObitImageMosaic* newImageMosaic (char* name, int number) {
@@ -21464,6 +21525,304 @@ static PyObject *_wrap_ImageGetName(PyObject *self, PyObject *args) {
     }
     _result = (char *)ImageGetName(_arg0);
     _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_newImageInterp(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageInterp * _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:newImageInterp",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (ObitImageInterp *)newImageInterp(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImageInterp_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageInterpCopy(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageInterp * _result;
+    ObitImageInterp * _arg0;
+    ObitImageInterp * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:ImageInterpCopy",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageInterp_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageInterpCopy. Expected _ObitImageInterp_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImageInterp_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageInterpCopy. Expected _ObitImageInterp_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of ImageInterpCopy. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitImageInterp *)ImageInterpCopy(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImageInterp_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageInterpUnref(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageInterp * _result;
+    ObitImageInterp * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageInterpUnref",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageInterp_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageInterpUnref. Expected _ObitImageInterp_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitImageInterp *)ImageInterpUnref(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImageInterp_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageInterpRef(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageInterp * _result;
+    ObitImageInterp * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageInterpRef",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageInterp_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageInterpRef. Expected _ObitImageInterp_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitImageInterp *)ImageInterpRef(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImageInterp_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageInterpCreate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageInterp * _result;
+    char * _arg0;
+    ObitImage * _arg1;
+    ObitErr * _arg2;
+    PyObject * _obj0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:ImageInterpCreate",&_obj0,&_argo1,&_argo2)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageInterpCreate. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of ImageInterpCreate. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitImageInterp *)ImageInterpCreate(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImageInterp_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageInterpValue(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    float  _result;
+    ObitImageInterp * _arg0;
+    double  _arg1;
+    double  _arg2;
+    float  _arg3;
+    int  _arg4;
+    ObitErr * _arg5;
+    PyObject * _argo0 = 0;
+    PyObject * _argo5 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OddfiO:ImageInterpValue",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_argo5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageInterp_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageInterpValue. Expected _ObitImageInterp_p.");
+        return NULL;
+        }
+    }
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of ImageInterpValue. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (float )ImageInterpValue(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    _resultobj = Py_BuildValue("f",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageInterpFindPlane(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    long  _result;
+    ObitImageInterp * _arg0;
+    double  _arg1;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Od:ImageInterpFindPlane",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageInterp_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageInterpFindPlane. Expected _ObitImageInterp_p.");
+        return NULL;
+        }
+    }
+    _result = (long )ImageInterpFindPlane(_arg0,_arg1);
+    _resultobj = Py_BuildValue("l",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageInterpGetName(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    ObitImageInterp * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageInterpGetName",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageInterp_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageInterpGetName. Expected _ObitImageInterp_p.");
+        return NULL;
+        }
+    }
+    _result = (char *)ImageInterpGetName(_arg0);
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageInterpIsA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitImageInterp * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageInterpIsA",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageInterp_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageInterpIsA. Expected _ObitImageInterp_p.");
+        return NULL;
+        }
+    }
+    _result = (int )ImageInterpIsA(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
@@ -44900,6 +45259,167 @@ static PyObject *_wrap_delete_Image(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+#define ImageInterp_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
+static PyObject *_wrap_ImageInterp_me_set(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageInterp * _result;
+    ImageInterp * _arg0;
+    ObitImageInterp * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:ImageInterp_me_set",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ImageInterp_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageInterp_me_set. Expected _ImageInterp_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImageInterp_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageInterp_me_set. Expected _ObitImageInterp_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitImageInterp *)ImageInterp_me_set(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImageInterp_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+#define ImageInterp_me_get(_swigobj) ((ObitImageInterp *) _swigobj->me)
+static PyObject *_wrap_ImageInterp_me_get(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageInterp * _result;
+    ImageInterp * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageInterp_me_get",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ImageInterp_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageInterp_me_get. Expected _ImageInterp_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitImageInterp *)ImageInterp_me_get(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImageInterp_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static ImageInterp *new_ImageInterp(char *name,ObitImage *image,ObitErr *err) {
+     ImageInterp *out;
+     out = (ImageInterp *) malloc(sizeof(ImageInterp));
+     if (strcmp(name, "None")) out->me = ImageInterpCreate((gchar*)name, image, err);
+     else out->me = NULL;
+     return out;
+   }
+
+static PyObject *_wrap_new_ImageInterp(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ImageInterp * _result;
+    char * _arg0;
+    ObitImage * _arg1;
+    ObitErr * _arg2;
+    PyObject * _obj0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:new_ImageInterp",&_obj0,&_argo1,&_argo2)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of new_ImageInterp. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of new_ImageInterp. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ImageInterp *)new_ImageInterp(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ImageInterp_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static void delete_ImageInterp(ImageInterp *self) {
+   if (!self) return;  // Not defined
+   if (self && self->me && self->me->ReferenceCount>0) {
+      self->me = ImageInterpUnref(self->me);
+      free(self);
+   }
+  }
+static PyObject *_wrap_delete_ImageInterp(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ImageInterp * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:delete_ImageInterp",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ImageInterp_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of delete_ImageInterp. Expected _ImageInterp_p.");
+        return NULL;
+        }
+    }
+    delete_ImageInterp(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 #define ImageMosaic_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
 static PyObject *_wrap_ImageMosaic_me_set(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -48155,6 +48675,10 @@ static PyMethodDef ObitMethods[] = {
 	 { "new_ImageMosaic", _wrap_new_ImageMosaic, METH_VARARGS },
 	 { "ImageMosaic_me_get", _wrap_ImageMosaic_me_get, METH_VARARGS },
 	 { "ImageMosaic_me_set", _wrap_ImageMosaic_me_set, METH_VARARGS },
+	 { "delete_ImageInterp", _wrap_delete_ImageInterp, METH_VARARGS },
+	 { "new_ImageInterp", _wrap_new_ImageInterp, METH_VARARGS },
+	 { "ImageInterp_me_get", _wrap_ImageInterp_me_get, METH_VARARGS },
+	 { "ImageInterp_me_set", _wrap_ImageInterp_me_set, METH_VARARGS },
 	 { "delete_Image", _wrap_delete_Image, METH_VARARGS },
 	 { "new_Image", _wrap_new_Image, METH_VARARGS },
 	 { "Image_me_get", _wrap_Image_me_get, METH_VARARGS },
@@ -48679,6 +49203,15 @@ static PyMethodDef ObitMethods[] = {
 	 { "ImageMosaicUnref", _wrap_ImageMosaicUnref, METH_VARARGS },
 	 { "ImageMosaicCopy", _wrap_ImageMosaicCopy, METH_VARARGS },
 	 { "newImageMosaic", _wrap_newImageMosaic, METH_VARARGS },
+	 { "ImageInterpIsA", _wrap_ImageInterpIsA, METH_VARARGS },
+	 { "ImageInterpGetName", _wrap_ImageInterpGetName, METH_VARARGS },
+	 { "ImageInterpFindPlane", _wrap_ImageInterpFindPlane, METH_VARARGS },
+	 { "ImageInterpValue", _wrap_ImageInterpValue, METH_VARARGS },
+	 { "ImageInterpCreate", _wrap_ImageInterpCreate, METH_VARARGS },
+	 { "ImageInterpRef", _wrap_ImageInterpRef, METH_VARARGS },
+	 { "ImageInterpUnref", _wrap_ImageInterpUnref, METH_VARARGS },
+	 { "ImageInterpCopy", _wrap_ImageInterpCopy, METH_VARARGS },
+	 { "newImageInterp", _wrap_newImageInterp, METH_VARARGS },
 	 { "ImageGetName", _wrap_ImageGetName, METH_VARARGS },
 	 { "ImageIsA", _wrap_ImageIsA, METH_VARARGS },
 	 { "ImageisScratch", _wrap_ImageisScratch, METH_VARARGS },
