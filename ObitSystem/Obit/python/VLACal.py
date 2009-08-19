@@ -232,7 +232,8 @@ def VLAAutoFlag(uv, target, err, \
     # end VLAAutoFlag
 
 def VLACal(uv, target, ACal, err, \
-           PCal=None, FQid=1, calFlux=None, \
+           PCal=None, FQid=0, calFlux=None, \
+           doCalib=-1, gainUse=0, doBand=0, BPVer=0, flagVer=-1, 
            calModel=None, calDisk=0, \
            solnVer=1, solInt=10.0, nThreads=1, refAnt=0, ampScalar=False,
            noScrat=[]):
@@ -247,11 +248,15 @@ def VLACal(uv, target, ACal, err, \
     ACal     = Amp calibrator
     err      = Obit error/message stack
     PCal     = if given, the phase calibrator name
-    FQid     = Frequency Id to process
+    FQid     = Frequency Id to process, 0=>any
     calFlux  = ACal point flux density if given
     calModel = Amp. calibration model FITS file
                Has priority over calFlux
     calDisk  = FITS disk for calModel
+    doCalib  = Apply calibration table, positive=>calibrate
+    gainUse  = CL/SN table to apply
+    doBand   = If >0.5 apply previous bandpass cal.
+    BPVer    = previous Bandpass table (BP) version
     solnVer  = output SN table version
     solInt   = solution interval (min)
     nThreads = Number of threads to use
@@ -282,14 +287,18 @@ def VLACal(uv, target, ACal, err, \
             setjy.Sources=[PCal]
         setjy.OPType="REJY"
         #setjy.debug = True # DEBUG
-        setjy.g
-    # Calib on Amp cal
+        if setjy.Sources[0]!=ACal:
+            setjy.g
+    # Calib on Amp cal if not in PCal
     calib = ObitTask.ObitTask("Calib")
     setname(uv,calib)
     calib.Sources  = [ACal]
     calib.flagVer  = 1
     calib.ampScalar= ampScalar
-    calib.doCalib  = 2
+    calib.doCalib  = doCalib
+    calib.gainUse  = gainUse
+    calib.doBand   = doBand
+    calib.BPVer    = BPVer
     calib.solMode  ="A&P"
     calib.solnVer  = solnVer
     calib.nThreads = nThreads
@@ -307,7 +316,9 @@ def VLACal(uv, target, ACal, err, \
         calib.Cmodel    = "COMP"
     #calib.prtLv = 5  # DEBUG
     #calib.debug    = True  # DEBUG
-    calib.g
+    # Run if Amp cal if not in PCal
+    if not ACal in PCal:
+        calib.g
 
     # ClCal CL1 + SN1 => Cl2
     clcal=ObitTask.ObitTask("CLCal")
@@ -335,17 +346,18 @@ def VLACal(uv, target, ACal, err, \
         calib.Cmodel    = " "
         calib.g
         
-        # GetJy to set flux density scale
-        getjy = ObitTask.ObitTask("GetJy")
-        setname(uv,getjy)
-        getjy.calSour=[ACal]
-        if type(PCal)==list:
-            getjy.Sources=PCal
-        else:
-            getjy.Sources=[PCal]
-        getjy.FreqID = FQid
-        #getjy.debug = True # DEBUG
-        getjy.g
+        # GetJy to set flux density scale if ACal not in PCal
+        if not ACal in PCal:
+            getjy = ObitTask.ObitTask("GetJy")
+            setname(uv,getjy)
+            getjy.calSour=[ACal]
+            if type(PCal)==list:
+                getjy.Sources=PCal
+            else:
+                getjy.Sources=[PCal]
+                getjy.FreqID = FQid
+            #getjy.debug = True # DEBUG
+            getjy.g
 
         # Set up for CLCal - only use phase calibrators
         if type(PCal)==list:
@@ -358,6 +370,7 @@ def VLACal(uv, target, ACal, err, \
     else:
         clcal.Sources=[target]
     print "Apply calibration for",target
+    #clcal.debug=True
     clcal.g
     
     # end PCal calibration
@@ -366,7 +379,7 @@ def VLACal(uv, target, ACal, err, \
 def VLABPCal(uv, BPCal, err, newBPVer=1,
              doCalib=2, gainUse=0, doBand=0, BPVer=0, flagVer=-1, \
              solInt=0.0, refAnt=0, ampScalar=False, specIndex=0.0,
-             noScrat=[]):
+             timerange=[0.,0.,0.,0.,0.,0.,0.,0.], noScrat=[]):
     """ Bandbass calibration
 
     Do bandbass calibration, write BP table
@@ -383,6 +396,7 @@ def VLABPCal(uv, BPCal, err, newBPVer=1,
     refAnt   = Reference antenna
     ampScalar= If true, scalar average data in calibration
     specIndex= spectral index of calibrator (steep=-0.70)
+    timerange= timerange (in AIPSish) to use
     noScrat  = list of disks to avoid for scratch files
     """
     ################################################################
@@ -397,13 +411,17 @@ def VLABPCal(uv, BPCal, err, newBPVer=1,
     bpass.docalib = doCalib
     bpass.gainuse = gainUse
     bpass.doband  = doBand
+    bpass.bpver   = BPVer
     bpass.flagver = flagVer
     bpass.solint  = solInt
     bpass.specindx= specIndex
     bpass.refant  = refAnt
-    bpass.baddisk[1:] = noScrat
+    bpass.timerang[1:] = timerange
+    bpass.baddisk[1:]  = noScrat
     if ampScalar:
         bpass.bpassprm[8] = 1.0
+    
+    #bpass.i
     bpass.g
     # End VLABPCal
 
@@ -451,27 +469,27 @@ def VLASetImager (uv, target, outIclass="", nThreads=1, noScrat=[]):
         img.Sources=target
     else:
         img.Sources=[target]
-    img.outClass=outIclass
-    img.doCalib = 2
-    img.doBand = 1
-    img.UVTaper=[0.0, 0.0, 0.0]
-    img.UVRange=[0.0,0.0]
-    img.FOV=0.05
-    img.autoWindow=True
-    img.Niter=5000
-    img.Gain=0.10
-    img.maxPSCLoop=3
-    img.minFluxPSC=0.5
-    img.solPInt=10.0/60.
-    img.solPType="L1"
-    img.maxASCLoop=1
-    img.minFluxPSC=1.5
-    img.solPInt=10.0/60.0
-    img.minSNR=3.0
-    img.avgPol=True
-    img.avgIF=True
-    img.nThreads = nThreads
-    img.noScrat  = noScrat
+    img.outClass   = outIclass
+    img.doCalib    = 2
+    img.doBand     = 1
+    img.UVTaper    = [0.0, 0.0, 0.0]
+    img.UVRange    = [0.0,0.0]
+    img.FOV        = 0.05
+    img.autoWindow = True
+    img.Niter      = 5000
+    img.Gain       = 0.10
+    img.maxPSCLoop = 3
+    img.minFluxPSC= 0.5
+    img.solPInt   = 10.0/60.
+    img.solPType  = "L1"
+    img.maxASCLoop= 1
+    img.minFluxPSC= 1.5
+    img.solAInt   = 1.0
+    img.minSNR    = 3.0
+    img.avgPol    = True
+    img.avgIF     = True
+    img.nThreads  = nThreads
+    img.noScrat   = noScrat
     return img
 # end VLASetImager
 
@@ -535,7 +553,7 @@ def VLAPolCal(uv, InsCals, RLCal, RLPhase, err, RM=0.0, \
         if avgIF:
             pcal.cparm[1]=1.0
         pcal.pmodel[1:]  = pmodel
-        pcal.baddisk[1:] = noScrat
+        pcal.i
         pcal.g
         # end instrumental poln cal
 
@@ -590,6 +608,8 @@ def VLAPolCal(uv, InsCals, RLCal, RLPhase, err, RM=0.0, \
         for iif in range (1, nif+1):
             img.BIF = iif
             img.EIF = iif
+            #img.dispURL    = "ObitView"  # DEBUG
+            #img.debug=True               # DEBUG
             img.g
             
             # Get fluxes from inner quarter of images
@@ -675,7 +695,7 @@ def VLAPolCal(uv, InsCals, RLCal, RLPhase, err, RM=0.0, \
             # REALLY NEED RM Correction!!!!!
             cor = RLPhase - 57.296 * math.atan2(UFlux[i],QFlux[i])
             RLCor.append(cor)
-            print "%3d  %8.2f %8.2f %7.2f %7.2f %7.2f %7.2f %7.2f "%\
+            print "%3d  %8.3f %8.3f %7.3f %7.3f %7.3f %7.3f %7.3f "%\
                   (i+1, IFlux[i], IRMS[i], QFlux[i], QRMS[i], UFlux[i], URMS[i], cor)
         
         # Copy highest CL table
@@ -691,4 +711,34 @@ def VLAPolCal(uv, InsCals, RLCal, RLPhase, err, RM=0.0, \
         clcor.g
         # end R-L Cal
     # End VLAPolCal
+
+def unique (inn):
+    """ Removes duplicate entries from an array of strings
+    
+    Returns an array of strings, also removes null and blank strings
+    as well as leading or trailing blanks
+    inn  = list of strings with possible redundancies
+    """
+    # Make local working copy and blank redundant entries
+    linn = []
+    for item in inn:
+        sitem = item.strip()
+        if len(sitem)>0:
+            linn.append(sitem)
+    # Remove duplicates from the end of the list
+    n = len(linn)
+    for jj in range(0,n):
+        j = n-jj-1
+        for i in range (0,j):
+            if (linn[j]==linn[i]):
+                linn[j] = ""
+                break;
+    # end loops
+    # Copy to output string
+    outl = []
+    for item in linn:
+        if len(item)>0:
+            outl.append(item)
+    return outl
+# end unique
 

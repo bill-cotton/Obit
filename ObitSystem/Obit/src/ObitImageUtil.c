@@ -3009,8 +3009,14 @@ ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
   imageDesc->yshift       = UVDesc->yshift;
   imageDesc->epoch        = UVDesc->epoch;
   imageDesc->equinox      = UVDesc->equinox;
-  imageDesc->obsra        = UVDesc->obsra;
-  imageDesc->obsdec       = UVDesc->obsdec;
+  /* Pointing position */
+  if ((fabs(UVDesc->obsra)>1.0e-5) || ((fabs(UVDesc->obsdec)>1.0e-5))) {
+    imageDesc->obsra  = UVDesc->obsra;
+    imageDesc->obsdec = UVDesc->obsdec;
+  } else {
+    imageDesc->obsra  = UVDesc->crval[UVDesc->jlocr];
+    imageDesc->obsdec = UVDesc->crval[UVDesc->jlocd];
+  }
 
   /* initialize some values */
   imageDesc->areBlanks = FALSE;

@@ -774,6 +774,9 @@ void ObitImageDescGetPoint(ObitImageDesc *in, odouble *RAPnt, odouble *DecPnt)
     *RAPnt  = in->crval[in->jlocr];
     *DecPnt = in->crval[in->jlocd];
   }
+  /* Make sure RA in range [0,360] */
+  if (*RAPnt<0.0)   *RAPnt += 360.0;
+  if (*RAPnt>360.0) *RAPnt -= 360.0;
 } /* end ObitImageDescGetPoint */
 
 /**

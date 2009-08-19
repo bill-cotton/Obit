@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry data editing software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2008
+;;  Copyright (C) 2005-2009
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -118,7 +118,7 @@ FDmaxRes                            Max. residual flux in sigma
 FDmaxResBL                          Max. baseline residual
 **PARAM** int 4 20
 FDbaseSel                           Channels for baseline fit
-                                    (start, end, iincrement,IF)
+                                    (start, end, increment,IF)
 ----------------------------------------------------------------
 AutoFlag Automated editing for radio Interferometry data
 Type:  Task
@@ -128,9 +128,9 @@ Type:  Task
 data.  Several editing modes are supported, 1) flagging by excessive 
 VPol and flagging by excessive IPol, 3) flagging by excessive RMS,
 fluctuations in the real and imaginary parts of visibility data,  
-and 4) Time domain filtering.  Any or all may be specified. 
-The result of this operation will be a FG (flag) table attached to 
-the "output" data.
+4) excess RMS/mean and 5) Frequency domain filtering.  
+Any or all may be specified.  The result of this operation will be 
+a FG (flag) table attached to the "output" data.
 
    Flagging is based on a combination of user supplied parameters
 (VClip, IClip, RMSClip, RMSAvg) and a statistical analysis of the 
@@ -190,9 +190,7 @@ Adverbs:
 
       Flagging control
   flagTab....Output Flagging table version.  This is the FG table 
-             out outName... to be written.  If the output uvdata
-             is the same as the input, it is a very bad idea for 
-             this to equal flagVer.  Default 1.
+             out outName... to be written.  Default 1.
   VClip......If [0]> 0.0 then flagging of data when averaged VPol 
              amplitudes exceed VClip.  Default 0.0 = no flagging.
              VClip[1]==0 => use statistical clipping
@@ -210,41 +208,42 @@ Adverbs:
              analysis.  Should flag the most discrepant 3% of data.
              Use with caution.
   RMSAvg.....Clip level for time domain RMS/average clipping
+             Edits by RMS_amp/amp in periods of timeAvg
   maxBad.....For VPol editing (VClip[0]>0) then if a fractions of
              baselines using a given antenna/IF/channel larger 
              than maxBad is flagged then all data using then
              antenna/IF/channel are flagged.  Default 0.25
-             For time domain editing (RMSClip) then is a fraction
-             larger than maxBad of all baselines in a given 
+             For time domain editing (RMSClip/RMSAvg) then if a 
+             fraction larger than maxBad of all baselines in a given 
              correlator are flagged in a given interval, then all
-             baselines using that correlator are flagged in that
-             interval.
+             baselines using that correlator (freq/poln)are flagged 
+             in that interval.
   timeAvg....Flagging interval (min)
              Interval over which data is vector averages for 
              VPol flagging and over which RMS fluctuations are
              determined for time domain flagging.  Each timeAvg
              period is considered independently.
              Default 1 min.
-doFD.........If True, do Time domain filtering
-             See Expalin AutoFlag for details
-FDmaxAmp.....Maximum average amplitude allowed in the spectrum  before
+  doFD.......If True, do Frequency domain filtering
+             See Explain AutoFlag for details
+  FDmaxAmp...Maximum average amplitude allowed in the spectrum  before
              fitting.  Any channel exceeding this is flagged in
              advance. default -> infinite  
-FDmaxV.......Maximum average amplitude allowed in V polarization; 
+  FDmaxV.....Maximum average amplitude allowed in V polarization; 
              any channel exceeding this is flagged in advance of
              the  baseline fitting or median filtering, 
              Calculates V from difference in amplitudes
-FDwidMW......If > 0 the width of the median window in channels. 
+  FDwidMW....If > 0 the width of the median window in channels. 
              An odd number (e.g. 5) is recommended,  
              0 -> linear baseline 
-FDmaxRMS.....Flag all channels having RMS values > FDmaxRMS[0] of the
+  FDmaxRMS...Flag all channels having RMS values > FDmaxRMS[0] of the
              channel median sigma.[default => 6.] plus FDmaxRMS[1]
              (default 0.1) of the channel average in quadrature 
-FDmaxRes.....Max. residual flux in sigma allowed for channels outside
+  FDmaxRes...Max. residual flux in sigma allowed for channels outside
              the baseline fitting regions. default => 6.
-FDmaxResBL...Max. residual flux in sigma allowed for channels within
+  FDmaxResBL.Max. residual flux in sigma allowed for channels within
              the baseline fitting regions.  Default = FDmaxRes
-FDbaseSel....Channel selection to define spectral baseline 
+  FDbaseSel..Channel selection to define spectral baseline 
              Used only for linear baseline fitting.
              Select groups of channels/IF(s) to fit as sets 
              of (Start,end,inc,IF), i.e., chanSel = 6,37,1,0, 
@@ -256,7 +255,7 @@ FDbaseSel....Channel selection to define spectral baseline
 ----------------------------------------------------------------
 Automatic editing task for radio interferometer data
 Documenter:  W. D. Cotton,  NRAO
-Related Programs: 
+Related Programs: MednFlag
 
 Time domain editing:
 Fill flagging table with clipping by RMS values of the real and 
@@ -268,12 +267,21 @@ A = sqrt (RMSClip[0]**2 + (avg_amp * RMSClip[1])**2)
     and avg_amp is the average amplitude on each baseline.
 B = median RMS + 3 * sigma of the RMS distribution.
 C = level corresponding to 3% of the data.
-   All data on a given baseline/correlator are flagged if the RMS
-exceeds the maxBad.  In addition, if the offending correlator is 
-a parallel-hand correlator then any corresponding cross-hand 
-correlations are also flagged.
+   All baselines using a given correlator (freq/poln) are flagged
+if a fraction in excess of  maxBad. is flagged.  In addition,
+if a flagged correlator is a parallel-hand correlator then any
+corresponding cross-hand correlations are also flagged.
 Results are unpredictable for uncalibrated data.
 
+RMS/mean flagging:
+   In each interval timeAvg the RMS and mean amplitude are 
+determined for each correlator.  Correlators and timeranges for 
+which this value exceeds RMSAvg are flagged.
+   All baselines using a given correlator (freq/poln) are flagged 
+if a fraction in excess of  maxBad. is flagged.  In addition, 
+if a flagged correlator is a parallel-hand correlator then any 
+corresponding cross-hand correlations are also flagged.
+Can be used for uncalibrated data.
 
 VPol editing:
    All data on a given baseline/correlator are flagged if the 
@@ -303,4 +311,5 @@ and a spectral baseline is established for the average values, either
 using a  median window filter (FDwidMW>0) or a linear baseline fit
 (FDwidMW<=0) to specified channels.  Channels with excessive RMSes or
 residual amplitudes are flagged. 
-
+Options other than FDmaxAmp and FDmaxV can be used on uncalibrated data;
+all can be used on calibrated data.

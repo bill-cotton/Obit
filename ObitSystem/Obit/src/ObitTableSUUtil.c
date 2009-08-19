@@ -263,13 +263,19 @@ ObitSourceList* ObitTableSUGetList (ObitTableSU *in, ObitErr *err) {
     if ((retCode != OBIT_IO_OK) || (err->error)) 
       Obit_traceback_val (err, routine, in->name, out);
 
+    /* Check for corruption by AIPS ++ */
+    if (row->RAMean<0.0)   row->RAMean += 360.0;
+    if (row->RAMean>360.0) row->RAMean -= 360.0;
+    if (row->RAApp<0.0)    row->RAApp  += 360.0;
+    if (row->RAApp>360.0)  row->RAApp  -= 360.0;
+
     sid = row->SourID - 1;
     out->SUlist[sid]->SourID  = row->SourID;
     out->SUlist[sid]->Qual    = row->Qual;
     out->SUlist[sid]->numIF   = in->numIF;
     out->SUlist[sid]->equinox = row->Epoch;   /* correct AIPS misnaming */
     out->SUlist[sid]->RAMean  = row->RAMean;
-    out->SUlist[sid]->DecMean = row-> DecMean;
+    out->SUlist[sid]->DecMean = row->DecMean;
     out->SUlist[sid]->RAApp   = row->RAApp;
     out->SUlist[sid]->DecApp  = row->DecApp;
     out->SUlist[sid]->Bandwidth  = row->Bandwidth;

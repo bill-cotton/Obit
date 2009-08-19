@@ -709,8 +709,8 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 } /* end  ObitUVEditTD */
 
 /**
- * Time-domain RMS/Avg editing of UV data - produces FG table
- * Fill flagging table with clipping by (rms_real**2 +rms_imag**2)/ampl**2
+ * Time-domain RMS/Avg  editing of UV data - produces FG table
+ * Fill flagging table with clipping by (rms_amp/amp)
  * All correlations are clipped on each baseline if the RMS/Avg is
  * larger than  the maximum.  The clipping is done independently in
  * each time interval defined by timeAvg. 
@@ -757,13 +757,504 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   olong ncorr, numAnt, numBL, blindx;
   gboolean gotOne, done, isbad, *badCor=NULL;
   ofloat *acc=NULL, *corCnt=NULL, *corBad=NULL, *Buffer;
-  ofloat startTime, endTime, curTime, rms2, rms3, ampl2;
+  ofloat startTime, endTime, curTime, rms2, ampl2;
   ofloat sec;
 
   gchar *tname, reason[25];
   struct tm *lp;
   time_t clock;
   gchar *routine = "ObitUVEditTDRMSAvg";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitUVIsA(inUV));
+  g_assert (ObitUVIsA(outUV));
+
+  /* Fully instantiate UV data if needed */
+  ObitUVFullInstantiate (inUV, TRUE, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  if (outUV) ObitUVFullInstantiate (outUV, TRUE, err);
+  if (err->error) Obit_traceback_msg (err, routine, outUV->name);
+
+  /* Get control parameters */
+  flagTab = 1;
+  ObitInfoListGetTest(inUV->info, "flagTab", &type, dim, &flagTab);
+  /* Time interval */
+  timeAvg = 1.0;  /* default 1 min */
+  ObitInfoListGetTest(inUV->info, "timeAvg", &type, dim, &timeAvg);
+  if (timeAvg<=(1.0/60.0)) timeAvg = 1.0;
+  timeAvg /= 1440.0;  /* convert to days */
+  /* RMS clipping parameters, no default */
+  ObitInfoListGet(inUV->info, "maxRMSAvg", &type, dim, &maxRMSAvg, err);
+  /* max. fraction bad baselines */
+  maxBad = 0.25;           /* default 0.25 */
+  ObitInfoListGetTest(inUV->info, "maxBad", &type, dim,  &maxBad);  
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
+   /* Data Selection */
+  BIF = 1;
+  ObitInfoListGetTest(inUV->info, "BIF", &type, dim, &BIF);
+  if (BIF<1) BIF = 1;
+  BChan = 1;
+  ObitInfoListGetTest(inUV->info, "BChan", &type, dim, &BChan);
+  if (BChan<1) BChan = 1;
+
+ /* Set number of vis per read to 1 */
+  nVisPIO = 1;
+  ObitInfoListGetTest(inUV->info, "nVisPIO", &type, dim, &nVisPIO);
+  itemp = 1;
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut(inUV->info, "nVisPIO", OBIT_long, dim, &itemp);
+
+  /* Selection of input? */
+  doCalSelect = TRUE;
+  ObitInfoListGetTest(inUV->info, "doCalSelect", &type, dim, &doCalSelect);
+  if (doCalSelect) access = OBIT_IO_ReadCal;
+  else access = OBIT_IO_ReadOnly;
+
+  /* test open to fully instantiate input and see if it's OK */
+  iretCode = ObitUVOpen (inUV, access, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
+    Obit_traceback_msg (err, routine, inUV->name);
+  inDesc  = inUV->myDesc;  /* Get descriptor */
+
+  /* Create output FG table */
+  tname = g_strconcat ("Flag Table for: ", outUV->name, NULL);
+  ver = flagTab;
+  outFlag = newObitTableFGValue(tname, (ObitData*)outUV, &ver, OBIT_IO_ReadWrite, 
+				err);
+  g_free (tname);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+ 
+  /* Allocate arrays */
+  suba    = 1;
+  numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
+  numBL   = (numAnt*(numAnt-1))/2;
+  ncorr   = inUV->myDesc->ncorr;
+  /* acc index = type + corr * (6) + BL * (3*ncorr)  where BL = 0-rel baseline index */
+  acc    = g_malloc0 (ncorr * 3 * numBL * sizeof(ofloat));
+  corCnt = g_malloc0 (ncorr * sizeof(ofloat));
+  corBad = g_malloc0 (ncorr * sizeof(ofloat));
+  badCor = g_malloc0 (ncorr * sizeof(gboolean));
+  maxRMS2  = g_malloc0 (ncorr * sizeof(ofloat)); /* Maximum variance per correlator */
+  crossBL1 = g_malloc0 (ncorr * sizeof(olong));   /* associated cross baseline 1 */
+  crossBL2 = g_malloc0 (ncorr * sizeof(olong));   /* associated cross baseline 2 */
+  corChan  = g_malloc0 (ncorr * sizeof(olong));   /* Correlator Channel */
+  corIF    = g_malloc0 (ncorr * sizeof(olong));   /* Correlator IF */
+  corStok  = g_malloc0 (ncorr * sizeof(olong));   /* Correlator Stokes */
+
+  /* Baseline tables */
+  blLookup = g_malloc0(numAnt*sizeof(olong));
+  BLAnt1   = g_malloc0 (numBL * sizeof(olong));    /* First antenna of baseline */
+  BLAnt2   = g_malloc0 (numBL * sizeof(olong));    /* Second antenna of baseline */
+  blLookup[0] = 0;
+  k = 0;
+  for (j=2; j<=numAnt; j++) {BLAnt1[k]=1; BLAnt2[k]=j; k++;}
+  for (i=1; i<numAnt; i++) {
+    blLookup[i] = blLookup[i-1] + numAnt-i;
+    for (j=i+2; j<=numAnt; j++) {BLAnt1[k]=i+1; BLAnt2[k]=j; k++;}
+  }
+
+  /* Initialize things */
+  startTime = -1.0e20;
+  endTime   =  1.0e20;
+  lastSourceID = -1;
+  curSourceID  = 0;
+  /* Single source selected? */
+  if (inUV->mySel->sources) curSourceID = inUV->mySel->sources[0];
+  lastSubA     = 0;
+  countAll     = 0;
+  countBad     = 0;
+  for (i=0; i<3*ncorr*numBL; i++) acc[i] = 0.0;
+
+  Buffer = inUV->buffer;
+
+  /* Digest visibility info */
+  digestCorrTDRMSAvg (inDesc, maxRMSAvg, maxRMS2, crossBL1, crossBL2, 
+		      corChan, corIF, corStok);
+
+  /* Open output table */
+  oretCode = ObitTableFGOpen (outFlag, OBIT_IO_ReadWrite, err);
+  if (err->error) goto cleanup;
+  
+  /* Create Row */
+  row = newObitTableFGRow (outFlag);
+  
+  /* Attach row to output buffer */
+  ObitTableFGSetRow (outFlag, row, err);
+  if (err->error) goto cleanup;
+  
+  /* If there are entries in the table, mark it unsorted */
+  if (outFlag->myDesc->nrow>0) 
+    {outFlag->myDesc->sort[0]=0; outFlag->myDesc->sort[1]=0;}
+  
+  /* Initialize solution row */
+  row->SourID  = 0; 
+  row->SubA    = 0; 
+  row->freqID  = 0; 
+  row->ants[0] = 0; 
+  row->ants[1] = 0; 
+  row->TimeRange[0] = -1.0e20; 
+  row->TimeRange[1] =  1.0e20; 
+  row->ifs[0]    = BIF; 
+  row->ifs[1]    = 0; 
+  row->chans[0]  = BChan; 
+  row->chans[1]  = 0; 
+  row->pFlags[0] = 0; 
+  row->pFlags[1] = 0; 
+  row->pFlags[2] = 0; 
+  row->pFlags[3] = 0; 
+  /* Reason includes time/date */
+  /* Get time since 00:00:00 GMT, Jan. 1, 1970 in seconds. */
+  time (&clock);
+  /* Convert to  broken-down time. */
+  lp = localtime (&clock);
+  lp->tm_mon++; /* For some bizzare reason, month is 0-rel */
+  if (lp->tm_year<1000)  lp->tm_year += 1900; /* full year */
+  sec = (ofloat)lp->tm_sec;
+  g_snprintf (reason, 25, "EditTDRMS %d/%d/%d %d:%d:%f", 
+	      lp->tm_year, lp->tm_mon, lp->tm_mday, 
+	      lp->tm_hour, lp->tm_min, sec);
+  row->reason    = reason; /* Unique string */
+  
+  /* Loop over intervals */
+  done   = FALSE;
+  gotOne = FALSE;
+  while (!done) {
+    
+    /* we're in business - loop through data - one vis per read */
+    while ((iretCode==OBIT_IO_OK) && (oretCode==OBIT_IO_OK)) {
+      if ((!gotOne) || (inUV->myDesc->numVisBuff<=0)) { /* need to read new record? */
+	if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
+	else iretCode = ObitUVRead (inUV, inUV->buffer, err);
+	if (err->error) goto cleanup;
+	/*if (iretCode!=OBIT_IO_OK) break;*/
+	firstVis = inDesc->firstVis;
+      }
+      
+      /* Are we there yet??? */
+      done = (inDesc->firstVis >= inDesc->nvis) || 
+	(iretCode==OBIT_IO_EOF);
+      if (done && (startTime>0.0)) goto process;
+
+
+      /* Make sure valid data found */
+      if (inUV->myDesc->numVisBuff<=0) continue;
+      
+      gotOne = FALSE;
+      /* Time */
+      curTime = Buffer[inDesc->iloct];
+      if (inDesc->ilocsu>=0) curSourceID = Buffer[inDesc->ilocsu];
+      if (startTime < -1000.0) {  /* Set time window etc. if needed */
+	startTime = curTime;
+	lastTime = curTime;
+	endTime   = startTime +  timeAvg;
+	startVis  = firstVis;
+	lastSourceID = curSourceID;
+      }
+
+      /* Still in current interval/source? */
+      if ((curTime<endTime) && (curSourceID == lastSourceID) && 
+	  (inDesc->firstVis<=inDesc->nvis) && (iretCode==OBIT_IO_OK)) {
+	/* accumulate statistics */
+	cbase = Buffer[inUV->myDesc->ilocb]; /* Baseline */
+	ant1 = (cbase / 256.0) + 0.001;
+	ant2 = (cbase - ant1 * 256) + 0.001;
+	lastSubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 1.5);
+	/* Baseline index this assumes a1<a2 always - ignore auto correlations */
+	if (ant1!=ant2) {
+	  blindx =  blLookup[ant1-1] + ant2-ant1-1;
+	  if (inDesc->ilocfq>=0) lastFQID = (olong)(Buffer[inDesc->ilocfq]+0.5);
+	  else lastFQID = 0;
+	  lastTime = curTime;
+	  
+	  /* Accumulate
+	     (1,*) =  count 
+	     (2,*) =  sum amp then max limit
+	     (3,*) =  sum amp**2 then rms^2/avg^2 */
+	  indx = inDesc->nrparm; /* offset of start of vis data */
+	  for (i=0; i<ncorr; i++) { /* loop 120 */
+	    if (Buffer[indx+2] > 0.0) {
+	      jndx = i*3 + blindx*3*ncorr;
+	      acc[jndx]   += 1.0;
+	      ampl2 = Buffer[indx]*Buffer[indx] +  Buffer[indx+1]*Buffer[indx+1];
+	      acc[jndx+1] += sqrt(ampl2);
+	      acc[jndx+2] += ampl2;
+	    } 
+	    indx += 3;
+	  } /* end loop  L120 over correlations */;
+	} /* end only cross correlations */
+      } else {  /* process interval */
+	
+      process:
+	/* Now have the next record in the IO Buffer */
+	if (iretCode==OBIT_IO_OK) gotOne = TRUE;
+	    
+	/* Get Amp + RMS */
+	for (i=0; i<numBL; i++) { /* loop 170 */
+	  for (j=0; j<ncorr; j++) { /* loop 160 */
+ 	    jndx = j*3 + i*3*ncorr;
+	    if (acc[jndx] > 0.0) countAll++;  /* count all possibilities */
+	    if (acc[jndx] > 1.1) {
+	      acc[jndx+1] /= acc[jndx];  /* Average amp */
+	      acc[jndx+2] /= acc[jndx];  /* Avg sum amp*amp */
+	      /* RMS Amplitude */
+	      rms2 = (acc[jndx+2] - acc[jndx+1]*acc[jndx+1]);
+	      rms2 = fabs (rms2);
+	      acc[jndx+2] = rms2;
+	    } 
+	  } /* end loop  L160: */
+	} /* end loop  L170: */
+
+	/* initialize counters */
+	for (i=0; i<ncorr; i++) corCnt[i] = corBad[i] = 0;
+
+	/* Find bad baselines. */
+	for (i=0; i<numBL; i++) { /* loop 200 */
+	  for (j=0; j<ncorr; j++) { /* loop 190 */
+ 	    jndx = j*3 + i*3*ncorr;
+            if (acc[jndx] > 1.1) {
+	      /* Get rms**2 */
+	      rms2 = acc[jndx+2];
+	      /* Average amppl**2 */
+	      ampl2 = acc[jndx+1]*acc[jndx+1];
+	      acc[jndx+1] = maxRMS2[j];
+	      acc[jndx+2] = rms2 / MAX(ampl2, 1.0e-20);
+
+	      /* Is this one bad? */
+	      isbad = acc[jndx+2]  > acc[jndx+1]  ;
+
+	      /* Correlator info */
+	      corCnt[j]++;
+	      if (isbad) {
+		/* Make sure it is flagged. */
+		acc[jndx+2] = 1.0e20;
+		acc[jndx+1] = 0.0;
+		corBad[j]++;
+		/* If parallel and bad, kill its cross-polarized relatives */
+		if ((crossBL1[j]>0) && (crossBL1[i]<ncorr)) {
+		  kndx = crossBL1[j]*3 + i*3*ncorr;
+		  acc[kndx+2] = 1.0e20;
+		  acc[kndx+1] = 0.0;
+		}
+		if ((crossBL2[j]>0) && (crossBL2[i]<ncorr)) {
+		  kndx = crossBL2[j]*3 + i*3*ncorr;
+		  acc[kndx+2] = 1.0e20;
+		  acc[kndx+1] = 0.0;
+		}
+	      } 
+	    } else if (acc[jndx] > 0.0) {
+	      /* Flag correlators without enough data. */
+	      acc[jndx+2] = 1.0e20;
+	      acc[jndx+1] = 0.0;
+	    }
+	  } /* end loop  L190: */
+	} /* end loop  L200: */
+	
+	/* Check for bad correlators */
+	for (i=0; i<ncorr; i++) { /* loop 210 */
+	  badCor[i] = FALSE;
+	  if (corCnt[i] > 1.1) {
+	    if ((corBad[i]/corCnt[i])  >  maxBad) {
+	      /* Kill correlator... */
+	      badCor[i] = TRUE;
+	      /* and all its relatives */
+	      if ((crossBL1[i]>0) && (crossBL1[i]<ncorr)) 
+		badCor[crossBL1[i]] = TRUE;
+	      if ((crossBL2[i]>0) && (crossBL2[i]<ncorr)) 
+		badCor[crossBL2[i]] = TRUE;
+	    }
+	  } 
+	} /* end loop  L210: */
+	
+	
+	/* Init Flagging table entry */
+	row->SourID  = lastSourceID; 
+	row->SubA    = lastSubA; 
+	row->freqID  = lastFQID; 
+	row->TimeRange[0] = startTime;
+	row->TimeRange[1] = lastTime;
+	
+	/* Loop over correlators flagging bad */
+	for (i=0; i<ncorr; i++) { /* loop 210 */
+	  if (badCor[i]) {
+	    row->ants[0]  = 0; 
+	    row->ants[1]  = 0; 
+	    row->ifs[0]   = BIF + corIF[i] - 1; 
+	    row->ifs[1]   = BIF + corIF[i] - 1; 
+	    row->chans[0] = BChan + corChan[i]  - 1; 
+	    row->chans[1] = BChan + corChan[i] - 1; 
+	    row->pFlags[0]= row->pFlags[1] = row->pFlags[2] = row->pFlags[3] = 0; 
+	    k = abs (corStok[i]);
+	    /* bit flag implementation kinda screwy */
+	    row->pFlags[0] |= 1<<(k-1);
+	    
+	    /* Write */
+	    iFGRow = -1;
+	    oretCode = ObitTableFGWriteRow (outFlag, iFGRow, row, err);
+	    if (err->error) goto cleanup;
+	  } /* end bad correlator section */
+	} /* end loop flagging correlators */
+	
+	/* Loop over baselines/correlator flagging bad */
+	for (i=0; i<numBL; i++) {
+	  for (j=0; j<ncorr; j++) {
+	    jndx = j*3 + i*3*ncorr;
+	    /* Count flagged interval/correlator */
+	    if ((acc[jndx]>1.1) && (badCor[j] || (acc[jndx+2] > acc[jndx+1])))
+	      countBad++;
+	    if ((!badCor[j])) {  /* Don't flag if correlator already flagged */
+	      if ((acc[jndx]>1.1) && (acc[jndx+2] > acc[jndx+1])) {
+		/* Check for higher number spectral channels in a contigious 
+		   block of bad channels and include in same flag */
+		jj = j;
+		for (kk = j+1; kk<ncorr; kk++) {
+		  /* Only interested in same IF, poln */
+		  if ((corIF[j]!=corIF[kk]) || (corStok[j]!=corStok[kk])) continue;
+		  kndx = kk*3 + i*3*ncorr;
+		  /* Higher channel number and to be flagged? */
+		  if ((corChan[kk]>corChan[jj]) && 
+		      ((acc[kndx]>1.1) && (acc[kndx+2]>acc[kndx+1]))) {
+		    jj = kk;         /* This correlator to be included in flag */
+		    countBad++;      /* Increment bad count */
+		    acc[kndx] = 0.0; /* don't consider again */
+		  } else if (corChan[kk]>corChan[jj]) { /* Higher channel number and good? */
+		    break;  /* stop looking at higher channel numbers */
+		  }
+		} /* end loop searching for higher bad channels */
+		row->ants[0]   = BLAnt1[i]; 
+		row->ants[1]   = BLAnt2[i]; 
+		row->ifs[0]    = BIF + corIF[j] - 1; 
+		row->ifs[1]    = BIF + corIF[j] - 1; 
+		row->chans[0]  = BChan + corChan[j]  - 1; 
+		row->chans[1]  = BChan + corChan[jj] - 1; 
+		row->pFlags[0]=row->pFlags[1]=row->pFlags[2]=row->pFlags[3]=0; 
+		k = abs (corStok[j]);
+		/* bit flag implementation kinda screwy */
+		row->pFlags[0] |= 1<<(k-1);
+		
+		/* Write */
+		iFGRow = -1;
+		oretCode = ObitTableFGWriteRow (outFlag, iFGRow, row, err);
+		if (err->error) goto cleanup;
+	      }  /* end flag correlator */
+	    } /* end correlator not flagged */
+	  } /* end loop over correlators */
+	} /* end loop over baselines */
+	
+	/* Are we there yet??? */
+	done = (inDesc->firstVis >= inDesc->nvis) || 
+	  (iretCode==OBIT_IO_EOF);
+
+	/* Reinitialize things */
+	startTime = -1.0e20;
+	endTime   =  1.0e20;
+	for (i=0; i<3*ncorr*numBL; i++) acc[i] = 0.0;
+
+      } /* end process interval */
+      
+    } /* end loop processing data */
+    if (done) break;
+  } /* end loop over intervals */
+  
+  /* check for errors */
+  if ((iretCode > OBIT_IO_EOF) || (oretCode > OBIT_IO_EOF) ||
+      (err->error)) goto cleanup;
+
+  /* Reset number of vis per read to original value */
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut(inUV->info, "nVisPIO", OBIT_long, dim, &nVisPIO);
+
+  /* Cleanup */
+ cleanup:  
+  /* close uv file */
+  iretCode = ObitUVClose (inUV, err);
+  
+  /* Close output table */
+  oretCode = ObitTableFGClose (outFlag, err);
+  
+  /* Deallocate arrays */
+  row     = ObitTableFGRowUnref(row);
+  outFlag = ObitTableFGUnref(outFlag);
+  if (acc)      g_free(acc);
+  if (corCnt)   g_free(corCnt);
+  if (corBad)   g_free(corBad);
+  if (badCor)   g_free(badCor);
+  if (blLookup) g_free(blLookup);
+  if (maxRMS2)  g_free(maxRMS2);
+  if (crossBL1) g_free(crossBL1);
+  if (crossBL2) g_free(crossBL2);
+  if (corChan)  g_free(corChan);
+  if (corIF)    g_free(corIF);
+  if (corStok)  g_free(corStok);
+  if (BLAnt1)   g_free(BLAnt1);
+  if (BLAnt2)   g_free(BLAnt2);
+  if (err->error)  Obit_traceback_msg (err, routine, inUV->name);
+
+  /* Give report */
+  Obit_log_error(err, OBIT_InfoErr, "%s: flag %d of %d vis/interval= %5.1f percent",
+		 routine, countBad, countAll, 100.0*(ofloat)countBad/((ofloat)countAll));
+
+  return;
+} /* end  ObitUVEditTDRMSAvg */
+
+/**
+ * Time-domain vector RMS/Avg editing of UV data - produces FG table
+ * Fill flagging table with clipping by (rms_real**2 +rms_imag**2)/ampl**2
+ * All correlations are clipped on each baseline if the RMS/Avg is
+ * larger than  the maximum.  The clipping is done independently in
+ * each time interval defined by timeAvg. 
+ *    The clipping level is given by maxRMSAvg
+ *    All data on a given baseline/correlator are flagged if the RMS
+ * exceeds the limit.  If a fraction of bad baselines on any correlator
+ * exceeds maxBad, then all data to that correlator is flagged.  In
+ * addition, if the offending correlator is a parallel hand correlator
+ * then any corresponding cross hand correlations are also flagged.
+ * Flagging entries are written into FG table flagTab.
+ * Control parameters on info member of inUV:
+ * \li "flagTab" OBIT_int    (1,1,1) FG table version number [ def. 1]
+ * \li "timeAvg" OBIT_float  (1,1,1) Time interval over which to determine 
+ *               data to be flagged (min) [def = 1 min.]
+ *               NB: this should be at least 2 integrations.
+ * \li "maxRMSAvg" OBIT_float (1,1,1) Maximum RMS/avg allowed
+ * \li "maxBad"    OBIT_float (1,1,1) Fraction of allowed flagged baselines 
+ *               to a poln/channel/IF above which all baselines are flagged.
+ *               [default 0.25]
+ *
+ * \param inUV     Input uv data to edit. 
+ * \param outUV    UV data onto which the FG table is to be attached.
+ *                 May be the same as inUV.
+ * \param err      Error stack, returns if  error.
+ */
+void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
+{
+  ObitIOCode iretCode, oretCode;
+  ObitTableFG *outFlag=NULL;
+  ObitTableFGRow *row=NULL;
+  gboolean doCalSelect;
+  olong i, j, k, jj, kk, firstVis, startVis, suba, iFGRow, ver;
+  olong countAll, countBad;
+  olong lastSourceID, curSourceID, lastSubA, lastFQID=-1;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM];
+  ObitIOAccess access;
+  ObitUVDesc *inDesc;
+  ofloat timeAvg, lastTime=-1.0, maxRMSAvg, *maxRMS2=NULL, maxBad, cbase;
+  olong *blLookup=NULL, *crossBL1=NULL, *crossBL2=NULL;
+  olong *corChan=NULL, *corIF=NULL, *corStok=NULL;
+  olong *BLAnt1=NULL, *BLAnt2=NULL, BIF, BChan;
+  olong flagTab, indx, jndx, kndx, nVisPIO, itemp, ant1, ant2;
+  olong ncorr, numAnt, numBL, blindx;
+  gboolean gotOne, done, isbad, *badCor=NULL;
+  ofloat *acc=NULL, *corCnt=NULL, *corBad=NULL, *Buffer;
+  ofloat startTime, endTime, curTime, rms2, rms3, ampl2;
+  ofloat sec;
+
+  gchar *tname, reason[25];
+  struct tm *lp;
+  time_t clock;
+  gchar *routine = "ObitUVEditTDRMSAvgVec";
 
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -1202,7 +1693,7 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 		 routine, countBad, countAll, 100.0*(ofloat)countBad/((ofloat)countAll));
 
   return;
-} /* end  ObitUVEditTDRMSAvg */
+} /* end  ObitUVEditTDRMSAvgVec */
 
 /**
  * Frequency domain editing of visibility data.  

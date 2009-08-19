@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -45,6 +45,9 @@ void ObitUVEditTD (ObitUV *inUV, ObitUV *outUV, ObitErr *err);
 
 /** Public:  Time domain RMS/Avg editing, FG table out */
 void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err);
+
+/** Public:  Time domain RMS/Avg vector editing, FG table out */
+void ObitUVEditTDRMSAvgVec (ObitUV *inUV, ObitUV *outUV, ObitErr *err);
 
 /** Public:  Frequency domain editing, FG table out */
 void ObitUVEditFD (ObitUV *inUV, ObitUV *outUV, ObitErr *err);
