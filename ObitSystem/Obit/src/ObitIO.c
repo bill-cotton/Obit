@@ -854,7 +854,9 @@ ObitIOCode ObitIOUpdateTables (ObitIO *in, ObitInfoList *info, ObitErr *err)
   /* error checks */
   g_assert (ObitErrIsA(err));
   if (err->error) return retCode;
-  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* If I/O not defined - ignore */
+  if (!ObitIsA(in, &myClassInfo)) return OBIT_IO_OK;
 
   /* Need to open and close? */
   openClose = !((in->myStatus==OBIT_Active) || (in->myStatus==OBIT_Modified));

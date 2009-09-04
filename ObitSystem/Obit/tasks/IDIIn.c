@@ -1,7 +1,10 @@
 /* $Id$  */
+/* TO DO:
+   1) Deal with single source data
+ */
 /* Read IDI format data                               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007,2008                                          */
+/*;  Copyright (C) 2007-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -37,10 +40,20 @@
 #include "ObitTableSU.h"
 #include "ObitTableAN.h"
 #include "ObitTableFQ.h"
+#include "ObitTableFG.h"
+#include "ObitTableCL.h"
+#include "ObitTableBP.h"
+#include "ObitTableTY.h"
+#include "ObitTableWX.h"
 #include "ObitTableIDI_ANTENNA.h"
 #include "ObitTableIDI_ARRAY_GEOMETRY.h"
 #include "ObitTableIDI_FREQUENCY.h"
 #include "ObitTableIDI_SOURCE.h"
+#include "ObitTableIDI_FLAG.h"
+#include "ObitTableIDI_CALIBRATION.h"
+#include "ObitTableIDI_BANDPASS.h"
+#include "ObitTableIDI_SYSTEM_TEMPERATURE.h"
+#include "ObitTableIDI_WEATHER.h"
 #include "ObitTableIDI_UV_DATA.h"
 #include "ObitHistory.h"
 #ifndef VELIGHT
@@ -71,6 +84,16 @@ void GetFrequencyInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
 /* Get Source info */
 void GetSourceInfo (ObitData *inData, ObitUV *outData, gboolean isNew, 
 		    ObitErr *err);
+/* Copy any FLAG tables */
+void GetFlagInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
+/* Copy any CALIBRATION tables */
+void GetCalibrationInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
+/* Copy any BANDPASS tables */
+void GetBandpassInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
+/* Copy any SYSTEM_TEMPERATURE tables */
+void GetTSysInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
+/* Copy any WEATHER tables */
+void GetWeatherInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
 /* Read data */
 void ProcessData (gchar *inscan, ofloat avgTime,
 		  olong *ndetect, olong *ntime, ofloat *refDate,
@@ -106,16 +129,19 @@ odouble refFrequency; /* reference frequency (Hz) */
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
-/*    Read IDI IDI  data to a UV dataset                                  */
+/*    Read IDI  data to a UV dataset                                      */
 /*----------------------------------------------------------------------- */
 {
   olong  i, ierr=0;
   ObitSystem *mySystem= NULL;
   ObitUV *outData= NULL;
+  ObitData *inData=NULL;
   ObitErr *err= NULL;
   gchar inscan[128];
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar FullFile[128];
+  olong disk;
 
   err = newObitErr();
 
@@ -164,17 +190,32 @@ int main ( int argc, char **argv )
   /* Open output data */
   if ((ObitUVOpen (outData, OBIT_IO_ReadWrite, err) 
        != OBIT_IO_OK) || (err->error>0))  /* error test */
-    Obit_log_error(err, OBIT_Error, "ERROR opening output FITS file %s", outData->name);
+    Obit_log_error(err, OBIT_Error, "ERROR opening output UV file %s", outData->name);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* convert data  */
   GetData (outData, inscan, myInput, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
-  /* Close */
+  /* Close output uv data */
   if ((ObitUVClose (outData, err) != OBIT_IO_OK) || (err->error>0))
     Obit_log_error(err, OBIT_Error, "ERROR closing output file");
   
+  /* Input file for tables */
+  inData = newObitData("Input Data");
+  disk = 0;
+  /* Full input file name */
+  sprintf (FullFile,"%s%s.fits", DataRoot, inscan);
+  ObitDataSetFITS(inData, disk, FullFile, err);
+  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+
+  /* Copy tables */
+  GetFlagInfo (inData, outData, err);          /* FLAG tables */
+  GetCalibrationInfo (inData, outData, err);   /* CALIBRATION tables */
+  GetBandpassInfo (inData, outData, err);      /* BANDPASS tables */
+  GetTSysInfo (inData, outData, err);          /* SYSTEM_TEMPERATURE tables */
+  GetWeatherInfo (inData, outData, err);       /* WEATHER tables */
+
   /* History */
   IDIInHistory (myInput, outData, err);
   
@@ -187,9 +228,10 @@ int main ( int argc, char **argv )
   mySystem = ObitSystemShutdown (mySystem);
   
   /* cleanup */
-  myInput = ObitInfoListUnref(myInput);   /* delete input list */
-  myInput = ObitInfoListUnref(myOutput);  /* delete output list */
-  outData = ObitUnref(outData);
+  myInput  = ObitInfoListUnref(myInput);   /* delete input list */
+  myOutput = ObitInfoListUnref(myOutput);  /* delete output list */
+  inData   = ObitUnref(inData);
+  outData  = ObitUnref(outData);
   if (SourceID) g_free(SourceID);
  
   return ierr;
@@ -481,9 +523,6 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
 
     /* outName given? */
     ObitInfoListGetP (myInput, "outName", &type, dim, (gpointer)&strTemp);
-    /* if not use inName */
-    if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12)))
-      ObitInfoListGetP (myInput, "inName", &type, dim, (gpointer)&strTemp);
     for (i=0; i<12; i++) Aname[i] = ' ';  Aname[i] = 0;
     for (i=0; i<MIN(12,dim[0]); i++) Aname[i] = strTemp[i];
     /* Save any defaulting on myInput */
@@ -497,8 +536,8 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
     } else { /* Didn't find */
       strncpy (Aclass, "NoClas", 7);
     }
-    /* Default out class is "UVSub" */
-    if (!strncmp(Aclass, "      ", 6)) strncpy (Aclass, "UVSub", 7);
+    /* Default out class is "IDIIn" */
+    if (!strncmp(Aclass, "      ", 6)) strncpy (Aclass, "IDIIn", 7);
 
     /* input AIPS disk - default is outDisk */
     ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
@@ -532,9 +571,6 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
 
     /* outFile given? */
     ObitInfoListGetP (myInput, "outFile", &type, dim, (gpointer)&strTemp);
-    /* if not use inName */
-    if ((strTemp==NULL) || (!strncmp(strTemp, "            ", 12)))
-      ObitInfoListGetP (myInput, "inFile", &type, dim, (gpointer)&strTemp);
     n = MIN (128, dim[0]);
     for (i=0; i<n; i++) outFile[i] = strTemp[i]; outFile[i] = 0;
     ObitTrimTrail(outFile);  /* remove trailing blanks */
@@ -601,7 +637,7 @@ void GetHeader (ObitUV *outData, gchar *inscan,
   g_assert(myInput!=NULL);
 
   /* Full input file name */
-  sprintf (FullFile,"%s/%s.fits", DataRoot, inscan);
+  sprintf (FullFile,"%s%s.fits", DataRoot, inscan);
 
   /* Create input Data from which to read tables */
   inData = newObitData("Input Data");
@@ -613,6 +649,12 @@ void GetHeader (ObitUV *outData, gchar *inscan,
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
 
+  /* Get source info, copy to output SU table, save lookup table in SourceID */
+  ObitUVOpen (outData, OBIT_IO_ReadWrite, err);
+  GetSourceInfo (inData, outData, isNew, err);
+  ObitUVClose (outData, err);
+  if (err->error) Obit_traceback_msg (err, routine, inData->name);
+ 
   /* Define output descriptor if isNew */
   if (isNew) {
     desc = outData->myDesc;
@@ -685,8 +727,8 @@ void GetHeader (ObitUV *outData, gchar *inscan,
     strncpy (desc->ptype[ncol], "TIME1   ", UVLEN_KEYWORD);
     ncol++;
     
-    /* Source */
-    if (inTable->myDesc->repeat[inTable->SourceCol]>0) {
+    /* Source - must have input SOURCE table */
+    if ((inTable->myDesc->repeat[inTable->SourceCol]>0) && SourceID) {
       strncpy (desc->ptype[ncol], "SOURCE  ", UVLEN_KEYWORD);
       ncol++;
     }
@@ -798,12 +840,6 @@ void GetHeader (ObitUV *outData, gchar *inscan,
 
   } /* End define descriptor */
 
-  /* Get source info, copy to output SU table, save lookup table in SourceID */
-  ObitUVOpen (outData, OBIT_IO_ReadWrite, err);
-  GetSourceInfo (inData, outData, isNew, err);
-  ObitUVClose (outData, err);
-  if (err->error) Obit_traceback_msg (err, routine, inData->name);
- 
   /* Instantiate output Data */
   ObitUVFullInstantiate (outData, FALSE, err);
   if (err->error)Obit_traceback_msg (err, routine, outData->name);
@@ -839,6 +875,7 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
   ObitTableIDI_UV_DATA *inTable=NULL;
   ObitTableIDI_UV_DATARow *inRow=NULL;
   gchar FullFile[128];
+  gchar tstr1[32], tstr2[32];
   gchar *routine = "GetData";
 
   /* error checks */
@@ -848,7 +885,7 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
   g_assert(ObitUVIsA(outData));
 
   /* Full input file name */
-  sprintf (FullFile,"%s/%s.fits", DataRoot, inscan);
+  sprintf (FullFile,"%s%s.fits", DataRoot, inscan);
 
   /* Create input Data from which to read tables */
   inData = newObitData("Input Data");
@@ -893,42 +930,77 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
   Obit_return_if_fail((nIF==inTable->no_band), err,
 		       "%s: Input number Bands (IFs) incompatible %d != %d", 
 		      routine, nIF, inTable->no_band);
+  /* Truncate strings to last non blank */
+  strncpy(tstr1, inTable->ctype1, 32);
+  ObitTrimTrail(tstr1);
+  strncpy(tstr2, desc->ctype[0], 32);
+  ObitTrimTrail(tstr2);
   lim = MIN (UVLEN_KEYWORD, MAXKEYCHARTABLEIDI_UV_DATA);
-  Obit_return_if_fail((!strncmp(inTable->ctype1,desc->ctype[0],lim)), err,
+  Obit_return_if_fail((!strncmp(tstr1, tstr2, lim)), err,
 		       "%s: First axis different %s != %s", 
-		      routine, inTable->ctype1,desc->ctype[0]);  
-  Obit_return_if_fail((!strncmp(inTable->ctype2,desc->ctype[1],lim)), err,
+		      routine, tstr1, tstr2);  
+  /* Truncate strings to last non blank */
+  strncpy(tstr1, inTable->ctype2, 32);
+  ObitTrimTrail(tstr1);
+  strncpy(tstr2, desc->ctype[1], 32);
+  ObitTrimTrail(tstr2);
+  Obit_return_if_fail((!strncmp(tstr1, tstr2, lim)), err,
 		      "%s: Second axis different %s != %s", 
-		      routine, inTable->ctype2,desc->ctype[1]);
+		      routine, tstr1, tstr2);  
   if (inTable->maxis>=2) {
-    Obit_return_if_fail((!strncmp(inTable->ctype3,desc->ctype[2],lim)), err,
-			"%s: Second axis different %s != %s", 
-			routine, inTable->ctype3,desc->ctype[2]);
+    /* Truncate strings to last non blank */
+    strncpy(tstr1, inTable->ctype3, 32);
+    ObitTrimTrail(tstr1);
+    strncpy(tstr2, desc->ctype[2], 32);
+    ObitTrimTrail(tstr2);
+    Obit_return_if_fail((!strncmp(tstr1, tstr2, lim)), err,
+			"%s: Third axis different %s != %s", 
+			routine, tstr1, tstr2);  
   }
   if (inTable->maxis>=3) {
-    Obit_return_if_fail((!strncmp(inTable->ctype3,desc->ctype[2],lim)), err,
-			"%s: Third axis different %s != %s", 
-			routine, inTable->ctype3,desc->ctype[2]);
+    /* Truncate strings to last non blank */
+    strncpy(tstr1, inTable->ctype4, 32);
+    ObitTrimTrail(tstr1);
+    strncpy(tstr2, desc->ctype[3], 32);
+    ObitTrimTrail(tstr2);
+    Obit_return_if_fail((!strncmp(tstr1, tstr2, lim)), err,
+			"%s: Fourth axis different %s != %s", 
+			routine, tstr1, tstr2);  
   }
   if (inTable->maxis>=4) {
-    Obit_return_if_fail((!strncmp(inTable->ctype4,desc->ctype[3],lim)), err,
-			"%s: Fourth axis different %s != %s", 
-			routine, inTable->ctype4,desc->ctype[3]);
+    /* Truncate strings to last non blank */
+    strncpy(tstr1, inTable->ctype5, 32);
+    ObitTrimTrail(tstr1);
+    strncpy(tstr2, desc->ctype[4], 32);
+    ObitTrimTrail(tstr2);
+    Obit_return_if_fail((!strncmp(tstr1, tstr2, lim)), err,
+			"%s: Fifth axis different %s != %s", 
+			routine, tstr1, tstr2);  
   }
   if (inTable->maxis>=5) {
-    Obit_return_if_fail((!strncmp(inTable->ctype5,desc->ctype[4],lim)), err,
-			"%s: Fifth axis different %s != %s", 
-			routine, inTable->ctype5,desc->ctype[4]);
+    /* Truncate strings to last non blank */
+    strncpy(tstr1, inTable->ctype6, 32);
+    ObitTrimTrail(tstr1);
+    strncpy(tstr2, desc->ctype[5], 32);
+    ObitTrimTrail(tstr2);
+    Obit_return_if_fail((!strncmp(tstr1, tstr2, lim)), err,
+			"%s: Sixth axis different %s != %s", 
+			routine, tstr1, tstr2);  
   }
   if (inTable->maxis>=6) {
-    Obit_return_if_fail((!strncmp(inTable->ctype6,desc->ctype[5],lim)), err,
-			"%s: Sixth axis different %s != %s", 
-			routine, inTable->ctype6,desc->ctype[5]);
+    /* Truncate strings to last non blank */
+    strncpy(tstr1, inTable->ctype7, 32);
+    ObitTrimTrail(tstr1);
+    strncpy(tstr2, desc->ctype[6], 32);
+    ObitTrimTrail(tstr2);
+    Obit_return_if_fail((!strncmp(tstr1, tstr2, lim)), err,
+			"%s: Seventh axis different %s != %s", 
+			routine, tstr1, tstr2);  
   }
-  Obit_return_if_fail((desc->ncorr==inTable->myDesc->repeat[inTable->WeightCol]), err,
+  Obit_return_if_fail((desc->ncorr*3==inTable->myDesc->repeat[inTable->FluxCol]), err,
 		      "%s: Input and output data sizes different, %d !=  %d", 
-		      routine, desc->ncorr, 
-		      inTable->myDesc->repeat[inTable->WeightCol]);
+		      routine, desc->ncorr*3, 
+		      inTable->myDesc->repeat[inTable->FluxCol]);
 
   /* Prepare output */
   desc = outData->myDesc;
@@ -970,7 +1042,8 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
     Buffer[desc->ilocb] = (ofloat)(ant1*256+ant2);
     Buffer[desc->iloct] = (ofloat)(inRow->date+inRow->Time-JD);
     if (desc->ilocsu>=0) {
-      sid = SourceID[inRow->Source-1];
+      if (SourceID) sid = SourceID[inRow->Source-1];
+      else sid = inRow->Source;
       Buffer[desc->ilocsu] = sid;
     }
     if (desc->ilocfq>=0) Buffer[desc->ilocfq] = (ofloat)inRow->FreqID;
@@ -1166,13 +1239,13 @@ void GetAntennaInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
 
     /* Set output Row */
     outRow->noSta     = inRow->antenna_no;
-    outRow->PolAngA   = inRow->PolAngA;
-    outRow->polTypeA  = inRow->polTypeA;   
+    outRow->PolAngA   = inRow->PolAngA[0];
+    outRow->polTypeA[0]  = inRow->polTypeA;   
     for (i=0; i<numPCal; i++) 
 	outRow->PolCalA[i] = inRow->PolCalA[i];
     if (inTable->no_stkd>1) {  /* Multiple polarizations */
-      outRow->PolAngB   = inRow->PolAngB;   
-      outRow->polTypeB  = inRow->polTypeB;   
+      outRow->PolAngB   = inRow->PolAngB[0];   
+      outRow->polTypeB[0]  = inRow->polTypeB;   
       for (i=0; i<numPCal; i++) 
 	outRow->PolCalB[i] = inRow->PolCalB[i];
     }
@@ -1251,7 +1324,7 @@ void GetFrequencyInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
   g_assert (ObitDataIsA(inData));
   g_assert (ObitUVIsA(outData));
 
-  /* Create input Source table object */
+  /* Create input FREQUENCY table object */
   ver = 1;
   access = OBIT_IO_ReadOnly;
   numIF = 0;
@@ -1323,7 +1396,7 @@ void GetFrequencyInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
     if (oRow<1) oRow = -1;
     if ((ObitTableFQWriteRow (outTable, oRow, outRow, err)
 	 != OBIT_IO_OK) || (err->error>0)) { 
-      Obit_log_error(err, OBIT_Error, "ERROR updating Source Table");
+      Obit_log_error(err, OBIT_Error, "ERROR updating FG Table");
       return;
     }
   } /* end loop over input table */
@@ -1337,7 +1410,7 @@ void GetFrequencyInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
 
   if ((ObitTableFQClose (outTable, err) 
        != OBIT_IO_OK) || (err->error>0)) { /* error test */
-    Obit_log_error(err, OBIT_Error, "ERROR closing output Source Table file");
+    Obit_log_error(err, OBIT_Error, "ERROR closing output FQ Table file");
     return;
   }
 
@@ -1352,10 +1425,10 @@ void GetFrequencyInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
 void GetSourceInfo (ObitData *inData, ObitUV *outData, gboolean isNew, 
 		    ObitErr *err)
 /*----------------------------------------------------------------------- */
-/*  Get Source info from IDI_SOURCE table on indata                       */
+/*  Get Source info from IDI_SOURCE table on inData                       */
 /*  Copies source info from intput to putput data and generated a lookup  */
 /*  table, global, SourceID to give translation from input source ID      */
-/*  to output .                                                           */
+/*  to output.  If no SOURCE table leafe SourceID=NULL                    */
 /*   Input:                                                               */
 /*      inData   Input IDI FITS object                                    */
 /*      outData  Output UV object                                         */
@@ -1379,13 +1452,20 @@ void GetSourceInfo (ObitData *inData, ObitUV *outData, gboolean isNew,
   g_assert (ObitDataIsA(inData));
   g_assert (ObitUVIsA(outData));
 
+  /* Print any messages */
+  ObitErrLog(err);
+  
   /* Create input Source table object */
   ver = 1;
   access = OBIT_IO_ReadOnly;
   numIF = 0;
   inTable = newObitTableIDI_SOURCEValue ("Input table", inData, 
 					 &ver, access, numIF, err);
-  if (inTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with IDI_SOURCE table");
+    /* Find it?  If not, just return */
+    if (inTable==NULL) {
+      ObitErrClearErr (err);
+      return;
+    }
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
   /* Open table */
@@ -1545,6 +1625,733 @@ void GetSourceInfo (ObitData *inData, ObitUV *outData, gboolean isNew,
   outTable = ObitTableSUUnref(outTable);
 
 } /* end  GetSourceInfo */
+
+void GetFlagInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
+/*----------------------------------------------------------------------- */
+/*  Convert any FLAG tables on inData to AIPS FG on outData               */
+/*   Input:                                                               */
+/*      inData   Input IDI FITS object                                    */
+/*      outData  Output UV object                                         */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  ObitTableIDI_FLAG*    inTable=NULL;
+  ObitTableIDI_FLAGRow* inRow=NULL;
+  ObitTableFG*          outTable=NULL;
+  ObitTableFGRow*       outRow=NULL;
+  olong i, iver, iRow, oRow, ver;
+  oint numIF;
+  ObitIOAccess access;
+  gchar *routine = "GetFlagInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitDataIsA(inData));
+  g_assert (ObitUVIsA(outData));
+
+  /* Loop over plausible versions */
+  for (iver=1; iver<1000; iver++) {
+    
+    /* Print any messages */
+    ObitErrLog(err);
+
+    /* Create input Flag table object */
+    ver = iver;
+    access = OBIT_IO_ReadOnly;
+    numIF = 0;
+    inTable = newObitTableIDI_FLAGValue ("Input table", inData, 
+					 &ver, access, numIF, err);
+    /* Find it? */
+    if (inTable==NULL) {
+      ObitErrClearErr (err);
+      break;
+    }
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
+    numIF = inTable->no_band;
+    
+    /* Open table */
+    if ((ObitTableIDI_FLAGOpen (inTable, access, err) 
+	 != OBIT_IO_OK) || (err->error))  { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR opening input IDI_FLAG table");
+      return;
+    }
+    
+    /* Create Row */
+    inRow = newObitTableIDI_FLAGRow (inTable);
+    
+    /* Create output FG table object */
+    ver = iver;
+    access = OBIT_IO_ReadWrite;
+    numIF = inTable->no_band;
+    outTable = newObitTableFGValue ("Output table", (ObitData*)outData, 
+				    &ver, access, err);
+    if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with FG table");
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    
+    /* Open table */
+    if ((ObitTableFGOpen (outTable, access, err) 
+	 != OBIT_IO_OK) || (err->error))  { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR opening output FG table");
+      return;
+    }
+    
+    /* Create output Row */
+    outRow = newObitTableFGRow (outTable);
+    /* attach to table buffer */
+    ObitTableFGSetRow (outTable, outRow, err);
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    
+    /* Initialize output row */
+    outRow->status       = 0;
+    
+    /* loop through input table */
+    for (iRow = 1; iRow<=inTable->myDesc->nrow; iRow++) {
+      if ((ObitTableIDI_FLAGReadRow (inTable, iRow, inRow, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "ERROR reading IDI_FLAG Table");
+	return;
+      }
+      
+      /* Loop over bands - write one at a time in FG table */
+      for (i=0; i<numIF; i++) {
+	/* Flagged? */
+	if (!inRow->bands[i]) continue;
+	/* Save to FG table */
+	outRow->SourID       = inRow->SourID;
+	outRow->SubA         = inRow->Array;
+	outRow->freqID       = inRow->fqid;
+	outRow->ants[0]      = inRow->ants[0];
+	outRow->ants[1]      = inRow->ants[1];
+	outRow->TimeRange[0] = inRow->timerange[0];
+	outRow->TimeRange[1] = inRow->timerange[1];
+	outRow->ifs[0]       = i+1;
+	outRow->ifs[1]       = i+1;
+	outRow->chans[0]     = inRow->chans[0];
+	outRow->chans[1]     = inRow->chans[1];
+	outRow->pFlags[0]    = inRow->pflags[0];
+	outRow->pFlags[1]    = inRow->pflags[1];
+	outRow->pFlags[2]    = inRow->pflags[2];
+	outRow->pFlags[3]    = inRow->pflags[3];
+	strncpy (outRow->reason, inRow->reason ,24);
+	/* Write */
+	oRow = -1;
+	if ((ObitTableFGWriteRow (outTable, oRow, outRow, err)
+	     != OBIT_IO_OK) || (err->error>0)) { 
+	  Obit_log_error(err, OBIT_Error, "ERROR updating FG Table");
+	  return;
+	}
+      }
+    } /* end loop over input table */
+    
+    /* Close  tables */
+    if ((ObitTableIDI_FLAGClose (inTable, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR closing input IDI_FLAG Table file");
+      return;
+    }
+    
+    if ((ObitTableFGClose (outTable, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR closing output FG Table file");
+      return;
+    }
+
+    /* Tell about it */
+    Obit_log_error(err, OBIT_InfoErr, "Copied FLAG table %d", iver);
+
+    /* Cleanup */
+    inRow    = ObitTableIDI_FLAGRowUnref(inRow);
+    inTable  = ObitTableIDI_FLAGUnref(inTable);
+    outRow   = ObitTableFGRowUnref(outRow);
+    outTable = ObitTableFGUnref(outTable);
+  } /* end loop over versions */
+
+} /* end  GetFlagInfo */
+
+void GetCalibrationInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
+/*----------------------------------------------------------------------- */
+/*  Convert any CALIBRATION tables on inData to AIPS CL on outData        */
+/*   Input:                                                               */
+/*      inData   Input IDI FITS object                                    */
+/*      outData  Output UV object                                         */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  ObitTableIDI_CALIBRATION*    inTable=NULL;
+  ObitTableIDI_CALIBRATIONRow* inRow=NULL;
+  ObitTableCL*          outTable=NULL;
+  ObitTableCLRow*       outRow=NULL;
+  olong i, iver, iRow, oRow, ver;
+  oint numIF, numAnt, numPol, numTerm;
+  ObitIOAccess access;
+  gchar *routine = "GetCalibrationInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitDataIsA(inData));
+  g_assert (ObitUVIsA(outData));
+
+  /* Loop over plausible versions */
+  for (iver=1; iver<1000; iver++) {
+    
+    /* Print any messages */
+    ObitErrLog(err);
+
+    /* Create input Flag table object */
+    ver = iver;
+    access = OBIT_IO_ReadOnly;
+    numIF = numAnt = numPol = 0;
+    inTable = newObitTableIDI_CALIBRATIONValue ("Input table", inData, 
+						&ver, access, numIF, numAnt, numPol, err);
+    /* Find it? */
+    if (inTable==NULL) {
+      ObitErrClearErr (err);
+      break;
+    }
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
+    
+    /* Open table */
+    if ((ObitTableIDI_CALIBRATIONOpen (inTable, access, err) 
+	 != OBIT_IO_OK) || (err->error))  { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR opening input IDI_CALIBRATION table");
+      return;
+    }
+    
+    /* Create Row */
+    inRow = newObitTableIDI_CALIBRATIONRow (inTable);
+    
+    /* Create output CL table object */
+    ver = iver;
+    access  = OBIT_IO_ReadWrite;
+    numIF   = inTable->no_band;
+    numAnt  = inTable->numAnt;
+    numPol  = inTable->numPol;
+    numTerm = 0;
+    outTable = newObitTableCLValue ("Output table", (ObitData*)outData, 
+				    &ver, access, numPol, numIF, numTerm, err);
+    if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with CL table");
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    
+    /* Open table */
+    if ((ObitTableCLOpen (outTable, access, err) 
+	 != OBIT_IO_OK) || (err->error))  { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR opening output CL table");
+      return;
+    }
+    
+    /* Create output Row */
+    outRow = newObitTableCLRow (outTable);
+    /* attach to table buffer */
+    ObitTableCLSetRow (outTable, outRow, err);
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    
+    /* Initialize output row */
+    outRow->IFR         = 0.0;
+    outRow->atmos       = 0.0;
+    outRow->Datmos      = 0.0;
+    outRow->GeoDelay[0] = 0.0;
+    outRow->MBDelay1    = 0.0;
+    outRow->clock1      = 0.0;
+    outRow->Dclock1     = 0.0;
+    outRow->dispers1    = 0.0;
+    outRow->Ddispers1   = 0.0;
+    for (i=0; i<numIF; i++) outRow->DopplerOff[i] = 0.0;
+    if (numPol>1) {   /* 2 poln */
+      outRow->MBDelay2  = 0.0;
+      outRow->clock2    = 0.0;
+      outRow->Dclock2   = 0.0;
+      outRow->dispers2  = 0.0;
+      outRow->Ddispers2 = 0.0;
+    }
+    outRow->status      = 0;
+    
+    /* loop through input table */
+    for (iRow = 1; iRow<=inTable->myDesc->nrow; iRow++) {
+      if ((ObitTableIDI_CALIBRATIONReadRow (inTable, iRow, inRow, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "ERROR reading IDI_CALIBRATION Table");
+	return;
+      }
+      
+      /* Save to CL table */
+      outRow->Time        = inRow->Time;
+      outRow->TimeI       = inRow->TimeI;
+      outRow->SourID      = inRow->SourID;
+      outRow->antNo       = inRow->antNo;
+      outRow->SubA        = inRow->Array;
+      outRow->FreqID      = inRow->fqid;
+      for (i=0; i<numIF; i++) {
+	outRow->Real1[i]      = inRow->real1[i];
+	outRow->Imag1[i]      = inRow->imag1[i];
+	outRow->Rate1[i]      = inRow->rate1[i];
+	outRow->Delay1[i]     = inRow->delay1[i];
+	outRow->Weight1[i]    = inRow->weight1[i];
+	outRow->RefAnt1[i]    = inRow->refant1[i];
+      }
+      if (numPol>1) {   /* 2 poln */
+	for (i=0; i<numIF; i++) {
+	  outRow->Real2[i]   = inRow->real2[i];
+	  outRow->Imag2[i]   = inRow->imag2[i];
+	  outRow->Rate2[i]   = inRow->rate2[i];
+	  outRow->Delay2[i]  = inRow->delay2[i];
+	  outRow->Weight2[i] = inRow->weight2[i];
+	  outRow->RefAnt2[i] = inRow->refant2[i];
+	}
+      }
+      /* Write */
+      oRow = -1;
+      if ((ObitTableCLWriteRow (outTable, oRow, outRow, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "ERROR updating CL Table");
+	return;
+      }
+
+    } /* end loop over input table */
+    
+    /* Close  tables */
+    if ((ObitTableIDI_CALIBRATIONClose (inTable, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR closing input IDI_CALIBRATION Table file");
+      return;
+    }
+    
+    if ((ObitTableCLClose (outTable, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR closing output CL Table file");
+      return;
+    }
+
+    /* Tell about it */
+    Obit_log_error(err, OBIT_InfoErr, "Copied CALIBRATION table %d", iver);
+
+    /* Cleanup */
+    inRow    = ObitTableIDI_CALIBRATIONRowUnref(inRow);
+    inTable  = ObitTableIDI_CALIBRATIONUnref(inTable);
+    outRow   = ObitTableCLRowUnref(outRow);
+    outTable = ObitTableCLUnref(outTable);
+  } /* end loop over versions */
+
+} /* end  GetCalibrationInfo */
+
+void GetBandpassInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
+/*----------------------------------------------------------------------- */
+/*  Convert any BANDPASS tables on inData to AIPS BP on outData           */
+/*   Input:                                                               */
+/*      inData   Input IDI FITS object                                    */
+/*      outData  Output UV object                                         */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  ObitTableIDI_BANDPASS*    inTable=NULL;
+  ObitTableIDI_BANDPASSRow* inRow=NULL;
+  ObitTableBP*          outTable=NULL;
+  ObitTableBPRow*       outRow=NULL;
+  olong i, iver, iRow, oRow, ver;
+  oint numIF, numAnt, numPol, numBach, strtChn;
+  ObitIOAccess access;
+  gchar *routine = "GetBandpassInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitDataIsA(inData));
+  g_assert (ObitUVIsA(outData));
+
+  /* Loop over plausible versions */
+  for (iver=1; iver<1000; iver++) {
+    
+    /* Print any messages */
+    ObitErrLog(err);
+
+    /* Create input Flag table object */
+    ver = iver;
+    access = OBIT_IO_ReadOnly;
+    numIF = numAnt = numPol = numBach =  strtChn = 0;
+    inTable = newObitTableIDI_BANDPASSValue ("Input table", inData, 
+					     &ver, access, 
+					     numIF, numAnt, numPol, numBach, strtChn,
+					     err);
+    /* Find it? */
+    if (inTable==NULL) {
+      ObitErrClearErr (err);
+      break;
+    }
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
+    
+    /* Open table */
+    if ((ObitTableIDI_BANDPASSOpen (inTable, access, err) 
+	 != OBIT_IO_OK) || (err->error))  { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR opening input IDI_BANDPASS table");
+      return;
+    }
+    
+    /* Create Row */
+    inRow = newObitTableIDI_BANDPASSRow (inTable);
+    
+    /* Create output BP table object */
+    ver = iver;
+    access  = OBIT_IO_ReadWrite;
+    numIF   = inTable->no_band;
+    numAnt  = inTable->numAnt;
+    numPol  = inTable->numPol;
+    numBach = inTable->numBach;
+    outTable = newObitTableBPValue ("Output table", (ObitData*)outData, 
+				    &ver, access, numPol, numIF, numBach, err);
+    if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with BP table");
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    
+    /* Open table */
+    if ((ObitTableBPOpen (outTable, access, err) 
+	 != OBIT_IO_OK) || (err->error))  { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR opening output BP table");
+      return;
+    }
+    
+    /* Create output Row */
+    outRow = newObitTableBPRow (outTable);
+    /* attach to table buffer */
+    ObitTableBPSetRow (outTable, outRow, err);
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    
+    /* Initialize output row */
+    for (i=0; i<numIF; i++) outRow->ChanShift[i] = 0.0;
+    outRow->status      = 0;
+    
+    /* loop through input table */
+    for (iRow = 1; iRow<=inTable->myDesc->nrow; iRow++) {
+      if ((ObitTableIDI_BANDPASSReadRow (inTable, iRow, inRow, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "ERROR reading IDI_BANDPASS Table");
+	return;
+      }
+      
+      /* Save to BP table */
+      outRow->Time        = inRow->Time;
+      outRow->TimeI       = inRow->TimeI;
+      outRow->SourID      = inRow->SourID;
+      outRow->SubA        = inRow->Array;
+      outRow->antNo       = inRow->antNo;
+      outRow->FreqID      = inRow->fqid;
+      outRow->RefAnt1    = inRow->refant1[0];
+      for (i=0; i<numIF; i++) {
+	outRow->Real1[i]      = inRow->breal1[i];
+	outRow->Imag1[i]      = inRow->bimag1[i];
+	outRow->Weight1[i]    = 1.0;
+      }
+      if (numPol>1) {   /* 2 poln */
+	outRow->RefAnt2 = inRow->refant2[0];
+	for (i=0; i<numIF; i++) {
+	  outRow->Real2[i]   = inRow->breal2[i];
+	  outRow->Imag2[i]   = inRow->bimag2[i];
+	  outRow->Weight2[i] = 1.0;
+	}
+      }
+      /* Write */
+      oRow = -1;
+      if ((ObitTableBPWriteRow (outTable, oRow, outRow, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "ERROR updating BP Table");
+	return;
+      }
+
+    } /* end loop over input table */
+    
+    /* Close  tables */
+    if ((ObitTableIDI_BANDPASSClose (inTable, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR closing input IDI_BANDPASS Table file");
+      return;
+    }
+    
+    if ((ObitTableBPClose (outTable, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR closing output BP Table file");
+      return;
+    }
+
+    /* Tell about it */
+    Obit_log_error(err, OBIT_InfoErr, "Copied BANDPASS table %d", iver);
+
+    /* Cleanup */
+    inRow    = ObitTableIDI_BANDPASSRowUnref(inRow);
+    inTable  = ObitTableIDI_BANDPASSUnref(inTable);
+    outRow   = ObitTableBPRowUnref(outRow);
+    outTable = ObitTableBPUnref(outTable);
+  } /* end loop over versions */
+
+} /* end  GetBandpassInfo */
+
+void GetTSysInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
+/*----------------------------------------------------------------------- */
+/*  Convert any SYSTEM_TEMPERATURE tables on inData to AIPS TY on outData */
+/*   Input:                                                               */
+/*      inData   Input IDI FITS object                                    */
+/*      outData  Output UV object                                         */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  ObitTableIDI_SYSTEM_TEMPERATURE*    inTable=NULL;
+  ObitTableIDI_SYSTEM_TEMPERATURERow* inRow=NULL;
+  ObitTableTY*          outTable=NULL;
+  ObitTableTYRow*       outRow=NULL;
+  olong i, iver, iRow, oRow, ver;
+  oint numIF, numPol;
+  ObitIOAccess access;
+  gchar *routine = "GetTSysInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitDataIsA(inData));
+  g_assert (ObitUVIsA(outData));
+
+  /* Loop over plausible versions */
+  for (iver=1; iver<1000; iver++) {
+    
+    /* Print any messages */
+    ObitErrLog(err);
+
+    /* Create input Flag table object */
+    ver = iver;
+    access = OBIT_IO_ReadOnly;
+    numIF = numPol = 0;
+    inTable = newObitTableIDI_SYSTEM_TEMPERATUREValue ("Input table", inData, 
+						       &ver, access, numIF, numPol, err);
+    /* Find it? */
+    if (inTable==NULL) {
+      ObitErrClearErr (err);
+      break;
+    }
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
+    
+    /* Open table */
+    if ((ObitTableIDI_SYSTEM_TEMPERATUREOpen (inTable, access, err) 
+	 != OBIT_IO_OK) || (err->error))  { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR opening input IDI_SYSTEM_TEMPERATURE table");
+      return;
+    }
+    
+    /* Create Row */
+    inRow = newObitTableIDI_SYSTEM_TEMPERATURERow (inTable);
+    
+    /* Create output TY table object */
+    ver = iver;
+    access  = OBIT_IO_ReadWrite;
+    numIF   = inTable->no_band;
+    numPol  = inTable->numPol;
+    outTable = newObitTableTYValue ("Output table", (ObitData*)outData, 
+				    &ver, access, numPol, numIF, err);
+    if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with TY table");
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    
+    /* Open table */
+    if ((ObitTableTYOpen (outTable, access, err) 
+	 != OBIT_IO_OK) || (err->error))  { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR opening output TY table");
+      return;
+    }
+    
+    /* Create output Row */
+    outRow = newObitTableTYRow (outTable);
+    /* attach to table buffer */
+    ObitTableTYSetRow (outTable, outRow, err);
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    
+    /* Initialize output row */
+    outRow->status      = 0;
+    
+    /* loop through input table */
+    for (iRow = 1; iRow<=inTable->myDesc->nrow; iRow++) {
+      if ((ObitTableIDI_SYSTEM_TEMPERATUREReadRow (inTable, iRow, inRow, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "ERROR reading IDI_SYSTEM_TEMPERATURE Table");
+	return;
+      }
+      
+      /* Save to TY table */
+      outRow->Time      = inRow->Time;
+      outRow->TimeI     = inRow->TimeI;
+      outRow->SourID    = inRow->SourID;
+      outRow->antennaNo = inRow->antNo;
+      outRow->SubA      = inRow->Array;
+      outRow->FreqID    = inRow->fqid;
+      for (i=0; i<numIF; i++) {
+	outRow->Tsys1[i] = inRow->TSys1[i];
+	outRow->Tant1[i] = inRow->TAnt1[i];
+      }
+      if (numPol>1) {   /* 2 poln */
+	for (i=0; i<numIF; i++) {
+	  outRow->Tsys2[i] = inRow->TSys2[i];
+	  outRow->Tant2[i] = inRow->TAnt2[i];
+	}
+      }
+      /* Write */
+      oRow = -1;
+      if ((ObitTableTYWriteRow (outTable, oRow, outRow, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "ERROR updating TY Table");
+	return;
+      }
+
+    } /* end loop over input table */
+    
+    /* Close  tables */
+    if ((ObitTableIDI_SYSTEM_TEMPERATUREClose (inTable, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR closing input IDI_SYSTEM_TEMPERATURE Table file");
+      return;
+    }
+    
+    if ((ObitTableTYClose (outTable, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR closing output TY Table file");
+      return;
+    }
+
+    /* Tell about it */
+    Obit_log_error(err, OBIT_InfoErr, "Copied SYSTEM_TEMPERATURE table %d", iver);
+
+    /* Cleanup */
+    inRow    = ObitTableIDI_SYSTEM_TEMPERATURERowUnref(inRow);
+    inTable  = ObitTableIDI_SYSTEM_TEMPERATUREUnref(inTable);
+    outRow   = ObitTableTYRowUnref(outRow);
+    outTable = ObitTableTYUnref(outTable);
+  } /* end loop over versions */
+
+} /* end  GetTSysInfo */
+
+void GetWeatherInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
+/*----------------------------------------------------------------------- */
+/*  Convert any WEATHER tables on inData to AIPS WX on outData            */
+/*   Input:                                                               */
+/*      inData   Input IDI FITS object                                    */
+/*      outData  Output UV object                                         */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  ObitTableIDI_WEATHER*    inTable=NULL;
+  ObitTableIDI_WEATHERRow* inRow=NULL;
+  ObitTableWX*          outTable=NULL;
+  ObitTableWXRow*       outRow=NULL;
+  olong iver, iRow, oRow, ver;
+  oint numIF;
+  ObitIOAccess access;
+  gchar *routine = "GetWeatherInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitDataIsA(inData));
+  g_assert (ObitUVIsA(outData));
+
+  /* Loop over plausible versions */
+  for (iver=1; iver<1000; iver++) {
+    
+    /* Print any messages */
+    ObitErrLog(err);
+
+    /* Create input Flag table object */
+    ver = iver;
+    access = OBIT_IO_ReadOnly;
+    numIF =0;
+    inTable = newObitTableIDI_WEATHERValue ("Input table", inData, 
+					    &ver, access, numIF,err);
+    /* Find it? */
+    if (inTable==NULL) {
+      ObitErrClearErr (err);
+      break;
+    }
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
+    
+    /* Open table */
+    if ((ObitTableIDI_WEATHEROpen (inTable, access, err) 
+	 != OBIT_IO_OK) || (err->error))  { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR opening input IDI_WEATHER table");
+      return;
+    }
+    
+    /* Create Row */
+    inRow = newObitTableIDI_WEATHERRow (inTable);
+    
+    /* Create output WX table object */
+    ver = iver;
+    access  = OBIT_IO_ReadWrite;
+    outTable = newObitTableWXValue ("Output table", (ObitData*)outData, 
+				    &ver, access, err);
+    if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with WX table");
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    
+    /* Open table */
+    if ((ObitTableWXOpen (outTable, access, err) 
+	 != OBIT_IO_OK) || (err->error))  { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR opening output WX table");
+      return;
+    }
+    
+    /* Create output Row */
+    outRow = newObitTableWXRow (outTable);
+    /* attach to table buffer */
+    ObitTableWXSetRow (outTable, outRow, err);
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    
+    /* Initialize output row */
+    outRow->status      = 0;
+    
+    /* loop through input table */
+    for (iRow = 1; iRow<=inTable->myDesc->nrow; iRow++) {
+      if ((ObitTableIDI_WEATHERReadRow (inTable, iRow, inRow, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "ERROR reading IDI_WEATHER Table");
+	return;
+      }
+      
+      /* Save to WX table */
+      outRow->Time          = inRow->Time;
+      outRow->TimeI         = inRow->TimeI;
+      outRow->antNo         = inRow->antNo;
+      outRow->temperature   = inRow->temperature;
+      outRow->pressure      = inRow->pressure;
+      outRow->dewpoint      = inRow->dewpoint;
+      outRow->windVelocity  = inRow->wind_velocity;
+      outRow->windDirection = inRow->wind_direction;
+      outRow->wvrH2O        = inRow->wvr_h2o;
+      outRow->onosElectron  = inRow->ionos_electron;
+      /* Write */
+      oRow = -1;
+      if ((ObitTableWXWriteRow (outTable, oRow, outRow, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "ERROR updating WX Table");
+	return;
+      }
+
+    } /* end loop over input table */
+    
+    /* Close  tables */
+    if ((ObitTableIDI_WEATHERClose (inTable, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR closing input IDI_WEATHER Table file");
+      return;
+    }
+    
+    if ((ObitTableWXClose (outTable, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR closing output WX Table file");
+      return;
+    }
+
+    /* Tell about it */
+    Obit_log_error(err, OBIT_InfoErr, "Copied WEATHER table %d", iver);
+
+    /* Cleanup */
+    inRow    = ObitTableIDI_WEATHERRowUnref(inRow);
+    inTable  = ObitTableIDI_WEATHERUnref(inTable);
+    outRow   = ObitTableWXRowUnref(outRow);
+    outTable = ObitTableWXUnref(outTable);
+  } /* end loop over versions */
+
+} /* end  GetWeatherInfo */
 
 /*----------------------------------------------------------------------- */
 /*  Write History for IDIIn                                               */

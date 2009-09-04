@@ -298,7 +298,7 @@ ofloat ObitMagicF (void)
 void ObitTrimTrail (gchar *str)
 {
   olong i;
-  for (i=strlen(str); i>2; i--) {
+  for (i=strlen(str); i>0; i--) {
     if (str[i]==' ') str[i] = 0;
     if (str[i]!=0) break;
   }

@@ -1781,6 +1781,7 @@ ObitTableDesc.
 {The number of antennas.
 }
 ]
+% Must be position 2 to index
 \tablekey[{"NO\_POL "}{J}{numPol}{}{(1,2)}
 {The number of polarizations.
 }
@@ -1861,6 +1862,7 @@ ObitTableDesc.
 \tablekey[{"NO\_ANT "}{J}{numAnt}{}{}
 {The number of antennas}
 ]
+% Must be position 2 to index
 \tablekey[{"NO\_POL "}{J}{numPol}{}{(1,2)}
 {The number of antennas}
 ]
@@ -2022,6 +2024,7 @@ ObitTableDesc.
 \tablekey[{"REVISION"}{J}{revision}{10}{}
 {Revision number of the table definition}
 ]
+% Must be position 2 to index
 \tablekey[{"NO\_POL  "}{J}{numPol}{}{(1,2)}
 {The number of polarizations}
 ]
@@ -2532,6 +2535,7 @@ ObitTableDesc.
 \tablekey[{"NO\_BAND "}{J}{numBand}{}{()}
 {The number of Bands(?).}
 ]
+% Must be position 2 to index
 \tablekey[{"NO\_POL"}{J}{numPol}{}{(1,2)}
 {The number of polarizations.}
 ]
@@ -2616,6 +2620,10 @@ ObitTableDesc.
 \tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
 {Reference date as "YYYYMMDD"}
 ]
+% Must be position 2 to index
+\tablekey[{"NO\_POL "}{J}{numPol}{}{(1,2)}
+{The number of polarizations.}
+]
 \tablekey[{"OBSCODE"}{A}{obscode}{"AA000"}{}
 {Observation code}
 ]
@@ -2636,9 +2644,6 @@ ObitTableDesc.
 ]
 \tablekey[{"REF\_PIXL "}{E}{refPixl}{}{}
 {Reference Pixel..}
-]
-\tablekey[{"NO\_POL "}{J}{numPol}{}{(1,2)}
-{The number of polarizations.}
 ]
 \tablekey[{"NPOLY "}{J}{npoly}{}{()}
 {The number of polynomial terms.}
@@ -2807,6 +2812,10 @@ ObitTableDesc.
 \tablekey[{"OBSCODE"}{A}{obscode}{"AA000"}{}
 {Observation code}
 ]
+% Must be position 2 to index
+\tablekey[{"NO\_POL"}{J}{numPol}{}{(1,2)}
+{The number of polarizations.}
+]
 \tablekey[{"RDATE   "}{A}{RefDate}{"YYYYMMDD"}{}
 {Reference date as "YYYYMMDD"}
 ]
@@ -2830,9 +2839,6 @@ ObitTableDesc.
 ]
 \tablekey[{"REF\_PIXL "}{E}{refPixl}{}{}
 {Reference Pixel..}
-]
-\tablekey[{"NO\_POL"}{J}{numPol}{}{(1,2)}
-{The number of polarizations.}
 ]
 \tablekey[{"FFT\_SIZE"}{J}{FFTSize}{}{}
 {FFT size.}
@@ -3304,6 +3310,7 @@ ObitTableDesc.
 \tablekey[{"TABREV"}{J}{revision}{3}{}
 {Revision number of the table definition.}
 ]
+% Must be position 2 to index
 \tablekey[{"NO\_POL"}{J}{numPol}{}{(1,2)}
 {The number of polarizations.}
 ]
@@ -3480,6 +3487,7 @@ ObitTableDesc.
 {Revision number of the table definition.
 }
 ]
+% Must be position 2 to index
 \tablekey[{"NO\_POL  "}{J}{numPol}{}{(1,2)}
 {The number of polarizations.
 }
@@ -3694,11 +3702,12 @@ ObitTableDesc.
 }
 % Table keyword description
 \begin{keywords}
-\tablekey[{"NO\_POL "}{J}{numPol}{}{(1,2)}
-{The number of polarizations.}
-]
 \tablekey[{"NO\_IF"}{J}{numIF}{}{()}
 {The number of IFs}
+]
+% Must be position 2 to index
+\tablekey[{"NO\_POL "}{J}{numPol}{}{(1,2)}
+{The number of polarizations.}
 ]
 \tablekey[{"REVISION"}{J}{revision}{10}{}
 {Revision number of the table definition.}
@@ -4063,7 +4072,7 @@ ObitTableDesc.
 %
 \clearpage
 %
-%%%%%%%%%%%%%%% ObitTableIDI_IARRAY_GEOMETRY Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%% ObitTableIDI_ARRAY_GEOMETRY Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 %
 \ClassName[{ObitTableIDI\_ARRAY\_GEOMETRY}]
@@ -4077,6 +4086,7 @@ This table is part of the IDI uv data format.
 IDI\_ARRAY\_GEOMETRY contains information about the locations 
 of antennas in a UV data set.
 Also time information and the state of the Earth's orientation.
+Only FITS cataloged data are supported.
 ]
 \tableover{
 In memory tables are stored in a fashion similar to how they are 
@@ -4099,7 +4109,7 @@ ObitTableDesc.
 {First Stokes parameter}
 ]
 \tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
-{Number of frequency bands (IF)}
+{Number of frequency bands }
 ]
 \tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
 {Number of frequency channels}
@@ -4171,13 +4181,13 @@ ObitTableDesc.
 \tablecol[{"STABXYZ "}{"METERS " }{D}{(3)}{StaXYZ}
 {X,Y,Z offset from array center}
 ] 
-\tablecol[{"DERXYZ  "}{"METERS " }{D}{(3)}{derXYZ}
+\tablecol[{"DERXYZ  "}{"METERS " }{E}{(3)}{derXYZ}
 {look this up}
 ] 
 \tablecol[{"ORBPARM "}{"       " }{D}{(numOrb)}{OrbParm}
 {Orbital parameters.}
 ] 
-\tablecol[{"NOSTA   "}{"       " }{J}{(1)}{noSta}
+\tablecol[{"NOSTA   "}{"       " }{I}{(1)}{noSta}
 {Station number, used as an index in other tables, uv data}
 ] 
 \tablecol[{"MNTSTA  "}{"       " }{J}{(1)}{mntSta}
@@ -4186,11 +4196,15 @@ ObitTableDesc.
 \tablecol[{"STAXOF  "}{"METERS " }{E}{(3)}{staXof}
 {Axis offset (in 3D???)}
 ] 
+\tablecol[{"DIAMETER"}{"METERS " }{E}{(1)}{diameter}
+{[OPTIONAL] Antenna diameter}
+] 
 \end{columns}
 %
 % Table modification history
 \begin{history}
 \modhistory[{W. D. Cotton}{28/04/2007}{Revision 1: Initial definition}]
+\modhistory[{W. D. Cotton}{02/09/2009}{Revision 1: Update definition}]
 \end{history}
 \clearpage
 %
@@ -4207,6 +4221,7 @@ ObitTableAN Class
 This table is part of the IDI uv data format.
 "IDI\_ANTENNA" contains information about the characteristics
 of antennas in a UV data set.
+Only FITS cataloged data are supported.
 Polarization calibration information is included. }
 ]
 \tableover{
@@ -4230,7 +4245,7 @@ ObitTableDesc.
 {First Stokes parameter}
 ]
 \tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
-{Number of frequency bands (IF)}
+{Number of frequency bands }
 ]
 \tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
 {Number of frequency channels}
@@ -4284,34 +4299,38 @@ ObitTableDesc.
 \tablecol[{"NO\_LEVELS"}{"       " }{J}{(1)}{no\_levels}
 {Quantization of data, no. levels.}
 ] 
-\tablecol[{"POLTYA  "}{"       " }{A}{(4)}{polTypeA}
+\tablecol[{"POLTYA  "}{"       " }{A}{(1)}{polTypeA}
 {Feed A feed poln. type 'R','L','X','Y', actually only one valid character.}
 ] 
-\tablecol[{"POLAA   "}{"DEGREES " }{E}{(1)}{PolAngA}
+\tablecol[{"POLAA   "}{"DEGREES " }{E}{(no\_band)}{PolAngA}
 {Feed A feed position angle}
 ] 
-\tablecol[{"POLCALA"}{"       " }{E}{(numPCal)}{PolCalA}
+\tablecol[{"POLCALA"}{"       " }{E}{(numPCal,no\_band)}{PolCalA}
 {Feed A poln. cal parameter. }
 ] 
-\tablecol[{"POLTYB "}{"       " }{A}{(4)}{polTypeB}
+\tablecol[{"POLTYB "}{"       " }{A}{(1)}{polTypeB}
 {Feed B feed poln. type 'R','L','X','Y'}
 ] 
-\tablecol[{"POLAB  "}{"DEGREES " }{E}{(1)}{PolAngB}
+\tablecol[{"POLAB  "}{"DEGREES " }{E}{(no\_band)}{PolAngB}
 {Feed B feed position angle}
 ] 
-\tablecol[{"POLCALB"}{"       " }{E}{(numPCal)}{PolCalB}
+\tablecol[{"POLCALB"}{"       " }{E}{(numPCal,no\_band)}{PolCalB}
 {Feed B poln. cal parameter}
+] 
+\tablecol[{"BEAMFWHM"}{"DEGREES " }{E}{(no\_band)}{BeamFWHM}
+{[OPTIONAL] Beam Full Width Half Maximum}
 ] 
 \end{columns}
 %
 % Table modification history
 \begin{history}
 \modhistory[{W. D. Cotton}{28/04/2007}{Revision 1: Initial definition}]
+\modhistory[{W. D. Cotton}{02/09/2009}{Revision 1: Update definition}]
 \end{history}
 \clearpage
 
 %%%%%%%%%%%%%%% ObitTableIDI\_FREQUENCY Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Obit base class
+% 
 %
 \ClassName[{ObitTableIDI\_FREQUENCY}]
 
@@ -4321,11 +4340,11 @@ ObitTableDesc.
 \tableintro[
 {This class contains tabular data and allows access.
 This table is part of the IDI uv data format.
-"IDI\_FREQUENCY" contains frequency related information for ``IF'' in uv
+"IDI\_FREQUENCY" contains frequency related information for ``Bands'' in uv
 data.
-An ``IF'' is a construct that allows sets of arbitrarily spaced frequencies.
+A ``Band'' is a construct that allows sets of arbitrarily spaced frequencies.
 An ObitTableIDI\_FREQUENCY is the front end to a persistent disk resident structure.
-Both FITS and AIPS cataloged data are supported.
+Only FITS cataloged data are supported.
 This class is derived from the ObitTable class.}
 ]
 \tableover{
@@ -4349,7 +4368,7 @@ ObitTableDesc.
 {First Stokes parameter}
 ]
 \tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
-{Number of frequency bands (IF)}
+{Number of frequency bands }
 ]
 \tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
 {Number of frequency channels}
@@ -4391,14 +4410,15 @@ ObitTableDesc.
 \tablecol[{"SIDEBAND "}{"       " }{J}{(no\_band)}{sideBand}
 {Sideband of the IF (-1 =$>$ lower, +1 =$>$ upper), now always written and read as +1}
 ] 
-\tablecol[{"BB\_CHAN "}{"       " }{J}{(no\_band)}{bb\_chan}
-{Look this one up1}
-] 
+%\tablecol[{"BB\_CHAN "}{"       " }{J}{(no\_band)}{bb\_chan}
+%{Look this one up}
+%] 
 \end{columns}
 %
 % Table modification history
 \begin{history}
 \modhistory[{W. D. Cotton}{28/04/2007}{Revision 1: Initial definition}]
+\modhistory[{W. D. Cotton}{02/09/2009}{Revision 1: Update definition}]
 \end{history}
 %
 \clearpage
@@ -4416,6 +4436,7 @@ ObitTableIDI\_SOURCE Class
 This table is part of the IDI uv data format.
 "IDI\_SOURCE" contains information about astronomical sources.
 An ObitTableIDI\_SOURCE is the front end to a persistent disk resident structure.
+Only FITS cataloged data are supported.
 This class is derived from the ObitTable class. }
 ]
 \tableover{
@@ -4439,7 +4460,7 @@ ObitTableDesc.
 {First Stokes parameter}
 ]
 \tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
-{Number of frequency bands (IF)}
+{Number of frequency bands }
 ]
 \tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
 {Number of frequency channels}
@@ -4479,25 +4500,25 @@ ObitTableDesc.
 {Calibrator code}
 ] 
 \tablecol[{"FREQID  "}{"       " }{J}{(1)}{FreqID}
-{Frequency group (AKA Band) ID}
+{Frequency group  ID}
 ] 
 \tablecol[{"IFLUX   "}{"JY     " }{E}{(no\_band)}{IFlux}
-{Total Stokes I flux density per IF}
+{Total Stokes I flux density per band}
 ] 
 \tablecol[{"QFLUX   "}{"JY     " }{E}{(no\_band)}{QFlux}
-{Total Stokes Q flux density per IF}
+{Total Stokes Q flux density per band}
 ] 
 \tablecol[{"UFLUX   "}{"JY     " }{E}{(no\_band)}{UFlux}
-{Total Stokes U flux density per IF}
+{Total Stokes U flux density per band}
 ] 
 \tablecol[{"VFLUX   "}{"JY     " }{E}{(no\_band)}{VFlux}
-{Total Stokes V flux density per IF }
+{Total Stokes V flux density per band }
 ] 
-\tablecol[{"ALPHA   "}{"JY     " }{E}{(no\_band)}{alpha}
+\tablecol[{"ALPHA   "}{"       " }{E}{(no\_band)}{alpha}
 {Spectral index per IF }
 ] 
-\tablecol[{"FREQOFF "}{"HZ     " }{D}{(no\_band)}{FreqOff}
-{Frequency offset (Hz) from IF nominal per IF}
+\tablecol[{"FREQOFF "}{"HZ     " }{E}{(no\_band)}{FreqOff}
+{Frequency offset (Hz) from band nominal per band}
 ] 
 \tablecol[{"RAEPO   "}{"DEGREES " }{D}{(1)}{RAMean}
 {Right ascension at mean EPOCH (actually equinox) }
@@ -4505,7 +4526,7 @@ ObitTableDesc.
 \tablecol[{"DECEPO  "}{"DEGREES " }{D}{(1)}{DecMean}
 {Declination at mean EPOCH (actually equinox) }
 ] 
-\tablecol[{"EPOCH   "}{"YEARS   " }{D}{(1)}{Epoch}
+\tablecol[{"EQUINOX  "}{"       " }{A}{(8)}{Equinox}
 {Mean Epoch (really equinox) for position in yr. since year 0.0}
 ] 
 \tablecol[{"RAAPP   "}{"DEGREES " }{D}{(1)}{RAApp}
@@ -4535,13 +4556,681 @@ ObitTableDesc.
 \tablecol[{"PARALLAX"}{"ARCSEC  " }{E}{(1)}{parallax}
 {Parallax}
 ] 
+\tablecol[{"EPOCH"}{"YEAR    " }{D}{(1)}{Epoch}
+{[OPTIONAL]Epoch of position}
+] 
 \end{columns}
 %
 % Table modification history
 \begin{history}
 \modhistory[{W. D. Cotton}{28/04/2007}{Revision 1: Initial definition}]
+\modhistory[{W. D. Cotton}{02/09/2009}{Revision 1: Update definition}]
 \end{history}
 %
+%
+\clearpage
+
+%%%%%%%%%%%%%%% ObitTableIDI\_SYSTEM_TEMPERATURE Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableIDI\_SYSTEM\_TEMPERATURE}]
+
+\tabletitle{IDI UV data System Temperature Table}
+% table name
+\tablename{IDI\_SYSTEM\_TEMPERATURE}
+\tableintro[
+{This class contains tabular data and allows access.
+This table is part of the IDI uv data format.
+"IDI\_SYSTEM\_TEMPERATURE" contains measured system and/or antenna temperatures
+Only FITS cataloged data are supported.
+This class is derived from the ObitTable class.}
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV  "}{J}{tabrev}{1}{}
+{Table format revision number}
+]
+% Must be position 2 to index
+\tablekey[{"NO\_POL  "}{J}{numPol}{}{(1,2)}
+{The number of polarizations}
+]
+\tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
+{Number of Stokes parameters}
+]
+\tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
+{First Stokes parameter}
+]
+\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
+{Number of frequency bands }
+]
+\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
+{Number of frequency channels}
+]
+\tablekey[{"REF\_FREQ"}{D}{ref\_freq}{1.0}{}
+{Reference frequency (Hz)}
+]
+\tablekey[{"CHAN\_BW "}{D}{chan\_bw}{1.0}{}
+{Channel bandwidth (Hz)}
+]
+\tablekey[{"REF\_PIXL"}{J}{ref\_pixl}{1.0}{}
+{Reference frequency bin}
+]
+\tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
+{Observation project code}
+]
+\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
+{Array name}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
+{Reference date as "YYYY-MM-DD"}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time}
+] 
+\tablecol[{"TIME INTERVAL"}{"DAYS    "}{E}{(1)}{TimeI}
+{Time interval.}
+] 
+\tablecol[{"SOURCE\_ID"}{"        "}{J}{(1)}{SourID}
+{Source Identifier number }
+] 
+\tablecol[{"ANTENNA\_NO"}{"       " }{J}{(1)}{antNo}
+{Antenna number }
+] 
+\tablecol[{"ARRAY"}{"        "}{J}{(1)}{Array}
+{Array number.}
+] 
+\tablecol[{"FREQID  "}{"       " }{J}{(1)}{fqid}
+{Frequency ID number for row, this is a random parameter in the uv data}
+] 
+\tablecol[{"TSYS\_\#NO\_POL"}{"K       "}{E}{(no\_band)}{TSys}
+{System temperature for poln \# NO\_POL}
+] 
+\tablecol[{"TANT\_\#NO\_POL"}{"K       "}{E}{(no\_band)}{TAnt}
+{Antenna temperature for poln \# NO\_POL}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/09/2009}{Revision 1: Initial definition}]
+\end{history}
+%
+\clearpage
+
+%%%%%%%%%%%%%%% ObitTableIDI\_GAIN\_CURVE Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableIDI\_GAIN\_CURVE}]
+
+\tabletitle{IDI UV data Gain Curve Table}
+% table name
+\tablename{IDI\_GAIN\_CURVE}
+\tableintro[
+{This class contains tabular data and allows access.
+This table is part of the IDI uv data format.
+"IDI\_GAIN\_CURVE" contains antenna gain as a function of pointing position.
+An ObitTableIDI\_GAIN\_CURVE is the front end to a persistent disk resident structure.
+Only FITS cataloged data are supported.
+This class is derived from the ObitTable class.}
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV  "}{J}{tabrev}{1}{}
+{Table format revision number}
+]
+% Must be position 2 to index
+\tablekey[{"NO\_POL  "}{J}{numPol}{}{(1,2)}
+{The number of polarizations}
+]
+\tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
+{Number of Stokes parameters}
+]
+\tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
+{First Stokes parameter}
+]
+\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
+{Number of frequency bands }
+]
+\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
+{Number of frequency channels}
+]
+\tablekey[{"REF\_FREQ"}{D}{ref\_freq}{1.0}{}
+{Reference frequency (Hz)}
+]
+\tablekey[{"CHAN\_BW "}{D}{chan\_bw}{1.0}{}
+{Channel bandwidth (Hz)}
+]
+\tablekey[{"REF\_PIXL"}{J}{ref\_pixl}{1.0}{}
+{Reference frequency bin}
+]
+\tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
+{Observation project code}
+]
+\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
+{Array name}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
+{Reference date as "YYYY-MM-DD"}
+]
+\tablekey[{"NO\_TABS"}{J}{numTabs}{}{()}
+{The number of tabulated terms}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"ANTENNA\_NO"}{"       " }{J}{(1)}{antNo}
+{Antenna number }
+] 
+\tablecol[{"ARRAY"}{"        "}{J}{(1)}{Array}
+{Array number.}
+] 
+\tablecol[{"FREQID  "}{"       " }{J}{(1)}{fqid}
+{Frequency ID number for row, this is a random parameter in the uv data}
+] 
+\tablecol[{"TYPE\_\#NO\_POL"}{"       " }{J}{(no\_band)}{type}
+{Gain curve type for poln \# NO\_POL}
+] 
+\tablecol[{"NTERM\_\#NO\_POL"}{"       " }{J}{(no\_band)}{nterm}
+{Number of terms for poln \# NO\_POL}
+] 
+\tablecol[{"X\_TYP\_\#NO\_POL"}{"       " }{J}{(no\_band)}{x\_typ}
+{X value types for poln \# NO\_POL}
+] 
+\tablecol[{"Y\_TYP\_\#NO\_POL"}{"       " }{J}{(no\_band)}{y\_typ}
+{Y value types for poln \# NO\_POL}
+] 
+\tablecol[{"X\_VAL\_\#NO\_POL"}{"       " }{E}{(numTabs,no\_band)}{x\_val}
+{X values for poln \# NO\_POL}
+] 
+\tablecol[{"Y\_VAL\_\#NO\_POL"}{"       " }{E}{(numTabs,no\_band)}{y\_val}
+{Y values for poln \# NO\_POL}
+] 
+\tablecol[{"GAIN\_\#NO\_POL"}{"       " }{E}{(no\_band)}{gain}
+{for poln \# NO\_POL}
+] 
+\tablecol[{"SENS\_\#NO\_POL"}{"       " }{E}{(no\_band)}{sens}
+{for poln \# NO\_POL}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/09/2009}{Revision 1: Initial definition}]
+\end{history}
+%
+\clearpage
+
+%%%%%%%%%%%%%%% ObitTableIDI\_FLAG Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableIDI\_FLAG}]
+
+\tabletitle{IDI UV data Flag Table}
+% table name
+\tablename{IDI\_FLAG}
+\tableintro[
+{This class contains tabular data and allows access.
+This table is part of the IDI uv data format.
+"IDI\_FLAG" contains descriptions of data to be ignored in uv data.
+An ObitTableIDI\_FLAG is the front end to a persistent disk resident structure.
+Only FITS cataloged data are supported.
+This class is derived from the ObitTable class.}
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV  "}{J}{tabrev}{1}{}
+{Table format revision number}
+]
+\tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
+{Number of Stokes parameters}
+]
+\tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
+{First Stokes parameter}
+]
+\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
+{Number of frequency bands }
+]
+\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
+{Number of frequency channels}
+]
+\tablekey[{"REF\_FREQ"}{D}{ref\_freq}{1.0}{}
+{Reference frequency (Hz)}
+]
+\tablekey[{"CHAN\_BW "}{D}{chan\_bw}{1.0}{}
+{Channel bandwidth (Hz)}
+]
+\tablekey[{"REF\_PIXL"}{J}{ref\_pixl}{1.0}{}
+{Reference frequency bin}
+]
+\tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
+{Observation project code}
+]
+\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
+{Array name}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
+{Reference date as "YYYY-MM-DD"}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"SOURCE\_ID"}{"        "}{J}{(1)}{SourID}
+{Source Identifier number }
+] 
+\tablecol[{"ARRAY"}{"        "}{J}{(1)}{Array}
+{Array number.}
+] 
+\tablecol[{"ANTS"}{"       " }{J}{(2)}{ants}
+{Antenna numbers of baseline, 0 means any}
+] 
+\tablecol[{"FREQID  "}{"       " }{J}{(1)}{fqid}
+{Frequency ID number for row, this is a random parameter in the uv data}
+] 
+\tablecol[{"TIMERANG"}{"DAY    " }{E}{(2)}{timerange}
+{Beginning and end times}
+] 
+\tablecol[{"BANDS"}{"       " }{J}{(no\_band)}{bands}
+{Band flag, not 0 means corresponding band flagged}
+] 
+\tablecol[{"CHANS"}{"       " }{J}{(2)}{chans}
+{Lowest and highest (1-rel) spectral channel numbers}
+] 
+\tablecol[{"PFLAGS"}{"       " }{J}{(4)}{pflags}
+{Polarization flags, non 0 means corresponding Stokes is flagged}
+] 
+\tablecol[{"REASON"}{"       " }{A}{(40)}{reason}
+{Reason for flagging}
+] 
+\tablecol[{"SEVERITY"}{"       " }{J}{(4)}{severity}
+{Severity, -1:no level, 0:known bad, 1:probably bad, 2:may be bad }
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/09/2009}{Revision 1: Initial definition}]
+\end{history}
+%
+\clearpage
+
+%%%%%%%%%%%%%%% ObitTableIDI\_WEATHER Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableIDI\_WEATHER}]
+
+\tabletitle{IDI UV data weather Table}
+% table name
+\tablename{IDI\_WEATHER}
+\tableintro[
+{This class contains tabular data and allows access.
+This table is part of the IDI uv data format.
+"IDI\_WEATHER" contains weather data.
+An ObitTableIDI\_WEATHER is the front end to a persistent disk resident structure.
+Only FITS cataloged data are supported.
+This class is derived from the ObitTable class.}
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV  "}{J}{tabrev}{2}{}
+{Table format revision number}
+]
+\tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
+{Number of Stokes parameters}
+]
+\tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
+{First Stokes parameter}
+]
+\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
+{Number of frequency bands }
+]
+\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
+{Number of frequency channels}
+]
+\tablekey[{"REF\_FREQ"}{D}{ref\_freq}{1.0}{}
+{Reference frequency (Hz)}
+]
+\tablekey[{"CHAN\_BW "}{D}{chan\_bw}{1.0}{}
+{Channel bandwidth (Hz)}
+]
+\tablekey[{"REF\_PIXL"}{J}{ref\_pixl}{1.0}{}
+{Reference frequency bin}
+]
+\tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
+{Observation project code}
+]
+\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
+{Array name}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
+{Reference date as "YYYY-MM-DD"}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time}
+] 
+\tablecol[{"TIME INTERVAL"}{"DAYS    "}{E}{(1)}{TimeI}
+{Time interval.}
+] 
+\tablecol[{"ANTENNA\_NO"}{"       " }{J}{(1)}{antNo}
+{Antenna number }
+] 
+\tablecol[{"TEMPERATURE"}{"DEG C   "}{E}{(1)}{temperature}
+{Air temperature }
+] 
+\tablecol[{"PRESSURE"}{"MILLIBAR   "}{E}{(1)}{pressure}
+{Air pressure.}
+] 
+\tablecol[{"DEWPOINT"}{"DEG C  " }{E}{(1)}{dewpoint}
+{Dew point}
+] 
+\tablecol[{"WIND\_VELOCITY"}{"M/S    " }{E}{(1)}{wind\_velocity}
+{Wind velocity}
+] 
+\tablecol[{"WIND\_DIRECTION"}{"DEC    " }{E}{(1)}{wind\_direction}
+{Wind direction, east from north}
+] 
+\tablecol[{"WVR\_H2O"}{"M**-2    " }{E}{(1)}{wvr\_h2o}
+{Water column density}
+] 
+\tablecol[{"IONOS\_ELECTRON"}{"M**-2    " }{E}{(1)}{ionos\_electron}
+{Electron column density}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/09/2009}{Revision 1: Initial definition}]
+\end{history}
+%
+\clearpage
+q
+%%%%%%%%%%%%%%% ObitTableIDI\_BANDPASS Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableIDI\_BANDPASS}]
+
+\tabletitle{IDI UV data System Temperature Table}
+% table name
+\tablename{IDI\_BANDPASS}
+\tableintro[
+{This class contains tabular data and allows access.
+This table is part of the IDI uv data format.
+"IDI\_BANDPASS" contains bandpass calibration data.
+Only FITS cataloged data are supported.
+This class is derived from the ObitTable class.}
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV  "}{J}{tabrev}{1}{}
+{Table format revision number}
+]
+% Must be position 2 to index
+\tablekey[{"NO\_POL  "}{J}{numPol}{}{(1,2)}
+{The number of polarizations}
+]
+\tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
+{Number of Stokes parameters}
+]
+\tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
+{First Stokes parameter}
+]
+\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
+{Number of frequency bands }
+]
+\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
+{Number of frequency channels}
+]
+\tablekey[{"REF\_FREQ"}{D}{ref\_freq}{1.0}{}
+{Reference frequency (Hz)}
+]
+\tablekey[{"CHAN\_BW "}{D}{chan\_bw}{1.0}{}
+{Channel bandwidth (Hz)}
+]
+\tablekey[{"REF\_PIXL"}{J}{ref\_pixl}{1.0}{}
+{Reference frequency bin}
+]
+\tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
+{Observation project code}
+]
+\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
+{Array name}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
+{Reference date as "YYYY-MM-DD"}
+]
+\tablekey[{"NO\_ANT  "}{J}{numAnt}{}{()}
+{The maximum antenna number}
+]
+\tablekey[{"NO\_BACH "}{J}{numBach}{}{()}
+{The number of spectral channels tabulated}
+]
+\tablekey[{"STRT\_CHN"}{J}{strtChn}{}{()}
+{Data channel number (1-rel) of first channel in the table}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time}
+] 
+\tablecol[{"TIME INTERVAL"}{"DAYS    "}{E}{(1)}{TimeI}
+{Time interval.}
+] 
+\tablecol[{"SOURCE\_ID"}{"        "}{J}{(1)}{SourID}
+{Source Identifier number }
+] 
+\tablecol[{"ANTENNA\_NO"}{"       " }{J}{(1)}{antNo}
+{Antenna number }
+] 
+\tablecol[{"ARRAY"}{"        "}{J}{(1)}{Array}
+{Array number.}
+] 
+\tablecol[{"FREQID  "}{"       " }{J}{(1)}{fqid}
+{Frequency ID number for row}
+] 
+\tablecol[{"BANDWIDTH"}{"HZ     " }{E}{(no\_band)}{bandwidth}
+{Channel bandwidth per band}
+] 
+\tablecol[{"BAND\_FREQ"}{"HZ     " }{D}{(no\_band)}{band\_freq}
+{Frequency per band}
+] 
+\tablecol[{"REFANT\_\#NO\_POL""}{"       " }{J}{(no\_band)}{refant}
+{Frequency per band}
+] 
+\tablecol[{"BREAL\_\#NO\_POL"}{"        "}{E}{(numBach,no\_band)}{breal}
+{Real correction for poln \# NO\_POL}
+] 
+\tablecol[{"BIMAG\_\#NO\_POL"}{"        "}{E}{(numBach,no\_band)}{bimag}
+{Imaginary correction for poln \# NO\_POL}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/09/2009}{Revision 1: Initial definition}]
+\end{history}
+%
+\clearpage
+
+%%%%%%%%%%%%%%% ObitTableIDI\_CALIBRATION Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableIDI\_CALIBRATION}]
+
+\tabletitle{IDI UV data Calibration Table}
+% table name
+\tablename{IDI\_CALIBRATION}
+\tableintro[
+{This class contains tabular data and allows access.
+This table is part of the IDI uv data format.
+"IDI\_CALIBRATION" contains calibration correction for uv data.
+Only FITS cataloged data are supported.
+This class is derived from the ObitTable class.}
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"TABREV  "}{J}{tabrev}{1}{}
+{Table format revision number}
+]
+% Must be position 2 to index
+\tablekey[{"NO\_POL  "}{J}{numPol}{}{(1,2)}
+{The number of polarizations}
+]
+\tablekey[{"NO\_STKD "}{J}{no\_stkd}{1}{}
+{Number of Stokes parameters}
+]
+\tablekey[{"STK\_1   "}{J}{stk\_1}{-1}{}
+{First Stokes parameter}
+]
+\tablekey[{"NO\_BAND "}{J}{no\_band}{1}{()}
+{Number of frequency bands }
+]
+\tablekey[{"NO\_CHAN "}{J}{no\_chan}{1}{}
+{Number of frequency channels}
+]
+\tablekey[{"REF\_FREQ"}{D}{ref\_freq}{1.0}{}
+{Reference frequency (Hz)}
+]
+\tablekey[{"CHAN\_BW "}{D}{chan\_bw}{1.0}{}
+{Channel bandwidth (Hz)}
+]
+\tablekey[{"REF\_PIXL"}{J}{ref\_pixl}{1.0}{}
+{Reference frequency bin}
+]
+\tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
+{Observation project code}
+]
+\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
+{Array name}
+]
+\tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
+{Reference date as "YYYY-MM-DD"}
+]
+\tablekey[{"NO\_ANT  "}{J}{numAnt}{}{()}
+{The maximum antenna number}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{D}{(1)}{Time}
+{The center time}
+] 
+\tablecol[{"TIME INTERVAL"}{"DAYS    "}{E}{(1)}{TimeI}
+{Time interval.}
+] 
+\tablecol[{"SOURCE\_ID"}{"        "}{J}{(1)}{SourID}
+{Source Identifier number }
+] 
+\tablecol[{"ANTENNA\_NO"}{"       " }{J}{(1)}{antNo}
+{Antenna number }
+] 
+\tablecol[{"ARRAY"}{"        "}{J}{(1)}{Array}
+{Array number.}
+] 
+\tablecol[{"FREQID  "}{"       " }{J}{(1)}{fqid}
+{Frequency ID number for row, this is a random parameter in the uv data}
+] 
+\tablecol[{"TSYS\_\#NO\_POL"}{"K       "}{E}{(no\_band)}{TSys}
+{System temperature for poln \# NO\_POL}
+] 
+\tablecol[{"TANT\_\#NO\_POL"}{"K       "}{E}{(no\_band)}{TAnt}
+{Antenna temperature for poln \# NO\_POL}
+] 
+\tablecol[{"SENSITIVITY\_\#NO\_POL"}{"K/JY    "}{E}{(no\_band)}{sensitivity}
+{Sensitivity for poln \# NO\_POL}
+] 
+\tablecol[{"PHASE\_\#NO\_POL"}{"RAD     "}{E}{(no\_band)}{phase}
+{Phase for poln \# NO\_POL}
+] 
+\tablecol[{"RATE\_\#NO\_POL"}{"SEC/SEC "}{E}{(no\_band)}{rate}
+{Rate of change of delay for poln \# NO\_POL}
+] 
+\tablecol[{"DELAY\_\#NO\_POL"}{"SEC     "}{E}{(no\_band)}{delay}
+{Delay for poln \# NO\_POL}
+] 
+\tablecol[{"REAL\_\#NO\_POL"}{"        "}{E}{(no\_band)}{real}
+{Real part of gain for poln \# NO\_POL}
+] 
+\tablecol[{"IMAG\_\#NO\_POL"}{"        "}{E}{(no\_band)}{imag}
+{Imaginary part of gain for poln \# NO\_POL}
+] 
+\tablecol[{"WEIGHT\_\#NO\_POL"}{"        "}{E}{(no\_band)}{weight}
+{Weight for poln \# NO\_POL}
+] 
+\tablecol[{"REFANT\_\#NO\_POL"}{"        "}{J}{(no\_band)}{refant}
+{Reference antenna for poln \# NO\_POL}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{02/09/2009}{Revision 1: Initial definition}]
+\end{history}
 %
 \clearpage
 
@@ -4607,6 +5296,12 @@ ObitTableDesc.
 ]
 \tablekey[{"MAXIS   "}{J}{maxis}{1}{}
 {Number of UV data matrix axes}
+]
+\tablekey[{"EQUINOX   "}{A}{Equinox}{"J2000   "}{}
+{[OPTIONAL] System and mean equinox of coordinates}
+]
+\tablekey[{"WEIGHTYP "}{A}{WeighTyp}{"NORMAL"}{}
+{[OPTIONAL] Type of data weights}
 ]
 \tablekey[{"TMATX01"}{L}{tmatx01}{FALSE}{}
 {[OPTIONAL] If TRUE col. 1 has the visibility matrix}
@@ -4758,14 +5453,20 @@ ObitTableDesc.
 \tablekey[{"CRVAL7"}{D}{crval7}{0.0}{}
 {[OPTIONAL] Reference coordinate on axis 7 }
 ]
+\tablekey[{"DATE-OBS"}{A}{dateObs}{"0000-00-00"}{}
+{[OPTIONAL] Observing date as YYYY-MM-DD}
+]
 \tablekey[{"TELESCOP"}{A}{teles}{}{}
-{Telescope used}
+{[OPTIONAL] Telescope used}
 ]
 \tablekey[{"OBSERVER"}{A}{observer}{}{}
-{Observer making the observations}
+{[OPTIONAL] Observer making the observations}
+]
+\tablekey[{"VIS\_SCAL"}{E}{visScale}{1.0}{}
+{[OPTIONAL] Scaling factor for visibilities}
 ]
 \tablekey[{"SORT    "}{A}{sort}{}{}
-{Sort order of data}
+{[OPTIONAL] Sort order of data}
 ]
 \end{keywords}
 %
@@ -4789,23 +5490,26 @@ ObitTableDesc.
 \tablecol[{"BASELINE"}{"        " }{J}{(1)}{Baseline}
 {Interferometer baseline as ant 1*256+ant1 (1-rel).}
 ] 
+\tablecol[{"ARRAY   "}{"        " }{J}{(1)}{Array}
+{Array number (1-rel)}
+] 
 \tablecol[{"FILTER  "}{"        " }{J}{(1)}{Filter}
-{Filter.}
+{[OPTIONAL]  VLBA Filter number.}
 ] 
 \tablecol[{"SOURCE  "}{"        " }{J}{(1)}{Source}
-{Source ID, index into SOURCE table.}
+{[OPTIONAL] Source ID, index into SOURCE table.}
 ] 
 \tablecol[{"FREQID  "}{"        " }{J}{(1)}{FreqID}
-{Frequency group ID, index into FREQUENCY table.}
+{[OPTIONAL] Frequency group ID.}
 ] 
 \tablecol[{"INTTIM"}{"SECONDS " }{E}{(1)}{IntTim}
-{The integration time.}
+{[OPTIONAL] The integration time.}
 ] 
 \tablecol[{"WEIGHT"}{"       " }{E}{(maxis2,maxis3,maxis4,maxis5)}{Weight}
 {Weight per correlation, same order as data.}
 ] 
 \tablecol[{"GATEID  "}{"       " }{J}{(1)}{GateID}
-{Gate ID.}
+{[OPTIONAL] VLBA Pulsar gate ID.}
 ] 
 \tablecol[{"FLUX    "}{"        " }{E}{(maxis1,maxis2,maxis3,maxis4,maxis5)}{Flux}
 {Visibility matrix}
@@ -4815,6 +5519,7 @@ ObitTableDesc.
 % Table modification history
 \begin{history}
 \modhistory[{W. D. Cotton}{28/04/2007}{Revision 1: Initial definition}]
+\modhistory[{W. D. Cotton}{02/09/2009}{Revision 1: Update definition}]
 \end{history}
 %
 

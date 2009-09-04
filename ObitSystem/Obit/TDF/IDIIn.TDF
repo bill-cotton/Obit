@@ -4,7 +4,7 @@
 ;! Obit Convert IDI data and append to a UV data file.
 ;# Task Obit IDI
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007
+;;  Copyright (C) 2007,2009
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ Scan                                Scan for FITS file
 **PARAM** str 64
 DataRoot                            Directory for input
 **PARAM** str 4
-DataType                            "FITS" or "AIPS" type of input
+DataType                            "FITS" or "AIPS" type of output
 **PARAM** str 48
 outFile                             FITS output uvdata if Type=='FITS'
 **PARAM** str 12
@@ -50,11 +50,13 @@ outDisk                             Output UV file disk unit #.
 ----------------------------------------------------------------
 IDIIn Convert IDI format data to UV
 Type:  Task
- Use:  Convert archive format to Obit UV data
+ Use:  Convert IDI archive format to Obit UV data
+       Can append multiple scans to the output dataset
 
 Adverbs:
   Scan.......Name of scan (e.g."lwda_uv_2006_10_28_23_59_42")
   DataRoot...Archive directory for project 
+             MUST end in '/'
   DataType..'FITS' or 'AIPS'  type of output
              Expects full file name to be DataRoot/Scan.fits
   outFile....Output UV FITS file name
