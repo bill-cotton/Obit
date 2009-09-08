@@ -116,6 +116,9 @@ sub ParseTableDoc  {
 	    #print ($line);
 	    # get table type
 	    $Extname = GetNextArgument();
+	    # GODDAMN VLBA assholes
+	    $ExtnameClean = $Extname;
+	    $ExtnameClean =~ s/-/_/;
             # Is this AIPS (2 char) or only FITS, (History special)?
             if ((length($Extname)==2) || ($Extname eq "History")) {
 		$ExtType = "AIPS ";
@@ -345,10 +348,10 @@ sub WriteClass {
     if ($Extname eq "XX") {return;}
 
     # Say what's happening
-    print ("Processing class ObitTable$Extname \n");
+    print ("Processing class ObitTable$ExtnameClean \n");
 
     # ClassInfo definition file
-    $filename = "include/ObitTable".$Extname."ClassDef.h";
+    $filename = "include/ObitTable".$ExtnameClean."ClassDef.h";
     $backupname = "$filename.backup";
     if (-f $filename) {rename ($filename, $backupname);}
     open (OUT, ">$filename") || 
@@ -357,7 +360,7 @@ sub WriteClass {
     close OUT;
 
     # Class Structure definition file
-    $filename = "include/ObitTable".$Extname."Def.h";
+    $filename = "include/ObitTable".$ExtnameClean."Def.h";
     $backupname = "$filename.backup";
     if (-f $filename) {rename ($filename, $backupname);}
     open (OUT, ">$filename") || 
@@ -366,7 +369,7 @@ sub WriteClass {
     close OUT;
  
     # Class Row Structure definition file
-    $filename = "include/ObitTable".$Extname."RowDef.h";
+    $filename = "include/ObitTable".$ExtnameClean."RowDef.h";
     $backupname = "$filename.backup";
     if (-f $filename) {rename ($filename, $backupname);}
     open (OUT, ">$filename") || 
@@ -375,7 +378,7 @@ sub WriteClass {
     close OUT;
 
     # Class Row Class Structure definition file
-    $filename = "include/ObitTable".$Extname."RowClassDef.h";
+    $filename = "include/ObitTable".$ExtnameClean."RowClassDef.h";
     $backupname = "$filename.backup";
     if (-f $filename) {rename ($filename, $backupname);}
     open (OUT, ">$filename") || 
@@ -384,7 +387,7 @@ sub WriteClass {
     close OUT;
 
    # Class definition file
-    $filename = "include/ObitTable".$Extname.".h";
+    $filename = "include/ObitTable".$ExtnameClean.".h";
     $backupname = "$filename.backup";
     if (-f $filename) {rename ($filename, $backupname);}
     open (OUT, ">$filename") || 
@@ -393,7 +396,7 @@ sub WriteClass {
     close OUT;
  
   # Class function definition file
-    $filename = "src/ObitTable".$Extname.".c";
+    $filename = "src/ObitTable".$ExtnameClean.".c";
     $backupname = "$filename.backup";
     if (-f $filename) {rename ($filename, $backupname);}
     open (OUT, ">$filename") || 
@@ -402,7 +405,7 @@ sub WriteClass {
     close OUT;
 
   # Write Python interface
-    $filename = "python/Table".$Extname.".inc";
+    $filename = "python/Table".$ExtnameClean.".inc";
     $backupname = "$filename.backup";
     if (-f $filename) {rename ($filename, $backupname);}
     open (OUT, ">$filename") || 
@@ -440,21 +443,21 @@ sub WriteClass {
 # Write ClassInfo definition file
 sub WriteClassDef {
     Copyright;
-    printf (OUT "/* Define the basic components of the ObitTable$Extname ClassInfo structure */\n");
+    printf (OUT "/* Define the basic components of the ObitTable$ExtnameClean ClassInfo structure */\n");
     printf (OUT "/* This is intended to be included in a classInfo structure definition*/\n");
     printf (OUT "\#include \"ObitTableClassDef.h\"  /* Parent class ClassInfo definition file */\n");
     printf (OUT "/** Function pointer to convert. */\n");
-    printf (OUT "ObitTableConvertFP ObitTable$Extname\Convert;\n");
+    printf (OUT "ObitTableConvertFP ObitTable$ExtnameClean\Convert;\n");
     printf (OUT "/** Function pointer to read a row. */\n");
-    printf (OUT "ObitTableReadRowFP ObitTable$Extname\ReadRow;\n");
+    printf (OUT "ObitTableReadRowFP ObitTable$ExtnameClean\ReadRow;\n");
     printf (OUT "/** Function pointer to write a row. */\n");
-    printf (OUT "ObitTableWriteRowFP ObitTable$Extname\WriteRow;\n");
+    printf (OUT "ObitTableWriteRowFP ObitTable$ExtnameClean\WriteRow;\n");
 } # end WriteClassDef
 
 # Write ClassInfo definition file
 sub WriteRowClassDef {
     Copyright;
-    printf (OUT "/* Define the basic components of the ObitTable$Extname\Row ClassInfo structure */\n");
+    printf (OUT "/* Define the basic components of the ObitTable$ExtnameClean\Row ClassInfo structure */\n");
     printf (OUT "/* This is intended to be included in a classInfo structure definition*/\n");
     printf (OUT "\#include \"ObitTableRowClassDef.h\"  /* Parent class ClassInfo definition file */\n");
 } # end WriteRowClassDef
@@ -467,8 +470,8 @@ sub WriteRowDef {
    printf (OUT "/*  Define the basic components of the ObitTableRow structure       */\n");
    printf (OUT "/*  This is intended to be included in a class structure definition   */\n");
    printf (OUT "/**\n");
-   printf (OUT " * \x5cfile ObitTable$Extname\RowDef.h\n");
-   printf (OUT " * ObitTable$Extname\Row structure members for derived classes.\n");
+   printf (OUT " * \x5cfile ObitTable$ExtnameClean\RowDef.h\n");
+   printf (OUT " * ObitTable$ExtnameClean\Row structure members for derived classes.\n");
    printf (OUT " */\n");
    printf (OUT "\#include \"ObitTableRowDef.h\"  /* Parent class definitions */\n");
 
@@ -554,11 +557,11 @@ sub WriteDef {
 
     Copyright;
 
-    printf (OUT "/*  Define the basic components of the ObitTable$Extname  structure          */\n");
+    printf (OUT "/*  Define the basic components of the ObitTable$ExtnameClean  structure          */\n");
     printf (OUT "/*  This is intended to be included in a class structure definition   */\n");
     printf (OUT "/**\n");
-    printf (OUT " * \x5cfile ObitTable$Extname\Def.h\n");
-    printf (OUT " * ObitTable$Extname structure members for derived classes.\n");
+    printf (OUT " * \x5cfile ObitTable$ExtnameClean\Def.h\n");
+    printf (OUT " * ObitTable$ExtnameClean structure members for derived classes.\n");
     printf (OUT " */\n");
     printf (OUT "\#include \"ObitTableDef.h\"  /* Parent class definitions */\n");
 
@@ -567,7 +570,7 @@ sub WriteDef {
 	printf (OUT "/** $KeyComm[$k] */\n");
 	$TC = DclTypeCode($KeyType[$k]);
 	$TX = ""; # special case for strings
-	if ($KeyType[$k] eq "A") {$TX = "[MAXKEYCHARTABLE".$Extname."]";}
+	if ($KeyType[$k] eq "A") {$TX = "[MAXKEYCHARTABLE".$ExtnameClean."]";}
 	printf (OUT "$TC  $KeyName[$k]$TX;\n");
     }
 
@@ -642,8 +645,8 @@ sub WriteHeader {
 
     Copyright;
 
-    printf (OUT "\#ifndef OBITTABLE".$Extname."_H \n");
-    printf (OUT "\#define OBITTABLE".$Extname."_H \n");
+    printf (OUT "\#ifndef OBITTABLE".$ExtnameClean."_H \n");
+    printf (OUT "\#define OBITTABLE".$ExtnameClean."_H \n");
     printf (OUT "\n");
     printf (OUT "\#include \"Obit.h\"\n");
     printf (OUT "\#include \"ObitErr.h\"\n");
@@ -652,8 +655,8 @@ sub WriteHeader {
     printf (OUT "\n");
     printf (OUT "/*-------- Obit: Merx mollis mortibus nuper ------------------*/\n");
     printf (OUT "/**\n");
-    printf (OUT " * \x5cfile ObitTable".$Extname.".h\n");
-    printf (OUT " * ObitTable".$Extname." class definition.\n");
+    printf (OUT " * \x5cfile ObitTable".$ExtnameClean.".h\n");
+    printf (OUT " * ObitTable".$ExtnameClean." class definition.\n");
     printf (OUT " *\n");
     printf (OUT " * This class is derived from the \#ObitTable class.\n");
     printf (OUT " *\n");
@@ -663,8 +666,8 @@ sub WriteHeader {
    }
     printf (OUT " *\n");
     printf (OUT " * This class contains tabular data and allows access.\n");
-    printf (OUT " * \"".$ExtType.$Extname."\" table\n");
-    printf (OUT " * An ObitTable".$Extname." is the front end to a persistent disk resident structure.\n");
+    printf (OUT " * \"".$ExtType.$ExtnameClean."\" table\n");
+    printf (OUT " * An ObitTable".$ExtnameClean." is the front end to a persistent disk resident structure.\n");
     if ($ExtType eq "AIPS ") {
       printf (OUT " * Both FITS (as Tables) and AIPS cataloged data are supported.\n");
     } else {
@@ -678,7 +681,7 @@ sub WriteHeader {
     printf (OUT " * stored by order of the decreasing element size: \n");
     printf (OUT " * double, float long, int, short, char rather than the logical order.\n");
     printf (OUT " * The details of the storage in the buffer are kept in the \n");
-    printf (OUT " * \#ObitTable".$Extname."Desc.\n");
+    printf (OUT " * \#ObitTable".$ExtnameClean."Desc.\n");
 	printf (OUT " *\n");
     printf (OUT " * In addition to the normal tabular data, a table will have a \"\_status\"\n");
     printf (OUT " * column to indicate the status of each row.\n");
@@ -694,7 +697,7 @@ sub WriteHeader {
       printf (OUT " * \x5cli status = -1 => row has been marked invalid.\n");
     }
     printf (OUT " *\n");
-    printf (OUT " * \x5csection ObitTable".$Extname."Specification Specifying desired data transfer parameters\n");
+    printf (OUT " * \x5csection ObitTable".$ExtnameClean."Specification Specifying desired data transfer parameters\n");
     printf (OUT " * The desired data transfers are specified in the member ObitInfoList.\n");
     if ($ExtType eq "AIPS ") {
       printf (OUT " * There are separate sets of parameters used to specify the FITS or AIPS \n");
@@ -717,7 +720,7 @@ sub WriteHeader {
     printf (OUT " * This implementation uses cfitsio which allows using, in addition to \n");
     printf (OUT " * regular FITS images, gzip compressed files, pipes, shared memory \n");
     printf (OUT " * and a number of other input forms.\n");
-    printf (OUT " * The convenience Macro \#ObitTable".$Extname."SetFITS simplifies specifying the \n");
+    printf (OUT " * The convenience Macro \#ObitTable".$ExtnameClean."SetFITS simplifies specifying the \n");
 	printf (OUT " * desired data.\n");
     printf (OUT " * Binary tables are used for storing visibility data in FITS.\n");
     printf (OUT " * For accessing FITS files the following entries in the ObitInfoList \n");
@@ -727,7 +730,7 @@ sub WriteHeader {
     printf (OUT " * \x5cli \"Ver\"      OBIT_int    (1,1,1) Table version number\n");
     printf (OUT " *\n");
     if ($ExtType eq "AIPS ") {
-      printf (OUT " * \subsection ObitTable".$Extname."AIPS AIPS files\n");
+      printf (OUT " * \subsection ObitTable".$ExtnameClean."AIPS AIPS files\n");
       printf (OUT " * The ObitAIPS class must be initialized before accessing AIPS files; \n");
       printf (OUT " * this uses \#ObitAIPSClassInit.\n");
       printf (OUT " * For accessing AIPS files the following entries in the ObitInfoList \n");
@@ -739,59 +742,59 @@ sub WriteHeader {
       printf (OUT " * \x5cli \"Ver\"  OBIT_int    (1,1,1) AIPS table version number.\n");
     }
     printf (OUT " *\n");
-    printf (OUT " * \x5csection ObitTable".$Extname."access Creators and Destructors\n");
-    printf (OUT " * An ObitTable".$Extname." can be created using newObitTable".$Extname."Value which attaches the \n");
+    printf (OUT " * \x5csection ObitTable".$ExtnameClean."access Creators and Destructors\n");
+    printf (OUT " * An ObitTable".$ExtnameClean." can be created using newObitTable".$ExtnameClean."Value which attaches the \n");
     printf (OUT " * table to an ObitData for the object.  \n");
-    printf (OUT " * If the output ObitTable".$Extname." has previously been specified, including file information,\n");
-    printf (OUT " * then ObitTable".$Extname."Copy will copy the disk resident as well as the memory \n");
+    printf (OUT " * If the output ObitTable".$ExtnameClean." has previously been specified, including file information,\n");
+    printf (OUT " * then ObitTable".$ExtnameClean."Copy will copy the disk resident as well as the memory \n");
     printf (OUT " * resident information.\n");
     printf (OUT " *\n");
-    printf (OUT " * A copy of a pointer to an ObitTable".$Extname." should always be made using the\n");
-    printf (OUT " * ObitTable".$Extname."Ref function which updates the reference count in the object.\n");
-    printf (OUT " * Then whenever freeing an ObitTable".$Extname." or changing a pointer, the function\n");
-    printf (OUT " * ObitTable".$Extname."Unref will decrement the reference count and destroy the object\n");
+    printf (OUT " * A copy of a pointer to an ObitTable".$ExtnameClean." should always be made using the\n");
+    printf (OUT " * ObitTable".$ExtnameClean."Ref function which updates the reference count in the object.\n");
+    printf (OUT " * Then whenever freeing an ObitTable".$ExtnameClean." or changing a pointer, the function\n");
+    printf (OUT " * ObitTable".$ExtnameClean."Unref will decrement the reference count and destroy the object\n");
     printf (OUT " * when the reference count hits 0.\n");
     printf (OUT " *\n");
-    printf (OUT " * \x5csection ObitTable".$Extname."Usage I/O\n");
+    printf (OUT " * \x5csection ObitTable".$ExtnameClean."Usage I/O\n");
     printf (OUT " * Visibility data is available after an input object is \"Opened\"\n");
     printf (OUT " * and \"Read\".\n");
-    printf (OUT " * I/O optionally uses a buffer attached to the ObitTable".$Extname." or some external\n");
+    printf (OUT " * I/O optionally uses a buffer attached to the ObitTable".$ExtnameClean." or some external\n");
     printf (OUT " * location.\n");
-    printf (OUT " * To Write an ObitTable".$Extname.", create it, open it, and write.\n");
+    printf (OUT " * To Write an ObitTable".$ExtnameClean.", create it, open it, and write.\n");
     printf (OUT " * The object should be closed to ensure all data is flushed to disk.\n");
-    printf (OUT " * Deletion of an ObitTable".$Extname." after its final unreferencing will automatically\n");
+    printf (OUT " * Deletion of an ObitTable".$ExtnameClean." after its final unreferencing will automatically\n");
     printf (OUT " * close it.\n");
     printf (OUT " */\n");
     printf (OUT "\n");
     printf (OUT "/*--------------Class definitions-------------------------------------*/\n");
     printf (OUT "\n");
     printf (OUT "/** Number of characters for Table keyword */\n");
-    printf (OUT " #define MAXKEYCHARTABLE".$Extname." 24\n");
+    printf (OUT " #define MAXKEYCHARTABLE".$ExtnameClean." 24\n");
     printf (OUT "\n");
-    printf (OUT "/** ObitTable".$Extname." Class structure. */\n");
+    printf (OUT "/** ObitTable".$ExtnameClean." Class structure. */\n");
     printf (OUT "typedef struct {\n");
-    printf (OUT "\#include \"ObitTable".$Extname."Def.h\"   /* this class definition */\n");
-    printf (OUT "} ObitTable".$Extname.";\n");
+    printf (OUT "\#include \"ObitTable".$ExtnameClean."Def.h\"   /* this class definition */\n");
+    printf (OUT "} ObitTable".$ExtnameClean.";\n");
     printf (OUT "\n");
-    printf (OUT "/** ObitTable".$Extname."Row Class structure. */\n");
+    printf (OUT "/** ObitTable".$ExtnameClean."Row Class structure. */\n");
     printf (OUT "typedef struct {\n");
-    printf (OUT "\#include \"ObitTable".$Extname."RowDef.h\"   /* this class row definition */\n");
-    printf (OUT "} ObitTable".$Extname."Row;\n");
+    printf (OUT "\#include \"ObitTable".$ExtnameClean."RowDef.h\"   /* this class row definition */\n");
+    printf (OUT "} ObitTable".$ExtnameClean."Row;\n");
     printf (OUT "\n");
     printf (OUT "/*----------------- Macroes ---------------------------*/\n");
     printf (OUT "/** \n");
-    printf (OUT " * Macro to unreference (and possibly destroy) an ObitTable".$Extname."\n");
-    printf (OUT " * returns an ObitTable".$Extname."*.\n");
+    printf (OUT " * Macro to unreference (and possibly destroy) an ObitTable".$ExtnameClean."\n");
+    printf (OUT " * returns an ObitTable".$ExtnameClean."*.\n");
     printf (OUT " * in = object to unreference\n");
     printf (OUT " */\n");
-    printf (OUT "\#define ObitTable".$Extname."Unref(in) ObitUnref (in)\n");
+    printf (OUT "\#define ObitTable".$ExtnameClean."Unref(in) ObitUnref (in)\n");
     printf (OUT "\n");
     printf (OUT "/** \n");
-    printf (OUT " * Macro to reference (update reference count) an ObitTable".$Extname.".\n");
-    printf (OUT " * returns an ObitTable".$Extname."*.\n");
+    printf (OUT " * Macro to reference (update reference count) an ObitTable".$ExtnameClean.".\n");
+    printf (OUT " * returns an ObitTable".$ExtnameClean."*.\n");
     printf (OUT " * in = object to reference\n");
     printf (OUT " */\n");
-    printf (OUT "\#define ObitTable".$Extname."Ref(in) ObitRef (in)\n");
+    printf (OUT "\#define ObitTable".$ExtnameClean."Ref(in) ObitRef (in)\n");
     printf (OUT "\n");
     printf (OUT "/** \n");
     printf (OUT " * Macro to determine if an object is the member of this or a \n");
@@ -799,21 +802,21 @@ sub WriteHeader {
     printf (OUT " * Returns TRUE if a member, else FALSE\n");
     printf (OUT " * in = object to reference\n");
     printf (OUT " */\n");
-    printf (OUT "\#define ObitTable".$Extname."IsA(in) ObitIsA (in, ObitTable".$Extname."GetClass())\n");
+    printf (OUT "\#define ObitTable".$ExtnameClean."IsA(in) ObitIsA (in, ObitTable".$ExtnameClean."GetClass())\n");
     printf (OUT "\n");
     printf (OUT "/** \n");
-    printf (OUT " * Macro to unreference (and possibly destroy) an ObitTable".$Extname."Row\n");
-    printf (OUT " * returns an ObitTable".$Extname."Row*.\n");
+    printf (OUT " * Macro to unreference (and possibly destroy) an ObitTable".$ExtnameClean."Row\n");
+    printf (OUT " * returns an ObitTable".$ExtnameClean."Row*.\n");
     printf (OUT " * in = object to unreference\n");
     printf (OUT " */\n");
-    printf (OUT "\#define ObitTable".$Extname."RowUnref(in) ObitUnref (in)\n");
+    printf (OUT "\#define ObitTable".$ExtnameClean."RowUnref(in) ObitUnref (in)\n");
     printf (OUT "\n");
     printf (OUT "/** \n");
-    printf (OUT " * Macro to reference (update reference count) an ObitTable".$Extname."Row.\n");
-    printf (OUT " * returns an ObitTable".$Extname."Row*.\n");
+    printf (OUT " * Macro to reference (update reference count) an ObitTable".$ExtnameClean."Row.\n");
+    printf (OUT " * returns an ObitTable".$ExtnameClean."Row*.\n");
     printf (OUT " * in = object to reference\n");
     printf (OUT " */\n");
-    printf (OUT "\#define ObitTable".$Extname."RowRef(in) ObitRef (in)\n");
+    printf (OUT "\#define ObitTable".$ExtnameClean."RowRef(in) ObitRef (in)\n");
     printf (OUT "\n");
     printf (OUT "/** \n");
     printf (OUT " * Macro to determine if an object is the member of this or a \n");
@@ -821,29 +824,29 @@ sub WriteHeader {
     printf (OUT " * Returns TRUE if a member, else FALSE\n");
     printf (OUT " * in = object to reference\n");
     printf (OUT " */\n");
-    printf (OUT "\#define ObitTable".$Extname."RowIsA(in) ObitIsA (in, ObitTable".$Extname."RowGetClass())\n");
+    printf (OUT "\#define ObitTable".$ExtnameClean."RowIsA(in) ObitIsA (in, ObitTable".$ExtnameClean."RowGetClass())\n");
     printf (OUT "\n");
     printf (OUT "/*---------------Public functions---------------------------*/\n");
     printf (OUT "/*----------------Table Row Functions ----------------------*/\n");
     printf (OUT "/** Public: Row Class initializer. */\n");
-    printf (OUT "void ObitTable".$Extname."RowClassInit (void);\n");
+    printf (OUT "void ObitTable".$ExtnameClean."RowClassInit (void);\n");
     printf (OUT "\n");
     printf (OUT "/** Public: Constructor. */\n");
-    printf (OUT "ObitTable".$Extname."Row* newObitTable".$Extname."Row (ObitTable".$Extname." *table);\n");
+    printf (OUT "ObitTable".$ExtnameClean."Row* newObitTable".$ExtnameClean."Row (ObitTable".$ExtnameClean." *table);\n");
     printf (OUT "\n");
     printf (OUT "/** Public: ClassInfo pointer */\n");
-    printf (OUT "gconstpointer ObitTable".$Extname."RowGetClass (void);\n");
+    printf (OUT "gconstpointer ObitTable".$ExtnameClean."RowGetClass (void);\n");
     printf (OUT "\n");
     printf (OUT "/*------------------Table Functions ------------------------*/\n");
     printf (OUT "/** Public: Class initializer. */\n");
-    printf (OUT "void ObitTable".$Extname."ClassInit (void);\n");
+    printf (OUT "void ObitTable".$ExtnameClean."ClassInit (void);\n");
     printf (OUT "\n");
     printf (OUT "/** Public: Constructor. */\n");
-    printf (OUT "ObitTable".$Extname."* newObitTable".$Extname." (gchar* name);\n");
+    printf (OUT "ObitTable".$ExtnameClean."* newObitTable".$ExtnameClean." (gchar* name);\n");
     printf (OUT "\n");
     printf (OUT "/** Public: Constructor from values. */\n");
-    printf (OUT "ObitTable".$Extname."* \n");
-    printf (OUT "newObitTable".$Extname."Value (gchar* name, ObitData *file, olong *ver,\n");
+    printf (OUT "ObitTable".$ExtnameClean."* \n");
+    printf (OUT "newObitTable".$ExtnameClean."Value (gchar* name, ObitData *file, olong *ver,\n");
     printf (OUT "  		     ObitIOAccess access,\n");
     # Add structural keywords to call sequence
     $temp =     "                  ";
@@ -857,42 +860,42 @@ sub WriteHeader {
     printf (OUT "		     ObitErr *err);\n");
     printf (OUT "\n");
     printf (OUT "/** Public: Class initializer. */\n");
-    printf (OUT "void ObitTable".$Extname."ClassInit (void);\n");
+    printf (OUT "void ObitTable".$ExtnameClean."ClassInit (void);\n");
     printf (OUT "\n");
     printf (OUT "/** Public: ClassInfo pointer */\n");
-    printf (OUT "gconstpointer ObitTable".$Extname."GetClass (void);\n");
+    printf (OUT "gconstpointer ObitTable".$ExtnameClean."GetClass (void);\n");
     printf (OUT "\n");
     printf (OUT "/** Public: Copy (deep) constructor. */\n");
-    printf (OUT "ObitTable".$Extname."* ObitTable".$Extname."Copy  (ObitTable".$Extname." *in, ObitTable".$Extname." *out, \n");
+    printf (OUT "ObitTable".$ExtnameClean."* ObitTable".$ExtnameClean."Copy  (ObitTable".$ExtnameClean." *in, ObitTable".$ExtnameClean." *out, \n");
     printf (OUT "			   ObitErr *err);\n");
     printf (OUT "\n");
     printf (OUT "/** Public: Copy (shallow) constructor. */\n");
-    printf (OUT "ObitTable".$Extname."* ObitTable".$Extname."Clone (ObitTable".$Extname." *in, ObitTable".$Extname." *out);\n");
+    printf (OUT "ObitTable".$ExtnameClean."* ObitTable".$ExtnameClean."Clone (ObitTable".$ExtnameClean." *in, ObitTable".$ExtnameClean." *out);\n");
     printf (OUT "\n");
-    printf (OUT "/** Public: Convert an ObitTable to an ObitTable".$Extname." */\n");
-    printf (OUT "ObitTable".$Extname."* ObitTable".$Extname."Convert  (ObitTable *in);\n");
+    printf (OUT "/** Public: Convert an ObitTable to an ObitTable".$ExtnameClean." */\n");
+    printf (OUT "ObitTable".$ExtnameClean."* ObitTable".$ExtnameClean."Convert  (ObitTable *in);\n");
     printf (OUT "\n");
     printf (OUT "/** Public: Create ObitIO structures and open file */\n");
-    printf (OUT "ObitIOCode ObitTable".$Extname."Open (ObitTable".$Extname." *in, ObitIOAccess access, \n");
+    printf (OUT "ObitIOCode ObitTable".$ExtnameClean."Open (ObitTable".$ExtnameClean." *in, ObitIOAccess access, \n");
     printf (OUT "			  ObitErr *err);\n");
     printf (OUT "\n");
     printf (OUT "/** Public: Read a table row */\n");
     printf (OUT "ObitIOCode \n");
-    printf (OUT "ObitTable".$Extname."ReadRow  (ObitTable".$Extname." *in, olong i".$Extname."Row, ObitTable".$Extname."Row *row,\n");
+    printf (OUT "ObitTable".$ExtnameClean."ReadRow  (ObitTable".$ExtnameClean." *in, olong i".$ExtnameClean."Row, ObitTable".$ExtnameClean."Row *row,\n");
     printf (OUT "		     ObitErr *err);\n");
     printf (OUT "\n");
     printf (OUT "/** Public: Init a table row for write */\n");
     printf (OUT "void \n");
-    printf (OUT "ObitTable".$Extname."SetRow  (ObitTable".$Extname." *in, ObitTable".$Extname."Row *row,\n");
+    printf (OUT "ObitTable".$ExtnameClean."SetRow  (ObitTable".$ExtnameClean." *in, ObitTable".$ExtnameClean."Row *row,\n");
     printf (OUT "		     ObitErr *err);\n");
     printf (OUT "\n");
     printf (OUT "/** Public: Write a table row */\n");
     printf (OUT "ObitIOCode \n");
-    printf (OUT "ObitTable".$Extname."WriteRow  (ObitTable".$Extname." *in, olong i".$Extname."Row, ObitTable".$Extname."Row *row,\n");
+    printf (OUT "ObitTable".$ExtnameClean."WriteRow  (ObitTable".$ExtnameClean." *in, olong i".$ExtnameClean."Row, ObitTable".$ExtnameClean."Row *row,\n");
     printf (OUT "		     ObitErr *err);\n");
     printf (OUT "\n");
     printf (OUT "/** Public: Close file and become inactive */\n");
-    printf (OUT "ObitIOCode ObitTable".$Extname."Close (ObitTable".$Extname." *in, ObitErr *err);\n");
+    printf (OUT "ObitIOCode ObitTable".$ExtnameClean."Close (ObitTable".$ExtnameClean." *in, ObitErr *err);\n");
     printf (OUT "\n");
     printf (OUT "/*----------- ClassInfo Structure -----------------------------------*/\n");
     printf (OUT "/**\n");
@@ -901,18 +904,18 @@ sub WriteHeader {
     printf (OUT " * (NULL if none) and function pointers.\n");
     printf (OUT " */\n");
     printf (OUT "typedef struct  {\n");
-    printf (OUT "\#include \"ObitTable".$Extname."ClassDef.h\"\n");
-    printf (OUT "} ObitTable".$Extname."ClassInfo; \n");
+    printf (OUT "\#include \"ObitTable".$ExtnameClean."ClassDef.h\"\n");
+    printf (OUT "} ObitTable".$ExtnameClean."ClassInfo; \n");
     printf (OUT "\n");
     printf (OUT "/**\n");
-    printf (OUT " * ClassInfo Structure For Table".$Extname."Row.\n");
+    printf (OUT " * ClassInfo Structure For Table".$ExtnameClean."Row.\n");
     printf (OUT " * Contains class name, a pointer to any parent class\n");
     printf (OUT " * (NULL if none) and function pointers.\n");
     printf (OUT " */\n");
     printf (OUT "typedef struct  {\n");
-    printf (OUT "\#include \"ObitTable".$Extname."RowClassDef.h\"\n");
-    printf (OUT "} ObitTable".$Extname."RowClassInfo; \n");
-    printf (OUT "\#endif /* OBITTABLE".$Extname."_H */ \n");
+    printf (OUT "\#include \"ObitTable".$ExtnameClean."RowClassDef.h\"\n");
+    printf (OUT "} ObitTable".$ExtnameClean."RowClassInfo; \n");
+    printf (OUT "\#endif /* OBITTABLE".$ExtnameClean."_H */ \n");
 } # end WriteHeader
 
 # Write Copyright
@@ -949,26 +952,26 @@ sub Copyright {
 
 # Write preamble to source file
 sub WritePreamble {
-    printf (OUT "\#include \"ObitTable".$Extname.".h\"\n");
+    printf (OUT "\#include \"ObitTable".$ExtnameClean.".h\"\n");
     printf (OUT "\#include \"ObitTableList.h\"\n");
     printf (OUT "\#include \"ObitData.h\"\n");
     printf (OUT "\n");
     printf (OUT "/*----------------Obit:  Merx mollis mortibus nuper ------------------*/\n");
     printf (OUT "/**\n");
-    printf (OUT " * \x5cfile ObitTable".$Extname.".c\n");
-    printf (OUT " * ObitTable".$Extname." class function definitions.\n");
+    printf (OUT " * \x5cfile ObitTable".$ExtnameClean.".c\n");
+    printf (OUT " * ObitTable".$ExtnameClean." class function definitions.\n");
     printf (OUT " *\n");
     printf (OUT " * This class is derived from the \#ObitTable class.\n");
     printf (OUT " */\n");
     printf (OUT "\n");
     printf (OUT "/** name of the class defined in this file */\n");
-    printf (OUT "static gchar *myClassName = \"ObitTable".$Extname."\";\n");
+    printf (OUT "static gchar *myClassName = \"ObitTable".$ExtnameClean."\";\n");
     printf (OUT "\n");
     printf (OUT "/**  Function to obtain parent Table ClassInfo - ObitTable */\n");
     printf (OUT "static ObitGetClassFP ObitParentGetClass = ObitTableGetClass;\n");
     printf (OUT "\n");
     printf (OUT "/** name of the Row class defined in this file */\n");
-    printf (OUT "static gchar *myRowClassName = \"ObitTable".$Extname."Row\";\n");
+    printf (OUT "static gchar *myRowClassName = \"ObitTable".$ExtnameClean."Row\";\n");
     printf (OUT "\n");
     printf (OUT "/**  Function to obtain parent TableRow ClassInfo */\n");
     printf (OUT "static ObitGetClassFP ObitParentGetRowClass = ObitTableRowGetClass;\n");
@@ -979,39 +982,39 @@ sub WritePreamble {
     printf (OUT " * ClassInfo structure ObitTableClassInfo.\n");
     printf (OUT " * This structure is used by class objects to access class functions.\n");
     printf (OUT " */\n");
-    printf (OUT "static ObitTable".$Extname."RowClassInfo myRowClassInfo = {FALSE};\n");
+    printf (OUT "static ObitTable".$ExtnameClean."RowClassInfo myRowClassInfo = {FALSE};\n");
     printf (OUT "\n");
     printf (OUT "/*------------------  Table  ------------------------*/\n");
     printf (OUT "/**\n");
-    printf (OUT " * ClassInfo structure ObitTable".$Extname."ClassInfo.\n");
+    printf (OUT " * ClassInfo structure ObitTable".$ExtnameClean."ClassInfo.\n");
     printf (OUT " * This structure is used by class objects to access class functions.\n");
     printf (OUT " */\n");
-    printf (OUT "static ObitTable".$Extname."ClassInfo myClassInfo = {FALSE};\n");
+    printf (OUT "static ObitTable".$ExtnameClean."ClassInfo myClassInfo = {FALSE};\n");
     printf (OUT "\n");
     printf (OUT "/*---------------Private function prototypes----------------*/\n");
     printf (OUT "/** Private: Initialize newly instantiated Row object. */\n");
-    printf (OUT "void  ObitTable".$Extname."RowInit  (gpointer in);\n");
+    printf (OUT "void  ObitTable".$ExtnameClean."RowInit  (gpointer in);\n");
     printf (OUT "\n");
     printf (OUT "/** Private: Deallocate Row members. */\n");
-    printf (OUT "void  ObitTable".$Extname."RowClear (gpointer in);\n");
+    printf (OUT "void  ObitTable".$ExtnameClean."RowClear (gpointer in);\n");
     printf (OUT "\n");
     printf (OUT "/** Private: Initialize newly instantiated object. */\n");
-    printf (OUT "void  ObitTable".$Extname."Init  (gpointer in);\n");
+    printf (OUT "void  ObitTable".$ExtnameClean."Init  (gpointer in);\n");
     printf (OUT "\n");
     printf (OUT "/** Private: Deallocate members. */\n");
-    printf (OUT "void  ObitTable".$Extname."Clear (gpointer in);\n");
+    printf (OUT "void  ObitTable".$ExtnameClean."Clear (gpointer in);\n");
     printf (OUT "\n");
     printf (OUT "/** Private: update table specific info */\n");
-    printf (OUT "static void ObitTable".$Extname."Update (ObitTable".$Extname." *in, ObitErr *err);\n");
+    printf (OUT "static void ObitTable".$ExtnameClean."Update (ObitTable".$ExtnameClean." *in, ObitErr *err);\n");
     printf (OUT "\n");
     printf (OUT "/** Private: copy table keywords to descriptor info list */\n");
-    printf (OUT "static void ObitTable".$Extname."DumpKey (ObitTable".$Extname." *in, ObitErr *err);\n");
+    printf (OUT "static void ObitTable".$ExtnameClean."DumpKey (ObitTable".$ExtnameClean." *in, ObitErr *err);\n");
     printf (OUT "\n");
     printf (OUT "/** Private: Set Class function pointers */\n");
-    printf (OUT "static void ObitTable".$Extname."ClassInfoDefFn (gpointer inClass);\n");
+    printf (OUT "static void ObitTable".$ExtnameClean."ClassInfoDefFn (gpointer inClass);\n");
     printf (OUT "\n");
     printf (OUT "/** Private: Set Row Class function pointers */\n");
-    printf (OUT "static void ObitTable".$Extname."RowClassInfoDefFn (gpointer inClass);\n");
+    printf (OUT "static void ObitTable".$ExtnameClean."RowClassInfoDefFn (gpointer inClass);\n");
     printf (OUT "/*----------------------Public functions---------------------------*/\n");
     printf (OUT "\n");
     printf (OUT "/*------------------  Table Row ------------------------*/\n");
@@ -1025,9 +1028,9 @@ sub WriteTableRow {
     printf (OUT " * \x5cparam name An optional name for the object.\n");
     printf (OUT " * \x5creturn the new object.\n");
     printf (OUT " */\n");
-    printf (OUT "ObitTable".$Extname."Row* newObitTable".$Extname."Row (ObitTable".$Extname." *table)\n");
+    printf (OUT "ObitTable".$ExtnameClean."Row* newObitTable".$ExtnameClean."Row (ObitTable".$ExtnameClean." *table)\n");
     printf (OUT "{\n");
-    printf (OUT "  ObitTable".$Extname."Row* out;\n");
+    printf (OUT "  ObitTable".$ExtnameClean."Row* out;\n");
     printf (OUT "  odouble   *dRow;\n");
     printf (OUT "  oint      *iRow;\n");
     printf (OUT "  gshort    *siRow;\n");
@@ -1037,19 +1040,19 @@ sub WriteTableRow {
     printf (OUT "  guint8    *bRow;\n");
     printf (OUT "\n");
     printf (OUT "  /* Class initialization if needed */\n");
-    printf (OUT "  if (!myRowClassInfo.initialized) ObitTable".$Extname."RowClassInit();\n");
+    printf (OUT "  if (!myRowClassInfo.initialized) ObitTable".$ExtnameClean."RowClassInit();\n");
     printf (OUT "\n");
     printf (OUT "  /* allocate/init structure */\n");
-    printf (OUT "  out = g_malloc0(sizeof(ObitTable".$Extname."Row));\n");
+    printf (OUT "  out = g_malloc0(sizeof(ObitTable".$ExtnameClean."Row));\n");
     printf (OUT "\n");
     printf (OUT "  /* initialize values */\n");
-    printf (OUT "  out->name = g_strdup(\"Table".$Extname." Row\");\n");
+    printf (OUT "  out->name = g_strdup(\"Table".$ExtnameClean." Row\");\n");
     printf (OUT "\n");
     printf (OUT "  /* set ClassInfo */\n");
     printf (OUT "  out->ClassInfo = (gpointer)&myRowClassInfo;\n");
     printf (OUT "\n");
     printf (OUT "  /* initialize other stuff */\n");
-    printf (OUT "  ObitTable".$Extname."RowInit((gpointer)out);\n");
+    printf (OUT "  ObitTable".$ExtnameClean."RowInit((gpointer)out);\n");
     printf (OUT "  out->myTable   = (ObitTable*)ObitTableRef((ObitTable*)table);\n");
     printf (OUT "\n");
     printf (OUT "  /* If writing attach to buffer */\n");
@@ -1110,18 +1113,18 @@ sub WriteTableRow {
     printf (OUT "  } /* end attaching row to table buffer */\n");
     printf (OUT "\n");
     printf (OUT " return out;\n");
-    printf (OUT "} /* end newObitTable".$Extname."Row */\n");
+    printf (OUT "} /* end newObitTable".$ExtnameClean."Row */\n");
     printf (OUT "\n");
     printf (OUT "/**\n");
     printf (OUT " * Returns ClassInfo pointer for the Row class.\n");
     printf (OUT " * \x5creturn pointer to the Row class structure.\n");
     printf (OUT " */\n");
-    printf (OUT "gconstpointer ObitTable".$Extname."RowGetClass (void)\n");
+    printf (OUT "gconstpointer ObitTable".$ExtnameClean."RowGetClass (void)\n");
     printf (OUT "{\n");
     printf (OUT "  /* Class initialization if needed */\n");
-    printf (OUT "  if (!myRowClassInfo.initialized) ObitTable".$Extname."RowClassInit();\n");
+    printf (OUT "  if (!myRowClassInfo.initialized) ObitTable".$ExtnameClean."RowClassInit();\n");
     printf (OUT "  return (gconstpointer)&myRowClassInfo;\n");
-    printf (OUT "} /* end ObitTable".$Extname."RowGetClass */\n");
+    printf (OUT "} /* end ObitTable".$ExtnameClean."RowGetClass */\n");
     printf (OUT "\n");
 } # End WriteTableRow
 
@@ -1134,15 +1137,15 @@ sub WriteConstructor {
     printf (OUT " * \x5cparam name An optional name for the object.\n");
     printf (OUT " * \x5creturn the new object.\n");
     printf (OUT " */\n");
-    printf (OUT "ObitTable".$Extname."* newObitTable".$Extname." (gchar* name)\n");
+    printf (OUT "ObitTable".$ExtnameClean."* newObitTable".$ExtnameClean." (gchar* name)\n");
     printf (OUT "{\n");
-    printf (OUT "  ObitTable".$Extname."* out;\n");
+    printf (OUT "  ObitTable".$ExtnameClean."* out;\n");
     printf (OUT "\n");
     printf (OUT "  /* Class initialization if needed */\n");
-    printf (OUT "  if (!myClassInfo.initialized) ObitTable".$Extname."ClassInit();\n");
+    printf (OUT "  if (!myClassInfo.initialized) ObitTable".$ExtnameClean."ClassInit();\n");
     printf (OUT "\n");
     printf (OUT "  /* allocate/init structure */\n");
-    printf (OUT "  out = g_malloc0(sizeof(ObitTable".$Extname."));\n");
+    printf (OUT "  out = g_malloc0(sizeof(ObitTable".$ExtnameClean."));\n");
     printf (OUT "\n");
     printf (OUT "  /* initialize values */\n");
     printf (OUT "  if (name!=NULL) out->name = g_strdup(name);\n");
@@ -1152,22 +1155,22 @@ sub WriteConstructor {
     printf (OUT "  out->ClassInfo = (gpointer)&myClassInfo;\n");
     printf (OUT "\n");
     printf (OUT "  /* initialize other stuff */\n");
-    printf (OUT "  ObitTable".$Extname."Init((gpointer)out);\n");
+    printf (OUT "  ObitTable".$ExtnameClean."Init((gpointer)out);\n");
     printf (OUT "\n");
     printf (OUT " return out;\n");
-    printf (OUT "} /* end newObitTable".$Extname." */\n");
+    printf (OUT "} /* end newObitTable".$ExtnameClean." */\n");
     printf (OUT "\n");
     printf (OUT "/**\n");
     printf (OUT " * Returns ClassInfo pointer for the class.\n");
     printf (OUT " * \x5creturn pointer to the class structure.\n");
     printf (OUT " */\n");
-    printf (OUT "gconstpointer ObitTable".$Extname."GetClass (void)\n");
+    printf (OUT "gconstpointer ObitTable".$ExtnameClean."GetClass (void)\n");
     printf (OUT "{\n");
     printf (OUT "  /* Class initialization if needed */\n");
-    printf (OUT "  if (!myClassInfo.initialized) ObitTable".$Extname."ClassInit();\n");
+    printf (OUT "  if (!myClassInfo.initialized) ObitTable".$ExtnameClean."ClassInit();\n");
     printf (OUT "\n");
     printf (OUT "  return (gconstpointer)&myClassInfo;\n");
-    printf (OUT "} /* end Obit".$Extname."GetClass */\n");
+    printf (OUT "} /* end Obit".$ExtnameClean."GetClass */\n");
     printf (OUT "\n");
     printf (OUT "/**\n");
     printf (OUT " * Constructor from values.\n");
@@ -1189,7 +1192,7 @@ sub WriteConstructor {
     printf (OUT " * \x5cparam err Error stack, returns if not empty.\n");
     printf (OUT " * \x5creturn the new object, NULL on failure.\n");
     printf (OUT " */\n");
-    printf (OUT "ObitTable".$Extname."* newObitTable".$Extname."Value (gchar* name, ObitData *file, olong *ver,\n");
+    printf (OUT "ObitTable".$ExtnameClean."* newObitTable".$ExtnameClean."Value (gchar* name, ObitData *file, olong *ver,\n");
 printf (OUT " 	                    ObitIOAccess access,\n");
 
     # Add structural keywords to call sequence
@@ -1203,7 +1206,7 @@ printf (OUT " 	                    ObitIOAccess access,\n");
     printf (OUT "  $temp\n");
     printf (OUT "		     ObitErr *err)\n");
     printf (OUT "{\n");
-    printf (OUT "  ObitTable".$Extname."* out=NULL;\n");
+    printf (OUT "  ObitTable".$ExtnameClean."* out=NULL;\n");
     printf (OUT "  ObitTable *testTab=NULL;\n");
     printf (OUT "  ObitTableDesc *desc=NULL;\n");
     printf (OUT "  ObitTableList *list=NULL;\n");
@@ -1212,12 +1215,12 @@ printf (OUT " 	                    ObitIOAccess access,\n");
     printf (OUT "  olong colNo, i, ncol, highVer;\n");
     printf (OUT "  ObitIOCode retCode;\n");
     # Drop any "IDI_" prefix
-    if ($Extname=~"IDI_") {
+    if ($ExtnameClean=~"IDI_") {
 	printf (OUT "  gchar *tabType = \"".$ExtType.substr($Extname,4)."\";\n");
     } else {
 	printf (OUT "  gchar *tabType = \"".$ExtType.$Extname."\";\n");
     }
-    printf (OUT "  gchar *routine = \"newObitTable".$Extname."Value\";\n");
+    printf (OUT "  gchar *routine = \"newObitTable".$ExtnameClean."Value\";\n");
     printf (OUT "\n");
     printf (OUT " /* error checks */\n");
     printf (OUT "  g_assert(ObitErrIsA(err));\n");
@@ -1225,7 +1228,7 @@ printf (OUT " 	                    ObitIOAccess access,\n");
     printf (OUT "  g_assert (ObitDataIsA(file));\n");
     printf (OUT "\n");
     printf (OUT "  /* Class initialization if needed */\n");
-    printf (OUT "  if (!myClassInfo.initialized) ObitTable".$Extname."ClassInit();\n");
+    printf (OUT "  if (!myClassInfo.initialized) ObitTable".$ExtnameClean."ClassInit();\n");
     printf (OUT "\n");
     printf (OUT "  /* Check if the table already exists */\n");
     printf (OUT "  /* Get TableList */\n");
@@ -1235,7 +1238,7 @@ printf (OUT " 	                    ObitIOAccess access,\n");
     printf (OUT "  /* Get highest version number if not specified */\n");
     printf (OUT "  if (*ver==0) { \n");
     # Drop any "IDI_" prefix
-    if ($Extname=~"IDI_") {
+    if ($ExtnameClean=~"IDI_") {
 	 printf (OUT "    highVer = ObitTableListGetHigh (list, \"".$ExtType.substr($Extname,4)."\");\n");
      } else {
 	 printf (OUT "    highVer = ObitTableListGetHigh (list, \"".$ExtType.$Extname."\");\n");
@@ -1253,11 +1256,11 @@ printf (OUT " 	                    ObitIOAccess access,\n");
     printf (OUT "  \n");
     printf (OUT "    /* if readonly, it must exist to proceed */\n");
     printf (OUT "    if ((access==OBIT_IO_ReadOnly) && !exist) return out;\n");
-    printf (OUT "    if (testTab!=NULL) { /* it exists, use it if is an ObitTable".$Extname." */\n");
-    printf (OUT "      if (ObitTable".$Extname."IsA(testTab)) { /* it is an ObitTable".$Extname." */\n");
+    printf (OUT "    if (testTab!=NULL) { /* it exists, use it if is an ObitTable".$ExtnameClean." */\n");
+    printf (OUT "      if (ObitTable".$ExtnameClean."IsA(testTab)) { /* it is an ObitTable".$ExtnameClean." */\n");
     printf (OUT "	out = ObitTableRef(testTab);\n");
     printf (OUT "      } else { /* needs conversion */\n");
-    printf (OUT " 	out = ObitTable".$Extname."Convert(testTab);\n");
+    printf (OUT " 	out = ObitTable".$ExtnameClean."Convert(testTab);\n");
     printf (OUT "	/* Update the TableList */\n");
     printf (OUT "	ObitTableListPut(list, tabType, ver, (ObitTable*)out, err);\n");
     printf (OUT "	if (err->error) /* add traceback,return */\n");
@@ -1285,10 +1288,10 @@ printf (OUT " 	                    ObitIOAccess access,\n");
     printf (OUT "  if (err->error) Obit_traceback_val (err, routine,\"\", out);\n");
     printf (OUT "  \n");
     printf (OUT "  /* likely need to convert */\n");
-    printf (OUT "  if (ObitTable".$Extname."IsA(testTab)) { \n");
+    printf (OUT "  if (ObitTable".$ExtnameClean."IsA(testTab)) { \n");
     printf (OUT "    out = ObitTableRef(testTab);\n");
     printf (OUT "  } else { /* needs conversion */\n");
-    printf (OUT "    out = ObitTable".$Extname."Convert(testTab);\n");
+    printf (OUT "    out = ObitTable".$ExtnameClean."Convert(testTab);\n");
     printf (OUT "  }\n");
     printf (OUT "  testTab = ObitTableUnref(testTab); /* remove reference */\n");
     printf (OUT "\n");
@@ -1317,7 +1320,7 @@ printf (OUT " 	                    ObitIOAccess access,\n");
 	    # Strings aways different
 	    if ($KeyType[$k] eq "A") {
 		# String
-		printf (OUT "  strncpy (out->$KeyName[$k], $KeyDefV[$k], MAXKEYCHARTABLE$Extname );\n");
+		printf (OUT "  strncpy (out->$KeyName[$k], $KeyDefV[$k], MAXKEYCHARTABLE$ExtnameClean );\n");
 	    } else {
 		# Numeric/boolean
 		printf (OUT "  out->$KeyName[$k] = $KeyDefV[$k];\n");
@@ -1490,17 +1493,17 @@ printf (OUT " 	                    ObitIOAccess access,\n");
     printf (OUT "  desc->nfield = colNo + 1;\n");
     printf (OUT "\n");
     printf (OUT "  /* initialize descriptor keywords */\n");
-    printf (OUT "  ObitTable".$Extname."DumpKey (out, err);\n");
+    printf (OUT "  ObitTable".$ExtnameClean."DumpKey (out, err);\n");
     printf (OUT " \n");
     printf (OUT "  /* index table descriptor */\n");
     printf (OUT "  ObitTableDescIndex (desc);\n");
     printf (OUT "\n");
     printf (OUT "  /* Open and Close to fully instantiate */\n");
-    printf (OUT "  retCode = ObitTable".$Extname."Open(out, OBIT_IO_WriteOnly, err);\n");
+    printf (OUT "  retCode = ObitTable".$ExtnameClean."Open(out, OBIT_IO_WriteOnly, err);\n");
     printf (OUT "  if ((retCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */\n");
     printf (OUT "    Obit_traceback_val (err, routine, out->name, out);    \n");
     printf (OUT "  \n");
-    printf (OUT "  retCode = ObitTable".$Extname."Close(out, err);\n");
+    printf (OUT "  retCode = ObitTable".$ExtnameClean."Close(out, err);\n");
     printf (OUT "  if ((retCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */\n");
     printf (OUT "    Obit_traceback_val (err, routine, out->name, out); \n");
     printf (OUT "\n");
@@ -1510,7 +1513,7 @@ printf (OUT " 	                    ObitIOAccess access,\n");
     printf (OUT "    Obit_traceback_val (err, routine, out->name, out); \n");
     printf (OUT "  \n");
     printf (OUT " return out;\n");
-    printf (OUT "} /* end newObitTable".$Extname."Value */\n");
+    printf (OUT "} /* end newObitTable".$ExtnameClean."Value */\n");
     printf (OUT "\n");
 } # end WriteConstructor
 
@@ -1518,21 +1521,21 @@ printf (OUT " 	                    ObitIOAccess access,\n");
 sub WriteCopy {
     local $k;
     printf (OUT "/**\n");
-    printf (OUT " * Convert an ObitTable to an ObitTable".$Extname.".\n");
+    printf (OUT " * Convert an ObitTable to an ObitTable".$ExtnameClean.".\n");
     printf (OUT " * New object will have references to members of in.\n");
     printf (OUT " * \x5cparam in  The object to copy, will still exist afterwards \n");
     printf (OUT " *            and should be Unrefed if not needed.\n");
     printf (OUT " * \x5creturn pointer to the new object.\n");
     printf (OUT " */\n");
-    printf (OUT "ObitTable".$Extname."* ObitTable".$Extname."Convert (ObitTable* in)\n");
+    printf (OUT "ObitTable".$ExtnameClean."* ObitTable".$ExtnameClean."Convert (ObitTable* in)\n");
     printf (OUT "{\n");
-    printf (OUT "  ObitTable".$Extname." *out;\n");
+    printf (OUT "  ObitTable".$ExtnameClean." *out;\n");
     printf (OUT "\n");
     printf (OUT "  /* error check */\n");
     printf (OUT "  g_assert(ObitTableIsA(in));\n");
     printf (OUT "\n");
     printf (OUT "  /* create basic object */\n");
-    printf (OUT "  out = newObitTable".$Extname."(in->name);\n");
+    printf (OUT "  out = newObitTable".$ExtnameClean."(in->name);\n");
     printf (OUT "\n");
     printf (OUT "  /* Delete structures on new */\n");
     printf (OUT "  out->info   = ObitInfoListUnref(out->info);\n");
@@ -1554,7 +1557,7 @@ sub WriteCopy {
     printf (OUT " out->myHost  = in->myHost;\n");
     printf (OUT "\n");
     printf (OUT "  return out;\n");
-    printf (OUT "} /* end ObitTable".$Extname."Convert */\n");
+    printf (OUT "} /* end ObitTable".$ExtnameClean."Convert */\n");
     printf (OUT "\n");
     printf (OUT "\n");
     printf (OUT "/**\n");
@@ -1574,12 +1577,12 @@ sub WriteCopy {
     printf (OUT " * \x5cparam err Error stack, returns if not empty.\n");
     printf (OUT " * \x5creturn pointer to the new object.\n");
     printf (OUT " */\n");
-    printf (OUT "ObitTable".$Extname."* ObitTable".$Extname."Copy (ObitTable".$Extname." *in, ObitTable".$Extname." *out, ObitErr *err)\n");
+    printf (OUT "ObitTable".$ExtnameClean."* ObitTable".$ExtnameClean."Copy (ObitTable".$ExtnameClean." *in, ObitTable".$ExtnameClean." *out, ObitErr *err)\n");
     printf (OUT "{\n");
-    printf (OUT "  gchar *routine = \"ObitTable".$Extname."Copy\";\n");
+    printf (OUT "  gchar *routine = \"ObitTable".$ExtnameClean."Copy\";\n");
     printf (OUT "\n");
     printf (OUT "  /* Class initialization if needed */\n");
-    printf (OUT "  if (!myClassInfo.initialized) ObitTable".$Extname."ClassInit();\n");
+    printf (OUT "  if (!myClassInfo.initialized) ObitTable".$ExtnameClean."ClassInit();\n");
     printf (OUT "\n");
     printf (OUT " /* error checks */\n");
     printf (OUT "  g_assert(ObitErrIsA(err));\n");
@@ -1588,7 +1591,7 @@ sub WriteCopy {
     printf (OUT "  if (out) g_assert (ObitIsA(out, &myClassInfo));\n");
     printf (OUT "\n");
     printf (OUT "  /* Use parent class to copy */\n");
-    printf (OUT "  out = (ObitTable".$Extname."*)ObitTableCopy ((ObitTable*)in, (ObitTable*)out, err);\n");
+    printf (OUT "  out = (ObitTable".$ExtnameClean."*)ObitTableCopy ((ObitTable*)in, (ObitTable*)out, err);\n");
     printf (OUT "  if (err->error) /* add traceback,return */\n");
     printf (OUT "    Obit_traceback_val (err, routine,in->name, out);\n");
     printf (OUT "\n");
@@ -1597,17 +1600,17 @@ sub WriteCopy {
     # Copy keywords
     for ($k=0; $k<$NumKey; $k++) {
 	if ($KeyType[$k] eq "A") { # Strings more difficult
-	    printf (OUT "  strncpy (out->$KeyName[$k], in->$KeyName[$k], MAXKEYCHARTABLE$Extname );\n");
+	    printf (OUT "  strncpy (out->$KeyName[$k], in->$KeyName[$k], MAXKEYCHARTABLE$ExtnameClean );\n");
 	} else {
 	    printf (OUT "  out->$KeyName[$k] = in->$KeyName[$k];\n");
 	}
     }
 
     printf (OUT "  /* Update class specific info */\n");
-    printf (OUT "  ObitTable".$Extname."Update (out, err);\n");
+    printf (OUT "  ObitTable".$ExtnameClean."Update (out, err);\n");
     printf (OUT "    \n");
     printf (OUT "  return out;\n");
-    printf (OUT "} /* end ObitTable".$Extname."Copy */\n");
+    printf (OUT "} /* end ObitTable".$ExtnameClean."Copy */\n");
     printf (OUT "\n");
 } # end WriteCopy
 
@@ -1641,16 +1644,16 @@ sub WriteOpen {
     printf (OUT " * \x5cparam err ObitErr for reporting errors.\n");
     printf (OUT " * \x5creturn return code, OBIT_IO_OK=> OK\n");
     printf (OUT " */\n");
-    printf (OUT "ObitIOCode ObitTable".$Extname."Open (ObitTable".$Extname." *in, ObitIOAccess access, \n");
+    printf (OUT "ObitIOCode ObitTable".$ExtnameClean."Open (ObitTable".$ExtnameClean." *in, ObitIOAccess access, \n");
     printf (OUT "			  ObitErr *err)\n");
     printf (OUT "{\n");
     printf (OUT "  ObitIOCode retCode = OBIT_IO_SpecErr;\n");
     printf (OUT "  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};\n");
     printf (OUT "  olong nRowPIO;\n");
-    printf (OUT "  gchar *routine = \"ObitTable".$Extname."Open\";\n");
+    printf (OUT "  gchar *routine = \"ObitTable".$ExtnameClean."Open\";\n");
     printf (OUT "\n");
     printf (OUT "  /* Class initialization if needed */\n");
-    printf (OUT "  if (!myClassInfo.initialized) ObitTable".$Extname."ClassInit();\n");
+    printf (OUT "  if (!myClassInfo.initialized) ObitTable".$ExtnameClean."ClassInit();\n");
     printf (OUT "\n");
     printf (OUT "  /* error checks */\n");
     printf (OUT "  g_assert (ObitErrIsA(err));\n");
@@ -1669,10 +1672,10 @@ sub WriteOpen {
     printf (OUT "     Obit_traceback_val (err, routine, in->name, retCode);\n");
     printf (OUT "   \n");
     printf (OUT "   /* Update class specific info */\n");
-    printf (OUT "   ObitTable".$Extname."Update (in, err);\n");
+    printf (OUT "   ObitTable".$ExtnameClean."Update (in, err);\n");
     printf (OUT "   \n");
     printf (OUT "   return retCode;\n");
-    printf (OUT "} /* end ObitTable".$Extname."Open */\n");
+    printf (OUT "} /* end ObitTable".$ExtnameClean."Open */\n");
     printf (OUT "\n");
 } # end WriteOpen
 
@@ -1683,13 +1686,13 @@ sub WriteReadRow {
     printf (OUT " * Scalar values are copied but for array values, pointers \n");
     printf (OUT " * into the data array are returned.\n");
     printf (OUT " * \x5cparam in       Table to read\n");
-    printf (OUT " * \x5cparam i".$Extname."Row   Row number, -1 -> next\n");
+    printf (OUT " * \x5cparam i".$ExtnameClean."Row   Row number, -1 -> next\n");
     printf (OUT " * \x5cparam row      Table Row structure to receive data\n");
     printf (OUT " * \x5cparam err ObitErr for reporting errors.\n");
     printf (OUT " * \x5creturn return code, OBIT_IO_OK=> OK\n");
     printf (OUT " */\n");
     printf (OUT "ObitIOCode \n");
-    printf (OUT "ObitTable".$Extname."ReadRow  (ObitTable".$Extname." *in, olong i".$Extname."Row, ObitTable".$Extname."Row *row,\n");
+    printf (OUT "ObitTable".$ExtnameClean."ReadRow  (ObitTable".$ExtnameClean." *in, olong i".$ExtnameClean."Row, ObitTable".$ExtnameClean."Row *row,\n");
     printf (OUT "		     ObitErr *err)\n");
     printf (OUT "{\n");
     printf (OUT "  ObitIOCode retCode = OBIT_IO_SpecErr;\n");
@@ -1700,7 +1703,7 @@ sub WriteReadRow {
     printf (OUT "  gchar     *cRow;\n");
     printf (OUT "  gboolean  *lRow;\n");
     printf (OUT "  guint8    *bRow;\n");
-    printf (OUT "  gchar *routine = \"ObitTable".$Extname."ReadRow\";\n");
+    printf (OUT "  gchar *routine = \"ObitTable".$ExtnameClean."ReadRow\";\n");
     printf (OUT "  \n");
     printf (OUT "  /* error checks */\n");
     printf (OUT "  g_assert (ObitErrIsA(err));\n");
@@ -1709,12 +1712,12 @@ sub WriteReadRow {
     printf (OUT "\n");
     printf (OUT "  if (in->myStatus == OBIT_Inactive) {\n");
     printf (OUT "    Obit_log_error(err, OBIT_Error,\n");
-    printf (OUT "		   \"".$ExtType.$Extname." Table is inactive for  %%s \", in->name);\n");
+    printf (OUT "		   \"".$ExtType.$ExtnameClean." Table is inactive for  %%s \", in->name);\n");
     printf (OUT "    return retCode;\n");
     printf (OUT " }\n");
     printf (OUT "\n");
-    printf (OUT "  /* read row i".$Extname."Row */\n");
-    printf (OUT "  retCode = ObitTableRead ((ObitTable*)in, i".$Extname."Row, NULL,  err);\n");
+    printf (OUT "  /* read row i".$ExtnameClean."Row */\n");
+    printf (OUT "  retCode = ObitTableRead ((ObitTable*)in, i".$ExtnameClean."Row, NULL,  err);\n");
     printf (OUT "  if (err->error) \n");
     printf (OUT "    Obit_traceback_val (err, routine, in->name, retCode);\n");
     printf (OUT "\n");
@@ -1783,7 +1786,7 @@ sub WriteReadRow {
     printf (OUT "  row->status = iRow[in->myDesc->statusOff];\n");
     printf (OUT "\n");
     printf (OUT "  return retCode;\n");
-    printf (OUT "} /*  end ObitTable".$Extname."ReadRow */\n");
+    printf (OUT "} /*  end ObitTable".$ExtnameClean."ReadRow */\n");
     printf (OUT "\n");
 } # end WriteReadRow
 
@@ -1801,7 +1804,7 @@ sub WriteSetRow {
     printf (OUT " * \x5cparam err ObitErr for reporting errors.\n");
     printf (OUT " */\n");
     printf (OUT "void \n");
-    printf (OUT "ObitTable".$Extname."SetRow  (ObitTable".$Extname." *in, ObitTable".$Extname."Row *row,\n");
+    printf (OUT "ObitTable".$ExtnameClean."SetRow  (ObitTable".$ExtnameClean." *in, ObitTable".$ExtnameClean."Row *row,\n");
     printf (OUT "		     ObitErr *err)\n");
     printf (OUT "{\n");
     printf (OUT "  odouble   *dRow;\n");
@@ -1820,7 +1823,7 @@ sub WriteSetRow {
     printf (OUT "\n");
     printf (OUT "  if (in->myStatus == OBIT_Inactive) {\n");
     printf (OUT "    Obit_log_error(err, OBIT_Error,\n");
-    printf (OUT "		   \"".$Extname." Table is inactive for  %%s \", in->name);\n");
+    printf (OUT "		   \"".$ExtnameClean." Table is inactive for  %%s \", in->name);\n");
     printf (OUT "    return;\n");
     printf (OUT " }\n");
     printf (OUT "\n");
@@ -1877,7 +1880,7 @@ sub WriteSetRow {
 	}
     } # end loop over keywords
     printf (OUT "\n");
-    printf (OUT "} /*  end ObitTable".$Extname."SetRow */\n");
+    printf (OUT "} /*  end ObitTable".$ExtnameClean."SetRow */\n");
     printf (OUT "\n");
 } # end WriteSetRow
 
@@ -1889,15 +1892,15 @@ sub WriteWriteRow {
     printf (OUT " * Before calling this routine, the row structure needs to be initialized\n");
     printf (OUT " * and filled with data. The array members of the row structure are  \n");
     printf (OUT " * pointers to independently allocated memory.  These pointers can be set to the \n");
-    printf (OUT " * correct table buffer locations using ObitTable".$Extname."SetRow  \n");
+    printf (OUT " * correct table buffer locations using ObitTable".$ExtnameClean."SetRow  \n");
     printf (OUT " * \x5cparam in       Table to read\n");
-    printf (OUT " * \x5cparam i".$Extname."Row   Row number, -1 -> next\n");
+    printf (OUT " * \x5cparam i".$ExtnameClean."Row   Row number, -1 -> next\n");
     printf (OUT " * \x5cparam row Table Row structure containing data\n");
     printf (OUT " * \x5cparam err ObitErr for reporting errors.\n");
     printf (OUT " * \x5creturn return code, OBIT_IO_OK=> OK\n");
     printf (OUT " */\n");
     printf (OUT "ObitIOCode \n");
-    printf (OUT "ObitTable".$Extname."WriteRow  (ObitTable".$Extname." *in, olong i".$Extname."Row, ObitTable".$Extname."Row *row,\n");
+    printf (OUT "ObitTable".$ExtnameClean."WriteRow  (ObitTable".$ExtnameClean." *in, olong i".$ExtnameClean."Row, ObitTable".$ExtnameClean."Row *row,\n");
     printf (OUT "		      ObitErr *err)\n");
     printf (OUT "{\n");
     printf (OUT "  ObitIOCode retCode = OBIT_IO_SpecErr;\n");
@@ -1908,7 +1911,7 @@ sub WriteWriteRow {
     printf (OUT "  gchar     *cRow;\n");
     printf (OUT "  gboolean  *lRow;\n");
     printf (OUT "  guint8    *bRow;\n");
-    printf (OUT "  gchar *routine = \"ObitTable".$Extname."WriteRow\";\n");
+    printf (OUT "  gchar *routine = \"ObitTable".$ExtnameClean."WriteRow\";\n");
     printf (OUT "  \n");
     printf (OUT "\n");
     printf (OUT "  /* error checks */\n");
@@ -1918,7 +1921,7 @@ sub WriteWriteRow {
     printf (OUT "\n");
     printf (OUT "  if (in->myStatus == OBIT_Inactive) {\n");
     printf (OUT "    Obit_log_error(err, OBIT_Error,\n");
-    printf (OUT "		   \"".$ExtType.$Extname." Table is inactive for %%s \", in->name);\n");
+    printf (OUT "		   \"".$ExtType.$ExtnameClean." Table is inactive for %%s \", in->name);\n");
     printf (OUT "    return retCode;\n");
     printf (OUT " }\n");
     printf (OUT "\n");
@@ -1997,13 +2000,13 @@ sub WriteWriteRow {
     printf (OUT "  /* Write one row */\n");
     printf (OUT "  in->myDesc->numRowBuff = 1;\n");
     printf (OUT " \n");
-    printf (OUT "  /* Write row i".$Extname."Row */\n");
-    printf (OUT "  retCode = ObitTableWrite ((ObitTable*)in, i".$Extname."Row, NULL,  err);\n");
+    printf (OUT "  /* Write row i".$ExtnameClean."Row */\n");
+    printf (OUT "  retCode = ObitTableWrite ((ObitTable*)in, i".$ExtnameClean."Row, NULL,  err);\n");
     printf (OUT "  if (err->error) \n");
     printf (OUT "    Obit_traceback_val (err, routine,in->name, retCode);\n");
     printf (OUT "\n");
     printf (OUT "  return retCode;\n");
-    printf (OUT "} /*  end ObitTable".$Extname."WriteRow */\n");
+    printf (OUT "} /*  end ObitTable".$ExtnameClean."WriteRow */\n");
     printf (OUT "\n");
     printf (OUT "/**\n");
     printf (OUT " * Shutdown I/O.\n");
@@ -2011,10 +2014,10 @@ sub WriteWriteRow {
     printf (OUT " * \x5cparam err ObitErr for reporting errors.\n");
     printf (OUT " * \x5creturn error code, OBIT_IO_OK=> OK\n");
     printf (OUT " */\n");
-    printf (OUT "ObitIOCode ObitTable".$Extname."Close (ObitTable".$Extname." *in, ObitErr *err)\n");
+    printf (OUT "ObitIOCode ObitTable".$ExtnameClean."Close (ObitTable".$ExtnameClean." *in, ObitErr *err)\n");
     printf (OUT "{\n");
     printf (OUT "  ObitIOCode retCode = OBIT_IO_SpecErr;\n");
-    printf (OUT "  gchar *routine = \"ObitTable".$Extname."Close\";\n");
+    printf (OUT "  gchar *routine = \"ObitTable".$ExtnameClean."Close\";\n");
     printf (OUT "\n");
     printf (OUT "  /* error checks */\n");
     printf (OUT "  g_assert (ObitErrIsA(err));\n");
@@ -2025,7 +2028,7 @@ sub WriteWriteRow {
     printf (OUT "\n");
     printf (OUT "  /* Update keywords on descriptor if not ReadOnly*/\n");
     printf (OUT "  if (in->myDesc->access != OBIT_IO_ReadOnly) \n");
-    printf (OUT "    ObitTable".$Extname."DumpKey (in, err);\n");
+    printf (OUT "    ObitTable".$ExtnameClean."DumpKey (in, err);\n");
     printf (OUT "  if (err->error) \n");
     printf (OUT "    Obit_traceback_val (err, routine, in->name, retCode);\n");
     printf (OUT "\n");
@@ -2035,7 +2038,7 @@ sub WriteWriteRow {
     printf (OUT "    Obit_traceback_val (err, routine, in->name, retCode);\n");
     printf (OUT "\n");
     printf (OUT "  return retCode;\n");
-    printf (OUT "} /* end ObitTable".$Extname."Close */\n");
+    printf (OUT "} /* end ObitTable".$ExtnameClean."Close */\n");
     printf (OUT "\n");
 } # end WriteWriteRow
 
@@ -2043,16 +2046,16 @@ sub WriteWriteRow {
 sub WriteTableRowPrivate {
     local $k, $temp, $TC, $want, $count, $f1, $f2, $f3, $f4, $f5, $colname;
     printf (OUT "/*---------------Private functions--------------------------*/\n");
-    printf (OUT "/*----------------  Table".$Extname." Row  ----------------------*/\n");
+    printf (OUT "/*----------------  Table".$ExtnameClean." Row  ----------------------*/\n");
     printf (OUT "/**\n");
     printf (OUT " * Creates empty member objects, initialize reference count.\n");
     printf (OUT " * Parent classes portions are (recursively) initialized first\n");
     printf (OUT " * \x5cparam inn Pointer to the object to initialize.\n");
     printf (OUT " */\n");
-    printf (OUT "void ObitTable".$Extname."RowInit  (gpointer inn)\n");
+    printf (OUT "void ObitTable".$ExtnameClean."RowInit  (gpointer inn)\n");
     printf (OUT "{\n");
     printf (OUT "  ObitClassInfo *ParentClass;\n");
-    printf (OUT "  ObitTable".$Extname."Row *in = inn;\n");
+    printf (OUT "  ObitTable".$ExtnameClean."Row *in = inn;\n");
     printf (OUT "\n");
     printf (OUT "  /* error checks */\n");
     printf (OUT "  g_assert (in != NULL);\n");
@@ -2100,19 +2103,19 @@ sub WriteTableRowPrivate {
 	}
     } # end loop over keywords
     printf (OUT "\n");
-    printf (OUT "} /* end ObitTable".$Extname."RowInit */\n");
+    printf (OUT "} /* end ObitTable".$ExtnameClean."RowInit */\n");
     printf (OUT "\n");
     printf (OUT "/**\n");
     printf (OUT " * Deallocates member objects.\n");
     printf (OUT " * Does (recursive) deallocation of parent class members.\n");
     printf (OUT " * For some reason this wasn't build into the GType class.\n");
     printf (OUT " * \x5cparam  inn Pointer to the object to deallocate.\n");
-    printf (OUT " *           Actually it should be an ObitTable".$Extname."Row* cast to an Obit*.\n");
+    printf (OUT " *           Actually it should be an ObitTable".$ExtnameClean."Row* cast to an Obit*.\n");
     printf (OUT " */\n");
-    printf (OUT "void ObitTable".$Extname."RowClear (gpointer inn)\n");
+    printf (OUT "void ObitTable".$ExtnameClean."RowClear (gpointer inn)\n");
     printf (OUT "{\n");
     printf (OUT "  ObitClassInfo *ParentClass;\n");
-    printf (OUT "  ObitTable".$Extname."Row *in = inn;\n");
+    printf (OUT "  ObitTable".$ExtnameClean."Row *in = inn;\n");
     printf (OUT "\n");
     printf (OUT "  /* error checks */\n");
     printf (OUT "  g_assert (ObitIsA(in, &myRowClassInfo));\n");
@@ -2126,13 +2129,13 @@ sub WriteTableRowPrivate {
     printf (OUT "  if ((ParentClass!=NULL) && ( ParentClass->ObitClear!=NULL)) \n");
     printf (OUT "    ParentClass->ObitClear (inn);\n");
     printf (OUT "  \n");
-    printf (OUT "} /* end ObitTable".$Extname."RowClear */\n");
+    printf (OUT "} /* end ObitTable".$ExtnameClean."RowClear */\n");
     printf (OUT "\n");
 
     printf (OUT "/**\n");
     printf (OUT " * Initialize global ClassInfo Structure.\n");
     printf (OUT " */\n");
-    printf (OUT "void ObitTable".$Extname."RowClassInit (void)\n");
+    printf (OUT "void ObitTable".$ExtnameClean."RowClassInit (void)\n");
     printf (OUT "{\n");
     printf (OUT "  if (myRowClassInfo.initialized) return;  /* only once */\n");
     printf (OUT "  \n");
@@ -2141,18 +2144,18 @@ sub WriteTableRowPrivate {
     printf (OUT "  myRowClassInfo.ParentClass = ObitParentGetRowClass();\n");
     printf (OUT "\n");
     printf (OUT "  /* Set function pointers */\n");
-    printf (OUT "  ObitTable".$Extname."RowClassInfoDefFn ((gpointer)&myRowClassInfo);\n");
+    printf (OUT "  ObitTable".$ExtnameClean."RowClassInfoDefFn ((gpointer)&myRowClassInfo);\n");
     printf (OUT " \n");
     printf (OUT "  myRowClassInfo.initialized = TRUE; /* Now initialized */\n");
     printf (OUT " \n");
-    printf (OUT "} /* end ObitTable".$Extname."RowClassInit */\n");
+    printf (OUT "} /* end ObitTable".$ExtnameClean."RowClassInit */\n");
     printf (OUT "\n");
     printf (OUT "/**\n");
     printf (OUT " * Initialize global ClassInfo Function pointers.\n");
     printf (OUT " */\n");
-    printf (OUT "static void ObitTable".$Extname."RowClassInfoDefFn (gpointer inClass)\n");
+    printf (OUT "static void ObitTable".$ExtnameClean."RowClassInfoDefFn (gpointer inClass)\n");
     printf (OUT "{\n");
-    printf (OUT "  ObitTable".$Extname."RowClassInfo *theClass = (ObitTable".$Extname."RowClassInfo*)inClass;\n");
+    printf (OUT "  ObitTable".$ExtnameClean."RowClassInfo *theClass = (ObitTable".$ExtnameClean."RowClassInfo*)inClass;\n");
     printf (OUT "  ObitClassInfo *ParentClass = (ObitClassInfo*)myRowClassInfo.ParentClass;\n");
     printf (OUT "\n");
     printf (OUT "  if (theClass->initialized) return;  /* only once */\n");
@@ -2166,34 +2169,34 @@ sub WriteTableRowPrivate {
     printf (OUT "    ParentClass->ObitClassInfoDefFn(theClass);\n");
     printf (OUT "\n");
     printf (OUT "  /* function pointers defined or overloaded this class */\n");
-    printf (OUT "  theClass->ObitClassInit = (ObitClassInitFP)ObitTable".$Extname."RowClassInit;\n");
-    printf (OUT "  theClass->ObitClassInfoDefFn = (ObitClassInfoDefFnFP)ObitTable".$Extname."RowClassInfoDefFn;\n");
-    printf (OUT "  theClass->ObitGetClass  = (ObitGetClassFP)ObitTable".$Extname."RowGetClass;\n");
+    printf (OUT "  theClass->ObitClassInit = (ObitClassInitFP)ObitTable".$ExtnameClean."RowClassInit;\n");
+    printf (OUT "  theClass->ObitClassInfoDefFn = (ObitClassInfoDefFnFP)ObitTable".$ExtnameClean."RowClassInfoDefFn;\n");
+    printf (OUT "  theClass->ObitGetClass  = (ObitGetClassFP)ObitTable".$ExtnameClean."RowGetClass;\n");
     printf (OUT "  theClass->newObit         = NULL;\n");
-    printf (OUT "  theClass->newObitTableRow = (newObitTableRowFP)newObitTable".$Extname."Row;\n");
+    printf (OUT "  theClass->newObitTableRow = (newObitTableRowFP)newObitTable".$ExtnameClean."Row;\n");
     printf (OUT "  theClass->ObitCopy        = NULL;\n");
     printf (OUT "  theClass->ObitClone       = NULL;\n");
-    printf (OUT "  theClass->ObitClear       = (ObitClearFP)ObitTable".$Extname."RowClear;\n");
-    printf (OUT "  theClass->ObitInit        = (ObitInitFP)ObitTable".$Extname."RowInit;\n");
+    printf (OUT "  theClass->ObitClear       = (ObitClearFP)ObitTable".$ExtnameClean."RowClear;\n");
+    printf (OUT "  theClass->ObitInit        = (ObitInitFP)ObitTable".$ExtnameClean."RowInit;\n");
     printf (OUT "\n");
-    printf (OUT "} /* end ObitTable".$Extname."RowClassDefFn */\n");
+    printf (OUT "} /* end ObitTable".$ExtnameClean."RowClassDefFn */\n");
     printf (OUT "\n");
 } # end WriteTableRowPrivate
 
 # Write Table Private routines
 sub WriteTablePrivate {
     local $k, $temp, $TC, $want, $count, $sl, $colname;
-    printf (OUT "/*------------------  Table".$Extname."  ------------------------*/\n");
+    printf (OUT "/*------------------  Table".$ExtnameClean."  ------------------------*/\n");
     printf (OUT "\n");
     printf (OUT "/**\n");
     printf (OUT " * Creates empty member objects, initialize reference count.\n");
     printf (OUT " * Parent classes portions are (recursively) initialized first\n");
     printf (OUT " * \x5cparam inn Pointer to the object to initialize.\n");
     printf (OUT " */\n");
-    printf (OUT "void ObitTable".$Extname."Init  (gpointer inn)\n");
+    printf (OUT "void ObitTable".$ExtnameClean."Init  (gpointer inn)\n");
     printf (OUT "{\n");
     printf (OUT "  ObitClassInfo *ParentClass;\n");
-    printf (OUT "  ObitTable".$Extname." *in = inn;\n");
+    printf (OUT "  ObitTable".$ExtnameClean." *in = inn;\n");
     printf (OUT "\n");
     printf (OUT "  /* error checks */\n");
     printf (OUT "  g_assert (in != NULL);\n");
@@ -2205,19 +2208,19 @@ sub WriteTablePrivate {
     printf (OUT "\n");
     printf (OUT "  /* set members in this class */\n");
     printf (OUT "\n");
-    printf (OUT "} /* end ObitTable".$Extname."Init */\n");
+    printf (OUT "} /* end ObitTable".$ExtnameClean."Init */\n");
     printf (OUT "\n");
     printf (OUT "/**\n");
     printf (OUT " * Deallocates member objects.\n");
     printf (OUT " * Does (recursive) deallocation of parent class members.\n");
     printf (OUT " * For some reason this wasn't build into the GType class.\n");
     printf (OUT " * \x5cparam  inn Pointer to the object to deallocate.\n");
-    printf (OUT " *           Actually it should be an ObitTable".$Extname."* cast to an Obit*.\n");
+    printf (OUT " *           Actually it should be an ObitTable".$ExtnameClean."* cast to an Obit*.\n");
     printf (OUT " */\n");
-    printf (OUT "void ObitTable".$Extname."Clear (gpointer inn)\n");
+    printf (OUT "void ObitTable".$ExtnameClean."Clear (gpointer inn)\n");
     printf (OUT "{\n");
     printf (OUT "  ObitClassInfo *ParentClass;\n");
-    printf (OUT "  ObitTable".$Extname." *in = inn;\n");
+    printf (OUT "  ObitTable".$ExtnameClean." *in = inn;\n");
     printf (OUT "\n");
     printf (OUT "  /* error checks */\n");
     printf (OUT "  g_assert (ObitIsA(in, &myClassInfo));\n");
@@ -2230,13 +2233,13 @@ sub WriteTablePrivate {
     printf (OUT "  if ((ParentClass!=NULL) && ( ParentClass->ObitClear!=NULL)) \n");
     printf (OUT "    ParentClass->ObitClear (inn);\n");
     printf (OUT "  \n");
-    printf (OUT "} /* end ObitTable".$Extname."Clear */\n");
+    printf (OUT "} /* end ObitTable".$ExtnameClean."Clear */\n");
     printf (OUT "\n");
 
     printf (OUT "/**\n");
     printf (OUT " * Initialize global ClassInfo Structure.\n");
     printf (OUT " */\n");
-    printf (OUT "void ObitTable".$Extname."ClassInit (void)\n");
+    printf (OUT "void ObitTable".$ExtnameClean."ClassInit (void)\n");
     printf (OUT "{\n");
     printf (OUT "  if (myClassInfo.initialized) return;  /* only once */\n");
     printf (OUT "  \n");
@@ -2245,18 +2248,18 @@ sub WriteTablePrivate {
     printf (OUT "  myClassInfo.ParentClass = ObitParentGetClass();\n");
     printf (OUT "\n");
     printf (OUT "  /* Set function pointers */\n");
-    printf (OUT "  ObitTable".$Extname."ClassInfoDefFn ((gpointer)&myClassInfo);\n");
+    printf (OUT "  ObitTable".$ExtnameClean."ClassInfoDefFn ((gpointer)&myClassInfo);\n");
     printf (OUT " \n");
     printf (OUT "  myClassInfo.initialized = TRUE; /* Now initialized */\n");
     printf (OUT " \n");
-    printf (OUT "} /* end ObitTable".$Extname."ClassInit */\n");
+    printf (OUT "} /* end ObitTable".$ExtnameClean."ClassInit */\n");
     printf (OUT "\n");
     printf (OUT "/**\n");
     printf (OUT " * Initialize global ClassInfo Function pointers.\n");
     printf (OUT " */\n");
-    printf (OUT "static void ObitTable".$Extname."ClassInfoDefFn (gpointer inClass)\n");
+    printf (OUT "static void ObitTable".$ExtnameClean."ClassInfoDefFn (gpointer inClass)\n");
     printf (OUT "{\n");
-    printf (OUT "  ObitTable".$Extname."ClassInfo *theClass = (ObitTable".$Extname."ClassInfo*)inClass;\n");
+    printf (OUT "  ObitTable".$ExtnameClean."ClassInfo *theClass = (ObitTable".$ExtnameClean."ClassInfo*)inClass;\n");
     printf (OUT "  ObitClassInfo *ParentClass = (ObitClassInfo*)myClassInfo.ParentClass;\n");
     printf (OUT "\n");
     printf (OUT "  if (theClass->initialized) return;  /* only once */\n");
@@ -2270,34 +2273,34 @@ sub WriteTablePrivate {
     printf (OUT "    ParentClass->ObitClassInfoDefFn(theClass);\n");
     printf (OUT "\n");
     printf (OUT "  /* function pointers defined or overloaded this class */\n");
-    printf (OUT "  theClass->ObitClassInit = (ObitClassInitFP)ObitTable".$Extname."ClassInit;\n");
-    printf (OUT "  theClass->ObitClassInfoDefFn = (ObitClassInfoDefFnFP)ObitTable".$Extname."ClassInfoDefFn;\n");
-    printf (OUT "  theClass->ObitGetClass  = (ObitGetClassFP)ObitTable".$Extname."GetClass;\n");
-    printf (OUT "  theClass->newObit       = (newObitFP)newObitTable".$Extname.";\n");
-    printf (OUT "  theClass->ObitCopy      = (ObitCopyFP)ObitTable".$Extname."Copy;\n");
+    printf (OUT "  theClass->ObitClassInit = (ObitClassInitFP)ObitTable".$ExtnameClean."ClassInit;\n");
+    printf (OUT "  theClass->ObitClassInfoDefFn = (ObitClassInfoDefFnFP)ObitTable".$ExtnameClean."ClassInfoDefFn;\n");
+    printf (OUT "  theClass->ObitGetClass  = (ObitGetClassFP)ObitTable".$ExtnameClean."GetClass;\n");
+    printf (OUT "  theClass->newObit       = (newObitFP)newObitTable".$ExtnameClean.";\n");
+    printf (OUT "  theClass->ObitCopy      = (ObitCopyFP)ObitTable".$ExtnameClean."Copy;\n");
     printf (OUT "  theClass->ObitClone     = (ObitCloneFP)ObitTableClone;\n");
-    printf (OUT "  theClass->ObitClear     = (ObitClearFP)ObitTable".$Extname."Clear;\n");
-    printf (OUT "  theClass->ObitInit      = (ObitInitFP)ObitTable".$Extname."Init;\n");
-    printf (OUT "  theClass->ObitTableConvert = (ObitTableConvertFP)ObitTable".$Extname."Convert;\n");
-    printf (OUT "  theClass->ObitTableOpen    = (ObitTableOpenFP)ObitTable".$Extname."Open;\n");
-    printf (OUT "  theClass->ObitTableClose   = (ObitTableCloseFP)ObitTable".$Extname."Close;\n");
+    printf (OUT "  theClass->ObitClear     = (ObitClearFP)ObitTable".$ExtnameClean."Clear;\n");
+    printf (OUT "  theClass->ObitInit      = (ObitInitFP)ObitTable".$ExtnameClean."Init;\n");
+    printf (OUT "  theClass->ObitTableConvert = (ObitTableConvertFP)ObitTable".$ExtnameClean."Convert;\n");
+    printf (OUT "  theClass->ObitTableOpen    = (ObitTableOpenFP)ObitTable".$ExtnameClean."Open;\n");
+    printf (OUT "  theClass->ObitTableClose   = (ObitTableCloseFP)ObitTable".$ExtnameClean."Close;\n");
     printf (OUT "  theClass->ObitTableRead    = (ObitTableReadFP)ObitTableRead;\n");
     printf (OUT "  theClass->ObitTableReadSelect = \n");
     printf (OUT "    (ObitTableReadSelectFP)ObitTableReadSelect;\n");
     printf (OUT "  theClass->ObitTableWrite = (ObitTableWriteFP)ObitTableWrite;\n");
     printf (OUT "  theClass->ObitTableReadRow = \n");
-    printf (OUT "    (ObitTableReadRowFP)ObitTable".$Extname."ReadRow;\n");
+    printf (OUT "    (ObitTableReadRowFP)ObitTable".$ExtnameClean."ReadRow;\n");
     printf (OUT "  theClass->ObitTableWriteRow = \n");
-    printf (OUT "    (ObitTableWriteRowFP)ObitTable".$Extname."WriteRow;\n");
+    printf (OUT "    (ObitTableWriteRowFP)ObitTable".$ExtnameClean."WriteRow;\n");
     printf (OUT "\n");
-    printf (OUT "} /* end ObitTable".$Extname."ClassDefFn */\n");
+    printf (OUT "} /* end ObitTable".$ExtnameClean."ClassDefFn */\n");
     printf (OUT "\n");
     printf (OUT "/**\n");
     printf (OUT " * Get table specific information from the infolist or descriptor\n");
     printf (OUT " * \x5cparam info Table to update\n");
     printf (OUT " * \x5cparam err  ObitErr for reporting errors.\n");
     printf (OUT " */\n");
-    printf (OUT "static void ObitTable".$Extname."Update (ObitTable".$Extname." *in, ObitErr *err)\n");
+    printf (OUT "static void ObitTable".$ExtnameClean."Update (ObitTable".$ExtnameClean." *in, ObitErr *err)\n");
     printf (OUT "{\n");
     printf (OUT "  olong i;\n");
    if ($NumKey>0) { # any keywords?
@@ -2332,7 +2335,7 @@ sub WriteTablePrivate {
 	    #if (($KeyDefV[$k] ne "") && ($KeyType[$k] eq "J")) {
 	    if ($KeyDefV[$k] ne "")  {
 		if ($KeyType[$k] eq "A") {
-		    printf (OUT "  strncpy (in->$KeyName[$k], $KeyDefV[$k], MAXKEYCHARTABLE$Extname); \n");
+		    printf (OUT "  strncpy (in->$KeyName[$k], $KeyDefV[$k], MAXKEYCHARTABLE$ExtnameClean); \n");
 		} else {
 		    printf (OUT "  in->$KeyName[$k] = $KeyDefV[$k]; \n");
 		}
@@ -2454,7 +2457,7 @@ sub WriteTablePrivate {
 	# That which is not optional is required
 	if (($ColSuff[$k] eq "") && (index($ColComm[$k],"[OPTIONAL]")<0)) {
 	    printf (OUT "  Obit_return_if_fail((in->$ColVName[$k]Off > -1), err,\n");
-	    printf (OUT "       \"ObitTable".$Extname."Update: Could not find column ".$ColVName[$k]."\");\n");
+	    printf (OUT "       \"ObitTable".$ExtnameClean."Update: Could not find column ".$ColVName[$k]."\");\n");
 	}
     } # end loop checking if found
     # Make sure everything found - indexed columns
@@ -2480,7 +2483,7 @@ sub WriteTablePrivate {
 		    
 		    if ($want) {
 			printf (OUT "    Obit_return_if_fail((in->$colname\Off > -1), err,\n");
-			printf (OUT "       \"ObitTable".$Extname."Update: Could not find column ".$colname."\");\n");
+			printf (OUT "       \"ObitTable".$ExtnameClean."Update: Could not find column ".$colname."\");\n");
 		    }
 		} # end loop over columns
 		
@@ -2488,14 +2491,14 @@ sub WriteTablePrivate {
 	    } # end loop over indices
 	}
     } # end loop over keywords checking if found
-    printf (OUT "} /* end ObitTable".$Extname."Update */\n");
+    printf (OUT "} /* end ObitTable".$ExtnameClean."Update */\n");
     printf (OUT "\n");
     printf (OUT "/**\n");
     printf (OUT " * Copy table specific (keyword) information  to infolist.\n");
     printf (OUT " * \x5cparam info Table to update\n");
     printf (OUT " * \x5cparam err  ObitErr for reporting errors.\n");
     printf (OUT " */\n");
-    printf (OUT "static void ObitTable".$Extname."DumpKey (ObitTable".$Extname." *in, ObitErr *err)\n");
+    printf (OUT "static void ObitTable".$ExtnameClean."DumpKey (ObitTable".$ExtnameClean." *in, ObitErr *err)\n");
     printf (OUT "{\n");
     printf (OUT "  ObitInfoList *info=NULL;\n");
     if ($NumKey>0) { # any keywords?
@@ -2516,7 +2519,7 @@ sub WriteTablePrivate {
 	$TC = GetTypeCode($KeyType[$k]);
 	printf (OUT "  type  = $TC;\n");
 	if ($KeyType[$k] eq "A") { # special case for strings
-	    printf (OUT "  dim[0] = MAXKEYCHARTABLE".$Extname.";\n");
+	    printf (OUT "  dim[0] = MAXKEYCHARTABLE".$ExtnameClean.";\n");
 	} else {
 	    printf (OUT "  dim[0] = 1;\n");
 	}
@@ -2524,7 +2527,7 @@ sub WriteTablePrivate {
 	printf (OUT "		  (gpointer)&in->$KeyName[$k]);\n");
     }
     printf (OUT "   \n");
-    printf (OUT "} /* end ObitTable".$Extname."DumpKey */\n");
+    printf (OUT "} /* end ObitTable".$ExtnameClean."DumpKey */\n");
 } # end WriteTablePrivate
 
 # Write Class function definition file
@@ -2548,13 +2551,13 @@ sub WritePy {
     printf (OUT "\%{\n");
     printf (OUT "\#include \"Obit.h\"\n");
     printf (OUT "\#include \"ObitData.h\"\n");
-    printf (OUT "\#include \"ObitTable".$Extname.".h\"\n");
+    printf (OUT "\#include \"ObitTable".$ExtnameClean.".h\"\n");
     printf (OUT "\%}\n");
     printf (OUT " \n");
     printf (OUT "\%");  # Keep python from trashing this line
     printf (OUT "inline \%{\n");
     printf (OUT " \n");
-    printf (OUT "extern ObitTable* Table".$Extname." (ObitData *inData, long *tabVer,\n");
+    printf (OUT "extern ObitTable* Table".$ExtnameClean." (ObitData *inData, long *tabVer,\n");
     printf (OUT " 	                   int access,\n");
     printf (OUT " 	                   char *tabName,\n");
 
@@ -2586,7 +2589,7 @@ sub WritePy {
     printf (OUT "   laccess = OBIT_IO_ReadOnly;\n");
     printf (OUT "   if (access==2) laccess = OBIT_IO_WriteOnly;\n");
     printf (OUT "   else if (access==3) laccess = OBIT_IO_ReadWrite;\n");
-    printf (OUT "   outTable = (ObitTable*)newObitTable".$Extname."Value ((gchar*)tabName, inData, (olong*)&ltabVer,\n");
+    printf (OUT "   outTable = (ObitTable*)newObitTable".$ExtnameClean."Value ((gchar*)tabName, inData, (olong*)&ltabVer,\n");
     printf (OUT "   			   laccess, \n");
     # Add structural keywords to call sequence
     $temp = " ";
@@ -2603,9 +2606,9 @@ sub WritePy {
     printf (OUT " \n");
 
 # TableXXGetHeadKeys
-    printf (OUT "extern PyObject* Table".$Extname."GetHeadKeys (ObitTable *inTab) {\n");
+    printf (OUT "extern PyObject* Table".$ExtnameClean."GetHeadKeys (ObitTable *inTab) {\n");
     printf (OUT "  PyObject *outDict=PyDict_New();\n");
-    printf (OUT "  ObitTable".$Extname." *lTab = (ObitTable".$Extname."*)inTab;\n");
+    printf (OUT "  ObitTable".$ExtnameClean." *lTab = (ObitTable".$ExtnameClean."*)inTab;\n");
     # Do structural keywords - assume all integers
     for ($k=0; $k<$NumKey; $k++) {
 	if ($KeyRang[$k] ne "") {
@@ -2645,10 +2648,10 @@ sub WritePy {
 
 
 # TableXXSetHeadKeys
-    printf (OUT "extern void Table".$Extname."SetHeadKeys (ObitTable *inTab, PyObject *inDict) {\n");
-    printf (OUT "  ObitTable".$Extname." *lTab = (ObitTable".$Extname."*)inTab;\n");
+    printf (OUT "extern void Table".$ExtnameClean."SetHeadKeys (ObitTable *inTab, PyObject *inDict) {\n");
+    printf (OUT "  ObitTable".$ExtnameClean." *lTab = (ObitTable".$ExtnameClean."*)inTab;\n");
     printf (OUT "  char *tstr;\n");
-    printf (OUT "  int lstr=MAXKEYCHARTABLE".$Extname.";\n");
+    printf (OUT "  int lstr=MAXKEYCHARTABLE".$ExtnameClean.";\n");
     printf (OUT "\n");
     # Do nonstructural keywords only
     for ($k=0; $k<$NumKey; $k++) {
