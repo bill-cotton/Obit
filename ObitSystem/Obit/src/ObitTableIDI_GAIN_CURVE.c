@@ -401,8 +401,7 @@ ObitTableIDI_GAIN_CURVE* newObitTableIDI_GAIN_CURVEValue (gchar* name, ObitData 
     desc->FieldUnit[colNo] = g_strdup("");
     desc->type[colNo] = OBIT_float;
     for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
-    desc->dim[colNo][0] = numTabs;
-    desc->dim[colNo][1] = no_band;
+    desc->dim[colNo][0] = no_band;
     colNo++;
   }
   if (numPol>=1) {
@@ -419,7 +418,8 @@ ObitTableIDI_GAIN_CURVE* newObitTableIDI_GAIN_CURVEValue (gchar* name, ObitData 
     desc->FieldUnit[colNo] = g_strdup("");
     desc->type[colNo] = OBIT_float;
     for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
-    desc->dim[colNo][0] = no_band;
+    desc->dim[colNo][0] = numTabs;
+    desc->dim[colNo][1] = no_band;
     colNo++;
   }
   if (numPol>=1) {
@@ -467,8 +467,7 @@ ObitTableIDI_GAIN_CURVE* newObitTableIDI_GAIN_CURVEValue (gchar* name, ObitData 
     desc->FieldUnit[colNo] = g_strdup("");
     desc->type[colNo] = OBIT_float;
     for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
-    desc->dim[colNo][0] = numTabs;
-    desc->dim[colNo][1] = no_band;
+    desc->dim[colNo][0] = no_band;
     colNo++;
   }
   if (numPol>=2) {
@@ -485,7 +484,8 @@ ObitTableIDI_GAIN_CURVE* newObitTableIDI_GAIN_CURVEValue (gchar* name, ObitData 
     desc->FieldUnit[colNo] = g_strdup("");
     desc->type[colNo] = OBIT_float;
     for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
-    desc->dim[colNo][0] = no_band;
+    desc->dim[colNo][0] = numTabs;
+    desc->dim[colNo][1] = no_band;
     colNo++;
   }
   if (numPol>=2) {

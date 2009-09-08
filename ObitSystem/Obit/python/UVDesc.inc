@@ -208,6 +208,7 @@ extern void UVDescSetDict(ObitUVDesc* in, PyObject *inDict) {
     tstr = PyString_AsString(PyList_GetItem(list7, i));
     strncpy (in->ptype[i], tstr, UVLEN_KEYWORD);
   }
+  in->firstVis = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "firstVis"));
   /* Reindex just to be sure */
   ObitUVDescIndex (in);
 } // end UVDescSetDict

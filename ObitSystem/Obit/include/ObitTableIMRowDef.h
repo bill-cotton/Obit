@@ -58,9 +58,9 @@ odouble*  PRate1;
 /** Group delay rate */
 odouble*  GRate1;
 /** Dispersion */
-ofloat*  Disp1;
+ofloat  Disp1;
 /** Dispersion rate */
-ofloat*  DRate1;
+ofloat  DRate1;
 /** Phase delay */
 odouble*  PDelay2;
 /** Group delay */
@@ -70,8 +70,8 @@ odouble*  PRate2;
 /** Group delay rate */
 odouble*  GRate2;
 /** Dispersion */
-ofloat*  Disp2;
+ofloat  Disp2;
 /** Dispersion rate */
-ofloat*  DRate2;
+ofloat  DRate2;
 /** status 0=normal, 1=modified, -1=flagged */
 olong  status;

@@ -144,14 +144,14 @@ ObitTableIMRow* newObitTableIMRow (ObitTableIM *table)
     if (table->numPol>=1) out->GDelay1 = dRow + table->GDelay1Off;
     if (table->numPol>=1) out->PRate1 = dRow + table->PRate1Off;
     if (table->numPol>=1) out->GRate1 = dRow + table->GRate1Off;
-    if (table->numPol>=1) out->Disp1 = fRow + table->Disp1Off;
-    if (table->numPol>=1) out->DRate1 = fRow + table->DRate1Off;
+    if (table->numPol>=1) out->Disp1 = fRow[table->Disp1Off];
+    if (table->numPol>=1) out->DRate1 = fRow[table->DRate1Off];
     if (table->numPol>=2) out->PDelay2 = dRow + table->PDelay2Off;
     if (table->numPol>=2) out->GDelay2 = dRow + table->GDelay2Off;
     if (table->numPol>=2) out->PRate2 = dRow + table->PRate2Off;
     if (table->numPol>=2) out->GRate2 = dRow + table->GRate2Off;
-    if (table->numPol>=2) out->Disp2 = fRow + table->Disp2Off;
-    if (table->numPol>=2) out->DRate2 = fRow + table->DRate2Off;
+    if (table->numPol>=2) out->Disp2 = fRow[table->Disp2Off];
+    if (table->numPol>=2) out->DRate2 = fRow[table->DRate2Off];
   } /* end attaching row to table buffer */
 
  return out;
@@ -424,8 +424,6 @@ ObitTableIM* newObitTableIMValue (gchar* name, ObitData *file, olong *ver,
     desc->FieldUnit[colNo] = g_strdup("SECONDS");
     desc->type[colNo] = OBIT_float;
     for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
-    desc->dim[colNo][0] = npoly;
-    desc->dim[colNo][1] = numBand;
     colNo++;
   }
   if (numPol>=1) {
@@ -433,7 +431,6 @@ ObitTableIM* newObitTableIMValue (gchar* name, ObitData *file, olong *ver,
     desc->FieldUnit[colNo] = g_strdup("SEC/SEC");
     desc->type[colNo] = OBIT_float;
     for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
-    desc->dim[colNo][0] = npoly;
     colNo++;
   }
   if (numPol>=2) {
@@ -475,8 +472,6 @@ ObitTableIM* newObitTableIMValue (gchar* name, ObitData *file, olong *ver,
     desc->FieldUnit[colNo] = g_strdup("SECONDS");
     desc->type[colNo] = OBIT_float;
     for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
-    desc->dim[colNo][0] = npoly;
-    desc->dim[colNo][1] = numBand;
     colNo++;
   }
   if (numPol>=2) {
@@ -484,7 +479,6 @@ ObitTableIM* newObitTableIMValue (gchar* name, ObitData *file, olong *ver,
     desc->FieldUnit[colNo] = g_strdup("SEC/SEC");
     desc->type[colNo] = OBIT_float;
     for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
-    desc->dim[colNo][0] = npoly;
     colNo++;
   }
   /* Add _status column at end */
@@ -731,14 +725,14 @@ ObitTableIMReadRow  (ObitTableIM *in, olong iIMRow, ObitTableIMRow *row,
   if (in->numPol>=1) row->GDelay1 = dRow + in->GDelay1Off;
   if (in->numPol>=1) row->PRate1 = dRow + in->PRate1Off;
   if (in->numPol>=1) row->GRate1 = dRow + in->GRate1Off;
-  if (in->numPol>=1) row->Disp1 = fRow + in->Disp1Off;
-  if (in->numPol>=1) row->DRate1 = fRow + in->DRate1Off;
+  if (in->numPol>=1) row->Disp1 = fRow[in->Disp1Off];
+  if (in->numPol>=1) row->DRate1 = fRow[in->DRate1Off];
   if (in->numPol>=2) row->PDelay2 = dRow + in->PDelay2Off;
   if (in->numPol>=2) row->GDelay2 = dRow + in->GDelay2Off;
   if (in->numPol>=2) row->PRate2 = dRow + in->PRate2Off;
   if (in->numPol>=2) row->GRate2 = dRow + in->GRate2Off;
-  if (in->numPol>=2) row->Disp2 = fRow + in->Disp2Off;
-  if (in->numPol>=2) row->DRate2 = fRow + in->DRate2Off;
+  if (in->numPol>=2) row->Disp2 = fRow[in->Disp2Off];
+  if (in->numPol>=2) row->DRate2 = fRow[in->DRate2Off];
   row->status = iRow[in->myDesc->statusOff];
 
   return retCode;
@@ -794,14 +788,14 @@ ObitTableIMSetRow  (ObitTableIM *in, ObitTableIMRow *row,
   if (in->numPol>=1) row->GDelay1 = dRow + in->GDelay1Off;
   if (in->numPol>=1) row->PRate1 = dRow + in->PRate1Off;
   if (in->numPol>=1) row->GRate1 = dRow + in->GRate1Off;
-  if (in->numPol>=1) row->Disp1 = fRow + in->Disp1Off;
-  if (in->numPol>=1) row->DRate1 = fRow + in->DRate1Off;
+  if (in->numPol>=1) row->Disp1 = fRow[in->Disp1Off];
+  if (in->numPol>=1) row->DRate1 = fRow[in->DRate1Off];
   if (in->numPol>=2) row->PDelay2 = dRow + in->PDelay2Off;
   if (in->numPol>=2) row->GDelay2 = dRow + in->GDelay2Off;
   if (in->numPol>=2) row->PRate2 = dRow + in->PRate2Off;
   if (in->numPol>=2) row->GRate2 = dRow + in->GRate2Off;
-  if (in->numPol>=2) row->Disp2 = fRow + in->Disp2Off;
-  if (in->numPol>=2) row->DRate2 = fRow + in->DRate2Off;
+  if (in->numPol>=2) row->Disp2 = fRow[in->Disp2Off];
+  if (in->numPol>=2) row->DRate2 = fRow[in->DRate2Off];
 
 } /*  end ObitTableIMSetRow */
 
@@ -884,16 +878,8 @@ ObitTableIMWriteRow  (ObitTableIM *in, olong iIMRow, ObitTableIMRow *row,
       for (i=0; i<in->myDesc->repeat[in->GRate1Col]; i++) 
         dRow[in->GRate1Off+i] = row->GRate1[i];
     } 
-  if (in->numPol>=1)
-    if (in->Disp1Col >= 0) { 
-      for (i=0; i<in->myDesc->repeat[in->Disp1Col]; i++) 
-        fRow[in->Disp1Off+i] = row->Disp1[i];
-    } 
-  if (in->numPol>=1)
-    if (in->DRate1Col >= 0) { 
-      for (i=0; i<in->myDesc->repeat[in->DRate1Col]; i++) 
-        fRow[in->DRate1Off+i] = row->DRate1[i];
-    } 
+  if (in->numPol>=1) fRow[in->Disp1Off] = row->Disp1;
+  if (in->numPol>=1) fRow[in->DRate1Off] = row->DRate1;
   if (in->numPol>=2)
     if (in->PDelay2Col >= 0) { 
       for (i=0; i<in->myDesc->repeat[in->PDelay2Col]; i++) 
@@ -914,16 +900,8 @@ ObitTableIMWriteRow  (ObitTableIM *in, olong iIMRow, ObitTableIMRow *row,
       for (i=0; i<in->myDesc->repeat[in->GRate2Col]; i++) 
         dRow[in->GRate2Off+i] = row->GRate2[i];
     } 
-  if (in->numPol>=2)
-    if (in->Disp2Col >= 0) { 
-      for (i=0; i<in->myDesc->repeat[in->Disp2Col]; i++) 
-        fRow[in->Disp2Off+i] = row->Disp2[i];
-    } 
-  if (in->numPol>=2)
-    if (in->DRate2Col >= 0) { 
-      for (i=0; i<in->myDesc->repeat[in->DRate2Col]; i++) 
-        fRow[in->DRate2Off+i] = row->DRate2[i];
-    } 
+  if (in->numPol>=2) fRow[in->Disp2Off] = row->Disp2;
+  if (in->numPol>=2) fRow[in->DRate2Off] = row->DRate2;
 
   /* copy status */
   iRow[in->myDesc->statusOff] = row->status;
@@ -998,14 +976,10 @@ void ObitTableIMRowInit  (gpointer inn)
   in->GDelay1 = NULL;
   in->PRate1 = NULL;
   in->GRate1 = NULL;
-  in->Disp1 = NULL;
-  in->DRate1 = NULL;
   in->PDelay2 = NULL;
   in->GDelay2 = NULL;
   in->PRate2 = NULL;
   in->GRate2 = NULL;
-  in->Disp2 = NULL;
-  in->DRate2 = NULL;
 
 } /* end ObitTableIMRowInit */
 
