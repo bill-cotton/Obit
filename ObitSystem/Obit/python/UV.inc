@@ -263,6 +263,12 @@ extern ObitUVDesc* UVGetDesc (ObitUV* in) {
   return ObitUVDescRef(in->myDesc);
 }
 
+extern ObitUVDesc* UVGetIODesc (ObitUV* in) {
+  ObitUVDesc *desc=NULL;
+  if (in->myIO!=NULL) desc = (ObitUVDesc*)(in->myIO->myDesc);
+  return ObitUVDescRef(desc);
+}
+
 extern void UVSetDesc (ObitUV* in, ObitUVDesc* desc) {
   in->myDesc = ObitUVDescUnref(in->myDesc);
   in->myDesc = ObitUVDescRef(desc);

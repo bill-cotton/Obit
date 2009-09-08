@@ -177,6 +177,12 @@ class UV (OData.OData):
             out    = UVDesc.UVDesc("None")
             out.me = Obit.UVGetDesc(self.cast(myClass))
             return out
+        if name=="IODesc":
+            if not self.UVIsA():
+                raise TypeError,"input MUST be a Python Obit UV"
+            out    = UVDesc.UVDesc("None")
+            out.me = Obit.UVGetIODesc(self.cast(myClass))
+            return out
         if name=="VisBuf":
             if not self.UVIsA():
                 raise TypeError,"input MUST be a Python Obit UV"
@@ -220,13 +226,14 @@ class UV (OData.OData):
         return ret
         # end Open
         
-    def Read (self, err):
+    def Read (self, err, firstVis=None):
         """ Read a UV  persistent (disk) form
         
         Reads into buffer attached to UV data, use VisBuf for access
         Returns 0 on success, else failure
-        self   = Python UV object
-        err    = Python Obit Error/message stack
+        self     = Python UV object
+        err      = Python Obit Error/message stack
+        firstVis = If given the first 1-rel visibility in data set
         """
         inUV = self
         # Checks
@@ -235,19 +242,26 @@ class UV (OData.OData):
         if not OErr.OErrIsA(err):
             raise TypeError,"err MUST be an OErr"
         #
+        # Set first vis?
+        if firstVis:
+            d = self.IODesc.Dict
+            d["firstVis"] = firstVis-1
+            self.IODesc.Dict = d
+        # Do I/O
         ret = Obit.UVRead (inUV.cast(myClass), err.me)
         if err.isErr:
             OErr.printErrMsg(err, "Error Reading UV data")
         return ret
         # end Read
         
-    def Write (self, err):
+    def Write (self, err, firstVis=None):
         """ Write a UV  persistent (disk) form
 
         Writes buffer attached to UV data, use VisBuf for access
         returns 0 on success, else failure
-        self      = Python UV object
-        err       = Python Obit Error/message stack
+        self     = Python UV object
+        err      = Python Obit Error/message stack
+        firstVis = If given the first 1-rel visibility in data set
         """
         inUV = self
         # Checks
@@ -256,19 +270,26 @@ class UV (OData.OData):
         if not OErr.OErrIsA(err):
             raise TypeError,"err MUST be an OErr"
         #
+        # Set first vis?
+        if firstVis:
+            d = self.IODesc.Dict
+            d["firstVis"] = firstVis-1
+            self.IODesc.Dict = d
+        # Do I/O
         ret = Obit.UVWrite (inUV.cast(myClass), err.me)
         if err.isErr:
             OErr.printErrMsg(err, "Error Reading UV data")
         return ret
         # end Write
         
-    def ReadVis (self, err):
+    def ReadVis (self, err, firstVis=None):
         """ Read a UV  persistent (disk) form
         
         Reads into UVVis structure
         Returns UVVis structure
-        self   = Python UV object
-        err    = Python Obit Error/message stack
+        self     = Python UV object
+        err      = Python Obit Error/message stack
+        firstVis = If given the first 1-rel visibility in data set
         """
         # Checks
         if not self.UVIsA():
@@ -276,19 +297,26 @@ class UV (OData.OData):
         if not OErr.OErrIsA(err):
             raise TypeError,"err MUST be an OErr"
         #
+        # Set first vis?
+        if firstVis:
+            d = self.IODesc.Dict
+            d["firstVis"] = firstVis-1
+            self.IODesc.Dict = d
+        # Do I/O
         ret = UVVis.PGet(self, err)
         if err.isErr:
             OErr.printErrMsg(err, "Error Reading UV data")
         return ret
         # end ReadVis
         
-    def WriteVis (self, outVis, err):
+    def WriteVis (self, outVis, err, firstVis=None):
         """ Write a UVVis to UV  persistent (disk) form
 
         Writes visibility to UV data
         self      = Python UV object
         outVis    = Vis structure to write
         err       = Python Obit Error/message stack
+        firstVis  = If given the first 1-rel visibility in data set
         """
         # Checks
         if not self.UVIsA():
@@ -296,9 +324,15 @@ class UV (OData.OData):
         if not OErr.OErrIsA(err):
             raise TypeError,"err MUST be an OErr"
         #
+        # Set first vis?
+        if firstVis:
+            d = self.IODesc.Dict
+            d["firstVis"] = firstVis-1
+            self.IODesc.Dict = d
+        # Do I/O
         UVVis.PSet(outVis, self, err)
         if err.isErr:
-            OErr.printErrMsg(err, "Error Reading UV data")
+            OErr.printErrMsg(err, "Error Writing UV data")
         return
         # end WriteVis
         
@@ -912,9 +946,24 @@ def PGetDesc (inUV):
     return inUV.Desc
     # end PGetDesc
 
+def PGetIODesc (inUV):
+    """ Return the member IO UVDesc
+
+    returns IO UVDesc as a Python Dictionary
+    inUV   = Python UV object
+    """
+    ################################################################
+     # Checks
+    if not PIsA(inUV):
+        raise TypeError,"inUV MUST be a Python Obit UV"
+    #
+    out    = UVDesc.UVDesc("None")
+    out.me = Obit.UVGetIODesc(inUV.me)
+    return out
+    # end PGetIODesc
+
 def PUpdateDesc (inUV, err, Desc=None):
     """ Update external representation of descriptor
-
     inUV   = Python UV object
     err    = Python Obit Error/message stack
     Desc   = UV descriptor, if None then use current descriptor

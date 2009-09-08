@@ -32,7 +32,7 @@
 IDIIn      LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 IDIIn :    Convert IDI data and append to a UV data file.
 **PARAM** str 64
-Scan                                Scan for FITS file
+Scan                                Scan or file name for input
 **PARAM** str 64
 DataRoot                            Directory for input
 **PARAM** str 4
@@ -52,9 +52,16 @@ IDIIn Convert IDI format data to UV
 Type:  Task
  Use:  Convert IDI archive format to Obit UV data
        Can append multiple scans to the output dataset
+       Selected tables in addition to the UV_DATA table 
+       will be converted.
+       Input data must have compatable geometry with the output
+       dataset.
 
 Adverbs:
-  Scan.......Name of scan (e.g."lwda_uv_2006_10_28_23_59_42")
+  Scan.......Name of scan or file name 
+             (e.g."lwda_uv_2006_10_28_23_59_42")
+             This is the input file name minus the postfix
+             '.fits'
   DataRoot...Archive directory for project 
              MUST end in '/'
   DataType..'FITS' or 'AIPS'  type of output

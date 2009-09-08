@@ -2649,6 +2649,9 @@ extern PyObject *ImageDescGetDict(ObitImageDesc* in) {
   PyDict_SetItemString(outDict, "altCrpix",PyFloat_FromDouble((double)in->altCrpix));
   PyDict_SetItemString(outDict, "altRef",  PyFloat_FromDouble((double)in->altRef));
   PyDict_SetItemString(outDict, "restFreq",PyFloat_FromDouble((double)in->restFreq));
+  PyDict_SetItemString(outDict, "xpixoff", PyFloat_FromDouble((double)in->xPxOff));
+  PyDict_SetItemString(outDict, "ypixoff", PyFloat_FromDouble((double)in->yPxOff));
+  PyDict_SetItemString(outDict, "do3D",    PyInt_FromLong((long)in->do3D));
   PyDict_SetItemString(outDict, "areBlanks",PyInt_FromLong((long)in->areBlanks));
   PyDict_SetItemString(outDict, "niter",   PyInt_FromLong((long)in->niter));
   PyDict_SetItemString(outDict, "naxis",   PyInt_FromLong((long)in->naxis));
@@ -2727,6 +2730,8 @@ extern void ImageDescSetDict(ObitImageDesc* in, PyObject *inDict) {
   in->yshift  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "yshift"));
   in->altCrpix= (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "altCrpix"));
   in->altRef  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "altRef"));
+  in->xPxOff  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "xpixoff"));
+  in->yPxOff  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ypixoff"));
   in->niter   = PyInt_AsLong(PyDict_GetItemString(inDict, "niter"));
   in->naxis   = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "naxis"));
   in->bitpix  = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "bitpix"));
@@ -2734,6 +2739,7 @@ extern void ImageDescSetDict(ObitImageDesc* in, PyObject *inDict) {
   in->VelReference  = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "VelReference"));
   in->VelDef  = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "VelDef"));
   in->areBlanks = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "areBlanks"));
+  in->do3D      = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "do3D"));
   list1 = PyDict_GetItemString(inDict, "ctype");
   number = MIN (IM_MAXDIM, PyList_Size(list1));
   for (i=0; i<number; i++) {
@@ -6569,6 +6575,225 @@ extern void TableIDI_ARRAY_GEOMETRYSetHeadKeys(ObitTable *,PyObject *);
 
 #include "Obit.h"
 #include "ObitData.h"
+#include "ObitTableIDI_BANDPASS.h"
+
+ 
+extern ObitTable* TableIDI_BANDPASS (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                           int numPol, int no_band, int numAnt, int numBach, int strtChn,
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   oint lnumPol = (oint)numPol;
+   oint lno_band = (oint)no_band;
+   oint lnumAnt = (oint)numAnt;
+   oint lnumBach = (oint)numBach;
+   oint lstrtChn = (oint)strtChn;
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableIDI_BANDPASSValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                           lnumPol, lno_band, lnumAnt, lnumBach, lstrtChn,
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableIDI_BANDPASSGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableIDI_BANDPASS *lTab = (ObitTableIDI_BANDPASS*)inTab;
+  PyDict_SetItemString(outDict, "numPol",  PyInt_FromLong((long)lTab->numPol));
+  PyDict_SetItemString(outDict, "no_band",  PyInt_FromLong((long)lTab->no_band));
+  PyDict_SetItemString(outDict, "numAnt",  PyInt_FromLong((long)lTab->numAnt));
+  PyDict_SetItemString(outDict, "numBach",  PyInt_FromLong((long)lTab->numBach));
+  PyDict_SetItemString(outDict, "strtChn",  PyInt_FromLong((long)lTab->strtChn));
+  PyDict_SetItemString(outDict, "tabrev",  PyInt_FromLong((long)lTab->tabrev));
+  PyDict_SetItemString(outDict, "no_stkd",  PyInt_FromLong((long)lTab->no_stkd));
+  PyDict_SetItemString(outDict, "stk_1",  PyInt_FromLong((long)lTab->stk_1));
+  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
+  PyDict_SetItemString(outDict, "ref_freq",  PyFloat_FromDouble((double)lTab->ref_freq));
+  PyDict_SetItemString(outDict, "chan_bw",  PyFloat_FromDouble((double)lTab->chan_bw));
+  PyDict_SetItemString(outDict, "ref_pixl",  PyInt_FromLong((long)lTab->ref_pixl));
+  PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
+  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
+
+  return outDict;
+} 
+
+extern void TableIDI_BANDPASSSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableIDI_BANDPASS *lTab = (ObitTableIDI_BANDPASS*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEIDI_BANDPASS;
+
+  lTab->tabrev = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tabrev"));
+  lTab->no_stkd = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_stkd"));
+  lTab->stk_1 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "stk_1"));
+  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
+  lTab->ref_freq = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ref_freq"));
+  lTab->chan_bw = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "chan_bw"));
+  lTab->ref_pixl = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "ref_pixl"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "obscode"));
+  strncpy (lTab->obscode, tstr, lstr); lTab->obscode[lstr-1]=0;
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
+  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+extern ObitTable *TableIDI_BANDPASS(ObitData *,long *,int ,char *,int ,int ,int ,int ,int ,ObitErr *);
+extern PyObject *TableIDI_BANDPASSGetHeadKeys(ObitTable *);
+extern void TableIDI_BANDPASSSetHeadKeys(ObitTable *,PyObject *);
+
+#include "Obit.h"
+#include "ObitData.h"
+#include "ObitTableIDI_CALIBRATION.h"
+
+ 
+extern ObitTable* TableIDI_CALIBRATION (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                           int numPol, int no_band, int numAnt,
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   oint lnumPol = (oint)numPol;
+   oint lno_band = (oint)no_band;
+   oint lnumAnt = (oint)numAnt;
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableIDI_CALIBRATIONValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                           lnumPol, lno_band, lnumAnt,
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableIDI_CALIBRATIONGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableIDI_CALIBRATION *lTab = (ObitTableIDI_CALIBRATION*)inTab;
+  PyDict_SetItemString(outDict, "numPol",  PyInt_FromLong((long)lTab->numPol));
+  PyDict_SetItemString(outDict, "no_band",  PyInt_FromLong((long)lTab->no_band));
+  PyDict_SetItemString(outDict, "numAnt",  PyInt_FromLong((long)lTab->numAnt));
+  PyDict_SetItemString(outDict, "tabrev",  PyInt_FromLong((long)lTab->tabrev));
+  PyDict_SetItemString(outDict, "no_stkd",  PyInt_FromLong((long)lTab->no_stkd));
+  PyDict_SetItemString(outDict, "stk_1",  PyInt_FromLong((long)lTab->stk_1));
+  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
+  PyDict_SetItemString(outDict, "ref_freq",  PyFloat_FromDouble((double)lTab->ref_freq));
+  PyDict_SetItemString(outDict, "chan_bw",  PyFloat_FromDouble((double)lTab->chan_bw));
+  PyDict_SetItemString(outDict, "ref_pixl",  PyInt_FromLong((long)lTab->ref_pixl));
+  PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
+  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
+
+  return outDict;
+} 
+
+extern void TableIDI_CALIBRATIONSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableIDI_CALIBRATION *lTab = (ObitTableIDI_CALIBRATION*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEIDI_CALIBRATION;
+
+  lTab->tabrev = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tabrev"));
+  lTab->no_stkd = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_stkd"));
+  lTab->stk_1 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "stk_1"));
+  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
+  lTab->ref_freq = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ref_freq"));
+  lTab->chan_bw = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "chan_bw"));
+  lTab->ref_pixl = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "ref_pixl"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "obscode"));
+  strncpy (lTab->obscode, tstr, lstr); lTab->obscode[lstr-1]=0;
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
+  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+extern ObitTable *TableIDI_CALIBRATION(ObitData *,long *,int ,char *,int ,int ,int ,ObitErr *);
+extern PyObject *TableIDI_CALIBRATIONGetHeadKeys(ObitTable *);
+extern void TableIDI_CALIBRATIONSetHeadKeys(ObitTable *,PyObject *);
+
+#include "Obit.h"
+#include "ObitData.h"
+#include "ObitTableIDI_FLAG.h"
+
+ 
+extern ObitTable* TableIDI_FLAG (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                           int no_band,
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   oint lno_band = (oint)no_band;
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableIDI_FLAGValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                           lno_band,
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableIDI_FLAGGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableIDI_FLAG *lTab = (ObitTableIDI_FLAG*)inTab;
+  PyDict_SetItemString(outDict, "no_band",  PyInt_FromLong((long)lTab->no_band));
+  PyDict_SetItemString(outDict, "tabrev",  PyInt_FromLong((long)lTab->tabrev));
+  PyDict_SetItemString(outDict, "no_stkd",  PyInt_FromLong((long)lTab->no_stkd));
+  PyDict_SetItemString(outDict, "stk_1",  PyInt_FromLong((long)lTab->stk_1));
+  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
+  PyDict_SetItemString(outDict, "ref_freq",  PyFloat_FromDouble((double)lTab->ref_freq));
+  PyDict_SetItemString(outDict, "chan_bw",  PyFloat_FromDouble((double)lTab->chan_bw));
+  PyDict_SetItemString(outDict, "ref_pixl",  PyInt_FromLong((long)lTab->ref_pixl));
+  PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
+  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
+
+  return outDict;
+} 
+
+extern void TableIDI_FLAGSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableIDI_FLAG *lTab = (ObitTableIDI_FLAG*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEIDI_FLAG;
+
+  lTab->tabrev = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tabrev"));
+  lTab->no_stkd = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_stkd"));
+  lTab->stk_1 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "stk_1"));
+  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
+  lTab->ref_freq = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ref_freq"));
+  lTab->chan_bw = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "chan_bw"));
+  lTab->ref_pixl = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "ref_pixl"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "obscode"));
+  strncpy (lTab->obscode, tstr, lstr); lTab->obscode[lstr-1]=0;
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
+  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+extern ObitTable *TableIDI_FLAG(ObitData *,long *,int ,char *,int ,ObitErr *);
+extern PyObject *TableIDI_FLAGGetHeadKeys(ObitTable *);
+extern void TableIDI_FLAGSetHeadKeys(ObitTable *,PyObject *);
+
+#include "Obit.h"
+#include "ObitData.h"
 #include "ObitTableIDI_FREQUENCY.h"
 
  
@@ -6635,6 +6860,225 @@ extern void TableIDI_FREQUENCYSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
 extern ObitTable *TableIDI_FREQUENCY(ObitData *,long *,int ,char *,int ,ObitErr *);
 extern PyObject *TableIDI_FREQUENCYGetHeadKeys(ObitTable *);
 extern void TableIDI_FREQUENCYSetHeadKeys(ObitTable *,PyObject *);
+
+#include "Obit.h"
+#include "ObitData.h"
+#include "ObitTableIDI_GAIN_CURVE.h"
+
+ 
+extern ObitTable* TableIDI_GAIN_CURVE (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                           int numPol, int no_band, int numTabs,
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   oint lnumPol = (oint)numPol;
+   oint lno_band = (oint)no_band;
+   oint lnumTabs = (oint)numTabs;
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableIDI_GAIN_CURVEValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                           lnumPol, lno_band, lnumTabs,
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableIDI_GAIN_CURVEGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableIDI_GAIN_CURVE *lTab = (ObitTableIDI_GAIN_CURVE*)inTab;
+  PyDict_SetItemString(outDict, "numPol",  PyInt_FromLong((long)lTab->numPol));
+  PyDict_SetItemString(outDict, "no_band",  PyInt_FromLong((long)lTab->no_band));
+  PyDict_SetItemString(outDict, "numTabs",  PyInt_FromLong((long)lTab->numTabs));
+  PyDict_SetItemString(outDict, "tabrev",  PyInt_FromLong((long)lTab->tabrev));
+  PyDict_SetItemString(outDict, "no_stkd",  PyInt_FromLong((long)lTab->no_stkd));
+  PyDict_SetItemString(outDict, "stk_1",  PyInt_FromLong((long)lTab->stk_1));
+  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
+  PyDict_SetItemString(outDict, "ref_freq",  PyFloat_FromDouble((double)lTab->ref_freq));
+  PyDict_SetItemString(outDict, "chan_bw",  PyFloat_FromDouble((double)lTab->chan_bw));
+  PyDict_SetItemString(outDict, "ref_pixl",  PyInt_FromLong((long)lTab->ref_pixl));
+  PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
+  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
+
+  return outDict;
+} 
+
+extern void TableIDI_GAIN_CURVESetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableIDI_GAIN_CURVE *lTab = (ObitTableIDI_GAIN_CURVE*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEIDI_GAIN_CURVE;
+
+  lTab->tabrev = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tabrev"));
+  lTab->no_stkd = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_stkd"));
+  lTab->stk_1 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "stk_1"));
+  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
+  lTab->ref_freq = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ref_freq"));
+  lTab->chan_bw = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "chan_bw"));
+  lTab->ref_pixl = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "ref_pixl"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "obscode"));
+  strncpy (lTab->obscode, tstr, lstr); lTab->obscode[lstr-1]=0;
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
+  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+extern ObitTable *TableIDI_GAIN_CURVE(ObitData *,long *,int ,char *,int ,int ,int ,ObitErr *);
+extern PyObject *TableIDI_GAIN_CURVEGetHeadKeys(ObitTable *);
+extern void TableIDI_GAIN_CURVESetHeadKeys(ObitTable *,PyObject *);
+
+#include "Obit.h"
+#include "ObitData.h"
+#include "ObitTableIDI_INTERFEROMETER_MODEL.h"
+
+ 
+extern ObitTable* TableIDI_INTERFEROMETER_MODEL (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                           int numPol, int npoly, int no_band,
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   oint lnumPol = (oint)numPol;
+   oint lnpoly = (oint)npoly;
+   oint lno_band = (oint)no_band;
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableIDI_INTERFEROMETER_MODELValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                           lnumPol, lnpoly, lno_band,
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableIDI_INTERFEROMETER_MODELGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableIDI_INTERFEROMETER_MODEL *lTab = (ObitTableIDI_INTERFEROMETER_MODEL*)inTab;
+  PyDict_SetItemString(outDict, "numPol",  PyInt_FromLong((long)lTab->numPol));
+  PyDict_SetItemString(outDict, "npoly",  PyInt_FromLong((long)lTab->npoly));
+  PyDict_SetItemString(outDict, "no_band",  PyInt_FromLong((long)lTab->no_band));
+  PyDict_SetItemString(outDict, "tabrev",  PyInt_FromLong((long)lTab->tabrev));
+  PyDict_SetItemString(outDict, "no_stkd",  PyInt_FromLong((long)lTab->no_stkd));
+  PyDict_SetItemString(outDict, "stk_1",  PyInt_FromLong((long)lTab->stk_1));
+  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
+  PyDict_SetItemString(outDict, "ref_freq",  PyFloat_FromDouble((double)lTab->ref_freq));
+  PyDict_SetItemString(outDict, "chan_bw",  PyFloat_FromDouble((double)lTab->chan_bw));
+  PyDict_SetItemString(outDict, "ref_pixl",  PyInt_FromLong((long)lTab->ref_pixl));
+  PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
+  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
+
+  return outDict;
+} 
+
+extern void TableIDI_INTERFEROMETER_MODELSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableIDI_INTERFEROMETER_MODEL *lTab = (ObitTableIDI_INTERFEROMETER_MODEL*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEIDI_INTERFEROMETER_MODEL;
+
+  lTab->tabrev = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tabrev"));
+  lTab->no_stkd = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_stkd"));
+  lTab->stk_1 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "stk_1"));
+  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
+  lTab->ref_freq = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ref_freq"));
+  lTab->chan_bw = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "chan_bw"));
+  lTab->ref_pixl = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "ref_pixl"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "obscode"));
+  strncpy (lTab->obscode, tstr, lstr); lTab->obscode[lstr-1]=0;
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
+  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+extern ObitTable *TableIDI_INTERFEROMETER_MODEL(ObitData *,long *,int ,char *,int ,int ,int ,ObitErr *);
+extern PyObject *TableIDI_INTERFEROMETER_MODELGetHeadKeys(ObitTable *);
+extern void TableIDI_INTERFEROMETER_MODELSetHeadKeys(ObitTable *,PyObject *);
+
+#include "Obit.h"
+#include "ObitData.h"
+#include "ObitTableIDI_PHASE_CAL.h"
+
+ 
+extern ObitTable* TableIDI_PHASE_CAL (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                           int numPol, int no_band, int numTones,
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   oint lnumPol = (oint)numPol;
+   oint lno_band = (oint)no_band;
+   oint lnumTones = (oint)numTones;
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableIDI_PHASE_CALValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                           lnumPol, lno_band, lnumTones,
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableIDI_PHASE_CALGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableIDI_PHASE_CAL *lTab = (ObitTableIDI_PHASE_CAL*)inTab;
+  PyDict_SetItemString(outDict, "numPol",  PyInt_FromLong((long)lTab->numPol));
+  PyDict_SetItemString(outDict, "no_band",  PyInt_FromLong((long)lTab->no_band));
+  PyDict_SetItemString(outDict, "numTones",  PyInt_FromLong((long)lTab->numTones));
+  PyDict_SetItemString(outDict, "tabrev",  PyInt_FromLong((long)lTab->tabrev));
+  PyDict_SetItemString(outDict, "no_stkd",  PyInt_FromLong((long)lTab->no_stkd));
+  PyDict_SetItemString(outDict, "stk_1",  PyInt_FromLong((long)lTab->stk_1));
+  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
+  PyDict_SetItemString(outDict, "ref_freq",  PyFloat_FromDouble((double)lTab->ref_freq));
+  PyDict_SetItemString(outDict, "chan_bw",  PyFloat_FromDouble((double)lTab->chan_bw));
+  PyDict_SetItemString(outDict, "ref_pixl",  PyInt_FromLong((long)lTab->ref_pixl));
+  PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
+  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
+
+  return outDict;
+} 
+
+extern void TableIDI_PHASE_CALSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableIDI_PHASE_CAL *lTab = (ObitTableIDI_PHASE_CAL*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEIDI_PHASE_CAL;
+
+  lTab->tabrev = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tabrev"));
+  lTab->no_stkd = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_stkd"));
+  lTab->stk_1 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "stk_1"));
+  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
+  lTab->ref_freq = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ref_freq"));
+  lTab->chan_bw = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "chan_bw"));
+  lTab->ref_pixl = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "ref_pixl"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "obscode"));
+  strncpy (lTab->obscode, tstr, lstr); lTab->obscode[lstr-1]=0;
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
+  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+extern ObitTable *TableIDI_PHASE_CAL(ObitData *,long *,int ,char *,int ,int ,int ,ObitErr *);
+extern PyObject *TableIDI_PHASE_CALGetHeadKeys(ObitTable *);
+extern void TableIDI_PHASE_CALSetHeadKeys(ObitTable *,PyObject *);
 
 #include "Obit.h"
 #include "ObitData.h"
@@ -6707,6 +7151,77 @@ extern void TableIDI_SOURCESetHeadKeys(ObitTable *,PyObject *);
 
 #include "Obit.h"
 #include "ObitData.h"
+#include "ObitTableIDI_SYSTEM_TEMPERATURE.h"
+
+ 
+extern ObitTable* TableIDI_SYSTEM_TEMPERATURE (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                           int numPol, int no_band,
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   oint lnumPol = (oint)numPol;
+   oint lno_band = (oint)no_band;
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableIDI_SYSTEM_TEMPERATUREValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                           lnumPol, lno_band,
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableIDI_SYSTEM_TEMPERATUREGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableIDI_SYSTEM_TEMPERATURE *lTab = (ObitTableIDI_SYSTEM_TEMPERATURE*)inTab;
+  PyDict_SetItemString(outDict, "numPol",  PyInt_FromLong((long)lTab->numPol));
+  PyDict_SetItemString(outDict, "no_band",  PyInt_FromLong((long)lTab->no_band));
+  PyDict_SetItemString(outDict, "tabrev",  PyInt_FromLong((long)lTab->tabrev));
+  PyDict_SetItemString(outDict, "no_stkd",  PyInt_FromLong((long)lTab->no_stkd));
+  PyDict_SetItemString(outDict, "stk_1",  PyInt_FromLong((long)lTab->stk_1));
+  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
+  PyDict_SetItemString(outDict, "ref_freq",  PyFloat_FromDouble((double)lTab->ref_freq));
+  PyDict_SetItemString(outDict, "chan_bw",  PyFloat_FromDouble((double)lTab->chan_bw));
+  PyDict_SetItemString(outDict, "ref_pixl",  PyInt_FromLong((long)lTab->ref_pixl));
+  PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
+  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
+
+  return outDict;
+} 
+
+extern void TableIDI_SYSTEM_TEMPERATURESetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableIDI_SYSTEM_TEMPERATURE *lTab = (ObitTableIDI_SYSTEM_TEMPERATURE*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEIDI_SYSTEM_TEMPERATURE;
+
+  lTab->tabrev = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tabrev"));
+  lTab->no_stkd = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_stkd"));
+  lTab->stk_1 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "stk_1"));
+  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
+  lTab->ref_freq = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ref_freq"));
+  lTab->chan_bw = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "chan_bw"));
+  lTab->ref_pixl = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "ref_pixl"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "obscode"));
+  strncpy (lTab->obscode, tstr, lstr); lTab->obscode[lstr-1]=0;
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
+  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+extern ObitTable *TableIDI_SYSTEM_TEMPERATURE(ObitData *,long *,int ,char *,int ,int ,ObitErr *);
+extern PyObject *TableIDI_SYSTEM_TEMPERATUREGetHeadKeys(ObitTable *);
+extern void TableIDI_SYSTEM_TEMPERATURESetHeadKeys(ObitTable *,PyObject *);
+
+#include "Obit.h"
+#include "ObitData.h"
 #include "ObitTableIDI_UV_DATA.h"
 
  
@@ -6757,6 +7272,8 @@ extern PyObject* TableIDI_UV_DATAGetHeadKeys (ObitTable *inTab) {
   PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
   PyDict_SetItemString(outDict, "nmatrix",  PyInt_FromLong((long)lTab->nmatrix));
   PyDict_SetItemString(outDict, "maxis",  PyInt_FromLong((long)lTab->maxis));
+  PyDict_SetItemString(outDict, "Equinox", PyString_InternFromString(lTab->Equinox));
+  PyDict_SetItemString(outDict, "WeighTyp", PyString_InternFromString(lTab->WeighTyp));
  PyDict_SetItemString(outDict, "tmatx01",  PyInt_FromLong((long)lTab->tmatx01));
  PyDict_SetItemString(outDict, "tmatx02",  PyInt_FromLong((long)lTab->tmatx02));
  PyDict_SetItemString(outDict, "tmatx03",  PyInt_FromLong((long)lTab->tmatx03));
@@ -6795,6 +7312,8 @@ extern PyObject* TableIDI_UV_DATAGetHeadKeys (ObitTable *inTab) {
   PyDict_SetItemString(outDict, "cdelt7",  PyFloat_FromDouble((double)lTab->cdelt7));
   PyDict_SetItemString(outDict, "crpix7",  PyFloat_FromDouble((double)lTab->crpix7));
   PyDict_SetItemString(outDict, "crval7",  PyFloat_FromDouble((double)lTab->crval7));
+  PyDict_SetItemString(outDict, "dateObs", PyString_InternFromString(lTab->dateObs));
+  PyDict_SetItemString(outDict, "visScale",  PyFloat_FromDouble((double)lTab->visScale));
 
   return outDict;
 } 
@@ -6817,6 +7336,10 @@ extern void TableIDI_UV_DATASetHeadKeys (ObitTable *inTab, PyObject *inDict) {
   strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
   lTab->nmatrix = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "nmatrix"));
   lTab->maxis = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "maxis"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "Equinox"));
+  strncpy (lTab->Equinox, tstr, lstr); lTab->Equinox[lstr-1]=0;
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "WeighTyp"));
+  strncpy (lTab->WeighTyp, tstr, lstr); lTab->WeighTyp[lstr-1]=0;
   lTab->tmatx01 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tmatx01"));
   lTab->tmatx02 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tmatx02"));
   lTab->tmatx03 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tmatx03"));
@@ -6855,6 +7378,9 @@ extern void TableIDI_UV_DATASetHeadKeys (ObitTable *inTab, PyObject *inDict) {
   lTab->cdelt7 = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "cdelt7"));
   lTab->crpix7 = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "crpix7"));
   lTab->crval7 = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "crval7"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "dateObs"));
+  strncpy (lTab->dateObs, tstr, lstr); lTab->dateObs[lstr-1]=0;
+  lTab->visScale = (ofloat)PyFloat_AsDouble(PyDict_GetItemString(inDict, "visScale"));
 
   if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
     lTab->myStatus = OBIT_Modified;
@@ -6866,19 +7392,88 @@ extern void TableIDI_UV_DATASetHeadKeys(ObitTable *,PyObject *);
 
 #include "Obit.h"
 #include "ObitData.h"
+#include "ObitTableIDI_WEATHER.h"
+
+ 
+extern ObitTable* TableIDI_WEATHER (ObitData *inData, long *tabVer,
+ 	                   int access,
+ 	                   char *tabName,
+                           int no_band,
+                           ObitErr *err)
+ {
+   ObitIOAccess laccess;
+   /* Cast structural keywords to correct type */
+   oint lno_band = (oint)no_band;
+   olong ltabVer = (olong)*tabVer;
+   ObitTable *outTable=NULL;
+   laccess = OBIT_IO_ReadOnly;
+   if (access==2) laccess = OBIT_IO_WriteOnly;
+   else if (access==3) laccess = OBIT_IO_ReadWrite;
+   outTable = (ObitTable*)newObitTableIDI_WEATHERValue ((gchar*)tabName, inData, (olong*)&ltabVer,
+   			   laccess, 
+                           lno_band,
+                           err);
+   *tabVer = (long)ltabVer;
+   return outTable;
+   }
+ 
+extern PyObject* TableIDI_WEATHERGetHeadKeys (ObitTable *inTab) {
+  PyObject *outDict=PyDict_New();
+  ObitTableIDI_WEATHER *lTab = (ObitTableIDI_WEATHER*)inTab;
+  PyDict_SetItemString(outDict, "no_band",  PyInt_FromLong((long)lTab->no_band));
+  PyDict_SetItemString(outDict, "tabrev",  PyInt_FromLong((long)lTab->tabrev));
+  PyDict_SetItemString(outDict, "no_stkd",  PyInt_FromLong((long)lTab->no_stkd));
+  PyDict_SetItemString(outDict, "stk_1",  PyInt_FromLong((long)lTab->stk_1));
+  PyDict_SetItemString(outDict, "no_chan",  PyInt_FromLong((long)lTab->no_chan));
+  PyDict_SetItemString(outDict, "ref_freq",  PyFloat_FromDouble((double)lTab->ref_freq));
+  PyDict_SetItemString(outDict, "chan_bw",  PyFloat_FromDouble((double)lTab->chan_bw));
+  PyDict_SetItemString(outDict, "ref_pixl",  PyInt_FromLong((long)lTab->ref_pixl));
+  PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
+  PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
+
+  return outDict;
+} 
+
+extern void TableIDI_WEATHERSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
+  ObitTableIDI_WEATHER *lTab = (ObitTableIDI_WEATHER*)inTab;
+  char *tstr;
+  int lstr=MAXKEYCHARTABLEIDI_WEATHER;
+
+  lTab->tabrev = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "tabrev"));
+  lTab->no_stkd = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_stkd"));
+  lTab->stk_1 = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "stk_1"));
+  lTab->no_chan = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "no_chan"));
+  lTab->ref_freq = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ref_freq"));
+  lTab->chan_bw = (odouble)PyFloat_AsDouble(PyDict_GetItemString(inDict, "chan_bw"));
+  lTab->ref_pixl = (oint)PyInt_AsLong(PyDict_GetItemString(inDict, "ref_pixl"));
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "obscode"));
+  strncpy (lTab->obscode, tstr, lstr); lTab->obscode[lstr-1]=0;
+  tstr = PyString_AsString(PyDict_GetItemString(inDict, "RefDate"));
+  strncpy (lTab->RefDate, tstr, lstr); lTab->RefDate[lstr-1]=0;
+
+  if ((lTab->myDesc->access==OBIT_IO_ReadWrite) || (lTab->myDesc->access==OBIT_IO_WriteOnly)) 
+    lTab->myStatus = OBIT_Modified;
+} 
+
+extern ObitTable *TableIDI_WEATHER(ObitData *,long *,int ,char *,int ,ObitErr *);
+extern PyObject *TableIDI_WEATHERGetHeadKeys(ObitTable *);
+extern void TableIDI_WEATHERSetHeadKeys(ObitTable *,PyObject *);
+
+#include "Obit.h"
+#include "ObitData.h"
 #include "ObitTableIM.h"
 
  
 extern ObitTable* TableIM (ObitData *inData, long *tabVer,
  	                   int access,
  	                   char *tabName,
-                           int numBand, int numPol, int npoly,
+                           int numPol, int numBand, int npoly,
                            ObitErr *err)
  {
    ObitIOAccess laccess;
    /* Cast structural keywords to correct type */
-   oint lnumBand = (oint)numBand;
    oint lnumPol = (oint)numPol;
+   oint lnumBand = (oint)numBand;
    oint lnpoly = (oint)npoly;
    olong ltabVer = (olong)*tabVer;
    ObitTable *outTable=NULL;
@@ -6887,7 +7482,7 @@ extern ObitTable* TableIM (ObitData *inData, long *tabVer,
    else if (access==3) laccess = OBIT_IO_ReadWrite;
    outTable = (ObitTable*)newObitTableIMValue ((gchar*)tabName, inData, (olong*)&ltabVer,
    			   laccess, 
-                           lnumBand, lnumPol, lnpoly,
+                           lnumPol, lnumBand, lnpoly,
                            err);
    *tabVer = (long)ltabVer;
    return outTable;
@@ -6896,8 +7491,8 @@ extern ObitTable* TableIM (ObitData *inData, long *tabVer,
 extern PyObject* TableIMGetHeadKeys (ObitTable *inTab) {
   PyObject *outDict=PyDict_New();
   ObitTableIM *lTab = (ObitTableIM*)inTab;
-  PyDict_SetItemString(outDict, "numBand",  PyInt_FromLong((long)lTab->numBand));
   PyDict_SetItemString(outDict, "numPol",  PyInt_FromLong((long)lTab->numPol));
+  PyDict_SetItemString(outDict, "numBand",  PyInt_FromLong((long)lTab->numBand));
   PyDict_SetItemString(outDict, "npoly",  PyInt_FromLong((long)lTab->npoly));
   PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
   PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
@@ -7627,13 +8222,13 @@ typedef struct {
 extern ObitTable* TableMC (ObitData *inData, long *tabVer,
  	                   int access,
  	                   char *tabName,
-                           int numBand, int numPol,
+                           int numPol, int numBand,
                            ObitErr *err)
  {
    ObitIOAccess laccess;
    /* Cast structural keywords to correct type */
-   oint lnumBand = (oint)numBand;
    oint lnumPol = (oint)numPol;
+   oint lnumBand = (oint)numBand;
    olong ltabVer = (olong)*tabVer;
    ObitTable *outTable=NULL;
    laccess = OBIT_IO_ReadOnly;
@@ -7641,7 +8236,7 @@ extern ObitTable* TableMC (ObitData *inData, long *tabVer,
    else if (access==3) laccess = OBIT_IO_ReadWrite;
    outTable = (ObitTable*)newObitTableMCValue ((gchar*)tabName, inData, (olong*)&ltabVer,
    			   laccess, 
-                           lnumBand, lnumPol,
+                           lnumPol, lnumBand,
                            err);
    *tabVer = (long)ltabVer;
    return outTable;
@@ -7650,8 +8245,8 @@ extern ObitTable* TableMC (ObitData *inData, long *tabVer,
 extern PyObject* TableMCGetHeadKeys (ObitTable *inTab) {
   PyObject *outDict=PyDict_New();
   ObitTableMC *lTab = (ObitTableMC*)inTab;
-  PyDict_SetItemString(outDict, "numBand",  PyInt_FromLong((long)lTab->numBand));
   PyDict_SetItemString(outDict, "numPol",  PyInt_FromLong((long)lTab->numPol));
+  PyDict_SetItemString(outDict, "numBand",  PyInt_FromLong((long)lTab->numBand));
   PyDict_SetItemString(outDict, "obscode", PyString_InternFromString(lTab->obscode));
   PyDict_SetItemString(outDict, "RefDate", PyString_InternFromString(lTab->RefDate));
   PyDict_SetItemString(outDict, "revision",  PyInt_FromLong((long)lTab->revision));
@@ -8167,13 +8762,13 @@ extern void TableSUSetHeadKeys(ObitTable *,PyObject *);
 extern ObitTable* TableTY (ObitData *inData, long *tabVer,
  	                   int access,
  	                   char *tabName,
-                           int numPol, int numIF,
+                           int numIF, int numPol,
                            ObitErr *err)
  {
    ObitIOAccess laccess;
    /* Cast structural keywords to correct type */
-   oint lnumPol = (oint)numPol;
    oint lnumIF = (oint)numIF;
+   oint lnumPol = (oint)numPol;
    olong ltabVer = (olong)*tabVer;
    ObitTable *outTable=NULL;
    laccess = OBIT_IO_ReadOnly;
@@ -8181,7 +8776,7 @@ extern ObitTable* TableTY (ObitData *inData, long *tabVer,
    else if (access==3) laccess = OBIT_IO_ReadWrite;
    outTable = (ObitTable*)newObitTableTYValue ((gchar*)tabName, inData, (olong*)&ltabVer,
    			   laccess, 
-                           lnumPol, lnumIF,
+                           lnumIF, lnumPol,
                            err);
    *tabVer = (long)ltabVer;
    return outTable;
@@ -8190,8 +8785,8 @@ extern ObitTable* TableTY (ObitData *inData, long *tabVer,
 extern PyObject* TableTYGetHeadKeys (ObitTable *inTab) {
   PyObject *outDict=PyDict_New();
   ObitTableTY *lTab = (ObitTableTY*)inTab;
-  PyDict_SetItemString(outDict, "numPol",  PyInt_FromLong((long)lTab->numPol));
   PyDict_SetItemString(outDict, "numIF",  PyInt_FromLong((long)lTab->numIF));
+  PyDict_SetItemString(outDict, "numPol",  PyInt_FromLong((long)lTab->numPol));
   PyDict_SetItemString(outDict, "revision",  PyInt_FromLong((long)lTab->revision));
 
   return outDict;
@@ -8851,6 +9446,7 @@ extern void UVDescSetDict(ObitUVDesc* in, PyObject *inDict) {
     tstr = PyString_AsString(PyList_GetItem(list7, i));
     strncpy (in->ptype[i], tstr, UVLEN_KEYWORD);
   }
+  in->firstVis = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "firstVis"));
   /* Reindex just to be sure */
   ObitUVDescIndex (in);
 } // end UVDescSetDict
@@ -9240,6 +9836,12 @@ extern ObitUVDesc* UVGetDesc (ObitUV* in) {
   return ObitUVDescRef(in->myDesc);
 }
 
+extern ObitUVDesc* UVGetIODesc (ObitUV* in) {
+  ObitUVDesc *desc=NULL;
+  if (in->myIO!=NULL) desc = (ObitUVDesc*)(in->myIO->myDesc);
+  return ObitUVDescRef(desc);
+}
+
 extern void UVSetDesc (ObitUV* in, ObitUVDesc* desc) {
   in->myDesc = ObitUVDescUnref(in->myDesc);
   in->myDesc = ObitUVDescRef(desc);
@@ -9396,6 +9998,7 @@ extern ObitInfoList *UVGetList(ObitUV *);
 extern ObitTableList *UVGetTableList(ObitUV *);
 extern long UVGetHighVer(ObitUV *,char *);
 extern ObitUVDesc *UVGetDesc(ObitUV *);
+extern ObitUVDesc *UVGetIODesc(ObitUV *);
 extern void UVSetDesc(ObitUV *,ObitUVDesc *);
 extern int UVisScratch(ObitUV *);
 extern int UVIsA(ObitUV *);
@@ -34773,6 +35376,462 @@ static PyObject *_wrap_TableIDI_ARRAY_GEOMETRYSetHeadKeys(PyObject *self, PyObje
     return _resultobj;
 }
 
+static PyObject *_wrap_TableIDI_BANDPASS(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitData * _arg0;
+    long * _arg1;
+    int  _arg2;
+    char * _arg3;
+    int  _arg4;
+    int  _arg5;
+    int  _arg6;
+    int  _arg7;
+    int  _arg8;
+    ObitErr * _arg9;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo9 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiOiiiiiO:TableIDI_BANDPASS",&_argo0,&_obj1,&_arg2,&_obj3,&_arg4,&_arg5,&_arg6,&_arg7,&_arg8,&_argo9)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_BANDPASS. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo9) {
+        if (_argo9 == Py_None) { _arg9 = NULL; }
+        else if (SWIG_GetPtrObj(_argo9,(void **) &_arg9,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 10 of TableIDI_BANDPASS. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableIDI_BANDPASS(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7,_arg8,_arg9);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((long *) _arg1);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_BANDPASSGetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTable * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:TableIDI_BANDPASSGetHeadKeys",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_BANDPASSGetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TableIDI_BANDPASSGetHeadKeys(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_BANDPASSSetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableIDI_BANDPASSSetHeadKeys",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_BANDPASSSetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    TableIDI_BANDPASSSetHeadKeys(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_CALIBRATION(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitData * _arg0;
+    long * _arg1;
+    int  _arg2;
+    char * _arg3;
+    int  _arg4;
+    int  _arg5;
+    int  _arg6;
+    ObitErr * _arg7;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo7 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiOiiiO:TableIDI_CALIBRATION",&_argo0,&_obj1,&_arg2,&_obj3,&_arg4,&_arg5,&_arg6,&_argo7)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_CALIBRATION. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo7) {
+        if (_argo7 == Py_None) { _arg7 = NULL; }
+        else if (SWIG_GetPtrObj(_argo7,(void **) &_arg7,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 8 of TableIDI_CALIBRATION. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableIDI_CALIBRATION(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((long *) _arg1);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_CALIBRATIONGetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTable * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:TableIDI_CALIBRATIONGetHeadKeys",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_CALIBRATIONGetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TableIDI_CALIBRATIONGetHeadKeys(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_CALIBRATIONSetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableIDI_CALIBRATIONSetHeadKeys",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_CALIBRATIONSetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    TableIDI_CALIBRATIONSetHeadKeys(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_FLAG(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitData * _arg0;
+    long * _arg1;
+    int  _arg2;
+    char * _arg3;
+    int  _arg4;
+    ObitErr * _arg5;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo5 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiOiO:TableIDI_FLAG",&_argo0,&_obj1,&_arg2,&_obj3,&_arg4,&_argo5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_FLAG. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of TableIDI_FLAG. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableIDI_FLAG(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((long *) _arg1);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_FLAGGetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTable * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:TableIDI_FLAGGetHeadKeys",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_FLAGGetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TableIDI_FLAGGetHeadKeys(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_FLAGSetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableIDI_FLAGSetHeadKeys",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_FLAGSetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    TableIDI_FLAGSetHeadKeys(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
 static PyObject *_wrap_TableIDI_FREQUENCY(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitTable * _result;
@@ -34915,6 +35974,462 @@ static PyObject *_wrap_TableIDI_FREQUENCYSetHeadKeys(PyObject *self, PyObject *a
   }
 }
     TableIDI_FREQUENCYSetHeadKeys(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_GAIN_CURVE(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitData * _arg0;
+    long * _arg1;
+    int  _arg2;
+    char * _arg3;
+    int  _arg4;
+    int  _arg5;
+    int  _arg6;
+    ObitErr * _arg7;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo7 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiOiiiO:TableIDI_GAIN_CURVE",&_argo0,&_obj1,&_arg2,&_obj3,&_arg4,&_arg5,&_arg6,&_argo7)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_GAIN_CURVE. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo7) {
+        if (_argo7 == Py_None) { _arg7 = NULL; }
+        else if (SWIG_GetPtrObj(_argo7,(void **) &_arg7,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 8 of TableIDI_GAIN_CURVE. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableIDI_GAIN_CURVE(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((long *) _arg1);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_GAIN_CURVEGetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTable * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:TableIDI_GAIN_CURVEGetHeadKeys",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_GAIN_CURVEGetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TableIDI_GAIN_CURVEGetHeadKeys(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_GAIN_CURVESetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableIDI_GAIN_CURVESetHeadKeys",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_GAIN_CURVESetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    TableIDI_GAIN_CURVESetHeadKeys(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_INTERFEROMETER_MODEL(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitData * _arg0;
+    long * _arg1;
+    int  _arg2;
+    char * _arg3;
+    int  _arg4;
+    int  _arg5;
+    int  _arg6;
+    ObitErr * _arg7;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo7 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiOiiiO:TableIDI_INTERFEROMETER_MODEL",&_argo0,&_obj1,&_arg2,&_obj3,&_arg4,&_arg5,&_arg6,&_argo7)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_INTERFEROMETER_MODEL. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo7) {
+        if (_argo7 == Py_None) { _arg7 = NULL; }
+        else if (SWIG_GetPtrObj(_argo7,(void **) &_arg7,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 8 of TableIDI_INTERFEROMETER_MODEL. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableIDI_INTERFEROMETER_MODEL(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((long *) _arg1);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_INTERFEROMETER_MODELGetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTable * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:TableIDI_INTERFEROMETER_MODELGetHeadKeys",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_INTERFEROMETER_MODELGetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TableIDI_INTERFEROMETER_MODELGetHeadKeys(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_INTERFEROMETER_MODELSetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableIDI_INTERFEROMETER_MODELSetHeadKeys",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_INTERFEROMETER_MODELSetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    TableIDI_INTERFEROMETER_MODELSetHeadKeys(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_PHASE_CAL(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitData * _arg0;
+    long * _arg1;
+    int  _arg2;
+    char * _arg3;
+    int  _arg4;
+    int  _arg5;
+    int  _arg6;
+    ObitErr * _arg7;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo7 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiOiiiO:TableIDI_PHASE_CAL",&_argo0,&_obj1,&_arg2,&_obj3,&_arg4,&_arg5,&_arg6,&_argo7)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_PHASE_CAL. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo7) {
+        if (_argo7 == Py_None) { _arg7 = NULL; }
+        else if (SWIG_GetPtrObj(_argo7,(void **) &_arg7,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 8 of TableIDI_PHASE_CAL. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableIDI_PHASE_CAL(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((long *) _arg1);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_PHASE_CALGetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTable * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:TableIDI_PHASE_CALGetHeadKeys",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_PHASE_CALGetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TableIDI_PHASE_CALGetHeadKeys(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_PHASE_CALSetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableIDI_PHASE_CALSetHeadKeys",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_PHASE_CALSetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    TableIDI_PHASE_CALSetHeadKeys(_arg0,_arg1);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
 {
@@ -35073,6 +36588,157 @@ static PyObject *_wrap_TableIDI_SOURCESetHeadKeys(PyObject *self, PyObject *args
     return _resultobj;
 }
 
+static PyObject *_wrap_TableIDI_SYSTEM_TEMPERATURE(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitData * _arg0;
+    long * _arg1;
+    int  _arg2;
+    char * _arg3;
+    int  _arg4;
+    int  _arg5;
+    ObitErr * _arg6;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo6 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiOiiO:TableIDI_SYSTEM_TEMPERATURE",&_argo0,&_obj1,&_arg2,&_obj3,&_arg4,&_arg5,&_argo6)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_SYSTEM_TEMPERATURE. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo6) {
+        if (_argo6 == Py_None) { _arg6 = NULL; }
+        else if (SWIG_GetPtrObj(_argo6,(void **) &_arg6,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 7 of TableIDI_SYSTEM_TEMPERATURE. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableIDI_SYSTEM_TEMPERATURE(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((long *) _arg1);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_SYSTEM_TEMPERATUREGetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTable * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:TableIDI_SYSTEM_TEMPERATUREGetHeadKeys",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_SYSTEM_TEMPERATUREGetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TableIDI_SYSTEM_TEMPERATUREGetHeadKeys(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_SYSTEM_TEMPERATURESetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableIDI_SYSTEM_TEMPERATURESetHeadKeys",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_SYSTEM_TEMPERATURESetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    TableIDI_SYSTEM_TEMPERATURESetHeadKeys(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
 static PyObject *_wrap_TableIDI_UV_DATA(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitTable * _result;
@@ -35220,6 +36886,156 @@ static PyObject *_wrap_TableIDI_UV_DATASetHeadKeys(PyObject *self, PyObject *arg
   }
 }
     TableIDI_UV_DATASetHeadKeys(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  Py_XDECREF (_arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_WEATHER(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitData * _arg0;
+    long * _arg1;
+    int  _arg2;
+    char * _arg3;
+    int  _arg4;
+    ObitErr * _arg5;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo5 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOiOiO:TableIDI_WEATHER",&_argo0,&_obj1,&_arg2,&_obj3,&_arg4,&_argo5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitData_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_WEATHER. Expected _ObitData_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of TableIDI_WEATHER. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableIDI_WEATHER(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((long *) _arg1);
+}
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_WEATHERGetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitTable * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:TableIDI_WEATHERGetHeadKeys",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_WEATHERGetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)TableIDI_WEATHERGetHeadKeys(_arg0);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_TableIDI_WEATHERSetHeadKeys(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _arg0;
+    PyObject * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:TableIDI_WEATHERSetHeadKeys",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitTable_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableIDI_WEATHERSetHeadKeys. Expected _ObitTable_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    _arg1 = PyDict_Copy(PyList_GetItem(_obj1,0));
+  } else if (PyDict_Check(_obj1)) {
+    _arg1 = PyDict_Copy(_obj1);
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list or dict");
+    return NULL;
+  }
+}
+    TableIDI_WEATHERSetHeadKeys(_arg0,_arg1);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
 {
@@ -41420,6 +43236,34 @@ static PyObject *_wrap_UVGetDesc(PyObject *self, PyObject *args) {
         }
     }
     _result = (ObitUVDesc *)UVGetDesc(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUVDesc_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVGetIODesc(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVDesc * _result;
+    ObitUV * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:UVGetIODesc",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVGetIODesc. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitUVDesc *)UVGetIODesc(_arg0);
     if (_result) {
         SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUVDesc_p");
         _resultobj = Py_BuildValue("s",_ptemp);
@@ -48776,6 +50620,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "UVIsA", _wrap_UVIsA, METH_VARARGS },
 	 { "UVisScratch", _wrap_UVisScratch, METH_VARARGS },
 	 { "UVSetDesc", _wrap_UVSetDesc, METH_VARARGS },
+	 { "UVGetIODesc", _wrap_UVGetIODesc, METH_VARARGS },
 	 { "UVGetDesc", _wrap_UVGetDesc, METH_VARARGS },
 	 { "UVGetHighVer", _wrap_UVGetHighVer, METH_VARARGS },
 	 { "UVGetTableList", _wrap_UVGetTableList, METH_VARARGS },
@@ -48933,15 +50778,39 @@ static PyMethodDef ObitMethods[] = {
 	 { "TableIMSetHeadKeys", _wrap_TableIMSetHeadKeys, METH_VARARGS },
 	 { "TableIMGetHeadKeys", _wrap_TableIMGetHeadKeys, METH_VARARGS },
 	 { "TableIM", _wrap_TableIM, METH_VARARGS },
+	 { "TableIDI_WEATHERSetHeadKeys", _wrap_TableIDI_WEATHERSetHeadKeys, METH_VARARGS },
+	 { "TableIDI_WEATHERGetHeadKeys", _wrap_TableIDI_WEATHERGetHeadKeys, METH_VARARGS },
+	 { "TableIDI_WEATHER", _wrap_TableIDI_WEATHER, METH_VARARGS },
 	 { "TableIDI_UV_DATASetHeadKeys", _wrap_TableIDI_UV_DATASetHeadKeys, METH_VARARGS },
 	 { "TableIDI_UV_DATAGetHeadKeys", _wrap_TableIDI_UV_DATAGetHeadKeys, METH_VARARGS },
 	 { "TableIDI_UV_DATA", _wrap_TableIDI_UV_DATA, METH_VARARGS },
+	 { "TableIDI_SYSTEM_TEMPERATURESetHeadKeys", _wrap_TableIDI_SYSTEM_TEMPERATURESetHeadKeys, METH_VARARGS },
+	 { "TableIDI_SYSTEM_TEMPERATUREGetHeadKeys", _wrap_TableIDI_SYSTEM_TEMPERATUREGetHeadKeys, METH_VARARGS },
+	 { "TableIDI_SYSTEM_TEMPERATURE", _wrap_TableIDI_SYSTEM_TEMPERATURE, METH_VARARGS },
 	 { "TableIDI_SOURCESetHeadKeys", _wrap_TableIDI_SOURCESetHeadKeys, METH_VARARGS },
 	 { "TableIDI_SOURCEGetHeadKeys", _wrap_TableIDI_SOURCEGetHeadKeys, METH_VARARGS },
 	 { "TableIDI_SOURCE", _wrap_TableIDI_SOURCE, METH_VARARGS },
+	 { "TableIDI_PHASE_CALSetHeadKeys", _wrap_TableIDI_PHASE_CALSetHeadKeys, METH_VARARGS },
+	 { "TableIDI_PHASE_CALGetHeadKeys", _wrap_TableIDI_PHASE_CALGetHeadKeys, METH_VARARGS },
+	 { "TableIDI_PHASE_CAL", _wrap_TableIDI_PHASE_CAL, METH_VARARGS },
+	 { "TableIDI_INTERFEROMETER_MODELSetHeadKeys", _wrap_TableIDI_INTERFEROMETER_MODELSetHeadKeys, METH_VARARGS },
+	 { "TableIDI_INTERFEROMETER_MODELGetHeadKeys", _wrap_TableIDI_INTERFEROMETER_MODELGetHeadKeys, METH_VARARGS },
+	 { "TableIDI_INTERFEROMETER_MODEL", _wrap_TableIDI_INTERFEROMETER_MODEL, METH_VARARGS },
+	 { "TableIDI_GAIN_CURVESetHeadKeys", _wrap_TableIDI_GAIN_CURVESetHeadKeys, METH_VARARGS },
+	 { "TableIDI_GAIN_CURVEGetHeadKeys", _wrap_TableIDI_GAIN_CURVEGetHeadKeys, METH_VARARGS },
+	 { "TableIDI_GAIN_CURVE", _wrap_TableIDI_GAIN_CURVE, METH_VARARGS },
 	 { "TableIDI_FREQUENCYSetHeadKeys", _wrap_TableIDI_FREQUENCYSetHeadKeys, METH_VARARGS },
 	 { "TableIDI_FREQUENCYGetHeadKeys", _wrap_TableIDI_FREQUENCYGetHeadKeys, METH_VARARGS },
 	 { "TableIDI_FREQUENCY", _wrap_TableIDI_FREQUENCY, METH_VARARGS },
+	 { "TableIDI_FLAGSetHeadKeys", _wrap_TableIDI_FLAGSetHeadKeys, METH_VARARGS },
+	 { "TableIDI_FLAGGetHeadKeys", _wrap_TableIDI_FLAGGetHeadKeys, METH_VARARGS },
+	 { "TableIDI_FLAG", _wrap_TableIDI_FLAG, METH_VARARGS },
+	 { "TableIDI_CALIBRATIONSetHeadKeys", _wrap_TableIDI_CALIBRATIONSetHeadKeys, METH_VARARGS },
+	 { "TableIDI_CALIBRATIONGetHeadKeys", _wrap_TableIDI_CALIBRATIONGetHeadKeys, METH_VARARGS },
+	 { "TableIDI_CALIBRATION", _wrap_TableIDI_CALIBRATION, METH_VARARGS },
+	 { "TableIDI_BANDPASSSetHeadKeys", _wrap_TableIDI_BANDPASSSetHeadKeys, METH_VARARGS },
+	 { "TableIDI_BANDPASSGetHeadKeys", _wrap_TableIDI_BANDPASSGetHeadKeys, METH_VARARGS },
+	 { "TableIDI_BANDPASS", _wrap_TableIDI_BANDPASS, METH_VARARGS },
 	 { "TableIDI_ARRAY_GEOMETRYSetHeadKeys", _wrap_TableIDI_ARRAY_GEOMETRYSetHeadKeys, METH_VARARGS },
 	 { "TableIDI_ARRAY_GEOMETRYGetHeadKeys", _wrap_TableIDI_ARRAY_GEOMETRYGetHeadKeys, METH_VARARGS },
 	 { "TableIDI_ARRAY_GEOMETRY", _wrap_TableIDI_ARRAY_GEOMETRY, METH_VARARGS },

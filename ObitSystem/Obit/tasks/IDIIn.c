@@ -1,8 +1,5 @@
 /* $Id$  */
-/* TO DO:
-   1) Deal with single source data
- */
-/* Read IDI format data                               */
+/* Read IDI format data, convert to Obit UV                           */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2007-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
@@ -44,6 +41,9 @@
 #include "ObitTableCL.h"
 #include "ObitTableBP.h"
 #include "ObitTableTY.h"
+#include "ObitTableIM.h"
+#include "ObitTableGC.h"
+#include "ObitTablePC.h"
 #include "ObitTableWX.h"
 #include "ObitTableIDI_ANTENNA.h"
 #include "ObitTableIDI_ARRAY_GEOMETRY.h"
@@ -53,12 +53,12 @@
 #include "ObitTableIDI_CALIBRATION.h"
 #include "ObitTableIDI_BANDPASS.h"
 #include "ObitTableIDI_SYSTEM_TEMPERATURE.h"
+#include "ObitTableIDI_GAIN_CURVE.h"
+#include "ObitTableIDI_PHASE_CAL.h"
+#include "ObitTableIDI_INTERFEROMETER_MODEL.h"
 #include "ObitTableIDI_WEATHER.h"
 #include "ObitTableIDI_UV_DATA.h"
 #include "ObitHistory.h"
-#ifndef VELIGHT
-#define VELIGHT 2.997924562e8
-#endif
 
 /* internal prototypes */
 /* Get inputs */
@@ -92,6 +92,14 @@ void GetCalibrationInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
 void GetBandpassInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
 /* Copy any SYSTEM_TEMPERATURE tables */
 void GetTSysInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
+/* Copy any GAIN_CURVEtables */
+void GetGainCurveInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
+/* Copy any PHASE_CALtables */
+void GetPhaseCalInfo (ObitData *inData, ObitUV *outData, 
+				 ObitErr *err);
+/* Copy any INTTERFEROMETER_MODELtables */
+void GetInterferometerModelInfo (ObitData *inData, ObitUV *outData, 
+				 ObitErr *err);
 /* Copy any WEATHER tables */
 void GetWeatherInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
 /* Read data */
@@ -100,36 +108,37 @@ void ProcessData (gchar *inscan, ofloat avgTime,
 		  ofloat** ATime, ofloat*** AData, ofloat** ACal, 
 		  ObitErr *err);
 /* Write history */
-void IDIInHistory (ObitInfoList* myInput, ObitUV* outData, ObitErr* err);
+void IDIInHistory (ObitData* inData, ObitInfoList* myInput, ObitUV* outData, 
+		   ObitErr* err);
 
 /* Program globals */
 gchar *pgmName = "IDIIn";       /* Program name */
 gchar *infile  = "IDIIn.inp";   /* File with program inputs */
 gchar *outfile = "IDIIn.out";   /* File to contain program outputs */
-olong  pgmNumber;       /* Program number (like POPS no.) */
-olong  AIPSuser;        /* AIPS user number number (like POPS no.) */
-olong  nAIPS=0;         /* Number of AIPS directories */
+olong  pgmNumber;      /* Program number (like POPS no.) */
+olong  AIPSuser;       /* AIPS user number number (like POPS no.) */
+olong  nAIPS=0;        /* Number of AIPS directories */
 gchar **AIPSdirs=NULL; /* List of AIPS data directories */
-olong  nFITS=0;         /* Number of FITS directories */
+olong  nFITS=0;        /* Number of FITS directories */
 ObitInfoList *myInput  = NULL; /* Input parameter list */
 ObitInfoList *myOutput = NULL; /* Output parameter list */
 gchar **FITSdirs=NULL; /* List of FITS data directories */
-gchar DataRoot[128]; /* Root directory of input data */
-odouble refMJD;   /* reference Julian date */
-odouble integTime;/* Integration time in days */
+gchar DataRoot[128];   /* Root directory of input data */
+odouble refMJD;        /* reference Julian date */
+odouble integTime;     /* Integration time in days */
 ofloat *SourceID = NULL; /* Source number (1-rel) lookup table */
 gboolean isNew=FALSE;  /* Is the output newly created */
-olong  nchan=1;   /* Number of frequencies */
-olong  nstok=1;   /* Number of Stokes */
-olong  nIF=1;     /* Number of IFs */
-ofloat deltaFreq; /* Channel increment */
-ofloat refPixel;  /* Frequency reference pixel */
-odouble refFrequency; /* reference frequency (Hz) */
+olong  nchan=1;        /* Number of frequencies */
+olong  nstok=1;        /* Number of Stokes */
+olong  nIF=1;          /* Number of IFs */
+ofloat deltaFreq;      /* Channel increment */
+ofloat refPixel;       /* Frequency reference pixel */
+odouble refFrequency;  /* reference frequency (Hz) */
 
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
-/*    Read IDI  data to a UV dataset                                      */
+/*    Read IDI  data to an Obit UV dataset                                */
 /*----------------------------------------------------------------------- */
 {
   olong  i, ierr=0;
@@ -143,7 +152,7 @@ int main ( int argc, char **argv )
   gchar FullFile[128];
   olong disk;
 
-  err = newObitErr();
+  err = newObitErr();  /* Obit error/message stack */
 
   /* Startup - parse command line */
   ierr = 0;
@@ -214,10 +223,13 @@ int main ( int argc, char **argv )
   GetCalibrationInfo (inData, outData, err);   /* CALIBRATION tables */
   GetBandpassInfo (inData, outData, err);      /* BANDPASS tables */
   GetTSysInfo (inData, outData, err);          /* SYSTEM_TEMPERATURE tables */
+  GetGainCurveInfo (inData, outData, err);     /* GAIN_CURVE tables */
+  GetInterferometerModelInfo (inData, outData, err); /* INTERFEROMETER_MODEL tables */
+  GetPhaseCalInfo (inData, outData, err);      /* PHASE_CAL tables */
   GetWeatherInfo (inData, outData, err);       /* WEATHER tables */
 
   /* History */
-  IDIInHistory (myInput, outData, err);
+  IDIInHistory (inData, myInput, outData, err);
   
   /* show any errors */
   if (err->error) ierr = 1;   ObitErrLog(err);   if (ierr!=0) goto exit;
@@ -388,7 +400,7 @@ void Usage(void)
     fprintf(stderr, "Arguments:\n");
     fprintf(stderr, "  -input input parameter file, def IDIIn.in\n");
     fprintf(stderr, "  -output output result file, def UVSub.out\n");
-    fprintf(stderr, "  -scan date/time used for form scan FITS file names\n");
+    fprintf(stderr, "  -scan of file root used to form scan FITS file names\n");
     fprintf(stderr, "  -DataRoot Directory name for input \n");
     fprintf(stderr, "  -outFile output uv FITS  file\n");  
     fprintf(stderr, "  -outName output uv AIPS file name\n");
@@ -874,6 +886,8 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
   ObitData *inData=NULL;
   ObitTableIDI_UV_DATA *inTable=NULL;
   ObitTableIDI_UV_DATARow *inRow=NULL;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar FullFile[128];
   gchar tstr1[32], tstr2[32];
   gchar *routine = "GetData";
@@ -1006,6 +1020,15 @@ void GetData (ObitUV *outData, gchar *inscan, ObitInfoList *myInput,
   desc = outData->myDesc;
   Buffer = outData->buffer;
   desc->firstVis = desc->nvis+1;  /* Append to end of data */
+
+  /* Get any prior Obit sort order */
+  if (outData->myDesc->isort[0] == ' ') {
+    ObitInfoListGetTest(myInput, "OBITSORT", &type, dim, tstr1);
+    /* Only the first 2 characters */
+    outData->myDesc->isort[0] = tstr1[0];
+    outData->myDesc->isort[1] = tstr1[1];
+    outData->myDesc->isort[2] = 0;
+  }
   
   /* Get reference MJD, convert ref date  to JD */
   ObitUVDescDate2JD (inTable->RefDate, &JD);
@@ -2222,6 +2245,476 @@ void GetTSysInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
 
 } /* end  GetTSysInfo */
 
+void GetGainCurveInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
+/*----------------------------------------------------------------------- */
+/*  Convert any GAIN_CURVE tables on inData to AIPS GC on outData         */
+/*   Input:                                                               */
+/*      inData   Input IDI FITS object                                    */
+/*      outData  Output UV object                                         */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  ObitTableIDI_GAIN_CURVE*    inTable=NULL;
+  ObitTableIDI_GAIN_CURVERow* inRow=NULL;
+  ObitTableGC*          outTable=NULL;
+  ObitTableGCRow*       outRow=NULL;
+  olong i, j, iver, iRow, oRow, ver;
+  oint numIF, numPol, numTabs;
+  ObitIOAccess access;
+  gchar *routine = "GetGainCurveInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitDataIsA(inData));
+  g_assert (ObitUVIsA(outData));
+
+  /* Loop over plausible versions */
+  for (iver=1; iver<1000; iver++) {
+    
+    /* Print any messages */
+    ObitErrLog(err);
+
+    /* Create input Flag table object */
+    ver = iver;
+    access = OBIT_IO_ReadOnly;
+    numIF = numPol = numTabs = 0;
+    inTable = newObitTableIDI_GAIN_CURVEValue ("Input table", inData, &ver, access, 
+					       numPol, numIF, numTabs, 
+					       err);
+    /* Find it? */
+    if (inTable==NULL) {
+      ObitErrClearErr (err);
+      break;
+    }
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
+    
+    /* Open table */
+    if ((ObitTableIDI_GAIN_CURVEOpen (inTable, access, err) 
+	 != OBIT_IO_OK) || (err->error))  { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR opening input IDI_GAIN_CURVE table");
+      return;
+    }
+    
+    /* Create Row */
+    inRow = newObitTableIDI_GAIN_CURVERow (inTable);
+    
+    /* Create output GC table object */
+    ver = iver;
+    access  = OBIT_IO_ReadWrite;
+    numIF   = inTable->no_band;
+    numPol  = inTable->numPol;
+    numTabs =  inTable->numTabs;
+    outTable = newObitTableGCValue ("Output table", (ObitData*)outData, 
+				    &ver, access, numIF, numPol, numTabs, err);
+    if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with GC table");
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    
+    /* Open table */
+    if ((ObitTableGCOpen (outTable, access, err) 
+	 != OBIT_IO_OK) || (err->error))  { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR opening output GC table");
+      return;
+    }
+    
+    /* Create output Row */
+    outRow = newObitTableGCRow (outTable);
+    /* attach to table buffer */
+    ObitTableGCSetRow (outTable, outRow, err);
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    
+    /* Initialize output row */
+    outRow->status = 0;
+    
+    /* loop through input table */
+    for (iRow = 1; iRow<=inTable->myDesc->nrow; iRow++) {
+      if ((ObitTableIDI_GAIN_CURVEReadRow (inTable, iRow, inRow, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "ERROR reading IDI_GAIN_CURVE Table");
+	return;
+      }
+      
+      /* Save to GC table */
+      outRow->antennaNo  = inRow->antNo;
+      outRow->SubArray   = inRow->Array;
+      outRow->FreqID     = inRow->fqid;
+      for (i=0; i<numIF; i++) {
+	outRow->Type1[i] = inRow->type1[i];
+	outRow->NTerm1[i]= inRow->nterm1[i];
+	outRow->XTyp1[i] = inRow->x_typ1[i];
+	outRow->YTyp1[i] = inRow->y_typ1[i];
+	outRow->XVal1[i] = inRow->x_val1[i];
+	outRow->sens1[i] = inRow->sens1[i];
+	for (j=0; j<numTabs; j++) {
+	  outRow->YVal1[i*numTabs+j] = inRow->y_val1[i*numTabs+j];
+	  outRow->gain1[i*numTabs+j] = inRow->gain1[i*numTabs+j];
+	}
+      }
+      if (numPol>1) {   /* 2 poln */
+	for (i=0; i<numIF; i++) {
+	  outRow->Type2[i] = inRow->type2[i];
+	  outRow->NTerm2[i]= inRow->nterm2[i];
+	  outRow->XTyp2[i] = inRow->x_typ2[i];
+	  outRow->YTyp2[i] = inRow->y_typ2[i];
+	  outRow->XVal2[i] = inRow->x_val2[i];
+	  outRow->sens2[i] = inRow->sens2[i];
+	  for (j=0; j<numTabs; j++) {
+	    outRow->YVal2[i*numTabs+j] = inRow->y_val2[i*numTabs+j];
+	    outRow->gain2[i*numTabs+j]  = inRow->gain2[i*numTabs+j];
+	  }
+	}
+      }
+
+      /* Write */
+      oRow = -1;
+      if ((ObitTableGCWriteRow (outTable, oRow, outRow, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "ERROR updating GC Table");
+	return;
+      }
+
+    } /* end loop over input table */
+    
+    /* Close  tables */
+    if ((ObitTableIDI_GAIN_CURVEClose (inTable, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR closing input IDI_GAIN_CURVE Table file");
+      return;
+    }
+    
+    if ((ObitTableGCClose (outTable, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR closing output GC Table file");
+      return;
+    }
+
+    /* Tell about it */
+    Obit_log_error(err, OBIT_InfoErr, "Copied GAIN_CURVE table %d", iver);
+
+    /* Cleanup */
+    inRow    = ObitTableIDI_GAIN_CURVERowUnref(inRow);
+    inTable  = ObitTableIDI_GAIN_CURVEUnref(inTable);
+    outRow   = ObitTableGCRowUnref(outRow);
+    outTable = ObitTableGCUnref(outTable);
+
+  } /* end loop over versions */
+
+} /* end  GetGainCurveInfo */
+
+void GetPhaseCalInfo (ObitData *inData, ObitUV *outData, 
+				 ObitErr *err)
+/*----------------------------------------------------------------------- */
+/* Convert any PHASE_CAL tables on inData to AIPS PC on outData           */
+/*   Input:                                                               */
+/*      inData   Input IDI FITS object                                    */
+/*      outData  Output UV object                                         */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  ObitTableIDI_PHASE_CAL*    inTable=NULL;
+  ObitTableIDI_PHASE_CALRow* inRow=NULL;
+  ObitTablePC*          outTable=NULL;
+  ObitTablePCRow*       outRow=NULL;
+  olong i, iver, iRow, oRow, ver;
+  oint numIF, numPol, numTones;
+  ObitIOAccess access;
+  gchar *routine = "GetPhaseCalInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitDataIsA(inData));
+  g_assert (ObitUVIsA(outData));
+
+  /* Loop over plausible versions */
+  for (iver=1; iver<1000; iver++) {
+    
+    /* Print any messages */
+    ObitErrLog(err);
+
+    /* Create input Flag table object */
+    ver = iver;
+    access = OBIT_IO_ReadOnly;
+    numIF = numPol = numTones = 0;
+    inTable = newObitTableIDI_PHASE_CALValue ("Input table", inData, &ver, access, 
+					      numPol, numIF, numTones, 
+					      err);
+    /* Find it? */
+    if (inTable==NULL) {
+      ObitErrClearErr (err);
+      break;
+    }
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
+    
+    /* Open table */
+    if ((ObitTableIDI_PHASE_CALOpen (inTable, access, err) 
+	 != OBIT_IO_OK) || (err->error))  { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR opening input IDI_PHASE_CAL table");
+      return;
+    }
+    
+    /* Create Row */
+    inRow = newObitTableIDI_PHASE_CALRow (inTable);
+    
+    /* Create output PC table object */
+    ver = iver;
+    access   = OBIT_IO_ReadWrite;
+    numIF    = inTable->no_band;
+    numPol   = inTable->numPol;
+    numTones =  inTable->numTones;
+    outTable = newObitTablePCValue ("Output table", (ObitData*)outData, 
+				    &ver, access, numPol, numIF, numTones, err);
+    if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with PC table");
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    
+    /* Open table */
+    if ((ObitTablePCOpen (outTable, access, err) 
+	 != OBIT_IO_OK) || (err->error))  { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR opening output PC table");
+      return;
+    }
+    
+    /* Create output Row */
+    outRow = newObitTablePCRow (outTable);
+    /* attach to table buffer */
+    ObitTablePCSetRow (outTable, outRow, err);
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    
+    /* Initialize output row */
+    outRow->status      = 0;
+    
+    /* loop through input table */
+    for (iRow = 1; iRow<=inTable->myDesc->nrow; iRow++) {
+      if ((ObitTableIDI_PHASE_CALReadRow (inTable, iRow, inRow, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "ERROR reading IDI_PHASE_CAL Table");
+	return;
+      }
+      
+      /* Save to PC table */
+      outRow->Time     = inRow->Time;
+      outRow->SourID   = inRow->SourID;
+      outRow->antennaNo= inRow->antennaNo;
+      outRow->Array    = inRow->Array;
+      outRow->FreqID   = inRow->FreqID;
+      outRow->CableCal = inRow->CableCal;
+      for (i=0; i<numTones; i++) {
+	outRow->State1[i]   = inRow->State1[i];
+	outRow->PCFreq1[i]  = inRow->PCFreq1[i];
+	outRow->PCReal1[i]  = inRow->PCReal1[i];
+	outRow->PCImag1[i]  = inRow->PCImag1[i];
+	outRow->PCRate1[i]  = inRow->PCRate1[i];
+	
+	if (numPol>1) {   /* 2 poln */
+	  outRow->PCFreq2[i]  = inRow->PCFreq2[i];
+	  outRow->PCReal2[i]  = inRow->PCReal2[i];
+	  outRow->PCImag2[i]  = inRow->PCImag2[i];
+	  outRow->PCRate2[i]  = inRow->PCRate2[i];
+	  outRow->State2[i]   = inRow->State2[i];
+	}
+      }
+
+      /* Write */
+      oRow = -1;
+      if ((ObitTablePCWriteRow (outTable, oRow, outRow, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "ERROR updating PC Table");
+	return;
+      }
+
+    } /* end loop over input table */
+    
+    /* Close  tables */
+    if ((ObitTableIDI_PHASE_CALClose (inTable, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR closing input IDI_PHASE_CAL Table file");
+      return;
+    }
+    
+    if ((ObitTablePCClose (outTable, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR closing output PC Table file");
+      return;
+    }
+
+    /* Tell about it */
+    Obit_log_error(err, OBIT_InfoErr, "Copied PHASE_CAL table %d", iver);
+
+    /* Cleanup */
+    inRow    = ObitTableIDI_PHASE_CALRowUnref(inRow);
+    inTable  = ObitTableIDI_PHASE_CALUnref(inTable);
+    outRow   = ObitTablePCRowUnref(outRow);
+    outTable = ObitTablePCUnref(outTable);
+
+  } /* end loop over versions */
+
+} /* end  GetPhaseCalInfo */
+
+void GetInterferometerModelInfo (ObitData *inData, ObitUV *outData, 
+				 ObitErr *err)
+/*----------------------------------------------------------------------- */
+/* Convert any INTERFEROMETER_MODEL tables on inData to AIPS IM on outData*/
+/*   Input:                                                               */
+/*      inData   Input IDI FITS object                                    */
+/*      outData  Output UV object                                         */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  ObitTableIDI_INTERFEROMETER_MODEL*    inTable=NULL;
+  ObitTableIDI_INTERFEROMETER_MODELRow* inRow=NULL;
+  ObitTableIM*          outTable=NULL;
+  ObitTableIMRow*       outRow=NULL;
+  olong i, j, iver, iRow, oRow, ver;
+  oint numIF, numPol, npoly;
+  ObitIOAccess access;
+  gchar *routine = "GetInterferometerModelInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitDataIsA(inData));
+  g_assert (ObitUVIsA(outData));
+
+  /* Loop over plausible versions */
+  for (iver=1; iver<1000; iver++) {
+    
+    /* Print any messages */
+    ObitErrLog(err);
+
+    /* Create input Flag table object */
+    ver = iver;
+    access = OBIT_IO_ReadOnly;
+    numIF = numPol = npoly = 0;
+    inTable = newObitTableIDI_INTERFEROMETER_MODELValue ("Input table", inData, &ver, access, 
+							 numPol, npoly, numIF, 
+							 err);
+    /* Find it? */
+    if (inTable==NULL) {
+      ObitErrClearErr (err);
+      break;
+    }
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
+    
+    /* Open table */
+    if ((ObitTableIDI_INTERFEROMETER_MODELOpen (inTable, access, err) 
+	 != OBIT_IO_OK) || (err->error))  { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR opening input IDI_INTERFEROMETER_MODEL table");
+      return;
+    }
+    
+    /* Create Row */
+    inRow = newObitTableIDI_INTERFEROMETER_MODELRow (inTable);
+    
+    /* Create output IM table object */
+    ver = iver;
+    access  = OBIT_IO_ReadWrite;
+    numIF   = inTable->no_band;
+    numPol  = inTable->numPol;
+    npoly   =  inTable->npoly;
+    outTable= newObitTableIMValue ("Output table", (ObitData*)outData, 
+				   &ver, access, numPol, numIF, npoly, err);
+    if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with IM table");
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    
+    /* Open table */
+    if ((ObitTableIMOpen (outTable, access, err) 
+	 != OBIT_IO_OK) || (err->error))  { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR opening output IM table");
+      return;
+    }
+    
+    /* Create output Row */
+    outRow = newObitTableIMRow (outTable);
+    /* attach to table buffer */
+    ObitTableIMSetRow (outTable, outRow, err);
+    if (err->error) Obit_traceback_msg (err, routine, outData->name);
+    
+    /* Initialize output row */
+    outRow->status      = 0;
+    
+    /* loop through input table */
+    for (iRow = 1; iRow<=inTable->myDesc->nrow; iRow++) {
+      if ((ObitTableIDI_INTERFEROMETER_MODELReadRow (inTable, iRow, inRow, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "ERROR reading IDI_INTERFEROMETER_MODEL Table");
+	return;
+      }
+      
+      /* Save to IM table */
+      outRow->Time      = inRow->Time;
+      outRow->TimeI     = inRow->TimeI;
+      outRow->SourID    = inRow->SourID;
+      outRow->antennaNo = inRow->antennaNo;
+      outRow->Array     = inRow->Array;
+      outRow->FreqID    = inRow->FreqID;
+      outRow->IFR       = inRow->IFR;
+      outRow->Disp1     = inRow->Disp1;
+      outRow->DRate1    = inRow->DRate1;
+    for (i=0; i<numIF; i++) {
+	outRow->FreqVar[i]   = inRow->FreqVar[i];
+	for (j=0; j<npoly; j++) {
+	  outRow->PDelay1[i*npoly+j]   = inRow->PDelay1[i*npoly+j];
+	  outRow->PRate1[i*npoly+j]    = inRow->PRate1[i*npoly+j];
+	  outRow->Disp1     = inRow->Disp1;
+	}
+      }
+      /* There are more in the IDI table */
+      for (j=0; j<npoly; j++) {
+	outRow->GDelay1[j]   = inRow->GDelay1[j];
+	outRow->GRate1[j]    = inRow->GRate1[j];
+      }
+      if (numPol>1) {   /* 2 poln */
+	outRow->Disp2  = inRow->Disp2;
+	outRow->DRate2 = inRow->DRate2;
+	for (i=0; i<numIF; i++) {
+	  for (j=0; j<npoly; j++) {
+	    outRow->PDelay2[i*npoly+j]   = inRow->PDelay2[i*npoly+j];
+	    outRow->PRate2[i*npoly+j]    = inRow->PRate2[i*npoly+j];
+	  }
+	}
+	for (j=0; j<npoly; j++) {
+	  /* There are more in the IDI table */
+	  outRow->GDelay2[j]   = inRow->GDelay2[j];
+	  outRow->GRate2[j]    = inRow->GRate2[j];
+	}
+      } /* end poln 2 */
+
+      /* Write */
+      oRow = -1;
+      if ((ObitTableIMWriteRow (outTable, oRow, outRow, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "ERROR updating IM Table");
+	return;
+      }
+
+    } /* end loop over input table */
+    
+    /* Close  tables */
+    if ((ObitTableIDI_INTERFEROMETER_MODELClose (inTable, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR closing input IDI_INTERFEROMETER_MODEL Table file");
+      return;
+    }
+    
+    if ((ObitTableIMClose (outTable, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR closing output IM Table file");
+      return;
+    }
+
+    /* Tell about it */
+    Obit_log_error(err, OBIT_InfoErr, "Copied INTERFEROMETER_MODEL table %d", iver);
+
+    /* Cleanup */
+    inRow    = ObitTableIDI_INTERFEROMETER_MODELRowUnref(inRow);
+    inTable  = ObitTableIDI_INTERFEROMETER_MODELUnref(inTable);
+    outRow   = ObitTableIMRowUnref(outRow);
+    outTable = ObitTableIMUnref(outTable);
+
+  } /* end loop over versions */
+
+} /* end  GetInterferometerModelInfo */
+
 void GetWeatherInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
 /*----------------------------------------------------------------------- */
 /*  Convert any WEATHER tables on inData to AIPS WX on outData            */
@@ -2356,17 +2849,19 @@ void GetWeatherInfo (ObitData *inData, ObitUV *outData, ObitErr *err)
 /*----------------------------------------------------------------------- */
 /*  Write History for IDIIn                                               */
 /*   Input:                                                               */
+/*      inData    FITS IDI to copy history from                           */
 /*      myInput   Input parameters on InfoList                            */
 /*      outData   ObitUV to write history to                              */
 /*   Output:                                                              */
 /*      err    Obit Error stack                                           */
 /*----------------------------------------------------------------------- */
-void IDIInHistory (ObitInfoList* myInput, ObitUV* outData, ObitErr* err)
+void IDIInHistory (ObitData* inData, ObitInfoList* myInput, ObitUV* outData, 
+		   ObitErr* err)
 {
-  ObitHistory *outHistory=NULL;
+  ObitHistory *inHistory=NULL, *outHistory=NULL;
   gchar        hicard[81];
   gchar        *hiEntries[] = {
-    "Scan", 
+    "Scan", "DataRoot",
     NULL};
   gchar *routine = "IDIInHistory";
 
@@ -2377,8 +2872,12 @@ void IDIInHistory (ObitInfoList* myInput, ObitUV* outData, ObitErr* err)
   g_assert (ObitUVIsA(outData));
 
   /* Do history  */
+  inHistory  = newObitDataHistory ((ObitData*)inData, OBIT_IO_ReadOnly, err);
   outHistory = newObitDataHistory ((ObitData*)outData, OBIT_IO_WriteOnly, err);
 
+  /* Copy to history table */
+  ObitHistoryCopy (inHistory, outHistory, err);
+  
   /* Add this programs history */
   ObitHistoryOpen (outHistory, OBIT_IO_ReadWrite, err);
   g_snprintf (hicard, 80, " Start Obit task %s ",pgmName);
@@ -2391,6 +2890,7 @@ void IDIInHistory (ObitInfoList* myInput, ObitUV* outData, ObitErr* err)
   ObitHistoryClose (outHistory, err);
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
 
+  outHistory = ObitHistoryUnref(outHistory);  /* cleanup */
   outHistory = ObitHistoryUnref(outHistory);
  
 } /* end IDIInHistory  */
