@@ -1350,7 +1350,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong         ochan, ichan, nchan, chInc, chAvg, BChan, EChan, RChan, 
     inBChan, bchan, echan, istok, nstok, bstok, estok, nfield, *ncomp=NULL;
-  gboolean     first, doFlat, doFCal, btemp, autoWindow, Tr=TRUE;
+  gboolean     first, doFlat, doFCal, btemp, autoWindow, Tr=TRUE, do3D;
   olong        inver, outver, selFGver, plane[5] = {0,1,1,1,1};
   gchar        Stokes[5], *chStokes=" IQUV", *CCType = "AIPS CC";
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
@@ -1361,7 +1361,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     NULL
   };
   gchar        *tmpParms[] = {  /* Imaging, weighting parameters */
-    "doFull", "FOV", "PBCor", "antSize", 
+    "doFull", "do3D", "FOV", "PBCor", "antSize", 
     "Catalog", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
     "MaxBaseline", "MinBaseline", "rotate", "Beam",
@@ -1431,7 +1431,9 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   ObitInfoListGetTest(myInput, "autoWindow", &type, dim, &autoWindow);
   doFCal = TRUE;
   ObitInfoListGetTest(myInput, "doFCal", &type, dim, &doFCal);
-
+  do3D = TRUE;
+  ObitInfoListGetTest(myInput, "do3D", &type, dim, &do3D);
+  
   /* Place to save parameters */
   saveParmList = newObitInfoList ();
   
@@ -1610,6 +1612,15 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       }
       ObitImageUtilInsertPlane (outField, outImage[istok-1], plane, err);
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+
+      /* For 2D imaging copy CC Table */
+      if (!do3D && doFlat) {
+ 	inver   = 1;
+	outver  = plane[0];
+	ObitDataCopyTable ((ObitData*)outField, (ObitData*)outImage[istok-1],
+			   CCType, &inver, &outver, err);
+	if (err->error) Obit_traceback_msg (err, routine, outField->name);
+      }
       outField = ObitImageUnref(outField);
 
       /* Subtract sky model from outData for I  */
@@ -1672,7 +1683,7 @@ void doFieldCal (gchar *Source, ObitInfoList* myInput, ObitUV* inUV,
 		 ObitErr* err)
 {
   ObitIonCal *ionCal = NULL;
-  gboolean autoWindow;
+  gboolean autoWindow, do3D=TRUE, Tr=TRUE;
   ObitInfoType type;
   ObitIOType IOType;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -1698,6 +1709,11 @@ void doFieldCal (gchar *Source, ObitInfoList* myInput, ObitUV* inUV,
   
   /* Copy control info */
   ObitInfoListCopyList (myInput, ionCal->info, FCParms);
+
+  /* Save input do3D and set to TRUE on uv data */
+  ObitInfoListGetTest(myInput, "do3D",  &type, dim, &do3D);
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut(inUV->info, "do3D", OBIT_bool, dim, &Tr);
 
   /* Special field based calibration parameters  used here and renamed */
   Niter = 200; dim[0] = dim[1] = dim[2] = 1;
@@ -1753,6 +1769,10 @@ void doFieldCal (gchar *Source, ObitInfoList* myInput, ObitUV* inUV,
 
   /* Restore NField */
   ObitInfoListAlwaysPut(inUV->info, "NField", type, dim, &NField);
+
+  /* Restore do3D on uv data */
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut(inUV->info, "do3D", OBIT_bool, dim, &do3D);
 
   /* Cleanup*/
   ionCal = ObitIonCalUnref(ionCal);
@@ -1843,12 +1863,6 @@ void doFieldImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
       dim[0] = 1;dim[1] = 1;
       ObitInfoListAlwaysPut(myClean->info, "doBeam", OBIT_bool, dim, &Fl);
 
-      /* Will we need to peel bright source? */
-      if (myClean->peakFlux>PeelFlux) {
-	ftemp = PeelFlux*1.1; /* Fudge a bit due to shallow CLEAN */
-	ObitInfoListAlwaysPut (myClean->info, "autoCen", OBIT_float, dim, &ftemp);
-      }
-
       Obit_log_error(err, OBIT_InfoErr, 
 		     "Redoing image/deconvolution to center strong source on pixel");
       ObitDConCleanVisDeconvolve ((ObitDCon*)myClean, err);
@@ -1879,7 +1893,11 @@ void doFieldImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   if (doFlatten) {
     ObitDConCleanFlatten((ObitDConClean*)myClean, err);
 
-    /* Display? */
+    /* If 2D imaging concatenate CC tables */
+    if (!myClean->mosaic->images[0]->myDesc->do3D) 
+      ObitImageMosaicCopyCC (myClean->mosaic, err);
+    
+  /* Display? */
     if (myClean->display)
       ObitDisplayShow (myClean->display, (Obit*)myClean->mosaic->FullField, NULL, 
 		       1, err);
@@ -2016,7 +2034,7 @@ void IonImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "UVRange",  "timeRange",  "Robust",  "UVTaper",  "WtBox", "WtFunc", 
     "BIF", "EIF", "BChan", "EChan",  "chInc", "chAvg",
     "doCalSelect",  "doCalib",  "gainUse", "doBand ",  "BPVer",  "flagVer", 
-    "doPol",  "doFull",  "Catalog",  "OutlierDist",  "OutlierFlux",  "OutlierSI",
+    "doPol",  "doFull", "do3D", "Catalog",  "OutlierDist",  "OutlierFlux",  "OutlierSI",
     "OutlierSize",  "CLEANBox",  "Gain",  "minFlux",  "Niter",  "minPatch",
     "FOV", "xCells", "yCells", "nx", "ny", "RAShift", "DecShift", "doRestore",
     "Beam",  "CCFilter",  "maxPixel", "autoWindow", "subA",

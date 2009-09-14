@@ -122,7 +122,7 @@ ObitUVImager* ObitUVImagerFromInfo (gchar *prefix, ObitInfoList *inList,
   gboolean missing;
   gpointer listPnt;
   gchar *parm[] = 
-    {"FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
+    {"do3D", "FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
      "RAShift", "DecShift", "Sources", 
      "Catalog",  "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
@@ -393,7 +393,7 @@ void ObitUVImagerWeight (ObitUVImager *in, ObitErr *err)
 {
   /* List of control parameters on uvwork */
   gchar *controlList[] = 
-    {"FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
+    {"do3D", "FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
      "RAShift", "DecShift", "Sources", 
      "Catalog",  "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
@@ -640,7 +640,7 @@ void ObitUVImagerGetInfo (ObitUVImager *in, gchar *prefix, ObitInfoList *outList
   olong i;
   gpointer listPnt;
   gchar *parm[] = 
-    {"FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
+    {"do3D", "FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
      "RAShift", "DecShift", "Sources", 
      "Catalog",  "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",

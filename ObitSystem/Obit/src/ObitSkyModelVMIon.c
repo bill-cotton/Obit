@@ -26,6 +26,7 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitUVDesc.h"
 #include "ObitSkyModelVMIon.h"
 #include "ObitTable.h"
 #include "ObitTableCCUtil.h"
@@ -301,9 +302,10 @@ void ObitSkyModelVMIonInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   ObitUVDesc *uvDesc=NULL;
   ofloat maprot, uvrot, *rotTable, *XTable, *YTable;
   ofloat umat[3][3], pmat[3][3], shift[2], ZernXY[2];
+  ofloat xpix, ypix;
   ObitInfoType type;
-  gint32 dim[MAXINFOELEMDIM];
-  odouble raPnt, decPnt;
+  gint32 dim[MAXINFOELEMDIM]={1,1,1,1,1};
+  odouble raPnt, decPnt, raCen, decCen;
   VMIonFTFuncArg *args;
   gchar *routine = "ObitSkyModelVMIonInitMod";
 
@@ -352,6 +354,10 @@ void ObitSkyModelVMIonInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   uvrot  = ObitUVDescRotate(uvDesc);
   in->ssrot = sin (DG2RAD * (uvrot - maprot));
   in->ccrot = cos (DG2RAD * (uvrot - maprot));
+
+  /* Set do3D on uv data */
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut(uvdata->info, "do3D", OBIT_bool, dim, &in->do3D);
 
   /* index array for fields */
   if (in->fieldIndex) g_free(in->fieldIndex); in->fieldIndex = NULL;
@@ -410,7 +416,7 @@ void ObitSkyModelVMIonInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
       else { /* use point model */
 	shift[0] = -in->pointXOff;
 	shift[1] = -in->pointYOff;
-	in->do3Dmul = ObitUVDescShift3DPos (uvDesc, shift, 0.0, umat, pmat);
+	in->do3Dmul = ObitUVDescShift3DPos (uvDesc, shift, 0.0, in->do3D, umat, pmat);
       }
       /* save */
       naxis[0] = 0; naxis[1] = count-1; 
@@ -472,10 +478,26 @@ void ObitSkyModelVMIonInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
 	shift[0] = -in->pointXOff;
 	shift[1] = -in->pointYOff;
       } else {
-	/* From image header*/
-	ObitSkyGeomShiftXY (raPnt, decPnt, imDesc->crota[imDesc->jlocd], 
-			    imDesc->crval[imDesc->jlocr], imDesc->crval[imDesc->jlocd], 
-			    &shift[0], &shift[1]);
+	/* By do3D */
+	if (in->do3D) {
+	  /* From image header*/
+	  ObitSkyGeomShiftXY (raPnt, decPnt, imDesc->crota[imDesc->jlocd], 
+			      imDesc->crval[imDesc->jlocr], imDesc->crval[imDesc->jlocd], 
+			      &shift[0], &shift[1]);
+	} else { /* 2D */
+	  /* Get position of facet center */
+	  xpix = 1.0 + 0.5 * imDesc->inaxes[imDesc->jlocr];
+	  ypix = 1.0 + 0.5 * imDesc->inaxes[imDesc->jlocd];
+	  ObitSkyGeomWorldPos (xpix, ypix, 
+			       imDesc->crval[imDesc->jlocr], imDesc->crval[imDesc->jlocd],
+			       imDesc->crpix[imDesc->jlocr], imDesc->crpix[imDesc->jlocd],
+			       imDesc->cdelt[imDesc->jlocr], imDesc->cdelt[imDesc->jlocd], 
+			       imDesc->crota[imDesc->jlocd], &imDesc->ctype[imDesc->jlocr][4],
+			       &raCen, &decCen);
+	  /* Shift to this position */
+	  ObitSkyGeomShiftXY (raPnt, decPnt, imDesc->crota[imDesc->jlocd], raCen, decCen,
+			      &shift[0], &shift[1]);
+	}
       }
       
       /* Offset on Zernike plane */

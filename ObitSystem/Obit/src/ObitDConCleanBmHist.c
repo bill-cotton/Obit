@@ -263,8 +263,8 @@ void ObitDConCleanBmHistUpdate (ObitDConCleanBmHist *in, ObitImage *Beam,
   data = ObitFArrayIndex(Beam->image, pos);
 
   /* Center pixel - make 0-rel */
-  icenx =  Beam->myDesc->crpix[0] - 0.5;
-  iceny =  Beam->myDesc->crpix[1] - 0.5;
+  icenx =  Beam->myDesc->crpix[0] - Beam->myDesc->xPxOff - 0.5;
+  iceny =  Beam->myDesc->crpix[1] - Beam->myDesc->yPxOff - 0.5;
 
   /* Loop over image - ignore outer pixels */
   nx = Beam->myDesc->inaxes[0];

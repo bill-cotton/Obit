@@ -26,6 +26,8 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitImageMosaic.h"
+#include "ObitDConClean.h"
 #include "ObitDConCleanVis.h"
 #include "ObitMem.h"
 #include "ObitFFT.h"
@@ -277,17 +279,21 @@ ObitDConCleanVis* ObitDConCleanVisCreate (gchar* name, ObitUV *uvdata,
   /* Arrays per field - including those in parent classes */
   nfield =  out->mosaic->numberImages;
   out->nfield  = nfield;
-  out->gain    = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean Loop gain");
-  out->minFlux = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean minFlux");
-  out->factor  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean factor");
-  out->quality = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean quality");
-  out->maxAbsRes  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean max res");
-  out->avgRes  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean avg res");
+  out->gain        = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean Loop gain");
+  out->minFlux     = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean minFlux");
+  out->factor      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean factor");
+  out->quality     = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean quality");
+  out->maxAbsRes   = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean max res");
+  out->avgRes      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean avg res");
+  out->imgPeakRMS  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Image Peak/RMS");
+  out->beamPeakRMS = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Beam Peak/RMS");
   for (i=0; i<nfield; i++) {
-    out->maxAbsRes[i] = -1.0;
-    out->avgRes[i]    = -1.0;
-    out->quality[i]   = -1.0;
-  }
+    out->maxAbsRes[i]   = -1.0;
+    out->avgRes[i]      = -1.0;
+    out->quality[i]     = -1.0;
+    out->imgPeakRMS[i]  = -1.0;
+    out->beamPeakRMS[i] = -1.0;
+ }
 
   return out;
 } /* end ObitDConCleanVisCreate */
@@ -351,17 +357,21 @@ ObitDConCleanVisCreate2 (gchar* name, ObitUV *uvdata,
   /* Arrays per field - including those in parent classes */
   nfield =  out->mosaic->numberImages;
   out->nfield  = nfield;
-  out->gain    = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean Loop gain");
-  out->minFlux = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean minFlux");
-  out->factor  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean factor");
-  out->quality = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean quality");
-  out->maxAbsRes  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean max res");
-  out->avgRes  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean avg res");
+  out->gain        = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean Loop gain");
+  out->minFlux     = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean minFlux");
+  out->factor      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean factor");
+  out->quality     = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean quality");
+  out->maxAbsRes   = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean max res");
+  out->avgRes      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean avg res");
+  out->imgPeakRMS  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Image Peak/RMS");
+  out->beamPeakRMS = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Beam Peak/RMS");
   for (i=0; i<nfield; i++) {
-    out->maxAbsRes[i] = -1.0;
-    out->avgRes[i]    = -1.0;
-    out->quality[i]   = -1.0;
-  }
+    out->maxAbsRes[i]   = -1.0;
+    out->avgRes[i]      = -1.0;
+    out->quality[i]     = -1.0;
+    out->imgPeakRMS[i]  = -1.0;
+    out->beamPeakRMS[i] = -1.0;
+ }
 
   return out;
 } /* end ObitDConCleanVisCreate2 */
@@ -608,6 +618,10 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
     if (err->error) Obit_traceback_msg (err, routine, in->name);
     if (in->prtLv>1) ObitErrLog(err);  /* Progress Report */
     else ObitErrClear(err);
+
+    /* If 2D imaging concatenate CC tables */
+    if (!in->mosaic->images[0]->myDesc->do3D) 
+      ObitImageMosaicCopyCC (in->mosaic, err);
     
     /* Display flattened image if enabled */
     if (in->display && in->mosaic->FullField) 
@@ -995,7 +1009,7 @@ ofloat ObitDConCleanVisQuality(ObitDConCleanVis *in, olong field,
  * See if an image needs to be remade because a source which exceeds
  * the flux  threshold is not centered (as determined by moments)
  * on the reference pixel (within toler pixel).
- * A new (96x96) field is added centered on the offending source and a negative
+ * A new (128x128) field is added centered on the offending source and a negative
  * clean window added to the position of the source in its original window.
  * Avoid duplicates of the same source and ensure that all occurances of this 
  * source in any exant field has a negative clean window added.
@@ -1030,7 +1044,7 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
   olong  CCVer, newField, win[3], inaxes[2], *owin;
   ofloat tmax, xcenter, ycenter, xoff, yoff, radius, cells[2], pixel[2], opixel[2];
   ofloat xcen, ycen, RAShift, DecShift, deltax, deltay, delta, *farray;
-  odouble pos[2], RAPnt, DecPnt;
+  odouble pos[2], pos2[2], RAPnt, DecPnt;
   gboolean done, outside=FALSE, facetDone, clear, Tr=TRUE;
   gchar *routine = "ObitDConCleanVisReimage";
 
@@ -1097,8 +1111,12 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
       done = FALSE;
       for (jfield=nprior; jfield<mosaic->numberImages; jfield++) { 
 	imDesc2 = mosaic->images[jfield]->myDesc;
-	deltax = (imDesc2->crval[0]-pos[0]) / imDesc->cdelt[0];
-	deltay = (imDesc2->crval[1]-pos[1]) / imDesc->cdelt[1];
+	/* Get position of center */
+	pixel[0] = 1.0 + imDesc2->inaxes[0]*0.5;
+	pixel[1] = 1.0 + imDesc2->inaxes[1]*0.5;
+	ObitImageDescGetPos(imDesc2, pixel, pos2, err);
+	deltax = (pos2[0]-pos[0]) / imDesc->cdelt[0];
+	deltay = (pos2[1]-pos[1]) / imDesc->cdelt[1];
 	delta = sqrt (deltax*deltax + deltay*deltay);
 	/* If center within 2 pixel of the previous case call it the same */
 	done = done || (delta<2.0);
@@ -1123,8 +1141,17 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 	/* Update mosaic and shift in other places */
 	mosaic->RAShift[ifield]  = RAShift;
 	mosaic->DecShift[ifield] = DecShift;
-	imDesc->crval[imDesc->jlocr] = pos[0];
-	imDesc->crval[imDesc->jlocd] = pos[1];
+	if (imDesc->do3D) {
+	  /* 3D shift position */
+	  imDesc->crval[imDesc->jlocr] = pos[0];
+	  imDesc->crval[imDesc->jlocd] = pos[1];
+	} else {
+	  /* Not 3D - shift reference pixel */
+	  imDesc->crpix[imDesc->jlocr] -=  xoff/imDesc->cdelt[imDesc->jlocr];
+	  imDesc->crpix[imDesc->jlocd] -=  yoff/imDesc->cdelt[imDesc->jlocd];
+	  imDesc->xPxOff -= xoff/imDesc->cdelt[imDesc->jlocr];
+	  imDesc->yPxOff -= yoff/imDesc->cdelt[imDesc->jlocd];
+	}
 	imDesc->xshift = RAShift;
 	imDesc->yshift = DecShift;
 	ObitInfoListGetP(uvdata->info, "xShift", &type, dim, (gpointer*)&farray);
@@ -1159,7 +1186,7 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 	ObitImageDescGetPoint (imDesc, &RAPnt, &DecPnt);
 	ObitSkyGeomShiftXY (RAPnt, DecPnt, ObitImageDescRotate(imDesc),
 			    pos[0], pos[1], &RAShift, &DecShift);
-	nx = ny = ObitFFTSuggestSize (96); nplane = 1;
+	nx = ny = ObitFFTSuggestSize (128); nplane = 1;
 	ObitImageMosaicAddField (in->mosaic, uvdata, nx, ny, nplane, 
 				 RAShift, DecShift, err);
 	if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
@@ -1210,8 +1237,10 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 	if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
 	
 	/* Add inner and outer windows */
-	xcen = mosaic->images[newField-1]->myDesc->crpix[0];
-	ycen = mosaic->images[newField-1]->myDesc->crpix[1];
+	xcen = mosaic->images[newField-1]->myDesc->crpix[0] - 
+	  mosaic->images[newField-1]->myDesc->xPxOff;
+	ycen = mosaic->images[newField-1]->myDesc->crpix[1] - 
+	  mosaic->images[newField-1]->myDesc->yPxOff;
 	win[0] = 5; win[1] = (olong)(xcen+0.5); win[2] = (olong)(ycen+0.5); 
 	ObitDConCleanWindowAdd (in->window, newField, OBIT_DConCleanWindow_round,
 				win, err);
@@ -1317,6 +1346,14 @@ void ObitDConCleanVisAddField (ObitDConCleanVis *in, ObitUV* uvdata,
   for (i=0; i<oldField; i++) ftemp[i] = in->avgRes[i]; ftemp[i] = 0.0; 
   in->avgRes = ObitMemFree(in->avgRes);
   in->avgRes = ftemp;
+  ftemp = ObitMemAlloc0Name(newField*sizeof(ofloat),"Image Peak/RMS");
+  for (i=0; i<oldField; i++) ftemp[i] = in->imgPeakRMS[i]; ftemp[i] = 0.0; 
+  in->imgPeakRMS = ObitMemFree(in->imgPeakRMS);
+  in->imgPeakRMS = ftemp;
+  ftemp = ObitMemAlloc0Name(newField*sizeof(ofloat),"Beam Peak/RMS");
+  for (i=0; i<oldField; i++) ftemp[i] = in->beamPeakRMS[i]; ftemp[i] = 0.0; 
+  in->beamPeakRMS = ObitMemFree(in->beamPeakRMS);
+  in->beamPeakRMS = ftemp;
 
 } /* end of routine ObitDConCleanVisAddField */ 
 
@@ -1427,8 +1464,17 @@ gboolean ObitDConCleanVisRecenter (ObitDConCleanVis *in, ObitUV* uvdata,
 	/* Update mosaic and shift in other places */
 	mosaic->RAShift[ifield]  = RAShift;
 	mosaic->DecShift[ifield] = DecShift;
-	imDesc->crval[imDesc->jlocr] = pos[0];
-	imDesc->crval[imDesc->jlocd] = pos[1];
+	if (imDesc->do3D) {
+	  /* 3D shift position */
+	  imDesc->crval[imDesc->jlocr] = pos[0];
+	  imDesc->crval[imDesc->jlocd] = pos[1];
+	} else {
+	  /* Not 3D - shift reference pixel */
+	  imDesc->crpix[imDesc->jlocr] -=  xoff/imDesc->cdelt[imDesc->jlocr];
+	  imDesc->crpix[imDesc->jlocd] -=  yoff/imDesc->cdelt[imDesc->jlocd];
+	  imDesc->xPxOff -= xoff/imDesc->cdelt[imDesc->jlocr];
+	  imDesc->yPxOff -= yoff/imDesc->cdelt[imDesc->jlocd];
+	}
 	imDesc->xshift = RAShift;
 	imDesc->yshift = DecShift;
 	ObitInfoListGetP(uvdata->info, "xShift", &type, dim, (gpointer*)&farray);
@@ -1711,8 +1757,11 @@ static void  MakeResidual (ObitDConCleanVis *in, olong field,
   /* Make residual image */
   imgClass->ObitUVImagerImage (in->imager, field, doWeight, doBeam, doFlatten, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
-  /* Get statistics */
-  inClass->ObitDConCleanImageStats ((ObitDConClean*)in, field, err);
+  /* Get statistics  for image */
+  inClass->ObitDConCleanImageStats ((ObitDConClean*)in, field, FALSE, err);
+  /* Need Beam statistics? */
+  if (doBeam)
+    inClass->ObitDConCleanImageStats ((ObitDConClean*)in, field, TRUE, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
   
   if (in->prtLv>1) ObitErrLog(err);  /* Progress Report */
@@ -1752,9 +1801,11 @@ static void  MakeAllResiduals (ObitDConCleanVis *in, ObitErr *err)
   /* Parallel Image images without needing beam */
   imgClass->ObitUVImagerImage (in->imager, 0,  doWeight, doBeam, doFlatten, err);
   
-  /* Loop over fields getting statistics */
+  /* Loop over fields getting statistics for Image and Beam */
   for (i=0; i<in->nfield; i++) {
-    inClass->ObitDConCleanImageStats ((ObitDConClean*)in, i+1, err);
+    inClass->ObitDConCleanImageStats ((ObitDConClean*)in, i+1, FALSE, err);
+    if (doBeam)
+      inClass->ObitDConCleanImageStats ((ObitDConClean*)in, i+1, TRUE, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
     /* Quality measure */

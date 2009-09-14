@@ -1709,25 +1709,22 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
     if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
     
     /*    Get reference pixel offsets from tangent point */
-    xpoff = (imDesc->crpix[imDesc->jlocr] - 
-	     (imDesc->inaxes[imDesc->jlocr]/2)) * 
-      imDesc->cdelt[imDesc->jlocr];
-    ypoff = (imDesc->crpix[imDesc->jlocd] - 
-	     (imDesc->inaxes[imDesc->jlocd]/2) - 1) * 
-      imDesc->cdelt[imDesc->jlocd];
-    /* These should always be zero for 3D imaging? */
-    xpoff = 0.0;
-    ypoff = 0.0;
+    if (in->do3D) {
+      /* These should always be zero for 3D imaging? */
+      xpoff = 0.0;
+      ypoff = 0.0;
+    } else { /** 2D - use offsets */
+      xpoff = imDesc->xPxOff * imDesc->cdelt[imDesc->jlocr];
+      ypoff = imDesc->yPxOff * imDesc->cdelt[imDesc->jlocd];
+    }
     
     /* Set field center offsets */
     xxoff = dxyzc[0] * ccrot + dxyzc[1] * ssrot;
     yyoff = dxyzc[1] * ccrot - dxyzc[0] * ssrot;
     zzoff = dxyzc[2];
 
-    /* 3D rotation matrix if needed */
-    if (in->do3D) {
-      do3Dmul = ObitUVDescShift3DMatrix (uvDesc, imDesc, umat, pmat);
-    } else {do3Dmul = FALSE;}
+    /* projection rotation matrix if needed */
+    do3Dmul = ObitUVDescShift3DMatrix (uvDesc, imDesc, umat, pmat);
     
     /* DEBUG
        fprintf (stderr,"%s: subtracting components %d to %d \n",
@@ -1772,7 +1769,7 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
 	  xyz[1] = xp[0]*umat[0][1] + xp[1]*umat[1][1];
 	  xyz[2] = xp[0]*umat[0][2] + xp[1]*umat[1][2];
 	  /* PRJMUL (2, XP, UMAT, XYZ); */
-	} else {  /* no 3D */
+	} else {  /* no rotn matrix */
 	  xyz[0] = ccrot * xp[0] + ssrot * xp[1];
 	  xyz[1] = ccrot * xp[1] - ssrot * xp[0];
 	  xyz[2] = 0.0;

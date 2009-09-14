@@ -677,6 +677,8 @@ ObitIOCode ObitIOTableFITSReadRow (ObitIOTableFITS *in, olong rowno,
   len    = desc->lrow;                /* Size of row in bytes */
   offset = 0;                         /* offset in buffer */
 
+  sprintf (nulstr, "    "); /* Initialize */
+
  /* read file one row at a time */
   retCode = OBIT_IO_ReadErr; /* in case something goes wrong */
   for (iRow=row; iRow<=row+nRows-1; iRow++) {

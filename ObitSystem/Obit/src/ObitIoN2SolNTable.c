@@ -66,6 +66,8 @@ ObitIoN2SolNTableUVW (const ofloat b[3], odouble dec, ofloat ha, ofloat uvw[3]);
  *                 Control info on info:
  * \li  "doAntOff" OBIT_bool (1,1,1) Correct for antenna offset from array center?
  *                 def FALSE
+ * \li  "do3D"     OBIT_bool (1,1,1) Use 3D Imaging?
+ *                 def TRUE
  * \param NITable  Input IonTable
  * \param outSN    if nonNULL a pointer to a previously existing Table
  * \param shift    RA and Dec offsets(deg) in which NITable to be evaluated.
@@ -85,7 +87,7 @@ ObitTableSN* ObitIoN2SolNTableConvert (ObitUV *inUV, ObitTableNI *NITable,
   gchar *tname;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
-  gboolean bad, do3Dmul, allBad=TRUE, doAntOff;
+  gboolean bad, do3Dmul, allBad=TRUE, doAntOff, do3D;
   ofloat  URot3D[3][3], PRot3D[3][3], off[2], fblank =  ObitMagicF();
   odouble ra, dec, raPnt, decPnt;
   gchar *routine = "ObitIoN2SolNTableConvert";
@@ -99,6 +101,10 @@ ObitTableSN* ObitIoN2SolNTableConvert (ObitUV *inUV, ObitTableNI *NITable,
   /* Antenna offset correction? */
   doAntOff = FALSE;
   ObitInfoListGetTest(inUV->info, "doAntOff", &type, dim, &doAntOff);
+
+  /* Imaging type? */
+  do3D = TRUE;
+  ObitInfoListGetTest(inUV->info, "do3D", &type, dim, &do3D);
 
   /* create output table if needed */
   if (inUV->myDesc->jlocs>=0) numPol = MIN (2, inUV->myDesc->inaxes[inUV->myDesc->jlocs]);
@@ -137,7 +143,7 @@ ObitTableSN* ObitIoN2SolNTableConvert (ObitUV *inUV, ObitTableNI *NITable,
   }
 
   /* 3D/rotation matrices */
-  do3Dmul = ObitUVDescShift3DPos (inUV->myDesc, shift, 0.0, URot3D, PRot3D);
+  do3Dmul = ObitUVDescShift3DPos (inUV->myDesc, shift, do3D, 0.0, URot3D, PRot3D);
 
   /* Open IoN table for read */
   retCode = ObitTableNIOpen (NITable, OBIT_IO_ReadOnly, err);

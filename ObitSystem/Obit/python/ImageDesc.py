@@ -269,7 +269,8 @@ def PHeaderDict (dict):
     dict   = Python ImageDesc to print as python dict
     """
     ################################################################
-    print "Object: %8s" % dict["object"] #"date"
+    print "Object: %8s   Origin: %8s" % \
+          (dict["object"], dict["origin"]) #"date origin
     print "Observed: %8s Telescope:  %8s Created: %8s" % \
           (dict["obsdat"],dict["teles"],dict["date"])
     print "Observer: %8s   Instrument: %8s " % \
@@ -295,8 +296,11 @@ def PHeaderDict (dict):
     print "Observed RA %16s Observed Dec %15s" % \
           (PRA2HMS(dict["obsra"]),  PDec2DMS(dict["obsdec"]))
     if dict["xshift"]!=0.0 or dict["yshift"]!=0.0:
-        print "Phase shifted in X %10.3f in Y %10.3f" % \
+        print "Phase shifted in X %10.3f in Y %10.3f deg" % \
               (dict["xshift"], dict["yshift"])
+    if not dict["do3D"]:
+        print "2D Image with pixel offsets %8.2f, %8.2f" % \
+              (dict["xpixoff"], dict["ypixoff"])
     if dict["niter"]>0:
         print "no. Comp %8d" % dict["niter"]
     if dict["beamMaj"]>0.0:

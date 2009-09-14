@@ -437,7 +437,7 @@ ObitInfoList* defaultInputs(ObitErr *err)
 {
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *strTemp;
-  ofloat ftemp, farray[3];
+  ofloat farray[3];
   gboolean btemp;
   olong  itemp, iarr[3];
   ObitInfoList *out = newObitInfoList();
@@ -1677,14 +1677,14 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
   ObitAntennaList *AList=NULL;
   ObitSource *Source=NULL;
   ObitTableAN *ANTable=NULL;
-  ObitIOCode retCode;
+  ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitInfoType type;
   gint32   dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  ofloat   xCells=1.0, yCells=1.0, blnkTime=0.0, tblank;
+  ofloat   xCells=1.0, yCells=1.0, blnkTime=0.0, tblank=-1.0e20;
   ofloat   u, v, time, base, ulast, vlast, tol, Az, El, PA;
   ofloat   ss, cc, xr, xi, fblank =  ObitMagicF();
   odouble  sumAz, sumEl, sumPA;
-  olong    count, maxElem=*nelem, iElem, indx, iant, ant1, ant2, off, iver;
+  olong    count, maxElem=*nelem, iElem, indx, iant, ant1, ant2, off=0, iver;
   olong    i, j, jlocs, jlocf, jlocif, incs, incf, incif, doff, ddoff;
   olong    iIF, ichan, *refAnts, nRefAnt;
   gboolean OK;

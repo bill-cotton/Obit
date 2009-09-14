@@ -81,6 +81,8 @@ typedef struct {
   ofloat tmax;
   /* Sum of values [out] */
   ofloat sum;
+  /* Sum of values^2 [out] */
+  ofloat sum2;
 } StatsFuncArg;
 
 /*---------------Private function prototypes----------------*/
@@ -204,25 +206,31 @@ ObitDConClean* ObitDConCleanCopy  (ObitDConClean *in, ObitDConClean *out, ObitEr
 
   /* Arrays */
   /* out with the old */
-  out->gain    = ObitMemFree (out->gain);
-  out->minFlux = ObitMemFree (out->minFlux);
-  out->factor  = ObitMemFree (out->factor);
-  out->maxAbsRes  = ObitMemFree (out->maxAbsRes);
-  out->avgRes  = ObitMemFree (out->avgRes);
+  out->gain        = ObitMemFree (out->gain);
+  out->minFlux     = ObitMemFree (out->minFlux);
+  out->factor      = ObitMemFree (out->factor);
+  out->maxAbsRes   = ObitMemFree (out->maxAbsRes);
+  out->avgRes      = ObitMemFree (out->avgRes);
+  out->imgPeakRMS  = ObitMemFree (out->imgPeakRMS);
+  out->beamPeakRMS = ObitMemFree (out->beamPeakRMS);
 
   /* In with the new */
   nfield =  in->mosaic->numberImages;
-  out->gain    = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean Loop gain");
-  out->minFlux = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean minFlux");
-  out->factor  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean factor");
-  out->maxAbsRes  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean max res");
-  out->avgRes  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean avg res");
+  out->gain        = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean Loop gain");
+  out->minFlux     = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean minFlux");
+  out->factor      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean factor");
+  out->maxAbsRes   = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean max res");
+  out->avgRes      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean avg res");
+  out->imgPeakRMS  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Image Peak/RMS");
+  out->beamPeakRMS = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Beam Peak/RMS");
   for (i=0; i<nfield; i++) {
-    out->gain[i]    = in->gain[i];
-    out->minFlux[i] = in->minFlux[i];
-    out->factor[i]  = in->factor[i];
-    out->maxAbsRes[i]  = in->maxAbsRes[i];
-    out->avgRes[i]  = in->avgRes[i];
+    out->gain[i]        = in->gain[i];
+    out->minFlux[i]     = in->minFlux[i];
+    out->factor[i]      = in->factor[i];
+    out->maxAbsRes[i]   = in->maxAbsRes[i];
+    out->avgRes[i]      = in->avgRes[i];
+    out->imgPeakRMS[i]  = in->imgPeakRMS[i];
+    out->beamPeakRMS[i] = in->imgPeakRMS[i];
   }
 
   return out;
@@ -261,25 +269,31 @@ void ObitDConCleanClone  (ObitDConClean *in, ObitDConClean *out, ObitErr *err)
 
   /* Arrays */
   /* out with the old */
-  out->gain    = ObitMemFree (out->gain);
-  out->minFlux = ObitMemFree (out->minFlux);
-  out->factor  = ObitMemFree (out->factor);
-  out->maxAbsRes  = ObitMemFree (out->maxAbsRes);
-  out->avgRes  = ObitMemFree (out->avgRes);
+  out->gain        = ObitMemFree (out->gain);
+  out->minFlux     = ObitMemFree (out->minFlux);
+  out->factor      = ObitMemFree (out->factor);
+  out->maxAbsRes   = ObitMemFree (out->maxAbsRes);
+  out->avgRes      = ObitMemFree (out->avgRes);
+  out->imgPeakRMS  = ObitMemFree (out->imgPeakRMS);
+  out->beamPeakRMS = ObitMemFree (out->beamPeakRMS);
 
   /* In with the new */
-  nfield       =  in->nfield;
-  out->gain    = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean Loop gain");
-  out->minFlux = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean minFlux");
-  out->factor  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean factor");
-  out->maxAbsRes  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean max res");
-  out->avgRes  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean avg res");
+  nfield = in->nfield;
+  out->gain        = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean Loop gain");
+  out->minFlux     = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean minFlux");
+  out->factor      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean factor");
+  out->maxAbsRes   = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean max res");
+  out->avgRes      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean avg res");
+  out->imgPeakRMS  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Image Peak/RMS");
+  out->beamPeakRMS = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Beam Peak/RMS");
   for (i=0; i<nfield; i++) {
-    out->gain[i]    = in->gain[i];
-    out->minFlux[i] = in->minFlux[i];
-    out->factor[i]  = in->factor[i];
-    out->maxAbsRes[i]  = in->maxAbsRes[i];
-    out->avgRes[i]  = in->avgRes[i];
+    out->gain[i]        = in->gain[i];
+    out->minFlux[i]     = in->minFlux[i];
+    out->factor[i]      = in->factor[i];
+    out->maxAbsRes[i]   = in->maxAbsRes[i];
+    out->avgRes[i]      = in->avgRes[i];
+    out->imgPeakRMS[i]  = in->imgPeakRMS[i];
+    out->beamPeakRMS[i] = in->imgPeakRMS[i];
   }
 
 } /* end ObitDConCleanClone */
@@ -322,14 +336,18 @@ ObitDConClean* ObitDConCleanCreate (gchar* name, ObitImageMosaic *mosaic,
   /* Arrays per field */
   nfield =  mosaic->numberImages;
   out->nfield  = nfield;
-  out->gain    = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean Loop gain");
-  out->minFlux = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean minFlux");
-  out->factor  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean factor");
-  out->maxAbsRes  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean max res");
-  out->avgRes  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean avg res");
+  out->gain        = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean Loop gain");
+  out->minFlux     = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean minFlux");
+  out->factor      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean factor");
+  out->maxAbsRes   = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean max res");
+  out->avgRes      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean avg res");
+  out->imgPeakRMS  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Image Peak/RMS");
+  out->beamPeakRMS = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Beam Peak/RMS");
   for (i=0; i<nfield; i++) {
-    out->maxAbsRes[i] = -1.0;
-    out->avgRes[i] = -1.0;
+    out->maxAbsRes[i]   = -1.0;
+    out->avgRes[i]      = -1.0;
+    out->imgPeakRMS[i]  = -1.0;
+    out->beamPeakRMS[i] = -1.0;
   }
  
   return out;
@@ -635,8 +653,10 @@ void ObitDConCleanDefWindow(ObitDConClean *in, ObitErr *err)
       type = OBIT_DConCleanWindow_round;
       window[0] = (olong)(in->mosaic->Radius);
       for (field=sfield; field<=in->mosaic->nFlyEye; field++) {
-	window[1] = (olong)in->mosaic->images[field-1]->myDesc->crpix[0];
-	window[2] = (olong)in->mosaic->images[field-1]->myDesc->crpix[1];
+	window[1] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[0]-
+			    in->mosaic->images[field-1]->myDesc->xPxOff);
+	window[2] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[1]-
+                            in->mosaic->images[field-1]->myDesc->yPxOff);
 	/* Add inner if CLEANBox not specified */
 	if ((field>=sfield) && (!in->autoWindow))
 	  ObitDConCleanWindowAdd (in->window, field, type, window, err);
@@ -663,13 +683,17 @@ void ObitDConCleanDefWindow(ObitDConClean *in, ObitErr *err)
     type = OBIT_DConCleanWindow_rectangle;
     if (in->mosaic->OutlierSize) {
       for (field=in->mosaic->nFlyEye+1; field<=in->mosaic->numberImages; field++) {
-	window[0] = (olong)in->mosaic->images[field-1]->myDesc->crpix[0] - 
+	window[0] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[0]-
+			    in->mosaic->images[field-1]->myDesc->xPxOff) - 
 	  in->mosaic->OutlierSize/2;
-	window[1] = (olong)in->mosaic->images[field-1]->myDesc->crpix[1] - 
+	window[1] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[1]-
+                            in->mosaic->images[field-1]->myDesc->yPxOff) - 
 	  in->mosaic->OutlierSize/2;
-	window[2] = (olong)in->mosaic->images[field-1]->myDesc->crpix[0] +
+	window[2] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[0]-
+                            in->mosaic->images[field-1]->myDesc->xPxOff) +
 	  in->mosaic->OutlierSize/2;
-	window[3] = (olong)in->mosaic->images[field-1]->myDesc->crpix[1] + 
+	window[3] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[1]-
+                            in->mosaic->images[field-1]->myDesc->yPxOff) + 
 	  in->mosaic->OutlierSize/2;
 	/* Only use if not autoWindow */
 	if (!in->autoWindow) ObitDConCleanWindowAdd (in->window, field, type, window, err);
@@ -771,14 +795,18 @@ gboolean ObitDConCleanPixelStats(ObitDConClean *in, ObitFArray *pixarray,
  * If autoWindow then the outer window is used to specify valid pixels, 
  * else the inner window.
  * For this version the following are calculated:
- * \li maxAbsRes Maximum absolute windowed residual value
- * \li avgRes    Average windowed residual value
+ * \li maxAbsRes   Maximum absolute windowed residual value (doBEAM=FALSE)
+ * \li avgRes      Average windowed residual value (doBEAM=FALSE)
+ * \li imgPeakRMS  Image Peak/RMS  (doBEAM=FALSE)
+ * \li beamPeakRMS Beam Peak/RMS  (doBeam = TRUE)
  *
  * \param in    The object to deconvolve
  * \param field Which field? (1-rel) <=0 -> all;
+ * \param doBeam If TRUE, do Beam statistics else Image
  * \param err   Obit error stack object.
  */
-void ObitDConCleanImageStats(ObitDConClean *in, olong field, ObitErr *err)
+void ObitDConCleanImageStats(ObitDConClean *in, olong field, gboolean doBeam, 
+			     ObitErr *err)
 {
   ObitIOCode retCode;
   ObitImage *image=NULL;
@@ -787,7 +815,7 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, ObitErr *err)
   olong  blc[IM_MAXDIM], trc[IM_MAXDIM];
   olong nThreads, i, it, nTh, nrow, nrowPerThread, hirow, lorow, count;
   olong  lo, hi;
-  ofloat tmax, sum;
+  ofloat tmax, sum, sum2;
   gboolean OK;
   StatsFuncArg **threadArgs;
   gchar *routine = "ObitDConCleanImageStats";
@@ -825,7 +853,10 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, ObitErr *err)
   for (i=lo; i<=hi; i++) {
 
     /* get image */
-    image = in->mosaic->images[i];
+    if (doBeam)
+      image = (ObitImage*)in->mosaic->images[i]->myBeam;
+    else
+      image = in->mosaic->images[i];
 
     /* Set output to full image, plane at a time */
     dim[0] = IM_MAXDIM;
@@ -877,14 +908,31 @@ void ObitDConCleanImageStats(ObitDConClean *in, olong field, ObitErr *err)
     count = 0;
     tmax  = 0.0;
     sum   = 0.0;
+    sum2  = 0.0;
     for (it=0; it<nTh; it++) {
       tmax   = MAX (tmax,  threadArgs[it]->tmax);
       count += threadArgs[it]->count;
       sum   += threadArgs[it]->sum;
+      sum2  += threadArgs[it]->sum2;
     }    
-    in->maxAbsRes[i] = MAX (tmax, 0.0);
-    if (count>0) in->avgRes[i] = sum/count;
-    else in->avgRes[i] = 0.0;
+
+    /* Beam? */
+    if (doBeam) {
+      if (count>0) {
+	in->beamPeakRMS[i] = tmax / sqrt(sum2/count);
+      } else {
+	in->beamPeakRMS[i] = 0.0;
+      }
+    } else { /* Image */
+      in->maxAbsRes[i] = MAX (tmax, 0.0);
+      if (count>0) {
+	in->avgRes[i]     = sum/count;
+ 	in->imgPeakRMS[i] = tmax / sqrt(sum2/count);
+     } else {
+	in->avgRes[i]     = 0.0;
+ 	in->imgPeakRMS[i] = 0.0;
+     }
+   }
 
     /* Save max residual on image */
     dim[0] = 1;
@@ -1525,8 +1573,6 @@ static void ObitDConCleanClassInfoDefFn (gpointer inClass)
   theClass->ObitDConCleanAutoWindow = 
     (ObitDConCleanAutoWindowFP)ObitDConCleanAutoWindow;
 
-  /* *************** CHANGE HERE *********************************  */
-
 } /* end ObitDConCleanClassDefFn */
 
 /*---------------Private functions--------------------------*/
@@ -1559,7 +1605,8 @@ void ObitDConCleanInit  (gpointer inn)
   in->factor    = NULL;
   in->nfield    = 0;
   in->maxAbsRes = NULL;
-  in->avgRes    = NULL;
+  in->imgPeakRMS  = NULL;
+  in->beamPeakRMS = NULL;
   in->CCver     = 0;
   in->bmaj      = 0.0;
   in->bmin      = 0.0;
@@ -1598,8 +1645,10 @@ void ObitDConCleanClear (gpointer inn)
   in->gain        = ObitMemFree (in->gain);
   in->minFlux     = ObitMemFree (in->minFlux);
   in->factor      = ObitMemFree (in->factor);
-  in->maxAbsRes   = ObitMemFree(in->maxAbsRes);
-  in->avgRes      = ObitMemFree(in->avgRes);
+  in->maxAbsRes   = ObitMemFree (in->maxAbsRes);
+  in->avgRes      = ObitMemFree (in->avgRes);
+  in->imgPeakRMS  = ObitMemFree (in->imgPeakRMS);
+  in->beamPeakRMS = ObitMemFree (in->beamPeakRMS);
 
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
@@ -1925,7 +1974,7 @@ static gpointer ThreadImageStats (gpointer args)
   ObitThread *thread    = largs->thread;
   /* local */
   olong ix, iy, nx, ny, count, pos[2];
-  ofloat *data, tmax, sum;
+  ofloat *data, tmax, sum, sum2;
   gboolean *umask=NULL, *mask=NULL, isUnbox;
   /*gchar *routine = "ThreadImageStats";*/
 
@@ -1937,8 +1986,9 @@ static gpointer ThreadImageStats (gpointer args)
   nx = inData->naxis[0];
   ny = inData->naxis[1];
   count = 0;
-  sum = 0.0;
-  tmax = -1.0e20;
+  sum   = 0.0;
+  sum2  = 0.0;
+  tmax  = -1.0e20;
 
   for (iy = loRow; iy<=hiRow; iy++) { /* loop in y */
     /* Use inner or outer window? */
@@ -1950,7 +2000,8 @@ static gpointer ThreadImageStats (gpointer args)
 	  for (ix=0; ix<nx; ix++) {
 	    if (mask[ix] && (!umask[ix])) {
 	      count++;
-	      sum += data[ix];
+	      sum  += data[ix];
+	      sum2 += data[ix]*data[ix];
 	      tmax = MAX (tmax, fabs(data[ix]));
 	    }
 	  }
@@ -1958,7 +2009,8 @@ static gpointer ThreadImageStats (gpointer args)
 	  for (ix=0; ix<nx; ix++) {
 	    if (mask[ix]) {
 	      count++;
-	      sum += data[ix];
+	      sum  += data[ix];
+	      sum2 += data[ix]*data[ix];
 	      tmax = MAX (tmax, fabs(data[ix]));
 	    }
 	  }
@@ -1970,7 +2022,8 @@ static gpointer ThreadImageStats (gpointer args)
 	for (ix=0; ix<nx; ix++) {
 	  if (mask[ix]) {
 	    count++;
-	    sum += data[ix];
+	    sum  += data[ix];
+	    sum2 += data[ix]*data[ix];
 	    tmax = MAX (tmax, fabs(data[ix]));
 	  }
 	}
@@ -1982,6 +2035,7 @@ static gpointer ThreadImageStats (gpointer args)
   /* save statistics */
   largs->count = count;
   largs->sum   = sum;
+  largs->sum2  = sum2;
   largs->tmax  = tmax;
       
   /* Cleanup */

@@ -27,10 +27,10 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
+#include "ObitImageMosaic.h"
 #include "ObitThread.h"
 #include "ObitSkyModelVMSquint.h"
 #include "ObitUV.h"
-#include "ObitImageMosaic.h"
 #include "ObitImageUtil.h"
 #include "ObitUVImager.h"
 #include "ObitUVUtil.h"
@@ -1392,8 +1392,9 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   ObitImageMosaic *mosaic=NULL;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong         i, chInc, BChan, EChan, BIF, nchan, ipoln, npoln, *IChanSel;
-  gboolean     doFlat, autoWindow, Tr=TRUE;
+  olong        i, chInc, BChan, EChan, BIF, nchan, ipoln, npoln, *IChanSel;
+  olong        niter;
+  gboolean     doFlat, autoWindow, Tr=TRUE, do3D;
   olong        inver, outver, selFGver, *unpeeled=NULL, plane[5] = {0,1,1,1,1};
   oint         otemp;
   gchar        Stokes[5],  IStokes[5], *CCType = "AIPS CC";
@@ -1405,7 +1406,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     NULL
   };
   gchar        *tmpParms[] = {  /* Imaging, weighting parameters */
-    "doFull", "FOV", "PBCor", "antSize", "PBmin",
+    "doFull", "do3D", "FOV", "PBCor", "antSize", "PBmin",
     "Catalog", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
     "MaxBaseline", "MinBaseline", "rotate", "Beam",
@@ -1460,6 +1461,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   ObitInfoListGetTest(myInput, "doFlatten", &type, dim, &doFlat);
   autoWindow = FALSE;
   ObitInfoListGetTest(myInput, "autoWindow", &type, dim, &autoWindow);
+  do3D = TRUE;
+  ObitInfoListGetTest(myInput, "do3D", &type, dim, &do3D);
 
   /* Place to save parameters */
   saveParmList = newObitInfoList ();
@@ -1618,8 +1621,10 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 	ObitInfoListAlwaysPut (skyModel->info, "UnPeeledComps", OBIT_long, dim, unpeeled);
     }
 
-    /* Subtract sky model from outData for I  */
-    if (ipoln==0) subIPolModel (outData, skyModel, &selFGver, err);
+    /* Subtract sky model from outData for I if any cleaning requested */
+    niter = 0;
+    ObitInfoListGetTest(myInput, "Niter",  &type, dim, &niter);
+    if ((ipoln==0) && (niter>0)) subIPolModel (outData, skyModel, &selFGver, err);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
     
     /* Copy result to output */
@@ -1636,6 +1641,15 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     }
     ObitImageUtilInsertPlane (outField, outImage[ipoln], plane, err);
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+    
+    /* For 2D imaging copy CC Table */
+    if (!do3D) {
+      inver  = 1;
+      outver = plane[0];
+      ObitDataCopyTable ((ObitData*)outField, (ObitData*)outImage[ipoln],
+			 CCType, &inver, &outver, err);
+      if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+    }
     outField = ObitImageUnref(outField);
   
     /* Make sure image created */
@@ -2118,6 +2132,11 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   if (doFlatten) {
     ObitDConCleanFlatten((ObitDConClean*)myClean, err);
     outImage = ObitImageMosaicGetFullImage (myClean->mosaic, err);
+
+    /* If 2D imaging concatenate CC tables */
+    if (!myClean->mosaic->images[0]->myDesc->do3D) 
+      ObitImageMosaicCopyCC (myClean->mosaic, err);
+    
   } else  outImage = ObitImageMosaicGetImage (myClean->mosaic, 0, err);
   if (err->error) Obit_traceback_msg (err, routine, myClean->name);
   
@@ -2275,7 +2294,7 @@ void SquintHistory (gchar *Source, ObitInfoList* myInput,
     "OutlierSize",  "CLEANBox",  "Gain",  "minFlux",  "Niter",  "minPatch",
     "ccfLim", "SDIGain",
     "Reuse", "autoCen", "Beam",  "Cmethod",  "CCFilter",  "maxPixel", 
-    "PBCor", "antSize", "doRestore", "doFull",  
+    "PBCor", "antSize", "doRestore", "doFull", "do3D", 
     "autoWindow", "subA",  "Alpha",
     "modelFlux", "modelPos", "modelParm",
     "maxPSCLoop", "minFluxPSC", "solPInt", "solPType", "solPMode", 

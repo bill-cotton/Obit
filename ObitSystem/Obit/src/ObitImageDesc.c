@@ -174,6 +174,9 @@ ObitImageDesc* ObitImageDescCopy (ObitImageDesc* in, ObitImageDesc* out,
   out->xshift  = in->xshift;
   out->yshift  = in->yshift;
   out->niter   = in->niter;
+  out->do3D    = in->do3D;
+  out->xPxOff  = in->xPxOff;
+  out->yPxOff  = in->yPxOff;
   out->beamMaj = in->beamMaj;
   out->beamMin = in->beamMin;
   out->beamPA  = in->beamPA;
@@ -255,6 +258,9 @@ void ObitImageDescCopyDesc (ObitImageDesc* in, ObitImageDesc* out,
   out->beamMin  = in->beamMin;
   out->beamPA   = in->beamPA;
   out->niter    = in->niter;
+  out->do3D     = in->do3D;
+  out->xPxOff   = in->xPxOff;
+  out->yPxOff   = in->yPxOff;
   for (i=0; i<IMLEN_VALUE; i++) out->object[i] = in->object[i];
   for (i=0; i<IMLEN_VALUE; i++) out->teles[i]  = in->teles[i];
   for (i=0; i<IMLEN_VALUE; i++) out->instrument[i] = in->instrument[i];
@@ -316,6 +322,9 @@ ObitImageDesc* ObitImageDescDefault (gchar *name)
   out->xshift  = 0.0;
   out->yshift  = 0.0;
   out->niter   = 0;
+  out->do3D    = TRUE;
+  out->xPxOff  = 0.0;
+  out->yPxOff  = 0.0;
   out->beamMaj = 0.0;
   out->beamMin = 0.0;
   out->beamPA  = 0.0;
@@ -692,7 +701,7 @@ void ObitImageDescGetPixel(ObitImageDesc* in, odouble *pos,
 /**
  * Determine if there is an overlap is the selected regions described by.
  * a pair of image descriptors
- * Tes if if the difference in ra and dec is less than the sum of 
+ * Test if the difference in ra and dec is less than the sum of 
  * the halfwidths.  Nonlinearities of coordinates ignored but test is 
  * somewhat generous.
  * \param in1      first input image descriptor
@@ -888,6 +897,9 @@ void ObitImageDescInit  (gpointer inn)
   in->plane   = 0;
   in->row     = 0;
   in->areBlanks = FALSE;
+  in->do3D      = TRUE;
+  in-> xPxOff   = 0.0;
+  in-> yPxOff   = 0.0;
   in->info      = newObitInfoList();
   for (i=0; i<IM_MAXDIM; i++) {
     in->inaxes[i] = 0;

@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -147,7 +147,7 @@ gboolean ObitUVDescShift3DMatrix (ObitUVDesc *uvDesc, ObitImageDesc* imDesc,
 
 /**  Public: Phase and UV re-projection matrices for 3D imaging for a given posn. offset */
 gboolean ObitUVDescShift3DPos (ObitUVDesc *uvDesc,  ofloat shift[2], ofloat mrotat,
-			       ofloat URot3D[3][3], ofloat PRot3D[3][3]);
+			       gboolean do3D, ofloat URot3D[3][3], ofloat PRot3D[3][3]);
 
 /*-------------------Class Info--------------------------*/
 /**

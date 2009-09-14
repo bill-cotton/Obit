@@ -701,6 +701,7 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
     /* Get model type in first with components */
     /* If only 3 col, or parmsCol 0 size then this is a point model */
     if ((CCTable->myDesc->nfield==3) || 
+	(CCTable->parmsCol<0) ||
 	(CCTable->myDesc->dim[CCTable->parmsCol]<=0))
       in->modType = OBIT_SkyModel_PointMod;
     if ((in->modType == OBIT_SkyModel_Unknown) && (in->startComp[i]<=endComp)) {
@@ -811,25 +812,23 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
     if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
     
     /*    Get reference pixel offsets from tangent point */
-    /* xpoff = (imDesc->crpix[imDesc->jlocr] - 
-       (imDesc->inaxes[imDesc->jlocr]/2)) * 
-       imDesc->cdelt[imDesc->jlocr];
-       ypoff = (imDesc->crpix[imDesc->jlocd] - 
-       (imDesc->inaxes[imDesc->jlocd]/2) - 1) * 
-       imDesc->cdelt[imDesc->jlocd];*/
-    /* These should always be zero for 3D imaging? */
-    xpoff = 0.0;
-    ypoff = 0.0;
+    if (in->do3D) {
+      /* These should always be zero for 3D imaging? */
+      xpoff = 0.0;
+      ypoff = 0.0;
+    } else { /** 2D - use offsets */
+      xpoff = imDesc->xPxOff * imDesc->cdelt[imDesc->jlocr];
+      ypoff = imDesc->yPxOff * imDesc->cdelt[imDesc->jlocd];
+       /* ypoff = (imDesc->yPxOff+1.0) * imDesc->cdelt[imDesc->jlocd];DEBUG */
+    }
     
     /* Set field center offsets */
     xxoff = dxyzc[0] * ccrot + dxyzc[1] * ssrot;
     yyoff = dxyzc[1] * ccrot - dxyzc[0] * ssrot;
     zzoff = dxyzc[2];
 
-    /* 3D rotation matrix if needed */
-    if (in->do3D) {
-      do3Dmul = ObitUVDescShift3DMatrix (uvDesc, imDesc, umat, pmat);
-    } else {do3Dmul = FALSE;}
+    /* rotation matrix if needed */
+    do3Dmul = ObitUVDescShift3DMatrix (uvDesc, imDesc, umat, pmat);
     
     /* Convert table to merged array */
     CompArr = ObitTableCCUtilMergeSel (CCTable, startComp, endComp, parms, err);
@@ -873,9 +872,13 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 	if (do3Dmul) {
 	  xyz[0] = xp[0]*umat[0][0] + xp[1]*umat[1][0];
 	  xyz[1] = xp[0]*umat[0][1] + xp[1]*umat[1][1];
-	  xyz[2] = xp[0]*umat[0][2] + xp[1]*umat[1][2];
+	  xyz[2] = xp[0]*umat[0][2] + xp[1]*umat[1][2]; 
+	  /* DEBUG
+	  xyz[0] = xp[0]*umat[0][0] + xp[1]*umat[0][1];
+	  xyz[1] = xp[0]*umat[1][0] + xp[1]*umat[1][1];
+	  xyz[2] = xp[0]*umat[2][0] + xp[1]*umat[2][1]; */
 	  /* PRJMUL (2, XP, UMAT, XYZ); */
-	} else {  /* no 3D */
+	} else {  /* no rotation  */
 	  xyz[0] = ccrot * xp[0] + ssrot * xp[1];
 	  xyz[1] = ccrot * xp[1] - ssrot * xp[0];
 	  xyz[2] = 0.0;
@@ -1098,7 +1101,7 @@ static gpointer ThreadSkyModelVMFTDFT (gpointer args)
   olong it, jt, itcnt;
   const ObitSkyModelVMClassInfo 
     *myClass=(const ObitSkyModelVMClassInfo*)in->ClassInfo;
-  gchar *routine = "ObitSkyModelVMFTDFT";
+  gchar *routine = "ThreadSkyModelVMFTDFT";
 
   /* error checks - assume most done at higher level */
   if (err->error) goto finish;

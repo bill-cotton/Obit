@@ -722,15 +722,23 @@ void ObitUVDescShiftPhase (ObitUVDesc* uvDesc,
 			   ObitImageDesc* imDesc, 
 			   ofloat dxyzc[3], ObitErr *err)
 {
-  ofloat maprot;
-  odouble  uvra, uvdec, imra, imdec;
+  ofloat maprot, inPixel[2];
+  odouble  uvra, uvdec, imra, imdec, pos[2];
   gchar *routine = "ObitUVDescShiftPhase";
 
-  /* get positions - assume 3D imaging */
+  /* get positions */
   uvra  = uvDesc->crval[uvDesc->jlocr];
   uvdec = uvDesc->crval[uvDesc->jlocd];
-  imra  = imDesc->crval[imDesc->jlocr];
-  imdec = imDesc->crval[imDesc->jlocd];
+  if (imDesc->do3D) {  /* 3D reference position is at center */
+    imra  = imDesc->crval[imDesc->jlocr];
+    imdec = imDesc->crval[imDesc->jlocd];
+  } else { /* 2D reference is tangent - calculate position of center */
+    inPixel[0] = 1.0 + imDesc->inaxes[imDesc->jlocr]*0.5;
+    inPixel[1] = 1.0 + imDesc->inaxes[imDesc->jlocd]*0.5;
+    ObitImageDescGetPos (imDesc, inPixel, pos, err);
+    imra  = pos[0];
+    imdec = pos[1];
+  }
   maprot = ObitImageDescRotate(imDesc);
   
   /* which projection type? Use projection code on first image axis to decide. */
@@ -840,7 +848,11 @@ ofloat ObitUVDescRotate (ObitUVDesc* uvDesc)
  * and (X,Y,Z) (phase shift terms) to those at a new tangent point
  * Note that these implement the -SIN projection.  They are not needed
  * for -NCP which should not use 3D imaging.
- * Algorithm adapted  from AIPS. PRJMAT.FOR (E. W. Greisen author)
+ * If imDesc->do3D=FALSE the matrices used for 2D imaging are returned:
+ * Returns re-projection matrix to convert (u,v,w) to (u',v',w') for
+ * shifted gridding in the same geometry as the central facet
+ * URot3D(3,1) = -L, URot3D(3,2) = -M, URot3D(3,3) = -1
+ * Algorithm adapted  from AIPS PRJMAT.FOR+P2DMAT.FOR (E. W. Greisen author)
  * \param uvDesc  UV data descriptor giving initial position 
  * \param imDesc  Image descriptor giving desired position 
  * \param URot3D  [out] 3D rotation matrix for uv plane
@@ -848,12 +860,12 @@ ofloat ObitUVDescRotate (ObitUVDesc* uvDesc)
  * \return TRUE if these rotation need to be applied.
  */
 gboolean ObitUVDescShift3DMatrix (ObitUVDesc *uvDesc, ObitImageDesc* imDesc,
-	       ofloat URot3D[3][3], ofloat PRot3D[3][3])
+				  ofloat URot3D[3][3], ofloat PRot3D[3][3])
 {
   odouble ra, dec, xra, xdec;
-  ofloat urotat, mrotat;
+  ofloat urotat, mrotat, pixel[2];
   olong  i, j, k;
-  odouble rm[3][3], sa, ca, sd, cd, sd0, cd0, t[3][3], r, x[3][3];
+  odouble rm[3][3], sa, ca, sd, cd, sd0, cd0, t[3][3], r, x[3][3], ll, mm, dd;
   gboolean isNCP, do3Dmul = FALSE;
 
   /* error checks */
@@ -862,127 +874,244 @@ gboolean ObitUVDescShift3DMatrix (ObitUVDesc *uvDesc, ObitImageDesc* imDesc,
   g_assert (URot3D != NULL);
   g_assert (PRot3D != NULL);
 
-  /* Get positions assuming 3D */
-  ra  = uvDesc->crval[uvDesc->jlocr];
-  dec = uvDesc->crval[uvDesc->jlocd];
-  xra  = imDesc->crval[imDesc->jlocr];
-  xdec = imDesc->crval[imDesc->jlocd];
-  mrotat = ObitImageDescRotate(imDesc);
-  urotat = ObitUVDescRotate(uvDesc);
-
-  /* Do these corrections need to be applied? */
-  do3Dmul = (mrotat!=0.0) || (urotat!=0.0) ||
-    (fabs(xra-ra) > 1.0e-10) || (fabs(xdec-dec) > 1.0e-10);
-
-  /* Don't want for NCP projection */
-  isNCP = !strncmp(&imDesc->ctype[0][4], "-NCP", 4);
-  do3Dmul = do3Dmul && (!isNCP);
-  
-  /*  sin's and cos's */
-  sa  = sin (DG2RAD * (xra-ra));
-  ca  = cos (DG2RAD * (xra-ra));
-  sd  = sin (DG2RAD * xdec);
-  cd  = cos (DG2RAD * xdec);
-  sd0 = sin (DG2RAD * dec);
-  cd0 = cos (DG2RAD * dec);
-  /* rotation matrix */
+  /* init rotation matrix */
   for (i=0; i<3; i++) 
     for (j=0; j<3; j++) 
       rm[i][j] = 0.0;
   rm[2][2] = 1.0;
-
-  /* map + */
-  r = DG2RAD * mrotat;
-  rm[0][0] = cos (r);
-  rm[1][1] = rm[0][0];
-  rm[1][0] = -sin (r);
-  rm[0][1] = sin (r);
-
-  /* forward matrix */
-  x[0][0] = ca;
-  x[1][0] = -sd * sa;
-  x[2][0] = cd * sa;
-  x[0][1] = sd0 * sa;
-  x[1][1] = cd * cd0 + sd * sd0 * ca;
-  x[2][1] = sd * cd0 - cd * sd0 * ca;
-  x[0][2] = -cd0 * sa;
-  x[1][2] = cd * sd0 - sd * cd0 * ca;
-  x[2][2] = sd * sd0 + cd * cd0 * ca;
   
-  /* multiply */
-  for (i=0; i<3; i++) {
-    for (j=0; j<3; j++) {
-      t[j][i] = 0.0;
-      for (k=0; k<3; k++) {
-	t[j][i] += x[k][i] * rm[j][k];
+  /* Get positions, rotations */
+  ra   = uvDesc->crval[uvDesc->jlocr];
+  dec  = uvDesc->crval[uvDesc->jlocd];
+  xra  = imDesc->crval[imDesc->jlocr];
+  xdec = imDesc->crval[imDesc->jlocd];
+  mrotat = ObitImageDescRotate(imDesc);
+  urotat = ObitUVDescRotate(uvDesc);
+  
+  /* Do these corrections need to be applied? */
+  do3Dmul = (mrotat!=0.0) || (urotat!=0.0) ||
+    (fabs(xra-ra) > 1.0e-10) || (fabs(xdec-dec) > 1.0e-10) ||
+    (fabs(imDesc->xPxOff)>1.0e-20) || (fabs(imDesc->yPxOff)>1.0e-20);
+  
+  /* Don't want for NCP projection */
+  isNCP = !strncmp(&imDesc->ctype[0][4], "-NCP", 4);
+  do3Dmul = do3Dmul && (!isNCP);
+  
+  /* Stuff that depends on imaging type */
+  if (imDesc->do3D) {
+  
+    /*  sin's and cos's */
+    sa  = sin (DG2RAD * (xra-ra));
+    ca  = cos (DG2RAD * (xra-ra));
+    sd  = sin (DG2RAD * xdec);
+    cd  = cos (DG2RAD * xdec);
+    sd0 = sin (DG2RAD * dec);
+    cd0 = cos (DG2RAD * dec);
+
+    /* map + */
+    r = DG2RAD * mrotat;
+    rm[0][0] = cos (r);
+    rm[1][1] = rm[0][0];
+    rm[1][0] = -sin (r);
+    rm[0][1] = sin (r);
+    
+    /* forward matrix */
+    x[0][0] = ca;
+    x[1][0] = -sd * sa;
+    x[2][0] = cd * sa;
+    x[0][1] = sd0 * sa;
+    x[1][1] = cd * cd0 + sd * sd0 * ca;
+    x[2][1] = sd * cd0 - cd * sd0 * ca;
+    x[0][2] = -cd0 * sa;
+    x[1][2] = cd * sd0 - sd * cd0 * ca;
+    x[2][2] = sd * sd0 + cd * cd0 * ca;
+    
+    /* multiply */
+    for (i=0; i<3; i++) {
+      for (j=0; j<3; j++) {
+	t[j][i] = 0.0;
+	for (k=0; k<3; k++) {
+	  t[j][i] += x[k][i] * rm[j][k];
+	}
       }
     }
-  }
     
     
-  /* uv - */
-  r = DG2RAD * urotat;
-  rm[0][0] = cos (r);
-  rm[1][1] = rm[0][0];
-  rm[1][0] = sin (r);
-  rm[0][1] = -sin (r);
-  
-  /* multiply */
-  for (i=0; i<3; i++) {
-    for (j=0; j<3; j++) {
-      r = 0.0;
-      for (k=0; k<3; k++) {
-	r += rm[k][i] * t[j][k];
-      }
-      URot3D[j][i] = r;
-    }
-  }
-  
-  /* uv + */
-  r = DG2RAD * urotat;
-  rm[0][0] = cos (r);
-  rm[1][1] = rm[0][0];
-  rm[1][0] = -sin (r);
-  rm[0][1] = sin (r);
-  
-  /* backward matrix */
-  x[0][0] = ca;
-  x[1][0] = sd0 * sa;
-  x[2][0] = -cd0 * sa;
-  x[0][1] = -sd * sa;
-  x[1][1] = cd * cd0 + sd * sd0 * ca;
-  x[2][1] = sd0 * cd - cd0 * sd * ca;
-  x[0][2] = cd * sa;
-  x[1][2] = cd0 * sd - sd0 * cd * ca;
-  x[2][2] = sd * sd0 + cd * cd0 * ca;
-  
- /* multiply */
-  for (i=0; i<3; i++) {
-    for (j=0; j<3; j++) {
-      t[j][i] = 0.0;
-      for (k=0; k<3; k++) {
-	t[j][i] += x[k][i] * rm[j][k];
+    /* uv - */
+    r = DG2RAD * urotat;
+    rm[0][0] = cos (r);
+    rm[1][1] = rm[0][0];
+    rm[1][0] = sin (r);
+    rm[0][1] = -sin (r);
+    
+    /* multiply */
+    for (i=0; i<3; i++) {
+      for (j=0; j<3; j++) {
+	r = 0.0;
+	for (k=0; k<3; k++) {
+	  r += rm[k][i] * t[j][k];
+	}
+	URot3D[j][i] = r;
       }
     }
-  }
+    
+    /* uv + */
+    r = DG2RAD * urotat;
+    rm[0][0] = cos (r);
+    rm[1][1] = rm[0][0];
+    rm[1][0] = -sin (r);
+    rm[0][1] = sin (r);
+    
+    /* backward matrix */
+    x[0][0] = ca;
+    x[1][0] = sd0 * sa;
+    x[2][0] = -cd0 * sa;
+    x[0][1] = -sd * sa;
+    x[1][1] = cd * cd0 + sd * sd0 * ca;
+    x[2][1] = sd0 * cd - cd0 * sd * ca;
+    x[0][2] = cd * sa;
+    x[1][2] = cd0 * sd - sd0 * cd * ca;
+    x[2][2] = sd * sd0 + cd * cd0 * ca;
+    
+    /* multiply */
+    for (i=0; i<3; i++) {
+      for (j=0; j<3; j++) {
+	t[j][i] = 0.0;
+	for (k=0; k<3; k++) {
+	  t[j][i] += x[k][i] * rm[j][k];
+	}
+      }
+    }
+    
+    /* map - */
+    r = DG2RAD * mrotat;
+    rm[0][0] = cos (r);
+    rm[1][1] = rm[0][0];
+    rm[1][0] = sin (r);
+    rm[0][1] = -sin (r);
+    
+    /* multiply */
+    for (i=0; i<3; i++) {
+      for (j=0; j<3; j++) {
+	r = 0.0;
+	for (k=0; k<3; k++) {
+	  r += rm[k][i] * t[j][k];
+	}
+	PRot3D[j][i] = r;
+      }
+    }
+  } else {  /* 2D */
+    /* Get positions */
+    pixel[0] = 1.0 + imDesc->inaxes[0]*0.5;
+    pixel[1] = 1.0 + imDesc->inaxes[1]*0.5;
+    ObitSkyGeomWorldPos(pixel[0], pixel[1],
+                        imDesc->crval[imDesc->jlocr], imDesc->crval[imDesc->jlocd],
+                        imDesc->crpix[imDesc->jlocr], imDesc->crpix[imDesc->jlocd],
+                        imDesc->cdelt[imDesc->jlocr], imDesc->cdelt[imDesc->jlocd],
+                        imDesc->crota[imDesc->jlocd], &imDesc->ctype[imDesc->jlocr][4],
+                        &xra, &xdec);
+  
+    /*  sin's and cos's */
+    sa  = sin (DG2RAD * (xra-ra));
+    ca  = cos (DG2RAD * (xra-ra));
+    sd  = sin (DG2RAD * xdec);
+    cd  = cos (DG2RAD * xdec);
+    sd0 = sin (DG2RAD * dec);
+    cd0 = cos (DG2RAD * dec);
 
-  /* map - */
-  r = DG2RAD * mrotat;
-  rm[0][0] = cos (r);
-  rm[1][1] = rm[0][0];
-  rm[1][0] = sin (r);
-  rm[0][1] = -sin (r);
+    /* Flat coordinates */
+    ll = cd * sa;
+    mm = sd * cd0 - cd * sd0 * ca;
+    dd = sqrt (1.0 - ll*ll - mm*mm);
 
-  /* multiply */
-  for (i=0; i<3; i++) {
-    for (j=0; j<3; j++) {
-      r = 0.0;
-      for (k=0; k<3; k++) {
-	r += rm[k][i] * t[j][k];
+    /* map + */
+    r = DG2RAD * mrotat;
+    rm[0][0] = cos (r);
+    rm[1][1] = rm[0][0];
+    rm[1][0] = -sin (r);
+    rm[0][1] = sin (r);
+
+    /* forward matrix - init */
+    for (i=0; i<3; i++) 
+      for (j=0; j<3; j++) 
+	x[i][j] = 0.0;
+    x[0][0] =  1.0;
+    x[1][1] =  1.0;
+    x[2][2] = -1.0;
+    x[0][2] = -ll / dd;
+    x[1][2] = -mm / dd;
+
+    /* multiply */
+    for (i=0; i<3; i++) {
+      for (j=0; j<3; j++) {
+	t[j][i] = 0.0;
+	for (k=0; k<3; k++) {
+	  t[j][i] += x[k][i] * rm[j][k];
+	}
       }
-      PRot3D[j][i] = r;
     }
-  }
+
+    /* uv - */
+    r = DG2RAD * urotat;
+    rm[0][0] = cos (r);
+    rm[1][1] = rm[0][0];
+    rm[1][0] = sin (r);
+    rm[0][1] = -sin (r);
+    
+    /* multiply */
+    for (i=0; i<3; i++) {
+      for (j=0; j<3; j++) {
+	r = 0.0;
+	for (k=0; k<3; k++) {
+	  r += rm[k][i] * t[j][k];
+	}
+	URot3D[j][i] = r;
+      }
+    }
+    
+    /* uv + */
+    r = DG2RAD * urotat;
+    rm[0][0] = cos (r);
+    rm[1][1] = rm[0][0];
+    rm[1][0] = -sin (r);
+    rm[0][1] = sin (r);
+    
+    /*  x,y,z unchanged by PRot3D */
+    for (i=0; i<3; i++) 
+      for (j=0; j<3; j++) 
+	x[i][j] = 0.0;
+    x[0][0] = 1.0;
+    x[1][1] = 1.0;
+    x[2][2] = 1.0;
+
+    /* multiply */
+    for (i=0; i<3; i++) {
+      for (j=0; j<3; j++) {
+	t[j][i] = 0.0;
+	for (k=0; k<3; k++) {
+	  t[j][i] += x[k][i] * rm[j][k];
+	}
+      }
+    }
+
+    /* map - */
+    r = DG2RAD * mrotat;
+    rm[0][0] = cos (r);
+    rm[1][1] = rm[0][0];
+    rm[1][0] = sin (r);
+    rm[0][1] = -sin (r);
+    
+    /* multiply */
+    for (i=0; i<3; i++) {
+      for (j=0; j<3; j++) {
+	r = 0.0;
+	for (k=0; k<3; k++) {
+	  r += rm[k][i] * t[j][k];
+	}
+	PRot3D[j][i] = r;
+      }
+    }
+  } /* end 2D */
 
   return do3Dmul; /* need to apply? */
 } /* end ObitUVDescShift3DMatrix */
@@ -997,37 +1126,30 @@ gboolean ObitUVDescShift3DMatrix (ObitUVDesc *uvDesc, ObitImageDesc* imDesc,
  * \param uvDesc  UV data descriptor giving initial position 
  * \param shift   RA and Dec offsets(deg) from uv position
  * \param mrotat  rotation in degrees of offset image
+ * \param do3D    If true use 3D Imaging, else 2D
  * \param URot3D  [out] 3D rotation matrix for uv plane
  * \param PRot3D  [out] 3D rotation matrix for image plane
  * \return TRUE if these rotation need to be applied.
  */
 gboolean ObitUVDescShift3DPos (ObitUVDesc *uvDesc, ofloat shift[2], ofloat mrotat,
-			       ofloat URot3D[3][3], ofloat PRot3D[3][3])
+			       gboolean do3D, ofloat URot3D[3][3], ofloat PRot3D[3][3])
 {
   odouble ra, dec, xra, xdec;
   ofloat urotat;
   olong  i, j, k;
-  odouble rm[3][3], sa, ca, sd, cd, sd0, cd0, t[3][3], r, x[3][3];
+  odouble rm[3][3], sa, ca, sd, cd, sd0, cd0, t[3][3], r, x[3][3], ll, mm, dd;
   gboolean isNCP, do3Dmul = FALSE;
 
   /* error checks */
   g_assert (ObitUVDescIsA(uvDesc));
   g_assert (URot3D != NULL);
   g_assert (PRot3D != NULL);
-
-  /* Get positions assuming 3D */
+  
+  /* Get position */
   ra  = uvDesc->crval[uvDesc->jlocr];
   dec = uvDesc->crval[uvDesc->jlocd];
   urotat = ObitUVDescRotate(uvDesc);
   ObitSkyGeomXYShift (ra, dec, shift[0], shift[1], mrotat, &xra, &xdec);
-
-  /* Do these corrections need to be applied? */
-  do3Dmul = (mrotat!=0.0) || (urotat!=0.0) ||
-    (fabs(xra-ra) > 1.0e-10) || (fabs(xdec-dec) > 1.0e-10);
-
-  /* Don't want for NCP projection */
-  isNCP = !strncmp(&uvDesc->ctype[0][4], "-NCP", 4);
-  do3Dmul = do3Dmul && (!isNCP);
   
   /*  sin's and cos's */
   sa  = sin (DG2RAD * (xra-ra));
@@ -1036,103 +1158,208 @@ gboolean ObitUVDescShift3DPos (ObitUVDesc *uvDesc, ofloat shift[2], ofloat mrota
   cd  = cos (DG2RAD * xdec);
   sd0 = sin (DG2RAD * dec);
   cd0 = cos (DG2RAD * dec);
+
   /* rotation matrix */
   for (i=0; i<3; i++) 
     for (j=0; j<3; j++) 
       rm[i][j] = 0.0;
   rm[2][2] = 1.0;
 
-  /* map + */
-  r = DG2RAD * mrotat;
-  rm[0][0] = cos (r);
-  rm[1][1] = rm[0][0];
-  rm[1][0] = -sin (r);
-  rm[0][1] = sin (r);
-
-  /* forward matrix */
-  x[0][0] = ca;
-  x[1][0] = -sd * sa;
-  x[2][0] = cd * sa;
-  x[0][1] = sd0 * sa;
-  x[1][1] = cd * cd0 + sd * sd0 * ca;
-  x[2][1] = sd * cd0 - cd * sd0 * ca;
-  x[0][2] = -cd0 * sa;
-  x[1][2] = cd * sd0 - sd * cd0 * ca;
-  x[2][2] = sd * sd0 + cd * cd0 * ca;
+  /* Do these corrections need to be applied? */
+  do3Dmul = (mrotat!=0.0) || (urotat!=0.0) ||
+    (fabs(xra-ra) > 1.0e-10) || (fabs(xdec-dec) > 1.0e-10);
   
-  /* multiply */
-  for (i=0; i<3; i++) {
-    for (j=0; j<3; j++) {
-      t[j][i] = 0.0;
-      for (k=0; k<3; k++) {
-	t[j][i] += x[k][i] * rm[j][k];
-      }
-    }
-  }
+  /* Don't want for NCP projection */
+  isNCP = !strncmp(&uvDesc->ctype[0][4], "-NCP", 4);
+  do3Dmul = do3Dmul && (!isNCP);
     
-  /* uv - */
-  r = DG2RAD * urotat;
-  rm[0][0] = cos (r);
-  rm[1][1] = rm[0][0];
-  rm[1][0] = sin (r);
-  rm[0][1] = -sin (r);
-  
-  /* multiply */
-  for (i=0; i<3; i++) {
-    for (j=0; j<3; j++) {
-      r = 0.0;
-      for (k=0; k<3; k++) {
-	r += rm[k][i] * t[j][k];
-      }
-      URot3D[j][i] = r;
-    }
-  }
-  
-  /* uv + */
-  r = DG2RAD * urotat;
-  rm[0][0] = cos (r);
-  rm[1][1] = rm[0][0];
-  rm[1][0] = -sin (r);
-  rm[0][1] = sin (r);
-  
-  /* backward matrix */
-  x[0][0] = ca;
-  x[1][0] = sd0 * sa;
-  x[2][0] = -cd0 * sa;
-  x[0][1] = -sd * sa;
-  x[1][1] = cd * cd0 + sd * sd0 * ca;
-  x[2][1] = sd0 * cd - cd0 * sd * ca;
-  x[0][2] = cd * sa;
-  x[1][2] = cd0 * sd - sd0 * cd * ca;
-  x[2][2] = sd * sd0 + cd * cd0 * ca;
-  
- /* multiply */
-  for (i=0; i<3; i++) {
-    for (j=0; j<3; j++) {
-      t[j][i] = 0.0;
-      for (k=0; k<3; k++) {
-	t[j][i] += x[k][i] * rm[j][k];
+  /* Stuff that depends on imaging type */
+  if (do3D) { /* 3D */
+    /* map + */
+    r = DG2RAD * mrotat;
+    rm[0][0] = cos (r);
+    rm[1][1] = rm[0][0];
+    rm[1][0] = -sin (r);
+    rm[0][1] = sin (r);
+    
+    /* forward matrix */
+    x[0][0] = ca;
+    x[1][0] = -sd * sa;
+    x[2][0] = cd * sa;
+    x[0][1] = sd0 * sa;
+    x[1][1] = cd * cd0 + sd * sd0 * ca;
+    x[2][1] = sd * cd0 - cd * sd0 * ca;
+    x[0][2] = -cd0 * sa;
+    x[1][2] = cd * sd0 - sd * cd0 * ca;
+    x[2][2] = sd * sd0 + cd * cd0 * ca;
+    
+    /* multiply */
+    for (i=0; i<3; i++) {
+      for (j=0; j<3; j++) {
+	t[j][i] = 0.0;
+	for (k=0; k<3; k++) {
+	  t[j][i] += x[k][i] * rm[j][k];
+	}
       }
     }
-  }
+    
+    /* uv - */
+    r = DG2RAD * urotat;
+    rm[0][0] = cos (r);
+    rm[1][1] = rm[0][0];
+    rm[1][0] = sin (r);
+    rm[0][1] = -sin (r);
+    
+    /* multiply */
+    for (i=0; i<3; i++) {
+      for (j=0; j<3; j++) {
+	r = 0.0;
+	for (k=0; k<3; k++) {
+	  r += rm[k][i] * t[j][k];
+	}
+	URot3D[j][i] = r;
+      }
+    }
+    
+    /* uv + */
+    r = DG2RAD * urotat;
+    rm[0][0] = cos (r);
+    rm[1][1] = rm[0][0];
+    rm[1][0] = -sin (r);
+    rm[0][1] = sin (r);
+    
+    /* backward matrix */
+    x[0][0] = ca;
+    x[1][0] = sd0 * sa;
+    x[2][0] = -cd0 * sa;
+    x[0][1] = -sd * sa;
+    x[1][1] = cd * cd0 + sd * sd0 * ca;
+    x[2][1] = sd0 * cd - cd0 * sd * ca;
+    x[0][2] = cd * sa;
+    x[1][2] = cd0 * sd - sd0 * cd * ca;
+    x[2][2] = sd * sd0 + cd * cd0 * ca;
+    
+    /* multiply */
+    for (i=0; i<3; i++) {
+      for (j=0; j<3; j++) {
+	t[j][i] = 0.0;
+	for (k=0; k<3; k++) {
+	  t[j][i] += x[k][i] * rm[j][k];
+	}
+      }
+    }
+    
+    /* map - */
+    r = DG2RAD * mrotat;
+    rm[0][0] = cos (r);
+    rm[1][1] = rm[0][0];
+    rm[1][0] = sin (r);
+    rm[0][1] = -sin (r);
+    
+    /* multiply */
+    for (i=0; i<3; i++) {
+      for (j=0; j<3; j++) {
+	r = 0.0;
+	for (k=0; k<3; k++) {
+	  r += rm[k][i] * t[j][k];
+	}
+	PRot3D[j][i] = r;
+      }
+    }
+  } else { /* 2D */
+    /* Flat coordinates */
+    ll = cd * sa;
+    mm = sd * cd0 - cd * sd0 * ca;
+    dd = sqrt (1.0 - ll*ll - mm*mm);
 
-  /* map - */
-  r = DG2RAD * mrotat;
-  rm[0][0] = cos (r);
-  rm[1][1] = rm[0][0];
-  rm[1][0] = sin (r);
-  rm[0][1] = -sin (r);
+    /* map + */
+    r = DG2RAD * mrotat;
+    rm[0][0] = cos (r);
+    rm[1][1] = rm[0][0];
+    rm[1][0] = -sin (r);
+    rm[0][1] = sin (r);
 
-  /* multiply */
-  for (i=0; i<3; i++) {
-    for (j=0; j<3; j++) {
-      r = 0.0;
-      for (k=0; k<3; k++) {
-	r += rm[k][i] * t[j][k];
+    /* forward matrix - init */
+    for (i=0; i<3; i++) 
+      for (j=0; j<3; j++) 
+	x[i][j] = 0.0;
+    x[0][0] =  1.0;
+    x[1][1] =  1.0;
+    x[2][2] = -1.0;
+    x[0][2] = -ll / dd;
+    x[1][2] = -mm / dd;
+
+    /* multiply */
+    for (i=0; i<3; i++) {
+      for (j=0; j<3; j++) {
+	t[j][i] = 0.0;
+	for (k=0; k<3; k++) {
+	  t[j][i] += x[k][i] * rm[j][k];
+	}
       }
-      PRot3D[j][i] = r;
     }
-  }
+
+    /* uv - */
+    r = DG2RAD * urotat;
+    rm[0][0] = cos (r);
+    rm[1][1] = rm[0][0];
+    rm[1][0] = sin (r);
+    rm[0][1] = -sin (r);
+    
+    /* multiply */
+    for (i=0; i<3; i++) {
+      for (j=0; j<3; j++) {
+	r = 0.0;
+	for (k=0; k<3; k++) {
+	  r += rm[k][i] * t[j][k];
+	}
+	URot3D[j][i] = r;
+      }
+    }
+    
+    /* uv + */
+    r = DG2RAD * urotat;
+    rm[0][0] = cos (r);
+    rm[1][1] = rm[0][0];
+    rm[1][0] = -sin (r);
+    rm[0][1] = sin (r);
+    
+    /*  x,y,x unchanged by PRot3D */
+    for (i=0; i<3; i++) 
+      for (j=0; j<3; j++) 
+	x[i][j] = 0.0;
+    x[0][0] = 1.0;
+    x[1][1] = 1.0;
+    x[2][2] = 1.0;
+
+    /* multiply */
+    for (i=0; i<3; i++) {
+      for (j=0; j<3; j++) {
+	t[j][i] = 0.0;
+	for (k=0; k<3; k++) {
+	  t[j][i] += x[k][i] * rm[j][k];
+	}
+      }
+    }
+
+    /* map - */
+    r = DG2RAD * mrotat;
+    rm[0][0] = cos (r);
+    rm[1][1] = rm[0][0];
+    rm[1][0] = sin (r);
+    rm[0][1] = -sin (r);
+    
+    /* multiply */
+    for (i=0; i<3; i++) {
+      for (j=0; j<3; j++) {
+	r = 0.0;
+	for (k=0; k<3; k++) {
+	  r += rm[k][i] * t[j][k];
+	}
+	PRot3D[j][i] = r;
+      }
+    }
+  } /* end 2D */
 
   return do3Dmul; /* need to apply? */
 } /* end ObitUVDescShift3DMatrix */

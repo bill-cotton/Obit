@@ -132,6 +132,7 @@
  *           Defaults: 1, 3, 1, 4 times Smooth(2) used when
  *
  * Imaging parameters:
+ * \li "do3D" OBIT_bool (1,1,1) 3D image, else 2D? [def TRUE]
  * \li "FOV"  OBIT_float (1,1,1)  Field of view (deg) for Mosaic 
  *                If > 0.0 then a mosaic of images will be added to cover this region.
  *                Note: these are in addition to the NField fields added by 

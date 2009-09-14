@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -808,7 +808,8 @@ void ObitImageClone2  (ObitImage *in1, ObitImage *in2, ObitImage *out,
   olong   i, icx, icy;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong naxis[IM_MAXDIM], onaxis[IM_MAXDIM];
-  ofloat      fact, *crpix, *crpix2, pix[IM_MAXDIM], pix2[IM_MAXDIM], pix3[IM_MAXDIM];
+  ofloat      fact, pix[IM_MAXDIM], pix2[IM_MAXDIM], pix3[IM_MAXDIM];
+  ofloat      crpix[IM_MAXDIM], crpix2[IM_MAXDIM];
   olong  blc[IM_MAXDIM], trc[IM_MAXDIM];
   ObitIOSize IOsize = OBIT_IO_byPlane;
   gchar *today=NULL;
@@ -836,8 +837,10 @@ void ObitImageClone2  (ObitImage *in1, ObitImage *in2, ObitImage *out,
   ObitInfoListPut (out->info, "IOBy", OBIT_long, dim, &IOsize, err);
 
   /* Reference pixels */
-  crpix  = in1->myDesc->crpix;
-  crpix2 = in2->myDesc->crpix;
+  for (i=0; i<IM_MAXDIM; i++) crpix[i]  = 1.0;
+  for (i=0; i<IM_MAXDIM; i++) crpix2[i] = 1.0;
+  crpix[0]  = in1->myDesc->crpix[0]; crpix[1]  = in1->myDesc->crpix[1];
+  crpix2[0] = in2->myDesc->crpix[0]; crpix2[1] = in2->myDesc->crpix[1];
 
   /* Creation date today */
   today = ObitToday();
@@ -848,8 +851,10 @@ void ObitImageClone2  (ObitImage *in1, ObitImage *in2, ObitImage *out,
   for (i=0; i<IM_MAXDIM; i++) naxis[i]  = in1->myDesc->inaxes[i];
 
   /* Center of subimage */
-  pix[0] = crpix[0];
-  pix[1] = crpix[1];
+  /*pix[0] = crpix[0];
+    pix[1] = crpix[1];*/
+  pix[0] = in1->myDesc->inaxes[0]/2;
+  pix[1] = in1->myDesc->inaxes[1]/2;
   pix[2] = 1;
   pix[3] = 1;
   pix[4] = 1;
@@ -885,11 +890,12 @@ void ObitImageClone2  (ObitImage *in1, ObitImage *in2, ObitImage *out,
   naxis[1] = naxis[1] * 1.1;
 
   /* How big is any existant output array - don't make it smaller */
+  for (i=0; i<IM_MAXDIM; i++) onaxis[i] = 0; 
   if (out->image) {
-    for (i=0; i<IM_MAXDIM; i++) onaxis[i] = out->image->naxis[i];
+    for (i=0; i<out->image->ndim; i++) onaxis[i] = out->image->naxis[i];
     if (onaxis[0] > naxis[0]) naxis[0] = onaxis[0];
     if (onaxis[1] > naxis[1]) naxis[1] = onaxis[1];
-  } else for (i=0; i<IM_MAXDIM; i++) onaxis[i] = 0;  /* Doesn't exist */
+  }
 
   /* Center of out image */
   icx = naxis[0] / 2;
@@ -1898,6 +1904,7 @@ void ObitImageInit  (gpointer inn)
 {
   ObitClassInfo *ParentClass;
   ObitImage *in = inn;
+  olong i;
 
   /* error checks */
   g_assert (in != NULL);

@@ -401,8 +401,6 @@ void ObitTableDescRealloc (ObitTableDesc* in, olong nfield)
   g_assert (ObitIsA(in, &myClassInfo));
   if (nfield<1) return; /* don't bother */
 
-  in->nfield = nfield;
-
   /* Free any existing array members  in descriptor */
   if (in->info)       in->info = ObitInfoListUnref (in->info); 
   if (in->type)       g_free(in->type);        in->type     = NULL;
@@ -431,6 +429,8 @@ void ObitTableDescRealloc (ObitTableDesc* in, olong nfield)
     }
     if (in->dim) g_free(in->dim); in->dim = NULL;
   }
+
+  in->nfield = nfield;  /* new number of fields */
 
   /* create new versions as needed */
   in->info       = newObitInfoList();

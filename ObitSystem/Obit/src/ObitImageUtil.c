@@ -28,6 +28,7 @@
 
 #include <sys/types.h>
 #include <time.h>
+#include "ObitImageDesc.h"
 #include "ObitThread.h"
 #include "ObitUVGrid.h"
 #include "ObitImageUtil.h"
@@ -102,6 +103,9 @@ static olong MakeInterpFuncArgs (ObitThread *thread, olong radius,
 
 /** Private: Delete Threaded Image interpolator args */
 static void KillInterpFuncArgs (olong nargs, InterpFuncArg **ThreadArgs);
+
+/** Private: Calculate 2D shift */
+static void TwoDShift (ObitUVDesc *UVDesc, ObitImageDesc *imageDesc);
 /*----------------------Public functions---------------------------*/
 
 /**
@@ -122,6 +126,7 @@ static void KillInterpFuncArgs (olong nargs, InterpFuncArg **ThreadArgs);
  * \li "yCells" OBIT_float (?,1,1) Y (=dec) cell spacing in asec [no default]
  * \li "xShift" OBIT_float (?,1,1) Desired shift in X (=RA) in degrees. [0]
  * \li "yShift" OBIT_float (?,1,1) Desired shift in Y (=dec) in degrees. [0]
+ * \li "do3D"   OBIT_bool (1,1,1) 3D image, else 2D? [def TRUE]
  * \param inUV     Input uv data. 
  * \param fieldNo  Which field (1-rel) in imaging parameter arrays.
  * \param doBeam   if TRUE also create beam as the myBeam member of 
@@ -259,6 +264,10 @@ ObitImage* ObitImageUtilCreateImage (ObitUV *inUV, olong fieldNo,
   inUV->myDesc->xshift += outImage->myDesc->xshift;
   inUV->myDesc->yshift += outImage->myDesc->yshift;
 
+  /* 2D/3D imaging */
+  outImage->myDesc->do3D = TRUE;
+  ObitInfoListGetTest(inUV->info, "do3D", &type, dim, &outImage->myDesc->do3D);
+
   /* Fill in descriptor */
   ObitImageUtilUV2ImageDesc (inUV->myDesc, outImage->myDesc, nChAvg);
 
@@ -275,6 +284,7 @@ ObitImage* ObitImageUtilCreateImage (ObitUV *inUV, olong fieldNo,
    theBeam->myDesc->cdelt[1] = yCells;
    theBeam->myDesc->inaxes[0] = nxBeam;
    theBeam->myDesc->inaxes[1] = nyBeam;
+   theBeam->myDesc->do3D      = outImage->myDesc->do3D;
    /* Fill in descriptor */
    ObitImageUtilUV2ImageDesc (inUV->myDesc, theBeam->myDesc, nChAvg);
    /* Header may have changed */
@@ -314,6 +324,7 @@ ObitImage* ObitImageUtilCreateImage (ObitUV *inUV, olong fieldNo,
  * \li "Robust" OBIT_float scalar = Briggs robust parameter. [def. 0.0]
  *              < -7 -> Pure Uniform weight, >7 -> Pure natural weight.
  *              Uses AIPS rather than Briggs definition of Robust.
+ * \li "do3D"   OBIT_bool (1,1,1) 3D image, else 2D? [def TRUE]
  * \li "WtPower" OBIT_float scalar = Power to raise weights to.  [def = 1.0]
  *              Note: a power of 0.0 sets all the output weights to 1 as modified
  *              by uniform/Tapering weighting.  Applied in determining weights 
@@ -448,6 +459,7 @@ void ObitImageUtilMakeImageFileInfo (ObitInfoList *inList, ObitErr *err)
  *              Note: a power of 0.0 sets all the output weights to 1 as modified
  *              by uniform/Tapering weighting.  Applied in determinng weights 
  *              as well as after.
+ * \li "do3D"   OBIT_bool (1,1,1) 3D image, else 2D? [def TRUE]
  * \param channel  Which frequency channel to image, 0->all.
  * \param err      Error stack, returns if not empty.
  */
@@ -727,6 +739,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
  *              Note: a power of 0.0 sets all the output weights to 1 as modified
  *              by uniform/Tapering weighting.  Applied in determinng weights 
  *              as well as after.
+ * \li "do3D"   OBIT_bool (1,1,1) 3D image, else 2D? [def TRUE]
  * \param err      Error stack, returns if not empty.
  */
 void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage, 
@@ -1553,6 +1566,13 @@ ObitImageUtilInterpolateWeight (ObitImage *inImage, ObitImage *outImage,
       return;
     }
   } /* end of not memory only */
+
+  /* Check outImage and outWeight */
+  if (!ObitFArrayIsCompatable(outImage->image, outWeight->image)) {
+      Obit_log_error(err, OBIT_Error, "%s: Incompatable sizes for %s %s", 
+		     routine, outImage->name, outWeight->name);
+      return;
+  }
 
   /* Make interpolator */
   interp = newObitFInterpolateCreate ("Interpolator", inImage->image, 
@@ -2888,6 +2908,7 @@ ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
   odouble sum;
   gchar *st1, *st2;
   gchar *today=NULL;
+  gchar *origin="Obit";
 
   /* error checks */
   g_assert (ObitUVDescIsA(UVDesc));
@@ -2901,8 +2922,23 @@ ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
   strncpy (imageDesc->date, today, IMLEN_VALUE-1);
   if (today) g_free(today);
  
-  /* loop over axes */
+  /* 2D/3D stuff */
+  if (imageDesc->do3D) {
+    /* Position from uv reference and shift */
+    ObitSkyGeomXYShift (UVDesc->crval[UVDesc->jlocr], 
+			UVDesc->crval[UVDesc->jlocd],
+			UVDesc->xshift, UVDesc->yshift, 
+			imageDesc->crota[1],
+			&imageDesc->crval[0], &imageDesc->crval[1]);
+    imageDesc->xshift = UVDesc->xshift;
+    imageDesc->yshift = UVDesc->yshift;
+    imageDesc->xPxOff = 0.0;
+    imageDesc->yPxOff = 0.0;
+  } else { /* 2D */
+    TwoDShift (UVDesc, imageDesc);
+  } /* end 2D */
 
+  /* loop over axes */
   iaxis = 0;
   /* RA axis, inaxes, cdelt, crota, xshift set else where */
   /* Form label string */
@@ -2917,8 +2953,12 @@ ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
   for (i=0; i<4; i++)  st1[i+4]=st2[i+4];
   st1[9] = 0;
 
-  /* Reference pixel */
-  imageDesc->crpix[iaxis] = 1.0 + imageDesc->inaxes[iaxis] / 2.0;
+  /* Reference pixel for 3D */
+  if (imageDesc->do3D) { /* 3D */
+    imageDesc->crpix[iaxis] = 1.0 + imageDesc->inaxes[iaxis] / 2.0;
+  } else { /* 2D 
+    imageDesc->crpix[iaxis] += 1.0 + imageDesc->inaxes[iaxis] / 2.0;*/
+  }
 
   /* Dec axis, inaxes, cdelt, crota, xshift set else where */
   iaxis++;
@@ -2934,15 +2974,12 @@ ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
   for (i=0; i<4; i++)  st1[i+4]=st2[i+4];
   st1[9] = 0;
 
-  /* Reference pixel */
-  imageDesc->crpix[iaxis] = 1.0 + imageDesc->inaxes[iaxis] / 2.0;
-
-  /* Position from uv reference and shift */
-  ObitSkyGeomXYShift (UVDesc->crval[UVDesc->jlocr], 
-		      UVDesc->crval[UVDesc->jlocd],
-		      UVDesc->xshift, UVDesc->yshift, 
-		      imageDesc->crota[1],
-		      &imageDesc->crval[0], &imageDesc->crval[1]);
+  /* Reference pixel for 3D */
+  if (imageDesc->do3D) { /* 3D */
+    imageDesc->crpix[iaxis] = 1.0 + imageDesc->inaxes[iaxis] / 2.0;
+  } else { /* 2D 
+    imageDesc->crpix[iaxis] += 1.0 + imageDesc->inaxes[iaxis] / 2.0;*/
+  }
 
   /* Frequency Axis */
   iaxis++;
@@ -2994,7 +3031,7 @@ ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
   strncpy (imageDesc->instrument,  UVDesc->instrument,  IMLEN_VALUE-1);
   strncpy (imageDesc->observer,  UVDesc->observer,  IMLEN_VALUE-1);
   strncpy (imageDesc->obsdat, UVDesc->obsdat, IMLEN_VALUE-1);
-  strncpy (imageDesc->origin, UVDesc->origin, IMLEN_VALUE-1);
+  strncpy (imageDesc->origin, origin,         IMLEN_VALUE-1);
   strncpy (imageDesc->bunit,  "JY/BEAM ",     IMLEN_VALUE-1);
   /* Set current date */
   ObitImageUtilCurDate (imageDesc->date, IMLEN_VALUE-1);
@@ -3005,8 +3042,6 @@ ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
   imageDesc->restFreq     = UVDesc->restFreq;
   imageDesc->VelReference = UVDesc->VelReference;
   imageDesc->VelDef       = UVDesc->VelDef;
-  imageDesc->xshift       = UVDesc->xshift;
-  imageDesc->yshift       = UVDesc->yshift;
   imageDesc->epoch        = UVDesc->epoch;
   imageDesc->equinox      = UVDesc->equinox;
   /* Pointing position */
@@ -3888,7 +3923,7 @@ static gpointer ThreadImageInterp (gpointer args)
   /* local */
   olong ix, iy, indx, pos[2];
   ofloat inPixel[2], outPixel[2], *out, *outWt=NULL, rad2=0.0, dist2, irad2=0.0;
-  ofloat *crpix, wt, val, fblank =  ObitMagicF();
+  ofloat crpix[2], wt, val, fblank =  ObitMagicF();
   gboolean OK;
   gchar *routine = "ThreadImageInterp";
 
@@ -3897,7 +3932,8 @@ static gpointer ThreadImageInterp (gpointer args)
   out   = ObitFArrayIndex (outData, pos);
 
   /* Coordinate reference pixel of input */
-  crpix = inDesc->crpix;
+  crpix[0] = inDesc->crpix[0] - inDesc->xPxOff;
+  crpix[1] = inDesc->crpix[1] - inDesc->yPxOff;
 
   /* if weighting */
   if (doWeight) {
@@ -3948,6 +3984,16 @@ static gpointer ThreadImageInterp (gpointer args)
       /* interpolate */
       /* array index in out for this pixel */
       indx = (iy-1) * outDesc->inaxes[0] + (ix-1);
+
+      /* DEBUG - check for blown array 
+	 if ((indx>=outData->arraySize) || (indx>=wtData->arraySize)) {
+	 ObitThreadLock(thread); 
+	 Obit_log_error(err, OBIT_Error,"%s: Overflowed output array",
+	 routine);
+	 ObitThreadUnlock(thread); 
+	 goto finish;
+	 } */
+
       if (wt != fblank ) {
 	val = ObitFInterpolatePixel (interp, inPixel, err);
 	if (doWeight & (val != fblank )) val *= wt;
@@ -4057,3 +4103,65 @@ static void KillInterpFuncArgs (olong nargs, InterpFuncArg **ThreadArgs)
   }
   g_free(ThreadArgs);
 } /*  end KillInterpFuncArgs */
+
+/**
+ * Fill in an image Descriptor shift information for 2D imaging
+ * Shift is the closest to the shift in UVDesc such that pixels are 
+ * on the same grid as the main tangent plane image.
+ * \param UVDesc    Input UV Descriptor.
+ * \param imageDesc Output image Descriptor
+ */
+static void TwoDShift (ObitUVDesc *UVDesc, ObitImageDesc *imageDesc)
+{
+  ofloat  xpix, ypix, xcrpix, ycrpix, xshift, yshift;
+  odouble ra, dec, rac, decc;
+
+  /* First calculate the reference pixel using the shift in UVDesc */
+  ObitSkyGeomXYShift (UVDesc->crval[UVDesc->jlocr], 
+		      UVDesc->crval[UVDesc->jlocd],
+		      UVDesc->xshift, UVDesc->yshift, imageDesc->crota[1],
+		      &ra, &dec);
+  ObitSkyGeomShiftCRP (&UVDesc->ptype[UVDesc->ilocu][4], 
+		       UVDesc->crval[UVDesc->jlocr], UVDesc->crval[UVDesc->jlocd],
+		       imageDesc->crota[1], ra, dec,
+		       &xshift, &yshift);
+  xcrpix = -xshift / imageDesc->cdelt[0];
+  ycrpix = -yshift / imageDesc->cdelt[1];
+
+  xcrpix += 1.0 + imageDesc->inaxes[0] / 2.0; /* offset to ref pix.*/
+  ycrpix += 1.0 + imageDesc->inaxes[1] / 2.0;
+  /* Get closest integral pixel */
+  if (xcrpix>0.0)  
+    xpix = (ofloat)((olong)(xcrpix+0.5));
+  else
+    xpix = (ofloat)((olong)(xcrpix-0.5));
+  if (ycrpix>0.0)  
+    ypix = (ofloat)((olong)(ycrpix+0.5));
+  else
+    ypix = (ofloat)((olong)(ycrpix-0.5));
+
+  /* Get coordinate (rac, decc) of image at (xpix,ypix) */
+  ObitSkyGeomWorldPos (xpix, ypix, ra, dec, xcrpix, ycrpix,
+		       imageDesc->cdelt[0], imageDesc->cdelt[1], 
+		       imageDesc->crota[1], &imageDesc->ctype[0][4],
+		       &rac, &decc);
+
+
+  /* Get shift to position (rac,decc) */
+  ObitSkyGeomShiftXY (UVDesc->crval[UVDesc->jlocr], UVDesc->crval[UVDesc->jlocd],
+		       imageDesc->crota[1], rac, decc,
+		       &xshift, &yshift);
+  imageDesc->xshift = xshift;
+  imageDesc->yshift = yshift;
+
+  /* Position  - as offset from UV (tangent) position */
+  imageDesc->crval[0] = UVDesc->crval[UVDesc->jlocr];
+  imageDesc->crval[1] = UVDesc->crval[UVDesc->jlocd];
+  imageDesc->crpix[0] = xpix;
+  imageDesc->crpix[1] = ypix;
+
+  /* Correct version */
+  imageDesc->xPxOff = xpix - (1.0 + imageDesc->inaxes[0] / 2.0);
+  imageDesc->yPxOff = ypix - (1.0 + imageDesc->inaxes[1] / 2.0);
+
+} /* end TwoDShift */

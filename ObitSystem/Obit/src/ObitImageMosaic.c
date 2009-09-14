@@ -37,6 +37,7 @@
 #include "ObitSkyGeom.h"
 #include "ObitTableVZ.h"
 #include "ObitTableSUUtil.h"
+#include "ObitTableCCUtil.h"
 #include "ObitPBUtil.h"
 #include "ObitFFT.h"
 #include "ObitMem.h"
@@ -1101,8 +1102,8 @@ ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *er
     else out->imDisk[i]   = Disk[0];
     out->nx[i]       = nx[i];
     out->ny[i]       = ny[i];
-    out->RAShift[i]  = RAShift[i]/3600.0;   /* to Deg*/
-    out->DecShift[i] = DecShift[i]/3600.0;  /* to Deg*/
+    out->RAShift[i]  = RAShift[i]/3600.0;   /* to Deg */
+    out->DecShift[i] = DecShift[i]/3600.0;  /* to Deg */
   }
 
   /* Cleanup */
@@ -1188,6 +1189,11 @@ void ObitImageMosaicDefine (ObitImageMosaic *in, ObitUV *uvData, gboolean doBeam
   for (i=in->nInit; i<in->numberImages; i++) {
     in->images[i] = ObitImageUtilCreateImage(uvData, i+1, doBeam, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
+    /* For 2D imaging pick up shift */
+    if (!in->images[i]->myDesc->do3D) {
+      in->RAShift[i]  = in->images[i]->myDesc->xshift;
+      in->DecShift[i] = in->images[i]->myDesc->yshift;
+    }
   }    /* end loop over images */
 
  /* Create full field image if needed */
@@ -1362,6 +1368,7 @@ void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err)
 
   /* Loop over tiles */
   for (i= 0; i<in->numberImages; i++) { /* loop 500 */
+
     /* Open full image */
     dim[0] = IM_MAXDIM;
     blc[0] = blc[1] = blc[2] = blc[4] = blc[5] = 1;
@@ -1404,7 +1411,7 @@ void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err)
     overlap = ObitImageDescOverlap(in->images[i]->myDesc, in->FullField->myDesc, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
-    if (overlap) {    /* Something to do */
+    if (overlap) {    /* Something to do? */
       /* Make or resize Interpolated scratch arrays (memory only images) */
       ObitImageClone2 (in->images[i], out, tout1, err);
       ObitImageClone2 (in->images[i], out, tout2, err);
@@ -1414,7 +1421,7 @@ void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err)
 	      i,tout1->image->naxis[0],tout1->image->naxis[1]);*/
 	
       naxis = tout1->myDesc->inaxes; /* How big is output */
-
+  
       /* Interpolate and weight image */
       /* reopen with windowing */
       ObitImageOpen (in->images[i], OBIT_IO_ReadOnly, err);
@@ -1424,6 +1431,10 @@ void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err)
       ObitImageUtilInterpolateWeight (in->images[i], tout1, tout2, TRUE, rad, 
 				      plane, plane, hwidth, err);
       if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+      /* DEBUG 
+	 ObitImageUtilArray2Image ("DbugInterp.fits", 1, tout1->image, err);
+	 ObitImageUtilArray2Image ("DbugInput.fits", 1, in->images[i]->image, err);*/
 
       /* Close, deallocate buffer */
       ObitImageClose(in->images[i], err);
@@ -2219,6 +2230,66 @@ void ObitImageMosaicGetInfo (ObitImageMosaic *in, gchar *prefix, ObitInfoList *o
   g_free(keyword);
  
 } /* end ObitImageMosaicGetInfo */
+
+/**
+ * Concatenate any CC files from facet images onto the FullField member
+ * Uses CC version 1 in all cases.
+ * \param mosaic   ImageMosaic to process
+ * \param err      Error/message stack
+ */
+void ObitImageMosaicCopyCC (ObitImageMosaic *in, ObitErr *err)
+{
+  ObitTableCC *inCCTab=NULL, *outCCTab=NULL;
+  olong CCVer, noParms, ifield;
+  gchar *routine = "ObitImageMosaicCopyCC";
+
+ /* error checks */
+  if (err->error) return;
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* Check if the FullField member exists - give warning and return if not. */
+  if (in->FullField==NULL) {
+    Obit_log_error(err, OBIT_InfoWarn, 
+		   "%s: Mosaic %s has no FullField member", 
+		   routine, in->name);
+  }
+
+  /* Get first input table to get structure */
+  CCVer   = 1;
+  noParms = 0;
+  inCCTab = newObitTableCCValue ("in CC", (ObitData*)in->images[0],
+				  &CCVer, OBIT_IO_ReadOnly, noParms, err);
+  if  (err->error) Obit_traceback_msg (err, routine,in->images[0]->name);
+  
+  /* Create output CC table on in->FullField */
+  CCVer    = 1;
+  noParms  = inCCTab->noParms;;
+  outCCTab = newObitTableCCValue ("out CC", (ObitData*)in->FullField,
+				  &CCVer, OBIT_IO_ReadWrite, noParms, err);
+  /* Clear any existing rows */
+  ObitTableClearRows ((ObitTable*)outCCTab, err);
+  if  (err->error) Obit_traceback_msg (err, routine, outCCTab->name);
+
+  /* Copy first */
+  ObitTableCCUtilAppend (inCCTab, outCCTab, 0, 0, err);
+  if  (err->error) Obit_traceback_msg (err, routine, inCCTab->name);
+  inCCTab = ObitTableCCUnref(inCCTab);
+
+  /* Loop over other tables */
+  for (ifield=1; ifield<in->numberImages; ifield++) {
+    CCVer   = 1;
+    noParms = 0;
+    inCCTab = newObitTableCCValue ("in CC", (ObitData*)in->images[ifield],
+				   &CCVer, OBIT_IO_ReadOnly, noParms, err);
+    if  (err->error) Obit_traceback_msg (err, routine, in->images[ifield]->name);
+    if (inCCTab==NULL) continue;  /* Is there one? */
+    ObitTableCCUtilAppend (inCCTab, outCCTab, 0, 0, err);
+    if  (err->error) Obit_traceback_msg (err, routine, inCCTab->name);
+    inCCTab = ObitTableCCUnref(inCCTab); /* Cleanup */
+  } /* end loop copying rest of tables */
+
+  outCCTab = ObitTableCCUnref(outCCTab); /* Cleanup */
+} /* end ObitImageMosaicCopyCC */
 
 /**
  * Initialize global ClassInfo Structure.

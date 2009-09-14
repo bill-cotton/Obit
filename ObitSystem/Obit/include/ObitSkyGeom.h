@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -74,6 +74,12 @@ void ObitSkyGeomShiftXY (odouble ra, odouble dec, ofloat rotate,
 void ObitSkyGeomXYShift (odouble ra, odouble dec, 
 			ofloat xShift, ofloat yShift, ofloat rotate,
 			odouble *shiftRA, odouble *shiftDec);
+
+/** Public: Get shift of coordinate reference pixel. */
+void  
+ObitSkyGeomShiftCRP (gchar *type, odouble ra, odouble dec, ofloat rotate,
+		     odouble xra, double xdec, 
+		     ofloat *xshift, ofloat *yshift);
 
 /** Public: Get shift parameters for -SIN projection. */
 void  

@@ -279,7 +279,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     "PBCor", "antSize", 
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
     "MaxBaseline", "MinBaseline", "rotate", "Beam",  "xCells", "yCells", 
-    "nx", "ny",  "nxBeam", "nyBeam", /*"dispURL",*/
+    "nx", "ny",  "nxBeam", "nyBeam", "do3D", /*"dispURL",*/
     NULL
   };
   gchar        *CLEANParms[] = {  /* Clean parameters */

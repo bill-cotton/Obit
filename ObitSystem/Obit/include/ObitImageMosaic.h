@@ -192,6 +192,9 @@ void ObitImageMosaicGetInfo (ObitImageMosaic *in, gchar *prefix, ObitInfoList *o
 typedef void 
 (*ObitImageMosaicGetInfoFP) (ObitImageMosaic *in, gchar *prefix, ObitInfoList *outList, 
 			     ObitErr *err);
+/** Public: Concatenate Image CC tables onto the FullField Image */
+void ObitImageMosaicCopyCC (ObitImageMosaic *in, ObitErr *err);
+
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

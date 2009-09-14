@@ -154,9 +154,10 @@ typedef gboolean (*ObitDConCleanPixelStatsFP) (ObitDConClean *in, ObitFArray *pi
 					       ObitErr *err);
 
 /** Public:  Determine image statistics. */
-void ObitDConCleanImageStats(ObitDConClean *in, olong field, ObitErr *err);
+void ObitDConCleanImageStats(ObitDConClean *in, olong field, gboolean doBeam, 
+			     ObitErr *err);
 typedef void (*ObitDConCleanImageStatsFP) (ObitDConClean *in, olong field, 
-					   ObitErr *err);
+					   gboolean doBeam, ObitErr *err);
  
 /** Public:Select components to be subtracted . */
 gboolean ObitDConCleanSelect(ObitDConClean *in, ObitFArray *pixarray, ObitErr *err);

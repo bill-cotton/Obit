@@ -167,8 +167,9 @@ static void jpreces(double JD, ofloat equin, double deldat, olong dir,
 {
   olong itemp;
   gboolean diurn;
-  odouble prnmat[3][3], poso[3], velo[3], rlst, pos[3], tu, gmst, 
-    twopi, time, e[3], ibige, pdote, konst, v[3], beta, pdotv, konst2, out[3], rhogeo;
+  odouble prnmat[3][3], velo[3], rlst, pos[3], tu, gmst, 
+    twopi, time, e[3], ibige, pdote, konst, v[3], beta, pdotv, konst2, rhogeo;
+  odouble poso[3]={0.0,0.0,0.0}, out[3]={0.0,0.0,0.0};
 
   twopi = 2.0 * G_PI;
 
@@ -769,8 +770,8 @@ static void EarthEphem(odouble JD, ofloat equin, odouble dvb[3], odouble dpb[3],
 		       odouble dvh[3], odouble dph[3])
 {
   olong ideq, i, j, k;
-  ofloat t, tsq, a, pertl, pertld, pertr, pertrd, cosa, sina, esq, e, param, twoe,
-    twog, g, phi, f, sinf, cosf, phid, psid, pertp, pertpd, tl,
+  ofloat t, tsq, a, pertl=0.0, pertld, pertr, pertrd, cosa, sina, esq, e, param, twoe,
+    twog, g, phi=0.0, f, sinf, cosf, phid, psid, pertp, pertpd, tl,
     sinlm, coslm, sigma, b, plon, pomg, pecc, flatm, flat;
   odouble dt, dtsq, dlocal, dml=0.0, deps, dparam, dpsi, d1pdro, drd, drld, dtl, dsinls,
     dcosls, dxhd, dyhd, dzhd, dxbd, dybd, dzbd, dcosep, dsinep,

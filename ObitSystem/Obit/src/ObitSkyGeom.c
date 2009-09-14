@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -114,6 +114,49 @@ void ObitSkyGeomXYShift (odouble ra, odouble dec,
     *shiftRA = ra;
 
 } /* end ObitSkyGeomXYShift */
+
+/**
+ * Determine the shift in coordinate reference pixel between 
+ * two celestial positions.
+ *  The shift is in (possibly) rotated coordinates.
+ * Adopted from the AIPSish SHFCRP.FOR
+ * \param type     Projection type ("-SIN", "-NCP", otherwise linear)
+ * \param ra       Initial (reference) Right Ascension in deg.
+ * \param dec      Initial (reference) declination in deg.
+ * \param rotate   Rotation of field, to E from N, deg.
+ * \param xra      Shifted Right Ascension in deg.
+ * \param ydec     Shifted declination in deg.
+ * \param xshift   (out) Shift from ra to xra in deg.
+ * \param yshift   (out) Shift from dec to xDec in deg.
+ */
+void  
+ObitSkyGeomShiftCRP (gchar *type, odouble ra, odouble dec, ofloat rotate,
+		     odouble xra, double xdec, 
+		     ofloat *xshift, ofloat *yshift)
+{
+  odouble xxshft, yyshft;
+  ofloat maprr;
+
+  maprr = rotate * DG2RAD;
+  /* L: SIN, NCP projection*/
+  xxshft = cos (DG2RAD*xdec) * sin (DG2RAD*(xra-ra));
+  
+  /*  M: NCP PROJECTION */
+  if (!strncmp(type,"-NCP",4)) {
+    yyshft = (cos (DG2RAD*dec) - cos (DG2RAD*xdec) *
+	      cos (DG2RAD*(xra-ra))) / sin (DG2RAD*dec);
+  /*  M: SIN PROJECTION */
+  } else if (!strncmp(type,"-SIN",4)) {
+    yyshft = sin (DG2RAD*xdec) * cos (DG2RAD*dec) - cos
+      (DG2RAD*xdec) * sin (DG2RAD*dec) * cos (DG2RAD*(xra-ra));
+  } else { /* Something else - do simple "linear" terms */
+    xxshft = cos (DG2RAD*dec) * (xra - ra);
+    yyshft = xdec - dec;
+  }
+  /* Undo rotation */
+  *xshift = ( cos (maprr) * xxshft + sin (maprr) * yyshft) * RAD2DG;
+  *yshift = (-sin (maprr) * xxshft + cos (maprr) * yyshft) * RAD2DG;
+} /* end ObitSkyGeomShiftCRP */
 
 /**
  * Finds coordinate shift from RA,DEC to XRA, XDEC and phase terms for

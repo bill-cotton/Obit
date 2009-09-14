@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageDesc type                         */
 /*                                                                    */
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -137,6 +137,9 @@ extern PyObject *ImageDescGetDict(ObitImageDesc* in) {
   PyDict_SetItemString(outDict, "altCrpix",PyFloat_FromDouble((double)in->altCrpix));
   PyDict_SetItemString(outDict, "altRef",  PyFloat_FromDouble((double)in->altRef));
   PyDict_SetItemString(outDict, "restFreq",PyFloat_FromDouble((double)in->restFreq));
+  PyDict_SetItemString(outDict, "xpixoff", PyFloat_FromDouble((double)in->xPxOff));
+  PyDict_SetItemString(outDict, "ypixoff", PyFloat_FromDouble((double)in->yPxOff));
+  PyDict_SetItemString(outDict, "do3D",    PyInt_FromLong((long)in->do3D));
   PyDict_SetItemString(outDict, "areBlanks",PyInt_FromLong((long)in->areBlanks));
   PyDict_SetItemString(outDict, "niter",   PyInt_FromLong((long)in->niter));
   PyDict_SetItemString(outDict, "naxis",   PyInt_FromLong((long)in->naxis));
@@ -215,6 +218,8 @@ extern void ImageDescSetDict(ObitImageDesc* in, PyObject *inDict) {
   in->yshift  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "yshift"));
   in->altCrpix= (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "altCrpix"));
   in->altRef  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "altRef"));
+  in->xPxOff  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "xpixoff"));
+  in->yPxOff  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "ypixoff"));
   in->niter   = PyInt_AsLong(PyDict_GetItemString(inDict, "niter"));
   in->naxis   = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "naxis"));
   in->bitpix  = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "bitpix"));
@@ -222,6 +227,7 @@ extern void ImageDescSetDict(ObitImageDesc* in, PyObject *inDict) {
   in->VelReference  = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "VelReference"));
   in->VelDef  = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "VelDef"));
   in->areBlanks = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "areBlanks"));
+  in->do3D      = (int)PyInt_AsLong(PyDict_GetItemString(inDict, "do3D"));
   list1 = PyDict_GetItemString(inDict, "ctype");
   number = MIN (IM_MAXDIM, PyList_Size(list1));
   for (i=0; i<number; i++) {

@@ -153,6 +153,8 @@ WtFunc                             Box function type when WtBox
 doFull                             Make full field (flattened) image?
 **PARAM** boo 1  **DEF** T
 doRestore                          Restore CCs to images?
+**PARAM** boo 1 **DEF** T
+do3D                               3D imaging, else 2D
 **PARAM** str 48  **DEF** NVSSVZ.FIT
 Catalog                            Outlier catalog name (NVSSVZ.FIT)
 **PARAM** float 1
@@ -451,6 +453,9 @@ Adverbs:
   doFull.....Make full field (flattened) image?
              Otherwise only make facets and leave them.
   doRestore..Restore CCs to images?
+  do3D.......If True, make the reference pixel in each facet tangent
+             to the celestial sphere, else on single tangent plane.
+             If False, CLEAN components are left on flattened image.
 
    The following control CLEANing:
   CLEANBox...A 4x50 array with the specification of a search

@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -152,21 +152,10 @@ ObitIOCode ObitTableCCUtilGrid (ObitTableCC *in, olong OverSample,
   else iCellY = 1.0;
 
   /*    Get reference pixel offsets from (nx/2+1, ny/2+1) */
-  xpoff = (desc->crpix[desc->jlocr] - 
-	   (desc->inaxes[desc->jlocr]/2) - 1) *
+  xpoff = (desc->crpix[desc->jlocr] - (desc->inaxes[desc->jlocr]/2) - 1) *
     desc->cdelt[desc->jlocr];
-  ypoff = (desc->crpix[desc->jlocd] - 
-	   (desc->inaxes[desc->jlocd]/2) - 1) *
-    /*DEBUG (desc->inaxes[desc->jlocd]/2)) *  */
+  ypoff = (desc->crpix[desc->jlocd] - (desc->inaxes[desc->jlocd]/2) - 1) *
     desc->cdelt[desc->jlocd];
-  /* This is difficult as AIPS uses nx/2, ny/2+1 as "Center"
-     in the 3D imaging Obit uses the reference pixel should always be 
-     [nx/2+1,ny/2+1] 
-     If image has been subimaged and new "center" not reference pixel
-     then AIPS method gets into trouble.
-  */
-  xpoff = 0.0;
-  ypoff = 0.0;
 
   /* loop over CCs */
   count = 0;  /* Count of components */

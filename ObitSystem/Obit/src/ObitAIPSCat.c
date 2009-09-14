@@ -28,6 +28,7 @@
 #include <time.h>
 #include <math.h>
 #include <string.h>
+#include "ObitImageDesc.h"
 #include "ObitAIPS.h"
 #include "ObitAIPSCat.h"
 #include "ObitTableDesc.h"
@@ -329,6 +330,11 @@ void ObitAIPSCatImageGetDesc (ObitImageDesc *desc, gchar *buffer,
     
   /* Beam minor axis in degrees */
   desc->beamMin = fheader[myDHDR.KRBMN];
+
+  /* 3D stuff - anything but explicit 2D is 3D */
+  desc->do3D   = header[myDHDR.KIITY] != -1;
+  desc->xPxOff = fheader[myDHDR.KRXPO];
+  desc->yPxOff = fheader[myDHDR.KRYPO];
     
   /* Beam position angle in degrees */
   desc->beamPA = fheader[myDHDR.KRBPA];
@@ -447,12 +453,13 @@ void ObitAIPSCatImageSetDesc (ObitImageDesc *desc, gchar *buffer,
     /* UV weight normalization */
     fheader[myDHDR.KRWTN] = 0.0;
 
-    /* 3D type [True]  */
-    header[myDHDR.KIITY] = 2;
+    /* 3D type   */
+    if (desc->do3D) header[myDHDR.KIITY] = 2;
+    else header[myDHDR.KIITY] = 1;
 
     /* Pixel offsets */
-    fheader[myDHDR.KRXPO] = 0.0;
-    fheader[myDHDR.KRYPO] = 0.0;
+    fheader[myDHDR.KRXPO] = desc->xPxOff;
+    fheader[myDHDR.KRYPO] = desc->yPxOff;
 
     /* set extension files */
     for (i=0; i<myDHDR.KIEXTN; i++) {

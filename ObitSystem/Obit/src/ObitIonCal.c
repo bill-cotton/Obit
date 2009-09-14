@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006,2008                                          */
+/*;  Copyright (C) 2006,2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -767,7 +767,8 @@ ofloat ObitIonCalFit1 (ObitIonCal *in, olong epoch, ofloat *coef,
  * \li Niter       OBIT_int   (1,1,1)  Max. number of components to clean
  * \li minFlux     OBIT_float (1,1,1)  Minimum flux density to CLEAN
  * \li autoWindow  OBIT_boolean (1,1,1)True if autoWindow feature wanted.
- * \li dispURL"    OBIT_string (1,1,1) URL of display server
+ * \li dispURL     OBIT_string (1,1,1) URL of display server
+ * \li do3D        OBIT_bool (1,1,1)   Use 3D imaging? def TRUE.
  *
  *   Control parameters on the in->info member.
  * \li nZern       OBIT_int   (1,1,1)  Zernike polynomial order requested [def 5]

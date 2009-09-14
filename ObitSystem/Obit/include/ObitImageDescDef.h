@@ -121,3 +121,7 @@
   olong jlocif;
   /** InfoList for other keywords */
   ObitInfoList *info;
+  /** Is thi image using 3D imaging? */
+  gboolean  do3D;
+  /** x, y pixel offset if not do3D */
+  ofloat  xPxOff, yPxOff;

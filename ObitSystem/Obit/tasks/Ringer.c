@@ -918,6 +918,7 @@ void doFit (ObitInfoList *myInput, ObitImage* in1Image, ObitImage* in2Image,
   ofloat r1, r2;
   olong i, j, nx, ny;
 
+  minxy[0] = minxy[1] = 0;
   /* search grid */
   minval = 1.0e20;
   nx = nsearch; ny = nsearch;

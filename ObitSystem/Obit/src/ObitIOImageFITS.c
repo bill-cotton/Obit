@@ -28,6 +28,7 @@
 
 #include <errno.h>
 #include "Obit.h"
+#include "ObitImageDesc.h"
 #include "ObitIOImageFITS.h"
 #include "ObitImageSel.h"
 #include "ObitTableList.h"
@@ -1922,7 +1923,7 @@ void  ObitIOImageAIPSCLEANRead(ObitIOImageFITS *in, olong *lstatus)
   int i, j, k, keys, morekeys, status=0;
   long ltemp;
   float ftemp;
-  gboolean gotBeam=FALSE, gotNiter=FALSE;
+  gboolean gotBeam=FALSE, gotNiter=FALSE, got3D=FALSE;
   ObitImageDesc *desc;
 
   /* error checks */
@@ -1957,14 +1958,37 @@ void  ObitIOImageAIPSCLEANRead(ObitIOImageFITS *in, olong *lstatus)
   if (status==KEY_NO_EXIST) status = 0;
   desc->niter = (olong)ltemp;
 
+  /* DO3D 2D==1 */
+  ltemp = 2;
+  fits_read_key_lng (in->myFptr, "DO3D", &ltemp, (char*)commnt, &status);
+  got3D = got3D || (status != KEY_NO_EXIST);
+  if (status==KEY_NO_EXIST) status = 0;
+  /* Anything not explicitly 2D is 3D */
+  desc->do3D = ltemp==2;
+
+  /* 2D x pixel offset */
+  ftemp = 0.0;
+  fits_read_key_flt (in->myFptr, "XPXOFF", &ftemp, (char*)commnt, &status);
+  got3D = got3D && (status != KEY_NO_EXIST);
+  if (status==KEY_NO_EXIST) status = 0;
+  desc->xPxOff = (ofloat)ftemp;
+
+   /* 2D y pixel offset */
+  ftemp = 0.0;
+  fits_read_key_flt (in->myFptr, "YPXOFF", &ftemp, (char*)commnt, &status);
+  got3D = got3D && (status != KEY_NO_EXIST);
+  if (status==KEY_NO_EXIST) status = 0;
+  desc->yPxOff = (ofloat)ftemp;
+
   /* If this worked, we're done */
-  if (gotBeam && gotNiter) return;
+  if (gotBeam && gotNiter && got3D) return;
 
   /* Oh Well, parse all the header cards looking for: 
-          1         2         3         4         5         6
-0123456789012345678901234567890123456789012345678901234567890123456789
+          1         2         3         4         5         6         7
+0123456789012345678901234567890123456789012345678901234567890123456789012345
 HISTORY AIPS   CLEAN BMAJ=  1.3432E-07 BMIN=  4.3621E-08 BPA= -43.11  
 HISTORY AIPS   CLEAN NITER=     1000 PRODUCT=1   / NORMAL   
+HISTORY AIPS   IMAGE ITYPE=2 XPOFF=  0.00000000E+00 YPOFF=  0.00000000E+00
   */
 
   /* how many keywords to look at? */
@@ -1988,6 +2012,18 @@ HISTORY AIPS   CLEAN NITER=     1000 PRODUCT=1   / NORMAL
 	for (j=0,i=27; i<36; i++) temp[j++] = card[i]; temp[j] = 0;
 	sscanf (temp, "%ld", &ltemp);
 	desc->niter = (olong)ltemp;
+      } else if (!strncmp ("HISTORY AIPS   IMAGE ITYPE=", card, 27)) {
+	/* Parse card */
+	for (j=0,i=27; i<29; i++) temp[j++] = card[i]; temp[j] = 0;
+	sscanf (temp, "%ld", &ltemp);
+	desc->do3D = ltemp==2;
+	got3D = TRUE;
+	for (j=0,i=35; i<52; i++) temp[j++] = card[i]; temp[j] = 0;
+	sscanf (temp, "%f", &ftemp);
+	desc->xPxOff = (ofloat)ftemp;
+	for (j=0,i=58; i<75; i++) temp[j++] = card[i]; temp[j] = 0;
+	sscanf (temp, "%f", &ftemp);
+	desc->yPxOff = (ofloat)ftemp;
       }
       /* Are we there yet? */
       if (gotBeam && gotNiter) return;
@@ -2041,6 +2077,21 @@ void  ObitIOImageAIPSCLEANWrite (ObitIOImageFITS *in, olong *lstatus)
 			 (char*)commnt, &status);
   }
 
+  /* 3D stuff */
+  if (desc->do3D) ltemp = 2;
+  else ltemp = 1;
+  strncpy (commnt, "2 means 3D imaging", FLEN_COMMENT);
+  fits_update_key_lng (in->myFptr, "DO3D", ltemp,
+			 (char*)commnt, &status);
+  strncpy (commnt, "x pixel offset", 
+	   FLEN_COMMENT);
+  fits_update_key_flt (in->myFptr, "XPXOFF", (float)desc->xPxOff,  
+		       6, (char*)commnt, &status);
+  strncpy (commnt, "y pixel offset", 
+	   FLEN_COMMENT);
+  fits_update_key_flt (in->myFptr, "YPXOFF", (float)desc->yPxOff,  
+		       6, (char*)commnt, &status);
+
   /* Purge previous version */
   PurgeAIPSHistory (in, &status);
 
@@ -2058,10 +2109,11 @@ void  ObitIOImageAIPSCLEANWrite (ObitIOImageFITS *in, olong *lstatus)
     fits_write_history (in->myFptr, (char*)card, &status);
    }
 
-   /* Image 3D type - stubbed for now */
-   ltemp  = 2;
-   rtemp1 = 0.0;
-   rtemp2 = 0.0;
+   /* Image 3D type */
+   if (desc->do3D) ltemp  = 2;
+   else ltemp = 1;
+   rtemp1 = desc->xPxOff;
+   rtemp2 = desc->yPxOff;
    g_snprintf (card, FLEN_COMMENT,
 	       "AIPS   IMAGE ITYPE=%1ld XPOFF=%16.8f YPOFF=%16.8f",
 	       ltemp, rtemp1, rtemp2);
