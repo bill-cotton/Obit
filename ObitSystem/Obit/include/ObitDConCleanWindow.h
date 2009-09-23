@@ -270,7 +270,7 @@ typedef olong (*ObitDConCleanWindowCountFP) (ObitDConCleanWindow *in,
 					     ObitDConCleanWindowType type,
 					     olong *window, ObitErr *err);
 
-/** Public: find values needed for autoWindow  */
+/** Public: add autoWindow  */
 gboolean 
 ObitDConCleanWindowAutoWindow (ObitDConCleanWindow *in, 
 			       olong field, ObitFArray *image,
@@ -305,6 +305,22 @@ ObitDConCleanWindowAddField (ObitDConCleanWindow *in,
 typedef olong 
 (*ObitDConCleanWindowAddFieldFP) (ObitDConCleanWindow *in,  
 				  olong inaxes[2], ObitErr *err);
+
+/** Public: Get Statistics on a field using windows */
+void
+ObitDConCleanWindowStats (ObitDConCleanWindow *in,  
+			  olong field, ObitFArray *image,
+			  gboolean doAbs,
+			  ofloat *PeakIn, olong *PeakInPos,
+			  ofloat *PeakOut, ofloat *RMS,
+			  ObitErr *err);
+typedef void 
+(*ObitDConCleanWindowStatsFP) (ObitDConCleanWindow *in,  
+			       olong field, ObitFArray *image,
+			       gboolean doAbs,
+			       ofloat *PeakIn, olong *PeakInPos,
+			       ofloat *PeakOut, ofloat *RMS,
+			       ObitErr *err);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

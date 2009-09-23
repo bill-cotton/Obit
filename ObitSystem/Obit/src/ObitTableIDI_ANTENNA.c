@@ -437,7 +437,7 @@ ObitTableIDI_ANTENNA* newObitTableIDI_ANTENNAValue (gchar* name, ObitData *file,
   /* Add _status column at end */
   desc->FieldName[colNo] = g_strdup("_status");
   desc->FieldUnit[colNo] = g_strdup("        ");
-  desc->type[colNo] = OBIT_short;
+  desc->type[colNo] = OBIT_long;
   for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
   
   /* number of fields */

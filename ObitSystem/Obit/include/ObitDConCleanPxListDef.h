@@ -39,10 +39,10 @@ ObitInfoList *info;
 ObitImageMosaic *mosaic;
 /** Image Clean window definition */
 ObitDConCleanWindow *window;
-/** Image Beam patch data,
+/** Array of Image Beam patch data,
     The beam patch array is square and 2*patch +1 x 2*patch +1
     in size.  The center pixel is the center of the dirty beam.*/
-ObitFArray *BeamPatch;
+ObitFArray **BeamPatch;
 /** Minimum flux density to load */
 ofloat minFluxLoad;
 /** Maximum abs. residual at end of CLEAN */

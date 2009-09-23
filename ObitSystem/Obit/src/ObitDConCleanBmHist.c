@@ -233,8 +233,8 @@ void ObitDConCleanBmHistUpdate (ObitDConCleanBmHist *in, ObitImage *Beam,
 
   /* Set output to full image, plane at a time */
   dim[0] = IM_MAXDIM;
-  blc[0] = blc[1] = blc[2] = blc[3] = blc[4] = blc[5] = 1;
-  trc[0] = trc[1] = trc[2] = trc[3] = trc[4] = trc[5] = 0;
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
   /* multiplane? */
   if (Beam->myDesc->inaxes[2]>1) {
     for (i=0; i<IM_MAXDIM-2; i++) trc[i+2] = plane[i];

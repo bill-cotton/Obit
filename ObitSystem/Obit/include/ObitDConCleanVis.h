@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -176,11 +176,6 @@ void  ObitDConCleanVisDefWindow (ObitDConClean *in, ObitErr *err);
 /** Public: Subtract components and generate new residual image(s). */
 void ObitDConCleanVisSub(ObitDConCleanVis *in, ObitErr *err);
 
-/** Public: Pick next field(s) and get Residual image(s) */
-gboolean ObitDConCleanVisPickNext(ObitDConCleanVis *in, ObitErr *err);
-typedef gboolean (*ObitDConCleanVisPickNextFP) (ObitDConClean *in, 
-					    ObitErr *err);
-
 /** Public: Determine quality measure for field */
 ofloat ObitDConCleanVisQuality(ObitDConCleanVis *in, olong field, 
 			       ObitErr *err);
@@ -211,6 +206,13 @@ gboolean ObitDConCleanVisFilter (ObitDConCleanVis *in, ofloat filter[2],
 typedef gboolean (*ObitDConCleanVisFilterFP) (ObitDConCleanVis *in, 
 					      ofloat filter[2], ObitErr* err);
 
+/** Public: Automatically add window. */
+gboolean ObitDConCleanVisAutoWindow(ObitDConClean *in, olong *fields, 
+				    ObitFArray **pixarray, ObitErr *err);
+
+/** Public:  Get pixel statistics. */
+gboolean ObitDConCleanVisPixelStats(ObitDConClean *in, ObitFArray **pixarray,
+				    ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

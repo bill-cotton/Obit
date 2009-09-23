@@ -187,7 +187,7 @@ void  ObitDConCleanOTFRecGetParms (ObitDCon *in, ObitErr *err);
 void ObitDConCleanOTFRecSub(ObitDConClean *in, ObitErr *err);
 
 /** Public:Select components  . */
-gboolean ObitDConCleanOTFRecSelect(ObitDConClean *in, ObitFArray *pixarray, 
+gboolean ObitDConCleanOTFRecSelect(ObitDConClean *in, ObitFArray **pixarray, 
 				   ObitErr *err);
 
 /** Public: Subtract components and generate new residual image(s). */
@@ -197,7 +197,7 @@ void ObitDConCleanOTFRecSub(ObitDConClean *in, ObitErr *err);
 void ObitDConCleanOTFRecRestore(ObitDConClean *in, ObitErr *err);
 
 /** Public:  Prepare for minor cycle. */
-void ObitDConCleanOTFRecPixelStats(ObitDConClean *in, ObitFArray *pixarray, 
+void ObitDConCleanOTFRecPixelStats(ObitDConClean *in, ObitFArray **pixarray, 
 				   ObitErr *err);
 
 /*----------- ClassInfo Structure -----------------------------------*/

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -149,8 +149,8 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
 				ofloat minFluxLoad,
 				ofloat autoWinFlux,
 				ObitDConCleanWindow *window, 
-				ObitFArray *BeamPatch,
-				ObitFArray *pixarray,
+				ObitFArray **BeamPatch,
+				ObitFArray **pixarray,
 				ObitErr *err);
 
 /** Public: Do minor cycle BGC CLEANing. */

@@ -137,7 +137,7 @@ void  ObitDConCleanOTFGetParms (ObitDCon *in, ObitErr *err);
 void ObitDConCleanOTFSub(ObitDConClean *in, ObitErr *err);
 
 /** Public:Select components  . */
-gboolean ObitDConCleanOTFSelect(ObitDConClean *in, ObitFArray *pixarray,
+gboolean ObitDConCleanOTFSelect(ObitDConClean *in, ObitFArray **pixarray,
 				ObitErr *err);
 
 /** Public: Subtract components and generate new residual image(s). */
@@ -151,7 +151,7 @@ void ObitDConCleanOTFScaleCC(ObitDConCleanOTF *in, ObitErr *err);
 typedef void (*ObitDConCleanOTFScaleCCFP) (ObitDConCleanOTF *in, ObitErr *err);
 
 /** Public:  Prepare for minor cycle. */
-void ObitDConCleanOTFPixelStats(ObitDConClean *in, ObitFArray *pixarray, 
+void ObitDConCleanOTFPixelStats(ObitDConClean *in, ObitFArray **pixarray, 
 				ObitErr *err);
 
 /*----------- ClassInfo Structure -----------------------------------*/

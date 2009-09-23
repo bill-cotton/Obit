@@ -98,7 +98,7 @@ ofloat BeamAngle (ObitImageDesc *in, ofloat x, ofloat y, ofloat offx, ofloat off
  Note: Derived classes MUST have the following entries at the beginning 
  of the corresponding structure */
 typedef struct {
-  /* type "squint" in this class */
+  /* type "vmsquint" in this class */
   gchar type[12];
   /* SkyModel with model components loaded (ObitSkyModelLoad) */
   ObitSkyModel *in;
@@ -443,8 +443,8 @@ void ObitSkyModelVMSquintShutDownMod (ObitSkyModel* inn, ObitUV *uvdata,
   ObitSkyModelVMShutDownMod(inn, uvdata, err);
 
   if (in->threadArgs) {
-    /* Check type - only handle "squint" */
-    if (!strncmp((gchar*)in->threadArgs[0], "squint", 6)) {
+    /* Check type - only handle "vmsquint" */
+    if (!strncmp((gchar*)in->threadArgs[0], "vmsquint", 8)) {
       for (i=0; i<in->nThreads; i++) {
 	args = (VMSquintFTFuncArg*)in->threadArgs[i];
 	if (args->Rgain)  g_free(args->Rgain);
@@ -455,7 +455,7 @@ void ObitSkyModelVMSquintShutDownMod (ObitSkyModel* inn, ObitUV *uvdata,
       }
       g_free(in->threadArgs);
       in->threadArgs = NULL;
-    } /* end if this a "squint" threadArg */
+    } /* end if this a "vmsquint" threadArg */
   }
 
   /* Restore calibration state */
@@ -486,13 +486,13 @@ void ObitSkyModelVMSquintInitModel (ObitSkyModel* inn, ObitErr *err)
 
   /* Threading */
   if (in->threadArgs) {
-    /* Check type - only handle "squint" */
+    /* Check type - only handle "vmsquint" */
     if (!strncmp((gchar*)in->threadArgs[0], "vmsquint", 8)) {
       for (i=0; i<in->nThreads; i++) {
 	args = (VMSquintFTFuncArg*)in->threadArgs[i];
 	args->endVMModelTime = -1.0e20;
       }
-    } /* end if this a "squint" threadArg */
+    } /* end if this a "vmsquint" threadArg */
   }
 } /* end ObitSkyModelVMSquintInitModel */
 
@@ -866,8 +866,8 @@ void ObitSkyModelVMSquintClear (gpointer inn)
     
   /* Thread stuff */
   if (in->threadArgs) {
-    /* Check type - only handle "squint" */
-    if (!strncmp((gchar*)in->threadArgs[0], "squint", 6)) {
+    /* Check type - only handle "vmsquint" */
+    if (!strncmp((gchar*)in->threadArgs[0], "vmsquint", 8)) {
       for (i=0; i<in->nThreads; i++) {
 	args = (VMSquintFTFuncArg*)in->threadArgs[i];
 	if (args->Rgain)  g_free(args->Rgain);
@@ -878,7 +878,7 @@ void ObitSkyModelVMSquintClear (gpointer inn)
       }
       g_free(in->threadArgs);
       in->threadArgs = NULL;
-    } /* end if this a "ion" threadArg */
+    } /* end if this a "vmsquint" threadArg */
   }
 
   /* unlink parent class members */
@@ -1207,7 +1207,9 @@ static gpointer ThreadSkyModelVMSquintFTDFT (gpointer args)
     ant1 = (cbase / 256.0) + 0.001;
     ant2 = (cbase - ant1 * 256) + 0.001;
     ant1--;    /* 0 rel */
+    ant1 = MAX (0, ant1);
     ant2--;    /* 0 rel */
+    ant2 = MAX (0, ant2);
 
     /* Loop over IFs */
     for (iIF=startIF; iIF<startIF+numberIF; iIF++) {

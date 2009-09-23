@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -53,6 +53,8 @@ gboolean doRecenter;
 ofloat peakFlux;
 /** Quality (desirability for next CLEAN) measure per field */
 ofloat *quality;
+/** Max abs "cleanable" flux density  per field */
+ofloat *cleanable;
 /** CLEAN component level to reuse, <0 none  */
 ofloat reuseFlux;
 /** autoCenter min flux density   */

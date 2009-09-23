@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -77,5 +77,9 @@ olong *imDisk;
 olong imSeq;
 /** Is a full field image desired? */
 gboolean doFull;
-/** Restoring beam, values in deg*/
+/** Restoring beam, values in deg */
 ofloat bmaj, bmin, bpa;
+/** If >=0 then this field is an autoCenter field and value is shifted counterpart */
+olong *isAuto;
+/** If >=0 then this field is shifted autoCenter field and value is counterpart */
+olong *isShift;

@@ -363,18 +363,19 @@ void ObitUVImagerIonWeight (ObitUVImager *in, ObitErr *err)
 /**
  * Image data in uvwork if defined, else uvdata writing results in mosaic.
  * \param in        The input object
- * \param field     Which field (1-rel) to Image, 0=> all
+ * \param field     zero terminated list of field numbers to image, 0=> all
  * \param doWeight  If TRUE do Weighting ov uv data first
  *                  If TRUE then input data is modified.
  * \param doBeam    If True calculate dirst beams first
  * \param doFlatten If TRUE, flatten images when done
  * \param err       Obit error stack object.
  */
-void ObitUVImagerIonImage (ObitUVImager *inn,  olong field, gboolean doWeight, 
+void ObitUVImagerIonImage (ObitUVImager *inn,  olong *field, gboolean doWeight, 
 			   gboolean doBeam, gboolean doFlatten, ObitErr *err)
 { 
   ObitUVImagerIon *in=(ObitUVImagerIon*)inn;
   ObitUV *data=NULL;
+  ObitImage **imageList=NULL;
   ObitTableSN *snTab=NULL;
   ObitUVDesc *UVDesc;
   ObitImageDesc *imageDesc;
@@ -382,11 +383,11 @@ void ObitUVImagerIonImage (ObitUVImager *inn,  olong field, gboolean doWeight,
   ObitImage *theBeam=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong itemp, prtLv;
-  gboolean Tr=TRUE, Fl=FALSE, needBeam, forceBeam;
+  gboolean Tr=TRUE, Fl=FALSE, needBeam, *forceBeam=NULL, doall, found=FALSE;
   ofloat shift[2], sumwts;
-  olong ifield, hiField, loField, channel=0, lver;
+  olong i, j, n, fldCnt, nImage, ifield, ofield=1, channel=0, lver;
+  olong *fldNo=NULL, nLeft, nDo, NumPar;
   gchar *tabtype=NULL;
-  gchar *NIlist[] = {"AIPS NI", NULL};
   gchar *routine = "ObitUVImagerIonImage";
 
   /* error checks */
@@ -394,6 +395,39 @@ void ObitUVImagerIonImage (ObitUVImager *inn,  olong field, gboolean doWeight,
   if (err->error) return;
   g_assert (ObitIsA(in, &myClassInfo));
 
+  /* Count number of fields to image */
+  nImage = 0;
+  for (i=0; i<in->mosaic->numberImages; i++) {
+    if (field[i]==0) break;
+    nImage++;
+  }
+  /* All wanted? */
+  doall =  (nImage <= 0);
+
+  NumPar = ObitUVImagerIonGetNumPar(in, err); /* How many to do? */
+
+  /* List of need to force making beam, keep track of field numbers */
+  forceBeam = g_malloc0(in->mosaic->numberImages*sizeof(gboolean));
+  fldNo     = g_malloc0(in->mosaic->numberImages*sizeof(olong));
+  
+  /* Get list of images */
+  imageList = g_malloc0(in->mosaic->numberImages*sizeof(ObitImage*));
+  if (doall) n = in->mosaic->numberImages;
+  else n = nImage;
+  fldCnt = 0;
+  for (i=0; i<n; i++) {
+    if (doall) ifield = i+1;
+    else ifield = field[i];
+    if (in->mosaic->isShift[ifield-1]) {  /* Special handling for shifted imaged */
+      imageList[fldCnt++] = in->mosaic->images[ifield-1];
+      fldNo[i] = ifield-1;                 /* Number (0-rel) in mosaic */
+      /* Need to force beam? */
+      theBeam = (ObitImage*)imageList[i]->myBeam;
+      forceBeam[i] = (theBeam==NULL) ||
+	!ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, &sumwts);
+    }
+  }
+  
   /* Weighting? */
   if (doWeight) {
     ObitUVImagerIonWeight (inn, err);
@@ -409,26 +443,19 @@ void ObitUVImagerIonImage (ObitUVImager *inn,  olong field, gboolean doWeight,
     return;
   }
 
-  /* Which field numbers (0-re) */
-  if (field>0) {
-    loField = field-1;
-    hiField = loField;
-  } else {  /* All */
-    loField = 0;
-    hiField = in->mosaic->numberImages-1;
-  }
-
-   /* Get print level */
+  /* Get print level */
   prtLv = 0;
   ObitInfoListGetTest(in->uvdata->info, "prtLv", &type, dim, &prtLv);
 
- /* DEBUG 
-  fprintf (stderr," %g doBeam %d field %d\n",in->mosaic->bmaj, doBeam, field);*/
-  /* Loop over fields Imaging */
-  for (ifield=loField; ifield<=hiField; ifield++) {
+  /* Image loop */
+  nLeft  = fldCnt;
+  ifield = 0;
+  while (nLeft>0) {
+    nDo = MIN (NumPar, nLeft);
+    
     /* Set Stokes */
     UVDesc    = data->myDesc;
-    imageDesc = in->mosaic->images[ifield]->myDesc;
+    imageDesc = imageList[ifield]->myDesc;
     imageDesc->crval[imageDesc->jlocs] = UVDesc->crval[UVDesc->jlocs];
 
     /* reset image max/min */
@@ -436,8 +463,8 @@ void ObitUVImagerIonImage (ObitUVImager *inn,  olong field, gboolean doWeight,
     imageDesc->minval    =  1.0e20;
 
     /* Position shift */
-    shift[0] = in->mosaic->RAShift[ifield];
-    shift[1] = in->mosaic->DecShift[ifield];
+    shift[0] = in->mosaic->RAShift[fldNo[ifield]];
+    shift[1] = in->mosaic->DecShift[fldNo[ifield]];
 
     /* Create SN table with values for this field from input NI table */
     snTab = ObitIoN2SolNTableConvert(data, in->ionTab, snTab, shift, err);
@@ -445,71 +472,105 @@ void ObitUVImagerIonImage (ObitUVImager *inn,  olong field, gboolean doWeight,
     /* Setup to use this SN table */
     dim[0] = 1;
     itemp = snTab->tabVer;
-    ObitInfoListAlwaysPut(data->info, "gainUse", OBIT_long, dim, &itemp);
+    ObitInfoListAlwaysPut(data->info, "gainUse",     OBIT_long, dim, &itemp);
     ObitInfoListAlwaysPut(data->info, "doCalSelect", OBIT_bool, dim, &Tr);
     itemp = 2;
-    ObitInfoListAlwaysPut(data->info, "doCalib", OBIT_long, dim, &itemp);
+    ObitInfoListAlwaysPut(data->info, "doCalib",     OBIT_long, dim, &itemp);
  
     /* diagnostics? */
     if (prtLv>=3) {
 	Obit_log_error(err, OBIT_InfoErr, 
 		       "%s: Field %d Using NI table %d with shift %lf %lf",
-		       routine, ifield+1, in->ionTab->tabVer, shift[0], shift[1]);
+		       routine, fldNo[ifield]+1, in->ionTab->tabVer, shift[0], shift[1]);
     }
 
 
     /* Need to force beam? */
-    theBeam = (ObitImage*)in->mosaic->images[ifield]->myBeam;
-    forceBeam = (theBeam==NULL) ||
-      !ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, &sumwts);
-    needBeam = doBeam || forceBeam;
+    needBeam = doBeam || forceBeam[ifield];
 
     /* Image */
-    ObitImageUtilMakeImage (data, in->mosaic->images[ifield], channel, 
-			    needBeam, Fl, err);
+    ObitImageUtilMakeImage (data, imageList[ifield], channel, needBeam, Fl, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    ifield += nDo;
+    nLeft  -= nDo;
+    if (prtLv>1) ObitErrLog(err);  /* Progress Report */
+    else ObitErrClear(err);
+  } /* End loop gridding */
 
+  /* Loop over fields finalizing */
+  for (i=0; i<fldCnt; i++) {
     /* If it made a beam check the beam size */
-    if (doBeam) {
+    if (doBeam || forceBeam[i]) {
       /* If no beam size given take this one */
       if (in->mosaic->bmaj==0.0) {
-	in->mosaic->bmaj = in->mosaic->images[ifield]->myDesc->beamMaj;
-	in->mosaic->bmin = in->mosaic->images[ifield]->myDesc->beamMin;
-	in->mosaic->bpa  = in->mosaic->images[ifield]->myDesc->beamPA;
+	in->mosaic->bmaj = imageList[i]->myDesc->beamMaj;
+	in->mosaic->bmin = imageList[i]->myDesc->beamMin;
+	in->mosaic->bpa  = imageList[i]->myDesc->beamPA;
       } else if (in->mosaic->bmaj>0.0) { /* beam forced */
-	in->mosaic->images[ifield]->myDesc->beamMaj = in->mosaic->bmaj;
-	in->mosaic->images[ifield]->myDesc->beamMin = in->mosaic->bmin;
-	in->mosaic->images[ifield]->myDesc->beamPA  = in->mosaic->bpa;
+	imageList[i]->myDesc->beamMaj = in->mosaic->bmaj;
+	imageList[i]->myDesc->beamMin = in->mosaic->bmin;
+	imageList[i]->myDesc->beamPA  = in->mosaic->bpa;
 	/* Tell if field 1 */
-	if (ifield==0) {
+	if ((i==0) && (field[0]==1)) {
 	  Obit_log_error(err, OBIT_InfoErr, 
 			 "Using Beamsize %f x %f asec PA=%f",
 			 in->mosaic->bmaj*3600.0, in->mosaic->bmin*3600.0, 
 			 in->mosaic->bpa);
 	}
       }
-    } /* end if doBeam */
-
-    /* Turn off calibration */
-    dim[0] = 1;
-    itemp = 0;
-    ObitInfoListAlwaysPut(data->info, "gainUse", OBIT_long, dim, &itemp);
-    ObitInfoListAlwaysPut(data->info, "doCalSelect", OBIT_bool, dim, &Fl);
-    itemp = -1;
-    ObitInfoListAlwaysPut(data->info, "doCalib", OBIT_long, dim, &itemp);
-
-    if (err->error) goto cleanup;
-
-    /* Diagnostics or clear messages */
-    if (prtLv>=1)  ObitErrLog(err);
-    else ObitErrClear(err);
-  } /* End loop over fields */
-
+    }
+  } /* End loop over fields finalizing*/
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  
+  /* Loop making any (2D) shifted images */
+  for (i=0; i<in->mosaic->numberImages; i++) {
+    /* Only needed for 2D */
+    if (in->mosaic->images[i]->myDesc->do3D) continue;
+    ofield = i;
+    ifield = in->mosaic->isShift[i]-1;
+    if (ifield >= 0) {
+      /* See if input image just made - named in field */
+      found = doall;
+      for (j=0; j<in->mosaic->numberImages; j++) {
+	if (field[j]==0) break;
+	if (field[j]==(ifield+1)) found = TRUE;
+      }
+      if (found) {
+	shift[0] = in->mosaic->images[ofield]->myDesc->crpix[0] - in->mosaic->images[ifield]->myDesc->crpix[0];
+	shift[1] = in->mosaic->images[ofield]->myDesc->crpix[1] - in->mosaic->images[ifield]->myDesc->crpix[1];
+	ObitImageUtilShift (in->mosaic->images[ifield], in->mosaic->images[ofield], shift, err);
+	/* Beam - no shift */
+	shift[0] = shift[1] = 0.0;
+	ObitImageUtilShift ((ObitImage*)in->mosaic->images[ifield]->myBeam, 
+			    (ObitImage*)in->mosaic->images[ofield]->myBeam, shift, err);
+      }
+    } /* end if shifted field */
+  } /* End loop making shifted images */
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+  
+  /* Turn off calibration */
+  dim[0] = 1;
+  itemp = 0;
+  ObitInfoListAlwaysPut(data->info, "gainUse",     OBIT_long, dim, &itemp);
+  ObitInfoListAlwaysPut(data->info, "doCalSelect", OBIT_bool, dim, &Fl);
+  itemp = -1;
+  ObitInfoListAlwaysPut(data->info, "doCalib",     OBIT_long, dim, &itemp);
+  
+  if (err->error) goto cleanup;
+  
+  /* Diagnostics or clear messages */
+  if (prtLv>=1)  ObitErrLog(err);
+  else ObitErrClear(err);
+  
   /* Need to flatten? */
   if (doFlatten) ObitUVImagerFlatten (inn, err);
   if (err->error) goto cleanup;
-
+  
   /* Cleanup*/
  cleanup:
+  if (fldNo)     g_free(fldNo);
+  if (forceBeam) g_free(forceBeam);
+  if (imageList) g_free(imageList);
   if (snTab) {
     tabtype = g_strdup(snTab->tabType); /* Save ephemerial values */
     lver = snTab->tabVer;
@@ -610,6 +671,20 @@ void ObitUVImagerIonGetInfo (ObitUVImager *inn, gchar *prefix, ObitInfoList *out
 } /* end ObitUVImagerIonGetInfo */
 
 /**
+ * Get number of parallel images
+ * Can only do 1
+ * \param in      Object of interest.
+ * \return the number of parallel images.
+ */
+olong ObitUVImagerIonGetNumPar (ObitUVImager *inn, ObitErr *err)
+{
+  /*ObitUVImagerIon *in = (ObitUVImagerIon*)inn;*/
+  olong out=1;
+
+  return out;
+} /*  end ObitUVImagerIonGetNumPar */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitUVImagerIonClassInit (void)
@@ -659,6 +734,7 @@ static void ObitUVImagerIonClassInfoDefFn (gpointer inClass)
   theClass->ObitUVImagerWeight = (ObitUVImagerWeightFP)ObitUVImagerIonWeight;
   theClass->ObitUVImagerImage  = (ObitUVImagerImageFP)ObitUVImagerIonImage;
   theClass->ObitUVImagerGetInfo= (ObitUVImagerGetInfoFP)ObitUVImagerIonGetInfo;
+  theClass->ObitUVImagerGetNumPar= (ObitUVImagerGetNumParFP)ObitUVImagerIonGetNumPar;
 
 } /* end ObitUVImagerIonClassDefFn */
 

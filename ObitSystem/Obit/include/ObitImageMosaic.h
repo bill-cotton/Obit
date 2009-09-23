@@ -180,7 +180,9 @@ void ObitImageMosaicFlagCC (ObitTableCC *CCTab, olong nccpos, ofloat radius,
 /** Public: Add field to mosaic */
 void ObitImageMosaicAddField (ObitImageMosaic *in, ObitUV *uvData, 
 			      olong nx, olong ny, olong nplane, 
-			      ofloat RAShift, ofloat DecShift, ObitErr *err);
+			      ofloat RAShift, ofloat DecShift, 
+			      gboolean isAuto, ObitErr *err);
+
 /** Public:  Generate a mosaic for peeling */
 ObitImageMosaic* ObitImageMosaicMaxField (ObitImageMosaic *mosaic, 
 					  ofloat MinFlux, olong *ignore, olong *field,

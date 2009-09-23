@@ -33,16 +33,18 @@
 #include "ObitDConDef.h"  /* Parent class definitions */
 /** CLEAN window list */
 ObitDConCleanWindow *window;
-/** Current Beam patch */
-ObitFArray *BeamPatch;
+/** Array of Beam patchex */
+ObitFArray **BeamPatches;
 /** Current Pixel list */
 ObitDConCleanPxList *Pixels;
 /** Current Beam histogram */
 ObitDConCleanBmHist *BeamHist;
 /** Current Pixel histogram */
 ObitDConCleanPxHist *PixelHist;
-/** Current field number 1-rel */
-olong currentField;
+/** Number of Current fields (entries in BeamPatches, currentFields  */
+olong numCurrentField;
+/** Array of Current field numbers 1-rel 0 terminated */
+olong *currentFields;
 /** Beam patch halfwidth size in pixels */
 olong beamPatchSize;
 /** Minimum beam patch halfwidth in pixels */

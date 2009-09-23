@@ -52,7 +52,7 @@ static void jprenu(olong dir, double JD, ofloat equinox, gboolean doNut,
 /** Private: Compute aberation and GR light bending */
 static void jaber(odouble JD, ofloat equin, gboolean diurn, 
 		  odouble rhoGeo, odouble phiGeo, odouble rLST,
-		  odouble poso[3], double velo[3]);
+		  odouble poso[3], odouble velo[3]);
 
 /** Private:  Correct rectangular position for polar motion */
 static void jpolar(olong dir, ofloat polarx, ofloat polary, odouble pos[3]);
@@ -420,7 +420,7 @@ static void jprenu(olong dir, double JD, ofloat equin, gboolean doNut,
  */
 static void jaber(odouble JD, ofloat equin, gboolean diurn, 
 		  odouble rhoGeo, odouble phiGeo, odouble rLST,
-		  odouble poso[3], double velo[3])
+		  odouble poso[3], odouble velo[3])
 {
   odouble dvb[3], dpb[3], dvh[3], dph[3], con;
   /* eqrau = earth's equatorial radius in au. */
@@ -755,7 +755,7 @@ static void jnut(odouble JD, odouble *delPsi, odouble *delEps)
   * from the value given in the Explanatory Supplement to the A.E.
   * P T Wallace   Starlink   March 1986
   * Adapted for use in AIPS.
-  * Adapted from the AIPSish SLAEVP.FOR
+  * Adapted from fortran SLAEVP.FOR
   * \param JD      Julian date of observation (e.g. 2446754.123445)
   * \param equin   Epoch of mean equinox (e.g. 2000.0)and
   *                equinox of the vectors returned.  If equin <= 0,
@@ -912,7 +912,7 @@ static void EarthEphem(odouble JD, ofloat equin, odouble dvb[3], odouble dpb[3],
     if (k == 0) {
       dml = dlocal;
     } else {
-      forbel[k] =  (ofloat) (dlocal);
+      forbel[k-1] =  (ofloat) (dlocal);
     } 
   } /* end loop  L10:  */
 

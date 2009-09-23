@@ -205,7 +205,7 @@ void ObitDConCleanImageClone  (ObitDConCleanImage *in, ObitDConCleanImage *out, 
  * \return the new object.
  */
 ObitDConCleanImage* ObitDConCleanImageCreate (gchar* name, ObitImageMosaic *mosaic,  
-			  ObitErr *err)
+					      ObitErr *err)
 {
   olong nfield;
   ObitDConCleanImage* out=NULL;
@@ -231,7 +231,12 @@ ObitDConCleanImage* ObitDConCleanImageCreate (gchar* name, ObitImageMosaic *mosa
   out->gain    = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean Loop gain");
   out->minFlux = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean minFlux");
   out->factor  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean factor");
+  out->currentFields = ObitMemAlloc0Name((nfield+1)*sizeof(olong),"Current fields");
+  out->BeamPatches   = ObitMemAlloc0Name(nfield*sizeof(ObitFArray*),"Beam patch");
   out->nfield  = nfield;
+  out->numCurrentField  = 1;
+  out->currentFields[0] = 1;
+  out->currentFields[1] = 0;
 
   return out;
 } /* end ObitDConCleanImageCreate */
@@ -297,7 +302,7 @@ void ObitDConCleanImageDeconvolve (ObitDCon *inn, ObitErr *err)
   /* Loop until Deconvolution done */
   done = FALSE;
   while (!done) {
-    in->currentField = 1;  /* Can only do oone */
+    in->currentFields[0] = 1;  /* Can only do oone */
     /* Get image/beam statistics needed for this cycle */
     inClass->ObitDConCleanPixelStats((ObitDConClean*)in, NULL, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
@@ -404,10 +409,10 @@ void ObitDConCleanImageSub(ObitDConCleanImage *in, ObitErr *err)
   
   /* Full field, correct plane */
   dim[0] = IM_MAXDIM;
-  blc[0] = blc[1] = 1;
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
   for (i=0; i<IM_MAXDIM-2; i++) blc[i+2] = in->plane[i];
   ObitInfoListPut (image->info, "BLC", OBIT_long, dim, blc, err); 
-  trc[0] = trc[1] = 0;
   for (i=0; i<IM_MAXDIM-2; i++) trc[i+2] = in->plane[i];
   ObitInfoListPut (image->info, "TRC", OBIT_long, dim, trc, err); 
   dim[0] = 1;
@@ -659,8 +664,8 @@ static void  GetXfer (ObitDConCleanImage *in, ObitErr *err)
 
   /* Set output to full image, plane at a time */
   dim[0] = IM_MAXDIM;
-  blc[0] = blc[1] = blc[2] = blc[3] = blc[4] = blc[5] = 1;
-  trc[0] = trc[1] = trc[2] = trc[3] = trc[4] = trc[5] = 0;
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
   /* multiplane? */
   if (Beam->myDesc->inaxes[2]>1) {
     for (i=0; i<IM_MAXDIM-2; i++) trc[i+2] = in->plane[i];

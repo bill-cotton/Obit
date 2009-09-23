@@ -351,6 +351,18 @@ ObitImageMosaic* ObitImageMosaicFromInfo (gchar *prefix, ObitInfoList *inList,
   ObitInfoListGetTest(inList, keyword, &type, dim, &out->bpa);
   g_free(keyword);
 
+  /* "xxxisAuto"       olong Is this an autoCenter field? */
+  if (prefix) keyword = g_strconcat (prefix, "isAuto", NULL);
+  else        keyword = g_strdup("isAuto");
+  ObitInfoListGetTest(inList, keyword, &type, dim, out->isAuto);
+  g_free(keyword);
+
+  /* "xxxisShift"       olong Is this an autoCenter shifted field? */
+  if (prefix) keyword = g_strconcat (prefix, "isShift", NULL);
+  else        keyword = g_strdup("isShift");
+  ObitInfoListGetTest(inList, keyword, &type, dim, out->isShift);
+  g_free(keyword);
+
   return out;
 } /* end ObitImageMosaicFromInfo */
 
@@ -507,8 +519,8 @@ ObitImageMosaicGetImageRMS  (ObitImageMosaic *in, olong number,
   ofloat RMS = -1.0;
   ObitIOSize IOBy;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong blc[IM_MAXDIM] = {1,1,1,1,1};
-  olong trc[IM_MAXDIM] = {0,0,0,0,0};
+  olong blc[IM_MAXDIM], trc[IM_MAXDIM];
+  olong i;
   gchar *routine="ObitImageMosaicGetImageRMS";
 
   /* error checks */
@@ -516,7 +528,10 @@ ObitImageMosaicGetImageRMS  (ObitImageMosaic *in, olong number,
   if (err->error) return RMS;
   g_assert (ObitIsA(in, &myClassInfo));
 
-  /* Check that number in legal range */
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
+
+ /* Check that number in legal range */
   if ((number<0) || (number>in->numberImages)) {
     Obit_log_error(err, OBIT_Error, 
 		   "%s: Image number %d out of range [%d %d] in %s", 
@@ -676,6 +691,8 @@ ObitImageMosaic* ObitImageMosaicCopy (ObitImageMosaic *in, ObitImageMosaic *out,
   for (i=0; i<in->numberImages; i++) {
     ObitImageMosaicSetImage(out, i, in->images[i], err);
     out->imDisk[i]   = in->imDisk[i];
+    out->isAuto[i]   = in->isAuto[i];
+    out->isShift[i]  = in->isShift[i];
     out->nx[i]       = in->nx[i];
     out->ny[i]       = in->ny[i];
     out->nplane[i]   = in->nplane[i];
@@ -1100,6 +1117,8 @@ ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *er
   for (i=0; i<NField; i++) {
     if (i<nDisk) out->imDisk[i]   = Disk[i];
     else out->imDisk[i]   = Disk[0];
+    out->isAuto[i]   = -1;
+    out->isShift[i]  = -1;
     out->nx[i]       = nx[i];
     out->ny[i]       = ny[i];
     out->RAShift[i]  = RAShift[i]/3600.0;   /* to Deg */
@@ -1131,6 +1150,11 @@ ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *er
  * \li imClass  - imClass
  * \li imSeq    - imSeq
  * \li imDisk   - imDisk
+ * \li isAuto   - if >0 this is an autoCenter field and the value is 
+ *                any corresponding 2D shifted (aligned) field, per field
+ *                For 3D imaging any positive value indicates an autoCenter field.
+ * \li isShift  - if >0 this is an autoCenter shifted field and the value is 
+ *                the corresponding 2D autoCenter field, per field
  * \param uvData UV data from which the images are to be made.
  * Imaging information on uvData:
  * \li "nChAvg" OBIT_int (1,1,1) number of channels to average.
@@ -1148,7 +1172,7 @@ void ObitImageMosaicDefine (ObitImageMosaic *in, ObitUV *uvData, gboolean doBeam
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat *farr=NULL;
-  gboolean doCalSelect;
+  gboolean doCalSelect, *barr=NULL;
   ObitIOAccess access;
   gchar *routine = "ObitImageMosaicDefine";
 
@@ -1173,6 +1197,12 @@ void ObitImageMosaicDefine (ObitImageMosaic *in, ObitUV *uvData, gboolean doBeam
   for (i=0; i<in->numberImages; i++) farr[i] = 3600.0*in->yCells;
   ObitInfoListAlwaysPut (uvData->info, "yCells", OBIT_float, dim, farr);
   ObitMemFree(farr);
+  /* Set doGrid=isAuto<=0 - only meaningful if do3D=FALSE */
+  barr = ObitMemAllocName(in->numberImages*sizeof(gboolean), routine);
+  for (i=0; i<in->numberImages; i++) barr[i] = in->isAuto[i]<=0;
+  ObitInfoListAlwaysPut (uvData->info, "doGrid", OBIT_float, dim, barr);
+  ObitMemFree(barr);
+ 
 
   /* Make sure UV data descriptor has proper info */
   doCalSelect = FALSE;
@@ -1224,19 +1254,21 @@ void ObitImageMosaicDefine (ObitImageMosaic *in, ObitUV *uvData, gboolean doBeam
 
 /**
  * Add a Field to a mosaic
- * \param in     The object with images
- * \param uvData UV data from which the images are to be made.
- * \param nx     Number of pixels in X for image, 
- *               will be converted to next larger good FFT size.
- * \param ny     Number of pixels in Y for image
- * \param nplane Number of planes for image
+ * \param in       The object with images to modify
+ * \param uvData   UV data from which the images are to be made.
+ * \param nx       Number of pixels in X for image, 
+ *                 will be converted to next larger good FFT size.
+ * \param ny       Number of pixels in Y for image
+ * \param nplane   Number of planes for image
  * \param RAShift  RA shift (asec) for image
  * \param DecShift Dec shift (asec) for image
- * \param err     Error stack, returns if not empty.
+ * \param isAuto   If true, this is an autoCenter image
+ * \param err      Error stack, returns if not empty.
  */
 void ObitImageMosaicAddField (ObitImageMosaic *in, ObitUV *uvData, 
 			      olong nx, olong ny, olong nplane, 
-			      ofloat RAShift, ofloat DecShift, ObitErr *err)
+			      ofloat RAShift, ofloat DecShift,
+			      gboolean isAuto, ObitErr *err)
 {
   ofloat *ftemp;
   olong   i, *itemp;
@@ -1263,6 +1295,22 @@ void ObitImageMosaicAddField (ObitImageMosaic *in, ObitUV *uvData,
   for (i=0; i<in->nInit; i++) itemp[i] = in->imDisk[i]; 
   in->imDisk = ObitMemFree(in->imDisk);
   in->imDisk = itemp;
+ 
+  /* isAuto array */
+  itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaic isAuto");
+  for (i=0; i<in->nInit; i++) itemp[i] = in->isAuto[i]; 
+  for (i=in->nInit; i<in->numberImages; i++) itemp[i] = -1; 
+  /* Large dummy value in new element if isAuto */
+  if (isAuto) itemp[in->numberImages-1] = in->numberImages+9999999;
+  in->isAuto = ObitMemFree(in->isAuto);
+  in->isAuto = itemp;
+ 
+  /* isShift array */
+  itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaic isShift");
+  for (i=0; i<in->nInit; i++) itemp[i] = in->isShift[i]; 
+  for (i=in->nInit; i<in->numberImages; i++) itemp[i] = -1; 
+  in->isShift = ObitMemFree(in->isShift);
+  in->isShift = itemp;
  
   /* Image size */
   itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaic nx");
@@ -1366,14 +1414,15 @@ void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err)
   ObitFArrayFill (sc1, 0.0);
   ObitFArrayFill (sc2, 0.0);
 
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
+
   /* Loop over tiles */
   for (i= 0; i<in->numberImages; i++) { /* loop 500 */
 
     /* Open full image */
     dim[0] = IM_MAXDIM;
-    blc[0] = blc[1] = blc[2] = blc[4] = blc[5] = 1;
     ObitInfoListPut (in->images[i]->info, "BLC", OBIT_long, dim, blc, err); 
-    trc[0] = trc[1] = trc[2] = trc[4] = trc[5] = 0;
     ObitInfoListPut (in->images[i]->info, "TRC", OBIT_long, dim, trc, err); 
     dim[0] = 1;
     ObitInfoListPut (in->images[i]->info, "IOBy", OBIT_long, dim, &IOsize, err);
@@ -1486,8 +1535,8 @@ void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err)
 
   /* Clear BLC,TRC on images */
   dim[0] = IM_MAXDIM;
-  blc[0] = blc[1] = blc[2] = blc[4] = blc[5] = 1;
-  trc[0] = trc[1] = trc[2] = trc[4] = trc[5] = 0;
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
   ObitInfoListPut (in->FullField->info, "BLC", OBIT_long, dim, blc, err); 
   ObitInfoListPut (in->FullField->info, "TRC", OBIT_long, dim, trc, err); 
   for (i=0; i<in->numberImages; i++) {
@@ -1764,7 +1813,7 @@ void ObitImageMosaicMaxCC (ObitTableCC *CCTab, olong nccpos, ofloat radius,
   nrow = CCTab->myDesc->nrow;
   
   /* Get first moments about reference pixel (0,0). */
-  for (i=0; i<=ncc; i++) { /* loop 500 */
+  for (i=0; i<ncc; i++) { /* loop 500 */
     dis = (xpos[i]-xcen)*(xpos[i]-xcen) + (ypos[i]-ycen)*(ypos[i]-ycen);
     if (dis <= mxdis) {
       sum  += flux[i];
@@ -2229,6 +2278,20 @@ void ObitImageMosaicGetInfo (ObitImageMosaic *in, gchar *prefix, ObitInfoList *o
   ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->bpa);
   g_free(keyword);
  
+  /* "xxxisAuto"       olong if >=0 the counterpart of an autoCenter field  */
+  if (prefix) keyword = g_strconcat (prefix, "isAuto", NULL);
+  else        keyword = g_strdup("isAuto");
+  dim[0] = in->numberImages; dim[1] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, in->isAuto);
+  g_free(keyword);
+
+  /* "xxxisShift"       olong if >=0 the counterpart of an autoCenter shifted field  */
+  if (prefix) keyword = g_strconcat (prefix, "isShift", NULL);
+  else        keyword = g_strdup("isShift");
+  dim[0] = in->numberImages; dim[1] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, in->isShift);
+  g_free(keyword);
+
 } /* end ObitImageMosaicGetInfo */
 
 /**
@@ -2376,6 +2439,8 @@ void ObitImageMosaicInit  (gpointer inn)
   in->nplane    = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaic nplane");
   in->RAShift   = ObitMemAlloc0Name(in->numberImages*sizeof(ofloat),"ImageMosaic RAShift");
   in->DecShift  = ObitMemAlloc0Name(in->numberImages*sizeof(ofloat),"ImageMosaic DecShift");
+  in->isAuto    = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaic isAuto");
+  in->isShift   = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaic isShift");
   in->imName    = NULL;
   in->imClass   = NULL;
   in->bmaj      = 0.0;
@@ -2416,6 +2481,8 @@ void ObitImageMosaicClear (gpointer inn)
   if (in->nplane)   ObitMemFree(in->nplane);
   if (in->RAShift)  ObitMemFree(in->RAShift);
   if (in->DecShift) ObitMemFree(in->DecShift);
+  if (in->isAuto)   ObitMemFree(in->isAuto);
+  if (in->isShift)  ObitMemFree(in->isShift);
   if (in->imName)   g_free(in->imName);
   if (in->imClass)  g_free(in->imClass);
  

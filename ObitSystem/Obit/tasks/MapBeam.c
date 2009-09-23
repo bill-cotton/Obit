@@ -920,7 +920,7 @@ ObitImage* setOutput (gchar *Source, olong iStoke, olong ant, gboolean doRMS,
   /* Define header */
   /* Most info from UV Data descriptor */
   outDesc = outImage->myDesc;
-  ObitImageUtilUV2ImageDesc (inData->myDesc, outDesc, 1);
+  ObitImageUtilUV2ImageDesc (inData->myDesc, outDesc, TRUE, 1);
 
   /* Creation date today */
   today = ObitToday();

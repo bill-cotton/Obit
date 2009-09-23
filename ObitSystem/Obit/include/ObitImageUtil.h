@@ -121,7 +121,7 @@ void ObitImageUtilMakeImageFileInfo (ObitInfoList *inList,ObitErr *err);
 /** Public: Convert an ObitUVDesc to an ObitImageDesc */
 void 
 ObitImageUtilUV2ImageDesc(ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
-			  olong nchavg);
+			  gboolean doGrid, olong nchavg);
 
 /** Public: Interpolate pixels in one image to another. */
 void ObitImageUtilInterpolateImage (ObitImage *inImage, ObitImage *outImage, 
@@ -193,4 +193,16 @@ void ObitImageUtilUVFilter (ObitImage *inImage, ObitImage *outImage, ofloat radi
 ObitImage* ObitImageUtilFArray2FITS (ObitFArray *array, 
 				     gchar *FITSFile, olong FITSdisk,
 				     ObitImageDesc *desc, ObitErr *err);
+
+/** Public: Interpolate an image to a grid with a fixed shift */
+void ObitImageUtilShift (ObitImage *inImage,  ObitImage *outImage, 
+			 ofloat *shift, ObitErr *err);
+
+/** Public: Give parallel imaging buffer size */
+olong ObitImageUtilBufSize (ObitUV *inU);
+
+/** Public: Set Image header 2D shift parameters */
+void ObitImageUtilTwoDShift (ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
+			     gboolean onGrid);
+
 #endif /* OBITIMAGEUTIL_H */ 

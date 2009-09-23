@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -105,7 +105,13 @@ void ObitDConCleanPxHistClone (ObitDConCleanPxHist *in,
 void ObitDConCleanPxHistUpdate (ObitDConCleanPxHist *in, olong field, 
 				olong *plane, ObitImageMosaic *mosaic,
 				ObitDConCleanWindow *window, 
-				ObitErr *err);
+				gboolean isLast, ObitErr *err);
+
+/** Public: Update add anotherimage with window. */
+void ObitDConCleanPxHistAdd (ObitDConCleanPxHist *in, olong field, 
+			     olong *plane, ObitImageMosaic *mosaic,
+			     ObitDConCleanWindow *window, 
+			     gboolean isLast, ObitErr *err);
 
 /** Public: Tell how many pixels are larger than a given abs. value. */
 olong ObitDConCleanPxHistNumber (ObitDConCleanPxHist *in, ofloat value,

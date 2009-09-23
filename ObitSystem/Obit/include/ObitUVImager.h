@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -260,10 +260,10 @@ typedef ObitUVImager* (*ObitUVImagerCreate2FP) (gchar* name, ObitUV *uvdata,
 typedef  void (*ObitUVImagerWeightFP) (ObitUVImager *in, ObitErr *err);
 
 /** Public: Form Image */
-void ObitUVImagerImage (ObitUVImager *in, olong field, gboolean doWeight, 
+void ObitUVImagerImage (ObitUVImager *in, olong *field, gboolean doWeight, 
 			gboolean doBeam, gboolean doFlatten, ObitErr *err);
 /** Typedef for definition of class pointer structure */
-typedef void (*ObitUVImagerImageFP) (ObitUVImager *in, olong field, gboolean doWeight, 
+typedef void (*ObitUVImagerImageFP) (ObitUVImager *in, olong *field, gboolean doWeight, 
 				     gboolean doBeam, gboolean doFlatten, ObitErr *err);
 
 /** Public: Flatten */
@@ -282,6 +282,11 @@ void ObitUVImagerGetInfo (ObitUVImager *in, gchar *prefix, ObitInfoList *outList
 typedef void 
 (*ObitUVImagerGetInfoFP) (ObitUVImager *in, gchar *prefix, ObitInfoList *outList, 
 			  ObitErr *err);
+
+/** Public: Get number of parallel images */
+olong ObitUVImagerGetNumPar (ObitUVImager *in, ObitErr *err);
+typedef olong
+(*ObitUVImagerGetNumParFP) (ObitUVImager *in, ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

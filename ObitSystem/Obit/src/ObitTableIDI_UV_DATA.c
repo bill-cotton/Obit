@@ -447,9 +447,9 @@ ObitTableIDI_UV_DATA* newObitTableIDI_UV_DATAValue (gchar* name, ObitData *file,
     desc->type[colNo] = OBIT_float;
     for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
     desc->dim[colNo][0] = maxis2;
-    /*desc->dim[colNo][1] = maxis3;
-      desc->dim[colNo][2] = maxis4;
-      desc->dim[colNo][3] = maxis5;*/
+    desc->dim[colNo][1] = maxis3;
+    desc->dim[colNo][2] = maxis4;
+    desc->dim[colNo][3] = maxis5;
     colNo++;
   }
   desc->FieldName[colNo] = g_strdup("GATEID  ");
@@ -473,7 +473,7 @@ ObitTableIDI_UV_DATA* newObitTableIDI_UV_DATAValue (gchar* name, ObitData *file,
   /* Add _status column at end */
   desc->FieldName[colNo] = g_strdup("_status");
   desc->FieldUnit[colNo] = g_strdup("        ");
-  desc->type[colNo] = OBIT_short;
+  desc->type[colNo] = OBIT_long;
   for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
   
   /* number of fields */
@@ -884,15 +884,14 @@ ObitTableIDI_UV_DATAWriteRow  (ObitTableIDI_UV_DATA *in, olong iIDI_UV_DATARow, 
   dRow[in->TimeOff] = row->Time;
   iRow[in->BaselineOff] = row->Baseline;
   iRow[in->ArrayOff] = row->Array;
-  /*iRow[in->FilterOff] = row->Filter;*/
+  iRow[in->FilterOff] = row->Filter;
   iRow[in->SourceOff] = row->Source;
   iRow[in->FreqIDOff] = row->FreqID;
   fRow[in->IntTimOff] = row->IntTim;
-  /*iRow[in->GateIDOff] = row->GateID;*/
+  iRow[in->GateIDOff] = row->GateID;
   if (in->WeightCol >= 0) { 
-    for (i=0; i<in->myDesc->repeat[in->WeightCol]; i++) {
+    for (i=0; i<in->myDesc->repeat[in->WeightCol]; i++) 
       fRow[in->WeightOff+i] = row->Weight[i];
-    }
   } 
   if (in->FluxCol >= 0) { 
     for (i=0; i<in->myDesc->repeat[in->FluxCol]; i++) 

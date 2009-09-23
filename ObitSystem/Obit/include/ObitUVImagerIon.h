@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -252,8 +252,8 @@ ObitUVImagerIon* ObitUVImagerIonCreate2 (gchar* name, ObitUV *uvdata,
  void ObitUVImagerIonWeight (ObitUVImager *in, ObitErr *err);
 
 /** Public: Form Image */
-void ObitUVImagerIonImage (ObitUVImager *in, olong field, gboolean doWeight, 
-			gboolean doBeam, gboolean doFlatten, ObitErr *err);
+void ObitUVImagerIonImage (ObitUVImager *in, olong *field, gboolean doWeight, 
+			   gboolean doBeam, gboolean doFlatten, ObitErr *err);
 
 /** Public: Flatten */
 void ObitUVImagerIonFlatten (ObitUVImager *in, ObitErr *err);
@@ -265,6 +265,9 @@ ObitImageMosaic* ObitUVImagerIonGetMosaic (ObitUVImager *in, ObitErr *err);
 void ObitUVImagerIonGetInfo (ObitUVImager *in, gchar *prefix, 
 			     ObitInfoList *outList, 
 			     ObitErr *err);
+
+/** Public: Get number of parallel images */
+olong ObitUVImagerIonGetNumPar (ObitUVImager *in, ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

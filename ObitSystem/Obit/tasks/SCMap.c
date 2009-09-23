@@ -1679,7 +1679,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	/* Auto Windowing? */
 	if (autoWindow) {
 	  myCleanClass->ObitDConCleanAutoWindow ((ObitDConClean*)myClean, 
-						 myClean->currentField, NULL, err);
+						 myClean->currentFields, NULL, err);
 	  if (err->error) Obit_traceback_msg (err, routine, myClean->name);
 	}
 	
@@ -1806,7 +1806,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	/* Auto Windowing? */
 	if (autoWindow) {
 	  myCleanClass->ObitDConCleanAutoWindow ((ObitDConClean*)myClean, 
-						 myClean->currentField, NULL, err);
+						 myClean->currentFields, NULL, err);
 	  if (err->error) Obit_traceback_msg (err, routine, myClean->name);
 	}
 	

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -27,8 +27,6 @@
 /*  Define the basic components of the ObitDConCleanVis ClassInfo structure */
 /* This is intended to be included in a classInfo structure definition   */
 #include "ObitDConCleanClassDef.h"  /* Parent class ClassInfo definition file */
-/** Pointer to Pick next field(s) and get Residual image(s).*/
-ObitDConCleanVisPickNextFP ObitDConCleanVisPickNext;
 /** Pointer to Determine quality measure for field.*/
 ObitDConCleanVisQualityFP ObitDConCleanVisQuality;
 /** Pointer to Determine if reimaging needed.*/

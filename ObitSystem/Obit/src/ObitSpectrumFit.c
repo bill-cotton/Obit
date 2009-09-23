@@ -1456,7 +1456,7 @@ static void WriteOutput (ObitSpectrumFit* in, ObitImage *outImage,
 {
   olong iplane, nOut;
   ObitIOSize IOBy;
-  olong  blc[IM_MAXDIM], trc[IM_MAXDIM];
+  olong  i, blc[IM_MAXDIM], trc[IM_MAXDIM];
   ObitIOCode retCode;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *routine = "WriteOutput";
@@ -1468,9 +1468,9 @@ static void WriteOutput (ObitSpectrumFit* in, ObitImage *outImage,
 
   /* Open output- all, by plane */
   dim[0] = IM_MAXDIM;
-  blc[0] = blc[1] = blc[2] = blc[3] = blc[4] = blc[5] = 1;
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
   ObitInfoListPut (outImage->info, "BLC", OBIT_long, dim, blc, err); 
-  trc[0] = trc[1] = trc[2] = trc[3] = trc[4] = trc[5] = 0;
   ObitInfoListPut (outImage->info, "TRC", OBIT_long, dim, trc, err); 
   IOBy = OBIT_IO_byPlane;
   dim[0] = 1;
@@ -1723,10 +1723,10 @@ static void NLFit (NLFitArg *arg)
   if (meanSNR>(SNRperTerm*2.0)) isDone = FALSE;  /* Always try for high SNR */
   if (isDone) goto done;
 
-  /* DEBUG
-  if (avg>5.0) {
+  /* DEBUG 
+  if (avg>2.0) {
     fprintf (stderr, "Found one %f\n", avg);
-  }  */
+  } */
 
   /* Higher order terms do nonlinear least-squares fit */
   nterm = 2;

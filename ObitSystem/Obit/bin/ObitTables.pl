@@ -1486,7 +1486,7 @@ printf (OUT " 	                    ObitIOAccess access,\n");
     printf (OUT "  /* Add _status column at end */\n");
     printf (OUT "  desc->FieldName[colNo] = g_strdup(\"_status\");\n");
     printf (OUT "  desc->FieldUnit[colNo] = g_strdup(\"        \");\n");
-    printf (OUT "  desc->type[colNo] = OBIT_short;\n");
+    printf (OUT "  desc->type[colNo] = OBIT_long;\n");
     printf (OUT "  for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;\n");
     printf (OUT "  \n");
     printf (OUT "  /* number of fields */\n");

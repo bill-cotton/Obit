@@ -228,6 +228,11 @@ ObitDConCleanOTFCreate (gchar* name, ObitImage *dirty, ObitImage *beam,
   out->gain    = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean Loop gain");
   out->minFlux = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean minFlux");
   out->factor  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean factor");
+  out->currentFields = ObitMemAlloc0Name((nfield+1)*sizeof(olong),"Current fields");
+  out->BeamPatches   = ObitMemAlloc0Name(nfield*sizeof(ObitFArray*),"Beam patch");
+  out->numCurrentField  = 1;
+  out->currentFields[0] = 1;
+  out->currentFields[1] = 0;
 
   /* Copy dirty image to clean image and use as residual */
   out->clean = ObitImageCopy (out->dirty, out->clean, err);
@@ -313,7 +318,7 @@ void ObitDConCleanOTFDeconvolve (ObitDCon *inn, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Read Beam patch if needed*/
-  if (!in->BeamPatch) ReadBP (in, err);
+  if (!in->BeamPatches) ReadBP (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /*Only one pass deconvolution needed */
@@ -425,10 +430,10 @@ void ObitDConCleanOTFSub(ObitDConClean *inn, ObitErr *err)
   
   /* Full field, correct plane */
   dim[0] = IM_MAXDIM;
-  blc[0] = blc[1] = 1;
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
   for (i=0; i<IM_MAXDIM-2; i++) blc[i+2] = in->plane[i];
   ObitInfoListPut (image->info, "BLC", OBIT_long, dim, blc, err); 
-  trc[0] = trc[1] = 0;
   for (i=0; i<IM_MAXDIM-2; i++) trc[i+2] = in->plane[i];
   ObitInfoListPut (image->info, "TRC", OBIT_long, dim, trc, err); 
   dim[0] = 1;
@@ -511,18 +516,18 @@ void ObitDConCleanOTFRestore (ObitDConClean *inn, ObitErr *err)
   cleanSize = in->cleanSize / (fabs(in->clean->myDesc->cdelt[0]));
 
   /* Generate clean beam - clone from BeamPatch */
-  if (!in->BeamPatch) ReadBP(in, err);
+  if (!in->BeamPatches[0]) ReadBP(in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* center of beam = peak */
-  fmax = ObitFArrayMax (in->BeamPatch, beamCen);
+  fmax = ObitFArrayMax (in->BeamPatches[0], beamCen);
 
   /* Copy */
-  cleanBeam = ObitFArrayCopy(in->BeamPatch, cleanBeam, err);
-  if (err->error) Obit_traceback_msg (err, routine, in->BeamPatch->name);
+  cleanBeam = ObitFArrayCopy(in->BeamPatches[0], cleanBeam, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->BeamPatches[0]->name);
 
   /* Get dirty beam area */
-  DBArea = ObitFArraySum (in->BeamPatch);
+  DBArea = ObitFArraySum (in->BeamPatches[0]);
 
   /* Replace with Gaussian */
   ObitFArray2DCGauss (cleanBeam, beamCen, cleanSize);
@@ -644,18 +649,18 @@ void ObitDConCleanOTFScaleCC (ObitDConCleanOTF *in, ObitErr *err)
   cleanSize = in->cleanSize / (fabs(in->clean->myDesc->cdelt[0]));
 
   /* Generate clean beam - clone from BeamPatch */
-  if (!in->BeamPatch) ReadBP(in, err);
+  if (!in->BeamPatches[0]) ReadBP(in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* center of beam = peak */
-  fmax = ObitFArrayMax (in->BeamPatch, beamCen);
+  fmax = ObitFArrayMax (in->BeamPatches[0], beamCen);
 
   /* Get dirty beam area */
-  DBArea = ObitFArraySum (in->BeamPatch);
+  DBArea = ObitFArraySum (in->BeamPatches[0]);
 
   /* Copy Dirty beam */
-  cleanBeam = ObitFArrayCopy(in->BeamPatch, cleanBeam, err);
-  if (err->error) Obit_traceback_msg (err, routine, in->BeamPatch->name);
+  cleanBeam = ObitFArrayCopy(in->BeamPatches[0], cleanBeam, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->BeamPatches[0]->name);
 
   /* Replace with CLEAN Gaussian */
   ObitFArray2DCGauss (cleanBeam, beamCen, cleanSize);
@@ -705,10 +710,11 @@ void ObitDConCleanOTFScaleCC (ObitDConCleanOTF *in, ObitErr *err)
  * Select/subtract components from PxList
  * \param in   The object to deconvolve
  * \param pixarray    If NonNULL use instead of the flux densities from the image file.
- * \param err Obit error stack object.
+ *                    Array of ObitFArrays corresponding to fields in in->currentFields 
+ * \param err         Obit error stack object.
  * \return TRUE if deconvolution is complete
  */
-gboolean ObitDConCleanOTFSelect(ObitDConClean *inn, ObitFArray *pixarray, ObitErr *err)
+gboolean ObitDConCleanOTFSelect(ObitDConClean *inn, ObitFArray **pixarray, ObitErr *err)
 {
   ObitDConCleanOTF *in;
   gboolean done = FALSE;
@@ -736,7 +742,7 @@ gboolean ObitDConCleanOTFSelect(ObitDConClean *inn, ObitFArray *pixarray, ObitEr
   
  /* Load PxList */
   ObitDConCleanPxListUpdate (in->Pixels, fields, 0, 0.0, in->autoWinFlux,
-			     in->window, in->BeamPatch, pixarray, err);
+			     in->window, in->BeamPatches, pixarray, err);
   if (err->error) Obit_traceback_val (err, routine, in->name, done);
 
   /* Clean */
@@ -752,7 +758,7 @@ gboolean ObitDConCleanOTFSelect(ObitDConClean *inn, ObitFArray *pixarray, ObitEr
  * \param pixarray    If NonNULL use instead of the flux densities from the image file.
  * \param err Obit error stack object.
  */
-void ObitDConCleanOTFPixelStats(ObitDConClean *in, ObitFArray *pixarray, 
+void ObitDConCleanOTFPixelStats(ObitDConClean *in, ObitFArray **pixarray, 
 				ObitErr *err)
 {
   const ObitDConCleanClassInfo *inClass;
@@ -762,7 +768,7 @@ void ObitDConCleanOTFPixelStats(ObitDConClean *in, ObitFArray *pixarray,
 
   /* Adjust window if autoWindow */
   if (in->autoWindow) 
-    inClass->ObitDConCleanAutoWindow (in, in->currentField, pixarray, err);
+    inClass->ObitDConCleanAutoWindow (in, in->currentFields, pixarray, err);
   else 
     in->autoWinFlux = -1.0e20; 
   if (err->error) Obit_traceback_msg (err, routine, in->name);
@@ -884,7 +890,7 @@ void ObitDConCleanOTFClear (gpointer inn)
 } /* end ObitDConCleanOTFClear */
 
 /**
- * Read Beam patch into BeamPatch
+ * Read Beam patch into BeamPatches[0]
  * The beam patch is symmetric about the center position allowing the 
  * beam itself not to be symmetric.
  * If the beam member is NULL, the BeamPatch is created and filled with the 
@@ -914,11 +920,11 @@ static void ReadBP (ObitDConCleanOTF* in, ObitErr *err)
     naxis[0] =  naxis[1] = 1 + 2*in->beamPatchSize;
     cen[0] = cen[1] = in->beamPatchSize;
     /* Create */
-    in->BeamPatch = ObitFArrayUnref(in->BeamPatch);
-    in->BeamPatch = ObitFArrayCreate("BeamPatch", 2, naxis);
+    in->BeamPatches[0] = ObitFArrayUnref(in->BeamPatches[0]);
+    in->BeamPatches[0] = ObitFArrayCreate("BeamPatch", 2, naxis);
     /* Fill with Gaussian with size of that in dirty image */
     beamSize = in->dirty->myDesc->beamMaj / fabs(in->dirty->myDesc->cdelt[0]);
-    ObitFArray2DCGauss (in->BeamPatch, cen, beamSize);
+    ObitFArray2DCGauss (in->BeamPatches[0], cen, beamSize);
     return;
  } /* End create Gaussian Beam patch if no image given */
   
@@ -984,8 +990,8 @@ static void ReadBP (ObitDConCleanOTF* in, ObitErr *err)
   atrc[1] = iceny + in->beamPatchSize;
 
   /* Save Beam patch */
-  in->BeamPatch = ObitFArrayUnref(in->BeamPatch);
-  in->BeamPatch = ObitFArraySubArr(Beam->image, ablc, atrc, err);
+  in->BeamPatches[0] = ObitFArrayUnref(in->BeamPatches[0]);
+  in->BeamPatches[0] = ObitFArraySubArr(Beam->image, ablc, atrc, err);
   if (err->error) Obit_traceback_msg (err, routine, Beam->name);
 
   retCode = ObitImageClose (Beam, err);

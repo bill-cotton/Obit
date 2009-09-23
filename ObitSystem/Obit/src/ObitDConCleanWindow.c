@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1502,8 +1502,7 @@ olong ObitDConCleanWindowCount (ObitDConCleanWindow *in, olong field,
 } /* end ObitDConCleanWindowCount */
 
 /**
- * Determine values needed for autoWindow from existing windows
- * and the array of pixel values.
+ * Add autoWindow box to a window if appropriate.
  * If the peak in the image is > n*RMS and occurs inside of the outer window but 
  * outside the previous inner window, a new round box is added at that position.
  * n=4 for small boxes, 3 large.
@@ -1641,8 +1640,8 @@ gboolean ObitDConCleanWindowAutoWindow (ObitDConCleanWindow *in,
   
   /* find peak PeakOut - this is used to set min CLEAN; 
      make small if peak is in the noise */
-  *PeakOut = ObitFArrayMax (tmpImage, pos);
-  if (doAbs)  *PeakOut = fabs (*PeakOut);
+  if (doAbs)  *PeakOut = ObitFArrayMaxAbs (tmpImage, pos);
+  else *PeakOut = ObitFArrayMax (tmpImage, pos);
   if (fabs(*PeakOut)<=minFlux)  *PeakOut = 0.0;
   /* If no window set because peak too close to noise, set to zero */
   if (noWin)  *PeakOut = 0.0;
@@ -1796,6 +1795,109 @@ ObitDConCleanWindowAddField (ObitDConCleanWindow *in,
 } /* end ObitDConCleanWindowAddField */
 
 /**
+ * Determine statistical measures of the first plane of an image with 
+ * corresponding window
+ * \param in         The Window object
+ * \param field      Which field (1-rel) is of interest?
+ * \param Image      pixel array, will be returned blanked outside the outer
+ *                   window and inside the inner window
+ * \param doAbs      If TRUE look for max. abs., otherwise max.
+ * \param PeakIn     [out] Peak value inside of outer window
+ * \param PeakInPos  [out] pixel position (1-rel) of PeakIn
+ * \param PeakOut    [out] Peak value outside of inner window but within outer 
+ *
+ * \param RMS        [out] RMS within outer Window
+ * \param err        Obit error stack object.
+ */
+void ObitDConCleanWindowStats (ObitDConCleanWindow *in, 
+			       olong field, ObitFArray *image,
+			       gboolean doAbs,
+			       ofloat *PeakIn, olong *PeakInPos,
+			       ofloat *PeakOut, ofloat *RMS,
+			       ObitErr *err)
+{
+  gboolean *mask=NULL;
+  ObitFArray *tmpImage=NULL;
+  olong ix, iy, nx, ny, pos[2];
+  ofloat *data, fblank = ObitMagicF();
+  gchar *routine = "ObitDConCleanWindowStats";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitIsA(in, &myClassInfo));
+  if ((field<=0) || (field>in->nfield)) {
+    Obit_log_error(err, OBIT_Error,"%s field %d out of range 1- %d in %s",
+                   routine, field, in->nfield, in->name);
+      return;
+  }
+
+  /* Image size */
+  nx = in->naxis[field-1][0];
+  ny = in->naxis[field-1][1];
+  /* Check */
+  Obit_return_if_fail (((nx==image->naxis[0]) && (ny==image->naxis[1])),
+		       err, "%s: Window and image different sizes ( %d  %d) ( %d  %d)",
+		       routine, nx, ny, image->naxis[0], image->naxis[1]);
+  
+  /* Copy of image for statistics  */
+  tmpImage = ObitFArrayCopy(image, tmpImage, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* blank tmpImage outside of outer window or in unboxes */
+  for (iy=0; iy<ny; iy++) {
+    /* pointer to data */
+    pos[0] = 0; pos[1] = iy;
+    data = ObitFArrayIndex(tmpImage, pos);
+    /* Get and apply window mask */
+    if (ObitDConCleanWindowOuterRow(in, field, iy+1, &mask, err)) {
+      for (ix=0; ix<nx; ix++) if (!mask[ix]) data[ix] = fblank;
+    } else { /* nothing valid - blank all */
+      for (ix=0; ix<nx; ix++) data[ix] = fblank;
+    }
+    /* Blank in any unboxes as well */
+    if (ObitDConCleanWindowUnrow(in, field, iy+1, &mask, err)) {
+      for (ix=0; ix<nx; ix++) if (mask[ix]) data[ix] = fblank;
+    }
+    if (err->error) goto clean;
+  } /* end loop blanking array */
+  
+  /* Find RMS, peak and pos in tmpImage = RMS, PeakIn, PeakInPos */
+  *RMS = ObitFArrayRMS (tmpImage);
+  if (doAbs) 
+    *PeakIn = ObitFArrayMaxAbs (tmpImage, PeakInPos);
+  else
+    *PeakIn = ObitFArrayMax (tmpImage, PeakInPos);
+
+  /* Blank inside the inner window  - if there is one */
+  if (in->Lists[field-1]) {
+    for (iy=0; iy<ny; iy++) {
+      /* pointer to data */
+      pos[0] = 0; pos[1] = iy;
+      data = ObitFArrayIndex(tmpImage, pos);
+      /* Get, invert, and apply window mask */
+      if (ObitDConCleanWindowInnerRow(in, field, iy+1, &mask, err)) {
+	for (ix=0; ix<nx; ix++) 
+	  if (mask[ix]) 
+	    data[ix] = fblank;
+      }
+    } /* end loop blanking array */
+    if (err->error) goto clean;
+  } /* end if inner window */
+
+  /* find peak PeakOut in outer window but outside inner window */
+  if (doAbs)  *PeakOut = ObitFArrayMaxAbs (tmpImage, pos);
+  else *PeakOut = ObitFArrayMax (tmpImage, pos);
+
+  /* Cleanup */
+ clean:
+  if (mask) ObitMemFree (mask);
+  tmpImage = ObitFArrayUnref(tmpImage);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  return;
+} /* end ObitDConCleanWindowStats */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitDConCleanWindowClassInit (void)
@@ -1864,6 +1966,8 @@ static void ObitDConCleanWindowClassInfoDefFn (gpointer inClass)
     (ObitDConCleanWindowReplaceFieldFP)ObitDConCleanWindowReplaceField;
   theClass->ObitDConCleanWindowAddField  = 
     (ObitDConCleanWindowAddFieldFP)ObitDConCleanWindowAddField;
+  theClass->ObitDConCleanWindowStats  = 
+    (ObitDConCleanWindowStatsFP)ObitDConCleanWindowStats;
 
 } /* end ObitDConCleanWindowClassDefFn */
 

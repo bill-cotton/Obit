@@ -332,7 +332,7 @@ void ObitAIPSCatImageGetDesc (ObitImageDesc *desc, gchar *buffer,
   desc->beamMin = fheader[myDHDR.KRBMN];
 
   /* 3D stuff - anything but explicit 2D is 3D */
-  desc->do3D   = header[myDHDR.KIITY] != -1;
+  desc->do3D   = header[myDHDR.KIITY] != 1;
   desc->xPxOff = fheader[myDHDR.KRXPO];
   desc->yPxOff = fheader[myDHDR.KRYPO];
     

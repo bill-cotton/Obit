@@ -148,9 +148,9 @@ void ObitDConCleanDefWindow(ObitDConClean *in, ObitErr *err);
 typedef void (*ObitDConCleanDefWindowFP) (ObitDConClean *in, ObitErr *err);
 
 /** Public:  Prepare for minor cycle. */
-gboolean ObitDConCleanPixelStats(ObitDConClean *in, ObitFArray *pixarray,
+gboolean ObitDConCleanPixelStats(ObitDConClean *in, ObitFArray **pixarray,
 				 ObitErr *err);
-typedef gboolean (*ObitDConCleanPixelStatsFP) (ObitDConClean *in, ObitFArray *pixarray,
+typedef gboolean (*ObitDConCleanPixelStatsFP) (ObitDConClean *in, ObitFArray **pixarray,
 					       ObitErr *err);
 
 /** Public:  Determine image statistics. */
@@ -160,8 +160,8 @@ typedef void (*ObitDConCleanImageStatsFP) (ObitDConClean *in, olong field,
 					   gboolean doBeam, ObitErr *err);
  
 /** Public:Select components to be subtracted . */
-gboolean ObitDConCleanSelect(ObitDConClean *in, ObitFArray *pixarray, ObitErr *err);
-typedef gboolean (*ObitDConCleanSelectFP) (ObitDConClean *in, ObitFArray *pixarray,
+gboolean ObitDConCleanSelect(ObitDConClean *in, ObitFArray **pixarray, ObitErr *err);
+typedef gboolean (*ObitDConCleanSelectFP) (ObitDConClean *in, ObitFArray **pixarray,
 					   ObitErr *err);
 
 /** Public: Subtract components and generate new residual image(s). */
@@ -181,10 +181,10 @@ void ObitDConCleanFlatten(ObitDConClean *in, ObitErr *err);
 typedef void (*ObitDConCleanFlattenFP) (ObitDConClean *in, ObitErr *err);
 
 /** Public: Automatically add window. */
-gboolean ObitDConCleanAutoWindow(ObitDConClean *in, olong field, ObitFArray *pixarray,
-				 ObitErr *err);
-typedef gboolean (*ObitDConCleanAutoWindowFP) (ObitDConClean *in, olong field, 
-					       ObitFArray *pixarray, ObitErr *err);
+gboolean ObitDConCleanAutoWindow(ObitDConClean *in, olong *fields, 
+				 ObitFArray **pixarray, ObitErr *err);
+typedef gboolean (*ObitDConCleanAutoWindowFP) (ObitDConClean *in, olong *fields, 
+					       ObitFArray **pixarray, ObitErr *err);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

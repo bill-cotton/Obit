@@ -3734,18 +3734,22 @@ ObitTableCC* ObitSkyModelgetPBCCTab (ObitSkyModel* in, ObitUV* uvdata,
 void ObitSkyModelgetPBImage (ObitSkyModel* in, ObitUV* uvdata, olong field, 
 				    ObitErr *err)
 {
-  olong   blc[IM_MAXDIM]={1,1,1,1,1}, trc[IM_MAXDIM]={0,0,0,0,0};
+  olong   blc[IM_MAXDIM], trc[IM_MAXDIM];
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong inPlane[IM_MAXDIM]={1,1,1,1,1};
+  olong inPlane[IM_MAXDIM];
   ObitIOCode retCode;
   ObitIOSize IOSize = OBIT_IO_byPlane;
-  olong ndim, naxis[2];
+  olong i, ndim, naxis[2];
   gchar *routine = "ObitSkyModelgetPBImage";
 
   /* error checks */
   g_assert (ObitErrIsA(err));
   if (err->error) return;
   g_assert (ObitSkyModelIsA(in));
+
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
+  for (i=0; i<IM_MAXDIM; i++) inPlane[i] = 0;
 
   /* See if primary Beam rel. corrections requested */
   if (!in->doPBCor) {

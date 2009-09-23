@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -262,6 +262,9 @@ ObitUVGSolve* ObitUVGSolveCreate (gchar* name)
  *                                  derive one if possible.
  * \li "WtUV"    OBIT_float (1,1,1) Weight outside of UVRANG. (default 1.0)
  * \li "prtLv"   OBIT_int   (1,1,1) Print level (default no print)
+ *
+ * On output the following are set
+ * \li "FractOK"    OBIT_float (1,1,1) The fraction of solutions which are OK
  * \param inUV   Input UV data. 
  * \param outUV  UV with which the output  SN is to be associated
  * \param sel    UV selector describing data fitted, used to deselect any 
@@ -279,7 +282,7 @@ ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV,
   olong i, k, nif, npoln, iAnt, numBL, SNver;
   olong nextVisBuf, cntmgm, iSNRow, numFreq, cntGood=0, cntPoss=0, cntBad=0;
   oint numPol, numIF, numAnt, suba, refant, minno, prtlv, mode;
-  ofloat solInt, snrmin, uvrang[2], wtuv, summgm;
+  ofloat solInt, snrmin, uvrang[2], wtuv, summgm, FractOK;
   olong itemp, kday, khr, kmn, ksec, *refAntUse=NULL;
   olong *ant1=NULL, *ant2=NULL, *count=NULL;
   ofloat *antwt=NULL, *creal=NULL, *cimag=NULL, *cwt=NULL;
@@ -619,6 +622,9 @@ ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV,
   /* Give success rate */
   Obit_log_error(err, OBIT_InfoErr, " %d of %d possible solutions found",
 		 cntGood, cntPoss);
+  FractOK = (ofloat)cntGood / (ofloat)cntPoss;
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut(in->info, "FractOK", OBIT_float, dim, &FractOK);
   /* DEBUG Obit_log_error(err, OBIT_InfoErr, " %d of %d possible solutions bad",
      cntBad, cntPoss); */
   

@@ -100,6 +100,8 @@ ObitFArray* ObitTableNIUtilSwallow (ObitTableNI *in, ObitErr *err)
   retCode = ObitTableNIClose (in, err);
   if (err->error) Obit_traceback_val (err, routine, in->name, out);
 
+  /* Cleanup */
+  NIRow = ObitTableNIRowUnref(NIRow);
   return out;
 } /* end ObitTableNIUtilSwallow */
 

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -712,15 +712,15 @@ void ObitUVSelfCalFluxHist (ObitUVSelfCal *in, ObitUV *inUV, ObitErr *err)
   for (i=0; i<in->numHist; i++) {in->hist[i] = 0.0; in->histRMS[i]=0.0; count[i]=0.0;}
   icells = 1.0 / in->HistInc;  /* inverse of cell spacing */
 
-  /* increment in frequency array = number of Stokes */
-  inc = inUV->myDesc->inaxes[inUV->myDesc->jlocs];  
-
   /* Open uv data if not already open */
   if (inUV->myStatus==OBIT_Inactive) {
     retCode = ObitUVOpen (inUV, OBIT_IO_ReadOnly, err);
     if (err->error) goto cleanup;
   }
   
+  /* increment in frequency array = number of Stokes */
+  inc = inUV->myDesc->inaxes[inUV->myDesc->jlocs];  
+
   /* Loop through data */
   while (retCode==OBIT_IO_OK) {
     /* read buffer full */

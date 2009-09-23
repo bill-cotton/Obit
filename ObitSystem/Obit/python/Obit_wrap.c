@@ -9568,7 +9568,8 @@ extern void UVImagerWeight (ObitUVImager* in, ObitErr *err) {
 extern void UVImagerImage (ObitUVImager* in, int field, int doWeight, int doBeam, 
                             int doFlatten, ObitErr *err) {
  gboolean LdoWeight=doWeight, LdoBeam=doBeam, LdoFlatten=doFlatten;
- olong Lfield = field;
+ olong Lfield[2];
+ Lfield[0] = field; Lfield[1] =  0;
  ObitUVImagerImage(in, Lfield, LdoWeight, LdoBeam, LdoFlatten, err);
 }
 

@@ -180,6 +180,7 @@ ObitSkyModel* ObitSkyModelVMCopy (ObitSkyModel *inn, ObitSkyModel *outt,
   out->curVMModelTime = in->curVMModelTime;
 
   /* Component array */
+  if (out->VMComps) ObitFArrayUnref(out->VMComps);
   if (in->VMComps) out->VMComps = ObitFArrayCopy(in->VMComps, out->VMComps, err);
 
   return (ObitSkyModel*)out;
@@ -309,7 +310,22 @@ void ObitSkyModelVMInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
  */
 void ObitSkyModelVMShutDownMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
 {
+  ObitSkyModelVM *in = (ObitSkyModelVM*)inn;
+  VMFTFuncArg *args;
+  olong i;
 
+  /* Free DFTFT thread arguments */
+  if (in->threadArgs) {
+    args = (VMFTFuncArg*)in->threadArgs[0];
+    if (!strncmp (args->type, "vm", 2)) {
+      for (i=0; i<in->nThreads; i++) {
+	args = (VMFTFuncArg*)in->threadArgs[i];
+	ObitFArrayUnref(args->VMComps);
+      }
+      g_free(in->threadArgs); in->threadArgs= NULL;
+    }
+  }
+  
   /* Call parent shutdown */
   ObitSkyModelShutDownMod(inn, uvdata, err);
 

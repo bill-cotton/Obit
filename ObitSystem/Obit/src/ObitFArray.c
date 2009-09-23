@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -716,7 +716,7 @@ ofloat ObitFArrayMax (ObitFArray *in, olong *pos)
 ofloat ObitFArrayMaxAbs (ObitFArray *in, olong *pos)
 {
   olong i, maxCell;
-  ofloat maxAVal, maxVal, fblank = ObitMagicF();
+  ofloat maxAVal, fblank = ObitMagicF();
   olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
   gboolean OK;
   FAFuncArg **threadArgs;
@@ -760,12 +760,11 @@ ofloat ObitFArrayMaxAbs (ObitFArray *in, olong *pos)
   if (!OK) return fblank;
 
   /* Find abs max */
-  maxVal = threadArgs[0]->value;
+  maxAVal = fabs(threadArgs[0]->value);
   maxCell = 0;
   for (i=1; i<nTh; i++) {
-    if ((threadArgs[i]->value!=fblank) && (threadArgs[i]->value>maxVal)) {
+    if ((threadArgs[i]->value!=fblank) && (fabs(threadArgs[i]->value)>maxAVal)) {
 	maxCell = i;
-	maxVal  = threadArgs[i]->value;
 	maxAVal = fabs(threadArgs[i]->value);
       }
     }
@@ -774,7 +773,7 @@ ofloat ObitFArrayMaxAbs (ObitFArray *in, olong *pos)
   /* Free local objects */
   KillFAFuncArgs(nThreads, threadArgs);
 
-  return MAX (0.0, maxVal);
+  return MAX (0.0, maxAVal);
 } /* end  ObitFArrayMaxAbs */
 
 /**
@@ -1043,7 +1042,7 @@ ofloat ObitFArrayRMS (ObitFArray* in)
   i1 = modeCell - 3 * (modeCell-imHalf);
   i1 = MAX (0, i1);
   i2 = modeCell + 3 * (ipHalf - modeCell);
-  i2 = MIN (numCell, i2);
+  i2 = MIN (numCell-1, i2);
 
   /* Get second moment */
   sum = sum2 = 0.0;
@@ -2395,6 +2394,11 @@ void ObitFArrayShiftAdd (ObitFArray* in1, olong *pos1,
   if (loy+offy<0) loy -= loy+offy;
   if (hix+offx>=nx2) hix -= hix+offx-nx2+1;
   if (hiy+offy>=ny2) hiy -= hiy+offy-ny2+1;
+  /* Keep in range */
+  lox = MAX (0, lox);
+  hix = MIN (hix, nx1-1);
+  loy = MAX (0, loy);
+  hiy = MIN (hiy, ny1-1);
 
   /* Loop over planes */
   for (ip = 0; ip<np; ip++) {
@@ -2921,7 +2925,7 @@ static gpointer ThreadFAAbsMax (gpointer arg)
 
   /* local */
   olong  i, temp, maxCell;
-  ofloat maxAVal, maxVal, *data, val, fblank = ObitMagicF();
+  ofloat maxAVal=0.0, maxVal, *data, val, fblank = ObitMagicF();
 
   largs->value = fblank;  /* In case no valid data*/
   if (hiElem<loElem) goto finish;

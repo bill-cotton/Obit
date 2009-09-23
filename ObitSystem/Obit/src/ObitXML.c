@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -514,6 +514,7 @@ ObitXMLXML2InfoList (ObitXML *xml, ObitErr *err)
        ObitInfoListPut(out, key, infoType, dim, data, err);
      
     g_free(data);
+    free(key);
     if (err->error)Obit_traceback_val (err, routine, "writing ObitInfoList", out);
   } /* end loop over elements */
 

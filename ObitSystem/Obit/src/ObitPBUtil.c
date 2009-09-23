@@ -2,7 +2,7 @@
 /* this version        2008-10-01 20:20:00  juan.uson      */
 /* J1 extended with large angle approximation              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -405,8 +405,7 @@ ObitFArray* ObitPBUtilImageCor(ObitImage *inImage, olong *inPlane,
 			       ObitErr *err)
 {
   ObitIOSize IOBy;
-  olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
-  olong trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  olong blc[IM_MAXDIM], trc[IM_MAXDIM];
   gint32 i, dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong ix, iy, indx, pos[2];
   ofloat inPixel[2], *out;
@@ -419,6 +418,9 @@ ObitFArray* ObitPBUtilImageCor(ObitImage *inImage, olong *inPlane,
   g_assert (ObitErrIsA(err));
   if (err->error) return outFA;
   g_assert (ObitImageIsA(inImage));
+
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
 
   /* Do I/O by plane and all of plane */
   IOBy = OBIT_IO_byPlane;

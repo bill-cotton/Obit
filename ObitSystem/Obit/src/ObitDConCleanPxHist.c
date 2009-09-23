@@ -194,13 +194,15 @@ void ObitDConCleanPxHistClone  (ObitDConCleanPxHist *in, ObitDConCleanPxHist *ou
  * \param plane  1-rel indices on dimensions 3-?
  * \param mosaic Image Mosaic with images
  * \param window Corresponding windows in mosaic images.
- *        Only pixels inside of the CLEAN window are used.
+ *               Only pixels inside of the CLEAN window are used.
+ * \param isLast If TRUE, this is the last contribution to the histogram
+ *               and it is turned into a cumulative distribution.
  * \param err Obit error stack object.
  */
 void ObitDConCleanPxHistUpdate (ObitDConCleanPxHist *in, olong field, 
 				olong *plane, ObitImageMosaic *mosaic,
 				ObitDConCleanWindow *window, 
-				ObitErr *err)
+				gboolean isLast, ObitErr *err)
 {
   ObitIOCode retCode;
   ObitImage *image=NULL;
@@ -226,10 +228,10 @@ void ObitDConCleanPxHistUpdate (ObitDConCleanPxHist *in, olong field,
 
   /* Set output to full image, plane at a time */
   dim[0] = IM_MAXDIM;
-  blc[0] = blc[1] = 1;
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
   for (i=0; i<IM_MAXDIM-2; i++) blc[i+2] = plane[i];
   ObitInfoListPut (image->info, "BLC", OBIT_long, dim, blc, err); 
-  trc[0] = trc[1] = 0;
   for (i=0; i<IM_MAXDIM-2; i++) trc[i+2] = plane[i];
   ObitInfoListPut (image->info, "TRC", OBIT_long, dim, trc, err); 
   dim[0] = 1;
@@ -304,15 +306,115 @@ void ObitDConCleanPxHistUpdate (ObitDConCleanPxHist *in, olong field,
   /* Free Image array? */
   image->image = ObitFArrayUnref(image->image);
 
-  /* Finish histogram, want cumulative distribution */
-  for (icell=in->ncell-2; icell>=0; icell--) {
-    in->hist[icell] += in->hist[icell+1];
+  if (isLast) {
+    /* Finish histogram, want cumulative distribution */
+    for (icell=in->ncell-2; icell>=0; icell--) {
+      in->hist[icell] += in->hist[icell+1];
+    }
   }
 
   /* Cleanup */
   if ((mask) && (ObitMemValid (mask))) mask = ObitMemFree (mask);
 
 } /* end ObitDConCleanPxHistUpdate */
+
+/**
+ * Add an image to an existing histogram histogram 
+ * Use previous extrema for new additions.
+ * \param in     The Pixel histogram object 
+ * \param field  Which field? (1-rel)
+ * \param plane  1-rel indices on dimensions 3-?
+ * \param mosaic Image Mosaic with images
+ * \param window Corresponding windows in mosaic images.
+ *        Only pixels inside of the CLEAN window are used.
+ * \param isLast If TRUE, this is the last contribution to the histogram
+ *               and it is turned into a cumulative distribution.
+ * \param err Obit error stack object.
+ */
+void ObitDConCleanPxHistAdd (ObitDConCleanPxHist *in, olong field, 
+			     olong *plane, ObitImageMosaic *mosaic,
+			     ObitDConCleanWindow *window, 
+			     gboolean isLast, ObitErr *err)
+{
+  ObitIOCode retCode;
+  ObitImage *image=NULL;
+  ObitIOSize IOsize = OBIT_IO_byPlane;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong  blc[IM_MAXDIM], trc[IM_MAXDIM];
+  olong i, ix, iy, icell, nx, ny, pos[2];
+  ofloat *data, tfact;
+  gboolean *mask=NULL;
+  gchar *routine = "ObitDConCleanPxHistAdd";
+
+  /* error checks */
+  if (err->error) return;
+
+  if ((field<=0) || (field>mosaic->numberImages)) {
+    Obit_log_error(err, OBIT_Error,"%s field %d out of range 1-%d in %s",
+                   routine, field, mosaic->numberImages, mosaic->name);
+      return;
+  }
+
+  /* Which image? */
+  image = mosaic->images[field-1];
+
+  /* Set output to full image, plane at a time */
+  dim[0] = IM_MAXDIM;
+  for (i=0; i<IM_MAXDIM; i++) blc[i] = 1;
+  for (i=0; i<IM_MAXDIM; i++) trc[i] = 0;
+  for (i=0; i<IM_MAXDIM-2; i++) blc[i+2] = plane[i];
+  ObitInfoListPut (image->info, "BLC", OBIT_long, dim, blc, err); 
+  for (i=0; i<IM_MAXDIM-2; i++) trc[i+2] = plane[i];
+  ObitInfoListPut (image->info, "TRC", OBIT_long, dim, trc, err); 
+  dim[0] = 1;
+  ObitInfoListPut (image->info, "IOBy", OBIT_long, dim, &IOsize, err);
+ 
+  retCode = ObitImageOpen (image, OBIT_IO_ReadOnly, err);
+  if (err->error) Obit_traceback_msg (err, routine, image->name);
+
+  retCode = ObitImageRead (image, image->image->array, err);
+  if (err->error) Obit_traceback_msg (err, routine, image->name);
+
+  /* Update histogram */
+  if (in->histMax != in->histMin) 
+    tfact = (ofloat)(in->ncell-1) / (in->histMax - in->histMin);
+  else tfact = 1.0;
+  nx = image->image->naxis[0];
+  ny = image->image->naxis[1];
+  pos[0] = pos[1] = 0;
+  data = ObitFArrayIndex(image->image, pos);
+  for (iy=0; iy<ny; iy++) {
+    /* Get window mask */
+    if (ObitDConCleanWindowRow(window, field, iy+1, &mask, err)) {
+      for (ix=0; ix<nx; ix++) {
+	if (mask[ix]) {
+	  icell = tfact * (fabs(data[ix]) - in->histMin) + 0.5;
+	  icell = MIN (icell, in->ncell-1);
+	  icell = MAX (icell, 0);
+	  in->hist[icell]++;    /* count it */
+	}
+      }
+    }
+    data += nx;
+  }
+
+  retCode = ObitImageClose (image, err);
+  if (err->error) Obit_traceback_msg (err, routine, image->name);
+
+  /* Free Image array? */
+  image->image = ObitFArrayUnref(image->image);
+
+  if (isLast) {
+    /* Finish histogram, want cumulative distribution */
+    for (icell=in->ncell-2; icell>=0; icell--) {
+      in->hist[icell] += in->hist[icell+1];
+    }
+  }
+
+  /* Cleanup */
+  if ((mask) && (ObitMemValid (mask))) mask = ObitMemFree (mask);
+
+} /* end ObitDConCleanPxHistAdd */
 
 /**
  * Tell the number of pixels with abs. value larger than value.

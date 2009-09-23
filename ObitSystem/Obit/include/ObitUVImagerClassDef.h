@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -44,3 +44,5 @@ ObitUVImagerGetMosaicFP ObitUVImagerGetMosaic;
 /** Function pointer to Extract information about underlying structures 
     to ObitInfoList. */
 ObitUVImagerGetInfoFP ObitUVImagerGetInfo;
+/** Function pointer to get number or parallel images function. */
+ObitUVImagerGetNumParFP ObitUVImagerGetNumPar;
