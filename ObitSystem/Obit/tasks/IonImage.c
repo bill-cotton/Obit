@@ -48,6 +48,8 @@
 #include "ObitTableCCUtil.h"
 #include "ObitUVPeelUtil.h"
 #include "ObitTablePSUtil.h"
+#include "ObitUVUtil.h"
+#include "ObitFITS.h"
 
 /* internal prototypes */
 /* Get inputs */
@@ -95,6 +97,10 @@ void subIPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver,
 void IonImageHistory (gchar *Source, gchar Stok, ObitInfoList* myInput, 
 		      ObitUV* inData, ObitImage* outImage, ObitUV* outData,
 		      ObitErr* err);
+
+/* Baseline dependent time averaging */
+void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData, 
+	    ObitErr* err);
 
 /* Program globals */
 gchar *pgmName = "IonImage";       /* Program name */
@@ -1003,7 +1009,7 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
   olong      nvis;
   gint32    dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean  exist;
-  gchar     tname[129], *today=NULL;
+  gchar     tname[129], *fullPath, *today=NULL;
   gchar     *routine = "setOutputUV";
 
   /* error checks */
@@ -1091,6 +1097,14 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     if (disk<=0) /* defaults to outDisk */
       ObitInfoListGet(myInput, "outDisk", &type, dim, &disk, err);
     
+    /* Delete any previous version */
+    fullPath = ObitFITSFilename (disk, out2File, err);
+    /* Does filename exist? */
+    if (ObitFileExist (fullPath, err) || err->error) {
+      ObitFileZapFile (fullPath, err);
+      g_free(fullPath);
+    }
+
     /* define object */
     nvis = 1000;
     ObitInfoListGetTest(inData->info, "nVisPIO", &type, dim, &nvis);
@@ -1469,8 +1483,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   dim[0] = 16; dim[1] = 1;
   ObitInfoListAlwaysPut (inData->info, "Sources", OBIT_string, dim, Source);
   
-  /* Copy data to output */
-  outData = ObitUVCopy (inData, outData, err); 
+  /* Copy or average input data to output */
+  BLAvg (myInput, inData, outData, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
   
   /* Copy NI table to output if not calibrating */
@@ -2032,7 +2046,7 @@ void IonImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq",
     "outFile",  "outDisk", "outName", "outClass", "outSeq",
     "UVRange",  "timeRange",  "Robust",  "UVTaper",  "WtBox", "WtFunc", 
-    "BIF", "EIF", "BChan", "EChan",  "chInc", "chAvg",
+    "BIF", "EIF", "BChan", "EChan",  "chInc", "chAvg", "BLFact", "BLFOV", 
     "doCalSelect",  "doCalib",  "gainUse", "doBand ",  "BPVer",  "flagVer", 
     "doPol",  "doFull", "do3D", "Catalog",  "OutlierDist",  "OutlierFlux",  "OutlierSI",
     "OutlierSize",  "CLEANBox",  "Gain",  "minFlux",  "Niter",  "minPatch",
@@ -2122,3 +2136,63 @@ void IonImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
  
 } /* end IonImageHistory  */
 
+#ifndef VELIGHT
+#define VELIGHT 2.997924562e8
+#endif
+/*----------------------------------------------------------------------- */
+/*  Copy or baseline dependent time average data                          */
+/*  If BLFact>1.00 then use baseline dependent time averaging, else       */
+/*  just a straight copy from inData to outData                           */
+/*  Uses minimum of solPint or solAInt as the maximum time average        */
+/*  or if this is zero then 1 min.                                        */
+/*   Input:                                                               */
+/*      myInput   Input parameters on InfoList use:                       */
+/*       "BLFact"  OBIT_float  (1,1,1) Maximum time smearing factor       */
+/*       "BLFOV"   OBIT_float  (1,1,1) Field of view (radius, deg)        */
+/*                                     Default FOV or 0.5*lambda/25.0 m   */
+/*       "solPInt" OBIT_float  (1,1,1) Phase self-cal soln. interval (min)*/
+/*       "solAInt" OBIT_float  (1,1,1) Amp self-cal soln. interval (min)  */
+/*      inData    ObitUV to copy data from                                */
+/*      outData   Output UV data to write                                 */
+/*   Output:                                                              */
+/*      err    Obit Error stack                                           */
+/*----------------------------------------------------------------------- */
+void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData, 
+	    ObitErr* err)
+{
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong NumChAvg=1;
+  odouble Freq;
+  ofloat BLFact=0.0, FOV=0.0, solPInt=0.0, solAInt=0.0, maxInt;
+  gchar *routine = "BLAvg";
+
+  /* What to do? */
+  ObitInfoListGetTest(myInput, "BLFact", &type, dim, &BLFact);
+  if (BLFact>1.00) { /* Average */
+    /* Set parameters */
+    ObitInfoListGetTest(myInput, "BLFOV",   &type, dim, &FOV);
+    if (FOV<=0.0) ObitInfoListGetTest(myInput, "FOV",   &type, dim, &FOV);
+    ObitInfoListGetTest(myInput, "solPInt", &type, dim, &solPInt);
+    ObitInfoListGetTest(myInput, "solAInt", &type, dim, &solAInt);
+    maxInt = MIN (solPInt, solAInt);
+    if (maxInt<=0.0) maxInt = 1.0;  /* Default 1 min */
+    /* Default FOV 0.5 lambda/diameter */
+    if (FOV<=0.0) {
+      Freq = inData->myDesc->crval[inData->myDesc->jlocf];
+      FOV = 0.5 * Freq * VELIGHT / 25.0;;
+    }
+
+    dim[0] = dim[1] = dim[2] = dim[3] = 1;
+    ObitInfoListAlwaysPut (inData->info, "FOV",      OBIT_float, dim, &FOV);
+    ObitInfoListAlwaysPut (inData->info, "maxInt",   OBIT_float, dim, &maxInt);
+    ObitInfoListAlwaysPut (inData->info, "maxFact",  OBIT_float, dim, &BLFact);
+    ObitInfoListAlwaysPut (inData->info, "NumChAvg", OBIT_long,  dim, &NumChAvg);
+    outData = ObitUVUtilBlAvgTF(inData, FALSE, outData, err);
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
+
+  } else { /* Straight copy */
+    ObitUVCopy (inData, outData, err);
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
+  }
+} /* end BLAvg */

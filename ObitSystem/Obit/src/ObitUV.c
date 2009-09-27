@@ -2778,6 +2778,7 @@ void ObitUVClear (gpointer inn)
   if ((in->nParallel>0) && (in->multiBufIO)) {
     for (ib=0; ib<in->nParallel; ib++) 
       in->multiBufIO[ib] = ObitIOUnref(in->multiBufIO[ib]);
+    g_free(in->multiBufIO);
   }
   
   /* unlink parent class members */

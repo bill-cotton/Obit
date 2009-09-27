@@ -635,6 +635,7 @@ void ObitUVImagerImage (ObitUVImager *in,  olong *field, gboolean doWeight,
 
   /* Cleanup */
   if (forceBeam) g_free(forceBeam);
+  if (fldNo) g_free(fldNo);
   if (imageList) g_free(imageList);
 } /* end ObitUVImagerImage */
 

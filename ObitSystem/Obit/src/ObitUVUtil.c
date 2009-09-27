@@ -184,6 +184,7 @@ ObitUV* ObitUVUtilCopyZero (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
     if (outUV) outUV = ObitUVUnref(outUV);
     outUV = newObitUVScratch (inUV, err);
   } else { /* non scratch output must exist - clone from inUV */
+   outUV->myDesc = ObitUVDescCopy (inUV->myDesc, outUV->myDesc, err);
     ObitUVClone (inUV, outUV, err);
   }
   if (err->error) Obit_traceback_val (err, routine, inUV->name, inUV);
@@ -1278,7 +1279,8 @@ ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
     if (outUV) outUV = ObitUVUnref(outUV);
     outUV = newObitUVScratch (inUV, err);
   } else { /* non scratch output must exist - clone from inUV */
-    ObitUVClone (inUV, outUV, err);
+    outUV->myDesc = ObitUVDescCopy (inUV->myDesc, outUV->myDesc, err);
+    /*ObitUVClone (inUV, outUV, err);*/
   }
   if (err->error) Obit_traceback_val (err, routine, inUV->name, inUV);
 
@@ -1849,7 +1851,8 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
     if (outUV) outUV = ObitUVUnref(outUV);
     outUV = newObitUVScratch (inUV, err);
   } else { /* non scratch output must exist - clone from inUV */
-    ObitUVClone (inUV, outUV, err);
+    outUV->myDesc = ObitUVDescCopy (inUV->myDesc, outUV->myDesc, err);
+    /*ObitUVClone (inUV, outUV, err);*/
   }
   if (err->error) Obit_traceback_val (err, routine, inUV->name, outUV);
 
@@ -1897,9 +1900,8 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   strncpy (outUV->myDesc->date, today, UVLEN_VALUE-1);
   if (today) g_free(today);
   
-  /* Set number of output vis per write to nvis */
+  /* Set number of output vis per write  */
   NPIO = 1;
-  nvis = 50000;  /* Make sort buffer big */
   ObitInfoListGetTest(inUV->info, "nVisPIO", &type, dim, &NPIO);
   itemp = 1000;  /* Internal IO buffer */
   dim[0] = dim[1] = dim[2] = 1;
@@ -1916,6 +1918,9 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   if ((oretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
 
   /* Create sort buffer */
+  /* Make sort buffer big  ~ 1 Gbyte */
+  nvis = 1000000000 / (outUV->myDesc->lrec*sizeof(ofloat));  
+  nvis = MIN (nvis, inUV->myDesc->nvis);
   outBuffer = ObitUVSortBufferCreate ("Buffer", outUV, nvis, err);
   if ((oretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
 

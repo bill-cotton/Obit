@@ -175,7 +175,7 @@ ObitHistory* ObitHistoryZap (ObitHistory *in, ObitErr *err)
   ObitIOZap ((ObitIO*)in->myIO, err);
   if (err->error)
     Obit_traceback_val (err, routine, in->name, in);
-  in->myIO = NULL;
+  in->myIO = ObitIOUnref(in->myIO);
 
   /* Get memory resident bits as well */
   in = ObitHistoryUnref(in);

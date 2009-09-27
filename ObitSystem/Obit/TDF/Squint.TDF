@@ -82,8 +82,12 @@ flagVer                             Flag table version
 doPol                               Apply polarization cal?
 **PARAM** float 1  **DEF** 0.0
 Alpha           -20.       20.      Spectral Index to correct
+**PARAM** float 1 **DEF** 0.999
+BLFact                              Baseline dependent time factor
+**PARAM** float 1
+BLFOV             0.0       180.    Radius averaging FOV (deg)
 **PARAM** str 4
-outDType                           "FITS" or "AIPS" type of output
+outDType                            "FITS" or "AIPS" type of output
 **PARAM** str 48
 outFile                             Output FITS image file ending
 **PARAM** str 12
@@ -294,6 +298,8 @@ In this case, the error messages will be displayed and the Status in
 the PS table set to "Failed  " rather than "Done    ".
    Greisen variant of Steer-Dewdney-Ito CLEAN implemented via 
 SDIGain
+   If BLFact > 1.0 then the input data will be subjected to a 
+baseline dependent time averaging.
 
 Adverbs:
   DataType..'FITS' or 'AIPS'  type of input/output
@@ -378,6 +384,23 @@ Adverbs:
   Alpha......If != 0.0 then correct data by spectral index Alpha before 
              imaging and self calibration. 
              -0.7 is typical for synchrotron.
+  BLFact.....Baseline dependent time averaging factor.
+             If BLFact>1.00 then the input data is time averaged in 
+             a baseline dependent fashion and written to the output 
+             data for further processing.
+             Use the following parameters:
+               BLFact = Maximum allowable amplitude loss due to time 
+                  averaging
+               BLFOV = Field of view over which the amplitude distortion
+                  is not to exceed BLFact.
+               The lesser of solPInt and solPMode is used for the 
+                  maximum averaging time.  
+                  If both are zero, 1 min. is used
+             This option can substantially reduce the data volume and
+             reduce processing time.
+  BLFOV......The radius of the field of view over which baseline 
+             dependent averaging is not to distort amplitudes by more 
+             than BLFact
 
       Output files
   outDType..'FITS' or 'AIPS'  type of output

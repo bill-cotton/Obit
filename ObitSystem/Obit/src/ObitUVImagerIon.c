@@ -404,7 +404,7 @@ void ObitUVImagerIonImage (ObitUVImager *inn,  olong *field, gboolean doWeight,
   /* All wanted? */
   doall =  (nImage <= 0);
 
-  NumPar = ObitUVImagerIonGetNumPar(in, err); /* How many to do? */
+  NumPar = ObitUVImagerIonGetNumPar(inn, err); /* How many to do? */
 
   /* List of need to force making beam, keep track of field numbers */
   forceBeam = g_malloc0(in->mosaic->numberImages*sizeof(gboolean));
@@ -577,6 +577,7 @@ void ObitUVImagerIonImage (ObitUVImager *inn,  olong *field, gboolean doWeight,
     ObitUVZapTable (data, tabtype, lver, err);
     if (tabtype) g_free (tabtype); tabtype = NULL;
     ObitUVUpdateTables (data, err);  /* Update disk header */
+    snTab = ObitTableSNUnref(snTab);
   }
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 } /* end ObitUVImagerIonImage */

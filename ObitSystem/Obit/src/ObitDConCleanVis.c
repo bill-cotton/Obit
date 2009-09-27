@@ -350,7 +350,7 @@ ObitDConCleanVis* ObitDConCleanVisCreate (gchar* name, ObitUV *uvdata,
   out->avgRes      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean avg res");
   out->imgPeakRMS  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Image Peak/RMS");
   out->beamPeakRMS = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Beam Peak/RMS");
-  out->currentFields = ObitMemAlloc0Name((nfield+1)*sizeof(olong),"Current fields");
+  out->currentFields = ObitMemAlloc0Name((nfield+3)*sizeof(olong),"Current fields");
   for (i=0; i<nfield; i++) {
     out->maxAbsRes[i]   = -1.0;
     out->avgRes[i]      = -1.0;
@@ -431,7 +431,7 @@ ObitDConCleanVisCreate2 (gchar* name, ObitUV *uvdata,
   out->avgRes      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean avg res");
   out->imgPeakRMS  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Image Peak/RMS");
   out->beamPeakRMS = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Beam Peak/RMS");
-  out->currentFields = ObitMemAlloc0Name((nfield+2)*sizeof(olong),"Current fields");
+  out->currentFields = ObitMemAlloc0Name((nfield+3)*sizeof(olong),"Current fields");
   for (i=0; i<nfield; i++) {
     out->maxAbsRes[i]   = -1.0;
     out->avgRes[i]      = -1.0;
@@ -987,12 +987,13 @@ void ObitDConCleanVisSub(ObitDConCleanVis *in, ObitErr *err)
  * \param in   The object to deconvolve
  * \param err Obit error stack object.
  * \return TRUE iff reached minimum flux density or max. number  comp.
+ *         or no fields with SNR>5
  */
 static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
 {
   olong i, best, loopCheck, indx, NumPar;
   olong *fldList=NULL;
-  gboolean *fresh, doBeam, done=TRUE, found;
+  gboolean *fresh, doBeam=FALSE, done=TRUE, found;
   ofloat sumwts, autoCenFlux=0.0;
   ObitImage *theBeam=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -1019,7 +1020,7 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
   }
 
   fresh   = ObitMemAlloc0(in->nfield*sizeof(gboolean));
-  fldList = ObitMemAlloc0((in->nfield+1)*sizeof(olong));
+  fldList = ObitMemAlloc0((in->nfield+3)*sizeof(olong));
 
   /* How many images in parallel? */
   imagerClass = (ObitUVImagerClassInfo*)in->imager->ClassInfo;
@@ -1053,10 +1054,10 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
     /* Check if reached max number of components */
     if (in->Pixels->currentIter >= in->Pixels->niter) return done;
     
-    /* Ignore fields already known to be finished, see if all done */
+    /* Ignore fields already known to be finished or low SNR, see if all done */
     done = TRUE;
     for (i=0; i<in->nfield; i++) {
-      if (in->maxAbsRes[i] <= in->minFlux[i]) {
+      if ((in->maxAbsRes[i] <= in->minFlux[i]) || (in->imgPeakRMS[i]<5.0)) {
 	in->quality[i]   = 0.0;
 	in->cleanable[i] = 0.0;
       }
@@ -1140,9 +1141,15 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
     if (loopCheck>2*in->nfield) break;
     
     /* Message */
-    Obit_log_error(err, OBIT_InfoWarn,
-		   "%s:  There may be something better - %f<%f",
-		   routine, in->quality[fldList[0]-1], in->quality[best]);
+    if (fldList[0]>0)
+	Obit_log_error(err, OBIT_InfoWarn,
+		       "%s:  There may be something better - %f<%f",
+		       routine, in->quality[fldList[0]-1], in->quality[best]);
+	else
+	Obit_log_error(err, OBIT_InfoWarn,
+                       "%s: Nothing - try again ",
+                       routine);
+
   } /* end loop reimaging */
 
   /* Get highest abs value in any CLEAN window */
@@ -1162,6 +1169,7 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
   for (i=0; i<in->nfield; i++) {
     in->currentFields[i] = fldList[i];
   }
+  in->currentFields[i] = 0;
  
   /* cleanup */
   fresh   = ObitMemFree(fresh);
@@ -1178,12 +1186,13 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
  * \param in   The object to deconvolve
  * \param err Obit error stack object.
  * \return TRUE iff reached minimum flux density or max. number  comp.
+ *         or no fields with SNR>5
  */
 static gboolean ObitDConCleanVisPickNext3D(ObitDConCleanVis *in, ObitErr *err)
 {
   olong i, best, second, loopCheck, indx, NumPar;
   olong *fldList;
-  gboolean *fresh, doBeam, done=TRUE;
+  gboolean *fresh, doBeam=FALSE, done=TRUE;
   ofloat sumwts;
   ObitImage *theBeam=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -1201,7 +1210,7 @@ static gboolean ObitDConCleanVisPickNext3D(ObitDConCleanVis *in, ObitErr *err)
       (in->Pixels->currentIter>0)) return done;
 
   fresh   = ObitMemAlloc0(in->nfield*sizeof(gboolean));
-  fldList = ObitMemAlloc0((in->nfield+1)*sizeof(olong));
+  fldList = ObitMemAlloc0((in->nfield+3)*sizeof(olong));
 
   /* How many images in parallel? */
   imagerClass = (ObitUVImagerClassInfo*)in->imager->ClassInfo;
@@ -1236,10 +1245,10 @@ static gboolean ObitDConCleanVisPickNext3D(ObitDConCleanVis *in, ObitErr *err)
     /* Check if reached max number of components */
     if (in->Pixels->currentIter >= in->Pixels->niter) return done;
     
-    /* Ignore fields already known to be finished, see if all done */
+    /* Ignore fields already known to be finished or low SNR, see if all done */
     done = TRUE;
     for (i=0; i<in->nfield; i++) {
-      if (in->maxAbsRes[i] <= in->minFlux[i]) {
+      if ((in->maxAbsRes[i] <= in->minFlux[i]) || (in->imgPeakRMS[i]<5.0)) {
 	in->quality[i]   = 0.0;
 	in->cleanable[i] = 0.0;
       }
@@ -1312,6 +1321,14 @@ static gboolean ObitDConCleanVisPickNext3D(ObitDConCleanVis *in, ObitErr *err)
   in->currentFields[1] = 0;
   in->numCurrentField  = 1;
 
+  /* Diagnostic */
+  if (in->prtLv>2) {
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "PickNext3D: best %d quality %g cleanable %g maxRes %g SNR %g",
+		   best+1, in->quality[best],  in->cleanable[best], 
+		   in->maxAbsRes[best], in->imgPeakRMS[best]);
+  }
+  
   /* highest abs value ever found in a CLEAN window */
   if (best>=0) in->peakFlux = MAX (in->peakFlux, in->maxAbsRes[best]);
 
@@ -1714,7 +1731,7 @@ void ObitDConCleanVisAddField (ObitDConCleanVis *in, ObitUV* uvdata,
 			       ObitErr* err) 
 {
   olong newField = 0;
-  olong i, oldField;
+  olong i, oldField, *itemp;
   ofloat *ftemp;
   gchar *routine = "ObitDConCleanVisAddField";
 
@@ -1769,6 +1786,10 @@ void ObitDConCleanVisAddField (ObitDConCleanVis *in, ObitUV* uvdata,
   for (i=0; i<oldField; i++) ftemp[i] = in->beamPeakRMS[i]; ftemp[i] = 0.0; 
   in->beamPeakRMS = ObitMemFree(in->beamPeakRMS);
   in->beamPeakRMS = ftemp;
+  itemp = ObitMemAlloc0Name((newField+3)*sizeof(olong),"currentFields");
+  for (i=0; i<oldField; i++) itemp[i] = in->currentFields[i]; itemp[i] = 0; 
+  in->currentFields = ObitMemFree(in->currentFields);
+  in->currentFields = itemp;
 
 } /* end of routine ObitDConCleanVisAddField */ 
 
@@ -2806,7 +2827,7 @@ static void WhosBest2D (ObitDConCleanVis *in, ofloat autoCenFlux,
  * Ranking by quality, ignored "fresh" and shifted images
  * Only includes images with a quality within 30% of the best
  * Uses autoShift only for flux densities above 0.1 x autoCenFlux
- * Fields with quality=0.0 (reachec CLEAN goal) are ignored.
+ * Fields with quality=0.0 (reached CLEAN goal) are ignored.
  * If the best is an autoWindow, only other autoWindow fields are considered
  * \param in      The Clean object
  * \param fresh   List of flags indicating freshly made

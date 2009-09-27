@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -534,8 +534,8 @@ void ObitSkyModelVMIonShutDownMod (ObitSkyModel* inn, ObitUV *uvdata,
   ObitSkyModelVMShutDownMod(inn, uvdata, err);
 
   if (in->threadArgs) {
-    /* Check type - only handle "ion" */
-    if (!strncmp((gchar*)in->threadArgs[0], "ion", 3)) {
+    /* Check type - only handle "vmion" */
+    if (!strncmp((gchar*)in->threadArgs[0], "vmion", 3)) {
       for (i=0; i<in->nThreads; i++) {
 	args = (VMIonFTFuncArg*)in->threadArgs[i];
 	if (args->VMComps) ObitFArrayUnref(args->VMComps);

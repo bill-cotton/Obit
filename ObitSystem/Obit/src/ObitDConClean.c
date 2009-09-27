@@ -239,7 +239,7 @@ ObitDConClean* ObitDConCleanCopy  (ObitDConClean *in, ObitDConClean *out, ObitEr
     out->imgPeakRMS[i]  = in->imgPeakRMS[i];
     out->beamPeakRMS[i] = in->imgPeakRMS[i];
   }
-  out->currentFields = ObitMemAlloc0Name((nfield+1)*sizeof(olong),"Current fields");
+  out->currentFields = ObitMemAlloc0Name((nfield+3)*sizeof(olong),"Current fields");
   for (i=0; i<in->numCurrentField; i++) out->currentFields[i] = in->currentFields[i];
   for (i=in->numCurrentField; i<=nfield; i++) out->currentFields[i] = 0;
 
@@ -318,7 +318,7 @@ void ObitDConCleanClone  (ObitDConClean *in, ObitDConClean *out, ObitErr *err)
     out->imgPeakRMS[i]  = in->imgPeakRMS[i];
     out->beamPeakRMS[i] = in->imgPeakRMS[i];
   }
-  out->currentFields = ObitMemAlloc0Name((nfield+1)*sizeof(olong),"Current fields");
+  out->currentFields = ObitMemAlloc0Name((nfield+3)*sizeof(olong),"Current fields");
   for (i=0; i<in->numCurrentField; i++) out->currentFields[i] = in->currentFields[i];
   for (i=in->numCurrentField; i<=nfield; i++) out->currentFields[i] = 0;
 
@@ -375,7 +375,7 @@ ObitDConClean* ObitDConCleanCreate (gchar* name, ObitImageMosaic *mosaic,
   out->avgRes      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean avg res");
   out->imgPeakRMS  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Image Peak/RMS");
   out->beamPeakRMS = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Beam Peak/RMS");
-  out->currentFields = ObitMemAlloc0Name((nfield+1)*sizeof(olong),"Current fields");
+  out->currentFields = ObitMemAlloc0Name((nfield+3)*sizeof(olong),"Current fields");
   for (i=0; i<nfield; i++) {
     out->maxAbsRes[i]   = -1.0;
     out->avgRes[i]      = -1.0;

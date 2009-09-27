@@ -3540,6 +3540,11 @@ gboolean ObitSkyModelsetPBChans(ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
     in->numberChannelPB = 0;
   }
 
+  /* everything done? */
+  done = (in->startIFPB >= (in->startIF+in->numberIF-1)) && 
+    (in->startChannelPB >= (in->startChannel+in->numberChannel-1));
+  if (done) return done;
+
   /* Info from uv descriptor */
   uvDesc = uvdata->myDesc;
   nfreq = uvDesc->inaxes[uvDesc->jlocf];
@@ -3568,7 +3573,8 @@ gboolean ObitSkyModelsetPBChans(ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
   
   /* which frequency channel is the start? */
   ifreq = (in->startIFPB-1) * incif + (in->startChannelPB-1) * incf;
-  
+  ifreq = MIN ((nfreq-1), ifreq);
+
   /* Primary beam correction factor at first IF/channel */
   uvDesc = uvdata->myDesc;
   PBStart = ObitPBUtilRelPB (Angle, niffreq, uvDesc->freqArr, in->antSize, 0.0,
@@ -3584,6 +3590,7 @@ gboolean ObitSkyModelsetPBChans(ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
 	 iChan++) {
       /* which frequency channel is this? */
       ifreq = (iIF-1) * incif + (iChan-1) * incf;
+      ifreq = MIN ((nfreq-1), ifreq);
       PBFact = ObitPBUtilRelPB (Angle, niffreq, uvDesc->freqArr, in->antSize, 0.0,
 				uvDesc->freqArr[ifreq]);
       /* Does this one differ by more than 1% from PBStart? */
@@ -3599,6 +3606,9 @@ gboolean ObitSkyModelsetPBChans(ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
 
   /* Either whole IFs or a block of channels in a single IF */
   in->numberChannelPB = MIN (in->numberChannelPB, in->numberChannel);
+  /* No more than all */
+  in->numberChannelPB = MIN (in->numberChannelPB, 
+			     in->numberChannel-in->startChannelPB+1);
 
   /* if the limit not found counts too high
      if (!found) {

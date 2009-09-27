@@ -87,7 +87,7 @@ void ObitPrecessUVJPrecessApp (ObitUVDesc *desc, ObitSource *source)
   /* Precess */
   RAMean  = DG2RAD*source->RAMean;
   DecMean = DG2RAD*source->DecMean;
-  jpreces (JD, desc->equinox, 0.01, 1, TRUE, obsPos, polar,
+  jpreces (JD, desc->equinox, 0.01, 1, FALSE, obsPos, polar,
 	   &RAMean, &DecMean, &source->RAApp, &source->DecApp);
 
   /* Convert to degrees */
