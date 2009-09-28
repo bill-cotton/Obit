@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -260,7 +260,7 @@ void ObitUVCalCalibrate (ObitUVCal *in, ofloat time, olong ant1, olong ant2,
   /* Integration time if in data and not already specified */
   if (me->DeltaTime<=0.0) {
     if (desc->ilocit>=0) 
-      me->DeltaTime = RP[desc->ilocid];
+      me->DeltaTime = RP[desc->ilocit];
     else
       me->DeltaTime = 1.0 / 86400.0; /* Default 1 sec */
   }

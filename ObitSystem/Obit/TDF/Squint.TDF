@@ -393,14 +393,16 @@ Adverbs:
                   averaging
                BLFOV = Field of view over which the amplitude distortion
                   is not to exceed BLFact.
-               The lesser of solPInt and solPMode is used for the 
+               The lesser of solPInt and solAInt is used for the 
                   maximum averaging time.  
                   If both are zero, 1 min. is used
              This option can substantially reduce the data volume and
              reduce processing time.
+             A value between 1.004 and 1.01 give a good tradeoff between
+             dynamic range and data reduction.
   BLFOV......The radius of the field of view over which baseline 
              dependent averaging is not to distort amplitudes by more 
-             than BLFact
+             than BLFact.  Defaults to FOV.
 
       Output files
   outDType..'FITS' or 'AIPS'  type of output

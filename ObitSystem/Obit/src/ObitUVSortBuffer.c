@@ -234,8 +234,6 @@ void ObitUVSortBufferAddVis (ObitUVSortBuffer *in, ofloat *vis,
 {
   olong i, lrec, delta, nwrite, nmove, NPIO, bindx, ivis, jvis, ncopy;
   ObitUVSortStruct *sortKeys;
-  ObitInfoType type;
-  gint32 dim[MAXINFOELEMDIM];
   gchar *routine = "ObitUVSortBufferAddVis";
 
   /* error checks */
@@ -259,8 +257,7 @@ void ObitUVSortBufferAddVis (ObitUVSortBuffer *in, ofloat *vis,
   ObitUVSortBufferSort(in, err);
 
   /* How big is I/O buffer? */
-  NPIO = 1;
-  ObitInfoListGetTest(in->myUVdata->info, "nVisPIO", &type, dim, &NPIO);
+  NPIO = in->myUVdata->bufferSize/lrec;
   
   /* Write with times up to lastTime */
   delta = sizeof(ObitUVSortStruct)/sizeof(ofloat);
@@ -268,7 +265,7 @@ void ObitUVSortBufferAddVis (ObitUVSortBuffer *in, ofloat *vis,
   while (ivis<in->hiVis) {  /* outer loop */
     nwrite = 0;
     bindx  = 0;
-    nmove = MIN(NPIO, in->hiVis-ivis);
+    nmove = MIN(NPIO-2, in->hiVis-ivis);
     
     /* Inner loop copying to I/O buffer */
     for (i=0; i<nmove; i++) {
@@ -278,7 +275,7 @@ void ObitUVSortBufferAddVis (ObitUVSortBuffer *in, ofloat *vis,
       jvis = sortKeys->index.itg;
       memmove(&in->myUVdata->buffer[bindx], &in->myBuffer[jvis*lrec], ncopy);
       bindx += lrec;
-      nwrite ++;
+      nwrite++;
       ivis++;
     } /* End loop copying to IO buffer */
   
@@ -324,9 +321,8 @@ void ObitUVSortBufferFlush (ObitUVSortBuffer *in, ObitErr *err)
   ObitUVSortBufferSort(in, err);
 
   /* How big is I/O buffer? */
-  NPIO = 1;
-  ObitInfoListGetTest(in->myUVdata->info, "nVisPIO", &type, dim, &NPIO);
   lrec = in->myUVdata->myDesc->lrec;
+  NPIO = in->myUVdata->bufferSize/lrec;
   ncopy = lrec*sizeof(ofloat);
   
   /* Loop writing to I/O buffer and writing */
@@ -335,7 +331,7 @@ void ObitUVSortBufferFlush (ObitUVSortBuffer *in, ObitErr *err)
   while (ivis<in->hiVis) {  /* outer loop */
     nwrite = 0;
     bindx  = 0;
-    nmove = MIN(NPIO, in->hiVis-ivis);
+    nmove = MIN(NPIO-2, in->hiVis-ivis);
     
     /* Inner loop copying to I/O buffer */
     for (i=0; i<nmove; i++) {
@@ -346,6 +342,7 @@ void ObitUVSortBufferFlush (ObitUVSortBuffer *in, ObitErr *err)
       bindx += lrec;
       nwrite ++;
       ivis++;
+
     } /* End loop copying to IO buffer */
   
     /* Write */

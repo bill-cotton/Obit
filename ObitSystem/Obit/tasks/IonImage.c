@@ -2173,8 +2173,11 @@ void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     /* Set parameters */
     ObitInfoListGetTest(myInput, "BLFOV",   &type, dim, &FOV);
     if (FOV<=0.0) ObitInfoListGetTest(myInput, "FOV",   &type, dim, &FOV);
-    ObitInfoListGetTest(myInput, "solPInt", &type, dim, &solPInt);
-    ObitInfoListGetTest(myInput, "solAInt", &type, dim, &solAInt);
+    ObitInfoListGetTest(myInput, "solInt",     &type, dim, &solPInt);
+    solPInt /= 4.0;
+    ObitInfoListGetTest(myInput, "PeelSolInt", &type, dim, &solAInt);
+    if (solAInt<=0.0) solAInt = solPInt;
+    if (solPInt<=0.0) solPInt = solAInt;
     maxInt = MIN (solPInt, solAInt);
     if (maxInt<=0.0) maxInt = 1.0;  /* Default 1 min */
     /* Default FOV 0.5 lambda/diameter */

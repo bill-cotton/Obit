@@ -1806,6 +1806,11 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
       return outUV;
   }
 
+  /* Give report */  
+  Obit_log_error(err, OBIT_InfoErr, 
+		 "Doing baseline dependent time averaging");
+  ObitErrLog(err); 
+
   /* Get Parameters - radius of field of view */
   FOV = 20.0/60.0;  /* default 20 amin */
   ObitInfoListGetTest(inUV->info, "FOV", &type, dim, &FOV);
@@ -2008,6 +2013,7 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
       lastSubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 0.5);
       /* Baseline index this assumes a1<=a2 always */
       blindx =  blLookup[ant1-1] + ant2-ant1;
+      blindx = MAX (0, MIN (blindx, numBL-1));
       if (inDesc->ilocfq>=0) lastFQID = (olong)(inBuffer[iindx+inDesc->ilocfq]+0.5);
       else lastFQID = 0;
       curTime = inBuffer[iindx+inDesc->iloct]; /* Time */
@@ -2182,10 +2188,6 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   if ((iretCode > OBIT_IO_EOF) || (oretCode > OBIT_IO_EOF) ||
       (err->error)) goto cleanup;
   
-  /* Restore no vis per read in output */
-  dim[0] = dim[1] = dim[2] = 1;
-  ObitInfoListAlwaysPut (outUV->info, "nVisPIO", OBIT_long, dim, &NPIO);
-
   /* Cleanup */
  cleanup:
   if (accVis)   g_free(accVis);   accVis   = NULL;
@@ -2213,6 +2215,10 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   oretCode = ObitUVClose (outUV, err);
   if ((oretCode!=OBIT_IO_OK) || (iretCode!=OBIT_IO_OK) || (err->error))
     Obit_traceback_val (err, routine, outUV->name, outUV);
+
+  /* Restore no vis per read in output */
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (outUV->info, "nVisPIO", OBIT_long, dim, &NPIO);
 
   /* Give report */  
   Obit_log_error(err, OBIT_InfoErr, 
