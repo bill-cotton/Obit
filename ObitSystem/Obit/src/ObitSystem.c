@@ -405,7 +405,11 @@ void ObitSystemFreeScratch (Obit *in, ObitErr *err)
 
   /* remove from list */
   elem = scratchListFind (mySystemInfo, in);
-  if (elem) scratchListRemove (mySystemInfo, elem);
+  if (elem) {
+    scratchListRemove (mySystemInfo, elem);
+    g_free(elem);
+  }
+  
   
   /* Unlock object */
   ObitThreadUnlock(mySystemInfo->thread);

@@ -21,12 +21,11 @@ wxPython.  Software distributed here will be installed privately and
 should not interfere with existing versions of packages (except
 possibly as a side effect of setting $LD_LIBRARY_PATH or $PATH).
 
-   The first step of installation is to move and unpack the 
-distribution tarball, e.g.:
- > gtar xzvf ObitInstall2.1.tgz
-or, if gtar is not available
- > gunzip ObitInstall2.1.tgz
- > tar xvf ObitInstall2.1.tar
+   The first step of installation is obtain a version of the software
+from the subversion server, e.g.:
+
+ > svn checkout https://svn.cv.nrao.edu/svn/ObitInstall/
+
 This will leave the installation under subdirectory ObitInstall
 The installation scripts are in, and should be run from subdirectory 
 ObitInstall.
@@ -61,6 +60,16 @@ using command line -without options to InstallObit.sh;  -help gives:
 Motif, python and GNU Scientific library:
  > InstallObit.sh -without MOTIF PYTHON GSL
 
+   If you cannot get the InstallObit.sh script to work, the fallback is to 
+install the needed third party manually (if not done by InstallObit.sh)
+and run the configure script in the subdirectories under ObitSystem
+Obit, ObitView, ObitTalk and ObitSD (If single dish package needed).
+These configure scripts allow a great deal of flexibility; 
+the see the details, use:
+> ./configure --help
+After running configure, run make to build the software in each of 
+these subdirectories.
+
    Interprocess communications in Obit uses the xmlrpc protocol.  In
 the c implementation, this uses the xmlrpc-c library which in turn,
 depends on other packages for the actual communications. Xmlrpc-c can
@@ -69,37 +78,37 @@ Libwww is not thread-safe so curl is greatly preferred.  The WWW option
 has been disabled in InstallObit.sh.
 
    To use the installed software, you have to tell your system where
-to look for it.  If you've installed it in a directory whose path is
-given by $ObitSystem (the ObitInstall directory), then you need to append 
-$ObitSystem/other/lib to your $LD_LIBRARY PATH, e.g.
+to look for it.  If you've installed it under a directory whose path is
+given by $OBITINSTALL (the ObitInstall directory), then you need to append 
+$OBITINSTALL/other/lib to your $LD_LIBRARY PATH, e.g.
 for csh
- > setenv LD_LIBRARY_PATH "$LD_LIBRARY PATH:$ObitSystem/other/lib"
+ > setenv LD_LIBRARY_PATH "$LD_LIBRARY PATH:$OBITINSTALL/other/lib"
 for sh
- % LD_LIBRARY_PATH="$LD_LIBRARY PATH:$ObitSystem/other/lib"; export LD_LIBRARY_PATH
-If this order picks up an incompatible library, prepend the Obit/other/lib but 
-beware of potential problems with other software.
+ % LD_LIBRARY_PATH="$LD_LIBRARY PATH:$OBITINSTALL/other/lib"; export LD_LIBRARY_PATH
+If this order picks up an incompatible library, prepend the 
+ObitInstall/other/lib but  beware of potential problems with other software.
 
-Similarly, you need to add $ObitSystem/bin to your $PATH
+Similarly, you need to add $OBITINSTALL/bin to your $PATH
 for csh
- > setenv PATH "$PATH:$ObitSystem/bin"
+ > setenv PATH "$PATH:$OBITINSTALL/bin"
 for sh
- % PATH="$PATH:$ObitSystem/bin"; export PATH
+ % PATH="$PATH:$OBITINSTALL/bin"; export PATH
 
    In order to run ObitTalk, the environment variables $OBIT and $OBITSD (if installed)
 need to be set:
 for csh
- > setenv OBIT "$ObitSystem/ObitSystem/Obit"
- > setenv OBITSD "$ObitSystem/ObitSystem/Obit"
+ > setenv OBIT "$OBITINSTALL/ObitSystem/Obit"
+ > setenv OBITSD "$OBITINSTALL/ObitSystem/Obit"
 for sh
- % OBIT="$ObitSystem/ObitSystem/Obit"; export OBIT
- % OBITSD="$ObitSystem/ObitSystem/ObitSD"; export OBITSD
+ % OBIT="$OBITINSTALL/ObitSystem/Obit"; export OBIT
+ % OBITSD="$OBITINSTALL/ObitSystem/ObitSD"; export OBITSD
 
    In order to run Obit software from python without using ObitTalk, 
 you need to set PYTHONPATH:
 for csh
- > setenv PYTHONPATH "$PYTHONPATH:$OBITSD/python:$OBIT/python:$ObitSystem/opt/share/obittalk/python"
+ > setenv PYTHONPATH "$PYTHONPATH:$OBITSD/python:$OBIT/python:$OBITINSTALL/opt/share/obittalk/python"
 for sh
- % PATHPYTHON="$PYTHONPATH:$OBITSD/python:$OBIT/python:$ObitSystem/opt/share/obittalk/python"; export PATH
+ % PATHPYTHON="$PYTHONPATH:$OBITSD/python:$OBIT/python:$OBITINSTALL/opt/share/obittalk/python"; export PATH
 
    The InstallObit.sh script creates a pair of setup files with the
 commands to set the relevant environment parameters.  These are
@@ -110,10 +119,8 @@ appropriate file should be sourced before running Obit software.
 ObitSystem/doc/ObitTalk.pdf.  The most recent documentation is available
 from the Obit home page http://www.cv.nrao.edu/~bcotton/Obit.html.
 
-   Updates can be obtained using the Obit anonymous svn server.  Such an
-update is recommended when installing this tarball as it is only updated 
-occasionally. 
-To update ObitSystem, cd to the ObitSystem top directory 
+   Updates can be obtained using the Obit anonymous svn server.  
+To update Obit, cd to the ObitSystem top directory 
 ($OBITINSTALL/ObitSystem as defined in the setup scripts created by 
 the installation) and :
  % svn update
@@ -124,7 +131,7 @@ the installation) and :
 library or generate code that can be linked with.  If your systen has
 a libz - then use it and specify -without ZLIB to InstallObit.sh
    The distributed Motif doesn't appear to build correctly on a 64 bit 
-system.
+system.  The distributed glib works but all messages are repeated.
 
 UBUNTU Notes:
 ------------

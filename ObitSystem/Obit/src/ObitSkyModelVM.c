@@ -87,7 +87,7 @@ gboolean ObitSkyModelVMLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
  Note: Derived classes MUST have the following entries at the beginning 
  of the corresponding structure */
 typedef struct {
-  /* type "vm" in this class */
+  /* type "vmbase" in this class */
   gchar type[12];
   /* SkyModel with model components loaded (ObitSkyModelLoad) */
   ObitSkyModel *in;
@@ -288,7 +288,7 @@ void ObitSkyModelVMInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
     
     for (i=0; i<in->nThreads; i++) {
       args = (VMFTFuncArg*)in->threadArgs[i];
-      strcpy (args->type, "vm");  /* Enter type as first entry */
+      strcpy (args->type, "vmbase");  /* Enter type as first entry */
       args->in     = inn;
       args->uvdata = uvdata;
       args->ithread= i;
@@ -317,10 +317,11 @@ void ObitSkyModelVMShutDownMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   /* Free DFTFT thread arguments */
   if (in->threadArgs) {
     args = (VMFTFuncArg*)in->threadArgs[0];
-    if (!strncmp (args->type, "vm", 2)) {
+    if (!strncmp (args->type, "vmbase", 6)) {
       for (i=0; i<in->nThreads; i++) {
 	args = (VMFTFuncArg*)in->threadArgs[i];
 	ObitFArrayUnref(args->VMComps);
+	g_free(in->threadArgs[i]);
       }
       g_free(in->threadArgs); in->threadArgs= NULL;
     }
@@ -1019,7 +1020,7 @@ void ObitSkyModelVMFTDFT (ObitSkyModelVM *in, olong field, ObitUV *uvdata, ObitE
 
   /* Check */
   args = (VMFTFuncArg*)in->threadArgs[0];
-  if (strncmp (args->type, "vm", 2)) {
+  if (strncmp (args->type, "vmbase", 6)) {
     Obit_log_error(err, OBIT_Error,"%s: Wrong type FuncArg %s", routine,args->type);
     return;
   }

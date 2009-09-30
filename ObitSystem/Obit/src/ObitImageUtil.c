@@ -1259,6 +1259,11 @@ ObitImageUtilInterpolateImage (ObitImage *inImage, ObitImage *outImage,
   nrowPerThread = nrow/nThreads;
   nTh = nThreads;
   if (nrow<64) {nrowPerThread = nrow; nTh = 1;}
+  /* No fewer than 64 rows per thread */
+  if ((nrowPerThread)<64) {
+    nTh = (olong)(0.5 + nrow/64.0);
+    nrowPerThread = nrow/nTh;
+  }
   lorow = 1;
   hirow = nrowPerThread;
   hirow = MIN (hirow, nrow);
@@ -1434,6 +1439,11 @@ ObitImageUtilInterpolateImageZern (ObitImage *inImage, ObitImage *outImage,
   nrowPerThread = nrow/nThreads;
   nTh = nThreads;
   if (nrow<64) {nrowPerThread = nrow; nTh = 1;}
+  /* No fewer than 64 rows per thread */
+  if ((nrowPerThread)<64) {
+    nTh = (olong)(0.5 + nrow/64.0);
+    nrowPerThread = nrow/nTh;
+  }
   lorow = 1;
   hirow = nrowPerThread;
   hirow = MIN (hirow, nrow);
@@ -1600,6 +1610,11 @@ ObitImageUtilInterpolateWeight (ObitImage *inImage, ObitImage *outImage,
   nrowPerThread = nrow/nThreads;
   nTh = nThreads;
   if (nrow<64) {nrowPerThread = nrow; nTh = 1;}
+  /* No fewer than 64 rows per thread */
+  if ((nrowPerThread)<64) {
+    nTh = (olong)(0.5 + nrow/64.0);
+    nrowPerThread = nrow/nTh;
+  }
   lorow = 1;
   hirow = nrowPerThread;
   hirow = MIN (hirow, nrow);
