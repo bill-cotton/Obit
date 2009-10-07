@@ -469,7 +469,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
 {
   ObitDConCleanVis *in;
   ObitFArray **pixarray=NULL;
-  gboolean done, fin=TRUE, quit, doSub, bail, doMore, moreClean;
+  gboolean done, fin=TRUE, quit, doSub, bail, doMore, moreClean, notDone;
   olong jtemp, i, *startCC=NULL, *newCC=NULL, count, ifld;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   const ObitDConCleanVisClassInfo *inClass;
@@ -556,8 +556,8 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, in->name);
   if (in->prtLv>1) ObitErrLog(err);  /* Progress Report */
   else ObitErrClear(err);
-  in->doBeam = FALSE;  /* Shouldn't need again */
-
+  in->doBeam = FALSE;                               /* Shouldn't need again */
+  in->Pixels->complCode = OBIT_CompReasonUnknown;   /* Clean not yet started */
   /* Create local arrays */
   startCC = g_malloc0(in->nfield*sizeof(olong));
   newCC   = g_malloc0(in->nfield*sizeof(olong));
@@ -611,8 +611,9 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
     }
 
     /* Get image/beam statistics needed for this cycle */
-    doMore = inClass->ObitDConCleanPixelStats((ObitDConClean*)in, pixarray, err);
+    notDone = inClass->ObitDConCleanPixelStats((ObitDConClean*)in, pixarray, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
+    if (!notDone) break;  /* Apparently finished */
     
     /*fprintf (stderr,"DEBUG doMore %d done %d\n", doMore, done);*/
 
@@ -629,7 +630,8 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
       }
       if (err->error) Obit_traceback_msg (err, routine, in->name);
      
-
+      /* Are we done */
+      if (!doMore) break;
 
       /* Number of components before CLEAN */
       for (ifld=0; ifld<in->numCurrentField; ifld++) {
@@ -1010,6 +1012,17 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
   if ((in->Pixels->currentIter >= in->Pixels->niter) && 
       (in->Pixels->currentIter>0)) return done;
 
+  /* If only one field - it's the one */
+  if (in->nfield==1) {
+    in->currentFields[0] = 1;
+    in->currentFields[1] = 0;
+    in->numCurrentField  = 1;
+    MakeResiduals(in, in->currentFields, FALSE, err);
+    done = (in->cleanable[0] <= in->minFlux[0]) || 
+      (in->imgPeakRMS[0]<MIN (4.0,(0.1*in->beamPeakRMS[0])));
+    return done;
+  }
+
   /* Check if there are autoCenter windows, if so get level */
   for (i=0; i<in->mosaic->numberImages; i++) {
     if (in->mosaic->isAuto[i]>0) {
@@ -1208,6 +1221,17 @@ static gboolean ObitDConCleanVisPickNext3D(ObitDConCleanVis *in, ObitErr *err)
   /* Check if reached max number of components and some done */
   if ((in->Pixels->currentIter >= in->Pixels->niter) && 
       (in->Pixels->currentIter>0)) return done;
+
+  /* If only one field - it's the one */
+  if (in->nfield==1) {
+    in->currentFields[0] = 1;
+    in->currentFields[1] = 0;
+    in->numCurrentField  = 1;
+    MakeResiduals(in, in->currentFields, FALSE, err);
+    done = (in->cleanable[0] <= in->minFlux[0]) || 
+      (in->imgPeakRMS[0]<MIN (4.0,(0.1*in->beamPeakRMS[0])));
+    return done;
+  }
 
   fresh   = ObitMemAlloc0(in->nfield*sizeof(gboolean));
   fldList = ObitMemAlloc0((in->nfield+3)*sizeof(olong));
@@ -2079,7 +2103,7 @@ gboolean ObitDConCleanVisAutoWindow(ObitDConClean *inn, olong *fields, ObitFArra
   gboolean doAbs, found;
   gchar *routine = "ObitDConCleanVisAutoWindow";
 
- /* error checks */
+  /* error checks */
   if (err->error) return newWin;
   g_assert (ObitDConCleanIsA(in));
 
@@ -2282,7 +2306,7 @@ gboolean ObitDConCleanVisPixelStats(ObitDConClean *inn, ObitFArray **pixarray,
 				    ObitErr *err)
 {
   ObitDConCleanVis *in=(ObitDConCleanVis*)inn;
-  gboolean newWin = FALSE, isLast = FALSE;
+  gboolean newWin = FALSE, isLast = FALSE, allDone=TRUE;
   olong field, ifld;
   ObitImage *Beam=NULL;
   const ObitDConCleanClassInfo *inClass;
@@ -2306,13 +2330,26 @@ gboolean ObitDConCleanVisPixelStats(ObitDConClean *inn, ObitFArray **pixarray,
     newWin = FALSE;
   }
   if (err->error) Obit_traceback_val (err, routine, in->name, newWin);
+
+  /* Did the previous CLEAN reach the CLEAN limit - if so don't check
+     if all fields are finished; if there was something else to CLEAN
+     a new Window will be added later */
+  allDone = TRUE;
   
   /* Loop over current fields */
   for (ifld=0; ifld<=in->numCurrentField; ifld++) {
     
     field = in->currentFields[ifld];
     if (field<=0) break;  /* List terminates */
-    
+
+    /* Is this field finished? */  
+    if ((in->Pixels->complCode!=OBIT_CompReasonNiter) &&
+	(in->Pixels->complCode!=OBIT_CompReasonMinFlux)) {
+      allDone = allDone && 
+	((in->cleanable[field-1] <= in->minFlux[field-1]) || 
+	 (in->imgPeakRMS[field-1]<4.0));
+    }
+
     /* Beam image */
     Beam = (ObitImage*)(in->mosaic->images[field-1]->myBeam);
     
@@ -2344,7 +2381,7 @@ gboolean ObitDConCleanVisPixelStats(ObitDConClean *inn, ObitFArray **pixarray,
     if (err->error) Obit_traceback_val (err, routine, in->name, newWin);
   }
 
-  return newWin;
+  return newWin || (!allDone);
 } /* end ObitDConCleanVisPixelStats */
 
 /**
@@ -3204,7 +3241,7 @@ static ofloat ObitDConCleanVisCleanable(ObitDConCleanVis *in, olong field,
   
   if (err->error) Obit_traceback_val (err, routine, image->name, out);
   
-  return PeakOut;
+  return fabs(PeakOut);
 } /* end ObitDConCleanVisCleanable */
 
 /* GLOBAL DEBUG */

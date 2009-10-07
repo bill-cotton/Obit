@@ -1081,8 +1081,11 @@ def PIsA (inUV):
     inUV   = Python UV object
     """
     ################################################################
-    return inUV.UVIsA()
-    # end PIsA
+    try:
+        return inUV.UVIsA()
+    except:
+        return False
+   # end PIsA
 
 def PGetName (inUV):
     """ Tells UV object name (label)

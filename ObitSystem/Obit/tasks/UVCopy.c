@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to copy uv data                        .                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -571,7 +571,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gboolean     doCalSelect;
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "souCode", "Qual", "Stokes", "timeRange", 
-    "BChan", "EChan", "BIF", "EIF", "FreqID",
+    "BChan", "EChan", "BIF", "EIF", "FreqID", "corrType", 
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "doPol",
     "Smooth", "Antennas",  "subA", "Sources", "souCode", "Qual",
      NULL};
@@ -817,7 +817,7 @@ void UVCopyHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     "FreqID", "BChan", "EChan", "BIF", "EIF",  "Stokes", 
     "Sources",  "Qual", "souCode", "subA", "Antennas", 
     "doCalSelect", "doCalib", "gainUse", "doPol", "flagVer", 
-    "doBand", "BPVer", "Smooth",  
+    "doBand", "BPVer", "Smooth",  "corrType", 
     "outFile",  "outDisk",  "outName", "outClass", "outSeq", "Compress",
     NULL};
   gchar *routine = "UVCopyHistory";

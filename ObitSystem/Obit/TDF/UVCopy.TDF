@@ -4,7 +4,7 @@
 ;! Copy UV data
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007,2008
+;;  Copyright (C) 2007-2009
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -67,6 +67,11 @@ EIF               0.0     9999.0   Highest IF (0=>BIF to last)
 subA                                Subarray
 **PARAM** int 50
 Antennas         0.0     1000.0     List of antennas to calibrate
+**PARAM** int 1
+corrType                            Cross or auto correlations
+                                      0 pass only xc data
+                                      1 pass xc and ac data
+                                      2 pass only ac data
 **PARAM** int 1
 doCalib          -1.0        2.0   If >0 calibrate data
                                    = 2 calibrate weights
@@ -141,6 +146,11 @@ Adverbs:
              determined. If any number is negative then all
              antennas listed  are NOT to be used to determine
              solutions and all others are. All 0 => use all.
+  corrType...If corrType = 0 then UVCopy will pass only cross-power data, 
+             this is the default mode. 
+             If corr=1 then both cross-power and total-power data 
+             will be passed; 
+             if corr=2 then only total-power data will be passed.
   doCalib....If >0, calibrate the data using information in the
              specified Cal (CL) table for multi-source or SN table for
              single-source data.  If > 1.5, also calibrate the weights

@@ -560,7 +560,10 @@ def PIsA (inTab):
     if inTab.__class__ != Table:
         return 0
     #
-    return Obit.TableIsA(inTab.me)
+    try:
+        return Obit.TableIsA(inTab.me)
+    except:
+        return False
     # end PIsA
 
 def PGetName (inTab):

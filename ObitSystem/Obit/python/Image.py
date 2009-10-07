@@ -1667,7 +1667,10 @@ def PIsA (inImage):
     inImage   = Python Image object
     """
     ################################################################
-    return inImage.ImageIsA()
+    try:
+        return inImage.ImageIsA()
+    except:
+        return False
     # end PIsA
 
 def PUnref (inImage):

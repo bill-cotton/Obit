@@ -771,6 +771,12 @@ void doFit (ObitInfoList *myInput, ObitImage* in1Image, ObitImage* in2Image,
   Bcount = 0;
   for (i=0; i<Bpix->arraySize; i++) 
     if ((Bpix->array[i]!=fblank)&&(Bpix->array[i]>=Cutoff)) Bcount++;
+
+  /* Better have found more than 10 each */
+  Obit_return_if_fail(((Acount+Bcount)>20), err,
+		      "%s: Insufficient counts above Cutoff %d %d", 
+		      routine, Acount, Bcount);
+
   AXpixel = g_malloc0(Acount*sizeof(ofloat));
   AYpixel = g_malloc0(Acount*sizeof(ofloat));
   AData   = g_malloc0(Acount*sizeof(ofloat));

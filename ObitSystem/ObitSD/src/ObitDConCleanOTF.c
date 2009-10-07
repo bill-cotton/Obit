@@ -318,7 +318,7 @@ void ObitDConCleanOTFDeconvolve (ObitDCon *inn, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Read Beam patch if needed*/
-  if (!in->BeamPatches) ReadBP (in, err);
+  if (!in->BeamPatches[0]) ReadBP (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /*Only one pass deconvolution needed */
