@@ -9613,6 +9613,7 @@ typedef struct {
 #include "ObitUVUtil.h"
 #include "ObitUVEdit.h"
 #include "ObitUVWeight.h"
+#include "ObitTableSNUtil.h"
 
 
 extern void UVSetFITS(ObitUV *in, long nvis, int disk, char *file, 
@@ -9968,6 +9969,10 @@ extern ObitTable* TableCLGetDummy (ObitUV *inUV,  ObitUV *outUV, long ver, ObitE
   return (ObitTable*)ObitTableCLGetDummy (inUV, outUV, (olong)ver, err);
 } // end TableCLGetDummy
 
+extern ObitTable* TableSNGetZeroFR (ObitUV *inUV,  ObitUV *outUV, long ver, ObitErr *err) {
+  return (ObitTable*)ObitTableSNGetZeroFR (inUV, outUV, (olong)ver, err);
+} // end TableCLGetDummy
+
 extern void UVSetFITS(ObitUV *,long ,int ,char *,ObitErr *);
 extern void UVSetAIPS(ObitUV *,long ,int ,int ,int ,ObitErr *);
 extern ObitData *UVCastData(ObitUV *);
@@ -10024,6 +10029,7 @@ extern ObitUV *UVEditClip(ObitUV *,int ,ObitUV *,ObitErr *);
 extern ObitUV *UVEditClipStokes(ObitUV *,int ,ObitUV *,ObitErr *);
 extern int UVUtilFlag(ObitUV *,ObitErr *);
 extern ObitTable *TableCLGetDummy(ObitUV *,ObitUV *,long ,ObitErr *);
+extern ObitTable *TableSNGetZeroFR(ObitUV *,ObitUV *,long ,ObitErr *);
 
 typedef struct {
   ObitUV *me;
@@ -44222,6 +44228,53 @@ static PyObject *_wrap_TableCLGetDummy(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_TableSNGetZeroFR(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitUV * _arg0;
+    ObitUV * _arg1;
+    long  _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo3 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOlO:TableSNGetZeroFR",&_argo0,&_argo1,&_arg2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableSNGetZeroFR. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of TableSNGetZeroFR. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of TableSNGetZeroFR. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableSNGetZeroFR(_arg0,_arg1,_arg2,_arg3);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
 static PyObject *_wrap_newUVSelfCal(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitUVSelfCal * _result;
@@ -50597,6 +50650,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "UVSelfCalCopy", _wrap_UVSelfCalCopy, METH_VARARGS },
 	 { "UVSelfCalCreate", _wrap_UVSelfCalCreate, METH_VARARGS },
 	 { "newUVSelfCal", _wrap_newUVSelfCal, METH_VARARGS },
+	 { "TableSNGetZeroFR", _wrap_TableSNGetZeroFR, METH_VARARGS },
 	 { "TableCLGetDummy", _wrap_TableCLGetDummy, METH_VARARGS },
 	 { "UVUtilFlag", _wrap_UVUtilFlag, METH_VARARGS },
 	 { "UVEditClipStokes", _wrap_UVEditClipStokes, METH_VARARGS },

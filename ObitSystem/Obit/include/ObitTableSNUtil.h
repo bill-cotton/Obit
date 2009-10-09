@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -48,4 +48,7 @@ ObitIOCode ObitTableSNSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err);
 ObitTableSN* ObitTableSNUtilInvert (ObitTableSN *inSN, ObitData *outData, olong *outVer, 
 				    gboolean doRepl, ObitErr *err);
 
+/** Public: Solution table to undo fringe rate. */
+ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver, 
+				   ObitErr *err);
 #endif /* OBITTABLESNUTIL_H */ 

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005                                               */
+/*;  Copyright (C) 2005,2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -28,6 +28,9 @@
 
 #include <math.h>
 #include "ObitTableSNUtil.h"
+#include "ObitTableANUtil.h"
+#include "ObitTableSUUtil.h"
+#include "ObitUVUtil.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -35,8 +38,11 @@
  * ObitTableSN class utility function definitions.
  */
 
-/*----------------------Public functions---------------------------*/
+/*---------------Private function prototypes----------------*/
+/** Private: Sinc function. */
+static ofloat Sinc (ofloat arg);
 
+/*----------------------Public functions---------------------------*/
 
 /**
  * Copies SN tables from inUV to outUV with selection in inUV
@@ -393,3 +399,494 @@ ObitTableSN* ObitTableSNUtilInvert (ObitTableSN *inSN, ObitData *outData, olong 
     /* Done */
     return outSN;
 } /* end ObitTableSNUtilInvert */
+
+#ifndef VELIGHT
+#define VELIGHT 2.997924562e8
+#endif
+/**
+ * Create SN table that will counter-rotate the data to a zero fringe rate
+ * After this operation, all terrestial sources should be constant.
+ * Amplitudes reflect the effect of the difference in fringe rate and delay
+ * for the integration time and observed bandwidth.
+ * \param inUV     Input UV data. Control parameters:
+ * \li "solInt"    OBIT_float (1,1,1) Entry interval in days [def 10 sec].
+ * \li "timeInt"   OBIT_float (1,1,1) Data integration time in sec [def 10 sec].
+ * \param outUV    UV with which the output  Table is to be associated
+ * \param ver      CL table version
+ * \param err      Error stack, returns if not empty.
+ * \return Pointer to the newly created ObitTableSN object which is 
+ *                 associated with outUV.
+ */
+ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver, 
+				   ObitErr *err)
+{
+#define MAXANT    300    /* Maximum number of antennas */
+  ObitTableSN *outCal=NULL;
+  ObitTableSNRow *row=NULL;
+  ObitAntennaList *AntList=NULL;
+  ObitTableAN *ANTable=NULL;
+  ObitSourceList *SouList=NULL;
+  ObitTableSU *SUTable=NULL;
+  ObitUVDesc *desc=NULL;
+  ObitIOAccess access;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  ofloat *rec, solInt, t0, sumTime, cbase, lastTime=-1.0, lastSource=-1.0, lastFQID=-1.0;
+  ofloat delTime, uvw[3], bl[3], delay, amp, phase, curSou=-1.0, curFQ=-1.0;
+  olong iRow, i, j, ia, lrec, maxant, suid;
+  olong  nTime, SubA, ant1, ant2, lastSubA=-1;
+  oint numPol, numIF, numOrb, numPCal;
+  odouble DecR, RAR, ArrLong, AntLst, HrAng=0.0, cosdec;
+  gdouble twopi = 2.0* G_PI, omegaE=7.29115e-5;
+  gboolean doCalSelect, doFirst=TRUE, someData=FALSE, gotAnt[MAXANT];
+  ObitIOCode retCode;
+  gchar *tname;
+  gchar *routine = "ObitTableSNGetZeroFR";
+ 
+   /* error checks */
+  if (err->error) return outCal;
+  g_assert (ObitUVIsA(inUV));
+  desc = inUV->myDesc;
+
+  /* Calibration/selection wanted? */ 
+  doCalSelect = FALSE;
+  ObitInfoListGetTest(inUV->info, "doCalSelect", &type, dim, &doCalSelect);
+  if (doCalSelect) access = OBIT_IO_ReadCal;
+  else access = OBIT_IO_ReadWrite;
+
+  /* open UV data to fully instantiate if not already open */
+  if ((inUV->myStatus==OBIT_Inactive) || (inUV->myStatus==OBIT_Defined)) {
+    retCode = ObitUVOpen (inUV, access, err);
+    if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
+  }
+  lrec = inUV->myDesc->lrec;
+  t0 = -1.0e20;
+
+  /* Create output */
+  if (desc->jlocs>=0)  numPol = MIN (2, desc->inaxes[desc->jlocs]);
+  else                 numPol = 1;
+  if (desc->jlocif>=0) numIF = desc->inaxes[desc->jlocif];
+  else                 numIF = 1;
+  tname  = g_strconcat ("Calibration for: ",inUV->name, NULL);
+  outCal = newObitTableSNValue(tname, (ObitData*)outUV, &ver, OBIT_IO_WriteOnly,  
+			       numPol, numIF, err);
+  g_free (tname);
+  if (err->error) Obit_traceback_val (err, routine, outUV->name, outCal);
+
+  /* Sorted? */
+  if (desc->isort[0]=='T') {
+    outCal->myDesc->sort[0] = outCal->TimeCol+1;
+    outCal->myDesc->sort[1] = outCal->antNoCol+1;
+  }
+
+  /* Get parameters for calibration */
+  /* "Solution interval" default 10 sec */
+  solInt = 10.0;
+  ObitInfoListGetTest(inUV->info, "solInt", &type, dim, (gpointer*)&solInt);
+  solInt /= 86400.0;  /* to days */
+
+  /* Source info - SU table or from header*/
+  ver      = 1;
+  access   = OBIT_IO_ReadOnly;
+  SUTable = newObitTableSUValue ("SU table", (ObitData*)outUV, 
+				 &ver, access, numIF, err);
+  if (SUTable==NULL) {
+    /* Get from header - REALLY SHOULD PRECESS */
+    RAR      = desc->crval[desc->jlocr]*DG2RAD;
+    DecR     = desc->crval[desc->jlocd]*DG2RAD;
+    cosdec   = cos(DecR);
+  } else { /* Use SU table */
+    SouList = ObitTableSUGetList (SUTable, err);
+    if (err->error) Obit_traceback_val (err, routine, outUV->name, outCal);
+    
+    /* Cleanup */
+    SUTable = ObitTableSUUnref(SUTable);
+  }
+
+  /* Antenna info */
+  ver      = 1;
+  access   = OBIT_IO_ReadOnly;
+  numOrb   = 0;
+  numPCal  = 0;
+  ANTable = newObitTableANValue ("AN table", (ObitData*)outUV, 
+				 &ver, access, numOrb, numPCal, err);
+  if (ANTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with AN table");
+  AntList = ObitTableANGetList (ANTable, err);
+  if (err->error) Obit_traceback_val (err, routine, outUV->name, outCal);
+
+  /* Cleanup */
+  ANTable = ObitTableANUnref(ANTable);
+
+  /* Antenna coordinates to wavelengths at reference frequency */
+  for (i=0; i<AntList->number; i++) {
+    AntList->ANlist[i]->AntXYZ[0] *= desc->crval[desc->jlocf]/VELIGHT;
+    AntList->ANlist[i]->AntXYZ[1] *= desc->crval[desc->jlocf]/VELIGHT;
+    AntList->ANlist[i]->AntXYZ[2] *= desc->crval[desc->jlocf]/VELIGHT;
+  }
+  ArrLong = AntList->ANlist[0]->AntLong;  /* Array longitude */
+
+  /* Open table */
+  if ((ObitTableSNOpen (outCal, OBIT_IO_WriteOnly, err) 
+       != OBIT_IO_OK) || (err->error))  { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR opening input CL table", routine);
+    return outCal;
+  }
+
+  /* Create Row */
+  row = newObitTableSNRow (outCal);
+
+  /* Attach row to output buffer */
+  ObitTableSNSetRow (outCal, row, err);
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
+
+  /* Initialize */
+  row->Time   = 0.0;
+  row->TimeI  = 0.0;
+  row->SourID = 0;
+  row->antNo  = 0;
+  row->SubA   = 0;
+  row->NodeNo = 0;
+  row->FreqID = 0;
+  row->IFR       = 0.0;
+  row->MBDelay1  = 0.0;
+  /* IF dependent things */
+  for (i=0; i<numIF; i++) {
+    row->Real1[i]   = 1.0;
+    row->Imag1[i]   = 0.0;
+    row->Rate1[i]   = 0.0;
+    row->Delay1[i]  = 0.0;
+    row->Weight1[i] = 1.0;
+    row->RefAnt1[i] = 0;
+  }
+  /* Multiple polarizations */
+  if (numPol>1) {
+    /* IF dependent things */
+    for (i=0; i<numIF; i++) {
+      row->Real2[i]   = 1.0;
+      row->Imag2[i]   = 0.0;
+      row->Rate2[i]   = 0.0;
+      row->Delay2[i]  = 0.0;
+      row->Weight2[i] = 1.0;
+      row->RefAnt2[i] = 0;
+    }
+  } /* end two poln */
+  /* List of antennas found */
+  for (i=0; i<MAXANT; i++) gotAnt[i] = FALSE;
+  maxant = AntList->number;
+
+  /* Averaging time (sec) for time smearing correction */
+  /* "Solution interval" default 10 sec */
+  delTime = 10.0;
+  ObitInfoListGetTest(inUV->info, "timeInt", &type, dim, &delTime);
+  delTime /= 86400.0;  /* to days */
+
+  /* loop looking at data */
+  retCode = OBIT_IO_OK;
+  sumTime = 0.0;
+  nTime   = 0;
+  doFirst = TRUE;
+  while (retCode == OBIT_IO_OK) {
+    
+    /* read buffer */
+    if (doCalSelect) retCode = ObitUVReadSelect (inUV, NULL, err);
+    else retCode = ObitUVRead (inUV, NULL, err);
+    if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
+    if (retCode==OBIT_IO_EOF) break; /* done? */
+    
+    /* Record pointer */
+    rec = inUV->buffer;
+    
+    /* First time */
+    if (t0<-1.0e10) {
+      t0         = rec[inUV->myDesc->iloct];
+      if (inUV->myDesc->ilocsu>0) lastSource = rec[inUV->myDesc->ilocsu];
+      if (inUV->myDesc->ilocfq>0) lastFQID   = rec[inUV->myDesc->ilocfq];
+      lastTime   = rec[inUV->myDesc->iloct];
+      cbase      = rec[inUV->myDesc->ilocb]; /* Baseline */
+      ant1       = (cbase / 256.0) + 0.001;
+      ant2       = (cbase - ant1 * 256) + 0.001;
+      lastSubA   = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 0.5);
+    }
+    
+    /* Loop over buffer */
+    for (i=0; i<inUV->myDesc->numVisBuff; i++) {
+
+      /* Accumulation or scan finished? If so, write "calibration".*/
+      if (inUV->myDesc->ilocsu>0) curSou = rec[inUV->myDesc->ilocsu];
+      if (inUV->myDesc->ilocfq>0) curFQ  = rec[inUV->myDesc->ilocfq];
+      if ((rec[inUV->myDesc->iloct] > (t0+solInt)) || 
+	  (curSou != lastSource) ||  (curFQ != lastFQID)) {
+	
+	/* Not first time - assume first descriptive parameter never blanked */
+	if (nTime>0) {
+	  /* if new scan write end of last scan and this time */
+	  if ((curSou != lastSource) || (curFQ != lastFQID)) {
+	    /* Need first entry for scan? */
+	    if (doFirst) {
+	      doFirst = FALSE;
+	      row->Time  = t0;
+	      row->TimeI = 0.0;
+	      row->SourID = (oint)(MAX(lastSource,0.0)+0.5);
+	      row->FreqID = (oint)(MAX(lastFQID,0.0)+0.5);
+	      row->SubA   = lastSubA;
+
+	      /* Source information 
+		 Apparent position in radians */
+	      if (SouList) {  /* Source table? */
+		suid     = row->SourID;
+		RAR      = SouList->SUlist[suid]->RAApp*DG2RAD;
+		DecR     = SouList->SUlist[suid]->DecApp*DG2RAD;
+		cosdec   = cos(DecR);
+	      }
+	      /* LST and hour angle (radians) */
+	      AntLst = AntList->GSTIAT0 + ArrLong + row->Time*AntList->RotRate;
+	      HrAng  = AntLst - RAR;
+
+	      /* Loop over antennas found */
+	      for (ia=1; ia<=maxant; ia++) {
+		if (!gotAnt[ia]) continue;
+		bl[0] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[0];
+		bl[1] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[1];
+		bl[2] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[2];
+		/* Compute uvw - short baseline approximation */
+		ObitUVUtilUVW (bl, DecR, (ofloat)HrAng, uvw);
+		/* Loop over IFs */
+		for (j=0; j<numIF; j++) {
+		  /* IF freq */
+		  row->Rate1[j]   = -uvw[1]*cosdec*omegaE/desc->freq;
+		  row->Delay1[j]  = -uvw[2]/desc->freq;
+		  delay = uvw[2] * desc->freqIF[j]/desc->freq;
+		  phase = -twopi*(delay-(olong)delay);
+		  amp = Sinc(delTime*row->Rate1[j]) * Sinc(desc->chIncIF[j]*row->Delay1[j]);
+		  if (amp!=0.0) amp = 1.0 / amp;
+		  row->Real1[j]   = amp * cos(phase);
+		  row->Imag1[j]   = amp * sin(phase);
+		  /* Multiple polarizations */
+		  if (numPol>1) {
+		    row->Real2[j]   = row->Real1[j];
+		    row->Imag2[j]   = row->Imag1[j];
+		    row->Rate2[j]   = row->Rate1[j];
+		    row->Delay2[j]  = row->Delay1[j];
+		  }
+		}
+		iRow = -1;
+		row->antNo = ia;
+		if ((ObitTableSNWriteRow (outCal, iRow, row, err)
+		     != OBIT_IO_OK) || (err->error>0)) { 
+		  Obit_log_error(err, OBIT_Error, "%s: ERROR writing SN Table file", routine);
+		  return outCal;
+		}
+	      }
+	    } else { /* Not first scan */
+	      /* values for end of previous scan */
+	      row->Time   = lastTime; 
+	      row->TimeI  = 0.0;
+	      row->SourID = (oint)(MAX(lastSource,0.0)+0.5);
+	      row->FreqID = (oint)(MAX(lastFQID,0.0)+0.5);
+	      row->SubA   = lastSubA;
+	      /* LST and hour angle (radians) */
+	      AntLst = AntList->GSTIAT0 + ArrLong + row->Time*AntList->RotRate;
+	      HrAng  = AntLst - RAR;
+	      /* Loop over antennas found */
+	      for (ia=1; ia<=maxant; ia++) {
+		if (!gotAnt[ia]) continue;
+		bl[0] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[0];
+		bl[1] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[1];
+		bl[2] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[2];
+		/* Compute uvw - short baseline approximation */
+		ObitUVUtilUVW (bl, DecR, (ofloat)HrAng, uvw);
+		/* Loop over IFs */
+		for (j=0; j<numIF; j++) {
+		  /* IF freq */
+		  row->Rate1[j]   = -uvw[1]*cosdec*omegaE/desc->freq;
+		  row->Delay1[j]  = -uvw[2]/desc->freq;
+		  delay = uvw[2] * desc->freqIF[j]/desc->freq;
+		  phase = -twopi*(delay-(olong)delay);
+		  amp = Sinc(delTime*row->Rate1[j]) * Sinc(desc->chIncIF[j]*row->Delay1[j]);
+		  if (amp!=0.0) amp = 1.0 / amp;
+		  row->Real1[j]   = amp * cos(phase);
+		  row->Imag1[j]   = amp * sin(phase);
+		  /* Multiple polarizations */
+		  if (numPol>1) {
+		    row->Real2[j]   = row->Real1[j];
+		    row->Imag2[j]   = row->Imag1[j];
+		    row->Rate2[j]   = row->Rate1[j];
+		    row->Delay2[j]  = row->Delay1[j];
+		  }
+		}
+		iRow = -1;
+		row->antNo = ia;
+		if ((ObitTableSNWriteRow (outCal, iRow, row, err)
+		     != OBIT_IO_OK) || (err->error>0)) { 
+		  Obit_log_error(err, OBIT_Error, "%s: ERROR writing SN Table file", routine);
+		  return outCal;
+		}
+	      }
+	      /* Values for start of next scan */
+	      row->Time   = rec[inUV->myDesc->iloct]; 
+	      row->TimeI  = 0.0;
+	      row->SourID = (oint)(rec[inUV->myDesc->ilocsu]+0.5);
+	      row->SubA   = SubA;
+	    } /* end write beginning of scan value */
+	  } else {  /* in middle of scan - use average time */
+	    /* Set descriptive info on Row */
+	    row->Time  = sumTime/nTime;  /* time */
+	    row->TimeI = 2.0 * (row->Time - t0);
+	    row->SourID = (oint)(rec[inUV->myDesc->ilocsu]+0.5);
+	    row->SubA   = SubA;
+	  }
+      
+	  /* Write Cal table */
+	  /* LST and hour angle (radians) */
+	  AntLst = AntList->GSTIAT0 + ArrLong + row->Time*AntList->RotRate;
+	  HrAng  = AntLst - RAR;
+	  /* Loop over antennas found */
+	  row->SubA   = lastSubA;
+	  for (ia=1; ia<=maxant; ia++) {
+	    if (!gotAnt[ia]) continue;
+	    bl[0] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[0];
+	    bl[1] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[1];
+	    bl[2] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[2];
+	    /* Compute uvw - short baseline approximation */
+	    ObitUVUtilUVW (bl, DecR, (ofloat)HrAng, uvw);
+	    /* Loop over IFs */
+	    for (j=0; j<numIF; j++) {
+	      /* IF freq */
+	      row->Rate1[j]   = -uvw[1]*cosdec*omegaE/desc->freq;
+	      row->Delay1[j]  = -uvw[2]/desc->freq;
+	      delay = uvw[2] * desc->freqIF[j]/desc->freq;
+	      phase = -twopi*(delay-(olong)delay);
+	      amp = Sinc(delTime*row->Rate1[j]) * Sinc(desc->chIncIF[j]*row->Delay1[j]);
+	      if (amp!=0.0) amp = 1.0 / amp;
+	      row->Real1[j]   = amp * cos(phase);
+	      row->Imag1[j]   = amp * sin(phase);
+	      /* Multiple polarizations */
+	      if (numPol>1) {
+		row->Real2[j]   = row->Real1[j];
+		row->Imag2[j]   = row->Imag1[j];
+		row->Rate2[j]   = row->Rate1[j];
+		row->Delay2[j]  = row->Delay1[j];
+	      }
+	    }
+	    iRow = -1;
+	    row->antNo = ia;
+	    if ((ObitTableSNWriteRow (outCal, iRow, row, err)
+		 != OBIT_IO_OK) || (err->error>0)) { 
+	      Obit_log_error(err, OBIT_Error, "%s: ERROR writing SN Table file", routine);
+	      return outCal;
+	    }
+	  }
+	  /* initialize accumulators */
+	  t0         = rec[inUV->myDesc->iloct];
+	  if (inUV->myDesc->ilocsu>0) lastSource = rec[inUV->myDesc->ilocsu];
+	  if (inUV->myDesc->ilocfq>0) lastFQID   = rec[inUV->myDesc->ilocfq];
+	  sumTime    = 0.0;
+	  nTime      = 0;
+	  lastSubA   = -1;
+ 
+	  /* Clear list of antennas found */
+	  for (ia=0; ia<maxant; ia++) gotAnt[ia] = FALSE;
+
+	} /* end of write entry if there is data */
+      } /* end write entry */
+      
+      /* accumulate statistics
+	 Antennas etc. */
+      cbase = rec[inUV->myDesc->ilocb]; /* Baseline */
+      ant1 = (cbase / 256.0) + 0.001;
+      ant2 = (cbase - ant1 * 256) + 0.001;
+      SubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 0.5);
+      if(lastSubA<=0) lastSubA = SubA;
+      gotAnt[ant1] = TRUE;
+      gotAnt[ant2] = TRUE;
+      sumTime += rec[inUV->myDesc->iloct];
+      lastTime = rec[inUV->myDesc->iloct];
+      nTime++; /* how many data points */
+      rec += inUV->myDesc->lrec; /* Data record pointer */
+      someData = TRUE;
+      
+    } /* end loop over buffer load */
+  } /* end loop reading data */
+  
+  /* Finish up any data in accumulator */
+  if (nTime>0) {
+    /* Set descriptive info on Row */
+    row->Time   = sumTime/nTime;
+    row->TimeI  = lastTime - t0;
+
+    /* Write Cal table */
+    /* LST and hour angle (radians) */
+    AntLst = AntList->GSTIAT0 + ArrLong + row->Time*AntList->RotRate;
+    HrAng  = AntLst - RAR;
+    /* Loop over antennas found */
+    for (ia=1; ia<=maxant; ia++) {
+      if (!gotAnt[ia]) continue;
+      bl[0] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[0];
+      bl[1] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[1];
+      bl[2] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[2];
+      /* Compute uvw - short baseline approximation */
+      ObitUVUtilUVW (bl, DecR, (ofloat)HrAng, uvw);
+      /* Loop over IFs */
+      for (j=0; j<numIF; j++) {
+	/* IF freq */
+	row->Rate1[j]   = -uvw[1]*cosdec*omegaE/desc->freq;
+	row->Delay1[j]  = -uvw[2]/desc->freq;
+	delay = uvw[2] * desc->freqIF[j]/desc->freq;
+	phase = -twopi*(delay-(olong)delay);
+	amp = Sinc(delTime*row->Rate1[j]) * Sinc(desc->chIncIF[j]*row->Delay1[j]);
+	if (amp!=0.0) amp = 1.0 / amp;
+	row->Real1[j]   = amp * cos(phase);
+	row->Imag1[j]   = amp * sin(phase);
+	/* Multiple polarizations */
+	if (numPol>1) {
+	  row->Real2[j]   = row->Real1[j];
+	  row->Imag2[j]   = row->Imag1[j];
+	  row->Rate2[j]   = row->Rate1[j];
+	  row->Delay2[j]  = row->Delay1[j];
+	}
+      }
+      iRow = -1;
+      row->antNo = ia;
+      if ((ObitTableSNWriteRow (outCal, iRow, row, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "%s: ERROR writing CL Table file", routine);
+	return outCal;
+      }
+    }
+  } /* End final cal */
+
+  /* Close cal table */
+  if ((ObitTableSNClose (outCal, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "%s: ERROR closing CL Table", routine);
+    return outCal;
+  }
+  
+  /* Close data */
+  retCode = ObitUVClose (inUV, err);
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
+
+  /* Give warning if no data selected */
+  if (!someData) Obit_log_error(err, OBIT_InfoWarn, 
+				"%s: Warning: NO data selected", routine);
+  /* Cleanup */
+  AntList = ObitAntennaListUnref(AntList);
+  SouList = ObitSourceListUnref(SouList);
+
+  return outCal;
+} /* end ObitTableSNGetZeroFR */
+
+/*---------------Private functions ----------------*/
+/**
+ * Sinc (sin pi*arg /pi*arg)
+ * \param arg argument of function
+ * \return sinc(arg).
+ */
+static ofloat Sinc (ofloat arg)
+{
+  ofloat out = 1.0;
+  if (fabs(arg)<1.0e-5) return out;
+  out = sin (G_PI*arg) / (G_PI*arg);
+  return out;
+} /* End Sinc */
+

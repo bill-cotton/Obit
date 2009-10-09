@@ -36,6 +36,7 @@
 #include "ObitUVUtil.h"
 #include "ObitUVEdit.h"
 #include "ObitUVWeight.h"
+#include "ObitTableSNUtil.h"
 %}
 
 
@@ -392,6 +393,10 @@ extern int UVUtilFlag (ObitUV *inUV, ObitErr *err) {
 
 extern ObitTable* TableCLGetDummy (ObitUV *inUV,  ObitUV *outUV, long ver, ObitErr *err) {
   return (ObitTable*)ObitTableCLGetDummy (inUV, outUV, (olong)ver, err);
+} // end TableCLGetDummy
+
+extern ObitTable* TableSNGetZeroFR (ObitUV *inUV,  ObitUV *outUV, long ver, ObitErr *err) {
+  return (ObitTable*)ObitTableSNGetZeroFR (inUV, outUV, (olong)ver, err);
 } // end TableCLGetDummy
 
 %}

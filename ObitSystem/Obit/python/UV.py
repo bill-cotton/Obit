@@ -1843,3 +1843,42 @@ def PTableCLGetDummy (inUV, outUV, ver, err, solInt=10.):
     return outTable
     # end PDummyCL
 
+def PTableSNGetZeroFR (inUV, outUV, ver, err, solInt=10., timeInt = 1.0):
+    """ Create SN tablethat will counter-rotate the data to a zero fringe rate 
+
+    Create and return an SN table
+    After this operation, all terrestial sources should be constant.
+    Amplitudes reflect the effect of the difference in fringe rate and delay
+    for the integration time and observed bandwidth.
+    inUV    = input Python Obit UV
+    outUV   = output Python Obit UV, must be previously defined
+    ver     = version number of new table, 0=> create new
+    err     = Python Obit Error/message stack
+    solint  = time interval (min) of table
+    """
+    ################################################################
+    # Checks
+    if not inUV.UVIsA():
+        raise TypeError,"inUV MUST be a Python Obit UV"
+    if not outUV.UVIsA():
+        raise TypeError,"outUV MUST be a Python Obit UV"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+
+    if err.isErr: # existing error?
+        return
+    
+    # Interval
+    inInfo = PGetList(inUV)    # 
+    dim = [1,1,1,1,1]
+    InfoList.PAlwaysPutFloat (inInfo, "solInt", dim, [solInt])
+    # Integration time
+    inInfo = PGetList(inUV)    # 
+    dim = [1,1,1,1,1]
+    InfoList.PAlwaysPutFloat (inInfo, "timeInt", dim, [timeInt])
+    #
+    outTable    = Table.Table("None")
+    outTable.me = Obit.TableSNGetZeroFR(inUV.me, outUV.me, ver, err.me)
+    return outTable
+    # end PTableSNGetZeroFR
+
