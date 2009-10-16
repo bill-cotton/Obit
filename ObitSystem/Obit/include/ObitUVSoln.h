@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -182,6 +182,10 @@ typedef gboolean (*ObitUVSolnGetSNFP) (ObitUVSoln *in,
 void ObitUVSolnShutDown (ObitUVSoln *in, ObitErr *err);
 /** Typedef for definition of class pointer structure */
 typedef void (*ObitUVSolnShutDownFP) (ObitUVSoln *in, ObitErr *err);
+
+/** Update calibration arrays. */
+void ObitUVSolnUpdate (ObitUVSoln *in, ofloat time, olong SourID,
+		       ObitErr *err);
 
 /** Refererence phases to a common reference antenna */
 void ObitUVSolnRefAnt (ObitTableSN *SNTab, olong isuba, olong* refant, 

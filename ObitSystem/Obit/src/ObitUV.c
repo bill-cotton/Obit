@@ -2030,8 +2030,53 @@ ObitIOCode ObitUVIOSet (ObitUV *in, ObitErr *err)
   Obit_retval_if_fail((in->myStatus!=OBIT_Inactive), err, retCode,
  		      "%s: IO inactive for %s", routine, in->name);
   
+  /* Reset any scan indexing */
+  ObitUVSelShutdown (((ObitUVSel*)in->myIO->mySel), err);
+  ObitUVSelNextInit (((ObitUVSel*)in->myIO->mySel), ((ObitUVDesc*)in->myIO->myDesc), 
+		     err);
+  if (err->error)  Obit_traceback_val (err, routine, in->name, retCode);
+
   return ObitIOSet (in->myIO, in->info, err);
 } /* end ObitUVIOSet */
+
+/**
+ * Reposition IO to arbitrary location in file
+ * \param in   Pointer to object to be repositioned.
+ * \param startVis Visibility number (1-rel) of start of next read/write
+ * \param err  ObitErr for reporting errors.
+ * \return return code, OBIT_IO_OK=> OK
+ */
+ObitIOCode ObitUVIOReset (ObitUV *in, olong startVis, ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  ObitUVSel *sel;
+  gchar *routine = "ObitUVIOSet";
+
+  /* error checks */
+  if (err->error) return retCode;
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* Barf and die if inactive */
+  Obit_retval_if_fail((in->myStatus!=OBIT_Inactive), err, retCode,
+ 		      "%s: IO inactive for %s", routine, in->name);
+
+  /* Reset descriptors */
+  sel = (ObitUVSel*)in->myIO->mySel;
+  startVis -= sel->nVisPIO;  /* next read will increment */
+  in->myDesc->firstVis   = startVis;
+  in->myDesc->numVisBuff = 0;
+  ((ObitUVDesc*)in->myIO->myDesc)->firstVis  = startVis;
+  ((ObitUVDesc*)in->myIO->myDesc)->numVisBuff = 0;
+
+  /* Reset any scan indexing */
+  if (sel->doIndex) {
+    ObitUVSelShutdown (sel, err);
+    ObitUVSelNextInit (sel, ((ObitUVDesc*)in->myIO->myDesc), err);
+  }
+  if(err->error)  Obit_traceback_val (err, routine, in->name, retCode);
+  retCode =   OBIT_IO_OK;
+  return retCode;
+} /* end ObitUVIOReset */
 
 /**
  * Get source position.  

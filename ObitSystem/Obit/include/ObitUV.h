@@ -315,6 +315,9 @@ ObitIOCode ObitUVClose (ObitUV *in, ObitErr *err);
 /** Public: Reset IO to start of file */
 ObitIOCode ObitUVIOSet (ObitUV *in, ObitErr *err);
 
+/** Public: Reset IO to arbitrary location in file */
+ObitIOCode ObitUVIOReset (ObitUV *in, olong startVis, ObitErr *err);
+
 /** Public: Read specified data */
 ObitIOCode ObitUVRead (ObitUV *in, ofloat *data, ObitErr *err);
 typedef ObitIOCode (*ObitUVReadFP) (ObitUV *in, ofloat *data, 

@@ -10035,6 +10035,65 @@ typedef struct {
   ObitUV *me;
 } UV;
 
+#include "ObitUVRFIXize.h"
+
+extern ObitUVRFIXize* newUVRFIXize (char* name) {
+  return newObitUVRFIXize (name);
+} // end  newUVRFIXize
+
+extern ObitUVRFIXize* UVRFIXizeCreate (char *name, ObitUV *inUV,
+	ObitUV *residUV, ObitUV *outUV) {
+ return ObitUVRFIXizeCreate(name, inUV, residUV, outUV);
+}
+
+extern ObitUVRFIXize* UVRFIXizeUnref (ObitUVRFIXize* in) {
+  if (!ObitUVRFIXizeIsA(in)) return NULL;
+  return ObitUVRFIXizeUnref(in);
+}
+
+extern ObitUVRFIXize*  UVRFIXizeRef (ObitUVRFIXize* in) {
+  return ObitUVRFIXizeRef(in);
+}
+
+extern void UVRFIXizeCounterRot (ObitUVRFIXize* in, ObitErr *err) {
+  ObitUVRFIXizeCounterRot(in, err);
+}
+
+extern void UVRFIXizeFilter (ObitUVRFIXize* in, ObitErr *err) {
+  ObitUVRFIXizeFilter(in, err);
+}
+
+extern void UVRFIXizeCorrect (ObitUVRFIXize* in, ObitErr *err) {
+  ObitUVRFIXizeCorrect(in, err);
+}
+
+extern ObitInfoList* UVRFIXizeGetList (ObitUVRFIXize* in) {
+  return ObitInfoListRef(in->info);
+}
+
+extern ObitSkyModel* UVRFIXizeGetRFI (ObitUVRFIXize* in) {
+  return ObitUVRef(in->RFIUV);
+}
+
+extern int UVRFIXizeIsA (ObitUVRFIXize* in) {
+  return ObitUVRFIXizeIsA(in);
+}
+
+extern ObitUVRFIXize *newUVRFIXize(char *);
+extern ObitUVRFIXize *UVRFIXizeCreate(char *,ObitUV *,ObitUV *,ObitUV *);
+extern ObitUVRFIXize *UVRFIXizeUnref(ObitUVRFIXize *);
+extern ObitUVRFIXize *UVRFIXizeRef(ObitUVRFIXize *);
+extern void UVRFIXizeCounterRot(ObitUVRFIXize *,ObitErr *);
+extern void UVRFIXizeFilter(ObitUVRFIXize *,ObitErr *);
+extern void UVRFIXizeCorrect(ObitUVRFIXize *,ObitErr *);
+extern ObitInfoList *UVRFIXizeGetList(ObitUVRFIXize *);
+extern ObitSkyModel *UVRFIXizeGetRFI(ObitUVRFIXize *);
+extern int UVRFIXizeIsA(ObitUVRFIXize *);
+
+typedef struct {
+  ObitUVRFIXize *me;
+} UVRFIXize;
+
 #include "ObitUVSelfCal.h"
 #include "ObitUVSoln.h"
 
@@ -44275,6 +44334,336 @@ static PyObject *_wrap_TableSNGetZeroFR(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_newUVRFIXize(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVRFIXize * _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:newUVRFIXize",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (ObitUVRFIXize *)newUVRFIXize(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUVRFIXize_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVRFIXizeCreate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVRFIXize * _result;
+    char * _arg0;
+    ObitUV * _arg1;
+    ObitUV * _arg2;
+    ObitUV * _arg3;
+    PyObject * _obj0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOO:UVRFIXizeCreate",&_obj0,&_argo1,&_argo2,&_argo3)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of UVRFIXizeCreate. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of UVRFIXizeCreate. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of UVRFIXizeCreate. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitUVRFIXize *)UVRFIXizeCreate(_arg0,_arg1,_arg2,_arg3);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUVRFIXize_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVRFIXizeUnref(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVRFIXize * _result;
+    ObitUVRFIXize * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:UVRFIXizeUnref",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXizeUnref. Expected _ObitUVRFIXize_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitUVRFIXize *)UVRFIXizeUnref(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUVRFIXize_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVRFIXizeRef(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVRFIXize * _result;
+    ObitUVRFIXize * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:UVRFIXizeRef",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXizeRef. Expected _ObitUVRFIXize_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitUVRFIXize *)UVRFIXizeRef(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUVRFIXize_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVRFIXizeCounterRot(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVRFIXize * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:UVRFIXizeCounterRot",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXizeCounterRot. Expected _ObitUVRFIXize_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of UVRFIXizeCounterRot. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    UVRFIXizeCounterRot(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVRFIXizeFilter(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVRFIXize * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:UVRFIXizeFilter",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXizeFilter. Expected _ObitUVRFIXize_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of UVRFIXizeFilter. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    UVRFIXizeFilter(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVRFIXizeCorrect(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVRFIXize * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:UVRFIXizeCorrect",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXizeCorrect. Expected _ObitUVRFIXize_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of UVRFIXizeCorrect. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    UVRFIXizeCorrect(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVRFIXizeGetList(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitInfoList * _result;
+    ObitUVRFIXize * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:UVRFIXizeGetList",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXizeGetList. Expected _ObitUVRFIXize_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitInfoList *)UVRFIXizeGetList(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitInfoList_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVRFIXizeGetRFI(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSkyModel * _result;
+    ObitUVRFIXize * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:UVRFIXizeGetRFI",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXizeGetRFI. Expected _ObitUVRFIXize_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSkyModel *)UVRFIXizeGetRFI(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSkyModel_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVRFIXizeIsA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitUVRFIXize * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:UVRFIXizeIsA",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXizeIsA. Expected _ObitUVRFIXize_p.");
+        return NULL;
+        }
+    }
+    _result = (int )UVRFIXizeIsA(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_newUVSelfCal(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitUVSelfCal * _result;
@@ -50344,6 +50733,147 @@ static PyObject *_wrap_delete_UV(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+#define UVRFIXize_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
+static PyObject *_wrap_UVRFIXize_me_set(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVRFIXize * _result;
+    UVRFIXize * _arg0;
+    ObitUVRFIXize * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:UVRFIXize_me_set",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_UVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXize_me_set. Expected _UVRFIXize_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitUVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of UVRFIXize_me_set. Expected _ObitUVRFIXize_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitUVRFIXize *)UVRFIXize_me_set(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUVRFIXize_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+#define UVRFIXize_me_get(_swigobj) ((ObitUVRFIXize *) _swigobj->me)
+static PyObject *_wrap_UVRFIXize_me_get(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVRFIXize * _result;
+    UVRFIXize * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:UVRFIXize_me_get",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_UVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXize_me_get. Expected _UVRFIXize_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitUVRFIXize *)UVRFIXize_me_get(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUVRFIXize_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static UVRFIXize *new_UVRFIXize(char *name) {
+     UVRFIXize *out;
+     out = (UVRFIXize *) malloc(sizeof(UVRFIXize));
+     if (strcmp(name, "None")) out->me = newUVRFIXize(name);
+     else out->me = NULL;
+     return out;
+   }
+
+static PyObject *_wrap_new_UVRFIXize(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    UVRFIXize * _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:new_UVRFIXize",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (UVRFIXize *)new_UVRFIXize(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_UVRFIXize_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static void delete_UVRFIXize(UVRFIXize *self) {
+   if (self->me->ReferenceCount>0) 
+      self->me = UVRFIXizeUnref(self->me);
+   free(self);
+  }
+static PyObject *_wrap_delete_UVRFIXize(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    UVRFIXize * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:delete_UVRFIXize",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_UVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of delete_UVRFIXize. Expected _UVRFIXize_p.");
+        return NULL;
+        }
+    }
+    delete_UVRFIXize(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 #define UVSelfCal_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
 static PyObject *_wrap_UVSelfCal_me_set(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -50490,6 +51020,10 @@ static PyMethodDef ObitMethods[] = {
 	 { "new_UVSelfCal", _wrap_new_UVSelfCal, METH_VARARGS },
 	 { "UVSelfCal_me_get", _wrap_UVSelfCal_me_get, METH_VARARGS },
 	 { "UVSelfCal_me_set", _wrap_UVSelfCal_me_set, METH_VARARGS },
+	 { "delete_UVRFIXize", _wrap_delete_UVRFIXize, METH_VARARGS },
+	 { "new_UVRFIXize", _wrap_new_UVRFIXize, METH_VARARGS },
+	 { "UVRFIXize_me_get", _wrap_UVRFIXize_me_get, METH_VARARGS },
+	 { "UVRFIXize_me_set", _wrap_UVRFIXize_me_set, METH_VARARGS },
 	 { "delete_UV", _wrap_delete_UV, METH_VARARGS },
 	 { "new_UV", _wrap_new_UV, METH_VARARGS },
 	 { "UV_me_get", _wrap_UV_me_get, METH_VARARGS },
@@ -50650,6 +51184,16 @@ static PyMethodDef ObitMethods[] = {
 	 { "UVSelfCalCopy", _wrap_UVSelfCalCopy, METH_VARARGS },
 	 { "UVSelfCalCreate", _wrap_UVSelfCalCreate, METH_VARARGS },
 	 { "newUVSelfCal", _wrap_newUVSelfCal, METH_VARARGS },
+	 { "UVRFIXizeIsA", _wrap_UVRFIXizeIsA, METH_VARARGS },
+	 { "UVRFIXizeGetRFI", _wrap_UVRFIXizeGetRFI, METH_VARARGS },
+	 { "UVRFIXizeGetList", _wrap_UVRFIXizeGetList, METH_VARARGS },
+	 { "UVRFIXizeCorrect", _wrap_UVRFIXizeCorrect, METH_VARARGS },
+	 { "UVRFIXizeFilter", _wrap_UVRFIXizeFilter, METH_VARARGS },
+	 { "UVRFIXizeCounterRot", _wrap_UVRFIXizeCounterRot, METH_VARARGS },
+	 { "UVRFIXizeRef", _wrap_UVRFIXizeRef, METH_VARARGS },
+	 { "UVRFIXizeUnref", _wrap_UVRFIXizeUnref, METH_VARARGS },
+	 { "UVRFIXizeCreate", _wrap_UVRFIXizeCreate, METH_VARARGS },
+	 { "newUVRFIXize", _wrap_newUVRFIXize, METH_VARARGS },
 	 { "TableSNGetZeroFR", _wrap_TableSNGetZeroFR, METH_VARARGS },
 	 { "TableCLGetDummy", _wrap_TableCLGetDummy, METH_VARARGS },
 	 { "UVUtilFlag", _wrap_UVUtilFlag, METH_VARARGS },

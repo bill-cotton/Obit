@@ -63,10 +63,6 @@ void  ObitUVSolnClear (gpointer in);
 /** Private: Set Class function pointers. */
 static void ObitUVSolnClassInfoDefFn (gpointer inClass);
 
-/** Private: Update calibration arrays. */
-static void ObitUVSolnUpdate (ObitUVSoln *in, ofloat time, olong SourID,
-			      ObitErr *err);
-
 /** Private:  Read calibration for a new time into the internal arrays. */
 static void ObitUVSolnNewTime (ObitUVSoln *in, ofloat time,
 			       ObitErr *err);
@@ -303,7 +299,9 @@ void ObitUVSolnStartUp (ObitUVSoln *in, ObitErr *err)
   in->SNTable =
     newObitTableSNValue (in->name, (ObitData*)in->myUV, &SNver, 
 			 OBIT_IO_ReadOnly, 0, 0, err);
-
+  Obit_return_if_fail((in->SNTable!=NULL), err,
+		      "%s: Cannot find AIPS SN table", routine);
+  
   /* Open solution table, get numPol  */
   retCode = ObitTableSNOpen (in->SNTable, OBIT_IO_ReadOnly, err);
   if ((retCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
@@ -356,20 +354,20 @@ void ObitUVSolnStartUp (ObitUVSoln *in, ObitErr *err)
   /* Allocate calibration arrays */
   in->lenCalArrayEntry = 6; /* length of cal array entry */
   size = in->numAnt * in->numIF * in->numPol * in->lenCalArrayEntry;
-  in->CalApply     = g_malloc(size*sizeof(ofloat));
-  in->CalPrior     = g_malloc(size*sizeof(ofloat));
-  in->CalFollow    = g_malloc(size*sizeof(ofloat));
-  in->IFR          = g_malloc(in->numAnt*sizeof(ofloat));
-  in->PriorIFR     = g_malloc(in->numAnt*sizeof(ofloat));
-  in->FollowIFR    = g_malloc(in->numAnt*sizeof(ofloat));
-  in->MBDelay      = g_malloc(2*in->numAnt*sizeof(ofloat));
-  in->PriorMBDelay = g_malloc(2*in->numAnt*sizeof(ofloat));
-  in->FollowMBDelay= g_malloc(2*in->numAnt*sizeof(ofloat));
-  in->PriorAntTime = g_malloc(in->numAnt*sizeof(ofloat));
-  in->FollowAntTime= g_malloc(in->numAnt*sizeof(ofloat));
-  in->RefAnt       = g_malloc(2*in->numAnt*sizeof(olong));
-  in->RateFact     = g_malloc(in->numIF*sizeof(ofloat));
-  in->MissAnt      = g_malloc(in->numAnt*sizeof(gboolean));
+  in->CalApply     = g_malloc0(size*sizeof(ofloat));
+  in->CalPrior     = g_malloc0(size*sizeof(ofloat));
+  in->CalFollow    = g_malloc0(size*sizeof(ofloat));
+  in->IFR          = g_malloc0(in->numAnt*sizeof(ofloat));
+  in->PriorIFR     = g_malloc0(in->numAnt*sizeof(ofloat));
+  in->FollowIFR    = g_malloc0(in->numAnt*sizeof(ofloat));
+  in->MBDelay      = g_malloc0(2*in->numAnt*sizeof(ofloat));
+  in->PriorMBDelay = g_malloc0(2*in->numAnt*sizeof(ofloat));
+  in->FollowMBDelay= g_malloc0(2*in->numAnt*sizeof(ofloat));
+  in->PriorAntTime = g_malloc0(in->numAnt*sizeof(ofloat));
+  in->FollowAntTime= g_malloc0(in->numAnt*sizeof(ofloat));
+  in->RefAnt       = g_malloc0(2*in->numAnt*sizeof(olong));
+  in->RateFact     = g_malloc0(in->numIF*sizeof(ofloat));
+  in->MissAnt      = g_malloc0(in->numAnt*sizeof(gboolean));
 
   /* Initial times to trigger update of calibration arrays */
   in->CalTime       = -1.0e20;
@@ -545,6 +543,319 @@ void ObitUVSolnShutDown (ObitUVSoln *in, ObitErr *err)
 
 } /*  end ObitUVSolnShutDown */
 
+/**
+ * Update ObitUVSoln calibration tables for time time.
+ * The current table is interpolated between the previous and following
+ * sets of solutions.
+ * If a new set of entries is needed from the SN/CL table they are read.
+ * Adopted from AIPS CGASET.FOR
+ * A calibration CalApply entry  consists of:
+ * \li real part of gain
+ * \li imaginary of gain
+ * \li group delay (sec)
+ * \li fringe rate (sec/sec)
+ * \li weight
+ * \param in   Calibrate Object.
+ * \param time desired time in days
+ * \param err  Error stack for messages and errors.
+ */
+void ObitUVSolnUpdate (ObitUVSoln *in, ofloat time, olong SourID, ObitErr *err)
+{
+  olong iant, iif, ipol, index, jndex, na, nturn;
+  gboolean   good1, good2, bad;
+  ofloat      wtt1, wtt2, phase1, phase2, amp, phase=0.0,
+    g1a, g1p, g2a, g2p, delta, wt1, wt2, dt, dt1, dt2, rate1, rate2, temp, 
+    phi0, phi1, phi2, phi3;
+  ofloat fblank = ObitMagicF();
+  gboolean newcal;
+  gchar *routine="ObitUVSolnUpdate";
+ 
+ 
+  /* see if time for new table entry */
+  if ((in->LastRowRead <= in->numRow)  &&  (time > in->FollowCalTime)) {
+    ObitUVSolnNewTime (in, time, err);
+    if (err->error) Obit_traceback_msg (err, routine, "unspecified");
+    newcal = TRUE;
+  } else {
+    newcal = FALSE;
+  }
+
+  /* see if calibration needs update; every 0.03 of solution interval. */
+  delta = (time - in->CalTime);  
+  if ((!newcal) &&  (delta <= 0.03*(in->FollowCalTime-in->PriorCalTime))) return;
+
+  /* interpolate current calibration to time */
+  in->CalTime = time;
+
+  /* loop thru antennas */
+  for (iant=0; iant<in->numAnt; iant++) { /* loop 500 */
+    /* initialize indices for CalApply (index),  CalPrior and CalFollow (jndex)*/
+    index = iant * in->numIF * in->numPol * in->lenCalArrayEntry;
+    jndex = iant * in->numIF * in->numPol * in->lenCalArrayEntry;
+
+    if (in->MissAnt[iant]) goto badant;  /* Nothing for this antenna */
+
+    /* set interpolation weights proportional to time difference. */
+    dt  = in->FollowAntTime[iant] - in->PriorAntTime[iant] + 1.0e-20;
+    dt1 = time - in->PriorAntTime[iant];
+    dt2 = time - in->FollowAntTime[iant];
+    wtt1 = 0.0;
+    if ((time < in->FollowAntTime[iant]) && (dt>1.0e-19)) wtt1 = -dt2 / dt;
+    wtt2 = 1.0 - wtt1;
+
+    /* Set Faraday rotation - interpolate if both good */
+    if ((in->PriorIFR[iant]  !=  fblank) && (in->FollowIFR[iant] != fblank)) {
+      in->IFR[iant] = wtt1 * in->PriorIFR[iant] + wtt2 * in->FollowIFR[iant];
+    } else if (in->PriorIFR[iant] != fblank) {
+      in->IFR[iant] = in->PriorIFR[iant];
+    } else if (in->FollowIFR[iant] != fblank) {
+      in->IFR[iant] = in->FollowIFR[iant];
+    } else {
+      in->IFR[iant] = fblank;
+    } 
+
+    /* Set multiband delay - interpolate if both good */
+    /* Average rates */
+    rate1 =  avgRatePrior (in, iant+1, 1);
+    rate2 =  avgRateFollow (in, iant+1, 1);
+    if ((in->PriorMBDelay[iant]  !=  fblank) && (in->FollowMBDelay[iant] != fblank)) {
+      in->MBDelay[iant] = 
+	wtt1 * (in->PriorMBDelay[iant]  + dt1 * rate1) + 
+	wtt2 * (in->FollowMBDelay[iant] + dt2 * rate2);
+    } else if (in->PriorMBDelay[iant] != fblank) {
+      in->MBDelay[iant] = in->PriorMBDelay[iant] + dt1 * rate1;
+    } else if (in->FollowMBDelay[iant] != fblank) {
+      in->MBDelay[iant] = in->FollowMBDelay[iant] + dt2 * rate2;
+    } else {
+      in->MBDelay[iant] = fblank;
+    } 
+    /* Second poln MB delay */
+    if (in->numPol>1) {
+      /* Average rates */
+      rate1 =  avgRatePrior (in, iant+1, 2);
+      rate2 =  avgRateFollow (in, iant+1,21);
+      na = in->numAnt;
+      if ((in->PriorMBDelay[iant+na]  !=  fblank) && (in->FollowMBDelay[iant+na] != fblank)) {
+	in->MBDelay[iant+na] = 
+	  wtt1 * (in->PriorMBDelay[iant+na]  + dt1 * rate1) + 
+	  wtt2 * (in->FollowMBDelay[iant+na] + dt2 * rate2);
+      } else if (in->PriorMBDelay[iant+na] != fblank) {
+	in->MBDelay[iant+na] = in->PriorMBDelay[iant+na] + dt1 * rate1;
+      } else if (in->FollowMBDelay[iant+na] != fblank) {
+	in->MBDelay[iant+na] = in->FollowMBDelay[iant+na] + dt2 * rate2;
+      } else {
+	in->MBDelay[iant+na] = fblank;
+      } 
+    }
+    
+    /* loop thru IF */
+    for (iif=0; iif<in->numIF; iif++) { /* loop 400 */
+
+      /* loop thru polarization */
+      for (ipol= 0; ipol<in->numPol; ipol++) { /* loop 300 */
+
+	/* initialize soln with blanks */
+	in->CalApply[index]   = fblank;
+	in->CalApply[index+1] = fblank;
+	in->CalApply[index+2] = fblank;
+	in->CalApply[index+3] = fblank;
+	in->CalApply[index+4] = fblank;
+	in->CalApply[index+5] = fblank;
+
+	/* check for blanked soln. */
+	good1 = (in->CalPrior[jndex] != fblank)  && 
+	  (in->CalPrior[jndex+1] != fblank)  && 
+	  (in->CalPrior[jndex+2] != fblank)  && 
+	  (in->CalPrior[jndex+3] != fblank)  && 
+	  (in->PriorAntTime[iant]>-100.0)    && 
+	  (wtt1 > 0.0);
+	good2 = (in->CalFollow[jndex] != fblank)  && 
+	  (in->CalFollow[jndex+1] != fblank)  && 
+	  (in->CalFollow[jndex+2] != fblank)  && 
+	  (in->CalFollow[jndex+3] != fblank)  && 
+	  (in->FollowAntTime[iant]>-100.0)    && 
+	  (wtt2 > 0.0);
+
+	/* If 'SELF' interpolation make sure it's the same source */
+	if (in->interMode==OBIT_UVSolnInterSELF) {
+	  if ((SourID!=in->PriorSourID)  && 
+	      (SourID>0) && (in->PriorSourID>0)) good1 = FALSE;
+	  if ((SourID!=in->FollowSourID)   && 
+	      (SourID>0) && (in->FollowSourID>0)) good2 = FALSE;
+
+	  /* If both OK pick closest */
+	  if (good1 && good2) {
+	    good1 = wtt1  >=  wtt2;
+	    good2 = wtt1  <  wtt2;
+	  }
+	} /* end 'SELF' interpolation */
+
+	/* Impose maximum interpolation time */
+	if (fabs(dt1) > in->maxInter)  good1 = FALSE;
+	if (fabs(dt2) > in->maxInter)  good2 = FALSE;
+
+	/* solution all flagged? */
+	bad = !(good1 || good2);
+
+	/* nothing more if both prior and following are bad */
+	if (!bad) {
+
+	  /* different reference antennas  use closest */
+	  if ((fabs (in->CalPrior[jndex+5] - in->CalFollow[jndex+5]) >= 0.5)
+	      &&  good1  &&  good2) {
+	    good1 = wtt1  >=  wtt2;
+	    good2 = wtt1  <  wtt2;
+	  } 
+	  
+	  /* initial weights */
+	  wt1 = wtt1;
+	  wt2 = wtt2;
+	  
+	  /* Only Following good */
+	  if (!good1) {
+	    wt1 = 0.0;
+	    wt2 = 1.0;
+	  } 
+	  
+	  /* Only Prior good */
+	  if (!good2) {
+	    wt1 = 1.0;
+	    wt2 = 0.0;
+	  } 
+	  
+	  /* Get gains from tables */
+	  if (good1) {
+	    g1a = in->CalPrior[jndex];
+	    g1p = in->CalPrior[jndex+1];
+	  } else {  /* if not good use following */
+	    g1a = in->CalFollow[jndex];
+	    g1p = in->CalFollow[jndex+1];
+	  }
+	  if (good2) {
+	    g2a = in->CalFollow[jndex];
+	    g2p = in->CalFollow[jndex+1];
+	  } else {  /* if not good use preceeding */
+	    g2a = in->CalPrior[jndex];
+	    g2p = in->CalPrior[jndex+1];
+	  }
+	  
+	  /* check if fringe rates given - if so add accumulated phase */
+	  if ((in->CalPrior[jndex+3]  != 0.0)  || (in->CalFollow[jndex+3] != 0.0)) {
+	    phase1 = 0.0;
+	    phase2 = 0.0;
+	    if (good1) phase1 = in->CalPrior[jndex+3]  * dt1 * in->RateFact[iif];
+	    if (good2) phase2 = in->CalFollow[jndex+3] * dt2 * in->RateFact[iif];
+
+	    /* rotate phase by accumulated fringe rate */
+	    g1p += phase1;
+	    g2p += phase2;
+
+	    /* Put in same turn */
+	    g1p = fmod(g1p, 2.0*G_PI);
+	    if (g1p<0.0) g1p += 2.0*G_PI;
+	    g2p = fmod(g2p, 2.0*G_PI);
+	    if (g2p<0.0) g2p += 2.0*G_PI;
+	  } 
+	  
+	  /* interpolate phase by mode */
+	  switch (in->interMode) {
+	  case OBIT_UVSolnInterSELF:
+	  case OBIT_UVSolnInter2PT:
+	  case OBIT_UVSolnInterPOLY:
+	  case OBIT_UVSolnInterSIMP:
+	    /* Both good? */
+	    if (good1 && good2 ) {
+	      /* resolve phase ambiguity by disallowing phase jumps of >180 deg */
+	      if (fabs(g2p-g1p)> G_PI) {
+		if ((g2p-g1p)> 0.0) g2p -=  2.0 * G_PI;
+		else g2p +=  2.0 * G_PI;
+	      }
+	      phase = g1p + (g2p - g1p) * dt1 / dt;
+	    } else if (good1) { /* Only prior */
+	      phase = g1p;
+	    } else if (good2) { /* Only following */
+	      phase = g2p;
+	    }
+	    break;
+	  case OBIT_UVSolnInterAMBG: /* Use rates to resolve ambiguities */
+	    /* Both good? */
+	    if (good1 && good2 ) {
+	      /* rates in radians per day
+	      rate1 = in->CalPrior[jndex+3]  * in->RateFact[iif];
+	      rate2 = in->CalFollow[jndex+3] * in->RateFact[iif];
+	      temp = (g1p + 0.5*(rate1*dt1+rate2*dt2) - g2p) / (2.0*G_PI); */
+	      /* How many turns of phase 
+	      if (temp>=0.0) nturn = (olong)(temp+0.5);
+	      else nturn = (olong)(temp-0.5);
+	      g2p += (ofloat)(nturn) * 2.0 * G_PI;*/
+	      phase = g1p + (g2p - g1p) * dt1 / dt;
+ 	    } else if (good1) { /* Only prior */
+	      phase = g1p;
+	    } else if (good2) { /* Only following */
+	      phase = g2p;
+	    }
+	    break;
+	  case OBIT_UVSolnInterCUBE:  /* CUBIC method */
+	    /* Both good? */
+	    if (good1 && good2 ) {
+	      /* rates in radians per second */
+	      rate1 = in->CalPrior[jndex+3]  * in->RateFact[iif];
+	      rate2 = in->CalFollow[jndex+3] * in->RateFact[iif];
+	      temp = (g1p + 0.5*(rate1+rate2) - g2p) / (2.0*G_PI);
+	      /* How many turns pf phase */
+	      if (temp>=0.0) nturn = (olong)(temp+0.5);
+	      else nturn = (olong)(temp-0.5);
+	      g2p += (ofloat)(nturn) * 2.0 * G_PI;
+	      phi0 = g1p;
+	      phi1 = rate1;
+	      phi2 = (3.0*(g2p-g1p) - 2.0*rate1*dt-rate2*dt)/(dt*dt);
+	      phi3 = -(2.0*(g2p-g1p) - rate1*dt-rate2*dt)/(dt*dt*dt);
+	      phase = phi0 + phi1*dt1 + phi2*dt1*dt1 + phi3*dt1*dt1*dt1;
+	    } else if (good1) { /* Only prior */
+	      phase = g1p;
+	    } else if (good2) { /* Only following */
+	      phase = g2p;
+	    }
+	    break;
+	  default:
+	    break;
+	  }; /* end switch by interpolation mode */
+
+	  /* interpolate amplitude */
+	  amp   = wt1 * g1a + wt2 * g2a;
+
+	  /* set amplitude and phase in output array */
+	  in->CalApply[index]   = amp * cos(phase);
+	  in->CalApply[index+1] = amp * sin(phase);
+
+	  /* interpolate delay */
+	  in->CalApply[index+2] = (wt1 * in->CalPrior[jndex+2] +
+				   wt2 * in->CalFollow[jndex+2]);
+	  /* interpolate rate */
+	  in->CalApply[index+3] = (wt1 * in->CalPrior[jndex+3] +
+				   wt2 * in->CalFollow[jndex+3]);
+	  /* interpolate weight */
+	  in->CalApply[index+4] = (wt1 * in->CalPrior[jndex+4] +
+				   wt2 * in->CalFollow[jndex+4]);
+
+	  /* reference antenna */
+	  if (good1) in->RefAnt[iant+ipol*in->numAnt] = 
+		       (olong)(in->CalPrior[jndex+5] + 0.5);
+	  else if (good2) in->RefAnt[iant+ipol*in->numAnt] = 
+			    (olong)(in->CalFollow[jndex+5] + 0.5);
+	} /* end of only valid solutions section */
+
+	/* update indices */
+      badant:
+        index += in->lenCalArrayEntry;
+	jndex += in->lenCalArrayEntry;
+
+      } /* end poln loop  L300: */;
+    } /* end IF loop  L400: */;
+  } /* end antenna loop  L500: */
+
+} /* end ObitUVSolnUpdate */
+    
 /**
  * References the phases to a common reference antenna in a  
  * polarization coherent fashion.  
@@ -2049,306 +2360,6 @@ void ObitUVSolnClear (gpointer inn)
   
 } /* end ObitUVSolnClear */
 
-/**
- * Update ObitUVSoln calibration tables for time time.
- * The current table is interpolated between the previous and following
- * sets of solutions.
- * If a new set of entries is needed from the SN/CL table they are read.
- * Adopted from AIPS CGASET.FOR
- * A calibration CalApply entry  consists of:
- * \li real part of gain
- * \li imaginary of gain
- * \li group delay (sec)
- * \li fringe rate (sec/sec)
- * \li weight
- * \param in   Calibrate Object.
- * \param time desired time in days
- * \param err  Error stack for messages and errors.
- */
-static void ObitUVSolnUpdate (ObitUVSoln *in, ofloat time, olong SourID, ObitErr *err)
-{
-  olong iant, iif, ipol, index, jndex, na, nturn;
-  gboolean   good1, good2, bad;
-  ofloat      wtt1, wtt2, phase1, phase2, amp, phase=0.0,
-    g1a, g1p, g2a, g2p, delta, wt1, wt2, dt, dt1, dt2, rate1, rate2, temp, 
-    phi0, phi1, phi2, phi3;
-  ofloat fblank = ObitMagicF();
-  gboolean newcal;
-  gchar *routine="ObitUVSolnUpdate";
- 
- 
-  /* see if time for new table entry */
-  if ((in->LastRowRead <= in->numRow)  &&  (time > in->FollowCalTime)) {
-    ObitUVSolnNewTime (in, time, err);
-    if (err->error) Obit_traceback_msg (err, routine, "unspecified");
-    newcal = TRUE;
-  } else {
-    newcal = FALSE;
-  }
-
-  /* see if calibration needs update; every 0.03 of solution interval. */
-  delta = (time - in->CalTime);  
-  if ((!newcal) &&  (delta <= 0.03*(in->FollowCalTime-in->PriorCalTime))) return;
-
-  /* interpolate current calibration to time */
-  in->CalTime = time;
-
-  /* loop thru antennas */
-  for (iant=0; iant<in->numAnt; iant++) { /* loop 500 */
-    /* initialize indices for CalApply (index),  CalPrior and CalFollow (jndex)*/
-    index = iant * in->numIF * in->numPol * in->lenCalArrayEntry;
-    jndex = iant * in->numIF * in->numPol * in->lenCalArrayEntry;
-
-    if (in->MissAnt[iant]) goto badant;  /* Nothing for this antenna */
-
-    /* set interpolation weights proportional to time difference. */
-    dt  = in->FollowAntTime[iant] - in->PriorAntTime[iant] + 1.0e-20;
-    dt1 = time - in->PriorAntTime[iant];
-    dt2 = time - in->FollowAntTime[iant];
-    wtt1 = 0.0;
-    if ((time < in->FollowAntTime[iant]) && (dt>1.0e-19)) wtt1 = -dt2 / dt;
-    wtt2 = 1.0 - wtt1;
-
-    /* Set Faraday rotation - interpolate if both good */
-    if ((in->PriorIFR[iant]  !=  fblank) && (in->FollowIFR[iant] != fblank)) {
-      in->IFR[iant] = wtt1 * in->PriorIFR[iant] + wtt2 * in->FollowIFR[iant];
-    } else if (in->PriorIFR[iant] != fblank) {
-      in->IFR[iant] = in->PriorIFR[iant];
-    } else if (in->FollowIFR[iant] != fblank) {
-      in->IFR[iant] = in->FollowIFR[iant];
-    } else {
-      in->IFR[iant] = fblank;
-    } 
-
-    /* Set multiband delay - interpolate if both good */
-    /* Average rates */
-    rate1 =  avgRatePrior (in, iant, 1);
-    rate2 =  avgRateFollow (in, iant, 1);
-    if ((in->PriorMBDelay[iant]  !=  fblank) && (in->FollowMBDelay[iant] != fblank)) {
-      in->MBDelay[iant] = 
-	wtt1 * (in->PriorMBDelay[iant]  + dt1 * rate1) + 
-	wtt2 * (in->FollowMBDelay[iant] + dt2 * rate2);
-    } else if (in->PriorMBDelay[iant] != fblank) {
-      in->MBDelay[iant] = in->PriorMBDelay[iant] + dt1 * rate1;
-    } else if (in->FollowMBDelay[iant] != fblank) {
-      in->MBDelay[iant] = in->FollowMBDelay[iant] + dt2 * rate2;
-    } else {
-      in->MBDelay[iant] = fblank;
-    } 
-    /* Second poln MB delay */
-    if (in->numPol>1) {
-      /* Average rates */
-      rate1 =  avgRatePrior (in, iant, 2);
-      rate2 =  avgRateFollow (in, iant,21);
-      na = in->numAnt;
-      if ((in->PriorMBDelay[iant+na]  !=  fblank) && (in->FollowMBDelay[iant+na] != fblank)) {
-	in->MBDelay[iant+na] = 
-	  wtt1 * (in->PriorMBDelay[iant+na]  + dt1 * rate1) + 
-	  wtt2 * (in->FollowMBDelay[iant+na] + dt2 * rate2);
-      } else if (in->PriorMBDelay[iant+na] != fblank) {
-	in->MBDelay[iant+na] = in->PriorMBDelay[iant+na] + dt1 * rate1;
-      } else if (in->FollowMBDelay[iant+na] != fblank) {
-	in->MBDelay[iant+na] = in->FollowMBDelay[iant+na] + dt2 * rate2;
-      } else {
-	in->MBDelay[iant+na] = fblank;
-      } 
-    }
-    
-    /* loop thru IF */
-    for (iif=0; iif<in->numIF; iif++) { /* loop 400 */
-
-      /* loop thru polarization */
-      for (ipol= 0; ipol<in->numPol; ipol++) { /* loop 300 */
-
-	/* initialize soln with blanks */
-	in->CalApply[index]   = fblank;
-	in->CalApply[index+1] = fblank;
-	in->CalApply[index+2] = fblank;
-	in->CalApply[index+3] = fblank;
-	in->CalApply[index+4] = fblank;
-	in->CalApply[index+5] = fblank;
-
-	/* check for blanked soln. */
-	good1 = (in->CalPrior[jndex] != fblank)  && 
-	  (in->CalPrior[jndex+1] != fblank)  && 
-	  (in->CalPrior[jndex+2] != fblank)  && 
-	  (in->CalPrior[jndex+3] != fblank)  && 
-	  (in->PriorAntTime[iant]>-100.0)    && 
-	  (wtt1 > 0.0);
-	good2 = (in->CalFollow[jndex] != fblank)  && 
-	  (in->CalFollow[jndex+1] != fblank)  && 
-	  (in->CalFollow[jndex+2] != fblank)  && 
-	  (in->CalFollow[jndex+3] != fblank)  && 
-	  (in->FollowAntTime[iant]>-100.0)    && 
-	  (wtt2 > 0.0);
-
-	/* If 'SELF' interpolation make sure it's the same source */
-	if (in->interMode==OBIT_UVSolnInterSELF) {
-	  if ((SourID!=in->PriorSourID)  && 
-	      (SourID>0) && (in->PriorSourID>0)) good1 = FALSE;
-	  if ((SourID!=in->FollowSourID)   && 
-	      (SourID>0) && (in->FollowSourID>0)) good2 = FALSE;
-
-	  /* If both OK pick closest */
-	  if (good1 && good2) {
-	    good1 = wtt1  >=  wtt2;
-	    good2 = wtt1  <  wtt2;
-	  }
-	} /* end 'SELF' interpolation */
-
-	/* Impose maximum interpolation time */
-	if (fabs(dt1) > in->maxInter)  good1 = FALSE;
-	if (fabs(dt2) > in->maxInter)  good2 = FALSE;
-
-	/* solution all flagged? */
-	bad = !(good1 || good2);
-
-	/* nothing more if both prior and following are bad */
-	if (!bad) {
-
-	  /* different reference antennas  use closest */
-	  if ((fabs (in->CalPrior[jndex+5] - in->CalFollow[jndex+5]) >= 0.5)
-	      &&  good1  &&  good2) {
-	    good1 = wtt1  >=  wtt2;
-	    good2 = wtt1  <  wtt2;
-	  } 
-	  
-	  /* initial weights */
-	  wt1 = wtt1;
-	  wt2 = wtt2;
-	  
-	  /* Only Following good */
-	  if (!good1) {
-	    wt1 = 0.0;
-	    wt2 = 1.0;
-	  } 
-	  
-	  /* Only Prior good */
-	  if (!good2) {
-	    wt1 = 1.0;
-	    wt2 = 0.0;
-	  } 
-	  
-	  /* Get gains from tables */
-	  if (good1) {
-	    g1a = in->CalPrior[jndex];
-	    g1p = in->CalPrior[jndex+1];
-	  } else {  /* if not good use following */
-	    g1a = in->CalFollow[jndex];
-	    g1p = in->CalFollow[jndex+1];
-	  }
-	  if (good2) {
-	    g2a = in->CalFollow[jndex];
-	    g2p = in->CalFollow[jndex+1];
-	  } else {  /* if not good use preceeding */
-	    g2a = in->CalPrior[jndex];
-	    g2p = in->CalPrior[jndex+1];
-	  }
-	  
-	  /* check if fringe rates given - if so add accumulated phase */
-	  if ((in->CalPrior[jndex+3]  != 0.0)  || (in->CalFollow[jndex+3] != 0.0)) {
-	    phase1 = 0.0;
-	    phase2 = 0.0;
-	    if (good1) phase1 = in->CalPrior[jndex+3]  * dt1 * in->RateFact[iif];
-	    if (good2) phase2 = in->CalFollow[jndex+3] * dt2 * in->RateFact[iif];
-
-	    /* rotate phase by accumulated fringe rate */
-	    g1p += phase1;
-	    g2p += phase2;
-	  } 
-	  
-	  /* interpolate phase by mode */
-	  switch (in->interMode) {
-	  case OBIT_UVSolnInterSELF:
-	  case OBIT_UVSolnInter2PT:
-	  case OBIT_UVSolnInterPOLY:
-	  case OBIT_UVSolnInterSIMP:
-	    /* resolve phase ambiguity by disallowing phase jumps of >180 deg */
-	    if (fabs(g2p-g1p)> G_PI) {
-	      if ((g2p-g1p)> 0.0) g2p -=  2.0 * G_PI;
-	      else g2p +=  2.0 * G_PI;
-	    }
-	    phase = g1p + (g2p - g1p) * dt1 / dt;
-	    break;
-	  case OBIT_UVSolnInterAMBG: /* Use rates to resolve ambiguities */
-	    /* Both good? */
-	    if (good1 && good2 ) {
-	      /* rates in radians per second */
-	      rate1 = in->CalPrior[jndex+3]  * in->RateFact[iif];
-	      rate2 = in->CalFollow[jndex+3] * in->RateFact[iif];
-	      temp = (g1p + 0.5*(rate1+rate2) - g2p) / (2.0*G_PI);
-	      /* How many turns of phase */
-	      if (temp>=0.0) nturn = (olong)(temp+0.5);
-	      else nturn = (olong)(temp-0.5);
-	      g2p += (ofloat)(nturn) * 2.0 * G_PI;
-	      phase = g1p + (g2p - g1p) * dt1 / dt;
-	    } else if (good1) { /* Only prior */
-	      phase = g1p;
-	    } else if (good2) { /* Only following */
-	      phase = g2p;
-	    }
-	    break;
-	  case OBIT_UVSolnInterCUBE:  /* CUBIC method */
-	    /* Both good? */
-	    if (good1 && good2 ) {
-	      /* rates in radians per second */
-	      rate1 = in->CalPrior[jndex+3]  * in->RateFact[iif];
-	      rate2 = in->CalFollow[jndex+3] * in->RateFact[iif];
-	      temp = (g1p + 0.5*(rate1+rate2) - g2p) / (2.0*G_PI);
-	      /* How many turns pf phase */
-	      if (temp>=0.0) nturn = (olong)(temp+0.5);
-	      else nturn = (olong)(temp-0.5);
-	      g2p += (ofloat)(nturn) * 2.0 * G_PI;
-	      phi0 = g1p;
-	      phi1 = rate1;
-	      phi2 = (3.0*(g2p-g1p) - 2.0*rate1*dt-rate2*dt)/(dt*dt);
-	      phi3 = -(2.0*(g2p-g1p) - rate1*dt-rate2*dt)/(dt*dt*dt);
-	      phase = phi0 + phi1*dt1 + phi2*dt1*dt1 + phi3*dt1*dt1*dt1;
-	    } else if (good1) { /* Only prior */
-	      phase = g1p;
-	    } else if (good2) { /* Only following */
-	      phase = g2p;
-	    }
-	    break;
-	  default:
-	    break;
-	  }; /* end switch by interpolation mode */
-
-	  /* interpolate amplitude */
-	  amp   = wt1 * g1a + wt2 * g2a;
-
-	  /* set amplitude and phase in output array */
-	  in->CalApply[index]   = amp * cos(phase);
-	  in->CalApply[index+1] = amp * sin(phase);
-
-	  /* interpolate delay */
-	  in->CalApply[index+2] = (wt1 * in->CalPrior[jndex+2] +
-				   wt2 * in->CalFollow[jndex+2]);
-	  /* interpolate rate */
-	  in->CalApply[index+3] = (wt1 * in->CalPrior[jndex+3] +
-				   wt2 * in->CalFollow[jndex+3]);
-	  /* interpolate weight */
-	  in->CalApply[index+4] = (wt1 * in->CalPrior[jndex+4] +
-				   wt2 * in->CalFollow[jndex+4]);
-
-	  /* reference antenna */
-	  if (good1) in->RefAnt[iant+ipol*in->numAnt] = 
-		       (olong)(in->CalPrior[jndex+5] + 0.5);
-	  else if (good2) in->RefAnt[iant+ipol*in->numAnt] = 
-			    (olong)(in->CalFollow[jndex+5] + 0.5);
-	} /* end of only valid solutions section */
-
-	/* update indices */
-      badant:
-        index += in->lenCalArrayEntry;
-	jndex += in->lenCalArrayEntry;
-
-      } /* end poln loop  L300: */;
-    } /* end IF loop  L400: */;
-  } /* end antenna loop  L500: */
-
-} /* end ObitUVSolnUpdate */
-    
 /**
  * Read calibration for next time from SN table.
  * Applies mean gain modulus corrections

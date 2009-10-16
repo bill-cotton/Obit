@@ -31,6 +31,8 @@
 #include "ObitTableANUtil.h"
 #include "ObitTableSUUtil.h"
 #include "ObitUVUtil.h"
+#include "ObitPrecess.h"
+#define MAXANT    300    /* Maximum number of antennas */
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -41,6 +43,13 @@
 /*---------------Private function prototypes----------------*/
 /** Private: Sinc function. */
 static ofloat Sinc (ofloat arg);
+
+/** Private: Write SN table for ZeroFR */
+static void SetRow (ObitAntennaList *AntList, ObitSourceList *SouList, 
+		    odouble ArrLong, ObitUVDesc *desc, 
+		    odouble *RAR, odouble *DecR, ofloat delTime,
+		    olong maxant, gboolean  gotAnt[MAXANT], 
+		    ObitTableSNRow *row, ObitTableSN *outCal, ObitErr *err);
 
 /*----------------------Public functions---------------------------*/
 
@@ -406,13 +415,13 @@ ObitTableSN* ObitTableSNUtilInvert (ObitTableSN *inSN, ObitData *outData, olong 
 /**
  * Create SN table that will counter-rotate the data to a zero fringe rate
  * After this operation, all terrestial sources should be constant.
- * Amplitudes reflect the effect of the difference in fringe rate and delay
+ * Weights reflect the effect of the difference in fringe rate and delay
  * for the integration time and observed bandwidth.
  * \param inUV     Input UV data. Control parameters:
  * \li "solInt"    OBIT_float (1,1,1) Entry interval in days [def 10 sec].
  * \li "timeInt"   OBIT_float (1,1,1) Data integration time in sec [def 10 sec].
  * \param outUV    UV with which the output  Table is to be associated
- * \param ver      CL table version
+ * \param ver      SN table version
  * \param err      Error stack, returns if not empty.
  * \return Pointer to the newly created ObitTableSN object which is 
  *                 associated with outUV.
@@ -420,7 +429,6 @@ ObitTableSN* ObitTableSNUtilInvert (ObitTableSN *inSN, ObitData *outData, olong 
 ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver, 
 				   ObitErr *err)
 {
-#define MAXANT    300    /* Maximum number of antennas */
   ObitTableSN *outCal=NULL;
   ObitTableSNRow *row=NULL;
   ObitAntennaList *AntList=NULL;
@@ -432,12 +440,11 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   ofloat *rec, solInt, t0, sumTime, cbase, lastTime=-1.0, lastSource=-1.0, lastFQID=-1.0;
-  ofloat delTime, uvw[3], bl[3], delay, amp, phase, curSou=-1.0, curFQ=-1.0;
-  olong iRow, i, j, ia, lrec, maxant, suid;
-  olong  nTime, SubA, ant1, ant2, lastSubA=-1;
+  ofloat delTime, curSou=-1.0, curFQ=-1.0;
+  olong i, ia, lrec, maxant;
+  olong  nTime, SubA=0, ant1, ant2, lastSubA=-1;
   oint numPol, numIF, numOrb, numPCal;
-  odouble DecR, RAR, ArrLong, AntLst, HrAng=0.0, cosdec;
-  gdouble twopi = 2.0* G_PI, omegaE=7.29115e-5;
+  odouble DecR=0.0, RAR=0.0, ArrLong, cosdec=0.0;
   gboolean doCalSelect, doFirst=TRUE, someData=FALSE, gotAnt[MAXANT];
   ObitIOCode retCode;
   gchar *tname;
@@ -491,9 +498,10 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
   SUTable = newObitTableSUValue ("SU table", (ObitData*)outUV, 
 				 &ver, access, numIF, err);
   if (SUTable==NULL) {
-    /* Get from header - REALLY SHOULD PRECESS */
-    RAR      = desc->crval[desc->jlocr]*DG2RAD;
-    DecR     = desc->crval[desc->jlocd]*DG2RAD;
+    /* Get from header */
+    ObitPrecessUVRaDecApp (desc, &RAR, &DecR);
+    RAR      *= DG2RAD;
+    DecR     *= DG2RAD;
     cosdec   = cos(DecR);
   } else { /* Use SU table */
     SouList = ObitTableSUGetList (SUTable, err);
@@ -574,6 +582,9 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
   for (i=0; i<MAXANT; i++) gotAnt[i] = FALSE;
   maxant = AntList->number;
 
+  /* Number of antennas */
+  outCal->numAnt = maxant;
+
   /* Averaging time (sec) for time smearing correction */
   /* "Solution interval" default 10 sec */
   delTime = 10.0;
@@ -629,54 +640,10 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
 	      row->SourID = (oint)(MAX(lastSource,0.0)+0.5);
 	      row->FreqID = (oint)(MAX(lastFQID,0.0)+0.5);
 	      row->SubA   = lastSubA;
-
-	      /* Source information 
-		 Apparent position in radians */
-	      if (SouList) {  /* Source table? */
-		suid     = row->SourID;
-		RAR      = SouList->SUlist[suid]->RAApp*DG2RAD;
-		DecR     = SouList->SUlist[suid]->DecApp*DG2RAD;
-		cosdec   = cos(DecR);
-	      }
-	      /* LST and hour angle (radians) */
-	      AntLst = AntList->GSTIAT0 + ArrLong + row->Time*AntList->RotRate;
-	      HrAng  = AntLst - RAR;
-
-	      /* Loop over antennas found */
-	      for (ia=1; ia<=maxant; ia++) {
-		if (!gotAnt[ia]) continue;
-		bl[0] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[0];
-		bl[1] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[1];
-		bl[2] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[2];
-		/* Compute uvw - short baseline approximation */
-		ObitUVUtilUVW (bl, DecR, (ofloat)HrAng, uvw);
-		/* Loop over IFs */
-		for (j=0; j<numIF; j++) {
-		  /* IF freq */
-		  row->Rate1[j]   = -uvw[1]*cosdec*omegaE/desc->freq;
-		  row->Delay1[j]  = -uvw[2]/desc->freq;
-		  delay = uvw[2] * desc->freqIF[j]/desc->freq;
-		  phase = -twopi*(delay-(olong)delay);
-		  amp = Sinc(delTime*row->Rate1[j]) * Sinc(desc->chIncIF[j]*row->Delay1[j]);
-		  if (amp!=0.0) amp = 1.0 / amp;
-		  row->Real1[j]   = amp * cos(phase);
-		  row->Imag1[j]   = amp * sin(phase);
-		  /* Multiple polarizations */
-		  if (numPol>1) {
-		    row->Real2[j]   = row->Real1[j];
-		    row->Imag2[j]   = row->Imag1[j];
-		    row->Rate2[j]   = row->Rate1[j];
-		    row->Delay2[j]  = row->Delay1[j];
-		  }
-		}
-		iRow = -1;
-		row->antNo = ia;
-		if ((ObitTableSNWriteRow (outCal, iRow, row, err)
-		     != OBIT_IO_OK) || (err->error>0)) { 
-		  Obit_log_error(err, OBIT_Error, "%s: ERROR writing SN Table file", routine);
-		  return outCal;
-		}
-	      }
+	      /* calculate/write rows */
+	      SetRow (AntList, SouList, ArrLong, desc, &RAR, &DecR, delTime,
+		      maxant,  gotAnt, row, outCal, err);
+	      if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
 	    } else { /* Not first scan */
 	      /* values for end of previous scan */
 	      row->Time   = lastTime; 
@@ -684,44 +651,11 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
 	      row->SourID = (oint)(MAX(lastSource,0.0)+0.5);
 	      row->FreqID = (oint)(MAX(lastFQID,0.0)+0.5);
 	      row->SubA   = lastSubA;
-	      /* LST and hour angle (radians) */
-	      AntLst = AntList->GSTIAT0 + ArrLong + row->Time*AntList->RotRate;
-	      HrAng  = AntLst - RAR;
-	      /* Loop over antennas found */
-	      for (ia=1; ia<=maxant; ia++) {
-		if (!gotAnt[ia]) continue;
-		bl[0] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[0];
-		bl[1] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[1];
-		bl[2] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[2];
-		/* Compute uvw - short baseline approximation */
-		ObitUVUtilUVW (bl, DecR, (ofloat)HrAng, uvw);
-		/* Loop over IFs */
-		for (j=0; j<numIF; j++) {
-		  /* IF freq */
-		  row->Rate1[j]   = -uvw[1]*cosdec*omegaE/desc->freq;
-		  row->Delay1[j]  = -uvw[2]/desc->freq;
-		  delay = uvw[2] * desc->freqIF[j]/desc->freq;
-		  phase = -twopi*(delay-(olong)delay);
-		  amp = Sinc(delTime*row->Rate1[j]) * Sinc(desc->chIncIF[j]*row->Delay1[j]);
-		  if (amp!=0.0) amp = 1.0 / amp;
-		  row->Real1[j]   = amp * cos(phase);
-		  row->Imag1[j]   = amp * sin(phase);
-		  /* Multiple polarizations */
-		  if (numPol>1) {
-		    row->Real2[j]   = row->Real1[j];
-		    row->Imag2[j]   = row->Imag1[j];
-		    row->Rate2[j]   = row->Rate1[j];
-		    row->Delay2[j]  = row->Delay1[j];
-		  }
-		}
-		iRow = -1;
-		row->antNo = ia;
-		if ((ObitTableSNWriteRow (outCal, iRow, row, err)
-		     != OBIT_IO_OK) || (err->error>0)) { 
-		  Obit_log_error(err, OBIT_Error, "%s: ERROR writing SN Table file", routine);
-		  return outCal;
-		}
-	      }
+	      /* calculate/write rows */
+	      SetRow (AntList, SouList, ArrLong, desc, &RAR, &DecR, delTime,
+		      maxant,  gotAnt, row, outCal, err);
+	      if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
+
 	      /* Values for start of next scan */
 	      row->Time   = rec[inUV->myDesc->iloct]; 
 	      row->TimeI  = 0.0;
@@ -737,45 +671,11 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
 	  }
       
 	  /* Write Cal table */
-	  /* LST and hour angle (radians) */
-	  AntLst = AntList->GSTIAT0 + ArrLong + row->Time*AntList->RotRate;
-	  HrAng  = AntLst - RAR;
-	  /* Loop over antennas found */
-	  row->SubA   = lastSubA;
-	  for (ia=1; ia<=maxant; ia++) {
-	    if (!gotAnt[ia]) continue;
-	    bl[0] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[0];
-	    bl[1] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[1];
-	    bl[2] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[2];
-	    /* Compute uvw - short baseline approximation */
-	    ObitUVUtilUVW (bl, DecR, (ofloat)HrAng, uvw);
-	    /* Loop over IFs */
-	    for (j=0; j<numIF; j++) {
-	      /* IF freq */
-	      row->Rate1[j]   = -uvw[1]*cosdec*omegaE/desc->freq;
-	      row->Delay1[j]  = -uvw[2]/desc->freq;
-	      delay = uvw[2] * desc->freqIF[j]/desc->freq;
-	      phase = -twopi*(delay-(olong)delay);
-	      amp = Sinc(delTime*row->Rate1[j]) * Sinc(desc->chIncIF[j]*row->Delay1[j]);
-	      if (amp!=0.0) amp = 1.0 / amp;
-	      row->Real1[j]   = amp * cos(phase);
-	      row->Imag1[j]   = amp * sin(phase);
-	      /* Multiple polarizations */
-	      if (numPol>1) {
-		row->Real2[j]   = row->Real1[j];
-		row->Imag2[j]   = row->Imag1[j];
-		row->Rate2[j]   = row->Rate1[j];
-		row->Delay2[j]  = row->Delay1[j];
-	      }
-	    }
-	    iRow = -1;
-	    row->antNo = ia;
-	    if ((ObitTableSNWriteRow (outCal, iRow, row, err)
-		 != OBIT_IO_OK) || (err->error>0)) { 
-	      Obit_log_error(err, OBIT_Error, "%s: ERROR writing SN Table file", routine);
-	      return outCal;
-	    }
-	  }
+	  /* calculate/write rows */
+	  SetRow (AntList, SouList, ArrLong, desc, &RAR, &DecR, delTime,
+		  maxant,  gotAnt, row, outCal, err);
+	  if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
+
 	  /* initialize accumulators */
 	  t0         = rec[inUV->myDesc->iloct];
 	  if (inUV->myDesc->ilocsu>0) lastSource = rec[inUV->myDesc->ilocsu];
@@ -815,44 +715,10 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
     row->TimeI  = lastTime - t0;
 
     /* Write Cal table */
-    /* LST and hour angle (radians) */
-    AntLst = AntList->GSTIAT0 + ArrLong + row->Time*AntList->RotRate;
-    HrAng  = AntLst - RAR;
-    /* Loop over antennas found */
-    for (ia=1; ia<=maxant; ia++) {
-      if (!gotAnt[ia]) continue;
-      bl[0] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[0];
-      bl[1] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[1];
-      bl[2] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[2];
-      /* Compute uvw - short baseline approximation */
-      ObitUVUtilUVW (bl, DecR, (ofloat)HrAng, uvw);
-      /* Loop over IFs */
-      for (j=0; j<numIF; j++) {
-	/* IF freq */
-	row->Rate1[j]   = -uvw[1]*cosdec*omegaE/desc->freq;
-	row->Delay1[j]  = -uvw[2]/desc->freq;
-	delay = uvw[2] * desc->freqIF[j]/desc->freq;
-	phase = -twopi*(delay-(olong)delay);
-	amp = Sinc(delTime*row->Rate1[j]) * Sinc(desc->chIncIF[j]*row->Delay1[j]);
-	if (amp!=0.0) amp = 1.0 / amp;
-	row->Real1[j]   = amp * cos(phase);
-	row->Imag1[j]   = amp * sin(phase);
-	/* Multiple polarizations */
-	if (numPol>1) {
-	  row->Real2[j]   = row->Real1[j];
-	  row->Imag2[j]   = row->Imag1[j];
-	  row->Rate2[j]   = row->Rate1[j];
-	  row->Delay2[j]  = row->Delay1[j];
-	}
-      }
-      iRow = -1;
-      row->antNo = ia;
-      if ((ObitTableSNWriteRow (outCal, iRow, row, err)
-	   != OBIT_IO_OK) || (err->error>0)) { 
-	Obit_log_error(err, OBIT_Error, "%s: ERROR writing CL Table file", routine);
-	return outCal;
-      }
-    }
+    /* calculate/write rows */
+    SetRow (AntList, SouList, ArrLong, desc, &RAR, &DecR, delTime,
+	    maxant,  gotAnt, row, outCal, err);
+    if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
   } /* End final cal */
 
   /* Close cal table */
@@ -872,7 +738,7 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
   /* Cleanup */
   AntList = ObitAntennaListUnref(AntList);
   SouList = ObitSourceListUnref(SouList);
-
+  row     = ObitTableSNRowUnref(row); 
   return outCal;
 } /* end ObitTableSNGetZeroFR */
 
@@ -890,3 +756,80 @@ static ofloat Sinc (ofloat arg)
   return out;
 } /* End Sinc */
 
+/**
+ * Calculate/write SN table entry for Zero Fringe Rate.
+ * \param AntList Antenna list
+ * \param SouList Source list or NULL
+ * \param ArrLong Array longitude (rad)
+ * \param desc    UV data descriptor
+ * \param RAR     Apparent RA (rad)
+ * \param DecR    Apparent declination (rad)
+ * \param delTime UV data integrationt time (days)
+ * \param maxant  Maximum antenna number
+ * \param gotAnt  Array of flags for antennas with data
+ * \param row     SN table row to use
+ * \param outCal  Output SN table
+ * \param err     ObitError/message stack
+ */
+static void SetRow (ObitAntennaList *AntList, ObitSourceList *SouList, 
+		    odouble ArrLong, ObitUVDesc *desc, 
+		    odouble *RAR, odouble *DecR, ofloat delTime,
+		    olong maxant, gboolean  gotAnt[MAXANT], 
+		    ObitTableSNRow *row, ObitTableSN *outCal, ObitErr *err) 
+{
+  odouble AntLst, HrAng=0.0, cosdec=0.0;
+  olong ia, j, suid, iRow, numIF, numPol;
+  gdouble twopi = 2.0* G_PI, omegaE=7.29115e-5;
+  ofloat wt, uvw[3], bl[3], delay, phase;
+  gchar *routine = "ObitTableSN:SetRow";
+
+  numIF  = outCal->numIF; 
+  numPol = outCal->numPol; 
+
+  /* LST and hour angle (radians) */
+  if (SouList) {  /* Source table? */
+    suid     = row->SourID-1;
+    *RAR     = SouList->SUlist[suid]->RAApp*DG2RAD;
+    *DecR    = SouList->SUlist[suid]->DecApp*DG2RAD;
+  }
+  cosdec   = cos(*DecR);
+
+  AntLst = AntList->GSTIAT0 + ArrLong + row->Time*AntList->RotRate;
+  HrAng  = AntLst - *RAR;
+  /* Loop over antennas found */
+  for (ia=1; ia<=maxant; ia++) {
+    if (!gotAnt[ia]) continue;
+    bl[0] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[0];
+    bl[1] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[1];
+    bl[2] = (ofloat)AntList->ANlist[ia-1]->AntXYZ[2];
+    /* Compute uvw - short baseline approximation */
+    ObitUVUtilUVW (bl, *DecR, (ofloat)HrAng, uvw);
+    /* Loop over IFs */
+    for (j=0; j<numIF; j++) {
+      /* IF freq */
+      row->Rate1[j]   = +uvw[0]*cosdec*omegaE/desc->freq;
+      row->Delay1[j]  = +uvw[2]/desc->freq;
+      delay = uvw[2] * desc->freqIF[j]/desc->freq;
+      phase = -twopi*(delay-(olong)delay);
+      wt = fabs(Sinc(delTime*row->Rate1[j]) * Sinc(desc->chIncIF[j]*row->Delay1[j]));
+      row->Real1[j]   = cos(phase);
+      row->Imag1[j]   = sin(phase);
+      row->Weight1[j] = wt;
+      /* Multiple polarizations */
+      if (numPol>1) {
+	row->Real2[j]   = row->Real1[j];
+	row->Imag2[j]   = row->Imag1[j];
+	row->Rate2[j]   = row->Rate1[j];
+	row->Delay2[j]  = row->Delay1[j];
+	row->Weight2[j] = row->Weight1[j];
+      }
+      iRow = -1;
+      row->antNo = ia;
+      if ((ObitTableSNWriteRow (outCal, iRow, row, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "%s: ERROR writing SN Table file", routine);
+	return ;
+      }
+    }
+  } /* end loop over antennas */
+} /* end SetRow */

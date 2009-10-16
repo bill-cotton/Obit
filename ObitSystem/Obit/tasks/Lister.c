@@ -100,6 +100,7 @@ olong  nFITS=0;                  /* Number of FITS directories */
 gchar **FITSdirs=NULL;           /* List of FITS data directories */
 ObitInfoList *myInput  = NULL;   /* Input parameter list */
 ObitInfoList *myOutput = NULL;   /* Output parameter list */
+ObitUVDesc *myUVDesc = NULL;     /* UV data descriptor */
 
 
 /* File info */
@@ -542,6 +543,9 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   /* Ensure inData fully instantiated and OK */
   ObitUVFullInstantiate (inData, TRUE, err);
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
+
+  /* Put descriptor where routines can pick it up */
+  myUVDesc = ObitUVDescRef(inData->myDesc);
 
   return inData;
 } /* end getInputData */
@@ -1244,7 +1248,7 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ofloat       scale = 1.0;
   gchar        *prtFile=NULL, timeString[25], inTab[28], dispType[10], source[20];
   gchar        *dTypes[] = {"AMP     ","PHASE   ","WT      ","DELAY   ","RATE    "};
-  gchar        *dLabel[] = {"Amplitude","Phase","Weight/SNR","Delay","Rate"};
+  gchar        *dLabel[] = {"Amplitude","Phase","Weight/SNR","Delay(nsec)","Rate(mHz)"};
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *routine = "doSCAN";
@@ -1564,10 +1568,12 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 	    if(lastSouID>-99) souChange = TRUE;
 	    lastSouID = souID;
 	    sprintf (source,"Unspecified     ");
-	    for (i=0; i<SouList->number; i++) {
-	      if (souID==SouList->SUlist[i]->SourID) {
-		strncpy (source, SouList->SUlist[i]->SourceName, 16);
-		break;
+	    if (SouList) {
+	      for (i=0; i<SouList->number; i++) {
+		if (souID==SouList->SUlist[i]->SourID) {
+		  strncpy (source, SouList->SUlist[i]->SourceName, 16);
+		  break;
+		}
 	      }
 	    }
 	  } /* end accumulate */
@@ -1670,6 +1676,7 @@ ofloat getSNValue (ObitTableSNRow *SNRow, gboolean firstPol,
       if ((SNRow->Real2[iif]!=fblank) && (SNRow->Imag2[iif]!=fblank) && (SNRow->Weight2[iif]>0.0))
 	value = RAD2DG * atan2 (SNRow->Imag2[iif], SNRow->Real2[iif]+1.0e-20);
     }
+    break;
   case 2:  /* "WT"    */
     if (firstPol) {
       value = SNRow->Weight1[iif];
@@ -1677,24 +1684,29 @@ ofloat getSNValue (ObitTableSNRow *SNRow, gboolean firstPol,
       value = SNRow->Weight2[iif];
     }
     break;
-  case 3:  /* "DELAY" */
+  case 3:  /* "DELAY" nsec */
     if (firstPol) {
       if ((SNRow->Real1[iif]!=fblank) && (SNRow->Imag1[iif]!=fblank) && (SNRow->Weight1[iif]>0.0))
-	value = SNRow->Delay1[iif];
+	value = 1.0e9*SNRow->Delay1[iif];
       
     } else {
       if ((SNRow->Real2[iif]!=fblank) && (SNRow->Imag2[iif]!=fblank) && (SNRow->Weight2[iif]>0.0))
-	value = SNRow->Delay2[iif];
+	value = 1.0e9*SNRow->Delay2[iif];
     }
     break;
   case 4:  /* "RATE"  */
     if (firstPol) {
-      if ((SNRow->Real1[iif]!=fblank) && (SNRow->Imag1[iif]!=fblank) && (SNRow->Weight1[iif]>0.0))
+      if ((SNRow->Real1[iif]!=fblank) && (SNRow->Imag1[iif]!=fblank) && (SNRow->Weight1[iif]>0.0)) {
 	value = SNRow->Rate1[iif];
-      
+	/* to milliHz */
+	if (myUVDesc) value *= myUVDesc->freqIF[iif]*1000.0;
+      }
     } else {
-      if ((SNRow->Real2[iif]!=fblank) && (SNRow->Imag2[iif]!=fblank) && (SNRow->Weight2[iif]>0.0))
+      if ((SNRow->Real2[iif]!=fblank) && (SNRow->Imag2[iif]!=fblank) && (SNRow->Weight2[iif]>0.0)) {
 	value = SNRow->Rate2[iif];
+	/* to milliHz */
+	if (myUVDesc) value *= myUVDesc->freqIF[iif]*1000.0;
+      }
     }
     break;
   default:
@@ -1750,21 +1762,27 @@ ofloat getCLValue (ObitTableCLRow *CLRow, gboolean firstPol,
   case 3:  /* "DELAY" */
     if (firstPol) {
       if ((CLRow->Real1[iif]!=fblank) && (CLRow->Imag1[iif]!=fblank) && (CLRow->Weight1[iif]>0.0))
-	value = CLRow->Delay1[iif];
+	value = 1.0e9*CLRow->Delay1[iif];
       
     } else {
       if ((CLRow->Real2[iif]!=fblank) && (CLRow->Imag2[iif]!=fblank) && (CLRow->Weight2[iif]>0.0))
-	value = CLRow->Delay2[iif];
+	value = 1.0e9*CLRow->Delay2[iif];
     }
     break;
   case 4:  /* "RATE"  */
     if (firstPol) {
-      if ((CLRow->Real1[iif]!=fblank) && (CLRow->Imag1[iif]!=fblank) && (CLRow->Weight1[iif]>0.0))
+      if ((CLRow->Real1[iif]!=fblank) && (CLRow->Imag1[iif]!=fblank) && (CLRow->Weight1[iif]>0.0)) {
 	value = CLRow->Rate1[iif];
+	/* to milliHz */
+	if (myUVDesc) value *= myUVDesc->freqIF[iif]*1000.0;
+      }
       
     } else {
-      if ((CLRow->Real2[iif]!=fblank) && (CLRow->Imag2[iif]!=fblank) && (CLRow->Weight2[iif]>0.0))
+      if ((CLRow->Real2[iif]!=fblank) && (CLRow->Imag2[iif]!=fblank) && (CLRow->Weight2[iif]>0.0)) {
 	value = CLRow->Rate2[iif];
+	/* to milliHz */
+	if (myUVDesc) value *= myUVDesc->freqIF[iif]*1000.0;
+      }
     }
     break;
   default:

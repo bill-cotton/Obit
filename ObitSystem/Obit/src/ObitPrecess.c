@@ -97,6 +97,37 @@ void ObitPrecessUVJPrecessApp (ObitUVDesc *desc, ObitSource *source)
 } /* end ObitPrecessUVJPrecessApp */
 
 /**
+ * Precess the RA and declination from a UV data header to the 
+ * apparent position of date
+ * \param desc      UV data descriptor
+ * \param RAApp  [out] RA of date [deg]
+ * \param DecApp [out] Declination of date [deg]
+ */
+void ObitPrecessUVRaDecApp (ObitUVDesc *desc, odouble *RAApp, odouble *DecApp)
+{
+  odouble JD, RAMean, DecMean;
+  odouble obsPos[] = {0.0, 0.0, 0.0};
+  ofloat polar[]   = {0.0, 0.0};
+  
+  /* error checks */
+  g_assert (ObitUVDescIsA(desc));
+  
+  /* Get Julian Date of observations */
+  ObitUVDescDate2JD (desc->obsdat, &JD);
+  
+  /* Precess */
+  RAMean  = desc->crval[desc->jlocr]*DG2RAD;
+  DecMean = desc->crval[desc->jlocd]*DG2RAD;
+  jpreces (JD, desc->equinox, 0.01, 1, FALSE, obsPos, polar,
+	   &RAMean, &DecMean, RAApp, DecApp);
+
+  /* Convert to degrees */
+  *RAApp  *= RAD2DG;
+  *DecApp *= RAD2DG;
+  
+} /* end ObitPrecessUVRaDecApp */
+
+/**
  * Predict the Greenwich Sidereal Time at UT=0 and the Earth's
  * rotation rate on a given Julian date.
  * \param JD

@@ -1447,13 +1447,14 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   olong ncorr, nrparm, numAnt, numBL;
   ObitIOAccess access;
   ObitUVDesc *inDesc, *outDesc;
+  ObitUVSortBuffer *outBuffer=NULL;
   olong suba, lastSourceID, curSourceID, lastSubA, lastFQID=-1;
   gchar *today=NULL;
   ofloat cbase, timeAvg, curTime, startTime, endTime, lastTime=-1.0;
-  ofloat *accVis=NULL, *accRP=NULL;
-  ofloat *inBuffer, *outBuffer;
+  ofloat *accVis=NULL, *accRP=NULL, *ttVis=NULL;
+  ofloat *inBuffer;
   olong ant1, ant2, blindx, *blLookup=NULL;
-  olong i, j, ivis=0, iindx, jndx, indx, NPIO, itemp;
+  olong i, j, ivis=0, iindx, jndx, indx, NPIO, itemp, nvis;
   gboolean done, gotOne;
   gchar *routine = "ObitUVUtilAvgT";
  
@@ -1501,10 +1502,13 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   strncpy (outUV->myDesc->date, today, UVLEN_VALUE-1);
   if (today) g_free(today);
   
- /* Set number of output vis per read to 1 */
+  /* Set number of output vis per read to twice number of baselines */
+  suba    = 1;
+  numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
+  numBL   = (numAnt*(numAnt+1))/2;  /* Include auto correlations */
   NPIO = 1;
   ObitInfoListGetTest(inUV->info, "nVisPIO", &type, dim, &NPIO);
-  itemp = 1;
+  itemp = 2 * numBL;
   dim[0] = dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut(outUV->info, "nVisPIO", OBIT_long, dim, &itemp);
 
@@ -1518,24 +1522,29 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   /* if it didn't work bail out */
   if ((oretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
 
- /* Get descriptors */
+  /* Get descriptors */
   inDesc  = inUV->myDesc;
   outDesc = outUV->myDesc;
 
   /* Create work arrays for averaging */
-  suba    = 1;
-  numAnt  = inUV->myDesc->numAnt[suba-1];/* actually highest antenna number */
-  numBL   = (numAnt*(numAnt+1))/2;  /* Include auto correlations */
   ncorr   = inUV->myDesc->ncorr;
   nrparm  = inUV->myDesc->nrparm;
   accVis  = g_malloc0(4*numBL*ncorr*sizeof(ofloat));     /* Vis */
   accRP   = g_malloc0(numBL*(nrparm+1)*sizeof(ofloat));  /* Rand. parm */
+  ttVis   = g_malloc0(( inUV->myDesc->lrec+5)*sizeof(ofloat)); /* Temp Vis */
 
   /* Baseline lookup table */
   blLookup = g_malloc0 (numAnt* sizeof(olong));
   blLookup[0] = 0;
   /* Include autocorr */
   for (i=1; i<numAnt; i++) blLookup[i] = blLookup[i-1] + numAnt-i+1; 
+
+  /* Create sort buffer */
+  /* Make sort buffer big enough for four copies of each baseline */
+  nvis = 4 * numBL;  
+  nvis = MIN (nvis, inUV->myDesc->nvis);
+  outBuffer = ObitUVSortBufferCreate ("Buffer", outUV, nvis, err);
+  if (err->error) goto cleanup;
 
   /* Copy tables before data */
   iretCode = ObitUVCopyTables (inUV, outUV, exclude, NULL, err);
@@ -1564,7 +1573,6 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   lastSourceID = -1;
   curSourceID  = 0;
   outDesc->numVisBuff = 0;
-  outBuffer = outUV->buffer;  /* Local copy of buffer pointer */
   inBuffer  = inUV->buffer;   /* Local copy of buffer pointer */
 
   /* Loop over intervals */
@@ -1665,7 +1673,7 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		  (i==inDesc->iloct)) 
 		accRP[jndx+i+1] /= accRP[jndx];
 	      /* Copy to output buffer */
-	      outBuffer[indx++] = accRP[jndx+i+1];
+	      ttVis[indx++] = accRP[jndx+i+1];
 	    } /* End random parameter loop */
 
 	    /* Average vis data */
@@ -1676,18 +1684,25 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		accVis[jndx+2] /= accVis[jndx];
 	      }
 	      /* Copy to output buffer */
-	      outBuffer[indx++] = accVis[jndx+1];
-	      outBuffer[indx++] = accVis[jndx+2];
-	      outBuffer[indx++] = accVis[jndx+3];
+	      ttVis[indx++] = accVis[jndx+1];
+	      ttVis[indx++] = accVis[jndx+2];
+	      ttVis[indx++] = accVis[jndx+3];
 	    } /* end loop over correlators */
 
-	    /* Write output one vis at a time */
+	    /* Copy to Sort Buffer (Sorts and writes when full) */
+	    ObitUVSortBufferAddVis(outBuffer, ttVis, endTime, err);
+	    if (err->error) goto cleanup;
+	    /* Write output one vis at a time
 	    outDesc->numVisBuff = 1;
 	    oretCode = ObitUVWrite (outUV, outBuffer, err);
-	    if (err->error) goto cleanup;
+	    if (err->error) goto cleanup; */
 	  } /* End any data this baseline */
 	} /* end loop over baselines */
 	
+	/* Flush Sort Buffer */
+	ObitUVSortBufferFlush (outBuffer, err);
+	if (err->error) Obit_traceback_val (err, routine, outUV->name, outUV);
+
 	/* Are we there yet??? */
 	done = (inDesc->firstVis >= inDesc->nvis) || 
 	  (iretCode==OBIT_IO_EOF);
@@ -1717,8 +1732,10 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   /* Cleanup */
  cleanup:
   if (accVis)   g_free(accVis);   accVis   = NULL;
+  if (ttVis)    g_free(ttVis);    ttVis    = NULL;
   if (accRP)    g_free(accRP);    accRP    = NULL;
   if (blLookup) g_free(blLookup); blLookup = NULL;
+  outBuffer = ObitUVSortBufferUnref(outBuffer);
 
   /* close files */
   iretCode = ObitUVClose (inUV, err);
@@ -1927,7 +1944,7 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   nvis = 1000000000 / (outUV->myDesc->lrec*sizeof(ofloat));  
   nvis = MIN (nvis, inUV->myDesc->nvis);
   outBuffer = ObitUVSortBufferCreate ("Buffer", outUV, nvis, err);
-  if ((oretCode!=OBIT_IO_OK) || (err->error)) goto cleanup;
+  if (err->error) goto cleanup;
 
   /* Get descriptors */
   inDesc  = inUV->myDesc;
@@ -2414,7 +2431,7 @@ ObitInfoList* ObitUVUtilCount (ObitUV *inUV, ofloat timeInt, ObitErr *err)
     Obit_traceback_val (err, routine, inUV->name, outList);
   
   return outList;
-} /* end ObitUVUtilAvgT  */
+} /* end ObitUVUtilCount  */
 
 /**
  * Copy blocks of channels from one UV to a set of output UVs..
