@@ -1020,7 +1020,7 @@ void ObitSkyModelVMFTDFT (ObitSkyModelVM *in, olong field, ObitUV *uvdata, ObitE
 
   /* Check */
   args = (VMFTFuncArg*)in->threadArgs[0];
-  if (strncmp (args->type, "vmbase", 6)) {
+  if (strncmp (args->type, "vm", 2)) {
     Obit_log_error(err, OBIT_Error,"%s: Wrong type FuncArg %s", routine,args->type);
     return;
   }

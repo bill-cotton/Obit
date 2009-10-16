@@ -401,6 +401,10 @@ void ObitUVSelNextInit (ObitUVSel *in, ObitUVDesc *desc, ObitErr *err)
   g_assert (ObitUVSelIsA(in));
   g_assert (ObitUVDescIsA(desc));
 
+
+  /* Indexing? */
+  if (in->NXTable==NULL) return;
+
   /* Open Index table  */
   retCode = 
     ObitTableNXOpen ((ObitTableNX*)(in->NXTable), OBIT_IO_ReadOnly, err);
