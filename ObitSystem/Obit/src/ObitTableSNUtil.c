@@ -46,9 +46,9 @@ static ofloat Sinc (ofloat arg);
 
 /** Private: Write SN table for ZeroFR */
 static void SetRow (ObitAntennaList *AntList, ObitSourceList *SouList, 
-		    odouble ArrLong, ObitUVDesc *desc, 
+		    odouble ArrLong, ObitUVDesc *desc,
 		    odouble *RAR, odouble *DecR, ofloat delTime,
-		    olong maxant, gboolean  gotAnt[MAXANT], 
+		    olong maxant, gboolean  gotAnt[MAXANT], gboolean invert,
 		    ObitTableSNRow *row, ObitTableSN *outCal, ObitErr *err);
 
 /*----------------------Public functions---------------------------*/
@@ -419,6 +419,7 @@ ObitTableSN* ObitTableSNUtilInvert (ObitTableSN *inSN, ObitData *outData, olong 
  * for the integration time and observed bandwidth.
  * \param inUV     Input UV data. Control parameters:
  * \li "solInt"    OBIT_float (1,1,1) Entry interval in days [def 10 sec].
+ * \li "doInvert"  OBIT_bool (1,1,1) If TRUE invert solution [def FALSE];
  * \li "timeInt"   OBIT_float (1,1,1) Data integration time in sec [def 10 sec].
  * \param outUV    UV with which the output  Table is to be associated
  * \param ver      SN table version
@@ -445,7 +446,7 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
   olong  nTime, SubA=0, ant1, ant2, lastSubA=-1;
   oint numPol, numIF, numOrb, numPCal;
   odouble DecR=0.0, RAR=0.0, ArrLong, cosdec=0.0;
-  gboolean doCalSelect, doFirst=TRUE, someData=FALSE, gotAnt[MAXANT];
+  gboolean doCalSelect, doFirst=TRUE, someData=FALSE, gotAnt[MAXANT], invert=FALSE;
   ObitIOCode retCode;
   gchar *tname;
   gchar *routine = "ObitTableSNGetZeroFR";
@@ -460,6 +461,9 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
   ObitInfoListGetTest(inUV->info, "doCalSelect", &type, dim, &doCalSelect);
   if (doCalSelect) access = OBIT_IO_ReadCal;
   else access = OBIT_IO_ReadWrite;
+
+  /* Invert solutions? */
+  ObitInfoListGetTest(inUV->info, "doInvert", &type, dim, &invert);
 
   /* open UV data to fully instantiate if not already open */
   if ((inUV->myStatus==OBIT_Inactive) || (inUV->myStatus==OBIT_Defined)) {
@@ -642,7 +646,7 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
 	      row->SubA   = lastSubA;
 	      /* calculate/write rows */
 	      SetRow (AntList, SouList, ArrLong, desc, &RAR, &DecR, delTime,
-		      maxant,  gotAnt, row, outCal, err);
+		      maxant,  gotAnt, invert, row, outCal, err);
 	      if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
 	    } else { /* Not first scan */
 	      /* values for end of previous scan */
@@ -653,7 +657,7 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
 	      row->SubA   = lastSubA;
 	      /* calculate/write rows */
 	      SetRow (AntList, SouList, ArrLong, desc, &RAR, &DecR, delTime,
-		      maxant,  gotAnt, row, outCal, err);
+		      maxant,  gotAnt, invert, row, outCal, err);
 	      if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
 
 	      /* Values for start of next scan */
@@ -673,7 +677,7 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
 	  /* Write Cal table */
 	  /* calculate/write rows */
 	  SetRow (AntList, SouList, ArrLong, desc, &RAR, &DecR, delTime,
-		  maxant,  gotAnt, row, outCal, err);
+		  maxant,  gotAnt, invert, row, outCal, err);
 	  if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
 
 	  /* initialize accumulators */
@@ -717,7 +721,7 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
     /* Write Cal table */
     /* calculate/write rows */
     SetRow (AntList, SouList, ArrLong, desc, &RAR, &DecR, delTime,
-	    maxant,  gotAnt, row, outCal, err);
+	    maxant,  gotAnt, invert, row, outCal, err);
     if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
   } /* End final cal */
 
@@ -767,6 +771,7 @@ static ofloat Sinc (ofloat arg)
  * \param delTime UV data integrationt time (days)
  * \param maxant  Maximum antenna number
  * \param gotAnt  Array of flags for antennas with data
+ * \param invert  If true invert solution
  * \param row     SN table row to use
  * \param outCal  Output SN table
  * \param err     ObitError/message stack
@@ -774,7 +779,7 @@ static ofloat Sinc (ofloat arg)
 static void SetRow (ObitAntennaList *AntList, ObitSourceList *SouList, 
 		    odouble ArrLong, ObitUVDesc *desc, 
 		    odouble *RAR, odouble *DecR, ofloat delTime,
-		    olong maxant, gboolean  gotAnt[MAXANT], 
+		    olong maxant, gboolean  gotAnt[MAXANT], gboolean invert,
 		    ObitTableSNRow *row, ObitTableSN *outCal, ObitErr *err) 
 {
   odouble AntLst, HrAng=0.0, cosdec=0.0;
@@ -811,6 +816,11 @@ static void SetRow (ObitAntennaList *AntList, ObitSourceList *SouList,
       row->Delay1[j]  = +uvw[2]/desc->freq;
       delay = uvw[2] * desc->freqIF[j]/desc->freq;
       phase = -twopi*(delay-(olong)delay);
+      if (invert) { /* invert solution? */
+	row->Rate1[j] = -row->Rate1[j];
+	row->Delay1[j] = -row->Delay1[j];
+	phase = -phase;
+      }
       wt = fabs(Sinc(delTime*row->Rate1[j]) * Sinc(desc->chIncIF[j]*row->Delay1[j]));
       row->Real1[j]   = cos(phase);
       row->Imag1[j]   = sin(phase);

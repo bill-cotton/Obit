@@ -51,6 +51,7 @@
  * copy of myUV.
  * Control parameters on object->info:
  * \li "solInt"    OBIT_float (1,1,1) Counter rotated SN table interval [def 1 min]
+ * \li "doInvert"  OBIT_bool (1,1,1) If TRUE invert solution [def FALSE];
  * \li "timeInt"   OBIT_float (1,1,1) Data integration time in sec [def 10 sec].
  * \li "timeAvg"   OBIT_float  (1,1,1) Time interval over which to average 
  *                 residual data to estimate RFI (min) [def = 1 min.]

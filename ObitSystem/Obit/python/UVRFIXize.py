@@ -111,11 +111,13 @@ def PGetList (inUVRFIXize):
 
 # Define UVRFIXize - most parameters can be defined here
 RFIXizeInput={'structure':['RFIXize',[('solInt','Counter rotated SN table interval [def 60 sec]'),
+                                      ('doInvert','If True invert solution [def False]'),
                                       ('timeInt','Data integration time in sec [def 10 sec]'),
                                       ('timeAvg','Time interval (min) over which to average residual'),
                                       ('minRFI','Minimum RFI amplitude (Jy) to subtract')]],
               # defaults
               'solInt':60.0,
+              'doInvert':False,
               'timeInt':10.0,
               'timeAvg':0.95,
               'minRFI':50}
@@ -132,6 +134,7 @@ def PCreate (name, inUV, residUV, outUV, input=RFIXizeInput):
     err       = Python Obit Error/message stack
     input     = control parameters:
     solInt      = Counter rotated SN table interval [def 1 min]
+    doInvert    = If True invert solution [def False]
     timeInt     = Data integration time in sec [def 10 sec]
     timeAvg     = Time interval (min) over which to average residual.
     minRFI      = Minimum RFI amplitude to subtract
@@ -153,6 +156,7 @@ def PCreate (name, inUV, residUV, outUV, input=RFIXizeInput):
     dim = [1,1,1,1,1]
     # Set control values on RFIXize
     InfoList.PAlwaysPutFloat   (inInfo, "solInt",  dim, [input["solInt"]])
+    InfoList.PAlwaysPutBoolean (inInfo, "doInvert",dim, [input["doInvert"]])
     InfoList.PAlwaysPutFloat   (inInfo, "timeInt", dim, [input["timeInt"]])
     InfoList.PAlwaysPutFloat   (inInfo, "timeAvg", dim, [input["timeAvg"]])
     InfoList.PAlwaysPutFloat   (inInfo, "minRFI",  dim, [input["minRFI"]])

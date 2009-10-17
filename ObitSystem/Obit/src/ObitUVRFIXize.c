@@ -159,6 +159,7 @@ ObitUVRFIXize* ObitUVRFIXizeCreate (gchar* name, ObitUV *inUV,
  * \li "timeAvg"   OBIT_float  (1,1,1) Time interval over which to average 
  *                 (min) [def = 1 min.]
  *                 NB: this should be at least 2 integrations.
+ * \li "doInvert"  OBIT_bool (1,1,1) If TRUE invert solution [def FALSE];
  * \param err    Error/message stack, returns if error.
  */
 void ObitUVRFIXizeCounterRot (ObitUVRFIXize *in, ObitErr* err) 
@@ -167,7 +168,7 @@ void ObitUVRFIXizeCounterRot (ObitUVRFIXize *in, ObitErr* err)
   gint32 dim[MAXINFOELEMDIM];
   olong ver, itemp;
   ofloat solInt=60, timeInt=10.0, timeAvg=0.95;
-  gboolean Tr=TRUE;
+  gboolean Tr=TRUE, invert=FALSE;
   gchar *routine = "ObitUVRFIXizeCounterRot";
   
   /* Error checks */
@@ -181,9 +182,11 @@ void ObitUVRFIXizeCounterRot (ObitUVRFIXize *in, ObitErr* err)
   /* Get/set solution table control */
   ObitInfoListGetTest(in->info, "solInt",  &type, dim, &solInt);
   ObitInfoListGetTest(in->info, "timeInt", &type, dim, &timeInt);
+  ObitInfoListGetTest(in->info, "doInvert", &type, dim, &invert);
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
   ObitInfoListAlwaysPut(in->residUV->info, "solInt",  OBIT_float, dim, &solInt);
   ObitInfoListAlwaysPut(in->residUV->info, "timeInt", OBIT_float, dim, &timeInt);
+  ObitInfoListAlwaysPut(in->residUV->info, "doInvert", OBIT_bool, dim, &invert);
 
   /* Create zero fringe rate solution table */
   ver    = 0;
@@ -244,6 +247,11 @@ void ObitUVRFIXizeFilter (ObitUVRFIXize *in, ObitErr* err)
   /* Error checks */
   if (err->error) return ;  /* previous error? */
   g_assert (ObitUVRFIXizeIsA(in));
+
+  /* Make sure in->RFIUV available */
+  Obit_return_if_fail ((in->RFIUV), err, 
+		       "%s Averaged counterrotated data not available (run Counterrot)", 
+		       routine);  
 
   /* Get averaging time */
   ObitInfoListGetTest(in->info, "timeAvg", &type, dim, &timeAvg);
@@ -388,6 +396,11 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
   if (err->error) return ;  /* previous error? */
   g_assert (ObitUVRFIXizeIsA(in));
   
+  /* Make sure in->RFIUV available */
+  Obit_return_if_fail ((in->RFIUV), err, 
+		       "%s Averaged counterrotated data not available (run Counterrot)", 
+		       routine);  
+
   /* Local pointers */
   inDesc  = in->myUV->myDesc;
   outDesc = in->outUV->myDesc;
