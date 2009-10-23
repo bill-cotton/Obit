@@ -224,7 +224,7 @@ void ObitUVRFIXizeCounterRot (ObitUVRFIXize *in, ObitErr* err)
  * \param in     UVRFIXize object
  * Control parameter on info element:
  * \li "minRFI"    OBIT_float (1,1,1) Minimum RFI amplitude (Jy) [def 50]
- * \li "timeAvg"   OBIT_float  (1,1,1) Time interval over whih RFIUV averaged 
+ * \li "timeAvg"   OBIT_float  (1,1,1) Time interval over which RFIUV averaged 
  *                 (min) [def = 1 min.]
  * \li "timeInt"   OBIT_float (1,1,1) Data integration time in sec [def 10 sec].
  * \param err    Error/message stack, returns if error.
@@ -288,7 +288,7 @@ void ObitUVRFIXizeFilter (ObitUVRFIXize *in, ObitErr* err)
   /* Fringe rate array */
   frRate = g_malloc0(in->numAnt*sizeof(float));
 
- /* Open Input Data */
+  /* Open Input Data */
   retCode = ObitUVOpen (in->RFIUV, OBIT_IO_ReadWrite, err);
   if ((retCode != OBIT_IO_OK) || (err->error>0)) 
     Obit_traceback_msg (err, routine, in->RFIUV->name);
@@ -358,8 +358,9 @@ void ObitUVRFIXizeFilter (ObitUVRFIXize *in, ObitErr* err)
     /* Rewrite buffer */
     retCode = ObitUVWrite (in->RFIUV, NULL, err);
     if (err->error) Obit_traceback_msg (err, routine, in->RFIUV->name);
-    /* Reset file offset to keep from causing problem in next red */
+    /* Reset file offset to keep from causing problem in next read */
     in->RFIUV->myDesc->firstVis -= in->RFIUV->myDesc->numVisBuff;
+    ((ObitUVDesc*)(in->RFIUV->myIO->myDesc))->firstVis -= in->RFIUV->myDesc->numVisBuff;
   } /* End loop over data */
   
   /* Close up */
