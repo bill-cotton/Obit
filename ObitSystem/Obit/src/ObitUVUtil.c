@@ -1454,7 +1454,7 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   ofloat *accVis=NULL, *accRP=NULL, *ttVis=NULL;
   ofloat *inBuffer;
   olong ant1, ant2, blindx, *blLookup=NULL;
-  olong i, j, ivis=0, iindx, jndx, indx, NPIO, itemp, nvis;
+  olong i, j, ivis=0, iindx=0, jndx, indx, NPIO, itemp, nvis;
   gboolean done, gotOne;
   gchar *routine = "ObitUVUtilAvgT";
  
@@ -1714,6 +1714,47 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 	for (i=0; i<4*ncorr*numBL; i++)    accVis[i] = 0.0;
 	for (i=0; i<(nrparm+1)*numBL; i++) accRP[i] = 0.0;
 
+	/* Now accumulate this visibility */
+	cbase = inBuffer[iindx+inUV->myDesc->ilocb]; /* Baseline */
+	ant1 = (cbase / 256.0) + 0.001;
+	ant2 = (cbase - ant1 * 256) + 0.001;
+	lastSubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 0.5);
+	/* Baseline index this assumes a1<=a2 always */
+	blindx =  blLookup[ant1-1] + ant2-ant1;
+	if (inDesc->ilocfq>=0) lastFQID = (olong)(inBuffer[iindx+inDesc->ilocfq]+0.5);
+	else lastFQID = 0;
+	lastTime = curTime;
+	
+	/* Accumulate RP
+	   (1,*) =  count 
+	   (2...,*) =  Random parameters, sum u, v, w, time, int. */
+	jndx = blindx*(1+nrparm);
+	accRP[jndx]++;
+	for (i=0; i<nrparm; i++) { 
+	  /* Sum known parameters to average */
+	  if ((i==inDesc->ilocu) || (i==inDesc->ilocv) || (i==inDesc->ilocw) ||
+	      (i==inDesc->iloct) || (i==inDesc->ilocit)) {
+	    accRP[jndx+i+1] += inBuffer[iindx+i];
+	  } else { /* merely keep the rest */
+	    accRP[jndx+i+1]  = inBuffer[iindx+i];
+	  }
+	} /* end loop over parameters */
+	/* Accumulate Vis
+	   (1,*) =  count 
+	   (2,*) =  sum Real
+	   (3,*) =  sum Imag
+	   (4,*) =  Sum Wt     */
+	indx = iindx+inDesc->nrparm; /* offset of start of vis data */
+	for (i=0; i<ncorr; i++) {
+	  if (inBuffer[indx+2] > 0.0) {
+	    jndx = i*4 + blindx*4*ncorr;
+	    accVis[jndx]   += 1.0;
+	    accVis[jndx+1] += inBuffer[indx];
+	    accVis[jndx+2] += inBuffer[indx+1];
+	    accVis[jndx+3] += inBuffer[indx+2];
+	  } 
+	  indx += 3;
+	} /* end loop over correlations */;
       } /* end process interval */
       
     } /* end loop processing buffer of input data */

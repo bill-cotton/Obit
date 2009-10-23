@@ -358,7 +358,8 @@ void ObitUVRFIXizeFilter (ObitUVRFIXize *in, ObitErr* err)
     /* Rewrite buffer */
     retCode = ObitUVWrite (in->RFIUV, NULL, err);
     if (err->error) Obit_traceback_msg (err, routine, in->RFIUV->name);
-    
+    /* Reset file offset to keep from causing problem in next red */
+    in->RFIUV->myDesc->firstVis -= in->RFIUV->myDesc->numVisBuff;
   } /* End loop over data */
   
   /* Close up */
@@ -382,7 +383,7 @@ void ObitUVRFIXizeFilter (ObitUVRFIXize *in, ObitErr* err)
 void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err) 
 {
   ObitIOCode retCode;
-  gboolean doCalSelect=FALSE, done, blank, want;
+  gboolean doCalSelect=FALSE, done, blank, want=FALSE, someGood;
   ObitInfoType type;
   ObitIOAccess access;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -453,6 +454,7 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
     if (done) break;
     
     /* Modify data */
+    want = FALSE;
     outDesc->numVisBuff = 0;  /* No data yet */
     for (i=0; i<inDesc->numVisBuff; i++) { /* loop over visibilities */
       jndx = i*inDesc->lrec;
@@ -479,11 +481,15 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
 
 
       /* Copy random parameters */
+      someGood = FALSE;
       iindx = jndx;
       oindx = (outDesc->numVisBuff)*outDesc->lrec;
       for (j=0; j<outDesc->nrparm; j++) {
 	in->outUV->buffer[oindx+j] = in->myUV->buffer[iindx+j];
       }
+      /* Zero output */
+      for (j=outDesc->nrparm; j<outDesc->lrec; j++) in->outUV->buffer[oindx+j] = 0.0;
+      
       
       /* loop over IF */
       for (iif=0; iif<nif; iif++) {
@@ -503,6 +509,7 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
 		in->outUV->buffer[oindx+1] = 0.0;
 		in->outUV->buffer[oindx+2] = 0.0;
 	      } else { /* subtract correction */
+		someGood = TRUE;
 		in->outUV->buffer[oindx+0] = 
 		  in->myUV->buffer[iindx+0] - in->VisApply[BLindx+0];
 		in->outUV->buffer[oindx+1] = 
@@ -519,7 +526,7 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
 	} /* end loop over frequency */
       } /* end loop over IF */
 
-      outDesc->numVisBuff++;  /* Count output */
+      if (someGood) outDesc->numVisBuff++;  /* Count output */
     } /* End loop over buffer */
     
     /* Rewrite buffer */

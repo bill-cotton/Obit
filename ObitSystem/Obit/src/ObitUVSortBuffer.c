@@ -233,7 +233,7 @@ void ObitUVSortBufferAddVis (ObitUVSortBuffer *in, ofloat *vis,
 			     ofloat lastTime, ObitErr *err)
 {
   olong i, lrec, delta, nwrite, nmove, NPIO, bindx, ivis, jvis, ncopy;
-  ObitUVSortStruct *sortKeys;
+  ObitUVSortStruct *sortKeys=NULL;
   gchar *routine = "ObitUVSortBufferAddVis";
 
   /* error checks */
@@ -310,8 +310,6 @@ void ObitUVSortBufferFlush (ObitUVSortBuffer *in, ObitErr *err)
 {
   olong i, ivis, jvis, lrec, delta, nwrite, nmove, NPIO, bindx, ncopy;
   ObitUVSortStruct *sortKeys;
-  ObitInfoType type;
-  gint32 dim[MAXINFOELEMDIM];
   gchar *routine = "ObitUVSortBufferFlush";
 
   /* error checks */
@@ -362,7 +360,7 @@ void ObitUVSortBufferFlush (ObitUVSortBuffer *in, ObitErr *err)
  */
 void ObitUVSortBufferSort (ObitUVSortBuffer *in, ObitErr *err)
 {
-  olong i, delta, lrec, iloct, number, size, ncomp; 
+  olong i, delta, lrec, iloct, ilocb, number, size, ncomp; 
   ObitUVSortStruct *sortKeys;
 
   /* error checks */
@@ -373,16 +371,18 @@ void ObitUVSortBufferSort (ObitUVSortBuffer *in, ObitErr *err)
   delta = sizeof(ObitUVSortStruct)/sizeof(ofloat);
   lrec  = in->myUVdata->myDesc->lrec;
   iloct = in->myUVdata->myDesc->iloct;
+  ilocb = in->myUVdata->myDesc->ilocb;
   for (i=0; i<in->hiVis; i++) {
     sortKeys = (ObitUVSortStruct*)&in->SortStruct[i*delta];
     sortKeys->index.itg = i;
     sortKeys->key[0]    = in->myBuffer[i*lrec+iloct];
+    sortKeys->key[1]    = in->myBuffer[i*lrec+ilocb];
   }
 
   /* Sort SortStruct */
   number = in->hiVis;
   size   = sizeof(ObitUVSortStruct);
-  ncomp  = 1;
+  ncomp  = 2;
   g_qsort_with_data (in->SortStruct, number, size, CompareFloat, &ncomp);
 
 } /* end ObitUVSortBufferSort */
