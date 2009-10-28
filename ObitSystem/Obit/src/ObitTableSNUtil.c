@@ -813,11 +813,11 @@ static void SetRow (ObitAntennaList *AntList, ObitSourceList *SouList,
     for (j=0; j<numIF; j++) {
       /* IF freq */
       row->Rate1[j]   = +uvw[0]*cosdec*omegaE/desc->freq;
-      row->Delay1[j]  = +uvw[2]/desc->freq;
+      row->Delay1[j]  = -uvw[2]/desc->freq;
       delay = uvw[2] * desc->freqIF[j]/desc->freq;
       phase = -twopi*(delay-(olong)delay);
       if (invert) { /* invert solution? */
-	row->Rate1[j] = -row->Rate1[j];
+	row->Rate1[j]  = -row->Rate1[j];
 	row->Delay1[j] = -row->Delay1[j];
 	phase = -phase;
       }
