@@ -210,7 +210,7 @@ class UV (OData.OData):
 
         Returns 0 on success, else failure
         self   = Python UV object
-        access = access READONLY (1), WRITEONLY (2), READWRITE(3)
+        access = access READONLY (1), WRITEONLY (2), READWRITE(3), READCAL(4)
         err    = Python Obit Error/message stack
         """
         inUV = self
@@ -481,6 +481,7 @@ class UV (OData.OData):
 READONLY  = OData.READONLY  # 1
 WRITEONLY = OData.WRITEONLY # 2
 READWRITE = OData.READWRITE # 3
+READCAL   = 4
 
 def newPFUV(name, filename, disk, exists, err, verbose=True, nvis=1000):
     """ Create and initialize an FITS based UV structure
@@ -1855,6 +1856,7 @@ def PTableSNGetZeroFR (inUV, outUV, ver, err, solInt=10., timeInt = 1.0):
     ver     = version number of new table, 0=> create new
     err     = Python Obit Error/message stack
     solint  = time interval (min) of table
+    timeInt = Integration time (sec) of data.
     """
     ################################################################
     # Checks

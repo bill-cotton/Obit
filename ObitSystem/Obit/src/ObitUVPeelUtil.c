@@ -386,12 +386,14 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     if (err->error) goto cleanup;
 
     /* Create temp SkyModel - use regular basal */
-    /* Trap VMSquint variations */
-    if (ObitSkyModelVMIsA(myClean->skyModel)) {
-      skyModelClass = (const ObitSkyModelClassInfo*)ObitSkyModelGetClass();
-    } else {
-      skyModelClass = (const ObitSkyModelClassInfo*)myClean->skyModel->ClassInfo;
-    }
+    /* Trap VMSquint variations 
+       I don't know why this seemed ne
+       if (ObitSkyModelVMIsA(myClean->skyModel)) {
+       skyModelClass = (const ObitSkyModelClassInfo*)ObitSkyModelGetClass();
+       } else {
+       skyModelClass = (const ObitSkyModelClassInfo*)myClean->skyModel->ClassInfo;
+       }*/
+    skyModelClass = (const ObitSkyModelClassInfo*)myClean->skyModel->ClassInfo;
     tmpSkyModel   = skyModelClass->ObitSkyModelCreate("Peel SkyModel", tmpMosaic);
     /* Use DFT model */
     dim[0] = dim[1] = 1;

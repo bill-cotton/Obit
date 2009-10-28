@@ -2876,6 +2876,9 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   if (in->myIO && in->myIO->myDesc) desc = (ObitUVDesc*)in->myIO->myDesc;
   else  desc = in->myDesc;
 
+  /* Be sure properly indexed */
+  ObitUVDescIndex (desc);
+
   /* Maximum number of visibilities per read/write? [default 100] */
   sel->nVisPIO = 100;
   ObitInfoListGetTest(info, "nVisPIO", &type, dim, &sel->nVisPIO);

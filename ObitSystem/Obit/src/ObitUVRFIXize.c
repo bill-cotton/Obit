@@ -224,8 +224,8 @@ void ObitUVRFIXizeCounterRot (ObitUVRFIXize *in, ObitErr* err)
  * \param in     UVRFIXize object
  * Control parameter on info element:
  * \li "minRFI"    OBIT_float (1,1,1) Minimum RFI amplitude (Jy) [def 50]
- * \li "timeAvg"   OBIT_float  (1,1,1) Time interval over which RFIUV averaged 
- *                 (min) [def = 1 min.]
+ * \li "timeAvg"   OBIT_float (1,1,1) Time interval over which RFIUV averaged 
+ *                   (min) [def = 1 min.]
  * \li "timeInt"   OBIT_float (1,1,1) Data integration time in sec [def 10 sec].
  * \param err    Error/message stack, returns if error.
  */
@@ -341,7 +341,7 @@ void ObitUVRFIXizeFilter (ObitUVRFIXize *in, ObitErr* err)
 	      /* Need at least 0.25 turn of phase in data averaging */
 	      if (fabs(timeAvg*fr)<0.25) {  
 		blank = TRUE;
-		zero = FALSE;
+		/*zero = FALSE;*/
 	      }
 	      if (zero) {
 		in->RFIUV->buffer[indx+0] = 0.0;
@@ -444,6 +444,7 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
     Obit_traceback_msg (err, routine, in->outUV->name);
 
   /* Loop over data */
+  want = FALSE;
   done = (retCode != OBIT_IO_OK);
   while (!done) {
     
@@ -455,7 +456,6 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
     if (done) break;
     
     /* Modify data */
-    want = FALSE;
     outDesc->numVisBuff = 0;  /* No data yet */
     for (i=0; i<inDesc->numVisBuff; i++) { /* loop over visibilities */
       jndx = i*inDesc->lrec;

@@ -159,7 +159,7 @@ extern int UVUpdateTables (ObitUV *in, ObitErr *err) {
 } // end  UVUpdateTables
 
 // Open and close to fully instantiate
-// access 1=READONLY, 2=WRITEONLY, 3=READWRITE
+// access 1=READONLY, 2=WRITEONLY, 3=READWRITE, 4=READCAL
 extern int UVfullInstantiate (ObitUV* in, int access, ObitErr *err) {
   ObitIOCode ret;
   ObitIOAccess laccess;
@@ -167,6 +167,7 @@ extern int UVfullInstantiate (ObitUV* in, int access, ObitErr *err) {
   laccess = OBIT_IO_ReadOnly;
   if (access==2) laccess = OBIT_IO_WriteOnly;
   else if (access==3) laccess = OBIT_IO_ReadWrite;
+  else if (access==4) laccess = OBIT_IO_ReadCal;
   ret = ObitUVOpen (in, laccess, err);
   ret = ObitUVClose (in, err);
   if ((err->error) || (ret!=OBIT_IO_OK)) return 1;
@@ -181,6 +182,7 @@ extern int UVOpen (ObitUV *in, int access, ObitErr *err) {
   laccess = OBIT_IO_ReadOnly;
   if (access==2) laccess = OBIT_IO_WriteOnly;
   else if (access==3) laccess = OBIT_IO_ReadWrite;
+  else if (access==4) laccess = OBIT_IO_ReadCal;
   ret = ObitUVOpen (in, laccess, err);
   if (ret==OBIT_IO_OK) return 0;
   else return 1;

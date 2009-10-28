@@ -9733,7 +9733,7 @@ extern int UVUpdateTables (ObitUV *in, ObitErr *err) {
 } // end  UVUpdateTables
 
 // Open and close to fully instantiate
-// access 1=READONLY, 2=WRITEONLY, 3=READWRITE
+// access 1=READONLY, 2=WRITEONLY, 3=READWRITE, 4=READCAL
 extern int UVfullInstantiate (ObitUV* in, int access, ObitErr *err) {
   ObitIOCode ret;
   ObitIOAccess laccess;
@@ -9741,6 +9741,7 @@ extern int UVfullInstantiate (ObitUV* in, int access, ObitErr *err) {
   laccess = OBIT_IO_ReadOnly;
   if (access==2) laccess = OBIT_IO_WriteOnly;
   else if (access==3) laccess = OBIT_IO_ReadWrite;
+  else if (access==4) laccess = OBIT_IO_ReadCal;
   ret = ObitUVOpen (in, laccess, err);
   ret = ObitUVClose (in, err);
   if ((err->error) || (ret!=OBIT_IO_OK)) return 1;
@@ -9755,6 +9756,7 @@ extern int UVOpen (ObitUV *in, int access, ObitErr *err) {
   laccess = OBIT_IO_ReadOnly;
   if (access==2) laccess = OBIT_IO_WriteOnly;
   else if (access==3) laccess = OBIT_IO_ReadWrite;
+  else if (access==4) laccess = OBIT_IO_ReadCal;
   ret = ObitUVOpen (in, laccess, err);
   if (ret==OBIT_IO_OK) return 0;
   else return 1;
@@ -10253,7 +10255,7 @@ extern ObitTable *SNInvert(ObitTable *,ObitData *,long ,int ,ObitErr *);
 extern PyObject* UVVisGet (ObitUV* inUV, ObitErr *err) {
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
-  gboolean doCalSelect;
+  gboolean doCalSelect, readMore=TRUE;
   ObitIOCode iretCode;
   ofloat cbase, *visp=NULL;
   olong ant1, ant2, suid, fqid, icorr;
@@ -10265,13 +10267,16 @@ extern PyObject* UVVisGet (ObitUV* inUV, ObitErr *err) {
    doCalSelect = FALSE;
    ObitInfoListGetTest(inUV->info, "doCalSelect", &type, (gint32*)dim, &doCalSelect);
 
-    if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
-    else iretCode = ObitUVRead (inUV, inUV->buffer, err);
-
-    if (iretCode==OBIT_IO_EOF)  {
-      PyDict_SetItemString(vis, "EOF",PyInt_FromLong((long)1));
-      return vis;
-    }
+    /* Read until valid data or EOF found */
+    while (readMore) {	
+      if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
+      else iretCode = ObitUVRead (inUV, inUV->buffer, err);
+      readMore = (inUV->myDesc->numVisBuff<=0);  /* keep going? */
+      if (iretCode==OBIT_IO_EOF)  {
+        PyDict_SetItemString(vis, "EOF",PyInt_FromLong((long)1));
+        return vis;
+      }
+    } /* End read until valid */
     if (iretCode!=OBIT_IO_OK) return vis;
 
     PyDict_SetItemString(vis, "visNo",  PyInt_FromLong((long)inUV->myDesc->firstVis));

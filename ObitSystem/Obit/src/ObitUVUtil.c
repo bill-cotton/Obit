@@ -64,6 +64,9 @@ static void FreqSel (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
 		     olong BIF, olong EIF,
 		     ofloat *inBuffer, ofloat *outBuffer);
 
+/** Update FQ table for averaging */
+static void FQSel (ObitUV *inUV, olong chAvg, olong fqid, ObitErr *err);
+
 /** Low accuracy inverse Sinc function */
 static ofloat InvSinc(ofloat arg);
 /*----------------------Public functions---------------------------*/
@@ -1234,6 +1237,7 @@ ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
 		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
 		    "AIPS PL","AIPS NI","AIPS BP","AIPS OF","AIPS PS",
+		    "AIPS FQ",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx, jndx;
@@ -1323,6 +1327,7 @@ ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   corMask = g_malloc(inDesc->ncorr*sizeof(gboolean));
 
   /* Modify descriptor for affects of averaging, get u,v,w scaling */
+  ObitUVGetFreq (inUV, err);   /* Make sure frequencies updated */
   scale = AvgFSetDesc (inDesc, outDesc, NumChAvg, ChanSel, doAvgAll, 
 		       corChan, corIF, corStok, corMask, err);
   if (err->error) goto cleanup;
@@ -1343,6 +1348,10 @@ ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
    sources deselected suggest MS out */
   if ((inUV->mySel->numberSourcesList>1) || (!inUV->mySel->selectSources))
   iretCode = ObitUVCopyTables (inUV, outUV, NULL, sourceInclude, err);
+  /* FQ table selection */
+  iretCode = ObitTableFQSelect (inUV, outUV, NULL, 0.0, err);
+  /* Correct FQ table for averaging */
+  FQSel (outUV, NumChAvg, 1, err);
   if (err->error) goto cleanup;
 
   /* reset to beginning of uv data */
@@ -1941,6 +1950,7 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
     corMask = g_malloc(inDesc->ncorr*sizeof(gboolean));
 
     /* Modify descriptor for affects of frequency averaging, get u,v,w scaling */
+    ObitUVGetFreq (inUV, err);   /* Make sure frequencies updated */
     scale = AvgFSetDesc (inUV->myDesc, outUV->myDesc, NumChAvg, ChanSel, doAvgAll, 
 			 corChan, corIF, corStok, corMask, err);
     if (err->error) goto cleanup;
@@ -3374,11 +3384,12 @@ static ofloat AvgFSetDesc (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
   /* Averaging channels  - IFs unaffected */
   numChan = inDesc->inaxes[inDesc->jlocf] / NumChAvg;
   /* Get frequency of first average */
-  sum = 0.0; count = 0;
-    sum2 = 0.0; count2 = 0;
+  sum  = 0.0; count  = 0;
+  sum2 = 0.0; count2 = 0;
+  ii = -1;
   for (i=0; i<inDesc->ncorr; i++) {
-    if (corChan[i]>=NumChAvg) break;  /* finished? */
-    ii = corChan[i] + corIF[i]*nchan;
+    if ((corChan[i]>0) || (corStok[i]>0) || (corIF[i]>0)) continue;  /* want? */
+    ii++;
     sum2 += inDesc->freqArr[ii];
     count2++;
     if (corMask[i]) {
@@ -3545,6 +3556,72 @@ static void FreqSel (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
   } /* end Stokes loop */
 
 } /* end FreqSel */
+
+/** 
+ * Update FQ table for averaging 
+ * \param inUV   Input UV data
+ * \param chAvg  Number of channels averaged
+ * \param fqid   Desired FQ ID to update
+ * \param err    Error stack, returns if not empty.
+ */
+static void FQSel (ObitUV *inUV, olong chAvg, olong fqid, ObitErr *err)
+{
+  ObitTableFQ    *inTab=NULL;
+  olong iFQver, highFQver;
+  oint numIF;
+  olong i, nif;
+  odouble *freqOff=NULL;
+  ofloat *chBandw=NULL;
+  oint *sideBand=NULL;
+  gchar *FQType = "AIPS FQ";
+  gchar *routine = "ObitUVUtil:FQSel";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitUVIsA(inUV));
+
+  /* How many FQ tables  */
+  highFQver = ObitTableListGetHigh (inUV->tableList, FQType);
+
+  /* Are there any? */
+  if (highFQver <= 0) return;
+
+  /* Should only be one FQ table */
+  iFQver = 1;
+  if (inUV->myDesc->jlocif>=0) 
+    nif = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
+  else
+    nif = 1;
+
+  /* Get input table */
+  numIF = 0;
+  inTab = 
+    newObitTableFQValue (inUV->name, (ObitData*)inUV, &iFQver, OBIT_IO_ReadOnly, 
+			 numIF, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  /* Find it? */
+   Obit_return_if_fail(((inTab!=NULL) || (nif<=1)), err,
+		      "%s: Could not find FQ table for %s %d IFs", 
+		      routine, inUV->name, nif);
+
+   /* Fetch values */
+   ObitTableFQGetInfo (inTab, fqid, &nif, &freqOff, &sideBand, &chBandw, err);
+   if (err->error) Obit_traceback_msg (err, routine, inTab->name);
+   
+   /* Update channel widths */
+   for (i=0; i<nif; i++) chBandw[i] *= (ofloat)chAvg;
+
+   /* Save values */
+   ObitTableFQPutInfo (inTab, fqid, nif, freqOff, sideBand, chBandw, err);
+   if (err->error) Obit_traceback_msg (err, routine, inTab->name);
+
+   /* Cleanup */
+   if (freqOff)  g_free(freqOff);
+   if (sideBand) g_free(sideBand);
+   if (chBandw)  g_free(chBandw);
+   inTab = ObitTableFQUnref(inTab);
+  
+ } /* end FQSel */
 
 /**
  * Low accuracy inverse Sinc function

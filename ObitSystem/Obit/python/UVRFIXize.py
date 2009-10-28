@@ -1,4 +1,6 @@
 # $Id:  $
+""" Utility to estimate and subtract quasi-constant RFI from UV data
+"""
 #-----------------------------------------------------------------------
 #  Copyright (C) 2009
 #  Associated Universities, Inc. Washington DC, USA.

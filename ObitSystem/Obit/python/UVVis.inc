@@ -37,7 +37,7 @@
 extern PyObject* UVVisGet (ObitUV* inUV, ObitErr *err) {
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
-  gboolean doCalSelect;
+  gboolean doCalSelect, readMore=TRUE;
   ObitIOCode iretCode;
   ofloat cbase, *visp=NULL;
   olong ant1, ant2, suid, fqid, icorr;
@@ -49,13 +49,16 @@ extern PyObject* UVVisGet (ObitUV* inUV, ObitErr *err) {
    doCalSelect = FALSE;
    ObitInfoListGetTest(inUV->info, "doCalSelect", &type, (gint32*)dim, &doCalSelect);
 
-    if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
-    else iretCode = ObitUVRead (inUV, inUV->buffer, err);
-
-    if (iretCode==OBIT_IO_EOF)  {
-      PyDict_SetItemString(vis, "EOF",PyInt_FromLong((long)1));
-      return vis;
-    }
+    /* Read until valid data or EOF found */
+    while (readMore) {	
+      if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
+      else iretCode = ObitUVRead (inUV, inUV->buffer, err);
+      readMore = (inUV->myDesc->numVisBuff<=0);  /* keep going? */
+      if (iretCode==OBIT_IO_EOF)  {
+        PyDict_SetItemString(vis, "EOF",PyInt_FromLong((long)1));
+        return vis;
+      }
+    } /* End read until valid */
     if (iretCode!=OBIT_IO_OK) return vis;
 
     PyDict_SetItemString(vis, "visNo",  PyInt_FromLong((long)inUV->myDesc->firstVis));

@@ -1155,13 +1155,13 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
     
     /* Message */
     if (fldList[0]>0)
-	Obit_log_error(err, OBIT_InfoWarn,
-		       "%s:  There may be something better - %f<%f",
-		       routine, in->quality[fldList[0]-1], in->quality[best]);
-	else
-	Obit_log_error(err, OBIT_InfoWarn,
-                       "%s: Nothing - try again ",
-                       routine);
+      Obit_log_error(err, OBIT_InfoWarn,
+		     "%s:  There may be something better - %f<%f",
+		     routine, in->quality[fldList[0]-1], in->quality[best]);
+    else
+      Obit_log_error(err, OBIT_InfoWarn,
+		     "%s: Nothing - try again ",
+		     routine);
 
   } /* end loop reimaging */
 
@@ -2833,13 +2833,25 @@ static void WhosBest2D (ObitDConCleanVis *in, ofloat autoCenFlux,
   olong i, best;
   gboolean isAuto=FALSE;
 
+  /* Find absolute best */
+  best = -1; 
+  testBest = -1.0e20;
+  for (i=0; i<in->nfield; i++) {
+    /* Ignore if SNR too low */
+    if (in->imgPeakRMS[i]<4.0) continue;
+    if (in->quality[i]>testBest) {
+      testBest = in->quality[i];
+      best = i;
+    }
+  } /* end loop finding current best */
+
   /* Using only autoCenter? */
   for (i=0; i<in->nfield; i++) {
     isAuto = (in->mosaic->isAuto[i]>=0) && (in->imgPeakRMS[i]>=4.0) 
-      && (in->maxAbsRes[i]>0.1*autoCenFlux); /* Is best a strong autoCenter image? */
+      && (in->maxAbsRes[i]>0.1*autoCenFlux) 
+      && (in->quality[i]>=testBest)    ; /* Is best a strong autoCenter image? */
     if (isAuto) break;
   }
-
   /* Find best */
   best = -1; 
   testBest = -1.0e20;
