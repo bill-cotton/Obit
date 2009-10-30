@@ -36,7 +36,7 @@
 /**
  * \file ObitUVRFIXize.c
  * ObitUVRFIXize class function definitions.
- * This clas allows manipulation (interpolation) of Solutions in an ObitTableSN.
+ * This clas supports RFI estimation and removel from UV data
  * This class is derived from the Obit base class.
  */
 
@@ -224,8 +224,8 @@ void ObitUVRFIXizeCounterRot (ObitUVRFIXize *in, ObitErr* err)
  * \param in     UVRFIXize object
  * Control parameter on info element:
  * \li "minRFI"    OBIT_float (1,1,1) Minimum RFI amplitude (Jy) [def 50]
- * \li "timeAvg"   OBIT_float (1,1,1) Time interval over which RFIUV averaged 
- *                   (min) [def = 1 min.]
+ * \li "timeAvg"   OBIT_float  (1,1,1) Time interval over whih RFIUV averaged 
+ *                 (min) [def = 1 min.]
  * \li "timeInt"   OBIT_float (1,1,1) Data integration time in sec [def 10 sec].
  * \param err    Error/message stack, returns if error.
  */
@@ -288,7 +288,7 @@ void ObitUVRFIXizeFilter (ObitUVRFIXize *in, ObitErr* err)
   /* Fringe rate array */
   frRate = g_malloc0(in->numAnt*sizeof(float));
 
-  /* Open Input Data */
+ /* Open Input Data */
   retCode = ObitUVOpen (in->RFIUV, OBIT_IO_ReadWrite, err);
   if ((retCode != OBIT_IO_OK) || (err->error>0)) 
     Obit_traceback_msg (err, routine, in->RFIUV->name);
@@ -341,7 +341,7 @@ void ObitUVRFIXizeFilter (ObitUVRFIXize *in, ObitErr* err)
 	      /* Need at least 0.25 turn of phase in data averaging */
 	      if (fabs(timeAvg*fr)<0.25) {  
 		blank = TRUE;
-		/*zero = FALSE;*/
+		zero = FALSE;
 	      }
 	      if (zero) {
 		in->RFIUV->buffer[indx+0] = 0.0;
@@ -358,9 +358,8 @@ void ObitUVRFIXizeFilter (ObitUVRFIXize *in, ObitErr* err)
     /* Rewrite buffer */
     retCode = ObitUVWrite (in->RFIUV, NULL, err);
     if (err->error) Obit_traceback_msg (err, routine, in->RFIUV->name);
-    /* Reset file offset to keep from causing problem in next read */
+    /* Reset file offset to keep from causing problem in next red */
     in->RFIUV->myDesc->firstVis -= in->RFIUV->myDesc->numVisBuff;
-    ((ObitUVDesc*)(in->RFIUV->myIO->myDesc))->firstVis -= in->RFIUV->myDesc->numVisBuff;
   } /* End loop over data */
   
   /* Close up */
@@ -444,7 +443,6 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
     Obit_traceback_msg (err, routine, in->outUV->name);
 
   /* Loop over data */
-  want = FALSE;
   done = (retCode != OBIT_IO_OK);
   while (!done) {
     
@@ -456,6 +454,7 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
     if (done) break;
     
     /* Modify data */
+    want = FALSE;
     outDesc->numVisBuff = 0;  /* No data yet */
     for (i=0; i<inDesc->numVisBuff; i++) { /* loop over visibilities */
       jndx = i*inDesc->lrec;
@@ -479,7 +478,6 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
 	want = FALSE;
 	continue;
       }
-
 
       /* Copy random parameters */
       someGood = FALSE;
@@ -516,10 +514,10 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
 		in->outUV->buffer[oindx+1] = 
 		  in->myUV->buffer[iindx+1] - in->VisApply[BLindx+1];
 		in->outUV->buffer[oindx+2] = in->myUV->buffer[iindx+2];
-		/* DEBUG - just replace 
+		/* DEBUG - just replace
 		in->outUV->buffer[oindx+0] = in->VisApply[BLindx+0];
 		in->outUV->buffer[oindx+1] = in->VisApply[BLindx+1];
-		in->outUV->buffer[oindx+2] = in->VisApply[BLindx+2];*/
+		in->outUV->buffer[oindx+2] = in->VisApply[BLindx+2]; */
 		/* End DEBUG */
 	    }
 	    } /* end if correlation valid */
@@ -659,7 +657,7 @@ void ObitUVRFIXizeFetchStartUp (ObitUVRFIXize *in, ObitErr *err)
 
 /**
  * Get RFI estimation for a given time;
- * Entry closest in time used
+ * Interpolates entries closest in time
  * Values for time are in array in->VisApply which is an array
  * of full visibility records, one per baseline.
  * The first baseline for antenna n (baseline n - n+1) starts in
@@ -673,10 +671,11 @@ void ObitUVRFIXizeFetchStartUp (ObitUVRFIXize *in, ObitErr *err)
 gboolean ObitUVRFIXizeFetch (ObitUVRFIXize *in, ofloat time, ObitErr *err)
 {
   gboolean out = FALSE;
-  gboolean wanted, doPrior;
+  gboolean wanted, doPrior, good1, good2;
   olong  k, j, jndx, indx, kndx, BLindx, ant1, ant2;
   olong incs, incif, incf,  nif, nchan, nstok, iif, ichan, istok;
   ofloat gr1, gi1, dly1, rat1, gr2, gi2, dly2, rat2, tr, ti, gr, gi;
+  ofloat dt1, dt2, dt, wt1, wt2, amp1, amp2, phase1, phase2, amp, phase=0.0;
   ofloat freqFact, dc, dcr, dci, ggr, ggi;
   ofloat fblank = ObitMagicF();
   gdouble twopi = 2.0* G_PI;
@@ -735,20 +734,75 @@ gboolean ObitUVRFIXizeFetch (ObitUVRFIXize *in, ofloat time, ObitErr *err)
       jndx = in->blLookup[ant1] + ant2-ant1-1;
       BLindx = jndx*desc->lrec;
 
+      /* set interpolation weights proportional to time difference. */
+      dt  = in->FollowVisTime[jndx] - in->PriorVisTime[jndx] + 1.0e-20;
+      dt1 = time - in->PriorVisTime[jndx];
+      dt2 = time - in->FollowVisTime[jndx];
+      wt1 = 0.0;
+      if ((time < in->FollowVisTime[jndx]) && (dt>1.0e-19)) wt1 = -dt2 / dt;
+      /* Before Prior time? */
+      if ((time < in->PriorVisTime[jndx]) || (in->FollowVisTime[jndx]<-1000.0)) wt1 = 1.0;
+      /* After Follow time? */
+      if ((time > in->FollowVisTime[jndx]) && (in->FollowVisTime[jndx]<-1000.0)) wt1 = 0.0;
+      wt2 = 1.0 - wt1;
+
       /* Is prior or follow closer in time */
       doPrior = fabs(time-in->PriorVisTime[jndx]) <= fabs(time-in->FollowVisTime[jndx]);
 
-      /* Copy closest visibility */
+      /* Copy closest visibility random parameters */
       if (doPrior) {
 	in->ApplyVisTime[jndx] = in->PriorVisTime[jndx];
 	in->ApplyVisNum[jndx]  = in->PriorVisNum[jndx];
-	for (j=0; j<desc->lrec; j++) 
+	for (j=0; j<desc->nrparm; j++) 
 	  in->VisApply[BLindx+j] = in->VisPrior[BLindx+j];
       } else { /* Follow closer */
 	in->ApplyVisTime[jndx] = in->FollowVisTime[jndx];
 	in->ApplyVisNum[jndx]  = in->FollowVisNum[jndx];
-	for (j=0; j<desc->lrec; j++) 
+	for (j=0; j<desc->nrparm; j++) 
 	  in->VisApply[BLindx+j] = in->VisFollow[BLindx+j];
+      }
+
+      /* Interpolate visibilities */
+      for (j=desc->nrparm; j<desc->lrec; j+=3) {
+	good1 = (in->PriorVisTime[jndx]>-100.0) && (in->VisPrior[BLindx+j+2]>0.0)  
+	  && (wt1>0.0);
+	good2 = (in->FollowVisTime[jndx]>-100.0) && (in->VisFollow[BLindx+j+2]>0.0) 
+	  && (wt2>0.0);
+	/* Prior good, follow bad */
+	if ((good1) && (!good2)) {
+	  in->VisApply[BLindx+j]   = in->VisPrior[BLindx+j];
+	  in->VisApply[BLindx+j+1] = in->VisPrior[BLindx+j+1];
+ 	  in->VisApply[BLindx+j+2] = in->VisPrior[BLindx+j+2];
+
+	  /* Prior bad, follow good */
+	} else if ((!good1) && (good2)) {
+	  in->VisApply[BLindx+j]   = in->VisFollow[BLindx+j];
+	  in->VisApply[BLindx+j+1] = in->VisFollow[BLindx+j+1];
+ 	  in->VisApply[BLindx+j+2] = in->VisFollow[BLindx+j+2];
+
+	  /* Both bad - flag */
+	} else if ((!good1) && (!good2)) {
+	  in->VisApply[BLindx+j]   = 0.0;
+	  in->VisApply[BLindx+j+1] = 0.0;
+ 	  in->VisApply[BLindx+j+2] = 0.0;
+
+	  /* Both good, interpolate in amp phase */
+	} else {
+	  amp1 = sqrt (in->VisPrior[BLindx+j]*in->VisPrior[BLindx+j] + 
+		       in->VisPrior[BLindx+j+1]*in->VisPrior[BLindx+j+1]);
+	  amp2 = sqrt (in->VisFollow[BLindx+j]*in->VisFollow[BLindx+j] + 
+		       in->VisFollow[BLindx+j+1]*in->VisFollow[BLindx+j+1]);
+	  phase1 = atan2 (in->VisPrior[BLindx+j+1],  in->VisPrior[BLindx+j]+1.0e-20);
+	  phase2 = atan2 (in->VisFollow[BLindx+j+1], in->VisFollow[BLindx+j]+1.0e-20);
+	  /* Force within half turn */
+	  if ((phase2-phase1)>2.*G_PI)  phase2 -= 2.*G_PI;
+	  if ((phase2-phase1)<-2.*G_PI) phase2 += 2.*G_PI;
+	  amp   = wt1*amp1 + wt2*amp2;
+	  phase = wt1*phase1 + wt2*phase2;
+	  in->VisApply[BLindx+j]   = amp * cos(phase);
+	  in->VisApply[BLindx+j+1] = amp * sin(phase);
+ 	  in->VisApply[BLindx+j+2] = in->VisPrior[BLindx+j+2]*wt1 + in->VisFollow[BLindx+j+2]*wt2;
+	}
       }
 
       /* Baseline phase calibration info */
@@ -1136,13 +1190,14 @@ static void ObitUVRFIXizeNewTime (ObitUVRFIXize *in, ofloat time,
 	in->PriorVisTime[jndx] = in->FollowVisTime[jndx];
 	in->PriorVisNum[jndx]  = in->FollowVisNum[jndx];
 	for (j=0; j<in->lenVisArrayEntry; j++) in->VisPrior[jndx+j] = in->VisFollow[jndx+j];
-	in->FollowVisTime[jndx] = -10000.0;
-	in->FollowVisNum[jndx ] = -1;
+	/*in->FollowVisTime[jndx] = -10000.0;
+	  in->FollowVisNum[jndx ] = -1;*/
       } /* end if shuffle */
     } /* end ant 2 loop */
   } /* end ant 1 loop */
 
   /* Is the desired next datum (in->NextVisRead in the current buffer or later? */
+  in->LastVisRead = in->NextVisRead;
   if (in->NextVisRead<inDesc->firstVis) {
     /* No - Restart IO */
     ObitUVIOReset (in->RFIUV, in->NextVisRead, err);
@@ -1150,7 +1205,7 @@ static void ObitUVRFIXizeNewTime (ObitUVRFIXize *in, ofloat time,
     in->LastVisRead = 200000000;  /* Force read */
   }
 
-  endTime = time + 0.51*in->AvgTime; /* Don't search further than this time */
+  endTime = time + 1.2*in->AvgTime; /* Don't search further than this time */
 
   /* Read  filling in data  until after endTime. */
   readAll = in->NextVisRead>=inDesc->nvis;  /* At end? */
@@ -1181,15 +1236,17 @@ static void ObitUVRFIXizeNewTime (ObitUVRFIXize *in, ofloat time,
 
     /* If follow time already passed time ignore */
     if ((in->RFIUV->buffer[indx+inDesc->iloct]>in->FollowVisTime[jndx]) &&
-	(in->FollowVisTime[jndx]>-100.0)) goto skip;
+	(in->FollowVisTime[jndx]>time)) goto skip;
 
     /* data time after target? */
     if (in->RFIUV->buffer[indx+inDesc->iloct] >= time) { 
       /* After target time update Follow */
       /* new following entry - copy to prior */
-      in->PriorVisTime[jndx] = in->FollowVisTime[jndx];
-      in->PriorVisNum[jndx]  = in->FollowVisNum[jndx];
-      for (j=0; j<in->lenVisArrayEntry; j++) in->VisPrior[BLoff+j] = in->VisFollow[BLoff+j];
+      if (in->FollowVisTime[jndx]<=time) {
+	in->PriorVisTime[jndx] = in->FollowVisTime[jndx];
+	in->PriorVisNum[jndx]  = in->FollowVisNum[jndx];
+	for (j=0; j<in->lenVisArrayEntry; j++) in->VisPrior[BLoff+j] = in->VisFollow[BLoff+j];
+      }
 
       /* fill in new following values */
       in->FollowVisTime[jndx] = in->RFIUV->buffer[indx+inDesc->iloct];
@@ -1207,15 +1264,15 @@ static void ObitUVRFIXizeNewTime (ObitUVRFIXize *in, ofloat time,
       in->PriorVisTime[jndx] = in->RFIUV->buffer[indx+inDesc->iloct];
       in->PriorVisNum[jndx]  = in->LastVisRead;
       for (j=0; j<in->lenVisArrayEntry; j++) in->VisPrior[BLoff+j] = in->RFIUV->buffer[indx+j];
-      /* No valid Follow time */
-      in->FollowVisTime[jndx] = -10000.0;
-      in->FollowVisNum[jndx]  = -1;
-    } /* end update follow or prior */
+      /* No valid Follow time - use prior */
+      in->FollowVisTime[jndx] = in->PriorVisTime[jndx];
+      in->FollowVisNum[jndx ] = in->PriorVisNum[jndx];
+      for (j=0; j<in->lenVisArrayEntry; j++) in->VisFollow[BLoff+j] = in->VisPrior[BLoff+j];
+   } /* end update follow or prior */
   skip:
     in->LastVisRead++;  /* Number in buffer processed */
   } /* end loop over file  */
   
-
   /* Average prior and follow times */
   sum = 0.0; count = 0;
   in->NextVisRead = 1;  /* Restart looking at last prior */
@@ -1225,8 +1282,7 @@ static void ObitUVRFIXizeNewTime (ObitUVRFIXize *in, ofloat time,
     for (ant2=ant1+1; ant2<in->numAnt; ant2++) {
       jndx = in->blLookup[ant1] + ant2-ant1-1;
       /* Find last valid prior */
-      if (in->PriorVisNum[jndx]>0) 
-	in->NextVisRead = MAX (in->NextVisRead, in->PriorVisNum[jndx]);
+      in->NextVisRead = MAX (in->NextVisRead, in->PriorVisNum[jndx]);
       if (in->PriorVisTime[jndx] > 0.0) {
 	sum += in->PriorVisTime[jndx];
 	count++;
@@ -1247,7 +1303,7 @@ static void ObitUVRFIXizeNewTime (ObitUVRFIXize *in, ofloat time,
       }
     } /* end ant 2 loop */
   } /* end ant 1 loop */
-  if (count>0) in->PriorTime = sum/count;
+  if (count>0) in->FollowTime = sum/count;
  
   /* just to be sure something rational in times */
   if (in->PriorTime < -1000.0)  in->PriorTime  = time - 2.0/86400.0;

@@ -33,6 +33,8 @@
 #include "ObitImageMosaic.h"
 #include "ObitSkyModel.h"
 #include "ObitSkyModelVM.h"
+#include "ObitSkyModelVMSquint.h"
+#include "ObitSkyModelVMIon.h"
 #include "ObitUVSelfCal.h"
 #include "ObitTableCCUtil.h"
 #include "ObitTableSNUtil.h"
@@ -333,6 +335,10 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
       if (i==(peelField-1)) { /* Don't subtract the peel field */
 	bcomp[i] = 2;
 	ecomp[i] = 1;
+      } else if (myClean->mosaic->isShift[i]==peelField) {	
+	/* or the shifted counterpart of 2D autoCentered field */
+	bcomp[i] = 2;
+	ecomp[i] = 1;
       } else {  /* All of other fields */
 	bcomp[i] = 1;
 	ecomp[i] = 0;
@@ -375,7 +381,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     ObitInfoListAlwaysPut (scrUV->info, "nx",         OBIT_long, dim, tmpMosaic->nx);
     ObitInfoListAlwaysPut (scrUV->info, "ny",         OBIT_long, dim, tmpMosaic->ny);
 
-    /* Temporary Imager */
+    /* Temporary Imager*/
     /* Trap Ion variation */
     if (ObitUVImagerIonIsA(myClean->imager)) {
       imagerClass = (const ObitUVImagerClassInfo*)ObitUVImagerGetClass();
@@ -383,6 +389,15 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
       imagerClass = (const ObitUVImagerClassInfo*)myClean->imager->ClassInfo;
     }
     tmpImager   = imagerClass->ObitUVImagerCreate2("Peel imager", scrUV, tmpMosaic, err);
+    if (err->error) goto cleanup;
+
+    /* Trap Ion variation  SkyModel */
+    if (ObitSkyModelVMIonIsA(myClean->skyModel)) {
+      skyModelClass = (const ObitSkyModelClassInfo*)ObitSkyModelGetClass();
+    } else {
+      skyModelClass = (const ObitSkyModelClassInfo*)myClean->skyModel->ClassInfo;
+    }
+    tmpSkyModel   = skyModelClass->ObitSkyModelCreate("Peel SkyModel", tmpMosaic);
     if (err->error) goto cleanup;
 
     /* Create temp SkyModel - use regular basal */
@@ -393,8 +408,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
        } else {
        skyModelClass = (const ObitSkyModelClassInfo*)myClean->skyModel->ClassInfo;
        }*/
-    skyModelClass = (const ObitSkyModelClassInfo*)myClean->skyModel->ClassInfo;
-    tmpSkyModel   = skyModelClass->ObitSkyModelCreate("Peel SkyModel", tmpMosaic);
+
     /* Use DFT model */
     dim[0] = dim[1] = 1;
     dft = (olong)OBIT_SkyModel_DFT;
