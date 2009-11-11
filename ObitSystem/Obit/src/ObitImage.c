@@ -139,6 +139,7 @@ ObitImage* newObitImage (gchar* name)
  * For xxxDataType = "MA"
  * \li xxxBLC   OBIT_oint[7] (Images only) 1-rel bottom-left corner pixel
  * \li xxxTRC   OBIT_oint[7] (Images Only) 1-rel top-right corner pixel
+ * \li xxxExist OBIT_bool (1,1,1) If True, file expected to exist (def TRUE)
  * \param err     ObitErr for reporting errors.
  * \return new data object with selection parameters set
  */
@@ -153,6 +154,7 @@ ObitImage* ObitImageFromFileInfo (gchar *prefix, ObitInfoList *inList,
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong        blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong        trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  gboolean     exist;
   gchar        *keyword=NULL, *DataTypeKey = "DataType", *DataType=NULL;
   gchar        *routine = "ObitImageFromFileInfo";
 
@@ -160,6 +162,13 @@ ObitImage* ObitImageFromFileInfo (gchar *prefix, ObitInfoList *inList,
 
   /* Create output */
   out = newObitImage (prefix);
+
+  /* Is it expected to exist? */
+  if (prefix) keyword = g_strconcat (prefix, "Exist", NULL);
+  else        keyword = g_strdup("nVisPIO");
+  exist = TRUE;
+  ObitInfoListGetTest(inList, keyword, &type, dim, &exist);
+  g_free(keyword);
 
   /* BLC */
   if (prefix) keyword = g_strconcat (prefix, "BLC", NULL);
@@ -247,8 +256,14 @@ ObitImage* ObitImageFromFileInfo (gchar *prefix, ObitInfoList *inList,
     ObitInfoListGet(inList, "AIPSuser", &type, dim, &AIPSuser, err);
     if (err->error) Obit_traceback_val (err, routine, "inList", out);    
 
-    /* Find catalog number */
-    cno = ObitAIPSDirFindCNO(disk, AIPSuser, Aname, Aclass, Atype, Aseq, err);
+    /* Find/assign catalog number */
+    if (exist) 
+      cno = ObitAIPSDirFindCNO(disk, AIPSuser, Aname, Aclass, Atype, Aseq, err);
+    else { /* Create */
+      cno = ObitAIPSDirAlloc(disk, AIPSuser, Aname, Aclass, Atype, Aseq, &exist, err);
+      Obit_log_error(err, OBIT_InfoErr, "Making AIPS image %s %s %d on disk %d cno %d",
+		     Aname, Aclass, Aseq, disk, cno);
+  }
     if (err->error) Obit_traceback_val (err, routine, "inList", out);
     
     /* define object */
@@ -287,14 +302,19 @@ ObitImage* ObitImageFromFileInfo (gchar *prefix, ObitInfoList *inList,
     ObitImageSetFITS (out, OBIT_IO_byPlane, disk, inFile, blc, trc, err);
     if (err->error) Obit_traceback_val (err, routine, "inList", out);
     
+    /* Tell about it if didn't exist */
+    if (!exist)
+      Obit_log_error(err, OBIT_InfoErr, "Making FITS image %s on disk %d",
+		     inFile, disk);
+
   } else { /* Unknown type - barf and bail */
     Obit_log_error(err, OBIT_Error, "%s: Unknown Data type %s", 
                    routine, DataType);
     return out;
   }
 
-  /* Ensure out fully instantiated and OK */
-  ObitImageFullInstantiate (out, TRUE, err);
+  /* Ensure out fully instantiated and OK if it exists */
+  if (exist) ObitImageFullInstantiate (out, TRUE, err);
   if (err->error) Obit_traceback_val (err, routine, "inList", out);
 
   /* Set defaults BLC, TRC - use size on myIO as blc, trc incorporated into myDesc */
@@ -1904,7 +1924,6 @@ void ObitImageInit  (gpointer inn)
 {
   ObitClassInfo *ParentClass;
   ObitImage *in = inn;
-  olong i;
 
   /* error checks */
   g_assert (in != NULL);

@@ -194,10 +194,12 @@ Adverbs:
   VClip......If [0]> 0.0 then flagging of data when averaged VPol 
              amplitudes exceed VClip.  Default 0.0 = no flagging.
              VClip[1]==0 => use statistical clipping
+             Data are vector averaged for timeAvg before clipping.
              See EXPLAIN section for details.    
   IClip......If [0]> 0.0 then flagging of data when averaged IPol 
              amplitudes exceed IClip.  Default 0.0 = no flagging.
              IClip[1]==0 => use statistical clipping
+             Data are vector averaged for timeAvg before clipping.
              See HELP and EXPLAIN sections for details.    
   RMSClip....Clip level for time domain (RMS editing) as
              constant + proportional part, 
@@ -219,8 +221,8 @@ Adverbs:
              baselines using that correlator (freq/poln)are flagged 
              in that interval.
   timeAvg....Flagging interval (min)
-             Interval over which data is vector averages for 
-             VPol flagging and over which RMS fluctuations are
+             Interval over which data is vector averaged for 
+             I/VPol flagging and over which RMS fluctuations are
              determined for time domain flagging.  Each timeAvg
              period is considered independently.
              Default 1 min.
@@ -272,11 +274,15 @@ if a fraction in excess of  maxBad. is flagged.  In addition,
 if a flagged correlator is a parallel-hand correlator then any
 corresponding cross-hand correlations are also flagged.
 Results are unpredictable for uncalibrated data.
+Flagging is based on fluctuations of either real or imaginary 
+parts so variations in either amplitude and/or phase can cause 
+data to be flagged.
 
 RMS/mean flagging:
    In each interval timeAvg the RMS and mean amplitude are 
 determined for each correlator.  Correlators and timeranges for 
-which this value exceeds RMSAvg are flagged.
+which this value exceeds RMSAvg are flagged. Scalar averging of
+amplitudes is used.
    All baselines using a given correlator (freq/poln) are flagged 
 if a fraction in excess of  maxBad. is flagged.  In addition, 
 if a flagged correlator is a parallel-hand correlator then any 
@@ -292,6 +298,7 @@ intended to flag the most discrepant 3 percent of the data.
 If a fraction of bad baselines on any antenna/channel/IF exceeds 
 maxBad, then all data to that correlator is flagged.  
 Results are unpredictable for uncalibrated data.
+Data are vector averaged for timeAvg before clipping.
 
 IPol editing:
    All data on a given baseline/correlator are flagged if the 
@@ -302,6 +309,7 @@ intended to flag the most discrepant 3 percent of the data.
 This is useful for editing really strong interference or data 
 with a model subtracted.
 Results are unpredictable for uncalibrated data.
+Data are vector averaged for timeAvg before clipping.
 
 Frequency domain editing
    Editing is done independently for each visibility measure.  First

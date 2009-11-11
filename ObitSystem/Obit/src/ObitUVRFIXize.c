@@ -223,10 +223,14 @@ void ObitUVRFIXizeCounterRot (ObitUVRFIXize *in, ObitErr* err)
  * \li Pass: the data contains RFI.
  * \param in     UVRFIXize object
  * Control parameter on info element:
- * \li "minRFI"    OBIT_float (1,1,1) Minimum RFI amplitude (Jy) [def 50]
- * \li "timeAvg"   OBIT_float  (1,1,1) Time interval over whih RFIUV averaged 
- *                 (min) [def = 1 min.]
- * \li "timeInt"   OBIT_float (1,1,1) Data integration time in sec [def 10 sec].
+ * \li "minRFI"   OBIT_float (1,1,1) Minimum RFI amplitude (Jy) to remove [def 50]
+ * \li "timeAvg"  OBIT_float  (1,1,1) Time interval over whic RFIUV averaged 
+ *                (min) [def = 1 min.]
+ * \li "timeInt"  OBIT_float (1,1,1) Data integration time in sec [def 10 sec].
+ * \li "maxRot"   OBIT_float (1,1,1) Max. fringe rotation (turns) in an integration 
+ *                  to estimate RFI[def 2.0].
+ * \li "minRot"   OBIT_float (1,1,1) Min. fringe rotation (turns) in an integration,
+ *                  data with smaller values flagged if > minRFI [def 2.0].
  * \param err    Error/message stack, returns if error.
  */
 void ObitUVRFIXizeFilter (ObitUVRFIXize *in, ObitErr* err) 
@@ -235,6 +239,7 @@ void ObitUVRFIXizeFilter (ObitUVRFIXize *in, ObitErr* err)
   gboolean done, zero, blank;
   ofloat *frRate=NULL, fr, fblank = ObitMagicF();
   ofloat timeInt=10.0, timeAvg=0.95, minamp2=50.0, amp2;
+  ofloat maxRot=2.0, minRot = 0.25;
   odouble freq;
   olong i, jndx, indx, ant1, ant2;
   olong incs, incif, incf,  nif, nfreq, nstok, iif, ichan, istok;
@@ -262,6 +267,10 @@ void ObitUVRFIXizeFilter (ObitUVRFIXize *in, ObitErr* err)
   ObitInfoListGetTest(in->info, "minRFI",  &type, dim, &minamp2);
   /* Want square for test */
   minamp2 = minamp2*minamp2;
+  /* Minimum rotation */
+  ObitInfoListGetTest(in->info, "minRot",  &type, dim, &minRot);
+  /* Maximum rotation */
+  ObitInfoListGetTest(in->info, "maxRot",  &type, dim, &maxRot);
 
   /* Local pointers */
   inDesc  = in->RFIUV->myDesc;
@@ -329,19 +338,19 @@ void ObitUVRFIXizeFilter (ObitUVRFIXize *in, ObitErr* err)
 	  /* Loop over Stokes */
 	  for (istok=0; istok<nstok; istok++) {
 	    indx = jndx + inDesc->nrparm + incs*istok + incf*ichan + incif*iif;
+	    blank = FALSE;
+	    zero  = FALSE;
 	    if ((in->RFIUV->buffer[indx+2]>0.0) && (fr!=fblank)) {
 	      /* What to do? */
-	      zero  = FALSE;
-	      blank = FALSE;
 	      amp2 = in->RFIUV->buffer[indx+0]*in->RFIUV->buffer[indx+0] +
 		in->RFIUV->buffer[indx+1]*in->RFIUV->buffer[indx+1];
 	      zero = amp2 < minamp2;  /* Amp below RFI threshold */
-	      /* If more than two turns in an integration ignore */
-	      zero = zero || (fabs(timeInt*fr)>2.0);
-	      /* Need at least 0.25 turn of phase in data averaging */
-	      if (fabs(timeAvg*fr)<0.25) {  
+	      /* If more than maxRot turns in an integration ignore */
+	      zero = zero || (fabs(timeInt*fr)>maxRot);
+	      /* Need at least minRot turn of phase in data averaging */
+	      if (fabs(timeAvg*fr)<minRot) {  
 		blank = TRUE;
-		zero = FALSE;
+		/*zero = FALSE;*/
 	      }
 	      if (zero) {
 		in->RFIUV->buffer[indx+0] = 0.0;
@@ -360,6 +369,8 @@ void ObitUVRFIXizeFilter (ObitUVRFIXize *in, ObitErr* err)
     if (err->error) Obit_traceback_msg (err, routine, in->RFIUV->name);
     /* Reset file offset to keep from causing problem in next red */
     in->RFIUV->myDesc->firstVis -= in->RFIUV->myDesc->numVisBuff;
+    ((ObitUVDesc*)in->RFIUV->myIO->myDesc)->firstVis = /* oh bother */
+      in->RFIUV->myDesc->firstVis;
   } /* End loop over data */
   
   /* Close up */
@@ -514,10 +525,10 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
 		in->outUV->buffer[oindx+1] = 
 		  in->myUV->buffer[iindx+1] - in->VisApply[BLindx+1];
 		in->outUV->buffer[oindx+2] = in->myUV->buffer[iindx+2];
-		/* DEBUG - just replace
+		/* DEBUG - just replace  
 		in->outUV->buffer[oindx+0] = in->VisApply[BLindx+0];
 		in->outUV->buffer[oindx+1] = in->VisApply[BLindx+1];
-		in->outUV->buffer[oindx+2] = in->VisApply[BLindx+2]; */
+		in->outUV->buffer[oindx+2] = in->VisApply[BLindx+2];*/
 		/* End DEBUG */
 	    }
 	    } /* end if correlation valid */

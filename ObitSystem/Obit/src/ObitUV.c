@@ -222,6 +222,7 @@ ObitUV* newObitUV (gchar* name)
  *          evenly divide the current scan.  See #ObitUVSelSubScan
  *          0 => Use scan average.
  *          This is only useful for ReadSelect operations on indexed ObitUVs.
+ * \li xxxExist OBIT_bool (1,1,1) If True, file expected to exist (def TRUE)
  * \param err     ObitErr for reporting errors.
  * \return new data object with selection parameters set
  */
@@ -231,6 +232,7 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
   ObitUV       *out = NULL;
   ObitInfoType type;
   olong        Aseq, AIPSuser, disk, cno, i, nvis, nThreads;
+  gboolean     exist;
   gchar        *strTemp, inFile[129], stemp[256];
   gchar        Aname[13], Aclass[7], *Atype = "UV";
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -249,6 +251,13 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
 
   /* Create output */
   out = newObitUV (prefix);
+
+  /* Is it expected to exist? */
+  if (prefix) keyword = g_strconcat (prefix, "Exist", NULL);
+  else        keyword = g_strdup("nVisPIO");
+  exist = TRUE;
+  ObitInfoListGetTest(inList, keyword, &type, dim, &exist);
+  g_free(keyword);
 
   /* Number of Vis per IO  */
   nvis = 1000;
@@ -333,8 +342,15 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
     ObitInfoListGet(inList, "AIPSuser", &type, dim, &AIPSuser, err);
     if (err->error) Obit_traceback_val (err, routine, "inList", out);    
 
-    /* Find catalog number */
-    cno = ObitAIPSDirFindCNO(disk, AIPSuser, Aname, Aclass, Atype, Aseq, err);
+    /* Find/assign catalog number */
+    if (exist) 
+      cno = ObitAIPSDirFindCNO(disk, AIPSuser, Aname, Aclass, Atype, Aseq, err);
+    else { /* Create */
+      cno = ObitAIPSDirAlloc(disk, AIPSuser, Aname, Aclass, Atype, Aseq, &exist, err);
+      Obit_log_error(err, OBIT_InfoErr, 
+		     "Making AIPS UV data %s %s %d on disk %d cno %d",
+		     Aname, Aclass, Aseq, disk, cno);
+    }
     if (err->error) Obit_traceback_val (err, routine, "inList", out);
     
     /* define object */
@@ -372,6 +388,12 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
     /* define object */
     ObitUVSetFITS (out, nvis, disk, inFile, err);
     if (err->error) Obit_traceback_val (err, routine, "inList", out);
+
+    /* If creating give message */
+    if (!exist)
+      Obit_log_error(err, OBIT_InfoErr, 
+		     "Making FITS UV data %s on disk %d", inFile, disk);
+      
     
   } else { /* Unknown type - barf and bail */
     Obit_log_error(err, OBIT_Error, "%s: Unknown Data type %s", 
@@ -396,8 +418,8 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
   else        keyword = g_strdup("Info");
   ObitInfoListCopyWithPrefix (inList, out->info, keyword, TRUE);
   
-  /* Ensure out fully instantiated and OK */
-  ObitUVFullInstantiate (out, TRUE, err);
+  /* Ensure out fully instantiated and OK if it exists */
+  if (exist)  ObitUVFullInstantiate (out, TRUE, err);
   if (err->error) Obit_traceback_val (err, routine, "inList", out);
 
   return out;

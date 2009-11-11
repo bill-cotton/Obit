@@ -110,6 +110,7 @@
  *                On output, this will include info on last CLEAN
  * \param  nfield [out] Number of entries in ncomp
  * \param  ncomp  [out] Array of number of components in data (i.e. after any peel)
+ *                -1 => none
  *                per field,  this array should be g_freeed after use
  * \param err     Error/message stack
  */
@@ -159,6 +160,8 @@ void ObitUVPeelUtilLoop (ObitInfoList* myInput, ObitUV* inUV,
   for (i=0; i<myClean->mosaic->numberImages; i++) {
     /* Keep track of unpeeled components */
     (*ncomp)[i] = myClean->skyModel->endComp[i];
+    /* If zero use -1 instead */
+    if ((*ncomp)[i]==0) (*ncomp)[i] = -1;
 
     if (peeled[i]<=0) continue;  /* ingnore fields not peeled */
     /* Copy CCs from peeled table (CC 2)  to CC 1 on output image */
@@ -439,6 +442,8 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     ObitInfoListAlwaysPut(tmpClean->info, "doFlatten", OBIT_bool, dim, &Fl);
     /* Explicitly do weighting  */
     ObitInfoListAlwaysPut(tmpClean->info, "doWeight", OBIT_bool, dim, &Tr);
+
+    if (tmpClean->CCver<=0) tmpClean->CCver = 2;  /* Specify CC ver */
  
     /* Use DFT model */
     dim[0] = dim[1] = 1;

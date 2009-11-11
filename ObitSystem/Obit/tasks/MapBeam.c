@@ -122,6 +122,7 @@ gchar **FITSdirs=NULL;           /* List of FITS data directories */
 ObitInfoList *myInput  = NULL;   /* Input parameter list */
 ObitInfoList *myOutput = NULL;   /* Output parameter list */
 ofloat avgAz=0.0, avgEl=0.0, avgPA=0.0; /* Average observing Az, El, par Ang (deg) */
+odouble RAMean=0.0, DecMean=0.0; /* Mean position of current source */
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
@@ -1009,7 +1010,7 @@ ObitImage* setOutput (gchar *Source, olong iStoke, olong ant, gboolean doRMS,
 /*----------------------------------------------------------------------- */
 void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
 {
-  gchar        Source[17];
+  gchar        Source[17], lastSource[17];
   ObitSourceList* doList;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong         maxlen, isource, failed=0, good=0;
@@ -1039,11 +1040,18 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
   /* Loop over list of sources */
+  strncpy (lastSource, "None such       ", 16);
   for (isource = 0; isource<doList->number; isource++) {
     if (!doList->SUlist[isource]) continue; /* removed? */
     maxlen = MIN (16, strlen(doList->SUlist[isource]->SourceName));
     strncpy (Source, doList->SUlist[isource]->SourceName, maxlen);
     Source[maxlen] = 0;
+    /* Ignore if same source name as last - just different qualifier */
+    if (!strncmp(lastSource, Source, 16)) continue;
+    strncpy (lastSource, Source, 16);
+    /* Save position in global */
+    RAMean  = doList->SUlist[isource]->RAMean;
+    DecMean = doList->SUlist[isource]->DecMean;
 
     Obit_log_error(err, OBIT_InfoErr, " ******  Source %s ******", Source);
     ObitTrimTrail(Source);  /* remove trailing blanks */
@@ -1733,11 +1741,14 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
   ANTable = ObitTableANUnref(ANTable);   /* Done with table */
   if (err->error) Obit_traceback_msg (err, routine, ANTable->name);
 
-  /* Source */
+  /* Source - get position from global */
   Source = newObitSource("Temp Source");
   Source->equinox = inData->myDesc->equinox;
-  Source->RAMean  = inData->myDesc->crval[inData->myDesc->jlocr];
-  Source->DecMean = inData->myDesc->crval[inData->myDesc->jlocd];
+  Source->RAMean  = RAMean;
+  Source->DecMean = DecMean;
+  if (err->error) Obit_traceback_msg (err, routine, inData->name);
+  /*  Source->RAMean  = inData->myDesc->crval[inData->myDesc->jlocr];
+      Source->DecMean = inData->myDesc->crval[inData->myDesc->jlocd];*/
   /* Compute apparent position */
   ObitPrecessUVJPrecessApp (inData->myDesc, Source);
   

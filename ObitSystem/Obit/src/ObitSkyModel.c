@@ -2882,8 +2882,10 @@ ofloat ObitSkyModelSum (ObitSkyModel *in, ObitErr *err)
     ver = in->CCver[field];
     tempTable = newObitImageTable (in->mosaic->images[field],OBIT_IO_ReadOnly, 
 				   tabType, &ver, err);
-    if ((tempTable==NULL) || (err->error)) 
-      Obit_traceback_val (err, routine, in->name, sum);
+    Obit_retval_if_fail (((tempTable!=NULL) && (!err->error)), err, sum,
+		       "%s: CANNOT Find CC table %d on %s",  
+		       routine, ver, in->name);  
+
     CCTable = ObitTableCCConvert(tempTable);
     tempTable = ObitTableUnref(tempTable);
     if (err->error) Obit_traceback_val (err, routine, in->name, sum);
@@ -2988,11 +2990,11 @@ void ObitSkyModelCompressCC (ObitSkyModel *in, ObitErr *err)
     retCode = ObitTableCCUtilMerge (CCTable, CCTable, err);
     if ((retCode != OBIT_IO_OK) || (err->error))
       Obit_traceback_msg (err, routine, in->name);
-    CCTable = ObitTableCCUnref (CCTable);
 
     /* Use all components */
     in->startComp[field] = 1;
-    in->endComp[field]   = 0; 
+    in->endComp[field]   = CCTable->myDesc->nrow; 
+    CCTable = ObitTableCCUnref (CCTable);
 
   } /* end loop over fields */
   

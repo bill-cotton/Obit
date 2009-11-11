@@ -116,12 +116,16 @@ RFIXizeInput={'structure':['RFIXize',[('solInt','Counter rotated SN table interv
                                       ('doInvert','If True invert solution [def False]'),
                                       ('timeInt','Data integration time in sec [def 10 sec]'),
                                       ('timeAvg','Time interval (min) over which to average residual'),
+                                      ('minRot','Min. fringe rotation in an integration, less flagged'),
+                                      ('maxRot','Max. fringe rotation in an integration, more no RFI'),
                                       ('minRFI','Minimum RFI amplitude (Jy) to subtract')]],
               # defaults
               'solInt':60.0,
               'doInvert':False,
               'timeInt':10.0,
               'timeAvg':0.95,
+              'minRot':0.25,
+              'maxRot':2.00,
               'minRFI':50}
 
 def PCreate (name, inUV, residUV, outUV, input=RFIXizeInput):
@@ -139,6 +143,12 @@ def PCreate (name, inUV, residUV, outUV, input=RFIXizeInput):
     doInvert    = If True invert solution [def False]
     timeInt     = Data integration time in sec [def 10 sec]
     timeAvg     = Time interval (min) over which to average residual.
+    minRot      = Min. fringe rotation (turns) in an integration,
+                  data with smaller values flagged if > minRFI
+                  Only reduce this if a very good model has been
+                  subtracted to make the residual data.
+    maxRot      = Max. fringe rotation (turns) in an integration 
+                  to estimate RFI 
     minRFI      = Minimum RFI amplitude to subtract
     """
     ################################################################
@@ -162,6 +172,8 @@ def PCreate (name, inUV, residUV, outUV, input=RFIXizeInput):
     InfoList.PAlwaysPutFloat   (inInfo, "timeInt", dim, [input["timeInt"]])
     InfoList.PAlwaysPutFloat   (inInfo, "timeAvg", dim, [input["timeAvg"]])
     InfoList.PAlwaysPutFloat   (inInfo, "minRFI",  dim, [input["minRFI"]])
+    InfoList.PAlwaysPutFloat   (inInfo, "minRot",  dim, [input["minRot"]])
+    InfoList.PAlwaysPutFloat   (inInfo, "maxRot",  dim, [input["maxRot"]])
     #
     return out;
     # end PCreate

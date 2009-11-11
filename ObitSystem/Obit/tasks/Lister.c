@@ -69,6 +69,9 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err);
 void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err);
 /* Gain listing */
 void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err);
+/* Get Scaling for data */
+void getDataScale (ObitUV* inData, ofloat *blscale, ofloat *wtscale, 
+		   ofloat *ampscale, ObitErr *err);
 /* Days to human string */
 void day2dhms(ofloat time, gchar *timeString);
 /* Extract data value from SN row */
@@ -569,7 +572,6 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   olong        LinesPerPage = 0;
   olong        i, ii, indx, jndx, count, bPrint, nPrint, doCrt=1, lenLine=0;
   ofloat       u, v, w, cbase, re, im, amp, phas, wt;
-  ofloat       maxBL=0.0, maxWt=0.0, minWt=1.0e20, maxAmp=0.0;
   ofloat       blscale=1., wtscale=1., ampscale=1.;
   olong        start, ic, ncor, mcor, maxcor, ant1, ant2, souID, SubA, inc=2;
   olong        bif=1, bchan=1, ichan, doCalib, gainUse, flagVer;
@@ -618,6 +620,10 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   /* How long is a line? */
   lenLine = MAX (72, MIN(doCrt,1023));
   if (!isInteractive) lenLine = 132;
+
+  /* Get scaling factors */
+  getDataScale (inData, &blscale, &wtscale, &ampscale, err);
+  if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
   /* Open uv data */
   iretCode = ObitUVOpen (inData, OBIT_IO_ReadCal, err);
@@ -695,92 +701,31 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     ObitPrinterWrite (myPrint, line, &quit, err);
     if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
   }
-
+      
   /* Loop through data */
   while ((iretCode==OBIT_IO_OK) && (count<nPrint)) {
     /* read buffer full */
     iretCode = ObitUVReadSelect (inData, NULL, err);
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
-    /* On first pass get scaling */
-    if (first && (inDesc->numVisBuff>1)) {
+    /* Labels at beginning of file */
+    if (first) {
       first = FALSE;
-      for (i=0; i<inDesc->numVisBuff; i++) { /* loop over visibilities */
-	indx = i*inDesc->lrec;
-	jndx = i*inDesc->lrec + inDesc->nrparm;
-	u   = inData->buffer[indx+inDesc->ilocu];
-	maxBL = MAX (maxBL, fabs(u));
-	v   = inData->buffer[indx+inDesc->ilocv];
-	maxBL = MAX (maxBL, fabs(v));
-	w   = inData->buffer[indx+inDesc->ilocw];
-	maxBL = MAX (maxBL, fabs(w));
-	re = inData->buffer[jndx];
-	im = inData->buffer[jndx+1];
-	amp = re*re+im*im;
-	maxAmp = MAX(maxAmp, amp);
-	wt  = inData->buffer[jndx+2];
-	maxWt = MAX (wt, maxWt); minWt = MIN (wt, minWt);
-      }
-      /* Scalings */
-      blscale = 1;
-      if (maxBL>1.0e3) blscale = 1.0e-1;
-      if (maxBL>1.0e4) blscale = 1.0e-2;
-      if (maxBL>1.0e5) blscale = 1.0e-3;
-      if (maxBL>1.0e6) blscale = 1.0e-4;
-      if (maxBL>1.0e7) blscale = 1.0e-5;
-      if (maxBL>1.0e7) blscale = 1.0e-6;
-      if (maxBL>1.0e9) blscale = 1.0e-7;
-      if (maxBL>1.0e10) blscale = 1.0e-8;
-      if (maxBL>1.0e11) blscale = 1.0e-9;
-      wtscale = 1.0;
-      if (maxWt>1.0e2)  wtscale = 1.0;
-      if (maxWt>1.0e3)  wtscale = 1.0e-1;
-      if (maxWt>1.0e4)  wtscale = 1.0e-2;
-      if (maxWt>1.0e5)  wtscale = 1.0e-3;
-      if (maxWt>1.0e6)  wtscale = 1.0e-4;
-      if (maxWt<1.0e2)  wtscale = 1.0e1;
-      if (maxWt<1.0e1)  wtscale = 1.0e2;
-      if (maxWt<1.0e-1) wtscale = 1.0e3;
-      if (maxWt<1.0e-2) wtscale = 1.0e4;
-      if (maxWt<1.0e-3) wtscale = 1.0e5;
-      if (maxWt<1.0e-4) wtscale = 1.0e6;
-      if (maxWt<1.0e-5) wtscale = 1.0e7;
-      if (maxWt<1.0e-6) wtscale = 1.0e8;
-      if (maxWt<1.0e-7) wtscale = 1.0e9;
-      if (maxWt<1.0e-8) wtscale = 1.0;
       sprintf( line, "   u,v,w scaled by %8.2g  weights scaled by  %8.2g",
 	       blscale, wtscale);
       ObitPrinterWrite (myPrint, line,   &quit, err);
       if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
-
-      ampscale = 1.0;
-      maxAmp = sqrt(maxAmp);
-      if (maxAmp>=1.3e0) ampscale = 1.0e1;
-      if (maxAmp>=1.3e1) ampscale = 1.0e0;
-      if (maxAmp>=1.3e2) ampscale = 1.0e-1;
-      if (maxAmp>=1.3e3) ampscale = 1.0e-2;
-      if (maxAmp>=1.3e4) ampscale = 1.0e-3;
-      if (maxAmp>=1.3e5) ampscale = 1.0e-2;
-      if (maxAmp>=1.3e6) ampscale = 1.0e-5;
-      if (maxAmp<1.3e0)  ampscale = 1.0e2;
-      if (maxAmp<=1.0e-1) ampscale = 1.0e3;
-      if (maxAmp<=1.0e-2) ampscale = 1.0e4;
-      if (maxAmp<=1.0e-3) ampscale = 1.0e5;
-      if (maxAmp<=1.0e-4) ampscale = 1.0e6;
-      if (maxAmp<=1.0e-5) ampscale = 1.0e7;
-      if (maxAmp<=1.0e-6) ampscale = 1.0e8;
       if (ampscale!=1.0) {
 	sprintf( line, "   Amplitudes scaled by %8.2g",ampscale);
 	ObitPrinterWrite (myPrint, line,   &quit, err);
       }
-
-      /* Titles */
-      ObitPrinterWrite (myPrint, Title1, &quit, err);
-      ObitPrinterWrite (myPrint, Title2, &quit, err);
-      if (quit) goto Quit;
-      if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
+    /* Titles */
+    ObitPrinterWrite (myPrint, Title1, &quit, err);
+    ObitPrinterWrite (myPrint, Title2, &quit, err);
+    if (quit) goto Quit;
+    if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
     }
-    
+  
     /* loop through buffer */
     for (i=0; i<inDesc->numVisBuff; i++) { /* loop over visibilities */
       /* Want this one% */
@@ -1599,6 +1544,121 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   if (valueArr) g_free(valueArr);
 
 } /* end doGAIN */
+
+/** 
+ * Get scaling for Data
+ * Reads first 100 selected visilitities and finds the extrema of the
+ * [u,v,w], weights and amplitudes over all correlations.
+ * \param inData    Input data to read, will be opened, read and closed
+ * \param blscale   [out] scaling for u,v,w
+ * \param wtscale   [out] scaling for weights
+ * \param ampscale  [out] scaling for amplitudes
+ * \param err       Obit Error stack 
+ */
+/* Get Scaling for data */
+void getDataScale (ObitUV* inData, ofloat *blscale, ofloat *wtscale, 
+		   ofloat *ampscale, ObitErr *err)
+{
+  ObitUVDesc   *inDesc;
+  ObitIOCode   iretCode;
+  olong count=0, i, j, indx, jndx, kndx;
+  gboolean good;
+  ofloat u, maxBL, v, w, re, im, amp, maxAmp=0.0, wt, maxWt=0.0, minWt=0.0;
+  gchar *routine = "getDataScale";
+
+    if (err->error) return;  /* prior error */
+    
+    /* Open uv data */
+    iretCode = ObitUVOpen (inData, OBIT_IO_ReadCal, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
+    Obit_traceback_msg (err, routine, inData->name);
+  count = 0;
+  inDesc = inData->myDesc;  
+  
+  /* Loop through data */
+  while ((iretCode==OBIT_IO_OK) && (count<100)) {
+    /* read buffer full */
+    iretCode = ObitUVReadSelect (inData, NULL, err);
+    if (iretCode==OBIT_IO_EOF) break;  /* Read all? */
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
+
+    for (i=0; i<inDesc->numVisBuff; i++) { /* loop over visibilities */
+      indx = i*inDesc->lrec;
+      jndx = i*inDesc->lrec + inDesc->nrparm;
+      u   = inData->buffer[indx+inDesc->ilocu];
+      maxBL = MAX (maxBL, fabs(u));
+      v   = inData->buffer[indx+inDesc->ilocv];
+      maxBL = MAX (maxBL, fabs(v));
+      w   = inData->buffer[indx+inDesc->ilocw];
+      maxBL = MAX (maxBL, fabs(w));
+      good = FALSE;
+      for (j=0; j<inDesc->ncorr; j++) {
+	kndx = jndx + 3*j;
+	wt  = inData->buffer[kndx+2];
+	if (wt>0.0) {
+	  good = TRUE;
+	  re = inData->buffer[kndx];
+	  im = inData->buffer[kndx+1];
+	  amp = re*re+im*im;
+	  maxAmp = MAX(maxAmp, amp);
+	  maxWt = MAX (wt, maxWt); minWt = MIN (wt, minWt);
+	}
+      }  /* end loop over correlations */
+      if (good) count++;  /* Count values */
+    } /* end buffer loop */
+    if (count>=100) break;
+  }
+
+  /* Close UV data */
+  ObitUVClose(inData, err);
+  if (err->error) Obit_traceback_msg (err, routine, inData->name);
+
+  /* Scalings */
+  *blscale = 1;
+  if (maxBL>1.0e3) *blscale = 1.0e-1;
+  if (maxBL>1.0e4) *blscale = 1.0e-2;
+  if (maxBL>1.0e5) *blscale = 1.0e-3;
+  if (maxBL>1.0e6) *blscale = 1.0e-4;
+  if (maxBL>1.0e7) *blscale = 1.0e-5;
+  if (maxBL>1.0e7) *blscale = 1.0e-6;
+  if (maxBL>1.0e9) *blscale = 1.0e-7;
+  if (maxBL>1.0e10) *blscale = 1.0e-8;
+  if (maxBL>1.0e11) *blscale = 1.0e-9;
+  *wtscale = 1.0;
+  if (maxWt>1.0e2)  *wtscale = 1.0;
+  if (maxWt>1.0e3)  *wtscale = 1.0e-1;
+  if (maxWt>1.0e4)  *wtscale = 1.0e-2;
+  if (maxWt>1.0e5)  *wtscale = 1.0e-3;
+  if (maxWt>1.0e6)  *wtscale = 1.0e-4;
+  if (maxWt<1.0e2)  *wtscale = 1.0e1;
+  if (maxWt<1.0e1)  *wtscale = 1.0e2;
+  if (maxWt<1.0e-1) *wtscale = 1.0e3;
+  if (maxWt<1.0e-2) *wtscale = 1.0e4;
+  if (maxWt<1.0e-3) *wtscale = 1.0e5;
+  if (maxWt<1.0e-4) *wtscale = 1.0e6;
+  if (maxWt<1.0e-5) *wtscale = 1.0e7;
+  if (maxWt<1.0e-6) *wtscale = 1.0e8;
+  if (maxWt<1.0e-7) *wtscale = 1.0e9;
+  if (maxWt<1.0e-8) *wtscale = 1.0;
+  *ampscale = 1.0;
+  maxAmp = sqrt(maxAmp);
+  if (maxAmp>=1.3e0) *ampscale = 1.0e1;
+  if (maxAmp>=1.3e1) *ampscale = 1.0e0;
+  if (maxAmp>=1.3e2) *ampscale = 1.0e-1;
+  if (maxAmp>=1.3e3) *ampscale = 1.0e-2;
+  if (maxAmp>=1.3e4) *ampscale = 1.0e-3;
+  if (maxAmp>=1.3e5) *ampscale = 1.0e-2;
+  if (maxAmp>=1.3e6) *ampscale = 1.0e-5;
+  if (maxAmp<1.3e0)  *ampscale = 1.0e2;
+  if (maxAmp<=1.0e-1) *ampscale = 1.0e3;
+  if (maxAmp<=1.0e-2) *ampscale = 1.0e4;
+  if (maxAmp<=1.0e-3) *ampscale = 1.0e5;
+  if (maxAmp<=1.0e-4) *ampscale = 1.0e6;
+  if (maxAmp<=1.0e-5) *ampscale = 1.0e7;
+  if (maxAmp<=1.0e-6) *ampscale = 1.0e8;
+  if (maxAmp==0.0)    *ampscale = 1.0;
+ 
+} /* end getDataScale */
 
 /** 
  * Convert Time in days to a human readable form "dd/hh:mm:ss.s"

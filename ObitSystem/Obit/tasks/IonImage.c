@@ -1936,7 +1936,7 @@ void doFieldImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 /*      skyModel  Skymodel to subtract                                    */
 /*      selFGver  Continuum channel selection FG flag, -1 if none         */
 /*      nfield    Number of fields in image mosaic                        */
-/*      ncomp     Array of number of components in data to use            */
+/*      ncomp     Array of number of components in data to use -1=>none   */
 /*   Output:                                                              */
 /*      err    Obit Error stack                                           */
 /*----------------------------------------------------------------------- */
@@ -1964,11 +1964,25 @@ void subIPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver,
   nfld = skyModel->mosaic->numberImages;
   itemp = ObitMemAlloc(nfld*sizeof(olong));  /* temp. array */
   dim[0] = nfld;
-  for (i=0; i<nfld; i++) itemp[i] = 1;
+  for (i=0; i<nfld; i++) {
+    if (i<nfield) {
+      if (ncomp[i]>=0) {
+	itemp[i] = 1;
+      } else { /* None */
+	itemp[i] = 2;
+      }
+    } else {  /* In case but should never happen */
+      itemp[i] = 0;
+    }
+  }
   ObitInfoListAlwaysPut(skyModel->info, "BComp", OBIT_long, dim, itemp);
   for (i=0; i<nfld; i++) {
     if (i<nfield) {
-      itemp[i] = ncomp[i];
+      if (ncomp[i]>=0) {
+	itemp[i] = ncomp[i];
+      } else { /* None */
+	itemp[i] = 1;
+      }
     } else {  /* In case but should never happen */
       itemp[i] = 0;
     }
@@ -2002,6 +2016,10 @@ void subIPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver,
     /* Subtract */
   ObitSkyModelSubUV (skyModel, scrUV, outData, err);
   if (err->error) goto cleanup;
+
+  /* Make sure something happened */
+  Obit_return_if_fail((outData->myDesc->nvis>1), err, 
+			"%s: NO Data written to output", routine);
 
   /* Copy any selection flagging/NI table back */
   ObitUVCopyTables (scrUV, outData, NULL, include, err);

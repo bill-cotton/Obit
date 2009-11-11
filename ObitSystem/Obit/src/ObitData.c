@@ -1381,6 +1381,7 @@ void ObitDataGetFileInfo (ObitData *in, gchar *prefix, ObitInfoList *outList,
  *          evenly divide the current scan.  See #ObitUVSelSubScan
  *          0 => Use scan average.
  *          This is only useful for ReadSelect operations on indexed ObitUVs.
+ * \li xxxExist OBIT_bool (1,1,1) If True, file expected to exist (def TRUE)
  * \param err     ObitErr for reporting errors.
  * \return new data object with selection parameters set
  */

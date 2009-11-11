@@ -50,14 +50,18 @@
  * The outUV data passed to PCreate will be filled with a corrected
  * copy of myUV.
  * Control parameters on object->info:
- * \li "solInt"    OBIT_float (1,1,1) Counter rotated SN table interval [def 1 min]
- * \li "doInvert"  OBIT_bool (1,1,1) If TRUE invert solution [def FALSE];
- * \li "timeInt"   OBIT_float (1,1,1) Data integration time in sec [def 10 sec].
- * \li "timeAvg"   OBIT_float  (1,1,1) Time interval over which to average 
+ * \li "solInt"   OBIT_float (1,1,1) Counter rotated SN table interval [def 1 min]
+ * \li "doInvert" OBIT_bool (1,1,1) If TRUE invert solution [def FALSE];
+ * \li "timeInt"  OBIT_float (1,1,1) Data integration time in sec [def 10 sec].
+ * \li "timeAvg"  OBIT_float  (1,1,1) Time interval over which to average 
  *                 residual data to estimate RFI (min) [def = 1 min.]
  *                 NB: this should be at least 2 integrations.
  *                 This is the time interval on which RFI will be searched
- * \li "minRFI"    OBIT_float (1,1,1) Minimum RFI amplitude (Jy) [def 50]
+ * \li "minRFI"   OBIT_float (1,1,1) Minimum RFI amplitude (Jy) to remove [def 50]
+ * \li "maxRot"   OBIT_float (1,1,1) Max. fringe rotation (turns) in an integration 
+ *                  to estimate RFI [def 2.0].
+ * \li "minRot"   OBIT_float (1,1,1) Min. fringe rotation (turns) in an integration,
+ *                  data with smaller values flagged if > minRFI [def 0.25].
  *
  * \section ObitUVRFIXizeaccess Creators and Destructors
  * An ObitUVRFIXize will usually be created using ObitUVRFIXizeCreate which allows 
