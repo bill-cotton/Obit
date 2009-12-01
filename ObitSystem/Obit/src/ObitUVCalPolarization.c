@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -52,7 +52,8 @@ ObitUVCalPolarizationUpdate (ObitUVCalPolarizationS *in, ObitUVCal *UVCal,
 			     ObitErr *err);
 
 /** Private: Set baseline inverse Mueller matrix for R/L Linear model */
-static void LinPol(ObitUVCalPolarizationS *in, olong iant1, olong iant2, olong iChan, ObitErr *err);
+static void LinPol(ObitUVCalPolarizationS *in, ObitUVCal *UVCal, olong SubA,
+		   olong iant1, olong iant2, olong iChan, ObitErr *err);
 
 /** Private: Set baseline inverse Mueller matrix for Elipticity/Orientation model */
 static void OriPol(ObitUVCalPolarizationS *in, olong iant1, olong iant2, olong iChan, ObitErr *err);
@@ -161,12 +162,12 @@ void ObitUVCalPolarizationInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
  * \param err   ObitError stack.
  */
 void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2, 
-			 ofloat *RP, ofloat *visIn, ObitErr *err)
+			    ofloat *RP, ofloat *visIn, ObitErr *err)
 {
   olong itemp, SubA, SourID, FreqID, iChan, limit, index, jndex, loff;
   olong i, iif, ifreq, ipol, ioff, joff, koff, jrl, jlr, ia1, ia2, ifoff;
   olong j, voff[4];
-  gboolean wflag;
+  gboolean wflag, someOK;
   ofloat xtemp[32], Lambda2, fblank = ObitMagicF();
   ofloat gr, gi, gr1, gi1, tr, ti;
   ObitUVCalPolarizationS *me;
@@ -175,11 +176,18 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
   ObitUVSel *sel;
   gchar *routine="ObitUVCalPolarization";
 
+  if (err->error) return;
+
   /* local pointers for structures */
   me   = in->polnCal;
   cal  = in->ampPhaseCal;
   desc = in->myDesc;
   sel  = in->mySel;
+
+  /* Make sure some good data */
+  someOK = FALSE;
+  for (i=0; i<desc->ncorr; i++) someOK = someOK || (visIn[i*3+2]>0.0);
+  if (!someOK) return;
 
   /* Subarray number in data */
   itemp = (olong)RP[desc->ilocb];
@@ -210,7 +218,7 @@ void ObitUVCalPolarization (ObitUVCal *in, float time, olong ant1, olong ant2,
     OriPol (me, ant1, ant2, iChan, err);
     break;
   case OBIT_UVPoln_Approx:  /* R/L Linear D-term approximation */
-    LinPol (me, ant1, ant2, iChan, err);
+    LinPol (me, in, SubA, ant1, ant2, iChan, err);
     break;
   case OBIT_UVPoln_VLBI:    /* R/L Linear D-term approximation for resolved sources */
     VLBIPol (me, ant1, ant2, iChan, err);
@@ -554,77 +562,64 @@ static void ObitUVCalPolarizationUpdate (ObitUVCalPolarizationS *in, ObitUVCal *
 } /* end ObitUVCalPolarizationUpdate */
 
 /**
- * Form baseline inverse Mueller matrix from antenna inverse Jones matrices
+ * Form baseline correction Mueller matrix 
  * R/L Linear model, one matrix per IF.
  * Use fact that inverse of outer product is outer product of inverse matrices.
  * Matrix assumes data order RR,RL,LR,LL
+ * Use method of AIPS/POLSET.FOR
  * \param in      Polarization Object.
- * \param iant1   First antenna of baseline
- * \param iant2   Second antenna of baseline
+ * \param UVCal   Basic UV calibration structure
+ * \param SubA    Subarray number (1-rel)
+ * \param iant1   First antenna of baseline (1-rel)
+ * \param iant2   Second antenna of baseline (1-rel)
  * \param iChan   Central channel to use
  * \param err     Error Stack.
  */
-static void LinPol(ObitUVCalPolarizationS *in, olong iant1, olong iant2, olong iChan, ObitErr *err)
+static void LinPol(ObitUVCalPolarizationS *in, ObitUVCal *UVCal,olong SubA, 
+		   olong iant1, olong iant2, olong iChan, ObitErr *err)
 {
-  olong iif, ia1, ia2, ioff, ifoff;
+  olong i, iif, jif, ia1, ia2, ifoff;
+  ofloat D1r[2], D1l[2], D2r[2], D2l[2];
+  ObitAntennaList *Ant;
   /* ofloat dbg[4][8];  debug */
   /*gint iii;  debug */
 
   /* loop thru IFs */
   ifoff = 0; /* Offset in PolCal to beginning of IF matrix */
-  ioff  = 0; /* Offset in Jones to beginning of IF matrix */
   for (iif=  in->bIF; iif<=in->eIF; iif++) { /* loop 400 */
     ia1 = iant1 - 1;
     ia2 = iant2 - 1;
+    jif = iif - 1;
 
-    /* iant1 * conjg(iant2), for order RR,RL,LR,LL */
-    in->PolCal[ifoff]    =  in->Jones[ia1][ioff+0] * in->Jones[ia2][ioff+0] + in->Jones[ia1][ioff+1] * in->Jones[ia2][ioff+1];
-    in->PolCal[ifoff+1]  =  in->Jones[ia1][ioff+0] * in->Jones[ia2][ioff+1] - in->Jones[ia1][ioff+1] * in->Jones[ia2][ioff+0];
-    in->PolCal[ifoff+2]  =  in->Jones[ia1][ioff+0] * in->Jones[ia2][ioff+2] + in->Jones[ia1][ioff+1] * in->Jones[ia2][ioff+3];
-    in->PolCal[ifoff+3]  =  in->Jones[ia1][ioff+0] * in->Jones[ia2][ioff+3] - in->Jones[ia1][ioff+1] * in->Jones[ia2][ioff+2];
-    in->PolCal[ifoff+4]  =  in->Jones[ia1][ioff+2] * in->Jones[ia2][ioff+0] + in->Jones[ia1][ioff+3] * in->Jones[ia2][ioff+1];
-    in->PolCal[ifoff+5]  =  in->Jones[ia1][ioff+2] * in->Jones[ia2][ioff+1] - in->Jones[ia1][ioff+3] * in->Jones[ia2][ioff+0];
-    in->PolCal[ifoff+6]  =  in->Jones[ia1][ioff+2] * in->Jones[ia2][ioff+2] + in->Jones[ia1][ioff+3] * in->Jones[ia2][ioff+3];
-    in->PolCal[ifoff+7]  =  in->Jones[ia1][ioff+2] * in->Jones[ia2][ioff+3] - in->Jones[ia1][ioff+3] * in->Jones[ia2][ioff+2];
+    for (i=0; i<32; i++) in->PolCal[ifoff+i] = 0.0;  /* Zero most terms */
+    in->PolCal[ifoff+0]  = 1.0;                      /* diagonal terms */
+    in->PolCal[ifoff+10] = 1.0;
+    in->PolCal[ifoff+20] = 1.0;
+    in->PolCal[ifoff+30] = 1.0;
 
-    in->PolCal[ifoff+8]  =  in->Jones[ia1][ioff+0] * in->Jones[ia2][ioff+4] + in->Jones[ia1][ioff+1] * in->Jones[ia2][ioff+5];
-    in->PolCal[ifoff+9]  =  in->Jones[ia1][ioff+0] * in->Jones[ia2][ioff+5] - in->Jones[ia1][ioff+1] * in->Jones[ia2][ioff+4];
-    in->PolCal[ifoff+10] =  in->Jones[ia1][ioff+0] * in->Jones[ia2][ioff+6] + in->Jones[ia1][ioff+1] * in->Jones[ia2][ioff+7];
-    in->PolCal[ifoff+11] =  in->Jones[ia1][ioff+0] * in->Jones[ia2][ioff+7] - in->Jones[ia1][ioff+1] * in->Jones[ia2][ioff+6];
-    in->PolCal[ifoff+12] =  in->Jones[ia1][ioff+2] * in->Jones[ia2][ioff+4] + in->Jones[ia1][ioff+3] * in->Jones[ia2][ioff+5];
-    in->PolCal[ifoff+13] =  in->Jones[ia1][ioff+2] * in->Jones[ia2][ioff+5] - in->Jones[ia1][ioff+3] * in->Jones[ia2][ioff+4];
-    in->PolCal[ifoff+14] =  in->Jones[ia1][ioff+2] * in->Jones[ia2][ioff+6] + in->Jones[ia1][ioff+3] * in->Jones[ia2][ioff+7];
-    in->PolCal[ifoff+15] =  in->Jones[ia1][ioff+2] * in->Jones[ia2][ioff+7] - in->Jones[ia1][ioff+3] * in->Jones[ia2][ioff+6];
+    /* D terms */
+    Ant = UVCal->antennaLists[SubA-1];
+    D1r[0] =  Ant->ANlist[ia1]->FeedAPCal[jif*2+0];
+    D1r[1] =  Ant->ANlist[ia1]->FeedAPCal[jif*2+1];
+    D1l[0] =  Ant->ANlist[ia1]->FeedBPCal[jif*2+0];
+    D1l[1] =  Ant->ANlist[ia1]->FeedBPCal[jif*2+1];
+    D2r[0] =  Ant->ANlist[ia2]->FeedAPCal[jif*2+0];
+    D2r[1] =  Ant->ANlist[ia2]->FeedAPCal[jif*2+1];
+    D2l[0] =  Ant->ANlist[ia2]->FeedBPCal[jif*2+0];
+    D2l[1] =  Ant->ANlist[ia2]->FeedBPCal[jif*2+1];
+    in->PolCal[ifoff+2] = -0.5 * (D1r[0] + D2l[0]);
+    in->PolCal[ifoff+3] = -0.5 * (D1r[1] - D2l[1]);
+    in->PolCal[ifoff+3*8+2] = in->PolCal[ifoff+2];
+    in->PolCal[ifoff+3*8+3] = in->PolCal[ifoff+3];
 
-    in->PolCal[ifoff+16] =  in->Jones[ia1][ioff+4] * in->Jones[ia2][ioff+0] + in->Jones[ia1][ioff+5] * in->Jones[ia2][ioff+1];
-    in->PolCal[ifoff+17] =  in->Jones[ia1][ioff+4] * in->Jones[ia2][ioff+1] - in->Jones[ia1][ioff+5] * in->Jones[ia2][ioff+0];
-    in->PolCal[ifoff+18] =  in->Jones[ia1][ioff+4] * in->Jones[ia2][ioff+2] + in->Jones[ia1][ioff+5] * in->Jones[ia2][ioff+3];
-    in->PolCal[ifoff+19] =  in->Jones[ia1][ioff+4] * in->Jones[ia2][ioff+3] - in->Jones[ia1][ioff+5] * in->Jones[ia2][ioff+2];
-    in->PolCal[ifoff+20] =  in->Jones[ia1][ioff+6] * in->Jones[ia2][ioff+0] + in->Jones[ia1][ioff+7] * in->Jones[ia2][ioff+1];
-    in->PolCal[ifoff+21] =  in->Jones[ia1][ioff+6] * in->Jones[ia2][ioff+1] - in->Jones[ia1][ioff+7] * in->Jones[ia2][ioff+1];
-    in->PolCal[ifoff+22] =  in->Jones[ia1][ioff+6] * in->Jones[ia2][ioff+2] + in->Jones[ia1][ioff+7] * in->Jones[ia2][ioff+3];
-    in->PolCal[ifoff+23] =  in->Jones[ia1][ioff+6] * in->Jones[ia2][ioff+3] - in->Jones[ia1][ioff+7] * in->Jones[ia2][ioff+2];
+    in->PolCal[ifoff+4] = -0.5 * (D1l[0] + D2r[0]);
+    in->PolCal[ifoff+5] = -0.5 * (D1l[1] - D2r[1]);
+    in->PolCal[ifoff+3*8+4] = in->PolCal[ifoff+4];
+    in->PolCal[ifoff+3*8+5] = in->PolCal[ifoff+5];
 
-    in->PolCal[ifoff+24] =  in->Jones[ia1][ioff+4] * in->Jones[ia2][ioff+4] + in->Jones[ia1][ioff+5] * in->Jones[ia2][ioff+5];
-    in->PolCal[ifoff+25] =  in->Jones[ia1][ioff+4] * in->Jones[ia2][ioff+5] - in->Jones[ia1][ioff+5] * in->Jones[ia2][ioff+4];
-    in->PolCal[ifoff+26] =  in->Jones[ia1][ioff+4] * in->Jones[ia2][ioff+6] + in->Jones[ia1][ioff+5] * in->Jones[ia2][ioff+7];
-    in->PolCal[ifoff+27] =  in->Jones[ia1][ioff+4] * in->Jones[ia2][ioff+7] - in->Jones[ia1][ioff+5] * in->Jones[ia2][ioff+6];
-    in->PolCal[ifoff+28] =  in->Jones[ia1][ioff+6] * in->Jones[ia2][ioff+4] + in->Jones[ia1][ioff+7] * in->Jones[ia2][ioff+5];
-    in->PolCal[ifoff+29] =  in->Jones[ia1][ioff+6] * in->Jones[ia2][ioff+5] - in->Jones[ia1][ioff+7] * in->Jones[ia2][ioff+4];
-    in->PolCal[ifoff+30] =  in->Jones[ia1][ioff+6] * in->Jones[ia2][ioff+6] + in->Jones[ia1][ioff+7] * in->Jones[ia2][ioff+7];
-    in->PolCal[ifoff+31] =  in->Jones[ia1][ioff+6] * in->Jones[ia2][ioff+7] - in->Jones[ia1][ioff+7] * in->Jones[ia2][ioff+6];
-
-
-   /* debug
-    iii = ifoff;
-    for (ia1=0; ia1<4; ia1++) {
-      for (ia2=0; ia2<8; ia2++)
-	dbg[ia1][ia2] = in->PolCal[iii++];
-  } */
-
-    ioff  +=  8; /* Offset in Jones to beginning of IF matrix */
     ifoff += 32; /* Offset in PolCal to beginning of IF matrix */
   } /* end loop over IF */
+
 } /* end  LinPol */
 
 /**
@@ -862,7 +857,7 @@ static void SetInvJones(ObitUVCalPolarizationS *in, ObitAntennaList *Ant,
       Dr[1] =  Ant->ANlist[iant-1]->FeedAPCal[2*iif+1];
       Dl[0] =  Ant->ANlist[iant-1]->FeedBPCal[2*iif+0];
       Dl[1] =  Ant->ANlist[iant-1]->FeedBPCal[2*iif+1];
-      /* Don't need rotation by parallactic angle, IFR */
+     /* Don't need rotation by parallactic angle, IFR */
       rotate = 0.0;
       break;
 

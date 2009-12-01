@@ -201,6 +201,7 @@ Adverbs:
                times Smooth(2) used when input Smooth(3) < net
                Smooth(2).
   outDType..'FITS' or 'AIPS'  type of output
+  outFile....Output UV FITS file name.
   outName....Output UV AIPS file name    Standard defaults.
   outClass...Output UV AIPS file class.  Standard defaults.
   outSeq.....Output UV AIPS file seq. #. 0 => highest unique.

@@ -130,6 +130,8 @@ Antennas         0.0     1000.0    List of antennas to include
 **PARAM** int 20
 RefAnts                            Reference antenna list, 
                                    NO Default!!
+**PARAM** int 1 
+prtLv             0                Print level in selfcal
 **PARAM** int 10
 noScrat                            AIPS disk numbers for which
                                    scratch files are disallowed
@@ -288,6 +290,7 @@ Adverbs:
   doPolNorm..True: Normalize each poln. image by its max. NYI
   Antennas...A list of the antennas to use.  All 0 => use all.
   RefAnts....List of reference antennas,  Must be given!!!
+  prtLv......Print level, 0=>none, 2=>obs. locations, Ipol
   noScrat....A list of AIPS disk numbers on which you do not 
              wish scratch files
 ----------------------------------------------------------------

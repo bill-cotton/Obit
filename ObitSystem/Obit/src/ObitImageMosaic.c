@@ -2311,7 +2311,7 @@ void ObitImageMosaicCopyCC (ObitImageMosaic *in, ObitErr *err)
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* Check if the FullField member exists - give warning and return if not. */
-  if (in->FullField==NULL) {
+  if ((in->FullField==NULL) && (in->nFlyEye>1)) {
     Obit_log_error(err, OBIT_InfoWarn, 
 		   "%s: Mosaic %s has no FullField member", 
 		   routine, in->name);
@@ -2324,19 +2324,26 @@ void ObitImageMosaicCopyCC (ObitImageMosaic *in, ObitErr *err)
 				  &CCVer, OBIT_IO_ReadOnly, noParms, err);
   if  (err->error) Obit_traceback_msg (err, routine,in->images[0]->name);
   
-  /* Create output CC table on in->FullField */
-  CCVer    = 1;
-  noParms  = inCCTab->noParms;;
-  outCCTab = newObitTableCCValue ("out CC", (ObitData*)in->FullField,
-				  &CCVer, OBIT_IO_ReadWrite, noParms, err);
-  /* Clear any existing rows */
-  ObitTableClearRows ((ObitTable*)outCCTab, err);
-  if  (err->error) Obit_traceback_msg (err, routine, outCCTab->name);
+  /* Create output CC table on in->FullField if exists */
+  if (in->FullField) {
+    CCVer    = 1;
+    noParms  = inCCTab->noParms;;
+    outCCTab = newObitTableCCValue ("out CC", (ObitData*)in->FullField,
+				    &CCVer, OBIT_IO_ReadWrite, noParms, err);
+    /* Clear any existing rows */
+    ObitTableClearRows ((ObitTable*)outCCTab, err);
+    if  (err->error) Obit_traceback_msg (err, routine, outCCTab->name);
 
-  /* Copy first */
-  ObitTableCCUtilAppend (inCCTab, outCCTab, 0, 0, err);
-  if  (err->error) Obit_traceback_msg (err, routine, inCCTab->name);
-  inCCTab = ObitTableCCUnref(inCCTab);
+    /* Copy first */
+    ObitTableCCUtilAppend (inCCTab, outCCTab, 0, 0, err);
+    if  (err->error) Obit_traceback_msg (err, routine, inCCTab->name);
+    inCCTab = ObitTableCCUnref(inCCTab);
+  } else { /* Copy others to first image */
+    CCVer    = 1;
+    noParms  = inCCTab->noParms;;
+    outCCTab = newObitTableCCValue ("out CC", (ObitData*)in->images[0],
+				    &CCVer, OBIT_IO_ReadWrite, noParms, err);
+  }
 
   /* Loop over other tables */
   for (ifield=1; ifield<in->numberImages; ifield++) {

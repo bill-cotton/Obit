@@ -688,10 +688,10 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
 	if ((inUV1->buffer[indx+2]>0.0) && (inUV2->buffer[indx+2]>0.0)) {
 	  inUV1->buffer[indx]   -= inUV2->buffer[indx];
 	  inUV1->buffer[indx+1] -= inUV2->buffer[indx+1];
-	} else {
-	  inUV1->buffer[indx]   = 0.0;
-	  inUV1->buffer[indx+1] = 0.0;
-	  inUV1->buffer[indx+2] = 0.0;
+	  /* this blanks poln data } else {
+	    inUV1->buffer[indx]   = 0.0;
+	    inUV1->buffer[indx+1] = 0.0;
+	    inUV1->buffer[indx+2] = 0.0;*/
 	}
 	indx += in1Desc->inaxes[0];
       } /* end loop over correlations */

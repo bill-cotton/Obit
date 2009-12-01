@@ -94,7 +94,7 @@ BLFact                              Baseline dependent time factor
 BLFOV             0.0       180.    Radius averaging FOV (deg)
 **PARAM** str 4
 outDType                            "FITS" or "AIPS" type of output
-**PARAM** str 48
+**PARAM** str 48 **DEF** .fits
 outFile                             Output FITS image file ending
 **PARAM** str 12
 outName                             Output AIPS image name
@@ -106,7 +106,7 @@ outSeq          -1.0     9999.0     Output AIPS image seq. no.
 outDisk                             Output image disk drive #
 **PARAM** int 1
 CCVer                               Output CC table version number
-**PARAM** str 48
+**PARAM** str 48 **DEF** .uvtab
 out2File                            Output FITS uvdata file ending
 **PARAM** str 12
 out2Name                            Output AIPS uvdata name

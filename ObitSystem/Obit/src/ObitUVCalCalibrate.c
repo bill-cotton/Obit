@@ -233,7 +233,7 @@ void ObitUVCalCalibrate (ObitUVCal *in, ofloat time, olong ant1, olong ant2,
     jndxa1, jndxa2, maxpol, idndx, itfilt, corID, iSubA, itemp;
   gboolean   sombad, somflg, allflg, smpflg, alpflg, allded, ccor;
   gboolean calBad, doDisp, badDsp;
-  ofloat tvr, tvi, tvr1, gr, gi, dgr, dgi, phase, grd, gid;
+  ofloat tvr, tvi, tvr1, gr, gi, dgr, dgi, ddgr, ddgi, phase, grd, gid;
   ofloat  cp, sp, gwt, dphas, rate, arg=0.0, rfact, dfact, fblank = ObitMagicF();
   odouble dbits, dsfact;
   ObitUVCalCalibrateS *me;
@@ -336,8 +336,12 @@ void ObitUVCalCalibrate (ObitUVCal *in, ofloat time, olong ant1, olong ant2,
       if (!calBad && me->doDelayRate) {
 
 	/* delay correction - real and imaginary of phase rotation per channel */
-	dgr = me->CalApply[indxa1+2] * me->CalApply[indxa2+2] + me->CalApply[indxa1+3] * me->CalApply[indxa2+3];
-	dgi = me->CalApply[indxa2+2] * me->CalApply[indxa1+3] - me->CalApply[indxa1+2] * me->CalApply[indxa2+3];
+	dgr = me->CalApply[indxa1+2] - me->CalApply[indxa2+2];  /* Now total phase */
+	dgi = 0.0;
+	ddgr = cos (dgr);
+	ddgi = sin (dgr);
+	/*dgr = me->CalApply[indxa1+2] * me->CalApply[indxa2+2] + me->CalApply[indxa1+3] * me->CalApply[indxa2+3];
+	  dgi = me->CalApply[indxa2+2] * me->CalApply[indxa1+3] - me->CalApply[indxa1+2] * me->CalApply[indxa2+3];*/
 
 	/* apply fringe rate */
 	rate  = me->CalApply[indxa1+4] - me->CalApply[indxa2+4];
@@ -350,7 +354,8 @@ void ObitUVCalCalibrate (ObitUVCal *in, ofloat time, olong ant1, olong ant2,
 	if ((me->doDelayDecorr) && me->doDelayDecorr[idndx] && (me->corrType[iSubA-1] == 1)) {
 
 	  /* spectral averaging correction - get delay phase channel-channel phase rotation */
-	  arg = 0.5 * atan2 (dgi, dgr);
+	  /* arg = 0.5 * atan2 (dgi, dgr); Now total phase */
+	  arg = 0.5 * dgr;
 	  if ((abs (arg) > 1.0e-5) && (me->NSpecA[idndx] > 1)) {
 	    dfact = me->NSpecA[idndx] * sin (arg / me->NSpecA[idndx]) / sin (arg);
 	    dfact = fabs (dfact);
@@ -404,7 +409,8 @@ void ObitUVCalCalibrate (ObitUVCal *in, ofloat time, olong ant1, olong ant2,
 
 	/* correct for frequency offset. - get delay phase channel-channel phase rotation */
 	if ((sel->startChann > 1)  ||  (fabs (desc->crpix[desc->jlocf] - 1.0) >  0.0001)) {
-	  dphas = atan2 (dgi, dgr);
+	  /*dphas = atan2 (dgi, dgr); Now total phase */
+	  dphas = dgr;
 	  phase = phase + dphas * (sel->startChann-desc->crpix[desc->jlocf]);
 	} 
 	cp = cos (phase);
@@ -466,8 +472,8 @@ void ObitUVCalCalibrate (ObitUVCal *in, ofloat time, olong ant1, olong ant2,
 
 	/* rotate phase correction for next if we have delay corrections */
 	if (me->doDelayRate) {
-	  tvr = gr * dgr - gi * dgi;
-	  tvi = gr * dgi + gi * dgr;
+	  tvr = gr * ddgr - gi * ddgi;
+	  tvi = gr * ddgi + gi * ddgr;
 	  gr = tvr;
 	  gi = tvi;
 	} 
@@ -811,7 +817,8 @@ static void ObitUVCalCalibrateUpdate (ObitUVCalCalibrateS *in, ofloat time,
 	  in->CalApply[index+1] *= ampcor;
 	  
 	  /* init. delay rotation. */
-	  in->CalApply[index+2] = 1.0;
+	  /* in->CalApply[index+2] = 1.0;*/
+	  in->CalApply[index+2] = 0.0;
 	  in->CalApply[index+3] = 0.0;
 	  
 	  /* delay correction - factors to rotate phase from channel to channel */
@@ -819,8 +826,9 @@ static void ObitUVCalCalibrateUpdate (ObitUVCalCalibrateS *in, ofloat time,
 	    phase1 = (wt1 * in->CalPrior[jndex+2] +
 		      wt2 * in->CalFollow[jndex+2]) * in->DelayFact[iif];
 	    doVLB = doVLB || (phase1 != 0.0); /* need delay/rate corrections */
-	    in->CalApply[index+2] = cos (phase1);
-	    in->CalApply[index+3] = sin (phase1);
+	    in->CalApply[index+2] = phase1;  /* Now the total phase */
+	    /* in->CalApply[index+2] = cos (phase1);
+	       in->CalApply[index+3] = sin (phase1); */
 	  } 
 
 	  /* set rate */

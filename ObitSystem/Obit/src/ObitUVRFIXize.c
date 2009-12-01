@@ -389,6 +389,9 @@ void ObitUVRFIXizeFilter (ObitUVRFIXize *in, ObitErr* err)
  * Remove estimated RFI from data 
  * Read RFIUV data and apply inverse of zero fringe rate table phases
  * \param in     UVRFIXize object
+ * Output parameters on info element:
+ * \li "fractFlag"  OBIT_float (1,1,1) Fraction of data flagged
+ * \li "fractMod"   OBIT_float (1,1,1) Fraction of data modified
  * \param err    Error/message stack, returns if error.
  */
 void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err) 
@@ -401,6 +404,10 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
   olong i, j, jndx, iindx, oindx, ant1, ant2;
   olong incs, incif, incf,  nif, nchan, nstok, iif, ichan, istok;
   olong BLindx, BLoff;
+  odouble totalVis=1.0e-10; /* Total number of output visibilities sampled */
+  odouble numFlag=0;        /* Number of visibilities flagged */
+  odouble numMod=0;         /* Number of visibilities modified */
+  ofloat fractFlag, fractMod;
   ObitUVDesc *inDesc, *outDesc;
   gchar *routine = "ObitUVRFIXizeCorrect";
   
@@ -465,7 +472,6 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
     if (done) break;
     
     /* Modify data */
-    want = FALSE;
     outDesc->numVisBuff = 0;  /* No data yet */
     for (i=0; i<inDesc->numVisBuff; i++) { /* loop over visibilities */
       jndx = i*inDesc->lrec;
@@ -486,7 +492,6 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
 	BLoff = (in->blLookup[ant1-1] + ant2-ant1-1) * in->myUV->myDesc->lrec
 	  + in->myUV->myDesc->nrparm;
       } else {
-	want = FALSE;
 	continue;
       }
 
@@ -512,13 +517,17 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
 	      incs*istok + incf*ichan + incif*iif;
 	    BLindx = BLoff + incs*istok + incf*ichan + incif*iif;
 	    if (in->myUV->buffer[iindx+2]>0.0) {
+	      totalVis++;   /* Count samples */
 	      /* What to do?  is RFI model blanked? */
 	      blank = in->VisApply[BLindx+2]<=0.0; 
 	      if (blank) { /* Can't make correction - flag */
+		numFlag++;   /* Count no. flagged */
 		in->outUV->buffer[oindx+0] = 0.0;
 		in->outUV->buffer[oindx+1] = 0.0;
 		in->outUV->buffer[oindx+2] = 0.0;
 	      } else { /* subtract correction */
+		if ((in->VisApply[BLindx+0]!=0) && 
+		    (in->VisApply[BLindx+1]!=0.0)) numMod++;   /* Count no. modified */
 		someGood = TRUE;
 		in->outUV->buffer[oindx+0] = 
 		  in->myUV->buffer[iindx+0] - in->VisApply[BLindx+0];
@@ -549,6 +558,16 @@ void ObitUVRFIXizeCorrect (ObitUVRFIXize *in, ObitErr* err)
   retCode = ObitUVClose(in->myUV, err);
   retCode = ObitUVClose(in->outUV, err);
   if (err->error) Obit_traceback_msg (err, routine, in->outUV->name);
+
+  /* Give report */
+  fractFlag = numFlag / totalVis;
+  fractMod  = numMod  / totalVis;
+  Obit_log_error(err, OBIT_InfoErr, 
+		 "Flagged %5.1f percent, modified %5.1f percent",
+		 100.0*fractFlag, 100.0*fractMod);
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListAlwaysPut(in->info, "fractFlag", OBIT_float, dim, &fractFlag);
+  ObitInfoListAlwaysPut(in->info, "fractMod",  OBIT_float, dim, &fractMod);
 
   /* Cleanup */
   ObitUVRFIXizeFetchShutDown (in, err);
@@ -773,55 +792,74 @@ gboolean ObitUVRFIXizeFetch (ObitUVRFIXize *in, ofloat time, ObitErr *err)
 	  in->VisApply[BLindx+j] = in->VisFollow[BLindx+j];
       }
 
-      /* Interpolate visibilities */
-      for (j=desc->nrparm; j<desc->lrec; j+=3) {
-	good1 = (in->PriorVisTime[jndx]>-100.0) && (in->VisPrior[BLindx+j+2]>0.0)  
-	  && (wt1>0.0);
-	good2 = (in->FollowVisTime[jndx]>-100.0) && (in->VisFollow[BLindx+j+2]>0.0) 
-	  && (wt2>0.0);
-	/* Prior good, follow bad */
-	if ((good1) && (!good2)) {
-	  in->VisApply[BLindx+j]   = in->VisPrior[BLindx+j];
-	  in->VisApply[BLindx+j+1] = in->VisPrior[BLindx+j+1];
- 	  in->VisApply[BLindx+j+2] = in->VisPrior[BLindx+j+2];
-
-	  /* Prior bad, follow good */
-	} else if ((!good1) && (good2)) {
-	  in->VisApply[BLindx+j]   = in->VisFollow[BLindx+j];
-	  in->VisApply[BLindx+j+1] = in->VisFollow[BLindx+j+1];
- 	  in->VisApply[BLindx+j+2] = in->VisFollow[BLindx+j+2];
-
-	  /* Both bad - flag */
-	} else if ((!good1) && (!good2)) {
-	  in->VisApply[BLindx+j]   = 0.0;
-	  in->VisApply[BLindx+j+1] = 0.0;
- 	  in->VisApply[BLindx+j+2] = 0.0;
-
-	  /* Both good, interpolate in amp phase */
-	} else {
-	  amp1 = sqrt (in->VisPrior[BLindx+j]*in->VisPrior[BLindx+j] + 
-		       in->VisPrior[BLindx+j+1]*in->VisPrior[BLindx+j+1]);
-	  amp2 = sqrt (in->VisFollow[BLindx+j]*in->VisFollow[BLindx+j] + 
-		       in->VisFollow[BLindx+j+1]*in->VisFollow[BLindx+j+1]);
-	  phase1 = atan2 (in->VisPrior[BLindx+j+1],  in->VisPrior[BLindx+j]+1.0e-20);
-	  phase2 = atan2 (in->VisFollow[BLindx+j+1], in->VisFollow[BLindx+j]+1.0e-20);
-	  /* Force within half turn */
-	  if ((phase2-phase1)>2.*G_PI)  phase2 -= 2.*G_PI;
-	  if ((phase2-phase1)<-2.*G_PI) phase2 += 2.*G_PI;
-	  amp   = wt1*amp1 + wt2*amp2;
-	  phase = wt1*phase1 + wt2*phase2;
-	  in->VisApply[BLindx+j]   = amp * cos(phase);
-	  in->VisApply[BLindx+j+1] = amp * sin(phase);
- 	  in->VisApply[BLindx+j+2] = in->VisPrior[BLindx+j+2]*wt1 + in->VisFollow[BLindx+j+2]*wt2;
-	}
-      }
-
       /* Baseline phase calibration info */
       dly1 = in->AntDelay[ant1];
       dly2 = in->AntDelay[ant2];
       rat1 = in->AntRate[ant1];
       rat2 = in->AntRate[ant2];
       
+      /* Interpolate visibilities */
+      /* Loop over IF */
+      for (iif=0; iif<in->numIF; iif++) {
+	/* Loop over poln */
+	for (istok=0; istok<nstok; istok++) {
+	  /* Loop over channel */
+	  for (ichan=0; ichan<nchan; ichan++) {
+	    /* Index for this datum */
+	    kndx = BLindx + desc->nrparm + incs*istok + incf*ichan + incif*iif;
+	    
+	    /*for (j=desc->nrparm; j<desc->lrec; j+=3) {*/
+	    good1 = (in->PriorVisTime[jndx]>-100.0)  && (in->VisPrior[kndx+2]>0.0)  
+	      && (wt1>0.0) && (rat1!=fblank);
+	    good2 = (in->FollowVisTime[jndx]>-100.0) && (in->VisFollow[kndx+2]>0.0) 
+	      && (wt2>0.0) && (rat2!=fblank);
+	    
+	    /* Prior good, follow bad */
+	    if ((good1) && (!good2)) {
+	      in->VisApply[kndx]   = in->VisPrior[kndx];
+	      in->VisApply[kndx+1] = in->VisPrior[kndx+1];
+	      in->VisApply[kndx+2] = in->VisPrior[kndx+2];
+	      
+	      /* Prior bad, follow good */
+	    } else if ((!good1) && (good2)) {
+	      in->VisApply[kndx]   = in->VisFollow[kndx];
+	      in->VisApply[kndx+1] = in->VisFollow[kndx+1];
+	      in->VisApply[kndx+2] = in->VisFollow[kndx+2];
+	      
+	      /* Both bad - flag */
+	    } else if ((!good1) && (!good2)) {
+	      in->VisApply[kndx]   = 0.0;
+	      in->VisApply[kndx+1] = 0.0;
+	      in->VisApply[kndx+2] = 0.0;
+	      
+	      /* Both good, interpolate in amp phase */
+	    } else {
+	      amp1 = sqrt (in->VisPrior[kndx]*in->VisPrior[kndx] + 
+			   in->VisPrior[kndx+1]*in->VisPrior[kndx+1]);
+	      amp2 = sqrt (in->VisFollow[kndx]*in->VisFollow[kndx] + 
+			   in->VisFollow[kndx+1]*in->VisFollow[kndx+1]);
+	      phase1 = atan2 (in->VisPrior[kndx+1],  in->VisPrior[kndx]+1.0e-20);
+	      phase2 = atan2 (in->VisFollow[kndx+1], in->VisFollow[kndx]+1.0e-20);
+	      /* Keep phase constant when interpolating with one zero. */
+	      if ((amp1!=0.) && (amp2==0.)) {
+		phase = phase1;
+	      } else if ((amp1==0.) && (amp2!=0.)) {
+		phase = phase2;
+	      } else {
+		/* Force within half turn */
+		if ((phase2-phase1)>=G_PI) phase2 -= twopi;
+		if ((phase2-phase1)<-G_PI) phase2 += twopi;
+		phase = wt1*phase1 + wt2*phase2;
+	      }
+	      amp   = wt1*amp1 + wt2*amp2;
+	      in->VisApply[kndx]   = amp * cos(phase);
+	      in->VisApply[kndx+1] = amp * sin(phase);
+	      in->VisApply[kndx+2] = in->VisPrior[kndx+2]*wt1 + in->VisFollow[kndx+2]*wt2;
+	    }
+	  } /* end loop over channel */
+	} /* end poln loop */
+      } /* end loop over IF */
+
       /* Calibrate visibility in VisApply[jndx] */
       /* Valid cal? */
       if ((dly1!=fblank) && (dly2!=fblank)) {
@@ -854,7 +892,7 @@ gboolean ObitUVRFIXizeFetch (ObitUVRFIXize *in, ofloat time, ObitErr *err)
 	      in->VisApply[kndx+1] = ggr*ti + tr*ggi;
 	    } /* end loop over channel */
 	  } /* end poln loop */
-	}
+	} /* end IF loop */
       } else { /* bad cal - flag */
 	for (k=0; k<desc->ncorr; k++) {
 	  kndx = BLindx + desc->nrparm + k*3;

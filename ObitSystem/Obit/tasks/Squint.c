@@ -1642,6 +1642,13 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     if ((ipoln==0) && (niter>0)) subIPolModel (outData, skyModel, &selFGver, err);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
     
+    /* If 2D imaging or single Fly's eye facet then concatenate CC tables */
+    if (myClean->nfield>1) {
+      if ((!myClean->mosaic->images[0]->myDesc->do3D) || 
+	  (myClean->mosaic->nFlyEye==1))
+	ObitImageMosaicCopyCC (myClean->mosaic, err);
+    }
+
     /* Copy result to output */
     plane[0] = 1;
     if (doFlat) 
@@ -1696,7 +1703,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       ObitImageMosaicZapImage (myClean->mosaic, -1, err); /* Delete mosaic members */
     if (doFlat) {  /* Delete flattened as well if not output */
       outField = ObitImageMosaicGetFullImage (myClean->mosaic, err);
-      outField = ObitImageZap(outField, err);
+      if (outField) outField = ObitImageZap(outField, err);
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     }
   }
@@ -1737,6 +1744,11 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
     "minNo", "doSmoo", "prtLv", "modelFlux", "modelPos", "modelParm",
     "dispURL", 
     NULL };
+  gchar        *CLEANParms[] = {  /* Clean parameters */
+    "autoWindow", "Gain", "minFlux", "Niter", "minPatch", "Beam", 
+    "Mode", "CCFilter", "maxPixel", "dispURL", "ccfLim", "SDIGain",
+    NULL
+  };
   gchar *routine = "doImage";
 
   /* error checks */
@@ -1759,6 +1771,10 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   /* Peeling trip level */
   PeelFlux = 1.0e20;
   ObitInfoListGetTest(myInput, "PeelFlux", &type, dim, &PeelFlux); 
+  
+  /* Get input parameters from myInput, copy to myClean */
+  ObitInfoListCopyList (myInput, myClean->info, CLEANParms);
+  if (err->error) Obit_traceback_msg (err, routine, myClean->name);
   
   /* Recentering trip level in CLEAN */
   dim[0] = 1;dim[1] = 1;
@@ -2150,20 +2166,19 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   doFlatten = TRUE;
   ObitInfoListGetTest(myInput, "doFlatten", &type, dim, &doFlatten);
   if (doFlatten) {
-    ObitDConCleanFlatten((ObitDConClean*)myClean, err);
-    outImage = ObitImageMosaicGetFullImage (myClean->mosaic, err);
-
-    /* If 2D imaging concatenate CC tables */
-    if (!myClean->mosaic->images[0]->myDesc->do3D) 
-      ObitImageMosaicCopyCC (myClean->mosaic, err);
-    
+    if ((myClean->nfield>1) && (myClean->mosaic->FullField)) {
+      ObitDConCleanFlatten((ObitDConClean*)myClean, err);
+      outImage = ObitImageMosaicGetFullImage (myClean->mosaic, err);
+    } else { /* Only one field */
+      outImage = ObitImageMosaicGetImage (myClean->mosaic, 0, err);
+    }
   } else  outImage = ObitImageMosaicGetImage (myClean->mosaic, 0, err);
   if (err->error) Obit_traceback_msg (err, routine, myClean->name);
   
   /* Display? */
-  if (selfCal && selfCal->display)
+  if (selfCal && selfCal->display && outImage)
     ObitDisplayShow (selfCal->display, (Obit*)outImage, NULL, 1, err);
-  else if (myClean->display)
+  else if (myClean->display && outImage)
     ObitDisplayShow (myClean->display, (Obit*)outImage, NULL, 1, err);
     
   if (err->error) Obit_traceback_msg (err, routine, myClean->name);

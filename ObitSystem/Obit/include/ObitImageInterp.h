@@ -103,11 +103,13 @@ void ObitImageInterpClone (ObitImageInterp *in,
 
 /** Public: Create/initialize ObitImageInterp structures */
 ObitImageInterp* ObitImageInterpCreate (gchar* name, 
-					ObitImage *image, ObitErr *err);
+					ObitImage *image, olong hwidth, 
+					ObitErr *err);
 /** Typedef for definition of class pointer structure */
 typedef 
 ObitImageInterp* (*ObitImageInterpCreateFP) (gchar* name, 
 					     ObitImage *image, 
+					     olong hwidth, 
 					     ObitErr *err);
 
 /** Public: Get pixel value at a position */

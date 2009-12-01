@@ -56,7 +56,8 @@ ObitUV* getResidualData (ObitInfoList *myInput, ObitErr *err);
 /* Get output data */
 ObitUV* getOutputData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err);
 /* Write history */
-void LowFRFIHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err);
+void LowFRFIHistory (ObitInfoList* myInput, ObitUV* inData, ObitUVRFIXize *myRFI,
+		     ObitErr* err);
 
 /* Program globals */
 gchar *pgmName = "LowFRFI";       /* Program name */
@@ -123,7 +124,7 @@ int main ( int argc, char **argv )
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
   /* Write history */
-  LowFRFIHistory (myInput, inData, err); 
+  LowFRFIHistory (myInput, outData, myRFI, err); 
 
   /* show any messages and errors */
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
@@ -674,10 +675,12 @@ ObitUV* getOutputData (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 /*   Input:                                                               */
 /*      myInput   Input parameters on InfoList                            */
 /*      inData    ObitUV to write history to                              */
+/*      myRFI     RFI Object                                              */
 /*   Output:                                                              */
 /*      err    Obit Error stack                                           */
 /*----------------------------------------------------------------------- */
-void LowFRFIHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
+void LowFRFIHistory (ObitInfoList* myInput, ObitUV* inData, 
+		     ObitUVRFIXize *myRFI, ObitErr* err)
 {
   ObitHistory *outHistory=NULL;
   gchar        hicard[81];
@@ -690,6 +693,9 @@ void LowFRFIHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "doPol", "Antennas", 
     "timeAvg", "minRFI", "timeInt", "solInt", "doInvert", "minRot", "maxRot",
     NULL};
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ofloat fractFlag=0.0, fractMod=0.0;
   gchar *routine = "LowFRFIHistory";
 
   /* error checks */
@@ -700,15 +706,22 @@ void LowFRFIHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
    /* Do history */
   outHistory = newObitDataHistory ((ObitData*)inData, OBIT_IO_ReadWrite, err);
 
-  /* Add this programs history */
+  /* Add this programs history 
+     Copy selected values from myInput */
   ObitHistoryOpen (outHistory, OBIT_IO_ReadWrite, err);
   g_snprintf (hicard, 80, " Start Obit task %s ",pgmName);
   ObitHistoryTimeStamp (outHistory, hicard, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
-
-  /* Copy selected values from myInput */
   ObitHistoryCopyInfoList (outHistory, pgmName, hiEntries, myInput, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
+
+  /* Results */
+  ObitInfoListGetTest(myRFI->info, "fractFlag",  &type, dim, &fractFlag);
+  ObitInfoListGetTest(myRFI->info, "fractMod",   &type, dim, &fractMod);
+  g_snprintf (hicard, 80, "%s / fraction flagged %8.5f",pgmName, fractFlag);
+  ObitHistoryWriteRec (outHistory, -1, hicard, err);
+  g_snprintf (hicard, 80, "%s / fraction modified %8.5f",pgmName, fractMod);
+  ObitHistoryWriteRec (outHistory, -1, hicard, err);
   ObitHistoryClose (outHistory, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
 

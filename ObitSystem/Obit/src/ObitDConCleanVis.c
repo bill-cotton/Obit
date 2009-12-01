@@ -640,7 +640,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
 	doMore = inClass->ObitDConCleanAutoWindow ((ObitDConClean*)in, in->currentFields, 
 						   pixarray, err);
       else {
-	doMore = in->autoWindow;  /* pretend on the first pass */
+	doMore = TRUE;
       }
       if (err->error) Obit_traceback_msg (err, routine, in->name);
      
@@ -736,7 +736,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
 			&& (in->imgPeakRMS[ifld]>=5.0));
       }
       /* Something left to CLEAN? */
-      if (redo && (redoCnt<1)) {
+      if (redo && (redoCnt<1) && (!quit)) {
 	redoCnt++;
 	Obit_log_error(err, OBIT_InfoErr,"Found more to CLEAN");
 	goto doRedo;

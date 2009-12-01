@@ -437,8 +437,8 @@ ObitIOCode ObitTableANSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
       g_snprintf (tempName, 7, "       ");
     }
     ObitInfoListAlwaysPut(outTab->myDesc->info, "POLTYPE", type, dim, tempName);
-
-   /* Polarization reference antenna */
+    
+    /* Polarization reference antenna */
     dim[0] = dim[1] = 1; type = OBIT_long; polRefAnt = 0;
     ObitInfoListGetTest(inTab->myDesc->info, "P_REFANT", &type, dim, &polRefAnt);
     ObitInfoListAlwaysPut(outTab->myDesc->info, "P_REFANT", type, dim, &polRefAnt);
@@ -464,7 +464,7 @@ ObitIOCode ObitTableANSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
     ObitTableANSetRow (outTab, outRow, err);
     if (err->error) Obit_traceback_val (err, routine, outTab->name, retCode);
 
-  /* Loop over table copying selected data */
+    /* Loop over table copying selected data */
     outANRow = -1;
  
     for (inANRow=1; inANRow<=inTab->myDesc->nrow; inANRow++) {
@@ -499,8 +499,8 @@ ObitIOCode ObitTableANSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  outRow->PolCalB[2*oif+1] = 0.0; 
 	} else if (numPCal>0) {  /* Copy */
 	  outRow->PolCalA[2*oif]   = inRow->PolCalA[2*iif]; 
-	  outRow->PolCalA[2*oif+1] = inRow->PolCalB[2*iif+1];
-	  outRow->PolCalB[2*oif]   = inRow->PolCalA[2*iif]; 
+	  outRow->PolCalA[2*oif+1] = inRow->PolCalA[2*iif+1];
+	  outRow->PolCalB[2*oif]   = inRow->PolCalB[2*iif]; 
 	  outRow->PolCalB[2*oif+1] = inRow->PolCalB[2*iif+1];
 	} 
       	oif++; 

@@ -148,7 +148,7 @@ class SkyModel(SkyModelPtr):
                  'InData':None,
                  'SkyModel':None,
                  'OutData':None,
-                 'doCalSelect':False,
+                 'doCalSelect':True,
                  'REPLACE':False,
                  'Stokes':'FULL',
                  'CCVer':None,
@@ -185,10 +185,11 @@ class SkyModel(SkyModelPtr):
                  'MODPTYOF':0.0,
                  'MODPTYPM':[0.0,0.0,0.0,0.0]}
     
-    def SubUV (err, input=cUVSubInput):
+    def SubUV (self, err, input=cUVSubInput):
         """ Fourier transform Sky model and subtract from uv data
         
         A SkyModel is Fourier transformed and subtracted from a uv data
+        self    = Python SkyModel object
         err     = Python Obit Error/message stack
         input   = input parameter dictionary
         Use SkyModel.input(input) to review contents of input structure 
@@ -244,7 +245,7 @@ class SkyModel(SkyModelPtr):
                  'InData':None,
                  'SkyModel':None,
                  'OutData':None,
-                 'doCalSelect':False,
+                 'doCalSelect':True,
                  'REPLACE':False,
                  'Stokes':'FULL',
                  'CCVer':None,
@@ -281,10 +282,11 @@ class SkyModel(SkyModelPtr):
                  'MODPTYOF':0.0,
                  'MODPTYPM':[0.0,0.0,0.0,0.0]}
     
-    def DivUV (err, input=cUVDivInput):
+    def DivUV (self, err, input=cUVDivInput):
         """ Fourier transform Sky model and divide into uv data
         
         A SkyModel is Fourier transformed and divided into a uv data
+        self    = Python SkyModel object
         err     = Python Obit Error/message stack
         input   = input parameter dictionary
         Use SkyModel.input(input) to review contents of input structure 
@@ -693,7 +695,8 @@ def PDivUV (err, input=UVDivInput):
     InfoList.PPutInt  (uvInfo, "corrType",        dim, [input["corrType"]],    err)
     dim[0] = 4
     InfoList.PAlwaysPutString (uvInfo, "Stokes",        dim, [input["Stokes"]])
-    InfoList.PAlwaysPutString (inInfo, "Stokes",        dim, [input["Stokes"]])
+    dim[0]=16;dim[1] = len(input["Sources"])
+    InfoList.PAlwaysPutString (uvInfo, "Sources",       dim, input["Sources"])
     dim[0] = 2
     InfoList.PPutFloat (uvInfo, "UVRange",        dim, input["UVRange"],       err)
     dim[0] = 3

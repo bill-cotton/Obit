@@ -1,6 +1,6 @@
 /* $Id: $    */  
 /*--------------------------------------------------------------------*/
-/* Swig module description for ImageInterp type                       */
+/* Swig module description for FullBeam type                          */
 /*                                                                    */
 /*;  Copyright (C) 2009                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
@@ -29,54 +29,54 @@
 /*--------------------------------------------------------------------*/
 
 %{
-#include "ObitImageInterp.h"
+#include "ObitFullBeam.h"
 #include "ObitImage.h"
 %}
 
 
 %inline %{
-extern ObitImageInterp* newImageInterp (char* name) {
-  return newObitImageInterp (name);
-} // end  newImageInterp
+extern ObitFullBeam* newFullBeam (char* name) {
+  return newObitFullBeam (name);
+} // end  newFullBeam
 
-extern ObitImageInterp* ImageInterpCopy  (ObitImageInterp *in, ObitImageInterp *out, 
+extern ObitFullBeam* FullBeamCopy  (ObitFullBeam *in, ObitFullBeam *out, 
 				    ObitErr *err) {
-  return ObitImageInterpCopy (in, out, err);
-} // end  ImageInterpCopy
+  return ObitFullBeamCopy (in, out, err);
+} // end  FullBeamCopy
 
-extern ObitImageInterp* ImageInterpUnref (ObitImageInterp* in) {
-  if (!ObitImageInterpIsA(in)) return NULL;
-  return ObitImageInterpUnref(in);
+extern ObitFullBeam* FullBeamUnref (ObitFullBeam* in) {
+  if (!ObitFullBeamIsA(in)) return NULL;
+  return ObitFullBeamUnref(in);
 }
 
-extern ObitImageInterp*  ImageInterpRef (ObitImageInterp* in) {
-  return ObitImageInterpRef(in);
+extern ObitFullBeam*  FullBeamRef (ObitFullBeam* in) {
+  return ObitFullBeamRef(in);
 }
 
-extern ObitImageInterp* ImageInterpCreate (char *name, ObitImage *image, 
-				     int hwidth, ObitErr *err) {
-  return ObitImageInterpCreate((gchar*)name, image, (olong)hwidth, err);
-} // end ImageInterpCreate
+extern ObitFullBeam* FullBeamCreate (char *name, ObitImage *image, 
+				     ObitErr *err) {
+  return ObitFullBeamCreate((gchar*)name, NULL, image, err);
+} // end FullBeamCreate
 
-extern float ImageInterpValue (ObitImageInterp* in, double ra, double dec,
+extern float FullBeamValue (ObitFullBeam* in, double dra, double ddec,
 		            float parAng, int plane, ObitErr *err) {
-  return ObitImageInterpValue(in, (odouble)ra, (odouble)dec, (ofloat)parAng, (olong)plane, err);
-} // end ImageInterpValue
+  return ObitFullBeamValue(in, (odouble)dra, (odouble)ddec, (ofloat)parAng, (olong)plane, err);
+} // end FullBeamGain
 
-extern long ImageInterpFindPlane (ObitImageInterp* in, double freq) {
-  return (long)ObitImageInterpFindPlane(in, (odouble)freq);
-} // end ImageInterpFindPlane
+extern long FullBeamFindPlane (ObitFullBeam* in, double freq) {
+  return (long)ObitFullBeamFindPlane(in, (odouble)freq);
+} // end FullBeamFindPlane
 
-extern char* ImageInterpGetName (ObitImageInterp* in) {
-  if (ObitImageInterpIsA(in)) {
+extern char* FullBeamGetName (ObitFullBeam* in) {
+  if (ObitFullBeamIsA(in)) {
     return in->name;
   } else {
     return NULL;
   }
 }
 
-extern int ImageInterpIsA (ObitImageInterp* in) {
-  return ObitImageInterpIsA(in);
+extern int FullBeamIsA (ObitFullBeam* in) {
+  return ObitFullBeamIsA(in);
 }
 
 %}
@@ -85,26 +85,26 @@ extern int ImageInterpIsA (ObitImageInterp* in) {
 /* A copy of the struct for c */
 %{
 typedef struct {
-  ObitImageInterp *me;
-} ImageInterp;
+  ObitFullBeam *me;
+} FullBeam;
 %}
 /* and a copy of the struct for swig */
 typedef struct {
-  ObitImageInterp *me;
-} ImageInterp;
+  ObitFullBeam *me;
+} FullBeam;
 
-%addmethods ImageInterp { 
-  ImageInterp(char* name, ObitImage *image, int hwidth, ObitErr *err) {
-     ImageInterp *out;
-     out = (ImageInterp *) malloc(sizeof(ImageInterp));
-     if (strcmp(name, "None")) out->me = ImageInterpCreate((gchar*)name, image, hwidth, err);
+%addmethods FullBeam { 
+  FullBeam(char* name, ObitImage *image, ObitErr *err) {
+     FullBeam *out;
+     out = (FullBeam *) malloc(sizeof(FullBeam));
+     if (strcmp(name, "None")) out->me = FullBeamCreate((gchar*)name, image, err);
      else out->me = NULL;
      return out;
    }
-  ~ImageInterp() {
+  ~FullBeam() {
    if (!self) return;  // Not defined
    if (self && self->me && self->me->ReferenceCount>0) {
-      self->me = ImageInterpUnref(self->me);
+      self->me = FullBeamUnref(self->me);
       free(self);
    }
   }

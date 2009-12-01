@@ -203,10 +203,11 @@ void ObitImageInterpClone  (ObitImageInterp *in, ObitImageInterp *out, ObitErr *
  * is channels vary fastest, then IFs.
  * \param name    An optional name for the object.
  * \param image   Image from which to derive object 
+ * \param hwidth  half width in pixels of interpolation, 1 or 2 usually OK
  * \return the new object.
  */
 ObitImageInterp* ObitImageInterpCreate (gchar* name, ObitImage *image, 
-					ObitErr *err)
+					olong hwidth, ObitErr *err)
 {
   ObitImageInterp* out=NULL;
   olong nImgFreq, nImgIF, nChIF, naxis[5], nx, ny;
@@ -253,7 +254,8 @@ ObitImageInterp* ObitImageInterpCreate (gchar* name, ObitImage *image,
 
   /* Create interpolator */
   out->myInterp = newObitFInterpolateCreate ("Interpolator", 
-					     out->ImgPixels, out->ImgDesc, 2);
+					     out->ImgPixels, out->ImgDesc, 
+					     hwidth);
 
   /* Loop over planes in order they appear in the UV data */
   iplane = 0;

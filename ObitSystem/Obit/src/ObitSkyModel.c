@@ -880,6 +880,10 @@ ObitIOCode ObitSkyModelSubUV (ObitSkyModel *in, ObitUV *indata, ObitUV *outdata,
     indata->buffer = Buffer; 
   }
 
+  /* Check compatability of input and output */
+  Obit_retval_if_fail ((indata->myDesc->ncorr==outdata->myDesc->ncorr), err, retCode,
+		       "%s: Incompatable Input and output UV data, ncorr %d!=%d", 
+		       routine, indata->myDesc->ncorr, outdata->myDesc->ncorr);
 
   inUV = indata;  /* First pass read input */
   /* Loop over images */
@@ -1146,6 +1150,11 @@ ObitIOCode ObitSkyModelDivUV (ObitSkyModel *in, ObitUV *indata, ObitUV *outdata,
   Buffer  = workUV->buffer; 
   inUV->bufferSize =  bufSize; 
   inUV->buffer = Buffer; 
+
+  /* Check compatability of input and output */
+  Obit_retval_if_fail ((indata->myDesc->ncorr==outdata->myDesc->ncorr), err, retCode,
+		       "%s: Incompatable Input and output UV data, ncorr %d!=%d", 
+		       routine, indata->myDesc->ncorr, outdata->myDesc->ncorr);
 
   /* Loop over images */
   if (in->mosaic!=NULL) nimage = in->mosaic->numberImages;  /* How many in mosaic? */

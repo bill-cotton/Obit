@@ -1,6 +1,6 @@
-/* $Id: $    */  
+/* $Id:   */  
 /*--------------------------------------------------------------------*/
-/* Swig module description for ImageInterp type                       */
+/* Swig module description for SkyModelVMBeam type                     */
 /*                                                                    */
 /*;  Copyright (C) 2009                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
@@ -20,7 +20,7 @@
 /*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
 /*;  MA 02139, USA.                                                   */
 /*;                                                                   */
-/*;Correspondence about this software should be addressed as follows: */
+/*;  Correspondence this software should be addressed as follows:     */
 /*;         Internet email: bcotton@nrao.edu.                         */
 /*;         Postal address: William Cotton                            */
 /*;                         National Radio Astronomy Observatory      */
@@ -29,54 +29,49 @@
 /*--------------------------------------------------------------------*/
 
 %{
-#include "ObitImageInterp.h"
-#include "ObitImage.h"
+#include "ObitSkyModelVMBeam.h"
 %}
 
 
 %inline %{
-extern ObitImageInterp* newImageInterp (char* name) {
-  return newObitImageInterp (name);
-} // end  newImageInterp
+extern ObitSkyModelVMBeam* newSkyModelVMBeam (char* name) {
+  return newObitSkyModelVMBeam (name);
+} // end  newSkyModelVMBeam
 
-extern ObitImageInterp* ImageInterpCopy  (ObitImageInterp *in, ObitImageInterp *out, 
+extern ObitSkyModelVMBeam* SkyModelVMBeamCopy  (ObitSkyModelVMBeam *in, ObitSkyModelVMBeam *out, 
 				    ObitErr *err) {
-  return ObitImageInterpCopy (in, out, err);
-} // end  ImageInterpCopy
+  return ObitSkyModelVMBeamCopy (in, out, err);
+} // end  SkyModelVMBeamCopy
 
-extern ObitImageInterp* ImageInterpUnref (ObitImageInterp* in) {
-  if (!ObitImageInterpIsA(in)) return NULL;
-  return ObitImageInterpUnref(in);
+extern ObitSkyModelVMBeam* SkyModelVMBeamUnref (ObitSkyModelVMBeam* in) {
+  if (!ObitSkyModelVMBeamIsA(in)) return NULL;
+  return ObitSkyModelVMBeamUnref(in);
 }
 
-extern ObitImageInterp*  ImageInterpRef (ObitImageInterp* in) {
-  return ObitImageInterpRef(in);
+extern ObitSkyModelVMBeam*  SkyModelVMBeamRef (ObitSkyModelVMBeam* in) {
+  return ObitSkyModelVMBeamRef(in);
 }
 
-extern ObitImageInterp* ImageInterpCreate (char *name, ObitImage *image, 
-				     int hwidth, ObitErr *err) {
-  return ObitImageInterpCreate((gchar*)name, image, (olong)hwidth, err);
-} // end ImageInterpCreate
+extern ObitInfoList* SkyModelVMBeamGetList (ObitSkyModelVMBeam* in) {
+  return ObitInfoListRef(in->info);
+}
 
-extern float ImageInterpValue (ObitImageInterp* in, double ra, double dec,
-		            float parAng, int plane, ObitErr *err) {
-  return ObitImageInterpValue(in, (odouble)ra, (odouble)dec, (ofloat)parAng, (olong)plane, err);
-} // end ImageInterpValue
+extern ObitSkyModelVMBeam* SkyModelVMBeamCreate (char *name, ObitImageMosaic* mosaic,
+  ObitUV *uvData, ObitImage *IBeam,  ObitImage *VBeam, ObitImage *QBeam,  ObitImage *UBeam, 
+  ObitErr *err) {
+ return ObitSkyModelVMBeamCreate(name, mosaic, uvData, IBeam, VBeam, QBeam, UBeam, err);
+}
 
-extern long ImageInterpFindPlane (ObitImageInterp* in, double freq) {
-  return (long)ObitImageInterpFindPlane(in, (odouble)freq);
-} // end ImageInterpFindPlane
-
-extern char* ImageInterpGetName (ObitImageInterp* in) {
-  if (ObitImageInterpIsA(in)) {
+extern char* SkyModelVMBeamGetName (ObitSkyModelVMBeam* in) {
+  if (ObitSkyModelVMBeamIsA(in)) {
     return in->name;
   } else {
     return NULL;
   }
 }
 
-extern int ImageInterpIsA (ObitImageInterp* in) {
-  return ObitImageInterpIsA(in);
+extern int SkyModelVMBeamIsA (ObitSkyModelVMBeam* in) {
+  return ObitSkyModelVMBeamIsA(in);
 }
 
 %}
@@ -85,28 +80,26 @@ extern int ImageInterpIsA (ObitImageInterp* in) {
 /* A copy of the struct for c */
 %{
 typedef struct {
-  ObitImageInterp *me;
-} ImageInterp;
+  ObitSkyModelVMBeam *me;
+} SkyModelVMBeam;
 %}
 /* and a copy of the struct for swig */
 typedef struct {
-  ObitImageInterp *me;
-} ImageInterp;
+  ObitSkyModelVMBeam *me;
+} SkyModelVMBeam;
 
-%addmethods ImageInterp { 
-  ImageInterp(char* name, ObitImage *image, int hwidth, ObitErr *err) {
-     ImageInterp *out;
-     out = (ImageInterp *) malloc(sizeof(ImageInterp));
-     if (strcmp(name, "None")) out->me = ImageInterpCreate((gchar*)name, image, hwidth, err);
+%addmethods SkyModelVMBeam { 
+  SkyModelVMBeam(char* name) {
+     SkyModelVMBeam *out;
+     out = (SkyModelVMBeam *) malloc(sizeof(SkyModelVMBeam));
+     if (strcmp(name, "None")) out->me = newSkyModelVMBeam(name);
      else out->me = NULL;
      return out;
    }
-  ~ImageInterp() {
-   if (!self) return;  // Not defined
-   if (self && self->me && self->me->ReferenceCount>0) {
-      self->me = ImageInterpUnref(self->me);
-      free(self);
-   }
+  ~SkyModelVMBeam() {
+   if (self->me-> ReferenceCount>0) 
+      self->me = SkyModelVMBeamUnref(self->me);
+   free(self);
   }
 };
 

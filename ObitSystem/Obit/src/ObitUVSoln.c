@@ -593,7 +593,7 @@ void ObitUVSolnUpdate (ObitUVSoln *in, ofloat time, olong SourID, ObitErr *err)
     index = iant * in->numIF * in->numPol * in->lenCalArrayEntry;
     jndex = iant * in->numIF * in->numPol * in->lenCalArrayEntry;
 
-    if (in->MissAnt[iant]) goto badant;  /* Nothing for this antenna */
+    if (in->MissAnt[iant]) continue;  /* Nothing for this antenna */
 
     /* set interpolation weights proportional to time difference. */
     dt  = in->FollowAntTime[iant] - in->PriorAntTime[iant] + 1.0e-20;
@@ -846,7 +846,6 @@ void ObitUVSolnUpdate (ObitUVSoln *in, ofloat time, olong SourID, ObitErr *err)
 	} /* end of only valid solutions section */
 
 	/* update indices */
-      badant:
         index += in->lenCalArrayEntry;
 	jndex += in->lenCalArrayEntry;
 

@@ -1612,6 +1612,17 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       doFieldImage (Stokes, myInput, outData, myClean, &nfield, &ncomp, err);
       if (err->error) Obit_traceback_msg (err, routine, outData->name);
 
+      /* Subtract sky model from outData for I  */
+      selFGver = -1;
+      if ((istok==1) && (nstok==1) && (ichan==RChan)) {
+	subIPolModel (outData, myClean->skyModel, &selFGver, nfield, ncomp, err);
+      }
+      if (err->error) Obit_traceback_msg (err, routine, outData->name);
+
+      /* If 2D imaging concatenate CC tables */
+      if ((myClean->nfield>1) && (!myClean->mosaic->images[0]->myDesc->do3D))
+	ObitImageMosaicCopyCC (myClean->mosaic, err);
+      
       /* Copy result to output */
       plane[0] = ochan;
       if (doFlat) 
@@ -1637,12 +1648,6 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       }
       outField = ObitImageUnref(outField);
 
-      /* Subtract sky model from outData for I  */
-      selFGver = -1;
-      if ((istok==1) && (nstok==1) && (ichan==RChan)) {
-	subIPolModel (outData, myClean->skyModel, &selFGver, nfield, ncomp, err);
-      }
-      if (err->error) Obit_traceback_msg (err, routine, outData->name);
       if (ncomp) g_free(ncomp); ncomp = NULL;
     } /* End Stokes loop */
 
@@ -1673,7 +1678,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       ObitImageMosaicZapImage (myClean->mosaic, -1, err); /* Delete mosaic members */
     if (doFlat) {  /* Delete flattened as well if not output */
       outField = ObitImageMosaicGetFullImage (myClean->mosaic, err);
-      outField = ObitImageZap(outField, err);
+      if (outField) outField = ObitImageZap(outField, err);
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     }
     myClean  = ObitDConCleanVisUnref(myClean);
@@ -1907,11 +1912,7 @@ void doFieldImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   if (doFlatten) {
     ObitDConCleanFlatten((ObitDConClean*)myClean, err);
 
-    /* If 2D imaging concatenate CC tables */
-    if (!myClean->mosaic->images[0]->myDesc->do3D) 
-      ObitImageMosaicCopyCC (myClean->mosaic, err);
-    
-  /* Display? */
+    /* Display? */
     if (myClean->display)
       ObitDisplayShow (myClean->display, (Obit*)myClean->mosaic->FullField, NULL, 
 		       1, err);

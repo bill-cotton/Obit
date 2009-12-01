@@ -1254,6 +1254,7 @@ ObitFArray** doImage (gboolean doRMS, olong ant, ObitInfoList* myInput,
 		      ObitErr* err)
 {
   ObitFArray   **out = NULL;
+  ObitFArray   *fatemp = NULL;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong        nx=11, ny=11, naxis[2], ipos[2], i, ipoln, ichan, iIF;
@@ -1263,7 +1264,7 @@ ObitFArray** doImage (gboolean doRMS, olong ant, ObitInfoList* myInput,
   ofloat       *SumU=NULL, *SumUU=NULL, *SumUWt=NULL;
   ofloat       *SumV=NULL, *SumVV=NULL, *SumVWt=NULL;
   ofloat       *SumAzCell=NULL, *SumElCell=NULL, *SumPACell=NULL;
-  ofloat       *Center, value;
+  ofloat       *Center, *ICenter, value;
   olong        *CntCell=NULL;
   gchar *routine = "doImage";
 
@@ -1337,25 +1338,33 @@ ObitFArray** doImage (gboolean doRMS, olong ant, ObitInfoList* myInput,
   /* No normalization for RMS */
   if (doRMS) goto cleanup;
 
-  /* Subtract center Q, U (source poln) from rest */
+  /* Subtract center Q, U (source poln) * Ipol beam from rest */
+  fatemp = ObitFArrayCreate (NULL, 2, naxis);  /* Work array */
   ipos[0] = nx/2; ipos[1] = ny/2;
   for (iIF=0; iIF<(*nIF); iIF++) {
     for (ichan=0; ichan<(*nchan); ichan++) {
       /* Q */ 
-      indx = 1*selem + iIF*(*nchan) + ichan;
-      Center = ObitFArrayIndex (out[indx],  ipos);
-      value = -(*Center);
-      ObitFArraySAdd (out[indx], value);
-
+      indx = 0*selem + iIF*(*nchan) + ichan;
+      qndx = 1*selem + iIF*(*nchan) + ichan;
+      ICenter = ObitFArrayIndex (out[indx],  ipos);
+      Center  = ObitFArrayIndex (out[qndx],  ipos);
+      value = -(*Center) / (*ICenter);  /* Normalize IPol beam */
+      fatemp = ObitFArrayCopy (out[indx], fatemp, err);
+      if (err->error) goto cleanup;
+      ObitFArraySMul (fatemp, value);  /* Q * IPol beam */
+      ObitFArrayAdd (out[qndx], fatemp, out[qndx]);
       /* U */ 
-      indx = 2*selem + iIF*(*nchan) + ichan;
-      Center = ObitFArrayIndex (out[indx],  ipos);
-      value = -(*Center);
-      ObitFArraySAdd (out[indx], value);
+      undx = 2*selem + iIF*(*nchan) + ichan;
+      Center = ObitFArrayIndex (out[undx],  ipos);
+      value = -(*Center) / (*ICenter);
+      fatemp = ObitFArrayCopy (out[indx], fatemp, err);
+      if (err->error) goto cleanup;
+      ObitFArraySMul (fatemp, value);  /* U * IPol beam */
+      ObitFArrayAdd (out[undx], fatemp, out[undx]);
     }
   }
 
-  /* Divide Q,U,V by I */
+  /* Divide Q,U,V by I  */
   for (iIF=0; iIF<(*nIF); iIF++) {
     for (ichan=0; ichan<(*nchan); ichan++) {
       indx = 0*selem + iIF*(*nchan) + ichan;
@@ -1396,7 +1405,8 @@ ObitFArray** doImage (gboolean doRMS, olong ant, ObitInfoList* myInput,
   if (SumAzCell) g_free(SumAzCell);
   if (SumElCell) g_free(SumElCell);
   if (CntCell)   g_free(CntCell);
- if (err->error) Obit_traceback_val (err, routine, inData->name, out);
+  fatemp = ObitFArrayUnref(fatemp);
+  if (err->error) Obit_traceback_val (err, routine, inData->name, out);
 
   return out;
 } /* end doImage */
@@ -1694,7 +1704,7 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
   odouble  sumAz, sumEl, sumPA;
   olong    count, maxElem=*nelem, iElem, indx, iant, ant1, ant2, off=0, iver;
   olong    i, j, jlocs, jlocf, jlocif, incs, incf, incif, doff, ddoff;
-  olong    iIF, ichan, *refAnts, nRefAnt;
+  olong    nx, ny, iIF, ichan, *refAnts, nRefAnt, ix, iy, prtLv=0;
   gboolean OK;
   gchar    *routine = "accumData";
 
@@ -1705,6 +1715,10 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
   ObitInfoListGetTest(myInput, "xCells", &type,   dim, &xCells);
   ObitInfoListGetTest(myInput, "yCells", &type,   dim, &yCells);
   ObitInfoListGetTest(myInput, "blnkTime", &type, dim, &blnkTime);
+  ObitInfoListGetTest(myInput, "prtLv",  &type, dim, &prtLv);
+  /* How big an image? */
+  ObitInfoListGetTest(myInput, "nx", &type, dim, &nx);
+  ObitInfoListGetTest(myInput, "ny", &type, dim, &ny);
   /* Cell spacing to radians */
   xCells = (xCells / 3600.0) * DG2RAD;
   yCells = (yCells / 3600.0) * DG2RAD;
@@ -1919,7 +1933,7 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 	  SumI[off]  /= SumIWt[off];
 	  SumII[off] = (((SumII[off]/SumIWt[off]) - SumI[off]*SumI[off]))/SumIWt[off];
 	  if (SumII[off]>0.0) SumII[off] = sqrt(SumII[off]);
-	  SumII[off] /= SumI[off];  /* Normalize by I */
+	  SumII[off] /= SumI[off];  /* Normalize variance by I */
 	} else {
 	  SumI[off]  = fblank;
 	  SumII[off] = fblank;
@@ -1928,7 +1942,7 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 	  SumQ[off]  /= SumQWt[off];
 	  SumQQ[off] = (((SumQQ[off]/SumQWt[off]) - SumQ[off]*SumQ[off]))/SumQWt[off];
 	  if (SumQQ[off]>0.0) SumQQ[off] = sqrt(SumQQ[off]);
-	  SumQQ[off] /= SumI[off];  /* Normalize by I */
+	  SumQQ[off] /= SumI[off];  /* Normalize variance by I */
 	} else {
 	  SumQ[off]  = fblank;
 	  SumQQ[off] = fblank;
@@ -1937,7 +1951,7 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 	  SumU[off]  /= SumUWt[off];
 	  SumUU[off] = (((SumUU[off]/SumUWt[off]) - SumU[off]*SumU[off]))/SumUWt[off];
 	  if (SumUU[off]>0.0) SumUU[off] = sqrt(SumUU[off]);
-	  SumUU[off] /= SumI[off];  /* Normalize by I */
+	  SumUU[off] /= SumI[off];  /* Normalize variance by I */
 	} else {
 	  SumU[off]  = fblank;
 	  SumUU[off] = fblank;
@@ -1946,22 +1960,33 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
 	  SumV[off]  /= SumVWt[off];
 	  SumVV[off] = (((SumVV[off]/SumVWt[off]) - SumV[off]*SumV[off]))/SumVWt[off];
 	  if (SumVV[off]>0.0) SumVV[off] = sqrt(SumVV[off]);
-	  SumVV[off] /= SumI[off];  /* Normalize by I */
+	  SumVV[off] /= SumI[off];  /* Normalize variance by I */
 	} else {
 	  SumV[off]  = fblank;
 	  SumVV[off] = fblank;
 	}
-      }
+	/* Counter rotate (Q+iU) for parallactic angle */
+	if ((SumQ[off]!=fblank) && (SumU[off]!=fblank)) {
+	  cc = cos(SumPACell[i]);
+	  ss = sin(SumPACell[i]);
+	  xr = SumQ[off];
+	  xi = SumU[off];
+	  SumQ[off] = cc*xr - ss*xi;
+	  SumU[off] = cc*xi + ss*xr;
+	} /* end counter rotate */
+      } /* end channel loop */
     } /* end IF loop */
 
-    /* Counter rotate (Q+iU) for parallactic angle */
-    if ((SumQ[off]!=fblank) && (SumU[off]!=fblank)) {
-      cc = cos(SumPACell[i]);
-      ss = sin(SumPACell[i]);
-      xr = SumQ[off];
-      xi = SumU[off];
-      SumQ[off] = cc*xr + ss*xi;
-      SumU[off] = cc*xi - ss*xr;
+
+    /* Add diagnostics */
+    if (prtLv>=2) {
+      ix = (olong) (SumAzCell[i] + nx/2 + 1.5);
+      iy = (olong) (SumElCell[i] + ny/2 + 1.5);
+      Obit_log_error(err, OBIT_InfoErr, 
+		     "Cell %3d %3d Az %8.1f asec, El %8.1f asec, I %6.3f Q %6.3f U %6.3f V %6.3f Jy",
+		     ix,iy, SumAzCell[i]*xCells*206265., 
+		     SumElCell[i]*yCells*206265., SumI[i*selem], SumQ[i*selem],
+		     SumU[i*selem], SumV[i*selem]);
     }
   } /* End loop normalizing list */
 
@@ -2011,7 +2036,7 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 		ofloat *SumAzCell, ofloat *SumElCell, ofloat *SumPACell, 
 		olong *CntCell, ObitFArray **grids)
 {
-  ofloat x, y, xcen, ycen, xCells=1.0, yCells=1.0;
+  ofloat x, y, xcen, ycen, closest, xCells=1.0, yCells=1.0;
   ofloat *coef, fblank =  ObitMagicF();
   odouble sumIWt , sumQWt, sumUWt, sumVWt;
   odouble valI, valII, valQ, valQQ, valU, valUU, valV, valVV;
@@ -2040,7 +2065,7 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
       x = ix - xcen;
       
       /* Get interpolation coefficients */
-      lagrange (x, y, nelem, 2, SumAzCell, SumElCell, coef);
+      lagrange (x, y, nelem, 1, SumAzCell, SumElCell, coef);
 
       /* Loop over IFs */
       for (iIF=0; iIF<nIF; iIF++) {
@@ -2049,8 +2074,10 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	  valI = valII = valQ = valQQ = valU = valUU = valV = valVV = 0.0;
 	  sumIWt = sumQWt = sumUWt = sumVWt = 0.0;
 	  off = ichan + iIF*nchan;
+	  closest = 1000.0; /* Closest element */
 	  /* Loop over lists summing */
 	  for (i=0; i<nelem; i++) {
+	    closest = MIN (closest, MAX (fabs(SumAzCell[i]-x), fabs(SumElCell[i]-y)));
 	    if (coef[i]!=0.0) {
 	      if (SumI[i*selem+off]!=fblank) {
 		valI  += coef[i]*SumI[i*selem+off];
@@ -2074,28 +2101,32 @@ void  gridData (ObitInfoList* myInput, olong nchan, olong nIF, olong npoln,
 	      }
 	    }
 	  } /* end loop over lists */
-	  if (sumIWt>0.0) {
+	  /* Better be something within 0.5 cells */
+	  if (closest>0.5) {
+	    sumIWt = sumQWt = sumUWt = sumVWt = 0.0;
+	  }
+	  if (sumIWt>0.5) {
 	    valI  /= sumIWt;
 	    valII /= sumIWt;
 	  } else {
 	    valI  = fblank;
 	    valII = fblank;
 	  }
-	  if (sumQWt>0.0) {
+	  if (sumQWt>0.5) {
 	    valQ  /= sumQWt;
 	    valQQ /= sumQWt;
 	  } else {
 	    valQ  = fblank;
 	    valQQ = fblank;
 	  }
-	  if (sumUWt>0.0) {
+	  if (sumUWt>0.5) {
 	    valU  /= sumUWt;
 	    valUU /= sumUWt;
 	  } else {
 	    valU  = fblank;
 	    valUU = fblank;
 	  }
-	  if (sumVWt>0.0) {
+	  if (sumVWt>0.5) {
 	    valV  /= sumVWt;
 	    valVV /= sumVWt;
 	  } else {

@@ -70,6 +70,10 @@ ObitHistoryGetSelect (ObitHistory* in, ObitErr *err);
 /** Private: Set Class function pointers. */
 static void ObitHistoryClassInfoDefFn (gpointer inClass);
 
+/** Private: Trim InfoLists to valid values. */
+static void ObitHistoryInfoListTrim (ObitInfoType type, 
+				     gint32 dim[MAXINFOELEMDIM], 
+				     gpointer xdata);
 /*----------------------Public functions---------------------------*/
 
 /**
@@ -779,6 +783,9 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
     
     if (found) { /* copy by type to history */
 
+      /* Trim blanks, zeroes */
+      ObitHistoryInfoListTrim (type, dim, xdata);
+
       /* element count */
       size = dim[0];
       for (j=1; j<MAXINFOELEMDIM; j++) size *= MAX (1, dim[j]);
@@ -1100,4 +1107,93 @@ ObitHistoryGetSelect (ObitHistory* in, ObitErr *err)
 
 } /* end ObitHistoryGetSelect */
 
+/**
+ * Trim an InfoList entry to only valid (non-blank, zero) entries
+ * Returns at least one, even is blank/zero.
+ * \param type  Data type
+ * \param dim   Array dimensionality, possibly modified on return
+ * \param xdata pointer to data, strings truncated to 64 char
+ */
+static void ObitHistoryInfoListTrim (ObitInfoType type, 
+				     gint32 dim[MAXINFOELEMDIM], 
+				     gpointer xdata)
+{
+  gboolean  *bdata;
+  olong     i, j, lstr, *ldata, *idata, size;
+  oint      *odata;
+  ofloat    *fdata;
+  odouble   *ddata;
+  gchar     *cdata, cstring[65];
+  gchar     *blank = "                                                                ";
+
+  /* element count */
+  size = dim[0];
+  for (j=1; j<MAXINFOELEMDIM; j++) size *= MAX (1, dim[j]);
+
+  /* Process by type */
+  switch (type) { 
+  case OBIT_int:
+    idata = (olong*)xdata;
+    dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    for (i=size-1; i>=0; i--) {
+      if (idata[i]!=0) break;
+      else dim[0] = i+1;
+    }
+    break;
+  case OBIT_oint:
+    odata = (oint*)xdata;
+    dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    for (i=size-1; i>=0; i--) {
+      if (odata[i]!=0) break;
+      else dim[0] = i+1;
+    }
+    break;
+  case OBIT_long:
+    ldata = (olong*)xdata;
+    dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    for (i=size-1; i>=0; i--) {
+      if (ldata[i]!=0) break;
+      else dim[0] = i+1;
+    }
+    break;
+  case OBIT_float:
+    fdata = (ofloat*)xdata;
+    dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    for (i=size-1; i>=0; i--) {
+      if (fdata[i]!=0.0) break;
+      else dim[0] = i+1;
+    }
+    break;
+  case OBIT_double:
+    ddata = (odouble*)xdata;
+    dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    for (i=size-1; i>=0; i--) {
+      if (ddata[i]!=0.0) break;
+      else dim[0] = i+1;
+    }
+    break;
+  case OBIT_string:   /* only 64 char of string */
+    dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    cdata = (gchar*)xdata;
+    lstr = dim[0];  /* length of string */
+    size /= MAX(1, lstr);
+    for (i=size-1; i>=0; i--) {
+      strncpy (cstring, cdata, MIN (lstr, 64));
+      cstring[MIN (lstr, 64)] = 0;  /* null terminate */
+      if (!strncmp(cstring, blank, lstr)) break;
+      else dim[1] = i+1;
+    }
+    break;
+  case OBIT_bool:
+    /* Use all, can tell invalid */
+    bdata = (gboolean*)xdata;
+    break;
+  default:
+    bdata = (gboolean*)xdata;
+  }; /* end switch by type */
+  
+  /* At least 1 */  
+  dim[0] = MAX (1, dim[0]);
+  
+} /* end ObitHistoryInfoListTrim  */
 

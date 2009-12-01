@@ -838,8 +838,7 @@ gboolean ObitDConCleanPixelStats(ObitDConClean *in, ObitFArray **pixarray,
 
 /**
  * Get Image statistics to help decide which field is next to process
- * If autoWindow then the outer window is used to specify valid pixels, 
- * else the inner window.
+ * The outer window is used to specify valid pixels, 
  * For this version the following are calculated:
  * \li maxAbsRes   Maximum absolute windowed residual value (doBEAM=FALSE)
  * \li avgRes      Average windowed residual value (doBEAM=FALSE)
@@ -2095,7 +2094,6 @@ static gpointer ThreadImageStats (gpointer args)
   StatsFuncArg *largs = (StatsFuncArg*)args;
   ObitFArray *inData    = largs->inData;
   ObitDConCleanWindow *window = largs->window;
-  gboolean   autoWindow = window->autoWindow;
   olong      field      = largs->field;
   olong      loRow      = largs->first-1;
   olong      hiRow      = largs->last-1;
@@ -2120,34 +2118,20 @@ static gpointer ThreadImageStats (gpointer args)
   tmax  = -1.0e20;
 
   for (iy = loRow; iy<=hiRow; iy++) { /* loop in y */
-    /* Use inner or outer window? */
-    if (autoWindow) { /* autoWindow mode outer window */
-      /* Get mask for unwindows */
-      isUnbox = ObitDConCleanWindowUnrow(window, field, iy+1, &umask, err);
-      if (ObitDConCleanWindowOuterRow(window, field, iy+1, &mask, err)) {
-	if (isUnbox) {
-	  for (ix=0; ix<nx; ix++) {
-	    if (mask[ix] && (!umask[ix])) {
-	      count++;
-	      sum  += data[ix];
-	      sum2 += data[ix]*data[ix];
-	      tmax = MAX (tmax, fabs(data[ix]));
-	    }
-	  }
-	} else { /* no unboxes */
-	  for (ix=0; ix<nx; ix++) {
-	    if (mask[ix]) {
-	      count++;
-	      sum  += data[ix];
-	      sum2 += data[ix]*data[ix];
-	      tmax = MAX (tmax, fabs(data[ix]));
-	    }
+    /* Use outer window */
+    /* Get mask for unwindows */
+    isUnbox = ObitDConCleanWindowUnrow(window, field, iy+1, &umask, err);
+    if (ObitDConCleanWindowOuterRow(window, field, iy+1, &mask, err)) {
+      if (isUnbox) {
+	for (ix=0; ix<nx; ix++) {
+	  if (mask[ix] && (!umask[ix])) {
+	    count++;
+	    sum  += data[ix];
+	    sum2 += data[ix]*data[ix];
+	    tmax = MAX (tmax, fabs(data[ix]));
 	  }
 	}
-      }
-    } else { /* use inner window */
-      /* Get window mask */
-      if (ObitDConCleanWindowRow(window, field, iy+1, &mask, err)) {
+      } else { /* no unboxes */
 	for (ix=0; ix<nx; ix++) {
 	  if (mask[ix]) {
 	    count++;
@@ -2157,7 +2141,7 @@ static gpointer ThreadImageStats (gpointer args)
 	  }
 	}
       }
-    } /* end branch for inner or outer window */
+    }
     data += nx;
   } /* end loop over rows */
   

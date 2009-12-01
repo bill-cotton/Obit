@@ -1,9 +1,9 @@
-""" Python Obit ImageInterp class
+""" Python Obit FullBeam class
 
 This class provides values of the beam shape derived from an image
 
 """
-# $Id: $
+# $Id: FullBeam.py 2 2008-06-10 15:32:27Z bill.cotton $
 #-----------------------------------------------------------------------
 #  Copyright (C) 2009
 #  Associated Universities, Inc. Washington DC, USA.
@@ -31,52 +31,53 @@ This class provides values of the beam shape derived from an image
 #                         Charlottesville, VA 22903-2475 USA
 #-----------------------------------------------------------------------
 
-# Obit ImageInterp
+# Obit FullBeam
 import Obit, OErr, Image, InfoList
 
-# Python shadow class to ObitImageInterp class
+# Python shadow class to ObitFullBeam class
 
 # class name in C
-myClass = "ObitImageInterp"
+myClass = "ObitFullBeam"
  
     
-class ImageInterpPtr :
+class FullBeamPtr :
     def __init__(self,this):
         self.this = this
     def __setattr__(self,name,value):
         if name == "me" :
             # Out with the old
-            Obit.ImageInterpUnref(Obit.ImageInterp_me_get(self.this))
+            Obit.FullBeamUnref(Obit.FullBeam_me_get(self.this))
             # In with the new
-            Obit.ImageInterp_me_set(self.this,value)
+            Obit.FullBeam_me_set(self.this,value)
             return
         # members
         self.__dict__[name] = value
     def __getattr__(self,name):
-        if self.__class__ != ImageInterp:
+        if self.__class__ != FullBeam:
             return
         if name == "me" : 
-            return Obit.ImageInterp_me_get(self.this)
+            return Obit.FullBeam_me_get(self.this)
         raise AttributeError,name
     def __repr__(self):
-        if self.__class__ != ImageInterp:
+        if self.__class__ != FullBeam:
             return
-        return "<C ImageInterp instance> " + Obit.ImageInterpGetName(self.me)
+        return "<C FullBeam instance> " + Obit.FullBeamGetName(self.me)
 #
-class ImageInterp(ImageInterpPtr):
-    """ Python Obit ImageInterp class
+class FullBeam(FullBeamPtr):
+    """ Python Obit FullBeam class
     
-    This class interpolates pixel values in an image, possibly selecting
-    by frequency and optionally rotating by a "parallactic angle".
+    This class provides values of the beam shape derived from an image
+    Gains at specified offsets from the beam center at giv3en parallactic
+    angles are interpolated from a Full Beam image.
     
-    ImageInterp Members with python interfaces:
+    FullBeam Members with python interfaces:
     """
-    def __init__(self, name="no_name", image=None, hwidth=1, err=None) :
-        self.this = Obit.new_ImageInterp(name, image, hwidth, err)
+    def __init__(self, name="no_name", image=None, err=None) :
+        self.this = Obit.new_FullBeam(name, image, err)
         self.myClass = myClass
     def __del__(self):
         if Obit!=None:
-            Obit.delete_ImageInterp(self.this)
+            Obit.delete_FullBeam(self.this)
     def cast(self, toClass):
         """ Casts object pointer to specified class
         
@@ -90,73 +91,70 @@ class ImageInterp(ImageInterpPtr):
         return out
     # end cast
     
-    def Value (self, ra, dec, err, rotate=0.0, plane=0 ):
+    def Gain (self, dra, ddec, parAng, plane, err):
         """ 
         
-        Returns Interpolated pixel value
-        self     = the ImageInterp object
-        ra       = RA (or "X") (deg) coordinate
-                   Use ImageDesc.PMS2RA for convert from human form
-        dec      = Dec (or "Y") (deg) coordinate
-                   Use ImageDesc.PDMS2Dec for convert from human form
-        rotate   = (Parallactic) angle to rotate image by (deg)
-        plane    = plane in ImageInterp (from FindPlane)
+        Returns Gain
+        self     = the FullBeam object
+        ra       = RA (deg) offset of direction for gain
+        dec      = Dec (deg) offset of direction for gain
+        parAng   = Parallactic angle (deg)
+        plane    = plane in FullBeam (from FindPlane)
         err      = Obit error/message stack
         """
         ################################################################
         # Checks
         if not PIsA(self):
-            raise TypeError,"self MUST be a Python Obit ImageInterp"
-        return Obit.ImageInterpValue(self.me, ra, dec, rotate, plane, err.me)
-    # end Value
+            raise TypeError,"self MUST be a Python Obit FullBeam"
+        return Obit.FullBeamValue(self.me, dra, ddec, parAng, plane, err.me)
+    # end Gain
     
     def FindPlane(self, freq):
         """ 
         
         Returns nearest plane to a given frequency
-        self     = the ImageInterp object
+        self     = the FullBeam object
         freq     = frequency (Hz)
         """
         ################################################################
         # Checks
         if not PIsA(self):
-            raise TypeError,"self MUST be a Python Obit ImageInterp"
-        return Obit.ImageInterpFindPlane(self.me, freq)
+            raise TypeError,"self MUST be a Python Obit FullBeam"
+        return Obit.FullBeamFindPlane(self.me, freq)
     # end FindPlane
     
-    def ImageInterpIsA (self):
-        """ Tells if input really a Python Obit ImageInterp
+    def FullBeamIsA (self):
+        """ Tells if input really a Python Obit FullBeam
         
         return true, false (1,0)
-        self   = Python ImageInterp object
+        self   = Python FullBeam object
         """
         ################################################################
         # Allow derived types
-        return Obit.ImageInterpIsA(self.cast(myClass))
-        # end ImageInterpIsA 
-    # end class ImageInterp
+        return Obit.FullBeamIsA(self.cast(myClass))
+        # end FullBeamIsA 
+    # end class FullBeam
     
-def PIsA (inImageInterp):
-    """ Tells if input really a Python Obit ImageInterp
+def PIsA (inFullBeam):
+    """ Tells if input really a Python Obit FullBeam
 
     return True, False (1,0)
-    inImageInterp   = Python ImageInterp object
+    inFullBeam   = Python FullBeam object
     """
     ################################################################
-    if inImageInterp.__class__ != ImageInterp:
-        print "Actually",inImageInterp.__class__
+    if inFullBeam.__class__ != FullBeam:
+        print "Actually",inFullBeam.__class__
         return 0
     # Checks - allow inheritence
-    return Obit.ImageInterpIsA(inImageInterp.me)
+    return Obit.FullBeamIsA(inFullBeam.me)
     # end PIsA
 
-def PCreate (name, image, err, hwidth=1):
-    """ Create the underlying structures of a ImageInterp
+def PCreate (name, image, err):
+    """ Create the underlying structures of a FullBeam
 
     return object created.
     name      = Name to be given to object
     image     = Python Image for which beam shape is desired
-    hwidth    = half width of interpolation (usually 1 or 2)
     err       = Obit error/message stack
     """
     ################################################################
@@ -166,8 +164,8 @@ def PCreate (name, image, err, hwidth=1):
     if not OErr.OErrIsA(err):
         raise TypeError,"err MUST be an OErr"
     #
-    out = ImageInterp("None",image=image.me,hwidth=hwidth,err=err.me);
-    out.me = Obit.ImageInterpCreate(name, image.me, hwidth, err.me)
+    out = FullBeam("None",image=image.me,err=err.me);
+    out.me = Obit.FullBeamCreate(name, image.me, err.me)
     if err.isErr:
         OErr.printErrMsg(err, "Error creating beam object")
     return out;
