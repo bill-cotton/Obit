@@ -1042,10 +1042,10 @@ ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *er
      
   /* Set fly's eye if needed */
   imsize = (olong)(2.0*Radius + 0.5);
-  overlap = MAX (20, (olong)(0.1*imsize + 0.5));
   
   /* Not bigger than FOV */
   imsize = MIN (imsize, ((2.0*3600.0*FOV/fabs(xCells))+10.99));
+  overlap = MAX (20, (olong)(0.1*imsize + 0.5));
   cells[0] = xCells; cells[1] = yCells;
   ObitUVGetRADec (uvData, &ra0, &dec0, err);
   if (err->error) Obit_traceback_val (err, routine, uvData->name, out);
