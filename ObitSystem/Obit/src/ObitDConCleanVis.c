@@ -523,6 +523,8 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
 					   in->maxPixel, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   }
+  /* Reset  min. resid */
+  in->Pixels->maxResid = 1.0e10;
 
   /* No more fields than in mosaic */
   Obit_return_if_fail ((in->nfield == in->mosaic->numberImages),

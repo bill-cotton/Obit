@@ -40,14 +40,14 @@ ofloat maxResid;
 ofloat begVMModelTime;
 /** Dimension of Rgain...  */
 olong dimGain;
-/** Array of time/spatially variable R component gain */
-ofloat *Rgain;
-/** Array of time/spatially variable L component gain */
-ofloat *Lgain;
-/** Array of time/spatially variable Stokes Q component gain */
-ofloat *Qgain;
-/** Array of time/spatially variable Stokes U component gain */
-ofloat *Ugain;
+/** Array of time/spatially variable R component gain, real, imag */
+ofloat *Rgain, *Rgaini;
+/** Array of time/spatially variable L component gain, real, imag */
+ofloat *Lgain, *Lgaini;
+/** Array of time/spatially variable Stokes Q component gain, real, imag */
+ofloat *Qgain, *Qgaini;
+/** Array of time/spatially variable Stokes U component gain, real, imag */
+ofloat *Ugain, *Ugaini;
 /** Array booleans, TRUE if corresponding antenna (0-rel) is EVLA */
 gboolean *isEVLA;
 /** Number of subarrays */
@@ -64,6 +64,14 @@ ObitImageInterp *VBeam;
 ObitImageInterp *QBeam;
 /** U Beam image if doCrossPol */
 ObitImageInterp *UBeam;
+/** I Beam phase image - NULL if not given */
+ObitImageInterp *IBeamPh;
+/** V Beam phase image  - NULL if not given **/
+ObitImageInterp *VBeamPh;
+/** Q Beam phase image if doCrossPol  - NULL if not given **/
+ObitImageInterp *QBeamPh;
+/** U Beam phase image if doCrossPol  - NULL if not given **/
+ObitImageInterp *UBeamPh;
 /** Array booleans, TRUE if corresponding antenna (0-rel) is EVLA */
 gboolean doCrossPol;
 /** Number of Beam planes */

@@ -633,7 +633,7 @@ void ObitUVSolnUpdate (ObitUVSoln *in, ofloat time, olong SourID, ObitErr *err)
     if (in->numPol>1) {
       /* Average rates */
       rate1 =  avgRatePrior (in, iant+1, 2);
-      rate2 =  avgRateFollow (in, iant+1,21);
+      rate2 =  avgRateFollow (in, iant+1,2);
       na = in->numAnt;
       if ((in->PriorMBDelay[iant+na]  !=  fblank) && (in->FollowMBDelay[iant+na] != fblank)) {
 	in->MBDelay[iant+na] = 
@@ -3781,7 +3781,8 @@ static ofloat avgRateFollow (ObitUVSoln *in, olong ant, olong ipol)
   ofloat fblank = ObitMagicF();
   olong indx, iif, count;
 
-  indx = (ipol-1) * in->lenCalArrayEntry * in->numIF;
+  indx = (ant-1) * (in->numPol * in->numIF * in->lenCalArrayEntry) +
+    (ipol-1) * in->lenCalArrayEntry * in->numIF;
   count = 0;
   sum = 0.0;
   for (iif=0; iif<in->numIF; iif++) {

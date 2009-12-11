@@ -3518,6 +3518,9 @@ gboolean ObitSkyModelsetPBChans(ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
   g_assert (ObitSkyModelIsA(in));
   g_assert (ObitUVIsA(uvdata));
 
+  /* PB corr only possible for multiple IF or channels */
+  if ((in->numberChannel<=1) && (in->numberIF<=1)) in->doPBCor = FALSE;
+
   /* See if primary Beam rel. corrections requested */
   if (!in->doPBCor) {
     /* No - use full set of IFs/channels */

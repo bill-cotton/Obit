@@ -84,6 +84,9 @@ void  ObitSkyModelVMBeamGetInput (ObitSkyModel* inn, ObitErr *err);
 /** Private: Threaded FTDFT */
 static gpointer ThreadSkyModelVMBeamFTDFT (gpointer arg);
 
+/** Private: Threaded FTDFT with phase correction */
+static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer arg);
+
 /*---------------Private structures----------------*/
 /* FT threaded function argument 
  Note: Derived classes MUST have the following entries at the beginning 
@@ -105,14 +108,14 @@ typedef struct {
   olong        ithread;
   /* Obit error stack object */
   ObitErr      *err;
-  /* Interpolator for I pol Beam image */
-  ObitFInterpolate *BeamIInterp;
-  /* Interpolator for V pol Beam image */
-  ObitFInterpolate *BeamVInterp;
-  /* Interpolator for Q pol Beam image */
-  ObitFInterpolate *BeamQInterp;
-  /* Interpolator for U pol Beam image */
-  ObitFInterpolate *BeamUInterp;
+  /* Amp, phase interpolator for I pol Beam image */
+  ObitFInterpolate *BeamIInterp, *BeamIPhInterp;
+  /* Amp, phase interpolator for V pol Beam image */
+  ObitFInterpolate *BeamVInterp, *BeamVPhInterp;
+  /* Amp, phase interpolator for Q pol Beam image */
+  ObitFInterpolate *BeamQInterp, *BeamQPhInterp;
+  /* Amp, phase interpolator for U pol Beam image */
+  ObitFInterpolate *BeamUInterp, *BeamUPhInterp;
   /* UV Interpolator for FTGrid */
   ObitCInterpolate *Interp;
   /* Start time (days) of validity of model */
@@ -125,14 +128,14 @@ typedef struct {
   olong channel;
   /** Dimension of Rgain...  */
   olong dimGain;
-  /** Array of time/spatially variable R component gain */
-  ofloat *Rgain;
-  /** Array of time/spatially variable L component gain */
-  ofloat *Lgain;
-  /** Array of time/spatially variable Q component gain */
-  ofloat *Qgain;
-  /** Array of time/spatially variable U component gain */
-  ofloat *Ugain;
+  /** Array of time/spatially variable R component gain, real, imag */
+  ofloat *Rgain, *Rgaini;
+  /** Array of time/spatially variable L component gain, real, imag */
+  ofloat *Lgain, *Lgaini;
+  /** Array of time/spatially variable Q component gain, real, imag */
+  ofloat *Qgain, *Qgaini;
+  /** Array of time/spatially variable U component gain, real, imag */
+  ofloat *Ugain, *Ugaini;
 } VMBeamFTFuncArg;
 /*----------------------Public functions---------------------------*/
 /**
@@ -251,16 +254,38 @@ ObitSkyModelVMBeamCopy  (ObitSkyModelVMBeam *in,
     if (out->Rgain) g_free(out->Rgain); out->Rgain = NULL;
     out->Rgain = g_malloc0(in->dimGain*sizeof(ofloat));
     for (i=0; i<in->dimGain; i++) out->Rgain[i] = in->Rgain[i];
+    if (out->Rgaini) g_free(out->Rgaini); out->Rgaini = NULL;
+    if (in->Rgaini) {
+      out->Rgaini = g_malloc0(in->dimGain*sizeof(ofloat));
+      for (i=0; i<in->dimGain; i++) out->Rgaini[i] = in->Rgaini[i];
+    }
+
     if (out->Lgain) g_free(out->Lgain); out->Lgain = NULL;
     out->Lgain = g_malloc0(in->dimGain*sizeof(ofloat));
     for (i=0; i<in->dimGain; i++) out->Lgain[i] = in->Lgain[i];
+    if (out->Lgaini) g_free(out->Lgaini); out->Lgaini = NULL;
+    if (in->Lgaini) {
+      out->Lgaini = g_malloc0(in->dimGain*sizeof(ofloat));
+      for (i=0; i<in->dimGain; i++) out->Lgaini[i] = in->Lgaini[i];
+    }
     if (in->doCrossPol) {
       if (out->Qgain) g_free(out->Qgain); out->Qgain = NULL;
       out->Qgain = g_malloc0(in->dimGain*sizeof(ofloat));
       for (i=0; i<in->dimGain; i++) out->Qgain[i] = in->Qgain[i];
+      if (in->Qgaini) {
+	if (out->Qgaini) g_free(out->Qgaini); out->Qgaini = NULL;
+	out->Qgaini = g_malloc0(in->dimGain*sizeof(ofloat));
+	for (i=0; i<in->dimGain; i++) out->Qgaini[i] = in->Qgaini[i];
+      }
+
       if (out->Ugain) g_free(out->Ugain); out->Ugain = NULL;
       out->Ugain = g_malloc0(in->dimGain*sizeof(ofloat));
       for (i=0; i<in->dimGain; i++) out->Ugain[i] = in->Ugain[i];
+      if (in->Ugaini) {
+	if (out->Ugaini) g_free(out->Ugaini); out->Ugaini = NULL;
+	out->Ugaini = g_malloc0(in->dimGain*sizeof(ofloat));
+	for (i=0; i<in->dimGain; i++) out->Ugaini[i] = in->Ugaini[i];
+      }
     }
   }
   return out;
@@ -268,13 +293,17 @@ ObitSkyModelVMBeamCopy  (ObitSkyModelVMBeam *in,
 
 /**
  * Creates an ObitSkyModelVMBeam 
- * \param name   An optional name for the object.
- * \param mosaic ObitImageMosaic giving one or more images/CC tables
- * \param uvData UV data to be operated on
- * \param IBeam  I Beam normalized image
- * \param VBeam  V Beam fractional image
- * \param QBeam  Q Beam fractional image
- * \param UBeam  U Beam ifractional mage
+ * \param name     An optional name for the object.
+ * \param mosaic   ObitImageMosaic giving one or more images/CC tables
+ * \param uvData   UV data to be operated on
+ * \param IBeam    I Beam normalized image
+ * \param VBeam    V Beam fractional image
+ * \param QBeam    Q Beam fractional image if nonNULL
+ * \param UBeam    U Beam fractional image if nonNULL
+ * \param IBeamPh  I Beam phase image if nonNULL
+ * \param VBeamPh  V Beam phase image if nonNULL
+ * \param QBeamPh  Q Beam phase image if nonNULL
+ * \param UBeamPh  U Beam phase image if nonNULL
  * \return the new object.
  */
 ObitSkyModelVMBeam* 
@@ -282,6 +311,8 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
 			  ObitUV *uvData,
 			  ObitImage *IBeam,  ObitImage *VBeam, 
 			  ObitImage *QBeam,  ObitImage *UBeam, 
+			  ObitImage *IBeamPh,  ObitImage *VBeamPh, 
+			  ObitImage *QBeamPh,  ObitImage *UBeamPh, 
 			  ObitErr *err)
 {
   ObitSkyModelVMBeam* out=NULL;
@@ -323,6 +354,17 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
   if (err->error) Obit_traceback_val (err, routine, name, out);
   out->numPlane = out->IBeam->nplanes;
 
+  /* Phase beams */
+  if (IBeamPh)
+    out->IBeamPh = ObitImageInterpCreate("IBeamPh", IBeamPh, 2, err);
+  if (VBeamPh)
+    out->VBeamPh = ObitImageInterpCreate("VBeamPh", VBeamPh, 2, err);
+  if (QBeamPh)
+    out->QBeamPh= ObitImageInterpCreate("QBeamPh", QBeamPh, 2, err);
+  if (UBeamPh)
+    out->UBeamPh = ObitImageInterpCreate("UBeamPh", UBeamPh, 2, err);
+  if (err->error) Obit_traceback_val (err, routine, name, out);
+
   /* Make sure they are all consistent */
   Obit_retval_if_fail ((ObitFArrayIsCompatable(out->IBeam->ImgPixels, 
 					       out->VBeam->ImgPixels)), err, out,
@@ -334,6 +376,26 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
     Obit_retval_if_fail ((ObitFArrayIsCompatable(out->IBeam->ImgPixels, 
 						 out->UBeam->ImgPixels)), err, out,
 		       "%s: Incompatable I, U beam arrays", routine);
+  }
+  if (out->IBeamPh) {
+    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->IBeam->ImgPixels, 
+						 out->IBeamPh->ImgPixels)), err, out,
+			 "%s: Incompatable I amp, phase beam arrays", routine);
+  }
+  if (out->VBeamPh) {
+    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->VBeam->ImgPixels, 
+						 out->VBeamPh->ImgPixels)), err, out,
+			 "%s: Incompatable V amp, phase beam arrays", routine);
+  }
+  if (out->doCrossPol && out->QBeamPh) {
+    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->QBeam->ImgPixels, 
+						 out->QBeamPh->ImgPixels)), err, out,
+			 "%s: Incompatable Q amp, phase beam arrays", routine);
+  }
+  if (out->doCrossPol && out->UBeamPh) {
+    Obit_retval_if_fail ((ObitFArrayIsCompatable(out->UBeam->ImgPixels, 
+						 out->UBeamPh->ImgPixels)), err, out,
+			 "%s: Incompatable U amp, phase beam arrays", routine);
   }
 
  /* Get list of planes per channel */
@@ -351,6 +413,10 @@ ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosaic,
   if (QBeam && (QBeam->image)) QBeam->image = ObitImageUnref(QBeam->image);
   if (UBeam && (UBeam->image)) UBeam->image = ObitImageUnref(UBeam->image);
   if (VBeam && (VBeam->image)) VBeam->image = ObitImageUnref(VBeam->image);
+  if (IBeamPh && (IBeamPh->image)) IBeamPh->image = ObitImageUnref(IBeamPh->image);
+  if (QBeamPh && (QBeamPh->image)) QBeamPh->image = ObitImageUnref(QBeamPh->image);
+  if (UBeamPh && (UBeamPh->image)) UBeamPh->image = ObitImageUnref(UBeamPh->image);
+  if (VBeamPh && (VBeamPh->image)) VBeamPh->image = ObitImageUnref(VBeamPh->image);
 
   return out;
 } /* end ObitSkyModelVMBeamCreate */
@@ -435,15 +501,23 @@ void ObitSkyModelVMBeamInitMod (ObitSkyModel* inn, ObitUV *uvdata,
     if (in->VBeam) args->BeamVInterp = ObitImageInterpCloneInterp(in->VBeam,err);
     if (in->QBeam) args->BeamQInterp = ObitImageInterpCloneInterp(in->QBeam,err);
     if (in->UBeam) args->BeamUInterp = ObitImageInterpCloneInterp(in->UBeam,err);
+    if (in->IBeamPh) args->BeamIPhInterp = ObitImageInterpCloneInterp(in->IBeamPh,err);
+    if (in->VBeamPh) args->BeamVPhInterp = ObitImageInterpCloneInterp(in->VBeamPh,err);
+    if (in->QBeamPh) args->BeamQPhInterp = ObitImageInterpCloneInterp(in->QBeamPh,err);
+    if (in->UBeamPh) args->BeamUPhInterp = ObitImageInterpCloneInterp(in->UBeamPh,err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
     args->begVMModelTime = -1.0e20;
     args->endVMModelTime = -1.0e20;
     args->VMComps= NULL;
     args->dimGain= 0;
     args->Rgain  = NULL;
+    args->Rgaini = NULL;
     args->Lgain  = NULL;
+    args->Lgaini = NULL;
     args->Qgain  = NULL;
+    args->Qgaini = NULL;
     args->Ugain  = NULL;
+    args->Ugaini = NULL;
   }
 
   /* Call parent initializer */
@@ -451,7 +525,11 @@ void ObitSkyModelVMBeamInitMod (ObitSkyModel* inn, ObitUV *uvdata,
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Fourier transform routines - DFT only */
-  in->DFTFunc   = (ObitThreadFunc)ThreadSkyModelVMBeamFTDFT;
+  /* Are phases given? */
+  if (in->IBeamPh) 
+    in->DFTFunc   = (ObitThreadFunc)ThreadSkyModelVMBeamFTDFTPh;
+  else /* No phase */
+    in->DFTFunc   = (ObitThreadFunc)ThreadSkyModelVMBeamFTDFT;
 
   /* Check requested Stokes
   Obit_return_if_fail((!strncmp(in->stokes,"    ",4)), err,
@@ -524,10 +602,18 @@ void ObitSkyModelVMBeamShutDownMod (ObitSkyModel* inn, ObitUV *uvdata,
 	args->BeamVInterp = ObitFInterpolateUnref(args->BeamVInterp);
 	args->BeamQInterp = ObitFInterpolateUnref(args->BeamQInterp);
 	args->BeamUInterp = ObitFInterpolateUnref(args->BeamUInterp);
+	args->BeamIPhInterp = ObitFInterpolateUnref(args->BeamIPhInterp);
+	args->BeamVPhInterp = ObitFInterpolateUnref(args->BeamVPhInterp);
+	args->BeamQPhInterp = ObitFInterpolateUnref(args->BeamQPhInterp);
+	args->BeamUPhInterp = ObitFInterpolateUnref(args->BeamUPhInterp);
 	if (args->Rgain)  g_free(args->Rgain);
 	if (args->Lgain)  g_free(args->Lgain);
 	if (args->Qgain)  g_free(args->Qgain);
 	if (args->Ugain)  g_free(args->Ugain);
+	if (args->Rgaini) g_free(args->Rgaini);
+	if (args->Lgaini) g_free(args->Lgaini);
+	if (args->Qgaini) g_free(args->Qgaini);
+	if (args->Ugaini) g_free(args->Ugaini);
 	g_free(in->threadArgs[i]);
       }
       g_free(in->threadArgs);
@@ -601,7 +687,7 @@ void ObitSkyModelVMBeamInitModel (ObitSkyModel* inn, ObitErr *err)
 
 /**
  * Update VM model with time and spatial modifications to model
- * Update model in Rgain, Lgain, Qgain, Ugain members for comps member 
+ * Update model in Rgain, Lgain, Qgain, Ugain etc, members for comps member 
  * Sets begVMModelTime to current time
  * Sets endVMModelTime for when parallactic angle differs by 1 degree.
  * \param in      SkyModelVM 
@@ -620,10 +706,12 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
 {
   ObitSkyModelVMBeam *in = (ObitSkyModelVMBeam*)inn;
   olong npos[2], lcomp, ncomp, i, ifield, lithread, plane;
-  ofloat *ccData=NULL, *Rgain=NULL, *Lgain=NULL, *Qgain=NULL, *Ugain=NULL;
+  ofloat *Rgain=NULL,  *Lgain=NULL,  *Qgain=NULL,  *Ugain=NULL, *ccData=NULL;
+  ofloat *Rgaini=NULL, *Lgaini=NULL, *Qgaini=NULL, *Ugaini=NULL;
   ofloat curPA, tPA, tTime, bTime;
-  /* Voltage ofloat xr, xi, tr, ti;*/
-  ofloat Ipol, Vpol, fblank = ObitMagicF();
+  ofloat xr, xi, tr, ti, tri, tii;
+  ofloat Ipol, Vpol, IpolPh=0.0, VpolPh=0.0, QpolPh=0.0, UpolPh=0.0;
+  ofloat fblank = ObitMagicF();
   odouble x, y;
   VMBeamFTFuncArg *args;
   gchar *routine = "ObitSkyModelVMBeamUpdateModel";
@@ -688,66 +776,101 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
 
   npos[0] = 0; npos[1] = 0; 
   ccData = ObitFArrayIndex(in->comps, npos);
-  Rgain = args->Rgain;
-  Lgain = args->Lgain;
+  Rgain  = args->Rgain;
+  Lgain  = args->Lgain;
+  Rgaini = args->Rgaini;
+  Lgaini = args->Lgaini;
   if (in->doCrossPol) {
-    Qgain = args->Qgain;
-    Ugain = args->Ugain;
+    Qgain  = args->Qgain;
+    Ugain  = args->Ugain;
+    Qgaini = args->Qgaini;
+    Ugaini = args->Ugaini;
+  } else {
+    Qgain  = NULL;
+    Ugain  = NULL;
+    Qgaini = NULL;
+    Ugaini = NULL;
   }
   lcomp = in->comps->naxis[0];  /* Length of row in comp table */
   ncomp = in->numComp;          /* number of components */
 
   /* Compute antenna gains and put in to Rgain, Lgain, Qgain, Ugain */
   for (i=0; i<ncomp; i++) {
-    Lgain[i] = 1.0;
-    Rgain[i] = 1.0;
+    Lgain[i]  = 1.0;
+    Rgain[i]  = 1.0;
+    Lgaini[i] = 0.0;
+    Rgaini[i] = 0.0;
     if (in->doCrossPol) {
-      Qgain[i] = 1.0;
-      Ugain[i] = 1.0;
+      Qgain[i]  = 1.0;
+      Ugain[i]  = 1.0;
+      Qgaini[i] = 0.0;
+      Ugaini[i] = 0.0;
     }
     /* Where in the beam? */
-    x = (odouble)ccData[i*lcomp+1];  /* AZ opposite of RA; offsets in beam images are of antenna, here of source */
-    y = (odouble)ccData[i*lcomp+2];
+    x = -(odouble)ccData[i*lcomp+1];  /* AZ opposite of RA; offsets in beam images are of source */
+    y =  (odouble)ccData[i*lcomp+2];
     ifield = ccData[i*lcomp+0]+0.5;
     if (ifield<0) continue;
 
     /* Interpolate gains -RR and LL as voltage gains */
     plane = in->FreqPlane[args->channel];
     Ipol = ObitImageInterpValueInt (in->IBeam, args->BeamIInterp, x, y, -curPA, plane, err);
+    if (in->IBeamPh)
+      IpolPh = DG2RAD*ObitImageInterpValueInt (in->IBeamPh, args->BeamIPhInterp, x, y, -curPA, plane, err);
     Vpol = ObitImageInterpValueInt (in->VBeam, args->BeamVInterp, x, y, -curPA, plane, err);
+    if (in->VBeamPh)
+      VpolPh = DG2RAD*ObitImageInterpValueInt (in->VBeamPh, args->BeamVPhInterp, x, y, -curPA, plane, err);
     if (Ipol!=fblank) {
-      /*Lgain[i] = MAX (0.001, (Ipol - Vpol)/Ipol);
-	Rgain[i] = MAX (0.001, (Ipol + Vpol)/Ipol);*/
-       /* Beam images from voltage beam 
-       Lgain[i] = MAX (0.001, (1.0 - 2.0*Vpol));
-       Rgain[i] = MAX (0.001, (1.0 + 2.0*Vpol));  */
-       /* Beam images from voltage beam */
-       Lgain[i] = MAX (0.001, (1.0 - Vpol));
-       Rgain[i] = MAX (0.001, (1.0 + Vpol));
-       /* end DEBUG */
+      /* Phases given? */
+      if (in->IBeamPh && in->VBeamPh) {
+	Lgain[i]  = (1.0*cos(IpolPh) - Vpol*cos(VpolPh));
+	Lgaini[i] = (1.0*sin(IpolPh) - Vpol*sin(VpolPh));
+	Rgain[i]  = (1.0*cos(IpolPh) + Vpol*cos(VpolPh));
+	Rgaini[i] = (1.0*sin(IpolPh) + Vpol*sin(VpolPh));
+      } else { /* no phase */
+	Lgain[i] = (1.0 - Vpol);
+	Lgaini[i] = 0.0;
+	Rgain[i] = (1.0 + Vpol);
+	Rgaini[i] = 0.0;
+      }
 
      } else {
       Lgain[i] = 0.001;
       Rgain[i] = 0.001;
     }
-    /* end DEBUG */
 
     if (in->doCrossPol) {
       Qgain[i] = ObitImageInterpValueInt (in->QBeam, args->BeamQInterp, x, y, -curPA, plane, err);
       if (Qgain[i]==fblank) Qgain[i] = 0.0;
+      if (in->QBeamPh)
+	QpolPh = DG2RAD*ObitImageInterpValueInt (in->QBeamPh, args->BeamQPhInterp, x, y, -curPA, plane, err);
       Ugain[i] = ObitImageInterpValueInt (in->UBeam, args->BeamUInterp, x, y, -curPA, plane, err);
       if (Ugain[i]==fblank) Ugain[i] = 0.0;
-      /* Beam images from voltage beam 
-       Qgain[i] *= 2.0;
-       Ugain[i] *= 2.0;*/
-      /* Rotate Q+jU by parallactic angle
-      xr = cos (curPA*DG2RAD);
-      xi = -sin (curPA*DG2RAD);
-      tr = Qgain[i];
-      ti = Ugain[i];
-      Qgain[i] = tr*xr - xi*ti;
-      Ugain[i] = tr*xi + xr*ti; */
-      /* end DEBUG */
+      if (in->UBeamPh)
+	UpolPh = DG2RAD*ObitImageInterpValueInt (in->UBeamPh, args->BeamUPhInterp, x, y, -curPA, plane, err);
+      /* Rotate Q+jU by parallactic angle */
+      /* Phases given? */
+      if (in->QBeamPh && in->UBeamPh) {
+	xr  = cos (2.0*curPA*DG2RAD);
+	xi  = sin (2.0*curPA*DG2RAD);
+	tr  = Qgain[i]*cos(QpolPh);
+	ti  = Ugain[i]*cos(UpolPh);
+	tri = Qgain[i]*sin(QpolPh);
+	tii = Ugain[i]*sin(UpolPh);
+	Qgain[i] = tr*xr - xi*ti;
+	Ugain[i] = tr*xi + xr*ti;
+	Qgaini[i] = tri*xr - xi*tii;
+	Ugaini[i] = tri*xi + xr*tii;
+      } else { /* no phase */
+	xr = cos (2.0*curPA*DG2RAD);
+	xi = sin (2.0*curPA*DG2RAD);
+	tr = Qgain[i];
+	ti = Ugain[i];
+	Qgain[i]  = tr*xr - xi*ti;
+	Qgaini[i] = 0.0;
+	Ugain[i]  = tr*xi + xr*ti;
+	Ugaini[i] = 0.0;
+      }
     }
     
   } /* end loop over components */
@@ -879,10 +1002,18 @@ void ObitSkyModelVMBeamInit  (gpointer inn)
   in->Lgain        = NULL;
   in->Qgain        = NULL;
   in->Ugain        = NULL;
+  in->Rgaini       = NULL;
+  in->Lgaini       = NULL;
+  in->Qgaini       = NULL;
+  in->Ugaini       = NULL;
   in->IBeam        = NULL;
   in->QBeam        = NULL;
   in->UBeam        = NULL;
   in->VBeam        = NULL;
+  in->IBeamPh      = NULL;
+  in->QBeamPh      = NULL;
+  in->UBeamPh      = NULL;
+  in->VBeamPh      = NULL;
   in->AntList      = NULL;
   in->curSource    = NULL;
   in->numAntList   = 0;
@@ -914,10 +1045,18 @@ void ObitSkyModelVMBeamClear (gpointer inn)
   if (in->Lgain)  g_free(in->Lgain);  in->Lgain  = NULL;
   if (in->Qgain)  g_free(in->Qgain);  in->Qgain  = NULL;
   if (in->Ugain)  g_free(in->Ugain);  in->Ugain  = NULL;
+  if (in->Rgaini) g_free(in->Rgaini); in->Rgaini = NULL;
+  if (in->Lgaini) g_free(in->Lgaini); in->Lgaini = NULL;
+  if (in->Qgaini) g_free(in->Qgaini); in->Qgaini = NULL;
+  if (in->Ugaini) g_free(in->Ugaini); in->Ugaini = NULL;
   in->IBeam     = ObitImageInterpUnref(in->IBeam);
   in->QBeam     = ObitImageInterpUnref(in->QBeam);
   in->UBeam     = ObitImageInterpUnref(in->UBeam);
   in->VBeam     = ObitImageInterpUnref(in->VBeam);
+  in->IBeamPh   = ObitImageInterpUnref(in->IBeamPh);
+  in->QBeamPh   = ObitImageInterpUnref(in->QBeamPh);
+  in->UBeamPh   = ObitImageInterpUnref(in->UBeamPh);
+  in->VBeamPh   = ObitImageInterpUnref(in->VBeamPh);
   in->curSource = ObitSourceUnref(in->curSource);
   if (in->AntList)  {
     for (i=0; i<in->numAntList; i++) { 
@@ -928,7 +1067,7 @@ void ObitSkyModelVMBeamClear (gpointer inn)
     
   /* Thread stuff */
   if (in->threadArgs) {
-    /* Check type - only handle "squint" */
+    /* Check type - only handle "vmbeam" */
     if (!strncmp((gchar*)in->threadArgs[0], "vmbeam", 6)) {
       for (i=0; i<in->nThreads; i++) {
 	args = (VMBeamFTFuncArg*)in->threadArgs[i];
@@ -936,6 +1075,10 @@ void ObitSkyModelVMBeamClear (gpointer inn)
 	if (args->Lgain)  g_free(args->Lgain);
 	if (args->Qgain)  g_free(args->Qgain);
 	if (args->Ugain)  g_free(args->Ugain);
+	if (args->Rgaini) g_free(args->Rgaini);
+	if (args->Lgaini) g_free(args->Lgaini);
+	if (args->Qgaini) g_free(args->Qgaini);
+	if (args->Ugaini) g_free(args->Ugaini);
 	g_free(in->threadArgs[i]);
       }
       g_free(in->threadArgs);
@@ -1114,12 +1257,20 @@ void ObitSkyModelVMBeamFTDFT (ObitSkyModelVM *inn, olong field, ObitUV *uvdata, 
       if (args->Lgain)  g_free(args->Lgain);
       if (args->Qgain)  g_free(args->Qgain); args->Qgain = NULL;
       if (args->Ugain)  g_free(args->Ugain); args->Ugain = NULL;
+      if (args->Rgaini) g_free(args->Rgaini);
+      if (args->Lgaini) g_free(args->Lgaini);
+      if (args->Qgaini) g_free(args->Qgaini); args->Qgaini = NULL;
+      if (args->Ugaini) g_free(args->Ugaini); args->Ugaini = NULL;
       args->dimGain = in->numComp;
       args->Rgain  = g_malloc0(args->dimGain*sizeof(ofloat));
+      args->Rgaini = g_malloc0(args->dimGain*sizeof(ofloat));
       args->Lgain  = g_malloc0(args->dimGain*sizeof(ofloat));
+      args->Lgaini = g_malloc0(args->dimGain*sizeof(ofloat));
       if (in->doCrossPol) {
 	args->Qgain  = g_malloc0(args->dimGain*sizeof(ofloat));
+	args->Qgaini = g_malloc0(args->dimGain*sizeof(ofloat));
 	args->Ugain  = g_malloc0(args->dimGain*sizeof(ofloat));
+	args->Ugaini = g_malloc0(args->dimGain*sizeof(ofloat));
       }
     }
     /* Update which vis */
@@ -1744,5 +1895,661 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
   
   return NULL;
 } /* ThreadSkyModelVMBeamFTDFT */
+
+/**
+ * Do Fourier transform using a DFT for a buffer of data.
+ * Version for time/spatial dependent effects with phase corrections .
+ * If doDivide member is true then FT of model is divided into the data,
+ * If doReplace member is true then FT of model replaces the data,
+ * else, it is subtracted.
+ * If doFlip member is true the Fourier transform is multiplied by sqrt(-1)
+ * (for Stokes RL and LR)
+ * This function may be overridden in a derived class and 
+ * should always be called by its function pointer.
+ * Method assumes same correction to all antennas.
+ * After the AIPSish QXXPTS, QPTDIV and friends
+ * Arguments are given in the VMBeamFTFuncArg structure passed as arg starting 
+ * with the following:
+ * \li type   String identifying structure
+ * \li in     SkyModelVM with model components loaded (ObitSkyModelLoad)
+ * \li field  Field number being processed (-1 => all)
+ * \li uvdata UV data set to model and subtract from current buffer
+ * \li first  First (1-rel) vis in uvdata buffer to process this thread
+ * \li last   Highest (1-rel) vis in uvdata buffer to process this thread
+ * \li ithread thread number, <0-> no threads
+ * \li err    Obit error stack object.
+ * \li begVMModelTime Start time (days) of validity of model
+ * \li endVMModelTime End time (days) of validity of model
+ * \li VMComps Thread copy of Components list - not used here
+ * \li dimGain Dimension of Rgain
+ * \li Rgain   Float array of time/spatially variable R component gain
+ * \li Rgaini  Float array of time/spatially variable R imaginary component gain
+ * \li Lgain   Float array of time/spatially variable L component gain
+ * \li Lgaini  Float array of time/spatially variable L imaginary component gain
+ * \li Qgain   Float array of time/spatially variable Q component gain
+ * \li Qgaini  Float array of time/spatially variable Q imaginary component gain
+ * \li Ugain   Float array of time/spatially variable U component gain
+ * \li Ugaini  Float array of time/spatially variable U imaginary component gain
+ * \li channel Current UV channel being processed (used in model update ).
+ * \return NULL
+ */
+static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
+{
+  /* Get arguments from structure */
+  VMBeamFTFuncArg *largs = (VMBeamFTFuncArg*)args;
+  ObitSkyModelVMBeam *in = (ObitSkyModelVMBeam*)largs->in;
+  /*olong field      = largs->field;*/
+  ObitUV *uvdata   = largs->uvdata;
+  olong loVis      = largs->first-1;
+  olong hiVis      = largs->last;
+  olong ithread    = MAX (0, largs->ithread);
+  ObitErr *err     = largs->err;
+  /*olong dimGain    = largs->dimGain;*/
+  ofloat *Rgain    = largs->Rgain;
+  ofloat *Lgain    = largs->Lgain;
+  ofloat *Qgain    = largs->Qgain;
+  ofloat *Ugain    = largs->Ugain;
+  ofloat *Rgaini   = largs->Rgaini;
+  ofloat *Lgaini   = largs->Lgaini;
+  ofloat *Qgaini   = largs->Qgaini;
+  ofloat *Ugaini   = largs->Ugaini;
+
+  olong iVis, iIF, iChannel, iStoke, iComp, lcomp, ncomp;
+  olong lrec, nrparm, naxis[2], channel, plane;
+  olong startPoln, numberPoln, jincs, startChannel, numberChannel;
+  olong lstartChannel, lstartIF;
+  olong jincf, startIF, numberIF, jincif, kincf, kincif;
+  olong offset, offsetChannel, offsetIF, iterm, nterm=0, nUVchan, nUVpoln;
+  olong ilocu, ilocv, ilocw, iloct, ilocb, suba, itemp, ant1, ant2, mcomp;
+  ofloat *visData, *Data, *ddata, *fscale;
+  ofloat sumRealRR, sumImagRR, modRealRR=0.0, modImagRR=0.0;
+  ofloat sumRealLL, sumImagLL, modRealLL=0.0, modImagLL=0.0;
+  ofloat sumRealQ,  sumImagQ,  modRealQ=0.0,  modImagQ=0.0;
+  ofloat sumRealU,  sumImagU,  modRealU=0.0,  modImagU=0.0;
+  ofloat cbase, tx, ty, tz, ll, lll;
+  ofloat re, im, specFact;
+  ofloat *rgain1, *lgain1, *rgain2, *lgain2, *rgain1i, *lgain1i, *rgain2i, *lgain2i;
+  ofloat *qgain1, *ugain1, *qgain2, *ugain2, *qgain1i, *ugain1i, *qgain2i, *ugain2i;
+  ofloat amp, ampr, ampl, arg, freq2=0.0, freqFact, wtRR=0.0, wtLL=0.0, temp;
+#define FazArrSize 100  /* Size of the amp/phase/sine/cosine arrays */
+  ofloat AmpArrRr[FazArrSize], AmpArrLr[FazArrSize], AmpArrRi[FazArrSize], AmpArrLi[FazArrSize];
+  ofloat FazArr[FazArrSize];
+  ofloat CosArr[FazArrSize], SinArr[FazArrSize];
+  olong it, jt, itcnt;
+  gboolean doCrossPol;
+  odouble *freqArr;
+  const ObitSkyModelVMClassInfo 
+    *myClass=(const ObitSkyModelVMClassInfo*)in->ClassInfo;
+  gchar *routine = "ObitSkyModelVMBeamFTDFT";
+
+  /* error checks - assume most done at higher level */
+  if (err->error) goto finish;
+
+  /* Visibility pointers */
+  ilocu =  uvdata->myDesc->ilocu;
+  ilocv =  uvdata->myDesc->ilocv;
+  ilocw =  uvdata->myDesc->ilocw;
+  iloct =  uvdata->myDesc->iloct;
+  ilocb =  uvdata->myDesc->ilocb;
+
+  /* Set channel, IF and Stokes ranges (to 0-rel)*/
+  startIF       = in->startIFPB-1;
+  numberIF      = MAX (1, in->numberIFPB);
+  jincif        = uvdata->myDesc->incif;
+  startChannel  = in->startChannelPB-1;
+  numberChannel = MAX (1, in->numberChannelPB);
+  nUVchan       = uvdata->myDesc->inaxes[ uvdata->myDesc->jlocf];
+  jincf         = uvdata->myDesc->incf;
+  startPoln     = in->startPoln-1;
+  numberPoln    = in->numberPoln;
+  nUVpoln       = uvdata->myDesc->inaxes[ uvdata->myDesc->jlocs];
+  jincs         = uvdata->myDesc->incs;  /* increment in real array */
+  /* Increments in frequency tables */
+  if (uvdata->myDesc->jlocf<uvdata->myDesc->jlocif) { /* freq before IF */
+    kincf = 1;
+    kincif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
+  } else { /* IF beforefreq  */
+    kincif = 1;
+    kincf = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
+  }
+
+  /* Cross or only parallel pol? */
+  doCrossPol = (nUVpoln > 2) && in->doCrossPol;
+  /* Only parallel for divide */
+  if (in->doDivide) doCrossPol = FALSE;
+
+  /* Get pointer for components */
+  naxis[0] = 0; naxis[1] = 0; 
+  Data = ObitFArrayIndex(in->comps, naxis);
+  lcomp = in->comps->naxis[0];   /* Length of row in comp table */
+  ncomp = in->comps->naxis[1];   /* Number of components */
+  mcomp = in->numComp;           /* Actual number */
+
+  /* Get pointer for frequency correction tables */
+  fscale  = uvdata->myDesc->fscale;
+  freqArr = uvdata->myDesc->freqArr;
+
+  /* Current channel (0-rel) */
+  channel = 0;
+  plane   = in->FreqPlane[largs->channel];  /* Which plane in correction cube */
+
+  /* Outer loop over blocks of channels */
+  /* Starting parameters this pass */
+  lstartIF       = startIF;
+  lstartChannel  = startChannel;
+  while (channel<(numberIF*numberChannel)) {
+    
+    /* Loop over vis in buffer */
+    lrec    = uvdata->myDesc->lrec;         /* Length of record */
+    visData = uvdata->buffer+loVis*lrec;    /* Buffer pointer with appropriate offset */
+    nrparm  = uvdata->myDesc->nrparm;       /* Words of "random parameters" */
+    
+    for (iVis=loVis; iVis<hiVis; iVis++) {
+      
+      /* Is current model still valid? */
+      if ((visData[iloct] > largs->endVMModelTime) || (visData[iloct] < largs->begVMModelTime)) {
+	/* Current channel - which plane in correction to apply? */
+	largs->channel = channel;
+	/* Subarray 0-rel */
+	itemp = (olong)visData[ilocb];
+	suba = 100.0 * (visData[ilocb]-itemp) + 0.5; 
+	/* Update */
+	myClass->ObitSkyModelVMUpdateModel ((ObitSkyModelVM*)in, visData[iloct], suba, uvdata, ithread, err);
+	if (err->error) {
+	  ObitThreadLock(in->thread);  /* Lock against other threads */
+	  Obit_log_error(err, OBIT_Error,"%s Error updating VMComps",
+			 routine);
+	  ObitThreadUnlock(in->thread); 
+	  goto finish;
+	}
+      }
+      
+      /* Need antennas numbers */
+      cbase = visData[ilocb]; /* Baseline */
+      ant1 = (cbase / 256.0) + 0.001;
+      ant2 = (cbase - ant1 * 256) + 0.001;
+      ant1--;    /* 0 rel */
+      ant2--;    /* 0 rel */
+      
+      /* Loop over IFs */
+      channel = lstartIF* nUVchan + lstartChannel; /* UV Channel */
+      for (iIF=lstartIF; iIF<startIF+numberIF; iIF++) {
+	offsetIF = nrparm + iIF*jincif; 
+	for (iChannel=lstartChannel; iChannel<startChannel+numberChannel; iChannel++) {
+	  offsetChannel = offsetIF + iChannel*jincf; 
+	  freqFact = fscale[iIF*kincif + iChannel*kincf];  /* Frequency scaling factor */
+	  
+	  /* Sum over components */
+	  /* Table values 0=Amp, 1=-2*pi*x, 2=-2*pi*y, 3=-2*pi*z */
+	  sumRealRR = sumImagRR = sumRealLL = sumImagLL = 0.0;
+	  sumRealQ  = sumImagQ  = sumRealU  = sumImagU  = 0.0;
+	  /* Set component gain lists by antenna and type */
+	  ddata = Data;
+	  rgain1 = Rgain;
+	  rgain2 = Rgain;
+	  lgain1 = Lgain;
+	  lgain2 = Lgain;
+	  qgain1 = Qgain;
+	  qgain2 = Qgain;
+	  ugain1 = Ugain;
+	  ugain2 = Ugain;
+	  /* Imaginary parts */
+	  rgain1i = Rgaini;
+	  rgain2i = Rgaini;
+	  lgain1i = Lgaini;
+	  lgain2i = Lgaini;
+	  qgain1i = Qgaini;
+	  qgain2i = Qgaini;
+	  ugain1i = Ugaini;
+	  ugain2i = Ugaini;
+
+	  /* Sum by model type - assume phase same for RR, LL */
+	  switch (in->modType) {
+	  case OBIT_SkyModel_PointMod:     /* Point */
+	    /* From the AIPSish QXXPTS.FOR  */
+	    for (it=0; it<mcomp; it+=FazArrSize) {
+	      itcnt = 0;
+	      for (iComp=it; iComp<mcomp; iComp++) {
+		FazArr[itcnt] = freqFact * (ddata[4]*visData[ilocu] + 
+					    ddata[5]*visData[ilocv] + 
+					    ddata[6]*visData[ilocw]);
+		/* Parallel  pol */
+		/* Amplitude from component flux and two gains */
+		AmpArrRr[itcnt] = ddata[3] * rgain1[iComp];
+		AmpArrLr[itcnt] = ddata[3] * lgain1[iComp];
+		AmpArrRi[itcnt] = ddata[3] * rgain1i[iComp];
+		AmpArrLi[itcnt] = ddata[3] * lgain1i[iComp];
+		ddata += lcomp;   /* update pointer */
+		itcnt++;          /* Count in amp/phase buffers */
+		if (itcnt>=FazArrSize) break;
+	      } /* end inner loop over components */
+	      
+	      /* Convert phases to sin/cos */
+	      ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	      /* Accumulate real and imaginary parts */
+	      for (jt=0; jt<itcnt; jt++) {
+		sumRealRR += AmpArrRr[jt]*CosArr[jt] - AmpArrRi[jt]*SinArr[jt];
+		sumImagRR += AmpArrRr[jt]*SinArr[jt] + AmpArrRi[jt]*CosArr[jt];
+		sumRealLL += AmpArrLr[jt]*CosArr[jt] - AmpArrLi[jt]*SinArr[jt];
+		sumImagLL += AmpArrLr[jt]*SinArr[jt] + AmpArrLi[jt]*CosArr[jt];
+		if (doCrossPol) {
+		  /* Cross pol */
+		  re = 0.5*(AmpArrRr[jt]+AmpArrLr[jt])*CosArr[jt] - 
+		    0.5*(AmpArrRi[jt]+AmpArrLi[jt])*SinArr[jt];  
+		  im = 0.5*(AmpArrRr[jt]+AmpArrLr[jt])*SinArr[jt] + 
+		    0.5*(AmpArrRi[jt]+AmpArrLi[jt])*CosArr[jt];
+		  sumRealQ += re * qgain1[jt]  - im * qgain1i[jt];
+		  sumImagQ += re * qgain1i[jt] + im * qgain1[jt];
+		  sumRealU += re * ugain1[jt]  - im * ugain1i[jt];
+		  sumImagU += re * ugain1i[jt] + im * ugain1[jt];
+		} /* end xpol */
+	      } /* End loop over amp/phase buffer */
+	    } /* end outer loop over components */
+	    break;
+	  case OBIT_SkyModel_PointModSpec:     /* Point + spectrum */
+	    for (it=0; it<mcomp; it+=FazArrSize) {
+	      itcnt = 0;
+	      for (iComp=it; iComp<mcomp; iComp++) {
+		if (ddata[3]!=0.0) {  /* valid? */
+		  tx = ddata[4]*(odouble)visData[ilocu];
+		  ty = ddata[5]*(odouble)visData[ilocv];
+		  tz = ddata[6]*(odouble)visData[ilocw];
+		  /* Frequency dependent term */
+		  lll = ll = log(freqFact);
+		  arg = 0.0;
+		  for (iterm=0; iterm<nterm; iterm++) {
+		    arg += ddata[6+iterm] * lll;
+		    lll *= ll;
+		  }
+		  specFact = exp(arg);
+		  FazArr[itcnt]  = freqFact * (tx + ty + tz);
+		  AmpArrRr[itcnt] = ddata[3] * rgain1[iComp];
+		  AmpArrLr[itcnt] = ddata[3] * lgain1[iComp];
+		  AmpArrRi[itcnt] = ddata[3] * rgain1i[iComp];
+		  AmpArrLi[itcnt] = ddata[3] * lgain1i[iComp];
+		}  /* end if valid */
+		ddata += lcomp;  /* update pointer */
+		itcnt++;          /* Count in amp/phase buffers */
+		if (itcnt>=FazArrSize) break;
+	      } /* end inner loop over components */
+	      
+	      /* Convert phases to sin/cos */
+	      ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+
+	      /* Accumulate real and imaginary parts */
+	      for (jt=0; jt<itcnt; jt++) {
+		/* Parallel  pol */
+		sumRealRR += AmpArrRr[jt]*CosArr[jt] - AmpArrRi[jt]*SinArr[jt];
+		sumImagRR += AmpArrRr[jt]*SinArr[jt] + AmpArrRi[jt]*CosArr[jt];
+		sumRealLL += AmpArrLr[jt]*CosArr[jt] - AmpArrLi[jt]*SinArr[jt];
+		sumImagLL += AmpArrLr[jt]*SinArr[jt] + AmpArrLi[jt]*CosArr[jt];
+		if (doCrossPol) {
+		  /* Cross pol */
+		  re = 0.5*(AmpArrRr[jt]+AmpArrLr[jt])*CosArr[jt] - 
+		    0.5*(AmpArrRi[jt]+AmpArrLi[jt])*SinArr[jt];  
+		  im = 0.5*(AmpArrRr[jt]+AmpArrLr[jt])*SinArr[jt] + 
+		    0.5*(AmpArrRi[jt]+AmpArrLi[jt])*CosArr[jt];
+		  sumRealQ += re * qgain1[jt]  - im * qgain1i[jt];
+		  sumImagQ += re * qgain1i[jt] + im * qgain1[jt];
+		  sumRealU += re * ugain1[jt]  - im * ugain1i[jt];
+		  sumImagU += re * ugain1i[jt] + im * ugain1[jt];
+		} /* end xpol */
+	      } /* End loop over amp/phase buffer */
+	    } /* end outer loop over components */
+	    break;
+	  case OBIT_SkyModel_GaussMod:     /* Gaussian on sky */
+	    /* From the AIPSish QGASUB.FOR  */
+	    freq2 = freqArr[iIF*kincif + iChannel*kincf];    /* Frequency squared */
+	    freq2 *= freq2;
+	    for (it=0; it<mcomp; it+=FazArrSize) {
+	      itcnt = 0;
+	      for (iComp=it; iComp<mcomp; iComp++) {
+		FazArr[itcnt] = freqFact * (ddata[4]*visData[ilocu] + 
+					    ddata[5]*visData[ilocv] + 
+					    ddata[6]*visData[ilocw]);
+		/* Parallel  pol */
+		arg = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
+			       ddata[8]*visData[ilocv]*visData[ilocv] +
+			       ddata[9]*visData[ilocu]*visData[ilocv]);
+		if (arg>1.0e-5) ampr *= exp (arg);
+		arg = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
+			       ddata[8]*visData[ilocv]*visData[ilocv] +
+			       ddata[9]*visData[ilocu]*visData[ilocv]);
+		ampr = ddata[3] * rgain1[iComp];
+		ampl = ddata[3] * lgain1[iComp];
+		if (arg>1.0e-5) {ampl *= exp (arg); ampr *= exp (arg);}
+		AmpArrRr[itcnt] = ampr;
+		AmpArrLr[itcnt] = ampl;
+		ampl = ddata[3] * lgain1i[iComp];
+		ampr = ddata[3] * rgain1i[iComp];
+		if (arg>1.0e-5) {ampl *= exp (arg); ampr *= exp (arg);}
+		AmpArrRi[itcnt] = ampr;
+		AmpArrLi[itcnt] = ampl;
+		ddata += lcomp;   /* update pointer */
+		itcnt++;          /* Count in amp/phase buffers */
+		if (itcnt>=FazArrSize) break;
+	      }  /* end inner loop over components */
+	      
+	      /* Convert phases to sin/cos */
+	      ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	      /* Accumulate real and imaginary parts */
+	      for (jt=0; jt<itcnt; jt++) {
+		sumRealRR += AmpArrRr[jt]*CosArr[jt] - AmpArrRi[jt]*SinArr[jt];
+		sumImagRR += AmpArrRr[jt]*SinArr[jt] + AmpArrRi[jt]*CosArr[jt];
+		sumRealLL += AmpArrLr[jt]*CosArr[jt] - AmpArrLi[jt]*SinArr[jt];
+		sumImagLL += AmpArrLr[jt]*SinArr[jt] + AmpArrLi[jt]*CosArr[jt];
+		if (doCrossPol) {
+		  /* Cross pol */
+		  re = 0.5*(AmpArrRr[jt]+AmpArrLr[jt])*CosArr[jt] - 
+		    0.5*(AmpArrRi[jt]+AmpArrLi[jt])*SinArr[jt];  
+		  im = 0.5*(AmpArrRr[jt]+AmpArrLr[jt])*SinArr[jt] + 
+		    0.5*(AmpArrRi[jt]+AmpArrLi[jt])*CosArr[jt];
+		  sumRealQ += re * qgain1[jt]  - im * qgain1i[jt];
+		  sumImagQ += re * qgain1i[jt] + im * qgain1[jt];
+		  sumRealU += re * ugain1[jt]  - im * ugain1i[jt];
+		  sumImagU += re * ugain1i[jt] + im * ugain1[jt];
+		} /* end xpol */
+	      } /* End loop over amp/phase buffer */
+	    } /* end outer loop over components */
+	    break;
+	  case OBIT_SkyModel_GaussModSpec:     /* Gaussian on sky + spectrum*/
+	    freq2 = freqFact*freqFact;    /* Frequency factor squared */
+	    for (it=0; it<mcomp; it+=FazArrSize) {
+	      itcnt = 0;
+	      for (iComp=it; iComp<mcomp; iComp++) {
+		if (ddata[3]!=0.0) {  /* valid? */
+		  /* Frequency dependent term */
+		  lll = ll = log(freqFact);
+		  arg = 0.0;
+		  for (iterm=0; iterm<nterm; iterm++) {
+		    arg += ddata[9+iterm] * lll;
+		    lll *= ll;
+		  }
+		  specFact = exp(arg);
+		  arg = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
+				 ddata[8]*visData[ilocv]*visData[ilocv] +
+				 ddata[9]*visData[ilocu]*visData[ilocv]);
+		  if (arg<-1.0e-5) amp = specFact * ddata[3] * exp (arg);
+		  else amp = specFact * ddata[3];
+		  tx = ddata[4]*(odouble)visData[ilocu];
+		  ty = ddata[5]*(odouble)visData[ilocv];
+		  tz = ddata[6]*(odouble)visData[ilocw];
+		  FazArr[itcnt] = freqFact * (tx + ty + tz);
+		  AmpArrRr[itcnt] = ddata[3] * rgain1[iComp];
+		  AmpArrLr[itcnt] = ddata[3] * lgain1[iComp];
+		  AmpArrRi[itcnt] = ddata[3] * rgain1i[iComp];
+		  AmpArrLi[itcnt] = ddata[3] * lgain1i[iComp];
+		} /* end if valid */
+		ddata += lcomp;  /* update pointer */
+		itcnt++;          /* Count in amp/phase buffers */
+		if (itcnt>=FazArrSize) break;
+	      }  /* end inner loop over components */
+
+	      /* Convert phases to sin/cos */
+	      ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	      /* Accumulate real and imaginary parts */
+	      for (jt=0; jt<itcnt; jt++) {
+		sumRealRR += AmpArrRr[jt]*CosArr[jt] - AmpArrRi[jt]*SinArr[jt];
+		sumImagRR += AmpArrRr[jt]*SinArr[jt] + AmpArrRi[jt]*CosArr[jt];
+		sumRealLL += AmpArrLr[jt]*CosArr[jt] - AmpArrLi[jt]*SinArr[jt];
+		sumImagLL += AmpArrLr[jt]*SinArr[jt] + AmpArrLi[jt]*CosArr[jt];
+		if (doCrossPol) {
+		  /* Cross pol */
+		  re = 0.5*(AmpArrRr[jt]+AmpArrLr[jt])*CosArr[jt] - 
+		    0.5*(AmpArrRi[jt]+AmpArrLi[jt])*SinArr[jt];  
+		  im = 0.5*(AmpArrRr[jt]+AmpArrLr[jt])*SinArr[jt] + 
+		    0.5*(AmpArrRi[jt]+AmpArrLi[jt])*CosArr[jt];
+		  sumRealQ += re * qgain1[jt]  - im * qgain1i[jt];
+		  sumImagQ += re * qgain1i[jt] + im * qgain1[jt];
+		  sumRealU += re * ugain1[jt]  - im * ugain1i[jt];
+		  sumImagU += re * ugain1i[jt] + im * ugain1[jt];
+		} /* end xpol */
+	      } /* End loop over amp/phase buffer */
+	    } /* end outer loop over components */
+	    break;
+	  case OBIT_SkyModel_USphereMod:    /* Uniform sphere */
+	    /* From the AIPSish QSPSUB.FOR  */
+	    for (it=0; it<mcomp; it+=FazArrSize) {
+	      itcnt = 0;
+	      for (iComp=it; iComp<mcomp; iComp++) {
+		FazArr[itcnt] = freqFact * (ddata[4]*visData[ilocu] + 
+					    ddata[5]*visData[ilocv] + 
+					    ddata[6]*visData[ilocw]);
+		arg = freqFact * sqrt(visData[ilocu]*visData[ilocu] +
+				      visData[ilocv]*visData[ilocv]) * ddata[7];
+		arg = MAX (arg, 0.1);
+		arg = ((sin(arg)/(arg*arg*arg)) - cos(arg)/(arg*arg));
+		AmpArrRr[itcnt] = ddata[3] * rgain1[iComp];
+		AmpArrLr[itcnt] = ddata[3] * lgain1[iComp];
+		AmpArrRi[itcnt] = ddata[3] * rgain1i[iComp];
+		AmpArrLi[itcnt] = ddata[3] * lgain1i[iComp];
+		ddata += lcomp;   /* update pointer */
+		itcnt++;          /* Count in amp/phase buffers */
+		if (itcnt>=FazArrSize) break;
+	      }
+	      
+	      /* Convert phases to sin/cos */
+	      ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	      /* Accumulate real and imaginary parts */
+	      for (jt=0; jt<itcnt; jt++) {
+		sumRealRR += AmpArrRr[jt]*CosArr[jt] - AmpArrRi[jt]*SinArr[jt];
+		sumImagRR += AmpArrRr[jt]*SinArr[jt] + AmpArrRi[jt]*CosArr[jt];
+		sumRealLL += AmpArrLr[jt]*CosArr[jt] - AmpArrLi[jt]*SinArr[jt];
+		sumImagLL += AmpArrLr[jt]*SinArr[jt] + AmpArrLi[jt]*CosArr[jt];
+		if (doCrossPol) {
+		  /* Cross pol */
+		  re = 0.5*(AmpArrRr[jt]+AmpArrLr[jt])*CosArr[jt] - 
+		    0.5*(AmpArrRi[jt]+AmpArrLi[jt])*SinArr[jt];  
+		  im = 0.5*(AmpArrRr[jt]+AmpArrLr[jt])*SinArr[jt] + 
+		    0.5*(AmpArrRi[jt]+AmpArrLi[jt])*CosArr[jt];
+		  sumRealQ += re * qgain1[jt]  - im * qgain1i[jt];
+		  sumImagQ += re * qgain1i[jt] + im * qgain1[jt];
+		  sumRealU += re * ugain1[jt]  - im * ugain1i[jt];
+		  sumImagU += re * ugain1i[jt] + im * ugain1[jt];
+		} /* end xpol */
+	      } /* End loop over amp/phase buffer */
+	    } /* end outer loop over components */
+	    break;
+	  case OBIT_SkyModel_USphereModSpec:    /* Uniform sphere + spectrum*/
+	    for (it=0; it<mcomp; it+=FazArrSize) {
+	      itcnt = 0;
+	      for (iComp=it; iComp<mcomp; iComp++) {
+		if (ddata[3]!=0.0) {  /* valid? */
+		  /* Frequency dependent term */
+		  lll = ll = log(freqFact);
+		  arg = 0.0;
+		  for (iterm=0; iterm<nterm; iterm++) {
+		    arg += ddata[8+iterm] * lll;
+		    lll *= ll;
+		  }
+		  specFact = exp(arg);
+		  arg = freqFact * sqrt(visData[ilocu]*visData[ilocu] +
+					visData[ilocv]*visData[ilocv]) * ddata[7];
+		  arg = MAX (arg, 0.1);
+		  amp = specFact * ddata[3] * ((sin(arg)/(arg*arg*arg)) - cos(arg)/(arg*arg));
+		  tx = ddata[4]*(odouble)visData[ilocu];
+		  ty = ddata[5]*(odouble)visData[ilocv];
+		  tz = ddata[6]*(odouble)visData[ilocw];
+		  FazArr[itcnt] = freqFact * (tx + ty + tz);
+		  AmpArrRr[itcnt] = ddata[3] * rgain1[iComp];
+		  AmpArrLr[itcnt] = ddata[3] * lgain1[iComp];
+		  AmpArrRi[itcnt] = ddata[3] * rgain1i[iComp];
+		  AmpArrLi[itcnt] = ddata[3] * lgain1i[iComp];
+		} /* end if valid */
+		ddata += lcomp;  /* update pointer */
+		itcnt++;          /* Count in amp/phase buffers */
+		if (itcnt>=FazArrSize) break;
+	      }  /* end inner loop over components */
+
+	      /* Convert phases to sin/cos */
+	      ObitSinCosVec(itcnt, FazArr, SinArr, CosArr);
+	      /* Accumulate real and imaginary parts */
+	      for (jt=0; jt<itcnt; jt++) {
+		sumRealRR += AmpArrRr[jt]*CosArr[jt] - AmpArrRi[jt]*SinArr[jt];
+		sumImagRR += AmpArrRr[jt]*SinArr[jt] + AmpArrRi[jt]*CosArr[jt];
+		sumRealLL += AmpArrLr[jt]*CosArr[jt] - AmpArrLi[jt]*SinArr[jt];
+		sumImagLL += AmpArrLr[jt]*SinArr[jt] + AmpArrLi[jt]*CosArr[jt];
+		if (doCrossPol) {
+		  /* Cross pol */
+		  re = 0.5*(AmpArrRr[jt]+AmpArrLr[jt])*CosArr[jt] - 
+		    0.5*(AmpArrRi[jt]+AmpArrLi[jt])*SinArr[jt];  
+		  im = 0.5*(AmpArrRr[jt]+AmpArrLr[jt])*SinArr[jt] + 
+		    0.5*(AmpArrRi[jt]+AmpArrLi[jt])*CosArr[jt];
+		  sumRealQ += re * qgain1[jt]  - im * qgain1i[jt];
+		  sumImagQ += re * qgain1i[jt] + im * qgain1[jt];
+		  sumRealU += re * ugain1[jt]  - im * ugain1i[jt];
+		  sumImagU += re * ugain1i[jt] + im * ugain1[jt];
+		} /* end xpol */
+	      } /* End loop over amp/phase buffer */
+	    } /* end outer loop over components */
+	    break;
+	  default:
+	    ObitThreadLock(in->thread);  /* Lock against other threads */
+	    Obit_log_error(err, OBIT_Error,"%s Unknown Comp model type %d in %s",
+			   routine, in->modType, in->name);
+	    ObitThreadUnlock(in->thread); 
+	    goto finish;
+	  }; /* end switch by model type */
+	  
+	  /* Models from sums */
+	  modRealRR = sumRealRR;
+	  modImagRR = sumImagRR;
+	  modRealLL = sumRealLL;
+	  modImagLL = sumImagLL;
+	  if (doCrossPol) {
+	    modRealQ = sumRealQ;
+	    modImagQ = sumImagQ;
+	    modRealU = sumRealU;
+	    modImagU = sumImagU;
+	  }
+	  
+	  /* Dividing? */
+	  if (in->doDivide) {
+	    /* Divide model - also correct weight */
+	    wtRR = modRealRR * modRealRR + modImagRR * modImagRR;
+	    modRealRR /= wtRR;
+	    modImagRR /= wtRR;
+	    wtRR = sqrt (wtRR);
+	    wtLL = modRealLL * modRealLL + modImagLL * modImagLL;
+	    modRealLL /= wtLL;
+	    modImagLL /= wtLL;
+	    wtLL = sqrt (wtLL);
+	  }
+	  
+	  /* RR */
+	  iStoke = 0;
+	  offset = offsetChannel + iStoke*jincs; /* Visibility offset */
+	  
+	  /* Ignore blanked data unless replacing the data */
+	  if ((visData[offset+2]>0.0) || in->doReplace) {
+	    /* Apply model to data */
+	    if (in->doDivide) {
+	      temp = modRealRR * visData[offset] + modImagRR * visData[offset+1];
+	      visData[offset+1] = modRealRR * visData[offset+1] - modImagRR * visData[offset];
+	      visData[offset]   = temp;
+	      visData[offset+2] *= wtRR;  /* correct weight */
+	    } else if (in->doReplace) {  /* replace data with model */
+	      visData[offset]   = modRealRR;
+	      visData[offset+1] = modImagRR;
+	    } else {
+	      /* Subtract model */
+	      visData[offset]   -= modRealRR;
+	      visData[offset+1] -= modImagRR;
+	    }
+	  } /* end RR not blanked */
+	  
+	  /* LL */
+	  offset += jincs;
+	  /* Ignore blanked data unless replacing the data */
+	  if ((visData[offset+2]>0.0) || in->doReplace) {
+	    /* Apply model to data */
+	    if (in->doDivide) {
+	      temp = modRealLL * visData[offset] + modImagLL * visData[offset+1];
+	      visData[offset+1] = modRealLL * visData[offset+1] - modImagLL * visData[offset];
+	      visData[offset]   = temp;
+	      visData[offset+2] *= wtLL;  /* correct weight */
+	    } else if (in->doReplace) {  /* replace data with model */
+	      visData[offset]   = modRealLL;
+	      visData[offset+1] = modImagLL;
+	    } else {
+	      /* Subtract model */
+	      visData[offset]   -= modRealLL;
+	      visData[offset+1] -= modImagLL;
+	    }
+	  } /* end LL not blanked */
+	  
+	  if (doCrossPol) {
+	    /* RL = Q+iU */
+	    iStoke = 2;
+	    offset = offsetChannel + iStoke*jincs; /* Visibility offset */
+	    
+	    /* Ignore blanked data unless replacing the data */
+	    if ((visData[offset+2]>0.0) || in->doReplace) {
+	      /* Apply model to data */
+	      if (in->doReplace) {  /* replace data with model */
+		/* TMS visData[offset]   = modRealU + modImagQ;
+		   visData[offset+1] = modImagU - modRealQ;*/
+                visData[offset]   = modRealQ - modImagU;
+                visData[offset+1] = modImagQ + modRealU;
+	      } else {
+		/* Subtract model */
+                visData[offset]   -= (modRealQ - modImagU);
+                visData[offset+1] -= (modImagQ + modRealU);
+	      }
+	    } /* end RL not blanked */
+	    
+	    /* LR  = Q-iU */
+	    offset += jincs;
+	    /* Ignore blanked data unless replacing the data */
+	    if ((visData[offset+2]>0.0) || in->doReplace) {
+	      /* Apply model to data */
+	      if (in->doReplace) {  /* replace data with model */
+		/* TMS visData[offset]   = (-modRealU + modImagQ);
+		   visData[offset+1] = (-modImagU - modRealQ);*/
+		visData[offset]   = modRealQ + modImagU;
+                visData[offset+1] = modImagQ - modRealU;
+	      } else {
+		/* Subtract model */
+		visData[offset]   -= (modRealQ + modImagU);
+                visData[offset+1] -= (modImagQ - modRealU);
+	      }
+	    } /* end LR not blanked */
+	  } /* end crosspol */
+	  
+	  offsetChannel += jincf;
+	  channel++; /* Finished another channel */
+	  /* Have we finished this plane in the correction cubes? */
+	  if (plane!=in->FreqPlane[MIN(channel, (in->numUVChann-1))]) {
+	    /* Reset gains & channels if this the last vis */
+	    if (iVis>=(hiVis-1)) {
+	      largs->endVMModelTime = -1.0e20;  
+	      lstartChannel = iChannel;
+	      lstartIF      = iIF;
+	      if (iChannel==(startChannel+numberChannel-1)) {  /* end of channel loop */
+		lstartChannel = 0;
+		lstartIF++;
+	      }
+	    }
+	    plane   = in->FreqPlane[MIN(channel, (in->numUVChann-1))];  /* Which plane in correction cube */
+	    goto newPlane;
+	  } /* end if new channel */
+	} /* end loop over Channel */
+	offsetIF += jincif;
+      } /* end loop over IF */
+      
+      /* Come to here is finished with correction plane */
+    newPlane:
+      visData += lrec; /* Update vis pointer */
+    } /* end loop over visibilities */
+    iStoke = 0;  /* DEBUG */
+  } /* end outer frequency loop */
+
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+} /* ThreadSkyModelVMBeamFTDFTPh */
 
 

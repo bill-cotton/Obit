@@ -58,8 +58,10 @@ extern ObitInfoList* SkyModelVMBeamGetList (ObitSkyModelVMBeam* in) {
 
 extern ObitSkyModelVMBeam* SkyModelVMBeamCreate (char *name, ObitImageMosaic* mosaic,
   ObitUV *uvData, ObitImage *IBeam,  ObitImage *VBeam, ObitImage *QBeam,  ObitImage *UBeam, 
+  ObitImage *IBeamPh,  ObitImage *VBeamPh, ObitImage *QBeamPh,  ObitImage *UBeamPh, 
   ObitErr *err) {
- return ObitSkyModelVMBeamCreate(name, mosaic, uvData, IBeam, VBeam, QBeam, UBeam, err);
+ return ObitSkyModelVMBeamCreate(name, mosaic, uvData, IBeam, VBeam, QBeam, UBeam, 
+    IBeamPh, VBeamPh, QBeamPh, UBeamPh, err);
 }
 
 extern char* SkyModelVMBeamGetName (ObitSkyModelVMBeam* in) {

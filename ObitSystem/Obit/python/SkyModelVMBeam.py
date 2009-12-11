@@ -103,7 +103,8 @@ class SkyModelVMBeam(SkyModel.SkyModel):
     
 # end class SkyModelVMBeam
 
-def PCreate (name, mosaic, uvData, IBeam, VBeam, QBeam, UBeam, err):
+def PCreate (name, mosaic, uvData, IBeam, VBeam, QBeam, UBeam, \
+             IBeamPh, VBeamPh, QBeamPh, UBeamPh, err):
     """ Create the parameters and underlying structures of a SkyModelVMBeam.
     
     name      = Name to be given to object
@@ -113,7 +114,11 @@ def PCreate (name, mosaic, uvData, IBeam, VBeam, QBeam, UBeam, err):
     IBeam     = Python Image I Beam normalized image
     VBeam     = Python Image V Beam fractional image
     QBeam     = Python Image Q Beam fractional image
-    UBeam     = Python Image U Beam ifractional mage
+    UBeam     = Python Image U Beam fractional image
+    IBeamPh   = Python Phase Image I Beam 
+    VBeamPh   = Python Phase Image V Beam 
+    QBeamPh   = Python Phase Image Q Beam 
+    UBeamPh   = Python Phase Image U Beam 
     err       = Python Obit Error/message stack
     """
     ################################################################
@@ -123,7 +128,9 @@ def PCreate (name, mosaic, uvData, IBeam, VBeam, QBeam, UBeam, err):
     #
     out = SkyModelVMBeam("None");
     out.me = Obit.SkyModelVMBeamCreate(name, mosaic.me, uvData.me, \
-                                       IBeam.me, VBeam.me, QBeam.me, UBeam.me, err.me)
+                                       IBeam.me, VBeam.me, QBeam.me, UBeam.me, \
+                                       IBeamPh.me, VBeamPh.me, QBeamPh.me, UBeamPh.me, \
+                                       err.me)
     return out;
     # end PCreate
 
@@ -145,6 +152,7 @@ def PSubUV (err, input=UVSubInput):
     doCalSelect = Select/calibrate/edit data?
     REPLACE     = Replace data with model?
     Stokes      = Stokes parameter, blank-> unchanged from input),
+    doPhase     = If Phase images provided. [def false]
     CCVer       = CC table versions to use [def all 0 => highest]
     BComp       = Start CC to use per table, 1-rel [def 1 ]
     EComp       = Highest CC to use per table, 1-rel [def to end]
@@ -195,7 +203,7 @@ def PSubUV (err, input=UVSubInput):
     #
     dim = [1,1,1,1,1]
     #
-    # Set Ion control values on SkyModelVMBeam/inData
+    # Set control values on SkyModelVMBeam/inData
     dim[0] = 1;
     inInfo = inSkyModelVMBeam.List
     uvInfo = inData.List   # 
@@ -224,6 +232,7 @@ def PDivUV (err, input=UVSubInput):
     SkyModelVMBeam    = Input SkyModelVMBeam,
     OutData     = Output uv data,
     doCalSelect = Select/calibrate/edit data?),
+    doPhase     = If Phase images provided. [def false]
     REPLACE     = Replace data with model?
     Stokes      = Stokes parameter, blank-> unchanged from input),
     CCVer       = CC table versions to use [def all 0 => highest]
@@ -277,7 +286,7 @@ def PDivUV (err, input=UVSubInput):
     #
     dim = [1,1,1,1,1]
     #
-    # Set Ion control values on SkyModelVMBeam/inData
+    # Set control values on SkyModelVMBeam/inData
     dim[0] = 1;
     inInfo = inSkyModelVMBeam.List
     uvInfo = inData.List   # 

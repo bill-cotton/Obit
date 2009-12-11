@@ -72,7 +72,7 @@ class ImageInterp(ImageInterpPtr):
     ImageInterp Members with python interfaces:
     """
     def __init__(self, name="no_name", image=None, hwidth=1, err=None) :
-        self.this = Obit.new_ImageInterp(name, image, hwidth, err)
+        self.this = Obit.new_ImageInterp(name, image.me, hwidth, err.me)
         self.myClass = myClass
     def __del__(self):
         if Obit!=None:

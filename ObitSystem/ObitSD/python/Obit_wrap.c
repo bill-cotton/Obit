@@ -2430,6 +2430,67 @@ extern int FITSFileExist(int ,char *,ObitErr *);
 extern int FITSAddDir(char *,ObitErr *);
 extern void FITSSetDir(char *,int ,ObitErr *);
 
+#include "ObitFullBeam.h"
+#include "ObitImage.h"
+
+extern ObitFullBeam* newFullBeam (char* name) {
+  return newObitFullBeam (name);
+} // end  newFullBeam
+
+extern ObitFullBeam* FullBeamCopy  (ObitFullBeam *in, ObitFullBeam *out, 
+				    ObitErr *err) {
+  return ObitFullBeamCopy (in, out, err);
+} // end  FullBeamCopy
+
+extern ObitFullBeam* FullBeamUnref (ObitFullBeam* in) {
+  if (!ObitFullBeamIsA(in)) return NULL;
+  return ObitFullBeamUnref(in);
+}
+
+extern ObitFullBeam*  FullBeamRef (ObitFullBeam* in) {
+  return ObitFullBeamRef(in);
+}
+
+extern ObitFullBeam* FullBeamCreate (char *name, ObitImage *image, 
+				     ObitErr *err) {
+  return ObitFullBeamCreate((gchar*)name, NULL, image, err);
+} // end FullBeamCreate
+
+extern float FullBeamValue (ObitFullBeam* in, double dra, double ddec,
+		            float parAng, int plane, ObitErr *err) {
+  return ObitFullBeamValue(in, (odouble)dra, (odouble)ddec, (ofloat)parAng, (olong)plane, err);
+} // end FullBeamGain
+
+extern long FullBeamFindPlane (ObitFullBeam* in, double freq) {
+  return (long)ObitFullBeamFindPlane(in, (odouble)freq);
+} // end FullBeamFindPlane
+
+extern char* FullBeamGetName (ObitFullBeam* in) {
+  if (ObitFullBeamIsA(in)) {
+    return in->name;
+  } else {
+    return NULL;
+  }
+}
+
+extern int FullBeamIsA (ObitFullBeam* in) {
+  return ObitFullBeamIsA(in);
+}
+
+extern ObitFullBeam *newFullBeam(char *);
+extern ObitFullBeam *FullBeamCopy(ObitFullBeam *,ObitFullBeam *,ObitErr *);
+extern ObitFullBeam *FullBeamUnref(ObitFullBeam *);
+extern ObitFullBeam *FullBeamRef(ObitFullBeam *);
+extern ObitFullBeam *FullBeamCreate(char *,ObitImage *,ObitErr *);
+extern float FullBeamValue(ObitFullBeam *,double ,double ,float ,int ,ObitErr *);
+extern long FullBeamFindPlane(ObitFullBeam *,double );
+extern char *FullBeamGetName(ObitFullBeam *);
+extern int FullBeamIsA(ObitFullBeam *);
+
+typedef struct {
+  ObitFullBeam *me;
+} FullBeam;
+
 #include "ObitHistory.h"
 
 
@@ -5278,6 +5339,63 @@ extern int SkyModelIsA(ObitSkyModel *);
 typedef struct {
   ObitSkyModel *me;
 } SkyModel;
+
+#include "ObitSkyModelVMBeam.h"
+
+extern ObitSkyModelVMBeam* newSkyModelVMBeam (char* name) {
+  return newObitSkyModelVMBeam (name);
+} // end  newSkyModelVMBeam
+
+extern ObitSkyModelVMBeam* SkyModelVMBeamCopy  (ObitSkyModelVMBeam *in, ObitSkyModelVMBeam *out, 
+				    ObitErr *err) {
+  return ObitSkyModelVMBeamCopy (in, out, err);
+} // end  SkyModelVMBeamCopy
+
+extern ObitSkyModelVMBeam* SkyModelVMBeamUnref (ObitSkyModelVMBeam* in) {
+  if (!ObitSkyModelVMBeamIsA(in)) return NULL;
+  return ObitSkyModelVMBeamUnref(in);
+}
+
+extern ObitSkyModelVMBeam*  SkyModelVMBeamRef (ObitSkyModelVMBeam* in) {
+  return ObitSkyModelVMBeamRef(in);
+}
+
+extern ObitInfoList* SkyModelVMBeamGetList (ObitSkyModelVMBeam* in) {
+  return ObitInfoListRef(in->info);
+}
+
+extern ObitSkyModelVMBeam* SkyModelVMBeamCreate (char *name, ObitImageMosaic* mosaic,
+  ObitUV *uvData, ObitImage *IBeam,  ObitImage *VBeam, ObitImage *QBeam,  ObitImage *UBeam, 
+  ObitImage *IBeamPh,  ObitImage *VBeamPh, ObitImage *QBeamPh,  ObitImage *UBeamPh, 
+  ObitErr *err) {
+ return ObitSkyModelVMBeamCreate(name, mosaic, uvData, IBeam, VBeam, QBeam, UBeam, 
+    IBeamPh, VBeamPh, QBeamPh, UBeamPh, err);
+}
+
+extern char* SkyModelVMBeamGetName (ObitSkyModelVMBeam* in) {
+  if (ObitSkyModelVMBeamIsA(in)) {
+    return in->name;
+  } else {
+    return NULL;
+  }
+}
+
+extern int SkyModelVMBeamIsA (ObitSkyModelVMBeam* in) {
+  return ObitSkyModelVMBeamIsA(in);
+}
+
+extern ObitSkyModelVMBeam *newSkyModelVMBeam(char *);
+extern ObitSkyModelVMBeam *SkyModelVMBeamCopy(ObitSkyModelVMBeam *,ObitSkyModelVMBeam *,ObitErr *);
+extern ObitSkyModelVMBeam *SkyModelVMBeamUnref(ObitSkyModelVMBeam *);
+extern ObitSkyModelVMBeam *SkyModelVMBeamRef(ObitSkyModelVMBeam *);
+extern ObitInfoList *SkyModelVMBeamGetList(ObitSkyModelVMBeam *);
+extern ObitSkyModelVMBeam *SkyModelVMBeamCreate(char *,ObitImageMosaic *,ObitUV *,ObitImage *,ObitImage *,ObitImage *,ObitImage *,ObitImage *,ObitImage *,ObitImage *,ObitImage *,ObitErr *);
+extern char *SkyModelVMBeamGetName(ObitSkyModelVMBeam *);
+extern int SkyModelVMBeamIsA(ObitSkyModelVMBeam *);
+
+typedef struct {
+  ObitSkyModelVMBeam *me;
+} SkyModelVMBeam;
 
 #include "ObitSkyModelVMIon.h"
 
@@ -9631,6 +9749,7 @@ typedef struct {
 #include "ObitUVUtil.h"
 #include "ObitUVEdit.h"
 #include "ObitUVWeight.h"
+#include "ObitTableSNUtil.h"
 
 
 extern void UVSetFITS(ObitUV *in, long nvis, int disk, char *file, 
@@ -9750,7 +9869,7 @@ extern int UVUpdateTables (ObitUV *in, ObitErr *err) {
 } // end  UVUpdateTables
 
 // Open and close to fully instantiate
-// access 1=READONLY, 2=WRITEONLY, 3=READWRITE
+// access 1=READONLY, 2=WRITEONLY, 3=READWRITE, 4=READCAL
 extern int UVfullInstantiate (ObitUV* in, int access, ObitErr *err) {
   ObitIOCode ret;
   ObitIOAccess laccess;
@@ -9758,6 +9877,7 @@ extern int UVfullInstantiate (ObitUV* in, int access, ObitErr *err) {
   laccess = OBIT_IO_ReadOnly;
   if (access==2) laccess = OBIT_IO_WriteOnly;
   else if (access==3) laccess = OBIT_IO_ReadWrite;
+  else if (access==4) laccess = OBIT_IO_ReadCal;
   ret = ObitUVOpen (in, laccess, err);
   ret = ObitUVClose (in, err);
   if ((err->error) || (ret!=OBIT_IO_OK)) return 1;
@@ -9772,6 +9892,7 @@ extern int UVOpen (ObitUV *in, int access, ObitErr *err) {
   laccess = OBIT_IO_ReadOnly;
   if (access==2) laccess = OBIT_IO_WriteOnly;
   else if (access==3) laccess = OBIT_IO_ReadWrite;
+  else if (access==4) laccess = OBIT_IO_ReadCal;
   ret = ObitUVOpen (in, laccess, err);
   if (ret==OBIT_IO_OK) return 0;
   else return 1;
@@ -9986,6 +10107,10 @@ extern ObitTable* TableCLGetDummy (ObitUV *inUV,  ObitUV *outUV, long ver, ObitE
   return (ObitTable*)ObitTableCLGetDummy (inUV, outUV, (olong)ver, err);
 } // end TableCLGetDummy
 
+extern ObitTable* TableSNGetZeroFR (ObitUV *inUV,  ObitUV *outUV, long ver, ObitErr *err) {
+  return (ObitTable*)ObitTableSNGetZeroFR (inUV, outUV, (olong)ver, err);
+} // end TableCLGetDummy
+
 extern void UVSetFITS(ObitUV *,long ,int ,char *,ObitErr *);
 extern void UVSetAIPS(ObitUV *,long ,int ,int ,int ,ObitErr *);
 extern ObitData *UVCastData(ObitUV *);
@@ -10042,10 +10167,70 @@ extern ObitUV *UVEditClip(ObitUV *,int ,ObitUV *,ObitErr *);
 extern ObitUV *UVEditClipStokes(ObitUV *,int ,ObitUV *,ObitErr *);
 extern int UVUtilFlag(ObitUV *,ObitErr *);
 extern ObitTable *TableCLGetDummy(ObitUV *,ObitUV *,long ,ObitErr *);
+extern ObitTable *TableSNGetZeroFR(ObitUV *,ObitUV *,long ,ObitErr *);
 
 typedef struct {
   ObitUV *me;
 } UV;
+
+#include "ObitUVRFIXize.h"
+
+extern ObitUVRFIXize* newUVRFIXize (char* name) {
+  return newObitUVRFIXize (name);
+} // end  newUVRFIXize
+
+extern ObitUVRFIXize* UVRFIXizeCreate (char *name, ObitUV *inUV,
+	ObitUV *residUV, ObitUV *outUV) {
+ return ObitUVRFIXizeCreate(name, inUV, residUV, outUV);
+}
+
+extern ObitUVRFIXize* UVRFIXizeUnref (ObitUVRFIXize* in) {
+  if (!ObitUVRFIXizeIsA(in)) return NULL;
+  return ObitUVRFIXizeUnref(in);
+}
+
+extern ObitUVRFIXize*  UVRFIXizeRef (ObitUVRFIXize* in) {
+  return ObitUVRFIXizeRef(in);
+}
+
+extern void UVRFIXizeCounterRot (ObitUVRFIXize* in, ObitErr *err) {
+  ObitUVRFIXizeCounterRot(in, err);
+}
+
+extern void UVRFIXizeFilter (ObitUVRFIXize* in, ObitErr *err) {
+  ObitUVRFIXizeFilter(in, err);
+}
+
+extern void UVRFIXizeCorrect (ObitUVRFIXize* in, ObitErr *err) {
+  ObitUVRFIXizeCorrect(in, err);
+}
+
+extern ObitInfoList* UVRFIXizeGetList (ObitUVRFIXize* in) {
+  return ObitInfoListRef(in->info);
+}
+
+extern ObitSkyModel* UVRFIXizeGetRFI (ObitUVRFIXize* in) {
+  return ObitUVRef(in->RFIUV);
+}
+
+extern int UVRFIXizeIsA (ObitUVRFIXize* in) {
+  return ObitUVRFIXizeIsA(in);
+}
+
+extern ObitUVRFIXize *newUVRFIXize(char *);
+extern ObitUVRFIXize *UVRFIXizeCreate(char *,ObitUV *,ObitUV *,ObitUV *);
+extern ObitUVRFIXize *UVRFIXizeUnref(ObitUVRFIXize *);
+extern ObitUVRFIXize *UVRFIXizeRef(ObitUVRFIXize *);
+extern void UVRFIXizeCounterRot(ObitUVRFIXize *,ObitErr *);
+extern void UVRFIXizeFilter(ObitUVRFIXize *,ObitErr *);
+extern void UVRFIXizeCorrect(ObitUVRFIXize *,ObitErr *);
+extern ObitInfoList *UVRFIXizeGetList(ObitUVRFIXize *);
+extern ObitSkyModel *UVRFIXizeGetRFI(ObitUVRFIXize *);
+extern int UVRFIXizeIsA(ObitUVRFIXize *);
+
+typedef struct {
+  ObitUVRFIXize *me;
+} UVRFIXize;
 
 #include "ObitUVSelfCal.h"
 #include "ObitUVSoln.h"
@@ -10206,7 +10391,7 @@ extern ObitTable *SNInvert(ObitTable *,ObitData *,long ,int ,ObitErr *);
 extern PyObject* UVVisGet (ObitUV* inUV, ObitErr *err) {
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
-  gboolean doCalSelect;
+  gboolean doCalSelect, readMore=TRUE;
   ObitIOCode iretCode;
   ofloat cbase, *visp=NULL;
   olong ant1, ant2, suid, fqid, icorr;
@@ -10218,13 +10403,16 @@ extern PyObject* UVVisGet (ObitUV* inUV, ObitErr *err) {
    doCalSelect = FALSE;
    ObitInfoListGetTest(inUV->info, "doCalSelect", &type, (gint32*)dim, &doCalSelect);
 
-    if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
-    else iretCode = ObitUVRead (inUV, inUV->buffer, err);
-
-    if (iretCode==OBIT_IO_EOF)  {
-      PyDict_SetItemString(vis, "EOF",PyInt_FromLong((long)1));
-      return vis;
-    }
+    /* Read until valid data or EOF found */
+    while (readMore) {	
+      if (doCalSelect) iretCode = ObitUVReadSelect (inUV, inUV->buffer, err);
+      else iretCode = ObitUVRead (inUV, inUV->buffer, err);
+      readMore = (inUV->myDesc->numVisBuff<=0);  /* keep going? */
+      if (iretCode==OBIT_IO_EOF)  {
+        PyDict_SetItemString(vis, "EOF",PyInt_FromLong((long)1));
+        return vis;
+      }
+    } /* End read until valid */
     if (iretCode!=OBIT_IO_OK) return vis;
 
     PyDict_SetItemString(vis, "visNo",  PyInt_FromLong((long)inUV->myDesc->firstVis));
@@ -21755,6 +21943,304 @@ static PyObject *_wrap_FITSSetDir(PyObject *self, PyObject *args) {
 {
   free((char *) _arg0);
 }
+    return _resultobj;
+}
+
+static PyObject *_wrap_newFullBeam(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitFullBeam * _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:newFullBeam",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (ObitFullBeam *)newFullBeam(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitFullBeam_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_FullBeamCopy(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitFullBeam * _result;
+    ObitFullBeam * _arg0;
+    ObitFullBeam * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:FullBeamCopy",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitFullBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of FullBeamCopy. Expected _ObitFullBeam_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitFullBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of FullBeamCopy. Expected _ObitFullBeam_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of FullBeamCopy. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitFullBeam *)FullBeamCopy(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitFullBeam_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_FullBeamUnref(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitFullBeam * _result;
+    ObitFullBeam * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:FullBeamUnref",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitFullBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of FullBeamUnref. Expected _ObitFullBeam_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitFullBeam *)FullBeamUnref(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitFullBeam_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_FullBeamRef(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitFullBeam * _result;
+    ObitFullBeam * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:FullBeamRef",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitFullBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of FullBeamRef. Expected _ObitFullBeam_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitFullBeam *)FullBeamRef(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitFullBeam_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_FullBeamCreate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitFullBeam * _result;
+    char * _arg0;
+    ObitImage * _arg1;
+    ObitErr * _arg2;
+    PyObject * _obj0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:FullBeamCreate",&_obj0,&_argo1,&_argo2)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of FullBeamCreate. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of FullBeamCreate. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitFullBeam *)FullBeamCreate(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitFullBeam_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_FullBeamValue(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    float  _result;
+    ObitFullBeam * _arg0;
+    double  _arg1;
+    double  _arg2;
+    float  _arg3;
+    int  _arg4;
+    ObitErr * _arg5;
+    PyObject * _argo0 = 0;
+    PyObject * _argo5 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OddfiO:FullBeamValue",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_argo5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitFullBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of FullBeamValue. Expected _ObitFullBeam_p.");
+        return NULL;
+        }
+    }
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of FullBeamValue. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (float )FullBeamValue(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    _resultobj = Py_BuildValue("f",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_FullBeamFindPlane(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    long  _result;
+    ObitFullBeam * _arg0;
+    double  _arg1;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"Od:FullBeamFindPlane",&_argo0,&_arg1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitFullBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of FullBeamFindPlane. Expected _ObitFullBeam_p.");
+        return NULL;
+        }
+    }
+    _result = (long )FullBeamFindPlane(_arg0,_arg1);
+    _resultobj = Py_BuildValue("l",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_FullBeamGetName(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    ObitFullBeam * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:FullBeamGetName",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitFullBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of FullBeamGetName. Expected _ObitFullBeam_p.");
+        return NULL;
+        }
+    }
+    _result = (char *)FullBeamGetName(_arg0);
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_FullBeamIsA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitFullBeam * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:FullBeamIsA",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitFullBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of FullBeamIsA. Expected _ObitFullBeam_p.");
+        return NULL;
+        }
+    }
+    _result = (int )FullBeamIsA(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
     return _resultobj;
 }
 
@@ -34782,6 +35268,357 @@ static PyObject *_wrap_SkyModelIsA(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_newSkyModelVMBeam(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSkyModelVMBeam * _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:newSkyModelVMBeam",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (ObitSkyModelVMBeam *)newSkyModelVMBeam(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSkyModelVMBeam_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_SkyModelVMBeamCopy(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSkyModelVMBeam * _result;
+    ObitSkyModelVMBeam * _arg0;
+    ObitSkyModelVMBeam * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:SkyModelVMBeamCopy",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSkyModelVMBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SkyModelVMBeamCopy. Expected _ObitSkyModelVMBeam_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitSkyModelVMBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of SkyModelVMBeamCopy. Expected _ObitSkyModelVMBeam_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of SkyModelVMBeamCopy. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSkyModelVMBeam *)SkyModelVMBeamCopy(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSkyModelVMBeam_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_SkyModelVMBeamUnref(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSkyModelVMBeam * _result;
+    ObitSkyModelVMBeam * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:SkyModelVMBeamUnref",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSkyModelVMBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SkyModelVMBeamUnref. Expected _ObitSkyModelVMBeam_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSkyModelVMBeam *)SkyModelVMBeamUnref(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSkyModelVMBeam_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_SkyModelVMBeamRef(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSkyModelVMBeam * _result;
+    ObitSkyModelVMBeam * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:SkyModelVMBeamRef",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSkyModelVMBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SkyModelVMBeamRef. Expected _ObitSkyModelVMBeam_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSkyModelVMBeam *)SkyModelVMBeamRef(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSkyModelVMBeam_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_SkyModelVMBeamGetList(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitInfoList * _result;
+    ObitSkyModelVMBeam * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:SkyModelVMBeamGetList",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSkyModelVMBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SkyModelVMBeamGetList. Expected _ObitSkyModelVMBeam_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitInfoList *)SkyModelVMBeamGetList(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitInfoList_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_SkyModelVMBeamCreate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSkyModelVMBeam * _result;
+    char * _arg0;
+    ObitImageMosaic * _arg1;
+    ObitUV * _arg2;
+    ObitImage * _arg3;
+    ObitImage * _arg4;
+    ObitImage * _arg5;
+    ObitImage * _arg6;
+    ObitImage * _arg7;
+    ObitImage * _arg8;
+    ObitImage * _arg9;
+    ObitImage * _arg10;
+    ObitErr * _arg11;
+    PyObject * _obj0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+    PyObject * _argo4 = 0;
+    PyObject * _argo5 = 0;
+    PyObject * _argo6 = 0;
+    PyObject * _argo7 = 0;
+    PyObject * _argo8 = 0;
+    PyObject * _argo9 = 0;
+    PyObject * _argo10 = 0;
+    PyObject * _argo11 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOOOOOOOOOO:SkyModelVMBeamCreate",&_obj0,&_argo1,&_argo2,&_argo3,&_argo4,&_argo5,&_argo6,&_argo7,&_argo8,&_argo9,&_argo10,&_argo11)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImageMosaic_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of SkyModelVMBeamCreate. Expected _ObitImageMosaic_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of SkyModelVMBeamCreate. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of SkyModelVMBeamCreate. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo4) {
+        if (_argo4 == Py_None) { _arg4 = NULL; }
+        else if (SWIG_GetPtrObj(_argo4,(void **) &_arg4,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 5 of SkyModelVMBeamCreate. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of SkyModelVMBeamCreate. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo6) {
+        if (_argo6 == Py_None) { _arg6 = NULL; }
+        else if (SWIG_GetPtrObj(_argo6,(void **) &_arg6,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 7 of SkyModelVMBeamCreate. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo7) {
+        if (_argo7 == Py_None) { _arg7 = NULL; }
+        else if (SWIG_GetPtrObj(_argo7,(void **) &_arg7,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 8 of SkyModelVMBeamCreate. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo8) {
+        if (_argo8 == Py_None) { _arg8 = NULL; }
+        else if (SWIG_GetPtrObj(_argo8,(void **) &_arg8,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 9 of SkyModelVMBeamCreate. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo9) {
+        if (_argo9 == Py_None) { _arg9 = NULL; }
+        else if (SWIG_GetPtrObj(_argo9,(void **) &_arg9,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 10 of SkyModelVMBeamCreate. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo10) {
+        if (_argo10 == Py_None) { _arg10 = NULL; }
+        else if (SWIG_GetPtrObj(_argo10,(void **) &_arg10,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 11 of SkyModelVMBeamCreate. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo11) {
+        if (_argo11 == Py_None) { _arg11 = NULL; }
+        else if (SWIG_GetPtrObj(_argo11,(void **) &_arg11,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 12 of SkyModelVMBeamCreate. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSkyModelVMBeam *)SkyModelVMBeamCreate(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7,_arg8,_arg9,_arg10,_arg11);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSkyModelVMBeam_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_SkyModelVMBeamGetName(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    ObitSkyModelVMBeam * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:SkyModelVMBeamGetName",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSkyModelVMBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SkyModelVMBeamGetName. Expected _ObitSkyModelVMBeam_p.");
+        return NULL;
+        }
+    }
+    _result = (char *)SkyModelVMBeamGetName(_arg0);
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_SkyModelVMBeamIsA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitSkyModelVMBeam * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:SkyModelVMBeamIsA",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitSkyModelVMBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SkyModelVMBeamIsA. Expected _ObitSkyModelVMBeam_p.");
+        return NULL;
+        }
+    }
+    _result = (int )SkyModelVMBeamIsA(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_newSkyModelVMIon(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitSkyModelVMIon * _result;
@@ -46900,6 +47737,383 @@ static PyObject *_wrap_TableCLGetDummy(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_TableSNGetZeroFR(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTable * _result;
+    ObitUV * _arg0;
+    ObitUV * _arg1;
+    long  _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo3 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOlO:TableSNGetZeroFR",&_argo0,&_argo1,&_arg2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of TableSNGetZeroFR. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of TableSNGetZeroFR. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of TableSNGetZeroFR. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTable *)TableSNGetZeroFR(_arg0,_arg1,_arg2,_arg3);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_newUVRFIXize(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVRFIXize * _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:newUVRFIXize",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (ObitUVRFIXize *)newUVRFIXize(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUVRFIXize_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVRFIXizeCreate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVRFIXize * _result;
+    char * _arg0;
+    ObitUV * _arg1;
+    ObitUV * _arg2;
+    ObitUV * _arg3;
+    PyObject * _obj0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOO:UVRFIXizeCreate",&_obj0,&_argo1,&_argo2,&_argo3)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of UVRFIXizeCreate. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of UVRFIXizeCreate. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of UVRFIXizeCreate. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitUVRFIXize *)UVRFIXizeCreate(_arg0,_arg1,_arg2,_arg3);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUVRFIXize_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVRFIXizeUnref(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVRFIXize * _result;
+    ObitUVRFIXize * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:UVRFIXizeUnref",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXizeUnref. Expected _ObitUVRFIXize_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitUVRFIXize *)UVRFIXizeUnref(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUVRFIXize_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVRFIXizeRef(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVRFIXize * _result;
+    ObitUVRFIXize * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:UVRFIXizeRef",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXizeRef. Expected _ObitUVRFIXize_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitUVRFIXize *)UVRFIXizeRef(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUVRFIXize_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVRFIXizeCounterRot(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVRFIXize * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:UVRFIXizeCounterRot",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXizeCounterRot. Expected _ObitUVRFIXize_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of UVRFIXizeCounterRot. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    UVRFIXizeCounterRot(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVRFIXizeFilter(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVRFIXize * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:UVRFIXizeFilter",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXizeFilter. Expected _ObitUVRFIXize_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of UVRFIXizeFilter. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    UVRFIXizeFilter(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVRFIXizeCorrect(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVRFIXize * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:UVRFIXizeCorrect",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXizeCorrect. Expected _ObitUVRFIXize_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of UVRFIXizeCorrect. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    UVRFIXizeCorrect(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVRFIXizeGetList(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitInfoList * _result;
+    ObitUVRFIXize * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:UVRFIXizeGetList",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXizeGetList. Expected _ObitUVRFIXize_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitInfoList *)UVRFIXizeGetList(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitInfoList_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVRFIXizeGetRFI(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSkyModel * _result;
+    ObitUVRFIXize * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:UVRFIXizeGetRFI",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXizeGetRFI. Expected _ObitUVRFIXize_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSkyModel *)UVRFIXizeGetRFI(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSkyModel_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVRFIXizeIsA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitUVRFIXize * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:UVRFIXizeIsA",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXizeIsA. Expected _ObitUVRFIXize_p.");
+        return NULL;
+        }
+    }
+    _result = (int )UVRFIXizeIsA(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_newUVSelfCal(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitUVSelfCal * _result;
@@ -57814,6 +59028,167 @@ static PyObject *_wrap_delete_FitRegion(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+#define FullBeam_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
+static PyObject *_wrap_FullBeam_me_set(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitFullBeam * _result;
+    FullBeam * _arg0;
+    ObitFullBeam * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:FullBeam_me_set",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_FullBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of FullBeam_me_set. Expected _FullBeam_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitFullBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of FullBeam_me_set. Expected _ObitFullBeam_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitFullBeam *)FullBeam_me_set(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitFullBeam_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+#define FullBeam_me_get(_swigobj) ((ObitFullBeam *) _swigobj->me)
+static PyObject *_wrap_FullBeam_me_get(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitFullBeam * _result;
+    FullBeam * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:FullBeam_me_get",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_FullBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of FullBeam_me_get. Expected _FullBeam_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitFullBeam *)FullBeam_me_get(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitFullBeam_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static FullBeam *new_FullBeam(char *name,ObitImage *image,ObitErr *err) {
+     FullBeam *out;
+     out = (FullBeam *) malloc(sizeof(FullBeam));
+     if (strcmp(name, "None")) out->me = FullBeamCreate((gchar*)name, image, err);
+     else out->me = NULL;
+     return out;
+   }
+
+static PyObject *_wrap_new_FullBeam(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    FullBeam * _result;
+    char * _arg0;
+    ObitImage * _arg1;
+    ObitErr * _arg2;
+    PyObject * _obj0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:new_FullBeam",&_obj0,&_argo1,&_argo2)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of new_FullBeam. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of new_FullBeam. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (FullBeam *)new_FullBeam(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_FullBeam_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static void delete_FullBeam(FullBeam *self) {
+   if (!self) return;  // Not defined
+   if (self && self->me && self->me->ReferenceCount>0) {
+      self->me = FullBeamUnref(self->me);
+      free(self);
+   }
+  }
+static PyObject *_wrap_delete_FullBeam(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    FullBeam * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:delete_FullBeam",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_FullBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of delete_FullBeam. Expected _FullBeam_p.");
+        return NULL;
+        }
+    }
+    delete_FullBeam(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 #define History_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
 static PyObject *_wrap_History_me_set(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -60155,6 +61530,147 @@ static PyObject *_wrap_delete_SkyModel(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+#define SkyModelVMBeam_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
+static PyObject *_wrap_SkyModelVMBeam_me_set(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSkyModelVMBeam * _result;
+    SkyModelVMBeam * _arg0;
+    ObitSkyModelVMBeam * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:SkyModelVMBeam_me_set",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_SkyModelVMBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SkyModelVMBeam_me_set. Expected _SkyModelVMBeam_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitSkyModelVMBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of SkyModelVMBeam_me_set. Expected _ObitSkyModelVMBeam_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSkyModelVMBeam *)SkyModelVMBeam_me_set(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSkyModelVMBeam_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+#define SkyModelVMBeam_me_get(_swigobj) ((ObitSkyModelVMBeam *) _swigobj->me)
+static PyObject *_wrap_SkyModelVMBeam_me_get(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitSkyModelVMBeam * _result;
+    SkyModelVMBeam * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:SkyModelVMBeam_me_get",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_SkyModelVMBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of SkyModelVMBeam_me_get. Expected _SkyModelVMBeam_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSkyModelVMBeam *)SkyModelVMBeam_me_get(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSkyModelVMBeam_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static SkyModelVMBeam *new_SkyModelVMBeam(char *name) {
+     SkyModelVMBeam *out;
+     out = (SkyModelVMBeam *) malloc(sizeof(SkyModelVMBeam));
+     if (strcmp(name, "None")) out->me = newSkyModelVMBeam(name);
+     else out->me = NULL;
+     return out;
+   }
+
+static PyObject *_wrap_new_SkyModelVMBeam(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    SkyModelVMBeam * _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:new_SkyModelVMBeam",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (SkyModelVMBeam *)new_SkyModelVMBeam(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_SkyModelVMBeam_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static void delete_SkyModelVMBeam(SkyModelVMBeam *self) {
+   if (self->me-> ReferenceCount>0) 
+      self->me = SkyModelVMBeamUnref(self->me);
+   free(self);
+  }
+static PyObject *_wrap_delete_SkyModelVMBeam(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    SkyModelVMBeam * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:delete_SkyModelVMBeam",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_SkyModelVMBeam_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of delete_SkyModelVMBeam. Expected _SkyModelVMBeam_p.");
+        return NULL;
+        }
+    }
+    delete_SkyModelVMBeam(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 #define SkyModelVMIon_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
 static PyObject *_wrap_SkyModelVMIon_me_set(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -61586,6 +63102,147 @@ static PyObject *_wrap_delete_UV(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+#define UVRFIXize_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
+static PyObject *_wrap_UVRFIXize_me_set(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVRFIXize * _result;
+    UVRFIXize * _arg0;
+    ObitUVRFIXize * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:UVRFIXize_me_set",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_UVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXize_me_set. Expected _UVRFIXize_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitUVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of UVRFIXize_me_set. Expected _ObitUVRFIXize_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitUVRFIXize *)UVRFIXize_me_set(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUVRFIXize_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+#define UVRFIXize_me_get(_swigobj) ((ObitUVRFIXize *) _swigobj->me)
+static PyObject *_wrap_UVRFIXize_me_get(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUVRFIXize * _result;
+    UVRFIXize * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:UVRFIXize_me_get",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_UVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVRFIXize_me_get. Expected _UVRFIXize_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitUVRFIXize *)UVRFIXize_me_get(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUVRFIXize_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static UVRFIXize *new_UVRFIXize(char *name) {
+     UVRFIXize *out;
+     out = (UVRFIXize *) malloc(sizeof(UVRFIXize));
+     if (strcmp(name, "None")) out->me = newUVRFIXize(name);
+     else out->me = NULL;
+     return out;
+   }
+
+static PyObject *_wrap_new_UVRFIXize(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    UVRFIXize * _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:new_UVRFIXize",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (UVRFIXize *)new_UVRFIXize(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_UVRFIXize_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static void delete_UVRFIXize(UVRFIXize *self) {
+   if (self->me->ReferenceCount>0) 
+      self->me = UVRFIXizeUnref(self->me);
+   free(self);
+  }
+static PyObject *_wrap_delete_UVRFIXize(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    UVRFIXize * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:delete_UVRFIXize",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_UVRFIXize_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of delete_UVRFIXize. Expected _UVRFIXize_p.");
+        return NULL;
+        }
+    }
+    delete_UVRFIXize(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 #define UVSelfCal_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
 static PyObject *_wrap_UVSelfCal_me_set(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -62654,6 +64311,10 @@ static PyMethodDef ObitMethods[] = {
 	 { "new_UVSelfCal", _wrap_new_UVSelfCal, METH_VARARGS },
 	 { "UVSelfCal_me_get", _wrap_UVSelfCal_me_get, METH_VARARGS },
 	 { "UVSelfCal_me_set", _wrap_UVSelfCal_me_set, METH_VARARGS },
+	 { "delete_UVRFIXize", _wrap_delete_UVRFIXize, METH_VARARGS },
+	 { "new_UVRFIXize", _wrap_new_UVRFIXize, METH_VARARGS },
+	 { "UVRFIXize_me_get", _wrap_UVRFIXize_me_get, METH_VARARGS },
+	 { "UVRFIXize_me_set", _wrap_UVRFIXize_me_set, METH_VARARGS },
 	 { "delete_UV", _wrap_delete_UV, METH_VARARGS },
 	 { "new_UV", _wrap_new_UV, METH_VARARGS },
 	 { "UV_me_get", _wrap_UV_me_get, METH_VARARGS },
@@ -62694,6 +64355,10 @@ static PyMethodDef ObitMethods[] = {
 	 { "new_SkyModelVMIon", _wrap_new_SkyModelVMIon, METH_VARARGS },
 	 { "SkyModelVMIon_me_get", _wrap_SkyModelVMIon_me_get, METH_VARARGS },
 	 { "SkyModelVMIon_me_set", _wrap_SkyModelVMIon_me_set, METH_VARARGS },
+	 { "delete_SkyModelVMBeam", _wrap_delete_SkyModelVMBeam, METH_VARARGS },
+	 { "new_SkyModelVMBeam", _wrap_new_SkyModelVMBeam, METH_VARARGS },
+	 { "SkyModelVMBeam_me_get", _wrap_SkyModelVMBeam_me_get, METH_VARARGS },
+	 { "SkyModelVMBeam_me_set", _wrap_SkyModelVMBeam_me_set, METH_VARARGS },
 	 { "delete_SkyModel", _wrap_delete_SkyModel, METH_VARARGS },
 	 { "new_SkyModel", _wrap_new_SkyModel, METH_VARARGS },
 	 { "SkyModel_me_get", _wrap_SkyModel_me_get, METH_VARARGS },
@@ -62757,6 +64422,10 @@ static PyMethodDef ObitMethods[] = {
 	 { "new_History", _wrap_new_History, METH_VARARGS },
 	 { "History_me_get", _wrap_History_me_get, METH_VARARGS },
 	 { "History_me_set", _wrap_History_me_set, METH_VARARGS },
+	 { "delete_FullBeam", _wrap_delete_FullBeam, METH_VARARGS },
+	 { "new_FullBeam", _wrap_new_FullBeam, METH_VARARGS },
+	 { "FullBeam_me_get", _wrap_FullBeam_me_get, METH_VARARGS },
+	 { "FullBeam_me_set", _wrap_FullBeam_me_set, METH_VARARGS },
 	 { "delete_FitRegion", _wrap_delete_FitRegion, METH_VARARGS },
 	 { "new_FitRegion", _wrap_new_FitRegion, METH_VARARGS },
 	 { "FitRegion_me_get", _wrap_FitRegion_me_get, METH_VARARGS },
@@ -63026,6 +64695,17 @@ static PyMethodDef ObitMethods[] = {
 	 { "UVSelfCalCopy", _wrap_UVSelfCalCopy, METH_VARARGS },
 	 { "UVSelfCalCreate", _wrap_UVSelfCalCreate, METH_VARARGS },
 	 { "newUVSelfCal", _wrap_newUVSelfCal, METH_VARARGS },
+	 { "UVRFIXizeIsA", _wrap_UVRFIXizeIsA, METH_VARARGS },
+	 { "UVRFIXizeGetRFI", _wrap_UVRFIXizeGetRFI, METH_VARARGS },
+	 { "UVRFIXizeGetList", _wrap_UVRFIXizeGetList, METH_VARARGS },
+	 { "UVRFIXizeCorrect", _wrap_UVRFIXizeCorrect, METH_VARARGS },
+	 { "UVRFIXizeFilter", _wrap_UVRFIXizeFilter, METH_VARARGS },
+	 { "UVRFIXizeCounterRot", _wrap_UVRFIXizeCounterRot, METH_VARARGS },
+	 { "UVRFIXizeRef", _wrap_UVRFIXizeRef, METH_VARARGS },
+	 { "UVRFIXizeUnref", _wrap_UVRFIXizeUnref, METH_VARARGS },
+	 { "UVRFIXizeCreate", _wrap_UVRFIXizeCreate, METH_VARARGS },
+	 { "newUVRFIXize", _wrap_newUVRFIXize, METH_VARARGS },
+	 { "TableSNGetZeroFR", _wrap_TableSNGetZeroFR, METH_VARARGS },
 	 { "TableCLGetDummy", _wrap_TableCLGetDummy, METH_VARARGS },
 	 { "UVUtilFlag", _wrap_UVUtilFlag, METH_VARARGS },
 	 { "UVEditClipStokes", _wrap_UVEditClipStokes, METH_VARARGS },
@@ -63315,6 +64995,14 @@ static PyMethodDef ObitMethods[] = {
 	 { "SkyModelVMIonUnref", _wrap_SkyModelVMIonUnref, METH_VARARGS },
 	 { "SkyModelVMIonCopy", _wrap_SkyModelVMIonCopy, METH_VARARGS },
 	 { "newSkyModelVMIon", _wrap_newSkyModelVMIon, METH_VARARGS },
+	 { "SkyModelVMBeamIsA", _wrap_SkyModelVMBeamIsA, METH_VARARGS },
+	 { "SkyModelVMBeamGetName", _wrap_SkyModelVMBeamGetName, METH_VARARGS },
+	 { "SkyModelVMBeamCreate", _wrap_SkyModelVMBeamCreate, METH_VARARGS },
+	 { "SkyModelVMBeamGetList", _wrap_SkyModelVMBeamGetList, METH_VARARGS },
+	 { "SkyModelVMBeamRef", _wrap_SkyModelVMBeamRef, METH_VARARGS },
+	 { "SkyModelVMBeamUnref", _wrap_SkyModelVMBeamUnref, METH_VARARGS },
+	 { "SkyModelVMBeamCopy", _wrap_SkyModelVMBeamCopy, METH_VARARGS },
+	 { "newSkyModelVMBeam", _wrap_newSkyModelVMBeam, METH_VARARGS },
 	 { "SkyModelIsA", _wrap_SkyModelIsA, METH_VARARGS },
 	 { "SkyModelGetName", _wrap_SkyModelGetName, METH_VARARGS },
 	 { "SkyModelCompressCC", _wrap_SkyModelCompressCC, METH_VARARGS },
@@ -63590,6 +65278,15 @@ static PyMethodDef ObitMethods[] = {
 	 { "HistoryCopy", _wrap_HistoryCopy, METH_VARARGS },
 	 { "HistoryZap", _wrap_HistoryZap, METH_VARARGS },
 	 { "HistoryCreate", _wrap_HistoryCreate, METH_VARARGS },
+	 { "FullBeamIsA", _wrap_FullBeamIsA, METH_VARARGS },
+	 { "FullBeamGetName", _wrap_FullBeamGetName, METH_VARARGS },
+	 { "FullBeamFindPlane", _wrap_FullBeamFindPlane, METH_VARARGS },
+	 { "FullBeamValue", _wrap_FullBeamValue, METH_VARARGS },
+	 { "FullBeamCreate", _wrap_FullBeamCreate, METH_VARARGS },
+	 { "FullBeamRef", _wrap_FullBeamRef, METH_VARARGS },
+	 { "FullBeamUnref", _wrap_FullBeamUnref, METH_VARARGS },
+	 { "FullBeamCopy", _wrap_FullBeamCopy, METH_VARARGS },
+	 { "newFullBeam", _wrap_newFullBeam, METH_VARARGS },
 	 { "FITSSetDir", _wrap_FITSSetDir, METH_VARARGS },
 	 { "FITSAddDir", _wrap_FITSAddDir, METH_VARARGS },
 	 { "FITSFileExist", _wrap_FITSFileExist, METH_VARARGS },

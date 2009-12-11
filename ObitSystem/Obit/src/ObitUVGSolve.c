@@ -261,6 +261,7 @@ ObitUVGSolve* ObitUVGSolveCreate (gchar* name)
  *                                  (lamda). If none is given then 
  *                                  derive one if possible.
  * \li "WtUV"    OBIT_float (1,1,1) Weight outside of UVRANG. (default 1.0)
+ * \li "minOK"   OBIT_float (1,1,1) Minimum fraction of valid solutions (def 0.1)
  * \li "prtLv"   OBIT_int   (1,1,1) Print level (default no print)
  *
  * On output the following are set
@@ -282,7 +283,7 @@ ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV,
   olong i, k, nif, npoln, iAnt, numBL, SNver;
   olong nextVisBuf, cntmgm, iSNRow, numFreq, cntGood=0, cntPoss=0, cntBad=0;
   oint numPol, numIF, numAnt, suba, refant, minno, prtlv, mode;
-  ofloat solInt, snrmin, uvrang[2], wtuv, summgm, FractOK;
+  ofloat solInt, snrmin, uvrang[2], wtuv, summgm, FractOK, minOK=0.1;
   olong itemp, kday, khr, kmn, ksec, *refAntUse=NULL;
   olong *ant1=NULL, *ant2=NULL, *count=NULL;
   ofloat *antwt=NULL, *creal=NULL, *cimag=NULL, *cwt=NULL;
@@ -309,6 +310,10 @@ ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV,
   ObitInfoListGetTest(in->info, "solInt", &type, dim, &solInt);
   solInt /= 1440.0;  /* Convert to days */
   ObitInfoListAlwaysPut(inUV->info, "SubScanTime", OBIT_float, dim, &solInt);
+
+  /* Min allowable OK fraction */
+  minOK = 0.1;
+  ObitInfoListGetTest(in->info, "minOK", &type, dim, &minOK);
 
   /* open UV data  */
   retCode = ObitUVOpen (inUV, OBIT_IO_ReadCal, err);
@@ -423,8 +428,10 @@ ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV,
   if (!strncmp(solmod, "A&P",3))  mode = 0;
   if (solmod[0]=='P')             mode = 1;
   if (!strncmp(solmod, "P!A", 3)) mode = 2;
-  Obit_log_error(err, OBIT_InfoErr, "Self calibrate in %s mode", ModeStr[mode]);
-  ObitErrLog(err);
+  if (prtlv>=1) {
+    Obit_log_error(err, OBIT_InfoErr, "Self calibrate in %s mode", ModeStr[mode]);
+    ObitErrLog(err);
+  }
   
   sid = in->curSource;  /* In case only one */
   /* If averaging gain modulus get antenna and source lists */
@@ -620,16 +627,18 @@ ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV,
   if (err->error) goto cleanup;
   
   /* Give success rate */
-  Obit_log_error(err, OBIT_InfoErr, " %d of %d possible solutions found",
-		 cntGood, cntPoss);
+  if (prtlv>=1) {
+    Obit_log_error(err, OBIT_InfoErr, " %d of %d possible solutions found",
+		   cntGood, cntPoss);
+  }
   FractOK = (ofloat)cntGood / (ofloat)cntPoss;
   dim[0] = dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut(in->info, "FractOK", OBIT_float, dim, &FractOK);
   /* DEBUG Obit_log_error(err, OBIT_InfoErr, " %d of %d possible solutions bad",
      cntBad, cntPoss); */
   
-  /* Require at least 10% */
-  if (!(cntGood >= 0.1*cntPoss)) {
+  /* Require at least minOK */
+  if (!(cntGood >= minOK*cntPoss)) {
     Obit_log_error(err, OBIT_Error,
 		   "%s: TOO FEW Successful selfcal solutions for  %s", 
 		   routine, inUV->name);
@@ -880,7 +889,7 @@ NextAvg (ObitUV* inUV, ofloat interv,
     
     /* Need to read? */
     if ((*nextVisBuf<0) || (*nextVisBuf>=inUV->myDesc->numVisBuff)) {
-      retCode = ObitUVRead (inUV, NULL, err);
+      retCode = ObitUVReadSelect (inUV, NULL, err);
       if (err->error) goto cleanup;
       /* Finished? */
       if (retCode==OBIT_IO_EOF) {
@@ -931,7 +940,7 @@ NextAvg (ObitUV* inUV, ofloat interv,
     }
 
     /* Ignore autocorrelations */
-    if (a1==a2) continue;
+    if (a1==a2) {(*nextVisBuf)++; continue;}
    
     /* Set extra weighting factors */
     weight = antwt[a1-1]*antwt[a2-1];

@@ -5348,8 +5348,10 @@ extern ObitInfoList* SkyModelVMBeamGetList (ObitSkyModelVMBeam* in) {
 
 extern ObitSkyModelVMBeam* SkyModelVMBeamCreate (char *name, ObitImageMosaic* mosaic,
   ObitUV *uvData, ObitImage *IBeam,  ObitImage *VBeam, ObitImage *QBeam,  ObitImage *UBeam, 
+  ObitImage *IBeamPh,  ObitImage *VBeamPh, ObitImage *QBeamPh,  ObitImage *UBeamPh, 
   ObitErr *err) {
- return ObitSkyModelVMBeamCreate(name, mosaic, uvData, IBeam, VBeam, QBeam, UBeam, err);
+ return ObitSkyModelVMBeamCreate(name, mosaic, uvData, IBeam, VBeam, QBeam, UBeam, 
+    IBeamPh, VBeamPh, QBeamPh, UBeamPh, err);
 }
 
 extern char* SkyModelVMBeamGetName (ObitSkyModelVMBeam* in) {
@@ -5369,7 +5371,7 @@ extern ObitSkyModelVMBeam *SkyModelVMBeamCopy(ObitSkyModelVMBeam *,ObitSkyModelV
 extern ObitSkyModelVMBeam *SkyModelVMBeamUnref(ObitSkyModelVMBeam *);
 extern ObitSkyModelVMBeam *SkyModelVMBeamRef(ObitSkyModelVMBeam *);
 extern ObitInfoList *SkyModelVMBeamGetList(ObitSkyModelVMBeam *);
-extern ObitSkyModelVMBeam *SkyModelVMBeamCreate(char *,ObitImageMosaic *,ObitUV *,ObitImage *,ObitImage *,ObitImage *,ObitImage *,ObitErr *);
+extern ObitSkyModelVMBeam *SkyModelVMBeamCreate(char *,ObitImageMosaic *,ObitUV *,ObitImage *,ObitImage *,ObitImage *,ObitImage *,ObitImage *,ObitImage *,ObitImage *,ObitImage *,ObitErr *);
 extern char *SkyModelVMBeamGetName(ObitSkyModelVMBeam *);
 extern int SkyModelVMBeamIsA(ObitSkyModelVMBeam *);
 
@@ -32769,7 +32771,11 @@ static PyObject *_wrap_SkyModelVMBeamCreate(PyObject *self, PyObject *args) {
     ObitImage * _arg4;
     ObitImage * _arg5;
     ObitImage * _arg6;
-    ObitErr * _arg7;
+    ObitImage * _arg7;
+    ObitImage * _arg8;
+    ObitImage * _arg9;
+    ObitImage * _arg10;
+    ObitErr * _arg11;
     PyObject * _obj0 = 0;
     PyObject * _argo1 = 0;
     PyObject * _argo2 = 0;
@@ -32778,10 +32784,14 @@ static PyObject *_wrap_SkyModelVMBeamCreate(PyObject *self, PyObject *args) {
     PyObject * _argo5 = 0;
     PyObject * _argo6 = 0;
     PyObject * _argo7 = 0;
+    PyObject * _argo8 = 0;
+    PyObject * _argo9 = 0;
+    PyObject * _argo10 = 0;
+    PyObject * _argo11 = 0;
     char _ptemp[128];
 
     self = self;
-    if(!PyArg_ParseTuple(args,"OOOOOOOO:SkyModelVMBeamCreate",&_obj0,&_argo1,&_argo2,&_argo3,&_argo4,&_argo5,&_argo6,&_argo7)) 
+    if(!PyArg_ParseTuple(args,"OOOOOOOOOOOO:SkyModelVMBeamCreate",&_obj0,&_argo1,&_argo2,&_argo3,&_argo4,&_argo5,&_argo6,&_argo7,&_argo8,&_argo9,&_argo10,&_argo11)) 
         return NULL;
 {
   if (PyString_Check(_obj0)) {
@@ -32843,12 +32853,40 @@ static PyObject *_wrap_SkyModelVMBeamCreate(PyObject *self, PyObject *args) {
     }
     if (_argo7) {
         if (_argo7 == Py_None) { _arg7 = NULL; }
-        else if (SWIG_GetPtrObj(_argo7,(void **) &_arg7,"_ObitErr_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 8 of SkyModelVMBeamCreate. Expected _ObitErr_p.");
+        else if (SWIG_GetPtrObj(_argo7,(void **) &_arg7,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 8 of SkyModelVMBeamCreate. Expected _ObitImage_p.");
         return NULL;
         }
     }
-    _result = (ObitSkyModelVMBeam *)SkyModelVMBeamCreate(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7);
+    if (_argo8) {
+        if (_argo8 == Py_None) { _arg8 = NULL; }
+        else if (SWIG_GetPtrObj(_argo8,(void **) &_arg8,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 9 of SkyModelVMBeamCreate. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo9) {
+        if (_argo9 == Py_None) { _arg9 = NULL; }
+        else if (SWIG_GetPtrObj(_argo9,(void **) &_arg9,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 10 of SkyModelVMBeamCreate. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo10) {
+        if (_argo10 == Py_None) { _arg10 = NULL; }
+        else if (SWIG_GetPtrObj(_argo10,(void **) &_arg10,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 11 of SkyModelVMBeamCreate. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo11) {
+        if (_argo11 == Py_None) { _arg11 = NULL; }
+        else if (SWIG_GetPtrObj(_argo11,(void **) &_arg11,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 12 of SkyModelVMBeamCreate. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitSkyModelVMBeam *)SkyModelVMBeamCreate(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7,_arg8,_arg9,_arg10,_arg11);
     if (_result) {
         SWIG_MakePtr(_ptemp, (char *) _result,"_ObitSkyModelVMBeam_p");
         _resultobj = Py_BuildValue("s",_ptemp);

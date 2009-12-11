@@ -168,6 +168,8 @@ ObitSkyModelVMBeam* ObitSkyModelVMBeamCreate (gchar* name, ObitImageMosaic* mosa
 					      ObitUV *uvData,
 					      ObitImage *IBeam,  ObitImage *VBeam, 
 					      ObitImage *QBeam,  ObitImage *UBeam, 
+					      ObitImage *IBeamPh,  ObitImage *VBeamPh, 
+					      ObitImage *QBeamPh,  ObitImage *UBeamPh, 
 					      ObitErr *err);
 
 /** Public: initialize ObitSkyModelVMBeam structures */
