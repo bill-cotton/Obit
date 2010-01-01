@@ -1,0 +1,70 @@
+\section{Obit\-Table\-NIUtil.c File Reference}
+\label{ObitTableNIUtil_8c}\index{ObitTableNIUtil.c@{ObitTableNIUtil.c}}
+{\bf Obit\-Table\-NI}{\rm (p.\,\pageref{structObitTableNI})} class utility function definitions. 
+
+{\tt \#include \char`\"{}Obit\-Table\-NIUtil.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+{\bf Obit\-FArray} $\ast$ {\bf Obit\-Table\-NIUtil\-Swallow} ({\bf Obit\-Table\-NI} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Swallow an NI table to an {\bf Obit\-FArray}{\rm (p.\,\pageref{structObitFArray})}. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-Table\-NIUtil\-Prior} ({\bf Obit\-FArray} $\ast$NIArray, {\bf ofloat} time, {\bf olong} $\ast$prior)
+\begin{CompactList}\small\item\em Public: return index of row in NI Table FArray prior to a given time. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-Table\-NIUtil\-Follow} ({\bf Obit\-FArray} $\ast$NIArray, {\bf ofloat} time, {\bf olong} $\ast$follow)
+\begin{CompactList}\small\item\em Public: return index of row in NI Table FArray following a given time. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Table\-NI}{\rm (p.\,\pageref{structObitTableNI})} class utility function definitions. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitTableNIUtil.c@{Obit\-Table\-NIUtil.c}!ObitTableNIUtilFollow@{ObitTableNIUtilFollow}}
+\index{ObitTableNIUtilFollow@{ObitTableNIUtilFollow}!ObitTableNIUtil.c@{Obit\-Table\-NIUtil.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-Table\-NIUtil\-Follow ({\bf Obit\-FArray} $\ast$ {\em NIArray}, {\bf ofloat} {\em time}, {\bf olong} $\ast$ {\em follow})}\label{ObitTableNIUtil_8c_a2}
+
+
+Public: return index of row in NI Table FArray following a given time. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em NIArray}]FArray with NI table returned by Obit\-Table\-NIUtil\-Swallow Rows each contain (all floats): \begin{itemize}
+\item [0] Time - The center time (days) \item [1] Time\-I - Time interval of the solution \item [2] ant\-No - Antenna number, 0=\$$>$\$ al \item [3] Sour\-Id - Source number, 0=\$$>$\$ all \item [4] Sub\-A - Subarray number, 0=\$$>$\$ all \item [5] weight - Weight \item [6...] coef - Zernike model coeffients \end{itemize}
+\item[{\em time}]Target time in days, if time follows the last time in NIArray then returns index of the last row. \item[{\em follow}]start search at index follow \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]row index in NIArray \end{Desc}
+\index{ObitTableNIUtil.c@{Obit\-Table\-NIUtil.c}!ObitTableNIUtilPrior@{ObitTableNIUtilPrior}}
+\index{ObitTableNIUtilPrior@{ObitTableNIUtilPrior}!ObitTableNIUtil.c@{Obit\-Table\-NIUtil.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-Table\-NIUtil\-Prior ({\bf Obit\-FArray} $\ast$ {\em NIArray}, {\bf ofloat} {\em time}, {\bf olong} $\ast$ {\em prior})}\label{ObitTableNIUtil_8c_a1}
+
+
+Public: return index of row in NI Table FArray prior to a given time. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em NIArray}]FArray with NI table returned by Obit\-Table\-NIUtil\-Swallow Rows each contain (all floats): \begin{itemize}
+\item [0] Time - The center time (days) \item [1] Time\-I - Time interval of the solution \item [2] ant\-No - Antenna number, 0=\$$>$\$ al \item [3] Sour\-Id - Source number, 0=\$$>$\$ all \item [4] Sub\-A - Subarray number, 0=\$$>$\$ all \item [5] weight - Weight \item [6...] coef - Zernike model coeffients \end{itemize}
+\item[{\em time}]Target time in days, if time is prior to the first time in NIArray then returns index of the first row. \item[{\em prior}]start search at index prior \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]row index in NIArray \end{Desc}
+\index{ObitTableNIUtil.c@{Obit\-Table\-NIUtil.c}!ObitTableNIUtilSwallow@{ObitTableNIUtilSwallow}}
+\index{ObitTableNIUtilSwallow@{ObitTableNIUtilSwallow}!ObitTableNIUtil.c@{Obit\-Table\-NIUtil.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ Obit\-Table\-NIUtil\-Swallow ({\bf Obit\-Table\-NI} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableNIUtil_8c_a0}
+
+
+Public: Swallow an NI table to an {\bf Obit\-FArray}{\rm (p.\,\pageref{structObitFArray})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table to swallow \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]FArray with elaments (all floats): \begin{itemize}
+\item [0] Time - The center time (days) \item [1] Time\-I - Time interval of the solution \item [2] ant\-No - Antenna number, 0=\$$>$\$ al \item [3] Sour\-Id - Source number, 0=\$$>$\$ all \item [4] Sub\-A - Subarray number, 0=\$$>$\$ all \item [5] weight - Weight \item [6...] coef - Zernike model coeffients The number of coefficients is lrow-6. \end{itemize}
+\end{Desc}

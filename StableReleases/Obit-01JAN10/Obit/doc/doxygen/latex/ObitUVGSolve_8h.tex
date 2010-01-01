@@ -1,0 +1,180 @@
+\section{Obit\-UVGSolve.h File Reference}
+\label{ObitUVGSolve_8h}\index{ObitUVGSolve.h@{ObitUVGSolve.h}}
+{\bf Obit\-UVGSolve}{\rm (p.\,\pageref{structObitUVGSolve})} Class for uv data self calibration. 
+
+{\tt \#include \char`\"{}Obit\-UV.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-SN.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Sky\-Model.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-UVGSolve}
+\begin{CompactList}\small\item\em Obit\-UVGSolve Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-UVGSolve\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-UVGSolve\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-UVGSolve}{\rm (p.\,\pageref{structObitUVGSolve})} returns a Obit\-UVGSolve$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-UVGSolve\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-UVGSolve}{\rm (p.\,\pageref{structObitUVGSolve})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-UVGSolve\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-UVGSolve\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef {\bf Obit\-UVGSolve} $\ast$($\ast$ {\bf Obit\-UVGSolve\-Create\-FP} )(gchar $\ast$name)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-UVGSolve\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-UVGSolve} $\ast$ {\bf new\-Obit\-UVGSolve} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+{\bf Obit\-UVGSolve} $\ast$ {\bf Obit\-UVGSolve\-Create} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-UVGSolve}{\rm (p.\,\pageref{structObitUVGSolve})} structures. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-UVGSolve\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-UVGSolve} $\ast$ {\bf Obit\-UVGSolve\-Copy} ({\bf Obit\-UVGSolve} $\ast$in, {\bf Obit\-UVGSolve} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-UVGSolve\-Clone} ({\bf Obit\-UVGSolve} $\ast$in, {\bf Obit\-UVGSolve} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+{\bf Obit\-Table\-SN} $\ast$ {\bf Obit\-UVGSolve\-Cal} ({\bf Obit\-UVGSolve} $\ast$in, {\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-UV} $\ast$out\-UV, {\bf Obit\-UVSel} $\ast$sel, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Determine calibration from UV data divided by model. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-UVGSolve}{\rm (p.\,\pageref{structObitUVGSolve})} Class for uv data self calibration. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} class.
+
+Routines determine calibration for an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} and write an SN table. Control parameters are on the info member. \begin{itemize}
+\item \char`\"{}sub\-A\char`\"{} OBIT\_\-int (1,1,1) Selected subarray (default 1) \item \char`\"{}sol\-Int\char`\"{} OBIT\_\-float (1,1,1) Solution interval (min). (default scan) \item \char`\"{}ref\-Ant\char`\"{} OBIT\_\-int (1,1,1) Ref ant to use. (default 1) \item \char`\"{}avg\-Pol\char`\"{} OBIT\_\-bool (1,1,1) True if RR and LL to be averaged (false) \item \char`\"{}avg\-IF\char`\"{} OBIT\_\-bool (1,1,1) True if all IFs to be averaged (false) \item \char`\"{}min\-SNR\char`\"{} OBIT\_\-float (1,1,1) Minimum acceptable SNR (5) \item \char`\"{}do\-MGM\char`\"{} OBIT\_\-bool (1,1,1) True then find the mean gain modulus (true) \item \char`\"{}elev\-MGM\char`\"{} OBIT\_\-float (1,1,1) Min. elevation to include in mean gain modulus \item \char`\"{}sol\-Type\char`\"{} OBIT\_\-string (4,1,1 Solution type ' ', 'L1', (' ') \item \char`\"{}sol\-Mode\char`\"{} OBIT\_\-string (4,1,1 Solution mode: 'A\&P', 'P', 'P!A', 'GCON' ('P') \item \char`\"{}min\-No\char`\"{} OBIT\_\-int (1,1,1) Min. no. antennas. (default 4) \item \char`\"{}ant\-Wt\char`\"{} OBIT\_\-float ($\ast$,1,1) Antenna weights. (default 1.0) \item \char`\"{}UVR\_\-Full\char`\"{}OBIT\_\-float (2,1,1) Range of baseline lengths with full weight (kilolamda). If none is given then derive one if possible. \item \char`\"{}Wt\-UV\char`\"{} OBIT\_\-float (1,1,1) Weight outside of UVRANG. (default 1.0) \item \char`\"{}prt\-Lv\char`\"{} OBIT\_\-int (1,1,1) Print level (default no print)\end{itemize}
+\subsection{Creators and Destructors}\label{ObitUVGSolve_8h_ObitUVGSolveaccess}
+An {\bf Obit\-UVGSolve}{\rm (p.\,\pageref{structObitUVGSolve})} will usually be created using Obit\-UVGSolve\-Create which allows specifying a name for the object as well as other information.
+
+A copy of a pointer to an {\bf Obit\-UVGSolve}{\rm (p.\,\pageref{structObitUVGSolve})} should always be made using the {\bf Obit\-UVGSolve\-Ref}{\rm (p.\,\pageref{ObitUVGSolve_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-UVGSolve}{\rm (p.\,\pageref{structObitUVGSolve})} or changing a pointer, the function {\bf Obit\-UVGSolve\-Unref}{\rm (p.\,\pageref{ObitUVGSolve_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.
+
+\subsection{Define Documentation}
+\index{ObitUVGSolve.h@{Obit\-UVGSolve.h}!ObitUVGSolveIsA@{ObitUVGSolveIsA}}
+\index{ObitUVGSolveIsA@{ObitUVGSolveIsA}!ObitUVGSolve.h@{Obit\-UVGSolve.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVGSolve\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-UVGSolve\-Get\-Class())}\label{ObitUVGSolve_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitUVGSolve.h@{Obit\-UVGSolve.h}!ObitUVGSolveRef@{ObitUVGSolveRef}}
+\index{ObitUVGSolveRef@{ObitUVGSolveRef}!ObitUVGSolve.h@{Obit\-UVGSolve.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVGSolve\-Ref(in)\ Obit\-Ref (in)}\label{ObitUVGSolve_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-UVGSolve}{\rm (p.\,\pageref{structObitUVGSolve})}. 
+
+returns a Obit\-UVGSolve$\ast$. in = object to reference \index{ObitUVGSolve.h@{Obit\-UVGSolve.h}!ObitUVGSolveUnref@{ObitUVGSolveUnref}}
+\index{ObitUVGSolveUnref@{ObitUVGSolveUnref}!ObitUVGSolve.h@{Obit\-UVGSolve.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVGSolve\-Unref(in)\ Obit\-Unref (in)}\label{ObitUVGSolve_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-UVGSolve}{\rm (p.\,\pageref{structObitUVGSolve})} returns a Obit\-UVGSolve$\ast$. 
+
+in = object to unreference 
+
+\subsection{Typedef Documentation}
+\index{ObitUVGSolve.h@{Obit\-UVGSolve.h}!ObitUVGSolveCreateFP@{ObitUVGSolveCreateFP}}
+\index{ObitUVGSolveCreateFP@{ObitUVGSolveCreateFP}!ObitUVGSolve.h@{Obit\-UVGSolve.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-UVGSolve}$\ast$($\ast$ {\bf Obit\-UVGSolve\-Create\-FP})(gchar $\ast$name)}\label{ObitUVGSolve_8h_a3}
+
+
+Typedef for definition of class pointer structure. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitUVGSolve.h@{Obit\-UVGSolve.h}!newObitUVGSolve@{newObitUVGSolve}}
+\index{newObitUVGSolve@{newObitUVGSolve}!ObitUVGSolve.h@{Obit\-UVGSolve.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVGSolve}$\ast$ new\-Obit\-UVGSolve (gchar $\ast$ {\em name})}\label{ObitUVGSolve_8h_a5}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitUVGSolve.h@{Obit\-UVGSolve.h}!ObitUVGSolveCal@{ObitUVGSolveCal}}
+\index{ObitUVGSolveCal@{ObitUVGSolveCal}!ObitUVGSolve.h@{Obit\-UVGSolve.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-SN}$\ast$ Obit\-UVGSolve\-Cal ({\bf Obit\-UVGSolve} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf Obit\-UVSel} $\ast$ {\em sel}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVGSolve_8h_a10}
+
+
+Public: Determine calibration from UV data divided by model. 
+
+If the output table previously exists, deselect any entries corresponding to data selected on in\-UV (to be fitted). Routine translated from the AIPSish UVUTIL.FOR/SLFCAL \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Input self cal object. If only one source fitted in-$>$cur\-Source, has it's ID Control parameters are on the info member. \begin{itemize}
+\item \char`\"{}soln\-Ver\char`\"{} OBIT\_\-int (1,1,1) Solution (SN) table to write; 0=$>$ create new. \item \char`\"{}sub\-A\char`\"{} OBIT\_\-int (1,1,1) Selected subarray (default 1) \item \char`\"{}sol\-Int\char`\"{} OBIT\_\-float (1,1,1) Solution interval (min). (default scan) \item \char`\"{}ref\-Ant\char`\"{} OBIT\_\-int (1,1,1) Ref ant to use. (default 1) \item \char`\"{}avg\-Pol\char`\"{} OBIT\_\-bool (1,1,1) True if RR and LL to be averaged (false) \item \char`\"{}avg\-IF\char`\"{} OBIT\_\-bool (1,1,1) True if all IFs to be averaged (false) \item \char`\"{}amp\-Scalar\char`\"{} OBIT\_\-bool (1,1,1) True ampscalar averaging of data wanted \item \char`\"{}min\-SNR\char`\"{} OBIT\_\-float (1,1,1) Minimum acceptable SNR (5) \item \char`\"{}do\-MGM\char`\"{} OBIT\_\-bool (1,1,1) True then find the mean gain modulus (false) \item \char`\"{}elev\-MGM\char`\"{} OBIT\_\-float (1,1,1) Min. elevation to include in mean gain modulus \item \char`\"{}sol\-Type\char`\"{} OBIT\_\-string (4,1,1 Solution type ' ', 'L1', (' ') \item \char`\"{}sol\-Mode\char`\"{} OBIT\_\-string (4,1,1 Solution mode: 'A\&P', 'P', 'P!A', 'GCON' ('P') \item \char`\"{}min\-No\char`\"{} OBIT\_\-int (1,1,1) Min. no. antennas. (default 4) \item \char`\"{}ant\-Wt\char`\"{} OBIT\_\-float ($\ast$,1,1) Antenna weights. (default 1.0) \item \char`\"{}UVR\_\-Full\char`\"{}OBIT\_\-float (2,1,1) Range of baseline lengths with full weight (lamda). If none is given then derive one if possible. \item \char`\"{}Wt\-UV\char`\"{} OBIT\_\-float (1,1,1) Weight outside of UVRANG. (default 1.0) \item \char`\"{}prt\-Lv\char`\"{} OBIT\_\-int (1,1,1) Print level (default no print) \end{itemize}
+\item[{\em in\-UV}]Input UV data. \item[{\em out\-UV}]UV with which the output SN is to be associated \item[{\em sel}]UV selector describing data fitted, used to deselect any extant entries in output SN table. \item[{\em err}]Error/message stack, returns if error. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Pointer to the newly created SN object which is associated with out\-UV. \end{Desc}
+\index{ObitUVGSolve.h@{Obit\-UVGSolve.h}!ObitUVGSolveClassInit@{ObitUVGSolveClassInit}}
+\index{ObitUVGSolveClassInit@{ObitUVGSolveClassInit}!ObitUVGSolve.h@{Obit\-UVGSolve.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVGSolve\-Class\-Init (void)}\label{ObitUVGSolve_8h_a4}
+
+
+Public: Class initializer. 
+
+\index{ObitUVGSolve.h@{Obit\-UVGSolve.h}!ObitUVGSolveClone@{ObitUVGSolveClone}}
+\index{ObitUVGSolveClone@{ObitUVGSolveClone}!ObitUVGSolve.h@{Obit\-UVGSolve.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVGSolve\-Clone ({\bf Obit\-UVGSolve} $\ast$ {\em in}, {\bf Obit\-UVGSolve} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVGSolve_8h_a9}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitUVGSolve.h@{Obit\-UVGSolve.h}!ObitUVGSolveCopy@{ObitUVGSolveCopy}}
+\index{ObitUVGSolveCopy@{ObitUVGSolveCopy}!ObitUVGSolve.h@{Obit\-UVGSolve.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVGSolve}$\ast$ Obit\-UVGSolve\-Copy ({\bf Obit\-UVGSolve} $\ast$ {\em in}, {\bf Obit\-UVGSolve} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVGSolve_8h_a8}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitUVGSolve.h@{Obit\-UVGSolve.h}!ObitUVGSolveCreate@{ObitUVGSolveCreate}}
+\index{ObitUVGSolveCreate@{ObitUVGSolveCreate}!ObitUVGSolve.h@{Obit\-UVGSolve.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVGSolve}$\ast$ Obit\-UVGSolve\-Create (gchar $\ast$ {\em name})}\label{ObitUVGSolve_8h_a6}
+
+
+Public: Create/initialize {\bf Obit\-UVGSolve}{\rm (p.\,\pageref{structObitUVGSolve})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitUVGSolve.h@{Obit\-UVGSolve.h}!ObitUVGSolveGetClass@{ObitUVGSolveGetClass}}
+\index{ObitUVGSolveGetClass@{ObitUVGSolveGetClass}!ObitUVGSolve.h@{Obit\-UVGSolve.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-UVGSolve\-Get\-Class (void)}\label{ObitUVGSolve_8h_a7}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}

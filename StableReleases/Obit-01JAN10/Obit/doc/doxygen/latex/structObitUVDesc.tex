@@ -1,0 +1,673 @@
+\section{Obit\-UVDesc Struct Reference}
+\label{structObitUVDesc}\index{ObitUVDesc@{ObitUVDesc}}
+Obit\-UVDesc Class structure.  
+
+
+{\tt \#include $<$Obit\-UVDesc.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+Obit\-IOAccess {\bf access}
+\begin{CompactList}\small\item\em Type of access to file. \item\end{CompactList}\item 
+{\bf olong} {\bf nvis}
+\begin{CompactList}\small\item\em Number of visibilities total. \item\end{CompactList}\item 
+{\bf olong} {\bf lrec}
+\begin{CompactList}\small\item\em Length (floats) of a vis record. \item\end{CompactList}\item 
+{\bf olong} {\bf nrparm}
+\begin{CompactList}\small\item\em Number of random parameters. \item\end{CompactList}\item 
+{\bf olong} {\bf first\-Vis}
+\begin{CompactList}\small\item\em current beginning visibility (1-rel) read/write in buffer \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Vis\-Buff}
+\begin{CompactList}\small\item\em number of visibilities in buffer \item\end{CompactList}\item 
+{\bf olong} {\bf naxis}
+\begin{CompactList}\small\item\em Number of axes. \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Sub\-A}
+\begin{CompactList}\small\item\em Number of subarrays in the data. \item\end{CompactList}\item 
+{\bf olong} {\bf max\-Ant}
+\begin{CompactList}\small\item\em Maximum antenna in the data. \item\end{CompactList}\item 
+{\bf olong} {\bf inaxes} [UV\_\-MAXDIM]
+\begin{CompactList}\small\item\em Dimensions of axes. \item\end{CompactList}\item 
+gchar {\bf ctype} [UV\_\-MAXDIM][UVLEN\_\-KEYWORD]
+\begin{CompactList}\small\item\em WCS labels for each dimension of array. \item\end{CompactList}\item 
+gchar {\bf ptype} [UV\_\-MAX\_\-RANP][UVLEN\_\-KEYWORD]
+\begin{CompactList}\small\item\em WCS labels for random axes. \item\end{CompactList}\item 
+{\bf ofloat} {\bf cdelt} [UV\_\-MAXDIM]
+\begin{CompactList}\small\item\em Axis coordinate increments. \item\end{CompactList}\item 
+{\bf ofloat} {\bf crpix} [UV\_\-MAXDIM]
+\begin{CompactList}\small\item\em Axis reference pixels (1-rel). \item\end{CompactList}\item 
+{\bf ofloat} {\bf crota} [UV\_\-MAXDIM]
+\begin{CompactList}\small\item\em Axis rotation angles (deg). \item\end{CompactList}\item 
+{\bf ofloat} {\bf alt\-Crpix}
+\begin{CompactList}\small\item\em Alternate reference Pixel (frequency or velocity). \item\end{CompactList}\item 
+{\bf ofloat} {\bf xshift}
+\begin{CompactList}\small\item\em Offset in X (rotated RA) of phase center (deg). \item\end{CompactList}\item 
+{\bf ofloat} {\bf yshift}
+\begin{CompactList}\small\item\em Offset in Y (rotated Dec) of phase center (deg). \item\end{CompactList}\item 
+{\bf ofloat} {\bf Delta\-Time}
+\begin{CompactList}\small\item\em Data integration time in Days. \item\end{CompactList}\item 
+gchar {\bf object} [UVLEN\_\-VALUE]
+\begin{CompactList}\small\item\em Name of object. \item\end{CompactList}\item 
+gchar {\bf teles} [UVLEN\_\-VALUE]
+\begin{CompactList}\small\item\em Name of telescope making observation. \item\end{CompactList}\item 
+gchar {\bf instrument} [UVLEN\_\-VALUE]
+\begin{CompactList}\small\item\em Name of instrument making observation. \item\end{CompactList}\item 
+gchar {\bf observer} [UVLEN\_\-VALUE]
+\begin{CompactList}\small\item\em Observer. \item\end{CompactList}\item 
+gchar {\bf obsdat} [UVLEN\_\-VALUE]
+\begin{CompactList}\small\item\em Observing date as yyyy-mm-dd. \item\end{CompactList}\item 
+gchar {\bf date} [UVLEN\_\-VALUE]
+\begin{CompactList}\small\item\em File creation date as yyyy-mm-dd. \item\end{CompactList}\item 
+gchar {\bf origin} [UVLEN\_\-VALUE]
+\begin{CompactList}\small\item\em Origin (software) of image. \item\end{CompactList}\item 
+gchar {\bf bunit} [UVLEN\_\-VALUE]
+\begin{CompactList}\small\item\em Units of visibilities. \item\end{CompactList}\item 
+{\bf ofloat} {\bf epoch}
+\begin{CompactList}\small\item\em Epoch (years) of celestial coordinates, This is sometimes confused with equinox. \item\end{CompactList}\item 
+{\bf ofloat} {\bf equinox}
+\begin{CompactList}\small\item\em Mean Equinox of celestial coordinates (e.g. \item\end{CompactList}\item 
+{\bf ofloat} {\bf max\-BL}
+\begin{CompactList}\small\item\em Maximum baseline length if $>$ 0. \item\end{CompactList}\item 
+{\bf ofloat} {\bf max\-W}
+\begin{CompactList}\small\item\em Maximum abs(W) if $>$ 0. \item\end{CompactList}\item 
+{\bf odouble} {\bf JDObs}
+\begin{CompactList}\small\item\em Julian date of observations. \item\end{CompactList}\item 
+{\bf odouble} {\bf crval} [UV\_\-MAXDIM]
+\begin{CompactList}\small\item\em Axis coordinate values at reference pixel. \item\end{CompactList}\item 
+{\bf odouble} {\bf obsra}
+\begin{CompactList}\small\item\em Observed RA (deg). \item\end{CompactList}\item 
+{\bf odouble} {\bf obsdec}
+\begin{CompactList}\small\item\em Observed Dec (deg). \item\end{CompactList}\item 
+{\bf odouble} {\bf alt\-Ref}
+\begin{CompactList}\small\item\em Alternate reference value (frequency or velocity). \item\end{CompactList}\item 
+{\bf odouble} {\bf rest\-Freq}
+\begin{CompactList}\small\item\em Rest frequency of line (Hz). \item\end{CompactList}\item 
+{\bf odouble} {\bf freq}
+\begin{CompactList}\small\item\em Reference Frequency (Hz) for u,v,w. \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf freq\-Arr}
+\begin{CompactList}\small\item\em Array of Frequencies (Hz) in the order of Freq, IF in data dimension is nfreq$\ast$nif. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf fscale}
+\begin{CompactList}\small\item\em Array of differential frequency scaling factors from one frequency to the next, dimension is nfreq$\ast$nif. \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf freq\-IF}
+\begin{CompactList}\small\item\em Array of Frequencies per IF. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf ch\-Inc\-IF}
+\begin{CompactList}\small\item\em Array of channel frequency increments per IF. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf sideband}
+\begin{CompactList}\small\item\em Array of sidebands, one per IF. \item\end{CompactList}\item 
+{\bf oint} $\ast$ {\bf num\-Ant}
+\begin{CompactList}\small\item\em Number of antennas (actually max ant number) per subarray. \item\end{CompactList}\item 
+{\bf olong} {\bf Vel\-Reference}
+\begin{CompactList}\small\item\em Velocity reference frame: 1-3 (LSR, Helio, Observer). \item\end{CompactList}\item 
+{\bf olong} {\bf Vel\-Def}
+\begin{CompactList}\small\item\em Velocity definition 0=$>$optical, 1=radio. \item\end{CompactList}\item 
+{\bf olong} {\bf ilocu}
+\begin{CompactList}\small\item\em Random parameter offset: U coordinate. \item\end{CompactList}\item 
+{\bf olong} {\bf ilocv}
+\begin{CompactList}\small\item\em Random parameter offset: V coordinate. \item\end{CompactList}\item 
+{\bf olong} {\bf ilocw}
+\begin{CompactList}\small\item\em Random parameter offset: W coordinate. \item\end{CompactList}\item 
+{\bf olong} {\bf iloct}
+\begin{CompactList}\small\item\em Random parameter offset:Time. \item\end{CompactList}\item 
+{\bf olong} {\bf ilocb}
+\begin{CompactList}\small\item\em Random parameter offset: Baseline. \item\end{CompactList}\item 
+{\bf olong} {\bf ilocsu}
+\begin{CompactList}\small\item\em Random parameter offset: Source id. \item\end{CompactList}\item 
+{\bf olong} {\bf ilocfq}
+\begin{CompactList}\small\item\em Random parameter offset:Freq id. \item\end{CompactList}\item 
+{\bf olong} {\bf ilocit}
+\begin{CompactList}\small\item\em Random parameter offset: Integration time. \item\end{CompactList}\item 
+{\bf olong} {\bf ilocid}
+\begin{CompactList}\small\item\em Random parameter offset: Correlation id. \item\end{CompactList}\item 
+{\bf olong} {\bf ilocws}
+\begin{CompactList}\small\item\em 0-rel axis order: Weight-scale parameters for compressed data \item\end{CompactList}\item 
+{\bf olong} {\bf jlocc}
+\begin{CompactList}\small\item\em 0-rel axis order: Complex values \item\end{CompactList}\item 
+{\bf olong} {\bf jlocs}
+\begin{CompactList}\small\item\em 0-rel axis order: Stokes' parameters \item\end{CompactList}\item 
+{\bf olong} {\bf jlocf}
+\begin{CompactList}\small\item\em 0-rel axis order: Frequency \item\end{CompactList}\item 
+{\bf olong} {\bf jlocr}
+\begin{CompactList}\small\item\em 0-rel axis order: RA \item\end{CompactList}\item 
+{\bf olong} {\bf jlocd}
+\begin{CompactList}\small\item\em 0-rel axis order: declination \item\end{CompactList}\item 
+{\bf olong} {\bf jlocif}
+\begin{CompactList}\small\item\em 0-rel axis order: IF \item\end{CompactList}\item 
+{\bf olong} {\bf incs}
+\begin{CompactList}\small\item\em Increment in data: Stokes. \item\end{CompactList}\item 
+{\bf olong} {\bf incf}
+\begin{CompactList}\small\item\em Increment in data: Frequency. \item\end{CompactList}\item 
+{\bf olong} {\bf incif}
+\begin{CompactList}\small\item\em Increment in data: IF. \item\end{CompactList}\item 
+{\bf olong} {\bf ncorr}
+\begin{CompactList}\small\item\em Total number of complex visibilities. \item\end{CompactList}\item 
+gchar {\bf isort} [3]
+\begin{CompactList}\small\item\em Sort order 1st 2 char meaningful. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Info\-List for other keywords. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-UVDesc Class structure. 
+
+This class contains descriptions of interferometric visibility data. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitUVDesc@{Obit\-UVDesc}!access@{access}}
+\index{access@{access}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOAccess {\bf Obit\-UVDesc::access}}\label{structObitUVDesc_o4}
+
+
+Type of access to file. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!altCrpix@{altCrpix}}
+\index{altCrpix@{altCrpix}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVDesc::alt\-Crpix}}\label{structObitUVDesc_o19}
+
+
+Alternate reference Pixel (frequency or velocity). 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!altRef@{altRef}}
+\index{altRef@{altRef}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-UVDesc::alt\-Ref}}\label{structObitUVDesc_o39}
+
+
+Alternate reference value (frequency or velocity). 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!bunit@{bunit}}
+\index{bunit@{bunit}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-UVDesc::bunit}[UVLEN\_\-VALUE]}\label{structObitUVDesc_o30}
+
+
+Units of visibilities. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!cdelt@{cdelt}}
+\index{cdelt@{cdelt}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVDesc::cdelt}[UV\_\-MAXDIM]}\label{structObitUVDesc_o16}
+
+
+Axis coordinate increments. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!chIncIF@{chIncIF}}
+\index{chIncIF@{chIncIF}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVDesc::ch\-Inc\-IF}}\label{structObitUVDesc_o45}
+
+
+Array of channel frequency increments per IF. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-UVDesc::Class\-Info}}\label{structObitUVDesc_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!crota@{crota}}
+\index{crota@{crota}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVDesc::crota}[UV\_\-MAXDIM]}\label{structObitUVDesc_o18}
+
+
+Axis rotation angles (deg). 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!crpix@{crpix}}
+\index{crpix@{crpix}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVDesc::crpix}[UV\_\-MAXDIM]}\label{structObitUVDesc_o17}
+
+
+Axis reference pixels (1-rel). 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!crval@{crval}}
+\index{crval@{crval}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-UVDesc::crval}[UV\_\-MAXDIM]}\label{structObitUVDesc_o36}
+
+
+Axis coordinate values at reference pixel. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!ctype@{ctype}}
+\index{ctype@{ctype}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-UVDesc::ctype}[UV\_\-MAXDIM][UVLEN\_\-KEYWORD]}\label{structObitUVDesc_o14}
+
+
+WCS labels for each dimension of array. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!date@{date}}
+\index{date@{date}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-UVDesc::date}[UVLEN\_\-VALUE]}\label{structObitUVDesc_o28}
+
+
+File creation date as yyyy-mm-dd. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!DeltaTime@{DeltaTime}}
+\index{DeltaTime@{DeltaTime}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVDesc::Delta\-Time}}\label{structObitUVDesc_o22}
+
+
+Data integration time in Days. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!epoch@{epoch}}
+\index{epoch@{epoch}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVDesc::epoch}}\label{structObitUVDesc_o31}
+
+
+Epoch (years) of celestial coordinates, This is sometimes confused with equinox. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!equinox@{equinox}}
+\index{equinox@{equinox}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVDesc::equinox}}\label{structObitUVDesc_o32}
+
+
+Mean Equinox of celestial coordinates (e.g. 
+
+2000) \index{ObitUVDesc@{Obit\-UVDesc}!firstVis@{firstVis}}
+\index{firstVis@{firstVis}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::first\-Vis}}\label{structObitUVDesc_o8}
+
+
+current beginning visibility (1-rel) read/write in buffer 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!freq@{freq}}
+\index{freq@{freq}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-UVDesc::freq}}\label{structObitUVDesc_o41}
+
+
+Reference Frequency (Hz) for u,v,w. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!freqArr@{freqArr}}
+\index{freqArr@{freqArr}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-UVDesc::freq\-Arr}}\label{structObitUVDesc_o42}
+
+
+Array of Frequencies (Hz) in the order of Freq, IF in data dimension is nfreq$\ast$nif. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!freqIF@{freqIF}}
+\index{freqIF@{freqIF}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-UVDesc::freq\-IF}}\label{structObitUVDesc_o44}
+
+
+Array of Frequencies per IF. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!fscale@{fscale}}
+\index{fscale@{fscale}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVDesc::fscale}}\label{structObitUVDesc_o43}
+
+
+Array of differential frequency scaling factors from one frequency to the next, dimension is nfreq$\ast$nif. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!ilocb@{ilocb}}
+\index{ilocb@{ilocb}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::ilocb}}\label{structObitUVDesc_o54}
+
+
+Random parameter offset: Baseline. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!ilocfq@{ilocfq}}
+\index{ilocfq@{ilocfq}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::ilocfq}}\label{structObitUVDesc_o56}
+
+
+Random parameter offset:Freq id. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!ilocid@{ilocid}}
+\index{ilocid@{ilocid}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::ilocid}}\label{structObitUVDesc_o58}
+
+
+Random parameter offset: Correlation id. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!ilocit@{ilocit}}
+\index{ilocit@{ilocit}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::ilocit}}\label{structObitUVDesc_o57}
+
+
+Random parameter offset: Integration time. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!ilocsu@{ilocsu}}
+\index{ilocsu@{ilocsu}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::ilocsu}}\label{structObitUVDesc_o55}
+
+
+Random parameter offset: Source id. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!iloct@{iloct}}
+\index{iloct@{iloct}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::iloct}}\label{structObitUVDesc_o53}
+
+
+Random parameter offset:Time. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!ilocu@{ilocu}}
+\index{ilocu@{ilocu}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::ilocu}}\label{structObitUVDesc_o50}
+
+
+Random parameter offset: U coordinate. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!ilocv@{ilocv}}
+\index{ilocv@{ilocv}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::ilocv}}\label{structObitUVDesc_o51}
+
+
+Random parameter offset: V coordinate. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!ilocw@{ilocw}}
+\index{ilocw@{ilocw}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::ilocw}}\label{structObitUVDesc_o52}
+
+
+Random parameter offset: W coordinate. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!ilocws@{ilocws}}
+\index{ilocws@{ilocws}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::ilocws}}\label{structObitUVDesc_o59}
+
+
+0-rel axis order: Weight-scale parameters for compressed data 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!inaxes@{inaxes}}
+\index{inaxes@{inaxes}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::inaxes}[UV\_\-MAXDIM]}\label{structObitUVDesc_o13}
+
+
+Dimensions of axes. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!incf@{incf}}
+\index{incf@{incf}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::incf}}\label{structObitUVDesc_o67}
+
+
+Increment in data: Frequency. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!incif@{incif}}
+\index{incif@{incif}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::incif}}\label{structObitUVDesc_o68}
+
+
+Increment in data: IF. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!incs@{incs}}
+\index{incs@{incs}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::incs}}\label{structObitUVDesc_o66}
+
+
+Increment in data: Stokes. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!info@{info}}
+\index{info@{info}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-UVDesc::info}}\label{structObitUVDesc_o71}
+
+
+Info\-List for other keywords. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!instrument@{instrument}}
+\index{instrument@{instrument}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-UVDesc::instrument}[UVLEN\_\-VALUE]}\label{structObitUVDesc_o25}
+
+
+Name of instrument making observation. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!isort@{isort}}
+\index{isort@{isort}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-UVDesc::isort}[3]}\label{structObitUVDesc_o70}
+
+
+Sort order 1st 2 char meaningful. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!JDObs@{JDObs}}
+\index{JDObs@{JDObs}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-UVDesc::JDObs}}\label{structObitUVDesc_o35}
+
+
+Julian date of observations. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!jlocc@{jlocc}}
+\index{jlocc@{jlocc}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::jlocc}}\label{structObitUVDesc_o60}
+
+
+0-rel axis order: Complex values 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!jlocd@{jlocd}}
+\index{jlocd@{jlocd}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::jlocd}}\label{structObitUVDesc_o64}
+
+
+0-rel axis order: declination 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!jlocf@{jlocf}}
+\index{jlocf@{jlocf}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::jlocf}}\label{structObitUVDesc_o62}
+
+
+0-rel axis order: Frequency 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!jlocif@{jlocif}}
+\index{jlocif@{jlocif}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::jlocif}}\label{structObitUVDesc_o65}
+
+
+0-rel axis order: IF 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!jlocr@{jlocr}}
+\index{jlocr@{jlocr}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::jlocr}}\label{structObitUVDesc_o63}
+
+
+0-rel axis order: RA 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!jlocs@{jlocs}}
+\index{jlocs@{jlocs}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::jlocs}}\label{structObitUVDesc_o61}
+
+
+0-rel axis order: Stokes' parameters 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!lrec@{lrec}}
+\index{lrec@{lrec}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::lrec}}\label{structObitUVDesc_o6}
+
+
+Length (floats) of a vis record. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!maxAnt@{maxAnt}}
+\index{maxAnt@{maxAnt}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::max\-Ant}}\label{structObitUVDesc_o12}
+
+
+Maximum antenna in the data. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!maxBL@{maxBL}}
+\index{maxBL@{maxBL}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVDesc::max\-BL}}\label{structObitUVDesc_o33}
+
+
+Maximum baseline length if $>$ 0. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!maxW@{maxW}}
+\index{maxW@{maxW}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVDesc::max\-W}}\label{structObitUVDesc_o34}
+
+
+Maximum abs(W) if $>$ 0. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!name@{name}}
+\index{name@{name}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-UVDesc::name}}\label{structObitUVDesc_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!naxis@{naxis}}
+\index{naxis@{naxis}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::naxis}}\label{structObitUVDesc_o10}
+
+
+Number of axes. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!ncorr@{ncorr}}
+\index{ncorr@{ncorr}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::ncorr}}\label{structObitUVDesc_o69}
+
+
+Total number of complex visibilities. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!nrparm@{nrparm}}
+\index{nrparm@{nrparm}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::nrparm}}\label{structObitUVDesc_o7}
+
+
+Number of random parameters. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!numAnt@{numAnt}}
+\index{numAnt@{numAnt}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint}$\ast$ {\bf Obit\-UVDesc::num\-Ant}}\label{structObitUVDesc_o47}
+
+
+Number of antennas (actually max ant number) per subarray. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!numSubA@{numSubA}}
+\index{numSubA@{numSubA}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::num\-Sub\-A}}\label{structObitUVDesc_o11}
+
+
+Number of subarrays in the data. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!numVisBuff@{numVisBuff}}
+\index{numVisBuff@{numVisBuff}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::num\-Vis\-Buff}}\label{structObitUVDesc_o9}
+
+
+number of visibilities in buffer 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!nvis@{nvis}}
+\index{nvis@{nvis}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::nvis}}\label{structObitUVDesc_o5}
+
+
+Number of visibilities total. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-UVDesc::Obit\-Id}}\label{structObitUVDesc_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!object@{object}}
+\index{object@{object}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-UVDesc::object}[UVLEN\_\-VALUE]}\label{structObitUVDesc_o23}
+
+
+Name of object. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!obsdat@{obsdat}}
+\index{obsdat@{obsdat}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-UVDesc::obsdat}[UVLEN\_\-VALUE]}\label{structObitUVDesc_o27}
+
+
+Observing date as yyyy-mm-dd. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!obsdec@{obsdec}}
+\index{obsdec@{obsdec}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-UVDesc::obsdec}}\label{structObitUVDesc_o38}
+
+
+Observed Dec (deg). 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!observer@{observer}}
+\index{observer@{observer}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-UVDesc::observer}[UVLEN\_\-VALUE]}\label{structObitUVDesc_o26}
+
+
+Observer. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!obsra@{obsra}}
+\index{obsra@{obsra}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-UVDesc::obsra}}\label{structObitUVDesc_o37}
+
+
+Observed RA (deg). 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!origin@{origin}}
+\index{origin@{origin}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-UVDesc::origin}[UVLEN\_\-VALUE]}\label{structObitUVDesc_o29}
+
+
+Origin (software) of image. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!ptype@{ptype}}
+\index{ptype@{ptype}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-UVDesc::ptype}[UV\_\-MAX\_\-RANP][UVLEN\_\-KEYWORD]}\label{structObitUVDesc_o15}
+
+
+WCS labels for random axes. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::Reference\-Count}}\label{structObitUVDesc_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!restFreq@{restFreq}}
+\index{restFreq@{restFreq}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-UVDesc::rest\-Freq}}\label{structObitUVDesc_o40}
+
+
+Rest frequency of line (Hz). 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!sideband@{sideband}}
+\index{sideband@{sideband}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVDesc::sideband}}\label{structObitUVDesc_o46}
+
+
+Array of sidebands, one per IF. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!teles@{teles}}
+\index{teles@{teles}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-UVDesc::teles}[UVLEN\_\-VALUE]}\label{structObitUVDesc_o24}
+
+
+Name of telescope making observation. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!VelDef@{VelDef}}
+\index{VelDef@{VelDef}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::Vel\-Def}}\label{structObitUVDesc_o49}
+
+
+Velocity definition 0=$>$optical, 1=radio. 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!VelReference@{VelReference}}
+\index{VelReference@{VelReference}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVDesc::Vel\-Reference}}\label{structObitUVDesc_o48}
+
+
+Velocity reference frame: 1-3 (LSR, Helio, Observer). 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!xshift@{xshift}}
+\index{xshift@{xshift}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVDesc::xshift}}\label{structObitUVDesc_o20}
+
+
+Offset in X (rotated RA) of phase center (deg). 
+
+\index{ObitUVDesc@{Obit\-UVDesc}!yshift@{yshift}}
+\index{yshift@{yshift}!ObitUVDesc@{Obit\-UVDesc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVDesc::yshift}}\label{structObitUVDesc_o21}
+
+
+Offset in Y (rotated Dec) of phase center (deg). 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-UVDesc.h}\end{CompactItemize}

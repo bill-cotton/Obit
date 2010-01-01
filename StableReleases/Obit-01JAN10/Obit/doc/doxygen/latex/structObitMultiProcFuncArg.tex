@@ -1,0 +1,122 @@
+\section{Obit\-Multi\-Proc\-Func\-Arg Struct Reference}
+\label{structObitMultiProcFuncArg}\index{ObitMultiProcFuncArg@{ObitMultiProcFuncArg}}
+Multi\-Proc function argument.  
+
+
+{\tt \#include $<$Obit\-Multi\-Proc.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+{\bf Obit\-RPC} $\ast$ {\bf client}
+\begin{CompactList}\small\item\em RPC Client. \item\end{CompactList}\item 
+gchar $\ast$ {\bf URL}
+\begin{CompactList}\small\item\em URL for Func\-Container. \item\end{CompactList}\item 
+gchar $\ast$ {\bf MPfunc}
+\begin{CompactList}\small\item\em Function name to call in Func\-Container for remote RPC call. \item\end{CompactList}\item 
+{\bf Obit\-Multi\-Proc\-Func} {\bf localfunc}
+\begin{CompactList}\small\item\em Function pointer to call in local address space, the same arguments and functionality as MPfunc. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf args}
+\begin{CompactList}\small\item\em Arguments as Info\-List. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf ret\-Val}
+\begin{CompactList}\small\item\em Return values as Info\-List. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em thread object \item\end{CompactList}\item 
+{\bf olong} {\bf ithread}
+\begin{CompactList}\small\item\em thread/stream number \item\end{CompactList}\item 
+{\bf olong} {\bf ijob}
+\begin{CompactList}\small\item\em job number \item\end{CompactList}\item 
+{\bf Obit\-Err} $\ast$ {\bf err}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} error/logging object. \item\end{CompactList}\item 
+gpointer {\bf user\_\-data}
+\begin{CompactList}\small\item\em Arbitrary user data. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Multi\-Proc function argument. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}!args@{args}}
+\index{args@{args}!ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Multi\-Proc\-Func\-Arg::args}}\label{structObitMultiProcFuncArg_o4}
+
+
+Arguments as Info\-List. 
+
+\index{ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}!client@{client}}
+\index{client@{client}!ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-RPC}$\ast$ {\bf Obit\-Multi\-Proc\-Func\-Arg::client}}\label{structObitMultiProcFuncArg_o0}
+
+
+RPC Client. 
+
+\index{ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}!err@{err}}
+\index{err@{err}!ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Err}$\ast$ {\bf Obit\-Multi\-Proc\-Func\-Arg::err}}\label{structObitMultiProcFuncArg_o9}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} error/logging object. 
+
+\index{ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}!ijob@{ijob}}
+\index{ijob@{ijob}!ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Multi\-Proc\-Func\-Arg::ijob}}\label{structObitMultiProcFuncArg_o8}
+
+
+job number 
+
+\index{ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}!ithread@{ithread}}
+\index{ithread@{ithread}!ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Multi\-Proc\-Func\-Arg::ithread}}\label{structObitMultiProcFuncArg_o7}
+
+
+thread/stream number 
+
+\index{ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}!localfunc@{localfunc}}
+\index{localfunc@{localfunc}!ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Multi\-Proc\-Func} {\bf Obit\-Multi\-Proc\-Func\-Arg::localfunc}}\label{structObitMultiProcFuncArg_o3}
+
+
+Function pointer to call in local address space, the same arguments and functionality as MPfunc. 
+
+\index{ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}!MPfunc@{MPfunc}}
+\index{MPfunc@{MPfunc}!ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Multi\-Proc\-Func\-Arg::MPfunc}}\label{structObitMultiProcFuncArg_o2}
+
+
+Function name to call in Func\-Container for remote RPC call. 
+
+\index{ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}!retVal@{retVal}}
+\index{retVal@{retVal}!ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Multi\-Proc\-Func\-Arg::ret\-Val}}\label{structObitMultiProcFuncArg_o5}
+
+
+Return values as Info\-List. 
+
+\index{ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}!thread@{thread}}
+\index{thread@{thread}!ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Multi\-Proc\-Func\-Arg::thread}}\label{structObitMultiProcFuncArg_o6}
+
+
+thread object 
+
+\index{ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}!URL@{URL}}
+\index{URL@{URL}!ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Multi\-Proc\-Func\-Arg::URL}}\label{structObitMultiProcFuncArg_o1}
+
+
+URL for Func\-Container. 
+
+\index{ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}!user_data@{user\_\-data}}
+\index{user_data@{user\_\-data}!ObitMultiProcFuncArg@{Obit\-Multi\-Proc\-Func\-Arg}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Multi\-Proc\-Func\-Arg::user\_\-data}}\label{structObitMultiProcFuncArg_o10}
+
+
+Arbitrary user data. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Multi\-Proc.h}\end{CompactItemize}

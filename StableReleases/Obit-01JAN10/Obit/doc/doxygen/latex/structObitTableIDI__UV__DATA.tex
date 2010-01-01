@@ -1,0 +1,986 @@
+\section{Obit\-Table\-IDI\_\-UV\_\-DATA Struct Reference}
+\label{structObitTableIDI__UV__DATA}\index{ObitTableIDI_UV_DATA@{ObitTableIDI\_\-UV\_\-DATA}}
+Obit\-Table\-IDI\_\-UV\_\-DATA Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-IDI\_\-UV\_\-DATA.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-IO} $\ast$ {\bf my\-IO}
+\begin{CompactList}\small\item\em I/O interface to access disk resident data. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Desc} $\ast$ {\bf my\-Desc}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Sel} $\ast$ {\bf my\-Sel}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf buffer}
+\begin{CompactList}\small\item\em Table buffer. \item\end{CompactList}\item 
+{\bf olong} {\bf buffer\-Size}
+\begin{CompactList}\small\item\em Table buffer size in floats. \item\end{CompactList}\item 
+gchar $\ast$ {\bf tab\-Type}
+\begin{CompactList}\small\item\em Table type (name of type, e.g. \item\end{CompactList}\item 
+{\bf olong} {\bf tab\-Ver}
+\begin{CompactList}\small\item\em Table version number(1-rel). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf my\-Host}
+\begin{CompactList}\small\item\em This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. \item\end{CompactList}\item 
+{\bf oint} {\bf tabrev}
+\begin{CompactList}\small\item\em Table format revision number. \item\end{CompactList}\item 
+{\bf oint} {\bf no\_\-stkd}
+\begin{CompactList}\small\item\em Number of Stokes parameters. \item\end{CompactList}\item 
+{\bf oint} {\bf stk\_\-1}
+\begin{CompactList}\small\item\em First Stokes parameter. \item\end{CompactList}\item 
+{\bf oint} {\bf no\_\-band}
+\begin{CompactList}\small\item\em Number of frequency bands (IF). \item\end{CompactList}\item 
+{\bf oint} {\bf no\_\-chan}
+\begin{CompactList}\small\item\em Number of frequency channels. \item\end{CompactList}\item 
+{\bf odouble} {\bf ref\_\-freq}
+\begin{CompactList}\small\item\em Reference frequency (Hz). \item\end{CompactList}\item 
+{\bf odouble} {\bf chan\_\-bw}
+\begin{CompactList}\small\item\em Channel bandwidth (Hz). \item\end{CompactList}\item 
+{\bf oint} {\bf ref\_\-pixl}
+\begin{CompactList}\small\item\em Reference frequency bin. \item\end{CompactList}\item 
+gchar {\bf obscode} [MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]
+\begin{CompactList}\small\item\em Observation project code. \item\end{CompactList}\item 
+gchar {\bf Arr\-Name} [MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]
+\begin{CompactList}\small\item\em Array name. \item\end{CompactList}\item 
+gchar {\bf Ref\-Date} [MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]
+\begin{CompactList}\small\item\em Reference date as \char`\"{}YYYY-MM-DD\char`\"{}. \item\end{CompactList}\item 
+{\bf oint} {\bf nmatrix}
+\begin{CompactList}\small\item\em Number of UV data matricies. \item\end{CompactList}\item 
+{\bf oint} {\bf maxis}
+\begin{CompactList}\small\item\em Number of UV data matrix axes. \item\end{CompactList}\item 
+gboolean {\bf tmatx01}
+\begin{CompactList}\small\item\em [OPTIONAL] If TRUE col. \item\end{CompactList}\item 
+gboolean {\bf tmatx02}
+\begin{CompactList}\small\item\em [OPTIONAL] If TRUE col. \item\end{CompactList}\item 
+gboolean {\bf tmatx03}
+\begin{CompactList}\small\item\em [OPTIONAL] If TRUE col. \item\end{CompactList}\item 
+gboolean {\bf tmatx04}
+\begin{CompactList}\small\item\em [OPTIONAL] If TRUE col. \item\end{CompactList}\item 
+gboolean {\bf tmatx05}
+\begin{CompactList}\small\item\em [OPTIONAL] If TRUE col. \item\end{CompactList}\item 
+gboolean {\bf tmatx06}
+\begin{CompactList}\small\item\em [OPTIONAL] If TRUE col. \item\end{CompactList}\item 
+gboolean {\bf tmatx07}
+\begin{CompactList}\small\item\em [OPTIONAL] If TRUE col. \item\end{CompactList}\item 
+gboolean {\bf tmatx08}
+\begin{CompactList}\small\item\em [OPTIONAL] If TRUE col. \item\end{CompactList}\item 
+gboolean {\bf tmatx09}
+\begin{CompactList}\small\item\em [OPTIONAL] If TRUE col. \item\end{CompactList}\item 
+gboolean {\bf tmatx10}
+\begin{CompactList}\small\item\em [OPTIONAL] If TRUE col. \item\end{CompactList}\item 
+gboolean {\bf tmatx11}
+\begin{CompactList}\small\item\em [OPTIONAL] If TRUE col. \item\end{CompactList}\item 
+gboolean {\bf tmatx12}
+\begin{CompactList}\small\item\em [OPTIONAL] If TRUE col. \item\end{CompactList}\item 
+gboolean {\bf tmatx13}
+\begin{CompactList}\small\item\em [OPTIONAL] If TRUE col. \item\end{CompactList}\item 
+gboolean {\bf tmatx14}
+\begin{CompactList}\small\item\em [OPTIONAL] If TRUE col. \item\end{CompactList}\item 
+gboolean {\bf tmatx15}
+\begin{CompactList}\small\item\em [OPTIONAL] If TRUE col. \item\end{CompactList}\item 
+{\bf oint} {\bf maxis1}
+\begin{CompactList}\small\item\em [OPTIONAL] Number of pixels on axis 1 \item\end{CompactList}\item 
+gchar {\bf ctype1} [MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]
+\begin{CompactList}\small\item\em [OPTIONAL] Type of data axis 1 \item\end{CompactList}\item 
+{\bf odouble} {\bf cdelt1}
+\begin{CompactList}\small\item\em [OPTIONAL] Increment in coordinate between pixels on axis 1 \item\end{CompactList}\item 
+{\bf ofloat} {\bf crpix1}
+\begin{CompactList}\small\item\em [OPTIONAL] Reference pixel on axis 1 \item\end{CompactList}\item 
+{\bf odouble} {\bf crval1}
+\begin{CompactList}\small\item\em [OPTIONAL] Reference coordinate on axis 1 \item\end{CompactList}\item 
+{\bf oint} {\bf maxis2}
+\begin{CompactList}\small\item\em [OPTIONAL] Number of pixels on axis 2 \item\end{CompactList}\item 
+gchar {\bf ctype2} [MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]
+\begin{CompactList}\small\item\em [OPTIONAL] Type of data axis 2 \item\end{CompactList}\item 
+{\bf odouble} {\bf cdelt2}
+\begin{CompactList}\small\item\em [OPTIONAL] Increment in coordinate between pixels on axis 2 \item\end{CompactList}\item 
+{\bf ofloat} {\bf crpix2}
+\begin{CompactList}\small\item\em [OPTIONAL] Reference pixel on axis 2 \item\end{CompactList}\item 
+{\bf odouble} {\bf crval2}
+\begin{CompactList}\small\item\em [OPTIONAL] Reference coordinate on axis 2 \item\end{CompactList}\item 
+{\bf oint} {\bf maxis3}
+\begin{CompactList}\small\item\em [OPTIONAL] Number of pixels on axis 3 \item\end{CompactList}\item 
+gchar {\bf ctype3} [MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]
+\begin{CompactList}\small\item\em [OPTIONAL] Type of data axis 3 \item\end{CompactList}\item 
+{\bf odouble} {\bf cdelt3}
+\begin{CompactList}\small\item\em [OPTIONAL] Increment in coordinate between pixels on axis 3 \item\end{CompactList}\item 
+{\bf ofloat} {\bf crpix3}
+\begin{CompactList}\small\item\em [OPTIONAL] Reference pixel on axis 3 \item\end{CompactList}\item 
+{\bf odouble} {\bf crval3}
+\begin{CompactList}\small\item\em [OPTIONAL] Reference coordinate on axis 3 \item\end{CompactList}\item 
+{\bf oint} {\bf maxis4}
+\begin{CompactList}\small\item\em [OPTIONAL] Number of pixels on axis 4 \item\end{CompactList}\item 
+gchar {\bf ctype4} [MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]
+\begin{CompactList}\small\item\em [OPTIONAL] Type of data axis 4 \item\end{CompactList}\item 
+{\bf odouble} {\bf cdelt4}
+\begin{CompactList}\small\item\em [OPTIONAL] Increment in coordinate between pixels on axis 4 \item\end{CompactList}\item 
+{\bf ofloat} {\bf crpix4}
+\begin{CompactList}\small\item\em [OPTIONAL] Reference pixel on axis 4 \item\end{CompactList}\item 
+{\bf odouble} {\bf crval4}
+\begin{CompactList}\small\item\em [OPTIONAL] Reference coordinate on axis 4 \item\end{CompactList}\item 
+{\bf oint} {\bf maxis5}
+\begin{CompactList}\small\item\em [OPTIONAL] Number of pixels on axis 5 \item\end{CompactList}\item 
+gchar {\bf ctype5} [MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]
+\begin{CompactList}\small\item\em [OPTIONAL] Type of data axis 5 \item\end{CompactList}\item 
+{\bf odouble} {\bf cdelt5}
+\begin{CompactList}\small\item\em [OPTIONAL] Increment in coordinate between pixels on axis 5 \item\end{CompactList}\item 
+{\bf ofloat} {\bf crpix5}
+\begin{CompactList}\small\item\em [OPTIONAL] Reference pixel on axis 5 \item\end{CompactList}\item 
+{\bf odouble} {\bf crval5}
+\begin{CompactList}\small\item\em [OPTIONAL] Reference coordinate on axis 5 \item\end{CompactList}\item 
+{\bf oint} {\bf maxis6}
+\begin{CompactList}\small\item\em [OPTIONAL] Number of pixels on axis 6 \item\end{CompactList}\item 
+gchar {\bf ctype6} [MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]
+\begin{CompactList}\small\item\em [OPTIONAL] Type of data axis 6 \item\end{CompactList}\item 
+{\bf odouble} {\bf cdelt6}
+\begin{CompactList}\small\item\em [OPTIONAL] Increment in coordinate between pixels on axis 6 \item\end{CompactList}\item 
+{\bf ofloat} {\bf crpix6}
+\begin{CompactList}\small\item\em [OPTIONAL] Reference pixel on axis 6 \item\end{CompactList}\item 
+{\bf odouble} {\bf crval6}
+\begin{CompactList}\small\item\em [OPTIONAL] Reference coordinate on axis 6 \item\end{CompactList}\item 
+{\bf oint} {\bf maxis7}
+\begin{CompactList}\small\item\em [OPTIONAL] Number of pixels on axis 7 \item\end{CompactList}\item 
+gchar {\bf ctype7} [MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]
+\begin{CompactList}\small\item\em [OPTIONAL] Type of data axis 7 \item\end{CompactList}\item 
+{\bf odouble} {\bf cdelt7}
+\begin{CompactList}\small\item\em [OPTIONAL] Increment in coordinate between pixels on axis 7 \item\end{CompactList}\item 
+{\bf ofloat} {\bf crpix7}
+\begin{CompactList}\small\item\em [OPTIONAL] Reference pixel on axis 7 \item\end{CompactList}\item 
+{\bf odouble} {\bf crval7}
+\begin{CompactList}\small\item\em [OPTIONAL] Reference coordinate on axis 7 \item\end{CompactList}\item 
+gchar {\bf teles} [MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]
+\begin{CompactList}\small\item\em Telescope used. \item\end{CompactList}\item 
+gchar {\bf observer} [MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]
+\begin{CompactList}\small\item\em Observer making the observations. \item\end{CompactList}\item 
+gchar {\bf sort} [MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]
+\begin{CompactList}\small\item\em Sort order of data. \item\end{CompactList}\item 
+{\bf olong} {\bf uu\-Off}
+\begin{CompactList}\small\item\em Column offset for U component of baseline. \item\end{CompactList}\item 
+{\bf olong} {\bf uu\-Col}
+\begin{CompactList}\small\item\em Physical column number for U component of baseline. \item\end{CompactList}\item 
+{\bf olong} {\bf vv\-Off}
+\begin{CompactList}\small\item\em Column offset for V component of baseline. \item\end{CompactList}\item 
+{\bf olong} {\bf vv\-Col}
+\begin{CompactList}\small\item\em Physical column number for V component of baseline. \item\end{CompactList}\item 
+{\bf olong} {\bf ww\-Off}
+\begin{CompactList}\small\item\em Column offset for W component of baseline. \item\end{CompactList}\item 
+{\bf olong} {\bf ww\-Col}
+\begin{CompactList}\small\item\em Physical column number for W component of baseline. \item\end{CompactList}\item 
+{\bf olong} {\bf date\-Off}
+\begin{CompactList}\small\item\em Column offset for Julian Date in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf date\-Col}
+\begin{CompactList}\small\item\em Physical column number for Julian Date in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-Off}
+\begin{CompactList}\small\item\em Column offset for The center time. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-Col}
+\begin{CompactList}\small\item\em Physical column number for The center time. \item\end{CompactList}\item 
+{\bf olong} {\bf Baseline\-Off}
+\begin{CompactList}\small\item\em Column offset for Interferometer baseline as ant 1$\ast$256+ant1 (1-rel). \item\end{CompactList}\item 
+{\bf olong} {\bf Baseline\-Col}
+\begin{CompactList}\small\item\em Physical column number for Interferometer baseline as ant 1$\ast$256+ant1 (1-rel). \item\end{CompactList}\item 
+{\bf olong} {\bf Filter\-Off}
+\begin{CompactList}\small\item\em Column offset for Filter. \item\end{CompactList}\item 
+{\bf olong} {\bf Filter\-Col}
+\begin{CompactList}\small\item\em Physical column number for Filter. \item\end{CompactList}\item 
+{\bf olong} {\bf Source\-Off}
+\begin{CompactList}\small\item\em Column offset for Source ID, index into SOURCE table. \item\end{CompactList}\item 
+{\bf olong} {\bf Source\-Col}
+\begin{CompactList}\small\item\em Physical column number for Source ID, index into SOURCE table. \item\end{CompactList}\item 
+{\bf olong} {\bf Freq\-IDOff}
+\begin{CompactList}\small\item\em Column offset for Frequency group ID, index into FREQUENCY table. \item\end{CompactList}\item 
+{\bf olong} {\bf Freq\-IDCol}
+\begin{CompactList}\small\item\em Physical column number for Frequency group ID, index into FREQUENCY table. \item\end{CompactList}\item 
+{\bf olong} {\bf Int\-Tim\-Off}
+\begin{CompactList}\small\item\em Column offset for The integration time. \item\end{CompactList}\item 
+{\bf olong} {\bf Int\-Tim\-Col}
+\begin{CompactList}\small\item\em Physical column number for The integration time. \item\end{CompactList}\item 
+{\bf olong} {\bf Gate\-IDOff}
+\begin{CompactList}\small\item\em Column offset for Gate ID. \item\end{CompactList}\item 
+{\bf olong} {\bf Gate\-IDCol}
+\begin{CompactList}\small\item\em Physical column number for Gate ID. \item\end{CompactList}\item 
+{\bf olong} {\bf Weight\-Off}
+\begin{CompactList}\small\item\em Column offset for Weight per correlation, same order as data. \item\end{CompactList}\item 
+{\bf olong} {\bf Weight\-Col}
+\begin{CompactList}\small\item\em Physical column number for Weight per correlation, same order as data. \item\end{CompactList}\item 
+{\bf olong} {\bf Flux\-Off}
+\begin{CompactList}\small\item\em Column offset for Visibility matrix in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Flux\-Col}
+\begin{CompactList}\small\item\em Physical column number for Visibility matrix in table record. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-IDI\_\-UV\_\-DATA Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!ArrName@{ArrName}}
+\index{ArrName@{ArrName}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Arr\-Name}[MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]}\label{structObitTableIDI__UV__DATA_o24}
+
+
+Array name. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!BaselineCol@{BaselineCol}}
+\index{BaselineCol@{BaselineCol}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Baseline\-Col}}\label{structObitTableIDI__UV__DATA_o92}
+
+
+Physical column number for Interferometer baseline as ant 1$\ast$256+ant1 (1-rel). 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!BaselineOff@{BaselineOff}}
+\index{BaselineOff@{BaselineOff}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Baseline\-Off}}\label{structObitTableIDI__UV__DATA_o91}
+
+
+Column offset for Interferometer baseline as ant 1$\ast$256+ant1 (1-rel). 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!buffer@{buffer}}
+\index{buffer@{buffer}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::buffer}}\label{structObitTableIDI__UV__DATA_o10}
+
+
+Table buffer. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!bufferSize@{bufferSize}}
+\index{bufferSize@{bufferSize}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::buffer\-Size}}\label{structObitTableIDI__UV__DATA_o11}
+
+
+Table buffer size in floats. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!cdelt1@{cdelt1}}
+\index{cdelt1@{cdelt1}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::cdelt1}}\label{structObitTableIDI__UV__DATA_o45}
+
+
+[OPTIONAL] Increment in coordinate between pixels on axis 1 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!cdelt2@{cdelt2}}
+\index{cdelt2@{cdelt2}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::cdelt2}}\label{structObitTableIDI__UV__DATA_o50}
+
+
+[OPTIONAL] Increment in coordinate between pixels on axis 2 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!cdelt3@{cdelt3}}
+\index{cdelt3@{cdelt3}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::cdelt3}}\label{structObitTableIDI__UV__DATA_o55}
+
+
+[OPTIONAL] Increment in coordinate between pixels on axis 3 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!cdelt4@{cdelt4}}
+\index{cdelt4@{cdelt4}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::cdelt4}}\label{structObitTableIDI__UV__DATA_o60}
+
+
+[OPTIONAL] Increment in coordinate between pixels on axis 4 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!cdelt5@{cdelt5}}
+\index{cdelt5@{cdelt5}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::cdelt5}}\label{structObitTableIDI__UV__DATA_o65}
+
+
+[OPTIONAL] Increment in coordinate between pixels on axis 5 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!cdelt6@{cdelt6}}
+\index{cdelt6@{cdelt6}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::cdelt6}}\label{structObitTableIDI__UV__DATA_o70}
+
+
+[OPTIONAL] Increment in coordinate between pixels on axis 6 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!cdelt7@{cdelt7}}
+\index{cdelt7@{cdelt7}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::cdelt7}}\label{structObitTableIDI__UV__DATA_o75}
+
+
+[OPTIONAL] Increment in coordinate between pixels on axis 7 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!chan_bw@{chan\_\-bw}}
+\index{chan_bw@{chan\_\-bw}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::chan\_\-bw}}\label{structObitTableIDI__UV__DATA_o21}
+
+
+Channel bandwidth (Hz). 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Class\-Info}}\label{structObitTableIDI__UV__DATA_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!crpix1@{crpix1}}
+\index{crpix1@{crpix1}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::crpix1}}\label{structObitTableIDI__UV__DATA_o46}
+
+
+[OPTIONAL] Reference pixel on axis 1 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!crpix2@{crpix2}}
+\index{crpix2@{crpix2}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::crpix2}}\label{structObitTableIDI__UV__DATA_o51}
+
+
+[OPTIONAL] Reference pixel on axis 2 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!crpix3@{crpix3}}
+\index{crpix3@{crpix3}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::crpix3}}\label{structObitTableIDI__UV__DATA_o56}
+
+
+[OPTIONAL] Reference pixel on axis 3 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!crpix4@{crpix4}}
+\index{crpix4@{crpix4}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::crpix4}}\label{structObitTableIDI__UV__DATA_o61}
+
+
+[OPTIONAL] Reference pixel on axis 4 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!crpix5@{crpix5}}
+\index{crpix5@{crpix5}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::crpix5}}\label{structObitTableIDI__UV__DATA_o66}
+
+
+[OPTIONAL] Reference pixel on axis 5 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!crpix6@{crpix6}}
+\index{crpix6@{crpix6}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::crpix6}}\label{structObitTableIDI__UV__DATA_o71}
+
+
+[OPTIONAL] Reference pixel on axis 6 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!crpix7@{crpix7}}
+\index{crpix7@{crpix7}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::crpix7}}\label{structObitTableIDI__UV__DATA_o76}
+
+
+[OPTIONAL] Reference pixel on axis 7 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!crval1@{crval1}}
+\index{crval1@{crval1}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::crval1}}\label{structObitTableIDI__UV__DATA_o47}
+
+
+[OPTIONAL] Reference coordinate on axis 1 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!crval2@{crval2}}
+\index{crval2@{crval2}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::crval2}}\label{structObitTableIDI__UV__DATA_o52}
+
+
+[OPTIONAL] Reference coordinate on axis 2 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!crval3@{crval3}}
+\index{crval3@{crval3}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::crval3}}\label{structObitTableIDI__UV__DATA_o57}
+
+
+[OPTIONAL] Reference coordinate on axis 3 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!crval4@{crval4}}
+\index{crval4@{crval4}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::crval4}}\label{structObitTableIDI__UV__DATA_o62}
+
+
+[OPTIONAL] Reference coordinate on axis 4 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!crval5@{crval5}}
+\index{crval5@{crval5}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::crval5}}\label{structObitTableIDI__UV__DATA_o67}
+
+
+[OPTIONAL] Reference coordinate on axis 5 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!crval6@{crval6}}
+\index{crval6@{crval6}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::crval6}}\label{structObitTableIDI__UV__DATA_o72}
+
+
+[OPTIONAL] Reference coordinate on axis 6 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!crval7@{crval7}}
+\index{crval7@{crval7}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::crval7}}\label{structObitTableIDI__UV__DATA_o77}
+
+
+[OPTIONAL] Reference coordinate on axis 7 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!ctype1@{ctype1}}
+\index{ctype1@{ctype1}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::ctype1}[MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]}\label{structObitTableIDI__UV__DATA_o44}
+
+
+[OPTIONAL] Type of data axis 1 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!ctype2@{ctype2}}
+\index{ctype2@{ctype2}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::ctype2}[MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]}\label{structObitTableIDI__UV__DATA_o49}
+
+
+[OPTIONAL] Type of data axis 2 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!ctype3@{ctype3}}
+\index{ctype3@{ctype3}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::ctype3}[MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]}\label{structObitTableIDI__UV__DATA_o54}
+
+
+[OPTIONAL] Type of data axis 3 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!ctype4@{ctype4}}
+\index{ctype4@{ctype4}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::ctype4}[MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]}\label{structObitTableIDI__UV__DATA_o59}
+
+
+[OPTIONAL] Type of data axis 4 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!ctype5@{ctype5}}
+\index{ctype5@{ctype5}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::ctype5}[MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]}\label{structObitTableIDI__UV__DATA_o64}
+
+
+[OPTIONAL] Type of data axis 5 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!ctype6@{ctype6}}
+\index{ctype6@{ctype6}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::ctype6}[MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]}\label{structObitTableIDI__UV__DATA_o69}
+
+
+[OPTIONAL] Type of data axis 6 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!ctype7@{ctype7}}
+\index{ctype7@{ctype7}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::ctype7}[MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]}\label{structObitTableIDI__UV__DATA_o74}
+
+
+[OPTIONAL] Type of data axis 7 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!dateCol@{dateCol}}
+\index{dateCol@{dateCol}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::date\-Col}}\label{structObitTableIDI__UV__DATA_o88}
+
+
+Physical column number for Julian Date in table record. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!dateOff@{dateOff}}
+\index{dateOff@{dateOff}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::date\-Off}}\label{structObitTableIDI__UV__DATA_o87}
+
+
+Column offset for Julian Date in table record. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!FilterCol@{FilterCol}}
+\index{FilterCol@{FilterCol}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Filter\-Col}}\label{structObitTableIDI__UV__DATA_o94}
+
+
+Physical column number for Filter. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!FilterOff@{FilterOff}}
+\index{FilterOff@{FilterOff}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Filter\-Off}}\label{structObitTableIDI__UV__DATA_o93}
+
+
+Column offset for Filter. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!FluxCol@{FluxCol}}
+\index{FluxCol@{FluxCol}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Flux\-Col}}\label{structObitTableIDI__UV__DATA_o106}
+
+
+Physical column number for Visibility matrix in table record. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!FluxOff@{FluxOff}}
+\index{FluxOff@{FluxOff}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Flux\-Off}}\label{structObitTableIDI__UV__DATA_o105}
+
+
+Column offset for Visibility matrix in table record. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!FreqIDCol@{FreqIDCol}}
+\index{FreqIDCol@{FreqIDCol}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Freq\-IDCol}}\label{structObitTableIDI__UV__DATA_o98}
+
+
+Physical column number for Frequency group ID, index into FREQUENCY table. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!FreqIDOff@{FreqIDOff}}
+\index{FreqIDOff@{FreqIDOff}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Freq\-IDOff}}\label{structObitTableIDI__UV__DATA_o97}
+
+
+Column offset for Frequency group ID, index into FREQUENCY table. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!GateIDCol@{GateIDCol}}
+\index{GateIDCol@{GateIDCol}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Gate\-IDCol}}\label{structObitTableIDI__UV__DATA_o102}
+
+
+Physical column number for Gate ID. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!GateIDOff@{GateIDOff}}
+\index{GateIDOff@{GateIDOff}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Gate\-IDOff}}\label{structObitTableIDI__UV__DATA_o101}
+
+
+Column offset for Gate ID. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!info@{info}}
+\index{info@{info}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::info}}\label{structObitTableIDI__UV__DATA_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!IntTimCol@{IntTimCol}}
+\index{IntTimCol@{IntTimCol}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Int\-Tim\-Col}}\label{structObitTableIDI__UV__DATA_o100}
+
+
+Physical column number for The integration time. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!IntTimOff@{IntTimOff}}
+\index{IntTimOff@{IntTimOff}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Int\-Tim\-Off}}\label{structObitTableIDI__UV__DATA_o99}
+
+
+Column offset for The integration time. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!maxis@{maxis}}
+\index{maxis@{maxis}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::maxis}}\label{structObitTableIDI__UV__DATA_o27}
+
+
+Number of UV data matrix axes. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!maxis1@{maxis1}}
+\index{maxis1@{maxis1}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::maxis1}}\label{structObitTableIDI__UV__DATA_o43}
+
+
+[OPTIONAL] Number of pixels on axis 1 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!maxis2@{maxis2}}
+\index{maxis2@{maxis2}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::maxis2}}\label{structObitTableIDI__UV__DATA_o48}
+
+
+[OPTIONAL] Number of pixels on axis 2 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!maxis3@{maxis3}}
+\index{maxis3@{maxis3}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::maxis3}}\label{structObitTableIDI__UV__DATA_o53}
+
+
+[OPTIONAL] Number of pixels on axis 3 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!maxis4@{maxis4}}
+\index{maxis4@{maxis4}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::maxis4}}\label{structObitTableIDI__UV__DATA_o58}
+
+
+[OPTIONAL] Number of pixels on axis 4 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!maxis5@{maxis5}}
+\index{maxis5@{maxis5}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::maxis5}}\label{structObitTableIDI__UV__DATA_o63}
+
+
+[OPTIONAL] Number of pixels on axis 5 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!maxis6@{maxis6}}
+\index{maxis6@{maxis6}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::maxis6}}\label{structObitTableIDI__UV__DATA_o68}
+
+
+[OPTIONAL] Number of pixels on axis 6 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!maxis7@{maxis7}}
+\index{maxis7@{maxis7}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::maxis7}}\label{structObitTableIDI__UV__DATA_o73}
+
+
+[OPTIONAL] Number of pixels on axis 7 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Desc}$\ast$ {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::my\-Desc}}\label{structObitTableIDI__UV__DATA_o8}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!myHost@{myHost}}
+\index{myHost@{myHost}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::my\-Host}}\label{structObitTableIDI__UV__DATA_o14}
+
+
+This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!myIO@{myIO}}
+\index{myIO@{myIO}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IO}$\ast$ {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::my\-IO}}\label{structObitTableIDI__UV__DATA_o7}
+
+
+I/O interface to access disk resident data. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Sel}$\ast$ {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::my\-Sel}}\label{structObitTableIDI__UV__DATA_o9}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::my\-Status}}\label{structObitTableIDI__UV__DATA_o6}
+
+
+I/O status. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!name@{name}}
+\index{name@{name}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::name}}\label{structObitTableIDI__UV__DATA_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!nmatrix@{nmatrix}}
+\index{nmatrix@{nmatrix}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::nmatrix}}\label{structObitTableIDI__UV__DATA_o26}
+
+
+Number of UV data matricies. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!no_band@{no\_\-band}}
+\index{no_band@{no\_\-band}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::no\_\-band}}\label{structObitTableIDI__UV__DATA_o18}
+
+
+Number of frequency bands (IF). 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!no_chan@{no\_\-chan}}
+\index{no_chan@{no\_\-chan}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::no\_\-chan}}\label{structObitTableIDI__UV__DATA_o19}
+
+
+Number of frequency channels. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!no_stkd@{no\_\-stkd}}
+\index{no_stkd@{no\_\-stkd}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::no\_\-stkd}}\label{structObitTableIDI__UV__DATA_o16}
+
+
+Number of Stokes parameters. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Obit\-Id}}\label{structObitTableIDI__UV__DATA_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!obscode@{obscode}}
+\index{obscode@{obscode}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::obscode}[MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]}\label{structObitTableIDI__UV__DATA_o23}
+
+
+Observation project code. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!observer@{observer}}
+\index{observer@{observer}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::observer}[MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]}\label{structObitTableIDI__UV__DATA_o79}
+
+
+Observer making the observations. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!ref_freq@{ref\_\-freq}}
+\index{ref_freq@{ref\_\-freq}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::ref\_\-freq}}\label{structObitTableIDI__UV__DATA_o20}
+
+
+Reference frequency (Hz). 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!ref_pixl@{ref\_\-pixl}}
+\index{ref_pixl@{ref\_\-pixl}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::ref\_\-pixl}}\label{structObitTableIDI__UV__DATA_o22}
+
+
+Reference frequency bin. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!RefDate@{RefDate}}
+\index{RefDate@{RefDate}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Ref\-Date}[MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]}\label{structObitTableIDI__UV__DATA_o25}
+
+
+Reference date as \char`\"{}YYYY-MM-DD\char`\"{}. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Reference\-Count}}\label{structObitTableIDI__UV__DATA_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!sort@{sort}}
+\index{sort@{sort}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::sort}[MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]}\label{structObitTableIDI__UV__DATA_o80}
+
+
+Sort order of data. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!SourceCol@{SourceCol}}
+\index{SourceCol@{SourceCol}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Source\-Col}}\label{structObitTableIDI__UV__DATA_o96}
+
+
+Physical column number for Source ID, index into SOURCE table. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!SourceOff@{SourceOff}}
+\index{SourceOff@{SourceOff}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Source\-Off}}\label{structObitTableIDI__UV__DATA_o95}
+
+
+Column offset for Source ID, index into SOURCE table. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!stk_1@{stk\_\-1}}
+\index{stk_1@{stk\_\-1}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::stk\_\-1}}\label{structObitTableIDI__UV__DATA_o17}
+
+
+First Stokes parameter. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!tabrev@{tabrev}}
+\index{tabrev@{tabrev}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::tabrev}}\label{structObitTableIDI__UV__DATA_o15}
+
+
+Table format revision number. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!tabType@{tabType}}
+\index{tabType@{tabType}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::tab\-Type}}\label{structObitTableIDI__UV__DATA_o12}
+
+
+Table type (name of type, e.g. 
+
+\char`\"{}AIPS AN\char`\"{}) \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!tabVer@{tabVer}}
+\index{tabVer@{tabVer}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::tab\-Ver}}\label{structObitTableIDI__UV__DATA_o13}
+
+
+Table version number(1-rel). 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!teles@{teles}}
+\index{teles@{teles}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::teles}[MAXKEYCHARTABLEIDI\_\-UV\_\-DATA]}\label{structObitTableIDI__UV__DATA_o78}
+
+
+Telescope used. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!thread@{thread}}
+\index{thread@{thread}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::thread}}\label{structObitTableIDI__UV__DATA_o4}
+
+
+Threading info member object. 
+
+\index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!TimeCol@{TimeCol}}
+\index{TimeCol@{TimeCol}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Time\-Col}}\label{structObitTableIDI__UV__DATA_o90}
+
+
+Physical column number for The center time. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!TimeOff@{TimeOff}}
+\index{TimeOff@{TimeOff}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Time\-Off}}\label{structObitTableIDI__UV__DATA_o89}
+
+
+Column offset for The center time. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!tmatx01@{tmatx01}}
+\index{tmatx01@{tmatx01}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::tmatx01}}\label{structObitTableIDI__UV__DATA_o28}
+
+
+[OPTIONAL] If TRUE col. 
+
+1 has the visibility matrix \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!tmatx02@{tmatx02}}
+\index{tmatx02@{tmatx02}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::tmatx02}}\label{structObitTableIDI__UV__DATA_o29}
+
+
+[OPTIONAL] If TRUE col. 
+
+2 has the visibility matrix \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!tmatx03@{tmatx03}}
+\index{tmatx03@{tmatx03}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::tmatx03}}\label{structObitTableIDI__UV__DATA_o30}
+
+
+[OPTIONAL] If TRUE col. 
+
+3 has the visibility matrix \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!tmatx04@{tmatx04}}
+\index{tmatx04@{tmatx04}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::tmatx04}}\label{structObitTableIDI__UV__DATA_o31}
+
+
+[OPTIONAL] If TRUE col. 
+
+4 has the visibility matrix \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!tmatx05@{tmatx05}}
+\index{tmatx05@{tmatx05}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::tmatx05}}\label{structObitTableIDI__UV__DATA_o32}
+
+
+[OPTIONAL] If TRUE col. 
+
+5 has the visibility matrix \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!tmatx06@{tmatx06}}
+\index{tmatx06@{tmatx06}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::tmatx06}}\label{structObitTableIDI__UV__DATA_o33}
+
+
+[OPTIONAL] If TRUE col. 
+
+6 has the visibility matrix \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!tmatx07@{tmatx07}}
+\index{tmatx07@{tmatx07}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::tmatx07}}\label{structObitTableIDI__UV__DATA_o34}
+
+
+[OPTIONAL] If TRUE col. 
+
+7 has the visibility matrix \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!tmatx08@{tmatx08}}
+\index{tmatx08@{tmatx08}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::tmatx08}}\label{structObitTableIDI__UV__DATA_o35}
+
+
+[OPTIONAL] If TRUE col. 
+
+8 has the visibility matrix \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!tmatx09@{tmatx09}}
+\index{tmatx09@{tmatx09}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::tmatx09}}\label{structObitTableIDI__UV__DATA_o36}
+
+
+[OPTIONAL] If TRUE col. 
+
+9 has the visibility matrix \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!tmatx10@{tmatx10}}
+\index{tmatx10@{tmatx10}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::tmatx10}}\label{structObitTableIDI__UV__DATA_o37}
+
+
+[OPTIONAL] If TRUE col. 
+
+10 has the visibility matrix \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!tmatx11@{tmatx11}}
+\index{tmatx11@{tmatx11}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::tmatx11}}\label{structObitTableIDI__UV__DATA_o38}
+
+
+[OPTIONAL] If TRUE col. 
+
+11 has the visibility matrix \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!tmatx12@{tmatx12}}
+\index{tmatx12@{tmatx12}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::tmatx12}}\label{structObitTableIDI__UV__DATA_o39}
+
+
+[OPTIONAL] If TRUE col. 
+
+12 has the visibility matrix \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!tmatx13@{tmatx13}}
+\index{tmatx13@{tmatx13}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::tmatx13}}\label{structObitTableIDI__UV__DATA_o40}
+
+
+[OPTIONAL] If TRUE col. 
+
+13 has the visibility matrix \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!tmatx14@{tmatx14}}
+\index{tmatx14@{tmatx14}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::tmatx14}}\label{structObitTableIDI__UV__DATA_o41}
+
+
+[OPTIONAL] If TRUE col. 
+
+14 has the visibility matrix \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!tmatx15@{tmatx15}}
+\index{tmatx15@{tmatx15}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::tmatx15}}\label{structObitTableIDI__UV__DATA_o42}
+
+
+[OPTIONAL] If TRUE col. 
+
+15 has the visibility matrix \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!uuCol@{uuCol}}
+\index{uuCol@{uuCol}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::uu\-Col}}\label{structObitTableIDI__UV__DATA_o82}
+
+
+Physical column number for U component of baseline. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!uuOff@{uuOff}}
+\index{uuOff@{uuOff}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::uu\-Off}}\label{structObitTableIDI__UV__DATA_o81}
+
+
+Column offset for U component of baseline. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!vvCol@{vvCol}}
+\index{vvCol@{vvCol}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::vv\-Col}}\label{structObitTableIDI__UV__DATA_o84}
+
+
+Physical column number for V component of baseline. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!vvOff@{vvOff}}
+\index{vvOff@{vvOff}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::vv\-Off}}\label{structObitTableIDI__UV__DATA_o83}
+
+
+Column offset for V component of baseline. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!WeightCol@{WeightCol}}
+\index{WeightCol@{WeightCol}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Weight\-Col}}\label{structObitTableIDI__UV__DATA_o104}
+
+
+Physical column number for Weight per correlation, same order as data. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!WeightOff@{WeightOff}}
+\index{WeightOff@{WeightOff}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::Weight\-Off}}\label{structObitTableIDI__UV__DATA_o103}
+
+
+Column offset for Weight per correlation, same order as data. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!wwCol@{wwCol}}
+\index{wwCol@{wwCol}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::ww\-Col}}\label{structObitTableIDI__UV__DATA_o86}
+
+
+Physical column number for W component of baseline. 
+
+in table record \index{ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}!wwOff@{wwOff}}
+\index{wwOff@{wwOff}!ObitTableIDI_UV_DATA@{Obit\-Table\-IDI\_\-UV\_\-DATA}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-UV\_\-DATA::ww\-Off}}\label{structObitTableIDI__UV__DATA_o85}
+
+
+Column offset for W component of baseline. 
+
+in table record 
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-IDI\_\-UV\_\-DATA.h}\end{CompactItemize}

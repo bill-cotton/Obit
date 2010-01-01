@@ -1,0 +1,151 @@
+\section{Obit\-Plot Struct Reference}
+\label{structObitPlot}\index{ObitPlot@{ObitPlot}}
+Obit\-Plot Class structure.  
+
+
+{\tt \#include $<$Obit\-Plot.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object - this class probably is not threadsafe. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Info\-List for parameters. \item\end{CompactList}\item 
+{\bf Obit\-Image} $\ast$ {\bf my\-Image}
+\begin{CompactList}\small\item\em Image being plotted. \item\end{CompactList}\item 
+{\bf Obit\-Err} $\ast$ {\bf my\-Err}
+\begin{CompactList}\small\item\em Obit\-Error structure. \item\end{CompactList}\item 
+gboolean {\bf x\-Log}
+\begin{CompactList}\small\item\em Are x and y axes log? \item\end{CompactList}\item 
+gboolean {\bf y\-Log}
+\begin{CompactList}\small\item\em Are x and y axes log? \item\end{CompactList}\item 
+{\bf ofloat} {\bf scalex}
+\begin{CompactList}\small\item\em Scalings for coordinates offsets. \item\end{CompactList}\item 
+{\bf ofloat} {\bf scaley}
+\begin{CompactList}\small\item\em Scalings for coordinates offsets. \item\end{CompactList}\item 
+{\bf olong} {\bf nx}
+\begin{CompactList}\small\item\em Number of panels in x, y. \item\end{CompactList}\item 
+{\bf olong} {\bf ny}
+\begin{CompactList}\small\item\em Number of panels in x, y. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Plot Class structure. 
+
+This class contains descriptions of interferometric visibility data. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitPlot@{Obit\-Plot}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitPlot@{Obit\-Plot}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Plot::Class\-Info}}\label{structObitPlot_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitPlot@{Obit\-Plot}!info@{info}}
+\index{info@{info}!ObitPlot@{Obit\-Plot}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Plot::info}}\label{structObitPlot_o5}
+
+
+Info\-List for parameters. 
+
+\index{ObitPlot@{Obit\-Plot}!myErr@{myErr}}
+\index{myErr@{myErr}!ObitPlot@{Obit\-Plot}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Err}$\ast$ {\bf Obit\-Plot::my\-Err}}\label{structObitPlot_o7}
+
+
+Obit\-Error structure. 
+
+\index{ObitPlot@{Obit\-Plot}!myImage@{myImage}}
+\index{myImage@{myImage}!ObitPlot@{Obit\-Plot}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image}$\ast$ {\bf Obit\-Plot::my\-Image}}\label{structObitPlot_o6}
+
+
+Image being plotted. 
+
+\index{ObitPlot@{Obit\-Plot}!name@{name}}
+\index{name@{name}!ObitPlot@{Obit\-Plot}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Plot::name}}\label{structObitPlot_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitPlot@{Obit\-Plot}!nx@{nx}}
+\index{nx@{nx}!ObitPlot@{Obit\-Plot}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Plot::nx}}\label{structObitPlot_o12}
+
+
+Number of panels in x, y. 
+
+\index{ObitPlot@{Obit\-Plot}!ny@{ny}}
+\index{ny@{ny}!ObitPlot@{Obit\-Plot}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Plot::ny}}\label{structObitPlot_o13}
+
+
+Number of panels in x, y. 
+
+\index{ObitPlot@{Obit\-Plot}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitPlot@{Obit\-Plot}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Plot::Obit\-Id}}\label{structObitPlot_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitPlot@{Obit\-Plot}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitPlot@{Obit\-Plot}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Plot::Reference\-Count}}\label{structObitPlot_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitPlot@{Obit\-Plot}!scalex@{scalex}}
+\index{scalex@{scalex}!ObitPlot@{Obit\-Plot}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Plot::scalex}}\label{structObitPlot_o10}
+
+
+Scalings for coordinates offsets. 
+
+\index{ObitPlot@{Obit\-Plot}!scaley@{scaley}}
+\index{scaley@{scaley}!ObitPlot@{Obit\-Plot}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Plot::scaley}}\label{structObitPlot_o11}
+
+
+Scalings for coordinates offsets. 
+
+\index{ObitPlot@{Obit\-Plot}!thread@{thread}}
+\index{thread@{thread}!ObitPlot@{Obit\-Plot}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Plot::thread}}\label{structObitPlot_o4}
+
+
+Threading info member object - this class probably is not threadsafe. 
+
+\index{ObitPlot@{Obit\-Plot}!xLog@{xLog}}
+\index{xLog@{xLog}!ObitPlot@{Obit\-Plot}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Plot::x\-Log}}\label{structObitPlot_o8}
+
+
+Are x and y axes log? 
+
+\index{ObitPlot@{Obit\-Plot}!yLog@{yLog}}
+\index{yLog@{yLog}!ObitPlot@{Obit\-Plot}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Plot::y\-Log}}\label{structObitPlot_o9}
+
+
+Are x and y axes log? 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Plot.h}\end{CompactItemize}

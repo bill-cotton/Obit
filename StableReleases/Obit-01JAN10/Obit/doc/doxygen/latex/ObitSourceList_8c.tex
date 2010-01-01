@@ -1,0 +1,107 @@
+\section{Obit\-Source\-List.c File Reference}
+\label{ObitSourceList_8c}\index{ObitSourceList.c@{ObitSourceList.c}}
+{\bf Obit\-Source\-List}{\rm (p.\,\pageref{structObitSourceList})} class function definitions. 
+
+{\tt \#include \char`\"{}Obit\-Source\-List.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Source\-List\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-Source\-List\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-Source\-List} $\ast$ {\bf new\-Obit\-Source\-List} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Source\-List\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Source\-List} $\ast$ {\bf Obit\-Source\-List\-Create} (gchar $\ast$name, {\bf olong} nsou)
+\begin{CompactList}\small\item\em Public: Create from value. \item\end{CompactList}\item 
+{\bf Obit\-Source\-List} $\ast$ {\bf Obit\-Source\-List\-Copy} ({\bf Obit\-Source\-List} $\ast$in, {\bf Obit\-Source\-List} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Source\-List\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Source\-List}{\rm (p.\,\pageref{structObitSourceList})} class function definitions. 
+
+This is a list of (astronomical) sources.
+
+\subsection{Function Documentation}
+\index{ObitSourceList.c@{Obit\-Source\-List.c}!newObitSourceList@{newObitSourceList}}
+\index{newObitSourceList@{newObitSourceList}!ObitSourceList.c@{Obit\-Source\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Source\-List}$\ast$ new\-Obit\-Source\-List (gchar $\ast$ {\em name})}\label{ObitSourceList_8c_a6}
+
+
+Public: Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitSourceList.c@{Obit\-Source\-List.c}!ObitSourceListClassInit@{ObitSourceListClassInit}}
+\index{ObitSourceListClassInit@{ObitSourceListClassInit}!ObitSourceList.c@{Obit\-Source\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Source\-List\-Class\-Init (void)}\label{ObitSourceList_8c_a10}
+
+
+Public: Class initializer. 
+
+\index{ObitSourceList.c@{Obit\-Source\-List.c}!ObitSourceListClear@{ObitSourceListClear}}
+\index{ObitSourceListClear@{ObitSourceListClear}!ObitSourceList.c@{Obit\-Source\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Source\-List\-Clear (gpointer {\em inn})}\label{ObitSourceList_8c_a4}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. \end{description}
+\end{Desc}
+\index{ObitSourceList.c@{Obit\-Source\-List.c}!ObitSourceListCopy@{ObitSourceListCopy}}
+\index{ObitSourceListCopy@{ObitSourceListCopy}!ObitSourceList.c@{Obit\-Source\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Source\-List}$\ast$ Obit\-Source\-List\-Copy ({\bf Obit\-Source\-List} $\ast$ {\em in}, {\bf Obit\-Source\-List} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSourceList_8c_a9}
+
+
+Public: Copy constructor. 
+
+Parent class members are included but any derived class info is ignored. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitSourceList.c@{Obit\-Source\-List.c}!ObitSourceListCreate@{ObitSourceListCreate}}
+\index{ObitSourceListCreate@{ObitSourceListCreate}!ObitSourceList.c@{Obit\-Source\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Source\-List}$\ast$ Obit\-Source\-List\-Create (gchar $\ast$ {\em name}, {\bf olong} {\em nsou})}\label{ObitSourceList_8c_a8}
+
+
+Public: Create from value. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em nsou}]Number of sources (actually, the highest Source ID). \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitSourceList.c@{Obit\-Source\-List.c}!ObitSourceListGetClass@{ObitSourceListGetClass}}
+\index{ObitSourceListGetClass@{ObitSourceListGetClass}!ObitSourceList.c@{Obit\-Source\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Source\-List\-Get\-Class (void)}\label{ObitSourceList_8c_a7}
+
+
+Public: Class\-Info pointer. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitSourceList.c@{Obit\-Source\-List.c}!ObitSourceListInit@{ObitSourceListInit}}
+\index{ObitSourceListInit@{ObitSourceListInit}!ObitSourceList.c@{Obit\-Source\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Source\-List\-Init (gpointer {\em inn})}\label{ObitSourceList_8c_a3}
+
+
+Private: Initialize newly instantiated object. 
+
+Does (recursive) initialization of base class members before this class. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}

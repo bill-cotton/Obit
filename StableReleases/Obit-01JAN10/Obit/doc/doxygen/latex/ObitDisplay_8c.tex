@@ -1,0 +1,145 @@
+\section{Obit\-Display.c File Reference}
+\label{ObitDisplay_8c}\index{ObitDisplay.c@{ObitDisplay.c}}
+{\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} class function definitions. 
+
+{\tt \#include \char`\"{}Obit\-AIPSDir.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-FITS.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Display.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Mosaic.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Util.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-RPCUtil.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Display\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-Display\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-Display} $\ast$ {\bf new\-Obit\-Display} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Display\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Display} $\ast$ {\bf Obit\-Display\-Create} (gchar $\ast$name, gchar $\ast$Server\-URL, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} structures. \item\end{CompactList}\item 
+gboolean {\bf Obit\-Display\-Show} ({\bf Obit\-Display} $\ast$display, {\bf Obit} $\ast$image, {\bf Obit\-DCon\-Clean\-Window} $\ast$window, {\bf olong} field, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Send Display and Window edit request. \item\end{CompactList}\item 
+void {\bf Obit\-Display\-Turn\-On} ({\bf Obit\-Display} $\ast$display)
+\begin{CompactList}\small\item\em Public: Turn display on. \item\end{CompactList}\item 
+void {\bf Obit\-Display\-Turn\-Off} ({\bf Obit\-Display} $\ast$display)
+\begin{CompactList}\small\item\em Public: Turn display off. \item\end{CompactList}\item 
+void {\bf Obit\-Display\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} class function definitions. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} base class.
+
+\subsection{Function Documentation}
+\index{ObitDisplay.c@{Obit\-Display.c}!newObitDisplay@{newObitDisplay}}
+\index{newObitDisplay@{newObitDisplay}!ObitDisplay.c@{Obit\-Display.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Display}$\ast$ new\-Obit\-Display (gchar $\ast$ {\em name})}\label{ObitDisplay_8c_a12}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitDisplay.c@{Obit\-Display.c}!ObitDisplayClassInit@{ObitDisplayClassInit}}
+\index{ObitDisplayClassInit@{ObitDisplayClassInit}!ObitDisplay.c@{Obit\-Display.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Display\-Class\-Init (void)}\label{ObitDisplay_8c_a18}
+
+
+Public: Class initializer. 
+
+\index{ObitDisplay.c@{Obit\-Display.c}!ObitDisplayClear@{ObitDisplayClear}}
+\index{ObitDisplayClear@{ObitDisplayClear}!ObitDisplay.c@{Obit\-Display.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Display\-Clear (gpointer {\em inn})}\label{ObitDisplay_8c_a4}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-Display$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitDisplay.c@{Obit\-Display.c}!ObitDisplayCreate@{ObitDisplayCreate}}
+\index{ObitDisplayCreate@{ObitDisplayCreate}!ObitDisplay.c@{Obit\-Display.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Display}$\ast$ Obit\-Display\-Create (gchar $\ast$ {\em name}, gchar $\ast$ {\em Server\-URL}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDisplay_8c_a14}
+
+
+Public: Create/initialize {\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em Server\-URL}]URL of display server, NULL defaults to \char`\"{}http://localhost:8765/RPC2\char`\"{} \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitDisplay.c@{Obit\-Display.c}!ObitDisplayGetClass@{ObitDisplayGetClass}}
+\index{ObitDisplayGetClass@{ObitDisplayGetClass}!ObitDisplay.c@{Obit\-Display.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Display\-Get\-Class (void)}\label{ObitDisplay_8c_a13}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitDisplay.c@{Obit\-Display.c}!ObitDisplayInit@{ObitDisplayInit}}
+\index{ObitDisplayInit@{ObitDisplayInit}!ObitDisplay.c@{Obit\-Display.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Display\-Init (gpointer {\em inn})}\label{ObitDisplay_8c_a3}
+
+
+Private: Initialize newly instantiated object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitDisplay.c@{Obit\-Display.c}!ObitDisplayShow@{ObitDisplayShow}}
+\index{ObitDisplayShow@{ObitDisplayShow}!ObitDisplay.c@{Obit\-Display.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Display\-Show ({\bf Obit\-Display} $\ast$ {\em display}, {\bf Obit} $\ast$ {\em image}, {\bf Obit\-DCon\-Clean\-Window} $\ast$ {\em window}, {\bf olong} {\em field}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDisplay_8c_a15}
+
+
+Public: Send Display and Window edit request. 
+
+For a mosaic, the user can request other images from the mosaic. If the display is remote, the image is copied as a gzipped FITS file. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em display}]{\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} object \item[{\em image}]{\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})} or Image Mosaic \item[{\em window}]if non\-NULL window corresponding to image possibly edited by user. This MUST correspond to image. \item[{\em field}]If image= an Image\-Mosaic then this is the 1-rel field number \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if user wants to quit \end{Desc}
+\index{ObitDisplay.c@{Obit\-Display.c}!ObitDisplayTurnOff@{ObitDisplayTurnOff}}
+\index{ObitDisplayTurnOff@{ObitDisplayTurnOff}!ObitDisplay.c@{Obit\-Display.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Display\-Turn\-Off ({\bf Obit\-Display} $\ast$ {\em display})}\label{ObitDisplay_8c_a17}
+
+
+Public: Turn display off. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em display}]{\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} object \end{description}
+\end{Desc}
+\index{ObitDisplay.c@{Obit\-Display.c}!ObitDisplayTurnOn@{ObitDisplayTurnOn}}
+\index{ObitDisplayTurnOn@{ObitDisplayTurnOn}!ObitDisplay.c@{Obit\-Display.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Display\-Turn\-On ({\bf Obit\-Display} $\ast$ {\em display})}\label{ObitDisplay_8c_a16}
+
+
+Public: Turn display on. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em display}]{\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} object \end{description}
+\end{Desc}

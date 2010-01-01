@@ -1,0 +1,71 @@
+\section{Obit\-FArray\-Util.c File Reference}
+\label{ObitFArrayUtil_8c}\index{ObitFArrayUtil.c@{ObitFArrayUtil.c}}
+{\bf Obit\-FArray}{\rm (p.\,\pageref{structObitFArray})} utility function definitions. 
+
+{\tt \#include \char`\"{}Obit\-FArray\-Util.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-CArray.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-FFT.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf fit\-Data}
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+{\bf ofloat} {\bf Obit\-FArray\-Util\-Fit\-CGauss} ({\bf Obit\-FArray} $\ast$in, {\bf ofloat} $\ast$FWHM, {\bf ofloat} $\ast$center, {\bf ofloat} $\ast$peak, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Fit 2-D circular Gaussian. \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf Obit\-FArray\-Util\-Convolve} ({\bf Obit\-FArray} $\ast$in1, {\bf Obit\-FArray} $\ast$in2, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Convolve two arrays. \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf Obit\-FArray\-Util\-UVGaus} ({\bf olong} $\ast$naxis, {\bf ofloat} $\ast$cells, {\bf ofloat} maprot, {\bf ofloat} Gaumaj, {\bf ofloat} Gaumin, {\bf ofloat} Gau\-PA)
+\begin{CompactList}\small\item\em Public: Create Gaussian UV Taper. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-FArray}{\rm (p.\,\pageref{structObitFArray})} utility function definitions. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitFArrayUtil.c@{Obit\-FArray\-Util.c}!ObitFArrayUtilConvolve@{ObitFArrayUtilConvolve}}
+\index{ObitFArrayUtilConvolve@{ObitFArrayUtilConvolve}!ObitFArrayUtil.c@{Obit\-FArray\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ Obit\-FArray\-Util\-Convolve ({\bf Obit\-FArray} $\ast$ {\em in1}, {\bf Obit\-FArray} $\ast$ {\em in2}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFArrayUtil_8c_a2}
+
+
+Public: Convolve two arrays. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in1}]First input array \item[{\em in2}]Second input array \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Convolution, shoud be Obit\-FArray\-Unrefed when done \end{Desc}
+\index{ObitFArrayUtil.c@{Obit\-FArray\-Util.c}!ObitFArrayUtilFitCGauss@{ObitFArrayUtilFitCGauss}}
+\index{ObitFArrayUtilFitCGauss@{ObitFArrayUtilFitCGauss}!ObitFArrayUtil.c@{Obit\-FArray\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} Obit\-FArray\-Util\-Fit\-CGauss ({\bf Obit\-FArray} $\ast$ {\em in}, {\bf ofloat} $\ast$ {\em FWHM}, {\bf ofloat} $\ast$ {\em center}, {\bf ofloat} $\ast$ {\em peak}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFArrayUtil_8c_a1}
+
+
+Public: Fit 2-D circular Gaussian. 
+
+Starting solution is peak value in array in. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]2-D FArray to fit \item[{\em FWHM}][in] half width of box around peak to use in fitting 0 =$>$ all. \item[{\em FWHM}][out] Full width malf max of Gaussian \item[{\em center}][out] 0-rel center pixel position \item[{\em peak}][out] Peak value \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]RMS residual, -1 on error \end{Desc}
+\index{ObitFArrayUtil.c@{Obit\-FArray\-Util.c}!ObitFArrayUtilUVGaus@{ObitFArrayUtilUVGaus}}
+\index{ObitFArrayUtilUVGaus@{ObitFArrayUtilUVGaus}!ObitFArrayUtil.c@{Obit\-FArray\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ Obit\-FArray\-Util\-UVGaus ({\bf olong} $\ast$ {\em naxis}, {\bf ofloat} $\ast$ {\em cells}, {\bf ofloat} {\em maprot}, {\bf ofloat} {\em Gaumaj}, {\bf ofloat} {\em Gaumin}, {\bf ofloat} {\em Gau\-PA})}\label{ObitFArrayUtil_8c_a3}
+
+
+Public: Create Gaussian UV Taper. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em naxis}]Dimension of image as [nx,ny] \item[{\em cells}]Cell spacing in x and y in units of maj,min (asec) \item[{\em maprot}]Map rotation (deg) \item[{\em maj}]Major axis of Gaussian in image plane (same units as cells) \item[{\em min}]Minor axis of Gaussian in image plane (same units as cells) \item[{\em pa}]Position angle of Gaussian in image plane, from N thru E, (deg) \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]{\bf Obit\-FArray}{\rm (p.\,\pageref{structObitFArray})}, should be un\-Reffed when done, as [u,v] \end{Desc}

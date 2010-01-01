@@ -1,0 +1,680 @@
+\section{Obit\-Data.h File Reference}
+\label{ObitData_8h}\index{ObitData.h@{ObitData.h}}
+{\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} virtual base class. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Thread.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Info\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-IO.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-History.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-Data}
+\begin{CompactList}\small\item\em Obit\-Data Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Data\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-Data\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} returns a Obit\-Data$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-Data\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Data\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-Data\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\item 
+\#define {\bf Obit\-Data\-Set\-FITS}(in, disk, file, err)
+\begin{CompactList}\small\item\em Convenience Macro to define {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} I/O to a FITS file. \item\end{CompactList}\item 
+\#define {\bf Obit\-Data\-Set\-AIPS}(in, disk, cno, user, err)
+\begin{CompactList}\small\item\em Convenience Macro to define {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} I/O to an AIPS file. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef {\bf Obit\-Data} $\ast$($\ast$ {\bf Obit\-Data\-From\-File\-Info\-FP} )(gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$in\-List, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef {\bf Obit\-Data} $\ast$($\ast$ {\bf new\-Obit\-Data\-Scratch\-FP} )({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-Data\-Full\-Instantiate\-FP} )({\bf Obit\-Data} $\ast$in, gboolean exist, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-Data\-Rename\-FP} )({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef {\bf Obit\-Data} $\ast$($\ast$ {\bf Obit\-Data\-Zap\-FP} )({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef {\bf Obit\-Data} $\ast$($\ast$ {\bf Obit\-Data\-Copy\-FP} )({\bf Obit\-Data} $\ast$in, {\bf Obit\-Data} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-Data\-Clone\-FP} )({\bf Obit\-Data} $\ast$in, {\bf Obit\-Data} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef gboolean($\ast$ {\bf Obit\-Data\-Same\-FP} )({\bf Obit\-Data} $\ast$in1, {\bf Obit\-Data} $\ast$in2, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-Data\-Setup\-IOFP} )({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-Data\-Open\-FP} )({\bf Obit\-Data} $\ast$in, Obit\-IOAccess access, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-Data\-Close\-FP} )({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-Data\-IOSet\-FP} )({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef {\bf Obit\-Table} $\ast$($\ast$ {\bf new\-Obit\-Data\-Table\-FP} )({\bf Obit\-Data} $\ast$in, Obit\-IOAccess access, gchar $\ast$tab\-Type, {\bf olong} $\ast$tabver, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef {\bf Obit\-History} $\ast$($\ast$ {\bf new\-Obit\-Data\-History\-FP} )({\bf Obit\-Data} $\ast$in, Obit\-IOAccess access, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-Data\-Zap\-Table\-FP} )({\bf Obit\-Data} $\ast$in, gchar $\ast$tab\-Type, {\bf olong} tab\-Ver, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-Data\-Copy\-Tables\-FP} )({\bf Obit\-Data} $\ast$in, {\bf Obit\-Data} $\ast$out, gchar $\ast$$\ast$exclude, gchar $\ast$$\ast$include, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-Data\-Update\-Tables\-FP} )({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-Data\-Copy\-Table\-FP} )({\bf Obit\-Data} $\ast$in, {\bf Obit\-Data} $\ast$out, gchar $\ast$tab\-Type, {\bf olong} $\ast$inver, {\bf olong} $\ast$outver, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-Data\-Write\-Keyword\-FP} )({\bf Obit\-Data} $\ast$in, gchar $\ast$name, Obit\-Info\-Type type, gint32 $\ast$dim, gconstpointer data, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-Data\-Read\-Keyword\-FP} )({\bf Obit\-Data} $\ast$in, gchar $\ast$name, Obit\-Info\-Type $\ast$type, gint32 $\ast$dim, gpointer data, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-Data\-Get\-File\-Info\-FP} )({\bf Obit\-Data} $\ast$in, gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$out\-List, {\bf Obit\-Err} $\ast$err)
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Data\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Data} $\ast$ {\bf new\-Obit\-Data} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+{\bf Obit\-Data} $\ast$ {\bf Obit\-Data\-From\-File\-Info} (gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$in\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create Data object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+{\bf Obit\-Data} $\ast$ {\bf new\-Obit\-Data\-Scratch} ({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy Constructor for scratch file. \item\end{CompactList}\item 
+void {\bf Obit\-Data\-Full\-Instantiate} ({\bf Obit\-Data} $\ast$in, gboolean exist, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Fully instantiate. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Data\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+void {\bf Obit\-Data\-Rename} ({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Rename underlying structures. \item\end{CompactList}\item 
+{\bf Obit\-Data} $\ast$ {\bf Obit\-Data\-Zap} ({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Delete underlying structures. \item\end{CompactList}\item 
+{\bf Obit\-Data} $\ast$ {\bf Obit\-Data\-Copy} ({\bf Obit\-Data} $\ast$in, {\bf Obit\-Data} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Data\-Clone} ({\bf Obit\-Data} $\ast$in, {\bf Obit\-Data} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+gboolean {\bf Obit\-Data\-Same} ({\bf Obit\-Data} $\ast$in1, {\bf Obit\-Data} $\ast$in2, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Do two Obit\-Datas have the same underlying structures?. \item\end{CompactList}\item 
+void {\bf Obit\-Data\-Setup\-IO} ({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Assign/Initialize IO member. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Data\-Open} ({\bf Obit\-Data} $\ast$in, Obit\-IOAccess access, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create {\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} structures and open file. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Data\-Close} ({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Close file and become inactive. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Data\-IOSet} ({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Reset IO to start of file. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf new\-Obit\-Data\-Table} ({\bf Obit\-Data} $\ast$in, Obit\-IOAccess access, gchar $\ast$tab\-Type, {\bf olong} $\ast$tabver, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Return an associated Table. \item\end{CompactList}\item 
+{\bf Obit\-History} $\ast$ {\bf new\-Obit\-Data\-History} ({\bf Obit\-Data} $\ast$in, Obit\-IOAccess access, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Return an associated History. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Data\-Zap\-Table} ({\bf Obit\-Data} $\ast$in, gchar $\ast$tab\-Type, {\bf olong} tab\-Ver, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Destroy an associated Table. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Data\-Copy\-Tables} ({\bf Obit\-Data} $\ast$in, {\bf Obit\-Data} $\ast$out, gchar $\ast$$\ast$exclude, gchar $\ast$$\ast$include, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy associated Tables. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Data\-Update\-Tables} ({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Update disk resident tables information. \item\end{CompactList}\item 
+void {\bf Obit\-Data\-Copy\-Table} ({\bf Obit\-Data} $\ast$in, {\bf Obit\-Data} $\ast$out, gchar $\ast$tab\-Type, {\bf olong} $\ast$inver, {\bf olong} $\ast$outver, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy a given table from one {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} to another. \item\end{CompactList}\item 
+void {\bf Obit\-Data\-Write\-Keyword} ({\bf Obit\-Data} $\ast$in, gchar $\ast$name, Obit\-Info\-Type type, gint32 $\ast$dim, gconstpointer data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Write header keyword. \item\end{CompactList}\item 
+void {\bf Obit\-Data\-Read\-Keyword} ({\bf Obit\-Data} $\ast$in, gchar $\ast$name, Obit\-Info\-Type $\ast$type, gint32 $\ast$dim, gpointer data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read header keyword. \item\end{CompactList}\item 
+void {\bf Obit\-Data\-Get\-File\-Info} ({\bf Obit\-Data} $\ast$in, gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$out\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Extract information about underlying file. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} virtual base class. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} class.
+
+This class is the virtual base class for {\bf Obit}{\rm (p.\,\pageref{structObit})} data. The derived classes are data access objects which allow access to potentially, multiple data structures and present a uniform internal representation. There maybe (usually are) associated tables which either describe the data or contain calibration and/or editing information. These associated tables are listed in an {\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})} member and the {\bf new\-Obit\-Data\-Table}{\rm (p.\,\pageref{ObitData_8c_a19})} function allows access to these tables. {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} is a derived class from class {\bf Obit}{\rm (p.\,\pageref{structObit})}.
+
+Generally {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} objects will be of derived class but a generic {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} will allow access to tables but not the main file data or descriptor.\subsection{Specifying desired data parameters}\label{ObitData_8h_ObitDataSpecification}
+The desired data are specified in the member {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. There are separate sets of parameters used to specify the FITS or AIPS data files. In the following an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} entry is defined by the name in double quotes, the data type code as an \#Obit\-Info\-Type enum and the dimensions of the array (? =$>$ depends on application). To specify whether the underlying data files are FITS or AIPS \begin{itemize}
+\item \char`\"{}File\-Type\char`\"{} OBIT\_\-int (1,1,1) OBIT\_\-IO\_\-FITS or OBIT\_\-IO\_\-AIPS which are values of an \#Obit\-IOType enum defined in {\bf Obit\-Types.h}{\rm (p.\,\pageref{ObitTypes_8h})}.\end{itemize}
+\subsubsection{files}\label{ObitData_8h_FITS}
+This implementation uses cfitsio which allows using, in addition to regular FITS idata, gzip compressed files, pipes, shared memory and a number of other input forms. The convenience Macro {\bf Obit\-UVSet\-FITS}{\rm (p.\,\pageref{ObitUV_8h_a3})} simplifies specifying the desired data. Binary tables of the type created by AIPS program FITAB are used for storing visibility data in FITS. For accessing FITS files the following entries in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} are used: \begin{itemize}
+\item \char`\"{}Disk\char`\"{} OBIT\_\-int (1,1,1) FITS \char`\"{}disk\char`\"{} number. \item \char`\"{}File\-Name\char`\"{} OBIT\_\-string (?,1,1) Name of disk file.\end{itemize}
+\subsubsection{AIPS files}\label{ObitUV_8h_ObitUVAIPS}
+The {\bf Obit\-AIPS}{\rm (p.\,\pageref{structObitAIPS})} class must be initialized before accessing AIPS files; this uses {\bf Obit\-AIPSClass\-Init}{\rm (p.\,\pageref{ObitAIPS_8c_a5})}. For accessing AIPS files, the following entries in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} are used: \begin{itemize}
+\item \char`\"{}Disk\char`\"{} OBIT\_\-int (1,1,1) AIPS \char`\"{}disk\char`\"{} number. \item \char`\"{}User\char`\"{} OBIT\_\-int (1,1,1) user number. \item \char`\"{}CNO\char`\"{} OBIT\_\-int (1,1,1) AIPS catalog slot number.\end{itemize}
+\subsection{Creators and Destructors}\label{ObitData_8h_ObitDataaccess}
+There should only be instances of derived classes ( which do not include \char`\"{}Data\char`\"{} in the class name). An object derived from {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} can be created using new\-Obit? which allows specifying a name for the object. This name is used to label messages. The copy constructors {\bf Obit}{\rm (p.\,\pageref{structObit})}?Clone and {\bf Obit}{\rm (p.\,\pageref{structObit})}?Copy make shallow and deep copies of an extant {\bf Obit}{\rm (p.\,\pageref{structObit})}?. If the output Obit\-U? has previously been specified, including its disk resident information, then {\bf Obit}{\rm (p.\,\pageref{structObit})}?Copy will copy the disk resident as well as the memory resident information. Also, any associated tables will be copied.
+
+A copy of a pointer to an {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} should always be made using the {\bf Obit}{\rm (p.\,\pageref{structObit})}?Ref function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} or changing a pointer, the function {\bf Obit}{\rm (p.\,\pageref{structObit})}?Unref will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.
+
+\subsection{Define Documentation}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataIsA@{ObitDataIsA}}
+\index{ObitDataIsA@{ObitDataIsA}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Data\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-Data\-Get\-Class())}\label{ObitData_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitData.h@{Obit\-Data.h}!ObitDataRef@{ObitDataRef}}
+\index{ObitDataRef@{ObitDataRef}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Data\-Ref(in)\ Obit\-Ref (in)}\label{ObitData_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})}. 
+
+returns a Obit\-Data$\ast$. in = object to reference \index{ObitData.h@{Obit\-Data.h}!ObitDataSetAIPS@{ObitDataSetAIPS}}
+\index{ObitDataSetAIPS@{ObitDataSetAIPS}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Data\-Set\-AIPS(in, disk, cno, user, err)}\label{ObitData_8h_a4}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}G_STMT_START{   \
+       in->info->dim[0]=1; in->info->dim[1]=1; in->info->dim[2]=1;  \
+       in->info->dim[3]=1; in->info->dim[4]=1;                      \
+       in->info->work[0] = OBIT_IO_AIPS;                            \
+       ObitInfoListPut (in->info, "FileType", OBIT_long,             \
+                  in->info->dim, (gpointer)&in->info->work[0], err);\
+       in->info->dim[0] = 1;                                        \
+       ObitInfoListPut (in->info, "Disk", OBIT_long,                 \
+                 in->info->dim, (gpointer)&disk, err);              \
+       ObitInfoListPut (in->info, "DISK", OBIT_long,                 \
+                 in->info->dim, (gpointer)&disk, err);              \
+       ObitInfoListPut (in->info, "CNO", OBIT_long,                  \
+                 in->info->dim, (gpointer)&cno, err);               \
+       ObitInfoListPut (in->info, "User", OBIT_long,                 \
+                 in->info->dim, (gpointer)&user, err);              \
+     }G_STMT_END
+\end{verbatim}\normalsize 
+Convenience Macro to define {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} I/O to an AIPS file. 
+
+Sets values on {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} on input object. \begin{itemize}
+\item in = {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} to specify i/O for. \item disk = AIPS disk number \item cno = catalog slot number \item user = User id number \item err = {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} to receive error messages. \end{itemize}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataSetFITS@{ObitDataSetFITS}}
+\index{ObitDataSetFITS@{ObitDataSetFITS}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Data\-Set\-FITS(in, disk, file, err)}\label{ObitData_8h_a3}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}G_STMT_START{       \
+       in->info->dim[0]=1; in->info->dim[1]=1; in->info->dim[2]=1;  \
+       in->info->dim[3]=1; in->info->dim[4]=1;                      \
+       in->info->work[0] = OBIT_IO_FITS;                            \
+       ObitInfoListPut (in->info, "FileType", OBIT_long,             \
+                  in->info->dim, (gpointer)&in->info->work[0], err);\
+       in->info->dim[0] = 1;                                        \
+       ObitInfoListPut (in->info, "Disk", OBIT_long,                 \
+                 in->info->dim, (gpointer)&in->info->work[2], err); \
+       in->info->dim[0] = strlen(file);                             \
+       ObitInfoListPut (in->info, "FileName", OBIT_string,          \
+                 in->info->dim, (gpointer)file, err);               \
+     }G_STMT_END
+\end{verbatim}\normalsize 
+Convenience Macro to define {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} I/O to a FITS file. 
+
+Sets values on {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} on input object. \begin{itemize}
+\item in = {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} to specify i/O for. \item disk = FITS disk number \item file = Specified FITS file name. \item err = {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} to receive error messages. \end{itemize}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataUnref@{ObitDataUnref}}
+\index{ObitDataUnref@{ObitDataUnref}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Data\-Unref(in)\ Obit\-Unref (in)}\label{ObitData_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} returns a Obit\-Data$\ast$. 
+
+in = object to unreference 
+
+\subsection{Typedef Documentation}
+\index{ObitData.h@{Obit\-Data.h}!newObitDataHistoryFP@{newObitDataHistoryFP}}
+\index{newObitDataHistoryFP@{newObitDataHistoryFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-History}$\ast$($\ast$ {\bf new\-Obit\-Data\-History\-FP})({\bf Obit\-Data} $\ast$in, Obit\-IOAccess access, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a18}
+
+
+\index{ObitData.h@{Obit\-Data.h}!newObitDataScratchFP@{newObitDataScratchFP}}
+\index{newObitDataScratchFP@{newObitDataScratchFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-Data}$\ast$($\ast$ {\bf new\-Obit\-Data\-Scratch\-FP})({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a6}
+
+
+\index{ObitData.h@{Obit\-Data.h}!newObitDataTableFP@{newObitDataTableFP}}
+\index{newObitDataTableFP@{newObitDataTableFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-Table}$\ast$($\ast$ {\bf new\-Obit\-Data\-Table\-FP})({\bf Obit\-Data} $\ast$in, Obit\-IOAccess access, gchar $\ast$tab\-Type, {\bf olong} $\ast$tabver, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a17}
+
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataCloneFP@{ObitDataCloneFP}}
+\index{ObitDataCloneFP@{ObitDataCloneFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Data\-Clone\-FP})({\bf Obit\-Data} $\ast$in, {\bf Obit\-Data} $\ast$out, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a11}
+
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataCloseFP@{ObitDataCloseFP}}
+\index{ObitDataCloseFP@{ObitDataCloseFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-Data\-Close\-FP})({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a15}
+
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataCopyFP@{ObitDataCopyFP}}
+\index{ObitDataCopyFP@{ObitDataCopyFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-Data}$\ast$($\ast$ {\bf Obit\-Data\-Copy\-FP})({\bf Obit\-Data} $\ast$in, {\bf Obit\-Data} $\ast$out, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a10}
+
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataCopyTableFP@{ObitDataCopyTableFP}}
+\index{ObitDataCopyTableFP@{ObitDataCopyTableFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Data\-Copy\-Table\-FP})({\bf Obit\-Data} $\ast$in, {\bf Obit\-Data} $\ast$out, gchar $\ast$tab\-Type, {\bf olong} $\ast$inver, {\bf olong} $\ast$outver, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a22}
+
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataCopyTablesFP@{ObitDataCopyTablesFP}}
+\index{ObitDataCopyTablesFP@{ObitDataCopyTablesFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-Data\-Copy\-Tables\-FP})({\bf Obit\-Data} $\ast$in, {\bf Obit\-Data} $\ast$out, gchar $\ast$$\ast$exclude, gchar $\ast$$\ast$include, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a20}
+
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataFromFileInfoFP@{ObitDataFromFileInfoFP}}
+\index{ObitDataFromFileInfoFP@{ObitDataFromFileInfoFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-Data}$\ast$($\ast$ {\bf Obit\-Data\-From\-File\-Info\-FP})(gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$in\-List, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a5}
+
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataFullInstantiateFP@{ObitDataFullInstantiateFP}}
+\index{ObitDataFullInstantiateFP@{ObitDataFullInstantiateFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Data\-Full\-Instantiate\-FP})({\bf Obit\-Data} $\ast$in, gboolean exist, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a7}
+
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataGetFileInfoFP@{ObitDataGetFileInfoFP}}
+\index{ObitDataGetFileInfoFP@{ObitDataGetFileInfoFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Data\-Get\-File\-Info\-FP})({\bf Obit\-Data} $\ast$in, gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$out\-List, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a25}
+
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataIOSetFP@{ObitDataIOSetFP}}
+\index{ObitDataIOSetFP@{ObitDataIOSetFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-Data\-IOSet\-FP})({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a16}
+
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataOpenFP@{ObitDataOpenFP}}
+\index{ObitDataOpenFP@{ObitDataOpenFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-Data\-Open\-FP})({\bf Obit\-Data} $\ast$in, Obit\-IOAccess access, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a14}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataReadKeywordFP@{ObitDataReadKeywordFP}}
+\index{ObitDataReadKeywordFP@{ObitDataReadKeywordFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Data\-Read\-Keyword\-FP})({\bf Obit\-Data} $\ast$in, gchar $\ast$name, Obit\-Info\-Type $\ast$type, gint32 $\ast$dim, gpointer data, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a24}
+
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataRenameFP@{ObitDataRenameFP}}
+\index{ObitDataRenameFP@{ObitDataRenameFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Data\-Rename\-FP})({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a8}
+
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataSameFP@{ObitDataSameFP}}
+\index{ObitDataSameFP@{ObitDataSameFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef gboolean($\ast$ {\bf Obit\-Data\-Same\-FP})({\bf Obit\-Data} $\ast$in1, {\bf Obit\-Data} $\ast$in2, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a12}
+
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataSetupIOFP@{ObitDataSetupIOFP}}
+\index{ObitDataSetupIOFP@{ObitDataSetupIOFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Data\-Setup\-IOFP})({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a13}
+
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataUpdateTablesFP@{ObitDataUpdateTablesFP}}
+\index{ObitDataUpdateTablesFP@{ObitDataUpdateTablesFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-Data\-Update\-Tables\-FP})({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a21}
+
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataWriteKeywordFP@{ObitDataWriteKeywordFP}}
+\index{ObitDataWriteKeywordFP@{ObitDataWriteKeywordFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Data\-Write\-Keyword\-FP})({\bf Obit\-Data} $\ast$in, gchar $\ast$name, Obit\-Info\-Type type, gint32 $\ast$dim, gconstpointer data, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a23}
+
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataZapFP@{ObitDataZapFP}}
+\index{ObitDataZapFP@{ObitDataZapFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-Data}$\ast$($\ast$ {\bf Obit\-Data\-Zap\-FP})({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a9}
+
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataZapTableFP@{ObitDataZapTableFP}}
+\index{ObitDataZapTableFP@{ObitDataZapTableFP}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-Data\-Zap\-Table\-FP})({\bf Obit\-Data} $\ast$in, gchar $\ast$tab\-Type, {\bf olong} tab\-Ver, {\bf Obit\-Err} $\ast$err)}\label{ObitData_8h_a19}
+
+
+
+
+\subsection{Function Documentation}
+\index{ObitData.h@{Obit\-Data.h}!newObitData@{newObitData}}
+\index{newObitData@{newObitData}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data}$\ast$ new\-Obit\-Data (gchar $\ast$ {\em name})}\label{ObitData_8h_a27}
+
+
+Public: Constructor. 
+
+A generic {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} object allows access to tables byt not the main data Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!newObitDataHistory@{newObitDataHistory}}
+\index{newObitDataHistory@{newObitDataHistory}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-History}$\ast$ new\-Obit\-Data\-History ({\bf Obit\-Data} $\ast$ {\em in}, Obit\-IOAccess {\em access}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a42}
+
+
+Public: Return an associated History. 
+
+If such an object exists, a reference to it is returned, else a new object is created and if access=OBIT\_\-IO\_\-Write\-Only entered in the {\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})} if appropriate (AIPS) \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object with associated tables. This MUST have been opened before this call. \item[{\em access}]access (OBIT\_\-IO\_\-Read\-Only,OBIT\_\-IO\_\-Read\-Write, or OBIT\_\-IO\_\-Write\-Only). \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to created {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}, NULL on failure. \end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!newObitDataScratch@{newObitDataScratch}}
+\index{newObitDataScratch@{newObitDataScratch}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data}$\ast$ new\-Obit\-Data\-Scratch ({\bf Obit\-Data} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a29}
+
+
+Public: Copy Constructor for scratch file. 
+
+A scratch Data is more or less the same as a normal Data except that it is automatically deleted on the final unreference. The output will have the underlying files of the same type as in already allocated. Virtual - calls actual class member; not supported for Generic {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!newObitDataTable@{newObitDataTable}}
+\index{newObitDataTable@{newObitDataTable}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ new\-Obit\-Data\-Table ({\bf Obit\-Data} $\ast$ {\em in}, Obit\-IOAccess {\em access}, gchar $\ast$ {\em tab\-Type}, {\bf olong} $\ast$ {\em tab\-Ver}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a41}
+
+
+Public: Return an associated Table. 
+
+If such an object exists, a reference to it is returned, else a new object is created and entered in the {\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})}. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object with associated tables. This MUST have been opened before this call. \item[{\em access}]access (OBIT\_\-IO\_\-Read\-Only,OBIT\_\-IO\_\-Read\-Write, or OBIT\_\-IO\_\-Write\-Only). This is used to determine defaulted version number and a different value may be used for the actual Open. \item[{\em tab\-Type}]The table type (e.g. \char`\"{}AIPS CC\char`\"{}). \item[{\em tab\-Ver}]Desired version number, may be zero in which case the highest extant version is returned for read and the highest+1 for write. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to created {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}, NULL on failure. \end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataClassInit@{ObitDataClassInit}}
+\index{ObitDataClassInit@{ObitDataClassInit}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Data\-Class\-Init (void)}\label{ObitData_8h_a26}
+
+
+Public: Class initializer. 
+
+\index{ObitData.h@{Obit\-Data.h}!ObitDataClone@{ObitDataClone}}
+\index{ObitDataClone@{ObitDataClone}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Data\-Clone ({\bf Obit\-Data} $\ast$ {\em in}, {\bf Obit\-Data} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a35}
+
+
+Public: Copy structure. 
+
+Virtual - calls actual class member; not supported for Generic {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataClose@{ObitDataClose}}
+\index{ObitDataClose@{ObitDataClose}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Data\-Close ({\bf Obit\-Data} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a39}
+
+
+Public: Close file and become inactive. 
+
+Virtual - calls actual class member \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be closed. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]error code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataCopy@{ObitDataCopy}}
+\index{ObitDataCopy@{ObitDataCopy}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data}$\ast$ Obit\-Data\-Copy ({\bf Obit\-Data} $\ast$ {\em in}, {\bf Obit\-Data} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a34}
+
+
+Public: Copy (deep) constructor. 
+
+Copies are made of complex members including disk files; these will be copied applying whatever selection is associated with the input. Objects should be closed on input and will be closed on output. In order for the disk file structures to be copied, the output file must be sufficiently defined that it can be written. The copy will be attempted but no errors will be logged until both input and output have been successfully opened. If the contents of the data are copied, all associated tables are copied first. {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} and {\bf Obit\-Thread}{\rm (p.\,\pageref{structObitThread})} members are only copied if the output object didn't previously exist. Parent class members are included but any derived class info is ignored. Virtual - calls actual class member; not supported for Generic {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataCopyTable@{ObitDataCopyTable}}
+\index{ObitDataCopyTable@{ObitDataCopyTable}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Data\-Copy\-Table ({\bf Obit\-Data} $\ast$ {\em in}, {\bf Obit\-Data} $\ast$ {\em out}, gchar $\ast$ {\em tab\-Type}, {\bf olong} $\ast$ {\em inver}, {\bf olong} $\ast$ {\em outver}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a46}
+
+
+Public: Copy a given table from one {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} to another. 
+
+Any previous data in the output table will be lost. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} with tables to copy. \item[{\em out}]An {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} to copy the tables to, old ones replaced. \item[{\em tab\-Type}]Table type, e.g. \char`\"{}AIPS CC\char`\"{} \item[{\em inver}]Input table version number, 0=$>$highest, actual returned \item[{\em outver}]Output table version number, 0=$>$new, actual returned \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataCopyTables@{ObitDataCopyTables}}
+\index{ObitDataCopyTables@{ObitDataCopyTables}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Data\-Copy\-Tables ({\bf Obit\-Data} $\ast$ {\em in}, {\bf Obit\-Data} $\ast$ {\em out}, gchar $\ast$$\ast$ {\em exclude}, gchar $\ast$$\ast$ {\em include}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a44}
+
+
+Public: Copy associated Tables. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} with tables to copy. \item[{\em out}]An {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} to copy the tables to, old ones replaced. \item[{\em exclude}]a NULL termimated list of table types NOT to copy. If NULL, use include \item[{\em include}]a NULL termimated list of table types to copy. ignored if exclude non\-NULL. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataFromFileInfo@{ObitDataFromFileInfo}}
+\index{ObitDataFromFileInfo@{ObitDataFromFileInfo}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data}$\ast$ Obit\-Data\-From\-File\-Info (gchar $\ast$ {\em prefix}, {\bf Obit\-Info\-List} $\ast$ {\em in\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a28}
+
+
+Public: Create Data object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em prefix}]If Non\-Null, string to be added to beginning of out\-List entry name \char`\"{}xxx\char`\"{} in the following \item[{\em in\-List}]Info\-List to extract object information from Following Info\-List entries for AIPS files (\char`\"{}xxx\char`\"{} = prefix): \begin{itemize}
+\item xxx\-Name OBIT\_\-string AIPS file name \item xxx\-Class OBIT\_\-string AIPS file class \item xxx\-Disk OBIT\_\-oint AIPS file disk number \item xxx\-Seq OBIT\_\-oint AIPS file Sequence number \item AIPSuser OBIT\_\-oint AIPS User number \item xxx\-CNO OBIT\_\-oint AIPS Catalog slot number \item xxx\-Dir OBIT\_\-string Directory name for xxx\-Disk\end{itemize}
+Following entries for FITS files (\char`\"{}xxx\char`\"{} = prefix): \begin{itemize}
+\item xxx\-File\-Name OBIT\_\-string FITS file name \item xxx\-Disk OBIT\_\-oint FITS file disk number \item xxx\-Dir OBIT\_\-string Directory name for xxx\-Disk\end{itemize}
+For all File types: \begin{itemize}
+\item xxx\-File\-Type OBIT\_\-string \char`\"{}UV\char`\"{} = UV data, \char`\"{}MA\char`\"{}=$>$image, \char`\"{}Table\char`\"{}=Table, \char`\"{}OTF\char`\"{}=OTF, etc \item xxx\-Data\-Type OBIT\_\-string \char`\"{}AIPS\char`\"{}, \char`\"{}FITS\char`\"{} Defaults to value of \char`\"{}Data\-Type\char`\"{}\end{itemize}
+For xxx\-Data\-Type = \char`\"{}Table\char`\"{} \begin{itemize}
+\item xxx\-Tab OBIT\_\-string (Tables only) Table type (e.g. \char`\"{}AIPS CC\char`\"{}) \item xxx\-Ver OBIT\_\-oint (Tables Only) Table version number\end{itemize}
+For xxx\-Data\-Type = \char`\"{}MA\char`\"{} \begin{itemize}
+\item xxx\-BLC OBIT\_\-oint[7] (Images only) 1-rel bottom-left corner pixel \item xxx\-TRC OBIT\_\-oint[7] (Images Only) 1-rel top-right corner pixel\end{itemize}
+For xxx\-Data\-Type = \char`\"{}OTF\char`\"{} \begin{itemize}
+\item xxxn\-Rec\-PIO OBIT\_\-int (1,1,1) Number of vis. records per IO call\end{itemize}
+For xxx\-Data\-Type = \char`\"{}UV\char`\"{} \begin{itemize}
+\item xxxn\-Vis\-PIO OBIT\_\-int (1,1,1) Number of vis. records per IO call \item xxxdo\-Cal\-Select OBIT\_\-bool (1,1,1) Select/calibrate/edit data? \item xxx\-Stokes OBIT\_\-string (4,1,1) Selected output Stokes parameters: \char`\"{}    \char`\"{}=$>$ no translation,\char`\"{}I   \char`\"{},\char`\"{}V   \char`\"{},\char`\"{}Q   \char`\"{}, \char`\"{}U   \char`\"{}, \char`\"{}IQU \char`\"{}, \char`\"{}IQUV\char`\"{}, \char`\"{}IV  \char`\"{}, \char`\"{}RR  \char`\"{}, \char`\"{}LL  \char`\"{}, \char`\"{}RL  \char`\"{}, \char`\"{}LR  \char`\"{}, \char`\"{}HALF\char`\"{} = RR,LL, \char`\"{}FULL\char`\"{}=RR,LL,RL,LR. [default \char`\"{}    \char`\"{}] In the above 'F' can substitute for \char`\"{}formal\char`\"{} 'I' (both RR+LL). \item xxx\-BChan OBIT\_\-int (1,1,1) First spectral channel selected. [def all] \item xxx\-EChan OBIT\_\-int (1,1,1) Highest spectral channel selected. [def all] \item xxx\-BIF OBIT\_\-int (1,1,1) First \char`\"{}IF\char`\"{} selected. [def all] \item xxx\-EIF OBIT\_\-int (1,1,1) Highest \char`\"{}IF\char`\"{} selected. [def all] \item xxxdo\-Pol OBIT\_\-int (1,1,1) $>$0 -$>$ calibrate polarization. \item xxxdo\-Calib OBIT\_\-int (1,1,1) $>$0 -$>$ calibrate, 2=$>$ also calibrate Weights \item xxxgain\-Use OBIT\_\-int (1,1,1) SN/CL table version number, 0-$>$ use highest \item xxxflag\-Ver OBIT\_\-int (1,1,1) Flag table version, 0-$>$ use highest, $<$0-$>$ none \item xxx\-BLVer OBIT\_\-int (1,1,1) BL table version, 0$>$ use highest, $<$0-$>$ none \item xxx\-BPVer OBIT\_\-int (1,1,1) Band pass (BP) table version, 0-$>$ use highest \item xxx\-Subarray OBIT\_\-int (1,1,1) Selected subarray, $<$=0-$>$all [default all] \item xxxdrop\-Sub\-A OBIT\_\-bool (1,1,1) Drop subarray info? \item xxx\-Freq\-ID OBIT\_\-int (1,1,1) Selected Frequency ID, $<$=0-$>$all [default all] \item xxxtime\-Range OBIT\_\-float (2,1,1) Selected timerange in days. \item xxx\-UVRange OBIT\_\-float (2,1,1) Selected UV range in kilowavelengths. \item xxx\-Input\-Avg\-Time OBIT\_\-float (1,1,1) Input data averaging time (sec). used for fringe rate decorrelation correction. \item xxx\-Sources OBIT\_\-string (?,?,1) Source names selected unless any starts with a '-' in which case all are deselected (with '-' stripped). \item xxxsou\-Code OBIT\_\-string (4,1,1) Source Cal code desired, ' ' =$>$ any code selected '$\ast$ ' =$>$ any non blank code (calibrators only) '-CAL' =$>$ blank codes only (no calibrators) \item xxx\-Qual Obit\_\-int (1,1,1) Source qualifier, -1 [default] = any \item xxx\-Antennas OBIT\_\-int (?,1,1) a list of selected antenna numbers, if any is negative then the absolute values are used and the specified antennas are deselected. \item xxxcorr\-Type OBIT\_\-int (1,1,1) Correlation type, 0=cross corr only, 1=both, 2=auto only. \item xxxpass\-Al l OBIT\_\-bool (1,1,1) If True, pass along all data when selecting/calibration even if it's all flagged, data deselected by time, source, antenna etc. is not passed. \item xxxdo\-Band OBIT\_\-int (1,1,1) Band pass application type $<$0-$>$ none (1) if = 1 then all the bandpass data for each antenna will be averaged to form a composite bandpass spectrum, this will then be used to correct the data. (2) if = 2 the bandpass spectra nearest in time (in a weighted sense) to the uv data point will be used to correct the data. (3) if = 3 the bandpass data will be interpolated in time using the solution weights to form a composite bandpass spectrum, this interpolated spectrum will then be used to correct the data. (4) if = 4 the bandpass spectra nearest in time (neglecting weights) to the uv data point will be used to correct the data. (5) if = 5 the bandpass data will be interpolated in time ignoring weights to form a composite bandpass spectrum, this interpolated spectrum will then be used to correct the data. \item xxx\-Smooth OBIT\_\-float (3,1,1) specifies the type of spectral smoothing Smooth(1) = type of smoothing to apply: 0 =$>$ no smoothing 1 =$>$ Hanning 2 =$>$ Gaussian 3 =$>$ Boxcar 4 =$>$ Sinc (i.e. sin(x)/x) Smooth(2) = the \char`\"{}diameter\char`\"{} of the function, i.e. width between first nulls of Hanning triangle and sinc function, FWHM of Gaussian, width of Boxcar. Defaults (if $<$ 0.1) are 4, 2, 2 and 3 channels for Smooth(1) = 1 - 4. Smooth(3) = the diameter over which the convolving function has value - in channels. Defaults: 1, 3, 1, 4 times Smooth(2) used when \item xxx\-Alpha OBIT\_\-float (1,1,1) Spectral index to apply, 0=none \item xxx\-Sub\-Scan\-Time Obit\_\-float scalar [Optional] if given, this is the desired time (days) of a sub scan. This is used by the selector to suggest a value close to this which will evenly divide the current scan. See {\bf Obit\-UVSel\-Sub\-Scan}{\rm (p.\,\pageref{ObitUVSel_8c_a21})} 0 =$>$ Use scan average. This is only useful for Read\-Select operations on indexed Obit\-UVs. \end{itemize}
+\item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]new data object with selection parameters set \end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataFullInstantiate@{ObitDataFullInstantiate}}
+\index{ObitDataFullInstantiate@{ObitDataFullInstantiate}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Data\-Full\-Instantiate ({\bf Obit\-Data} $\ast$ {\em in}, gboolean {\em exist}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a30}
+
+
+Public: Fully instantiate. 
+
+If object has previously been opened, as demonstrated by the existance of its my\-IO member, this operation is a no-op. Virtual - calls actual class member; not supported for Generic {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object \item[{\em exist}]TRUE if object should previously exist, else FALSE \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]error code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataGetClass@{ObitDataGetClass}}
+\index{ObitDataGetClass@{ObitDataGetClass}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Data\-Get\-Class (void)}\label{ObitData_8h_a31}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataGetFileInfo@{ObitDataGetFileInfo}}
+\index{ObitDataGetFileInfo@{ObitDataGetFileInfo}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Data\-Get\-File\-Info ({\bf Obit\-Data} $\ast$ {\em in}, gchar $\ast$ {\em prefix}, {\bf Obit\-Info\-List} $\ast$ {\em out\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a49}
+
+
+Public: Extract information about underlying file. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object of interest. \item[{\em prefix}]If Non\-Null, string to be added to beginning of out\-List entry name \char`\"{}xxx\char`\"{} in the following \item[{\em out\-List}]Info\-List to write entries into Following entries for AIPS files (\char`\"{}xxx\char`\"{} = prefix): \begin{itemize}
+\item xxx\-Name OBIT\_\-string AIPS file name \item xxx\-Class OBIT\_\-string AIPS file class \item xxx\-Disk OBIT\_\-oint AIPS file disk number \item xxx\-Seq OBIT\_\-oint AIPS file Sequence number \item AIPSuser OBIT\_\-oint AIPS User number \item xxx\-CNO OBIT\_\-oint AIPS Catalog slot number \item xxx\-Dir OBIT\_\-string Directory name for xxx\-Disk\end{itemize}
+Following entries for FITS files (\char`\"{}xxx\char`\"{} = prefix): \begin{itemize}
+\item xxx\-File\-Name OBIT\_\-string FITS file name \item xxx\-Disk OBIT\_\-oint FITS file disk number \item xxx\-Dir OBIT\_\-string Directory name for xxx\-Disk\end{itemize}
+For all File types types: \begin{itemize}
+\item xxx\-Data\-Type OBIT\_\-string \char`\"{}UV\char`\"{} = UV data, \char`\"{}MA\char`\"{}=$>$image, \char`\"{}Table\char`\"{}=Table, \char`\"{}OTF\char`\"{}=OTF, etc \item xxx\-File\-Type OBIT\_\-string \char`\"{}AIPS\char`\"{}, \char`\"{}FITS\char`\"{}\end{itemize}
+For xxx\-Data\-Type = \char`\"{}Table\char`\"{} \begin{itemize}
+\item xxx\-Tab OBIT\_\-string (Tables only) Table type (e.g. \char`\"{}AIPS CC\char`\"{}) \item xxx\-Ver OBIT\_\-oint (Tables Only) Table version number\end{itemize}
+For xxx\-Data\-Type = \char`\"{}MA\char`\"{} \begin{itemize}
+\item xxx\-BLC OBIT\_\-oint[7] (Images only) 1-rel bottom-left corner pixel \item xxx\-TRC OBIT\_\-oint[7] (Images Only) 1-rel top-right corner pixel\end{itemize}
+For xxx\-Data\-Type = \char`\"{}OTF\char`\"{} \begin{itemize}
+\item xxxn\-Rec\-PIO OBIT\_\-int (1,1,1) Number of vis. records per IO call\end{itemize}
+For xxx\-Data\-Type = \char`\"{}UV\char`\"{} \begin{itemize}
+\item xxxn\-Vis\-PIO OBIT\_\-int (1,1,1) Number of vis. records per IO call \item xxxdo\-Cal\-Select OBIT\_\-bool (1,1,1) Select/calibrate/edit data? \item xxx\-Stokes OBIT\_\-string (4,1,1) Selected output Stokes parameters: \char`\"{}    \char`\"{}=$>$ no translation,\char`\"{}I   \char`\"{},\char`\"{}V   \char`\"{},\char`\"{}Q   \char`\"{}, \char`\"{}U   \char`\"{}, \char`\"{}IQU \char`\"{}, \char`\"{}IQUV\char`\"{}, \char`\"{}IV  \char`\"{}, \char`\"{}RR  \char`\"{}, \char`\"{}LL  \char`\"{}, \char`\"{}RL  \char`\"{}, \char`\"{}LR  \char`\"{}, \char`\"{}HALF\char`\"{} = RR,LL, \char`\"{}FULL\char`\"{}=RR,LL,RL,LR. [default \char`\"{}    \char`\"{}] In the above 'F' can substitute for \char`\"{}formal\char`\"{} 'I' (both RR+LL). \item xxx\-BChan OBIT\_\-int (1,1,1) First spectral channel selected. [def all] \item xxx\-EChan OBIT\_\-int (1,1,1) Highest spectral channel selected. [def all] \item xxx\-BIF OBIT\_\-int (1,1,1) First \char`\"{}IF\char`\"{} selected. [def all] \item xxx\-EIF OBIT\_\-int (1,1,1) Highest \char`\"{}IF\char`\"{} selected. [def all] \item xxxdo\-Pol OBIT\_\-int (1,1,1) $>$0 -$>$ calibrate polarization. \item xxxdo\-Calib OBIT\_\-int (1,1,1) $>$0 -$>$ calibrate, 2=$>$ also calibrate Weights \item xxxgain\-Use OBIT\_\-int (1,1,1) SN/CL table version number, 0-$>$ use highest \item xxxflag\-Ver OBIT\_\-int (1,1,1) Flag table version, 0-$>$ use highest, $<$0-$>$ none \item xxx\-BLVer OBIT\_\-int (1,1,1) BL table version, 0$>$ use highest, $<$0-$>$ none \item xxx\-BPVer OBIT\_\-int (1,1,1) Band pass (BP) table version, 0-$>$ use highest \item xxx\-Subarray OBIT\_\-int (1,1,1) Selected subarray, $<$=0-$>$all [default all] \item xxxdrop\-Sub\-A OBIT\_\-bool (1,1,1) Drop subarray info? \item xxx\-Freq\-ID OBIT\_\-int (1,1,1) Selected Frequency ID, $<$=0-$>$all [default all] \item xxxtime\-Range OBIT\_\-float (2,1,1) Selected timerange in days. \item xxx\-UVRange OBIT\_\-float (2,1,1) Selected UV range in kilowavelengths. \item xxx\-Input\-Avg\-Time OBIT\_\-float (1,1,1) Input data averaging time (sec). used for fringe rate decorrelation correction. \item xxx\-Sources OBIT\_\-string (?,?,1) Source names selected unless any starts with a '-' in which case all are deselected (with '-' stripped). \item xxxsou\-Code OBIT\_\-string (4,1,1) Source Cal code desired, ' ' =$>$ any code selected '$\ast$ ' =$>$ any non blank code (calibrators only) '-CAL' =$>$ blank codes only (no calibrators) \item xxx\-Qual Obit\_\-int (1,1,1) Source qualifier, -1 [default] = any \item xxx\-Antennas OBIT\_\-int (?,1,1) a list of selected antenna numbers, if any is negative then the absolute values are used and the specified antennas are deselected. \item xxxcorr\-Type OBIT\_\-int (1,1,1) Correlation type, 0=cross corr only, 1=both, 2=auto only. \item xxxpass\-Al l OBIT\_\-bool (1,1,1) If True, pass along all data when selecting/calibration even if it's all flagged, data deselected by time, source, antenna etc. is not passed. \item xxxdo\-Band OBIT\_\-int (1,1,1) Band pass application type $<$0-$>$ none (1) if = 1 then all the bandpass data for each antenna will be averaged to form a composite bandpass spectrum, this will then be used to correct the data. (2) if = 2 the bandpass spectra nearest in time (in a weighted sense) to the uv data point will be used to correct the data. (3) if = 3 the bandpass data will be interpolated in time using the solution weights to form a composite bandpass spectrum, this interpolated spectrum will then be used to correct the data. (4) if = 4 the bandpass spectra nearest in time (neglecting weights) to the uv data point will be used to correct the data. (5) if = 5 the bandpass data will be interpolated in time ignoring weights to form a composite bandpass spectrum, this interpolated spectrum will then be used to correct the data. \item xxx\-Smooth OBIT\_\-float (3,1,1) specifies the type of spectral smoothing Smooth(1) = type of smoothing to apply: 0 =$>$ no smoothing 1 =$>$ Hanning 2 =$>$ Gaussian 3 =$>$ Boxcar 4 =$>$ Sinc (i.e. sin(x)/x) Smooth(2) = the \char`\"{}diameter\char`\"{} of the function, i.e. width between first nulls of Hanning triangle and sinc function, FWHM of Gaussian, width of Boxcar. Defaults (if $<$ 0.1) are 4, 2, 2 and 3 channels for Smooth(1) = 1 - 4. Smooth(3) = the diameter over which the convolving function has value - in channels. Defaults: 1, 3, 1, 4 times Smooth(2) used when \item xxx\-Alpha OBIT\_\-float (1,1,1) Spectral index to apply, 0=none \item xxx\-Sub\-Scan\-Time Obit\_\-float scalar [Optional] if given, this is the desired time (days) of a sub scan. This is used by the selector to suggest a value close to this which will evenly divide the current scan. See {\bf Obit\-UVSel\-Sub\-Scan}{\rm (p.\,\pageref{ObitUVSel_8c_a21})} 0 =$>$ Use scan average. This is only useful for Read\-Select operations on indexed Obit\-UVs. \end{itemize}
+\item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataIOSet@{ObitDataIOSet}}
+\index{ObitDataIOSet@{ObitDataIOSet}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Data\-IOSet ({\bf Obit\-Data} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a40}
+
+
+Public: Reset IO to start of file. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be rewound. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataOpen@{ObitDataOpen}}
+\index{ObitDataOpen@{ObitDataOpen}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Data\-Open ({\bf Obit\-Data} $\ast$ {\em in}, Obit\-IOAccess {\em access}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a38}
+
+
+Public: Create {\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} structures and open file. 
+
+Virtual - calls actual class member Reads table list if in generic {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} Object \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be opened. \item[{\em access}]access (OBIT\_\-IO\_\-Read\-Only,OBIT\_\-IO\_\-Read\-Write, OBIT\_\-IO\_\-Read\-Cal or OBIT\_\-IO\_\-Write\-Only). If OBIT\_\-IO\_\-Write\-Only any existing data in the output file will be lost. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataReadKeyword@{ObitDataReadKeyword}}
+\index{ObitDataReadKeyword@{ObitDataReadKeyword}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Data\-Read\-Keyword ({\bf Obit\-Data} $\ast$ {\em in}, gchar $\ast$ {\em name}, Obit\-Info\-Type $\ast$ {\em type}, gint32 $\ast$ {\em dim}, gpointer {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a48}
+
+
+Public: Read header keyword. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]object to update, must be fully instantiated \item[{\em name}][out] The label (keyword) of the information. Max 8 char \item[{\em type}][out] Data type of data element (enum defined in {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} class). \item[{\em dim}][out] Dimensionality of datum. Only scalars and strings up to 8 char are supported Note: for strings, the first element is the length in char. \item[{\em data}][out] Pointer to the data. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataRename@{ObitDataRename}}
+\index{ObitDataRename@{ObitDataRename}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Data\-Rename ({\bf Obit\-Data} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a32}
+
+
+Public: Rename underlying structures. 
+
+New name information depends on the underlying file type and is given on the info member. Not supported for Generic {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} For FITS files: \begin{itemize}
+\item \char`\"{}new\-File\-Name\char`\"{} OBIT\_\-string (?,1,1) New Name of disk file.\end{itemize}
+For AIPS: \begin{itemize}
+\item \char`\"{}new\-Name\char`\"{} OBIT\_\-string (12,1,1) New AIPS Name Blank = don't change \item \char`\"{}new\-Class\char`\"{} OBIT\_\-string (6,1,1) New AIPS Class Blank = don't change\-O \item \char`\"{}new\-Seq\char`\"{} OBIT\_\-int (1,1,1) New AIPS Sequence 0 =$>$ unique value \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be zapped. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\end{itemize}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataSame@{ObitDataSame}}
+\index{ObitDataSame@{ObitDataSame}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Data\-Same ({\bf Obit\-Data} $\ast$ {\em in1}, {\bf Obit\-Data} $\ast$ {\em in2}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a36}
+
+
+Public: Do two Obit\-Datas have the same underlying structures?. 
+
+This test is done using values entered into the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} in case the object has not yet been opened. Not supported for Generic {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in1}]First object to compare \item[{\em in2}]Second object to compare \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if to objects have the same underlying structures else FALSE \end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataSetupIO@{ObitDataSetupIO}}
+\index{ObitDataSetupIO@{ObitDataSetupIO}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Data\-Setup\-IO ({\bf Obit\-Data} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a37}
+
+
+Public: Assign/Initialize IO member. 
+
+This is the principle place where the underlying file type is known. Virtual - calls actual class member; not supported for Generic {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]object to attach my\-IO \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataUpdateTables@{ObitDataUpdateTables}}
+\index{ObitDataUpdateTables@{ObitDataUpdateTables}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Data\-Update\-Tables ({\bf Obit\-Data} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a45}
+
+
+Public: Update disk resident tables information. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be updated. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataWriteKeyword@{ObitDataWriteKeyword}}
+\index{ObitDataWriteKeyword@{ObitDataWriteKeyword}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Data\-Write\-Keyword ({\bf Obit\-Data} $\ast$ {\em in}, gchar $\ast$ {\em name}, Obit\-Info\-Type {\em type}, gint32 $\ast$ {\em dim}, gconstpointer {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a47}
+
+
+Public: Write header keyword. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]object to update, must be open during call with Write access \item[{\em name}]The label (keyword) of the information. Max 8 char \item[{\em type}]Data type of data element (enum defined in {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} class). \item[{\em dim}]Dimensionality of datum. Only scalars and strings up to 8 char are allowed Note: for strings, the first element is the length in char. \item[{\em data}]Pointer to the data. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataZap@{ObitDataZap}}
+\index{ObitDataZap@{ObitDataZap}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data}$\ast$ Obit\-Data\-Zap ({\bf Obit\-Data} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a33}
+
+
+Public: Delete underlying structures. 
+
+Virtual - calls actual class member; not supported for Generic {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be zapped. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer for input object, NULL if deletion successful \end{Desc}
+\index{ObitData.h@{Obit\-Data.h}!ObitDataZapTable@{ObitDataZapTable}}
+\index{ObitDataZapTable@{ObitDataZapTable}!ObitData.h@{Obit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Data\-Zap\-Table ({\bf Obit\-Data} $\ast$ {\em in}, gchar $\ast$ {\em tab\-Type}, {\bf olong} {\em tab\-Ver}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitData_8h_a43}
+
+
+Public: Destroy an associated Table. 
+
+The table is removed from the {\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})} but it is not updated. A call to Obit\-Data\-Update\-Tables to update disk structures. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object with associated tables. \item[{\em tab\-Type}]The table type (e.g. \char`\"{}AIPS CC\char`\"{}). \item[{\em tab\-Ver}]Desired version number, may be zero in which case the highest extant version is returned for read and the highest+1 for write. -1 =$>$ all versions of tab\-Type \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}

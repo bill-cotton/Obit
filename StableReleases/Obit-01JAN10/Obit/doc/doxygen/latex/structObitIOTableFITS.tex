@@ -1,0 +1,158 @@
+\section{Obit\-IOTable\-FITS Struct Reference}
+\label{structObitIOTableFITS}\index{ObitIOTableFITS@{ObitIOTableFITS}}
+Obit\-IOTable\-FITS Class structure.  
+
+
+{\tt \#include $<$Obit\-IOTable\-FITS.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+Obit\-IOAccess {\bf access}
+\begin{CompactList}\small\item\em Access type. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+gpointer {\bf my\-Desc}
+\begin{CompactList}\small\item\em data descriptor, type depends on data type. \item\end{CompactList}\item 
+gpointer {\bf my\-Sel}
+\begin{CompactList}\small\item\em data selector \item\end{CompactList}\item 
+gpointer {\bf my\-Cal}
+\begin{CompactList}\small\item\em Calibrator for Data. \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf table\-List}
+\begin{CompactList}\small\item\em Table\-List of associated tables (declared as base class due to logic problems). \item\end{CompactList}\item 
+{\bf olong} {\bf tab\-Ver}
+\begin{CompactList}\small\item\em Table version (EXTVER). \item\end{CompactList}\item 
+gchar $\ast$ {\bf tab\-Name}
+\begin{CompactList}\small\item\em Table name (EXTNAME). \item\end{CompactList}\item 
+{\bf olong} {\bf disk}
+\begin{CompactList}\small\item\em FITS \char`\"{}Disk\char`\"{} number. \item\end{CompactList}\item 
+gchar $\ast$ {\bf File\-Name}
+\begin{CompactList}\small\item\em File name. \item\end{CompactList}\item 
+fitsfile $\ast$ {\bf my\-Fptr}
+\begin{CompactList}\small\item\em cfitsio file pointer \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-IOTable\-FITS Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitIOTableFITS@{Obit\-IOTable\-FITS}!access@{access}}
+\index{access@{access}!ObitIOTableFITS@{Obit\-IOTable\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOAccess {\bf Obit\-IOTable\-FITS::access}}\label{structObitIOTableFITS_o4}
+
+
+Access type. 
+
+\index{ObitIOTableFITS@{Obit\-IOTable\-FITS}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitIOTableFITS@{Obit\-IOTable\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-IOTable\-FITS::Class\-Info}}\label{structObitIOTableFITS_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitIOTableFITS@{Obit\-IOTable\-FITS}!disk@{disk}}
+\index{disk@{disk}!ObitIOTableFITS@{Obit\-IOTable\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-IOTable\-FITS::disk}}\label{structObitIOTableFITS_o12}
+
+
+FITS \char`\"{}Disk\char`\"{} number. 
+
+\index{ObitIOTableFITS@{Obit\-IOTable\-FITS}!FileName@{FileName}}
+\index{FileName@{FileName}!ObitIOTableFITS@{Obit\-IOTable\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-IOTable\-FITS::File\-Name}}\label{structObitIOTableFITS_o13}
+
+
+File name. 
+
+\index{ObitIOTableFITS@{Obit\-IOTable\-FITS}!myCal@{myCal}}
+\index{myCal@{myCal}!ObitIOTableFITS@{Obit\-IOTable\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-IOTable\-FITS::my\-Cal}}\label{structObitIOTableFITS_o8}
+
+
+Calibrator for Data. 
+
+\index{ObitIOTableFITS@{Obit\-IOTable\-FITS}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitIOTableFITS@{Obit\-IOTable\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-IOTable\-FITS::my\-Desc}}\label{structObitIOTableFITS_o6}
+
+
+data descriptor, type depends on data type. 
+
+\index{ObitIOTableFITS@{Obit\-IOTable\-FITS}!myFptr@{myFptr}}
+\index{myFptr@{myFptr}!ObitIOTableFITS@{Obit\-IOTable\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fitsfile$\ast$ {\bf Obit\-IOTable\-FITS::my\-Fptr}}\label{structObitIOTableFITS_o14}
+
+
+cfitsio file pointer 
+
+\index{ObitIOTableFITS@{Obit\-IOTable\-FITS}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitIOTableFITS@{Obit\-IOTable\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-IOTable\-FITS::my\-Sel}}\label{structObitIOTableFITS_o7}
+
+
+data selector 
+
+\index{ObitIOTableFITS@{Obit\-IOTable\-FITS}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitIOTableFITS@{Obit\-IOTable\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-IOTable\-FITS::my\-Status}}\label{structObitIOTableFITS_o5}
+
+
+I/O status. 
+
+\index{ObitIOTableFITS@{Obit\-IOTable\-FITS}!name@{name}}
+\index{name@{name}!ObitIOTableFITS@{Obit\-IOTable\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-IOTable\-FITS::name}}\label{structObitIOTableFITS_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitIOTableFITS@{Obit\-IOTable\-FITS}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitIOTableFITS@{Obit\-IOTable\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-IOTable\-FITS::Obit\-Id}}\label{structObitIOTableFITS_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitIOTableFITS@{Obit\-IOTable\-FITS}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitIOTableFITS@{Obit\-IOTable\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-IOTable\-FITS::Reference\-Count}}\label{structObitIOTableFITS_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitIOTableFITS@{Obit\-IOTable\-FITS}!tableList@{tableList}}
+\index{tableList@{tableList}!ObitIOTableFITS@{Obit\-IOTable\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-IOTable\-FITS::table\-List}}\label{structObitIOTableFITS_o9}
+
+
+Table\-List of associated tables (declared as base class due to logic problems). 
+
+\index{ObitIOTableFITS@{Obit\-IOTable\-FITS}!tabName@{tabName}}
+\index{tabName@{tabName}!ObitIOTableFITS@{Obit\-IOTable\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-IOTable\-FITS::tab\-Name}}\label{structObitIOTableFITS_o11}
+
+
+Table name (EXTNAME). 
+
+\index{ObitIOTableFITS@{Obit\-IOTable\-FITS}!tabVer@{tabVer}}
+\index{tabVer@{tabVer}!ObitIOTableFITS@{Obit\-IOTable\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-IOTable\-FITS::tab\-Ver}}\label{structObitIOTableFITS_o10}
+
+
+Table version (EXTVER). 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-IOTable\-FITS.h}\end{CompactItemize}

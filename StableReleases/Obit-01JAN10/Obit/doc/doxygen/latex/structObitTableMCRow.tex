@@ -1,0 +1,275 @@
+\section{Obit\-Table\-MCRow Struct Reference}
+\label{structObitTableMCRow}\index{ObitTableMCRow@{ObitTableMCRow}}
+Obit\-Table\-MCRow Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-MC.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf my\-Table}
+\begin{CompactList}\small\item\em Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. \item\end{CompactList}\item 
+gpointer {\bf my\-Row\-Data}
+\begin{CompactList}\small\item\em Pointer to row data in buffer (never g\_\-free this). \item\end{CompactList}\item 
+{\bf odouble} {\bf Time}
+\begin{CompactList}\small\item\em The center time. \item\end{CompactList}\item 
+{\bf oint} {\bf Sour\-ID}
+\begin{CompactList}\small\item\em Source ID number. \item\end{CompactList}\item 
+{\bf oint} {\bf antenna\-No}
+\begin{CompactList}\small\item\em Antenna number. \item\end{CompactList}\item 
+{\bf oint} {\bf Array}
+\begin{CompactList}\small\item\em Array number. \item\end{CompactList}\item 
+{\bf oint} {\bf Freq\-ID}
+\begin{CompactList}\small\item\em Frequency ID. \item\end{CompactList}\item 
+{\bf odouble} {\bf atmos}
+\begin{CompactList}\small\item\em Atmospheric delay. \item\end{CompactList}\item 
+{\bf odouble} {\bf Datmos}
+\begin{CompactList}\small\item\em Time derivative of ATMOS. \item\end{CompactList}\item 
+{\bf odouble} {\bf GDelay}
+\begin{CompactList}\small\item\em Group delay. \item\end{CompactList}\item 
+{\bf odouble} {\bf GRate}
+\begin{CompactList}\small\item\em Group delay rate. \item\end{CompactList}\item 
+{\bf odouble} {\bf clock1}
+\begin{CompactList}\small\item\em \char`\"{}Clock\char`\"{} epoch error \item\end{CompactList}\item 
+{\bf odouble} {\bf Dclock1}
+\begin{CompactList}\small\item\em Time derivative of CLOCK. \item\end{CompactList}\item 
+{\bf ofloat} {\bf LOOffset1}
+\begin{CompactList}\small\item\em LO Offset. \item\end{CompactList}\item 
+{\bf ofloat} {\bf DLOOffset1}
+\begin{CompactList}\small\item\em Time derivative of LO offset. \item\end{CompactList}\item 
+{\bf ofloat} {\bf disp1}
+\begin{CompactList}\small\item\em Dispersive delay (sec at wavelength = 1m)for Poln \# 1. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Ddisp1}
+\begin{CompactList}\small\item\em Time derivative of DISPfor Poln \# 1. \item\end{CompactList}\item 
+{\bf odouble} {\bf clock2}
+\begin{CompactList}\small\item\em \char`\"{}Clock\char`\"{} epoch error \item\end{CompactList}\item 
+{\bf odouble} {\bf Dclock2}
+\begin{CompactList}\small\item\em Time derivative of CLOCK. \item\end{CompactList}\item 
+{\bf ofloat} {\bf LOOffset2}
+\begin{CompactList}\small\item\em LO Offset. \item\end{CompactList}\item 
+{\bf ofloat} {\bf DLOOffset2}
+\begin{CompactList}\small\item\em Time derivative of LO offset. \item\end{CompactList}\item 
+{\bf ofloat} {\bf disp2}
+\begin{CompactList}\small\item\em Dispersive delay (sec at wavelength = 1m)for Poln \# 2. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Ddisp2}
+\begin{CompactList}\small\item\em Time derivative of DISPfor Poln \# 2. \item\end{CompactList}\item 
+{\bf olong} {\bf status}
+\begin{CompactList}\small\item\em status 0=normal, 1=modified, -1=flagged \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-MCRow Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!antennaNo@{antennaNo}}
+\index{antennaNo@{antennaNo}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-MCRow::antenna\-No}}\label{structObitTableMCRow_o8}
+
+
+Antenna number. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!Array@{Array}}
+\index{Array@{Array}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-MCRow::Array}}\label{structObitTableMCRow_o9}
+
+
+Array number. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!atmos@{atmos}}
+\index{atmos@{atmos}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-MCRow::atmos}}\label{structObitTableMCRow_o11}
+
+
+Atmospheric delay. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-MCRow::Class\-Info}}\label{structObitTableMCRow_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!clock1@{clock1}}
+\index{clock1@{clock1}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-MCRow::clock1}}\label{structObitTableMCRow_o15}
+
+
+\char`\"{}Clock\char`\"{} epoch error 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!clock2@{clock2}}
+\index{clock2@{clock2}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-MCRow::clock2}}\label{structObitTableMCRow_o21}
+
+
+\char`\"{}Clock\char`\"{} epoch error 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!Datmos@{Datmos}}
+\index{Datmos@{Datmos}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-MCRow::Datmos}}\label{structObitTableMCRow_o12}
+
+
+Time derivative of ATMOS. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!Dclock1@{Dclock1}}
+\index{Dclock1@{Dclock1}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-MCRow::Dclock1}}\label{structObitTableMCRow_o16}
+
+
+Time derivative of CLOCK. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!Dclock2@{Dclock2}}
+\index{Dclock2@{Dclock2}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-MCRow::Dclock2}}\label{structObitTableMCRow_o22}
+
+
+Time derivative of CLOCK. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!Ddisp1@{Ddisp1}}
+\index{Ddisp1@{Ddisp1}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-MCRow::Ddisp1}}\label{structObitTableMCRow_o20}
+
+
+Time derivative of DISPfor Poln \# 1. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!Ddisp2@{Ddisp2}}
+\index{Ddisp2@{Ddisp2}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-MCRow::Ddisp2}}\label{structObitTableMCRow_o26}
+
+
+Time derivative of DISPfor Poln \# 2. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!disp1@{disp1}}
+\index{disp1@{disp1}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-MCRow::disp1}}\label{structObitTableMCRow_o19}
+
+
+Dispersive delay (sec at wavelength = 1m)for Poln \# 1. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!disp2@{disp2}}
+\index{disp2@{disp2}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-MCRow::disp2}}\label{structObitTableMCRow_o25}
+
+
+Dispersive delay (sec at wavelength = 1m)for Poln \# 2. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!DLOOffset1@{DLOOffset1}}
+\index{DLOOffset1@{DLOOffset1}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-MCRow::DLOOffset1}}\label{structObitTableMCRow_o18}
+
+
+Time derivative of LO offset. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!DLOOffset2@{DLOOffset2}}
+\index{DLOOffset2@{DLOOffset2}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-MCRow::DLOOffset2}}\label{structObitTableMCRow_o24}
+
+
+Time derivative of LO offset. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!FreqID@{FreqID}}
+\index{FreqID@{FreqID}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-MCRow::Freq\-ID}}\label{structObitTableMCRow_o10}
+
+
+Frequency ID. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!GDelay@{GDelay}}
+\index{GDelay@{GDelay}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-MCRow::GDelay}}\label{structObitTableMCRow_o13}
+
+
+Group delay. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!GRate@{GRate}}
+\index{GRate@{GRate}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-MCRow::GRate}}\label{structObitTableMCRow_o14}
+
+
+Group delay rate. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!LOOffset1@{LOOffset1}}
+\index{LOOffset1@{LOOffset1}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-MCRow::LOOffset1}}\label{structObitTableMCRow_o17}
+
+
+LO Offset. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!LOOffset2@{LOOffset2}}
+\index{LOOffset2@{LOOffset2}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-MCRow::LOOffset2}}\label{structObitTableMCRow_o23}
+
+
+LO Offset. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!myRowData@{myRowData}}
+\index{myRowData@{myRowData}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-MCRow::my\-Row\-Data}}\label{structObitTableMCRow_o5}
+
+
+Pointer to row data in buffer (never g\_\-free this). 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!myTable@{myTable}}
+\index{myTable@{myTable}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ {\bf Obit\-Table\-MCRow::my\-Table}}\label{structObitTableMCRow_o4}
+
+
+Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!name@{name}}
+\index{name@{name}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-MCRow::name}}\label{structObitTableMCRow_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-MCRow::Obit\-Id}}\label{structObitTableMCRow_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-MCRow::Reference\-Count}}\label{structObitTableMCRow_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!SourID@{SourID}}
+\index{SourID@{SourID}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-MCRow::Sour\-ID}}\label{structObitTableMCRow_o7}
+
+
+Source ID number. 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!status@{status}}
+\index{status@{status}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-MCRow::status}}\label{structObitTableMCRow_o27}
+
+
+status 0=normal, 1=modified, -1=flagged 
+
+\index{ObitTableMCRow@{Obit\-Table\-MCRow}!Time@{Time}}
+\index{Time@{Time}!ObitTableMCRow@{Obit\-Table\-MCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-MCRow::Time}}\label{structObitTableMCRow_o6}
+
+
+The center time. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-MC.h}\end{CompactItemize}

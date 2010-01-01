@@ -1,0 +1,150 @@
+\section{Obit\-Table\-Desc.c File Reference}
+\label{ObitTableDesc_8c}\index{ObitTableDesc.c@{ObitTableDesc.c}}
+{\bf Obit\-Table\-Desc}{\rm (p.\,\pageref{structObitTableDesc})} {\bf Obit}{\rm (p.\,\pageref{structObit})} Table descriptor class definition. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-Desc.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Table\-Desc\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Desc\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Desc} $\ast$ {\bf new\-Obit\-Table\-Desc} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Table\-Desc\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Return class pointer. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Desc} $\ast$ {\bf Obit\-Table\-Desc\-Copy} ({\bf Obit\-Table\-Desc} $\ast$in, {\bf Obit\-Table\-Desc} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy Table\-Desc. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Desc\-Copy\-Desc} ({\bf Obit\-Table\-Desc} $\ast$in, {\bf Obit\-Table\-Desc} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy descriptive (nonstructural) information. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Desc\-Index} ({\bf Obit\-Table\-Desc} $\ast$in)
+\begin{CompactList}\small\item\em Public: Index for easier access. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Desc\-Realloc} ({\bf Obit\-Table\-Desc} $\ast$in, {\bf olong} nfield)
+\begin{CompactList}\small\item\em Public: Reallocate arrays. \item\end{CompactList}\item 
+gboolean {\bf Obit\-Table\-Desc\-Compatible} ({\bf Obit\-Table\-Desc} $\ast$in1, {\bf Obit\-Table\-Desc} $\ast$in2)
+\begin{CompactList}\small\item\em Public: Check compatibility. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Desc\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Table\-Desc}{\rm (p.\,\pageref{structObitTableDesc})} {\bf Obit}{\rm (p.\,\pageref{structObit})} Table descriptor class definition. 
+
+This contains information about the structure of the table.
+
+\subsection{Function Documentation}
+\index{ObitTableDesc.c@{Obit\-Table\-Desc.c}!newObitTableDesc@{newObitTableDesc}}
+\index{newObitTableDesc@{newObitTableDesc}!ObitTableDesc.c@{Obit\-Table\-Desc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Desc}$\ast$ new\-Obit\-Table\-Desc (gchar $\ast$ {\em name})}\label{ObitTableDesc_8c_a4}
+
+
+Public: Constructor. 
+
+\begin{Desc}
+\item[Returns:]pointer to object created. \end{Desc}
+\index{ObitTableDesc.c@{Obit\-Table\-Desc.c}!ObitTableDescClassInit@{ObitTableDescClassInit}}
+\index{ObitTableDescClassInit@{ObitTableDescClassInit}!ObitTableDesc.c@{Obit\-Table\-Desc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Desc\-Class\-Init (void)}\label{ObitTableDesc_8c_a11}
+
+
+Public: Class initializer. 
+
+\index{ObitTableDesc.c@{Obit\-Table\-Desc.c}!ObitTableDescClear@{ObitTableDescClear}}
+\index{ObitTableDescClear@{ObitTableDescClear}!ObitTableDesc.c@{Obit\-Table\-Desc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Desc\-Clear (gpointer {\em inn})}\label{ObitTableDesc_8c_a3}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. \end{description}
+\end{Desc}
+\index{ObitTableDesc.c@{Obit\-Table\-Desc.c}!ObitTableDescCompatible@{ObitTableDescCompatible}}
+\index{ObitTableDescCompatible@{ObitTableDescCompatible}!ObitTableDesc.c@{Obit\-Table\-Desc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Table\-Desc\-Compatible ({\bf Obit\-Table\-Desc} $\ast$ {\em in1}, {\bf Obit\-Table\-Desc} $\ast$ {\em in2})}\label{ObitTableDesc_8c_a10}
+
+
+Public: Check compatibility. 
+
+Checks number, type, label and dimension of each column \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in1}]Pointer first object \item[{\em in2}]Pointer second object \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if Compatible, else FALSE \end{Desc}
+\index{ObitTableDesc.c@{Obit\-Table\-Desc.c}!ObitTableDescCopy@{ObitTableDescCopy}}
+\index{ObitTableDescCopy@{ObitTableDescCopy}!ObitTableDesc.c@{Obit\-Table\-Desc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Desc}$\ast$ Obit\-Table\-Desc\-Copy ({\bf Obit\-Table\-Desc} $\ast$ {\em in}, {\bf Obit\-Table\-Desc} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableDesc_8c_a6}
+
+
+Public: Copy Table\-Desc. 
+
+The output descriptor will have the structure and values of the input \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be copied. \item[{\em out}]Pointer to object to be written. If NULL then a new structure is created. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Pointer to new object. \end{Desc}
+\index{ObitTableDesc.c@{Obit\-Table\-Desc.c}!ObitTableDescCopyDesc@{ObitTableDescCopyDesc}}
+\index{ObitTableDescCopyDesc@{ObitTableDescCopyDesc}!ObitTableDesc.c@{Obit\-Table\-Desc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Desc\-Copy\-Desc ({\bf Obit\-Table\-Desc} $\ast$ {\em in}, {\bf Obit\-Table\-Desc} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableDesc_8c_a7}
+
+
+Public: Copy descriptive (nonstructural) information. 
+
+things that don't define the structure). \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be copied. \item[{\em out}]Pointer to object to be written. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack \end{description}
+\end{Desc}
+\index{ObitTableDesc.c@{Obit\-Table\-Desc.c}!ObitTableDescGetClass@{ObitTableDescGetClass}}
+\index{ObitTableDescGetClass@{ObitTableDescGetClass}!ObitTableDesc.c@{Obit\-Table\-Desc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Table\-Desc\-Get\-Class (void)}\label{ObitTableDesc_8c_a5}
+
+
+Public: Return class pointer. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitTableDesc.c@{Obit\-Table\-Desc.c}!ObitTableDescIndex@{ObitTableDescIndex}}
+\index{ObitTableDescIndex@{ObitTableDescIndex}!ObitTableDesc.c@{Obit\-Table\-Desc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Desc\-Index ({\bf Obit\-Table\-Desc} $\ast$ {\em in})}\label{ObitTableDesc_8c_a8}
+
+
+Public: Index for easier access. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object. \end{description}
+\end{Desc}
+\index{ObitTableDesc.c@{Obit\-Table\-Desc.c}!ObitTableDescInit@{ObitTableDescInit}}
+\index{ObitTableDescInit@{ObitTableDescInit}!ObitTableDesc.c@{Obit\-Table\-Desc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Desc\-Init (gpointer {\em inn})}\label{ObitTableDesc_8c_a2}
+
+
+Private: Initialize newly instantiated object. 
+
+Does (recursive) initialization of base class members before this class. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitTableDesc.c@{Obit\-Table\-Desc.c}!ObitTableDescRealloc@{ObitTableDescRealloc}}
+\index{ObitTableDescRealloc@{ObitTableDescRealloc}!ObitTableDesc.c@{Obit\-Table\-Desc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Desc\-Realloc ({\bf Obit\-Table\-Desc} $\ast$ {\em in}, {\bf olong} {\em nfield})}\label{ObitTableDesc_8c_a9}
+
+
+Public: Reallocate arrays. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to reallocate. \item[{\em nfield}]number of columns to allocate \end{description}
+\end{Desc}

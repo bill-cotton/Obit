@@ -1,0 +1,187 @@
+\section{Obit\-UVCal\-Class\-Info Struct Reference}
+\label{structObitUVCalClassInfo}\index{ObitUVCalClassInfo@{ObitUVCalClassInfo}}
+Class\-Info Structure.  
+
+
+{\tt \#include $<$Obit\-UVCal.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gboolean {\bf initialized}
+\begin{CompactList}\small\item\em Have I been initialized? \item\end{CompactList}\item 
+gboolean {\bf has\-Scratch}
+\begin{CompactList}\small\item\em Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? \item\end{CompactList}\item 
+gchar $\ast$ {\bf Class\-Name}
+\begin{CompactList}\small\item\em Name of class (\char`\"{}Obit\char`\"{}). \item\end{CompactList}\item 
+gconstpointer {\bf Parent\-Class}
+\begin{CompactList}\small\item\em Pointer to parent class Class\-Info, Null if none. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Init\-FP} {\bf Obit\-Class\-Init}
+\begin{CompactList}\small\item\em Function pointer to Class initializer. \item\end{CompactList}\item 
+{\bf new\-Obit\-FP} {\bf new\-Obit}
+\begin{CompactList}\small\item\em Function pointer to new\-Obit. \item\end{CompactList}\item 
+{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Get\-Class}
+\begin{CompactList}\small\item\em Function pointer to Get\-Class. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-Class\-Info\-Def\-Fn}
+\begin{CompactList}\small\item\em Function pointer to Class\-Info\-Def\-Fn. \item\end{CompactList}\item 
+{\bf Obit\-Copy\-FP} {\bf Obit\-Copy}
+\begin{CompactList}\small\item\em Function pointer to shallow copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Clone\-FP} {\bf Obit\-Clone}
+\begin{CompactList}\small\item\em Function pointer to deep copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Ref\-FP} {\bf Obit\-Ref}
+\begin{CompactList}\small\item\em Function pointer to Object Ref. \item\end{CompactList}\item 
+{\bf Obit\-Unref\-FP} {\bf Obit\-Unref}
+\begin{CompactList}\small\item\em Function pointer to Object Unref. \item\end{CompactList}\item 
+{\bf Obit\-Is\-AFP} {\bf Obit\-Is\-A}
+\begin{CompactList}\small\item\em Function pointer to test if a class member. \item\end{CompactList}\item 
+{\bf Obit\-Clear\-FP} {\bf Obit\-Clear}
+\begin{CompactList}\small\item\em Function pointer to deallocation function. \item\end{CompactList}\item 
+{\bf Obit\-Init\-FP} {\bf Obit\-Init}
+\begin{CompactList}\small\item\em Function pointer to object initializer. \item\end{CompactList}\item 
+{\bf Obit\-UVCal\-Start\-FP} {\bf Obit\-UVCal\-Start}
+\begin{CompactList}\small\item\em Function pointer to Obit\-UVCal\-Start. \item\end{CompactList}\item 
+{\bf Obit\-UVCal\-Apply\-FP} {\bf Obit\-UVCal\-Apply}
+\begin{CompactList}\small\item\em Function pointer to\-Obit UVCal\-Apply. \item\end{CompactList}\item 
+{\bf Obit\-UVCal\-Shutdown\-FP} {\bf Obit\-UVCal\-Shutdown}
+\begin{CompactList}\small\item\em Function pointer to Obit\-UVCal\-Shutdown. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Class\-Info Structure. 
+
+Contains class name, a pointer to any parent class (NULL if none) and function pointers. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}!ClassName@{ClassName}}
+\index{ClassName@{ClassName}!ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-UVCal\-Class\-Info::Class\-Name}}\label{structObitUVCalClassInfo_o2}
+
+
+Name of class (\char`\"{}Obit\char`\"{}). 
+
+\index{ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}!hasScratch@{hasScratch}}
+\index{hasScratch@{hasScratch}!ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-UVCal\-Class\-Info::has\-Scratch}}\label{structObitUVCalClassInfo_o1}
+
+
+Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? 
+
+\index{ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}!initialized@{initialized}}
+\index{initialized@{initialized}!ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-UVCal\-Class\-Info::initialized}}\label{structObitUVCalClassInfo_o0}
+
+
+Have I been initialized? 
+
+\index{ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}!newObit@{newObit}}
+\index{newObit@{newObit}!ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-FP} {\bf Obit\-UVCal\-Class\-Info::new\-Obit}}\label{structObitUVCalClassInfo_o5}
+
+
+Function pointer to new\-Obit. 
+
+\index{ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}!ObitClassInfoDefFn@{ObitClassInfoDefFn}}
+\index{ObitClassInfoDefFn@{ObitClassInfoDefFn}!ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-UVCal\-Class\-Info::Obit\-Class\-Info\-Def\-Fn}}\label{structObitUVCalClassInfo_o7}
+
+
+Function pointer to Class\-Info\-Def\-Fn. 
+
+\index{ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}!ObitClassInit@{ObitClassInit}}
+\index{ObitClassInit@{ObitClassInit}!ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Init\-FP} {\bf Obit\-UVCal\-Class\-Info::Obit\-Class\-Init}}\label{structObitUVCalClassInfo_o4}
+
+
+Function pointer to Class initializer. 
+
+\index{ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}!ObitClear@{ObitClear}}
+\index{ObitClear@{ObitClear}!ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clear\-FP} {\bf Obit\-UVCal\-Class\-Info::Obit\-Clear}}\label{structObitUVCalClassInfo_o13}
+
+
+Function pointer to deallocation function. 
+
+\index{ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}!ObitClone@{ObitClone}}
+\index{ObitClone@{ObitClone}!ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clone\-FP} {\bf Obit\-UVCal\-Class\-Info::Obit\-Clone}}\label{structObitUVCalClassInfo_o9}
+
+
+Function pointer to deep copy constructor. 
+
+\index{ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}!ObitCopy@{ObitCopy}}
+\index{ObitCopy@{ObitCopy}!ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Copy\-FP} {\bf Obit\-UVCal\-Class\-Info::Obit\-Copy}}\label{structObitUVCalClassInfo_o8}
+
+
+Function pointer to shallow copy constructor. 
+
+\index{ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}!ObitGetClass@{ObitGetClass}}
+\index{ObitGetClass@{ObitGetClass}!ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Get\-Class\-FP} {\bf Obit\-UVCal\-Class\-Info::Obit\-Get\-Class}}\label{structObitUVCalClassInfo_o6}
+
+
+Function pointer to Get\-Class. 
+
+\index{ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}!ObitInit@{ObitInit}}
+\index{ObitInit@{ObitInit}!ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Init\-FP} {\bf Obit\-UVCal\-Class\-Info::Obit\-Init}}\label{structObitUVCalClassInfo_o14}
+
+
+Function pointer to object initializer. 
+
+\index{ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}!ObitIsA@{ObitIsA}}
+\index{ObitIsA@{ObitIsA}!ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Is\-AFP} {\bf Obit\-UVCal\-Class\-Info::Obit\-Is\-A}}\label{structObitUVCalClassInfo_o12}
+
+
+Function pointer to test if a class member. 
+
+\index{ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}!ObitRef@{ObitRef}}
+\index{ObitRef@{ObitRef}!ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Ref\-FP} {\bf Obit\-UVCal\-Class\-Info::Obit\-Ref}}\label{structObitUVCalClassInfo_o10}
+
+
+Function pointer to Object Ref. 
+
+\index{ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}!ObitUnref@{ObitUnref}}
+\index{ObitUnref@{ObitUnref}!ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Unref\-FP} {\bf Obit\-UVCal\-Class\-Info::Obit\-Unref}}\label{structObitUVCalClassInfo_o11}
+
+
+Function pointer to Object Unref. 
+
+\index{ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}!ObitUVCalApply@{ObitUVCalApply}}
+\index{ObitUVCalApply@{ObitUVCalApply}!ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVCal\-Apply\-FP} {\bf Obit\-UVCal\-Class\-Info::Obit\-UVCal\-Apply}}\label{structObitUVCalClassInfo_o16}
+
+
+Function pointer to\-Obit UVCal\-Apply. 
+
+\index{ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}!ObitUVCalShutdown@{ObitUVCalShutdown}}
+\index{ObitUVCalShutdown@{ObitUVCalShutdown}!ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVCal\-Shutdown\-FP} {\bf Obit\-UVCal\-Class\-Info::Obit\-UVCal\-Shutdown}}\label{structObitUVCalClassInfo_o17}
+
+
+Function pointer to Obit\-UVCal\-Shutdown. 
+
+\index{ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}!ObitUVCalStart@{ObitUVCalStart}}
+\index{ObitUVCalStart@{ObitUVCalStart}!ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVCal\-Start\-FP} {\bf Obit\-UVCal\-Class\-Info::Obit\-UVCal\-Start}}\label{structObitUVCalClassInfo_o15}
+
+
+Function pointer to Obit\-UVCal\-Start. 
+
+\index{ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}!ParentClass@{ParentClass}}
+\index{ParentClass@{ParentClass}!ObitUVCalClassInfo@{Obit\-UVCal\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer {\bf Obit\-UVCal\-Class\-Info::Parent\-Class}}\label{structObitUVCalClassInfo_o3}
+
+
+Pointer to parent class Class\-Info, Null if none. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-UVCal.h}\end{CompactItemize}

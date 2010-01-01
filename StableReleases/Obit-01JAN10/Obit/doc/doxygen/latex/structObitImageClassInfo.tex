@@ -1,0 +1,439 @@
+\section{Obit\-Image\-Class\-Info Struct Reference}
+\label{structObitImageClassInfo}\index{ObitImageClassInfo@{ObitImageClassInfo}}
+Class\-Info Structure.  
+
+
+{\tt \#include $<$Obit\-Image.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gboolean {\bf initialized}
+\begin{CompactList}\small\item\em Have I been initialized? \item\end{CompactList}\item 
+gboolean {\bf has\-Scratch}
+\begin{CompactList}\small\item\em Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? \item\end{CompactList}\item 
+gchar $\ast$ {\bf Class\-Name}
+\begin{CompactList}\small\item\em Name of class (\char`\"{}Obit\char`\"{}). \item\end{CompactList}\item 
+gconstpointer {\bf Parent\-Class}
+\begin{CompactList}\small\item\em Pointer to parent class Class\-Info, Null if none. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Init\-FP} {\bf Obit\-Class\-Init}
+\begin{CompactList}\small\item\em Function pointer to Class initializer. \item\end{CompactList}\item 
+{\bf new\-Obit\-FP} {\bf new\-Obit}
+\begin{CompactList}\small\item\em Function pointer to new\-Obit. \item\end{CompactList}\item 
+{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Get\-Class}
+\begin{CompactList}\small\item\em Function pointer to Get\-Class. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-Class\-Info\-Def\-Fn}
+\begin{CompactList}\small\item\em Function pointer to Class\-Info\-Def\-Fn. \item\end{CompactList}\item 
+{\bf Obit\-Copy\-FP} {\bf Obit\-Copy}
+\begin{CompactList}\small\item\em Function pointer to shallow copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Clone\-FP} {\bf Obit\-Clone}
+\begin{CompactList}\small\item\em Function pointer to deep copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Ref\-FP} {\bf Obit\-Ref}
+\begin{CompactList}\small\item\em Function pointer to Object Ref. \item\end{CompactList}\item 
+{\bf Obit\-Unref\-FP} {\bf Obit\-Unref}
+\begin{CompactList}\small\item\em Function pointer to Object Unref. \item\end{CompactList}\item 
+{\bf Obit\-Is\-AFP} {\bf Obit\-Is\-A}
+\begin{CompactList}\small\item\em Function pointer to test if a class member. \item\end{CompactList}\item 
+{\bf Obit\-Clear\-FP} {\bf Obit\-Clear}
+\begin{CompactList}\small\item\em Function pointer to deallocation function. \item\end{CompactList}\item 
+{\bf Obit\-Init\-FP} {\bf Obit\-Init}
+\begin{CompactList}\small\item\em Function pointer to object initializer. \item\end{CompactList}\item 
+{\bf Obit\-Data\-From\-File\-Info\-FP} {\bf Obit\-Data\-From\-File\-Info}
+\begin{CompactList}\small\item\em Function pointer to Create Data object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+{\bf new\-Obit\-Data\-Scratch\-FP} {\bf new\-Obit\-Data\-Scratch}
+\begin{CompactList}\small\item\em Function pointer to scratch copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Data\-Same\-FP} {\bf Obit\-Data\-Same}
+\begin{CompactList}\small\item\em Function pointer to are two Obit\-Datas the same. \item\end{CompactList}\item 
+{\bf Obit\-Data\-Copy\-FP} {\bf Obit\-Data\-Copy}
+\begin{CompactList}\small\item\em Function pointer to Copy. \item\end{CompactList}\item 
+{\bf Obit\-Data\-Clone\-FP} {\bf Obit\-Data\-Clone}
+\begin{CompactList}\small\item\em Function pointer to Clone. \item\end{CompactList}\item 
+{\bf Obit\-Data\-Setup\-IOFP} {\bf Obit\-Data\-Setup\-IO}
+\begin{CompactList}\small\item\em Initialize IO member. \item\end{CompactList}\item 
+{\bf Obit\-Data\-Rename\-FP} {\bf Obit\-Data\-Rename}
+\begin{CompactList}\small\item\em Function pointer to Rename. \item\end{CompactList}\item 
+{\bf Obit\-Data\-Zap\-FP} {\bf Obit\-Data\-Zap}
+\begin{CompactList}\small\item\em Function pointer to Zap. \item\end{CompactList}\item 
+{\bf Obit\-Data\-Open\-FP} {\bf Obit\-Data\-Open}
+\begin{CompactList}\small\item\em Function pointer to Open. \item\end{CompactList}\item 
+{\bf Obit\-Data\-Close\-FP} {\bf Obit\-Data\-Close}
+\begin{CompactList}\small\item\em Function pointer to Close. \item\end{CompactList}\item 
+{\bf Obit\-Data\-IOSet\-FP} {\bf Obit\-Data\-IOSet}
+\begin{CompactList}\small\item\em Function pointer to Reset IO. \item\end{CompactList}\item 
+{\bf new\-Obit\-Data\-Table\-FP} {\bf new\-Obit\-Data\-Table}
+\begin{CompactList}\small\item\em Function pointer to Create an associated table. \item\end{CompactList}\item 
+{\bf Obit\-Data\-Zap\-Table\-FP} {\bf Obit\-Data\-Zap\-Table}
+\begin{CompactList}\small\item\em Destroy an associated Table(s). \item\end{CompactList}\item 
+{\bf Obit\-Data\-Full\-Instantiate\-FP} {\bf Obit\-Data\-Full\-Instantiate}
+\begin{CompactList}\small\item\em Fully instantiate. \item\end{CompactList}\item 
+{\bf Obit\-Data\-Copy\-Tables\-FP} {\bf Obit\-Data\-Copy\-Tables}
+\begin{CompactList}\small\item\em Copy associated Table(s). \item\end{CompactList}\item 
+{\bf Obit\-Data\-Update\-Tables\-FP} {\bf Obit\-Data\-Update\-Tables}
+\begin{CompactList}\small\item\em Update disk resident tables information. \item\end{CompactList}\item 
+{\bf Obit\-Data\-Copy\-Table\-FP} {\bf Obit\-Data\-Copy\-Table}
+\begin{CompactList}\small\item\em Copy a given table. \item\end{CompactList}\item 
+{\bf new\-Obit\-Data\-History\-FP} {\bf new\-Obit\-Data\-History}
+\begin{CompactList}\small\item\em Function pointer to Create an associated History. \item\end{CompactList}\item 
+{\bf Obit\-Data\-Write\-Keyword\-FP} {\bf Obit\-Data\-Write\-Keyword}
+\begin{CompactList}\small\item\em Function pointer to Write header keyword. \item\end{CompactList}\item 
+{\bf Obit\-Data\-Read\-Keyword\-FP} {\bf Obit\-Data\-Read\-Keyword}
+\begin{CompactList}\small\item\em Function pointer to Read header keyword. \item\end{CompactList}\item 
+{\bf Obit\-Data\-Get\-File\-Info\-FP} {\bf Obit\-Data\-Get\-File\-Info}
+\begin{CompactList}\small\item\em Function pointer to Extract information about underlying file. \item\end{CompactList}\item 
+{\bf new\-Obit\-Image\-Scratch\-FP} {\bf new\-Obit\-Image\-Scratch}
+\begin{CompactList}\small\item\em Function pointer to scratch copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Same\-FP} {\bf Obit\-Image\-Same}
+\begin{CompactList}\small\item\em Function pointer to are two Images the same. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Get\-Plane\-FP} {\bf Obit\-Image\-Get\-Plane}
+\begin{CompactList}\small\item\em Function pointer to read specified plane. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Put\-Plane\-FP} {\bf Obit\-Image\-Put\-Plane}
+\begin{CompactList}\small\item\em Function pointer to write specified plane. \item\end{CompactList}\item 
+{\bf new\-Obit\-Image\-Table\-FP} {\bf new\-Obit\-Image\-Table}
+\begin{CompactList}\small\item\em Function pointer to Create an associated table. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Zap\-Table\-FP} {\bf Obit\-Image\-Zap\-Table}
+\begin{CompactList}\small\item\em Destroy an associated Table(s). \item\end{CompactList}\item 
+{\bf Obit\-Image\-Full\-Instantiate\-FP} {\bf Obit\-Image\-Full\-Instantiate}
+\begin{CompactList}\small\item\em Fully instantiate. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Copy\-Tables\-FP} {\bf Obit\-Image\-Copy\-Tables}
+\begin{CompactList}\small\item\em Copy associated Table(s). \item\end{CompactList}\item 
+{\bf Obit\-Image\-Update\-Tables\-FP} {\bf Obit\-Image\-Update\-Tables}
+\begin{CompactList}\small\item\em Update disk resident tables information. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Set\-Beam\-Name\-FP} {\bf Obit\-Image\-Set\-Beam\-Name}
+\begin{CompactList}\small\item\em Name beam. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Class\-Info Structure. 
+
+Contains class name, a pointer to any parent class (NULL if none) and function pointers. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ClassName@{ClassName}}
+\index{ClassName@{ClassName}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Image\-Class\-Info::Class\-Name}}\label{structObitImageClassInfo_o2}
+
+
+Name of class (\char`\"{}Obit\char`\"{}). 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!hasScratch@{hasScratch}}
+\index{hasScratch@{hasScratch}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Image\-Class\-Info::has\-Scratch}}\label{structObitImageClassInfo_o1}
+
+
+Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!initialized@{initialized}}
+\index{initialized@{initialized}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Image\-Class\-Info::initialized}}\label{structObitImageClassInfo_o0}
+
+
+Have I been initialized? 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!newObit@{newObit}}
+\index{newObit@{newObit}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-FP} {\bf Obit\-Image\-Class\-Info::new\-Obit}}\label{structObitImageClassInfo_o5}
+
+
+Function pointer to new\-Obit. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!newObitDataHistory@{newObitDataHistory}}
+\index{newObitDataHistory@{newObitDataHistory}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-Data\-History\-FP} {\bf Obit\-Image\-Class\-Info::new\-Obit\-Data\-History}}\label{structObitImageClassInfo_o32}
+
+
+Function pointer to Create an associated History. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!newObitDataScratch@{newObitDataScratch}}
+\index{newObitDataScratch@{newObitDataScratch}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-Data\-Scratch\-FP} {\bf Obit\-Image\-Class\-Info::new\-Obit\-Data\-Scratch}}\label{structObitImageClassInfo_o16}
+
+
+Function pointer to scratch copy constructor. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!newObitDataTable@{newObitDataTable}}
+\index{newObitDataTable@{newObitDataTable}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-Data\-Table\-FP} {\bf Obit\-Image\-Class\-Info::new\-Obit\-Data\-Table}}\label{structObitImageClassInfo_o26}
+
+
+Function pointer to Create an associated table. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!newObitImageScratch@{newObitImageScratch}}
+\index{newObitImageScratch@{newObitImageScratch}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-Image\-Scratch\-FP} {\bf Obit\-Image\-Class\-Info::new\-Obit\-Image\-Scratch}}\label{structObitImageClassInfo_o36}
+
+
+Function pointer to scratch copy constructor. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!newObitImageTable@{newObitImageTable}}
+\index{newObitImageTable@{newObitImageTable}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-Image\-Table\-FP} {\bf Obit\-Image\-Class\-Info::new\-Obit\-Image\-Table}}\label{structObitImageClassInfo_o40}
+
+
+Function pointer to Create an associated table. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitClassInfoDefFn@{ObitClassInfoDefFn}}
+\index{ObitClassInfoDefFn@{ObitClassInfoDefFn}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Class\-Info\-Def\-Fn}}\label{structObitImageClassInfo_o7}
+
+
+Function pointer to Class\-Info\-Def\-Fn. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitClassInit@{ObitClassInit}}
+\index{ObitClassInit@{ObitClassInit}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Init\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Class\-Init}}\label{structObitImageClassInfo_o4}
+
+
+Function pointer to Class initializer. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitClear@{ObitClear}}
+\index{ObitClear@{ObitClear}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clear\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Clear}}\label{structObitImageClassInfo_o13}
+
+
+Function pointer to deallocation function. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitClone@{ObitClone}}
+\index{ObitClone@{ObitClone}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clone\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Clone}}\label{structObitImageClassInfo_o9}
+
+
+Function pointer to deep copy constructor. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitCopy@{ObitCopy}}
+\index{ObitCopy@{ObitCopy}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Copy\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Copy}}\label{structObitImageClassInfo_o8}
+
+
+Function pointer to shallow copy constructor. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitDataClone@{ObitDataClone}}
+\index{ObitDataClone@{ObitDataClone}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data\-Clone\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Data\-Clone}}\label{structObitImageClassInfo_o19}
+
+
+Function pointer to Clone. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitDataClose@{ObitDataClose}}
+\index{ObitDataClose@{ObitDataClose}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data\-Close\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Data\-Close}}\label{structObitImageClassInfo_o24}
+
+
+Function pointer to Close. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitDataCopy@{ObitDataCopy}}
+\index{ObitDataCopy@{ObitDataCopy}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data\-Copy\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Data\-Copy}}\label{structObitImageClassInfo_o18}
+
+
+Function pointer to Copy. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitDataCopyTable@{ObitDataCopyTable}}
+\index{ObitDataCopyTable@{ObitDataCopyTable}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data\-Copy\-Table\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Data\-Copy\-Table}}\label{structObitImageClassInfo_o31}
+
+
+Copy a given table. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitDataCopyTables@{ObitDataCopyTables}}
+\index{ObitDataCopyTables@{ObitDataCopyTables}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data\-Copy\-Tables\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Data\-Copy\-Tables}}\label{structObitImageClassInfo_o29}
+
+
+Copy associated Table(s). 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitDataFromFileInfo@{ObitDataFromFileInfo}}
+\index{ObitDataFromFileInfo@{ObitDataFromFileInfo}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data\-From\-File\-Info\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Data\-From\-File\-Info}}\label{structObitImageClassInfo_o15}
+
+
+Function pointer to Create Data object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitDataFullInstantiate@{ObitDataFullInstantiate}}
+\index{ObitDataFullInstantiate@{ObitDataFullInstantiate}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data\-Full\-Instantiate\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Data\-Full\-Instantiate}}\label{structObitImageClassInfo_o28}
+
+
+Fully instantiate. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitDataGetFileInfo@{ObitDataGetFileInfo}}
+\index{ObitDataGetFileInfo@{ObitDataGetFileInfo}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data\-Get\-File\-Info\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Data\-Get\-File\-Info}}\label{structObitImageClassInfo_o35}
+
+
+Function pointer to Extract information about underlying file. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitDataIOSet@{ObitDataIOSet}}
+\index{ObitDataIOSet@{ObitDataIOSet}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data\-IOSet\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Data\-IOSet}}\label{structObitImageClassInfo_o25}
+
+
+Function pointer to Reset IO. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitDataOpen@{ObitDataOpen}}
+\index{ObitDataOpen@{ObitDataOpen}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data\-Open\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Data\-Open}}\label{structObitImageClassInfo_o23}
+
+
+Function pointer to Open. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitDataReadKeyword@{ObitDataReadKeyword}}
+\index{ObitDataReadKeyword@{ObitDataReadKeyword}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data\-Read\-Keyword\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Data\-Read\-Keyword}}\label{structObitImageClassInfo_o34}
+
+
+Function pointer to Read header keyword. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitDataRename@{ObitDataRename}}
+\index{ObitDataRename@{ObitDataRename}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data\-Rename\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Data\-Rename}}\label{structObitImageClassInfo_o21}
+
+
+Function pointer to Rename. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitDataSame@{ObitDataSame}}
+\index{ObitDataSame@{ObitDataSame}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data\-Same\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Data\-Same}}\label{structObitImageClassInfo_o17}
+
+
+Function pointer to are two Obit\-Datas the same. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitDataSetupIO@{ObitDataSetupIO}}
+\index{ObitDataSetupIO@{ObitDataSetupIO}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data\-Setup\-IOFP} {\bf Obit\-Image\-Class\-Info::Obit\-Data\-Setup\-IO}}\label{structObitImageClassInfo_o20}
+
+
+Initialize IO member. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitDataUpdateTables@{ObitDataUpdateTables}}
+\index{ObitDataUpdateTables@{ObitDataUpdateTables}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data\-Update\-Tables\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Data\-Update\-Tables}}\label{structObitImageClassInfo_o30}
+
+
+Update disk resident tables information. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitDataWriteKeyword@{ObitDataWriteKeyword}}
+\index{ObitDataWriteKeyword@{ObitDataWriteKeyword}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data\-Write\-Keyword\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Data\-Write\-Keyword}}\label{structObitImageClassInfo_o33}
+
+
+Function pointer to Write header keyword. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitDataZap@{ObitDataZap}}
+\index{ObitDataZap@{ObitDataZap}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data\-Zap\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Data\-Zap}}\label{structObitImageClassInfo_o22}
+
+
+Function pointer to Zap. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitDataZapTable@{ObitDataZapTable}}
+\index{ObitDataZapTable@{ObitDataZapTable}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Data\-Zap\-Table\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Data\-Zap\-Table}}\label{structObitImageClassInfo_o27}
+
+
+Destroy an associated Table(s). 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitGetClass@{ObitGetClass}}
+\index{ObitGetClass@{ObitGetClass}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Get\-Class}}\label{structObitImageClassInfo_o6}
+
+
+Function pointer to Get\-Class. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitImageCopyTables@{ObitImageCopyTables}}
+\index{ObitImageCopyTables@{ObitImageCopyTables}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Copy\-Tables\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Image\-Copy\-Tables}}\label{structObitImageClassInfo_o43}
+
+
+Copy associated Table(s). 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitImageFullInstantiate@{ObitImageFullInstantiate}}
+\index{ObitImageFullInstantiate@{ObitImageFullInstantiate}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Full\-Instantiate\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Image\-Full\-Instantiate}}\label{structObitImageClassInfo_o42}
+
+
+Fully instantiate. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitImageGetPlane@{ObitImageGetPlane}}
+\index{ObitImageGetPlane@{ObitImageGetPlane}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Get\-Plane\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Image\-Get\-Plane}}\label{structObitImageClassInfo_o38}
+
+
+Function pointer to read specified plane. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitImagePutPlane@{ObitImagePutPlane}}
+\index{ObitImagePutPlane@{ObitImagePutPlane}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Put\-Plane\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Image\-Put\-Plane}}\label{structObitImageClassInfo_o39}
+
+
+Function pointer to write specified plane. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitImageSame@{ObitImageSame}}
+\index{ObitImageSame@{ObitImageSame}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Same\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Image\-Same}}\label{structObitImageClassInfo_o37}
+
+
+Function pointer to are two Images the same. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitImageSetBeamName@{ObitImageSetBeamName}}
+\index{ObitImageSetBeamName@{ObitImageSetBeamName}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Set\-Beam\-Name\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Image\-Set\-Beam\-Name}}\label{structObitImageClassInfo_o45}
+
+
+Name beam. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitImageUpdateTables@{ObitImageUpdateTables}}
+\index{ObitImageUpdateTables@{ObitImageUpdateTables}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Update\-Tables\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Image\-Update\-Tables}}\label{structObitImageClassInfo_o44}
+
+
+Update disk resident tables information. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitImageZapTable@{ObitImageZapTable}}
+\index{ObitImageZapTable@{ObitImageZapTable}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Zap\-Table\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Image\-Zap\-Table}}\label{structObitImageClassInfo_o41}
+
+
+Destroy an associated Table(s). 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitInit@{ObitInit}}
+\index{ObitInit@{ObitInit}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Init\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Init}}\label{structObitImageClassInfo_o14}
+
+
+Function pointer to object initializer. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitIsA@{ObitIsA}}
+\index{ObitIsA@{ObitIsA}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Is\-AFP} {\bf Obit\-Image\-Class\-Info::Obit\-Is\-A}}\label{structObitImageClassInfo_o12}
+
+
+Function pointer to test if a class member. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitRef@{ObitRef}}
+\index{ObitRef@{ObitRef}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Ref\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Ref}}\label{structObitImageClassInfo_o10}
+
+
+Function pointer to Object Ref. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ObitUnref@{ObitUnref}}
+\index{ObitUnref@{ObitUnref}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Unref\-FP} {\bf Obit\-Image\-Class\-Info::Obit\-Unref}}\label{structObitImageClassInfo_o11}
+
+
+Function pointer to Object Unref. 
+
+\index{ObitImageClassInfo@{Obit\-Image\-Class\-Info}!ParentClass@{ParentClass}}
+\index{ParentClass@{ParentClass}!ObitImageClassInfo@{Obit\-Image\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer {\bf Obit\-Image\-Class\-Info::Parent\-Class}}\label{structObitImageClassInfo_o3}
+
+
+Pointer to parent class Class\-Info, Null if none. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Image.h}\end{CompactItemize}

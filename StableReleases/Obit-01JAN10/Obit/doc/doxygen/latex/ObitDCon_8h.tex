@@ -1,0 +1,193 @@
+\section{Obit\-DCon.h File Reference}
+\label{ObitDCon_8h}\index{ObitDCon.h@{ObitDCon.h}}
+{\bf Obit\-DCon}{\rm (p.\,\pageref{structObitDCon})} virtual deconvolution base class. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Mosaic.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-DCon}
+\begin{CompactList}\small\item\em Obit\-DCon virtual deconvolution base class. \item\end{CompactList}\item 
+struct {\bf Obit\-DCon\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-DCon\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-DCon}{\rm (p.\,\pageref{structObitDCon})} returns a Obit\-DCon$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-DCon\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-DCon}{\rm (p.\,\pageref{structObitDCon})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-DCon\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-DCon\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef void($\ast$ {\bf Obit\-DCon\-Get\-Parms\-FP} )({\bf Obit\-DCon} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-DCon\-Deconvolve\-FP} )({\bf Obit\-DCon} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-DCon\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-DCon} $\ast$ {\bf new\-Obit\-DCon} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+{\bf Obit\-DCon} $\ast$ {\bf Obit\-DCon\-Create} (gchar $\ast$name, {\bf Obit\-Image\-Mosaic} $\ast$mosaic, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-DCon}{\rm (p.\,\pageref{structObitDCon})} structures. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-DCon\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-DCon} $\ast$ {\bf Obit\-DCon\-Copy} ({\bf Obit\-DCon} $\ast$in, {\bf Obit\-DCon} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clone} ({\bf Obit\-DCon} $\ast$in, {\bf Obit\-DCon} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Get\-Parms} ({\bf Obit\-DCon} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get Parameters. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Deconvolve} ({\bf Obit\-DCon} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Do deconvolution. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-DCon}{\rm (p.\,\pageref{structObitDCon})} virtual deconvolution base class. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} class.
+
+Actual deconvolution classes are derived from this class\subsection{Creators and Destructors}\label{ObitDCon_8h_ObitDConaccess}
+An {\bf Obit\-DCon}{\rm (p.\,\pageref{structObitDCon})} will usually be created using Obit\-DCon\-Create which allows specifying a name for the object as well as other information.
+
+A copy of a pointer to an {\bf Obit\-DCon}{\rm (p.\,\pageref{structObitDCon})} should always be made using the {\bf Obit\-DCon\-Ref}{\rm (p.\,\pageref{ObitDCon_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-DCon}{\rm (p.\,\pageref{structObitDCon})} or changing a pointer, the function {\bf Obit\-DCon\-Unref}{\rm (p.\,\pageref{ObitDCon_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.
+
+\subsection{Define Documentation}
+\index{ObitDCon.h@{Obit\-DCon.h}!ObitDConIsA@{ObitDConIsA}}
+\index{ObitDConIsA@{ObitDConIsA}!ObitDCon.h@{Obit\-DCon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-DCon\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-DCon\-Get\-Class())}\label{ObitDCon_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitDCon.h@{Obit\-DCon.h}!ObitDConRef@{ObitDConRef}}
+\index{ObitDConRef@{ObitDConRef}!ObitDCon.h@{Obit\-DCon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-DCon\-Ref(in)\ Obit\-Ref (in)}\label{ObitDCon_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-DCon}{\rm (p.\,\pageref{structObitDCon})}. 
+
+returns a Obit\-DCon$\ast$. in = object to reference \index{ObitDCon.h@{Obit\-DCon.h}!ObitDConUnref@{ObitDConUnref}}
+\index{ObitDConUnref@{ObitDConUnref}!ObitDCon.h@{Obit\-DCon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-DCon\-Unref(in)\ Obit\-Unref (in)}\label{ObitDCon_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-DCon}{\rm (p.\,\pageref{structObitDCon})} returns a Obit\-DCon$\ast$. 
+
+in = object to unreference 
+
+\subsection{Typedef Documentation}
+\index{ObitDCon.h@{Obit\-DCon.h}!ObitDConDeconvolveFP@{ObitDConDeconvolveFP}}
+\index{ObitDConDeconvolveFP@{ObitDConDeconvolveFP}!ObitDCon.h@{Obit\-DCon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-DCon\-Deconvolve\-FP})({\bf Obit\-DCon} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitDCon_8h_a4}
+
+
+\index{ObitDCon.h@{Obit\-DCon.h}!ObitDConGetParmsFP@{ObitDConGetParmsFP}}
+\index{ObitDConGetParmsFP@{ObitDConGetParmsFP}!ObitDCon.h@{Obit\-DCon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-DCon\-Get\-Parms\-FP})({\bf Obit\-DCon} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitDCon_8h_a3}
+
+
+
+
+\subsection{Function Documentation}
+\index{ObitDCon.h@{Obit\-DCon.h}!newObitDCon@{newObitDCon}}
+\index{newObitDCon@{newObitDCon}!ObitDCon.h@{Obit\-DCon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon}$\ast$ new\-Obit\-DCon (gchar $\ast$ {\em name})}\label{ObitDCon_8h_a6}
+
+
+Public: Default Constructor. 
+
+VIRTUAL routine - should never be called - defined for convenience of derived classes Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitDCon.h@{Obit\-DCon.h}!ObitDConClassInit@{ObitDConClassInit}}
+\index{ObitDConClassInit@{ObitDConClassInit}!ObitDCon.h@{Obit\-DCon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Class\-Init (void)}\label{ObitDCon_8h_a5}
+
+
+Public: Class initializer. 
+
+\index{ObitDCon.h@{Obit\-DCon.h}!ObitDConClone@{ObitDConClone}}
+\index{ObitDConClone@{ObitDConClone}!ObitDCon.h@{Obit\-DCon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clone ({\bf Obit\-DCon} $\ast$ {\em in}, {\bf Obit\-DCon} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDCon_8h_a10}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitDCon.h@{Obit\-DCon.h}!ObitDConCopy@{ObitDConCopy}}
+\index{ObitDConCopy@{ObitDConCopy}!ObitDCon.h@{Obit\-DCon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon}$\ast$ Obit\-DCon\-Copy ({\bf Obit\-DCon} $\ast$ {\em in}, {\bf Obit\-DCon} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDCon_8h_a9}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitDCon.h@{Obit\-DCon.h}!ObitDConCreate@{ObitDConCreate}}
+\index{ObitDConCreate@{ObitDConCreate}!ObitDCon.h@{Obit\-DCon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon}$\ast$ Obit\-DCon\-Create (gchar $\ast$ {\em name}, {\bf Obit\-Image\-Mosaic} $\ast$ {\em mosaic}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDCon_8h_a7}
+
+
+Public: Create/initialize {\bf Obit\-DCon}{\rm (p.\,\pageref{structObitDCon})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em mosaic}]Image mosaic to be deconvolved. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitDCon.h@{Obit\-DCon.h}!ObitDConDeconvolve@{ObitDConDeconvolve}}
+\index{ObitDConDeconvolve@{ObitDConDeconvolve}!ObitDCon.h@{Obit\-DCon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Deconvolve ({\bf Obit\-DCon} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDCon_8h_a12}
+
+
+Public: Do deconvolution. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to deconvolve \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitDCon.h@{Obit\-DCon.h}!ObitDConGetClass@{ObitDConGetClass}}
+\index{ObitDConGetClass@{ObitDConGetClass}!ObitDCon.h@{Obit\-DCon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-DCon\-Get\-Class (void)}\label{ObitDCon_8h_a8}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitDCon.h@{Obit\-DCon.h}!ObitDConGetParms@{ObitDConGetParms}}
+\index{ObitDConGetParms@{ObitDConGetParms}!ObitDCon.h@{Obit\-DCon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Get\-Parms ({\bf Obit\-DCon} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDCon_8h_a11}
+
+
+Public: Get Parameters. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The CLEAN object as base class \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}

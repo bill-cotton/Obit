@@ -1,0 +1,332 @@
+\section{Obit\-AIPSObject.h File Reference}
+\label{ObitAIPSObject_8h}\index{ObitAIPSObject.h@{ObitAIPSObject.h}}
+Obit\-AIPSObject module definition. 
+
+{\tt \#include $<$glib.h$>$}\par
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-AIPS.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-AIPSCat.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+union {\bf Obit\-AIPSCat\-Equiv}
+\begin{CompactList}\small\item\em AIPS catalog header. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf MAXAIPSOBJDIM}\ 5
+\begin{CompactList}\small\item\em Maximum number of dimensions. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef gchar {\bf AIPSObj} [32]
+\begin{CompactList}\small\item\em Typedef for AIPS Object name. \item\end{CompactList}\item 
+typedef gchar {\bf AIPSObj\-Class} [8]
+\begin{CompactList}\small\item\em Typedef for AIPS Object class. \item\end{CompactList}\item 
+typedef gchar {\bf AIPSKey} [8]
+\begin{CompactList}\small\item\em Typedef for AIPS Object keyword. \item\end{CompactList}\item 
+typedef {\bf oint} {\bf AIPSKey\-Dim} [MAXAIPSOBJDIM]
+\begin{CompactList}\small\item\em Typedef for AIPS Object keyword dimension. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Enumerations}
+\begin{CompactItemize}
+\item 
+enum {\bf obit\-AIPSObject\-Type} \{ \par
+{\bf OBIT\_\-AIPSObject\-Int} =  4, 
+{\bf OBIT\_\-AIPSObject\-Re} =  2, 
+{\bf OBIT\_\-AIPSObject\-DP} =  1, 
+{\bf OBIT\_\-AIPSObject\-Car} =  3, 
+\par
+{\bf OBIT\_\-AIPSObject\-Log} =  5
+ \}
+\begin{CompactList}\small\item\em enum for AIPS object keyword type. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-AIPSObject\-OBinit} ({\bf oint} $\ast$ierr)
+\begin{CompactList}\small\item\em Public: Initialize AIPS Object manager. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSObject\-OBvhkw} ({\bf AIPSObj\-Class} class, {\bf AIPSKey} keyword, Obit\-AIPSObject\-Type type, {\bf oint} $\ast$ierr)
+\begin{CompactList}\small\item\em Public: Add a Catalog header keyword to the virtual keyword list. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSObject\-OBkeyv} ({\bf oint} objnum, {\bf AIPSKey} keywrd, {\bf oint} $\ast$keypnt, {\bf olong} $\ast$ierr, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: See if keyword is an object dependent, virtual keyword. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSObject\-OBrget} ({\bf oint} objnum, {\bf AIPSKey} keywrd, Obit\-AIPSObject\-Type $\ast$type, {\bf AIPSKey\-Dim} dim, gpointer value, gchar $\ast$valuec, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Fetch the value (array) for a specified real (non-virtual) keyword. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSObject\-OBcrea} ({\bf AIPSObj} name, {\bf AIPSObj\-Class} class, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Associate an object slot with an object name. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSObject\-OBfree} ({\bf AIPSObj} name, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Free the object slot associated with an object. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSObject\-OBname} ({\bf AIPSObj} name, {\bf oint} $\ast$objnum, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Look up the object slot number of object with name \char`\"{}name\char`\"{}. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSObject\-OBclass} ({\bf oint} objnum, {\bf oint} $\ast$classno, {\bf AIPSObj\-Class} name, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Look up the class number/name of object number objnum. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSObject\-OBput} ({\bf oint} objnum, {\bf AIPSKey} keywrd, Obit\-AIPSObject\-Type type, {\bf AIPSKey\-Dim} dim, gpointer value, gchar $\ast$valuec, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Save an entry in an object creating it if necessary. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSObject\-OBget} ({\bf oint} objnum, {\bf AIPSKey} keywrd, Obit\-AIPSObject\-Type $\ast$type, {\bf AIPSKey\-Dim} dim, gpointer value, gchar $\ast$valuec, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Fetch the value (array) for a specified keyword. \item\end{CompactList}\item 
+gboolean {\bf Obit\-AIPSObject\-OBinfo} ({\bf oint} objnum, {\bf AIPSKey} keywrd, Obit\-AIPSObject\-Type $\ast$type, {\bf AIPSKey\-Dim} dim, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Check for for a specified keyword. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSObject\-OBdskc} ({\bf AIPSObj} name, {\bf oint} $\ast$disk, {\bf oint} $\ast$cno, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Return Disk and slot information for object. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSObject\-OBhget} ({\bf AIPSObj} name, union {\bf Obit\-AIPSCat\-Equiv} cat, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Return catalog header record for an object. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSObject\-OBhput} ({\bf AIPSObj} name, union {\bf Obit\-AIPSCat\-Equiv} cat, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Store catalog header record for an object. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSObject\-OBcopy} ({\bf AIPSObj} namein, {\bf AIPSObj} namout, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copies one image to another. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-AIPSObject module definition. 
+
+This is a Utility module to handle the interface with the AIPS object system.
+
+\subsection{Define Documentation}
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!MAXAIPSOBJDIM@{MAXAIPSOBJDIM}}
+\index{MAXAIPSOBJDIM@{MAXAIPSOBJDIM}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAXAIPSOBJDIM\ 5}\label{ObitAIPSObject_8h_a0}
+
+
+Maximum number of dimensions. 
+
+
+
+\subsection{Typedef Documentation}
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!AIPSKey@{AIPSKey}}
+\index{AIPSKey@{AIPSKey}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef gchar {\bf AIPSKey}[8]}\label{ObitAIPSObject_8h_a3}
+
+
+Typedef for AIPS Object keyword. 
+
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!AIPSKeyDim@{AIPSKeyDim}}
+\index{AIPSKeyDim@{AIPSKeyDim}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf oint} {\bf AIPSKey\-Dim}[MAXAIPSOBJDIM]}\label{ObitAIPSObject_8h_a4}
+
+
+Typedef for AIPS Object keyword dimension. 
+
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!AIPSObj@{AIPSObj}}
+\index{AIPSObj@{AIPSObj}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef gchar {\bf AIPSObj}[32]}\label{ObitAIPSObject_8h_a1}
+
+
+Typedef for AIPS Object name. 
+
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!AIPSObjClass@{AIPSObjClass}}
+\index{AIPSObjClass@{AIPSObjClass}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef gchar {\bf AIPSObj\-Class}[8]}\label{ObitAIPSObject_8h_a2}
+
+
+Typedef for AIPS Object class. 
+
+
+
+\subsection{Enumeration Type Documentation}
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!obitAIPSObjectType@{obitAIPSObjectType}}
+\index{obitAIPSObjectType@{obitAIPSObjectType}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}enum {\bf obit\-AIPSObject\-Type}}\label{ObitAIPSObject_8h_a25}
+
+
+enum for AIPS object keyword type. 
+
+Defined in \$INC/PAOOF.INC \begin{Desc}
+\item[Enumeration values: ]\par
+\begin{description}
+\index{OBIT_AIPSObjectInt@{OBIT\_\-AIPSObjectInt}!ObitAIPSObject.h@{ObitAIPSObject.h}}\index{ObitAIPSObject.h@{ObitAIPSObject.h}!OBIT_AIPSObjectInt@{OBIT\_\-AIPSObjectInt}}\item[{\em 
+OBIT\_\-AIPSObject\-Int\label{ObitAIPSObject_8h_a25a5}
+}]Integer type. \index{OBIT_AIPSObjectRe@{OBIT\_\-AIPSObjectRe}!ObitAIPSObject.h@{ObitAIPSObject.h}}\index{ObitAIPSObject.h@{ObitAIPSObject.h}!OBIT_AIPSObjectRe@{OBIT\_\-AIPSObjectRe}}\item[{\em 
+OBIT\_\-AIPSObject\-Re\label{ObitAIPSObject_8h_a25a6}
+}]Float type. \index{OBIT_AIPSObjectDP@{OBIT\_\-AIPSObjectDP}!ObitAIPSObject.h@{ObitAIPSObject.h}}\index{ObitAIPSObject.h@{ObitAIPSObject.h}!OBIT_AIPSObjectDP@{OBIT\_\-AIPSObjectDP}}\item[{\em 
+OBIT\_\-AIPSObject\-DP\label{ObitAIPSObject_8h_a25a7}
+}]Double type. \index{OBIT_AIPSObjectCar@{OBIT\_\-AIPSObjectCar}!ObitAIPSObject.h@{ObitAIPSObject.h}}\index{ObitAIPSObject.h@{ObitAIPSObject.h}!OBIT_AIPSObjectCar@{OBIT\_\-AIPSObjectCar}}\item[{\em 
+OBIT\_\-AIPSObject\-Car\label{ObitAIPSObject_8h_a25a8}
+}]Character type. \index{OBIT_AIPSObjectLog@{OBIT\_\-AIPSObjectLog}!ObitAIPSObject.h@{ObitAIPSObject.h}}\index{ObitAIPSObject.h@{ObitAIPSObject.h}!OBIT_AIPSObjectLog@{OBIT\_\-AIPSObjectLog}}\item[{\em 
+OBIT\_\-AIPSObject\-Log\label{ObitAIPSObject_8h_a25a9}
+}]Boolean type. \end{description}
+\end{Desc}
+
+
+
+\subsection{Function Documentation}
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!ObitAIPSObjectOBclass@{ObitAIPSObjectOBclass}}
+\index{ObitAIPSObjectOBclass@{ObitAIPSObjectOBclass}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSObject\-OBclass ({\bf oint} {\em objnum}, {\bf oint} $\ast$ {\em classno}, {\bf AIPSObj\-Class} {\em name}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSObject_8h_a17}
+
+
+Public: Look up the class number/name of object number objnum. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em objnum}]object slot number \item[{\em classno}]Class number \item[{\em name}]name of class of object \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!ObitAIPSObjectOBcopy@{ObitAIPSObjectOBcopy}}
+\index{ObitAIPSObjectOBcopy@{ObitAIPSObjectOBcopy}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSObject\-OBcopy ({\bf AIPSObj} {\em namein}, {\bf AIPSObj} {\em namout}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSObject_8h_a24}
+
+
+Public: Copies one image to another. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em namein}]Input AIPS object name \item[{\em namout}]Output AIPS object name \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!ObitAIPSObjectOBcrea@{ObitAIPSObjectOBcrea}}
+\index{ObitAIPSObjectOBcrea@{ObitAIPSObjectOBcrea}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSObject\-OBcrea ({\bf AIPSObj} {\em name}, {\bf AIPSObj\-Class} {\em class}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSObject_8h_a14}
+
+
+Public: Associate an object slot with an object name. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]Name of object to create \item[{\em class}]Class name of new object \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!ObitAIPSObjectOBdskc@{ObitAIPSObjectOBdskc}}
+\index{ObitAIPSObjectOBdskc@{ObitAIPSObjectOBdskc}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSObject\-OBdskc ({\bf AIPSObj} {\em name}, {\bf oint} $\ast$ {\em disk}, {\bf oint} $\ast$ {\em cno}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSObject_8h_a21}
+
+
+Public: Return Disk and slot information for object. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]Name of object to lookup \item[{\em disk}]AIPS disk number \item[{\em cno}]AIPS catalog slot number \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!ObitAIPSObjectOBfree@{ObitAIPSObjectOBfree}}
+\index{ObitAIPSObjectOBfree@{ObitAIPSObjectOBfree}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSObject\-OBfree ({\bf AIPSObj} {\em name}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSObject_8h_a15}
+
+
+Public: Free the object slot associated with an object. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]Name of object to free \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!ObitAIPSObjectOBget@{ObitAIPSObjectOBget}}
+\index{ObitAIPSObjectOBget@{ObitAIPSObjectOBget}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSObject\-OBget ({\bf oint} {\em objnum}, {\bf AIPSKey} {\em keywrd}, Obit\-AIPSObject\-Type $\ast$ {\em type}, {\bf AIPSKey\-Dim} {\em dim}, gpointer {\em value}, gchar $\ast$ {\em valuec}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSObject_8h_a19}
+
+
+Public: Fetch the value (array) for a specified keyword. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em objnum}]object slot number \item[{\em keywrd}]keyword \item[{\em type}]data type OBIT\_\-AIPSObject\-Int, OBIT\_\-AIPSObject\-Re, OBIT\_\-AIPSObject\-DP, OBIT\_\-AIPSObject\-Car \item[{\em dim}]dimensionality of value (valuec) \item[{\em value}]numeric data value (array) \item[{\em valuec}]character data array \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!ObitAIPSObjectOBhget@{ObitAIPSObjectOBhget}}
+\index{ObitAIPSObjectOBhget@{ObitAIPSObjectOBhget}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSObject\-OBhget ({\bf AIPSObj} {\em name}, union {\bf Obit\-AIPSCat\-Equiv} {\em cat}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSObject_8h_a22}
+
+
+Public: Return catalog header record for an object. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]Name of object \item[{\em cat}]AIPS catalog header block \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!ObitAIPSObjectOBhput@{ObitAIPSObjectOBhput}}
+\index{ObitAIPSObjectOBhput@{ObitAIPSObjectOBhput}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSObject\-OBhput ({\bf AIPSObj} {\em name}, union {\bf Obit\-AIPSCat\-Equiv} {\em cat}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSObject_8h_a23}
+
+
+Public: Store catalog header record for an object. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]Name of object \item[{\em cat}]AIPS catalog header block \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!ObitAIPSObjectOBinfo@{ObitAIPSObjectOBinfo}}
+\index{ObitAIPSObjectOBinfo@{ObitAIPSObjectOBinfo}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-AIPSObject\-OBinfo ({\bf oint} {\em objnum}, {\bf AIPSKey} {\em keywrd}, Obit\-AIPSObject\-Type $\ast$ {\em type}, {\bf AIPSKey\-Dim} {\em dim}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSObject_8h_a20}
+
+
+Public: Check for for a specified keyword. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em objnum}]object slot number \item[{\em keywrd}]keyword \item[{\em type}]data type OBIT\_\-AIPSObject\-Int, OBIT\_\-AIPSObject\-Re, OBIT\_\-AIPSObject\-DP, OBIT\_\-AIPSObject\-Car \item[{\em dim}]dimensionality of value (valuec) \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if found, else FALSE \end{Desc}
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!ObitAIPSObjectOBinit@{ObitAIPSObjectOBinit}}
+\index{ObitAIPSObjectOBinit@{ObitAIPSObjectOBinit}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSObject\-OBinit ({\bf oint} $\ast$ {\em ierr})}\label{ObitAIPSObject_8h_a10}
+
+
+Public: Initialize AIPS Object manager. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em ierr}]return code, 0=$>$OK \end{description}
+\end{Desc}
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!ObitAIPSObjectOBkeyv@{ObitAIPSObjectOBkeyv}}
+\index{ObitAIPSObjectOBkeyv@{ObitAIPSObjectOBkeyv}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSObject\-OBkeyv ({\bf oint} {\em objnum}, {\bf AIPSKey} {\em keywrd}, {\bf oint} $\ast$ {\em keypnt}, {\bf olong} $\ast$ {\em ierr}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSObject_8h_a12}
+
+
+Public: See if keyword is an object dependent, virtual keyword. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em objnum}]object slot number \item[{\em keywrd}]keyword \item[{\em keypnt}]index in tables , set if keywrd found \item[{\em ierr}]return code, 0=$>$found, -1=not found, $>$0 =$>$ error \item[{\em err}]Error stack \end{description}
+\end{Desc}
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!ObitAIPSObjectOBname@{ObitAIPSObjectOBname}}
+\index{ObitAIPSObjectOBname@{ObitAIPSObjectOBname}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSObject\-OBname ({\bf AIPSObj} {\em name}, {\bf oint} $\ast$ {\em objnum}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSObject_8h_a16}
+
+
+Public: Look up the object slot number of object with name \char`\"{}name\char`\"{}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]Name of object to lookup \item[{\em objnum}]object slot number \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!ObitAIPSObjectOBput@{ObitAIPSObjectOBput}}
+\index{ObitAIPSObjectOBput@{ObitAIPSObjectOBput}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSObject\-OBput ({\bf oint} {\em objnum}, {\bf AIPSKey} {\em keywrd}, Obit\-AIPSObject\-Type {\em type}, {\bf AIPSKey\-Dim} {\em dim}, gpointer {\em value}, gchar $\ast$ {\em valuec}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSObject_8h_a18}
+
+
+Public: Save an entry in an object creating it if necessary. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em objnum}]object slot number \item[{\em keywrd}]keyword \item[{\em type}]data type OBIT\_\-AIPSObject\-Int, OBIT\_\-AIPSObject\-Re, OBIT\_\-AIPSObject\-DP, OBIT\_\-AIPSObject\-Car \item[{\em dim}]dimensionality of value (valuec) \item[{\em value}]numeric data value (array) \item[{\em valuec}]character data array \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!ObitAIPSObjectOBrget@{ObitAIPSObjectOBrget}}
+\index{ObitAIPSObjectOBrget@{ObitAIPSObjectOBrget}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSObject\-OBrget ({\bf oint} {\em objnum}, {\bf AIPSKey} {\em keywrd}, Obit\-AIPSObject\-Type $\ast$ {\em type}, {\bf AIPSKey\-Dim} {\em dim}, gpointer {\em value}, gchar $\ast$ {\em valuec}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSObject_8h_a13}
+
+
+Public: Fetch the value (array) for a specified real (non-virtual) keyword. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em objnum}]object slot number \item[{\em keywrd}]keyword \item[{\em type}]data type OBIT\_\-AIPSObject\-Int, OBIT\_\-AIPSObject\-Re, OBIT\_\-AIPSObject\-DP, OBIT\_\-AIPSObject\-Car \item[{\em dim}]dimensionality of value (valuec) \item[{\em value}]numeric data value (array) \item[{\em valuec}]character data array \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitAIPSObject.h@{Obit\-AIPSObject.h}!ObitAIPSObjectOBvhkw@{ObitAIPSObjectOBvhkw}}
+\index{ObitAIPSObjectOBvhkw@{ObitAIPSObjectOBvhkw}!ObitAIPSObject.h@{Obit\-AIPSObject.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSObject\-OBvhkw ({\bf AIPSObj\-Class} {\em class}, {\bf AIPSKey} {\em keyword}, Obit\-AIPSObject\-Type {\em type}, {\bf oint} $\ast$ {\em ierr})}\label{ObitAIPSObject_8h_a11}
+
+
+Public: Add a Catalog header keyword to the virtual keyword list. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em class}]object class \item[{\em keyword}]keyword to add \item[{\em type}]data type OBIT\_\-AIPSObject\-Int, OBIT\_\-AIPSObject\-Re, OBIT\_\-AIPSObject\-DP, OBIT\_\-AIPSObject\-Car \item[{\em ierr}]return code, 0=$>$OK \end{description}
+\end{Desc}

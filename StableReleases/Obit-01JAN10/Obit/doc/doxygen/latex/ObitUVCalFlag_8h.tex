@@ -1,0 +1,83 @@
+\section{Obit\-UVCal\-Flag.h File Reference}
+\label{ObitUVCalFlag_8h}\index{ObitUVCalFlag.h@{ObitUVCalFlag.h}}
+{\bf Obit\-UVCal}{\rm (p.\,\pageref{structObitUVCal})} utilities for applying flagging to uv data. 
+
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$stdlib.h$>$}\par
+{\tt \#include $<$math.h$>$}\par
+{\tt \#include $<$glib.h$>$}\par
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVDesc.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVSel.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVCal.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-UVCal\-Flag\-Init} ({\bf Obit\-UVCal} $\ast$in, {\bf Obit\-UVSel} $\ast$sel, {\bf Obit\-UVDesc} $\ast$desc, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Init Flagging. \item\end{CompactList}\item 
+void {\bf Obit\-UVCal\-Flag} ({\bf Obit\-UVCal} $\ast$in, float time, {\bf olong} ant1, {\bf olong} ant2, {\bf ofloat} $\ast$RP, {\bf ofloat} $\ast$vis\-In, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Apply Flagging. \item\end{CompactList}\item 
+void {\bf Obit\-UVCal\-Flag\-Shutdown} ({\bf Obit\-UVCal} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Shutdown Flagging. \item\end{CompactList}\item 
+{\bf Obit\-UVCal\-Flag\-S} $\ast$ {\bf Obit\-UVCal\-Flag\-SUnref} ({\bf Obit\-UVCal\-Flag\-S} $\ast$in)
+\begin{CompactList}\small\item\em Public: Destroy Flagging structure. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-UVCal}{\rm (p.\,\pageref{structObitUVCal})} utilities for applying flagging to uv data. 
+
+This is implemented as utility routines and a separate Structure definition to avoid circular definitions. The {\bf Obit\-UVCal}{\rm (p.\,\pageref{structObitUVCal})} must be visible here but the structure needed for this calibration is a member of the {\bf Obit\-UVCal}{\rm (p.\,\pageref{structObitUVCal})}. If it were implemented as an {\bf Obit}{\rm (p.\,\pageref{structObit})} class this would lead to a circular definition which c cannot deal with.
+
+\subsection{Function Documentation}
+\index{ObitUVCalFlag.h@{Obit\-UVCal\-Flag.h}!ObitUVCalFlag@{ObitUVCalFlag}}
+\index{ObitUVCalFlag@{ObitUVCalFlag}!ObitUVCalFlag.h@{Obit\-UVCal\-Flag.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVCal\-Flag ({\bf Obit\-UVCal} $\ast$ {\em in}, float {\em time}, {\bf olong} {\em ant1}, {\bf olong} {\em ant2}, {\bf ofloat} $\ast$ {\em RP}, {\bf ofloat} $\ast$ {\em vis\-In}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVCalFlag_8h_a1}
+
+
+Public: Apply Flagging. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Flag Object. \item[{\em time}]Time of datum \item[{\em ant1}]first antenna number of baseline \item[{\em ant2}]second antanna of baseline. \item[{\em RP}]Random parameters array. \item[{\em vis\-In}]1 visibility as an array of floats \item[{\em err}]Obit\-Error stack. \end{description}
+\end{Desc}
+\index{ObitUVCalFlag.h@{Obit\-UVCal\-Flag.h}!ObitUVCalFlagInit@{ObitUVCalFlagInit}}
+\index{ObitUVCalFlagInit@{ObitUVCalFlagInit}!ObitUVCalFlag.h@{Obit\-UVCal\-Flag.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVCal\-Flag\-Init ({\bf Obit\-UVCal} $\ast$ {\em in}, {\bf Obit\-UVSel} $\ast$ {\em sel}, {\bf Obit\-UVDesc} $\ast$ {\em desc}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVCalFlag_8h_a0}
+
+
+Public: Init Flagging. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Flag Object. \item[{\em sel}]Data selector. \item[{\em desc}]Data descriptor. \item[{\em err}]Obit\-Error stack. \end{description}
+\end{Desc}
+\index{ObitUVCalFlag.h@{Obit\-UVCal\-Flag.h}!ObitUVCalFlagShutdown@{ObitUVCalFlagShutdown}}
+\index{ObitUVCalFlagShutdown@{ObitUVCalFlagShutdown}!ObitUVCalFlag.h@{Obit\-UVCal\-Flag.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVCal\-Flag\-Shutdown ({\bf Obit\-UVCal} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVCalFlag_8h_a2}
+
+
+Public: Shutdown Flagging. 
+
+Close any open file and destroy structures. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Flag Object. \item[{\em err}]Obit\-Error stack. \end{description}
+\end{Desc}
+\index{ObitUVCalFlag.h@{Obit\-UVCal\-Flag.h}!ObitUVCalFlagSUnref@{ObitUVCalFlagSUnref}}
+\index{ObitUVCalFlagSUnref@{ObitUVCalFlagSUnref}!ObitUVCalFlag.h@{Obit\-UVCal\-Flag.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVCal\-Flag\-S}$\ast$ Obit\-UVCal\-Flag\-SUnref ({\bf Obit\-UVCal\-Flag\-S} $\ast$ {\em in})}\label{ObitUVCalFlag_8h_a3}
+
+
+Public: Destroy Flagging structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Flag Object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NULL \end{Desc}

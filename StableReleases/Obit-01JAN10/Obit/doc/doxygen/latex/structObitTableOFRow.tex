@@ -1,0 +1,158 @@
+\section{Obit\-Table\-OFRow Struct Reference}
+\label{structObitTableOFRow}\index{ObitTableOFRow@{ObitTableOFRow}}
+Obit\-Table\-OFRow Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-OF.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf my\-Table}
+\begin{CompactList}\small\item\em Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. \item\end{CompactList}\item 
+gpointer {\bf my\-Row\-Data}
+\begin{CompactList}\small\item\em Pointer to row data in buffer (never g\_\-free this). \item\end{CompactList}\item 
+{\bf ofloat} {\bf Time}
+\begin{CompactList}\small\item\em The center time of the sscan. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Time\-I}
+\begin{CompactList}\small\item\em Duration of scan. \item\end{CompactList}\item 
+{\bf oint} {\bf Sour\-ID}
+\begin{CompactList}\small\item\em Source ID as defined in then SOURCE table. \item\end{CompactList}\item 
+{\bf oint} {\bf ant\-No}
+\begin{CompactList}\small\item\em Antenna number. \item\end{CompactList}\item 
+{\bf oint} {\bf Sub\-A}
+\begin{CompactList}\small\item\em Subarray number. \item\end{CompactList}\item 
+{\bf oint} {\bf Freq\-ID}
+\begin{CompactList}\small\item\em Frequency id of scan. \item\end{CompactList}\item 
+gboolean {\bf ref\-Pnt}
+\begin{CompactList}\small\item\em Reference pointing(?) flag. \item\end{CompactList}\item 
+gboolean {\bf shadow}
+\begin{CompactList}\small\item\em Antenna shadowed(?) flag. \item\end{CompactList}\item 
+{\bf olong} {\bf status}
+\begin{CompactList}\small\item\em status 0=normal, 1=modified, -1=flagged \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-OFRow Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableOFRow@{Obit\-Table\-OFRow}!antNo@{antNo}}
+\index{antNo@{antNo}!ObitTableOFRow@{Obit\-Table\-OFRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-OFRow::ant\-No}}\label{structObitTableOFRow_o9}
+
+
+Antenna number. 
+
+\index{ObitTableOFRow@{Obit\-Table\-OFRow}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableOFRow@{Obit\-Table\-OFRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-OFRow::Class\-Info}}\label{structObitTableOFRow_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableOFRow@{Obit\-Table\-OFRow}!FreqID@{FreqID}}
+\index{FreqID@{FreqID}!ObitTableOFRow@{Obit\-Table\-OFRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-OFRow::Freq\-ID}}\label{structObitTableOFRow_o11}
+
+
+Frequency id of scan. 
+
+\index{ObitTableOFRow@{Obit\-Table\-OFRow}!myRowData@{myRowData}}
+\index{myRowData@{myRowData}!ObitTableOFRow@{Obit\-Table\-OFRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-OFRow::my\-Row\-Data}}\label{structObitTableOFRow_o5}
+
+
+Pointer to row data in buffer (never g\_\-free this). 
+
+\index{ObitTableOFRow@{Obit\-Table\-OFRow}!myTable@{myTable}}
+\index{myTable@{myTable}!ObitTableOFRow@{Obit\-Table\-OFRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ {\bf Obit\-Table\-OFRow::my\-Table}}\label{structObitTableOFRow_o4}
+
+
+Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. 
+
+\index{ObitTableOFRow@{Obit\-Table\-OFRow}!name@{name}}
+\index{name@{name}!ObitTableOFRow@{Obit\-Table\-OFRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-OFRow::name}}\label{structObitTableOFRow_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableOFRow@{Obit\-Table\-OFRow}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableOFRow@{Obit\-Table\-OFRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-OFRow::Obit\-Id}}\label{structObitTableOFRow_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableOFRow@{Obit\-Table\-OFRow}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableOFRow@{Obit\-Table\-OFRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OFRow::Reference\-Count}}\label{structObitTableOFRow_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableOFRow@{Obit\-Table\-OFRow}!refPnt@{refPnt}}
+\index{refPnt@{refPnt}!ObitTableOFRow@{Obit\-Table\-OFRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-OFRow::ref\-Pnt}}\label{structObitTableOFRow_o12}
+
+
+Reference pointing(?) flag. 
+
+\index{ObitTableOFRow@{Obit\-Table\-OFRow}!shadow@{shadow}}
+\index{shadow@{shadow}!ObitTableOFRow@{Obit\-Table\-OFRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-OFRow::shadow}}\label{structObitTableOFRow_o13}
+
+
+Antenna shadowed(?) flag. 
+
+\index{ObitTableOFRow@{Obit\-Table\-OFRow}!SourID@{SourID}}
+\index{SourID@{SourID}!ObitTableOFRow@{Obit\-Table\-OFRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-OFRow::Sour\-ID}}\label{structObitTableOFRow_o8}
+
+
+Source ID as defined in then SOURCE table. 
+
+\index{ObitTableOFRow@{Obit\-Table\-OFRow}!status@{status}}
+\index{status@{status}!ObitTableOFRow@{Obit\-Table\-OFRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OFRow::status}}\label{structObitTableOFRow_o14}
+
+
+status 0=normal, 1=modified, -1=flagged 
+
+\index{ObitTableOFRow@{Obit\-Table\-OFRow}!SubA@{SubA}}
+\index{SubA@{SubA}!ObitTableOFRow@{Obit\-Table\-OFRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-OFRow::Sub\-A}}\label{structObitTableOFRow_o10}
+
+
+Subarray number. 
+
+\index{ObitTableOFRow@{Obit\-Table\-OFRow}!Time@{Time}}
+\index{Time@{Time}!ObitTableOFRow@{Obit\-Table\-OFRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-OFRow::Time}}\label{structObitTableOFRow_o6}
+
+
+The center time of the sscan. 
+
+\index{ObitTableOFRow@{Obit\-Table\-OFRow}!TimeI@{TimeI}}
+\index{TimeI@{TimeI}!ObitTableOFRow@{Obit\-Table\-OFRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-OFRow::Time\-I}}\label{structObitTableOFRow_o7}
+
+
+Duration of scan. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-OF.h}\end{CompactItemize}

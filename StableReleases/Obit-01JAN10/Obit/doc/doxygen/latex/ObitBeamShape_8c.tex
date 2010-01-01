@@ -1,0 +1,175 @@
+\section{Obit\-Beam\-Shape.c File Reference}
+\label{ObitBeamShape_8c}\index{ObitBeamShape.c@{ObitBeamShape.c}}
+{\bf Obit\-Beam\-Shape}{\rm (p.\,\pageref{structObitBeamShape})} class function definitions. 
+
+{\tt \#include \char`\"{}Obit\-Beam\-Shape.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-PBUtil.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Beam\-Shape\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-Beam\-Shape\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-Beam\-Shape} $\ast$ {\bf new\-Obit\-Beam\-Shape} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Beam\-Shape\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Beam\-Shape} $\ast$ {\bf Obit\-Beam\-Shape\-Copy} ({\bf Obit\-Beam\-Shape} $\ast$in, {\bf Obit\-Beam\-Shape} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Beam\-Shape\-Clone} ({\bf Obit\-Beam\-Shape} $\ast$in, {\bf Obit\-Beam\-Shape} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+{\bf Obit\-Beam\-Shape} $\ast$ {\bf Obit\-Beam\-Shape\-Create} (gchar $\ast$name, {\bf Obit\-Image} $\ast$image, {\bf ofloat} pbmin, {\bf ofloat} ant\-Size, gboolean do\-Gain)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-Beam\-Shape}{\rm (p.\,\pageref{structObitBeamShape})} structures. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Obit\-Beam\-Shape\-Gain} ({\bf Obit\-Beam\-Shape} $\ast$in, {\bf odouble} ra, {\bf odouble} dec, {\bf ofloat} par\-Ang)
+\begin{CompactList}\small\item\em Public: Calculate gain in a given direction. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Obit\-Beam\-Shape\-Gain\-Sym} ({\bf Obit\-Beam\-Shape} $\ast$in, {\bf odouble} Angle)
+\begin{CompactList}\small\item\em Public: Calculate gain in a symmetric Beam. \item\end{CompactList}\item 
+{\bf odouble} {\bf Obit\-Beam\-Shape\-Angle} ({\bf Obit\-Beam\-Shape} $\ast$in, {\bf odouble} ra, {\bf odouble} dec, {\bf ofloat} par\-Ang)
+\begin{CompactList}\small\item\em Public: Calculate angular offset from beam center. \item\end{CompactList}\item 
+void {\bf Obit\-Beam\-Shape\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Beam\-Shape}{\rm (p.\,\pageref{structObitBeamShape})} class function definitions. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} base class.
+
+\subsection{Function Documentation}
+\index{ObitBeamShape.c@{Obit\-Beam\-Shape.c}!newObitBeamShape@{newObitBeamShape}}
+\index{newObitBeamShape@{newObitBeamShape}!ObitBeamShape.c@{Obit\-Beam\-Shape.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Beam\-Shape}$\ast$ new\-Obit\-Beam\-Shape (gchar $\ast$ {\em name})}\label{ObitBeamShape_8c_a6}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitBeamShape.c@{Obit\-Beam\-Shape.c}!ObitBeamShapeAngle@{ObitBeamShapeAngle}}
+\index{ObitBeamShapeAngle@{ObitBeamShapeAngle}!ObitBeamShape.c@{Obit\-Beam\-Shape.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} Obit\-Beam\-Shape\-Angle ({\bf Obit\-Beam\-Shape} $\ast$ {\em in}, {\bf odouble} {\em ra}, {\bf odouble} {\em dec}, {\bf ofloat} {\em par\-Ang})}\label{ObitBeamShape_8c_a13}
+
+
+Public: Calculate angular offset from beam center. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]the Beam\-Shape object \item[{\em ra}]RA (deg) of direction for angle \item[{\em dec}]Declination (deg) of direction for angle \item[{\em par\-Ang}]Parallactic angle (rad) NYI \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Angle from pointing center (deg) \end{Desc}
+\index{ObitBeamShape.c@{Obit\-Beam\-Shape.c}!ObitBeamShapeClassInit@{ObitBeamShapeClassInit}}
+\index{ObitBeamShapeClassInit@{ObitBeamShapeClassInit}!ObitBeamShape.c@{Obit\-Beam\-Shape.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Beam\-Shape\-Class\-Init (void)}\label{ObitBeamShape_8c_a14}
+
+
+Public: Class initializer. 
+
+\index{ObitBeamShape.c@{Obit\-Beam\-Shape.c}!ObitBeamShapeClear@{ObitBeamShapeClear}}
+\index{ObitBeamShapeClear@{ObitBeamShapeClear}!ObitBeamShape.c@{Obit\-Beam\-Shape.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Beam\-Shape\-Clear (gpointer {\em inn})}\label{ObitBeamShape_8c_a4}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-Beam\-Shape$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitBeamShape.c@{Obit\-Beam\-Shape.c}!ObitBeamShapeClone@{ObitBeamShapeClone}}
+\index{ObitBeamShapeClone@{ObitBeamShapeClone}!ObitBeamShape.c@{Obit\-Beam\-Shape.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Beam\-Shape\-Clone ({\bf Obit\-Beam\-Shape} $\ast$ {\em in}, {\bf Obit\-Beam\-Shape} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitBeamShape_8c_a9}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitBeamShape.c@{Obit\-Beam\-Shape.c}!ObitBeamShapeCopy@{ObitBeamShapeCopy}}
+\index{ObitBeamShapeCopy@{ObitBeamShapeCopy}!ObitBeamShape.c@{Obit\-Beam\-Shape.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Beam\-Shape}$\ast$ Obit\-Beam\-Shape\-Copy ({\bf Obit\-Beam\-Shape} $\ast$ {\em in}, {\bf Obit\-Beam\-Shape} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitBeamShape_8c_a8}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitBeamShape.c@{Obit\-Beam\-Shape.c}!ObitBeamShapeCreate@{ObitBeamShapeCreate}}
+\index{ObitBeamShapeCreate@{ObitBeamShapeCreate}!ObitBeamShape.c@{Obit\-Beam\-Shape.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Beam\-Shape}$\ast$ Obit\-Beam\-Shape\-Create (gchar $\ast$ {\em name}, {\bf Obit\-Image} $\ast$ {\em image}, {\bf ofloat} {\em pbmin}, {\bf ofloat} {\em ant\-Size}, gboolean {\em do\-Gain})}\label{ObitBeamShape_8c_a10}
+
+
+Public: Create/initialize {\bf Obit\-Beam\-Shape}{\rm (p.\,\pageref{structObitBeamShape})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em image}]Image for which beam shape is desired \item[{\em pbmin}]Minimum gain, lower values will be clipped at this value \item[{\em ant\-Size}]Size of Antenna in (m) \item[{\em do\-Gain}]If true gain wanted, else gain set to 1.0 \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitBeamShape.c@{Obit\-Beam\-Shape.c}!ObitBeamShapeGain@{ObitBeamShapeGain}}
+\index{ObitBeamShapeGain@{ObitBeamShapeGain}!ObitBeamShape.c@{Obit\-Beam\-Shape.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} Obit\-Beam\-Shape\-Gain ({\bf Obit\-Beam\-Shape} $\ast$ {\em in}, {\bf odouble} {\em ra}, {\bf odouble} {\em dec}, {\bf ofloat} {\em par\-Ang})}\label{ObitBeamShape_8c_a11}
+
+
+Public: Calculate gain in a given direction. 
+
+Simple function of distance from pointing center. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]the Beam\-Shape object \item[{\em ra}]RA (deg) of direction for gain \item[{\em dec}]Declination (deg) of direction for gain \item[{\em par\-Ang}]Parallactic angle (rad) NYI \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Gain \end{Desc}
+\index{ObitBeamShape.c@{Obit\-Beam\-Shape.c}!ObitBeamShapeGainSym@{ObitBeamShapeGainSym}}
+\index{ObitBeamShapeGainSym@{ObitBeamShapeGainSym}!ObitBeamShape.c@{Obit\-Beam\-Shape.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} Obit\-Beam\-Shape\-Gain\-Sym ({\bf Obit\-Beam\-Shape} $\ast$ {\em in}, {\bf odouble} {\em Angle})}\label{ObitBeamShape_8c_a12}
+
+
+Public: Calculate gain in a symmetric Beam. 
+
+Simple function of distance from pointing center. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]the Beam\-Shape object \item[{\em Angle}]Angular distance (deg) from pointing center \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]gain \end{Desc}
+\index{ObitBeamShape.c@{Obit\-Beam\-Shape.c}!ObitBeamShapeGetClass@{ObitBeamShapeGetClass}}
+\index{ObitBeamShapeGetClass@{ObitBeamShapeGetClass}!ObitBeamShape.c@{Obit\-Beam\-Shape.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Beam\-Shape\-Get\-Class (void)}\label{ObitBeamShape_8c_a7}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitBeamShape.c@{Obit\-Beam\-Shape.c}!ObitBeamShapeInit@{ObitBeamShapeInit}}
+\index{ObitBeamShapeInit@{ObitBeamShapeInit}!ObitBeamShape.c@{Obit\-Beam\-Shape.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Beam\-Shape\-Init (gpointer {\em inn})}\label{ObitBeamShape_8c_a3}
+
+
+Private: Initialize newly instantiated object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}

@@ -1,0 +1,51 @@
+\section{Obit\-UVSoln2Cal.h File Reference}
+\label{ObitUVSoln2Cal_8h}\index{ObitUVSoln2Cal.h@{ObitUVSoln2Cal.h}}
+Routines to Apply a Soln (SN) table to a Cal (CL) table writing a new Cal table for UV class. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Thread.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Info\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UV.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVSoln.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-SN.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-CL.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-CL} $\ast$ {\bf Obit\-UVSoln2Cal} ({\bf Obit\-UV} $\ast$in, {\bf Obit\-UV} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Apply a Soln table to a Cal table writing a new Cal table. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Routines to Apply a Soln (SN) table to a Cal (CL) table writing a new Cal table for UV class. 
+
+The following options can be entered onto the in\-UV uv data info list: \begin{itemize}
+\item \char`\"{}inter\-Mode\char`\"{}, OBIT\_\-string (4,1,1) Interpolation mode: default or blank = \char`\"{}2PT \char`\"{} \item \char`\"{}2PT \char`\"{} = linear vector interpolation with no SN smoothing. \item \char`\"{}SELF\char`\"{} = Use only SN solution from same source which is closest in time. \item \char`\"{}POLY\char`\"{} = Fit a polynomial to the SN rates and delays. Use the integral of the rate polynomial for the phases. \item \char`\"{}SIMP\char`\"{} = Simple linear phase connection between SN phase entries, assumes phase difference less than 180 degrees. \item \char`\"{}AMBG\char`\"{} = Linear phase connection using rates to resolve phase ambiguities. \item \char`\"{}CUBE\char`\"{} = As AMBG but fit third order polynomial to phases and rates. \item \char`\"{}MWF \char`\"{} = Median window filter of SN table before 2PT interpolation \item \char`\"{}GAUS\char`\"{} = Gaussian smoothing of SN table before 2PT interpolation, \item \char`\"{}BOX \char`\"{} = Boxcar smoothing of SN table before 2PT interpolation, boxcar width set by adverb INTPARM. \item \char`\"{}inter\-Parm\char`\"{}, OBIT\_\-float (3,1,1) interpolation parameters default = 0's \item mode=\char`\"{}BOX \char`\"{}, smoothing time in hours for amplitude, phase, delay/rate \item mode=\char`\"{}MWF \char`\"{}, window size in hours for amplitude, phase, delay/rate\end{itemize}
+\begin{itemize}
+\item \char`\"{}inter\-NPoly\char`\"{}, OBIT\_\-int (1,1,1) number of terms in polynomial for mode=\char`\"{}POLY\char`\"{}, default = 2\end{itemize}
+\begin{itemize}
+\item \char`\"{}max\-Inter\char`\"{}, OBIT\_\-float (1,1,1) Max. time (min) over which to interpolate. default = 1440.0;\end{itemize}
+\begin{itemize}
+\item \char`\"{}all\-Pass\char`\"{}, OBIT\_\-bool (1,1,1) If true copy unmodified entries as well. else only data calibrated. Default = FALSE.\end{itemize}
+\begin{itemize}
+\item \char`\"{}soln\-Ver\char`\"{}, OBIT\_\-int (1,1,1) Solution (SN) table version to use. 0=$>$highest, default 0; \item \char`\"{}cal\-In\char`\"{}, OBIT\_\-int (1,1,1) Input calibration (CL) table version to use. 0=$>$highest, -1 =$>$ just convert soln\-Ver to a CL table, default 0; \item \char`\"{}cal\-Out\char`\"{}, OBIT\_\-int (1,1,1) Output calibration (CL) table version to use. 0=$>$create new, default 0; \item \char`\"{}sub\-A\char`\"{}, OBIT\_\-int (1,1,1) Subarray, default 1 \item \char`\"{}ref\-Ant\char`\"{}, OBIT\_\-int (1,1,1) Reference antenna, default 1\end{itemize}
+Any data selection parameters on the input UV data info object will be applied.
+
+\subsection{Function Documentation}
+\index{ObitUVSoln2Cal.h@{Obit\-UVSoln2Cal.h}!ObitUVSoln2Cal@{ObitUVSoln2Cal}}
+\index{ObitUVSoln2Cal@{ObitUVSoln2Cal}!ObitUVSoln2Cal.h@{Obit\-UVSoln2Cal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-CL}$\ast$ Obit\-UVSoln2Cal ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVSoln2Cal_8h_a0}
+
+
+Public: Apply a Soln table to a Cal table writing a new Cal table. 
+
+If an input Cal table is given then apply Solutions in this routine, if no input Cal table, then copy the Soln table to a new Cal table in Obit\-UVSoln\-Copy\-Cal. Input SN table will have its phases referenced to ref\-Ant. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input UV data. Control parameters on in\-UV: \begin{itemize}
+\item \char`\"{}Sources\char`\"{} OBIT\_\-string (?,?,1) Source names selected unless any starts with a '-' in which case all are deselected (with '-' stripped). \item \char`\"{}sou\-Code\char`\"{} OBIT\_\-string (4,1,1) Source Cal code desired, ' ' =$>$ any code selected '$\ast$ ' =$>$ any non blank code (calibrators only) '-CAL' =$>$ blank codes only (no calibrators) \item \char`\"{}Qual\char`\"{} Obit\_\-int (1,1,1) Source qualifier, -1 [default] = any \item \char`\"{}cal\-Sour\char`\"{} OBIT\_\-string (?,?,1) Calibrator names selected unless any starts with a '-' in which cse all are deselected (with '-' stripped). \item \char`\"{}cal\-Code\char`\"{} OBIT\_\-strine (4,1,1) Calibrator code \item \char`\"{}soln\-Ver\char`\"{} OBIT\_\-int (1,1,1) Input Solution (SN) table version \item \char`\"{}cal\-In\char`\"{} OBIT\_\-int (1,1,1) Input Cal (CL) table version iff $<$0 then no input Cal table, copy Soln records to output. \item \char`\"{}cal\-Out\char`\"{} OBIT\_\-int (1,1,1) Output Calibration table version \item \char`\"{}Antennas\char`\"{} OBIT\_\-int (?,1,1) a list of selected antenna numbers, if any is negative then the absolute values are used and the specified antennas are deselected. \item \char`\"{}sub\-A\char`\"{} OBIT\_\-int (1,1,1) Selected subarray (default 1) \item \char`\"{}ref\-Ant\char`\"{} OBIT\_\-int (1,1,1) Ref ant to use. (default 1) \item \char`\"{}all\-Pass\char`\"{}, OBIT\_\-bool (1,1,1) If true copy unmodified entries as well. else only data calibrated. Default = FALSE. \end{itemize}
+\item[{\em out\-UV}]UV with which the output UVCal is to be associated \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Pointer to the newly created CL object which is associated with out\-UV. Should be Unreffed when done. \end{Desc}

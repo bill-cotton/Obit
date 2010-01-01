@@ -1,0 +1,217 @@
+; SNSmo
+;---------------------------------------------------------------
+;! smooths and filters a calibration SN table
+;# Obit Task Calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2006,2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+SNSmo     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+SNSmo     Task which smooths and filters Solution(SN) tables.
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                             Input UV file name (name)
+**PARAM** str 6
+inClass                            Input UV file name (class)
+**PARAM** int 1
+inSeq             0.0     9999.0   Input UV file name (seq. #)
+**PARAM** int 1
+inDisk            0.0        9.0   Input UV file disk unit #
+**PARAM** str 16 30
+Sources                            Source list ' '=>all.
+**PARAM** int 1
+FreqID                             Freq. ID to select, 0=>all
+**PARAM** int 1  **DEF** 1
+BIF               0.0      100.0   Lowest IF number 0=>all
+**PARAM** int 1
+EIF               0.0      100.0   Highest IF number 0=>all
+**PARAM** float 2
+timeRange                          Time range to use.
+**PARAM** int 50
+Antennas                           Antennas to correct.
+**PARAM** int 1
+subA              0.0     9999.0   Subarray; 0 => all.
+**PARAM** str 4
+smoFunc                            Smoothing function
+**PARAM** float 5 
+smoParm                            Smoothing parameters
+**PARAM** boo 1 **DEF** F
+doBlank                            Blanked value interpolation
+**PARAM** str 4
+smoType                            Data to smooth
+**PARAM** float 5 
+clipSmo                            Smoothing time for clipping
+**PARAM** float 5 
+clipParm                           Clipping values
+**PARAM** int 1
+solnIn                             Input SN table; 0=>highest
+**PARAM** int 1
+solnOut                            Output SN table; 0=>new
+**PARAM** int 1
+refAnt                             Reference antenna 0=>pick.
+----------------------------------------------------------------
+SNSmo
+Task: This task references and smooths an SN table.  First values
+can be clipped to a specified range of values.  Next, phase-like 
+values (phase, delays and rate) are rereferenced if necessary to 
+a single antenna.  This rereferencing is done in a manner which 
+should preserve the coherence of the two orthoginal polarization 
+systems.
+   Following the referencing the solutions are smoothed in a
+manner to preserve coherence, rates are all averaged before
+smoothing and the average phase difference between the
+orthogonal polarizations before smoothing is enforced on the
+solutions after smoothing.  Blanked solutions will be
+interpolated or not under control of doBlank.
+   Rates are averaged.
+
+   Mostly lifted from AIPS.
+
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input AIPS UV file name (name).      Standard defaults.
+  inClass....Input AIPS UV file name (class).     Standard defaults.
+  inSeq......Input AIPS UV file name (seq. #).    0 => highest.
+  inDisk.....Disk drive # of input UV file.  0 => any.
+  Sources....list of sources to process.
+             '*' = all; a "-" before a source name
+             means all except ANY source named.
+  FreqID.....Frequency identifier to select (you may determine
+	     which is applicable from the OPTYPE='SCAN' listing
+	     produced by LISTR).
+  BIF........First IF to process. 0=>all.
+  EIF........Highest IF to process. 0=>all higher than BIF
+  timeRange..Time range of the data to be used. 
+             start day, end day.
+             Use  dhms2day to convert from human readable form
+  Antennas...A list of the antennas to be modified.  If any
+             number is negative then all antennas listed  are
+             NOT to be modified.  All 0 => use all.
+  subA.......The subarray to modify.  0 -> all.
+  smoFunc....The smoothing function
+             'BOX ' = boxcar smoothing.
+             'MWF ' = Median window filter
+             'GAUS' = Gaussian filter
+             other => boxcar
+  smoParm......Parameters for smoothing function.
+             'BOX':
+             smoParm gives the boxcar width in hours.
+              (1) => smoothing time for amplitudes,
+              (2) => smoothing time for phase,
+              (3) => smoothing time for rates
+              (4) => smoothing time for singleband delay
+              (5) => smoothing time for multiband delay
+             'MWF':
+             smoParm gives the window width in hours.
+              (1) => smoothing time for amplitudes,
+              (2) => smoothing time for phase,
+              (3) => smoothing time for rates
+              (4) => smoothing time for singleband delay
+              (5) => smoothing time for multiband delay
+             In all cases, the interpolation of blanked
+             solutions is governed by doBlank (see below)
+  doBlank....Blanked value interpolation:
+             >= 0: replace previously blanked values with
+                   smoothed values.
+                   Note: this is only effective if amplitudes and
+                   phases are also interpolated.
+              < 0: do NOT interpolate previously blanked
+                   values.
+  smoType....Specified the data to be smoothed. '    '=>'AMPL'
+             NB: Rates are averaged before smoothing.
+            'AMPL' = amplitude smoothing only,
+            'PHAS' = phase smoothing only,
+            'BOTH' = amplitude and phase,
+            'DELA' = delay smoothing only,
+            'DERA' = delay and rate smoothing only
+            'VLBI' = Coherent phase, rate and delay smoothing.
+                     Phases smoothed in each IF separately.
+            'VLMB' = Like VLBI but phases are averaged over IF
+                     before smoothing. The average phase is
+                     the phase of vector average of the compex
+                     amplitudes. The average amplitude is the
+                     scalar average of the amplitudes.
+            'FULL' = same as VLBI
+  clipSmo....Data can be clipped by comparison with a median
+             window filter.  The width of the Median window
+             is specified in clipSmo:
+              (0) => smoothing time for amplitudes,
+              (1) => smoothing time for phase,
+              (2) => smoothing time for rates
+              (3) => smoothing time for singleband delay
+              (4) => smoothing time for multiband delay
+  clipParm...The maximum allowed deviation (0 => all values OK)
+              (0) => Max. deviation for amplitudes,
+              (1) => Max. deviation for phase, (deg)
+              (2) => Max. deviation for rates (mHz)
+              (3) => Max. deviation for singleband delay (nsec)
+              (4) => Max. deviation for multiband delay (nsec)
+  solnIn.....input version number of the SN table to smooth.
+             0 => Highest.
+  solnOut....output version of SN table to write.
+             0 => create new table.
+  refAnt.....Reference antenna to use.  All phase-like values
+             in the SN table will be referenced to
+             this antenna. 0=> use the one used in the most
+             solutions.
+----------------------------------------------------------------
+SNSmo:  Smooths solution (SN) tables.
+Documentor: W. D. Cotton
+Related Programs: Calib, CLCal
+
+   This task rereferences an SN table to a common antenna
+(refAnt) and then allows smoothing of a variety of data types in
+an solution (SN) table.  This rereferencing and smoothing is
+done in a way that will maintain phase coherence between the
+right and left (or orthogonal linear) systems.
+   Phase smoothing is done after removing the integral of the
+fringe rate which is then replaced after smoothing.  This allows
+the possibility of sensible phase smoothing with non zero fringe
+rates. It is recommended that this task not overwrite the original
+table to protect aginst errors.
+
+   The SN table differs from the standard SN table by the
+inclusion of multiband delays for the two polarizations and the
+IF phases are at the IF frequency.
+
+smoType = 'VLBI'
+   This option causes all residual rates for a given time and
+antenna and antenna to be averaged and the phases for the two
+polarizations of a given IF are forced to maintain R-L
+coherence.  Values in the "Multiband" delay columns will be
+processed but the phases in each IF are processed independently.
+
+smoType = 'VLMB'
+   This option is designed for data which has been fringe fitted
+for a multiband delay.  In this case the phase in each IF should
+be estimates of the same (or identical) values.  Thus the phases
+are averaged in IF before smoothing. The average phase is the
+phase of vector average of the compex amplitudes. The amplitude
+is the scalar average of the amplitudes.

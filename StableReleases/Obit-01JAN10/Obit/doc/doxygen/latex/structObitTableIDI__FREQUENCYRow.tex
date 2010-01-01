@@ -1,0 +1,140 @@
+\section{Obit\-Table\-IDI\_\-FREQUENCYRow Struct Reference}
+\label{structObitTableIDI__FREQUENCYRow}\index{ObitTableIDI_FREQUENCYRow@{ObitTableIDI\_\-FREQUENCYRow}}
+Obit\-Table\-IDI\_\-FREQUENCYRow Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-IDI\_\-FREQUENCY.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf my\-Table}
+\begin{CompactList}\small\item\em Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. \item\end{CompactList}\item 
+gpointer {\bf my\-Row\-Data}
+\begin{CompactList}\small\item\em Pointer to row data in buffer (never g\_\-free this). \item\end{CompactList}\item 
+{\bf oint} {\bf fqid}
+\begin{CompactList}\small\item\em Frequency ID number for row, this is a random parameter in the uv data. \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf bandfreq}
+\begin{CompactList}\small\item\em Offset from reference frequency for each Band. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf ch\-Width}
+\begin{CompactList}\small\item\em Bandwidth of an individual channel, now always written and read as a signed value. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf tot\-BW}
+\begin{CompactList}\small\item\em Total bandwidth of the IF, now written and read as an unsigned value. \item\end{CompactList}\item 
+{\bf oint} $\ast$ {\bf side\-Band}
+\begin{CompactList}\small\item\em Sideband of the IF (-1 =\$$>$\$ lower, +1 =\$$>$\$ upper), now always written and read as +1. \item\end{CompactList}\item 
+{\bf oint} $\ast$ {\bf bb\_\-chan}
+\begin{CompactList}\small\item\em Look this one up1. \item\end{CompactList}\item 
+{\bf olong} {\bf status}
+\begin{CompactList}\small\item\em status 0=normal, 1=modified, -1=flagged \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-IDI\_\-FREQUENCYRow Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}!bandfreq@{bandfreq}}
+\index{bandfreq@{bandfreq}!ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-Table\-IDI\_\-FREQUENCYRow::bandfreq}}\label{structObitTableIDI__FREQUENCYRow_o7}
+
+
+Offset from reference frequency for each Band. 
+
+\index{ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}!bb_chan@{bb\_\-chan}}
+\index{bb_chan@{bb\_\-chan}!ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint}$\ast$ {\bf Obit\-Table\-IDI\_\-FREQUENCYRow::bb\_\-chan}}\label{structObitTableIDI__FREQUENCYRow_o11}
+
+
+Look this one up1. 
+
+\index{ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}!chWidth@{chWidth}}
+\index{chWidth@{chWidth}!ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-IDI\_\-FREQUENCYRow::ch\-Width}}\label{structObitTableIDI__FREQUENCYRow_o8}
+
+
+Bandwidth of an individual channel, now always written and read as a signed value. 
+
+\index{ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-IDI\_\-FREQUENCYRow::Class\-Info}}\label{structObitTableIDI__FREQUENCYRow_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}!fqid@{fqid}}
+\index{fqid@{fqid}!ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-FREQUENCYRow::fqid}}\label{structObitTableIDI__FREQUENCYRow_o6}
+
+
+Frequency ID number for row, this is a random parameter in the uv data. 
+
+\index{ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}!myRowData@{myRowData}}
+\index{myRowData@{myRowData}!ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-IDI\_\-FREQUENCYRow::my\-Row\-Data}}\label{structObitTableIDI__FREQUENCYRow_o5}
+
+
+Pointer to row data in buffer (never g\_\-free this). 
+
+\index{ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}!myTable@{myTable}}
+\index{myTable@{myTable}!ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ {\bf Obit\-Table\-IDI\_\-FREQUENCYRow::my\-Table}}\label{structObitTableIDI__FREQUENCYRow_o4}
+
+
+Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. 
+
+\index{ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}!name@{name}}
+\index{name@{name}!ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-IDI\_\-FREQUENCYRow::name}}\label{structObitTableIDI__FREQUENCYRow_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-IDI\_\-FREQUENCYRow::Obit\-Id}}\label{structObitTableIDI__FREQUENCYRow_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-FREQUENCYRow::Reference\-Count}}\label{structObitTableIDI__FREQUENCYRow_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}!sideBand@{sideBand}}
+\index{sideBand@{sideBand}!ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint}$\ast$ {\bf Obit\-Table\-IDI\_\-FREQUENCYRow::side\-Band}}\label{structObitTableIDI__FREQUENCYRow_o10}
+
+
+Sideband of the IF (-1 =\$$>$\$ lower, +1 =\$$>$\$ upper), now always written and read as +1. 
+
+\index{ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}!status@{status}}
+\index{status@{status}!ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-FREQUENCYRow::status}}\label{structObitTableIDI__FREQUENCYRow_o12}
+
+
+status 0=normal, 1=modified, -1=flagged 
+
+\index{ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}!totBW@{totBW}}
+\index{totBW@{totBW}!ObitTableIDI_FREQUENCYRow@{Obit\-Table\-IDI\_\-FREQUENCYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-IDI\_\-FREQUENCYRow::tot\-BW}}\label{structObitTableIDI__FREQUENCYRow_o9}
+
+
+Total bandwidth of the IF, now written and read as an unsigned value. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-IDI\_\-FREQUENCY.h}\end{CompactItemize}

@@ -1,0 +1,707 @@
+\section{Obit\-Sky\-Model\-VMSquint Struct Reference}
+\label{structObitSkyModelVMSquint}\index{ObitSkyModelVMSquint@{ObitSkyModelVMSquint}}
+Obit\-Sky\-Model\-VMSquint Class structure.  
+
+
+{\tt \#include $<$Obit\-Sky\-Model\-VMSquint.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Mosaic} $\ast$ {\bf mosaic}
+\begin{CompactList}\small\item\em Image array. \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf plane}
+\begin{CompactList}\small\item\em Image plane of single image. \item\end{CompactList}\item 
+{\bf Obit\-CArray} $\ast$ {\bf FTplane}
+\begin{CompactList}\small\item\em Fourier transform of plane. \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Conj\-Col}
+\begin{CompactList}\small\item\em Number of conjugate (neg U) columns in FTplane. \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf comps}
+\begin{CompactList}\small\item\em Array of component model as rows in an FArray. \item\end{CompactList}\item 
+{\bf Obit\-CInterpolate} $\ast$ {\bf my\-Interp}
+\begin{CompactList}\small\item\em Interpolator for UV grid. \item\end{CompactList}\item 
+Obit\-Sky\-Model\-Type {\bf model\-Type}
+\begin{CompactList}\small\item\em Model type. \item\end{CompactList}\item 
+Obit\-Sky\-Model\-Comp\-Type {\bf mod\-Type}
+\begin{CompactList}\small\item\em Component model type. \item\end{CompactList}\item 
+Obit\-Sky\-Model\-Mode {\bf model\-Mode}
+\begin{CompactList}\small\item\em Model calculation mode for components. \item\end{CompactList}\item 
+Obit\-Sky\-Model\-Mode {\bf current\-Mode}
+\begin{CompactList}\small\item\em Current model calculation mode. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf CCver}
+\begin{CompactList}\small\item\em List of AIPSCC table versions per image in mosaic there are mosaic-$>$number\-Images of these. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf start\-Comp}
+\begin{CompactList}\small\item\em List of beginning component per image in mosaic (1-rel). \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf end\-Comp}
+\begin{CompactList}\small\item\em List of highest component per image in mosaic (1-rel). \item\end{CompactList}\item 
+{\bf ofloat} {\bf factor}
+\begin{CompactList}\small\item\em Factor to multiply times model. \item\end{CompactList}\item 
+{\bf ofloat} {\bf min\-Flux}
+\begin{CompactList}\small\item\em Minimum flux density model or pixel. \item\end{CompactList}\item 
+{\bf ofloat} {\bf stok\-Factor}
+\begin{CompactList}\small\item\em Factor to multiply times second Stokes of model. \item\end{CompactList}\item 
+{\bf ofloat} {\bf point\-Flux}
+\begin{CompactList}\small\item\em Point model flux density (Jy). \item\end{CompactList}\item 
+{\bf ofloat} {\bf point\-XOff}
+\begin{CompactList}\small\item\em Point, x (ra), y (dec) offset in deg. \item\end{CompactList}\item 
+{\bf ofloat} {\bf point\-YOff}
+\begin{CompactList}\small\item\em Point, x (ra), y (dec) offset in deg. \item\end{CompactList}\item 
+{\bf ofloat} {\bf point\-Parms} [10]
+\begin{CompactList}\small\item\em Other (non-point)model components: major\_\-axis (deg), minor\_\-axis (deg), position\_\-angle (deg), type (Obit\-Sky\-Model\-Comp\-Type as gint), spectral terms;. \item\end{CompactList}\item 
+{\bf ofloat} {\bf ant\-Size}
+\begin{CompactList}\small\item\em Antennna diameter for rel. \item\end{CompactList}\item 
+gboolean {\bf do3D}
+\begin{CompactList}\small\item\em Apply 3D imaging corrections. \item\end{CompactList}\item 
+gboolean {\bf do\-Divide}
+\begin{CompactList}\small\item\em Divide model into data? \item\end{CompactList}\item 
+gboolean {\bf do\-Replace}
+\begin{CompactList}\small\item\em Replace data with model? \item\end{CompactList}\item 
+gboolean {\bf do\-PBCor}
+\begin{CompactList}\small\item\em Make relative Primary Beam corrections? \item\end{CompactList}\item 
+{\bf olong} {\bf start\-Channel}
+\begin{CompactList}\small\item\em Selected start channel[1-rel] and number. \item\end{CompactList}\item 
+{\bf olong} {\bf number\-Channel}
+\begin{CompactList}\small\item\em Selected start channel[1-rel] and number. \item\end{CompactList}\item 
+{\bf olong} {\bf start\-IF}
+\begin{CompactList}\small\item\em Selected start IF [1-rel] and number. \item\end{CompactList}\item 
+{\bf olong} {\bf number\-IF}
+\begin{CompactList}\small\item\em Selected start IF [1-rel] and number. \item\end{CompactList}\item 
+{\bf olong} {\bf start\-Channel\-PB}
+\begin{CompactList}\small\item\em Selected start rel. \item\end{CompactList}\item 
+{\bf olong} {\bf number\-Channel\-PB}
+\begin{CompactList}\small\item\em Selected start rel. \item\end{CompactList}\item 
+{\bf olong} {\bf start\-IFPB}
+\begin{CompactList}\small\item\em Selected start rel. \item\end{CompactList}\item 
+{\bf olong} {\bf number\-IFPB}
+\begin{CompactList}\small\item\em Selected start rel. \item\end{CompactList}\item 
+{\bf olong} {\bf nfreq\-PB}
+\begin{CompactList}\small\item\em Number of frequency channels for PB correction. \item\end{CompactList}\item 
+{\bf odouble} {\bf PBFreq}
+\begin{CompactList}\small\item\em Reference frequency for this block of channels for PB corrections. \item\end{CompactList}\item 
+gchar {\bf stokes} [5]
+\begin{CompactList}\small\item\em Selected Stokes. \item\end{CompactList}\item 
+{\bf olong} {\bf start\-Poln}
+\begin{CompactList}\small\item\em Selected start Poln [1-rel] and number. \item\end{CompactList}\item 
+{\bf olong} {\bf number\-Poln}
+\begin{CompactList}\small\item\em Selected start Poln [1-rel] and number. \item\end{CompactList}\item 
+gboolean {\bf do\-Flip}
+\begin{CompactList}\small\item\em True if need to multiply the FT by sqrt(-1) before applying. \item\end{CompactList}\item 
+gboolean {\bf no\-Neg}
+\begin{CompactList}\small\item\em True if only positive flux components are to be used. \item\end{CompactList}\item 
+{\bf ofloat} {\bf min\-DFT}
+\begin{CompactList}\small\item\em Minimum absolute component flux to use in DFT. \item\end{CompactList}\item 
+{\bf ofloat} {\bf max\-Grid}
+\begin{CompactList}\small\item\em Maximum absolute component flux to use in Gridded model. \item\end{CompactList}\item 
+gboolean {\bf do\-DFT}
+\begin{CompactList}\small\item\em Something to do for DFT model. \item\end{CompactList}\item 
+gboolean {\bf do\-Grid}
+\begin{CompactList}\small\item\em Something to do for Grid model. \item\end{CompactList}\item 
+{\bf olong} {\bf prt\-Lv}
+\begin{CompactList}\small\item\em message level for deconvolution progress messages, 0=none, 1=summary, 2=normal, higher numbers for diagnostics \item\end{CompactList}\item 
+{\bf olong} {\bf n\-Spec\-Term}
+\begin{CompactList}\small\item\em Number of spectral terms. \item\end{CompactList}\item 
+{\bf olong} {\bf n\-Threads}
+\begin{CompactList}\small\item\em Number of threads (elements in thread\-Args). \item\end{CompactList}\item 
+gpointer $\ast$$\ast$ {\bf thread\-Args}
+\begin{CompactList}\small\item\em Array of FT Function structures. \item\end{CompactList}\item 
+{\bf Obit\-Thread\-Func} {\bf DFTFunc}
+\begin{CompactList}\small\item\em DFT Fourier transform routine. \item\end{CompactList}\item 
+{\bf Obit\-Thread\-Func} {\bf Grid\-Func}
+\begin{CompactList}\small\item\em Gridded Fourier transform routine. \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf VMComps}
+\begin{CompactList}\small\item\em Array of time/spatially variable component model as rows in an FArray. \item\end{CompactList}\item 
+{\bf ofloat} {\bf cur\-VMModel\-Time}
+\begin{CompactList}\small\item\em Current time (d) for model in VMComps. \item\end{CompactList}\item 
+{\bf ofloat} {\bf end\-VMModel\-Time}
+\begin{CompactList}\small\item\em End time (d) for validity of model model in VMComps. \item\end{CompactList}\item 
+{\bf ofloat} {\bf update\-Interval}
+\begin{CompactList}\small\item\em Model update interval (d). \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Comp}
+\begin{CompactList}\small\item\em Number of actual components in model. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Threshold}
+\begin{CompactList}\small\item\em Threshold flux density for doing high accuracy DFT model. \item\end{CompactList}\item 
+{\bf ofloat} {\bf max\-Resid}
+\begin{CompactList}\small\item\em Current maximum residual. \item\end{CompactList}\item 
+{\bf olong} {\bf dim\-Gain}
+\begin{CompactList}\small\item\em Dimension of Rgain... \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Rgain}
+\begin{CompactList}\small\item\em Array of time/spatially variable VLA R component gain. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Lgain}
+\begin{CompactList}\small\item\em Array of time/spatially variable VLA L component gain. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf REgain}
+\begin{CompactList}\small\item\em Array of time/spatially variable EVLA R component gain. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf LEgain}
+\begin{CompactList}\small\item\em Array of time/spatially variable EVLA L component gain. \item\end{CompactList}\item 
+gboolean $\ast$ {\bf is\-EVLA}
+\begin{CompactList}\small\item\em Array booleans, TRUE if corresponding antenna (0-rel) is EVLA. \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Ant\-List}
+\begin{CompactList}\small\item\em Number of subarrays. \item\end{CompactList}\item 
+{\bf Obit\-Antenna\-List} $\ast$$\ast$ {\bf Ant\-List}
+\begin{CompactList}\small\item\em Antenna List for parallactic angle. \item\end{CompactList}\item 
+{\bf Obit\-Source} $\ast$ {\bf cur\-Source}
+\begin{CompactList}\small\item\em Current source. \item\end{CompactList}\item 
+gchar {\bf save\-Stokes} [8]
+\begin{CompactList}\small\item\em Save Stokes request. \item\end{CompactList}\item 
+gboolean {\bf save\-Do\-Cal\-Select}
+\begin{CompactList}\small\item\em Save do\-Cal\-Select. \item\end{CompactList}\item 
+{\bf olong} {\bf save\-Do\-Calib}
+\begin{CompactList}\small\item\em Save do\-Calib. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Sky\-Model\-VMSquint Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!AntList@{AntList}}
+\index{AntList@{AntList}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Antenna\-List}$\ast$$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::Ant\-List}}\label{structObitSkyModelVMSquint_o71}
+
+
+Antenna List for parallactic angle. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!antSize@{antSize}}
+\index{antSize@{antSize}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMSquint::ant\-Size}}\label{structObitSkyModelVMSquint_o27}
+
+
+Antennna diameter for rel. 
+
+PB corrections \index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!CCver@{CCver}}
+\index{CCver@{CCver}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::CCver}}\label{structObitSkyModelVMSquint_o17}
+
+
+List of AIPSCC table versions per image in mosaic there are mosaic-$>$number\-Images of these. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Sky\-Model\-VMSquint::Class\-Info}}\label{structObitSkyModelVMSquint_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!comps@{comps}}
+\index{comps@{comps}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::comps}}\label{structObitSkyModelVMSquint_o11}
+
+
+Array of component model as rows in an FArray. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!currentMode@{currentMode}}
+\index{currentMode@{currentMode}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-Sky\-Model\-Mode {\bf Obit\-Sky\-Model\-VMSquint::current\-Mode}}\label{structObitSkyModelVMSquint_o16}
+
+
+Current model calculation mode. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!curSource@{curSource}}
+\index{curSource@{curSource}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Source}$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::cur\-Source}}\label{structObitSkyModelVMSquint_o72}
+
+
+Current source. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!curVMModelTime@{curVMModelTime}}
+\index{curVMModelTime@{curVMModelTime}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMSquint::cur\-VMModel\-Time}}\label{structObitSkyModelVMSquint_o58}
+
+
+Current time (d) for model in VMComps. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!DFTFunc@{DFTFunc}}
+\index{DFTFunc@{DFTFunc}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread\-Func} {\bf Obit\-Sky\-Model\-VMSquint::DFTFunc}}\label{structObitSkyModelVMSquint_o55}
+
+
+DFT Fourier transform routine. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!dimGain@{dimGain}}
+\index{dimGain@{dimGain}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::dim\-Gain}}\label{structObitSkyModelVMSquint_o64}
+
+
+Dimension of Rgain... 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!do3D@{do3D}}
+\index{do3D@{do3D}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Sky\-Model\-VMSquint::do3D}}\label{structObitSkyModelVMSquint_o28}
+
+
+Apply 3D imaging corrections. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!doDFT@{doDFT}}
+\index{doDFT@{doDFT}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Sky\-Model\-VMSquint::do\-DFT}}\label{structObitSkyModelVMSquint_o49}
+
+
+Something to do for DFT model. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!doDivide@{doDivide}}
+\index{doDivide@{doDivide}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Sky\-Model\-VMSquint::do\-Divide}}\label{structObitSkyModelVMSquint_o29}
+
+
+Divide model into data? 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!doFlip@{doFlip}}
+\index{doFlip@{doFlip}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Sky\-Model\-VMSquint::do\-Flip}}\label{structObitSkyModelVMSquint_o45}
+
+
+True if need to multiply the FT by sqrt(-1) before applying. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!doGrid@{doGrid}}
+\index{doGrid@{doGrid}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Sky\-Model\-VMSquint::do\-Grid}}\label{structObitSkyModelVMSquint_o50}
+
+
+Something to do for Grid model. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!doPBCor@{doPBCor}}
+\index{doPBCor@{doPBCor}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Sky\-Model\-VMSquint::do\-PBCor}}\label{structObitSkyModelVMSquint_o31}
+
+
+Make relative Primary Beam corrections? 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!doReplace@{doReplace}}
+\index{doReplace@{doReplace}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Sky\-Model\-VMSquint::do\-Replace}}\label{structObitSkyModelVMSquint_o30}
+
+
+Replace data with model? 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!endComp@{endComp}}
+\index{endComp@{endComp}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::end\-Comp}}\label{structObitSkyModelVMSquint_o19}
+
+
+List of highest component per image in mosaic (1-rel). 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!endVMModelTime@{endVMModelTime}}
+\index{endVMModelTime@{endVMModelTime}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMSquint::end\-VMModel\-Time}}\label{structObitSkyModelVMSquint_o59}
+
+
+End time (d) for validity of model model in VMComps. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!factor@{factor}}
+\index{factor@{factor}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMSquint::factor}}\label{structObitSkyModelVMSquint_o20}
+
+
+Factor to multiply times model. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!FTplane@{FTplane}}
+\index{FTplane@{FTplane}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-CArray}$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::FTplane}}\label{structObitSkyModelVMSquint_o9}
+
+
+Fourier transform of plane. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!GridFunc@{GridFunc}}
+\index{GridFunc@{GridFunc}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread\-Func} {\bf Obit\-Sky\-Model\-VMSquint::Grid\-Func}}\label{structObitSkyModelVMSquint_o56}
+
+
+Gridded Fourier transform routine. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!info@{info}}
+\index{info@{info}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::info}}\label{structObitSkyModelVMSquint_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!isEVLA@{isEVLA}}
+\index{isEVLA@{isEVLA}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::is\-EVLA}}\label{structObitSkyModelVMSquint_o69}
+
+
+Array booleans, TRUE if corresponding antenna (0-rel) is EVLA. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!LEgain@{LEgain}}
+\index{LEgain@{LEgain}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::LEgain}}\label{structObitSkyModelVMSquint_o68}
+
+
+Array of time/spatially variable EVLA L component gain. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!Lgain@{Lgain}}
+\index{Lgain@{Lgain}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::Lgain}}\label{structObitSkyModelVMSquint_o66}
+
+
+Array of time/spatially variable VLA L component gain. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!maxGrid@{maxGrid}}
+\index{maxGrid@{maxGrid}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMSquint::max\-Grid}}\label{structObitSkyModelVMSquint_o48}
+
+
+Maximum absolute component flux to use in Gridded model. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!maxResid@{maxResid}}
+\index{maxResid@{maxResid}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMSquint::max\-Resid}}\label{structObitSkyModelVMSquint_o63}
+
+
+Current maximum residual. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!minDFT@{minDFT}}
+\index{minDFT@{minDFT}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMSquint::min\-DFT}}\label{structObitSkyModelVMSquint_o47}
+
+
+Minimum absolute component flux to use in DFT. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!minFlux@{minFlux}}
+\index{minFlux@{minFlux}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMSquint::min\-Flux}}\label{structObitSkyModelVMSquint_o21}
+
+
+Minimum flux density model or pixel. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!modelMode@{modelMode}}
+\index{modelMode@{modelMode}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-Sky\-Model\-Mode {\bf Obit\-Sky\-Model\-VMSquint::model\-Mode}}\label{structObitSkyModelVMSquint_o15}
+
+
+Model calculation mode for components. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!modelType@{modelType}}
+\index{modelType@{modelType}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-Sky\-Model\-Type {\bf Obit\-Sky\-Model\-VMSquint::model\-Type}}\label{structObitSkyModelVMSquint_o13}
+
+
+Model type. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!modType@{modType}}
+\index{modType@{modType}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-Sky\-Model\-Comp\-Type {\bf Obit\-Sky\-Model\-VMSquint::mod\-Type}}\label{structObitSkyModelVMSquint_o14}
+
+
+Component model type. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!mosaic@{mosaic}}
+\index{mosaic@{mosaic}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Mosaic}$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::mosaic}}\label{structObitSkyModelVMSquint_o7}
+
+
+Image array. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!myInterp@{myInterp}}
+\index{myInterp@{myInterp}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-CInterpolate}$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::my\-Interp}}\label{structObitSkyModelVMSquint_o12}
+
+
+Interpolator for UV grid. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Sky\-Model\-VMSquint::my\-Status}}\label{structObitSkyModelVMSquint_o6}
+
+
+I/O status. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!name@{name}}
+\index{name@{name}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::name}}\label{structObitSkyModelVMSquint_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!nfreqPB@{nfreqPB}}
+\index{nfreqPB@{nfreqPB}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::nfreq\-PB}}\label{structObitSkyModelVMSquint_o40}
+
+
+Number of frequency channels for PB correction. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!noNeg@{noNeg}}
+\index{noNeg@{noNeg}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Sky\-Model\-VMSquint::no\-Neg}}\label{structObitSkyModelVMSquint_o46}
+
+
+True if only positive flux components are to be used. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!nSpecTerm@{nSpecTerm}}
+\index{nSpecTerm@{nSpecTerm}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::n\-Spec\-Term}}\label{structObitSkyModelVMSquint_o52}
+
+
+Number of spectral terms. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!nThreads@{nThreads}}
+\index{nThreads@{nThreads}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::n\-Threads}}\label{structObitSkyModelVMSquint_o53}
+
+
+Number of threads (elements in thread\-Args). 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!numAntList@{numAntList}}
+\index{numAntList@{numAntList}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::num\-Ant\-List}}\label{structObitSkyModelVMSquint_o70}
+
+
+Number of subarrays. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!numberChannel@{numberChannel}}
+\index{numberChannel@{numberChannel}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::number\-Channel}}\label{structObitSkyModelVMSquint_o33}
+
+
+Selected start channel[1-rel] and number. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!numberChannelPB@{numberChannelPB}}
+\index{numberChannelPB@{numberChannelPB}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::number\-Channel\-PB}}\label{structObitSkyModelVMSquint_o37}
+
+
+Selected start rel. 
+
+PB correction channel[1-rel] and number \index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!numberIF@{numberIF}}
+\index{numberIF@{numberIF}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::number\-IF}}\label{structObitSkyModelVMSquint_o35}
+
+
+Selected start IF [1-rel] and number. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!numberIFPB@{numberIFPB}}
+\index{numberIFPB@{numberIFPB}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::number\-IFPB}}\label{structObitSkyModelVMSquint_o39}
+
+
+Selected start rel. 
+
+PB correction IF [1-rel] and number \index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!numberPoln@{numberPoln}}
+\index{numberPoln@{numberPoln}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::number\-Poln}}\label{structObitSkyModelVMSquint_o44}
+
+
+Selected start Poln [1-rel] and number. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!numComp@{numComp}}
+\index{numComp@{numComp}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::num\-Comp}}\label{structObitSkyModelVMSquint_o61}
+
+
+Number of actual components in model. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!numConjCol@{numConjCol}}
+\index{numConjCol@{numConjCol}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::num\-Conj\-Col}}\label{structObitSkyModelVMSquint_o10}
+
+
+Number of conjugate (neg U) columns in FTplane. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Sky\-Model\-VMSquint::Obit\-Id}}\label{structObitSkyModelVMSquint_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!PBFreq@{PBFreq}}
+\index{PBFreq@{PBFreq}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Sky\-Model\-VMSquint::PBFreq}}\label{structObitSkyModelVMSquint_o41}
+
+
+Reference frequency for this block of channels for PB corrections. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!plane@{plane}}
+\index{plane@{plane}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::plane}}\label{structObitSkyModelVMSquint_o8}
+
+
+Image plane of single image. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!pointFlux@{pointFlux}}
+\index{pointFlux@{pointFlux}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMSquint::point\-Flux}}\label{structObitSkyModelVMSquint_o23}
+
+
+Point model flux density (Jy). 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!pointParms@{pointParms}}
+\index{pointParms@{pointParms}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMSquint::point\-Parms}[10]}\label{structObitSkyModelVMSquint_o26}
+
+
+Other (non-point)model components: major\_\-axis (deg), minor\_\-axis (deg), position\_\-angle (deg), type (Obit\-Sky\-Model\-Comp\-Type as gint), spectral terms;. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!pointXOff@{pointXOff}}
+\index{pointXOff@{pointXOff}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMSquint::point\-XOff}}\label{structObitSkyModelVMSquint_o24}
+
+
+Point, x (ra), y (dec) offset in deg. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!pointYOff@{pointYOff}}
+\index{pointYOff@{pointYOff}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMSquint::point\-YOff}}\label{structObitSkyModelVMSquint_o25}
+
+
+Point, x (ra), y (dec) offset in deg. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!prtLv@{prtLv}}
+\index{prtLv@{prtLv}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::prt\-Lv}}\label{structObitSkyModelVMSquint_o51}
+
+
+message level for deconvolution progress messages, 0=none, 1=summary, 2=normal, higher numbers for diagnostics 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::Reference\-Count}}\label{structObitSkyModelVMSquint_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!REgain@{REgain}}
+\index{REgain@{REgain}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::REgain}}\label{structObitSkyModelVMSquint_o67}
+
+
+Array of time/spatially variable EVLA R component gain. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!Rgain@{Rgain}}
+\index{Rgain@{Rgain}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::Rgain}}\label{structObitSkyModelVMSquint_o65}
+
+
+Array of time/spatially variable VLA R component gain. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!saveDoCalib@{saveDoCalib}}
+\index{saveDoCalib@{saveDoCalib}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::save\-Do\-Calib}}\label{structObitSkyModelVMSquint_o75}
+
+
+Save do\-Calib. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!saveDoCalSelect@{saveDoCalSelect}}
+\index{saveDoCalSelect@{saveDoCalSelect}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Sky\-Model\-VMSquint::save\-Do\-Cal\-Select}}\label{structObitSkyModelVMSquint_o74}
+
+
+Save do\-Cal\-Select. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!saveStokes@{saveStokes}}
+\index{saveStokes@{saveStokes}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Sky\-Model\-VMSquint::save\-Stokes}[8]}\label{structObitSkyModelVMSquint_o73}
+
+
+Save Stokes request. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!startChannel@{startChannel}}
+\index{startChannel@{startChannel}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::start\-Channel}}\label{structObitSkyModelVMSquint_o32}
+
+
+Selected start channel[1-rel] and number. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!startChannelPB@{startChannelPB}}
+\index{startChannelPB@{startChannelPB}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::start\-Channel\-PB}}\label{structObitSkyModelVMSquint_o36}
+
+
+Selected start rel. 
+
+PB correction channel[1-rel] and number \index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!startComp@{startComp}}
+\index{startComp@{startComp}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::start\-Comp}}\label{structObitSkyModelVMSquint_o18}
+
+
+List of beginning component per image in mosaic (1-rel). 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!startIF@{startIF}}
+\index{startIF@{startIF}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::start\-IF}}\label{structObitSkyModelVMSquint_o34}
+
+
+Selected start IF [1-rel] and number. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!startIFPB@{startIFPB}}
+\index{startIFPB@{startIFPB}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::start\-IFPB}}\label{structObitSkyModelVMSquint_o38}
+
+
+Selected start rel. 
+
+PB correction IF [1-rel] and number \index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!startPoln@{startPoln}}
+\index{startPoln@{startPoln}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMSquint::start\-Poln}}\label{structObitSkyModelVMSquint_o43}
+
+
+Selected start Poln [1-rel] and number. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!stokes@{stokes}}
+\index{stokes@{stokes}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Sky\-Model\-VMSquint::stokes}[5]}\label{structObitSkyModelVMSquint_o42}
+
+
+Selected Stokes. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!stokFactor@{stokFactor}}
+\index{stokFactor@{stokFactor}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMSquint::stok\-Factor}}\label{structObitSkyModelVMSquint_o22}
+
+
+Factor to multiply times second Stokes of model. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!thread@{thread}}
+\index{thread@{thread}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::thread}}\label{structObitSkyModelVMSquint_o4}
+
+
+Threading info member object. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!threadArgs@{threadArgs}}
+\index{threadArgs@{threadArgs}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer$\ast$$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::thread\-Args}}\label{structObitSkyModelVMSquint_o54}
+
+
+Array of FT Function structures. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!Threshold@{Threshold}}
+\index{Threshold@{Threshold}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMSquint::Threshold}}\label{structObitSkyModelVMSquint_o62}
+
+
+Threshold flux density for doing high accuracy DFT model. 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!updateInterval@{updateInterval}}
+\index{updateInterval@{updateInterval}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMSquint::update\-Interval}}\label{structObitSkyModelVMSquint_o60}
+
+
+Model update interval (d). 
+
+\index{ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}!VMComps@{VMComps}}
+\index{VMComps@{VMComps}!ObitSkyModelVMSquint@{Obit\-Sky\-Model\-VMSquint}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-Sky\-Model\-VMSquint::VMComps}}\label{structObitSkyModelVMSquint_o57}
+
+
+Array of time/spatially variable component model as rows in an FArray. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Sky\-Model\-VMSquint.h}\end{CompactItemize}

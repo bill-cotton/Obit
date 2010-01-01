@@ -1,0 +1,327 @@
+\section{Obit\-Table\-IDI\_\-UV\_\-DATA.h File Reference}
+\label{ObitTableIDI__UV__DATA_8h}\index{ObitTableIDI_UV_DATA.h@{ObitTableIDI\_\-UV\_\-DATA.h}}
+{\bf Obit\-Table\-IDI\_\-UV\_\-DATA}{\rm (p.\,\pageref{structObitTableIDI__UV__DATA})} class definition. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Data.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-Table\-IDI\_\-UV\_\-DATA}
+\begin{CompactList}\small\item\em Obit\-Table\-IDI\_\-UV\_\-DATA Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Table\-IDI\_\-UV\_\-DATARow}
+\begin{CompactList}\small\item\em Obit\-Table\-IDI\_\-UV\_\-DATARow Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Table\-IDI\_\-UV\_\-DATAClass\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Table\-IDI\_\-UV\_\-DATARow\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure For Table\-IDI\_\-UV\_\-DATARow. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf MAXKEYCHARTABLEIDI\_\-UV\_\-DATA}\ 24
+\begin{CompactList}\small\item\em Number of characters for Table keyword. \item\end{CompactList}\item 
+\#define {\bf Obit\-Table\-IDI\_\-UV\_\-DATAUnref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Table\-IDI\_\-UV\_\-DATA}{\rm (p.\,\pageref{structObitTableIDI__UV__DATA})} returns an Obit\-Table\-IDI\_\-UV\_\-DATA$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-Table\-IDI\_\-UV\_\-DATARef}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Table\-IDI\_\-UV\_\-DATA}{\rm (p.\,\pageref{structObitTableIDI__UV__DATA})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Table\-IDI\_\-UV\_\-DATAIs\-A}(in)\ Obit\-Is\-A (in, Obit\-Table\-IDI\_\-UV\_\-DATAGet\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\item 
+\#define {\bf Obit\-Table\-IDI\_\-UV\_\-DATARow\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Table\-IDI\_\-UV\_\-DATARow}{\rm (p.\,\pageref{structObitTableIDI__UV__DATARow})} returns an Obit\-Table\-IDI\_\-UV\_\-DATARow$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-Table\-IDI\_\-UV\_\-DATARow\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Table\-IDI\_\-UV\_\-DATARow}{\rm (p.\,\pageref{structObitTableIDI__UV__DATARow})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Table\-IDI\_\-UV\_\-DATARow\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-Table\-IDI\_\-UV\_\-DATARow\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Table\-IDI\_\-UV\_\-DATARow\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Row Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Table\-IDI\_\-UV\_\-DATARow} $\ast$ {\bf new\-Obit\-Table\-IDI\_\-UV\_\-DATARow} ({\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$table)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Table\-IDI\_\-UV\_\-DATARow\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-IDI\_\-UV\_\-DATAClass\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$ {\bf new\-Obit\-Table\-IDI\_\-UV\_\-DATA} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$ {\bf new\-Obit\-Table\-IDI\_\-UV\_\-DATAValue} (gchar $\ast$name, {\bf Obit\-Data} $\ast$file, {\bf olong} $\ast$ver, Obit\-IOAccess access, {\bf oint} no\_\-band, {\bf oint} maxis1, {\bf oint} maxis2, {\bf oint} maxis3, {\bf oint} maxis4, {\bf oint} maxis5, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Constructor from values. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Table\-IDI\_\-UV\_\-DATAGet\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$ {\bf Obit\-Table\-IDI\_\-UV\_\-DATACopy} ({\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$in, {\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$ {\bf Obit\-Table\-IDI\_\-UV\_\-DATAClone} ({\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$in, {\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$out)
+\begin{CompactList}\small\item\em Public: Copy (shallow) constructor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$ {\bf Obit\-Table\-IDI\_\-UV\_\-DATAConvert} ({\bf Obit\-Table} $\ast$in)
+\begin{CompactList}\small\item\em Public: Convert an {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} to an {\bf Obit\-Table\-IDI\_\-UV\_\-DATA}{\rm (p.\,\pageref{structObitTableIDI__UV__DATA})}. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-IDI\_\-UV\_\-DATAOpen} ({\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$in, Obit\-IOAccess access, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create {\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} structures and open file. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-IDI\_\-UV\_\-DATARead\-Row} ({\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$in, {\bf olong} i\-IDI\_\-UV\_\-DATARow, {\bf Obit\-Table\-IDI\_\-UV\_\-DATARow} $\ast$row, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read a table row. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-IDI\_\-UV\_\-DATASet\-Row} ({\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$in, {\bf Obit\-Table\-IDI\_\-UV\_\-DATARow} $\ast$row, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Init a table row for write. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-IDI\_\-UV\_\-DATAWrite\-Row} ({\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$in, {\bf olong} i\-IDI\_\-UV\_\-DATARow, {\bf Obit\-Table\-IDI\_\-UV\_\-DATARow} $\ast$row, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Write a table row. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-IDI\_\-UV\_\-DATAClose} ({\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Close file and become inactive. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Table\-IDI\_\-UV\_\-DATA}{\rm (p.\,\pageref{structObitTableIDI__UV__DATA})} class definition. 
+
+This class is derived from the {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} class.
+
+This class contains tabular data and allows access. This table is part of the IDI uv data format. An IDI table radio interferometer observational data.
+
+This class contains tabular data and allows access. \char`\"{}IDI\_\-UV\_\-DATA\char`\"{} table An {\bf Obit\-Table\-IDI\_\-UV\_\-DATA}{\rm (p.\,\pageref{structObitTableIDI__UV__DATA})} is the front end to a persistent disk resident structure. Only FITS (as Tables) are supported.\subsection{History\-Table data storage}\label{ObitTableWX_8h_TableDataStorage}
+In memory tables are stored in a fashion similar to how they are stored on disk - in large blocks in memory rather than structures. Due to the word alignment requirements of some machines, they are stored by order of the decreasing element size: double, float long, int, short, char rather than the logical order. The details of the storage in the buffer are kept in the \#Obit\-Table\-IDI\_\-UV\_\-DATADesc.
+
+In addition to the normal tabular data, a table will have a \char`\"{}\_\-status\char`\"{} column to indicate the status of each row.\subsection{Specifying desired data transfer parameters}\label{ObitTableIDI__UV__DATA_8h_ObitTableIDI_UV_DATASpecification}
+The desired data transfers are specified in the member {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. In the following an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} entry is defined by the name in double quotes, the data type code as an \#Obit\-Info\-Type enum and the dimensions of the array (? =$>$ depends on application).
+
+The following apply to both types of files: \begin{itemize}
+\item \char`\"{}n\-Row\-PIO\char`\"{}, OBIT\_\-int, Max. Number of visibilities per \char`\"{}Read\char`\"{} or \char`\"{}Write\char`\"{} operation. Default = 1.\end{itemize}
+\subsubsection{FITS files}\label{ObitTableWX_8h_TableFITS}
+This implementation uses cfitsio which allows using, in addition to regular FITS images, gzip compressed files, pipes, shared memory and a number of other input forms. The convenience Macro \#Obit\-Table\-IDI\_\-UV\_\-DATASet\-FITS simplifies specifying the desired data. Binary tables are used for storing visibility data in FITS. For accessing FITS files the following entries in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} are used: \begin{itemize}
+\item \char`\"{}File\-Name\char`\"{} OBIT\_\-string (?,1,1) FITS file name. \item \char`\"{}Tab\-Name\char`\"{} OBIT\_\-string (?,1,1) Table name (e.g. \char`\"{}AIPS CC\char`\"{}). \item \char`\"{}Ver\char`\"{} OBIT\_\-int (1,1,1) Table version number\end{itemize}
+\subsection{Creators and Destructors}\label{ObitTableIDI__UV__DATA_8h_ObitTableIDI_UV_DATAaccess}
+An {\bf Obit\-Table\-IDI\_\-UV\_\-DATA}{\rm (p.\,\pageref{structObitTableIDI__UV__DATA})} can be created using new\-Obit\-Table\-IDI\_\-UV\_\-DATAValue which attaches the table to an {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} for the object. If the output {\bf Obit\-Table\-IDI\_\-UV\_\-DATA}{\rm (p.\,\pageref{structObitTableIDI__UV__DATA})} has previously been specified, including file information, then Obit\-Table\-IDI\_\-UV\_\-DATACopy will copy the disk resident as well as the memory resident information.
+
+A copy of a pointer to an {\bf Obit\-Table\-IDI\_\-UV\_\-DATA}{\rm (p.\,\pageref{structObitTableIDI__UV__DATA})} should always be made using the Obit\-Table\-IDI\_\-UV\_\-DATARef function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-Table\-IDI\_\-UV\_\-DATA}{\rm (p.\,\pageref{structObitTableIDI__UV__DATA})} or changing a pointer, the function Obit\-Table\-IDI\_\-UV\_\-DATAUnref will decrement the reference count and destroy the object when the reference count hits 0.\subsection{I/O}\label{ObitTableIDI__UV__DATA_8h_ObitTableIDI_UV_DATAUsage}
+Visibility data is available after an input object is \char`\"{}Opened\char`\"{} and \char`\"{}Read\char`\"{}. I/O optionally uses a buffer attached to the {\bf Obit\-Table\-IDI\_\-UV\_\-DATA}{\rm (p.\,\pageref{structObitTableIDI__UV__DATA})} or some external location. To Write an {\bf Obit\-Table\-IDI\_\-UV\_\-DATA}{\rm (p.\,\pageref{structObitTableIDI__UV__DATA})}, create it, open it, and write. The object should be closed to ensure all data is flushed to disk. Deletion of an {\bf Obit\-Table\-IDI\_\-UV\_\-DATA}{\rm (p.\,\pageref{structObitTableIDI__UV__DATA})} after its final unreferencing will automatically close it.
+
+\subsection{Define Documentation}
+\index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!MAXKEYCHARTABLEIDI_UV_DATA@{MAXKEYCHARTABLEIDI\_\-UV\_\-DATA}}
+\index{MAXKEYCHARTABLEIDI_UV_DATA@{MAXKEYCHARTABLEIDI\_\-UV\_\-DATA}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAXKEYCHARTABLEIDI\_\-UV\_\-DATA\ 24}\label{ObitTableIDI__UV__DATA_8h_a0}
+
+
+Number of characters for Table keyword. 
+
+\index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!ObitTableIDI_UV_DATAIsA@{ObitTableIDI\_\-UV\_\-DATAIsA}}
+\index{ObitTableIDI_UV_DATAIsA@{ObitTableIDI\_\-UV\_\-DATAIsA}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Table\-IDI\_\-UV\_\-DATAIs\-A(in)\ Obit\-Is\-A (in, Obit\-Table\-IDI\_\-UV\_\-DATAGet\-Class())}\label{ObitTableIDI__UV__DATA_8h_a3}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!ObitTableIDI_UV_DATARef@{ObitTableIDI\_\-UV\_\-DATARef}}
+\index{ObitTableIDI_UV_DATARef@{ObitTableIDI\_\-UV\_\-DATARef}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Table\-IDI\_\-UV\_\-DATARef(in)\ Obit\-Ref (in)}\label{ObitTableIDI__UV__DATA_8h_a2}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Table\-IDI\_\-UV\_\-DATA}{\rm (p.\,\pageref{structObitTableIDI__UV__DATA})}. 
+
+returns an Obit\-Table\-IDI\_\-UV\_\-DATA$\ast$. in = object to reference \index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!ObitTableIDI_UV_DATARowIsA@{ObitTableIDI\_\-UV\_\-DATARowIsA}}
+\index{ObitTableIDI_UV_DATARowIsA@{ObitTableIDI\_\-UV\_\-DATARowIsA}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Table\-IDI\_\-UV\_\-DATARow\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-Table\-IDI\_\-UV\_\-DATARow\-Get\-Class())}\label{ObitTableIDI__UV__DATA_8h_a6}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!ObitTableIDI_UV_DATARowRef@{ObitTableIDI\_\-UV\_\-DATARowRef}}
+\index{ObitTableIDI_UV_DATARowRef@{ObitTableIDI\_\-UV\_\-DATARowRef}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Table\-IDI\_\-UV\_\-DATARow\-Ref(in)\ Obit\-Ref (in)}\label{ObitTableIDI__UV__DATA_8h_a5}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Table\-IDI\_\-UV\_\-DATARow}{\rm (p.\,\pageref{structObitTableIDI__UV__DATARow})}. 
+
+returns an Obit\-Table\-IDI\_\-UV\_\-DATARow$\ast$. in = object to reference \index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!ObitTableIDI_UV_DATARowUnref@{ObitTableIDI\_\-UV\_\-DATARowUnref}}
+\index{ObitTableIDI_UV_DATARowUnref@{ObitTableIDI\_\-UV\_\-DATARowUnref}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Table\-IDI\_\-UV\_\-DATARow\-Unref(in)\ Obit\-Unref (in)}\label{ObitTableIDI__UV__DATA_8h_a4}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Table\-IDI\_\-UV\_\-DATARow}{\rm (p.\,\pageref{structObitTableIDI__UV__DATARow})} returns an Obit\-Table\-IDI\_\-UV\_\-DATARow$\ast$. 
+
+in = object to unreference \index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!ObitTableIDI_UV_DATAUnref@{ObitTableIDI\_\-UV\_\-DATAUnref}}
+\index{ObitTableIDI_UV_DATAUnref@{ObitTableIDI\_\-UV\_\-DATAUnref}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Table\-IDI\_\-UV\_\-DATAUnref(in)\ Obit\-Unref (in)}\label{ObitTableIDI__UV__DATA_8h_a1}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Table\-IDI\_\-UV\_\-DATA}{\rm (p.\,\pageref{structObitTableIDI__UV__DATA})} returns an Obit\-Table\-IDI\_\-UV\_\-DATA$\ast$. 
+
+in = object to unreference 
+
+\subsection{Function Documentation}
+\index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!newObitTableIDI_UV_DATA@{newObitTableIDI\_\-UV\_\-DATA}}
+\index{newObitTableIDI_UV_DATA@{newObitTableIDI\_\-UV\_\-DATA}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-IDI\_\-UV\_\-DATA}$\ast$ new\-Obit\-Table\-IDI\_\-UV\_\-DATA (gchar $\ast$ {\em name})}\label{ObitTableIDI__UV__DATA_8h_a11}
+
+
+Public: Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!newObitTableIDI_UV_DATARow@{newObitTableIDI\_\-UV\_\-DATARow}}
+\index{newObitTableIDI_UV_DATARow@{newObitTableIDI\_\-UV\_\-DATARow}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-IDI\_\-UV\_\-DATARow}$\ast$ new\-Obit\-Table\-IDI\_\-UV\_\-DATARow ({\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$ {\em table})}\label{ObitTableIDI__UV__DATA_8h_a8}
+
+
+Public: Constructor. 
+
+If table is open and for write, the row is attached to the buffer Initializes Row class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!newObitTableIDI_UV_DATAValue@{newObitTableIDI\_\-UV\_\-DATAValue}}
+\index{newObitTableIDI_UV_DATAValue@{newObitTableIDI\_\-UV\_\-DATAValue}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-IDI\_\-UV\_\-DATA}$\ast$ new\-Obit\-Table\-IDI\_\-UV\_\-DATAValue (gchar $\ast$ {\em name}, {\bf Obit\-Data} $\ast$ {\em file}, {\bf olong} $\ast$ {\em ver}, Obit\-IOAccess {\em access}, {\bf oint} {\em no\_\-band}, {\bf oint} {\em maxis1}, {\bf oint} {\em maxis2}, {\bf oint} {\em maxis3}, {\bf oint} {\em maxis4}, {\bf oint} {\em maxis5}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableIDI__UV__DATA_8h_a12}
+
+
+Public: Constructor from values. 
+
+Creates a new table structure and attaches to the Table\-List of file. If the specified table already exists then it is returned. Initializes class if needed on first call. Forces an update of any disk resident structures (e.g. AIPS header). \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em file}]{\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} which which the table is to be associated. \item[{\em ver}]Table version number. 0=$>$ add higher, value used returned \item[{\em access}]access (OBIT\_\-IO\_\-Read\-Only, means do not create if it doesn't exist. \item[{\em no\_\-band}]Number of frequency bands (IF) \item[{\em maxis1}][OPTIONAL] Number of pixels on axis 1 \item[{\em maxis2}][OPTIONAL] Number of pixels on axis 2 \item[{\em maxis3}][OPTIONAL] Number of pixels on axis 3 \item[{\em maxis4}][OPTIONAL] Number of pixels on axis 4 \item[{\em maxis5}][OPTIONAL] Number of pixels on axis 5 \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object, NULL on failure. \end{Desc}
+\index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!ObitTableIDI_UV_DATAClassInit@{ObitTableIDI\_\-UV\_\-DATAClassInit}}
+\index{ObitTableIDI_UV_DATAClassInit@{ObitTableIDI\_\-UV\_\-DATAClassInit}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-IDI\_\-UV\_\-DATAClass\-Init (void)}\label{ObitTableIDI__UV__DATA_8h_a10}
+
+
+Public: Class initializer. 
+
+\index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!ObitTableIDI_UV_DATAClone@{ObitTableIDI\_\-UV\_\-DATAClone}}
+\index{ObitTableIDI_UV_DATAClone@{ObitTableIDI\_\-UV\_\-DATAClone}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-IDI\_\-UV\_\-DATA}$\ast$ Obit\-Table\-IDI\_\-UV\_\-DATAClone ({\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$ {\em in}, {\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$ {\em out})}\label{ObitTableIDI__UV__DATA_8h_a15}
+
+
+Public: Copy (shallow) constructor. 
+
+\index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!ObitTableIDI_UV_DATAClose@{ObitTableIDI\_\-UV\_\-DATAClose}}
+\index{ObitTableIDI_UV_DATAClose@{ObitTableIDI\_\-UV\_\-DATAClose}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-IDI\_\-UV\_\-DATAClose ({\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableIDI__UV__DATA_8h_a21}
+
+
+Public: Close file and become inactive. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be closed. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]error code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!ObitTableIDI_UV_DATAConvert@{ObitTableIDI\_\-UV\_\-DATAConvert}}
+\index{ObitTableIDI_UV_DATAConvert@{ObitTableIDI\_\-UV\_\-DATAConvert}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-IDI\_\-UV\_\-DATA}$\ast$ Obit\-Table\-IDI\_\-UV\_\-DATAConvert ({\bf Obit\-Table} $\ast$ {\em in})}\label{ObitTableIDI__UV__DATA_8h_a16}
+
+
+Public: Convert an {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} to an {\bf Obit\-Table\-IDI\_\-UV\_\-DATA}{\rm (p.\,\pageref{structObitTableIDI__UV__DATA})}. 
+
+New object will have references to members of in. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy, will still exist afterwards and should be Unrefed if not needed. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!ObitTableIDI_UV_DATACopy@{ObitTableIDI\_\-UV\_\-DATACopy}}
+\index{ObitTableIDI_UV_DATACopy@{ObitTableIDI\_\-UV\_\-DATACopy}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-IDI\_\-UV\_\-DATA}$\ast$ Obit\-Table\-IDI\_\-UV\_\-DATACopy ({\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$ {\em in}, {\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableIDI__UV__DATA_8h_a14}
+
+
+Public: Copy (deep) constructor. 
+
+Copies are made of complex members including disk files; these will be copied applying whatever selection is associated with the input. Objects should be closed on input and will be closed on output. In order for the disk file structures to be copied, the output file must be sufficiently defined that it can be written. The copy will be attempted but no errors will be logged until both input and output have been successfully opened. {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} and {\bf Obit\-Thread}{\rm (p.\,\pageref{structObitThread})} members are only copied if the output object didn't previously exist. Parent class members are included but any derived class info is ignored. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!ObitTableIDI_UV_DATAGetClass@{ObitTableIDI\_\-UV\_\-DATAGetClass}}
+\index{ObitTableIDI_UV_DATAGetClass@{ObitTableIDI\_\-UV\_\-DATAGetClass}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Table\-IDI\_\-UV\_\-DATAGet\-Class (void)}\label{ObitTableIDI__UV__DATA_8h_a13}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!ObitTableIDI_UV_DATAOpen@{ObitTableIDI\_\-UV\_\-DATAOpen}}
+\index{ObitTableIDI_UV_DATAOpen@{ObitTableIDI\_\-UV\_\-DATAOpen}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-IDI\_\-UV\_\-DATAOpen ({\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$ {\em in}, Obit\-IOAccess {\em access}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableIDI__UV__DATA_8h_a17}
+
+
+Public: Create {\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} structures and open file. 
+
+The image descriptor is read if OBIT\_\-IO\_\-Read\-Only or OBIT\_\-IO\_\-Read\-Write and written to disk if opened OBIT\_\-IO\_\-Write\-Only. After the file has been opened the member, buffer is initialized for reading/storing the table unless member buffer\-Size is $<$0. If the requested version (\char`\"{}Ver\char`\"{} in Info\-List) is 0 then the highest numbered table of the same type is opened on Read or Read/Write, or a new table is created on on Write. The file etc. info should have been stored in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}: \begin{itemize}
+\item \char`\"{}File\-Type\char`\"{} OBIT\_\-long scalar = OBIT\_\-IO\_\-FITS (AIPS not allowed) for file type (see class documentation for details). \item \char`\"{}n\-Row\-PIO\char`\"{} OBIT\_\-long scalar = Maximum number of table rows per transfer, this is the target size for Reads (may be fewer) and is used to create buffers. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be opened. \item[{\em access}]access (OBIT\_\-IO\_\-Read\-Only,OBIT\_\-IO\_\-Read\-Write, or OBIT\_\-IO\_\-Write\-Only). If OBIT\_\-IO\_\-Write\-Only any existing data in the output file will be lost. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\end{itemize}
+\index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!ObitTableIDI_UV_DATAReadRow@{ObitTableIDI\_\-UV\_\-DATAReadRow}}
+\index{ObitTableIDI_UV_DATAReadRow@{ObitTableIDI\_\-UV\_\-DATAReadRow}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-IDI\_\-UV\_\-DATARead\-Row ({\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$ {\em in}, {\bf olong} {\em i\-IDI\_\-UV\_\-DATARow}, {\bf Obit\-Table\-IDI\_\-UV\_\-DATARow} $\ast$ {\em row}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableIDI__UV__DATA_8h_a18}
+
+
+Public: Read a table row. 
+
+Scalar values are copied but for array values, pointers into the data array are returned. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table to read \item[{\em i\-IDI\_\-UV\_\-DATARow}]Row number, -1 -$>$ next \item[{\em row}]Table Row structure to receive data \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!ObitTableIDI_UV_DATARowClassInit@{ObitTableIDI\_\-UV\_\-DATARowClassInit}}
+\index{ObitTableIDI_UV_DATARowClassInit@{ObitTableIDI\_\-UV\_\-DATARowClassInit}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-IDI\_\-UV\_\-DATARow\-Class\-Init (void)}\label{ObitTableIDI__UV__DATA_8h_a7}
+
+
+Public: Row Class initializer. 
+
+\index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!ObitTableIDI_UV_DATARowGetClass@{ObitTableIDI\_\-UV\_\-DATARowGetClass}}
+\index{ObitTableIDI_UV_DATARowGetClass@{ObitTableIDI\_\-UV\_\-DATARowGetClass}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Table\-IDI\_\-UV\_\-DATARow\-Get\-Class (void)}\label{ObitTableIDI__UV__DATA_8h_a9}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the Row class structure. \end{Desc}
+\index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!ObitTableIDI_UV_DATASetRow@{ObitTableIDI\_\-UV\_\-DATASetRow}}
+\index{ObitTableIDI_UV_DATASetRow@{ObitTableIDI\_\-UV\_\-DATASetRow}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-IDI\_\-UV\_\-DATASet\-Row ({\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$ {\em in}, {\bf Obit\-Table\-IDI\_\-UV\_\-DATARow} $\ast$ {\em row}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableIDI__UV__DATA_8h_a19}
+
+
+Public: Init a table row for write. 
+
+This is only useful prior to filling a row structure in preparation . for a Write\-Row operation. Array members of the Row structure are . pointers to independently allocated memory, this routine allows using . the table IO buffer instead of allocating yet more memory.. This routine need only be called once to initialize a Row structure for write.. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table with buffer to be written \item[{\em row}]Table Row structure to attach \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}!ObitTableIDI_UV_DATAWriteRow@{ObitTableIDI\_\-UV\_\-DATAWriteRow}}
+\index{ObitTableIDI_UV_DATAWriteRow@{ObitTableIDI\_\-UV\_\-DATAWriteRow}!ObitTableIDI_UV_DATA.h@{Obit\-Table\-IDI\_\-UV\_\-DATA.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-IDI\_\-UV\_\-DATAWrite\-Row ({\bf Obit\-Table\-IDI\_\-UV\_\-DATA} $\ast$ {\em in}, {\bf olong} {\em i\-IDI\_\-UV\_\-DATARow}, {\bf Obit\-Table\-IDI\_\-UV\_\-DATARow} $\ast$ {\em row}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableIDI__UV__DATA_8h_a20}
+
+
+Public: Write a table row. 
+
+Before calling this routine, the row structure needs to be initialized and filled with data. The array members of the row structure are pointers to independently allocated memory. These pointers can be set to the correct table buffer locations using Obit\-Table\-IDI\_\-UV\_\-DATASet\-Row \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table to read \item[{\em i\-IDI\_\-UV\_\-DATARow}]Row number, -1 -$>$ next \item[{\em row}]Table Row structure containing data \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}

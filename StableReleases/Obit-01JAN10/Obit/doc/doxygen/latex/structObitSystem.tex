@@ -1,0 +1,169 @@
+\section{Obit\-System Struct Reference}
+\label{structObitSystem}\index{ObitSystem@{ObitSystem}}
+Obit\-System Class structure.  
+
+
+{\tt \#include $<$Obit\-System.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+gchar $\ast$ {\bf pgm\-Name}
+\begin{CompactList}\small\item\em Program name. \item\end{CompactList}\item 
+{\bf olong} {\bf pgm\-Number}
+\begin{CompactList}\small\item\em Program number. \item\end{CompactList}\item 
+{\bf olong} {\bf number\-Scratch}
+\begin{CompactList}\small\item\em Number of scratch files registered (not number current in list). \item\end{CompactList}\item 
+{\bf olong} {\bf number\-AIPSdisk}
+\begin{CompactList}\small\item\em Number of AIPS disks. \item\end{CompactList}\item 
+{\bf olong} {\bf number\-FITSdisk}
+\begin{CompactList}\small\item\em Number of FITS disks. \item\end{CompactList}\item 
+{\bf olong} {\bf AIPSuser}
+\begin{CompactList}\small\item\em AIPS user number. \item\end{CompactList}\item 
+{\bf olong} {\bf last\-Disk}
+\begin{CompactList}\small\item\em disk number of last scratch file assigned \item\end{CompactList}\item 
+{\bf olong} {\bf number}
+\begin{CompactList}\small\item\em Number of entries in scratch\-List. \item\end{CompactList}\item 
+GSList $\ast$ {\bf scratch\-List}
+\begin{CompactList}\small\item\em glib singly linked list for registered scratch files \item\end{CompactList}\item 
+{\bf Obit\-Err} $\ast$ {\bf err}
+\begin{CompactList}\small\item\em Error/message object. \item\end{CompactList}\item 
+time\_\-t {\bf start\-Time}
+\begin{CompactList}\small\item\em Start clock time. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-System Class structure. 
+
+This class contains {\bf Obit}{\rm (p.\,\pageref{structObit})} system-wide information 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitSystem@{Obit\-System}!AIPSuser@{AIPSuser}}
+\index{AIPSuser@{AIPSuser}!ObitSystem@{Obit\-System}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-System::AIPSuser}}\label{structObitSystem_o10}
+
+
+AIPS user number. 
+
+\index{ObitSystem@{Obit\-System}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitSystem@{Obit\-System}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-System::Class\-Info}}\label{structObitSystem_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitSystem@{Obit\-System}!err@{err}}
+\index{err@{err}!ObitSystem@{Obit\-System}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Err}$\ast$ {\bf Obit\-System::err}}\label{structObitSystem_o14}
+
+
+Error/message object. 
+
+\index{ObitSystem@{Obit\-System}!lastDisk@{lastDisk}}
+\index{lastDisk@{lastDisk}!ObitSystem@{Obit\-System}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-System::last\-Disk}}\label{structObitSystem_o11}
+
+
+disk number of last scratch file assigned 
+
+\index{ObitSystem@{Obit\-System}!name@{name}}
+\index{name@{name}!ObitSystem@{Obit\-System}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-System::name}}\label{structObitSystem_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitSystem@{Obit\-System}!number@{number}}
+\index{number@{number}!ObitSystem@{Obit\-System}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-System::number}}\label{structObitSystem_o12}
+
+
+Number of entries in scratch\-List. 
+
+\index{ObitSystem@{Obit\-System}!numberAIPSdisk@{numberAIPSdisk}}
+\index{numberAIPSdisk@{numberAIPSdisk}!ObitSystem@{Obit\-System}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-System::number\-AIPSdisk}}\label{structObitSystem_o8}
+
+
+Number of AIPS disks. 
+
+\index{ObitSystem@{Obit\-System}!numberFITSdisk@{numberFITSdisk}}
+\index{numberFITSdisk@{numberFITSdisk}!ObitSystem@{Obit\-System}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-System::number\-FITSdisk}}\label{structObitSystem_o9}
+
+
+Number of FITS disks. 
+
+\index{ObitSystem@{Obit\-System}!numberScratch@{numberScratch}}
+\index{numberScratch@{numberScratch}!ObitSystem@{Obit\-System}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-System::number\-Scratch}}\label{structObitSystem_o7}
+
+
+Number of scratch files registered (not number current in list). 
+
+\index{ObitSystem@{Obit\-System}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitSystem@{Obit\-System}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-System::Obit\-Id}}\label{structObitSystem_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitSystem@{Obit\-System}!pgmName@{pgmName}}
+\index{pgmName@{pgmName}!ObitSystem@{Obit\-System}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-System::pgm\-Name}}\label{structObitSystem_o5}
+
+
+Program name. 
+
+\index{ObitSystem@{Obit\-System}!pgmNumber@{pgmNumber}}
+\index{pgmNumber@{pgmNumber}!ObitSystem@{Obit\-System}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-System::pgm\-Number}}\label{structObitSystem_o6}
+
+
+Program number. 
+
+\index{ObitSystem@{Obit\-System}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitSystem@{Obit\-System}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-System::Reference\-Count}}\label{structObitSystem_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitSystem@{Obit\-System}!scratchList@{scratchList}}
+\index{scratchList@{scratchList}!ObitSystem@{Obit\-System}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}GSList$\ast$ {\bf Obit\-System::scratch\-List}}\label{structObitSystem_o13}
+
+
+glib singly linked list for registered scratch files 
+
+\index{ObitSystem@{Obit\-System}!startTime@{startTime}}
+\index{startTime@{startTime}!ObitSystem@{Obit\-System}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}time\_\-t {\bf Obit\-System::start\-Time}}\label{structObitSystem_o15}
+
+
+Start clock time. 
+
+\index{ObitSystem@{Obit\-System}!thread@{thread}}
+\index{thread@{thread}!ObitSystem@{Obit\-System}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-System::thread}}\label{structObitSystem_o4}
+
+
+Threading info member object. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-System.h}\end{CompactItemize}

@@ -1,0 +1,338 @@
+\section{Obit\-Image\-Desc.h File Reference}
+\label{ObitImageDesc_8h}\index{ObitImageDesc.h@{ObitImageDesc.h}}
+{\bf Obit\-Image\-Desc}{\rm (p.\,\pageref{structObitImageDesc})} {\bf Obit}{\rm (p.\,\pageref{structObit})} Image descriptor class definition. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Info\-List.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-Image\-Desc}
+\begin{CompactList}\small\item\em Obit\-Image\-Desc Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Image\-Desc\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-Image\-Desc\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Image\-Desc}{\rm (p.\,\pageref{structObitImageDesc})} returns a Obit\-Image\-Desc$\ast$ (NULL). \item\end{CompactList}\item 
+\#define {\bf Obit\-Image\-Desc\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Image\-Desc}{\rm (p.\,\pageref{structObitImageDesc})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Image\-Desc\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-Image\-Desc\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\item 
+\#define {\bf IM\_\-MAXDIM}\ 7
+\begin{CompactList}\small\item\em Maximum number of dimensions. \item\end{CompactList}\item 
+\#define {\bf IMLEN\_\-VALUE}\ 41
+\begin{CompactList}\small\item\em Maximum length of descriptor string value. \item\end{CompactList}\item 
+\#define {\bf IMLEN\_\-KEYWORD}\ 21
+\begin{CompactList}\small\item\em Maximum length of descriptor keyword. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Enumerations}
+\begin{CompactItemize}
+\item 
+enum {\bf obit\-Coord\-Type} \{ {\bf OBIT\_\-Equatorial}, 
+{\bf OBIT\_\-Galactic}, 
+{\bf OBIT\_\-Ecliptic}
+ \}
+\begin{CompactList}\small\item\em enum for coordinate system types (Equatorial, Galactic, Ecliptic) \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Image\-Desc\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Desc} $\ast$ {\bf new\-Obit\-Image\-Desc} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Image\-Desc\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Return class pointer. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Desc} $\ast$ {\bf Obit\-Image\-Desc\-Copy} ({\bf Obit\-Image\-Desc} $\ast$in, {\bf Obit\-Image\-Desc} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy Image\-Desc. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Desc\-Copy\-Desc} ({\bf Obit\-Image\-Desc} $\ast$in, {\bf Obit\-Image\-Desc} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy descriptive (nonstructural) information. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Desc} $\ast$ {\bf Obit\-Image\-Desc\-Default} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Image\-Desc. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Desc\-Index} ({\bf Obit\-Image\-Desc} $\ast$in)
+\begin{CompactList}\small\item\em Public: Index for easier access. \item\end{CompactList}\item 
+gboolean {\bf Obit\-Image\-Desc\-Cvt\-Pixel} ({\bf Obit\-Image\-Desc} $\ast$in, {\bf Obit\-Image\-Desc} $\ast$out, {\bf ofloat} $\ast$in\-Pixel, {\bf ofloat} $\ast$out\-Pixel, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Convert pixels on one image to those in another. \item\end{CompactList}\item 
+gboolean {\bf Obit\-Image\-Desc\-Cvt\-Zern} ({\bf Obit\-Image\-Desc} $\ast$in, {\bf Obit\-Image\-Desc} $\ast$out, {\bf olong} n\-Zern, {\bf ofloat} $\ast$ZCoef, {\bf ofloat} $\ast$in\-Pixel, {\bf ofloat} $\ast$out\-Pixel, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Convert pixels on one image to those in another with Zernike corrections. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Desc\-Get\-Pos} ({\bf Obit\-Image\-Desc} $\ast$in, {\bf ofloat} $\ast$in\-Pixel, {\bf odouble} $\ast$pos, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Determine the location of a pixel in an image. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Desc\-Get\-Pixel} ({\bf Obit\-Image\-Desc} $\ast$in, {\bf odouble} $\ast$pos, {\bf ofloat} $\ast$out\-Pixel, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Determine the pixel of a location in an image. \item\end{CompactList}\item 
+gboolean {\bf Obit\-Image\-Desc\-Overlap} ({\bf Obit\-Image\-Desc} $\ast$in1, {\bf Obit\-Image\-Desc} $\ast$in2, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Is there overlap in two images. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Obit\-Image\-Desc\-Rotate} ({\bf Obit\-Image\-Desc} $\ast$in)
+\begin{CompactList}\small\item\em Public: Tell rotation angle of image. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Desc\-Get\-Point} ({\bf Obit\-Image\-Desc} $\ast$in, {\bf odouble} $\ast$RAPnt, {\bf odouble} $\ast$Dec\-Pnt)
+\begin{CompactList}\small\item\em Public: Tell Pointing position. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Obit\-Image\-Desc\-Angle} ({\bf Obit\-Image\-Desc} $\ast$in, {\bf ofloat} y, {\bf ofloat} x)
+\begin{CompactList}\small\item\em Public: Determine the angular distance to the antenna pointing position. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Image\-Desc}{\rm (p.\,\pageref{structObitImageDesc})} {\bf Obit}{\rm (p.\,\pageref{structObit})} Image descriptor class definition. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} class.
+
+This contains information about the observations and the size and coordinates in the image. Also included are the current location of the image in an {\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})} image buffer and the specified subimaging parameters.\subsection{Usage}\label{ObitImageDesc_8h_ObitImageDescUsage}
+Instances can be obtained using the {\bf new\-Obit\-Image\-Desc}{\rm (p.\,\pageref{ObitImageDesc_8c_a6})} constructor the {\bf Obit\-Image\-Desc\-Copy}{\rm (p.\,\pageref{ObitImageDesc_8c_a8})} copy constructor or a pointer duplicated using the {\bf Obit\-Image\-Desc\-Ref}{\rm (p.\,\pageref{ObitImageDesc_8h_a1})} function. When an instance is no longer needed, use the {\bf Obit\-Image\-Desc\-Unref}{\rm (p.\,\pageref{ObitImageDesc_8h_a0})} macro to release it.
+
+\subsection{Define Documentation}
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!IM_MAXDIM@{IM\_\-MAXDIM}}
+\index{IM_MAXDIM@{IM\_\-MAXDIM}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define IM\_\-MAXDIM\ 7}\label{ObitImageDesc_8h_a3}
+
+
+Maximum number of dimensions. 
+
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!IMLEN_KEYWORD@{IMLEN\_\-KEYWORD}}
+\index{IMLEN_KEYWORD@{IMLEN\_\-KEYWORD}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define IMLEN\_\-KEYWORD\ 21}\label{ObitImageDesc_8h_a5}
+
+
+Maximum length of descriptor keyword. 
+
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!IMLEN_VALUE@{IMLEN\_\-VALUE}}
+\index{IMLEN_VALUE@{IMLEN\_\-VALUE}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define IMLEN\_\-VALUE\ 41}\label{ObitImageDesc_8h_a4}
+
+
+Maximum length of descriptor string value. 
+
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!ObitImageDescIsA@{ObitImageDescIsA}}
+\index{ObitImageDescIsA@{ObitImageDescIsA}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Image\-Desc\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-Image\-Desc\-Get\-Class())}\label{ObitImageDesc_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!ObitImageDescRef@{ObitImageDescRef}}
+\index{ObitImageDescRef@{ObitImageDescRef}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Image\-Desc\-Ref(in)\ Obit\-Ref (in)}\label{ObitImageDesc_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Image\-Desc}{\rm (p.\,\pageref{structObitImageDesc})}. 
+
+returns a Obit\-Image\-Desc$\ast$. in = object to reference \index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!ObitImageDescUnref@{ObitImageDescUnref}}
+\index{ObitImageDescUnref@{ObitImageDescUnref}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Image\-Desc\-Unref(in)\ Obit\-Unref (in)}\label{ObitImageDesc_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Image\-Desc}{\rm (p.\,\pageref{structObitImageDesc})} returns a Obit\-Image\-Desc$\ast$ (NULL). 
+
+\begin{itemize}
+\item in = object to unreference. \end{itemize}
+
+
+\subsection{Enumeration Type Documentation}
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!obitCoordType@{obitCoordType}}
+\index{obitCoordType@{obitCoordType}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}enum {\bf obit\-Coord\-Type}}\label{ObitImageDesc_8h_a24}
+
+
+enum for coordinate system types (Equatorial, Galactic, Ecliptic) 
+
+\begin{Desc}
+\item[Enumeration values: ]\par
+\begin{description}
+\index{OBIT_Equatorial@{OBIT\_\-Equatorial}!ObitImageDesc.h@{ObitImageDesc.h}}\index{ObitImageDesc.h@{ObitImageDesc.h}!OBIT_Equatorial@{OBIT\_\-Equatorial}}\item[{\em 
+OBIT\_\-Equatorial\label{ObitImageDesc_8h_a24a6}
+}]Equatorial (RA, Dec). \index{OBIT_Galactic@{OBIT\_\-Galactic}!ObitImageDesc.h@{ObitImageDesc.h}}\index{ObitImageDesc.h@{ObitImageDesc.h}!OBIT_Galactic@{OBIT\_\-Galactic}}\item[{\em 
+OBIT\_\-Galactic\label{ObitImageDesc_8h_a24a7}
+}]Galactic (GLONG, GLAT). \index{OBIT_Ecliptic@{OBIT\_\-Ecliptic}!ObitImageDesc.h@{ObitImageDesc.h}}\index{ObitImageDesc.h@{ObitImageDesc.h}!OBIT_Ecliptic@{OBIT\_\-Ecliptic}}\item[{\em 
+OBIT\_\-Ecliptic\label{ObitImageDesc_8h_a24a8}
+}]Ecliptic (ELONG, ELAT). \end{description}
+\end{Desc}
+
+
+
+\subsection{Function Documentation}
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!newObitImageDesc@{newObitImageDesc}}
+\index{newObitImageDesc@{newObitImageDesc}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Desc}$\ast$ new\-Obit\-Image\-Desc (gchar $\ast$ {\em name})}\label{ObitImageDesc_8h_a10}
+
+
+Public: Constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]Optional name for object, NULL = don't use \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to object created. \end{Desc}
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!ObitImageDescAngle@{ObitImageDescAngle}}
+\index{ObitImageDescAngle@{ObitImageDescAngle}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} Obit\-Image\-Desc\-Angle ({\bf Obit\-Image\-Desc} $\ast$ {\em in}, {\bf ofloat} {\em y}, {\bf ofloat} {\em x})}\label{ObitImageDesc_8h_a23}
+
+
+Public: Determine the angular distance to the antenna pointing position. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Image descriptor \item[{\em x}]X offset in deg from ref pixel in in This should be in the same system and equinox as in in. \item[{\em y}]Y offset in deg from ref pixel in in \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]angular distance on the sky (deg) \end{Desc}
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!ObitImageDescClassInit@{ObitImageDescClassInit}}
+\index{ObitImageDescClassInit@{ObitImageDescClassInit}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Desc\-Class\-Init (void)}\label{ObitImageDesc_8h_a9}
+
+
+Public: Class initializer. 
+
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!ObitImageDescCopy@{ObitImageDescCopy}}
+\index{ObitImageDescCopy@{ObitImageDescCopy}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Desc}$\ast$ Obit\-Image\-Desc\-Copy ({\bf Obit\-Image\-Desc} $\ast$ {\em in}, {\bf Obit\-Image\-Desc} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImageDesc_8h_a12}
+
+
+Public: Copy Image\-Desc. 
+
+The output descriptor will have the size and reference pixel modified to reflect subimaging on the input, i.e. the output descriptor describes the input after being read. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be copied. \item[{\em out}]Pointer to object to be written. If NULL then a new structure is created. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Pointer to new object. \end{Desc}
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!ObitImageDescCopyDesc@{ObitImageDescCopyDesc}}
+\index{ObitImageDescCopyDesc@{ObitImageDescCopyDesc}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Desc\-Copy\-Desc ({\bf Obit\-Image\-Desc} $\ast$ {\em in}, {\bf Obit\-Image\-Desc} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImageDesc_8h_a13}
+
+
+Public: Copy descriptive (nonstructural) information. 
+
+things that don't define the structure). \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be copied. \item[{\em out}]Pointer to object to be written. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack \end{description}
+\end{Desc}
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!ObitImageDescCvtPixel@{ObitImageDescCvtPixel}}
+\index{ObitImageDescCvtPixel@{ObitImageDescCvtPixel}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Image\-Desc\-Cvt\-Pixel ({\bf Obit\-Image\-Desc} $\ast$ {\em in}, {\bf Obit\-Image\-Desc} $\ast$ {\em out}, {\bf ofloat} $\ast$ {\em in\-Pixel}, {\bf ofloat} $\ast$ {\em out\-Pixel}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImageDesc_8h_a16}
+
+
+Public: Convert pixels on one image to those in another. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]input image descriptor \item[{\em out}]output image descriptor \item[{\em in\-Pixel}]Pixel location in input image \item[{\em out\-Pixel}][out] Pixel location in input image \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if out\-Pixel is in out, else FALSE \end{Desc}
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!ObitImageDescCvtZern@{ObitImageDescCvtZern}}
+\index{ObitImageDescCvtZern@{ObitImageDescCvtZern}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Image\-Desc\-Cvt\-Zern ({\bf Obit\-Image\-Desc} $\ast$ {\em in}, {\bf Obit\-Image\-Desc} $\ast$ {\em out}, {\bf olong} {\em n\-Zern}, {\bf ofloat} $\ast$ {\em ZCoef}, {\bf ofloat} $\ast$ {\em in\-Pixel}, {\bf ofloat} $\ast$ {\em out\-Pixel}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImageDesc_8h_a17}
+
+
+Public: Convert pixels on one image to those in another with Zernike corrections. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]input image descriptor \item[{\em out}]output image descriptor \item[{\em n\-Zern}]Number of Zernike terms, can handle up to 17 \item[{\em ZCoef}]Array of Zernike coefficients (piston ignored) \item[{\em in\-Pixel}]Pixel location in input image \item[{\em out\-Pixel}][out] Pixel location in input image \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if out\-Pixel is in out, else FALSE \end{Desc}
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!ObitImageDescDefault@{ObitImageDescDefault}}
+\index{ObitImageDescDefault@{ObitImageDescDefault}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Desc}$\ast$ Obit\-Image\-Desc\-Default (gchar $\ast$ {\em name})}\label{ObitImageDesc_8h_a14}
+
+
+Public: Default Image\-Desc. 
+
+Default is a 1 x 1 floating array \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]Optional name for object, NULL = don't use \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Pointer to new object. \end{Desc}
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!ObitImageDescGetClass@{ObitImageDescGetClass}}
+\index{ObitImageDescGetClass@{ObitImageDescGetClass}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Image\-Desc\-Get\-Class (void)}\label{ObitImageDesc_8h_a11}
+
+
+Public: Return class pointer. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!ObitImageDescGetPixel@{ObitImageDescGetPixel}}
+\index{ObitImageDescGetPixel@{ObitImageDescGetPixel}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Desc\-Get\-Pixel ({\bf Obit\-Image\-Desc} $\ast$ {\em in}, {\bf odouble} $\ast$ {\em pos}, {\bf ofloat} $\ast$ {\em out\-Pixel}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImageDesc_8h_a19}
+
+
+Public: Determine the pixel of a location in an image. 
+
+to pixel in\-Pixel in image described by in. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]input image descriptor \item[{\em pos}]celestial coordinate (RA, dec in deg) \item[{\em out\-Pixel}][out] Pixel location in input image \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack \end{description}
+\end{Desc}
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!ObitImageDescGetPoint@{ObitImageDescGetPoint}}
+\index{ObitImageDescGetPoint@{ObitImageDescGetPoint}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Desc\-Get\-Point ({\bf Obit\-Image\-Desc} $\ast$ {\em in}, {\bf odouble} $\ast$ {\em RAPnt}, {\bf odouble} $\ast$ {\em Dec\-Pnt})}\label{ObitImageDesc_8h_a22}
+
+
+Public: Tell Pointing position. 
+
+If observed value given in in (not both 0), these are returned, else the reference position. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Image descriptor \item[\mbox{$\rightarrow$} {\em RAPnt}]Observed RA (deg) \item[\mbox{$\rightarrow$} {\em Dec\-Pnt}]Observed Dec (deg) \end{description}
+\end{Desc}
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!ObitImageDescGetPos@{ObitImageDescGetPos}}
+\index{ObitImageDescGetPos@{ObitImageDescGetPos}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Desc\-Get\-Pos ({\bf Obit\-Image\-Desc} $\ast$ {\em in}, {\bf ofloat} $\ast$ {\em in\-Pixel}, {\bf odouble} $\ast$ {\em pos}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImageDesc_8h_a18}
+
+
+Public: Determine the location of a pixel in an image. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]input image descriptor \item[{\em in\-Pixel}]Pixel location in input image \item[{\em pos}][out] celestial coordinate (RA, dec in deg) \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack \end{description}
+\end{Desc}
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!ObitImageDescIndex@{ObitImageDescIndex}}
+\index{ObitImageDescIndex@{ObitImageDescIndex}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Desc\-Index ({\bf Obit\-Image\-Desc} $\ast$ {\em in})}\label{ObitImageDesc_8h_a15}
+
+
+Public: Index for easier access. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object. \end{description}
+\end{Desc}
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!ObitImageDescOverlap@{ObitImageDescOverlap}}
+\index{ObitImageDescOverlap@{ObitImageDescOverlap}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Image\-Desc\-Overlap ({\bf Obit\-Image\-Desc} $\ast$ {\em in1}, {\bf Obit\-Image\-Desc} $\ast$ {\em in2}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImageDesc_8h_a20}
+
+
+Public: Is there overlap in two images. 
+
+a pair of image descriptors Tes if if the difference in ra and dec is less than the sum of the halfwidths. Nonlinearities of coordinates ignored but test is somewhat generous. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in1}]first input image descriptor \item[{\em in2}]second input image descriptor \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if there is overlap, else FALSE \end{Desc}
+\index{ObitImageDesc.h@{Obit\-Image\-Desc.h}!ObitImageDescRotate@{ObitImageDescRotate}}
+\index{ObitImageDescRotate@{ObitImageDescRotate}!ObitImageDesc.h@{Obit\-Image\-Desc.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} Obit\-Image\-Desc\-Rotate ({\bf Obit\-Image\-Desc} $\ast$ {\em im\-Desc})}\label{ObitImageDesc_8h_a21}
+
+
+Public: Tell rotation angle of image. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em im\-Desc}]Image descriptor \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]rotation angle on sky (of u,v,w) in deg. \end{Desc}

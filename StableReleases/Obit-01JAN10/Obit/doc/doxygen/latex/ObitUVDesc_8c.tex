@@ -1,0 +1,304 @@
+\section{Obit\-UVDesc.c File Reference}
+\label{ObitUVDesc_8c}\index{ObitUVDesc.c@{ObitUVDesc.c}}
+{\bf Obit\-UVDesc}{\rm (p.\,\pageref{structObitUVDesc})} {\bf Obit}{\rm (p.\,\pageref{structObit})} UV data descriptor class definition. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVDesc.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-FQ.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-FQUtil.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Sky\-Geom.h\char`\"{}}\par
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf AINT}(x)\ ({\bf odouble})(({\bf olong})(x))
+\begin{CompactList}\small\item\em truncate double to integer precision \item\end{CompactList}\item 
+\#define {\bf DG2RAD}\ G\_\-PI / 180.0
+\begin{CompactList}\small\item\em Degrees to radians factor. \item\end{CompactList}\item 
+\#define {\bf RAD2DG}\ 180.0 / G\_\-PI
+\begin{CompactList}\small\item\em Radians to degrees factor. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-UVDesc\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-UVDesc\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-UVDesc} $\ast$ {\bf new\-Obit\-UVDesc} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-UVDesc\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Return class pointer. \item\end{CompactList}\item 
+{\bf Obit\-UVDesc} $\ast$ {\bf Obit\-UVDesc\-Copy} ({\bf Obit\-UVDesc} $\ast$in, {\bf Obit\-UVDesc} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy UVDesc. \item\end{CompactList}\item 
+void {\bf Obit\-UVDesc\-Copy\-Desc} ({\bf Obit\-UVDesc} $\ast$in, {\bf Obit\-UVDesc} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy descriptive (nonstructural) information. \item\end{CompactList}\item 
+void {\bf Obit\-UVDesc\-Copy\-Freq} ({\bf Obit\-UVDesc} $\ast$in, {\bf Obit\-UVDesc} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy Frequency information arrays. \item\end{CompactList}\item 
+void {\bf Obit\-UVDesc\-Index} ({\bf Obit\-UVDesc} $\ast$in)
+\begin{CompactList}\small\item\em Public: Index for easier access. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-UVDesc\-Regular\-Indices} ({\bf Obit\-UVDesc} $\ast$in)
+\begin{CompactList}\small\item\em Public: Find the indices correspondoning to regular parameters. \item\end{CompactList}\item 
+void {\bf Obit\-UVDesc\-Get\-Freq} ({\bf Obit\-UVDesc} $\ast$in, {\bf Obit} $\ast$fqtab, {\bf odouble} $\ast$Sou\-IFOff, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get Frequency arrays. \item\end{CompactList}\item 
+void {\bf Obit\-UVDesc\-Date2JD} (const gchar $\ast$date, {\bf odouble} $\ast$JD)
+\begin{CompactList}\small\item\em Public: Convert Date string to Julian Date. \item\end{CompactList}\item 
+void {\bf Obit\-UVDesc\-JD2Date} ({\bf odouble} JD, gchar $\ast$date)
+\begin{CompactList}\small\item\em Public: Convert Julian Date to Date string. \item\end{CompactList}\item 
+void {\bf Obit\-UVDesc\-Shift\-Phase} ({\bf Obit\-UVDesc} $\ast$uv\-Desc, {\bf Obit\-Image\-Desc} $\ast$im\-Desc, {\bf ofloat} dxyzc[3], {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get position phase shift parameters from image descriptor. \item\end{CompactList}\item 
+void {\bf Obit\-UVDesc\-Shift\-Posn} ({\bf Obit\-UVDesc} $\ast$uv\-Desc, {\bf ofloat} x\-Shift, {\bf ofloat} y\-Shift, {\bf ofloat} dxyzc[3], {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get position phase shift parameters from a shift. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Obit\-UVDesc\-Rotate} ({\bf Obit\-UVDesc} $\ast$uv\-Desc)
+\begin{CompactList}\small\item\em Public: Tell rotation angle of uv data. \item\end{CompactList}\item 
+gboolean {\bf Obit\-UVDesc\-Shift3DMatrix} ({\bf Obit\-UVDesc} $\ast$uv\-Desc, {\bf Obit\-Image\-Desc} $\ast$im\-Desc, {\bf ofloat} URot3D[3][3], {\bf ofloat} PRot3D[3][3])
+\begin{CompactList}\small\item\em Public: Phase and UV re-projection matrices for 3D imaging. \item\end{CompactList}\item 
+gboolean {\bf Obit\-UVDesc\-Shift3DPos} ({\bf Obit\-UVDesc} $\ast$uv\-Desc, {\bf ofloat} shift[2], {\bf ofloat} mrotat, {\bf ofloat} URot3D[3][3], {\bf ofloat} PRot3D[3][3])
+\begin{CompactList}\small\item\em Public: Phase and UV re-projection matrices for 3D imaging for a given posn. \item\end{CompactList}\item 
+void {\bf Obit\-UVDesc\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-UVDesc}{\rm (p.\,\pageref{structObitUVDesc})} {\bf Obit}{\rm (p.\,\pageref{structObit})} UV data descriptor class definition. 
+
+This contains information about the observations and the coordinates in the image.
+
+\subsection{Define Documentation}
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!AINT@{AINT}}
+\index{AINT@{AINT}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define AINT(x)\ ({\bf odouble})(({\bf olong})(x))}\label{ObitUVDesc_8c_a0}
+
+
+truncate double to integer precision 
+
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!DG2RAD@{DG2RAD}}
+\index{DG2RAD@{DG2RAD}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define DG2RAD\ G\_\-PI / 180.0}\label{ObitUVDesc_8c_a1}
+
+
+Degrees to radians factor. 
+
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!RAD2DG@{RAD2DG}}
+\index{RAD2DG@{RAD2DG}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define RAD2DG\ 180.0 / G\_\-PI}\label{ObitUVDesc_8c_a2}
+
+
+Radians to degrees factor. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!newObitUVDesc@{newObitUVDesc}}
+\index{newObitUVDesc@{newObitUVDesc}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVDesc}$\ast$ new\-Obit\-UVDesc (gchar $\ast$ {\em name})}\label{ObitUVDesc_8c_a9}
+
+
+Public: Constructor. 
+
+\begin{Desc}
+\item[Returns:]pointer to object created. \end{Desc}
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!ObitUVDescClassInit@{ObitUVDescClassInit}}
+\index{ObitUVDescClassInit@{ObitUVDescClassInit}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVDesc\-Class\-Init (void)}\label{ObitUVDesc_8c_a24}
+
+
+Public: Class initializer. 
+
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!ObitUVDescClear@{ObitUVDescClear}}
+\index{ObitUVDescClear@{ObitUVDescClear}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVDesc\-Clear (gpointer {\em inn})}\label{ObitUVDesc_8c_a7}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. \end{description}
+\end{Desc}
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!ObitUVDescCopy@{ObitUVDescCopy}}
+\index{ObitUVDescCopy@{ObitUVDescCopy}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVDesc}$\ast$ Obit\-UVDesc\-Copy ({\bf Obit\-UVDesc} $\ast$ {\em in}, {\bf Obit\-UVDesc} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVDesc_8c_a11}
+
+
+Public: Copy UVDesc. 
+
+The output descriptor will have the size and reference pixel modified to reflect subimaging on the input, i.e. the output descriptor describes the input. Output will have frequency arrays deallocated, if necessary use Obit\-UVDesc\-Get\-Freq to rebuild. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be copied. \item[{\em out}]Pointer to object to be written. If NULL then a new structure is created. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Pointer to new object. \end{Desc}
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!ObitUVDescCopyDesc@{ObitUVDescCopyDesc}}
+\index{ObitUVDescCopyDesc@{ObitUVDescCopyDesc}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVDesc\-Copy\-Desc ({\bf Obit\-UVDesc} $\ast$ {\em in}, {\bf Obit\-UVDesc} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVDesc_8c_a12}
+
+
+Public: Copy descriptive (nonstructural) information. 
+
+things that don't define the structure). \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be copied. \item[{\em out}]Pointer to object to be written. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack \end{description}
+\end{Desc}
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!ObitUVDescCopyFreq@{ObitUVDescCopyFreq}}
+\index{ObitUVDescCopyFreq@{ObitUVDescCopyFreq}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVDesc\-Copy\-Freq ({\bf Obit\-UVDesc} $\ast$ {\em in}, {\bf Obit\-UVDesc} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVDesc_8c_a13}
+
+
+Public: Copy Frequency information arrays. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be copied. \item[{\em out}]Pointer to object to be written. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack \end{description}
+\end{Desc}
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!ObitUVDescDate2JD@{ObitUVDescDate2JD}}
+\index{ObitUVDescDate2JD@{ObitUVDescDate2JD}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVDesc\-Date2JD (const gchar $\ast$ {\em date}, {\bf odouble} $\ast$ {\em JD})}\label{ObitUVDesc_8c_a17}
+
+
+Public: Convert Date string to Julian Date. 
+
+Algorithm from ACM Algorithm number 199 This routine is good from 1 Mar 1900 indefinitely. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em date}][in] Date string \item[{\em date}][out] Julian date. \end{description}
+\end{Desc}
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!ObitUVDescGetClass@{ObitUVDescGetClass}}
+\index{ObitUVDescGetClass@{ObitUVDescGetClass}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-UVDesc\-Get\-Class (void)}\label{ObitUVDesc_8c_a10}
+
+
+Public: Return class pointer. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!ObitUVDescGetFreq@{ObitUVDescGetFreq}}
+\index{ObitUVDescGetFreq@{ObitUVDescGetFreq}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVDesc\-Get\-Freq ({\bf Obit\-UVDesc} $\ast$ {\em in}, {\bf Obit} $\ast$ {\em fqtab}, {\bf odouble} $\ast$ {\em Sou\-IFOff}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVDesc_8c_a16}
+
+
+Public: Get Frequency arrays. 
+
+These are the freq\-Arr, fscale, freq\-IF sideband, and ch\-Inc\-IF array members. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Descriptor to update. \item[{\em fqtab}]FQ table with IF frequency information Actually an {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} but passed as parent class to avoid If NUll no FQ table available - use defaults from header circular definitions inf include files. \item[{\em Sou\-IFOff}]if Non\-NULL, source dependent values to be added to the IF frequencies. Includes selection by IF. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!ObitUVDescIndex@{ObitUVDescIndex}}
+\index{ObitUVDescIndex@{ObitUVDescIndex}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVDesc\-Index ({\bf Obit\-UVDesc} $\ast$ {\em in})}\label{ObitUVDesc_8c_a14}
+
+
+Public: Index for easier access. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object. \end{description}
+\end{Desc}
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!ObitUVDescInit@{ObitUVDescInit}}
+\index{ObitUVDescInit@{ObitUVDescInit}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVDesc\-Init (gpointer {\em inn})}\label{ObitUVDesc_8c_a6}
+
+
+Private: Initialize newly instantiated object. 
+
+Does (recursive) initialization of base class members before this class. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!ObitUVDescJD2Date@{ObitUVDescJD2Date}}
+\index{ObitUVDescJD2Date@{ObitUVDescJD2Date}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVDesc\-JD2Date ({\bf odouble} {\em JD}, gchar $\ast$ {\em date})}\label{ObitUVDesc_8c_a18}
+
+
+Public: Convert Julian Date to Date string. 
+
+Apdapted from ASM Algorithm no. 199 \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em date}][in] Julian date. \item[{\em date}][out] Date string, Must be at least 11 characters. \end{description}
+\end{Desc}
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!ObitUVDescRegularIndices@{ObitUVDescRegularIndices}}
+\index{ObitUVDescRegularIndices@{ObitUVDescRegularIndices}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-UVDesc\-Regular\-Indices ({\bf Obit\-UVDesc} $\ast$ {\em in})}\label{ObitUVDesc_8c_a15}
+
+
+Public: Find the indices correspondoning to regular parameters. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the overall number of axes across all regular parameters. \end{Desc}
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!ObitUVDescRotate@{ObitUVDescRotate}}
+\index{ObitUVDescRotate@{ObitUVDescRotate}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} Obit\-UVDesc\-Rotate ({\bf Obit\-UVDesc} $\ast$ {\em uv\-Desc})}\label{ObitUVDesc_8c_a21}
+
+
+Public: Tell rotation angle of uv data. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em uv\-Desc}]UV data descriptor \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]rotation angle on sky (of u,v,w) in deg. \end{Desc}
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!ObitUVDescShift3DMatrix@{ObitUVDescShift3DMatrix}}
+\index{ObitUVDescShift3DMatrix@{ObitUVDescShift3DMatrix}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-UVDesc\-Shift3DMatrix ({\bf Obit\-UVDesc} $\ast$ {\em uv\-Desc}, {\bf Obit\-Image\-Desc} $\ast$ {\em im\-Desc}, {\bf ofloat} {\em URot3D}[3][3], {\bf ofloat} {\em PRot3D}[3][3])}\label{ObitUVDesc_8c_a22}
+
+
+Public: Phase and UV re-projection matrices for 3D imaging. 
+
+They are not needed for -NCP which should not use 3D imaging. Algorithm adapted from AIPS. PRJMAT.FOR (E. W. Greisen author) \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em uv\-Desc}]UV data descriptor giving initial position \item[{\em im\-Desc}]Image descriptor giving desired position \item[{\em URot3D}][out] 3D rotation matrix for uv plane \item[{\em PRot3D}][out] 3D rotation matrix for image plane \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if these rotation need to be applied. \end{Desc}
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!ObitUVDescShift3DPos@{ObitUVDescShift3DPos}}
+\index{ObitUVDescShift3DPos@{ObitUVDescShift3DPos}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-UVDesc\-Shift3DPos ({\bf Obit\-UVDesc} $\ast$ {\em uv\-Desc}, {\bf ofloat} {\em shift}[2], {\bf ofloat} {\em mrotat}, {\bf ofloat} {\em URot3D}[3][3], {\bf ofloat} {\em PRot3D}[3][3])}\label{ObitUVDesc_8c_a23}
+
+
+Public: Phase and UV re-projection matrices for 3D imaging for a given posn. 
+
+They are not needed for -NCP which should not use 3D imaging. Version for a given offset and rotation from the UV data Algorithm adapted from AIPS. PRJMAT.FOR (E. W. Greisen author) \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em uv\-Desc}]UV data descriptor giving initial position \item[{\em shift}]RA and Dec offsets(deg) from uv position \item[{\em mrotat}]rotation in degrees of offset image \item[{\em URot3D}][out] 3D rotation matrix for uv plane \item[{\em PRot3D}][out] 3D rotation matrix for image plane \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if these rotation need to be applied. \end{Desc}
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!ObitUVDescShiftPhase@{ObitUVDescShiftPhase}}
+\index{ObitUVDescShiftPhase@{ObitUVDescShiftPhase}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVDesc\-Shift\-Phase ({\bf Obit\-UVDesc} $\ast$ {\em uv\-Desc}, {\bf Obit\-Image\-Desc} $\ast$ {\em im\-Desc}, {\bf ofloat} {\em dxyzc}[3], {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVDesc_8c_a19}
+
+
+Public: Get position phase shift parameters from image descriptor. 
+
+Recognizes \char`\"{}-SIN\char`\"{} and \char`\"{}-NCP\char`\"{} projections. Assumes 3D imaging for -SIN and not for -NCP. Apdapted from AIPS. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em uv\-Desc}]UV data descriptor \item[{\em im\-Desc}]Image descriptor. \item[{\em dxyzc}](out) the derived shift parameters. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitUVDesc.c@{Obit\-UVDesc.c}!ObitUVDescShiftPosn@{ObitUVDescShiftPosn}}
+\index{ObitUVDescShiftPosn@{ObitUVDescShiftPosn}!ObitUVDesc.c@{Obit\-UVDesc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVDesc\-Shift\-Posn ({\bf Obit\-UVDesc} $\ast$ {\em uv\-Desc}, {\bf ofloat} {\em x\-Shift}, {\bf ofloat} {\em y\-Shift}, {\bf ofloat} {\em dxyzc}[3], {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVDesc_8c_a20}
+
+
+Public: Get position phase shift parameters from a shift. 
+
+Recognizes \char`\"{}-SIN\char`\"{} and \char`\"{}-NCP\char`\"{} projections. Assumes 3D imaging for -SIN and not for -NCP. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em uv\-Desc}]UV data descriptor \item[{\em x\-Shift}]Shift from ra in deg. \item[{\em y\-Shift}]Shift from dec in deg. \item[{\em dxyzc}](out) the derived shift parameters. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}

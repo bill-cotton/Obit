@@ -1,0 +1,491 @@
+\section{Obit\-Image.c File Reference}
+\label{ObitImage_8c}\index{ObitImage.c@{ObitImage.c}}
+{\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})} class function definitions. 
+
+{\tt \#include \char`\"{}Obit\-Image\-Desc.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Sel.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-IOImage\-FITS.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-IOImage\-AIPS.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-FITS.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-AIPSDir.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-System.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Mem.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-History.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Image\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-Image} $\ast$ {\bf new\-Obit\-Image} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+{\bf Obit\-Image} $\ast$ {\bf Obit\-Image\-From\-File\-Info} (gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$in\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create Image object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+{\bf Obit\-Image} $\ast$ {\bf new\-Obit\-Image\-Scratch} ({\bf Obit\-Image} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy Constructor for scratch file. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Image\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+gboolean {\bf Obit\-Image\-Same} ({\bf Obit\-Image} $\ast$in1, {\bf Obit\-Image} $\ast$in2, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Do two Imagess have the same underlying structures?. \item\end{CompactList}\item 
+{\bf Obit\-Image} $\ast$ {\bf Obit\-Image\-Zap} ({\bf Obit\-Image} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Delete underlying structures. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Rename} ({\bf Obit\-Image} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Rename underlying structures. \item\end{CompactList}\item 
+{\bf Obit\-Image} $\ast$ {\bf Obit\-Image\-Copy} ({\bf Obit\-Image} $\ast$in, {\bf Obit\-Image} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Clone} ({\bf Obit\-Image} $\ast$in, {\bf Obit\-Image} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Clone2} ({\bf Obit\-Image} $\ast$in1, {\bf Obit\-Image} $\ast$in2, {\bf Obit\-Image} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure of in1 on grid of in2. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Clone\-Mem} ({\bf Obit\-Image} $\ast$in, {\bf Obit\-Image} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure of in to memory resident Image out. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Image\-Open} ({\bf Obit\-Image} $\ast$in, Obit\-IOAccess access, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create {\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} structures and open file. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Image\-Close} ({\bf Obit\-Image} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Close file and become inactive. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Full\-Instantiate} ({\bf Obit\-Image} $\ast$in, gboolean exist, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Fully instantiate. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Image\-Read} ({\bf Obit\-Image} $\ast$in, {\bf ofloat} $\ast$data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read specified data. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Image\-Write} ({\bf Obit\-Image} $\ast$in, {\bf ofloat} $\ast$data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Write specified data. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Image\-Get\-Plane} ({\bf Obit\-Image} $\ast$in, {\bf ofloat} $\ast$data, {\bf olong} plane[5], {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read specified image plane. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Image\-Put\-Plane} ({\bf Obit\-Image} $\ast$in, {\bf ofloat} $\ast$data, {\bf olong} plane[5], {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Write specified image plane. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf new\-Obit\-Image\-Table} ({\bf Obit\-Image} $\ast$in, Obit\-IOAccess access, gchar $\ast$tab\-Type, {\bf olong} $\ast$tab\-Ver, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Return an associated Table. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Image\-Zap\-Table} ({\bf Obit\-Image} $\ast$in, gchar $\ast$tab\-Type, {\bf olong} tab\-Ver, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Destroy an associated Table. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Image\-Copy\-Tables} ({\bf Obit\-Image} $\ast$in, {\bf Obit\-Image} $\ast$out, gchar $\ast$$\ast$exclude, gchar $\ast$$\ast$include, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy associated Tables. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Image\-Update\-Tables} ({\bf Obit\-Image} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Update disk resident tables information. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Image\-IOSet} ({\bf Obit\-Image} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Reposition IO to beginning of file. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Set\-Beam\-Name} ({\bf Obit\-Image} $\ast$image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Set name etc for a beam associated with an image. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Write\-Keyword} ({\bf Obit\-Image} $\ast$in, gchar $\ast$name, Obit\-Info\-Type type, gint32 $\ast$dim, gconstpointer data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Write header keyword. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Read\-Keyword} ({\bf Obit\-Image} $\ast$in, gchar $\ast$name, Obit\-Info\-Type $\ast$type, gint32 $\ast$dim, gpointer data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read header keyword. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Set\-Select} ({\bf Obit\-Image} $\ast$in, Obit\-IOSize IOBy, {\bf olong} blc[IM\_\-MAXDIM], {\bf olong} trc[IM\_\-MAXDIM], {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Set selection. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})} class function definitions. 
+
+This class is derived from the {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} base class.
+
+This class contains an astronomical image and allows access. An {\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})} is the front end to a persistent disk resident structure.
+
+\subsection{Function Documentation}
+\index{ObitImage.c@{Obit\-Image.c}!newObitImage@{newObitImage}}
+\index{newObitImage@{newObitImage}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image}$\ast$ new\-Obit\-Image (gchar $\ast$ {\em name})}\label{ObitImage_8c_a9}
+
+
+Public: Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!newObitImageScratch@{newObitImageScratch}}
+\index{newObitImageScratch@{newObitImageScratch}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image}$\ast$ new\-Obit\-Image\-Scratch ({\bf Obit\-Image} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a11}
+
+
+Public: Copy Constructor for scratch file. 
+
+A scratch Image is more or less the same as a normal Image except that it is automatically deleted on the final unreference. The output will have the underlying files of the same type as in already allocated. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy, info may have \begin{itemize}
+\item Scr\-Size OBIT\_\-int (?,1,1) Dimension of the desired scratch Image \end{itemize}
+\item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!newObitImageTable@{newObitImageTable}}
+\index{newObitImageTable@{newObitImageTable}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ new\-Obit\-Image\-Table ({\bf Obit\-Image} $\ast$ {\em in}, Obit\-IOAccess {\em access}, gchar $\ast$ {\em tab\-Type}, {\bf olong} $\ast$ {\em tab\-Ver}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a27}
+
+
+Public: Return an associated Table. 
+
+If such an object exists, a reference to it is returned, else a new object is created and entered in the {\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})}. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object with associated tables. This MUST have been opened before this call. \item[{\em access}]access (OBIT\_\-IO\_\-Read\-Only,OBIT\_\-IO\_\-Read\-Write, or OBIT\_\-IO\_\-Write\-Only). This is used to determine defaulted version number and a different value may be used for the actual Open. \item[{\em tab\-Type}]The table type (e.g. \char`\"{}AIPS CC\char`\"{}). \item[{\em tab\-Ver}]Desired version number, may be zero in which case the highest extant version is returned for read and the highest+1 for write. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to created {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}, NULL on failure. \end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageClassInit@{ObitImageClassInit}}
+\index{ObitImageClassInit@{ObitImageClassInit}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Class\-Init (void)}\label{ObitImage_8c_a46}
+
+
+Public: Class initializer. 
+
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageClear@{ObitImageClear}}
+\index{ObitImageClear@{ObitImageClear}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Clear (gpointer {\em inn})}\label{ObitImage_8c_a4}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-Image$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageClone@{ObitImageClone}}
+\index{ObitImageClone@{ObitImageClone}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Clone ({\bf Obit\-Image} $\ast$ {\em in}, {\bf Obit\-Image} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a17}
+
+
+Public: Copy structure. 
+
+Output version set to floating pixels \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy, info may have \item[{\em out}]An existing object pointer for output, info may have \begin{itemize}
+\item Size OBIT\_\-int (?,1,1) Dimension of the desired Image \end{itemize}
+\item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageClone2@{ObitImageClone2}}
+\index{ObitImageClone2@{ObitImageClone2}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Clone2 ({\bf Obit\-Image} $\ast$ {\em in1}, {\bf Obit\-Image} $\ast$ {\em in2}, {\bf Obit\-Image} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a18}
+
+
+Public: Copy structure of in1 on grid of in2. 
+
+Only sets descriptor and data buffer members on out. Suitable for memory only image, out-$>$my\-Sel-$>$File\-Type set to OBIT\_\-IO\_\-MEM. Returns without error if in1 cannot be projected onto in2. Routine translated from the AIPSish 4MASS/SUB/FLATEN.FOR/FLTMSC \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in1}]Image whose region is to be covered, must have actual descriptor \item[{\em in2}]Image whose geometry is to be copied , must have actual descriptor \item[{\em out}]An existing object pointer for output. If the image (FArray) member exists, it is resized if needed. Descriptor updated to reflect any resizing \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageCloneMem@{ObitImageCloneMem}}
+\index{ObitImageCloneMem@{ObitImageCloneMem}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Clone\-Mem ({\bf Obit\-Image} $\ast$ {\em in}, {\bf Obit\-Image} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a19}
+
+
+Public: Copy structure of in to memory resident Image out. 
+
+out-$>$my\-Sel-$>$File\-Type set to OBIT\_\-IO\_\-MEM. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Image to be duplicated \item[{\em out}]An existing object pointer for output. If the image (FArray) member exists, it is resized if needed. Descriptor updated to reflect any resizing \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageClose@{ObitImageClose}}
+\index{ObitImageClose@{ObitImageClose}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Image\-Close ({\bf Obit\-Image} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a21}
+
+
+Public: Close file and become inactive. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be closed. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]error code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageCopy@{ObitImageCopy}}
+\index{ObitImageCopy@{ObitImageCopy}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image}$\ast$ Obit\-Image\-Copy ({\bf Obit\-Image} $\ast$ {\em in}, {\bf Obit\-Image} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a16}
+
+
+Public: Copy (deep) constructor. 
+
+Copies are made of complex members including disk files; these will be copied applying whatever selection is associated with the input. Objects should be closed on input and will be closed on output. In order for the disk file structures to be copied, the output file must be sufficiently defined that it can be written. The copy will be attempted but no errors will be logged until both input and output have been successfully opened. {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} and {\bf Obit\-Thread}{\rm (p.\,\pageref{structObitThread})} members are only copied if the output object didn't previously exist. Parent class members are included but any derived class info is ignored. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageCopyTables@{ObitImageCopyTables}}
+\index{ObitImageCopyTables@{ObitImageCopyTables}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Image\-Copy\-Tables ({\bf Obit\-Image} $\ast$ {\em in}, {\bf Obit\-Image} $\ast$ {\em out}, gchar $\ast$$\ast$ {\em exclude}, gchar $\ast$$\ast$ {\em include}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a29}
+
+
+Public: Copy associated Tables. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The {\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})} with tables to copy. \item[{\em out}]An {\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})} to copy the tables to, old ones replaced. \item[{\em exclude}]a NULL termimated list of table types NOT to copy. If NULL, use include \item[{\em include}]a NULL termimated list of table types to copy. ignored if exclude non\-NULL. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageFromFileInfo@{ObitImageFromFileInfo}}
+\index{ObitImageFromFileInfo@{ObitImageFromFileInfo}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image}$\ast$ Obit\-Image\-From\-File\-Info (gchar $\ast$ {\em prefix}, {\bf Obit\-Info\-List} $\ast$ {\em in\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a10}
+
+
+Public: Create Image object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em prefix}]If Non\-Null, string to be added to beginning of out\-List entry name \char`\"{}xxx\char`\"{} in the following \item[{\em in\-List}]Info\-List to extract object information from Following Info\-List entries for AIPS files (\char`\"{}xxx\char`\"{} = prefix): \begin{itemize}
+\item xxx\-Name OBIT\_\-string AIPS file name \item xxx\-Class OBIT\_\-string AIPS file class \item xxx\-Disk OBIT\_\-oint AIPS file disk number \item xxx\-Seq OBIT\_\-oint AIPS file Sequence number \item AIPSUser OBIT\_\-oint AIPS User number \item xxx\-CNO OBIT\_\-oint AIPS Catalog slot number \item xxx\-Dir OBIT\_\-string Directory name for xxx\-Disk\end{itemize}
+Following entries for FITS files (\char`\"{}xxx\char`\"{} = prefix): \begin{itemize}
+\item xxx\-File OBIT\_\-string FITS file name \item xxx\-Disk OBIT\_\-oint FITS file disk number \item xxx\-Dir OBIT\_\-string Directory name for xxx\-Disk\end{itemize}
+For all File types: \begin{itemize}
+\item xxx\-File\-Type OBIT\_\-string \char`\"{}UV\char`\"{} = UV data, \char`\"{}MA\char`\"{}=$>$image, \char`\"{}Table\char`\"{}=Table, \char`\"{}OTF\char`\"{}=OTF, etc \item xxx\-Data\-Type OBIT\_\-string \char`\"{}AIPS\char`\"{}, \char`\"{}FITS\char`\"{} Defaults to value of \char`\"{}Data\-Type\char`\"{}\end{itemize}
+For xxx\-Data\-Type = \char`\"{}MA\char`\"{} \begin{itemize}
+\item xxx\-BLC OBIT\_\-oint[7] (Images only) 1-rel bottom-left corner pixel \item xxx\-TRC OBIT\_\-oint[7] (Images Only) 1-rel top-right corner pixel \end{itemize}
+\item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]new data object with selection parameters set \end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageFullInstantiate@{ObitImageFullInstantiate}}
+\index{ObitImageFullInstantiate@{ObitImageFullInstantiate}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Full\-Instantiate ({\bf Obit\-Image} $\ast$ {\em in}, gboolean {\em exist}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a22}
+
+
+Public: Fully instantiate. 
+
+If object has previously been opened, as demonstrated by the existance of its my\-IO member, this operation is a no-op. Virtual - calls actual class member \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object \item[{\em exist}]TRUE if object should previously exist, else FALSE \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]error code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageGetClass@{ObitImageGetClass}}
+\index{ObitImageGetClass@{ObitImageGetClass}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Image\-Get\-Class (void)}\label{ObitImage_8c_a12}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageGetPlane@{ObitImageGetPlane}}
+\index{ObitImageGetPlane@{ObitImageGetPlane}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Image\-Get\-Plane ({\bf Obit\-Image} $\ast$ {\em in}, {\bf ofloat} $\ast$ {\em data}, {\bf olong} {\em plane}[5], {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a25}
+
+
+Public: Read specified image plane. 
+
+If the object is open on call it is returned open, otherwise closed. The {\bf Obit\-Image\-Desc}{\rm (p.\,\pageref{structObitImageDesc})} maintains the current location in the image. This is a NOP if in is a memory only image Note: the underlying routines need more work for $>$ 3 dimensions, descriptor plane needs to be turned into an array. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be read. \item[{\em data}]Pointer to buffer to write results. if NULL, use the image member of in. \item[{\em plane}]5 element array giving pixel numbers (1-rel) on axes 3-7 \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK =$>$ OK \end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageInit@{ObitImageInit}}
+\index{ObitImageInit@{ObitImageInit}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Init (gpointer {\em inn})}\label{ObitImage_8c_a3}
+
+
+Private: Initialize newly instantiated object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageIOSet@{ObitImageIOSet}}
+\index{ObitImageIOSet@{ObitImageIOSet}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Image\-IOSet ({\bf Obit\-Image} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a31}
+
+
+Reposition IO to beginning of file. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be rewound. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageOpen@{ObitImageOpen}}
+\index{ObitImageOpen@{ObitImageOpen}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Image\-Open ({\bf Obit\-Image} $\ast$ {\em in}, Obit\-IOAccess {\em access}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a20}
+
+
+Public: Create {\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} structures and open file. 
+
+The image descriptor is read if OBIT\_\-IO\_\-Read\-Only or OBIT\_\-IO\_\-Read\-Write and written to disk if opened OBIT\_\-IO\_\-Write\-Only. Update for selection (blc,trc) is only done on OBIT\_\-IO\_\-Read\-Only . After the file has been opened, the member image is initialized for storing the image unless member ext\-Buffer is TRUE. The file etc. info should have been stored in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}: \char`\"{}File\-Type\char`\"{} OBIT\_\-long scalar = OBIT\_\-IO\_\-FITS or OBIT\_\-IO\_\-AIPS or OBIT\_\-IO\_\-MEM (no persistent form ) for file type. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be opened. \item[{\em access}]access (OBIT\_\-IO\_\-Read\-Only,OBIT\_\-IO\_\-Read\-Write or OBIT\_\-IO\_\-Write\-Only). \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImagePutPlane@{ObitImagePutPlane}}
+\index{ObitImagePutPlane@{ObitImagePutPlane}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Image\-Put\-Plane ({\bf Obit\-Image} $\ast$ {\em in}, {\bf ofloat} $\ast$ {\em data}, {\bf olong} {\em plane}[5], {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a26}
+
+
+Public: Write specified image plane. 
+
+If the object is open on call it is returned open, otherwise closed. The {\bf Obit\-Image\-Desc}{\rm (p.\,\pageref{structObitImageDesc})} maintains the current location in the image. This is a NOP if in is a memory only image Note: the underlying routines need more work for $>$ 3 dimensions, descriptor plane needs to be turned into an array. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be read. \item[{\em data}]Pointer to buffer with pixel data if NULL, use the image member of in. \item[{\em plane}]5 element array giving pixel numbers (1-rel) on axes 3-7 \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK =$>$ OK \end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageRead@{ObitImageRead}}
+\index{ObitImageRead@{ObitImageRead}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Image\-Read ({\bf Obit\-Image} $\ast$ {\em in}, {\bf ofloat} $\ast$ {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a23}
+
+
+Public: Read specified data. 
+
+Reads row in-$>$my\-Desc-$>$row + 1; plane in-$>$my\-Desc-$>$plane + 1 A series of calls will read sequential sections of the image, either a row at a time or a plane at a time as specified to Obit\-Image\-Open. The {\bf Obit\-Image\-Desc}{\rm (p.\,\pageref{structObitImageDesc})} maintains the current location in the image. This is a NOP if in is a memory only image \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be read. \item[{\em data}]pointer to buffer to write results. if NULL, use the image member of in. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK =$>$ OK \end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageReadKeyword@{ObitImageReadKeyword}}
+\index{ObitImageReadKeyword@{ObitImageReadKeyword}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Read\-Keyword ({\bf Obit\-Image} $\ast$ {\em in}, gchar $\ast$ {\em name}, Obit\-Info\-Type $\ast$ {\em type}, gint32 $\ast$ {\em dim}, gpointer {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a34}
+
+
+Public: Read header keyword. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]object to update, must be fully instantiated \item[{\em name}][out] The label (keyword) of the information. Max 8 char \item[{\em type}][out] Data type of data element (enum defined in {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} class). \item[{\em dim}][out] Dimensionality of datum. Only scalars and strings up to 8 char are supported Note: for strings, the first element is the length in char. \item[{\em data}][out] Pointer to the data. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageRename@{ObitImageRename}}
+\index{ObitImageRename@{ObitImageRename}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Rename ({\bf Obit\-Image} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a15}
+
+
+Public: Rename underlying structures. 
+
+For FITS files: \begin{itemize}
+\item \char`\"{}new\-File\-Name\char`\"{} OBIT\_\-string (?,1,1) New Name of disk file.\end{itemize}
+For AIPS: \begin{itemize}
+\item \char`\"{}new\-Name\char`\"{} OBIT\_\-string (12,1,1) New AIPS Name Blank = don't change \item \char`\"{}new\-Class\char`\"{} OBIT\_\-string (6,1,1) New AIPS Class Blank = don't change\-O \item \char`\"{}new\-Seq\char`\"{} OBIT\_\-int (1,1,1) New AIPS Sequence 0 =$>$ unique value \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be renamed. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\end{itemize}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageSame@{ObitImageSame}}
+\index{ObitImageSame@{ObitImageSame}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Image\-Same ({\bf Obit\-Image} $\ast$ {\em in1}, {\bf Obit\-Image} $\ast$ {\em in2}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a13}
+
+
+Public: Do two Imagess have the same underlying structures?. 
+
+This test is done using values entered into the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} in case the object has not yet been opened. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in1}]First object to compare \item[{\em in2}]Second object to compare \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if to objects have the same underlying structures else FALSE \end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageSetBeamName@{ObitImageSetBeamName}}
+\index{ObitImageSetBeamName@{ObitImageSetBeamName}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Set\-Beam\-Name ({\bf Obit\-Image} $\ast$ {\em image}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a32}
+
+
+Public: Set name etc for a beam associated with an image. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em image}]Image whose beam name is to be set \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} stack for reporting problems. \end{description}
+\end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageSetSelect@{ObitImageSetSelect}}
+\index{ObitImageSetSelect@{ObitImageSetSelect}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Set\-Select ({\bf Obit\-Image} $\ast$ {\em in}, Obit\-IOSize {\em IOBy}, {\bf olong} {\em blc}[IM\_\-MAXDIM], {\bf olong} {\em trc}[IM\_\-MAXDIM], {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a35}
+
+
+Public: Set selection. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]object to update, must be fully instantiated Will be opened and closed to get descriptor. \item[{\em IOBy}]Size of I/O (OBIT\_\-IO\_\-by\-Plane or OBIT\_\-IO\_\-by\-Row). \item[{\em blc}]Array giving bottom left corner (1-rel) if zeroes, use descriptor to get actual value for whole image. Actual values returned \item[{\em trc}]Array giving top right corner (1-rel) if zeroes, read descriptor to get actual value for whole image. Actual values returned \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageUpdateTables@{ObitImageUpdateTables}}
+\index{ObitImageUpdateTables@{ObitImageUpdateTables}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Image\-Update\-Tables ({\bf Obit\-Image} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a30}
+
+
+Public: Update disk resident tables information. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be updated. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageWrite@{ObitImageWrite}}
+\index{ObitImageWrite@{ObitImageWrite}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Image\-Write ({\bf Obit\-Image} $\ast$ {\em in}, {\bf ofloat} $\ast$ {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a24}
+
+
+Public: Write specified data. 
+
+Writes row in-$>$my\-Desc-$>$row + 1; plane in-$>$my\-Desc-$>$plane + 1 A series of calls will write sequential sections of the image, either a row at a time or a plane at a time as specified to Obit\-Image\-Open. The {\bf Obit\-Image\-Desc}{\rm (p.\,\pageref{structObitImageDesc})} maintains the current location in the image. This is a NOP if in is a memory only image \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be written. \item[{\em data}]pointer to buffer containing input data. if NULL, use the image member of in. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageWriteKeyword@{ObitImageWriteKeyword}}
+\index{ObitImageWriteKeyword@{ObitImageWriteKeyword}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Write\-Keyword ({\bf Obit\-Image} $\ast$ {\em in}, gchar $\ast$ {\em name}, Obit\-Info\-Type {\em type}, gint32 $\ast$ {\em dim}, gconstpointer {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a33}
+
+
+Public: Write header keyword. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]object to update, must be open during call with Write access \item[{\em name}]The label (keyword) of the information. Max 8 char \item[{\em type}]Data type of data element (enum defined in {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} class). \item[{\em dim}]Dimensionality of datum. Only scalars and strings up to 8 char are allowed Note: for strings, the first element is the length in char. \item[{\em data}]Pointer to the data. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageZap@{ObitImageZap}}
+\index{ObitImageZap@{ObitImageZap}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image}$\ast$ Obit\-Image\-Zap ({\bf Obit\-Image} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a14}
+
+
+Public: Delete underlying structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be zapped. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer for input object, NULL if deletion successful \end{Desc}
+\index{ObitImage.c@{Obit\-Image.c}!ObitImageZapTable@{ObitImageZapTable}}
+\index{ObitImageZapTable@{ObitImageZapTable}!ObitImage.c@{Obit\-Image.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Image\-Zap\-Table ({\bf Obit\-Image} $\ast$ {\em in}, gchar $\ast$ {\em tab\-Type}, {\bf olong} {\em tab\-Ver}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImage_8c_a28}
+
+
+Public: Destroy an associated Table. 
+
+The table is removed from the {\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})} but the external form may not be updated. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object with associated tables. \item[{\em tab\-Type}]The table type (e.g. \char`\"{}AIPS CC\char`\"{}). \item[{\em tab\-Ver}]Desired version number, may be zero in which case the highest extant version is returned for read and the highest+1 for write. -1 =$>$ all versions of tab\-Type \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}

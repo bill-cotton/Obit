@@ -1,0 +1,375 @@
+\section{Obit\-UVCal\-Flag\-S Struct Reference}
+\label{structObitUVCalFlagS}\index{ObitUVCalFlagS@{ObitUVCalFlagS}}
+Amp/phase/delay/rate calibration structure.  
+
+
+{\tt \#include $<$Obit\-UVCal.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+{\bf Obit} $\ast$ {\bf FGTable}
+\begin{CompactList}\small\item\em Calibration FG table (as Obit$\ast$). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf FGTable\-Row}
+\begin{CompactList}\small\item\em FG Table Row (as Obit$\ast$). \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Row}
+\begin{CompactList}\small\item\em Number of rows in flag table. \item\end{CompactList}\item 
+{\bf olong} {\bf Last\-Row\-Read}
+\begin{CompactList}\small\item\em Last Row read. \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Ant}
+\begin{CompactList}\small\item\em Number of antennas in flag table (actually max antenna no). \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Sub\-A}
+\begin{CompactList}\small\item\em Number of subarrays in the data. \item\end{CompactList}\item 
+{\bf olong} {\bf num\-IF}
+\begin{CompactList}\small\item\em Number of IFs in data. \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Stok}
+\begin{CompactList}\small\item\em Number of Stokes' in data. \item\end{CompactList}\item 
+{\bf olong} {\bf stoke0}
+\begin{CompactList}\small\item\em First Stokes value in data. \item\end{CompactList}\item 
+{\bf olong} {\bf Sub\-A}
+\begin{CompactList}\small\item\em Selected Subarray number. \item\end{CompactList}\item 
+{\bf olong} {\bf Freq\-ID}
+\begin{CompactList}\small\item\em Selected Frequency ID number. \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Chan}
+\begin{CompactList}\small\item\em Number of channels in data. \item\end{CompactList}\item 
+{\bf ofloat} {\bf flag\-Time}
+\begin{CompactList}\small\item\em Time (days) for which the flagging tables is current \{TMFLST\}. \item\end{CompactList}\item 
+{\bf olong} {\bf max\-Flag}
+\begin{CompactList}\small\item\em Maximum number of flag table entries \{MAXFLG\}. \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Flag}
+\begin{CompactList}\small\item\em Current number of flag table entries \{NUMFLG\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf flag\-Sour}
+\begin{CompactList}\small\item\em Source ID per flag entry \{FLGSOU\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf flag\-Ant}
+\begin{CompactList}\small\item\em Antenna number per flag entry \{FLGANT\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf flag\-Base}
+\begin{CompactList}\small\item\em Baseline number (A1$\ast$256+A2) per flag entry \{FLGBAS\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf flag\-Sub\-A}
+\begin{CompactList}\small\item\em Subarray number per flag entry \{FLGSUB\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf flag\-FQID}
+\begin{CompactList}\small\item\em Freqid numbers per flag entry \{FLGFQD\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf flag\-BIF}
+\begin{CompactList}\small\item\em First IF per flag entry \{FLGBIF\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf flag\-EIF}
+\begin{CompactList}\small\item\em Highest IF per flag entry \{FLGEIF\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf flag\-BChan}
+\begin{CompactList}\small\item\em First channel per flag entry \{FLGBCH\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf flag\-EChan}
+\begin{CompactList}\small\item\em Highest channel per flag entry \{FLGECH\}. \item\end{CompactList}\item 
+gboolean $\ast$ {\bf flag\-Pol}
+\begin{CompactList}\small\item\em Flags for the polarizations per flag entry \{FLGPOL\} Note: there are 4$\ast$num\-Flag values. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf flag\-End\-Time}
+\begin{CompactList}\small\item\em End time of vslidity per flag entry \{FLGTND\}. \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf FGTable}
+\begin{CompactList}\small\item\em Calibration FG table (as Obit$\ast$). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf FGTable\-Row}
+\begin{CompactList}\small\item\em FG Table Row (as Obit$\ast$). \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf flag\-Sour}
+\begin{CompactList}\small\item\em Source ID per flag entry \{FLGSOU\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf flag\-Ant}
+\begin{CompactList}\small\item\em Antenna number per flag entry \{FLGANT\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf flag\-Base}
+\begin{CompactList}\small\item\em Baseline number (A1$\ast$256+A2) per flag entry \{FLGBAS\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf flag\-Sub\-A}
+\begin{CompactList}\small\item\em Subarray number per flag entry \{FLGSUB\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf flag\-FQID}
+\begin{CompactList}\small\item\em Freqid numbers per flag entry \{FLGFQD\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf flag\-BIF}
+\begin{CompactList}\small\item\em First IF per flag entry \{FLGBIF\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf flag\-EIF}
+\begin{CompactList}\small\item\em Highest IF per flag entry \{FLGEIF\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf flag\-BChan}
+\begin{CompactList}\small\item\em First channel per flag entry \{FLGBCH\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf flag\-EChan}
+\begin{CompactList}\small\item\em Highest channel per flag entry \{FLGECH\}. \item\end{CompactList}\item 
+gboolean $\ast$ {\bf flag\-Pol}
+\begin{CompactList}\small\item\em Flags for the polarizations per flag entry \{FLGPOL\} Note: there are 4$\ast$num\-Flag values. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf flag\-End\-Time}
+\begin{CompactList}\small\item\em End time of vslidity per flag entry \{FLGTND\}. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Amp/phase/delay/rate calibration structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!FGTable@{FGTable}}
+\index{FGTable@{FGTable}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal\-Flag\-S::FGTable}}\label{structObitUVCalFlagS_o26}
+
+
+Calibration FG table (as Obit$\ast$). 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!FGTable@{FGTable}}
+\index{FGTable@{FGTable}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal\-Flag\-S::FGTable}}\label{structObitUVCalFlagS_o0}
+
+
+Calibration FG table (as Obit$\ast$). 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!FGTableRow@{FGTableRow}}
+\index{FGTableRow@{FGTableRow}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal\-Flag\-S::FGTable\-Row}}\label{structObitUVCalFlagS_o27}
+
+
+FG Table Row (as Obit$\ast$). 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!FGTableRow@{FGTableRow}}
+\index{FGTableRow@{FGTableRow}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal\-Flag\-S::FGTable\-Row}}\label{structObitUVCalFlagS_o1}
+
+
+FG Table Row (as Obit$\ast$). 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagAnt@{flagAnt}}
+\index{flagAnt@{flagAnt}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-Ant}}\label{structObitUVCalFlagS_o29}
+
+
+Antenna number per flag entry \{FLGANT\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagAnt@{flagAnt}}
+\index{flagAnt@{flagAnt}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-Ant}}\label{structObitUVCalFlagS_o16}
+
+
+Antenna number per flag entry \{FLGANT\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagBase@{flagBase}}
+\index{flagBase@{flagBase}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-Base}}\label{structObitUVCalFlagS_o30}
+
+
+Baseline number (A1$\ast$256+A2) per flag entry \{FLGBAS\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagBase@{flagBase}}
+\index{flagBase@{flagBase}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-Base}}\label{structObitUVCalFlagS_o17}
+
+
+Baseline number (A1$\ast$256+A2) per flag entry \{FLGBAS\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagBChan@{flagBChan}}
+\index{flagBChan@{flagBChan}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-BChan}}\label{structObitUVCalFlagS_o35}
+
+
+First channel per flag entry \{FLGBCH\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagBChan@{flagBChan}}
+\index{flagBChan@{flagBChan}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-BChan}}\label{structObitUVCalFlagS_o22}
+
+
+First channel per flag entry \{FLGBCH\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagBIF@{flagBIF}}
+\index{flagBIF@{flagBIF}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-BIF}}\label{structObitUVCalFlagS_o33}
+
+
+First IF per flag entry \{FLGBIF\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagBIF@{flagBIF}}
+\index{flagBIF@{flagBIF}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-BIF}}\label{structObitUVCalFlagS_o20}
+
+
+First IF per flag entry \{FLGBIF\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagEChan@{flagEChan}}
+\index{flagEChan@{flagEChan}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-EChan}}\label{structObitUVCalFlagS_o36}
+
+
+Highest channel per flag entry \{FLGECH\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagEChan@{flagEChan}}
+\index{flagEChan@{flagEChan}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-EChan}}\label{structObitUVCalFlagS_o23}
+
+
+Highest channel per flag entry \{FLGECH\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagEIF@{flagEIF}}
+\index{flagEIF@{flagEIF}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-EIF}}\label{structObitUVCalFlagS_o34}
+
+
+Highest IF per flag entry \{FLGEIF\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagEIF@{flagEIF}}
+\index{flagEIF@{flagEIF}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-EIF}}\label{structObitUVCalFlagS_o21}
+
+
+Highest IF per flag entry \{FLGEIF\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagEndTime@{flagEndTime}}
+\index{flagEndTime@{flagEndTime}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-End\-Time}}\label{structObitUVCalFlagS_o38}
+
+
+End time of vslidity per flag entry \{FLGTND\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagEndTime@{flagEndTime}}
+\index{flagEndTime@{flagEndTime}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-End\-Time}}\label{structObitUVCalFlagS_o25}
+
+
+End time of vslidity per flag entry \{FLGTND\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagFQID@{flagFQID}}
+\index{flagFQID@{flagFQID}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-FQID}}\label{structObitUVCalFlagS_o32}
+
+
+Freqid numbers per flag entry \{FLGFQD\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagFQID@{flagFQID}}
+\index{flagFQID@{flagFQID}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-FQID}}\label{structObitUVCalFlagS_o19}
+
+
+Freqid numbers per flag entry \{FLGFQD\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagPol@{flagPol}}
+\index{flagPol@{flagPol}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-Pol}}\label{structObitUVCalFlagS_o37}
+
+
+Flags for the polarizations per flag entry \{FLGPOL\} Note: there are 4$\ast$num\-Flag values. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagPol@{flagPol}}
+\index{flagPol@{flagPol}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-Pol}}\label{structObitUVCalFlagS_o24}
+
+
+Flags for the polarizations per flag entry \{FLGPOL\} Note: there are 4$\ast$num\-Flag values. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagSour@{flagSour}}
+\index{flagSour@{flagSour}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-Sour}}\label{structObitUVCalFlagS_o28}
+
+
+Source ID per flag entry \{FLGSOU\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagSour@{flagSour}}
+\index{flagSour@{flagSour}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-Sour}}\label{structObitUVCalFlagS_o15}
+
+
+Source ID per flag entry \{FLGSOU\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagSubA@{flagSubA}}
+\index{flagSubA@{flagSubA}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-Sub\-A}}\label{structObitUVCalFlagS_o31}
+
+
+Subarray number per flag entry \{FLGSUB\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagSubA@{flagSubA}}
+\index{flagSubA@{flagSubA}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Flag\-S::flag\-Sub\-A}}\label{structObitUVCalFlagS_o18}
+
+
+Subarray number per flag entry \{FLGSUB\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!flagTime@{flagTime}}
+\index{flagTime@{flagTime}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVCal\-Flag\-S::flag\-Time}}\label{structObitUVCalFlagS_o12}
+
+
+Time (days) for which the flagging tables is current \{TMFLST\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!FreqID@{FreqID}}
+\index{FreqID@{FreqID}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Flag\-S::Freq\-ID}}\label{structObitUVCalFlagS_o10}
+
+
+Selected Frequency ID number. 
+
+$<$=0-$>$ all \index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!LastRowRead@{LastRowRead}}
+\index{LastRowRead@{LastRowRead}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Flag\-S::Last\-Row\-Read}}\label{structObitUVCalFlagS_o3}
+
+
+Last Row read. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!maxFlag@{maxFlag}}
+\index{maxFlag@{maxFlag}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Flag\-S::max\-Flag}}\label{structObitUVCalFlagS_o13}
+
+
+Maximum number of flag table entries \{MAXFLG\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!numAnt@{numAnt}}
+\index{numAnt@{numAnt}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Flag\-S::num\-Ant}}\label{structObitUVCalFlagS_o4}
+
+
+Number of antennas in flag table (actually max antenna no). 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!numChan@{numChan}}
+\index{numChan@{numChan}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Flag\-S::num\-Chan}}\label{structObitUVCalFlagS_o11}
+
+
+Number of channels in data. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!numFlag@{numFlag}}
+\index{numFlag@{numFlag}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Flag\-S::num\-Flag}}\label{structObitUVCalFlagS_o14}
+
+
+Current number of flag table entries \{NUMFLG\}. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!numIF@{numIF}}
+\index{numIF@{numIF}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Flag\-S::num\-IF}}\label{structObitUVCalFlagS_o6}
+
+
+Number of IFs in data. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!numRow@{numRow}}
+\index{numRow@{numRow}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Flag\-S::num\-Row}}\label{structObitUVCalFlagS_o2}
+
+
+Number of rows in flag table. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!numStok@{numStok}}
+\index{numStok@{numStok}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Flag\-S::num\-Stok}}\label{structObitUVCalFlagS_o7}
+
+
+Number of Stokes' in data. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!numSubA@{numSubA}}
+\index{numSubA@{numSubA}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Flag\-S::num\-Sub\-A}}\label{structObitUVCalFlagS_o5}
+
+
+Number of subarrays in the data. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!stoke0@{stoke0}}
+\index{stoke0@{stoke0}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Flag\-S::stoke0}}\label{structObitUVCalFlagS_o8}
+
+
+First Stokes value in data. 
+
+\index{ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}!SubA@{SubA}}
+\index{SubA@{SubA}!ObitUVCalFlagS@{Obit\-UVCal\-Flag\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Flag\-S::Sub\-A}}\label{structObitUVCalFlagS_o9}
+
+
+Selected Subarray number. 
+
+$<$=0-$>$ all 
+
+The documentation for this struct was generated from the following files:\begin{CompactItemize}
+\item 
+{\bf Obit\-UVCal.h}\item 
+{\bf Obit\-UVCal\-Flag.c}\end{CompactItemize}

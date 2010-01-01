@@ -1,0 +1,476 @@
+\section{Obit\-UVCal Struct Reference}
+\label{structObitUVCal}\index{ObitUVCal@{ObitUVCal}}
+Obit\-UVCal Class structure.  
+
+
+{\tt \#include $<$Obit\-UVCal.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-UVDesc} $\ast$ {\bf my\-Desc}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} UV data Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-UVSel} $\ast$ {\bf my\-Sel}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} UV data Selector. \item\end{CompactList}\item 
+gboolean {\bf drop\-Sub\-A}
+\begin{CompactList}\small\item\em Drop Subarray info? \item\end{CompactList}\item 
+gboolean {\bf do\-Flag}
+\begin{CompactList}\small\item\em Apply flagging? \item\end{CompactList}\item 
+gboolean {\bf do\-Smo}
+\begin{CompactList}\small\item\em Apply Spectral smoothing. \item\end{CompactList}\item 
+gboolean {\bf do\-BL}
+\begin{CompactList}\small\item\em Apply Baseline based calibration? \item\end{CompactList}\item 
+gboolean {\bf do\-Cal}
+\begin{CompactList}\small\item\em Apply amp/phase/delay/rate/baseline calibration. \item\end{CompactList}\item 
+{\bf olong} {\bf do\-BP}
+\begin{CompactList}\small\item\em Apply Bandpass calibration? if $>$ 0 specifies bandpass type. \item\end{CompactList}\item 
+gboolean {\bf do\-Pol}
+\begin{CompactList}\small\item\em Apply Polarization calibration? \item\end{CompactList}\item 
+{\bf olong} {\bf jadr} [4][2]
+\begin{CompactList}\small\item\em Stokes translation indices. \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Ant}
+\begin{CompactList}\small\item\em Number of antennas in calibration table (actually max antenna no). \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Sub\-A}
+\begin{CompactList}\small\item\em Number of subarrays in the data. \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Chan}
+\begin{CompactList}\small\item\em Number of Spectral channels. \item\end{CompactList}\item 
+{\bf olong} {\bf b\-Chan}
+\begin{CompactList}\small\item\em Start channel number (1-rel). \item\end{CompactList}\item 
+{\bf olong} {\bf e\-Chan}
+\begin{CompactList}\small\item\em highest channel (1-rel) \item\end{CompactList}\item 
+{\bf olong} {\bf num\-IF}
+\begin{CompactList}\small\item\em Number of IFs. \item\end{CompactList}\item 
+{\bf olong} {\bf b\-IF}
+\begin{CompactList}\small\item\em Start IF number (1-rel) selected. \item\end{CompactList}\item 
+{\bf olong} {\bf e\-IF}
+\begin{CompactList}\small\item\em highest IF (1-rel) selected \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Stok}
+\begin{CompactList}\small\item\em Number of Stokes in data. \item\end{CompactList}\item 
+{\bf ofloat} {\bf sel\-Fact} [4][2]
+\begin{CompactList}\small\item\em Stokes translation factors. \item\end{CompactList}\item 
+{\bf ofloat} {\bf smooth} [3]
+\begin{CompactList}\small\item\em Spectral smoothing SMOOTH(1) = type of smoothing to apply: 0 =$>$ no smoothing 1 =$>$ Hanning 2 =$>$ Gaussian 3 =$>$ Boxcar 4 =$>$ Sinc (i.e. \item\end{CompactList}\item 
+{\bf ofloat} {\bf alpha}
+\begin{CompactList}\small\item\em Spectral index to apply to data (wrt ref Freq). \item\end{CompactList}\item 
+{\bf olong} {\bf b\-Chan\-Smo}
+\begin{CompactList}\small\item\em Start channel number for smoothing (1-rel) \{BCHANS\}. \item\end{CompactList}\item 
+{\bf olong} {\bf e\-Chan\-Smo}
+\begin{CompactList}\small\item\em highest channel for smoothing (1-rel) \{ECHANS\} \item\end{CompactList}\item 
+{\bf olong} {\bf Smooth\-Width}
+\begin{CompactList}\small\item\em Width of spectral Smoothing kernal. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Smooth\-Conv\-Fn}
+\begin{CompactList}\small\item\em Smoothing convolution function \{SMTAB\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Smooth\-Work}
+\begin{CompactList}\small\item\em Spectral smoothing work array. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Spec\-Indx\-Work}
+\begin{CompactList}\small\item\em Spectral Index work array. \item\end{CompactList}\item 
+{\bf Obit\-Source\-List} $\ast$ {\bf source\-List}
+\begin{CompactList}\small\item\em Source\-List with source info. \item\end{CompactList}\item 
+{\bf Obit\-Antenna\-List} $\ast$$\ast$ {\bf antenna\-Lists}
+\begin{CompactList}\small\item\em Array of Antenna\-Lists one per subarray. \item\end{CompactList}\item 
+{\bf Obit\-UVCal\-Flag\-S} $\ast$ {\bf flag}
+\begin{CompactList}\small\item\em data flagging structure \item\end{CompactList}\item 
+{\bf Obit\-UVCal\-Baseline\-S} $\ast$ {\bf baseline\-Cal}
+\begin{CompactList}\small\item\em Baseline dependent calibration structure. \item\end{CompactList}\item 
+{\bf Obit\-UVCal\-Calibrate\-S} $\ast$ {\bf amp\-Phase\-Cal}
+\begin{CompactList}\small\item\em Amp/phase/delay/rate calibration structure. \item\end{CompactList}\item 
+{\bf Obit\-UVCal\-Bandpass\-S} $\ast$ {\bf bandpass\-Cal}
+\begin{CompactList}\small\item\em Bandpass calibration structure. \item\end{CompactList}\item 
+{\bf Obit\-UVCal\-Polarization\-S} $\ast$ {\bf poln\-Cal}
+\begin{CompactList}\small\item\em Polarization calibration structure. \item\end{CompactList}\item 
+{\bf olong} {\bf num\-ANTable}
+\begin{CompactList}\small\item\em Number of subarrays (number of entries in ANtables). \item\end{CompactList}\item 
+{\bf Obit} $\ast$$\ast$ {\bf ANTables}
+\begin{CompactList}\small\item\em Array of AN tables for polarization calibration, one per subarray (as Obit$\ast$). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf BLTable}
+\begin{CompactList}\small\item\em Baseline dependent calibration table (as Obit$\ast$). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf BPTable}
+\begin{CompactList}\small\item\em Bandpass calibration table (as Obit$\ast$). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf CQTable}
+\begin{CompactList}\small\item\em VLBA corelator parameter table. \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf CLTable}
+\begin{CompactList}\small\item\em CL table for multisource calibration. \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf FGTable}
+\item 
+{\bf Obit} $\ast$ {\bf SNTable}
+\item 
+{\bf Obit} $\ast$ {\bf SUTable}
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-UVCal Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitUVCal@{Obit\-UVCal}!alpha@{alpha}}
+\index{alpha@{alpha}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVCal::alpha}}\label{structObitUVCal_o28}
+
+
+Spectral index to apply to data (wrt ref Freq). 
+
+\index{ObitUVCal@{Obit\-UVCal}!ampPhaseCal@{ampPhaseCal}}
+\index{ampPhaseCal@{ampPhaseCal}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVCal\-Calibrate\-S}$\ast$ {\bf Obit\-UVCal::amp\-Phase\-Cal}}\label{structObitUVCal_o39}
+
+
+Amp/phase/delay/rate calibration structure. 
+
+\index{ObitUVCal@{Obit\-UVCal}!ANTables@{ANTables}}
+\index{ANTables@{ANTables}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$$\ast$ {\bf Obit\-UVCal::ANTables}}\label{structObitUVCal_o43}
+
+
+Array of AN tables for polarization calibration, one per subarray (as Obit$\ast$). 
+
+\index{ObitUVCal@{Obit\-UVCal}!antennaLists@{antennaLists}}
+\index{antennaLists@{antennaLists}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Antenna\-List}$\ast$$\ast$ {\bf Obit\-UVCal::antenna\-Lists}}\label{structObitUVCal_o36}
+
+
+Array of Antenna\-Lists one per subarray. 
+
+\index{ObitUVCal@{Obit\-UVCal}!bandpassCal@{bandpassCal}}
+\index{bandpassCal@{bandpassCal}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVCal\-Bandpass\-S}$\ast$ {\bf Obit\-UVCal::bandpass\-Cal}}\label{structObitUVCal_o40}
+
+
+Bandpass calibration structure. 
+
+\index{ObitUVCal@{Obit\-UVCal}!baselineCal@{baselineCal}}
+\index{baselineCal@{baselineCal}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVCal\-Baseline\-S}$\ast$ {\bf Obit\-UVCal::baseline\-Cal}}\label{structObitUVCal_o38}
+
+
+Baseline dependent calibration structure. 
+
+\index{ObitUVCal@{Obit\-UVCal}!bChan@{bChan}}
+\index{bChan@{bChan}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal::b\-Chan}}\label{structObitUVCal_o20}
+
+
+Start channel number (1-rel). 
+
+\index{ObitUVCal@{Obit\-UVCal}!bChanSmo@{bChanSmo}}
+\index{bChanSmo@{bChanSmo}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal::b\-Chan\-Smo}}\label{structObitUVCal_o29}
+
+
+Start channel number for smoothing (1-rel) \{BCHANS\}. 
+
+\index{ObitUVCal@{Obit\-UVCal}!bIF@{bIF}}
+\index{bIF@{bIF}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal::b\-IF}}\label{structObitUVCal_o23}
+
+
+Start IF number (1-rel) selected. 
+
+\index{ObitUVCal@{Obit\-UVCal}!BLTable@{BLTable}}
+\index{BLTable@{BLTable}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal::BLTable}}\label{structObitUVCal_o44}
+
+
+Baseline dependent calibration table (as Obit$\ast$). 
+
+\index{ObitUVCal@{Obit\-UVCal}!BPTable@{BPTable}}
+\index{BPTable@{BPTable}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal::BPTable}}\label{structObitUVCal_o45}
+
+
+Bandpass calibration table (as Obit$\ast$). 
+
+\index{ObitUVCal@{Obit\-UVCal}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-UVCal::Class\-Info}}\label{structObitUVCal_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitUVCal@{Obit\-UVCal}!CLTable@{CLTable}}
+\index{CLTable@{CLTable}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal::CLTable}}\label{structObitUVCal_o47}
+
+
+CL table for multisource calibration. 
+
+\index{ObitUVCal@{Obit\-UVCal}!CQTable@{CQTable}}
+\index{CQTable@{CQTable}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal::CQTable}}\label{structObitUVCal_o46}
+
+
+VLBA corelator parameter table. 
+
+\index{ObitUVCal@{Obit\-UVCal}!doBL@{doBL}}
+\index{doBL@{doBL}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-UVCal::do\-BL}}\label{structObitUVCal_o12}
+
+
+Apply Baseline based calibration? 
+
+\index{ObitUVCal@{Obit\-UVCal}!doBP@{doBP}}
+\index{doBP@{doBP}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal::do\-BP}}\label{structObitUVCal_o14}
+
+
+Apply Bandpass calibration? if $>$ 0 specifies bandpass type. 
+
+\index{ObitUVCal@{Obit\-UVCal}!doCal@{doCal}}
+\index{doCal@{doCal}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-UVCal::do\-Cal}}\label{structObitUVCal_o13}
+
+
+Apply amp/phase/delay/rate/baseline calibration. 
+
+\index{ObitUVCal@{Obit\-UVCal}!doFlag@{doFlag}}
+\index{doFlag@{doFlag}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-UVCal::do\-Flag}}\label{structObitUVCal_o10}
+
+
+Apply flagging? 
+
+\index{ObitUVCal@{Obit\-UVCal}!doPol@{doPol}}
+\index{doPol@{doPol}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-UVCal::do\-Pol}}\label{structObitUVCal_o15}
+
+
+Apply Polarization calibration? 
+
+\index{ObitUVCal@{Obit\-UVCal}!doSmo@{doSmo}}
+\index{doSmo@{doSmo}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-UVCal::do\-Smo}}\label{structObitUVCal_o11}
+
+
+Apply Spectral smoothing. 
+
+\index{ObitUVCal@{Obit\-UVCal}!dropSubA@{dropSubA}}
+\index{dropSubA@{dropSubA}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-UVCal::drop\-Sub\-A}}\label{structObitUVCal_o9}
+
+
+Drop Subarray info? 
+
+\index{ObitUVCal@{Obit\-UVCal}!eChan@{eChan}}
+\index{eChan@{eChan}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal::e\-Chan}}\label{structObitUVCal_o21}
+
+
+highest channel (1-rel) 
+
+\index{ObitUVCal@{Obit\-UVCal}!eChanSmo@{eChanSmo}}
+\index{eChanSmo@{eChanSmo}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal::e\-Chan\-Smo}}\label{structObitUVCal_o30}
+
+
+highest channel for smoothing (1-rel) \{ECHANS\} 
+
+\index{ObitUVCal@{Obit\-UVCal}!eIF@{eIF}}
+\index{eIF@{eIF}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal::e\-IF}}\label{structObitUVCal_o24}
+
+
+highest IF (1-rel) selected 
+
+\index{ObitUVCal@{Obit\-UVCal}!FGTable@{FGTable}}
+\index{FGTable@{FGTable}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal::FGTable}}\label{structObitUVCal_o48}
+
+
+\index{ObitUVCal@{Obit\-UVCal}!flag@{flag}}
+\index{flag@{flag}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVCal\-Flag\-S}$\ast$ {\bf Obit\-UVCal::flag}}\label{structObitUVCal_o37}
+
+
+data flagging structure 
+
+\index{ObitUVCal@{Obit\-UVCal}!info@{info}}
+\index{info@{info}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-UVCal::info}}\label{structObitUVCal_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitUVCal@{Obit\-UVCal}!jadr@{jadr}}
+\index{jadr@{jadr}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal::jadr}[4][2]}\label{structObitUVCal_o16}
+
+
+Stokes translation indices. 
+
+\index{ObitUVCal@{Obit\-UVCal}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVDesc}$\ast$ {\bf Obit\-UVCal::my\-Desc}}\label{structObitUVCal_o7}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} UV data Descriptor. 
+
+\index{ObitUVCal@{Obit\-UVCal}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVSel}$\ast$ {\bf Obit\-UVCal::my\-Sel}}\label{structObitUVCal_o8}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} UV data Selector. 
+
+\index{ObitUVCal@{Obit\-UVCal}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-UVCal::my\-Status}}\label{structObitUVCal_o6}
+
+
+I/O status. 
+
+\index{ObitUVCal@{Obit\-UVCal}!name@{name}}
+\index{name@{name}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-UVCal::name}}\label{structObitUVCal_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitUVCal@{Obit\-UVCal}!numAnt@{numAnt}}
+\index{numAnt@{numAnt}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal::num\-Ant}}\label{structObitUVCal_o17}
+
+
+Number of antennas in calibration table (actually max antenna no). 
+
+\index{ObitUVCal@{Obit\-UVCal}!numANTable@{numANTable}}
+\index{numANTable@{numANTable}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal::num\-ANTable}}\label{structObitUVCal_o42}
+
+
+Number of subarrays (number of entries in ANtables). 
+
+\index{ObitUVCal@{Obit\-UVCal}!numChan@{numChan}}
+\index{numChan@{numChan}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal::num\-Chan}}\label{structObitUVCal_o19}
+
+
+Number of Spectral channels. 
+
+\index{ObitUVCal@{Obit\-UVCal}!numIF@{numIF}}
+\index{numIF@{numIF}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal::num\-IF}}\label{structObitUVCal_o22}
+
+
+Number of IFs. 
+
+\index{ObitUVCal@{Obit\-UVCal}!numStok@{numStok}}
+\index{numStok@{numStok}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal::num\-Stok}}\label{structObitUVCal_o25}
+
+
+Number of Stokes in data. 
+
+\index{ObitUVCal@{Obit\-UVCal}!numSubA@{numSubA}}
+\index{numSubA@{numSubA}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal::num\-Sub\-A}}\label{structObitUVCal_o18}
+
+
+Number of subarrays in the data. 
+
+\index{ObitUVCal@{Obit\-UVCal}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-UVCal::Obit\-Id}}\label{structObitUVCal_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitUVCal@{Obit\-UVCal}!polnCal@{polnCal}}
+\index{polnCal@{polnCal}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVCal\-Polarization\-S}$\ast$ {\bf Obit\-UVCal::poln\-Cal}}\label{structObitUVCal_o41}
+
+
+Polarization calibration structure. 
+
+\index{ObitUVCal@{Obit\-UVCal}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal::Reference\-Count}}\label{structObitUVCal_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitUVCal@{Obit\-UVCal}!selFact@{selFact}}
+\index{selFact@{selFact}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVCal::sel\-Fact}[4][2]}\label{structObitUVCal_o26}
+
+
+Stokes translation factors. 
+
+\index{ObitUVCal@{Obit\-UVCal}!smooth@{smooth}}
+\index{smooth@{smooth}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVCal::smooth}[3]}\label{structObitUVCal_o27}
+
+
+Spectral smoothing SMOOTH(1) = type of smoothing to apply: 0 =$>$ no smoothing 1 =$>$ Hanning 2 =$>$ Gaussian 3 =$>$ Boxcar 4 =$>$ Sinc (i.e. 
+
+sin(x)/x) SMOOTH(2) = the \char`\"{}diameter\char`\"{} of the function, i.e. width between first nulls of Hanning triangle and sinc function, FWHM of Gaussian, width of Boxcar. Defaults (if $<$ 0.1) are 4, 2, 2 and 3 channels for SMOOTH(1) = 1 - 4. SMOOTH(3) = the diameter over which the convolving function has value - in channels. Defaults: 1, 3, 1, 4 times SMOOTH(2) used when \index{ObitUVCal@{Obit\-UVCal}!SmoothConvFn@{SmoothConvFn}}
+\index{SmoothConvFn@{SmoothConvFn}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal::Smooth\-Conv\-Fn}}\label{structObitUVCal_o32}
+
+
+Smoothing convolution function \{SMTAB\}. 
+
+\index{ObitUVCal@{Obit\-UVCal}!SmoothWidth@{SmoothWidth}}
+\index{SmoothWidth@{SmoothWidth}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal::Smooth\-Width}}\label{structObitUVCal_o31}
+
+
+Width of spectral Smoothing kernal. 
+
+\index{ObitUVCal@{Obit\-UVCal}!SmoothWork@{SmoothWork}}
+\index{SmoothWork@{SmoothWork}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal::Smooth\-Work}}\label{structObitUVCal_o33}
+
+
+Spectral smoothing work array. 
+
+\index{ObitUVCal@{Obit\-UVCal}!SNTable@{SNTable}}
+\index{SNTable@{SNTable}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal::SNTable}}\label{structObitUVCal_o49}
+
+
+\index{ObitUVCal@{Obit\-UVCal}!sourceList@{sourceList}}
+\index{sourceList@{sourceList}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Source\-List}$\ast$ {\bf Obit\-UVCal::source\-List}}\label{structObitUVCal_o35}
+
+
+Source\-List with source info. 
+
+\index{ObitUVCal@{Obit\-UVCal}!SpecIndxWork@{SpecIndxWork}}
+\index{SpecIndxWork@{SpecIndxWork}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal::Spec\-Indx\-Work}}\label{structObitUVCal_o34}
+
+
+Spectral Index work array. 
+
+\index{ObitUVCal@{Obit\-UVCal}!SUTable@{SUTable}}
+\index{SUTable@{SUTable}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal::SUTable}}\label{structObitUVCal_o50}
+
+
+\index{ObitUVCal@{Obit\-UVCal}!thread@{thread}}
+\index{thread@{thread}!ObitUVCal@{Obit\-UVCal}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-UVCal::thread}}\label{structObitUVCal_o4}
+
+
+Threading info member object. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-UVCal.h}\end{CompactItemize}

@@ -1,0 +1,199 @@
+\section{Obit\-Full\-Beam.c File Reference}
+\label{ObitFullBeam_8c}\index{ObitFullBeam.c@{ObitFullBeam.c}}
+{\bf Obit\-Full\-Beam}{\rm (p.\,\pageref{structObitFullBeam})} class function definitions. 
+
+{\tt \#include \char`\"{}Obit\-Image\-Desc.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Full\-Beam.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-FInterpolate.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Thread.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Util.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Position.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Full\-Beam\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-Full\-Beam\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-Full\-Beam} $\ast$ {\bf new\-Obit\-Full\-Beam} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Full\-Beam\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Full\-Beam} $\ast$ {\bf Obit\-Full\-Beam\-Copy} ({\bf Obit\-Full\-Beam} $\ast$in, {\bf Obit\-Full\-Beam} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Full\-Beam\-Clone} ({\bf Obit\-Full\-Beam} $\ast$in, {\bf Obit\-Full\-Beam} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+{\bf Obit\-Full\-Beam} $\ast$ {\bf Obit\-Full\-Beam\-Create} (gchar $\ast$name, {\bf Obit\-Info\-List} $\ast$my\-Input, {\bf Obit\-Image} $\ast$image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-Full\-Beam}{\rm (p.\,\pageref{structObitFullBeam})} structures. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Obit\-Full\-Beam\-Value} ({\bf Obit\-Full\-Beam} $\ast$in, {\bf odouble} d\-RA, {\bf odouble} d\-Dec, {\bf ofloat} PAngle, {\bf olong} plane, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get beam value. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Obit\-Full\-Beam\-Value\-Int} ({\bf Obit\-Full\-Beam} $\ast$in, {\bf Obit\-FInterpolate} $\ast$interp, {\bf odouble} d\-RA, {\bf odouble} d\-Dec, {\bf ofloat} PAngle, {\bf olong} plane, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get beam value providing interpolator. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-Full\-Beam\-Find\-Plane} ({\bf Obit\-Full\-Beam} $\ast$in, {\bf odouble} freq)
+\begin{CompactList}\small\item\em Public: Lookup plane for frequency. \item\end{CompactList}\item 
+{\bf Obit\-FInterpolate} $\ast$ {\bf Obit\-Full\-Beam\-Clone\-Interp} ({\bf Obit\-Full\-Beam} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get clone of interpolator. \item\end{CompactList}\item 
+void {\bf Obit\-Full\-Beam\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Full\-Beam}{\rm (p.\,\pageref{structObitFullBeam})} class function definitions. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} base class.
+
+{\bf Obit\-Full\-Beam}{\rm (p.\,\pageref{structObitFullBeam})} Class to generate full beam corrections from beam images An {\bf Obit\-Full\-Beam}{\rm (p.\,\pageref{structObitFullBeam})} takes images or (hyper)cubes of a primary beam in a given Stokes parameter and assists in image plane corrections
+
+\subsection{Function Documentation}
+\index{ObitFullBeam.c@{Obit\-Full\-Beam.c}!newObitFullBeam@{newObitFullBeam}}
+\index{newObitFullBeam@{newObitFullBeam}!ObitFullBeam.c@{Obit\-Full\-Beam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Full\-Beam}$\ast$ new\-Obit\-Full\-Beam (gchar $\ast$ {\em name})}\label{ObitFullBeam_8c_a7}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitFullBeam.c@{Obit\-Full\-Beam.c}!ObitFullBeamClassInit@{ObitFullBeamClassInit}}
+\index{ObitFullBeamClassInit@{ObitFullBeamClassInit}!ObitFullBeam.c@{Obit\-Full\-Beam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Full\-Beam\-Class\-Init (void)}\label{ObitFullBeam_8c_a16}
+
+
+Public: Class initializer. 
+
+\index{ObitFullBeam.c@{Obit\-Full\-Beam.c}!ObitFullBeamClear@{ObitFullBeamClear}}
+\index{ObitFullBeamClear@{ObitFullBeamClear}!ObitFullBeam.c@{Obit\-Full\-Beam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Full\-Beam\-Clear (gpointer {\em inn})}\label{ObitFullBeam_8c_a4}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-Full\-Beam$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitFullBeam.c@{Obit\-Full\-Beam.c}!ObitFullBeamClone@{ObitFullBeamClone}}
+\index{ObitFullBeamClone@{ObitFullBeamClone}!ObitFullBeam.c@{Obit\-Full\-Beam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Full\-Beam\-Clone ({\bf Obit\-Full\-Beam} $\ast$ {\em in}, {\bf Obit\-Full\-Beam} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFullBeam_8c_a10}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitFullBeam.c@{Obit\-Full\-Beam.c}!ObitFullBeamCloneInterp@{ObitFullBeamCloneInterp}}
+\index{ObitFullBeamCloneInterp@{ObitFullBeamCloneInterp}!ObitFullBeam.c@{Obit\-Full\-Beam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FInterpolate}$\ast$ Obit\-Full\-Beam\-Clone\-Interp ({\bf Obit\-Full\-Beam} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFullBeam_8c_a15}
+
+
+Public: Get clone of interpolator. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object to whose interpolator to clone \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]interpolator, Unref wnen done \end{Desc}
+\index{ObitFullBeam.c@{Obit\-Full\-Beam.c}!ObitFullBeamCopy@{ObitFullBeamCopy}}
+\index{ObitFullBeamCopy@{ObitFullBeamCopy}!ObitFullBeam.c@{Obit\-Full\-Beam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Full\-Beam}$\ast$ Obit\-Full\-Beam\-Copy ({\bf Obit\-Full\-Beam} $\ast$ {\em in}, {\bf Obit\-Full\-Beam} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFullBeam_8c_a9}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitFullBeam.c@{Obit\-Full\-Beam.c}!ObitFullBeamCreate@{ObitFullBeamCreate}}
+\index{ObitFullBeamCreate@{ObitFullBeamCreate}!ObitFullBeam.c@{Obit\-Full\-Beam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Full\-Beam}$\ast$ Obit\-Full\-Beam\-Create (gchar $\ast$ {\em name}, {\bf Obit\-Info\-List} $\ast$ {\em my\-Input}, {\bf Obit\-Image} $\ast$ {\em image}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFullBeam_8c_a11}
+
+
+Public: Create/initialize {\bf Obit\-Full\-Beam}{\rm (p.\,\pageref{structObitFullBeam})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em my\-Input}]Info\-List with optional control parameters (may be NULL): \begin{itemize}
+\item \char`\"{}ant\-Size\char`\"{} OBIT\_\-float scalar Diameter of antennas for gain. [def 24.5] \item \char`\"{}min\-Gain\char`\"{} OBIT\_\-float scalar Min. allowed antenna gain, [def 0.02] \end{itemize}
+\item[{\em image}]Image from which to derive object \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitFullBeam.c@{Obit\-Full\-Beam.c}!ObitFullBeamFindPlane@{ObitFullBeamFindPlane}}
+\index{ObitFullBeamFindPlane@{ObitFullBeamFindPlane}!ObitFullBeam.c@{Obit\-Full\-Beam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-Full\-Beam\-Find\-Plane ({\bf Obit\-Full\-Beam} $\ast$ {\em in}, {\bf odouble} {\em freq})}\label{ObitFullBeam_8c_a14}
+
+
+Public: Lookup plane for frequency. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object to interpolate \item[{\em freq}]Frequency (Ha) to lookup \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]closest 0-rel plane number \end{Desc}
+\index{ObitFullBeam.c@{Obit\-Full\-Beam.c}!ObitFullBeamGetClass@{ObitFullBeamGetClass}}
+\index{ObitFullBeamGetClass@{ObitFullBeamGetClass}!ObitFullBeam.c@{Obit\-Full\-Beam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Full\-Beam\-Get\-Class (void)}\label{ObitFullBeam_8c_a8}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitFullBeam.c@{Obit\-Full\-Beam.c}!ObitFullBeamInit@{ObitFullBeamInit}}
+\index{ObitFullBeamInit@{ObitFullBeamInit}!ObitFullBeam.c@{Obit\-Full\-Beam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Full\-Beam\-Init (gpointer {\em inn})}\label{ObitFullBeam_8c_a3}
+
+
+Private: Initialize newly instantiated object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitFullBeam.c@{Obit\-Full\-Beam.c}!ObitFullBeamValue@{ObitFullBeamValue}}
+\index{ObitFullBeamValue@{ObitFullBeamValue}!ObitFullBeam.c@{Obit\-Full\-Beam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} Obit\-Full\-Beam\-Value ({\bf Obit\-Full\-Beam} $\ast$ {\em in}, {\bf odouble} {\em d\-RA}, {\bf odouble} {\em d\-Dec}, {\bf ofloat} {\em PAngle}, {\bf olong} {\em plane}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFullBeam_8c_a12}
+
+
+Public: Get beam value. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object to interpolate \item[{\em d\-RA}]Right Ascension offset desired (deg) @ std. equinox \item[{\em d\-Dec}]Declination offset (deg) desired @ std. equinox \item[{\em PAngle}]Parallactic Angle (deg) \item[{\em plane}]Image plane 0-rel (frequency) to use Can be obtained from Obit\-Full\-Beam\-Find\-Plane \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]interpolated beam value - may be fblank \end{Desc}
+\index{ObitFullBeam.c@{Obit\-Full\-Beam.c}!ObitFullBeamValueInt@{ObitFullBeamValueInt}}
+\index{ObitFullBeamValueInt@{ObitFullBeamValueInt}!ObitFullBeam.c@{Obit\-Full\-Beam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} Obit\-Full\-Beam\-Value\-Int ({\bf Obit\-Full\-Beam} $\ast$ {\em in}, {\bf Obit\-FInterpolate} $\ast$ {\em interp}, {\bf odouble} {\em d\-RA}, {\bf odouble} {\em d\-Dec}, {\bf ofloat} {\em PAngle}, {\bf olong} {\em plane}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFullBeam_8c_a13}
+
+
+Public: Get beam value providing interpolator. 
+
+Locks in-$>$thread for multithreading Use this routine for best multi-threaded performance. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object to interpolate \item[{\em interp}]Interpolator \item[{\em d\-RA}]Right Ascension offset desired (deg) @ std. equinox \item[{\em d\-Dec}]Declination offset (deg) desired @ std. equinox \item[{\em PAngle}]Parallactic Angle (deg) \item[{\em plane}]Image plane 0-rel (frequency) to use Can be obtained from Obit\-Full\-Beam\-Find\-Plane \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]interpolated beam value - may be fblank \end{Desc}

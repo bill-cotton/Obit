@@ -1,0 +1,259 @@
+\section{Obit\-Table\-Desc Struct Reference}
+\label{structObitTableDesc}\index{ObitTableDesc@{ObitTableDesc}}
+Obit\-Table\-Desc Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-Desc.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+Obit\-IOAccess {\bf access}
+\begin{CompactList}\small\item\em Type of access to file (read, write...). \item\end{CompactList}\item 
+{\bf olong} {\bf nrow}
+\begin{CompactList}\small\item\em Number of rows. \item\end{CompactList}\item 
+{\bf olong} {\bf lrow}
+\begin{CompactList}\small\item\em Length of a row in bytes. \item\end{CompactList}\item 
+{\bf olong} {\bf lrow\-IO}
+\begin{CompactList}\small\item\em Length of a row in bytes for I/O purposes. \item\end{CompactList}\item 
+{\bf olong} {\bf start\-Data}
+\begin{CompactList}\small\item\em file position in bytes of the beginning of the table \item\end{CompactList}\item 
+{\bf olong} {\bf first\-Row}
+\begin{CompactList}\small\item\em current beginning row (1-rel) read/write in buffer \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Row\-Buff}
+\begin{CompactList}\small\item\em number of rows in buffer \item\end{CompactList}\item 
+{\bf olong} {\bf nfield}
+\begin{CompactList}\small\item\em Number of columns (fields). \item\end{CompactList}\item 
+{\bf olong} {\bf version}
+\begin{CompactList}\small\item\em Table version number. \item\end{CompactList}\item 
+{\bf olong} {\bf nkey}
+\begin{CompactList}\small\item\em Number of keywords stored in info. \item\end{CompactList}\item 
+{\bf olong} {\bf sort} [2]
+\begin{CompactList}\small\item\em Sort order, column by primary and secondary key, positive =$>$ ascending order, negative =$>$ descending An additional + or - 256 indicates sorting by absolute value. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf order}
+\begin{CompactList}\small\item\em Physical (1-rel) order number of each field - as stored in memory. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf offset}
+\begin{CompactList}\small\item\em Offset from the first word in a row to the first element in the field in units of the data type of the field. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf byte\-Offset}
+\begin{CompactList}\small\item\em Offset from the first word in a row to the first element in the field in units of bytes. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf repeat}
+\begin{CompactList}\small\item\em Total number of element (of column type). \item\end{CompactList}\item 
+gint32 $\ast$$\ast$ {\bf dim}
+\begin{CompactList}\small\item\em Field dimension [MAXINFOELEMDIM]. \item\end{CompactList}\item 
+Obit\-Info\-Type $\ast$ {\bf type}
+\begin{CompactList}\small\item\em Field data types as \#Obit\-Info\-Type. \item\end{CompactList}\item 
+gchar $\ast$ {\bf Table\-Name}
+\begin{CompactList}\small\item\em Table name. \item\end{CompactList}\item 
+gchar $\ast$$\ast$ {\bf Field\-Name}
+\begin{CompactList}\small\item\em Field labels. \item\end{CompactList}\item 
+gchar $\ast$$\ast$ {\bf Field\-Unit}
+\begin{CompactList}\small\item\em Field units. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Info\-List for other keywords. \item\end{CompactList}\item 
+{\bf olong} {\bf status\-Off}
+\begin{CompactList}\small\item\em Offset for \char`\"{}\_\-status\char`\"{} column. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-Desc Class structure. 
+
+This class contains descriptions of interferometric visibility data. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableDesc@{Obit\-Table\-Desc}!access@{access}}
+\index{access@{access}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOAccess {\bf Obit\-Table\-Desc::access}}\label{structObitTableDesc_o4}
+
+
+Type of access to file (read, write...). 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!byteOffset@{byteOffset}}
+\index{byteOffset@{byteOffset}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-Table\-Desc::byte\-Offset}}\label{structObitTableDesc_o17}
+
+
+Offset from the first word in a row to the first element in the field in units of bytes. 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-Desc::Class\-Info}}\label{structObitTableDesc_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!dim@{dim}}
+\index{dim@{dim}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32$\ast$$\ast$ {\bf Obit\-Table\-Desc::dim}}\label{structObitTableDesc_o19}
+
+
+Field dimension [MAXINFOELEMDIM]. 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!FieldName@{FieldName}}
+\index{FieldName@{FieldName}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$$\ast$ {\bf Obit\-Table\-Desc::Field\-Name}}\label{structObitTableDesc_o22}
+
+
+Field labels. 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!FieldUnit@{FieldUnit}}
+\index{FieldUnit@{FieldUnit}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$$\ast$ {\bf Obit\-Table\-Desc::Field\-Unit}}\label{structObitTableDesc_o23}
+
+
+Field units. 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!firstRow@{firstRow}}
+\index{firstRow@{firstRow}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-Desc::first\-Row}}\label{structObitTableDesc_o9}
+
+
+current beginning row (1-rel) read/write in buffer 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!info@{info}}
+\index{info@{info}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Table\-Desc::info}}\label{structObitTableDesc_o24}
+
+
+Info\-List for other keywords. 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!lrow@{lrow}}
+\index{lrow@{lrow}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-Desc::lrow}}\label{structObitTableDesc_o6}
+
+
+Length of a row in bytes. 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!lrowIO@{lrowIO}}
+\index{lrowIO@{lrowIO}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-Desc::lrow\-IO}}\label{structObitTableDesc_o7}
+
+
+Length of a row in bytes for I/O purposes. 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!name@{name}}
+\index{name@{name}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-Desc::name}}\label{structObitTableDesc_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!nfield@{nfield}}
+\index{nfield@{nfield}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-Desc::nfield}}\label{structObitTableDesc_o11}
+
+
+Number of columns (fields). 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!nkey@{nkey}}
+\index{nkey@{nkey}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-Desc::nkey}}\label{structObitTableDesc_o13}
+
+
+Number of keywords stored in info. 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!nrow@{nrow}}
+\index{nrow@{nrow}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-Desc::nrow}}\label{structObitTableDesc_o5}
+
+
+Number of rows. 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!numRowBuff@{numRowBuff}}
+\index{numRowBuff@{numRowBuff}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-Desc::num\-Row\-Buff}}\label{structObitTableDesc_o10}
+
+
+number of rows in buffer 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-Desc::Obit\-Id}}\label{structObitTableDesc_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!offset@{offset}}
+\index{offset@{offset}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-Table\-Desc::offset}}\label{structObitTableDesc_o16}
+
+
+Offset from the first word in a row to the first element in the field in units of the data type of the field. 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!order@{order}}
+\index{order@{order}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-Table\-Desc::order}}\label{structObitTableDesc_o15}
+
+
+Physical (1-rel) order number of each field - as stored in memory. 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-Desc::Reference\-Count}}\label{structObitTableDesc_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!repeat@{repeat}}
+\index{repeat@{repeat}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-Table\-Desc::repeat}}\label{structObitTableDesc_o18}
+
+
+Total number of element (of column type). 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!sort@{sort}}
+\index{sort@{sort}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-Desc::sort}[2]}\label{structObitTableDesc_o14}
+
+
+Sort order, column by primary and secondary key, positive =$>$ ascending order, negative =$>$ descending An additional + or - 256 indicates sorting by absolute value. 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!startData@{startData}}
+\index{startData@{startData}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-Desc::start\-Data}}\label{structObitTableDesc_o8}
+
+
+file position in bytes of the beginning of the table 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!statusOff@{statusOff}}
+\index{statusOff@{statusOff}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-Desc::status\-Off}}\label{structObitTableDesc_o25}
+
+
+Offset for \char`\"{}\_\-status\char`\"{} column. 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!TableName@{TableName}}
+\index{TableName@{TableName}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-Desc::Table\-Name}}\label{structObitTableDesc_o21}
+
+
+Table name. 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!type@{type}}
+\index{type@{type}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-Info\-Type$\ast$ {\bf Obit\-Table\-Desc::type}}\label{structObitTableDesc_o20}
+
+
+Field data types as \#Obit\-Info\-Type. 
+
+\index{ObitTableDesc@{Obit\-Table\-Desc}!version@{version}}
+\index{version@{version}!ObitTableDesc@{Obit\-Table\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-Desc::version}}\label{structObitTableDesc_o12}
+
+
+Table version number. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-Desc.h}\end{CompactItemize}

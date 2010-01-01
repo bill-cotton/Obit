@@ -1,0 +1,466 @@
+\section{Obit\-XML.h File Reference}
+\label{ObitXML_8h}\index{ObitXML.h@{ObitXML.h}}
+{\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} XML class. 
+
+{\tt \#include $<$xmlrpc.h$>$}\par
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Thread.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-DCon\-Clean\-Window.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-XML}
+\begin{CompactList}\small\item\em Obit\-XML Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-XMLClass\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-XMLUnref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} returns a Obit\-XML$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-XMLRef}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-XMLIs\-A}(in)\ Obit\-Is\-A (in, Obit\-XMLGet\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef xmlrpc\_\-env {\bf Obit\-XMLEnv}
+\begin{CompactList}\small\item\em Environment structure. \item\end{CompactList}\item 
+typedef xmlrpc\_\-value {\bf Obit\-XMLValue}
+\begin{CompactList}\small\item\em Parameter array structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Enumerations}
+\begin{CompactItemize}
+\item 
+enum {\bf obit\-XMLType} \{ \par
+{\bf OBIT\_\-XML\_\-Reply} =  0, 
+{\bf OBIT\_\-XML\_\-Result}, 
+{\bf OBIT\_\-XML\_\-Info\-List}, 
+{\bf OBIT\_\-XML\_\-Ping}, 
+\par
+{\bf OBIT\_\-XML\_\-Load\-Image}, 
+{\bf OBIT\_\-XML\_\-Edit\-Window}, 
+{\bf OBIT\_\-XML\_\-Bin\-Blob}, 
+{\bf OBIT\_\-XML\_\-RPCCall\-Arg}, 
+\par
+{\bf OBIT\_\-XML\_\-Unknown}
+ \}
+\begin{CompactList}\small\item\em enum for object type. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-XMLClass\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-XML} $\ast$ {\bf new\-Obit\-XML} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-XMLGet\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-XML} $\ast$ {\bf Obit\-XMLSet\-Call\-Arg} (gchar $\ast$func, {\bf Obit\-Info\-List} $\ast$arg\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Constructor from RPC Call arguments to be sent. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf Obit\-XMLGet\-Call\-Arg} ({\bf Obit\-XMLEnv} $\ast$const env\-P, {\bf Obit\-XMLValue} $\ast$const param\-Array\-P, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Convert RPC Call arguments received to an Info\-List. \item\end{CompactList}\item 
+{\bf Obit\-XMLEnv} {\bf Obit\-XMLGet\-Env} ({\bf Obit\-XML} $\ast$in)
+\begin{CompactList}\small\item\em Public: Give XML Environment. \item\end{CompactList}\item 
+{\bf Obit\-XMLValue} $\ast$ {\bf Obit\-XMLGet\-Value} ({\bf Obit\-XML} $\ast$in)
+\begin{CompactList}\small\item\em Public: Give XML Value. \item\end{CompactList}\item 
+{\bf Obit\-XML} $\ast$ {\bf Obit\-XMLPing2XML} ({\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Constructor for ping. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-XMLXML2Ping} ({\bf Obit\-XML} $\ast$xml, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Convert to ping info. \item\end{CompactList}\item 
+{\bf Obit\-XML} $\ast$ {\bf Obit\-XMLInfo\-List2XML} ({\bf Obit\-Info\-List} $\ast$list, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Constructor from {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf Obit\-XMLXML2Info\-List} ({\bf Obit\-XML} $\ast$xml, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Convert to {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf Obit\-XMLXMLInfo2List} ({\bf Obit\-XML} $\ast$xml, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Convert XML created from an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} to {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+{\bf Obit\-XML} $\ast$ {\bf Obit\-XMLFile\-Info2XML} (Obit\-IOType Type, gchar $\ast$Name, gchar $\ast$AClass, gchar $\ast$ADir, {\bf olong} ASeq, {\bf olong} AUser, {\bf olong} Field, {\bf olong} NField, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Constructor from Image file info. \item\end{CompactList}\item 
+void {\bf Obit\-XMLXML2File\-Info} ({\bf Obit\-XML} $\ast$xml, Obit\-IOType $\ast$Type, gchar $\ast$$\ast$Name, gchar $\ast$$\ast$AClass, gchar $\ast$$\ast$ADir, {\bf olong} $\ast$ASeq, {\bf olong} $\ast$AUser, {\bf olong} $\ast$Field, {\bf olong} $\ast$NField, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Convert to Image file info. \item\end{CompactList}\item 
+{\bf Obit\-XML} $\ast$ {\bf Obit\-XMLWindow2XML} ({\bf Obit\-DCon\-Clean\-Window} $\ast$window, {\bf olong} field, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Constructor from {\bf Obit\-DCon\-Clean\-Window}{\rm (p.\,\pageref{structObitDConCleanWindow})}. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Window} $\ast$ {\bf Obit\-XMLXML2Window} ({\bf Obit\-XML} $\ast$xml, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Convert to {\bf Obit\-DCon\-Clean\-Window}{\rm (p.\,\pageref{structObitDConCleanWindow})}. \item\end{CompactList}\item 
+{\bf Obit\-XML} $\ast$ {\bf Obit\-XMLBlob2XML} (gpointer blob, {\bf Obit\-Info\-List} $\ast$desc, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Constructor from Binary blob. \item\end{CompactList}\item 
+gpointer {\bf Obit\-XMLXML2Blob} ({\bf Obit\-XML} $\ast$xml, {\bf Obit\-Info\-List} $\ast$$\ast$desc, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Convert to Binary blob. \item\end{CompactList}\item 
+{\bf Obit\-XML} $\ast$ {\bf Obit\-XMLReturn} (gchar $\ast$name, gpointer parm\-P, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Constructor for return object. \item\end{CompactList}\item 
+{\bf Obit\-XML} $\ast$ {\bf Obit\-XMLServer\-Return} ({\bf Obit\-Info\-List} $\ast$list, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Constructor for Server\-Return object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf Obit\-XMLGet\-Server\-Result} ({\bf Obit\-XML} $\ast$xml, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get \char`\"{}Result\char`\"{} Info\-List from Server\-Return object. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} XML class. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} class.
+
+This class controls the conversion to and from xml for {\bf Obit}{\rm (p.\,\pageref{structObit})} related information. The xml structures are generally to be used in a remote procedure call using {\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})}.\subsection{Creators and Destructors}\label{ObitXML_8h_ObitXMLaccess}
+An {\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} will usually be created using Obit\-XMLCreate which allows specifying a name for the object as well as other information.
+
+A copy of a pointer to an {\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} should always be made using the {\bf Obit\-XMLRef}{\rm (p.\,\pageref{ObitXML_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} or changing a pointer, the function {\bf Obit\-XMLUnref}{\rm (p.\,\pageref{ObitXML_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.
+
+\subsection{Define Documentation}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLIsA@{ObitXMLIsA}}
+\index{ObitXMLIsA@{ObitXMLIsA}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-XMLIs\-A(in)\ Obit\-Is\-A (in, Obit\-XMLGet\-Class())}\label{ObitXML_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitXML.h@{Obit\-XML.h}!ObitXMLRef@{ObitXMLRef}}
+\index{ObitXMLRef@{ObitXMLRef}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-XMLRef(in)\ Obit\-Ref (in)}\label{ObitXML_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})}. 
+
+returns a Obit\-XML$\ast$. in = object to reference \index{ObitXML.h@{Obit\-XML.h}!ObitXMLUnref@{ObitXMLUnref}}
+\index{ObitXMLUnref@{ObitXMLUnref}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-XMLUnref(in)\ Obit\-Unref (in)}\label{ObitXML_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} returns a Obit\-XML$\ast$. 
+
+in = object to unreference 
+
+\subsection{Typedef Documentation}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLEnv@{ObitXMLEnv}}
+\index{ObitXMLEnv@{ObitXMLEnv}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef xmlrpc\_\-env {\bf Obit\-XMLEnv}}\label{ObitXML_8h_a3}
+
+
+Environment structure. 
+
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLValue@{ObitXMLValue}}
+\index{ObitXMLValue@{ObitXMLValue}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef xmlrpc\_\-value {\bf Obit\-XMLValue}}\label{ObitXML_8h_a4}
+
+
+Parameter array structure. 
+
+
+
+\subsection{Enumeration Type Documentation}
+\index{ObitXML.h@{Obit\-XML.h}!obitXMLType@{obitXMLType}}
+\index{obitXMLType@{obitXMLType}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}enum {\bf obit\-XMLType}}\label{ObitXML_8h_a35}
+
+
+enum for object type. 
+
+This specifies which known type of XML object \begin{Desc}
+\item[Enumeration values: ]\par
+\begin{description}
+\index{OBIT_XML_Reply@{OBIT\_\-XML\_\-Reply}!ObitXML.h@{ObitXML.h}}\index{ObitXML.h@{ObitXML.h}!OBIT_XML_Reply@{OBIT\_\-XML\_\-Reply}}\item[{\em 
+OBIT\_\-XML\_\-Reply\label{ObitXML_8h_a35a5}
+}]Reply status from RPC call. \index{OBIT_XML_Result@{OBIT\_\-XML\_\-Result}!ObitXML.h@{ObitXML.h}}\index{ObitXML.h@{ObitXML.h}!OBIT_XML_Result@{OBIT\_\-XML\_\-Result}}\item[{\em 
+OBIT\_\-XML\_\-Result\label{ObitXML_8h_a35a6}
+}]Reply results. \index{OBIT_XML_InfoList@{OBIT\_\-XML\_\-InfoList}!ObitXML.h@{ObitXML.h}}\index{ObitXML.h@{ObitXML.h}!OBIT_XML_InfoList@{OBIT\_\-XML\_\-InfoList}}\item[{\em 
+OBIT\_\-XML\_\-Info\-List\label{ObitXML_8h_a35a7}
+}]{\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \index{OBIT_XML_Ping@{OBIT\_\-XML\_\-Ping}!ObitXML.h@{ObitXML.h}}\index{ObitXML.h@{ObitXML.h}!OBIT_XML_Ping@{OBIT\_\-XML\_\-Ping}}\item[{\em 
+OBIT\_\-XML\_\-Ping\label{ObitXML_8h_a35a8}
+}]Ping parameters. \index{OBIT_XML_LoadImage@{OBIT\_\-XML\_\-LoadImage}!ObitXML.h@{ObitXML.h}}\index{ObitXML.h@{ObitXML.h}!OBIT_XML_LoadImage@{OBIT\_\-XML\_\-LoadImage}}\item[{\em 
+OBIT\_\-XML\_\-Load\-Image\label{ObitXML_8h_a35a9}
+}]Load\-Image parameters. \index{OBIT_XML_EditWindow@{OBIT\_\-XML\_\-EditWindow}!ObitXML.h@{ObitXML.h}}\index{ObitXML.h@{ObitXML.h}!OBIT_XML_EditWindow@{OBIT\_\-XML\_\-EditWindow}}\item[{\em 
+OBIT\_\-XML\_\-Edit\-Window\label{ObitXML_8h_a35a10}
+}]Edit\-Window parameters. \index{OBIT_XML_BinBlob@{OBIT\_\-XML\_\-BinBlob}!ObitXML.h@{ObitXML.h}}\index{ObitXML.h@{ObitXML.h}!OBIT_XML_BinBlob@{OBIT\_\-XML\_\-BinBlob}}\item[{\em 
+OBIT\_\-XML\_\-Bin\-Blob\label{ObitXML_8h_a35a11}
+}]Binary blob. \index{OBIT_XML_RPCCallArg@{OBIT\_\-XML\_\-RPCCallArg}!ObitXML.h@{ObitXML.h}}\index{ObitXML.h@{ObitXML.h}!OBIT_XML_RPCCallArg@{OBIT\_\-XML\_\-RPCCallArg}}\item[{\em 
+OBIT\_\-XML\_\-RPCCall\-Arg\label{ObitXML_8h_a35a12}
+}]RPC Call argument. \index{OBIT_XML_Unknown@{OBIT\_\-XML\_\-Unknown}!ObitXML.h@{ObitXML.h}}\index{ObitXML.h@{ObitXML.h}!OBIT_XML_Unknown@{OBIT\_\-XML\_\-Unknown}}\item[{\em 
+OBIT\_\-XML\_\-Unknown\label{ObitXML_8h_a35a13}
+}]Unknown. \end{description}
+\end{Desc}
+
+
+
+\subsection{Function Documentation}
+\index{ObitXML.h@{Obit\-XML.h}!newObitXML@{newObitXML}}
+\index{newObitXML@{newObitXML}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-XML}$\ast$ new\-Obit\-XML (gchar $\ast$ {\em name})}\label{ObitXML_8h_a15}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLBlob2XML@{ObitXMLBlob2XML}}
+\index{ObitXMLBlob2XML@{ObitXMLBlob2XML}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-XML}$\ast$ Obit\-XMLBlob2XML (gpointer {\em blob}, {\bf Obit\-Info\-List} $\ast$ {\em desc}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitXML_8h_a30}
+
+
+Public: Constructor from Binary blob. 
+
+type = OBIT\_\-XML\_\-Bin\-Blob \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em blob}]Binary blob to include \item[{\em desc}]Description of blob including: \begin{itemize}
+\item size long scalar Size of blob in bytes \end{itemize}
+\item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]new {\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})}, blob in member \char`\"{}Blob\-Data\char`\"{} \end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLClassInit@{ObitXMLClassInit}}
+\index{ObitXMLClassInit@{ObitXMLClassInit}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-XMLClass\-Init (void)}\label{ObitXML_8h_a14}
+
+
+Public: Class initializer. 
+
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLFileInfo2XML@{ObitXMLFileInfo2XML}}
+\index{ObitXMLFileInfo2XML@{ObitXMLFileInfo2XML}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-XML}$\ast$ Obit\-XMLFile\-Info2XML (Obit\-IOType {\em Type}, gchar $\ast$ {\em Name}, gchar $\ast$ {\em AClass}, gchar $\ast$ {\em ADir}, {\bf olong} {\em ASeq}, {\bf olong} {\em AUser}, {\bf olong} {\em Field}, {\bf olong} {\em NField}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitXML_8h_a26}
+
+
+Public: Constructor from Image file info. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em Type}]Image type, OBIT\_\-IO\_\-FITS or OBIT\_\-IO\_\-AIPS \item[{\em Name}]FITS file path or AIPS Name (12 char) \item[{\em AClass}]AIPS class (6 char), may be NULL for FITS \item[{\em ADir}]Path to AIPS directory, may be NULL for FITS \item[{\em ASeq}]AIPS image sequence number \item[{\em AUser}]AIPS User number \item[{\em Field}]Field number (1-rel) \item[{\em NField}]Total number of fields in mosaic \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]new {\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} object \end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLGetCallArg@{ObitXMLGetCallArg}}
+\index{ObitXMLGetCallArg@{ObitXMLGetCallArg}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ Obit\-XMLGet\-Call\-Arg ({\bf Obit\-XMLEnv} $\ast$const  {\em env\-P}, {\bf Obit\-XMLValue} $\ast$const  {\em param\-Array\-P}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitXML_8h_a18}
+
+
+Public: Convert RPC Call arguments received to an Info\-List. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em env\-P}]Environment, structure copied \item[{\em param\-Array\-P}]Parameter array, structure NOT copied \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]new {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} object \end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLGetClass@{ObitXMLGetClass}}
+\index{ObitXMLGetClass@{ObitXMLGetClass}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-XMLGet\-Class (void)}\label{ObitXML_8h_a16}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLGetEnv@{ObitXMLGetEnv}}
+\index{ObitXMLGetEnv@{ObitXMLGetEnv}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-XMLEnv} Obit\-XMLGet\-Env ({\bf Obit\-XML} $\ast$ {\em in})}\label{ObitXML_8h_a19}
+
+
+Public: Give XML Environment. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]XML object \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to XML Environment \end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLGetServerResult@{ObitXMLGetServerResult}}
+\index{ObitXMLGetServerResult@{ObitXMLGetServerResult}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ Obit\-XMLGet\-Server\-Result ({\bf Obit\-XML} $\ast$ {\em xml}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitXML_8h_a34}
+
+
+Public: Get \char`\"{}Result\char`\"{} Info\-List from Server\-Return object. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em xml}]Object from which result to be extracted \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]new Info \end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLGetValue@{ObitXMLGetValue}}
+\index{ObitXMLGetValue@{ObitXMLGetValue}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-XMLValue}$\ast$ Obit\-XMLGet\-Value ({\bf Obit\-XML} $\ast$ {\em in})}\label{ObitXML_8h_a20}
+
+
+Public: Give XML Value. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]XML object \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to XML Value \end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLInfoList2XML@{ObitXMLInfoList2XML}}
+\index{ObitXMLInfoList2XML@{ObitXMLInfoList2XML}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-XML}$\ast$ Obit\-XMLInfo\-List2XML ({\bf Obit\-Info\-List} $\ast$ {\em list}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitXML_8h_a23}
+
+
+Public: Constructor from {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+type = OBIT\_\-XML\_\-Info\-List \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em list}]List to convert \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]new {\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} object (Unref when done) \end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLPing2XML@{ObitXMLPing2XML}}
+\index{ObitXMLPing2XML@{ObitXMLPing2XML}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-XML}$\ast$ Obit\-XMLPing2XML ({\bf Obit\-Err} $\ast$ {\em err})}\label{ObitXML_8h_a21}
+
+
+Public: Constructor for ping. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]new {\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} object \end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLReturn@{ObitXMLReturn}}
+\index{ObitXMLReturn@{ObitXMLReturn}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-XML}$\ast$ Obit\-XMLReturn (gchar $\ast$ {\em name}, gpointer {\em parm\-P}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitXML_8h_a32}
+
+
+Public: Constructor for return object. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]Name string for new object \item[{\em parm\-P}]xmlrpc\_\-value (as gpointer) as xml data for new object This passes control of parm\-P to the new object \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]new {\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} object \end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLServerReturn@{ObitXMLServerReturn}}
+\index{ObitXMLServerReturn@{ObitXMLServerReturn}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-XML}$\ast$ Obit\-XMLServer\-Return ({\bf Obit\-Info\-List} $\ast$ {\em list}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitXML_8h_a33}
+
+
+Public: Constructor for Server\-Return object. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em list}]Info list to be written as xml entry \char`\"{}Result\char`\"{} \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]new {\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} object \end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLSetCallArg@{ObitXMLSetCallArg}}
+\index{ObitXMLSetCallArg@{ObitXMLSetCallArg}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-XML}$\ast$ Obit\-XMLSet\-Call\-Arg (gchar $\ast$ {\em func}, {\bf Obit\-Info\-List} $\ast$ {\em arg\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitXML_8h_a17}
+
+
+Public: Constructor from RPC Call arguments to be sent. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em func}]Name of function to be called \item[{\em arg\-List}]Info\-List with call arguments \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]new {\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} object suitable to be passed to Obit\-RPCCall \end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLWindow2XML@{ObitXMLWindow2XML}}
+\index{ObitXMLWindow2XML@{ObitXMLWindow2XML}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-XML}$\ast$ Obit\-XMLWindow2XML ({\bf Obit\-DCon\-Clean\-Window} $\ast$ {\em window}, {\bf olong} {\em field}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitXML_8h_a28}
+
+
+Public: Constructor from {\bf Obit\-DCon\-Clean\-Window}{\rm (p.\,\pageref{structObitDConCleanWindow})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em window}]Object from which to extract information \item[{\em field}]Which field? (1-rel) \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]{\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} object \end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLXML2Blob@{ObitXMLXML2Blob}}
+\index{ObitXMLXML2Blob@{ObitXMLXML2Blob}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer Obit\-XMLXML2Blob ({\bf Obit\-XML} $\ast$ {\em xml}, {\bf Obit\-Info\-List} $\ast$$\ast$ {\em desc}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitXML_8h_a31}
+
+
+Public: Convert to Binary blob. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em xml}]Object to convert \item[{\em desc}][out] Description of output blob including: \begin{itemize}
+\item size olong scalar Size of blob in bytes \end{itemize}
+\item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]new output binary blob (Obit\-Mem\-Free when done) \end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLXML2FileInfo@{ObitXMLXML2FileInfo}}
+\index{ObitXMLXML2FileInfo@{ObitXMLXML2FileInfo}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-XMLXML2File\-Info ({\bf Obit\-XML} $\ast$ {\em xml}, Obit\-IOType $\ast$ {\em Type}, gchar $\ast$$\ast$ {\em Name}, gchar $\ast$$\ast$ {\em AClass}, gchar $\ast$$\ast$ {\em ADir}, {\bf olong} $\ast$ {\em ASeq}, {\bf olong} $\ast$ {\em AUser}, {\bf olong} $\ast$ {\em Field}, {\bf olong} $\ast$ {\em NField}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitXML_8h_a27}
+
+
+Public: Convert to Image file info. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em xml}]{\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} Object from which to extract information \item[{\em Type}][out]Image type, OBIT\_\-IO\_\-FITS or OBIT\_\-IO\_\-AIPS \item[{\em Name}][out]FITS file path or AIPS Name (12 char) will be allocated, g\_\-free when done \item[{\em AClass}][out]AIPS class (6 char), if non NULL will be allocated, g\_\-free when done \item[{\em ADir}][out]Path to AIPS directory if non NULL will be allocated, g\_\-free when done \item[{\em Aseq}][out]AIPS image sequence number \item[{\em Auser}][out]AIPS User number \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \item[{\em Field}][out]Field number (1-rel) \item[{\em NField}][out]Total number of fields in mosaic \end{description}
+\end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLXML2InfoList@{ObitXMLXML2InfoList}}
+\index{ObitXMLXML2InfoList@{ObitXMLXML2InfoList}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ Obit\-XMLXML2Info\-List ({\bf Obit\-XML} $\ast$ {\em xml}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitXML_8h_a24}
+
+
+Public: Convert to {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em xml}]Object to convert \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]new {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} (Unref when done) \end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLXML2Ping@{ObitXMLXML2Ping}}
+\index{ObitXMLXML2Ping@{ObitXMLXML2Ping}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-XMLXML2Ping ({\bf Obit\-XML} $\ast$ {\em xml}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitXML_8h_a22}
+
+
+Public: Convert to ping info. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em xml}]{\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} Object from which to extract information \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the random gint \end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLXML2Window@{ObitXMLXML2Window}}
+\index{ObitXMLXML2Window@{ObitXMLXML2Window}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Window}$\ast$ Obit\-XMLXML2Window ({\bf Obit\-XML} $\ast$ {\em xml}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitXML_8h_a29}
+
+
+Public: Convert to {\bf Obit\-DCon\-Clean\-Window}{\rm (p.\,\pageref{structObitDConCleanWindow})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em env}]xmlrpc environment \item[{\em xmlwindow}]XML Object from which to extract information \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]{\bf Obit}{\rm (p.\,\pageref{structObit})} Window structure \end{Desc}
+\index{ObitXML.h@{Obit\-XML.h}!ObitXMLXMLInfo2List@{ObitXMLXMLInfo2List}}
+\index{ObitXMLXMLInfo2List@{ObitXMLXMLInfo2List}!ObitXML.h@{Obit\-XML.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ Obit\-XMLXMLInfo2List ({\bf Obit\-XML} $\ast$ {\em xml}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitXML_8h_a25}
+
+
+Public: Convert XML created from an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} to {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em xml}]Object to convert \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]new {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} (Unref when done) \end{Desc}

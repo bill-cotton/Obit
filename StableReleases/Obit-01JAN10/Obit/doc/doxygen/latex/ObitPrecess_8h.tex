@@ -1,0 +1,48 @@
+\section{Obit\-Precess.h File Reference}
+\label{ObitPrecess_8h}\index{ObitPrecess.h@{ObitPrecess.h}}
+Obit\-Precess Precession utilities definition. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Info\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Source.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVDesc.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Precess\-UVJPrecess\-App} ({\bf Obit\-UVDesc} $\ast$desc, {\bf Obit\-Source} $\ast$source)
+\begin{CompactList}\small\item\em Public: Precess source position from standard Epoch to apparent. \item\end{CompactList}\item 
+void {\bf Obit\-Precess\-GST0} ({\bf odouble} JD, {\bf odouble} $\ast$GSTUTC0, {\bf odouble} $\ast$Rate)
+\begin{CompactList}\small\item\em Public: Predict GST at UTC=0 and Earth rotation rate. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Precess Precession utilities definition. 
+
+This utility contains routines for the precession of celestial positions. There are no objects of this class.
+
+\subsection{Function Documentation}
+\index{ObitPrecess.h@{Obit\-Precess.h}!ObitPrecessGST0@{ObitPrecessGST0}}
+\index{ObitPrecessGST0@{ObitPrecessGST0}!ObitPrecess.h@{Obit\-Precess.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Precess\-GST0 ({\bf odouble} {\em JD}, {\bf odouble} $\ast$ {\em GSTUTC0}, {\bf odouble} $\ast$ {\em Rate})}\label{ObitPrecess_8h_a1}
+
+
+Public: Predict GST at UTC=0 and Earth rotation rate. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em JD}]\item[{\em GSTUTC0}][out] Apparent GST (hours) at UTC=0 on JD \item[{\em Rate}][out] Earth rotation rate turns per day on JD \end{description}
+\end{Desc}
+\index{ObitPrecess.h@{Obit\-Precess.h}!ObitPrecessUVJPrecessApp@{ObitPrecessUVJPrecessApp}}
+\index{ObitPrecessUVJPrecessApp@{ObitPrecessUVJPrecessApp}!ObitPrecess.h@{Obit\-Precess.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Precess\-UVJPrecess\-App ({\bf Obit\-UVDesc} $\ast$ {\em desc}, {\bf Obit\-Source} $\ast$ {\em source})}\label{ObitPrecess_8h_a0}
+
+
+Public: Precess source position from standard Epoch to apparent. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em desc}]UV data descriptor \item[{\em source}]{\bf Obit}{\rm (p.\,\pageref{structObit})} source with position to precess. \end{description}
+\end{Desc}

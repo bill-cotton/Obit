@@ -1,0 +1,241 @@
+\section{Obit\-Time\-Filter\-Class\-Info Struct Reference}
+\label{structObitTimeFilterClassInfo}\index{ObitTimeFilterClassInfo@{ObitTimeFilterClassInfo}}
+Class\-Info Structure.  
+
+
+{\tt \#include $<$Obit\-Time\-Filter.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gboolean {\bf initialized}
+\begin{CompactList}\small\item\em Have I been initialized? \item\end{CompactList}\item 
+gboolean {\bf has\-Scratch}
+\begin{CompactList}\small\item\em Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? \item\end{CompactList}\item 
+gchar $\ast$ {\bf Class\-Name}
+\begin{CompactList}\small\item\em Name of class (\char`\"{}Obit\char`\"{}). \item\end{CompactList}\item 
+gconstpointer {\bf Parent\-Class}
+\begin{CompactList}\small\item\em Pointer to parent class Class\-Info, Null if none. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Init\-FP} {\bf Obit\-Class\-Init}
+\begin{CompactList}\small\item\em Function pointer to Class initializer. \item\end{CompactList}\item 
+{\bf new\-Obit\-FP} {\bf new\-Obit}
+\begin{CompactList}\small\item\em Function pointer to new\-Obit. \item\end{CompactList}\item 
+{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Get\-Class}
+\begin{CompactList}\small\item\em Function pointer to Get\-Class. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-Class\-Info\-Def\-Fn}
+\begin{CompactList}\small\item\em Function pointer to Class\-Info\-Def\-Fn. \item\end{CompactList}\item 
+{\bf Obit\-Copy\-FP} {\bf Obit\-Copy}
+\begin{CompactList}\small\item\em Function pointer to shallow copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Clone\-FP} {\bf Obit\-Clone}
+\begin{CompactList}\small\item\em Function pointer to deep copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Ref\-FP} {\bf Obit\-Ref}
+\begin{CompactList}\small\item\em Function pointer to Object Ref. \item\end{CompactList}\item 
+{\bf Obit\-Unref\-FP} {\bf Obit\-Unref}
+\begin{CompactList}\small\item\em Function pointer to Object Unref. \item\end{CompactList}\item 
+{\bf Obit\-Is\-AFP} {\bf Obit\-Is\-A}
+\begin{CompactList}\small\item\em Function pointer to test if a class member. \item\end{CompactList}\item 
+{\bf Obit\-Clear\-FP} {\bf Obit\-Clear}
+\begin{CompactList}\small\item\em Function pointer to deallocation function. \item\end{CompactList}\item 
+{\bf Obit\-Init\-FP} {\bf Obit\-Init}
+\begin{CompactList}\small\item\em Function pointer to object initializer. \item\end{CompactList}\item 
+{\bf new\-Obit\-Time\-Filter\-FP} {\bf new\-Obit\-Time\-Filter}
+\begin{CompactList}\small\item\em Function pointer to constructor. \item\end{CompactList}\item 
+{\bf Obit\-Time\-Filter\-Grid\-Time\-FP} {\bf Obit\-Time\-Filter\-Grid\-Time}
+\begin{CompactList}\small\item\em Function pointer to construct regular time series. \item\end{CompactList}\item 
+{\bf Obit\-Time\-Filter\-Ungrid\-Time\-FP} {\bf Obit\-Time\-Filter\-Ungrid\-Time}
+\begin{CompactList}\small\item\em Function pointer to copy to external time series. \item\end{CompactList}\item 
+{\bf Obit\-Time\-Filter2Freq\-FP} {\bf Obit\-Time\-Filter2Freq}
+\begin{CompactList}\small\item\em Function pointer to Compute frequency series. \item\end{CompactList}\item 
+{\bf Obit\-Time\-Filter2Time\-FP} {\bf Obit\-Time\-Filter2Time}
+\begin{CompactList}\small\item\em Function pointer to Compute Time series. \item\end{CompactList}\item 
+{\bf Obit\-Time\-Filter\-Filter\-FP} {\bf Obit\-Time\-Filter\-Filter}
+\begin{CompactList}\small\item\em Function pointer to Apply Filter to Frequency series. \item\end{CompactList}\item 
+{\bf Obit\-Time\-Filter\-Do\-Filter\-FP} {\bf Obit\-Time\-Filter\-Do\-Filter}
+\begin{CompactList}\small\item\em Function pointer to Apply Filter to Frequency series (physical inputs). \item\end{CompactList}\item 
+{\bf Obit\-Time\-Filter\-Plot\-Power\-FP} {\bf Obit\-Time\-Filter\-Plot\-Power}
+\begin{CompactList}\small\item\em Function pointer to Plot power spectrum. \item\end{CompactList}\item 
+{\bf Obit\-Time\-Filter\-Plot\-Time\-FP} {\bf Obit\-Time\-Filter\-Plot\-Time}
+\begin{CompactList}\small\item\em Function pointer to Plot Time series. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Class\-Info Structure. 
+
+Contains class name, a pointer to any parent class (NULL if none) and function pointers. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ClassName@{ClassName}}
+\index{ClassName@{ClassName}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Time\-Filter\-Class\-Info::Class\-Name}}\label{structObitTimeFilterClassInfo_o2}
+
+
+Name of class (\char`\"{}Obit\char`\"{}). 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!hasScratch@{hasScratch}}
+\index{hasScratch@{hasScratch}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Time\-Filter\-Class\-Info::has\-Scratch}}\label{structObitTimeFilterClassInfo_o1}
+
+
+Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!initialized@{initialized}}
+\index{initialized@{initialized}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Time\-Filter\-Class\-Info::initialized}}\label{structObitTimeFilterClassInfo_o0}
+
+
+Have I been initialized? 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!newObit@{newObit}}
+\index{newObit@{newObit}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::new\-Obit}}\label{structObitTimeFilterClassInfo_o5}
+
+
+Function pointer to new\-Obit. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!newObitTimeFilter@{newObitTimeFilter}}
+\index{newObitTimeFilter@{newObitTimeFilter}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-Time\-Filter\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::new\-Obit\-Time\-Filter}}\label{structObitTimeFilterClassInfo_o15}
+
+
+Function pointer to constructor. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ObitClassInfoDefFn@{ObitClassInfoDefFn}}
+\index{ObitClassInfoDefFn@{ObitClassInfoDefFn}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::Obit\-Class\-Info\-Def\-Fn}}\label{structObitTimeFilterClassInfo_o7}
+
+
+Function pointer to Class\-Info\-Def\-Fn. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ObitClassInit@{ObitClassInit}}
+\index{ObitClassInit@{ObitClassInit}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Init\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::Obit\-Class\-Init}}\label{structObitTimeFilterClassInfo_o4}
+
+
+Function pointer to Class initializer. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ObitClear@{ObitClear}}
+\index{ObitClear@{ObitClear}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clear\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::Obit\-Clear}}\label{structObitTimeFilterClassInfo_o13}
+
+
+Function pointer to deallocation function. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ObitClone@{ObitClone}}
+\index{ObitClone@{ObitClone}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clone\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::Obit\-Clone}}\label{structObitTimeFilterClassInfo_o9}
+
+
+Function pointer to deep copy constructor. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ObitCopy@{ObitCopy}}
+\index{ObitCopy@{ObitCopy}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Copy\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::Obit\-Copy}}\label{structObitTimeFilterClassInfo_o8}
+
+
+Function pointer to shallow copy constructor. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ObitGetClass@{ObitGetClass}}
+\index{ObitGetClass@{ObitGetClass}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::Obit\-Get\-Class}}\label{structObitTimeFilterClassInfo_o6}
+
+
+Function pointer to Get\-Class. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ObitInit@{ObitInit}}
+\index{ObitInit@{ObitInit}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Init\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::Obit\-Init}}\label{structObitTimeFilterClassInfo_o14}
+
+
+Function pointer to object initializer. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ObitIsA@{ObitIsA}}
+\index{ObitIsA@{ObitIsA}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Is\-AFP} {\bf Obit\-Time\-Filter\-Class\-Info::Obit\-Is\-A}}\label{structObitTimeFilterClassInfo_o12}
+
+
+Function pointer to test if a class member. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ObitRef@{ObitRef}}
+\index{ObitRef@{ObitRef}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Ref\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::Obit\-Ref}}\label{structObitTimeFilterClassInfo_o10}
+
+
+Function pointer to Object Ref. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ObitTimeFilter2Freq@{ObitTimeFilter2Freq}}
+\index{ObitTimeFilter2Freq@{ObitTimeFilter2Freq}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Time\-Filter2Freq\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::Obit\-Time\-Filter2Freq}}\label{structObitTimeFilterClassInfo_o18}
+
+
+Function pointer to Compute frequency series. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ObitTimeFilter2Time@{ObitTimeFilter2Time}}
+\index{ObitTimeFilter2Time@{ObitTimeFilter2Time}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Time\-Filter2Time\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::Obit\-Time\-Filter2Time}}\label{structObitTimeFilterClassInfo_o19}
+
+
+Function pointer to Compute Time series. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ObitTimeFilterDoFilter@{ObitTimeFilterDoFilter}}
+\index{ObitTimeFilterDoFilter@{ObitTimeFilterDoFilter}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Time\-Filter\-Do\-Filter\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::Obit\-Time\-Filter\-Do\-Filter}}\label{structObitTimeFilterClassInfo_o21}
+
+
+Function pointer to Apply Filter to Frequency series (physical inputs). 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ObitTimeFilterFilter@{ObitTimeFilterFilter}}
+\index{ObitTimeFilterFilter@{ObitTimeFilterFilter}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Time\-Filter\-Filter\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::Obit\-Time\-Filter\-Filter}}\label{structObitTimeFilterClassInfo_o20}
+
+
+Function pointer to Apply Filter to Frequency series. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ObitTimeFilterGridTime@{ObitTimeFilterGridTime}}
+\index{ObitTimeFilterGridTime@{ObitTimeFilterGridTime}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Time\-Filter\-Grid\-Time\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::Obit\-Time\-Filter\-Grid\-Time}}\label{structObitTimeFilterClassInfo_o16}
+
+
+Function pointer to construct regular time series. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ObitTimeFilterPlotPower@{ObitTimeFilterPlotPower}}
+\index{ObitTimeFilterPlotPower@{ObitTimeFilterPlotPower}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Time\-Filter\-Plot\-Power\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::Obit\-Time\-Filter\-Plot\-Power}}\label{structObitTimeFilterClassInfo_o22}
+
+
+Function pointer to Plot power spectrum. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ObitTimeFilterPlotTime@{ObitTimeFilterPlotTime}}
+\index{ObitTimeFilterPlotTime@{ObitTimeFilterPlotTime}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Time\-Filter\-Plot\-Time\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::Obit\-Time\-Filter\-Plot\-Time}}\label{structObitTimeFilterClassInfo_o23}
+
+
+Function pointer to Plot Time series. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ObitTimeFilterUngridTime@{ObitTimeFilterUngridTime}}
+\index{ObitTimeFilterUngridTime@{ObitTimeFilterUngridTime}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Time\-Filter\-Ungrid\-Time\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::Obit\-Time\-Filter\-Ungrid\-Time}}\label{structObitTimeFilterClassInfo_o17}
+
+
+Function pointer to copy to external time series. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ObitUnref@{ObitUnref}}
+\index{ObitUnref@{ObitUnref}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Unref\-FP} {\bf Obit\-Time\-Filter\-Class\-Info::Obit\-Unref}}\label{structObitTimeFilterClassInfo_o11}
+
+
+Function pointer to Object Unref. 
+
+\index{ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}!ParentClass@{ParentClass}}
+\index{ParentClass@{ParentClass}!ObitTimeFilterClassInfo@{Obit\-Time\-Filter\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer {\bf Obit\-Time\-Filter\-Class\-Info::Parent\-Class}}\label{structObitTimeFilterClassInfo_o3}
+
+
+Pointer to parent class Class\-Info, Null if none. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Time\-Filter.h}\end{CompactItemize}

@@ -1,0 +1,239 @@
+\section{Obit\-Source Struct Reference}
+\label{structObitSource}\index{ObitSource@{ObitSource}}
+Obit\-Source Class.  
+
+
+{\tt \#include $<$Obit\-Source.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf olong} {\bf Sour\-ID}
+\begin{CompactList}\small\item\em Source ID number. \item\end{CompactList}\item 
+{\bf olong} {\bf Qual}
+\begin{CompactList}\small\item\em Source qualifier. \item\end{CompactList}\item 
+{\bf olong} {\bf num\-IF}
+\begin{CompactList}\small\item\em Number of IFs. \item\end{CompactList}\item 
+gchar {\bf Source\-Name} [20]
+\begin{CompactList}\small\item\em Source Name. \item\end{CompactList}\item 
+gchar {\bf Cal\-Code} [8]
+\begin{CompactList}\small\item\em Source cal code. \item\end{CompactList}\item 
+{\bf ofloat} {\bf equinox}
+\begin{CompactList}\small\item\em Standard Equinox. \item\end{CompactList}\item 
+{\bf odouble} {\bf RAApp}
+\begin{CompactList}\small\item\em Source Apparent RA (deg). \item\end{CompactList}\item 
+{\bf odouble} {\bf Dec\-App}
+\begin{CompactList}\small\item\em Source Apparent Declination (deg). \item\end{CompactList}\item 
+{\bf odouble} {\bf RAMean}
+\begin{CompactList}\small\item\em Source RA at standard equinox (deg). \item\end{CompactList}\item 
+{\bf odouble} {\bf Dec\-Mean}
+\begin{CompactList}\small\item\em Source Declination at standard equinox (deg). \item\end{CompactList}\item 
+{\bf odouble} {\bf PMRa}
+\begin{CompactList}\small\item\em Proper motion (deg/day) in RA. \item\end{CompactList}\item 
+{\bf odouble} {\bf PMDec}
+\begin{CompactList}\small\item\em Proper motion (deg/day) in declination. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf IFlux}
+\begin{CompactList}\small\item\em Total Stokes I flux density per IF. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf QFlux}
+\begin{CompactList}\small\item\em Total Stokes Q flux density per IF. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf UFlux}
+\begin{CompactList}\small\item\em Total Stokes U flux density per IF. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf VFlux}
+\begin{CompactList}\small\item\em Total Stokes V flux densityper IF. \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf Freq\-Off}
+\begin{CompactList}\small\item\em Frequency offset (Hz) from IF nominal per IF. \item\end{CompactList}\item 
+{\bf odouble} {\bf Bandwidth}
+\begin{CompactList}\small\item\em Bandwidth. \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf LSRVel}
+\begin{CompactList}\small\item\em LSR velocity per IF. \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf Rest\-Freq}
+\begin{CompactList}\small\item\em Line rest frequency per IF. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Source Class. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitSource@{Obit\-Source}!Bandwidth@{Bandwidth}}
+\index{Bandwidth@{Bandwidth}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Source::Bandwidth}}\label{structObitSource_o21}
+
+
+Bandwidth. 
+
+\index{ObitSource@{Obit\-Source}!CalCode@{CalCode}}
+\index{CalCode@{CalCode}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Source::Cal\-Code}[8]}\label{structObitSource_o8}
+
+
+Source cal code. 
+
+\index{ObitSource@{Obit\-Source}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Source::Class\-Info}}\label{structObitSource_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitSource@{Obit\-Source}!DecApp@{DecApp}}
+\index{DecApp@{DecApp}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Source::Dec\-App}}\label{structObitSource_o11}
+
+
+Source Apparent Declination (deg). 
+
+\index{ObitSource@{Obit\-Source}!DecMean@{DecMean}}
+\index{DecMean@{DecMean}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Source::Dec\-Mean}}\label{structObitSource_o13}
+
+
+Source Declination at standard equinox (deg). 
+
+\index{ObitSource@{Obit\-Source}!equinox@{equinox}}
+\index{equinox@{equinox}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Source::equinox}}\label{structObitSource_o9}
+
+
+Standard Equinox. 
+
+\index{ObitSource@{Obit\-Source}!FreqOff@{FreqOff}}
+\index{FreqOff@{FreqOff}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-Source::Freq\-Off}}\label{structObitSource_o20}
+
+
+Frequency offset (Hz) from IF nominal per IF. 
+
+\index{ObitSource@{Obit\-Source}!IFlux@{IFlux}}
+\index{IFlux@{IFlux}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Source::IFlux}}\label{structObitSource_o16}
+
+
+Total Stokes I flux density per IF. 
+
+\index{ObitSource@{Obit\-Source}!LSRVel@{LSRVel}}
+\index{LSRVel@{LSRVel}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-Source::LSRVel}}\label{structObitSource_o22}
+
+
+LSR velocity per IF. 
+
+\index{ObitSource@{Obit\-Source}!name@{name}}
+\index{name@{name}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Source::name}}\label{structObitSource_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitSource@{Obit\-Source}!numIF@{numIF}}
+\index{numIF@{numIF}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Source::num\-IF}}\label{structObitSource_o6}
+
+
+Number of IFs. 
+
+\index{ObitSource@{Obit\-Source}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Source::Obit\-Id}}\label{structObitSource_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitSource@{Obit\-Source}!PMDec@{PMDec}}
+\index{PMDec@{PMDec}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Source::PMDec}}\label{structObitSource_o15}
+
+
+Proper motion (deg/day) in declination. 
+
+\index{ObitSource@{Obit\-Source}!PMRa@{PMRa}}
+\index{PMRa@{PMRa}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Source::PMRa}}\label{structObitSource_o14}
+
+
+Proper motion (deg/day) in RA. 
+
+\index{ObitSource@{Obit\-Source}!QFlux@{QFlux}}
+\index{QFlux@{QFlux}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Source::QFlux}}\label{structObitSource_o17}
+
+
+Total Stokes Q flux density per IF. 
+
+\index{ObitSource@{Obit\-Source}!Qual@{Qual}}
+\index{Qual@{Qual}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Source::Qual}}\label{structObitSource_o5}
+
+
+Source qualifier. 
+
+\index{ObitSource@{Obit\-Source}!RAApp@{RAApp}}
+\index{RAApp@{RAApp}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Source::RAApp}}\label{structObitSource_o10}
+
+
+Source Apparent RA (deg). 
+
+\index{ObitSource@{Obit\-Source}!RAMean@{RAMean}}
+\index{RAMean@{RAMean}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Source::RAMean}}\label{structObitSource_o12}
+
+
+Source RA at standard equinox (deg). 
+
+\index{ObitSource@{Obit\-Source}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Source::Reference\-Count}}\label{structObitSource_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitSource@{Obit\-Source}!RestFreq@{RestFreq}}
+\index{RestFreq@{RestFreq}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-Source::Rest\-Freq}}\label{structObitSource_o23}
+
+
+Line rest frequency per IF. 
+
+\index{ObitSource@{Obit\-Source}!SourceName@{SourceName}}
+\index{SourceName@{SourceName}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Source::Source\-Name}[20]}\label{structObitSource_o7}
+
+
+Source Name. 
+
+\index{ObitSource@{Obit\-Source}!SourID@{SourID}}
+\index{SourID@{SourID}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Source::Sour\-ID}}\label{structObitSource_o4}
+
+
+Source ID number. 
+
+\index{ObitSource@{Obit\-Source}!UFlux@{UFlux}}
+\index{UFlux@{UFlux}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Source::UFlux}}\label{structObitSource_o18}
+
+
+Total Stokes U flux density per IF. 
+
+\index{ObitSource@{Obit\-Source}!VFlux@{VFlux}}
+\index{VFlux@{VFlux}!ObitSource@{Obit\-Source}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Source::VFlux}}\label{structObitSource_o19}
+
+
+Total Stokes V flux densityper IF. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Source.h}\end{CompactItemize}

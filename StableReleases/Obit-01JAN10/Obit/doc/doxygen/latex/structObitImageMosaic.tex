@@ -1,0 +1,293 @@
+\section{Obit\-Image\-Mosaic Struct Reference}
+\label{structObitImageMosaic}\index{ObitImageMosaic@{ObitImageMosaic}}
+Obit\-Image\-Mosaic Class structure.  
+
+
+{\tt \#include $<$Obit\-Image\-Mosaic.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+{\bf olong} {\bf number\-Images}
+\begin{CompactList}\small\item\em Number of images in Mosaic. \item\end{CompactList}\item 
+{\bf olong} {\bf n\-Fly\-Eye}
+\begin{CompactList}\small\item\em Number of images in Fly's eye. \item\end{CompactList}\item 
+{\bf olong} {\bf n\-Init}
+\begin{CompactList}\small\item\em Number of images already initialized. \item\end{CompactList}\item 
+{\bf Obit\-Image} $\ast$$\ast$ {\bf images}
+\begin{CompactList}\small\item\em Image array. \item\end{CompactList}\item 
+{\bf Obit\-Image} $\ast$ {\bf Full\-Field}
+\begin{CompactList}\small\item\em Full field image. \item\end{CompactList}\item 
+{\bf ofloat} {\bf FOV}
+\begin{CompactList}\small\item\em Field of view as radius (deg). \item\end{CompactList}\item 
+{\bf ofloat} {\bf Radius}
+\begin{CompactList}\small\item\em Radius of the usable region of a given tile (cells). \item\end{CompactList}\item 
+{\bf ofloat} {\bf x\-Cells}
+\begin{CompactList}\small\item\em Cell Spacing in X (deg). \item\end{CompactList}\item 
+{\bf ofloat} {\bf y\-Cells}
+\begin{CompactList}\small\item\em Cell Spacing in Y (deg). \item\end{CompactList}\item 
+{\bf olong} {\bf Outlier\-Size}
+\begin{CompactList}\small\item\em Requested size (CLEAN window) of outliers. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf nx}
+\begin{CompactList}\small\item\em Number of pixels in X for each image. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf ny}
+\begin{CompactList}\small\item\em Number of pixels in Y for each image. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf nplane}
+\begin{CompactList}\small\item\em Number of planes for each image. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf RAShift}
+\begin{CompactList}\small\item\em RA shift (deg) for each image. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Dec\-Shift}
+\begin{CompactList}\small\item\em Dec shift (deg) for each image. \item\end{CompactList}\item 
+Obit\-IOType {\bf file\-Type}
+\begin{CompactList}\small\item\em Are image OBIT\_\-IO\_\-AIPS or OBIT\_\-IO\_\-FITS? \item\end{CompactList}\item 
+gchar $\ast$ {\bf im\-Name}
+\begin{CompactList}\small\item\em Name of Mosaic images. \item\end{CompactList}\item 
+gchar $\ast$ {\bf im\-Class}
+\begin{CompactList}\small\item\em Class of Mosaic images, 2 char if AIPS. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf im\-Disk}
+\begin{CompactList}\small\item\em Disk numbers of Mosaic images. \item\end{CompactList}\item 
+{\bf olong} {\bf im\-Seq}
+\begin{CompactList}\small\item\em Sequence number of Mosaic images. \item\end{CompactList}\item 
+gboolean {\bf do\-Full}
+\begin{CompactList}\small\item\em Is a full field image desired? \item\end{CompactList}\item 
+{\bf ofloat} {\bf bmaj}
+\begin{CompactList}\small\item\em Restoring beam, values in deg. \item\end{CompactList}\item 
+{\bf ofloat} {\bf bmin}
+\begin{CompactList}\small\item\em Restoring beam, values in deg. \item\end{CompactList}\item 
+{\bf ofloat} {\bf bpa}
+\begin{CompactList}\small\item\em Restoring beam, values in deg. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Image\-Mosaic Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!bmaj@{bmaj}}
+\index{bmaj@{bmaj}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Mosaic::bmaj}}\label{structObitImageMosaic_o27}
+
+
+Restoring beam, values in deg. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!bmin@{bmin}}
+\index{bmin@{bmin}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Mosaic::bmin}}\label{structObitImageMosaic_o28}
+
+
+Restoring beam, values in deg. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!bpa@{bpa}}
+\index{bpa@{bpa}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Mosaic::bpa}}\label{structObitImageMosaic_o29}
+
+
+Restoring beam, values in deg. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Image\-Mosaic::Class\-Info}}\label{structObitImageMosaic_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!DecShift@{DecShift}}
+\index{DecShift@{DecShift}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Image\-Mosaic::Dec\-Shift}}\label{structObitImageMosaic_o20}
+
+
+Dec shift (deg) for each image. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!doFull@{doFull}}
+\index{doFull@{doFull}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Image\-Mosaic::do\-Full}}\label{structObitImageMosaic_o26}
+
+
+Is a full field image desired? 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!fileType@{fileType}}
+\index{fileType@{fileType}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOType {\bf Obit\-Image\-Mosaic::file\-Type}}\label{structObitImageMosaic_o21}
+
+
+Are image OBIT\_\-IO\_\-AIPS or OBIT\_\-IO\_\-FITS? 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!FOV@{FOV}}
+\index{FOV@{FOV}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Mosaic::FOV}}\label{structObitImageMosaic_o11}
+
+
+Field of view as radius (deg). 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!FullField@{FullField}}
+\index{FullField@{FullField}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image}$\ast$ {\bf Obit\-Image\-Mosaic::Full\-Field}}\label{structObitImageMosaic_o10}
+
+
+Full field image. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!images@{images}}
+\index{images@{images}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image}$\ast$$\ast$ {\bf Obit\-Image\-Mosaic::images}}\label{structObitImageMosaic_o9}
+
+
+Image array. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!imClass@{imClass}}
+\index{imClass@{imClass}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Image\-Mosaic::im\-Class}}\label{structObitImageMosaic_o23}
+
+
+Class of Mosaic images, 2 char if AIPS. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!imDisk@{imDisk}}
+\index{imDisk@{imDisk}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-Image\-Mosaic::im\-Disk}}\label{structObitImageMosaic_o24}
+
+
+Disk numbers of Mosaic images. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!imName@{imName}}
+\index{imName@{imName}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Image\-Mosaic::im\-Name}}\label{structObitImageMosaic_o22}
+
+
+Name of Mosaic images. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!imSeq@{imSeq}}
+\index{imSeq@{imSeq}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Mosaic::im\-Seq}}\label{structObitImageMosaic_o25}
+
+
+Sequence number of Mosaic images. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!info@{info}}
+\index{info@{info}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Image\-Mosaic::info}}\label{structObitImageMosaic_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!name@{name}}
+\index{name@{name}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Image\-Mosaic::name}}\label{structObitImageMosaic_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!nFlyEye@{nFlyEye}}
+\index{nFlyEye@{nFlyEye}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Mosaic::n\-Fly\-Eye}}\label{structObitImageMosaic_o7}
+
+
+Number of images in Fly's eye. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!nInit@{nInit}}
+\index{nInit@{nInit}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Mosaic::n\-Init}}\label{structObitImageMosaic_o8}
+
+
+Number of images already initialized. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!nplane@{nplane}}
+\index{nplane@{nplane}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-Image\-Mosaic::nplane}}\label{structObitImageMosaic_o18}
+
+
+Number of planes for each image. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!numberImages@{numberImages}}
+\index{numberImages@{numberImages}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Mosaic::number\-Images}}\label{structObitImageMosaic_o6}
+
+
+Number of images in Mosaic. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!nx@{nx}}
+\index{nx@{nx}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-Image\-Mosaic::nx}}\label{structObitImageMosaic_o16}
+
+
+Number of pixels in X for each image. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!ny@{ny}}
+\index{ny@{ny}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-Image\-Mosaic::ny}}\label{structObitImageMosaic_o17}
+
+
+Number of pixels in Y for each image. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Image\-Mosaic::Obit\-Id}}\label{structObitImageMosaic_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!OutlierSize@{OutlierSize}}
+\index{OutlierSize@{OutlierSize}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Mosaic::Outlier\-Size}}\label{structObitImageMosaic_o15}
+
+
+Requested size (CLEAN window) of outliers. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!Radius@{Radius}}
+\index{Radius@{Radius}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Mosaic::Radius}}\label{structObitImageMosaic_o12}
+
+
+Radius of the usable region of a given tile (cells). 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!RAShift@{RAShift}}
+\index{RAShift@{RAShift}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Image\-Mosaic::RAShift}}\label{structObitImageMosaic_o19}
+
+
+RA shift (deg) for each image. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Mosaic::Reference\-Count}}\label{structObitImageMosaic_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!thread@{thread}}
+\index{thread@{thread}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Image\-Mosaic::thread}}\label{structObitImageMosaic_o4}
+
+
+Threading info member object. 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!xCells@{xCells}}
+\index{xCells@{xCells}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Mosaic::x\-Cells}}\label{structObitImageMosaic_o13}
+
+
+Cell Spacing in X (deg). 
+
+\index{ObitImageMosaic@{Obit\-Image\-Mosaic}!yCells@{yCells}}
+\index{yCells@{yCells}!ObitImageMosaic@{Obit\-Image\-Mosaic}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Mosaic::y\-Cells}}\label{structObitImageMosaic_o14}
+
+
+Cell Spacing in Y (deg). 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Image\-Mosaic.h}\end{CompactItemize}

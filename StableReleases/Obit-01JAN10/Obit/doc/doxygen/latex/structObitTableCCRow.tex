@@ -1,0 +1,122 @@
+\section{Obit\-Table\-CCRow Struct Reference}
+\label{structObitTableCCRow}\index{ObitTableCCRow@{ObitTableCCRow}}
+Obit\-Table\-CCRow Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-CC.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf my\-Table}
+\begin{CompactList}\small\item\em Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. \item\end{CompactList}\item 
+gpointer {\bf my\-Row\-Data}
+\begin{CompactList}\small\item\em Pointer to row data in buffer (never g\_\-free this). \item\end{CompactList}\item 
+{\bf ofloat} {\bf Flux}
+\begin{CompactList}\small\item\em Component flux density. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Delta\-X}
+\begin{CompactList}\small\item\em Component X position. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Delta\-Y}
+\begin{CompactList}\small\item\em Component Y position. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf parms}
+\begin{CompactList}\small\item\em [OPTIONAL] Component parameters; \item\end{CompactList}\item 
+{\bf olong} {\bf status}
+\begin{CompactList}\small\item\em status 0=normal, 1=modified, -1=flagged \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-CCRow Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableCCRow@{Obit\-Table\-CCRow}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableCCRow@{Obit\-Table\-CCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-CCRow::Class\-Info}}\label{structObitTableCCRow_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableCCRow@{Obit\-Table\-CCRow}!DeltaX@{DeltaX}}
+\index{DeltaX@{DeltaX}!ObitTableCCRow@{Obit\-Table\-CCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-CCRow::Delta\-X}}\label{structObitTableCCRow_o7}
+
+
+Component X position. 
+
+\index{ObitTableCCRow@{Obit\-Table\-CCRow}!DeltaY@{DeltaY}}
+\index{DeltaY@{DeltaY}!ObitTableCCRow@{Obit\-Table\-CCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-CCRow::Delta\-Y}}\label{structObitTableCCRow_o8}
+
+
+Component Y position. 
+
+\index{ObitTableCCRow@{Obit\-Table\-CCRow}!Flux@{Flux}}
+\index{Flux@{Flux}!ObitTableCCRow@{Obit\-Table\-CCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-CCRow::Flux}}\label{structObitTableCCRow_o6}
+
+
+Component flux density. 
+
+\index{ObitTableCCRow@{Obit\-Table\-CCRow}!myRowData@{myRowData}}
+\index{myRowData@{myRowData}!ObitTableCCRow@{Obit\-Table\-CCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-CCRow::my\-Row\-Data}}\label{structObitTableCCRow_o5}
+
+
+Pointer to row data in buffer (never g\_\-free this). 
+
+\index{ObitTableCCRow@{Obit\-Table\-CCRow}!myTable@{myTable}}
+\index{myTable@{myTable}!ObitTableCCRow@{Obit\-Table\-CCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ {\bf Obit\-Table\-CCRow::my\-Table}}\label{structObitTableCCRow_o4}
+
+
+Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. 
+
+\index{ObitTableCCRow@{Obit\-Table\-CCRow}!name@{name}}
+\index{name@{name}!ObitTableCCRow@{Obit\-Table\-CCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-CCRow::name}}\label{structObitTableCCRow_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableCCRow@{Obit\-Table\-CCRow}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableCCRow@{Obit\-Table\-CCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-CCRow::Obit\-Id}}\label{structObitTableCCRow_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableCCRow@{Obit\-Table\-CCRow}!parms@{parms}}
+\index{parms@{parms}!ObitTableCCRow@{Obit\-Table\-CCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-CCRow::parms}}\label{structObitTableCCRow_o9}
+
+
+[OPTIONAL] Component parameters; 
+
+\index{ObitTableCCRow@{Obit\-Table\-CCRow}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableCCRow@{Obit\-Table\-CCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CCRow::Reference\-Count}}\label{structObitTableCCRow_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableCCRow@{Obit\-Table\-CCRow}!status@{status}}
+\index{status@{status}!ObitTableCCRow@{Obit\-Table\-CCRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CCRow::status}}\label{structObitTableCCRow_o10}
+
+
+status 0=normal, 1=modified, -1=flagged 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-CC.h}\end{CompactItemize}

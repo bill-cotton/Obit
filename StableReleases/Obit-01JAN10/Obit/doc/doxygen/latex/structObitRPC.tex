@@ -1,0 +1,113 @@
+\section{Obit\-RPC Struct Reference}
+\label{structObitRPC}\index{ObitRPC@{ObitRPC}}
+Obit\-RPC Class structure.  
+
+
+{\tt \#include $<$Obit\-RPC.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+Obit\-RPCType {\bf type}
+\begin{CompactList}\small\item\em Type of RPC. \item\end{CompactList}\item 
+xmlrpc\_\-env {\bf env\-P}
+\begin{CompactList}\small\item\em xmlrpc environment \item\end{CompactList}\item 
+xmlrpc\_\-registry $\ast$ {\bf registry\-P}
+\begin{CompactList}\small\item\em xmlrpc server method registry \item\end{CompactList}\item 
+xmlrpc\_\-server\_\-abyss\_\-parms {\bf serverparm}
+\begin{CompactList}\small\item\em xmlrpc server parameters \item\end{CompactList}\item 
+xmlrpc\_\-client $\ast$ {\bf client\-P}
+\begin{CompactList}\small\item\em xmlrpc client \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-RPC Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitRPC@{Obit\-RPC}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitRPC@{Obit\-RPC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-RPC::Class\-Info}}\label{structObitRPC_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitRPC@{Obit\-RPC}!clientP@{clientP}}
+\index{clientP@{clientP}!ObitRPC@{Obit\-RPC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}xmlrpc\_\-client$\ast$ {\bf Obit\-RPC::client\-P}}\label{structObitRPC_o9}
+
+
+xmlrpc client 
+
+\index{ObitRPC@{Obit\-RPC}!envP@{envP}}
+\index{envP@{envP}!ObitRPC@{Obit\-RPC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}xmlrpc\_\-env {\bf Obit\-RPC::env\-P}}\label{structObitRPC_o6}
+
+
+xmlrpc environment 
+
+\index{ObitRPC@{Obit\-RPC}!name@{name}}
+\index{name@{name}!ObitRPC@{Obit\-RPC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-RPC::name}}\label{structObitRPC_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitRPC@{Obit\-RPC}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitRPC@{Obit\-RPC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-RPC::Obit\-Id}}\label{structObitRPC_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitRPC@{Obit\-RPC}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitRPC@{Obit\-RPC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-RPC::Reference\-Count}}\label{structObitRPC_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitRPC@{Obit\-RPC}!registryP@{registryP}}
+\index{registryP@{registryP}!ObitRPC@{Obit\-RPC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}xmlrpc\_\-registry$\ast$ {\bf Obit\-RPC::registry\-P}}\label{structObitRPC_o7}
+
+
+xmlrpc server method registry 
+
+\index{ObitRPC@{Obit\-RPC}!serverparm@{serverparm}}
+\index{serverparm@{serverparm}!ObitRPC@{Obit\-RPC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}xmlrpc\_\-server\_\-abyss\_\-parms {\bf Obit\-RPC::serverparm}}\label{structObitRPC_o8}
+
+
+xmlrpc server parameters 
+
+\index{ObitRPC@{Obit\-RPC}!thread@{thread}}
+\index{thread@{thread}!ObitRPC@{Obit\-RPC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-RPC::thread}}\label{structObitRPC_o4}
+
+
+Threading info member object. 
+
+\index{ObitRPC@{Obit\-RPC}!type@{type}}
+\index{type@{type}!ObitRPC@{Obit\-RPC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-RPCType {\bf Obit\-RPC::type}}\label{structObitRPC_o5}
+
+
+Type of RPC. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-RPC.h}\end{CompactItemize}

@@ -1,0 +1,536 @@
+\section{Obit\-Table\-GC Struct Reference}
+\label{structObitTableGC}\index{ObitTableGC@{ObitTableGC}}
+Obit\-Table\-GC Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-GC.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-IO} $\ast$ {\bf my\-IO}
+\begin{CompactList}\small\item\em I/O interface to access disk resident data. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Desc} $\ast$ {\bf my\-Desc}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Sel} $\ast$ {\bf my\-Sel}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf buffer}
+\begin{CompactList}\small\item\em Table buffer. \item\end{CompactList}\item 
+{\bf olong} {\bf buffer\-Size}
+\begin{CompactList}\small\item\em Table buffer size in floats. \item\end{CompactList}\item 
+gchar $\ast$ {\bf tab\-Type}
+\begin{CompactList}\small\item\em Table type (name of type, e.g. \item\end{CompactList}\item 
+{\bf olong} {\bf tab\-Ver}
+\begin{CompactList}\small\item\em Table version number(1-rel). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf my\-Host}
+\begin{CompactList}\small\item\em This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. \item\end{CompactList}\item 
+{\bf oint} {\bf num\-Band}
+\begin{CompactList}\small\item\em The number of Bands(?). \item\end{CompactList}\item 
+{\bf oint} {\bf num\-Pol}
+\begin{CompactList}\small\item\em The number of polarizations. \item\end{CompactList}\item 
+{\bf oint} {\bf num\-Tabs}
+\begin{CompactList}\small\item\em The number of ??. \item\end{CompactList}\item 
+{\bf oint} {\bf revision}
+\begin{CompactList}\small\item\em Revision number of the table definition. \item\end{CompactList}\item 
+{\bf olong} {\bf antenna\-No\-Off}
+\begin{CompactList}\small\item\em Column offset for Antenna number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf antenna\-No\-Col}
+\begin{CompactList}\small\item\em Physical column number for Antenna number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Sub\-Array\-Off}
+\begin{CompactList}\small\item\em Column offset for Subarray number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Sub\-Array\-Col}
+\begin{CompactList}\small\item\em Physical column number for Subarray number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Freq\-IDOff}
+\begin{CompactList}\small\item\em Column offset for Frequency id of scan in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Freq\-IDCol}
+\begin{CompactList}\small\item\em Physical column number for Frequency id of scan in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Type1Off}
+\begin{CompactList}\small\item\em Column offset for TYPE\_\-\#1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Type1Col}
+\begin{CompactList}\small\item\em Physical column number for TYPE\_\-\#1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf NTerm1Off}
+\begin{CompactList}\small\item\em Column offset for NTERM\_\-\#1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf NTerm1Col}
+\begin{CompactList}\small\item\em Physical column number for NTERM\_\-\#1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf XTyp1Off}
+\begin{CompactList}\small\item\em Column offset for X\_\-TYP\_\-\#1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf XTyp1Col}
+\begin{CompactList}\small\item\em Physical column number for X\_\-TYP\_\-\#1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf YTyp1Off}
+\begin{CompactList}\small\item\em Column offset for Y\_\-TYP\_\-\#1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf YTyp1Col}
+\begin{CompactList}\small\item\em Physical column number for Y\_\-TYP\_\-\#1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf XVal1Off}
+\begin{CompactList}\small\item\em Column offset for X\_\-TYP\_\-\#1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf XVal1Col}
+\begin{CompactList}\small\item\em Physical column number for X\_\-TYP\_\-\#1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf YVal1Off}
+\begin{CompactList}\small\item\em Column offset for Y\_\-TYP\_\-\#1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf YVal1Col}
+\begin{CompactList}\small\item\em Physical column number for Y\_\-TYP\_\-\#1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf gain1Off}
+\begin{CompactList}\small\item\em Column offset for GAIN\_\-\#1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf gain1Col}
+\begin{CompactList}\small\item\em Physical column number for GAIN\_\-\#1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf sens1Off}
+\begin{CompactList}\small\item\em Column offset for X\_\-TYP\_\-\#1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf sens1Col}
+\begin{CompactList}\small\item\em Physical column number for X\_\-TYP\_\-\#1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Type2Off}
+\begin{CompactList}\small\item\em Column offset for TYPE\_\-\#2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Type2Col}
+\begin{CompactList}\small\item\em Physical column number for TYPE\_\-\#2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf NTerm2Off}
+\begin{CompactList}\small\item\em Column offset for NTERM\_\-\#2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf NTerm2Col}
+\begin{CompactList}\small\item\em Physical column number for NTERM\_\-\#2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf XTyp2Off}
+\begin{CompactList}\small\item\em Column offset for X\_\-TYP\_\-\#2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf XTyp2Col}
+\begin{CompactList}\small\item\em Physical column number for X\_\-TYP\_\-\#2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf YTyp2Off}
+\begin{CompactList}\small\item\em Column offset for Y\_\-TYP\_\-\#2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf YTyp2Col}
+\begin{CompactList}\small\item\em Physical column number for Y\_\-TYP\_\-\#2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf XVal2Off}
+\begin{CompactList}\small\item\em Column offset for X\_\-TYP\_\-\#2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf XVal2Col}
+\begin{CompactList}\small\item\em Physical column number for X\_\-TYP\_\-\#2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf YVal2Off}
+\begin{CompactList}\small\item\em Column offset for Y\_\-TYP\_\-\#2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf YVal2Col}
+\begin{CompactList}\small\item\em Physical column number for Y\_\-TYP\_\-\#2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf gain2Off}
+\begin{CompactList}\small\item\em Column offset for GAIN\_\-\#2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf gain2Col}
+\begin{CompactList}\small\item\em Physical column number for GAIN\_\-\#2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf sens2Off}
+\begin{CompactList}\small\item\em Column offset for X\_\-TYP\_\-\#2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf sens2Col}
+\begin{CompactList}\small\item\em Physical column number for X\_\-TYP\_\-\#2 in table record. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-GC Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableGC@{Obit\-Table\-GC}!antennaNoCol@{antennaNoCol}}
+\index{antennaNoCol@{antennaNoCol}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::antenna\-No\-Col}}\label{structObitTableGC_o20}
+
+
+Physical column number for Antenna number in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!antennaNoOff@{antennaNoOff}}
+\index{antennaNoOff@{antennaNoOff}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::antenna\-No\-Off}}\label{structObitTableGC_o19}
+
+
+Column offset for Antenna number in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!buffer@{buffer}}
+\index{buffer@{buffer}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-GC::buffer}}\label{structObitTableGC_o10}
+
+
+Table buffer. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!bufferSize@{bufferSize}}
+\index{bufferSize@{bufferSize}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::buffer\-Size}}\label{structObitTableGC_o11}
+
+
+Table buffer size in floats. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-GC::Class\-Info}}\label{structObitTableGC_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!FreqIDCol@{FreqIDCol}}
+\index{FreqIDCol@{FreqIDCol}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::Freq\-IDCol}}\label{structObitTableGC_o24}
+
+
+Physical column number for Frequency id of scan in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!FreqIDOff@{FreqIDOff}}
+\index{FreqIDOff@{FreqIDOff}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::Freq\-IDOff}}\label{structObitTableGC_o23}
+
+
+Column offset for Frequency id of scan in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!gain1Col@{gain1Col}}
+\index{gain1Col@{gain1Col}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::gain1Col}}\label{structObitTableGC_o38}
+
+
+Physical column number for GAIN\_\-\#1 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!gain1Off@{gain1Off}}
+\index{gain1Off@{gain1Off}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::gain1Off}}\label{structObitTableGC_o37}
+
+
+Column offset for GAIN\_\-\#1 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!gain2Col@{gain2Col}}
+\index{gain2Col@{gain2Col}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::gain2Col}}\label{structObitTableGC_o54}
+
+
+Physical column number for GAIN\_\-\#2 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!gain2Off@{gain2Off}}
+\index{gain2Off@{gain2Off}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::gain2Off}}\label{structObitTableGC_o53}
+
+
+Column offset for GAIN\_\-\#2 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!info@{info}}
+\index{info@{info}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Table\-GC::info}}\label{structObitTableGC_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Desc}$\ast$ {\bf Obit\-Table\-GC::my\-Desc}}\label{structObitTableGC_o8}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!myHost@{myHost}}
+\index{myHost@{myHost}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-Table\-GC::my\-Host}}\label{structObitTableGC_o14}
+
+
+This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!myIO@{myIO}}
+\index{myIO@{myIO}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IO}$\ast$ {\bf Obit\-Table\-GC::my\-IO}}\label{structObitTableGC_o7}
+
+
+I/O interface to access disk resident data. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Sel}$\ast$ {\bf Obit\-Table\-GC::my\-Sel}}\label{structObitTableGC_o9}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Table\-GC::my\-Status}}\label{structObitTableGC_o6}
+
+
+I/O status. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!name@{name}}
+\index{name@{name}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-GC::name}}\label{structObitTableGC_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!NTerm1Col@{NTerm1Col}}
+\index{NTerm1Col@{NTerm1Col}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::NTerm1Col}}\label{structObitTableGC_o28}
+
+
+Physical column number for NTERM\_\-\#1 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!NTerm1Off@{NTerm1Off}}
+\index{NTerm1Off@{NTerm1Off}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::NTerm1Off}}\label{structObitTableGC_o27}
+
+
+Column offset for NTERM\_\-\#1 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!NTerm2Col@{NTerm2Col}}
+\index{NTerm2Col@{NTerm2Col}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::NTerm2Col}}\label{structObitTableGC_o44}
+
+
+Physical column number for NTERM\_\-\#2 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!NTerm2Off@{NTerm2Off}}
+\index{NTerm2Off@{NTerm2Off}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::NTerm2Off}}\label{structObitTableGC_o43}
+
+
+Column offset for NTERM\_\-\#2 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!numBand@{numBand}}
+\index{numBand@{numBand}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-GC::num\-Band}}\label{structObitTableGC_o15}
+
+
+The number of Bands(?). 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!numPol@{numPol}}
+\index{numPol@{numPol}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-GC::num\-Pol}}\label{structObitTableGC_o16}
+
+
+The number of polarizations. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!numTabs@{numTabs}}
+\index{numTabs@{numTabs}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-GC::num\-Tabs}}\label{structObitTableGC_o17}
+
+
+The number of ??. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-GC::Obit\-Id}}\label{structObitTableGC_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::Reference\-Count}}\label{structObitTableGC_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!revision@{revision}}
+\index{revision@{revision}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-GC::revision}}\label{structObitTableGC_o18}
+
+
+Revision number of the table definition. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!sens1Col@{sens1Col}}
+\index{sens1Col@{sens1Col}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::sens1Col}}\label{structObitTableGC_o40}
+
+
+Physical column number for X\_\-TYP\_\-\#1 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!sens1Off@{sens1Off}}
+\index{sens1Off@{sens1Off}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::sens1Off}}\label{structObitTableGC_o39}
+
+
+Column offset for X\_\-TYP\_\-\#1 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!sens2Col@{sens2Col}}
+\index{sens2Col@{sens2Col}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::sens2Col}}\label{structObitTableGC_o56}
+
+
+Physical column number for X\_\-TYP\_\-\#2 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!sens2Off@{sens2Off}}
+\index{sens2Off@{sens2Off}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::sens2Off}}\label{structObitTableGC_o55}
+
+
+Column offset for X\_\-TYP\_\-\#2 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!SubArrayCol@{SubArrayCol}}
+\index{SubArrayCol@{SubArrayCol}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::Sub\-Array\-Col}}\label{structObitTableGC_o22}
+
+
+Physical column number for Subarray number in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!SubArrayOff@{SubArrayOff}}
+\index{SubArrayOff@{SubArrayOff}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::Sub\-Array\-Off}}\label{structObitTableGC_o21}
+
+
+Column offset for Subarray number in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!tabType@{tabType}}
+\index{tabType@{tabType}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-GC::tab\-Type}}\label{structObitTableGC_o12}
+
+
+Table type (name of type, e.g. 
+
+\char`\"{}AIPS AN\char`\"{}) \index{ObitTableGC@{Obit\-Table\-GC}!tabVer@{tabVer}}
+\index{tabVer@{tabVer}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::tab\-Ver}}\label{structObitTableGC_o13}
+
+
+Table version number(1-rel). 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!thread@{thread}}
+\index{thread@{thread}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Table\-GC::thread}}\label{structObitTableGC_o4}
+
+
+Threading info member object. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!Type1Col@{Type1Col}}
+\index{Type1Col@{Type1Col}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::Type1Col}}\label{structObitTableGC_o26}
+
+
+Physical column number for TYPE\_\-\#1 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!Type1Off@{Type1Off}}
+\index{Type1Off@{Type1Off}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::Type1Off}}\label{structObitTableGC_o25}
+
+
+Column offset for TYPE\_\-\#1 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!Type2Col@{Type2Col}}
+\index{Type2Col@{Type2Col}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::Type2Col}}\label{structObitTableGC_o42}
+
+
+Physical column number for TYPE\_\-\#2 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!Type2Off@{Type2Off}}
+\index{Type2Off@{Type2Off}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::Type2Off}}\label{structObitTableGC_o41}
+
+
+Column offset for TYPE\_\-\#2 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!XTyp1Col@{XTyp1Col}}
+\index{XTyp1Col@{XTyp1Col}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::XTyp1Col}}\label{structObitTableGC_o30}
+
+
+Physical column number for X\_\-TYP\_\-\#1 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!XTyp1Off@{XTyp1Off}}
+\index{XTyp1Off@{XTyp1Off}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::XTyp1Off}}\label{structObitTableGC_o29}
+
+
+Column offset for X\_\-TYP\_\-\#1 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!XTyp2Col@{XTyp2Col}}
+\index{XTyp2Col@{XTyp2Col}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::XTyp2Col}}\label{structObitTableGC_o46}
+
+
+Physical column number for X\_\-TYP\_\-\#2 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!XTyp2Off@{XTyp2Off}}
+\index{XTyp2Off@{XTyp2Off}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::XTyp2Off}}\label{structObitTableGC_o45}
+
+
+Column offset for X\_\-TYP\_\-\#2 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!XVal1Col@{XVal1Col}}
+\index{XVal1Col@{XVal1Col}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::XVal1Col}}\label{structObitTableGC_o34}
+
+
+Physical column number for X\_\-TYP\_\-\#1 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!XVal1Off@{XVal1Off}}
+\index{XVal1Off@{XVal1Off}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::XVal1Off}}\label{structObitTableGC_o33}
+
+
+Column offset for X\_\-TYP\_\-\#1 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!XVal2Col@{XVal2Col}}
+\index{XVal2Col@{XVal2Col}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::XVal2Col}}\label{structObitTableGC_o50}
+
+
+Physical column number for X\_\-TYP\_\-\#2 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!XVal2Off@{XVal2Off}}
+\index{XVal2Off@{XVal2Off}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::XVal2Off}}\label{structObitTableGC_o49}
+
+
+Column offset for X\_\-TYP\_\-\#2 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!YTyp1Col@{YTyp1Col}}
+\index{YTyp1Col@{YTyp1Col}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::YTyp1Col}}\label{structObitTableGC_o32}
+
+
+Physical column number for Y\_\-TYP\_\-\#1 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!YTyp1Off@{YTyp1Off}}
+\index{YTyp1Off@{YTyp1Off}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::YTyp1Off}}\label{structObitTableGC_o31}
+
+
+Column offset for Y\_\-TYP\_\-\#1 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!YTyp2Col@{YTyp2Col}}
+\index{YTyp2Col@{YTyp2Col}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::YTyp2Col}}\label{structObitTableGC_o48}
+
+
+Physical column number for Y\_\-TYP\_\-\#2 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!YTyp2Off@{YTyp2Off}}
+\index{YTyp2Off@{YTyp2Off}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::YTyp2Off}}\label{structObitTableGC_o47}
+
+
+Column offset for Y\_\-TYP\_\-\#2 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!YVal1Col@{YVal1Col}}
+\index{YVal1Col@{YVal1Col}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::YVal1Col}}\label{structObitTableGC_o36}
+
+
+Physical column number for Y\_\-TYP\_\-\#1 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!YVal1Off@{YVal1Off}}
+\index{YVal1Off@{YVal1Off}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::YVal1Off}}\label{structObitTableGC_o35}
+
+
+Column offset for Y\_\-TYP\_\-\#1 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!YVal2Col@{YVal2Col}}
+\index{YVal2Col@{YVal2Col}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::YVal2Col}}\label{structObitTableGC_o52}
+
+
+Physical column number for Y\_\-TYP\_\-\#2 in table record. 
+
+\index{ObitTableGC@{Obit\-Table\-GC}!YVal2Off@{YVal2Off}}
+\index{YVal2Off@{YVal2Off}!ObitTableGC@{Obit\-Table\-GC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-GC::YVal2Off}}\label{structObitTableGC_o51}
+
+
+Column offset for Y\_\-TYP\_\-\#2 in table record. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-GC.h}\end{CompactItemize}

@@ -1,0 +1,188 @@
+\section{Obit\-Image\-Fit.h File Reference}
+\label{ObitImageFit_8h}\index{ObitImageFit.h@{ObitImageFit.h}}
+{\bf Obit\-Image\-Fit}{\rm (p.\,\pageref{structObitImageFit})} fits models to images. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Fit\-Region.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Fit\-Data.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-Image\-Fit}
+\begin{CompactList}\small\item\em Obit\-Image\-Fit Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Image\-Fit\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-Image\-Fit\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Image\-Fit}{\rm (p.\,\pageref{structObitImageFit})} returns a Obit\-Image\-Fit$\ast$.(NULL) in = object to unreference. \item\end{CompactList}\item 
+\#define {\bf Obit\-Image\-Fit\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Image\-Fit}{\rm (p.\,\pageref{structObitImageFit})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Image\-Fit\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-Image\-Fit\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef {\bf Obit\-Image\-Fit} $\ast$($\ast$ {\bf Obit\-Image\-Fit\-Create\-FP} )(gchar $\ast$name)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef {\bf olong}($\ast$ {\bf Obit\-Image\-Fit\-Fit\-FP} )({\bf Obit\-Image\-Fit} $\ast$in, {\bf Obit\-Image} $\ast$image, {\bf Obit\-Fit\-Region} $\ast$reg, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Image\-Fit\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Fit} $\ast$ {\bf new\-Obit\-Image\-Fit} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Fit} $\ast$ {\bf Obit\-Image\-Fit\-Create} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-Image\-Fit}{\rm (p.\,\pageref{structObitImageFit})} structures. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-Image\-Fit\-Fit} ({\bf Obit\-Image\-Fit} $\ast$in, {\bf Obit\-Image} $\ast$image, {\bf Obit\-Fit\-Region} $\ast$reg, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Fit an {\bf Obit\-Fit\-Region}{\rm (p.\,\pageref{structObitFitRegion})}. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Image\-Fit\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Fit} $\ast$ {\bf Obit\-Image\-Fit\-Copy} ({\bf Obit\-Image\-Fit} $\ast$in, {\bf Obit\-Image\-Fit} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Fit\-Clone} ({\bf Obit\-Image\-Fit} $\ast$in, {\bf Obit\-Image\-Fit} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Image\-Fit}{\rm (p.\,\pageref{structObitImageFit})} fits models to images. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} class.
+
+Fits image models in an {\bf Obit\-Fit\-Region}{\rm (p.\,\pageref{structObitFitRegion})}.\subsection{Creators and Destructors}\label{ObitImageFit_8h_ObitImageFitaccess}
+An {\bf Obit\-Image\-Fit}{\rm (p.\,\pageref{structObitImageFit})} will usually be created using Obit\-Image\-Fit\-Create which allows specifying a name for the object as well as other information.
+
+A copy of a pointer to an {\bf Obit\-Image\-Fit}{\rm (p.\,\pageref{structObitImageFit})} should always be made using the {\bf Obit\-Image\-Fit\-Ref}{\rm (p.\,\pageref{ObitImageFit_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-Image\-Fit}{\rm (p.\,\pageref{structObitImageFit})} or changing a pointer, the function {\bf Obit\-Image\-Fit\-Unref}{\rm (p.\,\pageref{ObitImageFit_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.
+
+\subsection{Define Documentation}
+\index{ObitImageFit.h@{Obit\-Image\-Fit.h}!ObitImageFitIsA@{ObitImageFitIsA}}
+\index{ObitImageFitIsA@{ObitImageFitIsA}!ObitImageFit.h@{Obit\-Image\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Image\-Fit\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-Image\-Fit\-Get\-Class())}\label{ObitImageFit_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitImageFit.h@{Obit\-Image\-Fit.h}!ObitImageFitRef@{ObitImageFitRef}}
+\index{ObitImageFitRef@{ObitImageFitRef}!ObitImageFit.h@{Obit\-Image\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Image\-Fit\-Ref(in)\ Obit\-Ref (in)}\label{ObitImageFit_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Image\-Fit}{\rm (p.\,\pageref{structObitImageFit})}. 
+
+returns a Obit\-Image\-Fit$\ast$. in = object to reference \index{ObitImageFit.h@{Obit\-Image\-Fit.h}!ObitImageFitUnref@{ObitImageFitUnref}}
+\index{ObitImageFitUnref@{ObitImageFitUnref}!ObitImageFit.h@{Obit\-Image\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Image\-Fit\-Unref(in)\ Obit\-Unref (in)}\label{ObitImageFit_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Image\-Fit}{\rm (p.\,\pageref{structObitImageFit})} returns a Obit\-Image\-Fit$\ast$.(NULL) in = object to unreference. 
+
+
+
+\subsection{Typedef Documentation}
+\index{ObitImageFit.h@{Obit\-Image\-Fit.h}!ObitImageFitCreateFP@{ObitImageFitCreateFP}}
+\index{ObitImageFitCreateFP@{ObitImageFitCreateFP}!ObitImageFit.h@{Obit\-Image\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-Image\-Fit}$\ast$($\ast$ {\bf Obit\-Image\-Fit\-Create\-FP})(gchar $\ast$name)}\label{ObitImageFit_8h_a3}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitImageFit.h@{Obit\-Image\-Fit.h}!ObitImageFitFitFP@{ObitImageFitFitFP}}
+\index{ObitImageFitFitFP@{ObitImageFitFitFP}!ObitImageFit.h@{Obit\-Image\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf olong}($\ast$ {\bf Obit\-Image\-Fit\-Fit\-FP})({\bf Obit\-Image\-Fit} $\ast$in, {\bf Obit\-Image} $\ast$image, {\bf Obit\-Fit\-Region} $\ast$reg, {\bf Obit\-Err} $\ast$err)}\label{ObitImageFit_8h_a4}
+
+
+Typedef for definition of class pointer structure. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitImageFit.h@{Obit\-Image\-Fit.h}!newObitImageFit@{newObitImageFit}}
+\index{newObitImageFit@{newObitImageFit}!ObitImageFit.h@{Obit\-Image\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Fit}$\ast$ new\-Obit\-Image\-Fit (gchar $\ast$ {\em name})}\label{ObitImageFit_8h_a6}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitImageFit.h@{Obit\-Image\-Fit.h}!ObitImageFitClassInit@{ObitImageFitClassInit}}
+\index{ObitImageFitClassInit@{ObitImageFitClassInit}!ObitImageFit.h@{Obit\-Image\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Fit\-Class\-Init (void)}\label{ObitImageFit_8h_a5}
+
+
+Public: Class initializer. 
+
+\index{ObitImageFit.h@{Obit\-Image\-Fit.h}!ObitImageFitClone@{ObitImageFitClone}}
+\index{ObitImageFitClone@{ObitImageFitClone}!ObitImageFit.h@{Obit\-Image\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Fit\-Clone ({\bf Obit\-Image\-Fit} $\ast$ {\em in}, {\bf Obit\-Image\-Fit} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImageFit_8h_a11}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitImageFit.h@{Obit\-Image\-Fit.h}!ObitImageFitCopy@{ObitImageFitCopy}}
+\index{ObitImageFitCopy@{ObitImageFitCopy}!ObitImageFit.h@{Obit\-Image\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Fit}$\ast$ Obit\-Image\-Fit\-Copy ({\bf Obit\-Image\-Fit} $\ast$ {\em in}, {\bf Obit\-Image\-Fit} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImageFit_8h_a10}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitImageFit.h@{Obit\-Image\-Fit.h}!ObitImageFitCreate@{ObitImageFitCreate}}
+\index{ObitImageFitCreate@{ObitImageFitCreate}!ObitImageFit.h@{Obit\-Image\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Fit}$\ast$ Obit\-Image\-Fit\-Create (gchar $\ast$ {\em name})}\label{ObitImageFit_8h_a7}
+
+
+Public: Create/initialize {\bf Obit\-Image\-Fit}{\rm (p.\,\pageref{structObitImageFit})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitImageFit.h@{Obit\-Image\-Fit.h}!ObitImageFitFit@{ObitImageFitFit}}
+\index{ObitImageFitFit@{ObitImageFitFit}!ObitImageFit.h@{Obit\-Image\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-Image\-Fit\-Fit ({\bf Obit\-Image\-Fit} $\ast$ {\em in}, {\bf Obit\-Image} $\ast$ {\em image}, {\bf Obit\-Fit\-Region} $\ast$ {\em reg}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImageFit_8h_a8}
+
+
+Public: Fit an {\bf Obit\-Fit\-Region}{\rm (p.\,\pageref{structObitFitRegion})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Fitter to use, control info in info: \begin{itemize}
+\item \char`\"{}Max\-Iter\char`\"{} OBIT\_\-int (1,1,1) Maximum number of iterations defaults to 10 per fitted parameter \item \char`\"{}prt\-Lv\char`\"{} OBIT\_\-int (1,1,1) Message level, 0=$>$none [def 0] \item \char`\"{}Pos\-Guard\char`\"{} OBIT\_\-double (1,1,1) Distance from edge to allow center [def no bound] \item \char`\"{}Flux\-Low\char`\"{} OBIT\_\-double (1,1,1) Lower bounds on Flux density [no bound] \item \char`\"{}GMaj\-Up\char`\"{} OBIT\_\-double (1,1,1) Major axis upper bound [no bound] \item \char`\"{}GMaj\-Low\char`\"{} OBIT\_\-double (1,1,1) Major axis lower bound [no bound] \item \char`\"{}GMin\-Up\char`\"{} OBIT\_\-double (1,1,1) Minor axis upper bound [no bound] \item \char`\"{}GMin\-Low\char`\"{} OBIT\_\-double (1,1,1) Minor axis lower bound [no bound] \end{itemize}
+\item[{\em image}]Image to fit, should have pixel array attached and opened as described in reg (BLC, TRC). \item[{\em reg}]Region in image to fit, on input the initial guess on output, the fitted result \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error/message stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]a completion code: 0=$>$ converged, 1=$>$ max. iterations. \end{Desc}
+\index{ObitImageFit.h@{Obit\-Image\-Fit.h}!ObitImageFitGetClass@{ObitImageFitGetClass}}
+\index{ObitImageFitGetClass@{ObitImageFitGetClass}!ObitImageFit.h@{Obit\-Image\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Image\-Fit\-Get\-Class (void)}\label{ObitImageFit_8h_a9}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}

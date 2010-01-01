@@ -1,0 +1,212 @@
+\section{Obit\-Table\-CQRow Struct Reference}
+\label{structObitTableCQRow}\index{ObitTableCQRow@{ObitTableCQRow}}
+Obit\-Table\-CQRow Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-CQ.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf my\-Table}
+\begin{CompactList}\small\item\em Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. \item\end{CompactList}\item 
+gpointer {\bf my\-Row\-Data}
+\begin{CompactList}\small\item\em Pointer to row data in buffer (never g\_\-free this). \item\end{CompactList}\item 
+{\bf oint} {\bf Frq\-Sel}
+\begin{CompactList}\small\item\em Frequency ID \{IFQDCQ in AIPSish. \item\end{CompactList}\item 
+{\bf oint} {\bf Sub\-A}
+\begin{CompactList}\small\item\em Subarray number \{ISUBCQ. \item\end{CompactList}\item 
+{\bf oint} $\ast$ {\bf FFTSize}
+\begin{CompactList}\small\item\em Size of FFT in correlator \{NFFTCQ. \item\end{CompactList}\item 
+{\bf oint} $\ast$ {\bf num\-Chan}
+\begin{CompactList}\small\item\em No. \item\end{CompactList}\item 
+{\bf oint} $\ast$ {\bf Spec\-Avg}
+\begin{CompactList}\small\item\em Spectral averaging factor\{NSAVCQ. \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf Edge\-Freq}
+\begin{CompactList}\small\item\em Edge frequency \{DFRQCQ. \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf Chan\-BW}
+\begin{CompactList}\small\item\em Channel bandwidth \{DCBWCQ. \item\end{CompactList}\item 
+gchar $\ast$ {\bf Taper\-Fn}
+\begin{CompactList}\small\item\em Taper function \{LTAPCQ. \item\end{CompactList}\item 
+{\bf oint} $\ast$ {\bf Over\-Samp}
+\begin{CompactList}\small\item\em Oversampling factor \{NOVSCQ. \item\end{CompactList}\item 
+{\bf oint} $\ast$ {\bf Zero\-Pad}
+\begin{CompactList}\small\item\em Zero-padding factor \{NZPDCQ. \item\end{CompactList}\item 
+{\bf oint} $\ast$ {\bf Filter}
+\begin{CompactList}\small\item\em Filter type \{IFLTCQ. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Time\-Avg}
+\begin{CompactList}\small\item\em Time averaging interval \{TAVGCQ. \item\end{CompactList}\item 
+{\bf oint} $\ast$ {\bf num\-Bits}
+\begin{CompactList}\small\item\em Quantization (no. \item\end{CompactList}\item 
+{\bf oint} $\ast$ {\bf FFTOverlap}
+\begin{CompactList}\small\item\em FFT overlap factor \{IOVLCQ. \item\end{CompactList}\item 
+{\bf olong} {\bf status}
+\begin{CompactList}\small\item\em status 0=normal, 1=modified, -1=flagged \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-CQRow Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!ChanBW@{ChanBW}}
+\index{ChanBW@{ChanBW}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-Table\-CQRow::Chan\-BW}}\label{structObitTableCQRow_o12}
+
+
+Channel bandwidth \{DCBWCQ. 
+
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-CQRow::Class\-Info}}\label{structObitTableCQRow_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!EdgeFreq@{EdgeFreq}}
+\index{EdgeFreq@{EdgeFreq}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-Table\-CQRow::Edge\-Freq}}\label{structObitTableCQRow_o11}
+
+
+Edge frequency \{DFRQCQ. 
+
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!FFTOverlap@{FFTOverlap}}
+\index{FFTOverlap@{FFTOverlap}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint}$\ast$ {\bf Obit\-Table\-CQRow::FFTOverlap}}\label{structObitTableCQRow_o19}
+
+
+FFT overlap factor \{IOVLCQ. 
+
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!FFTSize@{FFTSize}}
+\index{FFTSize@{FFTSize}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint}$\ast$ {\bf Obit\-Table\-CQRow::FFTSize}}\label{structObitTableCQRow_o8}
+
+
+Size of FFT in correlator \{NFFTCQ. 
+
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!Filter@{Filter}}
+\index{Filter@{Filter}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint}$\ast$ {\bf Obit\-Table\-CQRow::Filter}}\label{structObitTableCQRow_o16}
+
+
+Filter type \{IFLTCQ. 
+
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!FrqSel@{FrqSel}}
+\index{FrqSel@{FrqSel}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-CQRow::Frq\-Sel}}\label{structObitTableCQRow_o6}
+
+
+Frequency ID \{IFQDCQ in AIPSish. 
+
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!myRowData@{myRowData}}
+\index{myRowData@{myRowData}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-CQRow::my\-Row\-Data}}\label{structObitTableCQRow_o5}
+
+
+Pointer to row data in buffer (never g\_\-free this). 
+
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!myTable@{myTable}}
+\index{myTable@{myTable}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ {\bf Obit\-Table\-CQRow::my\-Table}}\label{structObitTableCQRow_o4}
+
+
+Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. 
+
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!name@{name}}
+\index{name@{name}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-CQRow::name}}\label{structObitTableCQRow_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!numBits@{numBits}}
+\index{numBits@{numBits}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint}$\ast$ {\bf Obit\-Table\-CQRow::num\-Bits}}\label{structObitTableCQRow_o18}
+
+
+Quantization (no. 
+
+of bits per recorded sample)\{NBITCQ \index{ObitTableCQRow@{Obit\-Table\-CQRow}!numChan@{numChan}}
+\index{numChan@{numChan}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint}$\ast$ {\bf Obit\-Table\-CQRow::num\-Chan}}\label{structObitTableCQRow_o9}
+
+
+No. 
+
+of channels in correlator\{NCHCQ \index{ObitTableCQRow@{Obit\-Table\-CQRow}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-CQRow::Obit\-Id}}\label{structObitTableCQRow_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!OverSamp@{OverSamp}}
+\index{OverSamp@{OverSamp}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint}$\ast$ {\bf Obit\-Table\-CQRow::Over\-Samp}}\label{structObitTableCQRow_o14}
+
+
+Oversampling factor \{NOVSCQ. 
+
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CQRow::Reference\-Count}}\label{structObitTableCQRow_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!SpecAvg@{SpecAvg}}
+\index{SpecAvg@{SpecAvg}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint}$\ast$ {\bf Obit\-Table\-CQRow::Spec\-Avg}}\label{structObitTableCQRow_o10}
+
+
+Spectral averaging factor\{NSAVCQ. 
+
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!status@{status}}
+\index{status@{status}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CQRow::status}}\label{structObitTableCQRow_o20}
+
+
+status 0=normal, 1=modified, -1=flagged 
+
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!SubA@{SubA}}
+\index{SubA@{SubA}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-CQRow::Sub\-A}}\label{structObitTableCQRow_o7}
+
+
+Subarray number \{ISUBCQ. 
+
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!TaperFn@{TaperFn}}
+\index{TaperFn@{TaperFn}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-CQRow::Taper\-Fn}}\label{structObitTableCQRow_o13}
+
+
+Taper function \{LTAPCQ. 
+
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!TimeAvg@{TimeAvg}}
+\index{TimeAvg@{TimeAvg}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-CQRow::Time\-Avg}}\label{structObitTableCQRow_o17}
+
+
+Time averaging interval \{TAVGCQ. 
+
+\index{ObitTableCQRow@{Obit\-Table\-CQRow}!ZeroPad@{ZeroPad}}
+\index{ZeroPad@{ZeroPad}!ObitTableCQRow@{Obit\-Table\-CQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint}$\ast$ {\bf Obit\-Table\-CQRow::Zero\-Pad}}\label{structObitTableCQRow_o15}
+
+
+Zero-padding factor \{NZPDCQ. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-CQ.h}\end{CompactItemize}

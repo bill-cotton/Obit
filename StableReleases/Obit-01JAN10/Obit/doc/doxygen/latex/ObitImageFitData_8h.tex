@@ -1,0 +1,175 @@
+\section{Obit\-Image\-Fit\-Data.h File Reference}
+\label{ObitImageFitData_8h}\index{ObitImageFitData.h@{ObitImageFitData.h}}
+{\bf Obit\-Image\-Fit\-Data}{\rm (p.\,\pageref{structObitImageFitData})} Stores fitting data and provides evaluation routines. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Fit\-Region.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-Image\-Fit\-Data}
+\begin{CompactList}\small\item\em Obit\-Image\-Fit\-Data Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Image\-Fit\-Data\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-Image\-Fit\-Data\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Image\-Fit\-Data}{\rm (p.\,\pageref{structObitImageFitData})} returns a Obit\-Image\-Fit\-Data$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-Image\-Fit\-Data\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Image\-Fit\-Data}{\rm (p.\,\pageref{structObitImageFitData})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Image\-Fit\-Data\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-Image\-Fit\-Data\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef void($\ast$ {\bf Obit\-Image\-Fit\-Data\-Func\-FP} )(gpointer data, {\bf odouble} $\ast$p, {\bf odouble} $\ast$f, {\bf odouble} $\ast$grad, {\bf olong} iflag)
+\begin{CompactList}\small\item\em function pointer for evaluation routine used by solver \item\end{CompactList}\item 
+typedef {\bf Obit\-Image\-Fit\-Data} $\ast$($\ast$ {\bf Obit\-Image\-Fit\-Data\-Create\-FP} )(gchar $\ast$name, {\bf Obit\-Fit\-Region} $\ast$reg, {\bf Obit\-Info\-List} $\ast$bounds, {\bf Obit\-Image} $\ast$image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef void($\ast$ {\bf Obit\-Image\-Fit\-Data2Reg\-FP} )({\bf Obit\-Image\-Fit\-Data} $\ast$data, {\bf Obit\-Fit\-Region} $\ast$reg)
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Image\-Fit\-Data\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Fit\-Data} $\ast$ {\bf new\-Obit\-Image\-Fit\-Data} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Fit\-Data} $\ast$ {\bf Obit\-Image\-Fit\-Data\-Create} (gchar $\ast$name, {\bf Obit\-Fit\-Region} $\ast$reg, {\bf Obit\-Info\-List} $\ast$bounds, {\bf Obit\-Image} $\ast$image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-Image\-Fit\-Data}{\rm (p.\,\pageref{structObitImageFitData})} structures. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Fit\-Data2Reg} ({\bf Obit\-Image\-Fit\-Data} $\ast$data, {\bf Obit\-Fit\-Region} $\ast$reg)
+\begin{CompactList}\small\item\em Public: Copy contents to {\bf Obit\-Fit\-Region}{\rm (p.\,\pageref{structObitFitRegion})}. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Fit\-Data\-Gauss\-Err} ({\bf ofloat} peak, {\bf ofloat} major, {\bf ofloat} minor, {\bf ofloat} posang, {\bf ofloat} irms, {\bf ofloat} $\ast$beam, {\bf ofloat} $\ast$epeak, {\bf ofloat} $\ast$errra, {\bf ofloat} $\ast$errdec, {\bf ofloat} $\ast$errmaj, {\bf ofloat} $\ast$errmin, {\bf ofloat} $\ast$errpa)
+\begin{CompactList}\small\item\em Public: Determine errors for Gaussian model. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Image\-Fit\-Data\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Image\-Fit\-Data}{\rm (p.\,\pageref{structObitImageFitData})} Stores fitting data and provides evaluation routines. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} class.\subsection{Creators and Destructors}\label{ObitImageFitData_8h_ObitImageFitDataaccess}
+An {\bf Obit\-Image\-Fit\-Data}{\rm (p.\,\pageref{structObitImageFitData})} will usually be created using Obit\-Image\-Fit\-Data\-Create which allows specifying a name for the object as well as other information.
+
+A copy of a pointer to an {\bf Obit\-Image\-Fit\-Data}{\rm (p.\,\pageref{structObitImageFitData})} should always be made using the {\bf Obit\-Image\-Fit\-Data\-Ref}{\rm (p.\,\pageref{ObitImageFitData_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-Image\-Fit\-Data}{\rm (p.\,\pageref{structObitImageFitData})} or changing a pointer, the function {\bf Obit\-Image\-Fit\-Data\-Unref}{\rm (p.\,\pageref{ObitImageFitData_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.
+
+\subsection{Define Documentation}
+\index{ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}!ObitImageFitDataIsA@{ObitImageFitDataIsA}}
+\index{ObitImageFitDataIsA@{ObitImageFitDataIsA}!ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Image\-Fit\-Data\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-Image\-Fit\-Data\-Get\-Class())}\label{ObitImageFitData_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}!ObitImageFitDataRef@{ObitImageFitDataRef}}
+\index{ObitImageFitDataRef@{ObitImageFitDataRef}!ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Image\-Fit\-Data\-Ref(in)\ Obit\-Ref (in)}\label{ObitImageFitData_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Image\-Fit\-Data}{\rm (p.\,\pageref{structObitImageFitData})}. 
+
+returns a Obit\-Image\-Fit\-Data$\ast$. in = object to reference \index{ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}!ObitImageFitDataUnref@{ObitImageFitDataUnref}}
+\index{ObitImageFitDataUnref@{ObitImageFitDataUnref}!ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Image\-Fit\-Data\-Unref(in)\ Obit\-Unref (in)}\label{ObitImageFitData_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Image\-Fit\-Data}{\rm (p.\,\pageref{structObitImageFitData})} returns a Obit\-Image\-Fit\-Data$\ast$. 
+
+in = object to unreference 
+
+\subsection{Typedef Documentation}
+\index{ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}!ObitImageFitData2RegFP@{ObitImageFitData2RegFP}}
+\index{ObitImageFitData2RegFP@{ObitImageFitData2RegFP}!ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Image\-Fit\-Data2Reg\-FP})({\bf Obit\-Image\-Fit\-Data} $\ast$data, {\bf Obit\-Fit\-Region} $\ast$reg)}\label{ObitImageFitData_8h_a5}
+
+
+\index{ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}!ObitImageFitDataCreateFP@{ObitImageFitDataCreateFP}}
+\index{ObitImageFitDataCreateFP@{ObitImageFitDataCreateFP}!ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-Image\-Fit\-Data}$\ast$($\ast$ {\bf Obit\-Image\-Fit\-Data\-Create\-FP})(gchar $\ast$name, {\bf Obit\-Fit\-Region} $\ast$reg, {\bf Obit\-Info\-List} $\ast$bounds, {\bf Obit\-Image} $\ast$image, {\bf Obit\-Err} $\ast$err)}\label{ObitImageFitData_8h_a4}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}!ObitImageFitDataFuncFP@{ObitImageFitDataFuncFP}}
+\index{ObitImageFitDataFuncFP@{ObitImageFitDataFuncFP}!ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Image\-Fit\-Data\-Func\-FP})(gpointer data, {\bf odouble} $\ast$p, {\bf odouble} $\ast$f, {\bf odouble} $\ast$grad, {\bf olong} iflag)}\label{ObitImageFitData_8h_a3}
+
+
+function pointer for evaluation routine used by solver 
+
+
+
+\subsection{Function Documentation}
+\index{ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}!newObitImageFitData@{newObitImageFitData}}
+\index{newObitImageFitData@{newObitImageFitData}!ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Fit\-Data}$\ast$ new\-Obit\-Image\-Fit\-Data (gchar $\ast$ {\em name})}\label{ObitImageFitData_8h_a7}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}!ObitImageFitData2Reg@{ObitImageFitData2Reg}}
+\index{ObitImageFitData2Reg@{ObitImageFitData2Reg}!ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Fit\-Data2Reg ({\bf Obit\-Image\-Fit\-Data} $\ast$ {\em data}, {\bf Obit\-Fit\-Region} $\ast$ {\em reg})}\label{ObitImageFitData_8h_a9}
+
+
+Public: Copy contents to {\bf Obit\-Fit\-Region}{\rm (p.\,\pageref{structObitFitRegion})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em data}]Fit data to copy \item[{\em reg}]{\bf Obit\-Fit\-Region}{\rm (p.\,\pageref{structObitFitRegion})} to update \end{description}
+\end{Desc}
+\index{ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}!ObitImageFitDataClassInit@{ObitImageFitDataClassInit}}
+\index{ObitImageFitDataClassInit@{ObitImageFitDataClassInit}!ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Fit\-Data\-Class\-Init (void)}\label{ObitImageFitData_8h_a6}
+
+
+Public: Class initializer. 
+
+\index{ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}!ObitImageFitDataCreate@{ObitImageFitDataCreate}}
+\index{ObitImageFitDataCreate@{ObitImageFitDataCreate}!ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Fit\-Data}$\ast$ Obit\-Image\-Fit\-Data\-Create (gchar $\ast$ {\em name}, {\bf Obit\-Fit\-Region} $\ast$ {\em reg}, {\bf Obit\-Info\-List} $\ast$ {\em bounds}, {\bf Obit\-Image} $\ast$ {\em image}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImageFitData_8h_a8}
+
+
+Public: Create/initialize {\bf Obit\-Image\-Fit\-Data}{\rm (p.\,\pageref{structObitImageFitData})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em reg}]{\bf Obit\-Fit\-Region}{\rm (p.\,\pageref{structObitFitRegion})} to copy \item[{\em bounds}]Info\-List giving bounds \begin{itemize}
+\item \char`\"{}Pos\-Guard\char`\"{} OBIT\_\-double (1,1,1) Distance from edge to allow center [def no bound] \item \char`\"{}Flux\-Low\char`\"{} OBIT\_\-double (1,1,1) Lower bounds on Flux density [no bound] \item \char`\"{}GMaj\-Up\char`\"{} OBIT\_\-double (1,1,1) Major axis upper bound [no bound] \item \char`\"{}GMaj\-Low\char`\"{} OBIT\_\-double (1,1,1) Major axis lower bound [no bound] \item \char`\"{}GMin\-Up\char`\"{} OBIT\_\-double (1,1,1) Minor axis upper bound [no bound] \item \char`\"{}GMin\-Low\char`\"{} OBIT\_\-double (1,1,1) Minor axis lower bound [no bound] \end{itemize}
+\item[{\em image}]Image with pixel data, (with selection used for reg) \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error/mesage stack \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}!ObitImageFitDataGaussErr@{ObitImageFitDataGaussErr}}
+\index{ObitImageFitDataGaussErr@{ObitImageFitDataGaussErr}!ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Fit\-Data\-Gauss\-Err ({\bf ofloat} {\em peak}, {\bf ofloat} {\em major}, {\bf ofloat} {\em minor}, {\bf ofloat} {\em posang}, {\bf ofloat} {\em irms}, {\bf ofloat} $\ast$ {\em beam}, {\bf ofloat} $\ast$ {\em epeak}, {\bf ofloat} $\ast$ {\em errra}, {\bf ofloat} $\ast$ {\em errdec}, {\bf ofloat} $\ast$ {\em errmaj}, {\bf ofloat} $\ast$ {\em errmin}, {\bf ofloat} $\ast$ {\em errpa})}\label{ObitImageFitData_8h_a10}
+
+
+Public: Determine errors for Gaussian model. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em peak}]Peak Ipol (Jy/beam) \item[{\em major}]Fitted major axis size (pixel) \item[{\em minor}]Fitted minor axis size (pixel) \item[{\em posang}]Fitted PA (rad) \item[{\em irms}]RMS (sigma) in Ipol. \item[{\em beam}]Restoring beam major, minor axes and position angle (pixel, pixel, rad) \item[{\em epeak}][out] Error in peak (Jy/beam) \item[{\em errra}][out] Error of Right Ascension (pixel) \item[{\em errdec}][out] Error of Declination (pixel) \item[{\em errmaj}][out] Error of major axis size (pixel) \item[{\em errmin}][out] Error of Minor axis size (pixel) \item[{\em errpa}][out] Error of position angle (rad) \end{description}
+\end{Desc}
+\index{ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}!ObitImageFitDataGetClass@{ObitImageFitDataGetClass}}
+\index{ObitImageFitDataGetClass@{ObitImageFitDataGetClass}!ObitImageFitData.h@{Obit\-Image\-Fit\-Data.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Image\-Fit\-Data\-Get\-Class (void)}\label{ObitImageFitData_8h_a11}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}

@@ -1,0 +1,205 @@
+\section{Obit\-UVGrid\-Class\-Info Struct Reference}
+\label{structObitUVGridClassInfo}\index{ObitUVGridClassInfo@{ObitUVGridClassInfo}}
+Class\-Info Structure.  
+
+
+{\tt \#include $<$Obit\-UVGrid.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gboolean {\bf initialized}
+\begin{CompactList}\small\item\em Have I been initialized? \item\end{CompactList}\item 
+gboolean {\bf has\-Scratch}
+\begin{CompactList}\small\item\em Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? \item\end{CompactList}\item 
+gchar $\ast$ {\bf Class\-Name}
+\begin{CompactList}\small\item\em Name of class (\char`\"{}Obit\char`\"{}). \item\end{CompactList}\item 
+gconstpointer {\bf Parent\-Class}
+\begin{CompactList}\small\item\em Pointer to parent class Class\-Info, Null if none. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Init\-FP} {\bf Obit\-Class\-Init}
+\begin{CompactList}\small\item\em Function pointer to Class initializer. \item\end{CompactList}\item 
+{\bf new\-Obit\-FP} {\bf new\-Obit}
+\begin{CompactList}\small\item\em Function pointer to new\-Obit. \item\end{CompactList}\item 
+{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Get\-Class}
+\begin{CompactList}\small\item\em Function pointer to Get\-Class. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-Class\-Info\-Def\-Fn}
+\begin{CompactList}\small\item\em Function pointer to Class\-Info\-Def\-Fn. \item\end{CompactList}\item 
+{\bf Obit\-Copy\-FP} {\bf Obit\-Copy}
+\begin{CompactList}\small\item\em Function pointer to shallow copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Clone\-FP} {\bf Obit\-Clone}
+\begin{CompactList}\small\item\em Function pointer to deep copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Ref\-FP} {\bf Obit\-Ref}
+\begin{CompactList}\small\item\em Function pointer to Object Ref. \item\end{CompactList}\item 
+{\bf Obit\-Unref\-FP} {\bf Obit\-Unref}
+\begin{CompactList}\small\item\em Function pointer to Object Unref. \item\end{CompactList}\item 
+{\bf Obit\-Is\-AFP} {\bf Obit\-Is\-A}
+\begin{CompactList}\small\item\em Function pointer to test if a class member. \item\end{CompactList}\item 
+{\bf Obit\-Clear\-FP} {\bf Obit\-Clear}
+\begin{CompactList}\small\item\em Function pointer to deallocation function. \item\end{CompactList}\item 
+{\bf Obit\-Init\-FP} {\bf Obit\-Init}
+\begin{CompactList}\small\item\em Function pointer to object initializer. \item\end{CompactList}\item 
+{\bf Obit\-UVGrid\-Setup\-FP} {\bf Obit\-UVGrid\-Setup}
+\begin{CompactList}\small\item\em Function pointer to Create/initialize structures. \item\end{CompactList}\item 
+{\bf Obit\-UVGrid\-Read\-UVFP} {\bf Obit\-UVGrid\-Read\-UV}
+\begin{CompactList}\small\item\em Function pointer to Read/grid uv data. \item\end{CompactList}\item 
+{\bf Obit\-UVGrid\-Read\-UVPar\-FP} {\bf Obit\-UVGrid\-Read\-UVPar}
+\begin{CompactList}\small\item\em Function pointer to Parallel Read/grid uv data. \item\end{CompactList}\item 
+{\bf Obit\-UVGrid\-FFT2Im\-FP} {\bf Obit\-UVGrid\-FFT2Im}
+\begin{CompactList}\small\item\em Function pointer to transform/correct. \item\end{CompactList}\item 
+{\bf Obit\-UVGrid\-FFT2Im\-Par\-FP} {\bf Obit\-UVGrid\-FFT2Im\-Par}
+\begin{CompactList}\small\item\em Function pointer to Parallel transform/correct. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Class\-Info Structure. 
+
+Contains class name, a pointer to any parent class (NULL if none) and function pointers. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!ClassName@{ClassName}}
+\index{ClassName@{ClassName}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-UVGrid\-Class\-Info::Class\-Name}}\label{structObitUVGridClassInfo_o2}
+
+
+Name of class (\char`\"{}Obit\char`\"{}). 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!hasScratch@{hasScratch}}
+\index{hasScratch@{hasScratch}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-UVGrid\-Class\-Info::has\-Scratch}}\label{structObitUVGridClassInfo_o1}
+
+
+Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!initialized@{initialized}}
+\index{initialized@{initialized}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-UVGrid\-Class\-Info::initialized}}\label{structObitUVGridClassInfo_o0}
+
+
+Have I been initialized? 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!newObit@{newObit}}
+\index{newObit@{newObit}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-FP} {\bf Obit\-UVGrid\-Class\-Info::new\-Obit}}\label{structObitUVGridClassInfo_o5}
+
+
+Function pointer to new\-Obit. 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!ObitClassInfoDefFn@{ObitClassInfoDefFn}}
+\index{ObitClassInfoDefFn@{ObitClassInfoDefFn}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-UVGrid\-Class\-Info::Obit\-Class\-Info\-Def\-Fn}}\label{structObitUVGridClassInfo_o7}
+
+
+Function pointer to Class\-Info\-Def\-Fn. 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!ObitClassInit@{ObitClassInit}}
+\index{ObitClassInit@{ObitClassInit}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Init\-FP} {\bf Obit\-UVGrid\-Class\-Info::Obit\-Class\-Init}}\label{structObitUVGridClassInfo_o4}
+
+
+Function pointer to Class initializer. 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!ObitClear@{ObitClear}}
+\index{ObitClear@{ObitClear}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clear\-FP} {\bf Obit\-UVGrid\-Class\-Info::Obit\-Clear}}\label{structObitUVGridClassInfo_o13}
+
+
+Function pointer to deallocation function. 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!ObitClone@{ObitClone}}
+\index{ObitClone@{ObitClone}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clone\-FP} {\bf Obit\-UVGrid\-Class\-Info::Obit\-Clone}}\label{structObitUVGridClassInfo_o9}
+
+
+Function pointer to deep copy constructor. 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!ObitCopy@{ObitCopy}}
+\index{ObitCopy@{ObitCopy}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Copy\-FP} {\bf Obit\-UVGrid\-Class\-Info::Obit\-Copy}}\label{structObitUVGridClassInfo_o8}
+
+
+Function pointer to shallow copy constructor. 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!ObitGetClass@{ObitGetClass}}
+\index{ObitGetClass@{ObitGetClass}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Get\-Class\-FP} {\bf Obit\-UVGrid\-Class\-Info::Obit\-Get\-Class}}\label{structObitUVGridClassInfo_o6}
+
+
+Function pointer to Get\-Class. 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!ObitInit@{ObitInit}}
+\index{ObitInit@{ObitInit}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Init\-FP} {\bf Obit\-UVGrid\-Class\-Info::Obit\-Init}}\label{structObitUVGridClassInfo_o14}
+
+
+Function pointer to object initializer. 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!ObitIsA@{ObitIsA}}
+\index{ObitIsA@{ObitIsA}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Is\-AFP} {\bf Obit\-UVGrid\-Class\-Info::Obit\-Is\-A}}\label{structObitUVGridClassInfo_o12}
+
+
+Function pointer to test if a class member. 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!ObitRef@{ObitRef}}
+\index{ObitRef@{ObitRef}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Ref\-FP} {\bf Obit\-UVGrid\-Class\-Info::Obit\-Ref}}\label{structObitUVGridClassInfo_o10}
+
+
+Function pointer to Object Ref. 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!ObitUnref@{ObitUnref}}
+\index{ObitUnref@{ObitUnref}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Unref\-FP} {\bf Obit\-UVGrid\-Class\-Info::Obit\-Unref}}\label{structObitUVGridClassInfo_o11}
+
+
+Function pointer to Object Unref. 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!ObitUVGridFFT2Im@{ObitUVGridFFT2Im}}
+\index{ObitUVGridFFT2Im@{ObitUVGridFFT2Im}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVGrid\-FFT2Im\-FP} {\bf Obit\-UVGrid\-Class\-Info::Obit\-UVGrid\-FFT2Im}}\label{structObitUVGridClassInfo_o18}
+
+
+Function pointer to transform/correct. 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!ObitUVGridFFT2ImPar@{ObitUVGridFFT2ImPar}}
+\index{ObitUVGridFFT2ImPar@{ObitUVGridFFT2ImPar}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVGrid\-FFT2Im\-Par\-FP} {\bf Obit\-UVGrid\-Class\-Info::Obit\-UVGrid\-FFT2Im\-Par}}\label{structObitUVGridClassInfo_o19}
+
+
+Function pointer to Parallel transform/correct. 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!ObitUVGridReadUV@{ObitUVGridReadUV}}
+\index{ObitUVGridReadUV@{ObitUVGridReadUV}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVGrid\-Read\-UVFP} {\bf Obit\-UVGrid\-Class\-Info::Obit\-UVGrid\-Read\-UV}}\label{structObitUVGridClassInfo_o16}
+
+
+Function pointer to Read/grid uv data. 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!ObitUVGridReadUVPar@{ObitUVGridReadUVPar}}
+\index{ObitUVGridReadUVPar@{ObitUVGridReadUVPar}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVGrid\-Read\-UVPar\-FP} {\bf Obit\-UVGrid\-Class\-Info::Obit\-UVGrid\-Read\-UVPar}}\label{structObitUVGridClassInfo_o17}
+
+
+Function pointer to Parallel Read/grid uv data. 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!ObitUVGridSetup@{ObitUVGridSetup}}
+\index{ObitUVGridSetup@{ObitUVGridSetup}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVGrid\-Setup\-FP} {\bf Obit\-UVGrid\-Class\-Info::Obit\-UVGrid\-Setup}}\label{structObitUVGridClassInfo_o15}
+
+
+Function pointer to Create/initialize structures. 
+
+\index{ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}!ParentClass@{ParentClass}}
+\index{ParentClass@{ParentClass}!ObitUVGridClassInfo@{Obit\-UVGrid\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer {\bf Obit\-UVGrid\-Class\-Info::Parent\-Class}}\label{structObitUVGridClassInfo_o3}
+
+
+Pointer to parent class Class\-Info, Null if none. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-UVGrid.h}\end{CompactItemize}

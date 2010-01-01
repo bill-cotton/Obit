@@ -1,0 +1,113 @@
+\section{Obit\-CArray Struct Reference}
+\label{structObitCArray}\index{ObitCArray@{ObitCArray}}
+Obit\-CArray Class structure.  
+
+
+{\tt \#include $<$Obit\-CArray.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf array}
+\begin{CompactList}\small\item\em array \item\end{CompactList}\item 
+{\bf olong} {\bf array\-Size}
+\begin{CompactList}\small\item\em total grid size in pairs of floats \item\end{CompactList}\item 
+{\bf olong} {\bf ndim}
+\begin{CompactList}\small\item\em Number dimensions in array. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf naxis}
+\begin{CompactList}\small\item\em Dimensionality array. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-CArray Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitCArray@{Obit\-CArray}!array@{array}}
+\index{array@{array}!ObitCArray@{Obit\-CArray}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-CArray::array}}\label{structObitCArray_o6}
+
+
+array 
+
+\index{ObitCArray@{Obit\-CArray}!arraySize@{arraySize}}
+\index{arraySize@{arraySize}!ObitCArray@{Obit\-CArray}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-CArray::array\-Size}}\label{structObitCArray_o7}
+
+
+total grid size in pairs of floats 
+
+\index{ObitCArray@{Obit\-CArray}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitCArray@{Obit\-CArray}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-CArray::Class\-Info}}\label{structObitCArray_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitCArray@{Obit\-CArray}!info@{info}}
+\index{info@{info}!ObitCArray@{Obit\-CArray}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-CArray::info}}\label{structObitCArray_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitCArray@{Obit\-CArray}!name@{name}}
+\index{name@{name}!ObitCArray@{Obit\-CArray}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-CArray::name}}\label{structObitCArray_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitCArray@{Obit\-CArray}!naxis@{naxis}}
+\index{naxis@{naxis}!ObitCArray@{Obit\-CArray}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-CArray::naxis}}\label{structObitCArray_o9}
+
+
+Dimensionality array. 
+
+\index{ObitCArray@{Obit\-CArray}!ndim@{ndim}}
+\index{ndim@{ndim}!ObitCArray@{Obit\-CArray}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-CArray::ndim}}\label{structObitCArray_o8}
+
+
+Number dimensions in array. 
+
+\index{ObitCArray@{Obit\-CArray}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitCArray@{Obit\-CArray}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-CArray::Obit\-Id}}\label{structObitCArray_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitCArray@{Obit\-CArray}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitCArray@{Obit\-CArray}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-CArray::Reference\-Count}}\label{structObitCArray_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitCArray@{Obit\-CArray}!thread@{thread}}
+\index{thread@{thread}!ObitCArray@{Obit\-CArray}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-CArray::thread}}\label{structObitCArray_o4}
+
+
+Threading info member object. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-CArray.h}\end{CompactItemize}

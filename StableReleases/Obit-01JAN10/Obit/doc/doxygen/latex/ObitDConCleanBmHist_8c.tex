@@ -1,0 +1,157 @@
+\section{Obit\-DCon\-Clean\-Bm\-Hist.c File Reference}
+\label{ObitDConCleanBmHist_8c}\index{ObitDConCleanBmHist.c@{ObitDConCleanBmHist.c}}
+{\bf Obit\-DCon\-Clean\-Bm\-Hist}{\rm (p.\,\pageref{structObitDConCleanBmHist})} class function definitions. 
+
+{\tt \#include \char`\"{}Obit\-DCon\-Clean\-Bm\-Hist.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Mem.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-DCon\-Clean\-Bm\-Hist\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Bm\-Hist\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Bm\-Hist} $\ast$ {\bf new\-Obit\-DCon\-Clean\-Bm\-Hist} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-DCon\-Clean\-Bm\-Hist\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Bm\-Hist} $\ast$ {\bf Obit\-DCon\-Clean\-Bm\-Hist\-Copy} ({\bf Obit\-DCon\-Clean\-Bm\-Hist} $\ast$in, {\bf Obit\-DCon\-Clean\-Bm\-Hist} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Bm\-Hist\-Clone} ({\bf Obit\-DCon\-Clean\-Bm\-Hist} $\ast$in, {\bf Obit\-DCon\-Clean\-Bm\-Hist} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Bm\-Hist} $\ast$ {\bf Obit\-DCon\-Clean\-Bm\-Hist\-Create} (gchar $\ast$name, {\bf Obit\-Image} $\ast$Beam, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-DCon\-Clean\-Bm\-Hist}{\rm (p.\,\pageref{structObitDConCleanBmHist})} structures. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Bm\-Hist\-Update} ({\bf Obit\-DCon\-Clean\-Bm\-Hist} $\ast$in, {\bf Obit\-Image} $\ast$Beam, {\bf olong} $\ast$plane, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Update with new Beam image. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Obit\-DCon\-Clean\-Bm\-Hist\-Peak} ({\bf Obit\-DCon\-Clean\-Bm\-Hist} $\ast$in, {\bf olong} radius, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Give maximum abs. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Bm\-Hist\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-DCon\-Clean\-Bm\-Hist}{\rm (p.\,\pageref{structObitDConCleanBmHist})} class function definitions. 
+
+This class determines the maximum beam sidelobe exterior to a given x or y distance. This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} base class.
+
+\subsection{Function Documentation}
+\index{ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}!newObitDConCleanBmHist@{newObitDConCleanBmHist}}
+\index{newObitDConCleanBmHist@{newObitDConCleanBmHist}!ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Bm\-Hist}$\ast$ new\-Obit\-DCon\-Clean\-Bm\-Hist (gchar $\ast$ {\em name})}\label{ObitDConCleanBmHist_8c_a6}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}!ObitDConCleanBmHistClassInit@{ObitDConCleanBmHistClassInit}}
+\index{ObitDConCleanBmHistClassInit@{ObitDConCleanBmHistClassInit}!ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Bm\-Hist\-Class\-Init (void)}\label{ObitDConCleanBmHist_8c_a13}
+
+
+Public: Class initializer. 
+
+\index{ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}!ObitDConCleanBmHistClear@{ObitDConCleanBmHistClear}}
+\index{ObitDConCleanBmHistClear@{ObitDConCleanBmHistClear}!ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Bm\-Hist\-Clear (gpointer {\em inn})}\label{ObitDConCleanBmHist_8c_a4}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-DCon\-Clean\-Bm\-Hist$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}!ObitDConCleanBmHistClone@{ObitDConCleanBmHistClone}}
+\index{ObitDConCleanBmHistClone@{ObitDConCleanBmHistClone}!ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Bm\-Hist\-Clone ({\bf Obit\-DCon\-Clean\-Bm\-Hist} $\ast$ {\em in}, {\bf Obit\-DCon\-Clean\-Bm\-Hist} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanBmHist_8c_a9}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}!ObitDConCleanBmHistCopy@{ObitDConCleanBmHistCopy}}
+\index{ObitDConCleanBmHistCopy@{ObitDConCleanBmHistCopy}!ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Bm\-Hist}$\ast$ Obit\-DCon\-Clean\-Bm\-Hist\-Copy ({\bf Obit\-DCon\-Clean\-Bm\-Hist} $\ast$ {\em in}, {\bf Obit\-DCon\-Clean\-Bm\-Hist} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanBmHist_8c_a8}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}!ObitDConCleanBmHistCreate@{ObitDConCleanBmHistCreate}}
+\index{ObitDConCleanBmHistCreate@{ObitDConCleanBmHistCreate}!ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Bm\-Hist}$\ast$ Obit\-DCon\-Clean\-Bm\-Hist\-Create (gchar $\ast$ {\em name}, {\bf Obit\-Image} $\ast$ {\em Beam}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanBmHist_8c_a10}
+
+
+Public: Create/initialize {\bf Obit\-DCon\-Clean\-Bm\-Hist}{\rm (p.\,\pageref{structObitDConCleanBmHist})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em Beam}]from which to create object \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}!ObitDConCleanBmHistGetClass@{ObitDConCleanBmHistGetClass}}
+\index{ObitDConCleanBmHistGetClass@{ObitDConCleanBmHistGetClass}!ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-DCon\-Clean\-Bm\-Hist\-Get\-Class (void)}\label{ObitDConCleanBmHist_8c_a7}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}!ObitDConCleanBmHistInit@{ObitDConCleanBmHistInit}}
+\index{ObitDConCleanBmHistInit@{ObitDConCleanBmHistInit}!ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Bm\-Hist\-Init (gpointer {\em inn})}\label{ObitDConCleanBmHist_8c_a3}
+
+
+Private: Initialize newly instantiated object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}!ObitDConCleanBmHistPeak@{ObitDConCleanBmHistPeak}}
+\index{ObitDConCleanBmHistPeak@{ObitDConCleanBmHistPeak}!ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} Obit\-DCon\-Clean\-Bm\-Hist\-Peak ({\bf Obit\-DCon\-Clean\-Bm\-Hist} $\ast$ {\em in}, {\bf olong} {\em radius}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanBmHist_8c_a12}
+
+
+Public: Give maximum abs. 
+
+abs. value of sidelobe exterior to a given radius. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The Beam histogram object \item[{\em radius}]How far from center in cells? (Not radius in the usual sense but a beam patch sense). \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the absolute values of the maximum exterior sidelobe. \end{Desc}
+\index{ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}!ObitDConCleanBmHistUpdate@{ObitDConCleanBmHistUpdate}}
+\index{ObitDConCleanBmHistUpdate@{ObitDConCleanBmHistUpdate}!ObitDConCleanBmHist.c@{Obit\-DCon\-Clean\-Bm\-Hist.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Bm\-Hist\-Update ({\bf Obit\-DCon\-Clean\-Bm\-Hist} $\ast$ {\em in}, {\bf Obit\-Image} $\ast$ {\em Beam}, {\bf olong} $\ast$ {\em plane}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanBmHist_8c_a11}
+
+
+Public: Update with new Beam image. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The Beam histogram object \item[{\em plane}]1-rel indices on dimensions 3-? \item[{\em Beam}]The Beam image \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}

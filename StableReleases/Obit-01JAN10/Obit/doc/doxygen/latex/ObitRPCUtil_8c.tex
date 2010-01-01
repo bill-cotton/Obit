@@ -1,0 +1,31 @@
+\section{Obit\-RPCUtil.c File Reference}
+\label{ObitRPCUtil_8c}\index{ObitRPCUtil.c@{ObitRPCUtil.c}}
+{\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} class utility function definitions. 
+
+{\tt \#include \char`\"{}Obit\-RPCUtil.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Mem.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-RPCUtil\-File\-Send} ({\bf Obit\-File} $\ast$file, {\bf Obit\-RPC} $\ast$client, gchar $\ast$server\-URL, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy a file over an XMLRPC connection. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} class utility function definitions. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitRPCUtil.c@{Obit\-RPCUtil.c}!ObitRPCUtilFileSend@{ObitRPCUtilFileSend}}
+\index{ObitRPCUtilFileSend@{ObitRPCUtilFileSend}!ObitRPCUtil.c@{Obit\-RPCUtil.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-RPCUtil\-File\-Send ({\bf Obit\-File} $\ast$ {\em file}, {\bf Obit\-RPC} $\ast$ {\em client}, gchar $\ast$ {\em server\-URL}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitRPCUtil_8c_a0}
+
+
+Public: Copy a file over an XMLRPC connection. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em file}]File to be sent \item[{\em client}]RPC client to use \item[{\em server\-URL}]URL of service, e.g. \char`\"{}http://localhost:8765/RPC2\char`\"{} \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}

@@ -1,0 +1,122 @@
+\section{Obit\-Data Struct Reference}
+\label{structObitData}\index{ObitData@{ObitData}}
+Obit\-Data Class structure.  
+
+
+{\tt \#include $<$Obit\-Data.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+Obit\-IOAccess {\bf Data\-Access}
+\begin{CompactList}\small\item\em access type \item\end{CompactList}\item 
+{\bf Obit\-IO} $\ast$ {\bf my\-IO}
+\begin{CompactList}\small\item\em I/O interface to access disk resident data. \item\end{CompactList}\item 
+{\bf Obit\-Table\-List} $\ast$ {\bf table\-List}
+\begin{CompactList}\small\item\em {\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})} of associated tables. \item\end{CompactList}\item 
+gboolean {\bf is\-Scratch}
+\begin{CompactList}\small\item\em Is this a scratch object to be deleted when final unlink. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Data Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitData@{Obit\-Data}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitData@{Obit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Data::Class\-Info}}\label{structObitData_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitData@{Obit\-Data}!DataAccess@{DataAccess}}
+\index{DataAccess@{DataAccess}!ObitData@{Obit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOAccess {\bf Obit\-Data::Data\-Access}}\label{structObitData_o7}
+
+
+access type 
+
+\index{ObitData@{Obit\-Data}!info@{info}}
+\index{info@{info}!ObitData@{Obit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Data::info}}\label{structObitData_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitData@{Obit\-Data}!isScratch@{isScratch}}
+\index{isScratch@{isScratch}!ObitData@{Obit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Data::is\-Scratch}}\label{structObitData_o10}
+
+
+Is this a scratch object to be deleted when final unlink. 
+
+\index{ObitData@{Obit\-Data}!myIO@{myIO}}
+\index{myIO@{myIO}!ObitData@{Obit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IO}$\ast$ {\bf Obit\-Data::my\-IO}}\label{structObitData_o8}
+
+
+I/O interface to access disk resident data. 
+
+\index{ObitData@{Obit\-Data}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitData@{Obit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Data::my\-Status}}\label{structObitData_o6}
+
+
+I/O status. 
+
+\index{ObitData@{Obit\-Data}!name@{name}}
+\index{name@{name}!ObitData@{Obit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Data::name}}\label{structObitData_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitData@{Obit\-Data}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitData@{Obit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Data::Obit\-Id}}\label{structObitData_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitData@{Obit\-Data}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitData@{Obit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Data::Reference\-Count}}\label{structObitData_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitData@{Obit\-Data}!tableList@{tableList}}
+\index{tableList@{tableList}!ObitData@{Obit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-List}$\ast$ {\bf Obit\-Data::table\-List}}\label{structObitData_o9}
+
+
+{\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})} of associated tables. 
+
+\index{ObitData@{Obit\-Data}!thread@{thread}}
+\index{thread@{thread}!ObitData@{Obit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Data::thread}}\label{structObitData_o4}
+
+
+Threading info member object. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Data.h}\end{CompactItemize}

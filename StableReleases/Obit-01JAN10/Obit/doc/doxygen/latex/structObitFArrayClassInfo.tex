@@ -1,0 +1,610 @@
+\section{Obit\-FArray\-Class\-Info Struct Reference}
+\label{structObitFArrayClassInfo}\index{ObitFArrayClassInfo@{ObitFArrayClassInfo}}
+Class\-Info Structure.  
+
+
+{\tt \#include $<$Obit\-FArray.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gboolean {\bf initialized}
+\begin{CompactList}\small\item\em Have I been initialized? \item\end{CompactList}\item 
+gboolean {\bf has\-Scratch}
+\begin{CompactList}\small\item\em Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? \item\end{CompactList}\item 
+gchar $\ast$ {\bf Class\-Name}
+\begin{CompactList}\small\item\em Name of class (\char`\"{}Obit\char`\"{}). \item\end{CompactList}\item 
+gconstpointer {\bf Parent\-Class}
+\begin{CompactList}\small\item\em Pointer to parent class Class\-Info, Null if none. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Init\-FP} {\bf Obit\-Class\-Init}
+\begin{CompactList}\small\item\em Function pointer to Class initializer. \item\end{CompactList}\item 
+{\bf new\-Obit\-FP} {\bf new\-Obit}
+\begin{CompactList}\small\item\em Function pointer to new\-Obit. \item\end{CompactList}\item 
+{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Get\-Class}
+\begin{CompactList}\small\item\em Function pointer to Get\-Class. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-Class\-Info\-Def\-Fn}
+\begin{CompactList}\small\item\em Function pointer to Class\-Info\-Def\-Fn. \item\end{CompactList}\item 
+{\bf Obit\-Copy\-FP} {\bf Obit\-Copy}
+\begin{CompactList}\small\item\em Function pointer to shallow copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Clone\-FP} {\bf Obit\-Clone}
+\begin{CompactList}\small\item\em Function pointer to deep copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Ref\-FP} {\bf Obit\-Ref}
+\begin{CompactList}\small\item\em Function pointer to Object Ref. \item\end{CompactList}\item 
+{\bf Obit\-Unref\-FP} {\bf Obit\-Unref}
+\begin{CompactList}\small\item\em Function pointer to Object Unref. \item\end{CompactList}\item 
+{\bf Obit\-Is\-AFP} {\bf Obit\-Is\-A}
+\begin{CompactList}\small\item\em Function pointer to test if a class member. \item\end{CompactList}\item 
+{\bf Obit\-Clear\-FP} {\bf Obit\-Clear}
+\begin{CompactList}\small\item\em Function pointer to deallocation function. \item\end{CompactList}\item 
+{\bf Obit\-Init\-FP} {\bf Obit\-Init}
+\begin{CompactList}\small\item\em Function pointer to object initializer. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Create\-FP} {\bf Obit\-FArray\-Create}
+\begin{CompactList}\small\item\em Function pointer to Constructor. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Sub\-Arr\-FP} {\bf Obit\-FArray\-Sub\-Arr}
+\begin{CompactList}\small\item\em Function pointer to subarray constructor. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Transpose\-FP} {\bf Obit\-FArray\-Transpose}
+\begin{CompactList}\small\item\em Function pointer to transpose constructor. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Is\-Compatable\-FP} {\bf Obit\-FArray\-Is\-Compatable}
+\begin{CompactList}\small\item\em Function pointer to compatability checker. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Realloc\-FP} {\bf Obit\-FArray\-Realloc}
+\begin{CompactList}\small\item\em Function pointer to reallocate structures. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Index\-FP} {\bf Obit\-FArray\-Index}
+\begin{CompactList}\small\item\em Function pointer to return index. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Max\-FP} {\bf Obit\-FArray\-Max}
+\begin{CompactList}\small\item\em Function pointer to find maximum. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Max\-Abs\-FP} {\bf Obit\-FArray\-Max\-Abs}
+\begin{CompactList}\small\item\em Function pointer to find maximum abs. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Min\-FP} {\bf Obit\-FArray\-Min}
+\begin{CompactList}\small\item\em Function pointer to find minimum. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Deblank\-FP} {\bf Obit\-FArray\-Deblank}
+\begin{CompactList}\small\item\em Function pointer to deblank. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-RMSFP} {\bf Obit\-FArray\-RMS}
+\begin{CompactList}\small\item\em Function pointer to find RMS of pixel distribution from histogram. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Raw\-RMSFP} {\bf Obit\-FArray\-Raw\-RMS}
+\begin{CompactList}\small\item\em Function pointer to find RMS of pixel distribution. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-RMS0FP} {\bf Obit\-FArray\-RMS0}
+\begin{CompactList}\small\item\em Function pointer to find RMS about zero. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-RMSQuant\-FP} {\bf Obit\-FArray\-RMSQuant}
+\begin{CompactList}\small\item\em Function pointer to find RMS with possible quantization. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Mode\-FP} {\bf Obit\-FArray\-Mode}
+\begin{CompactList}\small\item\em Function pointer to find Mode of pixel distribution. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Mean\-FP} {\bf Obit\-FArray\-Mean}
+\begin{CompactList}\small\item\em Function pointer to find Mean of pixel distribution. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Fill\-FP} {\bf Obit\-FArray\-Fill}
+\begin{CompactList}\small\item\em Function pointer to fill elements of an FArray. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Neg\-FP} {\bf Obit\-FArray\-Neg}
+\begin{CompactList}\small\item\em Function pointer to negate elements of an FArray. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Sin\-FP} {\bf Obit\-FArray\-Sin}
+\begin{CompactList}\small\item\em Function pointer to sine of elements of an FArray. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Cos\-FP} {\bf Obit\-FArray\-Cos}
+\begin{CompactList}\small\item\em Function pointer to cosine of elements of an FArray. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Cos\-FP} {\bf Obit\-FArray\-Sqrt}
+\begin{CompactList}\small\item\em Function pointer to square root of elements of an FArray. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Sum\-FP} {\bf Obit\-FArray\-Sum}
+\begin{CompactList}\small\item\em Function pointer to sum elements of an FArray. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Count\-FP} {\bf Obit\-FArray\-Count}
+\begin{CompactList}\small\item\em Function pointer to number of valid elements in an FArray. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-SAdd\-FP} {\bf Obit\-FArray\-SAdd}
+\begin{CompactList}\small\item\em Function pointer to Add a scalar to elements of an FArray. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-SMul\-FP} {\bf Obit\-FArray\-SMul}
+\begin{CompactList}\small\item\em Function pointer to Multiply elements of an FArray by a scalar. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-SDiv\-FP} {\bf Obit\-FArray\-SDiv}
+\begin{CompactList}\small\item\em Function pointer to divide elements of an FArray into a scalar. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Clip\-FP} {\bf Obit\-FArray\-Clip}
+\begin{CompactList}\small\item\em Function pointer to Clip elements of an FArray outside of a given range. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-In\-Clip\-FP} {\bf Obit\-FArray\-In\-Clip}
+\begin{CompactList}\small\item\em Function pointer to Clip elements of an FArray inside of a given range. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Blank\-FP} {\bf Obit\-FArray\-Blank}
+\begin{CompactList}\small\item\em Function pointer to Blank elements of an array where another is blanked. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Max\-Arr\-FP} {\bf Obit\-FArray\-Max\-Arr}
+\begin{CompactList}\small\item\em Function pointer to get larger elements of two FArrays. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Min\-Arr\-FP} {\bf Obit\-FArray\-Min\-Arr}
+\begin{CompactList}\small\item\em Function pointer to get lesser elements of two FArrays. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Sum\-Arr\-FP} {\bf Obit\-FArray\-Sum\-Arr}
+\begin{CompactList}\small\item\em Function pointer to Add enonblanked lements of two FArrays. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Avg\-Arr\-FP} {\bf Obit\-FArray\-Avg\-Arr}
+\begin{CompactList}\small\item\em Function pointer to average nonblanked elements of two FArrays. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Add\-FP} {\bf Obit\-FArray\-Add}
+\begin{CompactList}\small\item\em Function pointer to Add elements of two FArrays. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Sub\-FP} {\bf Obit\-FArray\-Sub}
+\begin{CompactList}\small\item\em Function pointer to Subtract elements of two FArrays. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Mul\-FP} {\bf Obit\-FArray\-Mul}
+\begin{CompactList}\small\item\em Function pointer to Multiply elements of two FArrays. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Div\-FP} {\bf Obit\-FArray\-Div}
+\begin{CompactList}\small\item\em Function pointer to Divide elements of two FArrays. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Div\-Clip\-FP} {\bf Obit\-FArray\-Div\-Clip}
+\begin{CompactList}\small\item\em Function pointer to Divide elements of two FArrays with clipping. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Dot\-FP} {\bf Obit\-FArray\-Dot}
+\begin{CompactList}\small\item\em Function pointer to \char`\"{}dot\char`\"{} product of two FArrays. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Mul\-Col\-Row\-FP} {\bf Obit\-FArray\-Mul\-Col\-Row}
+\begin{CompactList}\small\item\em Function pointer to multiple 2D by row, col vector. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Quant\-FP} {\bf Obit\-FArray\-Quant}
+\begin{CompactList}\small\item\em Function pointer to determine quantization. \item\end{CompactList}\item 
+{\bf Obit\-FArray1DCenter\-FP} {\bf Obit\-FArray1DCenter}
+\begin{CompactList}\small\item\em Function pointer to Convert a 1D \char`\"{}center at edges\char`\"{} array to proper order. \item\end{CompactList}\item 
+{\bf Obit\-FArray2DCenter\-FP} {\bf Obit\-FArray2DCenter}
+\begin{CompactList}\small\item\em Function pointer to Convert a 2D \char`\"{}center at edges\char`\"{} array to proper order. \item\end{CompactList}\item 
+{\bf Obit\-FArray2DSym\-Inv\-FP} {\bf Obit\-FArray2DSym\-Inv}
+\begin{CompactList}\small\item\em Function pointer to inplace invert a symmetric 2D array. \item\end{CompactList}\item 
+{\bf Obit\-FArray2DCGauss\-FP} {\bf Obit\-FArray2DCGauss}
+\begin{CompactList}\small\item\em Function pointer to Make 2-D Circular Gaussian. \item\end{CompactList}\item 
+{\bf Obit\-FArray2DCGauss\-FP} {\bf Obit\-FArray2DEGauss}
+\begin{CompactList}\small\item\em Function pointer to Make 2-D Elliptical Gaussian. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Shift\-Add\-FP} {\bf Obit\-FArray\-Shift\-Add}
+\begin{CompactList}\small\item\em Function pointer to Shift and Add scaled array. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Pad\-FP} {\bf Obit\-FArray\-Pad}
+\begin{CompactList}\small\item\em Function pointer to Zero pad an array. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Conv\-Gaus\-FP} {\bf Obit\-FArray\-Conv\-Gaus}
+\begin{CompactList}\small\item\em Function pointer to Convolve a list of Gaussians onto an FArray. \item\end{CompactList}\item 
+{\bf Obit\-FArray\-Sel\-Inc\-FP} {\bf Obit\-FArray\-Sel\-Inc}
+\begin{CompactList}\small\item\em Function pointer to Select elements in an FArray by increment. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Class\-Info Structure. 
+
+Contains class name, a pointer to any parent class (NULL if none) and function pointers. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ClassName@{ClassName}}
+\index{ClassName@{ClassName}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-FArray\-Class\-Info::Class\-Name}}\label{structObitFArrayClassInfo_o2}
+
+
+Name of class (\char`\"{}Obit\char`\"{}). 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!hasScratch@{hasScratch}}
+\index{hasScratch@{hasScratch}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-FArray\-Class\-Info::has\-Scratch}}\label{structObitFArrayClassInfo_o1}
+
+
+Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!initialized@{initialized}}
+\index{initialized@{initialized}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-FArray\-Class\-Info::initialized}}\label{structObitFArrayClassInfo_o0}
+
+
+Have I been initialized? 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!newObit@{newObit}}
+\index{newObit@{newObit}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-FP} {\bf Obit\-FArray\-Class\-Info::new\-Obit}}\label{structObitFArrayClassInfo_o5}
+
+
+Function pointer to new\-Obit. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitClassInfoDefFn@{ObitClassInfoDefFn}}
+\index{ObitClassInfoDefFn@{ObitClassInfoDefFn}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-Class\-Info\-Def\-Fn}}\label{structObitFArrayClassInfo_o7}
+
+
+Function pointer to Class\-Info\-Def\-Fn. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitClassInit@{ObitClassInit}}
+\index{ObitClassInit@{ObitClassInit}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Init\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-Class\-Init}}\label{structObitFArrayClassInfo_o4}
+
+
+Function pointer to Class initializer. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitClear@{ObitClear}}
+\index{ObitClear@{ObitClear}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clear\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-Clear}}\label{structObitFArrayClassInfo_o13}
+
+
+Function pointer to deallocation function. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitClone@{ObitClone}}
+\index{ObitClone@{ObitClone}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clone\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-Clone}}\label{structObitFArrayClassInfo_o9}
+
+
+Function pointer to deep copy constructor. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitCopy@{ObitCopy}}
+\index{ObitCopy@{ObitCopy}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Copy\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-Copy}}\label{structObitFArrayClassInfo_o8}
+
+
+Function pointer to shallow copy constructor. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArray1DCenter@{ObitFArray1DCenter}}
+\index{ObitFArray1DCenter@{ObitFArray1DCenter}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray1DCenter\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray1DCenter}}\label{structObitFArrayClassInfo_o56}
+
+
+Function pointer to Convert a 1D \char`\"{}center at edges\char`\"{} array to proper order. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArray2DCenter@{ObitFArray2DCenter}}
+\index{ObitFArray2DCenter@{ObitFArray2DCenter}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray2DCenter\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray2DCenter}}\label{structObitFArrayClassInfo_o57}
+
+
+Function pointer to Convert a 2D \char`\"{}center at edges\char`\"{} array to proper order. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArray2DCGauss@{ObitFArray2DCGauss}}
+\index{ObitFArray2DCGauss@{ObitFArray2DCGauss}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray2DCGauss\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray2DCGauss}}\label{structObitFArrayClassInfo_o59}
+
+
+Function pointer to Make 2-D Circular Gaussian. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArray2DEGauss@{ObitFArray2DEGauss}}
+\index{ObitFArray2DEGauss@{ObitFArray2DEGauss}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray2DCGauss\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray2DEGauss}}\label{structObitFArrayClassInfo_o60}
+
+
+Function pointer to Make 2-D Elliptical Gaussian. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArray2DSymInv@{ObitFArray2DSymInv}}
+\index{ObitFArray2DSymInv@{ObitFArray2DSymInv}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray2DSym\-Inv\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray2DSym\-Inv}}\label{structObitFArrayClassInfo_o58}
+
+
+Function pointer to inplace invert a symmetric 2D array. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayAdd@{ObitFArrayAdd}}
+\index{ObitFArrayAdd@{ObitFArrayAdd}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Add\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Add}}\label{structObitFArrayClassInfo_o48}
+
+
+Function pointer to Add elements of two FArrays. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayAvgArr@{ObitFArrayAvgArr}}
+\index{ObitFArrayAvgArr@{ObitFArrayAvgArr}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Avg\-Arr\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Avg\-Arr}}\label{structObitFArrayClassInfo_o47}
+
+
+Function pointer to average nonblanked elements of two FArrays. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayBlank@{ObitFArrayBlank}}
+\index{ObitFArrayBlank@{ObitFArrayBlank}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Blank\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Blank}}\label{structObitFArrayClassInfo_o43}
+
+
+Function pointer to Blank elements of an array where another is blanked. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayClip@{ObitFArrayClip}}
+\index{ObitFArrayClip@{ObitFArrayClip}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Clip\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Clip}}\label{structObitFArrayClassInfo_o41}
+
+
+Function pointer to Clip elements of an FArray outside of a given range. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayConvGaus@{ObitFArrayConvGaus}}
+\index{ObitFArrayConvGaus@{ObitFArrayConvGaus}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Conv\-Gaus\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Conv\-Gaus}}\label{structObitFArrayClassInfo_o63}
+
+
+Function pointer to Convolve a list of Gaussians onto an FArray. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayCos@{ObitFArrayCos}}
+\index{ObitFArrayCos@{ObitFArrayCos}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Cos\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Cos}}\label{structObitFArrayClassInfo_o34}
+
+
+Function pointer to cosine of elements of an FArray. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayCount@{ObitFArrayCount}}
+\index{ObitFArrayCount@{ObitFArrayCount}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Count\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Count}}\label{structObitFArrayClassInfo_o37}
+
+
+Function pointer to number of valid elements in an FArray. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayCreate@{ObitFArrayCreate}}
+\index{ObitFArrayCreate@{ObitFArrayCreate}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Create\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Create}}\label{structObitFArrayClassInfo_o15}
+
+
+Function pointer to Constructor. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayDeblank@{ObitFArrayDeblank}}
+\index{ObitFArrayDeblank@{ObitFArrayDeblank}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Deblank\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Deblank}}\label{structObitFArrayClassInfo_o24}
+
+
+Function pointer to deblank. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayDiv@{ObitFArrayDiv}}
+\index{ObitFArrayDiv@{ObitFArrayDiv}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Div\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Div}}\label{structObitFArrayClassInfo_o51}
+
+
+Function pointer to Divide elements of two FArrays. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayDivClip@{ObitFArrayDivClip}}
+\index{ObitFArrayDivClip@{ObitFArrayDivClip}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Div\-Clip\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Div\-Clip}}\label{structObitFArrayClassInfo_o52}
+
+
+Function pointer to Divide elements of two FArrays with clipping. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayDot@{ObitFArrayDot}}
+\index{ObitFArrayDot@{ObitFArrayDot}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Dot\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Dot}}\label{structObitFArrayClassInfo_o53}
+
+
+Function pointer to \char`\"{}dot\char`\"{} product of two FArrays. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayFill@{ObitFArrayFill}}
+\index{ObitFArrayFill@{ObitFArrayFill}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Fill\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Fill}}\label{structObitFArrayClassInfo_o31}
+
+
+Function pointer to fill elements of an FArray. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayInClip@{ObitFArrayInClip}}
+\index{ObitFArrayInClip@{ObitFArrayInClip}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-In\-Clip\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-In\-Clip}}\label{structObitFArrayClassInfo_o42}
+
+
+Function pointer to Clip elements of an FArray inside of a given range. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayIndex@{ObitFArrayIndex}}
+\index{ObitFArrayIndex@{ObitFArrayIndex}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Index\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Index}}\label{structObitFArrayClassInfo_o20}
+
+
+Function pointer to return index. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayIsCompatable@{ObitFArrayIsCompatable}}
+\index{ObitFArrayIsCompatable@{ObitFArrayIsCompatable}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Is\-Compatable\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Is\-Compatable}}\label{structObitFArrayClassInfo_o18}
+
+
+Function pointer to compatability checker. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayMax@{ObitFArrayMax}}
+\index{ObitFArrayMax@{ObitFArrayMax}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Max\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Max}}\label{structObitFArrayClassInfo_o21}
+
+
+Function pointer to find maximum. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayMaxAbs@{ObitFArrayMaxAbs}}
+\index{ObitFArrayMaxAbs@{ObitFArrayMaxAbs}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Max\-Abs\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Max\-Abs}}\label{structObitFArrayClassInfo_o22}
+
+
+Function pointer to find maximum abs. 
+
+value. \index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayMaxArr@{ObitFArrayMaxArr}}
+\index{ObitFArrayMaxArr@{ObitFArrayMaxArr}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Max\-Arr\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Max\-Arr}}\label{structObitFArrayClassInfo_o44}
+
+
+Function pointer to get larger elements of two FArrays. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayMean@{ObitFArrayMean}}
+\index{ObitFArrayMean@{ObitFArrayMean}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Mean\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Mean}}\label{structObitFArrayClassInfo_o30}
+
+
+Function pointer to find Mean of pixel distribution. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayMin@{ObitFArrayMin}}
+\index{ObitFArrayMin@{ObitFArrayMin}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Min\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Min}}\label{structObitFArrayClassInfo_o23}
+
+
+Function pointer to find minimum. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayMinArr@{ObitFArrayMinArr}}
+\index{ObitFArrayMinArr@{ObitFArrayMinArr}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Min\-Arr\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Min\-Arr}}\label{structObitFArrayClassInfo_o45}
+
+
+Function pointer to get lesser elements of two FArrays. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayMode@{ObitFArrayMode}}
+\index{ObitFArrayMode@{ObitFArrayMode}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Mode\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Mode}}\label{structObitFArrayClassInfo_o29}
+
+
+Function pointer to find Mode of pixel distribution. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayMul@{ObitFArrayMul}}
+\index{ObitFArrayMul@{ObitFArrayMul}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Mul\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Mul}}\label{structObitFArrayClassInfo_o50}
+
+
+Function pointer to Multiply elements of two FArrays. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayMulColRow@{ObitFArrayMulColRow}}
+\index{ObitFArrayMulColRow@{ObitFArrayMulColRow}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Mul\-Col\-Row\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Mul\-Col\-Row}}\label{structObitFArrayClassInfo_o54}
+
+
+Function pointer to multiple 2D by row, col vector. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayNeg@{ObitFArrayNeg}}
+\index{ObitFArrayNeg@{ObitFArrayNeg}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Neg\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Neg}}\label{structObitFArrayClassInfo_o32}
+
+
+Function pointer to negate elements of an FArray. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayPad@{ObitFArrayPad}}
+\index{ObitFArrayPad@{ObitFArrayPad}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Pad\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Pad}}\label{structObitFArrayClassInfo_o62}
+
+
+Function pointer to Zero pad an array. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayQuant@{ObitFArrayQuant}}
+\index{ObitFArrayQuant@{ObitFArrayQuant}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Quant\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Quant}}\label{structObitFArrayClassInfo_o55}
+
+
+Function pointer to determine quantization. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayRawRMS@{ObitFArrayRawRMS}}
+\index{ObitFArrayRawRMS@{ObitFArrayRawRMS}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Raw\-RMSFP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Raw\-RMS}}\label{structObitFArrayClassInfo_o26}
+
+
+Function pointer to find RMS of pixel distribution. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayRealloc@{ObitFArrayRealloc}}
+\index{ObitFArrayRealloc@{ObitFArrayRealloc}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Realloc\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Realloc}}\label{structObitFArrayClassInfo_o19}
+
+
+Function pointer to reallocate structures. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayRMS@{ObitFArrayRMS}}
+\index{ObitFArrayRMS@{ObitFArrayRMS}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-RMSFP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-RMS}}\label{structObitFArrayClassInfo_o25}
+
+
+Function pointer to find RMS of pixel distribution from histogram. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayRMS0@{ObitFArrayRMS0}}
+\index{ObitFArrayRMS0@{ObitFArrayRMS0}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-RMS0FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-RMS0}}\label{structObitFArrayClassInfo_o27}
+
+
+Function pointer to find RMS about zero. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayRMSQuant@{ObitFArrayRMSQuant}}
+\index{ObitFArrayRMSQuant@{ObitFArrayRMSQuant}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-RMSQuant\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-RMSQuant}}\label{structObitFArrayClassInfo_o28}
+
+
+Function pointer to find RMS with possible quantization. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArraySAdd@{ObitFArraySAdd}}
+\index{ObitFArraySAdd@{ObitFArraySAdd}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-SAdd\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-SAdd}}\label{structObitFArrayClassInfo_o38}
+
+
+Function pointer to Add a scalar to elements of an FArray. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArraySDiv@{ObitFArraySDiv}}
+\index{ObitFArraySDiv@{ObitFArraySDiv}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-SDiv\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-SDiv}}\label{structObitFArrayClassInfo_o40}
+
+
+Function pointer to divide elements of an FArray into a scalar. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArraySelInc@{ObitFArraySelInc}}
+\index{ObitFArraySelInc@{ObitFArraySelInc}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Sel\-Inc\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Sel\-Inc}}\label{structObitFArrayClassInfo_o64}
+
+
+Function pointer to Select elements in an FArray by increment. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayShiftAdd@{ObitFArrayShiftAdd}}
+\index{ObitFArrayShiftAdd@{ObitFArrayShiftAdd}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Shift\-Add\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Shift\-Add}}\label{structObitFArrayClassInfo_o61}
+
+
+Function pointer to Shift and Add scaled array. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArraySin@{ObitFArraySin}}
+\index{ObitFArraySin@{ObitFArraySin}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Sin\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Sin}}\label{structObitFArrayClassInfo_o33}
+
+
+Function pointer to sine of elements of an FArray. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArraySMul@{ObitFArraySMul}}
+\index{ObitFArraySMul@{ObitFArraySMul}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-SMul\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-SMul}}\label{structObitFArrayClassInfo_o39}
+
+
+Function pointer to Multiply elements of an FArray by a scalar. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArraySqrt@{ObitFArraySqrt}}
+\index{ObitFArraySqrt@{ObitFArraySqrt}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Cos\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Sqrt}}\label{structObitFArrayClassInfo_o35}
+
+
+Function pointer to square root of elements of an FArray. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArraySub@{ObitFArraySub}}
+\index{ObitFArraySub@{ObitFArraySub}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Sub\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Sub}}\label{structObitFArrayClassInfo_o49}
+
+
+Function pointer to Subtract elements of two FArrays. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArraySubArr@{ObitFArraySubArr}}
+\index{ObitFArraySubArr@{ObitFArraySubArr}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Sub\-Arr\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Sub\-Arr}}\label{structObitFArrayClassInfo_o16}
+
+
+Function pointer to subarray constructor. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArraySum@{ObitFArraySum}}
+\index{ObitFArraySum@{ObitFArraySum}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Sum\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Sum}}\label{structObitFArrayClassInfo_o36}
+
+
+Function pointer to sum elements of an FArray. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArraySumArr@{ObitFArraySumArr}}
+\index{ObitFArraySumArr@{ObitFArraySumArr}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Sum\-Arr\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Sum\-Arr}}\label{structObitFArrayClassInfo_o46}
+
+
+Function pointer to Add enonblanked lements of two FArrays. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitFArrayTranspose@{ObitFArrayTranspose}}
+\index{ObitFArrayTranspose@{ObitFArrayTranspose}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray\-Transpose\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-FArray\-Transpose}}\label{structObitFArrayClassInfo_o17}
+
+
+Function pointer to transpose constructor. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitGetClass@{ObitGetClass}}
+\index{ObitGetClass@{ObitGetClass}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Get\-Class\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-Get\-Class}}\label{structObitFArrayClassInfo_o6}
+
+
+Function pointer to Get\-Class. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitInit@{ObitInit}}
+\index{ObitInit@{ObitInit}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Init\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-Init}}\label{structObitFArrayClassInfo_o14}
+
+
+Function pointer to object initializer. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitIsA@{ObitIsA}}
+\index{ObitIsA@{ObitIsA}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Is\-AFP} {\bf Obit\-FArray\-Class\-Info::Obit\-Is\-A}}\label{structObitFArrayClassInfo_o12}
+
+
+Function pointer to test if a class member. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitRef@{ObitRef}}
+\index{ObitRef@{ObitRef}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Ref\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-Ref}}\label{structObitFArrayClassInfo_o10}
+
+
+Function pointer to Object Ref. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ObitUnref@{ObitUnref}}
+\index{ObitUnref@{ObitUnref}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Unref\-FP} {\bf Obit\-FArray\-Class\-Info::Obit\-Unref}}\label{structObitFArrayClassInfo_o11}
+
+
+Function pointer to Object Unref. 
+
+\index{ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}!ParentClass@{ParentClass}}
+\index{ParentClass@{ParentClass}!ObitFArrayClassInfo@{Obit\-FArray\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer {\bf Obit\-FArray\-Class\-Info::Parent\-Class}}\label{structObitFArrayClassInfo_o3}
+
+
+Pointer to parent class Class\-Info, Null if none. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-FArray.h}\end{CompactItemize}

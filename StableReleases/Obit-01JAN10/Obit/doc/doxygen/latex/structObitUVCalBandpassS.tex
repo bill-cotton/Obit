@@ -1,0 +1,561 @@
+\section{Obit\-UVCal\-Bandpass\-S Struct Reference}
+\label{structObitUVCalBandpassS}\index{ObitUVCalBandpassS@{ObitUVCalBandpassS}}
+Amp/phase/delay/rate calibration structure.  
+
+
+{\tt \#include $<$Obit\-UVCal.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+{\bf Obit} $\ast$ {\bf BPTable}
+\begin{CompactList}\small\item\em Calibration BP table (as Obit$\ast$). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf BPTable\-Row}
+\begin{CompactList}\small\item\em BP Table Row (as Obit$\ast$). \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Row}
+\begin{CompactList}\small\item\em Number of rows in calibration table. \item\end{CompactList}\item 
+{\bf olong} {\bf Last\-Row\-Read}
+\begin{CompactList}\small\item\em Last Row read. \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Ant}
+\begin{CompactList}\small\item\em Number of antennas in calibration table (actually max antenna no). \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Sub\-A}
+\begin{CompactList}\small\item\em Number of subarrays in the data. \item\end{CompactList}\item 
+{\bf olong} {\bf num\-IF}
+\begin{CompactList}\small\item\em Number of IFs in data. \item\end{CompactList}\item 
+{\bf olong} {\bf Sub\-A}
+\begin{CompactList}\small\item\em Selected Subarray number. \item\end{CompactList}\item 
+{\bf olong} {\bf Freq\-ID}
+\begin{CompactList}\small\item\em Selected Frequency ID number. \item\end{CompactList}\item 
+{\bf olong} {\bf b\-IF}
+\begin{CompactList}\small\item\em Start IF number (1-rel) selected. \item\end{CompactList}\item 
+{\bf olong} {\bf e\-IF}
+\begin{CompactList}\small\item\em highest IF (1-rel) selected \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Chan}
+\begin{CompactList}\small\item\em Number of channels in data. \item\end{CompactList}\item 
+{\bf olong} {\bf b\-Chan}
+\begin{CompactList}\small\item\em Start channel number (1-rel). \item\end{CompactList}\item 
+{\bf olong} {\bf e\-Chan}
+\begin{CompactList}\small\item\em highest channel (1-rel) \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Pol}
+\begin{CompactList}\small\item\em Number of polarizations in the calibration table (1 or 2). \item\end{CompactList}\item 
+{\bf olong} {\bf Pol\-Off} [2][4]
+\begin{CompactList}\small\item\em Offset from the beginning an IF entry in the calibration array for a given polarization. \item\end{CompactList}\item 
+{\bf olong} {\bf Cur\-Sour\-ID}
+\begin{CompactList}\small\item\em current source ID in cal table \item\end{CompactList}\item 
+{\bf olong} {\bf Prior\-Sour\-ID}
+\begin{CompactList}\small\item\em Prior source ID in cal table. \item\end{CompactList}\item 
+{\bf olong} {\bf Follow\-Sour\-ID}
+\begin{CompactList}\small\item\em Following source ID in cal table. \item\end{CompactList}\item 
+{\bf olong} {\bf BPType}
+\begin{CompactList}\small\item\em Type of bandpass solution 1-$>$cross power, 2-$>$total power, 3-$>$mix, default 1. \item\end{CompactList}\item 
+{\bf olong} {\bf len\-BPArray\-Entry}
+\begin{CompactList}\small\item\em Length of calibration array entry. \item\end{CompactList}\item 
+{\bf olong} {\bf do\-Band}
+\begin{CompactList}\small\item\em Bandpass calibration type \begin{itemize}
+\item if = 1 then all the bandpass data for each antenna will be averaged to form a composite bandpass spectrum, this will then be used to correct the data. \end{itemize}
+\item\end{CompactList}\item 
+gboolean $\ast$ {\bf is\-VLBA}
+\begin{CompactList}\small\item\em if this VLBA data? per subarray \item\end{CompactList}\item 
+gboolean {\bf do\-BPWt}
+\begin{CompactList}\small\item\em Calibrate Weights? \item\end{CompactList}\item 
+{\bf ofloat} {\bf Delta\-Time}
+\begin{CompactList}\small\item\em Integration time of data. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Prior\-BPTime}
+\begin{CompactList}\small\item\em Prior time in cal table \{BPTIM(1)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Prior\-Ant\-Time}
+\begin{CompactList}\small\item\em Prior time per antenna. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Follow\-BPTime}
+\begin{CompactList}\small\item\em Following Time in cal table \{BPLTIM(2)\}. \item\end{CompactList}\item 
+{\bf ofloat} {\bf BPTime}
+\begin{CompactList}\small\item\em time of calibration in Cal\-Apply \{LCALTM\} \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Follow\-Ant\-Time}
+\begin{CompactList}\small\item\em Following time per antenna. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf BPApply}
+\begin{CompactList}\small\item\em Calibration array to apply to data \{BLFAC\} Values in order: Indexing scheme: an entry defined by ant1$<$ant2 starts in element: lentry $\ast$ (((ant1-1)$\ast$numant-((ant1+1)$\ast$ant1)/2 + ant2) - 1) + 1 where lentry = 2 $\ast$ NUMPOL $\ast$ (EIF-BIF+1) An entry contains the values in order: By IF (NUMIF) By Polarization (NUMPOL) By Channel Real part, imaginary part. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf BPPrior}
+\begin{CompactList}\small\item\em Prior calibration array from cal (BP table) \{BLLTAB($\ast$,1)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf BPFollow}
+\begin{CompactList}\small\item\em Following calibration array from cal (BP table) \{BLLTAB($\ast$,1)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Prior\-Soln\-Wt}
+\begin{CompactList}\small\item\em Solution Weights, per, antenna, per selected IF, per poln, prior solution. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Follow\-Soln\-Wt}
+\begin{CompactList}\small\item\em Solution Weights, per, antenna, per selected IF, per poln, prior solution. \item\end{CompactList}\item 
+{\bf Obit\-CArray} $\ast$ {\bf spectrum1}
+\begin{CompactList}\small\item\em Spectra work arrays 2$\ast$nchan complex arrays. \item\end{CompactList}\item 
+{\bf Obit\-CArray} $\ast$ {\bf spectrum2}
+\begin{CompactList}\small\item\em Spectra work arrays 2$\ast$nchan complex arrays. \item\end{CompactList}\item 
+{\bf Obit\-FFT} $\ast$ {\bf ACFFTFor}
+\begin{CompactList}\small\item\em Obit\-FFTs for autocorrelations. \item\end{CompactList}\item 
+{\bf Obit\-FFT} $\ast$ {\bf ACFFTRev}
+\begin{CompactList}\small\item\em Obit\-FFTs for autocorrelations. \item\end{CompactList}\item 
+{\bf Obit\-FFT} $\ast$ {\bf CCFFTFor}
+\begin{CompactList}\small\item\em Obit\-FFTs for crosscorrelations. \item\end{CompactList}\item 
+{\bf Obit\-FFT} $\ast$ {\bf CCFFTRev}
+\begin{CompactList}\small\item\em Obit\-FFTs for crosscorrelations. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf BPWork1}
+\begin{CompactList}\small\item\em Work arrays for expanding polynomial BP table entries. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf BPWork2}
+\begin{CompactList}\small\item\em Work arrays for expanding polynomial BP table entries. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf BPWork3}
+\begin{CompactList}\small\item\em Work arrays for expanding polynomial BP table entries. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf BPWork4}
+\begin{CompactList}\small\item\em Work arrays for expanding polynomial BP table entries. \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf BPTable}
+\begin{CompactList}\small\item\em Calibration BP table (as Obit$\ast$). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf BPTable\-Row}
+\begin{CompactList}\small\item\em BP Table Row (as Obit$\ast$). \item\end{CompactList}\item 
+gboolean $\ast$ {\bf is\-VLBA}
+\begin{CompactList}\small\item\em if this VLBA data? per subarray \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Prior\-Ant\-Time}
+\begin{CompactList}\small\item\em Prior time per antenna. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Follow\-Ant\-Time}
+\begin{CompactList}\small\item\em Following time per antenna. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf BPApply}
+\begin{CompactList}\small\item\em Calibration array to apply to data \{BLFAC\} Values in order: Indexing scheme: an entry defined by ant1$<$ant2 starts in element: lentry $\ast$ (((ant1-1)$\ast$numant-((ant1+1)$\ast$ant1)/2 + ant2) - 1) + 1 where lentry = 2 $\ast$ NUMPOL $\ast$ (EIF-BIF+1) An entry contains the values in order: By IF (NUMIF) By Polarization (NUMPOL) By Channel Real part, imaginary part. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf BPPrior}
+\begin{CompactList}\small\item\em Prior calibration array from cal (BP table) \{BLLTAB($\ast$,1)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf BPFollow}
+\begin{CompactList}\small\item\em Following calibration array from cal (BP table) \{BLLTAB($\ast$,1)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Prior\-Soln\-Wt}
+\begin{CompactList}\small\item\em Solution Weights, per, antenna, per selected IF, per poln, prior solution. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Follow\-Soln\-Wt}
+\begin{CompactList}\small\item\em Solution Weights, per, antenna, per selected IF, per poln, prior solution. \item\end{CompactList}\item 
+{\bf Obit\-CArray} $\ast$ {\bf spectrum1}
+\begin{CompactList}\small\item\em Spectra work arrays 2$\ast$nchan complex arrays. \item\end{CompactList}\item 
+{\bf Obit\-FFT} $\ast$ {\bf ACFFTFor}
+\begin{CompactList}\small\item\em Obit\-FFTs for autocorrelations. \item\end{CompactList}\item 
+{\bf Obit\-FFT} $\ast$ {\bf CCFFTFor}
+\begin{CompactList}\small\item\em Obit\-FFTs for crosscorrelations. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf BPWork1}
+\begin{CompactList}\small\item\em Work arrays for expanding polynomial BP table entries. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Amp/phase/delay/rate calibration structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!ACFFTFor@{ACFFTFor}}
+\index{ACFFTFor@{ACFFTFor}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FFT}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::ACFFTFor}}\label{structObitUVCalBandpassS_o56}
+
+
+Obit\-FFTs for autocorrelations. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!ACFFTFor@{ACFFTFor}}
+\index{ACFFTFor@{ACFFTFor}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FFT}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::ACFFTFor}}\label{structObitUVCalBandpassS_o37}
+
+
+Obit\-FFTs for autocorrelations. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!ACFFTRev@{ACFFTRev}}
+\index{ACFFTRev@{ACFFTRev}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FFT} $\ast$ {\bf Obit\-UVCal\-Bandpass\-S::ACFFTRev}}\label{structObitUVCalBandpassS_o38}
+
+
+Obit\-FFTs for autocorrelations. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!bChan@{bChan}}
+\index{bChan@{bChan}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::b\-Chan}}\label{structObitUVCalBandpassS_o12}
+
+
+Start channel number (1-rel). 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!bIF@{bIF}}
+\index{bIF@{bIF}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::b\-IF}}\label{structObitUVCalBandpassS_o9}
+
+
+Start IF number (1-rel) selected. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!BPApply@{BPApply}}
+\index{BPApply@{BPApply}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::BPApply}}\label{structObitUVCalBandpassS_o50}
+
+
+Calibration array to apply to data \{BLFAC\} Values in order: Indexing scheme: an entry defined by ant1$<$ant2 starts in element: lentry $\ast$ (((ant1-1)$\ast$numant-((ant1+1)$\ast$ant1)/2 + ant2) - 1) + 1 where lentry = 2 $\ast$ NUMPOL $\ast$ (EIF-BIF+1) An entry contains the values in order: By IF (NUMIF) By Polarization (NUMPOL) By Channel Real part, imaginary part. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!BPApply@{BPApply}}
+\index{BPApply@{BPApply}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::BPApply}}\label{structObitUVCalBandpassS_o30}
+
+
+Calibration array to apply to data \{BLFAC\} Values in order: Indexing scheme: an entry defined by ant1$<$ant2 starts in element: lentry $\ast$ (((ant1-1)$\ast$numant-((ant1+1)$\ast$ant1)/2 + ant2) - 1) + 1 where lentry = 2 $\ast$ NUMPOL $\ast$ (EIF-BIF+1) An entry contains the values in order: By IF (NUMIF) By Polarization (NUMPOL) By Channel Real part, imaginary part. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!BPFollow@{BPFollow}}
+\index{BPFollow@{BPFollow}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::BPFollow}}\label{structObitUVCalBandpassS_o52}
+
+
+Following calibration array from cal (BP table) \{BLLTAB($\ast$,1)\}. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!BPFollow@{BPFollow}}
+\index{BPFollow@{BPFollow}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::BPFollow}}\label{structObitUVCalBandpassS_o32}
+
+
+Following calibration array from cal (BP table) \{BLLTAB($\ast$,1)\}. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!BPPrior@{BPPrior}}
+\index{BPPrior@{BPPrior}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::BPPrior}}\label{structObitUVCalBandpassS_o51}
+
+
+Prior calibration array from cal (BP table) \{BLLTAB($\ast$,1)\}. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!BPPrior@{BPPrior}}
+\index{BPPrior@{BPPrior}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::BPPrior}}\label{structObitUVCalBandpassS_o31}
+
+
+Prior calibration array from cal (BP table) \{BLLTAB($\ast$,1)\}. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!BPTable@{BPTable}}
+\index{BPTable@{BPTable}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::BPTable}}\label{structObitUVCalBandpassS_o45}
+
+
+Calibration BP table (as Obit$\ast$). 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!BPTable@{BPTable}}
+\index{BPTable@{BPTable}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::BPTable}}\label{structObitUVCalBandpassS_o0}
+
+
+Calibration BP table (as Obit$\ast$). 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!BPTableRow@{BPTableRow}}
+\index{BPTableRow@{BPTableRow}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::BPTable\-Row}}\label{structObitUVCalBandpassS_o46}
+
+
+BP Table Row (as Obit$\ast$). 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!BPTableRow@{BPTableRow}}
+\index{BPTableRow@{BPTableRow}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::BPTable\-Row}}\label{structObitUVCalBandpassS_o1}
+
+
+BP Table Row (as Obit$\ast$). 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!BPTime@{BPTime}}
+\index{BPTime@{BPTime}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVCal\-Bandpass\-S::BPTime}}\label{structObitUVCalBandpassS_o28}
+
+
+time of calibration in Cal\-Apply \{LCALTM\} 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!BPType@{BPType}}
+\index{BPType@{BPType}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::BPType}}\label{structObitUVCalBandpassS_o19}
+
+
+Type of bandpass solution 1-$>$cross power, 2-$>$total power, 3-$>$mix, default 1. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!BPWork1@{BPWork1}}
+\index{BPWork1@{BPWork1}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::BPWork1}}\label{structObitUVCalBandpassS_o58}
+
+
+Work arrays for expanding polynomial BP table entries. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!BPWork1@{BPWork1}}
+\index{BPWork1@{BPWork1}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::BPWork1}}\label{structObitUVCalBandpassS_o41}
+
+
+Work arrays for expanding polynomial BP table entries. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!BPWork2@{BPWork2}}
+\index{BPWork2@{BPWork2}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} $\ast$ {\bf Obit\-UVCal\-Bandpass\-S::BPWork2}}\label{structObitUVCalBandpassS_o42}
+
+
+Work arrays for expanding polynomial BP table entries. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!BPWork3@{BPWork3}}
+\index{BPWork3@{BPWork3}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} $\ast$ {\bf Obit\-UVCal\-Bandpass\-S::BPWork3}}\label{structObitUVCalBandpassS_o43}
+
+
+Work arrays for expanding polynomial BP table entries. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!BPWork4@{BPWork4}}
+\index{BPWork4@{BPWork4}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} $\ast$ {\bf Obit\-UVCal\-Bandpass\-S::BPWork4}}\label{structObitUVCalBandpassS_o44}
+
+
+Work arrays for expanding polynomial BP table entries. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!CCFFTFor@{CCFFTFor}}
+\index{CCFFTFor@{CCFFTFor}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FFT}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::CCFFTFor}}\label{structObitUVCalBandpassS_o57}
+
+
+Obit\-FFTs for crosscorrelations. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!CCFFTFor@{CCFFTFor}}
+\index{CCFFTFor@{CCFFTFor}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FFT}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::CCFFTFor}}\label{structObitUVCalBandpassS_o39}
+
+
+Obit\-FFTs for crosscorrelations. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!CCFFTRev@{CCFFTRev}}
+\index{CCFFTRev@{CCFFTRev}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FFT} $\ast$ {\bf Obit\-UVCal\-Bandpass\-S::CCFFTRev}}\label{structObitUVCalBandpassS_o40}
+
+
+Obit\-FFTs for crosscorrelations. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!CurSourID@{CurSourID}}
+\index{CurSourID@{CurSourID}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::Cur\-Sour\-ID}}\label{structObitUVCalBandpassS_o16}
+
+
+current source ID in cal table 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!DeltaTime@{DeltaTime}}
+\index{DeltaTime@{DeltaTime}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVCal\-Bandpass\-S::Delta\-Time}}\label{structObitUVCalBandpassS_o24}
+
+
+Integration time of data. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!doBand@{doBand}}
+\index{doBand@{doBand}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::do\-Band}}\label{structObitUVCalBandpassS_o21}
+
+
+Bandpass calibration type \begin{itemize}
+\item if = 1 then all the bandpass data for each antenna will be averaged to form a composite bandpass spectrum, this will then be used to correct the data. \end{itemize}
+
+
+\begin{itemize}
+\item if = 2 the bandpass spectra nearest in time (in a weighted sense) to the uv data point will be used to correct the data. \item if = 3 the bandpass data will be interpolated in time using the solution weights to form a composite bandpass spectrum, this interpolated spectrum will then be used to correct the data. \item if = 4 the bandpass spectra nearest in time (neglecting weights) to the uv data point will be used to correct the data. \item if = 5 the bandpass data will be interpolated in time ignoring weights to form a composite bandpass spectrum, this interpolated spectrum will then be used to \item if = 1 then all the bandpass data for each antenna will be averaged to form a composite bandpass spectrum, this will then be used to correct the data. \item if = 2 the bandpass spectra nearest in time (in a weighted sense) to the uv data point will be used to correct the data. \item if = 3 the bandpass data will be interpolated in time using the solution weights to form a composite bandpass spectrum, this interpolated spectrum will then be used to correct the data. \item if = 4 the bandpass spectra nearest in time (neglecting weights) to the uv data point will be used to correct the data. \item if = 5 the bandpass data will be interpolated in time ignoring weights to form a composite bandpass spectrum, this interpolated spectrum will then be used to correct the data. \end{itemize}
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!doBPWt@{doBPWt}}
+\index{doBPWt@{doBPWt}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-UVCal\-Bandpass\-S::do\-BPWt}}\label{structObitUVCalBandpassS_o23}
+
+
+Calibrate Weights? 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!eChan@{eChan}}
+\index{eChan@{eChan}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::e\-Chan}}\label{structObitUVCalBandpassS_o13}
+
+
+highest channel (1-rel) 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!eIF@{eIF}}
+\index{eIF@{eIF}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::e\-IF}}\label{structObitUVCalBandpassS_o10}
+
+
+highest IF (1-rel) selected 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!FollowAntTime@{FollowAntTime}}
+\index{FollowAntTime@{FollowAntTime}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::Follow\-Ant\-Time}}\label{structObitUVCalBandpassS_o49}
+
+
+Following time per antenna. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!FollowAntTime@{FollowAntTime}}
+\index{FollowAntTime@{FollowAntTime}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::Follow\-Ant\-Time}}\label{structObitUVCalBandpassS_o29}
+
+
+Following time per antenna. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!FollowBPTime@{FollowBPTime}}
+\index{FollowBPTime@{FollowBPTime}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVCal\-Bandpass\-S::Follow\-BPTime}}\label{structObitUVCalBandpassS_o27}
+
+
+Following Time in cal table \{BPLTIM(2)\}. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!FollowSolnWt@{FollowSolnWt}}
+\index{FollowSolnWt@{FollowSolnWt}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::Follow\-Soln\-Wt}}\label{structObitUVCalBandpassS_o54}
+
+
+Solution Weights, per, antenna, per selected IF, per poln, prior solution. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!FollowSolnWt@{FollowSolnWt}}
+\index{FollowSolnWt@{FollowSolnWt}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::Follow\-Soln\-Wt}}\label{structObitUVCalBandpassS_o34}
+
+
+Solution Weights, per, antenna, per selected IF, per poln, prior solution. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!FollowSourID@{FollowSourID}}
+\index{FollowSourID@{FollowSourID}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::Follow\-Sour\-ID}}\label{structObitUVCalBandpassS_o18}
+
+
+Following source ID in cal table. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!FreqID@{FreqID}}
+\index{FreqID@{FreqID}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::Freq\-ID}}\label{structObitUVCalBandpassS_o8}
+
+
+Selected Frequency ID number. 
+
+$<$=0-$>$ all \index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!isVLBA@{isVLBA}}
+\index{isVLBA@{isVLBA}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::is\-VLBA}}\label{structObitUVCalBandpassS_o47}
+
+
+if this VLBA data? per subarray 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!isVLBA@{isVLBA}}
+\index{isVLBA@{isVLBA}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::is\-VLBA}}\label{structObitUVCalBandpassS_o22}
+
+
+if this VLBA data? per subarray 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!LastRowRead@{LastRowRead}}
+\index{LastRowRead@{LastRowRead}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::Last\-Row\-Read}}\label{structObitUVCalBandpassS_o3}
+
+
+Last Row read. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!lenBPArrayEntry@{lenBPArrayEntry}}
+\index{lenBPArrayEntry@{lenBPArrayEntry}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::len\-BPArray\-Entry}}\label{structObitUVCalBandpassS_o20}
+
+
+Length of calibration array entry. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!numAnt@{numAnt}}
+\index{numAnt@{numAnt}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::num\-Ant}}\label{structObitUVCalBandpassS_o4}
+
+
+Number of antennas in calibration table (actually max antenna no). 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!numChan@{numChan}}
+\index{numChan@{numChan}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::num\-Chan}}\label{structObitUVCalBandpassS_o11}
+
+
+Number of channels in data. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!numIF@{numIF}}
+\index{numIF@{numIF}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::num\-IF}}\label{structObitUVCalBandpassS_o6}
+
+
+Number of IFs in data. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!numPol@{numPol}}
+\index{numPol@{numPol}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::num\-Pol}}\label{structObitUVCalBandpassS_o14}
+
+
+Number of polarizations in the calibration table (1 or 2). 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!numRow@{numRow}}
+\index{numRow@{numRow}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::num\-Row}}\label{structObitUVCalBandpassS_o2}
+
+
+Number of rows in calibration table. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!numSubA@{numSubA}}
+\index{numSubA@{numSubA}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::num\-Sub\-A}}\label{structObitUVCalBandpassS_o5}
+
+
+Number of subarrays in the data. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!PolOff@{PolOff}}
+\index{PolOff@{PolOff}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::Pol\-Off}}\label{structObitUVCalBandpassS_o15}
+
+
+Offset from the beginning an IF entry in the calibration array for a given polarization. 
+
+The first dimension is the polarization pixel number and the second is the antenna number of a baseline (e.g. first or second = 1 or 2). \index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!PriorAntTime@{PriorAntTime}}
+\index{PriorAntTime@{PriorAntTime}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::Prior\-Ant\-Time}}\label{structObitUVCalBandpassS_o48}
+
+
+Prior time per antenna. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!PriorAntTime@{PriorAntTime}}
+\index{PriorAntTime@{PriorAntTime}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::Prior\-Ant\-Time}}\label{structObitUVCalBandpassS_o26}
+
+
+Prior time per antenna. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!PriorBPTime@{PriorBPTime}}
+\index{PriorBPTime@{PriorBPTime}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVCal\-Bandpass\-S::Prior\-BPTime}}\label{structObitUVCalBandpassS_o25}
+
+
+Prior time in cal table \{BPTIM(1)\}. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!PriorSolnWt@{PriorSolnWt}}
+\index{PriorSolnWt@{PriorSolnWt}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::Prior\-Soln\-Wt}}\label{structObitUVCalBandpassS_o53}
+
+
+Solution Weights, per, antenna, per selected IF, per poln, prior solution. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!PriorSolnWt@{PriorSolnWt}}
+\index{PriorSolnWt@{PriorSolnWt}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::Prior\-Soln\-Wt}}\label{structObitUVCalBandpassS_o33}
+
+
+Solution Weights, per, antenna, per selected IF, per poln, prior solution. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!PriorSourID@{PriorSourID}}
+\index{PriorSourID@{PriorSourID}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::Prior\-Sour\-ID}}\label{structObitUVCalBandpassS_o17}
+
+
+Prior source ID in cal table. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!spectrum1@{spectrum1}}
+\index{spectrum1@{spectrum1}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-CArray}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::spectrum1}}\label{structObitUVCalBandpassS_o55}
+
+
+Spectra work arrays 2$\ast$nchan complex arrays. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!spectrum1@{spectrum1}}
+\index{spectrum1@{spectrum1}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-CArray}$\ast$ {\bf Obit\-UVCal\-Bandpass\-S::spectrum1}}\label{structObitUVCalBandpassS_o35}
+
+
+Spectra work arrays 2$\ast$nchan complex arrays. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!spectrum2@{spectrum2}}
+\index{spectrum2@{spectrum2}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-CArray} $\ast$ {\bf Obit\-UVCal\-Bandpass\-S::spectrum2}}\label{structObitUVCalBandpassS_o36}
+
+
+Spectra work arrays 2$\ast$nchan complex arrays. 
+
+\index{ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}!SubA@{SubA}}
+\index{SubA@{SubA}!ObitUVCalBandpassS@{Obit\-UVCal\-Bandpass\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Bandpass\-S::Sub\-A}}\label{structObitUVCalBandpassS_o7}
+
+
+Selected Subarray number. 
+
+$<$=0-$>$ all 
+
+The documentation for this struct was generated from the following files:\begin{CompactItemize}
+\item 
+{\bf Obit\-UVCal.h}\item 
+{\bf Obit\-UVCal\-Bandpass.c}\end{CompactItemize}

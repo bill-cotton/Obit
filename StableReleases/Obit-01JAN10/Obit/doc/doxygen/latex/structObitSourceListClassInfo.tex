@@ -1,0 +1,160 @@
+\section{Obit\-Source\-List\-Class\-Info Struct Reference}
+\label{structObitSourceListClassInfo}\index{ObitSourceListClassInfo@{ObitSourceListClassInfo}}
+Class\-Info Structure.  
+
+
+{\tt \#include $<$Obit\-Source\-List.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gboolean {\bf initialized}
+\begin{CompactList}\small\item\em Have I been initialized? \item\end{CompactList}\item 
+gboolean {\bf has\-Scratch}
+\begin{CompactList}\small\item\em Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? \item\end{CompactList}\item 
+gchar $\ast$ {\bf Class\-Name}
+\begin{CompactList}\small\item\em Name of class (\char`\"{}Obit\char`\"{}). \item\end{CompactList}\item 
+gconstpointer {\bf Parent\-Class}
+\begin{CompactList}\small\item\em Pointer to parent class Class\-Info, Null if none. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Init\-FP} {\bf Obit\-Class\-Init}
+\begin{CompactList}\small\item\em Function pointer to Class initializer. \item\end{CompactList}\item 
+{\bf new\-Obit\-FP} {\bf new\-Obit}
+\begin{CompactList}\small\item\em Function pointer to new\-Obit. \item\end{CompactList}\item 
+{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Get\-Class}
+\begin{CompactList}\small\item\em Function pointer to Get\-Class. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-Class\-Info\-Def\-Fn}
+\begin{CompactList}\small\item\em Function pointer to Class\-Info\-Def\-Fn. \item\end{CompactList}\item 
+{\bf Obit\-Copy\-FP} {\bf Obit\-Copy}
+\begin{CompactList}\small\item\em Function pointer to shallow copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Clone\-FP} {\bf Obit\-Clone}
+\begin{CompactList}\small\item\em Function pointer to deep copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Ref\-FP} {\bf Obit\-Ref}
+\begin{CompactList}\small\item\em Function pointer to Object Ref. \item\end{CompactList}\item 
+{\bf Obit\-Unref\-FP} {\bf Obit\-Unref}
+\begin{CompactList}\small\item\em Function pointer to Object Unref. \item\end{CompactList}\item 
+{\bf Obit\-Is\-AFP} {\bf Obit\-Is\-A}
+\begin{CompactList}\small\item\em Function pointer to test if a class member. \item\end{CompactList}\item 
+{\bf Obit\-Clear\-FP} {\bf Obit\-Clear}
+\begin{CompactList}\small\item\em Function pointer to deallocation function. \item\end{CompactList}\item 
+{\bf Obit\-Init\-FP} {\bf Obit\-Init}
+\begin{CompactList}\small\item\em Function pointer to object initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Class\-Info Structure. 
+
+Contains class name, a pointer to parent class and function pointers. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}!ClassName@{ClassName}}
+\index{ClassName@{ClassName}!ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Source\-List\-Class\-Info::Class\-Name}}\label{structObitSourceListClassInfo_o2}
+
+
+Name of class (\char`\"{}Obit\char`\"{}). 
+
+\index{ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}!hasScratch@{hasScratch}}
+\index{hasScratch@{hasScratch}!ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Source\-List\-Class\-Info::has\-Scratch}}\label{structObitSourceListClassInfo_o1}
+
+
+Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? 
+
+\index{ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}!initialized@{initialized}}
+\index{initialized@{initialized}!ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Source\-List\-Class\-Info::initialized}}\label{structObitSourceListClassInfo_o0}
+
+
+Have I been initialized? 
+
+\index{ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}!newObit@{newObit}}
+\index{newObit@{newObit}!ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-FP} {\bf Obit\-Source\-List\-Class\-Info::new\-Obit}}\label{structObitSourceListClassInfo_o5}
+
+
+Function pointer to new\-Obit. 
+
+\index{ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}!ObitClassInfoDefFn@{ObitClassInfoDefFn}}
+\index{ObitClassInfoDefFn@{ObitClassInfoDefFn}!ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-Source\-List\-Class\-Info::Obit\-Class\-Info\-Def\-Fn}}\label{structObitSourceListClassInfo_o7}
+
+
+Function pointer to Class\-Info\-Def\-Fn. 
+
+\index{ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}!ObitClassInit@{ObitClassInit}}
+\index{ObitClassInit@{ObitClassInit}!ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Init\-FP} {\bf Obit\-Source\-List\-Class\-Info::Obit\-Class\-Init}}\label{structObitSourceListClassInfo_o4}
+
+
+Function pointer to Class initializer. 
+
+\index{ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}!ObitClear@{ObitClear}}
+\index{ObitClear@{ObitClear}!ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clear\-FP} {\bf Obit\-Source\-List\-Class\-Info::Obit\-Clear}}\label{structObitSourceListClassInfo_o13}
+
+
+Function pointer to deallocation function. 
+
+\index{ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}!ObitClone@{ObitClone}}
+\index{ObitClone@{ObitClone}!ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clone\-FP} {\bf Obit\-Source\-List\-Class\-Info::Obit\-Clone}}\label{structObitSourceListClassInfo_o9}
+
+
+Function pointer to deep copy constructor. 
+
+\index{ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}!ObitCopy@{ObitCopy}}
+\index{ObitCopy@{ObitCopy}!ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Copy\-FP} {\bf Obit\-Source\-List\-Class\-Info::Obit\-Copy}}\label{structObitSourceListClassInfo_o8}
+
+
+Function pointer to shallow copy constructor. 
+
+\index{ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}!ObitGetClass@{ObitGetClass}}
+\index{ObitGetClass@{ObitGetClass}!ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Source\-List\-Class\-Info::Obit\-Get\-Class}}\label{structObitSourceListClassInfo_o6}
+
+
+Function pointer to Get\-Class. 
+
+\index{ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}!ObitInit@{ObitInit}}
+\index{ObitInit@{ObitInit}!ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Init\-FP} {\bf Obit\-Source\-List\-Class\-Info::Obit\-Init}}\label{structObitSourceListClassInfo_o14}
+
+
+Function pointer to object initializer. 
+
+\index{ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}!ObitIsA@{ObitIsA}}
+\index{ObitIsA@{ObitIsA}!ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Is\-AFP} {\bf Obit\-Source\-List\-Class\-Info::Obit\-Is\-A}}\label{structObitSourceListClassInfo_o12}
+
+
+Function pointer to test if a class member. 
+
+\index{ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}!ObitRef@{ObitRef}}
+\index{ObitRef@{ObitRef}!ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Ref\-FP} {\bf Obit\-Source\-List\-Class\-Info::Obit\-Ref}}\label{structObitSourceListClassInfo_o10}
+
+
+Function pointer to Object Ref. 
+
+\index{ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}!ObitUnref@{ObitUnref}}
+\index{ObitUnref@{ObitUnref}!ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Unref\-FP} {\bf Obit\-Source\-List\-Class\-Info::Obit\-Unref}}\label{structObitSourceListClassInfo_o11}
+
+
+Function pointer to Object Unref. 
+
+\index{ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}!ParentClass@{ParentClass}}
+\index{ParentClass@{ParentClass}!ObitSourceListClassInfo@{Obit\-Source\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer {\bf Obit\-Source\-List\-Class\-Info::Parent\-Class}}\label{structObitSourceListClassInfo_o3}
+
+
+Pointer to parent class Class\-Info, Null if none. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Source\-List.h}\end{CompactItemize}

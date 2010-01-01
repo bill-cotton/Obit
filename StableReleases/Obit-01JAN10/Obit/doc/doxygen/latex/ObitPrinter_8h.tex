@@ -1,0 +1,265 @@
+\section{Obit\-Printer.h File Reference}
+\label{ObitPrinter_8h}\index{ObitPrinter.h@{ObitPrinter.h}}
+{\bf Obit\-Printer}{\rm (p.\,\pageref{structObitPrinter})} template for classes derived from {\bf Obit}{\rm (p.\,\pageref{structObit})}. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-File.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Thread.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Info\-List.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-Printer}
+\begin{CompactList}\small\item\em Obit\-Printer Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Printer\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-Printer\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Printer}{\rm (p.\,\pageref{structObitPrinter})} returns a Obit\-Printer$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-Printer\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Printer}{\rm (p.\,\pageref{structObitPrinter})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Printer\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-Printer\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef {\bf Obit\-Printer} $\ast$($\ast$ {\bf Obit\-Printer\-Create\-FP} )(gchar $\ast$name, gboolean is\-Interactive, FILE $\ast$out\-Stream, gchar $\ast$file\-Name)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef void $\ast$($\ast$ {\bf Obit\-Printer\-Open\-FP} )({\bf Obit\-Printer} $\ast$in, {\bf olong} Lines\-Per\-Page, gchar $\ast$Title1, gchar $\ast$Title2, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void $\ast$($\ast$ {\bf Obit\-Printer\-Write\-FP} )({\bf Obit\-Printer} $\ast$in, gchar $\ast$line, gboolean $\ast$quit, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void $\ast$($\ast$ {\bf Obit\-Printer\-Close\-FP} )({\bf Obit\-Printer} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void $\ast$($\ast$ {\bf Obit\-Printer\-Set\-Title\-FP} )({\bf Obit\-Printer} $\ast$in, gchar $\ast$Title1, gchar $\ast$Title2, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void $\ast$($\ast$ {\bf Obit\-Printer\-New\-Page\-FP} )({\bf Obit\-Printer} $\ast$in, gboolean $\ast$quit, {\bf Obit\-Err} $\ast$err)
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Printer\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Printer} $\ast$ {\bf new\-Obit\-Printer} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+{\bf Obit\-Printer} $\ast$ {\bf Obit\-Printer\-Create} (gchar $\ast$name, gboolean is\-Interactive, FILE $\ast$out\-Stream, gchar $\ast$file\-Name)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-Printer}{\rm (p.\,\pageref{structObitPrinter})} structures. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Printer\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Printer} $\ast$ {\bf Obit\-Printer\-Copy} ({\bf Obit\-Printer} $\ast$in, {\bf Obit\-Printer} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Printer\-Clone} ({\bf Obit\-Printer} $\ast$in, {\bf Obit\-Printer} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+void {\bf Obit\-Printer\-Open} ({\bf Obit\-Printer} $\ast$in, {\bf olong} Lines\-Per\-Page, gchar $\ast$Title1, gchar $\ast$Title2, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Open Printer. \item\end{CompactList}\item 
+void {\bf Obit\-Printer\-Write} ({\bf Obit\-Printer} $\ast$in, gchar $\ast$line, gboolean $\ast$quit, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Print line. \item\end{CompactList}\item 
+void {\bf Obit\-Printer\-Close} ({\bf Obit\-Printer} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Close Printer. \item\end{CompactList}\item 
+void {\bf Obit\-Printer\-Set\-Title} ({\bf Obit\-Printer} $\ast$in, gchar $\ast$Title1, gchar $\ast$Title2, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Update Titles. \item\end{CompactList}\item 
+void {\bf Obit\-Printer\-New\-Page} ({\bf Obit\-Printer} $\ast$in, gboolean $\ast$quit, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Start a new page. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Printer}{\rm (p.\,\pageref{structObitPrinter})} template for classes derived from {\bf Obit}{\rm (p.\,\pageref{structObit})}. 
+
+The printer class handles the actual printing, either interactively or to a file.\subsection{Creators and Destructors}\label{ObitPrinter_8h_ObitPrinteraccess}
+An {\bf Obit\-Printer}{\rm (p.\,\pageref{structObitPrinter})} will usually be created using Obit\-Printer\-Create which allows specifying a name for the object as well as other information.
+
+A copy of a pointer to an {\bf Obit\-Printer}{\rm (p.\,\pageref{structObitPrinter})} should always be made using the {\bf Obit\-Printer\-Ref}{\rm (p.\,\pageref{ObitPrinter_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-Printer}{\rm (p.\,\pageref{structObitPrinter})} or changing a pointer, the function {\bf Obit\-Printer\-Unref}{\rm (p.\,\pageref{ObitPrinter_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.
+
+\subsection{Define Documentation}
+\index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterIsA@{ObitPrinterIsA}}
+\index{ObitPrinterIsA@{ObitPrinterIsA}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Printer\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-Printer\-Get\-Class())}\label{ObitPrinter_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterRef@{ObitPrinterRef}}
+\index{ObitPrinterRef@{ObitPrinterRef}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Printer\-Ref(in)\ Obit\-Ref (in)}\label{ObitPrinter_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Printer}{\rm (p.\,\pageref{structObitPrinter})}. 
+
+returns a Obit\-Printer$\ast$. in = object to reference \index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterUnref@{ObitPrinterUnref}}
+\index{ObitPrinterUnref@{ObitPrinterUnref}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Printer\-Unref(in)\ Obit\-Unref (in)}\label{ObitPrinter_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Printer}{\rm (p.\,\pageref{structObitPrinter})} returns a Obit\-Printer$\ast$. 
+
+in = object to unreference 
+
+\subsection{Typedef Documentation}
+\index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterCloseFP@{ObitPrinterCloseFP}}
+\index{ObitPrinterCloseFP@{ObitPrinterCloseFP}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void$\ast$($\ast$ {\bf Obit\-Printer\-Close\-FP})({\bf Obit\-Printer} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitPrinter_8h_a6}
+
+
+\index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterCreateFP@{ObitPrinterCreateFP}}
+\index{ObitPrinterCreateFP@{ObitPrinterCreateFP}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-Printer}$\ast$($\ast$ {\bf Obit\-Printer\-Create\-FP})(gchar $\ast$name, gboolean is\-Interactive, FILE $\ast$out\-Stream, gchar $\ast$file\-Name)}\label{ObitPrinter_8h_a3}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterNewPageFP@{ObitPrinterNewPageFP}}
+\index{ObitPrinterNewPageFP@{ObitPrinterNewPageFP}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void$\ast$($\ast$ {\bf Obit\-Printer\-New\-Page\-FP})({\bf Obit\-Printer} $\ast$in, gboolean $\ast$quit, {\bf Obit\-Err} $\ast$err)}\label{ObitPrinter_8h_a8}
+
+
+\index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterOpenFP@{ObitPrinterOpenFP}}
+\index{ObitPrinterOpenFP@{ObitPrinterOpenFP}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void$\ast$($\ast$ {\bf Obit\-Printer\-Open\-FP})({\bf Obit\-Printer} $\ast$in, {\bf olong} Lines\-Per\-Page, gchar $\ast$Title1, gchar $\ast$Title2, {\bf Obit\-Err} $\ast$err)}\label{ObitPrinter_8h_a4}
+
+
+\index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterSetTitleFP@{ObitPrinterSetTitleFP}}
+\index{ObitPrinterSetTitleFP@{ObitPrinterSetTitleFP}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void$\ast$($\ast$ {\bf Obit\-Printer\-Set\-Title\-FP})({\bf Obit\-Printer} $\ast$in, gchar $\ast$Title1, gchar $\ast$Title2, {\bf Obit\-Err} $\ast$err)}\label{ObitPrinter_8h_a7}
+
+
+\index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterWriteFP@{ObitPrinterWriteFP}}
+\index{ObitPrinterWriteFP@{ObitPrinterWriteFP}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void$\ast$($\ast$ {\bf Obit\-Printer\-Write\-FP})({\bf Obit\-Printer} $\ast$in, gchar $\ast$line, gboolean $\ast$quit, {\bf Obit\-Err} $\ast$err)}\label{ObitPrinter_8h_a5}
+
+
+
+
+\subsection{Function Documentation}
+\index{ObitPrinter.h@{Obit\-Printer.h}!newObitPrinter@{newObitPrinter}}
+\index{newObitPrinter@{newObitPrinter}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Printer}$\ast$ new\-Obit\-Printer (gchar $\ast$ {\em name})}\label{ObitPrinter_8h_a10}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterClassInit@{ObitPrinterClassInit}}
+\index{ObitPrinterClassInit@{ObitPrinterClassInit}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Printer\-Class\-Init (void)}\label{ObitPrinter_8h_a9}
+
+
+Public: Class initializer. 
+
+\index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterClone@{ObitPrinterClone}}
+\index{ObitPrinterClone@{ObitPrinterClone}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Printer\-Clone ({\bf Obit\-Printer} $\ast$ {\em in}, {\bf Obit\-Printer} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitPrinter_8h_a14}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterClose@{ObitPrinterClose}}
+\index{ObitPrinterClose@{ObitPrinterClose}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Printer\-Close ({\bf Obit\-Printer} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitPrinter_8h_a17}
+
+
+Public: Close Printer. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to write \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterCopy@{ObitPrinterCopy}}
+\index{ObitPrinterCopy@{ObitPrinterCopy}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Printer}$\ast$ Obit\-Printer\-Copy ({\bf Obit\-Printer} $\ast$ {\em in}, {\bf Obit\-Printer} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitPrinter_8h_a13}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterCreate@{ObitPrinterCreate}}
+\index{ObitPrinterCreate@{ObitPrinterCreate}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Printer}$\ast$ Obit\-Printer\-Create (gchar $\ast$ {\em name}, gboolean {\em is\-Interactive}, FILE $\ast$ {\em out\-Stream}, gchar $\ast$ {\em file\-Name})}\label{ObitPrinter_8h_a11}
+
+
+Public: Create/initialize {\bf Obit\-Printer}{\rm (p.\,\pageref{structObitPrinter})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em is\-Interactive}]If true, output is interactive and written to out\-Stream, answers to questions read from stdin. \item[{\em out\-Stream}]Output interactive device, e.g. stdout \item[{\em file\-Name}]Name of output ascii file if noninteractive ignored for interactive \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterGetClass@{ObitPrinterGetClass}}
+\index{ObitPrinterGetClass@{ObitPrinterGetClass}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Printer\-Get\-Class (void)}\label{ObitPrinter_8h_a12}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterNewPage@{ObitPrinterNewPage}}
+\index{ObitPrinterNewPage@{ObitPrinterNewPage}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Printer\-New\-Page ({\bf Obit\-Printer} $\ast$ {\em in}, gboolean $\ast$ {\em quit}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitPrinter_8h_a19}
+
+
+Public: Start a new page. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to update \item[{\em quit}][out] If TRUE, user has had enough \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterOpen@{ObitPrinterOpen}}
+\index{ObitPrinterOpen@{ObitPrinterOpen}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Printer\-Open ({\bf Obit\-Printer} $\ast$ {\em in}, {\bf olong} {\em Lines\-Per\-Page}, gchar $\ast$ {\em Title1}, gchar $\ast$ {\em Title2}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitPrinter_8h_a15}
+
+
+Public: Open Printer. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The {\bf Obit\-Printer}{\rm (p.\,\pageref{structObitPrinter})} object to Open \item[{\em Lines\-Per\-Page}]Number of lines per page, if $<$=0: 24 if interactive, 80 otherwise \item[{\em Title1}]First title string for each page \item[{\em Title2}]Second title string for each page \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterSetTitle@{ObitPrinterSetTitle}}
+\index{ObitPrinterSetTitle@{ObitPrinterSetTitle}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Printer\-Set\-Title ({\bf Obit\-Printer} $\ast$ {\em in}, gchar $\ast$ {\em Title1}, gchar $\ast$ {\em Title2}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitPrinter_8h_a18}
+
+
+Public: Update Titles. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to update \item[{\em Title1}]First title string for each page \item[{\em Title2}]Second title string for each page \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitPrinter.h@{Obit\-Printer.h}!ObitPrinterWrite@{ObitPrinterWrite}}
+\index{ObitPrinterWrite@{ObitPrinterWrite}!ObitPrinter.h@{Obit\-Printer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Printer\-Write ({\bf Obit\-Printer} $\ast$ {\em in}, gchar $\ast$ {\em line}, gboolean $\ast$ {\em quit}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitPrinter_8h_a16}
+
+
+Public: Print line. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to write \item[{\em line}]Line of text to add \item[{\em quit}][out] If TRUE, user has had enough \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}

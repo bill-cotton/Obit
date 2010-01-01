@@ -1,0 +1,412 @@
+\section{Obit\-IOHistory\-AIPSClass\-Info Struct Reference}
+\label{structObitIOHistoryAIPSClassInfo}\index{ObitIOHistoryAIPSClassInfo@{ObitIOHistoryAIPSClassInfo}}
+Class\-Info Structure.  
+
+
+{\tt \#include $<$Obit\-IOHistory\-AIPS.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gboolean {\bf initialized}
+\begin{CompactList}\small\item\em Have I been initialized? \item\end{CompactList}\item 
+gboolean {\bf has\-Scratch}
+\begin{CompactList}\small\item\em Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? \item\end{CompactList}\item 
+gchar $\ast$ {\bf Class\-Name}
+\begin{CompactList}\small\item\em Name of class (\char`\"{}Obit\char`\"{}). \item\end{CompactList}\item 
+gconstpointer {\bf Parent\-Class}
+\begin{CompactList}\small\item\em Pointer to parent class Class\-Info, Null if none. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Init\-FP} {\bf Obit\-Class\-Init}
+\begin{CompactList}\small\item\em Function pointer to Class initializer. \item\end{CompactList}\item 
+{\bf new\-Obit\-FP} {\bf new\-Obit}
+\begin{CompactList}\small\item\em Function pointer to new\-Obit. \item\end{CompactList}\item 
+{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Get\-Class}
+\begin{CompactList}\small\item\em Function pointer to Get\-Class. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-Class\-Info\-Def\-Fn}
+\begin{CompactList}\small\item\em Function pointer to Class\-Info\-Def\-Fn. \item\end{CompactList}\item 
+{\bf Obit\-Copy\-FP} {\bf Obit\-Copy}
+\begin{CompactList}\small\item\em Function pointer to shallow copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Clone\-FP} {\bf Obit\-Clone}
+\begin{CompactList}\small\item\em Function pointer to deep copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Ref\-FP} {\bf Obit\-Ref}
+\begin{CompactList}\small\item\em Function pointer to Object Ref. \item\end{CompactList}\item 
+{\bf Obit\-Unref\-FP} {\bf Obit\-Unref}
+\begin{CompactList}\small\item\em Function pointer to Object Unref. \item\end{CompactList}\item 
+{\bf Obit\-Is\-AFP} {\bf Obit\-Is\-A}
+\begin{CompactList}\small\item\em Function pointer to test if a class member. \item\end{CompactList}\item 
+{\bf Obit\-Clear\-FP} {\bf Obit\-Clear}
+\begin{CompactList}\small\item\em Function pointer to deallocation function. \item\end{CompactList}\item 
+{\bf Obit\-Init\-FP} {\bf Obit\-Init}
+\begin{CompactList}\small\item\em Function pointer to object initializer. \item\end{CompactList}\item 
+{\bf new\-Obit\-IOFP} {\bf new\-Obit\-IO}
+\begin{CompactList}\small\item\em Function pointer to Constructor. \item\end{CompactList}\item 
+{\bf Obit\-IOSame\-FP} {\bf Obit\-IOSame}
+\begin{CompactList}\small\item\em Function pointer to Are underlying structures the same?. \item\end{CompactList}\item 
+{\bf Obit\-IORename\-FP} {\bf Obit\-IORename}
+\begin{CompactList}\small\item\em Function pointer to Rename. \item\end{CompactList}\item 
+{\bf Obit\-IOZap\-FP} {\bf Obit\-IOZap}
+\begin{CompactList}\small\item\em Function pointer to Zap. \item\end{CompactList}\item 
+{\bf Obit\-IOOpen\-FP} {\bf Obit\-IOOpen}
+\begin{CompactList}\small\item\em Function pointer to Open. \item\end{CompactList}\item 
+{\bf Obit\-IOClose\-FP} {\bf Obit\-IOClose}
+\begin{CompactList}\small\item\em Function pointer to Close. \item\end{CompactList}\item 
+{\bf Obit\-IOSet\-FP} {\bf Obit\-IOSet}
+\begin{CompactList}\small\item\em Function pointer to Init I/O. \item\end{CompactList}\item 
+{\bf Obit\-IORead\-FP} {\bf Obit\-IORead}
+\begin{CompactList}\small\item\em Function pointer to Read. \item\end{CompactList}\item 
+{\bf Obit\-IORead\-Multi\-FP} {\bf Obit\-IORead\-Multi}
+\begin{CompactList}\small\item\em Function pointer to Read to multiple buffers. \item\end{CompactList}\item 
+{\bf Obit\-IORe\-Read\-Multi\-FP} {\bf Obit\-IORe\-Read\-Multi}
+\begin{CompactList}\small\item\em Function pointer to Reread to multiple buffers. \item\end{CompactList}\item 
+{\bf Obit\-IORead\-Row\-FP} {\bf Obit\-IORead\-Row}
+\begin{CompactList}\small\item\em Function pointer to Read specifying start row. \item\end{CompactList}\item 
+{\bf Obit\-IORead\-Select\-FP} {\bf Obit\-IORead\-Select}
+\begin{CompactList}\small\item\em Function pointer to Read with selection. \item\end{CompactList}\item 
+{\bf Obit\-IORead\-Multi\-Select\-FP} {\bf Obit\-IORead\-Multi\-Select}
+\begin{CompactList}\small\item\em Function pointer to Read with selection to multiple buffers. \item\end{CompactList}\item 
+{\bf Obit\-IORe\-Read\-Multi\-Select\-FP} {\bf Obit\-IORe\-Read\-Multi\-Select}
+\begin{CompactList}\small\item\em Function pointer to Reread with selection to multiple buffers. \item\end{CompactList}\item 
+{\bf Obit\-IORead\-Row\-Select\-FP} {\bf Obit\-IORead\-Row\-Select}
+\begin{CompactList}\small\item\em Function pointer to Read with selection specifying start row. \item\end{CompactList}\item 
+{\bf Obit\-IOWrite\-FP} {\bf Obit\-IOWrite}
+\begin{CompactList}\small\item\em Function pointer to Write. \item\end{CompactList}\item 
+{\bf Obit\-IOWrite\-Row\-FP} {\bf Obit\-IOWrite\-Row}
+\begin{CompactList}\small\item\em Function pointer to Write specifying start row. \item\end{CompactList}\item 
+{\bf Obit\-IOFlush\-FP} {\bf Obit\-IOFlush}
+\begin{CompactList}\small\item\em Function pointer to Flush. \item\end{CompactList}\item 
+{\bf Obit\-IORead\-Descriptor\-FP} {\bf Obit\-IORead\-Descriptor}
+\begin{CompactList}\small\item\em Public: Read Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-IOWrite\-Descriptor\-FP} {\bf Obit\-IOWrite\-Descriptor}
+\begin{CompactList}\small\item\em Public: Write Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-IOCreate\-Buffer\-FP} {\bf Obit\-IOCreate\-Buffer}
+\begin{CompactList}\small\item\em Function pointer to Create buffer. \item\end{CompactList}\item 
+{\bf Obit\-IOFree\-Buffer\-FP} {\bf Obit\-IOFree\-Buffer}
+\begin{CompactList}\small\item\em Function pointer to Destroy buffer. \item\end{CompactList}\item 
+{\bf new\-Obit\-IOTable\-FP} {\bf new\-Obit\-IOTable}
+\begin{CompactList}\small\item\em Function pointer to create a table. \item\end{CompactList}\item 
+{\bf Obit\-IOUpdate\-Tables\-FP} {\bf Obit\-IOUpdate\-Tables}
+\begin{CompactList}\small\item\em Function pointer to update table info. \item\end{CompactList}\item 
+{\bf Obit\-IOGet\-File\-Info\-FP} {\bf Obit\-IOGet\-File\-Info}
+\begin{CompactList}\small\item\em Function pointer to Extract information about underlying file. \item\end{CompactList}\item 
+{\bf Obit\-IOHistory\-Read\-Rec\-FP} {\bf Obit\-IOHistory\-Read\-Rec}
+\begin{CompactList}\small\item\em Function pointer to Read record. \item\end{CompactList}\item 
+{\bf Obit\-IOHistory\-Write\-Rec\-FP} {\bf Obit\-IOHistory\-Write\-Rec}
+\begin{CompactList}\small\item\em Function pointer to Write record. \item\end{CompactList}\item 
+{\bf Obit\-IOHistory\-Num\-Rec\-FP} {\bf Obit\-IOHistory\-Num\-Rec}
+\begin{CompactList}\small\item\em Function pointer to number record. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Class\-Info Structure. 
+
+Contains class name, a pointer to any base class (NULL if none) and function pointers. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ClassName@{ClassName}}
+\index{ClassName@{ClassName}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-IOHistory\-AIPSClass\-Info::Class\-Name}}\label{structObitIOHistoryAIPSClassInfo_o2}
+
+
+Name of class (\char`\"{}Obit\char`\"{}). 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!hasScratch@{hasScratch}}
+\index{hasScratch@{hasScratch}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-IOHistory\-AIPSClass\-Info::has\-Scratch}}\label{structObitIOHistoryAIPSClassInfo_o1}
+
+
+Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!initialized@{initialized}}
+\index{initialized@{initialized}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-IOHistory\-AIPSClass\-Info::initialized}}\label{structObitIOHistoryAIPSClassInfo_o0}
+
+
+Have I been initialized? 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!newObit@{newObit}}
+\index{newObit@{newObit}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::new\-Obit}}\label{structObitIOHistoryAIPSClassInfo_o5}
+
+
+Function pointer to new\-Obit. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!newObitIO@{newObitIO}}
+\index{newObitIO@{newObitIO}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-IOFP} {\bf Obit\-IOHistory\-AIPSClass\-Info::new\-Obit\-IO}}\label{structObitIOHistoryAIPSClassInfo_o15}
+
+
+Function pointer to Constructor. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!newObitIOTable@{newObitIOTable}}
+\index{newObitIOTable@{newObitIOTable}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-IOTable\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::new\-Obit\-IOTable}}\label{structObitIOHistoryAIPSClassInfo_o37}
+
+
+Function pointer to create a table. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitClassInfoDefFn@{ObitClassInfoDefFn}}
+\index{ObitClassInfoDefFn@{ObitClassInfoDefFn}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-Class\-Info\-Def\-Fn}}\label{structObitIOHistoryAIPSClassInfo_o7}
+
+
+Function pointer to Class\-Info\-Def\-Fn. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitClassInit@{ObitClassInit}}
+\index{ObitClassInit@{ObitClassInit}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Init\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-Class\-Init}}\label{structObitIOHistoryAIPSClassInfo_o4}
+
+
+Function pointer to Class initializer. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitClear@{ObitClear}}
+\index{ObitClear@{ObitClear}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clear\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-Clear}}\label{structObitIOHistoryAIPSClassInfo_o13}
+
+
+Function pointer to deallocation function. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitClone@{ObitClone}}
+\index{ObitClone@{ObitClone}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clone\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-Clone}}\label{structObitIOHistoryAIPSClassInfo_o9}
+
+
+Function pointer to deep copy constructor. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitCopy@{ObitCopy}}
+\index{ObitCopy@{ObitCopy}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Copy\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-Copy}}\label{structObitIOHistoryAIPSClassInfo_o8}
+
+
+Function pointer to shallow copy constructor. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitGetClass@{ObitGetClass}}
+\index{ObitGetClass@{ObitGetClass}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Get\-Class\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-Get\-Class}}\label{structObitIOHistoryAIPSClassInfo_o6}
+
+
+Function pointer to Get\-Class. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitInit@{ObitInit}}
+\index{ObitInit@{ObitInit}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Init\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-Init}}\label{structObitIOHistoryAIPSClassInfo_o14}
+
+
+Function pointer to object initializer. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOClose@{ObitIOClose}}
+\index{ObitIOClose@{ObitIOClose}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IOClose\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IOClose}}\label{structObitIOHistoryAIPSClassInfo_o20}
+
+
+Function pointer to Close. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOCreateBuffer@{ObitIOCreateBuffer}}
+\index{ObitIOCreateBuffer@{ObitIOCreateBuffer}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IOCreate\-Buffer\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IOCreate\-Buffer}}\label{structObitIOHistoryAIPSClassInfo_o35}
+
+
+Function pointer to Create buffer. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOFlush@{ObitIOFlush}}
+\index{ObitIOFlush@{ObitIOFlush}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IOFlush\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IOFlush}}\label{structObitIOHistoryAIPSClassInfo_o32}
+
+
+Function pointer to Flush. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOFreeBuffer@{ObitIOFreeBuffer}}
+\index{ObitIOFreeBuffer@{ObitIOFreeBuffer}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IOFree\-Buffer\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IOFree\-Buffer}}\label{structObitIOHistoryAIPSClassInfo_o36}
+
+
+Function pointer to Destroy buffer. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOGetFileInfo@{ObitIOGetFileInfo}}
+\index{ObitIOGetFileInfo@{ObitIOGetFileInfo}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IOGet\-File\-Info\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IOGet\-File\-Info}}\label{structObitIOHistoryAIPSClassInfo_o39}
+
+
+Function pointer to Extract information about underlying file. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOHistoryNumRec@{ObitIOHistoryNumRec}}
+\index{ObitIOHistoryNumRec@{ObitIOHistoryNumRec}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IOHistory\-Num\-Rec\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IOHistory\-Num\-Rec}}\label{structObitIOHistoryAIPSClassInfo_o42}
+
+
+Function pointer to number record. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOHistoryReadRec@{ObitIOHistoryReadRec}}
+\index{ObitIOHistoryReadRec@{ObitIOHistoryReadRec}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IOHistory\-Read\-Rec\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IOHistory\-Read\-Rec}}\label{structObitIOHistoryAIPSClassInfo_o40}
+
+
+Function pointer to Read record. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOHistoryWriteRec@{ObitIOHistoryWriteRec}}
+\index{ObitIOHistoryWriteRec@{ObitIOHistoryWriteRec}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IOHistory\-Write\-Rec\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IOHistory\-Write\-Rec}}\label{structObitIOHistoryAIPSClassInfo_o41}
+
+
+Function pointer to Write record. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOOpen@{ObitIOOpen}}
+\index{ObitIOOpen@{ObitIOOpen}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IOOpen\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IOOpen}}\label{structObitIOHistoryAIPSClassInfo_o19}
+
+
+Function pointer to Open. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIORead@{ObitIORead}}
+\index{ObitIORead@{ObitIORead}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IORead\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IORead}}\label{structObitIOHistoryAIPSClassInfo_o22}
+
+
+Function pointer to Read. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOReadDescriptor@{ObitIOReadDescriptor}}
+\index{ObitIOReadDescriptor@{ObitIOReadDescriptor}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IORead\-Descriptor\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IORead\-Descriptor}}\label{structObitIOHistoryAIPSClassInfo_o33}
+
+
+Public: Read Descriptor. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOReadMulti@{ObitIOReadMulti}}
+\index{ObitIOReadMulti@{ObitIOReadMulti}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IORead\-Multi\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IORead\-Multi}}\label{structObitIOHistoryAIPSClassInfo_o23}
+
+
+Function pointer to Read to multiple buffers. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOReadMultiSelect@{ObitIOReadMultiSelect}}
+\index{ObitIOReadMultiSelect@{ObitIOReadMultiSelect}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IORead\-Multi\-Select\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IORead\-Multi\-Select}}\label{structObitIOHistoryAIPSClassInfo_o27}
+
+
+Function pointer to Read with selection to multiple buffers. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOReadRow@{ObitIOReadRow}}
+\index{ObitIOReadRow@{ObitIOReadRow}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IORead\-Row\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IORead\-Row}}\label{structObitIOHistoryAIPSClassInfo_o25}
+
+
+Function pointer to Read specifying start row. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOReadRowSelect@{ObitIOReadRowSelect}}
+\index{ObitIOReadRowSelect@{ObitIOReadRowSelect}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IORead\-Row\-Select\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IORead\-Row\-Select}}\label{structObitIOHistoryAIPSClassInfo_o29}
+
+
+Function pointer to Read with selection specifying start row. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOReadSelect@{ObitIOReadSelect}}
+\index{ObitIOReadSelect@{ObitIOReadSelect}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IORead\-Select\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IORead\-Select}}\label{structObitIOHistoryAIPSClassInfo_o26}
+
+
+Function pointer to Read with selection. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIORename@{ObitIORename}}
+\index{ObitIORename@{ObitIORename}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IORename\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IORename}}\label{structObitIOHistoryAIPSClassInfo_o17}
+
+
+Function pointer to Rename. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOReReadMulti@{ObitIOReReadMulti}}
+\index{ObitIOReReadMulti@{ObitIOReReadMulti}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IORe\-Read\-Multi\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IORe\-Read\-Multi}}\label{structObitIOHistoryAIPSClassInfo_o24}
+
+
+Function pointer to Reread to multiple buffers. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOReReadMultiSelect@{ObitIOReReadMultiSelect}}
+\index{ObitIOReReadMultiSelect@{ObitIOReReadMultiSelect}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IORe\-Read\-Multi\-Select\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IORe\-Read\-Multi\-Select}}\label{structObitIOHistoryAIPSClassInfo_o28}
+
+
+Function pointer to Reread with selection to multiple buffers. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOSame@{ObitIOSame}}
+\index{ObitIOSame@{ObitIOSame}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IOSame\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IOSame}}\label{structObitIOHistoryAIPSClassInfo_o16}
+
+
+Function pointer to Are underlying structures the same?. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOSet@{ObitIOSet}}
+\index{ObitIOSet@{ObitIOSet}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IOSet\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IOSet}}\label{structObitIOHistoryAIPSClassInfo_o21}
+
+
+Function pointer to Init I/O. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOUpdateTables@{ObitIOUpdateTables}}
+\index{ObitIOUpdateTables@{ObitIOUpdateTables}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IOUpdate\-Tables\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IOUpdate\-Tables}}\label{structObitIOHistoryAIPSClassInfo_o38}
+
+
+Function pointer to update table info. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOWrite@{ObitIOWrite}}
+\index{ObitIOWrite@{ObitIOWrite}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IOWrite\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IOWrite}}\label{structObitIOHistoryAIPSClassInfo_o30}
+
+
+Function pointer to Write. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOWriteDescriptor@{ObitIOWriteDescriptor}}
+\index{ObitIOWriteDescriptor@{ObitIOWriteDescriptor}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IOWrite\-Descriptor\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IOWrite\-Descriptor}}\label{structObitIOHistoryAIPSClassInfo_o34}
+
+
+Public: Write Descriptor. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOWriteRow@{ObitIOWriteRow}}
+\index{ObitIOWriteRow@{ObitIOWriteRow}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IOWrite\-Row\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IOWrite\-Row}}\label{structObitIOHistoryAIPSClassInfo_o31}
+
+
+Function pointer to Write specifying start row. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIOZap@{ObitIOZap}}
+\index{ObitIOZap@{ObitIOZap}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IOZap\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-IOZap}}\label{structObitIOHistoryAIPSClassInfo_o18}
+
+
+Function pointer to Zap. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitIsA@{ObitIsA}}
+\index{ObitIsA@{ObitIsA}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Is\-AFP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-Is\-A}}\label{structObitIOHistoryAIPSClassInfo_o12}
+
+
+Function pointer to test if a class member. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitRef@{ObitRef}}
+\index{ObitRef@{ObitRef}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Ref\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-Ref}}\label{structObitIOHistoryAIPSClassInfo_o10}
+
+
+Function pointer to Object Ref. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ObitUnref@{ObitUnref}}
+\index{ObitUnref@{ObitUnref}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Unref\-FP} {\bf Obit\-IOHistory\-AIPSClass\-Info::Obit\-Unref}}\label{structObitIOHistoryAIPSClassInfo_o11}
+
+
+Function pointer to Object Unref. 
+
+\index{ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}!ParentClass@{ParentClass}}
+\index{ParentClass@{ParentClass}!ObitIOHistoryAIPSClassInfo@{Obit\-IOHistory\-AIPSClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer {\bf Obit\-IOHistory\-AIPSClass\-Info::Parent\-Class}}\label{structObitIOHistoryAIPSClassInfo_o3}
+
+
+Pointer to parent class Class\-Info, Null if none. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-IOHistory\-AIPS.h}\end{CompactItemize}

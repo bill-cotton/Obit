@@ -1,0 +1,248 @@
+\section{Obit\-Image\-Fit\-Data Struct Reference}
+\label{structObitImageFitData}\index{ObitImageFitData@{ObitImageFitData}}
+Obit\-Image\-Fit\-Data Class structure.  
+
+
+{\tt \#include $<$Obit\-Image\-Fit\-Data.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Fit\-Data\-Func\-FP} {\bf fx}
+\begin{CompactList}\small\item\em Function pointer for evaluation. \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf pixels}
+\begin{CompactList}\small\item\em image pixel array \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf resids}
+\begin{CompactList}\small\item\em image pixel residual array \item\end{CompactList}\item 
+{\bf olong} {\bf ncomp}
+\begin{CompactList}\small\item\em Number of components to fit. \item\end{CompactList}\item 
+{\bf olong} {\bf nparm}
+\begin{CompactList}\small\item\em Total number of parameters. \item\end{CompactList}\item 
+{\bf olong} {\bf nvar}
+\begin{CompactList}\small\item\em Number of parameters to fit. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf np}
+\begin{CompactList}\small\item\em Number of model parameters per component. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf ivar}
+\begin{CompactList}\small\item\em Component number of fitted parameters. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf jvar}
+\begin{CompactList}\small\item\em Parameter number of fitted parameters. \item\end{CompactList}\item 
+Obit\-Fit\-Model\-Comp\-Type $\ast$ {\bf type}
+\begin{CompactList}\small\item\em Model component types. \item\end{CompactList}\item 
+{\bf odouble} $\ast$$\ast$ {\bf p}
+\begin{CompactList}\small\item\em Parameters of model components [comp][param]. \item\end{CompactList}\item 
+{\bf odouble} $\ast$$\ast$ {\bf dp}
+\begin{CompactList}\small\item\em Small but significant differential in p [comp][param]. \item\end{CompactList}\item 
+gboolean $\ast$$\ast$ {\bf pf}
+\begin{CompactList}\small\item\em Fit this parameter? [comp][param]. \item\end{CompactList}\item 
+{\bf odouble} $\ast$$\ast$ {\bf pu}
+\begin{CompactList}\small\item\em Model component parameter upper bounds, fblank = undef. \item\end{CompactList}\item 
+{\bf odouble} $\ast$$\ast$ {\bf pl}
+\begin{CompactList}\small\item\em Model components parameter lower bounds, fblank = undef. \item\end{CompactList}\item 
+{\bf odouble} $\ast$$\ast$ {\bf e}
+\begin{CompactList}\small\item\em model component parameter errors \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf ptemp}
+\begin{CompactList}\small\item\em Work array the length of the number of all parameters. \item\end{CompactList}\item 
+{\bf ofloat} {\bf rscale}
+\begin{CompactList}\small\item\em Amplitude scaling. \item\end{CompactList}\item 
+{\bf ofloat} {\bf beamarea}
+\begin{CompactList}\small\item\em Restoring beam area in pixels. \item\end{CompactList}\item 
+{\bf ofloat} {\bf beam} [3]
+\begin{CompactList}\small\item\em Restoring beam in pixels. \item\end{CompactList}\item 
+{\bf ofloat} {\bf irms}
+\begin{CompactList}\small\item\em RMS in full image. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Image\-Fit\-Data Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!beam@{beam}}
+\index{beam@{beam}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Fit\-Data::beam}[3]}\label{structObitImageFitData_o23}
+
+
+Restoring beam in pixels. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!beamarea@{beamarea}}
+\index{beamarea@{beamarea}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Fit\-Data::beamarea}}\label{structObitImageFitData_o22}
+
+
+Restoring beam area in pixels. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Image\-Fit\-Data::Class\-Info}}\label{structObitImageFitData_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!dp@{dp}}
+\index{dp@{dp}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$$\ast$ {\bf Obit\-Image\-Fit\-Data::dp}}\label{structObitImageFitData_o15}
+
+
+Small but significant differential in p [comp][param]. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!e@{e}}
+\index{e@{e}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$$\ast$ {\bf Obit\-Image\-Fit\-Data::e}}\label{structObitImageFitData_o19}
+
+
+model component parameter errors 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!fx@{fx}}
+\index{fx@{fx}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Fit\-Data\-Func\-FP} {\bf Obit\-Image\-Fit\-Data::fx}}\label{structObitImageFitData_o4}
+
+
+Function pointer for evaluation. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!irms@{irms}}
+\index{irms@{irms}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Fit\-Data::irms}}\label{structObitImageFitData_o24}
+
+
+RMS in full image. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!ivar@{ivar}}
+\index{ivar@{ivar}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-Image\-Fit\-Data::ivar}}\label{structObitImageFitData_o11}
+
+
+Component number of fitted parameters. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!jvar@{jvar}}
+\index{jvar@{jvar}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-Image\-Fit\-Data::jvar}}\label{structObitImageFitData_o12}
+
+
+Parameter number of fitted parameters. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!name@{name}}
+\index{name@{name}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Image\-Fit\-Data::name}}\label{structObitImageFitData_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!ncomp@{ncomp}}
+\index{ncomp@{ncomp}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Fit\-Data::ncomp}}\label{structObitImageFitData_o7}
+
+
+Number of components to fit. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!np@{np}}
+\index{np@{np}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-Image\-Fit\-Data::np}}\label{structObitImageFitData_o10}
+
+
+Number of model parameters per component. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!nparm@{nparm}}
+\index{nparm@{nparm}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Fit\-Data::nparm}}\label{structObitImageFitData_o8}
+
+
+Total number of parameters. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!nvar@{nvar}}
+\index{nvar@{nvar}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Fit\-Data::nvar}}\label{structObitImageFitData_o9}
+
+
+Number of parameters to fit. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Image\-Fit\-Data::Obit\-Id}}\label{structObitImageFitData_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!p@{p}}
+\index{p@{p}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$$\ast$ {\bf Obit\-Image\-Fit\-Data::p}}\label{structObitImageFitData_o14}
+
+
+Parameters of model components [comp][param]. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!pf@{pf}}
+\index{pf@{pf}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean$\ast$$\ast$ {\bf Obit\-Image\-Fit\-Data::pf}}\label{structObitImageFitData_o16}
+
+
+Fit this parameter? [comp][param]. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!pixels@{pixels}}
+\index{pixels@{pixels}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-Image\-Fit\-Data::pixels}}\label{structObitImageFitData_o5}
+
+
+image pixel array 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!pl@{pl}}
+\index{pl@{pl}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$$\ast$ {\bf Obit\-Image\-Fit\-Data::pl}}\label{structObitImageFitData_o18}
+
+
+Model components parameter lower bounds, fblank = undef. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!ptemp@{ptemp}}
+\index{ptemp@{ptemp}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-Image\-Fit\-Data::ptemp}}\label{structObitImageFitData_o20}
+
+
+Work array the length of the number of all parameters. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!pu@{pu}}
+\index{pu@{pu}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$$\ast$ {\bf Obit\-Image\-Fit\-Data::pu}}\label{structObitImageFitData_o17}
+
+
+Model component parameter upper bounds, fblank = undef. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Fit\-Data::Reference\-Count}}\label{structObitImageFitData_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!resids@{resids}}
+\index{resids@{resids}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-Image\-Fit\-Data::resids}}\label{structObitImageFitData_o6}
+
+
+image pixel residual array 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!rscale@{rscale}}
+\index{rscale@{rscale}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Fit\-Data::rscale}}\label{structObitImageFitData_o21}
+
+
+Amplitude scaling. 
+
+\index{ObitImageFitData@{Obit\-Image\-Fit\-Data}!type@{type}}
+\index{type@{type}!ObitImageFitData@{Obit\-Image\-Fit\-Data}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-Fit\-Model\-Comp\-Type$\ast$ {\bf Obit\-Image\-Fit\-Data::type}}\label{structObitImageFitData_o13}
+
+
+Model component types. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Image\-Fit\-Data.h}\end{CompactItemize}

@@ -1,0 +1,259 @@
+\section{Obit\-Spectrum\-Fit.h File Reference}
+\label{ObitSpectrumFit_8h}\index{ObitSpectrumFit.h@{ObitSpectrumFit.h}}
+{\bf Obit\-Spectrum\-Fit}{\rm (p.\,\pageref{structObitSpectrumFit})} Class for fitting spectra to image pixels. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Beam\-Shape.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Thread.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Info\-List.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-Spectrum\-Fit}
+\begin{CompactList}\small\item\em Obit\-Spectrum\-Fit Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Spectrum\-Fit\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-Spectrum\-Fit\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Spectrum\-Fit}{\rm (p.\,\pageref{structObitSpectrumFit})} returns a Obit\-Spectrum\-Fit$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-Spectrum\-Fit\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Spectrum\-Fit}{\rm (p.\,\pageref{structObitSpectrumFit})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Spectrum\-Fit\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-Spectrum\-Fit\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef {\bf Obit\-Spectrum\-Fit} $\ast$($\ast$ {\bf Obit\-Spectrum\-Fit\-Create\-FP} )(gchar $\ast$name, {\bf olong} nterm)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef void($\ast$ {\bf Obit\-Spectrum\-Fit\-Cube\-FP} )({\bf Obit\-Spectrum\-Fit} $\ast$in, {\bf Obit\-Image} $\ast$in\-Image, {\bf Obit\-Image} $\ast$out\-Image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef void($\ast$ {\bf Obit\-Spectrum\-Fit\-Im\-Arr\-FP} )({\bf Obit\-Spectrum\-Fit} $\ast$in, {\bf olong} nimage, {\bf Obit\-Image} $\ast$$\ast$im\-Arr, {\bf Obit\-Image} $\ast$out\-Image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef void($\ast$ {\bf Obit\-Spectrum\-Fit\-Eval\-FP} )({\bf Obit\-Spectrum\-Fit} $\ast$in, {\bf Obit\-Image} $\ast$in\-Image, {\bf odouble} out\-Freq, {\bf Obit\-Image} $\ast$out\-Image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef {\bf ofloat} $\ast$($\ast$ {\bf Obit\-Spectrum\-Fit\-Single\-FP} )({\bf olong} nfreq, {\bf olong} nterm, {\bf odouble} ref\-Freq, {\bf odouble} $\ast$freq, {\bf ofloat} $\ast$flux, {\bf ofloat} $\ast$sigma, gboolean do\-Broke\-Pow, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Spectrum\-Fit\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Spectrum\-Fit} $\ast$ {\bf new\-Obit\-Spectrum\-Fit} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+{\bf Obit\-Spectrum\-Fit} $\ast$ {\bf Obit\-Spectrum\-Fit\-Create} (gchar $\ast$name, {\bf olong} nterm)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-Spectrum\-Fit}{\rm (p.\,\pageref{structObitSpectrumFit})} structures. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Spectrum\-Fit\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Spectrum\-Fit} $\ast$ {\bf Obit\-Spectrum\-Fit\-Copy} ({\bf Obit\-Spectrum\-Fit} $\ast$in, {\bf Obit\-Spectrum\-Fit} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Spectrum\-Fit\-Clone} ({\bf Obit\-Spectrum\-Fit} $\ast$in, {\bf Obit\-Spectrum\-Fit} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+void {\bf Obit\-Spectrum\-Fit\-Cube} ({\bf Obit\-Spectrum\-Fit} $\ast$in, {\bf Obit\-Image} $\ast$in\-Image, {\bf Obit\-Image} $\ast$out\-Image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Fit spectrum to an image cube. \item\end{CompactList}\item 
+void {\bf Obit\-Spectrum\-Fit\-Im\-Arr} ({\bf Obit\-Spectrum\-Fit} $\ast$in, {\bf olong} nimage, {\bf Obit\-Image} $\ast$$\ast$im\-Arr, {\bf Obit\-Image} $\ast$out\-Image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Fit spectrum to an array of images. \item\end{CompactList}\item 
+void {\bf Obit\-Spectrum\-Fit\-Eval} ({\bf Obit\-Spectrum\-Fit} $\ast$in, {\bf Obit\-Image} $\ast$in\-Image, {\bf odouble} out\-Freq, {\bf Obit\-Image} $\ast$out\-Image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Evaluate spectrum. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Obit\-Spectrum\-Fit\-Single} ({\bf olong} nfreq, {\bf olong} nterm, {\bf odouble} ref\-Freq, {\bf odouble} $\ast$freq, {\bf ofloat} $\ast$flux, {\bf ofloat} $\ast$sigma, gboolean do\-Broke\-Pow, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Fit single spectrum. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Spectrum\-Fit}{\rm (p.\,\pageref{structObitSpectrumFit})} Class for fitting spectra to image pixels. 
+
+This class does least squares fitting of log(s) as a polynomial in log(\$\$). Either an image cube or a set of single plane images at arbitrary frequencies may be fitted. The result is an image cube of Log(S) with multiples of powers of log(\$\$) as the planes. The function Obit\-Spectrum\-Fit\-Eval will evaluate this fit and return an image with the flux densities at the desired frequencies.\subsection{Creators and Destructors}\label{ObitSpectrumFit_8h_ObitSpectrumFitaccess}
+An {\bf Obit\-Spectrum\-Fit}{\rm (p.\,\pageref{structObitSpectrumFit})} will usually be created using Obit\-Spectrum\-Fit\-Create which allows specifying a name for the object as well as other information.
+
+A copy of a pointer to an {\bf Obit\-Spectrum\-Fit}{\rm (p.\,\pageref{structObitSpectrumFit})} should always be made using the {\bf Obit\-Spectrum\-Fit\-Ref}{\rm (p.\,\pageref{ObitSpectrumFit_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-Spectrum\-Fit}{\rm (p.\,\pageref{structObitSpectrumFit})} or changing a pointer, the function {\bf Obit\-Spectrum\-Fit\-Unref}{\rm (p.\,\pageref{ObitSpectrumFit_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.
+
+\subsection{Define Documentation}
+\index{ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}!ObitSpectrumFitIsA@{ObitSpectrumFitIsA}}
+\index{ObitSpectrumFitIsA@{ObitSpectrumFitIsA}!ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Spectrum\-Fit\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-Spectrum\-Fit\-Get\-Class())}\label{ObitSpectrumFit_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}!ObitSpectrumFitRef@{ObitSpectrumFitRef}}
+\index{ObitSpectrumFitRef@{ObitSpectrumFitRef}!ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Spectrum\-Fit\-Ref(in)\ Obit\-Ref (in)}\label{ObitSpectrumFit_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Spectrum\-Fit}{\rm (p.\,\pageref{structObitSpectrumFit})}. 
+
+returns a Obit\-Spectrum\-Fit$\ast$. in = object to reference \index{ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}!ObitSpectrumFitUnref@{ObitSpectrumFitUnref}}
+\index{ObitSpectrumFitUnref@{ObitSpectrumFitUnref}!ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Spectrum\-Fit\-Unref(in)\ Obit\-Unref (in)}\label{ObitSpectrumFit_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Spectrum\-Fit}{\rm (p.\,\pageref{structObitSpectrumFit})} returns a Obit\-Spectrum\-Fit$\ast$. 
+
+in = object to unreference 
+
+\subsection{Typedef Documentation}
+\index{ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}!ObitSpectrumFitCreateFP@{ObitSpectrumFitCreateFP}}
+\index{ObitSpectrumFitCreateFP@{ObitSpectrumFitCreateFP}!ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-Spectrum\-Fit}$\ast$($\ast$ {\bf Obit\-Spectrum\-Fit\-Create\-FP})(gchar $\ast$name, {\bf olong} nterm)}\label{ObitSpectrumFit_8h_a3}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}!ObitSpectrumFitCubeFP@{ObitSpectrumFitCubeFP}}
+\index{ObitSpectrumFitCubeFP@{ObitSpectrumFitCubeFP}!ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Spectrum\-Fit\-Cube\-FP})({\bf Obit\-Spectrum\-Fit} $\ast$in, {\bf Obit\-Image} $\ast$in\-Image, {\bf Obit\-Image} $\ast$out\-Image, {\bf Obit\-Err} $\ast$err)}\label{ObitSpectrumFit_8h_a4}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}!ObitSpectrumFitEvalFP@{ObitSpectrumFitEvalFP}}
+\index{ObitSpectrumFitEvalFP@{ObitSpectrumFitEvalFP}!ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Spectrum\-Fit\-Eval\-FP})({\bf Obit\-Spectrum\-Fit} $\ast$in, {\bf Obit\-Image} $\ast$in\-Image, {\bf odouble} out\-Freq, {\bf Obit\-Image} $\ast$out\-Image, {\bf Obit\-Err} $\ast$err)}\label{ObitSpectrumFit_8h_a6}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}!ObitSpectrumFitImArrFP@{ObitSpectrumFitImArrFP}}
+\index{ObitSpectrumFitImArrFP@{ObitSpectrumFitImArrFP}!ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Spectrum\-Fit\-Im\-Arr\-FP})({\bf Obit\-Spectrum\-Fit} $\ast$in, {\bf olong} nimage, {\bf Obit\-Image} $\ast$$\ast$im\-Arr, {\bf Obit\-Image} $\ast$out\-Image, {\bf Obit\-Err} $\ast$err)}\label{ObitSpectrumFit_8h_a5}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}!ObitSpectrumFitSingleFP@{ObitSpectrumFitSingleFP}}
+\index{ObitSpectrumFitSingleFP@{ObitSpectrumFitSingleFP}!ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf ofloat}$\ast$($\ast$ {\bf Obit\-Spectrum\-Fit\-Single\-FP})({\bf olong} nfreq, {\bf olong} nterm, {\bf odouble} ref\-Freq, {\bf odouble} $\ast$freq, {\bf ofloat} $\ast$flux, {\bf ofloat} $\ast$sigma, gboolean do\-Broke\-Pow, {\bf Obit\-Err} $\ast$err)}\label{ObitSpectrumFit_8h_a7}
+
+
+Typedef for definition of class pointer structure. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}!newObitSpectrumFit@{newObitSpectrumFit}}
+\index{newObitSpectrumFit@{newObitSpectrumFit}!ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Spectrum\-Fit}$\ast$ new\-Obit\-Spectrum\-Fit (gchar $\ast$ {\em name})}\label{ObitSpectrumFit_8h_a9}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}!ObitSpectrumFitClassInit@{ObitSpectrumFitClassInit}}
+\index{ObitSpectrumFitClassInit@{ObitSpectrumFitClassInit}!ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Spectrum\-Fit\-Class\-Init (void)}\label{ObitSpectrumFit_8h_a8}
+
+
+Public: Class initializer. 
+
+\index{ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}!ObitSpectrumFitClone@{ObitSpectrumFitClone}}
+\index{ObitSpectrumFitClone@{ObitSpectrumFitClone}!ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Spectrum\-Fit\-Clone ({\bf Obit\-Spectrum\-Fit} $\ast$ {\em in}, {\bf Obit\-Spectrum\-Fit} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSpectrumFit_8h_a13}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}!ObitSpectrumFitCopy@{ObitSpectrumFitCopy}}
+\index{ObitSpectrumFitCopy@{ObitSpectrumFitCopy}!ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Spectrum\-Fit}$\ast$ Obit\-Spectrum\-Fit\-Copy ({\bf Obit\-Spectrum\-Fit} $\ast$ {\em in}, {\bf Obit\-Spectrum\-Fit} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSpectrumFit_8h_a12}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}!ObitSpectrumFitCreate@{ObitSpectrumFitCreate}}
+\index{ObitSpectrumFitCreate@{ObitSpectrumFitCreate}!ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Spectrum\-Fit}$\ast$ Obit\-Spectrum\-Fit\-Create (gchar $\ast$ {\em name}, {\bf olong} {\em nterm})}\label{ObitSpectrumFit_8h_a10}
+
+
+Public: Create/initialize {\bf Obit\-Spectrum\-Fit}{\rm (p.\,\pageref{structObitSpectrumFit})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em nterm}]Number of coefficients of powers of log(nu) \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}!ObitSpectrumFitCube@{ObitSpectrumFitCube}}
+\index{ObitSpectrumFitCube@{ObitSpectrumFitCube}!ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Spectrum\-Fit\-Cube ({\bf Obit\-Spectrum\-Fit} $\ast$ {\em in}, {\bf Obit\-Image} $\ast$ {\em in\-Image}, {\bf Obit\-Image} $\ast$ {\em out\-Image}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSpectrumFit_8h_a14}
+
+
+Public: Fit spectrum to an image cube. 
+
+The third axis of the output image will be \char`\"{}SPECLOGF\char`\"{} to indicate that then planes are spectral fit parameters. The \char`\"{}CRVAL\char`\"{} on this axis will be the reference Frequency for the fitting. Item \char`\"{}NTERM\char`\"{} is added to the output image descriptor to give the maximum number Item \char`\"{}\char`\"{}BROKENPO\char`\"{} is added to the output image descriptor if fit is a broken power law of terms fitted \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Spectral fitting object Potential parameters on in-$>$info: \begin{itemize}
+\item \char`\"{}ref\-Freq\char`\"{} OBIT\_\-double scalar Reference frequency for fit [def ref for in\-Image] \item \char`\"{}max\-Chi2\char`\"{} OBIT\_\-float scalar Max. Chi Sq for accepting a partial spectrum [def 1.5] \item \char`\"{}do\-Error\char`\"{} OBIT\_\-boolean scalar If true do error analysis [def False] \item \char`\"{}do\-PBCor\char`\"{} OBIT\_\-boolean scalar If true do primary beam correction. [def False] \item \char`\"{}do\-Broke\-Pow\char`\"{} OBIT\_\-boolean scalar If true do broken power law (3 terms). [def False] \item \char`\"{}cal\-Fract\char`\"{} OBIT\_\-float (?,1,1) Calibration error as fraction of flux One per frequency or one for all, def 1.0e-5 \item \char`\"{}PBmin\char`\"{} OBIT\_\-float (?,1,1) Minimum beam gain correction One per frequency or one for all, def 0.05, 1.0 =$>$ no gain corrections \item \char`\"{}ant\-Size\char`\"{} OBIT\_\-float (?,1,1) Antenna diameter (m) for gain corr, One per frequency or one for all, def 25.0\end{itemize}
+\item[{\em in\-Image}]Image cube to be fitted \item[{\em out\-Image}]Image cube with fitted spectra. Should be defined but not created. Planes 1-$>$nterm are coefficients per pixel if do\-Error: Planes nterm+1-$>$2$\ast$nterm are uncertainties in coefficients Plane 2$\ast$nterm+1 = Chi squared of fit \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}!ObitSpectrumFitEval@{ObitSpectrumFitEval}}
+\index{ObitSpectrumFitEval@{ObitSpectrumFitEval}!ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Spectrum\-Fit\-Eval ({\bf Obit\-Spectrum\-Fit} $\ast$ {\em in}, {\bf Obit\-Image} $\ast$ {\em in\-Image}, {\bf odouble} {\em out\-Freq}, {\bf Obit\-Image} $\ast$ {\em out\-Image}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSpectrumFit_8h_a16}
+
+
+Public: Evaluate spectrum. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Spectral fitting object \item[{\em in\-Image}]Spectral coefficient image Planes 1-$>$nterm are coefficients per pixel Planes nterm+1-$>$2$\ast$nterm are uncertainties in coefficients Plane 2$\ast$nterm+1 = Chi squared of fit \item[{\em out\-Freq}]Output Frequency in Hz \item[{\em out\-Image}]Image to write, must be defined but not yet exist. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}!ObitSpectrumFitGetClass@{ObitSpectrumFitGetClass}}
+\index{ObitSpectrumFitGetClass@{ObitSpectrumFitGetClass}!ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Spectrum\-Fit\-Get\-Class (void)}\label{ObitSpectrumFit_8h_a11}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}!ObitSpectrumFitImArr@{ObitSpectrumFitImArr}}
+\index{ObitSpectrumFitImArr@{ObitSpectrumFitImArr}!ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Spectrum\-Fit\-Im\-Arr ({\bf Obit\-Spectrum\-Fit} $\ast$ {\em in}, {\bf olong} {\em nimage}, {\bf Obit\-Image} $\ast$$\ast$ {\em im\-Arr}, {\bf Obit\-Image} $\ast$ {\em out\-Image}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSpectrumFit_8h_a15}
+
+
+Public: Fit spectrum to an array of images. 
+
+The \char`\"{}CRVAL\char`\"{} on this axis will be the reference Frequency for the fitting. Item \char`\"{}NTERM\char`\"{} is added to the output image descriptor to give the maximum number of terms fitted Item \char`\"{}\char`\"{}BROKENPO\char`\"{} is added to the output image descriptor if fit is a broken power law \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Spectral fitting object \begin{itemize}
+\item \char`\"{}ref\-Freq\char`\"{} OBIT\_\-double scalar Reference frequency for fit [def average of inputs] \item \char`\"{}max\-Chi2\char`\"{} OBIT\_\-float scalar Max. Chi Sq for accepting a partial spectrum [def 1.5] \item \char`\"{}do\-Error\char`\"{} OBIT\_\-boolean scalar If true do error analysis [def False] \item \char`\"{}do\-PBCor\char`\"{} OBIT\_\-boolean scalar If true do primary beam correction.[def False] \item \char`\"{}do\-Broke\-Pow\char`\"{} OBIT\_\-boolean scalar If true do broken power law (3 terms). [def False] \item \char`\"{}cal\-Fract\char`\"{} OBIT\_\-float (?,1,1) Calibration error as fraction of flux One per frequency or one for all, def 0.05 \item \char`\"{}PBmin\char`\"{} OBIT\_\-float (?,1,1) Minimum beam gain correction One per frequency or one for all, def 0.05, 1.0 =$>$ no gain corrections \item \char`\"{}ant\-Size\char`\"{} OBIT\_\-float (?,1,1) Antenna diameter (m) for gain corr, One per frequency or one for all, def 25.0 \end{itemize}
+\item[{\em nimage}]Number of entries in im\-Arr \item[{\em im\-Arr}]Array of images to be fitted \item[{\em out\-Image}]Image cube with fitted spectra. Should be defined but not created. Planes 1-$>$nterm are coefficients per pixel if do\-Error: Planes nterm+1-$>$2$\ast$nterm are uncertainties in coefficients Plane 2$\ast$nterm+1 = Chi squared of fit \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}!ObitSpectrumFitSingle@{ObitSpectrumFitSingle}}
+\index{ObitSpectrumFitSingle@{ObitSpectrumFitSingle}!ObitSpectrumFit.h@{Obit\-Spectrum\-Fit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ Obit\-Spectrum\-Fit\-Single ({\bf olong} {\em nfreq}, {\bf olong} {\em nterm}, {\bf odouble} {\em ref\-Freq}, {\bf odouble} $\ast$ {\em freq}, {\bf ofloat} $\ast$ {\em flux}, {\bf ofloat} $\ast$ {\em sigma}, gboolean {\em do\-Broke\-Pow}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSpectrumFit_8h_a17}
+
+
+Public: Fit single spectrum. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em nfreq}]Number of entries in freq, flux, sigma \item[{\em nterm}]Number of coefficients of powers of log(nu) to fit \item[{\em ref\-Freq}]Reference frequency (Hz) \item[{\em freq}]Array of Frequencies (Hz) \item[{\em flux}]Array of fluxes (Jy) same dim as freq \item[{\em sigma}]Array of errors (Jy) same dim as freq \item[{\em do\-Broke\-Pow}]TRUE if a broken power law fit is desired (3 terms) \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Array of fitter parameters, errors for each and Chi Squares of fit Initial terms are in Jy, other in log. \end{Desc}

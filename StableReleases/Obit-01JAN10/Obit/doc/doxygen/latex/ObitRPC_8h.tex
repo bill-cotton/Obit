@@ -1,0 +1,330 @@
+\section{Obit\-RPC.h File Reference}
+\label{ObitRPC_8h}\index{ObitRPC.h@{ObitRPC.h}}
+{\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} Remote Procedure Call class. 
+
+{\tt \#include $<$xmlrpc\_\-client.h$>$}\par
+{\tt \#include $<$xmlrpc\_\-server.h$>$}\par
+{\tt \#include $<$xmlrpc\_\-server\_\-abyss.h$>$}\par
+{\tt \#include $<$xmlrpc-c/base.h$>$}\par
+{\tt \#include $<$xmlrpc-c/client.h$>$}\par
+{\tt \#include $<$xmlrpc-c/server.h$>$}\par
+{\tt \#include $<$xmlrpc-c/server\_\-abyss.h$>$}\par
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-XML.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-RPC}
+\begin{CompactList}\small\item\em Obit\-RPC Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-RPCClass\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-RPCUnref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} returns a Obit\-RPC$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-RPCRef}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-RPCIs\-A}(in)\ Obit\-Is\-A (in, Obit\-RPCGet\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef xmlrpc\_\-response\_\-handler {\bf Obit\-RPC\_\-response\_\-handler}
+\item 
+typedef {\bf Obit\-RPC} $\ast$($\ast$ {\bf Obit\-RPCCreate\-Client\-FP} )(gchar $\ast$name, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef {\bf Obit\-RPC} $\ast$($\ast$ {\bf Obit\-RPCCreate\-Server\-FP} )(gchar $\ast$name, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Enumerations}
+\begin{CompactItemize}
+\item 
+enum {\bf obit\-RPCType} \{ {\bf OBIT\_\-RPC\_\-Client} =  0, 
+{\bf OBIT\_\-RPC\_\-Server}
+ \}
+\begin{CompactList}\small\item\em enum for object type. \item\end{CompactList}\item 
+enum {\bf obit\-RPCRequest\-Type} \{ \par
+{\bf OBIT\_\-RPC\_\-Request\_\-Continue} =  0, 
+{\bf OBIT\_\-RPC\_\-Request\_\-Abort}, 
+{\bf OBIT\_\-RPC\_\-Request\_\-Quit}, 
+{\bf OBIT\_\-RPC\_\-Request\_\-No\-TV}, 
+\par
+{\bf OBIT\_\-RPC\_\-Request\_\-Field}, 
+{\bf OBIT\_\-RPC\_\-Request\_\-Edit\-Win}
+ \}
+\begin{CompactList}\small\item\em enum for request sent from server back to client This list needs to be compatible with \#Obit\-Display\-Request defined in {\bf Obit\-Display.h}{\rm (p.\,\pageref{ObitDisplay_8h})} \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-RPCClass\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+void {\bf Obit\-RPCClass\-Shutdown} (void)
+\begin{CompactList}\small\item\em Public: Class shutdown. \item\end{CompactList}\item 
+{\bf Obit\-RPC} $\ast$ {\bf new\-Obit\-RPC} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+{\bf Obit\-RPC} $\ast$ {\bf Obit\-RPCCreate\-Client} (gchar $\ast$name, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize client {\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} structures. \item\end{CompactList}\item 
+{\bf Obit\-RPC} $\ast$ {\bf Obit\-RPCCreate\-Server} (gchar $\ast$name, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize server {\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} structures. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-RPCGet\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-XML} $\ast$ {\bf Obit\-RPCCall} ({\bf Obit\-RPC} $\ast$client, gchar $\ast$server\-URL, {\bf Obit\-XML} $\ast$arg, {\bf Obit\-Info\-List} $\ast$$\ast$status, {\bf Obit\-Info\-List} $\ast$$\ast$request, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Send synchronous RPC request. \item\end{CompactList}\item 
+void {\bf Obit\-RPCCall\-Snd} ({\bf Obit\-RPC} $\ast$client, gchar $\ast$server\-URL, {\bf Obit\-XML} $\ast$arg, {\bf Obit\-RPC\_\-response\_\-handler} callback, gpointer user\_\-data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Send asynchronous RPC request. \item\end{CompactList}\item 
+{\bf Obit\-XML} $\ast$ {\bf Obit\-RPCCall\-Rcv} ({\bf Obit\-RPC} $\ast$client, {\bf Obit\-XMLValue} $\ast$result, {\bf Obit\-Info\-List} $\ast$$\ast$status, {\bf Obit\-Info\-List} $\ast$$\ast$request, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Process asynchronous RPC response. \item\end{CompactList}\item 
+void {\bf Obit\-RPCAdd\-Method} ({\bf Obit\-RPC} $\ast$server, gchar $\ast$method\_\-name, xmlrpc\_\-method method, gpointer user\_\-data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Add method callback to server. \item\end{CompactList}\item 
+void {\bf Obit\-RPCServer\-Loop} ({\bf Obit\-RPC} $\ast$server, {\bf olong} port, gchar $\ast$log\_\-file)
+\begin{CompactList}\small\item\em Start Server loop. \item\end{CompactList}\item 
+void {\bf Obit\-RPCClient\-Async\-Loop} ({\bf olong} timeout)
+\begin{CompactList}\small\item\em Run client async event loop. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} Remote Procedure Call class. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} class. Related functions are in the {\bf Obit\-RPCUtil }{\rm (p.\,\pageref{ObitRPCUtil_8h})} module.
+
+This class handles Remote Procedure Calls. The implementation is based on xmlrpc which only allows a single client or server handler at a time.\subsection{Creators and Destructors}\label{ObitRPC_8h_ObitRPCaccess}
+An {\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} will usually be created using Obit\-RPCCreate which allows specifying a name for the object as well as other information.
+
+A copy of a pointer to an {\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} should always be made using the {\bf Obit\-RPCRef}{\rm (p.\,\pageref{ObitRPC_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} or changing a pointer, the function {\bf Obit\-RPCUnref}{\rm (p.\,\pageref{ObitRPC_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.
+
+\subsection{Define Documentation}
+\index{ObitRPC.h@{Obit\-RPC.h}!ObitRPCIsA@{ObitRPCIsA}}
+\index{ObitRPCIsA@{ObitRPCIsA}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-RPCIs\-A(in)\ Obit\-Is\-A (in, Obit\-RPCGet\-Class())}\label{ObitRPC_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitRPC.h@{Obit\-RPC.h}!ObitRPCRef@{ObitRPCRef}}
+\index{ObitRPCRef@{ObitRPCRef}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-RPCRef(in)\ Obit\-Ref (in)}\label{ObitRPC_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})}. 
+
+returns a Obit\-RPC$\ast$. in = object to reference \index{ObitRPC.h@{Obit\-RPC.h}!ObitRPCUnref@{ObitRPCUnref}}
+\index{ObitRPCUnref@{ObitRPCUnref}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-RPCUnref(in)\ Obit\-Unref (in)}\label{ObitRPC_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} returns a Obit\-RPC$\ast$. 
+
+in = object to unreference 
+
+\subsection{Typedef Documentation}
+\index{ObitRPC.h@{Obit\-RPC.h}!ObitRPC_response_handler@{ObitRPC\_\-response\_\-handler}}
+\index{ObitRPC_response_handler@{ObitRPC\_\-response\_\-handler}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef xmlrpc\_\-response\_\-handler {\bf Obit\-RPC\_\-response\_\-handler}}\label{ObitRPC_8h_a3}
+
+
+\index{ObitRPC.h@{Obit\-RPC.h}!ObitRPCCreateClientFP@{ObitRPCCreateClientFP}}
+\index{ObitRPCCreateClientFP@{ObitRPCCreateClientFP}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-RPC}$\ast$($\ast$ {\bf Obit\-RPCCreate\-Client\-FP})(gchar $\ast$name, {\bf Obit\-Err} $\ast$err)}\label{ObitRPC_8h_a4}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitRPC.h@{Obit\-RPC.h}!ObitRPCCreateServerFP@{ObitRPCCreateServerFP}}
+\index{ObitRPCCreateServerFP@{ObitRPCCreateServerFP}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-RPC}$\ast$($\ast$ {\bf Obit\-RPCCreate\-Server\-FP})(gchar $\ast$name, {\bf Obit\-Err} $\ast$err)}\label{ObitRPC_8h_a5}
+
+
+Typedef for definition of class pointer structure. 
+
+
+
+\subsection{Enumeration Type Documentation}
+\index{ObitRPC.h@{Obit\-RPC.h}!obitRPCRequestType@{obitRPCRequestType}}
+\index{obitRPCRequestType@{obitRPCRequestType}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}enum {\bf obit\-RPCRequest\-Type}}\label{ObitRPC_8h_a27}
+
+
+enum for request sent from server back to client This list needs to be compatible with \#Obit\-Display\-Request defined in {\bf Obit\-Display.h}{\rm (p.\,\pageref{ObitDisplay_8h})} 
+
+\begin{Desc}
+\item[Enumeration values: ]\par
+\begin{description}
+\index{OBIT_RPC_Request_Continue@{OBIT\_\-RPC\_\-Request\_\-Continue}!ObitRPC.h@{ObitRPC.h}}\index{ObitRPC.h@{ObitRPC.h}!OBIT_RPC_Request_Continue@{OBIT\_\-RPC\_\-Request\_\-Continue}}\item[{\em 
+OBIT\_\-RPC\_\-Request\_\-Continue\label{ObitRPC_8h_a27a8}
+}]Continue the program. \index{OBIT_RPC_Request_Abort@{OBIT\_\-RPC\_\-Request\_\-Abort}!ObitRPC.h@{ObitRPC.h}}\index{ObitRPC.h@{ObitRPC.h}!OBIT_RPC_Request_Abort@{OBIT\_\-RPC\_\-Request\_\-Abort}}\item[{\em 
+OBIT\_\-RPC\_\-Request\_\-Abort\label{ObitRPC_8h_a27a9}
+}]Abort the program. \index{OBIT_RPC_Request_Quit@{OBIT\_\-RPC\_\-Request\_\-Quit}!ObitRPC.h@{ObitRPC.h}}\index{ObitRPC.h@{ObitRPC.h}!OBIT_RPC_Request_Quit@{OBIT\_\-RPC\_\-Request\_\-Quit}}\item[{\em 
+OBIT\_\-RPC\_\-Request\_\-Quit\label{ObitRPC_8h_a27a10}
+}]Quit - graceful shutdown. \index{OBIT_RPC_Request_NoTV@{OBIT\_\-RPC\_\-Request\_\-NoTV}!ObitRPC.h@{ObitRPC.h}}\index{ObitRPC.h@{ObitRPC.h}!OBIT_RPC_Request_NoTV@{OBIT\_\-RPC\_\-Request\_\-NoTV}}\item[{\em 
+OBIT\_\-RPC\_\-Request\_\-No\-TV\label{ObitRPC_8h_a27a11}
+}]Stop displaying intermediate results. \index{OBIT_RPC_Request_Field@{OBIT\_\-RPC\_\-Request\_\-Field}!ObitRPC.h@{ObitRPC.h}}\index{ObitRPC.h@{ObitRPC.h}!OBIT_RPC_Request_Field@{OBIT\_\-RPC\_\-Request\_\-Field}}\item[{\em 
+OBIT\_\-RPC\_\-Request\_\-Field\label{ObitRPC_8h_a27a12}
+}]Send another field in the current mosaic. \index{OBIT_RPC_Request_EditWin@{OBIT\_\-RPC\_\-Request\_\-EditWin}!ObitRPC.h@{ObitRPC.h}}\index{ObitRPC.h@{ObitRPC.h}!OBIT_RPC_Request_EditWin@{OBIT\_\-RPC\_\-Request\_\-EditWin}}\item[{\em 
+OBIT\_\-RPC\_\-Request\_\-Edit\-Win\label{ObitRPC_8h_a27a13}
+}]Edit Clean window in current field. \end{description}
+\end{Desc}
+
+\index{ObitRPC.h@{Obit\-RPC.h}!obitRPCType@{obitRPCType}}
+\index{obitRPCType@{obitRPCType}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}enum {\bf obit\-RPCType}}\label{ObitRPC_8h_a26}
+
+
+enum for object type. 
+
+This specifies which known type of RPC object \begin{Desc}
+\item[Enumeration values: ]\par
+\begin{description}
+\index{OBIT_RPC_Client@{OBIT\_\-RPC\_\-Client}!ObitRPC.h@{ObitRPC.h}}\index{ObitRPC.h@{ObitRPC.h}!OBIT_RPC_Client@{OBIT\_\-RPC\_\-Client}}\item[{\em 
+OBIT\_\-RPC\_\-Client\label{ObitRPC_8h_a26a6}
+}]Client. \index{OBIT_RPC_Server@{OBIT\_\-RPC\_\-Server}!ObitRPC.h@{ObitRPC.h}}\index{ObitRPC.h@{ObitRPC.h}!OBIT_RPC_Server@{OBIT\_\-RPC\_\-Server}}\item[{\em 
+OBIT\_\-RPC\_\-Server\label{ObitRPC_8h_a26a7}
+}]Server. \end{description}
+\end{Desc}
+
+
+
+\subsection{Function Documentation}
+\index{ObitRPC.h@{Obit\-RPC.h}!newObitRPC@{newObitRPC}}
+\index{newObitRPC@{newObitRPC}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-RPC}$\ast$ new\-Obit\-RPC (gchar $\ast$ {\em name})}\label{ObitRPC_8h_a16}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitRPC.h@{Obit\-RPC.h}!ObitRPCAddMethod@{ObitRPCAddMethod}}
+\index{ObitRPCAddMethod@{ObitRPCAddMethod}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-RPCAdd\-Method ({\bf Obit\-RPC} $\ast$ {\em server}, gchar $\ast$ {\em method\_\-name}, xmlrpc\_\-method {\em method}, gpointer {\em user\_\-data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitRPC_8h_a23}
+
+
+Add method callback to server. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em server}]Server {\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} \item[{\em method\_\-name}]name of the method \item[{\em method}]function pointer to xmlrpc\_\-method callback \item[{\em user\_\-data}]Additional data to be passed to method, may be NULL \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\index{ObitRPC.h@{Obit\-RPC.h}!ObitRPCCall@{ObitRPCCall}}
+\index{ObitRPCCall@{ObitRPCCall}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-XML}$\ast$ Obit\-RPCCall ({\bf Obit\-RPC} $\ast$ {\em client}, gchar $\ast$ {\em server\-URL}, {\bf Obit\-XML} $\ast$ {\em arg}, {\bf Obit\-Info\-List} $\ast$$\ast$ {\em status}, {\bf Obit\-Info\-List} $\ast$$\ast$ {\em request}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitRPC_8h_a20}
+
+
+Public: Send synchronous RPC request. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em client}]Client {\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} \item[{\em server\-URL}]URL of service, e.g. \char`\"{}http://localhost:8765/RPC2\char`\"{} \item[{\em arg}]Argument of call (includes method name ) \item[{\em status}][out] if non NULL, Status in form of Info list, entries \char`\"{}code\char`\"{}, \char`\"{}reason\char`\"{} Should be Unrefed when done \item[{\em request}][out] if non NULL, Any in form of Info list, entries \char`\"{}code\char`\"{}, and case dependent parameters. Returns NULL if no request Should be Unrefed when done \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]XML object returned, NULL on communications failure, even if this is defined the function may have failed. \end{Desc}
+\index{ObitRPC.h@{Obit\-RPC.h}!ObitRPCCallRcv@{ObitRPCCallRcv}}
+\index{ObitRPCCallRcv@{ObitRPCCallRcv}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-XML}$\ast$ Obit\-RPCCall\-Rcv ({\bf Obit\-RPC} $\ast$ {\em client}, {\bf Obit\-XMLValue} $\ast$ {\em result}, {\bf Obit\-Info\-List} $\ast$$\ast$ {\em status}, {\bf Obit\-Info\-List} $\ast$$\ast$ {\em request}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitRPC_8h_a22}
+
+
+Public: Process asynchronous RPC response. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em client}]Client {\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} \item[{\em result}]Response from callback as gpointer \item[{\em status}][out] if non NULL, Status in form of Info list, entries \char`\"{}code\char`\"{}, \char`\"{}reason\char`\"{} Should be Unrefed when done \item[{\em request}][out] if non NULL, Any in form of Info list, entries \char`\"{}code\char`\"{}, and case dependent parameters. Returns NULL if no request Should be Unrefed when done \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]XML object returned, NULL on communications failure, even if this is defined the function may have failed. \end{Desc}
+\index{ObitRPC.h@{Obit\-RPC.h}!ObitRPCCallSnd@{ObitRPCCallSnd}}
+\index{ObitRPCCallSnd@{ObitRPCCallSnd}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-RPCCall\-Snd ({\bf Obit\-RPC} $\ast$ {\em client}, gchar $\ast$ {\em server\-URL}, {\bf Obit\-XML} $\ast$ {\em arg}, {\bf Obit\-RPC\_\-response\_\-handler} {\em callback}, gpointer {\em user\_\-data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitRPC_8h_a21}
+
+
+Public: Send asynchronous RPC request. 
+
+Request is aynchronously sent; the reply will be to callback \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em client}]Client {\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} \item[{\em server\-URL}]URL of service, e.g. \char`\"{}http://localhost:8765/RPC2\char`\"{} \item[{\em arg}]Argument of call (includes method name ) \item[{\em callback}]Callback function typedef void ($\ast$xmlrpc\_\-response\_\-handler) (const char $\ast$server\_\-url, const char $\ast$method\_\-name, xmlrpc\_\-value $\ast$param\_\-array, void $\ast$user\_\-data, xmlrpc\_\-env $\ast$fault, xmlrpc\_\-value $\ast$result); \item[{\em user\_\-data}]Pointer to be passed to Callback with result \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]XML object returned, NULL on communications failure, even if this is defined the function may have failed. \end{Desc}
+\index{ObitRPC.h@{Obit\-RPC.h}!ObitRPCClassInit@{ObitRPCClassInit}}
+\index{ObitRPCClassInit@{ObitRPCClassInit}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-RPCClass\-Init (void)}\label{ObitRPC_8h_a14}
+
+
+Public: Class initializer. 
+
+\index{ObitRPC.h@{Obit\-RPC.h}!ObitRPCClassShutdown@{ObitRPCClassShutdown}}
+\index{ObitRPCClassShutdown@{ObitRPCClassShutdown}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-RPCClass\-Shutdown (void)}\label{ObitRPC_8h_a15}
+
+
+Public: Class shutdown. 
+
+\index{ObitRPC.h@{Obit\-RPC.h}!ObitRPCClientAsyncLoop@{ObitRPCClientAsyncLoop}}
+\index{ObitRPCClientAsyncLoop@{ObitRPCClientAsyncLoop}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-RPCClient\-Async\-Loop ({\bf olong} {\em timeout})}\label{ObitRPC_8h_a25}
+
+
+Run client async event loop. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em timeout}]timeout in microseconds, $<$= -$>$ forever \end{description}
+\end{Desc}
+\index{ObitRPC.h@{Obit\-RPC.h}!ObitRPCCreateClient@{ObitRPCCreateClient}}
+\index{ObitRPCCreateClient@{ObitRPCCreateClient}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-RPC}$\ast$ Obit\-RPCCreate\-Client (gchar $\ast$ {\em name}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitRPC_8h_a17}
+
+
+Public: Create/initialize client {\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitRPC.h@{Obit\-RPC.h}!ObitRPCCreateServer@{ObitRPCCreateServer}}
+\index{ObitRPCCreateServer@{ObitRPCCreateServer}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-RPC}$\ast$ Obit\-RPCCreate\-Server (gchar $\ast$ {\em name}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitRPC_8h_a18}
+
+
+Public: Create/initialize server {\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitRPC.h@{Obit\-RPC.h}!ObitRPCGetClass@{ObitRPCGetClass}}
+\index{ObitRPCGetClass@{ObitRPCGetClass}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-RPCGet\-Class (void)}\label{ObitRPC_8h_a19}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitRPC.h@{Obit\-RPC.h}!ObitRPCServerLoop@{ObitRPCServerLoop}}
+\index{ObitRPCServerLoop@{ObitRPCServerLoop}!ObitRPC.h@{Obit\-RPC.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-RPCServer\-Loop ({\bf Obit\-RPC} $\ast$ {\em server}, {\bf olong} {\em port}, gchar $\ast$ {\em log\_\-file})}\label{ObitRPC_8h_a24}
+
+
+Start Server loop. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em server}]Server {\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} \item[{\em port}]Port number to listen to \item[{\em logging}]file, NULL=$>$/tmp/xmlrpc\_\-log \end{description}
+\end{Desc}

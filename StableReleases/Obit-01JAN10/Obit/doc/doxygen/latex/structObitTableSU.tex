@@ -1,0 +1,536 @@
+\section{Obit\-Table\-SU Struct Reference}
+\label{structObitTableSU}\index{ObitTableSU@{ObitTableSU}}
+Obit\-Table\-SU Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-SU.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-IO} $\ast$ {\bf my\-IO}
+\begin{CompactList}\small\item\em I/O interface to access disk resident data. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Desc} $\ast$ {\bf my\-Desc}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Sel} $\ast$ {\bf my\-Sel}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf buffer}
+\begin{CompactList}\small\item\em Table buffer. \item\end{CompactList}\item 
+{\bf olong} {\bf buffer\-Size}
+\begin{CompactList}\small\item\em Table buffer size in floats. \item\end{CompactList}\item 
+gchar $\ast$ {\bf tab\-Type}
+\begin{CompactList}\small\item\em Table type (name of type, e.g. \item\end{CompactList}\item 
+{\bf olong} {\bf tab\-Ver}
+\begin{CompactList}\small\item\em Table version number(1-rel). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf my\-Host}
+\begin{CompactList}\small\item\em This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. \item\end{CompactList}\item 
+{\bf oint} {\bf num\-IF}
+\begin{CompactList}\small\item\em The number of IFs. \item\end{CompactList}\item 
+gchar {\bf vel\-Type} [MAXKEYCHARTABLESU]
+\begin{CompactList}\small\item\em Velocity type. \item\end{CompactList}\item 
+gchar {\bf vel\-Def} [MAXKEYCHARTABLESU]
+\begin{CompactList}\small\item\em Velocity definition 'RADIO' or 'OPTICAL'. \item\end{CompactList}\item 
+{\bf oint} {\bf Freq\-ID}
+\begin{CompactList}\small\item\em The Frequency ID for which the source parameters are relevant. \item\end{CompactList}\item 
+{\bf olong} {\bf Sour\-IDOff}
+\begin{CompactList}\small\item\em Column offset for Source ID in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Sour\-IDCol}
+\begin{CompactList}\small\item\em Physical column number for Source ID in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Qual\-Off}
+\begin{CompactList}\small\item\em Column offset for Source qualifier in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Qual\-Col}
+\begin{CompactList}\small\item\em Physical column number for Source qualifier in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Bandwidth\-Off}
+\begin{CompactList}\small\item\em Column offset for Bandwidth in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Bandwidth\-Col}
+\begin{CompactList}\small\item\em Physical column number for Bandwidth in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf RAMean\-Off}
+\begin{CompactList}\small\item\em Column offset for Right ascension at mean EPOCH (actually equinox) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf RAMean\-Col}
+\begin{CompactList}\small\item\em Physical column number for Right ascension at mean EPOCH (actually equinox) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Dec\-Mean\-Off}
+\begin{CompactList}\small\item\em Column offset for Declination at mean EPOCH (actually equinox) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Dec\-Mean\-Col}
+\begin{CompactList}\small\item\em Physical column number for Declination at mean EPOCH (actually equinox) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Epoch\-Off}
+\begin{CompactList}\small\item\em Column offset for Mean Epoch (really equinox) for position in yr. \item\end{CompactList}\item 
+{\bf olong} {\bf Epoch\-Col}
+\begin{CompactList}\small\item\em Physical column number for Mean Epoch (really equinox) for position in yr. \item\end{CompactList}\item 
+{\bf olong} {\bf RAApp\-Off}
+\begin{CompactList}\small\item\em Column offset for Apparent Right ascension in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf RAApp\-Col}
+\begin{CompactList}\small\item\em Physical column number for Apparent Right ascension in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Dec\-App\-Off}
+\begin{CompactList}\small\item\em Column offset for Apparent Declination in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Dec\-App\-Col}
+\begin{CompactList}\small\item\em Physical column number for Apparent Declination in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PMRa\-Off}
+\begin{CompactList}\small\item\em Column offset for Proper motion (deg/day) in RA in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PMRa\-Col}
+\begin{CompactList}\small\item\em Physical column number for Proper motion (deg/day) in RA in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PMDec\-Off}
+\begin{CompactList}\small\item\em Column offset for Proper motion (deg/day) in declination in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PMDec\-Col}
+\begin{CompactList}\small\item\em Physical column number for Proper motion (deg/day) in declination in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Source\-Off}
+\begin{CompactList}\small\item\em Column offset for Source name in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Source\-Col}
+\begin{CompactList}\small\item\em Physical column number for Source name in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Cal\-Code\-Off}
+\begin{CompactList}\small\item\em Column offset for Calibrator code in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Cal\-Code\-Col}
+\begin{CompactList}\small\item\em Physical column number for Calibrator code in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf IFlux\-Off}
+\begin{CompactList}\small\item\em Column offset for Total Stokes I flux density per IF in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf IFlux\-Col}
+\begin{CompactList}\small\item\em Physical column number for Total Stokes I flux density per IF in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf QFlux\-Off}
+\begin{CompactList}\small\item\em Column offset for Total Stokes Q flux density per IF in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf QFlux\-Col}
+\begin{CompactList}\small\item\em Physical column number for Total Stokes Q flux density per IF in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf UFlux\-Off}
+\begin{CompactList}\small\item\em Column offset for Total Stokes U flux density per IF in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf UFlux\-Col}
+\begin{CompactList}\small\item\em Physical column number for Total Stokes U flux density per IF in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf VFlux\-Off}
+\begin{CompactList}\small\item\em Column offset for Total Stokes V flux densityper IF in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf VFlux\-Col}
+\begin{CompactList}\small\item\em Physical column number for Total Stokes V flux densityper IF in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Freq\-Off\-Off}
+\begin{CompactList}\small\item\em Column offset for Frequency offset (Hz) from IF nominal per IF in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Freq\-Off\-Col}
+\begin{CompactList}\small\item\em Physical column number for Frequency offset (Hz) from IF nominal per IF in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf LSRVel\-Off}
+\begin{CompactList}\small\item\em Column offset for LSR velocity per IF in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf LSRVel\-Col}
+\begin{CompactList}\small\item\em Physical column number for LSR velocity per IF in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Rest\-Freq\-Off}
+\begin{CompactList}\small\item\em Column offset for Line rest frequency per IF in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Rest\-Freq\-Col}
+\begin{CompactList}\small\item\em Physical column number for Line rest frequency per IF in table record. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-SU Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableSU@{Obit\-Table\-SU}!BandwidthCol@{BandwidthCol}}
+\index{BandwidthCol@{BandwidthCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Bandwidth\-Col}}\label{structObitTableSU_o24}
+
+
+Physical column number for Bandwidth in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!BandwidthOff@{BandwidthOff}}
+\index{BandwidthOff@{BandwidthOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Bandwidth\-Off}}\label{structObitTableSU_o23}
+
+
+Column offset for Bandwidth in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!buffer@{buffer}}
+\index{buffer@{buffer}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-SU::buffer}}\label{structObitTableSU_o10}
+
+
+Table buffer. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!bufferSize@{bufferSize}}
+\index{bufferSize@{bufferSize}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::buffer\-Size}}\label{structObitTableSU_o11}
+
+
+Table buffer size in floats. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!CalCodeCol@{CalCodeCol}}
+\index{CalCodeCol@{CalCodeCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Cal\-Code\-Col}}\label{structObitTableSU_o42}
+
+
+Physical column number for Calibrator code in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!CalCodeOff@{CalCodeOff}}
+\index{CalCodeOff@{CalCodeOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Cal\-Code\-Off}}\label{structObitTableSU_o41}
+
+
+Column offset for Calibrator code in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-SU::Class\-Info}}\label{structObitTableSU_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!DecAppCol@{DecAppCol}}
+\index{DecAppCol@{DecAppCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Dec\-App\-Col}}\label{structObitTableSU_o34}
+
+
+Physical column number for Apparent Declination in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!DecAppOff@{DecAppOff}}
+\index{DecAppOff@{DecAppOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Dec\-App\-Off}}\label{structObitTableSU_o33}
+
+
+Column offset for Apparent Declination in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!DecMeanCol@{DecMeanCol}}
+\index{DecMeanCol@{DecMeanCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Dec\-Mean\-Col}}\label{structObitTableSU_o28}
+
+
+Physical column number for Declination at mean EPOCH (actually equinox) in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!DecMeanOff@{DecMeanOff}}
+\index{DecMeanOff@{DecMeanOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Dec\-Mean\-Off}}\label{structObitTableSU_o27}
+
+
+Column offset for Declination at mean EPOCH (actually equinox) in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!EpochCol@{EpochCol}}
+\index{EpochCol@{EpochCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Epoch\-Col}}\label{structObitTableSU_o30}
+
+
+Physical column number for Mean Epoch (really equinox) for position in yr. 
+
+since year 0.0 in table record \index{ObitTableSU@{Obit\-Table\-SU}!EpochOff@{EpochOff}}
+\index{EpochOff@{EpochOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Epoch\-Off}}\label{structObitTableSU_o29}
+
+
+Column offset for Mean Epoch (really equinox) for position in yr. 
+
+since year 0.0 in table record \index{ObitTableSU@{Obit\-Table\-SU}!FreqID@{FreqID}}
+\index{FreqID@{FreqID}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-SU::Freq\-ID}}\label{structObitTableSU_o18}
+
+
+The Frequency ID for which the source parameters are relevant. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!FreqOffCol@{FreqOffCol}}
+\index{FreqOffCol@{FreqOffCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Freq\-Off\-Col}}\label{structObitTableSU_o52}
+
+
+Physical column number for Frequency offset (Hz) from IF nominal per IF in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!FreqOffOff@{FreqOffOff}}
+\index{FreqOffOff@{FreqOffOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Freq\-Off\-Off}}\label{structObitTableSU_o51}
+
+
+Column offset for Frequency offset (Hz) from IF nominal per IF in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!IFluxCol@{IFluxCol}}
+\index{IFluxCol@{IFluxCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::IFlux\-Col}}\label{structObitTableSU_o44}
+
+
+Physical column number for Total Stokes I flux density per IF in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!IFluxOff@{IFluxOff}}
+\index{IFluxOff@{IFluxOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::IFlux\-Off}}\label{structObitTableSU_o43}
+
+
+Column offset for Total Stokes I flux density per IF in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!info@{info}}
+\index{info@{info}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Table\-SU::info}}\label{structObitTableSU_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!LSRVelCol@{LSRVelCol}}
+\index{LSRVelCol@{LSRVelCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::LSRVel\-Col}}\label{structObitTableSU_o54}
+
+
+Physical column number for LSR velocity per IF in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!LSRVelOff@{LSRVelOff}}
+\index{LSRVelOff@{LSRVelOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::LSRVel\-Off}}\label{structObitTableSU_o53}
+
+
+Column offset for LSR velocity per IF in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Desc}$\ast$ {\bf Obit\-Table\-SU::my\-Desc}}\label{structObitTableSU_o8}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!myHost@{myHost}}
+\index{myHost@{myHost}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-Table\-SU::my\-Host}}\label{structObitTableSU_o14}
+
+
+This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!myIO@{myIO}}
+\index{myIO@{myIO}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IO}$\ast$ {\bf Obit\-Table\-SU::my\-IO}}\label{structObitTableSU_o7}
+
+
+I/O interface to access disk resident data. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Sel}$\ast$ {\bf Obit\-Table\-SU::my\-Sel}}\label{structObitTableSU_o9}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Table\-SU::my\-Status}}\label{structObitTableSU_o6}
+
+
+I/O status. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!name@{name}}
+\index{name@{name}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-SU::name}}\label{structObitTableSU_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!numIF@{numIF}}
+\index{numIF@{numIF}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-SU::num\-IF}}\label{structObitTableSU_o15}
+
+
+The number of IFs. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-SU::Obit\-Id}}\label{structObitTableSU_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!PMDecCol@{PMDecCol}}
+\index{PMDecCol@{PMDecCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::PMDec\-Col}}\label{structObitTableSU_o38}
+
+
+Physical column number for Proper motion (deg/day) in declination in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!PMDecOff@{PMDecOff}}
+\index{PMDecOff@{PMDecOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::PMDec\-Off}}\label{structObitTableSU_o37}
+
+
+Column offset for Proper motion (deg/day) in declination in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!PMRaCol@{PMRaCol}}
+\index{PMRaCol@{PMRaCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::PMRa\-Col}}\label{structObitTableSU_o36}
+
+
+Physical column number for Proper motion (deg/day) in RA in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!PMRaOff@{PMRaOff}}
+\index{PMRaOff@{PMRaOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::PMRa\-Off}}\label{structObitTableSU_o35}
+
+
+Column offset for Proper motion (deg/day) in RA in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!QFluxCol@{QFluxCol}}
+\index{QFluxCol@{QFluxCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::QFlux\-Col}}\label{structObitTableSU_o46}
+
+
+Physical column number for Total Stokes Q flux density per IF in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!QFluxOff@{QFluxOff}}
+\index{QFluxOff@{QFluxOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::QFlux\-Off}}\label{structObitTableSU_o45}
+
+
+Column offset for Total Stokes Q flux density per IF in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!QualCol@{QualCol}}
+\index{QualCol@{QualCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Qual\-Col}}\label{structObitTableSU_o22}
+
+
+Physical column number for Source qualifier in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!QualOff@{QualOff}}
+\index{QualOff@{QualOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Qual\-Off}}\label{structObitTableSU_o21}
+
+
+Column offset for Source qualifier in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!RAAppCol@{RAAppCol}}
+\index{RAAppCol@{RAAppCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::RAApp\-Col}}\label{structObitTableSU_o32}
+
+
+Physical column number for Apparent Right ascension in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!RAAppOff@{RAAppOff}}
+\index{RAAppOff@{RAAppOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::RAApp\-Off}}\label{structObitTableSU_o31}
+
+
+Column offset for Apparent Right ascension in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!RAMeanCol@{RAMeanCol}}
+\index{RAMeanCol@{RAMeanCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::RAMean\-Col}}\label{structObitTableSU_o26}
+
+
+Physical column number for Right ascension at mean EPOCH (actually equinox) in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!RAMeanOff@{RAMeanOff}}
+\index{RAMeanOff@{RAMeanOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::RAMean\-Off}}\label{structObitTableSU_o25}
+
+
+Column offset for Right ascension at mean EPOCH (actually equinox) in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Reference\-Count}}\label{structObitTableSU_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!RestFreqCol@{RestFreqCol}}
+\index{RestFreqCol@{RestFreqCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Rest\-Freq\-Col}}\label{structObitTableSU_o56}
+
+
+Physical column number for Line rest frequency per IF in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!RestFreqOff@{RestFreqOff}}
+\index{RestFreqOff@{RestFreqOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Rest\-Freq\-Off}}\label{structObitTableSU_o55}
+
+
+Column offset for Line rest frequency per IF in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!SourceCol@{SourceCol}}
+\index{SourceCol@{SourceCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Source\-Col}}\label{structObitTableSU_o40}
+
+
+Physical column number for Source name in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!SourceOff@{SourceOff}}
+\index{SourceOff@{SourceOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Source\-Off}}\label{structObitTableSU_o39}
+
+
+Column offset for Source name in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!SourIDCol@{SourIDCol}}
+\index{SourIDCol@{SourIDCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Sour\-IDCol}}\label{structObitTableSU_o20}
+
+
+Physical column number for Source ID in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!SourIDOff@{SourIDOff}}
+\index{SourIDOff@{SourIDOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::Sour\-IDOff}}\label{structObitTableSU_o19}
+
+
+Column offset for Source ID in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!tabType@{tabType}}
+\index{tabType@{tabType}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-SU::tab\-Type}}\label{structObitTableSU_o12}
+
+
+Table type (name of type, e.g. 
+
+\char`\"{}AIPS AN\char`\"{}) \index{ObitTableSU@{Obit\-Table\-SU}!tabVer@{tabVer}}
+\index{tabVer@{tabVer}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::tab\-Ver}}\label{structObitTableSU_o13}
+
+
+Table version number(1-rel). 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!thread@{thread}}
+\index{thread@{thread}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Table\-SU::thread}}\label{structObitTableSU_o4}
+
+
+Threading info member object. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!UFluxCol@{UFluxCol}}
+\index{UFluxCol@{UFluxCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::UFlux\-Col}}\label{structObitTableSU_o48}
+
+
+Physical column number for Total Stokes U flux density per IF in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!UFluxOff@{UFluxOff}}
+\index{UFluxOff@{UFluxOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::UFlux\-Off}}\label{structObitTableSU_o47}
+
+
+Column offset for Total Stokes U flux density per IF in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!velDef@{velDef}}
+\index{velDef@{velDef}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-SU::vel\-Def}[MAXKEYCHARTABLESU]}\label{structObitTableSU_o17}
+
+
+Velocity definition 'RADIO' or 'OPTICAL'. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!velType@{velType}}
+\index{velType@{velType}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-SU::vel\-Type}[MAXKEYCHARTABLESU]}\label{structObitTableSU_o16}
+
+
+Velocity type. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!VFluxCol@{VFluxCol}}
+\index{VFluxCol@{VFluxCol}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::VFlux\-Col}}\label{structObitTableSU_o50}
+
+
+Physical column number for Total Stokes V flux densityper IF in table record. 
+
+\index{ObitTableSU@{Obit\-Table\-SU}!VFluxOff@{VFluxOff}}
+\index{VFluxOff@{VFluxOff}!ObitTableSU@{Obit\-Table\-SU}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-SU::VFlux\-Off}}\label{structObitTableSU_o49}
+
+
+Column offset for Total Stokes V flux densityper IF in table record. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-SU.h}\end{CompactItemize}

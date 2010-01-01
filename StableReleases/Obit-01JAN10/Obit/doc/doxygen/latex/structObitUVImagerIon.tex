@@ -1,0 +1,104 @@
+\section{Obit\-UVImager\-Ion Struct Reference}
+\label{structObitUVImagerIon}\index{ObitUVImagerIon@{ObitUVImagerIon}}
+Obit\-UVImager\-Ion Class structure.  
+
+
+{\tt \#include $<$Obit\-UVImager\-Ion.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-UV} $\ast$ {\bf uvdata}
+\begin{CompactList}\small\item\em Input UV data. \item\end{CompactList}\item 
+{\bf Obit\-UV} $\ast$ {\bf uvwork}
+\begin{CompactList}\small\item\em selected/calibrated/edited/Weighted UV data to be imaged \item\end{CompactList}\item 
+{\bf Obit\-Image\-Mosaic} $\ast$ {\bf mosaic}
+\begin{CompactList}\small\item\em Image mosaic to be produced. \item\end{CompactList}\item 
+{\bf Obit\-Table\-NI} $\ast$ {\bf ion\-Tab}
+\begin{CompactList}\small\item\em Ionospheric calibration table. \item\end{CompactList}\item 
+{\bf olong} {\bf sn\-Ver}
+\begin{CompactList}\small\item\em SN table version number. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-UVImager\-Ion Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitUVImagerIon@{Obit\-UVImager\-Ion}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitUVImagerIon@{Obit\-UVImager\-Ion}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-UVImager\-Ion::Class\-Info}}\label{structObitUVImagerIon_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitUVImagerIon@{Obit\-UVImager\-Ion}!ionTab@{ionTab}}
+\index{ionTab@{ionTab}!ObitUVImagerIon@{Obit\-UVImager\-Ion}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-NI}$\ast$ {\bf Obit\-UVImager\-Ion::ion\-Tab}}\label{structObitUVImagerIon_o7}
+
+
+Ionospheric calibration table. 
+
+\index{ObitUVImagerIon@{Obit\-UVImager\-Ion}!mosaic@{mosaic}}
+\index{mosaic@{mosaic}!ObitUVImagerIon@{Obit\-UVImager\-Ion}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Mosaic}$\ast$ {\bf Obit\-UVImager\-Ion::mosaic}}\label{structObitUVImagerIon_o6}
+
+
+Image mosaic to be produced. 
+
+\index{ObitUVImagerIon@{Obit\-UVImager\-Ion}!name@{name}}
+\index{name@{name}!ObitUVImagerIon@{Obit\-UVImager\-Ion}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-UVImager\-Ion::name}}\label{structObitUVImagerIon_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitUVImagerIon@{Obit\-UVImager\-Ion}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitUVImagerIon@{Obit\-UVImager\-Ion}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-UVImager\-Ion::Obit\-Id}}\label{structObitUVImagerIon_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitUVImagerIon@{Obit\-UVImager\-Ion}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitUVImagerIon@{Obit\-UVImager\-Ion}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVImager\-Ion::Reference\-Count}}\label{structObitUVImagerIon_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitUVImagerIon@{Obit\-UVImager\-Ion}!snVer@{snVer}}
+\index{snVer@{snVer}!ObitUVImagerIon@{Obit\-UVImager\-Ion}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVImager\-Ion::sn\-Ver}}\label{structObitUVImagerIon_o8}
+
+
+SN table version number. 
+
+\index{ObitUVImagerIon@{Obit\-UVImager\-Ion}!uvdata@{uvdata}}
+\index{uvdata@{uvdata}!ObitUVImagerIon@{Obit\-UVImager\-Ion}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UV}$\ast$ {\bf Obit\-UVImager\-Ion::uvdata}}\label{structObitUVImagerIon_o4}
+
+
+Input UV data. 
+
+\index{ObitUVImagerIon@{Obit\-UVImager\-Ion}!uvwork@{uvwork}}
+\index{uvwork@{uvwork}!ObitUVImagerIon@{Obit\-UVImager\-Ion}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UV}$\ast$ {\bf Obit\-UVImager\-Ion::uvwork}}\label{structObitUVImagerIon_o5}
+
+
+selected/calibrated/edited/Weighted UV data to be imaged 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-UVImager\-Ion.h}\end{CompactItemize}

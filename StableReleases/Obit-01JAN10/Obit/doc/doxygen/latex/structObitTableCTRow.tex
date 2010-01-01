@@ -1,0 +1,185 @@
+\section{Obit\-Table\-CTRow Struct Reference}
+\label{structObitTableCTRow}\index{ObitTableCTRow@{ObitTableCTRow}}
+Obit\-Table\-CTRow Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-CT.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf my\-Table}
+\begin{CompactList}\small\item\em Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. \item\end{CompactList}\item 
+gpointer {\bf my\-Row\-Data}
+\begin{CompactList}\small\item\em Pointer to row data in buffer (never g\_\-free this). \item\end{CompactList}\item 
+{\bf odouble} {\bf Time}
+\begin{CompactList}\small\item\em The center time. \item\end{CompactList}\item 
+{\bf odouble} {\bf ut1utc}
+\begin{CompactList}\small\item\em UT1-UTC. \item\end{CompactList}\item 
+{\bf odouble} {\bf iatutc}
+\begin{CompactList}\small\item\em IAT-UTC. \item\end{CompactList}\item 
+{\bf odouble} {\bf a1utc}
+\begin{CompactList}\small\item\em A1-UTC. \item\end{CompactList}\item 
+gchar {\bf ut1Type}
+\begin{CompactList}\small\item\em UT1 TYPE. \item\end{CompactList}\item 
+gchar {\bf wob\-Type}
+\begin{CompactList}\small\item\em WOB TYPES. \item\end{CompactList}\item 
+{\bf odouble} {\bf dpsi}
+\begin{CompactList}\small\item\em DPSI. \item\end{CompactList}\item 
+{\bf odouble} {\bf ddpsi}
+\begin{CompactList}\small\item\em DDPSI. \item\end{CompactList}\item 
+{\bf odouble} {\bf deps}
+\begin{CompactList}\small\item\em DEPS. \item\end{CompactList}\item 
+{\bf odouble} {\bf ddeps}
+\begin{CompactList}\small\item\em DDEPS. \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf wob\-XY}
+\begin{CompactList}\small\item\em Earth pole wobble. \item\end{CompactList}\item 
+{\bf olong} {\bf status}
+\begin{CompactList}\small\item\em status 0=normal, 1=modified, -1=flagged \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-CTRow Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableCTRow@{Obit\-Table\-CTRow}!a1utc@{a1utc}}
+\index{a1utc@{a1utc}!ObitTableCTRow@{Obit\-Table\-CTRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-CTRow::a1utc}}\label{structObitTableCTRow_o9}
+
+
+A1-UTC. 
+
+\index{ObitTableCTRow@{Obit\-Table\-CTRow}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableCTRow@{Obit\-Table\-CTRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-CTRow::Class\-Info}}\label{structObitTableCTRow_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableCTRow@{Obit\-Table\-CTRow}!ddeps@{ddeps}}
+\index{ddeps@{ddeps}!ObitTableCTRow@{Obit\-Table\-CTRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-CTRow::ddeps}}\label{structObitTableCTRow_o15}
+
+
+DDEPS. 
+
+\index{ObitTableCTRow@{Obit\-Table\-CTRow}!ddpsi@{ddpsi}}
+\index{ddpsi@{ddpsi}!ObitTableCTRow@{Obit\-Table\-CTRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-CTRow::ddpsi}}\label{structObitTableCTRow_o13}
+
+
+DDPSI. 
+
+\index{ObitTableCTRow@{Obit\-Table\-CTRow}!deps@{deps}}
+\index{deps@{deps}!ObitTableCTRow@{Obit\-Table\-CTRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-CTRow::deps}}\label{structObitTableCTRow_o14}
+
+
+DEPS. 
+
+\index{ObitTableCTRow@{Obit\-Table\-CTRow}!dpsi@{dpsi}}
+\index{dpsi@{dpsi}!ObitTableCTRow@{Obit\-Table\-CTRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-CTRow::dpsi}}\label{structObitTableCTRow_o12}
+
+
+DPSI. 
+
+\index{ObitTableCTRow@{Obit\-Table\-CTRow}!iatutc@{iatutc}}
+\index{iatutc@{iatutc}!ObitTableCTRow@{Obit\-Table\-CTRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-CTRow::iatutc}}\label{structObitTableCTRow_o8}
+
+
+IAT-UTC. 
+
+\index{ObitTableCTRow@{Obit\-Table\-CTRow}!myRowData@{myRowData}}
+\index{myRowData@{myRowData}!ObitTableCTRow@{Obit\-Table\-CTRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-CTRow::my\-Row\-Data}}\label{structObitTableCTRow_o5}
+
+
+Pointer to row data in buffer (never g\_\-free this). 
+
+\index{ObitTableCTRow@{Obit\-Table\-CTRow}!myTable@{myTable}}
+\index{myTable@{myTable}!ObitTableCTRow@{Obit\-Table\-CTRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ {\bf Obit\-Table\-CTRow::my\-Table}}\label{structObitTableCTRow_o4}
+
+
+Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. 
+
+\index{ObitTableCTRow@{Obit\-Table\-CTRow}!name@{name}}
+\index{name@{name}!ObitTableCTRow@{Obit\-Table\-CTRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-CTRow::name}}\label{structObitTableCTRow_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableCTRow@{Obit\-Table\-CTRow}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableCTRow@{Obit\-Table\-CTRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-CTRow::Obit\-Id}}\label{structObitTableCTRow_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableCTRow@{Obit\-Table\-CTRow}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableCTRow@{Obit\-Table\-CTRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CTRow::Reference\-Count}}\label{structObitTableCTRow_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableCTRow@{Obit\-Table\-CTRow}!status@{status}}
+\index{status@{status}!ObitTableCTRow@{Obit\-Table\-CTRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CTRow::status}}\label{structObitTableCTRow_o17}
+
+
+status 0=normal, 1=modified, -1=flagged 
+
+\index{ObitTableCTRow@{Obit\-Table\-CTRow}!Time@{Time}}
+\index{Time@{Time}!ObitTableCTRow@{Obit\-Table\-CTRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-CTRow::Time}}\label{structObitTableCTRow_o6}
+
+
+The center time. 
+
+\index{ObitTableCTRow@{Obit\-Table\-CTRow}!ut1Type@{ut1Type}}
+\index{ut1Type@{ut1Type}!ObitTableCTRow@{Obit\-Table\-CTRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-CTRow::ut1Type}}\label{structObitTableCTRow_o10}
+
+
+UT1 TYPE. 
+
+\index{ObitTableCTRow@{Obit\-Table\-CTRow}!ut1utc@{ut1utc}}
+\index{ut1utc@{ut1utc}!ObitTableCTRow@{Obit\-Table\-CTRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-CTRow::ut1utc}}\label{structObitTableCTRow_o7}
+
+
+UT1-UTC. 
+
+\index{ObitTableCTRow@{Obit\-Table\-CTRow}!wobType@{wobType}}
+\index{wobType@{wobType}!ObitTableCTRow@{Obit\-Table\-CTRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-CTRow::wob\-Type}}\label{structObitTableCTRow_o11}
+
+
+WOB TYPES. 
+
+\index{ObitTableCTRow@{Obit\-Table\-CTRow}!wobXY@{wobXY}}
+\index{wobXY@{wobXY}!ObitTableCTRow@{Obit\-Table\-CTRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-Table\-CTRow::wob\-XY}}\label{structObitTableCTRow_o16}
+
+
+Earth pole wobble. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-CT.h}\end{CompactItemize}

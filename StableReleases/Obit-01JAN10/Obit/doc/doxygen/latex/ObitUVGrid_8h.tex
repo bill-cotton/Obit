@@ -1,0 +1,221 @@
+\section{Obit\-UVGrid.h File Reference}
+\label{ObitUVGrid_8h}\index{ObitUVGrid.h@{ObitUVGrid.h}}
+{\bf Obit\-UVGrid}{\rm (p.\,\pageref{structObitUVGrid})} uv data class definition. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Thread.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Info\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UV.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-FArray.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-CArray.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-FFT.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-UVGrid}
+\begin{CompactList}\small\item\em Obit\-UVGrid Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-UVGrid\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-UVGrid\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-UVGrid}{\rm (p.\,\pageref{structObitUVGrid})} returns a Obit\-UVGrid$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-UVGrid\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-UVGrid}{\rm (p.\,\pageref{structObitUVGrid})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-UVGrid\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-UVGrid\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef void($\ast$ {\bf Obit\-UVGrid\-Setup\-FP} )({\bf Obit\-UVGrid} $\ast$in, {\bf Obit\-UV} $\ast$UVin, {\bf Obit\-Image\-Desc} $\ast$image\-Desc, gboolean do\-Beam, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-UVGrid\-Read\-UVFP} )({\bf Obit\-UVGrid} $\ast$in, {\bf Obit\-UV} $\ast$UVin, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-UVGrid\-Read\-UVPar\-FP} )({\bf olong} n\-Par, {\bf Obit\-UVGrid} $\ast$$\ast$in, {\bf Obit\-UV} $\ast$$\ast$UVin, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-UVGrid\-FFT2Im\-FP} )({\bf olong} n\-Par, {\bf Obit\-UVGrid} $\ast$in, {\bf Obit\-FArray} $\ast$array, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-UVGrid\-FFT2Im\-Par\-FP} )({\bf olong} n\-Par, {\bf Obit\-UVGrid} $\ast$$\ast$in, {\bf Obit\-FArray} $\ast$$\ast$array, {\bf Obit\-Err} $\ast$err)
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-UVGrid\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-UVGrid} $\ast$ {\bf new\-Obit\-UVGrid} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-UVGrid\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+void {\bf Obit\-UVGrid\-Setup} ({\bf Obit\-UVGrid} $\ast$in, {\bf Obit\-UV} $\ast$UVin, {\bf Obit\-Image\-Desc} $\ast$beam\-Desc, {\bf Obit\-Image\-Desc} $\ast$image\-Desc, gboolean do\-Beam, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: initialize/reset {\bf Obit\-UVGrid}{\rm (p.\,\pageref{structObitUVGrid})} structures. \item\end{CompactList}\item 
+void {\bf Obit\-UVGrid\-Read\-UV} ({\bf Obit\-UVGrid} $\ast$in, {\bf Obit\-UV} $\ast$UVin, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read uv data accumulating to grid. \item\end{CompactList}\item 
+void {\bf Obit\-UVGrid\-Read\-UVPar} ({\bf olong} n\-Par, {\bf Obit\-UVGrid} $\ast$$\ast$in, {\bf Obit\-UV} $\ast$$\ast$UVin, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Parallel read uv data accumulating to grid. \item\end{CompactList}\item 
+void {\bf Obit\-UVGrid\-FFT2Im} ({\bf Obit\-UVGrid} $\ast$in, {\bf Obit\-FArray} $\ast$array, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: FFT grid to image plane with gridding correction. \item\end{CompactList}\item 
+void {\bf Obit\-UVGrid\-FFT2Im\-Par} ({\bf olong} n\-Par, {\bf Obit\-UVGrid} $\ast$$\ast$in, {\bf Obit\-FArray} $\ast$$\ast$array, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Parallel FFT grid to image plane with gridding correction. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-UVGrid}{\rm (p.\,\pageref{structObitUVGrid})} uv data class definition. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} class.
+
+This class is for creating and manipulating a UVGrid as a memory resident intermediate entity between {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} and {\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})} classes. The beam corresponding to each image should be made first using the same {\bf Obit\-UVGrid}{\rm (p.\,\pageref{structObitUVGrid})}.\subsection{Creators and Destructors}\label{ObitUVGrid_8h_ObitUVGridaccess}
+An {\bf Obit\-UVGrid}{\rm (p.\,\pageref{structObitUVGrid})} can be created using new\-Obit\-UVGrid which allows specifying a name for the object. This name is used to label messages.
+
+A copy of a pointer to an {\bf Obit\-UVGrid}{\rm (p.\,\pageref{structObitUVGrid})} should always be made using the {\bf Obit\-UVGrid\-Ref}{\rm (p.\,\pageref{ObitUVGrid_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-UVGrid}{\rm (p.\,\pageref{structObitUVGrid})} or changing a pointer, the function {\bf Obit\-UVGrid\-Unref}{\rm (p.\,\pageref{ObitUVGrid_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.
+
+\subsection{Define Documentation}
+\index{ObitUVGrid.h@{Obit\-UVGrid.h}!ObitUVGridIsA@{ObitUVGridIsA}}
+\index{ObitUVGridIsA@{ObitUVGridIsA}!ObitUVGrid.h@{Obit\-UVGrid.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVGrid\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-UVGrid\-Get\-Class())}\label{ObitUVGrid_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitUVGrid.h@{Obit\-UVGrid.h}!ObitUVGridRef@{ObitUVGridRef}}
+\index{ObitUVGridRef@{ObitUVGridRef}!ObitUVGrid.h@{Obit\-UVGrid.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVGrid\-Ref(in)\ Obit\-Ref (in)}\label{ObitUVGrid_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-UVGrid}{\rm (p.\,\pageref{structObitUVGrid})}. 
+
+returns a Obit\-UVGrid$\ast$. in = object to reference \index{ObitUVGrid.h@{Obit\-UVGrid.h}!ObitUVGridUnref@{ObitUVGridUnref}}
+\index{ObitUVGridUnref@{ObitUVGridUnref}!ObitUVGrid.h@{Obit\-UVGrid.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVGrid\-Unref(in)\ Obit\-Unref (in)}\label{ObitUVGrid_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-UVGrid}{\rm (p.\,\pageref{structObitUVGrid})} returns a Obit\-UVGrid$\ast$. 
+
+in = object to unreference 
+
+\subsection{Typedef Documentation}
+\index{ObitUVGrid.h@{Obit\-UVGrid.h}!ObitUVGridFFT2ImFP@{ObitUVGridFFT2ImFP}}
+\index{ObitUVGridFFT2ImFP@{ObitUVGridFFT2ImFP}!ObitUVGrid.h@{Obit\-UVGrid.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-UVGrid\-FFT2Im\-FP})({\bf olong} n\-Par, {\bf Obit\-UVGrid} $\ast$in, {\bf Obit\-FArray} $\ast$array, {\bf Obit\-Err} $\ast$err)}\label{ObitUVGrid_8h_a6}
+
+
+\index{ObitUVGrid.h@{Obit\-UVGrid.h}!ObitUVGridFFT2ImParFP@{ObitUVGridFFT2ImParFP}}
+\index{ObitUVGridFFT2ImParFP@{ObitUVGridFFT2ImParFP}!ObitUVGrid.h@{Obit\-UVGrid.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-UVGrid\-FFT2Im\-Par\-FP})({\bf olong} n\-Par, {\bf Obit\-UVGrid} $\ast$$\ast$in, {\bf Obit\-FArray} $\ast$$\ast$array, {\bf Obit\-Err} $\ast$err)}\label{ObitUVGrid_8h_a7}
+
+
+\index{ObitUVGrid.h@{Obit\-UVGrid.h}!ObitUVGridReadUVFP@{ObitUVGridReadUVFP}}
+\index{ObitUVGridReadUVFP@{ObitUVGridReadUVFP}!ObitUVGrid.h@{Obit\-UVGrid.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-UVGrid\-Read\-UVFP})({\bf Obit\-UVGrid} $\ast$in, {\bf Obit\-UV} $\ast$UVin, {\bf Obit\-Err} $\ast$err)}\label{ObitUVGrid_8h_a4}
+
+
+\index{ObitUVGrid.h@{Obit\-UVGrid.h}!ObitUVGridReadUVParFP@{ObitUVGridReadUVParFP}}
+\index{ObitUVGridReadUVParFP@{ObitUVGridReadUVParFP}!ObitUVGrid.h@{Obit\-UVGrid.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-UVGrid\-Read\-UVPar\-FP})({\bf olong} n\-Par, {\bf Obit\-UVGrid} $\ast$$\ast$in, {\bf Obit\-UV} $\ast$$\ast$UVin, {\bf Obit\-Err} $\ast$err)}\label{ObitUVGrid_8h_a5}
+
+
+\index{ObitUVGrid.h@{Obit\-UVGrid.h}!ObitUVGridSetupFP@{ObitUVGridSetupFP}}
+\index{ObitUVGridSetupFP@{ObitUVGridSetupFP}!ObitUVGrid.h@{Obit\-UVGrid.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-UVGrid\-Setup\-FP})({\bf Obit\-UVGrid} $\ast$in, {\bf Obit\-UV} $\ast$UVin, {\bf Obit\-Image\-Desc} $\ast$image\-Desc, gboolean do\-Beam, {\bf Obit\-Err} $\ast$err)}\label{ObitUVGrid_8h_a3}
+
+
+Typedef for definition of class pointer structure. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitUVGrid.h@{Obit\-UVGrid.h}!newObitUVGrid@{newObitUVGrid}}
+\index{newObitUVGrid@{newObitUVGrid}!ObitUVGrid.h@{Obit\-UVGrid.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVGrid}$\ast$ new\-Obit\-UVGrid (gchar $\ast$ {\em name})}\label{ObitUVGrid_8h_a9}
+
+
+Public: Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitUVGrid.h@{Obit\-UVGrid.h}!ObitUVGridClassInit@{ObitUVGridClassInit}}
+\index{ObitUVGridClassInit@{ObitUVGridClassInit}!ObitUVGrid.h@{Obit\-UVGrid.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVGrid\-Class\-Init (void)}\label{ObitUVGrid_8h_a8}
+
+
+Public: Class initializer. 
+
+\index{ObitUVGrid.h@{Obit\-UVGrid.h}!ObitUVGridFFT2Im@{ObitUVGridFFT2Im}}
+\index{ObitUVGridFFT2Im@{ObitUVGridFFT2Im}!ObitUVGrid.h@{Obit\-UVGrid.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVGrid\-FFT2Im ({\bf Obit\-UVGrid} $\ast$ {\em in}, {\bf Obit\-FArray} $\ast$ {\em array}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVGrid_8h_a14}
+
+
+Public: FFT grid to image plane with gridding correction. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object to initialize \item[{\em array}]Output image array. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} stack for reporting problems. \end{description}
+\end{Desc}
+\index{ObitUVGrid.h@{Obit\-UVGrid.h}!ObitUVGridFFT2ImPar@{ObitUVGridFFT2ImPar}}
+\index{ObitUVGridFFT2ImPar@{ObitUVGridFFT2ImPar}!ObitUVGrid.h@{Obit\-UVGrid.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVGrid\-FFT2Im\-Par ({\bf olong} {\em n\-Par}, {\bf Obit\-UVGrid} $\ast$$\ast$ {\em in}, {\bf Obit\-FArray} $\ast$$\ast$ {\em array}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVGrid_8h_a15}
+
+
+Public: Parallel FFT grid to image plane with gridding correction. 
+
+If Beams are being made, there should be entries in in and array for both beam and image with the beam immediately prior to the associated image. Apparently the threading in FFTW clashes with that in {\bf Obit}{\rm (p.\,\pageref{structObit})} so here the FFTs are done sequentially \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em n\-Par}]Number of parallel griddings \item[{\em in}]Array of objects to grid \item[{\em array}]Array of output image pixel arrays, elements must correspond to those in in \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} stack for reporting problems. \end{description}
+\end{Desc}
+\index{ObitUVGrid.h@{Obit\-UVGrid.h}!ObitUVGridGetClass@{ObitUVGridGetClass}}
+\index{ObitUVGridGetClass@{ObitUVGridGetClass}!ObitUVGrid.h@{Obit\-UVGrid.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-UVGrid\-Get\-Class (void)}\label{ObitUVGrid_8h_a10}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitUVGrid.h@{Obit\-UVGrid.h}!ObitUVGridReadUV@{ObitUVGridReadUV}}
+\index{ObitUVGridReadUV@{ObitUVGridReadUV}!ObitUVGrid.h@{Obit\-UVGrid.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVGrid\-Read\-UV ({\bf Obit\-UVGrid} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em UVin}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVGrid_8h_a12}
+
+
+Public: Read uv data accumulating to grid. 
+
+Buffering of data will use the buffers as defined on UVin (\char`\"{}n\-Vis\-PIO\char`\"{} in info member). The UVin object will be closed at the termination of this routine. Requires setup by \#Obit\-UVGrid\-Create. The gridding information should have been stored in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} on in: \begin{itemize}
+\item \char`\"{}Guardband\char`\"{} OBIT\_\-float scalar = maximum fraction of U or v range allowed in grid. Default = 0.4. \item \char`\"{}Max\-Baseline\char`\"{} OBIT\_\-float scalar = maximum baseline length in wavelengths. Default = 1.0e15. \item \char`\"{}start\-Chann\char`\"{} OBIT\_\-long scalar = first channel (1-rel) in uv data to grid. Default = 1. \item \char`\"{}number\-Chann\char`\"{} OBIT\_\-long scalar = number of channels in uv data to grid. Default = all. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object to initialize \item[{\em UVin}]Uv data object to be gridded. Should be the same as passed to previous call to {\bf Obit\-UVGrid\-Setup}{\rm (p.\,\pageref{ObitUVGrid_8c_a18})} for input in. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} stack for reporting problems. \end{description}
+\end{Desc}
+\end{itemize}
+\index{ObitUVGrid.h@{Obit\-UVGrid.h}!ObitUVGridReadUVPar@{ObitUVGridReadUVPar}}
+\index{ObitUVGridReadUVPar@{ObitUVGridReadUVPar}!ObitUVGrid.h@{Obit\-UVGrid.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVGrid\-Read\-UVPar ({\bf olong} {\em n\-Par}, {\bf Obit\-UVGrid} $\ast$$\ast$ {\em in}, {\bf Obit\-UV} $\ast$$\ast$ {\em UVin}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVGrid_8h_a13}
+
+
+Public: Parallel read uv data accumulating to grid. 
+
+Buffering of data will use the buffers as defined on UVin (\char`\"{}n\-Vis\-PIO\char`\"{} in info member). The UVin object will be closed at the termination of this routine. Requires setup by \#Obit\-UVGrid\-Create. The gridding information should have been stored in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} on in[0]: \begin{itemize}
+\item \char`\"{}Guardband\char`\"{} OBIT\_\-float scalar = maximum fraction of U or v range allowed in grid. Default = 0.4. \item \char`\"{}Max\-Baseline\char`\"{} OBIT\_\-float scalar = maximum baseline length in wavelengths. Default = 1.0e15. \item \char`\"{}start\-Chann\char`\"{} OBIT\_\-long scalar = first channel (1-rel) in uv data to grid. Default = 1. \item \char`\"{}number\-Chann\char`\"{} OBIT\_\-long scalar = number of channels in uv data to grid. Default = all. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em n\-Par}]Number of parallel griddings \item[{\em in}]Array of objects to grid Each should be initialized by Obit\-UVGrid\-Setup To include beams, double n\-Par and set do\-Beam member on one of each pair. \item[{\em UVin}]Array of UV data objects to be gridded. Should be the same as passed to previous call to {\bf Obit\-UVGrid\-Setup}{\rm (p.\,\pageref{ObitUVGrid_8c_a18})} for input in element. MUST all point to same data set with same selection but possible different calibration. All but [0] should be closed. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} stack for reporting problems. \end{description}
+\end{Desc}
+\end{itemize}
+\index{ObitUVGrid.h@{Obit\-UVGrid.h}!ObitUVGridSetup@{ObitUVGridSetup}}
+\index{ObitUVGridSetup@{ObitUVGridSetup}!ObitUVGrid.h@{Obit\-UVGrid.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVGrid\-Setup ({\bf Obit\-UVGrid} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em UVin}, {\bf Obit\-Image\-Desc} $\ast$ {\em beam\-Desc}, {\bf Obit\-Image\-Desc} $\ast$ {\em image\-Desc}, gboolean {\em do\-Beam}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVGrid_8h_a11}
+
+
+Public: initialize/reset {\bf Obit\-UVGrid}{\rm (p.\,\pageref{structObitUVGrid})} structures. 
+
+Input data should be fully edited and calibrated, with any weighting applied and converted to the appropriate Stokes type. The object UVin will be opened during this call if it is not already open. The output image should describe the center, size and grid spacing of the desired image. The beam corresponding to each image should be made first using the same {\bf Obit\-UVGrid}{\rm (p.\,\pageref{structObitUVGrid})}. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object to initialize \item[{\em UVin}]Uv data object to be gridded. \item[{\em beam\-Desc}]Descriptor for beam to be derived. \item[{\em image\-Desc}]Descriptor for image to be derived. \item[{\em do\-Beam}]TRUE is this is a Beam. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} stack for reporting problems. \end{description}
+\end{Desc}

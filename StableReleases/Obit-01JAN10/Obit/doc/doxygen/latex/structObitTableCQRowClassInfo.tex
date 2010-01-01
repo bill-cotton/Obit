@@ -1,0 +1,169 @@
+\section{Obit\-Table\-CQRow\-Class\-Info Struct Reference}
+\label{structObitTableCQRowClassInfo}\index{ObitTableCQRowClassInfo@{ObitTableCQRowClassInfo}}
+Class\-Info Structure For Table\-CQRow.  
+
+
+{\tt \#include $<$Obit\-Table\-CQ.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gboolean {\bf initialized}
+\begin{CompactList}\small\item\em Have I been initialized? \item\end{CompactList}\item 
+gboolean {\bf has\-Scratch}
+\begin{CompactList}\small\item\em Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? \item\end{CompactList}\item 
+gchar $\ast$ {\bf Class\-Name}
+\begin{CompactList}\small\item\em Name of class (\char`\"{}Obit\char`\"{}). \item\end{CompactList}\item 
+gconstpointer {\bf Parent\-Class}
+\begin{CompactList}\small\item\em Pointer to parent class Class\-Info, Null if none. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Init\-FP} {\bf Obit\-Class\-Init}
+\begin{CompactList}\small\item\em Function pointer to Class initializer. \item\end{CompactList}\item 
+{\bf new\-Obit\-FP} {\bf new\-Obit}
+\begin{CompactList}\small\item\em Function pointer to new\-Obit. \item\end{CompactList}\item 
+{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Get\-Class}
+\begin{CompactList}\small\item\em Function pointer to Get\-Class. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-Class\-Info\-Def\-Fn}
+\begin{CompactList}\small\item\em Function pointer to Class\-Info\-Def\-Fn. \item\end{CompactList}\item 
+{\bf Obit\-Copy\-FP} {\bf Obit\-Copy}
+\begin{CompactList}\small\item\em Function pointer to shallow copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Clone\-FP} {\bf Obit\-Clone}
+\begin{CompactList}\small\item\em Function pointer to deep copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Ref\-FP} {\bf Obit\-Ref}
+\begin{CompactList}\small\item\em Function pointer to Object Ref. \item\end{CompactList}\item 
+{\bf Obit\-Unref\-FP} {\bf Obit\-Unref}
+\begin{CompactList}\small\item\em Function pointer to Object Unref. \item\end{CompactList}\item 
+{\bf Obit\-Is\-AFP} {\bf Obit\-Is\-A}
+\begin{CompactList}\small\item\em Function pointer to test if a class member. \item\end{CompactList}\item 
+{\bf Obit\-Clear\-FP} {\bf Obit\-Clear}
+\begin{CompactList}\small\item\em Function pointer to deallocation function. \item\end{CompactList}\item 
+{\bf Obit\-Init\-FP} {\bf Obit\-Init}
+\begin{CompactList}\small\item\em Function pointer to object initializer. \item\end{CompactList}\item 
+{\bf new\-Obit\-Table\-Row\-FP} {\bf new\-Obit\-Table\-Row}
+\begin{CompactList}\small\item\em Function pointer to creator. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Class\-Info Structure For Table\-CQRow. 
+
+Contains class name, a pointer to any parent class (NULL if none) and function pointers. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}!ClassName@{ClassName}}
+\index{ClassName@{ClassName}!ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-CQRow\-Class\-Info::Class\-Name}}\label{structObitTableCQRowClassInfo_o2}
+
+
+Name of class (\char`\"{}Obit\char`\"{}). 
+
+\index{ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}!hasScratch@{hasScratch}}
+\index{hasScratch@{hasScratch}!ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-CQRow\-Class\-Info::has\-Scratch}}\label{structObitTableCQRowClassInfo_o1}
+
+
+Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? 
+
+\index{ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}!initialized@{initialized}}
+\index{initialized@{initialized}!ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-CQRow\-Class\-Info::initialized}}\label{structObitTableCQRowClassInfo_o0}
+
+
+Have I been initialized? 
+
+\index{ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}!newObit@{newObit}}
+\index{newObit@{newObit}!ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-FP} {\bf Obit\-Table\-CQRow\-Class\-Info::new\-Obit}}\label{structObitTableCQRowClassInfo_o5}
+
+
+Function pointer to new\-Obit. 
+
+\index{ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}!newObitTableRow@{newObitTableRow}}
+\index{newObitTableRow@{newObitTableRow}!ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-Table\-Row\-FP} {\bf Obit\-Table\-CQRow\-Class\-Info::new\-Obit\-Table\-Row}}\label{structObitTableCQRowClassInfo_o15}
+
+
+Function pointer to creator. 
+
+\index{ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}!ObitClassInfoDefFn@{ObitClassInfoDefFn}}
+\index{ObitClassInfoDefFn@{ObitClassInfoDefFn}!ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-Table\-CQRow\-Class\-Info::Obit\-Class\-Info\-Def\-Fn}}\label{structObitTableCQRowClassInfo_o7}
+
+
+Function pointer to Class\-Info\-Def\-Fn. 
+
+\index{ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}!ObitClassInit@{ObitClassInit}}
+\index{ObitClassInit@{ObitClassInit}!ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Init\-FP} {\bf Obit\-Table\-CQRow\-Class\-Info::Obit\-Class\-Init}}\label{structObitTableCQRowClassInfo_o4}
+
+
+Function pointer to Class initializer. 
+
+\index{ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}!ObitClear@{ObitClear}}
+\index{ObitClear@{ObitClear}!ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clear\-FP} {\bf Obit\-Table\-CQRow\-Class\-Info::Obit\-Clear}}\label{structObitTableCQRowClassInfo_o13}
+
+
+Function pointer to deallocation function. 
+
+\index{ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}!ObitClone@{ObitClone}}
+\index{ObitClone@{ObitClone}!ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clone\-FP} {\bf Obit\-Table\-CQRow\-Class\-Info::Obit\-Clone}}\label{structObitTableCQRowClassInfo_o9}
+
+
+Function pointer to deep copy constructor. 
+
+\index{ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}!ObitCopy@{ObitCopy}}
+\index{ObitCopy@{ObitCopy}!ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Copy\-FP} {\bf Obit\-Table\-CQRow\-Class\-Info::Obit\-Copy}}\label{structObitTableCQRowClassInfo_o8}
+
+
+Function pointer to shallow copy constructor. 
+
+\index{ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}!ObitGetClass@{ObitGetClass}}
+\index{ObitGetClass@{ObitGetClass}!ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Table\-CQRow\-Class\-Info::Obit\-Get\-Class}}\label{structObitTableCQRowClassInfo_o6}
+
+
+Function pointer to Get\-Class. 
+
+\index{ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}!ObitInit@{ObitInit}}
+\index{ObitInit@{ObitInit}!ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Init\-FP} {\bf Obit\-Table\-CQRow\-Class\-Info::Obit\-Init}}\label{structObitTableCQRowClassInfo_o14}
+
+
+Function pointer to object initializer. 
+
+\index{ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}!ObitIsA@{ObitIsA}}
+\index{ObitIsA@{ObitIsA}!ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Is\-AFP} {\bf Obit\-Table\-CQRow\-Class\-Info::Obit\-Is\-A}}\label{structObitTableCQRowClassInfo_o12}
+
+
+Function pointer to test if a class member. 
+
+\index{ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}!ObitRef@{ObitRef}}
+\index{ObitRef@{ObitRef}!ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Ref\-FP} {\bf Obit\-Table\-CQRow\-Class\-Info::Obit\-Ref}}\label{structObitTableCQRowClassInfo_o10}
+
+
+Function pointer to Object Ref. 
+
+\index{ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}!ObitUnref@{ObitUnref}}
+\index{ObitUnref@{ObitUnref}!ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Unref\-FP} {\bf Obit\-Table\-CQRow\-Class\-Info::Obit\-Unref}}\label{structObitTableCQRowClassInfo_o11}
+
+
+Function pointer to Object Unref. 
+
+\index{ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}!ParentClass@{ParentClass}}
+\index{ParentClass@{ParentClass}!ObitTableCQRowClassInfo@{Obit\-Table\-CQRow\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer {\bf Obit\-Table\-CQRow\-Class\-Info::Parent\-Class}}\label{structObitTableCQRowClassInfo_o3}
+
+
+Pointer to parent class Class\-Info, Null if none. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-CQ.h}\end{CompactItemize}

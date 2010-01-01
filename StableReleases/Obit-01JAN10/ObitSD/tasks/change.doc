@@ -1,0 +1,36 @@
+Xsvn commit python/OTF.py python/OTFUtil.py -m "Fix documentation error in makeImage" \
+X    ../ObitView/src/scrolltext.c  ../ObitView/src/imagedisp.c \
+X         -m " Fix Dimension for 64 bit problem"
+X svn commit src/scrolltext.c  src/imagedisp.c \
+X        -m " Better Fix Dimension for 64 bit problem"
+
+X svn add \
+X     src/ObitTableGBTPARDATA2.c include/ObitTableGBTPARDATA2*.h \
+X     python/TableGBTPARDATA2.inc \
+X     src/ObitTableGBTQUADDETECTOR.c include/ObitTableGBTQUADDETECTOR*.h \
+X     python/TableGBTQUADDETECTOR.inc \
+X     include/ObitTableGBTPARSENSORUtil.h src/ObitTableGBTPARSENSORUtil.c \
+X     TDF/QuadDet.TDF tasks/QuadDet.c \
+
+X svn commit \
+X     src/ObitTableGBTPARDATA.c -m "Make CFGVALID optional" \
+X     bin/ObitSDTables.pl -m "Copyright date to 2009" \
+X     doc/ObitSD.tex -m "Add PARDATA2, GBTQUADDETECTOR tables" \
+X     src/ObitTableGBTPARDATA2.c include/ObitTableGBTPARDATA2*.h \
+X     python/TableGBTPARDATA2.inc \
+X     src/ObitTableGBTQUADDETECTOR.c include/ObitTableGBTQUADDETECTOR*.h \
+X     python/TableGBTQUADDETECTOR.inc \
+X     TDF/PAROTF2.TDF tasks/PAROTF2.c \
+X         -m "New GBT format " \
+X     include/ObitTableGBTPARSENSORUtil.h src/ObitTableGBTPARSENSORUtil.c \
+X         -m "Routine to get lookup table for detectors" \
+X     src/ObitOTFSoln2Cal.c -m "Modify to allow OTFSoln tables with only positions" \
+X     TDF/QuadDet.TDF tasks/QuadDet.c \
+X         -m "New task to read and process Quadrant detector output " \
+X svn commit \
+X     tasks/PAROTF2.c tasks/CCBOTF.c tasks/DCROTF.c \
+X         -m "GetPoint: return dec-90 if time out of range of table"
+X 
+X     ObitSD/python/OTF.py -m "ResidCal: Fix bug in test for no model given" \
+
+   ObitSD/src/ObitOTFGetSoln.c -m "Filter: double size of time stream and zero pad" \

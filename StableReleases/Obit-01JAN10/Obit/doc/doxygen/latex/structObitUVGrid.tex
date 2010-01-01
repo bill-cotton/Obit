@@ -1,0 +1,426 @@
+\section{Obit\-UVGrid Struct Reference}
+\label{structObitUVGrid}\index{ObitUVGrid@{ObitUVGrid}}
+Obit\-UVGrid Class structure.  
+
+
+{\tt \#include $<$Obit\-UVGrid.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf olong} {\bf conv\-Width}
+\begin{CompactList}\small\item\em Width of convolving kernel in cells. \item\end{CompactList}\item 
+{\bf olong} {\bf conv\-Nper\-Cell}
+\begin{CompactList}\small\item\em Number of of tabulated points per cell in convfn. \item\end{CompactList}\item 
+{\bf olong} {\bf icenx\-Beam}
+\begin{CompactList}\small\item\em Center pixel (1-rel) Beam. \item\end{CompactList}\item 
+{\bf olong} {\bf iceny\-Beam}
+\begin{CompactList}\small\item\em Center pixel (1-rel) Beam. \item\end{CompactList}\item 
+{\bf olong} {\bf icenx\-Image}
+\begin{CompactList}\small\item\em Center pixel (1-rel) Image. \item\end{CompactList}\item 
+{\bf olong} {\bf iceny\-Image}
+\begin{CompactList}\small\item\em Center pixel (1-rel) Image. \item\end{CompactList}\item 
+{\bf olong} {\bf nx\-Beam}
+\begin{CompactList}\small\item\em Size of beam plane (pixels). \item\end{CompactList}\item 
+{\bf olong} {\bf ny\-Beam}
+\begin{CompactList}\small\item\em Size of beam plane (pixels). \item\end{CompactList}\item 
+{\bf olong} {\bf nx\-Image}
+\begin{CompactList}\small\item\em Size of image plane (pixels). \item\end{CompactList}\item 
+{\bf olong} {\bf ny\-Image}
+\begin{CompactList}\small\item\em Size of image plane (pixels). \item\end{CompactList}\item 
+{\bf olong} {\bf start\-Chann}
+\begin{CompactList}\small\item\em Start channel (1-rel) in uv data to grid. \item\end{CompactList}\item 
+{\bf olong} {\bf number\-Chann}
+\item 
+{\bf ofloat} {\bf UScale}
+\begin{CompactList}\small\item\em Scaling from wavelength to cells for u, v, w at reference frequency. \item\end{CompactList}\item 
+{\bf ofloat} {\bf VScale}
+\begin{CompactList}\small\item\em Scaling from wavelength to cells for u, v, w at reference frequency. \item\end{CompactList}\item 
+{\bf ofloat} {\bf WScale}
+\begin{CompactList}\small\item\em Scaling from wavelength to cells for u, v, w at reference frequency. \item\end{CompactList}\item 
+{\bf ofloat} {\bf dxc}
+\begin{CompactList}\small\item\em -2pi$\ast$Position shift parameters for x, y,z \item\end{CompactList}\item 
+{\bf ofloat} {\bf dyc}
+\begin{CompactList}\small\item\em -2pi$\ast$Position shift parameters for x, y,z \item\end{CompactList}\item 
+{\bf ofloat} {\bf dzc}
+\begin{CompactList}\small\item\em -2pi$\ast$Position shift parameters for x, y,z \item\end{CompactList}\item 
+{\bf ofloat} {\bf rotate}
+\begin{CompactList}\small\item\em rotation to apply in imaging \item\end{CompactList}\item 
+{\bf ofloat} {\bf guardband}
+\begin{CompactList}\small\item\em guardband as fraction of the grid size \item\end{CompactList}\item 
+{\bf ofloat} {\bf blmax}
+\begin{CompactList}\small\item\em max, min baseline lengths (wavelengths) \item\end{CompactList}\item 
+{\bf ofloat} {\bf blmin}
+\begin{CompactList}\small\item\em max, min baseline lengths (wavelengths) \item\end{CompactList}\item 
+{\bf ofloat} {\bf Beam\-Norm}
+\begin{CompactList}\small\item\em Prenormalization peak of Beam, used to normalize images. \item\end{CompactList}\item 
+gboolean {\bf do\-Beam}
+\begin{CompactList}\small\item\em Is this to be a Beam image? \item\end{CompactList}\item 
+gboolean {\bf do3Dmul}
+\begin{CompactList}\small\item\em Need to apply 3D imaging rotations? \item\end{CompactList}\item 
+{\bf ofloat} {\bf URot3D} [3][3]
+\begin{CompactList}\small\item\em 3D rotation matrix for u,v,w \item\end{CompactList}\item 
+{\bf ofloat} {\bf PRot3D} [3][3]
+\begin{CompactList}\small\item\em 3D rotation matrix for x,y,z \item\end{CompactList}\item 
+{\bf Obit\-CArray} $\ast$ {\bf grid}
+\begin{CompactList}\small\item\em uvdata grid, typed as ofloat but complex as (real,imag) \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf convfn}
+\begin{CompactList}\small\item\em Gridding convolution table. \item\end{CompactList}\item 
+{\bf Obit\-FFT} $\ast$ {\bf FFTBeam}
+\begin{CompactList}\small\item\em {\bf Obit\-FFT}{\rm (p.\,\pageref{structObitFFT})} for making a beam. \item\end{CompactList}\item 
+{\bf Obit\-FFT} $\ast$ {\bf FFTImage}
+\begin{CompactList}\small\item\em {\bf Obit\-FFT}{\rm (p.\,\pageref{structObitFFT})} for making image. \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf x\-Corr\-Beam}
+\begin{CompactList}\small\item\em \char`\"{}X\char`\"{} gridding correction function for beam \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf y\-Corr\-Beam}
+\begin{CompactList}\small\item\em \char`\"{}Y\char`\"{} gridding correction function for beam \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf x\-Corr\-Image}
+\begin{CompactList}\small\item\em \char`\"{}X\char`\"{} gridding correction function for image \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf y\-Corr\-Image}
+\begin{CompactList}\small\item\em \char`\"{}Y\char`\"{} gridding correction function for image \item\end{CompactList}\item 
+{\bf olong} {\bf n\-Threads}
+\begin{CompactList}\small\item\em Number of threads (elements in thread\-Args). \item\end{CompactList}\item 
+gpointer $\ast$$\ast$ {\bf thread\-Args}
+\begin{CompactList}\small\item\em Array of FT Function structures. \item\end{CompactList}\item 
+{\bf Obit\-CArray} $\ast$$\ast$ {\bf work\-Grids}
+\begin{CompactList}\small\item\em n\-Threads-1 work gridding arrays \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-UVGrid Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitUVGrid@{Obit\-UVGrid}!BeamNorm@{BeamNorm}}
+\index{BeamNorm@{BeamNorm}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVGrid::Beam\-Norm}}\label{structObitUVGrid_o29}
+
+
+Prenormalization peak of Beam, used to normalize images. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!blmax@{blmax}}
+\index{blmax@{blmax}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVGrid::blmax}}\label{structObitUVGrid_o27}
+
+
+max, min baseline lengths (wavelengths) 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!blmin@{blmin}}
+\index{blmin@{blmin}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVGrid::blmin}}\label{structObitUVGrid_o28}
+
+
+max, min baseline lengths (wavelengths) 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-UVGrid::Class\-Info}}\label{structObitUVGrid_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!convfn@{convfn}}
+\index{convfn@{convfn}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-UVGrid::convfn}}\label{structObitUVGrid_o35}
+
+
+Gridding convolution table. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!convNperCell@{convNperCell}}
+\index{convNperCell@{convNperCell}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVGrid::conv\-Nper\-Cell}}\label{structObitUVGrid_o8}
+
+
+Number of of tabulated points per cell in convfn. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!convWidth@{convWidth}}
+\index{convWidth@{convWidth}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVGrid::conv\-Width}}\label{structObitUVGrid_o7}
+
+
+Width of convolving kernel in cells. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!do3Dmul@{do3Dmul}}
+\index{do3Dmul@{do3Dmul}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-UVGrid::do3Dmul}}\label{structObitUVGrid_o31}
+
+
+Need to apply 3D imaging rotations? 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!doBeam@{doBeam}}
+\index{doBeam@{doBeam}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-UVGrid::do\-Beam}}\label{structObitUVGrid_o30}
+
+
+Is this to be a Beam image? 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!dxc@{dxc}}
+\index{dxc@{dxc}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVGrid::dxc}}\label{structObitUVGrid_o22}
+
+
+-2pi$\ast$Position shift parameters for x, y,z 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!dyc@{dyc}}
+\index{dyc@{dyc}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVGrid::dyc}}\label{structObitUVGrid_o23}
+
+
+-2pi$\ast$Position shift parameters for x, y,z 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!dzc@{dzc}}
+\index{dzc@{dzc}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVGrid::dzc}}\label{structObitUVGrid_o24}
+
+
+-2pi$\ast$Position shift parameters for x, y,z 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!FFTBeam@{FFTBeam}}
+\index{FFTBeam@{FFTBeam}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FFT}$\ast$ {\bf Obit\-UVGrid::FFTBeam}}\label{structObitUVGrid_o36}
+
+
+{\bf Obit\-FFT}{\rm (p.\,\pageref{structObitFFT})} for making a beam. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!FFTImage@{FFTImage}}
+\index{FFTImage@{FFTImage}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FFT}$\ast$ {\bf Obit\-UVGrid::FFTImage}}\label{structObitUVGrid_o37}
+
+
+{\bf Obit\-FFT}{\rm (p.\,\pageref{structObitFFT})} for making image. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!grid@{grid}}
+\index{grid@{grid}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-CArray}$\ast$ {\bf Obit\-UVGrid::grid}}\label{structObitUVGrid_o34}
+
+
+uvdata grid, typed as ofloat but complex as (real,imag) 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!guardband@{guardband}}
+\index{guardband@{guardband}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVGrid::guardband}}\label{structObitUVGrid_o26}
+
+
+guardband as fraction of the grid size 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!icenxBeam@{icenxBeam}}
+\index{icenxBeam@{icenxBeam}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVGrid::icenx\-Beam}}\label{structObitUVGrid_o9}
+
+
+Center pixel (1-rel) Beam. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!icenxImage@{icenxImage}}
+\index{icenxImage@{icenxImage}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVGrid::icenx\-Image}}\label{structObitUVGrid_o11}
+
+
+Center pixel (1-rel) Image. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!icenyBeam@{icenyBeam}}
+\index{icenyBeam@{icenyBeam}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVGrid::iceny\-Beam}}\label{structObitUVGrid_o10}
+
+
+Center pixel (1-rel) Beam. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!icenyImage@{icenyImage}}
+\index{icenyImage@{icenyImage}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVGrid::iceny\-Image}}\label{structObitUVGrid_o12}
+
+
+Center pixel (1-rel) Image. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!info@{info}}
+\index{info@{info}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-UVGrid::info}}\label{structObitUVGrid_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-UVGrid::my\-Status}}\label{structObitUVGrid_o6}
+
+
+I/O status. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!name@{name}}
+\index{name@{name}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-UVGrid::name}}\label{structObitUVGrid_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!nThreads@{nThreads}}
+\index{nThreads@{nThreads}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVGrid::n\-Threads}}\label{structObitUVGrid_o42}
+
+
+Number of threads (elements in thread\-Args). 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!numberChann@{numberChann}}
+\index{numberChann@{numberChann}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVGrid::number\-Chann}}\label{structObitUVGrid_o18}
+
+
+\index{ObitUVGrid@{Obit\-UVGrid}!nxBeam@{nxBeam}}
+\index{nxBeam@{nxBeam}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVGrid::nx\-Beam}}\label{structObitUVGrid_o13}
+
+
+Size of beam plane (pixels). 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!nxImage@{nxImage}}
+\index{nxImage@{nxImage}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVGrid::nx\-Image}}\label{structObitUVGrid_o15}
+
+
+Size of image plane (pixels). 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!nyBeam@{nyBeam}}
+\index{nyBeam@{nyBeam}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVGrid::ny\-Beam}}\label{structObitUVGrid_o14}
+
+
+Size of beam plane (pixels). 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!nyImage@{nyImage}}
+\index{nyImage@{nyImage}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVGrid::ny\-Image}}\label{structObitUVGrid_o16}
+
+
+Size of image plane (pixels). 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-UVGrid::Obit\-Id}}\label{structObitUVGrid_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!PRot3D@{PRot3D}}
+\index{PRot3D@{PRot3D}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVGrid::PRot3D}[3][3]}\label{structObitUVGrid_o33}
+
+
+3D rotation matrix for x,y,z 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVGrid::Reference\-Count}}\label{structObitUVGrid_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!rotate@{rotate}}
+\index{rotate@{rotate}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVGrid::rotate}}\label{structObitUVGrid_o25}
+
+
+rotation to apply in imaging 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!startChann@{startChann}}
+\index{startChann@{startChann}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVGrid::start\-Chann}}\label{structObitUVGrid_o17}
+
+
+Start channel (1-rel) in uv data to grid. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!thread@{thread}}
+\index{thread@{thread}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-UVGrid::thread}}\label{structObitUVGrid_o4}
+
+
+Threading info member object. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!threadArgs@{threadArgs}}
+\index{threadArgs@{threadArgs}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer$\ast$$\ast$ {\bf Obit\-UVGrid::thread\-Args}}\label{structObitUVGrid_o43}
+
+
+Array of FT Function structures. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!URot3D@{URot3D}}
+\index{URot3D@{URot3D}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVGrid::URot3D}[3][3]}\label{structObitUVGrid_o32}
+
+
+3D rotation matrix for u,v,w 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!UScale@{UScale}}
+\index{UScale@{UScale}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVGrid::UScale}}\label{structObitUVGrid_o19}
+
+
+Scaling from wavelength to cells for u, v, w at reference frequency. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!VScale@{VScale}}
+\index{VScale@{VScale}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVGrid::VScale}}\label{structObitUVGrid_o20}
+
+
+Scaling from wavelength to cells for u, v, w at reference frequency. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!workGrids@{workGrids}}
+\index{workGrids@{workGrids}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-CArray}$\ast$$\ast$ {\bf Obit\-UVGrid::work\-Grids}}\label{structObitUVGrid_o44}
+
+
+n\-Threads-1 work gridding arrays 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!WScale@{WScale}}
+\index{WScale@{WScale}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVGrid::WScale}}\label{structObitUVGrid_o21}
+
+
+Scaling from wavelength to cells for u, v, w at reference frequency. 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!xCorrBeam@{xCorrBeam}}
+\index{xCorrBeam@{xCorrBeam}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-UVGrid::x\-Corr\-Beam}}\label{structObitUVGrid_o38}
+
+
+\char`\"{}X\char`\"{} gridding correction function for beam 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!xCorrImage@{xCorrImage}}
+\index{xCorrImage@{xCorrImage}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-UVGrid::x\-Corr\-Image}}\label{structObitUVGrid_o40}
+
+
+\char`\"{}X\char`\"{} gridding correction function for image 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!yCorrBeam@{yCorrBeam}}
+\index{yCorrBeam@{yCorrBeam}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-UVGrid::y\-Corr\-Beam}}\label{structObitUVGrid_o39}
+
+
+\char`\"{}Y\char`\"{} gridding correction function for beam 
+
+\index{ObitUVGrid@{Obit\-UVGrid}!yCorrImage@{yCorrImage}}
+\index{yCorrImage@{yCorrImage}!ObitUVGrid@{Obit\-UVGrid}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-UVGrid::y\-Corr\-Image}}\label{structObitUVGrid_o41}
+
+
+\char`\"{}Y\char`\"{} gridding correction function for image 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-UVGrid.h}\end{CompactItemize}

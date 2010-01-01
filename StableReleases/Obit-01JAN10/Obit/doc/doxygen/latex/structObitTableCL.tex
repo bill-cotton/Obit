@@ -1,0 +1,806 @@
+\section{Obit\-Table\-CL Struct Reference}
+\label{structObitTableCL}\index{ObitTableCL@{ObitTableCL}}
+Obit\-Table\-CL Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-CL.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-IO} $\ast$ {\bf my\-IO}
+\begin{CompactList}\small\item\em I/O interface to access disk resident data. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Desc} $\ast$ {\bf my\-Desc}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Sel} $\ast$ {\bf my\-Sel}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf buffer}
+\begin{CompactList}\small\item\em Table buffer. \item\end{CompactList}\item 
+{\bf olong} {\bf buffer\-Size}
+\begin{CompactList}\small\item\em Table buffer size in floats. \item\end{CompactList}\item 
+gchar $\ast$ {\bf tab\-Type}
+\begin{CompactList}\small\item\em Table type (name of type, e.g. \item\end{CompactList}\item 
+{\bf olong} {\bf tab\-Ver}
+\begin{CompactList}\small\item\em Table version number(1-rel). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf my\-Host}
+\begin{CompactList}\small\item\em This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. \item\end{CompactList}\item 
+{\bf oint} {\bf revision}
+\begin{CompactList}\small\item\em Revision number of the table definition. \item\end{CompactList}\item 
+{\bf oint} {\bf num\-Pol}
+\begin{CompactList}\small\item\em The number of polarizations. \item\end{CompactList}\item 
+{\bf oint} {\bf num\-IF}
+\begin{CompactList}\small\item\em The number of IFs. \item\end{CompactList}\item 
+{\bf oint} {\bf num\-Ant}
+\begin{CompactList}\small\item\em The number of antennas in table. \item\end{CompactList}\item 
+{\bf oint} {\bf num\-Term}
+\begin{CompactList}\small\item\em The number of terms in model polynomial. \item\end{CompactList}\item 
+{\bf odouble} {\bf m\-GMod}
+\begin{CompactList}\small\item\em The Mean Gain modulus. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-Off}
+\begin{CompactList}\small\item\em Column offset for The center time of the solution in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-Col}
+\begin{CompactList}\small\item\em Physical column number for The center time of the solution in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-IOff}
+\begin{CompactList}\small\item\em Column offset for Solution interval. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-ICol}
+\begin{CompactList}\small\item\em Physical column number for Solution interval. \item\end{CompactList}\item 
+{\bf olong} {\bf Sour\-IDOff}
+\begin{CompactList}\small\item\em Column offset for Source Identifier number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Sour\-IDCol}
+\begin{CompactList}\small\item\em Physical column number for Source Identifier number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf ant\-No\-Off}
+\begin{CompactList}\small\item\em Column offset for Antenna number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf ant\-No\-Col}
+\begin{CompactList}\small\item\em Physical column number for Antenna number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Sub\-AOff}
+\begin{CompactList}\small\item\em Column offset for Subarray number. \item\end{CompactList}\item 
+{\bf olong} {\bf Sub\-ACol}
+\begin{CompactList}\small\item\em Physical column number for Subarray number. \item\end{CompactList}\item 
+{\bf olong} {\bf Freq\-IDOff}
+\begin{CompactList}\small\item\em Column offset for Frequency ID in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Freq\-IDCol}
+\begin{CompactList}\small\item\em Physical column number for Frequency ID in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf IFROff}
+\begin{CompactList}\small\item\em Column offset for Ionospheric Faraday Rotation in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf IFRCol}
+\begin{CompactList}\small\item\em Physical column number for Ionospheric Faraday Rotation in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf atmos\-Off}
+\begin{CompactList}\small\item\em Column offset for Atmospheric delay in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf atmos\-Col}
+\begin{CompactList}\small\item\em Physical column number for Atmospheric delay in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Datmos\-Off}
+\begin{CompactList}\small\item\em Column offset for Time derivative of ATMOS in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Datmos\-Col}
+\begin{CompactList}\small\item\em Physical column number for Time derivative of ATMOS in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Geo\-Delay\-Off}
+\begin{CompactList}\small\item\em Column offset for Geometric delay polynomial series at TIME in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Geo\-Delay\-Col}
+\begin{CompactList}\small\item\em Physical column number for Geometric delay polynomial series at TIME in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Doppler\-Off\-Off}
+\begin{CompactList}\small\item\em Column offset for Doppler offset for each IF in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Doppler\-Off\-Col}
+\begin{CompactList}\small\item\em Physical column number for Doppler offset for each IF in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf MBDelay1Off}
+\begin{CompactList}\small\item\em Column offset for Multiband delay poln \# 1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf MBDelay1Col}
+\begin{CompactList}\small\item\em Physical column number for Multiband delay poln \# 1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf clock1Off}
+\begin{CompactList}\small\item\em Column offset for \char`\"{}Clock\char`\"{} epoch error in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf clock1Col}
+\begin{CompactList}\small\item\em Physical column number for \char`\"{}Clock\char`\"{} epoch error in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Dclock1Off}
+\begin{CompactList}\small\item\em Column offset for Time derivative of CLOCK in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Dclock1Col}
+\begin{CompactList}\small\item\em Physical column number for Time derivative of CLOCK in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf dispers1Off}
+\begin{CompactList}\small\item\em Column offset for Dispersive delay (sec at wavelength = 1m)for Poln \# 1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf dispers1Col}
+\begin{CompactList}\small\item\em Physical column number for Dispersive delay (sec at wavelength = 1m)for Poln \# 1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Ddispers1Off}
+\begin{CompactList}\small\item\em Column offset for Time derivative of DISPfor Poln \# 1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Ddispers1Col}
+\begin{CompactList}\small\item\em Physical column number for Time derivative of DISPfor Poln \# 1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Real1Off}
+\begin{CompactList}\small\item\em Column offset for Real (gain Poln \# 1 ) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Real1Col}
+\begin{CompactList}\small\item\em Physical column number for Real (gain Poln \# 1 ) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Imag1Off}
+\begin{CompactList}\small\item\em Column offset for Imaginary (gain Poln \# 1) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Imag1Col}
+\begin{CompactList}\small\item\em Physical column number for Imaginary (gain Poln \# 1) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Rate1Off}
+\begin{CompactList}\small\item\em Column offset for Residual fringe rate Poln \# 1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Rate1Col}
+\begin{CompactList}\small\item\em Physical column number for Residual fringe rate Poln \# 1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Delay1Off}
+\begin{CompactList}\small\item\em Column offset for Residual group delay Poln \# 1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Delay1Col}
+\begin{CompactList}\small\item\em Physical column number for Residual group delay Poln \# 1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Weight1Off}
+\begin{CompactList}\small\item\em Column offset for Weight of soln. \item\end{CompactList}\item 
+{\bf olong} {\bf Weight1Col}
+\begin{CompactList}\small\item\em Physical column number for Weight of soln. \item\end{CompactList}\item 
+{\bf olong} {\bf Ref\-Ant1Off}
+\begin{CompactList}\small\item\em Column offset for Reference antenna Poln \# 1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Ref\-Ant1Col}
+\begin{CompactList}\small\item\em Physical column number for Reference antenna Poln \# 1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf MBDelay2Off}
+\begin{CompactList}\small\item\em Column offset for Multiband delay poln \# 2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf MBDelay2Col}
+\begin{CompactList}\small\item\em Physical column number for Multiband delay poln \# 2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf clock2Off}
+\begin{CompactList}\small\item\em Column offset for \char`\"{}Clock\char`\"{} epoch error in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf clock2Col}
+\begin{CompactList}\small\item\em Physical column number for \char`\"{}Clock\char`\"{} epoch error in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Dclock2Off}
+\begin{CompactList}\small\item\em Column offset for Time derivative of CLOCK in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Dclock2Col}
+\begin{CompactList}\small\item\em Physical column number for Time derivative of CLOCK in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf dispers2Off}
+\begin{CompactList}\small\item\em Column offset for Dispersive delay (sec at wavelength = 1m)for Poln \# 2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf dispers2Col}
+\begin{CompactList}\small\item\em Physical column number for Dispersive delay (sec at wavelength = 1m)for Poln \# 2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Ddispers2Off}
+\begin{CompactList}\small\item\em Column offset for Time derivative of DISPfor Poln \# 2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Ddispers2Col}
+\begin{CompactList}\small\item\em Physical column number for Time derivative of DISPfor Poln \# 2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Real2Off}
+\begin{CompactList}\small\item\em Column offset for Real (gain Poln \# 2 ) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Real2Col}
+\begin{CompactList}\small\item\em Physical column number for Real (gain Poln \# 2 ) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Imag2Off}
+\begin{CompactList}\small\item\em Column offset for Imaginary (gain Poln \# 2) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Imag2Col}
+\begin{CompactList}\small\item\em Physical column number for Imaginary (gain Poln \# 2) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Rate2Off}
+\begin{CompactList}\small\item\em Column offset for Residual fringe rate Poln \# 2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Rate2Col}
+\begin{CompactList}\small\item\em Physical column number for Residual fringe rate Poln \# 2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Delay2Off}
+\begin{CompactList}\small\item\em Column offset for Residual group delay Poln \# 2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Delay2Col}
+\begin{CompactList}\small\item\em Physical column number for Residual group delay Poln \# 2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Weight2Off}
+\begin{CompactList}\small\item\em Column offset for Weight of soln. \item\end{CompactList}\item 
+{\bf olong} {\bf Weight2Col}
+\begin{CompactList}\small\item\em Physical column number for Weight of soln. \item\end{CompactList}\item 
+{\bf olong} {\bf Ref\-Ant2Off}
+\begin{CompactList}\small\item\em Column offset for Reference antenna Poln \# 2 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Ref\-Ant2Col}
+\begin{CompactList}\small\item\em Physical column number for Reference antenna Poln \# 2 in table record. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-CL Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableCL@{Obit\-Table\-CL}!antNoCol@{antNoCol}}
+\index{antNoCol@{antNoCol}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::ant\-No\-Col}}\label{structObitTableCL_o28}
+
+
+Physical column number for Antenna number in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!antNoOff@{antNoOff}}
+\index{antNoOff@{antNoOff}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::ant\-No\-Off}}\label{structObitTableCL_o27}
+
+
+Column offset for Antenna number in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!atmosCol@{atmosCol}}
+\index{atmosCol@{atmosCol}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::atmos\-Col}}\label{structObitTableCL_o36}
+
+
+Physical column number for Atmospheric delay in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!atmosOff@{atmosOff}}
+\index{atmosOff@{atmosOff}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::atmos\-Off}}\label{structObitTableCL_o35}
+
+
+Column offset for Atmospheric delay in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!buffer@{buffer}}
+\index{buffer@{buffer}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-CL::buffer}}\label{structObitTableCL_o10}
+
+
+Table buffer. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!bufferSize@{bufferSize}}
+\index{bufferSize@{bufferSize}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::buffer\-Size}}\label{structObitTableCL_o11}
+
+
+Table buffer size in floats. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-CL::Class\-Info}}\label{structObitTableCL_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!clock1Col@{clock1Col}}
+\index{clock1Col@{clock1Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::clock1Col}}\label{structObitTableCL_o46}
+
+
+Physical column number for \char`\"{}Clock\char`\"{} epoch error in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!clock1Off@{clock1Off}}
+\index{clock1Off@{clock1Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::clock1Off}}\label{structObitTableCL_o45}
+
+
+Column offset for \char`\"{}Clock\char`\"{} epoch error in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!clock2Col@{clock2Col}}
+\index{clock2Col@{clock2Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::clock2Col}}\label{structObitTableCL_o68}
+
+
+Physical column number for \char`\"{}Clock\char`\"{} epoch error in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!clock2Off@{clock2Off}}
+\index{clock2Off@{clock2Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::clock2Off}}\label{structObitTableCL_o67}
+
+
+Column offset for \char`\"{}Clock\char`\"{} epoch error in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!DatmosCol@{DatmosCol}}
+\index{DatmosCol@{DatmosCol}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Datmos\-Col}}\label{structObitTableCL_o38}
+
+
+Physical column number for Time derivative of ATMOS in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!DatmosOff@{DatmosOff}}
+\index{DatmosOff@{DatmosOff}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Datmos\-Off}}\label{structObitTableCL_o37}
+
+
+Column offset for Time derivative of ATMOS in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Dclock1Col@{Dclock1Col}}
+\index{Dclock1Col@{Dclock1Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Dclock1Col}}\label{structObitTableCL_o48}
+
+
+Physical column number for Time derivative of CLOCK in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Dclock1Off@{Dclock1Off}}
+\index{Dclock1Off@{Dclock1Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Dclock1Off}}\label{structObitTableCL_o47}
+
+
+Column offset for Time derivative of CLOCK in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Dclock2Col@{Dclock2Col}}
+\index{Dclock2Col@{Dclock2Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Dclock2Col}}\label{structObitTableCL_o70}
+
+
+Physical column number for Time derivative of CLOCK in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Dclock2Off@{Dclock2Off}}
+\index{Dclock2Off@{Dclock2Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Dclock2Off}}\label{structObitTableCL_o69}
+
+
+Column offset for Time derivative of CLOCK in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Ddispers1Col@{Ddispers1Col}}
+\index{Ddispers1Col@{Ddispers1Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Ddispers1Col}}\label{structObitTableCL_o52}
+
+
+Physical column number for Time derivative of DISPfor Poln \# 1 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Ddispers1Off@{Ddispers1Off}}
+\index{Ddispers1Off@{Ddispers1Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Ddispers1Off}}\label{structObitTableCL_o51}
+
+
+Column offset for Time derivative of DISPfor Poln \# 1 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Ddispers2Col@{Ddispers2Col}}
+\index{Ddispers2Col@{Ddispers2Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Ddispers2Col}}\label{structObitTableCL_o74}
+
+
+Physical column number for Time derivative of DISPfor Poln \# 2 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Ddispers2Off@{Ddispers2Off}}
+\index{Ddispers2Off@{Ddispers2Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Ddispers2Off}}\label{structObitTableCL_o73}
+
+
+Column offset for Time derivative of DISPfor Poln \# 2 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Delay1Col@{Delay1Col}}
+\index{Delay1Col@{Delay1Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Delay1Col}}\label{structObitTableCL_o60}
+
+
+Physical column number for Residual group delay Poln \# 1 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Delay1Off@{Delay1Off}}
+\index{Delay1Off@{Delay1Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Delay1Off}}\label{structObitTableCL_o59}
+
+
+Column offset for Residual group delay Poln \# 1 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Delay2Col@{Delay2Col}}
+\index{Delay2Col@{Delay2Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Delay2Col}}\label{structObitTableCL_o82}
+
+
+Physical column number for Residual group delay Poln \# 2 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Delay2Off@{Delay2Off}}
+\index{Delay2Off@{Delay2Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Delay2Off}}\label{structObitTableCL_o81}
+
+
+Column offset for Residual group delay Poln \# 2 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!dispers1Col@{dispers1Col}}
+\index{dispers1Col@{dispers1Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::dispers1Col}}\label{structObitTableCL_o50}
+
+
+Physical column number for Dispersive delay (sec at wavelength = 1m)for Poln \# 1 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!dispers1Off@{dispers1Off}}
+\index{dispers1Off@{dispers1Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::dispers1Off}}\label{structObitTableCL_o49}
+
+
+Column offset for Dispersive delay (sec at wavelength = 1m)for Poln \# 1 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!dispers2Col@{dispers2Col}}
+\index{dispers2Col@{dispers2Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::dispers2Col}}\label{structObitTableCL_o72}
+
+
+Physical column number for Dispersive delay (sec at wavelength = 1m)for Poln \# 2 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!dispers2Off@{dispers2Off}}
+\index{dispers2Off@{dispers2Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::dispers2Off}}\label{structObitTableCL_o71}
+
+
+Column offset for Dispersive delay (sec at wavelength = 1m)for Poln \# 2 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!DopplerOffCol@{DopplerOffCol}}
+\index{DopplerOffCol@{DopplerOffCol}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Doppler\-Off\-Col}}\label{structObitTableCL_o42}
+
+
+Physical column number for Doppler offset for each IF in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!DopplerOffOff@{DopplerOffOff}}
+\index{DopplerOffOff@{DopplerOffOff}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Doppler\-Off\-Off}}\label{structObitTableCL_o41}
+
+
+Column offset for Doppler offset for each IF in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!FreqIDCol@{FreqIDCol}}
+\index{FreqIDCol@{FreqIDCol}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Freq\-IDCol}}\label{structObitTableCL_o32}
+
+
+Physical column number for Frequency ID in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!FreqIDOff@{FreqIDOff}}
+\index{FreqIDOff@{FreqIDOff}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Freq\-IDOff}}\label{structObitTableCL_o31}
+
+
+Column offset for Frequency ID in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!GeoDelayCol@{GeoDelayCol}}
+\index{GeoDelayCol@{GeoDelayCol}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Geo\-Delay\-Col}}\label{structObitTableCL_o40}
+
+
+Physical column number for Geometric delay polynomial series at TIME in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!GeoDelayOff@{GeoDelayOff}}
+\index{GeoDelayOff@{GeoDelayOff}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Geo\-Delay\-Off}}\label{structObitTableCL_o39}
+
+
+Column offset for Geometric delay polynomial series at TIME in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!IFRCol@{IFRCol}}
+\index{IFRCol@{IFRCol}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::IFRCol}}\label{structObitTableCL_o34}
+
+
+Physical column number for Ionospheric Faraday Rotation in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!IFROff@{IFROff}}
+\index{IFROff@{IFROff}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::IFROff}}\label{structObitTableCL_o33}
+
+
+Column offset for Ionospheric Faraday Rotation in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Imag1Col@{Imag1Col}}
+\index{Imag1Col@{Imag1Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Imag1Col}}\label{structObitTableCL_o56}
+
+
+Physical column number for Imaginary (gain Poln \# 1) in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Imag1Off@{Imag1Off}}
+\index{Imag1Off@{Imag1Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Imag1Off}}\label{structObitTableCL_o55}
+
+
+Column offset for Imaginary (gain Poln \# 1) in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Imag2Col@{Imag2Col}}
+\index{Imag2Col@{Imag2Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Imag2Col}}\label{structObitTableCL_o78}
+
+
+Physical column number for Imaginary (gain Poln \# 2) in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Imag2Off@{Imag2Off}}
+\index{Imag2Off@{Imag2Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Imag2Off}}\label{structObitTableCL_o77}
+
+
+Column offset for Imaginary (gain Poln \# 2) in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!info@{info}}
+\index{info@{info}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Table\-CL::info}}\label{structObitTableCL_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!MBDelay1Col@{MBDelay1Col}}
+\index{MBDelay1Col@{MBDelay1Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::MBDelay1Col}}\label{structObitTableCL_o44}
+
+
+Physical column number for Multiband delay poln \# 1 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!MBDelay1Off@{MBDelay1Off}}
+\index{MBDelay1Off@{MBDelay1Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::MBDelay1Off}}\label{structObitTableCL_o43}
+
+
+Column offset for Multiband delay poln \# 1 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!MBDelay2Col@{MBDelay2Col}}
+\index{MBDelay2Col@{MBDelay2Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::MBDelay2Col}}\label{structObitTableCL_o66}
+
+
+Physical column number for Multiband delay poln \# 2 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!MBDelay2Off@{MBDelay2Off}}
+\index{MBDelay2Off@{MBDelay2Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::MBDelay2Off}}\label{structObitTableCL_o65}
+
+
+Column offset for Multiband delay poln \# 2 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!mGMod@{mGMod}}
+\index{mGMod@{mGMod}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-CL::m\-GMod}}\label{structObitTableCL_o20}
+
+
+The Mean Gain modulus. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Desc}$\ast$ {\bf Obit\-Table\-CL::my\-Desc}}\label{structObitTableCL_o8}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!myHost@{myHost}}
+\index{myHost@{myHost}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-Table\-CL::my\-Host}}\label{structObitTableCL_o14}
+
+
+This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!myIO@{myIO}}
+\index{myIO@{myIO}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IO}$\ast$ {\bf Obit\-Table\-CL::my\-IO}}\label{structObitTableCL_o7}
+
+
+I/O interface to access disk resident data. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Sel}$\ast$ {\bf Obit\-Table\-CL::my\-Sel}}\label{structObitTableCL_o9}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Table\-CL::my\-Status}}\label{structObitTableCL_o6}
+
+
+I/O status. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!name@{name}}
+\index{name@{name}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-CL::name}}\label{structObitTableCL_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!numAnt@{numAnt}}
+\index{numAnt@{numAnt}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-CL::num\-Ant}}\label{structObitTableCL_o18}
+
+
+The number of antennas in table. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!numIF@{numIF}}
+\index{numIF@{numIF}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-CL::num\-IF}}\label{structObitTableCL_o17}
+
+
+The number of IFs. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!numPol@{numPol}}
+\index{numPol@{numPol}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-CL::num\-Pol}}\label{structObitTableCL_o16}
+
+
+The number of polarizations. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!numTerm@{numTerm}}
+\index{numTerm@{numTerm}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-CL::num\-Term}}\label{structObitTableCL_o19}
+
+
+The number of terms in model polynomial. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-CL::Obit\-Id}}\label{structObitTableCL_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Rate1Col@{Rate1Col}}
+\index{Rate1Col@{Rate1Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Rate1Col}}\label{structObitTableCL_o58}
+
+
+Physical column number for Residual fringe rate Poln \# 1 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Rate1Off@{Rate1Off}}
+\index{Rate1Off@{Rate1Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Rate1Off}}\label{structObitTableCL_o57}
+
+
+Column offset for Residual fringe rate Poln \# 1 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Rate2Col@{Rate2Col}}
+\index{Rate2Col@{Rate2Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Rate2Col}}\label{structObitTableCL_o80}
+
+
+Physical column number for Residual fringe rate Poln \# 2 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Rate2Off@{Rate2Off}}
+\index{Rate2Off@{Rate2Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Rate2Off}}\label{structObitTableCL_o79}
+
+
+Column offset for Residual fringe rate Poln \# 2 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Real1Col@{Real1Col}}
+\index{Real1Col@{Real1Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Real1Col}}\label{structObitTableCL_o54}
+
+
+Physical column number for Real (gain Poln \# 1 ) in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Real1Off@{Real1Off}}
+\index{Real1Off@{Real1Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Real1Off}}\label{structObitTableCL_o53}
+
+
+Column offset for Real (gain Poln \# 1 ) in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Real2Col@{Real2Col}}
+\index{Real2Col@{Real2Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Real2Col}}\label{structObitTableCL_o76}
+
+
+Physical column number for Real (gain Poln \# 2 ) in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Real2Off@{Real2Off}}
+\index{Real2Off@{Real2Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Real2Off}}\label{structObitTableCL_o75}
+
+
+Column offset for Real (gain Poln \# 2 ) in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!RefAnt1Col@{RefAnt1Col}}
+\index{RefAnt1Col@{RefAnt1Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Ref\-Ant1Col}}\label{structObitTableCL_o64}
+
+
+Physical column number for Reference antenna Poln \# 1 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!RefAnt1Off@{RefAnt1Off}}
+\index{RefAnt1Off@{RefAnt1Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Ref\-Ant1Off}}\label{structObitTableCL_o63}
+
+
+Column offset for Reference antenna Poln \# 1 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!RefAnt2Col@{RefAnt2Col}}
+\index{RefAnt2Col@{RefAnt2Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Ref\-Ant2Col}}\label{structObitTableCL_o86}
+
+
+Physical column number for Reference antenna Poln \# 2 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!RefAnt2Off@{RefAnt2Off}}
+\index{RefAnt2Off@{RefAnt2Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Ref\-Ant2Off}}\label{structObitTableCL_o85}
+
+
+Column offset for Reference antenna Poln \# 2 in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Reference\-Count}}\label{structObitTableCL_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!revision@{revision}}
+\index{revision@{revision}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-CL::revision}}\label{structObitTableCL_o15}
+
+
+Revision number of the table definition. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!SourIDCol@{SourIDCol}}
+\index{SourIDCol@{SourIDCol}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Sour\-IDCol}}\label{structObitTableCL_o26}
+
+
+Physical column number for Source Identifier number in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!SourIDOff@{SourIDOff}}
+\index{SourIDOff@{SourIDOff}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Sour\-IDOff}}\label{structObitTableCL_o25}
+
+
+Column offset for Source Identifier number in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!SubACol@{SubACol}}
+\index{SubACol@{SubACol}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Sub\-ACol}}\label{structObitTableCL_o30}
+
+
+Physical column number for Subarray number. 
+
+in table record \index{ObitTableCL@{Obit\-Table\-CL}!SubAOff@{SubAOff}}
+\index{SubAOff@{SubAOff}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Sub\-AOff}}\label{structObitTableCL_o29}
+
+
+Column offset for Subarray number. 
+
+in table record \index{ObitTableCL@{Obit\-Table\-CL}!tabType@{tabType}}
+\index{tabType@{tabType}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-CL::tab\-Type}}\label{structObitTableCL_o12}
+
+
+Table type (name of type, e.g. 
+
+\char`\"{}AIPS AN\char`\"{}) \index{ObitTableCL@{Obit\-Table\-CL}!tabVer@{tabVer}}
+\index{tabVer@{tabVer}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::tab\-Ver}}\label{structObitTableCL_o13}
+
+
+Table version number(1-rel). 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!thread@{thread}}
+\index{thread@{thread}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Table\-CL::thread}}\label{structObitTableCL_o4}
+
+
+Threading info member object. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!TimeCol@{TimeCol}}
+\index{TimeCol@{TimeCol}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Time\-Col}}\label{structObitTableCL_o22}
+
+
+Physical column number for The center time of the solution in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!TimeICol@{TimeICol}}
+\index{TimeICol@{TimeICol}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Time\-ICol}}\label{structObitTableCL_o24}
+
+
+Physical column number for Solution interval. 
+
+in table record \index{ObitTableCL@{Obit\-Table\-CL}!TimeIOff@{TimeIOff}}
+\index{TimeIOff@{TimeIOff}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Time\-IOff}}\label{structObitTableCL_o23}
+
+
+Column offset for Solution interval. 
+
+in table record \index{ObitTableCL@{Obit\-Table\-CL}!TimeOff@{TimeOff}}
+\index{TimeOff@{TimeOff}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Time\-Off}}\label{structObitTableCL_o21}
+
+
+Column offset for The center time of the solution in table record. 
+
+\index{ObitTableCL@{Obit\-Table\-CL}!Weight1Col@{Weight1Col}}
+\index{Weight1Col@{Weight1Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Weight1Col}}\label{structObitTableCL_o62}
+
+
+Physical column number for Weight of soln. 
+
+Poln \# 1 in table record \index{ObitTableCL@{Obit\-Table\-CL}!Weight1Off@{Weight1Off}}
+\index{Weight1Off@{Weight1Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Weight1Off}}\label{structObitTableCL_o61}
+
+
+Column offset for Weight of soln. 
+
+Poln \# 1 in table record \index{ObitTableCL@{Obit\-Table\-CL}!Weight2Col@{Weight2Col}}
+\index{Weight2Col@{Weight2Col}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Weight2Col}}\label{structObitTableCL_o84}
+
+
+Physical column number for Weight of soln. 
+
+Poln \# 2 in table record \index{ObitTableCL@{Obit\-Table\-CL}!Weight2Off@{Weight2Off}}
+\index{Weight2Off@{Weight2Off}!ObitTableCL@{Obit\-Table\-CL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CL::Weight2Off}}\label{structObitTableCL_o83}
+
+
+Column offset for Weight of soln. 
+
+Poln \# 2 in table record 
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-CL.h}\end{CompactItemize}

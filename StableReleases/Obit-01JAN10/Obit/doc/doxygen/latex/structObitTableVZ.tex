@@ -1,0 +1,248 @@
+\section{Obit\-Table\-VZ Struct Reference}
+\label{structObitTableVZ}\index{ObitTableVZ@{ObitTableVZ}}
+Obit\-Table\-VZ Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-VZ.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-IO} $\ast$ {\bf my\-IO}
+\begin{CompactList}\small\item\em I/O interface to access disk resident data. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Desc} $\ast$ {\bf my\-Desc}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Sel} $\ast$ {\bf my\-Sel}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf buffer}
+\begin{CompactList}\small\item\em Table buffer. \item\end{CompactList}\item 
+{\bf olong} {\bf buffer\-Size}
+\begin{CompactList}\small\item\em Table buffer size in floats. \item\end{CompactList}\item 
+gchar $\ast$ {\bf tab\-Type}
+\begin{CompactList}\small\item\em Table type (name of type, e.g. \item\end{CompactList}\item 
+{\bf olong} {\bf tab\-Ver}
+\begin{CompactList}\small\item\em Table version number(1-rel). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf my\-Host}
+\begin{CompactList}\small\item\em This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. \item\end{CompactList}\item 
+{\bf oint} {\bf revision}
+\begin{CompactList}\small\item\em Revision number of the table definition. \item\end{CompactList}\item 
+{\bf odouble} {\bf ref\-Freq}
+\begin{CompactList}\small\item\em The Reference frequency. \item\end{CompactList}\item 
+{\bf olong} {\bf Ra2000Off}
+\begin{CompactList}\small\item\em Column offset for RA (J2000) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Ra2000Col}
+\begin{CompactList}\small\item\em Physical column number for RA (J2000) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Dec2000Off}
+\begin{CompactList}\small\item\em Column offset for Dec (J2000) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Dec2000Col}
+\begin{CompactList}\small\item\em Physical column number for Dec (J2000) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Peak\-Int\-Off}
+\begin{CompactList}\small\item\em Column offset for Peak Ipol in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Peak\-Int\-Col}
+\begin{CompactList}\small\item\em Physical column number for Peak Ipol in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Quality\-Off}
+\begin{CompactList}\small\item\em Column offset for Quality (crowding) measure, 0=$>$ best, higher worse in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Quality\-Col}
+\begin{CompactList}\small\item\em Physical column number for Quality (crowding) measure, 0=$>$ best, higher worse in table record. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-VZ Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableVZ@{Obit\-Table\-VZ}!buffer@{buffer}}
+\index{buffer@{buffer}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-VZ::buffer}}\label{structObitTableVZ_o10}
+
+
+Table buffer. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!bufferSize@{bufferSize}}
+\index{bufferSize@{bufferSize}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VZ::buffer\-Size}}\label{structObitTableVZ_o11}
+
+
+Table buffer size in floats. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-VZ::Class\-Info}}\label{structObitTableVZ_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!Dec2000Col@{Dec2000Col}}
+\index{Dec2000Col@{Dec2000Col}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VZ::Dec2000Col}}\label{structObitTableVZ_o20}
+
+
+Physical column number for Dec (J2000) in table record. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!Dec2000Off@{Dec2000Off}}
+\index{Dec2000Off@{Dec2000Off}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VZ::Dec2000Off}}\label{structObitTableVZ_o19}
+
+
+Column offset for Dec (J2000) in table record. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!info@{info}}
+\index{info@{info}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Table\-VZ::info}}\label{structObitTableVZ_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Desc}$\ast$ {\bf Obit\-Table\-VZ::my\-Desc}}\label{structObitTableVZ_o8}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!myHost@{myHost}}
+\index{myHost@{myHost}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-Table\-VZ::my\-Host}}\label{structObitTableVZ_o14}
+
+
+This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!myIO@{myIO}}
+\index{myIO@{myIO}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IO}$\ast$ {\bf Obit\-Table\-VZ::my\-IO}}\label{structObitTableVZ_o7}
+
+
+I/O interface to access disk resident data. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Sel}$\ast$ {\bf Obit\-Table\-VZ::my\-Sel}}\label{structObitTableVZ_o9}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Table\-VZ::my\-Status}}\label{structObitTableVZ_o6}
+
+
+I/O status. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!name@{name}}
+\index{name@{name}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-VZ::name}}\label{structObitTableVZ_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-VZ::Obit\-Id}}\label{structObitTableVZ_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!PeakIntCol@{PeakIntCol}}
+\index{PeakIntCol@{PeakIntCol}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VZ::Peak\-Int\-Col}}\label{structObitTableVZ_o22}
+
+
+Physical column number for Peak Ipol in table record. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!PeakIntOff@{PeakIntOff}}
+\index{PeakIntOff@{PeakIntOff}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VZ::Peak\-Int\-Off}}\label{structObitTableVZ_o21}
+
+
+Column offset for Peak Ipol in table record. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!QualityCol@{QualityCol}}
+\index{QualityCol@{QualityCol}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VZ::Quality\-Col}}\label{structObitTableVZ_o24}
+
+
+Physical column number for Quality (crowding) measure, 0=$>$ best, higher worse in table record. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!QualityOff@{QualityOff}}
+\index{QualityOff@{QualityOff}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VZ::Quality\-Off}}\label{structObitTableVZ_o23}
+
+
+Column offset for Quality (crowding) measure, 0=$>$ best, higher worse in table record. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!Ra2000Col@{Ra2000Col}}
+\index{Ra2000Col@{Ra2000Col}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VZ::Ra2000Col}}\label{structObitTableVZ_o18}
+
+
+Physical column number for RA (J2000) in table record. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!Ra2000Off@{Ra2000Off}}
+\index{Ra2000Off@{Ra2000Off}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VZ::Ra2000Off}}\label{structObitTableVZ_o17}
+
+
+Column offset for RA (J2000) in table record. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VZ::Reference\-Count}}\label{structObitTableVZ_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!refFreq@{refFreq}}
+\index{refFreq@{refFreq}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-VZ::ref\-Freq}}\label{structObitTableVZ_o16}
+
+
+The Reference frequency. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!revision@{revision}}
+\index{revision@{revision}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VZ::revision}}\label{structObitTableVZ_o15}
+
+
+Revision number of the table definition. 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!tabType@{tabType}}
+\index{tabType@{tabType}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-VZ::tab\-Type}}\label{structObitTableVZ_o12}
+
+
+Table type (name of type, e.g. 
+
+\char`\"{}AIPS AN\char`\"{}) \index{ObitTableVZ@{Obit\-Table\-VZ}!tabVer@{tabVer}}
+\index{tabVer@{tabVer}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VZ::tab\-Ver}}\label{structObitTableVZ_o13}
+
+
+Table version number(1-rel). 
+
+\index{ObitTableVZ@{Obit\-Table\-VZ}!thread@{thread}}
+\index{thread@{thread}!ObitTableVZ@{Obit\-Table\-VZ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Table\-VZ::thread}}\label{structObitTableVZ_o4}
+
+
+Threading info member object. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-VZ.h}\end{CompactItemize}

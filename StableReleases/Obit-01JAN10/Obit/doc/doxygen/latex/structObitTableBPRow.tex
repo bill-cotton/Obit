@@ -1,0 +1,230 @@
+\section{Obit\-Table\-BPRow Struct Reference}
+\label{structObitTableBPRow}\index{ObitTableBPRow@{ObitTableBPRow}}
+Obit\-Table\-BPRow Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-BP.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf my\-Table}
+\begin{CompactList}\small\item\em Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. \item\end{CompactList}\item 
+gpointer {\bf my\-Row\-Data}
+\begin{CompactList}\small\item\em Pointer to row data in buffer (never g\_\-free this). \item\end{CompactList}\item 
+{\bf odouble} {\bf Time}
+\begin{CompactList}\small\item\em The center time. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Time\-I}
+\begin{CompactList}\small\item\em Time interval of record. \item\end{CompactList}\item 
+{\bf oint} {\bf Sour\-ID}
+\begin{CompactList}\small\item\em Source ID number. \item\end{CompactList}\item 
+{\bf oint} {\bf Sub\-A}
+\begin{CompactList}\small\item\em Subarray number. \item\end{CompactList}\item 
+{\bf oint} {\bf ant\-No}
+\begin{CompactList}\small\item\em Antenna number. \item\end{CompactList}\item 
+{\bf ofloat} {\bf BW}
+\begin{CompactList}\small\item\em andwidth of an individual channel \item\end{CompactList}\item 
+{\bf oint} {\bf Freq\-ID}
+\begin{CompactList}\small\item\em Freq. \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf Chan\-Shift}
+\begin{CompactList}\small\item\em Frequency shift for each IF. \item\end{CompactList}\item 
+{\bf oint} {\bf Ref\-Ant1}
+\begin{CompactList}\small\item\em Reference Antenna. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Weight1}
+\begin{CompactList}\small\item\em Weights for complex bandpass. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Real1}
+\begin{CompactList}\small\item\em Real (channel gain Poln \# 1 ). \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Imag1}
+\begin{CompactList}\small\item\em Imaginary (channel gain Poln \# 1). \item\end{CompactList}\item 
+{\bf oint} {\bf Ref\-Ant2}
+\begin{CompactList}\small\item\em Reference Antenna. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Weight2}
+\begin{CompactList}\small\item\em Weights for complex bandpass. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Real2}
+\begin{CompactList}\small\item\em Real (channel gain Poln \# 2 ). \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Imag2}
+\begin{CompactList}\small\item\em Imaginary (channel gain Poln \# 2). \item\end{CompactList}\item 
+{\bf olong} {\bf status}
+\begin{CompactList}\small\item\em status 0=normal, 1=modified, -1=flagged \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-BPRow Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!antNo@{antNo}}
+\index{antNo@{antNo}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-BPRow::ant\-No}}\label{structObitTableBPRow_o10}
+
+
+Antenna number. 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!BW@{BW}}
+\index{BW@{BW}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-BPRow::BW}}\label{structObitTableBPRow_o11}
+
+
+andwidth of an individual channel 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!ChanShift@{ChanShift}}
+\index{ChanShift@{ChanShift}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-Table\-BPRow::Chan\-Shift}}\label{structObitTableBPRow_o13}
+
+
+Frequency shift for each IF. 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-BPRow::Class\-Info}}\label{structObitTableBPRow_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!FreqID@{FreqID}}
+\index{FreqID@{FreqID}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-BPRow::Freq\-ID}}\label{structObitTableBPRow_o12}
+
+
+Freq. 
+
+id number \index{ObitTableBPRow@{Obit\-Table\-BPRow}!Imag1@{Imag1}}
+\index{Imag1@{Imag1}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-BPRow::Imag1}}\label{structObitTableBPRow_o17}
+
+
+Imaginary (channel gain Poln \# 1). 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!Imag2@{Imag2}}
+\index{Imag2@{Imag2}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-BPRow::Imag2}}\label{structObitTableBPRow_o21}
+
+
+Imaginary (channel gain Poln \# 2). 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!myRowData@{myRowData}}
+\index{myRowData@{myRowData}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-BPRow::my\-Row\-Data}}\label{structObitTableBPRow_o5}
+
+
+Pointer to row data in buffer (never g\_\-free this). 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!myTable@{myTable}}
+\index{myTable@{myTable}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ {\bf Obit\-Table\-BPRow::my\-Table}}\label{structObitTableBPRow_o4}
+
+
+Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!name@{name}}
+\index{name@{name}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-BPRow::name}}\label{structObitTableBPRow_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-BPRow::Obit\-Id}}\label{structObitTableBPRow_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!Real1@{Real1}}
+\index{Real1@{Real1}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-BPRow::Real1}}\label{structObitTableBPRow_o16}
+
+
+Real (channel gain Poln \# 1 ). 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!Real2@{Real2}}
+\index{Real2@{Real2}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-BPRow::Real2}}\label{structObitTableBPRow_o20}
+
+
+Real (channel gain Poln \# 2 ). 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!RefAnt1@{RefAnt1}}
+\index{RefAnt1@{RefAnt1}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-BPRow::Ref\-Ant1}}\label{structObitTableBPRow_o14}
+
+
+Reference Antenna. 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!RefAnt2@{RefAnt2}}
+\index{RefAnt2@{RefAnt2}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-BPRow::Ref\-Ant2}}\label{structObitTableBPRow_o18}
+
+
+Reference Antenna. 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-BPRow::Reference\-Count}}\label{structObitTableBPRow_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!SourID@{SourID}}
+\index{SourID@{SourID}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-BPRow::Sour\-ID}}\label{structObitTableBPRow_o8}
+
+
+Source ID number. 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!status@{status}}
+\index{status@{status}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-BPRow::status}}\label{structObitTableBPRow_o22}
+
+
+status 0=normal, 1=modified, -1=flagged 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!SubA@{SubA}}
+\index{SubA@{SubA}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-BPRow::Sub\-A}}\label{structObitTableBPRow_o9}
+
+
+Subarray number. 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!Time@{Time}}
+\index{Time@{Time}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-BPRow::Time}}\label{structObitTableBPRow_o6}
+
+
+The center time. 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!TimeI@{TimeI}}
+\index{TimeI@{TimeI}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-BPRow::Time\-I}}\label{structObitTableBPRow_o7}
+
+
+Time interval of record. 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!Weight1@{Weight1}}
+\index{Weight1@{Weight1}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-BPRow::Weight1}}\label{structObitTableBPRow_o15}
+
+
+Weights for complex bandpass. 
+
+\index{ObitTableBPRow@{Obit\-Table\-BPRow}!Weight2@{Weight2}}
+\index{Weight2@{Weight2}!ObitTableBPRow@{Obit\-Table\-BPRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-BPRow::Weight2}}\label{structObitTableBPRow_o19}
+
+
+Weights for complex bandpass. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-BP.h}\end{CompactItemize}

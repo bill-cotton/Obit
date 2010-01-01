@@ -1,0 +1,197 @@
+\section{Obit\-Image\-Interp.c File Reference}
+\label{ObitImageInterp_8c}\index{ObitImageInterp.c@{ObitImageInterp.c}}
+{\bf Obit\-Image\-Interp}{\rm (p.\,\pageref{structObitImageInterp})} class function definitions. 
+
+{\tt \#include \char`\"{}Obit\-Image\-Desc.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Interp.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-FInterpolate.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Thread.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Util.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Position.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Image\-Interp\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Interp\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Interp} $\ast$ {\bf new\-Obit\-Image\-Interp} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Image\-Interp\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Interp} $\ast$ {\bf Obit\-Image\-Interp\-Copy} ({\bf Obit\-Image\-Interp} $\ast$in, {\bf Obit\-Image\-Interp} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Interp\-Clone} ({\bf Obit\-Image\-Interp} $\ast$in, {\bf Obit\-Image\-Interp} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Interp} $\ast$ {\bf Obit\-Image\-Interp\-Create} (gchar $\ast$name, {\bf Obit\-Image} $\ast$image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-Image\-Interp}{\rm (p.\,\pageref{structObitImageInterp})} structures. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Obit\-Image\-Interp\-Value} ({\bf Obit\-Image\-Interp} $\ast$in, {\bf odouble} RA, {\bf odouble} Dec, {\bf ofloat} Angle, {\bf olong} plane, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get pixel value at a position. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Obit\-Image\-Interp\-Value\-Int} ({\bf Obit\-Image\-Interp} $\ast$in, {\bf Obit\-FInterpolate} $\ast$interp, {\bf odouble} RA, {\bf odouble} Dec, {\bf ofloat} Angle, {\bf olong} plane, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get beam value providing interpolator. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-Image\-Interp\-Find\-Plane} ({\bf Obit\-Image\-Interp} $\ast$in, {\bf odouble} freq)
+\begin{CompactList}\small\item\em Public: Lookup plane for frequency. \item\end{CompactList}\item 
+{\bf Obit\-FInterpolate} $\ast$ {\bf Obit\-Image\-Interp\-Clone\-Interp} ({\bf Obit\-Image\-Interp} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get clone of interpolator. \item\end{CompactList}\item 
+void {\bf Obit\-Image\-Interp\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Image\-Interp}{\rm (p.\,\pageref{structObitImageInterp})} class function definitions. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} base class.
+
+{\bf Obit\-Image\-Interp}{\rm (p.\,\pageref{structObitImageInterp})} Class to nterpolate pixel values in images
+
+\subsection{Function Documentation}
+\index{ObitImageInterp.c@{Obit\-Image\-Interp.c}!newObitImageInterp@{newObitImageInterp}}
+\index{newObitImageInterp@{newObitImageInterp}!ObitImageInterp.c@{Obit\-Image\-Interp.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Interp}$\ast$ new\-Obit\-Image\-Interp (gchar $\ast$ {\em name})}\label{ObitImageInterp_8c_a7}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitImageInterp.c@{Obit\-Image\-Interp.c}!ObitImageInterpClassInit@{ObitImageInterpClassInit}}
+\index{ObitImageInterpClassInit@{ObitImageInterpClassInit}!ObitImageInterp.c@{Obit\-Image\-Interp.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Interp\-Class\-Init (void)}\label{ObitImageInterp_8c_a16}
+
+
+Public: Class initializer. 
+
+\index{ObitImageInterp.c@{Obit\-Image\-Interp.c}!ObitImageInterpClear@{ObitImageInterpClear}}
+\index{ObitImageInterpClear@{ObitImageInterpClear}!ObitImageInterp.c@{Obit\-Image\-Interp.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Interp\-Clear (gpointer {\em inn})}\label{ObitImageInterp_8c_a4}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-Image\-Interp$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitImageInterp.c@{Obit\-Image\-Interp.c}!ObitImageInterpClone@{ObitImageInterpClone}}
+\index{ObitImageInterpClone@{ObitImageInterpClone}!ObitImageInterp.c@{Obit\-Image\-Interp.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Interp\-Clone ({\bf Obit\-Image\-Interp} $\ast$ {\em in}, {\bf Obit\-Image\-Interp} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImageInterp_8c_a10}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitImageInterp.c@{Obit\-Image\-Interp.c}!ObitImageInterpCloneInterp@{ObitImageInterpCloneInterp}}
+\index{ObitImageInterpCloneInterp@{ObitImageInterpCloneInterp}!ObitImageInterp.c@{Obit\-Image\-Interp.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FInterpolate}$\ast$ Obit\-Image\-Interp\-Clone\-Interp ({\bf Obit\-Image\-Interp} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImageInterp_8c_a15}
+
+
+Public: Get clone of interpolator. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object to whose interpolator to clone \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]interpolator, Unref wnen done \end{Desc}
+\index{ObitImageInterp.c@{Obit\-Image\-Interp.c}!ObitImageInterpCopy@{ObitImageInterpCopy}}
+\index{ObitImageInterpCopy@{ObitImageInterpCopy}!ObitImageInterp.c@{Obit\-Image\-Interp.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Interp}$\ast$ Obit\-Image\-Interp\-Copy ({\bf Obit\-Image\-Interp} $\ast$ {\em in}, {\bf Obit\-Image\-Interp} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImageInterp_8c_a9}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitImageInterp.c@{Obit\-Image\-Interp.c}!ObitImageInterpCreate@{ObitImageInterpCreate}}
+\index{ObitImageInterpCreate@{ObitImageInterpCreate}!ObitImageInterp.c@{Obit\-Image\-Interp.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Interp}$\ast$ Obit\-Image\-Interp\-Create (gchar $\ast$ {\em name}, {\bf Obit\-Image} $\ast$ {\em image}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImageInterp_8c_a11}
+
+
+Public: Create/initialize {\bf Obit\-Image\-Interp}{\rm (p.\,\pageref{structObitImageInterp})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em image}]Image from which to derive object \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitImageInterp.c@{Obit\-Image\-Interp.c}!ObitImageInterpFindPlane@{ObitImageInterpFindPlane}}
+\index{ObitImageInterpFindPlane@{ObitImageInterpFindPlane}!ObitImageInterp.c@{Obit\-Image\-Interp.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-Image\-Interp\-Find\-Plane ({\bf Obit\-Image\-Interp} $\ast$ {\em in}, {\bf odouble} {\em freq})}\label{ObitImageInterp_8c_a14}
+
+
+Public: Lookup plane for frequency. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object to interpolate \item[{\em freq}]Frequency (Ha) to lookup \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]closest 0-rel plane number \end{Desc}
+\index{ObitImageInterp.c@{Obit\-Image\-Interp.c}!ObitImageInterpGetClass@{ObitImageInterpGetClass}}
+\index{ObitImageInterpGetClass@{ObitImageInterpGetClass}!ObitImageInterp.c@{Obit\-Image\-Interp.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Image\-Interp\-Get\-Class (void)}\label{ObitImageInterp_8c_a8}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitImageInterp.c@{Obit\-Image\-Interp.c}!ObitImageInterpInit@{ObitImageInterpInit}}
+\index{ObitImageInterpInit@{ObitImageInterpInit}!ObitImageInterp.c@{Obit\-Image\-Interp.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Image\-Interp\-Init (gpointer {\em inn})}\label{ObitImageInterp_8c_a3}
+
+
+Private: Initialize newly instantiated object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitImageInterp.c@{Obit\-Image\-Interp.c}!ObitImageInterpValue@{ObitImageInterpValue}}
+\index{ObitImageInterpValue@{ObitImageInterpValue}!ObitImageInterp.c@{Obit\-Image\-Interp.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} Obit\-Image\-Interp\-Value ({\bf Obit\-Image\-Interp} $\ast$ {\em in}, {\bf odouble} {\em RA}, {\bf odouble} {\em Dec}, {\bf ofloat} {\em Angle}, {\bf olong} {\em plane}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImageInterp_8c_a12}
+
+
+Public: Get pixel value at a position. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object to interpolate \item[{\em RA}]Right Ascension desired (deg) @ std. equinox \item[{\em Dec}]Declination deg) desired @ std. equinox \item[{\em Angle}](Parallactic) Angle to rotate image (deg) \item[{\em plane}]Image plane 0-rel (frequency) to use Can be obtained from Obit\-Image\-Interp\-Find\-Plane \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]interpolated beam value - may be fblank \end{Desc}
+\index{ObitImageInterp.c@{Obit\-Image\-Interp.c}!ObitImageInterpValueInt@{ObitImageInterpValueInt}}
+\index{ObitImageInterpValueInt@{ObitImageInterpValueInt}!ObitImageInterp.c@{Obit\-Image\-Interp.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} Obit\-Image\-Interp\-Value\-Int ({\bf Obit\-Image\-Interp} $\ast$ {\em in}, {\bf Obit\-FInterpolate} $\ast$ {\em interp}, {\bf odouble} {\em RA}, {\bf odouble} {\em Dec}, {\bf ofloat} {\em Angle}, {\bf olong} {\em plane}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitImageInterp_8c_a13}
+
+
+Public: Get beam value providing interpolator. 
+
+Locks in-$>$thread for multithreading Use this routine for best multi-threaded performance and in most useful for interpolating beam images (x=azimuth, y=elevation) \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object to interpolate \item[{\em interp}]Interpolator \item[{\em RA}]X or Right Ascension desired (deg) @ std. equinox \item[{\em Dec}]Y or Declination deg) desired @ std. equinox \item[{\em Angle}](Parallactic) Angle to rotate (deg) \item[{\em plane}]Image plane 0-rel (frequency) to use Can be obtained from Obit\-Image\-Interp\-Find\-Plane \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]interpolated beam value - may be fblank \end{Desc}

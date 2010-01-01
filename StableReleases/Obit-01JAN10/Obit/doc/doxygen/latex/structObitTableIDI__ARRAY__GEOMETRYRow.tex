@@ -1,0 +1,149 @@
+\section{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow Struct Reference}
+\label{structObitTableIDI__ARRAY__GEOMETRYRow}\index{ObitTableIDI_ARRAY_GEOMETRYRow@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYRow}}
+Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf my\-Table}
+\begin{CompactList}\small\item\em Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. \item\end{CompactList}\item 
+gpointer {\bf my\-Row\-Data}
+\begin{CompactList}\small\item\em Pointer to row data in buffer (never g\_\-free this). \item\end{CompactList}\item 
+{\bf oint} {\bf no\-Sta}
+\begin{CompactList}\small\item\em Station number, used as an index in other tables, uv data. \item\end{CompactList}\item 
+{\bf oint} {\bf mnt\-Sta}
+\begin{CompactList}\small\item\em Mount type, 0=altaz, 1=equatorial, 2=orbiting, 3=dipole. \item\end{CompactList}\item 
+gchar $\ast$ {\bf Ant\-Name}
+\begin{CompactList}\small\item\em Station name. \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf Sta\-XYZ}
+\begin{CompactList}\small\item\em X,Y,Z offset from array center. \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf der\-XYZ}
+\begin{CompactList}\small\item\em look this up \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf Orb\-Parm}
+\begin{CompactList}\small\item\em Orbital parameters. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf sta\-Xof}
+\begin{CompactList}\small\item\em Axis offset (in 3D???). \item\end{CompactList}\item 
+{\bf olong} {\bf status}
+\begin{CompactList}\small\item\em status 0=normal, 1=modified, -1=flagged \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}!AntName@{AntName}}
+\index{AntName@{AntName}!ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow::Ant\-Name}}\label{structObitTableIDI__ARRAY__GEOMETRYRow_o8}
+
+
+Station name. 
+
+\index{ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow::Class\-Info}}\label{structObitTableIDI__ARRAY__GEOMETRYRow_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}!derXYZ@{derXYZ}}
+\index{derXYZ@{derXYZ}!ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow::der\-XYZ}}\label{structObitTableIDI__ARRAY__GEOMETRYRow_o10}
+
+
+look this up 
+
+\index{ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}!mntSta@{mntSta}}
+\index{mntSta@{mntSta}!ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow::mnt\-Sta}}\label{structObitTableIDI__ARRAY__GEOMETRYRow_o7}
+
+
+Mount type, 0=altaz, 1=equatorial, 2=orbiting, 3=dipole. 
+
+\index{ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}!myRowData@{myRowData}}
+\index{myRowData@{myRowData}!ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow::my\-Row\-Data}}\label{structObitTableIDI__ARRAY__GEOMETRYRow_o5}
+
+
+Pointer to row data in buffer (never g\_\-free this). 
+
+\index{ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}!myTable@{myTable}}
+\index{myTable@{myTable}!ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow::my\-Table}}\label{structObitTableIDI__ARRAY__GEOMETRYRow_o4}
+
+
+Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. 
+
+\index{ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}!name@{name}}
+\index{name@{name}!ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow::name}}\label{structObitTableIDI__ARRAY__GEOMETRYRow_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}!noSta@{noSta}}
+\index{noSta@{noSta}!ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow::no\-Sta}}\label{structObitTableIDI__ARRAY__GEOMETRYRow_o6}
+
+
+Station number, used as an index in other tables, uv data. 
+
+\index{ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow::Obit\-Id}}\label{structObitTableIDI__ARRAY__GEOMETRYRow_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}!OrbParm@{OrbParm}}
+\index{OrbParm@{OrbParm}!ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow::Orb\-Parm}}\label{structObitTableIDI__ARRAY__GEOMETRYRow_o11}
+
+
+Orbital parameters. 
+
+\index{ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow::Reference\-Count}}\label{structObitTableIDI__ARRAY__GEOMETRYRow_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}!status@{status}}
+\index{status@{status}!ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow::status}}\label{structObitTableIDI__ARRAY__GEOMETRYRow_o13}
+
+
+status 0=normal, 1=modified, -1=flagged 
+
+\index{ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}!staXof@{staXof}}
+\index{staXof@{staXof}!ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow::sta\-Xof}}\label{structObitTableIDI__ARRAY__GEOMETRYRow_o12}
+
+
+Axis offset (in 3D???). 
+
+\index{ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}!StaXYZ@{StaXYZ}}
+\index{StaXYZ@{StaXYZ}!ObitTableIDI_ARRAY_GEOMETRYRow@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow::Sta\-XYZ}}\label{structObitTableIDI__ARRAY__GEOMETRYRow_o9}
+
+
+X,Y,Z offset from array center. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}\end{CompactItemize}

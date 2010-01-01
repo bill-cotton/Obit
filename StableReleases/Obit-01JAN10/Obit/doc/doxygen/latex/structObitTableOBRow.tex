@@ -1,0 +1,158 @@
+\section{Obit\-Table\-OBRow Struct Reference}
+\label{structObitTableOBRow}\index{ObitTableOBRow@{ObitTableOBRow}}
+Obit\-Table\-OBRow Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-OB.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf my\-Table}
+\begin{CompactList}\small\item\em Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. \item\end{CompactList}\item 
+gpointer {\bf my\-Row\-Data}
+\begin{CompactList}\small\item\em Pointer to row data in buffer (never g\_\-free this). \item\end{CompactList}\item 
+{\bf oint} {\bf antenna\-No}
+\begin{CompactList}\small\item\em Antenna number. \item\end{CompactList}\item 
+{\bf oint} {\bf Sub\-A}
+\begin{CompactList}\small\item\em Subarray number. \item\end{CompactList}\item 
+{\bf odouble} {\bf Time}
+\begin{CompactList}\small\item\em The center time. \item\end{CompactList}\item 
+{\bf ofloat} {\bf orientation}
+\begin{CompactList}\small\item\em ORIENTATION. \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf orb\-XYZ}
+\begin{CompactList}\small\item\em Obital position. \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf vel\-XYZ}
+\begin{CompactList}\small\item\em Orbital velocity. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf sun\-Angle}
+\begin{CompactList}\small\item\em Relative position of the Sun. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf eclipse}
+\begin{CompactList}\small\item\em ECLIPSE. \item\end{CompactList}\item 
+{\bf olong} {\bf status}
+\begin{CompactList}\small\item\em status 0=normal, 1=modified, -1=flagged \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-OBRow Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableOBRow@{Obit\-Table\-OBRow}!antennaNo@{antennaNo}}
+\index{antennaNo@{antennaNo}!ObitTableOBRow@{Obit\-Table\-OBRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-OBRow::antenna\-No}}\label{structObitTableOBRow_o6}
+
+
+Antenna number. 
+
+\index{ObitTableOBRow@{Obit\-Table\-OBRow}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableOBRow@{Obit\-Table\-OBRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-OBRow::Class\-Info}}\label{structObitTableOBRow_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableOBRow@{Obit\-Table\-OBRow}!eclipse@{eclipse}}
+\index{eclipse@{eclipse}!ObitTableOBRow@{Obit\-Table\-OBRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-OBRow::eclipse}}\label{structObitTableOBRow_o13}
+
+
+ECLIPSE. 
+
+\index{ObitTableOBRow@{Obit\-Table\-OBRow}!myRowData@{myRowData}}
+\index{myRowData@{myRowData}!ObitTableOBRow@{Obit\-Table\-OBRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-OBRow::my\-Row\-Data}}\label{structObitTableOBRow_o5}
+
+
+Pointer to row data in buffer (never g\_\-free this). 
+
+\index{ObitTableOBRow@{Obit\-Table\-OBRow}!myTable@{myTable}}
+\index{myTable@{myTable}!ObitTableOBRow@{Obit\-Table\-OBRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ {\bf Obit\-Table\-OBRow::my\-Table}}\label{structObitTableOBRow_o4}
+
+
+Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. 
+
+\index{ObitTableOBRow@{Obit\-Table\-OBRow}!name@{name}}
+\index{name@{name}!ObitTableOBRow@{Obit\-Table\-OBRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-OBRow::name}}\label{structObitTableOBRow_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableOBRow@{Obit\-Table\-OBRow}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableOBRow@{Obit\-Table\-OBRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-OBRow::Obit\-Id}}\label{structObitTableOBRow_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableOBRow@{Obit\-Table\-OBRow}!orbXYZ@{orbXYZ}}
+\index{orbXYZ@{orbXYZ}!ObitTableOBRow@{Obit\-Table\-OBRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-Table\-OBRow::orb\-XYZ}}\label{structObitTableOBRow_o10}
+
+
+Obital position. 
+
+\index{ObitTableOBRow@{Obit\-Table\-OBRow}!orientation@{orientation}}
+\index{orientation@{orientation}!ObitTableOBRow@{Obit\-Table\-OBRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-OBRow::orientation}}\label{structObitTableOBRow_o9}
+
+
+ORIENTATION. 
+
+\index{ObitTableOBRow@{Obit\-Table\-OBRow}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableOBRow@{Obit\-Table\-OBRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OBRow::Reference\-Count}}\label{structObitTableOBRow_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableOBRow@{Obit\-Table\-OBRow}!status@{status}}
+\index{status@{status}!ObitTableOBRow@{Obit\-Table\-OBRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OBRow::status}}\label{structObitTableOBRow_o14}
+
+
+status 0=normal, 1=modified, -1=flagged 
+
+\index{ObitTableOBRow@{Obit\-Table\-OBRow}!SubA@{SubA}}
+\index{SubA@{SubA}!ObitTableOBRow@{Obit\-Table\-OBRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-OBRow::Sub\-A}}\label{structObitTableOBRow_o7}
+
+
+Subarray number. 
+
+\index{ObitTableOBRow@{Obit\-Table\-OBRow}!sunAngle@{sunAngle}}
+\index{sunAngle@{sunAngle}!ObitTableOBRow@{Obit\-Table\-OBRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-OBRow::sun\-Angle}}\label{structObitTableOBRow_o12}
+
+
+Relative position of the Sun. 
+
+\index{ObitTableOBRow@{Obit\-Table\-OBRow}!Time@{Time}}
+\index{Time@{Time}!ObitTableOBRow@{Obit\-Table\-OBRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-OBRow::Time}}\label{structObitTableOBRow_o8}
+
+
+The center time. 
+
+\index{ObitTableOBRow@{Obit\-Table\-OBRow}!velXYZ@{velXYZ}}
+\index{velXYZ@{velXYZ}!ObitTableOBRow@{Obit\-Table\-OBRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-Table\-OBRow::vel\-XYZ}}\label{structObitTableOBRow_o11}
+
+
+Orbital velocity. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-OB.h}\end{CompactItemize}

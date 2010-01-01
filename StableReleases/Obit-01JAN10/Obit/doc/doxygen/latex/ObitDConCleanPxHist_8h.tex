@@ -1,0 +1,158 @@
+\section{Obit\-DCon\-Clean\-Px\-Hist.h File Reference}
+\label{ObitDConCleanPxHist_8h}\index{ObitDConCleanPxHist.h@{ObitDConCleanPxHist.h}}
+{\bf Obit\-DCon\-Clean\-Px\-Hist}{\rm (p.\,\pageref{structObitDConCleanPxHist})} CLEAN image pixel histogram class. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Mosaic.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-DCon\-Clean\-Window.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-DCon\-Clean\-Px\-Hist}
+\begin{CompactList}\small\item\em Obit\-DCon\-Clean\-Px\-Hist Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-DCon\-Clean\-Px\-Hist\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-DCon\-Clean\-Px\-Hist\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-DCon\-Clean\-Px\-Hist}{\rm (p.\,\pageref{structObitDConCleanPxHist})} returns a Obit\-DCon\-Clean\-Px\-Hist$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-DCon\-Clean\-Px\-Hist\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-DCon\-Clean\-Px\-Hist}{\rm (p.\,\pageref{structObitDConCleanPxHist})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-DCon\-Clean\-Px\-Hist\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-DCon\-Clean\-Px\-Hist\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-DCon\-Clean\-Px\-Hist\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Px\-Hist} $\ast$ {\bf new\-Obit\-DCon\-Clean\-Px\-Hist} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-DCon\-Clean\-Px\-Hist\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Px\-Hist} $\ast$ {\bf Obit\-DCon\-Clean\-Px\-Hist\-Copy} ({\bf Obit\-DCon\-Clean\-Px\-Hist} $\ast$in, {\bf Obit\-DCon\-Clean\-Px\-Hist} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Px\-Hist\-Clone} ({\bf Obit\-DCon\-Clean\-Px\-Hist} $\ast$in, {\bf Obit\-DCon\-Clean\-Px\-Hist} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Px\-Hist\-Update} ({\bf Obit\-DCon\-Clean\-Px\-Hist} $\ast$in, {\bf olong} field, {\bf olong} $\ast$plane, {\bf Obit\-Image\-Mosaic} $\ast$mosaic, {\bf Obit\-DCon\-Clean\-Window} $\ast$window, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Update with new image and window. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-DCon\-Clean\-Px\-Hist\-Number} ({\bf Obit\-DCon\-Clean\-Px\-Hist} $\ast$in, {\bf ofloat} value, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Tell how many pixels are larger than a given abs. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-DCon\-Clean\-Px\-Hist}{\rm (p.\,\pageref{structObitDConCleanPxHist})} CLEAN image pixel histogram class. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} class.\subsection{Creators and Destructors}\label{ObitDConCleanPxHist_8h_ObitDConCleanPxHistaccess}
+An {\bf Obit\-DCon\-Clean\-Px\-Hist}{\rm (p.\,\pageref{structObitDConCleanPxHist})} will usually be created using Obit\-DCon\-Clean\-Px\-Hist\-Create which allows specifying a name for the object as well as other information.
+
+A copy of a pointer to an {\bf Obit\-DCon\-Clean\-Px\-Hist}{\rm (p.\,\pageref{structObitDConCleanPxHist})} should always be made using the {\bf Obit\-DCon\-Clean\-Px\-Hist\-Ref}{\rm (p.\,\pageref{ObitDConCleanPxHist_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-DCon\-Clean\-Px\-Hist}{\rm (p.\,\pageref{structObitDConCleanPxHist})} or changing a pointer, the function {\bf Obit\-DCon\-Clean\-Px\-Hist\-Unref}{\rm (p.\,\pageref{ObitDConCleanPxHist_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.
+
+\subsection{Define Documentation}
+\index{ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}!ObitDConCleanPxHistIsA@{ObitDConCleanPxHistIsA}}
+\index{ObitDConCleanPxHistIsA@{ObitDConCleanPxHistIsA}!ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-DCon\-Clean\-Px\-Hist\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-DCon\-Clean\-Px\-Hist\-Get\-Class())}\label{ObitDConCleanPxHist_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}!ObitDConCleanPxHistRef@{ObitDConCleanPxHistRef}}
+\index{ObitDConCleanPxHistRef@{ObitDConCleanPxHistRef}!ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-DCon\-Clean\-Px\-Hist\-Ref(in)\ Obit\-Ref (in)}\label{ObitDConCleanPxHist_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-DCon\-Clean\-Px\-Hist}{\rm (p.\,\pageref{structObitDConCleanPxHist})}. 
+
+returns a Obit\-DCon\-Clean\-Px\-Hist$\ast$. in = object to reference \index{ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}!ObitDConCleanPxHistUnref@{ObitDConCleanPxHistUnref}}
+\index{ObitDConCleanPxHistUnref@{ObitDConCleanPxHistUnref}!ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-DCon\-Clean\-Px\-Hist\-Unref(in)\ Obit\-Unref (in)}\label{ObitDConCleanPxHist_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-DCon\-Clean\-Px\-Hist}{\rm (p.\,\pageref{structObitDConCleanPxHist})} returns a Obit\-DCon\-Clean\-Px\-Hist$\ast$. 
+
+in = object to unreference 
+
+\subsection{Function Documentation}
+\index{ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}!newObitDConCleanPxHist@{newObitDConCleanPxHist}}
+\index{newObitDConCleanPxHist@{newObitDConCleanPxHist}!ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Px\-Hist}$\ast$ new\-Obit\-DCon\-Clean\-Px\-Hist (gchar $\ast$ {\em name})}\label{ObitDConCleanPxHist_8h_a4}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}!ObitDConCleanPxHistClassInit@{ObitDConCleanPxHistClassInit}}
+\index{ObitDConCleanPxHistClassInit@{ObitDConCleanPxHistClassInit}!ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Px\-Hist\-Class\-Init (void)}\label{ObitDConCleanPxHist_8h_a3}
+
+
+Public: Class initializer. 
+
+\index{ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}!ObitDConCleanPxHistClone@{ObitDConCleanPxHistClone}}
+\index{ObitDConCleanPxHistClone@{ObitDConCleanPxHistClone}!ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Px\-Hist\-Clone ({\bf Obit\-DCon\-Clean\-Px\-Hist} $\ast$ {\em in}, {\bf Obit\-DCon\-Clean\-Px\-Hist} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanPxHist_8h_a7}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}!ObitDConCleanPxHistCopy@{ObitDConCleanPxHistCopy}}
+\index{ObitDConCleanPxHistCopy@{ObitDConCleanPxHistCopy}!ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Px\-Hist}$\ast$ Obit\-DCon\-Clean\-Px\-Hist\-Copy ({\bf Obit\-DCon\-Clean\-Px\-Hist} $\ast$ {\em in}, {\bf Obit\-DCon\-Clean\-Px\-Hist} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanPxHist_8h_a6}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}!ObitDConCleanPxHistGetClass@{ObitDConCleanPxHistGetClass}}
+\index{ObitDConCleanPxHistGetClass@{ObitDConCleanPxHistGetClass}!ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-DCon\-Clean\-Px\-Hist\-Get\-Class (void)}\label{ObitDConCleanPxHist_8h_a5}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}!ObitDConCleanPxHistNumber@{ObitDConCleanPxHistNumber}}
+\index{ObitDConCleanPxHistNumber@{ObitDConCleanPxHistNumber}!ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-DCon\-Clean\-Px\-Hist\-Number ({\bf Obit\-DCon\-Clean\-Px\-Hist} $\ast$ {\em in}, {\bf ofloat} {\em value}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanPxHist_8h_a9}
+
+
+Public: Tell how many pixels are larger than a given abs. 
+
+value larger than value. Only pixels inside of the CLEAN window are used. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The Beam histogram object \item[{\em value}]The value of interest \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]number of pixels of abs value $>$ value \end{Desc}
+\index{ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}!ObitDConCleanPxHistUpdate@{ObitDConCleanPxHistUpdate}}
+\index{ObitDConCleanPxHistUpdate@{ObitDConCleanPxHistUpdate}!ObitDConCleanPxHist.h@{Obit\-DCon\-Clean\-Px\-Hist.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Px\-Hist\-Update ({\bf Obit\-DCon\-Clean\-Px\-Hist} $\ast$ {\em in}, {\bf olong} {\em field}, {\bf olong} $\ast$ {\em plane}, {\bf Obit\-Image\-Mosaic} $\ast$ {\em mosaic}, {\bf Obit\-DCon\-Clean\-Window} $\ast$ {\em window}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanPxHist_8h_a8}
+
+
+Public: Update with new image and window. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The Pixel histogram object \item[{\em field}]Which field? (1-rel) \item[{\em plane}]1-rel indices on dimensions 3-? \item[{\em mosaic}]Image Mosaic with images \item[{\em window}]Corresponding windows in mosaic images. Only pixels inside of the CLEAN window are used. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}

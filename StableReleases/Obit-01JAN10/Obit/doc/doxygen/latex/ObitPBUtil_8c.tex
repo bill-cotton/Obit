@@ -1,0 +1,113 @@
+\section{Obit\-PBUtil.c File Reference}
+\label{ObitPBUtil_8c}\index{ObitPBUtil.c@{ObitPBUtil.c}}
+Obit\-PBUtil function definitions. 
+
+{\tt \#include \char`\"{}Obit\-PBUtil.h\char`\"{}}\par
+{\tt \#include $<$math.h$>$}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+{\bf ofloat} {\bf Obit\-PBUtil\-Poly} ({\bf odouble} Angle, {\bf odouble} Freq, {\bf ofloat} pbmin)
+\begin{CompactList}\small\item\em Use polynomial beam shape - useful for VLA frequencies $<$ 1.0 GHz. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Obit\-PBUtil\-Jinc} ({\bf odouble} Angle, {\bf odouble} Freq, {\bf ofloat} ant\-Size, {\bf ofloat} pbmin)
+\begin{CompactList}\small\item\em Use Jinc beam shape - useful for frequencies $>$ 1.0 GHz. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Obit\-PBUtil\-Rel\-PB} ({\bf odouble} Angle, {\bf olong} nfreq, {\bf odouble} $\ast$Freq, {\bf ofloat} ant\-Size, {\bf ofloat} pbmin, {\bf odouble} ref\-Freq)
+\begin{CompactList}\small\item\em Function which returns relative primary beam correction. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Obit\-PBUtil\-Pnt\-Err} ({\bf odouble} Angle, {\bf odouble} Angle\-O, {\bf ofloat} ant\-Size, {\bf ofloat} pbmin, {\bf odouble} Freq)
+\begin{CompactList}\small\item\em Function which returns pointing error amplitude correction. \item\end{CompactList}\item 
+{\bf Obit\-Table\-CC} $\ast$ {\bf Obit\-PBUtil\-CCCor} ({\bf Obit\-Image} $\ast$image, {\bf olong} in\-CCver, {\bf olong} $\ast$out\-CCver, {\bf olong} nfreq, {\bf odouble} $\ast$Freq, {\bf ofloat} ant\-Size, {\bf ofloat} pbmin, {\bf odouble} ref\-Freq, {\bf olong} $\ast$start\-CC, {\bf olong} $\ast$end\-CC, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Correct {\bf Obit\-Table\-CC}{\rm (p.\,\pageref{structObitTableCC})} for relative Primary Beam. \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf Obit\-PBUtil\-Image\-Cor} ({\bf Obit\-Image} $\ast$in\-Image, {\bf olong} $\ast$in\-Plane, {\bf olong} nfreq, {\bf odouble} $\ast$Freq, {\bf ofloat} ant\-Size, {\bf ofloat} pbmin, {\bf odouble} ref\-Freq, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Correct Image for relative Primary Beam. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-PBUtil function definitions. 
+
+Antenna primary beam shape utility class.
+
+\subsection{Function Documentation}
+\index{ObitPBUtil.c@{Obit\-PBUtil.c}!ObitPBUtilCCCor@{ObitPBUtilCCCor}}
+\index{ObitPBUtilCCCor@{ObitPBUtilCCCor}!ObitPBUtil.c@{Obit\-PBUtil.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-CC}$\ast$ Obit\-PBUtil\-CCCor ({\bf Obit\-Image} $\ast$ {\em image}, {\bf olong} {\em in\-CCver}, {\bf olong} $\ast$ {\em out\-CCver}, {\bf olong} {\em nfreq}, {\bf odouble} $\ast$ {\em Freq}, {\bf ofloat} {\em ant\-Size}, {\bf ofloat} {\em pbmin}, {\bf odouble} {\em ref\-Freq}, {\bf olong} $\ast$ {\em start\-CC}, {\bf olong} $\ast$ {\em end\-CC}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitPBUtil_8c_a4}
+
+
+Correct {\bf Obit\-Table\-CC}{\rm (p.\,\pageref{structObitTableCC})} for relative Primary Beam. 
+
+From the AIPSish \$FOURMASS/SUB/PBUTIL.FOR PBFCCT \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em image}]input image with input CC table \item[{\em in\-CCver}]input CC table \item[{\em out\-CCver}]Desired output CC table on image, if 0 then new value used returned. \item[{\em nfreq}]number of frequencies in Freq \item[{\em Freq}]Frequencies (Hz) of observations. \item[{\em ant\-Size}]Antenna diameter in meters. (defaults to 25.0) \item[{\em pbmin}]Minimum antenna gain Jinc 0=$>$0.05, poly 0=$>$ 0.01 \item[{\em ref\-Freq}]Reference frequency (Hz) for which CC table is needed \item[{\em start\-CC}][in] the desired first CC number (1-rel) [out] the actual first CC number in returned table \item[{\em end\-CC}][in] the desired highest CC number, 0=$>$ to end of table [out] the actual highest CC bumber in returned table \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error/message object \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to Obit\-CCtable, Unref when no longer needed. \end{Desc}
+\index{ObitPBUtil.c@{Obit\-PBUtil.c}!ObitPBUtilImageCor@{ObitPBUtilImageCor}}
+\index{ObitPBUtilImageCor@{ObitPBUtilImageCor}!ObitPBUtil.c@{Obit\-PBUtil.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ Obit\-PBUtil\-Image\-Cor ({\bf Obit\-Image} $\ast$ {\em in\-Image}, {\bf olong} $\ast$ {\em in\-Plane}, {\bf olong} {\em nfreq}, {\bf odouble} $\ast$ {\em Freq}, {\bf ofloat} {\em ant\-Size}, {\bf ofloat} {\em pbmin}, {\bf odouble} {\em ref\-Freq}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitPBUtil_8c_a5}
+
+
+Correct Image for relative Primary Beam. 
+
+From the AIPSish \$FOURMASS/SUB/PBUTIL.FOR PBFSCI \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-Image}]input image with \item[{\em in\-Plane}]Desired plane in in\-Image, 1-rel pixel numbers on planes 3-7; ignored if mem\-Only \item[{\em nfreq}]number of frequencies in Freq \item[{\em Freq}]Frequencies (Hz) of observations. \item[{\em ant\-Size}]Antenna diameter in meters. (defaults to 25.0) \item[{\em pbmin}]Minimum antenna gain Jinc 0=$>$0.05, poly 0=$>$ 0.01 \item[{\em ref\-Freq}]Reference frequency (Hz) for which CC table is needed \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error/message object \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to {\bf Obit\-FArray}{\rm (p.\,\pageref{structObitFArray})}, Unref when no longer needed. NULL on error \end{Desc}
+\index{ObitPBUtil.c@{Obit\-PBUtil.c}!ObitPBUtilJinc@{ObitPBUtilJinc}}
+\index{ObitPBUtilJinc@{ObitPBUtilJinc}!ObitPBUtil.c@{Obit\-PBUtil.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} Obit\-PBUtil\-Jinc ({\bf odouble} {\em Angle}, {\bf odouble} {\em Freq}, {\bf ofloat} {\em ant\-Size}, {\bf ofloat} {\em pbmin})}\label{ObitPBUtil_8c_a1}
+
+
+Use Jinc beam shape - useful for frequencies $>$ 1.0 GHz. 
+
+The power pattern is calculated from the pointing position and for observing frequency freq (Hz). The power pattern (2 $\ast$ j1(x) / x) $\ast$$\ast$ 2 of a uniformly illuminated circular aperture is used, since it fits the observations better than the standard PBCOR beam does. If the relative gain is less than pbmin, it is set to pbmin. vscale is a measured constant inversely proportional to the VLA primary beamwidth, which is assumed to scale as 1./freq. vscale = 4.487e-9 corresponds to a 29.4 arcmin fwhm at 1.47 ghz. the actual scale is determined from the antenna size (ant\-Size). xmax = value of x where the series approximation to the J1 goes from the small angle approximation to the large angle approximation. Note: this routine is probably only useful for the VLA but might be ok for a homogenous array of uniformly illuminated antennas where the beam scales from the VLA beam by the ratio of antenna diameters. From the AIPSish \$FOURMASS/SUB/PBUTIL.FOR \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em Angle}]Angle from the pointing position (deg) \item[{\em Freq}]Frequency (Hz) of observations \item[{\em ant\-Size}]Antenna diameter in meters. (defaults to 25.0) \item[{\em pbmin}]Minimum antenna gain 0=$>$0.05 \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Fractional antenna power [pbmin, 1] \end{Desc}
+\index{ObitPBUtil.c@{Obit\-PBUtil.c}!ObitPBUtilPntErr@{ObitPBUtilPntErr}}
+\index{ObitPBUtilPntErr@{ObitPBUtilPntErr}!ObitPBUtil.c@{Obit\-PBUtil.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} Obit\-PBUtil\-Pnt\-Err ({\bf odouble} {\em Angle}, {\bf odouble} {\em Angle\-O}, {\bf ofloat} {\em ant\-Size}, {\bf ofloat} {\em pbmin}, {\bf odouble} {\em Freq})}\label{ObitPBUtil_8c_a3}
+
+
+Function which returns pointing error amplitude correction. 
+
+Note: this is the power pattern. Uses Obit\-PBUtil\-Poly (VLA assumed) for frequencies $<$ 1 GHz and Obit\-PBUtil\-Jinc at higher frequencies Adopted from the AIPSish \$FOURMASS/SUB/PBUTIL.FOR PBFACT \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em Angle}]Intended angle from the intended pointing position (deg) \item[{\em Angle\-O}]Actual angle from the intended pointing position (deg) \item[{\em ant\-Size}]Antenna diameter in meters. (defaults to 25.0) \item[{\em pbmin}]Minimum antenna gain Jinc 0=$>$0.05, poly 0=$>$ 0.01 \item[{\em Freq}]Frequency (Hz) for which rel. gain is desired \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]amplitude correction \end{Desc}
+\index{ObitPBUtil.c@{Obit\-PBUtil.c}!ObitPBUtilPoly@{ObitPBUtilPoly}}
+\index{ObitPBUtilPoly@{ObitPBUtilPoly}!ObitPBUtil.c@{Obit\-PBUtil.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} Obit\-PBUtil\-Poly ({\bf odouble} {\em Angle}, {\bf odouble} {\em Freq}, {\bf ofloat} {\em pbmin})}\label{ObitPBUtil_8c_a0}
+
+
+Use polynomial beam shape - useful for VLA frequencies $<$ 1.0 GHz. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em Angle}]Angle from the pointing position (deg) \item[{\em Freq}]Frequency (Hz) of observations \item[{\em pbmin}]Minimum antenna gain 0=$>$0.01 \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Fractional antenna power [pbmin, 1] \end{Desc}
+\index{ObitPBUtil.c@{Obit\-PBUtil.c}!ObitPBUtilRelPB@{ObitPBUtilRelPB}}
+\index{ObitPBUtilRelPB@{ObitPBUtilRelPB}!ObitPBUtil.c@{Obit\-PBUtil.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} Obit\-PBUtil\-Rel\-PB ({\bf odouble} {\em Angle}, {\bf olong} {\em nfreq}, {\bf odouble} $\ast$ {\em Freq}, {\bf ofloat} {\em ant\-Size}, {\bf ofloat} {\em pbmin}, {\bf odouble} {\em ref\-Freq})}\label{ObitPBUtil_8c_a2}
+
+
+Function which returns relative primary beam correction. 
+
+Uses Obit\-PBUtil\-Poly (VLA assumed) for frequencies $<$ 1 GHz and Obit\-PBUtil\-Jinc at higher frequencies Adopted from the AIPSish \$FOURMASS/SUB/PBUTIL.FOR PBFACT \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em Angle}]Angle from the pointing position (deg) \item[{\em nfreq}]number of frequencies in Freq \item[{\em Freq}]Frequencies (Hz) of observations. \item[{\em ant\-Size}]Antenna diameter in meters. (defaults to 25.0) \item[{\em pbmin}]Minimum antenna gain Jinc 0=$>$0.05, poly 0=$>$ 0.01 \item[{\em ref\-Freq}]Reference frequency (Hz) for which rel. gain is desired \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Relative gain at freq ref\-Freq wrt average of Freq. \end{Desc}

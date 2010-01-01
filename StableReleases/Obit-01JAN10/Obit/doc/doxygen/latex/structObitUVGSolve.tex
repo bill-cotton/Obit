@@ -1,0 +1,113 @@
+\section{Obit\-UVGSolve Struct Reference}
+\label{structObitUVGSolve}\index{ObitUVGSolve@{ObitUVGSolve}}
+Obit\-UVGSolve Class structure.  
+
+
+{\tt \#include $<$Obit\-UVGSolve.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+{\bf Obit\-Antenna\-List} $\ast$ {\bf AList}
+\begin{CompactList}\small\item\em .Antenna\-List \item\end{CompactList}\item 
+{\bf Obit\-Source\-List} $\ast$ {\bf SList}
+\begin{CompactList}\small\item\em .Source List \item\end{CompactList}\item 
+{\bf olong} {\bf cur\-Source}
+\begin{CompactList}\small\item\em Current source index in SList. \item\end{CompactList}\item 
+{\bf ofloat} {\bf UVFull\-Range} [2]
+\begin{CompactList}\small\item\em UV range of full weight. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-UVGSolve Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitUVGSolve@{Obit\-UVGSolve}!AList@{AList}}
+\index{AList@{AList}!ObitUVGSolve@{Obit\-UVGSolve}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Antenna\-List}$\ast$ {\bf Obit\-UVGSolve::AList}}\label{structObitUVGSolve_o6}
+
+
+.Antenna\-List 
+
+\index{ObitUVGSolve@{Obit\-UVGSolve}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitUVGSolve@{Obit\-UVGSolve}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-UVGSolve::Class\-Info}}\label{structObitUVGSolve_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitUVGSolve@{Obit\-UVGSolve}!curSource@{curSource}}
+\index{curSource@{curSource}!ObitUVGSolve@{Obit\-UVGSolve}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVGSolve::cur\-Source}}\label{structObitUVGSolve_o8}
+
+
+Current source index in SList. 
+
+\index{ObitUVGSolve@{Obit\-UVGSolve}!info@{info}}
+\index{info@{info}!ObitUVGSolve@{Obit\-UVGSolve}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-UVGSolve::info}}\label{structObitUVGSolve_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitUVGSolve@{Obit\-UVGSolve}!name@{name}}
+\index{name@{name}!ObitUVGSolve@{Obit\-UVGSolve}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-UVGSolve::name}}\label{structObitUVGSolve_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitUVGSolve@{Obit\-UVGSolve}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitUVGSolve@{Obit\-UVGSolve}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-UVGSolve::Obit\-Id}}\label{structObitUVGSolve_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitUVGSolve@{Obit\-UVGSolve}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitUVGSolve@{Obit\-UVGSolve}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVGSolve::Reference\-Count}}\label{structObitUVGSolve_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitUVGSolve@{Obit\-UVGSolve}!SList@{SList}}
+\index{SList@{SList}!ObitUVGSolve@{Obit\-UVGSolve}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Source\-List}$\ast$ {\bf Obit\-UVGSolve::SList}}\label{structObitUVGSolve_o7}
+
+
+.Source List 
+
+\index{ObitUVGSolve@{Obit\-UVGSolve}!thread@{thread}}
+\index{thread@{thread}!ObitUVGSolve@{Obit\-UVGSolve}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-UVGSolve::thread}}\label{structObitUVGSolve_o4}
+
+
+Threading info member object. 
+
+\index{ObitUVGSolve@{Obit\-UVGSolve}!UVFullRange@{UVFullRange}}
+\index{UVFullRange@{UVFullRange}!ObitUVGSolve@{Obit\-UVGSolve}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVGSolve::UVFull\-Range}[2]}\label{structObitUVGSolve_o9}
+
+
+UV range of full weight. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-UVGSolve.h}\end{CompactItemize}

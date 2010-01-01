@@ -1,0 +1,212 @@
+\section{Obit\-Table\-PSRow Struct Reference}
+\label{structObitTablePSRow}\index{ObitTablePSRow@{ObitTablePSRow}}
+Obit\-Table\-PSRow Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-PS.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf my\-Table}
+\begin{CompactList}\small\item\em Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. \item\end{CompactList}\item 
+gpointer {\bf my\-Row\-Data}
+\begin{CompactList}\small\item\em Pointer to row data in buffer (never g\_\-free this). \item\end{CompactList}\item 
+{\bf odouble} {\bf RAPoint}
+\begin{CompactList}\small\item\em Pointing RA at epoch 2000. \item\end{CompactList}\item 
+{\bf odouble} {\bf Dec\-Point}
+\begin{CompactList}\small\item\em Pointing Dec at epoch 2000. \item\end{CompactList}\item 
+gboolean {\bf Special}
+\begin{CompactList}\small\item\em Special processing applied. \item\end{CompactList}\item 
+{\bf oint} {\bf No\-Fields}
+\begin{CompactList}\small\item\em Number of sub fields. \item\end{CompactList}\item 
+gchar $\ast$ {\bf Field\-Name}
+\begin{CompactList}\small\item\em Field name (source). \item\end{CompactList}\item 
+gchar $\ast$ {\bf obsdate}
+\begin{CompactList}\small\item\em Observing ref. \item\end{CompactList}\item 
+gchar $\ast$ {\bf Status}
+\begin{CompactList}\small\item\em Processing status. \item\end{CompactList}\item 
+gboolean $\ast$ {\bf IQU}
+\begin{CompactList}\small\item\em IQU Flags True if processed. \item\end{CompactList}\item 
+gboolean $\ast$ {\bf CCLimit}
+\begin{CompactList}\small\item\em Flags to using all possible CC. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Per\-Cent}
+\begin{CompactList}\small\item\em Percent of visibility data I,Q,U. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Pix\-Max}
+\begin{CompactList}\small\item\em Pixel max (Jy) I,Q,U. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Pix\-Min}
+\begin{CompactList}\small\item\em Pixel min (Jy) I,Q,U. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Quality}
+\begin{CompactList}\small\item\em Quality measure, RMS I,Q,U. \item\end{CompactList}\item 
+gchar $\ast$ {\bf Comment}
+\begin{CompactList}\small\item\em Comments. \item\end{CompactList}\item 
+{\bf olong} {\bf status}
+\begin{CompactList}\small\item\em status 0=normal, 1=modified, -1=flagged \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-PSRow Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!CCLimit@{CCLimit}}
+\index{CCLimit@{CCLimit}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean$\ast$ {\bf Obit\-Table\-PSRow::CCLimit}}\label{structObitTablePSRow_o14}
+
+
+Flags to using all possible CC. 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-PSRow::Class\-Info}}\label{structObitTablePSRow_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!Comment@{Comment}}
+\index{Comment@{Comment}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-PSRow::Comment}}\label{structObitTablePSRow_o19}
+
+
+Comments. 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!DecPoint@{DecPoint}}
+\index{DecPoint@{DecPoint}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-PSRow::Dec\-Point}}\label{structObitTablePSRow_o7}
+
+
+Pointing Dec at epoch 2000. 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!FieldName@{FieldName}}
+\index{FieldName@{FieldName}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-PSRow::Field\-Name}}\label{structObitTablePSRow_o10}
+
+
+Field name (source). 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!IQU@{IQU}}
+\index{IQU@{IQU}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean$\ast$ {\bf Obit\-Table\-PSRow::IQU}}\label{structObitTablePSRow_o13}
+
+
+IQU Flags True if processed. 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!myRowData@{myRowData}}
+\index{myRowData@{myRowData}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-PSRow::my\-Row\-Data}}\label{structObitTablePSRow_o5}
+
+
+Pointer to row data in buffer (never g\_\-free this). 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!myTable@{myTable}}
+\index{myTable@{myTable}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ {\bf Obit\-Table\-PSRow::my\-Table}}\label{structObitTablePSRow_o4}
+
+
+Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!name@{name}}
+\index{name@{name}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-PSRow::name}}\label{structObitTablePSRow_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!NoFields@{NoFields}}
+\index{NoFields@{NoFields}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-PSRow::No\-Fields}}\label{structObitTablePSRow_o9}
+
+
+Number of sub fields. 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-PSRow::Obit\-Id}}\label{structObitTablePSRow_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!obsdate@{obsdate}}
+\index{obsdate@{obsdate}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-PSRow::obsdate}}\label{structObitTablePSRow_o11}
+
+
+Observing ref. 
+
+date.(YYYYMMDD) \index{ObitTablePSRow@{Obit\-Table\-PSRow}!PerCent@{PerCent}}
+\index{PerCent@{PerCent}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-PSRow::Per\-Cent}}\label{structObitTablePSRow_o15}
+
+
+Percent of visibility data I,Q,U. 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!PixMax@{PixMax}}
+\index{PixMax@{PixMax}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-PSRow::Pix\-Max}}\label{structObitTablePSRow_o16}
+
+
+Pixel max (Jy) I,Q,U. 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!PixMin@{PixMin}}
+\index{PixMin@{PixMin}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-PSRow::Pix\-Min}}\label{structObitTablePSRow_o17}
+
+
+Pixel min (Jy) I,Q,U. 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!Quality@{Quality}}
+\index{Quality@{Quality}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-PSRow::Quality}}\label{structObitTablePSRow_o18}
+
+
+Quality measure, RMS I,Q,U. 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!RAPoint@{RAPoint}}
+\index{RAPoint@{RAPoint}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-PSRow::RAPoint}}\label{structObitTablePSRow_o6}
+
+
+Pointing RA at epoch 2000. 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PSRow::Reference\-Count}}\label{structObitTablePSRow_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!Special@{Special}}
+\index{Special@{Special}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-PSRow::Special}}\label{structObitTablePSRow_o8}
+
+
+Special processing applied. 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!status@{status}}
+\index{status@{status}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PSRow::status}}\label{structObitTablePSRow_o20}
+
+
+status 0=normal, 1=modified, -1=flagged 
+
+\index{ObitTablePSRow@{Obit\-Table\-PSRow}!Status@{Status}}
+\index{Status@{Status}!ObitTablePSRow@{Obit\-Table\-PSRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-PSRow::Status}}\label{structObitTablePSRow_o12}
+
+
+Processing status. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-PS.h}\end{CompactItemize}

@@ -1,0 +1,122 @@
+\section{Obit\-UVSort\-Buffer Struct Reference}
+\label{structObitUVSortBuffer}\index{ObitUVSortBuffer@{ObitUVSortBuffer}}
+Obit\-UVSort\-Buffer Class structure.  
+
+
+{\tt \#include $<$Obit\-UVSort\-Buffer.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+{\bf Obit\-UV} $\ast$ {\bf my\-UVdata}
+\begin{CompactList}\small\item\em {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} object. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf my\-Buffer}
+\begin{CompactList}\small\item\em Buffer. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Sort\-Struct}
+\begin{CompactList}\small\item\em Sort structure array. \item\end{CompactList}\item 
+{\bf olong} {\bf nvis}
+\begin{CompactList}\small\item\em Number of visibilities. \item\end{CompactList}\item 
+{\bf olong} {\bf hi\-Vis}
+\begin{CompactList}\small\item\em Highest number populated. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-UVSort\-Buffer Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitUVSortBuffer@{Obit\-UVSort\-Buffer}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitUVSortBuffer@{Obit\-UVSort\-Buffer}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-UVSort\-Buffer::Class\-Info}}\label{structObitUVSortBuffer_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitUVSortBuffer@{Obit\-UVSort\-Buffer}!hiVis@{hiVis}}
+\index{hiVis@{hiVis}!ObitUVSortBuffer@{Obit\-UVSort\-Buffer}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVSort\-Buffer::hi\-Vis}}\label{structObitUVSortBuffer_o10}
+
+
+Highest number populated. 
+
+\index{ObitUVSortBuffer@{Obit\-UVSort\-Buffer}!info@{info}}
+\index{info@{info}!ObitUVSortBuffer@{Obit\-UVSort\-Buffer}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-UVSort\-Buffer::info}}\label{structObitUVSortBuffer_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitUVSortBuffer@{Obit\-UVSort\-Buffer}!myBuffer@{myBuffer}}
+\index{myBuffer@{myBuffer}!ObitUVSortBuffer@{Obit\-UVSort\-Buffer}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVSort\-Buffer::my\-Buffer}}\label{structObitUVSortBuffer_o7}
+
+
+Buffer. 
+
+\index{ObitUVSortBuffer@{Obit\-UVSort\-Buffer}!myUVdata@{myUVdata}}
+\index{myUVdata@{myUVdata}!ObitUVSortBuffer@{Obit\-UVSort\-Buffer}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UV}$\ast$ {\bf Obit\-UVSort\-Buffer::my\-UVdata}}\label{structObitUVSortBuffer_o6}
+
+
+{\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} object. 
+
+\index{ObitUVSortBuffer@{Obit\-UVSort\-Buffer}!name@{name}}
+\index{name@{name}!ObitUVSortBuffer@{Obit\-UVSort\-Buffer}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-UVSort\-Buffer::name}}\label{structObitUVSortBuffer_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitUVSortBuffer@{Obit\-UVSort\-Buffer}!nvis@{nvis}}
+\index{nvis@{nvis}!ObitUVSortBuffer@{Obit\-UVSort\-Buffer}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVSort\-Buffer::nvis}}\label{structObitUVSortBuffer_o9}
+
+
+Number of visibilities. 
+
+\index{ObitUVSortBuffer@{Obit\-UVSort\-Buffer}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitUVSortBuffer@{Obit\-UVSort\-Buffer}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-UVSort\-Buffer::Obit\-Id}}\label{structObitUVSortBuffer_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitUVSortBuffer@{Obit\-UVSort\-Buffer}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitUVSortBuffer@{Obit\-UVSort\-Buffer}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVSort\-Buffer::Reference\-Count}}\label{structObitUVSortBuffer_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitUVSortBuffer@{Obit\-UVSort\-Buffer}!SortStruct@{SortStruct}}
+\index{SortStruct@{SortStruct}!ObitUVSortBuffer@{Obit\-UVSort\-Buffer}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVSort\-Buffer::Sort\-Struct}}\label{structObitUVSortBuffer_o8}
+
+
+Sort structure array. 
+
+\index{ObitUVSortBuffer@{Obit\-UVSort\-Buffer}!thread@{thread}}
+\index{thread@{thread}!ObitUVSortBuffer@{Obit\-UVSort\-Buffer}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-UVSort\-Buffer::thread}}\label{structObitUVSortBuffer_o4}
+
+
+Threading info member object. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-UVSort\-Buffer.h}\end{CompactItemize}

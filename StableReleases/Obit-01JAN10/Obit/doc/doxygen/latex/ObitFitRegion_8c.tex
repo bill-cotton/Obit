@@ -1,0 +1,170 @@
+\section{Obit\-Fit\-Region.c File Reference}
+\label{ObitFitRegion_8c}\index{ObitFitRegion.c@{ObitFitRegion.c}}
+{\bf Obit\-Fit\-Region}{\rm (p.\,\pageref{structObitFitRegion})} class function definitions. 
+
+{\tt \#include \char`\"{}Obit\-Fit\-Region.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Fit\-Region\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-Fit\-Region\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-Fit\-Region} $\ast$ {\bf new\-Obit\-Fit\-Region} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Fit\-Region\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Fit\-Region} $\ast$ {\bf Obit\-Fit\-Region\-Copy} ({\bf Obit\-Fit\-Region} $\ast$in, {\bf Obit\-Fit\-Region} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Fit\-Region\-Clone} ({\bf Obit\-Fit\-Region} $\ast$in, {\bf Obit\-Fit\-Region} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+void {\bf Obit\-Fit\-Region\-Resize} ({\bf Obit\-Fit\-Region} $\ast$in, {\bf olong} nmodel)
+\begin{CompactList}\small\item\em Public: Resize. \item\end{CompactList}\item 
+{\bf Obit\-Fit\-Region} $\ast$ {\bf Obit\-Fit\-Region\-Create} (gchar $\ast$name, {\bf olong} corner[2], {\bf olong} dim[2], {\bf ofloat} peak, {\bf ofloat} peak\-Resid, {\bf ofloat} RMSResid, {\bf ofloat} flux\-Resid, {\bf olong} nmodel, {\bf Obit\-Fit\-Model} $\ast$$\ast$models)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-Fit\-Region}{\rm (p.\,\pageref{structObitFitRegion})} structures. \item\end{CompactList}\item 
+gchar $\ast$ {\bf Obit\-Fit\-Region\-Name} ({\bf olong} indx)
+\begin{CompactList}\small\item\em Public: Generate the region name from an index. \item\end{CompactList}\item 
+void {\bf Obit\-Fit\-Region\-Subtract} ({\bf Obit\-Fit\-Region} $\ast$reg, {\bf Obit\-Image} $\ast$image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Subtract from image. \item\end{CompactList}\item 
+void {\bf Obit\-Fit\-Region\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Fit\-Region}{\rm (p.\,\pageref{structObitFitRegion})} class function definitions. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} base class.
+
+\subsection{Function Documentation}
+\index{ObitFitRegion.c@{Obit\-Fit\-Region.c}!newObitFitRegion@{newObitFitRegion}}
+\index{newObitFitRegion@{newObitFitRegion}!ObitFitRegion.c@{Obit\-Fit\-Region.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Fit\-Region}$\ast$ new\-Obit\-Fit\-Region (gchar $\ast$ {\em name})}\label{ObitFitRegion_8c_a6}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitFitRegion.c@{Obit\-Fit\-Region.c}!ObitFitRegionClassInit@{ObitFitRegionClassInit}}
+\index{ObitFitRegionClassInit@{ObitFitRegionClassInit}!ObitFitRegion.c@{Obit\-Fit\-Region.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Fit\-Region\-Class\-Init (void)}\label{ObitFitRegion_8c_a14}
+
+
+Public: Class initializer. 
+
+\index{ObitFitRegion.c@{Obit\-Fit\-Region.c}!ObitFitRegionClear@{ObitFitRegionClear}}
+\index{ObitFitRegionClear@{ObitFitRegionClear}!ObitFitRegion.c@{Obit\-Fit\-Region.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Fit\-Region\-Clear (gpointer {\em inn})}\label{ObitFitRegion_8c_a4}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-Fit\-Region$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitFitRegion.c@{Obit\-Fit\-Region.c}!ObitFitRegionClone@{ObitFitRegionClone}}
+\index{ObitFitRegionClone@{ObitFitRegionClone}!ObitFitRegion.c@{Obit\-Fit\-Region.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Fit\-Region\-Clone ({\bf Obit\-Fit\-Region} $\ast$ {\em in}, {\bf Obit\-Fit\-Region} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFitRegion_8c_a9}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitFitRegion.c@{Obit\-Fit\-Region.c}!ObitFitRegionCopy@{ObitFitRegionCopy}}
+\index{ObitFitRegionCopy@{ObitFitRegionCopy}!ObitFitRegion.c@{Obit\-Fit\-Region.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Fit\-Region}$\ast$ Obit\-Fit\-Region\-Copy ({\bf Obit\-Fit\-Region} $\ast$ {\em in}, {\bf Obit\-Fit\-Region} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFitRegion_8c_a8}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitFitRegion.c@{Obit\-Fit\-Region.c}!ObitFitRegionCreate@{ObitFitRegionCreate}}
+\index{ObitFitRegionCreate@{ObitFitRegionCreate}!ObitFitRegion.c@{Obit\-Fit\-Region.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Fit\-Region}$\ast$ Obit\-Fit\-Region\-Create (gchar $\ast$ {\em name}, {\bf olong} {\em corner}[2], {\bf olong} {\em dim}[2], {\bf ofloat} {\em peak}, {\bf ofloat} {\em peak\-Resid}, {\bf ofloat} {\em RMSResid}, {\bf ofloat} {\em flux\-Resid}, {\bf olong} {\em nmodel}, {\bf Obit\-Fit\-Model} $\ast$$\ast$ {\em models})}\label{ObitFitRegion_8c_a11}
+
+
+Public: Create/initialize {\bf Obit\-Fit\-Region}{\rm (p.\,\pageref{structObitFitRegion})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]A unique name for the object. \item[{\em corner}]bottom left corner in selected region of image (0-rel) \item[{\em dim}]dimension of region \item[{\em peak}]peak in region \item[{\em peak\-Resid}]peak in region residual after model subtraction \item[{\em RMSResid}]RMS residual \item[{\em flux\-Resid}]Sum of pixel values in residual \item[{\em nmodel}]Number of models \item[{\em models}]Array of Models, steals references \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitFitRegion.c@{Obit\-Fit\-Region.c}!ObitFitRegionGetClass@{ObitFitRegionGetClass}}
+\index{ObitFitRegionGetClass@{ObitFitRegionGetClass}!ObitFitRegion.c@{Obit\-Fit\-Region.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Fit\-Region\-Get\-Class (void)}\label{ObitFitRegion_8c_a7}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitFitRegion.c@{Obit\-Fit\-Region.c}!ObitFitRegionInit@{ObitFitRegionInit}}
+\index{ObitFitRegionInit@{ObitFitRegionInit}!ObitFitRegion.c@{Obit\-Fit\-Region.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Fit\-Region\-Init (gpointer {\em inn})}\label{ObitFitRegion_8c_a3}
+
+
+Private: Initialize newly instantiated object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitFitRegion.c@{Obit\-Fit\-Region.c}!ObitFitRegionName@{ObitFitRegionName}}
+\index{ObitFitRegionName@{ObitFitRegionName}!ObitFitRegion.c@{Obit\-Fit\-Region.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ Obit\-Fit\-Region\-Name ({\bf olong} {\em indx})}\label{ObitFitRegion_8c_a12}
+
+
+Public: Generate the region name from an index. 
+
+Each region has the name \char`\"{}regnnnnnn\char`\"{} where nnnnnn is the 1-rel \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em index}]index number of region \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]name, should be g\_\-freeed when done \end{Desc}
+\index{ObitFitRegion.c@{Obit\-Fit\-Region.c}!ObitFitRegionResize@{ObitFitRegionResize}}
+\index{ObitFitRegionResize@{ObitFitRegionResize}!ObitFitRegion.c@{Obit\-Fit\-Region.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Fit\-Region\-Resize ({\bf Obit\-Fit\-Region} $\ast$ {\em in}, {\bf olong} {\em nmodel})}\label{ObitFitRegion_8c_a10}
+
+
+Public: Resize. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to resize \item[{\em nmodel}]New number of models \end{description}
+\end{Desc}
+\index{ObitFitRegion.c@{Obit\-Fit\-Region.c}!ObitFitRegionSubtract@{ObitFitRegionSubtract}}
+\index{ObitFitRegionSubtract@{ObitFitRegionSubtract}!ObitFitRegion.c@{Obit\-Fit\-Region.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Fit\-Region\-Subtract ({\bf Obit\-Fit\-Region} $\ast$ {\em reg}, {\bf Obit\-Image} $\ast$ {\em image}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFitRegion_8c_a13}
+
+
+Public: Subtract from image. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]region model in image. \item[{\em image}]Image with attached image buffer pixel array \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error/message stack \end{description}
+\end{Desc}

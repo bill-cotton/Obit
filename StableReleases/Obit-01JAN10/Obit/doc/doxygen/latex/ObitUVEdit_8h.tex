@@ -1,0 +1,133 @@
+\section{Obit\-UVEdit.h File Reference}
+\label{ObitUVEdit_8h}\index{ObitUVEdit.h@{ObitUVEdit.h}}
+Obit\-UVEdit module definition for editing {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} data. 
+
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UV.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-UVEdit\-TD} ({\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-UV} $\ast$out\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Time domain editing, FG table out. \item\end{CompactList}\item 
+void {\bf Obit\-UVEdit\-TDRMSAvg} ({\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-UV} $\ast$out\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Time domain RMS/Avg editing, FG table out. \item\end{CompactList}\item 
+void {\bf Obit\-UVEdit\-FD} ({\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-UV} $\ast$out\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Frequency domain editing, FG table out. \item\end{CompactList}\item 
+void {\bf Obit\-UVEdit\-Stokes} ({\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-UV} $\ast$out\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Edit by excessive amplitude in given Stokes, FG table out. \item\end{CompactList}\item 
+{\bf Obit\-UV} $\ast$ {\bf Obit\-UVEdit\-Clip} ({\bf Obit\-UV} $\ast$in\-UV, gboolean scratch, {\bf Obit\-UV} $\ast$out\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Clip raw visibilities, uv data out. \item\end{CompactList}\item 
+{\bf Obit\-UV} $\ast$ {\bf Obit\-UVEdit\-Clip\-Stokes} ({\bf Obit\-UV} $\ast$in\-UV, gboolean scratch, {\bf Obit\-UV} $\ast$out\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Flag visibilities by Stokes, uv data out. \item\end{CompactList}\item 
+void {\bf Obit\-UVEdit\-Median} ({\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-UV} $\ast$out\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Flag visibilities by running median. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-UVEdit module definition for editing {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} data. 
+
+This utility module contains utility functions for editing uv data.
+
+\subsection{Function Documentation}
+\index{ObitUVEdit.h@{Obit\-UVEdit.h}!ObitUVEditClip@{ObitUVEditClip}}
+\index{ObitUVEditClip@{ObitUVEditClip}!ObitUVEdit.h@{Obit\-UVEdit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UV}$\ast$ Obit\-UVEdit\-Clip ({\bf Obit\-UV} $\ast$ {\em in\-UV}, gboolean {\em scratch}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVEdit_8h_a4}
+
+
+Public: Clip raw visibilities, uv data out. 
+
+Writes edited UV data Control parameters are on the in\-UV info member: \begin{itemize}
+\item \char`\"{}max\-Amp\char`\"{} OBIT\_\-float (1,1,1) Maximum allowed amplitude \item \char`\"{}oper\char`\"{} OBIT\_\-string (4,1,1) operation type: \char`\"{}flag\char`\"{} flag data with amplitudes in excess of max\-Amp \char`\"{}clip\char`\"{} clip amplitudes at max\-Amp and preserve phase default is \char`\"{}flag\char`\"{} \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input uv data to clip. \item[{\em scratch}]True if scratch file desired, will be same type as in\-UV. \item[{\em out\-UV}]If not scratch, then the previously defined output file May be the same as in\-UV. May be NULL for scratch only If it exists and scratch, it will be Unrefed \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the clipped {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. \end{Desc}
+\end{itemize}
+\index{ObitUVEdit.h@{Obit\-UVEdit.h}!ObitUVEditClipStokes@{ObitUVEditClipStokes}}
+\index{ObitUVEditClipStokes@{ObitUVEditClipStokes}!ObitUVEdit.h@{Obit\-UVEdit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UV}$\ast$ Obit\-UVEdit\-Clip\-Stokes ({\bf Obit\-UV} $\ast$ {\em in\-UV}, gboolean {\em scratch}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVEdit_8h_a5}
+
+
+Public: Flag visibilities by Stokes, uv data out. 
+
+Writes edited UV data Data with amplitudes of the selected stokes in excess of max\-Amp are flagged. Optionally all correlations associated may be flagged. Stokes conversion as needed for test. Control parameters are on the in\-UV info member: \begin{itemize}
+\item \char`\"{}flag\-Stok\char`\"{} OBIT\_\-string (1,1,1) Stokes value to clip (I, Q, U, V, R, L) default = \char`\"{}I\char`\"{} \item \char`\"{}flag\-All\char`\"{} Obit\_\-bool (1,1,1) if true, flag all associated correlations default = True \item \char`\"{}max\-Amp\char`\"{} OBIT\_\-float (1,1,1) Maximum allowed amplitude\end{itemize}
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input uv data to clip. \item[{\em scratch}]True if scratch file desired, will be same type as in\-UV. \item[{\em out\-UV}]If not scratch, then the previously defined output file May be the same as in\-UV. May be NULL for scratch only If it exists and scratch, it will be Unrefed \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the clipped {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. \end{Desc}
+\index{ObitUVEdit.h@{Obit\-UVEdit.h}!ObitUVEditFD@{ObitUVEditFD}}
+\index{ObitUVEditFD@{ObitUVEditFD}!ObitUVEdit.h@{Obit\-UVEdit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVEdit\-FD ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVEdit_8h_a2}
+
+
+Public: Frequency domain editing, FG table out. 
+
+Editing is done independently for each visibility measure. First clipping is done on correlator and Vpol amplitudes. Following this, an average and RMS is determined for each channel in each time\-Avg period and a spectral baseline is established for the average values, either using a median window filter (FDwid\-MW$>$0) or a linear baseline fit (FDwid\-MW$<$=0) to specified channels. Channels with excessive RMSes or residual amplitudes are flagged. Flagging is done by entering the offending data in FG table flag\-Tab on out\-UV. Routine adopted from the AIPSish FDEDIT.FOR/FDEDIT \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Name of input uvdata object. Any prior selection and editing is applied. Control parameters on info member of in\-UV: \begin{itemize}
+\item \char`\"{}flag\-Tab\char`\"{} OBIT\_\-int (1,1,1) FG table version number [ def. 1] \item \char`\"{}time\-Avg\char`\"{} OBIT\_\-float (1,1,1) Time interval over which to average data to be flagged (min) [def = 1 min.] NB: this should be at least 2 integrations. \item \char`\"{}FDmax\-Amp\char`\"{} OBIT\_\-float (1,1,1) Maximum average amplitude allowed in the spectrum before fitting. Any channel exceeding this is flagged in advance. default -$>$ infinite \item \char`\"{}FDmax\-V\char`\"{} OBIT\_\-float (1,1,1) Maximum average amplitude allowed in V polarization; any channel exceeding this is flagged in advance of the baseline fitting or median filtering, Calculates V from difference in amplitudes. default -$>$ infinite \item \char`\"{}FDwid\-MW\char`\"{} OBIT\_\-int (1,1,1) If $>$ 0 the width of the median window in channels. An odd number (5) is recommended, default or 0 -$>$ linear baseline \item \char`\"{}FDmax\-RMS\char`\"{} OBIT\_\-float (2,1,1) Flag all channels having RMS values $>$ max\-RMS[0] of the channel median sigma.[default =$>$ 6.] plus max\-RMS[1] (default 0.1) of the channel average in quadrature \item \char`\"{}FDmax\-Res\char`\"{} OBIT\_\-float (1,1,1) Max. residual flux in sigma allowed for channels outside the baseline fitting regions. default =$>$ 6. \item \char`\"{}FDmax\-Res\-BL\char`\"{} OBIT\_\-float (1,1,1) Max. residual flux in sigma allowed for channels within the baseline fitting regions. Default = FDmax\-Res \item \char`\"{}FDbase\-Sel\char`\"{} OBIT\_\-int (4,$\ast$,1) Channel selection to define spectral baseline Used only for linear baseline fitting. Select groups of channels/IF(s) to fit as sets of (Start,end,inc,IF), i.e., FDbase\-Sel = 6,37,1,0, 92,123,1,0 for two regions applying to all IFs. Channel and IF numbers 1 -rel The first group for which the end channel == 0 terminates the list Channel increments defaults to 1 If the IF==0 then the group applies to all IF. Default is channels 2 =$>$ nchan-1 all IFs \end{itemize}
+\item[{\em out\-UV}]UV data onto which the FG table is to be attached. May be the same as in\-UV. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\index{ObitUVEdit.h@{Obit\-UVEdit.h}!ObitUVEditMedian@{ObitUVEditMedian}}
+\index{ObitUVEditMedian@{ObitUVEditMedian}!ObitUVEdit.h@{Obit\-UVEdit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVEdit\-Median ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVEdit_8h_a6}
+
+
+Public: Flag visibilities by running median. 
+
+A running estimate of the amplitude of each baseline/correlation is determined using a quasi median window (alpha is used to control) filter. Amplitudes in excess of flag\-Sig time a robust RMS in the window will be flagged. Data to be flagged are indicated in FG table flag\-Tab on out\-UV. Control parameters are on the in\-UV info member: \begin{itemize}
+\item \char`\"{}flag\-Tab\char`\"{} OBIT\_\-int (1,1,1) FG table version number [ def. 1] NB: this should not also being used to flag the input data! \item \char`\"{}flag\-Sig\char`\"{} OBIT\_\-float (1,1,1) Sigma in window for flagging [def 10] \item \char`\"{}alpha\char`\"{} OBIT\_\-float (1,1,1) controls averaging [0.5] 0 -$>$ 1 = pure boxcar -$>$ pure MWF (alpha of the center data samples are ignored and the rest averaged). \item \char`\"{}time\-Wind\char`\"{} OBIT\_\-float (1,1,1) Window size (days) over which to determine medians, RMSes [1 min] \item \char`\"{}time\-Avg\char`\"{} OBIT\_\-float (1,1,1) Previous averaging time in min if defaulted, determined from data. \item \char`\"{}beg\-IF\char`\"{} OBIT\_\-int (1,1,1) First IF in data [ def. 1] This takes into account any previous selection \item \char`\"{}beg\-Chan\char`\"{} OBIT\_\-int (1,1,1) First channel in data [ def. 1]\end{itemize}
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input uv data to edit. Any prior selection/calibration applied. \item[{\em out\-UV}]UV data onto which the FG table is to be attached. Channels, IS and polarizations will be appropriate for out\-UV May be the same as in\-UV. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\index{ObitUVEdit.h@{Obit\-UVEdit.h}!ObitUVEditStokes@{ObitUVEditStokes}}
+\index{ObitUVEditStokes@{ObitUVEditStokes}!ObitUVEdit.h@{Obit\-UVEdit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVEdit\-Stokes ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVEdit_8h_a3}
+
+
+Public: Edit by excessive amplitude in given Stokes, FG table out. 
+
+If a fraction of bad baselines on any antenna/channel/IF exceeds max\-Bad, then all data to that correlator is flagged. The actual clipping level is the lesser of max\-Amp[0] and if max\-Amp[1]$<$=0, a value determined from a statistical analysis of each interval intended to flag the most discrepant 3 percent of the data. Flagging entries are written into FG table flag\-Tab. Results are unpredictable for uncalibrated data. Control parameters on info member of in\-UV: \begin{itemize}
+\item \char`\"{}flag\-Stok\char`\"{} OBIT\_\-string (1,1,1) Stokes value to clip (I, Q, U, V, R, L) default = \char`\"{}V\char`\"{} \item \char`\"{}flag\-Tab\char`\"{} OBIT\_\-int (1,1,1) FG table version number [ def. 1] NB: this should not also being used to flag the input data! \item \char`\"{}time\-Avg\char`\"{} OBIT\_\-float (1,1,1) Time interval over which to determine data to be flagged (min) [def = 1 min.] \item \char`\"{}max\-Amp\char`\"{} OBIT\_\-float (2,1,1) Maximum value allowed [0] = clipping level, [1]==0.0 use statistical level \item \char`\"{}max\-Bad\char`\"{} OBIT\_\-float (1,1,1) Fraction of allowed flagged baselines to an antenna above which all baselines are flagged. [default 0.25]\end{itemize}
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input uv data to edit. \item[{\em out\-UV}]UV data onto which the FG table is to be attached. May be the same as in\-UV. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\index{ObitUVEdit.h@{Obit\-UVEdit.h}!ObitUVEditTD@{ObitUVEditTD}}
+\index{ObitUVEditTD@{ObitUVEditTD}!ObitUVEdit.h@{Obit\-UVEdit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVEdit\-TD ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVEdit_8h_a0}
+
+
+Public: Time domain editing, FG table out. 
+
+All correlations are clipped on each baseline if the RMS is larger than the maximum. The clipping is done independently in each time interval defined by time\-Avg. The clipping level is given by MIN (A, MAX (B,C)) where: A = sqrt (max\-RMS[0]$\ast$$\ast$2 + (avg\_\-amp $\ast$ max\-RMS[1])$\ast$$\ast$2) and avg\_\-amp is the average amplitude on each baseline. B = median RMS + 3 $\ast$ sigma of the RMS distribution. C = level corresponding to 3\% of the data. Usage of C is controlled by do\-Hi\-Edit All data on a given baseline/correlator are flagged if the RMS exceeds the limit. If a fraction of bad baselines on any correlator exceeds max\-Bad, then all data to that correlator is flagged. In addition, if the offending correlator is a parallel hand correlator then any corresponding cross hand correlations are also flagged. Flagging entries are written into FG table flag\-Tab. Control parameters on info member of in\-UV: \begin{itemize}
+\item \char`\"{}flag\-Tab\char`\"{} OBIT\_\-int (1,1,1) FG table version number [ def. 1] \item \char`\"{}time\-Avg\char`\"{} OBIT\_\-float (1,1,1) Time interval over which to determine data to be flagged (min) [def = 1 min.] NB: this should be at least 2 integrations. \item \char`\"{}max\-RMS\char`\"{} OBIT\_\-float (2,1,1) Maximum RMS allowed, constant plus amplitude coefficient. \item \char`\"{}max\-Bad\char`\"{} OBIT\_\-float (1,1,1) Fraction of allowed flagged baselines to a poln/channel/IF above which all baselines are flagged. [default 0.25] \item \char`\"{}do\-Hi\-Edit\char`\"{} OBIT\_\-boolean (1,1,1) If present and TRUE, flag based on statistics [def FALSE] Routine adapted from the AIPSish TDEDIT.FOR/TDEDIT \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input uv data to edit. \item[{\em out\-UV}]UV data onto which the FG table is to be attached. May be the same as in\-UV. \item[{\em err}]Error stack, returns if error. \end{description}
+\end{Desc}
+\end{itemize}
+\index{ObitUVEdit.h@{Obit\-UVEdit.h}!ObitUVEditTDRMSAvg@{ObitUVEditTDRMSAvg}}
+\index{ObitUVEditTDRMSAvg@{ObitUVEditTDRMSAvg}!ObitUVEdit.h@{Obit\-UVEdit.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVEdit\-TDRMSAvg ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVEdit_8h_a1}
+
+
+Public: Time domain RMS/Avg editing, FG table out. 
+
+The clipping is done independently in each time interval defined by time\-Avg. The clipping level is given by max\-RMSAvg All data on a given baseline/correlator are flagged if the RMS exceeds the limit. If a fraction of bad baselines on any correlator exceeds max\-Bad, then all data to that correlator is flagged. In addition, if the offending correlator is a parallel hand correlator then any corresponding cross hand correlations are also flagged. Flagging entries are written into FG table flag\-Tab. Control parameters on info member of in\-UV: \begin{itemize}
+\item \char`\"{}flag\-Tab\char`\"{} OBIT\_\-int (1,1,1) FG table version number [ def. 1] \item \char`\"{}time\-Avg\char`\"{} OBIT\_\-float (1,1,1) Time interval over which to determine data to be flagged (min) [def = 1 min.] NB: this should be at least 2 integrations. \item \char`\"{}max\-RMSAvg\char`\"{} OBIT\_\-float (1,1,1) Maximum RMS/avg allowed \item \char`\"{}max\-Bad\char`\"{} OBIT\_\-float (1,1,1) Fraction of allowed flagged baselines to a poln/channel/IF above which all baselines are flagged. [default 0.25]\end{itemize}
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input uv data to edit. \item[{\em out\-UV}]UV data onto which the FG table is to be attached. May be the same as in\-UV. \item[{\em err}]Error stack, returns if error. \end{description}
+\end{Desc}

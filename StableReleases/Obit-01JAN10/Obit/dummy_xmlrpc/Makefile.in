@@ -1,0 +1,23 @@
+srcdir = @srcdir@
+
+CPPFLAGS = @CPPFLAGS@
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+DEFS = @DEFS@
+CPPFLAGS = @CPPFLAGS@
+
+ALL_CPPFLAGS = $(CPPFLAGS) -I$(srcdir)
+ALL_CFLAGS = $(CFLAGS)
+
+all: libxmlrpc.a
+
+.c.o:
+	$(CC) -c $(ALL_CPPFLAGS) $(ALL_CFLAGS) $<
+
+libxmlrpc.a: xmlrpc.o
+	$(AR) r $@ $<
+
+clean:
+	rm -f *.o
+	rm -f *.a

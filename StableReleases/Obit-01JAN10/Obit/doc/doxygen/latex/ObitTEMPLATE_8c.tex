@@ -1,0 +1,126 @@
+\section{Obit\-TEMPLATE.c File Reference}
+\label{ObitTEMPLATE_8c}\index{ObitTEMPLATE.c@{ObitTEMPLATE.c}}
+{\bf Obit\-TEMPLATE}{\rm (p.\,\pageref{structObitTEMPLATE})} class function definitions. 
+
+{\tt \#include \char`\"{}Obit\-TEMPLATE.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-TEMPLATEInit} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-TEMPLATEClear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-TEMPLATE} $\ast$ {\bf new\-Obit\-TEMPLATE} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-TEMPLATEGet\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-TEMPLATE} $\ast$ {\bf Obit\-TEMPLATECopy} ({\bf Obit\-TEMPLATE} $\ast$in, {\bf Obit\-TEMPLATE} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-TEMPLATEClone} ({\bf Obit\-TEMPLATE} $\ast$in, {\bf Obit\-TEMPLATE} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+{\bf Obit\-TEMPLATE} $\ast$ {\bf Obit\-TEMPLATECreate} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-TEMPLATE}{\rm (p.\,\pageref{structObitTEMPLATE})} structures. \item\end{CompactList}\item 
+void {\bf Obit\-TEMPLATEClass\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-TEMPLATE}{\rm (p.\,\pageref{structObitTEMPLATE})} class function definitions. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} base class.
+
+\subsection{Function Documentation}
+\index{ObitTEMPLATE.c@{Obit\-TEMPLATE.c}!newObitTEMPLATE@{newObitTEMPLATE}}
+\index{newObitTEMPLATE@{newObitTEMPLATE}!ObitTEMPLATE.c@{Obit\-TEMPLATE.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-TEMPLATE}$\ast$ new\-Obit\-TEMPLATE (gchar $\ast$ {\em name})}\label{ObitTEMPLATE_8c_a6}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitTEMPLATE.c@{Obit\-TEMPLATE.c}!ObitTEMPLATEClassInit@{ObitTEMPLATEClassInit}}
+\index{ObitTEMPLATEClassInit@{ObitTEMPLATEClassInit}!ObitTEMPLATE.c@{Obit\-TEMPLATE.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-TEMPLATEClass\-Init (void)}\label{ObitTEMPLATE_8c_a11}
+
+
+Public: Class initializer. 
+
+\index{ObitTEMPLATE.c@{Obit\-TEMPLATE.c}!ObitTEMPLATEClear@{ObitTEMPLATEClear}}
+\index{ObitTEMPLATEClear@{ObitTEMPLATEClear}!ObitTEMPLATE.c@{Obit\-TEMPLATE.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-TEMPLATEClear (gpointer {\em inn})}\label{ObitTEMPLATE_8c_a4}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-TEMPLATE$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitTEMPLATE.c@{Obit\-TEMPLATE.c}!ObitTEMPLATEClone@{ObitTEMPLATEClone}}
+\index{ObitTEMPLATEClone@{ObitTEMPLATEClone}!ObitTEMPLATE.c@{Obit\-TEMPLATE.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-TEMPLATEClone ({\bf Obit\-TEMPLATE} $\ast$ {\em in}, {\bf Obit\-TEMPLATE} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTEMPLATE_8c_a9}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitTEMPLATE.c@{Obit\-TEMPLATE.c}!ObitTEMPLATECopy@{ObitTEMPLATECopy}}
+\index{ObitTEMPLATECopy@{ObitTEMPLATECopy}!ObitTEMPLATE.c@{Obit\-TEMPLATE.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-TEMPLATE}$\ast$ Obit\-TEMPLATECopy ({\bf Obit\-TEMPLATE} $\ast$ {\em in}, {\bf Obit\-TEMPLATE} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTEMPLATE_8c_a8}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitTEMPLATE.c@{Obit\-TEMPLATE.c}!ObitTEMPLATECreate@{ObitTEMPLATECreate}}
+\index{ObitTEMPLATECreate@{ObitTEMPLATECreate}!ObitTEMPLATE.c@{Obit\-TEMPLATE.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-TEMPLATE}$\ast$ Obit\-TEMPLATECreate (gchar $\ast$ {\em name})}\label{ObitTEMPLATE_8c_a10}
+
+
+Public: Create/initialize {\bf Obit\-TEMPLATE}{\rm (p.\,\pageref{structObitTEMPLATE})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitTEMPLATE.c@{Obit\-TEMPLATE.c}!ObitTEMPLATEGetClass@{ObitTEMPLATEGetClass}}
+\index{ObitTEMPLATEGetClass@{ObitTEMPLATEGetClass}!ObitTEMPLATE.c@{Obit\-TEMPLATE.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-TEMPLATEGet\-Class (void)}\label{ObitTEMPLATE_8c_a7}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitTEMPLATE.c@{Obit\-TEMPLATE.c}!ObitTEMPLATEInit@{ObitTEMPLATEInit}}
+\index{ObitTEMPLATEInit@{ObitTEMPLATEInit}!ObitTEMPLATE.c@{Obit\-TEMPLATE.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-TEMPLATEInit (gpointer {\em inn})}\label{ObitTEMPLATE_8c_a3}
+
+
+Private: Initialize newly instantiated object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}

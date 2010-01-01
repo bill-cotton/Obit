@@ -1,0 +1,176 @@
+\section{Obit\-Table\-History Struct Reference}
+\label{structObitTableHistory}\index{ObitTableHistory@{ObitTableHistory}}
+Obit\-Table\-History Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-History.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-IO} $\ast$ {\bf my\-IO}
+\begin{CompactList}\small\item\em I/O interface to access disk resident data. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Desc} $\ast$ {\bf my\-Desc}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Sel} $\ast$ {\bf my\-Sel}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf buffer}
+\begin{CompactList}\small\item\em Table buffer. \item\end{CompactList}\item 
+{\bf olong} {\bf buffer\-Size}
+\begin{CompactList}\small\item\em Table buffer size in floats. \item\end{CompactList}\item 
+gchar $\ast$ {\bf tab\-Type}
+\begin{CompactList}\small\item\em Table type (name of type, e.g. \item\end{CompactList}\item 
+{\bf olong} {\bf tab\-Ver}
+\begin{CompactList}\small\item\em Table version number(1-rel). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf my\-Host}
+\begin{CompactList}\small\item\em This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. \item\end{CompactList}\item 
+{\bf olong} {\bf entry\-Off}
+\begin{CompactList}\small\item\em Column offset for Processing History entry in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf entry\-Col}
+\begin{CompactList}\small\item\em Physical column number for Processing History entry in table record. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-History Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableHistory@{Obit\-Table\-History}!buffer@{buffer}}
+\index{buffer@{buffer}!ObitTableHistory@{Obit\-Table\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-History::buffer}}\label{structObitTableHistory_o10}
+
+
+Table buffer. 
+
+\index{ObitTableHistory@{Obit\-Table\-History}!bufferSize@{bufferSize}}
+\index{bufferSize@{bufferSize}!ObitTableHistory@{Obit\-Table\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-History::buffer\-Size}}\label{structObitTableHistory_o11}
+
+
+Table buffer size in floats. 
+
+\index{ObitTableHistory@{Obit\-Table\-History}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableHistory@{Obit\-Table\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-History::Class\-Info}}\label{structObitTableHistory_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableHistory@{Obit\-Table\-History}!entryCol@{entryCol}}
+\index{entryCol@{entryCol}!ObitTableHistory@{Obit\-Table\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-History::entry\-Col}}\label{structObitTableHistory_o16}
+
+
+Physical column number for Processing History entry in table record. 
+
+\index{ObitTableHistory@{Obit\-Table\-History}!entryOff@{entryOff}}
+\index{entryOff@{entryOff}!ObitTableHistory@{Obit\-Table\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-History::entry\-Off}}\label{structObitTableHistory_o15}
+
+
+Column offset for Processing History entry in table record. 
+
+\index{ObitTableHistory@{Obit\-Table\-History}!info@{info}}
+\index{info@{info}!ObitTableHistory@{Obit\-Table\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Table\-History::info}}\label{structObitTableHistory_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitTableHistory@{Obit\-Table\-History}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitTableHistory@{Obit\-Table\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Desc}$\ast$ {\bf Obit\-Table\-History::my\-Desc}}\label{structObitTableHistory_o8}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. 
+
+\index{ObitTableHistory@{Obit\-Table\-History}!myHost@{myHost}}
+\index{myHost@{myHost}!ObitTableHistory@{Obit\-Table\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-Table\-History::my\-Host}}\label{structObitTableHistory_o14}
+
+
+This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. 
+
+\index{ObitTableHistory@{Obit\-Table\-History}!myIO@{myIO}}
+\index{myIO@{myIO}!ObitTableHistory@{Obit\-Table\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IO}$\ast$ {\bf Obit\-Table\-History::my\-IO}}\label{structObitTableHistory_o7}
+
+
+I/O interface to access disk resident data. 
+
+\index{ObitTableHistory@{Obit\-Table\-History}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitTableHistory@{Obit\-Table\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Sel}$\ast$ {\bf Obit\-Table\-History::my\-Sel}}\label{structObitTableHistory_o9}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. 
+
+\index{ObitTableHistory@{Obit\-Table\-History}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitTableHistory@{Obit\-Table\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Table\-History::my\-Status}}\label{structObitTableHistory_o6}
+
+
+I/O status. 
+
+\index{ObitTableHistory@{Obit\-Table\-History}!name@{name}}
+\index{name@{name}!ObitTableHistory@{Obit\-Table\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-History::name}}\label{structObitTableHistory_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableHistory@{Obit\-Table\-History}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableHistory@{Obit\-Table\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-History::Obit\-Id}}\label{structObitTableHistory_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableHistory@{Obit\-Table\-History}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableHistory@{Obit\-Table\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-History::Reference\-Count}}\label{structObitTableHistory_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableHistory@{Obit\-Table\-History}!tabType@{tabType}}
+\index{tabType@{tabType}!ObitTableHistory@{Obit\-Table\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-History::tab\-Type}}\label{structObitTableHistory_o12}
+
+
+Table type (name of type, e.g. 
+
+\char`\"{}AIPS AN\char`\"{}) \index{ObitTableHistory@{Obit\-Table\-History}!tabVer@{tabVer}}
+\index{tabVer@{tabVer}!ObitTableHistory@{Obit\-Table\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-History::tab\-Ver}}\label{structObitTableHistory_o13}
+
+
+Table version number(1-rel). 
+
+\index{ObitTableHistory@{Obit\-Table\-History}!thread@{thread}}
+\index{thread@{thread}!ObitTableHistory@{Obit\-Table\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Table\-History::thread}}\label{structObitTableHistory_o4}
+
+
+Threading info member object. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-History.h}\end{CompactItemize}

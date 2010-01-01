@@ -1,0 +1,254 @@
+\section{Obit\-Sky\-Model\-VMSquint.h File Reference}
+\label{ObitSkyModelVMSquint_8h}\index{ObitSkyModelVMSquint.h@{ObitSkyModelVMSquint.h}}
+{\bf Obit\-Sky\-Model\-VMIon}{\rm (p.\,\pageref{structObitSkyModelVMIon})} class represents VLA beam squint corrected sky models and their Fourier transforms. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-FArray.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-CArray.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-CInterpolate.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Mosaic.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UV.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Sky\-Model\-VM.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-Sky\-Model\-VMSquint}
+\begin{CompactList}\small\item\em Obit\-Sky\-Model\-VMSquint Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Sky\-Model\-VMSquint\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-Sky\-Model\-VMSquint\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Sky\-Model\-VMSquint}{\rm (p.\,\pageref{structObitSkyModelVMSquint})} returns a Obit\-Sky\-Model\-VMSquint$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-Sky\-Model\-VMSquint\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Sky\-Model\-VMSquint}{\rm (p.\,\pageref{structObitSkyModelVMSquint})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Sky\-Model\-VMSquint\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-Sky\-Model\-VMSquint\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Sky\-Model\-VMSquint\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Sky\-Model\-VMSquint} $\ast$ {\bf new\-Obit\-Sky\-Model\-VMSquint} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMSquint\-From\-Info} ({\bf Obit\-Sky\-Model} $\ast$out, gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$in\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Init Sky\-Model object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+{\bf Obit\-Sky\-Model\-VMSquint} $\ast$ {\bf Obit\-Sky\-Model\-VMSquint\-Create} (gchar $\ast$name, {\bf Obit\-Image\-Mosaic} $\ast$mosaic)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-Sky\-Model\-VMSquint}{\rm (p.\,\pageref{structObitSkyModelVMSquint})} structures. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMSquint\-Init\-Mod} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: initialize {\bf Obit\-Sky\-Model\-VMSquint}{\rm (p.\,\pageref{structObitSkyModelVMSquint})} structures. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMSquint\-Shut\-Down\-Mod} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: shutdown {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} processes. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMInit\-Model} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: initialize model for pass through data. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Sky\-Model\-VMSquint\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Sky\-Model\-VMSquint} $\ast$ {\bf Obit\-Sky\-Model\-VMSquint\-Copy} ({\bf Obit\-Sky\-Model\-VMSquint} $\ast$in, {\bf Obit\-Sky\-Model\-VMSquint} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMSquint\-Clone} ({\bf Obit\-Sky\-Model\-VMSquint} $\ast$in, {\bf Obit\-Sky\-Model\-VMSquint} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMSquint\-Update\-Model} ({\bf Obit\-Sky\-Model\-VM} $\ast$in, {\bf ofloat} time, {\bf olong} suba, {\bf Obit\-UV} $\ast$uvdata, {\bf olong} ithread, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Routine to update model. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMSquint\-Chose} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-UV} $\ast$uvdata)
+\begin{CompactList}\small\item\em Private: Chose model type. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMSquint\-Get\-Info} ({\bf Obit\-Sky\-Model} $\ast$in, gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$out\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Extract information about underlying structures to {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Sky\-Model\-VMIon}{\rm (p.\,\pageref{structObitSkyModelVMIon})} class represents VLA beam squint corrected sky models and their Fourier transforms. 
+
+This class represents sky models incorporating beam squint corrections for NRAO-like antennas with offset feeds.
+
+This class is derived from the {\bf Obit\-Sky\-Model\-VM}{\rm (p.\,\pageref{structObitSkyModelVM})} class.
+
+The accurate model calculation used a Direct Fourier Transform (DFT) to calculate the effects of the offset in the beam in RR and LL. As such, this class can only operate on data sets containing RR and LL correlations. Requested Stokes should always be \char`\"{}    \char`\"{}. Since this is a limitation on dynamic range the correction can be applied only to the brighter parts of a given CLEAN model and faster methods may be applied to the less bright parts of the model. Control over when the accurate, slow and less accurate but faster methods are used is controlled by Info\-List members Threshold and max\-Resid (see below). Threshold sets the level for the accurate model. There are several cases: \begin{itemize}
+\item CLEANing For use in CLEANing, max\-Resid should be either unspecified or set to a negative number. In this case, the value used will be derived from the residual images. Whenever the maximum residual level at the start of a CLEAN major cycle exceeds Threshold, all component subtraction will use the high accuracy model. Otherwise, the modeling type is controlled by the info item Mode. \item Calculation of complete model. If a complete model calculation such as for a self calibration or model subtraction is needed then explicitly set max\-Resid to 0.0. In this case, the component lists will be compressed (all components in a given cell combined) and the decision to use the accurate or fast model calculation is made based on whether the component has an absolute value of flux density above or below Threshold.\end{itemize}
+\subsection{Creators and Destructors}\label{ObitSkyModelVMSquint_8h_ObitSkyModelVMSquintaccess}
+An {\bf Obit\-Sky\-Model\-VMSquint}{\rm (p.\,\pageref{structObitSkyModelVMSquint})} will usually be created using Obit\-Sky\-Model\-VMSquint\-Create which allows specifying a name for the object as well as the Image\-Mosaic containing the model.
+
+A copy of a pointer to an {\bf Obit\-Sky\-Model\-VMSquint}{\rm (p.\,\pageref{structObitSkyModelVMSquint})} should always be made using the {\bf Obit\-Sky\-Model\-VMSquint\-Ref}{\rm (p.\,\pageref{ObitSkyModelVMSquint_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-Sky\-Model\-VMSquint}{\rm (p.\,\pageref{structObitSkyModelVMSquint})} or changing a pointer, the function {\bf Obit\-Sky\-Model\-VMSquint\-Unref}{\rm (p.\,\pageref{ObitSkyModelVMSquint_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.\subsection{Data selection}\label{ObitSkyModelVMSquint_8h_ObitSkyModelVMSquintselect}
+The selection of data to be modified is through values added to the info ({\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}) member and include the following: \begin{itemize}
+\item \char`\"{}Stokes\char`\"{} OBIT\_\-string (4,1,1) Selected output Stokes parameters: \char`\"{}    \char`\"{}=$>$ no translation, [default \char`\"{}    \char`\"{}] \item \char`\"{}ion\-Ver\char`\"{}OBIT\_\-int (1,1,1) NI table version number, 0-$>$ use highest, def=1 \item \char`\"{}BChan\char`\"{} OBIT\_\-int (1,1,1) First spectral channel selected. [def all] \item \char`\"{}EChan\char`\"{} OBIT\_\-int (1,1,1) Highest spectral channel selected. [def all] \item \char`\"{}BIF\char`\"{} OBIT\_\-int (1,1,1) First \char`\"{}IF\char`\"{} selected. [def all] \item \char`\"{}EIF\char`\"{} OBIT\_\-int (1,1,1) Highest \char`\"{}IF\char`\"{} selected. [def all] \item \char`\"{}do3D\char`\"{} OBIT\_\-bool (1,1,1) If 3D imaging wanted. [def false] \item \char`\"{}DIVIDE\char`\"{} OBIT\_\-bool (1,1,1) If division rather than subtraction wanted. [def false] \item \char`\"{}REPLACE\char`\"{} OBIT\_\-bool (1,1,1) If TRUE replace data with model. [def false] \item \char`\"{}PBCor\char`\"{} OBIT\_\-bool (1,1,1) If TRUE make relative primary beam corrections [def true] \item \char`\"{}no\-Neg\char`\"{} OBIT\_\-bool (1,1,1) If TRUE only positive flux comps are to be used [def false] \item \char`\"{}ant\-Size\char`\"{} OBIT\_\-float (1,1,1) Diameter of antennas for rel. r,.[def 25.0] \item \char`\"{}PBmin\char`\"{} OBIT\_\-float (1,1,1) min. beam gain for Squint correction [Jinc 0.05, Poly 0.01] \item \char`\"{}Factor\char`\"{} OBIT\_\-float (1,1,1) model multiplications factor (-1=$>$add) [def 1] \item \char`\"{}min\-Flux\char`\"{} OBIT\_\-float (1,1,1) Minimum flux density model or pixel [def -1.0e20] \item \char`\"{}Model\-Type\char`\"{} OBIT\_\-int (1,1,1) Model type (Obit\-Sky\-Model\-VMSquint\-Type) [def OBIT\_\-Sky\-Model\_\-Comps] \item \char`\"{}Mode\char`\"{} OBIT\_\-int (1,1,1) Model mode (Obit\-Sky\-Model\-VMSquint\-Mode) [def OBIT\_\-Sky\-Model\_\-Fastest] \item \char`\"{}MODPTFLX\char`\"{} OBIT\_\-float (1,1,1) Point model flux in Jy, [def 0.0] \item \char`\"{}MODPTXOF\char`\"{} OBIT\_\-float (1,1,1) Point model \char`\"{}x\char`\"{} offset in deg [def 0.0] \item \char`\"{}MODPTYOF\char`\"{} OBIT\_\-float (1,1,1) Point model \char`\"{}y\char`\"{} offset in deg [def 0.0] \item \char`\"{}MODPTYPM\char`\"{} OBIT\_\-float (4,1,1) Point other parameters [def all 0.0] \item \char`\"{}CCVer\char`\"{} OBIT\_\-int (?,1,1) CC table versions to use [def all 0 =$>$ highest] \item \char`\"{}BComp\char`\"{} OBIT\_\-int (?,1,1) Start CC to use per table, 1-rel [def 1 ] \item \char`\"{}EComp\char`\"{} OBIT\_\-int (?,1,1) Highest CC to use per table, 1-rel [def to end ] \item \char`\"{}Update\-Int\char`\"{} OBIT\_\-float (1,1,1) Model update interval (min) [def 1 min] \item \char`\"{}Threshold\char`\"{} OBIT\_\-float (1,1,1) Threshold for high accuracy model [1.0e20] \item \char`\"{}max\-Resid\char`\"{} OBIT\_\-float (1,1,1) Current maximum abs residual flux density if max\-Resid==0.0 then use accurate model for merged CC abs flux $>$ Threshold and the gridded method for weaker summed components. [default or $<$ 0 then determine from Image\-Mosaic]\end{itemize}
+
+
+\subsection{Define Documentation}
+\index{ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}!ObitSkyModelVMSquintIsA@{ObitSkyModelVMSquintIsA}}
+\index{ObitSkyModelVMSquintIsA@{ObitSkyModelVMSquintIsA}!ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Sky\-Model\-VMSquint\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-Sky\-Model\-VMSquint\-Get\-Class())}\label{ObitSkyModelVMSquint_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}!ObitSkyModelVMSquintRef@{ObitSkyModelVMSquintRef}}
+\index{ObitSkyModelVMSquintRef@{ObitSkyModelVMSquintRef}!ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Sky\-Model\-VMSquint\-Ref(in)\ Obit\-Ref (in)}\label{ObitSkyModelVMSquint_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Sky\-Model\-VMSquint}{\rm (p.\,\pageref{structObitSkyModelVMSquint})}. 
+
+returns a Obit\-Sky\-Model\-VMSquint$\ast$. in = object to reference \index{ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}!ObitSkyModelVMSquintUnref@{ObitSkyModelVMSquintUnref}}
+\index{ObitSkyModelVMSquintUnref@{ObitSkyModelVMSquintUnref}!ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Sky\-Model\-VMSquint\-Unref(in)\ Obit\-Unref (in)}\label{ObitSkyModelVMSquint_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Sky\-Model\-VMSquint}{\rm (p.\,\pageref{structObitSkyModelVMSquint})} returns a Obit\-Sky\-Model\-VMSquint$\ast$. 
+
+in = object to unreference 
+
+\subsection{Function Documentation}
+\index{ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}!newObitSkyModelVMSquint@{newObitSkyModelVMSquint}}
+\index{newObitSkyModelVMSquint@{newObitSkyModelVMSquint}!ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Sky\-Model\-VMSquint}$\ast$ new\-Obit\-Sky\-Model\-VMSquint (gchar $\ast$ {\em name})}\label{ObitSkyModelVMSquint_8h_a4}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}!ObitSkyModelVMInitModel@{ObitSkyModelVMInitModel}}
+\index{ObitSkyModelVMInitModel@{ObitSkyModelVMInitModel}!ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMInit\-Model ({\bf Obit\-Sky\-Model} $\ast$ {\em inn}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMSquint_8h_a9}
+
+
+Public: initialize model for pass through data. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Sky\-Model to initialize \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}!ObitSkyModelVMSquintChose@{ObitSkyModelVMSquintChose}}
+\index{ObitSkyModelVMSquintChose@{ObitSkyModelVMSquintChose}!ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMSquint\-Chose ({\bf Obit\-Sky\-Model} $\ast$ {\em inn}, {\bf Obit\-UV} $\ast$ {\em uvdata})}\label{ObitSkyModelVMSquint_8h_a14}
+
+
+Private: Chose model type. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to the {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} . \item[{\em uvdata}]UV data set \end{description}
+\end{Desc}
+\index{ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}!ObitSkyModelVMSquintClassInit@{ObitSkyModelVMSquintClassInit}}
+\index{ObitSkyModelVMSquintClassInit@{ObitSkyModelVMSquintClassInit}!ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMSquint\-Class\-Init (void)}\label{ObitSkyModelVMSquint_8h_a3}
+
+
+Public: Class initializer. 
+
+\index{ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}!ObitSkyModelVMSquintClone@{ObitSkyModelVMSquintClone}}
+\index{ObitSkyModelVMSquintClone@{ObitSkyModelVMSquintClone}!ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMSquint\-Clone ({\bf Obit\-Sky\-Model\-VMSquint} $\ast$ {\em in}, {\bf Obit\-Sky\-Model\-VMSquint} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMSquint_8h_a12}
+
+
+Public: Copy structure. 
+
+\index{ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}!ObitSkyModelVMSquintCopy@{ObitSkyModelVMSquintCopy}}
+\index{ObitSkyModelVMSquintCopy@{ObitSkyModelVMSquintCopy}!ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Sky\-Model\-VMSquint}$\ast$ Obit\-Sky\-Model\-VMSquint\-Copy ({\bf Obit\-Sky\-Model\-VMSquint} $\ast$ {\em in}, {\bf Obit\-Sky\-Model\-VMSquint} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMSquint_8h_a11}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}!ObitSkyModelVMSquintCreate@{ObitSkyModelVMSquintCreate}}
+\index{ObitSkyModelVMSquintCreate@{ObitSkyModelVMSquintCreate}!ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Sky\-Model\-VMSquint}$\ast$ Obit\-Sky\-Model\-VMSquint\-Create (gchar $\ast$ {\em name}, {\bf Obit\-Image\-Mosaic} $\ast$ {\em mosaic})}\label{ObitSkyModelVMSquint_8h_a6}
+
+
+Public: Create/initialize {\bf Obit\-Sky\-Model\-VMSquint}{\rm (p.\,\pageref{structObitSkyModelVMSquint})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em mosaic}]{\bf Obit\-Image\-Mosaic}{\rm (p.\,\pageref{structObitImageMosaic})} giving one or more images/CC tables \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}!ObitSkyModelVMSquintFromInfo@{ObitSkyModelVMSquintFromInfo}}
+\index{ObitSkyModelVMSquintFromInfo@{ObitSkyModelVMSquintFromInfo}!ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMSquint\-From\-Info ({\bf Obit\-Sky\-Model} $\ast$ {\em out}, gchar $\ast$ {\em prefix}, {\bf Obit\-Info\-List} $\ast$ {\em in\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMSquint_8h_a5}
+
+
+Public: Init Sky\-Model object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em out}]the new object.to be initialized \item[{\em prefix}]If Non\-Null, string to be added to beginning of in\-List entry name \char`\"{}xxx\char`\"{} in the following \item[{\em in\-List}]Info\-List to extract object information from \begin{itemize}
+\item \char`\"{}xxx\-Class\-Type\char`\"{} string Sky\-Model type, \char`\"{}Squint\char`\"{} for this class \item \char`\"{}xxx\-Threshold\char`\"{} ofloat Threshold flux density for doing high accuracy DFT model \end{itemize}
+\item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}!ObitSkyModelVMSquintGetClass@{ObitSkyModelVMSquintGetClass}}
+\index{ObitSkyModelVMSquintGetClass@{ObitSkyModelVMSquintGetClass}!ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Sky\-Model\-VMSquint\-Get\-Class (void)}\label{ObitSkyModelVMSquint_8h_a10}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}!ObitSkyModelVMSquintGetInfo@{ObitSkyModelVMSquintGetInfo}}
+\index{ObitSkyModelVMSquintGetInfo@{ObitSkyModelVMSquintGetInfo}!ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMSquint\-Get\-Info ({\bf Obit\-Sky\-Model} $\ast$ {\em inn}, gchar $\ast$ {\em prefix}, {\bf Obit\-Info\-List} $\ast$ {\em out\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMSquint_8h_a15}
+
+
+Public: Extract information about underlying structures to {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object of interest. \item[{\em prefix}]If Non\-Null, string to be added to beginning of out\-List entry name \char`\"{}xxx\char`\"{} in the following \item[{\em out\-List}]Info\-List to write entries into \begin{itemize}
+\item \char`\"{}xxx\-Class\-Type\char`\"{} string Sky\-Model type, \char`\"{}Squint\char`\"{} for this class \item \char`\"{}xxx\-Threshold\char`\"{} ofloat Threshold flux density for doing high accuracy DFT model \end{itemize}
+\item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}!ObitSkyModelVMSquintInitMod@{ObitSkyModelVMSquintInitMod}}
+\index{ObitSkyModelVMSquintInitMod@{ObitSkyModelVMSquintInitMod}!ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMSquint\-Init\-Mod ({\bf Obit\-Sky\-Model} $\ast$ {\em inn}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMSquint_8h_a7}
+
+
+Public: initialize {\bf Obit\-Sky\-Model\-VMSquint}{\rm (p.\,\pageref{structObitSkyModelVMSquint})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model to initialize \item[{\em uvdata}]uv data being modeled. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}!ObitSkyModelVMSquintShutDownMod@{ObitSkyModelVMSquintShutDownMod}}
+\index{ObitSkyModelVMSquintShutDownMod@{ObitSkyModelVMSquintShutDownMod}!ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMSquint\-Shut\-Down\-Mod ({\bf Obit\-Sky\-Model} $\ast$ {\em inn}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMSquint_8h_a8}
+
+
+Public: shutdown {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} processes. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model to shutdown \item[{\em uvdata}]uv data being modeled. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}!ObitSkyModelVMSquintUpdateModel@{ObitSkyModelVMSquintUpdateModel}}
+\index{ObitSkyModelVMSquintUpdateModel@{ObitSkyModelVMSquintUpdateModel}!ObitSkyModelVMSquint.h@{Obit\-Sky\-Model\-VMSquint.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMSquint\-Update\-Model ({\bf Obit\-Sky\-Model\-VM} $\ast$ {\em inn}, {\bf ofloat} {\em time}, {\bf olong} {\em suba}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf olong} {\em ithread}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMSquint_8h_a13}
+
+
+Public: Routine to update model. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model\-VM Parameters on info: PBmin = min. beam gain for Squint correction (Jinc 0.05, Poly 0.01) \item[{\em time}]current time (d) \item[{\em suba}]0-rel subarray number \item[{\em uvdata}]uv data being modeled. \item[{\em ithread}]which thread (0-rel) , $<$0-$>$ no threads \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}

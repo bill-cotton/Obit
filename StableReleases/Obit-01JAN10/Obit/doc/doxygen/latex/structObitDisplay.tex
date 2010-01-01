@@ -1,0 +1,95 @@
+\section{Obit\-Display Struct Reference}
+\label{structObitDisplay}\index{ObitDisplay@{ObitDisplay}}
+Obit\-Display Class structure.  
+
+
+{\tt \#include $<$Obit\-Display.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+gchar $\ast$ {\bf Server\-URL}
+\begin{CompactList}\small\item\em URL of display server. \item\end{CompactList}\item 
+gboolean {\bf turned\-Off}
+\begin{CompactList}\small\item\em Display turned off? \item\end{CompactList}\item 
+{\bf Obit\-RPC} $\ast$ {\bf client}
+\begin{CompactList}\small\item\em RPC client. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Display Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitDisplay@{Obit\-Display}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitDisplay@{Obit\-Display}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Display::Class\-Info}}\label{structObitDisplay_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitDisplay@{Obit\-Display}!client@{client}}
+\index{client@{client}!ObitDisplay@{Obit\-Display}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-RPC}$\ast$ {\bf Obit\-Display::client}}\label{structObitDisplay_o7}
+
+
+RPC client. 
+
+\index{ObitDisplay@{Obit\-Display}!name@{name}}
+\index{name@{name}!ObitDisplay@{Obit\-Display}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Display::name}}\label{structObitDisplay_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitDisplay@{Obit\-Display}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitDisplay@{Obit\-Display}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Display::Obit\-Id}}\label{structObitDisplay_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitDisplay@{Obit\-Display}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitDisplay@{Obit\-Display}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Display::Reference\-Count}}\label{structObitDisplay_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitDisplay@{Obit\-Display}!ServerURL@{ServerURL}}
+\index{ServerURL@{ServerURL}!ObitDisplay@{Obit\-Display}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Display::Server\-URL}}\label{structObitDisplay_o5}
+
+
+URL of display server. 
+
+\index{ObitDisplay@{Obit\-Display}!thread@{thread}}
+\index{thread@{thread}!ObitDisplay@{Obit\-Display}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Display::thread}}\label{structObitDisplay_o4}
+
+
+Threading info member object. 
+
+\index{ObitDisplay@{Obit\-Display}!turnedOff@{turnedOff}}
+\index{turnedOff@{turnedOff}!ObitDisplay@{Obit\-Display}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Display::turned\-Off}}\label{structObitDisplay_o6}
+
+
+Display turned off? 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Display.h}\end{CompactItemize}

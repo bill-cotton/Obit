@@ -1,0 +1,166 @@
+% midi.sty
+%-----------------------------------------------------------------------
+% LaTeX style definitions OBIT macroes
+%-----------------------------------------------------------------------
+%-----------------------------------------------------------------------
+% This file modifies the LaTeX article style.
+% This file is invoked using the LaTeX declarations:
+%
+%\documentclass[11pt]{article}
+%\usepackage{OBITdoc}
+%-----------------------------------------------------------------------
+\typeout{Document Style `Obit'. }
+%-----------------------------------------------------------------------
+%                                      Define the 'obit' environment:
+\newenvironment{obit}{
+    \renewcommand{\thepage}{\thechapter --\arabic{page}}}{}
+%-----------------------------------------------------------------------
+%                                      Set page size and margins
+\setlength{\textwidth}{6.5in}
+\setlength{\textheight}{9in}
+\setlength{\oddsidemargin}{0in}
+\setlength{\evensidemargin}{0in}
+\setlength{\topmargin}{-0.125in}
+%                                      Fonts
+\font\ttlfont=cmbxsl10 at 30pt
+\font\secfont=cmbxsl10 at 15pt
+\font\namefont=cmr10 at 15pt
+%
+%                
+%                      Definitions
+\newtoks\classname
+\global\let\@classname\@empty
+ \def\ClassName[#1#2]{\section{Class #1}}
+%                      Class enumerators
+\def\ClassEnum[#1#2]{\subsection{enum: #1}\hfill\break
+#2}
+\def\ObitEnum{\begin{itemize}}
+
+\def\ObitEnumItem[#1#2]{\item{\bf #1}: #2}
+\def\endObitEnum{\end{itemize}}
+%
+%                      Macroes for entries
+\def\tabletitle#1{\subsection{ #1}\vskip 1cm}
+\def\tablename#1{{\namefont {\secfont Table name:} #1}}
+\def\tableintro#1{\subsubsection{Introduction}#1}
+\def\tableover#1{\subsubsection{Overview}#1}
+%
+% define column index for keyword symbols (i.e. ``j'' means the column
+% number of column ``DATA1''
+\def\tablecolindex[#1#2]{In the following symbol '#1' refers to the table
+column with label '#2'.}
+%
+%  Table keywords
+\def\keywords{\subsubsection{Keywords}
+The following keywords must follow the required bintable keywords but
+the order is otherwise arbitrary.  
+Allowed data types are:
+{\bf I}=integer(16-bit), {\bf J}=integer(32-bit), {\bf E}=real, 
+{\bf D}=double, {\bf A}=character, 
+{\bf L}=logical.  
+``Variable name'' is the name the keyword is given in software and
+``Range'' if present indicates a structural keyword, ``()'' indicates
+all values are allowed and ``(n,m)'' indicates values from n to m.
+This latter is used to indicate sufixes for column lables.
+\begin{itemize}}
+\def\endkeywords{\end{itemize}}
+% tablekey table keyword)
+% arguments, name,  data type, variable name, default value, range, description
+\def\tablekey[#1#2#3#4#5#6]{\item{\bf #1: Type: #2}, 
+Variable name:  #3, \hfill\break
+Default value: #4, {Range: #5} \\
+#6
+}
+%
+%  Table Columns
+\def\columns{\subsubsection{Columns}
+The order of the columns is arbitrary.
+Allowed data types are:
+{\bf I}=16 bit integer, {\bf J}=32 bit integer, 
+{\bf E}=real, {\bf D}=double, 
+{\bf C}=Complex (32 bit each), {\bf M}=double complex (64 bit each), 
+{\bf A}=character, 
+{\bf L}=logical, {\bf X=}bit array, {\bf B}=byte array.
+Multidimensional arrays use the {\tt TDIMnnn} keyword
+convention.\hfill\break
+The first line of each entry gives the name:type, units and
+dimensionality of the entry.
+``Variable name'' is the name the keyword is given in software,
+possibly with a suffix if the column label ends in \#xxx where xxx is
+a keyword.
+\begin{itemize}}
+\def\endcolumns{\end{itemize}}
+% tablecol adds table column
+% arguments, name, units, data type, dimension, variable name, description
+%\def\tablecol[#1#2#3#4#5#6]{\item{column: \hbox to 4cm{\bf #1 : #3\hfill}
+\def\tablecol[#1#2#3#4#5#6]{\item{{\bf #1 : Type #3\hfil}
+\hbox to 4cm{\hfil #2}
+\hbox to 4cm{\hfil #4}}\break 
+Variable name root: #5\\
+#6
+}
+%
+%  Table Modification history
+\def\history{\subsubsection{Modification History}\begin{enumerate}
+}
+\def\endhistory{\end{enumerate}}
+% modhistory adds modification history
+% arguments, name of person, date (dd/mm/yyyy), description of modification
+\def\modhistory[#1#2#3]{\item{ #1 #2}\hfill\break #3}
+
+% references macroes
+\def\references{\section*{References}
+\bgroup\parindent=0pt\parskip=.5ex
+\def\refpar{\par\hangindent=3em\hangafter=1}}
+\def\endreferences{\refpar\egroup}
+\def\thebibliography{\section*{References}
+\list{\null}{\leftmargin 3em\labelwidth 0pt\labelsep 0pt\itemindent -3em
+\usecounter{enumi}}
+\def\refpar{\relax}
+\def\newblock{\hskip .11em plus .33em minus .07em}
+\sloppy\clubpenalty4000\widowpenalty4000
+\sfcode`\.=1000\relax}
+\def\endthebibliography{\endlist}
+\def\@biblabel#1{\relax}
+\def\@cite#1#2{#1\if@tempswa , #2\fi}
+\def\reference{\relax\refpar}
+\def\@citex[#1]#2{\if@filesw\immediate\write\@auxout{\string\citation{#2}}\fi
+\def\@citea{}\@cite{\@for\@citeb:=#2\do
+{\@citea\def\@citea{,\penalty\@m\ }\@ifundefined
+{b@\@citeb}{\@warning
+{Citation `\@citeb' on page \thepage \space undefined}}%
+{\csname b@\@citeb\endcsname}}}{#1}}
+\let\jnl@style=\rm
+\def\ref@jnl#1{{\jnl@style#1\/}}
+\def\aj{\ref@jnl{AJ}}			
+\def\araa{\ref@jnl{ARA\&A}}		
+\def\apj{\ref@jnl{ApJ}}			
+\def\apjl{\ref@jnl{ApJ}}		
+\def\apjs{\ref@jnl{ApJS}}		
+\def\ao{\ref@jnl{Appl.Optics}}		
+\def\apss{\ref@jnl{Ap\&SS}}		
+\def\aap{\ref@jnl{A\&A}}		
+\def\aapr{\ref@jnl{A\&A~Rev.}}		
+\def\aaps{\ref@jnl{A\&AS}}		
+\def\azh{\ref@jnl{AZh}}			
+\def\baas{\ref@jnl{BAAS}}		
+\def\jrasc{\ref@jnl{JRASC}}		
+\def\memras{\ref@jnl{MmRAS}}		
+\def\mnras{\ref@jnl{MNRAS}}		
+\def\pra{\ref@jnl{Phys.Rev.A}}		
+\def\prb{\ref@jnl{Phys.Rev.B}}		
+\def\prc{\ref@jnl{Phys.Rev.C}}		
+\def\prd{\ref@jnl{Phys.Rev.D}}		
+\def\prl{\ref@jnl{Phys.Rev.Lett}}	
+\def\pasp{\ref@jnl{PASP}}		
+\def\pasj{\ref@jnl{PASJ}}		
+\def\qjras{\ref@jnl{QJRAS}}		
+\def\skytel{\ref@jnl{S\&T}}		
+\def\solphys{\ref@jnl{Solar~Phys.}}	
+\def\sovast{\ref@jnl{Soviet~Ast.}}	
+\def\ssr{\ref@jnl{Space~Sci.Rev.}}	
+\def\zap{\ref@jnl{ZAp}}			
+\let\astap=\aap
+\let\apjlett=\apjl
+\let\apjsupp=\apjs
+ 

@@ -1,0 +1,596 @@
+\section{Obit\-Sky\-Model.c File Reference}
+\label{ObitSkyModel_8c}\index{ObitSkyModel.c@{ObitSkyModel.c}}
+{\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} class function definitions. 
+
+{\tt \#include $<$math.h$>$}\par
+{\tt \#include \char`\"{}Obit\-Thread.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Sky\-Model.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Sky\-Model\-VMSquint.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Sky\-Model\-VMIon.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Mosaic.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-CCUtil.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-FFT.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVUtil.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Util.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-PBUtil.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Mem.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Sin\-Cos.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf FTFunc\-Arg}
+\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf HWIDTH}\ 12
+\begin{CompactList}\small\item\em Half width of gridded subtraction interpolation kernal. \item\end{CompactList}\item 
+\#define {\bf Faz\-Arr\-Size}\ 100
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Sky\-Model\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+gboolean {\bf Obit\-Sky\-Model\-Load\-Point} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Private: Load point model, may be overridden in derived class. \item\end{CompactList}\item 
+gboolean {\bf Obit\-Sky\-Model\-Load\-Comps} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf olong} n, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Private: Load Components model, may be overridden in derived class. \item\end{CompactList}\item 
+{\bf Obit\-Sky\-Model} $\ast$ {\bf new\-Obit\-Sky\-Model} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+{\bf Obit\-Sky\-Model} $\ast$ {\bf Obit\-Sky\-Model\-From\-Info} (gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$in\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create Sky\-Model object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Sky\-Model\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Sky\-Model} $\ast$ {\bf Obit\-Sky\-Model\-Copy} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-Sky\-Model} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-Clone} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-Sky\-Model} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+{\bf Obit\-Sky\-Model} $\ast$ {\bf Obit\-Sky\-Model\-Create} (gchar $\ast$name, {\bf Obit\-Image\-Mosaic} $\ast$mosaic)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} structures. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-Init\-Mod} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: initialize {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} structures. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-Shut\-Down\-Mod} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: shutdown {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} processes. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-Init\-Model} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: initialize model for pass in time through data. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Sky\-Model\-Sub\-UV} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-UV} $\ast$indata, {\bf Obit\-UV} $\ast$outdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Subtract model from an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Sky\-Model\-Div\-UV} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-UV} $\ast$indata, {\bf Obit\-UV} $\ast$outdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Divide model into an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. \item\end{CompactList}\item 
+gboolean {\bf Obit\-Sky\-Model\-Load} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf olong} image, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Load specified image and plane. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-FT} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf olong} field, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Calculate Fourier transform of model for current buffer in an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. \item\end{CompactList}\item 
+gboolean {\bf Obit\-Sky\-Model\-Grid\-Comps} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf olong} n, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Grid Components model, may be overridden in derived class. \item\end{CompactList}\item 
+gboolean {\bf Obit\-Sky\-Model\-Load\-Image} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf olong} n, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Load/FT image model, may be overridden in derived class. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-FTDFT} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf olong} field, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: FT by DFT, may be overridden in derived class. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-FTGrid} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf olong} field, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: FT by Gridding, may be overridden in derived class. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Obit\-Sky\-Model\-Sum} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Sum flux in Clean Model. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-Compress\-CC} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Compress CC Tables. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-Get\-Input} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get input parameters from info. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-Chose} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-UV} $\ast$uvdata)
+\begin{CompactList}\small\item\em Public: Decide model method. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-Set\-Select} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Fill in data selection values. \item\end{CompactList}\item 
+gboolean {\bf Obit\-Sky\-Modelset\-PBChans} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Decide next block of channels if doing PB correction. \item\end{CompactList}\item 
+{\bf Obit\-Table\-CC} $\ast$ {\bf Obit\-Sky\-Modelget\-PBCCTab} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf olong} field, {\bf olong} $\ast$in\-CCVer, {\bf olong} $\ast$out\-CCver, {\bf olong} $\ast$start\-CC, {\bf olong} $\ast$end\-CC, {\bf ofloat} range[2], {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: return {\bf Obit\-Table\-CC}{\rm (p.\,\pageref{structObitTableCC})} with possible PB corrections. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Modelget\-PBImage} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf olong} field, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: fill in-$>$plane with image and possibly PB corrected. \item\end{CompactList}\item 
+gboolean {\bf Obit\-Sky\-Model\-Grid\-FTComps} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf olong} field, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Grid/FT components. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-Load\-Grid\-Comps} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf olong} field, {\bf Obit\-UV} $\ast$uvdata, {\bf ofloat} gparm[3], {\bf olong} $\ast$ncomp, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Load Grid components. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-FTImage} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-FArray} $\ast$in\-Array, {\bf Obit\-CArray} $\ast$out\-Array)
+\begin{CompactList}\small\item\em Public: FT image array in in-$>$plane. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-Add\-Field} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Add field to mosaic. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-Get\-Info} ({\bf Obit\-Sky\-Model} $\ast$in, gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$out\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Extract information about underlying structures to {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+{\bf olong} {\bf Over\-Sample} = 2
+\begin{CompactList}\small\item\em Over sampling factor in uv plane. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} class function definitions. 
+
+This class represents sky models and their Fourier transforms and is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} base class.
+
+\subsection{Define Documentation}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!FazArrSize@{FazArrSize}}
+\index{FazArrSize@{FazArrSize}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Faz\-Arr\-Size\ 100}\label{ObitSkyModel_8c_a1}
+
+
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!HWIDTH@{HWIDTH}}
+\index{HWIDTH@{HWIDTH}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define HWIDTH\ 12}\label{ObitSkyModel_8c_a0}
+
+
+Half width of gridded subtraction interpolation kernal. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!newObitSkyModel@{newObitSkyModel}}
+\index{newObitSkyModel@{newObitSkyModel}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Sky\-Model}$\ast$ new\-Obit\-Sky\-Model (gchar $\ast$ {\em name})}\label{ObitSkyModel_8c_a13}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelAddField@{ObitSkyModelAddField}}
+\index{ObitSkyModelAddField@{ObitSkyModelAddField}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-Add\-Field ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a41}
+
+
+Public: Add field to mosaic. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]the {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} . \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelChose@{ObitSkyModelChose}}
+\index{ObitSkyModelChose@{ObitSkyModelChose}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-Chose ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em uvdata})}\label{ObitSkyModel_8c_a33}
+
+
+Public: Decide model method. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to the\-Obit\-Sky\-Model . \item[{\em uvdata}]UV data set \end{description}
+\end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelClassInit@{ObitSkyModelClassInit}}
+\index{ObitSkyModelClassInit@{ObitSkyModelClassInit}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-Class\-Init (void)}\label{ObitSkyModel_8c_a43}
+
+
+Public: Class initializer. 
+
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelClear@{ObitSkyModelClear}}
+\index{ObitSkyModelClear@{ObitSkyModelClear}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-Clear (gpointer {\em inn})}\label{ObitSkyModel_8c_a7}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. For some reason this wasn't build into the GType class. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-Sky\-Model$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelClone@{ObitSkyModelClone}}
+\index{ObitSkyModelClone@{ObitSkyModelClone}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-Clone ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf Obit\-Sky\-Model} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a17}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelCompressCC@{ObitSkyModelCompressCC}}
+\index{ObitSkyModelCompressCC@{ObitSkyModelCompressCC}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-Compress\-CC ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a31}
+
+
+Public: Compress CC Tables. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Sum of Clean components \end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelCopy@{ObitSkyModelCopy}}
+\index{ObitSkyModelCopy@{ObitSkyModelCopy}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Sky\-Model}$\ast$ Obit\-Sky\-Model\-Copy ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf Obit\-Sky\-Model} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a16}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelCreate@{ObitSkyModelCreate}}
+\index{ObitSkyModelCreate@{ObitSkyModelCreate}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Sky\-Model}$\ast$ Obit\-Sky\-Model\-Create (gchar $\ast$ {\em name}, {\bf Obit\-Image\-Mosaic} $\ast$ {\em mosaic})}\label{ObitSkyModel_8c_a18}
+
+
+Public: Create/initialize {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em mosaic}]{\bf Obit\-Image\-Mosaic}{\rm (p.\,\pageref{structObitImageMosaic})} giving one or more images/CC tables \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelDivUV@{ObitSkyModelDivUV}}
+\index{ObitSkyModelDivUV@{ObitSkyModelDivUV}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Sky\-Model\-Div\-UV ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em indata}, {\bf Obit\-UV} $\ast$ {\em outdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a23}
+
+
+Public: Divide model into an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model to Fourier transform \item[{\em indata}]UV data set to subtract model from \item[{\em outdata}]UV data set to write to \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelFromInfo@{ObitSkyModelFromInfo}}
+\index{ObitSkyModelFromInfo@{ObitSkyModelFromInfo}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Sky\-Model}$\ast$ Obit\-Sky\-Model\-From\-Info (gchar $\ast$ {\em prefix}, {\bf Obit\-Info\-List} $\ast$ {\em in\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a14}
+
+
+Public: Create Sky\-Model object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+Initializes class if needed on first call. Also works for derived classes. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em prefix}]If Non\-Null, string to be added to beginning of in\-List entry name \char`\"{}xxx\char`\"{} in the following \item[{\em in\-List}]Info\-List to extract object information from \begin{itemize}
+\item \char`\"{}xxx\-Class\-Type\char`\"{} string Sky\-Model type, \char`\"{}Base\char`\"{} for base class \item \char`\"{}xxxmosaic\char`\"{} string prefix of {\bf Obit\-Image\-Mosaic}{\rm (p.\,\pageref{structObitImageMosaic})} mosaic \item \char`\"{}xxxmodel\-Type\char`\"{} olong Model type (Obit\-Sky\-Model\-Type) \item \char`\"{}xxxmod\-Type\char`\"{} olong Component model type (Obit\-Sky\-Model\-Comp\-Type) \item \char`\"{}xxxmodel\-Mode\char`\"{} olong Model calculation mode for components (Obit\-Sky\-Model\-Comp\-Type) \item \char`\"{}xxx\-CCver\char`\"{} olong$\ast$ List of AIPSCC table versions per image in mosaic there are mosaic-$>$number\-Images of these \item \char`\"{}xxxstart\-Comp\char`\"{} olong$\ast$ List of beginning component per image in mosaic (1-rel) \item \char`\"{}xxxend\-Comp\char`\"{} olong$\ast$ List of highest component per image in mosaic (1-rel) \item \char`\"{}xxxfactor\char`\"{} ofloat Factor to multiply times model \item \char`\"{}xxxmin\-Flux\char`\"{} ofloat Minimum flux density model or pixel \item \char`\"{}xxxstok\-Factor\char`\"{}ofloat Factor to multiply times second Stokes of model \item \char`\"{}xxxpoint\-Flux\char`\"{} ofloat Point model flux density (Jy) \item \char`\"{}xxxpoint\-XOff\char`\"{} ofloat Point, x (ra)offset in deg. \item \char`\"{}xxxpoint\-YOff\char`\"{} ofloat Point, y (dec) offset in deg. \item \char`\"{}xxxpoint\-Parms\char`\"{}ofloat[10] Other (non-point)model components: major\_\-axis (deg), minor\_\-axis (deg), position\_\-angle (deg), type (Obit\-Sky\-Model\-Comp\-Type as gint), spectral terms; \item \char`\"{}xxxant\-Size\char`\"{} ofloat Antennna diameter (m) for rel. PB corrections \item \char`\"{}xxxdo3D\char`\"{} boolean Apply 3D imaging corrections? \item \char`\"{}xxxdo\-Divide\char`\"{} boolean Divide model into data? \item \char`\"{}xxxdo\-Replace\char`\"{} boolean Replace data with model? \item \char`\"{}xxxdo\-PBCor\char`\"{} boolean Make relative Primary Beam corrections? \item \char`\"{}xxxstart\-Channel\char`\"{} olong Selected start channel[1-rel] \item \char`\"{}xxxnumber\-Channel\char`\"{} olong Selected channel and number \item \char`\"{}xxxstart\-IF\char`\"{} olong Selected start IF [1-rel] \item \char`\"{}xxxnumber\-IF\char`\"{} olong Selected IF number \item \char`\"{}xxxstart\-Channel\-PB\char`\"{} olong Selected start rel. PB correction channel[1-rel] \item \char`\"{}xxxnumber\-Channel\-PB\char`\"{} olong Selected PB correction channel number \item \char`\"{}xxxstart\-IFPB\char`\"{} olong Selected start rel. PB correction IF[1-rel] \item \char`\"{}xxxnumber\-IFPB\char`\"{} olong Selected PB correction IF number \item \char`\"{}xxxnfreq\-PB\char`\"{} olong number of frequency channels for PB correction \item \char`\"{}xxx\-PBFreq\char`\"{} odouble Reference frequency (Hz) for this block of channels for PB corrections \item \char`\"{}xxxstokes\char`\"{} gchar[5] Selected Stokes \item \char`\"{}xxxstart\-Poln\char`\"{} olong Selected start Poln [1-rel] \item \char`\"{}xxxnumber\-Poln\char`\"{} olong Selected Poln number \item \char`\"{}xxxdo\-Flip\char`\"{} boolean True if need to multiply the FT by sqrt(-1) before applying \item \char`\"{}xxxno\-Neg\char`\"{} boolean True if only positive flux components are to be used \item \char`\"{}xxxmin\-DFT\char`\"{} ofloat Minimum absolute component flux to use in DFT \item \char`\"{}xxxmax\-Grid\char`\"{} ofloat Maximum absolute component flux to use in Gridded model \item \char`\"{}xxxdo\-DFT\char`\"{} boolean Something to do for DFT model? \item \char`\"{}xxxdo\-Grid\char`\"{} boolean Something to do for Grid model? \item \char`\"{}xxxprt\-Lv\char`\"{} olong message level for progress messages \item \char`\"{}xxxn\-Spec\-Term\char`\"{} olong Number of spectral terms \item \char`\"{}xxxn\-Threads\char`\"{} olong Number of threads \end{itemize}
+\item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelFT@{ObitSkyModelFT}}
+\index{ObitSkyModelFT@{ObitSkyModelFT}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-FT ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf olong} {\em field}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a25}
+
+
+Public: Calculate Fourier transform of model for current buffer in an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. 
+
+If do\-Divide member is true then FT of model is divided into the data, If do\-Replace member is true then FT of model replaces the data, else, it is subtracted. If do\-Flip member is true the Fourier transform is multiplied by sqrt(-1) (for Stokes RL and LR) Processes all data selected. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model to Fourier transform \item[{\em field}]Field number being processed (-1 =$>$ all) \item[{\em uvdata}]UV data set to subtract model from \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelFTDFT@{ObitSkyModelFTDFT}}
+\index{ObitSkyModelFTDFT@{ObitSkyModelFTDFT}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-FTDFT ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf olong} {\em field}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a28}
+
+
+Public: FT by DFT, may be overridden in derived class. 
+
+If threading has been enabled by a call to Obit\-Thread\-Allow\-Threads this routine will divide the buffer up amount the number of processors returned by Obit\-Thread\-Num\-Proc. If do\-Divide member is true then FT of model is divided into the data, If do\-Replace member is true then FT of model replaces the data, else, it is subtracted. If do\-Flip member is true the Fourier transform is multiplied by sqrt(-1) (for Stokes RL and LR) After the AIPSish QXXPTS, QPTDIV and friends This function may be overridden in a derived class and should always be called by its function pointer. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model with model components loaded (Obit\-Sky\-Model\-Load) \item[{\em field}]Field number being processed (-1 =$>$ all) \item[{\em uvdata}]UV data set to model and subtract from current buffer \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelFTGrid@{ObitSkyModelFTGrid}}
+\index{ObitSkyModelFTGrid@{ObitSkyModelFTGrid}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-FTGrid ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf olong} {\em field}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a29}
+
+
+Public: FT by Gridding, may be overridden in derived class. 
+
+If threading has been enabled by a call to Obit\-Thread\-Allow\-Threads this routine will divide the buffer up amount the number of processors returned by Obit\-Thread\-Num\-Proc. If do\-Divide member is true then FT of model is divided into the data, If do\-Replace member is true then FT of model replaces the data, else, it is subtracted. Adapted from the AIPSish ALGSTB, QUVINT, QINTP Note: Unlike AIPS, FFTw produces nontransposed images with half the first (U) axis. This function may be overridden in a derived class and should always be called by its function pointer. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model with model components loaded (Obit\-Sky\-Model\-Load) \item[{\em field}]Field number being processed (-1 =$>$ all) \item[{\em uvdata}]UV data set to model and subtract from current buffer \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelFTImage@{ObitSkyModelFTImage}}
+\index{ObitSkyModelFTImage@{ObitSkyModelFTImage}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-FTImage ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf Obit\-FArray} $\ast$ {\em in\-Array}, {\bf Obit\-CArray} $\ast$ {\em out\-Array})}\label{ObitSkyModel_8c_a40}
+
+
+Public: FT image array in in-$>$plane. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]the {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} . \item[{\em in\-Array}]Array to be Transformed. \item[{\em out\-Array}]Output of FFT, half plane complex \end{description}
+\end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelGetClass@{ObitSkyModelGetClass}}
+\index{ObitSkyModelGetClass@{ObitSkyModelGetClass}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Sky\-Model\-Get\-Class (void)}\label{ObitSkyModel_8c_a15}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelGetInfo@{ObitSkyModelGetInfo}}
+\index{ObitSkyModelGetInfo@{ObitSkyModelGetInfo}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-Get\-Info ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, gchar $\ast$ {\em prefix}, {\bf Obit\-Info\-List} $\ast$ {\em out\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a42}
+
+
+Public: Extract information about underlying structures to {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object of interest. \item[{\em prefix}]If Non\-Null, string to be added to beginning of out\-List entry name \char`\"{}xxx\char`\"{} in the following \item[{\em out\-List}]Info\-List to write entries into \begin{itemize}
+\item \char`\"{}xxx\-Class\-Type\char`\"{} string Sky\-Model type, \char`\"{}Base\char`\"{} for base class \item \char`\"{}xxxmosaic\char`\"{} string prefix of {\bf Obit\-Image\-Mosaic}{\rm (p.\,\pageref{structObitImageMosaic})} mosaic \item \char`\"{}xxxmodel\-Type\char`\"{} olong Model type (Obit\-Sky\-Model\-Type) \item \char`\"{}xxxmod\-Type\char`\"{} olong Component model type (Obit\-Sky\-Model\-Comp\-Type) \item \char`\"{}xxxmodel\-Mode\char`\"{} olong Model calculation mode for components (Obit\-Sky\-Model\-Comp\-Type) \item \char`\"{}xxx\-CCver\char`\"{} olong$\ast$ List of AIPSCC table versions per image in mosaic there are mosaic-$>$number\-Images of these \item \char`\"{}xxxstart\-Comp\char`\"{} olong$\ast$ List of beginning component per image in mosaic (1-rel) \item \char`\"{}xxxend\-Comp\char`\"{} olong$\ast$ List of highest component per image in mosaic (1-rel) \item \char`\"{}xxxfactor\char`\"{} ofloat Factor to multiply times model \item \char`\"{}xxxmin\-Flux\char`\"{} ofloat Minimum flux density model or pixel \item \char`\"{}xxxstok\-Factor\char`\"{}ofloat Factor to multiply times second Stokes of model \item \char`\"{}xxxpoint\-Flux\char`\"{} ofloat Point model flux density (Jy) \item \char`\"{}xxxpoint\-XOff\char`\"{} ofloat Point, x (ra)offset in deg. \item \char`\"{}xxxpoint\-YOff\char`\"{} ofloat Point, y (dec) offset in deg. \item \char`\"{}xxxpoint\-Parms\char`\"{}ofloat[10] Other (non-point)model components: major\_\-axis (deg), minor\_\-axis (deg), position\_\-angle (deg), type (Obit\-Sky\-Model\-Comp\-Type as gint), spectral terms; \item \char`\"{}xxxant\-Size\char`\"{} ofloat Antennna diameter (m) for rel. PB corrections \item \char`\"{}xxxdo3D\char`\"{} boolean Apply 3D imaging corrections? \item \char`\"{}xxxdo\-Divide\char`\"{} boolean Divide model into data? \item \char`\"{}xxxdo\-Replace\char`\"{} boolean Replace data with model? \item \char`\"{}xxxdo\-PBCor\char`\"{} boolean Make relative Primary Beam corrections? \item \char`\"{}xxxstart\-Channel\char`\"{} olong Selected start channel[1-rel] \item \char`\"{}xxxnumber\-Channel\char`\"{} olong Selected channel and number \item \char`\"{}xxxstart\-IF\char`\"{} olong Selected start IF [1-rel] \item \char`\"{}xxxnumber\-IF\char`\"{} olong Selected IF number \item \char`\"{}xxxstart\-Channel\-PB\char`\"{} olong Selected start rel. PB correction channel[1-rel] \item \char`\"{}xxxnumber\-Channel\-PB\char`\"{} olong Selected PB correction channel number \item \char`\"{}xxxstart\-IFPB\char`\"{} olong Selected start rel. PB correction IF[1-rel] \item \char`\"{}xxxnumber\-IFPB\char`\"{} olong Selected PB correction IF number \item \char`\"{}xxxnfreq\-PB\char`\"{} olong number of frequency channels for PB correction \item \char`\"{}xxx\-PBFreq\char`\"{} odouble Reference frequency (Hz) for this block of channels for PB corrections \item \char`\"{}xxxstokes\char`\"{} gchar[5] Selected Stokes \item \char`\"{}xxxstart\-Poln\char`\"{} olong Selected start Poln [1-rel] \item \char`\"{}xxxnumber\-Poln\char`\"{} olong Selected Poln number \item \char`\"{}xxxdo\-Flip\char`\"{} boolean True if need to multiply the FT by sqrt(-1) before applying \item \char`\"{}xxxno\-Neg\char`\"{} boolean True if only positive flux components are to be used \item \char`\"{}xxxmin\-DFT\char`\"{} ofloat Minimum absolute component flux to use in DFT \item \char`\"{}xxxmax\-Grid\char`\"{} ofloat Maximum absolute component flux to use in Gridded model \item \char`\"{}xxxdo\-DFT\char`\"{} boolean Something to do for DFT model? \item \char`\"{}xxxdo\-Grid\char`\"{} boolean Something to do for Grid model? \item \char`\"{}xxxprt\-Lv\char`\"{} olong message level for progress messages \item \char`\"{}xxxn\-Spec\-Term\char`\"{} olong Number of spectral terms \item \char`\"{}xxxn\-Threads\char`\"{} olong Number of threads \end{itemize}
+\item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelGetInput@{ObitSkyModelGetInput}}
+\index{ObitSkyModelGetInput@{ObitSkyModelGetInput}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-Get\-Input ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a32}
+
+
+Public: Get input parameters from info. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to the {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} . \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelgetPBCCTab@{ObitSkyModelgetPBCCTab}}
+\index{ObitSkyModelgetPBCCTab@{ObitSkyModelgetPBCCTab}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-CC}$\ast$ Obit\-Sky\-Modelget\-PBCCTab ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf olong} {\em field}, {\bf olong} $\ast$ {\em in\-CCVer}, {\bf olong} $\ast$ {\em out\-CCver}, {\bf olong} $\ast$ {\em start\-CC}, {\bf olong} $\ast$ {\em end\-CC}, {\bf ofloat} {\em range}[2], {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a36}
+
+
+Public: return {\bf Obit\-Table\-CC}{\rm (p.\,\pageref{structObitTableCC})} with possible PB corrections. 
+
+In the latter case, the table should be Zapped when use is finished. If not making relative Primary Beam correctsions then all selected, else the next block for which the primary beam correction varies by less than 1\% at the edge of the FOV. If in-$>$current\-Mode=OBIT\_\-Sky\-Model\_\-Mixed then the output table will be merged and only contain entries with abs. flux densities in the range range. If there are no components selected to process, the input table is always returned. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model \item[{\em uvdata}]UV data \item[{\em field}]Field number in in-$>$mosaic \item[{\em in\-CCVer}]input CC table version \item[{\em out\-CCver}]output CC table version number, 0=$>$ create new in which case the actual value is returned \item[{\em start\-CC}][in] the desired first CC number (1-rel) [out] the actual first CC number in returned table \item[{\em end\-CC}][in] the desired highest CC number, 0=$>$ to end of table [out] the actual highest CC number in returned table \item[{\em range}]Range of allowed, merged CC fluxes. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Obit\-CCTable to use, this should be Unref when done and Zapped if out\-CCver != 0. \end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelgetPBImage@{ObitSkyModelgetPBImage}}
+\index{ObitSkyModelgetPBImage@{ObitSkyModelgetPBImage}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Modelget\-PBImage ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf olong} {\em field}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a37}
+
+
+Public: fill in-$>$plane with image and possibly PB corrected. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model \item[{\em uvdata}]UV data \item[{\em field}]Field number in in-$>$mosaic \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Obit\-CCTable to use, this should be Unref when done and Zapped if out\-CCver != 0 \end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelGridComps@{ObitSkyModelGridComps}}
+\index{ObitSkyModelGridComps@{ObitSkyModelGridComps}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Sky\-Model\-Grid\-Comps ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf olong} {\em n}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a26}
+
+
+Public: Grid Components model, may be overridden in derived class. 
+
+Multiplies by factor member. This function may be overridden in a derived class and should always be called by its function pointer. Due to the difference with the FFT ordering for half plane complex in AIPS and using FFTW, the method here is different. Components are added to a grid which is then FFTed. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model \item[{\em n}]Image number on mosaic, 0-rel \item[{\em uvdata}]UV data set to model \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE iff this image produced a valid model (i.e. had some CCs). \end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelGridFTComps@{ObitSkyModelGridFTComps}}
+\index{ObitSkyModelGridFTComps@{ObitSkyModelGridFTComps}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Sky\-Model\-Grid\-FTComps ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf olong} {\em field}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a38}
+
+
+Public: Grid/FT components. 
+
+Scaling of components and any tapering is applied. Grid is double size for increased accuracy. For convenience in interpolation, HWIDTH columns are added by copying from the positive half plane. Due to the difference with the FFT ordering for half plane complex in AIPS and using FFTW, the method here is different. Components are added to a grid which is then FFTed. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to the\-Obit\-Sky\-Model . \item[{\em field}]field number (0-rel) in in-$>$mosaic-$>$images \item[{\em uvdata}]UV data set to model \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE iff this image produced a valid model (i.e. had some CCs). \end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelInit@{ObitSkyModelInit}}
+\index{ObitSkyModelInit@{ObitSkyModelInit}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-Init (gpointer {\em inn})}\label{ObitSkyModel_8c_a6}
+
+
+Private: Initialize newly instantiated object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelInitMod@{ObitSkyModelInitMod}}
+\index{ObitSkyModelInitMod@{ObitSkyModelInitMod}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-Init\-Mod ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a19}
+
+
+Public: initialize {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model to initialize \item[{\em uvdata}]uv data being modeled. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelInitModel@{ObitSkyModelInitModel}}
+\index{ObitSkyModelInitModel@{ObitSkyModelInitModel}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-Init\-Model ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a21}
+
+
+Public: initialize model for pass in time through data. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model to initialize \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelLoad@{ObitSkyModelLoad}}
+\index{ObitSkyModelLoad@{ObitSkyModelLoad}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Sky\-Model\-Load ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf olong} {\em image}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a24}
+
+
+Public: Load specified image and plane. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model to Fourier transform \item[{\em image}]Image number in mosaic member to load model, 0-rel If $<$0 , load all \item[{\em uvdata}]UV data set to model \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE iff this image produced a valid model (i.e. had some CCs). \end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelLoadComps@{ObitSkyModelLoadComps}}
+\index{ObitSkyModelLoadComps@{ObitSkyModelLoadComps}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Sky\-Model\-Load\-Comps ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf olong} {\em n}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a10}
+
+
+Private: Load Components model, may be overridden in derived class. 
+
+If the frequency axis has ctype \char`\"{}SPECLOGF\char`\"{} and if \char`\"{}NTERM\char`\"{} exists in the first image descriptor Info\-List and is $>$ 0 and there are at least nterm planes in the image, then there should be spectral information in the CC tables which is used. Multiplies by factor member. This function may be overridden in a derived class and should always be called by its function pointer. Adapted from the AIPSish QNOT:VISDFT \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model \item[{\em n}]Image number on mosaic, if -1 load all images \item[{\em uvdata}]UV data set to model \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE iff this image produced a valid model (i.e. had some CCs). \end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelLoadGridComps@{ObitSkyModelLoadGridComps}}
+\index{ObitSkyModelLoadGridComps@{ObitSkyModelLoadGridComps}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-Load\-Grid\-Comps ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf olong} {\em field}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf ofloat} {\em gparm}[3], {\bf olong} $\ast$ {\em ncomp}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a39}
+
+
+Public: Load Grid components. 
+
+Grid is oversize for increased accuracy. Due to the difference with the FFT ordering for half plane complex in AIPS and using FFTW, the method here is different. Components are added to a grid which is then FFTed. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to the\-Obit\-Sky\-Model . \item[{\em field}]field number (0-rel) in in-$>$mosaic-$>$images \item[{\em uvdata}]UV data set to model \item[{\em gparm}][out] the parameters of the Gaussians in the table [-1,-1,-1] =$>$ not Gaussian. \item[{\em ncomp}]Actual number of components in in-$>$comps \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelLoadImage@{ObitSkyModelLoadImage}}
+\index{ObitSkyModelLoadImage@{ObitSkyModelLoadImage}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Sky\-Model\-Load\-Image ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf olong} {\em n}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a27}
+
+
+Public: Load/FT image model, may be overridden in derived class. 
+
+Multiplies by factor member. This function may be overridden in a derived class and should always be called by its function pointer. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model \item[{\em n}]Image number on mosaic \item[{\em uvdata}]UV data set to model \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE iff this image produced a valid model (generally true here). \end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelLoadPoint@{ObitSkyModelLoadPoint}}
+\index{ObitSkyModelLoadPoint@{ObitSkyModelLoadPoint}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Sky\-Model\-Load\-Point ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a9}
+
+
+Private: Load point model, may be overridden in derived class. 
+
+Multiplies by factor member. This function may be overridden in a derived class and should always be called by its function pointer. Adapted from the AIPSish QNOT:VISDFT Output is in member comps with a single row, the entries are \begin{itemize}
+\item Amplitude (Jy) \item -2$\ast$pi$\ast$x (radians) \item -2$\ast$pi$\ast$y (radians) \item -2$\ast$pi$\ast$z (radians) \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model \item[{\em uvdata}]UV data set to model \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE iff this image produced a valid model (i.e. had some CCs). \end{Desc}
+\end{itemize}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelsetPBChans@{ObitSkyModelsetPBChans}}
+\index{ObitSkyModelsetPBChans@{ObitSkyModelsetPBChans}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Sky\-Modelset\-PBChans ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a35}
+
+
+Public: Decide next block of channels if doing PB correction. 
+
+Works by modifying the followint {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} members: \begin{itemize}
+\item start\-IFPB First IF selected in current pass, if this is initally -1 then initialize. \item number\-IFPB Number of IFs selected in current pass \item start\-Channel\-PB First channel selected in current pass \item number\-Channel\-PB Number of channels selected in current pass \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model \item[{\em uvdata}]UV data \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if there are more channels to do, else FALSE \end{Desc}
+\end{itemize}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelSetSelect@{ObitSkyModelSetSelect}}
+\index{ObitSkyModelSetSelect@{ObitSkyModelSetSelect}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-Set\-Select ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a34}
+
+
+Public: Fill in data selection values. 
+
+Especially the polarization controls are difficult. All channel, IF, Stokes axis values are 1-rel. Does a number of consistency checks. Looks up the numbers of Clean components in each image. Recognize the following Stokes' \begin{itemize}
+\item \char`\"{}    \char`\"{} use I, RR, LL, RR+LL as given in data \item \char`\"{}RR  \char`\"{} use RR only \item \char`\"{}LL  \char`\"{} use LL only \item \char`\"{}RL  \char`\"{} use RL only \item \char`\"{}LR  \char`\"{} use LR only \item \char`\"{}RLLR\char`\"{} use RL and LR \item \char`\"{}I???\char`\"{} use I, RR, LL, RR+LL as given in data \item \char`\"{}Q???\char`\"{} use Q, or RL\&LR \item \char`\"{}U???\char`\"{} use U, or RL\&LR \item \char`\"{}V???\char`\"{} use V, or RR\&LL Default action is equivalent to Stokes=\char`\"{} \char`\"{}; Also sets do\-Flip as necessary for requested combination of Stokes and uv data. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to the\-Obit\-Sky\-Model . \item[{\em uvdata}]UV data set \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\end{itemize}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelShutDownMod@{ObitSkyModelShutDownMod}}
+\index{ObitSkyModelShutDownMod@{ObitSkyModelShutDownMod}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-Shut\-Down\-Mod ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a20}
+
+
+Public: shutdown {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} processes. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model to initialize \item[{\em uvdata}]uv data being modeled. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelSubUV@{ObitSkyModelSubUV}}
+\index{ObitSkyModelSubUV@{ObitSkyModelSubUV}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Sky\-Model\-Sub\-UV ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em indata}, {\bf Obit\-UV} $\ast$ {\em outdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a22}
+
+
+Public: Subtract model from an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model to Fourier transform \item[{\em indata}]UV data set to subtract model from \item[{\em outdata}]UV data set to write to \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!ObitSkyModelSum@{ObitSkyModelSum}}
+\index{ObitSkyModelSum@{ObitSkyModelSum}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} Obit\-Sky\-Model\-Sum ({\bf Obit\-Sky\-Model} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModel_8c_a30}
+
+
+Public: Sum flux in Clean Model. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model Checks Info\-List member no\-Neg \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Sum of Clean components \end{Desc}
+
+
+\subsection{Variable Documentation}
+\index{ObitSkyModel.c@{Obit\-Sky\-Model.c}!OverSample@{OverSample}}
+\index{OverSample@{OverSample}!ObitSkyModel.c@{Obit\-Sky\-Model.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Over\-Sample} = 2}\label{ObitSkyModel_8c_a5}
+
+
+Over sampling factor in uv plane. 
+

@@ -1,0 +1,284 @@
+\section{Obit\-Table\-NX Struct Reference}
+\label{structObitTableNX}\index{ObitTableNX@{ObitTableNX}}
+Obit\-Table\-NX Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-NX.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-IO} $\ast$ {\bf my\-IO}
+\begin{CompactList}\small\item\em I/O interface to access disk resident data. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Desc} $\ast$ {\bf my\-Desc}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Sel} $\ast$ {\bf my\-Sel}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf buffer}
+\begin{CompactList}\small\item\em Table buffer. \item\end{CompactList}\item 
+{\bf olong} {\bf buffer\-Size}
+\begin{CompactList}\small\item\em Table buffer size in floats. \item\end{CompactList}\item 
+gchar $\ast$ {\bf tab\-Type}
+\begin{CompactList}\small\item\em Table type (name of type, e.g. \item\end{CompactList}\item 
+{\bf olong} {\bf tab\-Ver}
+\begin{CompactList}\small\item\em Table version number(1-rel). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf my\-Host}
+\begin{CompactList}\small\item\em This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-Off}
+\begin{CompactList}\small\item\em Column offset for The center time of the sscan. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-Col}
+\begin{CompactList}\small\item\em Physical column number for The center time of the sscan. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-IOff}
+\begin{CompactList}\small\item\em Column offset for Duration of scan in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-ICol}
+\begin{CompactList}\small\item\em Physical column number for Duration of scan in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Sour\-IDOff}
+\begin{CompactList}\small\item\em Column offset for Source ID as defined in then SOURCE table in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Sour\-IDCol}
+\begin{CompactList}\small\item\em Physical column number for Source ID as defined in then SOURCE table in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Sub\-AOff}
+\begin{CompactList}\small\item\em Column offset for Subarray number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Sub\-ACol}
+\begin{CompactList}\small\item\em Physical column number for Subarray number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Start\-Vis\-Off}
+\begin{CompactList}\small\item\em Column offset for First visibility number (1-rel) in scan in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Start\-Vis\-Col}
+\begin{CompactList}\small\item\em Physical column number for First visibility number (1-rel) in scan in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf End\-Vis\-Off}
+\begin{CompactList}\small\item\em Column offset for Last visibility number (1-rel) in scan in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf End\-Vis\-Col}
+\begin{CompactList}\small\item\em Physical column number for Last visibility number (1-rel) in scan in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Freq\-IDOff}
+\begin{CompactList}\small\item\em Column offset for Frequency id of scan in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Freq\-IDCol}
+\begin{CompactList}\small\item\em Physical column number for Frequency id of scan in table record. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-NX Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableNX@{Obit\-Table\-NX}!buffer@{buffer}}
+\index{buffer@{buffer}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-NX::buffer}}\label{structObitTableNX_o10}
+
+
+Table buffer. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!bufferSize@{bufferSize}}
+\index{bufferSize@{bufferSize}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NX::buffer\-Size}}\label{structObitTableNX_o11}
+
+
+Table buffer size in floats. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-NX::Class\-Info}}\label{structObitTableNX_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!EndVisCol@{EndVisCol}}
+\index{EndVisCol@{EndVisCol}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NX::End\-Vis\-Col}}\label{structObitTableNX_o26}
+
+
+Physical column number for Last visibility number (1-rel) in scan in table record. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!EndVisOff@{EndVisOff}}
+\index{EndVisOff@{EndVisOff}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NX::End\-Vis\-Off}}\label{structObitTableNX_o25}
+
+
+Column offset for Last visibility number (1-rel) in scan in table record. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!FreqIDCol@{FreqIDCol}}
+\index{FreqIDCol@{FreqIDCol}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NX::Freq\-IDCol}}\label{structObitTableNX_o28}
+
+
+Physical column number for Frequency id of scan in table record. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!FreqIDOff@{FreqIDOff}}
+\index{FreqIDOff@{FreqIDOff}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NX::Freq\-IDOff}}\label{structObitTableNX_o27}
+
+
+Column offset for Frequency id of scan in table record. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!info@{info}}
+\index{info@{info}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Table\-NX::info}}\label{structObitTableNX_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Desc}$\ast$ {\bf Obit\-Table\-NX::my\-Desc}}\label{structObitTableNX_o8}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!myHost@{myHost}}
+\index{myHost@{myHost}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-Table\-NX::my\-Host}}\label{structObitTableNX_o14}
+
+
+This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!myIO@{myIO}}
+\index{myIO@{myIO}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IO}$\ast$ {\bf Obit\-Table\-NX::my\-IO}}\label{structObitTableNX_o7}
+
+
+I/O interface to access disk resident data. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Sel}$\ast$ {\bf Obit\-Table\-NX::my\-Sel}}\label{structObitTableNX_o9}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Table\-NX::my\-Status}}\label{structObitTableNX_o6}
+
+
+I/O status. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!name@{name}}
+\index{name@{name}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-NX::name}}\label{structObitTableNX_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-NX::Obit\-Id}}\label{structObitTableNX_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NX::Reference\-Count}}\label{structObitTableNX_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!SourIDCol@{SourIDCol}}
+\index{SourIDCol@{SourIDCol}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NX::Sour\-IDCol}}\label{structObitTableNX_o20}
+
+
+Physical column number for Source ID as defined in then SOURCE table in table record. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!SourIDOff@{SourIDOff}}
+\index{SourIDOff@{SourIDOff}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NX::Sour\-IDOff}}\label{structObitTableNX_o19}
+
+
+Column offset for Source ID as defined in then SOURCE table in table record. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!StartVisCol@{StartVisCol}}
+\index{StartVisCol@{StartVisCol}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NX::Start\-Vis\-Col}}\label{structObitTableNX_o24}
+
+
+Physical column number for First visibility number (1-rel) in scan in table record. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!StartVisOff@{StartVisOff}}
+\index{StartVisOff@{StartVisOff}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NX::Start\-Vis\-Off}}\label{structObitTableNX_o23}
+
+
+Column offset for First visibility number (1-rel) in scan in table record. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!SubACol@{SubACol}}
+\index{SubACol@{SubACol}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NX::Sub\-ACol}}\label{structObitTableNX_o22}
+
+
+Physical column number for Subarray number in table record. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!SubAOff@{SubAOff}}
+\index{SubAOff@{SubAOff}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NX::Sub\-AOff}}\label{structObitTableNX_o21}
+
+
+Column offset for Subarray number in table record. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!tabType@{tabType}}
+\index{tabType@{tabType}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-NX::tab\-Type}}\label{structObitTableNX_o12}
+
+
+Table type (name of type, e.g. 
+
+\char`\"{}AIPS AN\char`\"{}) \index{ObitTableNX@{Obit\-Table\-NX}!tabVer@{tabVer}}
+\index{tabVer@{tabVer}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NX::tab\-Ver}}\label{structObitTableNX_o13}
+
+
+Table version number(1-rel). 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!thread@{thread}}
+\index{thread@{thread}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Table\-NX::thread}}\label{structObitTableNX_o4}
+
+
+Threading info member object. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!TimeCol@{TimeCol}}
+\index{TimeCol@{TimeCol}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NX::Time\-Col}}\label{structObitTableNX_o16}
+
+
+Physical column number for The center time of the sscan. 
+
+in table record \index{ObitTableNX@{Obit\-Table\-NX}!TimeICol@{TimeICol}}
+\index{TimeICol@{TimeICol}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NX::Time\-ICol}}\label{structObitTableNX_o18}
+
+
+Physical column number for Duration of scan in table record. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!TimeIOff@{TimeIOff}}
+\index{TimeIOff@{TimeIOff}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NX::Time\-IOff}}\label{structObitTableNX_o17}
+
+
+Column offset for Duration of scan in table record. 
+
+\index{ObitTableNX@{Obit\-Table\-NX}!TimeOff@{TimeOff}}
+\index{TimeOff@{TimeOff}!ObitTableNX@{Obit\-Table\-NX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NX::Time\-Off}}\label{structObitTableNX_o15}
+
+
+Column offset for The center time of the sscan. 
+
+in table record 
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-NX.h}\end{CompactItemize}

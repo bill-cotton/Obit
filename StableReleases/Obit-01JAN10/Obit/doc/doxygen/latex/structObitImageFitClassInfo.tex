@@ -1,0 +1,178 @@
+\section{Obit\-Image\-Fit\-Class\-Info Struct Reference}
+\label{structObitImageFitClassInfo}\index{ObitImageFitClassInfo@{ObitImageFitClassInfo}}
+Class\-Info Structure.  
+
+
+{\tt \#include $<$Obit\-Image\-Fit.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gboolean {\bf initialized}
+\begin{CompactList}\small\item\em Have I been initialized? \item\end{CompactList}\item 
+gboolean {\bf has\-Scratch}
+\begin{CompactList}\small\item\em Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? \item\end{CompactList}\item 
+gchar $\ast$ {\bf Class\-Name}
+\begin{CompactList}\small\item\em Name of class (\char`\"{}Obit\char`\"{}). \item\end{CompactList}\item 
+gconstpointer {\bf Parent\-Class}
+\begin{CompactList}\small\item\em Pointer to parent class Class\-Info, Null if none. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Init\-FP} {\bf Obit\-Class\-Init}
+\begin{CompactList}\small\item\em Function pointer to Class initializer. \item\end{CompactList}\item 
+{\bf new\-Obit\-FP} {\bf new\-Obit}
+\begin{CompactList}\small\item\em Function pointer to new\-Obit. \item\end{CompactList}\item 
+{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Get\-Class}
+\begin{CompactList}\small\item\em Function pointer to Get\-Class. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-Class\-Info\-Def\-Fn}
+\begin{CompactList}\small\item\em Function pointer to Class\-Info\-Def\-Fn. \item\end{CompactList}\item 
+{\bf Obit\-Copy\-FP} {\bf Obit\-Copy}
+\begin{CompactList}\small\item\em Function pointer to shallow copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Clone\-FP} {\bf Obit\-Clone}
+\begin{CompactList}\small\item\em Function pointer to deep copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Ref\-FP} {\bf Obit\-Ref}
+\begin{CompactList}\small\item\em Function pointer to Object Ref. \item\end{CompactList}\item 
+{\bf Obit\-Unref\-FP} {\bf Obit\-Unref}
+\begin{CompactList}\small\item\em Function pointer to Object Unref. \item\end{CompactList}\item 
+{\bf Obit\-Is\-AFP} {\bf Obit\-Is\-A}
+\begin{CompactList}\small\item\em Function pointer to test if a class member. \item\end{CompactList}\item 
+{\bf Obit\-Clear\-FP} {\bf Obit\-Clear}
+\begin{CompactList}\small\item\em Function pointer to deallocation function. \item\end{CompactList}\item 
+{\bf Obit\-Init\-FP} {\bf Obit\-Init}
+\begin{CompactList}\small\item\em Function pointer to object initializer. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Fit\-Create\-FP} {\bf Obit\-Image\-Fit\-Create}
+\begin{CompactList}\small\item\em Function pointer to Constructor. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Fit\-Fit\-FP} {\bf Obit\-Image\-Fit\-Fit}
+\begin{CompactList}\small\item\em Function pointer Fitter. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Class\-Info Structure. 
+
+Contains class name, a pointer to any parent class (NULL if none) and function pointers. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}!ClassName@{ClassName}}
+\index{ClassName@{ClassName}!ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Image\-Fit\-Class\-Info::Class\-Name}}\label{structObitImageFitClassInfo_o2}
+
+
+Name of class (\char`\"{}Obit\char`\"{}). 
+
+\index{ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}!hasScratch@{hasScratch}}
+\index{hasScratch@{hasScratch}!ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Image\-Fit\-Class\-Info::has\-Scratch}}\label{structObitImageFitClassInfo_o1}
+
+
+Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? 
+
+\index{ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}!initialized@{initialized}}
+\index{initialized@{initialized}!ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Image\-Fit\-Class\-Info::initialized}}\label{structObitImageFitClassInfo_o0}
+
+
+Have I been initialized? 
+
+\index{ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}!newObit@{newObit}}
+\index{newObit@{newObit}!ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-FP} {\bf Obit\-Image\-Fit\-Class\-Info::new\-Obit}}\label{structObitImageFitClassInfo_o5}
+
+
+Function pointer to new\-Obit. 
+
+\index{ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}!ObitClassInfoDefFn@{ObitClassInfoDefFn}}
+\index{ObitClassInfoDefFn@{ObitClassInfoDefFn}!ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-Image\-Fit\-Class\-Info::Obit\-Class\-Info\-Def\-Fn}}\label{structObitImageFitClassInfo_o7}
+
+
+Function pointer to Class\-Info\-Def\-Fn. 
+
+\index{ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}!ObitClassInit@{ObitClassInit}}
+\index{ObitClassInit@{ObitClassInit}!ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Init\-FP} {\bf Obit\-Image\-Fit\-Class\-Info::Obit\-Class\-Init}}\label{structObitImageFitClassInfo_o4}
+
+
+Function pointer to Class initializer. 
+
+\index{ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}!ObitClear@{ObitClear}}
+\index{ObitClear@{ObitClear}!ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clear\-FP} {\bf Obit\-Image\-Fit\-Class\-Info::Obit\-Clear}}\label{structObitImageFitClassInfo_o13}
+
+
+Function pointer to deallocation function. 
+
+\index{ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}!ObitClone@{ObitClone}}
+\index{ObitClone@{ObitClone}!ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clone\-FP} {\bf Obit\-Image\-Fit\-Class\-Info::Obit\-Clone}}\label{structObitImageFitClassInfo_o9}
+
+
+Function pointer to deep copy constructor. 
+
+\index{ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}!ObitCopy@{ObitCopy}}
+\index{ObitCopy@{ObitCopy}!ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Copy\-FP} {\bf Obit\-Image\-Fit\-Class\-Info::Obit\-Copy}}\label{structObitImageFitClassInfo_o8}
+
+
+Function pointer to shallow copy constructor. 
+
+\index{ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}!ObitGetClass@{ObitGetClass}}
+\index{ObitGetClass@{ObitGetClass}!ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Image\-Fit\-Class\-Info::Obit\-Get\-Class}}\label{structObitImageFitClassInfo_o6}
+
+
+Function pointer to Get\-Class. 
+
+\index{ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}!ObitImageFitCreate@{ObitImageFitCreate}}
+\index{ObitImageFitCreate@{ObitImageFitCreate}!ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Fit\-Create\-FP} {\bf Obit\-Image\-Fit\-Class\-Info::Obit\-Image\-Fit\-Create}}\label{structObitImageFitClassInfo_o15}
+
+
+Function pointer to Constructor. 
+
+\index{ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}!ObitImageFitFit@{ObitImageFitFit}}
+\index{ObitImageFitFit@{ObitImageFitFit}!ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Fit\-Fit\-FP} {\bf Obit\-Image\-Fit\-Class\-Info::Obit\-Image\-Fit\-Fit}}\label{structObitImageFitClassInfo_o16}
+
+
+Function pointer Fitter. 
+
+\index{ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}!ObitInit@{ObitInit}}
+\index{ObitInit@{ObitInit}!ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Init\-FP} {\bf Obit\-Image\-Fit\-Class\-Info::Obit\-Init}}\label{structObitImageFitClassInfo_o14}
+
+
+Function pointer to object initializer. 
+
+\index{ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}!ObitIsA@{ObitIsA}}
+\index{ObitIsA@{ObitIsA}!ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Is\-AFP} {\bf Obit\-Image\-Fit\-Class\-Info::Obit\-Is\-A}}\label{structObitImageFitClassInfo_o12}
+
+
+Function pointer to test if a class member. 
+
+\index{ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}!ObitRef@{ObitRef}}
+\index{ObitRef@{ObitRef}!ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Ref\-FP} {\bf Obit\-Image\-Fit\-Class\-Info::Obit\-Ref}}\label{structObitImageFitClassInfo_o10}
+
+
+Function pointer to Object Ref. 
+
+\index{ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}!ObitUnref@{ObitUnref}}
+\index{ObitUnref@{ObitUnref}!ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Unref\-FP} {\bf Obit\-Image\-Fit\-Class\-Info::Obit\-Unref}}\label{structObitImageFitClassInfo_o11}
+
+
+Function pointer to Object Unref. 
+
+\index{ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}!ParentClass@{ParentClass}}
+\index{ParentClass@{ParentClass}!ObitImageFitClassInfo@{Obit\-Image\-Fit\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer {\bf Obit\-Image\-Fit\-Class\-Info::Parent\-Class}}\label{structObitImageFitClassInfo_o3}
+
+
+Pointer to parent class Class\-Info, Null if none. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Image\-Fit.h}\end{CompactItemize}

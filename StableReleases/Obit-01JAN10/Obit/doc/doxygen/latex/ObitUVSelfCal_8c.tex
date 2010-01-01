@@ -1,0 +1,192 @@
+\section{Obit\-UVSelf\-Cal.c File Reference}
+\label{ObitUVSelfCal_8c}\index{ObitUVSelfCal.c@{ObitUVSelfCal.c}}
+{\bf Obit\-UVSelf\-Cal}{\rm (p.\,\pageref{structObitUVSelfCal})} class function definitions. 
+
+{\tt \#include \char`\"{}Obit\-UVSelf\-Cal.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Mem.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-Util.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVUtil.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVSoln.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-UVSelf\-Cal\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-UVSelf\-Cal\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-UVSelf\-Cal} $\ast$ {\bf new\-Obit\-UVSelf\-Cal} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-UVSelf\-Cal\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-UVSelf\-Cal} $\ast$ {\bf Obit\-UVSelf\-Cal\-Copy} ({\bf Obit\-UVSelf\-Cal} $\ast$in, {\bf Obit\-UVSelf\-Cal} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-UVSelf\-Cal\-Clone} ({\bf Obit\-UVSelf\-Cal} $\ast$in, {\bf Obit\-UVSelf\-Cal} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+{\bf Obit\-UVSelf\-Cal} $\ast$ {\bf Obit\-UVSelf\-Cal\-Create} (gchar $\ast$name, {\bf Obit\-Sky\-Model} $\ast$sky\-Model)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-UVSelf\-Cal}{\rm (p.\,\pageref{structObitUVSelfCal})} structures. \item\end{CompactList}\item 
+gboolean {\bf Obit\-UVSelf\-Cal\-Self\-Cal} ({\bf Obit\-UVSelf\-Cal} $\ast$in, {\bf Obit\-UV} $\ast$in\-UV, gboolean init, gboolean $\ast$no\-SCNeed, {\bf Obit\-DCon\-Clean\-Window} $\ast$window, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Determine calibration. \item\end{CompactList}\item 
+void {\bf Obit\-UVSelf\-Cal\-Model} ({\bf Obit\-UVSelf\-Cal} $\ast$in, {\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Determine initial calibration with point model. \item\end{CompactList}\item 
+void {\bf Obit\-UVSelf\-Cal\-Flux\-Hist} ({\bf Obit\-UVSelf\-Cal} $\ast$in, {\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Get Flux density histogram. \item\end{CompactList}\item 
+void {\bf Obit\-UVSelf\-Cal\-BLRange} ({\bf Obit\-UVSelf\-Cal} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Find uv range for a current model. \item\end{CompactList}\item 
+void {\bf Obit\-UVSelf\-Cal\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-UVSelf\-Cal}{\rm (p.\,\pageref{structObitUVSelfCal})} class function definitions. 
+
+This class enables self calibration of {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} data sets
+
+\subsection{Function Documentation}
+\index{ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}!newObitUVSelfCal@{newObitUVSelfCal}}
+\index{newObitUVSelfCal@{newObitUVSelfCal}!ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVSelf\-Cal}$\ast$ new\-Obit\-UVSelf\-Cal (gchar $\ast$ {\em name})}\label{ObitUVSelfCal_8c_a6}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}!ObitUVSelfCalBLRange@{ObitUVSelfCalBLRange}}
+\index{ObitUVSelfCalBLRange@{ObitUVSelfCalBLRange}!ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVSelf\-Cal\-BLRange ({\bf Obit\-UVSelf\-Cal} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVSelfCal_8c_a14}
+
+
+Find uv range for a current model. 
+
+Returns a uv range from the longest baseline whose average flux amplitude - 1 X RMS exceeds the sum of the clean components in the mosaic member of the Sky\-Model member to infinity. Results saved in the UVFull\-Range member. If there is no histogram all baselines are accepted. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Input Self Cal \item[{\em in\-UV}]UV data to examine \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\index{ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}!ObitUVSelfCalClassInit@{ObitUVSelfCalClassInit}}
+\index{ObitUVSelfCalClassInit@{ObitUVSelfCalClassInit}!ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVSelf\-Cal\-Class\-Init (void)}\label{ObitUVSelfCal_8c_a15}
+
+
+Public: Class initializer. 
+
+\index{ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}!ObitUVSelfCalClear@{ObitUVSelfCalClear}}
+\index{ObitUVSelfCalClear@{ObitUVSelfCalClear}!ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVSelf\-Cal\-Clear (gpointer {\em inn})}\label{ObitUVSelfCal_8c_a4}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-UVSelf\-Cal$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}!ObitUVSelfCalClone@{ObitUVSelfCalClone}}
+\index{ObitUVSelfCalClone@{ObitUVSelfCalClone}!ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVSelf\-Cal\-Clone ({\bf Obit\-UVSelf\-Cal} $\ast$ {\em in}, {\bf Obit\-UVSelf\-Cal} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVSelfCal_8c_a9}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}!ObitUVSelfCalCopy@{ObitUVSelfCalCopy}}
+\index{ObitUVSelfCalCopy@{ObitUVSelfCalCopy}!ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVSelf\-Cal}$\ast$ Obit\-UVSelf\-Cal\-Copy ({\bf Obit\-UVSelf\-Cal} $\ast$ {\em in}, {\bf Obit\-UVSelf\-Cal} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVSelfCal_8c_a8}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}!ObitUVSelfCalCreate@{ObitUVSelfCalCreate}}
+\index{ObitUVSelfCalCreate@{ObitUVSelfCalCreate}!ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVSelf\-Cal}$\ast$ Obit\-UVSelf\-Cal\-Create (gchar $\ast$ {\em name}, {\bf Obit\-Sky\-Model} $\ast$ {\em sky\-Model})}\label{ObitUVSelfCal_8c_a10}
+
+
+Public: Create/initialize {\bf Obit\-UVSelf\-Cal}{\rm (p.\,\pageref{structObitUVSelfCal})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em sky\-Model}]Sky model [optional] to normalize uv data \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}!ObitUVSelfCalFluxHist@{ObitUVSelfCalFluxHist}}
+\index{ObitUVSelfCalFluxHist@{ObitUVSelfCalFluxHist}!ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVSelf\-Cal\-Flux\-Hist ({\bf Obit\-UVSelf\-Cal} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVSelfCal_8c_a13}
+
+
+Get Flux density histogram. 
+
+Histogram forced to be monitonically decreasing with baseline. Also computes RMS of average values as hist\-RMS \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Input Self Cal \item[{\em in\-UV}]UV data to examine \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\index{ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}!ObitUVSelfCalGetClass@{ObitUVSelfCalGetClass}}
+\index{ObitUVSelfCalGetClass@{ObitUVSelfCalGetClass}!ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-UVSelf\-Cal\-Get\-Class (void)}\label{ObitUVSelfCal_8c_a7}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}!ObitUVSelfCalInit@{ObitUVSelfCalInit}}
+\index{ObitUVSelfCalInit@{ObitUVSelfCalInit}!ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVSelf\-Cal\-Init (gpointer {\em inn})}\label{ObitUVSelfCal_8c_a3}
+
+
+Private: Initialize newly instantiated object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}!ObitUVSelfCalModel@{ObitUVSelfCalModel}}
+\index{ObitUVSelfCalModel@{ObitUVSelfCalModel}!ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVSelf\-Cal\-Model ({\bf Obit\-UVSelf\-Cal} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVSelfCal_8c_a12}
+
+
+Public: Determine initial calibration with point model. 
+
+On output, the dataset has a new SN table with this calibration and is set up to apply them. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Input self cal object. Control parameters are on the info member. \begin{itemize}
+\item \char`\"{}model\-Flux\char`\"{} OBIT\_\-float (1,1,1) Model flux density [def 1.0] \item \char`\"{}model\-Pos\char`\"{} OBIT\_\-float (2,1,1) Model posn. offset (X, y) asec [def 0] \item \char`\"{}model\-Parm\char`\"{} OBIT\_\-float (?,1,1) Other model parameters: major\_\-axis (deg), minor\_\-axis (deg), position\_\-angle (deg), type (Obit\-Sky\-Model\-Comp\-Type as gint); [def 0] \item \char`\"{}sub\-A\char`\"{} OBIT\_\-int (1,1,1) Selected subarray (default 1) \item \char`\"{}sol\-Int\char`\"{} OBIT\_\-float (1,1,1) Solution interval (min). (default 1 sec) \item \char`\"{}ref\-Ant\char`\"{} OBIT\_\-int (1,1,1) Ref ant to use. (default 1) \item \char`\"{}avg\-Pol\char`\"{} OBIT\_\-bool (1,1,1) True if RR and LL to be averaged (false) \item \char`\"{}avg\-IF\char`\"{} OBIT\_\-bool (1,1,1) True if all IFs to be averaged (false) \item \char`\"{}SNRMin\char`\"{} OBIT\_\-float (1,1,1) Minimum acceptable SNR (5) \item \char`\"{}do\-MGM\char`\"{} OBIT\_\-bool (1,1,1) True then find the mean gain modulus (true) \item \char`\"{}sol\-Type\char`\"{} OBIT\_\-string (4,1,1 Solution type ' ', 'L1', (' ') \item \char`\"{}sol\-Mode\char`\"{} OBIT\_\-string (4,1,1 Solution mode: 'A\&P', 'P', 'P!A', 'GCON' ('P') \item \char`\"{}min\-No\char`\"{} OBIT\_\-int (1,1,1) Min. no. antennas. (default 4) \item \char`\"{}ant\-Wt\char`\"{} OBIT\_\-float ($\ast$,1,1) Antenna weights. (default 1.0) \item \char`\"{}UVR\_\-Full\char`\"{}OBIT\_\-float (2,1,1) Range of baseline lengths with full weight (kilolamda). If none is given then derive one if possible. \item \char`\"{}Wt\-UV\char`\"{} OBIT\_\-float (1,1,1) Weight outside of UVRANG. (default 1.0) \item \char`\"{}prt\-Lv\char`\"{} OBIT\_\-int (1,1,1) Print level (default no print) \item \char`\"{}do\-Smoo\char`\"{} OBIT\_\-bool (1,1,1) True then interpolate failed solutions [F] \end{itemize}
+\item[{\em in\-UV}]Input UV data. \item[{\em err}]Error/message stack, returns if error. \end{description}
+\end{Desc}
+\index{ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}!ObitUVSelfCalSelfCal@{ObitUVSelfCalSelfCal}}
+\index{ObitUVSelfCalSelfCal@{ObitUVSelfCalSelfCal}!ObitUVSelfCal.c@{Obit\-UVSelf\-Cal.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-UVSelf\-Cal\-Self\-Cal ({\bf Obit\-UVSelf\-Cal} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em in\-UV}, gboolean {\em init}, gboolean $\ast$ {\em no\-SCNeed}, {\bf Obit\-DCon\-Clean\-Window} $\ast$ {\em window}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVSelfCal_8c_a11}
+
+
+Public: Determine calibration. 
+
+On output, the dataset has a new SN table with this calibration and is set up to apply them. Routine determines if self calibration is converged, if so TRUE is returned (else FALSE) and the best SN table is set to be applied. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Input self cal object. Control parameters are on the info member. \begin{itemize}
+\item \char`\"{}sub\-A\char`\"{} OBIT\_\-int (1,1,1) Selected subarray (default 1) \item \char`\"{}sol\-Int\char`\"{} OBIT\_\-float (1,1,1) Solution interval (min). (default 1 sec) \item \char`\"{}ref\-Ant\char`\"{} OBIT\_\-int (1,1,1) Ref ant to use. (default 1) \item \char`\"{}avg\-Pol\char`\"{} OBIT\_\-bool (1,1,1) True if RR and LL to be averaged (false) \item \char`\"{}avg\-IF\char`\"{} OBIT\_\-bool (1,1,1) True if all IFs to be averaged (false) \item \char`\"{}SNRMin\char`\"{} OBIT\_\-float (1,1,1) Minimum acceptable SNR (5) \item \char`\"{}do\-MGM\char`\"{} OBIT\_\-bool (1,1,1) True then find the mean gain modulus (true) \item \char`\"{}sol\-Type\char`\"{} OBIT\_\-string (4,1,1 Solution type ' ', 'L1', (' ') \item \char`\"{}sol\-Mode\char`\"{} OBIT\_\-string (4,1,1 Solution mode: 'A\&P', 'P', 'P!A', 'GCON' ('P') \item \char`\"{}min\-No\char`\"{} OBIT\_\-int (1,1,1) Min. no. antennas. (default 4) \item \char`\"{}ant\-Wt\char`\"{} OBIT\_\-float ($\ast$,1,1) Antenna weights. (default 1.0) \item \char`\"{}UVR\_\-Full\char`\"{}OBIT\_\-float (2,1,1) Range of baseline lengths with full weight (kilolamda). If none is given then derive one if possible. \item \char`\"{}Wt\-UV\char`\"{} OBIT\_\-float (1,1,1) Weight outside of UVRANG. (default 1.0) \item \char`\"{}prt\-Lv\char`\"{} OBIT\_\-int (1,1,1) Print level (default no print) \item \char`\"{}min\-Flux\-PSC\char`\"{} OBIT\_\-float (1,1,1) min peak flux for phase selfcal \item \char`\"{}min\-Flux\-ASC\char`\"{} OBIT\_\-float (1,1,1) min peak flux for A\&P selfcal \item \char`\"{}do\-Smoo\char`\"{} OBIT\_\-bool (1,1,1) True then interpolate failed solutions [F] \item \char`\"{}disp\-URL\char`\"{} OBIT\_\-string scalar = URL of display server \item \char`\"{}peak\-Flux\char`\"{} OBIT\_\-float scalar If present and $>$ 0.0, then this is the highest image pixel value to use to determine if SC needed else use sum of CC in Sky\-Model. \end{itemize}
+\item[{\em in\-UV}]Input UV data. \item[{\em init}]If True, this is the first SC in a series. \item[{\em no\-SCNeed}]If True, no self calibration was needed \item[{\em window}]If non\-NULL, the CLEAN window to be edited. \item[{\em err}]Error/message stack, returns if error. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]True if SC converged, else False. No gain solution if True \end{Desc}

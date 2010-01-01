@@ -1,0 +1,107 @@
+\section{Obit\-Antenna.h File Reference}
+\label{ObitAntenna_8h}\index{ObitAntenna.h@{ObitAntenna.h}}
+{\bf Obit\-Antenna}{\rm (p.\,\pageref{structObitAntenna})} class definition. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-Antenna}
+\begin{CompactList}\small\item\em Obit\-Antenna Class. \item\end{CompactList}\item 
+struct {\bf Obit\-Antenna\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-Antenna\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Antenna}{\rm (p.\,\pageref{structObitAntenna})} returns a Obit\-Antenna$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-Antenna\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Antenna}{\rm (p.\,\pageref{structObitAntenna})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Antenna\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-Antenna\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Antenna\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Antenna} $\ast$ {\bf new\-Obit\-Antenna} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Antenna\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Antenna} $\ast$ {\bf Obit\-Antenna\-Copy} ({\bf Obit\-Antenna} $\ast$in, {\bf Obit\-Antenna} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy constructor. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Antenna}{\rm (p.\,\pageref{structObitAntenna})} class definition. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} class.
+
+This class contains information about a given antenna.\subsection{Usage}\label{ObitAntenna_8h_ObitAntennaUsage}
+Instances can be obtained using the {\bf new\-Obit\-Antenna}{\rm (p.\,\pageref{ObitAntenna_8c_a6})} constructor, the {\bf Obit\-Antenna\-Copy}{\rm (p.\,\pageref{ObitAntenna_8c_a8})} constructor or a pointer duplicated using the {\bf Obit\-Antenna\-Ref}{\rm (p.\,\pageref{ObitAntenna_8h_a1})} macro. When an instance is no longer needed, use the {\bf Obit\-Antenna\-Unref}{\rm (p.\,\pageref{ObitAntenna_8h_a0})} macro to release it.
+
+\subsection{Define Documentation}
+\index{ObitAntenna.h@{Obit\-Antenna.h}!ObitAntennaIsA@{ObitAntennaIsA}}
+\index{ObitAntennaIsA@{ObitAntennaIsA}!ObitAntenna.h@{Obit\-Antenna.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Antenna\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-Antenna\-Get\-Class())}\label{ObitAntenna_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitAntenna.h@{Obit\-Antenna.h}!ObitAntennaRef@{ObitAntennaRef}}
+\index{ObitAntennaRef@{ObitAntennaRef}!ObitAntenna.h@{Obit\-Antenna.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Antenna\-Ref(in)\ Obit\-Ref (in)}\label{ObitAntenna_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Antenna}{\rm (p.\,\pageref{structObitAntenna})}. 
+
+returns a Obit\-Antenna$\ast$. in = object to reference \index{ObitAntenna.h@{Obit\-Antenna.h}!ObitAntennaUnref@{ObitAntennaUnref}}
+\index{ObitAntennaUnref@{ObitAntennaUnref}!ObitAntenna.h@{Obit\-Antenna.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Antenna\-Unref(in)\ Obit\-Unref (in)}\label{ObitAntenna_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Antenna}{\rm (p.\,\pageref{structObitAntenna})} returns a Obit\-Antenna$\ast$. 
+
+in = object to unreference 
+
+\subsection{Function Documentation}
+\index{ObitAntenna.h@{Obit\-Antenna.h}!newObitAntenna@{newObitAntenna}}
+\index{newObitAntenna@{newObitAntenna}!ObitAntenna.h@{Obit\-Antenna.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Antenna}$\ast$ new\-Obit\-Antenna (gchar $\ast$ {\em name})}\label{ObitAntenna_8h_a4}
+
+
+Public: Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitAntenna.h@{Obit\-Antenna.h}!ObitAntennaClassInit@{ObitAntennaClassInit}}
+\index{ObitAntennaClassInit@{ObitAntennaClassInit}!ObitAntenna.h@{Obit\-Antenna.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Antenna\-Class\-Init (void)}\label{ObitAntenna_8h_a3}
+
+
+Public: Class initializer. 
+
+\index{ObitAntenna.h@{Obit\-Antenna.h}!ObitAntennaCopy@{ObitAntennaCopy}}
+\index{ObitAntennaCopy@{ObitAntennaCopy}!ObitAntenna.h@{Obit\-Antenna.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Antenna}$\ast$ Obit\-Antenna\-Copy ({\bf Obit\-Antenna} $\ast$ {\em in}, {\bf Obit\-Antenna} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAntenna_8h_a6}
+
+
+Public: Copy constructor. 
+
+Parent class members are included but any derived class info is ignored. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitAntenna.h@{Obit\-Antenna.h}!ObitAntennaGetClass@{ObitAntennaGetClass}}
+\index{ObitAntennaGetClass@{ObitAntennaGetClass}!ObitAntenna.h@{Obit\-Antenna.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Antenna\-Get\-Class (void)}\label{ObitAntenna_8h_a5}
+
+
+Public: Class\-Info pointer. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}

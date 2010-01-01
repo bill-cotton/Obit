@@ -1,0 +1,331 @@
+\section{Obit\-Table\-CQClass\-Info Struct Reference}
+\label{structObitTableCQClassInfo}\index{ObitTableCQClassInfo@{ObitTableCQClassInfo}}
+Class\-Info Structure.  
+
+
+{\tt \#include $<$Obit\-Table\-CQ.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gboolean {\bf initialized}
+\begin{CompactList}\small\item\em Have I been initialized? \item\end{CompactList}\item 
+gboolean {\bf has\-Scratch}
+\begin{CompactList}\small\item\em Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? \item\end{CompactList}\item 
+gchar $\ast$ {\bf Class\-Name}
+\begin{CompactList}\small\item\em Name of class (\char`\"{}Obit\char`\"{}). \item\end{CompactList}\item 
+gconstpointer {\bf Parent\-Class}
+\begin{CompactList}\small\item\em Pointer to parent class Class\-Info, Null if none. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Init\-FP} {\bf Obit\-Class\-Init}
+\begin{CompactList}\small\item\em Function pointer to Class initializer. \item\end{CompactList}\item 
+{\bf new\-Obit\-FP} {\bf new\-Obit}
+\begin{CompactList}\small\item\em Function pointer to new\-Obit. \item\end{CompactList}\item 
+{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Get\-Class}
+\begin{CompactList}\small\item\em Function pointer to Get\-Class. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-Class\-Info\-Def\-Fn}
+\begin{CompactList}\small\item\em Function pointer to Class\-Info\-Def\-Fn. \item\end{CompactList}\item 
+{\bf Obit\-Copy\-FP} {\bf Obit\-Copy}
+\begin{CompactList}\small\item\em Function pointer to shallow copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Clone\-FP} {\bf Obit\-Clone}
+\begin{CompactList}\small\item\em Function pointer to deep copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Ref\-FP} {\bf Obit\-Ref}
+\begin{CompactList}\small\item\em Function pointer to Object Ref. \item\end{CompactList}\item 
+{\bf Obit\-Unref\-FP} {\bf Obit\-Unref}
+\begin{CompactList}\small\item\em Function pointer to Object Unref. \item\end{CompactList}\item 
+{\bf Obit\-Is\-AFP} {\bf Obit\-Is\-A}
+\begin{CompactList}\small\item\em Function pointer to test if a class member. \item\end{CompactList}\item 
+{\bf Obit\-Clear\-FP} {\bf Obit\-Clear}
+\begin{CompactList}\small\item\em Function pointer to deallocation function. \item\end{CompactList}\item 
+{\bf Obit\-Init\-FP} {\bf Obit\-Init}
+\begin{CompactList}\small\item\em Function pointer to object initializer. \item\end{CompactList}\item 
+{\bf Obit\-Table\-From\-File\-Info\-FP} {\bf Obit\-Table\-From\-File\-Info}
+\begin{CompactList}\small\item\em Function pointer to Create Table object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Full\-Instantiate\-FP} {\bf Obit\-Table\-Full\-Instantiate}
+\begin{CompactList}\small\item\em Fully instantiate. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Clear\-Rows\-FP} {\bf Obit\-Table\-Clear\-Rows}
+\begin{CompactList}\small\item\em Remove previous entries. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Convert\-FP} {\bf Obit\-Table\-Convert}
+\begin{CompactList}\small\item\em Function pointer to Convert. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Zap\-FP} {\bf Obit\-Table\-Zap}
+\begin{CompactList}\small\item\em Function pointer to Zap. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Open\-FP} {\bf Obit\-Table\-Open}
+\begin{CompactList}\small\item\em Function pointer to Open. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Close\-FP} {\bf Obit\-Table\-Close}
+\begin{CompactList}\small\item\em Function pointer to Close. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Read\-FP} {\bf Obit\-Table\-Read}
+\begin{CompactList}\small\item\em Function pointer to Read. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Read\-Select\-FP} {\bf Obit\-Table\-Read\-Select}
+\begin{CompactList}\small\item\em Function pointer to Read with selection/calibration. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Write\-FP} {\bf Obit\-Table\-Write}
+\begin{CompactList}\small\item\em Function pointer to Write. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Read\-Row\-FP} {\bf Obit\-Table\-Read\-Row}
+\begin{CompactList}\small\item\em Function pointer to Read Row. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Write\-Row\-FP} {\bf Obit\-Table\-Write\-Row}
+\begin{CompactList}\small\item\em Function pointer to Write Row. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Set\-Row\-FP} {\bf Obit\-Table\-Set\-Row}
+\begin{CompactList}\small\item\em Function pointer to Attach Row. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Get\-Type\-FP} {\bf Obit\-Table\-Get\-Type}
+\begin{CompactList}\small\item\em Function pointer to Return table type. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Get\-Version\-FP} {\bf Obit\-Table\-Get\-Version}
+\begin{CompactList}\small\item\em Function pointer to Return table version. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Get\-File\-Info\-FP} {\bf Obit\-Table\-Get\-File\-Info}
+\begin{CompactList}\small\item\em Function pointer to Extract information about underlying file. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Convert\-FP} {\bf Obit\-Table\-CQConvert}
+\begin{CompactList}\small\item\em Function pointer to convert. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Read\-Row\-FP} {\bf Obit\-Table\-CQRead\-Row}
+\begin{CompactList}\small\item\em Function pointer to read a row. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Write\-Row\-FP} {\bf Obit\-Table\-CQWrite\-Row}
+\begin{CompactList}\small\item\em Function pointer to write a row. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Class\-Info Structure. 
+
+Contains class name, a pointer to any parent class (NULL if none) and function pointers. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ClassName@{ClassName}}
+\index{ClassName@{ClassName}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-CQClass\-Info::Class\-Name}}\label{structObitTableCQClassInfo_o2}
+
+
+Name of class (\char`\"{}Obit\char`\"{}). 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!hasScratch@{hasScratch}}
+\index{hasScratch@{hasScratch}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-CQClass\-Info::has\-Scratch}}\label{structObitTableCQClassInfo_o1}
+
+
+Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!initialized@{initialized}}
+\index{initialized@{initialized}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Table\-CQClass\-Info::initialized}}\label{structObitTableCQClassInfo_o0}
+
+
+Have I been initialized? 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!newObit@{newObit}}
+\index{newObit@{newObit}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-FP} {\bf Obit\-Table\-CQClass\-Info::new\-Obit}}\label{structObitTableCQClassInfo_o5}
+
+
+Function pointer to new\-Obit. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitClassInfoDefFn@{ObitClassInfoDefFn}}
+\index{ObitClassInfoDefFn@{ObitClassInfoDefFn}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Class\-Info\-Def\-Fn}}\label{structObitTableCQClassInfo_o7}
+
+
+Function pointer to Class\-Info\-Def\-Fn. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitClassInit@{ObitClassInit}}
+\index{ObitClassInit@{ObitClassInit}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Init\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Class\-Init}}\label{structObitTableCQClassInfo_o4}
+
+
+Function pointer to Class initializer. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitClear@{ObitClear}}
+\index{ObitClear@{ObitClear}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clear\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Clear}}\label{structObitTableCQClassInfo_o13}
+
+
+Function pointer to deallocation function. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitClone@{ObitClone}}
+\index{ObitClone@{ObitClone}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clone\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Clone}}\label{structObitTableCQClassInfo_o9}
+
+
+Function pointer to deep copy constructor. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitCopy@{ObitCopy}}
+\index{ObitCopy@{ObitCopy}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Copy\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Copy}}\label{structObitTableCQClassInfo_o8}
+
+
+Function pointer to shallow copy constructor. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitGetClass@{ObitGetClass}}
+\index{ObitGetClass@{ObitGetClass}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Get\-Class}}\label{structObitTableCQClassInfo_o6}
+
+
+Function pointer to Get\-Class. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitInit@{ObitInit}}
+\index{ObitInit@{ObitInit}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Init\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Init}}\label{structObitTableCQClassInfo_o14}
+
+
+Function pointer to object initializer. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitIsA@{ObitIsA}}
+\index{ObitIsA@{ObitIsA}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Is\-AFP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Is\-A}}\label{structObitTableCQClassInfo_o12}
+
+
+Function pointer to test if a class member. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitRef@{ObitRef}}
+\index{ObitRef@{ObitRef}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Ref\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Ref}}\label{structObitTableCQClassInfo_o10}
+
+
+Function pointer to Object Ref. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableClearRows@{ObitTableClearRows}}
+\index{ObitTableClearRows@{ObitTableClearRows}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Clear\-Rows\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-Clear\-Rows}}\label{structObitTableCQClassInfo_o17}
+
+
+Remove previous entries. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableClose@{ObitTableClose}}
+\index{ObitTableClose@{ObitTableClose}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Close\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-Close}}\label{structObitTableCQClassInfo_o21}
+
+
+Function pointer to Close. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableConvert@{ObitTableConvert}}
+\index{ObitTableConvert@{ObitTableConvert}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Convert\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-Convert}}\label{structObitTableCQClassInfo_o18}
+
+
+Function pointer to Convert. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableCQConvert@{ObitTableCQConvert}}
+\index{ObitTableCQConvert@{ObitTableCQConvert}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Convert\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-CQConvert}}\label{structObitTableCQClassInfo_o31}
+
+
+Function pointer to convert. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableCQReadRow@{ObitTableCQReadRow}}
+\index{ObitTableCQReadRow@{ObitTableCQReadRow}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Read\-Row\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-CQRead\-Row}}\label{structObitTableCQClassInfo_o32}
+
+
+Function pointer to read a row. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableCQWriteRow@{ObitTableCQWriteRow}}
+\index{ObitTableCQWriteRow@{ObitTableCQWriteRow}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Write\-Row\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-CQWrite\-Row}}\label{structObitTableCQClassInfo_o33}
+
+
+Function pointer to write a row. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableFromFileInfo@{ObitTableFromFileInfo}}
+\index{ObitTableFromFileInfo@{ObitTableFromFileInfo}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-From\-File\-Info\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-From\-File\-Info}}\label{structObitTableCQClassInfo_o15}
+
+
+Function pointer to Create Table object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableFullInstantiate@{ObitTableFullInstantiate}}
+\index{ObitTableFullInstantiate@{ObitTableFullInstantiate}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Full\-Instantiate\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-Full\-Instantiate}}\label{structObitTableCQClassInfo_o16}
+
+
+Fully instantiate. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableGetFileInfo@{ObitTableGetFileInfo}}
+\index{ObitTableGetFileInfo@{ObitTableGetFileInfo}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Get\-File\-Info\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-Get\-File\-Info}}\label{structObitTableCQClassInfo_o30}
+
+
+Function pointer to Extract information about underlying file. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableGetType@{ObitTableGetType}}
+\index{ObitTableGetType@{ObitTableGetType}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Get\-Type\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-Get\-Type}}\label{structObitTableCQClassInfo_o28}
+
+
+Function pointer to Return table type. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableGetVersion@{ObitTableGetVersion}}
+\index{ObitTableGetVersion@{ObitTableGetVersion}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Get\-Version\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-Get\-Version}}\label{structObitTableCQClassInfo_o29}
+
+
+Function pointer to Return table version. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableOpen@{ObitTableOpen}}
+\index{ObitTableOpen@{ObitTableOpen}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Open\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-Open}}\label{structObitTableCQClassInfo_o20}
+
+
+Function pointer to Open. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableRead@{ObitTableRead}}
+\index{ObitTableRead@{ObitTableRead}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Read\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-Read}}\label{structObitTableCQClassInfo_o22}
+
+
+Function pointer to Read. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableReadRow@{ObitTableReadRow}}
+\index{ObitTableReadRow@{ObitTableReadRow}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Read\-Row\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-Read\-Row}}\label{structObitTableCQClassInfo_o25}
+
+
+Function pointer to Read Row. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableReadSelect@{ObitTableReadSelect}}
+\index{ObitTableReadSelect@{ObitTableReadSelect}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Read\-Select\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-Read\-Select}}\label{structObitTableCQClassInfo_o23}
+
+
+Function pointer to Read with selection/calibration. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableSetRow@{ObitTableSetRow}}
+\index{ObitTableSetRow@{ObitTableSetRow}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Set\-Row\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-Set\-Row}}\label{structObitTableCQClassInfo_o27}
+
+
+Function pointer to Attach Row. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableWrite@{ObitTableWrite}}
+\index{ObitTableWrite@{ObitTableWrite}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Write\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-Write}}\label{structObitTableCQClassInfo_o24}
+
+
+Function pointer to Write. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableWriteRow@{ObitTableWriteRow}}
+\index{ObitTableWriteRow@{ObitTableWriteRow}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Write\-Row\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-Write\-Row}}\label{structObitTableCQClassInfo_o26}
+
+
+Function pointer to Write Row. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitTableZap@{ObitTableZap}}
+\index{ObitTableZap@{ObitTableZap}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Zap\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Table\-Zap}}\label{structObitTableCQClassInfo_o19}
+
+
+Function pointer to Zap. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ObitUnref@{ObitUnref}}
+\index{ObitUnref@{ObitUnref}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Unref\-FP} {\bf Obit\-Table\-CQClass\-Info::Obit\-Unref}}\label{structObitTableCQClassInfo_o11}
+
+
+Function pointer to Object Unref. 
+
+\index{ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}!ParentClass@{ParentClass}}
+\index{ParentClass@{ParentClass}!ObitTableCQClassInfo@{Obit\-Table\-CQClass\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer {\bf Obit\-Table\-CQClass\-Info::Parent\-Class}}\label{structObitTableCQClassInfo_o3}
+
+
+Pointer to parent class Class\-Info, Null if none. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-CQ.h}\end{CompactItemize}

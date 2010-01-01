@@ -1,0 +1,263 @@
+\section{Obit\-UVCal.h File Reference}
+\label{ObitUVCal_8h}\index{ObitUVCal.h@{ObitUVCal.h}}
+{\bf Obit\-UVCal}{\rm (p.\,\pageref{structObitUVCal})} data calibration class definition. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Thread.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Info\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVDesc.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVSel.h\char`\"{}}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$stdlib.h$>$}\par
+{\tt \#include $<$math.h$>$}\par
+{\tt \#include $<$glib.h$>$}\par
+{\tt \#include \char`\"{}Obit\-UVCal.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-FFT.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Source\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Antenna\-List.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-UVCal\-Calibrate\-S}
+\begin{CompactList}\small\item\em Amp/phase/delay/rate calibration structure. \item\end{CompactList}\item 
+struct {\bf Obit\-UVCal\-Baseline\-S}
+\begin{CompactList}\small\item\em Amp/phase/delay/rate calibration structure. \item\end{CompactList}\item 
+struct {\bf Obit\-UVCal\-Flag\-S}
+\begin{CompactList}\small\item\em Amp/phase/delay/rate calibration structure. \item\end{CompactList}\item 
+struct {\bf Obit\-UVCal\-Bandpass\-S}
+\begin{CompactList}\small\item\em Amp/phase/delay/rate calibration structure. \item\end{CompactList}\item 
+struct {\bf Obit\-UVCal\-Polarization\-S}
+\begin{CompactList}\small\item\em Polarization calibration structure. \item\end{CompactList}\item 
+struct {\bf Obit\-UVCal}
+\begin{CompactList}\small\item\em Obit\-UVCal Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-UVCal\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-UVCal\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-UVCal}{\rm (p.\,\pageref{structObitUVCal})} returns a Obit\-UVCal$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-UVCal\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-UVCal}{\rm (p.\,\pageref{structObitUVCal})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-UVCal\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-UVCal\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef void($\ast$ {\bf Obit\-UVCal\-Start\-FP} )({\bf Obit\-UVCal} $\ast$in, {\bf Obit\-UVSel} $\ast$sel, {\bf Obit\-UVDesc} $\ast$in\-Desc, {\bf Obit\-UVDesc} $\ast$out\-Desc, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef gboolean($\ast$ {\bf Obit\-UVCal\-Apply\-FP} )({\bf Obit\-UVCal} $\ast$in, {\bf ofloat} $\ast$vis\-In, {\bf ofloat} $\ast$vis\-Out, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-UVCal\-Shutdown\-FP} )({\bf Obit\-UVCal} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef gboolean($\ast$ {\bf Obit\-UVCal\-Want\-FP} )({\bf Obit\-UVCal} $\ast$in, {\bf ofloat} time, {\bf olong} ant1, {\bf olong} ant2, {\bf ofloat} $\ast$RP, {\bf ofloat} $\ast$vis\-In, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-UVCal\-Smooth\-FP} )({\bf Obit\-UVCal} $\ast$in, float time, {\bf olong} ant1, {\bf olong} ant2, {\bf ofloat} $\ast$vis\-In, {\bf Obit\-Err} $\ast$err)
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-UVCal\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-UVCal} $\ast$ {\bf new\-Obit\-UVCal} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-UVCal\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-UVCal} $\ast$ {\bf Obit\-UVCal\-Copy} ({\bf Obit\-UVCal} $\ast$in, {\bf Obit\-UVCal} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+{\bf Obit\-UVCal} $\ast$ {\bf Obit\-UVCal\-Clone} ({\bf Obit\-UVCal} $\ast$in, {\bf Obit\-UVCal} $\ast$out)
+\begin{CompactList}\small\item\em Public: Copy (shallow) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-UVCal\-Start} ({\bf Obit\-UVCal} $\ast$in, {\bf Obit\-UVSel} $\ast$sel, {\bf Obit\-UVDesc} $\ast$in\-Desc, {\bf Obit\-UVDesc} $\ast$out\-Desc, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Initialize calibration. \item\end{CompactList}\item 
+gboolean {\bf Obit\-UVCal\-Apply} ({\bf Obit\-UVCal} $\ast$in, {\bf ofloat} $\ast$vis\-In, {\bf ofloat} $\ast$vis\-Out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Apply Calibration. \item\end{CompactList}\item 
+void {\bf Obit\-UVCal\-Shutdown} ({\bf Obit\-UVCal} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Shutdown. \item\end{CompactList}\item 
+gboolean {\bf Obit\-UVCal\-Want} ({\bf Obit\-UVCal} $\ast$in, {\bf ofloat} time, {\bf olong} ant1, {\bf olong} ant2, {\bf ofloat} $\ast$RP, {\bf ofloat} $\ast$vis\-In, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: test if data wanted. \item\end{CompactList}\item 
+void {\bf Obit\-UVCal\-Smooth} ({\bf Obit\-UVCal} $\ast$in, float time, {\bf olong} ant1, {\bf olong} ant2, {\bf ofloat} $\ast$RP, {\bf ofloat} $\ast$vis\-In, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Smooth data in frequency. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-UVCal}{\rm (p.\,\pageref{structObitUVCal})} data calibration class definition. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} class.
+
+This class is for the calibration, editing and selection of uv data.
+
+\subsection{Define Documentation}
+\index{ObitUVCal.h@{Obit\-UVCal.h}!ObitUVCalIsA@{ObitUVCalIsA}}
+\index{ObitUVCalIsA@{ObitUVCalIsA}!ObitUVCal.h@{Obit\-UVCal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVCal\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-UVCal\-Get\-Class())}\label{ObitUVCal_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitUVCal.h@{Obit\-UVCal.h}!ObitUVCalRef@{ObitUVCalRef}}
+\index{ObitUVCalRef@{ObitUVCalRef}!ObitUVCal.h@{Obit\-UVCal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVCal\-Ref(in)\ Obit\-Ref (in)}\label{ObitUVCal_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-UVCal}{\rm (p.\,\pageref{structObitUVCal})}. 
+
+returns a Obit\-UVCal$\ast$. in = object to reference \index{ObitUVCal.h@{Obit\-UVCal.h}!ObitUVCalUnref@{ObitUVCalUnref}}
+\index{ObitUVCalUnref@{ObitUVCalUnref}!ObitUVCal.h@{Obit\-UVCal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVCal\-Unref(in)\ Obit\-Unref (in)}\label{ObitUVCal_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-UVCal}{\rm (p.\,\pageref{structObitUVCal})} returns a Obit\-UVCal$\ast$. 
+
+in = object to unreference 
+
+\subsection{Typedef Documentation}
+\index{ObitUVCal.h@{Obit\-UVCal.h}!ObitUVCalApplyFP@{ObitUVCalApplyFP}}
+\index{ObitUVCalApplyFP@{ObitUVCalApplyFP}!ObitUVCal.h@{Obit\-UVCal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef gboolean($\ast$ {\bf Obit\-UVCal\-Apply\-FP})({\bf Obit\-UVCal} $\ast$in, {\bf ofloat} $\ast$vis\-In, {\bf ofloat} $\ast$vis\-Out, {\bf Obit\-Err} $\ast$err)}\label{ObitUVCal_8h_a4}
+
+
+\index{ObitUVCal.h@{Obit\-UVCal.h}!ObitUVCalShutdownFP@{ObitUVCalShutdownFP}}
+\index{ObitUVCalShutdownFP@{ObitUVCalShutdownFP}!ObitUVCal.h@{Obit\-UVCal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-UVCal\-Shutdown\-FP})({\bf Obit\-UVCal} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitUVCal_8h_a5}
+
+
+\index{ObitUVCal.h@{Obit\-UVCal.h}!ObitUVCalSmoothFP@{ObitUVCalSmoothFP}}
+\index{ObitUVCalSmoothFP@{ObitUVCalSmoothFP}!ObitUVCal.h@{Obit\-UVCal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-UVCal\-Smooth\-FP})({\bf Obit\-UVCal} $\ast$in, float time, {\bf olong} ant1, {\bf olong} ant2, {\bf ofloat} $\ast$vis\-In, {\bf Obit\-Err} $\ast$err)}\label{ObitUVCal_8h_a7}
+
+
+\index{ObitUVCal.h@{Obit\-UVCal.h}!ObitUVCalStartFP@{ObitUVCalStartFP}}
+\index{ObitUVCalStartFP@{ObitUVCalStartFP}!ObitUVCal.h@{Obit\-UVCal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-UVCal\-Start\-FP})({\bf Obit\-UVCal} $\ast$in, {\bf Obit\-UVSel} $\ast$sel, {\bf Obit\-UVDesc} $\ast$in\-Desc, {\bf Obit\-UVDesc} $\ast$out\-Desc, {\bf Obit\-Err} $\ast$err)}\label{ObitUVCal_8h_a3}
+
+
+\index{ObitUVCal.h@{Obit\-UVCal.h}!ObitUVCalWantFP@{ObitUVCalWantFP}}
+\index{ObitUVCalWantFP@{ObitUVCalWantFP}!ObitUVCal.h@{Obit\-UVCal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef gboolean($\ast$ {\bf Obit\-UVCal\-Want\-FP})({\bf Obit\-UVCal} $\ast$in, {\bf ofloat} time, {\bf olong} ant1, {\bf olong} ant2, {\bf ofloat} $\ast$RP, {\bf ofloat} $\ast$vis\-In, {\bf Obit\-Err} $\ast$err)}\label{ObitUVCal_8h_a6}
+
+
+
+
+\subsection{Function Documentation}
+\index{ObitUVCal.h@{Obit\-UVCal.h}!newObitUVCal@{newObitUVCal}}
+\index{newObitUVCal@{newObitUVCal}!ObitUVCal.h@{Obit\-UVCal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVCal}$\ast$ new\-Obit\-UVCal (gchar $\ast$ {\em name})}\label{ObitUVCal_8h_a9}
+
+
+Public: Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitUVCal.h@{Obit\-UVCal.h}!ObitUVCalApply@{ObitUVCalApply}}
+\index{ObitUVCalApply@{ObitUVCalApply}!ObitUVCal.h@{Obit\-UVCal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-UVCal\-Apply ({\bf Obit\-UVCal} $\ast$ {\em in}, {\bf ofloat} $\ast$ {\em rec\-In}, {\bf ofloat} $\ast$ {\em rec\-Out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVCal_8h_a14}
+
+
+Public: Apply Calibration. 
+
+Data should be uncompressed before calling. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Calibration Object. \item[{\em rec\-In}]Input raw data array for a single visibility, random parameters then visibility array. \item[{\em rec\-Out}]Output calibrated, edited,transformed data. \item[{\em err}]Obit\-Error stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if some of the data is valid, FALSE if none. \end{Desc}
+\index{ObitUVCal.h@{Obit\-UVCal.h}!ObitUVCalClassInit@{ObitUVCalClassInit}}
+\index{ObitUVCalClassInit@{ObitUVCalClassInit}!ObitUVCal.h@{Obit\-UVCal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVCal\-Class\-Init (void)}\label{ObitUVCal_8h_a8}
+
+
+Public: Class initializer. 
+
+\index{ObitUVCal.h@{Obit\-UVCal.h}!ObitUVCalClone@{ObitUVCalClone}}
+\index{ObitUVCalClone@{ObitUVCalClone}!ObitUVCal.h@{Obit\-UVCal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVCal}$\ast$ Obit\-UVCal\-Clone ({\bf Obit\-UVCal} $\ast$ {\em in}, {\bf Obit\-UVCal} $\ast$ {\em out})}\label{ObitUVCal_8h_a12}
+
+
+Public: Copy (shallow) constructor. 
+
+The result will have pointers to the more complex members. Parent class members are included but any derived class info is ignored. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitUVCal.h@{Obit\-UVCal.h}!ObitUVCalCopy@{ObitUVCalCopy}}
+\index{ObitUVCalCopy@{ObitUVCalCopy}!ObitUVCal.h@{Obit\-UVCal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVCal}$\ast$ Obit\-UVCal\-Copy ({\bf Obit\-UVCal} $\ast$ {\em in}, {\bf Obit\-UVCal} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVCal_8h_a11}
+
+
+Public: Copy (deep) constructor. 
+
+Copies are made of complex members including disk files; these will be copied applying whatever selection is associated with the input. Parent class members are included but any derived class info is ignored. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitUVCal.h@{Obit\-UVCal.h}!ObitUVCalGetClass@{ObitUVCalGetClass}}
+\index{ObitUVCalGetClass@{ObitUVCalGetClass}!ObitUVCal.h@{Obit\-UVCal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-UVCal\-Get\-Class (void)}\label{ObitUVCal_8h_a10}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitUVCal.h@{Obit\-UVCal.h}!ObitUVCalShutdown@{ObitUVCalShutdown}}
+\index{ObitUVCalShutdown@{ObitUVCalShutdown}!ObitUVCal.h@{Obit\-UVCal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVCal\-Shutdown ({\bf Obit\-UVCal} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVCal_8h_a15}
+
+
+Public: Shutdown. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Calibration Object. \item[{\em err}]Obit\-Error stack. \end{description}
+\end{Desc}
+\index{ObitUVCal.h@{Obit\-UVCal.h}!ObitUVCalSmooth@{ObitUVCalSmooth}}
+\index{ObitUVCalSmooth@{ObitUVCalSmooth}!ObitUVCal.h@{Obit\-UVCal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVCal\-Smooth ({\bf Obit\-UVCal} $\ast$ {\em in}, float {\em time}, {\bf olong} {\em ant1}, {\bf olong} {\em ant2}, {\bf ofloat} $\ast$ {\em RP}, {\bf ofloat} $\ast$ {\em vis\-In}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVCal_8h_a17}
+
+
+Public: Smooth data in frequency. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Calibration Object. \item[{\em time}]Time of datum \item[{\em ant1}]first antenna number of baseline \item[{\em ant2}]second antanna of baseline. \item[{\em RP}]Random parameters array. \item[{\em vis\-In}]1 visibility as an array of floats \item[{\em err}]Obit\-Error stack. \end{description}
+\end{Desc}
+\index{ObitUVCal.h@{Obit\-UVCal.h}!ObitUVCalStart@{ObitUVCalStart}}
+\index{ObitUVCalStart@{ObitUVCalStart}!ObitUVCal.h@{Obit\-UVCal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVCal\-Start ({\bf Obit\-UVCal} $\ast$ {\em in}, {\bf Obit\-UVSel} $\ast$ {\em sel}, {\bf Obit\-UVDesc} $\ast$ {\em in\-Desc}, {\bf Obit\-UVDesc} $\ast$ {\em out\-Desc}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVCal_8h_a13}
+
+
+Public: Initialize calibration. 
+
+Output descriptor modified to reflect data selection. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object CFto initialize. \item[{\em sel}]Data selector. \item[{\em in\-Desc}]Input data descriptor. \item[{\em out\-Desc}]Output data descriptor (after transformations/selection). \item[{\em err}]Obit\-Error stack. \end{description}
+\end{Desc}
+\index{ObitUVCal.h@{Obit\-UVCal.h}!ObitUVCalWant@{ObitUVCalWant}}
+\index{ObitUVCalWant@{ObitUVCalWant}!ObitUVCal.h@{Obit\-UVCal.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-UVCal\-Want ({\bf Obit\-UVCal} $\ast$ {\em in}, {\bf ofloat} {\em time}, {\bf olong} {\em ant1}, {\bf olong} {\em ant2}, {\bf ofloat} $\ast$ {\em RP}, {\bf ofloat} $\ast$ {\em vis\-In}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVCal_8h_a16}
+
+
+Public: test if data wanted. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Calibration Object. \item[{\em time}]Time of datum \item[{\em ant1}]first antenna number of baseline \item[{\em ant2}]second antanna of baseline. \item[{\em RP}]Random parameter array \item[{\em vis\-In}]1 visibility as an array of floats \item[{\em err}]Obit\-Error stack. \end{description}
+\end{Desc}

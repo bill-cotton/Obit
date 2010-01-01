@@ -1,0 +1,376 @@
+\section{Obit\-DCon\-Clean\-Vis.h File Reference}
+\label{ObitDConCleanVis_8h}\index{ObitDConCleanVis.h@{ObitDConCleanVis.h}}
+{\bf Obit\-DCon\-Clean\-Vis}{\rm (p.\,\pageref{structObitDConCleanVis})} Visisibility-based (Cotton-Schwab) CLEAN class. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-DCon\-Clean\-Px\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-DCon\-Clean.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Mosaic.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-DCon\-Clean\-Window.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-DCon\-Clean\-Bm\-Hist.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-DCon\-Clean\-Px\-Hist.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVImager.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Sky\-Model.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Display.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-DCon\-Clean\-Vis}
+\begin{CompactList}\small\item\em Obit\-DCon\-Clean\-Vis Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-DCon\-Clean\-Vis\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-DCon\-Clean\-Vis\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-DCon\-Clean\-Vis}{\rm (p.\,\pageref{structObitDConCleanVis})} returns a Obit\-DCon\-Clean\-Vis$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-DCon\-Clean\-Vis\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-DCon\-Clean\-Vis}{\rm (p.\,\pageref{structObitDConCleanVis})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-DCon\-Clean\-Vis\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-DCon\-Clean\-Vis\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef gboolean($\ast$ {\bf Obit\-DCon\-Clean\-Vis\-Pick\-Next\-FP} )({\bf Obit\-DCon\-Clean} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef {\bf ofloat}($\ast$ {\bf Obit\-DCon\-Clean\-Vis\-Quality\-FP} )({\bf Obit\-DCon\-Clean} $\ast$in, {\bf olong} field, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef gboolean($\ast$ {\bf Obit\-DCon\-Clean\-Vis\-Reimage\-FP} )({\bf Obit\-DCon\-Clean\-Vis} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-DCon\-Clean\-Vis\-Add\-Field\-FP} )({\bf Obit\-DCon\-Clean\-Vis} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef gboolean($\ast$ {\bf Obit\-DCon\-Clean\-Vis\-Recenter\-FP} )({\bf Obit\-DCon\-Clean\-Vis} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef gboolean($\ast$ {\bf Obit\-DCon\-Clean\-Vis\-Filter\-FP} )({\bf Obit\-DCon\-Clean\-Vis} $\ast$in, {\bf ofloat} filter[2], {\bf Obit\-Err} $\ast$err)
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-DCon\-Clean\-Vis\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Vis} $\ast$ {\bf new\-Obit\-DCon\-Clean\-Vis} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Vis} $\ast$ {\bf Obit\-DCon\-Clean\-Vis\-Create} (gchar $\ast$name, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-DCon\-Clean\-Vis}{\rm (p.\,\pageref{structObitDConCleanVis})} structures. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Vis} $\ast$ {\bf Obit\-DCon\-Clean\-Vis\-Create2} (gchar $\ast$name, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-UVImager} $\ast$imager, {\bf Obit\-Sky\-Model} $\ast$sky\-Model, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-DCon\-Clean\-Vis}{\rm (p.\,\pageref{structObitDConCleanVis})} structures from optional components. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-DCon\-Clean\-Vis\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Vis} $\ast$ {\bf Obit\-DCon\-Clean\-Vis\-Copy} ({\bf Obit\-DCon\-Clean\-Vis} $\ast$in, {\bf Obit\-DCon\-Clean\-Vis} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Vis\-Clone} ({\bf Obit\-DCon\-Clean\-Vis} $\ast$in, {\bf Obit\-DCon\-Clean\-Vis} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Vis\-Deconvolve} ({\bf Obit\-DCon} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Do deconvolution. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Vis\-Get\-Parms} ({\bf Obit\-DCon} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get parameters. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Vis\-Def\-Window} ({\bf Obit\-DCon\-Clean} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Set Default CLEAN windows. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Vis\-Sub} ({\bf Obit\-DCon\-Clean\-Vis} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Subtract components and generate new residual image(s). \item\end{CompactList}\item 
+gboolean {\bf Obit\-DCon\-Clean\-Vis\-Pick\-Next} ({\bf Obit\-DCon\-Clean\-Vis} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Pick next field(s) and get Residual image(s). \item\end{CompactList}\item 
+{\bf ofloat} {\bf Obit\-DCon\-Clean\-Vis\-Quality} ({\bf Obit\-DCon\-Clean\-Vis} $\ast$in, {\bf olong} field, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Determine quality measure for field. \item\end{CompactList}\item 
+gboolean {\bf Obit\-DCon\-Clean\-Vis\-Reimage} ({\bf Obit\-DCon\-Clean\-Vis} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Reimaging needed to center strong source on pixel? \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Vis\-Add\-Field} ({\bf Obit\-DCon\-Clean\-Vis} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Resize to add a new field. \item\end{CompactList}\item 
+gboolean {\bf Obit\-DCon\-Clean\-Vis\-Recenter} ({\bf Obit\-DCon\-Clean\-Vis} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Recenter auto\-Center images. \item\end{CompactList}\item 
+gboolean {\bf Obit\-DCon\-Clean\-Vis\-Filter} ({\bf Obit\-DCon\-Clean\-Vis} $\ast$in, {\bf ofloat} filter[2], {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Filter weak, isolated components. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-DCon\-Clean\-Vis}{\rm (p.\,\pageref{structObitDConCleanVis})} Visisibility-based (Cotton-Schwab) CLEAN class. 
+
+This class is derived from the {\bf Obit\-DCon\-Clean}{\rm (p.\,\pageref{structObitDConClean})} class.
+
+auto\-Window feature will automatically set CLEAN windows inside a predefined outer window. Each cycle the residuals inside the outer window are searched to the maximum value; if the peak is outside the inner window and $>$ 3 sigma, a new round box of radius 3 pixels is added to the window. Cleaning in each cycle will stop when the peak residual drops to the level of the highest value outside the CLEAN window. In auto\-Window mode, the field to be processed next is determined using the statistics from the outer window and for normal mode, the inner window. This should result in the brightest emission being cleaned next and a box added on it if necessary.\subsection{Creators and Destructors}\label{ObitDConCleanVis_8h_ObitDConCleanVisaccess}
+An {\bf Obit\-DCon\-Clean\-Vis}{\rm (p.\,\pageref{structObitDConCleanVis})} will usually be created using Obit\-DCon\-Clean\-Vis\-Create or Obit\-DCon\-Clean\-Vis\-Create2 which allow specifying a name for the object as well as other information.
+
+A copy of a pointer to an {\bf Obit\-DCon\-Clean\-Vis}{\rm (p.\,\pageref{structObitDConCleanVis})} should always be made using the {\bf Obit\-DCon\-Clean\-Vis\-Ref}{\rm (p.\,\pageref{ObitDConCleanVis_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-DCon\-Clean\-Vis}{\rm (p.\,\pageref{structObitDConCleanVis})} or changing a pointer, the function {\bf Obit\-DCon\-Clean\-Vis\-Unref}{\rm (p.\,\pageref{ObitDConCleanVis_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor. \subsection{CLEAN control information}\label{ObitDConCleanVis_8h_ObitDConCleanViscontrol}
+The control parameters for the CLEAN are read from the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} member when the Deconvolve function is called: The file etc. info should have been stored in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}: \begin{itemize}
+\item \char`\"{}Niter\char`\"{} OBIT\_\-long scalar = Maximum number of CLEAN iterations \item \char`\"{}max\-Pixel\char`\"{} OBIT\_\-long scalar = Maximum number of residuals [def 20000] \item \char`\"{}min\-Patch\char`\"{} OBIT\_\-long scalar = Minimum beam patch in pixels [def 100] \item \char`\"{}BMAJ\char`\"{} OBIT\_\-float scalar = Restoring beam major axis (deg) \item \char`\"{}BMIN\char`\"{} OBIT\_\-float scalar = Restoring beam minor axis (deg) \item \char`\"{}BPA\char`\"{} OBIT\_\-float scalar = Restoring beam position angle (deg) (\char`\"{},\char`\"{}, deg) \item \char`\"{}Beam\char`\"{} OBIT\_\-float array[3]= (BMAJ, BMIN, BPA) alternate form \item \char`\"{}Gain\char`\"{} OBIT\_\-float scalar = CLEAN loop gain per field If one given, used for all \item \char`\"{}min\-Flux\char`\"{} OBIT\_\-float scalar = Minimum flux density (Jy) per field If one given, used for all \item \char`\"{}Factor\char`\"{} OBIT\_\-float array = CLEAN depth factor per field If one given, used for all \item \char`\"{}Plane\char`\"{} OBIT\_\-long array = Plane being processed, 1-rel indices of axes 3-? \item \char`\"{}CCVer\char`\"{} OBIT\_\-long = CC table version number \item \char`\"{}CLEANBox\char`\"{}OBIT\_\-long [4,?] = Array of Clean boxes for field 1 Any entries with first element=0 are ignored. \item \char`\"{}prt\-Lv\char`\"{} OBIT\_\-int message level [def 2] 0=none, 1=summary, 2=normal, higher numbers for diagnostics \item \char`\"{}auto\-Window\char`\"{} OBIT\_\-boolean scalar = True if auto\-Window feature wanted. \item \char`\"{}Mode\char`\"{} OBIT\_\-long scalar = Model mode (Obit\-Sky\-Model\-Mode) [def OBIT\_\-Sky\-Model\_\-Fastest] \item \char`\"{}do\-Restore\char`\"{} OBIT\_\-bool = Restore image when done? [def TRUE] \item \char`\"{}do\-XRestore\char`\"{} OBIT\_\-bool = Cross restore images when done? [def do\-Restore] \item \char`\"{}do\-Flatten\char`\"{} OBIT\_\-bool = Flatten image when done? [def TRUE] \item \char`\"{}do\-Weight\char`\"{} OBIT\_\-bool = Weight UV data before imaging? [def TRUE] \item \char`\"{}do\-Beam\char`\"{} OBIT\_\-bool = Need to (re)make beam? [def TRUE] \item \char`\"{}do\-Recenter\char`\"{} OBIT\_\-bool = Allow recentering auto\-Center fields? [def TRUE] \item \char`\"{}reuse\-Flux\char`\"{} OBIT\_\-float = Level of Components in initial Sky\-Model to reuse, $<$0 -$>$ none [def none] \item \char`\"{}auto\-Cen\char`\"{} OBIT\_\-float scalar = Threshold leven for autocenter If peak exceeds this value the min\-Flux reset to 0.1$\ast$auto\-Cen \item \char`\"{}disp\-URL\char`\"{} OBIT\_\-string = URL of display server\end{itemize}
+
+
+\subsection{Define Documentation}
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisIsA@{ObitDConCleanVisIsA}}
+\index{ObitDConCleanVisIsA@{ObitDConCleanVisIsA}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-DCon\-Clean\-Vis\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-DCon\-Clean\-Vis\-Get\-Class())}\label{ObitDConCleanVis_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisRef@{ObitDConCleanVisRef}}
+\index{ObitDConCleanVisRef@{ObitDConCleanVisRef}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-DCon\-Clean\-Vis\-Ref(in)\ Obit\-Ref (in)}\label{ObitDConCleanVis_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-DCon\-Clean\-Vis}{\rm (p.\,\pageref{structObitDConCleanVis})}. 
+
+returns a Obit\-DCon\-Clean\-Vis$\ast$. in = object to reference \index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisUnref@{ObitDConCleanVisUnref}}
+\index{ObitDConCleanVisUnref@{ObitDConCleanVisUnref}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-DCon\-Clean\-Vis\-Unref(in)\ Obit\-Unref (in)}\label{ObitDConCleanVis_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-DCon\-Clean\-Vis}{\rm (p.\,\pageref{structObitDConCleanVis})} returns a Obit\-DCon\-Clean\-Vis$\ast$. 
+
+in = object to unreference 
+
+\subsection{Typedef Documentation}
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisAddFieldFP@{ObitDConCleanVisAddFieldFP}}
+\index{ObitDConCleanVisAddFieldFP@{ObitDConCleanVisAddFieldFP}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-DCon\-Clean\-Vis\-Add\-Field\-FP})({\bf Obit\-DCon\-Clean\-Vis} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)}\label{ObitDConCleanVis_8h_a6}
+
+
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisFilterFP@{ObitDConCleanVisFilterFP}}
+\index{ObitDConCleanVisFilterFP@{ObitDConCleanVisFilterFP}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef gboolean($\ast$ {\bf Obit\-DCon\-Clean\-Vis\-Filter\-FP})({\bf Obit\-DCon\-Clean\-Vis} $\ast$in, {\bf ofloat} filter[2], {\bf Obit\-Err} $\ast$err)}\label{ObitDConCleanVis_8h_a8}
+
+
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisPickNextFP@{ObitDConCleanVisPickNextFP}}
+\index{ObitDConCleanVisPickNextFP@{ObitDConCleanVisPickNextFP}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef gboolean($\ast$ {\bf Obit\-DCon\-Clean\-Vis\-Pick\-Next\-FP})({\bf Obit\-DCon\-Clean} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitDConCleanVis_8h_a3}
+
+
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisQualityFP@{ObitDConCleanVisQualityFP}}
+\index{ObitDConCleanVisQualityFP@{ObitDConCleanVisQualityFP}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf ofloat}($\ast$ {\bf Obit\-DCon\-Clean\-Vis\-Quality\-FP})({\bf Obit\-DCon\-Clean} $\ast$in, {\bf olong} field, {\bf Obit\-Err} $\ast$err)}\label{ObitDConCleanVis_8h_a4}
+
+
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisRecenterFP@{ObitDConCleanVisRecenterFP}}
+\index{ObitDConCleanVisRecenterFP@{ObitDConCleanVisRecenterFP}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef gboolean($\ast$ {\bf Obit\-DCon\-Clean\-Vis\-Recenter\-FP})({\bf Obit\-DCon\-Clean\-Vis} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)}\label{ObitDConCleanVis_8h_a7}
+
+
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisReimageFP@{ObitDConCleanVisReimageFP}}
+\index{ObitDConCleanVisReimageFP@{ObitDConCleanVisReimageFP}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef gboolean($\ast$ {\bf Obit\-DCon\-Clean\-Vis\-Reimage\-FP})({\bf Obit\-DCon\-Clean\-Vis} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)}\label{ObitDConCleanVis_8h_a5}
+
+
+
+
+\subsection{Function Documentation}
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!newObitDConCleanVis@{newObitDConCleanVis}}
+\index{newObitDConCleanVis@{newObitDConCleanVis}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Vis}$\ast$ new\-Obit\-DCon\-Clean\-Vis (gchar $\ast$ {\em name})}\label{ObitDConCleanVis_8h_a10}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisAddField@{ObitDConCleanVisAddField}}
+\index{ObitDConCleanVisAddField@{ObitDConCleanVisAddField}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Vis\-Add\-Field ({\bf Obit\-DCon\-Clean\-Vis} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanVis_8h_a23}
+
+
+Public: Resize to add a new field. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]DCon\-Clean\-Vis to expand \item[{\em uvdata}]UV data being imaged. \item[{\em err}]Error/message stack \end{description}
+\end{Desc}
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisClassInit@{ObitDConCleanVisClassInit}}
+\index{ObitDConCleanVisClassInit@{ObitDConCleanVisClassInit}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Vis\-Class\-Init (void)}\label{ObitDConCleanVis_8h_a9}
+
+
+Public: Class initializer. 
+
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisClone@{ObitDConCleanVisClone}}
+\index{ObitDConCleanVisClone@{ObitDConCleanVisClone}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Vis\-Clone ({\bf Obit\-DCon\-Clean\-Vis} $\ast$ {\em in}, {\bf Obit\-DCon\-Clean\-Vis} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanVis_8h_a15}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisCopy@{ObitDConCleanVisCopy}}
+\index{ObitDConCleanVisCopy@{ObitDConCleanVisCopy}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Vis}$\ast$ Obit\-DCon\-Clean\-Vis\-Copy ({\bf Obit\-DCon\-Clean\-Vis} $\ast$ {\em in}, {\bf Obit\-DCon\-Clean\-Vis} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanVis_8h_a14}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisCreate@{ObitDConCleanVisCreate}}
+\index{ObitDConCleanVisCreate@{ObitDConCleanVisCreate}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Vis}$\ast$ Obit\-DCon\-Clean\-Vis\-Create (gchar $\ast$ {\em name}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanVis_8h_a11}
+
+
+Public: Create/initialize {\bf Obit\-DCon\-Clean\-Vis}{\rm (p.\,\pageref{structObitDConCleanVis})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em uvdata}]from which to create object, should have all control information defined on info member. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisCreate2@{ObitDConCleanVisCreate2}}
+\index{ObitDConCleanVisCreate2@{ObitDConCleanVisCreate2}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Vis}$\ast$ Obit\-DCon\-Clean\-Vis\-Create2 (gchar $\ast$ {\em name}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-UVImager} $\ast$ {\em imager}, {\bf Obit\-Sky\-Model} $\ast$ {\em sky\-Model}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanVis_8h_a12}
+
+
+Public: Create/initialize {\bf Obit\-DCon\-Clean\-Vis}{\rm (p.\,\pageref{structObitDConCleanVis})} structures from optional components. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em uvdata}]from which to create object, should have all control information defined on info member. \item[{\em imager}]Optional {\bf Obit\-UVImager}{\rm (p.\,\pageref{structObitUVImager})} to use, if NULL use default Reference \char`\"{}stolen\char`\"{} (i.e. no need to Unref after call) \item[{\em sky\-Model}]Optional {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} to use, if NULL use default Reference \char`\"{}stolen\char`\"{} (i.e. no need to Unref after call) \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisDeconvolve@{ObitDConCleanVisDeconvolve}}
+\index{ObitDConCleanVisDeconvolve@{ObitDConCleanVisDeconvolve}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Vis\-Deconvolve ({\bf Obit\-DCon} $\ast$ {\em inn}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanVis_8h_a16}
+
+
+Public: Do deconvolution. 
+
+CLEAN control parameters are in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} member: \begin{itemize}
+\item \char`\"{}Niter\char`\"{} OBIT\_\-long scalar = Maximum number of CLEAN iterations \item \char`\"{}max\-Pixel\char`\"{} OBIT\_\-long scalar = Maximum number of residuals [def 20000] \item \char`\"{}min\-Patch\char`\"{} OBIT\_\-long scalar = Minimum beam patch in pixels [def 50] \item \char`\"{}BMAJ\char`\"{} OBIT\_\-float scalar = Restoring beam major axis (deg) \item \char`\"{}BMIN\char`\"{} OBIT\_\-float scalar = Restoring beam minor axis (deg) \item \char`\"{}BPA\char`\"{} OBIT\_\-float scalar = Restoring beam position angle (deg) \item \char`\"{}Beam\char`\"{} OBIT\_\-float array[3]= (BMAJ, BMIN, BPA) alternate form \item \char`\"{}CCVer\char`\"{} OBIT\_\-long array = CLEAN table version for all fields \item \char`\"{}Gain\char`\"{} OBIT\_\-float array = CLEAN loop gain per field \item \char`\"{}min\-Flux\char`\"{} OBIT\_\-float array = Minimun flux density (Jy) per field \item \char`\"{}Factor\char`\"{} OBIT\_\-float array = CLEAN depth factor per field \item \char`\"{}auto\-Cen\char`\"{} OBIT\_\-float scalar = Threshold leven for autocenter If peak exceeds this value the min\-Flux reset to 0.1$\ast$auto\-Cen \item \char`\"{}Plane\char`\"{} OBIT\_\-long array = Plane being processed, 1-rel indices of axes 3-? \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to deconvolve \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\end{itemize}
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisDefWindow@{ObitDConCleanVisDefWindow}}
+\index{ObitDConCleanVisDefWindow@{ObitDConCleanVisDefWindow}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Vis\-Def\-Window ({\bf Obit\-DCon\-Clean} $\ast$ {\em inn}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanVis_8h_a18}
+
+
+Public: Set Default CLEAN windows. 
+
+If CLEANBox defined in in-$>$info then its contents are used for field 1. Assumes all images in mosaic have descriptors defined. Uses base class function. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The CLEAN object \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisFilter@{ObitDConCleanVisFilter}}
+\index{ObitDConCleanVisFilter@{ObitDConCleanVisFilter}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-DCon\-Clean\-Vis\-Filter ({\bf Obit\-DCon\-Clean\-Vis} $\ast$ {\em in}, {\bf ofloat} {\em filter}[2], {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanVis_8h_a25}
+
+
+Public: Filter weak, isolated components. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]DCon\-Clean\-Vis to check Values on info member: \begin{itemize}
+\item \char`\"{}CCVer\char`\"{} OBIT\_\-long scalar = CC table version to use, default 1 \end{itemize}
+\item[{\em filter,filtering}]parameters: [0] = radius Radius within which to consider components. (deg) if this is 0.0 nothing is done [1] = min\-Flux Minimum acceptable summed flux (Jy) \item[{\em err}]Error/message stack return TRUE if any components were removed, i.e. reimaging needed \end{description}
+\end{Desc}
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisGetClass@{ObitDConCleanVisGetClass}}
+\index{ObitDConCleanVisGetClass@{ObitDConCleanVisGetClass}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-DCon\-Clean\-Vis\-Get\-Class (void)}\label{ObitDConCleanVis_8h_a13}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisGetParms@{ObitDConCleanVisGetParms}}
+\index{ObitDConCleanVisGetParms@{ObitDConCleanVisGetParms}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Vis\-Get\-Parms ({\bf Obit\-DCon} $\ast$ {\em inn}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanVis_8h_a17}
+
+
+Public: Get parameters. 
+
+\begin{itemize}
+\item \char`\"{}auto\-Cen\char`\"{} OBIT\_\-float scalar = Threshold leven for autocenter If peak exceeds this value the min\-Flux reset to 0.1$\ast$auto\-Cen \item \char`\"{}disp\-URL\char`\"{} OBIT\_\-string scalar = URL of display server \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The CLEAN object as base class \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\end{itemize}
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisPickNext@{ObitDConCleanVisPickNext}}
+\index{ObitDConCleanVisPickNext@{ObitDConCleanVisPickNext}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-DCon\-Clean\-Vis\-Pick\-Next ({\bf Obit\-DCon\-Clean\-Vis} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanVis_8h_a20}
+
+
+Public: Pick next field(s) and get Residual image(s). 
+
+Adopted from the AIPSish CLBSTF (QOOP:QCLEAN.FOR) \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to deconvolve \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE iff reached minimum flux density or max. number comp. \end{Desc}
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisQuality@{ObitDConCleanVisQuality}}
+\index{ObitDConCleanVisQuality@{ObitDConCleanVisQuality}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} Obit\-DCon\-Clean\-Vis\-Quality ({\bf Obit\-DCon\-Clean\-Vis} $\ast$ {\em in}, {\bf olong} {\em field}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanVis_8h_a21}
+
+
+Public: Determine quality measure for field. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to deconvolve \item[{\em field}]field number (1-rel) to test \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]quality measure, higher is more desirable \end{Desc}
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisRecenter@{ObitDConCleanVisRecenter}}
+\index{ObitDConCleanVisRecenter@{ObitDConCleanVisRecenter}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-DCon\-Clean\-Vis\-Recenter ({\bf Obit\-DCon\-Clean\-Vis} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanVis_8h_a24}
+
+
+Public: Recenter auto\-Center images. 
+
+The centroid of the CLEAN components of auto\-Center fields are determined. If they are not at the reference pixel to within toler, the position is adjusted. Fields in the mosaic member of in are considered auto\-Center fields if the image info member contains a boolean entry \char`\"{}auto\-Cen\-Field\char`\"{} with value True. Any images recentered will have the CLEAN components cleared Images should be remade if any positions are modified. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]DCon\-Clean\-Vis to check Values on info member: \begin{itemize}
+\item \char`\"{}CCVer\char`\"{} OBIT\_\-long scalar = CC table version to use, default 1 \item \char`\"{}toler\char`\"{} OBIT\_\-float scalar = Tolerance to accept as on a pixel (cells) def 0.001 \end{itemize}
+\item[{\em uvdata}]UV data \item[{\em err}]Error/message stack return TRUE if a position was modified \end{description}
+\end{Desc}
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisReimage@{ObitDConCleanVisReimage}}
+\index{ObitDConCleanVisReimage@{ObitDConCleanVisReimage}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-DCon\-Clean\-Vis\-Reimage ({\bf Obit\-DCon\-Clean\-Vis} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanVis_8h_a22}
+
+
+Public: Reimaging needed to center strong source on pixel? 
+
+A new (96x96) field is added centered on the offending source and a negative clean window added to the position of the source in its original window. Avoid duplicates of the same source and ensure that all occurances of this source in any exant field has a negative clean window added. Multiple centering sources per facet are allowed A boolean entry \char`\"{}auto\-Cen\-Field\char`\"{} with value True is added to the info member of any image members added to the mosaic member. Routine originally translated from the AIPSish VLAUTIL.FOR/VLCCIN \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]DCon\-Clean\-Vis to check Values on info member: \begin{itemize}
+\item \char`\"{}restart\-Flux\char`\"{} OBIT\_\-float scalar = Minimum brightness flux for CLEAN restart, def infinite \item \char`\"{}CCVer\char`\"{} OBIT\_\-long scalar = CC table version to use, default 1 \item \char`\"{}toler\char`\"{} OBIT\_\-float scalar = Tolerance to accept as on a pixel (cells) def 0.01 \end{itemize}
+\item[{\em uvdata}]UV data being imaged. \item[{\em err}]Error/message stack \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if image needs to be remade, generally meaning something exceeded threshold. \end{Desc}
+\index{ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}!ObitDConCleanVisSub@{ObitDConCleanVisSub}}
+\index{ObitDConCleanVisSub@{ObitDConCleanVisSub}!ObitDConCleanVis.h@{Obit\-DCon\-Clean\-Vis.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Vis\-Sub ({\bf Obit\-DCon\-Clean\-Vis} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanVis_8h_a19}
+
+
+Public: Subtract components and generate new residual image(s). 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to deconvolve \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}

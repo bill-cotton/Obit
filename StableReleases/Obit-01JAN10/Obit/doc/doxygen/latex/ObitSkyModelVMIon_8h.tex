@@ -1,0 +1,241 @@
+\section{Obit\-Sky\-Model\-VMIon.h File Reference}
+\label{ObitSkyModelVMIon_8h}\index{ObitSkyModelVMIon.h@{ObitSkyModelVMIon.h}}
+{\bf Obit\-Sky\-Model\-VMIon}{\rm (p.\,\pageref{structObitSkyModelVMIon})} class represents ionospheric corrected sky models and their Fourier transforms. 
+
+{\tt \#include \char`\"{}Obit\-Sky\-Model\-VM.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-FArray.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-CArray.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-CInterpolate.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Mosaic.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UV.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-NI.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-Sky\-Model\-VMIon}
+\begin{CompactList}\small\item\em Obit\-Sky\-Model\-VMIon Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Sky\-Model\-VMIon\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-Sky\-Model\-VMIon\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Sky\-Model\-VMIon}{\rm (p.\,\pageref{structObitSkyModelVMIon})} returns a Obit\-Sky\-Model\-VMIon$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-Sky\-Model\-VMIon\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Sky\-Model\-VMIon}{\rm (p.\,\pageref{structObitSkyModelVMIon})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Sky\-Model\-VMIon\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-Sky\-Model\-VMIon\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Sky\-Model\-VMIon\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Sky\-Model\-VMIon} $\ast$ {\bf new\-Obit\-Sky\-Model\-VMIon} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMIon\-From\-Info} ({\bf Obit\-Sky\-Model} $\ast$out, gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$in\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Init Sky\-Model object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+{\bf Obit\-Sky\-Model\-VMIon} $\ast$ {\bf Obit\-Sky\-Model\-VMIon\-Create} (gchar $\ast$name, {\bf Obit\-Image\-Mosaic} $\ast$mosaic)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-Sky\-Model\-VMIon}{\rm (p.\,\pageref{structObitSkyModelVMIon})} structures. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMIon\-Init\-Mod} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: initialize {\bf Obit\-Sky\-Model\-VMIon}{\rm (p.\,\pageref{structObitSkyModelVMIon})} structures. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMIon\-Shut\-Down\-Mod} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: shutdown {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} processes. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMInit\-Model} ({\bf Obit\-Sky\-Model} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: initialize model for pass through data. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Sky\-Model\-VMIon\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Sky\-Model\-VMIon} $\ast$ {\bf Obit\-Sky\-Model\-VMIon\-Copy} ({\bf Obit\-Sky\-Model\-VMIon} $\ast$in, {\bf Obit\-Sky\-Model\-VMIon} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMIon\-Clone} ({\bf Obit\-Sky\-Model\-VMIon} $\ast$in, {\bf Obit\-Sky\-Model\-VMIon} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMIon\-Update\-Model} ({\bf Obit\-Sky\-Model\-VM} $\ast$in, {\bf ofloat} time, {\bf olong} suba, {\bf Obit\-UV} $\ast$uvdata, {\bf olong} ithread, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Routine to update model. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMIon\-Get\-Info} ({\bf Obit\-Sky\-Model} $\ast$in, gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$out\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Extract information about underlying structures to {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Sky\-Model\-VMIon}{\rm (p.\,\pageref{structObitSkyModelVMIon})} class represents ionospheric corrected sky models and their Fourier transforms. 
+
+This class represents sky models incorporating ionospheric phase models and their Fourier transforms and is derived from the {\bf Obit\-Sky\-Model\-VMIon}{\rm (p.\,\pageref{structObitSkyModelVMIon})} class. Models of visibility data incorporating the corrupting effects of a time and spatially variable ionospheric model are calculated
+
+This class is derived from the {\bf Obit\-Sky\-Model\-VM}{\rm (p.\,\pageref{structObitSkyModelVM})} class.\subsection{Creators and Destructors}\label{ObitSkyModelVMIon_8h_ObitSkyModelVMIonaccess}
+An {\bf Obit\-Sky\-Model\-VMIon}{\rm (p.\,\pageref{structObitSkyModelVMIon})} will usually be created using Obit\-Sky\-Model\-VMIon\-Create which allows specifying a name for the object as well as the Image\-Mosaic containing the model.
+
+A copy of a pointer to an {\bf Obit\-Sky\-Model\-VMIon}{\rm (p.\,\pageref{structObitSkyModelVMIon})} should always be made using the {\bf Obit\-Sky\-Model\-VMIon\-Ref}{\rm (p.\,\pageref{ObitSkyModelVMIon_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-Sky\-Model\-VMIon}{\rm (p.\,\pageref{structObitSkyModelVMIon})} or changing a pointer, the function {\bf Obit\-Sky\-Model\-VMIon\-Unref}{\rm (p.\,\pageref{ObitSkyModelVMIon_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.\subsection{Data selection}\label{ObitSkyModelVMIon_8h_ObitSkyModelVMIonselect}
+The selection of data to be modified is through values added to the info ({\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}) member and include the following: \begin{itemize}
+\item \char`\"{}Stokes\char`\"{} OBIT\_\-string (4,1,1) Selected output Stokes parameters: \char`\"{}    \char`\"{}=$>$ no translation,\char`\"{}I   \char`\"{},\char`\"{}V   \char`\"{},\char`\"{}Q   \char`\"{}, \char`\"{}U   \char`\"{}, \char`\"{}IQU \char`\"{}, \char`\"{}IQUV\char`\"{}, \char`\"{}IV  \char`\"{}, \char`\"{}RR  \char`\"{}, \char`\"{}LL  \char`\"{}, \char`\"{}RL  \char`\"{}, \char`\"{}LR  \char`\"{}, \char`\"{}HALF\char`\"{} = RR,LL, \char`\"{}FULL\char`\"{}=RR,LL,RL,LR. [default \char`\"{}I\char`\"{}] In the above 'F' can substitute for \char`\"{}formal\char`\"{} 'I' (both RR+LL). \item \char`\"{}ion\-Ver\char`\"{}OBIT\_\-int (1,1,1) NI table version number, 0-$>$ use highest, def=1 \item \char`\"{}BChan\char`\"{} OBIT\_\-int (1,1,1) First spectral channel selected. [def all] \item \char`\"{}EChan\char`\"{} OBIT\_\-int (1,1,1) Highest spectral channel selected. [def all] \item \char`\"{}BIF\char`\"{} OBIT\_\-int (1,1,1) First \char`\"{}IF\char`\"{} selected. [def all] \item \char`\"{}EIF\char`\"{} OBIT\_\-int (1,1,1) Highest \char`\"{}IF\char`\"{} selected. [def all] \item \char`\"{}do3D\char`\"{} OBIT\_\-bool (1,1,1) If 3D imaging wanted. [def false] \item \char`\"{}DIVIDE\char`\"{} OBIT\_\-bool (1,1,1) If division rather than subtraction wanted. [def false] \item \char`\"{}REPLACE\char`\"{} OBIT\_\-bool (1,1,1) If TRUE replace data with model. [def false] \item \char`\"{}PBCor\char`\"{} OBIT\_\-bool (1,1,1) If TRUE make relative primary beam corrections [def true] \item \char`\"{}no\-Neg\char`\"{} OBIT\_\-bool (1,1,1) If TRUE only positive flux comps are to be used [def false] \item \char`\"{}ant\-Size\char`\"{} OBIT\_\-float (1,1,1) Diameter of antennas for rel. r,.[def 25.0] \item \char`\"{}Factor\char`\"{} OBIT\_\-float (1,1,1) model multiplications factor (-1=$>$add) [def 1] \item \char`\"{}min\-Flux\char`\"{} OBIT\_\-float (1,1,1) Minimum flux density model or pixel [def -1.0e20] \item \char`\"{}Model\-Type\char`\"{} OBIT\_\-int (1,1,1) Model type (Obit\-Sky\-Model\-Type) [def OBIT\_\-Sky\-Model\_\-Comps] \item \char`\"{}MODPTFLX\char`\"{} OBIT\_\-float (1,1,1) Point model flux in Jy, [def 0.0] \item \char`\"{}MODPTXOF\char`\"{} OBIT\_\-float (1,1,1) Point model \char`\"{}x\char`\"{} offset in deg [def 0.0] \item \char`\"{}MODPTYOF\char`\"{} OBIT\_\-float (1,1,1) Point model \char`\"{}y\char`\"{} offset in deg [def 0.0] \item \char`\"{}MODPTYPM\char`\"{} OBIT\_\-float (4,1,1) Point other parameters [def all 0.0] \item \char`\"{}CCVer\char`\"{} OBIT\_\-int (?,1,1) CC table versions to use [def all 0 =$>$ highest] \item \char`\"{}BComp\char`\"{} OBIT\_\-int (?,1,1) Start CC to use per table, 1-rel [def 1 ] \item \char`\"{}EComp\char`\"{} OBIT\_\-int (?,1,1) Highest CC to use per table, 1-rel [def to end ] \item \char`\"{}Update\-Int\char`\"{} OBIT\_\-float (1,1,1) Model update interval (min) [def 1 min] \item \char`\"{}ion\-Ver\char`\"{}OBIT\_\-int (1,1,1) NI table version number, 0-$>$ use highest, def=1\end{itemize}
+
+
+\subsection{Define Documentation}
+\index{ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}!ObitSkyModelVMIonIsA@{ObitSkyModelVMIonIsA}}
+\index{ObitSkyModelVMIonIsA@{ObitSkyModelVMIonIsA}!ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Sky\-Model\-VMIon\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-Sky\-Model\-VMIon\-Get\-Class())}\label{ObitSkyModelVMIon_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}!ObitSkyModelVMIonRef@{ObitSkyModelVMIonRef}}
+\index{ObitSkyModelVMIonRef@{ObitSkyModelVMIonRef}!ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Sky\-Model\-VMIon\-Ref(in)\ Obit\-Ref (in)}\label{ObitSkyModelVMIon_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Sky\-Model\-VMIon}{\rm (p.\,\pageref{structObitSkyModelVMIon})}. 
+
+returns a Obit\-Sky\-Model\-VMIon$\ast$. in = object to reference \index{ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}!ObitSkyModelVMIonUnref@{ObitSkyModelVMIonUnref}}
+\index{ObitSkyModelVMIonUnref@{ObitSkyModelVMIonUnref}!ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Sky\-Model\-VMIon\-Unref(in)\ Obit\-Unref (in)}\label{ObitSkyModelVMIon_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Sky\-Model\-VMIon}{\rm (p.\,\pageref{structObitSkyModelVMIon})} returns a Obit\-Sky\-Model\-VMIon$\ast$. 
+
+in = object to unreference 
+
+\subsection{Function Documentation}
+\index{ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}!newObitSkyModelVMIon@{newObitSkyModelVMIon}}
+\index{newObitSkyModelVMIon@{newObitSkyModelVMIon}!ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Sky\-Model\-VMIon}$\ast$ new\-Obit\-Sky\-Model\-VMIon (gchar $\ast$ {\em name})}\label{ObitSkyModelVMIon_8h_a4}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}!ObitSkyModelVMInitModel@{ObitSkyModelVMInitModel}}
+\index{ObitSkyModelVMInitModel@{ObitSkyModelVMInitModel}!ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMInit\-Model ({\bf Obit\-Sky\-Model} $\ast$ {\em inn}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMIon_8h_a9}
+
+
+Public: initialize model for pass through data. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Sky\-Model to initialize \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}!ObitSkyModelVMIonClassInit@{ObitSkyModelVMIonClassInit}}
+\index{ObitSkyModelVMIonClassInit@{ObitSkyModelVMIonClassInit}!ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMIon\-Class\-Init (void)}\label{ObitSkyModelVMIon_8h_a3}
+
+
+Public: Class initializer. 
+
+\index{ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}!ObitSkyModelVMIonClone@{ObitSkyModelVMIonClone}}
+\index{ObitSkyModelVMIonClone@{ObitSkyModelVMIonClone}!ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMIon\-Clone ({\bf Obit\-Sky\-Model\-VMIon} $\ast$ {\em in}, {\bf Obit\-Sky\-Model\-VMIon} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMIon_8h_a12}
+
+
+Public: Copy structure. 
+
+\index{ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}!ObitSkyModelVMIonCopy@{ObitSkyModelVMIonCopy}}
+\index{ObitSkyModelVMIonCopy@{ObitSkyModelVMIonCopy}!ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Sky\-Model\-VMIon}$\ast$ Obit\-Sky\-Model\-VMIon\-Copy ({\bf Obit\-Sky\-Model\-VMIon} $\ast$ {\em in}, {\bf Obit\-Sky\-Model\-VMIon} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMIon_8h_a11}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}!ObitSkyModelVMIonCreate@{ObitSkyModelVMIonCreate}}
+\index{ObitSkyModelVMIonCreate@{ObitSkyModelVMIonCreate}!ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Sky\-Model\-VMIon}$\ast$ Obit\-Sky\-Model\-VMIon\-Create (gchar $\ast$ {\em name}, {\bf Obit\-Image\-Mosaic} $\ast$ {\em mosaic})}\label{ObitSkyModelVMIon_8h_a6}
+
+
+Public: Create/initialize {\bf Obit\-Sky\-Model\-VMIon}{\rm (p.\,\pageref{structObitSkyModelVMIon})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em mosaic}]{\bf Obit\-Image\-Mosaic}{\rm (p.\,\pageref{structObitImageMosaic})} giving one or more images/CC tables \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}!ObitSkyModelVMIonFromInfo@{ObitSkyModelVMIonFromInfo}}
+\index{ObitSkyModelVMIonFromInfo@{ObitSkyModelVMIonFromInfo}!ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMIon\-From\-Info ({\bf Obit\-Sky\-Model} $\ast$ {\em out}, gchar $\ast$ {\em prefix}, {\bf Obit\-Info\-List} $\ast$ {\em in\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMIon_8h_a5}
+
+
+Public: Init Sky\-Model object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em out}]the new object.to be initialized \item[{\em prefix}]If Non\-Null, string to be added to beginning of in\-List entry name \char`\"{}xxx\char`\"{} in the following \item[{\em in\-List}]Info\-List to extract object information from \begin{itemize}
+\item \char`\"{}xxx\-Class\-Type\char`\"{} string Sky\-Model type, \char`\"{}Ion\char`\"{} for this class \item \char`\"{}xxx\-NITable\char`\"{} string prefix for NI table \item \char`\"{}xxxdo3Dmul\char`\"{} boolean if true need 3D rotation multiply by matrix \item \char`\"{}xxxncoef\char`\"{} olong Number of coefficients \end{itemize}
+\item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}!ObitSkyModelVMIonGetClass@{ObitSkyModelVMIonGetClass}}
+\index{ObitSkyModelVMIonGetClass@{ObitSkyModelVMIonGetClass}!ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Sky\-Model\-VMIon\-Get\-Class (void)}\label{ObitSkyModelVMIon_8h_a10}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}!ObitSkyModelVMIonGetInfo@{ObitSkyModelVMIonGetInfo}}
+\index{ObitSkyModelVMIonGetInfo@{ObitSkyModelVMIonGetInfo}!ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMIon\-Get\-Info ({\bf Obit\-Sky\-Model} $\ast$ {\em inn}, gchar $\ast$ {\em prefix}, {\bf Obit\-Info\-List} $\ast$ {\em out\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMIon_8h_a14}
+
+
+Public: Extract information about underlying structures to {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object of interest. \item[{\em prefix}]If Non\-Null, string to be added to beginning of out\-List entry name \char`\"{}xxx\char`\"{} in the following \item[{\em out\-List}]Info\-List to write entries into \begin{itemize}
+\item \char`\"{}xxx\-Class\-Type\char`\"{} string Sky\-Model type, \char`\"{}Ion\char`\"{} for this class \item \char`\"{}xxx\-NITable\char`\"{} string prefix for NI table \item \char`\"{}xxxdo3Dmul\char`\"{} boolean if true need 3D rotation multiply by matrix \item \char`\"{}xxxncoef\char`\"{} olong Number of coefficients \end{itemize}
+\item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}!ObitSkyModelVMIonInitMod@{ObitSkyModelVMIonInitMod}}
+\index{ObitSkyModelVMIonInitMod@{ObitSkyModelVMIonInitMod}!ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMIon\-Init\-Mod ({\bf Obit\-Sky\-Model} $\ast$ {\em inn}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMIon_8h_a7}
+
+
+Public: initialize {\bf Obit\-Sky\-Model\-VMIon}{\rm (p.\,\pageref{structObitSkyModelVMIon})} structures. 
+
+\begin{itemize}
+\item field\-Index index in field based tables for a given field (0-rel) \item u\-Rot\-Tab Table of rotation matrices for components 6 needed per row (field) Only fields with actual components are included \item Zern\-X Table of Zernike X gradient terms per field \item Zern\-Y Table of Zernike Y gradient terms per field \item do3D if true need 3D rotation \item ccrot, ssrot = cosine, sine of rotation difference between uv, image \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Sky\-Model to initialize \item[{\em uvdata}]uv data being modeled. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\end{itemize}
+\index{ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}!ObitSkyModelVMIonShutDownMod@{ObitSkyModelVMIonShutDownMod}}
+\index{ObitSkyModelVMIonShutDownMod@{ObitSkyModelVMIonShutDownMod}!ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMIon\-Shut\-Down\-Mod ({\bf Obit\-Sky\-Model} $\ast$ {\em inn}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMIon_8h_a8}
+
+
+Public: shutdown {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} processes. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Sky\-Model to shutdown \item[{\em uvdata}]uv data being modeled. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}!ObitSkyModelVMIonUpdateModel@{ObitSkyModelVMIonUpdateModel}}
+\index{ObitSkyModelVMIonUpdateModel@{ObitSkyModelVMIonUpdateModel}!ObitSkyModelVMIon.h@{Obit\-Sky\-Model\-VMIon.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMIon\-Update\-Model ({\bf Obit\-Sky\-Model\-VM} $\ast$ {\em inn}, {\bf ofloat} {\em time}, {\bf olong} {\em suba}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf olong} {\em ithread}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMIon_8h_a13}
+
+
+Public: Routine to update model. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Sky\-Model\-VM \item[{\em time}]current time (d) \item[{\em suba}]0-rel subarray number (not used here) \item[{\em uvdata}]uv data being modeled. \item[{\em ithread}]which thread (0-rel), $<$0-$>$ no threads \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}

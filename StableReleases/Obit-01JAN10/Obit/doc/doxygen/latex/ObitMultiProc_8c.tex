@@ -1,0 +1,226 @@
+\section{Obit\-Multi\-Proc.c File Reference}
+\label{ObitMultiProc_8c}\index{ObitMultiProc.c@{ObitMultiProc.c}}
+{\bf Obit\-Multi\-Proc}{\rm (p.\,\pageref{structObitMultiProc})} class function definitions. 
+
+{\tt \#include $<$unistd.h$>$}\par
+{\tt \#include \char`\"{}Obit\-Multi\-Proc.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-XML.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-RPC.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Return.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-Multi\-Proc\-APFunc\-Arg}
+\begin{CompactList}\small\item\em Multi\-Proc Thread routine argument for starting asynchronous processes. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Multi\-Proc\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-Multi\-Proc\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-Multi\-Proc} $\ast$ {\bf new\-Obit\-Multi\-Proc} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Multi\-Proc\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Multi\-Proc} $\ast$ {\bf Obit\-Multi\-Proc\-Copy} ({\bf Obit\-Multi\-Proc} $\ast$in, {\bf Obit\-Multi\-Proc} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Multi\-Proc\-Clone} ({\bf Obit\-Multi\-Proc} $\ast$in, {\bf Obit\-Multi\-Proc} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+{\bf Obit\-Multi\-Proc} $\ast$ {\bf Obit\-Multi\-Proc\-Create} (gchar $\ast$name, {\bf olong} njobs, gchar $\ast$MPfunc, {\bf Obit\-Multi\-Proc\-Func} local\-Func, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-Multi\-Proc}{\rm (p.\,\pageref{structObitMultiProc})} structures. \item\end{CompactList}\item 
+void {\bf Obit\-Multi\-Proc\-Start} ({\bf Obit\-Info\-List} $\ast$my\-Input, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Start auxillary Func\-Container processes based on values in Inputs list. \item\end{CompactList}\item 
+void {\bf Obit\-Multi\-Proc\-Shutdown} ({\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Shutdown auxillary Func\-Container processes. \item\end{CompactList}\item 
+void {\bf Obit\-Multi\-Proc\-Set\-Func\-Arg} ({\bf Obit\-Multi\-Proc} $\ast$in, {\bf olong} job\-No, {\bf Obit\-Info\-List} $\ast$arg)
+\begin{CompactList}\small\item\em Copies argument values for a given job of threading. \item\end{CompactList}\item 
+void {\bf Obit\-Multi\-Proc\-Set\-Exec\-Flag} ({\bf Obit\-Multi\-Proc} $\ast$in, {\bf olong} job\-No, gboolean flag)
+\begin{CompactList}\small\item\em Set execution flag for a given job. \item\end{CompactList}\item 
+void {\bf Obit\-Multi\-Proc\-Execute} ({\bf Obit\-Multi\-Proc} $\ast$in, {\bf ofloat} timeout, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Execute selected jobs If the URLs are specified in in-$>$args[$\ast$]-$>$URL, they are used, otherwise the first my\-Class\-Info.n\-Processor are assigned the list of URL in the class global structure. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf Obit\-Multi\-Proc\-Get\-Func\-Ret} ({\bf Obit\-Multi\-Proc} $\ast$in, {\bf olong} job\-No)
+\begin{CompactList}\small\item\em Return reference to job return value {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+void {\bf Obit\-Multi\-Proc\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Multi\-Proc}{\rm (p.\,\pageref{structObitMultiProc})} class function definitions. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} base class.
+
+\subsection{Function Documentation}
+\index{ObitMultiProc.c@{Obit\-Multi\-Proc.c}!newObitMultiProc@{newObitMultiProc}}
+\index{newObitMultiProc@{newObitMultiProc}!ObitMultiProc.c@{Obit\-Multi\-Proc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Multi\-Proc}$\ast$ new\-Obit\-Multi\-Proc (gchar $\ast$ {\em name})}\label{ObitMultiProc_8c_a11}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitMultiProc.c@{Obit\-Multi\-Proc.c}!ObitMultiProcClassInit@{ObitMultiProcClassInit}}
+\index{ObitMultiProcClassInit@{ObitMultiProcClassInit}!ObitMultiProc.c@{Obit\-Multi\-Proc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Multi\-Proc\-Class\-Init (void)}\label{ObitMultiProc_8c_a22}
+
+
+Public: Class initializer. 
+
+\index{ObitMultiProc.c@{Obit\-Multi\-Proc.c}!ObitMultiProcClear@{ObitMultiProcClear}}
+\index{ObitMultiProcClear@{ObitMultiProcClear}!ObitMultiProc.c@{Obit\-Multi\-Proc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Multi\-Proc\-Clear (gpointer {\em inn})}\label{ObitMultiProc_8c_a4}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-Multi\-Proc$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitMultiProc.c@{Obit\-Multi\-Proc.c}!ObitMultiProcClone@{ObitMultiProcClone}}
+\index{ObitMultiProcClone@{ObitMultiProcClone}!ObitMultiProc.c@{Obit\-Multi\-Proc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Multi\-Proc\-Clone ({\bf Obit\-Multi\-Proc} $\ast$ {\em in}, {\bf Obit\-Multi\-Proc} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitMultiProc_8c_a14}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitMultiProc.c@{Obit\-Multi\-Proc.c}!ObitMultiProcCopy@{ObitMultiProcCopy}}
+\index{ObitMultiProcCopy@{ObitMultiProcCopy}!ObitMultiProc.c@{Obit\-Multi\-Proc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Multi\-Proc}$\ast$ Obit\-Multi\-Proc\-Copy ({\bf Obit\-Multi\-Proc} $\ast$ {\em in}, {\bf Obit\-Multi\-Proc} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitMultiProc_8c_a13}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitMultiProc.c@{Obit\-Multi\-Proc.c}!ObitMultiProcCreate@{ObitMultiProcCreate}}
+\index{ObitMultiProcCreate@{ObitMultiProcCreate}!ObitMultiProc.c@{Obit\-Multi\-Proc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Multi\-Proc}$\ast$ Obit\-Multi\-Proc\-Create (gchar $\ast$ {\em name}, {\bf olong} {\em njobs}, gchar $\ast$ {\em MPfunc}, {\bf Obit\-Multi\-Proc\-Func} {\em local\-Func}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitMultiProc_8c_a15}
+
+
+Public: Create/initialize {\bf Obit\-Multi\-Proc}{\rm (p.\,\pageref{structObitMultiProc})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em njobs}]Number of \char`\"{}jobs\char`\"{} to be processed \item[{\em MPfunc}]Name of remote Func\-Container function \item[{\em local\-Func}]Local pointer to job function which should be the same as that executed in Func\-Container. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitMultiProc.c@{Obit\-Multi\-Proc.c}!ObitMultiProcExecute@{ObitMultiProcExecute}}
+\index{ObitMultiProcExecute@{ObitMultiProcExecute}!ObitMultiProc.c@{Obit\-Multi\-Proc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Multi\-Proc\-Execute ({\bf Obit\-Multi\-Proc} $\ast$ {\em in}, {\bf ofloat} {\em timeout}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitMultiProc_8c_a20}
+
+
+Execute selected jobs If the URLs are specified in in-$>$args[$\ast$]-$>$URL, they are used, otherwise the first my\-Class\-Info.n\-Processor are assigned the list of URL in the class global structure. 
+
+Can run synchronously or asynchronously if enabled. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Multi\-Proc object to execute \item[{\em timeout}]Timeout (min) per function call, $<$= 0 -$>$ forever \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error/message structure to be used for process messages and error handling \end{description}
+\end{Desc}
+\index{ObitMultiProc.c@{Obit\-Multi\-Proc.c}!ObitMultiProcGetClass@{ObitMultiProcGetClass}}
+\index{ObitMultiProcGetClass@{ObitMultiProcGetClass}!ObitMultiProc.c@{Obit\-Multi\-Proc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Multi\-Proc\-Get\-Class (void)}\label{ObitMultiProc_8c_a12}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitMultiProc.c@{Obit\-Multi\-Proc.c}!ObitMultiProcGetFuncRet@{ObitMultiProcGetFuncRet}}
+\index{ObitMultiProcGetFuncRet@{ObitMultiProcGetFuncRet}!ObitMultiProc.c@{Obit\-Multi\-Proc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ Obit\-Multi\-Proc\-Get\-Func\-Ret ({\bf Obit\-Multi\-Proc} $\ast$ {\em in}, {\bf olong} {\em job\-No})}\label{ObitMultiProc_8c_a21}
+
+
+Return reference to job return value {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Multi\-Proc object \item[{\em job\-No}]0-rel job number \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to return value {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}, NULL on error \end{Desc}
+\index{ObitMultiProc.c@{Obit\-Multi\-Proc.c}!ObitMultiProcInit@{ObitMultiProcInit}}
+\index{ObitMultiProcInit@{ObitMultiProcInit}!ObitMultiProc.c@{Obit\-Multi\-Proc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Multi\-Proc\-Init (gpointer {\em inn})}\label{ObitMultiProc_8c_a3}
+
+
+Private: Initialize newly instantiated object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitMultiProc.c@{Obit\-Multi\-Proc.c}!ObitMultiProcSetExecFlag@{ObitMultiProcSetExecFlag}}
+\index{ObitMultiProcSetExecFlag@{ObitMultiProcSetExecFlag}!ObitMultiProc.c@{Obit\-Multi\-Proc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Multi\-Proc\-Set\-Exec\-Flag ({\bf Obit\-Multi\-Proc} $\ast$ {\em in}, {\bf olong} {\em job\-No}, gboolean {\em flag})}\label{ObitMultiProc_8c_a19}
+
+
+Set execution flag for a given job. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Multi\-Proc object \item[{\em job\-No}]0-rel job number \item[{\em flag}]If TRUE (default) this this job will be executed by Obit\-Multi\-Proc\-Execute, otherwise, not. \end{description}
+\end{Desc}
+\index{ObitMultiProc.c@{Obit\-Multi\-Proc.c}!ObitMultiProcSetFuncArg@{ObitMultiProcSetFuncArg}}
+\index{ObitMultiProcSetFuncArg@{ObitMultiProcSetFuncArg}!ObitMultiProc.c@{Obit\-Multi\-Proc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Multi\-Proc\-Set\-Func\-Arg ({\bf Obit\-Multi\-Proc} $\ast$ {\em in}, {\bf olong} {\em job\-No}, {\bf Obit\-Info\-List} $\ast$ {\em arg})}\label{ObitMultiProc_8c_a18}
+
+
+Copies argument values for a given job of threading. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Multi\-Proc object \item[{\em job\-No}]0-rel job number \item[{\em arg}]Argument list to copy \end{description}
+\end{Desc}
+\index{ObitMultiProc.c@{Obit\-Multi\-Proc.c}!ObitMultiProcShutdown@{ObitMultiProcShutdown}}
+\index{ObitMultiProcShutdown@{ObitMultiProcShutdown}!ObitMultiProc.c@{Obit\-Multi\-Proc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Multi\-Proc\-Shutdown ({\bf Obit\-Err} $\ast$ {\em err})}\label{ObitMultiProc_8c_a17}
+
+
+Shutdown auxillary Func\-Container processes. 
+
+Sequential processing using the {\bf Obit\-Multi\-Proc}{\rm (p.\,\pageref{structObitMultiProc})} will still be supported. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NULL \end{Desc}
+\index{ObitMultiProc.c@{Obit\-Multi\-Proc.c}!ObitMultiProcStart@{ObitMultiProcStart}}
+\index{ObitMultiProcStart@{ObitMultiProcStart}!ObitMultiProc.c@{Obit\-Multi\-Proc.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Multi\-Proc\-Start ({\bf Obit\-Info\-List} $\ast$ {\em my\-Input}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitMultiProc_8c_a16}
+
+
+Start auxillary Func\-Container processes based on values in Inputs list. 
+
+Starts auxillary executions of Func\-Container and saves the necessary information in class structures where they are available to any {\bf Obit\-Multi\-Proc}{\rm (p.\,\pageref{structObitMultiProc})} instance. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em my\-Input}]Task parameter input list. Significant entries: \begin{itemize}
+\item \char`\"{}RPCURL\char`\"{} If present and has more than one nonblank entry and RPCURL has no non-blank entries then a set processes running Func\-Container will be started the on each URL watching each port in the URL.. \item \char`\"{}RPCports\char`\"{} If present and has more than one positive entry and RPCURL has no non-blank entries then a set processes running Func\-Container will be started on localhost watching each port listed. \item \char`\"{}AIPSuser\char`\"{} AIPS user number \item \char`\"{}n\-AIPS\char`\"{} Number of AIPS data directories \item \char`\"{}AIPSdirs\char`\"{} List of AIPS data directories \item \char`\"{}n\-FITS\char`\"{} Number of FITS data directories \item \char`\"{}FITSdirs\char`\"{} List of FITS data directories \item \char`\"{}n\-Threads\char`\"{} Number of threads functions are allowed to use. \end{itemize}
+\item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}

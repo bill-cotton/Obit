@@ -1,0 +1,415 @@
+\section{Obit\-Err.h File Reference}
+\label{ObitErr_8h}\index{ObitErr.h@{ObitErr.h}}
+{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} Error stack class definition. 
+
+{\tt \#include $<$glib.h$>$}\par
+{\tt \#include $<$time.h$>$}\par
+{\tt \#include \char`\"{}Obit\-Types.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-Err}
+\begin{CompactList}\small\item\em Obit\-Err Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Err\-Elem}
+\begin{CompactList}\small\item\em {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} Stack Element structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf OBITERRBUFSIZE}\ 120
+\begin{CompactList}\small\item\em Size of message buffer in characters. \item\end{CompactList}\item 
+\#define {\bf Obit\_\-log\_\-error}(err, err\-Code, format...)
+\begin{CompactList}\small\item\em Macro to log error message adds err\-Msg/traceback to err for errors \begin{itemize}
+\item err = {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} to receive messages. \end{itemize}
+\item\end{CompactList}\item 
+\#define {\bf Obit\_\-log\_\-error\_\-no\_\-trace}(err, err\-Code, format...)
+\begin{CompactList}\small\item\em Macro to log error message without tracepacb Evaluates expression and if false, adds err\-Msg/traceback to err \begin{itemize}
+\item err = {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} to receive messages. \end{itemize}
+\item\end{CompactList}\item 
+\#define {\bf Obit\_\-return\_\-if\_\-fail}(expr, err, format...)
+\begin{CompactList}\small\item\em Macro to evaluate expression, log in err and return on failure. \item\end{CompactList}\item 
+\#define {\bf Obit\_\-retval\_\-if\_\-fail}(expr, err, out, format...)
+\begin{CompactList}\small\item\em Macro to evaluate expression, log in err and return a value on failure. \item\end{CompactList}\item 
+\#define {\bf Obit\_\-traceback\_\-msg}(err, me, name)
+\begin{CompactList}\small\item\em Macro for traceback when an error in a called routine is encountered. \item\end{CompactList}\item 
+\#define {\bf Obit\_\-traceback\_\-val}(err, me, name, out)
+\begin{CompactList}\small\item\em Macro for traceback logging with a return value Writes traceback info and returns, optionally passing a value. \item\end{CompactList}\item 
+\#define {\bf Obit\_\-cfitsio\_\-error}(err)
+\begin{CompactList}\small\item\em Macro to dump cfitsio error stack to an {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})}. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Enumerations}
+\begin{CompactItemize}
+\item 
+enum {\bf Obit\-Err\-Code} \{ \par
+{\bf OBIT\_\-None} =  0, 
+{\bf OBIT\_\-Info\-Err}, 
+{\bf OBIT\_\-Info\-Warn}, 
+{\bf OBIT\_\-Traceback}, 
+\par
+{\bf OBIT\_\-Mild\-Error}, 
+{\bf OBIT\_\-Error}, 
+{\bf OBIT\_\-Strong\-Error}, 
+{\bf OBIT\_\-Fatal}
+ \}
+\begin{CompactList}\small\item\em enum for error codes. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+{\bf Obit\-Err} $\ast$ {\bf new\-Obit\-Err} (void)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+{\bf Obit\-Err} $\ast$ {\bf Obit\-Err\-Ref} ({\bf Obit\-Err} $\ast$in)
+\begin{CompactList}\small\item\em Public: Reference to object, update reference count. \item\end{CompactList}\item 
+{\bf Obit\-Err} $\ast$ {\bf Obit\-Err\-Unref} ({\bf Obit\-Err} $\ast$in)
+\begin{CompactList}\small\item\em Public: Unreference object, destroy if no more references. \item\end{CompactList}\item 
+void {\bf Obit\-Err\-Clear} ({\bf Obit\-Err} $\ast$in)
+\begin{CompactList}\small\item\em Public: Clear error stack. \item\end{CompactList}\item 
+void {\bf Obit\-Err\-Clear\-Err} ({\bf Obit\-Err} $\ast$in)
+\begin{CompactList}\small\item\em Public: Clear only error messages and status in stack. \item\end{CompactList}\item 
+void {\bf Obit\-Err\-Push} ({\bf Obit\-Err} $\ast$in, {\bf Obit\-Err\-Code} err\-Level, gchar $\ast$err\-Msg)
+\begin{CompactList}\small\item\em Public: Add entry in error stack. \item\end{CompactList}\item 
+void {\bf Obit\-Err\-Pop} ({\bf Obit\-Err} $\ast$in, {\bf Obit\-Err\-Code} $\ast$err\-Level, gchar $\ast$$\ast$err\-Msg, time\_\-t $\ast$err\-Time\-Tag)
+\begin{CompactList}\small\item\em Public: Pop last entry from top of stack. \item\end{CompactList}\item 
+void {\bf Obit\-Err\-Log} ({\bf Obit\-Err} $\ast$in)
+\begin{CompactList}\small\item\em Public: Write all entries in log file. \item\end{CompactList}\item 
+void {\bf Obit\-Err\-Time\-Stamp} ({\bf Obit\-Err} $\ast$in)
+\begin{CompactList}\small\item\em Public: Add timestamp message. \item\end{CompactList}\item 
+void {\bf Obit\-Err\-Time\-Log} ({\bf Obit\-Err} $\ast$in, gchar $\ast$err\-Msg)
+\begin{CompactList}\small\item\em Public: Add message with timestamp. \item\end{CompactList}\item 
+gboolean {\bf Obit\-Err\-Is\-A} ({\bf Obit\-Err} $\ast$in)
+\begin{CompactList}\small\item\em Public: Returns true if input is a Obit\-Err$\ast$. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} Error stack class definition. 
+
+This is an error stack class for obtaining tracebacks for error conditions. When an error is detected, it should be entered onto the {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} and the function returns. Each function with an {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} argument should check at the beginning to see if an error condition already exists (number $>$ 0) and if so return. Any function calling a function which encounters an error should add its message to the stack and return. Numerous macroes assist with use of the {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})}.
+
+A number of macroes are defined to simplify managing the error stack. Implementation uses a glib GQueue.\subsection{Usage}\label{ObitErr_8h_ObitErrUsage}
+Instances can be obtained using the {\bf new\-Obit\-Err}{\rm (p.\,\pageref{ObitErr_8c_a6})} constructor or a pointer duplicated using the {\bf Obit\-Err\-Ref}{\rm (p.\,\pageref{ObitErr_8c_a7})} function. When an instance is no longer needed, use the {\bf Obit\-Err\-Unref}{\rm (p.\,\pageref{ObitErr_8c_a8})} function to release it.
+
+\subsection{Define Documentation}
+\index{ObitErr.h@{Obit\-Err.h}!Obit_cfitsio_error@{Obit\_\-cfitsio\_\-error}}
+\index{Obit_cfitsio_error@{Obit\_\-cfitsio\_\-error}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\_\-cfitsio\_\-error(err)}\label{ObitErr_8h_a7}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}G_STMT_START{                       \
+      while (fits_read_errmsg(err->buffer))                           \
+        ObitErrPush (err, OBIT_Error, err->buffer);                   \
+      fits_clear_errmsg();     }G_STMT_END
+\end{verbatim}\normalsize 
+Macro to dump cfitsio error stack to an {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})}. 
+
+Clears cfitsio error stack when done \begin{itemize}
+\item err = {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} to recieve messages. \end{itemize}
+\index{ObitErr.h@{Obit\-Err.h}!Obit_log_error@{Obit\_\-log\_\-error}}
+\index{Obit_log_error@{Obit\_\-log\_\-error}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\_\-log\_\-error(err, err\-Code, format...)}\label{ObitErr_8h_a1}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}G_STMT_START{ \
+        g_snprintf (err->buffer, OBITERRBUFSIZE, format);          \
+        ObitErrPush (err, errCode, err->buffer);                   \
+        if (errCode>OBIT_Traceback) {                              \
+           g_snprintf (err->buffer, OBITERRBUFSIZE,                \
+                       " This occured at file %s: line %d (%s)",   \
+                        __FILE__, __LINE__, __PRETTY_FUNCTION__);  \
+           ObitErrPush (err, OBIT_Error, err->buffer);             \
+          }                                                        \
+        }G_STMT_END
+\end{verbatim}\normalsize 
+Macro to log error message adds err\-Msg/traceback to err for errors \begin{itemize}
+\item err = {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} to receive messages. \end{itemize}
+
+
+\begin{itemize}
+\item err\-Code = {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} level for message \item format = formatting string and arguments. \end{itemize}
+\index{ObitErr.h@{Obit\-Err.h}!Obit_log_error_no_trace@{Obit\_\-log\_\-error\_\-no\_\-trace}}
+\index{Obit_log_error_no_trace@{Obit\_\-log\_\-error\_\-no\_\-trace}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\_\-log\_\-error\_\-no\_\-trace(err, err\-Code, format...)}\label{ObitErr_8h_a2}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}G_STMT_START{ \
+        g_snprintf (err->buffer, OBITERRBUFSIZE, format);          \
+        ObitErrPush (err, errCode, err->buffer);                   \
+        }G_STMT_END
+\end{verbatim}\normalsize 
+Macro to log error message without tracepacb Evaluates expression and if false, adds err\-Msg/traceback to err \begin{itemize}
+\item err = {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} to receive messages. \end{itemize}
+
+
+\begin{itemize}
+\item err\-Code = {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} level for message \item format = formatting string and arguments. \end{itemize}
+\index{ObitErr.h@{Obit\-Err.h}!Obit_return_if_fail@{Obit\_\-return\_\-if\_\-fail}}
+\index{Obit_return_if_fail@{Obit\_\-return\_\-if\_\-fail}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\_\-return\_\-if\_\-fail(expr, err, format...)}\label{ObitErr_8h_a3}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}G_STMT_START{  \
+     if (expr) { } else  {                                       \
+        g_snprintf (err->buffer, OBITERRBUFSIZE, format);        \
+        ObitErrPush (err, OBIT_Error, err->buffer);              \
+        g_snprintf (err->buffer, OBITERRBUFSIZE,                 \
+                    " Occured at file %s: line %d (%s)",         \
+                     __FILE__, __LINE__, __PRETTY_FUNCTION__);   \
+        ObitErrPush (err, OBIT_Error, err->buffer);              \
+        return;                                                  \
+     } }G_STMT_END
+\end{verbatim}\normalsize 
+Macro to evaluate expression, log in err and return on failure. 
+
+Evaluates expression and if false, adds err\-Msg to err log the location and then return (no return value). $\backslash$ li expr = expression to evaluate \begin{itemize}
+\item err = {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} to receive messages. \item format = formatting string and arguments. \end{itemize}
+\index{ObitErr.h@{Obit\-Err.h}!Obit_retval_if_fail@{Obit\_\-retval\_\-if\_\-fail}}
+\index{Obit_retval_if_fail@{Obit\_\-retval\_\-if\_\-fail}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\_\-retval\_\-if\_\-fail(expr, err, out, format...)}\label{ObitErr_8h_a4}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}G_STMT_START{ \
+     if (expr) { } else  {                                        \
+        g_snprintf (err->buffer, OBITERRBUFSIZE, format);         \
+        ObitErrPush (err, OBIT_Error, err->buffer);               \
+        g_snprintf (err->buffer, OBITERRBUFSIZE,                  \
+                    " Occured at file %s: line %d (%s)",          \
+                     __FILE__, __LINE__, __PRETTY_FUNCTION__);    \
+        ObitErrPush (err, OBIT_Error, err->buffer);               \
+        return out;                                               \
+     } }G_STMT_END
+\end{verbatim}\normalsize 
+Macro to evaluate expression, log in err and return a value on failure. 
+
+Evaluates expression and if false, adds err\-Msg to err log the location and then return, passing out if non\-NULL. \begin{itemize}
+\item expr = expression to evaluate \item err = {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} to receive messages. \item out = return value. \item format = formatting string and arguments. \end{itemize}
+\index{ObitErr.h@{Obit\-Err.h}!Obit_traceback_msg@{Obit\_\-traceback\_\-msg}}
+\index{Obit_traceback_msg@{Obit\_\-traceback\_\-msg}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\_\-traceback\_\-msg(err, me, name)}\label{ObitErr_8h_a5}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}G_STMT_START{           \
+     g_snprintf (err->buffer, OBITERRBUFSIZE,                   \
+                "Traceback: routine %s:  object %s", me, name); \
+     ObitErrPush (err, OBIT_Traceback, err->buffer);            \
+     g_snprintf (err->buffer, OBITERRBUFSIZE,                   \
+                 " Occured at file %s: line %d (%s)",           \
+                  __FILE__, __LINE__, __PRETTY_FUNCTION__);     \
+      ObitErrPush (err, OBIT_Traceback, err->buffer);           \
+      return;                                                   \
+     }G_STMT_END
+\end{verbatim}\normalsize 
+Macro for traceback when an error in a called routine is encountered. 
+
+Writes traceback info and returns (no return value). \begin{itemize}
+\item err = {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} structure to log to. \item me = name of calling routine; \item name = object name. \end{itemize}
+\index{ObitErr.h@{Obit\-Err.h}!Obit_traceback_val@{Obit\_\-traceback\_\-val}}
+\index{Obit_traceback_val@{Obit\_\-traceback\_\-val}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\_\-traceback\_\-val(err, me, name, out)}\label{ObitErr_8h_a6}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}G_STMT_START{       \
+     g_snprintf (err->buffer, OBITERRBUFSIZE,                   \
+                "Traceback: routine %s:  object %s", me, name); \
+     ObitErrPush (err, OBIT_Traceback, err->buffer);            \
+     g_snprintf (err->buffer, OBITERRBUFSIZE,                   \
+                 " at file %s: line %d (%s)",                   \
+                  __FILE__, __LINE__, __PRETTY_FUNCTION__);     \
+      ObitErrPush (err, OBIT_Traceback, err->buffer);           \
+      return out;                                               \
+     }G_STMT_END
+\end{verbatim}\normalsize 
+Macro for traceback logging with a return value Writes traceback info and returns, optionally passing a value. 
+
+\begin{itemize}
+\item err = {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} structure to log to. \item me = name of calling routine; \item name = object name. \item out = return code \end{itemize}
+\index{ObitErr.h@{Obit\-Err.h}!OBITERRBUFSIZE@{OBITERRBUFSIZE}}
+\index{OBITERRBUFSIZE@{OBITERRBUFSIZE}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define OBITERRBUFSIZE\ 120}\label{ObitErr_8h_a0}
+
+
+Size of message buffer in characters. 
+
+
+
+\subsection{Enumeration Type Documentation}
+\index{ObitErr.h@{Obit\-Err.h}!ObitErrCode@{ObitErrCode}}
+\index{ObitErrCode@{ObitErrCode}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}enum {\bf Obit\-Err\-Code}}\label{ObitErr_8h_a27}
+
+
+enum for error codes. 
+
+Should be coordinated with Obit\-Error\-Level\-String in {\bf Obit\-Err.c}{\rm (p.\,\pageref{ObitErr_8c})}. \begin{Desc}
+\item[Enumeration values: ]\par
+\begin{description}
+\index{OBIT_None@{OBIT\_\-None}!ObitErr.h@{ObitErr.h}}\index{ObitErr.h@{ObitErr.h}!OBIT_None@{OBIT\_\-None}}\item[{\em 
+OBIT\_\-None\label{ObitErr_8h_a27a8}
+}]no message \index{OBIT_InfoErr@{OBIT\_\-InfoErr}!ObitErr.h@{ObitErr.h}}\index{ObitErr.h@{ObitErr.h}!OBIT_InfoErr@{OBIT\_\-InfoErr}}\item[{\em 
+OBIT\_\-Info\-Err\label{ObitErr_8h_a27a9}
+}]information \index{OBIT_InfoWarn@{OBIT\_\-InfoWarn}!ObitErr.h@{ObitErr.h}}\index{ObitErr.h@{ObitErr.h}!OBIT_InfoWarn@{OBIT\_\-InfoWarn}}\item[{\em 
+OBIT\_\-Info\-Warn\label{ObitErr_8h_a27a10}
+}]warning \index{OBIT_Traceback@{OBIT\_\-Traceback}!ObitErr.h@{ObitErr.h}}\index{ObitErr.h@{ObitErr.h}!OBIT_Traceback@{OBIT\_\-Traceback}}\item[{\em 
+OBIT\_\-Traceback\label{ObitErr_8h_a27a11}
+}]no new error - use for traceback \index{OBIT_MildError@{OBIT\_\-MildError}!ObitErr.h@{ObitErr.h}}\index{ObitErr.h@{ObitErr.h}!OBIT_MildError@{OBIT\_\-MildError}}\item[{\em 
+OBIT\_\-Mild\-Error\label{ObitErr_8h_a27a12}
+}]mild error \index{OBIT_Error@{OBIT\_\-Error}!ObitErr.h@{ObitErr.h}}\index{ObitErr.h@{ObitErr.h}!OBIT_Error@{OBIT\_\-Error}}\item[{\em 
+OBIT\_\-Error\label{ObitErr_8h_a27a13}
+}]error \index{OBIT_StrongError@{OBIT\_\-StrongError}!ObitErr.h@{ObitErr.h}}\index{ObitErr.h@{ObitErr.h}!OBIT_StrongError@{OBIT\_\-StrongError}}\item[{\em 
+OBIT\_\-Strong\-Error\label{ObitErr_8h_a27a14}
+}]serious error \index{OBIT_Fatal@{OBIT\_\-Fatal}!ObitErr.h@{ObitErr.h}}\index{ObitErr.h@{ObitErr.h}!OBIT_Fatal@{OBIT\_\-Fatal}}\item[{\em 
+OBIT\_\-Fatal\label{ObitErr_8h_a27a15}
+}]Fatal condition. \end{description}
+\end{Desc}
+
+
+
+\subsection{Function Documentation}
+\index{ObitErr.h@{Obit\-Err.h}!newObitErr@{newObitErr}}
+\index{newObitErr@{newObitErr}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Err}$\ast$ new\-Obit\-Err (void)}\label{ObitErr_8h_a16}
+
+
+Public: Constructor. 
+
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitErr.h@{Obit\-Err.h}!ObitErrClear@{ObitErrClear}}
+\index{ObitErrClear@{ObitErrClear}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Err\-Clear ({\bf Obit\-Err} $\ast$ {\em in})}\label{ObitErr_8h_a19}
+
+
+Public: Clear error stack. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to clear. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NULL pointer. \end{Desc}
+\index{ObitErr.h@{Obit\-Err.h}!ObitErrClearErr@{ObitErrClearErr}}
+\index{ObitErrClearErr@{ObitErrClearErr}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Err\-Clear\-Err ({\bf Obit\-Err} $\ast$ {\em in})}\label{ObitErr_8h_a20}
+
+
+Public: Clear only error messages and status in stack. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to clear. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NULL pointer. \end{Desc}
+\index{ObitErr.h@{Obit\-Err.h}!ObitErrIsA@{ObitErrIsA}}
+\index{ObitErrIsA@{ObitErrIsA}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Err\-Is\-A ({\bf Obit\-Err} $\ast$ {\em in})}\label{ObitErr_8h_a26}
+
+
+Public: Returns true if input is a Obit\-Err$\ast$. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to test. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if member else FALSE. \end{Desc}
+\index{ObitErr.h@{Obit\-Err.h}!ObitErrLog@{ObitErrLog}}
+\index{ObitErrLog@{ObitErrLog}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Err\-Log ({\bf Obit\-Err} $\ast$ {\em in})}\label{ObitErr_8h_a23}
+
+
+Public: Write all entries in log file. 
+
+Stack will be cleared when done \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Input {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})}. NULL if there are no more messages. \end{description}
+\end{Desc}
+\index{ObitErr.h@{Obit\-Err.h}!ObitErrPop@{ObitErrPop}}
+\index{ObitErrPop@{ObitErrPop}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Err\-Pop ({\bf Obit\-Err} $\ast$ {\em in}, {\bf Obit\-Err\-Code} $\ast$ {\em err\-Level}, gchar $\ast$$\ast$ {\em err\-Msg}, time\_\-t $\ast$ {\em err\-Time\-Tag})}\label{ObitErr_8h_a22}
+
+
+Public: Pop last entry from top of stack. 
+
+This item is then removed. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Input {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})}. \item[{\em err\-Level}](output) Error level code. \item[{\em err\-Msg}](output) Error message (deallocate with g\_\-free when done). NULL if there are no more messages. \item[{\em err\-Time\-Tag}](output) Error message (deallocate with g\_\-free when done). \end{description}
+\end{Desc}
+\index{ObitErr.h@{Obit\-Err.h}!ObitErrPush@{ObitErrPush}}
+\index{ObitErrPush@{ObitErrPush}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Err\-Push ({\bf Obit\-Err} $\ast$ {\em in}, {\bf Obit\-Err\-Code} {\em err\-Level}, gchar $\ast$ {\em err\-Msg})}\label{ObitErr_8h_a21}
+
+
+Public: Add entry in error stack. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to add message to. \item[{\em err\-Level}]Error level code. \item[{\em err\-Msg}]Error message. \end{description}
+\end{Desc}
+\index{ObitErr.h@{Obit\-Err.h}!ObitErrRef@{ObitErrRef}}
+\index{ObitErrRef@{ObitErrRef}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Err}$\ast$ Obit\-Err\-Ref ({\bf Obit\-Err} $\ast$ {\em in})}\label{ObitErr_8h_a17}
+
+
+Public: Reference to object, update reference count. 
+
+This function should always be used to copy pointers as this will ensure a proper reference count. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to link. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the pointer to in. \end{Desc}
+\index{ObitErr.h@{Obit\-Err.h}!ObitErrTimeLog@{ObitErrTimeLog}}
+\index{ObitErrTimeLog@{ObitErrTimeLog}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Err\-Time\-Log ({\bf Obit\-Err} $\ast$ {\em in}, gchar $\ast$ {\em err\-Msg})}\label{ObitErr_8h_a25}
+
+
+Public: Add message with timestamp. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Input {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})}. \item[{\em err\-Msg}]Message string \end{description}
+\end{Desc}
+\index{ObitErr.h@{Obit\-Err.h}!ObitErrTimeStamp@{ObitErrTimeStamp}}
+\index{ObitErrTimeStamp@{ObitErrTimeStamp}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Err\-Time\-Stamp ({\bf Obit\-Err} $\ast$ {\em in})}\label{ObitErr_8h_a24}
+
+
+Public: Add timestamp message. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Input {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})}. \end{description}
+\end{Desc}
+\index{ObitErr.h@{Obit\-Err.h}!ObitErrUnref@{ObitErrUnref}}
+\index{ObitErrUnref@{ObitErrUnref}!ObitErr.h@{Obit\-Err.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Err}$\ast$ Obit\-Err\-Unref ({\bf Obit\-Err} $\ast$ {\em in})}\label{ObitErr_8h_a18}
+
+
+Public: Unreference object, destroy if no more references. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to unlink. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NULL pointer. \end{Desc}

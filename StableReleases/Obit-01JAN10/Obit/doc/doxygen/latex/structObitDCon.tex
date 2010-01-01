@@ -1,0 +1,108 @@
+\section{Obit\-DCon Struct Reference}
+\label{structObitDCon}\index{ObitDCon@{ObitDCon}}
+Obit\-DCon virtual deconvolution base class.  
+
+
+{\tt \#include $<$Obit\-DCon.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Mosaic} $\ast$ {\bf mosaic}
+\begin{CompactList}\small\item\em Image mosaic being deconvolved. \item\end{CompactList}\item 
+{\bf olong} {\bf plane} [IM\_\-MAXDIM-2]
+\begin{CompactList}\small\item\em Plane being processed, 1-rel indices of axes 3-? \item\end{CompactList}\item 
+{\bf olong} {\bf prt\-Lv}
+\begin{CompactList}\small\item\em message level for deconvolution progress messages, 0=none, 1=summary, 2=normal, higher numbers for diagnostics \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-DCon virtual deconvolution base class. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} class.
+
+Actual deconvolution classes are derived from this class 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitDCon@{Obit\-DCon}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitDCon@{Obit\-DCon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-DCon::Class\-Info}}\label{structObitDCon_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitDCon@{Obit\-DCon}!info@{info}}
+\index{info@{info}!ObitDCon@{Obit\-DCon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-DCon::info}}\label{structObitDCon_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitDCon@{Obit\-DCon}!mosaic@{mosaic}}
+\index{mosaic@{mosaic}!ObitDCon@{Obit\-DCon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Mosaic}$\ast$ {\bf Obit\-DCon::mosaic}}\label{structObitDCon_o6}
+
+
+Image mosaic being deconvolved. 
+
+\index{ObitDCon@{Obit\-DCon}!name@{name}}
+\index{name@{name}!ObitDCon@{Obit\-DCon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-DCon::name}}\label{structObitDCon_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitDCon@{Obit\-DCon}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitDCon@{Obit\-DCon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-DCon::Obit\-Id}}\label{structObitDCon_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitDCon@{Obit\-DCon}!plane@{plane}}
+\index{plane@{plane}!ObitDCon@{Obit\-DCon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-DCon::plane}[IM\_\-MAXDIM-2]}\label{structObitDCon_o7}
+
+
+Plane being processed, 1-rel indices of axes 3-? 
+
+\index{ObitDCon@{Obit\-DCon}!prtLv@{prtLv}}
+\index{prtLv@{prtLv}!ObitDCon@{Obit\-DCon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-DCon::prt\-Lv}}\label{structObitDCon_o8}
+
+
+message level for deconvolution progress messages, 0=none, 1=summary, 2=normal, higher numbers for diagnostics 
+
+\index{ObitDCon@{Obit\-DCon}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitDCon@{Obit\-DCon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-DCon::Reference\-Count}}\label{structObitDCon_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitDCon@{Obit\-DCon}!thread@{thread}}
+\index{thread@{thread}!ObitDCon@{Obit\-DCon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-DCon::thread}}\label{structObitDCon_o4}
+
+
+Threading info member object. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-DCon.h}\end{CompactItemize}

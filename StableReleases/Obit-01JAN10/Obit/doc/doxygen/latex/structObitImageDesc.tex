@@ -1,0 +1,457 @@
+\section{Obit\-Image\-Desc Struct Reference}
+\label{structObitImageDesc}\index{ObitImageDesc@{ObitImageDesc}}
+Obit\-Image\-Desc Class structure.  
+
+
+{\tt \#include $<$Obit\-Image\-Desc.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf olong} {\bf bitpix}
+\begin{CompactList}\small\item\em Number of bits per pixel on disk. \item\end{CompactList}\item 
+{\bf olong} {\bf naxis}
+\begin{CompactList}\small\item\em Number of axes. \item\end{CompactList}\item 
+{\bf olong} {\bf inaxes} [IM\_\-MAXDIM]
+\begin{CompactList}\small\item\em Dimensions of axes. \item\end{CompactList}\item 
+gchar {\bf ctype} [IM\_\-MAXDIM][IMLEN\_\-KEYWORD]
+\begin{CompactList}\small\item\em WCS labels for each dimension of array. \item\end{CompactList}\item 
+{\bf ofloat} {\bf cdelt} [IM\_\-MAXDIM]
+\begin{CompactList}\small\item\em Axis coordinate increments. \item\end{CompactList}\item 
+{\bf ofloat} {\bf crpix} [IM\_\-MAXDIM]
+\begin{CompactList}\small\item\em Axis reference pixels (1-rel). \item\end{CompactList}\item 
+{\bf ofloat} {\bf crota} [IM\_\-MAXDIM]
+\begin{CompactList}\small\item\em Axis rotation angles (deg). \item\end{CompactList}\item 
+{\bf ofloat} {\bf alt\-Crpix}
+\begin{CompactList}\small\item\em Alternate reference Pixel (frequency or velocity). \item\end{CompactList}\item 
+{\bf ofloat} {\bf xshift}
+\begin{CompactList}\small\item\em Offset in X (rotated RA) of phase center (deg). \item\end{CompactList}\item 
+{\bf ofloat} {\bf yshift}
+\begin{CompactList}\small\item\em Offset in Y (rotated Dec) of phase center (deg). \item\end{CompactList}\item 
+{\bf ofloat} {\bf beam\-Maj}
+\begin{CompactList}\small\item\em Convolving beam major axis in degrees. \item\end{CompactList}\item 
+{\bf ofloat} {\bf beam\-Min}
+\begin{CompactList}\small\item\em Convolving beam minor axis in degrees. \item\end{CompactList}\item 
+{\bf ofloat} {\bf beam\-PA}
+\begin{CompactList}\small\item\em Convolving beam position angle in degrees. \item\end{CompactList}\item 
+gchar {\bf object} [IMLEN\_\-VALUE]
+\begin{CompactList}\small\item\em Name of object. \item\end{CompactList}\item 
+gchar {\bf teles} [IMLEN\_\-VALUE]
+\begin{CompactList}\small\item\em Name of telescope making observation. \item\end{CompactList}\item 
+gchar {\bf instrument} [IMLEN\_\-VALUE]
+\begin{CompactList}\small\item\em Name of instrument making observation. \item\end{CompactList}\item 
+gchar {\bf observer} [IMLEN\_\-VALUE]
+\begin{CompactList}\small\item\em Observer. \item\end{CompactList}\item 
+gchar {\bf obsdat} [IMLEN\_\-VALUE]
+\begin{CompactList}\small\item\em Observing date as yyyy-mm-dd. \item\end{CompactList}\item 
+gchar {\bf date} [IMLEN\_\-VALUE]
+\begin{CompactList}\small\item\em Image creation date as yyyy-mm-dd. \item\end{CompactList}\item 
+gchar {\bf origin} [IMLEN\_\-VALUE]
+\begin{CompactList}\small\item\em Origin (software) of image. \item\end{CompactList}\item 
+gchar {\bf bunit} [IMLEN\_\-VALUE]
+\begin{CompactList}\small\item\em Units of image. \item\end{CompactList}\item 
+{\bf ofloat} {\bf epoch}
+\begin{CompactList}\small\item\em Epoch (years) of celestial coordinates, This is sometimes confused with equinox. \item\end{CompactList}\item 
+{\bf ofloat} {\bf equinox}
+\begin{CompactList}\small\item\em Mean Equinox of celestial coordinates (e.g. \item\end{CompactList}\item 
+{\bf odouble} {\bf obsra}
+\begin{CompactList}\small\item\em Observed RA (deg). \item\end{CompactList}\item 
+{\bf odouble} {\bf obsdec}
+\begin{CompactList}\small\item\em Observed Dec (deg). \item\end{CompactList}\item 
+{\bf odouble} {\bf crval} [IM\_\-MAXDIM]
+\begin{CompactList}\small\item\em Axis coordinate values at reference pixel. \item\end{CompactList}\item 
+{\bf odouble} {\bf alt\-Ref}
+\begin{CompactList}\small\item\em Alternate reference value (frequency or velocity). \item\end{CompactList}\item 
+{\bf odouble} {\bf rest\-Freq}
+\begin{CompactList}\small\item\em Rest frequency of line (Hz). \item\end{CompactList}\item 
+{\bf ofloat} {\bf maxval}
+\begin{CompactList}\small\item\em maximum value in image \item\end{CompactList}\item 
+{\bf ofloat} {\bf minval}
+\begin{CompactList}\small\item\em minimum value in image \item\end{CompactList}\item 
+gboolean {\bf are\-Blanks}
+\begin{CompactList}\small\item\em Are there blanked pixels in the image? \item\end{CompactList}\item 
+{\bf olong} {\bf niter}
+\begin{CompactList}\small\item\em number of iterations of deconvolution \item\end{CompactList}\item 
+{\bf olong} {\bf Vel\-Reference}
+\begin{CompactList}\small\item\em Velocity reference frame: 1-3 (LSR, Helio, Observer). \item\end{CompactList}\item 
+{\bf olong} {\bf Vel\-Def}
+\begin{CompactList}\small\item\em Velocity definition 0=$>$optical, 1=radio. \item\end{CompactList}\item 
+Obit\-Coord\-Type {\bf coord\-Type}
+\begin{CompactList}\small\item\em Coordinate type. \item\end{CompactList}\item 
+{\bf olong} {\bf row}
+\begin{CompactList}\small\item\em current row (1-rel) read/write in buffer \item\end{CompactList}\item 
+{\bf olong} {\bf plane}
+\begin{CompactList}\small\item\em current plane (1-rel) read/write in buffer \item\end{CompactList}\item 
+Obit\-IOSize {\bf IOsize}
+\begin{CompactList}\small\item\em Access size code. \item\end{CompactList}\item 
+{\bf olong} {\bf jlocr}
+\begin{CompactList}\small\item\em 0-rel axis order: RA (or longitude) , -1 means not present. \item\end{CompactList}\item 
+{\bf olong} {\bf jlocd}
+\begin{CompactList}\small\item\em 0-rel axis order: declination (or latitude), -1 means not present. \item\end{CompactList}\item 
+{\bf olong} {\bf jlocs}
+\begin{CompactList}\small\item\em 0-rel axis order: Stokes' parameters, -1 means not present. \item\end{CompactList}\item 
+{\bf olong} {\bf jlocf}
+\begin{CompactList}\small\item\em 0-rel axis order: Frequency. \item\end{CompactList}\item 
+{\bf olong} {\bf jlocif}
+\begin{CompactList}\small\item\em 0-rel axis order: IF \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Info\-List for other keywords. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Image\-Desc Class structure. 
+
+This class contains descriptions of astronomical images. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitImageDesc@{Obit\-Image\-Desc}!altCrpix@{altCrpix}}
+\index{altCrpix@{altCrpix}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Desc::alt\-Crpix}}\label{structObitImageDesc_o11}
+
+
+Alternate reference Pixel (frequency or velocity). 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!altRef@{altRef}}
+\index{altRef@{altRef}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Image\-Desc::alt\-Ref}}\label{structObitImageDesc_o30}
+
+
+Alternate reference value (frequency or velocity). 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!areBlanks@{areBlanks}}
+\index{areBlanks@{areBlanks}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Image\-Desc::are\-Blanks}}\label{structObitImageDesc_o34}
+
+
+Are there blanked pixels in the image? 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!beamMaj@{beamMaj}}
+\index{beamMaj@{beamMaj}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Desc::beam\-Maj}}\label{structObitImageDesc_o14}
+
+
+Convolving beam major axis in degrees. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!beamMin@{beamMin}}
+\index{beamMin@{beamMin}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Desc::beam\-Min}}\label{structObitImageDesc_o15}
+
+
+Convolving beam minor axis in degrees. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!beamPA@{beamPA}}
+\index{beamPA@{beamPA}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Desc::beam\-PA}}\label{structObitImageDesc_o16}
+
+
+Convolving beam position angle in degrees. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!bitpix@{bitpix}}
+\index{bitpix@{bitpix}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Desc::bitpix}}\label{structObitImageDesc_o4}
+
+
+Number of bits per pixel on disk. 
+
+negative implies IEEE floating. \index{ObitImageDesc@{Obit\-Image\-Desc}!bunit@{bunit}}
+\index{bunit@{bunit}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Image\-Desc::bunit}[IMLEN\_\-VALUE]}\label{structObitImageDesc_o24}
+
+
+Units of image. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!cdelt@{cdelt}}
+\index{cdelt@{cdelt}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Desc::cdelt}[IM\_\-MAXDIM]}\label{structObitImageDesc_o8}
+
+
+Axis coordinate increments. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Image\-Desc::Class\-Info}}\label{structObitImageDesc_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!coordType@{coordType}}
+\index{coordType@{coordType}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-Coord\-Type {\bf Obit\-Image\-Desc::coord\-Type}}\label{structObitImageDesc_o38}
+
+
+Coordinate type. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!crota@{crota}}
+\index{crota@{crota}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Desc::crota}[IM\_\-MAXDIM]}\label{structObitImageDesc_o10}
+
+
+Axis rotation angles (deg). 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!crpix@{crpix}}
+\index{crpix@{crpix}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Desc::crpix}[IM\_\-MAXDIM]}\label{structObitImageDesc_o9}
+
+
+Axis reference pixels (1-rel). 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!crval@{crval}}
+\index{crval@{crval}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Image\-Desc::crval}[IM\_\-MAXDIM]}\label{structObitImageDesc_o29}
+
+
+Axis coordinate values at reference pixel. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!ctype@{ctype}}
+\index{ctype@{ctype}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Image\-Desc::ctype}[IM\_\-MAXDIM][IMLEN\_\-KEYWORD]}\label{structObitImageDesc_o7}
+
+
+WCS labels for each dimension of array. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!date@{date}}
+\index{date@{date}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Image\-Desc::date}[IMLEN\_\-VALUE]}\label{structObitImageDesc_o22}
+
+
+Image creation date as yyyy-mm-dd. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!epoch@{epoch}}
+\index{epoch@{epoch}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Desc::epoch}}\label{structObitImageDesc_o25}
+
+
+Epoch (years) of celestial coordinates, This is sometimes confused with equinox. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!equinox@{equinox}}
+\index{equinox@{equinox}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Desc::equinox}}\label{structObitImageDesc_o26}
+
+
+Mean Equinox of celestial coordinates (e.g. 
+
+2000) \index{ObitImageDesc@{Obit\-Image\-Desc}!inaxes@{inaxes}}
+\index{inaxes@{inaxes}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Desc::inaxes}[IM\_\-MAXDIM]}\label{structObitImageDesc_o6}
+
+
+Dimensions of axes. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!info@{info}}
+\index{info@{info}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Image\-Desc::info}}\label{structObitImageDesc_o47}
+
+
+Info\-List for other keywords. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!instrument@{instrument}}
+\index{instrument@{instrument}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Image\-Desc::instrument}[IMLEN\_\-VALUE]}\label{structObitImageDesc_o19}
+
+
+Name of instrument making observation. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!IOsize@{IOsize}}
+\index{IOsize@{IOsize}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOSize {\bf Obit\-Image\-Desc::IOsize}}\label{structObitImageDesc_o41}
+
+
+Access size code. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!jlocd@{jlocd}}
+\index{jlocd@{jlocd}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Desc::jlocd}}\label{structObitImageDesc_o43}
+
+
+0-rel axis order: declination (or latitude), -1 means not present. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!jlocf@{jlocf}}
+\index{jlocf@{jlocf}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Desc::jlocf}}\label{structObitImageDesc_o45}
+
+
+0-rel axis order: Frequency. 
+
+-1 means not present. \index{ObitImageDesc@{Obit\-Image\-Desc}!jlocif@{jlocif}}
+\index{jlocif@{jlocif}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Desc::jlocif}}\label{structObitImageDesc_o46}
+
+
+0-rel axis order: IF 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!jlocr@{jlocr}}
+\index{jlocr@{jlocr}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Desc::jlocr}}\label{structObitImageDesc_o42}
+
+
+0-rel axis order: RA (or longitude) , -1 means not present. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!jlocs@{jlocs}}
+\index{jlocs@{jlocs}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Desc::jlocs}}\label{structObitImageDesc_o44}
+
+
+0-rel axis order: Stokes' parameters, -1 means not present. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!maxval@{maxval}}
+\index{maxval@{maxval}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Desc::maxval}}\label{structObitImageDesc_o32}
+
+
+maximum value in image 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!minval@{minval}}
+\index{minval@{minval}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Desc::minval}}\label{structObitImageDesc_o33}
+
+
+minimum value in image 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!name@{name}}
+\index{name@{name}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Image\-Desc::name}}\label{structObitImageDesc_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!naxis@{naxis}}
+\index{naxis@{naxis}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Desc::naxis}}\label{structObitImageDesc_o5}
+
+
+Number of axes. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!niter@{niter}}
+\index{niter@{niter}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Desc::niter}}\label{structObitImageDesc_o35}
+
+
+number of iterations of deconvolution 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Image\-Desc::Obit\-Id}}\label{structObitImageDesc_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!object@{object}}
+\index{object@{object}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Image\-Desc::object}[IMLEN\_\-VALUE]}\label{structObitImageDesc_o17}
+
+
+Name of object. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!obsdat@{obsdat}}
+\index{obsdat@{obsdat}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Image\-Desc::obsdat}[IMLEN\_\-VALUE]}\label{structObitImageDesc_o21}
+
+
+Observing date as yyyy-mm-dd. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!obsdec@{obsdec}}
+\index{obsdec@{obsdec}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Image\-Desc::obsdec}}\label{structObitImageDesc_o28}
+
+
+Observed Dec (deg). 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!observer@{observer}}
+\index{observer@{observer}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Image\-Desc::observer}[IMLEN\_\-VALUE]}\label{structObitImageDesc_o20}
+
+
+Observer. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!obsra@{obsra}}
+\index{obsra@{obsra}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Image\-Desc::obsra}}\label{structObitImageDesc_o27}
+
+
+Observed RA (deg). 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!origin@{origin}}
+\index{origin@{origin}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Image\-Desc::origin}[IMLEN\_\-VALUE]}\label{structObitImageDesc_o23}
+
+
+Origin (software) of image. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!plane@{plane}}
+\index{plane@{plane}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Desc::plane}}\label{structObitImageDesc_o40}
+
+
+current plane (1-rel) read/write in buffer 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Desc::Reference\-Count}}\label{structObitImageDesc_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!restFreq@{restFreq}}
+\index{restFreq@{restFreq}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Image\-Desc::rest\-Freq}}\label{structObitImageDesc_o31}
+
+
+Rest frequency of line (Hz). 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!row@{row}}
+\index{row@{row}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Desc::row}}\label{structObitImageDesc_o39}
+
+
+current row (1-rel) read/write in buffer 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!teles@{teles}}
+\index{teles@{teles}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Image\-Desc::teles}[IMLEN\_\-VALUE]}\label{structObitImageDesc_o18}
+
+
+Name of telescope making observation. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!VelDef@{VelDef}}
+\index{VelDef@{VelDef}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Desc::Vel\-Def}}\label{structObitImageDesc_o37}
+
+
+Velocity definition 0=$>$optical, 1=radio. 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!VelReference@{VelReference}}
+\index{VelReference@{VelReference}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image\-Desc::Vel\-Reference}}\label{structObitImageDesc_o36}
+
+
+Velocity reference frame: 1-3 (LSR, Helio, Observer). 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!xshift@{xshift}}
+\index{xshift@{xshift}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Desc::xshift}}\label{structObitImageDesc_o12}
+
+
+Offset in X (rotated RA) of phase center (deg). 
+
+\index{ObitImageDesc@{Obit\-Image\-Desc}!yshift@{yshift}}
+\index{yshift@{yshift}!ObitImageDesc@{Obit\-Image\-Desc}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Image\-Desc::yshift}}\label{structObitImageDesc_o13}
+
+
+Offset in Y (rotated Dec) of phase center (deg). 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Image\-Desc.h}\end{CompactItemize}

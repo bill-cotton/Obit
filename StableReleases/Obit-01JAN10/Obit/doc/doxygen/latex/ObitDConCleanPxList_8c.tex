@@ -1,0 +1,236 @@
+\section{Obit\-DCon\-Clean\-Px\-List.c File Reference}
+\label{ObitDConCleanPxList_8c}\index{ObitDConCleanPxList.c@{ObitDConCleanPxList.c}}
+{\bf Obit\-DCon\-Clean\-Px\-List}{\rm (p.\,\pageref{structObitDConCleanPxList})} class function definitions. 
+
+{\tt \#include \char`\"{}Obit\-DCon\-Clean\-Px\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Mem.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf CLEANFunc\-Arg}
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-DCon\-Clean\-Px\-List\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Px\-List\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Px\-List} $\ast$ {\bf new\-Obit\-DCon\-Clean\-Px\-List} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-DCon\-Clean\-Px\-List\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Px\-List} $\ast$ {\bf Obit\-DCon\-Clean\-Px\-List\-Copy} ({\bf Obit\-DCon\-Clean\-Px\-List} $\ast$in, {\bf Obit\-DCon\-Clean\-Px\-List} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Px\-List\-Clone} ({\bf Obit\-DCon\-Clean\-Px\-List} $\ast$in, {\bf Obit\-DCon\-Clean\-Px\-List} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Px\-List} $\ast$ {\bf Obit\-DCon\-Clean\-Px\-List\-Create} (gchar $\ast$name, {\bf Obit\-Image\-Mosaic} $\ast$mosaic, {\bf olong} max\-Pixel, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-DCon}{\rm (p.\,\pageref{structObitDCon})} structures. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Px\-List\-Get\-Parms} ({\bf Obit\-DCon\-Clean\-Px\-List} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get Parameters. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Px\-List\-Reset} ({\bf Obit\-DCon\-Clean\-Px\-List} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Reset Clean. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Px\-List\-Resize} ({\bf Obit\-DCon\-Clean\-Px\-List} $\ast$in, {\bf olong} max\-Pixel, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Resize Arrrays. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Px\-List\-Update} ({\bf Obit\-DCon\-Clean\-Px\-List} $\ast$in, {\bf olong} $\ast$fields, {\bf olong} n\-Skip, {\bf ofloat} min\-Flux\-Load, {\bf ofloat} auto\-Win\-Flux, {\bf Obit\-DCon\-Clean\-Window} $\ast$window, {\bf Obit\-FArray} $\ast$Beam\-Patch, {\bf Obit\-FArray} $\ast$pixarray, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Update with new image and window. \item\end{CompactList}\item 
+gboolean {\bf Obit\-DCon\-Clean\-Px\-List\-CLEAN} ({\bf Obit\-DCon\-Clean\-Px\-List} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Do minor cycle BGC CLEANing. \item\end{CompactList}\item 
+gboolean {\bf Obit\-DCon\-Clean\-Px\-List\-SDI} ({\bf Obit\-DCon\-Clean\-Px\-List} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Do SDI CLEANing. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-DCon\-Clean\-Px\-List\-Result} ({\bf Obit\-DCon\-Clean\-Px\-List} $\ast$in, {\bf olong} $\ast$ncomp, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get results of CLEAN. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Px\-List\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-DCon\-Clean\-Px\-List}{\rm (p.\,\pageref{structObitDConCleanPxList})} class function definitions. 
+
+This class determines the pixel histogram of an image. This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} base class.
+
+\subsection{Function Documentation}
+\index{ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}!newObitDConCleanPxList@{newObitDConCleanPxList}}
+\index{newObitDConCleanPxList@{newObitDConCleanPxList}!ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Px\-List}$\ast$ new\-Obit\-DCon\-Clean\-Px\-List (gchar $\ast$ {\em name})}\label{ObitDConCleanPxList_8c_a10}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}!ObitDConCleanPxListClassInit@{ObitDConCleanPxListClassInit}}
+\index{ObitDConCleanPxListClassInit@{ObitDConCleanPxListClassInit}!ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Px\-List\-Class\-Init (void)}\label{ObitDConCleanPxList_8c_a22}
+
+
+Public: Class initializer. 
+
+\index{ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}!ObitDConCleanPxListCLEAN@{ObitDConCleanPxListCLEAN}}
+\index{ObitDConCleanPxListCLEAN@{ObitDConCleanPxListCLEAN}!ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-DCon\-Clean\-Px\-List\-CLEAN ({\bf Obit\-DCon\-Clean\-Px\-List} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanPxList_8c_a19}
+
+
+Public: Do minor cycle BGC CLEANing. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The Pixel list object \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if hit limit of niter or min. flux density. \end{Desc}
+\index{ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}!ObitDConCleanPxListClear@{ObitDConCleanPxListClear}}
+\index{ObitDConCleanPxListClear@{ObitDConCleanPxListClear}!ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Px\-List\-Clear (gpointer {\em inn})}\label{ObitDConCleanPxList_8c_a4}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-DCon\-Clean\-Px\-List$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}!ObitDConCleanPxListClone@{ObitDConCleanPxListClone}}
+\index{ObitDConCleanPxListClone@{ObitDConCleanPxListClone}!ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Px\-List\-Clone ({\bf Obit\-DCon\-Clean\-Px\-List} $\ast$ {\em in}, {\bf Obit\-DCon\-Clean\-Px\-List} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanPxList_8c_a13}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}!ObitDConCleanPxListCopy@{ObitDConCleanPxListCopy}}
+\index{ObitDConCleanPxListCopy@{ObitDConCleanPxListCopy}!ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Px\-List}$\ast$ Obit\-DCon\-Clean\-Px\-List\-Copy ({\bf Obit\-DCon\-Clean\-Px\-List} $\ast$ {\em in}, {\bf Obit\-DCon\-Clean\-Px\-List} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanPxList_8c_a12}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}!ObitDConCleanPxListCreate@{ObitDConCleanPxListCreate}}
+\index{ObitDConCleanPxListCreate@{ObitDConCleanPxListCreate}!ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Px\-List}$\ast$ Obit\-DCon\-Clean\-Px\-List\-Create (gchar $\ast$ {\em name}, {\bf Obit\-Image\-Mosaic} $\ast$ {\em mosaic}, {\bf olong} {\em max\-Pixel}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanPxList_8c_a14}
+
+
+Public: Create/initialize {\bf Obit\-DCon}{\rm (p.\,\pageref{structObitDCon})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em mosaic}]Image mosaic to be deconvolved. \item[{\em max\-Pixel}]Maximum number of pixels allowed (dim. or arrays) \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}!ObitDConCleanPxListGetClass@{ObitDConCleanPxListGetClass}}
+\index{ObitDConCleanPxListGetClass@{ObitDConCleanPxListGetClass}!ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-DCon\-Clean\-Px\-List\-Get\-Class (void)}\label{ObitDConCleanPxList_8c_a11}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}!ObitDConCleanPxListGetParms@{ObitDConCleanPxListGetParms}}
+\index{ObitDConCleanPxListGetParms@{ObitDConCleanPxListGetParms}!ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Px\-List\-Get\-Parms ({\bf Obit\-DCon\-Clean\-Px\-List} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanPxList_8c_a15}
+
+
+Public: Get Parameters. 
+
+\begin{itemize}
+\item \char`\"{}min\-Flux\char`\"{} OBIT\_\-float array = Minimun flux density (Jy) per field If only one given it is used for all. \item \char`\"{}Factor\char`\"{} OBIT\_\-float array = CLEAN depth factor per field If only one given it is used for all. \item \char`\"{}f\-Gauss\char`\"{} OBIT\_\-float array = Gaussian size (deg) per field \item \char`\"{}CCVer\char`\"{} OBIT\_\-long array = CLEAN table version per field If only one given it is used for all. \item \char`\"{}prt\-Lv\char`\"{} OBIT\_\-long = message level [def 2] 0=none, 1=summary, 2=normal, higher numbers for diagnostics \item \char`\"{}ccf\-Lim\char`\"{} OBIT\_\-float = Min. fraction of residual peak to CLEAN to clipped to [0.0,0.9] \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The Pixel list CLEAN object \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\end{itemize}
+\index{ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}!ObitDConCleanPxListInit@{ObitDConCleanPxListInit}}
+\index{ObitDConCleanPxListInit@{ObitDConCleanPxListInit}!ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Px\-List\-Init (gpointer {\em inn})}\label{ObitDConCleanPxList_8c_a3}
+
+
+Private: Initialize newly instantiated object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}!ObitDConCleanPxListReset@{ObitDConCleanPxListReset}}
+\index{ObitDConCleanPxListReset@{ObitDConCleanPxListReset}!ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Px\-List\-Reset ({\bf Obit\-DCon\-Clean\-Px\-List} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanPxList_8c_a16}
+
+
+Public: Reset Clean. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The Pixel List object \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}!ObitDConCleanPxListResize@{ObitDConCleanPxListResize}}
+\index{ObitDConCleanPxListResize@{ObitDConCleanPxListResize}!ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Px\-List\-Resize ({\bf Obit\-DCon\-Clean\-Px\-List} $\ast$ {\em in}, {\bf olong} {\em max\-Pixel}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanPxList_8c_a17}
+
+
+Public: Resize Arrrays. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The Pixel List object \item[{\em max\-Pixel}]Maximum number of pixels allowed (dim. or arrays) \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}!ObitDConCleanPxListResult@{ObitDConCleanPxListResult}}
+\index{ObitDConCleanPxListResult@{ObitDConCleanPxListResult}!ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-DCon\-Clean\-Px\-List\-Result ({\bf Obit\-DCon\-Clean\-Px\-List} $\ast$ {\em in}, {\bf olong} $\ast$ {\em ncomp}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanPxList_8c_a21}
+
+
+Public: Get results of CLEAN. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The Pixel List object \item[{\em ncomps}]Array of total number of components per field, same order as in {\bf Obit\-Image\-Mosaic}{\rm (p.\,\pageref{structObitImageMosaic})} \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}!ObitDConCleanPxListSDI@{ObitDConCleanPxListSDI}}
+\index{ObitDConCleanPxListSDI@{ObitDConCleanPxListSDI}!ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-DCon\-Clean\-Px\-List\-SDI ({\bf Obit\-DCon\-Clean\-Px\-List} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanPxList_8c_a20}
+
+
+Public: Do SDI CLEANing. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The Pixel list object \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if hit limit of niter or min. flux density. \end{Desc}
+\index{ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}!ObitDConCleanPxListUpdate@{ObitDConCleanPxListUpdate}}
+\index{ObitDConCleanPxListUpdate@{ObitDConCleanPxListUpdate}!ObitDConCleanPxList.c@{Obit\-DCon\-Clean\-Px\-List.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Px\-List\-Update ({\bf Obit\-DCon\-Clean\-Px\-List} $\ast$ {\em in}, {\bf olong} $\ast$ {\em fields}, {\bf olong} {\em n\-Skip}, {\bf ofloat} {\em min\-Flux\-Load}, {\bf ofloat} {\em auto\-Win\-Flux}, {\bf Obit\-DCon\-Clean\-Window} $\ast$ {\em window}, {\bf Obit\-FArray} $\ast$ {\em Beam\-Patch}, {\bf Obit\-FArray} $\ast$ {\em pixarray}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanPxList_8c_a18}
+
+
+Public: Update with new image and window. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The Pixel List object \item[{\em fields}]Which fields? (1-rel) as zero terminated list \item[{\em n\-Skip}]Number of residuals to skip between ones accepted \item[{\em min\-Flux\-Load}]Minimum pixel flux density to accept \item[{\em auto\-Win\-Flux}]min. residual flux allowed for auto Window \item[{\em window}]Windows object corresponding to Image Mosaic being CLEANED Only pixels inside of the CLEAN window are used. \item[{\em Beam\-Patch}]Dirty beam patch to use \item[{\em pixarray}]If Non\-NULL use instead of the flux densities from the image file. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}

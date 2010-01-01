@@ -1,0 +1,257 @@
+\section{Obit\-Table\-FQ Struct Reference}
+\label{structObitTableFQ}\index{ObitTableFQ@{ObitTableFQ}}
+Obit\-Table\-FQ Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-FQ.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-IO} $\ast$ {\bf my\-IO}
+\begin{CompactList}\small\item\em I/O interface to access disk resident data. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Desc} $\ast$ {\bf my\-Desc}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Sel} $\ast$ {\bf my\-Sel}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf buffer}
+\begin{CompactList}\small\item\em Table buffer. \item\end{CompactList}\item 
+{\bf olong} {\bf buffer\-Size}
+\begin{CompactList}\small\item\em Table buffer size in floats. \item\end{CompactList}\item 
+gchar $\ast$ {\bf tab\-Type}
+\begin{CompactList}\small\item\em Table type (name of type, e.g. \item\end{CompactList}\item 
+{\bf olong} {\bf tab\-Ver}
+\begin{CompactList}\small\item\em Table version number(1-rel). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf my\-Host}
+\begin{CompactList}\small\item\em This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. \item\end{CompactList}\item 
+{\bf oint} {\bf num\-IF}
+\begin{CompactList}\small\item\em The number of IFs, used to dimension table column entries. \item\end{CompactList}\item 
+{\bf olong} {\bf fqid\-Off}
+\begin{CompactList}\small\item\em Column offset for Frequency ID number for row, this is a random parameter in the uv data in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf fqid\-Col}
+\begin{CompactList}\small\item\em Physical column number for Frequency ID number for row, this is a random parameter in the uv data in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf freq\-Off\-Off}
+\begin{CompactList}\small\item\em Column offset for Offset from reference frequency for each IF in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf freq\-Off\-Col}
+\begin{CompactList}\small\item\em Physical column number for Offset from reference frequency for each IF in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf ch\-Width\-Off}
+\begin{CompactList}\small\item\em Column offset for Bandwidth of an individual channel, now always written and read as a signed value in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf ch\-Width\-Col}
+\begin{CompactList}\small\item\em Physical column number for Bandwidth of an individual channel, now always written and read as a signed value in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf tot\-BWOff}
+\begin{CompactList}\small\item\em Column offset for Total bandwidth of the IF, now written and read as an unsigned value in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf tot\-BWCol}
+\begin{CompactList}\small\item\em Physical column number for Total bandwidth of the IF, now written and read as an unsigned value in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf side\-Band\-Off}
+\begin{CompactList}\small\item\em Column offset for Sideband of the IF (-1 =\$$>$\$ lower, +1 =\$$>$\$ upper), now always written and read as +1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf side\-Band\-Col}
+\begin{CompactList}\small\item\em Physical column number for Sideband of the IF (-1 =\$$>$\$ lower, +1 =\$$>$\$ upper), now always written and read as +1 in table record. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-FQ Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableFQ@{Obit\-Table\-FQ}!buffer@{buffer}}
+\index{buffer@{buffer}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-FQ::buffer}}\label{structObitTableFQ_o10}
+
+
+Table buffer. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!bufferSize@{bufferSize}}
+\index{bufferSize@{bufferSize}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-FQ::buffer\-Size}}\label{structObitTableFQ_o11}
+
+
+Table buffer size in floats. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!chWidthCol@{chWidthCol}}
+\index{chWidthCol@{chWidthCol}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-FQ::ch\-Width\-Col}}\label{structObitTableFQ_o21}
+
+
+Physical column number for Bandwidth of an individual channel, now always written and read as a signed value in table record. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!chWidthOff@{chWidthOff}}
+\index{chWidthOff@{chWidthOff}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-FQ::ch\-Width\-Off}}\label{structObitTableFQ_o20}
+
+
+Column offset for Bandwidth of an individual channel, now always written and read as a signed value in table record. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-FQ::Class\-Info}}\label{structObitTableFQ_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!fqidCol@{fqidCol}}
+\index{fqidCol@{fqidCol}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-FQ::fqid\-Col}}\label{structObitTableFQ_o17}
+
+
+Physical column number for Frequency ID number for row, this is a random parameter in the uv data in table record. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!fqidOff@{fqidOff}}
+\index{fqidOff@{fqidOff}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-FQ::fqid\-Off}}\label{structObitTableFQ_o16}
+
+
+Column offset for Frequency ID number for row, this is a random parameter in the uv data in table record. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!freqOffCol@{freqOffCol}}
+\index{freqOffCol@{freqOffCol}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-FQ::freq\-Off\-Col}}\label{structObitTableFQ_o19}
+
+
+Physical column number for Offset from reference frequency for each IF in table record. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!freqOffOff@{freqOffOff}}
+\index{freqOffOff@{freqOffOff}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-FQ::freq\-Off\-Off}}\label{structObitTableFQ_o18}
+
+
+Column offset for Offset from reference frequency for each IF in table record. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!info@{info}}
+\index{info@{info}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Table\-FQ::info}}\label{structObitTableFQ_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Desc}$\ast$ {\bf Obit\-Table\-FQ::my\-Desc}}\label{structObitTableFQ_o8}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!myHost@{myHost}}
+\index{myHost@{myHost}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-Table\-FQ::my\-Host}}\label{structObitTableFQ_o14}
+
+
+This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!myIO@{myIO}}
+\index{myIO@{myIO}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IO}$\ast$ {\bf Obit\-Table\-FQ::my\-IO}}\label{structObitTableFQ_o7}
+
+
+I/O interface to access disk resident data. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Sel}$\ast$ {\bf Obit\-Table\-FQ::my\-Sel}}\label{structObitTableFQ_o9}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Table\-FQ::my\-Status}}\label{structObitTableFQ_o6}
+
+
+I/O status. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!name@{name}}
+\index{name@{name}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-FQ::name}}\label{structObitTableFQ_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!numIF@{numIF}}
+\index{numIF@{numIF}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-FQ::num\-IF}}\label{structObitTableFQ_o15}
+
+
+The number of IFs, used to dimension table column entries. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-FQ::Obit\-Id}}\label{structObitTableFQ_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-FQ::Reference\-Count}}\label{structObitTableFQ_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!sideBandCol@{sideBandCol}}
+\index{sideBandCol@{sideBandCol}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-FQ::side\-Band\-Col}}\label{structObitTableFQ_o25}
+
+
+Physical column number for Sideband of the IF (-1 =\$$>$\$ lower, +1 =\$$>$\$ upper), now always written and read as +1 in table record. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!sideBandOff@{sideBandOff}}
+\index{sideBandOff@{sideBandOff}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-FQ::side\-Band\-Off}}\label{structObitTableFQ_o24}
+
+
+Column offset for Sideband of the IF (-1 =\$$>$\$ lower, +1 =\$$>$\$ upper), now always written and read as +1 in table record. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!tabType@{tabType}}
+\index{tabType@{tabType}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-FQ::tab\-Type}}\label{structObitTableFQ_o12}
+
+
+Table type (name of type, e.g. 
+
+\char`\"{}AIPS AN\char`\"{}) \index{ObitTableFQ@{Obit\-Table\-FQ}!tabVer@{tabVer}}
+\index{tabVer@{tabVer}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-FQ::tab\-Ver}}\label{structObitTableFQ_o13}
+
+
+Table version number(1-rel). 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!thread@{thread}}
+\index{thread@{thread}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Table\-FQ::thread}}\label{structObitTableFQ_o4}
+
+
+Threading info member object. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!totBWCol@{totBWCol}}
+\index{totBWCol@{totBWCol}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-FQ::tot\-BWCol}}\label{structObitTableFQ_o23}
+
+
+Physical column number for Total bandwidth of the IF, now written and read as an unsigned value in table record. 
+
+\index{ObitTableFQ@{Obit\-Table\-FQ}!totBWOff@{totBWOff}}
+\index{totBWOff@{totBWOff}!ObitTableFQ@{Obit\-Table\-FQ}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-FQ::tot\-BWOff}}\label{structObitTableFQ_o22}
+
+
+Column offset for Total bandwidth of the IF, now written and read as an unsigned value in table record. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-FQ.h}\end{CompactItemize}

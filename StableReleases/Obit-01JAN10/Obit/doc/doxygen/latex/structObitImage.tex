@@ -1,0 +1,176 @@
+\section{Obit\-Image Struct Reference}
+\label{structObitImage}\index{ObitImage@{ObitImage}}
+Obit\-Image Class structure.  
+
+
+{\tt \#include $<$Obit\-Image.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+Obit\-IOAccess {\bf Data\-Access}
+\begin{CompactList}\small\item\em access type \item\end{CompactList}\item 
+{\bf Obit\-IO} $\ast$ {\bf my\-IO}
+\begin{CompactList}\small\item\em I/O interface to access disk resident data. \item\end{CompactList}\item 
+{\bf Obit\-Table\-List} $\ast$ {\bf table\-List}
+\begin{CompactList}\small\item\em {\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})} of associated tables. \item\end{CompactList}\item 
+gboolean {\bf is\-Scratch}
+\begin{CompactList}\small\item\em Is this a scratch object to be deleted when final unlink. \item\end{CompactList}\item 
+gboolean {\bf ext\-Buffer}
+\begin{CompactList}\small\item\em is an external buffer desired? \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf image}
+\begin{CompactList}\small\item\em Image buffer. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Desc} $\ast$ {\bf my\-Desc}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Image Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Sel} $\ast$ {\bf my\-Sel}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Image Selector. \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf my\-Beam}
+\begin{CompactList}\small\item\em Pointer to associated Beam (as parent type). \item\end{CompactList}\item 
+{\bf Obit\-UVGrid} $\ast$ {\bf my\-Grid}
+\begin{CompactList}\small\item\em Gridding object for making image and beam. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Image Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitImage@{Obit\-Image}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitImage@{Obit\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Image::Class\-Info}}\label{structObitImage_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitImage@{Obit\-Image}!DataAccess@{DataAccess}}
+\index{DataAccess@{DataAccess}!ObitImage@{Obit\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOAccess {\bf Obit\-Image::Data\-Access}}\label{structObitImage_o7}
+
+
+access type 
+
+\index{ObitImage@{Obit\-Image}!extBuffer@{extBuffer}}
+\index{extBuffer@{extBuffer}!ObitImage@{Obit\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Image::ext\-Buffer}}\label{structObitImage_o11}
+
+
+is an external buffer desired? 
+
+\index{ObitImage@{Obit\-Image}!image@{image}}
+\index{image@{image}!ObitImage@{Obit\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-Image::image}}\label{structObitImage_o12}
+
+
+Image buffer. 
+
+\index{ObitImage@{Obit\-Image}!info@{info}}
+\index{info@{info}!ObitImage@{Obit\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Image::info}}\label{structObitImage_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitImage@{Obit\-Image}!isScratch@{isScratch}}
+\index{isScratch@{isScratch}!ObitImage@{Obit\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Image::is\-Scratch}}\label{structObitImage_o10}
+
+
+Is this a scratch object to be deleted when final unlink. 
+
+\index{ObitImage@{Obit\-Image}!myBeam@{myBeam}}
+\index{myBeam@{myBeam}!ObitImage@{Obit\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-Image::my\-Beam}}\label{structObitImage_o15}
+
+
+Pointer to associated Beam (as parent type). 
+
+\index{ObitImage@{Obit\-Image}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitImage@{Obit\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Desc}$\ast$ {\bf Obit\-Image::my\-Desc}}\label{structObitImage_o13}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Image Descriptor. 
+
+\index{ObitImage@{Obit\-Image}!myGrid@{myGrid}}
+\index{myGrid@{myGrid}!ObitImage@{Obit\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVGrid}$\ast$ {\bf Obit\-Image::my\-Grid}}\label{structObitImage_o16}
+
+
+Gridding object for making image and beam. 
+
+\index{ObitImage@{Obit\-Image}!myIO@{myIO}}
+\index{myIO@{myIO}!ObitImage@{Obit\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IO}$\ast$ {\bf Obit\-Image::my\-IO}}\label{structObitImage_o8}
+
+
+I/O interface to access disk resident data. 
+
+\index{ObitImage@{Obit\-Image}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitImage@{Obit\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Sel}$\ast$ {\bf Obit\-Image::my\-Sel}}\label{structObitImage_o14}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Image Selector. 
+
+\index{ObitImage@{Obit\-Image}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitImage@{Obit\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Image::my\-Status}}\label{structObitImage_o6}
+
+
+I/O status. 
+
+\index{ObitImage@{Obit\-Image}!name@{name}}
+\index{name@{name}!ObitImage@{Obit\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Image::name}}\label{structObitImage_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitImage@{Obit\-Image}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitImage@{Obit\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Image::Obit\-Id}}\label{structObitImage_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitImage@{Obit\-Image}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitImage@{Obit\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Image::Reference\-Count}}\label{structObitImage_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitImage@{Obit\-Image}!tableList@{tableList}}
+\index{tableList@{tableList}!ObitImage@{Obit\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-List}$\ast$ {\bf Obit\-Image::table\-List}}\label{structObitImage_o9}
+
+
+{\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})} of associated tables. 
+
+\index{ObitImage@{Obit\-Image}!thread@{thread}}
+\index{thread@{thread}!ObitImage@{Obit\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Image::thread}}\label{structObitImage_o4}
+
+
+Threading info member object. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Image.h}\end{CompactItemize}

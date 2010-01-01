@@ -1,0 +1,194 @@
+\section{Obit\-Table\-ATRow Struct Reference}
+\label{structObitTableATRow}\index{ObitTableATRow@{ObitTableATRow}}
+Obit\-Table\-ATRow Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-AT.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf my\-Table}
+\begin{CompactList}\small\item\em Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. \item\end{CompactList}\item 
+gpointer {\bf my\-Row\-Data}
+\begin{CompactList}\small\item\em Pointer to row data in buffer (never g\_\-free this). \item\end{CompactList}\item 
+{\bf odouble} {\bf Time}
+\begin{CompactList}\small\item\em The center time. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Time\-I}
+\begin{CompactList}\small\item\em Time interval of record. \item\end{CompactList}\item 
+{\bf oint} {\bf antenna\-No}
+\begin{CompactList}\small\item\em Antenna number. \item\end{CompactList}\item 
+{\bf oint} {\bf Array}
+\begin{CompactList}\small\item\em Array number. \item\end{CompactList}\item 
+{\bf oint} {\bf num\-Levels}
+\begin{CompactList}\small\item\em Number of levels of something(?). \item\end{CompactList}\item 
+gchar {\bf pol\-Type\-A}
+\begin{CompactList}\small\item\em Feed A feed poln. \item\end{CompactList}\item 
+gchar {\bf pol\-Type\-B}
+\begin{CompactList}\small\item\em Feed B feed poln. \item\end{CompactList}\item 
+gchar $\ast$ {\bf Ant\-Name}
+\begin{CompactList}\small\item\em Station name. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Pol\-Ang\-A}
+\begin{CompactList}\small\item\em Feed A feed position angle. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Pol\-Cal\-A}
+\begin{CompactList}\small\item\em Feed A poln. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Pol\-Ang\-B}
+\begin{CompactList}\small\item\em Feed B feed position angle. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Pol\-Cal\-B}
+\begin{CompactList}\small\item\em Feed B poln. \item\end{CompactList}\item 
+{\bf olong} {\bf status}
+\begin{CompactList}\small\item\em status 0=normal, 1=modified, -1=flagged \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-ATRow Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableATRow@{Obit\-Table\-ATRow}!antennaNo@{antennaNo}}
+\index{antennaNo@{antennaNo}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-ATRow::antenna\-No}}\label{structObitTableATRow_o8}
+
+
+Antenna number. 
+
+\index{ObitTableATRow@{Obit\-Table\-ATRow}!AntName@{AntName}}
+\index{AntName@{AntName}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-ATRow::Ant\-Name}}\label{structObitTableATRow_o13}
+
+
+Station name. 
+
+\index{ObitTableATRow@{Obit\-Table\-ATRow}!Array@{Array}}
+\index{Array@{Array}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-ATRow::Array}}\label{structObitTableATRow_o9}
+
+
+Array number. 
+
+\index{ObitTableATRow@{Obit\-Table\-ATRow}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-ATRow::Class\-Info}}\label{structObitTableATRow_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableATRow@{Obit\-Table\-ATRow}!myRowData@{myRowData}}
+\index{myRowData@{myRowData}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-ATRow::my\-Row\-Data}}\label{structObitTableATRow_o5}
+
+
+Pointer to row data in buffer (never g\_\-free this). 
+
+\index{ObitTableATRow@{Obit\-Table\-ATRow}!myTable@{myTable}}
+\index{myTable@{myTable}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ {\bf Obit\-Table\-ATRow::my\-Table}}\label{structObitTableATRow_o4}
+
+
+Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. 
+
+\index{ObitTableATRow@{Obit\-Table\-ATRow}!name@{name}}
+\index{name@{name}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-ATRow::name}}\label{structObitTableATRow_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableATRow@{Obit\-Table\-ATRow}!numLevels@{numLevels}}
+\index{numLevels@{numLevels}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-ATRow::num\-Levels}}\label{structObitTableATRow_o10}
+
+
+Number of levels of something(?). 
+
+\index{ObitTableATRow@{Obit\-Table\-ATRow}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-ATRow::Obit\-Id}}\label{structObitTableATRow_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableATRow@{Obit\-Table\-ATRow}!PolAngA@{PolAngA}}
+\index{PolAngA@{PolAngA}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-ATRow::Pol\-Ang\-A}}\label{structObitTableATRow_o14}
+
+
+Feed A feed position angle. 
+
+\index{ObitTableATRow@{Obit\-Table\-ATRow}!PolAngB@{PolAngB}}
+\index{PolAngB@{PolAngB}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-ATRow::Pol\-Ang\-B}}\label{structObitTableATRow_o16}
+
+
+Feed B feed position angle. 
+
+\index{ObitTableATRow@{Obit\-Table\-ATRow}!PolCalA@{PolCalA}}
+\index{PolCalA@{PolCalA}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-ATRow::Pol\-Cal\-A}}\label{structObitTableATRow_o15}
+
+
+Feed A poln. 
+
+cal parameter. \index{ObitTableATRow@{Obit\-Table\-ATRow}!PolCalB@{PolCalB}}
+\index{PolCalB@{PolCalB}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-ATRow::Pol\-Cal\-B}}\label{structObitTableATRow_o17}
+
+
+Feed B poln. 
+
+cal parameter \index{ObitTableATRow@{Obit\-Table\-ATRow}!polTypeA@{polTypeA}}
+\index{polTypeA@{polTypeA}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-ATRow::pol\-Type\-A}}\label{structObitTableATRow_o11}
+
+
+Feed A feed poln. 
+
+type 'R','L','X','Y', actually only one valid character. \index{ObitTableATRow@{Obit\-Table\-ATRow}!polTypeB@{polTypeB}}
+\index{polTypeB@{polTypeB}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-ATRow::pol\-Type\-B}}\label{structObitTableATRow_o12}
+
+
+Feed B feed poln. 
+
+type 'R','L','X','Y' \index{ObitTableATRow@{Obit\-Table\-ATRow}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-ATRow::Reference\-Count}}\label{structObitTableATRow_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableATRow@{Obit\-Table\-ATRow}!status@{status}}
+\index{status@{status}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-ATRow::status}}\label{structObitTableATRow_o18}
+
+
+status 0=normal, 1=modified, -1=flagged 
+
+\index{ObitTableATRow@{Obit\-Table\-ATRow}!Time@{Time}}
+\index{Time@{Time}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-ATRow::Time}}\label{structObitTableATRow_o6}
+
+
+The center time. 
+
+\index{ObitTableATRow@{Obit\-Table\-ATRow}!TimeI@{TimeI}}
+\index{TimeI@{TimeI}!ObitTableATRow@{Obit\-Table\-ATRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-ATRow::Time\-I}}\label{structObitTableATRow_o7}
+
+
+Time interval of record. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-AT.h}\end{CompactItemize}

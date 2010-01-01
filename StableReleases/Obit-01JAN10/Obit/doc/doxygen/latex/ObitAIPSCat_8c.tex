@@ -1,0 +1,195 @@
+\section{Obit\-AIPSCat.c File Reference}
+\label{ObitAIPSCat_8c}\index{ObitAIPSCat.c@{ObitAIPSCat.c}}
+Obit\-AIPSCat class function definitions. 
+
+{\tt \#include $<$sys/types.h$>$}\par
+{\tt \#include $<$time.h$>$}\par
+{\tt \#include $<$math.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include \char`\"{}Obit\-AIPS.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-AIPSCat.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-Desc.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-File.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-AIPSCat\-DHDR}
+\begin{CompactList}\small\item\em Structure to contain information about the structure of the AIPS header file. \item\end{CompactList}\item 
+union {\bf FBLANKequiv}
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-AIPSCat\-Image\-Get\-Desc} ({\bf Obit\-Image\-Desc} $\ast$desc, gchar $\ast$buffer, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Convert AIPS header file data to an {\bf Obit\-Image\-Desc}{\rm (p.\,\pageref{structObitImageDesc})}. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSCat\-Image\-Set\-Desc} ({\bf Obit\-Image\-Desc} $\ast$desc, gchar $\ast$buffer, gboolean init, {\bf Obit\-AIPSDir\-Cat\-Entry} $\ast$dir\-Entry, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Convert an {\bf Obit\-Image\-Desc}{\rm (p.\,\pageref{structObitImageDesc})} to AIPS header file data. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSCat\-UVGet\-Desc} ({\bf Obit\-UVDesc} $\ast$desc, gchar $\ast$buffer, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Convert AIPS header file data to an {\bf Obit\-UVDesc}{\rm (p.\,\pageref{structObitUVDesc})}. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSCat\-UVSet\-Desc} ({\bf Obit\-UVDesc} $\ast$desc, gchar $\ast$buffer, gboolean init, {\bf Obit\-AIPSDir\-Cat\-Entry} $\ast$dir\-Entry, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Convert an {\bf Obit\-UVDesc}{\rm (p.\,\pageref{structObitUVDesc})} to AIPS header file data. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSCat\-Get\-Table} ({\bf Obit\-Table\-List} $\ast$table\-List, gchar $\ast$buffer, {\bf olong} user, {\bf olong} disk, {\bf olong} cno, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy AIPS header to an {\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})}. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSCat\-Set\-Table} ({\bf Obit\-Table\-List} $\ast$table\-List, gchar $\ast$buffer, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy an {\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})} to AIPS table header. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSCat\-Table\-Get\-Desc} ({\bf Obit\-Table\-Desc} $\ast$desc, gchar tab\-Type[3], {\bf olong} tab\-Ver, {\bf AIPSint} control\-Block[256], {\bf AIPSint} record[256], {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Convert AIPS Table header to an {\bf Obit\-Table\-Desc}{\rm (p.\,\pageref{structObitTableDesc})}. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSCat\-Table\-Set\-Desc} ({\bf Obit\-Table\-Desc} $\ast$desc, gboolean init, gchar tab\-Type[3], {\bf olong} tab\-Ver, {\bf AIPSint} control\-Block[256], {\bf AIPSint} record[256], {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Convert an {\bf Obit\-Table\-Desc}{\rm (p.\,\pageref{structObitTableDesc})} to AIPS table header. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSCat\-Init\-DHDR} (void)
+\begin{CompactList}\small\item\em Public: Initialize AIPS Header info object. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-AIPSCat\-Offset} (gchar $\ast$keyword)
+\begin{CompactList}\small\item\em Public: Return catalog header offset for by keyword. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSCat\-Dummy} ({\bf olong} disk, {\bf olong} user, gchar Aname[13], gchar Aclass[7], gchar Atype[3], {\bf olong} seq, {\bf olong} cno, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Write dummy AIPS header. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSCat\-Rename} ({\bf olong} disk, {\bf olong} user, {\bf olong} cno, gchar $\ast$new\-Name, gchar $\ast$new\-Class, {\bf olong} new\-Seq, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Rename cataloged name, class, seq. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-AIPSCat class function definitions. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitAIPSCat.c@{Obit\-AIPSCat.c}!ObitAIPSCatDummy@{ObitAIPSCatDummy}}
+\index{ObitAIPSCatDummy@{ObitAIPSCatDummy}!ObitAIPSCat.c@{Obit\-AIPSCat.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSCat\-Dummy ({\bf olong} {\em disk}, {\bf olong} {\em user}, gchar {\em Aname}[13], gchar {\em Aclass}[7], gchar {\em Atype}[3], {\bf olong} {\em seq}, {\bf olong} {\em cno}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSCat_8c_a15}
+
+
+Public: Write dummy AIPS header. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em disk}]disk number. \item[{\em user}]AIPS user number. \item[{\em Aname}]AIPS name. \item[{\em Aclass}]AIPS class. \item[{\em Atype}]AIPS file type (MA, UV, SC). \item[{\em seq}]AIPS sequence number. \item[{\em cno}]AIPS catalog slot number \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack. \end{description}
+\end{Desc}
+\index{ObitAIPSCat.c@{Obit\-AIPSCat.c}!ObitAIPSCatGetTable@{ObitAIPSCatGetTable}}
+\index{ObitAIPSCatGetTable@{ObitAIPSCatGetTable}!ObitAIPSCat.c@{Obit\-AIPSCat.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSCat\-Get\-Table ({\bf Obit\-Table\-List} $\ast$ {\em table\-List}, gchar $\ast$ {\em buffer}, {\bf olong} {\em user}, {\bf olong} {\em disk}, {\bf olong} {\em cno}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSCat_8c_a9}
+
+
+Public: Copy AIPS header to an {\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em table\-List}]The {\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})} to be updated. Entries not already present in table\-List will be entered with a NULL pointer for the Table. \item[{\em buffer}]A buffer of AIPS\_\-NBPS char with the contents of the AIPS header file. \item[{\em user}]AIPS user number. \item[{\em disk}]AIPS disk number. \item[{\em cno}]AIPS catalog slot number. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} structure to report errors. \end{description}
+\end{Desc}
+\index{ObitAIPSCat.c@{Obit\-AIPSCat.c}!ObitAIPSCatImageGetDesc@{ObitAIPSCatImageGetDesc}}
+\index{ObitAIPSCatImageGetDesc@{ObitAIPSCatImageGetDesc}!ObitAIPSCat.c@{Obit\-AIPSCat.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSCat\-Image\-Get\-Desc ({\bf Obit\-Image\-Desc} $\ast$ {\em desc}, gchar $\ast$ {\em buffer}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSCat_8c_a5}
+
+
+Public: Convert AIPS header file data to an {\bf Obit\-Image\-Desc}{\rm (p.\,\pageref{structObitImageDesc})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em desc}]The Image descriptor to be updated. \item[{\em buffer}]A buffer of AIPS\_\-NBPS char with the contents of the AIPS header file. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} structure to report errors. \end{description}
+\end{Desc}
+\index{ObitAIPSCat.c@{Obit\-AIPSCat.c}!ObitAIPSCatImageSetDesc@{ObitAIPSCatImageSetDesc}}
+\index{ObitAIPSCatImageSetDesc@{ObitAIPSCatImageSetDesc}!ObitAIPSCat.c@{Obit\-AIPSCat.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSCat\-Image\-Set\-Desc ({\bf Obit\-Image\-Desc} $\ast$ {\em desc}, gchar $\ast$ {\em buffer}, gboolean {\em init}, {\bf Obit\-AIPSDir\-Cat\-Entry} $\ast$ {\em dir\-Entry}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSCat_8c_a6}
+
+
+Public: Convert an {\bf Obit\-Image\-Desc}{\rm (p.\,\pageref{structObitImageDesc})} to AIPS header file data. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em desc}]The Image descriptor to be updated. \item[{\em buffer}]A buffer of AIPS\_\-NBPS char with the contents of the AIPS header file. \item[{\em init}]If true, initialize the contents of buffer before converting. \item[{\em dir\-Entry}]Structure with catalog directory with file name information. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} structure to report errors. \end{description}
+\end{Desc}
+\index{ObitAIPSCat.c@{Obit\-AIPSCat.c}!ObitAIPSCatInitDHDR@{ObitAIPSCatInitDHDR}}
+\index{ObitAIPSCatInitDHDR@{ObitAIPSCatInitDHDR}!ObitAIPSCat.c@{Obit\-AIPSCat.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSCat\-Init\-DHDR (void)}\label{ObitAIPSCat_8c_a13}
+
+
+Public: Initialize AIPS Header info object. 
+
+Uses 0 relative values rather than AIPS 1-rel. This is more-or-less AIPS routine \$APLSUB/VHDRIN.FOR \index{ObitAIPSCat.c@{Obit\-AIPSCat.c}!ObitAIPSCatOffset@{ObitAIPSCatOffset}}
+\index{ObitAIPSCatOffset@{ObitAIPSCatOffset}!ObitAIPSCat.c@{Obit\-AIPSCat.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-AIPSCat\-Offset (gchar $\ast$ {\em keyword})}\label{ObitAIPSCat_8c_a14}
+
+
+Public: Return catalog header offset for by keyword. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em keyword}]name of keyword. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0-rel offset in AIPS catalog header, -1 =$>$ not found \end{Desc}
+\index{ObitAIPSCat.c@{Obit\-AIPSCat.c}!ObitAIPSCatRename@{ObitAIPSCatRename}}
+\index{ObitAIPSCatRename@{ObitAIPSCatRename}!ObitAIPSCat.c@{Obit\-AIPSCat.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSCat\-Rename ({\bf olong} {\em disk}, {\bf olong} {\em user}, {\bf olong} {\em cno}, gchar $\ast$ {\em new\-Name}, gchar $\ast$ {\em new\-Class}, {\bf olong} {\em new\-Seq}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSCat_8c_a16}
+
+
+Public: Rename cataloged name, class, seq. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em disk}]Disk number \item[{\em user}]AIPS user number. \item[{\em cno}]Slot number to be renamed \item[{\em new\-Name}]New AIPS name (12 characters) \item[{\em new\-Class}]New AIPS Class (6 characters) \item[{\em new\-Seq}]New AIPS sequence \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack. \end{description}
+\end{Desc}
+\index{ObitAIPSCat.c@{Obit\-AIPSCat.c}!ObitAIPSCatSetTable@{ObitAIPSCatSetTable}}
+\index{ObitAIPSCatSetTable@{ObitAIPSCatSetTable}!ObitAIPSCat.c@{Obit\-AIPSCat.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSCat\-Set\-Table ({\bf Obit\-Table\-List} $\ast$ {\em table\-List}, gchar $\ast$ {\em buffer}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSCat_8c_a10}
+
+
+Public: Copy an {\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})} to AIPS table header. 
+
+For AIPS tables, names must be of the form \char`\"{}AIPS XX\char`\"{} where XX is the table type. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em table\-List}]The {\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})} to be updated. \item[{\em buffer}]A buffer of AIPS\_\-NBPS char with the contents of the AIPS header file. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} structure to report errors. \end{description}
+\end{Desc}
+\index{ObitAIPSCat.c@{Obit\-AIPSCat.c}!ObitAIPSCatTableGetDesc@{ObitAIPSCatTableGetDesc}}
+\index{ObitAIPSCatTableGetDesc@{ObitAIPSCatTableGetDesc}!ObitAIPSCat.c@{Obit\-AIPSCat.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSCat\-Table\-Get\-Desc ({\bf Obit\-Table\-Desc} $\ast$ {\em desc}, gchar {\em tab\-Type}[3], {\bf olong} {\em tab\-Ver}, {\bf AIPSint} {\em control\-Block}[256], {\bf AIPSint} {\em record}[256], {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSCat_8c_a11}
+
+
+Public: Convert AIPS Table header to an {\bf Obit\-Table\-Desc}{\rm (p.\,\pageref{structObitTableDesc})}. 
+
+Column labels, units and any keyword value pairs are not dealt with; this routine needs to be coordinated with {\bf Obit\-IOTable\-AIPS::Obit\-IOTable\-AIPSRead\-Descriptor}{\rm (p.\,\pageref{ObitIOTableAIPS_8c_a23})}. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em desc}]The Table descriptor to be updated. \item[{\em tab\-Type}]AIPS two character type code \item[{\em tab\-Ver}]AIPS Table version. \item[{\em control\-Block}]AIPS table control block. \item[{\em record}]Second \char`\"{}record\char`\"{} with size and type info. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} structure to report errors. \end{description}
+\end{Desc}
+\index{ObitAIPSCat.c@{Obit\-AIPSCat.c}!ObitAIPSCatTableSetDesc@{ObitAIPSCatTableSetDesc}}
+\index{ObitAIPSCatTableSetDesc@{ObitAIPSCatTableSetDesc}!ObitAIPSCat.c@{Obit\-AIPSCat.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSCat\-Table\-Set\-Desc ({\bf Obit\-Table\-Desc} $\ast$ {\em desc}, gboolean {\em init}, gchar {\em tab\-Type}[3], {\bf olong} {\em tab\-Ver}, {\bf AIPSint} {\em control\-Block}[256], {\bf AIPSint} {\em record}[256], {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSCat_8c_a12}
+
+
+Public: Convert an {\bf Obit\-Table\-Desc}{\rm (p.\,\pageref{structObitTableDesc})} to AIPS table header. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em desc}]The Table descriptor to be updated. \item[{\em init}]If true, initialize the contents of buffers before converting. \item[{\em tab\-Type}]AIPS two character type code \item[{\em tab\-Ver}]AIPS Table version. \item[{\em control\-Block}]AIPS table control block. \item[{\em record}]Second \char`\"{}record\char`\"{} with size and type info. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} structure to report errors. \end{description}
+\end{Desc}
+\index{ObitAIPSCat.c@{Obit\-AIPSCat.c}!ObitAIPSCatUVGetDesc@{ObitAIPSCatUVGetDesc}}
+\index{ObitAIPSCatUVGetDesc@{ObitAIPSCatUVGetDesc}!ObitAIPSCat.c@{Obit\-AIPSCat.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSCat\-UVGet\-Desc ({\bf Obit\-UVDesc} $\ast$ {\em desc}, gchar $\ast$ {\em buffer}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSCat_8c_a7}
+
+
+Public: Convert AIPS header file data to an {\bf Obit\-UVDesc}{\rm (p.\,\pageref{structObitUVDesc})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em desc}]The UV descriptor to be updated. \item[{\em buffer}]A buffer of AIPS\_\-NBPS char with teh contents of the AIPS header file. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} structure to report errors. \end{description}
+\end{Desc}
+\index{ObitAIPSCat.c@{Obit\-AIPSCat.c}!ObitAIPSCatUVSetDesc@{ObitAIPSCatUVSetDesc}}
+\index{ObitAIPSCatUVSetDesc@{ObitAIPSCatUVSetDesc}!ObitAIPSCat.c@{Obit\-AIPSCat.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSCat\-UVSet\-Desc ({\bf Obit\-UVDesc} $\ast$ {\em desc}, gchar $\ast$ {\em buffer}, gboolean {\em init}, {\bf Obit\-AIPSDir\-Cat\-Entry} $\ast$ {\em dir\-Entry}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPSCat_8c_a8}
+
+
+Public: Convert an {\bf Obit\-UVDesc}{\rm (p.\,\pageref{structObitUVDesc})} to AIPS header file data. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em desc}]The UV descriptor to be updated. \item[{\em buffer}]A buffer of AIPS\_\-NBPS char with the contents of the AIPS header file. \item[{\em init}]If true, initialize the contents of buffer before converting. \item[{\em dir\-Entry}]Structure with catalog directory wile file name information. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} structure to report errors. \end{description}
+\end{Desc}

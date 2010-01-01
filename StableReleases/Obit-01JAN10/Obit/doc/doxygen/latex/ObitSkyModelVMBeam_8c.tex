@@ -1,0 +1,280 @@
+\section{Obit\-Sky\-Model\-VMBeam.c File Reference}
+\label{ObitSkyModelVMBeam_8c}\index{ObitSkyModelVMBeam.c@{ObitSkyModelVMBeam.c}}
+{\bf Obit\-Sky\-Model\-VMBeam}{\rm (p.\,\pageref{structObitSkyModelVMBeam})} class function definitions. 
+
+{\tt \#include \char`\"{}Obit\-Thread.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Sky\-Model\-VMBeam.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-CCUtil.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-FFT.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVUtil.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Util.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-PBUtil.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Mem.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Precess.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-ANUtil.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Sky\-Geom.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Sin\-Cos.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf VMBeam\-FTFunc\-Arg}
+\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf VELIGHT}\ 2.997924562e8
+\item 
+\#define {\bf Faz\-Arr\-Size}\ 100
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Sky\-Model\-VMBeam\-FTDFT} ({\bf Obit\-Sky\-Model\-VM} $\ast$in, {\bf olong} field, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Private: FT by DFT, may be overridden in derived class. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMBeam\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMBeam\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMBeam\-Get\-Input} ({\bf Obit\-Sky\-Model} $\ast$inn, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Private: Get Inputs. \item\end{CompactList}\item 
+{\bf Obit\-Sky\-Model\-VMBeam} $\ast$ {\bf new\-Obit\-Sky\-Model\-VMBeam} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMBeam\-From\-Info} ({\bf Obit\-Sky\-Model} $\ast$out, gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$in\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Init Sky\-Model object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Sky\-Model\-VMBeam\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Sky\-Model\-VMBeam} $\ast$ {\bf Obit\-Sky\-Model\-VMBeam\-Copy} ({\bf Obit\-Sky\-Model\-VMBeam} $\ast$in, {\bf Obit\-Sky\-Model\-VMBeam} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+{\bf Obit\-Sky\-Model\-VMBeam} $\ast$ {\bf Obit\-Sky\-Model\-VMBeam\-Create} (gchar $\ast$name, {\bf Obit\-Image\-Mosaic} $\ast$mosaic, {\bf Obit\-UV} $\ast$uv\-Data, {\bf Obit\-Image} $\ast$IBeam, {\bf Obit\-Image} $\ast$VBeam, {\bf Obit\-Image} $\ast$QBeam, {\bf Obit\-Image} $\ast$UBeam, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-Sky\-Model\-VMBeam}{\rm (p.\,\pageref{structObitSkyModelVMBeam})} structures. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMBeam\-Init\-Mod} ({\bf Obit\-Sky\-Model} $\ast$inn, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: initialize {\bf Obit\-Sky\-Model\-VMBeam}{\rm (p.\,\pageref{structObitSkyModelVMBeam})} structures. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMBeam\-Shut\-Down\-Mod} ({\bf Obit\-Sky\-Model} $\ast$inn, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: shutdown {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} processes. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMBeam\-Init\-Model} ({\bf Obit\-Sky\-Model} $\ast$inn, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Initializes an {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} for a pass through data in time order. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMBeam\-Update\-Model} ({\bf Obit\-Sky\-Model\-VM} $\ast$inn, {\bf ofloat} time, {\bf olong} suba, {\bf Obit\-UV} $\ast$uvdata, {\bf olong} ithread, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Routine to update model. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMBeam\-Get\-Info} ({\bf Obit\-Sky\-Model} $\ast$inn, gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$out\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Extract information about underlying structures to {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMBeam\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+void {\bf Obit\-Sky\-Model\-VMBeam\-Chose} ({\bf Obit\-Sky\-Model} $\ast$inn, {\bf Obit\-UV} $\ast$uvdata)
+\begin{CompactList}\small\item\em Private: Chose model type. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Sky\-Model\-VMBeam}{\rm (p.\,\pageref{structObitSkyModelVMBeam})} class function definitions. 
+
+This class is derived from the {\bf Obit\-Sky\-Model\-VM}{\rm (p.\,\pageref{structObitSkyModelVM})} class
+
+This class represents sky models incorporating beam corrections and their Fourier transforms.
+
+\subsection{Define Documentation}
+\index{ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}!FazArrSize@{FazArrSize}}
+\index{FazArrSize@{FazArrSize}!ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Faz\-Arr\-Size\ 100}\label{ObitSkyModelVMBeam_8c_a1}
+
+
+\index{ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}!VELIGHT@{VELIGHT}}
+\index{VELIGHT@{VELIGHT}!ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define VELIGHT\ 2.997924562e8}\label{ObitSkyModelVMBeam_8c_a0}
+
+
+
+
+\subsection{Function Documentation}
+\index{ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}!newObitSkyModelVMBeam@{newObitSkyModelVMBeam}}
+\index{newObitSkyModelVMBeam@{newObitSkyModelVMBeam}!ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Sky\-Model\-VMBeam}$\ast$ new\-Obit\-Sky\-Model\-VMBeam (gchar $\ast$ {\em name})}\label{ObitSkyModelVMBeam_8c_a11}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}!ObitSkyModelVMBeamChose@{ObitSkyModelVMBeamChose}}
+\index{ObitSkyModelVMBeamChose@{ObitSkyModelVMBeamChose}!ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMBeam\-Chose ({\bf Obit\-Sky\-Model} $\ast$ {\em inn}, {\bf Obit\-UV} $\ast$ {\em uvdata})}\label{ObitSkyModelVMBeam_8c_a22}
+
+
+Private: Chose model type. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to the {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} . \item[{\em uvdata}]UV data set \end{description}
+\end{Desc}
+\index{ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}!ObitSkyModelVMBeamClassInit@{ObitSkyModelVMBeamClassInit}}
+\index{ObitSkyModelVMBeamClassInit@{ObitSkyModelVMBeamClassInit}!ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMBeam\-Class\-Init (void)}\label{ObitSkyModelVMBeam_8c_a21}
+
+
+Public: Class initializer. 
+
+\index{ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}!ObitSkyModelVMBeamClear@{ObitSkyModelVMBeamClear}}
+\index{ObitSkyModelVMBeamClear@{ObitSkyModelVMBeamClear}!ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMBeam\-Clear (gpointer {\em inn})}\label{ObitSkyModelVMBeam_8c_a7}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. For some reason this wasn't build into the GType class. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-Sky\-Model\-VMBeam$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}!ObitSkyModelVMBeamCopy@{ObitSkyModelVMBeamCopy}}
+\index{ObitSkyModelVMBeamCopy@{ObitSkyModelVMBeamCopy}!ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Sky\-Model\-VMBeam}$\ast$ Obit\-Sky\-Model\-VMBeam\-Copy ({\bf Obit\-Sky\-Model\-VMBeam} $\ast$ {\em in}, {\bf Obit\-Sky\-Model\-VMBeam} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMBeam_8c_a14}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}!ObitSkyModelVMBeamCreate@{ObitSkyModelVMBeamCreate}}
+\index{ObitSkyModelVMBeamCreate@{ObitSkyModelVMBeamCreate}!ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Sky\-Model\-VMBeam}$\ast$ Obit\-Sky\-Model\-VMBeam\-Create (gchar $\ast$ {\em name}, {\bf Obit\-Image\-Mosaic} $\ast$ {\em mosaic}, {\bf Obit\-UV} $\ast$ {\em uv\-Data}, {\bf Obit\-Image} $\ast$ {\em IBeam}, {\bf Obit\-Image} $\ast$ {\em VBeam}, {\bf Obit\-Image} $\ast$ {\em QBeam}, {\bf Obit\-Image} $\ast$ {\em UBeam}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMBeam_8c_a15}
+
+
+Public: Create/initialize {\bf Obit\-Sky\-Model\-VMBeam}{\rm (p.\,\pageref{structObitSkyModelVMBeam})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em mosaic}]{\bf Obit\-Image\-Mosaic}{\rm (p.\,\pageref{structObitImageMosaic})} giving one or more images/CC tables \item[{\em uv\-Data}]UV data to be operated on \item[{\em IBeam}]I Beam normalized image \item[{\em VBeam}]V Beam fractional image \item[{\em QBeam}]Q Beam fractional image \item[{\em UBeam}]U Beam ifractional mage \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}!ObitSkyModelVMBeamFromInfo@{ObitSkyModelVMBeamFromInfo}}
+\index{ObitSkyModelVMBeamFromInfo@{ObitSkyModelVMBeamFromInfo}!ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMBeam\-From\-Info ({\bf Obit\-Sky\-Model} $\ast$ {\em out}, gchar $\ast$ {\em prefix}, {\bf Obit\-Info\-List} $\ast$ {\em in\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMBeam_8c_a12}
+
+
+Public: Init Sky\-Model object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em out}]the new object.to be initialized \item[{\em prefix}]If Non\-Null, string to be added to beginning of in\-List entry name \char`\"{}xxx\char`\"{} in the following \item[{\em in\-List}]Info\-List to extract object information from \begin{itemize}
+\item \char`\"{}xxx\-Class\-Type\char`\"{} string Sky\-Model type, \char`\"{}Squint\char`\"{} for this class \item \char`\"{}xxx\-Threshold\char`\"{} ofloat Threshold flux density for doing high accuracy DFT model \end{itemize}
+\item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}!ObitSkyModelVMBeamFTDFT@{ObitSkyModelVMBeamFTDFT}}
+\index{ObitSkyModelVMBeamFTDFT@{ObitSkyModelVMBeamFTDFT}!ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMBeam\-FTDFT ({\bf Obit\-Sky\-Model\-VM} $\ast$ {\em inn}, {\bf olong} {\em field}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMBeam_8c_a5}
+
+
+Private: FT by DFT, may be overridden in derived class. 
+
+If threading has been enabled by a call to Obit\-Thread\-Allow\-Threads this routine will divide the buffer up amount the number of processors returned by Obit\-Thread\-Num\-Proc. If do\-Divide member is true then FT of model is divided into the data, If do\-Replace member is true then FT of model replaces the data, else, it is subtracted. After the AIPSish QXXPTS, QPTDIV and friends This function may be overridden in a derived class and should always be called by its function pointer. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model with model components loaded (Obit\-Sky\-Model\-Load) \item[{\em field}]Field number being processed (-1 =$>$ all) \item[{\em uvdata}]UV data set to model and subtract from current buffer \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}!ObitSkyModelVMBeamGetClass@{ObitSkyModelVMBeamGetClass}}
+\index{ObitSkyModelVMBeamGetClass@{ObitSkyModelVMBeamGetClass}!ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Sky\-Model\-VMBeam\-Get\-Class (void)}\label{ObitSkyModelVMBeam_8c_a13}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}!ObitSkyModelVMBeamGetInfo@{ObitSkyModelVMBeamGetInfo}}
+\index{ObitSkyModelVMBeamGetInfo@{ObitSkyModelVMBeamGetInfo}!ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMBeam\-Get\-Info ({\bf Obit\-Sky\-Model} $\ast$ {\em inn}, gchar $\ast$ {\em prefix}, {\bf Obit\-Info\-List} $\ast$ {\em out\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMBeam_8c_a20}
+
+
+Public: Extract information about underlying structures to {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object of interest. \item[{\em prefix}]If Non\-Null, string to be added to beginning of out\-List entry name \char`\"{}xxx\char`\"{} in the following \item[{\em out\-List}]Info\-List to write entries into \begin{itemize}
+\item \char`\"{}xxx\-Class\-Type\char`\"{} string Sky\-Model type, \char`\"{}Squint\char`\"{} for this class \item \char`\"{}xxx\-Threshold\char`\"{} ofloat Threshold flux density for doing high accuracy DFT model \end{itemize}
+\item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}!ObitSkyModelVMBeamGetInput@{ObitSkyModelVMBeamGetInput}}
+\index{ObitSkyModelVMBeamGetInput@{ObitSkyModelVMBeamGetInput}!ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMBeam\-Get\-Input ({\bf Obit\-Sky\-Model} $\ast$ {\em inn}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMBeam_8c_a9}
+
+
+Private: Get Inputs. 
+
+If any image has an info item \char`\"{}max\-Abs\-Resid\char`\"{} the the maximum of any of these is used, else the MAX (fabs(minval), fabs(maxval)) is used. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to the {\bf Obit\-Sky\-Model\-VMBeam}{\rm (p.\,\pageref{structObitSkyModelVMBeam})} . \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}!ObitSkyModelVMBeamInit@{ObitSkyModelVMBeamInit}}
+\index{ObitSkyModelVMBeamInit@{ObitSkyModelVMBeamInit}!ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMBeam\-Init (gpointer {\em inn})}\label{ObitSkyModelVMBeam_8c_a6}
+
+
+Private: Initialize newly instantiated object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}!ObitSkyModelVMBeamInitMod@{ObitSkyModelVMBeamInitMod}}
+\index{ObitSkyModelVMBeamInitMod@{ObitSkyModelVMBeamInitMod}!ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMBeam\-Init\-Mod ({\bf Obit\-Sky\-Model} $\ast$ {\em inn}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMBeam_8c_a16}
+
+
+Public: initialize {\bf Obit\-Sky\-Model\-VMBeam}{\rm (p.\,\pageref{structObitSkyModelVMBeam})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model to initialize \item[{\em uvdata}]uv data being modeled. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}!ObitSkyModelVMBeamInitModel@{ObitSkyModelVMBeamInitModel}}
+\index{ObitSkyModelVMBeamInitModel@{ObitSkyModelVMBeamInitModel}!ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMBeam\-Init\-Model ({\bf Obit\-Sky\-Model} $\ast$ {\em inn}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMBeam_8c_a18}
+
+
+Initializes an {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} for a pass through data in time order. 
+
+Resets current times, converts field offsets of components to pointing offsets \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model to initialize \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}!ObitSkyModelVMBeamShutDownMod@{ObitSkyModelVMBeamShutDownMod}}
+\index{ObitSkyModelVMBeamShutDownMod@{ObitSkyModelVMBeamShutDownMod}!ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMBeam\-Shut\-Down\-Mod ({\bf Obit\-Sky\-Model} $\ast$ {\em inn}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMBeam_8c_a17}
+
+
+Public: shutdown {\bf Obit\-Sky\-Model}{\rm (p.\,\pageref{structObitSkyModel})} processes. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model to shutdown \item[{\em uvdata}]uv data being modeled. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}!ObitSkyModelVMBeamUpdateModel@{ObitSkyModelVMBeamUpdateModel}}
+\index{ObitSkyModelVMBeamUpdateModel@{ObitSkyModelVMBeamUpdateModel}!ObitSkyModelVMBeam.c@{Obit\-Sky\-Model\-VMBeam.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sky\-Model\-VMBeam\-Update\-Model ({\bf Obit\-Sky\-Model\-VM} $\ast$ {\em inn}, {\bf ofloat} {\em time}, {\bf olong} {\em suba}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf olong} {\em ithread}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSkyModelVMBeam_8c_a19}
+
+
+Public: Routine to update model. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Sky\-Model\-VM Parameters on info:(?) PBmin = min. beam gain correction \item[{\em time}]current time (d) \item[{\em suba}]0-rel subarray number \item[{\em uvdata}]uv data being modeled. \item[{\em ithread}]which thread (0-rel) , $<$0-$>$ no threads \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}

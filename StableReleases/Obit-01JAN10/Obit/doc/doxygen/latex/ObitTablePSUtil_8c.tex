@@ -1,0 +1,48 @@
+\section{Obit\-Table\-PSUtil.c File Reference}
+\label{ObitTablePSUtil_8c}\index{ObitTablePSUtil.c@{ObitTablePSUtil.c}}
+{\bf Obit\-Table\-PS}{\rm (p.\,\pageref{structObitTablePS})} class utility function definitions. 
+
+{\tt \#include \char`\"{}Obit\-Table\-PSUtil.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+gboolean {\bf Obit\-Table\-PSWant\-Sour} ({\bf Obit\-Table\-PS} $\ast$in, gchar $\ast$target, {\bf olong} $\ast$the\-Row, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Lookup source. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-PSSummary} ({\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-Info\-List} $\ast$info, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Write/update processing summary. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Table\-PS}{\rm (p.\,\pageref{structObitTablePS})} class utility function definitions. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitTablePSUtil.c@{Obit\-Table\-PSUtil.c}!ObitTablePSSummary@{ObitTablePSSummary}}
+\index{ObitTablePSSummary@{ObitTablePSSummary}!ObitTablePSUtil.c@{Obit\-Table\-PSUtil.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-PSSummary ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-Info\-List} $\ast$ {\em info}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTablePSUtil_8c_a1}
+
+
+Public: Write/update processing summary. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]{\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} object with PS table to update \item[{\em info}]List with parameters: \begin{itemize}
+\item \char`\"{}Field\-Name\char`\"{} OBIT\_\-string (16,1,1) \item \char`\"{}obsdate\char`\"{} OBIT\_\-string (8,1,1) Observing ref. date.(YYYYMMDD) default - get from header \item \char`\"{}RAPoint\char`\"{} OBIT\_\-double (1,1,1) Pointing RA at epoch 2000 \item \char`\"{}Dec\-Point\char`\"{} OBIT\_\-double (1,1,1) Pointing Dec at epoch 2000 \item \char`\"{}Status\char`\"{} OBIT\_\-string (8,1,1) Processing status, default \char`\"{}Done\char`\"{} \item \char`\"{}IQU\char`\"{} OBIT\_\-bool (3,1,1) IQU Flags True if processed\} \item \char`\"{}Special\char`\"{} OBIT\_\-bool (1,1,1) Special processing applied, def. FALSE \item \char`\"{}No\-Fields\char`\"{} OBIT\_\-int (1,1,1) Number of sub fields \item \char`\"{}CCLimit\char`\"{} OBIT\_\-bool (3,1,1) Flags to using all possible CC, def FALSE \item \char`\"{}Per\-Cent\char`\"{} OBIT\_\-float (3,1,1) percent of visibility data I,Q,U, def 100.0 \item \char`\"{}Pix\-Max\char`\"{} OBIT\_\-float (3,1,1) Pixel max (Jy) I,Q,U \item \char`\"{}Pix\-Min\char`\"{} OBIT\_\-float (3,1,1) Pixel min (Jy) I,Q,U \item \char`\"{}Quality\char`\"{} OBIT\_\-float (3,1,1) Quality measure, RMS I,Q,U \item \char`\"{}Comment\char`\"{} OBIT\_\-string (80,1,1) Comments, default blank \end{itemize}
+\item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\index{ObitTablePSUtil.c@{Obit\-Table\-PSUtil.c}!ObitTablePSWantSour@{ObitTablePSWantSour}}
+\index{ObitTablePSWantSour@{ObitTablePSWantSour}!ObitTablePSUtil.c@{Obit\-Table\-PSUtil.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Table\-PSWant\-Sour ({\bf Obit\-Table\-PS} $\ast$ {\em in}, gchar $\ast$ {\em target}, {\bf olong} $\ast$ {\em the\-Row}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTablePSUtil_8c_a0}
+
+
+Public: Lookup source. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]PS table to access, opened and closed externally \item[{\em target}]Desired target field name. \item[{\em the\-Row}][out] row number on which match found, even if not successful, else -1. \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]FALSE if successful prior processing indicated, else TRUE \end{Desc}

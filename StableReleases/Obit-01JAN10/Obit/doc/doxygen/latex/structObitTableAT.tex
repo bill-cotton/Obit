@@ -1,0 +1,491 @@
+\section{Obit\-Table\-AT Struct Reference}
+\label{structObitTableAT}\index{ObitTableAT@{ObitTableAT}}
+Obit\-Table\-AT Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-AT.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-IO} $\ast$ {\bf my\-IO}
+\begin{CompactList}\small\item\em I/O interface to access disk resident data. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Desc} $\ast$ {\bf my\-Desc}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Sel} $\ast$ {\bf my\-Sel}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf buffer}
+\begin{CompactList}\small\item\em Table buffer. \item\end{CompactList}\item 
+{\bf olong} {\bf buffer\-Size}
+\begin{CompactList}\small\item\em Table buffer size in floats. \item\end{CompactList}\item 
+gchar $\ast$ {\bf tab\-Type}
+\begin{CompactList}\small\item\em Table type (name of type, e.g. \item\end{CompactList}\item 
+{\bf olong} {\bf tab\-Ver}
+\begin{CompactList}\small\item\em Table version number(1-rel). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf my\-Host}
+\begin{CompactList}\small\item\em This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. \item\end{CompactList}\item 
+{\bf oint} {\bf revision}
+\begin{CompactList}\small\item\em Revision number of the table definition. \item\end{CompactList}\item 
+gchar {\bf obscode} [MAXKEYCHARTABLEAT]
+\begin{CompactList}\small\item\em Observation code. \item\end{CompactList}\item 
+gchar {\bf Ref\-Date} [MAXKEYCHARTABLEAT]
+\begin{CompactList}\small\item\em Reference date as \char`\"{}YYYYMMDD\char`\"{}. \item\end{CompactList}\item 
+{\bf oint} {\bf num\-Stkd}
+\begin{CompactList}\small\item\em The number of Stokes(?). \item\end{CompactList}\item 
+{\bf oint} {\bf stk1}
+\begin{CompactList}\small\item\em First Stokes(?). \item\end{CompactList}\item 
+{\bf oint} {\bf num\-Band}
+\begin{CompactList}\small\item\em The number of Bands(?). \item\end{CompactList}\item 
+{\bf oint} {\bf num\-Chan}
+\begin{CompactList}\small\item\em The number of spectral channels. \item\end{CompactList}\item 
+{\bf odouble} {\bf ref\-Freq}
+\begin{CompactList}\small\item\em Reference Frequency. \item\end{CompactList}\item 
+{\bf ofloat} {\bf chan\-BW}
+\begin{CompactList}\small\item\em Channel bandwidth. \item\end{CompactList}\item 
+{\bf ofloat} {\bf ref\-Pixl}
+\begin{CompactList}\small\item\em Reference Pixel.. \item\end{CompactList}\item 
+{\bf oint} {\bf no\-PCal}
+\begin{CompactList}\small\item\em Number of polarization calibration parameters. \item\end{CompactList}\item 
+gchar {\bf pol\-Type} [MAXKEYCHARTABLEAT]
+\begin{CompactList}\small\item\em The Polarization calibration type. \item\end{CompactList}\item 
+{\bf oint} {\bf Freq\-ID}
+\begin{CompactList}\small\item\em The frequency ID. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-Off}
+\begin{CompactList}\small\item\em Column offset for The center time. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-Col}
+\begin{CompactList}\small\item\em Physical column number for The center time. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-IOff}
+\begin{CompactList}\small\item\em Column offset for Time interval of record in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-ICol}
+\begin{CompactList}\small\item\em Physical column number for Time interval of record in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf antenna\-No\-Off}
+\begin{CompactList}\small\item\em Column offset for Antenna number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf antenna\-No\-Col}
+\begin{CompactList}\small\item\em Physical column number for Antenna number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Array\-Off}
+\begin{CompactList}\small\item\em Column offset for Array number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Array\-Col}
+\begin{CompactList}\small\item\em Physical column number for Array number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Levels\-Off}
+\begin{CompactList}\small\item\em Column offset for Number of levels of something(?) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Levels\-Col}
+\begin{CompactList}\small\item\em Physical column number for Number of levels of something(?) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf pol\-Type\-AOff}
+\begin{CompactList}\small\item\em Column offset for Feed A feed poln. \item\end{CompactList}\item 
+{\bf olong} {\bf pol\-Type\-ACol}
+\begin{CompactList}\small\item\em Physical column number for Feed A feed poln. \item\end{CompactList}\item 
+{\bf olong} {\bf pol\-Type\-BOff}
+\begin{CompactList}\small\item\em Column offset for Feed B feed poln. \item\end{CompactList}\item 
+{\bf olong} {\bf pol\-Type\-BCol}
+\begin{CompactList}\small\item\em Physical column number for Feed B feed poln. \item\end{CompactList}\item 
+{\bf olong} {\bf Ant\-Name\-Off}
+\begin{CompactList}\small\item\em Column offset for Station name in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Ant\-Name\-Col}
+\begin{CompactList}\small\item\em Physical column number for Station name in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Pol\-Ang\-AOff}
+\begin{CompactList}\small\item\em Column offset for Feed A feed position angle in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Pol\-Ang\-ACol}
+\begin{CompactList}\small\item\em Physical column number for Feed A feed position angle in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Pol\-Cal\-AOff}
+\begin{CompactList}\small\item\em Column offset for Feed A poln. \item\end{CompactList}\item 
+{\bf olong} {\bf Pol\-Cal\-ACol}
+\begin{CompactList}\small\item\em Physical column number for Feed A poln. \item\end{CompactList}\item 
+{\bf olong} {\bf Pol\-Ang\-BOff}
+\begin{CompactList}\small\item\em Column offset for Feed B feed position angle in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Pol\-Ang\-BCol}
+\begin{CompactList}\small\item\em Physical column number for Feed B feed position angle in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Pol\-Cal\-BOff}
+\begin{CompactList}\small\item\em Column offset for Feed B poln. \item\end{CompactList}\item 
+{\bf olong} {\bf Pol\-Cal\-BCol}
+\begin{CompactList}\small\item\em Physical column number for Feed B poln. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-AT Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableAT@{Obit\-Table\-AT}!antennaNoCol@{antennaNoCol}}
+\index{antennaNoCol@{antennaNoCol}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::antenna\-No\-Col}}\label{structObitTableAT_o33}
+
+
+Physical column number for Antenna number in table record. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!antennaNoOff@{antennaNoOff}}
+\index{antennaNoOff@{antennaNoOff}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::antenna\-No\-Off}}\label{structObitTableAT_o32}
+
+
+Column offset for Antenna number in table record. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!AntNameCol@{AntNameCol}}
+\index{AntNameCol@{AntNameCol}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::Ant\-Name\-Col}}\label{structObitTableAT_o43}
+
+
+Physical column number for Station name in table record. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!AntNameOff@{AntNameOff}}
+\index{AntNameOff@{AntNameOff}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::Ant\-Name\-Off}}\label{structObitTableAT_o42}
+
+
+Column offset for Station name in table record. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!ArrayCol@{ArrayCol}}
+\index{ArrayCol@{ArrayCol}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::Array\-Col}}\label{structObitTableAT_o35}
+
+
+Physical column number for Array number in table record. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!ArrayOff@{ArrayOff}}
+\index{ArrayOff@{ArrayOff}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::Array\-Off}}\label{structObitTableAT_o34}
+
+
+Column offset for Array number in table record. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!buffer@{buffer}}
+\index{buffer@{buffer}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-AT::buffer}}\label{structObitTableAT_o10}
+
+
+Table buffer. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!bufferSize@{bufferSize}}
+\index{bufferSize@{bufferSize}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::buffer\-Size}}\label{structObitTableAT_o11}
+
+
+Table buffer size in floats. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!chanBW@{chanBW}}
+\index{chanBW@{chanBW}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-AT::chan\-BW}}\label{structObitTableAT_o23}
+
+
+Channel bandwidth. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-AT::Class\-Info}}\label{structObitTableAT_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!FreqID@{FreqID}}
+\index{FreqID@{FreqID}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-AT::Freq\-ID}}\label{structObitTableAT_o27}
+
+
+The frequency ID. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!info@{info}}
+\index{info@{info}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Table\-AT::info}}\label{structObitTableAT_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Desc}$\ast$ {\bf Obit\-Table\-AT::my\-Desc}}\label{structObitTableAT_o8}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!myHost@{myHost}}
+\index{myHost@{myHost}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-Table\-AT::my\-Host}}\label{structObitTableAT_o14}
+
+
+This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!myIO@{myIO}}
+\index{myIO@{myIO}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IO}$\ast$ {\bf Obit\-Table\-AT::my\-IO}}\label{structObitTableAT_o7}
+
+
+I/O interface to access disk resident data. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Sel}$\ast$ {\bf Obit\-Table\-AT::my\-Sel}}\label{structObitTableAT_o9}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Table\-AT::my\-Status}}\label{structObitTableAT_o6}
+
+
+I/O status. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!name@{name}}
+\index{name@{name}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-AT::name}}\label{structObitTableAT_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!noPCal@{noPCal}}
+\index{noPCal@{noPCal}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-AT::no\-PCal}}\label{structObitTableAT_o25}
+
+
+Number of polarization calibration parameters. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!numBand@{numBand}}
+\index{numBand@{numBand}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-AT::num\-Band}}\label{structObitTableAT_o20}
+
+
+The number of Bands(?). 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!numChan@{numChan}}
+\index{numChan@{numChan}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-AT::num\-Chan}}\label{structObitTableAT_o21}
+
+
+The number of spectral channels. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!numLevelsCol@{numLevelsCol}}
+\index{numLevelsCol@{numLevelsCol}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::num\-Levels\-Col}}\label{structObitTableAT_o37}
+
+
+Physical column number for Number of levels of something(?) in table record. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!numLevelsOff@{numLevelsOff}}
+\index{numLevelsOff@{numLevelsOff}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::num\-Levels\-Off}}\label{structObitTableAT_o36}
+
+
+Column offset for Number of levels of something(?) in table record. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!numStkd@{numStkd}}
+\index{numStkd@{numStkd}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-AT::num\-Stkd}}\label{structObitTableAT_o18}
+
+
+The number of Stokes(?). 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-AT::Obit\-Id}}\label{structObitTableAT_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!obscode@{obscode}}
+\index{obscode@{obscode}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-AT::obscode}[MAXKEYCHARTABLEAT]}\label{structObitTableAT_o16}
+
+
+Observation code. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!PolAngACol@{PolAngACol}}
+\index{PolAngACol@{PolAngACol}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::Pol\-Ang\-ACol}}\label{structObitTableAT_o45}
+
+
+Physical column number for Feed A feed position angle in table record. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!PolAngAOff@{PolAngAOff}}
+\index{PolAngAOff@{PolAngAOff}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::Pol\-Ang\-AOff}}\label{structObitTableAT_o44}
+
+
+Column offset for Feed A feed position angle in table record. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!PolAngBCol@{PolAngBCol}}
+\index{PolAngBCol@{PolAngBCol}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::Pol\-Ang\-BCol}}\label{structObitTableAT_o49}
+
+
+Physical column number for Feed B feed position angle in table record. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!PolAngBOff@{PolAngBOff}}
+\index{PolAngBOff@{PolAngBOff}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::Pol\-Ang\-BOff}}\label{structObitTableAT_o48}
+
+
+Column offset for Feed B feed position angle in table record. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!PolCalACol@{PolCalACol}}
+\index{PolCalACol@{PolCalACol}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::Pol\-Cal\-ACol}}\label{structObitTableAT_o47}
+
+
+Physical column number for Feed A poln. 
+
+cal parameter. in table record \index{ObitTableAT@{Obit\-Table\-AT}!PolCalAOff@{PolCalAOff}}
+\index{PolCalAOff@{PolCalAOff}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::Pol\-Cal\-AOff}}\label{structObitTableAT_o46}
+
+
+Column offset for Feed A poln. 
+
+cal parameter. in table record \index{ObitTableAT@{Obit\-Table\-AT}!PolCalBCol@{PolCalBCol}}
+\index{PolCalBCol@{PolCalBCol}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::Pol\-Cal\-BCol}}\label{structObitTableAT_o51}
+
+
+Physical column number for Feed B poln. 
+
+cal parameter in table record \index{ObitTableAT@{Obit\-Table\-AT}!PolCalBOff@{PolCalBOff}}
+\index{PolCalBOff@{PolCalBOff}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::Pol\-Cal\-BOff}}\label{structObitTableAT_o50}
+
+
+Column offset for Feed B poln. 
+
+cal parameter in table record \index{ObitTableAT@{Obit\-Table\-AT}!polType@{polType}}
+\index{polType@{polType}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-AT::pol\-Type}[MAXKEYCHARTABLEAT]}\label{structObitTableAT_o26}
+
+
+The Polarization calibration type. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!polTypeACol@{polTypeACol}}
+\index{polTypeACol@{polTypeACol}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::pol\-Type\-ACol}}\label{structObitTableAT_o39}
+
+
+Physical column number for Feed A feed poln. 
+
+type 'R','L','X','Y', actually only one valid character. in table record \index{ObitTableAT@{Obit\-Table\-AT}!polTypeAOff@{polTypeAOff}}
+\index{polTypeAOff@{polTypeAOff}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::pol\-Type\-AOff}}\label{structObitTableAT_o38}
+
+
+Column offset for Feed A feed poln. 
+
+type 'R','L','X','Y', actually only one valid character. in table record \index{ObitTableAT@{Obit\-Table\-AT}!polTypeBCol@{polTypeBCol}}
+\index{polTypeBCol@{polTypeBCol}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::pol\-Type\-BCol}}\label{structObitTableAT_o41}
+
+
+Physical column number for Feed B feed poln. 
+
+type 'R','L','X','Y' in table record \index{ObitTableAT@{Obit\-Table\-AT}!polTypeBOff@{polTypeBOff}}
+\index{polTypeBOff@{polTypeBOff}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::pol\-Type\-BOff}}\label{structObitTableAT_o40}
+
+
+Column offset for Feed B feed poln. 
+
+type 'R','L','X','Y' in table record \index{ObitTableAT@{Obit\-Table\-AT}!RefDate@{RefDate}}
+\index{RefDate@{RefDate}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-AT::Ref\-Date}[MAXKEYCHARTABLEAT]}\label{structObitTableAT_o17}
+
+
+Reference date as \char`\"{}YYYYMMDD\char`\"{}. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::Reference\-Count}}\label{structObitTableAT_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!refFreq@{refFreq}}
+\index{refFreq@{refFreq}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-AT::ref\-Freq}}\label{structObitTableAT_o22}
+
+
+Reference Frequency. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!refPixl@{refPixl}}
+\index{refPixl@{refPixl}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-AT::ref\-Pixl}}\label{structObitTableAT_o24}
+
+
+Reference Pixel.. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!revision@{revision}}
+\index{revision@{revision}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-AT::revision}}\label{structObitTableAT_o15}
+
+
+Revision number of the table definition. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!stk1@{stk1}}
+\index{stk1@{stk1}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-AT::stk1}}\label{structObitTableAT_o19}
+
+
+First Stokes(?). 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!tabType@{tabType}}
+\index{tabType@{tabType}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-AT::tab\-Type}}\label{structObitTableAT_o12}
+
+
+Table type (name of type, e.g. 
+
+\char`\"{}AIPS AN\char`\"{}) \index{ObitTableAT@{Obit\-Table\-AT}!tabVer@{tabVer}}
+\index{tabVer@{tabVer}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::tab\-Ver}}\label{structObitTableAT_o13}
+
+
+Table version number(1-rel). 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!thread@{thread}}
+\index{thread@{thread}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Table\-AT::thread}}\label{structObitTableAT_o4}
+
+
+Threading info member object. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!TimeCol@{TimeCol}}
+\index{TimeCol@{TimeCol}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::Time\-Col}}\label{structObitTableAT_o29}
+
+
+Physical column number for The center time. 
+
+in table record \index{ObitTableAT@{Obit\-Table\-AT}!TimeICol@{TimeICol}}
+\index{TimeICol@{TimeICol}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::Time\-ICol}}\label{structObitTableAT_o31}
+
+
+Physical column number for Time interval of record in table record. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!TimeIOff@{TimeIOff}}
+\index{TimeIOff@{TimeIOff}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::Time\-IOff}}\label{structObitTableAT_o30}
+
+
+Column offset for Time interval of record in table record. 
+
+\index{ObitTableAT@{Obit\-Table\-AT}!TimeOff@{TimeOff}}
+\index{TimeOff@{TimeOff}!ObitTableAT@{Obit\-Table\-AT}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-AT::Time\-Off}}\label{structObitTableAT_o28}
+
+
+Column offset for The center time. 
+
+in table record 
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-AT.h}\end{CompactItemize}

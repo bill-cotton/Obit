@@ -1,0 +1,19 @@
+srcdir = @srcdir@
+
+CPPFLAGS = @CPPFLAGS@
+CFLAGS = @CFLAGS@
+LDFLAGS = @LDFLAGS@
+LIBS = @LIBS@
+DEFS = @DEFS@
+CPPFLAGS = @CPPFLAGS@
+
+ALL_CPPFLAGS = $(CPPFLAGS) -I$(srcdir)
+ALL_CFLAGS = $(CFLAGS) @GLIB_CFLAGS@
+
+all: libcfitsio.a
+
+.c.o:
+	$(CC) -c $(ALL_CPPFLAGS) $(ALL_CFLAGS) $<
+
+libcfitsio.a: fitsio.o
+	$(AR) r $@ $<

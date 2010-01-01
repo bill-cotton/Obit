@@ -1,0 +1,8 @@
+Writing XML-RPC servers in Python.
+
+* What is passed in as a class, comes out as a dictionary.
+
+* You can't return None.  Since that's exactly what Pytrhon does if
+  you omit the return statement from a function, be sure to explicitly
+  return something.  My suggestion is returning True to indicate
+  things worked out as expected.

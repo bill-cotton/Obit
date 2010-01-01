@@ -1,0 +1,131 @@
+\section{Obit\-Table\-FQRow Struct Reference}
+\label{structObitTableFQRow}\index{ObitTableFQRow@{ObitTableFQRow}}
+Obit\-Table\-FQRow Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-FQ.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf my\-Table}
+\begin{CompactList}\small\item\em Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. \item\end{CompactList}\item 
+gpointer {\bf my\-Row\-Data}
+\begin{CompactList}\small\item\em Pointer to row data in buffer (never g\_\-free this). \item\end{CompactList}\item 
+{\bf oint} {\bf fqid}
+\begin{CompactList}\small\item\em Frequency ID number for row, this is a random parameter in the uv data. \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf freq\-Off}
+\begin{CompactList}\small\item\em Offset from reference frequency for each IF. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf ch\-Width}
+\begin{CompactList}\small\item\em Bandwidth of an individual channel, now always written and read as a signed value. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf tot\-BW}
+\begin{CompactList}\small\item\em Total bandwidth of the IF, now written and read as an unsigned value. \item\end{CompactList}\item 
+{\bf oint} $\ast$ {\bf side\-Band}
+\begin{CompactList}\small\item\em Sideband of the IF (-1 =\$$>$\$ lower, +1 =\$$>$\$ upper), now always written and read as +1. \item\end{CompactList}\item 
+{\bf olong} {\bf status}
+\begin{CompactList}\small\item\em status 0=normal, 1=modified, -1=flagged \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-FQRow Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableFQRow@{Obit\-Table\-FQRow}!chWidth@{chWidth}}
+\index{chWidth@{chWidth}!ObitTableFQRow@{Obit\-Table\-FQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-FQRow::ch\-Width}}\label{structObitTableFQRow_o8}
+
+
+Bandwidth of an individual channel, now always written and read as a signed value. 
+
+\index{ObitTableFQRow@{Obit\-Table\-FQRow}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableFQRow@{Obit\-Table\-FQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-FQRow::Class\-Info}}\label{structObitTableFQRow_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableFQRow@{Obit\-Table\-FQRow}!fqid@{fqid}}
+\index{fqid@{fqid}!ObitTableFQRow@{Obit\-Table\-FQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-FQRow::fqid}}\label{structObitTableFQRow_o6}
+
+
+Frequency ID number for row, this is a random parameter in the uv data. 
+
+\index{ObitTableFQRow@{Obit\-Table\-FQRow}!freqOff@{freqOff}}
+\index{freqOff@{freqOff}!ObitTableFQRow@{Obit\-Table\-FQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-Table\-FQRow::freq\-Off}}\label{structObitTableFQRow_o7}
+
+
+Offset from reference frequency for each IF. 
+
+\index{ObitTableFQRow@{Obit\-Table\-FQRow}!myRowData@{myRowData}}
+\index{myRowData@{myRowData}!ObitTableFQRow@{Obit\-Table\-FQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-FQRow::my\-Row\-Data}}\label{structObitTableFQRow_o5}
+
+
+Pointer to row data in buffer (never g\_\-free this). 
+
+\index{ObitTableFQRow@{Obit\-Table\-FQRow}!myTable@{myTable}}
+\index{myTable@{myTable}!ObitTableFQRow@{Obit\-Table\-FQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ {\bf Obit\-Table\-FQRow::my\-Table}}\label{structObitTableFQRow_o4}
+
+
+Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. 
+
+\index{ObitTableFQRow@{Obit\-Table\-FQRow}!name@{name}}
+\index{name@{name}!ObitTableFQRow@{Obit\-Table\-FQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-FQRow::name}}\label{structObitTableFQRow_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableFQRow@{Obit\-Table\-FQRow}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableFQRow@{Obit\-Table\-FQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-FQRow::Obit\-Id}}\label{structObitTableFQRow_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableFQRow@{Obit\-Table\-FQRow}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableFQRow@{Obit\-Table\-FQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-FQRow::Reference\-Count}}\label{structObitTableFQRow_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableFQRow@{Obit\-Table\-FQRow}!sideBand@{sideBand}}
+\index{sideBand@{sideBand}!ObitTableFQRow@{Obit\-Table\-FQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint}$\ast$ {\bf Obit\-Table\-FQRow::side\-Band}}\label{structObitTableFQRow_o10}
+
+
+Sideband of the IF (-1 =\$$>$\$ lower, +1 =\$$>$\$ upper), now always written and read as +1. 
+
+\index{ObitTableFQRow@{Obit\-Table\-FQRow}!status@{status}}
+\index{status@{status}!ObitTableFQRow@{Obit\-Table\-FQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-FQRow::status}}\label{structObitTableFQRow_o11}
+
+
+status 0=normal, 1=modified, -1=flagged 
+
+\index{ObitTableFQRow@{Obit\-Table\-FQRow}!totBW@{totBW}}
+\index{totBW@{totBW}!ObitTableFQRow@{Obit\-Table\-FQRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-FQRow::tot\-BW}}\label{structObitTableFQRow_o9}
+
+
+Total bandwidth of the IF, now written and read as an unsigned value. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-FQ.h}\end{CompactItemize}

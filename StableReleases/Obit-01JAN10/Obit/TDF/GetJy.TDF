@@ -1,0 +1,150 @@
+; GetJy
+;---------------------------------------------------------------
+;! determines calibrator flux densities
+;# Task Calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2007
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: Bill Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+GetJy     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+GetJy     Task to determine source flux densities.
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                             FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                             AIPS uvdata name (name)
+**PARAM** str 6
+inClass                            AIPS uvdata name (class)
+**PARAM** int 1
+inSeq            0.0       9999.0  AIPS uvdata name (seq. #)
+**PARAM** int 1
+inDisk           0.0          9.0  Input Disk drive #
+**PARAM** str 16 30
+Sources                            Source list to calibrate
+**PARAM** str 4
+souCode                            Source "Cal codes"
+**PARAM** str 16 30
+calSour                            Cal sources for calibration
+**PARAM** int 1 **DEF** -1
+Qual            -10.0              Source qualifier -1=>all
+**PARAM** str 4
+calCode                            Calibrator code '    '=>all
+**PARAM** int 1 **DEF** 1
+BIF               0.0      100.0   Lowest IF number 0=1
+**PARAM** int 1
+EIF               0.0      100.0   Highest IF number
+**PARAM** float 2
+timeRange                          Time range to process.
+**PARAM** int 50
+Antennas         0.0     1000.0    List of antennas to calibrate
+**PARAM** int 1
+subA              0.0     1000.0   Subarray, 0=>all
+**PARAM** int 1
+FreqID                             Freq. ID to select.
+**PARAM** int 1
+solnVer                            SN table to use
+----------------------------------------------------------------
+GetJy
+Note: Adopted fropm AIPS and may not be entirely correct
+Task:  Determines flux densities from Calib solution (SN)
+tables, enters the results in the source (SU) table, and
+corrects the amplitudes of the solutions in the SN tables.
+
+   Before running GetJy:
+1) SetJy should be run to insert the flux densities of the
+primary flux density calibrators into the AIPS SU table.
+2) Calib should be run on all primary and secondary flux
+density calibrators.  Separate runs may be needed for different
+sources if UVRange and/or Antennas needs to be different.
+   After running GetJy:
+3) Run CLCal to apply the SN tables to a specified CL table.
+
+NOTE: GetJy may be run multiple times without adversely
+affecting either the AIPS SN or AIPS SU tables.
+
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input AIPS UV file name (name).      Standard defaults.
+  inClass....Input AIPS UV file name (class).     Standard defaults.
+  inSeq......Input AIPS UV file name (seq. #).    0 => highest.
+  inDisk.....Disk drive # of input UV file
+  Sources....List of sources whose flux densities are to be
+             determined.  All blank => all; a "-" before a
+             source name means all except ANY source named.
+  souCode....Sources may be selected on the basis of the
+             calibrator code given in the AIPS SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The souCode test is applied in addition to the
+             other tests, i.e. Sources and Qual, in the
+             selection of sources to process.
+  calSour....List of calibrators to use to determine source
+             flux densities.  The flux densities of these
+             sources should have been entered into the SU table
+             using SetJy before running Calib.  All blank = all;
+             a "-" before a calibrator name means all except
+             ANY calibrator named.
+  Qual.......Only sources with a source qualifier number in the
+             SU table matching Qual will be used if Qual is not
+             -1.  Qual affects the selection of both the list of
+             sources and the list of calibrators.
+  calCode....Calibrators may be selected on the basis of the
+             calibrator code given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The calCode test is applied in addition to the
+             other tests, i.e. calSour and Qual, in the
+             selection of calibrators.
+             calCode affects only the selection of calibrators.
+  BIF........Lowest IF number to process, 0=>1.
+  EIF........Highest IF number to process, 0=>all.
+  timeRange..Time range of the data to be considered. In order:
+             Start and end times in days relative to ref.
+             date.  timeRange is only used in the determination
+             of the source flux densities.  Solutions at all
+             times are corrected by the determined flux
+             densities.
+             Use  dhms2day to convert from human readable form
+  subA.......Subarray number to use. 0=>1
+             Only data in subarray subA are used to
+             determine flux densities and only solutions in this
+             subarray are corrected.
+  Antennas...A list of the antennas to use.  If any number
+             is negative then all antennas listed  are NOT
+             desired and all others are. All 0 => use all.
+             Antennas is only used to determine the source flux
+             densities; solutions for all antennas are
+             corrected.
+  FreqID.....Frequency identifier to select , <=0=>any
+  SolnVer....Selected SN table.  0=> Highest
+             Note: this is different from AIPS
+----------------------------------------------------------------

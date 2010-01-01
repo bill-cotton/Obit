@@ -1,0 +1,225 @@
+\section{Obit\-UVSort\-Buffer.h File Reference}
+\label{ObitUVSortBuffer_8h}\index{ObitUVSortBuffer.h@{ObitUVSortBuffer.h}}
+{\bf Obit\-UVSort\-Buffer}{\rm (p.\,\pageref{structObitUVSortBuffer})} Sorting buffer for UV data. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UV.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+union {\bf Obit\-UVSort\-Equiv}
+\begin{CompactList}\small\item\em Equivalence for Sort key arrays. \item\end{CompactList}\item 
+struct {\bf Obit\-UVSort\-Struct}
+\begin{CompactList}\small\item\em Sort Index plus sort key. \item\end{CompactList}\item 
+struct {\bf Obit\-UVSort\-Buffer}
+\begin{CompactList}\small\item\em Obit\-UVSort\-Buffer Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-UVSort\-Buffer\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-UVSort\-Buffer\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-UVSort\-Buffer}{\rm (p.\,\pageref{structObitUVSortBuffer})} returns a Obit\-UVSort\-Buffer$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-UVSort\-Buffer\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-UVSort\-Buffer}{\rm (p.\,\pageref{structObitUVSortBuffer})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-UVSort\-Buffer\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-UVSort\-Buffer\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef {\bf Obit\-UVSort\-Buffer} $\ast$($\ast$ {\bf Obit\-UVSort\-Buffer\-Create\-FP} )(gchar $\ast$name, {\bf Obit\-UV} $\ast$in\-UV, {\bf olong} nvis, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef void($\ast$ {\bf Obit\-UVSort\-Buffer\-Add\-Vis\-FP} )({\bf Obit\-UVSort\-Buffer} $\ast$in, {\bf ofloat} $\ast$vis, {\bf ofloat} last\-Time, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-UVSort\-Buffer\-Sort\-FP} )({\bf Obit\-UVSort\-Buffer} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-UVSort\-Buffer\-Flush\-FP} )({\bf Obit\-UVSort\-Buffer} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-UVSort\-Buffer\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-UVSort\-Buffer} $\ast$ {\bf new\-Obit\-UVSort\-Buffer} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+{\bf Obit\-UVSort\-Buffer} $\ast$ {\bf Obit\-UVSort\-Buffer\-Create} (gchar $\ast$name, {\bf Obit\-UV} $\ast$in\-UV, {\bf olong} nvis, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-UVSort\-Buffer}{\rm (p.\,\pageref{structObitUVSortBuffer})} structures. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-UVSort\-Buffer\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-UVSort\-Buffer} $\ast$ {\bf Obit\-UVSort\-Buffer\-Copy} ({\bf Obit\-UVSort\-Buffer} $\ast$in, {\bf Obit\-UVSort\-Buffer} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-UVSort\-Buffer\-Clone} ({\bf Obit\-UVSort\-Buffer} $\ast$in, {\bf Obit\-UVSort\-Buffer} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+void {\bf Obit\-UVSort\-Buffer\-Add\-Vis} ({\bf Obit\-UVSort\-Buffer} $\ast$in, {\bf ofloat} $\ast$vis, {\bf ofloat} last\-Time, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Add a visibility. \item\end{CompactList}\item 
+void {\bf Obit\-UVSort\-Buffer\-Sort} ({\bf Obit\-UVSort\-Buffer} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Sort buffer. \item\end{CompactList}\item 
+void {\bf Obit\-UVSort\-Buffer\-Flush} ({\bf Obit\-UVSort\-Buffer} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Flush buffer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-UVSort\-Buffer}{\rm (p.\,\pageref{structObitUVSortBuffer})} Sorting buffer for UV data. 
+
+The {\bf Obit\-UVSort\-Buffer}{\rm (p.\,\pageref{structObitUVSortBuffer})} assists in the sorting of UV data into time order by providing an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} data buffer with sorting and other manipulation facilities.\subsection{Creators and Destructors}\label{ObitUVSortBuffer_8h_ObitUVSortBufferaccess}
+An {\bf Obit\-UVSort\-Buffer}{\rm (p.\,\pageref{structObitUVSortBuffer})} will usually be created using Obit\-UVSort\-Buffer\-Create which allows specifying a name for the object as well as other information.
+
+A copy of a pointer to an {\bf Obit\-UVSort\-Buffer}{\rm (p.\,\pageref{structObitUVSortBuffer})} should always be made using the {\bf Obit\-UVSort\-Buffer\-Ref}{\rm (p.\,\pageref{ObitUVSortBuffer_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-UVSort\-Buffer}{\rm (p.\,\pageref{structObitUVSortBuffer})} or changing a pointer, the function {\bf Obit\-UVSort\-Buffer\-Unref}{\rm (p.\,\pageref{ObitUVSortBuffer_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.
+
+\subsection{Define Documentation}
+\index{ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}!ObitUVSortBufferIsA@{ObitUVSortBufferIsA}}
+\index{ObitUVSortBufferIsA@{ObitUVSortBufferIsA}!ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVSort\-Buffer\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-UVSort\-Buffer\-Get\-Class())}\label{ObitUVSortBuffer_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}!ObitUVSortBufferRef@{ObitUVSortBufferRef}}
+\index{ObitUVSortBufferRef@{ObitUVSortBufferRef}!ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVSort\-Buffer\-Ref(in)\ Obit\-Ref (in)}\label{ObitUVSortBuffer_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-UVSort\-Buffer}{\rm (p.\,\pageref{structObitUVSortBuffer})}. 
+
+returns a Obit\-UVSort\-Buffer$\ast$. in = object to reference \index{ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}!ObitUVSortBufferUnref@{ObitUVSortBufferUnref}}
+\index{ObitUVSortBufferUnref@{ObitUVSortBufferUnref}!ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVSort\-Buffer\-Unref(in)\ Obit\-Unref (in)}\label{ObitUVSortBuffer_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-UVSort\-Buffer}{\rm (p.\,\pageref{structObitUVSortBuffer})} returns a Obit\-UVSort\-Buffer$\ast$. 
+
+in = object to unreference 
+
+\subsection{Typedef Documentation}
+\index{ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}!ObitUVSortBufferAddVisFP@{ObitUVSortBufferAddVisFP}}
+\index{ObitUVSortBufferAddVisFP@{ObitUVSortBufferAddVisFP}!ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-UVSort\-Buffer\-Add\-Vis\-FP})({\bf Obit\-UVSort\-Buffer} $\ast$in, {\bf ofloat} $\ast$vis, {\bf ofloat} last\-Time, {\bf Obit\-Err} $\ast$err)}\label{ObitUVSortBuffer_8h_a4}
+
+
+\index{ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}!ObitUVSortBufferCreateFP@{ObitUVSortBufferCreateFP}}
+\index{ObitUVSortBufferCreateFP@{ObitUVSortBufferCreateFP}!ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-UVSort\-Buffer}$\ast$($\ast$ {\bf Obit\-UVSort\-Buffer\-Create\-FP})(gchar $\ast$name, {\bf Obit\-UV} $\ast$in\-UV, {\bf olong} nvis, {\bf Obit\-Err} $\ast$err)}\label{ObitUVSortBuffer_8h_a3}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}!ObitUVSortBufferFlushFP@{ObitUVSortBufferFlushFP}}
+\index{ObitUVSortBufferFlushFP@{ObitUVSortBufferFlushFP}!ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-UVSort\-Buffer\-Flush\-FP})({\bf Obit\-UVSort\-Buffer} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitUVSortBuffer_8h_a6}
+
+
+\index{ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}!ObitUVSortBufferSortFP@{ObitUVSortBufferSortFP}}
+\index{ObitUVSortBufferSortFP@{ObitUVSortBufferSortFP}!ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-UVSort\-Buffer\-Sort\-FP})({\bf Obit\-UVSort\-Buffer} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitUVSortBuffer_8h_a5}
+
+
+
+
+\subsection{Function Documentation}
+\index{ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}!newObitUVSortBuffer@{newObitUVSortBuffer}}
+\index{newObitUVSortBuffer@{newObitUVSortBuffer}!ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVSort\-Buffer}$\ast$ new\-Obit\-UVSort\-Buffer (gchar $\ast$ {\em name})}\label{ObitUVSortBuffer_8h_a8}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}!ObitUVSortBufferAddVis@{ObitUVSortBufferAddVis}}
+\index{ObitUVSortBufferAddVis@{ObitUVSortBufferAddVis}!ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVSort\-Buffer\-Add\-Vis ({\bf Obit\-UVSort\-Buffer} $\ast$ {\em in}, {\bf ofloat} $\ast$ {\em vis}, {\bf ofloat} {\em last\-Time}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVSortBuffer_8h_a13}
+
+
+Public: Add a visibility. 
+
+When the buffer is filled, it is sorted and times up to last\-Time written to output. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to add to \item[{\em vis}]Vis record to add (including random parameters) \item[{\em last\-Time}]Highest time (days) to write. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}!ObitUVSortBufferClassInit@{ObitUVSortBufferClassInit}}
+\index{ObitUVSortBufferClassInit@{ObitUVSortBufferClassInit}!ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVSort\-Buffer\-Class\-Init (void)}\label{ObitUVSortBuffer_8h_a7}
+
+
+Public: Class initializer. 
+
+\index{ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}!ObitUVSortBufferClone@{ObitUVSortBufferClone}}
+\index{ObitUVSortBufferClone@{ObitUVSortBufferClone}!ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVSort\-Buffer\-Clone ({\bf Obit\-UVSort\-Buffer} $\ast$ {\em in}, {\bf Obit\-UVSort\-Buffer} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVSortBuffer_8h_a12}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}!ObitUVSortBufferCopy@{ObitUVSortBufferCopy}}
+\index{ObitUVSortBufferCopy@{ObitUVSortBufferCopy}!ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVSort\-Buffer}$\ast$ Obit\-UVSort\-Buffer\-Copy ({\bf Obit\-UVSort\-Buffer} $\ast$ {\em in}, {\bf Obit\-UVSort\-Buffer} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVSortBuffer_8h_a11}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}!ObitUVSortBufferCreate@{ObitUVSortBufferCreate}}
+\index{ObitUVSortBufferCreate@{ObitUVSortBufferCreate}!ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVSort\-Buffer}$\ast$ Obit\-UVSort\-Buffer\-Create (gchar $\ast$ {\em name}, {\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf olong} {\em nvis}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVSortBuffer_8h_a9}
+
+
+Public: Create/initialize {\bf Obit\-UVSort\-Buffer}{\rm (p.\,\pageref{structObitUVSortBuffer})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em in\-UV}]{\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} from which the buffer is to be created. \item[{\em nvis}]Size in visibilities of the buffer \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}!ObitUVSortBufferFlush@{ObitUVSortBufferFlush}}
+\index{ObitUVSortBufferFlush@{ObitUVSortBufferFlush}!ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVSort\-Buffer\-Flush ({\bf Obit\-UVSort\-Buffer} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVSortBuffer_8h_a15}
+
+
+Public: Flush buffer. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to flush \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}!ObitUVSortBufferGetClass@{ObitUVSortBufferGetClass}}
+\index{ObitUVSortBufferGetClass@{ObitUVSortBufferGetClass}!ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-UVSort\-Buffer\-Get\-Class (void)}\label{ObitUVSortBuffer_8h_a10}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}!ObitUVSortBufferSort@{ObitUVSortBufferSort}}
+\index{ObitUVSortBufferSort@{ObitUVSortBufferSort}!ObitUVSortBuffer.h@{Obit\-UVSort\-Buffer.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVSort\-Buffer\-Sort ({\bf Obit\-UVSort\-Buffer} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVSortBuffer_8h_a14}
+
+
+Public: Sort buffer. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to sort \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}

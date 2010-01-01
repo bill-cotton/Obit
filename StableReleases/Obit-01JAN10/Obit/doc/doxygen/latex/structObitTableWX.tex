@@ -1,0 +1,383 @@
+\section{Obit\-Table\-WX Struct Reference}
+\label{structObitTableWX}\index{ObitTableWX@{ObitTableWX}}
+Obit\-Table\-WX Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-WX.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-IO} $\ast$ {\bf my\-IO}
+\begin{CompactList}\small\item\em I/O interface to access disk resident data. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Desc} $\ast$ {\bf my\-Desc}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Sel} $\ast$ {\bf my\-Sel}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf buffer}
+\begin{CompactList}\small\item\em Table buffer. \item\end{CompactList}\item 
+{\bf olong} {\bf buffer\-Size}
+\begin{CompactList}\small\item\em Table buffer size in floats. \item\end{CompactList}\item 
+gchar $\ast$ {\bf tab\-Type}
+\begin{CompactList}\small\item\em Table type (name of type, e.g. \item\end{CompactList}\item 
+{\bf olong} {\bf tab\-Ver}
+\begin{CompactList}\small\item\em Table version number(1-rel). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf my\-Host}
+\begin{CompactList}\small\item\em This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. \item\end{CompactList}\item 
+{\bf oint} {\bf revision}
+\begin{CompactList}\small\item\em Revision number of the table definition. \item\end{CompactList}\item 
+gchar {\bf obscode} [MAXKEYCHARTABLEWX]
+\begin{CompactList}\small\item\em Observation code. \item\end{CompactList}\item 
+gchar {\bf Ref\-Date} [MAXKEYCHARTABLEWX]
+\begin{CompactList}\small\item\em Reference date as \char`\"{}YYYYMMDD\char`\"{}. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-Off}
+\begin{CompactList}\small\item\em Column offset for The center time of the solution in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-Col}
+\begin{CompactList}\small\item\em Physical column number for The center time of the solution in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-IOff}
+\begin{CompactList}\small\item\em Column offset for Solution interval. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-ICol}
+\begin{CompactList}\small\item\em Physical column number for Solution interval. \item\end{CompactList}\item 
+{\bf olong} {\bf ant\-No\-Off}
+\begin{CompactList}\small\item\em Column offset for Antenna number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf ant\-No\-Col}
+\begin{CompactList}\small\item\em Physical column number for Antenna number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Sub\-AOff}
+\begin{CompactList}\small\item\em Column offset for Subarray number. \item\end{CompactList}\item 
+{\bf olong} {\bf Sub\-ACol}
+\begin{CompactList}\small\item\em Physical column number for Subarray number. \item\end{CompactList}\item 
+{\bf olong} {\bf temperature\-Off}
+\begin{CompactList}\small\item\em Column offset for Temperature in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf temperature\-Col}
+\begin{CompactList}\small\item\em Physical column number for Temperature in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf pressure\-Off}
+\begin{CompactList}\small\item\em Column offset for Pressure in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf pressure\-Col}
+\begin{CompactList}\small\item\em Physical column number for Pressure in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf dewpoint\-Off}
+\begin{CompactList}\small\item\em Column offset for Dew Point in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf dewpoint\-Col}
+\begin{CompactList}\small\item\em Physical column number for Dew Point in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf wind\-Velocity\-Off}
+\begin{CompactList}\small\item\em Column offset for Wind velocity in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf wind\-Velocity\-Col}
+\begin{CompactList}\small\item\em Physical column number for Wind velocity in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf wind\-Direction\-Off}
+\begin{CompactList}\small\item\em Column offset for Wind direction (azimuth) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf wind\-Direction\-Col}
+\begin{CompactList}\small\item\em Physical column number for Wind direction (azimuth) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf wvr\-H2OOff}
+\begin{CompactList}\small\item\em Column offset for Water vapor radiometer in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf wvr\-H2OCol}
+\begin{CompactList}\small\item\em Physical column number for Water vapor radiometer in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf onos\-Electron\-Off}
+\begin{CompactList}\small\item\em Column offset for Ionospheric electron something in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf onos\-Electron\-Col}
+\begin{CompactList}\small\item\em Physical column number for Ionospheric electron something in table record. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-WX Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableWX@{Obit\-Table\-WX}!antNoCol@{antNoCol}}
+\index{antNoCol@{antNoCol}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::ant\-No\-Col}}\label{structObitTableWX_o23}
+
+
+Physical column number for Antenna number in table record. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!antNoOff@{antNoOff}}
+\index{antNoOff@{antNoOff}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::ant\-No\-Off}}\label{structObitTableWX_o22}
+
+
+Column offset for Antenna number in table record. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!buffer@{buffer}}
+\index{buffer@{buffer}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-WX::buffer}}\label{structObitTableWX_o10}
+
+
+Table buffer. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!bufferSize@{bufferSize}}
+\index{bufferSize@{bufferSize}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::buffer\-Size}}\label{structObitTableWX_o11}
+
+
+Table buffer size in floats. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-WX::Class\-Info}}\label{structObitTableWX_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!dewpointCol@{dewpointCol}}
+\index{dewpointCol@{dewpointCol}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::dewpoint\-Col}}\label{structObitTableWX_o31}
+
+
+Physical column number for Dew Point in table record. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!dewpointOff@{dewpointOff}}
+\index{dewpointOff@{dewpointOff}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::dewpoint\-Off}}\label{structObitTableWX_o30}
+
+
+Column offset for Dew Point in table record. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!info@{info}}
+\index{info@{info}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Table\-WX::info}}\label{structObitTableWX_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Desc}$\ast$ {\bf Obit\-Table\-WX::my\-Desc}}\label{structObitTableWX_o8}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!myHost@{myHost}}
+\index{myHost@{myHost}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-Table\-WX::my\-Host}}\label{structObitTableWX_o14}
+
+
+This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!myIO@{myIO}}
+\index{myIO@{myIO}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IO}$\ast$ {\bf Obit\-Table\-WX::my\-IO}}\label{structObitTableWX_o7}
+
+
+I/O interface to access disk resident data. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Sel}$\ast$ {\bf Obit\-Table\-WX::my\-Sel}}\label{structObitTableWX_o9}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Table\-WX::my\-Status}}\label{structObitTableWX_o6}
+
+
+I/O status. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!name@{name}}
+\index{name@{name}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-WX::name}}\label{structObitTableWX_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-WX::Obit\-Id}}\label{structObitTableWX_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!obscode@{obscode}}
+\index{obscode@{obscode}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-WX::obscode}[MAXKEYCHARTABLEWX]}\label{structObitTableWX_o16}
+
+
+Observation code. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!onosElectronCol@{onosElectronCol}}
+\index{onosElectronCol@{onosElectronCol}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::onos\-Electron\-Col}}\label{structObitTableWX_o39}
+
+
+Physical column number for Ionospheric electron something in table record. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!onosElectronOff@{onosElectronOff}}
+\index{onosElectronOff@{onosElectronOff}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::onos\-Electron\-Off}}\label{structObitTableWX_o38}
+
+
+Column offset for Ionospheric electron something in table record. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!pressureCol@{pressureCol}}
+\index{pressureCol@{pressureCol}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::pressure\-Col}}\label{structObitTableWX_o29}
+
+
+Physical column number for Pressure in table record. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!pressureOff@{pressureOff}}
+\index{pressureOff@{pressureOff}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::pressure\-Off}}\label{structObitTableWX_o28}
+
+
+Column offset for Pressure in table record. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!RefDate@{RefDate}}
+\index{RefDate@{RefDate}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-WX::Ref\-Date}[MAXKEYCHARTABLEWX]}\label{structObitTableWX_o17}
+
+
+Reference date as \char`\"{}YYYYMMDD\char`\"{}. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::Reference\-Count}}\label{structObitTableWX_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!revision@{revision}}
+\index{revision@{revision}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-WX::revision}}\label{structObitTableWX_o15}
+
+
+Revision number of the table definition. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!SubACol@{SubACol}}
+\index{SubACol@{SubACol}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::Sub\-ACol}}\label{structObitTableWX_o25}
+
+
+Physical column number for Subarray number. 
+
+in table record \index{ObitTableWX@{Obit\-Table\-WX}!SubAOff@{SubAOff}}
+\index{SubAOff@{SubAOff}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::Sub\-AOff}}\label{structObitTableWX_o24}
+
+
+Column offset for Subarray number. 
+
+in table record \index{ObitTableWX@{Obit\-Table\-WX}!tabType@{tabType}}
+\index{tabType@{tabType}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-WX::tab\-Type}}\label{structObitTableWX_o12}
+
+
+Table type (name of type, e.g. 
+
+\char`\"{}AIPS AN\char`\"{}) \index{ObitTableWX@{Obit\-Table\-WX}!tabVer@{tabVer}}
+\index{tabVer@{tabVer}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::tab\-Ver}}\label{structObitTableWX_o13}
+
+
+Table version number(1-rel). 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!temperatureCol@{temperatureCol}}
+\index{temperatureCol@{temperatureCol}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::temperature\-Col}}\label{structObitTableWX_o27}
+
+
+Physical column number for Temperature in table record. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!temperatureOff@{temperatureOff}}
+\index{temperatureOff@{temperatureOff}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::temperature\-Off}}\label{structObitTableWX_o26}
+
+
+Column offset for Temperature in table record. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!thread@{thread}}
+\index{thread@{thread}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Table\-WX::thread}}\label{structObitTableWX_o4}
+
+
+Threading info member object. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!TimeCol@{TimeCol}}
+\index{TimeCol@{TimeCol}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::Time\-Col}}\label{structObitTableWX_o19}
+
+
+Physical column number for The center time of the solution in table record. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!TimeICol@{TimeICol}}
+\index{TimeICol@{TimeICol}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::Time\-ICol}}\label{structObitTableWX_o21}
+
+
+Physical column number for Solution interval. 
+
+in table record \index{ObitTableWX@{Obit\-Table\-WX}!TimeIOff@{TimeIOff}}
+\index{TimeIOff@{TimeIOff}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::Time\-IOff}}\label{structObitTableWX_o20}
+
+
+Column offset for Solution interval. 
+
+in table record \index{ObitTableWX@{Obit\-Table\-WX}!TimeOff@{TimeOff}}
+\index{TimeOff@{TimeOff}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::Time\-Off}}\label{structObitTableWX_o18}
+
+
+Column offset for The center time of the solution in table record. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!windDirectionCol@{windDirectionCol}}
+\index{windDirectionCol@{windDirectionCol}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::wind\-Direction\-Col}}\label{structObitTableWX_o35}
+
+
+Physical column number for Wind direction (azimuth) in table record. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!windDirectionOff@{windDirectionOff}}
+\index{windDirectionOff@{windDirectionOff}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::wind\-Direction\-Off}}\label{structObitTableWX_o34}
+
+
+Column offset for Wind direction (azimuth) in table record. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!windVelocityCol@{windVelocityCol}}
+\index{windVelocityCol@{windVelocityCol}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::wind\-Velocity\-Col}}\label{structObitTableWX_o33}
+
+
+Physical column number for Wind velocity in table record. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!windVelocityOff@{windVelocityOff}}
+\index{windVelocityOff@{windVelocityOff}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::wind\-Velocity\-Off}}\label{structObitTableWX_o32}
+
+
+Column offset for Wind velocity in table record. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!wvrH2OCol@{wvrH2OCol}}
+\index{wvrH2OCol@{wvrH2OCol}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::wvr\-H2OCol}}\label{structObitTableWX_o37}
+
+
+Physical column number for Water vapor radiometer in table record. 
+
+\index{ObitTableWX@{Obit\-Table\-WX}!wvrH2OOff@{wvrH2OOff}}
+\index{wvrH2OOff@{wvrH2OOff}!ObitTableWX@{Obit\-Table\-WX}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-WX::wvr\-H2OOff}}\label{structObitTableWX_o36}
+
+
+Column offset for Water vapor radiometer in table record. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-WX.h}\end{CompactItemize}

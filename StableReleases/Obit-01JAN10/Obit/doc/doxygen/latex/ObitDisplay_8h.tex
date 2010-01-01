@@ -1,0 +1,263 @@
+\section{Obit\-Display.h File Reference}
+\label{ObitDisplay_8h}\index{ObitDisplay.h@{ObitDisplay.h}}
+{\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} Image Display class. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-RPC.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-DCon\-Clean\-Window.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-Display}
+\begin{CompactList}\small\item\em Obit\-Display Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Display\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-Display\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} returns a Obit\-Display$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-Display\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Display\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-Display\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef {\bf Obit\-Display} $\ast$($\ast$ {\bf Obit\-Display\-Create\-FP} )(gchar $\ast$name, gchar $\ast$Server\-URL, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef gboolean($\ast$ {\bf Obit\-Display\-Show\-FP} )({\bf Obit\-Display} $\ast$display, {\bf Obit} $\ast$image, {\bf Obit\-DCon\-Clean\-Window} $\ast$window, {\bf olong} field, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef void($\ast$ {\bf Obit\-Display\-Turn\-On\-FP} )({\bf Obit\-Display} $\ast$display)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef void($\ast$ {\bf Obit\-Display\-Turn\-Off\-FP} )({\bf Obit\-Display} $\ast$display)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Enumerations}
+\begin{CompactItemize}
+\item 
+enum {\bf obit\-Display\-Request} \{ \par
+{\bf OBIT\_\-Request\_\-Continue} =  0, 
+{\bf OBIT\_\-Request\_\-Abort}, 
+{\bf OBIT\_\-Request\_\-Quit}, 
+{\bf OBIT\_\-Request\_\-No\-TV}, 
+\par
+{\bf OBIT\_\-Request\_\-View}, 
+{\bf OBIT\_\-Request\_\-Edit}
+ \}
+\begin{CompactList}\small\item\em enum Display request coads (MUST be synchronized with server usage which is defined in {\bf Obit\-RPC.h}{\rm (p.\,\pageref{ObitRPC_8h})} \#Obit\-RPCRequest\-Type) This specifies the request \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Display\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Display} $\ast$ {\bf new\-Obit\-Display} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+{\bf Obit\-Display} $\ast$ {\bf Obit\-Display\-Create} (gchar $\ast$name, gchar $\ast$Server\-URL, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} structures. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Display\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+gboolean {\bf Obit\-Display\-Show} ({\bf Obit\-Display} $\ast$display, {\bf Obit} $\ast$image, {\bf Obit\-DCon\-Clean\-Window} $\ast$window, {\bf olong} field, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Send Display and Window edit request. \item\end{CompactList}\item 
+void {\bf Obit\-Display\-Turn\-On} ({\bf Obit\-Display} $\ast$display)
+\begin{CompactList}\small\item\em Public: Turn display on. \item\end{CompactList}\item 
+void {\bf Obit\-Display\-Turn\-Off} ({\bf Obit\-Display} $\ast$display)
+\begin{CompactList}\small\item\em Public: Turn display off. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} Image Display class. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} class.
+
+This class communicates with the Image Display server The implementation is based on Obit\-View, only one allowed and return\subsection{Display Interface}\label{ObitDisplay_8h_ObitDisplay}
+The {\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} class is the client interface between applications software and the image display server which runs asynchronously, perhaps on another computer. The server is specified by a URL in the {\bf Obit\-Display\-Create}{\rm (p.\,\pageref{ObitDisplay_8c_a14})} call and an example of a local server running on port 8765 is \char`\"{}http://localhost:8765/RPC2\char`\"{} The actual communications uses the {\bf Obit\-RPC}{\rm (p.\,\pageref{structObitRPC})} class which communicates using internet (http) protocols and xml to package the information communicated. The actual communication is through {\bf Obit\-RPCCall}{\rm (p.\,\pageref{ObitRPC_8c_a11})}. In {\bf Obit}{\rm (p.\,\pageref{structObit})}, xml is encapsulated in the {\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} class. In Obit\-View the server is managed in XMLRPCserver.
+
+The communication model is the client/server model where the client makes a call with a single (xml) argument and the server performs its service and returns a single (xml) reply. (Since xml is very flexible the requirement of a single argument and reply is not a limitation). In this model, the interaction between client and server is stateless, i.e., makes no assumption about any previous or future interactions, although both the client and do have state. In this implementation, the response from the server may include a request for a further action by the client. Examples of this are to display and/or edit the CLEAN window for another field of a mosaic or to abort the program.
+
+The returned xml from the server contains up to three components: \begin{itemize}
+\item Result This will be the {\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} returned by the {\bf Obit\-RPCCall}{\rm (p.\,\pageref{ObitRPC_8c_a11})} and depends on the Call type. There is an {\bf Obit\-XML}{\rm (p.\,\pageref{structObitXML})} function to translate this to the call-specific useful form. \item Status This is returned as an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} by {\bf Obit\-RPCCall}{\rm (p.\,\pageref{ObitRPC_8c_a11})} and gives the status (success or failure) of the call. See below for details. \item Request [optional] The request section, if present, is returned as an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} by {\bf Obit\-RPCCall}{\rm (p.\,\pageref{ObitRPC_8c_a11})} . This describes a request by the server (generally user input) for an action by the client and is described further below.\end{itemize}
+\subsubsection{Returned}\label{ObitDisplay_8h_Status}
+The status argument returned by {\bf Obit\-RPCCall}{\rm (p.\,\pageref{ObitRPC_8c_a11})} is an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} translation of Status portion of the server response. There will be two entries: \begin{itemize}
+\item code (olong) which is a return code, 0=OK everything else indicates an error \item reason (gchar$\ast$) which is a reason for the code. \char`\"{}OK\char`\"{} is given for success, \char`\"{}Busy\char`\"{} if the server is still processing another request (code=1). Other values may also appear.\end{itemize}
+\subsubsection{Returned}\label{ObitDisplay_8h_Request}
+The request argument returned by {\bf Obit\-RPCCall}{\rm (p.\,\pageref{ObitRPC_8c_a11})} is an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} translation of Request portion of the server response. This is a copy of an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} generated by the server and the details depend on the exact request. The Request code is the \char`\"{}Request\char`\"{} entry (olong) in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}(\#Obit\-Display\-Request enum defined for convienence) and the following values are defined: \begin{itemize}
+\item 0 (OBIT\_\-Request\_\-Continue) Continue program (no request for action) , \item 1 (OBIT\_\-Request\_\-Abort) Abort program, current results are assumed of no value \item 2 (OBIT\_\-Request\_\-Quit) Quit, graceful shutdown with current results saved \item 3 (OBIT\_\-Request\_\-Edit) Edit, send window for editing, must match current image \item 4 (OBIT\_\-Request\_\-View) View, send another field in the same {\bf Obit\-Image\-Mosaic}{\rm (p.\,\pageref{structObitImageMosaic})} and possibly corresponding window to edit. This request will also include member \char`\"{}Field\char`\"{} (olong) which is the 1-rel field number requested.\end{itemize}
+\subsection{Functions}\label{ObitDisplay_8h_Server}
+The display server currently supported is Obit\-View which has the following callable functions: \begin{itemize}
+\item ping Simple function to test communications. \item load\-FITS (not used here) Sends the name of a FITS image to display. Name should be the full path as seen from the server and may be an internet URL. \item load\-Image Load any image type accessable by {\bf Obit}{\rm (p.\,\pageref{structObit})} in the server \item edit\-Window Passed an {\bf Obit\-DCon\-Clean\-Window}{\rm (p.\,\pageref{structObitDConCleanWindow})} for a single image, the server overlays it on the image and allows interactive editing, returning the edited window structure.\end{itemize}
+\subsubsection{call arguments and return}\label{ObitDisplay_8h_ping}
+The argument passed to the ping call is generated by {\bf Obit\-XMLPing2XML}{\rm (p.\,\pageref{ObitXML_8c_a14})} although no actual information is passed to the server (a random integer is used). The return value is a string containing the name of the server (e.g. \char`\"{}Obit\-View\char`\"{}). The Status return value from {\bf Obit\-RPCCall}{\rm (p.\,\pageref{ObitRPC_8c_a11})} gives the availability of the server (may be \char`\"{}busy\char`\"{}). If there was a communications failure (e.g. no server or network connection or bad xml) then an error will be entered on err.\subsubsection{call arguments and return}\label{ObitDisplay_8h_loadFITS}
+This call is not used by {\bf Obit}{\rm (p.\,\pageref{structObit})}. The argument is a single string giving the full path or URL of a FITS image to load.\subsubsection{call arguments and return}\label{ObitDisplay_8h_loadImage}
+This call is used to display an image accessable by {\bf Obit}{\rm (p.\,\pageref{structObit})} running in the server. The argument is generated by {\bf Obit\-XMLFile\-Info2XML}{\rm (p.\,\pageref{ObitXML_8c_a19})} which takes a description of the file as seen by the server. Note: the FITS path may be an internet URL but only local AIPS images are accessable. The return value is a string of either \char`\"{}Loaded File\char`\"{} or \char`\"{}Load failed\char`\"{} but the succes of the function is better determined from the Status return.\subsubsection{call arguments and return}\label{ObitDisplay_8h_editWindow}
+This call sends the {\bf Obit\-DCon\-Clean\-Window}{\rm (p.\,\pageref{structObitDConCleanWindow})} (one field only) corresponding to the previous load\-Image call and allows the user to interactively edit the window. The call argument to {\bf Obit\-RPCCall}{\rm (p.\,\pageref{ObitRPC_8c_a11})} is generated by {\bf Obit\-XMLWindow2XML}{\rm (p.\,\pageref{ObitXML_8c_a21})} and the return value converted into a (single field) {\bf Obit\-DCon\-Clean\-Window}{\rm (p.\,\pageref{structObitDConCleanWindow})} by {\bf Obit\-XMLXML2Window}{\rm (p.\,\pageref{ObitXML_8c_a22})}. The return from this call may include a Request for a further action.\subsection{Creators and Destructors}\label{ObitDisplay_8h_ObitDisplayaccess}
+An {\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} will usually be created using Obit\-Display\-Create which allows specifying a name for the object as well as other information.
+
+A copy of a pointer to an {\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} should always be made using the {\bf Obit\-Display\-Ref}{\rm (p.\,\pageref{ObitDisplay_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} or changing a pointer, the function {\bf Obit\-Display\-Unref}{\rm (p.\,\pageref{ObitDisplay_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.
+
+\subsection{Define Documentation}
+\index{ObitDisplay.h@{Obit\-Display.h}!ObitDisplayIsA@{ObitDisplayIsA}}
+\index{ObitDisplayIsA@{ObitDisplayIsA}!ObitDisplay.h@{Obit\-Display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Display\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-Display\-Get\-Class())}\label{ObitDisplay_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitDisplay.h@{Obit\-Display.h}!ObitDisplayRef@{ObitDisplayRef}}
+\index{ObitDisplayRef@{ObitDisplayRef}!ObitDisplay.h@{Obit\-Display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Display\-Ref(in)\ Obit\-Ref (in)}\label{ObitDisplay_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})}. 
+
+returns a Obit\-Display$\ast$. in = object to reference \index{ObitDisplay.h@{Obit\-Display.h}!ObitDisplayUnref@{ObitDisplayUnref}}
+\index{ObitDisplayUnref@{ObitDisplayUnref}!ObitDisplay.h@{Obit\-Display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Display\-Unref(in)\ Obit\-Unref (in)}\label{ObitDisplay_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} returns a Obit\-Display$\ast$. 
+
+in = object to unreference 
+
+\subsection{Typedef Documentation}
+\index{ObitDisplay.h@{Obit\-Display.h}!ObitDisplayCreateFP@{ObitDisplayCreateFP}}
+\index{ObitDisplayCreateFP@{ObitDisplayCreateFP}!ObitDisplay.h@{Obit\-Display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-Display}$\ast$($\ast$ {\bf Obit\-Display\-Create\-FP})(gchar $\ast$name, gchar $\ast$Server\-URL, {\bf Obit\-Err} $\ast$err)}\label{ObitDisplay_8h_a3}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitDisplay.h@{Obit\-Display.h}!ObitDisplayShowFP@{ObitDisplayShowFP}}
+\index{ObitDisplayShowFP@{ObitDisplayShowFP}!ObitDisplay.h@{Obit\-Display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef gboolean($\ast$ {\bf Obit\-Display\-Show\-FP})({\bf Obit\-Display} $\ast$display, {\bf Obit} $\ast$image, {\bf Obit\-DCon\-Clean\-Window} $\ast$window, {\bf olong} field, {\bf Obit\-Err} $\ast$err)}\label{ObitDisplay_8h_a4}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitDisplay.h@{Obit\-Display.h}!ObitDisplayTurnOffFP@{ObitDisplayTurnOffFP}}
+\index{ObitDisplayTurnOffFP@{ObitDisplayTurnOffFP}!ObitDisplay.h@{Obit\-Display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Display\-Turn\-Off\-FP})({\bf Obit\-Display} $\ast$display)}\label{ObitDisplay_8h_a6}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitDisplay.h@{Obit\-Display.h}!ObitDisplayTurnOnFP@{ObitDisplayTurnOnFP}}
+\index{ObitDisplayTurnOnFP@{ObitDisplayTurnOnFP}!ObitDisplay.h@{Obit\-Display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Display\-Turn\-On\-FP})({\bf Obit\-Display} $\ast$display)}\label{ObitDisplay_8h_a5}
+
+
+Typedef for definition of class pointer structure. 
+
+
+
+\subsection{Enumeration Type Documentation}
+\index{ObitDisplay.h@{Obit\-Display.h}!obitDisplayRequest@{obitDisplayRequest}}
+\index{obitDisplayRequest@{obitDisplayRequest}!ObitDisplay.h@{Obit\-Display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}enum {\bf obit\-Display\-Request}}\label{ObitDisplay_8h_a20}
+
+
+enum Display request coads (MUST be synchronized with server usage which is defined in {\bf Obit\-RPC.h}{\rm (p.\,\pageref{ObitRPC_8h})} \#Obit\-RPCRequest\-Type) This specifies the request 
+
+\begin{Desc}
+\item[Enumeration values: ]\par
+\begin{description}
+\index{OBIT_Request_Continue@{OBIT\_\-Request\_\-Continue}!ObitDisplay.h@{ObitDisplay.h}}\index{ObitDisplay.h@{ObitDisplay.h}!OBIT_Request_Continue@{OBIT\_\-Request\_\-Continue}}\item[{\em 
+OBIT\_\-Request\_\-Continue\label{ObitDisplay_8h_a20a7}
+}]Continue program (no request for action). \index{OBIT_Request_Abort@{OBIT\_\-Request\_\-Abort}!ObitDisplay.h@{ObitDisplay.h}}\index{ObitDisplay.h@{ObitDisplay.h}!OBIT_Request_Abort@{OBIT\_\-Request\_\-Abort}}\item[{\em 
+OBIT\_\-Request\_\-Abort\label{ObitDisplay_8h_a20a8}
+}]Abort program current results are assumed of no value. \index{OBIT_Request_Quit@{OBIT\_\-Request\_\-Quit}!ObitDisplay.h@{ObitDisplay.h}}\index{ObitDisplay.h@{ObitDisplay.h}!OBIT_Request_Quit@{OBIT\_\-Request\_\-Quit}}\item[{\em 
+OBIT\_\-Request\_\-Quit\label{ObitDisplay_8h_a20a9}
+}]Quit, graceful shutdown with current results saved. \index{OBIT_Request_NoTV@{OBIT\_\-Request\_\-NoTV}!ObitDisplay.h@{ObitDisplay.h}}\index{ObitDisplay.h@{ObitDisplay.h}!OBIT_Request_NoTV@{OBIT\_\-Request\_\-NoTV}}\item[{\em 
+OBIT\_\-Request\_\-No\-TV\label{ObitDisplay_8h_a20a10}
+}]No more TV display. \index{OBIT_Request_View@{OBIT\_\-Request\_\-View}!ObitDisplay.h@{ObitDisplay.h}}\index{ObitDisplay.h@{ObitDisplay.h}!OBIT_Request_View@{OBIT\_\-Request\_\-View}}\item[{\em 
+OBIT\_\-Request\_\-View\label{ObitDisplay_8h_a20a11}
+}]View, send another field in the same {\bf Obit\-Image\-Mosaic}{\rm (p.\,\pageref{structObitImageMosaic})}. \index{OBIT_Request_Edit@{OBIT\_\-Request\_\-Edit}!ObitDisplay.h@{ObitDisplay.h}}\index{ObitDisplay.h@{ObitDisplay.h}!OBIT_Request_Edit@{OBIT\_\-Request\_\-Edit}}\item[{\em 
+OBIT\_\-Request\_\-Edit\label{ObitDisplay_8h_a20a12}
+}]Edit, send window for editing. \end{description}
+\end{Desc}
+
+
+
+\subsection{Function Documentation}
+\index{ObitDisplay.h@{Obit\-Display.h}!newObitDisplay@{newObitDisplay}}
+\index{newObitDisplay@{newObitDisplay}!ObitDisplay.h@{Obit\-Display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Display}$\ast$ new\-Obit\-Display (gchar $\ast$ {\em name})}\label{ObitDisplay_8h_a14}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitDisplay.h@{Obit\-Display.h}!ObitDisplayClassInit@{ObitDisplayClassInit}}
+\index{ObitDisplayClassInit@{ObitDisplayClassInit}!ObitDisplay.h@{Obit\-Display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Display\-Class\-Init (void)}\label{ObitDisplay_8h_a13}
+
+
+Public: Class initializer. 
+
+\index{ObitDisplay.h@{Obit\-Display.h}!ObitDisplayCreate@{ObitDisplayCreate}}
+\index{ObitDisplayCreate@{ObitDisplayCreate}!ObitDisplay.h@{Obit\-Display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Display}$\ast$ Obit\-Display\-Create (gchar $\ast$ {\em name}, gchar $\ast$ {\em Server\-URL}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDisplay_8h_a15}
+
+
+Public: Create/initialize {\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em Server\-URL}]URL of display server, NULL defaults to \char`\"{}http://localhost:8765/RPC2\char`\"{} \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitDisplay.h@{Obit\-Display.h}!ObitDisplayGetClass@{ObitDisplayGetClass}}
+\index{ObitDisplayGetClass@{ObitDisplayGetClass}!ObitDisplay.h@{Obit\-Display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Display\-Get\-Class (void)}\label{ObitDisplay_8h_a16}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitDisplay.h@{Obit\-Display.h}!ObitDisplayShow@{ObitDisplayShow}}
+\index{ObitDisplayShow@{ObitDisplayShow}!ObitDisplay.h@{Obit\-Display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Display\-Show ({\bf Obit\-Display} $\ast$ {\em display}, {\bf Obit} $\ast$ {\em image}, {\bf Obit\-DCon\-Clean\-Window} $\ast$ {\em window}, {\bf olong} {\em field}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDisplay_8h_a17}
+
+
+Public: Send Display and Window edit request. 
+
+For a mosaic, the user can request other images from the mosaic. If the display is remote, the image is copied as a gzipped FITS file. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em display}]{\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} object \item[{\em image}]{\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})} or Image Mosaic \item[{\em window}]if non\-NULL window corresponding to image possibly edited by user. This MUST correspond to image. \item[{\em field}]If image= an Image\-Mosaic then this is the 1-rel field number \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Error message \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if user wants to quit \end{Desc}
+\index{ObitDisplay.h@{Obit\-Display.h}!ObitDisplayTurnOff@{ObitDisplayTurnOff}}
+\index{ObitDisplayTurnOff@{ObitDisplayTurnOff}!ObitDisplay.h@{Obit\-Display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Display\-Turn\-Off ({\bf Obit\-Display} $\ast$ {\em display})}\label{ObitDisplay_8h_a19}
+
+
+Public: Turn display off. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em display}]{\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} object \end{description}
+\end{Desc}
+\index{ObitDisplay.h@{Obit\-Display.h}!ObitDisplayTurnOn@{ObitDisplayTurnOn}}
+\index{ObitDisplayTurnOn@{ObitDisplayTurnOn}!ObitDisplay.h@{Obit\-Display.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Display\-Turn\-On ({\bf Obit\-Display} $\ast$ {\em display})}\label{ObitDisplay_8h_a18}
+
+
+Public: Turn display on. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em display}]{\bf Obit\-Display}{\rm (p.\,\pageref{structObitDisplay})} object \end{description}
+\end{Desc}

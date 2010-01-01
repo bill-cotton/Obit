@@ -1,0 +1,82 @@
+\section{Obit\-Table\-Util.h File Reference}
+\label{ObitTableUtil_8h}\index{ObitTableUtil.h@{ObitTableUtil.h}}
+{\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} class utility routine definition. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+Obit\-IOCode {\bf Obit\-Table\-Util\-Sort} ({\bf Obit\-Table} $\ast$in, gchar $\ast$col\-Name, gboolean desc, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Sort a table by one key. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-Util\-Abs\-Sort} ({\bf Obit\-Table} $\ast$in, gchar $\ast$col\-Name, gboolean desc, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Sort a table by abs value of one key. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-Util\-Sort2f} ({\bf Obit\-Table} $\ast$in, gchar $\ast$col\-Name1, {\bf olong} cell1, gboolean desc1, gchar $\ast$col\-Name2, {\bf olong} cell2, gboolean desc2, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Sort a table by otwo numeric keys. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Util\-Truncate} ({\bf Obit\-Table} $\ast$in, {\bf olong} nrows, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Truncate table. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} class utility routine definition. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitTableUtil.h@{Obit\-Table\-Util.h}!ObitTableUtilAbsSort@{ObitTableUtilAbsSort}}
+\index{ObitTableUtilAbsSort@{ObitTableUtilAbsSort}!ObitTableUtil.h@{Obit\-Table\-Util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-Util\-Abs\-Sort ({\bf Obit\-Table} $\ast$ {\em in}, gchar $\ast$ {\em col\-Name}, gboolean {\em desc}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableUtil_8h_a1}
+
+
+Public: Sort a table by abs value of one key. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table to sort \item[{\em col\-Name}]Column label to sort by (for now first cell) \item[{\em desc}]If true want descending sort, else ascent \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]I/O Code OBIT\_\-IO\_\-OK = OK. \end{Desc}
+\index{ObitTableUtil.h@{Obit\-Table\-Util.h}!ObitTableUtilSort@{ObitTableUtilSort}}
+\index{ObitTableUtilSort@{ObitTableUtilSort}!ObitTableUtil.h@{Obit\-Table\-Util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-Util\-Sort ({\bf Obit\-Table} $\ast$ {\em in}, gchar $\ast$ {\em col\-Name}, gboolean {\em desc}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableUtil_8h_a0}
+
+
+Public: Sort a table by one key. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table to sort \item[{\em col\-Name}]Column label to sort by (for now first cell) \item[{\em desc}]If true want descending sort, else ascent \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]I/O Code OBIT\_\-IO\_\-OK = OK. \end{Desc}
+\index{ObitTableUtil.h@{Obit\-Table\-Util.h}!ObitTableUtilSort2f@{ObitTableUtilSort2f}}
+\index{ObitTableUtilSort2f@{ObitTableUtilSort2f}!ObitTableUtil.h@{Obit\-Table\-Util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-Util\-Sort2f ({\bf Obit\-Table} $\ast$ {\em in}, gchar $\ast$ {\em col\-Name1}, {\bf olong} {\em cell1}, gboolean {\em desc1}, gchar $\ast$ {\em col\-Name2}, {\bf olong} {\em cell2}, gboolean {\em desc2}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableUtil_8h_a2}
+
+
+Public: Sort a table by otwo numeric keys. 
+
+If the table is already marked in this order then it is not resorted. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table to sort \item[{\em col\-Name1}]Column label to sort by (for now first cell) Most slowly varying key \item[{\em cell1}]Cell in col\-Name1 of sortkey, 1 rel \item[{\em desc1}]If true want descending sort, else ascent \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \item[{\em col\-Name2}]Column label for secondary key Most rapidly varying key \item[{\em cell2}]Cell in col\-Name2 of sortkey, 1 rel \item[{\em desc2}]If true want descending sort key 2, else ascent \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]I/O Code OBIT\_\-IO\_\-OK = OK. \end{Desc}
+\index{ObitTableUtil.h@{Obit\-Table\-Util.h}!ObitTableUtilTruncate@{ObitTableUtilTruncate}}
+\index{ObitTableUtilTruncate@{ObitTableUtilTruncate}!ObitTableUtil.h@{Obit\-Table\-Util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Util\-Truncate ({\bf Obit\-Table} $\ast$ {\em in}, {\bf olong} {\em nrows}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableUtil_8h_a3}
+
+
+Truncate table. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object \item[{\em nrows}]Number of rows desired \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]error code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}

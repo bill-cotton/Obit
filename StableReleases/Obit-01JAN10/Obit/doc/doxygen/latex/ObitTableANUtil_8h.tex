@@ -1,0 +1,73 @@
+\section{Obit\-Table\-ANUtil.h File Reference}
+\label{ObitTableANUtil_8h}\index{ObitTableANUtil.h@{ObitTableANUtil.h}}
+{\bf Obit\-Table\-AN}{\rm (p.\,\pageref{structObitTableAN})} class utility routine definition. 
+
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$stdlib.h$>$}\par
+{\tt \#include $<$math.h$>$}\par
+{\tt \#include $<$glib.h$>$}\par
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UV.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Antenna\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-AN.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+Obit\-IOCode {\bf Obit\-Table\-ANGet\-Info} ({\bf Obit\-Table\-AN} $\ast$in, {\bf oint} $\ast$num\-Ant, {\bf odouble} $\ast$ref\-Freq, gchar $\ast$ref\-Date, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get Highest antenna number, reference frequency, date. \item\end{CompactList}\item 
+{\bf Obit\-Antenna\-List} $\ast$ {\bf Obit\-Table\-ANGet\-List} ({\bf Obit\-Table\-AN} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read an antenna list into a {\bf Obit\-Antenna\-List}{\rm (p.\,\pageref{structObitAntennaList})}. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-ANSelect} ({\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-UV} $\ast$out\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy AN tables with selection. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Table\-AN}{\rm (p.\,\pageref{structObitTableAN})} class utility routine definition. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitTableANUtil.h@{Obit\-Table\-ANUtil.h}!ObitTableANGetInfo@{ObitTableANGetInfo}}
+\index{ObitTableANGetInfo@{ObitTableANGetInfo}!ObitTableANUtil.h@{Obit\-Table\-ANUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-ANGet\-Info ({\bf Obit\-Table\-AN} $\ast$ {\em in}, {\bf oint} $\ast$ {\em num\-Ant}, {\bf odouble} $\ast$ {\em ref\-Freq}, gchar $\ast$ {\em ref\-Date}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableANUtil_8h_a0}
+
+
+Public: Get Highest antenna number, reference frequency, date. 
+
+Undesired output parameters are indicated by NULL. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table to obtain data from \item[{\em num\-Ant}]Highest antenna number if non NULL. \item[{\em ref\-Freq}]Reference frequency if non NULL \item[{\em ref\-Date}]Reference data if non NULL, must be at least 11 characters allocated. \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]I/O Code OBIT\_\-IO\_\-OK = OK. \end{Desc}
+\index{ObitTableANUtil.h@{Obit\-Table\-ANUtil.h}!ObitTableANGetList@{ObitTableANGetList}}
+\index{ObitTableANGetList@{ObitTableANGetList}!ObitTableANUtil.h@{Obit\-Table\-ANUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Antenna\-List}$\ast$ Obit\-Table\-ANGet\-List ({\bf Obit\-Table\-AN} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableANUtil_8h_a1}
+
+
+Public: Read an antenna list into a {\bf Obit\-Antenna\-List}{\rm (p.\,\pageref{structObitAntennaList})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table to obtain data from \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]requested {\bf Obit\-Antenna\-List}{\rm (p.\,\pageref{structObitAntennaList})} \end{Desc}
+\index{ObitTableANUtil.h@{Obit\-Table\-ANUtil.h}!ObitTableANSelect@{ObitTableANSelect}}
+\index{ObitTableANSelect@{ObitTableANSelect}!ObitTableANUtil.h@{Obit\-Table\-ANUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-ANSelect ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableANUtil_8h_a2}
+
+
+Public: Copy AN tables with selection. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input UV to copy from \item[{\em out\-UV}]Output UV to copy to \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]I/O Code OBIT\_\-IO\_\-OK = OK. \end{Desc}

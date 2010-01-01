@@ -1,0 +1,203 @@
+\section{Obit\-IOHistory\-AIPS Struct Reference}
+\label{structObitIOHistoryAIPS}\index{ObitIOHistoryAIPS@{ObitIOHistoryAIPS}}
+Obit\-IOHistory\-AIPS Class.  
+
+
+{\tt \#include $<$Obit\-IOHistory\-AIPS.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+Obit\-IOAccess {\bf access}
+\begin{CompactList}\small\item\em Access type. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+gpointer {\bf my\-Desc}
+\begin{CompactList}\small\item\em data descriptor, type depends on data type. \item\end{CompactList}\item 
+gpointer {\bf my\-Sel}
+\begin{CompactList}\small\item\em data selector \item\end{CompactList}\item 
+gpointer {\bf my\-Cal}
+\begin{CompactList}\small\item\em Calibrator for Data. \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf table\-List}
+\begin{CompactList}\small\item\em Table\-List of associated tables (declared as base class due to logic problems). \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Info\-List for file definition information. \item\end{CompactList}\item 
+{\bf olong} {\bf Max\-Number}
+\begin{CompactList}\small\item\em Maximum number of records currently in file. \item\end{CompactList}\item 
+{\bf olong} {\bf Current\-Number}
+\begin{CompactList}\small\item\em Current number in file. \item\end{CompactList}\item 
+{\bf olong} {\bf Last}
+\begin{CompactList}\small\item\em Last read or written. \item\end{CompactList}\item 
+{\bf Obit\-File} $\ast$ {\bf my\-File}
+\begin{CompactList}\small\item\em File IO object. \item\end{CompactList}\item 
+{\bf Obit\-File\-Pos} {\bf file\-Pos}
+\begin{CompactList}\small\item\em Current file position. \item\end{CompactList}\item 
+{\bf olong} {\bf Current\-Block}
+\begin{CompactList}\small\item\em Block number (1-rel) currently in buffer. \item\end{CompactList}\item 
+gchar {\bf buffer} [2048]
+\begin{CompactList}\small\item\em IO Buffer. \item\end{CompactList}\item 
+gchar $\ast$ {\bf File\-Name}
+\begin{CompactList}\small\item\em Name of the file. \item\end{CompactList}\item 
+gboolean {\bf dirty}
+\begin{CompactList}\small\item\em Has buffer been modofied? \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-IOHistory\-AIPS Class. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!access@{access}}
+\index{access@{access}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOAccess {\bf Obit\-IOHistory\-AIPS::access}}\label{structObitIOHistoryAIPS_o4}
+
+
+Access type. 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!buffer@{buffer}}
+\index{buffer@{buffer}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-IOHistory\-AIPS::buffer}[2048]}\label{structObitIOHistoryAIPS_o17}
+
+
+IO Buffer. 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-IOHistory\-AIPS::Class\-Info}}\label{structObitIOHistoryAIPS_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!CurrentBlock@{CurrentBlock}}
+\index{CurrentBlock@{CurrentBlock}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-IOHistory\-AIPS::Current\-Block}}\label{structObitIOHistoryAIPS_o16}
+
+
+Block number (1-rel) currently in buffer. 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!CurrentNumber@{CurrentNumber}}
+\index{CurrentNumber@{CurrentNumber}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-IOHistory\-AIPS::Current\-Number}}\label{structObitIOHistoryAIPS_o12}
+
+
+Current number in file. 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!dirty@{dirty}}
+\index{dirty@{dirty}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-IOHistory\-AIPS::dirty}}\label{structObitIOHistoryAIPS_o19}
+
+
+Has buffer been modofied? 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!FileName@{FileName}}
+\index{FileName@{FileName}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-IOHistory\-AIPS::File\-Name}}\label{structObitIOHistoryAIPS_o18}
+
+
+Name of the file. 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!filePos@{filePos}}
+\index{filePos@{filePos}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-File\-Pos} {\bf Obit\-IOHistory\-AIPS::file\-Pos}}\label{structObitIOHistoryAIPS_o15}
+
+
+Current file position. 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!info@{info}}
+\index{info@{info}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-IOHistory\-AIPS::info}}\label{structObitIOHistoryAIPS_o10}
+
+
+Info\-List for file definition information. 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!Last@{Last}}
+\index{Last@{Last}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-IOHistory\-AIPS::Last}}\label{structObitIOHistoryAIPS_o13}
+
+
+Last read or written. 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!MaxNumber@{MaxNumber}}
+\index{MaxNumber@{MaxNumber}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-IOHistory\-AIPS::Max\-Number}}\label{structObitIOHistoryAIPS_o11}
+
+
+Maximum number of records currently in file. 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!myCal@{myCal}}
+\index{myCal@{myCal}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-IOHistory\-AIPS::my\-Cal}}\label{structObitIOHistoryAIPS_o8}
+
+
+Calibrator for Data. 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-IOHistory\-AIPS::my\-Desc}}\label{structObitIOHistoryAIPS_o6}
+
+
+data descriptor, type depends on data type. 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!myFile@{myFile}}
+\index{myFile@{myFile}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-File}$\ast$ {\bf Obit\-IOHistory\-AIPS::my\-File}}\label{structObitIOHistoryAIPS_o14}
+
+
+File IO object. 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-IOHistory\-AIPS::my\-Sel}}\label{structObitIOHistoryAIPS_o7}
+
+
+data selector 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-IOHistory\-AIPS::my\-Status}}\label{structObitIOHistoryAIPS_o5}
+
+
+I/O status. 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!name@{name}}
+\index{name@{name}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-IOHistory\-AIPS::name}}\label{structObitIOHistoryAIPS_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-IOHistory\-AIPS::Obit\-Id}}\label{structObitIOHistoryAIPS_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-IOHistory\-AIPS::Reference\-Count}}\label{structObitIOHistoryAIPS_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}!tableList@{tableList}}
+\index{tableList@{tableList}!ObitIOHistoryAIPS@{Obit\-IOHistory\-AIPS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-IOHistory\-AIPS::table\-List}}\label{structObitIOHistoryAIPS_o9}
+
+
+Table\-List of associated tables (declared as base class due to logic problems). 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-IOHistory\-AIPS.h}\end{CompactItemize}

@@ -1,0 +1,51 @@
+\section{Obit\-Table\-SUUtil.h File Reference}
+\label{ObitTableSUUtil_8h}\index{ObitTableSUUtil.h@{ObitTableSUUtil.h}}
+{\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})} class utility routine definition. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-SU.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Source\-List.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+Obit\-IOCode {\bf Obit\-Table\-SULookup} ({\bf Obit\-Table\-SU} $\ast$in, gint32 $\ast$dim, gchar $\ast$inlist, {\bf olong} Qual, gchar sou\-Code[5], {\bf olong} $\ast$outlist, gboolean $\ast$select, {\bf olong} $\ast$Number, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Lookup a list of sources. \item\end{CompactList}\item 
+{\bf Obit\-Source\-List} $\ast$ {\bf Obit\-Table\-SUGet\-List} ({\bf Obit\-Table\-SU} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read a source list into a {\bf Obit\-Source\-List}{\rm (p.\,\pageref{structObitSourceList})}. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})} class utility routine definition. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitTableSUUtil.h@{Obit\-Table\-SUUtil.h}!ObitTableSUGetList@{ObitTableSUGetList}}
+\index{ObitTableSUGetList@{ObitTableSUGetList}!ObitTableSUUtil.h@{Obit\-Table\-SUUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Source\-List}$\ast$ Obit\-Table\-SUGet\-List ({\bf Obit\-Table\-SU} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableSUUtil_8h_a1}
+
+
+Public: Read a source list into a {\bf Obit\-Source\-List}{\rm (p.\,\pageref{structObitSourceList})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table to obtain data from \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]requested {\bf Obit\-Source\-List}{\rm (p.\,\pageref{structObitSourceList})} \end{Desc}
+\index{ObitTableSUUtil.h@{Obit\-Table\-SUUtil.h}!ObitTableSULookup@{ObitTableSULookup}}
+\index{ObitTableSULookup@{ObitTableSULookup}!ObitTableSUUtil.h@{Obit\-Table\-SUUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-SULookup ({\bf Obit\-Table\-SU} $\ast$ {\em in}, gint32 $\ast$ {\em dim}, gchar $\ast$ {\em inlist}, {\bf olong} {\em Qual}, gchar {\em sou\-Code}[5], {\bf olong} $\ast$ {\em outlist}, gboolean $\ast$ {\em xselect}, {\bf olong} $\ast$ {\em Number}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableSUUtil_8h_a0}
+
+
+Public: Lookup a list of sources. 
+
+This is intended for finding user selected sources. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table to obtain data from \item[{\em dim}]dimensionality of inlist, first, the length if the source names, then the number of entries. \item[{\em inlist}]List of source names in single array with no nulls, any leading '-' is stripped; Any nonblank entries that are not found in the SU table will generate a warning. \item[{\em Qual}]Desired source qualifier, -1 =$>$ any \item[{\em sou\-Code}]Source Cal code desired, ' ' =$>$ any code selected '$\ast$ ' =$>$ any non blank code (calibrators only) '-CAL' =$>$ blank codes only (no calibrators) \item[{\em outlist}]List of source IDs corresponding to inlist, -1 =$>$ not found. Nothing done if this is NULL. \item[{\em xselect}]TRUE if source list selected, always TRUE as the list returned is those that match selection or don't match deselection. \item[{\em Number}]on input, the size allocated to out\-List, on output, the number found \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]I/O Code OBIT\_\-IO\_\-OK = OK. \end{Desc}

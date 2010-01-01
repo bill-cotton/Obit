@@ -1,0 +1,170 @@
+\section{Obit\-Table\-VLUtil.h File Reference}
+\label{ObitTableVLUtil_8h}\index{ObitTableVLUtil.h@{ObitTableVLUtil.h}}
+{\bf Obit\-Table\-VL}{\rm (p.\,\pageref{structObitTableVL})} class utility routine definition. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-VL.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-VZ.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Fit\-Region\-List.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Table\-VLAppend} ({\bf Obit\-Table\-VL} $\ast$in, {\bf Obit\-Table\-VL} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Append one VL table to another. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-VLIndex} ({\bf Obit\-Table\-VL} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Index a VL table. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-VLMerge} ({\bf Obit\-Table\-VL} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Merge overlapping components. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-VLSelect} ({\bf Obit\-Table\-VL} $\ast$in, {\bf Obit\-Table\-VL} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Select significant components. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-VLPurge} ({\bf Obit\-Table\-VL} $\ast$in, gchar $\ast$field, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Remove entries from a given field. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-VLRedun} ({\bf Obit\-Table\-VL} $\ast$in, {\bf Obit\-Table\-VL} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Remove redundant entries. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-VLCal} ({\bf Obit\-Table\-VL} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Apply final calibration and error analysis. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-VLPrint} ({\bf Obit\-Table\-VL} $\ast$in, {\bf Obit\-Image} $\ast$image, FILE $\ast$prt\-File, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Write human readable version of an VL table to a FILE. \item\end{CompactList}\item 
+{\bf Obit\-Table\-VZ} $\ast$ {\bf Obit\-Table\-VL2VZ} ({\bf Obit\-Table\-VL} $\ast$in, {\bf Obit\-Data} $\ast$data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Convert a VL table to a VZ (short) table. \item\end{CompactList}\item 
+{\bf Obit\-Table\-VZ} $\ast$ {\bf Obit\-Table\-VZSel} ({\bf Obit\-Table\-VZ} $\ast$in, {\bf Obit\-Data} $\ast$data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Select entries in a VZ (short) table. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Table\-VL}{\rm (p.\,\pageref{structObitTableVL})} class utility routine definition. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}!ObitTableVL2VZ@{ObitTableVL2VZ}}
+\index{ObitTableVL2VZ@{ObitTableVL2VZ}!ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-VZ}$\ast$ Obit\-Table\-VL2VZ ({\bf Obit\-Table\-VL} $\ast$ {\em in}, {\bf Obit\-Data} $\ast$ {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableVLUtil_8h_a8}
+
+
+Public: Convert a VL table to a VZ (short) table. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Input VL table Control parameters on info object: \begin{itemize}
+\item \char`\"{}min\-Flux\char`\"{} OBIT\_\-float (1,1,1) Minimum acceptable flux density (Jy) \end{itemize}
+\item[{\em data}]Data object onto which the output VZ table it to be attached Frequency in data header assumed to be that of the VL table \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\index{ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}!ObitTableVLAppend@{ObitTableVLAppend}}
+\index{ObitTableVLAppend@{ObitTableVLAppend}!ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-VLAppend ({\bf Obit\-Table\-VL} $\ast$ {\em in}, {\bf Obit\-Table\-VL} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableVLUtil_8h_a0}
+
+
+Public: Append one VL table to another. 
+
+Drops deselected entries (both AIPS and FITS). \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Input VL table \item[{\em out}]Output VL table \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\index{ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}!ObitTableVLCal@{ObitTableVLCal}}
+\index{ObitTableVLCal@{ObitTableVLCal}!ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-VLCal ({\bf Obit\-Table\-VL} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableVLUtil_8h_a6}
+
+
+Public: Apply final calibration and error analysis. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Input VL table \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\index{ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}!ObitTableVLIndex@{ObitTableVLIndex}}
+\index{ObitTableVLIndex@{ObitTableVLIndex}!ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-VLIndex ({\bf Obit\-Table\-VL} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableVLUtil_8h_a1}
+
+
+Public: Index a VL table. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Input VL table \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\index{ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}!ObitTableVLMerge@{ObitTableVLMerge}}
+\index{ObitTableVLMerge@{ObitTableVLMerge}!ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-VLMerge ({\bf Obit\-Table\-VL} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableVLUtil_8h_a2}
+
+
+Public: Merge overlapping components. 
+
+The resultant position is the weighted average and the flux is the sum. This should be run on a table with all entries derived from the same image. Adopted from the AIPSish task VLMRG \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Input VL table Control parameters on info object: \begin{itemize}
+\item \char`\"{}Radius\char`\"{} OBIT\_\-float (1,1,1) The radius in pixels within which to sum components. [def 3.01] \item \char`\"{}Cutoff\char`\"{} OBIT\_\-float (1,1,1) The minimum acceptable fraction of summed flux. [def 0.05] \item \char`\"{}beg\-Row\char`\"{} OBIT\_\-int (1,1,1) First row to include [def 1] \item \char`\"{}end\-Row\char`\"{} OBIT\_\-long (1,1,1) last row to include [def or 0 = all] \end{itemize}
+\item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\index{ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}!ObitTableVLPrint@{ObitTableVLPrint}}
+\index{ObitTableVLPrint@{ObitTableVLPrint}!ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-VLPrint ({\bf Obit\-Table\-VL} $\ast$ {\em in}, {\bf Obit\-Image} $\ast$ {\em image}, FILE $\ast$ {\em prt\-File}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableVLUtil_8h_a7}
+
+
+Public: Write human readable version of an VL table to a FILE. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]VL table to print \item[{\em prt\-File}]Where to write \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\index{ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}!ObitTableVLPurge@{ObitTableVLPurge}}
+\index{ObitTableVLPurge@{ObitTableVLPurge}!ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-VLPurge ({\bf Obit\-Table\-VL} $\ast$ {\em in}, gchar $\ast$ {\em field}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableVLUtil_8h_a4}
+
+
+Public: Remove entries from a given field. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Input VL table \item[{\em field}]Field name to purge (8 char, blank filled) \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\index{ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}!ObitTableVLRedun@{ObitTableVLRedun}}
+\index{ObitTableVLRedun@{ObitTableVLRedun}!ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-VLRedun ({\bf Obit\-Table\-VL} $\ast$ {\em in}, {\bf Obit\-Table\-VL} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableVLUtil_8h_a5}
+
+
+Public: Remove redundant entries. 
+
+If a positional match (max\-Dist) is found then the one closest to the center of its image (center\-Pix) is chosen. The other entry is flagged in the input table. When the search over the RA range from the original source is finished the final accepted entry is written to the output table. Adopted from the AIPSish task VREDN \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Input VL table, will be sorted if needed Control parameters on in-$>$info object: \begin{itemize}
+\item \char`\"{}center\-Pix\char`\"{} OBIT\_\-int (2,1,1) Center pixel in images [def 512,512] \item \char`\"{}max\-Dist\char`\"{} OBIT\_\-float (1,1,1) How far (\char`\"{}) to search for matches [def 15\char`\"{}] \item \char`\"{}beg\-Row\char`\"{} OBIT\_\-int (1,1,1) First row to include [def 1] \item \char`\"{}end\-Row\char`\"{} OBIT\_\-long (1,1,1) last row to include [def or 0 = all] \end{itemize}
+\item[{\em out}]Output VL table \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\index{ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}!ObitTableVLSelect@{ObitTableVLSelect}}
+\index{ObitTableVLSelect@{ObitTableVLSelect}!ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-VLSelect ({\bf Obit\-Table\-VL} $\ast$ {\em in}, {\bf Obit\-Table\-VL} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableVLUtil_8h_a3}
+
+
+Public: Select significant components. 
+
+For any non zero entry in Steps, if the entry has a peak weaker than fraction of the total within radius then it is not copied to the output. This should be run on a table with all entries derived from the same image. Adopted from the AIPSish task VLSEL \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Input VL table Control parameters on info object: \begin{itemize}
+\item \char`\"{}Steps\char`\"{} OBIT\_\-float (2,?,1) Pairs of values giving (radius(cells), fraction), empty entries zero filled Example: \{\{2.0,0.05\}, \{3.0,0.02\}, \{4.0,0.01\}\} \item \char`\"{}BLC\char`\"{} OBIT\_\-int (2,1,1) Lowest x,y pixel number selected [def 1,1] \item \char`\"{}TRC\char`\"{} OBIT\_\-long (2,1,1) Highest pixel number selected [def or 0 = all] \item \char`\"{}beg\-Row\char`\"{} OBIT\_\-int (1,1,1) First row to include [def 1] \item \char`\"{}end\-Row\char`\"{} OBIT\_\-long (1,1,1) last row to include [def or 0 = all] \end{itemize}
+\item[{\em out}]Output VL table \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\index{ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}!ObitTableVZSel@{ObitTableVZSel}}
+\index{ObitTableVZSel@{ObitTableVZSel}!ObitTableVLUtil.h@{Obit\-Table\-VLUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-VZ}$\ast$ Obit\-Table\-VZSel ({\bf Obit\-Table\-VZ} $\ast$ {\em in}, {\bf Obit\-Data} $\ast$ {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableVLUtil_8h_a9}
+
+
+Public: Select entries in a VZ (short) table. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Input VZ table Control parameters on info object: \begin{itemize}
+\item \char`\"{}clip\char`\"{} OBIT\_\-float scalar Minimum acceptable for clipping (Jy) (used if do\-Clip, no default) \item \char`\"{}nearest\char`\"{} OBIT\_\-float scalar Minimum nearest neighbor to be considered isolated (deg) (used if do\-Isol, do\-Aver, no default) \item \char`\"{}dist\-Avg\char`\"{} OBIT\_\-float scalar Distance within to average sources (deg) (used if do\-Aver, no default) \item \char`\"{}ignore\char`\"{} OBIT\_\-float scalar Minimum acceptable flux density (Jy) (used if do\-Aver, do\-Isol, no default) \item \char`\"{}crowd\char`\"{} OBIT\_\-float scalar Distance (deg) for crowding test (used if do\-Aver, default=nearest) \item \char`\"{}do\-Clip\char`\"{} OBIT\_\-boolean scalar Clipping by min\-Peak [def FALSE] \item \char`\"{}do\-Isol\char`\"{} OBIT\_\-boolean scalar Select isolated entries within nearest ignore entries fainter than ignore [def FALSE] \item \char`\"{}do\-Aver\char`\"{} OBIT\_\-boolean scalar Average entries within dist\-Avg reject outliers [def FALSE] If the brightest source within nearest is fainter than ignore then the source is passed, else: If a component is the brightest within nearest then all components within dist\-Avg are merged. If the source has no companions within nearest it is passed. If the component has brighter companions within nearest, it is dropped. \end{itemize}
+\item[{\em data}]Data object onto which the output VZ table is to be attached \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}

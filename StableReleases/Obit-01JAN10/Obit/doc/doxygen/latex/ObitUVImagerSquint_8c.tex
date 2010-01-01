@@ -1,0 +1,221 @@
+\section{Obit\-UVImager\-Squint.c File Reference}
+\label{ObitUVImagerSquint_8c}\index{ObitUVImagerSquint.c@{ObitUVImagerSquint.c}}
+{\bf Obit\-UVImager\-Squint}{\rm (p.\,\pageref{structObitUVImagerSquint})} class function definitions. 
+
+{\tt \#include \char`\"{}Obit\-UVImager\-Squint.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Util.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVWeight.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Sky\-Geom.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-UVImager\-Squint\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-UVImager\-Squint\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-UVImager\-Squint} $\ast$ {\bf new\-Obit\-UVImager\-Squint} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+void {\bf Obit\-UVImager\-Squint\-From\-Info} ({\bf Obit\-UVImager} $\ast$out, gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$in\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Init UVImager object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-UVImager\-Squint\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-UVImager\-Squint} $\ast$ {\bf Obit\-UVImager\-Squint\-Copy} ({\bf Obit\-UVImager\-Squint} $\ast$in, {\bf Obit\-UVImager\-Squint} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-UVImager\-Squint\-Clone} ({\bf Obit\-UVImager\-Squint} $\ast$in, {\bf Obit\-UVImager\-Squint} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+{\bf Obit\-UVImager\-Squint} $\ast$ {\bf Obit\-UVImager\-Squint\-Create} (gchar $\ast$name, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-UVImager\-Squint}{\rm (p.\,\pageref{structObitUVImagerSquint})} structures. \item\end{CompactList}\item 
+{\bf Obit\-UVImager\-Squint} $\ast$ {\bf Obit\-UVImager\-Squint\-Create2} (gchar $\ast$name, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Image\-Mosaic} $\ast$mosaic, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-UVImager\-Squint}{\rm (p.\,\pageref{structObitUVImagerSquint})} structures given mosaic. \item\end{CompactList}\item 
+void {\bf Obit\-UVImager\-Squint\-Weight} ({\bf Obit\-UVImager} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Weight data. \item\end{CompactList}\item 
+void {\bf Obit\-UVImager\-Squint\-Flatten} ({\bf Obit\-UVImager} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Flatten Image Mosaic. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Mosaic} $\ast$ {\bf Obit\-UVImager\-Squint\-Get\-Mosaic} ({\bf Obit\-UVImager} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em return Image\-Mosaic member \item\end{CompactList}\item 
+void {\bf Obit\-UVImager\-Squint\-Get\-Info} ({\bf Obit\-UVImager} $\ast$inn, gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$out\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Extract information about underlying structures to {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+void {\bf Obit\-UVImager\-Squint\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-UVImager\-Squint}{\rm (p.\,\pageref{structObitUVImagerSquint})} class function definitions. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} base class.
+
+\subsection{Function Documentation}
+\index{ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}!newObitUVImagerSquint@{newObitUVImagerSquint}}
+\index{newObitUVImagerSquint@{newObitUVImagerSquint}!ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVImager\-Squint}$\ast$ new\-Obit\-UVImager\-Squint (gchar $\ast$ {\em name})}\label{ObitUVImagerSquint_8c_a6}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}!ObitUVImagerSquintClassInit@{ObitUVImagerSquintClassInit}}
+\index{ObitUVImagerSquintClassInit@{ObitUVImagerSquintClassInit}!ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVImager\-Squint\-Class\-Init (void)}\label{ObitUVImagerSquint_8c_a17}
+
+
+Public: Class initializer. 
+
+\index{ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}!ObitUVImagerSquintClear@{ObitUVImagerSquintClear}}
+\index{ObitUVImagerSquintClear@{ObitUVImagerSquintClear}!ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVImager\-Squint\-Clear (gpointer {\em inn})}\label{ObitUVImagerSquint_8c_a4}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-UVImager\-Squint$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}!ObitUVImagerSquintClone@{ObitUVImagerSquintClone}}
+\index{ObitUVImagerSquintClone@{ObitUVImagerSquintClone}!ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVImager\-Squint\-Clone ({\bf Obit\-UVImager\-Squint} $\ast$ {\em in}, {\bf Obit\-UVImager\-Squint} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImagerSquint_8c_a10}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}!ObitUVImagerSquintCopy@{ObitUVImagerSquintCopy}}
+\index{ObitUVImagerSquintCopy@{ObitUVImagerSquintCopy}!ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVImager\-Squint}$\ast$ Obit\-UVImager\-Squint\-Copy ({\bf Obit\-UVImager\-Squint} $\ast$ {\em in}, {\bf Obit\-UVImager\-Squint} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImagerSquint_8c_a9}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}!ObitUVImagerSquintCreate@{ObitUVImagerSquintCreate}}
+\index{ObitUVImagerSquintCreate@{ObitUVImagerSquintCreate}!ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVImager\-Squint}$\ast$ Obit\-UVImager\-Squint\-Create (gchar $\ast$ {\em name}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImagerSquint_8c_a11}
+
+
+Public: Create/initialize {\bf Obit\-UVImager\-Squint}{\rm (p.\,\pageref{structObitUVImagerSquint})} structures. 
+
+The output Image\-Mosaic member is created \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em uvdata}]{\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} object with info member containng the output image specifications and all processing parameters. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}!ObitUVImagerSquintCreate2@{ObitUVImagerSquintCreate2}}
+\index{ObitUVImagerSquintCreate2@{ObitUVImagerSquintCreate2}!ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVImager\-Squint}$\ast$ Obit\-UVImager\-Squint\-Create2 (gchar $\ast$ {\em name}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Image\-Mosaic} $\ast$ {\em mosaic}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImagerSquint_8c_a12}
+
+
+Public: Create/initialize {\bf Obit\-UVImager\-Squint}{\rm (p.\,\pageref{structObitUVImagerSquint})} structures given mosaic. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em uvdata}]{\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} object with info member containng the output image specifications and all processing parameters. \item[{\em mosaic}]Image\-Mosaic to use \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}!ObitUVImagerSquintFlatten@{ObitUVImagerSquintFlatten}}
+\index{ObitUVImagerSquintFlatten@{ObitUVImagerSquintFlatten}!ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVImager\-Squint\-Flatten ({\bf Obit\-UVImager} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImagerSquint_8c_a14}
+
+
+Flatten Image Mosaic. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The input object \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}!ObitUVImagerSquintFromInfo@{ObitUVImagerSquintFromInfo}}
+\index{ObitUVImagerSquintFromInfo@{ObitUVImagerSquintFromInfo}!ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVImager\-Squint\-From\-Info ({\bf Obit\-UVImager} $\ast$ {\em out}, gchar $\ast$ {\em prefix}, {\bf Obit\-Info\-List} $\ast$ {\em in\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImagerSquint_8c_a7}
+
+
+Public: Init UVImager object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em out}]the new object.to be initialized \item[{\em prefix}]If Non\-Null, string to be added to beginning of in\-List entry name \char`\"{}xxx\char`\"{} in the following \item[{\em in\-List}]Info\-List to extract object information from \begin{itemize}
+\item \char`\"{}xxx\-Class\-Type\char`\"{} string UVImager type, \char`\"{}Squint\char`\"{} for this class \item \char`\"{}xxx\-UVData\char`\"{} prefix for uvdata member, entry with value \char`\"{}None\char`\"{} =$>$ doesn't exist \item \char`\"{}xxx\-UVWork\char`\"{} prefix for uvwork member, entry with value \char`\"{}None\char`\"{} =$>$ doesn't exist \item \char`\"{}xxx\-Mosaic\char`\"{} prefix for mosaic member, entry with value \char`\"{}None\char`\"{} =$>$ doesn't exist \end{itemize}
+\item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}!ObitUVImagerSquintGetClass@{ObitUVImagerSquintGetClass}}
+\index{ObitUVImagerSquintGetClass@{ObitUVImagerSquintGetClass}!ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-UVImager\-Squint\-Get\-Class (void)}\label{ObitUVImagerSquint_8c_a8}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}!ObitUVImagerSquintGetInfo@{ObitUVImagerSquintGetInfo}}
+\index{ObitUVImagerSquintGetInfo@{ObitUVImagerSquintGetInfo}!ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVImager\-Squint\-Get\-Info ({\bf Obit\-UVImager} $\ast$ {\em inn}, gchar $\ast$ {\em prefix}, {\bf Obit\-Info\-List} $\ast$ {\em out\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImagerSquint_8c_a16}
+
+
+Public: Extract information about underlying structures to {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object of interest. \item[{\em prefix}]If Non\-Null, string to be added to beginning of out\-List entry name \char`\"{}xxx\char`\"{} in the following \item[{\em out\-List}]Info\-List to write entries into \begin{itemize}
+\item \char`\"{}xxx\-Class\-Type\char`\"{} string UVImager type, \char`\"{}Squint\char`\"{} for this class \item \char`\"{}xxx\-UVData\char`\"{} prefix for uvdata member, entry with value \char`\"{}None\char`\"{} =$>$ doesn't exist \item \char`\"{}xxx\-UVWork\char`\"{} prefix for uvwork member, entry with value \char`\"{}None\char`\"{} =$>$ doesn't exist \item \char`\"{}xxx\-Mosaic\char`\"{} prefix for mosaic member, entry with value \char`\"{}None\char`\"{} =$>$ doesn't exist \end{itemize}
+\item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}!ObitUVImagerSquintGetMosaic@{ObitUVImagerSquintGetMosaic}}
+\index{ObitUVImagerSquintGetMosaic@{ObitUVImagerSquintGetMosaic}!ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Mosaic}$\ast$ Obit\-UVImager\-Squint\-Get\-Mosaic ({\bf Obit\-UVImager} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImagerSquint_8c_a15}
+
+
+return Image\-Mosaic member 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The input object \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]reference to Image\-Mosaic. \end{Desc}
+\index{ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}!ObitUVImagerSquintInit@{ObitUVImagerSquintInit}}
+\index{ObitUVImagerSquintInit@{ObitUVImagerSquintInit}!ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVImager\-Squint\-Init (gpointer {\em inn})}\label{ObitUVImagerSquint_8c_a3}
+
+
+Private: Initialize newly instantiated object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}!ObitUVImagerSquintWeight@{ObitUVImagerSquintWeight}}
+\index{ObitUVImagerSquintWeight@{ObitUVImagerSquintWeight}!ObitUVImagerSquint.c@{Obit\-UVImager\-Squint.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVImager\-Squint\-Weight ({\bf Obit\-UVImager} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImagerSquint_8c_a13}
+
+
+Public: Weight data. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The input object \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}

@@ -1,0 +1,2170 @@
+m4trace:/usr/share/aclocal/glib-2.0.m4:212: -1- AC_DEFUN([AM_PATH_GLIB_2_0], [dnl 
+dnl Get the cflags and libraries from pkg-config
+dnl
+AC_ARG_ENABLE(glibtest, [  --disable-glibtest      do not try to compile and run a test GLIB program],
+		    , enable_glibtest=yes)
+
+  pkg_config_args=glib-2.0
+  for module in . $4
+  do
+      case "$module" in
+         gmodule) 
+             pkg_config_args="$pkg_config_args gmodule-2.0"
+         ;;
+         gobject) 
+             pkg_config_args="$pkg_config_args gobject-2.0"
+         ;;
+         gthread) 
+             pkg_config_args="$pkg_config_args gthread-2.0"
+         ;;
+      esac
+  done
+
+  AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+
+  no_glib=""
+
+  if test x$PKG_CONFIG != xno ; then
+    if $PKG_CONFIG --atleast-pkgconfig-version 0.7 ; then
+      :
+    else
+      echo *** pkg-config too old; version 0.7 or better required.
+      no_glib=yes
+      PKG_CONFIG=no
+    fi
+  else
+    no_glib=yes
+  fi
+
+  min_glib_version=ifelse([$1], ,2.0.0,$1)
+  AC_MSG_CHECKING(for GLIB - version >= $min_glib_version)
+
+  if test x$PKG_CONFIG != xno ; then
+    ## don't try to run the test against uninstalled libtool libs
+    if $PKG_CONFIG --uninstalled $pkg_config_args; then
+	  echo "Will use uninstalled version of GLib found in PKG_CONFIG_PATH"
+	  enable_glibtest=no
+    fi
+
+    if $PKG_CONFIG --atleast-version $min_glib_version $pkg_config_args; then
+	  :
+    else
+	  no_glib=yes
+    fi
+  fi
+
+  if test x"$no_glib" = x ; then
+    GLIB_GENMARSHAL=`$PKG_CONFIG --variable=glib_genmarshal glib-2.0`
+    GOBJECT_QUERY=`$PKG_CONFIG --variable=gobject_query glib-2.0`
+    GLIB_MKENUMS=`$PKG_CONFIG --variable=glib_mkenums glib-2.0`
+
+    GLIB_CFLAGS=`$PKG_CONFIG --cflags $pkg_config_args`
+    GLIB_LIBS=`$PKG_CONFIG --libs $pkg_config_args`
+    glib_config_major_version=`$PKG_CONFIG --modversion glib-2.0 | \
+           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
+    glib_config_minor_version=`$PKG_CONFIG --modversion glib-2.0 | \
+           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
+    glib_config_micro_version=`$PKG_CONFIG --modversion glib-2.0 | \
+           sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
+    if test "x$enable_glibtest" = "xyes" ; then
+      ac_save_CFLAGS="$CFLAGS"
+      ac_save_LIBS="$LIBS"
+      CFLAGS="$CFLAGS $GLIB_CFLAGS"
+      LIBS="$GLIB_LIBS $LIBS"
+dnl
+dnl Now check if the installed GLIB is sufficiently new. (Also sanity
+dnl checks the results of pkg-config to some extent)
+dnl
+      rm -f conf.glibtest
+      AC_TRY_RUN([
+#include <glib.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+int 
+main ()
+{
+  int major, minor, micro;
+  char *tmp_version;
+
+  system ("touch conf.glibtest");
+
+  /* HP/UX 9 (%@#!) writes to sscanf strings */
+  tmp_version = g_strdup("$min_glib_version");
+  if (sscanf(tmp_version, "%d.%d.%d", &major, &minor, &micro) != 3) {
+     printf("%s, bad version string\n", "$min_glib_version");
+     exit(1);
+   }
+
+  if ((glib_major_version != $glib_config_major_version) ||
+      (glib_minor_version != $glib_config_minor_version) ||
+      (glib_micro_version != $glib_config_micro_version))
+    {
+      printf("\n*** 'pkg-config --modversion glib-2.0' returned %d.%d.%d, but GLIB (%d.%d.%d)\n", 
+             $glib_config_major_version, $glib_config_minor_version, $glib_config_micro_version,
+             glib_major_version, glib_minor_version, glib_micro_version);
+      printf ("*** was found! If pkg-config was correct, then it is best\n");
+      printf ("*** to remove the old version of GLib. You may also be able to fix the error\n");
+      printf("*** by modifying your LD_LIBRARY_PATH enviroment variable, or by editing\n");
+      printf("*** /etc/ld.so.conf. Make sure you have run ldconfig if that is\n");
+      printf("*** required on your system.\n");
+      printf("*** If pkg-config was wrong, set the environment variable PKG_CONFIG_PATH\n");
+      printf("*** to point to the correct configuration files\n");
+    } 
+  else if ((glib_major_version != GLIB_MAJOR_VERSION) ||
+	   (glib_minor_version != GLIB_MINOR_VERSION) ||
+           (glib_micro_version != GLIB_MICRO_VERSION))
+    {
+      printf("*** GLIB header files (version %d.%d.%d) do not match\n",
+	     GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION);
+      printf("*** library (version %d.%d.%d)\n",
+	     glib_major_version, glib_minor_version, glib_micro_version);
+    }
+  else
+    {
+      if ((glib_major_version > major) ||
+        ((glib_major_version == major) && (glib_minor_version > minor)) ||
+        ((glib_major_version == major) && (glib_minor_version == minor) && (glib_micro_version >= micro)))
+      {
+        return 0;
+       }
+     else
+      {
+        printf("\n*** An old version of GLIB (%d.%d.%d) was found.\n",
+               glib_major_version, glib_minor_version, glib_micro_version);
+        printf("*** You need a version of GLIB newer than %d.%d.%d. The latest version of\n",
+	       major, minor, micro);
+        printf("*** GLIB is always available from ftp://ftp.gtk.org.\n");
+        printf("***\n");
+        printf("*** If you have already installed a sufficiently new version, this error\n");
+        printf("*** probably means that the wrong copy of the pkg-config shell script is\n");
+        printf("*** being found. The easiest way to fix this is to remove the old version\n");
+        printf("*** of GLIB, but you can also set the PKG_CONFIG environment to point to the\n");
+        printf("*** correct copy of pkg-config. (In this case, you will have to\n");
+        printf("*** modify your LD_LIBRARY_PATH enviroment variable, or edit /etc/ld.so.conf\n");
+        printf("*** so that the correct libraries are found at run-time))\n");
+      }
+    }
+  return 1;
+}
+],, no_glib=yes,[echo $ac_n "cross compiling; assumed OK... $ac_c"])
+       CFLAGS="$ac_save_CFLAGS"
+       LIBS="$ac_save_LIBS"
+     fi
+  fi
+  if test "x$no_glib" = x ; then
+     AC_MSG_RESULT(yes (version $glib_config_major_version.$glib_config_minor_version.$glib_config_micro_version))
+     ifelse([$2], , :, [$2])     
+  else
+     AC_MSG_RESULT(no)
+     if test "$PKG_CONFIG" = "no" ; then
+       echo "*** A new enough version of pkg-config was not found."
+       echo "*** See http://www.freedesktop.org/software/pkgconfig/"
+     else
+       if test -f conf.glibtest ; then
+        :
+       else
+          echo "*** Could not run GLIB test program, checking why..."
+          ac_save_CFLAGS="$CFLAGS"
+          ac_save_LIBS="$LIBS"
+          CFLAGS="$CFLAGS $GLIB_CFLAGS"
+          LIBS="$LIBS $GLIB_LIBS"
+          AC_TRY_LINK([
+#include <glib.h>
+#include <stdio.h>
+],      [ return ((glib_major_version) || (glib_minor_version) || (glib_micro_version)); ],
+        [ echo "*** The test program compiled, but did not run. This usually means"
+          echo "*** that the run-time linker is not finding GLIB or finding the wrong"
+          echo "*** version of GLIB. If it is not finding GLIB, you'll need to set your"
+          echo "*** LD_LIBRARY_PATH environment variable, or edit /etc/ld.so.conf to point"
+          echo "*** to the installed location  Also, make sure you have run ldconfig if that"
+          echo "*** is required on your system"
+	  echo "***"
+          echo "*** If you have an old version installed, it is best to remove it, although"
+          echo "*** you may also be able to get things to work by modifying LD_LIBRARY_PATH" ],
+        [ echo "*** The test program failed to compile or link. See the file config.log for the"
+          echo "*** exact error that occured. This usually means GLIB is incorrectly installed."])
+          CFLAGS="$ac_save_CFLAGS"
+          LIBS="$ac_save_LIBS"
+       fi
+     fi
+     GLIB_CFLAGS=""
+     GLIB_LIBS=""
+     GLIB_GENMARSHAL=""
+     GOBJECT_QUERY=""
+     GLIB_MKENUMS=""
+     ifelse([$3], , :, [$3])
+  fi
+  AC_SUBST(GLIB_CFLAGS)
+  AC_SUBST(GLIB_LIBS)
+  AC_SUBST(GLIB_GENMARSHAL)
+  AC_SUBST(GOBJECT_QUERY)
+  AC_SUBST(GLIB_MKENUMS)
+  rm -f conf.glibtest
+])
+m4trace:/usr/share/aclocal-1.9/amversion.m4:23: -1- AC_DEFUN([AM_AUTOMAKE_VERSION], [am__api_version="1.9"])
+m4trace:/usr/share/aclocal-1.9/amversion.m4:30: -1- AC_DEFUN([AM_SET_CURRENT_AUTOMAKE_VERSION], [AM_AUTOMAKE_VERSION([1.9.2])])
+m4trace:/usr/share/aclocal-1.9/auxdir.m4:63: -1- AC_DEFUN([AM_AUX_DIR_EXPAND], [dnl Rely on autoconf to set up CDPATH properly.
+AC_PREREQ([2.50])dnl
+# expand $ac_aux_dir to an absolute path
+am_aux_dir=`cd $ac_aux_dir && pwd`
+])
+m4trace:/usr/share/aclocal-1.9/cond.m4:42: -1- AC_DEFUN([AM_CONDITIONAL], [AC_PREREQ(2.52)dnl
+ ifelse([$1], [TRUE],  [AC_FATAL([$0: invalid condition: $1])],
+	[$1], [FALSE], [AC_FATAL([$0: invalid condition: $1])])dnl
+AC_SUBST([$1_TRUE])
+AC_SUBST([$1_FALSE])
+if $2; then
+  $1_TRUE=
+  $1_FALSE='#'
+else
+  $1_TRUE='#'
+  $1_FALSE=
+fi
+AC_CONFIG_COMMANDS_PRE(
+[if test -z "${$1_TRUE}" && test -z "${$1_FALSE}"; then
+  AC_MSG_ERROR([[conditional "$1" was never defined.
+Usually this means the macro was only invoked conditionally.]])
+fi])])
+m4trace:/usr/share/aclocal-1.9/depend.m4:142: -1- AC_DEFUN([_AM_DEPENDENCIES], [AC_REQUIRE([AM_SET_DEPDIR])dnl
+AC_REQUIRE([AM_OUTPUT_DEPENDENCY_COMMANDS])dnl
+AC_REQUIRE([AM_MAKE_INCLUDE])dnl
+AC_REQUIRE([AM_DEP_TRACK])dnl
+
+ifelse([$1], CC,   [depcc="$CC"   am_compiler_list=],
+       [$1], CXX,  [depcc="$CXX"  am_compiler_list=],
+       [$1], OBJC, [depcc="$OBJC" am_compiler_list='gcc3 gcc'],
+       [$1], GCJ,  [depcc="$GCJ"  am_compiler_list='gcc3 gcc'],
+                   [depcc="$$1"   am_compiler_list=])
+
+AC_CACHE_CHECK([dependency style of $depcc],
+               [am_cv_$1_dependencies_compiler_type],
+[if test -z "$AMDEP_TRUE" && test -f "$am_depcomp"; then
+  # We make a subdir and do the tests there.  Otherwise we can end up
+  # making bogus files that we don't know about and never remove.  For
+  # instance it was reported that on HP-UX the gcc test will end up
+  # making a dummy file named `D' -- because `-MD' means `put the output
+  # in D'.
+  mkdir conftest.dir
+  # Copy depcomp to subdir because otherwise we won't find it if we're
+  # using a relative directory.
+  cp "$am_depcomp" conftest.dir
+  cd conftest.dir
+  # We will build objects and dependencies in a subdirectory because
+  # it helps to detect inapplicable dependency modes.  For instance
+  # both Tru64's cc and ICC support -MD to output dependencies as a
+  # side effect of compilation, but ICC will put the dependencies in
+  # the current directory while Tru64 will put them in the object
+  # directory.
+  mkdir sub
+
+  am_cv_$1_dependencies_compiler_type=none
+  if test "$am_compiler_list" = ""; then
+     am_compiler_list=`sed -n ['s/^#*\([a-zA-Z0-9]*\))$/\1/p'] < ./depcomp`
+  fi
+  for depmode in $am_compiler_list; do
+    # Setup a source with many dependencies, because some compilers
+    # like to wrap large dependency lists on column 80 (with \), and
+    # we should not choose a depcomp mode which is confused by this.
+    #
+    # We need to recreate these files for each test, as the compiler may
+    # overwrite some of them when testing with obscure command lines.
+    # This happens at least with the AIX C compiler.
+    : > sub/conftest.c
+    for i in 1 2 3 4 5 6; do
+      echo '#include "conftst'$i'.h"' >> sub/conftest.c
+      # Using `: > sub/conftst$i.h' creates only sub/conftst1.h with
+      # Solaris 8's {/usr,}/bin/sh.
+      touch sub/conftst$i.h
+    done
+    echo "${am__include} ${am__quote}sub/conftest.Po${am__quote}" > confmf
+
+    case $depmode in
+    nosideeffect)
+      # after this tag, mechanisms are not by side-effect, so they'll
+      # only be used when explicitly requested
+      if test "x$enable_dependency_tracking" = xyes; then
+	continue
+      else
+	break
+      fi
+      ;;
+    none) break ;;
+    esac
+    # We check with `-c' and `-o' for the sake of the "dashmstdout"
+    # mode.  It turns out that the SunPro C++ compiler does not properly
+    # handle `-M -o', and we need to detect this.
+    if depmode=$depmode \
+       source=sub/conftest.c object=sub/conftest.${OBJEXT-o} \
+       depfile=sub/conftest.Po tmpdepfile=sub/conftest.TPo \
+       $SHELL ./depcomp $depcc -c -o sub/conftest.${OBJEXT-o} sub/conftest.c \
+         >/dev/null 2>conftest.err &&
+       grep sub/conftst6.h sub/conftest.Po > /dev/null 2>&1 &&
+       grep sub/conftest.${OBJEXT-o} sub/conftest.Po > /dev/null 2>&1 &&
+       ${MAKE-make} -s -f confmf > /dev/null 2>&1; then
+      # icc doesn't choke on unknown options, it will just issue warnings
+      # or remarks (even with -Werror).  So we grep stderr for any message
+      # that says an option was ignored or not supported.
+      # When given -MP, icc 7.0 and 7.1 complain thusly:
+      #   icc: Command line warning: ignoring option '-M'; no argument required
+      # The diagnosis changed in icc 8.0:
+      #   icc: Command line remark: option '-MP' not supported
+      if (grep 'ignoring option' conftest.err ||
+          grep 'not supported' conftest.err) >/dev/null 2>&1; then :; else
+        am_cv_$1_dependencies_compiler_type=$depmode
+        break
+      fi
+    fi
+  done
+
+  cd ..
+  rm -rf conftest.dir
+else
+  am_cv_$1_dependencies_compiler_type=none
+fi
+])
+AC_SUBST([$1DEPMODE], [depmode=$am_cv_$1_dependencies_compiler_type])
+AM_CONDITIONAL([am__fastdep$1], [
+  test "x$enable_dependency_tracking" != xno \
+  && test "$am_cv_$1_dependencies_compiler_type" = gcc3])
+])
+m4trace:/usr/share/aclocal-1.9/depend.m4:152: -1- AC_DEFUN([AM_SET_DEPDIR], [AC_REQUIRE([AM_SET_LEADING_DOT])dnl
+AC_SUBST([DEPDIR], ["${am__leading_dot}deps"])dnl
+])
+m4trace:/usr/share/aclocal-1.9/depend.m4:167: -1- AC_DEFUN([AM_DEP_TRACK], [AC_ARG_ENABLE(dependency-tracking,
+[  --disable-dependency-tracking  speeds up one-time build
+  --enable-dependency-tracking   do not reject slow dependency extractors])
+if test "x$enable_dependency_tracking" != xno; then
+  am_depcomp="$ac_aux_dir/depcomp"
+  AMDEPBACKSLASH='\'
+fi
+AM_CONDITIONAL([AMDEP], [test "x$enable_dependency_tracking" != xno])
+AC_SUBST([AMDEPBACKSLASH])
+])
+m4trace:/usr/share/aclocal-1.9/depout.m4:64: -1- AC_DEFUN([_AM_OUTPUT_DEPENDENCY_COMMANDS], [for mf in $CONFIG_FILES; do
+  # Strip MF so we end up with the name of the file.
+  mf=`echo "$mf" | sed -e 's/:.*$//'`
+  # Check whether this is an Automake generated Makefile or not.
+  # We used to match only the files named `Makefile.in', but
+  # some people rename them; so instead we look at the file content.
+  # Grep'ing the first line is not enough: some people post-process
+  # each Makefile.in and add a new line on top of each file to say so.
+  # So let's grep whole file.
+  if grep '^#.*generated by automake' $mf > /dev/null 2>&1; then
+    dirpart=`AS_DIRNAME("$mf")`
+  else
+    continue
+  fi
+  # Extract the definition of DEPDIR, am__include, and am__quote
+  # from the Makefile without running `make'.
+  DEPDIR=`sed -n 's/^DEPDIR = //p' < "$mf"`
+  test -z "$DEPDIR" && continue
+  am__include=`sed -n 's/^am__include = //p' < "$mf"`
+  test -z "am__include" && continue
+  am__quote=`sed -n 's/^am__quote = //p' < "$mf"`
+  # When using ansi2knr, U may be empty or an underscore; expand it
+  U=`sed -n 's/^U = //p' < "$mf"`
+  # Find all dependency output files, they are included files with
+  # $(DEPDIR) in their names.  We invoke sed twice because it is the
+  # simplest approach to changing $(DEPDIR) to its actual value in the
+  # expansion.
+  for file in `sed -n "
+    s/^$am__include $am__quote\(.*(DEPDIR).*\)$am__quote"'$/\1/p' <"$mf" | \
+       sed -e 's/\$(DEPDIR)/'"$DEPDIR"'/g' -e 's/\$U/'"$U"'/g'`; do
+    # Make sure the directory exists.
+    test -f "$dirpart/$file" && continue
+    fdir=`AS_DIRNAME(["$file"])`
+    AS_MKDIR_P([$dirpart/$fdir])
+    # echo "creating $dirpart/$file"
+    echo '# dummy' > "$dirpart/$file"
+  done
+done
+])
+m4trace:/usr/share/aclocal-1.9/depout.m4:78: -1- AC_DEFUN([AM_OUTPUT_DEPENDENCY_COMMANDS], [AC_CONFIG_COMMANDS([depfiles],
+     [test x"$AMDEP_TRUE" != x"" || _AM_OUTPUT_DEPENDENCY_COMMANDS],
+     [AMDEP_TRUE="$AMDEP_TRUE" ac_aux_dir="$ac_aux_dir"])
+])
+m4trace:/usr/share/aclocal-1.9/init.m4:103: -1- AC_DEFUN([AM_INIT_AUTOMAKE], [AC_PREREQ([2.58])dnl
+dnl Autoconf wants to disallow AM_ names.  We explicitly allow
+dnl the ones we care about.
+m4_pattern_allow([^AM_[A-Z]+FLAGS$])dnl
+AC_REQUIRE([AM_SET_CURRENT_AUTOMAKE_VERSION])dnl
+AC_REQUIRE([AC_PROG_INSTALL])dnl
+# test to see if srcdir already configured
+if test "`cd $srcdir && pwd`" != "`pwd`" &&
+   test -f $srcdir/config.status; then
+  AC_MSG_ERROR([source directory already configured; run "make distclean" there first])
+fi
+
+# test whether we have cygpath
+if test -z "$CYGPATH_W"; then
+  if (cygpath --version) >/dev/null 2>/dev/null; then
+    CYGPATH_W='cygpath -w'
+  else
+    CYGPATH_W=echo
+  fi
+fi
+AC_SUBST([CYGPATH_W])
+
+# Define the identity of the package.
+dnl Distinguish between old-style and new-style calls.
+m4_ifval([$2],
+[m4_ifval([$3], [_AM_SET_OPTION([no-define])])dnl
+ AC_SUBST([PACKAGE], [$1])dnl
+ AC_SUBST([VERSION], [$2])],
+[_AM_SET_OPTIONS([$1])dnl
+ AC_SUBST([PACKAGE], ['AC_PACKAGE_TARNAME'])dnl
+ AC_SUBST([VERSION], ['AC_PACKAGE_VERSION'])])dnl
+
+_AM_IF_OPTION([no-define],,
+[AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [Name of package])
+ AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [Version number of package])])dnl
+
+# Some tools Automake needs.
+AC_REQUIRE([AM_SANITY_CHECK])dnl
+AC_REQUIRE([AC_ARG_PROGRAM])dnl
+AM_MISSING_PROG(ACLOCAL, aclocal-${am__api_version})
+AM_MISSING_PROG(AUTOCONF, autoconf)
+AM_MISSING_PROG(AUTOMAKE, automake-${am__api_version})
+AM_MISSING_PROG(AUTOHEADER, autoheader)
+AM_MISSING_PROG(MAKEINFO, makeinfo)
+AM_PROG_INSTALL_SH
+AM_PROG_INSTALL_STRIP
+AC_REQUIRE([AM_PROG_MKDIR_P])dnl
+# We need awk for the "check" target.  The system "awk" is bad on
+# some platforms.
+AC_REQUIRE([AC_PROG_AWK])dnl
+AC_REQUIRE([AC_PROG_MAKE_SET])dnl
+AC_REQUIRE([AM_SET_LEADING_DOT])dnl
+_AM_IF_OPTION([tar-ustar], [_AM_PROG_TAR([ustar])],
+              [_AM_IF_OPTION([tar-pax], [_AM_PROG_TAR([pax])],
+	      		     [_AM_PROG_TAR([v7])])])
+_AM_IF_OPTION([no-dependencies],,
+[AC_PROVIDE_IFELSE([AC_PROG_CC],
+                  [_AM_DEPENDENCIES(CC)],
+                  [define([AC_PROG_CC],
+                          defn([AC_PROG_CC])[_AM_DEPENDENCIES(CC)])])dnl
+AC_PROVIDE_IFELSE([AC_PROG_CXX],
+                  [_AM_DEPENDENCIES(CXX)],
+                  [define([AC_PROG_CXX],
+                          defn([AC_PROG_CXX])[_AM_DEPENDENCIES(CXX)])])dnl
+])
+])
+m4trace:/usr/share/aclocal-1.9/init.m4:124: -1- AC_DEFUN([_AC_AM_CONFIG_HEADER_HOOK], [# Compute $1's index in $config_headers.
+_am_stamp_count=1
+for _am_header in $config_headers :; do
+  case $_am_header in
+    $1 | $1:* )
+      break ;;
+    * )
+      _am_stamp_count=`expr $_am_stamp_count + 1` ;;
+  esac
+done
+echo "timestamp for $1" >`AS_DIRNAME([$1])`/stamp-h[]$_am_stamp_count])
+m4trace:/usr/share/aclocal-1.9/install-sh.m4:25: -1- AC_DEFUN([AM_PROG_INSTALL_SH], [AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
+install_sh=${install_sh-"$am_aux_dir/install-sh"}
+AC_SUBST(install_sh)])
+m4trace:/usr/share/aclocal-1.9/lead-dot.m4:32: -1- AC_DEFUN([AM_SET_LEADING_DOT], [rm -rf .tst 2>/dev/null
+mkdir .tst 2>/dev/null
+if test -d .tst; then
+  am__leading_dot=.
+else
+  am__leading_dot=_
+fi
+rmdir .tst 2>/dev/null
+AC_SUBST([am__leading_dot])])
+m4trace:/usr/share/aclocal-1.9/make.m4:62: -1- AC_DEFUN([AM_MAKE_INCLUDE], [am_make=${MAKE-make}
+cat > confinc << 'END'
+am__doit:
+	@echo done
+.PHONY: am__doit
+END
+# If we don't find an include directive, just comment out the code.
+AC_MSG_CHECKING([for style of include used by $am_make])
+am__include="#"
+am__quote=
+_am_result=none
+# First try GNU make style include.
+echo "include confinc" > confmf
+# We grep out `Entering directory' and `Leaving directory'
+# messages which can occur if `w' ends up in MAKEFLAGS.
+# In particular we don't look at `^make:' because GNU make might
+# be invoked under some other name (usually "gmake"), in which
+# case it prints its new name instead of `make'.
+if test "`$am_make -s -f confmf 2> /dev/null | grep -v 'ing directory'`" = "done"; then
+   am__include=include
+   am__quote=
+   _am_result=GNU
+fi
+# Now try BSD make style include.
+if test "$am__include" = "#"; then
+   echo '.include "confinc"' > confmf
+   if test "`$am_make -s -f confmf 2> /dev/null`" = "done"; then
+      am__include=.include
+      am__quote="\""
+      _am_result=BSD
+   fi
+fi
+AC_SUBST([am__include])
+AC_SUBST([am__quote])
+AC_MSG_RESULT([$_am_result])
+rm -f confinc confmf
+])
+m4trace:/usr/share/aclocal-1.9/missing.m4:31: -1- AC_DEFUN([AM_MISSING_PROG], [AC_REQUIRE([AM_MISSING_HAS_RUN])
+$1=${$1-"${am_missing_run}$2"}
+AC_SUBST($1)])
+m4trace:/usr/share/aclocal-1.9/missing.m4:48: -1- AC_DEFUN([AM_MISSING_HAS_RUN], [AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
+test x"${MISSING+set}" = xset || MISSING="\${SHELL} $am_aux_dir/missing"
+# Use eval to expand $SHELL
+if eval "$MISSING --run true"; then
+  am_missing_run="$MISSING --run "
+else
+  am_missing_run=
+  AC_MSG_WARN([`missing' script is too old or missing])
+fi
+])
+m4trace:/usr/share/aclocal-1.9/mkdirp.m4:73: -1- AC_DEFUN([AM_PROG_MKDIR_P], [if mkdir -p --version . >/dev/null 2>&1 && test ! -d ./--version; then
+  # We used to keeping the `.' as first argument, in order to
+  # allow $(mkdir_p) to be used without argument.  As in
+  #   $(mkdir_p) $(somedir)
+  # where $(somedir) is conditionally defined.  However this is wrong
+  # for two reasons:
+  #  1. if the package is installed by a user who cannot write `.'
+  #     make install will fail,
+  #  2. the above comment should most certainly read
+  #     $(mkdir_p) $(DESTDIR)$(somedir)
+  #     so it does not work when $(somedir) is undefined and
+  #     $(DESTDIR) is not.
+  #  To support the latter case, we have to write
+  #     test -z "$(somedir)" || $(mkdir_p) $(DESTDIR)$(somedir),
+  #  so the `.' trick is pointless.
+  mkdir_p='mkdir -p --'
+else
+  # On NextStep and OpenStep, the `mkdir' command does not
+  # recognize any option.  It will interpret all options as
+  # directories to create, and then abort because `.' already
+  # exists.
+  for d in ./-p ./--version;
+  do
+    test -d $d && rmdir $d
+  done
+  # $(mkinstalldirs) is defined by Automake if mkinstalldirs exists.
+  if test -f "$ac_aux_dir/mkinstalldirs"; then
+    mkdir_p='$(mkinstalldirs)'
+  else
+    mkdir_p='$(install_sh) -d'
+  fi
+fi
+AC_SUBST([mkdir_p])])
+m4trace:/usr/share/aclocal-1.9/options.m4:25: -1- AC_DEFUN([_AM_MANGLE_OPTION], [[_AM_OPTION_]m4_bpatsubst($1, [[^a-zA-Z0-9_]], [_])])
+m4trace:/usr/share/aclocal-1.9/options.m4:31: -1- AC_DEFUN([_AM_SET_OPTION], [m4_define(_AM_MANGLE_OPTION([$1]), 1)])
+m4trace:/usr/share/aclocal-1.9/options.m4:37: -1- AC_DEFUN([_AM_SET_OPTIONS], [AC_FOREACH([_AM_Option], [$1], [_AM_SET_OPTION(_AM_Option)])])
+m4trace:/usr/share/aclocal-1.9/options.m4:43: -1- AC_DEFUN([_AM_IF_OPTION], [m4_ifset(_AM_MANGLE_OPTION([$1]), [$2], [$3])])
+m4trace:/usr/share/aclocal-1.9/python.m4:163: -1- AC_DEFUN([AM_PATH_PYTHON], [
+  dnl Find a Python interpreter.  Python versions prior to 1.5 are not
+  dnl supported because the default installation locations changed from
+  dnl $prefix/lib/site-python in 1.4 to $prefix/lib/python1.5/site-packages
+  dnl in 1.5.
+  m4_define([_AM_PYTHON_INTERPRETER_LIST],
+            [python python2 python2.4 python2.3 python2.2 dnl
+python2.1 python2.0 python1.6 python1.5])
+
+  m4_if([$1],[],[
+    dnl No version check is needed.
+    # Find any Python interpreter.
+    if test -z "$PYTHON"; then
+      PYTHON=:
+      AC_PATH_PROGS([PYTHON], _AM_PYTHON_INTERPRETER_LIST)
+    fi
+    am_display_PYTHON=python
+  ], [
+    dnl A version check is needed.
+    if test -n "$PYTHON"; then
+      # If the user set $PYTHON, use it and don't search something else.
+      AC_MSG_CHECKING([whether $PYTHON version >= $1])
+      AM_PYTHON_CHECK_VERSION([$PYTHON], [$1],
+			      [AC_MSG_RESULT(yes)],
+			      [AC_MSG_ERROR(too old)])
+      am_display_PYTHON=$PYTHON
+    else
+      # Otherwise, try each interpreter until we find one that satisfies
+      # VERSION.
+      AC_CACHE_CHECK([for a Python interpreter with version >= $1],
+	[am_cv_pathless_PYTHON],[
+	for am_cv_pathless_PYTHON in _AM_PYTHON_INTERPRETER_LIST none; do
+	  test "$am_cv_pathless_PYTHON" = none && break
+	  AM_PYTHON_CHECK_VERSION([$am_cv_pathless_PYTHON], [$1], [break])
+	done])
+      # Set $PYTHON to the absolute path of $am_cv_pathless_PYTHON.
+      if test "$am_cv_pathless_PYTHON" = none; then
+	PYTHON=:
+      else
+        AC_PATH_PROG([PYTHON], [$am_cv_pathless_PYTHON])
+      fi
+      am_display_PYTHON=$am_cv_pathless_PYTHON
+    fi
+  ])
+
+  if test "$PYTHON" = :; then
+  dnl Run any user-specified action, or abort.
+    m4_default([$3], [AC_MSG_ERROR([no suitable Python interpreter found])])
+  else
+
+  dnl Query Python for its version number.  Getting [:3] seems to be
+  dnl the best way to do this; it's what "site.py" does in the standard
+  dnl library.
+
+  AC_CACHE_CHECK([for $am_display_PYTHON version], [am_cv_python_version],
+    [am_cv_python_version=`$PYTHON -c "import sys; print sys.version[[:3]]"`])
+  AC_SUBST([PYTHON_VERSION], [$am_cv_python_version])
+
+  dnl Use the values of $prefix and $exec_prefix for the corresponding
+  dnl values of PYTHON_PREFIX and PYTHON_EXEC_PREFIX.  These are made
+  dnl distinct variables so they can be overridden if need be.  However,
+  dnl general consensus is that you shouldn't need this ability.
+
+  AC_SUBST([PYTHON_PREFIX], ['${prefix}'])
+  AC_SUBST([PYTHON_EXEC_PREFIX], ['${exec_prefix}'])
+
+  dnl At times (like when building shared libraries) you may want
+  dnl to know which OS platform Python thinks this is.
+
+  AC_CACHE_CHECK([for $am_display_PYTHON platform], [am_cv_python_platform],
+    [am_cv_python_platform=`$PYTHON -c "import sys; print sys.platform"`])
+  AC_SUBST([PYTHON_PLATFORM], [$am_cv_python_platform])
+
+
+  dnl Set up 4 directories:
+
+  dnl pythondir -- where to install python scripts.  This is the
+  dnl   site-packages directory, not the python standard library
+  dnl   directory like in previous automake betas.  This behavior
+  dnl   is more consistent with lispdir.m4 for example.
+  dnl Query distutils for this directory.  distutils does not exist in
+  dnl Python 1.5, so we fall back to the hardcoded directory if it
+  dnl doesn't work.
+  AC_CACHE_CHECK([for $am_display_PYTHON script directory],
+    [am_cv_python_pythondir],
+    [am_cv_python_pythondir=`$PYTHON -c "from distutils import sysconfig; print sysconfig.get_python_lib(0,0,prefix='$PYTHON_PREFIX')" 2>/dev/null ||
+     echo "$PYTHON_PREFIX/lib/python$PYTHON_VERSION/site-packages"`])
+  AC_SUBST([pythondir], [$am_cv_python_pythondir])
+
+  dnl pkgpythondir -- $PACKAGE directory under pythondir.  Was
+  dnl   PYTHON_SITE_PACKAGE in previous betas, but this naming is
+  dnl   more consistent with the rest of automake.
+
+  AC_SUBST([pkgpythondir], [\${pythondir}/$PACKAGE])
+
+  dnl pyexecdir -- directory for installing python extension modules
+  dnl   (shared libraries)
+  dnl Query distutils for this directory.  distutils does not exist in
+  dnl Python 1.5, so we fall back to the hardcoded directory if it
+  dnl doesn't work.
+  AC_CACHE_CHECK([for $am_display_PYTHON extension module directory],
+    [am_cv_python_pyexecdir],
+    [am_cv_python_pyexecdir=`$PYTHON -c "from distutils import sysconfig; print sysconfig.get_python_lib(1,0,prefix='$PYTHON_EXEC_PREFIX')" 2>/dev/null ||
+     echo "${PYTHON_EXEC_PREFIX}/lib/python${PYTHON_VERSION}/site-packages"`])
+  AC_SUBST([pyexecdir], [$am_cv_python_pyexecdir])
+
+  dnl pkgpyexecdir -- $(pyexecdir)/$(PACKAGE)
+
+  AC_SUBST([pkgpyexecdir], [\${pyexecdir}/$PACKAGE])
+
+  dnl Run any user-specified action.
+  $2
+  fi
+
+])
+m4trace:/usr/share/aclocal-1.9/python.m4:182: -1- AC_DEFUN([AM_PYTHON_CHECK_VERSION], [prog="import sys, string
+# split strings by '.' and convert to numeric.  Append some zeros
+# because we need at least 4 digits for the hex conversion.
+minver = map(int, string.split('$2', '.')) + [[0, 0, 0]]
+minverhex = 0
+for i in xrange(0, 4): minverhex = (minverhex << 8) + minver[[i]]
+sys.exit(sys.hexversion < minverhex)"
+  AS_IF([AM_RUN_LOG([$1 -c "$prog"])], [$3], [$4])])
+m4trace:/usr/share/aclocal-1.9/runlog.m4:27: -1- AC_DEFUN([AM_RUN_LOG], [{ echo "$as_me:$LINENO: $1" >&AS_MESSAGE_LOG_FD
+   ($1) >&AS_MESSAGE_LOG_FD 2>&AS_MESSAGE_LOG_FD
+   ac_status=$?
+   echo "$as_me:$LINENO: \$? = $ac_status" >&AS_MESSAGE_LOG_FD
+   (exit $ac_status); }])
+m4trace:/usr/share/aclocal-1.9/sanity.m4:63: -1- AC_DEFUN([AM_SANITY_CHECK], [AC_MSG_CHECKING([whether build environment is sane])
+# Just in case
+sleep 1
+echo timestamp > conftest.file
+# Do `set' in a subshell so we don't clobber the current shell's
+# arguments.  Must try -L first in case configure is actually a
+# symlink; some systems play weird games with the mod time of symlinks
+# (eg FreeBSD returns the mod time of the symlink's containing
+# directory).
+if (
+   set X `ls -Lt $srcdir/configure conftest.file 2> /dev/null`
+   if test "$[*]" = "X"; then
+      # -L didn't work.
+      set X `ls -t $srcdir/configure conftest.file`
+   fi
+   rm -f conftest.file
+   if test "$[*]" != "X $srcdir/configure conftest.file" \
+      && test "$[*]" != "X conftest.file $srcdir/configure"; then
+
+      # If neither matched, then we have a broken ls.  This can happen
+      # if, for instance, CONFIG_SHELL is bash and it inherits a
+      # broken ls alias from the environment.  This has actually
+      # happened.  Such a system could not be considered "sane".
+      AC_MSG_ERROR([ls -t appears to fail.  Make sure there is not a broken
+alias in your environment])
+   fi
+
+   test "$[2]" = conftest.file
+   )
+then
+   # Ok.
+   :
+else
+   AC_MSG_ERROR([newly created file is older than distributed files!
+Check your system clock])
+fi
+AC_MSG_RESULT(yes)])
+m4trace:/usr/share/aclocal-1.9/strip.m4:38: -1- AC_DEFUN([AM_PROG_INSTALL_STRIP], [AC_REQUIRE([AM_PROG_INSTALL_SH])dnl
+# Installed binaries are usually stripped using `strip' when the user
+# run `make install-strip'.  However `strip' might not be the right
+# tool to use in cross-compilation environments, therefore Automake
+# will honor the `STRIP' environment variable to overrule this program.
+dnl Don't test for $cross_compiling = yes, because it might be `maybe'.
+if test "$cross_compiling" != no; then
+  AC_CHECK_TOOL([STRIP], [strip], :)
+fi
+INSTALL_STRIP_PROGRAM="\${SHELL} \$(install_sh) -c -s"
+AC_SUBST([INSTALL_STRIP_PROGRAM])])
+m4trace:/usr/share/aclocal-1.9/tar.m4:107: -1- AC_DEFUN([_AM_PROG_TAR], [# Always define AMTAR for backward compatibility.
+AM_MISSING_PROG([AMTAR], [tar])
+m4_if([$1], [v7],
+     [am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'],
+     [m4_case([$1], [ustar],, [pax],,
+              [m4_fatal([Unknown tar format])])
+AC_MSG_CHECKING([how to create a $1 tar archive])
+# Loop over all known methods to create a tar archive until one works.
+_am_tools='gnutar m4_if([$1], [ustar], [plaintar]) pax cpio none'
+_am_tools=${am_cv_prog_tar_$1-$_am_tools}
+# Do not fold the above two line into one, because Tru64 sh and
+# Solaris sh will not grok spaces in the rhs of `-'.
+for _am_tool in $_am_tools
+do
+  case $_am_tool in
+  gnutar)
+    for _am_tar in tar gnutar gtar;
+    do
+      AM_RUN_LOG([$_am_tar --version]) && break
+    done
+    am__tar="$_am_tar --format=m4_if([$1], [pax], [posix], [$1]) -chf - "'"$$tardir"'
+    am__tar_="$_am_tar --format=m4_if([$1], [pax], [posix], [$1]) -chf - "'"$tardir"'
+    am__untar="$_am_tar -xf -"
+    ;;
+  plaintar)
+    # Must skip GNU tar: if it does not support --format= it doesn't create
+    # ustar tarball either.
+    (tar --version) >/dev/null 2>&1 && continue
+    am__tar='tar chf - "$$tardir"'
+    am__tar_='tar chf - "$tardir"'
+    am__untar='tar xf -'
+    ;;
+  pax)
+    am__tar='pax -L -x $1 -w "$$tardir"'
+    am__tar_='pax -L -x $1 -w "$tardir"'
+    am__untar='pax -r'
+    ;;
+  cpio)
+    am__tar='find "$$tardir" -print | cpio -o -H $1 -L'
+    am__tar_='find "$tardir" -print | cpio -o -H $1 -L'
+    am__untar='cpio -i -H $1 -d'
+    ;;
+  none)
+    am__tar=false
+    am__tar_=false
+    am__untar=false
+    ;;
+  esac
+
+  # If the value was cached, stop now.  We just wanted to have am__tar
+  # and am__untar set.
+  test -n "${am_cv_prog_tar_$1}" && break
+
+  # tar/untar a dummy directory, and stop if the command works
+  rm -rf conftest.dir
+  mkdir conftest.dir
+  echo GrepMe > conftest.dir/file
+  AM_RUN_LOG([tardir=conftest.dir && eval $am__tar_ >conftest.tar])
+  rm -rf conftest.dir
+  if test -s conftest.tar; then
+    AM_RUN_LOG([$am__untar <conftest.tar])
+    grep GrepMe conftest.dir/file >/dev/null 2>&1 && break
+  fi
+done
+rm -rf conftest.dir
+
+AC_CACHE_VAL([am_cv_prog_tar_$1], [am_cv_prog_tar_$1=$_am_tool])
+AC_MSG_RESULT([$am_cv_prog_tar_$1])])
+AC_SUBST([am__tar])
+AC_SUBST([am__untar])
+])
+m4trace:m4/cfitsio.m4:98: -1- AC_DEFUN([AC_PATH_CFITSIO], [
+	AC_ARG_WITH(cfitsio,
+                    AC_HELP_STRING([--with-cfitsio=DIR],
+                             [search for CFITSIO in DIR/include and DIR/lib]),
+                    [for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir/include; then
+      CFITSIO_CPPFLAGS="$CFITSIO_CPPFLAGS -I$dir/include"
+    fi
+    if test -d $dir/lib; then
+      CFITSIO_LDFLAGS="$CFITSIO_LDFLAGS -L$dir/lib"
+    fi
+  done[]])
+
+        AC_ARG_WITH(cfitsio-includes,
+                    AC_HELP_STRING([--with-cfitsio-includes=DIR],
+	                           [search for CFITSIO includes in DIR]),
+	            [for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir; then
+      CFITSIO_CPPFLAGS="$CFITSIO_CPPFLAGS -I$dir"
+    fi
+  done[]])
+
+ac_cfitsio_saved_CPPFLAGS="$CPPFLAGS"
+ac_cfitsio_saved_LDFLAGS="$LDFLAGS"
+ac_cfitsio_saved_LIBS="$LIBS"
+CPPFLAGS="$CPPFLAGS $CFITSIO_CPPFLAGS"
+LDFLAGS="$LDFLAGS $CFITSIO_LDFLAGS"
+# Check in standard/suggested place
+ac_have_cfitsioh=yes
+ac_have_cfitsio=yes
+	touch /tmp/dummy1_fitsio.h
+        AC_CHECK_HEADER([/tmp/dummy1_fitsio.h], [], [ac_have_cfitsioh=no], [#include  <fitsio.h>])
+	rm /tmp/dummy1_fitsio.h
+	if test $ac_have_cfitsioh = no; then
+	# Try where cfitsio likes to put includes
+		if  test -f /usr/include/cfitsio/fitsio.h; then
+			CFITSIO_CPPFLAGS="-I/usr/include/cfitsio"
+			CPPFLAGS="$ac_cfitsio_saved_CPPFLAGS $CFITSIO_CPPFLAGS"
+  			touch /tmp/dummy2_fitsio.h
+      			AC_CHECK_HEADERS([/tmp/dummy2_fitsio.h], [ac_have_cfitsioh=yes], [ac_have_cfitsioh=no
+	                	AC_MSG_WARN([cannot find CFITSIO headers in /usr/include/cfitsio])],
+				[#include  <fitsio.h>])
+			rm /tmp/dummy2_fitsio.h
+		fi
+	fi
+ 	if test $ac_have_cfitsioh = yes; then
+        	AC_CHECK_LIB([cfitsio], ffinit, [], [ac_have_cfitsio=no
+	             AC_MSG_WARN([cannot find CFITSIO library in default])],[-lm])
+	fi
+# Hack to get around caching
+testdirs="$HOME/opt/cfitsio $OBITINSTALL/other"
+for dir in $testdirs; do
+	if test $ac_have_cfitsio = no; then
+		if  test -d $dir; then
+			CFITSIO_CPPFLAGS="-I$dir/include"
+			CPPFLAGS="$ac_cfitsio_saved_CPPFLAGS $CFITSIO_CPPFLAGS"
+			CFITSIO_LDFLAGS="-L$dir/lib"
+			LDFLAGS="$ac_cfitsio_saved_LDFLAGS $CFITSIO_LDFLAGS"
+  			touch /tmp/dummy3_fitsio.h
+	        	AC_CHECK_HEADERS(/tmp/dummy3_fitsio.h, [], [ac_have_cfitsio=no
+		        	AC_MSG_WARN([cannot find CFITSIO headers in $dir])],
+				[#include  "fitsio.h"])
+			rm /tmp/dummy3_fitsio.h
+ 			if test $ac_have_cfitsioh = yes; then
+				# Force check
+				ac_cv_search_ffinit="  "
+		        	AC_CHECK_LIB([cfitsio], ffinit, [ac_have_cfitsio=yes], [ac_have_cfitsio=no
+				     AC_MSG_WARN([cannot find CFITSIO library in $dir])],[-lm])
+			fi
+			if test $ac_have_fftw = yes ; then
+				if test $ac_have_fftwh = yes ; then
+					break;
+				fi
+			fi
+		fi
+	fi
+done[]
+CFITSIO_LIBS="$LIBS"
+if test $ac_have_cfitsioh = no; then
+	ac_have_cfitsio=no
+fi
+if test $ac_have_cfitsio = no; then
+	ac_have_cfitsio=no
+	CFITSIO_CPPFLAGS=""
+	CFITSIO_LDFLAGS=""
+	CFITSIO_LIBS=""
+fi
+if test $ac_have_cfitsio = yes; then
+	AC_DEFINE(HAVE_CFITSIO, 1, [Define to 1 if you have CFITSIO.])
+fi
+CPPFLAGS="$ac_cfitsio_saved_CPPFLAGS"
+LDFLAGS="$ac_cfitsio_saved_LDFLAGS"
+LIBS="$ac_cfitsio_saved_LIBS"
+	AC_SUBST(CFITSIO_CPPFLAGS)
+	AC_SUBST(CFITSIO_LDFLAGS)
+	AC_SUBST(CFITSIO_LIBS)
+])
+m4trace:m4/fPIC.m4:15: -1- AC_DEFUN([AC_CHECK_FPIC], [
+AC_MSG_CHECKING(checking if -fPIC compiler option allowed... )
+use_fPIC=no
+ac_fpic_saved_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -fPIC"
+	#AC_DEFINE([HELLO_WORLD], ["Hello, World\n"])
+	AC_COMPILE_IFELSE(
+            [AC_LANG_PROGRAM([[const char hw[] = "Hello, World\n";]],
+                    [[]])],
+	   [ac_fpic_saved_CFLAGS="$CFLAGS"; use_fPIC=yes],	
+	   [use_fPIC=no])
+CFLAGS="$ac_fpic_saved_CFLAGS"
+AC_MSG_RESULT($use_fPIC)
+])
+m4trace:m4/fftw.m4:100: -1- AC_DEFUN([AC_PATH_FFTW], [
+	AC_ARG_WITH(fftw,
+                    AC_HELP_STRING([--with-fftw=DIR],
+                                 [search for FFTW in DIR/include and DIR/lib]),
+                    [for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir/include; then
+      FFTW_CPPFLAGS="$FFTW_CPPFLAGS -I$dir/include"
+    fi
+    if test -d $dir/lib; then
+      FFTW_LDFLAGS="$FFTW_LDFLAGS -L$dir/lib"
+    fi
+  done[]])
+
+        AC_ARG_WITH(fftw-includes,
+                    AC_HELP_STRING([--with-fftw-includes=DIR],
+	                           [search for FFTW includes in DIR]),
+	            [for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir; then
+      FFTW_CPPFLAGS="$FFTW_CPPFLAGS -I$dir"
+    fi
+  done[]])
+
+ac_fftw_saved_CPPFLAGS="$CPPFLAGS"
+ac_fftw_saved_LDFLAGS="$LDFLAGS"
+ac_fftw_saved_LIBS="$LIBS"
+CPPFLAGS="$CPPFLAGS $FFTW_CPPFLAGS"
+LDFLAGS="$LDFLAGS $FFTW_LDFLAGS"
+ac_have_fftw=no
+  	touch /tmp/dummy1_fftw.h
+        AC_CHECK_HEADERS([/tmp/dummy1_fftw.h], [ac_have_fftwh=yes], [ac_have_fftwh=no],
+			[#include "fftw.h"
+#include "rfftw.h"])
+	rm /tmp/dummy1_fftw.h
+	if test $ac_have_fftwh = yes; then
+        	AC_CHECK_LIB([fftw], fftw, [ac_have_fftw=yes FFTW_LIBS="$LIBS -lfftw"], [ac_have_fftw=no],
+                       [-lm ])
+        	AC_CHECK_LIB([rfftw], rfftw, [ac_have_fftw=yes FFTW_LIBS="$FFTW_LIBS -lrfftw"], [ac_have_fftw=no],
+                       [-lm -lfftw])
+	fi
+# List of places to try
+testdirs="$HOME/opt/fftw $OBITINSTALL/other"
+for dir in $testdirs; do
+	if test $ac_have_fftw = no; then
+		if  test -f $dir/include/fftw.h; then
+			FFTW_CPPFLAGS="-I$dir/include"
+			CPPFLAGS="$ac_fftw_saved_CPPFLAGS $FFTW_CPPFLAGS"
+			FFTW_LDFLAGS="-L$dir/lib"
+			LDFLAGS="$ac_fftw_saved_LDFLAGS $FFTW_LDFLAGS"
+  			touch /tmp/dummy3_fftw.h
+	        	AC_CHECK_HEADERS(/tmp/dummy3_fftw.h, [ac_have_fftwh=yes], [ac_have_fftwh=no],
+				[#include "fftw.h"
+#include "rfftw.h"])
+			rm /tmp/dummy3_fftw.h
+			if test $ac_have_fftwh = yes; then
+				# Force check
+				ac_cv_search_fftw="  "
+				ac_cv_search_rfftw="  "
+	        		AC_CHECK_LIB([fftw], fftw, [ac_have_fftw=yes FFTW_LIBS="$LIBS -lfftw"], [ac_have_fftw=no],
+        	        		[-lm ])
+		        	AC_CHECK_LIB([rfftw], rfftw, [ac_have_fftw=yes FFTW_LIBS="$FFTW_LIBS -lrfftw"], [ac_have_fftw=no],
+        		               [-lm -lfftw])
+			fi
+			if test $ac_have_fftw = yes ; then
+				if test $ac_have_fftwh = yes ; then
+					break;
+				fi
+			fi
+		fi
+	fi
+done[]
+if test $ac_have_fftwh = no; then
+	AC_MSG_WARN([cannot find FFTW headers])
+	ac_have_fftw=no
+fi
+if test $ac_have_fftw = no; then
+	AC_MSG_WARN([cannot find FFTW library])
+	FFTW_CPPFLAGS=""
+	FFTW_LDFLAGS=""
+	FFTW_LIBS=""
+fi
+# Use FFTW3 in preference to FFTW2
+if test $ac_have_fftw3 = yes; then
+	AC_MSG_WARN([Using FFTW 3 library in preference to FFTW2])
+	ac_have_fftw=no
+	FFTW_CPPFLAGS=""
+	FFTW_CFLAGS=""
+	FFTW_LIBS=""
+	FFTW_LDFLAGS=""
+fi
+if test $ac_have_fftw = yes; then
+	AC_DEFINE(HAVE_FFTW, 1, [Define to 1 if FFTW 2 is available.])
+fi
+CPPFLAGS="$ac_fftw_saved_CPPFLAGS"
+LDFLAGS="$ac_fftw_saved_LDFLAGS"
+LIBS="$ac_fftw_saved_LIBS"
+	AC_SUBST(FFTW_CPPFLAGS)
+	AC_SUBST(FFTW_LDFLAGS)
+	AC_SUBST(FFTW_LIBS)
+])
+m4trace:m4/fftw3.m4:84: -1- AC_DEFUN([AC_PATH_FFTW3], [
+	AC_ARG_WITH(fftw3,
+                    AC_HELP_STRING([--with-fftw3=DIR],
+                                 [search for FFTW3 in DIR/include and DIR/lib]),
+                    [for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir/include; then
+      FFTW3_CPPFLAGS="$FFTW3_CPPFLAGS -I$dir/include"
+    fi
+    if test -d $dir/lib; then
+      FFTW3_LDFLAGS="$FFTW3_LDFLAGS -L$dir/lib"
+    fi
+  done[]])
+
+        AC_ARG_WITH(fftw3-includes,
+                    AC_HELP_STRING([--with-fftw3-includes=DIR],
+	                           [search for FFTW3 includes in DIR]),
+	            [for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir; then
+      FFTW3_CPPFLAGS="$FFTW3_CPPFLAGS -I$dir"
+    fi
+  done[]])
+
+ac_fftw3_saved_CPPFLAGS="$CPPFLAGS"
+ac_fftw3_saved_LDFLAGS="$LDFLAGS"
+ac_fftw3_saved_LIBS="$LIBS"
+CPPFLAGS="$CPPFLAGS $FFTW3_CPPFLAGS"
+LDFLAGS="$LDFLAGS $FFTW3_LDFLAGS"
+ac_have_fftw3=no
+  	touch /tmp/dummy1_fftw3.h
+        AC_CHECK_HEADERS([/tmp/dummy1_fftw3.h], [ac_have_fftw3h=yes], [ac_have_fftw3h=no],
+			[#include "fftw3.h"])
+	rm /tmp/dummy1_fftw3.h
+	if test $ac_have_fftw3h = yes; then
+        	AC_CHECK_LIB([fftw3f], fftwf_execute, [ac_have_fftw3=yes FFTW3_LIBS="$LIBS -lfftw3f"], [ac_have_fftw3=no],
+                       [-lm ])
+	fi
+# List of places to try
+testdirs="$HOME/opt/fftw3 $OBITINSTALL/other"
+for dir in $testdirs; do
+	if test $ac_have_fftw3 = no; then
+		if  test -f $dir/include/fftw3.h; then
+			FFTW3_CPPFLAGS="-I$dir/include"
+			CPPFLAGS="$ac_fftw3_saved_CPPFLAGS $FFTW3_CPPFLAGS"
+			FFTW3_LDFLAGS="-L$dir/lib"
+			LDFLAGS="$ac_fftw3_saved_LDFLAGS $FFTW3_LDFLAGS"
+  			touch /tmp/dummy3_fftw3.h
+	        	AC_CHECK_HEADERS(/tmp/dummy3_fftw3.h, [ac_have_fftw3h=yes], [ac_have_fftw3h=no],
+				[#include "fftw3.h"])
+			rm /tmp/dummy3_fftw3.h
+			if test $ac_have_fftw3h = yes; then
+				# Force check
+				ac_cv_search_fftw3="  "
+	        		AC_CHECK_LIB([fftw3f], fftwf_execute, [ac_have_fftw3=yes FFTW3_LIBS="$LIBS -lfftw3"], [ac_have_fftw3=no],
+        	        		[-lm ])
+			fi
+			if test $ac_have_fftw3 = yes ; then
+				if test $ac_have_fftw3h = yes ; then
+					break;
+				fi
+			fi
+		fi
+	fi
+done[]
+if test $ac_have_fftw3h = no; then
+	AC_MSG_WARN([cannot find FFTW3 headers])
+	ac_have_fftw3=no
+fi
+if test $ac_have_fftw3 = no; then
+	AC_MSG_WARN([cannot find FFTW3 library])
+	FFTW3_CPPFLAGS=""
+	FFTW3_LDFLAGS=""
+	FFTW3_LIBS=""
+fi
+if test $ac_have_fftw3 = yes; then
+	AC_DEFINE(HAVE_FFTW3, 1, [Define to 1 if FFTW3 is available.])
+fi
+CPPFLAGS="$ac_fftw3_saved_CPPFLAGS"
+LDFLAGS="$ac_fftw3_saved_LDFLAGS"
+LIBS="$ac_fftw3_saved_LIBS"
+	AC_SUBST(FFTW3_CPPFLAGS)
+	AC_SUBST(FFTW3_LDFLAGS)
+	AC_SUBST(FFTW3_LIBS)
+])
+m4trace:m4/gsl.m4:92: -1- AC_DEFUN([AC_PATH_GSL], [
+	AC_ARG_WITH(gsl,
+                    AC_HELP_STRING([--with-gsl=DIR],
+                                 [search for GSL in DIR/include and DIR/lib]),
+                    [for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir/include; then
+      GSL_CFLAGS="$GSL_CFLAGS -I$dir/include"
+    fi
+    if test -d $dir/lib; then
+      GSL_LDFLAGS="$GSL_LDFLAGS -L$dir/lib"
+    fi
+  done[]])
+
+        AC_ARG_WITH(gsl-includes,
+                    AC_HELP_STRING([--with-gsl-includes=DIR],
+	                           [search for GSL includes in DIR]),
+	            [for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir; then
+      GSL_CFLAGS="$GSL_CFLAGS -I$dir"
+    fi
+  done[]])
+
+ac_gsl_saved_CFLAGS="$CFLAGS"
+ac_gsl_saved_LDFLAGS="$LDFLAGS"
+ac_gsl_saved_LIBS="$LIBS"
+CFLAGS="$CFLAGS $GSL_CFLAGS"
+LDFLAGS="$LDFLAGS $GSL_LDFLAGS"
+if ! test GSL_CFLAGS; then
+    GSL_CFLAGS="`gsl-config --cflags`"
+fi
+GSL_LIBS="`gsl-config --libs`"
+ac_have_gsl=no
+ac_have_gslh=no
+  	touch /tmp/dummy1_gsl.h
+        AC_CHECK_HEADERS([/tmp/dummy1_gsl.h], [ac_have_gslh=yes], [ac_have_gslh=no],
+			[#include "gsl/gsl_blas.h"])
+	rm /tmp/dummy1_gsl.h
+ 	if test $ac_have_gslh = yes; then
+	        AC_SEARCH_LIBS(cblas_isamax, [gslcblas], [ac_have_gsl=yes], [ac_have_gsl=no], [-lm])
+        	AC_SEARCH_LIBS(gsl_fit_linear, [gsl], [ac_have_gsl=yes], [ac_have_gsl=no], [-lm])
+	fi
+# List of places to try
+testdirs="$HOME/opt/gsl $OBITINSTALL/other"
+for dir in $testdirs; do
+	if test $ac_have_gsl = no; then
+		if  test -f $dir/include/gsl/gsl_blas.h; then
+			GSL_CFLAGS="-I$dir/include"
+			CPPFLAGS="$ac_gsl_saved_CPPFLAGS $GSL_CFLAGS"
+			GSL_LDFLAGS="-L$dir/lib"
+			LDFLAGS="$ac_gsl_saved_LDFLAGS $GSL_LDFLAGS"
+  			touch /tmp/dummy3_gsl.h
+	        	AC_CHECK_HEADERS(/tmp/dummy3_gsl.h, [ac_have_gslh=yes], [ac_have_gslh=no],
+				[#include "gsl/gsl_blas.h])
+			rm /tmp/dummy3_gsl.h
+			if test $ac_have_gslh = yes; then
+				# Force check
+				ac_cv_search_cblas_isamax="  "
+				ac_cv_search_gsl_fit_linear="  "
+			        AC_SEARCH_LIBS(cblas_isamax, [gslcblas], [ac_have_gsl=yes], [ac_have_gsl=no], [-lm])
+        			AC_SEARCH_LIBS(gsl_fit_linear, [gsl], [ac_have_gsl=yes], [ac_have_gsl=no], 
+					[-lm -lgslcblas])
+			fi
+			if test $ac_have_gsl = yes ; then
+				if test $ac_have_gslh = yes ; then
+					break;
+				fi
+			fi
+		fi
+	fi
+done[]
+if test $ac_have_gslh = no; then
+	AC_MSG_WARN([cannot find GSL headers])
+	ac_have_gsl=no
+fi
+if test $ac_have_gsl = no; then
+	AC_MSG_WARN([cannot find GSL library])
+	GSL_CFLAGS=""
+	GSL_LDFLAGS=""
+	GSL_LIBS=""
+fi
+if test $ac_have_gsl = yes; then
+	AC_DEFINE(HAVE_GSL, 1, [Define to 1 if GSL is available.])
+fi
+GSL_LIBS="$LIBS"
+CFLAGS="$ac_gsl_saved_CFLAGS"
+LDFLAGS="$ac_gsl_saved_LDFLAGS"
+LIBS="$ac_gsl_saved_LIBS"
+	AC_SUBST(GSL_CFLAGS)
+	AC_SUBST(GSL_LDFLAGS)
+	AC_SUBST(GSL_LIBS)
+])
+m4trace:m4/obit.m4:59: -1- AC_DEFUN([AC_PATH_OBIT], [
+# Default root of Obit directory is $OBIT
+	OBIT_DIR="$OBIT"
+	if test -d $OBIT_DIR/include; then
+	     OBIT_CPPFLAGS="$OBIT_CPPFLAGS -I$OBIT_DIR/include $GLIB_CFLAGS"
+	fi
+	if test -d $OBIT_DIR/lib/; then
+	     OBIT_LDFLAGS="$OBIT_LDFLAGS -L$OBIT_DIR/lib/ $GLIB_LIBS $GTHREAD_LIBS"
+	fi
+
+	AC_ARG_WITH(obit,
+                    AC_HELP_STRING([--with-obit=DIR],
+                             [search for OBIT in DIR/include and DIR/lib]),
+                    [for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir/include; then
+      OBIT_CPPFLAGS="$OBIT_CPPFLAGS -I$dir/include $GLIB_CFLAGS"
+      OBIT_DIR="$dir"
+      OBIT="$dir"
+    fi
+    if test -d $dir/lib/$ARCH; then
+      OBIT_LDFLAGS="$OBIT_LDFLAGS -L$dir/lib/ $GLIB_LIBS $GTHREAD_LIBS"
+    fi
+  done[]])
+
+        AC_ARG_WITH(obit-includes,
+                    AC_HELP_STRING([--with-obit-includes=DIR],
+	                           [search for OBIT includes in DIR]),
+	            [for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir; then
+      OBIT_CPPFLAGS="$OBIT_CPPFLAGS -I$dir"
+    fi
+  done[]])
+
+ac_obit_saved_CPPFLAGS="$CPPFLAGS"
+ac_obit_saved_LDFLAGS="$LDFLAGS"
+ac_obit_saved_LIBS="$LIBS"
+CPPFLAGS="$CPPFLAGS $OBIT_CPPFLAGS"
+LDFLAGS="$LDFLAGS $OBIT_LDFLAGS"
+ac_have_obit=yes
+        AC_CHECK_LIB(Obit, newObit, [], [ac_have_obit=no
+	             AC_MSG_ERROR([cannot find OBIT library])]
+			$GLIB_LIBS $GTHREAD_LIBS -lglib-2.0)
+        AC_CHECK_HEADER(Obit.h, [], [ac_have_obit=no
+	                AC_MSG_ERROR([cannot find OBIT headers])])
+if test $ac_have_obit = yes; then
+	AC_DEFINE(HAVE_OBIT, 1, [Define to 1 if you have OBIT.])
+fi
+OBIT_LIBS="$LIBS"
+CPPFLAGS="$ac_obit_saved_CPPFLAGS"
+LDFLAGS="$ac_obit_saved_LDFLAGS"
+LIBS="$ac_obit_saved_LIBS"
+	AC_SUBST(OBIT_CPPFLAGS)
+	AC_SUBST(OBIT_LDFLAGS)
+	AC_SUBST(OBIT_LIBS)
+	AC_SUBST(OBIT_DIR)
+	AC_SUBST(OBIT)
+])
+m4trace:m4/pgplot.m4:95: -1- AC_DEFUN([AM_PATH_PGPLOT], [
+         AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])dnl
+         AC_REQUIRE([AC_PATH_XTRA])dnl
+
+         AC_ARG_WITH(pgplot,
+                     AC_HELP_STRING([--with-pgplot=DIR],
+                                    [search for PGPLOT in DIR]),
+                     [for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir; then
+      PGPLOT_CPPFLAGS="$PGPLOT_CPPFLAGS -I$dir"
+      PGPLOT_LDFLAGS="$PGPLOT_LDFLAGS -L$dir"
+    fi
+  done[]])
+ac_pgplot_saved_CPPFLAGS="$CPPFLAGS"
+ac_pgplot_saved_CFLAGS="$CFLAGS"
+ac_pgplot_saved_LDFLAGS="$LDFLAGS"
+ac_pgplot_saved_LIBS="$LIBS"
+PGPLOT_CFLAGS="$PGPLOT_CFLAGS $X_CFLAGS"
+PGPLOT_LIBS="$PGPLOT_LIBS $X_LIBS $X_PRE_LIBS -lX11 $X_EXTRA_LIBS"
+CPPFLAGS="$CPPFLAGS $PGPLOT_CPPFLAGS"
+CFLAGS="$CFLAGS $PGPLOT_CFLAGS"
+LDFLAGS="$LDFLAGS $PGPLOT_LDFLAGS"
+LIBS="$PGPLOT_LIBS $FLIBS"
+ac_have_pgplot=no
+ac_have_pgploth=no
+  	touch /tmp/dummy1_pgplot.h
+	AC_CHECK_HEADER(/tmp/dummy1_pgplot.h, [ac_have_pgploth=yes], [ac_have_pgploth=no], 
+	[#include "cpgplot.h"])
+	rm /tmp/dummy1_pgplot.h
+ 	if test $ac_have_pgploth = yes; then
+		AC_CHECK_LIB(pgplot, main, [ac_have_pgplot=yes], [ac_have_pgplot=no])
+		AC_CHECK_LIB(cpgplot, cpgenv, [ac_have_pgplot=yes], [ac_have_pgplot=no], [-lpgplot])
+	fi
+# List of places to try
+testdirs="$HOME/opt/pgplot $OBITINSTALL/other"
+for dir in $testdirs; do
+	if test $ac_have_pgplot = no; then
+		if  test -f $dir/include/cpgplot.h; then
+			PGPLOT_CFLAGS="-I$dir/include"
+			CPPFLAGS="$ac_pgplot_saved_CPPFLAGS $PGPLOT_CFLAGS"
+			PGPLOT_LDFLAGS="-L$dir/lib"
+			LDFLAGS="$ac_pgplot_saved_LDFLAGS $PGPLOT_LDFLAGS"
+  			touch /tmp/dummy3_pgplot.h
+			AC_CHECK_HEADER(/tmp/dummy3_pgplot.h, [ac_have_pgploth=yes], [ac_have_pgploth=no], 
+				[#include "cpgplot.h"])
+			rm /tmp/dummy3_pgplot.h
+			if test $ac_have_pgploth = yes; then
+				# Force check
+				ac_cv_search_main="  "
+				ac_cv_search_cpgenv="  "
+				AC_CHECK_LIB(pgplot, main, [ac_have_pgplot=yes], [ac_have_pgplot=no])
+				AC_CHECK_LIB(cpgplot, cpgenv, [ac_have_pgplot=yes], [ac_have_pgplot=no], [-lpgplot])
+			fi
+			if test $ac_have_pgplot = yes ; then
+				if test $ac_have_pgploth = yes ; then
+					break;
+				fi
+			fi
+		fi
+	fi
+done[]
+PGPLOT_LIBS="-lcpgplot -lpgplot $PGPLOT_LIBS"
+if test $ac_have_pgploth = no; then
+	AC_MSG_WARN([cannot find PGPLOT headers])
+	ac_have_pgplot=no
+	PGPLOT_CPPFLAGS=""
+	PGPLOT_CFLAGS=""
+fi
+if test $ac_have_pgplot = no; then
+	AC_MSG_WARN([cannot find PGPLOT C library])
+	PGPLOT_LIBS=""
+	PGPLOT_LDFLAGS=""
+fi
+# Use plplot in preference to pgplot
+if test $ac_have_plplot = yes; then
+	AC_MSG_WARN([Using PLPLOT C library in preference to PGPLOT])
+	ac_have_pgplot=no
+	PGPLOT_CPPFLAGS=""
+	PGPLOT_CFLAGS=""
+	PGPLOT_LIBS=""
+	PGPLOT_LDFLAGS=""
+fi
+if test $ac_have_pgplot = yes; then
+	 AC_DEFINE(HAVE_PGPLOT, 1, [Define to 1 if you have PGPLOT.])
+fi
+CPPFLAGS="$ac_pgplot_saved_CPPFLAGS"
+CFLAGS="$ac_pgplot_saved_CFLAGS"
+LDFLAGS="$ac_pgplot_saved_LDFLAGS"
+LIBS="$ac_pgplot_saved_LIBS"
+	 AC_SUBST(PGPLOT_CPPFLAGS)
+	 AC_SUBST(PGPLOT_CFLAGS)
+	 AC_SUBST(PGPLOT_LDFLAGS)
+	 AC_SUBST(PGPLOT_LIBS)
+])
+m4trace:m4/plplot.m4:87: -1- AC_DEFUN([AC_PATH_PLPLOT], [
+
+         AC_ARG_WITH(plplot,
+                     AC_HELP_STRING([--with-plplot=DIR],
+                                    [search for PLPLOT in DIR]),
+                     [for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir; then
+ 	PLPLOT_CPPFLAGS="$PLPLOT_CPPFLAGS -I$dir/include/plplot"
+ 	PLPLOT_CFLAGS="$PLPLOT_CFLAGS -I$dir/include/plplot"
+	PLPLOT_LDFLAGS="$PLPLOT_LDFLAGS -L$dir/lib"
+    fi
+  done[]])
+ac_plplot_saved_CPPFLAGS="$CPPFLAGS"
+ac_plplot_saved_CFLAGS="$CFLAGS"
+ac_plplot_saved_LDFLAGS="$LDFLAGS"
+ac_plplot_saved_LIBS="$LIBS"
+if ! test PLPLOT_CFLAGS; then
+    PLPLOT_CFLAGS="`plplot-config --cflags`"
+fi
+PLPLOT_LIBS="`plplot-config --libs`"
+CPPFLAGS="$CPPFLAGS $PLPLOT_CPPFLAGS"
+CFLAGS="$CFLAGS $PLPLOT_CFLAGS"
+LDFLAGS="$LDFLAGS $PLPLOT_LDFLAGS"
+LIBS="$PLPLOT_LIBS"
+ac_have_plplot=no
+ac_have_plploth=no
+# Standard location?
+  	touch /tmp/dummy1_plplot.h
+	AC_CHECK_HEADER(/tmp/dummy1_plplot.h, [ac_have_plploth=yes], [ac_have_plploth=no], 
+	[#include "plplot.h"])
+	rm /tmp/dummy1_plplot.h
+ 	if test $ac_have_plploth = yes; then
+		AC_CHECK_LIB(plplot, c_plinit, [ac_have_plplot=yes], [ac_have_plplot=no])
+	fi
+# List of places to try
+testdirs="$HOME/opt/plplot $OBITINSTALL/other"
+for dir in $testdirs; do
+	if test $ac_have_plplot = no; then
+		if  test -f $dir/include/plplot/plplot.h; then
+			#echo "Trying in $dir"
+			PLPLOT_CFLAGS="-I$dir/include/plplot/"
+			CPPFLAGS="$ac_plplot_saved_CPPFLAGS $PLPLOT_CFLAGS"
+			PLPLOT_LDFLAGS="-L$dir/lib"
+			LDFLAGS="$ac_plplot_saved_LDFLAGS $PLPLOT_LDFLAGS"
+  			touch /tmp/dummy3_plplot.h
+			AC_CHECK_HEADER(/tmp/dummy3_plplot.h, [ac_have_plploth=yes], [ac_have_plploth=no], 
+				[#include "plplot.h"])
+			rm /tmp/dummy3_plplot.h
+			if test $ac_have_plploth = yes; then
+				# Force check
+				ac_cv_search_c_plinit="  "
+				AC_SEARCH_LIBS(c_plinit, plplot, [ac_have_plplot=yes], [ac_have_plplot=no],
+					[])
+			fi
+			if test $ac_have_plplot = yes ; then
+				if test $ac_have_plploth = yes ; then
+					break;
+				fi
+			fi
+		fi
+	fi
+done[]
+PLPLOT_LIBS="-lplplot $PLPLOT_LIBS"
+if test $ac_have_plploth = no; then
+	AC_MSG_WARN([cannot find PLPLOT headers])
+	ac_have_plplot=no
+	PLPLOT_CPPFLAGS=""
+	PLPLOT_CFLAGS=""
+fi
+if test $ac_have_plplot = no; then
+	AC_MSG_WARN([cannot find PLPLOT C library])
+	PLPLOT_LIBS=""
+	PLPLOT_LDFLAGS=""
+fi
+if test $ac_have_plplot = yes; then
+	 AC_DEFINE(HAVE_PLPLOT, 1, [Define to 1 if you have PLPLOT.])
+fi
+CPPFLAGS="$ac_plplot_saved_CPPFLAGS"
+CFLAGS="$ac_plplot_saved_CFLAGS"
+LDFLAGS="$LDFLAGS $PLPLOT_LDFLAGS"
+LIBS="$ac_plplot_saved_LIBS"
+	 AC_SUBST(PLPLOT_CPPFLAGS)
+	 AC_SUBST(PLPLOT_CFLAGS)
+	 AC_SUBST(PLPLOT_LDFLAGS)
+	 AC_SUBST(PLPLOT_LIBS)
+])
+m4trace:m4/xmlrpc.m4:161: -1- AC_DEFUN([AC_PATH_XMLRPC], [
+	AC_ARG_WITH(xmlrpc,
+                    AC_HELP_STRING([--with-xmlrpc=DIR],
+                                 [search for XMLRPC in DIR/include and DIR/lib]),
+                    [for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir/include; then
+      XMLRPC_CPPFLAGS="$XMLRPC_CPPFLAGS -I$dir/include"
+    fi
+    if test -d $dir/lib; then
+      XMLRPC_LDFLAGS="$XMLRPC_LDFLAGS -L$dir/lib"
+    fi
+  done[]])
+
+        AC_ARG_WITH(xmlrpc-includes,
+                    AC_HELP_STRING([--with-xmlrpc-includes=DIR],
+	                           [search for XMLRPC includes in DIR]),
+	            [for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir; then
+      XMLRPC_CPPFLAGS="$XMLRPC_CPPFLAGS -I$dir"
+    fi
+  done[]])
+
+XMLRPC="$dir"
+
+	AC_ARG_WITH(www,
+                    AC_HELP_STRING([--with-www=DIR],
+                                 [search for WWW in DIR/include and DIR/lib]),
+                    [for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir/include; then
+      WWW_CPPFLAGS="$WWW_CPPFLAGS -I$dir/include"
+    fi
+    if test -d $dir/lib; then
+      WWW_LDFLAGS="$WWW_LDFLAGS -L$dir/lib"
+      WWW_LIBDIR="$dir/lib"
+    fi
+  done[]])
+
+        AC_ARG_WITH(www-includes,
+                    AC_HELP_STRING([--with-www-includes=DIR],
+	                           [search for WWW includes in DIR]),
+	            [for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir; then
+    	WWW_CPPFLAGS="$WWW_CPPFLAGS -I$dir"
+    fi
+  done[]])
+
+
+ac_xmlrpc_saved_CPPFLAGS="$CPPFLAGS"
+ac_xmlrpc_saved_LDFLAGS="$LDFLAGS"
+ac_xmlrpc_saved_LIBS="$LIBS"
+CPPFLAGS="$CPPFLAGS $XMLRPC_CPPFLAGS"
+if ! test XMLRPC_CFLAGS; then
+  XMLRPC_CFLAGS="`xmlrpc-c-config --cflags`"
+fi
+XMLRPC_LDFLAGS="$LDFLAGS "
+# Libaries needed 
+XMLRPC_LIBS="`xmlrpc-c-config --libs` `xmlrpc-c-config client --libs`  "
+# Fall back if this fails
+if test "$XMLRPC_LIBS""set" == "set"; then
+  XMLRPC_LIBS=" -lxmlrpc -lxmlrpc_util -lxmlrpc_xmlparse -lxmlrpc_xmltok "
+fi
+#echo " XMLRPC_LIBS .$XMLRPC_LIBS."
+XMLRPC_SERVER_LIBS="`xmlrpc-c-config abyss-server --libs`"
+# Fall back if this fails
+if test "$XMLRPC_SERVER_LIBS""set" == "set"; then
+  XMLRPC_SERVER_LIBS="-lxmlrpc_server_abyss -lxmlrpc_server -lxmlrpc_abyss  -lpthread -lxmlrpc -lxmlrpc_util -lxmlrpc_xmlparse -lxmlrpc_xmltok"
+fi
+#echo " XMLRPC_SERVER_LIBS .$XMLRPC_SERVER_LIBS."
+
+XMLRPC_CLIENT_LIBS="`xmlrpc-c-config client --libs`"
+# Fall back if this fails
+if test "$XMLRPC_CLIENT_LIBS""set" == "set"; then
+  XMLRPC_SERVER_LIBS="-lpthread -lxmlrpc -lxmlrpc_util -lxmlrpc_xmlparse -lxmlrpc_xmltok"
+fi
+#echo " XMLRPC_CLIENT_LIBS .$XMLRPC_CLIENT_LIBS."
+
+ac_have_xmlrpc=no
+ac_have_xmlrpch=no
+# In older versions this was xmlrpc.h:
+  	touch /tmp/dummy1_xmlrpc.h
+        AC_CHECK_HEADERS([/tmp/dummy1_xmlrpc.h], [ac_have_xmlrpch=yes], [ac_have_xmlrpch=no],
+		[#include "xmlrpc_client.h"])
+	rm /tmp/dummy1_xmlrpc.h
+ 	if test $ac_have_xmlrpch = yes; then
+	        AC_SEARCH_LIBS(xmlrpc_env_init, xmlrpc, [ac_have_xmlrpc=yes], [ac_have_xmlrpc=no],
+			[$XMLRPC_LIBS $XMLRPC_LDFLAGS])
+	fi
+# List of places to try
+testdirs="$HOME/opt/xmlrpc $OBITINSTALL/other"
+for dir in $testdirs; do
+	if test $ac_have_xmlrpc = no; then
+		if  test -f $dir/include/xmlrpc_client.h; then
+			XMLRPC_CFLAGS="-I$dir/include"
+			CPPFLAGS="$ac_xmlrpc_saved_CPPFLAGS $XMLRPC_CFLAGS"
+			XMLRPC_LDFLAGS="-L$dir/lib"
+			LDFLAGS="$XMLRPC_LDFLAGS $ac_xmlrpc_saved_LDFLAGS "
+			#echo "Trying in $dir with $LDFLAGS"
+  			touch /tmp/dummy3_xmlrpc.h
+		        AC_CHECK_HEADERS([/tmp/dummy3_xmlrpc.h], [ac_have_xmlrpch=yes], [ac_have_xmlrpch=no],
+				[#include "xmlrpc_client.h"])
+			rm /tmp/dummy3_xmlrpc.h
+			if test $ac_have_xmlrpch = yes; then
+				# Force check
+				ac_cv_search_xmlrpc_env_init="  "
+			        AC_SEARCH_LIBS(xmlrpc_env_init, xmlrpc, [ac_have_xmlrpc=yes], 
+					[ac_have_xmlrpc=no],
+					[$XMLRPC_LIBS $XMLRPC_LDFLAGS])
+				fi
+			if test $ac_have_xmlrpc = yes ; then
+				if test $ac_have_xmlrpch = yes ; then
+					break;
+				fi
+			fi
+		fi
+	fi
+done[]
+XMLRPC_SERVER_CPPFLAGS="$CPPFLAGS $XMLRPC_CPPFLAGS"
+XMLRPC_SERVER_LDFLAGS="$LDFLAGS $XMLRPC_LDFLAGS"
+XMLRPC_SERVER_LIBS="$ac_xmlrpc_saved_LIBS $XMLRPC_SERVER_LIBS "
+
+XMLRPC_CLIENT_CPPFLAGS="$CPPFLAGS $XMLRPC_CPPFLAGS"
+XMLRPC_CLIENT_LDFLAGS="$LDFLAGS $XMLRPC_LDFLAGS"
+XMLRPC_CLIENT_LIBS="$ac_xmlrpc_saved_LIBS -lxmlrpc_client -lcurl $XMLRPC_LIBS "
+XMLRPC_LIBS="$ac_xmlrpc_saved_LIBS $XMLRPC_LIBS "
+
+if test $ac_have_xmlrpch = no; then
+	AC_MSG_WARN([cannot find XMLRPC headers])
+	ac_have_xmlrpc=no
+fi
+if test $ac_have_xmlrpc = no; then
+	AC_MSG_WARN([cannot find XMLRPC library])
+	XMLRPC_SERVER_CPPFLAGS=""
+	XMLRPC_SERVER_LDFLAGS=""
+	XMLRPC_SERVER_LIBS=""
+
+	XMLRPC_CLIENT_CPPFLAGS=""
+	XMLRPC_CLIENT_LDFLAGS=""
+	XMLRPC_CLIENT_LIBS=""
+fi
+AC_MSG_CHECKING(checking if xmlrpc available )
+AC_MSG_RESULT($ac_have_xmlrpc)
+if test $ac_have_xmlrpc = yes; then
+	AC_DEFINE(HAVE_XMLRPC, 1, [Define to 1 if XMLRPC is available.])
+fi
+
+AC_SUBST(XMLRPC_SERVER_CPPFLAGS)
+AC_SUBST(XMLRPC_SERVER_LDFLAGS)
+AC_SUBST(XMLRPC_SERVER_LIBS)
+AC_SUBST(XMLRPC_CLIENT_CPPFLAGS)
+AC_SUBST(XMLRPC_CLIENT_LDFLAGS)
+AC_SUBST(XMLRPC_CLIENT_LIBS)
+
+CPPFLAGS="$ac_xmlrpc_saved_CPPFLAGS"
+LDFLAGS="$ac_xmlrpc_saved_LDFLAGS"
+LIBS="$ac_xmlrpc_saved_LIBS"
+	AC_SUBST(XMLRPC_CPPFLAGS)
+	AC_SUBST(XMLRPC_LDFLAGS)
+	AC_SUBST(XMLRPC_LIBS)
+	AC_SUBST(WWWLIB_WL_RPATH)
+	AC_SUBST(WWW_LIBS)
+])
+m4trace:m4/zlib.m4:80: -1- AC_DEFUN([AC_PATH_ZLIB], [
+	AC_ARG_WITH(zlib,
+                    AC_HELP_STRING([--with-zlib=DIR],
+                                 [search for ZLIB in DIR/include and DIR/lib]),
+                    [for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir/include; then
+      ZLIB_CFLAGS="$ZLIB_CFLAGS -I$dir/include"
+    fi
+    if test -d $dir/lib; then
+      ZLIB_LDFLAGS="$ZLIB_LDFLAGS -L$dir/lib"
+    fi
+  done[]])
+
+        AC_ARG_WITH(zlib-includes,
+                    AC_HELP_STRING([--with-zlib-includes=DIR],
+	                           [search for ZLIB includes in DIR]),
+	            [for dir in `echo "$withval" | tr : ' '`; do
+    if test -d $dir; then
+      ZLIB_CFLAGS="$ZLIB_CFLAGS -I$dir"
+    fi
+  done[]])
+
+ac_zlib_saved_CFLAGS="$CFLAGS"
+ac_zlib_saved_LDFLAGS="$LDFLAGS"
+ac_zlib_saved_LIBS="$LIBS"
+CFLAGS="$CFLAGS $ZLIB_CFLAGS"
+LDFLAGS="$LDFLAGS $ZLIB_LDFLAGS"
+ac_have_zlibh=no
+ac_have_zlib=no
+  	touch /tmp/dummy1_zlib.h
+        AC_CHECK_HEADERS([/tmp/dummy1_zlib.h], [ac_have_zlibh=yes], [ac_have_zlibh=no],
+		[#include "zlib.h"])
+	rm /tmp/dummy1_zlib.h
+ 	if test $ac_have_zlibh = yes; then
+        	AC_SEARCH_LIBS(gzopen, [z], [ac_have_zlib=yes], [ac_have_zlib=no])
+	fi
+# List of places to try
+testdirs="$HOME/opt/zlib $OBITINSTALL/other"
+for dir in $testdirs; do
+	if test $ac_have_zlib = no; then
+		if  test -f $dir/include/zlib.h; then
+			ZLIB_CFLAGS="-I$dir/include"
+			CPPFLAGS="$ac_zlib_saved_CPPFLAGS $ZLIB_CFLAGS"
+			ZLIB_LDFLAGS="-L$dir/lib"
+			LDFLAGS="$ac_zlib_saved_LDFLAGS $ZLIB_LDFLAGS"
+  			touch /tmp/dummy3_zlib.h
+ 		        AC_CHECK_HEADERS([/tmp/dummy3_zlib.h], [ac_have_zlibh=yes], [ac_have_zlibh=no],
+				[#include "zlib.h"])
+			rm /tmp/dummy3_zlib.h
+			if test $ac_have_zlibh = yes; then
+				# Force check
+				ac_cv_search_gzopen="  "
+		        	AC_SEARCH_LIBS(gzopen, [z], [ac_have_zlib=yes], [ac_have_zlib=no])
+			fi
+			if test $ac_have_zlib = yes ; then
+				if test $ac_have_zlibh = yes ; then
+					break;
+				fi
+			fi
+		fi
+	fi
+done[]
+if test $ac_have_zlib = no; then
+	AC_MSG_WARN([cannot find ZLIB library])
+fi
+if test $ac_have_zlibh = no; then
+	AC_MSG_WARN([cannot find ZLIB headers])
+	ac_have_zlib=no
+fi
+if test $ac_have_zlib = yes; then
+	AC_DEFINE(HAVE_ZLIB, 1, [Define to 1 if ZLIB is available.])
+fi
+ZLIB_LIBS="$LIBS"
+CFLAGS="$ac_zlib_saved_CFLAGS"
+LDFLAGS="$ac_zlib_saved_LDFLAGS"
+LIBS="$ac_zlib_saved_LIBS"
+	AC_SUBST(ZLIB_CFLAGS)
+	AC_SUBST(ZLIB_LDFLAGS)
+	AC_SUBST(ZLIB_LIBS)
+])
+m4trace:configure.ac:33: -1- AC_INIT([ObitSD], [1.3], [bcotton@nrao.edu])
+m4trace:configure.ac:33: -1- m4_pattern_forbid([^_?A[CHUM]_])
+m4trace:configure.ac:33: -1- m4_pattern_forbid([_AC_])
+m4trace:configure.ac:33: -1- m4_pattern_forbid([^LIBOBJS$], [do not use LIBOBJS directly, use AC_LIBOBJ (see section `AC_LIBOBJ vs LIBOBJS'])
+m4trace:configure.ac:33: -1- m4_pattern_allow([^AS_FLAGS$])
+m4trace:configure.ac:33: -1- m4_pattern_forbid([^_?m4_])
+m4trace:configure.ac:33: -1- m4_pattern_forbid([^dnl$])
+m4trace:configure.ac:33: -1- m4_pattern_forbid([^_?AS_])
+m4trace:configure.ac:33: -1- AC_SUBST([SHELL], [${CONFIG_SHELL-/bin/sh}])
+m4trace:configure.ac:33: -1- AC_SUBST([PATH_SEPARATOR])
+m4trace:configure.ac:33: -1- AC_SUBST([PACKAGE_NAME], [m4_ifdef([AC_PACKAGE_NAME],      ['AC_PACKAGE_NAME'])])
+m4trace:configure.ac:33: -1- AC_SUBST([PACKAGE_TARNAME], [m4_ifdef([AC_PACKAGE_TARNAME],   ['AC_PACKAGE_TARNAME'])])
+m4trace:configure.ac:33: -1- AC_SUBST([PACKAGE_VERSION], [m4_ifdef([AC_PACKAGE_VERSION],   ['AC_PACKAGE_VERSION'])])
+m4trace:configure.ac:33: -1- AC_SUBST([PACKAGE_STRING], [m4_ifdef([AC_PACKAGE_STRING],    ['AC_PACKAGE_STRING'])])
+m4trace:configure.ac:33: -1- AC_SUBST([PACKAGE_BUGREPORT], [m4_ifdef([AC_PACKAGE_BUGREPORT], ['AC_PACKAGE_BUGREPORT'])])
+m4trace:configure.ac:33: -1- AC_SUBST([exec_prefix], [NONE])
+m4trace:configure.ac:33: -1- AC_SUBST([prefix], [NONE])
+m4trace:configure.ac:33: -1- AC_SUBST([program_transform_name], [s,x,x,])
+m4trace:configure.ac:33: -1- AC_SUBST([bindir], ['${exec_prefix}/bin'])
+m4trace:configure.ac:33: -1- AC_SUBST([sbindir], ['${exec_prefix}/sbin'])
+m4trace:configure.ac:33: -1- AC_SUBST([libexecdir], ['${exec_prefix}/libexec'])
+m4trace:configure.ac:33: -1- AC_SUBST([datadir], ['${prefix}/share'])
+m4trace:configure.ac:33: -1- AC_SUBST([sysconfdir], ['${prefix}/etc'])
+m4trace:configure.ac:33: -1- AC_SUBST([sharedstatedir], ['${prefix}/com'])
+m4trace:configure.ac:33: -1- AC_SUBST([localstatedir], ['${prefix}/var'])
+m4trace:configure.ac:33: -1- AC_SUBST([libdir], ['${exec_prefix}/lib'])
+m4trace:configure.ac:33: -1- AC_SUBST([includedir], ['${prefix}/include'])
+m4trace:configure.ac:33: -1- AC_SUBST([oldincludedir], ['/usr/include'])
+m4trace:configure.ac:33: -1- AC_SUBST([infodir], ['${prefix}/info'])
+m4trace:configure.ac:33: -1- AC_SUBST([mandir], ['${prefix}/man'])
+m4trace:configure.ac:33: -1- AC_DEFINE_TRACE_LITERAL([PACKAGE_NAME])
+m4trace:configure.ac:33: -1- AH_OUTPUT([PACKAGE_NAME], [/* Define to the full name of this package. */
+#undef PACKAGE_NAME])
+m4trace:configure.ac:33: -1- AC_DEFINE_TRACE_LITERAL([PACKAGE_TARNAME])
+m4trace:configure.ac:33: -1- AH_OUTPUT([PACKAGE_TARNAME], [/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME])
+m4trace:configure.ac:33: -1- AC_DEFINE_TRACE_LITERAL([PACKAGE_VERSION])
+m4trace:configure.ac:33: -1- AH_OUTPUT([PACKAGE_VERSION], [/* Define to the version of this package. */
+#undef PACKAGE_VERSION])
+m4trace:configure.ac:33: -1- AC_DEFINE_TRACE_LITERAL([PACKAGE_STRING])
+m4trace:configure.ac:33: -1- AH_OUTPUT([PACKAGE_STRING], [/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING])
+m4trace:configure.ac:33: -1- AC_DEFINE_TRACE_LITERAL([PACKAGE_BUGREPORT])
+m4trace:configure.ac:33: -1- AH_OUTPUT([PACKAGE_BUGREPORT], [/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT])
+m4trace:configure.ac:33: -1- AC_SUBST([build_alias])
+m4trace:configure.ac:33: -1- AC_SUBST([host_alias])
+m4trace:configure.ac:33: -1- AC_SUBST([target_alias])
+m4trace:configure.ac:33: -1- AC_SUBST([DEFS])
+m4trace:configure.ac:33: -1- AC_SUBST([ECHO_C])
+m4trace:configure.ac:33: -1- AC_SUBST([ECHO_N])
+m4trace:configure.ac:33: -1- AC_SUBST([ECHO_T])
+m4trace:configure.ac:33: -1- AC_SUBST([LIBS])
+m4trace:configure.ac:34: -1- AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+m4trace:configure.ac:34: -1- m4_pattern_allow([^AM_[A-Z]+FLAGS$])
+m4trace:configure.ac:34: -1- AM_SET_CURRENT_AUTOMAKE_VERSION
+m4trace:configure.ac:34: -1- AM_AUTOMAKE_VERSION([1.9.2])
+m4trace:configure.ac:34: -1- AC_PROG_INSTALL
+m4trace:configure.ac:34: -1- AC_SUBST([INSTALL_PROGRAM])
+m4trace:configure.ac:34: -1- AC_SUBST([INSTALL_SCRIPT])
+m4trace:configure.ac:34: -1- AC_SUBST([INSTALL_DATA])
+m4trace:configure.ac:34: -1- AC_SUBST([CYGPATH_W])
+m4trace:configure.ac:34: -1- _AM_SET_OPTIONS([-Wall -Werror foreign])
+m4trace:configure.ac:34: -1- _AM_SET_OPTION([-Wall])
+m4trace:configure.ac:34: -2- _AM_MANGLE_OPTION([-Wall])
+m4trace:configure.ac:34: -1- _AM_SET_OPTION([-Werror])
+m4trace:configure.ac:34: -2- _AM_MANGLE_OPTION([-Werror])
+m4trace:configure.ac:34: -1- _AM_SET_OPTION([foreign])
+m4trace:configure.ac:34: -2- _AM_MANGLE_OPTION([foreign])
+m4trace:configure.ac:34: -1- AC_SUBST([PACKAGE], ['AC_PACKAGE_TARNAME'])
+m4trace:configure.ac:34: -1- AC_SUBST([VERSION], ['AC_PACKAGE_VERSION'])
+m4trace:configure.ac:34: -1- _AM_IF_OPTION([no-define], [], [AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [Name of package])
+ AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [Version number of package])])
+m4trace:configure.ac:34: -2- _AM_MANGLE_OPTION([no-define])
+m4trace:configure.ac:34: -1- AC_DEFINE_TRACE_LITERAL([PACKAGE])
+m4trace:configure.ac:34: -1- AH_OUTPUT([PACKAGE], [/* Name of package */
+#undef PACKAGE])
+m4trace:configure.ac:34: -1- AC_DEFINE_TRACE_LITERAL([VERSION])
+m4trace:configure.ac:34: -1- AH_OUTPUT([VERSION], [/* Version number of package */
+#undef VERSION])
+m4trace:configure.ac:34: -1- AM_SANITY_CHECK
+m4trace:configure.ac:34: -1- AM_MISSING_PROG([ACLOCAL], [aclocal-${am__api_version}])
+m4trace:configure.ac:34: -1- AM_MISSING_HAS_RUN
+m4trace:configure.ac:34: -1- AM_AUX_DIR_EXPAND
+m4trace:configure.ac:34: -1- AC_SUBST([ACLOCAL])
+m4trace:configure.ac:34: -1- AM_MISSING_PROG([AUTOCONF], [autoconf])
+m4trace:configure.ac:34: -1- AC_SUBST([AUTOCONF])
+m4trace:configure.ac:34: -1- AM_MISSING_PROG([AUTOMAKE], [automake-${am__api_version}])
+m4trace:configure.ac:34: -1- AC_SUBST([AUTOMAKE])
+m4trace:configure.ac:34: -1- AM_MISSING_PROG([AUTOHEADER], [autoheader])
+m4trace:configure.ac:34: -1- AC_SUBST([AUTOHEADER])
+m4trace:configure.ac:34: -1- AM_MISSING_PROG([MAKEINFO], [makeinfo])
+m4trace:configure.ac:34: -1- AC_SUBST([MAKEINFO])
+m4trace:configure.ac:34: -1- AM_PROG_INSTALL_SH
+m4trace:configure.ac:34: -1- AC_SUBST([install_sh])
+m4trace:configure.ac:34: -1- AM_PROG_INSTALL_STRIP
+m4trace:configure.ac:34: -1- AC_SUBST([STRIP])
+m4trace:configure.ac:34: -1- AC_SUBST([ac_ct_STRIP])
+m4trace:configure.ac:34: -1- AC_SUBST([INSTALL_STRIP_PROGRAM])
+m4trace:configure.ac:34: -1- AM_PROG_MKDIR_P
+m4trace:configure.ac:34: -1- AC_SUBST([mkdir_p])
+m4trace:configure.ac:34: -1- AC_PROG_AWK
+m4trace:configure.ac:34: -1- AC_SUBST([AWK])
+m4trace:configure.ac:34: -1- AC_PROG_MAKE_SET
+m4trace:configure.ac:34: -1- AC_SUBST([SET_MAKE])
+m4trace:configure.ac:34: -1- AM_SET_LEADING_DOT
+m4trace:configure.ac:34: -1- AC_SUBST([am__leading_dot])
+m4trace:configure.ac:34: -1- _AM_IF_OPTION([tar-ustar], [_AM_PROG_TAR([ustar])], [_AM_IF_OPTION([tar-pax], [_AM_PROG_TAR([pax])],
+	      		     [_AM_PROG_TAR([v7])])])
+m4trace:configure.ac:34: -2- _AM_MANGLE_OPTION([tar-ustar])
+m4trace:configure.ac:34: -1- _AM_IF_OPTION([tar-pax], [_AM_PROG_TAR([pax])], [_AM_PROG_TAR([v7])])
+m4trace:configure.ac:34: -2- _AM_MANGLE_OPTION([tar-pax])
+m4trace:configure.ac:34: -1- _AM_PROG_TAR([v7])
+m4trace:configure.ac:34: -1- AM_MISSING_PROG([AMTAR], [tar])
+m4trace:configure.ac:34: -1- AC_SUBST([AMTAR])
+m4trace:configure.ac:34: -1- AC_SUBST([am__tar])
+m4trace:configure.ac:34: -1- AC_SUBST([am__untar])
+m4trace:configure.ac:34: -1- _AM_IF_OPTION([no-dependencies], [], [AC_PROVIDE_IFELSE([AC_PROG_CC],
+                  [_AM_DEPENDENCIES(CC)],
+                  [define([AC_PROG_CC],
+                          defn([AC_PROG_CC])[_AM_DEPENDENCIES(CC)])])dnl
+AC_PROVIDE_IFELSE([AC_PROG_CXX],
+                  [_AM_DEPENDENCIES(CXX)],
+                  [define([AC_PROG_CXX],
+                          defn([AC_PROG_CXX])[_AM_DEPENDENCIES(CXX)])])dnl
+])
+m4trace:configure.ac:34: -2- _AM_MANGLE_OPTION([no-dependencies])
+m4trace:configure.ac:38: -1- AC_PROG_CC
+m4trace:configure.ac:38: -1- AC_SUBST([CC])
+m4trace:configure.ac:38: -1- AC_SUBST([CFLAGS])
+m4trace:configure.ac:38: -1- AC_SUBST([LDFLAGS])
+m4trace:configure.ac:38: -1- AC_SUBST([CPPFLAGS])
+m4trace:configure.ac:38: -1- AC_SUBST([CC])
+m4trace:configure.ac:38: -1- AC_SUBST([ac_ct_CC])
+m4trace:configure.ac:38: -1- AC_SUBST([CC])
+m4trace:configure.ac:38: -1- AC_SUBST([ac_ct_CC])
+m4trace:configure.ac:38: -1- AC_SUBST([CC])
+m4trace:configure.ac:38: -1- AC_SUBST([CC])
+m4trace:configure.ac:38: -1- AC_SUBST([ac_ct_CC])
+m4trace:configure.ac:38: -1- AC_SUBST([EXEEXT], [$ac_cv_exeext])
+m4trace:configure.ac:38: -1- AC_SUBST([OBJEXT], [$ac_cv_objext])
+m4trace:configure.ac:38: -1- _AM_DEPENDENCIES([CC])
+m4trace:configure.ac:38: -1- AM_SET_DEPDIR
+m4trace:configure.ac:38: -1- AC_SUBST([DEPDIR], ["${am__leading_dot}deps"])
+m4trace:configure.ac:38: -1- AM_OUTPUT_DEPENDENCY_COMMANDS
+m4trace:configure.ac:38: -1- AM_MAKE_INCLUDE
+m4trace:configure.ac:38: -1- AC_SUBST([am__include])
+m4trace:configure.ac:38: -1- AC_SUBST([am__quote])
+m4trace:configure.ac:38: -1- AM_DEP_TRACK
+m4trace:configure.ac:38: -1- AM_CONDITIONAL([AMDEP], [test "x$enable_dependency_tracking" != xno])
+m4trace:configure.ac:38: -1- AC_SUBST([AMDEP_TRUE])
+m4trace:configure.ac:38: -1- AC_SUBST([AMDEP_FALSE])
+m4trace:configure.ac:38: -1- AC_SUBST([AMDEPBACKSLASH])
+m4trace:configure.ac:38: -1- AC_SUBST([CCDEPMODE], [depmode=$am_cv_CC_dependencies_compiler_type])
+m4trace:configure.ac:38: -1- AM_CONDITIONAL([am__fastdepCC], [
+  test "x$enable_dependency_tracking" != xno \
+  && test "$am_cv_CC_dependencies_compiler_type" = gcc3])
+m4trace:configure.ac:38: -1- AC_SUBST([am__fastdepCC_TRUE])
+m4trace:configure.ac:38: -1- AC_SUBST([am__fastdepCC_FALSE])
+m4trace:configure.ac:39: -1- AC_PROG_RANLIB
+m4trace:configure.ac:39: -1- AC_SUBST([RANLIB])
+m4trace:configure.ac:39: -1- AC_SUBST([ac_ct_RANLIB])
+m4trace:configure.ac:40: -1- AM_PATH_PYTHON([2.2])
+m4trace:configure.ac:40: -1- AM_PYTHON_CHECK_VERSION([$PYTHON], [2.2], [AC_MSG_RESULT(yes)], [AC_MSG_ERROR(too old)])
+m4trace:configure.ac:40: -1- AM_RUN_LOG([$PYTHON -c "$prog"])
+m4trace:configure.ac:40: -1- AM_PYTHON_CHECK_VERSION([$am_cv_pathless_PYTHON], [2.2], [break])
+m4trace:configure.ac:40: -1- AM_RUN_LOG([$am_cv_pathless_PYTHON -c "$prog"])
+m4trace:configure.ac:40: -1- AC_SUBST([PYTHON], [$ac_cv_path_PYTHON])
+m4trace:configure.ac:40: -1- AC_SUBST([PYTHON_VERSION], [$am_cv_python_version])
+m4trace:configure.ac:40: -1- AC_SUBST([PYTHON_PREFIX], ['${prefix}'])
+m4trace:configure.ac:40: -1- AC_SUBST([PYTHON_EXEC_PREFIX], ['${exec_prefix}'])
+m4trace:configure.ac:40: -1- AC_SUBST([PYTHON_PLATFORM], [$am_cv_python_platform])
+m4trace:configure.ac:40: -1- AC_SUBST([pythondir], [$am_cv_python_pythondir])
+m4trace:configure.ac:40: -1- AC_SUBST([pkgpythondir], [\${pythondir}/$PACKAGE])
+m4trace:configure.ac:40: -1- AC_SUBST([pyexecdir], [$am_cv_python_pyexecdir])
+m4trace:configure.ac:40: -1- AC_SUBST([pkgpyexecdir], [\${pyexecdir}/$PACKAGE])
+m4trace:configure.ac:41: -1- AC_SUBST([SWIG], [$ac_cv_path_SWIG])
+m4trace:configure.ac:44: -1- AC_HEADER_STDC
+m4trace:configure.ac:44: -1- AC_PROG_CPP
+m4trace:configure.ac:44: -1- AC_SUBST([CPP])
+m4trace:configure.ac:44: -1- AC_SUBST([CPPFLAGS])
+m4trace:configure.ac:44: -1- AC_SUBST([CPP])
+m4trace:configure.ac:44: -1- AC_SUBST([EGREP])
+m4trace:configure.ac:44: -1- AC_DEFINE_TRACE_LITERAL([STDC_HEADERS])
+m4trace:configure.ac:44: -1- AH_OUTPUT([STDC_HEADERS], [/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS])
+m4trace:configure.ac:45: -1- AC_CHECK_HEADERS([stdlib.h string.h unistd.h])
+m4trace:configure.ac:45: -1- AH_OUTPUT([HAVE_STDLIB_H], [/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H])
+m4trace:configure.ac:45: -1- AH_OUTPUT([HAVE_STRING_H], [/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H])
+m4trace:configure.ac:45: -1- AH_OUTPUT([HAVE_UNISTD_H], [/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H])
+m4trace:configure.ac:45: -1- AC_CHECK_HEADERS([sys/types.h sys/stat.h stdlib.h string.h memory.h strings.h \
+		  inttypes.h stdint.h unistd.h], [], [], [$ac_includes_default])
+m4trace:configure.ac:45: -1- AH_OUTPUT([HAVE_SYS_TYPES_H], [/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H])
+m4trace:configure.ac:45: -1- AH_OUTPUT([HAVE_SYS_STAT_H], [/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H])
+m4trace:configure.ac:45: -1- AH_OUTPUT([HAVE_STDLIB_H], [/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H])
+m4trace:configure.ac:45: -1- AH_OUTPUT([HAVE_STRING_H], [/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H])
+m4trace:configure.ac:45: -1- AH_OUTPUT([HAVE_MEMORY_H], [/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H])
+m4trace:configure.ac:45: -1- AH_OUTPUT([HAVE_STRINGS_H], [/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H])
+m4trace:configure.ac:45: -1- AH_OUTPUT([HAVE_INTTYPES_H], [/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H])
+m4trace:configure.ac:45: -1- AH_OUTPUT([HAVE_STDINT_H], [/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H])
+m4trace:configure.ac:45: -1- AH_OUTPUT([HAVE_UNISTD_H], [/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H])
+m4trace:configure.ac:48: -1- AC_C_CONST
+m4trace:configure.ac:48: -1- AC_DEFINE_TRACE_LITERAL([const])
+m4trace:configure.ac:48: -1- AH_OUTPUT([const], [/* Define to empty if `const\' does not conform to ANSI C. */
+#undef const])
+m4trace:configure.ac:49: -1- AC_TYPE_SIZE_T
+m4trace:configure.ac:49: -1- AC_DEFINE_TRACE_LITERAL([size_t])
+m4trace:configure.ac:49: -1- AH_OUTPUT([size_t], [/* Define to `unsigned\' if <sys/types.h> does not define. */
+#undef size_t])
+m4trace:configure.ac:53: -1- AC_CHECK_FPIC
+m4trace:configure.ac:56: -1- AM_PATH_GLIB_2_0
+m4trace:configure.ac:56: -1- AC_SUBST([PKG_CONFIG], [$ac_cv_path_PKG_CONFIG])
+m4trace:configure.ac:56: -1- _m4_warn([obsolete], [The macro `AC_TRY_RUN' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:2289: AC_TRY_RUN is expanded from...
+/usr/share/aclocal/glib-2.0.m4:212: AM_PATH_GLIB_2_0 is expanded from...
+configure.ac:56: the top level])
+m4trace:configure.ac:56: -1- _m4_warn([obsolete], [The macro `AC_TRY_LINK' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:2223: AC_TRY_LINK is expanded from...
+/usr/share/aclocal/glib-2.0.m4:212: AM_PATH_GLIB_2_0 is expanded from...
+configure.ac:56: the top level])
+m4trace:configure.ac:56: -1- AC_SUBST([GLIB_CFLAGS])
+m4trace:configure.ac:56: -1- AC_SUBST([GLIB_LIBS])
+m4trace:configure.ac:56: -1- AC_SUBST([GLIB_GENMARSHAL])
+m4trace:configure.ac:56: -1- AC_SUBST([GOBJECT_QUERY])
+m4trace:configure.ac:56: -1- AC_SUBST([GLIB_MKENUMS])
+m4trace:configure.ac:57: -1- AC_CHECK_LIB([m], [pow strtol])
+m4trace:configure.ac:57: -1- AH_OUTPUT([HAVE_LIBM], [/* Define to 1 if you have the `m\' library (-lm). */
+#undef HAVE_LIBM])
+m4trace:configure.ac:57: -1- AC_DEFINE_TRACE_LITERAL([HAVE_LIBM])
+m4trace:configure.ac:58: -1- AC_PATH_CFITSIO
+m4trace:configure.ac:58: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
+m4/cfitsio.m4:98: AC_PATH_CFITSIO is expanded from...
+configure.ac:58: the top level])
+m4trace:configure.ac:58: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
+m4/cfitsio.m4:98: AC_PATH_CFITSIO is expanded from...
+configure.ac:58: the top level])
+m4trace:configure.ac:58: -1- AC_CHECK_HEADERS([/tmp/dummy2_fitsio.h], [ac_have_cfitsioh=yes], [ac_have_cfitsioh=no
+	                	AC_MSG_WARN([cannot find CFITSIO headers in /usr/include/cfitsio])], [#include  <fitsio.h>])
+m4trace:configure.ac:58: -1- AH_OUTPUT([HAVE__TMP_DUMMY2_FITSIO_H], [/* Define to 1 if you have the </tmp/dummy2_fitsio.h> header file. */
+#undef HAVE__TMP_DUMMY2_FITSIO_H])
+m4trace:configure.ac:58: -1- AC_CHECK_LIB([cfitsio], [ffinit], [], [ac_have_cfitsio=no
+	             AC_MSG_WARN([cannot find CFITSIO library in default])], [-lm])
+m4trace:configure.ac:58: -1- AH_OUTPUT([HAVE_LIBCFITSIO], [/* Define to 1 if you have the `cfitsio\' library (-lcfitsio). */
+#undef HAVE_LIBCFITSIO])
+m4trace:configure.ac:58: -1- AC_DEFINE_TRACE_LITERAL([HAVE_LIBCFITSIO])
+m4trace:configure.ac:58: -1- AC_CHECK_HEADERS([/tmp/dummy3_fitsio.h], [], [ac_have_cfitsio=no
+		        	AC_MSG_WARN([cannot find CFITSIO headers in $dir])], [#include  "fitsio.h"])
+m4trace:configure.ac:58: -1- AH_OUTPUT([HAVE__TMP_DUMMY3_FITSIO_H], [/* Define to 1 if you have the </tmp/dummy3_fitsio.h> header file. */
+#undef HAVE__TMP_DUMMY3_FITSIO_H])
+m4trace:configure.ac:58: -1- AC_CHECK_LIB([cfitsio], [ffinit], [ac_have_cfitsio=yes], [ac_have_cfitsio=no
+				     AC_MSG_WARN([cannot find CFITSIO library in $dir])], [-lm])
+m4trace:configure.ac:58: -1- AC_DEFINE_TRACE_LITERAL([HAVE_CFITSIO])
+m4trace:configure.ac:58: -1- AH_OUTPUT([HAVE_CFITSIO], [/* Define to 1 if you have CFITSIO. */
+#undef HAVE_CFITSIO])
+m4trace:configure.ac:58: -1- AC_SUBST([CFITSIO_CPPFLAGS])
+m4trace:configure.ac:58: -1- AC_SUBST([CFITSIO_LDFLAGS])
+m4trace:configure.ac:58: -1- AC_SUBST([CFITSIO_LIBS])
+m4trace:configure.ac:59: -1- AC_PATH_FFTW3
+m4trace:configure.ac:59: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
+m4/fftw3.m4:84: AC_PATH_FFTW3 is expanded from...
+configure.ac:59: the top level])
+m4trace:configure.ac:59: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
+m4/fftw3.m4:84: AC_PATH_FFTW3 is expanded from...
+configure.ac:59: the top level])
+m4trace:configure.ac:59: -1- AC_CHECK_HEADERS([/tmp/dummy1_fftw3.h], [ac_have_fftw3h=yes], [ac_have_fftw3h=no], [#include "fftw3.h"])
+m4trace:configure.ac:59: -1- AH_OUTPUT([HAVE__TMP_DUMMY1_FFTW3_H], [/* Define to 1 if you have the </tmp/dummy1_fftw3.h> header file. */
+#undef HAVE__TMP_DUMMY1_FFTW3_H])
+m4trace:configure.ac:59: -1- AC_CHECK_LIB([fftw3f], [fftwf_execute], [ac_have_fftw3=yes FFTW3_LIBS="$LIBS -lfftw3f"], [ac_have_fftw3=no], [-lm ])
+m4trace:configure.ac:59: -1- AC_CHECK_HEADERS([/tmp/dummy3_fftw3.h], [ac_have_fftw3h=yes], [ac_have_fftw3h=no], [#include "fftw3.h"])
+m4trace:configure.ac:59: -1- AH_OUTPUT([HAVE__TMP_DUMMY3_FFTW3_H], [/* Define to 1 if you have the </tmp/dummy3_fftw3.h> header file. */
+#undef HAVE__TMP_DUMMY3_FFTW3_H])
+m4trace:configure.ac:59: -1- AC_CHECK_LIB([fftw3f], [fftwf_execute], [ac_have_fftw3=yes FFTW3_LIBS="$LIBS -lfftw3"], [ac_have_fftw3=no], [-lm ])
+m4trace:configure.ac:59: -1- AC_DEFINE_TRACE_LITERAL([HAVE_FFTW3])
+m4trace:configure.ac:59: -1- AH_OUTPUT([HAVE_FFTW3], [/* Define to 1 if FFTW3 is available. */
+#undef HAVE_FFTW3])
+m4trace:configure.ac:59: -1- AC_SUBST([FFTW3_CPPFLAGS])
+m4trace:configure.ac:59: -1- AC_SUBST([FFTW3_LDFLAGS])
+m4trace:configure.ac:59: -1- AC_SUBST([FFTW3_LIBS])
+m4trace:configure.ac:60: -1- AC_PATH_FFTW
+m4trace:configure.ac:60: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
+m4/fftw.m4:100: AC_PATH_FFTW is expanded from...
+configure.ac:60: the top level])
+m4trace:configure.ac:60: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
+m4/fftw.m4:100: AC_PATH_FFTW is expanded from...
+configure.ac:60: the top level])
+m4trace:configure.ac:60: -1- AC_CHECK_HEADERS([/tmp/dummy1_fftw.h], [ac_have_fftwh=yes], [ac_have_fftwh=no], [#include "fftw.h"
+#include "rfftw.h"])
+m4trace:configure.ac:60: -1- AH_OUTPUT([HAVE__TMP_DUMMY1_FFTW_H], [/* Define to 1 if you have the </tmp/dummy1_fftw.h> header file. */
+#undef HAVE__TMP_DUMMY1_FFTW_H])
+m4trace:configure.ac:60: -1- AC_CHECK_LIB([fftw], [fftw], [ac_have_fftw=yes FFTW_LIBS="$LIBS -lfftw"], [ac_have_fftw=no], [-lm ])
+m4trace:configure.ac:60: -1- AC_CHECK_LIB([rfftw], [rfftw], [ac_have_fftw=yes FFTW_LIBS="$FFTW_LIBS -lrfftw"], [ac_have_fftw=no], [-lm -lfftw])
+m4trace:configure.ac:60: -1- AC_CHECK_HEADERS([/tmp/dummy3_fftw.h], [ac_have_fftwh=yes], [ac_have_fftwh=no], [#include "fftw.h"
+#include "rfftw.h"])
+m4trace:configure.ac:60: -1- AH_OUTPUT([HAVE__TMP_DUMMY3_FFTW_H], [/* Define to 1 if you have the </tmp/dummy3_fftw.h> header file. */
+#undef HAVE__TMP_DUMMY3_FFTW_H])
+m4trace:configure.ac:60: -1- AC_CHECK_LIB([fftw], [fftw], [ac_have_fftw=yes FFTW_LIBS="$LIBS -lfftw"], [ac_have_fftw=no], [-lm ])
+m4trace:configure.ac:60: -1- AC_CHECK_LIB([rfftw], [rfftw], [ac_have_fftw=yes FFTW_LIBS="$FFTW_LIBS -lrfftw"], [ac_have_fftw=no], [-lm -lfftw])
+m4trace:configure.ac:60: -1- AC_DEFINE_TRACE_LITERAL([HAVE_FFTW])
+m4trace:configure.ac:60: -1- AH_OUTPUT([HAVE_FFTW], [/* Define to 1 if FFTW 2 is available. */
+#undef HAVE_FFTW])
+m4trace:configure.ac:60: -1- AC_SUBST([FFTW_CPPFLAGS])
+m4trace:configure.ac:60: -1- AC_SUBST([FFTW_LDFLAGS])
+m4trace:configure.ac:60: -1- AC_SUBST([FFTW_LIBS])
+m4trace:configure.ac:61: -1- AC_PATH_GSL
+m4trace:configure.ac:61: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
+m4/gsl.m4:92: AC_PATH_GSL is expanded from...
+configure.ac:61: the top level])
+m4trace:configure.ac:61: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
+m4/gsl.m4:92: AC_PATH_GSL is expanded from...
+configure.ac:61: the top level])
+m4trace:configure.ac:61: -1- AC_CHECK_HEADERS([/tmp/dummy1_gsl.h], [ac_have_gslh=yes], [ac_have_gslh=no], [#include "gsl/gsl_blas.h"])
+m4trace:configure.ac:61: -1- AH_OUTPUT([HAVE__TMP_DUMMY1_GSL_H], [/* Define to 1 if you have the </tmp/dummy1_gsl.h> header file. */
+#undef HAVE__TMP_DUMMY1_GSL_H])
+m4trace:configure.ac:61: -1- AC_CHECK_HEADERS([/tmp/dummy3_gsl.h], [ac_have_gslh=yes], [ac_have_gslh=no], [#include "gsl/gsl_blas.h])
+m4trace:configure.ac:61: -1- AH_OUTPUT([HAVE__TMP_DUMMY3_GSL_H], [/* Define to 1 if you have the </tmp/dummy3_gsl.h> header file. */
+#undef HAVE__TMP_DUMMY3_GSL_H])
+m4trace:configure.ac:61: -1- AC_DEFINE_TRACE_LITERAL([HAVE_GSL])
+m4trace:configure.ac:61: -1- AH_OUTPUT([HAVE_GSL], [/* Define to 1 if GSL is available. */
+#undef HAVE_GSL])
+m4trace:configure.ac:61: -1- AC_SUBST([GSL_CFLAGS])
+m4trace:configure.ac:61: -1- AC_SUBST([GSL_LDFLAGS])
+m4trace:configure.ac:61: -1- AC_SUBST([GSL_LIBS])
+m4trace:configure.ac:62: -1- AC_PATH_XMLRPC
+m4trace:configure.ac:62: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
+m4/xmlrpc.m4:161: AC_PATH_XMLRPC is expanded from...
+configure.ac:62: the top level])
+m4trace:configure.ac:62: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
+m4/xmlrpc.m4:161: AC_PATH_XMLRPC is expanded from...
+configure.ac:62: the top level])
+m4trace:configure.ac:62: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
+m4/xmlrpc.m4:161: AC_PATH_XMLRPC is expanded from...
+configure.ac:62: the top level])
+m4trace:configure.ac:62: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
+m4/xmlrpc.m4:161: AC_PATH_XMLRPC is expanded from...
+configure.ac:62: the top level])
+m4trace:configure.ac:62: -1- AC_CHECK_HEADERS([/tmp/dummy1_xmlrpc.h], [ac_have_xmlrpch=yes], [ac_have_xmlrpch=no], [#include "xmlrpc_client.h"])
+m4trace:configure.ac:62: -1- AH_OUTPUT([HAVE__TMP_DUMMY1_XMLRPC_H], [/* Define to 1 if you have the </tmp/dummy1_xmlrpc.h> header file. */
+#undef HAVE__TMP_DUMMY1_XMLRPC_H])
+m4trace:configure.ac:62: -1- AC_CHECK_HEADERS([/tmp/dummy3_xmlrpc.h], [ac_have_xmlrpch=yes], [ac_have_xmlrpch=no], [#include "xmlrpc_client.h"])
+m4trace:configure.ac:62: -1- AH_OUTPUT([HAVE__TMP_DUMMY3_XMLRPC_H], [/* Define to 1 if you have the </tmp/dummy3_xmlrpc.h> header file. */
+#undef HAVE__TMP_DUMMY3_XMLRPC_H])
+m4trace:configure.ac:62: -1- AC_DEFINE_TRACE_LITERAL([HAVE_XMLRPC])
+m4trace:configure.ac:62: -1- AH_OUTPUT([HAVE_XMLRPC], [/* Define to 1 if XMLRPC is available. */
+#undef HAVE_XMLRPC])
+m4trace:configure.ac:62: -1- AC_SUBST([XMLRPC_SERVER_CPPFLAGS])
+m4trace:configure.ac:62: -1- AC_SUBST([XMLRPC_SERVER_LDFLAGS])
+m4trace:configure.ac:62: -1- AC_SUBST([XMLRPC_SERVER_LIBS])
+m4trace:configure.ac:62: -1- AC_SUBST([XMLRPC_CLIENT_CPPFLAGS])
+m4trace:configure.ac:62: -1- AC_SUBST([XMLRPC_CLIENT_LDFLAGS])
+m4trace:configure.ac:62: -1- AC_SUBST([XMLRPC_CLIENT_LIBS])
+m4trace:configure.ac:62: -1- AC_SUBST([XMLRPC_CPPFLAGS])
+m4trace:configure.ac:62: -1- AC_SUBST([XMLRPC_LDFLAGS])
+m4trace:configure.ac:62: -1- AC_SUBST([XMLRPC_LIBS])
+m4trace:configure.ac:62: -1- AC_SUBST([WWWLIB_WL_RPATH])
+m4trace:configure.ac:62: -1- AC_SUBST([WWW_LIBS])
+m4trace:configure.ac:63: -1- AC_PATH_ZLIB
+m4trace:configure.ac:63: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
+m4/zlib.m4:80: AC_PATH_ZLIB is expanded from...
+configure.ac:63: the top level])
+m4trace:configure.ac:63: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
+m4/zlib.m4:80: AC_PATH_ZLIB is expanded from...
+configure.ac:63: the top level])
+m4trace:configure.ac:63: -1- AC_CHECK_HEADERS([/tmp/dummy1_zlib.h], [ac_have_zlibh=yes], [ac_have_zlibh=no], [#include "zlib.h"])
+m4trace:configure.ac:63: -1- AH_OUTPUT([HAVE__TMP_DUMMY1_ZLIB_H], [/* Define to 1 if you have the </tmp/dummy1_zlib.h> header file. */
+#undef HAVE__TMP_DUMMY1_ZLIB_H])
+m4trace:configure.ac:63: -1- AC_CHECK_HEADERS([/tmp/dummy3_zlib.h], [ac_have_zlibh=yes], [ac_have_zlibh=no], [#include "zlib.h"])
+m4trace:configure.ac:63: -1- AH_OUTPUT([HAVE__TMP_DUMMY3_ZLIB_H], [/* Define to 1 if you have the </tmp/dummy3_zlib.h> header file. */
+#undef HAVE__TMP_DUMMY3_ZLIB_H])
+m4trace:configure.ac:63: -1- AC_DEFINE_TRACE_LITERAL([HAVE_ZLIB])
+m4trace:configure.ac:63: -1- AH_OUTPUT([HAVE_ZLIB], [/* Define to 1 if ZLIB is available. */
+#undef HAVE_ZLIB])
+m4trace:configure.ac:63: -1- AC_SUBST([ZLIB_CFLAGS])
+m4trace:configure.ac:63: -1- AC_SUBST([ZLIB_LDFLAGS])
+m4trace:configure.ac:63: -1- AC_SUBST([ZLIB_LIBS])
+m4trace:configure.ac:64: -1- AC_PATH_PLPLOT
+m4trace:configure.ac:64: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
+m4/plplot.m4:87: AC_PATH_PLPLOT is expanded from...
+configure.ac:64: the top level])
+m4trace:configure.ac:64: -1- AC_CHECK_LIB([plplot], [c_plinit], [ac_have_plplot=yes], [ac_have_plplot=no])
+m4trace:configure.ac:64: -1- AC_DEFINE_TRACE_LITERAL([HAVE_PLPLOT])
+m4trace:configure.ac:64: -1- AH_OUTPUT([HAVE_PLPLOT], [/* Define to 1 if you have PLPLOT. */
+#undef HAVE_PLPLOT])
+m4trace:configure.ac:64: -1- AC_SUBST([PLPLOT_CPPFLAGS])
+m4trace:configure.ac:64: -1- AC_SUBST([PLPLOT_CFLAGS])
+m4trace:configure.ac:64: -1- AC_SUBST([PLPLOT_LDFLAGS])
+m4trace:configure.ac:64: -1- AC_SUBST([PLPLOT_LIBS])
+m4trace:configure.ac:65: -1- AM_PATH_PGPLOT
+m4trace:configure.ac:65: -1- AC_SUBST([F77])
+m4trace:configure.ac:65: -1- AC_SUBST([FFLAGS])
+m4trace:configure.ac:65: -1- AC_SUBST([LDFLAGS])
+m4trace:configure.ac:65: -1- AC_SUBST([F77])
+m4trace:configure.ac:65: -1- AC_SUBST([ac_ct_F77])
+m4trace:configure.ac:65: -1- AC_SUBST([FLIBS])
+m4trace:configure.ac:65: -1- AC_PATH_X
+m4trace:configure.ac:65: -1- AC_DEFINE_TRACE_LITERAL([X_DISPLAY_MISSING])
+m4trace:configure.ac:65: -1- AH_OUTPUT([X_DISPLAY_MISSING], [/* Define to 1 if the X Window System is missing or not being used. */
+#undef X_DISPLAY_MISSING])
+m4trace:configure.ac:65: -1- AC_CHECK_LIB([dnet], [dnet_ntoa], [X_EXTRA_LIBS="$X_EXTRA_LIBS -ldnet"])
+m4trace:configure.ac:65: -1- AC_CHECK_LIB([dnet_stub], [dnet_ntoa], [X_EXTRA_LIBS="$X_EXTRA_LIBS -ldnet_stub"])
+m4trace:configure.ac:65: -1- AC_CHECK_LIB([nsl], [gethostbyname], [X_EXTRA_LIBS="$X_EXTRA_LIBS -lnsl"])
+m4trace:configure.ac:65: -1- AC_CHECK_LIB([bsd], [gethostbyname], [X_EXTRA_LIBS="$X_EXTRA_LIBS -lbsd"])
+m4trace:configure.ac:65: -1- AC_CHECK_LIB([socket], [connect], [X_EXTRA_LIBS="-lsocket $X_EXTRA_LIBS"], [], [$X_EXTRA_LIBS])
+m4trace:configure.ac:65: -1- AC_CHECK_LIB([posix], [remove], [X_EXTRA_LIBS="$X_EXTRA_LIBS -lposix"])
+m4trace:configure.ac:65: -1- AC_CHECK_LIB([ipc], [shmat], [X_EXTRA_LIBS="$X_EXTRA_LIBS -lipc"])
+m4trace:configure.ac:65: -1- AC_CHECK_LIB([ICE], [IceConnectionNumber], [X_PRE_LIBS="$X_PRE_LIBS -lSM -lICE"], [], [$X_EXTRA_LIBS])
+m4trace:configure.ac:65: -1- AC_SUBST([X_CFLAGS])
+m4trace:configure.ac:65: -1- AC_SUBST([X_PRE_LIBS])
+m4trace:configure.ac:65: -1- AC_SUBST([X_LIBS])
+m4trace:configure.ac:65: -1- AC_SUBST([X_EXTRA_LIBS])
+m4trace:configure.ac:65: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
+m4/pgplot.m4:95: AM_PATH_PGPLOT is expanded from...
+configure.ac:65: the top level])
+m4trace:configure.ac:65: -1- AC_CHECK_LIB([pgplot], [main], [ac_have_pgplot=yes], [ac_have_pgplot=no])
+m4trace:configure.ac:65: -1- AC_CHECK_LIB([cpgplot], [cpgenv], [ac_have_pgplot=yes], [ac_have_pgplot=no], [-lpgplot])
+m4trace:configure.ac:65: -1- AC_CHECK_LIB([pgplot], [main], [ac_have_pgplot=yes], [ac_have_pgplot=no])
+m4trace:configure.ac:65: -1- AC_CHECK_LIB([cpgplot], [cpgenv], [ac_have_pgplot=yes], [ac_have_pgplot=no], [-lpgplot])
+m4trace:configure.ac:65: -1- AC_DEFINE_TRACE_LITERAL([HAVE_PGPLOT])
+m4trace:configure.ac:65: -1- AH_OUTPUT([HAVE_PGPLOT], [/* Define to 1 if you have PGPLOT. */
+#undef HAVE_PGPLOT])
+m4trace:configure.ac:65: -1- AC_SUBST([PGPLOT_CPPFLAGS])
+m4trace:configure.ac:65: -1- AC_SUBST([PGPLOT_CFLAGS])
+m4trace:configure.ac:65: -1- AC_SUBST([PGPLOT_LDFLAGS])
+m4trace:configure.ac:65: -1- AC_SUBST([PGPLOT_LIBS])
+m4trace:configure.ac:74: -1- AC_SUBST([PYTHON_CPPFLAGS])
+m4trace:configure.ac:83: -1- AC_SUBST([PYTHON_LDFLAGS])
+m4trace:configure.ac:86: -1- AC_FUNC_FSEEKO
+m4trace:configure.ac:86: -1- AC_DEFINE_TRACE_LITERAL([_LARGEFILE_SOURCE])
+m4trace:configure.ac:86: -1- AH_OUTPUT([_LARGEFILE_SOURCE], [/* Define to 1 to make fseeko visible on some hosts (e.g. glibc 2.2). */
+#undef _LARGEFILE_SOURCE])
+m4trace:configure.ac:86: -1- AC_DEFINE_TRACE_LITERAL([HAVE_FSEEKO])
+m4trace:configure.ac:86: -1- AH_OUTPUT([HAVE_FSEEKO], [/* Define to 1 if fseeko (and presumably ftello) exists and is declared. */
+#undef HAVE_FSEEKO])
+m4trace:configure.ac:89: -1- AC_DEFINE_TRACE_LITERAL([_FILE_OFFSET_BITS])
+m4trace:configure.ac:89: -1- AH_OUTPUT([_FILE_OFFSET_BITS], [/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS])
+m4trace:configure.ac:89: -1- AC_DEFINE_TRACE_LITERAL([_LARGE_FILES])
+m4trace:configure.ac:89: -1- AH_OUTPUT([_LARGE_FILES], [/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES])
+m4trace:configure.ac:111: -1- AC_CHECK_LIB([gthread-2.0], [g_thread_init], [ac_gthread=yes], [ac_gthread=no
+             AC_MSG_WARN([cannot find GTHREAD library])], [$TGTHREAD_LIBS])
+m4trace:configure.ac:113: -1- AC_DEFINE_TRACE_LITERAL([OBIT_THREADS_ENABLED])
+m4trace:configure.ac:113: -1- AH_OUTPUT([OBIT_THREADS_ENABLED], [/* Define to 1 if you have gthreads. */
+#undef OBIT_THREADS_ENABLED])
+m4trace:configure.ac:115: -1- AC_SUBST([GTHREAD_LIBS])
+m4trace:configure.ac:119: -1- AC_PATH_OBIT
+m4trace:configure.ac:119: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
+m4/obit.m4:59: AC_PATH_OBIT is expanded from...
+configure.ac:119: the top level])
+m4trace:configure.ac:119: -2- _m4_warn([obsolete], [The macro `AC_HELP_STRING' is obsolete.
+You should run autoupdate.], [autoconf/general.m4:219: AC_HELP_STRING is expanded from...
+m4/obit.m4:59: AC_PATH_OBIT is expanded from...
+configure.ac:119: the top level])
+m4trace:configure.ac:119: -1- AC_CHECK_LIB([Obit], [newObit], [], [ac_have_obit=no
+	             AC_MSG_ERROR([cannot find OBIT library])
+			$GLIB_LIBS $GTHREAD_LIBS -lglib-2.0])
+m4trace:configure.ac:119: -1- AH_OUTPUT([HAVE_LIBOBIT], [/* Define to 1 if you have the `Obit\' library (-lObit). */
+#undef HAVE_LIBOBIT])
+m4trace:configure.ac:119: -1- AC_DEFINE_TRACE_LITERAL([HAVE_LIBOBIT])
+m4trace:configure.ac:119: -1- AC_DEFINE_TRACE_LITERAL([HAVE_OBIT])
+m4trace:configure.ac:119: -1- AH_OUTPUT([HAVE_OBIT], [/* Define to 1 if you have OBIT. */
+#undef HAVE_OBIT])
+m4trace:configure.ac:119: -1- AC_SUBST([OBIT_CPPFLAGS])
+m4trace:configure.ac:119: -1- AC_SUBST([OBIT_LDFLAGS])
+m4trace:configure.ac:119: -1- AC_SUBST([OBIT_LIBS])
+m4trace:configure.ac:119: -1- AC_SUBST([OBIT_DIR])
+m4trace:configure.ac:119: -1- AC_SUBST([OBIT])
+m4trace:configure.ac:121: -1- AC_CONFIG_FILES([Makefile python/Makefile src/Makefile test/Makefile tasks/Makefile])
+m4trace:configure.ac:122: -1- AC_SUBST([LIB@&t@OBJS], [$ac_libobjs])
+m4trace:configure.ac:122: -1- AC_SUBST([LTLIBOBJS], [$ac_ltlibobjs])
+m4trace:configure.ac:122: -1- _AM_OUTPUT_DEPENDENCY_COMMANDS

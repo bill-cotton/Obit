@@ -1,0 +1,401 @@
+\section{Obit\-DCon\-Clean\-Image Struct Reference}
+\label{structObitDConCleanImage}\index{ObitDConCleanImage@{ObitDConCleanImage}}
+Obit\-DCon\-Clean\-Image Class structure.  
+
+
+{\tt \#include $<$Obit\-DCon\-Clean\-Image.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Mosaic} $\ast$ {\bf mosaic}
+\begin{CompactList}\small\item\em Image mosaic being deconvolved. \item\end{CompactList}\item 
+{\bf olong} {\bf plane} [IM\_\-MAXDIM-2]
+\begin{CompactList}\small\item\em Plane being processed, 1-rel indices of axes 3-? \item\end{CompactList}\item 
+{\bf olong} {\bf prt\-Lv}
+\begin{CompactList}\small\item\em message level for deconvolution progress messages, 0=none, 1=summary, 2=normal, higher numbers for diagnostics \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Window} $\ast$ {\bf window}
+\begin{CompactList}\small\item\em CLEAN window list. \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf Beam\-Patch}
+\begin{CompactList}\small\item\em Current Beam patch. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Px\-List} $\ast$ {\bf Pixels}
+\begin{CompactList}\small\item\em Current Pixel list. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Bm\-Hist} $\ast$ {\bf Beam\-Hist}
+\begin{CompactList}\small\item\em Current Beam histogram. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Px\-Hist} $\ast$ {\bf Pixel\-Hist}
+\begin{CompactList}\small\item\em Current Pixel histogram. \item\end{CompactList}\item 
+{\bf olong} {\bf current\-Field}
+\begin{CompactList}\small\item\em Current field number 1-rel. \item\end{CompactList}\item 
+{\bf olong} {\bf beam\-Patch\-Size}
+\begin{CompactList}\small\item\em Beam patch halfwidth size in pixels. \item\end{CompactList}\item 
+{\bf olong} {\bf min\-Patch\-Size}
+\begin{CompactList}\small\item\em Minimum beam patch halfwidth in pixels. \item\end{CompactList}\item 
+{\bf ofloat} {\bf min\-Flux\-Load}
+\begin{CompactList}\small\item\em Minimum flux density to load in this CLEAN cycle. \item\end{CompactList}\item 
+{\bf olong} {\bf niter}
+\begin{CompactList}\small\item\em Maximum number of iterations. \item\end{CompactList}\item 
+{\bf olong} {\bf max\-Pixel}
+\begin{CompactList}\small\item\em Maximum number of residuals. \item\end{CompactList}\item 
+{\bf olong} {\bf number\-Skip}
+\begin{CompactList}\small\item\em Number to skip in loading Pixel list. \item\end{CompactList}\item 
+{\bf ofloat} {\bf bmaj}
+\begin{CompactList}\small\item\em Restoring beam, values in deg. \item\end{CompactList}\item 
+{\bf ofloat} {\bf bmin}
+\begin{CompactList}\small\item\em Restoring beam, values in deg. \item\end{CompactList}\item 
+{\bf ofloat} {\bf bpa}
+\begin{CompactList}\small\item\em Restoring beam, values in deg. \item\end{CompactList}\item 
+{\bf olong} {\bf nfield}
+\begin{CompactList}\small\item\em Number of fields in arrays. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf gain}
+\begin{CompactList}\small\item\em CLEAN gain per field. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf min\-Flux}
+\begin{CompactList}\small\item\em Minimum flux density per field. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf factor}
+\begin{CompactList}\small\item\em Depth factor per field. \item\end{CompactList}\item 
+{\bf olong} {\bf CCver}
+\begin{CompactList}\small\item\em CC table version same for each field. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf max\-Abs\-Res}
+\begin{CompactList}\small\item\em Max Abs windowed residual per field, -1=$>$ uninitialized. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf avg\-Res}
+\begin{CompactList}\small\item\em Average windowed residual per field, -1=$>$ uninitialized. \item\end{CompactList}\item 
+{\bf ofloat} {\bf auto\-Win\-Flux}
+\begin{CompactList}\small\item\em min. \item\end{CompactList}\item 
+{\bf ofloat} {\bf ccf\-Lim}
+\begin{CompactList}\small\item\em Min. \item\end{CompactList}\item 
+{\bf ofloat} {\bf SDIGain}
+\begin{CompactList}\small\item\em SDI Trip level in pixel histogram, $<$=0 =$>$ no SDI CLEAN. \item\end{CompactList}\item 
+gboolean {\bf do\-SDI}
+\begin{CompactList}\small\item\em Do SDI CLean? \item\end{CompactList}\item 
+gboolean {\bf auto\-Window}
+\begin{CompactList}\small\item\em auto Window feature requested? \item\end{CompactList}\item 
+{\bf Obit\-CArray} $\ast$ {\bf transfer}
+\begin{CompactList}\small\item\em Transfer function (FFT of Dirty Beam). \item\end{CompactList}\item 
+{\bf Obit\-FFT} $\ast$ {\bf for\-FFT}
+\begin{CompactList}\small\item\em Forward FFT. \item\end{CompactList}\item 
+{\bf Obit\-FFT} $\ast$ {\bf rev\-FFT}
+\begin{CompactList}\small\item\em Reverse FFT. \item\end{CompactList}\item 
+{\bf olong} {\bf start\-Comp}
+\begin{CompactList}\small\item\em beginning component to start next Clean or subtract \item\end{CompactList}\item 
+{\bf olong} {\bf end\-Comp}
+\begin{CompactList}\small\item\em Highest component for next subtract. \item\end{CompactList}\item 
+gboolean {\bf do\-Restore}
+\begin{CompactList}\small\item\em Restore image when done? \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-DCon\-Clean\-Image Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!autoWindow@{autoWindow}}
+\index{autoWindow@{autoWindow}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-DCon\-Clean\-Image::auto\-Window}}\label{structObitDConCleanImage_o35}
+
+
+auto Window feature requested? 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!autoWinFlux@{autoWinFlux}}
+\index{autoWinFlux@{autoWinFlux}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-DCon\-Clean\-Image::auto\-Win\-Flux}}\label{structObitDConCleanImage_o31}
+
+
+min. 
+
+minor cycle flux for auto Window feature \index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!avgRes@{avgRes}}
+\index{avgRes@{avgRes}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-DCon\-Clean\-Image::avg\-Res}}\label{structObitDConCleanImage_o30}
+
+
+Average windowed residual per field, -1=$>$ uninitialized. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!BeamHist@{BeamHist}}
+\index{BeamHist@{BeamHist}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Bm\-Hist}$\ast$ {\bf Obit\-DCon\-Clean\-Image::Beam\-Hist}}\label{structObitDConCleanImage_o12}
+
+
+Current Beam histogram. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!BeamPatch@{BeamPatch}}
+\index{BeamPatch@{BeamPatch}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-DCon\-Clean\-Image::Beam\-Patch}}\label{structObitDConCleanImage_o10}
+
+
+Current Beam patch. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!beamPatchSize@{beamPatchSize}}
+\index{beamPatchSize@{beamPatchSize}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-DCon\-Clean\-Image::beam\-Patch\-Size}}\label{structObitDConCleanImage_o15}
+
+
+Beam patch halfwidth size in pixels. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!bmaj@{bmaj}}
+\index{bmaj@{bmaj}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-DCon\-Clean\-Image::bmaj}}\label{structObitDConCleanImage_o21}
+
+
+Restoring beam, values in deg. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!bmin@{bmin}}
+\index{bmin@{bmin}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-DCon\-Clean\-Image::bmin}}\label{structObitDConCleanImage_o22}
+
+
+Restoring beam, values in deg. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!bpa@{bpa}}
+\index{bpa@{bpa}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-DCon\-Clean\-Image::bpa}}\label{structObitDConCleanImage_o23}
+
+
+Restoring beam, values in deg. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!ccfLim@{ccfLim}}
+\index{ccfLim@{ccfLim}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-DCon\-Clean\-Image::ccf\-Lim}}\label{structObitDConCleanImage_o32}
+
+
+Min. 
+
+fraction of residual peak to CLEAN to \index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!CCver@{CCver}}
+\index{CCver@{CCver}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-DCon\-Clean\-Image::CCver}}\label{structObitDConCleanImage_o28}
+
+
+CC table version same for each field. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-DCon\-Clean\-Image::Class\-Info}}\label{structObitDConCleanImage_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!currentField@{currentField}}
+\index{currentField@{currentField}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-DCon\-Clean\-Image::current\-Field}}\label{structObitDConCleanImage_o14}
+
+
+Current field number 1-rel. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!doRestore@{doRestore}}
+\index{doRestore@{doRestore}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-DCon\-Clean\-Image::do\-Restore}}\label{structObitDConCleanImage_o41}
+
+
+Restore image when done? 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!doSDI@{doSDI}}
+\index{doSDI@{doSDI}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-DCon\-Clean\-Image::do\-SDI}}\label{structObitDConCleanImage_o34}
+
+
+Do SDI CLean? 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!endComp@{endComp}}
+\index{endComp@{endComp}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-DCon\-Clean\-Image::end\-Comp}}\label{structObitDConCleanImage_o40}
+
+
+Highest component for next subtract. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!factor@{factor}}
+\index{factor@{factor}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-DCon\-Clean\-Image::factor}}\label{structObitDConCleanImage_o27}
+
+
+Depth factor per field. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!forFFT@{forFFT}}
+\index{forFFT@{forFFT}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FFT}$\ast$ {\bf Obit\-DCon\-Clean\-Image::for\-FFT}}\label{structObitDConCleanImage_o37}
+
+
+Forward FFT. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!gain@{gain}}
+\index{gain@{gain}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-DCon\-Clean\-Image::gain}}\label{structObitDConCleanImage_o25}
+
+
+CLEAN gain per field. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!info@{info}}
+\index{info@{info}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-DCon\-Clean\-Image::info}}\label{structObitDConCleanImage_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!maxAbsRes@{maxAbsRes}}
+\index{maxAbsRes@{maxAbsRes}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-DCon\-Clean\-Image::max\-Abs\-Res}}\label{structObitDConCleanImage_o29}
+
+
+Max Abs windowed residual per field, -1=$>$ uninitialized. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!maxPixel@{maxPixel}}
+\index{maxPixel@{maxPixel}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-DCon\-Clean\-Image::max\-Pixel}}\label{structObitDConCleanImage_o19}
+
+
+Maximum number of residuals. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!minFlux@{minFlux}}
+\index{minFlux@{minFlux}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-DCon\-Clean\-Image::min\-Flux}}\label{structObitDConCleanImage_o26}
+
+
+Minimum flux density per field. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!minFluxLoad@{minFluxLoad}}
+\index{minFluxLoad@{minFluxLoad}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-DCon\-Clean\-Image::min\-Flux\-Load}}\label{structObitDConCleanImage_o17}
+
+
+Minimum flux density to load in this CLEAN cycle. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!minPatchSize@{minPatchSize}}
+\index{minPatchSize@{minPatchSize}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-DCon\-Clean\-Image::min\-Patch\-Size}}\label{structObitDConCleanImage_o16}
+
+
+Minimum beam patch halfwidth in pixels. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!mosaic@{mosaic}}
+\index{mosaic@{mosaic}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Mosaic}$\ast$ {\bf Obit\-DCon\-Clean\-Image::mosaic}}\label{structObitDConCleanImage_o6}
+
+
+Image mosaic being deconvolved. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!name@{name}}
+\index{name@{name}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-DCon\-Clean\-Image::name}}\label{structObitDConCleanImage_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!nfield@{nfield}}
+\index{nfield@{nfield}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-DCon\-Clean\-Image::nfield}}\label{structObitDConCleanImage_o24}
+
+
+Number of fields in arrays. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!niter@{niter}}
+\index{niter@{niter}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-DCon\-Clean\-Image::niter}}\label{structObitDConCleanImage_o18}
+
+
+Maximum number of iterations. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!numberSkip@{numberSkip}}
+\index{numberSkip@{numberSkip}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-DCon\-Clean\-Image::number\-Skip}}\label{structObitDConCleanImage_o20}
+
+
+Number to skip in loading Pixel list. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-DCon\-Clean\-Image::Obit\-Id}}\label{structObitDConCleanImage_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!PixelHist@{PixelHist}}
+\index{PixelHist@{PixelHist}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Px\-Hist}$\ast$ {\bf Obit\-DCon\-Clean\-Image::Pixel\-Hist}}\label{structObitDConCleanImage_o13}
+
+
+Current Pixel histogram. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!Pixels@{Pixels}}
+\index{Pixels@{Pixels}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Px\-List}$\ast$ {\bf Obit\-DCon\-Clean\-Image::Pixels}}\label{structObitDConCleanImage_o11}
+
+
+Current Pixel list. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!plane@{plane}}
+\index{plane@{plane}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-DCon\-Clean\-Image::plane}[IM\_\-MAXDIM-2]}\label{structObitDConCleanImage_o7}
+
+
+Plane being processed, 1-rel indices of axes 3-? 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!prtLv@{prtLv}}
+\index{prtLv@{prtLv}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-DCon\-Clean\-Image::prt\-Lv}}\label{structObitDConCleanImage_o8}
+
+
+message level for deconvolution progress messages, 0=none, 1=summary, 2=normal, higher numbers for diagnostics 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-DCon\-Clean\-Image::Reference\-Count}}\label{structObitDConCleanImage_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!revFFT@{revFFT}}
+\index{revFFT@{revFFT}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FFT}$\ast$ {\bf Obit\-DCon\-Clean\-Image::rev\-FFT}}\label{structObitDConCleanImage_o38}
+
+
+Reverse FFT. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!SDIGain@{SDIGain}}
+\index{SDIGain@{SDIGain}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-DCon\-Clean\-Image::SDIGain}}\label{structObitDConCleanImage_o33}
+
+
+SDI Trip level in pixel histogram, $<$=0 =$>$ no SDI CLEAN. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!startComp@{startComp}}
+\index{startComp@{startComp}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-DCon\-Clean\-Image::start\-Comp}}\label{structObitDConCleanImage_o39}
+
+
+beginning component to start next Clean or subtract 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!thread@{thread}}
+\index{thread@{thread}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-DCon\-Clean\-Image::thread}}\label{structObitDConCleanImage_o4}
+
+
+Threading info member object. 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!transfer@{transfer}}
+\index{transfer@{transfer}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-CArray}$\ast$ {\bf Obit\-DCon\-Clean\-Image::transfer}}\label{structObitDConCleanImage_o36}
+
+
+Transfer function (FFT of Dirty Beam). 
+
+\index{ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}!window@{window}}
+\index{window@{window}!ObitDConCleanImage@{Obit\-DCon\-Clean\-Image}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Window}$\ast$ {\bf Obit\-DCon\-Clean\-Image::window}}\label{structObitDConCleanImage_o9}
+
+
+CLEAN window list. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-DCon\-Clean\-Image.h}\end{CompactItemize}

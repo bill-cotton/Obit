@@ -1,0 +1,93 @@
+\section{Obit\-UVCal\-Bandpass.c File Reference}
+\label{ObitUVCalBandpass_8c}\index{ObitUVCalBandpass.c@{ObitUVCalBandpass.c}}
+{\bf Obit\-UVCal}{\rm (p.\,\pageref{structObitUVCal})} utilities for applying bandpass calibration to uv data. 
+
+{\tt \#include \char`\"{}Obit\-UVCal\-Bandpass.h\char`\"{}}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$stdlib.h$>$}\par
+{\tt \#include $<$math.h$>$}\par
+{\tt \#include $<$glib.h$>$}\par
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVDesc.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVSel.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVCal.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-FFT.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-BP.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-UVCal\-Bandpass\-S}
+\begin{CompactList}\small\item\em Amp/phase/delay/rate calibration structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-UVCal\-Bandpass\-Init} ({\bf Obit\-UVCal} $\ast$in, {\bf Obit\-UVSel} $\ast$sel, {\bf Obit\-UVDesc} $\ast$desc, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Init bandpass calibration. \item\end{CompactList}\item 
+void {\bf Obit\-UVCal\-Bandpass} ({\bf Obit\-UVCal} $\ast$in, float time, {\bf olong} ant1, {\bf olong} ant2, {\bf ofloat} $\ast$RP, {\bf ofloat} $\ast$vis\-In, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Apply bandpass calibration. \item\end{CompactList}\item 
+void {\bf Obit\-UVCal\-Bandpass\-Shutdown} ({\bf Obit\-UVCal} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Shutdown Calibration. \item\end{CompactList}\item 
+{\bf Obit\-UVCal\-Bandpass\-S} $\ast$ {\bf Obit\-UVCal\-Bandpass\-SUnref} ({\bf Obit\-UVCal\-Bandpass\-S} $\ast$in)
+\begin{CompactList}\small\item\em Public: Destroy bandpass calibration structure . \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-UVCal}{\rm (p.\,\pageref{structObitUVCal})} utilities for applying bandpass calibration to uv data. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitUVCalBandpass.c@{Obit\-UVCal\-Bandpass.c}!ObitUVCalBandpass@{ObitUVCalBandpass}}
+\index{ObitUVCalBandpass@{ObitUVCalBandpass}!ObitUVCalBandpass.c@{Obit\-UVCal\-Bandpass.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVCal\-Bandpass ({\bf Obit\-UVCal} $\ast$ {\em in}, float {\em time}, {\bf olong} {\em ant1}, {\bf olong} {\em ant2}, {\bf ofloat} $\ast$ {\em RP}, {\bf ofloat} $\ast$ {\em vis\-In}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVCalBandpass_8c_a12}
+
+
+Public: Apply bandpass calibration. 
+
+A calibration array entry consists of: Per Antenna: Per IF selected Per Polarization Per channel selected: \begin{itemize}
+\item real part of gain \item imaginary of gain \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Bandpass Object. \item[{\em time}]Time of datum \item[{\em ant1}]first antenna number of baseline \item[{\em ant2}]second antanna of baseline. \item[{\em RP}]Random parameters array. \item[{\em vis\-In}]1 visibility as an array of floats \item[{\em err}]Obit\-Error stack. \end{description}
+\end{Desc}
+\end{itemize}
+\index{ObitUVCalBandpass.c@{Obit\-UVCal\-Bandpass.c}!ObitUVCalBandpassInit@{ObitUVCalBandpassInit}}
+\index{ObitUVCalBandpassInit@{ObitUVCalBandpassInit}!ObitUVCalBandpass.c@{Obit\-UVCal\-Bandpass.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVCal\-Bandpass\-Init ({\bf Obit\-UVCal} $\ast$ {\em in}, {\bf Obit\-UVSel} $\ast$ {\em sel}, {\bf Obit\-UVDesc} $\ast$ {\em desc}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVCalBandpass_8c_a11}
+
+
+Public: Init bandpass calibration. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Bandpass Object. \item[{\em sel}]Data selector. \item[{\em desc}]Data descriptor. \item[{\em err}]Obit\-Error stack. \end{description}
+\end{Desc}
+\index{ObitUVCalBandpass.c@{Obit\-UVCal\-Bandpass.c}!ObitUVCalBandpassShutdown@{ObitUVCalBandpassShutdown}}
+\index{ObitUVCalBandpassShutdown@{ObitUVCalBandpassShutdown}!ObitUVCalBandpass.c@{Obit\-UVCal\-Bandpass.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVCal\-Bandpass\-Shutdown ({\bf Obit\-UVCal} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVCalBandpass_8c_a13}
+
+
+Public: Shutdown Calibration. 
+
+Close any open file and destroy structures. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Bandpass Object. \item[{\em err}]Obit\-Error stack. \end{description}
+\end{Desc}
+\index{ObitUVCalBandpass.c@{Obit\-UVCal\-Bandpass.c}!ObitUVCalBandpassSUnref@{ObitUVCalBandpassSUnref}}
+\index{ObitUVCalBandpassSUnref@{ObitUVCalBandpassSUnref}!ObitUVCalBandpass.c@{Obit\-UVCal\-Bandpass.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVCal\-Bandpass\-S}$\ast$ Obit\-UVCal\-Bandpass\-SUnref ({\bf Obit\-UVCal\-Bandpass\-S} $\ast$ {\em in})}\label{ObitUVCalBandpass_8c_a14}
+
+
+Public: Destroy bandpass calibration structure . 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Bandpass Object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NULL \end{Desc}

@@ -1,0 +1,104 @@
+\section{Obit\-History Struct Reference}
+\label{structObitHistory}\index{ObitHistory@{ObitHistory}}
+Obit\-History Class structure.  
+
+
+{\tt \#include $<$Obit\-History.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-IOHistory} $\ast$ {\bf my\-IO}
+\begin{CompactList}\small\item\em I/O interface to access disk resident data. \item\end{CompactList}\item 
+Obit\-IOType {\bf File\-Type}
+\begin{CompactList}\small\item\em File Type requested (FITS/AIPS). \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-History Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitHistory@{Obit\-History}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitHistory@{Obit\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-History::Class\-Info}}\label{structObitHistory_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitHistory@{Obit\-History}!FileType@{FileType}}
+\index{FileType@{FileType}!ObitHistory@{Obit\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOType {\bf Obit\-History::File\-Type}}\label{structObitHistory_o8}
+
+
+File Type requested (FITS/AIPS). 
+
+\index{ObitHistory@{Obit\-History}!info@{info}}
+\index{info@{info}!ObitHistory@{Obit\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-History::info}}\label{structObitHistory_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitHistory@{Obit\-History}!myIO@{myIO}}
+\index{myIO@{myIO}!ObitHistory@{Obit\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IOHistory}$\ast$ {\bf Obit\-History::my\-IO}}\label{structObitHistory_o7}
+
+
+I/O interface to access disk resident data. 
+
+\index{ObitHistory@{Obit\-History}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitHistory@{Obit\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-History::my\-Status}}\label{structObitHistory_o6}
+
+
+I/O status. 
+
+\index{ObitHistory@{Obit\-History}!name@{name}}
+\index{name@{name}!ObitHistory@{Obit\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-History::name}}\label{structObitHistory_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitHistory@{Obit\-History}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitHistory@{Obit\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-History::Obit\-Id}}\label{structObitHistory_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitHistory@{Obit\-History}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitHistory@{Obit\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-History::Reference\-Count}}\label{structObitHistory_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitHistory@{Obit\-History}!thread@{thread}}
+\index{thread@{thread}!ObitHistory@{Obit\-History}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-History::thread}}\label{structObitHistory_o4}
+
+
+Threading info member object. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-History.h}\end{CompactItemize}

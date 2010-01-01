@@ -1,0 +1,482 @@
+\section{Obit\-Table\-PC Struct Reference}
+\label{structObitTablePC}\index{ObitTablePC@{ObitTablePC}}
+Obit\-Table\-PC Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-PC.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-IO} $\ast$ {\bf my\-IO}
+\begin{CompactList}\small\item\em I/O interface to access disk resident data. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Desc} $\ast$ {\bf my\-Desc}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Sel} $\ast$ {\bf my\-Sel}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf buffer}
+\begin{CompactList}\small\item\em Table buffer. \item\end{CompactList}\item 
+{\bf olong} {\bf buffer\-Size}
+\begin{CompactList}\small\item\em Table buffer size in floats. \item\end{CompactList}\item 
+gchar $\ast$ {\bf tab\-Type}
+\begin{CompactList}\small\item\em Table type (name of type, e.g. \item\end{CompactList}\item 
+{\bf olong} {\bf tab\-Ver}
+\begin{CompactList}\small\item\em Table version number(1-rel). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf my\-Host}
+\begin{CompactList}\small\item\em This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. \item\end{CompactList}\item 
+{\bf oint} {\bf revision}
+\begin{CompactList}\small\item\em Revision number of the table definition. \item\end{CompactList}\item 
+{\bf oint} {\bf num\-Pol}
+\begin{CompactList}\small\item\em The number of polarizations. \item\end{CompactList}\item 
+{\bf oint} {\bf num\-Band}
+\begin{CompactList}\small\item\em The number of Bands(?). \item\end{CompactList}\item 
+{\bf oint} {\bf num\-Tones}
+\begin{CompactList}\small\item\em The number of Tones. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-Off}
+\begin{CompactList}\small\item\em Column offset for The center time. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-Col}
+\begin{CompactList}\small\item\em Physical column number for The center time. \item\end{CompactList}\item 
+{\bf olong} {\bf Sour\-IDOff}
+\begin{CompactList}\small\item\em Column offset for Source ID number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Sour\-IDCol}
+\begin{CompactList}\small\item\em Physical column number for Source ID number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf antenna\-No\-Off}
+\begin{CompactList}\small\item\em Column offset for Antenna number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf antenna\-No\-Col}
+\begin{CompactList}\small\item\em Physical column number for Antenna number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Array\-Off}
+\begin{CompactList}\small\item\em Column offset for Array number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Array\-Col}
+\begin{CompactList}\small\item\em Physical column number for Array number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Freq\-IDOff}
+\begin{CompactList}\small\item\em Column offset for Frequency ID in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Freq\-IDCol}
+\begin{CompactList}\small\item\em Physical column number for Frequency ID in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Cable\-Cal\-Off}
+\begin{CompactList}\small\item\em Column offset for CABLE\_\-CAL in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Cable\-Cal\-Col}
+\begin{CompactList}\small\item\em Physical column number for CABLE\_\-CAL in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf State1Off}
+\begin{CompactList}\small\item\em Column offset for State counts(?) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf State1Col}
+\begin{CompactList}\small\item\em Physical column number for State counts(?) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PCFreq1Off}
+\begin{CompactList}\small\item\em Column offset for Frequencies of the phase tones in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PCFreq1Col}
+\begin{CompactList}\small\item\em Physical column number for Frequencies of the phase tones in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PCReal1Off}
+\begin{CompactList}\small\item\em Column offset for Real part of tone phase in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PCReal1Col}
+\begin{CompactList}\small\item\em Physical column number for Real part of tone phase in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PCImag1Off}
+\begin{CompactList}\small\item\em Column offset for Imaginary part of tone phase in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PCImag1Col}
+\begin{CompactList}\small\item\em Physical column number for Imaginary part of tone phase in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PCRate1Off}
+\begin{CompactList}\small\item\em Column offset for Tone rate phase in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PCRate1Col}
+\begin{CompactList}\small\item\em Physical column number for Tone rate phase in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf State2Off}
+\begin{CompactList}\small\item\em Column offset for State counts(?) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf State2Col}
+\begin{CompactList}\small\item\em Physical column number for State counts(?) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PCFreq2Off}
+\begin{CompactList}\small\item\em Column offset for Frequencies of the phase tones in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PCFreq2Col}
+\begin{CompactList}\small\item\em Physical column number for Frequencies of the phase tones in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PCReal2Off}
+\begin{CompactList}\small\item\em Column offset for Real part of tone phase in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PCReal2Col}
+\begin{CompactList}\small\item\em Physical column number for Real part of tone phase in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PCImag2Off}
+\begin{CompactList}\small\item\em Column offset for Imaginary part of tone phase in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PCImag2Col}
+\begin{CompactList}\small\item\em Physical column number for Imaginary part of tone phase in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PCRate2Off}
+\begin{CompactList}\small\item\em Column offset for Tone rate phase in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PCRate2Col}
+\begin{CompactList}\small\item\em Physical column number for Tone rate phase in table record. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-PC Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTablePC@{Obit\-Table\-PC}!antennaNoCol@{antennaNoCol}}
+\index{antennaNoCol@{antennaNoCol}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::antenna\-No\-Col}}\label{structObitTablePC_o24}
+
+
+Physical column number for Antenna number in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!antennaNoOff@{antennaNoOff}}
+\index{antennaNoOff@{antennaNoOff}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::antenna\-No\-Off}}\label{structObitTablePC_o23}
+
+
+Column offset for Antenna number in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!ArrayCol@{ArrayCol}}
+\index{ArrayCol@{ArrayCol}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::Array\-Col}}\label{structObitTablePC_o26}
+
+
+Physical column number for Array number in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!ArrayOff@{ArrayOff}}
+\index{ArrayOff@{ArrayOff}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::Array\-Off}}\label{structObitTablePC_o25}
+
+
+Column offset for Array number in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!buffer@{buffer}}
+\index{buffer@{buffer}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-PC::buffer}}\label{structObitTablePC_o10}
+
+
+Table buffer. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!bufferSize@{bufferSize}}
+\index{bufferSize@{bufferSize}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::buffer\-Size}}\label{structObitTablePC_o11}
+
+
+Table buffer size in floats. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!CableCalCol@{CableCalCol}}
+\index{CableCalCol@{CableCalCol}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::Cable\-Cal\-Col}}\label{structObitTablePC_o30}
+
+
+Physical column number for CABLE\_\-CAL in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!CableCalOff@{CableCalOff}}
+\index{CableCalOff@{CableCalOff}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::Cable\-Cal\-Off}}\label{structObitTablePC_o29}
+
+
+Column offset for CABLE\_\-CAL in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-PC::Class\-Info}}\label{structObitTablePC_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!FreqIDCol@{FreqIDCol}}
+\index{FreqIDCol@{FreqIDCol}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::Freq\-IDCol}}\label{structObitTablePC_o28}
+
+
+Physical column number for Frequency ID in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!FreqIDOff@{FreqIDOff}}
+\index{FreqIDOff@{FreqIDOff}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::Freq\-IDOff}}\label{structObitTablePC_o27}
+
+
+Column offset for Frequency ID in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!info@{info}}
+\index{info@{info}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Table\-PC::info}}\label{structObitTablePC_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Desc}$\ast$ {\bf Obit\-Table\-PC::my\-Desc}}\label{structObitTablePC_o8}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!myHost@{myHost}}
+\index{myHost@{myHost}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-Table\-PC::my\-Host}}\label{structObitTablePC_o14}
+
+
+This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!myIO@{myIO}}
+\index{myIO@{myIO}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IO}$\ast$ {\bf Obit\-Table\-PC::my\-IO}}\label{structObitTablePC_o7}
+
+
+I/O interface to access disk resident data. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Sel}$\ast$ {\bf Obit\-Table\-PC::my\-Sel}}\label{structObitTablePC_o9}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Table\-PC::my\-Status}}\label{structObitTablePC_o6}
+
+
+I/O status. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!name@{name}}
+\index{name@{name}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-PC::name}}\label{structObitTablePC_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!numBand@{numBand}}
+\index{numBand@{numBand}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-PC::num\-Band}}\label{structObitTablePC_o17}
+
+
+The number of Bands(?). 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!numPol@{numPol}}
+\index{numPol@{numPol}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-PC::num\-Pol}}\label{structObitTablePC_o16}
+
+
+The number of polarizations. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!numTones@{numTones}}
+\index{numTones@{numTones}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-PC::num\-Tones}}\label{structObitTablePC_o18}
+
+
+The number of Tones. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-PC::Obit\-Id}}\label{structObitTablePC_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!PCFreq1Col@{PCFreq1Col}}
+\index{PCFreq1Col@{PCFreq1Col}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::PCFreq1Col}}\label{structObitTablePC_o34}
+
+
+Physical column number for Frequencies of the phase tones in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!PCFreq1Off@{PCFreq1Off}}
+\index{PCFreq1Off@{PCFreq1Off}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::PCFreq1Off}}\label{structObitTablePC_o33}
+
+
+Column offset for Frequencies of the phase tones in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!PCFreq2Col@{PCFreq2Col}}
+\index{PCFreq2Col@{PCFreq2Col}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::PCFreq2Col}}\label{structObitTablePC_o44}
+
+
+Physical column number for Frequencies of the phase tones in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!PCFreq2Off@{PCFreq2Off}}
+\index{PCFreq2Off@{PCFreq2Off}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::PCFreq2Off}}\label{structObitTablePC_o43}
+
+
+Column offset for Frequencies of the phase tones in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!PCImag1Col@{PCImag1Col}}
+\index{PCImag1Col@{PCImag1Col}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::PCImag1Col}}\label{structObitTablePC_o38}
+
+
+Physical column number for Imaginary part of tone phase in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!PCImag1Off@{PCImag1Off}}
+\index{PCImag1Off@{PCImag1Off}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::PCImag1Off}}\label{structObitTablePC_o37}
+
+
+Column offset for Imaginary part of tone phase in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!PCImag2Col@{PCImag2Col}}
+\index{PCImag2Col@{PCImag2Col}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::PCImag2Col}}\label{structObitTablePC_o48}
+
+
+Physical column number for Imaginary part of tone phase in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!PCImag2Off@{PCImag2Off}}
+\index{PCImag2Off@{PCImag2Off}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::PCImag2Off}}\label{structObitTablePC_o47}
+
+
+Column offset for Imaginary part of tone phase in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!PCRate1Col@{PCRate1Col}}
+\index{PCRate1Col@{PCRate1Col}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::PCRate1Col}}\label{structObitTablePC_o40}
+
+
+Physical column number for Tone rate phase in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!PCRate1Off@{PCRate1Off}}
+\index{PCRate1Off@{PCRate1Off}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::PCRate1Off}}\label{structObitTablePC_o39}
+
+
+Column offset for Tone rate phase in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!PCRate2Col@{PCRate2Col}}
+\index{PCRate2Col@{PCRate2Col}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::PCRate2Col}}\label{structObitTablePC_o50}
+
+
+Physical column number for Tone rate phase in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!PCRate2Off@{PCRate2Off}}
+\index{PCRate2Off@{PCRate2Off}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::PCRate2Off}}\label{structObitTablePC_o49}
+
+
+Column offset for Tone rate phase in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!PCReal1Col@{PCReal1Col}}
+\index{PCReal1Col@{PCReal1Col}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::PCReal1Col}}\label{structObitTablePC_o36}
+
+
+Physical column number for Real part of tone phase in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!PCReal1Off@{PCReal1Off}}
+\index{PCReal1Off@{PCReal1Off}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::PCReal1Off}}\label{structObitTablePC_o35}
+
+
+Column offset for Real part of tone phase in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!PCReal2Col@{PCReal2Col}}
+\index{PCReal2Col@{PCReal2Col}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::PCReal2Col}}\label{structObitTablePC_o46}
+
+
+Physical column number for Real part of tone phase in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!PCReal2Off@{PCReal2Off}}
+\index{PCReal2Off@{PCReal2Off}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::PCReal2Off}}\label{structObitTablePC_o45}
+
+
+Column offset for Real part of tone phase in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::Reference\-Count}}\label{structObitTablePC_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!revision@{revision}}
+\index{revision@{revision}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-PC::revision}}\label{structObitTablePC_o15}
+
+
+Revision number of the table definition. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!SourIDCol@{SourIDCol}}
+\index{SourIDCol@{SourIDCol}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::Sour\-IDCol}}\label{structObitTablePC_o22}
+
+
+Physical column number for Source ID number in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!SourIDOff@{SourIDOff}}
+\index{SourIDOff@{SourIDOff}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::Sour\-IDOff}}\label{structObitTablePC_o21}
+
+
+Column offset for Source ID number in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!State1Col@{State1Col}}
+\index{State1Col@{State1Col}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::State1Col}}\label{structObitTablePC_o32}
+
+
+Physical column number for State counts(?) in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!State1Off@{State1Off}}
+\index{State1Off@{State1Off}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::State1Off}}\label{structObitTablePC_o31}
+
+
+Column offset for State counts(?) in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!State2Col@{State2Col}}
+\index{State2Col@{State2Col}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::State2Col}}\label{structObitTablePC_o42}
+
+
+Physical column number for State counts(?) in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!State2Off@{State2Off}}
+\index{State2Off@{State2Off}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::State2Off}}\label{structObitTablePC_o41}
+
+
+Column offset for State counts(?) in table record. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!tabType@{tabType}}
+\index{tabType@{tabType}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-PC::tab\-Type}}\label{structObitTablePC_o12}
+
+
+Table type (name of type, e.g. 
+
+\char`\"{}AIPS AN\char`\"{}) \index{ObitTablePC@{Obit\-Table\-PC}!tabVer@{tabVer}}
+\index{tabVer@{tabVer}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::tab\-Ver}}\label{structObitTablePC_o13}
+
+
+Table version number(1-rel). 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!thread@{thread}}
+\index{thread@{thread}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Table\-PC::thread}}\label{structObitTablePC_o4}
+
+
+Threading info member object. 
+
+\index{ObitTablePC@{Obit\-Table\-PC}!TimeCol@{TimeCol}}
+\index{TimeCol@{TimeCol}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::Time\-Col}}\label{structObitTablePC_o20}
+
+
+Physical column number for The center time. 
+
+in table record \index{ObitTablePC@{Obit\-Table\-PC}!TimeOff@{TimeOff}}
+\index{TimeOff@{TimeOff}!ObitTablePC@{Obit\-Table\-PC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-PC::Time\-Off}}\label{structObitTablePC_o19}
+
+
+Column offset for The center time. 
+
+in table record 
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-PC.h}\end{CompactItemize}

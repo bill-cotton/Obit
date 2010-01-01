@@ -1,0 +1,325 @@
+\section{Obit\-AIPS.c File Reference}
+\label{ObitAIPS_8c}\index{ObitAIPS.c@{ObitAIPS.c}}
+{\bf Obit\-AIPS}{\rm (p.\,\pageref{structObitAIPS})} class function definitions. 
+
+{\tt \#include \char`\"{}Obit\-AIPS.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-AIPSCat.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-History.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+union {\bf FBLANKequiv}
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-AIPSClass\-Init} ({\bf olong} number, gchar $\ast$dir[$\,$], {\bf oint} F\_\-TRUE, {\bf oint} F\_\-FALSE)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSShutdown} (void)
+\begin{CompactList}\small\item\em Public: Shutdown. \item\end{CompactList}\item 
+gchar $\ast$ {\bf Obit\-AIPSFilename} (Obit\-AIPSFile\-Type type, {\bf olong} disk, {\bf olong} cno, {\bf olong} userid, gchar $\ast$tab\-Type, {\bf olong} tab\-Ver, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Generate name of AIPS file. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-AIPSSet\-Dirname} ({\bf olong} disk, gchar $\ast$dir, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Set directory string. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-AIPSFind\-Dirname} (gchar $\ast$dir, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Find/Add directory. \item\end{CompactList}\item 
+gchar $\ast$ {\bf Obit\-AIPSDirname} ({\bf olong} disk, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get directory string. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-AIPSGet\-Num\-Disk} ({\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get number of AIPS disks. \item\end{CompactList}\item 
+{\bf Obit\-File\-Pos} {\bf Obit\-AIPSImage\-File\-Offset} ({\bf olong} naxis, {\bf olong} $\ast$naxes, {\bf olong} $\ast$pos)
+\begin{CompactList}\small\item\em Public: Determine file position offset in an image. \item\end{CompactList}\item 
+{\bf Obit\-File\-Pos} {\bf Obit\-AIPSTable\-File\-Offset} ({\bf Obit\-File\-Pos} start, {\bf olong} lrow, {\bf olong} row)
+\begin{CompactList}\small\item\em Public: Determine file position offset in a table. \item\end{CompactList}\item 
+{\bf Obit\-File\-Pos} {\bf Obit\-AIPSTable\-EOF} ({\bf Obit\-File\-Pos} start, {\bf olong} lrow, {\bf olong} nrow)
+\begin{CompactList}\small\item\em Public: Determine file position of the end of an AIPS table. \item\end{CompactList}\item 
+{\bf Obit\-File\-Pos} {\bf Obit\-AIPSUVWonky\-Pad} ({\bf Obit\-File\-Pos} cur\-Pos)
+\begin{CompactList}\small\item\em Public: Wonky padding for end of UV data. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSEHex} ({\bf olong} in, gchar $\ast$out)
+\begin{CompactList}\small\item\em Public: Convert a olong to EHex. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSAssign} (gchar $\ast$pgm\-Name, {\bf olong} pgm\-Number, gchar $\ast$type, {\bf olong} user, {\bf olong} disk, {\bf olong} scr\-No, {\bf Obit\-Info\-List} $\ast$info, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Assign a scratch file info. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSRename} ({\bf Obit\-IO} $\ast$in, {\bf Obit\-Info\-List} $\ast$info, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Rename an AIPS file. \item\end{CompactList}\item 
+gboolean {\bf Obit\-AIPSBoolean\-F2C} ({\bf oint} logical)
+\begin{CompactList}\small\item\em Public: Convert Fortran LOGICAL to a gboolean. \item\end{CompactList}\item 
+{\bf oint} {\bf Obit\-AIPSBoolean\-C2F} (gboolean bool)
+\begin{CompactList}\small\item\em Public: Convert a gboolean to a Fortran LOGICAL. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSno\-Scrat} ({\bf olong} disk, gboolean no\-Scrat, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Mark/Unmark AIPS directory as no\-Scrat. \item\end{CompactList}\item 
+gboolean {\bf Obit\-AIPSis\-No\-Scrat} ({\bf olong} disk)
+\begin{CompactList}\small\item\em Public: Tell if AIPS directory is no\-Scrat. \item\end{CompactList}\item 
+void {\bf Obit\-AIPSSetno\-Scrat} ({\bf Obit\-Info\-List} $\ast$info, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Check for \char`\"{}no\-Scrat\char`\"{} AIPS disks. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+gchar {\bf AIPS\_\-Version} = 'D'
+\begin{CompactList}\small\item\em Current AIPS data revision code. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-AIPS}{\rm (p.\,\pageref{structObitAIPS})} class function definitions. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSAssign@{ObitAIPSAssign}}
+\index{ObitAIPSAssign@{ObitAIPSAssign}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSAssign (gchar $\ast$ {\em pgm\-Name}, {\bf olong} {\em pgm\-Number}, gchar $\ast$ {\em type}, {\bf olong} {\em user}, {\bf olong} {\em disk}, {\bf olong} {\em scr\-No}, {\bf Obit\-Info\-List} $\ast$ {\em info}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPS_8c_a17}
+
+
+Public: Assign a scratch file info. 
+
+Deliberately does not follow AIPS conventions. name = \char`\"{}OBIT SCRATCH\char`\"{} class = \char`\"{}pgm\-Name+pgm\-Number\char`\"{} seq = scr\-No Makes name \char`\"{}pgm\-Name+pgm\-Number+'Scr'+scr\-No\char`\"{} \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pgm\-Name}]Program name \item[{\em pgm\-Number}]Program incarnation number \item[{\em type}]AIPS file type (\char`\"{}MA\char`\"{}, \char`\"{}UV\char`\"{}). \item[{\em user}]AIPS user number \item[{\em disk}]AIPS disk number. \item[{\em scr\-No}]Which scratch file number \item[{\em info}]{\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} to write to \item[{\em err}]Error stack for any error messages. \end{description}
+\end{Desc}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSBooleanC2F@{ObitAIPSBooleanC2F}}
+\index{ObitAIPSBooleanC2F@{ObitAIPSBooleanC2F}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} Obit\-AIPSBoolean\-C2F (gboolean {\em bool})}\label{ObitAIPS_8c_a20}
+
+
+Public: Convert a gboolean to a Fortran LOGICAL. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em bool}]boolean (TRUE or FALSE) \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Fortran LOGICAL value equivalent \end{Desc}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSBooleanF2C@{ObitAIPSBooleanF2C}}
+\index{ObitAIPSBooleanF2C@{ObitAIPSBooleanF2C}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-AIPSBoolean\-F2C ({\bf oint} {\em logical})}\label{ObitAIPS_8c_a19}
+
+
+Public: Convert Fortran LOGICAL to a gboolean. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em logical}]Fortran LOGICAL value \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]gboolean equivalent (TRUE or FALSE) \end{Desc}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSClassInit@{ObitAIPSClassInit}}
+\index{ObitAIPSClassInit@{ObitAIPSClassInit}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSClass\-Init ({\bf olong} {\em number}, gchar $\ast$ {\em dir}[$\,$], {\bf oint} {\em F\_\-TRUE}, {\bf oint} {\em F\_\-FALSE})}\label{ObitAIPS_8c_a5}
+
+
+Public: Class initializer. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em number}]of disks defined [0,MAXAIPSDISK]], $>$=0 -$>$ none \item[{\em dir}]the names of the directories If NULL, check for environment variables \$DA01... \item[{\em F\_\-TRUE}]Value of Fortran TRUE (used in Fortran interface) \item[{\em F\_\-FALSE}]Value of Fortran FALSE \end{description}
+\end{Desc}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSDirname@{ObitAIPSDirname}}
+\index{ObitAIPSDirname@{ObitAIPSDirname}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ Obit\-AIPSDirname ({\bf olong} {\em disk}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPS_8c_a10}
+
+
+Public: Get directory string. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em disk}]AIPS disk number. \item[{\em err}]Error stack for any error messages. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]directory name string, this is a pointer into a global class structure and should not be g\_\-freeed. \end{Desc}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSEHex@{ObitAIPSEHex}}
+\index{ObitAIPSEHex@{ObitAIPSEHex}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSEHex ({\bf olong} {\em in}, gchar $\ast$ {\em out})}\label{ObitAIPS_8c_a16}
+
+
+Public: Convert a olong to EHex. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]integer to be converted \item[{\em out}]preexisting string into which to write value must be at least 4 characters. \end{description}
+\end{Desc}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSFilename@{ObitAIPSFilename}}
+\index{ObitAIPSFilename@{ObitAIPSFilename}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ Obit\-AIPSFilename (Obit\-AIPSFile\-Type {\em type}, {\bf olong} {\em disk}, {\bf olong} {\em cno}, {\bf olong} {\em userid}, gchar $\ast$ {\em tab\-Type}, {\bf olong} {\em tab\-Ver}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPS_8c_a7}
+
+
+Public: Generate name of AIPS file. 
+
+{\bf Obit\-AIPSClass\-Init}{\rm (p.\,\pageref{ObitAIPS_8c_a5})} must have been used to initialize. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em type}]File type code \item[{\em disk}]AIPS \char`\"{}disk\char`\"{} number. 1-rel \item[{\em cno}]AIPS catalog slot number. \item[{\em userid}]user number. \item[{\em tab\-Type}]two character code for table type, NULL if not needed. \item[{\em tab\-Ver}]table version number. \item[{\em err}]Error stack for any error messages. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]file name string, should be g\_\-freeed when done. \end{Desc}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSFindDirname@{ObitAIPSFindDirname}}
+\index{ObitAIPSFindDirname@{ObitAIPSFindDirname}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-AIPSFind\-Dirname (gchar $\ast$ {\em dir}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPS_8c_a9}
+
+
+Public: Find/Add directory. 
+
+Searches the current list of directories for directory name dir, if it exists, its disk number is returned. Otherwise the directory is added and its number is returned. Note, the maximum number of AIPS disks is MAXAIPSDISK new disks up to this max can be assigned. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em disk}]disk (1-rel) to be changed, must have been assigned at startup if $<$=0 then add new disk, up to MAXAIPSDISK \item[{\em dir}]name of the directory to be located or added \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]disk number assigned \end{Desc}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSGetNumDisk@{ObitAIPSGetNumDisk}}
+\index{ObitAIPSGetNumDisk@{ObitAIPSGetNumDisk}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-AIPSGet\-Num\-Disk ({\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPS_8c_a11}
+
+
+Public: Get number of AIPS disks. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em err}]Error stack for any error messages. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]number of disks \end{Desc}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSImageFileOffset@{ObitAIPSImageFileOffset}}
+\index{ObitAIPSImageFileOffset@{ObitAIPSImageFileOffset}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-File\-Pos} Obit\-AIPSImage\-File\-Offset ({\bf olong} {\em naxis}, {\bf olong} $\ast$ {\em naxes}, {\bf olong} $\ast$ {\em pos})}\label{ObitAIPS_8c_a12}
+
+
+Public: Determine file position offset in an image. 
+
+AIPS images have planes starting on an even \#AIPS\_\-NBPS byte boundry. If the row size is less than AIPS\_\-NBPS bytes, multiple rows are stored in a sector but are not allowed to cross a sector boundry; the end of a sector is padded and the next row starts at the beginning of a new sector. Rows longer than a sector have the last sector padded and the next row starts at the beginning of a new sector. This was necessary back at the dawn of time when MODCOMP computers roamed the earth and could only start a transfer at the beginning of a disk sector. This routine patterned after the aipsish \$APLSUB/COMOFF.FOR. (The original is incomprehensible). \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em naxis}]number of axes in image \item[{\em naxes}]number of pixels on each axis. \item[{\em pos}]1-rel pixel position \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]byte offset from beginning of image file \end{Desc}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSisNoScrat@{ObitAIPSisNoScrat}}
+\index{ObitAIPSisNoScrat@{ObitAIPSisNoScrat}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-AIPSis\-No\-Scrat ({\bf olong} {\em disk})}\label{ObitAIPS_8c_a22}
+
+
+Public: Tell if AIPS directory is no\-Scrat. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em disk}]AIPS disk number. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]True if scratch files disallowed or invalid disk \end{Desc}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSnoScrat@{ObitAIPSnoScrat}}
+\index{ObitAIPSnoScrat@{ObitAIPSnoScrat}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSno\-Scrat ({\bf olong} {\em disk}, gboolean {\em no\-Scrat}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPS_8c_a21}
+
+
+Public: Mark/Unmark AIPS directory as no\-Scrat. 
+
+don't add scratch files on this data area \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em disk}]AIPS disk number. \item[{\em no\-Scrat}]If True don't put scratch files on disk else allow. \item[{\em err}]Error stack for any error messages. \end{description}
+\end{Desc}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSRename@{ObitAIPSRename}}
+\index{ObitAIPSRename@{ObitAIPSRename}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSRename ({\bf Obit\-IO} $\ast$ {\em in}, {\bf Obit\-Info\-List} $\ast$ {\em info}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPS_8c_a18}
+
+
+Public: Rename an AIPS file. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]{\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} on AIPS file \item[{\em info}]Associated {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} \begin{itemize}
+\item \char`\"{}Disk\char`\"{} OBIT\_\-long (1,1,1) Disk number \item \char`\"{}CNO\char`\"{} OBIT\_\-long (1,1,1) Catalog slot number \item \char`\"{}new\-Name\char`\"{} OBIT\_\-string (12,1,1) New AIPS Name absent or Blank = don't change \item \char`\"{}new\-Class\char`\"{} OBIT\_\-string (6,1,1) New AIPS Class absent or Blank = don't change\-O \item \char`\"{}new\-Seq\char`\"{} OBIT\_\-long (1,1,1) New AIPS Sequence 0 =$>$ unique value \end{itemize}
+\item[{\em err}]Error stack for any error messages. \end{description}
+\end{Desc}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSSetDirname@{ObitAIPSSetDirname}}
+\index{ObitAIPSSetDirname@{ObitAIPSSetDirname}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-AIPSSet\-Dirname ({\bf olong} {\em disk}, gchar $\ast$ {\em dir}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPS_8c_a8}
+
+
+Public: Set directory string. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em disk}]disk (1-rel) to be changed, must have been assigned at startup if $<$=0 then add new disk, up to MAXAIPSDISK \item[{\em dir}]new name of the directory \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]disk number assigned \end{Desc}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSSetnoScrat@{ObitAIPSSetnoScrat}}
+\index{ObitAIPSSetnoScrat@{ObitAIPSSetnoScrat}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSSetno\-Scrat ({\bf Obit\-Info\-List} $\ast$ {\em info}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitAIPS_8c_a23}
+
+
+Public: Check for \char`\"{}no\-Scrat\char`\"{} AIPS disks. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em info}]List to check \item[{\em err}]Error stack for any error messages. \end{description}
+\end{Desc}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSShutdown@{ObitAIPSShutdown}}
+\index{ObitAIPSShutdown@{ObitAIPSShutdown}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-AIPSShutdown (void)}\label{ObitAIPS_8c_a6}
+
+
+Public: Shutdown. 
+
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSTableEOF@{ObitAIPSTableEOF}}
+\index{ObitAIPSTableEOF@{ObitAIPSTableEOF}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-File\-Pos} Obit\-AIPSTable\-EOF ({\bf Obit\-File\-Pos} {\em start}, {\bf olong} {\em lrow}, {\bf olong} {\em nrow})}\label{ObitAIPS_8c_a14}
+
+
+Public: Determine file position of the end of an AIPS table. 
+
+Tables rows are written either an integral number of sectors (\#AIPS\_\-NBPS bytes) per row, or an integral number of rows per sector. The last \char`\"{}sector\char`\"{} is padded after the last datum. This routine calculates the location of the end of this sector. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em start}]Byte offset of the beginning of the row data. \item[{\em lrow}]The length of a row in bytes. \item[{\em nrow}]Number of rows in the table. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]byte offset from beginning of table file \end{Desc}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSTableFileOffset@{ObitAIPSTableFileOffset}}
+\index{ObitAIPSTableFileOffset@{ObitAIPSTableFileOffset}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-File\-Pos} Obit\-AIPSTable\-File\-Offset ({\bf Obit\-File\-Pos} {\em start}, {\bf olong} {\em lrow}, {\bf olong} {\em row})}\label{ObitAIPS_8c_a13}
+
+
+Public: Determine file position offset in a table. 
+
+Tables rows are written either an integral number of sectors (\#AIPS\_\-NBPS bytes) per row, or an integral number of rows per sector. The last \char`\"{}sector\char`\"{} is padded after the last datum. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em start}]Byte offset of the beginning of the row data. \item[{\em lrow}]The length of a row in bytes. \item[{\em row}]1-rel row number desired. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]byte offset from beginning of table file \end{Desc}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!ObitAIPSUVWonkyPad@{ObitAIPSUVWonkyPad}}
+\index{ObitAIPSUVWonkyPad@{ObitAIPSUVWonkyPad}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-File\-Pos} Obit\-AIPSUVWonky\-Pad ({\bf Obit\-File\-Pos} {\em cur\-Pos})}\label{ObitAIPS_8c_a15}
+
+
+Public: Wonky padding for end of UV data. 
+
+Must be an integral number of AIPS blocks \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em cur\-Pos}]The byte offset of the current end of the file. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]target file position index in bytes to be padded to. \end{Desc}
+
+
+\subsection{Variable Documentation}
+\index{ObitAIPS.c@{Obit\-AIPS.c}!AIPS_Version@{AIPS\_\-Version}}
+\index{AIPS_Version@{AIPS\_\-Version}!ObitAIPS.c@{Obit\-AIPS.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf AIPS\_\-Version} = 'D'}\label{ObitAIPS_8c_a1}
+
+
+Current AIPS data revision code. 
+

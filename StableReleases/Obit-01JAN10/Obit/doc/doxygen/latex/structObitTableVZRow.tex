@@ -1,0 +1,122 @@
+\section{Obit\-Table\-VZRow Struct Reference}
+\label{structObitTableVZRow}\index{ObitTableVZRow@{ObitTableVZRow}}
+Obit\-Table\-VZRow Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-VZ.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf my\-Table}
+\begin{CompactList}\small\item\em Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. \item\end{CompactList}\item 
+gpointer {\bf my\-Row\-Data}
+\begin{CompactList}\small\item\em Pointer to row data in buffer (never g\_\-free this). \item\end{CompactList}\item 
+{\bf odouble} {\bf Ra2000}
+\begin{CompactList}\small\item\em RA (J2000). \item\end{CompactList}\item 
+{\bf odouble} {\bf Dec2000}
+\begin{CompactList}\small\item\em Dec (J2000). \item\end{CompactList}\item 
+{\bf ofloat} {\bf Peak\-Int}
+\begin{CompactList}\small\item\em Peak Ipol. \item\end{CompactList}\item 
+{\bf oint} {\bf Quality}
+\begin{CompactList}\small\item\em Quality (crowding) measure, 0=$>$ best, higher worse. \item\end{CompactList}\item 
+{\bf olong} {\bf status}
+\begin{CompactList}\small\item\em status 0=normal, 1=modified, -1=flagged \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-VZRow Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableVZRow@{Obit\-Table\-VZRow}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableVZRow@{Obit\-Table\-VZRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-VZRow::Class\-Info}}\label{structObitTableVZRow_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableVZRow@{Obit\-Table\-VZRow}!Dec2000@{Dec2000}}
+\index{Dec2000@{Dec2000}!ObitTableVZRow@{Obit\-Table\-VZRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-VZRow::Dec2000}}\label{structObitTableVZRow_o7}
+
+
+Dec (J2000). 
+
+\index{ObitTableVZRow@{Obit\-Table\-VZRow}!myRowData@{myRowData}}
+\index{myRowData@{myRowData}!ObitTableVZRow@{Obit\-Table\-VZRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-VZRow::my\-Row\-Data}}\label{structObitTableVZRow_o5}
+
+
+Pointer to row data in buffer (never g\_\-free this). 
+
+\index{ObitTableVZRow@{Obit\-Table\-VZRow}!myTable@{myTable}}
+\index{myTable@{myTable}!ObitTableVZRow@{Obit\-Table\-VZRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ {\bf Obit\-Table\-VZRow::my\-Table}}\label{structObitTableVZRow_o4}
+
+
+Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. 
+
+\index{ObitTableVZRow@{Obit\-Table\-VZRow}!name@{name}}
+\index{name@{name}!ObitTableVZRow@{Obit\-Table\-VZRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-VZRow::name}}\label{structObitTableVZRow_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableVZRow@{Obit\-Table\-VZRow}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableVZRow@{Obit\-Table\-VZRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-VZRow::Obit\-Id}}\label{structObitTableVZRow_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableVZRow@{Obit\-Table\-VZRow}!PeakInt@{PeakInt}}
+\index{PeakInt@{PeakInt}!ObitTableVZRow@{Obit\-Table\-VZRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-VZRow::Peak\-Int}}\label{structObitTableVZRow_o8}
+
+
+Peak Ipol. 
+
+\index{ObitTableVZRow@{Obit\-Table\-VZRow}!Quality@{Quality}}
+\index{Quality@{Quality}!ObitTableVZRow@{Obit\-Table\-VZRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VZRow::Quality}}\label{structObitTableVZRow_o9}
+
+
+Quality (crowding) measure, 0=$>$ best, higher worse. 
+
+\index{ObitTableVZRow@{Obit\-Table\-VZRow}!Ra2000@{Ra2000}}
+\index{Ra2000@{Ra2000}!ObitTableVZRow@{Obit\-Table\-VZRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-VZRow::Ra2000}}\label{structObitTableVZRow_o6}
+
+
+RA (J2000). 
+
+\index{ObitTableVZRow@{Obit\-Table\-VZRow}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableVZRow@{Obit\-Table\-VZRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VZRow::Reference\-Count}}\label{structObitTableVZRow_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableVZRow@{Obit\-Table\-VZRow}!status@{status}}
+\index{status@{status}!ObitTableVZRow@{Obit\-Table\-VZRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VZRow::status}}\label{structObitTableVZRow_o10}
+
+
+status 0=normal, 1=modified, -1=flagged 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-VZ.h}\end{CompactItemize}

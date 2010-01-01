@@ -1,0 +1,263 @@
+\section{Obit\-UVUtil.h File Reference}
+\label{ObitUVUtil_8h}\index{ObitUVUtil.h@{ObitUVUtil.h}}
+Obit\-UVUtil module definition. 
+
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UV.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Source\-List.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-UVUtil\-UVWExtrema} ({\bf Obit\-UV} $\ast$in\-UV, {\bf ofloat} $\ast$Max\-BL, {\bf ofloat} $\ast$Max\-W, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get UVW Extrema. \item\end{CompactList}\item 
+{\bf Obit\-UV} $\ast$ {\bf Obit\-UVUtil\-Copy\-Zero} ({\bf Obit\-UV} $\ast$in\-UV, gboolean scratch, {\bf Obit\-UV} $\ast$out\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Make zeroed copy of an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. \item\end{CompactList}\item 
+void {\bf Obit\-UVUtil\-Vis\-Divide} ({\bf Obit\-UV} $\ast$in\-UV1, {\bf Obit\-UV} $\ast$in\-UV2, {\bf Obit\-UV} $\ast$out\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Divide the visibilities in one Obit\-UVData by another. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Obit\-UVUtil\-Vis\-Compare} ({\bf Obit\-UV} $\ast$in\-UV1, {\bf Obit\-UV} $\ast$in\-UV2, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Compare the visibilities in one Obit\-UVData with another. \item\end{CompactList}\item 
+void {\bf Obit\-UVUtil\-Index} ({\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Index a uv data. \item\end{CompactList}\item 
+{\bf Obit\-Source\-List} $\ast$ {\bf Obit\-UVUtil\-Which\-Sources} ({\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get list of selected sources. \item\end{CompactList}\item 
+{\bf Obit\-UV} $\ast$ {\bf Obit\-UVUtil\-Avg\-F} ({\bf Obit\-UV} $\ast$in\-UV, gboolean scratch, {\bf Obit\-UV} $\ast$out\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Average a data set in frequency. \item\end{CompactList}\item 
+{\bf Obit\-UV} $\ast$ {\bf Obit\-UVUtil\-Avg\-T} ({\bf Obit\-UV} $\ast$in\-UV, gboolean scratch, {\bf Obit\-UV} $\ast$out\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Average a data set in time. \item\end{CompactList}\item 
+{\bf Obit\-UV} $\ast$ {\bf Obit\-UVUtil\-Bl\-Avg\-TF} ({\bf Obit\-UV} $\ast$in\-UV, gboolean scratch, {\bf Obit\-UV} $\ast$out\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Average a data set in time and/or frequency. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf Obit\-UVUtil\-Count} ({\bf Obit\-UV} $\ast$in\-UV, {\bf ofloat} time\-Int, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Count good data by time segment. \item\end{CompactList}\item 
+void {\bf Obit\-UVUtil\-Split\-Ch} ({\bf Obit\-UV} $\ast$in\-UV, {\bf olong} n\-Out, {\bf Obit\-UV} $\ast$$\ast$out\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy data by channel to multiple output UV. \item\end{CompactList}\item 
+void {\bf Obit\-UVUtil\-Noise} ({\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-UV} $\ast$out\-UV, {\bf ofloat} scale, {\bf ofloat} sigma, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Add Gaussian noise to a UV data set. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-UVUtil\-Flag} ({\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Add a flag entry. \item\end{CompactList}\item 
+void {\bf Obit\-UVUtil\-UVW} (const {\bf ofloat} b[3], {\bf odouble} dec, {\bf ofloat} ha, {\bf ofloat} uvw[3])
+\begin{CompactList}\small\item\em Public: Calculate visibility uvw. \item\end{CompactList}\item 
+void {\bf Obit\-UVUtil\-Append} ({\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-UV} $\ast$out\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Append the contents of one UV data onto another. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-UVUtil module definition. 
+
+This utility module contains functions which operate on {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} data sets.
+
+\subsection{Function Documentation}
+\index{ObitUVUtil.h@{Obit\-UVUtil.h}!ObitUVUtilAppend@{ObitUVUtilAppend}}
+\index{ObitUVUtilAppend@{ObitUVUtilAppend}!ObitUVUtil.h@{Obit\-UVUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVUtil\-Append ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVUtil_8h_a14}
+
+
+Public: Append the contents of one UV data onto another. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input UV \item[{\em out\-UV}]Output UV, must already be defined \item[{\em err}]Error stack \end{description}
+\end{Desc}
+\index{ObitUVUtil.h@{Obit\-UVUtil.h}!ObitUVUtilAvgF@{ObitUVUtilAvgF}}
+\index{ObitUVUtilAvgF@{ObitUVUtilAvgF}!ObitUVUtil.h@{Obit\-UVUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UV}$\ast$ Obit\-UVUtil\-Avg\-F ({\bf Obit\-UV} $\ast$ {\em in\-UV}, gboolean {\em scratch}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVUtil_8h_a6}
+
+
+Public: Average a data set in frequency. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input uv data to average, Any request for calibration, editing and selection honored Control parameters on info element of in\-UV: \begin{itemize}
+\item \char`\"{}Num\-Ch\-Avg\char`\"{} OBIT\_\-long scalar Number of channels to average, [def. = all] \item \char`\"{}do\-Avg\-All\char`\"{} OBIT\_\-bool Scalar, if TRUE then average all channels and IF. default = FALSE \item \char`\"{}Chan\-Sel\char`\"{} OBIT\_\-int (4,$\ast$) Groups of channels to consider (relative to channels \& IFs selected by BChan, EChan, BIF, EIF) (start, end, increment, IF) where start and end at the beginning and ending channel numbers (1-rel) of the group to be included, increment is the increment between selected channels and IF is the IF number (1-rel) default increment is 1, IF=0 means all IF. The list of groups is terminated by a start $<$=0 Default is all channels in each IF.\end{itemize}
+\item[{\em scratch}]True if scratch file desired, will be same type as in\-UV. \item[{\em out\-UV}]If not scratch, then the previously defined output file May be NULL for scratch only If it exists and scratch, it will be Unrefed \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the frequency averaged {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. \end{Desc}
+\index{ObitUVUtil.h@{Obit\-UVUtil.h}!ObitUVUtilAvgT@{ObitUVUtilAvgT}}
+\index{ObitUVUtilAvgT@{ObitUVUtilAvgT}!ObitUVUtil.h@{Obit\-UVUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UV}$\ast$ Obit\-UVUtil\-Avg\-T ({\bf Obit\-UV} $\ast$ {\em in\-UV}, gboolean {\em scratch}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVUtil_8h_a7}
+
+
+Public: Average a data set in time. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input uv data to average, Any request for calibration, editing and selection honored Control parameter on info element of in\-UV: \begin{itemize}
+\item \char`\"{}time\-Avg\char`\"{} OBIT\_\-float (1,1,1) Time interval over which to average (min) [def = 1 min.] NB: this should be at least 2 integrations.\end{itemize}
+\item[{\em scratch}]True if scratch file desired, will be same type as in\-UV. \item[{\em out\-UV}]If not scratch, then the previously defined output file May be NULL for scratch only If it exists and scratch, it will be Unrefed \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the frequency averaged {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. \end{Desc}
+\index{ObitUVUtil.h@{Obit\-UVUtil.h}!ObitUVUtilBlAvgTF@{ObitUVUtilBlAvgTF}}
+\index{ObitUVUtilBlAvgTF@{ObitUVUtilBlAvgTF}!ObitUVUtil.h@{Obit\-UVUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UV}$\ast$ Obit\-UVUtil\-Bl\-Avg\-TF ({\bf Obit\-UV} $\ast$ {\em in\-UV}, gboolean {\em scratch}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVUtil_8h_a8}
+
+
+Public: Average a data set in time and/or frequency. 
+
+Also optionally average in frequency. Time average UV data with averaging times depending on time and baseline. The averaging time is the greater of max\-Int and the time it takes for time smearing to reduce the visibility amplitude by max\-Fact. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input uv data to average, Any request for calibration, editing and selection honored Control parameters on info element of in\-UV: \begin{itemize}
+\item \char`\"{}FOV\char`\"{} OBIT\_\-float (1,1,1) Field of view (radius, deg) \item \char`\"{}max\-Int\char`\"{} OBIT\_\-float (1,1,1) Maximum integration (min) \item \char`\"{}max\-Fact\char`\"{} OBIT\_\-float (1,1,1) Maximum time smearing factor \item \char`\"{}Num\-Ch\-Avg\char`\"{} OBIT\_\-long scalar Number of channels to average, [def. = all] \item \char`\"{}do\-Avg\-All\char`\"{} OBIT\_\-bool Scalar, if TRUE then average all channels and IF. default = FALSE \item \char`\"{}Chan\-Sel\char`\"{} OBIT\_\-int (4,$\ast$) Groups of channels to consider (relative to channels \& IFs selected by BChan, EChan, BIF, EIF) (start, end, increment, IF) where start and end at the beginning and ending channel numbers (1-rel) of the group to be included, increment is the increment between selected channels and IF is the IF number (1-rel) default increment is 1, IF=0 means all IF. The list of groups is terminated by a start $<$=0 Default is all channels in each IF.\end{itemize}
+\item[{\em scratch}]True if scratch file desired, will be same type as in\-UV. \item[{\em out\-UV}]If not scratch, then the previously defined output file May be NULL for scratch only If it exists and scratch, it will be Unrefed \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the frequency averaged {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. \end{Desc}
+\index{ObitUVUtil.h@{Obit\-UVUtil.h}!ObitUVUtilCopyZero@{ObitUVUtilCopyZero}}
+\index{ObitUVUtilCopyZero@{ObitUVUtilCopyZero}!ObitUVUtil.h@{Obit\-UVUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UV}$\ast$ Obit\-UVUtil\-Copy\-Zero ({\bf Obit\-UV} $\ast$ {\em in\-UV}, gboolean {\em scratch}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVUtil_8h_a1}
+
+
+Public: Make zeroed copy of an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input uv data to copy. \item[{\em scratch}]True if scratch file desired, will be same type as in\-UV. \item[{\em out\-UV}]If not scratch, then the previously defined output file May be NULL for scratch only If it exists and scratch, it will be Unrefed \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the zeroed {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. \end{Desc}
+\index{ObitUVUtil.h@{Obit\-UVUtil.h}!ObitUVUtilCount@{ObitUVUtilCount}}
+\index{ObitUVUtilCount@{ObitUVUtilCount}!ObitUVUtil.h@{Obit\-UVUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ Obit\-UVUtil\-Count ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf ofloat} {\em time\-Int}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVUtil_8h_a9}
+
+
+Public: Count good data by time segment. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-Data}]Input UV data, data selections, if any, applied \item[{\em time\-Int}]Size of time interval in days, max. 500 intervals If data from a new source is found a new interval is started. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]{\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} with entries: \begin{itemize}
+\item \char`\"{}num\-Time\char`\"{} OBIT\_\-int [1] Number of time intervals \item \char`\"{}num\-Corr\char`\"{} OBIT\_\-int [1] Number of Correlations per vis \item \char`\"{}Count\char`\"{} OBIT\_\-int [?] Count of good correlations per interval \item \char`\"{}Bad\char`\"{} OBIT\_\-int [?] Count of bad correlations per interval \item \char`\"{}Source\char`\"{} OBIT\_\-int [?] Source ID per interval \item \char`\"{}LST\char`\"{} OBIT\_\-float [?] Average LST (days) per interval -1000.0 =$>$ no data. \end{itemize}
+\end{Desc}
+\index{ObitUVUtil.h@{Obit\-UVUtil.h}!ObitUVUtilFlag@{ObitUVUtilFlag}}
+\index{ObitUVUtilFlag@{ObitUVUtilFlag}!ObitUVUtil.h@{Obit\-UVUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-UVUtil\-Flag ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVUtil_8h_a12}
+
+
+Public: Add a flag entry. 
+
+Stokes order 'R', 'L', 'RL' 'LR' or 'X', 'Y', 'XY', 'YX' \begin{itemize}
+\item \char`\"{}Reason\char`\"{} OBIT\_\-string (?,1,1) reason string for flagging (max. 24 char). \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input UV data \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]IO return code, OBIT\_\-IO\_\-OK = OK \end{Desc}
+\end{itemize}
+\index{ObitUVUtil.h@{Obit\-UVUtil.h}!ObitUVUtilIndex@{ObitUVUtilIndex}}
+\index{ObitUVUtilIndex@{ObitUVUtilIndex}!ObitUVUtil.h@{Obit\-UVUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVUtil\-Index ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVUtil_8h_a4}
+
+
+Public: Index a uv data. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input UV data. Control parameters are on the info member. \begin{itemize}
+\item \char`\"{}max\-Scan\char`\"{} OBIT\_\-float (1,1,1) max. scan time, min. [def LARGE] \item \char`\"{}max\-Gap\char`\"{} OBIT\_\-float (1,1,1) max. time gap in scan, min. [def LARGE] \end{itemize}
+\item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\index{ObitUVUtil.h@{Obit\-UVUtil.h}!ObitUVUtilNoise@{ObitUVUtilNoise}}
+\index{ObitUVUtilNoise@{ObitUVUtilNoise}!ObitUVUtil.h@{Obit\-UVUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVUtil\-Noise ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf ofloat} {\em scale}, {\bf ofloat} {\em sigma}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVUtil_8h_a11}
+
+
+Public: Add Gaussian noise to a UV data set. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input UV \item[{\em out\-UV}]Output UV, must already be defined but may be in\-UV \item[{\em scale}]scaling factor for data \item[{\em sigma}]Standard deviation of Gaussian noise . \item[{\em err}]Error stack \end{description}
+\end{Desc}
+\index{ObitUVUtil.h@{Obit\-UVUtil.h}!ObitUVUtilSplitCh@{ObitUVUtilSplitCh}}
+\index{ObitUVUtilSplitCh@{ObitUVUtilSplitCh}!ObitUVUtil.h@{Obit\-UVUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVUtil\-Split\-Ch ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf olong} {\em n\-Out}, {\bf Obit\-UV} $\ast$$\ast$ {\em out\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVUtil_8h_a10}
+
+
+Public: Copy data by channel to multiple output UV. 
+
+All selected IFs and polarizations are also copied, there must be an integran number of IFs per output. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input uv data to average, Any request for calibration, editing and selection honored \item[{\em n\-Out}]Number of outout images \item[{\em out\-UV}]Array of previously defined but not yet instantiated (never opened) UV data objects to receive 1/n\-Out of the data channels in in\-UV. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\index{ObitUVUtil.h@{Obit\-UVUtil.h}!ObitUVUtilUVW@{ObitUVUtilUVW}}
+\index{ObitUVUtilUVW@{ObitUVUtilUVW}!ObitUVUtil.h@{Obit\-UVUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVUtil\-UVW (const {\bf ofloat} {\em b}[3], {\bf odouble} {\em dec}, {\bf ofloat} {\em ha}, {\bf ofloat} {\em uvw}[3])}\label{ObitUVUtil_8h_a13}
+
+
+Public: Calculate visibility uvw. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em b}]Baseline vector \item[{\em dec}]Pointing declination (rad) \item[{\em ha}]Pointing hour angle (rad) \item[{\em uvw}][out] baseline u,v,w in units of b \end{description}
+\end{Desc}
+\index{ObitUVUtil.h@{Obit\-UVUtil.h}!ObitUVUtilUVWExtrema@{ObitUVUtilUVWExtrema}}
+\index{ObitUVUtilUVWExtrema@{ObitUVUtilUVWExtrema}!ObitUVUtil.h@{Obit\-UVUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVUtil\-UVWExtrema ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf ofloat} $\ast$ {\em Max\-BL}, {\bf ofloat} $\ast$ {\em Max\-W}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVUtil_8h_a0}
+
+
+Public: Get UVW Extrema. 
+
+Imaging parameters are on the in\-UV info member as arrays for a number of fields. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input uv data. \item[{\em Max\-BL}]Output maximum baseline length (sqrt(u$\ast$u+v$\ast$v)) \item[{\em Max\-W}]Output Max abs(w) in data. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\index{ObitUVUtil.h@{Obit\-UVUtil.h}!ObitUVUtilVisCompare@{ObitUVUtilVisCompare}}
+\index{ObitUVUtilVisCompare@{ObitUVUtilVisCompare}!ObitUVUtil.h@{Obit\-UVUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} Obit\-UVUtil\-Vis\-Compare ({\bf Obit\-UV} $\ast$ {\em in\-UV1}, {\bf Obit\-UV} $\ast$ {\em in\-UV2}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVUtil_8h_a3}
+
+
+Public: Compare the visibilities in one Obit\-UVData with another. 
+
+Return the RMS of the real and imaginary differences divided by the amplitude of in\-UV2. Only valid visibilities compared, zero amplitudes ignored. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV1}]Input uv data numerator, no calibration/selection \item[{\em in\-UV2}]Input uv data denominator, no calibration/selection in\-UV2 should have the same structure, no. vis etc as in\-UV1. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]RMS of the real and imaginary differences /amplitude, -1 =$>$ no data compared or other error. \end{Desc}
+\index{ObitUVUtil.h@{Obit\-UVUtil.h}!ObitUVUtilVisDivide@{ObitUVUtilVisDivide}}
+\index{ObitUVUtilVisDivide@{ObitUVUtilVisDivide}!ObitUVUtil.h@{Obit\-UVUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVUtil\-Vis\-Divide ({\bf Obit\-UV} $\ast$ {\em in\-UV1}, {\bf Obit\-UV} $\ast$ {\em in\-UV2}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVUtil_8h_a2}
+
+
+Public: Divide the visibilities in one Obit\-UVData by another. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV1}]Input uv data numerator, no calibration/selection \item[{\em in\-UV2}]Input uv data denominator, no calibration/selection in\-UV2 should have the same structure, no. vis etc as in\-UV1. \item[{\em out\-UV}]Previously defined output, may be the same as in\-UV1 \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\index{ObitUVUtil.h@{Obit\-UVUtil.h}!ObitUVUtilWhichSources@{ObitUVUtilWhichSources}}
+\index{ObitUVUtilWhichSources@{ObitUVUtilWhichSources}!ObitUVUtil.h@{Obit\-UVUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Source\-List}$\ast$ Obit\-UVUtil\-Which\-Sources ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVUtil_8h_a5}
+
+
+Public: Get list of selected sources. 
+
+\begin{itemize}
+\item Any explicit selection in Sources parameter in UV data selector \item selection by Cal\-Code \item selection to exclude any entries marked done in the PS table if Infolist item 'do\-PS' is True. \item if time range given and an NX table exists, only select sources with data in this timerange. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]UV data with all selection criteria, other controls: \end{description}
+\end{Desc}
+\item \char`\"{}do\-PS\char`\"{} OBIT\_\-bool (1,1,1) If true and PS 1 exists, exclude [def False] \item \char`\"{}sou\-Code\char`\"{} OBIT\_\-string (4,1,1) Source Cal code desired, ' ' =$>$ any code selected '$\ast$ ' =$>$ any non blank code (calibrators only) '-CAL' =$>$ blank codes only (no calibrators) def = ' ' any sources marked done in PS table 1. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]requested {\bf Obit\-Source\-List}{\rm (p.\,\pageref{structObitSourceList})} \end{Desc}
+\end{itemize}

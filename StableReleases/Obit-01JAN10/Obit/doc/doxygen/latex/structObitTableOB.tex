@@ -1,0 +1,311 @@
+\section{Obit\-Table\-OB Struct Reference}
+\label{structObitTableOB}\index{ObitTableOB@{ObitTableOB}}
+Obit\-Table\-OB Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-OB.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-IO} $\ast$ {\bf my\-IO}
+\begin{CompactList}\small\item\em I/O interface to access disk resident data. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Desc} $\ast$ {\bf my\-Desc}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Sel} $\ast$ {\bf my\-Sel}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf buffer}
+\begin{CompactList}\small\item\em Table buffer. \item\end{CompactList}\item 
+{\bf olong} {\bf buffer\-Size}
+\begin{CompactList}\small\item\em Table buffer size in floats. \item\end{CompactList}\item 
+gchar $\ast$ {\bf tab\-Type}
+\begin{CompactList}\small\item\em Table type (name of type, e.g. \item\end{CompactList}\item 
+{\bf olong} {\bf tab\-Ver}
+\begin{CompactList}\small\item\em Table version number(1-rel). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf my\-Host}
+\begin{CompactList}\small\item\em This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. \item\end{CompactList}\item 
+{\bf oint} {\bf revision}
+\begin{CompactList}\small\item\em Revision number of the table definition. \item\end{CompactList}\item 
+{\bf olong} {\bf antenna\-No\-Off}
+\begin{CompactList}\small\item\em Column offset for Antenna number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf antenna\-No\-Col}
+\begin{CompactList}\small\item\em Physical column number for Antenna number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Sub\-AOff}
+\begin{CompactList}\small\item\em Column offset for Subarray number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Sub\-ACol}
+\begin{CompactList}\small\item\em Physical column number for Subarray number in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-Off}
+\begin{CompactList}\small\item\em Column offset for The center time. \item\end{CompactList}\item 
+{\bf olong} {\bf Time\-Col}
+\begin{CompactList}\small\item\em Physical column number for The center time. \item\end{CompactList}\item 
+{\bf olong} {\bf orientation\-Off}
+\begin{CompactList}\small\item\em Column offset for ORIENTATION in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf orientation\-Col}
+\begin{CompactList}\small\item\em Physical column number for ORIENTATION in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf orb\-XYZOff}
+\begin{CompactList}\small\item\em Column offset for Obital position in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf orb\-XYZCol}
+\begin{CompactList}\small\item\em Physical column number for Obital position in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf vel\-XYZOff}
+\begin{CompactList}\small\item\em Column offset for Orbital velocity in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf vel\-XYZCol}
+\begin{CompactList}\small\item\em Physical column number for Orbital velocity in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf sun\-Angle\-Off}
+\begin{CompactList}\small\item\em Column offset for Relative position of the Sun in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf sun\-Angle\-Col}
+\begin{CompactList}\small\item\em Physical column number for Relative position of the Sun in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf eclipse\-Off}
+\begin{CompactList}\small\item\em Column offset for ECLIPSE in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf eclipse\-Col}
+\begin{CompactList}\small\item\em Physical column number for ECLIPSE in table record. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-OB Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableOB@{Obit\-Table\-OB}!antennaNoCol@{antennaNoCol}}
+\index{antennaNoCol@{antennaNoCol}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::antenna\-No\-Col}}\label{structObitTableOB_o17}
+
+
+Physical column number for Antenna number in table record. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!antennaNoOff@{antennaNoOff}}
+\index{antennaNoOff@{antennaNoOff}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::antenna\-No\-Off}}\label{structObitTableOB_o16}
+
+
+Column offset for Antenna number in table record. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!buffer@{buffer}}
+\index{buffer@{buffer}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-OB::buffer}}\label{structObitTableOB_o10}
+
+
+Table buffer. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!bufferSize@{bufferSize}}
+\index{bufferSize@{bufferSize}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::buffer\-Size}}\label{structObitTableOB_o11}
+
+
+Table buffer size in floats. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-OB::Class\-Info}}\label{structObitTableOB_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!eclipseCol@{eclipseCol}}
+\index{eclipseCol@{eclipseCol}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::eclipse\-Col}}\label{structObitTableOB_o31}
+
+
+Physical column number for ECLIPSE in table record. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!eclipseOff@{eclipseOff}}
+\index{eclipseOff@{eclipseOff}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::eclipse\-Off}}\label{structObitTableOB_o30}
+
+
+Column offset for ECLIPSE in table record. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!info@{info}}
+\index{info@{info}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Table\-OB::info}}\label{structObitTableOB_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Desc}$\ast$ {\bf Obit\-Table\-OB::my\-Desc}}\label{structObitTableOB_o8}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!myHost@{myHost}}
+\index{myHost@{myHost}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-Table\-OB::my\-Host}}\label{structObitTableOB_o14}
+
+
+This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!myIO@{myIO}}
+\index{myIO@{myIO}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IO}$\ast$ {\bf Obit\-Table\-OB::my\-IO}}\label{structObitTableOB_o7}
+
+
+I/O interface to access disk resident data. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Sel}$\ast$ {\bf Obit\-Table\-OB::my\-Sel}}\label{structObitTableOB_o9}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Table\-OB::my\-Status}}\label{structObitTableOB_o6}
+
+
+I/O status. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!name@{name}}
+\index{name@{name}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-OB::name}}\label{structObitTableOB_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-OB::Obit\-Id}}\label{structObitTableOB_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!orbXYZCol@{orbXYZCol}}
+\index{orbXYZCol@{orbXYZCol}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::orb\-XYZCol}}\label{structObitTableOB_o25}
+
+
+Physical column number for Obital position in table record. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!orbXYZOff@{orbXYZOff}}
+\index{orbXYZOff@{orbXYZOff}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::orb\-XYZOff}}\label{structObitTableOB_o24}
+
+
+Column offset for Obital position in table record. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!orientationCol@{orientationCol}}
+\index{orientationCol@{orientationCol}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::orientation\-Col}}\label{structObitTableOB_o23}
+
+
+Physical column number for ORIENTATION in table record. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!orientationOff@{orientationOff}}
+\index{orientationOff@{orientationOff}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::orientation\-Off}}\label{structObitTableOB_o22}
+
+
+Column offset for ORIENTATION in table record. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::Reference\-Count}}\label{structObitTableOB_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!revision@{revision}}
+\index{revision@{revision}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-OB::revision}}\label{structObitTableOB_o15}
+
+
+Revision number of the table definition. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!SubACol@{SubACol}}
+\index{SubACol@{SubACol}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::Sub\-ACol}}\label{structObitTableOB_o19}
+
+
+Physical column number for Subarray number in table record. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!SubAOff@{SubAOff}}
+\index{SubAOff@{SubAOff}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::Sub\-AOff}}\label{structObitTableOB_o18}
+
+
+Column offset for Subarray number in table record. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!sunAngleCol@{sunAngleCol}}
+\index{sunAngleCol@{sunAngleCol}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::sun\-Angle\-Col}}\label{structObitTableOB_o29}
+
+
+Physical column number for Relative position of the Sun in table record. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!sunAngleOff@{sunAngleOff}}
+\index{sunAngleOff@{sunAngleOff}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::sun\-Angle\-Off}}\label{structObitTableOB_o28}
+
+
+Column offset for Relative position of the Sun in table record. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!tabType@{tabType}}
+\index{tabType@{tabType}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-OB::tab\-Type}}\label{structObitTableOB_o12}
+
+
+Table type (name of type, e.g. 
+
+\char`\"{}AIPS AN\char`\"{}) \index{ObitTableOB@{Obit\-Table\-OB}!tabVer@{tabVer}}
+\index{tabVer@{tabVer}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::tab\-Ver}}\label{structObitTableOB_o13}
+
+
+Table version number(1-rel). 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!thread@{thread}}
+\index{thread@{thread}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Table\-OB::thread}}\label{structObitTableOB_o4}
+
+
+Threading info member object. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!TimeCol@{TimeCol}}
+\index{TimeCol@{TimeCol}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::Time\-Col}}\label{structObitTableOB_o21}
+
+
+Physical column number for The center time. 
+
+in table record \index{ObitTableOB@{Obit\-Table\-OB}!TimeOff@{TimeOff}}
+\index{TimeOff@{TimeOff}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::Time\-Off}}\label{structObitTableOB_o20}
+
+
+Column offset for The center time. 
+
+in table record \index{ObitTableOB@{Obit\-Table\-OB}!velXYZCol@{velXYZCol}}
+\index{velXYZCol@{velXYZCol}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::vel\-XYZCol}}\label{structObitTableOB_o27}
+
+
+Physical column number for Orbital velocity in table record. 
+
+\index{ObitTableOB@{Obit\-Table\-OB}!velXYZOff@{velXYZOff}}
+\index{velXYZOff@{velXYZOff}!ObitTableOB@{Obit\-Table\-OB}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-OB::vel\-XYZOff}}\label{structObitTableOB_o26}
+
+
+Column offset for Orbital velocity in table record. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-OB.h}\end{CompactItemize}

@@ -1,0 +1,297 @@
+\section{Obit\-History.c File Reference}
+\label{ObitHistory_8c}\index{ObitHistory.c@{ObitHistory.c}}
+{\bf Obit\-History}{\rm (p.\,\pageref{structObitHistory})} class function definitions. 
+
+{\tt \#include $<$sys/types.h$>$}\par
+{\tt \#include $<$time.h$>$}\par
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-File\-FITS.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-IOHistory.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-IOHistory\-FITS.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-IOHistory\-AIPS.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-History.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-History\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-History\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-History} $\ast$ {\bf new\-Obit\-History} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default constructor. \item\end{CompactList}\item 
+{\bf Obit\-History} $\ast$ {\bf new\-Obit\-History\-Value} (gchar $\ast$name, {\bf Obit\-Info\-List} $\ast$info, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Constructor from object info\-List. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-History\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-History} $\ast$ {\bf Obit\-History\-Zap} ({\bf Obit\-History} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Delete underlying structures. \item\end{CompactList}\item 
+{\bf Obit\-History} $\ast$ {\bf Obit\-History\-Copy} ({\bf Obit\-History} $\ast$in, {\bf Obit\-History} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Deep copy. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-History\-Copy\-Header} ({\bf Obit\-History} $\ast$in, {\bf Obit\-History} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy history from header (FITS). \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-History\-Copy2Header} ({\bf Obit\-History} $\ast$in, {\bf Obit\-History} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy history to header (FITS). \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-History\-Header2Header} ({\bf Obit\-History} $\ast$in, {\bf Obit\-History} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy history from header (FITS) to header (FITS). \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-History\-Open} ({\bf Obit\-History} $\ast$in, Obit\-IOAccess access, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create {\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} structures and open file. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-History\-Close} ({\bf Obit\-History} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Close file and become inactive. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-History\-Read\-Rec} ({\bf Obit\-History} $\ast$in, {\bf olong} recno, gchar hi\-Card[73], {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read specified Record. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-History\-Write\-Rec} ({\bf Obit\-History} $\ast$in, {\bf olong} recno, gchar hi\-Card[73], {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Write specified Record. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-History\-Time\-Stamp} ({\bf Obit\-History} $\ast$in, gchar $\ast$label, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Add time stamp and label. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-History\-Num\-Rec} ({\bf Obit\-History} $\ast$in)
+\begin{CompactList}\small\item\em Public: Tell number of history records. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-History\-Copy\-Info\-List} ({\bf Obit\-History} $\ast$out, gchar $\ast$pgm\-Name, gchar $\ast$list[$\,$], {\bf Obit\-Info\-List} $\ast$info, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy a list of values from an Info\-List to a History. \item\end{CompactList}\item 
+void {\bf Obit\-History\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-History}{\rm (p.\,\pageref{structObitHistory})} class function definitions. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} base class.
+
+\subsection{Function Documentation}
+\index{ObitHistory.c@{Obit\-History.c}!newObitHistory@{newObitHistory}}
+\index{newObitHistory@{newObitHistory}!ObitHistory.c@{Obit\-History.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-History}$\ast$ new\-Obit\-History (gchar $\ast$ {\em name})}\label{ObitHistory_8c_a7}
+
+
+Public: Default constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitHistory.c@{Obit\-History.c}!newObitHistoryValue@{newObitHistoryValue}}
+\index{newObitHistoryValue@{newObitHistoryValue}!ObitHistory.c@{Obit\-History.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-History}$\ast$ new\-Obit\-History\-Value (gchar $\ast$ {\em name}, {\bf Obit\-Info\-List} $\ast$ {\em info}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitHistory_8c_a8}
+
+
+Public: Constructor from object info\-List. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em info}]Parent object list defining the underlying file e.g. File\-Type, disk, name for FITS, disk, user, cno for AIPS. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitHistory.c@{Obit\-History.c}!ObitHistoryClassInit@{ObitHistoryClassInit}}
+\index{ObitHistoryClassInit@{ObitHistoryClassInit}!ObitHistory.c@{Obit\-History.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-History\-Class\-Init (void)}\label{ObitHistory_8c_a22}
+
+
+Public: Class initializer. 
+
+\index{ObitHistory.c@{Obit\-History.c}!ObitHistoryClear@{ObitHistoryClear}}
+\index{ObitHistoryClear@{ObitHistoryClear}!ObitHistory.c@{Obit\-History.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-History\-Clear (gpointer {\em inn})}\label{ObitHistory_8c_a4}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. For some reason this wasn't build into the GType class. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-History$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitHistory.c@{Obit\-History.c}!ObitHistoryClose@{ObitHistoryClose}}
+\index{ObitHistoryClose@{ObitHistoryClose}!ObitHistory.c@{Obit\-History.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-History\-Close ({\bf Obit\-History} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitHistory_8c_a16}
+
+
+Public: Close file and become inactive. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be closed. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]error code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitHistory.c@{Obit\-History.c}!ObitHistoryCopy@{ObitHistoryCopy}}
+\index{ObitHistoryCopy@{ObitHistoryCopy}!ObitHistory.c@{Obit\-History.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-History}$\ast$ Obit\-History\-Copy ({\bf Obit\-History} $\ast$ {\em in}, {\bf Obit\-History} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitHistory_8c_a11}
+
+
+Public: Deep copy. 
+
+Both objects should be filly defined. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy, if underlying structures don't exist, it merely returns without writing the out History. \item[{\em out}]An existing object pointer for output \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitHistory.c@{Obit\-History.c}!ObitHistoryCopy2Header@{ObitHistoryCopy2Header}}
+\index{ObitHistoryCopy2Header@{ObitHistoryCopy2Header}!ObitHistory.c@{Obit\-History.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-History\-Copy2Header ({\bf Obit\-History} $\ast$ {\em in}, {\bf Obit\-History} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitHistory_8c_a13}
+
+
+Public: Copy history to header (FITS). 
+
+Both objects should be filly defined. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]Output object for HISTORY header entries. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitHistory.c@{Obit\-History.c}!ObitHistoryCopyHeader@{ObitHistoryCopyHeader}}
+\index{ObitHistoryCopyHeader@{ObitHistoryCopyHeader}!ObitHistory.c@{Obit\-History.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-History\-Copy\-Header ({\bf Obit\-History} $\ast$ {\em in}, {\bf Obit\-History} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitHistory_8c_a12}
+
+
+Public: Copy history from header (FITS). 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitHistory.c@{Obit\-History.c}!ObitHistoryCopyInfoList@{ObitHistoryCopyInfoList}}
+\index{ObitHistoryCopyInfoList@{ObitHistoryCopyInfoList}!ObitHistory.c@{Obit\-History.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-History\-Copy\-Info\-List ({\bf Obit\-History} $\ast$ {\em out}, gchar $\ast$ {\em pgm\-Name}, gchar $\ast$ {\em list}[$\,$], {\bf Obit\-Info\-List} $\ast$ {\em info}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitHistory_8c_a21}
+
+
+Public: Copy a list of values from an Info\-List to a History. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em out}]Output object for HISTORY header entries. \item[{\em list}]NULL terminated list of entries in info \item[{\em info}]{\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} with values to copy \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitHistory.c@{Obit\-History.c}!ObitHistoryGetClass@{ObitHistoryGetClass}}
+\index{ObitHistoryGetClass@{ObitHistoryGetClass}!ObitHistory.c@{Obit\-History.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-History\-Get\-Class (void)}\label{ObitHistory_8c_a9}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitHistory.c@{Obit\-History.c}!ObitHistoryHeader2Header@{ObitHistoryHeader2Header}}
+\index{ObitHistoryHeader2Header@{ObitHistoryHeader2Header}!ObitHistory.c@{Obit\-History.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-History\-Header2Header ({\bf Obit\-History} $\ast$ {\em in}, {\bf Obit\-History} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitHistory_8c_a14}
+
+
+Public: Copy history from header (FITS) to header (FITS). 
+
+Both objects should be filly defined. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]Output object for HISTORY header entries. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitHistory.c@{Obit\-History.c}!ObitHistoryInit@{ObitHistoryInit}}
+\index{ObitHistoryInit@{ObitHistoryInit}!ObitHistory.c@{Obit\-History.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-History\-Init (gpointer {\em inn})}\label{ObitHistory_8c_a3}
+
+
+Private: Initialize newly instantiated object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitHistory.c@{Obit\-History.c}!ObitHistoryNumRec@{ObitHistoryNumRec}}
+\index{ObitHistoryNumRec@{ObitHistoryNumRec}!ObitHistory.c@{Obit\-History.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-History\-Num\-Rec ({\bf Obit\-History} $\ast$ {\em in})}\label{ObitHistory_8c_a20}
+
+
+Public: Tell number of history records. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to open object to be tested \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]number of records, $<$0 =$>$ problem \end{Desc}
+\index{ObitHistory.c@{Obit\-History.c}!ObitHistoryOpen@{ObitHistoryOpen}}
+\index{ObitHistoryOpen@{ObitHistoryOpen}!ObitHistory.c@{Obit\-History.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-History\-Open ({\bf Obit\-History} $\ast$ {\em in}, Obit\-IOAccess {\em access}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitHistory_8c_a15}
+
+
+Public: Create {\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} structures and open file. 
+
+The image descriptor is read if OBIT\_\-IO\_\-Read\-Only or OBIT\_\-IO\_\-Read\-Write and written to disk if opened OBIT\_\-IO\_\-Write\-Only. After the file has been opened the member, buffer is initialized for reading/storing the table unless member buffer\-Size is $<$0. If the requested version (\char`\"{}Ver\char`\"{} in Info\-List) is 0 then the highest numbered table of the same type is opened on Read or Read/Write, or a new table is created on on Write. The file etc. info should have been stored in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}: \begin{itemize}
+\item \char`\"{}File\-Type\char`\"{} OBIT\_\-long scalar = OBIT\_\-IO\_\-FITS or OBIT\_\-IO\_\-AIPS for file type (see class documentation for details). \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be opened. \item[{\em access}]access (OBIT\_\-IO\_\-Read\-Only,OBIT\_\-IO\_\-Read\-Write, or OBIT\_\-IO\_\-Write\-Only). If OBIT\_\-IO\_\-Write\-Only any existing data in the output file will be lost. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\end{itemize}
+\index{ObitHistory.c@{Obit\-History.c}!ObitHistoryReadRec@{ObitHistoryReadRec}}
+\index{ObitHistoryReadRec@{ObitHistoryReadRec}!ObitHistory.c@{Obit\-History.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-History\-Read\-Rec ({\bf Obit\-History} $\ast$ {\em in}, {\bf olong} {\em recno}, gchar {\em hi\-Card}[73], {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitHistory_8c_a17}
+
+
+Public: Read specified Record. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be read. \item[{\em recno}]Record number to read, -1 = next; \item[{\em hi\-Card}]Char array to accept line \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK =$>$ OK \end{Desc}
+\index{ObitHistory.c@{Obit\-History.c}!ObitHistoryTimeStamp@{ObitHistoryTimeStamp}}
+\index{ObitHistoryTimeStamp@{ObitHistoryTimeStamp}!ObitHistory.c@{Obit\-History.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-History\-Time\-Stamp ({\bf Obit\-History} $\ast$ {\em in}, gchar $\ast$ {\em label}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitHistory_8c_a19}
+
+
+Public: Add time stamp and label. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be written. \item[{\em label}]Label string for record \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK =$>$ OK \end{Desc}
+\index{ObitHistory.c@{Obit\-History.c}!ObitHistoryWriteRec@{ObitHistoryWriteRec}}
+\index{ObitHistoryWriteRec@{ObitHistoryWriteRec}!ObitHistory.c@{Obit\-History.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-History\-Write\-Rec ({\bf Obit\-History} $\ast$ {\em in}, {\bf olong} {\em recno}, gchar {\em hi\-Card}[73], {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitHistory_8c_a18}
+
+
+Public: Write specified Record. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be written. \item[{\em rowno}]Record number to write, -1 = next; \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK =$>$ OK \end{Desc}
+\index{ObitHistory.c@{Obit\-History.c}!ObitHistoryZap@{ObitHistoryZap}}
+\index{ObitHistoryZap@{ObitHistoryZap}!ObitHistory.c@{Obit\-History.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-History}$\ast$ Obit\-History\-Zap ({\bf Obit\-History} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitHistory_8c_a10}
+
+
+Public: Delete underlying structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be zapped. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer for input object, NULL if deletion successful \end{Desc}

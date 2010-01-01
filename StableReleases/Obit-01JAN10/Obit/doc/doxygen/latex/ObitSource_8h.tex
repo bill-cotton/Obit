@@ -1,0 +1,107 @@
+\section{Obit\-Source.h File Reference}
+\label{ObitSource_8h}\index{ObitSource.h@{ObitSource.h}}
+{\bf Obit\-Source}{\rm (p.\,\pageref{structObitSource})} class definition. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-Source}
+\begin{CompactList}\small\item\em Obit\-Source Class. \item\end{CompactList}\item 
+struct {\bf Obit\-Source\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-Source\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Source}{\rm (p.\,\pageref{structObitSource})} returns a Obit\-Source$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-Source\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Source}{\rm (p.\,\pageref{structObitSource})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Source\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-Source\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Source\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Source} $\ast$ {\bf new\-Obit\-Source} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Source\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Source} $\ast$ {\bf Obit\-Source\-Copy} ({\bf Obit\-Source} $\ast$in, {\bf Obit\-Source} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy constructor. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Source}{\rm (p.\,\pageref{structObitSource})} class definition. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} class.
+
+This class contains information about a given source.\subsection{Usage}\label{ObitSource_8h_ObitSourceUsage}
+Instances can be obtained using the {\bf new\-Obit\-Source}{\rm (p.\,\pageref{ObitSource_8c_a6})} constructor, the {\bf Obit\-Source\-Copy}{\rm (p.\,\pageref{ObitSource_8c_a8})} constructor or a pointer duplicated using the {\bf Obit\-Source\-Ref}{\rm (p.\,\pageref{ObitSource_8h_a1})} macro. When an instance is no longer needed, use the {\bf Obit\-Source\-Unref}{\rm (p.\,\pageref{ObitSource_8h_a0})} macro to release it.
+
+\subsection{Define Documentation}
+\index{ObitSource.h@{Obit\-Source.h}!ObitSourceIsA@{ObitSourceIsA}}
+\index{ObitSourceIsA@{ObitSourceIsA}!ObitSource.h@{Obit\-Source.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Source\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-Source\-Get\-Class())}\label{ObitSource_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitSource.h@{Obit\-Source.h}!ObitSourceRef@{ObitSourceRef}}
+\index{ObitSourceRef@{ObitSourceRef}!ObitSource.h@{Obit\-Source.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Source\-Ref(in)\ Obit\-Ref (in)}\label{ObitSource_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Source}{\rm (p.\,\pageref{structObitSource})}. 
+
+returns a Obit\-Source$\ast$. in = object to reference \index{ObitSource.h@{Obit\-Source.h}!ObitSourceUnref@{ObitSourceUnref}}
+\index{ObitSourceUnref@{ObitSourceUnref}!ObitSource.h@{Obit\-Source.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Source\-Unref(in)\ Obit\-Unref (in)}\label{ObitSource_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Source}{\rm (p.\,\pageref{structObitSource})} returns a Obit\-Source$\ast$. 
+
+in = object to unreference 
+
+\subsection{Function Documentation}
+\index{ObitSource.h@{Obit\-Source.h}!newObitSource@{newObitSource}}
+\index{newObitSource@{newObitSource}!ObitSource.h@{Obit\-Source.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Source}$\ast$ new\-Obit\-Source (gchar $\ast$ {\em name})}\label{ObitSource_8h_a4}
+
+
+Public: Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitSource.h@{Obit\-Source.h}!ObitSourceClassInit@{ObitSourceClassInit}}
+\index{ObitSourceClassInit@{ObitSourceClassInit}!ObitSource.h@{Obit\-Source.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Source\-Class\-Init (void)}\label{ObitSource_8h_a3}
+
+
+Public: Class initializer. 
+
+\index{ObitSource.h@{Obit\-Source.h}!ObitSourceCopy@{ObitSourceCopy}}
+\index{ObitSourceCopy@{ObitSourceCopy}!ObitSource.h@{Obit\-Source.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Source}$\ast$ Obit\-Source\-Copy ({\bf Obit\-Source} $\ast$ {\em in}, {\bf Obit\-Source} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSource_8h_a6}
+
+
+Public: Copy constructor. 
+
+Parent class members are included but any derived class info is ignored. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitSource.h@{Obit\-Source.h}!ObitSourceGetClass@{ObitSourceGetClass}}
+\index{ObitSourceGetClass@{ObitSourceGetClass}!ObitSource.h@{Obit\-Source.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Source\-Get\-Class (void)}\label{ObitSource_8h_a5}
+
+
+Public: Class\-Info pointer. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}

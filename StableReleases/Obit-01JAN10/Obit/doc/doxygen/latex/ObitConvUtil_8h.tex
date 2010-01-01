@@ -1,0 +1,77 @@
+\section{Obit\-Conv\-Util.h File Reference}
+\label{ObitConvUtil_8h}\index{ObitConvUtil.h@{ObitConvUtil.h}}
+Obit\-Conv\-Util utility module definition for the {\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})} class. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-FFT.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Conv\-Util\-Conv} ({\bf Obit\-Image} $\ast$in\-Image, {\bf Obit\-FArray} $\ast$conv\-Fn, gboolean do\-Divide, {\bf ofloat} rescale, {\bf Obit\-Image} $\ast$out\-Image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em (de)Convolve an Image with an FArray and write out\-Image This routine convolves all selected planes in in\-Image with conv\-Fn if do\-Divide is FALSE, else it does a linear deconvolution Operations are performed using FFTs \item\end{CompactList}\item 
+void {\bf Obit\-Conv\-Util\-Conv\-Gauss} ({\bf Obit\-Image} $\ast$in\-Image, {\bf ofloat} Gaumaj, {\bf ofloat} Gaumin, {\bf ofloat} Gau\-PA, {\bf ofloat} rescale, {\bf Obit\-Image} $\ast$out\-Image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Convolve an Image with an FArray and write out\-Image This routine convolves all selected planes in a Gaussian Operations are performed using FFTs. \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf Obit\-Conv\-Util\-Gaus} ({\bf Obit\-Image} $\ast$in\-Image, {\bf ofloat} Beam[3])
+\begin{CompactList}\small\item\em Create an {\bf Obit\-FArray}{\rm (p.\,\pageref{structObitFArray})} containing a unit area Gaussian in the center. \item\end{CompactList}\item 
+void {\bf Obit\-Conv\-Util\-Deconv} ({\bf ofloat} fmaj, {\bf ofloat} fmin, {\bf ofloat} fpa, {\bf ofloat} cmaj, {\bf ofloat} cmin, {\bf ofloat} cpa, {\bf ofloat} $\ast$rmaj, {\bf ofloat} $\ast$rmin, {\bf ofloat} $\ast$rpa)
+\begin{CompactList}\small\item\em Deconvolves a Gaussian \char`\"{}beam\char`\"{} from a Gaussian component. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Conv\-Util utility module definition for the {\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})} class. 
+
+Routines for image convolution
+
+\subsection{Function Documentation}
+\index{ObitConvUtil.h@{Obit\-Conv\-Util.h}!ObitConvUtilConv@{ObitConvUtilConv}}
+\index{ObitConvUtilConv@{ObitConvUtilConv}!ObitConvUtil.h@{Obit\-Conv\-Util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Conv\-Util\-Conv ({\bf Obit\-Image} $\ast$ {\em in\-Image}, {\bf Obit\-FArray} $\ast$ {\em conv\-Fn}, gboolean {\em do\-Divide}, {\bf ofloat} {\em rescale}, {\bf Obit\-Image} $\ast$ {\em out\-Image}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitConvUtil_8h_a0}
+
+
+(de)Convolve an Image with an FArray and write out\-Image This routine convolves all selected planes in in\-Image with conv\-Fn if do\-Divide is FALSE, else it does a linear deconvolution Operations are performed using FFTs 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-Image}]Input {\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})} \item[{\em conv\-Fn}]Convolving Function \item[{\em do\-Dovide}]If true divide FT of conv\-Fn into FT of in\-Image, else multiply \item[{\em rescale}]multiplication factor to scale output to correct units \item[{\em out\-Image}]Output {\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})} must be a clone of in\-Image Actual convolution size must be set externally \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitConvUtil.h@{Obit\-Conv\-Util.h}!ObitConvUtilConvGauss@{ObitConvUtilConvGauss}}
+\index{ObitConvUtilConvGauss@{ObitConvUtilConvGauss}!ObitConvUtil.h@{Obit\-Conv\-Util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Conv\-Util\-Conv\-Gauss ({\bf Obit\-Image} $\ast$ {\em in\-Image}, {\bf ofloat} {\em Gaumaj}, {\bf ofloat} {\em Gaumin}, {\bf ofloat} {\em Gau\-PA}, {\bf ofloat} {\em rescale}, {\bf Obit\-Image} $\ast$ {\em out\-Image}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitConvUtil_8h_a1}
+
+
+Convolve an Image with an FArray and write out\-Image This routine convolves all selected planes in a Gaussian Operations are performed using FFTs. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-Image}]Input {\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})} \item[{\em Gaumaj}]Major axis of Gaussian in image plane (arcsec) \item[{\em Gaumin}]Minor axis of Gaussian in image plane (arcsec) \item[{\em Gau\-PA}]Position angle of Gaussian in image plane, from N thru E, (deg) \item[{\em rescale}]Multiplication factor to scale output to correct units \item[{\em out\-Image}]Output {\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})} must be a clone of in\-Image Actual convolution size must be set externally \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitConvUtil.h@{Obit\-Conv\-Util.h}!ObitConvUtilDeconv@{ObitConvUtilDeconv}}
+\index{ObitConvUtilDeconv@{ObitConvUtilDeconv}!ObitConvUtil.h@{Obit\-Conv\-Util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Conv\-Util\-Deconv ({\bf ofloat} {\em fmaj}, {\bf ofloat} {\em fmin}, {\bf ofloat} {\em fpa}, {\bf ofloat} {\em cmaj}, {\bf ofloat} {\em cmin}, {\bf ofloat} {\em cpa}, {\bf ofloat} $\ast$ {\em rmaj}, {\bf ofloat} $\ast$ {\em rmin}, {\bf ofloat} $\ast$ {\em rpa})}\label{ObitConvUtil_8h_a3}
+
+
+Deconvolves a Gaussian \char`\"{}beam\char`\"{} from a Gaussian component. 
+
+Routine translated from the AIPSish APL/SUB/DECONV.FOR/DECONV \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em fmaj}]Convolved major axis \item[{\em fmin}]Convolved minor axis \item[{\em fpa}]Convolved position angle of major axis \item[{\em cmaj}]Beam major axis \item[{\em cmin}]Beam minor axis \item[{\em cpa}]Beam position angle of major axis \item[{\em rmaj}][out] Actual major axis; = 0 =$>$ unable to fit \item[{\em rmin}][out] Actual minor axis; = 0 =$>$ unable to fit \item[{\em rpa}][out] Actual position angle of major axis \end{description}
+\end{Desc}
+\index{ObitConvUtil.h@{Obit\-Conv\-Util.h}!ObitConvUtilGaus@{ObitConvUtilGaus}}
+\index{ObitConvUtilGaus@{ObitConvUtilGaus}!ObitConvUtil.h@{Obit\-Conv\-Util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ Obit\-Conv\-Util\-Gaus ({\bf Obit\-Image} $\ast$ {\em in\-Image}, {\bf ofloat} {\em Beam}[3])}\label{ObitConvUtil_8h_a2}
+
+
+Create an {\bf Obit\-FArray}{\rm (p.\,\pageref{structObitFArray})} containing a unit area Gaussian in the center. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-Image}]{\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})} giving the geometry of the output array \item[{\em Beam}]Gaussian major, minor axis, position angle all in deg. If there is no pixel spacing information in the in\-Image descriptor then the size is assumed in pixels. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]new {\bf Obit\-FArray}{\rm (p.\,\pageref{structObitFArray})}, should be Unreffed when done \end{Desc}

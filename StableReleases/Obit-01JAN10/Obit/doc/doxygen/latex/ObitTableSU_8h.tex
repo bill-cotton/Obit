@@ -1,0 +1,331 @@
+\section{Obit\-Table\-SU.h File Reference}
+\label{ObitTableSU_8h}\index{ObitTableSU.h@{ObitTableSU.h}}
+{\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})} class definition. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Data.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-Table\-SU}
+\begin{CompactList}\small\item\em Obit\-Table\-SU Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Table\-SURow}
+\begin{CompactList}\small\item\em Obit\-Table\-SURow Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Table\-SUClass\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Table\-SURow\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure For Table\-SURow. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf MAXKEYCHARTABLESU}\ 24
+\begin{CompactList}\small\item\em Number of characters for Table keyword. \item\end{CompactList}\item 
+\#define {\bf Obit\-Table\-SUUnref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})} returns an Obit\-Table\-SU$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-Table\-SURef}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Table\-SUIs\-A}(in)\ Obit\-Is\-A (in, Obit\-Table\-SUGet\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\item 
+\#define {\bf Obit\-Table\-SURow\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Table\-SURow}{\rm (p.\,\pageref{structObitTableSURow})} returns an Obit\-Table\-SURow$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-Table\-SURow\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Table\-SURow}{\rm (p.\,\pageref{structObitTableSURow})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Table\-SURow\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-Table\-SURow\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Table\-SURow\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Row Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Table\-SURow} $\ast$ {\bf new\-Obit\-Table\-SURow} ({\bf Obit\-Table\-SU} $\ast$table)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Table\-SURow\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-SUClass\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Table\-SU} $\ast$ {\bf new\-Obit\-Table\-SU} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-SU} $\ast$ {\bf new\-Obit\-Table\-SUValue} (gchar $\ast$name, {\bf Obit\-Data} $\ast$file, {\bf olong} $\ast$ver, Obit\-IOAccess access, {\bf oint} num\-IF, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Constructor from values. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Table\-SUGet\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Table\-SU} $\ast$ {\bf Obit\-Table\-SUCopy} ({\bf Obit\-Table\-SU} $\ast$in, {\bf Obit\-Table\-SU} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-SU} $\ast$ {\bf Obit\-Table\-SUClone} ({\bf Obit\-Table\-SU} $\ast$in, {\bf Obit\-Table\-SU} $\ast$out)
+\begin{CompactList}\small\item\em Public: Copy (shallow) constructor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-SU} $\ast$ {\bf Obit\-Table\-SUConvert} ({\bf Obit\-Table} $\ast$in)
+\begin{CompactList}\small\item\em Public: Convert an {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} to an {\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})}. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-SUOpen} ({\bf Obit\-Table\-SU} $\ast$in, Obit\-IOAccess access, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create {\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} structures and open file. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-SURead\-Row} ({\bf Obit\-Table\-SU} $\ast$in, {\bf olong} i\-SURow, {\bf Obit\-Table\-SURow} $\ast$row, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read a table row. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-SUSet\-Row} ({\bf Obit\-Table\-SU} $\ast$in, {\bf Obit\-Table\-SURow} $\ast$row, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Init a table row for write. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-SUWrite\-Row} ({\bf Obit\-Table\-SU} $\ast$in, {\bf olong} i\-SURow, {\bf Obit\-Table\-SURow} $\ast$row, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Write a table row. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-SUClose} ({\bf Obit\-Table\-SU} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Close file and become inactive. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})} class definition. 
+
+This class is derived from the {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} class.
+
+This class contains tabular data and allows access. \char`\"{}AIPS SU\char`\"{} contains information about astronomical sources. An {\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})} is the front end to a persistent disk resident structure. Both FITS and AIPS cataloged data are supported. This class is derived from the {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} class.
+
+This class contains tabular data and allows access. \char`\"{}AIPS SU\char`\"{} table An {\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})} is the front end to a persistent disk resident structure. Both FITS (as Tables) and AIPS cataloged data are supported.\subsection{History\-Table data storage}\label{ObitTableWX_8h_TableDataStorage}
+In memory tables are stored in a fashion similar to how they are stored on disk - in large blocks in memory rather than structures. Due to the word alignment requirements of some machines, they are stored by order of the decreasing element size: double, float long, int, short, char rather than the logical order. The details of the storage in the buffer are kept in the \#Obit\-Table\-SUDesc.
+
+In addition to the normal tabular data, a table will have a \char`\"{}\_\-status\char`\"{} column to indicate the status of each row. The status value is read from and written to (some modification) AIPS tables but are not written to externally generated FITS tables which don't have these colummns. It will be written to {\bf Obit}{\rm (p.\,\pageref{structObit})} generated tables which will have these columns. Status values: \begin{itemize}
+\item status = 0 =$>$ normal \item status = 1 =$>$ row has been modified (or created) and needs to be written. \item status = -1 =$>$ row has been marked invalid.\end{itemize}
+\subsection{Specifying desired data transfer parameters}\label{ObitTableSU_8h_ObitTableSUSpecification}
+The desired data transfers are specified in the member {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. There are separate sets of parameters used to specify the FITS or AIPS data files. In the following an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} entry is defined by the name in double quotes, the data type code as an \#Obit\-Info\-Type enum and the dimensions of the array (? =$>$ depends on application). To specify whether the underlying data files are FITS or AIPS \begin{itemize}
+\item \char`\"{}File\-Type\char`\"{} OBIT\_\-int (1,1,1) OBIT\_\-IO\_\-FITS or OBIT\_\-IO\_\-AIPS which are values of an \#Obit\-IOType enum defined in {\bf Obit\-IO.h}{\rm (p.\,\pageref{ObitIO_8h})}.\end{itemize}
+The following apply to both types of files: \begin{itemize}
+\item \char`\"{}n\-Row\-PIO\char`\"{}, OBIT\_\-int, Max. Number of visibilities per \char`\"{}Read\char`\"{} or \char`\"{}Write\char`\"{} operation. Default = 1.\end{itemize}
+\subsubsection{FITS files}\label{ObitTableWX_8h_TableFITS}
+This implementation uses cfitsio which allows using, in addition to regular FITS images, gzip compressed files, pipes, shared memory and a number of other input forms. The convenience Macro \#Obit\-Table\-SUSet\-FITS simplifies specifying the desired data. Binary tables are used for storing visibility data in FITS. For accessing FITS files the following entries in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} are used: \begin{itemize}
+\item \char`\"{}File\-Name\char`\"{} OBIT\_\-string (?,1,1) FITS file name. \item \char`\"{}Tab\-Name\char`\"{} OBIT\_\-string (?,1,1) Table name (e.g. \char`\"{}AIPS CC\char`\"{}). \item \char`\"{}Ver\char`\"{} OBIT\_\-int (1,1,1) Table version number\end{itemize}
+subsection Obit\-Table\-SUAIPS AIPS files The {\bf Obit\-AIPS}{\rm (p.\,\pageref{structObitAIPS})} class must be initialized before accessing AIPS files; this uses {\bf Obit\-AIPSClass\-Init}{\rm (p.\,\pageref{ObitAIPS_8c_a5})}. For accessing AIPS files the following entries in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} are used: \begin{itemize}
+\item \char`\"{}Disk\char`\"{} OBIT\_\-int (1,1,1) AIPS \char`\"{}disk\char`\"{} number. \item \char`\"{}User\char`\"{} OBIT\_\-int (1,1,1) user number. \item \char`\"{}CNO\char`\"{} OBIT\_\-int (1,1,1) AIPS catalog slot number. \item \char`\"{}Table\-Type\char`\"{} OBIT\_\-string (2,1,1) AIPS Table type \item \char`\"{}Ver\char`\"{} OBIT\_\-int (1,1,1) AIPS table version number.\end{itemize}
+\subsection{Creators and Destructors}\label{ObitTableSU_8h_ObitTableSUaccess}
+An {\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})} can be created using new\-Obit\-Table\-SUValue which attaches the table to an {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} for the object. If the output {\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})} has previously been specified, including file information, then Obit\-Table\-SUCopy will copy the disk resident as well as the memory resident information.
+
+A copy of a pointer to an {\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})} should always be made using the Obit\-Table\-SURef function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})} or changing a pointer, the function Obit\-Table\-SUUnref will decrement the reference count and destroy the object when the reference count hits 0.\subsection{I/O}\label{ObitTableSU_8h_ObitTableSUUsage}
+Visibility data is available after an input object is \char`\"{}Opened\char`\"{} and \char`\"{}Read\char`\"{}. I/O optionally uses a buffer attached to the {\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})} or some external location. To Write an {\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})}, create it, open it, and write. The object should be closed to ensure all data is flushed to disk. Deletion of an {\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})} after its final unreferencing will automatically close it.
+
+\subsection{Define Documentation}
+\index{ObitTableSU.h@{Obit\-Table\-SU.h}!MAXKEYCHARTABLESU@{MAXKEYCHARTABLESU}}
+\index{MAXKEYCHARTABLESU@{MAXKEYCHARTABLESU}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAXKEYCHARTABLESU\ 24}\label{ObitTableSU_8h_a0}
+
+
+Number of characters for Table keyword. 
+
+\index{ObitTableSU.h@{Obit\-Table\-SU.h}!ObitTableSUIsA@{ObitTableSUIsA}}
+\index{ObitTableSUIsA@{ObitTableSUIsA}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Table\-SUIs\-A(in)\ Obit\-Is\-A (in, Obit\-Table\-SUGet\-Class())}\label{ObitTableSU_8h_a3}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitTableSU.h@{Obit\-Table\-SU.h}!ObitTableSURef@{ObitTableSURef}}
+\index{ObitTableSURef@{ObitTableSURef}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Table\-SURef(in)\ Obit\-Ref (in)}\label{ObitTableSU_8h_a2}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})}. 
+
+returns an Obit\-Table\-SU$\ast$. in = object to reference \index{ObitTableSU.h@{Obit\-Table\-SU.h}!ObitTableSURowIsA@{ObitTableSURowIsA}}
+\index{ObitTableSURowIsA@{ObitTableSURowIsA}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Table\-SURow\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-Table\-SURow\-Get\-Class())}\label{ObitTableSU_8h_a6}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitTableSU.h@{Obit\-Table\-SU.h}!ObitTableSURowRef@{ObitTableSURowRef}}
+\index{ObitTableSURowRef@{ObitTableSURowRef}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Table\-SURow\-Ref(in)\ Obit\-Ref (in)}\label{ObitTableSU_8h_a5}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Table\-SURow}{\rm (p.\,\pageref{structObitTableSURow})}. 
+
+returns an Obit\-Table\-SURow$\ast$. in = object to reference \index{ObitTableSU.h@{Obit\-Table\-SU.h}!ObitTableSURowUnref@{ObitTableSURowUnref}}
+\index{ObitTableSURowUnref@{ObitTableSURowUnref}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Table\-SURow\-Unref(in)\ Obit\-Unref (in)}\label{ObitTableSU_8h_a4}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Table\-SURow}{\rm (p.\,\pageref{structObitTableSURow})} returns an Obit\-Table\-SURow$\ast$. 
+
+in = object to unreference \index{ObitTableSU.h@{Obit\-Table\-SU.h}!ObitTableSUUnref@{ObitTableSUUnref}}
+\index{ObitTableSUUnref@{ObitTableSUUnref}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Table\-SUUnref(in)\ Obit\-Unref (in)}\label{ObitTableSU_8h_a1}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})} returns an Obit\-Table\-SU$\ast$. 
+
+in = object to unreference 
+
+\subsection{Function Documentation}
+\index{ObitTableSU.h@{Obit\-Table\-SU.h}!newObitTableSU@{newObitTableSU}}
+\index{newObitTableSU@{newObitTableSU}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-SU}$\ast$ new\-Obit\-Table\-SU (gchar $\ast$ {\em name})}\label{ObitTableSU_8h_a11}
+
+
+Public: Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitTableSU.h@{Obit\-Table\-SU.h}!newObitTableSURow@{newObitTableSURow}}
+\index{newObitTableSURow@{newObitTableSURow}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-SURow}$\ast$ new\-Obit\-Table\-SURow ({\bf Obit\-Table\-SU} $\ast$ {\em table})}\label{ObitTableSU_8h_a8}
+
+
+Public: Constructor. 
+
+If table is open and for write, the row is attached to the buffer Initializes Row class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitTableSU.h@{Obit\-Table\-SU.h}!newObitTableSUValue@{newObitTableSUValue}}
+\index{newObitTableSUValue@{newObitTableSUValue}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-SU}$\ast$ new\-Obit\-Table\-SUValue (gchar $\ast$ {\em name}, {\bf Obit\-Data} $\ast$ {\em file}, {\bf olong} $\ast$ {\em ver}, Obit\-IOAccess {\em access}, {\bf oint} {\em num\-IF}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableSU_8h_a12}
+
+
+Public: Constructor from values. 
+
+Creates a new table structure and attaches to the Table\-List of file. If the specified table already exists then it is returned. Initializes class if needed on first call. Forces an update of any disk resident structures (e.g. AIPS header). \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em file}]{\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} which which the table is to be associated. \item[{\em ver}]Table version number. 0=$>$ add higher, value used returned \item[{\em access}]access (OBIT\_\-IO\_\-Read\-Only, means do not create if it doesn't exist. \item[{\em num\-IF}]The number of IFs \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object, NULL on failure. \end{Desc}
+\index{ObitTableSU.h@{Obit\-Table\-SU.h}!ObitTableSUClassInit@{ObitTableSUClassInit}}
+\index{ObitTableSUClassInit@{ObitTableSUClassInit}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-SUClass\-Init (void)}\label{ObitTableSU_8h_a10}
+
+
+Public: Class initializer. 
+
+\index{ObitTableSU.h@{Obit\-Table\-SU.h}!ObitTableSUClone@{ObitTableSUClone}}
+\index{ObitTableSUClone@{ObitTableSUClone}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-SU}$\ast$ Obit\-Table\-SUClone ({\bf Obit\-Table\-SU} $\ast$ {\em in}, {\bf Obit\-Table\-SU} $\ast$ {\em out})}\label{ObitTableSU_8h_a15}
+
+
+Public: Copy (shallow) constructor. 
+
+\index{ObitTableSU.h@{Obit\-Table\-SU.h}!ObitTableSUClose@{ObitTableSUClose}}
+\index{ObitTableSUClose@{ObitTableSUClose}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-SUClose ({\bf Obit\-Table\-SU} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableSU_8h_a21}
+
+
+Public: Close file and become inactive. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be closed. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]error code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitTableSU.h@{Obit\-Table\-SU.h}!ObitTableSUConvert@{ObitTableSUConvert}}
+\index{ObitTableSUConvert@{ObitTableSUConvert}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-SU}$\ast$ Obit\-Table\-SUConvert ({\bf Obit\-Table} $\ast$ {\em in})}\label{ObitTableSU_8h_a16}
+
+
+Public: Convert an {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} to an {\bf Obit\-Table\-SU}{\rm (p.\,\pageref{structObitTableSU})}. 
+
+New object will have references to members of in. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy, will still exist afterwards and should be Unrefed if not needed. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitTableSU.h@{Obit\-Table\-SU.h}!ObitTableSUCopy@{ObitTableSUCopy}}
+\index{ObitTableSUCopy@{ObitTableSUCopy}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-SU}$\ast$ Obit\-Table\-SUCopy ({\bf Obit\-Table\-SU} $\ast$ {\em in}, {\bf Obit\-Table\-SU} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableSU_8h_a14}
+
+
+Public: Copy (deep) constructor. 
+
+Copies are made of complex members including disk files; these will be copied applying whatever selection is associated with the input. Objects should be closed on input and will be closed on output. In order for the disk file structures to be copied, the output file must be sufficiently defined that it can be written. The copy will be attempted but no errors will be logged until both input and output have been successfully opened. {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} and {\bf Obit\-Thread}{\rm (p.\,\pageref{structObitThread})} members are only copied if the output object didn't previously exist. Parent class members are included but any derived class info is ignored. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitTableSU.h@{Obit\-Table\-SU.h}!ObitTableSUGetClass@{ObitTableSUGetClass}}
+\index{ObitTableSUGetClass@{ObitTableSUGetClass}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Table\-SUGet\-Class (void)}\label{ObitTableSU_8h_a13}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitTableSU.h@{Obit\-Table\-SU.h}!ObitTableSUOpen@{ObitTableSUOpen}}
+\index{ObitTableSUOpen@{ObitTableSUOpen}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-SUOpen ({\bf Obit\-Table\-SU} $\ast$ {\em in}, Obit\-IOAccess {\em access}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableSU_8h_a17}
+
+
+Public: Create {\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} structures and open file. 
+
+The image descriptor is read if OBIT\_\-IO\_\-Read\-Only or OBIT\_\-IO\_\-Read\-Write and written to disk if opened OBIT\_\-IO\_\-Write\-Only. After the file has been opened the member, buffer is initialized for reading/storing the table unless member buffer\-Size is $<$0. If the requested version (\char`\"{}Ver\char`\"{} in Info\-List) is 0 then the highest numbered table of the same type is opened on Read or Read/Write, or a new table is created on on Write. The file etc. info should have been stored in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}: \begin{itemize}
+\item \char`\"{}File\-Type\char`\"{} OBIT\_\-long scalar = OBIT\_\-IO\_\-FITS or OBIT\_\-IO\_\-AIPS for file type (see class documentation for details). \item \char`\"{}n\-Row\-PIO\char`\"{} OBIT\_\-long scalar = Maximum number of table rows per transfer, this is the target size for Reads (may be fewer) and is used to create buffers. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be opened. \item[{\em access}]access (OBIT\_\-IO\_\-Read\-Only,OBIT\_\-IO\_\-Read\-Write, or OBIT\_\-IO\_\-Write\-Only). If OBIT\_\-IO\_\-Write\-Only any existing data in the output file will be lost. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\end{itemize}
+\index{ObitTableSU.h@{Obit\-Table\-SU.h}!ObitTableSUReadRow@{ObitTableSUReadRow}}
+\index{ObitTableSUReadRow@{ObitTableSUReadRow}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-SURead\-Row ({\bf Obit\-Table\-SU} $\ast$ {\em in}, {\bf olong} {\em i\-SURow}, {\bf Obit\-Table\-SURow} $\ast$ {\em row}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableSU_8h_a18}
+
+
+Public: Read a table row. 
+
+Scalar values are copied but for array values, pointers into the data array are returned. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table to read \item[{\em i\-SURow}]Row number, -1 -$>$ next \item[{\em row}]Table Row structure to receive data \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitTableSU.h@{Obit\-Table\-SU.h}!ObitTableSURowClassInit@{ObitTableSURowClassInit}}
+\index{ObitTableSURowClassInit@{ObitTableSURowClassInit}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-SURow\-Class\-Init (void)}\label{ObitTableSU_8h_a7}
+
+
+Public: Row Class initializer. 
+
+\index{ObitTableSU.h@{Obit\-Table\-SU.h}!ObitTableSURowGetClass@{ObitTableSURowGetClass}}
+\index{ObitTableSURowGetClass@{ObitTableSURowGetClass}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Table\-SURow\-Get\-Class (void)}\label{ObitTableSU_8h_a9}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the Row class structure. \end{Desc}
+\index{ObitTableSU.h@{Obit\-Table\-SU.h}!ObitTableSUSetRow@{ObitTableSUSetRow}}
+\index{ObitTableSUSetRow@{ObitTableSUSetRow}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-SUSet\-Row ({\bf Obit\-Table\-SU} $\ast$ {\em in}, {\bf Obit\-Table\-SURow} $\ast$ {\em row}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableSU_8h_a19}
+
+
+Public: Init a table row for write. 
+
+This is only useful prior to filling a row structure in preparation . for a Write\-Row operation. Array members of the Row structure are . pointers to independently allocated memory, this routine allows using . the table IO buffer instead of allocating yet more memory.. This routine need only be called once to initialize a Row structure for write.. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table with buffer to be written \item[{\em row}]Table Row structure to attach \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitTableSU.h@{Obit\-Table\-SU.h}!ObitTableSUWriteRow@{ObitTableSUWriteRow}}
+\index{ObitTableSUWriteRow@{ObitTableSUWriteRow}!ObitTableSU.h@{Obit\-Table\-SU.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-SUWrite\-Row ({\bf Obit\-Table\-SU} $\ast$ {\em in}, {\bf olong} {\em i\-SURow}, {\bf Obit\-Table\-SURow} $\ast$ {\em row}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableSU_8h_a20}
+
+
+Public: Write a table row. 
+
+Before calling this routine, the row structure needs to be initialized and filled with data. The array members of the row structure are pointers to independently allocated memory. These pointers can be set to the correct table buffer locations using Obit\-Table\-SUSet\-Row \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table to read \item[{\em i\-SURow}]Row number, -1 -$>$ next \item[{\em row}]Table Row structure containing data \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}

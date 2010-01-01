@@ -1,0 +1,23 @@
+
+                  Change log for ObitView
+
+   1  06 June 2005, Version 0.0:  Clone from XFITSview
+
+   2  22 July 2005, Version 0.0   Switch to Obit image IO
+      Now supports AIPS (through xmlrpc interface) and  FITS
+      and interactive editing of Clean boxes.
+
+   3 6 June 2006   Version 0.0  bug fix
+     EditRequestBox: Update max field number in requestbox.
+
+moviebox.c:MovieLoadPlane: return if load fails, 
+various: check image validity
+X src/imagedisp.c src/logger.c: Trap out of image NULLs from ObitFArrayIndex
+X src/drawbox.c  add Gg key function to toggle between box and unbox
+X src/helpbox.c  update editing function descriptions
+
+3 July 2007, Version 0.1 Add timeout
+   Add timeout for edit requests.  Value can be set in OptionBox.
+   Allows infinite timeout.
+   Fix problems in blinking.
+

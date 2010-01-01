@@ -1,0 +1,766 @@
+\section{Obit\-UVCal\-Calibrate\-S Struct Reference}
+\label{structObitUVCalCalibrateS}\index{ObitUVCalCalibrateS@{ObitUVCalCalibrateS}}
+Amp/phase/delay/rate calibration structure.  
+
+
+{\tt \#include $<$Obit\-UVCal.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+{\bf Obit} $\ast$ {\bf CLTable}
+\begin{CompactList}\small\item\em Calibration CL table (as Obit$\ast$). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf CLTable\-Row}
+\begin{CompactList}\small\item\em CL Table Row (as Obit$\ast$). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf SNTable}
+\begin{CompactList}\small\item\em Calibration SN table (as Obit$\ast$). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf SNTable\-Row}
+\begin{CompactList}\small\item\em SN Table Row (as Obit$\ast$). \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Row}
+\begin{CompactList}\small\item\em Number of rows in calibration table. \item\end{CompactList}\item 
+{\bf olong} {\bf Last\-Row\-Read}
+\begin{CompactList}\small\item\em Last Row read. \item\end{CompactList}\item 
+gboolean {\bf do\-SNTable}
+\begin{CompactList}\small\item\em Use SN (else CL) table? \item\end{CompactList}\item 
+gboolean {\bf do\-Cal\-Wt}
+\begin{CompactList}\small\item\em Calibrate Weights? \item\end{CompactList}\item 
+gboolean {\bf do\-Rate\-Smear}
+\begin{CompactList}\small\item\em Make rate smearing correction? \{DORSM\}. \item\end{CompactList}\item 
+gboolean {\bf do\-Delay\-Rate}
+\begin{CompactList}\small\item\em Make delay/rate correction? \item\end{CompactList}\item 
+{\bf olong} {\bf len\-Cal\-Array\-Entry}
+\begin{CompactList}\small\item\em length of entry in Cal\-Apply/Cal\-Prior/Cal\-Follow (LCUCAL) \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Ant}
+\begin{CompactList}\small\item\em Number of antennas in calibration table (actually max antenna no). \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Sub\-A}
+\begin{CompactList}\small\item\em Number of subarrays in the data. \item\end{CompactList}\item 
+{\bf olong} {\bf num\-IF}
+\begin{CompactList}\small\item\em Number of IFs in data. \item\end{CompactList}\item 
+{\bf olong} {\bf Sub\-A}
+\begin{CompactList}\small\item\em Selected Subarray number. \item\end{CompactList}\item 
+{\bf olong} {\bf Freq\-ID}
+\begin{CompactList}\small\item\em Selected Frequency ID number. \item\end{CompactList}\item 
+{\bf olong} {\bf b\-IF}
+\begin{CompactList}\small\item\em Start IF number (1-rel) selected. \item\end{CompactList}\item 
+{\bf olong} {\bf e\-IF}
+\begin{CompactList}\small\item\em highest IF (1-rel) selected \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Chan}
+\begin{CompactList}\small\item\em Number of channels in data. \item\end{CompactList}\item 
+{\bf olong} {\bf b\-Chan}
+\begin{CompactList}\small\item\em Start channel number (1-rel). \item\end{CompactList}\item 
+{\bf olong} {\bf e\-Chan}
+\begin{CompactList}\small\item\em highest channel (1-rel) \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Pol}
+\begin{CompactList}\small\item\em Number of polarizations in the calibration table (1 or 2). \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Lambda}
+\begin{CompactList}\small\item\em number of entries in Lambda for each IF \{NLAMBDA\} \item\end{CompactList}\item 
+{\bf olong} {\bf Pol\-Off} [2][4]
+\begin{CompactList}\small\item\em Offset from the beginning an IF entry in the calibration array for a given polarization. \item\end{CompactList}\item 
+{\bf olong} {\bf count\-Rec} [3][2]
+\begin{CompactList}\small\item\em Count of the good, the bad and ugly. \item\end{CompactList}\item 
+{\bf olong} {\bf Cur\-Sour\-ID}
+\begin{CompactList}\small\item\em current source ID in cal table \item\end{CompactList}\item 
+{\bf olong} {\bf Prior\-Sour\-ID}
+\begin{CompactList}\small\item\em Prior source ID in cal table. \item\end{CompactList}\item 
+{\bf olong} {\bf Follow\-Sour\-ID}
+\begin{CompactList}\small\item\em Following source ID in cal table. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Prior\-Cal\-Time}
+\begin{CompactList}\small\item\em Prior time in cal table \{CALTIM(1)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Prior\-Ant\-Time}
+\begin{CompactList}\small\item\em Prior time per antenna. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Follow\-Cal\-Time}
+\begin{CompactList}\small\item\em Following Time in cal table \{CALTIM(2)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Follow\-Ant\-Time}
+\begin{CompactList}\small\item\em Following time per antenna. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Cal\-Time}
+\begin{CompactList}\small\item\em time of calibration in Cal\-Apply \{LCALTM\} \item\end{CompactList}\item 
+{\bf ofloat} {\bf Delta\-Time}
+\begin{CompactList}\small\item\em Integration time of data (days). \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Cal\-Apply}
+\begin{CompactList}\small\item\em Calibration array to apply to data \{CURCAL\} Values in order: By antenna \{NUMANT\} By IF (EIF-BIF+1) By Polarization \{NUMPOL\} Real part, imaginary part, cos(delta), sin(delta), rate Where delta is the phase change between channels and rate is the fringe rate in radians/day. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Cal\-Prior}
+\begin{CompactList}\small\item\em Prior calibration array from cal (SN or CL table) \{CALTAB($\ast$,1)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Cal\-Follow}
+\begin{CompactList}\small\item\em Following calibration array from cal (SN or CL table) \{CALTAB($\ast$,1)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf IFR}
+\begin{CompactList}\small\item\em Current Ionospheric Faraday rotation per ant \{IFR\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Prior\-IFR}
+\begin{CompactList}\small\item\em Prior Ionospheric Faraday rotation per ant \{IFRTAB($\ast$,1)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Follow\-IFR}
+\begin{CompactList}\small\item\em Following Ionospheric Faraday rotation per IF \{IFRTAB($\ast$,2)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf DDelay}
+\begin{CompactList}\small\item\em Dispersive delay at time of current datum, one per antenna \{DDELAY\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Prior\-DDelay}
+\begin{CompactList}\small\item\em Prior dispersive delay per ant \{DDTAB($\ast$,1)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Follow\-DDelay}
+\begin{CompactList}\small\item\em Following dispersive delay per ant \{DDTAB($\ast$,1)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Rate\-Fact}
+\begin{CompactList}\small\item\em IF scaling factor to convert s/s to rad/day. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Delay\-Fact}
+\begin{CompactList}\small\item\em IF scaling factor to convert s to rad/channel. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Lambda}
+\begin{CompactList}\small\item\em Array of wavelengths for each channel and IF \{LAMBDA\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf LTaper}
+\begin{CompactList}\small\item\em VLBA Filter Taper function (eg. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf NSpec\-A}
+\begin{CompactList}\small\item\em VLBA Spectral averaging factor per IF and Corr-ID from CQ table \{NSPECA,NXDSM\}. \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf Del\-Bit}
+\begin{CompactList}\small\item\em VLBA Time interval per bit in FFT (s) per IF and Corr-ID from CQ table \{DELBIT, DBTVBA\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf NFFTSize}
+\begin{CompactList}\small\item\em VLBA FFT size per IF and Corr-ID from CQ table \{NFFTSZ,NFTVBA\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf type\-Time\-Filt}
+\begin{CompactList}\small\item\em VLBA Time filter type (0=$>$boxcar; 3=$>$32-4; 4=$>$64-8 per IF and Corr-ID from CQ table (ITYPTF,ITFVBA). \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Time\-Filt\-Time}
+\begin{CompactList}\small\item\em VLBA Time filter averaging time (sec) per IF and Corr-ID from CQ table \{TAVGTF\}. \item\end{CompactList}\item 
+gboolean $\ast$ {\bf do\-Delay\-Decorr}
+\begin{CompactList}\small\item\em is VLBA delay decor. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf corr\-Type}
+\begin{CompactList}\small\item\em VLBA Subarray correlator type (1=VLBA; else non-VLBA) \{NETVLB, ICQVBA\}. \item\end{CompactList}\item 
+gboolean $\ast$ {\bf warn\-No\-CQ}
+\begin{CompactList}\small\item\em VLBA: Print warning about missing CQ per IF and Corr-ID from CQ table \{WARN,WRNVBA\}. \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf CLTable}
+\begin{CompactList}\small\item\em Calibration CL table (as Obit$\ast$). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf CLTable\-Row}
+\begin{CompactList}\small\item\em CL Table Row (as Obit$\ast$). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf SNTable}
+\begin{CompactList}\small\item\em Calibration SN table (as Obit$\ast$). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf SNTable\-Row}
+\begin{CompactList}\small\item\em SN Table Row (as Obit$\ast$). \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Prior\-Ant\-Time}
+\begin{CompactList}\small\item\em Prior time per antenna. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Follow\-Ant\-Time}
+\begin{CompactList}\small\item\em Following time per antenna. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Cal\-Apply}
+\begin{CompactList}\small\item\em Calibration array to apply to data \{CURCAL\} Values in order: By antenna \{NUMANT\} By IF (EIF-BIF+1) By Polarization \{NUMPOL\} Real part, imaginary part, cos(delta), sin(delta), rate Where delta is the phase change between channels and rate is the fringe rate in radians/day. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Cal\-Prior}
+\begin{CompactList}\small\item\em Prior calibration array from cal (SN or CL table) \{CALTAB($\ast$,1)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Cal\-Follow}
+\begin{CompactList}\small\item\em Following calibration array from cal (SN or CL table) \{CALTAB($\ast$,1)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf IFR}
+\begin{CompactList}\small\item\em Current Ionospheric Faraday rotation per ant \{IFR\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Prior\-IFR}
+\begin{CompactList}\small\item\em Prior Ionospheric Faraday rotation per ant \{IFRTAB($\ast$,1)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Follow\-IFR}
+\begin{CompactList}\small\item\em Following Ionospheric Faraday rotation per IF \{IFRTAB($\ast$,2)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf DDelay}
+\begin{CompactList}\small\item\em Dispersive delay at time of current datum, one per antenna \{DDELAY\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Prior\-DDelay}
+\begin{CompactList}\small\item\em Prior dispersive delay per ant \{DDTAB($\ast$,1)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Follow\-DDelay}
+\begin{CompactList}\small\item\em Following dispersive delay per ant \{DDTAB($\ast$,1)\}. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Rate\-Fact}
+\begin{CompactList}\small\item\em IF scaling factor to convert s/s to rad/day. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Delay\-Fact}
+\begin{CompactList}\small\item\em IF scaling factor to convert s to rad/channel. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Lambda}
+\begin{CompactList}\small\item\em Array of wavelengths for each channel and IF \{LAMBDA\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf LTaper}
+\begin{CompactList}\small\item\em VLBA Filter Taper function (eg. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf NSpec\-A}
+\begin{CompactList}\small\item\em VLBA Spectral averaging factor per IF and Corr-ID from CQ table \{NSPECA,NXDSM\}. \item\end{CompactList}\item 
+{\bf odouble} $\ast$ {\bf Del\-Bit}
+\begin{CompactList}\small\item\em VLBA Time interval per bit in FFT (s) per IF and Corr-ID from CQ table \{DELBIT, DBTVBA\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf NFFTSize}
+\begin{CompactList}\small\item\em VLBA FFT size per IF and Corr-ID from CQ table \{NFFTSZ,NFTVBA\}. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf type\-Time\-Filt}
+\begin{CompactList}\small\item\em VLBA Time filter type (0=$>$boxcar; 3=$>$32-4; 4=$>$64-8 per IF and Corr-ID from CQ table (ITYPTF,ITFVBA). \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Time\-Filt\-Time}
+\begin{CompactList}\small\item\em VLBA Time filter averaging time (sec) per IF and Corr-ID from CQ table \{TAVGTF\}. \item\end{CompactList}\item 
+gboolean $\ast$ {\bf do\-Delay\-Decorr}
+\begin{CompactList}\small\item\em is VLBA delay decor. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf corr\-Type}
+\begin{CompactList}\small\item\em VLBA Subarray correlator type (1=VLBA; else non-VLBA) \{NETVLB, ICQVBA\}. \item\end{CompactList}\item 
+gboolean $\ast$ {\bf warn\-No\-CQ}
+\begin{CompactList}\small\item\em VLBA: Print warning about missing CQ per IF and Corr-ID from CQ table \{WARN,WRNVBA\}. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Amp/phase/delay/rate calibration structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!bChan@{bChan}}
+\index{bChan@{bChan}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::b\-Chan}}\label{structObitUVCalCalibrateS_o19}
+
+
+Start channel number (1-rel). 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!bIF@{bIF}}
+\index{bIF@{bIF}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::b\-IF}}\label{structObitUVCalCalibrateS_o16}
+
+
+Start IF number (1-rel) selected. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!CalApply@{CalApply}}
+\index{CalApply@{CalApply}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Cal\-Apply}}\label{structObitUVCalCalibrateS_o61}
+
+
+Calibration array to apply to data \{CURCAL\} Values in order: By antenna \{NUMANT\} By IF (EIF-BIF+1) By Polarization \{NUMPOL\} Real part, imaginary part, cos(delta), sin(delta), rate Where delta is the phase change between channels and rate is the fringe rate in radians/day. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!CalApply@{CalApply}}
+\index{CalApply@{CalApply}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Cal\-Apply}}\label{structObitUVCalCalibrateS_o34}
+
+
+Calibration array to apply to data \{CURCAL\} Values in order: By antenna \{NUMANT\} By IF (EIF-BIF+1) By Polarization \{NUMPOL\} Real part, imaginary part, cos(delta), sin(delta), rate Where delta is the phase change between channels and rate is the fringe rate in radians/day. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!CalFollow@{CalFollow}}
+\index{CalFollow@{CalFollow}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Cal\-Follow}}\label{structObitUVCalCalibrateS_o63}
+
+
+Following calibration array from cal (SN or CL table) \{CALTAB($\ast$,1)\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!CalFollow@{CalFollow}}
+\index{CalFollow@{CalFollow}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Cal\-Follow}}\label{structObitUVCalCalibrateS_o36}
+
+
+Following calibration array from cal (SN or CL table) \{CALTAB($\ast$,1)\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!CalPrior@{CalPrior}}
+\index{CalPrior@{CalPrior}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Cal\-Prior}}\label{structObitUVCalCalibrateS_o62}
+
+
+Prior calibration array from cal (SN or CL table) \{CALTAB($\ast$,1)\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!CalPrior@{CalPrior}}
+\index{CalPrior@{CalPrior}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Cal\-Prior}}\label{structObitUVCalCalibrateS_o35}
+
+
+Prior calibration array from cal (SN or CL table) \{CALTAB($\ast$,1)\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!CalTime@{CalTime}}
+\index{CalTime@{CalTime}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVCal\-Calibrate\-S::Cal\-Time}}\label{structObitUVCalCalibrateS_o32}
+
+
+time of calibration in Cal\-Apply \{LCALTM\} 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!CLTable@{CLTable}}
+\index{CLTable@{CLTable}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::CLTable}}\label{structObitUVCalCalibrateS_o55}
+
+
+Calibration CL table (as Obit$\ast$). 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!CLTable@{CLTable}}
+\index{CLTable@{CLTable}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::CLTable}}\label{structObitUVCalCalibrateS_o0}
+
+
+Calibration CL table (as Obit$\ast$). 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!CLTableRow@{CLTableRow}}
+\index{CLTableRow@{CLTableRow}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::CLTable\-Row}}\label{structObitUVCalCalibrateS_o56}
+
+
+CL Table Row (as Obit$\ast$). 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!CLTableRow@{CLTableRow}}
+\index{CLTableRow@{CLTableRow}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::CLTable\-Row}}\label{structObitUVCalCalibrateS_o1}
+
+
+CL Table Row (as Obit$\ast$). 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!corrType@{corrType}}
+\index{corrType@{corrType}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::corr\-Type}}\label{structObitUVCalCalibrateS_o80}
+
+
+VLBA Subarray correlator type (1=VLBA; else non-VLBA) \{NETVLB, ICQVBA\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!corrType@{corrType}}
+\index{corrType@{corrType}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::corr\-Type}}\label{structObitUVCalCalibrateS_o53}
+
+
+VLBA Subarray correlator type (1=VLBA; else non-VLBA) \{NETVLB, ICQVBA\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!countRec@{countRec}}
+\index{countRec@{countRec}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::count\-Rec}}\label{structObitUVCalCalibrateS_o24}
+
+
+Count of the good, the bad and ugly. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!CurSourID@{CurSourID}}
+\index{CurSourID@{CurSourID}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::Cur\-Sour\-ID}}\label{structObitUVCalCalibrateS_o25}
+
+
+current source ID in cal table 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!DDelay@{DDelay}}
+\index{DDelay@{DDelay}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::DDelay}}\label{structObitUVCalCalibrateS_o67}
+
+
+Dispersive delay at time of current datum, one per antenna \{DDELAY\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!DDelay@{DDelay}}
+\index{DDelay@{DDelay}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::DDelay}}\label{structObitUVCalCalibrateS_o40}
+
+
+Dispersive delay at time of current datum, one per antenna \{DDELAY\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!DelayFact@{DelayFact}}
+\index{DelayFact@{DelayFact}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Delay\-Fact}}\label{structObitUVCalCalibrateS_o71}
+
+
+IF scaling factor to convert s to rad/channel. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!DelayFact@{DelayFact}}
+\index{DelayFact@{DelayFact}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Delay\-Fact}}\label{structObitUVCalCalibrateS_o44}
+
+
+IF scaling factor to convert s to rad/channel. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!DelBit@{DelBit}}
+\index{DelBit@{DelBit}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Del\-Bit}}\label{structObitUVCalCalibrateS_o75}
+
+
+VLBA Time interval per bit in FFT (s) per IF and Corr-ID from CQ table \{DELBIT, DBTVBA\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!DelBit@{DelBit}}
+\index{DelBit@{DelBit}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Del\-Bit}}\label{structObitUVCalCalibrateS_o48}
+
+
+VLBA Time interval per bit in FFT (s) per IF and Corr-ID from CQ table \{DELBIT, DBTVBA\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!DeltaTime@{DeltaTime}}
+\index{DeltaTime@{DeltaTime}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVCal\-Calibrate\-S::Delta\-Time}}\label{structObitUVCalCalibrateS_o33}
+
+
+Integration time of data (days). 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!doCalWt@{doCalWt}}
+\index{doCalWt@{doCalWt}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-UVCal\-Calibrate\-S::do\-Cal\-Wt}}\label{structObitUVCalCalibrateS_o7}
+
+
+Calibrate Weights? 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!doDelayDecorr@{doDelayDecorr}}
+\index{doDelayDecorr@{doDelayDecorr}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::do\-Delay\-Decorr}}\label{structObitUVCalCalibrateS_o79}
+
+
+is VLBA delay decor. 
+
+correction enabled per IF and Corr-ID from CQ table \{WDODSM, DODSM\} \index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!doDelayDecorr@{doDelayDecorr}}
+\index{doDelayDecorr@{doDelayDecorr}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::do\-Delay\-Decorr}}\label{structObitUVCalCalibrateS_o52}
+
+
+is VLBA delay decor. 
+
+correction enabled per IF and Corr-ID from CQ table \{WDODSM, DODSM\} \index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!doDelayRate@{doDelayRate}}
+\index{doDelayRate@{doDelayRate}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-UVCal\-Calibrate\-S::do\-Delay\-Rate}}\label{structObitUVCalCalibrateS_o9}
+
+
+Make delay/rate correction? 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!doRateSmear@{doRateSmear}}
+\index{doRateSmear@{doRateSmear}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-UVCal\-Calibrate\-S::do\-Rate\-Smear}}\label{structObitUVCalCalibrateS_o8}
+
+
+Make rate smearing correction? \{DORSM\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!doSNTable@{doSNTable}}
+\index{doSNTable@{doSNTable}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-UVCal\-Calibrate\-S::do\-SNTable}}\label{structObitUVCalCalibrateS_o6}
+
+
+Use SN (else CL) table? 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!eChan@{eChan}}
+\index{eChan@{eChan}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::e\-Chan}}\label{structObitUVCalCalibrateS_o20}
+
+
+highest channel (1-rel) 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!eIF@{eIF}}
+\index{eIF@{eIF}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::e\-IF}}\label{structObitUVCalCalibrateS_o17}
+
+
+highest IF (1-rel) selected 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!FollowAntTime@{FollowAntTime}}
+\index{FollowAntTime@{FollowAntTime}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Follow\-Ant\-Time}}\label{structObitUVCalCalibrateS_o60}
+
+
+Following time per antenna. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!FollowAntTime@{FollowAntTime}}
+\index{FollowAntTime@{FollowAntTime}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Follow\-Ant\-Time}}\label{structObitUVCalCalibrateS_o31}
+
+
+Following time per antenna. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!FollowCalTime@{FollowCalTime}}
+\index{FollowCalTime@{FollowCalTime}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVCal\-Calibrate\-S::Follow\-Cal\-Time}}\label{structObitUVCalCalibrateS_o30}
+
+
+Following Time in cal table \{CALTIM(2)\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!FollowDDelay@{FollowDDelay}}
+\index{FollowDDelay@{FollowDDelay}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Follow\-DDelay}}\label{structObitUVCalCalibrateS_o69}
+
+
+Following dispersive delay per ant \{DDTAB($\ast$,1)\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!FollowDDelay@{FollowDDelay}}
+\index{FollowDDelay@{FollowDDelay}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Follow\-DDelay}}\label{structObitUVCalCalibrateS_o42}
+
+
+Following dispersive delay per ant \{DDTAB($\ast$,1)\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!FollowIFR@{FollowIFR}}
+\index{FollowIFR@{FollowIFR}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Follow\-IFR}}\label{structObitUVCalCalibrateS_o66}
+
+
+Following Ionospheric Faraday rotation per IF \{IFRTAB($\ast$,2)\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!FollowIFR@{FollowIFR}}
+\index{FollowIFR@{FollowIFR}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Follow\-IFR}}\label{structObitUVCalCalibrateS_o39}
+
+
+Following Ionospheric Faraday rotation per IF \{IFRTAB($\ast$,2)\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!FollowSourID@{FollowSourID}}
+\index{FollowSourID@{FollowSourID}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::Follow\-Sour\-ID}}\label{structObitUVCalCalibrateS_o27}
+
+
+Following source ID in cal table. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!FreqID@{FreqID}}
+\index{FreqID@{FreqID}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::Freq\-ID}}\label{structObitUVCalCalibrateS_o15}
+
+
+Selected Frequency ID number. 
+
+$<$=0-$>$ all \index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!IFR@{IFR}}
+\index{IFR@{IFR}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::IFR}}\label{structObitUVCalCalibrateS_o64}
+
+
+Current Ionospheric Faraday rotation per ant \{IFR\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!IFR@{IFR}}
+\index{IFR@{IFR}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::IFR}}\label{structObitUVCalCalibrateS_o37}
+
+
+Current Ionospheric Faraday rotation per ant \{IFR\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!Lambda@{Lambda}}
+\index{Lambda@{Lambda}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Lambda}}\label{structObitUVCalCalibrateS_o72}
+
+
+Array of wavelengths for each channel and IF \{LAMBDA\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!Lambda@{Lambda}}
+\index{Lambda@{Lambda}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Lambda}}\label{structObitUVCalCalibrateS_o45}
+
+
+Array of wavelengths for each channel and IF \{LAMBDA\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!LastRowRead@{LastRowRead}}
+\index{LastRowRead@{LastRowRead}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::Last\-Row\-Read}}\label{structObitUVCalCalibrateS_o5}
+
+
+Last Row read. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!lenCalArrayEntry@{lenCalArrayEntry}}
+\index{lenCalArrayEntry@{lenCalArrayEntry}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::len\-Cal\-Array\-Entry}}\label{structObitUVCalCalibrateS_o10}
+
+
+length of entry in Cal\-Apply/Cal\-Prior/Cal\-Follow (LCUCAL) 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!LTaper@{LTaper}}
+\index{LTaper@{LTaper}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::LTaper}}\label{structObitUVCalCalibrateS_o73}
+
+
+VLBA Filter Taper function (eg. 
+
+'HANNING') from CQ table\{LTAPER, LTPVBA\} \begin{itemize}
+\item 1 = \char`\"{}HANNING\char`\"{} \item 2 = \char`\"{}UNIFORM\char`\"{} \end{itemize}
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!LTaper@{LTaper}}
+\index{LTaper@{LTaper}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::LTaper}}\label{structObitUVCalCalibrateS_o46}
+
+
+VLBA Filter Taper function (eg. 
+
+'HANNING') from CQ table\{LTAPER, LTPVBA\} \begin{itemize}
+\item 1 = \char`\"{}HANNING\char`\"{} \item 2 = \char`\"{}UNIFORM\char`\"{} \end{itemize}
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!NFFTSize@{NFFTSize}}
+\index{NFFTSize@{NFFTSize}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::NFFTSize}}\label{structObitUVCalCalibrateS_o76}
+
+
+VLBA FFT size per IF and Corr-ID from CQ table \{NFFTSZ,NFTVBA\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!NFFTSize@{NFFTSize}}
+\index{NFFTSize@{NFFTSize}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::NFFTSize}}\label{structObitUVCalCalibrateS_o49}
+
+
+VLBA FFT size per IF and Corr-ID from CQ table \{NFFTSZ,NFTVBA\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!NSpecA@{NSpecA}}
+\index{NSpecA@{NSpecA}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::NSpec\-A}}\label{structObitUVCalCalibrateS_o74}
+
+
+VLBA Spectral averaging factor per IF and Corr-ID from CQ table \{NSPECA,NXDSM\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!NSpecA@{NSpecA}}
+\index{NSpecA@{NSpecA}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::NSpec\-A}}\label{structObitUVCalCalibrateS_o47}
+
+
+VLBA Spectral averaging factor per IF and Corr-ID from CQ table \{NSPECA,NXDSM\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!numAnt@{numAnt}}
+\index{numAnt@{numAnt}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::num\-Ant}}\label{structObitUVCalCalibrateS_o11}
+
+
+Number of antennas in calibration table (actually max antenna no). 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!numChan@{numChan}}
+\index{numChan@{numChan}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::num\-Chan}}\label{structObitUVCalCalibrateS_o18}
+
+
+Number of channels in data. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!numIF@{numIF}}
+\index{numIF@{numIF}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::num\-IF}}\label{structObitUVCalCalibrateS_o13}
+
+
+Number of IFs in data. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!numLambda@{numLambda}}
+\index{numLambda@{numLambda}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::num\-Lambda}}\label{structObitUVCalCalibrateS_o22}
+
+
+number of entries in Lambda for each IF \{NLAMBDA\} 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!numPol@{numPol}}
+\index{numPol@{numPol}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::num\-Pol}}\label{structObitUVCalCalibrateS_o21}
+
+
+Number of polarizations in the calibration table (1 or 2). 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!numRow@{numRow}}
+\index{numRow@{numRow}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::num\-Row}}\label{structObitUVCalCalibrateS_o4}
+
+
+Number of rows in calibration table. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!numSubA@{numSubA}}
+\index{numSubA@{numSubA}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::num\-Sub\-A}}\label{structObitUVCalCalibrateS_o12}
+
+
+Number of subarrays in the data. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!PolOff@{PolOff}}
+\index{PolOff@{PolOff}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::Pol\-Off}}\label{structObitUVCalCalibrateS_o23}
+
+
+Offset from the beginning an IF entry in the calibration array for a given polarization. 
+
+The first dimension is the polarization pixel number and the second is the antenna number of a baseline (e.g. first or second = 1 or 2). \index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!PriorAntTime@{PriorAntTime}}
+\index{PriorAntTime@{PriorAntTime}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Prior\-Ant\-Time}}\label{structObitUVCalCalibrateS_o59}
+
+
+Prior time per antenna. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!PriorAntTime@{PriorAntTime}}
+\index{PriorAntTime@{PriorAntTime}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Prior\-Ant\-Time}}\label{structObitUVCalCalibrateS_o29}
+
+
+Prior time per antenna. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!PriorCalTime@{PriorCalTime}}
+\index{PriorCalTime@{PriorCalTime}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-UVCal\-Calibrate\-S::Prior\-Cal\-Time}}\label{structObitUVCalCalibrateS_o28}
+
+
+Prior time in cal table \{CALTIM(1)\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!PriorDDelay@{PriorDDelay}}
+\index{PriorDDelay@{PriorDDelay}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Prior\-DDelay}}\label{structObitUVCalCalibrateS_o68}
+
+
+Prior dispersive delay per ant \{DDTAB($\ast$,1)\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!PriorDDelay@{PriorDDelay}}
+\index{PriorDDelay@{PriorDDelay}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Prior\-DDelay}}\label{structObitUVCalCalibrateS_o41}
+
+
+Prior dispersive delay per ant \{DDTAB($\ast$,1)\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!PriorIFR@{PriorIFR}}
+\index{PriorIFR@{PriorIFR}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Prior\-IFR}}\label{structObitUVCalCalibrateS_o65}
+
+
+Prior Ionospheric Faraday rotation per ant \{IFRTAB($\ast$,1)\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!PriorIFR@{PriorIFR}}
+\index{PriorIFR@{PriorIFR}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Prior\-IFR}}\label{structObitUVCalCalibrateS_o38}
+
+
+Prior Ionospheric Faraday rotation per ant \{IFRTAB($\ast$,1)\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!PriorSourID@{PriorSourID}}
+\index{PriorSourID@{PriorSourID}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::Prior\-Sour\-ID}}\label{structObitUVCalCalibrateS_o26}
+
+
+Prior source ID in cal table. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!RateFact@{RateFact}}
+\index{RateFact@{RateFact}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Rate\-Fact}}\label{structObitUVCalCalibrateS_o70}
+
+
+IF scaling factor to convert s/s to rad/day. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!RateFact@{RateFact}}
+\index{RateFact@{RateFact}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Rate\-Fact}}\label{structObitUVCalCalibrateS_o43}
+
+
+IF scaling factor to convert s/s to rad/day. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!SNTable@{SNTable}}
+\index{SNTable@{SNTable}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::SNTable}}\label{structObitUVCalCalibrateS_o57}
+
+
+Calibration SN table (as Obit$\ast$). 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!SNTable@{SNTable}}
+\index{SNTable@{SNTable}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::SNTable}}\label{structObitUVCalCalibrateS_o2}
+
+
+Calibration SN table (as Obit$\ast$). 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!SNTableRow@{SNTableRow}}
+\index{SNTableRow@{SNTableRow}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::SNTable\-Row}}\label{structObitUVCalCalibrateS_o58}
+
+
+SN Table Row (as Obit$\ast$). 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!SNTableRow@{SNTableRow}}
+\index{SNTableRow@{SNTableRow}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::SNTable\-Row}}\label{structObitUVCalCalibrateS_o3}
+
+
+SN Table Row (as Obit$\ast$). 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!SubA@{SubA}}
+\index{SubA@{SubA}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-UVCal\-Calibrate\-S::Sub\-A}}\label{structObitUVCalCalibrateS_o14}
+
+
+Selected Subarray number. 
+
+$<$=0-$>$ all \index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!TimeFiltTime@{TimeFiltTime}}
+\index{TimeFiltTime@{TimeFiltTime}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Time\-Filt\-Time}}\label{structObitUVCalCalibrateS_o78}
+
+
+VLBA Time filter averaging time (sec) per IF and Corr-ID from CQ table \{TAVGTF\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!TimeFiltTime@{TimeFiltTime}}
+\index{TimeFiltTime@{TimeFiltTime}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::Time\-Filt\-Time}}\label{structObitUVCalCalibrateS_o51}
+
+
+VLBA Time filter averaging time (sec) per IF and Corr-ID from CQ table \{TAVGTF\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!typeTimeFilt@{typeTimeFilt}}
+\index{typeTimeFilt@{typeTimeFilt}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::type\-Time\-Filt}}\label{structObitUVCalCalibrateS_o77}
+
+
+VLBA Time filter type (0=$>$boxcar; 3=$>$32-4; 4=$>$64-8 per IF and Corr-ID from CQ table (ITYPTF,ITFVBA). 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!typeTimeFilt@{typeTimeFilt}}
+\index{typeTimeFilt@{typeTimeFilt}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::type\-Time\-Filt}}\label{structObitUVCalCalibrateS_o50}
+
+
+VLBA Time filter type (0=$>$boxcar; 3=$>$32-4; 4=$>$64-8 per IF and Corr-ID from CQ table (ITYPTF,ITFVBA). 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!warnNoCQ@{warnNoCQ}}
+\index{warnNoCQ@{warnNoCQ}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::warn\-No\-CQ}}\label{structObitUVCalCalibrateS_o81}
+
+
+VLBA: Print warning about missing CQ per IF and Corr-ID from CQ table \{WARN,WRNVBA\}. 
+
+\index{ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}!warnNoCQ@{warnNoCQ}}
+\index{warnNoCQ@{warnNoCQ}!ObitUVCalCalibrateS@{Obit\-UVCal\-Calibrate\-S}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean$\ast$ {\bf Obit\-UVCal\-Calibrate\-S::warn\-No\-CQ}}\label{structObitUVCalCalibrateS_o54}
+
+
+VLBA: Print warning about missing CQ per IF and Corr-ID from CQ table \{WARN,WRNVBA\}. 
+
+
+
+The documentation for this struct was generated from the following files:\begin{CompactItemize}
+\item 
+{\bf Obit\-UVCal.h}\item 
+{\bf Obit\-UVCal\-Calibrate.c}\end{CompactItemize}

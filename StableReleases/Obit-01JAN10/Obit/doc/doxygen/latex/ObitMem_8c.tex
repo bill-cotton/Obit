@@ -1,0 +1,175 @@
+\section{Obit\-Mem.c File Reference}
+\label{ObitMem_8c}\index{ObitMem.c@{ObitMem.c}}
+Obit\-Mem Module definition file. 
+
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include \char`\"{}Obit\-Mem.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf mem\-Table\-Elem}
+\item 
+struct {\bf Obit\-Mem\-Class\-Info}
+\begin{CompactList}\small\item\em Obit\-Mem Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Mem\-Valid\-Struc}
+\begin{CompactList}\small\item\em Structure to use in validity testing. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+gpointer {\bf Obit\-Mem\-Alloc} (gulong size)
+\begin{CompactList}\small\item\em Public: allocate memory. \item\end{CompactList}\item 
+gpointer {\bf Obit\-Mem\-Alloc0} (gulong size)
+\begin{CompactList}\small\item\em Public: allocate memory and zero fill. \item\end{CompactList}\item 
+gpointer {\bf Obit\-Mem\-Alloc\-Name} (gulong size, gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: allocate memory giving name. \item\end{CompactList}\item 
+gpointer {\bf Obit\-Mem\-Alloc0Name} (gulong size, gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: allocate memory and zero fill, giving name. \item\end{CompactList}\item 
+gpointer {\bf Obit\-Mem\-Realloc} (gpointer mem, gulong size)
+\begin{CompactList}\small\item\em Public: reallocate memory. \item\end{CompactList}\item 
+gpointer {\bf Obit\-Mem\-Free} (gpointer mem)
+\begin{CompactList}\small\item\em Public: deallocate. \item\end{CompactList}\item 
+gboolean {\bf Obit\-Mem\-Valid} (gpointer mem)
+\begin{CompactList}\small\item\em Public: Check if in allocated block. \item\end{CompactList}\item 
+void {\bf Obit\-Mem\-Print} (FILE $\ast$file)
+\begin{CompactList}\small\item\em Public: Print contents to file (e.g. \item\end{CompactList}\item 
+void {\bf Obit\-Mem\-Summary} ({\bf olong} $\ast$number, {\bf olong} $\ast$total)
+\begin{CompactList}\small\item\em Public: Summary of contents. \item\end{CompactList}\item 
+void {\bf Obit\-Mem\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Mem Module definition file. 
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Memory management class Use compiler switch -DFASTOBITMEM to disable checking or -DMEMWATCH to use MEMWATCH debugging
+
+\subsection{Function Documentation}
+\index{ObitMem.c@{Obit\-Mem.c}!ObitMemAlloc@{ObitMemAlloc}}
+\index{ObitMemAlloc@{ObitMemAlloc}!ObitMem.c@{Obit\-Mem.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer Obit\-Mem\-Alloc (gulong {\em size})}\label{ObitMem_8c_a10}
+
+
+Public: allocate memory. 
+
+Implementation used g\_\-malloc \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em size}]Number of bytes requested \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to allocated memory, NULL on failure \end{Desc}
+\index{ObitMem.c@{Obit\-Mem.c}!ObitMemAlloc0@{ObitMemAlloc0}}
+\index{ObitMemAlloc0@{ObitMemAlloc0}!ObitMem.c@{Obit\-Mem.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer Obit\-Mem\-Alloc0 (gulong {\em size})}\label{ObitMem_8c_a11}
+
+
+Public: allocate memory and zero fill. 
+
+Implementation uses g\_\-malloc0 \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em size}]Number of bytes requested \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to allocated memory, NULL on failure \end{Desc}
+\index{ObitMem.c@{Obit\-Mem.c}!ObitMemAlloc0Name@{ObitMemAlloc0Name}}
+\index{ObitMemAlloc0Name@{ObitMemAlloc0Name}!ObitMem.c@{Obit\-Mem.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer Obit\-Mem\-Alloc0Name (gulong {\em size}, gchar $\ast$ {\em name})}\label{ObitMem_8c_a13}
+
+
+Public: allocate memory and zero fill, giving name. 
+
+Implementation uses g\_\-malloc0 \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em size}]Number of bytes requested \item[{\em name}]Name for entry, up to 20 char. Useful for debugging. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to allocated memory, NULL on failure \end{Desc}
+\index{ObitMem.c@{Obit\-Mem.c}!ObitMemAllocName@{ObitMemAllocName}}
+\index{ObitMemAllocName@{ObitMemAllocName}!ObitMem.c@{Obit\-Mem.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer Obit\-Mem\-Alloc\-Name (gulong {\em size}, gchar $\ast$ {\em name})}\label{ObitMem_8c_a12}
+
+
+Public: allocate memory giving name. 
+
+Initializes class if needed on first call. Implementation used g\_\-malloc \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em size}]Number of bytes requested \item[{\em name}]Name for entry, up to 20 char. Useful for debugging. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to allocated memory, NULL on failure \end{Desc}
+\index{ObitMem.c@{Obit\-Mem.c}!ObitMemClassInit@{ObitMemClassInit}}
+\index{ObitMemClassInit@{ObitMemClassInit}!ObitMem.c@{Obit\-Mem.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Mem\-Class\-Init (void)}\label{ObitMem_8c_a19}
+
+
+Public: Class initializer. 
+
+\index{ObitMem.c@{Obit\-Mem.c}!ObitMemFree@{ObitMemFree}}
+\index{ObitMemFree@{ObitMemFree}!ObitMem.c@{Obit\-Mem.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer Obit\-Mem\-Free (gpointer {\em mem})}\label{ObitMem_8c_a15}
+
+
+Public: deallocate. 
+
+This is a NOP if mem is not to a valid block of memory. Note: ONLY FREE MEMORY ALLOCATED BY Obit\-Mem!!! Implementation used g\_\-free \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em mem}]Pointer to memory to be freed. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to allocated memory, NULL on failure \end{Desc}
+\index{ObitMem.c@{Obit\-Mem.c}!ObitMemPrint@{ObitMemPrint}}
+\index{ObitMemPrint@{ObitMemPrint}!ObitMem.c@{Obit\-Mem.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Mem\-Print (FILE $\ast$ {\em file})}\label{ObitMem_8c_a17}
+
+
+Public: Print contents to file (e.g. 
+
+stdout) \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em file}]to print to. \end{description}
+\end{Desc}
+\index{ObitMem.c@{Obit\-Mem.c}!ObitMemRealloc@{ObitMemRealloc}}
+\index{ObitMemRealloc@{ObitMemRealloc}!ObitMem.c@{Obit\-Mem.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer Obit\-Mem\-Realloc (gpointer {\em mem}, gulong {\em size})}\label{ObitMem_8c_a14}
+
+
+Public: reallocate memory. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em mem}]Pointer to old memory, if null, allocates anonymous slot \item[{\em size}]Number of bytes requested \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to allocated memory, NULL on failure \end{Desc}
+\index{ObitMem.c@{Obit\-Mem.c}!ObitMemSummary@{ObitMemSummary}}
+\index{ObitMemSummary@{ObitMemSummary}!ObitMem.c@{Obit\-Mem.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Mem\-Summary ({\bf olong} $\ast$ {\em number}, {\bf olong} $\ast$ {\em total})}\label{ObitMem_8c_a18}
+
+
+Public: Summary of contents. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em number}]Number of entries \item[{\em total}]Total memory allocated in MByte \end{description}
+\end{Desc}
+\index{ObitMem.c@{Obit\-Mem.c}!ObitMemValid@{ObitMemValid}}
+\index{ObitMemValid@{ObitMemValid}!ObitMem.c@{Obit\-Mem.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Mem\-Valid (gpointer {\em mem})}\label{ObitMem_8c_a16}
+
+
+Public: Check if in allocated block. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em mem}]Pointer to memory to be tested. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if in allocated block, else FALSE \end{Desc}

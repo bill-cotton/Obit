@@ -1,0 +1,260 @@
+\section{Obit\-System.c File Reference}
+\label{ObitSystem_8c}\index{ObitSystem.c@{ObitSystem.c}}
+{\bf Obit\-System}{\rm (p.\,\pageref{structObitSystem})} Class definition file. 
+
+{\tt \#include $<$errno.h$>$}\par
+{\tt \#include $<$time.h$>$}\par
+{\tt \#include $<$sys/times.h$>$}\par
+{\tt \#include $<$bits/types.h$>$}\par
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-System.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-AIPS.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-FITS.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-RPC.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UV.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf scratch\-List\-Elem}
+\begin{CompactList}\small\item\em An element of a scratch\-List. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf CLK\_\-TCK}\ ((\_\-\_\-clock\_\-t) \_\-\_\-sysconf (2))
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+long int {\bf \_\-\_\-sysconf} (int)
+\item 
+void {\bf Obit\-System\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-System\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-System} $\ast$ {\bf Obit\-System\-Startup} (gchar $\ast$pgm\-Name, {\bf olong} pgm\-Number, {\bf olong} AIPSuser, {\bf olong} number\-AIPSdisk, gchar $\ast$AIPSdir[$\,$], {\bf olong} number\-FITSdisk, gchar $\ast$FITSdir[$\,$], {\bf oint} F\_\-TRUE, {\bf oint} F\_\-FALSE, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: startup/Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-System\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Return class pointer. \item\end{CompactList}\item 
+{\bf Obit\-System} $\ast$ {\bf Obit\-System\-Shutdown} ({\bf Obit\-System} $\ast$in)
+\begin{CompactList}\small\item\em Public: Shutdown. \item\end{CompactList}\item 
+void {\bf Obit\-System\-Get\-Scratch} (Obit\-IOType File\-Type, gchar $\ast$type, {\bf Obit\-Info\-List} $\ast$info, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get Scratch file assignments. \item\end{CompactList}\item 
+void {\bf Obit\-System\-Add\-Scratch} ({\bf Obit} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Add Scratch file assignments. \item\end{CompactList}\item 
+void {\bf Obit\-System\-Free\-Scratch} ({\bf Obit} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Free Scratch file assignments. \item\end{CompactList}\item 
+gboolean {\bf Obit\-System\-Is\-Init} (void)
+\begin{CompactList}\small\item\em Public: Tell If {\bf Obit}{\rm (p.\,\pageref{structObit})} is initialized. \item\end{CompactList}\item 
+gchar $\ast$ {\bf Obit\-System\-Get\-Pgm\-Name} (void)
+\begin{CompactList}\small\item\em Public: Tell Program Name. \item\end{CompactList}\item 
+void {\bf Obit\-System\-Set\-Pgm\-Name} (gchar $\ast$pgm\-Name)
+\begin{CompactList}\small\item\em Public: Reset Program Name. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-System\-Get\-Pgm\-Number} (void)
+\begin{CompactList}\small\item\em Public: Tell Program Number. \item\end{CompactList}\item 
+void {\bf Obit\-System\-Set\-Pgm\-Number} ({\bf olong} pgm\-Number)
+\begin{CompactList}\small\item\em Public: Reset Program Number. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-System\-Get\-AIPSuser} (void)
+\begin{CompactList}\small\item\em Public: Tell AIPS user ID. \item\end{CompactList}\item 
+void {\bf Obit\-System\-Set\-AIPSuser} ({\bf olong} AIPSuser)
+\begin{CompactList}\small\item\em Public: Reset AIPS user ID. \item\end{CompactList}\item 
+void {\bf Obit\-System\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-System}{\rm (p.\,\pageref{structObitSystem})} Class definition file. 
+
+
+
+\subsection{Define Documentation}
+\index{ObitSystem.c@{Obit\-System.c}!CLK_TCK@{CLK\_\-TCK}}
+\index{CLK_TCK@{CLK\_\-TCK}!ObitSystem.c@{Obit\-System.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define CLK\_\-TCK\ ((\_\-\_\-clock\_\-t) \_\-\_\-sysconf (2))}\label{ObitSystem_8c_a0}
+
+
+
+
+\subsection{Function Documentation}
+\index{ObitSystem.c@{Obit\-System.c}!__sysconf@{\_\-\_\-sysconf}}
+\index{__sysconf@{\_\-\_\-sysconf}!ObitSystem.c@{Obit\-System.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}long int \_\-\_\-sysconf (int)}\label{ObitSystem_8c_a5}
+
+
+\index{ObitSystem.c@{Obit\-System.c}!ObitSystemAddScratch@{ObitSystemAddScratch}}
+\index{ObitSystemAddScratch@{ObitSystemAddScratch}!ObitSystem.c@{Obit\-System.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-System\-Add\-Scratch ({\bf Obit} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSystem_8c_a18}
+
+
+Public: Add Scratch file assignments. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object ({\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} or {\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})}) to add to list \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack for any error messages. \end{description}
+\end{Desc}
+\index{ObitSystem.c@{Obit\-System.c}!ObitSystemClassInit@{ObitSystemClassInit}}
+\index{ObitSystemClassInit@{ObitSystemClassInit}!ObitSystem.c@{Obit\-System.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-System\-Class\-Init (void)}\label{ObitSystem_8c_a27}
+
+
+Public: Class initializer. 
+
+\index{ObitSystem.c@{Obit\-System.c}!ObitSystemClear@{ObitSystemClear}}
+\index{ObitSystemClear@{ObitSystemClear}!ObitSystem.c@{Obit\-System.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-System\-Clear (gpointer {\em inn})}\label{ObitSystem_8c_a7}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. \end{description}
+\end{Desc}
+\index{ObitSystem.c@{Obit\-System.c}!ObitSystemFreeScratch@{ObitSystemFreeScratch}}
+\index{ObitSystemFreeScratch@{ObitSystemFreeScratch}!ObitSystem.c@{Obit\-System.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-System\-Free\-Scratch ({\bf Obit} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSystem_8c_a19}
+
+
+Public: Free Scratch file assignments. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object ({\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} or {\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})}) to remove from list \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack for any error messages. \end{description}
+\end{Desc}
+\index{ObitSystem.c@{Obit\-System.c}!ObitSystemGetAIPSuser@{ObitSystemGetAIPSuser}}
+\index{ObitSystemGetAIPSuser@{ObitSystemGetAIPSuser}!ObitSystem.c@{Obit\-System.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-System\-Get\-AIPSuser (void)}\label{ObitSystem_8c_a25}
+
+
+Public: Tell AIPS user ID. 
+
+\begin{Desc}
+\item[Returns:]AIPS user number \end{Desc}
+\index{ObitSystem.c@{Obit\-System.c}!ObitSystemGetClass@{ObitSystemGetClass}}
+\index{ObitSystemGetClass@{ObitSystemGetClass}!ObitSystem.c@{Obit\-System.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-System\-Get\-Class (void)}\label{ObitSystem_8c_a15}
+
+
+Public: Return class pointer. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitSystem.c@{Obit\-System.c}!ObitSystemGetPgmName@{ObitSystemGetPgmName}}
+\index{ObitSystemGetPgmName@{ObitSystemGetPgmName}!ObitSystem.c@{Obit\-System.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ Obit\-System\-Get\-Pgm\-Name (void)}\label{ObitSystem_8c_a21}
+
+
+Public: Tell Program Name. 
+
+\begin{Desc}
+\item[Returns:]Program name \end{Desc}
+\index{ObitSystem.c@{Obit\-System.c}!ObitSystemGetPgmNumber@{ObitSystemGetPgmNumber}}
+\index{ObitSystemGetPgmNumber@{ObitSystemGetPgmNumber}!ObitSystem.c@{Obit\-System.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-System\-Get\-Pgm\-Number (void)}\label{ObitSystem_8c_a23}
+
+
+Public: Tell Program Number. 
+
+\begin{Desc}
+\item[Returns:]Program number \end{Desc}
+\index{ObitSystem.c@{Obit\-System.c}!ObitSystemGetScratch@{ObitSystemGetScratch}}
+\index{ObitSystemGetScratch@{ObitSystemGetScratch}!ObitSystem.c@{Obit\-System.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-System\-Get\-Scratch (Obit\-IOType {\em File\-Type}, gchar $\ast$ {\em type}, {\bf Obit\-Info\-List} $\ast$ {\em info}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSystem_8c_a17}
+
+
+Public: Get Scratch file assignments. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em File\-Type}]File system type (OBIT\_\-IO\_\-FITS, OBIT\_\-IO\_\-AIPS); \item[{\em type}]File type (\char`\"{}MA\char`\"{}, \char`\"{}UV\char`\"{} for AIPS, not used for FITS) \item[{\em info}]{\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} to write assignments to \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack for any error messages. \end{description}
+\end{Desc}
+\index{ObitSystem.c@{Obit\-System.c}!ObitSystemInit@{ObitSystemInit}}
+\index{ObitSystemInit@{ObitSystemInit}!ObitSystem.c@{Obit\-System.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-System\-Init (gpointer {\em inn})}\label{ObitSystem_8c_a6}
+
+
+Private: Initialize newly instantiated object. 
+
+Does (recursive) initialization of base class members before this class. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitSystem.c@{Obit\-System.c}!ObitSystemIsInit@{ObitSystemIsInit}}
+\index{ObitSystemIsInit@{ObitSystemIsInit}!ObitSystem.c@{Obit\-System.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-System\-Is\-Init (void)}\label{ObitSystem_8c_a20}
+
+
+Public: Tell If {\bf Obit}{\rm (p.\,\pageref{structObit})} is initialized. 
+
+\begin{Desc}
+\item[Returns:]TRUE if {\bf Obit}{\rm (p.\,\pageref{structObit})} initialized, else FALSE \end{Desc}
+\index{ObitSystem.c@{Obit\-System.c}!ObitSystemSetAIPSuser@{ObitSystemSetAIPSuser}}
+\index{ObitSystemSetAIPSuser@{ObitSystemSetAIPSuser}!ObitSystem.c@{Obit\-System.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-System\-Set\-AIPSuser ({\bf olong} {\em AIPSuser})}\label{ObitSystem_8c_a26}
+
+
+Public: Reset AIPS user ID. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em AIPSuser}]AIPS user number \end{description}
+\end{Desc}
+\index{ObitSystem.c@{Obit\-System.c}!ObitSystemSetPgmName@{ObitSystemSetPgmName}}
+\index{ObitSystemSetPgmName@{ObitSystemSetPgmName}!ObitSystem.c@{Obit\-System.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-System\-Set\-Pgm\-Name (gchar $\ast$ {\em pgm\-Name})}\label{ObitSystem_8c_a22}
+
+
+Public: Reset Program Name. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pgm\-Name}]Program name \end{description}
+\end{Desc}
+\index{ObitSystem.c@{Obit\-System.c}!ObitSystemSetPgmNumber@{ObitSystemSetPgmNumber}}
+\index{ObitSystemSetPgmNumber@{ObitSystemSetPgmNumber}!ObitSystem.c@{Obit\-System.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-System\-Set\-Pgm\-Number ({\bf olong} {\em pgm\-Number})}\label{ObitSystem_8c_a24}
+
+
+Public: Reset Program Number. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pgm\-Number}]Program number \end{description}
+\end{Desc}
+\index{ObitSystem.c@{Obit\-System.c}!ObitSystemShutdown@{ObitSystemShutdown}}
+\index{ObitSystemShutdown@{ObitSystemShutdown}!ObitSystem.c@{Obit\-System.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-System}$\ast$ Obit\-System\-Shutdown ({\bf Obit\-System} $\ast$ {\em in})}\label{ObitSystem_8c_a16}
+
+
+Public: Shutdown. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object to shutdown \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]NULL pointer for object destroyed.. \end{Desc}
+\index{ObitSystem.c@{Obit\-System.c}!ObitSystemStartup@{ObitSystemStartup}}
+\index{ObitSystemStartup@{ObitSystemStartup}!ObitSystem.c@{Obit\-System.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-System}$\ast$ Obit\-System\-Startup (gchar $\ast$ {\em pgm\-Name}, {\bf olong} {\em pgm\-Number}, {\bf olong} {\em AIPSuser}, {\bf olong} {\em number\-AIPSdisk}, gchar $\ast$ {\em AIPSdir}[$\,$], {\bf olong} {\em number\-FITSdisk}, gchar $\ast$ {\em FITSdir}[$\,$], {\bf oint} {\em F\_\-TRUE}, {\bf oint} {\em F\_\-FALSE}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitSystem_8c_a14}
+
+
+Public: startup/Constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pgm\-Name}]Name of program (max 5 char if AIPS) If NULL or empty (zero length), no start/shutdown messages \item[{\em pgm\-Number}]Version number of program (e.g. POPS number). \item[{\em AIPSuser}]AIPS user number if using AIPS files \item[{\em number\-AIPSdisk}]Number of AIPS disks If 0, no AIPS files. \item[{\em AIPSdir}]List of AIPS directory names If NULL none. \item[{\em number\-FITSdisk}]Number of FITS disks If 0, no FITS files. \item[{\em FITSdir}]List of FITS directory names If NULL none. \item[{\em F\_\-TRUE}]Value of Fortran TRUE (used in Fortran interface) \item[{\em F\_\-FALSE}]Value of Fortran FALSE \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack for any error messages. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to object created. \end{Desc}

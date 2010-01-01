@@ -1,0 +1,136 @@
+\section{Obit\-Table\-Sel.c File Reference}
+\label{ObitTableSel_8c}\index{ObitTableSel.c@{ObitTableSel.c}}
+{\bf Obit\-Table\-Sel}{\rm (p.\,\pageref{structObitTableSel})} {\bf Obit}{\rm (p.\,\pageref{structObit})} uv data selector class definition. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-Sel.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Table\-Sel\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Sel\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Sel} $\ast$ {\bf new\-Obit\-Table\-Sel} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Table\-Sel\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Return class pointer. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Sel} $\ast$ {\bf Obit\-Table\-Sel\-Copy} ({\bf Obit\-Table\-Sel} $\ast$in, {\bf Obit\-Table\-Sel} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy Table\-Sel. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-Table\-Sel\-Buffer\-Size} ({\bf Obit\-Table\-Desc} $\ast$desc, {\bf Obit\-Table\-Sel} $\ast$sel)
+\begin{CompactList}\small\item\em Public: How big a buffer is needed for a data transfer? \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Sel\-Default} ({\bf Obit\-Table\-Desc} $\ast$in, {\bf Obit\-Table\-Sel} $\ast$sel)
+\begin{CompactList}\small\item\em Public: Enforces defaults in inaxes, blc, trc. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Sel\-Set\-Desc} ({\bf Obit\-Table\-Desc} $\ast$in, {\bf Obit\-Table\-Sel} $\ast$sel, {\bf Obit\-Table\-Desc} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Applies selection to a Descriptor. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Sel\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Table\-Sel}{\rm (p.\,\pageref{structObitTableSel})} {\bf Obit}{\rm (p.\,\pageref{structObit})} uv data selector class definition. 
+
+This contains information about data selection and calibration.
+
+\subsection{Function Documentation}
+\index{ObitTableSel.c@{Obit\-Table\-Sel.c}!newObitTableSel@{newObitTableSel}}
+\index{newObitTableSel@{newObitTableSel}!ObitTableSel.c@{Obit\-Table\-Sel.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Sel}$\ast$ new\-Obit\-Table\-Sel (gchar $\ast$ {\em name})}\label{ObitTableSel_8c_a6}
+
+
+Public: Constructor. 
+
+\begin{Desc}
+\item[Returns:]pointer to object created. \end{Desc}
+\index{ObitTableSel.c@{Obit\-Table\-Sel.c}!ObitTableSelBufferSize@{ObitTableSelBufferSize}}
+\index{ObitTableSelBufferSize@{ObitTableSelBufferSize}!ObitTableSel.c@{Obit\-Table\-Sel.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-Table\-Sel\-Buffer\-Size ({\bf Obit\-Table\-Desc} $\ast$ {\em desc}, {\bf Obit\-Table\-Sel} $\ast$ {\em sel})}\label{ObitTableSel_8c_a9}
+
+
+Public: How big a buffer is needed for a data transfer? 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em desc}]Pointer input descriptor. \item[{\em sel}]Table selector. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]size in bytes needed for I/O. \end{Desc}
+\index{ObitTableSel.c@{Obit\-Table\-Sel.c}!ObitTableSelClassInit@{ObitTableSelClassInit}}
+\index{ObitTableSelClassInit@{ObitTableSelClassInit}!ObitTableSel.c@{Obit\-Table\-Sel.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Sel\-Class\-Init (void)}\label{ObitTableSel_8c_a12}
+
+
+Public: Class initializer. 
+
+\index{ObitTableSel.c@{Obit\-Table\-Sel.c}!ObitTableSelClear@{ObitTableSelClear}}
+\index{ObitTableSelClear@{ObitTableSelClear}!ObitTableSel.c@{Obit\-Table\-Sel.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Sel\-Clear (gpointer {\em inn})}\label{ObitTableSel_8c_a4}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. \end{description}
+\end{Desc}
+\index{ObitTableSel.c@{Obit\-Table\-Sel.c}!ObitTableSelCopy@{ObitTableSelCopy}}
+\index{ObitTableSelCopy@{ObitTableSelCopy}!ObitTableSel.c@{Obit\-Table\-Sel.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Sel}$\ast$ Obit\-Table\-Sel\-Copy ({\bf Obit\-Table\-Sel} $\ast$ {\em in}, {\bf Obit\-Table\-Sel} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableSel_8c_a8}
+
+
+Public: Copy Table\-Sel. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be copied. \item[{\em out}]Pointer to object to be written. If NULL then a new structure is created. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Pointer to new object. \end{Desc}
+\index{ObitTableSel.c@{Obit\-Table\-Sel.c}!ObitTableSelDefault@{ObitTableSelDefault}}
+\index{ObitTableSelDefault@{ObitTableSelDefault}!ObitTableSel.c@{Obit\-Table\-Sel.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Sel\-Default ({\bf Obit\-Table\-Desc} $\ast$ {\em in}, {\bf Obit\-Table\-Sel} $\ast$ {\em sel})}\label{ObitTableSel_8c_a10}
+
+
+Public: Enforces defaults in inaxes, blc, trc. 
+
+Also indexes structure. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to descriptor. \item[{\em sel}]Table selector. \end{description}
+\end{Desc}
+\index{ObitTableSel.c@{Obit\-Table\-Sel.c}!ObitTableSelGetClass@{ObitTableSelGetClass}}
+\index{ObitTableSelGetClass@{ObitTableSelGetClass}!ObitTableSel.c@{Obit\-Table\-Sel.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Table\-Sel\-Get\-Class (void)}\label{ObitTableSel_8c_a7}
+
+
+Public: Return class pointer. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitTableSel.c@{Obit\-Table\-Sel.c}!ObitTableSelInit@{ObitTableSelInit}}
+\index{ObitTableSelInit@{ObitTableSelInit}!ObitTableSel.c@{Obit\-Table\-Sel.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Sel\-Init (gpointer {\em inn})}\label{ObitTableSel_8c_a3}
+
+
+Private: Initialize newly instantiated object. 
+
+Does (recursive) initialization of base class members before this class. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitTableSel.c@{Obit\-Table\-Sel.c}!ObitTableSelSetDesc@{ObitTableSelSetDesc}}
+\index{ObitTableSelSetDesc@{ObitTableSelSetDesc}!ObitTableSel.c@{Obit\-Table\-Sel.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Sel\-Set\-Desc ({\bf Obit\-Table\-Desc} $\ast$ {\em in}, {\bf Obit\-Table\-Sel} $\ast$ {\em sel}, {\bf Obit\-Table\-Desc} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableSel_8c_a11}
+
+
+Public: Applies selection to a Descriptor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to input descriptor, this described the data as they appear on disk (possible compressed). \item[{\em sel}]Table selector, blc, trc members changed if needed. \item[{\em out}]Pointer to output descriptor, this describes the data after any processing when read, or before any compression on output. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack \end{description}
+\end{Desc}

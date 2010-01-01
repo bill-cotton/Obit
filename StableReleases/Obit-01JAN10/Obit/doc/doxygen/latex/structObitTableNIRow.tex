@@ -1,0 +1,149 @@
+\section{Obit\-Table\-NIRow Struct Reference}
+\label{structObitTableNIRow}\index{ObitTableNIRow@{ObitTableNIRow}}
+Obit\-Table\-NIRow Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-NI.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf my\-Table}
+\begin{CompactList}\small\item\em Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. \item\end{CompactList}\item 
+gpointer {\bf my\-Row\-Data}
+\begin{CompactList}\small\item\em Pointer to row data in buffer (never g\_\-free this). \item\end{CompactList}\item 
+{\bf odouble} {\bf Time}
+\begin{CompactList}\small\item\em The center time. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Time\-I}
+\begin{CompactList}\small\item\em ime interval of the solution \item\end{CompactList}\item 
+{\bf oint} {\bf ant\-No}
+\begin{CompactList}\small\item\em Antenna number, 0=\$$>$\$ all. \item\end{CompactList}\item 
+{\bf oint} {\bf Sour\-Id}
+\begin{CompactList}\small\item\em Source number, 0=\$$>$\$ all. \item\end{CompactList}\item 
+{\bf oint} {\bf Sub\-A}
+\begin{CompactList}\small\item\em Subarray number, 0=\$$>$\$ all. \item\end{CompactList}\item 
+{\bf ofloat} {\bf weight}
+\begin{CompactList}\small\item\em Weight. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf coef}
+\begin{CompactList}\small\item\em Zernike model coeffients. \item\end{CompactList}\item 
+{\bf olong} {\bf status}
+\begin{CompactList}\small\item\em status 0=normal, 1=modified, -1=flagged \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-NIRow Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableNIRow@{Obit\-Table\-NIRow}!antNo@{antNo}}
+\index{antNo@{antNo}!ObitTableNIRow@{Obit\-Table\-NIRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-NIRow::ant\-No}}\label{structObitTableNIRow_o8}
+
+
+Antenna number, 0=\$$>$\$ all. 
+
+\index{ObitTableNIRow@{Obit\-Table\-NIRow}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableNIRow@{Obit\-Table\-NIRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-NIRow::Class\-Info}}\label{structObitTableNIRow_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableNIRow@{Obit\-Table\-NIRow}!coef@{coef}}
+\index{coef@{coef}!ObitTableNIRow@{Obit\-Table\-NIRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-NIRow::coef}}\label{structObitTableNIRow_o12}
+
+
+Zernike model coeffients. 
+
+\index{ObitTableNIRow@{Obit\-Table\-NIRow}!myRowData@{myRowData}}
+\index{myRowData@{myRowData}!ObitTableNIRow@{Obit\-Table\-NIRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-NIRow::my\-Row\-Data}}\label{structObitTableNIRow_o5}
+
+
+Pointer to row data in buffer (never g\_\-free this). 
+
+\index{ObitTableNIRow@{Obit\-Table\-NIRow}!myTable@{myTable}}
+\index{myTable@{myTable}!ObitTableNIRow@{Obit\-Table\-NIRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ {\bf Obit\-Table\-NIRow::my\-Table}}\label{structObitTableNIRow_o4}
+
+
+Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. 
+
+\index{ObitTableNIRow@{Obit\-Table\-NIRow}!name@{name}}
+\index{name@{name}!ObitTableNIRow@{Obit\-Table\-NIRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-NIRow::name}}\label{structObitTableNIRow_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableNIRow@{Obit\-Table\-NIRow}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableNIRow@{Obit\-Table\-NIRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-NIRow::Obit\-Id}}\label{structObitTableNIRow_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableNIRow@{Obit\-Table\-NIRow}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableNIRow@{Obit\-Table\-NIRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NIRow::Reference\-Count}}\label{structObitTableNIRow_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableNIRow@{Obit\-Table\-NIRow}!SourId@{SourId}}
+\index{SourId@{SourId}!ObitTableNIRow@{Obit\-Table\-NIRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-NIRow::Sour\-Id}}\label{structObitTableNIRow_o9}
+
+
+Source number, 0=\$$>$\$ all. 
+
+\index{ObitTableNIRow@{Obit\-Table\-NIRow}!status@{status}}
+\index{status@{status}!ObitTableNIRow@{Obit\-Table\-NIRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-NIRow::status}}\label{structObitTableNIRow_o13}
+
+
+status 0=normal, 1=modified, -1=flagged 
+
+\index{ObitTableNIRow@{Obit\-Table\-NIRow}!SubA@{SubA}}
+\index{SubA@{SubA}!ObitTableNIRow@{Obit\-Table\-NIRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-NIRow::Sub\-A}}\label{structObitTableNIRow_o10}
+
+
+Subarray number, 0=\$$>$\$ all. 
+
+\index{ObitTableNIRow@{Obit\-Table\-NIRow}!Time@{Time}}
+\index{Time@{Time}!ObitTableNIRow@{Obit\-Table\-NIRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-NIRow::Time}}\label{structObitTableNIRow_o6}
+
+
+The center time. 
+
+\index{ObitTableNIRow@{Obit\-Table\-NIRow}!TimeI@{TimeI}}
+\index{TimeI@{TimeI}!ObitTableNIRow@{Obit\-Table\-NIRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-NIRow::Time\-I}}\label{structObitTableNIRow_o7}
+
+
+ime interval of the solution 
+
+\index{ObitTableNIRow@{Obit\-Table\-NIRow}!weight@{weight}}
+\index{weight@{weight}!ObitTableNIRow@{Obit\-Table\-NIRow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-NIRow::weight}}\label{structObitTableNIRow_o11}
+
+
+Weight. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-NI.h}\end{CompactItemize}

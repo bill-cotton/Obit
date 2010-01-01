@@ -1,0 +1,203 @@
+\section{Obit\-Table\-IDI\_\-ANTENNARow Struct Reference}
+\label{structObitTableIDI__ANTENNARow}\index{ObitTableIDI_ANTENNARow@{ObitTableIDI\_\-ANTENNARow}}
+Obit\-Table\-IDI\_\-ANTENNARow Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-IDI\_\-ANTENNA.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf my\-Table}
+\begin{CompactList}\small\item\em Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. \item\end{CompactList}\item 
+gpointer {\bf my\-Row\-Data}
+\begin{CompactList}\small\item\em Pointer to row data in buffer (never g\_\-free this). \item\end{CompactList}\item 
+{\bf odouble} {\bf time}
+\begin{CompactList}\small\item\em Time. \item\end{CompactList}\item 
+{\bf ofloat} {\bf time\_\-interval}
+\begin{CompactList}\small\item\em Time interval over which antenna characteristics valid. \item\end{CompactList}\item 
+{\bf oint} {\bf antenna\_\-no}
+\begin{CompactList}\small\item\em Station number, used as an index in other tables, uv data. \item\end{CompactList}\item 
+{\bf oint} {\bf array}
+\begin{CompactList}\small\item\em Subarray number. \item\end{CompactList}\item 
+{\bf oint} {\bf freqid}
+\begin{CompactList}\small\item\em Frequency group id. \item\end{CompactList}\item 
+{\bf oint} {\bf no\_\-levels}
+\begin{CompactList}\small\item\em Quantization of data, no. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Pol\-Ang\-A}
+\begin{CompactList}\small\item\em Feed A feed position angle. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Pol\-Ang\-B}
+\begin{CompactList}\small\item\em Feed B feed position angle. \item\end{CompactList}\item 
+gchar $\ast$ {\bf Ant\-Name}
+\begin{CompactList}\small\item\em Station name. \item\end{CompactList}\item 
+gchar $\ast$ {\bf pol\-Type\-A}
+\begin{CompactList}\small\item\em Feed A feed poln. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Pol\-Cal\-A}
+\begin{CompactList}\small\item\em Feed A poln. \item\end{CompactList}\item 
+gchar $\ast$ {\bf pol\-Type\-B}
+\begin{CompactList}\small\item\em Feed B feed poln. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf Pol\-Cal\-B}
+\begin{CompactList}\small\item\em Feed B poln. \item\end{CompactList}\item 
+{\bf olong} {\bf status}
+\begin{CompactList}\small\item\em status 0=normal, 1=modified, -1=flagged \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-IDI\_\-ANTENNARow Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!antenna_no@{antenna\_\-no}}
+\index{antenna_no@{antenna\_\-no}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-ANTENNARow::antenna\_\-no}}\label{structObitTableIDI__ANTENNARow_o8}
+
+
+Station number, used as an index in other tables, uv data. 
+
+\index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!AntName@{AntName}}
+\index{AntName@{AntName}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-IDI\_\-ANTENNARow::Ant\-Name}}\label{structObitTableIDI__ANTENNARow_o14}
+
+
+Station name. 
+
+\index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!array@{array}}
+\index{array@{array}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-ANTENNARow::array}}\label{structObitTableIDI__ANTENNARow_o9}
+
+
+Subarray number. 
+
+\index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-IDI\_\-ANTENNARow::Class\-Info}}\label{structObitTableIDI__ANTENNARow_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!freqid@{freqid}}
+\index{freqid@{freqid}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-ANTENNARow::freqid}}\label{structObitTableIDI__ANTENNARow_o10}
+
+
+Frequency group id. 
+
+\index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!myRowData@{myRowData}}
+\index{myRowData@{myRowData}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-IDI\_\-ANTENNARow::my\-Row\-Data}}\label{structObitTableIDI__ANTENNARow_o5}
+
+
+Pointer to row data in buffer (never g\_\-free this). 
+
+\index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!myTable@{myTable}}
+\index{myTable@{myTable}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ {\bf Obit\-Table\-IDI\_\-ANTENNARow::my\-Table}}\label{structObitTableIDI__ANTENNARow_o4}
+
+
+Pointer to associated {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}. 
+
+\index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!name@{name}}
+\index{name@{name}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-IDI\_\-ANTENNARow::name}}\label{structObitTableIDI__ANTENNARow_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!no_levels@{no\_\-levels}}
+\index{no_levels@{no\_\-levels}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-ANTENNARow::no\_\-levels}}\label{structObitTableIDI__ANTENNARow_o11}
+
+
+Quantization of data, no. 
+
+levels. \index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-IDI\_\-ANTENNARow::Obit\-Id}}\label{structObitTableIDI__ANTENNARow_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!PolAngA@{PolAngA}}
+\index{PolAngA@{PolAngA}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-IDI\_\-ANTENNARow::Pol\-Ang\-A}}\label{structObitTableIDI__ANTENNARow_o12}
+
+
+Feed A feed position angle. 
+
+\index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!PolAngB@{PolAngB}}
+\index{PolAngB@{PolAngB}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-IDI\_\-ANTENNARow::Pol\-Ang\-B}}\label{structObitTableIDI__ANTENNARow_o13}
+
+
+Feed B feed position angle. 
+
+\index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!PolCalA@{PolCalA}}
+\index{PolCalA@{PolCalA}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-IDI\_\-ANTENNARow::Pol\-Cal\-A}}\label{structObitTableIDI__ANTENNARow_o16}
+
+
+Feed A poln. 
+
+cal parameter. \index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!PolCalB@{PolCalB}}
+\index{PolCalB@{PolCalB}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-IDI\_\-ANTENNARow::Pol\-Cal\-B}}\label{structObitTableIDI__ANTENNARow_o18}
+
+
+Feed B poln. 
+
+cal parameter \index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!polTypeA@{polTypeA}}
+\index{polTypeA@{polTypeA}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-IDI\_\-ANTENNARow::pol\-Type\-A}}\label{structObitTableIDI__ANTENNARow_o15}
+
+
+Feed A feed poln. 
+
+type 'R','L','X','Y', actually only one valid character. \index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!polTypeB@{polTypeB}}
+\index{polTypeB@{polTypeB}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-IDI\_\-ANTENNARow::pol\-Type\-B}}\label{structObitTableIDI__ANTENNARow_o17}
+
+
+Feed B feed poln. 
+
+type 'R','L','X','Y' \index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-ANTENNARow::Reference\-Count}}\label{structObitTableIDI__ANTENNARow_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!status@{status}}
+\index{status@{status}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-ANTENNARow::status}}\label{structObitTableIDI__ANTENNARow_o19}
+
+
+status 0=normal, 1=modified, -1=flagged 
+
+\index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!time@{time}}
+\index{time@{time}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-ANTENNARow::time}}\label{structObitTableIDI__ANTENNARow_o6}
+
+
+Time. 
+
+\index{ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}!time_interval@{time\_\-interval}}
+\index{time_interval@{time\_\-interval}!ObitTableIDI_ANTENNARow@{Obit\-Table\-IDI\_\-ANTENNARow}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-IDI\_\-ANTENNARow::time\_\-interval}}\label{structObitTableIDI__ANTENNARow_o7}
+
+
+Time interval over which antenna characteristics valid. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-IDI\_\-ANTENNA.h}\end{CompactItemize}

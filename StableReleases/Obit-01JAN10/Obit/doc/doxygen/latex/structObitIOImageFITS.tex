@@ -1,0 +1,176 @@
+\section{Obit\-IOImage\-FITS Struct Reference}
+\label{structObitIOImageFITS}\index{ObitIOImageFITS@{ObitIOImageFITS}}
+Obit\-IOImage\-FITS Class structure.  
+
+
+{\tt \#include $<$Obit\-IOImage\-FITS.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+Obit\-IOAccess {\bf access}
+\begin{CompactList}\small\item\em Access type. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+gpointer {\bf my\-Desc}
+\begin{CompactList}\small\item\em data descriptor, type depends on data type. \item\end{CompactList}\item 
+gpointer {\bf my\-Sel}
+\begin{CompactList}\small\item\em data selector \item\end{CompactList}\item 
+gpointer {\bf my\-Cal}
+\begin{CompactList}\small\item\em Calibrator for Data. \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf table\-List}
+\begin{CompactList}\small\item\em Table\-List of associated tables (declared as base class due to logic problems). \item\end{CompactList}\item 
+{\bf olong} {\bf disk}
+\begin{CompactList}\small\item\em FITS \char`\"{}Disk\char`\"{} number. \item\end{CompactList}\item 
+gchar $\ast$ {\bf File\-Name}
+\begin{CompactList}\small\item\em File name. \item\end{CompactList}\item 
+fitsfile $\ast$ {\bf my\-Fptr}
+\begin{CompactList}\small\item\em cfitsio file pointer \item\end{CompactList}\item 
+gboolean {\bf data\-Mod}
+\begin{CompactList}\small\item\em Has data been modified? \item\end{CompactList}\item 
+{\bf ofloat} {\bf bscale}
+\begin{CompactList}\small\item\em Image pixel scaling. \item\end{CompactList}\item 
+{\bf ofloat} {\bf bzero}
+\begin{CompactList}\small\item\em Image pixel offset. \item\end{CompactList}\item 
+{\bf olong} {\bf magic}
+\begin{CompactList}\small\item\em Integer magic value blank. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-IOImage\-FITS Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitIOImageFITS@{Obit\-IOImage\-FITS}!access@{access}}
+\index{access@{access}!ObitIOImageFITS@{Obit\-IOImage\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOAccess {\bf Obit\-IOImage\-FITS::access}}\label{structObitIOImageFITS_o4}
+
+
+Access type. 
+
+\index{ObitIOImageFITS@{Obit\-IOImage\-FITS}!bscale@{bscale}}
+\index{bscale@{bscale}!ObitIOImageFITS@{Obit\-IOImage\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-IOImage\-FITS::bscale}}\label{structObitIOImageFITS_o14}
+
+
+Image pixel scaling. 
+
+\index{ObitIOImageFITS@{Obit\-IOImage\-FITS}!bzero@{bzero}}
+\index{bzero@{bzero}!ObitIOImageFITS@{Obit\-IOImage\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-IOImage\-FITS::bzero}}\label{structObitIOImageFITS_o15}
+
+
+Image pixel offset. 
+
+\index{ObitIOImageFITS@{Obit\-IOImage\-FITS}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitIOImageFITS@{Obit\-IOImage\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-IOImage\-FITS::Class\-Info}}\label{structObitIOImageFITS_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitIOImageFITS@{Obit\-IOImage\-FITS}!dataMod@{dataMod}}
+\index{dataMod@{dataMod}!ObitIOImageFITS@{Obit\-IOImage\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-IOImage\-FITS::data\-Mod}}\label{structObitIOImageFITS_o13}
+
+
+Has data been modified? 
+
+\index{ObitIOImageFITS@{Obit\-IOImage\-FITS}!disk@{disk}}
+\index{disk@{disk}!ObitIOImageFITS@{Obit\-IOImage\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-IOImage\-FITS::disk}}\label{structObitIOImageFITS_o10}
+
+
+FITS \char`\"{}Disk\char`\"{} number. 
+
+\index{ObitIOImageFITS@{Obit\-IOImage\-FITS}!FileName@{FileName}}
+\index{FileName@{FileName}!ObitIOImageFITS@{Obit\-IOImage\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-IOImage\-FITS::File\-Name}}\label{structObitIOImageFITS_o11}
+
+
+File name. 
+
+\index{ObitIOImageFITS@{Obit\-IOImage\-FITS}!magic@{magic}}
+\index{magic@{magic}!ObitIOImageFITS@{Obit\-IOImage\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-IOImage\-FITS::magic}}\label{structObitIOImageFITS_o16}
+
+
+Integer magic value blank. 
+
+\index{ObitIOImageFITS@{Obit\-IOImage\-FITS}!myCal@{myCal}}
+\index{myCal@{myCal}!ObitIOImageFITS@{Obit\-IOImage\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-IOImage\-FITS::my\-Cal}}\label{structObitIOImageFITS_o8}
+
+
+Calibrator for Data. 
+
+\index{ObitIOImageFITS@{Obit\-IOImage\-FITS}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitIOImageFITS@{Obit\-IOImage\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-IOImage\-FITS::my\-Desc}}\label{structObitIOImageFITS_o6}
+
+
+data descriptor, type depends on data type. 
+
+\index{ObitIOImageFITS@{Obit\-IOImage\-FITS}!myFptr@{myFptr}}
+\index{myFptr@{myFptr}!ObitIOImageFITS@{Obit\-IOImage\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}fitsfile$\ast$ {\bf Obit\-IOImage\-FITS::my\-Fptr}}\label{structObitIOImageFITS_o12}
+
+
+cfitsio file pointer 
+
+\index{ObitIOImageFITS@{Obit\-IOImage\-FITS}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitIOImageFITS@{Obit\-IOImage\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-IOImage\-FITS::my\-Sel}}\label{structObitIOImageFITS_o7}
+
+
+data selector 
+
+\index{ObitIOImageFITS@{Obit\-IOImage\-FITS}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitIOImageFITS@{Obit\-IOImage\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-IOImage\-FITS::my\-Status}}\label{structObitIOImageFITS_o5}
+
+
+I/O status. 
+
+\index{ObitIOImageFITS@{Obit\-IOImage\-FITS}!name@{name}}
+\index{name@{name}!ObitIOImageFITS@{Obit\-IOImage\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-IOImage\-FITS::name}}\label{structObitIOImageFITS_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitIOImageFITS@{Obit\-IOImage\-FITS}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitIOImageFITS@{Obit\-IOImage\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-IOImage\-FITS::Obit\-Id}}\label{structObitIOImageFITS_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitIOImageFITS@{Obit\-IOImage\-FITS}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitIOImageFITS@{Obit\-IOImage\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-IOImage\-FITS::Reference\-Count}}\label{structObitIOImageFITS_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitIOImageFITS@{Obit\-IOImage\-FITS}!tableList@{tableList}}
+\index{tableList@{tableList}!ObitIOImageFITS@{Obit\-IOImage\-FITS}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-IOImage\-FITS::table\-List}}\label{structObitIOImageFITS_o9}
+
+
+Table\-List of associated tables (declared as base class due to logic problems). 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-IOImage\-FITS.h}\end{CompactItemize}

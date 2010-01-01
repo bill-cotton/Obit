@@ -1,0 +1,671 @@
+\section{Obit\-Sky\-Model\-VMIon Struct Reference}
+\label{structObitSkyModelVMIon}\index{ObitSkyModelVMIon@{ObitSkyModelVMIon}}
+Obit\-Sky\-Model\-VMIon Class structure.  
+
+
+{\tt \#include $<$Obit\-Sky\-Model\-VMIon.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Mosaic} $\ast$ {\bf mosaic}
+\begin{CompactList}\small\item\em Image array. \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf plane}
+\begin{CompactList}\small\item\em Image plane of single image. \item\end{CompactList}\item 
+{\bf Obit\-CArray} $\ast$ {\bf FTplane}
+\begin{CompactList}\small\item\em Fourier transform of plane. \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Conj\-Col}
+\begin{CompactList}\small\item\em Number of conjugate (neg U) columns in FTplane. \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf comps}
+\begin{CompactList}\small\item\em Array of component model as rows in an FArray. \item\end{CompactList}\item 
+{\bf Obit\-CInterpolate} $\ast$ {\bf my\-Interp}
+\begin{CompactList}\small\item\em Interpolator for UV grid. \item\end{CompactList}\item 
+Obit\-Sky\-Model\-Type {\bf model\-Type}
+\begin{CompactList}\small\item\em Model type. \item\end{CompactList}\item 
+Obit\-Sky\-Model\-Comp\-Type {\bf mod\-Type}
+\begin{CompactList}\small\item\em Component model type. \item\end{CompactList}\item 
+Obit\-Sky\-Model\-Mode {\bf model\-Mode}
+\begin{CompactList}\small\item\em Model calculation mode for components. \item\end{CompactList}\item 
+Obit\-Sky\-Model\-Mode {\bf current\-Mode}
+\begin{CompactList}\small\item\em Current model calculation mode. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf CCver}
+\begin{CompactList}\small\item\em List of AIPSCC table versions per image in mosaic there are mosaic-$>$number\-Images of these. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf start\-Comp}
+\begin{CompactList}\small\item\em List of beginning component per image in mosaic (1-rel). \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf end\-Comp}
+\begin{CompactList}\small\item\em List of highest component per image in mosaic (1-rel). \item\end{CompactList}\item 
+{\bf ofloat} {\bf factor}
+\begin{CompactList}\small\item\em Factor to multiply times model. \item\end{CompactList}\item 
+{\bf ofloat} {\bf min\-Flux}
+\begin{CompactList}\small\item\em Minimum flux density model or pixel. \item\end{CompactList}\item 
+{\bf ofloat} {\bf stok\-Factor}
+\begin{CompactList}\small\item\em Factor to multiply times second Stokes of model. \item\end{CompactList}\item 
+{\bf ofloat} {\bf point\-Flux}
+\begin{CompactList}\small\item\em Point model flux density (Jy). \item\end{CompactList}\item 
+{\bf ofloat} {\bf point\-XOff}
+\begin{CompactList}\small\item\em Point, x (ra), y (dec) offset in deg. \item\end{CompactList}\item 
+{\bf ofloat} {\bf point\-YOff}
+\begin{CompactList}\small\item\em Point, x (ra), y (dec) offset in deg. \item\end{CompactList}\item 
+{\bf ofloat} {\bf point\-Parms} [10]
+\begin{CompactList}\small\item\em Other (non-point)model components: major\_\-axis (deg), minor\_\-axis (deg), position\_\-angle (deg), type (Obit\-Sky\-Model\-Comp\-Type as gint), spectral terms;. \item\end{CompactList}\item 
+{\bf ofloat} {\bf ant\-Size}
+\begin{CompactList}\small\item\em Antennna diameter for rel. \item\end{CompactList}\item 
+gboolean {\bf do3D}
+\begin{CompactList}\small\item\em Apply 3D imaging corrections. \item\end{CompactList}\item 
+gboolean {\bf do\-Divide}
+\begin{CompactList}\small\item\em Divide model into data? \item\end{CompactList}\item 
+gboolean {\bf do\-Replace}
+\begin{CompactList}\small\item\em Replace data with model? \item\end{CompactList}\item 
+gboolean {\bf do\-PBCor}
+\begin{CompactList}\small\item\em Make relative Primary Beam corrections? \item\end{CompactList}\item 
+{\bf olong} {\bf start\-Channel}
+\begin{CompactList}\small\item\em Selected start channel[1-rel] and number. \item\end{CompactList}\item 
+{\bf olong} {\bf number\-Channel}
+\begin{CompactList}\small\item\em Selected start channel[1-rel] and number. \item\end{CompactList}\item 
+{\bf olong} {\bf start\-IF}
+\begin{CompactList}\small\item\em Selected start IF [1-rel] and number. \item\end{CompactList}\item 
+{\bf olong} {\bf number\-IF}
+\begin{CompactList}\small\item\em Selected start IF [1-rel] and number. \item\end{CompactList}\item 
+{\bf olong} {\bf start\-Channel\-PB}
+\begin{CompactList}\small\item\em Selected start rel. \item\end{CompactList}\item 
+{\bf olong} {\bf number\-Channel\-PB}
+\begin{CompactList}\small\item\em Selected start rel. \item\end{CompactList}\item 
+{\bf olong} {\bf start\-IFPB}
+\begin{CompactList}\small\item\em Selected start rel. \item\end{CompactList}\item 
+{\bf olong} {\bf number\-IFPB}
+\begin{CompactList}\small\item\em Selected start rel. \item\end{CompactList}\item 
+{\bf olong} {\bf nfreq\-PB}
+\begin{CompactList}\small\item\em Number of frequency channels for PB correction. \item\end{CompactList}\item 
+{\bf odouble} {\bf PBFreq}
+\begin{CompactList}\small\item\em Reference frequency for this block of channels for PB corrections. \item\end{CompactList}\item 
+gchar {\bf stokes} [5]
+\begin{CompactList}\small\item\em Selected Stokes. \item\end{CompactList}\item 
+{\bf olong} {\bf start\-Poln}
+\begin{CompactList}\small\item\em Selected start Poln [1-rel] and number. \item\end{CompactList}\item 
+{\bf olong} {\bf number\-Poln}
+\begin{CompactList}\small\item\em Selected start Poln [1-rel] and number. \item\end{CompactList}\item 
+gboolean {\bf do\-Flip}
+\begin{CompactList}\small\item\em True if need to multiply the FT by sqrt(-1) before applying. \item\end{CompactList}\item 
+gboolean {\bf no\-Neg}
+\begin{CompactList}\small\item\em True if only positive flux components are to be used. \item\end{CompactList}\item 
+{\bf ofloat} {\bf min\-DFT}
+\begin{CompactList}\small\item\em Minimum absolute component flux to use in DFT. \item\end{CompactList}\item 
+{\bf ofloat} {\bf max\-Grid}
+\begin{CompactList}\small\item\em Maximum absolute component flux to use in Gridded model. \item\end{CompactList}\item 
+gboolean {\bf do\-DFT}
+\begin{CompactList}\small\item\em Something to do for DFT model. \item\end{CompactList}\item 
+gboolean {\bf do\-Grid}
+\begin{CompactList}\small\item\em Something to do for Grid model. \item\end{CompactList}\item 
+{\bf olong} {\bf prt\-Lv}
+\begin{CompactList}\small\item\em message level for deconvolution progress messages, 0=none, 1=summary, 2=normal, higher numbers for diagnostics \item\end{CompactList}\item 
+{\bf olong} {\bf n\-Spec\-Term}
+\begin{CompactList}\small\item\em Number of spectral terms. \item\end{CompactList}\item 
+{\bf olong} {\bf n\-Threads}
+\begin{CompactList}\small\item\em Number of threads (elements in thread\-Args). \item\end{CompactList}\item 
+gpointer $\ast$$\ast$ {\bf thread\-Args}
+\begin{CompactList}\small\item\em Array of FT Function structures. \item\end{CompactList}\item 
+{\bf Obit\-Thread\-Func} {\bf DFTFunc}
+\begin{CompactList}\small\item\em DFT Fourier transform routine. \item\end{CompactList}\item 
+{\bf Obit\-Thread\-Func} {\bf Grid\-Func}
+\begin{CompactList}\small\item\em Gridded Fourier transform routine. \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf VMComps}
+\begin{CompactList}\small\item\em Array of time/spatially variable component model as rows in an FArray. \item\end{CompactList}\item 
+{\bf ofloat} {\bf cur\-VMModel\-Time}
+\begin{CompactList}\small\item\em Current time (d) for model in VMComps. \item\end{CompactList}\item 
+{\bf ofloat} {\bf end\-VMModel\-Time}
+\begin{CompactList}\small\item\em End time (d) for validity of model model in VMComps. \item\end{CompactList}\item 
+{\bf ofloat} {\bf update\-Interval}
+\begin{CompactList}\small\item\em Model update interval (d). \item\end{CompactList}\item 
+{\bf olong} {\bf num\-Comp}
+\begin{CompactList}\small\item\em Number of actual components in model. \item\end{CompactList}\item 
+{\bf olong} $\ast$ {\bf field\-Index}
+\begin{CompactList}\small\item\em Index table for fields with components. \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf u\-Rot\-Tab}
+\begin{CompactList}\small\item\em Table of rotation matrices for components 6 needed per row (field). \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf Zern\-Y}
+\begin{CompactList}\small\item\em Table of Zernike X gradient terms, ncoef needed per row (field). \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf Zern\-X}
+\begin{CompactList}\small\item\em Table of Zernike Y gradient terms, ncoef needed per row (field). \item\end{CompactList}\item 
+gboolean {\bf do3Dmul}
+\begin{CompactList}\small\item\em if true need 3D rotation multiply by matrix \item\end{CompactList}\item 
+{\bf ofloat} {\bf ccrot}
+\begin{CompactList}\small\item\em cosine, sine of rotation difference between uv, image \item\end{CompactList}\item 
+{\bf ofloat} {\bf ssrot}
+\begin{CompactList}\small\item\em cosine, sine of rotation difference between uv, image \item\end{CompactList}\item 
+{\bf Obit\-Table\-NI} $\ast$ {\bf NITable}
+\begin{CompactList}\small\item\em NI Table with ionospheric model. \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf NIArray}
+\begin{CompactList}\small\item\em FArray with contents of NI Table. \item\end{CompactList}\item 
+{\bf olong} {\bf ncoef}
+\begin{CompactList}\small\item\em Number of coefficients. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Sky\-Model\-VMIon Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!antSize@{antSize}}
+\index{antSize@{antSize}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMIon::ant\-Size}}\label{structObitSkyModelVMIon_o27}
+
+
+Antennna diameter for rel. 
+
+PB corrections \index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!ccrot@{ccrot}}
+\index{ccrot@{ccrot}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMIon::ccrot}}\label{structObitSkyModelVMIon_o67}
+
+
+cosine, sine of rotation difference between uv, image 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!CCver@{CCver}}
+\index{CCver@{CCver}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-Sky\-Model\-VMIon::CCver}}\label{structObitSkyModelVMIon_o17}
+
+
+List of AIPSCC table versions per image in mosaic there are mosaic-$>$number\-Images of these. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Sky\-Model\-VMIon::Class\-Info}}\label{structObitSkyModelVMIon_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!comps@{comps}}
+\index{comps@{comps}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-Sky\-Model\-VMIon::comps}}\label{structObitSkyModelVMIon_o11}
+
+
+Array of component model as rows in an FArray. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!currentMode@{currentMode}}
+\index{currentMode@{currentMode}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-Sky\-Model\-Mode {\bf Obit\-Sky\-Model\-VMIon::current\-Mode}}\label{structObitSkyModelVMIon_o16}
+
+
+Current model calculation mode. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!curVMModelTime@{curVMModelTime}}
+\index{curVMModelTime@{curVMModelTime}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMIon::cur\-VMModel\-Time}}\label{structObitSkyModelVMIon_o58}
+
+
+Current time (d) for model in VMComps. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!DFTFunc@{DFTFunc}}
+\index{DFTFunc@{DFTFunc}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread\-Func} {\bf Obit\-Sky\-Model\-VMIon::DFTFunc}}\label{structObitSkyModelVMIon_o55}
+
+
+DFT Fourier transform routine. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!do3D@{do3D}}
+\index{do3D@{do3D}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Sky\-Model\-VMIon::do3D}}\label{structObitSkyModelVMIon_o28}
+
+
+Apply 3D imaging corrections. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!do3Dmul@{do3Dmul}}
+\index{do3Dmul@{do3Dmul}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Sky\-Model\-VMIon::do3Dmul}}\label{structObitSkyModelVMIon_o66}
+
+
+if true need 3D rotation multiply by matrix 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!doDFT@{doDFT}}
+\index{doDFT@{doDFT}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Sky\-Model\-VMIon::do\-DFT}}\label{structObitSkyModelVMIon_o49}
+
+
+Something to do for DFT model. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!doDivide@{doDivide}}
+\index{doDivide@{doDivide}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Sky\-Model\-VMIon::do\-Divide}}\label{structObitSkyModelVMIon_o29}
+
+
+Divide model into data? 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!doFlip@{doFlip}}
+\index{doFlip@{doFlip}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Sky\-Model\-VMIon::do\-Flip}}\label{structObitSkyModelVMIon_o45}
+
+
+True if need to multiply the FT by sqrt(-1) before applying. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!doGrid@{doGrid}}
+\index{doGrid@{doGrid}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Sky\-Model\-VMIon::do\-Grid}}\label{structObitSkyModelVMIon_o50}
+
+
+Something to do for Grid model. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!doPBCor@{doPBCor}}
+\index{doPBCor@{doPBCor}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Sky\-Model\-VMIon::do\-PBCor}}\label{structObitSkyModelVMIon_o31}
+
+
+Make relative Primary Beam corrections? 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!doReplace@{doReplace}}
+\index{doReplace@{doReplace}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Sky\-Model\-VMIon::do\-Replace}}\label{structObitSkyModelVMIon_o30}
+
+
+Replace data with model? 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!endComp@{endComp}}
+\index{endComp@{endComp}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-Sky\-Model\-VMIon::end\-Comp}}\label{structObitSkyModelVMIon_o19}
+
+
+List of highest component per image in mosaic (1-rel). 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!endVMModelTime@{endVMModelTime}}
+\index{endVMModelTime@{endVMModelTime}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMIon::end\-VMModel\-Time}}\label{structObitSkyModelVMIon_o59}
+
+
+End time (d) for validity of model model in VMComps. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!factor@{factor}}
+\index{factor@{factor}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMIon::factor}}\label{structObitSkyModelVMIon_o20}
+
+
+Factor to multiply times model. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!fieldIndex@{fieldIndex}}
+\index{fieldIndex@{fieldIndex}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-Sky\-Model\-VMIon::field\-Index}}\label{structObitSkyModelVMIon_o62}
+
+
+Index table for fields with components. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!FTplane@{FTplane}}
+\index{FTplane@{FTplane}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-CArray}$\ast$ {\bf Obit\-Sky\-Model\-VMIon::FTplane}}\label{structObitSkyModelVMIon_o9}
+
+
+Fourier transform of plane. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!GridFunc@{GridFunc}}
+\index{GridFunc@{GridFunc}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread\-Func} {\bf Obit\-Sky\-Model\-VMIon::Grid\-Func}}\label{structObitSkyModelVMIon_o56}
+
+
+Gridded Fourier transform routine. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!info@{info}}
+\index{info@{info}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Sky\-Model\-VMIon::info}}\label{structObitSkyModelVMIon_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!maxGrid@{maxGrid}}
+\index{maxGrid@{maxGrid}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMIon::max\-Grid}}\label{structObitSkyModelVMIon_o48}
+
+
+Maximum absolute component flux to use in Gridded model. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!minDFT@{minDFT}}
+\index{minDFT@{minDFT}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMIon::min\-DFT}}\label{structObitSkyModelVMIon_o47}
+
+
+Minimum absolute component flux to use in DFT. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!minFlux@{minFlux}}
+\index{minFlux@{minFlux}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMIon::min\-Flux}}\label{structObitSkyModelVMIon_o21}
+
+
+Minimum flux density model or pixel. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!modelMode@{modelMode}}
+\index{modelMode@{modelMode}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-Sky\-Model\-Mode {\bf Obit\-Sky\-Model\-VMIon::model\-Mode}}\label{structObitSkyModelVMIon_o15}
+
+
+Model calculation mode for components. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!modelType@{modelType}}
+\index{modelType@{modelType}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-Sky\-Model\-Type {\bf Obit\-Sky\-Model\-VMIon::model\-Type}}\label{structObitSkyModelVMIon_o13}
+
+
+Model type. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!modType@{modType}}
+\index{modType@{modType}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-Sky\-Model\-Comp\-Type {\bf Obit\-Sky\-Model\-VMIon::mod\-Type}}\label{structObitSkyModelVMIon_o14}
+
+
+Component model type. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!mosaic@{mosaic}}
+\index{mosaic@{mosaic}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Mosaic}$\ast$ {\bf Obit\-Sky\-Model\-VMIon::mosaic}}\label{structObitSkyModelVMIon_o7}
+
+
+Image array. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!myInterp@{myInterp}}
+\index{myInterp@{myInterp}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-CInterpolate}$\ast$ {\bf Obit\-Sky\-Model\-VMIon::my\-Interp}}\label{structObitSkyModelVMIon_o12}
+
+
+Interpolator for UV grid. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Sky\-Model\-VMIon::my\-Status}}\label{structObitSkyModelVMIon_o6}
+
+
+I/O status. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!name@{name}}
+\index{name@{name}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Sky\-Model\-VMIon::name}}\label{structObitSkyModelVMIon_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!ncoef@{ncoef}}
+\index{ncoef@{ncoef}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMIon::ncoef}}\label{structObitSkyModelVMIon_o71}
+
+
+Number of coefficients. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!nfreqPB@{nfreqPB}}
+\index{nfreqPB@{nfreqPB}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMIon::nfreq\-PB}}\label{structObitSkyModelVMIon_o40}
+
+
+Number of frequency channels for PB correction. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!NIArray@{NIArray}}
+\index{NIArray@{NIArray}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-Sky\-Model\-VMIon::NIArray}}\label{structObitSkyModelVMIon_o70}
+
+
+FArray with contents of NI Table. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!NITable@{NITable}}
+\index{NITable@{NITable}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-NI}$\ast$ {\bf Obit\-Sky\-Model\-VMIon::NITable}}\label{structObitSkyModelVMIon_o69}
+
+
+NI Table with ionospheric model. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!noNeg@{noNeg}}
+\index{noNeg@{noNeg}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Sky\-Model\-VMIon::no\-Neg}}\label{structObitSkyModelVMIon_o46}
+
+
+True if only positive flux components are to be used. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!nSpecTerm@{nSpecTerm}}
+\index{nSpecTerm@{nSpecTerm}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMIon::n\-Spec\-Term}}\label{structObitSkyModelVMIon_o52}
+
+
+Number of spectral terms. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!nThreads@{nThreads}}
+\index{nThreads@{nThreads}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMIon::n\-Threads}}\label{structObitSkyModelVMIon_o53}
+
+
+Number of threads (elements in thread\-Args). 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!numberChannel@{numberChannel}}
+\index{numberChannel@{numberChannel}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMIon::number\-Channel}}\label{structObitSkyModelVMIon_o33}
+
+
+Selected start channel[1-rel] and number. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!numberChannelPB@{numberChannelPB}}
+\index{numberChannelPB@{numberChannelPB}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMIon::number\-Channel\-PB}}\label{structObitSkyModelVMIon_o37}
+
+
+Selected start rel. 
+
+PB correction channel[1-rel] and number \index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!numberIF@{numberIF}}
+\index{numberIF@{numberIF}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMIon::number\-IF}}\label{structObitSkyModelVMIon_o35}
+
+
+Selected start IF [1-rel] and number. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!numberIFPB@{numberIFPB}}
+\index{numberIFPB@{numberIFPB}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMIon::number\-IFPB}}\label{structObitSkyModelVMIon_o39}
+
+
+Selected start rel. 
+
+PB correction IF [1-rel] and number \index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!numberPoln@{numberPoln}}
+\index{numberPoln@{numberPoln}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMIon::number\-Poln}}\label{structObitSkyModelVMIon_o44}
+
+
+Selected start Poln [1-rel] and number. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!numComp@{numComp}}
+\index{numComp@{numComp}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMIon::num\-Comp}}\label{structObitSkyModelVMIon_o61}
+
+
+Number of actual components in model. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!numConjCol@{numConjCol}}
+\index{numConjCol@{numConjCol}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMIon::num\-Conj\-Col}}\label{structObitSkyModelVMIon_o10}
+
+
+Number of conjugate (neg U) columns in FTplane. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Sky\-Model\-VMIon::Obit\-Id}}\label{structObitSkyModelVMIon_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!PBFreq@{PBFreq}}
+\index{PBFreq@{PBFreq}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Sky\-Model\-VMIon::PBFreq}}\label{structObitSkyModelVMIon_o41}
+
+
+Reference frequency for this block of channels for PB corrections. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!plane@{plane}}
+\index{plane@{plane}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-Sky\-Model\-VMIon::plane}}\label{structObitSkyModelVMIon_o8}
+
+
+Image plane of single image. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!pointFlux@{pointFlux}}
+\index{pointFlux@{pointFlux}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMIon::point\-Flux}}\label{structObitSkyModelVMIon_o23}
+
+
+Point model flux density (Jy). 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!pointParms@{pointParms}}
+\index{pointParms@{pointParms}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMIon::point\-Parms}[10]}\label{structObitSkyModelVMIon_o26}
+
+
+Other (non-point)model components: major\_\-axis (deg), minor\_\-axis (deg), position\_\-angle (deg), type (Obit\-Sky\-Model\-Comp\-Type as gint), spectral terms;. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!pointXOff@{pointXOff}}
+\index{pointXOff@{pointXOff}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMIon::point\-XOff}}\label{structObitSkyModelVMIon_o24}
+
+
+Point, x (ra), y (dec) offset in deg. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!pointYOff@{pointYOff}}
+\index{pointYOff@{pointYOff}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMIon::point\-YOff}}\label{structObitSkyModelVMIon_o25}
+
+
+Point, x (ra), y (dec) offset in deg. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!prtLv@{prtLv}}
+\index{prtLv@{prtLv}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMIon::prt\-Lv}}\label{structObitSkyModelVMIon_o51}
+
+
+message level for deconvolution progress messages, 0=none, 1=summary, 2=normal, higher numbers for diagnostics 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMIon::Reference\-Count}}\label{structObitSkyModelVMIon_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!ssrot@{ssrot}}
+\index{ssrot@{ssrot}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMIon::ssrot}}\label{structObitSkyModelVMIon_o68}
+
+
+cosine, sine of rotation difference between uv, image 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!startChannel@{startChannel}}
+\index{startChannel@{startChannel}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMIon::start\-Channel}}\label{structObitSkyModelVMIon_o32}
+
+
+Selected start channel[1-rel] and number. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!startChannelPB@{startChannelPB}}
+\index{startChannelPB@{startChannelPB}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMIon::start\-Channel\-PB}}\label{structObitSkyModelVMIon_o36}
+
+
+Selected start rel. 
+
+PB correction channel[1-rel] and number \index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!startComp@{startComp}}
+\index{startComp@{startComp}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong}$\ast$ {\bf Obit\-Sky\-Model\-VMIon::start\-Comp}}\label{structObitSkyModelVMIon_o18}
+
+
+List of beginning component per image in mosaic (1-rel). 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!startIF@{startIF}}
+\index{startIF@{startIF}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMIon::start\-IF}}\label{structObitSkyModelVMIon_o34}
+
+
+Selected start IF [1-rel] and number. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!startIFPB@{startIFPB}}
+\index{startIFPB@{startIFPB}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMIon::start\-IFPB}}\label{structObitSkyModelVMIon_o38}
+
+
+Selected start rel. 
+
+PB correction IF [1-rel] and number \index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!startPoln@{startPoln}}
+\index{startPoln@{startPoln}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Sky\-Model\-VMIon::start\-Poln}}\label{structObitSkyModelVMIon_o43}
+
+
+Selected start Poln [1-rel] and number. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!stokes@{stokes}}
+\index{stokes@{stokes}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Sky\-Model\-VMIon::stokes}[5]}\label{structObitSkyModelVMIon_o42}
+
+
+Selected Stokes. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!stokFactor@{stokFactor}}
+\index{stokFactor@{stokFactor}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMIon::stok\-Factor}}\label{structObitSkyModelVMIon_o22}
+
+
+Factor to multiply times second Stokes of model. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!thread@{thread}}
+\index{thread@{thread}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Sky\-Model\-VMIon::thread}}\label{structObitSkyModelVMIon_o4}
+
+
+Threading info member object. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!threadArgs@{threadArgs}}
+\index{threadArgs@{threadArgs}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer$\ast$$\ast$ {\bf Obit\-Sky\-Model\-VMIon::thread\-Args}}\label{structObitSkyModelVMIon_o54}
+
+
+Array of FT Function structures. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!updateInterval@{updateInterval}}
+\index{updateInterval@{updateInterval}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Sky\-Model\-VMIon::update\-Interval}}\label{structObitSkyModelVMIon_o60}
+
+
+Model update interval (d). 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!uRotTab@{uRotTab}}
+\index{uRotTab@{uRotTab}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-Sky\-Model\-VMIon::u\-Rot\-Tab}}\label{structObitSkyModelVMIon_o63}
+
+
+Table of rotation matrices for components 6 needed per row (field). 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!VMComps@{VMComps}}
+\index{VMComps@{VMComps}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-Sky\-Model\-VMIon::VMComps}}\label{structObitSkyModelVMIon_o57}
+
+
+Array of time/spatially variable component model as rows in an FArray. 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!ZernX@{ZernX}}
+\index{ZernX@{ZernX}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-Sky\-Model\-VMIon::Zern\-X}}\label{structObitSkyModelVMIon_o65}
+
+
+Table of Zernike Y gradient terms, ncoef needed per row (field). 
+
+\index{ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}!ZernY@{ZernY}}
+\index{ZernY@{ZernY}!ObitSkyModelVMIon@{Obit\-Sky\-Model\-VMIon}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ {\bf Obit\-Sky\-Model\-VMIon::Zern\-Y}}\label{structObitSkyModelVMIon_o64}
+
+
+Table of Zernike X gradient terms, ncoef needed per row (field). 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Sky\-Model\-VMIon.h}\end{CompactItemize}

@@ -1,0 +1,160 @@
+\section{Obit\-DCon\-Clean\-Px\-List\-Class\-Info Struct Reference}
+\label{structObitDConCleanPxListClassInfo}\index{ObitDConCleanPxListClassInfo@{ObitDConCleanPxListClassInfo}}
+Class\-Info Structure.  
+
+
+{\tt \#include $<$Obit\-DCon\-Clean\-Px\-List.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gboolean {\bf initialized}
+\begin{CompactList}\small\item\em Have I been initialized? \item\end{CompactList}\item 
+gboolean {\bf has\-Scratch}
+\begin{CompactList}\small\item\em Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? \item\end{CompactList}\item 
+gchar $\ast$ {\bf Class\-Name}
+\begin{CompactList}\small\item\em Name of class (\char`\"{}Obit\char`\"{}). \item\end{CompactList}\item 
+gconstpointer {\bf Parent\-Class}
+\begin{CompactList}\small\item\em Pointer to parent class Class\-Info, Null if none. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Init\-FP} {\bf Obit\-Class\-Init}
+\begin{CompactList}\small\item\em Function pointer to Class initializer. \item\end{CompactList}\item 
+{\bf new\-Obit\-FP} {\bf new\-Obit}
+\begin{CompactList}\small\item\em Function pointer to new\-Obit. \item\end{CompactList}\item 
+{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Get\-Class}
+\begin{CompactList}\small\item\em Function pointer to Get\-Class. \item\end{CompactList}\item 
+{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-Class\-Info\-Def\-Fn}
+\begin{CompactList}\small\item\em Function pointer to Class\-Info\-Def\-Fn. \item\end{CompactList}\item 
+{\bf Obit\-Copy\-FP} {\bf Obit\-Copy}
+\begin{CompactList}\small\item\em Function pointer to shallow copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Clone\-FP} {\bf Obit\-Clone}
+\begin{CompactList}\small\item\em Function pointer to deep copy constructor. \item\end{CompactList}\item 
+{\bf Obit\-Ref\-FP} {\bf Obit\-Ref}
+\begin{CompactList}\small\item\em Function pointer to Object Ref. \item\end{CompactList}\item 
+{\bf Obit\-Unref\-FP} {\bf Obit\-Unref}
+\begin{CompactList}\small\item\em Function pointer to Object Unref. \item\end{CompactList}\item 
+{\bf Obit\-Is\-AFP} {\bf Obit\-Is\-A}
+\begin{CompactList}\small\item\em Function pointer to test if a class member. \item\end{CompactList}\item 
+{\bf Obit\-Clear\-FP} {\bf Obit\-Clear}
+\begin{CompactList}\small\item\em Function pointer to deallocation function. \item\end{CompactList}\item 
+{\bf Obit\-Init\-FP} {\bf Obit\-Init}
+\begin{CompactList}\small\item\em Function pointer to object initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Class\-Info Structure. 
+
+Contains class name, a pointer to any parent class (NULL if none) and function pointers. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}!ClassName@{ClassName}}
+\index{ClassName@{ClassName}!ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-DCon\-Clean\-Px\-List\-Class\-Info::Class\-Name}}\label{structObitDConCleanPxListClassInfo_o2}
+
+
+Name of class (\char`\"{}Obit\char`\"{}). 
+
+\index{ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}!hasScratch@{hasScratch}}
+\index{hasScratch@{hasScratch}!ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-DCon\-Clean\-Px\-List\-Class\-Info::has\-Scratch}}\label{structObitDConCleanPxListClassInfo_o1}
+
+
+Are disk resident \char`\"{}scratch\char`\"{} objects of this class possible? 
+
+\index{ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}!initialized@{initialized}}
+\index{initialized@{initialized}!ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-DCon\-Clean\-Px\-List\-Class\-Info::initialized}}\label{structObitDConCleanPxListClassInfo_o0}
+
+
+Have I been initialized? 
+
+\index{ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}!newObit@{newObit}}
+\index{newObit@{newObit}!ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf new\-Obit\-FP} {\bf Obit\-DCon\-Clean\-Px\-List\-Class\-Info::new\-Obit}}\label{structObitDConCleanPxListClassInfo_o5}
+
+
+Function pointer to new\-Obit. 
+
+\index{ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}!ObitClassInfoDefFn@{ObitClassInfoDefFn}}
+\index{ObitClassInfoDefFn@{ObitClassInfoDefFn}!ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Info\-Def\-Fn\-FP} {\bf Obit\-DCon\-Clean\-Px\-List\-Class\-Info::Obit\-Class\-Info\-Def\-Fn}}\label{structObitDConCleanPxListClassInfo_o7}
+
+
+Function pointer to Class\-Info\-Def\-Fn. 
+
+\index{ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}!ObitClassInit@{ObitClassInit}}
+\index{ObitClassInit@{ObitClassInit}!ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Class\-Init\-FP} {\bf Obit\-DCon\-Clean\-Px\-List\-Class\-Info::Obit\-Class\-Init}}\label{structObitDConCleanPxListClassInfo_o4}
+
+
+Function pointer to Class initializer. 
+
+\index{ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}!ObitClear@{ObitClear}}
+\index{ObitClear@{ObitClear}!ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clear\-FP} {\bf Obit\-DCon\-Clean\-Px\-List\-Class\-Info::Obit\-Clear}}\label{structObitDConCleanPxListClassInfo_o13}
+
+
+Function pointer to deallocation function. 
+
+\index{ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}!ObitClone@{ObitClone}}
+\index{ObitClone@{ObitClone}!ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Clone\-FP} {\bf Obit\-DCon\-Clean\-Px\-List\-Class\-Info::Obit\-Clone}}\label{structObitDConCleanPxListClassInfo_o9}
+
+
+Function pointer to deep copy constructor. 
+
+\index{ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}!ObitCopy@{ObitCopy}}
+\index{ObitCopy@{ObitCopy}!ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Copy\-FP} {\bf Obit\-DCon\-Clean\-Px\-List\-Class\-Info::Obit\-Copy}}\label{structObitDConCleanPxListClassInfo_o8}
+
+
+Function pointer to shallow copy constructor. 
+
+\index{ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}!ObitGetClass@{ObitGetClass}}
+\index{ObitGetClass@{ObitGetClass}!ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Get\-Class\-FP} {\bf Obit\-DCon\-Clean\-Px\-List\-Class\-Info::Obit\-Get\-Class}}\label{structObitDConCleanPxListClassInfo_o6}
+
+
+Function pointer to Get\-Class. 
+
+\index{ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}!ObitInit@{ObitInit}}
+\index{ObitInit@{ObitInit}!ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Init\-FP} {\bf Obit\-DCon\-Clean\-Px\-List\-Class\-Info::Obit\-Init}}\label{structObitDConCleanPxListClassInfo_o14}
+
+
+Function pointer to object initializer. 
+
+\index{ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}!ObitIsA@{ObitIsA}}
+\index{ObitIsA@{ObitIsA}!ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Is\-AFP} {\bf Obit\-DCon\-Clean\-Px\-List\-Class\-Info::Obit\-Is\-A}}\label{structObitDConCleanPxListClassInfo_o12}
+
+
+Function pointer to test if a class member. 
+
+\index{ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}!ObitRef@{ObitRef}}
+\index{ObitRef@{ObitRef}!ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Ref\-FP} {\bf Obit\-DCon\-Clean\-Px\-List\-Class\-Info::Obit\-Ref}}\label{structObitDConCleanPxListClassInfo_o10}
+
+
+Function pointer to Object Ref. 
+
+\index{ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}!ObitUnref@{ObitUnref}}
+\index{ObitUnref@{ObitUnref}!ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Unref\-FP} {\bf Obit\-DCon\-Clean\-Px\-List\-Class\-Info::Obit\-Unref}}\label{structObitDConCleanPxListClassInfo_o11}
+
+
+Function pointer to Object Unref. 
+
+\index{ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}!ParentClass@{ParentClass}}
+\index{ParentClass@{ParentClass}!ObitDConCleanPxListClassInfo@{Obit\-DCon\-Clean\-Px\-List\-Class\-Info}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer {\bf Obit\-DCon\-Clean\-Px\-List\-Class\-Info::Parent\-Class}}\label{structObitDConCleanPxListClassInfo_o3}
+
+
+Pointer to parent class Class\-Info, Null if none. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-DCon\-Clean\-Px\-List.h}\end{CompactItemize}

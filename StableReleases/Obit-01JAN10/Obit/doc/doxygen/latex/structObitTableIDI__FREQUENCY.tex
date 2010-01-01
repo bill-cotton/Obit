@@ -1,0 +1,365 @@
+\section{Obit\-Table\-IDI\_\-FREQUENCY Struct Reference}
+\label{structObitTableIDI__FREQUENCY}\index{ObitTableIDI_FREQUENCY@{ObitTableIDI\_\-FREQUENCY}}
+Obit\-Table\-IDI\_\-FREQUENCY Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-IDI\_\-FREQUENCY.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-IO} $\ast$ {\bf my\-IO}
+\begin{CompactList}\small\item\em I/O interface to access disk resident data. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Desc} $\ast$ {\bf my\-Desc}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Sel} $\ast$ {\bf my\-Sel}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf buffer}
+\begin{CompactList}\small\item\em Table buffer. \item\end{CompactList}\item 
+{\bf olong} {\bf buffer\-Size}
+\begin{CompactList}\small\item\em Table buffer size in floats. \item\end{CompactList}\item 
+gchar $\ast$ {\bf tab\-Type}
+\begin{CompactList}\small\item\em Table type (name of type, e.g. \item\end{CompactList}\item 
+{\bf olong} {\bf tab\-Ver}
+\begin{CompactList}\small\item\em Table version number(1-rel). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf my\-Host}
+\begin{CompactList}\small\item\em This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. \item\end{CompactList}\item 
+{\bf oint} {\bf tabrev}
+\begin{CompactList}\small\item\em Table format revision number. \item\end{CompactList}\item 
+{\bf oint} {\bf no\_\-stkd}
+\begin{CompactList}\small\item\em Number of Stokes parameters. \item\end{CompactList}\item 
+{\bf oint} {\bf stk\_\-1}
+\begin{CompactList}\small\item\em First Stokes parameter. \item\end{CompactList}\item 
+{\bf oint} {\bf no\_\-band}
+\begin{CompactList}\small\item\em Number of frequency bands (IF). \item\end{CompactList}\item 
+{\bf oint} {\bf no\_\-chan}
+\begin{CompactList}\small\item\em Number of frequency channels. \item\end{CompactList}\item 
+{\bf odouble} {\bf ref\_\-freq}
+\begin{CompactList}\small\item\em Reference frequency (Hz). \item\end{CompactList}\item 
+{\bf odouble} {\bf chan\_\-bw}
+\begin{CompactList}\small\item\em Channel bandwidth (Hz). \item\end{CompactList}\item 
+{\bf oint} {\bf ref\_\-pixl}
+\begin{CompactList}\small\item\em Reference frequency bin. \item\end{CompactList}\item 
+gchar {\bf obscode} [MAXKEYCHARTABLEIDI\_\-FREQUENCY]
+\begin{CompactList}\small\item\em Observation project code. \item\end{CompactList}\item 
+gchar {\bf Arr\-Name} [MAXKEYCHARTABLEIDI\_\-FREQUENCY]
+\begin{CompactList}\small\item\em Array name. \item\end{CompactList}\item 
+gchar {\bf Ref\-Date} [MAXKEYCHARTABLEIDI\_\-FREQUENCY]
+\begin{CompactList}\small\item\em Reference date as \char`\"{}YYYY-MM-DD\char`\"{}. \item\end{CompactList}\item 
+{\bf olong} {\bf fqid\-Off}
+\begin{CompactList}\small\item\em Column offset for Frequency ID number for row, this is a random parameter in the uv data in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf fqid\-Col}
+\begin{CompactList}\small\item\em Physical column number for Frequency ID number for row, this is a random parameter in the uv data in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf bandfreq\-Off}
+\begin{CompactList}\small\item\em Column offset for Offset from reference frequency for each Band in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf bandfreq\-Col}
+\begin{CompactList}\small\item\em Physical column number for Offset from reference frequency for each Band in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf ch\-Width\-Off}
+\begin{CompactList}\small\item\em Column offset for Bandwidth of an individual channel, now always written and read as a signed value in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf ch\-Width\-Col}
+\begin{CompactList}\small\item\em Physical column number for Bandwidth of an individual channel, now always written and read as a signed value in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf tot\-BWOff}
+\begin{CompactList}\small\item\em Column offset for Total bandwidth of the IF, now written and read as an unsigned value in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf tot\-BWCol}
+\begin{CompactList}\small\item\em Physical column number for Total bandwidth of the IF, now written and read as an unsigned value in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf side\-Band\-Off}
+\begin{CompactList}\small\item\em Column offset for Sideband of the IF (-1 =\$$>$\$ lower, +1 =\$$>$\$ upper), now always written and read as +1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf side\-Band\-Col}
+\begin{CompactList}\small\item\em Physical column number for Sideband of the IF (-1 =\$$>$\$ lower, +1 =\$$>$\$ upper), now always written and read as +1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf bb\_\-chan\-Off}
+\begin{CompactList}\small\item\em Column offset for Look this one up1 in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf bb\_\-chan\-Col}
+\begin{CompactList}\small\item\em Physical column number for Look this one up1 in table record. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-IDI\_\-FREQUENCY Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!ArrName@{ArrName}}
+\index{ArrName@{ArrName}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-IDI\_\-FREQUENCY::Arr\-Name}[MAXKEYCHARTABLEIDI\_\-FREQUENCY]}\label{structObitTableIDI__FREQUENCY_o24}
+
+
+Array name. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!bandfreqCol@{bandfreqCol}}
+\index{bandfreqCol@{bandfreqCol}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-FREQUENCY::bandfreq\-Col}}\label{structObitTableIDI__FREQUENCY_o29}
+
+
+Physical column number for Offset from reference frequency for each Band in table record. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!bandfreqOff@{bandfreqOff}}
+\index{bandfreqOff@{bandfreqOff}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-FREQUENCY::bandfreq\-Off}}\label{structObitTableIDI__FREQUENCY_o28}
+
+
+Column offset for Offset from reference frequency for each Band in table record. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!bb_chanCol@{bb\_\-chanCol}}
+\index{bb_chanCol@{bb\_\-chanCol}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-FREQUENCY::bb\_\-chan\-Col}}\label{structObitTableIDI__FREQUENCY_o37}
+
+
+Physical column number for Look this one up1 in table record. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!bb_chanOff@{bb\_\-chanOff}}
+\index{bb_chanOff@{bb\_\-chanOff}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-FREQUENCY::bb\_\-chan\-Off}}\label{structObitTableIDI__FREQUENCY_o36}
+
+
+Column offset for Look this one up1 in table record. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!buffer@{buffer}}
+\index{buffer@{buffer}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-IDI\_\-FREQUENCY::buffer}}\label{structObitTableIDI__FREQUENCY_o10}
+
+
+Table buffer. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!bufferSize@{bufferSize}}
+\index{bufferSize@{bufferSize}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-FREQUENCY::buffer\-Size}}\label{structObitTableIDI__FREQUENCY_o11}
+
+
+Table buffer size in floats. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!chan_bw@{chan\_\-bw}}
+\index{chan_bw@{chan\_\-bw}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-FREQUENCY::chan\_\-bw}}\label{structObitTableIDI__FREQUENCY_o21}
+
+
+Channel bandwidth (Hz). 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!chWidthCol@{chWidthCol}}
+\index{chWidthCol@{chWidthCol}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-FREQUENCY::ch\-Width\-Col}}\label{structObitTableIDI__FREQUENCY_o31}
+
+
+Physical column number for Bandwidth of an individual channel, now always written and read as a signed value in table record. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!chWidthOff@{chWidthOff}}
+\index{chWidthOff@{chWidthOff}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-FREQUENCY::ch\-Width\-Off}}\label{structObitTableIDI__FREQUENCY_o30}
+
+
+Column offset for Bandwidth of an individual channel, now always written and read as a signed value in table record. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-IDI\_\-FREQUENCY::Class\-Info}}\label{structObitTableIDI__FREQUENCY_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!fqidCol@{fqidCol}}
+\index{fqidCol@{fqidCol}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-FREQUENCY::fqid\-Col}}\label{structObitTableIDI__FREQUENCY_o27}
+
+
+Physical column number for Frequency ID number for row, this is a random parameter in the uv data in table record. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!fqidOff@{fqidOff}}
+\index{fqidOff@{fqidOff}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-FREQUENCY::fqid\-Off}}\label{structObitTableIDI__FREQUENCY_o26}
+
+
+Column offset for Frequency ID number for row, this is a random parameter in the uv data in table record. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!info@{info}}
+\index{info@{info}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Table\-IDI\_\-FREQUENCY::info}}\label{structObitTableIDI__FREQUENCY_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Desc}$\ast$ {\bf Obit\-Table\-IDI\_\-FREQUENCY::my\-Desc}}\label{structObitTableIDI__FREQUENCY_o8}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!myHost@{myHost}}
+\index{myHost@{myHost}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-Table\-IDI\_\-FREQUENCY::my\-Host}}\label{structObitTableIDI__FREQUENCY_o14}
+
+
+This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!myIO@{myIO}}
+\index{myIO@{myIO}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IO}$\ast$ {\bf Obit\-Table\-IDI\_\-FREQUENCY::my\-IO}}\label{structObitTableIDI__FREQUENCY_o7}
+
+
+I/O interface to access disk resident data. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Sel}$\ast$ {\bf Obit\-Table\-IDI\_\-FREQUENCY::my\-Sel}}\label{structObitTableIDI__FREQUENCY_o9}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Table\-IDI\_\-FREQUENCY::my\-Status}}\label{structObitTableIDI__FREQUENCY_o6}
+
+
+I/O status. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!name@{name}}
+\index{name@{name}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-IDI\_\-FREQUENCY::name}}\label{structObitTableIDI__FREQUENCY_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!no_band@{no\_\-band}}
+\index{no_band@{no\_\-band}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-FREQUENCY::no\_\-band}}\label{structObitTableIDI__FREQUENCY_o18}
+
+
+Number of frequency bands (IF). 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!no_chan@{no\_\-chan}}
+\index{no_chan@{no\_\-chan}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-FREQUENCY::no\_\-chan}}\label{structObitTableIDI__FREQUENCY_o19}
+
+
+Number of frequency channels. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!no_stkd@{no\_\-stkd}}
+\index{no_stkd@{no\_\-stkd}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-FREQUENCY::no\_\-stkd}}\label{structObitTableIDI__FREQUENCY_o16}
+
+
+Number of Stokes parameters. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-IDI\_\-FREQUENCY::Obit\-Id}}\label{structObitTableIDI__FREQUENCY_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!obscode@{obscode}}
+\index{obscode@{obscode}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-IDI\_\-FREQUENCY::obscode}[MAXKEYCHARTABLEIDI\_\-FREQUENCY]}\label{structObitTableIDI__FREQUENCY_o23}
+
+
+Observation project code. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!ref_freq@{ref\_\-freq}}
+\index{ref_freq@{ref\_\-freq}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf odouble} {\bf Obit\-Table\-IDI\_\-FREQUENCY::ref\_\-freq}}\label{structObitTableIDI__FREQUENCY_o20}
+
+
+Reference frequency (Hz). 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!ref_pixl@{ref\_\-pixl}}
+\index{ref_pixl@{ref\_\-pixl}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-FREQUENCY::ref\_\-pixl}}\label{structObitTableIDI__FREQUENCY_o22}
+
+
+Reference frequency bin. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!RefDate@{RefDate}}
+\index{RefDate@{RefDate}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Table\-IDI\_\-FREQUENCY::Ref\-Date}[MAXKEYCHARTABLEIDI\_\-FREQUENCY]}\label{structObitTableIDI__FREQUENCY_o25}
+
+
+Reference date as \char`\"{}YYYY-MM-DD\char`\"{}. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-FREQUENCY::Reference\-Count}}\label{structObitTableIDI__FREQUENCY_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!sideBandCol@{sideBandCol}}
+\index{sideBandCol@{sideBandCol}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-FREQUENCY::side\-Band\-Col}}\label{structObitTableIDI__FREQUENCY_o35}
+
+
+Physical column number for Sideband of the IF (-1 =\$$>$\$ lower, +1 =\$$>$\$ upper), now always written and read as +1 in table record. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!sideBandOff@{sideBandOff}}
+\index{sideBandOff@{sideBandOff}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-FREQUENCY::side\-Band\-Off}}\label{structObitTableIDI__FREQUENCY_o34}
+
+
+Column offset for Sideband of the IF (-1 =\$$>$\$ lower, +1 =\$$>$\$ upper), now always written and read as +1 in table record. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!stk_1@{stk\_\-1}}
+\index{stk_1@{stk\_\-1}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-FREQUENCY::stk\_\-1}}\label{structObitTableIDI__FREQUENCY_o17}
+
+
+First Stokes parameter. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!tabrev@{tabrev}}
+\index{tabrev@{tabrev}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-IDI\_\-FREQUENCY::tabrev}}\label{structObitTableIDI__FREQUENCY_o15}
+
+
+Table format revision number. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!tabType@{tabType}}
+\index{tabType@{tabType}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-IDI\_\-FREQUENCY::tab\-Type}}\label{structObitTableIDI__FREQUENCY_o12}
+
+
+Table type (name of type, e.g. 
+
+\char`\"{}AIPS AN\char`\"{}) \index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!tabVer@{tabVer}}
+\index{tabVer@{tabVer}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-FREQUENCY::tab\-Ver}}\label{structObitTableIDI__FREQUENCY_o13}
+
+
+Table version number(1-rel). 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!thread@{thread}}
+\index{thread@{thread}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Table\-IDI\_\-FREQUENCY::thread}}\label{structObitTableIDI__FREQUENCY_o4}
+
+
+Threading info member object. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!totBWCol@{totBWCol}}
+\index{totBWCol@{totBWCol}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-FREQUENCY::tot\-BWCol}}\label{structObitTableIDI__FREQUENCY_o33}
+
+
+Physical column number for Total bandwidth of the IF, now written and read as an unsigned value in table record. 
+
+\index{ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}!totBWOff@{totBWOff}}
+\index{totBWOff@{totBWOff}!ObitTableIDI_FREQUENCY@{Obit\-Table\-IDI\_\-FREQUENCY}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-IDI\_\-FREQUENCY::tot\-BWOff}}\label{structObitTableIDI__FREQUENCY_o32}
+
+
+Column offset for Total bandwidth of the IF, now written and read as an unsigned value in table record. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-IDI\_\-FREQUENCY.h}\end{CompactItemize}

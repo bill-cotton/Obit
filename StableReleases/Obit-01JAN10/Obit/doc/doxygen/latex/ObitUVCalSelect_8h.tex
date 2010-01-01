@@ -1,0 +1,56 @@
+\section{Obit\-UVCal\-Select.h File Reference}
+\label{ObitUVCalSelect_8h}\index{ObitUVCalSelect.h@{ObitUVCalSelect.h}}
+{\bf Obit\-UVCal}{\rm (p.\,\pageref{structObitUVCal})} utilities for selecting data and translating Stokes. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Thread.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Info\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVDesc.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVSel.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVCal.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-UVCal\-Select\-Init} ({\bf Obit\-UVCal} $\ast$in, {\bf Obit\-UVSel} $\ast$sel, {\bf Obit\-UVDesc} $\ast$in\-Desc, {\bf Obit\-UVDesc} $\ast$out\-Desc, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Init data selection. \item\end{CompactList}\item 
+gboolean {\bf Obit\-UVCal\-Select} ({\bf Obit\-UVCal} $\ast$in, {\bf ofloat} $\ast$vis\-In, {\bf ofloat} $\ast$RP, {\bf ofloat} $\ast$vis\-Out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: translate/select data. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-UVCal}{\rm (p.\,\pageref{structObitUVCal})} utilities for selecting data and translating Stokes. 
+
+This is implemented as utility routines and a separate Structure definition to avoid circular definitions. The {\bf Obit\-UVCal}{\rm (p.\,\pageref{structObitUVCal})} must be visible here but the structure needed for this calibration is a member of the {\bf Obit\-UVCal}{\rm (p.\,\pageref{structObitUVCal})}. If it were implemented as an {\bf Obit}{\rm (p.\,\pageref{structObit})} class this would lead to a circular definition which c cannot deal with.
+
+\subsection{Function Documentation}
+\index{ObitUVCalSelect.h@{Obit\-UVCal\-Select.h}!ObitUVCalSelect@{ObitUVCalSelect}}
+\index{ObitUVCalSelect@{ObitUVCalSelect}!ObitUVCalSelect.h@{Obit\-UVCal\-Select.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-UVCal\-Select ({\bf Obit\-UVCal} $\ast$ {\em in}, {\bf ofloat} $\ast$ {\em RP}, {\bf ofloat} $\ast$ {\em vis\-In}, {\bf ofloat} $\ast$ {\em vis\-Out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVCalSelect_8h_a1}
+
+
+Public: translate/select data. 
+
+U, V, W scales if selecting in IF. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Calibration Object. \begin{itemize}
+\item my\-Sel-$>$trans\-Pol if TRUE translate stokes \item my\-Sel-$>$both\-Corr if TRUE all data needed in combination \item jadr (0-rel) indices to the first and second visibility input records to be used in the output record. If jadr(1,n) is negative (Stokes U from RL,LR) use abs(jadr(1,n)) and multiply the visibility by i (=sqrt(-1)). If jadr(2,n) $<$ 0, (RL,LR from Q,U) use abs and construct (1) + i$\ast$(2) \item sel\-Fact Factors to be multiplied by the first and second input vis's to make the output vis. \end{itemize}
+\item[{\em RP}]Random parameters array. \item[{\em vis\-In}]input visibility as an array of floats \item[{\em vis\-Out}]output visibility as an array of floats \item[{\em err}]Obit\-Error stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if at least some data is valid \end{Desc}
+\index{ObitUVCalSelect.h@{Obit\-UVCal\-Select.h}!ObitUVCalSelectInit@{ObitUVCalSelectInit}}
+\index{ObitUVCalSelectInit@{ObitUVCalSelectInit}!ObitUVCalSelect.h@{Obit\-UVCal\-Select.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVCal\-Select\-Init ({\bf Obit\-UVCal} $\ast$ {\em in}, {\bf Obit\-UVSel} $\ast$ {\em sel}, {\bf Obit\-UVDesc} $\ast$ {\em in\-Desc}, {\bf Obit\-UVDesc} $\ast$ {\em out\-Desc}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVCalSelect_8h_a0}
+
+
+Public: Init data selection. 
+
+Output descriptor modified to reflect data selection. Stokes 'F' = formal I (both RR+LL or XX+YY needed) On output data are ordered Stokes, Freq, IF if Stokes translation Adapted from the AIPSish DGINIT.FOR. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object to initialize. \begin{itemize}
+\item my\-Sel-$>$trans\-Pol if TRUE translate stokes \item my\-Sel-$>$both\-Corr if TRUE all data needed in combination \item jadr (0-rel) indices to the first and second visibility input records to be used in the output record. If jadr(1,n) is negative (Stokes U from RL,LR) use abs(jadr(1,n)) and multiply the visibility by i (=sqrt(-1)). If jadr(2,n) $<$ 0, (RL,LR from Q,U) use abs and construct (1) + i$\ast$(2) \item sel\-Fact Factors to be multiplied by the first and second input vis's to make the output vis. \end{itemize}
+\item[{\em sel}]Data selector. \item[{\em in\-Desc}]Input data descriptor. \item[{\em out\-Desc}]Output data descriptor (after transformations/selection). \item[{\em err}]Obit\-Error stack. \end{description}
+\end{Desc}

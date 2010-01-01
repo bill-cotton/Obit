@@ -1,0 +1,327 @@
+\section{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h File Reference}
+\label{ObitTableIDI__ARRAY__GEOMETRY_8h}\index{ObitTableIDI_ARRAY_GEOMETRY.h@{ObitTableIDI\_\-ARRAY\_\-GEOMETRY.h}}
+{\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRY})} class definition. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Data.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}
+\begin{CompactList}\small\item\em Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}
+\begin{CompactList}\small\item\em Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYClass\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure For Table\-IDI\_\-ARRAY\_\-GEOMETRYRow. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf MAXKEYCHARTABLEIDI\_\-ARRAY\_\-GEOMETRY}\ 24
+\begin{CompactList}\small\item\em Number of characters for Table keyword. \item\end{CompactList}\item 
+\#define {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYUnref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRY})} returns an Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRef}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRY})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYIs\-A}(in)\ Obit\-Is\-A (in, Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYGet\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\item 
+\#define {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRYRow})} returns an Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRYRow})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Row Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow} $\ast$ {\bf new\-Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow} ({\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$table)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYClass\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$ {\bf new\-Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$ {\bf new\-Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYValue} (gchar $\ast$name, {\bf Obit\-Data} $\ast$file, {\bf olong} $\ast$ver, Obit\-IOAccess access, {\bf oint} no\_\-band, {\bf oint} num\-Orb, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Constructor from values. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYGet\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$ {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYCopy} ({\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$in, {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$ {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYClone} ({\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$in, {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$out)
+\begin{CompactList}\small\item\em Public: Copy (shallow) constructor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$ {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYConvert} ({\bf Obit\-Table} $\ast$in)
+\begin{CompactList}\small\item\em Public: Convert an {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} to an {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRY})}. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYOpen} ({\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$in, Obit\-IOAccess access, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create {\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} structures and open file. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRead\-Row} ({\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$in, {\bf olong} i\-IDI\_\-ARRAY\_\-GEOMETRYRow, {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow} $\ast$row, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read a table row. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYSet\-Row} ({\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$in, {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow} $\ast$row, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Init a table row for write. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYWrite\-Row} ({\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$in, {\bf olong} i\-IDI\_\-ARRAY\_\-GEOMETRYRow, {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow} $\ast$row, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Write a table row. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYClose} ({\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Close file and become inactive. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRY})} class definition. 
+
+This class is derived from the {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} class.
+
+This class contains tabular data and allows access. This table is part of the IDI uv data format. IDI contains information about the locations of antennas in a UV data set. Also time information and the state of the Earth's orientation. ]  In memory tables are stored in a fashion similar to how they are stored on disk - in large blocks in memory rather than structures. Due to the word alignment requirements of some machines, they are stored by order of the decreasing element size: double, float long, int, short, char rather than the logical order. The details of the storage in the buffer are kept in the {\bf Obit\-Table\-Desc}{\rm (p.\,\pageref{structObitTableDesc})}.
+
+This class contains tabular data and allows access. \char`\"{}IDI\_\-ARRAY\_\-GEOMETRY\char`\"{} table An {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRY})} is the front end to a persistent disk resident structure. Only FITS (as Tables) are supported.\subsection{History\-Table data storage}\label{ObitTableWX_8h_TableDataStorage}
+In memory tables are stored in a fashion similar to how they are stored on disk - in large blocks in memory rather than structures. Due to the word alignment requirements of some machines, they are stored by order of the decreasing element size: double, float long, int, short, char rather than the logical order. The details of the storage in the buffer are kept in the \#Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYDesc.
+
+In addition to the normal tabular data, a table will have a \char`\"{}\_\-status\char`\"{} column to indicate the status of each row.\subsection{Specifying desired data transfer parameters}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_ObitTableIDI_ARRAY_GEOMETRYSpecification}
+The desired data transfers are specified in the member {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. In the following an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} entry is defined by the name in double quotes, the data type code as an \#Obit\-Info\-Type enum and the dimensions of the array (? =$>$ depends on application).
+
+The following apply to both types of files: \begin{itemize}
+\item \char`\"{}n\-Row\-PIO\char`\"{}, OBIT\_\-int, Max. Number of visibilities per \char`\"{}Read\char`\"{} or \char`\"{}Write\char`\"{} operation. Default = 1.\end{itemize}
+\subsubsection{FITS files}\label{ObitTableWX_8h_TableFITS}
+This implementation uses cfitsio which allows using, in addition to regular FITS images, gzip compressed files, pipes, shared memory and a number of other input forms. The convenience Macro \#Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYSet\-FITS simplifies specifying the desired data. Binary tables are used for storing visibility data in FITS. For accessing FITS files the following entries in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} are used: \begin{itemize}
+\item \char`\"{}File\-Name\char`\"{} OBIT\_\-string (?,1,1) FITS file name. \item \char`\"{}Tab\-Name\char`\"{} OBIT\_\-string (?,1,1) Table name (e.g. \char`\"{}AIPS CC\char`\"{}). \item \char`\"{}Ver\char`\"{} OBIT\_\-int (1,1,1) Table version number\end{itemize}
+\subsection{Creators and Destructors}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_ObitTableIDI_ARRAY_GEOMETRYaccess}
+An {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRY})} can be created using new\-Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYValue which attaches the table to an {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} for the object. If the output {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRY})} has previously been specified, including file information, then Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYCopy will copy the disk resident as well as the memory resident information.
+
+A copy of a pointer to an {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRY})} should always be made using the Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRef function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRY})} or changing a pointer, the function Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYUnref will decrement the reference count and destroy the object when the reference count hits 0.\subsection{I/O}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_ObitTableIDI_ARRAY_GEOMETRYUsage}
+Visibility data is available after an input object is \char`\"{}Opened\char`\"{} and \char`\"{}Read\char`\"{}. I/O optionally uses a buffer attached to the {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRY})} or some external location. To Write an {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRY})}, create it, open it, and write. The object should be closed to ensure all data is flushed to disk. Deletion of an {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRY})} after its final unreferencing will automatically close it.
+
+\subsection{Define Documentation}
+\index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!MAXKEYCHARTABLEIDI_ARRAY_GEOMETRY@{MAXKEYCHARTABLEIDI\_\-ARRAY\_\-GEOMETRY}}
+\index{MAXKEYCHARTABLEIDI_ARRAY_GEOMETRY@{MAXKEYCHARTABLEIDI\_\-ARRAY\_\-GEOMETRY}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAXKEYCHARTABLEIDI\_\-ARRAY\_\-GEOMETRY\ 24}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a0}
+
+
+Number of characters for Table keyword. 
+
+\index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!ObitTableIDI_ARRAY_GEOMETRYIsA@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYIsA}}
+\index{ObitTableIDI_ARRAY_GEOMETRYIsA@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYIsA}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYIs\-A(in)\ Obit\-Is\-A (in, Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYGet\-Class())}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a3}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!ObitTableIDI_ARRAY_GEOMETRYRef@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYRef}}
+\index{ObitTableIDI_ARRAY_GEOMETRYRef@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYRef}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRef(in)\ Obit\-Ref (in)}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a2}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRY})}. 
+
+returns an Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY$\ast$. in = object to reference \index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!ObitTableIDI_ARRAY_GEOMETRYRowIsA@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYRowIsA}}
+\index{ObitTableIDI_ARRAY_GEOMETRYRowIsA@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYRowIsA}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow\-Get\-Class())}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a6}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!ObitTableIDI_ARRAY_GEOMETRYRowRef@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYRowRef}}
+\index{ObitTableIDI_ARRAY_GEOMETRYRowRef@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYRowRef}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow\-Ref(in)\ Obit\-Ref (in)}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a5}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRYRow})}. 
+
+returns an Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow$\ast$. in = object to reference \index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!ObitTableIDI_ARRAY_GEOMETRYRowUnref@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYRowUnref}}
+\index{ObitTableIDI_ARRAY_GEOMETRYRowUnref@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYRowUnref}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow\-Unref(in)\ Obit\-Unref (in)}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a4}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRYRow})} returns an Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow$\ast$. 
+
+in = object to unreference \index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!ObitTableIDI_ARRAY_GEOMETRYUnref@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYUnref}}
+\index{ObitTableIDI_ARRAY_GEOMETRYUnref@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYUnref}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYUnref(in)\ Obit\-Unref (in)}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a1}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRY})} returns an Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY$\ast$. 
+
+in = object to unreference 
+
+\subsection{Function Documentation}
+\index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!newObitTableIDI_ARRAY_GEOMETRY@{newObitTableIDI\_\-ARRAY\_\-GEOMETRY}}
+\index{newObitTableIDI_ARRAY_GEOMETRY@{newObitTableIDI\_\-ARRAY\_\-GEOMETRY}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}$\ast$ new\-Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY (gchar $\ast$ {\em name})}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a11}
+
+
+Public: Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!newObitTableIDI_ARRAY_GEOMETRYRow@{newObitTableIDI\_\-ARRAY\_\-GEOMETRYRow}}
+\index{newObitTableIDI_ARRAY_GEOMETRYRow@{newObitTableIDI\_\-ARRAY\_\-GEOMETRYRow}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow}$\ast$ new\-Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow ({\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$ {\em table})}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a8}
+
+
+Public: Constructor. 
+
+If table is open and for write, the row is attached to the buffer Initializes Row class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!newObitTableIDI_ARRAY_GEOMETRYValue@{newObitTableIDI\_\-ARRAY\_\-GEOMETRYValue}}
+\index{newObitTableIDI_ARRAY_GEOMETRYValue@{newObitTableIDI\_\-ARRAY\_\-GEOMETRYValue}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}$\ast$ new\-Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYValue (gchar $\ast$ {\em name}, {\bf Obit\-Data} $\ast$ {\em file}, {\bf olong} $\ast$ {\em ver}, Obit\-IOAccess {\em access}, {\bf oint} {\em no\_\-band}, {\bf oint} {\em num\-Orb}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a12}
+
+
+Public: Constructor from values. 
+
+Creates a new table structure and attaches to the Table\-List of file. If the specified table already exists then it is returned. Initializes class if needed on first call. Forces an update of any disk resident structures (e.g. AIPS header). \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em file}]{\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} which which the table is to be associated. \item[{\em ver}]Table version number. 0=$>$ add higher, value used returned \item[{\em access}]access (OBIT\_\-IO\_\-Read\-Only, means do not create if it doesn't exist. \item[{\em no\_\-band}]Number of frequency bands (IF) \item[{\em num\-Orb}]Number of orbital parameters \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object, NULL on failure. \end{Desc}
+\index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!ObitTableIDI_ARRAY_GEOMETRYClassInit@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYClassInit}}
+\index{ObitTableIDI_ARRAY_GEOMETRYClassInit@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYClassInit}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYClass\-Init (void)}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a10}
+
+
+Public: Class initializer. 
+
+\index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!ObitTableIDI_ARRAY_GEOMETRYClone@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYClone}}
+\index{ObitTableIDI_ARRAY_GEOMETRYClone@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYClone}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}$\ast$ Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYClone ({\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$ {\em in}, {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$ {\em out})}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a15}
+
+
+Public: Copy (shallow) constructor. 
+
+\index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!ObitTableIDI_ARRAY_GEOMETRYClose@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYClose}}
+\index{ObitTableIDI_ARRAY_GEOMETRYClose@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYClose}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYClose ({\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a21}
+
+
+Public: Close file and become inactive. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be closed. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]error code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!ObitTableIDI_ARRAY_GEOMETRYConvert@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYConvert}}
+\index{ObitTableIDI_ARRAY_GEOMETRYConvert@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYConvert}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}$\ast$ Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYConvert ({\bf Obit\-Table} $\ast$ {\em in})}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a16}
+
+
+Public: Convert an {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} to an {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}{\rm (p.\,\pageref{structObitTableIDI__ARRAY__GEOMETRY})}. 
+
+New object will have references to members of in. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy, will still exist afterwards and should be Unrefed if not needed. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!ObitTableIDI_ARRAY_GEOMETRYCopy@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYCopy}}
+\index{ObitTableIDI_ARRAY_GEOMETRYCopy@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYCopy}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY}$\ast$ Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYCopy ({\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$ {\em in}, {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a14}
+
+
+Public: Copy (deep) constructor. 
+
+Copies are made of complex members including disk files; these will be copied applying whatever selection is associated with the input. Objects should be closed on input and will be closed on output. In order for the disk file structures to be copied, the output file must be sufficiently defined that it can be written. The copy will be attempted but no errors will be logged until both input and output have been successfully opened. {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} and {\bf Obit\-Thread}{\rm (p.\,\pageref{structObitThread})} members are only copied if the output object didn't previously exist. Parent class members are included but any derived class info is ignored. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!ObitTableIDI_ARRAY_GEOMETRYGetClass@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYGetClass}}
+\index{ObitTableIDI_ARRAY_GEOMETRYGetClass@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYGetClass}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYGet\-Class (void)}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a13}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!ObitTableIDI_ARRAY_GEOMETRYOpen@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYOpen}}
+\index{ObitTableIDI_ARRAY_GEOMETRYOpen@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYOpen}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYOpen ({\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$ {\em in}, Obit\-IOAccess {\em access}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a17}
+
+
+Public: Create {\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} structures and open file. 
+
+The image descriptor is read if OBIT\_\-IO\_\-Read\-Only or OBIT\_\-IO\_\-Read\-Write and written to disk if opened OBIT\_\-IO\_\-Write\-Only. After the file has been opened the member, buffer is initialized for reading/storing the table unless member buffer\-Size is $<$0. If the requested version (\char`\"{}Ver\char`\"{} in Info\-List) is 0 then the highest numbered table of the same type is opened on Read or Read/Write, or a new table is created on on Write. The file etc. info should have been stored in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}: \begin{itemize}
+\item \char`\"{}File\-Type\char`\"{} OBIT\_\-long scalar = OBIT\_\-IO\_\-FITS (AIPS not allowed) for file type (see class documentation for details). \item \char`\"{}n\-Row\-PIO\char`\"{} OBIT\_\-long scalar = Maximum number of table rows per transfer, this is the target size for Reads (may be fewer) and is used to create buffers. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be opened. \item[{\em access}]access (OBIT\_\-IO\_\-Read\-Only,OBIT\_\-IO\_\-Read\-Write, or OBIT\_\-IO\_\-Write\-Only). If OBIT\_\-IO\_\-Write\-Only any existing data in the output file will be lost. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\end{itemize}
+\index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!ObitTableIDI_ARRAY_GEOMETRYReadRow@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYReadRow}}
+\index{ObitTableIDI_ARRAY_GEOMETRYReadRow@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYReadRow}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRead\-Row ({\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$ {\em in}, {\bf olong} {\em i\-IDI\_\-ARRAY\_\-GEOMETRYRow}, {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow} $\ast$ {\em row}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a18}
+
+
+Public: Read a table row. 
+
+Scalar values are copied but for array values, pointers into the data array are returned. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table to read \item[{\em i\-IDI\_\-ARRAY\_\-GEOMETRYRow}]Row number, -1 -$>$ next \item[{\em row}]Table Row structure to receive data \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!ObitTableIDI_ARRAY_GEOMETRYRowClassInit@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYRowClassInit}}
+\index{ObitTableIDI_ARRAY_GEOMETRYRowClassInit@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYRowClassInit}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow\-Class\-Init (void)}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a7}
+
+
+Public: Row Class initializer. 
+
+\index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!ObitTableIDI_ARRAY_GEOMETRYRowGetClass@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYRowGetClass}}
+\index{ObitTableIDI_ARRAY_GEOMETRYRowGetClass@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYRowGetClass}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow\-Get\-Class (void)}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a9}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the Row class structure. \end{Desc}
+\index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!ObitTableIDI_ARRAY_GEOMETRYSetRow@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYSetRow}}
+\index{ObitTableIDI_ARRAY_GEOMETRYSetRow@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYSetRow}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYSet\-Row ({\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$ {\em in}, {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow} $\ast$ {\em row}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a19}
+
+
+Public: Init a table row for write. 
+
+This is only useful prior to filling a row structure in preparation . for a Write\-Row operation. Array members of the Row structure are . pointers to independently allocated memory, this routine allows using . the table IO buffer instead of allocating yet more memory.. This routine need only be called once to initialize a Row structure for write.. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table with buffer to be written \item[{\em row}]Table Row structure to attach \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}!ObitTableIDI_ARRAY_GEOMETRYWriteRow@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYWriteRow}}
+\index{ObitTableIDI_ARRAY_GEOMETRYWriteRow@{ObitTableIDI\_\-ARRAY\_\-GEOMETRYWriteRow}!ObitTableIDI_ARRAY_GEOMETRY.h@{Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYWrite\-Row ({\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRY} $\ast$ {\em in}, {\bf olong} {\em i\-IDI\_\-ARRAY\_\-GEOMETRYRow}, {\bf Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYRow} $\ast$ {\em row}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableIDI__ARRAY__GEOMETRY_8h_a20}
+
+
+Public: Write a table row. 
+
+Before calling this routine, the row structure needs to be initialized and filled with data. The array members of the row structure are pointers to independently allocated memory. These pointers can be set to the correct table buffer locations using Obit\-Table\-IDI\_\-ARRAY\_\-GEOMETRYSet\-Row \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table to read \item[{\em i\-IDI\_\-ARRAY\_\-GEOMETRYRow}]Row number, -1 -$>$ next \item[{\em row}]Table Row structure containing data \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}

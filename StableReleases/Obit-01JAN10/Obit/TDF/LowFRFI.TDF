@@ -1,0 +1,270 @@
+; $Id: LowFRFI.TDF 109 2009-06-10 12:11:14Z bill.cotton $
+; LowFRFI
+;---------------------------------------------------------------
+;! Low Frequency Radio Interferometry RFI removal
+;# Task Obit Imaging calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2006-2009
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+LowFRFI   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+LowFRFI:Low Frequency Radio Interferometry RFI removal
+                    Input
+**PARAM** str 4
+DataType                            "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                              Input multisource UV data AIPS
+**PARAM** str 6
+inClass                             Input UV data (class)
+**PARAM** int 1
+inSeq                               Input UV data (seq. #)
+**PARAM** int 1
+inDisk                              Input UV data disk drive #
+**PARAM** str 48
+in2File                             FITS Residual uvdata if 'FITS'
+**PARAM** str 12
+in2Name                             Residual UV data AIPS
+**PARAM** str 6
+in2Class                            Residual UV data (class)
+**PARAM** int 1
+in2Seq                              Residual UV data (seq. #)
+**PARAM** int 1
+in2Disk                             Residual UV data disk drive #
+                    Selection/calibration of input
+**PARAM** str 16 30
+Sources                             Source (1) (pointing) list
+**PARAM** int 1 **DEF** -1
+Qual            -10.0               Source qualifier -1=>any
+**PARAM** str 4
+souCode                             Calibrator code '    '=>any
+**PARAM** float 2
+timeRange                           Time range to process.
+**PARAM** int 1
+BChan            0.0     8192.0     Low freq. channel 0 for cont.
+**PARAM** int 1
+EChan            0.0     8192.0     Highest freq channel
+**PARAM** int 1
+subA                                Subarray
+**PARAM** int 50
+Antennas         0.0     1000.0     List of antennas to calibrate
+**PARAM** int 1
+doCalib          -1         10      Apply calibration table
+**PARAM** int 1
+gainUse                             CL/SN table to apply
+**PARAM** int 1
+doBand           -1.0       10.0    If >0.5 apply bandpass cal.
+**PARAM** int 1
+BPVer                               Bandpass table version
+**PARAM** int 1 **DEF** -1
+flagVer                             Input Flag table version
+**PARAM** int 1 **DEF** -1
+flagRes                             Residual Flag table version
+**PARAM** boo 1 **DEF** F
+doPol                               Apply polarization cal?
+**PARAM** str 4
+                       Control
+**PARAM** float 1 **DEF** 1.0
+timeAvg                             Time interval over which to average 
+                                    residual data to estimate RFI (min) 
+**PARAM** float 1 **DEF** 50.0
+minRFI                              Minimum RFI amplitude (Jy) to remove
+**PARAM** float 1 **DEF** 10.0
+timeInt                             Data integration time in sec
+**PARAM** float 1 **DEF** 1.0
+solInt                              Counter rot. SN tab interval (min)
+**PARAM** boo 1 **DEF** F
+doInvert                            If TRUE invert SN solution           
+**PARAM** float 1 **DEF** 0.25
+minRot                              Min. fringe rot. (turns) in an integ,
+**PARAM** float 1 **DEF** 2.0
+maxRot                              Max. fringe rot. (turns) in an integ 
+                    Output
+outDType                            "FITS" or "AIPS" type of output
+**PARAM** str 48
+outFile                             FITS output uvdata if Type=='FITS'
+**PARAM** str 12
+outName                             Output UV AIPS file name
+**PARAM** str 6
+outClass                            Output UV AIPS file class
+**PARAM** int 1
+outSeq           -1.0     9999.0    Output UV AIPS fileseq. #
+**PARAM** int 1
+outDisk                             Output UV file disk unit #.
+**PARAM** boo 1 
+Compress                            True => write compressed data
+**PARAM** int 10
+noScrat                             AIPS disk numbers for which
+                                    scratch files are disallowed
+----------------------------------------------------------------
+LowFRFI Estimate and remove RFI from radio interferometry data
+Type:  Task
+ Use:  Excize RFI from interferometry data.
+
+   This program estimates RFI from a set of residual UV data from 
+which a sky model has been subtracted.  The general method is 
+to counter rotate the residual data by the interferometer 
+fringe tracking model and averaging to time tiimeAvg.  
+Terrestial signals should have near zero fringe rates and this 
+counter rotation will tend to wash out the  celestial signals while 
+improving the SNR on the RFI.  The estimates of the RFI are then 
+filtered to zero the RFI model at times/baselines/channels for 
+which the averaged amplitude of the RFI model is less than minRFI,
+or for which the phase rotation of the interferometer fringe 
+tracking exceeds maxRot turns of phase.  For slow fringe rates, 
+the separation of celestial signals from RFI is poor so data with
+fringe rotations less than minRot turns over timeAvg are flagged
+if the amplitude exceeds minRFI.
+   The final RFI model is then interpolated to the times of the 
+input data and subtracted.  This will results in data with low 
+fringe rates and high RFI being flagged.
+
+   The input data may be either a single source or multi source
+data set although only a single source should be selected.
+The residual data set should be a single source file.
+
+  Clipping of impulsive RFI prior to running LowFRFI is recommended.
+Clipping of residuals derived from imaging the output of
+LowFRFI may further improve the image.
+
+   See ftp://ftp.cv.nrao.edu/NRAO-staff/bcotton/Obit/LowFRFI.pdf for
+a detailed discussion of the use of this task.
+
+Parameters:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input multi(single)source UV data file
+  inClass....Input UV data file (class).      Standard defaults.
+  inSeq......Input UV data file (seq. #).     0 => highest.
+  inDisk.....Input UV data file disk drive #.
+  in2File.....FITS input uvdata if Type=='FITS'
+  in2Name.....Residual single-source UV data file
+  in2Class....Residual UV data file (class).      Standard defaults.
+  in2Seq......Residual UV data file (seq. #).     0 => highest.
+  in2Disk.....Residual UV data file disk drive #.
+
+       Data selection
+  Sources....List of sources (pointings) to be processed.
+             '*' or blank = all; a "-" before a source name
+             means all except ANY source named. 
+  Qual.......Only sources with a source qualifier number in the
+             SU table matching Qual will be used if Qual is not
+             -1.  Qual affects the selection of both the list of
+             sources and the list of calibrators.
+  souCode....Calibrators may be selected on the basis of the
+             calibrator code given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The souCode test is applied in addition to the
+             other tests, i.e. Sources and Qual, in the
+             selection of sources to process.
+  timeRange..Start and end times (day)
+             Use  dhms2day to convert from human readable form
+  BChan......First channel number to include, 0=>1.  Channel numbers are 1
+             relative as defined in the input data file.
+  EChan......Highest channel number to to include,  0 => max 
+  subA.......Sub-array number to use. 0=>all.
+  Antennas...A list of the antennas to  have solutions
+             determined. If any number is negative then all
+             antennas listed  are NOT to be used to determine
+             solutions and all others are. All 0 => use all.
+  doCalib....If true, apply SN or CL table
+  gainUse....CL/SN table version number to apply. 0=> highest.
+  doBand.....If true (>0) then correct the data for the shape of the
+             antenna bandpasses using the BP table specified by BPVer.
+             The correction has five modes:
+             (a) if DOBAND=1 all entries for an antenna in the table
+             are averaged together before correcting the data.
+             (b) if DOBAND=2 the entry nearest in time (including
+             solution weights) is used to correct the data.
+             (c) if DOBAND=3 the table entries are interpolated in
+             time (using solution weights) and the data are then
+             corrected.
+             (d) if DOBAND=4 the entry nearest in time (ignoring
+             solution weights) is used to correct the data.
+             (e) if DOBAND=5 the table entries are interpolated in
+             time (ignoring solution weights) and the data are then
+             corrected.
+             IMAGR uses DOBAND as the nearest integer; 0.1 is therefore
+             "false".
+  BPVer......Specifies the version of the BP table to be applied
+                0 => highest numbered table.
+               <0 => no bandpass correction to be applied.
+  flagVer....FG table to use for editing input. 0 => highest.
+  flagRes....FG table to use for editing residual UV data. 0 => highest.
+  doPol......>=1 apply polarization calibration
+
+
+      Excision control
+  timeAvg....Time interval over which to average residual data to 
+             estimate RFI (min).  This should bea as long as the RFI
+             can reasonably be considered constant.
+             NB: if this is too short (less than a half dozen 
+             integrations) LowFRFI will artifically reduce the 
+             noise as well as remove source emission left in the 
+             residual data.
+  minRFI.....Minimum RFI amplitude (Jy) to remove.  This should be 
+             set relatively conservatively, at least several sigma 
+             in the averaged residual data to keep from merely 
+             subtracting noise and any unmodeled flux density.
+  timeInt....The averaging time of the input and residual data.
+  solInt.....The time interval for calculating the counter-
+              rotation SN table
+  doInvert...If True, then invert the phase solutions for the 
+             counter-rotation SN table.
+             This MAY be needed for GMRT data; do not use for VLA.
+  minRot.....The minimum fraction of a turn of phase of the
+             fringe tracking below which to flag output data
+             for which the RFI model exceeds minRFI.
+             This may result in a substantial amount of data 
+             being flagged.  A low (0) value may be used if a very
+             good model has been subtracted from the data; 
+             otherwise extended emission may be removed with 
+             the RFI.
+  maxRot.....The maxmum fraction of a turn of phase of the
+             fringe tracking above which the RFI is assumed to 
+             have been washed out.  Data for which the phase 
+             turns by more than this amount will have no RFI 
+             correction made.
+
+      Output
+  outDType..'FITS' or 'AIPS'  type of output
+  outName....Output UV AIPS file name    Standard defaults.
+  outClass...Output UV AIPS file class.  Standard defaults.
+  outSeq.....Output UV AIPS file seq. #. 0 => highest unique.
+  outDisk....Disk drive # of output UV (FITS or AIPS) NO default
+             0 FITS => current directory
+  Compress...If True  the output data is written in
+             compressed format which can result in a substantial
+             reduction in disk space needed.  
+             DO NOT USE THIS OPTION if there is channel-dependent 
+             weighting or data with extreme dynamic range.
+  noScrat....A list of AIPS disk numbers on which you do not 
+             wish scratch files
+----------------------------------------------------------------

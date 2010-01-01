@@ -1,0 +1,752 @@
+\section{Obit\-Table\-VL Struct Reference}
+\label{structObitTableVL}\index{ObitTableVL@{ObitTableVL}}
+Obit\-Table\-VL Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-VL.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-IO} $\ast$ {\bf my\-IO}
+\begin{CompactList}\small\item\em I/O interface to access disk resident data. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Desc} $\ast$ {\bf my\-Desc}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Sel} $\ast$ {\bf my\-Sel}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf buffer}
+\begin{CompactList}\small\item\em Table buffer. \item\end{CompactList}\item 
+{\bf olong} {\bf buffer\-Size}
+\begin{CompactList}\small\item\em Table buffer size in floats. \item\end{CompactList}\item 
+gchar $\ast$ {\bf tab\-Type}
+\begin{CompactList}\small\item\em Table type (name of type, e.g. \item\end{CompactList}\item 
+{\bf olong} {\bf tab\-Ver}
+\begin{CompactList}\small\item\em Table version number(1-rel). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf my\-Host}
+\begin{CompactList}\small\item\em This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. \item\end{CompactList}\item 
+{\bf oint} {\bf revision}
+\begin{CompactList}\small\item\em Revision number of the table definition. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Beam\-Major}
+\begin{CompactList}\small\item\em Restoring beam major axis in deg. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Beam\-Minor}
+\begin{CompactList}\small\item\em Restoring beam minor axis in deg. \item\end{CompactList}\item 
+{\bf ofloat} {\bf Beam\-PA}
+\begin{CompactList}\small\item\em Restoring beam position angle of major axis in deg. \item\end{CompactList}\item 
+{\bf oint} {\bf Sort\-Order}
+\begin{CompactList}\small\item\em Column number for sort (neg -$>$ descending). \item\end{CompactList}\item 
+{\bf oint} {\bf num\-Indexed}
+\begin{CompactList}\small\item\em Number of rows in table when indexed. \item\end{CompactList}\item 
+{\bf oint} {\bf index00}
+\begin{CompactList}\small\item\em First entry for RA=00 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index01}
+\begin{CompactList}\small\item\em First entry for RA=01 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index02}
+\begin{CompactList}\small\item\em First entry for RA=02 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index03}
+\begin{CompactList}\small\item\em First entry for RA=03 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index04}
+\begin{CompactList}\small\item\em First entry for RA=04 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index05}
+\begin{CompactList}\small\item\em First entry for RA=05 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index06}
+\begin{CompactList}\small\item\em First entry for RA=06 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index07}
+\begin{CompactList}\small\item\em First entry for RA=07 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index08}
+\begin{CompactList}\small\item\em First entry for RA=08 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index09}
+\begin{CompactList}\small\item\em First entry for RA=09 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index10}
+\begin{CompactList}\small\item\em First entry for RA=10 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index11}
+\begin{CompactList}\small\item\em First entry for RA=11 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index12}
+\begin{CompactList}\small\item\em First entry for RA=12 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index13}
+\begin{CompactList}\small\item\em First entry for RA=13 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index14}
+\begin{CompactList}\small\item\em First entry for RA=14 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index15}
+\begin{CompactList}\small\item\em First entry for RA=15 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index16}
+\begin{CompactList}\small\item\em First entry for RA=16 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index17}
+\begin{CompactList}\small\item\em First entry for RA=17 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index18}
+\begin{CompactList}\small\item\em First entry for RA=18 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index19}
+\begin{CompactList}\small\item\em First entry for RA=19 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index20}
+\begin{CompactList}\small\item\em First entry for RA=20 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index21}
+\begin{CompactList}\small\item\em First entry for RA=21 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index22}
+\begin{CompactList}\small\item\em First entry for RA=22 h. \item\end{CompactList}\item 
+{\bf oint} {\bf index23}
+\begin{CompactList}\small\item\em First entry for RA=23 h. \item\end{CompactList}\item 
+{\bf olong} {\bf Ra2000Off}
+\begin{CompactList}\small\item\em Column offset for RA (J2000) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Ra2000Col}
+\begin{CompactList}\small\item\em Physical column number for RA (J2000) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Dec2000Off}
+\begin{CompactList}\small\item\em Column offset for Dec (J2000) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Dec2000Col}
+\begin{CompactList}\small\item\em Physical column number for Dec (J2000) in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Peak\-Int\-Off}
+\begin{CompactList}\small\item\em Column offset for Peak Ipol in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Peak\-Int\-Col}
+\begin{CompactList}\small\item\em Physical column number for Peak Ipol in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Major\-Axis\-Off}
+\begin{CompactList}\small\item\em Column offset for Fitted major axis size in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Major\-Axis\-Col}
+\begin{CompactList}\small\item\em Physical column number for Fitted major axis size in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Minor\-Axis\-Off}
+\begin{CompactList}\small\item\em Column offset for Fitted minor axis siz in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Minor\-Axis\-Col}
+\begin{CompactList}\small\item\em Physical column number for Fitted minor axis siz in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Pos\-Angle\-Off}
+\begin{CompactList}\small\item\em Column offset for Fitted PA in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Pos\-Angle\-Col}
+\begin{CompactList}\small\item\em Physical column number for Fitted PA in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf QCenter\-Off}
+\begin{CompactList}\small\item\em Column offset for Center Q flux density in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf QCenter\-Col}
+\begin{CompactList}\small\item\em Physical column number for Center Q flux density in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf UCenter\-Off}
+\begin{CompactList}\small\item\em Column offset for enter U flux density in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf UCenter\-Col}
+\begin{CompactList}\small\item\em Physical column number for enter U flux density in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PFlux\-Off}
+\begin{CompactList}\small\item\em Column offset for Integrated polarized flux density in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf PFlux\-Col}
+\begin{CompactList}\small\item\em Physical column number for Integrated polarized flux density in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf IRMSOff}
+\begin{CompactList}\small\item\em Column offset for Ipol RMS uncertainty in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf IRMSCol}
+\begin{CompactList}\small\item\em Physical column number for Ipol RMS uncertainty in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Pol\-RMSOff}
+\begin{CompactList}\small\item\em Column offset for RMS (sigma) in Qpol and Upol in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Pol\-RMSCol}
+\begin{CompactList}\small\item\em Physical column number for RMS (sigma) in Qpol and Upol in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Res\-RMSOff}
+\begin{CompactList}\small\item\em Column offset for RMS of Ipol residual in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Res\-RMSCol}
+\begin{CompactList}\small\item\em Physical column number for RMS of Ipol residual in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Res\-Peak\-Off}
+\begin{CompactList}\small\item\em Column offset for Peak in Ipol residual in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Res\-Peak\-Col}
+\begin{CompactList}\small\item\em Physical column number for Peak in Ipol residual in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Res\-Flux\-Off}
+\begin{CompactList}\small\item\em Column offset for Integrated Ipol residual in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Res\-Flux\-Col}
+\begin{CompactList}\small\item\em Physical column number for Integrated Ipol residual in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Center\-XOff}
+\begin{CompactList}\small\item\em Column offset for Center x position in pixels in FIELD in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Center\-XCol}
+\begin{CompactList}\small\item\em Physical column number for Center x position in pixels in FIELD in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Center\-YOff}
+\begin{CompactList}\small\item\em Column offset for Center y position in pixels in FIELD in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Center\-YCol}
+\begin{CompactList}\small\item\em Physical column number for Center y position in pixels in FIELD in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf JDProcess\-Off}
+\begin{CompactList}\small\item\em Column offset for Julian date on which entry was derived from image. \item\end{CompactList}\item 
+{\bf olong} {\bf JDProcess\-Col}
+\begin{CompactList}\small\item\em Physical column number for Julian date on which entry was derived from image. \item\end{CompactList}\item 
+{\bf olong} {\bf Field\-Off}
+\begin{CompactList}\small\item\em Column offset for Name of survey field in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Field\-Col}
+\begin{CompactList}\small\item\em Physical column number for Name of survey field in table record. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-VL Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableVL@{Obit\-Table\-VL}!BeamMajor@{BeamMajor}}
+\index{BeamMajor@{BeamMajor}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-VL::Beam\-Major}}\label{structObitTableVL_o16}
+
+
+Restoring beam major axis in deg. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!BeamMinor@{BeamMinor}}
+\index{BeamMinor@{BeamMinor}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-VL::Beam\-Minor}}\label{structObitTableVL_o17}
+
+
+Restoring beam minor axis in deg. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!BeamPA@{BeamPA}}
+\index{BeamPA@{BeamPA}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Table\-VL::Beam\-PA}}\label{structObitTableVL_o18}
+
+
+Restoring beam position angle of major axis in deg. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!buffer@{buffer}}
+\index{buffer@{buffer}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-VL::buffer}}\label{structObitTableVL_o10}
+
+
+Table buffer. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!bufferSize@{bufferSize}}
+\index{bufferSize@{bufferSize}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::buffer\-Size}}\label{structObitTableVL_o11}
+
+
+Table buffer size in floats. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!CenterXCol@{CenterXCol}}
+\index{CenterXCol@{CenterXCol}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Center\-XCol}}\label{structObitTableVL_o74}
+
+
+Physical column number for Center x position in pixels in FIELD in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!CenterXOff@{CenterXOff}}
+\index{CenterXOff@{CenterXOff}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Center\-XOff}}\label{structObitTableVL_o73}
+
+
+Column offset for Center x position in pixels in FIELD in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!CenterYCol@{CenterYCol}}
+\index{CenterYCol@{CenterYCol}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Center\-YCol}}\label{structObitTableVL_o76}
+
+
+Physical column number for Center y position in pixels in FIELD in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!CenterYOff@{CenterYOff}}
+\index{CenterYOff@{CenterYOff}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Center\-YOff}}\label{structObitTableVL_o75}
+
+
+Column offset for Center y position in pixels in FIELD in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-VL::Class\-Info}}\label{structObitTableVL_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!Dec2000Col@{Dec2000Col}}
+\index{Dec2000Col@{Dec2000Col}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Dec2000Col}}\label{structObitTableVL_o48}
+
+
+Physical column number for Dec (J2000) in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!Dec2000Off@{Dec2000Off}}
+\index{Dec2000Off@{Dec2000Off}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Dec2000Off}}\label{structObitTableVL_o47}
+
+
+Column offset for Dec (J2000) in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!FieldCol@{FieldCol}}
+\index{FieldCol@{FieldCol}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Field\-Col}}\label{structObitTableVL_o80}
+
+
+Physical column number for Name of survey field in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!FieldOff@{FieldOff}}
+\index{FieldOff@{FieldOff}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Field\-Off}}\label{structObitTableVL_o79}
+
+
+Column offset for Name of survey field in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index00@{index00}}
+\index{index00@{index00}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index00}}\label{structObitTableVL_o21}
+
+
+First entry for RA=00 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index01@{index01}}
+\index{index01@{index01}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index01}}\label{structObitTableVL_o22}
+
+
+First entry for RA=01 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index02@{index02}}
+\index{index02@{index02}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index02}}\label{structObitTableVL_o23}
+
+
+First entry for RA=02 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index03@{index03}}
+\index{index03@{index03}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index03}}\label{structObitTableVL_o24}
+
+
+First entry for RA=03 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index04@{index04}}
+\index{index04@{index04}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index04}}\label{structObitTableVL_o25}
+
+
+First entry for RA=04 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index05@{index05}}
+\index{index05@{index05}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index05}}\label{structObitTableVL_o26}
+
+
+First entry for RA=05 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index06@{index06}}
+\index{index06@{index06}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index06}}\label{structObitTableVL_o27}
+
+
+First entry for RA=06 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index07@{index07}}
+\index{index07@{index07}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index07}}\label{structObitTableVL_o28}
+
+
+First entry for RA=07 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index08@{index08}}
+\index{index08@{index08}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index08}}\label{structObitTableVL_o29}
+
+
+First entry for RA=08 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index09@{index09}}
+\index{index09@{index09}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index09}}\label{structObitTableVL_o30}
+
+
+First entry for RA=09 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index10@{index10}}
+\index{index10@{index10}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index10}}\label{structObitTableVL_o31}
+
+
+First entry for RA=10 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index11@{index11}}
+\index{index11@{index11}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index11}}\label{structObitTableVL_o32}
+
+
+First entry for RA=11 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index12@{index12}}
+\index{index12@{index12}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index12}}\label{structObitTableVL_o33}
+
+
+First entry for RA=12 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index13@{index13}}
+\index{index13@{index13}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index13}}\label{structObitTableVL_o34}
+
+
+First entry for RA=13 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index14@{index14}}
+\index{index14@{index14}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index14}}\label{structObitTableVL_o35}
+
+
+First entry for RA=14 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index15@{index15}}
+\index{index15@{index15}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index15}}\label{structObitTableVL_o36}
+
+
+First entry for RA=15 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index16@{index16}}
+\index{index16@{index16}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index16}}\label{structObitTableVL_o37}
+
+
+First entry for RA=16 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index17@{index17}}
+\index{index17@{index17}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index17}}\label{structObitTableVL_o38}
+
+
+First entry for RA=17 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index18@{index18}}
+\index{index18@{index18}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index18}}\label{structObitTableVL_o39}
+
+
+First entry for RA=18 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index19@{index19}}
+\index{index19@{index19}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index19}}\label{structObitTableVL_o40}
+
+
+First entry for RA=19 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index20@{index20}}
+\index{index20@{index20}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index20}}\label{structObitTableVL_o41}
+
+
+First entry for RA=20 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index21@{index21}}
+\index{index21@{index21}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index21}}\label{structObitTableVL_o42}
+
+
+First entry for RA=21 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index22@{index22}}
+\index{index22@{index22}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index22}}\label{structObitTableVL_o43}
+
+
+First entry for RA=22 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!index23@{index23}}
+\index{index23@{index23}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::index23}}\label{structObitTableVL_o44}
+
+
+First entry for RA=23 h. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!info@{info}}
+\index{info@{info}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Table\-VL::info}}\label{structObitTableVL_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!IRMSCol@{IRMSCol}}
+\index{IRMSCol@{IRMSCol}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::IRMSCol}}\label{structObitTableVL_o64}
+
+
+Physical column number for Ipol RMS uncertainty in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!IRMSOff@{IRMSOff}}
+\index{IRMSOff@{IRMSOff}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::IRMSOff}}\label{structObitTableVL_o63}
+
+
+Column offset for Ipol RMS uncertainty in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!JDProcessCol@{JDProcessCol}}
+\index{JDProcessCol@{JDProcessCol}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::JDProcess\-Col}}\label{structObitTableVL_o78}
+
+
+Physical column number for Julian date on which entry was derived from image. 
+
+in table record \index{ObitTableVL@{Obit\-Table\-VL}!JDProcessOff@{JDProcessOff}}
+\index{JDProcessOff@{JDProcessOff}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::JDProcess\-Off}}\label{structObitTableVL_o77}
+
+
+Column offset for Julian date on which entry was derived from image. 
+
+in table record \index{ObitTableVL@{Obit\-Table\-VL}!MajorAxisCol@{MajorAxisCol}}
+\index{MajorAxisCol@{MajorAxisCol}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Major\-Axis\-Col}}\label{structObitTableVL_o52}
+
+
+Physical column number for Fitted major axis size in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!MajorAxisOff@{MajorAxisOff}}
+\index{MajorAxisOff@{MajorAxisOff}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Major\-Axis\-Off}}\label{structObitTableVL_o51}
+
+
+Column offset for Fitted major axis size in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!MinorAxisCol@{MinorAxisCol}}
+\index{MinorAxisCol@{MinorAxisCol}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Minor\-Axis\-Col}}\label{structObitTableVL_o54}
+
+
+Physical column number for Fitted minor axis siz in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!MinorAxisOff@{MinorAxisOff}}
+\index{MinorAxisOff@{MinorAxisOff}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Minor\-Axis\-Off}}\label{structObitTableVL_o53}
+
+
+Column offset for Fitted minor axis siz in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Desc}$\ast$ {\bf Obit\-Table\-VL::my\-Desc}}\label{structObitTableVL_o8}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!myHost@{myHost}}
+\index{myHost@{myHost}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-Table\-VL::my\-Host}}\label{structObitTableVL_o14}
+
+
+This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!myIO@{myIO}}
+\index{myIO@{myIO}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IO}$\ast$ {\bf Obit\-Table\-VL::my\-IO}}\label{structObitTableVL_o7}
+
+
+I/O interface to access disk resident data. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Sel}$\ast$ {\bf Obit\-Table\-VL::my\-Sel}}\label{structObitTableVL_o9}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Table\-VL::my\-Status}}\label{structObitTableVL_o6}
+
+
+I/O status. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!name@{name}}
+\index{name@{name}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-VL::name}}\label{structObitTableVL_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!numIndexed@{numIndexed}}
+\index{numIndexed@{numIndexed}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::num\-Indexed}}\label{structObitTableVL_o20}
+
+
+Number of rows in table when indexed. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-VL::Obit\-Id}}\label{structObitTableVL_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!PeakIntCol@{PeakIntCol}}
+\index{PeakIntCol@{PeakIntCol}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Peak\-Int\-Col}}\label{structObitTableVL_o50}
+
+
+Physical column number for Peak Ipol in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!PeakIntOff@{PeakIntOff}}
+\index{PeakIntOff@{PeakIntOff}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Peak\-Int\-Off}}\label{structObitTableVL_o49}
+
+
+Column offset for Peak Ipol in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!PFluxCol@{PFluxCol}}
+\index{PFluxCol@{PFluxCol}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::PFlux\-Col}}\label{structObitTableVL_o62}
+
+
+Physical column number for Integrated polarized flux density in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!PFluxOff@{PFluxOff}}
+\index{PFluxOff@{PFluxOff}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::PFlux\-Off}}\label{structObitTableVL_o61}
+
+
+Column offset for Integrated polarized flux density in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!PolRMSCol@{PolRMSCol}}
+\index{PolRMSCol@{PolRMSCol}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Pol\-RMSCol}}\label{structObitTableVL_o66}
+
+
+Physical column number for RMS (sigma) in Qpol and Upol in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!PolRMSOff@{PolRMSOff}}
+\index{PolRMSOff@{PolRMSOff}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Pol\-RMSOff}}\label{structObitTableVL_o65}
+
+
+Column offset for RMS (sigma) in Qpol and Upol in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!PosAngleCol@{PosAngleCol}}
+\index{PosAngleCol@{PosAngleCol}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Pos\-Angle\-Col}}\label{structObitTableVL_o56}
+
+
+Physical column number for Fitted PA in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!PosAngleOff@{PosAngleOff}}
+\index{PosAngleOff@{PosAngleOff}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Pos\-Angle\-Off}}\label{structObitTableVL_o55}
+
+
+Column offset for Fitted PA in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!QCenterCol@{QCenterCol}}
+\index{QCenterCol@{QCenterCol}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::QCenter\-Col}}\label{structObitTableVL_o58}
+
+
+Physical column number for Center Q flux density in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!QCenterOff@{QCenterOff}}
+\index{QCenterOff@{QCenterOff}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::QCenter\-Off}}\label{structObitTableVL_o57}
+
+
+Column offset for Center Q flux density in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!Ra2000Col@{Ra2000Col}}
+\index{Ra2000Col@{Ra2000Col}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Ra2000Col}}\label{structObitTableVL_o46}
+
+
+Physical column number for RA (J2000) in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!Ra2000Off@{Ra2000Off}}
+\index{Ra2000Off@{Ra2000Off}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Ra2000Off}}\label{structObitTableVL_o45}
+
+
+Column offset for RA (J2000) in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Reference\-Count}}\label{structObitTableVL_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!ResFluxCol@{ResFluxCol}}
+\index{ResFluxCol@{ResFluxCol}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Res\-Flux\-Col}}\label{structObitTableVL_o72}
+
+
+Physical column number for Integrated Ipol residual in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!ResFluxOff@{ResFluxOff}}
+\index{ResFluxOff@{ResFluxOff}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Res\-Flux\-Off}}\label{structObitTableVL_o71}
+
+
+Column offset for Integrated Ipol residual in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!ResPeakCol@{ResPeakCol}}
+\index{ResPeakCol@{ResPeakCol}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Res\-Peak\-Col}}\label{structObitTableVL_o70}
+
+
+Physical column number for Peak in Ipol residual in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!ResPeakOff@{ResPeakOff}}
+\index{ResPeakOff@{ResPeakOff}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Res\-Peak\-Off}}\label{structObitTableVL_o69}
+
+
+Column offset for Peak in Ipol residual in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!ResRMSCol@{ResRMSCol}}
+\index{ResRMSCol@{ResRMSCol}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Res\-RMSCol}}\label{structObitTableVL_o68}
+
+
+Physical column number for RMS of Ipol residual in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!ResRMSOff@{ResRMSOff}}
+\index{ResRMSOff@{ResRMSOff}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::Res\-RMSOff}}\label{structObitTableVL_o67}
+
+
+Column offset for RMS of Ipol residual in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!revision@{revision}}
+\index{revision@{revision}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::revision}}\label{structObitTableVL_o15}
+
+
+Revision number of the table definition. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!SortOrder@{SortOrder}}
+\index{SortOrder@{SortOrder}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-VL::Sort\-Order}}\label{structObitTableVL_o19}
+
+
+Column number for sort (neg -$>$ descending). 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!tabType@{tabType}}
+\index{tabType@{tabType}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-VL::tab\-Type}}\label{structObitTableVL_o12}
+
+
+Table type (name of type, e.g. 
+
+\char`\"{}AIPS AN\char`\"{}) \index{ObitTableVL@{Obit\-Table\-VL}!tabVer@{tabVer}}
+\index{tabVer@{tabVer}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::tab\-Ver}}\label{structObitTableVL_o13}
+
+
+Table version number(1-rel). 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!thread@{thread}}
+\index{thread@{thread}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Table\-VL::thread}}\label{structObitTableVL_o4}
+
+
+Threading info member object. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!UCenterCol@{UCenterCol}}
+\index{UCenterCol@{UCenterCol}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::UCenter\-Col}}\label{structObitTableVL_o60}
+
+
+Physical column number for enter U flux density in table record. 
+
+\index{ObitTableVL@{Obit\-Table\-VL}!UCenterOff@{UCenterOff}}
+\index{UCenterOff@{UCenterOff}!ObitTableVL@{Obit\-Table\-VL}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-VL::UCenter\-Off}}\label{structObitTableVL_o59}
+
+
+Column offset for enter U flux density in table record. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-VL.h}\end{CompactItemize}

@@ -1,0 +1,194 @@
+\section{Obit\-Time\-Filter Struct Reference}
+\label{structObitTimeFilter}\index{ObitTimeFilter@{ObitTimeFilter}}
+Obit\-Time\-Filter Class structure.  
+
+
+{\tt \#include $<$Obit\-Time\-Filter.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$$\ast$ {\bf time\-Series}
+\begin{CompactList}\small\item\em Array of Time series. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$$\ast$ {\bf time\-Data}
+\begin{CompactList}\small\item\em Pointers to data in time arrays. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf times}
+\begin{CompactList}\small\item\em Times in series. \item\end{CompactList}\item 
+{\bf Obit\-CArray} $\ast$$\ast$ {\bf freq\-Series}
+\begin{CompactList}\small\item\em Array of Frequency series. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$$\ast$ {\bf freq\-Data}
+\begin{CompactList}\small\item\em Pointers to data in frequency arrays. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf freqs}
+\begin{CompactList}\small\item\em Frequencies in series. \item\end{CompactList}\item 
+{\bf Obit\-FFT} $\ast$ {\bf FFTFor}
+\begin{CompactList}\small\item\em Forward (time-$>$freq) FFT. \item\end{CompactList}\item 
+{\bf Obit\-FFT} $\ast$ {\bf FFTRev}
+\begin{CompactList}\small\item\em Reverse (freq-$>$time) FFT. \item\end{CompactList}\item 
+{\bf Obit\-FInterpolate} $\ast$ {\bf interp}
+\begin{CompactList}\small\item\em Interpolation object to deblank time series. \item\end{CompactList}\item 
+{\bf olong} {\bf n\-Time}
+\begin{CompactList}\small\item\em Number of times in series. \item\end{CompactList}\item 
+{\bf olong} {\bf n\-Freq}
+\begin{CompactList}\small\item\em Number of frequencies in series. \item\end{CompactList}\item 
+{\bf olong} {\bf n\-Series}
+\begin{CompactList}\small\item\em Number of series. \item\end{CompactList}\item 
+{\bf ofloat} {\bf d\-Time}
+\begin{CompactList}\small\item\em Time step in series. \item\end{CompactList}\item 
+{\bf ofloat} {\bf d\-Freq}
+\begin{CompactList}\small\item\em Frequency step in series. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Time\-Filter Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Time\-Filter::Class\-Info}}\label{structObitTimeFilter_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!dFreq@{dFreq}}
+\index{dFreq@{dFreq}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Time\-Filter::d\-Freq}}\label{structObitTimeFilter_o18}
+
+
+Frequency step in series. 
+
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!dTime@{dTime}}
+\index{dTime@{dTime}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat} {\bf Obit\-Time\-Filter::d\-Time}}\label{structObitTimeFilter_o17}
+
+
+Time step in series. 
+
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!FFTFor@{FFTFor}}
+\index{FFTFor@{FFTFor}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FFT}$\ast$ {\bf Obit\-Time\-Filter::FFTFor}}\label{structObitTimeFilter_o11}
+
+
+Forward (time-$>$freq) FFT. 
+
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!FFTRev@{FFTRev}}
+\index{FFTRev@{FFTRev}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FFT}$\ast$ {\bf Obit\-Time\-Filter::FFTRev}}\label{structObitTimeFilter_o12}
+
+
+Reverse (freq-$>$time) FFT. 
+
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!freqData@{freqData}}
+\index{freqData@{freqData}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$$\ast$ {\bf Obit\-Time\-Filter::freq\-Data}}\label{structObitTimeFilter_o9}
+
+
+Pointers to data in frequency arrays. 
+
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!freqs@{freqs}}
+\index{freqs@{freqs}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Time\-Filter::freqs}}\label{structObitTimeFilter_o10}
+
+
+Frequencies in series. 
+
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!freqSeries@{freqSeries}}
+\index{freqSeries@{freqSeries}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-CArray}$\ast$$\ast$ {\bf Obit\-Time\-Filter::freq\-Series}}\label{structObitTimeFilter_o8}
+
+
+Array of Frequency series. 
+
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!interp@{interp}}
+\index{interp@{interp}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FInterpolate}$\ast$ {\bf Obit\-Time\-Filter::interp}}\label{structObitTimeFilter_o13}
+
+
+Interpolation object to deblank time series. 
+
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!name@{name}}
+\index{name@{name}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Time\-Filter::name}}\label{structObitTimeFilter_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!nFreq@{nFreq}}
+\index{nFreq@{nFreq}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Time\-Filter::n\-Freq}}\label{structObitTimeFilter_o15}
+
+
+Number of frequencies in series. 
+
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!nSeries@{nSeries}}
+\index{nSeries@{nSeries}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Time\-Filter::n\-Series}}\label{structObitTimeFilter_o16}
+
+
+Number of series. 
+
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!nTime@{nTime}}
+\index{nTime@{nTime}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Time\-Filter::n\-Time}}\label{structObitTimeFilter_o14}
+
+
+Number of times in series. 
+
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Time\-Filter::Obit\-Id}}\label{structObitTimeFilter_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Time\-Filter::Reference\-Count}}\label{structObitTimeFilter_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!thread@{thread}}
+\index{thread@{thread}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Time\-Filter::thread}}\label{structObitTimeFilter_o4}
+
+
+Threading info member object. 
+
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!timeData@{timeData}}
+\index{timeData@{timeData}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$$\ast$ {\bf Obit\-Time\-Filter::time\-Data}}\label{structObitTimeFilter_o6}
+
+
+Pointers to data in time arrays. 
+
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!times@{times}}
+\index{times@{times}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Time\-Filter::times}}\label{structObitTimeFilter_o7}
+
+
+Times in series. 
+
+\index{ObitTimeFilter@{Obit\-Time\-Filter}!timeSeries@{timeSeries}}
+\index{timeSeries@{timeSeries}!ObitTimeFilter@{Obit\-Time\-Filter}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$$\ast$ {\bf Obit\-Time\-Filter::time\-Series}}\label{structObitTimeFilter_o5}
+
+
+Array of Time series. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Time\-Filter.h}\end{CompactItemize}

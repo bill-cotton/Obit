@@ -1,0 +1,239 @@
+\section{Obit\-Table\-CC Struct Reference}
+\label{structObitTableCC}\index{ObitTableCC@{ObitTableCC}}
+Obit\-Table\-CC Class structure.  
+
+
+{\tt \#include $<$Obit\-Table\-CC.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+{\bf Obit\-Thread} $\ast$ {\bf thread}
+\begin{CompactList}\small\item\em Threading info member object. \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Linked list of arrays of data. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+{\bf Obit\-IO} $\ast$ {\bf my\-IO}
+\begin{CompactList}\small\item\em I/O interface to access disk resident data. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Desc} $\ast$ {\bf my\-Desc}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Sel} $\ast$ {\bf my\-Sel}
+\begin{CompactList}\small\item\em {\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. \item\end{CompactList}\item 
+{\bf ofloat} $\ast$ {\bf buffer}
+\begin{CompactList}\small\item\em Table buffer. \item\end{CompactList}\item 
+{\bf olong} {\bf buffer\-Size}
+\begin{CompactList}\small\item\em Table buffer size in floats. \item\end{CompactList}\item 
+gchar $\ast$ {\bf tab\-Type}
+\begin{CompactList}\small\item\em Table type (name of type, e.g. \item\end{CompactList}\item 
+{\bf olong} {\bf tab\-Ver}
+\begin{CompactList}\small\item\em Table version number(1-rel). \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf my\-Host}
+\begin{CompactList}\small\item\em This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. \item\end{CompactList}\item 
+{\bf oint} {\bf no\-Parms}
+\begin{CompactList}\small\item\em Number of parameters for non point components, usually 0 or 4. \item\end{CompactList}\item 
+{\bf olong} {\bf Flux\-Off}
+\begin{CompactList}\small\item\em Column offset for Component flux density in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Flux\-Col}
+\begin{CompactList}\small\item\em Physical column number for Component flux density in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf Delta\-XOff}
+\begin{CompactList}\small\item\em Column offset for Component X position. \item\end{CompactList}\item 
+{\bf olong} {\bf Delta\-XCol}
+\begin{CompactList}\small\item\em Physical column number for Component X position. \item\end{CompactList}\item 
+{\bf olong} {\bf Delta\-YOff}
+\begin{CompactList}\small\item\em Column offset for Component Y position. \item\end{CompactList}\item 
+{\bf olong} {\bf Delta\-YCol}
+\begin{CompactList}\small\item\em Physical column number for Component Y position. \item\end{CompactList}\item 
+{\bf olong} {\bf parms\-Off}
+\begin{CompactList}\small\item\em Column offset for [OPTIONAL] Component parameters; in table record. \item\end{CompactList}\item 
+{\bf olong} {\bf parms\-Col}
+\begin{CompactList}\small\item\em Physical column number for [OPTIONAL] Component parameters; in table record. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Table\-CC Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitTableCC@{Obit\-Table\-CC}!buffer@{buffer}}
+\index{buffer@{buffer}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ofloat}$\ast$ {\bf Obit\-Table\-CC::buffer}}\label{structObitTableCC_o10}
+
+
+Table buffer. 
+
+\index{ObitTableCC@{Obit\-Table\-CC}!bufferSize@{bufferSize}}
+\index{bufferSize@{bufferSize}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CC::buffer\-Size}}\label{structObitTableCC_o11}
+
+
+Table buffer size in floats. 
+
+\index{ObitTableCC@{Obit\-Table\-CC}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-Table\-CC::Class\-Info}}\label{structObitTableCC_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitTableCC@{Obit\-Table\-CC}!DeltaXCol@{DeltaXCol}}
+\index{DeltaXCol@{DeltaXCol}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CC::Delta\-XCol}}\label{structObitTableCC_o19}
+
+
+Physical column number for Component X position. 
+
+in table record \index{ObitTableCC@{Obit\-Table\-CC}!DeltaXOff@{DeltaXOff}}
+\index{DeltaXOff@{DeltaXOff}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CC::Delta\-XOff}}\label{structObitTableCC_o18}
+
+
+Column offset for Component X position. 
+
+in table record \index{ObitTableCC@{Obit\-Table\-CC}!DeltaYCol@{DeltaYCol}}
+\index{DeltaYCol@{DeltaYCol}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CC::Delta\-YCol}}\label{structObitTableCC_o21}
+
+
+Physical column number for Component Y position. 
+
+in table record \index{ObitTableCC@{Obit\-Table\-CC}!DeltaYOff@{DeltaYOff}}
+\index{DeltaYOff@{DeltaYOff}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CC::Delta\-YOff}}\label{structObitTableCC_o20}
+
+
+Column offset for Component Y position. 
+
+in table record \index{ObitTableCC@{Obit\-Table\-CC}!FluxCol@{FluxCol}}
+\index{FluxCol@{FluxCol}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CC::Flux\-Col}}\label{structObitTableCC_o17}
+
+
+Physical column number for Component flux density in table record. 
+
+\index{ObitTableCC@{Obit\-Table\-CC}!FluxOff@{FluxOff}}
+\index{FluxOff@{FluxOff}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CC::Flux\-Off}}\label{structObitTableCC_o16}
+
+
+Column offset for Component flux density in table record. 
+
+\index{ObitTableCC@{Obit\-Table\-CC}!info@{info}}
+\index{info@{info}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-Table\-CC::info}}\label{structObitTableCC_o5}
+
+
+Linked list of arrays of data. 
+
+\index{ObitTableCC@{Obit\-Table\-CC}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Desc}$\ast$ {\bf Obit\-Table\-CC::my\-Desc}}\label{structObitTableCC_o8}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Descriptor. 
+
+\index{ObitTableCC@{Obit\-Table\-CC}!myHost@{myHost}}
+\index{myHost@{myHost}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-Table\-CC::my\-Host}}\label{structObitTableCC_o14}
+
+
+This table attached to host (actually) {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} this is a secret reference - don't use Ref or Unref functions. 
+
+\index{ObitTableCC@{Obit\-Table\-CC}!myIO@{myIO}}
+\index{myIO@{myIO}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-IO}$\ast$ {\bf Obit\-Table\-CC::my\-IO}}\label{structObitTableCC_o7}
+
+
+I/O interface to access disk resident data. 
+
+\index{ObitTableCC@{Obit\-Table\-CC}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Sel}$\ast$ {\bf Obit\-Table\-CC::my\-Sel}}\label{structObitTableCC_o9}
+
+
+{\bf Obit}{\rm (p.\,\pageref{structObit})} Table data Selector. 
+
+\index{ObitTableCC@{Obit\-Table\-CC}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-Table\-CC::my\-Status}}\label{structObitTableCC_o6}
+
+
+I/O status. 
+
+\index{ObitTableCC@{Obit\-Table\-CC}!name@{name}}
+\index{name@{name}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-CC::name}}\label{structObitTableCC_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitTableCC@{Obit\-Table\-CC}!noParms@{noParms}}
+\index{noParms@{noParms}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf oint} {\bf Obit\-Table\-CC::no\-Parms}}\label{structObitTableCC_o15}
+
+
+Number of parameters for non point components, usually 0 or 4. 
+
+\index{ObitTableCC@{Obit\-Table\-CC}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Table\-CC::Obit\-Id}}\label{structObitTableCC_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitTableCC@{Obit\-Table\-CC}!parmsCol@{parmsCol}}
+\index{parmsCol@{parmsCol}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CC::parms\-Col}}\label{structObitTableCC_o23}
+
+
+Physical column number for [OPTIONAL] Component parameters; in table record. 
+
+\index{ObitTableCC@{Obit\-Table\-CC}!parmsOff@{parmsOff}}
+\index{parmsOff@{parmsOff}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CC::parms\-Off}}\label{structObitTableCC_o22}
+
+
+Column offset for [OPTIONAL] Component parameters; in table record. 
+
+\index{ObitTableCC@{Obit\-Table\-CC}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CC::Reference\-Count}}\label{structObitTableCC_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitTableCC@{Obit\-Table\-CC}!tabType@{tabType}}
+\index{tabType@{tabType}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Table\-CC::tab\-Type}}\label{structObitTableCC_o12}
+
+
+Table type (name of type, e.g. 
+
+\char`\"{}AIPS AN\char`\"{}) \index{ObitTableCC@{Obit\-Table\-CC}!tabVer@{tabVer}}
+\index{tabVer@{tabVer}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-Table\-CC::tab\-Ver}}\label{structObitTableCC_o13}
+
+
+Table version number(1-rel). 
+
+\index{ObitTableCC@{Obit\-Table\-CC}!thread@{thread}}
+\index{thread@{thread}!ObitTableCC@{Obit\-Table\-CC}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Thread}$\ast$ {\bf Obit\-Table\-CC::thread}}\label{structObitTableCC_o4}
+
+
+Threading info member object. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-CC.h}\end{CompactItemize}

@@ -1,0 +1,61 @@
+\section{Obit\-IOTable\-AIPSUtil.h File Reference}
+\label{ObitIOTableAIPSUtil_8h}\index{ObitIOTableAIPSUtil.h@{ObitIOTableAIPSUtil.h}}
+Obit\-IOTable\-AIPSUtil AIPS tables utilities. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Data.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-IOTable\-AIPSUtil\-Read\-Table\-List} ({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read Table list from external source. \item\end{CompactList}\item 
+void {\bf Obit\-IOTable\-AIPSUtil\-Write\-Table\-List} ({\bf Obit\-Data} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Write Table list to an external file. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf Obit\-IOTable\-AIPSUtil\-Get\-Table} ({\bf Obit\-Data} $\ast$in, Obit\-IOAccess access, gchar $\ast$tab\-Type, {\bf olong} $\ast$tab\-Ver, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get Table. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-IOTable\-AIPSUtil AIPS tables utilities. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitIOTableAIPSUtil.h@{Obit\-IOTable\-AIPSUtil.h}!ObitIOTableAIPSUtilGetTable@{ObitIOTableAIPSUtilGetTable}}
+\index{ObitIOTableAIPSUtilGetTable@{ObitIOTableAIPSUtilGetTable}!ObitIOTableAIPSUtil.h@{Obit\-IOTable\-AIPSUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ Obit\-IOTable\-AIPSUtil\-Get\-Table ({\bf Obit\-Data} $\ast$ {\em in}, Obit\-IOAccess {\em access}, gchar $\ast$ {\em tab\-Type}, {\bf olong} $\ast$ {\em tab\-Ver}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitIOTableAIPSUtil_8h_a2}
+
+
+Public: Get Table. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object with tables \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Table or NULL on error \end{Desc}
+\index{ObitIOTableAIPSUtil.h@{Obit\-IOTable\-AIPSUtil.h}!ObitIOTableAIPSUtilReadTableList@{ObitIOTableAIPSUtilReadTableList}}
+\index{ObitIOTableAIPSUtilReadTableList@{ObitIOTableAIPSUtilReadTableList}!ObitIOTableAIPSUtil.h@{Obit\-IOTable\-AIPSUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-IOTable\-AIPSUtil\-Read\-Table\-List ({\bf Obit\-Data} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitIOTableAIPSUtil_8h_a0}
+
+
+Public: Read Table list from external source. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be read. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitIOTableAIPSUtil.h@{Obit\-IOTable\-AIPSUtil.h}!ObitIOTableAIPSUtilWriteTableList@{ObitIOTableAIPSUtilWriteTableList}}
+\index{ObitIOTableAIPSUtilWriteTableList@{ObitIOTableAIPSUtilWriteTableList}!ObitIOTableAIPSUtil.h@{Obit\-IOTable\-AIPSUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-IOTable\-AIPSUtil\-Write\-Table\-List ({\bf Obit\-Data} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitIOTableAIPSUtil_8h_a1}
+
+
+Public: Write Table list to an external file. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be update \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}

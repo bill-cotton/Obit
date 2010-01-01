@@ -1,0 +1,483 @@
+\section{Obit\-Table.c File Reference}
+\label{ObitTable_8c}\index{ObitTable.c@{ObitTable.c}}
+{\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} class function definitions. 
+
+{\tt \#include \char`\"{}Obit\-Table.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-IOTable\-FITS.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-IOTable\-AIPS.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-Desc.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-Sel.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Mem.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Data.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Table\-Row\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated Row object. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Row\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate Row members. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-Table\-Row} $\ast$ {\bf new\-Obit\-Table\-Row} ({\bf Obit\-Table} $\ast$table)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Table\-Row\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Row\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Row Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf new\-Obit\-Table} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Table\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf Obit\-Table\-Zap} ({\bf Obit\-Table} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Delete underlying structures. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf Obit\-Table\-Copy} ({\bf Obit\-Table} $\ast$in, {\bf Obit\-Table} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf Obit\-Table\-Clone} ({\bf Obit\-Table} $\ast$in, {\bf Obit\-Table} $\ast$out)
+\begin{CompactList}\small\item\em Public: Copy (shallow) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Concat} ({\bf Obit\-Table} $\ast$in, {\bf Obit\-Table} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Concatenate two tables. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-Open} ({\bf Obit\-Table} $\ast$in, Obit\-IOAccess access, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create {\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} structures and open file. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-Close} ({\bf Obit\-Table} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Close file and become inactive. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Full\-Instantiate} ({\bf Obit\-Table} $\ast$in, gboolean exist, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Fully instantiate. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Clear\-Rows} ({\bf Obit\-Table} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Remove any previous entries - also forces instantiate. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-Read} ({\bf Obit\-Table} $\ast$in, {\bf olong} rowno, {\bf ofloat} $\ast$data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read specified data. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-Read\-Select} ({\bf Obit\-Table} $\ast$in, {\bf olong} rowno, {\bf ofloat} $\ast$data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read/select data. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-Write} ({\bf Obit\-Table} $\ast$in, {\bf olong} rowno, {\bf ofloat} $\ast$data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Write specified data. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf Obit\-Table\-Convert} ({\bf Obit\-Table} $\ast$in)
+\begin{CompactList}\small\item\em Public: Convert an {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} to a derived type. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-Read\-Row} ({\bf Obit\-Table} $\ast$in, {\bf olong} rowno, {\bf Obit\-Table\-Row} $\ast$row, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read specified Row. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Set\-Row} ({\bf Obit\-Table} $\ast$in, {\bf Obit\-Table\-Row} $\ast$row, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Attach Row to buffer. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-Write\-Row} ({\bf Obit\-Table} $\ast$in, {\bf olong} rowno, {\bf Obit\-Table\-Row} $\ast$row, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Write specified Row. \item\end{CompactList}\item 
+gchar $\ast$ {\bf Obit\-Table\-Get\-Type} ({\bf Obit\-Table} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Return table type. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-Table\-Get\-Version} ({\bf Obit\-Table} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Return table version. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Get\-File\-Info} ({\bf Obit\-Table} $\ast$in, gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$out\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Extract information about underlying file. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf Obit\-Table\-From\-File\-Info} (gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$in\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create Table object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Parent\-Get\-Row\-Class} = Obit\-Get\-Class
+\begin{CompactList}\small\item\em Function to obtain parent Class\-Info. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} class function definitions. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} base class.
+
+\subsection{Function Documentation}
+\index{ObitTable.c@{Obit\-Table.c}!newObitTable@{newObitTable}}
+\index{newObitTable@{newObitTable}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ new\-Obit\-Table (gchar $\ast$ {\em name})}\label{ObitTable_8c_a16}
+
+
+Public: Default constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!newObitTableRow@{newObitTableRow}}
+\index{newObitTableRow@{newObitTableRow}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-Row}$\ast$ new\-Obit\-Table\-Row ({\bf Obit\-Table} $\ast$ {\em table})}\label{ObitTable_8c_a13}
+
+
+Public: Constructor. 
+
+Initializes Row class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableClassInit@{ObitTableClassInit}}
+\index{ObitTableClassInit@{ObitTableClassInit}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Class\-Init (void)}\label{ObitTable_8c_a37}
+
+
+Public: Class initializer. 
+
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableClear@{ObitTableClear}}
+\index{ObitTableClear@{ObitTableClear}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Clear (gpointer {\em inn})}\label{ObitTable_8c_a9}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. For some reason this wasn't build into the GType class. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-Table$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableClearRows@{ObitTableClearRows}}
+\index{ObitTableClearRows@{ObitTableClearRows}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Clear\-Rows ({\bf Obit\-Table} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTable_8c_a25}
+
+
+Public: Remove any previous entries - also forces instantiate. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]error code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableClone@{ObitTableClone}}
+\index{ObitTableClone@{ObitTableClone}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ Obit\-Table\-Clone ({\bf Obit\-Table} $\ast$ {\em in}, {\bf Obit\-Table} $\ast$ {\em out})}\label{ObitTable_8c_a20}
+
+
+Public: Copy (shallow) constructor. 
+
+The result will have pointers to the more complex members. Parent class members are included but any derived class info is ignored. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableClose@{ObitTableClose}}
+\index{ObitTableClose@{ObitTableClose}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-Close ({\bf Obit\-Table} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTable_8c_a23}
+
+
+Public: Close file and become inactive. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be closed. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]error code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableConcat@{ObitTableConcat}}
+\index{ObitTableConcat@{ObitTableConcat}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Concat ({\bf Obit\-Table} $\ast$ {\em in}, {\bf Obit\-Table} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTable_8c_a21}
+
+
+Public: Concatenate two tables. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableConvert@{ObitTableConvert}}
+\index{ObitTableConvert@{ObitTableConvert}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ Obit\-Table\-Convert ({\bf Obit\-Table} $\ast$ {\em in})}\label{ObitTable_8c_a29}
+
+
+Public: Convert an {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} to a derived type. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be converted still exists after call. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]converted table \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableCopy@{ObitTableCopy}}
+\index{ObitTableCopy@{ObitTableCopy}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ Obit\-Table\-Copy ({\bf Obit\-Table} $\ast$ {\em in}, {\bf Obit\-Table} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTable_8c_a19}
+
+
+Public: Copy (deep) constructor. 
+
+Copies are made of complex members including disk files; these will be copied applying whatever selection is associated with the input. Objects should be closed on input and will be closed on output. In order for the disk file structures to be copied, the output file must be sufficiently defined that it can be written. The copy will be attempted but no errors will be logged until both input and output have been successfully opened. {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} and {\bf Obit\-Thread}{\rm (p.\,\pageref{structObitThread})} members are only copied if the output object didn't previously exist. Parent class members are included but any derived class info is ignored. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableFromFileInfo@{ObitTableFromFileInfo}}
+\index{ObitTableFromFileInfo@{ObitTableFromFileInfo}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ Obit\-Table\-From\-File\-Info (gchar $\ast$ {\em prefix}, {\bf Obit\-Info\-List} $\ast$ {\em in\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTable_8c_a36}
+
+
+Public: Create Table object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em prefix}]If Non\-Null, string to be added to beginning of out\-List entry name \char`\"{}xxx\char`\"{} in the following \item[{\em in\-List}]Info\-List to extract object information from Following Info\-List entries for AIPS files (\char`\"{}xxx\char`\"{} = prefix): \begin{itemize}
+\item xxx\-Name OBIT\_\-string AIPS file name \item xxx\-Class OBIT\_\-string AIPS file class \item xxx\-Disk OBIT\_\-oint AIPS file disk number \item xxx\-Seq OBIT\_\-oint AIPS file Sequence number \item AIPSuser OBIT\_\-oint AIPS User number \item xxx\-CNO OBIT\_\-oint AIPS Catalog slot number \item xxx\-Dir OBIT\_\-string Directory name for xxx\-Disk\end{itemize}
+Following entries for FITS files (\char`\"{}xxx\char`\"{} = prefix): \begin{itemize}
+\item xxx\-File\-Name OBIT\_\-string FITS file name \item xxx\-Disk OBIT\_\-oint FITS file disk number \item xxx\-Dir OBIT\_\-string Directory name for xxx\-Disk\end{itemize}
+For all File types: \begin{itemize}
+\item xxx\-File\-Type OBIT\_\-string \char`\"{}AIPS\char`\"{}, \char`\"{}FITS\char`\"{}\end{itemize}
+For xxx\-Data\-Type = \char`\"{}Table\char`\"{} \begin{itemize}
+\item xxx\-Table\-Parent OBIT\_\-string (Tables only) Table parent type (e.g. \char`\"{}MA\char`\"{}) \item xxx\-Tab OBIT\_\-string (Tables only) Table type (e.g. \char`\"{}AIPS CC\char`\"{}) \item xxx\-Ver OBIT\_\-oint (Tables Only) Table version number\end{itemize}
+\item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]new data object with selection parameters set \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableFullInstantiate@{ObitTableFullInstantiate}}
+\index{ObitTableFullInstantiate@{ObitTableFullInstantiate}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Full\-Instantiate ({\bf Obit\-Table} $\ast$ {\em in}, gboolean {\em exist}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTable_8c_a24}
+
+
+Public: Fully instantiate. 
+
+If object has previously been opened, as demonstrated by the existance of its my\-IO member, this operation is a no-op. Virtual - calls actual class member \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object \item[{\em exist}]TRUE if object should previously exist, else FALSE \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]error code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableGetClass@{ObitTableGetClass}}
+\index{ObitTableGetClass@{ObitTableGetClass}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Table\-Get\-Class (void)}\label{ObitTable_8c_a17}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableGetFileInfo@{ObitTableGetFileInfo}}
+\index{ObitTableGetFileInfo@{ObitTableGetFileInfo}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Get\-File\-Info ({\bf Obit\-Table} $\ast$ {\em in}, gchar $\ast$ {\em prefix}, {\bf Obit\-Info\-List} $\ast$ {\em out\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTable_8c_a35}
+
+
+Public: Extract information about underlying file. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object of interest. \item[{\em prefix}]If Non\-Null, string to be added to beginning of out\-List entry name \char`\"{}xxx\char`\"{} in the following \item[{\em out\-List}]Info\-List to write entries into Following entries for AIPS files (\char`\"{}xxx\char`\"{} = prefix): \begin{itemize}
+\item xxx\-Name OBIT\_\-string AIPS file name \item xxx\-Class OBIT\_\-string AIPS file class \item xxx\-Disk OBIT\_\-oint AIPS file disk number \item xxx\-Seq OBIT\_\-oint AIPS file Sequence number \item AIPSuser OBIT\_\-oint AIPS User number \item xxx\-CNO OBIT\_\-oint AIPS Catalog slot number \item xxx\-Dir OBIT\_\-string Directory name for xxx\-Disk\end{itemize}
+Following entries for FITS files (\char`\"{}xxx\char`\"{} = prefix): \begin{itemize}
+\item xxx\-File\-Name OBIT\_\-string FITS file name \item xxx\-Disk OBIT\_\-oint FITS file disk number \item xxx\-Dir OBIT\_\-string Directory name for xxx\-Disk\end{itemize}
+For all File types types: \begin{itemize}
+\item xxx\-Data\-Type OBIT\_\-string \char`\"{}UV\char`\"{} = UV data, \char`\"{}MA\char`\"{}=$>$image, \char`\"{}Table\char`\"{}=Table, \char`\"{}OTF\char`\"{}=OTF, etc \item xxx\-File\-Type OBIT\_\-string \char`\"{}AIPS\char`\"{}, \char`\"{}FITS\char`\"{}\end{itemize}
+For xxx\-Data\-Type = \char`\"{}Table\char`\"{} \begin{itemize}
+\item xxx\-Tab OBIT\_\-string (Tables only) Table type (e.g. \char`\"{}AIPS CC\char`\"{}) \item xxx\-Ver OBIT\_\-oint (Tables Only) Table version number\end{itemize}
+\item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableGetType@{ObitTableGetType}}
+\index{ObitTableGetType@{ObitTableGetType}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ Obit\-Table\-Get\-Type ({\bf Obit\-Table} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTable_8c_a33}
+
+
+Public: Return table type. 
+
+\char`\"{}AIPS AN\char`\"{}) \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be read. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to string \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableGetVersion@{ObitTableGetVersion}}
+\index{ObitTableGetVersion@{ObitTableGetVersion}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-Table\-Get\-Version ({\bf Obit\-Table} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTable_8c_a34}
+
+
+Public: Return table version. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be read. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]version number \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableInit@{ObitTableInit}}
+\index{ObitTableInit@{ObitTableInit}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Init (gpointer {\em inn})}\label{ObitTable_8c_a8}
+
+
+Private: Initialize newly instantiated object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableOpen@{ObitTableOpen}}
+\index{ObitTableOpen@{ObitTableOpen}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-Open ({\bf Obit\-Table} $\ast$ {\em in}, Obit\-IOAccess {\em access}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTable_8c_a22}
+
+
+Public: Create {\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} structures and open file. 
+
+The image descriptor is read if OBIT\_\-IO\_\-Read\-Only or OBIT\_\-IO\_\-Read\-Write and written to disk if opened OBIT\_\-IO\_\-Write\-Only. After the file has been opened the member, buffer is initialized for reading/storing the table unless member buffer\-Size is $<$0. If the requested version (\char`\"{}Ver\char`\"{} in Info\-List) is 0 then the highest numbered table of the same type is opened on Read or Read/Write, or a new table is created on on Write. The file etc. info should have been stored in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}: \begin{itemize}
+\item \char`\"{}File\-Type\char`\"{} OBIT\_\-long scalar = OBIT\_\-IO\_\-FITS or OBIT\_\-IO\_\-AIPS for file type (see class documentation for details). \item \char`\"{}n\-Row\-PIO\char`\"{} OBIT\_\-long scalar = Maximum number of table rows per transfer, this is the target size for Reads (may be fewer) and is used to create buffers. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be opened. \item[{\em access}]access (OBIT\_\-IO\_\-Read\-Only,OBIT\_\-IO\_\-Read\-Write, or OBIT\_\-IO\_\-Write\-Only). If OBIT\_\-IO\_\-Write\-Only any existing data in the output file will be lost. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\end{itemize}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableRead@{ObitTableRead}}
+\index{ObitTableRead@{ObitTableRead}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-Read ({\bf Obit\-Table} $\ast$ {\em in}, {\bf olong} {\em rowno}, {\bf ofloat} $\ast$ {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTable_8c_a26}
+
+
+Public: Read specified data. 
+
+The {\bf Obit\-Table\-Desc}{\rm (p.\,\pageref{structObitTableDesc})} maintains the current location in the table. The number read will be my\-Sel-$>$n\-Row\-PIO (until the end of the selected range of rows in which case it will be smaller). The first row number after a read is my\-Desc-$>$first\-Row and the number of row is my\-Desc-$>$num\-Row\-Buff. If there are existing rows in the buffer marked as modified (\char`\"{}\_\-status\char`\"{} column value =1) the buffer is rewritten to disk before the new buffer is read. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be read. \item[{\em rowno}]Row number to start reading, -1 = next; \item[{\em data}]pointer to buffer to write results. if NULL, use the buffer member of in. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK =$>$ OK \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableReadRow@{ObitTableReadRow}}
+\index{ObitTableReadRow@{ObitTableReadRow}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-Read\-Row ({\bf Obit\-Table} $\ast$ {\em in}, {\bf olong} {\em rowno}, {\bf Obit\-Table\-Row} $\ast$ {\em row}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTable_8c_a30}
+
+
+Public: Read specified Row. 
+
+The {\bf Obit\-Table\-Desc}{\rm (p.\,\pageref{structObitTableDesc})} maintains the current location in the table. If there are existing rows in the buffer marked as modified (\char`\"{}\_\-status\char`\"{} column value =1) the buffer is rewritten to disk before the new buffer is read. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be read. \item[{\em rowno}]Row number to start reading, -1 = next; \item[{\em row}]pointer to Table row Structure to accept data. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK =$>$ OK \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableReadSelect@{ObitTableReadSelect}}
+\index{ObitTableReadSelect@{ObitTableReadSelect}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-Read\-Select ({\bf Obit\-Table} $\ast$ {\em in}, {\bf olong} {\em rowno}, {\bf ofloat} $\ast$ {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTable_8c_a27}
+
+
+Public: Read/select data. 
+
+The number read will be my\-Sel-$>$n\-Row\-PIO (until the end of the selected range of visibilities in which case it will be smaller). The first visibility number after a read is my\-Desc-$>$first\-Row and the number of visibilities is my\-Desc-$>$num\-Row\-Buff. If there are existing rows in the buffer marked as modified (\char`\"{}\_\-status\char`\"{} column value =1) the buffer is rewritten to disk before the new buffer is read. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be read. \item[{\em rowno}]Row number to start reading, -1 = next; \item[{\em data}]pointer to buffer to write results. if NULL, use the buffer member of in. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK =$>$ OK \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableRowClassInit@{ObitTableRowClassInit}}
+\index{ObitTableRowClassInit@{ObitTableRowClassInit}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Row\-Class\-Init (void)}\label{ObitTable_8c_a15}
+
+
+Public: Row Class initializer. 
+
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableRowClear@{ObitTableRowClear}}
+\index{ObitTableRowClear@{ObitTableRowClear}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Row\-Clear (gpointer {\em inn})}\label{ObitTable_8c_a7}
+
+
+Private: Deallocate Row members. 
+
+Does (recursive) deallocation of parent class members. For some reason this wasn't build into the GType class. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-Table\-Row$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableRowGetClass@{ObitTableRowGetClass}}
+\index{ObitTableRowGetClass@{ObitTableRowGetClass}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Table\-Row\-Get\-Class (void)}\label{ObitTable_8c_a14}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the Row class structure. \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableRowInit@{ObitTableRowInit}}
+\index{ObitTableRowInit@{ObitTableRowInit}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Row\-Init (gpointer {\em inn})}\label{ObitTable_8c_a6}
+
+
+Private: Initialize newly instantiated Row object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableSetRow@{ObitTableSetRow}}
+\index{ObitTableSetRow@{ObitTableSetRow}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-Set\-Row ({\bf Obit\-Table} $\ast$ {\em in}, {\bf Obit\-Table\-Row} $\ast$ {\em row}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTable_8c_a31}
+
+
+Public: Attach Row to buffer. 
+
+This is only useful prior to filling a row structure in preparation . for a Write\-Row operation. Array members of the Row structure are . pointers to independently allocated memory, this routine allows using . the table IO buffer instead of allocating yet more memory.. This routine need only be called once to initialize a Row structure for write.. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table with buffer to be written \item[{\em row}]Table Row structure to attach \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableWrite@{ObitTableWrite}}
+\index{ObitTableWrite@{ObitTableWrite}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-Write ({\bf Obit\-Table} $\ast$ {\em in}, {\bf olong} {\em rowno}, {\bf ofloat} $\ast$ {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTable_8c_a28}
+
+
+Public: Write specified data. 
+
+The data in the buffer will be written starting at visibility my\-Desc-$>$first\-Row and the number written will be my\-Desc-$>$num\-Row\-Buff which should not exceed my\-Sel-$>$n\-Row\-PIO if the internal buffer is used. my\-Desc-$>$first\-Row will be maintained and need not be changed for sequential writing. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be written. \item[{\em rowno}]Row number (1-rel) to start reading, -1 = next; \item[{\em data}]pointer to buffer containing input data. if NULL, use the buffer member of in. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableWriteRow@{ObitTableWriteRow}}
+\index{ObitTableWriteRow@{ObitTableWriteRow}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-Write\-Row ({\bf Obit\-Table} $\ast$ {\em in}, {\bf olong} {\em rowno}, {\bf Obit\-Table\-Row} $\ast$ {\em row}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTable_8c_a32}
+
+
+Public: Write specified Row. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be read. \item[{\em rowno}]Row number to start reading, -1 = next; \item[{\em row}]pointer to Table row Structure to accept data. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK =$>$ OK \end{Desc}
+\index{ObitTable.c@{Obit\-Table.c}!ObitTableZap@{ObitTableZap}}
+\index{ObitTableZap@{ObitTableZap}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ Obit\-Table\-Zap ({\bf Obit\-Table} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTable_8c_a18}
+
+
+Public: Delete underlying structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be zapped. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer for input object, NULL if deletion successful \end{Desc}
+
+
+\subsection{Variable Documentation}
+\index{ObitTable.c@{Obit\-Table.c}!ObitParentGetRowClass@{ObitParentGetRowClass}}
+\index{ObitParentGetRowClass@{ObitParentGetRowClass}!ObitTable.c@{Obit\-Table.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Get\-Class\-FP} {\bf Obit\-Parent\-Get\-Row\-Class} = Obit\-Get\-Class}\label{ObitTable_8c_a3}
+
+
+Function to obtain parent Class\-Info. 
+

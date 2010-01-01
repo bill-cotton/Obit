@@ -1,0 +1,64 @@
+\section{Obit\-Table\-CLUtil.c File Reference}
+\label{ObitTableCLUtil_8c}\index{ObitTableCLUtil.c@{ObitTableCLUtil.c}}
+{\bf Obit\-Table\-CL}{\rm (p.\,\pageref{structObitTableCL})} class utility function definitions. 
+
+{\tt \#include $<$math.h$>$}\par
+{\tt \#include \char`\"{}Obit\-Table\-CLUtil.h\char`\"{}}\par
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf MAXANT}\ 300
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+Obit\-IOCode {\bf Obit\-Table\-CLSelect} ({\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-UV} $\ast$out\-UV, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy CL tables with selection. \item\end{CompactList}\item 
+{\bf Obit\-Table\-CL} $\ast$ {\bf Obit\-Table\-CLGet\-Dummy} ({\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-UV} $\ast$out\-UV, {\bf olong} ver, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create Dummy Cal table. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Table\-CL}{\rm (p.\,\pageref{structObitTableCL})} class utility function definitions. 
+
+
+
+\subsection{Define Documentation}
+\index{ObitTableCLUtil.c@{Obit\-Table\-CLUtil.c}!MAXANT@{MAXANT}}
+\index{MAXANT@{MAXANT}!ObitTableCLUtil.c@{Obit\-Table\-CLUtil.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define MAXANT\ 300}\label{ObitTableCLUtil_8c_a0}
+
+
+
+
+\subsection{Function Documentation}
+\index{ObitTableCLUtil.c@{Obit\-Table\-CLUtil.c}!ObitTableCLGetDummy@{ObitTableCLGetDummy}}
+\index{ObitTableCLGetDummy@{ObitTableCLGetDummy}!ObitTableCLUtil.c@{Obit\-Table\-CLUtil.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-CL}$\ast$ Obit\-Table\-CLGet\-Dummy ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf olong} {\em ver}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableCLUtil_8c_a2}
+
+
+Public: Create Dummy Cal table. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input UV data. Control parameters: \begin{itemize}
+\item \char`\"{}sol\-Int\char`\"{} OBIT\_\-float (1,1,1) Solution interval in days [def 10 sec]. \end{itemize}
+\item[{\em out\-UV}]UV with which the output Table is to be associated \item[{\em ver}]CL table version \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Pointer to the newly created {\bf Obit\-Table\-CL}{\rm (p.\,\pageref{structObitTableCL})} object which is associated with out\-UV. \end{Desc}
+\index{ObitTableCLUtil.c@{Obit\-Table\-CLUtil.c}!ObitTableCLSelect@{ObitTableCLSelect}}
+\index{ObitTableCLSelect@{ObitTableCLSelect}!ObitTableCLUtil.c@{Obit\-Table\-CLUtil.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-CLSelect ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableCLUtil_8c_a1}
+
+
+Public: Copy CL tables with selection. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input UV to copy from \item[{\em out\-UV}]Output UV to copy to \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]I/O Code OBIT\_\-IO\_\-OK = OK. \end{Desc}

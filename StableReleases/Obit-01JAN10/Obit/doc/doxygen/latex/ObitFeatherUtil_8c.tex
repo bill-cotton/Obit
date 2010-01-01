@@ -1,0 +1,195 @@
+\section{Obit\-Feather\-Util.c File Reference}
+\label{ObitFeatherUtil_8c}\index{ObitFeatherUtil.c@{ObitFeatherUtil.c}}
+Obit\-Feather\-Util utility function definitions for {\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})} class. 
+
+{\tt \#include $<$math.h$>$}\par
+{\tt \#include $<$string.h$>$}\par
+{\tt \#include \char`\"{}Obit\-Feather\-Util.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Util.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+{\bf Obit\-FFT} $\ast$ {\bf Obit\-Feather\-Util\-Create\-FFT} ({\bf Obit\-Image} $\ast$in, Obit\-FFTdir dir)
+\begin{CompactList}\small\item\em Public: Create an FFT object suitable for FFTing an image. \item\end{CompactList}\item 
+{\bf Obit\-CArray} $\ast$ {\bf Obit\-Feather\-Util\-Create\-FFTArray} ({\bf Obit\-FFT} $\ast$in\-FFT)
+\begin{CompactList}\small\item\em Public: Create a half plane CArray suitable for the output of FFTing an image. \item\end{CompactList}\item 
+{\bf Obit\-Image} $\ast$ {\bf Obit\-Feather\-Util\-Create\-Pad\-Image} ({\bf Obit\-FFT} $\ast$in\-FFT, {\bf Obit\-Image} $\ast$in\-Image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Return scratch Image the size needed for a padding. \item\end{CompactList}\item 
+void {\bf Obit\-Feather\-Util\-Pad} ({\bf Obit\-FFT} $\ast$in\-FFT, {\bf Obit\-Image} $\ast$in\-Image, {\bf Obit\-Image} $\ast$out\-Image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Zero Pads an image as needed for an FFT. \item\end{CompactList}\item 
+void {\bf Obit\-Feather\-Util\-Bigger} ({\bf olong} $\ast$naxis, {\bf Obit\-Image} $\ast$in\-Image, {\bf Obit\-Image} $\ast$out\-Image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Increases the size of an image and zero pads. \item\end{CompactList}\item 
+void {\bf Obit\-Feather\-Util\-Pad\-Array} ({\bf Obit\-FFT} $\ast$in\-FFT, {\bf Obit\-FArray} $\ast$in\-Array, {\bf Obit\-FArray} $\ast$out\-Array)
+\begin{CompactList}\small\item\em Public:Zero Pads an array as needed for an FFT Pad\-Array. \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf Obit\-Feather\-Util\-Extract} ({\bf Obit\-FFT} $\ast$in\-FFT, {\bf Obit\-FArray} $\ast$in\-Array, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Extract a Real array from one padded for FFTs. \item\end{CompactList}\item 
+{\bf Obit\-FArray} $\ast$ {\bf Obit\-Feather\-Util\-Make\-Beam\-Mask} ({\bf Obit\-Image} $\ast$in\-Image, {\bf Obit\-FFT} $\ast$in\-FFT, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public:Make uv plane weighting array. \item\end{CompactList}\item 
+void {\bf Obit\-Feather\-Util\-Create\-Model} ({\bf Obit\-Image} $\ast$image, {\bf Obit\-FArray} $\ast$out\-Array)
+\begin{CompactList}\small\item\em Public: Fill an FArray with a model the size and shape of the resolution in an image. \item\end{CompactList}\item 
+void {\bf Obit\-Feather\-Util\-Accum\-Image} ({\bf Obit\-FFT} $\ast$FFTfor, {\bf Obit\-Image} $\ast$in\-Image, {\bf Obit\-FArray} $\ast$wt\-Array, {\bf Obit\-CArray} $\ast$acc\-Array, {\bf Obit\-CArray} $\ast$work\-Array, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Accumulate the weighted FT of an FArray. \item\end{CompactList}\item 
+void {\bf Obit\-Feather\-Util\-Interpol} ({\bf Obit\-Image} $\ast$in\-Image, {\bf Obit\-Image} $\ast$tmpl\-Image, {\bf Obit\-Image} $\ast$out\-Image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: HGEOM-like operation (Before EWG got to it). \item\end{CompactList}\item 
+void {\bf Obit\-Feather\-Util\-Sub\-Image} ({\bf Obit\-Image} $\ast$in\-Image, {\bf Obit\-FArray} $\ast$in\-Array, {\bf Obit\-Image} $\ast$out\-Image, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Extract the subimage in in\-Aray corresponding to out\-Image. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Feather\-Util utility function definitions for {\bf Obit\-Image}{\rm (p.\,\pageref{structObitImage})} class. 
+
+Routines for feathering together images at different resolutions.
+
+\subsection{Function Documentation}
+\index{ObitFeatherUtil.c@{Obit\-Feather\-Util.c}!ObitFeatherUtilAccumImage@{ObitFeatherUtilAccumImage}}
+\index{ObitFeatherUtilAccumImage@{ObitFeatherUtilAccumImage}!ObitFeatherUtil.c@{Obit\-Feather\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Feather\-Util\-Accum\-Image ({\bf Obit\-FFT} $\ast$ {\em FFTfor}, {\bf Obit\-Image} $\ast$ {\em in\-Image}, {\bf Obit\-FArray} $\ast$ {\em wt\-Array}, {\bf Obit\-CArray} $\ast$ {\em acc\-Array}, {\bf Obit\-CArray} $\ast$ {\em work\-Array}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFeatherUtil_8c_a9}
+
+
+Public: Accumulate the weighted FT of an FArray. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em FFTfor}]FFT object to FT input array (on in\-Image) \item[{\em in\-Image}]Image to be accumulated must be a size compatable with FFTfor, returned with contents swapped for FFTs \item[{\em wt\-Array}]FArray containing accumulation weights, must be a size compatable with FT of input array. \item[{\em acc\-Array}]CArray in which the results are to be accumulated. must be a size compatable with FT of input array. \item[{\em work\-Array}]CArray for temporary storage of FT of input array. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\index{ObitFeatherUtil.c@{Obit\-Feather\-Util.c}!ObitFeatherUtilBigger@{ObitFeatherUtilBigger}}
+\index{ObitFeatherUtilBigger@{ObitFeatherUtilBigger}!ObitFeatherUtil.c@{Obit\-Feather\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Feather\-Util\-Bigger ({\bf olong} $\ast$ {\em naxis}, {\bf Obit\-Image} $\ast$ {\em in\-Image}, {\bf Obit\-Image} $\ast$ {\em out\-Image}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFeatherUtil_8c_a4}
+
+
+Public: Increases the size of an image and zero pads. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em naxis}]dimension array of desired output \item[{\em in\-Image}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Image to be padded. \item[{\em out\-Image}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Image for output, Must previously exist \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\index{ObitFeatherUtil.c@{Obit\-Feather\-Util.c}!ObitFeatherUtilCreateFFT@{ObitFeatherUtilCreateFFT}}
+\index{ObitFeatherUtilCreateFFT@{ObitFeatherUtilCreateFFT}!ObitFeatherUtil.c@{Obit\-Feather\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FFT}$\ast$ Obit\-Feather\-Util\-Create\-FFT ({\bf Obit\-Image} $\ast$ {\em in}, Obit\-FFTdir {\em dir})}\label{ObitFeatherUtil_8c_a0}
+
+
+Public: Create an FFT object suitable for FFTing an image. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Image to be FFTed \item[{\em dir}]FFT direction (OBIT\_\-FFT\_\-Forward, OBIT\_\-FFT\_\-Reverse) \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]{\bf Obit\-FFT}{\rm (p.\,\pageref{structObitFFT})}, must be Unrefed when done \end{Desc}
+\index{ObitFeatherUtil.c@{Obit\-Feather\-Util.c}!ObitFeatherUtilCreateFFTArray@{ObitFeatherUtilCreateFFTArray}}
+\index{ObitFeatherUtilCreateFFTArray@{ObitFeatherUtilCreateFFTArray}!ObitFeatherUtil.c@{Obit\-Feather\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-CArray}$\ast$ Obit\-Feather\-Util\-Create\-FFTArray ({\bf Obit\-FFT} $\ast$ {\em in\-FFT})}\label{ObitFeatherUtil_8c_a1}
+
+
+Public: Create a half plane CArray suitable for the output of FFTing an image. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-FFT}]FFT to be applied \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]CArray, must be Unrefed when done \end{Desc}
+\index{ObitFeatherUtil.c@{Obit\-Feather\-Util.c}!ObitFeatherUtilCreateModel@{ObitFeatherUtilCreateModel}}
+\index{ObitFeatherUtilCreateModel@{ObitFeatherUtilCreateModel}!ObitFeatherUtil.c@{Obit\-Feather\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Feather\-Util\-Create\-Model ({\bf Obit\-Image} $\ast$ {\em image}, {\bf Obit\-FArray} $\ast$ {\em out\-Array})}\label{ObitFeatherUtil_8c_a8}
+
+
+Public: Fill an FArray with a model the size and shape of the resolution in an image. 
+
+A model image is inserted in out\-Array derived from the restoring beam in image. The size and geometry of out\-Array must be those described by image \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em image}]Image with info, image member MUST be present \item[{\em out\-Array}]Python FArray to receive model, must previously exist. \end{description}
+\end{Desc}
+\index{ObitFeatherUtil.c@{Obit\-Feather\-Util.c}!ObitFeatherUtilCreatePadImage@{ObitFeatherUtilCreatePadImage}}
+\index{ObitFeatherUtilCreatePadImage@{ObitFeatherUtilCreatePadImage}!ObitFeatherUtil.c@{Obit\-Feather\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image}$\ast$ Obit\-Feather\-Util\-Create\-Pad\-Image ({\bf Obit\-FFT} $\ast$ {\em in\-FFT}, {\bf Obit\-Image} $\ast$ {\em in\-Image}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFeatherUtil_8c_a2}
+
+
+Public: Return scratch Image the size needed for a padding. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-FFT}]FFT defining proper padded image size (created by Obit\-Feather\-Util\-Create\-FFT) \item[{\em in\-Image}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Image to be padded. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Scratch Image, must be Unrefed when done \end{Desc}
+\index{ObitFeatherUtil.c@{Obit\-Feather\-Util.c}!ObitFeatherUtilExtract@{ObitFeatherUtilExtract}}
+\index{ObitFeatherUtilExtract@{ObitFeatherUtilExtract}!ObitFeatherUtil.c@{Obit\-Feather\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ Obit\-Feather\-Util\-Extract ({\bf Obit\-FFT} $\ast$ {\em in\-FFT}, {\bf Obit\-FArray} $\ast$ {\em in\-Array}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFeatherUtil_8c_a6}
+
+
+Public: Extract a Real array from one padded for FFTs. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-FFT}]Gives size of FFT needed \item[{\em in\-Array}]FArray with FFT results. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitFeatherUtil.c@{Obit\-Feather\-Util.c}!ObitFeatherUtilInterpol@{ObitFeatherUtilInterpol}}
+\index{ObitFeatherUtilInterpol@{ObitFeatherUtilInterpol}!ObitFeatherUtil.c@{Obit\-Feather\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Feather\-Util\-Interpol ({\bf Obit\-Image} $\ast$ {\em in\-Image}, {\bf Obit\-Image} $\ast$ {\em tmpl\-Image}, {\bf Obit\-Image} $\ast$ {\em out\-Image}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFeatherUtil_8c_a10}
+
+
+Public: HGEOM-like operation (Before EWG got to it). 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-Image}]Image to be interpolated \item[{\em tmpl\-Image}]Image whose geometry is to be used. \item[{\em out\-Image}]values from in\-Image on grid of tmpl\-Image undefined values set to zero to allow FFT. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\index{ObitFeatherUtil.c@{Obit\-Feather\-Util.c}!ObitFeatherUtilMakeBeamMask@{ObitFeatherUtilMakeBeamMask}}
+\index{ObitFeatherUtilMakeBeamMask@{ObitFeatherUtilMakeBeamMask}!ObitFeatherUtil.c@{Obit\-Feather\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-FArray}$\ast$ Obit\-Feather\-Util\-Make\-Beam\-Mask ({\bf Obit\-Image} $\ast$ {\em in\-Image}, {\bf Obit\-FFT} $\ast$ {\em in\-FFT}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFeatherUtil_8c_a7}
+
+
+Public:Make uv plane weighting array. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-Image}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Image to be padded. \item[{\em in\-FFT}]{\bf Obit}{\rm (p.\,\pageref{structObit})} forward FFT object \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]uv mask array \end{Desc}
+\index{ObitFeatherUtil.c@{Obit\-Feather\-Util.c}!ObitFeatherUtilPad@{ObitFeatherUtilPad}}
+\index{ObitFeatherUtilPad@{ObitFeatherUtilPad}!ObitFeatherUtil.c@{Obit\-Feather\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Feather\-Util\-Pad ({\bf Obit\-FFT} $\ast$ {\em in\-FFT}, {\bf Obit\-Image} $\ast$ {\em in\-Image}, {\bf Obit\-Image} $\ast$ {\em out\-Image}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFeatherUtil_8c_a3}
+
+
+Public: Zero Pads an image as needed for an FFT. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-FFT}]FFT to be applied \item[{\em in\-Image}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Image to be padded. \item[{\em out\-Image}]{\bf Obit}{\rm (p.\,\pageref{structObit})} Image for output \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\index{ObitFeatherUtil.c@{Obit\-Feather\-Util.c}!ObitFeatherUtilPadArray@{ObitFeatherUtilPadArray}}
+\index{ObitFeatherUtilPadArray@{ObitFeatherUtilPadArray}!ObitFeatherUtil.c@{Obit\-Feather\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Feather\-Util\-Pad\-Array ({\bf Obit\-FFT} $\ast$ {\em in\-FFT}, {\bf Obit\-FArray} $\ast$ {\em in\-Array}, {\bf Obit\-FArray} $\ast$ {\em out\-Array})}\label{ObitFeatherUtil_8c_a5}
+
+
+Public:Zero Pads an array as needed for an FFT Pad\-Array. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-FFT}]Gives size of FFT needed \item[{\em in\-Array}]FArray to be padded. \item[{\em out\-Array}]FArray containing in\-Array but zero filled. \end{description}
+\end{Desc}
+\index{ObitFeatherUtil.c@{Obit\-Feather\-Util.c}!ObitFeatherUtilSubImage@{ObitFeatherUtilSubImage}}
+\index{ObitFeatherUtilSubImage@{ObitFeatherUtilSubImage}!ObitFeatherUtil.c@{Obit\-Feather\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Feather\-Util\-Sub\-Image ({\bf Obit\-Image} $\ast$ {\em in\-Image}, {\bf Obit\-FArray} $\ast$ {\em in\-Array}, {\bf Obit\-Image} $\ast$ {\em out\-Image}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFeatherUtil_8c_a11}
+
+
+Public: Extract the subimage in in\-Aray corresponding to out\-Image. 
+
+one the padded version of the other) out\-Image is updated in permanent storage (disk) \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-Image}]Image describing in\-Array \item[{\em in\-Array}]array from which values are to be extracted \item[{\em out\-Image}]accepts values from in\-Image, must exist and be fully defined \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}

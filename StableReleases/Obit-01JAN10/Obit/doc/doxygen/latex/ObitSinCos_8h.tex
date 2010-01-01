@@ -1,0 +1,42 @@
+\section{Obit\-Sin\-Cos.h File Reference}
+\label{ObitSinCos_8h}\index{ObitSinCos.h@{ObitSinCos.h}}
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Sin\-Cos\-Calc} ({\bf ofloat} angle, {\bf ofloat} $\ast$sin, {\bf ofloat} $\ast$cos)
+\begin{CompactList}\small\item\em Calculate sine/cosine of angle. \item\end{CompactList}\item 
+void {\bf Obit\-Sin\-Cos\-Vec} ({\bf olong} n, {\bf ofloat} $\ast$angle, {\bf ofloat} $\ast$sin, {\bf ofloat} $\ast$cos)
+\begin{CompactList}\small\item\em Calculate sine/cosine of vector of angles. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Function Documentation}
+\index{ObitSinCos.h@{Obit\-Sin\-Cos.h}!ObitSinCosCalc@{ObitSinCosCalc}}
+\index{ObitSinCosCalc@{ObitSinCosCalc}!ObitSinCos.h@{Obit\-Sin\-Cos.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sin\-Cos\-Calc ({\bf ofloat} {\em angle}, {\bf ofloat} $\ast$ {\em sin}, {\bf ofloat} $\ast$ {\em cos})}\label{ObitSinCos_8h_a0}
+
+
+Calculate sine/cosine of angle. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em angle}]angle in radians \item[{\em sin}][out] sine(angle) \item[{\em cos}][out] cosine(angle) \end{description}
+\end{Desc}
+\index{ObitSinCos.h@{Obit\-Sin\-Cos.h}!ObitSinCosVec@{ObitSinCosVec}}
+\index{ObitSinCosVec@{ObitSinCosVec}!ObitSinCos.h@{Obit\-Sin\-Cos.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Sin\-Cos\-Vec ({\bf olong} {\em n}, {\bf ofloat} $\ast$ {\em angle}, {\bf ofloat} $\ast$ {\em sin}, {\bf ofloat} $\ast$ {\em cos})}\label{ObitSinCos_8h_a1}
+
+
+Calculate sine/cosine of vector of angles. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em n}]Number of elements to process \item[{\em angle}]array of angles in radians \item[{\em sin}][out] sine(angle) \item[{\em cos}][out] cosine(angle)\end{description}
+\end{Desc}
+
+
+SSE implementation 
+
+SSE implementation 

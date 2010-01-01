@@ -1,0 +1,32 @@
+\section{Obit\-Table\-NXUtil.c File Reference}
+\label{ObitTableNXUtil_8c}\index{ObitTableNXUtil.c@{ObitTableNXUtil.c}}
+{\bf Obit\-Table\-NX}{\rm (p.\,\pageref{structObitTableNX})} class utility function definitions. 
+
+{\tt \#include \char`\"{}Obit\-Table\-NXUtil.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+gboolean {\bf Obit\-Table\-NXWant\-Sour} ({\bf Obit\-Table\-NX} $\ast$in, {\bf olong} sid, {\bf ofloat} timerange[2], {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Lookup source and timerange. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Table\-NX}{\rm (p.\,\pageref{structObitTableNX})} class utility function definitions. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitTableNXUtil.c@{Obit\-Table\-NXUtil.c}!ObitTableNXWantSour@{ObitTableNXWantSour}}
+\index{ObitTableNXWantSour@{ObitTableNXWantSour}!ObitTableNXUtil.c@{Obit\-Table\-NXUtil.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-Table\-NXWant\-Sour ({\bf Obit\-Table\-NX} $\ast$ {\em in}, {\bf olong} {\em sid}, {\bf ofloat} {\em timerange}[2], {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableNXUtil_8c_a0}
+
+
+Public: Lookup source and timerange. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]NX table to access , opened and closed externally \item[{\em sid}]Desired Source id \item[{\em timerange}]Timerange in question \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if i\-Nde\-X table shows data for the given source in the given timerange, else FALSE \end{Desc}

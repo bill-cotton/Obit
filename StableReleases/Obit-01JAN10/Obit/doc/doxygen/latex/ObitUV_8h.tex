@@ -1,0 +1,833 @@
+\section{Obit\-UV.h File Reference}
+\label{ObitUV_8h}\index{ObitUV.h@{ObitUV.h}}
+{\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} uv data class definition. 
+
+{\tt \#include \char`\"{}Obit\-Data.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVDesc.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UVSel.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-List.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-UV}
+\begin{CompactList}\small\item\em Obit\-UV Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-UVClass\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-UVUnref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} returns a Obit\-UV$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-UVRef}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-UVIs\-A}(in)\ Obit\-Is\-A (in, Obit\-UVGet\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\item 
+\#define {\bf Obit\-UVSet\-FITS}(in, nvis, disk, file, err)
+\begin{CompactList}\small\item\em Convenience Macro to define UV I/O to a FITS file. \item\end{CompactList}\item 
+\#define {\bf Obit\-UVSet\-AIPS}(in, nvis, disk, cno, user, err)
+\begin{CompactList}\small\item\em Convenience Macro to define UV I/O to an AIPS file. \item\end{CompactList}\item 
+\#define {\bf Obit\-UVCpx\-Divide}(in1, in2, out, work)
+\begin{CompactList}\small\item\em Divide one complex number by another. \item\end{CompactList}\item 
+\#define {\bf Obit\-UVWt\-Cpx\-Divide}(in1, in2, out, work)
+\begin{CompactList}\small\item\em Divide one complex number with weight by another. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef {\bf Obit\-UV} $\ast$($\ast$ {\bf new\-Obit\-UVScratch\-FP} )({\bf Obit\-UV} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-UVFull\-Instantiate\-FP} )({\bf Obit\-UV} $\ast$in, gboolean exist, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef gboolean($\ast$ {\bf Obit\-UVSame\-FP} )({\bf Obit\-UV} $\ast$in1, {\bf Obit\-UV} $\ast$in2, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-UVRead\-FP} )({\bf Obit\-UV} $\ast$in, {\bf ofloat} $\ast$data, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-UVRead\-Multi\-FP} )({\bf olong} n\-Buff, {\bf Obit\-UV} $\ast$$\ast$in, {\bf ofloat} $\ast$$\ast$data, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-UVRe\-Read\-Multi\-FP} )({\bf olong} n\-Buff, {\bf Obit\-UV} $\ast$$\ast$in, {\bf ofloat} $\ast$$\ast$data, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-UVRead\-Select\-FP} )({\bf Obit\-UV} $\ast$in, {\bf ofloat} $\ast$data, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-UVRead\-Multi\-Select\-FP} )({\bf olong} n\-Buff, {\bf Obit\-UV} $\ast$$\ast$in, {\bf ofloat} $\ast$$\ast$data, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-UVRe\-Read\-Multi\-Select\-FP} )({\bf olong} n\-Buff, {\bf Obit\-UV} $\ast$$\ast$in, {\bf ofloat} $\ast$$\ast$data, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-UVWrite\-FP} )({\bf Obit\-UV} $\ast$in, {\bf ofloat} $\ast$data, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-UVRewritefp} )({\bf Obit\-UV} $\ast$in, {\bf ofloat} $\ast$data, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef {\bf Obit\-Table} $\ast$($\ast$ {\bf new\-Obit\-UVTable\-FP} )({\bf Obit\-UV} $\ast$in, Obit\-IOAccess access, gchar $\ast$tab\-Type, {\bf olong} $\ast$tabver, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-UVZap\-Table\-FP} )({\bf Obit\-UV} $\ast$in, gchar $\ast$tab\-Type, {\bf olong} tab\-Ver, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-UVCopy\-Tables\-FP} )({\bf Obit\-UV} $\ast$in, {\bf Obit\-UV} $\ast$out, gchar $\ast$$\ast$exclude, gchar $\ast$$\ast$include, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef Obit\-IOCode($\ast$ {\bf Obit\-UVUpdate\-Tables\-FP} )({\bf Obit\-UV} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef {\bf olong}($\ast$ {\bf Obit\-UVChan\-Sel\-FP} )({\bf Obit\-UV} $\ast$in, gint32 $\ast$dim, {\bf olong} $\ast$IChan\-Sel, {\bf Obit\-Err} $\ast$err)
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-UVClass\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-UV} $\ast$ {\bf new\-Obit\-UV} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+{\bf Obit\-UV} $\ast$ {\bf Obit\-UVFrom\-File\-Info} (gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$in\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create UV object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+{\bf Obit\-UV} $\ast$ {\bf new\-Obit\-UVScratch} ({\bf Obit\-UV} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy Constructor for scratch file. \item\end{CompactList}\item 
+void {\bf Obit\-UVFull\-Instantiate} ({\bf Obit\-UV} $\ast$in, gboolean exist, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Fully instantiate. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-UVGet\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-UV} $\ast$ {\bf Obit\-UVZap} ({\bf Obit\-UV} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Delete underlying structures. \item\end{CompactList}\item 
+void {\bf Obit\-UVRename} ({\bf Obit\-UV} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Rename underlying structures. \item\end{CompactList}\item 
+{\bf Obit\-UV} $\ast$ {\bf Obit\-UVCopy} ({\bf Obit\-UV} $\ast$in, {\bf Obit\-UV} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-UVClone} ({\bf Obit\-UV} $\ast$in, {\bf Obit\-UV} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+gboolean {\bf Obit\-UVSame} ({\bf Obit\-UV} $\ast$in1, {\bf Obit\-UV} $\ast$in2, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Do two UVs have the same underlying structures?. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-UVOpen} ({\bf Obit\-UV} $\ast$in, Obit\-IOAccess access, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create {\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} structures and open file. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-UVClose} ({\bf Obit\-UV} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Close file and become inactive. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-UVIOSet} ({\bf Obit\-UV} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Reset IO to start of file. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-UVRead} ({\bf Obit\-UV} $\ast$in, {\bf ofloat} $\ast$data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read specified data. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-UVRead\-Multi} ({\bf olong} n\-Buff, {\bf Obit\-UV} $\ast$$\ast$in, {\bf ofloat} $\ast$$\ast$data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read to multiple buffers. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-UVRe\-Read\-Multi} ({\bf olong} n\-Buff, {\bf Obit\-UV} $\ast$$\ast$in, {\bf ofloat} $\ast$$\ast$data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Reread to multiple buffers. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-UVRead\-Select} ({\bf Obit\-UV} $\ast$in, {\bf ofloat} $\ast$data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read select, edit, calibrate specified data. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-UVRead\-Multi\-Select} ({\bf olong} n\-Buff, {\bf Obit\-UV} $\ast$$\ast$in, {\bf ofloat} $\ast$$\ast$data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read with selection to multiple buffers. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-UVRe\-Read\-Multi\-Select} ({\bf olong} n\-Buff, {\bf Obit\-UV} $\ast$$\ast$in, {\bf ofloat} $\ast$$\ast$data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Reread with selection to multiple buffers. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-UVWrite} ({\bf Obit\-UV} $\ast$in, {\bf ofloat} $\ast$data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Write specified data. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-UVRewrite} ({\bf Obit\-UV} $\ast$in, {\bf ofloat} $\ast$data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Rewrite specified data. \item\end{CompactList}\item 
+{\bf Obit\-Table} $\ast$ {\bf new\-Obit\-UVTable} ({\bf Obit\-UV} $\ast$in, Obit\-IOAccess access, gchar $\ast$tab\-Type, {\bf olong} $\ast$tabver, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Return an associated Table. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-UVZap\-Table} ({\bf Obit\-UV} $\ast$in, gchar $\ast$tab\-Type, {\bf olong} tab\-Ver, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Destroy an associated Table. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-UVCopy\-Tables} ({\bf Obit\-UV} $\ast$in, {\bf Obit\-UV} $\ast$out, gchar $\ast$$\ast$exclude, gchar $\ast$$\ast$include, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy associated Tables. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-UVUpdate\-Tables} ({\bf Obit\-UV} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Update disk resident tables information. \item\end{CompactList}\item 
+void {\bf Obit\-UVGet\-Freq} ({\bf Obit\-UV} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get Frequency arrays. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-UVGet\-Sub\-A} ({\bf Obit\-UV} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Obtains Subarray info for an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. \item\end{CompactList}\item 
+void {\bf Obit\-UVGet\-RADec} ({\bf Obit\-UV} $\ast$uvdata, {\bf odouble} $\ast$ra, {\bf odouble} $\ast$dec, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get source position. \item\end{CompactList}\item 
+void {\bf Obit\-UVGet\-Sou\-Info} ({\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get single source info. \item\end{CompactList}\item 
+void {\bf Obit\-UVWrite\-Keyword} ({\bf Obit\-UV} $\ast$in, gchar $\ast$name, Obit\-Info\-Type type, gint32 $\ast$dim, gconstpointer data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Write header keyword. \item\end{CompactList}\item 
+void {\bf Obit\-UVRead\-Keyword} ({\bf Obit\-UV} $\ast$in, gchar $\ast$name, Obit\-Info\-Type $\ast$type, gint32 $\ast$dim, gpointer data, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read header keyword. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-UVChan\-Sel} ({\bf Obit\-UV} $\ast$in, gint32 $\ast$dim, {\bf olong} $\ast$IChan\-Sel, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Channel selection in FG table. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} uv data class definition. 
+
+This class is derived from the {\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} class. Related functions are in the {\bf Obit\-UVUtil }{\rm (p.\,\pageref{ObitUVUtil_8h})} , {\bf Obit\-UVEdit }{\rm (p.\,\pageref{ObitUVEdit_8h})} and {\bf Obit\-UVPeel\-Util }{\rm (p.\,\pageref{ObitUVPeelUtil_8h})} modules.
+
+This class contains interoferometric data and allows access. An {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} is the front end to a persistent disk resident structure. There maybe (usually are) associated tables which either describe the data or contain calibration and/or editing information. These associated tables are listed in an {\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})} member and the {\bf new\-Obit\-UVTable}{\rm (p.\,\pageref{ObitUV_8c_a30})} function allows access to these tables. Both FITS (as Tables) and AIPS cataloged data are supported. The knowledge of underlying classes should be limited to private function \#Obit\-UVSetup\-IO in {\bf Obit\-UV.c}{\rm (p.\,\pageref{ObitUV_8c})}\subsection{Specifying desired data transfer parameters}\label{ObitUV_8h_ObitUVSpecification}
+The desired data transfers are specified in the member {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. There are separate sets of parameters used to specify the FITS or AIPS data files. Data is read and written as arrays of floats, data compressed on the disk is compressed/uncompressed on the fly. In the following an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} entry is defined by the name in double quotes, the data type code as an \#Obit\-Info\-Type enum and the dimensions of the array (? =$>$ depends on application). To specify whether the underlying data files are FITS or AIPS \begin{itemize}
+\item \char`\"{}File\-Type\char`\"{} OBIT\_\-int (1,1,1) OBIT\_\-IO\_\-FITS or OBIT\_\-IO\_\-AIPS which are values of an \#Obit\-IOType enum defined in {\bf Obit\-Types.h}{\rm (p.\,\pageref{ObitTypes_8h})}.\end{itemize}
+The following apply to both types of files: \begin{itemize}
+\item \char`\"{}n\-Vis\-PIO\char`\"{}, OBIT\_\-int, Max. Number of visibilities per \char`\"{}Read\char`\"{} or \char`\"{}Write\char`\"{} operation. Default = 1.\end{itemize}
+\subsubsection{FITS files}\label{ObitUV_8h_UVFITS}
+This implementation uses cfitsio which allows using, in addition to regular FITS data, gzip compressed files, pipes, shared memory and a number of other input forms. The convenience Macro {\bf Obit\-UVSet\-FITS}{\rm (p.\,\pageref{ObitUV_8h_a3})} simplifies specifying the desired data. Binary tables of the type created by AIPS program FITAB are used for storing visibility data in FITS. For accessing FITS files the following entries in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} are used: \begin{itemize}
+\item \char`\"{}Disk\char`\"{} OBIT\_\-int (1,1,1) FITS \char`\"{}disk\char`\"{} number. \item \char`\"{}File\-Name\char`\"{} OBIT\_\-string (?,1,1) Name of disk file.\end{itemize}
+\subsubsection{AIPS files}\label{ObitUV_8h_ObitUVAIPS}
+The {\bf Obit\-AIPS}{\rm (p.\,\pageref{structObitAIPS})} class must be initialized before accessing AIPS files; this uses {\bf Obit\-AIPSClass\-Init}{\rm (p.\,\pageref{ObitAIPS_8c_a5})}. The convenience macro {\bf Obit\-UVSet\-AIPS}{\rm (p.\,\pageref{ObitUV_8h_a4})} simplifies specifying the desired data. For accessing AIPS files, the following entries in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} are used: \begin{itemize}
+\item \char`\"{}Disk\char`\"{} OBIT\_\-int (1,1,1) AIPS \char`\"{}disk\char`\"{} number. \item \char`\"{}User\char`\"{} OBIT\_\-int (1,1,1) user number. \item \char`\"{}CNO\char`\"{} OBIT\_\-int (1,1,1) AIPS catalog slot number.\end{itemize}
+\subsection{Creators and Destructors}\label{ObitUV_8h_ObitUVaccess}
+An {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} can be created using new\-Obit\-UV which allows specifying a name for the object. This name is used to label messages. The copy constructors {\bf Obit\-UVClone}{\rm (p.\,\pageref{ObitUV_8c_a18})} and Obit\-UVCopy make shallow and deep copies of an extant {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. If the output {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} has previously been specified, including its disk resident information, then Obit\-UVCopy will copy the disk resident as well as the memory resident information. Also, any associated tables will be copied.
+
+A copy of a pointer to an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} should always be made using the {\bf Obit\-UVRef}{\rm (p.\,\pageref{ObitUV_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} or changing a pointer, the function {\bf Obit\-UVUnref}{\rm (p.\,\pageref{ObitUV_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.\subsection{I/O}\label{ObitUV_8h_ObitUVUsage}
+Visibility data is available after an input object is \char`\"{}Opened\char`\"{} and \char`\"{}Read\char`\"{}. \char`\"{}Read Select\char`\"{} also allows specifying the data to be read as well as optional calibration and editing to be applied as the data is read. I/O optionally uses a buffer attached to the {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} or some external location. Data consists of a set of \char`\"{}random parameters\char`\"{} (u,v,w time, baseline, etc) and a rectangular data array of complex visibilities with a weight. The order, presence and size of components of the data are described in an {\bf Obit\-UVDesc}{\rm (p.\,\pageref{structObitUVDesc})} object which also tells which visibility numbers are in the buffer. To Write an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}, create it, open it, and write. The object should be closed to ensure all data is flushed to disk. Deletion of an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} after its final unreferencing will automatically close it.\subsection{Selection, Editing and Calibration}\label{ObitUV_8h_Data}
+All IO supports (where appropriate) data selection, editing an calibration. These are controlled by information on the {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} data object's info member, details are given in the {\bf Obit\-UVSel}{\rm (p.\,\pageref{structObitUVSel})} class documentation.
+
+\subsection{Define Documentation}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVCpxDivide@{ObitUVCpxDivide}}
+\index{ObitUVCpxDivide@{ObitUVCpxDivide}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVCpx\-Divide(in1, in2, out, work)}\label{ObitUV_8h_a5}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}G_STMT_START{      \
+       work[2] = in2[0]*in2[0] + in2[1]*in2[1];               \
+       if (work[2]==0.0) work[2] = 1;                         \
+       work[0] = in1[0]/work[2]; work[1] = in1[1]/work[2];    \
+       out[0] = work[0]*in2[0] + work[1]*in2[1];              \
+       out[1] = work[1]*in2[0] - work[0]*in2[1];              \
+     }G_STMT_END
+\end{verbatim}\normalsize 
+Divide one complex number by another. 
+
+\begin{itemize}
+\item in1 = Numerator complex (real,imaginary) \item in2 = Denominator complex \item out = Output complex value, can be in1 (0,0) on zero divide \item work = Array of 3 elements like in... \end{itemize}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVIsA@{ObitUVIsA}}
+\index{ObitUVIsA@{ObitUVIsA}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVIs\-A(in)\ Obit\-Is\-A (in, Obit\-UVGet\-Class())}\label{ObitUV_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitUV.h@{Obit\-UV.h}!ObitUVRef@{ObitUVRef}}
+\index{ObitUVRef@{ObitUVRef}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVRef(in)\ Obit\-Ref (in)}\label{ObitUV_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. 
+
+returns a Obit\-UV$\ast$. in = object to reference \index{ObitUV.h@{Obit\-UV.h}!ObitUVSetAIPS@{ObitUVSetAIPS}}
+\index{ObitUVSetAIPS@{ObitUVSetAIPS}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVSet\-AIPS(in, nvis, disk, cno, user, err)}\label{ObitUV_8h_a4}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}G_STMT_START{     \
+       in->info->dim[0]=1; in->info->dim[1]=1; in->info->dim[2]=1;  \
+       in->info->dim[3]=1; in->info->dim[4]=1;                      \
+       in->info->work[0] = OBIT_IO_AIPS;                            \
+       in->info->work[1]= nvis;                                     \
+       ObitInfoListPut (in->info, "FileType", OBIT_long,             \
+                  in->info->dim, (gpointer)&in->info->work[0], err);\
+       ObitInfoListPut (in->info, "nVisPIO", OBIT_long, in->info->dim,\
+                 (gpointer)&in->info->work[1], err);                \
+       in->info->dim[0] = 1;                                        \
+       ObitInfoListPut (in->info, "Disk", OBIT_long,                 \
+                 in->info->dim, (gpointer)&disk, err);              \
+       ObitInfoListPut (in->info, "DISK", OBIT_long,                 \
+                 in->info->dim, (gpointer)&disk, err);              \
+       ObitInfoListPut (in->info, "CNO", OBIT_long,                  \
+                 in->info->dim, (gpointer)&cno, err);               \
+       ObitInfoListPut (in->info, "User", OBIT_long,                 \
+                 in->info->dim, (gpointer)&user, err);              \
+     }G_STMT_END
+\end{verbatim}\normalsize 
+Convenience Macro to define UV I/O to an AIPS file. 
+
+Sets values on {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} on input object. \begin{itemize}
+\item in = {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} to specify i/O for. \item nvis = Max. Number of visibilities per read. \item disk = AIPS disk number \item cno = catalog slot number \item user = User id number \item err = {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} to receive error messages. \end{itemize}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVSetFITS@{ObitUVSetFITS}}
+\index{ObitUVSetFITS@{ObitUVSetFITS}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVSet\-FITS(in, nvis, disk, file, err)}\label{ObitUV_8h_a3}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}G_STMT_START{         \
+       in->info->dim[0]=1; in->info->dim[1]=1; in->info->dim[2]=1;  \
+       in->info->dim[3]=1; in->info->dim[4]=1;                      \
+       in->info->work[0] = OBIT_IO_FITS;                            \
+       in->info->work[1] = nvis; in->info->work[2]= disk;           \
+       ObitInfoListPut (in->info, "FileType", OBIT_long,             \
+                  in->info->dim, (gpointer)&in->info->work[0], err);\
+       ObitInfoListPut (in->info, "nVisPIO", OBIT_long,              \
+                  in->info->dim, (gpointer)&in->info->work[1], err);\
+       ObitInfoListPut (in->info, "IOBy", OBIT_long, in->info->dim,  \
+                 (gpointer)&in->info->work[1], err);                \
+       in->info->dim[0] = 1;                                        \
+       ObitInfoListPut (in->info, "Disk", OBIT_long,                 \
+                 in->info->dim, (gpointer)&in->info->work[2], err); \
+       in->info->dim[0] = strlen(file);                             \
+       ObitInfoListPut (in->info, "FileName", OBIT_string,          \
+                 in->info->dim, (gpointer)file, err);               \
+     }G_STMT_END
+\end{verbatim}\normalsize 
+Convenience Macro to define UV I/O to a FITS file. 
+
+Sets values on {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} on input object. \begin{itemize}
+\item in = {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} to specify i/O for. \item nvis = Max. Number of visibilities per read. \item disk = FITS disk number \item file = Specified FITS file name. \item err = {\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} to receive error messages. \end{itemize}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVUnref@{ObitUVUnref}}
+\index{ObitUVUnref@{ObitUVUnref}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVUnref(in)\ Obit\-Unref (in)}\label{ObitUV_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} returns a Obit\-UV$\ast$. 
+
+in = object to unreference \index{ObitUV.h@{Obit\-UV.h}!ObitUVWtCpxDivide@{ObitUVWtCpxDivide}}
+\index{ObitUVWtCpxDivide@{ObitUVWtCpxDivide}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVWt\-Cpx\-Divide(in1, in2, out, work)}\label{ObitUV_8h_a6}
+
+
+{\bf Value:}
+
+\footnotesize\begin{verbatim}G_STMT_START{    \
+       if ((in1[2]<=0.0) || (in2[2]<=0.0)) { /* bad */        \
+         out[0] = out[1] = out[2] = 0.0;                      \
+       } else { /* do division */                             \
+         work[2] = in2[0]*in2[0] + in2[1]*in2[1];             \
+         if (work[2]==0.0) {out[0] = out[1] = out[2] = 0.0;   \
+         } else {  /* OK */                                   \
+           work[0] = in1[0]/work[2]; work[1] = in1[1]/work[2];\
+           out[0] = work[0]*in2[0] + work[1]*in2[1];          \
+           out[1] = work[1]*in2[0] - work[0]*in2[1];          \
+           out[2] *= sqrt(work[2]);                           \
+         }                                                    \
+       }                                                      \
+     }G_STMT_END
+\end{verbatim}\normalsize 
+Divide one complex number with weight by another. 
+
+Sets values on {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} on input object. \begin{itemize}
+\item in1 = Numerator complex (real,imaginary,weight) \item in2 = Denominator complex \item out = Output complex value, can be in1, (0,0,0) on zero divide \item work = Array of 3 elements like in... \end{itemize}
+
+
+\subsection{Typedef Documentation}
+\index{ObitUV.h@{Obit\-UV.h}!newObitUVScratchFP@{newObitUVScratchFP}}
+\index{newObitUVScratchFP@{newObitUVScratchFP}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-UV}$\ast$($\ast$ {\bf new\-Obit\-UVScratch\-FP})({\bf Obit\-UV} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitUV_8h_a7}
+
+
+\index{ObitUV.h@{Obit\-UV.h}!newObitUVTableFP@{newObitUVTableFP}}
+\index{newObitUVTableFP@{newObitUVTableFP}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-Table}$\ast$($\ast$ {\bf new\-Obit\-UVTable\-FP})({\bf Obit\-UV} $\ast$in, Obit\-IOAccess access, gchar $\ast$tab\-Type, {\bf olong} $\ast$tabver, {\bf Obit\-Err} $\ast$err)}\label{ObitUV_8h_a18}
+
+
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVChanSelFP@{ObitUVChanSelFP}}
+\index{ObitUVChanSelFP@{ObitUVChanSelFP}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf olong}($\ast$ {\bf Obit\-UVChan\-Sel\-FP})({\bf Obit\-UV} $\ast$in, gint32 $\ast$dim, {\bf olong} $\ast$IChan\-Sel, {\bf Obit\-Err} $\ast$err)}\label{ObitUV_8h_a22}
+
+
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVCopyTablesFP@{ObitUVCopyTablesFP}}
+\index{ObitUVCopyTablesFP@{ObitUVCopyTablesFP}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-UVCopy\-Tables\-FP})({\bf Obit\-UV} $\ast$in, {\bf Obit\-UV} $\ast$out, gchar $\ast$$\ast$exclude, gchar $\ast$$\ast$include, {\bf Obit\-Err} $\ast$err)}\label{ObitUV_8h_a20}
+
+
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVFullInstantiateFP@{ObitUVFullInstantiateFP}}
+\index{ObitUVFullInstantiateFP@{ObitUVFullInstantiateFP}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-UVFull\-Instantiate\-FP})({\bf Obit\-UV} $\ast$in, gboolean exist, {\bf Obit\-Err} $\ast$err)}\label{ObitUV_8h_a8}
+
+
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVReadFP@{ObitUVReadFP}}
+\index{ObitUVReadFP@{ObitUVReadFP}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-UVRead\-FP})({\bf Obit\-UV} $\ast$in, {\bf ofloat} $\ast$data, {\bf Obit\-Err} $\ast$err)}\label{ObitUV_8h_a10}
+
+
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVReadMultiFP@{ObitUVReadMultiFP}}
+\index{ObitUVReadMultiFP@{ObitUVReadMultiFP}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-UVRead\-Multi\-FP})({\bf olong} n\-Buff, {\bf Obit\-UV} $\ast$$\ast$in, {\bf ofloat} $\ast$$\ast$data, {\bf Obit\-Err} $\ast$err)}\label{ObitUV_8h_a11}
+
+
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVReadMultiSelectFP@{ObitUVReadMultiSelectFP}}
+\index{ObitUVReadMultiSelectFP@{ObitUVReadMultiSelectFP}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-UVRead\-Multi\-Select\-FP})({\bf olong} n\-Buff, {\bf Obit\-UV} $\ast$$\ast$in, {\bf ofloat} $\ast$$\ast$data, {\bf Obit\-Err} $\ast$err)}\label{ObitUV_8h_a14}
+
+
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVReadSelectFP@{ObitUVReadSelectFP}}
+\index{ObitUVReadSelectFP@{ObitUVReadSelectFP}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-UVRead\-Select\-FP})({\bf Obit\-UV} $\ast$in, {\bf ofloat} $\ast$data, {\bf Obit\-Err} $\ast$err)}\label{ObitUV_8h_a13}
+
+
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVReReadMultiFP@{ObitUVReReadMultiFP}}
+\index{ObitUVReReadMultiFP@{ObitUVReReadMultiFP}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-UVRe\-Read\-Multi\-FP})({\bf olong} n\-Buff, {\bf Obit\-UV} $\ast$$\ast$in, {\bf ofloat} $\ast$$\ast$data, {\bf Obit\-Err} $\ast$err)}\label{ObitUV_8h_a12}
+
+
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVReReadMultiSelectFP@{ObitUVReReadMultiSelectFP}}
+\index{ObitUVReReadMultiSelectFP@{ObitUVReReadMultiSelectFP}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-UVRe\-Read\-Multi\-Select\-FP})({\bf olong} n\-Buff, {\bf Obit\-UV} $\ast$$\ast$in, {\bf ofloat} $\ast$$\ast$data, {\bf Obit\-Err} $\ast$err)}\label{ObitUV_8h_a15}
+
+
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVRewritefp@{ObitUVRewritefp}}
+\index{ObitUVRewritefp@{ObitUVRewritefp}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-UVRewritefp})({\bf Obit\-UV} $\ast$in, {\bf ofloat} $\ast$data, {\bf Obit\-Err} $\ast$err)}\label{ObitUV_8h_a17}
+
+
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVSameFP@{ObitUVSameFP}}
+\index{ObitUVSameFP@{ObitUVSameFP}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef gboolean($\ast$ {\bf Obit\-UVSame\-FP})({\bf Obit\-UV} $\ast$in1, {\bf Obit\-UV} $\ast$in2, {\bf Obit\-Err} $\ast$err)}\label{ObitUV_8h_a9}
+
+
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVUpdateTablesFP@{ObitUVUpdateTablesFP}}
+\index{ObitUVUpdateTablesFP@{ObitUVUpdateTablesFP}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-UVUpdate\-Tables\-FP})({\bf Obit\-UV} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitUV_8h_a21}
+
+
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVWriteFP@{ObitUVWriteFP}}
+\index{ObitUVWriteFP@{ObitUVWriteFP}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-UVWrite\-FP})({\bf Obit\-UV} $\ast$in, {\bf ofloat} $\ast$data, {\bf Obit\-Err} $\ast$err)}\label{ObitUV_8h_a16}
+
+
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVZapTableFP@{ObitUVZapTableFP}}
+\index{ObitUVZapTableFP@{ObitUVZapTableFP}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef Obit\-IOCode($\ast$ {\bf Obit\-UVZap\-Table\-FP})({\bf Obit\-UV} $\ast$in, gchar $\ast$tab\-Type, {\bf olong} tab\-Ver, {\bf Obit\-Err} $\ast$err)}\label{ObitUV_8h_a19}
+
+
+
+
+\subsection{Function Documentation}
+\index{ObitUV.h@{Obit\-UV.h}!newObitUV@{newObitUV}}
+\index{newObitUV@{newObitUV}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UV}$\ast$ new\-Obit\-UV (gchar $\ast$ {\em name})}\label{ObitUV_8h_a24}
+
+
+Public: Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!newObitUVScratch@{newObitUVScratch}}
+\index{newObitUVScratch@{newObitUVScratch}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UV}$\ast$ new\-Obit\-UVScratch ({\bf Obit\-UV} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a26}
+
+
+Public: Copy Constructor for scratch file. 
+
+A scratch UV is more or less the same as a normal UV except that it is automatically deleted on the final unreference. The output will have the underlying files of the same type as in already allocated. The object is defined but the underlying structures are not created. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!newObitUVTable@{newObitUVTable}}
+\index{newObitUVTable@{newObitUVTable}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table}$\ast$ new\-Obit\-UVTable ({\bf Obit\-UV} $\ast$ {\em in}, Obit\-IOAccess {\em access}, gchar $\ast$ {\em tab\-Type}, {\bf olong} $\ast$ {\em tab\-Ver}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a45}
+
+
+Public: Return an associated Table. 
+
+If such an object exists, a reference to it is returned, else a new object is created and entered in the {\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})}. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object with associated tables. This MUST have been opened before this call. \item[{\em access}]access (OBIT\_\-IO\_\-Read\-Only,OBIT\_\-IO\_\-Read\-Write, or OBIT\_\-IO\_\-Write\-Only). This is used to determine defaulted version number and a different value may be used for the actual Open. \item[{\em tab\-Type}]The table type (e.g. \char`\"{}AIPS CC\char`\"{}). \item[{\em tab\-Ver}]Desired version number, may be zero in which case the highest extant version is returned for read and the highest+1 for write. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to created {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})}, NULL on failure. \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVChanSel@{ObitUVChanSel}}
+\index{ObitUVChanSel@{ObitUVChanSel}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-UVChan\-Sel ({\bf Obit\-UV} $\ast$ {\em in}, gint32 $\ast$ {\em dim}, {\bf olong} $\ast$ {\em IChan\-Sel}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a55}
+
+
+Public: Channel selection in FG table. 
+
+If a flag table is currently selected it is copied to a new AIPS FG table on the uv data and channel selection added. If no flag table is selected then an new table is created. The new flagging entries includ all channels and IFs in the range specified in the UVSel values of BChan, EChan, BIF and EIF that are NOT specified in the IChan\-Sel array \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]UV with selection to which the new flag table is to be attached. \item[{\em dim}]Dimensionality of IChan\-Sel \item[{\em IChan\-Sel}]Channel selection in groups of 4 values: Sets of channels are selected by groups of 4 parameters: [0] 1-rel start channel number in block (def . 1) [1] 1-rel end channel number, (def. to end) [2] channel increment [3] 1-rel IF number (def all) [5,0,2,1] means every other channel from 5 to the highest in IF 1. All zeroes means all channels and all IFs selected by BChan, EChan, BIF, EIF. List terminated by group of 4 zeroes. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the AIPS FG table version number, -1 on no selection or failure. \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVClassInit@{ObitUVClassInit}}
+\index{ObitUVClassInit@{ObitUVClassInit}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVClass\-Init (void)}\label{ObitUV_8h_a23}
+
+
+Public: Class initializer. 
+
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVClone@{ObitUVClone}}
+\index{ObitUVClone@{ObitUVClone}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVClone ({\bf Obit\-UV} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a32}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVClose@{ObitUVClose}}
+\index{ObitUVClose@{ObitUVClose}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-UVClose ({\bf Obit\-UV} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a35}
+
+
+Public: Close file and become inactive. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be closed. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]error code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVCopy@{ObitUVCopy}}
+\index{ObitUVCopy@{ObitUVCopy}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UV}$\ast$ Obit\-UVCopy ({\bf Obit\-UV} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a31}
+
+
+Public: Copy (deep) constructor. 
+
+Copies are made of complex members including disk files; these will be copied applying whatever selection is associated with the input. Objects should be closed on input and will be closed on output. In order for the disk file structures to be copied, the output file must be sufficiently defined that it can be written; the copy does not apply any selection/calibration/translation. The copy will be attempted but no errors will be logged until both input and output have been successfully opened. If the contents of the uv data are copied, all associated tables are copied first. {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} and {\bf Obit\-Thread}{\rm (p.\,\pageref{structObitThread})} members are only copied if the output object didn't previously exist. Parent class members are included but any derived class info is ignored. The file etc. info should have been stored in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}: \begin{itemize}
+\item \char`\"{}do\-Cal\-Select\char`\"{} OBIT\_\-boolean scalar if TRUE, calibrate/select/edit input data. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\end{itemize}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVCopyTables@{ObitUVCopyTables}}
+\index{ObitUVCopyTables@{ObitUVCopyTables}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-UVCopy\-Tables ({\bf Obit\-UV} $\ast$ {\em in}, {\bf Obit\-UV} $\ast$ {\em out}, gchar $\ast$$\ast$ {\em exclude}, gchar $\ast$$\ast$ {\em include}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a47}
+
+
+Public: Copy associated Tables. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} with tables to copy. \item[{\em out}]An {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} to copy the tables to, old ones replaced. \item[{\em exclude}]a NULL termimated list of table types NOT to copy. If NULL, use include \item[{\em include}]a NULL termimated list of table types to copy. ignored if exclude non\-NULL. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVFromFileInfo@{ObitUVFromFileInfo}}
+\index{ObitUVFromFileInfo@{ObitUVFromFileInfo}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UV}$\ast$ Obit\-UVFrom\-File\-Info (gchar $\ast$ {\em prefix}, {\bf Obit\-Info\-List} $\ast$ {\em in\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a25}
+
+
+Public: Create UV object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em prefix}]If Non\-Null, string to be added to beginning of out\-List entry name \char`\"{}xxx\char`\"{} in the following \item[{\em in\-List}]Info\-List to extract object information from Following Info\-List entries for AIPS files (\char`\"{}xxx\char`\"{} = prefix): \begin{itemize}
+\item xxx\-Name OBIT\_\-string AIPS file name \item xxx\-Class OBIT\_\-string AIPS file class \item xxx\-Disk OBIT\_\-oint AIPS file disk number \item xxx\-Seq OBIT\_\-oint AIPS file Sequence number \item xxx\-User OBIT\_\-oint AIPS User number \item xxx\-CNO OBIT\_\-oint AIPS Catalog slot number \item xxx\-Dir OBIT\_\-string Directory name for xxx\-Disk\end{itemize}
+Following entries for FITS files (\char`\"{}xxx\char`\"{} = prefix): \begin{itemize}
+\item xxx\-File\-Name OBIT\_\-string FITS file name \item xxx\-Disk OBIT\_\-oint FITS file disk number \item xxx\-Dir OBIT\_\-string Directory name for xxx\-Disk\end{itemize}
+For all File types types: \begin{itemize}
+\item xxx\-Data\-Type OBIT\_\-string \char`\"{}UV\char`\"{} = UV data, \char`\"{}MA\char`\"{}=$>$image, \char`\"{}Table\char`\"{}=Table, \char`\"{}OTF\char`\"{}=OTF, etc \item xxx\-File\-Type OBIT\_\-oint File type as Obit\-IOType, OBIT\_\-IO\_\-FITS, OBIT\_\-IO\_\-AIPS\end{itemize}
+For xxx\-Data\-Type = \char`\"{}UV\char`\"{} \begin{itemize}
+\item xxxn\-Vis\-PIO OBIT\_\-int (1,1,1) Number of vis. records per IO call \item xxxdo\-Cal\-Select OBIT\_\-bool (1,1,1) Select/calibrate/edit data? \item xxx\-Stokes OBIT\_\-string (4,1,1) Selected output Stokes parameters: \char`\"{}    \char`\"{}=$>$ no translation,\char`\"{}I   \char`\"{},\char`\"{}V   \char`\"{},\char`\"{}Q   \char`\"{}, \char`\"{}U   \char`\"{}, \char`\"{}IQU \char`\"{}, \char`\"{}IQUV\char`\"{}, \char`\"{}IV  \char`\"{}, \char`\"{}RR  \char`\"{}, \char`\"{}LL  \char`\"{}, \char`\"{}RL  \char`\"{}, \char`\"{}LR  \char`\"{}, \char`\"{}HALF\char`\"{} = RR,LL, \char`\"{}FULL\char`\"{}=RR,LL,RL,LR. [default \char`\"{}    \char`\"{}] In the above 'F' can substitute for \char`\"{}formal\char`\"{} 'I' (both RR+LL). \item xxx\-BChan OBIT\_\-int (1,1,1) First spectral channel selected. [def all] \item xxx\-EChan OBIT\_\-int (1,1,1) Highest spectral channel selected. [def all] \item xxx\-BIF OBIT\_\-int (1,1,1) First \char`\"{}IF\char`\"{} selected. [def all] \item xxx\-EIF OBIT\_\-int (1,1,1) Highest \char`\"{}IF\char`\"{} selected. [def all] \item xxxdo\-Pol OBIT\_\-int (1,1,1) $>$0 -$>$ calibrate polarization. \item xxxdo\-Calib OBIT\_\-int (1,1,1) $>$0 -$>$ calibrate, 2=$>$ also calibrate Weights \item xxxgain\-Use OBIT\_\-int (1,1,1) SN/CL table version number, 0-$>$ use highest \item xxxflag\-Ver OBIT\_\-int (1,1,1) Flag table version, 0-$>$ use highest, $<$0-$>$ none \item xxx\-BLVer OBIT\_\-int (1,1,1) BL table version, 0$>$ use highest, $<$0-$>$ none \item xxx\-BPVer OBIT\_\-int (1,1,1) Band pass (BP) table version, 0-$>$ use highest \item xxx\-Subarray OBIT\_\-int (1,1,1) Selected subarray, $<$=0-$>$all [default all] \item xxxdrop\-Sub\-A OBIT\_\-bool (1,1,1) Drop subarray info? \item xxx\-Freq\-ID OBIT\_\-int (1,1,1) Selected Frequency ID, $<$=0-$>$all [default all] \item xxxtime\-Range OBIT\_\-float (2,1,1) Selected timerange in days. \item xxx\-UVRange OBIT\_\-float (2,1,1) Selected UV range in kilowavelengths. \item xxx\-Input\-Avg\-Time OBIT\_\-float (1,1,1) Input data averaging time (sec). used for fringe rate decorrelation correction. \item xxx\-Sources OBIT\_\-string (?,?,1) Source names selected unless any starts with a '-' in which case all are deselected (with '-' stripped). \item xxxsou\-Code OBIT\_\-string (4,1,1) Source Cal code desired, ' ' =$>$ any code selected '$\ast$ ' =$>$ any non blank code (calibrators only) '-CAL' =$>$ blank codes only (no calibrators) \item xxx\-Qual Obit\_\-int (1,1,1) Source qualifier, -1 [default] = any \item xxx\-Antennas OBIT\_\-int (?,1,1) a list of selected antenna numbers, if any is negative then the absolute values are used and the specified antennas are deselected. \item xxxcorr\-Type OBIT\_\-int (1,1,1) Correlation type, 0=cross corr only, 1=both, 2=auto only. \item xxxpass\-Al l OBIT\_\-bool (1,1,1) If True, pass along all data when selecting/calibration even if it's all flagged, data deselected by time, source, antenna etc. is not passed. \item xxxdo\-Band OBIT\_\-int (1,1,1) Band pass application type $<$0-$>$ none (1) if = 1 then all the bandpass data for each antenna will be averaged to form a composite bandpass spectrum, this will then be used to correct the data. (2) if = 2 the bandpass spectra nearest in time (in a weighted sense) to the uv data point will be used to correct the data. (3) if = 3 the bandpass data will be interpolated in time using the solution weights to form a composite bandpass spectrum, this interpolated spectrum will then be used to correct the data. (4) if = 4 the bandpass spectra nearest in time (neglecting weights) to the uv data point will be used to correct the data. (5) if = 5 the bandpass data will be interpolated in time ignoring weights to form a composite bandpass spectrum, this interpolated spectrum will then be used to correct the data. \item xxx\-Smooth OBIT\_\-float (3,1,1) specifies the type of spectral smoothing Smooth(1) = type of smoothing to apply: 0 =$>$ no smoothing 1 =$>$ Hanning 2 =$>$ Gaussian 3 =$>$ Boxcar 4 =$>$ Sinc (i.e. sin(x)/x) Smooth(2) = the \char`\"{}diameter\char`\"{} of the function, i.e. width between first nulls of Hanning triangle and sinc function, FWHM of Gaussian, width of Boxcar. Defaults (if $<$ 0.1) are 4, 2, 2 and 3 channels for Smooth(1) = 1 - 4. Smooth(3) = the diameter over which the convolving function has value - in channels. Defaults: 1, 3, 1, 4 times Smooth(2) used when \item xxx\-Alpha OBIT\_\-float (1,1,1) Spectral index to apply, 0=none \item xxx\-Sub\-Scan\-Time Obit\_\-float scalar [Optional] if given, this is the desired time (days) of a sub scan. This is used by the selector to suggest a value close to this which will evenly divide the current scan. See {\bf Obit\-UVSel\-Sub\-Scan}{\rm (p.\,\pageref{ObitUVSel_8c_a21})} 0 =$>$ Use scan average. This is only useful for Read\-Select operations on indexed Obit\-UVs. \end{itemize}
+\item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]new data object with selection parameters set \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVFullInstantiate@{ObitUVFullInstantiate}}
+\index{ObitUVFullInstantiate@{ObitUVFullInstantiate}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVFull\-Instantiate ({\bf Obit\-UV} $\ast$ {\em in}, gboolean {\em exist}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a27}
+
+
+Public: Fully instantiate. 
+
+If object has previously been opened, as demonstrated by the existance of its my\-IO member, this operation is a no-op. Virtual - calls actual class member \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object \item[{\em exist}]TRUE if object should previously exist, else FALSE \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]error code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVGetClass@{ObitUVGetClass}}
+\index{ObitUVGetClass@{ObitUVGetClass}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-UVGet\-Class (void)}\label{ObitUV_8h_a28}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVGetFreq@{ObitUVGetFreq}}
+\index{ObitUVGetFreq@{ObitUVGetFreq}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVGet\-Freq ({\bf Obit\-UV} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a49}
+
+
+Public: Get Frequency arrays. 
+
+These are the my\-Desc-$>$freq\-Arr and my\-Desc-$>$fscale array members. Uses source dependent frequency info if available from in-$>$info \begin{itemize}
+\item \char`\"{}Sou\-IFOff\char`\"{} OBIT\_\-double (nif,1,1) Source frequency offset per IF \item \char`\"{}Sou\-BW\char`\"{} OBIT\_\-double (1,1,1) Channel Bandwidth\end{itemize}
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} with descriptor to update. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVGetRADec@{ObitUVGetRADec}}
+\index{ObitUVGetRADec@{ObitUVGetRADec}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVGet\-RADec ({\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf odouble} $\ast$ {\em ra}, {\bf odouble} $\ast$ {\em dec}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a51}
+
+
+Public: Get source position. 
+
+If single source file get from uv\-Desc, if multisource read from SU table Checks that only one source selected. Also fill in position like information in the descriptor for multi-source datasets \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em uvdata}]Data object from which position sought \item[{\em ra}][out] RA at mean epoch (deg) \item[{\em dec}][out] Dec at mean epoch (deg) \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVGetSouInfo@{ObitUVGetSouInfo}}
+\index{ObitUVGetSouInfo@{ObitUVGetSouInfo}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVGet\-Sou\-Info ({\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a52}
+
+
+Public: Get single source info. 
+
+Also fill in position like information in the descriptor for multi-source datasets If source table is read, the source dependent IF offsets and bandwidth are written to the in-$>$info object as \begin{itemize}
+\item \char`\"{}Sou\-IFOff\char`\"{} OBIT\_\-double (nif,1,1) Source frequency offset per IF \item \char`\"{}Sou\-BW\char`\"{} OBIT\_\-double (1,1,1) Bandwidth\end{itemize}
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em uvdata}]Data object from which info sought \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVGetSubA@{ObitUVGetSubA}}
+\index{ObitUVGetSubA@{ObitUVGetSubA}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-UVGet\-Sub\-A ({\bf Obit\-UV} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a50}
+
+
+Public: Obtains Subarray info for an {\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object to obtain data from and with descriptors to update. Updated on in-$>$my\-Desc and in-$>$my\-IO-$>$my\-Desc: \begin{itemize}
+\item num\-Sub\-A Number of subarrays, always $>$0 \item num\-Ant Array of maximum antenna numbers per subarray will be allocaded here and must be gfreeed when done NULL returned if no AN tables \item max\-Ant Maximum antenna number in num\-Ant. 0 if no AN tables. \end{itemize}
+\item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]I/O Code OBIT\_\-IO\_\-OK = OK. \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVIOSet@{ObitUVIOSet}}
+\index{ObitUVIOSet@{ObitUVIOSet}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-UVIOSet ({\bf Obit\-UV} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a36}
+
+
+Public: Reset IO to start of file. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be rewound. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVOpen@{ObitUVOpen}}
+\index{ObitUVOpen@{ObitUVOpen}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-UVOpen ({\bf Obit\-UV} $\ast$ {\em in}, Obit\-IOAccess {\em access}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a34}
+
+
+Public: Create {\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} structures and open file. 
+
+The image descriptor is read if OBIT\_\-IO\_\-Read\-Only, OBIT\_\-IO\_\-Read\-Cal or OBIT\_\-IO\_\-Read\-Write and written to disk if opened OBIT\_\-IO\_\-Write\-Only. If access is OBIT\_\-IO\_\-Read\-Cal then the calibration/selection/editing needed is initialized. See the {\bf Obit\-UVSel}{\rm (p.\,\pageref{structObitUVSel})} class for a description of the selection and calibration parameters. After the file has been opened the member, buffer is initialized for reading/storing the data unless member buffer\-Size is $<$0. The file etc. info should have been stored in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}: \begin{itemize}
+\item \char`\"{}File\-Type\char`\"{} OBIT\_\-long scalar = OBIT\_\-IO\_\-FITS or OBIT\_\-IO\_\-AIPS for file type. \item \char`\"{}n\-Vis\-PIO\char`\"{} OBIT\_\-long scalar = Maximum number of visibilities per transfer, this is the target size for Reads (may be fewer) and is used to create buffers. \item \char`\"{}Compress\char`\"{} Obit\_\-bool scalar = TRUE indicates output is to be in compressed format. (access=OBIT\_\-IO\_\-Write\-Only only). \item \char`\"{}Sub\-Scan\-Time\char`\"{} Obit\_\-float scalar [Optional] if given, this is the desired time (day) of a sub scan. This is used by the selector to suggest a value close to this which will evenly divided the current scan. See {\bf Obit\-UVSel\-Sub\-Scan}{\rm (p.\,\pageref{ObitUVSel_8c_a21})} \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be opened. \item[{\em access}]access (OBIT\_\-IO\_\-Read\-Only,OBIT\_\-IO\_\-Read\-Write, OBIT\_\-IO\_\-Read\-Cal or OBIT\_\-IO\_\-Write\-Only). If OBIT\_\-IO\_\-Write\-Only any existing data in the output file will be lost. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\end{itemize}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVRead@{ObitUVRead}}
+\index{ObitUVRead@{ObitUVRead}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-UVRead ({\bf Obit\-UV} $\ast$ {\em in}, {\bf ofloat} $\ast$ {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a37}
+
+
+Public: Read specified data. 
+
+The {\bf Obit\-UVDesc}{\rm (p.\,\pageref{structObitUVDesc})} maintains the current location in the file. The number read will be my\-Sel-$>$n\-Vis\-PIO (until the end of the selected range of visibilities in which case it will be smaller). The first visibility number after a read is my\-Desc-$>$first\-Vis and the number of visibilities is my\-Desc-$>$num\-Vis\-Buff. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be read. \item[{\em data}]pointer to buffer to write results. if NULL, use the buffer member of in. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK =$>$ OK \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVReadKeyword@{ObitUVReadKeyword}}
+\index{ObitUVReadKeyword@{ObitUVReadKeyword}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVRead\-Keyword ({\bf Obit\-UV} $\ast$ {\em in}, gchar $\ast$ {\em name}, Obit\-Info\-Type $\ast$ {\em type}, gint32 $\ast$ {\em dim}, gpointer {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a54}
+
+
+Public: Read header keyword. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]object to update, must be fully instantiated \item[{\em name}][out] The label (keyword) of the information. Max 8 char \item[{\em type}][out] Data type of data element (enum defined in {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} class). \item[{\em dim}][out] Dimensionality of datum. Only scalars and strings up to 8 char are supported Note: for strings, the first element is the length in char. \item[{\em data}][out] Pointer to the data. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVReadMulti@{ObitUVReadMulti}}
+\index{ObitUVReadMulti@{ObitUVReadMulti}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-UVRead\-Multi ({\bf olong} {\em n\-Buff}, {\bf Obit\-UV} $\ast$$\ast$ {\em in}, {\bf ofloat} $\ast$$\ast$ {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a38}
+
+
+Public: Read to multiple buffers. 
+
+If amp/phase calibration being applied, it is done independently for each buffer using the my\-Cal in the associated in, otherwise, the first buffer is processed and copied to the others. All buffers must be the same size and the underlying dataset the same. The {\bf Obit\-UVDesc}{\rm (p.\,\pageref{structObitUVDesc})} maintains the current location in the file. The number read will be my\-Sel-$>$n\-Vis\-PIO (until the end of the selected range of visibilities in which case it will be smaller). The first visibility number after a read is my\-Desc-$>$first\-Vis and the number of visibilities is my\-Desc-$>$num\-Vis\-Buff. When OBIT\_\-IO\_\-EOF is returned all data has been read (then is no new data in data) \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em n\-Buff}]Number of buffers to be filled \item[{\em in}]Array of pointers to to object to be read; must all be to same underlying data set. \item[{\em data}]Array of pointers to buffers to write results. If NULL, use buffers on in elements (must be open) \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK =$>$ OK \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVReadMultiSelect@{ObitUVReadMultiSelect}}
+\index{ObitUVReadMultiSelect@{ObitUVReadMultiSelect}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-UVRead\-Multi\-Select ({\bf olong} {\em n\-Buff}, {\bf Obit\-UV} $\ast$$\ast$ {\em in}, {\bf ofloat} $\ast$$\ast$ {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a41}
+
+
+Public: Read with selection to multiple buffers. 
+
+The number read will be my\-Sel-$>$n\-Vis\-PIO (until the end of the selected range of visibilities in which case it will be smaller). The first visibility number after a read is my\-Desc-$>$first\-Vis and the number of visibilities is my\-Desc-$>$num\-Vis\-Buff. When OBIT\_\-IO\_\-EOF is returned all data has been read (then is no new data in data) \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em n\-Buff}]Number of buffers to be filled \item[{\em in}]Array of pointers to to object to be read; must all be to same underlying data set but with possible independent calibration \item[{\em data}]array of pointers to buffers to write results. If NULL, use buffers on in elements (must be open) \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK =$>$ OK \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVReadSelect@{ObitUVReadSelect}}
+\index{ObitUVReadSelect@{ObitUVReadSelect}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-UVRead\-Select ({\bf Obit\-UV} $\ast$ {\em in}, {\bf ofloat} $\ast$ {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a40}
+
+
+Public: Read select, edit, calibrate specified data. 
+
+The number read will be my\-Sel-$>$n\-Vis\-PIO (until the end of the selected range of visibilities in which case it will be smaller). The first visibility number after a read is my\-Desc-$>$first\-Vis and the number of visibilities is my\-Desc-$>$num\-Vis\-Buff. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be read. \item[{\em data}]pointer to buffer to write results. if NULL, use the buffer member of in. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK =$>$ OK \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVRename@{ObitUVRename}}
+\index{ObitUVRename@{ObitUVRename}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVRename ({\bf Obit\-UV} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a30}
+
+
+Public: Rename underlying structures. 
+
+For FITS files: \begin{itemize}
+\item \char`\"{}new\-File\-Name\char`\"{} OBIT\_\-string (?,1,1) New Name of disk file.\end{itemize}
+For AIPS: \begin{itemize}
+\item \char`\"{}new\-Name\char`\"{} OBIT\_\-string (12,1,1) New AIPS Name Blank = don't change \item \char`\"{}new\-Class\char`\"{} OBIT\_\-string (6,1,1) New AIPS Class Blank = don't change\-O \item \char`\"{}new\-Seq\char`\"{} OBIT\_\-int (1,1,1) New AIPS Sequence 0 =$>$ unique value \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be renamed. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\end{itemize}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVReReadMulti@{ObitUVReReadMulti}}
+\index{ObitUVReReadMulti@{ObitUVReReadMulti}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-UVRe\-Read\-Multi ({\bf olong} {\em n\-Buff}, {\bf Obit\-UV} $\ast$$\ast$ {\em in}, {\bf ofloat} $\ast$$\ast$ {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a39}
+
+
+Public: Reread to multiple buffers. 
+
+Retreives data read in a previous call to Obit\-UVRead\-Multi. in which in[0] should be the same as in the call to Obit\-UVRead\-Multi If amp/phase calibration being applied, it is done independently for each buffer using the my\-Cal in the associated in, otherwise, data from the first buffer copied to the others. NOTE: this depends on retreiving the data from the first element in All buffers must be the same size and the underlying dataset the same. The {\bf Obit\-UVDesc}{\rm (p.\,\pageref{structObitUVDesc})} maintains the current location in the file. The first visibility number after a read is my\-Desc-$>$first\-Vis and the number of visibilities is my\-Desc-$>$num\-Vis\-Buff. When OBIT\_\-IO\_\-EOF is returned all data has been read (then is no new data in data) \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em n\-Buff}]Number of buffers to be filled \item[{\em in}]Array of pointers to to object to be read; must all be to same underlying data set. \item[{\em data}]Array of pointers to buffers to write results. If NULL, use buffers on in elements (must be open) \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK =$>$ OK \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVReReadMultiSelect@{ObitUVReReadMultiSelect}}
+\index{ObitUVReReadMultiSelect@{ObitUVReReadMultiSelect}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-UVRe\-Read\-Multi\-Select ({\bf olong} {\em n\-Buff}, {\bf Obit\-UV} $\ast$$\ast$ {\em in}, {\bf ofloat} $\ast$$\ast$ {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a42}
+
+
+Public: Reread with selection to multiple buffers. 
+
+Retreives data read in a previous call to Obit\-UVRead\-Multi\-Select possibly applying new calibration. NOTE: this depends on retreiving the data from the first element in in which should be the same as in the call to Obit\-UVRead\-Multi\-Select The first visibility number after a read is my\-Desc-$>$first\-Vis and the number of visibilities is my\-Desc-$>$num\-Vis\-Buff. When OBIT\_\-IO\_\-EOF is returned all data has been read (then is no new data in data) \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em n\-Buff}]Number of buffers to be filled \item[{\em in}]Array of pointers to to object to be read; must all be to same underlying data set but with possible independent calibration \item[{\em data}]array of pointers to buffers to write results. If NULL, use buffers on in elements (must be open) \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK =$>$ OK \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVRewrite@{ObitUVRewrite}}
+\index{ObitUVRewrite@{ObitUVRewrite}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-UVRewrite ({\bf Obit\-UV} $\ast$ {\em in}, {\bf ofloat} $\ast$ {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a44}
+
+
+Public: Rewrite specified data. 
+
+This routines assumes that the input UV is also being read and so the first\-Vis values in the UV descriptors on both in and its IO member are left unchanged. Otherwise a call to this routine is equivalent to Obit\-UVWrite The data in the buffer will be written starting at visibility my\-Desc-$>$first\-Vis and the number written will be my\-Desc-$>$num\-Vis\-Buff which should not exceed my\-Sel-$>$n\-Vis\-PIO if the internal buffer is used. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be written. \item[{\em data}]pointer to buffer containing input data. if NULL, use the buffer member of in. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVSame@{ObitUVSame}}
+\index{ObitUVSame@{ObitUVSame}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean Obit\-UVSame ({\bf Obit\-UV} $\ast$ {\em in1}, {\bf Obit\-UV} $\ast$ {\em in2}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a33}
+
+
+Public: Do two UVs have the same underlying structures?. 
+
+This test is done using values entered into the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} in case the object has not yet been opened. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in1}]First object to compare \item[{\em in2}]Second object to compare \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]TRUE if to objects have the same underlying structures else FALSE \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVUpdateTables@{ObitUVUpdateTables}}
+\index{ObitUVUpdateTables@{ObitUVUpdateTables}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-UVUpdate\-Tables ({\bf Obit\-UV} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a48}
+
+
+Public: Update disk resident tables information. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be updated. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVWrite@{ObitUVWrite}}
+\index{ObitUVWrite@{ObitUVWrite}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-UVWrite ({\bf Obit\-UV} $\ast$ {\em in}, {\bf ofloat} $\ast$ {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a43}
+
+
+Public: Write specified data. 
+
+The data in the buffer will be written starting at visibility my\-Desc-$>$first\-Vis and the number written will be my\-Desc-$>$num\-Vis\-Buff which should not exceed my\-Sel-$>$n\-Vis\-PIO if the internal buffer is used. my\-Desc-$>$first\-Vis will be maintained and need not be changed for sequential writing. NB: If the same UV data is being both read and rewritten, use Obit\-UVRewrite instead of Obit\-UVWrite. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be written. \item[{\em data}]pointer to buffer containing input data. if NULL, use the buffer member of in. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVWriteKeyword@{ObitUVWriteKeyword}}
+\index{ObitUVWriteKeyword@{ObitUVWriteKeyword}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVWrite\-Keyword ({\bf Obit\-UV} $\ast$ {\em in}, gchar $\ast$ {\em name}, Obit\-Info\-Type {\em type}, gint32 $\ast$ {\em dim}, gconstpointer {\em data}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a53}
+
+
+Public: Write header keyword. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]object to update, must be open during call with Write access \item[{\em name}]The label (keyword) of the information. Max 8 char \item[{\em type}]Data type of data element (enum defined in {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} class). \item[{\em dim}]Dimensionality of datum. Only scalars and strings up to 8 char are allowed Note: for strings, the first element is the length in char. \item[{\em data}]Pointer to the data. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVZap@{ObitUVZap}}
+\index{ObitUVZap@{ObitUVZap}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UV}$\ast$ Obit\-UVZap ({\bf Obit\-UV} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a29}
+
+
+Public: Delete underlying structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be zapped. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer for input object, NULL if deletion successful \end{Desc}
+\index{ObitUV.h@{Obit\-UV.h}!ObitUVZapTable@{ObitUVZapTable}}
+\index{ObitUVZapTable@{ObitUVZapTable}!ObitUV.h@{Obit\-UV.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-UVZap\-Table ({\bf Obit\-UV} $\ast$ {\em in}, gchar $\ast$ {\em tab\-Type}, {\bf olong} {\em tab\-Ver}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUV_8h_a46}
+
+
+Public: Destroy an associated Table. 
+
+The table is removed from the {\bf Obit\-Table\-List}{\rm (p.\,\pageref{structObitTableList})} but the external form may not be updated. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object with associated tables. \item[{\em tab\-Type}]The table type (e.g. \char`\"{}AIPS CC\char`\"{}). \item[{\em tab\-Ver}]Desired version number, may be zero in which case the highest extant version is returned for read and the highest+1 for write. -1 =$>$ all versions of tab\-Type \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}

@@ -1,0 +1,53 @@
+\section{Obit\-UVPeel\-Util.h File Reference}
+\label{ObitUVPeelUtil_8h}\index{ObitUVPeelUtil.h@{ObitUVPeelUtil.h}}
+Obit\-UVPeel\-Util module definition. 
+
+{\tt \#include \char`\"{}Obit\-Info\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UV.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-DCon\-Clean\-Vis.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+{\bf olong} {\bf Obit\-UVPeel\-Util\-Peel} ({\bf Obit\-Info\-List} $\ast$my\-Input, {\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-DCon\-Clean\-Vis} $\ast$my\-Clean, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Peel strong source from UV data based on previous CLEAN. \item\end{CompactList}\item 
+void {\bf Obit\-UVPeel\-Util\-Loop} ({\bf Obit\-Info\-List} $\ast$my\-Input, {\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-DCon\-Clean\-Vis} $\ast$my\-Clean, {\bf olong} $\ast$nfield, {\bf olong} $\ast$$\ast$ncomp, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Loop over sources to be peeled. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-UVPeel\-Util module definition. 
+
+This utility utility contains utility functions for \char`\"{}peeling\char`\"{} uv data. This technique is to subtract individual sources after self calibrating on them.
+
+\subsection{Function Documentation}
+\index{ObitUVPeelUtil.h@{Obit\-UVPeel\-Util.h}!ObitUVPeelUtilLoop@{ObitUVPeelUtilLoop}}
+\index{ObitUVPeelUtilLoop@{ObitUVPeelUtilLoop}!ObitUVPeelUtil.h@{Obit\-UVPeel\-Util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVPeel\-Util\-Loop ({\bf Obit\-Info\-List} $\ast$ {\em my\-Input}, {\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-DCon\-Clean\-Vis} $\ast$ {\em my\-Clean}, {\bf olong} $\ast$ {\em nfield}, {\bf olong} $\ast$$\ast$ {\em ncomp}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVPeelUtil_8h_a1}
+
+
+Public: Loop over sources to be peeled. 
+
+This routine should only be run after all self-calibration and autocentering has been done, at least one previous CLEAN is required. Each loop picks the strongest field with peak above Peel\-Flux and subtracts all others using the Sky\-Model on my\-Clean and then self-calibrates the residual data to obtain a best model and calibration for that field. A model uv data set derived from the self-calibrated model and inverse of the self cal calibration is used to corrupt the model data which is then permanently subtracted from the input data. The imaging is then redone using the my\-Clean setup. The components peeled are written to CC Table 2 on the output peeled image. After all peeling is done, the components on the CC tables 2 are appended to CC tables 1 so that these tables contain all components subtracted. On return, ncomp contains the number of components in each CC table 1 which were NOT peeled, i.e. should be subtracted from in\-UV to produce a residual data set. No component restoration or flattening is done. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em my\-Input}]Info\-List with control parameters (most have defaults): \begin{itemize}
+\item Peel\-Flux f Minimum level for Peeling (peal in CCs) \item Peel\-Loop i max. number of self cal loops \item Peel\-Sol\-Int f Peel SC Solution interval (min) \item Peel\-Type s Peel SC Solution type ' ', 'L1' \item Peel\-Mode s Peel SC Solution mode:'A\&P', 'P', 'P!A', \item Peel\-Niter i Niter for peel.CLEAN \item Peel\-Min\-Flux f Minimum Peel Clean component (Jy) \item Peel\-Ref\-Ant i Peel SC Reference antenna \item Peel\-SNRMin f Min. allowed SNR in peel selfcal \item Peel\-Avg\-Pol b Avg. poln in peel self cal? \item Peel\-Avg\-IF b Avg. IFs in peel self cal? \item PBCor b Apply Frequency PB Corr? \item ant\-Size f Diameter of ant. for PBCor (m) \item Robust f Robustness power \item nu\-Grid i Size in u of weighting grid \item nv\-Grid i Size in v of weighting grid \item Wt\-Box i Additional rows and columns in weighting \item Wt\-Func i Box function type when Wt\-Box \item UVTaper f [2] (U,V) Gaussian taper klambda \item Wt\-Power f Power to raise weights to \item Max\-Baseline f maximum baseline length in wavelengths. \item Min\-Baseline f minimum baseline length in wavelengths. \item rotate f rotation of images \item x\-Cells f Image cell spacing in X in asec. \item y\-Cells f Image cell spacing in Y in asec. \item Gain f CLEAN loop gain \item min\-Patch i Min. BEAM half-width. \item auto\-Window b If true, automatically set windows \item Wt\-UV f Weighting to use outside of basic uv range \item min\-No i Min. allowed no. antennas in selfcal \item do\-Smoo b If true interpolate failed solutions \item prt\-Lv i Print level in selfcal, 0=$>$none \end{itemize}
+\item[{\em in\-UV}]Data to be peeled, on return all SN tables will be removed. and peeled source will have been subtracted \item[{\em my\-Clean}]Clean object which has previously been CLEANed and which has a field with a CC peak in excess of Peel\-Flux. Need for peeling based on values of my\-Clean-$>$peak\-Flux and Peel\-Flux. The test for individual fields is the maximum as determined from the CLEAN components by {\bf Obit\-Image\-Mosaic\-Max\-Field}{\rm (p.\,\pageref{ObitImageMosaic_8c_a30})} On output, this will include info on last CLEAN \item[{\em nfield}][out] Number of entries in ncomp \item[{\em ncomp}][out] Array of number of components in data (i.e. after any peel) per field, this array should be g\_\-freeed after use \item[{\em err}]Error/message stack \end{description}
+\end{Desc}
+\index{ObitUVPeelUtil.h@{Obit\-UVPeel\-Util.h}!ObitUVPeelUtilPeel@{ObitUVPeelUtilPeel}}
+\index{ObitUVPeelUtilPeel@{ObitUVPeelUtilPeel}!ObitUVPeelUtil.h@{Obit\-UVPeel\-Util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-UVPeel\-Util\-Peel ({\bf Obit\-Info\-List} $\ast$ {\em my\-Input}, {\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-DCon\-Clean\-Vis} $\ast$ {\em my\-Clean}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVPeelUtil_8h_a0}
+
+
+Public: Peel strong source from UV data based on previous CLEAN. 
+
+Picks the strongest field with peak above Peel\-Flux and subtracts all others using the Sky\-Model on my\-Clean and then self calibrates the residual data to obtain a best model and calibration for that field. A model uv data set derived from the selfcalibrated model and inverse of the self cal calibration is used to corrupt the model data which is then subtracted from the input data. The imaging is then redone using the my\-Clean setup . The components peeled are written to CC Table 2 on the output Peeled image. Note: If multiple peels are done, the components from previously peeled fields will not be in Table 1 and the components from any CC table 2 need to be copied to table 1 when the peeling is finished. No restoration or flattening is done. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em my\-Input}]Info\-List with control parameters (most have defaults): \begin{itemize}
+\item Peel\-Flux f Minimum level for Peeling (peal in CCs) \item Peel\-Loop i max. number of self cal loops \item Peel\-Sol\-Int f Peel SC Solution interval (min) \item Peel\-Type s Peel SC Solution type ' ', 'L1' \item Peel\-Mode s Peel SC Solution mode:'A\&P', 'P', 'P!A', \item Peel\-Niter i Niter for peel.CLEAN \item Peel\-Min\-Flux f Minimum Peel Clean component (Jy) \item Peel\-Ref\-Ant i Peel SC Reference antenna \item Peel\-SNRMin f Min. allowed SNR in peel selfcal \item Peel\-Avg\-Pol b Avg. poln in peel self cal? \item Peel\-Avg\-IF b Avg. IFs in peel self cal? \item PBCor b Apply Frequency PB Corr? \item ant\-Size f Diameter of ant. for PBCor (m) \item Robust f Robustness power \item nu\-Grid i Size in u of weighting grid \item nv\-Grid i Size in v of weighting grid \item Wt\-Box i Additional rows and columns in weighting \item Wt\-Func i Box function type when Wt\-Box \item UVTaper f [2] (U,V) Gaussian taper klambda \item Wt\-Power f Power to raise weights to \item Max\-Baseline f maximum baseline length in wavelengths. \item Min\-Baseline f minimum baseline length in wavelengths. \item rotate f rotation of images \item x\-Cells f Image cell spacing in X in asec. \item y\-Cells f Image cell spacing in Y in asec. \item Gain f CLEAN loop gain \item min\-Patch i Min. BEAM half-width. \item auto\-Window b If true, automatically set windows \item Wt\-UV f Weighting to use outside of basic uv range \item min\-No i Min. allowed no. antennas in selfcal \item do\-Smoo b If true interpolate failed solutions \item prt\-Lv i Print level in selfcal, 0=$>$none \end{itemize}
+\item[{\em in\-UV}]Data to be peeled, on return all SN tables will be removed. and peeled source will have been subtracted \item[{\em my\-Clean}]Clean object which has previously been CLEANed and which has a field with a CC peak in excess of Peel\-Flux. Need for peeling based on values of my\-Clean-$>$peak\-Flux and Peel\-Flux. The test for individual fields is the maximum as determined from the CLEAN components by {\bf Obit\-Image\-Mosaic\-Max\-Field}{\rm (p.\,\pageref{ObitImageMosaic_8c_a30})} On output, this will include info on last CLEAN \item[{\em err}]Error/message stack \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the 1-rel field number of the peeled field or -1 if no peel \end{Desc}

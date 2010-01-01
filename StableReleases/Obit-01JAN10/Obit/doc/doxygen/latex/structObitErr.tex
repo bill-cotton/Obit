@@ -1,0 +1,77 @@
+\section{Obit\-Err Struct Reference}
+\label{structObitErr}\index{ObitErr@{ObitErr}}
+Obit\-Err Class structure.  
+
+
+{\tt \#include $<$Obit\-Err.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gchar $\ast$ {\bf class\-Name}
+\begin{CompactList}\small\item\em class name for verification \item\end{CompactList}\item 
+gint16 {\bf number}
+\begin{CompactList}\small\item\em Number of error messages. \item\end{CompactList}\item 
+gboolean {\bf error}
+\begin{CompactList}\small\item\em Has an error been entered. \item\end{CompactList}\item 
+GQueue $\ast$ {\bf stack}
+\begin{CompactList}\small\item\em Stack structure. \item\end{CompactList}\item 
+gint32 {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count of pointers to this object. \item\end{CompactList}\item 
+gchar {\bf buffer} [OBITERRBUFSIZE+1]
+\begin{CompactList}\small\item\em message buffer \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Err Class structure. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitErr@{Obit\-Err}!buffer@{buffer}}
+\index{buffer@{buffer}!ObitErr@{Obit\-Err}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar {\bf Obit\-Err::buffer}[OBITERRBUFSIZE+1]}\label{structObitErr_o5}
+
+
+message buffer 
+
+\index{ObitErr@{Obit\-Err}!className@{className}}
+\index{className@{className}!ObitErr@{Obit\-Err}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-Err::class\-Name}}\label{structObitErr_o0}
+
+
+class name for verification 
+
+\index{ObitErr@{Obit\-Err}!error@{error}}
+\index{error@{error}!ObitErr@{Obit\-Err}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gboolean {\bf Obit\-Err::error}}\label{structObitErr_o2}
+
+
+Has an error been entered. 
+
+\index{ObitErr@{Obit\-Err}!number@{number}}
+\index{number@{number}!ObitErr@{Obit\-Err}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint16 {\bf Obit\-Err::number}}\label{structObitErr_o1}
+
+
+Number of error messages. 
+
+\index{ObitErr@{Obit\-Err}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitErr@{Obit\-Err}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-Err::Reference\-Count}}\label{structObitErr_o4}
+
+
+Reference count of pointers to this object. 
+
+\index{ObitErr@{Obit\-Err}!stack@{stack}}
+\index{stack@{stack}!ObitErr@{Obit\-Err}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}GQueue$\ast$ {\bf Obit\-Err::stack}}\label{structObitErr_o3}
+
+
+Stack structure. 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-Err.h}\end{CompactItemize}

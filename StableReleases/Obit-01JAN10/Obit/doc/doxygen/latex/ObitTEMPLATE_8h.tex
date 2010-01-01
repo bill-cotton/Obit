@@ -1,0 +1,157 @@
+\section{Obit\-TEMPLATE.h File Reference}
+\label{ObitTEMPLATE_8h}\index{ObitTEMPLATE.h@{ObitTEMPLATE.h}}
+{\bf Obit\-TEMPLATE}{\rm (p.\,\pageref{structObitTEMPLATE})} template for classes derived from {\bf Obit}{\rm (p.\,\pageref{structObit})}. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-TEMPLATE}
+\begin{CompactList}\small\item\em Obit\-TEMPLATE Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-TEMPLATEClass\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-TEMPLATEUnref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-TEMPLATE}{\rm (p.\,\pageref{structObitTEMPLATE})} returns a Obit\-TEMPLATE$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-TEMPLATERef}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-TEMPLATE}{\rm (p.\,\pageref{structObitTEMPLATE})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-TEMPLATEIs\-A}(in)\ Obit\-Is\-A (in, Obit\-TEMPLATEGet\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef {\bf Obit\-TEMPLATE} $\ast$($\ast$ {\bf Obit\-TEMPLATECreate\-FP} )(gchar $\ast$name)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-TEMPLATEClass\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-TEMPLATE} $\ast$ {\bf new\-Obit\-TEMPLATE} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+{\bf Obit\-TEMPLATE} $\ast$ {\bf Obit\-TEMPLATECreate} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-TEMPLATE}{\rm (p.\,\pageref{structObitTEMPLATE})} structures. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-TEMPLATEGet\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-TEMPLATE} $\ast$ {\bf Obit\-TEMPLATECopy} ({\bf Obit\-TEMPLATE} $\ast$in, {\bf Obit\-TEMPLATE} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-TEMPLATEClone} ({\bf Obit\-TEMPLATE} $\ast$in, {\bf Obit\-TEMPLATE} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-TEMPLATE}{\rm (p.\,\pageref{structObitTEMPLATE})} template for classes derived from {\bf Obit}{\rm (p.\,\pageref{structObit})}. 
+
+Class documentation should go here.\subsection{Creators and Destructors}\label{ObitTEMPLATE_8h_ObitTEMPLATEaccess}
+An {\bf Obit\-TEMPLATE}{\rm (p.\,\pageref{structObitTEMPLATE})} will usually be created using Obit\-TEMPLATECreate which allows specifying a name for the object as well as other information.
+
+A copy of a pointer to an {\bf Obit\-TEMPLATE}{\rm (p.\,\pageref{structObitTEMPLATE})} should always be made using the {\bf Obit\-TEMPLATERef}{\rm (p.\,\pageref{ObitTEMPLATE_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-TEMPLATE}{\rm (p.\,\pageref{structObitTEMPLATE})} or changing a pointer, the function {\bf Obit\-TEMPLATEUnref}{\rm (p.\,\pageref{ObitTEMPLATE_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.
+
+\subsection{Define Documentation}
+\index{ObitTEMPLATE.h@{Obit\-TEMPLATE.h}!ObitTEMPLATEIsA@{ObitTEMPLATEIsA}}
+\index{ObitTEMPLATEIsA@{ObitTEMPLATEIsA}!ObitTEMPLATE.h@{Obit\-TEMPLATE.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-TEMPLATEIs\-A(in)\ Obit\-Is\-A (in, Obit\-TEMPLATEGet\-Class())}\label{ObitTEMPLATE_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitTEMPLATE.h@{Obit\-TEMPLATE.h}!ObitTEMPLATERef@{ObitTEMPLATERef}}
+\index{ObitTEMPLATERef@{ObitTEMPLATERef}!ObitTEMPLATE.h@{Obit\-TEMPLATE.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-TEMPLATERef(in)\ Obit\-Ref (in)}\label{ObitTEMPLATE_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-TEMPLATE}{\rm (p.\,\pageref{structObitTEMPLATE})}. 
+
+returns a Obit\-TEMPLATE$\ast$. in = object to reference \index{ObitTEMPLATE.h@{Obit\-TEMPLATE.h}!ObitTEMPLATEUnref@{ObitTEMPLATEUnref}}
+\index{ObitTEMPLATEUnref@{ObitTEMPLATEUnref}!ObitTEMPLATE.h@{Obit\-TEMPLATE.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-TEMPLATEUnref(in)\ Obit\-Unref (in)}\label{ObitTEMPLATE_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-TEMPLATE}{\rm (p.\,\pageref{structObitTEMPLATE})} returns a Obit\-TEMPLATE$\ast$. 
+
+in = object to unreference 
+
+\subsection{Typedef Documentation}
+\index{ObitTEMPLATE.h@{Obit\-TEMPLATE.h}!ObitTEMPLATECreateFP@{ObitTEMPLATECreateFP}}
+\index{ObitTEMPLATECreateFP@{ObitTEMPLATECreateFP}!ObitTEMPLATE.h@{Obit\-TEMPLATE.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-TEMPLATE}$\ast$($\ast$ {\bf Obit\-TEMPLATECreate\-FP})(gchar $\ast$name)}\label{ObitTEMPLATE_8h_a3}
+
+
+Typedef for definition of class pointer structure. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitTEMPLATE.h@{Obit\-TEMPLATE.h}!newObitTEMPLATE@{newObitTEMPLATE}}
+\index{newObitTEMPLATE@{newObitTEMPLATE}!ObitTEMPLATE.h@{Obit\-TEMPLATE.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-TEMPLATE}$\ast$ new\-Obit\-TEMPLATE (gchar $\ast$ {\em name})}\label{ObitTEMPLATE_8h_a5}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitTEMPLATE.h@{Obit\-TEMPLATE.h}!ObitTEMPLATEClassInit@{ObitTEMPLATEClassInit}}
+\index{ObitTEMPLATEClassInit@{ObitTEMPLATEClassInit}!ObitTEMPLATE.h@{Obit\-TEMPLATE.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-TEMPLATEClass\-Init (void)}\label{ObitTEMPLATE_8h_a4}
+
+
+Public: Class initializer. 
+
+\index{ObitTEMPLATE.h@{Obit\-TEMPLATE.h}!ObitTEMPLATEClone@{ObitTEMPLATEClone}}
+\index{ObitTEMPLATEClone@{ObitTEMPLATEClone}!ObitTEMPLATE.h@{Obit\-TEMPLATE.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-TEMPLATEClone ({\bf Obit\-TEMPLATE} $\ast$ {\em in}, {\bf Obit\-TEMPLATE} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTEMPLATE_8h_a9}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitTEMPLATE.h@{Obit\-TEMPLATE.h}!ObitTEMPLATECopy@{ObitTEMPLATECopy}}
+\index{ObitTEMPLATECopy@{ObitTEMPLATECopy}!ObitTEMPLATE.h@{Obit\-TEMPLATE.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-TEMPLATE}$\ast$ Obit\-TEMPLATECopy ({\bf Obit\-TEMPLATE} $\ast$ {\em in}, {\bf Obit\-TEMPLATE} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTEMPLATE_8h_a8}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitTEMPLATE.h@{Obit\-TEMPLATE.h}!ObitTEMPLATECreate@{ObitTEMPLATECreate}}
+\index{ObitTEMPLATECreate@{ObitTEMPLATECreate}!ObitTEMPLATE.h@{Obit\-TEMPLATE.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-TEMPLATE}$\ast$ Obit\-TEMPLATECreate (gchar $\ast$ {\em name})}\label{ObitTEMPLATE_8h_a6}
+
+
+Public: Create/initialize {\bf Obit\-TEMPLATE}{\rm (p.\,\pageref{structObitTEMPLATE})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitTEMPLATE.h@{Obit\-TEMPLATE.h}!ObitTEMPLATEGetClass@{ObitTEMPLATEGetClass}}
+\index{ObitTEMPLATEGetClass@{ObitTEMPLATEGetClass}!ObitTEMPLATE.h@{Obit\-TEMPLATE.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-TEMPLATEGet\-Class (void)}\label{ObitTEMPLATE_8h_a7}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}

@@ -1,0 +1,274 @@
+\section{Obit\-Table\-MF.c File Reference}
+\label{ObitTableMF_8c}\index{ObitTableMF.c@{ObitTableMF.c}}
+{\bf Obit\-Table\-MF}{\rm (p.\,\pageref{structObitTableMF})} class function definitions. 
+
+{\tt \#include \char`\"{}Obit\-Table\-MF.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-List.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Data.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Table\-MFRow\-Init} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated Row object. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-MFRow\-Clear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate Row members. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-MFInit} (gpointer in)
+\begin{CompactList}\small\item\em Private: Initialize newly instantiated object. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-MFClear} (gpointer in)
+\begin{CompactList}\small\item\em Private: Deallocate members. \item\end{CompactList}\item 
+{\bf Obit\-Table\-MFRow} $\ast$ {\bf new\-Obit\-Table\-MFRow} ({\bf Obit\-Table\-MF} $\ast$table)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Table\-MFRow\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Table\-MF} $\ast$ {\bf new\-Obit\-Table\-MF} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Table\-MFGet\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Table\-MF} $\ast$ {\bf new\-Obit\-Table\-MFValue} (gchar $\ast$name, {\bf Obit\-Data} $\ast$file, {\bf olong} $\ast$ver, Obit\-IOAccess access, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Constructor from values. \item\end{CompactList}\item 
+{\bf Obit\-Table\-MF} $\ast$ {\bf Obit\-Table\-MFConvert} ({\bf Obit\-Table} $\ast$in)
+\begin{CompactList}\small\item\em Public: Convert an {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} to an {\bf Obit\-Table\-MF}{\rm (p.\,\pageref{structObitTableMF})}. \item\end{CompactList}\item 
+{\bf Obit\-Table\-MF} $\ast$ {\bf Obit\-Table\-MFCopy} ({\bf Obit\-Table\-MF} $\ast$in, {\bf Obit\-Table\-MF} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-MFOpen} ({\bf Obit\-Table\-MF} $\ast$in, Obit\-IOAccess access, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create {\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} structures and open file. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-MFRead\-Row} ({\bf Obit\-Table\-MF} $\ast$in, {\bf olong} i\-MFRow, {\bf Obit\-Table\-MFRow} $\ast$row, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read a table row. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-MFSet\-Row} ({\bf Obit\-Table\-MF} $\ast$in, {\bf Obit\-Table\-MFRow} $\ast$row, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Init a table row for write. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-MFWrite\-Row} ({\bf Obit\-Table\-MF} $\ast$in, {\bf olong} i\-MFRow, {\bf Obit\-Table\-MFRow} $\ast$row, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Write a table row. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-MFClose} ({\bf Obit\-Table\-MF} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Close file and become inactive. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-MFRow\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Row Class initializer. \item\end{CompactList}\item 
+void {\bf Obit\-Table\-MFClass\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Table\-MF}{\rm (p.\,\pageref{structObitTableMF})} class function definitions. 
+
+This class is derived from the {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} class.
+
+\subsection{Function Documentation}
+\index{ObitTableMF.c@{Obit\-Table\-MF.c}!newObitTableMF@{newObitTableMF}}
+\index{newObitTableMF@{newObitTableMF}!ObitTableMF.c@{Obit\-Table\-MF.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-MF}$\ast$ new\-Obit\-Table\-MF (gchar $\ast$ {\em name})}\label{ObitTableMF_8c_a16}
+
+
+Public: Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitTableMF.c@{Obit\-Table\-MF.c}!newObitTableMFRow@{newObitTableMFRow}}
+\index{newObitTableMFRow@{newObitTableMFRow}!ObitTableMF.c@{Obit\-Table\-MF.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-MFRow}$\ast$ new\-Obit\-Table\-MFRow ({\bf Obit\-Table\-MF} $\ast$ {\em table})}\label{ObitTableMF_8c_a14}
+
+
+Public: Constructor. 
+
+If table is open and for write, the row is attached to the buffer Initializes Row class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitTableMF.c@{Obit\-Table\-MF.c}!newObitTableMFValue@{newObitTableMFValue}}
+\index{newObitTableMFValue@{newObitTableMFValue}!ObitTableMF.c@{Obit\-Table\-MF.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-MF}$\ast$ new\-Obit\-Table\-MFValue (gchar $\ast$ {\em name}, {\bf Obit\-Data} $\ast$ {\em file}, {\bf olong} $\ast$ {\em ver}, Obit\-IOAccess {\em access}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableMF_8c_a18}
+
+
+Public: Constructor from values. 
+
+Creates a new table structure and attaches to the Table\-List of file. If the specified table already exists then it is returned. Initializes class if needed on first call. Forces an update of any disk resident structures (e.g. AIPS header). \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em file}]{\bf Obit\-Data}{\rm (p.\,\pageref{structObitData})} which which the table is to be associated. \item[{\em ver}]Table version number. 0=$>$ add higher, value used returned \item[{\em access}]access (OBIT\_\-IO\_\-Read\-Only, means do not create if it doesn't exist. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object, NULL on failure. \end{Desc}
+\index{ObitTableMF.c@{Obit\-Table\-MF.c}!ObitTableMFClassInit@{ObitTableMFClassInit}}
+\index{ObitTableMFClassInit@{ObitTableMFClassInit}!ObitTableMF.c@{Obit\-Table\-MF.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-MFClass\-Init (void)}\label{ObitTableMF_8c_a27}
+
+
+Public: Class initializer. 
+
+\index{ObitTableMF.c@{Obit\-Table\-MF.c}!ObitTableMFClear@{ObitTableMFClear}}
+\index{ObitTableMFClear@{ObitTableMFClear}!ObitTableMF.c@{Obit\-Table\-MF.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-MFClear (gpointer {\em inn})}\label{ObitTableMF_8c_a9}
+
+
+Private: Deallocate members. 
+
+Does (recursive) deallocation of parent class members. For some reason this wasn't build into the GType class. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-Table\-MF$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitTableMF.c@{Obit\-Table\-MF.c}!ObitTableMFClose@{ObitTableMFClose}}
+\index{ObitTableMFClose@{ObitTableMFClose}!ObitTableMF.c@{Obit\-Table\-MF.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-MFClose ({\bf Obit\-Table\-MF} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableMF_8c_a25}
+
+
+Public: Close file and become inactive. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be closed. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]error code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitTableMF.c@{Obit\-Table\-MF.c}!ObitTableMFConvert@{ObitTableMFConvert}}
+\index{ObitTableMFConvert@{ObitTableMFConvert}!ObitTableMF.c@{Obit\-Table\-MF.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-MF}$\ast$ Obit\-Table\-MFConvert ({\bf Obit\-Table} $\ast$ {\em in})}\label{ObitTableMF_8c_a19}
+
+
+Public: Convert an {\bf Obit\-Table}{\rm (p.\,\pageref{structObitTable})} to an {\bf Obit\-Table\-MF}{\rm (p.\,\pageref{structObitTableMF})}. 
+
+New object will have references to members of in. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy, will still exist afterwards and should be Unrefed if not needed. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitTableMF.c@{Obit\-Table\-MF.c}!ObitTableMFCopy@{ObitTableMFCopy}}
+\index{ObitTableMFCopy@{ObitTableMFCopy}!ObitTableMF.c@{Obit\-Table\-MF.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-MF}$\ast$ Obit\-Table\-MFCopy ({\bf Obit\-Table\-MF} $\ast$ {\em in}, {\bf Obit\-Table\-MF} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableMF_8c_a20}
+
+
+Public: Copy (deep) constructor. 
+
+Copies are made of complex members including disk files; these will be copied applying whatever selection is associated with the input. Objects should be closed on input and will be closed on output. In order for the disk file structures to be copied, the output file must be sufficiently defined that it can be written. The copy will be attempted but no errors will be logged until both input and output have been successfully opened. {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} and {\bf Obit\-Thread}{\rm (p.\,\pageref{structObitThread})} members are only copied if the output object didn't previously exist. Parent class members are included but any derived class info is ignored. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitTableMF.c@{Obit\-Table\-MF.c}!ObitTableMFGetClass@{ObitTableMFGetClass}}
+\index{ObitTableMFGetClass@{ObitTableMFGetClass}!ObitTableMF.c@{Obit\-Table\-MF.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Table\-MFGet\-Class (void)}\label{ObitTableMF_8c_a17}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitTableMF.c@{Obit\-Table\-MF.c}!ObitTableMFInit@{ObitTableMFInit}}
+\index{ObitTableMFInit@{ObitTableMFInit}!ObitTableMF.c@{Obit\-Table\-MF.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-MFInit (gpointer {\em inn})}\label{ObitTableMF_8c_a8}
+
+
+Private: Initialize newly instantiated object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitTableMF.c@{Obit\-Table\-MF.c}!ObitTableMFOpen@{ObitTableMFOpen}}
+\index{ObitTableMFOpen@{ObitTableMFOpen}!ObitTableMF.c@{Obit\-Table\-MF.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-MFOpen ({\bf Obit\-Table\-MF} $\ast$ {\em in}, Obit\-IOAccess {\em access}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableMF_8c_a21}
+
+
+Public: Create {\bf Obit\-IO}{\rm (p.\,\pageref{structObitIO})} structures and open file. 
+
+The image descriptor is read if OBIT\_\-IO\_\-Read\-Only or OBIT\_\-IO\_\-Read\-Write and written to disk if opened OBIT\_\-IO\_\-Write\-Only. After the file has been opened the member, buffer is initialized for reading/storing the table unless member buffer\-Size is $<$0. If the requested version (\char`\"{}Ver\char`\"{} in Info\-List) is 0 then the highest numbered table of the same type is opened on Read or Read/Write, or a new table is created on on Write. The file etc. info should have been stored in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}: \begin{itemize}
+\item \char`\"{}File\-Type\char`\"{} OBIT\_\-long scalar = OBIT\_\-IO\_\-FITS or OBIT\_\-IO\_\-AIPS for file type (see class documentation for details). \item \char`\"{}n\-Row\-PIO\char`\"{} OBIT\_\-long scalar = Maximum number of table rows per transfer, this is the target size for Reads (may be fewer) and is used to create buffers. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Pointer to object to be opened. \item[{\em access}]access (OBIT\_\-IO\_\-Read\-Only,OBIT\_\-IO\_\-Read\-Write, or OBIT\_\-IO\_\-Write\-Only). If OBIT\_\-IO\_\-Write\-Only any existing data in the output file will be lost. \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\end{itemize}
+\index{ObitTableMF.c@{Obit\-Table\-MF.c}!ObitTableMFReadRow@{ObitTableMFReadRow}}
+\index{ObitTableMFReadRow@{ObitTableMFReadRow}!ObitTableMF.c@{Obit\-Table\-MF.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-MFRead\-Row ({\bf Obit\-Table\-MF} $\ast$ {\em in}, {\bf olong} {\em i\-MFRow}, {\bf Obit\-Table\-MFRow} $\ast$ {\em row}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableMF_8c_a22}
+
+
+Public: Read a table row. 
+
+Scalar values are copied but for array values, pointers into the data array are returned. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table to read \item[{\em i\-MFRow}]Row number, -1 -$>$ next \item[{\em row}]Table Row structure to receive data \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}
+\index{ObitTableMF.c@{Obit\-Table\-MF.c}!ObitTableMFRowClassInit@{ObitTableMFRowClassInit}}
+\index{ObitTableMFRowClassInit@{ObitTableMFRowClassInit}!ObitTableMF.c@{Obit\-Table\-MF.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-MFRow\-Class\-Init (void)}\label{ObitTableMF_8c_a26}
+
+
+Public: Row Class initializer. 
+
+\index{ObitTableMF.c@{Obit\-Table\-MF.c}!ObitTableMFRowClear@{ObitTableMFRowClear}}
+\index{ObitTableMFRowClear@{ObitTableMFRowClear}!ObitTableMF.c@{Obit\-Table\-MF.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-MFRow\-Clear (gpointer {\em inn})}\label{ObitTableMF_8c_a7}
+
+
+Private: Deallocate Row members. 
+
+Does (recursive) deallocation of parent class members. For some reason this wasn't build into the GType class. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to deallocate. Actually it should be an Obit\-Table\-MFRow$\ast$ cast to an Obit$\ast$. \end{description}
+\end{Desc}
+\index{ObitTableMF.c@{Obit\-Table\-MF.c}!ObitTableMFRowGetClass@{ObitTableMFRowGetClass}}
+\index{ObitTableMFRowGetClass@{ObitTableMFRowGetClass}!ObitTableMF.c@{Obit\-Table\-MF.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Table\-MFRow\-Get\-Class (void)}\label{ObitTableMF_8c_a15}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the Row class structure. \end{Desc}
+\index{ObitTableMF.c@{Obit\-Table\-MF.c}!ObitTableMFRowInit@{ObitTableMFRowInit}}
+\index{ObitTableMFRowInit@{ObitTableMFRowInit}!ObitTableMF.c@{Obit\-Table\-MF.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-MFRow\-Init (gpointer {\em inn})}\label{ObitTableMF_8c_a6}
+
+
+Private: Initialize newly instantiated Row object. 
+
+Parent classes portions are (recursively) initialized first \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em inn}]Pointer to the object to initialize. \end{description}
+\end{Desc}
+\index{ObitTableMF.c@{Obit\-Table\-MF.c}!ObitTableMFSetRow@{ObitTableMFSetRow}}
+\index{ObitTableMFSetRow@{ObitTableMFSetRow}!ObitTableMF.c@{Obit\-Table\-MF.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Table\-MFSet\-Row ({\bf Obit\-Table\-MF} $\ast$ {\em in}, {\bf Obit\-Table\-MFRow} $\ast$ {\em row}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableMF_8c_a23}
+
+
+Public: Init a table row for write. 
+
+This is only useful prior to filling a row structure in preparation . for a Write\-Row operation. Array members of the Row structure are . pointers to independently allocated memory, this routine allows using . the table IO buffer instead of allocating yet more memory.. This routine need only be called once to initialize a Row structure for write.. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table with buffer to be written \item[{\em row}]Table Row structure to attach \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitTableMF.c@{Obit\-Table\-MF.c}!ObitTableMFWriteRow@{ObitTableMFWriteRow}}
+\index{ObitTableMFWriteRow@{ObitTableMFWriteRow}!ObitTableMF.c@{Obit\-Table\-MF.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-MFWrite\-Row ({\bf Obit\-Table\-MF} $\ast$ {\em in}, {\bf olong} {\em i\-MFRow}, {\bf Obit\-Table\-MFRow} $\ast$ {\em row}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableMF_8c_a24}
+
+
+Public: Write a table row. 
+
+Before calling this routine, the row structure needs to be initialized and filled with data. The array members of the row structure are pointers to independently allocated memory. These pointers can be set to the correct table buffer locations using Obit\-Table\-MFSet\-Row \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Table to read \item[{\em i\-MFRow}]Row number, -1 -$>$ next \item[{\em row}]Table Row structure containing data \item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]return code, OBIT\_\-IO\_\-OK=$>$ OK \end{Desc}

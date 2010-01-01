@@ -1,0 +1,215 @@
+\section{Obit\-Fit\-Model.h File Reference}
+\label{ObitFitModel_8h}\index{ObitFitModel.h@{ObitFitModel.h}}
+{\bf Obit\-Fit\-Model}{\rm (p.\,\pageref{structObitFitModel})} Stores model fit parameters. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-Fit\-Model}
+\begin{CompactList}\small\item\em Obit\-Fit\-Model Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Fit\-Model\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-Fit\-Model\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Fit\-Model}{\rm (p.\,\pageref{structObitFitModel})} returns a Obit\-Fit\-Model$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-Fit\-Model\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Fit\-Model}{\rm (p.\,\pageref{structObitFitModel})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Fit\-Model\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-Fit\-Model\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef {\bf Obit\-Fit\-Model} $\ast$($\ast$ {\bf Obit\-Fit\-Model\-Create\-FP} )(gchar $\ast$name, Obit\-Fit\-Model\-Comp\-Type type, {\bf ofloat} Flux, {\bf ofloat} Delta\-X, {\bf ofloat} Delta\-Y, {\bf olong} nparm, {\bf ofloat} $\ast$parms)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Enumerations}
+\begin{CompactItemize}
+\item 
+enum {\bf obit\-Fit\-Model\-Comp\-Type} \{ \par
+{\bf OBIT\_\-Fit\-Model\_\-Point\-Mod}, 
+{\bf OBIT\_\-Fit\-Model\_\-Gauss\-Mod}, 
+{\bf OBIT\_\-Fit\-Model\_\-CGauss\-Mod}, 
+{\bf OBIT\_\-Fit\-Model\_\-USphere\-Mod}, 
+\par
+{\bf OBIT\_\-Fit\-Model\_\-Background}, 
+{\bf OBIT\_\-Fit\-Model\_\-Unknown}
+ \}
+\begin{CompactList}\small\item\em enum for Model Component model type \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Fit\-Model\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Fit\-Model} $\ast$ {\bf new\-Obit\-Fit\-Model} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+{\bf Obit\-Fit\-Model} $\ast$ {\bf Obit\-Fit\-Model\-Create} (gchar $\ast$name, Obit\-Fit\-Model\-Comp\-Type type, {\bf ofloat} Flux, {\bf ofloat} Delta\-X, {\bf ofloat} Delta\-Y, {\bf olong} nparm, {\bf ofloat} $\ast$parms)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-Fit\-Model}{\rm (p.\,\pageref{structObitFitModel})} structures. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Fit\-Model\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-Fit\-Model} $\ast$ {\bf Obit\-Fit\-Model\-Copy} ({\bf Obit\-Fit\-Model} $\ast$in, {\bf Obit\-Fit\-Model} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-Fit\-Model\-Clone} ({\bf Obit\-Fit\-Model} $\ast$in, {\bf Obit\-Fit\-Model} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-Fit\-Model\-Decon\-Gau} ({\bf ofloat} bmaj, {\bf ofloat} bmin, {\bf ofloat} bpa, {\bf ofloat} ebmaj, {\bf ofloat} ebmin, {\bf ofloat} ebpa, {\bf ofloat} cbmaj, {\bf ofloat} cbmin, {\bf ofloat} cbpa, {\bf ofloat} dgau[3][3])
+\begin{CompactList}\small\item\em Public: Deconvolve Gaussians. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Fit\-Model}{\rm (p.\,\pageref{structObitFitModel})} Stores model fit parameters. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} class.\subsection{Creators and Destructors}\label{ObitFitModel_8h_ObitFitModelaccess}
+An {\bf Obit\-Fit\-Model}{\rm (p.\,\pageref{structObitFitModel})} will usually be created using Obit\-Fit\-Model\-Create which allows specifying a name for the object as well as other information.
+
+A copy of a pointer to an {\bf Obit\-Fit\-Model}{\rm (p.\,\pageref{structObitFitModel})} should always be made using the {\bf Obit\-Fit\-Model\-Ref}{\rm (p.\,\pageref{ObitFitModel_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-Fit\-Model}{\rm (p.\,\pageref{structObitFitModel})} or changing a pointer, the function {\bf Obit\-Fit\-Model\-Unref}{\rm (p.\,\pageref{ObitFitModel_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.
+
+\subsection{Define Documentation}
+\index{ObitFitModel.h@{Obit\-Fit\-Model.h}!ObitFitModelIsA@{ObitFitModelIsA}}
+\index{ObitFitModelIsA@{ObitFitModelIsA}!ObitFitModel.h@{Obit\-Fit\-Model.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Fit\-Model\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-Fit\-Model\-Get\-Class())}\label{ObitFitModel_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitFitModel.h@{Obit\-Fit\-Model.h}!ObitFitModelRef@{ObitFitModelRef}}
+\index{ObitFitModelRef@{ObitFitModelRef}!ObitFitModel.h@{Obit\-Fit\-Model.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Fit\-Model\-Ref(in)\ Obit\-Ref (in)}\label{ObitFitModel_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Fit\-Model}{\rm (p.\,\pageref{structObitFitModel})}. 
+
+returns a Obit\-Fit\-Model$\ast$. in = object to reference \index{ObitFitModel.h@{Obit\-Fit\-Model.h}!ObitFitModelUnref@{ObitFitModelUnref}}
+\index{ObitFitModelUnref@{ObitFitModelUnref}!ObitFitModel.h@{Obit\-Fit\-Model.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Fit\-Model\-Unref(in)\ Obit\-Unref (in)}\label{ObitFitModel_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Fit\-Model}{\rm (p.\,\pageref{structObitFitModel})} returns a Obit\-Fit\-Model$\ast$. 
+
+in = object to unreference 
+
+\subsection{Typedef Documentation}
+\index{ObitFitModel.h@{Obit\-Fit\-Model.h}!ObitFitModelCreateFP@{ObitFitModelCreateFP}}
+\index{ObitFitModelCreateFP@{ObitFitModelCreateFP}!ObitFitModel.h@{Obit\-Fit\-Model.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-Fit\-Model}$\ast$($\ast$ {\bf Obit\-Fit\-Model\-Create\-FP})(gchar $\ast$name, Obit\-Fit\-Model\-Comp\-Type type, {\bf ofloat} Flux, {\bf ofloat} Delta\-X, {\bf ofloat} Delta\-Y, {\bf olong} nparm, {\bf ofloat} $\ast$parms)}\label{ObitFitModel_8h_a3}
+
+
+Typedef for definition of class pointer structure. 
+
+
+
+\subsection{Enumeration Type Documentation}
+\index{ObitFitModel.h@{Obit\-Fit\-Model.h}!obitFitModelCompType@{obitFitModelCompType}}
+\index{obitFitModelCompType@{obitFitModelCompType}!ObitFitModel.h@{Obit\-Fit\-Model.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}enum {\bf obit\-Fit\-Model\-Comp\-Type}}\label{ObitFitModel_8h_a17}
+
+
+enum for Model Component model type 
+
+\begin{Desc}
+\item[Enumeration values: ]\par
+\begin{description}
+\index{OBIT_FitModel_PointMod@{OBIT\_\-FitModel\_\-PointMod}!ObitFitModel.h@{ObitFitModel.h}}\index{ObitFitModel.h@{ObitFitModel.h}!OBIT_FitModel_PointMod@{OBIT\_\-FitModel\_\-PointMod}}\item[{\em 
+OBIT\_\-Fit\-Model\_\-Point\-Mod\label{ObitFitModel_8h_a17a4}
+}]Point. \index{OBIT_FitModel_GaussMod@{OBIT\_\-FitModel\_\-GaussMod}!ObitFitModel.h@{ObitFitModel.h}}\index{ObitFitModel.h@{ObitFitModel.h}!OBIT_FitModel_GaussMod@{OBIT\_\-FitModel\_\-GaussMod}}\item[{\em 
+OBIT\_\-Fit\-Model\_\-Gauss\-Mod\label{ObitFitModel_8h_a17a5}
+}]Gaussian on sky. \index{OBIT_FitModel_CGaussMod@{OBIT\_\-FitModel\_\-CGaussMod}!ObitFitModel.h@{ObitFitModel.h}}\index{ObitFitModel.h@{ObitFitModel.h}!OBIT_FitModel_CGaussMod@{OBIT\_\-FitModel\_\-CGaussMod}}\item[{\em 
+OBIT\_\-Fit\-Model\_\-CGauss\-Mod\label{ObitFitModel_8h_a17a6}
+}]Convolved Gaussian. \index{OBIT_FitModel_USphereMod@{OBIT\_\-FitModel\_\-USphereMod}!ObitFitModel.h@{ObitFitModel.h}}\index{ObitFitModel.h@{ObitFitModel.h}!OBIT_FitModel_USphereMod@{OBIT\_\-FitModel\_\-USphereMod}}\item[{\em 
+OBIT\_\-Fit\-Model\_\-USphere\-Mod\label{ObitFitModel_8h_a17a7}
+}]Uniform sphere. \index{OBIT_FitModel_Background@{OBIT\_\-FitModel\_\-Background}!ObitFitModel.h@{ObitFitModel.h}}\index{ObitFitModel.h@{ObitFitModel.h}!OBIT_FitModel_Background@{OBIT\_\-FitModel\_\-Background}}\item[{\em 
+OBIT\_\-Fit\-Model\_\-Background\label{ObitFitModel_8h_a17a8}
+}]Background surface. \index{OBIT_FitModel_Unknown@{OBIT\_\-FitModel\_\-Unknown}!ObitFitModel.h@{ObitFitModel.h}}\index{ObitFitModel.h@{ObitFitModel.h}!OBIT_FitModel_Unknown@{OBIT\_\-FitModel\_\-Unknown}}\item[{\em 
+OBIT\_\-Fit\-Model\_\-Unknown\label{ObitFitModel_8h_a17a9}
+}]Unknown. \end{description}
+\end{Desc}
+
+
+
+\subsection{Function Documentation}
+\index{ObitFitModel.h@{Obit\-Fit\-Model.h}!newObitFitModel@{newObitFitModel}}
+\index{newObitFitModel@{newObitFitModel}!ObitFitModel.h@{Obit\-Fit\-Model.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Fit\-Model}$\ast$ new\-Obit\-Fit\-Model (gchar $\ast$ {\em name})}\label{ObitFitModel_8h_a11}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitFitModel.h@{Obit\-Fit\-Model.h}!ObitFitModelClassInit@{ObitFitModelClassInit}}
+\index{ObitFitModelClassInit@{ObitFitModelClassInit}!ObitFitModel.h@{Obit\-Fit\-Model.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Fit\-Model\-Class\-Init (void)}\label{ObitFitModel_8h_a10}
+
+
+Public: Class initializer. 
+
+\index{ObitFitModel.h@{Obit\-Fit\-Model.h}!ObitFitModelClone@{ObitFitModelClone}}
+\index{ObitFitModelClone@{ObitFitModelClone}!ObitFitModel.h@{Obit\-Fit\-Model.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Fit\-Model\-Clone ({\bf Obit\-Fit\-Model} $\ast$ {\em in}, {\bf Obit\-Fit\-Model} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFitModel_8h_a15}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error/message stack object. \end{description}
+\end{Desc}
+\index{ObitFitModel.h@{Obit\-Fit\-Model.h}!ObitFitModelCopy@{ObitFitModelCopy}}
+\index{ObitFitModelCopy@{ObitFitModelCopy}!ObitFitModel.h@{Obit\-Fit\-Model.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Fit\-Model}$\ast$ Obit\-Fit\-Model\-Copy ({\bf Obit\-Fit\-Model} $\ast$ {\em in}, {\bf Obit\-Fit\-Model} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitFitModel_8h_a14}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitFitModel.h@{Obit\-Fit\-Model.h}!ObitFitModelCreate@{ObitFitModelCreate}}
+\index{ObitFitModelCreate@{ObitFitModelCreate}!ObitFitModel.h@{Obit\-Fit\-Model.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Fit\-Model}$\ast$ Obit\-Fit\-Model\-Create (gchar $\ast$ {\em name}, Obit\-Fit\-Model\-Comp\-Type {\em type}, {\bf ofloat} {\em Peak}, {\bf ofloat} {\em Delta\-X}, {\bf ofloat} {\em Delta\-Y}, {\bf olong} {\em nparm}, {\bf ofloat} $\ast$ {\em parms})}\label{ObitFitModel_8h_a12}
+
+
+Public: Create/initialize {\bf Obit\-Fit\-Model}{\rm (p.\,\pageref{structObitFitModel})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em type}]Model type of the model component \item[{\em Peak}]Peak density \item[{\em Delta\-X}]\char`\"{}X\char`\"{} (RA) offset (deg) of center from reference position \item[{\em Delta\-Y}]\char`\"{}Y\char`\"{} (Dec) offset (deg) of center from reference position \item[{\em nparm}]Number of parameters \item[{\em parms}]Model parameters, type dependent \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitFitModel.h@{Obit\-Fit\-Model.h}!ObitFitModelDeconGau@{ObitFitModelDeconGau}}
+\index{ObitFitModelDeconGau@{ObitFitModelDeconGau}!ObitFitModel.h@{Obit\-Fit\-Model.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-Fit\-Model\-Decon\-Gau ({\bf ofloat} {\em bmaj}, {\bf ofloat} {\em bmin}, {\bf ofloat} {\em bpa}, {\bf ofloat} {\em ebmaj}, {\bf ofloat} {\em ebmin}, {\bf ofloat} {\em ebpa}, {\bf ofloat} {\em cbmaj}, {\bf ofloat} {\em cbmin}, {\bf ofloat} {\em cbpa}, {\bf ofloat} {\em dgau}[3][3])}\label{ObitFitModel_8h_a16}
+
+
+Public: Deconvolve Gaussians. 
+
+Routine translated from the AIPSish VSAD.FOR/BMVAL \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em bmaj}]Fitted major axis \item[{\em bmin}]Fitted minor axis \item[{\em bpa}]Fitted pos. angle (deg) \item[{\em ebmaj}]Fitted major axis error \item[{\em ebmin}]Fitted minor axis error \item[{\em ebpa}]Fitted pos. angle error (deg) \item[{\em cbmaj}]Clean beam major axis \item[{\em cbmin}]Clean beam minor axis \item[{\em cbpa}]Clean beam pos. angle (deg) \item[{\em dgau}]Deconvolved (Major, minor, PA) array dgau[0][$\ast$] = deconvolved dgau[1][$\ast$] = upper bound dgau[2][$\ast$] = lower bound \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Error return 0-$>$ Can completely deconvolve 1-$>$ Cannot deconv some limits 2-$>$ Cannot deconv fitted source \end{Desc}
+\index{ObitFitModel.h@{Obit\-Fit\-Model.h}!ObitFitModelGetClass@{ObitFitModelGetClass}}
+\index{ObitFitModelGetClass@{ObitFitModelGetClass}!ObitFitModel.h@{Obit\-Fit\-Model.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Fit\-Model\-Get\-Class (void)}\label{ObitFitModel_8h_a13}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}

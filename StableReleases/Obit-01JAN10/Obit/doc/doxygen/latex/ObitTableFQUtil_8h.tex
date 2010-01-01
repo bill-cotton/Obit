@@ -1,0 +1,67 @@
+\section{Obit\-Table\-FQUtil.h File Reference}
+\label{ObitTableFQUtil_8h}\index{ObitTableFQUtil.h@{ObitTableFQUtil.h}}
+{\bf Obit\-Table\-FQ}{\rm (p.\,\pageref{structObitTableFQ})} class utility routine definition. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UV.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-FQ.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+Obit\-IOCode {\bf Obit\-Table\-FQGet\-Info} ({\bf Obit\-Table\-FQ} $\ast$in, {\bf oint} fqid, {\bf oint} $\ast$nif, {\bf odouble} $\ast$$\ast$freq\-Off, {\bf oint} $\ast$$\ast$side\-Band, {\bf ofloat} $\ast$$\ast$ch\-Bandw, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Read information for an FQid. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-FQPut\-Info} ({\bf Obit\-Table\-FQ} $\ast$in, {\bf oint} fqid, {\bf oint} nif, {\bf odouble} $\ast$freq\-Off, {\bf oint} $\ast$side\-Band, {\bf ofloat} $\ast$ch\-Bandw, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Write Read information for an FQid. \item\end{CompactList}\item 
+Obit\-IOCode {\bf Obit\-Table\-FQSelect} ({\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-UV} $\ast$out\-UV, {\bf odouble} $\ast$Sou\-IFOff, {\bf odouble} Sou\-BW, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy FQ table with selection. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Table\-FQ}{\rm (p.\,\pageref{structObitTableFQ})} class utility routine definition. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitTableFQUtil.h@{Obit\-Table\-FQUtil.h}!ObitTableFQGetInfo@{ObitTableFQGetInfo}}
+\index{ObitTableFQGetInfo@{ObitTableFQGetInfo}!ObitTableFQUtil.h@{Obit\-Table\-FQUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-FQGet\-Info ({\bf Obit\-Table\-FQ} $\ast$ {\em in}, {\bf oint} {\em fqid}, {\bf oint} $\ast$ {\em nif}, {\bf odouble} $\ast$$\ast$ {\em freq\-Off}, {\bf oint} $\ast$$\ast$ {\em side\-Band}, {\bf ofloat} $\ast$$\ast$ {\em ch\-Bandw}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableFQUtil_8h_a0}
+
+
+Public: Read information for an FQid. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]FQ table to access \item[{\em fqid}]Desired frequency id \item[{\em nif}]Number of IFs in data \item[{\em freq\-Off}]IF Frequency offsets from reference frequency (Hz) returns pointer to newly malloced memory, must be g\_\-freeed. \item[{\em side\-Ban}]Sideband array, 1=$>$ upper, -1=lower (?) returns pointer to newly malloced memory, must be g\_\-freeed. \item[{\em ch\-Bandw}]channel bandwidths per IF (Hz), returns pointer to newly malloced memory, must be g\_\-freeed. \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]I/O Code OBIT\_\-IO\_\-OK = OK. \end{Desc}
+\index{ObitTableFQUtil.h@{Obit\-Table\-FQUtil.h}!ObitTableFQPutInfo@{ObitTableFQPutInfo}}
+\index{ObitTableFQPutInfo@{ObitTableFQPutInfo}!ObitTableFQUtil.h@{Obit\-Table\-FQUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-FQPut\-Info ({\bf Obit\-Table\-FQ} $\ast$ {\em in}, {\bf oint} {\em fqid}, {\bf oint} {\em nif}, {\bf odouble} $\ast$ {\em freq\-Off}, {\bf oint} $\ast$ {\em side\-Band}, {\bf ofloat} $\ast$ {\em ch\-Bandw}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableFQUtil_8h_a1}
+
+
+Public: Write Read information for an FQid. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]FQ table to access \item[{\em fqid}]Desired frequency id \item[{\em nif}]Number of IFs in data \item[{\em freq\-Off}]IF Frequency offsets from reference frequency (Hz) \item[{\em side\-Ban}]Sideband array, 1=$>$ upper, -1=lower (?) \item[{\em ch\-Bandw}]channel bandwidths per IF (Hz), \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]I/O Code OBIT\_\-IO\_\-OK = OK. \end{Desc}
+\index{ObitTableFQUtil.h@{Obit\-Table\-FQUtil.h}!ObitTableFQSelect@{ObitTableFQSelect}}
+\index{ObitTableFQSelect@{ObitTableFQSelect}!ObitTableFQUtil.h@{Obit\-Table\-FQUtil.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOCode Obit\-Table\-FQSelect ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-UV} $\ast$ {\em out\-UV}, {\bf odouble} $\ast$ {\em Sou\-IFOff}, {\bf odouble} {\em Sou\-BW}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTableFQUtil_8h_a2}
+
+
+Public: Copy FQ table with selection. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input UV to copy from \item[{\em out\-UV}]Output UV to copy to \item[{\em Sou\-IFOff}]if Non\-NULL, source dependent values to be added to the IF frequencies. Includes selection by IF. \item[{\em $\ast$err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} error stack. \item[{\em Sou\-BW}]if $>$0.0, source dependent total bandwidth \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]I/O Code OBIT\_\-IO\_\-OK = OK. \end{Desc}

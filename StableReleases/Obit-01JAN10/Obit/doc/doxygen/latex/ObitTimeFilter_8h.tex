@@ -1,0 +1,336 @@
+\section{Obit\-Time\-Filter.h File Reference}
+\label{ObitTimeFilter_8h}\index{ObitTimeFilter.h@{ObitTimeFilter.h}}
+{\bf Obit\-Time\-Filter}{\rm (p.\,\pageref{structObitTimeFilter})} time filter class definition. 
+
+{\tt \#include \char`\"{}Obit\-Thread.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-FArray.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-CArray.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-FFT.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-FInterpolate.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-Time\-Filter}
+\begin{CompactList}\small\item\em Obit\-Time\-Filter Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-Time\-Filter\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-Time\-Filter\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-Time\-Filter}{\rm (p.\,\pageref{structObitTimeFilter})} returns a Obit\-Time\-Filter$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-Time\-Filter\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-Time\-Filter}{\rm (p.\,\pageref{structObitTimeFilter})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-Time\-Filter\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-Time\-Filter\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef {\bf Obit\-Time\-Filter} $\ast$($\ast$ {\bf new\-Obit\-Time\-Filter\-FP} )(gchar $\ast$name, {\bf olong} n\-Time, {\bf olong} n\-Filter)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef void($\ast$ {\bf Obit\-Time\-Filter\-Grid\-Time\-FP} )({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} series\-No, {\bf ofloat} d\-Time, {\bf olong} n\-Time, {\bf ofloat} $\ast$times, {\bf ofloat} $\ast$data)
+\item 
+typedef void($\ast$ {\bf Obit\-Time\-Filter\-Ungrid\-Time\-FP} )({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} series\-No, {\bf olong} n\-Time, {\bf ofloat} $\ast$times, {\bf ofloat} $\ast$data)
+\item 
+typedef void($\ast$ {\bf Obit\-Time\-Filter2Freq\-FP} )({\bf Obit\-Time\-Filter} $\ast$in)
+\item 
+typedef void($\ast$ {\bf Obit\-Time\-Filter2Time\-FP} )({\bf Obit\-Time\-Filter} $\ast$in)
+\item 
+typedef void($\ast$ {\bf Obit\-Time\-Filter\-Filter\-FP} )({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} series\-No, Obit\-Time\-Filter\-Type type, {\bf ofloat} $\ast$parms, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-Time\-Filter\-Do\-Filter\-FP} )({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} series\-No, Obit\-Time\-Filter\-Type type, {\bf ofloat} $\ast$freqs, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-Time\-Filter\-Plot\-Power\-FP} )({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} series\-No, gchar $\ast$label, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef void($\ast$ {\bf Obit\-Time\-Filter\-Plot\-Time\-FP} )({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} series\-No, gchar $\ast$label, {\bf Obit\-Err} $\ast$err)
+\end{CompactItemize}
+\subsection*{Enumerations}
+\begin{CompactItemize}
+\item 
+enum {\bf obit\-Time\-Filter\-Type} \{ {\bf OBIT\_\-Time\-Filter\_\-Low\-Pass}, 
+{\bf OBIT\_\-Time\-Filter\_\-High\-Pass}, 
+{\bf OBIT\_\-Time\-Filter\_\-Notch\-Pass}, 
+{\bf OBIT\_\-Time\-Filter\_\-Notch\-Block}
+ \}
+\begin{CompactList}\small\item\em enum for type of {\bf Obit\-Time\-Filter}{\rm (p.\,\pageref{structObitTimeFilter})} filter type. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Time\-Filter\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-Time\-Filter} $\ast$ {\bf new\-Obit\-Time\-Filter} (gchar $\ast$name, {\bf olong} n\-Time, {\bf olong} n\-Series)
+\begin{CompactList}\small\item\em Public: Constructor. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-Time\-Filter\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+void {\bf Obit\-Time\-Filter\-Resize} ({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} n\-Time)
+\begin{CompactList}\small\item\em Public: Resize arrays. \item\end{CompactList}\item 
+void {\bf Obit\-Time\-Filter\-Grid\-Time} ({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} series\-No, {\bf ofloat} d\-Time, {\bf olong} n\-Time, {\bf ofloat} $\ast$times, {\bf ofloat} $\ast$data)
+\begin{CompactList}\small\item\em Public: Construct regular time series. \item\end{CompactList}\item 
+void {\bf Obit\-Time\-Filter\-Ungrid\-Time} ({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} series\-No, {\bf olong} n\-Time, {\bf ofloat} $\ast$times, {\bf ofloat} $\ast$data)
+\begin{CompactList}\small\item\em Public: Copy time series to external times. \item\end{CompactList}\item 
+void {\bf Obit\-Time\-Filter2Freq} ({\bf Obit\-Time\-Filter} $\ast$in)
+\begin{CompactList}\small\item\em Public: Compute frequency series. \item\end{CompactList}\item 
+void {\bf Obit\-Time\-Filter2Time} ({\bf Obit\-Time\-Filter} $\ast$in)
+\begin{CompactList}\small\item\em Public: Compute Time series. \item\end{CompactList}\item 
+void {\bf Obit\-Time\-Filter\-Filter} ({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} series\-No, Obit\-Time\-Filter\-Type type, {\bf ofloat} $\ast$parms, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Apply Filter to Frequency series. \item\end{CompactList}\item 
+void {\bf Obit\-Time\-Filter\-Do\-Filter} ({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} series\-No, Obit\-Time\-Filter\-Type type, {\bf ofloat} $\ast$freqs, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Apply Filter to Frequency series with physical parameters. \item\end{CompactList}\item 
+void {\bf Obit\-Time\-Filter\-Plot\-Power} ({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} series\-No, gchar $\ast$label, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Plot power spectrum. \item\end{CompactList}\item 
+void {\bf Obit\-Time\-Filter\-Plot\-Time} ({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} series\-No, gchar $\ast$label, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Plot Time series. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-Time\-Filter}{\rm (p.\,\pageref{structObitTimeFilter})} time filter class definition. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} class. This class is for performing Time\-Filter on memory resident data.\subsection{Creators and Destructors}\label{ObitTimeFilter_8h_ObitTimeFilter}
+An {\bf Obit\-Time\-Filter}{\rm (p.\,\pageref{structObitTimeFilter})} can be created using new\-Obit\-Time\-Filter which allows specifying a name for the object, and the type, size and direction of the transform.
+
+A copy of a pointer to an {\bf Obit\-Time\-Filter}{\rm (p.\,\pageref{structObitTimeFilter})} should always be made using the {\bf Obit\-Time\-Filter\-Ref}{\rm (p.\,\pageref{ObitTimeFilter_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-Time\-Filter}{\rm (p.\,\pageref{structObitTimeFilter})} or changing a pointer, the function {\bf Obit\-Time\-Filter\-Unref}{\rm (p.\,\pageref{ObitTimeFilter_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.\subsection{Creators and Destructors}\label{ObitTimeFilter_8h_ObitTimeFilter}
+An {\bf Obit\-Time\-Filter}{\rm (p.\,\pageref{structObitTimeFilter})} provides storage for one or more time series of floats in both the time and frequency (half complex) domains. The class also contains tools for transforming from one domain to the other and for applying a filter in the frequency domain. Typcal usage sequence is: \begin{itemize}
+\item Create using {\bf new\-Obit\-Time\-Filter}{\rm (p.\,\pageref{ObitTimeFilter_8c_a7})} \item fill time series data using \#time\-Data ofloat pointer member \item transform to frequency using {\bf Obit\-Time\-Filter2Freq}{\rm (p.\,\pageref{ObitTimeFilter_8c_a12})} \item apply filter using {\bf Obit\-Time\-Filter\-Filter}{\rm (p.\,\pageref{ObitTimeFilter_8c_a14})} \item transform back to time domain using {\bf Obit\-Time\-Filter2Time}{\rm (p.\,\pageref{ObitTimeFilter_8c_a13})} \item access filter time series using \#time\-Data ofloat pointer member \item unreference object using {\bf Obit\-Time\-Filter\-Unref}{\rm (p.\,\pageref{ObitTimeFilter_8h_a0})}\end{itemize}
+
+
+\subsection{Define Documentation}
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilterIsA@{ObitTimeFilterIsA}}
+\index{ObitTimeFilterIsA@{ObitTimeFilterIsA}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Time\-Filter\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-Time\-Filter\-Get\-Class())}\label{ObitTimeFilter_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilterRef@{ObitTimeFilterRef}}
+\index{ObitTimeFilterRef@{ObitTimeFilterRef}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Time\-Filter\-Ref(in)\ Obit\-Ref (in)}\label{ObitTimeFilter_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-Time\-Filter}{\rm (p.\,\pageref{structObitTimeFilter})}. 
+
+returns a Obit\-Time\-Filter$\ast$. in = object to reference \index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilterUnref@{ObitTimeFilterUnref}}
+\index{ObitTimeFilterUnref@{ObitTimeFilterUnref}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-Time\-Filter\-Unref(in)\ Obit\-Unref (in)}\label{ObitTimeFilter_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-Time\-Filter}{\rm (p.\,\pageref{structObitTimeFilter})} returns a Obit\-Time\-Filter$\ast$. 
+
+in = object to unreference 
+
+\subsection{Typedef Documentation}
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!newObitTimeFilterFP@{newObitTimeFilterFP}}
+\index{newObitTimeFilterFP@{newObitTimeFilterFP}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-Time\-Filter}$\ast$($\ast$ {\bf new\-Obit\-Time\-Filter\-FP})(gchar $\ast$name, {\bf olong} n\-Time, {\bf olong} n\-Filter)}\label{ObitTimeFilter_8h_a3}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilter2FreqFP@{ObitTimeFilter2FreqFP}}
+\index{ObitTimeFilter2FreqFP@{ObitTimeFilter2FreqFP}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Time\-Filter2Freq\-FP})({\bf Obit\-Time\-Filter} $\ast$in)}\label{ObitTimeFilter_8h_a6}
+
+
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilter2TimeFP@{ObitTimeFilter2TimeFP}}
+\index{ObitTimeFilter2TimeFP@{ObitTimeFilter2TimeFP}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Time\-Filter2Time\-FP})({\bf Obit\-Time\-Filter} $\ast$in)}\label{ObitTimeFilter_8h_a7}
+
+
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilterDoFilterFP@{ObitTimeFilterDoFilterFP}}
+\index{ObitTimeFilterDoFilterFP@{ObitTimeFilterDoFilterFP}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Time\-Filter\-Do\-Filter\-FP})({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} series\-No, Obit\-Time\-Filter\-Type type, {\bf ofloat} $\ast$freqs, {\bf Obit\-Err} $\ast$err)}\label{ObitTimeFilter_8h_a9}
+
+
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilterFilterFP@{ObitTimeFilterFilterFP}}
+\index{ObitTimeFilterFilterFP@{ObitTimeFilterFilterFP}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Time\-Filter\-Filter\-FP})({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} series\-No, Obit\-Time\-Filter\-Type type, {\bf ofloat} $\ast$parms, {\bf Obit\-Err} $\ast$err)}\label{ObitTimeFilter_8h_a8}
+
+
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilterGridTimeFP@{ObitTimeFilterGridTimeFP}}
+\index{ObitTimeFilterGridTimeFP@{ObitTimeFilterGridTimeFP}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Time\-Filter\-Grid\-Time\-FP})({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} series\-No, {\bf ofloat} d\-Time, {\bf olong} n\-Time, {\bf ofloat} $\ast$times, {\bf ofloat} $\ast$data)}\label{ObitTimeFilter_8h_a4}
+
+
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilterPlotPowerFP@{ObitTimeFilterPlotPowerFP}}
+\index{ObitTimeFilterPlotPowerFP@{ObitTimeFilterPlotPowerFP}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Time\-Filter\-Plot\-Power\-FP})({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} series\-No, gchar $\ast$label, {\bf Obit\-Err} $\ast$err)}\label{ObitTimeFilter_8h_a10}
+
+
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilterPlotTimeFP@{ObitTimeFilterPlotTimeFP}}
+\index{ObitTimeFilterPlotTimeFP@{ObitTimeFilterPlotTimeFP}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Time\-Filter\-Plot\-Time\-FP})({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} series\-No, gchar $\ast$label, {\bf Obit\-Err} $\ast$err)}\label{ObitTimeFilter_8h_a11}
+
+
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilterUngridTimeFP@{ObitTimeFilterUngridTimeFP}}
+\index{ObitTimeFilterUngridTimeFP@{ObitTimeFilterUngridTimeFP}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-Time\-Filter\-Ungrid\-Time\-FP})({\bf Obit\-Time\-Filter} $\ast$in, {\bf olong} series\-No, {\bf olong} n\-Time, {\bf ofloat} $\ast$times, {\bf ofloat} $\ast$data)}\label{ObitTimeFilter_8h_a5}
+
+
+
+
+\subsection{Enumeration Type Documentation}
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!obitTimeFilterType@{obitTimeFilterType}}
+\index{obitTimeFilterType@{obitTimeFilterType}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}enum {\bf obit\-Time\-Filter\-Type}}\label{ObitTimeFilter_8h_a28}
+
+
+enum for type of {\bf Obit\-Time\-Filter}{\rm (p.\,\pageref{structObitTimeFilter})} filter type. 
+
+This specifies the type of filtering to be performed. \begin{Desc}
+\item[Enumeration values: ]\par
+\begin{description}
+\index{OBIT_TimeFilter_LowPass@{OBIT\_\-TimeFilter\_\-LowPass}!ObitTimeFilter.h@{ObitTimeFilter.h}}\index{ObitTimeFilter.h@{ObitTimeFilter.h}!OBIT_TimeFilter_LowPass@{OBIT\_\-TimeFilter\_\-LowPass}}\item[{\em 
+OBIT\_\-Time\-Filter\_\-Low\-Pass\label{ObitTimeFilter_8h_a28a12}
+}]Low pass filter. \index{OBIT_TimeFilter_HighPass@{OBIT\_\-TimeFilter\_\-HighPass}!ObitTimeFilter.h@{ObitTimeFilter.h}}\index{ObitTimeFilter.h@{ObitTimeFilter.h}!OBIT_TimeFilter_HighPass@{OBIT\_\-TimeFilter\_\-HighPass}}\item[{\em 
+OBIT\_\-Time\-Filter\_\-High\-Pass\label{ObitTimeFilter_8h_a28a13}
+}]High pass filter. \index{OBIT_TimeFilter_NotchPass@{OBIT\_\-TimeFilter\_\-NotchPass}!ObitTimeFilter.h@{ObitTimeFilter.h}}\index{ObitTimeFilter.h@{ObitTimeFilter.h}!OBIT_TimeFilter_NotchPass@{OBIT\_\-TimeFilter\_\-NotchPass}}\item[{\em 
+OBIT\_\-Time\-Filter\_\-Notch\-Pass\label{ObitTimeFilter_8h_a28a14}
+}]Notch pass filter. \index{OBIT_TimeFilter_NotchBlock@{OBIT\_\-TimeFilter\_\-NotchBlock}!ObitTimeFilter.h@{ObitTimeFilter.h}}\index{ObitTimeFilter.h@{ObitTimeFilter.h}!OBIT_TimeFilter_NotchBlock@{OBIT\_\-TimeFilter\_\-NotchBlock}}\item[{\em 
+OBIT\_\-Time\-Filter\_\-Notch\-Block\label{ObitTimeFilter_8h_a28a15}
+}]Notch block filter. \end{description}
+\end{Desc}
+
+
+
+\subsection{Function Documentation}
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!newObitTimeFilter@{newObitTimeFilter}}
+\index{newObitTimeFilter@{newObitTimeFilter}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Time\-Filter}$\ast$ new\-Obit\-Time\-Filter (gchar $\ast$ {\em name}, {\bf olong} {\em n\-Time}, {\bf olong} {\em n\-Series})}\label{ObitTimeFilter_8h_a17}
+
+
+Public: Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em n\-Time}]Number of times in arrays to be filtered It is best to add some extra padding (10\%) to allow a smooth transition from the end of the sequence back to the beginning. Remember the FFT algorithm assumes the function is periodic. \item[{\em n\-Series}]Number of time sequences to be filtered \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilter2Freq@{ObitTimeFilter2Freq}}
+\index{ObitTimeFilter2Freq@{ObitTimeFilter2Freq}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Time\-Filter2Freq ({\bf Obit\-Time\-Filter} $\ast$ {\em in})}\label{ObitTimeFilter_8h_a22}
+
+
+Public: Compute frequency series. 
+
+A linear interpolation between the last valid point and the first valid point is made to reduce the wraparound edge effects. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object with Time\-Filter structures. \end{description}
+\end{Desc}
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilter2Time@{ObitTimeFilter2Time}}
+\index{ObitTimeFilter2Time@{ObitTimeFilter2Time}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Time\-Filter2Time ({\bf Obit\-Time\-Filter} $\ast$ {\em in})}\label{ObitTimeFilter_8h_a23}
+
+
+Public: Compute Time series. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object with Time\-Filter structures. \end{description}
+\end{Desc}
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilterClassInit@{ObitTimeFilterClassInit}}
+\index{ObitTimeFilterClassInit@{ObitTimeFilterClassInit}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Time\-Filter\-Class\-Init (void)}\label{ObitTimeFilter_8h_a16}
+
+
+Public: Class initializer. 
+
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilterDoFilter@{ObitTimeFilterDoFilter}}
+\index{ObitTimeFilterDoFilter@{ObitTimeFilterDoFilter}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Time\-Filter\-Do\-Filter ({\bf Obit\-Time\-Filter} $\ast$ {\em in}, {\bf olong} {\em series\-No}, Obit\-Time\-Filter\-Type {\em type}, {\bf ofloat} $\ast$ {\em freq}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTimeFilter_8h_a25}
+
+
+Public: Apply Filter to Frequency series with physical parameters. 
+
+Following Filters are supported: \begin{itemize}
+\item OBIT\_\-Time\-Filter\_\-Low\-Pass - Zeroes frequencies above freq[0] (Hz) \item OBIT\_\-Time\-Filter\_\-High\-Pass - Zeroes frequencies below freq[0] (Hz) \item OBIT\_\-Time\-Filter\_\-Notch\-Pass - Zeroes frequencies not in frequency range freq[0]-$>$freq[1] \item OBIT\_\-Time\-Filter\_\-Notch\-Block - Zeroes frequencies in frequency range freq[0]-$>$freq[1]\end{itemize}
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object with Time\-Filter structures. \item[{\em series\-No}]Which time/frequency series to apply to (0-rel), $<$0 =$>$ all \item[{\em type}]Filter type to apply \item[{\em freq}]Frequencies (Hz) for filter, meaning depends on type. \item[{\em err}]Error stack \end{description}
+\end{Desc}
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilterFilter@{ObitTimeFilterFilter}}
+\index{ObitTimeFilterFilter@{ObitTimeFilterFilter}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Time\-Filter\-Filter ({\bf Obit\-Time\-Filter} $\ast$ {\em in}, {\bf olong} {\em series\-No}, Obit\-Time\-Filter\-Type {\em type}, {\bf ofloat} $\ast$ {\em parms}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTimeFilter_8h_a24}
+
+
+Public: Apply Filter to Frequency series. 
+
+Following Filters are supported: \begin{itemize}
+\item OBIT\_\-Time\-Filter\_\-Low\-Pass - Zeroes frequencies above a fraction, parm[0], of the highest. \item OBIT\_\-Time\-Filter\_\-High\-Pass - Zeroes frequencies below a fraction, parm[0], of the highest. \item OBIT\_\-Time\-Filter\_\-Notch\-Pass - Zeroes frequencies not in frequency range parm[0]-$>$parm[1] \item OBIT\_\-Time\-Filter\_\-Notch\-Block - Zeroes frequencies in frequency range parm[0]-$>$parm[1]\end{itemize}
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object with Time\-Filter structures. \item[{\em series\-No}]Which time/frequency series to apply to (0-rel), $<$0 =$>$ all \item[{\em type}]Filter type to apply \item[{\em $\ast$parm}]Parameters for filter, meaning depends on type. \item[{\em err}]Error stack \end{description}
+\end{Desc}
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilterGetClass@{ObitTimeFilterGetClass}}
+\index{ObitTimeFilterGetClass@{ObitTimeFilterGetClass}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-Time\-Filter\-Get\-Class (void)}\label{ObitTimeFilter_8h_a18}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilterGridTime@{ObitTimeFilterGridTime}}
+\index{ObitTimeFilterGridTime@{ObitTimeFilterGridTime}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Time\-Filter\-Grid\-Time ({\bf Obit\-Time\-Filter} $\ast$ {\em in}, {\bf olong} {\em series\-No}, {\bf ofloat} {\em d\-Time}, {\bf olong} {\em n\-Time}, {\bf ofloat} $\ast$ {\em times}, {\bf ofloat} $\ast$ {\em data})}\label{ObitTimeFilter_8h_a20}
+
+
+Public: Construct regular time series. 
+
+Will resize in if needed. Data will be averaging into time bins. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object with Time\-Filter structures. \item[{\em series\-No}]Which time/frequency series to apply to (0-rel) \item[{\em d\-Time}]Increment of desired time grid (days) \item[{\em n\-Time}]Number of times in times, data \item[{\em times}]Array of times (days) \item[{\em data}]Array of data elements corresponding to times. \end{description}
+\end{Desc}
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilterPlotPower@{ObitTimeFilterPlotPower}}
+\index{ObitTimeFilterPlotPower@{ObitTimeFilterPlotPower}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Time\-Filter\-Plot\-Power ({\bf Obit\-Time\-Filter} $\ast$ {\em in}, {\bf olong} {\em series\-No}, gchar $\ast$ {\em label}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTimeFilter_8h_a26}
+
+
+Public: Plot power spectrum. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]{\bf Obit\-Time\-Filter}{\rm (p.\,\pageref{structObitTimeFilter})} to plot \item[{\em series\-No}]Which frequency series to plot (0-rel) \item[{\em label}]If non\-NULL, a label for the plot \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilterPlotTime@{ObitTimeFilterPlotTime}}
+\index{ObitTimeFilterPlotTime@{ObitTimeFilterPlotTime}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Time\-Filter\-Plot\-Time ({\bf Obit\-Time\-Filter} $\ast$ {\em in}, {\bf olong} {\em series\-No}, gchar $\ast$ {\em label}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitTimeFilter_8h_a27}
+
+
+Public: Plot Time series. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]{\bf Obit\-Time\-Filter}{\rm (p.\,\pageref{structObitTimeFilter})} to plot \item[{\em series\-No}]Which time series to plot (0-rel) \item[{\em label}]If non\-NULL, a label for the plot \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilterResize@{ObitTimeFilterResize}}
+\index{ObitTimeFilterResize@{ObitTimeFilterResize}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Time\-Filter\-Resize ({\bf Obit\-Time\-Filter} $\ast$ {\em in}, {\bf olong} {\em n\-Time})}\label{ObitTimeFilter_8h_a19}
+
+
+Public: Resize arrays. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]{\bf Obit\-Time\-Filter}{\rm (p.\,\pageref{structObitTimeFilter})} to resize. \item[{\em n\-Time}]Number of times in arrays to be filtered It is best to add some extra padding (10\%) to allow a smooth transition from the end of the sequence back to the beginning. Remember the FFT algorithm assumes the function is periodic. \end{description}
+\end{Desc}
+\index{ObitTimeFilter.h@{Obit\-Time\-Filter.h}!ObitTimeFilterUngridTime@{ObitTimeFilterUngridTime}}
+\index{ObitTimeFilterUngridTime@{ObitTimeFilterUngridTime}!ObitTimeFilter.h@{Obit\-Time\-Filter.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Time\-Filter\-Ungrid\-Time ({\bf Obit\-Time\-Filter} $\ast$ {\em in}, {\bf olong} {\em series\-No}, {\bf olong} {\em n\-Time}, {\bf ofloat} $\ast$ {\em times}, {\bf ofloat} $\ast$ {\em data})}\label{ObitTimeFilter_8h_a21}
+
+
+Public: Copy time series to external times. 
+
+Time series data are copied by nearest time stamp \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object with Time\-Filter structures. \item[{\em series\-No}]Which time/frequency series to apply to (0-rel) \item[{\em n\-Time}]Number of times in times, data \item[{\em times}][in] Array of times (days) \item[{\em data}][out] Array of date elements corresponding to times. \end{description}
+\end{Desc}

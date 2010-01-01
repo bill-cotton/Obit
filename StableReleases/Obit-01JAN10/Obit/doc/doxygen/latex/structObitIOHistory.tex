@@ -1,0 +1,149 @@
+\section{Obit\-IOHistory Struct Reference}
+\label{structObitIOHistory}\index{ObitIOHistory@{ObitIOHistory}}
+Obit\-IOHistory Class.  
+
+
+{\tt \#include $<$Obit\-IOHistory.h$>$}
+
+\subsection*{Public Attributes}
+\begin{CompactItemize}
+\item 
+gint32 {\bf Obit\-Id}
+\begin{CompactList}\small\item\em Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. \item\end{CompactList}\item 
+gpointer {\bf Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info pointer for class with name, base and function pointers. \item\end{CompactList}\item 
+{\bf olong} {\bf Reference\-Count}
+\begin{CompactList}\small\item\em Reference count for object (numbers of pointers attaching). \item\end{CompactList}\item 
+gchar $\ast$ {\bf name}
+\begin{CompactList}\small\item\em Name of object [Optional]. \item\end{CompactList}\item 
+Obit\-IOAccess {\bf access}
+\begin{CompactList}\small\item\em Access type. \item\end{CompactList}\item 
+Obit\-IOStatus {\bf my\-Status}
+\begin{CompactList}\small\item\em I/O status. \item\end{CompactList}\item 
+gpointer {\bf my\-Desc}
+\begin{CompactList}\small\item\em data descriptor, type depends on data type. \item\end{CompactList}\item 
+gpointer {\bf my\-Sel}
+\begin{CompactList}\small\item\em data selector \item\end{CompactList}\item 
+gpointer {\bf my\-Cal}
+\begin{CompactList}\small\item\em Calibrator for Data. \item\end{CompactList}\item 
+{\bf Obit} $\ast$ {\bf table\-List}
+\begin{CompactList}\small\item\em Table\-List of associated tables (declared as base class due to logic problems). \item\end{CompactList}\item 
+{\bf Obit\-Info\-List} $\ast$ {\bf info}
+\begin{CompactList}\small\item\em Info\-List for file definition information. \item\end{CompactList}\item 
+{\bf olong} {\bf Max\-Number}
+\begin{CompactList}\small\item\em Maximum number of records currently in file. \item\end{CompactList}\item 
+{\bf olong} {\bf Current\-Number}
+\begin{CompactList}\small\item\em Current number in file. \item\end{CompactList}\item 
+{\bf olong} {\bf Last}
+\begin{CompactList}\small\item\em Last read or written. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-IOHistory Class. 
+
+
+
+\subsection{Member Data Documentation}
+\index{ObitIOHistory@{Obit\-IOHistory}!access@{access}}
+\index{access@{access}!ObitIOHistory@{Obit\-IOHistory}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOAccess {\bf Obit\-IOHistory::access}}\label{structObitIOHistory_o4}
+
+
+Access type. 
+
+\index{ObitIOHistory@{Obit\-IOHistory}!ClassInfo@{ClassInfo}}
+\index{ClassInfo@{ClassInfo}!ObitIOHistory@{Obit\-IOHistory}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-IOHistory::Class\-Info}}\label{structObitIOHistory_o1}
+
+
+Class\-Info pointer for class with name, base and function pointers. 
+
+\index{ObitIOHistory@{Obit\-IOHistory}!CurrentNumber@{CurrentNumber}}
+\index{CurrentNumber@{CurrentNumber}!ObitIOHistory@{Obit\-IOHistory}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-IOHistory::Current\-Number}}\label{structObitIOHistory_o12}
+
+
+Current number in file. 
+
+\index{ObitIOHistory@{Obit\-IOHistory}!info@{info}}
+\index{info@{info}!ObitIOHistory@{Obit\-IOHistory}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Info\-List}$\ast$ {\bf Obit\-IOHistory::info}}\label{structObitIOHistory_o10}
+
+
+Info\-List for file definition information. 
+
+\index{ObitIOHistory@{Obit\-IOHistory}!Last@{Last}}
+\index{Last@{Last}!ObitIOHistory@{Obit\-IOHistory}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-IOHistory::Last}}\label{structObitIOHistory_o13}
+
+
+Last read or written. 
+
+\index{ObitIOHistory@{Obit\-IOHistory}!MaxNumber@{MaxNumber}}
+\index{MaxNumber@{MaxNumber}!ObitIOHistory@{Obit\-IOHistory}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-IOHistory::Max\-Number}}\label{structObitIOHistory_o11}
+
+
+Maximum number of records currently in file. 
+
+\index{ObitIOHistory@{Obit\-IOHistory}!myCal@{myCal}}
+\index{myCal@{myCal}!ObitIOHistory@{Obit\-IOHistory}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-IOHistory::my\-Cal}}\label{structObitIOHistory_o8}
+
+
+Calibrator for Data. 
+
+\index{ObitIOHistory@{Obit\-IOHistory}!myDesc@{myDesc}}
+\index{myDesc@{myDesc}!ObitIOHistory@{Obit\-IOHistory}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-IOHistory::my\-Desc}}\label{structObitIOHistory_o6}
+
+
+data descriptor, type depends on data type. 
+
+\index{ObitIOHistory@{Obit\-IOHistory}!mySel@{mySel}}
+\index{mySel@{mySel}!ObitIOHistory@{Obit\-IOHistory}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gpointer {\bf Obit\-IOHistory::my\-Sel}}\label{structObitIOHistory_o7}
+
+
+data selector 
+
+\index{ObitIOHistory@{Obit\-IOHistory}!myStatus@{myStatus}}
+\index{myStatus@{myStatus}!ObitIOHistory@{Obit\-IOHistory}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}Obit\-IOStatus {\bf Obit\-IOHistory::my\-Status}}\label{structObitIOHistory_o5}
+
+
+I/O status. 
+
+\index{ObitIOHistory@{Obit\-IOHistory}!name@{name}}
+\index{name@{name}!ObitIOHistory@{Obit\-IOHistory}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gchar$\ast$ {\bf Obit\-IOHistory::name}}\label{structObitIOHistory_o3}
+
+
+Name of object [Optional]. 
+
+\index{ObitIOHistory@{Obit\-IOHistory}!ObitId@{ObitId}}
+\index{ObitId@{ObitId}!ObitIOHistory@{Obit\-IOHistory}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gint32 {\bf Obit\-IOHistory::Obit\-Id}}\label{structObitIOHistory_o0}
+
+
+Recognition bit pattern to identify the start of an {\bf Obit}{\rm (p.\,\pageref{structObit})} object. 
+
+\index{ObitIOHistory@{Obit\-IOHistory}!ReferenceCount@{ReferenceCount}}
+\index{ReferenceCount@{ReferenceCount}!ObitIOHistory@{Obit\-IOHistory}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} {\bf Obit\-IOHistory::Reference\-Count}}\label{structObitIOHistory_o2}
+
+
+Reference count for object (numbers of pointers attaching). 
+
+\index{ObitIOHistory@{Obit\-IOHistory}!tableList@{tableList}}
+\index{tableList@{tableList}!ObitIOHistory@{Obit\-IOHistory}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit}$\ast$ {\bf Obit\-IOHistory::table\-List}}\label{structObitIOHistory_o9}
+
+
+Table\-List of associated tables (declared as base class due to logic problems). 
+
+
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+{\bf Obit\-IOHistory.h}\end{CompactItemize}

@@ -1,0 +1,39 @@
+\section{Obit\-Io\-N2Sol\-NTable.h File Reference}
+\label{ObitIoN2SolNTable_8h}\index{ObitIoN2SolNTable.h@{ObitIoN2SolNTable.h}}
+Obit\-Io\-N2Sol\-NTable utility definition. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UV.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-NI.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Table\-SN.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Info\-List.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+{\bf Obit\-Table\-SN} $\ast$ {\bf Obit\-Io\-N2Sol\-NTable\-Convert} ({\bf Obit\-UV} $\ast$in\-UV, {\bf Obit\-Table\-NI} $\ast$NITable, {\bf Obit\-Table\-SN} $\ast$out\-SN, {\bf ofloat} shift[2], {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Convert a NI table to an SN table. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Io\-N2Sol\-NTable utility definition. 
+
+This utility package converts an Io\-Nospheric model into a Solutio\-N table. There are no objects of this class.
+
+\subsection{Function Documentation}
+\index{ObitIoN2SolNTable.h@{Obit\-Io\-N2Sol\-NTable.h}!ObitIoN2SolNTableConvert@{ObitIoN2SolNTableConvert}}
+\index{ObitIoN2SolNTableConvert@{ObitIoN2SolNTableConvert}!ObitIoN2SolNTable.h@{Obit\-Io\-N2Sol\-NTable.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Table\-SN}$\ast$ Obit\-Io\-N2Sol\-NTable\-Convert ({\bf Obit\-UV} $\ast$ {\em in\-UV}, {\bf Obit\-Table\-NI} $\ast$ {\em NITable}, {\bf Obit\-Table\-SN} $\ast$ {\em out\-SN}, {\bf ofloat} {\em shift}[2], {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitIoN2SolNTable_8h_a0}
+
+
+Public: Convert a NI table to an SN table. 
+
+Output SN table will be associated with in\-UV. Currently antenna offset form array center correction turned off \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\-UV}]Input uv data. Control info on info: \begin{itemize}
+\item \char`\"{}do\-Ant\-Off\char`\"{} OBIT\_\-bool (1,1,1) Correct for antenna offset from array center? def FALSE \end{itemize}
+\item[{\em NITable}]Input Ion\-Table \item[{\em out\-SN}]if non\-NULL a pointer to a previously existing Table \item[{\em shift}]RA and Dec offsets(deg) in which NITable to be evaluated. \item[{\em err}]Error stack, returns if not empty. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]Pointer to the newly created {\bf Obit\-Table\-SN}{\rm (p.\,\pageref{structObitTableSN})} or out\-SN if non\-NULL \end{Desc}

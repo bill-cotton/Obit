@@ -1,0 +1,199 @@
+\section{Obit\-DCon\-Clean\-Image.h File Reference}
+\label{ObitDConCleanImage_8h}\index{ObitDConCleanImage.h@{ObitDConCleanImage.h}}
+{\bf Obit\-DCon\-Clean\-Image}{\rm (p.\,\pageref{structObitDConCleanImage})} Image based (BGC-like) CLEAN class. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-DCon\-Clean.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Mosaic.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-DCon\-Clean\-Window.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-DCon\-Clean\-Bm\-Hist.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-DCon\-Clean\-Px\-Hist.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-DCon\-Clean\-Px\-List.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-DCon\-Clean\-Image}
+\begin{CompactList}\small\item\em Obit\-DCon\-Clean\-Image Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-DCon\-Clean\-Image\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-DCon\-Clean\-Image\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-DCon\-Clean\-Image}{\rm (p.\,\pageref{structObitDConCleanImage})} returns a Obit\-DCon\-Clean\-Image$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-DCon\-Clean\-Image\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-DCon\-Clean\-Image}{\rm (p.\,\pageref{structObitDConCleanImage})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-DCon\-Clean\-Image\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-DCon\-Clean\-Image\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-DCon\-Clean\-Image\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Image} $\ast$ {\bf new\-Obit\-DCon\-Clean\-Image} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Image} $\ast$ {\bf Obit\-DCon\-Clean\-Image\-Create} (gchar $\ast$name, {\bf Obit\-Image\-Mosaic} $\ast$mosaic, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-DCon\-Clean\-Image}{\rm (p.\,\pageref{structObitDConCleanImage})} structures. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-DCon\-Clean\-Image\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-DCon\-Clean\-Image} $\ast$ {\bf Obit\-DCon\-Clean\-Image\-Copy} ({\bf Obit\-DCon\-Clean\-Image} $\ast$in, {\bf Obit\-DCon\-Clean\-Image} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Image\-Clone} ({\bf Obit\-DCon\-Clean\-Image} $\ast$in, {\bf Obit\-DCon\-Clean\-Image} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Image\-Deconvolve} ({\bf Obit\-DCon} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Do deconvolution. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Image\-Get\-Parms} ({\bf Obit\-DCon} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Get parameters. \item\end{CompactList}\item 
+void {\bf Obit\-DCon\-Clean\-Image\-Sub} ({\bf Obit\-DCon\-Clean\-Image} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Subtract components and generate new residual image(s). \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-DCon\-Clean\-Image}{\rm (p.\,\pageref{structObitDConCleanImage})} Image based (BGC-like) CLEAN class. 
+
+This class is derived from the {\bf Obit\-DCon\-Clean}{\rm (p.\,\pageref{structObitDConClean})} class.
+
+Only a Single field can be CLEANed and only a quarter the area of it.\subsection{Creators and Destructors}\label{ObitDConCleanImage_8h_ObitDConCleanImageaccess}
+An {\bf Obit\-DCon\-Clean\-Image}{\rm (p.\,\pageref{structObitDConCleanImage})} will usually be created using Obit\-DCon\-Clean\-Image\-Create which allows specifying a name for the object as well as other information.
+
+A copy of a pointer to an {\bf Obit\-DCon\-Clean\-Image}{\rm (p.\,\pageref{structObitDConCleanImage})} should always be made using the {\bf Obit\-DCon\-Clean\-Image\-Ref}{\rm (p.\,\pageref{ObitDConCleanImage_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-DCon\-Clean\-Image}{\rm (p.\,\pageref{structObitDConCleanImage})} or changing a pointer, the function {\bf Obit\-DCon\-Clean\-Image\-Unref}{\rm (p.\,\pageref{ObitDConCleanImage_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor. \subsection{CLEAN control information}\label{ObitDConCleanImage_8h_ObitDConCleanImagecontrol}
+The control parameters for the CLEAN are read from the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} member when the Deconvolve function is called: The file etc. info should have been stored in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}: \begin{itemize}
+\item \char`\"{}Niter\char`\"{} OBIT\_\-long scalar = Maximum number of CLEAN iterations \item \char`\"{}max\-Pixel\char`\"{} OBIT\_\-long scalar = Maximum number of residuals [def 20000] \item \char`\"{}min\-Patch\char`\"{} OBIT\_\-long scalar = Minimum beam patch in pixels [def 100] \item \char`\"{}BMAJ\char`\"{} OBIT\_\-float scalar = Restoring beam major axis (deg) \item \char`\"{}BMIN\char`\"{} OBIT\_\-float scalar = Restoring beam minor axis (deg) \item \char`\"{}BPA\char`\"{} OBIT\_\-float scalar = Restoring beam position angle (deg) \item \char`\"{}Beam\char`\"{} OBIT\_\-float array[3]= (BMAJ, BMIN, BPA) alternate form \item \char`\"{}Gain\char`\"{} OBIT\_\-float scalar = CLEAN loop gain \item \char`\"{}min\-Flux\char`\"{} OBIT\_\-float scalar = Minimun flux density (Jy) \item \char`\"{}Factor\char`\"{} OBIT\_\-float array = CLEAN depth factor \item \char`\"{}Plane\char`\"{} OBIT\_\-long array = Plane being processed, 1-rel indices of axes 3-? [def 1,1,1,1,1] \item \char`\"{}CLEANBox\char`\"{} OBIT\_\-long [4,?] = Array of Clean boxes for field 1 Any entries with first element=0 are ignored. \item \char`\"{}prt\-Lv\char`\"{} OBIT\_\-int message level [def 2] 0=none, 1=summary, 2=normal, higher numbers for diagnostics \item \char`\"{}CCVer\char`\"{} OBIT\_\-long = CC table version number\end{itemize}
+
+
+\subsection{Define Documentation}
+\index{ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}!ObitDConCleanImageIsA@{ObitDConCleanImageIsA}}
+\index{ObitDConCleanImageIsA@{ObitDConCleanImageIsA}!ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-DCon\-Clean\-Image\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-DCon\-Clean\-Image\-Get\-Class())}\label{ObitDConCleanImage_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}!ObitDConCleanImageRef@{ObitDConCleanImageRef}}
+\index{ObitDConCleanImageRef@{ObitDConCleanImageRef}!ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-DCon\-Clean\-Image\-Ref(in)\ Obit\-Ref (in)}\label{ObitDConCleanImage_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-DCon\-Clean\-Image}{\rm (p.\,\pageref{structObitDConCleanImage})}. 
+
+returns a Obit\-DCon\-Clean\-Image$\ast$. in = object to reference \index{ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}!ObitDConCleanImageUnref@{ObitDConCleanImageUnref}}
+\index{ObitDConCleanImageUnref@{ObitDConCleanImageUnref}!ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-DCon\-Clean\-Image\-Unref(in)\ Obit\-Unref (in)}\label{ObitDConCleanImage_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-DCon\-Clean\-Image}{\rm (p.\,\pageref{structObitDConCleanImage})} returns a Obit\-DCon\-Clean\-Image$\ast$. 
+
+in = object to unreference 
+
+\subsection{Function Documentation}
+\index{ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}!newObitDConCleanImage@{newObitDConCleanImage}}
+\index{newObitDConCleanImage@{newObitDConCleanImage}!ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Image}$\ast$ new\-Obit\-DCon\-Clean\-Image (gchar $\ast$ {\em name})}\label{ObitDConCleanImage_8h_a4}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}!ObitDConCleanImageClassInit@{ObitDConCleanImageClassInit}}
+\index{ObitDConCleanImageClassInit@{ObitDConCleanImageClassInit}!ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Image\-Class\-Init (void)}\label{ObitDConCleanImage_8h_a3}
+
+
+Public: Class initializer. 
+
+\index{ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}!ObitDConCleanImageClone@{ObitDConCleanImageClone}}
+\index{ObitDConCleanImageClone@{ObitDConCleanImageClone}!ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Image\-Clone ({\bf Obit\-DCon\-Clean\-Image} $\ast$ {\em in}, {\bf Obit\-DCon\-Clean\-Image} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanImage_8h_a8}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}!ObitDConCleanImageCopy@{ObitDConCleanImageCopy}}
+\index{ObitDConCleanImageCopy@{ObitDConCleanImageCopy}!ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Image}$\ast$ Obit\-DCon\-Clean\-Image\-Copy ({\bf Obit\-DCon\-Clean\-Image} $\ast$ {\em in}, {\bf Obit\-DCon\-Clean\-Image} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanImage_8h_a7}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}!ObitDConCleanImageCreate@{ObitDConCleanImageCreate}}
+\index{ObitDConCleanImageCreate@{ObitDConCleanImageCreate}!ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-DCon\-Clean\-Image}$\ast$ Obit\-DCon\-Clean\-Image\-Create (gchar $\ast$ {\em name}, {\bf Obit\-Image\-Mosaic} $\ast$ {\em mosaic}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanImage_8h_a5}
+
+
+Public: Create/initialize {\bf Obit\-DCon\-Clean\-Image}{\rm (p.\,\pageref{structObitDConCleanImage})} structures. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em mosaic}]from which to create object \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}!ObitDConCleanImageDeconvolve@{ObitDConCleanImageDeconvolve}}
+\index{ObitDConCleanImageDeconvolve@{ObitDConCleanImageDeconvolve}!ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Image\-Deconvolve ({\bf Obit\-DCon} $\ast$ {\em inn}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanImage_8h_a9}
+
+
+Public: Do deconvolution. 
+
+CLEAN control parameters are in the {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})} member: \begin{itemize}
+\item \char`\"{}Niter\char`\"{} OBIT\_\-long scalar = Maximum number of CLEAN iterations \item \char`\"{}max\-Pixel\char`\"{} OBIT\_\-long scalar = Maximum number of residuals [def 20000] \item \char`\"{}min\-Patch\char`\"{} OBIT\_\-long scalar = Minimum beam patch in pixels [def 50] \item \char`\"{}BMAJ\char`\"{} OBIT\_\-float scalar = Restoring beam major axis (deg) \item \char`\"{}BMIN\char`\"{} OBIT\_\-float scalar = Restoring beam minor axis (deg) \item \char`\"{}BPA\char`\"{} OBIT\_\-float scalar = Restoring beam position angle (deg) \item \char`\"{}Beam\char`\"{} OBIT\_\-float array[3]= (BMAJ, BMIN, BPA) alternate form \item \char`\"{}CCVer\char`\"{} OBIT\_\-long array = CLEAN table version per field \item \char`\"{}Gain\char`\"{} OBIT\_\-float array = CLEAN loop gain per field \item \char`\"{}min\-Flux\char`\"{} OBIT\_\-float array = Minimun flux density (Jy) per field \item \char`\"{}Factor\char`\"{} OBIT\_\-float array = CLEAN depth factor per field \item \char`\"{}Plane\char`\"{} OBIT\_\-long array = Plane being processed, 1-rel indices of axes 3-? \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to deconvolve \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\end{itemize}
+\index{ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}!ObitDConCleanImageGetClass@{ObitDConCleanImageGetClass}}
+\index{ObitDConCleanImageGetClass@{ObitDConCleanImageGetClass}!ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-DCon\-Clean\-Image\-Get\-Class (void)}\label{ObitDConCleanImage_8h_a6}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}!ObitDConCleanImageGetParms@{ObitDConCleanImageGetParms}}
+\index{ObitDConCleanImageGetParms@{ObitDConCleanImageGetParms}!ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Image\-Get\-Parms ({\bf Obit\-DCon} $\ast$ {\em inn}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanImage_8h_a10}
+
+
+Public: Get parameters. 
+
+From Parent classes: \begin{itemize}
+\item \char`\"{}Niter\char`\"{} OBIT\_\-long scalar = Maximum number of CLEAN iterations \item \char`\"{}max\-Pixel\char`\"{} OBIT\_\-long scalar = Maximum number of residuals [def 20000] \item \char`\"{}min\-Patch\char`\"{} OBIT\_\-long scalar = Minimum beam patch in pixels [def 100] \item \char`\"{}BMAJ\char`\"{} OBIT\_\-float scalar = Restoring beam major axis (deg) \item \char`\"{}BMIN\char`\"{} OBIT\_\-float scalar = Restoring beam minor axis (deg) \item \char`\"{}BPA\char`\"{} OBIT\_\-float scalar = Restoring beam position angle (deg) \item \char`\"{}Beam\char`\"{} OBIT\_\-float array[3]= (BMAJ, BMIN, BPA) alternate form \item \char`\"{}CCVer\char`\"{} OBIT\_\-long array = CLEAN table version per field \item \char`\"{}Gain\char`\"{} OBIT\_\-float array = CLEAN loop gain per field \item \char`\"{}min\-Flux\char`\"{} OBIT\_\-float array = Minimun flux density (Jy) per field \item \char`\"{}Factor\char`\"{} OBIT\_\-float array = CLEAN depth factor per field \item \char`\"{}Plane\char`\"{} OBIT\_\-long array = Plane being processed, 1-rel indices of axes 3-? \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The CLEAN object as base class \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\end{itemize}
+\index{ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}!ObitDConCleanImageSub@{ObitDConCleanImageSub}}
+\index{ObitDConCleanImageSub@{ObitDConCleanImageSub}!ObitDConCleanImage.h@{Obit\-DCon\-Clean\-Image.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-DCon\-Clean\-Image\-Sub ({\bf Obit\-DCon\-Clean\-Image} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitDConCleanImage_8h_a11}
+
+
+Public: Subtract components and generate new residual image(s). 
+
+Grids and FFT components, multiplies by transfer function (FFT of beam), reverse FFTs and subtracts from image. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to deconvolve \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}

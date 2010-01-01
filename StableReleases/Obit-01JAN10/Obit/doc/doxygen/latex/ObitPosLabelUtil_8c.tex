@@ -1,0 +1,118 @@
+\section{Obit\-Pos\-Label\-Util.c File Reference}
+\label{ObitPosLabelUtil_8c}\index{ObitPosLabelUtil.c@{ObitPosLabelUtil.c}}
+Obit\-Pos\-Label\-Util - position labeling utilities. 
+
+{\tt \#include \char`\"{}Obit\-Pos\-Label\-Util.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-Pos\-Lable\-Util\-Axis\-Label} ({\bf odouble} pos, gchar $\ast$axis, gchar $\ast$label)
+\begin{CompactList}\small\item\em Create appropriate character string describing a location. \item\end{CompactList}\item 
+void {\bf Obit\-Pos\-Label\-Util\-RA2HMS} ({\bf odouble} ra, gchar $\ast$rach, gchar $\ast$rast)
+\begin{CompactList}\small\item\em Public: Convert RA in degrees to hh mm ss.sss. \item\end{CompactList}\item 
+void {\bf Obit\-Pos\-Label\-Util\-Dec2DMS} ({\bf odouble} dec, gchar $\ast$decch, gchar $\ast$decst)
+\begin{CompactList}\small\item\em Public: Convert dec in degrees to Dec dd mm ss.sss. \item\end{CompactList}\item 
+void {\bf Obit\-Pos\-Label\-Util\-RAHMS} ({\bf odouble} ra, {\bf olong} $\ast$h, {\bf olong} $\ast$m, {\bf ofloat} $\ast$s)
+\begin{CompactList}\small\item\em Public: Convert RA in degrees to hours min and seconds. \item\end{CompactList}\item 
+void {\bf Obit\-Pos\-Label\-Util\-Dec\-DMS} ({\bf odouble} dec, {\bf olong} $\ast$d, {\bf olong} $\ast$m, {\bf ofloat} $\ast$s)
+\begin{CompactList}\small\item\em Convert dec in degrees to degrees, min, sec. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-Pos\-Label\-Util\-HMSRA} ({\bf olong} h, {\bf olong} m, {\bf ofloat} s, {\bf odouble} $\ast$ra)
+\begin{CompactList}\small\item\em Public: Convert RA in hours min and seconds to degrees. \item\end{CompactList}\item 
+{\bf olong} {\bf Obit\-Pos\-Label\-Util\-DMSDec} ({\bf olong} d, {\bf olong} m, {\bf ofloat} s, {\bf odouble} $\ast$dec)
+\begin{CompactList}\small\item\em Public: convert dec in degrees, min, sec to degrees. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Obit\-Pos\-Label\-Util - position labeling utilities. 
+
+Liberally adopted from XFITSview/Obit\-View
+
+\subsection{Function Documentation}
+\index{ObitPosLabelUtil.c@{Obit\-Pos\-Label\-Util.c}!ObitPosLabelUtilDec2DMS@{ObitPosLabelUtilDec2DMS}}
+\index{ObitPosLabelUtilDec2DMS@{ObitPosLabelUtilDec2DMS}!ObitPosLabelUtil.c@{Obit\-Pos\-Label\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Pos\-Label\-Util\-Dec2DMS ({\bf odouble} {\em dec}, gchar $\ast$ {\em decch}, gchar $\ast$ {\em decst})}\label{ObitPosLabelUtil_8c_a2}
+
+
+Public: Convert dec in degrees to Dec dd mm ss.sss. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em dec}]dec in degrees \item[{\em decch}]label for Declination axis \item[{\em decst}][out] dec string \end{description}
+\end{Desc}
+\index{ObitPosLabelUtil.c@{Obit\-Pos\-Label\-Util.c}!ObitPosLabelUtilDecDMS@{ObitPosLabelUtilDecDMS}}
+\index{ObitPosLabelUtilDecDMS@{ObitPosLabelUtilDecDMS}!ObitPosLabelUtil.c@{Obit\-Pos\-Label\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Pos\-Label\-Util\-Dec\-DMS ({\bf odouble} {\em dec}, {\bf olong} $\ast$ {\em d}, {\bf olong} $\ast$ {\em m}, {\bf ofloat} $\ast$ {\em s})}\label{ObitPosLabelUtil_8c_a4}
+
+
+Convert dec in degrees to degrees, min, sec. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em dec}]Declination in degrees \item[{\em d}][out] degrees \item[{\em m}][out] min \item[{\em s}][out] sec \end{description}
+\end{Desc}
+\index{ObitPosLabelUtil.c@{Obit\-Pos\-Label\-Util.c}!ObitPosLabelUtilDMSDec@{ObitPosLabelUtilDMSDec}}
+\index{ObitPosLabelUtilDMSDec@{ObitPosLabelUtilDMSDec}!ObitPosLabelUtil.c@{Obit\-Pos\-Label\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-Pos\-Label\-Util\-DMSDec ({\bf olong} {\em d}, {\bf olong} {\em m}, {\bf ofloat} {\em s}, {\bf odouble} $\ast$ {\em dec})}\label{ObitPosLabelUtil_8c_a6}
+
+
+Public: convert dec in degrees, min, sec to degrees. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em d}]degrees \item[{\em m}]min \item[{\em s}]sec \item[{\em ra}][out] RA in degrees \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0 if in range +/-360 else 1 \end{Desc}
+\index{ObitPosLabelUtil.c@{Obit\-Pos\-Label\-Util.c}!ObitPosLabelUtilHMSRA@{ObitPosLabelUtilHMSRA}}
+\index{ObitPosLabelUtilHMSRA@{ObitPosLabelUtilHMSRA}!ObitPosLabelUtil.c@{Obit\-Pos\-Label\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf olong} Obit\-Pos\-Label\-Util\-HMSRA ({\bf olong} {\em h}, {\bf olong} {\em m}, {\bf ofloat} {\em s}, {\bf odouble} $\ast$ {\em ra})}\label{ObitPosLabelUtil_8c_a5}
+
+
+Public: Convert RA in hours min and seconds to degrees. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em h}]hours \item[{\em m}]min \item[{\em s}]sec \item[{\em ra}][out] RA in degrees \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]0 if in 0-24 hours else 1 \end{Desc}
+\index{ObitPosLabelUtil.c@{Obit\-Pos\-Label\-Util.c}!ObitPosLabelUtilRA2HMS@{ObitPosLabelUtilRA2HMS}}
+\index{ObitPosLabelUtilRA2HMS@{ObitPosLabelUtilRA2HMS}!ObitPosLabelUtil.c@{Obit\-Pos\-Label\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Pos\-Label\-Util\-RA2HMS ({\bf odouble} {\em ra}, gchar $\ast$ {\em rach}, gchar $\ast$ {\em rast})}\label{ObitPosLabelUtil_8c_a1}
+
+
+Public: Convert RA in degrees to hh mm ss.sss. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em ra}]RA in degrees \item[{\em rach}]label for RA axis \item[{\em rast}][out] Ra string \end{description}
+\end{Desc}
+\index{ObitPosLabelUtil.c@{Obit\-Pos\-Label\-Util.c}!ObitPosLabelUtilRAHMS@{ObitPosLabelUtilRAHMS}}
+\index{ObitPosLabelUtilRAHMS@{ObitPosLabelUtilRAHMS}!ObitPosLabelUtil.c@{Obit\-Pos\-Label\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Pos\-Label\-Util\-RAHMS ({\bf odouble} {\em ra}, {\bf olong} $\ast$ {\em h}, {\bf olong} $\ast$ {\em m}, {\bf ofloat} $\ast$ {\em s})}\label{ObitPosLabelUtil_8c_a3}
+
+
+Public: Convert RA in degrees to hours min and seconds. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em ra}]RA in degrees \item[{\em h}][out] hours \item[{\em m}][out] min \item[{\em s}][out] sec \end{description}
+\end{Desc}
+\index{ObitPosLabelUtil.c@{Obit\-Pos\-Label\-Util.c}!ObitPosLableUtilAxisLabel@{ObitPosLableUtilAxisLabel}}
+\index{ObitPosLableUtilAxisLabel@{ObitPosLableUtilAxisLabel}!ObitPosLabelUtil.c@{Obit\-Pos\-Label\-Util.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-Pos\-Lable\-Util\-Axis\-Label ({\bf odouble} {\em pos}, gchar $\ast$ {\em axis}, gchar $\ast$ {\em label})}\label{ObitPosLabelUtil_8c_a0}
+
+
+Create appropriate character string describing a location. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em pos}]location on axis, angles in degrees \item[{\em axis}]label for the axis \item[{\em label}]output string, must be large enough for 17 char contains first 4 characters of axis and the value. \end{description}
+\end{Desc}

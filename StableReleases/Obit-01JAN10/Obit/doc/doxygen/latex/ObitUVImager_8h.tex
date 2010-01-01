@@ -1,0 +1,339 @@
+\section{Obit\-UVImager.h File Reference}
+\label{ObitUVImager_8h}\index{ObitUVImager.h@{ObitUVImager.h}}
+{\bf Obit\-UVImager}{\rm (p.\,\pageref{structObitUVImager})} Class for imaging UV data. 
+
+{\tt \#include \char`\"{}Obit.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Err.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-UV.h\char`\"{}}\par
+{\tt \#include \char`\"{}Obit\-Image\-Mosaic.h\char`\"{}}\par
+\subsection*{Classes}
+\begin{CompactItemize}
+\item 
+struct {\bf Obit\-UVImager}
+\begin{CompactList}\small\item\em Obit\-UVImager Class structure. \item\end{CompactList}\item 
+struct {\bf Obit\-UVImager\-Class\-Info}
+\begin{CompactList}\small\item\em Class\-Info Structure. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define {\bf Obit\-UVImager\-Unref}(in)\ Obit\-Unref (in)
+\begin{CompactList}\small\item\em Macro to unreference (and possibly destroy) an {\bf Obit\-UVImager}{\rm (p.\,\pageref{structObitUVImager})} returns a Obit\-UVImager$\ast$. \item\end{CompactList}\item 
+\#define {\bf Obit\-UVImager\-Ref}(in)\ Obit\-Ref (in)
+\begin{CompactList}\small\item\em Macro to reference (update reference count) an {\bf Obit\-UVImager}{\rm (p.\,\pageref{structObitUVImager})}. \item\end{CompactList}\item 
+\#define {\bf Obit\-UVImager\-Is\-A}(in)\ Obit\-Is\-A (in, Obit\-UVImager\-Get\-Class())
+\begin{CompactList}\small\item\em Macro to determine if an object is the member of this or a derived class. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef {\bf Obit\-UVImager} $\ast$($\ast$ {\bf Obit\-UVImager\-From\-Info\-FP} )(gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$in\-List, {\bf Obit\-Err} $\ast$err)
+\item 
+typedef {\bf Obit\-UVImager} $\ast$($\ast$ {\bf Obit\-UVImager\-Create\-FP} )(gchar $\ast$name, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef {\bf Obit\-UVImager} $\ast$($\ast$ {\bf Obit\-UVImager\-Create2FP} )(gchar $\ast$name, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Image\-Mosaic} $\ast$mosaic, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef void($\ast$ {\bf Obit\-UVImager\-Weight\-FP} )({\bf Obit\-UVImager} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef void($\ast$ {\bf Obit\-UVImager\-Image\-FP} )({\bf Obit\-UVImager} $\ast$in, {\bf olong} field, gboolean do\-Weight, gboolean do\-Beam, gboolean do\-Flatten, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef void($\ast$ {\bf Obit\-UVImager\-Flatten\-FP} )({\bf Obit\-UVImager} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef {\bf Obit\-Image\-Mosaic} $\ast$($\ast$ {\bf Obit\-UVImager\-Get\-Mosaic\-FP} )({\bf Obit\-UVImager} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Typedef for definition of class pointer structure. \item\end{CompactList}\item 
+typedef void($\ast$ {\bf Obit\-UVImager\-Get\-Info\-FP} )({\bf Obit\-UVImager} $\ast$in, gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$out\-List, {\bf Obit\-Err} $\ast$err)
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void {\bf Obit\-UVImager\-Class\-Init} (void)
+\begin{CompactList}\small\item\em Public: Class initializer. \item\end{CompactList}\item 
+{\bf Obit\-UVImager} $\ast$ {\bf new\-Obit\-UVImager} (gchar $\ast$name)
+\begin{CompactList}\small\item\em Public: Default Constructor. \item\end{CompactList}\item 
+{\bf Obit\-UVImager} $\ast$ {\bf Obit\-UVImager\-From\-Info} (gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$in\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create UVImager object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\item 
+gconstpointer {\bf Obit\-UVImager\-Get\-Class} (void)
+\begin{CompactList}\small\item\em Public: Class\-Info pointer. \item\end{CompactList}\item 
+{\bf Obit\-UVImager} $\ast$ {\bf Obit\-UVImager\-Copy} ({\bf Obit\-UVImager} $\ast$in, {\bf Obit\-UVImager} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy (deep) constructor. \item\end{CompactList}\item 
+void {\bf Obit\-UVImager\-Clone} ({\bf Obit\-UVImager} $\ast$in, {\bf Obit\-UVImager} $\ast$out, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Copy structure. \item\end{CompactList}\item 
+{\bf Obit\-UVImager} $\ast$ {\bf Obit\-UVImager\-Create} (gchar $\ast$name, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-UVImager}{\rm (p.\,\pageref{structObitUVImager})} structures. \item\end{CompactList}\item 
+{\bf Obit\-UVImager} $\ast$ {\bf Obit\-UVImager\-Create2} (gchar $\ast$name, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Image\-Mosaic} $\ast$mosaic, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Create/initialize {\bf Obit\-UVImager}{\rm (p.\,\pageref{structObitUVImager})} structures given mosaic. \item\end{CompactList}\item 
+void {\bf Obit\-UVImager\-Weight} ({\bf Obit\-UVImager} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Weight data. \item\end{CompactList}\item 
+void {\bf Obit\-UVImager\-Image} ({\bf Obit\-UVImager} $\ast$in, {\bf olong} field, gboolean do\-Weight, gboolean do\-Beam, gboolean do\-Flatten, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Form Image. \item\end{CompactList}\item 
+void {\bf Obit\-UVImager\-Flatten} ({\bf Obit\-UVImager} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Flatten. \item\end{CompactList}\item 
+{\bf Obit\-Image\-Mosaic} $\ast$ {\bf Obit\-UVImager\-Get\-Mosaic} ({\bf Obit\-UVImager} $\ast$in, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: return Image\-Mosaic member. \item\end{CompactList}\item 
+void {\bf Obit\-UVImager\-Get\-Info} ({\bf Obit\-UVImager} $\ast$in, gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$out\-List, {\bf Obit\-Err} $\ast$err)
+\begin{CompactList}\small\item\em Public: Extract information about underlying structures to {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+{\bf Obit\-UVImager}{\rm (p.\,\pageref{structObitUVImager})} Class for imaging UV data. 
+
+This class is derived from the {\bf Obit}{\rm (p.\,\pageref{structObit})} class.
+
+This class presents a uniform interface to the UV data imaging routines. These go from an input uv data and allow optional selection, calibration and editing and then conversion into a dirty image allowing a number of processing parameters. The result is an Image\-Mosaic which may optionally be flattened into a single plane.\subsection{Creators and Destructors}\label{ObitUVImager_8h_ObitUVImageraccess}
+An {\bf Obit\-UVImager}{\rm (p.\,\pageref{structObitUVImager})} will usually be created using Obit\-UVImager\-Create which allows specifying a name for the object as well as other information.
+
+A copy of a pointer to an {\bf Obit\-UVImager}{\rm (p.\,\pageref{structObitUVImager})} should always be made using the {\bf Obit\-UVImager\-Ref}{\rm (p.\,\pageref{ObitUVImager_8h_a1})} function which updates the reference count in the object. Then whenever freeing an {\bf Obit\-UVImager}{\rm (p.\,\pageref{structObitUVImager})} or changing a pointer, the function {\bf Obit\-UVImager\-Unref}{\rm (p.\,\pageref{ObitUVImager_8h_a0})} will decrement the reference count and destroy the object when the reference count hits 0. There is no explicit destructor.\subsection{Control Parameters}\label{ObitUVImager_8h_ObitUVImagerparameters}
+The imaging control parameters are passed through the info object on the uv data, these control both the output image files and the processing parameters. Output images: \begin{itemize}
+\item \char`\"{}Type OBIT\_\-int (1,1,1) Underlying file type, 1=FITS, 2=AIPS \item \char`\"{}Name\char`\"{} OBIT\_\-string (?,1,1) Name of image, used as AIPS name or to derive FITS filename \item \char`\"{}Class\char`\"{} OBIT\_\-string (?,1,1) Root of class, used as AIPS class or to derive FITS filename \item \char`\"{}Seq\char`\"{} OBIT\_\-int (1,1,1) Sequence number \item \char`\"{}Disk\char`\"{} OBIT\_\-int (1,1,1) Disk number for underlying files\end{itemize}
+UVData selection/calibration/editing control \begin{itemize}
+\item \char`\"{}Max\-Baseline\char`\"{} OBIT\_\-float scalar = maximum baseline length in wavelengths. Default = 1.0e15. Output data not flagged by this criteria. \item \char`\"{}Min\-Baseline\char`\"{} OBIT\_\-float scalar = minimum baseline length in wavelengths. Default = 1.0e15.Output data not flagged by this criteria. \item \char`\"{}do\-Cal\-Select\char`\"{} OBIT\_\-bool (1,1,1) Select/calibrate/edit data? \item \char`\"{}Stokes\char`\"{} OBIT\_\-string (4,1,1) Selected output Stokes parameters: \char`\"{}    \char`\"{}=$>$ no translation,\char`\"{}I   \char`\"{},\char`\"{}V   \char`\"{},\char`\"{}Q   \char`\"{}, \char`\"{}U   \char`\"{}, \char`\"{}IQU \char`\"{}, \char`\"{}IQUV\char`\"{}, \char`\"{}IV  \char`\"{}, \char`\"{}RR  \char`\"{}, \char`\"{}LL  \char`\"{}, \char`\"{}RL  \char`\"{}, \char`\"{}LR  \char`\"{}, \char`\"{}HALF\char`\"{} = RR,LL, \char`\"{}FULL\char`\"{}=RR,LL,RL,LR. [default \char`\"{}    \char`\"{}] In the above 'F' can substitute for \char`\"{}formal\char`\"{} 'I' (both RR+LL). \item \char`\"{}BChan\char`\"{} OBIT\_\-int (1,1,1) First spectral channel selected. [def all] \item \char`\"{}EChan\char`\"{} OBIT\_\-int (1,1,1) Highest spectral channel selected. [def all] \item \char`\"{}BIF\char`\"{} OBIT\_\-int (1,1,1) First \char`\"{}IF\char`\"{} selected. [def all] \item \char`\"{}EIF\char`\"{} OBIT\_\-int (1,1,1) Highest \char`\"{}IF\char`\"{} selected. [def all] \item \char`\"{}do\-Pol\char`\"{} OBIT\_\-int (1,1,1) $>$0 -$>$ calibrate polarization. \item \char`\"{}do\-Calib\char`\"{} OBIT\_\-int (1,1,1) $>$0 -$>$ calibrate, 2=$>$ also calibrate Weights \item \char`\"{}gain\-Use\char`\"{} OBIT\_\-int (1,1,1) SN/CL table version number, 0-$>$ use highest \item \char`\"{}flagver\char`\"{} OBIT\_\-int (1,1,1) Flag table version, 0-$>$ use highest, $<$0-$>$ none \item \char`\"{}BLVer\char`\"{} OBIT\_\-int (1,1,1) BL table version, 0$>$ use highest, $<$0-$>$ none \item \char`\"{}BPVer\char`\"{} OBIT\_\-int (1,1,1) Band pass (BP) table version, 0-$>$ use highest \item \char`\"{}Subarray\char`\"{} OBIT\_\-int (1,1,1) Selected subarray, $<$=0-$>$all [default all] \item \char`\"{}freq\-ID\char`\"{} OBIT\_\-int (1,1,1) Selected Frequency ID, $<$=0-$>$all [default all] \item \char`\"{}time\-Range\char`\"{} OBIT\_\-float (2,1,1) Selected timerange in days. \item \char`\"{}UVRange\char`\"{} OBIT\_\-float (2,1,1) Selected UV range in kilowavelengths. \item \char`\"{}Sources\char`\"{} OBIT\_\-string (?,?,1) Source names selected unless any starts with a '-' in which cse all are deselected (with '-' stripped). \item \char`\"{}Antennas\char`\"{} OBIT\_\-int (?,1,1) a list of selected antenna numbers, if any is negative then the absolute values are used and the specified antennas are deselected. \item \char`\"{}corr\-Type\char`\"{} OBIT\_\-int (1,1,1) Correlation type, 0=cross corr only, 1=both, 2=auto only. \item \char`\"{}do\-Band\char`\"{} OBIT\_\-int (1,1,1) Band pass application type $<$0-$>$ none (1) if = 1 then all the bandpass data for each antenna will be averaged to form a composite bandpass spectrum, this will then be used to correct the data. (2) if = 2 the bandpass spectra nearest in time (in a weighted sense) to the uv data point will be used to correct the data. (3) if = 3 the bandpass data will be interpolated in time using the solution weights to form a composite bandpass spectrum, this interpolated spectrum will then be used to correct the data. (4) if = 4 the bandpass spectra nearest in time (neglecting weights) to the uv data point will be used to correct the data. (5) if = 5 the bandpass data will be interpolated in time ignoring weights to form a composite bandpass spectrum, this interpolated spectrum will then be used to correct the data. \item \char`\"{}Smooth\char`\"{} OBIT\_\-float (3,1,1) specifies the type of spectral smoothing Smooth(1) = type of smoothing to apply: 0 =$>$ no smoothing 1 =$>$ Hanning 2 =$>$ Gaussian 3 =$>$ Boxcar 4 =$>$ Sinc (i.e. sin(x)/x) Smooth(2) = the \char`\"{}diameter\char`\"{} of the function, i.e. width between first nulls of Hanning triangle and sinc function, FWHM of Gaussian, width of Boxcar. Defaults (if $<$ 0.1) are 4, 2, 2 and 3 channels for Smooth(1) = 1 - 4. Smooth(3) = the diameter over which the convolving function has value - in channels. Defaults: 1, 3, 1, 4 times Smooth(2) used when\end{itemize}
+Imaging parameters: \begin{itemize}
+\item \char`\"{}FOV\char`\"{} OBIT\_\-float (1,1,1) Field of view (deg) for Mosaic If $>$ 0.0 then a mosaic of images will be added to cover this region. Note: these are in addition to the NField fields added by other parameters \item \char`\"{}do\-Full\char`\"{} OBIT\_\-boolean (1,1,1) if TRUE, create full field image to cover FOV [def. FALSE] \item \char`\"{}NField\char`\"{} OBIT\_\-int (1,1,1) Number of fields defined in input, if unspecified derive from data and FOV \item \char`\"{}x\-Cells\char`\"{} OBIT\_\-float (?,1,1) Cell spacing in X (asec) for all images, if unspecified derive from data \item \char`\"{}y\-Cells\char`\"{} OBIT\_\-float (?,1,1) Cell spacing in Y (asec) for all images, if unspecified derive from data \item \char`\"{}nx\char`\"{} OBIT\_\-int (?,1,1) Minimum number of cells in X for NField images if unspecified derive from data \item \char`\"{}ny\char`\"{} OBIT\_\-int (?,1,1) Minimum number of cells in Y for NField images if unspecified derive from data \item \char`\"{}RAShift\char`\"{} OBIT\_\-float (?,1,1) Right ascension shift (AIPS convention) for each field if unspecified derive from FOV and data \item \char`\"{}Dec\-Shift\char`\"{} OBIT\_\-float (?,1,1) Declination for each field if unspecified derive from FOV and data\end{itemize}
+Outliers to be added: \begin{itemize}
+\item \char`\"{}Catalog\char`\"{} OBIT\_\-string (?,1,1) = AIPSVZ format catalog for defining outliers, 'None'=don't use [default] 'Default' = use default catalog. Assumed in FITSdata disk 1. \item \char`\"{}Outlier\-Dist\char`\"{} OBIT\_\-float (1,1,1) Maximum distance (deg) from center to include outlier fields from Catalog. [default 1 deg] \item \char`\"{}Outlier\-Flux\char`\"{} OBIT\_\-float (1,1,1) Minimum estimated flux density include outlier fields from Catalog. [default 0.1 Jy ] \item \char`\"{}Outlier\-SI\char`\"{} OBIT\_\-float (1,1,1) Spectral index to use to convert catalog flux density to observed frequency. [default = -0.75] \item \char`\"{}Outlier\-Size\char`\"{} OBIT\_\-int (?,1,1) Width of outlier field in pixels. [default 50]\end{itemize}
+Weighting parameters on in\-UV: \begin{itemize}
+\item \char`\"{}nu\-Grid\char`\"{} OBIT\_\-long (1,1,1) = Number of \char`\"{}U\char`\"{} pixels in weighting grid. [defaults to \char`\"{}nx\char`\"{}] \item \char`\"{}nv\-Grid\char`\"{} OBIT\_\-int (1,1,1) Number of \char`\"{}V\char`\"{} pixels in weighting grid. \item \char`\"{}Wt\-Box\char`\"{} OBIT\_\-int (1,1,1) Size of weighting box in cells [def 1] \item \char`\"{}Wt\-Func\char`\"{} OBIT\_\-int (1,1,1) Weighting convolution function [def. 1] 1=Pill box, 2=linear, 3=exponential, 4=Gaussian if positive, function is of radius, negative in u and v. \item \char`\"{}x\-Cells\char`\"{} OBIT\_\-float (1,1,1) Image cell spacing in X in asec. \item \char`\"{}y\-Cells\char`\"{} OBIT\_\-float (1,1,1) Image cell spacing in Y in asec. \item \char`\"{}UVTaper\char`\"{} OBIT\_\-float (1,1,1) UV taper width in kilowavelengths. [def. no taper]. NB: If the taper is applied here is should not also be applied in the imaging step as the taper will be applied to the output data. \item \char`\"{}Robust\char`\"{} OBIT\_\-float (1,1,1) Briggs robust parameter. [def. 0.0] $<$ -7 -$>$ Pure Uniform weight, $>$7 -$>$ Pure natural weight. Uses AIPS rather than Briggs definition of Robust. \item \char`\"{}Wt\-Power\char`\"{} OBIT\_\-float (1,1,1) Power to raise weights to. [def = 1.0] Note: a power of 0.0 sets all the output weights to 1 as modified by uniform/Tapering weighting. Applied in determinng weights as well as after.\end{itemize}
+
+
+\subsection{Define Documentation}
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerIsA@{ObitUVImagerIsA}}
+\index{ObitUVImagerIsA@{ObitUVImagerIsA}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVImager\-Is\-A(in)\ Obit\-Is\-A (in, Obit\-UVImager\-Get\-Class())}\label{ObitUVImager_8h_a2}
+
+
+Macro to determine if an object is the member of this or a derived class. 
+
+Returns TRUE if a member, else FALSE in = object to reference \index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerRef@{ObitUVImagerRef}}
+\index{ObitUVImagerRef@{ObitUVImagerRef}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVImager\-Ref(in)\ Obit\-Ref (in)}\label{ObitUVImager_8h_a1}
+
+
+Macro to reference (update reference count) an {\bf Obit\-UVImager}{\rm (p.\,\pageref{structObitUVImager})}. 
+
+returns a Obit\-UVImager$\ast$. in = object to reference \index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerUnref@{ObitUVImagerUnref}}
+\index{ObitUVImagerUnref@{ObitUVImagerUnref}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define Obit\-UVImager\-Unref(in)\ Obit\-Unref (in)}\label{ObitUVImager_8h_a0}
+
+
+Macro to unreference (and possibly destroy) an {\bf Obit\-UVImager}{\rm (p.\,\pageref{structObitUVImager})} returns a Obit\-UVImager$\ast$. 
+
+in = object to unreference 
+
+\subsection{Typedef Documentation}
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerCreate2FP@{ObitUVImagerCreate2FP}}
+\index{ObitUVImagerCreate2FP@{ObitUVImagerCreate2FP}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-UVImager}$\ast$($\ast$ {\bf Obit\-UVImager\-Create2FP})(gchar $\ast$name, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Image\-Mosaic} $\ast$mosaic, {\bf Obit\-Err} $\ast$err)}\label{ObitUVImager_8h_a5}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerCreateFP@{ObitUVImagerCreateFP}}
+\index{ObitUVImagerCreateFP@{ObitUVImagerCreateFP}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-UVImager}$\ast$($\ast$ {\bf Obit\-UVImager\-Create\-FP})(gchar $\ast$name, {\bf Obit\-UV} $\ast$uvdata, {\bf Obit\-Err} $\ast$err)}\label{ObitUVImager_8h_a4}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerFlattenFP@{ObitUVImagerFlattenFP}}
+\index{ObitUVImagerFlattenFP@{ObitUVImagerFlattenFP}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-UVImager\-Flatten\-FP})({\bf Obit\-UVImager} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitUVImager_8h_a8}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerFromInfoFP@{ObitUVImagerFromInfoFP}}
+\index{ObitUVImagerFromInfoFP@{ObitUVImagerFromInfoFP}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-UVImager}$\ast$($\ast$ {\bf Obit\-UVImager\-From\-Info\-FP})(gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$in\-List, {\bf Obit\-Err} $\ast$err)}\label{ObitUVImager_8h_a3}
+
+
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerGetInfoFP@{ObitUVImagerGetInfoFP}}
+\index{ObitUVImagerGetInfoFP@{ObitUVImagerGetInfoFP}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-UVImager\-Get\-Info\-FP})({\bf Obit\-UVImager} $\ast$in, gchar $\ast$prefix, {\bf Obit\-Info\-List} $\ast$out\-List, {\bf Obit\-Err} $\ast$err)}\label{ObitUVImager_8h_a10}
+
+
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerGetMosaicFP@{ObitUVImagerGetMosaicFP}}
+\index{ObitUVImagerGetMosaicFP@{ObitUVImagerGetMosaicFP}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef {\bf Obit\-Image\-Mosaic}$\ast$($\ast$ {\bf Obit\-UVImager\-Get\-Mosaic\-FP})({\bf Obit\-UVImager} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitUVImager_8h_a9}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerImageFP@{ObitUVImagerImageFP}}
+\index{ObitUVImagerImageFP@{ObitUVImagerImageFP}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-UVImager\-Image\-FP})({\bf Obit\-UVImager} $\ast$in, {\bf olong} field, gboolean do\-Weight, gboolean do\-Beam, gboolean do\-Flatten, {\bf Obit\-Err} $\ast$err)}\label{ObitUVImager_8h_a7}
+
+
+Typedef for definition of class pointer structure. 
+
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerWeightFP@{ObitUVImagerWeightFP}}
+\index{ObitUVImagerWeightFP@{ObitUVImagerWeightFP}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef void($\ast$ {\bf Obit\-UVImager\-Weight\-FP})({\bf Obit\-UVImager} $\ast$in, {\bf Obit\-Err} $\ast$err)}\label{ObitUVImager_8h_a6}
+
+
+Typedef for definition of class pointer structure. 
+
+
+
+\subsection{Function Documentation}
+\index{ObitUVImager.h@{Obit\-UVImager.h}!newObitUVImager@{newObitUVImager}}
+\index{newObitUVImager@{newObitUVImager}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVImager}$\ast$ new\-Obit\-UVImager (gchar $\ast$ {\em name})}\label{ObitUVImager_8h_a12}
+
+
+Public: Default Constructor. 
+
+Initializes class if needed on first call. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerClassInit@{ObitUVImagerClassInit}}
+\index{ObitUVImagerClassInit@{ObitUVImagerClassInit}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVImager\-Class\-Init (void)}\label{ObitUVImager_8h_a11}
+
+
+Public: Class initializer. 
+
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerClone@{ObitUVImagerClone}}
+\index{ObitUVImagerClone@{ObitUVImagerClone}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVImager\-Clone ({\bf Obit\-UVImager} $\ast$ {\em in}, {\bf Obit\-UVImager} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImager_8h_a16}
+
+
+Public: Copy structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output, must be defined. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerCopy@{ObitUVImagerCopy}}
+\index{ObitUVImagerCopy@{ObitUVImagerCopy}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVImager}$\ast$ Obit\-UVImager\-Copy ({\bf Obit\-UVImager} $\ast$ {\em in}, {\bf Obit\-UVImager} $\ast$ {\em out}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImager_8h_a15}
+
+
+Public: Copy (deep) constructor. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The object to copy \item[{\em out}]An existing object pointer for output or NULL if none exists. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]pointer to the new object. \end{Desc}
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerCreate@{ObitUVImagerCreate}}
+\index{ObitUVImagerCreate@{ObitUVImagerCreate}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVImager}$\ast$ Obit\-UVImager\-Create (gchar $\ast$ {\em name}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImager_8h_a17}
+
+
+Public: Create/initialize {\bf Obit\-UVImager}{\rm (p.\,\pageref{structObitUVImager})} structures. 
+
+The output Image\-Mosaic member is created \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em uvdata}]{\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} object with info member containng the output image specifications and all processing parameters. \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerCreate2@{ObitUVImagerCreate2}}
+\index{ObitUVImagerCreate2@{ObitUVImagerCreate2}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVImager}$\ast$ Obit\-UVImager\-Create2 (gchar $\ast$ {\em name}, {\bf Obit\-UV} $\ast$ {\em uvdata}, {\bf Obit\-Image\-Mosaic} $\ast$ {\em mosaic}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImager_8h_a18}
+
+
+Public: Create/initialize {\bf Obit\-UVImager}{\rm (p.\,\pageref{structObitUVImager})} structures given mosaic. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em name}]An optional name for the object. \item[{\em uvdata}]{\bf Obit\-UV}{\rm (p.\,\pageref{structObitUV})} object with info member containng the output image specifications and all processing parameters. \item[{\em mosaic}]Image\-Mosaic to use \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerFlatten@{ObitUVImagerFlatten}}
+\index{ObitUVImagerFlatten@{ObitUVImagerFlatten}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVImager\-Flatten ({\bf Obit\-UVImager} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImager_8h_a21}
+
+
+Public: Flatten. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The input object \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerFromInfo@{ObitUVImagerFromInfo}}
+\index{ObitUVImagerFromInfo@{ObitUVImagerFromInfo}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-UVImager}$\ast$ Obit\-UVImager\-From\-Info (gchar $\ast$ {\em prefix}, {\bf Obit\-Info\-List} $\ast$ {\em in\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImager_8h_a13}
+
+
+Public: Create UVImager object from description in an {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+Initializes class if needed on first call. Also works for derived classes. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em prefix}]If Non\-Null, string to be added to beginning of in\-List entry name \char`\"{}xxx\char`\"{} in the following \item[{\em in\-List}]Info\-List to extract object information from \begin{itemize}
+\item \char`\"{}xxx\-Class\-Type\char`\"{} string UVImager type, \char`\"{}Base\char`\"{} for base class \item \char`\"{}xxx\-UVData\char`\"{} prefix for uvdata member, entry with value \char`\"{}None\char`\"{} =$>$ doesn't exist \item \char`\"{}xxx\-UVWork\char`\"{} prefix for uvwork member, entry with value \char`\"{}None\char`\"{} =$>$ doesn't exist \item \char`\"{}xxx\-Mosaic\char`\"{} prefix for mosaic member, entry with value \char`\"{}None\char`\"{} =$>$ doesn't exist \item various weighting parameters \end{itemize}
+\item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the new object. \end{Desc}
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerGetClass@{ObitUVImagerGetClass}}
+\index{ObitUVImagerGetClass@{ObitUVImagerGetClass}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}gconstpointer Obit\-UVImager\-Get\-Class (void)}\label{ObitUVImager_8h_a14}
+
+
+Public: Class\-Info pointer. 
+
+\begin{Desc}
+\item[Returns:]pointer to the class structure. \end{Desc}
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerGetInfo@{ObitUVImagerGetInfo}}
+\index{ObitUVImagerGetInfo@{ObitUVImagerGetInfo}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVImager\-Get\-Info ({\bf Obit\-UVImager} $\ast$ {\em in}, gchar $\ast$ {\em prefix}, {\bf Obit\-Info\-List} $\ast$ {\em out\-List}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImager_8h_a23}
+
+
+Public: Extract information about underlying structures to {\bf Obit\-Info\-List}{\rm (p.\,\pageref{structObitInfoList})}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]Object of interest. \item[{\em prefix}]If Non\-Null, string to be added to beginning of out\-List entry name \char`\"{}xxx\char`\"{} in the following \item[{\em out\-List}]Info\-List to write entries into \begin{itemize}
+\item \char`\"{}xxx\-Class\-Type\char`\"{} string UVImager type, \char`\"{}Base\char`\"{} for base class \item \char`\"{}xxx\-UVData\char`\"{} prefix for uvdata member, entry with value \char`\"{}None\char`\"{} =$>$ doesn't exist \item \char`\"{}xxx\-UVWork\char`\"{} prefix for uvwork member, entry with value \char`\"{}None\char`\"{} =$>$ doesn't exist \item \char`\"{}xxx\-Mosaic\char`\"{} prefix for mosaic member, entry with value \char`\"{}None\char`\"{} =$>$ doesn't exist \item various weighting parameters \end{itemize}
+\item[{\em err}]{\bf Obit\-Err}{\rm (p.\,\pageref{structObitErr})} for reporting errors. \end{description}
+\end{Desc}
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerGetMosaic@{ObitUVImagerGetMosaic}}
+\index{ObitUVImagerGetMosaic@{ObitUVImagerGetMosaic}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf Obit\-Image\-Mosaic}$\ast$ Obit\-UVImager\-Get\-Mosaic ({\bf Obit\-UVImager} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImager_8h_a22}
+
+
+Public: return Image\-Mosaic member. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The input object \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]reference to Image\-Mosaic. \end{Desc}
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerImage@{ObitUVImagerImage}}
+\index{ObitUVImagerImage@{ObitUVImagerImage}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVImager\-Image ({\bf Obit\-UVImager} $\ast$ {\em in}, {\bf olong} {\em field}, gboolean {\em do\-Weight}, gboolean {\em do\-Beam}, gboolean {\em do\-Flatten}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImager_8h_a20}
+
+
+Public: Form Image. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The input object \item[{\em field}]Which field (1-rel) to Image, 0=$>$ all \item[{\em do\-Weight}]If TRUE do Weighting ov uv data first If TRUE then input data is modified. \item[{\em do\-Beam}]If True calculate dirst beams first \item[{\em do\-Flatten}]If TRUE, flatten images when done \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
+\index{ObitUVImager.h@{Obit\-UVImager.h}!ObitUVImagerWeight@{ObitUVImagerWeight}}
+\index{ObitUVImagerWeight@{ObitUVImagerWeight}!ObitUVImager.h@{Obit\-UVImager.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void Obit\-UVImager\-Weight ({\bf Obit\-UVImager} $\ast$ {\em in}, {\bf Obit\-Err} $\ast$ {\em err})}\label{ObitUVImager_8h_a19}
+
+
+Public: Weight data. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in}]The input object \item[{\em err}]{\bf Obit}{\rm (p.\,\pageref{structObit})} error stack object. \end{description}
+\end{Desc}
