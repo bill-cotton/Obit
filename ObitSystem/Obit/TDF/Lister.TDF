@@ -67,6 +67,11 @@ Antennas         0.0     1000.0    List of antennas to calibrate
 **PARAM** int 1
 subA          0.0     1000.0       Subarray, 0=>all
 **PARAM** int 1
+corrType                            Cross or auto correlations
+                                      0 pass only xc data
+                                      1 pass xc and ac data
+                                      2 pass only ac data
+**PARAM** int 1
 doCalib          -1.0        2.0   If >0 calibrate data
                                    = 2 calibrate weights
 **PARAM** int 1
@@ -90,6 +95,7 @@ gainVer                            Table version for "GAIN"
 **PARAM** str 8
 dispType                           Data display type"
                                    "AMP", "PHASE", "WT", "DELAY", "RATE"
+                                   "SNR"
 **PARAM** int 1 **DEF** 4
 ndig                               Number of digits in compressed displays
 **PARAM** str 4
@@ -165,6 +171,11 @@ Adverbs:
              densities; solutions for all antennas are
              corrected.
   subA.......Subarray number to copy. 0=>all.
+  corrType...If corrType = 0 then UVCopy will pass only cross-power data, 
+             this is the default mode. 
+             If corr=1 then both cross-power and total-power data 
+             will be passed; 
+             if corr=2 then only total-power data will be passed.
   doCalib....If > 0, calibrate the data using information in the
              specified Cal (CL) table for multi-source or SN table for
              single-source data.  If > 1.5, also calibrate the weights
@@ -226,6 +237,7 @@ Adverbs:
              "WT"    Weight or SNR
              "DELAY" Group Delay (nsec)
              "RATE"  Fringe rate in mHz.
+             "SNR"   Signal to noise (weight)
   ndig.......Number of digits in compressed displays (4-8)
   opType.....Printing operation desired:
              "DATA" print UV data in a form similar to AIPS/PRTUV

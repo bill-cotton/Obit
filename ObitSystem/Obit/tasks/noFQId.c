@@ -746,10 +746,10 @@ void unFQid(ObitInfoList *myInput, ObitUV* inData, ObitUV* outData,
   olong i, indx, itab;
   olong iver, hiVer;
   gchar *include[]={"AIPS NX", "AIPS SN", "AIPS CL", "AIPS TY"," AIPS GC", "AIPS FG",
-		    "AIPS SU", "AIPS AN", "AIPS FQ",
+		    "AIPS SU", "AIPS AN", "AIPS FQ", 
 		    NULL};
   gchar *FixTabs[]={"AIPS NX", "AIPS SN", "AIPS CL", "AIPS TY", "AIPS GC", "AIPS FG", 
-		    NULL};
+		    "AIPS FQ", NULL};
   gchar *routine = "unFQid";
 
   /* error checks */
@@ -969,7 +969,7 @@ void FixTableCol (ObitTable *tab, ObitErr *err)
   ObitTableRow *row;
   olong i, size, colNo;
   olong irow, nrow, byteOffset;
-  gchar *FixCol = "FREQ ID";
+  gchar *FixCol[] = {"FREQ ID","FRQSEL"};
   gchar *routine = "FixTableCol";
 
   /* error checks */
@@ -983,13 +983,24 @@ void FixTableCol (ObitTable *tab, ObitErr *err)
 
   /* Which column is desired? */
   colNo = -1;
-  size = strlen(FixCol);
+  size = strlen(FixCol[0]);
   for (i=0; i<tab->myDesc->nfield; i++) {
-    if (!strncmp (FixCol, tab->myDesc->FieldName[i], size)) {
+    if (!strncmp (FixCol[0], tab->myDesc->FieldName[i], size)) {
       colNo = i;
       break;
     }
   }
+
+  /* If not found - try the other */
+  if (colNo<0) {
+    size = strlen(FixCol[1]);
+    for (i=0; i<tab->myDesc->nfield; i++) {
+      if (!strncmp (FixCol[1], tab->myDesc->FieldName[i], size)) {
+	colNo = i;
+	break;
+      }
+    }
+  }  
 
   /* If column not found - bug out */
   if (colNo<0) {

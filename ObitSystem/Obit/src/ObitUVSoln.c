@@ -1660,6 +1660,8 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 	if (need2) row->MBDelay2 = work1[13*nxt+itime];
       }
 
+      /* weights zero rather than fblank */
+      if (work1[3*nxt+itime]==fblank) work1[3*nxt+itime] = 0.0;
       if (work1[3*nxt+itime] > 0.0) {
 	amp = sqrt (work1[0*nxt+itime]*work1[0*nxt+itime] + 
 		    work1[1*nxt+itime]*work1[1*nxt+itime]);
@@ -1680,6 +1682,8 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 	row->Rate1[iif]   = fblank;
       }
       if (need2) {
+	/* weights zero rather than fblank */
+	if (work1[7*nxt+itime]==fblank) work1[7*nxt+itime] = 0.0;
 	if (work1[7*nxt+itime] > 0.0) {
 	  amp = sqrt (work1[4*nxt+itime]*work1[4*nxt+itime] + 
 		      work1[5*nxt+itime]*work1[5*nxt+itime]);

@@ -3179,18 +3179,18 @@ ObitImageUtilVel (ObitImage *inImage, ObitImage *outImage, ObitErr *err)
       else trc[i] -= 1.0;
     }
   }
-  ObitInfoListAlwaysPut (inImage->info, "TRC", OBIT_long, dim, trc);
+  /* Not needed?ObitInfoListAlwaysPut (inImage->info, "TRC", OBIT_long, dim, trc);*/
 
   /* Blank or zero for out of range points? */
   if (Parms[2]<=0.5) newVal = fblank;
   else newVal = 0.0;
 
-  /* Make scratch copy for convolution */
-  scrImage = newObitImageScratch (inImage, err);
-  if (err->error) Obit_traceback_msg (err, routine, outImage->name);
-
   /* Open input image */
   iretCode = ObitImageOpen (inImage, OBIT_IO_ReadOnly, err);
+  if (err->error) Obit_traceback_msg (err, routine, outImage->name);
+
+  /* Make scratch copy for convolution */
+  scrImage = newObitImageScratch (inImage, err);
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
 
   /* Copy descriptor */

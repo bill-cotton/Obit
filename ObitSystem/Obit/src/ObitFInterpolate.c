@@ -359,14 +359,14 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
   good = 0;
  
   /* Loop over data summing values times convolving weights */
-  for (j= 0; j<iwid; j++) {
+  for (j=0; j<iwid; j++) {
     wty = yKernal[j];
-    for (i= 1; i<=iwid; i++) {
+    for (i=0; i<iwid; i++) {
       indx = planeOff + xStart + i + ((yStart + j) * in->nx);
-      wt = xKernal[i-1] * wty;
-      if (data[indx-1] != fblank) {
+      wt = xKernal[i] * wty;
+      if (data[indx] != fblank) {
 	sumwt = sumwt + wt;
-	sum = sum + data[indx-1] * wt;
+	sum = sum + data[indx] * wt;
 	good = good + 1;
       } 
     }
@@ -389,12 +389,12 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
     /* interpolate in rows */
     sum = 0.0;
     sumwt = 0.0;
-    for (i= 1; i<=iwid; i++) { /* loop 120 */
+    for (i=0; i<iwid; i++) { /* loop 120 */
       den = 1.0;
       prod = 1.0;
-      for (k= 1; k<=iwid; k++) { /* loop 110 */
-	indx = planeOff + xStart + k + ((yStart + j - 1) * in->nx);
-	if (data[indx-1] != fblank) {
+      for (k=0; k<iwid; k++) { /* loop 110 */
+	indx = planeOff + xStart + k + ((yStart + j) * in->nx);
+	if (data[indx] != fblank) {
 	  if (i != k) {
 	    den = den * (i - k);
 	    prod = prod * (xp - k);
@@ -402,17 +402,17 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
 	} 
       } /* end loop  L110: */;
  
-     indx = planeOff + xStart + i + ((yStart + j - 1) * in->nx);
+     indx = planeOff + xStart + i + ((yStart + j) * in->nx);
 
       /* accumulate */
-      if (data[indx-1] != fblank) {
+      if (data[indx] != fblank) {
 	if (abs (den) > 1.0e-10) {
 	  wt = prod / den;
 	} else {
 	  wt = 0.0;
 	} 
 	sumwt = sumwt + wt;
-	sum = sum + wt * data[indx-1];
+	sum = sum + wt * data[indx];
       } 
     } /* end loop  L120: */
 
@@ -427,11 +427,11 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
   /* interpolate in column */
   sum = 0.0;
   sumwt = 0.0;
-  for (i= 1; i<=iwid; i++) { /* loop 220 */
+  for (i=0; i<iwid; i++) { /* loop 220 */
     den = 1.0;
     prod = 1.0;
-    for (k= 1; k<=iwid; k++) { /* loop 210 */
-      if (row[k-1] != fblank) {
+    for (k=0; k<iwid; k++) { /* loop 210 */
+      if (row[k] != fblank) {
 	if (i != k) {
 	  den = den * (i - k);
 	  prod = prod * (yp - k);
@@ -440,7 +440,7 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
     } /* end loop  L210: */
     
     /* accumulate */
-    if (row[i-1] != fblank) {
+    if (row[i] != fblank) {
       if (abs (den) > 1.0e-10) {
 	wt = prod / den;
       } else {

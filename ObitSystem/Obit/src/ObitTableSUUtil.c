@@ -339,3 +339,149 @@ ObitSourceList* ObitTableSUGetList (ObitTableSU *in, ObitErr *err) {
 
   return out;
 } /* end ObitTableSUGetList */
+
+/**
+ * Copies SU tables from inUV to outUV with selection in inUV
+ * Copies all sources but selects IFs
+ * \param inUV     Input UV to copy from
+ * \param outUV    Output UV to copy to
+ * \param err      ObitErr error stack.
+ * \return I/O Code  OBIT_IO_OK = OK.
+ */
+ObitIOCode ObitTableSUSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  ObitTableSU    *inTab=NULL, *outTab=NULL;
+  ObitTableSURow *inRow=NULL, *outRow=NULL;
+  olong i, iif, oif;
+  olong highSUver, iSUver, inSURow, outSURow;
+  oint numIF;
+  gchar *SUType = "AIPS SU";
+  gchar *routine = "ObitTableSUSelect";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return retCode;
+  g_assert (ObitUVIsA(inUV));
+  g_assert (ObitUVIsA(outUV));
+
+  /* Fully instantiate UV files */
+  ObitUVFullInstantiate (inUV, TRUE, err);
+  if (err->error )Obit_traceback_val (err, routine, inUV->name, retCode);
+  ObitUVFullInstantiate (outUV, FALSE, err);
+  if (err->error )Obit_traceback_val (err, routine, outUV->name, retCode);
+
+  /* How many SU tables  */
+  highSUver = ObitTableListGetHigh (inUV->tableList, SUType);
+
+  /* Are there any? */
+  if (highSUver <= 0) return OBIT_IO_OK;
+
+  /* Only 1 SU table allowed */
+  iSUver = 1;
+
+  /* Get input table */
+  numIF = 0;
+  inTab = 
+    newObitTableSUValue (inUV->name, (ObitData*)inUV, &iSUver, OBIT_IO_ReadOnly, 
+			 numIF, err);
+  if (err->error) Obit_traceback_val (err, routine, inTab->name, retCode);
+  /* Find it */
+  if (inTab==NULL) return OBIT_IO_OK; /* No - return */
+  
+  /* Open input table */
+  retCode = ObitTableSUOpen (inTab, OBIT_IO_ReadOnly, err);
+  if ((retCode != OBIT_IO_OK) || (err->error))
+    Obit_traceback_val (err, routine, inTab->name, retCode);
+  
+  /* Delete any old output table */
+  retCode = ObitDataZapTable ((ObitData*)outUV, SUType, iSUver, err);
+  if (err->error) Obit_traceback_val (err, routine, outUV->name, retCode);
+  
+  /* Create output table */
+  numIF  = inUV->mySel->numberIF;
+  outTab = 
+    newObitTableSUValue (outUV->name, (ObitData*)outUV, &iSUver, OBIT_IO_WriteOnly, 
+			 numIF, err);
+  if (err->error) Obit_traceback_val (err, routine, outUV->name, retCode);
+  /* Create it? */
+  Obit_retval_if_fail((outTab!=NULL), err, retCode,
+		      "%s: Could not create SU table %d for %s", 
+		      routine, iSUver, outTab->name);
+  
+  /* Open output table */
+  retCode = ObitTableSUOpen (outTab, OBIT_IO_WriteOnly, err);
+  if ((retCode != OBIT_IO_OK) || (err->error))
+    Obit_traceback_val (err, routine, inTab->name, retCode);
+  
+  /* Update header info */
+  for (i=0; i<MAXKEYCHARTABLESU; i++)  outTab->velType[i] = inTab->velType[i];
+  for (i=0; i<MAXKEYCHARTABLESU; i++)  outTab->velDef[i]  = inTab->velDef[i];
+  outTab->FreqID    = inTab->FreqID;
+  
+  /* Set rows */
+  inRow  = newObitTableSURow (inTab);
+  outRow = newObitTableSURow (outTab);
+  ObitTableSUSetRow (outTab, outRow, err);
+  if (err->error) Obit_traceback_val (err, routine, outTab->name, retCode);
+  
+  /* Loop over table copying selected data */
+  outSURow = -1;
+  for (inSURow=1; inSURow<=inTab->myDesc->nrow; inSURow++) {
+    retCode = ObitTableSUReadRow (inTab, inSURow, inRow, err);
+    if ((retCode != OBIT_IO_OK) || (err->error))
+      Obit_traceback_val (err, routine, inUV->name, retCode);
+    if (inRow->status==-1) continue;
+    
+    /* Copy selected data */
+    outRow->SourID    = inRow->SourID;
+    outRow->Qual      = inRow->Qual;
+    outRow->Bandwidth = inRow->Bandwidth;
+    outRow->RAMean    = inRow->RAMean;
+    outRow->DecMean   = inRow->DecMean;
+    outRow->Epoch     = inRow->Epoch;
+    outRow->RAApp     = inRow->RAApp;
+    outRow->DecApp    = inRow->DecApp;
+    outRow->PMRa      = inRow->PMDec;
+    for (i=0; i<inTab->myDesc->repeat[inTab->SourceCol]; i++) 
+      outRow->Source[i] = inRow->Source[i];
+    for (i=0; i<inTab->myDesc->repeat[inTab->CalCodeCol]; i++) 
+      outRow->CalCode[i] = inRow->CalCode[i];
+
+    oif = 0;
+    for (iif=inUV->mySel->startIF-1; 
+	 iif<inUV->mySel->startIF+inUV->mySel->numberIF-1;
+	 iif++) {
+      outRow->IFlux[oif]    = inRow->IFlux[iif];
+      outRow->QFlux[oif]    = inRow->QFlux[iif];
+      outRow->UFlux[oif]    = inRow->UFlux[iif];
+      outRow->VFlux[oif]    = inRow->VFlux[iif];
+      outRow->FreqOff[oif]  = inRow->FreqOff[iif];
+      outRow->LSRVel[oif]   = inRow->LSRVel[iif];
+      outRow->RestFreq[oif] = inRow->RestFreq[iif];
+      oif++;
+    }
+    retCode = ObitTableSUWriteRow (outTab, outSURow, outRow, err);
+    if ((retCode != OBIT_IO_OK) || (err->error))
+      Obit_traceback_val (err, routine, inUV->name, retCode);
+  } /* end loop over rows */
+  
+  /* Close tables */
+  retCode = ObitTableSUClose (inTab, err);
+  if ((retCode != OBIT_IO_OK) || (err->error))
+    Obit_traceback_val (err, routine, inTab->name, retCode);
+  retCode = ObitTableSUClose (outTab, err);
+  if ((retCode != OBIT_IO_OK) || (err->error))
+    Obit_traceback_val (err, routine, outTab->name, retCode);
+
+  /* release table objects */
+  inTab  = ObitTableSUUnref(inTab);
+  outTab = ObitTableSUUnref(outTab);
+  
+  /* release row objects */
+  inRow  = ObitTableSURowUnref(inRow);
+  outRow = ObitTableSURowUnref(outRow);
+
+  return retCode;
+} /* end ObitTableSUSelect */
+

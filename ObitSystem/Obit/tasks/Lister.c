@@ -500,7 +500,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *strTemp;
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Qual", "calCode", "Stokes", "timeRange",  "FreqID", 
-    "BIF", "EIF", "BChan", "EChan", "Antennas", "subA",
+    "BIF", "EIF", "BChan", "EChan", "Antennas", "subA", "corrType",
     "doCalib", "gainUse", "doPol", "flagVer", "doBand", "BPVer", "Smooth", 
     "doCalSelect",
      NULL};
@@ -1192,8 +1192,10 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ofloat       time=0., lasttime, value=0., *valueArr=NULL, fblank = ObitMagicF();
   ofloat       scale = 1.0;
   gchar        *prtFile=NULL, timeString[25], inTab[28], dispType[10], source[20];
-  gchar        *dTypes[] = {"AMP     ","PHASE   ","WT      ","DELAY   ","RATE    "};
-  gchar        *dLabel[] = {"Amplitude","Phase","Weight/SNR","Delay(nsec)","Rate(mHz)"};
+  gchar        *dTypes[] = {"AMP     ","PHASE   ","WT      ","DELAY   ","RATE    ",
+                "SNR     "};
+  gchar        *dLabel[] = {"Amplitude","Phase","Weight/SNR","Delay(nsec)","Rate(mHz)",
+                "SNR"};
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *routine = "doSCAN";
@@ -1239,7 +1241,7 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   dt = -1;       /* Display type code */
   /* Default is "AMP" */
   if (!strncmp(dispType, "    ",4)) sprintf (dispType,"%s",dTypes[0]);
-  for (i=0; i<5; i++) {
+  for (i=0; i<6; i++) {
     if (!strcmp (dispType, dTypes[i])) {
       dt = i;
       break;
@@ -1706,7 +1708,7 @@ void day2dhms(ofloat time, gchar *timeString)
  * \param firstPol  If true, first poln, else second
  * \param iif       0-rel IF number
  * \param dtype     Desired data type code
- *                  0=amp, 1=phase, 3=wt, 4=Delay, 5=Rate
+ *                  0=amp, 1=phase, 2=wt, 3=Delay, 4=Rate, 5=SNR(Weight)
  * \return value, blanked if necessary
  */
 ofloat getSNValue (ObitTableSNRow *SNRow, gboolean firstPol, 
@@ -1768,6 +1770,12 @@ ofloat getSNValue (ObitTableSNRow *SNRow, gboolean firstPol,
 	if (myUVDesc) value *= myUVDesc->freqIF[iif]*1000.0;
       }
     }
+  case 5:  /* "SNR"    */
+    if (firstPol) {
+      value = SNRow->Weight1[iif];
+    } else {
+      value = SNRow->Weight2[iif];
+    }
     break;
   default:
     value = fblank;
@@ -1781,7 +1789,7 @@ ofloat getSNValue (ObitTableSNRow *SNRow, gboolean firstPol,
  * \param firstPol  If true, first poln, else second
  * \param iif       0-rel IF number
  * \param dtype     Desired data type code
- *                  0=amp, 1=phase, 3=wt, 4=Delay, 5=Rate
+ *                  0=amp, 1=phase, 2=wt, 3=Delay, 4=Rate, 5=SNR(Weight)
  * \return value, blanked if necessary
  */
 ofloat getCLValue (ObitTableCLRow *CLRow, gboolean firstPol, 
@@ -1843,6 +1851,13 @@ ofloat getCLValue (ObitTableCLRow *CLRow, gboolean firstPol,
 	/* to milliHz */
 	if (myUVDesc) value *= myUVDesc->freqIF[iif]*1000.0;
       }
+    }
+    break;
+  case 5:  /* "SNR"    */
+    if (firstPol) {
+      value = CLRow->Weight1[iif];
+    } else {
+      value = CLRow->Weight2[iif];
     }
     break;
   default:

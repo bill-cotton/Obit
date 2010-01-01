@@ -1062,7 +1062,7 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
     MakeResiduals(in, in->currentFields, FALSE, err);
     done = (in->cleanable[0] <= in->minFlux[0]) || 
       ((in->Pixels->maxResid <= in->minFlux[0]) && (in->Pixels->currentIter>1)) || 
-      (in->imgPeakRMS[0]<MAX (4.0,(0.1*in->beamPeakRMS[0])));
+      (in->autoWindow && (in->imgPeakRMS[0]<MAX (4.0,(0.1*in->beamPeakRMS[0]))));
     return done;
   }
 
@@ -1279,7 +1279,7 @@ static gboolean ObitDConCleanVisPickNext3D(ObitDConCleanVis *in, ObitErr *err)
     MakeResiduals(in, in->currentFields, FALSE, err);
     done = (in->cleanable[0] <= in->minFlux[0]) || 
       ((in->Pixels->maxResid <= in->minFlux[0]) && (in->Pixels->currentIter>1)) || 
-      (in->imgPeakRMS[0]<MAX (4.0,(0.1*in->beamPeakRMS[0])));
+      (in->autoWindow && (in->imgPeakRMS[0]<MAX (4.0,(0.1*in->beamPeakRMS[0]))));
     return done;
   }
 

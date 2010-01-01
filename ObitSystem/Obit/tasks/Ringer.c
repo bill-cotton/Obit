@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Fit Rings to SiO maser images                                      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007                                               */
+/*;  Copyright (C) 2007,2009                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -50,7 +50,7 @@ ObitImage* getInputImage1 (ObitInfoList *myInput, ObitErr *err);
 ObitImage* getInputImage2 (ObitInfoList *myInput, ObitErr *err);
 /* Check that inputs are compatable */
 void checkInput (ObitImage* in1Image, ObitImage* in2Image, ObitErr *err);
-/* do fitting */
+/* do fitting of circular ring */
 void doFit (ObitInfoList *myInput, ObitImage* in1Image, ObitImage* in2Image, 
 	    ObitInfoList *myOutput, ObitErr *err);
 /* parameter search */
@@ -63,6 +63,16 @@ void DoHisto(ofloat cen[2], ofloat spacing);
 void DoMom(gboolean final, ofloat Amom[2], ofloat Bmom[2]);
 /* get Fraction of flux in annulus */
 void GetFrac (ofloat Amom[2], ofloat Bmom[2], ofloat Frac[2]);
+/* do fitting of Elliptical ring */
+void doFitE (ObitInfoList *myInput, ObitImage* in1Image, ObitImage* in2Image, 
+	    ObitInfoList *myOutput, ObitErr *err);
+/* Elliptical ring parameter search */
+void searchE (olong nsearch, ofloat spacing, olong prtLv, 
+	      ofloat *Center, ofloat *Radius, ofloat *Width, ofloat Frac[2], 
+	      ofloat *Ratio, ofloat dRat, ofloat *posAng, ofloat dPA,
+	      ObitErr *err);
+/* Histograms of new elliptical value  */
+void DoHistoE(ofloat cen[2], ofloat ar[2], ofloat pa, ofloat spacing);
 
 /* Program globals */
 gchar *pgmName = "Ringer";       /* Program name */
@@ -92,6 +102,9 @@ int main ( int argc, char **argv )
   oint ierr = 0;
   ObitSystem   *mySystem= NULL;
   ObitImage    *in1Image= NULL, *in2Image= NULL;
+  gboolean     doEllip=FALSE;
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
   ObitErr      *err= NULL;
 
    /* Startup - parse command line */
@@ -120,8 +133,12 @@ int main ( int argc, char **argv )
   doFit (myInput, in1Image, in2Image, myOutput, err);
   if (err->error) ierr = 1;  ObitErrLog(err); if (ierr!=0) goto exit;
 
-  /* show any messages and errors */
-  if (err->error) ierr = 1; ObitErrLog(err);  if (ierr!=0) goto exit;
+  /* want elliptical fit as well */
+  ObitInfoListGetTest(myInput, "doEllip", &type, dim, &doEllip);
+  if (doEllip) {
+    doFitE (myInput, in1Image, in2Image, myOutput, err);
+    if (err->error) ierr = 1; ObitErrLog(err);  if (ierr!=0) goto exit;
+  }
   
   /* cleanup */
   myInput    = ObitInfoListUnref(myInput);    /* delete input list */
@@ -449,6 +466,16 @@ ObitInfoList* defaultOutputs(ObitErr *err)
   /* Frac */
   dim[0] = 2; dim[1] = 1;
   ObitInfoListPut (out, "Frac", OBIT_float, dim, ftemp, err);
+  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+
+  /* Ratio */
+  dim[0] = 2; dim[1] = 1;
+  ObitInfoListPut (out, "Ratio", OBIT_float, dim, ftemp, err);
+  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+
+  /* PosAng  */
+  dim[0] = 1; dim[1] = 1;
+  ObitInfoListPut (out, "PosAng", OBIT_float, dim, ftemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   return out;
@@ -909,7 +936,7 @@ void doFit (ObitInfoList *myInput, ObitImage* in1Image, ObitImage* in2Image,
 /*   Fit ring                                                             */
 /*   Inputs:                                                              */
 /*      space    Spacing (pixels) for search                              */
-/*      nsearch  width (pixels os earch pattern                           */
+/*      nsearch  Number of searches per parameter                         */
 /*      spacing  Spacing (pixels) for histogram                           */
 /*      prtLv    print level, debug if >=3                                */
 /*   Output:                                                              */
@@ -1151,3 +1178,356 @@ void GetFrac(ofloat Amom[2], ofloat Bmom[2], ofloat Frac[2])
 
 } /* end  GetFrac */
 
+/*----------------------------------------------------------------------- */
+/*  Fit axial ratioes and position angle starting from Center and Radius  */
+/*                          */
+/*   Input:                                                               */
+/*      myInput   Input parameters on InfoList                            */
+/*      in1Image  First image                                             */
+/*      in2Image  Second image                                            */
+/*   Output:                                                              */
+/*      myOutput  Output parameters on InfoList , fitted values added     */
+/*      err       Obit Error stack                                        */
+/*----------------------------------------------------------------------- */
+void doFitE (ObitInfoList *myInput, ObitImage* in1Image, ObitImage* in2Image, 
+	    ObitInfoList *myOutput, ObitErr *err)
+{
+  ofloat Spacing=1.0, Cutoff=0.0;
+  olong NSearch = 51, srch;
+  ofloat Radius[2]={-1.0, -1.0}, Center[2]={-1.0, -1.0}, Width[2]={-1.0, -1.0};
+  ofloat Ratio[2]={1.0,1.0},  Frac[2], PosAng=0.0, dRat, dPA, PARange;
+  ofloat fblank = ObitMagicF();
+  ObitFArray *Apix=in1Image->image, *Bpix=in2Image->image; 
+  olong prtLv=0;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ofloat scale;
+  olong i, nx, ix, iy;
+  gchar *routine = "doFitE";
+
+  if (err->error) return; /* previous error? */
+
+  /* Get parameters from myInput/myOutput */
+  ObitInfoListGetTest(myInput, "Spacing", &type, dim, &Spacing);
+  if (Spacing<=0.01) Spacing = 2.0;
+  ObitInfoListGetTest(myInput, "NSearch", &type, dim, &NSearch);
+  if (NSearch<=0) NSearch = 51;
+  ObitInfoListGetTest(myInput, "Cutoff",  &type, dim, &Cutoff);
+  Cutoff = MAX (0.01, Cutoff);
+  ObitInfoListGetTest(myInput, "Ratio",   &type, dim, Ratio);
+  ObitInfoListGetTest(myInput, "PosAng",  &type, dim, &PosAng);
+  ObitInfoListGetTest(myOutput, "Center",  &type, dim, Center);
+  /* Center 0-rel */
+  Center[0] -= 1.0;
+  Center[1] -= 1.0;
+  ObitInfoListGetTest(myOutput, "Radius",  &type, dim, Radius);
+  ObitInfoListGetTest(myOutput, "Width",   &type, dim, Width);
+  ObitInfoListGetTest(myInput,  "prtLv",   &type, dim, &prtLv);
+
+  /* Convert to lists of pixels above Cutoff - first count */
+  Acount = 0;
+  for (i=0; i<Apix->arraySize; i++) 
+    if ((Apix->array[i]!=fblank)&&(Apix->array[i]>=Cutoff)) Acount++;
+  Bcount = 0;
+  for (i=0; i<Bpix->arraySize; i++) 
+    if ((Bpix->array[i]!=fblank)&&(Bpix->array[i]>=Cutoff)) Bcount++;
+
+  /* Better have found more than 10 each */
+  Obit_return_if_fail(((Acount+Bcount)>20), err,
+		      "%s: Insufficient counts above Cutoff %d %d", 
+		      routine, Acount, Bcount);
+
+  AXpixel = g_malloc0(Acount*sizeof(ofloat));
+  AYpixel = g_malloc0(Acount*sizeof(ofloat));
+  AData   = g_malloc0(Acount*sizeof(ofloat));
+  BXpixel = g_malloc0(Bcount*sizeof(ofloat));
+  BYpixel = g_malloc0(Bcount*sizeof(ofloat));
+  BData   = g_malloc0(Bcount*sizeof(ofloat));
+
+  /* Histogram */ 
+  nx = in1Image->myDesc->inaxes[0];
+  nhisto = nx;
+  Ahisto = g_malloc0 (nx*sizeof(float));
+  Bhisto = g_malloc0 (nx*sizeof(float));
+  
+  /* Generate lists */
+  Acount = 0;
+  for (i=0; i<Apix->arraySize; i++) {
+    if ((Apix->array[i]!=fblank)&&(Apix->array[i]>=Cutoff)) {
+      AData[Acount] = Apix->array[i];
+      iy = i / nx;
+      ix = i - iy * nx;
+      AXpixel[Acount] = (ofloat)ix;
+      AYpixel[Acount] = (ofloat)iy;
+      Acount++;
+    }
+  }
+  
+  Bcount = 0;
+  for (i=0; i<Bpix->arraySize; i++) {
+    if ((Bpix->array[i]!=fblank)&&(Bpix->array[i]>=Cutoff)) {
+      BData[Bcount] = Bpix->array[i];
+      iy = i / nx;
+      ix = i - iy * nx;
+      BXpixel[Bcount] = (ofloat)ix;
+      BYpixel[Bcount] = (ofloat)iy;
+      Bcount++;
+    }
+  }
+  
+  /* Position angle to Radians */
+  PosAng *= DG2RAD;
+  /* If position angle given only search +/- 20 deg */
+  if (fabs(PosAng)>1.0e-5) PARange = 20.0*2.0*DG2RAD;
+  else PARange = 3.1415926;
+
+  /* Default ratio - 1.5 */ 
+  if (Ratio[0]<=0.0) Ratio[0] = 1.5;
+  if (Ratio[1]<=0.0) Ratio[1] = 1.5;
+  
+  /* do coarse search  */
+  srch = 1+2*(NSearch/2);   /* Make odd */
+  srch = MAX (5, srch);
+  dRat = 1.0/srch;
+  dPA  = PARange/srch;
+  searchE (srch, Spacing, prtLv, Center, Radius, Width, Frac, 
+	   Ratio, dRat, &PosAng, dPA, err);
+  if (err->error) Obit_traceback_msg (err, routine, "search");
+
+  /* do fine search */
+  srch = 1+2*((NSearch/2)/2);
+  srch = MAX (5, srch);
+  dRat = 0.05/srch;
+  dPA  = 0.25*PARange/srch;
+  searchE (srch, Spacing,  prtLv, Center, Radius, Width, Frac,  
+	   Ratio, dRat, &PosAng, dPA, err);
+  if (err->error) Obit_traceback_msg (err, routine,"search");
+
+  /* do fine2 search */
+  srch = 1+2*((NSearch/4)/2);
+  srch = MAX (5, srch);
+  dRat = 0.01/srch;
+  dPA  = 0.05*PARange/srch;
+  searchE (srch, Spacing, prtLv, Center, Radius, Width, Frac,  
+	   Ratio, dRat, &PosAng, dPA, err);
+  if (err->error) Obit_traceback_msg (err, routine, "search");
+
+  /* Center 1-rel */
+  Center[0] += 1.0;
+  Center[1] += 1.0;
+
+  /* Position angle to degrees */
+  PosAng *= RAD2DG;
+
+  /* report results */
+  scale = fabs(in1Image->myDesc->cdelt[1])*3600000.0;
+  if (prtLv>=1) {
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "Axial Ratio %5.2f %5.2f Position angle %5.2f deg",
+		   Ratio[0], Ratio[1], PosAng);
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "Center %5.2f %5.2f Radius %5.2f %5.2f Width %5.2f %5.2f pixels",
+		   Center[0], Center[1], Radius[0], Radius[1], Width[0], Width[1]);
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "Radius %5.2f %5.2f Width %5.2f %5.2f mas",
+		   Radius[0]*scale, Radius[1]*scale, 
+		   Width[0]*scale, Width[1]*scale);
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "Fraction of flux in annulus %5.3f %5.3f ",
+		   Frac[0], Frac[1]);
+ }
+
+  if (prtLv>=2) {
+    /* show histograms */
+    scale = fabs(in1Image->myDesc->cdelt[1])*3600000.0*Spacing;
+    Obit_log_error(err, OBIT_InfoErr, "  Radius   A Hist   B Hist");
+    for (i = 0; i<200; i++) {
+     Obit_log_error(err, OBIT_InfoErr, 
+		    "%8.3f %8.3f %8.3f", 
+		    i*scale, 100.0*Ahisto[i], 100.0*Bhisto[i]);
+    } 
+  }
+  
+  ObitErrLog(err); /* show any error messages on err */
+  /* Cleanup */
+  if (AXpixel) g_free(AXpixel);
+  if (AYpixel) g_free(AYpixel);
+  if (AData)   g_free(AData);
+  if (BXpixel) g_free(BXpixel);
+  if (BYpixel) g_free(BYpixel);
+  if (BData)   g_free(BData);
+  if (Ahisto)  g_free(Ahisto);
+  if (Bhisto)  g_free(Bhisto);
+
+  /* Save results on output */
+  dim[0] = 2;
+  ObitInfoListAlwaysPut (myOutput, "Ratio",  OBIT_float, dim, Ratio);
+  ObitInfoListAlwaysPut (myOutput, "Radius", OBIT_float, dim, Radius);
+  ObitInfoListAlwaysPut (myOutput, "Width",  OBIT_float, dim, Width);
+  ObitInfoListAlwaysPut (myOutput, "Frac",   OBIT_float, dim, Frac);
+  dim[0] = 1;
+  ObitInfoListAlwaysPut (myOutput, "PosAng", OBIT_float, dim, &PosAng);
+} /* end doFitE */
+
+void searchE (olong nsearch, ofloat spacing, olong prtLv, 
+	      ofloat *Center, ofloat *Radius, ofloat *Width, ofloat Frac[2],
+	      ofloat *Ratio, ofloat dRat, ofloat *posAng, ofloat dPA,
+	      ObitErr *err)
+/*----------------------------------------------------------------------- */
+/*   Fit Axial ratio and position angle                                   */
+/*   Does 3 parameter direct search                                       */
+/*   Inputs:                                                              */
+/*      nsearch  Number of searches per parameter                         */
+/*      spacing  Spacing (pixels) for histogram                           */
+/*      prtLv    print level, debug if >=3                                */
+/*      Center   Center pixel                                             */
+/*      dRat     Spacing in ratio search                                  */
+/*      dPA      Spacing in position angle search (rad)                   */
+/*   Output:                                                              */
+/*      Radius   Ring radii in pixels                                     */
+/*      Width    Ring widths in pixel                                     */
+/*      Ratio    Axial ratio per image, center value on input             */
+/*      Frac     Fraction of flux in annulus defined by Amom, Bmom        */
+/*      PosAng   Position angle (rad) center value on input               */
+/*      err      Obit Error stack                                         */
+/*----------------------------------------------------------------------- */
+{
+  ofloat Amom[2], Bmom[2],  minxy[3], minval, v;
+  ofloat ar[2], pa;
+  olong i, j, k, ns;
+
+  minxy[0] = minxy[1] = minxy[2] = 0;
+  /* search grid */
+  minval = 1.0e20;
+  ns = 1 + 2*(nsearch/4);
+  for (k=0; k<nsearch; k++) {  /* Loop in PA */
+    pa = (*posAng) + (k-nsearch/2)*dPA;
+    for (j=0; j<ns; j++) { /* Loop in first ratio */
+      ar[0] = Ratio[0] + (j-nsearch/2)*dRat;
+      if (ar[0]<1.0) continue;
+      for (i=0; i<ns; i++) { /* Loop in second ratio */
+	ar[1] = Ratio[1] + (i-nsearch/2)*dRat;
+	if (ar[1]<1.0) continue;
+	DoHistoE(Center, ar, pa, spacing);
+	DoMom (FALSE, Amom, Bmom);
+	v = Amom[1]+Bmom[1];
+	/*      map[i][j] = v;*/
+	if (minval>v) {
+	  minval = v;
+	  minxy[0] = pa;     /* Save min pa */
+	  minxy[1] = ar[0];  /* Save min first axial ratio */
+	  minxy[2] = ar[1];  /* Save min second axial ratio */
+	}
+      } /* end Loop in second ratio */
+    } /* end Loop in first ratio */
+  } /* end PA Loop */
+
+  /* best value statistics */
+  DoHistoE(Center, &minxy[1], minxy[0], spacing);
+  DoMom (TRUE, Amom, Bmom);
+  Radius[0] = Amom[0]*spacing;
+  Radius[1] = Bmom[0]*spacing;
+  Width[0]  = Amom[1]*spacing;
+  Width[1]  = Bmom[1]*spacing;
+  
+  /* Get fraction of flux in annulus */
+  GetFrac(Amom, Bmom, Frac);
+  
+  /* save results */
+  *posAng  = minxy[0];
+  Ratio[0] = minxy[1];
+  Ratio[1] = minxy[2];
+  
+  if (prtLv>=3) {
+    Obit_log_error(err, OBIT_InfoErr, 
+		   " min %5.3f Ratio %5.2f %5.2f PosAngle %5.2f ",
+		   minval, Ratio[0], Ratio[1], (*posAng)*57.296);
+    ObitErrLog(err); /* show any messages on err */
+  }
+} /* end  searchE */
+
+void DoHistoE(ofloat cen[2], ofloat ar[2], ofloat pa, ofloat spacing)
+/*----------------------------------------------------------------------- */
+/*   Calculate histograms of summed flux vs distance from center          */
+/*   Normalize by area                                                    */
+/*   Input :                                                              */
+/*      cen  R[2] center pixel about which to make the histogram          */
+/*      ar   R[2] Axial ratio of first and second image                   */
+/*      pa   Position angle of major axis                                 */
+/*      spacing  Spacing (pixels) for histogram                           */
+/*----------------------------------------------------------------------- */
+{
+  olong  i, icell;
+  ofloat dx, dy, x2, y2, dist, maxd2, ispace=1.0/spacing;
+  ofloat theta, phi, tanphi, maja1, mina1, maja2, mina2, rad;
+
+  /* initialize */
+  for (i=0; i<nhisto; i++) {Ahisto[i] = 0.0; Bhisto[i] = 0.0;}
+
+  /* maximum distance squared */
+  maxd2 = (nhisto*spacing) * (nhisto*spacing);
+
+  /* Major and minor axes for unit ellipse */
+  mina1 = 2.0 / (1.0 + ar[0]);
+  maja1 = mina1 * ar[0];
+  mina1 *= mina1;  /* Square */
+  maja1 *= maja1;
+  mina2 = 2.0 / (1.0 + ar[1]);
+  maja2 = mina2 * ar[1];
+  mina2 *= mina2;  /* Square */
+  maja2 *= maja2;
+
+  /* A data */
+  for (i=0; i<Acount; i++) {
+    dx = AXpixel[i]-cen[0];
+    dy = AYpixel[i]-cen[1];
+    theta = atan2(-dx, dy);
+    /* counter rotation in ellipse frame */
+    phi = theta - pa;
+    /* distance to center from puncture point along angle phi */
+    tanphi = tan(phi);
+    y2 = (maja1*mina1/(maja1*tanphi*tanphi + mina1));
+    x2 = (mina1 - (y2*mina1)/maja1);
+    rad = sqrt(x2 + y2);
+
+    /* Distort by inverse of distance on ellipse from center.*/
+    dx /= rad;
+    dy /= rad;
+    dist = dx*dx + dy*dy;
+    if (dist<maxd2) {
+      dist = sqrt (dist);
+      icell = dist * ispace + 0.5;
+      if (icell>=nhisto) icell = nhisto-1;
+      Ahisto[icell] += AData[i];
+    }
+  }
+  /* normalize by area */
+  for (i=1; i<nhisto; i++) Ahisto[i] /= (float)i;
+
+  /* B data */
+  for (i=0; i<Bcount; i++) {
+    dx = BXpixel[i]-cen[0];
+    dy = BYpixel[i]-cen[1];
+    theta = atan2(-dx, dy);
+    /* rotation in ellipse frame */
+    phi = theta - pa;
+    /* distance to center from puncture point along angle phi */
+    tanphi = tan(phi);
+    y2 = (maja2*mina2/(maja2*tanphi*tanphi + mina2));
+    x2 = (mina2 - (y2*mina2)/maja2);
+    rad = sqrt(x2 + y2);
+
+    /* Distort by inverse of distance on ellipse from center.*/
+    dx /= rad;
+    dy /= rad;
+    dist = dx*dx + dy*dy;
+    if (dist<maxd2) {
+      dist = sqrt (dist);
+      icell = dist * ispace + 0.5;
+      if (icell>=nhisto) icell = nhisto-1;
+      Bhisto[icell] += BData[i];
+    }
+  }
+ /* normalize by area */
+  for (i=1; i<nhisto; i++) Bhisto[i] /= (float)i;
+} /* end  DoHistoE */

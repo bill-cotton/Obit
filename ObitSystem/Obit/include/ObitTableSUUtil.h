@@ -32,6 +32,7 @@
 #include "ObitErr.h"
 #include "ObitTableSU.h"
 #include "ObitSourceList.h"
+#include "ObitUV.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -47,5 +48,8 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
 
 /** Public: Read a source list into a ObitSourceList */
 ObitSourceList* ObitTableSUGetList (ObitTableSU *in, ObitErr *err);
+
+/** Public: Copy an SU table selecting by IF */
+ObitIOCode ObitTableSUSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err);
 
 #endif /* OBITTABLESUUTIL_H */ 

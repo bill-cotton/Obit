@@ -3406,6 +3406,8 @@ static void ObitUVSetupIO (ObitUV *in, ObitErr *err)
  * Copy standard UV data tables and then selected tables with selection 
  * specified on inUV.
  * Tables with selection:
+ * \li SU
+ * The SU table is copied selecting by IF if multiple output sources are copied
  * \li FQ
  * The FQ table is always copied selecting by IF and FQID
  * Frequency offsets relative to first selected IF.
@@ -3467,7 +3469,7 @@ static ObitIOCode CopyTablesSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* Or all sources in a MS file selected */
   copySU = copySU || 
     ((inUV->mySel->numberSourcesList==0) && (inUV->myDesc->ilocsu>=0));
-  if (copySU) retCode = ObitUVCopyTables (inUV, outUV, NULL, sourceInclude, err);
+  if (copySU) retCode = ObitTableSUSelect (inUV, outUV, err);
   if ((retCode != OBIT_IO_OK) || (err->error))
     Obit_traceback_val (err, routine, inUV->name, retCode);
 

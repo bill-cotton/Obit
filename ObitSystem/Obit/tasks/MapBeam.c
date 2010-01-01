@@ -1909,9 +1909,9 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
       if (!OK) goto next;
 
       /* Observing geometry (radians) */
-      Az = ObitAntennaListAz (AList, iant, time, Source);
-      El = ObitAntennaListElev (AList, iant, time, Source);
-      PA = ObitAntennaListParAng (AList, iant, time, Source);
+      Az = ObitAntennaListAz (AList, ant1, time, Source);
+      El = ObitAntennaListElev (AList, ant1, time, Source);
+      PA = ObitAntennaListParAng (AList, ant1, time, Source);
 
       /* Accumulate */
       sumAz += Az;

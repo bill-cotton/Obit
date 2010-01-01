@@ -174,3 +174,41 @@ def PWriteCirc (sttab, im, center, radius, err):
         printErrMsg(err, "Error Writing ST table")
     # end PWriteCirc
 
+def PWriteEllipse (sttab, im, center, major, minor, PA, err):
+    """ Write an entry for drawing a circle
+    
+    sttab  = Python Table object, must be open with write enabled
+    im     = Obit Image on which to attach ST Table
+    center = [x,y] pixels
+    major  = major axis size in pixels
+    minor  = minor axis size in pixels
+    PA     = position angle (from N thru E in deg)
+    err    = Python Obit Error/message stack
+    """
+    ################################################################
+    # Check
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    if err.isErr: # existing error?
+        return None
+    # Get image descriptor
+    id = im.Desc.Dict
+    # Get row
+    row = newRow(im)
+    # Convert pixels to positions
+    pos = ImageDesc.PGetPos(im.Desc, center, err)
+    if err.isErr:
+        printErrMsg(err, "Error converting pixel location to position")
+    row[id["ctype"][0]] = [pos[0]]
+    row[id["ctype"][1]] = [pos[1]]
+    row['MAJOR AX']  = [major * abs(id["cdelt"][0])]
+    row['MINOR AX']  = [minor * abs(id["cdelt"][0])]
+    row['POSANG']    = [PA]
+    row['STARTYPE']  = [3.0]
+    row['LABEL']     = ["    "]
+    # Write
+    sttab.WriteRow(-1,row, err)
+    if err.isErr:
+        printErrMsg(err, "Error Writing ST table")
+    # end PWriteEllipse
+

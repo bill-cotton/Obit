@@ -304,8 +304,8 @@ ObitIOCode ObitTableFQSelect (ObitUV *inUV, ObitUV *outUV, odouble *SouIFOff,
       Obit_traceback_val (err, routine, inUV->name, retCode);
     if (inRow->status==-1) continue;
     
-    /* Want this one? Use first if none specified */
-    wanted = ((inFQRow==1) ||
+    /* Want this one? Use all if none specified */
+    wanted = ((inUV->mySel->FreqID<=0) || 
 	      (inRow->fqid==inUV->mySel->FreqID));
     if (!wanted) continue;
     

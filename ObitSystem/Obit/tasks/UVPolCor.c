@@ -1320,6 +1320,8 @@ void getBeam (ObitInfoList *myInput, gboolean doPhase,
 
   /* File type - could be either AIPS or FITS */
   ObitInfoListGetP (myInput, "in3DataType", &type, dim, (gpointer)&Type);
+  if ((Type==NULL) || ((Type[0]==' ')&&(Type[1]==' ')&&(Type[2]==' ')))
+    ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
   if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
     /* AIPS Class */
     strncpy (Aclass, "I     ", 7);
@@ -1402,6 +1404,9 @@ void getBeam (ObitInfoList *myInput, gboolean doPhase,
 
   /* Also phase? */
   if (doPhase) {
+    ObitInfoListGetP (myInput, "in4DataType", &type, dim, (gpointer)&Type);
+    if ((Type==NULL) || ((Type[0]==' ')&&(Type[1]==' ')&&(Type[2]==' ')))
+      ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
     /* Get base parts of name */
     if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
       /* AIPS Class */

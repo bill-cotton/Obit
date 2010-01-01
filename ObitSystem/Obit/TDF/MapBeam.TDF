@@ -122,6 +122,8 @@ blnkTime                           Blank time at the begin (sec)
 **PARAM** boo 1 **DEF** True
 avgAnt                             True => Average all antennas
 **PARAM** boo 1 **DEF** True
+doPhase                            True => write phase Images
+**PARAM** boo 1 **DEF** True
 doRMS                              True => write RMS Images
 **PARAM** boo 1 **DEF** False
 doPolNorm                          True => normalize pol by max 
@@ -149,9 +151,12 @@ Use:   Image quasi "holography" mode data to make total
        and Stokes I, Q, U and V; 
        the third axis is frequency (if there are multiple channels), 
        4th IF (if there are multiple IFs.
-          The real part of each Stokes correlation is averaged and 
-       interpolated using a Lagrange interpolater onto the specified 
-       grid.  Correction for the source Q and U is done by subtracting 
+          The each Stokes correlation is averaged and interpolated 
+       using a Lagrange interpolater onto the specified grid. 
+       The value is then converted into a phase between -90 and + 90
+       degrees and the corresponding "amplitude" (which will be 
+       negative for phases > 90 deg.
+          Correction for the source Q and U is done by subtracting 
        the central pixel value from the entire image.  For Stokes I, 
        the image is normalized to 1.0.  For the other Stokes and all 
        RMS images, the image values are divided by the (unnormalized) 
@@ -248,9 +253,12 @@ Adverbs:
   outFile....Output FITS Image file name ending
              Of form Source+Stokes+Antenna#(or "All")+outFile for Stokes
                      Source+Stokes+Antenna#(or "All")+"RMS"+outFile for RMS
+                  or Source+Stokes+Antenna#(or "All")+"Ph"+outFile for Phase
   outName....Output Image AIPS name ending
              Of form Source+outName for Stokes
              Class is Stokes+Antenna#(or "All") for Stokes 
+             Class is Stokes+Antenna#(or "All")+"RM" for RMS or
+             + "PH" for phase images 
              Class is Stokes+Antenna#(or "All")+"RM" for RMS
   outSeq.....Output Image AIPS file seq. #. 0 => highest unique.
   outDisk....Disk drive # of output UV (FITS or AIPS) NO AIPS default
@@ -286,6 +294,7 @@ Adverbs:
   avgAnt.....True:  combine data of all selected antennas
              into one map.
              False: create separate maps for each selected ant.
+  doPhase....True: Write Phase images as well as ampl images
   doRMS......True: Write RMS images as well as Stokes images
   doPolNorm..True: Normalize each poln. image by its max. NYI
   Antennas...A list of the antennas to use.  All 0 => use all.

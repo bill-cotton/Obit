@@ -57,6 +57,8 @@ UVRange         0.                  Min & max baseline (klambda)
 **PARAM** float 1  **DEF** 0.01
 WtUV              0.0               Weight outside full wt uvrange
 **PARAM** int 1
+FreqID                              Freq. ID to select.
+**PARAM** int 1
 BChan1           0.0     8192.0     Low freq. channel,  initial
 **PARAM** int 1
 EChan1           0.0     8192.0     Highest freq channel, initial
@@ -64,6 +66,8 @@ EChan1           0.0     8192.0     Highest freq channel, initial
 BChan2           0.0     8192.0     Low freq. channel for BP
 **PARAM** int 1
 EChan2           0.0     8192.0     Highest freq channel for BP
+**PARAM** int 1
+ChWid2           0.0                Number of channels in BP soln
 **PARAM** int 1
 subA                                Subarray
 **PARAM** int 50
@@ -106,10 +110,10 @@ BComp                               First CLEAN comp to use.
 EComp                               Last CLEAN comp to use.
                                     to use (0 => all)
 **PARAM** str 4
-Cmethod                            Modeling method:
-                                   'DFT','GRID','    '
+Cmethod                             Modeling method:
+                                    'DFT','GRID','    '
 **PARAM** str 4
-Cmodel                             Model type: 'COMP','IMAG'
+Cmodel                              Model type: 'COMP','IMAG'
 **PARAM** float 1
 Flux                                Lowest CC component used.
 **PARAM** float 1  
@@ -122,6 +126,8 @@ modelParm                           Model parameters (maj, min, pa, type)
 BPSoln                              BP table to write
 **PARAM** int 1
 refAnt            0                 Reference antenna
+**PARAM** boo 1  **DEF** F
+doAuto                              Use autocorrelation spectra?
 **PARAM** float 1
 solInt1           0.0               Initial Soln interval (min)
 **PARAM** float 1
@@ -162,13 +168,17 @@ table.
    If a model is supplied, either in the form of an image or model
 parameters, this model will be Fourier transformed and divided into 
 the data before performing the solutions.
-   The operation consists of two steps, an initial phase self cal 
-on a short time scale using channels BChan1 to Echan1 to remove 
-atmospheric phase fluctuations followed by a longer timescale 
-amplitude/phase calibration in each of channels BChan2 to EChan2.  
-The results of this latter set of fits is accumulated into the 
-output AIPS BP table.
-   Only cross-correlation spectra used.
+   Bandpasses may be determined from either autocorrelation spectra
+(doAuto=True) or crosscorrelation spectra (doAuto=False).
+The operation for crosscorrelations consists of two steps, 
+1) an initial phase self cal on a short time scale using channels 
+BChan1 to Echan1 to remove atmospheric phase fluctuations followed 
+by 
+2) a longer timescale  amplitude/phase calibration in each of channels 
+BChan2 to EChan2.  The results of this latter set of fits is 
+accumulated into the output AIPS BP table.
+   Note: No Doppler corrections are made so this program is not really 
+suitable for calibrating VLBI data.
 
 Adverbs:
   DataType..'FITS' or 'AIPS'  type of input
@@ -199,12 +209,14 @@ Adverbs:
              Use  dhms2day to convert from human readable form
   BChan1.....First channel number to include, 0=>1.  Channel numbers are 1
              relative as defined in the input data file.
-             Used in initial atmospheric correction calibration
+             Used in initial atmospheric correction calibration and
+             autocorrelation calibration.
   EChan1.....Highest channel number to to include,  0 => max 
              Used in initial atmospheric correction calibration,
              BChan1 and EChan1 should define a sufficiently narrow 
              bandpass that any group delay errors are no more than about
-             one third of a turn of phase over this band
+             one third of a turn of phase over this band. 
+             Also used for autocorrelation calibration.
   BChan2.....First channel number to include, 0=>1.  Channel numbers are 1
              relative as defined in the input data file.
              This defines the channels for which bandpass solutions are 
@@ -212,9 +224,11 @@ Adverbs:
   EChan2.....Highest channel number to to include,  0 => max 
              This defines the channels for which bandpass solutions are 
              desired.
+  ChWid2.....If >0, The bandpass calibration will use ChWid2 channels 
+             centered on each channel, should be odd.
   FreqID.....Frequency identifier to select (you may determine which is
              applicable from the opType='SCAN' listing produced by
-             Lister).
+             Lister).  0=> any.
   subA.......Sub-array number to use. 0=>all.
   Antennas...A list of the antennas to  have solutions
              determined. If any number is negative then all
@@ -222,9 +236,9 @@ Adverbs:
              solutions and all others are. All 0 => use all.
   doCalib....If true, apply SN or CL table
   gainUse....CL/SN table version number to apply. 0=> highest.
-  doBand.....If true (>0) then correct the data for the shape of the
-             antenna bandpasses using the BP table specified by BPVer.
-             The correction has five modes:
+  doBand.....If > 0 then correct the data for the shape of the
+             antenna bandpasses using the (prior) BP table specified 
+             by BPVer.  The correction has five modes:
              (a) if DOBAND=1 all entries for an antenna in the table
              are averaged together before correcting the data.
              (b) if DOBAND=2 the entry nearest in time (including
@@ -240,6 +254,9 @@ Adverbs:
   BPVer......Specifies the version of the BP table to be applied
                 0 => highest numbered table.
                <0 => no bandpass correction to be applied.
+             Note: Applying a prior BP table in this manner may not
+             be a good idea as the output will be a differential
+             correction and there is no way to apply it to a BP table.
   flagVer....FG table to use for editing. 0 => highest.
   doPol......If True, apply polarization calibration
   Alpha......If != 0.0 then correct data by spectral index Alpha before 
@@ -297,9 +314,12 @@ Adverbs:
 
       Calibration control
   BPSoln.....Bandpass (BP) table to write, 0=> create new
-  refAnt.....Reference antenna number
+  refAnt.....Reference antenna number, YOU REALLY SHOULD SET THIS!
+  doAuto.....If True, use autocorrelation spectra for fitting.
+             Each spectral bandpass is normalized to an average of 1.0.
   solInt1....Solution interval (min) of initial wideband self cal.
-  solInt2....Solution interval (min) of channel self-cal
+  solInt2....Solution interval (min) of channel self-cal or 
+             autocorrelation fitting. 0 => Average whole data set.
   solType....Solution Type: '  ', 'L1', 
   solMode....Solution Mode:'A&P', 'P', 'P!A',
              Used for bandpass solutions only.
@@ -315,7 +335,7 @@ Adverbs:
   nThreads...If the Obit libraries are compiled with multiple
              thread operation enabled, this parameter sets the 
              number of threads that can be used for parallel 
-             operations. 
+             operations in the model calculation.
              NB: This only improves performance if there are 
              multiple processors and/or cores in the host.
   noScrat....A list of AIPS disk numbers on which you do not 

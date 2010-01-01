@@ -72,6 +72,12 @@ Radius   $                         Fitted ring radius
 Width    $                         Fitted ring widths
 **PARAM** float 2
 Frac     $                         Fraction of power in ring
+**PARAM** boo 1
+doEllip                            Fit ellipticity*
+**PARAM** float 2
+Ratio    $                         Fitted axial ratio per image
+**PARAM** float 1
+PosAng   $                         Fitted position angle (deg)
 **PARAM** int 1
 prtLv             0                Print level in selfcal
 ----------------------------------------------------------------
@@ -84,12 +90,20 @@ Fitting is done by a direct parameter search over center position, the
 sum of the widths of the rings found from a moment analysis is used as
 the objective measure.  The center pixel with the minimum sum of the
 ring widths is the fitted position, widths are from the moment analysis.
+   Optionally, an elliptical ring can be fitted starting from the 
+fitted Center and Radius using a direct search for an axial Ratio
+for each image at a common position angle.
 
 Notes:
    Images with a single dominant cluster of spots may result in a very 
 small ring around this cluster if allowed.  Forcing the initial center
 and restricting the search can help.
    Using an appropriate Cutoff can be critical for weak sources.
+
+   When using doEllip, the major and minor axes in pixels for each 
+   image are:
+      minor_diameter = 2.0*2.0*Radius / (1.0+Ratio)
+      major_diameter = minor_diameter * Ratio
 
 Adverbs:
   Userid......User ID of owner of image.  0=>current user 32000=>all
@@ -125,5 +139,13 @@ Adverbs:
   Frac........Fraction of power in ring per transition [output]
               The fraction of the total emission in the annulus of
               radius Radius and width Width.
+  doEllip.....If True, fit ellipticity using previously fitted 
+              Center and Radius.
+  Ratio.......The fitted axial ratio (major/minor) per image 
+              on input, the initial guess, 0=> 1.0
+  PosAng......The position angle in deg, from north through east
+              fit jointly to the two images.
+              On input, the initial guess; if != 0.0 then only
+              search +/- 20 deg of this value.
   prtLv.......Print level, 0=>none
 ----------------------------------------------------------------

@@ -87,6 +87,10 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer arg);
 /** Private: Threaded FTDFT with phase correction */
 static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer arg);
 
+/** Private: get model frequency primary beam */
+static ofloat getPBBeam(ObitImageDesc *desc, ofloat x, ofloat y, 
+			ofloat antSize, ofloat pbmin);
+
 /*---------------Private structures----------------*/
 /* FT threaded function argument 
  Note: Derived classes MUST have the following entries at the beginning 
@@ -705,10 +709,10 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
 				    ObitErr *err)
 {
   ObitSkyModelVMBeam *in = (ObitSkyModelVMBeam*)inn;
-  olong npos[2], lcomp, ncomp, i, ifield, lithread, plane;
+  olong npos[2], lcomp, ncomp, i, ifield, lithread, plane, kincif, kincf, kindex;
   ofloat *Rgain=NULL,  *Lgain=NULL,  *Qgain=NULL,  *Ugain=NULL, *ccData=NULL;
   ofloat *Rgaini=NULL, *Lgaini=NULL, *Qgaini=NULL, *Ugaini=NULL;
-  ofloat curPA, tPA, tTime, bTime;
+  ofloat curPA, tPA, tTime, bTime, fscale, PBCor, xx, yy;
   ofloat xr, xi, tr, ti, tri, tii;
   ofloat Ipol, Vpol, IpolPh=0.0, VpolPh=0.0, QpolPh=0.0, UpolPh=0.0;
   ofloat fblank = ObitMagicF();
@@ -794,6 +798,21 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   lcomp = in->comps->naxis[0];  /* Length of row in comp table */
   ncomp = in->numComp;          /* number of components */
 
+  /* Increments in frequency tables */
+  if (uvdata->myDesc->jlocf<uvdata->myDesc->jlocif) { /* freq before IF */
+    kincf = 1;
+    kincif = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
+  } else { /* IF beforefreq  */
+    kincif = 1;
+    kincf = uvdata->myDesc->inaxes[uvdata->myDesc->jlocif];
+  }
+
+  /* Scale by ratio of frequency to beam image ref. frequency */
+  plane = in->FreqPlane[args->channel];
+  kindex = (in->startChannelPB+(in->numberChannelPB/2)-1)*kincf +
+    (in->startIFPB+(in->numberIFPB/2)-1)*kincif;
+  fscale = uvdata->myDesc->freqArr[kindex] / in->IBeam->freqs[plane];
+  
   /* Compute antenna gains and put in to Rgain, Lgain, Qgain, Ugain */
   for (i=0; i<ncomp; i++) {
     Lgain[i]  = 1.0;
@@ -807,14 +826,19 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
       Ugaini[i] = 0.0;
     }
     /* Where in the beam? */
-    x = -(odouble)ccData[i*lcomp+1];  /* AZ opposite of RA; offsets in beam images are of source */
-    y =  (odouble)ccData[i*lcomp+2];
+    xx = -ccData[i*lcomp+1];  /* AZ opposite of RA; offsets in beam images are of source */
+    yy =  ccData[i*lcomp+2];
+    /* Scale by ratio of frequency to beam image ref. frequency */
+    x = (odouble)xx * fscale;
+    y = (odouble)yy * fscale;
     ifield = ccData[i*lcomp+0]+0.5;
     if (ifield<0) continue;
 
     /* Interpolate gains -RR and LL as voltage gains */
     plane = in->FreqPlane[args->channel];
     Ipol = ObitImageInterpValueInt (in->IBeam, args->BeamIInterp, x, y, -curPA, plane, err);
+    /* Get primary beam correction for component */
+    PBCor = Ipol / getPBBeam(in->mosaic->images[ifield]->myDesc, xx, yy, in->antSize, 0.01);
     if (in->IBeamPh)
       IpolPh = DG2RAD*ObitImageInterpValueInt (in->IBeamPh, args->BeamIPhInterp, x, y, -curPA, plane, err);
     Vpol = ObitImageInterpValueInt (in->VBeam, args->BeamVInterp, x, y, -curPA, plane, err);
@@ -828,9 +852,9 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
 	Rgain[i]  = (1.0*cos(IpolPh) + Vpol*cos(VpolPh));
 	Rgaini[i] = (1.0*sin(IpolPh) + Vpol*sin(VpolPh));
       } else { /* no phase */
-	Lgain[i] = (1.0 - Vpol);
+	Lgain[i] = (PBCor - Vpol);
 	Lgaini[i] = 0.0;
-	Rgain[i] = (1.0 + Vpol);
+	Rgain[i] = (PBCor + Vpol);
 	Rgaini[i] = 0.0;
       }
 
@@ -1152,6 +1176,9 @@ void  ObitSkyModelVMBeamGetInput (ObitSkyModel* inn, ObitErr *err)
     } /* end if still nothing */	  
     in->maxResid = maxv;	
   } else  in->maxResid = InfoReal.flt;
+
+  /* Make sure doPBCor turned off, will always use beam model instead */
+  in->doPBCor = FALSE;
   
 } /* end ObitSkyModelVMBeamGetInput */
 
@@ -2550,6 +2577,52 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
     ObitThreadPoolDone (in->thread, (gpointer)&largs->ithread);
   
   return NULL;
-} /* ThreadSkyModelVMBeamFTDFTPh */
+} /* end ThreadSkyModelVMBeamFTDFTPh */
 
+/** 
+ *  Get model frequency primary beam 
+ * \param desc    model image header
+ * \param Angle   Angle from the pointing position (deg)
+ * \param x       x offset from center (deg)
+ * \param y       y offset from center (deg)
+ * \param antSize Antenna diameter in meters. (defaults to 25.0)
+ * \param pbmin   Minimum antenna gain Jinc 0=>0.05, poly 0=> 0.01
+ * \return Relative gain at freq refFreq wrt average of Freq.
+*/
+static ofloat getPBBeam(ObitImageDesc *desc, ofloat x, ofloat y, 
+			ofloat antSize, ofloat pbmin)
+{
+  ofloat PBBeam = 1.0;
+  odouble freq;
+  gboolean doJinc;
+  odouble Angle, RAPnt, DecPnt, ra, dec, xx, yy, zz;
+
+  if (antSize <=0.0) antSize = 25.0;  /* defailt antenna size */
+
+  /* Get pointing position */
+  ObitImageDescGetPoint(desc, &RAPnt, &DecPnt);
+  RAPnt  *= DG2RAD;
+  DecPnt *= DG2RAD;
+
+  /* Convert offset to position */
+  ObitSkyGeomXYShift (desc->crval[desc->jlocr], desc->crval[desc->jlocd],
+		      x, y, ObitImageDescRotate(desc), &ra, &dec);
+
+  /* Angle from center */
+  xx = DG2RAD * ra;
+  yy = DG2RAD * dec;
+  zz = sin (yy) * sin (DecPnt) + cos (yy) * cos (DecPnt) * cos (xx-RAPnt);
+  zz = MIN (zz, 1.000);
+  Angle = acos (zz) * RAD2DG;
+
+  /* Which beam shape function to use? */
+  freq = desc->crval[desc->jlocf];
+  doJinc = (freq >= 1.0e9);
+  
+  /* Gain at freq */
+  if (doJinc) PBBeam = ObitPBUtilJinc(Angle, freq, antSize, pbmin);
+  else        PBBeam = ObitPBUtilPoly(Angle, freq, pbmin);
+ 
+  return PBBeam;
+} /* end  getPBBeam*/
 
