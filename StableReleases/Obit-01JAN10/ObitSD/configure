@@ -5963,7 +5963,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include "gsl/gsl_blas.h
+#include "gsl/gsl_blas.h"
 
 #include <$ac_header>
 _ACEOF
@@ -10146,7 +10146,7 @@ fi;
 # Includes
 if test "x$PYTHON_CPPFLAGS" = x; then
     if test "x$PYTHON" = x; then
-        PYTHON=`pwd`/../../bin/python
+        PYTHON=`pwd`/../bin/python2.5
     fi
 cat <<_ACEOF >conftest.py
 import distutils.sysconfig
@@ -10160,7 +10160,7 @@ fi
 # Python libs
 if test "x$PYTHON_LD_FLAGS" = x; then
     if test "x$PYTHON" = x; then
-        PYTHON=`pwd`/../../bin/python
+        PYTHON=`pwd`/../bin/python2.5
     fi
 cat <<_ACEOF >conftest.py
 import distutils.sysconfig

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -396,6 +396,7 @@ void ObitAIPSDirRemoveEntry(olong disk, olong user, olong cno, ObitErr *err)
   if (entry.status!=0) {
     Obit_log_error(err, OBIT_Error, 
 		   "Cannot remove Catalog entry - active status");
+    ObitAIPSDirClose (myDir, err); 
     return;
   }
 

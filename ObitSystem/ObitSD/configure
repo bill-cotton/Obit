@@ -5963,7 +5963,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include "gsl/gsl_blas.h
+#include "gsl/gsl_blas.h"
 
 #include <$ac_header>
 _ACEOF

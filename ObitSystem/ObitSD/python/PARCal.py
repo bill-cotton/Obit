@@ -435,7 +435,7 @@ def FitCal (err, input=FitCalInput):
 
 def InitCal (inData, targets, err, \
              flagver=1, CalJy=[38.5], BLInt=30., AtmInt=20.,tau0=0.1, 
-             PointTab=None, prior=None, priorModel = True, PSF=None):
+             PointTab=None, prior=None, priorModel = True, PSF=None, clip=0.0):
     """ Initial calibration of Mustang (PAR) data
 
     Any prior calibration tables are removed and then does the following:
@@ -491,6 +491,7 @@ def InitCal (inData, targets, err, \
             is to be used, if False then the image itself is used.
     PSF     = If prior is given, this is the instrumental PSF to use in the
             subtraction.
+    clip    = clip model below this value
     """
 
     # Initial calibration
@@ -541,6 +542,7 @@ def InitCal (inData, targets, err, \
         inInfo.set("flagVer", flagver)
         if priorModel:
             # Use CC table
+            prior.List.set("clip", clip)
             resid = OTFUtil.PSubModel(inData, None, prior, PSF, err)
         else:
             # Use Image

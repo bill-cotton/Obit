@@ -101,12 +101,12 @@ OBITSD=$BASE/ObitSD;export OBITSD
 
 # Set paths
 PYTHONPATH=$OBIT/python;export PYTHONPATH
-LD_LIBRARY_PATH=$BASE/other/lib; export LD_LIBRARY_PATH
+LD_LIBRARY_PATH="$BASE/lib"; export LD_LIBRARY_PATH
 PATH=$BASE/bin:$PATH;export PATH
 
 # install Third party software
 if test $doTHIRD = yes; then
-    ./build3rdParty.sh $@
+    ./Dbuild3rdParty.sh $@
     # Add link to python executable if built
     #if test $doPYTHON  = yes; then 
 #	rm -f $BASE/bin/python
@@ -152,7 +152,8 @@ if test $doObit = yes; then
 	$PLPLOT $GSL $GLIB $FFTW $CFITSIO $WWW $CURL $XMLRPC $ZLIB $PYTHON \
 	OBIT=$OBIT  OBITINSTALL=$BASE LD_LIBRARY_PATH=$LD_LIBRARY_PATH \
 	PKG_CONFIG_PATH=$BASE/other/lib/pkgconfig/
-    make clean all 
+    echo "LD_LIBRARY_PATH =$LD_LIBRARY_PATH"
+    make  all 
 #make clean
 fi
 

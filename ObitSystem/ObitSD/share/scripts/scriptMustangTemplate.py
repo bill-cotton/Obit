@@ -103,10 +103,12 @@ tau0 = [[0.0000, 0.100],       \
 soln = [(6*solInt), (3*solInt), (solInt), (solInt)]
 doOffset = True    # Do Offset cal before each MultiBeam cal?
 deMode   = True    # Subtract the mode of the image when forming
+clipData = 1.0e3   # Flag data with abs > clipData
 
 # The following resets parameters for particular objects
 # Cluster
 if target[0]=="A1835":
+    clipData = 1.0e-1               # Flag data with abs > clipData
     BLInt  = 20.0                   # Baseline filter time in sec
     AtmInt = 20.0                   # Atmospheric filter time in sec
     if priorFile and FITSDir.PExist(priorFile, inDisk, err):
@@ -196,7 +198,8 @@ else:
 ################################## Initial calibration #############################
 PARCal.InitCal(inOTF, target, err,\
                flagver=flagver, CalJy=CalJy, BLInt=BLInt, AtmInt=AtmInt,tau0=tau0, \
-               prior=prior, priorModel=priorModel, PSF=PSF, PointTab=PointTab)
+               prior=prior, priorModel=priorModel, PSF=PSF, PointTab=PointTab,
+               clip = minResidFlux)
 
 ############################### Write calibrated output ###############################
 # Apply current calibration and use result for remaining calibration
@@ -321,6 +324,7 @@ OTF.ImageInput["flagVer"]  = flagver         # Which flag table to apply, -1 = n
 OTF.ImageInput["minWt"   ] = minWt           # Minimum weight in imaging - includes data weight
 OTF.ImageInput["ConvType"] = convType        # Gridding fn 0= pillbox, 3=Gaussian, 4=Exp*Sinc
 OTF.ImageInput["ConvParm"] = convParm        # Gridding fn parameters
+OTF.ImageInput["Clip"]     = clipData        # Clip data at abs(clipData)
 
 # Beam scaling?
 jnInfo = outOTF.List

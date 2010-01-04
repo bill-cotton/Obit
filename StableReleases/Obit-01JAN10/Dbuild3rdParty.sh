@@ -1,5 +1,6 @@
 #!/bin/sh
 # Script/Notes for building 3rd party software for Obit
+# DEBUG version only builds packages if the tarball is not already present.
 #------------------------------------------------------------------------------
 #  Which libraries wanted
 doPLPLOT=yes
@@ -16,7 +17,7 @@ doXMLRPC=yes
 
 # Check command line arguments
 arg=$1
-if test $arg = -without; then
+if test $arg=-without; then
     for x in $@; do
 	if test $x = PLPLOT;  then doPLPLOT=no;fi
 	if test $x = CFITSIO; then doCFITSIO=no;fi
@@ -31,7 +32,7 @@ if test $arg = -without; then
 	if test $x = XMLRPC;  then doXMLRPC=no; fi
     done
 fi
-if test $arg = -help; then
+if test $arg=-help; then
     echo "Build Obit software"
     echo "Third party software may be deselected with -without and any of the following"
     echo "to use a version of the package installed in a standard place"
@@ -69,7 +70,8 @@ OBIT=`pwd`/Obit;export OBIT
 
 # Set paths
 PYTHONPATH=$OBIT/python;export PYTHONPATH
-LD_LIBRARY_PATH=$BASE3/lib; export LD_LIBRARY_PATH
+LD_LIBRARY_PATH="$BASE3/lib"; export LD_LIBRARY_PATH
+echo "LD_LIBRARY_PATH =$LD_LIBRARY_PATH"
 PATH=$PATH:$BASE3/bin;export PATH
 
 # Create other directories for third party software
@@ -90,17 +92,16 @@ if test $doPLPLOT = yes; then
     if !(test -f other/tarballs/$plplottar); then
 	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$plplottar
 	mv $plplottar other/tarballs/
+	cd $BASE3
+	rm -f -r $plplotdir
+	tar xzvf tarballs/$plplottar
+	cd  $plplotdir
+	./configure --prefix=$BASE3/ -enable-java=no --enable-tcl=no \
+	    --without--python --with-double=no
+	make clean all
+	make install
+	make clean
     fi
-    cd $BASE3
-# cleanup
-    rm -f -r $plplotdir
-    tar xzvf tarballs/$plplottar
-    cd  $plplotdir
-    ./configure --prefix=$BASE3/ -enable-java=no --enable-tcl=no \
-	--without--python --with-double=no
-    make clean all
-    make install
-    make clean
 fi
 
 # cfitsio
@@ -113,14 +114,14 @@ if test $doCFITSIO = yes; then
     if !(test -f other/tarballs/$cfitsiotar); then
 	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$cfitsiotar
 	mv $cfitsiotar other/tarballs/
+	cd $BASE3
+	rm -f -r $cfitsiodir
+	tar xzvf tarballs/$cfitsiotar
+	cd $cfitsiodir
+	./configure --prefix=$BASE3/ 
+	make clean all install
+	make clean
     fi
-    cd $BASE3
-    rm -f -r $cfitsiodir
-    tar xzvf tarballs/$cfitsiotar
-    cd $cfitsiodir
-    ./configure --prefix=$BASE3/ 
-    make clean all install
-    make clean
 fi
 
 
@@ -133,14 +134,14 @@ if test $doGLIB = yes; then
     if !(test -f other/tarballs/$pkgconfigtar); then
 	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$pkgconfigtar
 	mv $pkgconfigtar other/tarballs/
-    fi
-    cd $BASE3
+	cd $BASE3
 # pkgconfig
-    rm -f -r $pkgconfigdir
-    tar xzvf tarballs/$pkgconfigtar
-    cd $pkgconfigdir
-    ./configure --prefix=$BASE3/
-    make clean all install
+	rm -f -r $pkgconfigdir
+	tar xzvf tarballs/$pkgconfigtar
+	cd $pkgconfigdir
+	./configure --prefix=$BASE3/
+	make clean all install
+    fi
 # now glib
     cd $BASE
     glibdir=glib-2.2.0
@@ -149,13 +150,13 @@ if test $doGLIB = yes; then
     if !(test -f other/tarballs/$glibtar); then
 	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$glibtar
 	mv $glibtar other/tarballs/
-    fi
     cd $BASE3
     rm -f -r $glibdir
     tar xzvf tarballs/$glibtar
     cd $glibdir
     ./configure --prefix=$BASE3/
     make clean all install
+    fi
 # Link headers where they can be found at compile time
 #ln -s $BASE3/include/glib-2.0/*.h  $BASE3/include
 #ln -s $BASE3/lib/glib-2.0/include/*.h  $BASE3/include
@@ -171,15 +172,15 @@ if test $doFFTW = yes; then
     if !(test -f other/tarballs/$fftw3tar); then
 	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$fftw3tar
 	mv $fftw3tar other/tarballs/
-    fi
-    cd $BASE3
+	cd $BASE3
 # cleanup
-    rm -f -r $fftw3dir
-    tar xzvf tarballs/$fftw3tar
-    cd $fftw3dir
+	rm -f -r $fftw3dir
+	tar xzvf tarballs/$fftw3tar
+	cd $fftw3dir
 # Use --enable-threads for multithreaded
-    ./configure --prefix=$BASE3/ --with-gcc --enable-shared --enable-float
-    make clean all install
+	./configure --prefix=$BASE3/ --with-gcc --enable-shared --enable-float
+	make clean all install
+    fi
 fi
 
 # gsl
@@ -191,15 +192,15 @@ if test $doGSL = yes; then
     if !(test -f other/tarballs/$gsltar); then
 	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$gsltar
 	mv $gsltar other/tarballs/
-    fi
-    cd $BASE3
+	cd $BASE3
 # cleanup
-    rm -f -r $gsldir
-    tar xzvf tarballs/$gsltar
-    cd $gsldir
-    ./configure --prefix=$BASE3 
-    make clean all install
-    make clean
+	rm -f -r $gsldir
+	tar xzvf tarballs/$gsltar
+	cd $gsldir
+	./configure --prefix=$BASE3 
+	make clean all install
+	make clean
+    fi
 fi
 
 # zlib
@@ -211,16 +212,16 @@ if test $doZLIB = yes; then
     if !(test -f other/tarballs/$zlibtar); then
 	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$zlibtar
 	mv $zlibtar other/tarballs/
-    fi
-    cd $BASE3
+	cd $BASE3
 # cleanup
-    rm -f -r $zlibdir
-    tar xzvf tarballs/$zlibtar
-    cd $zlibdir
-    ./configure --prefix=$BASE3
-    make clean all 
-    make install
-    make clean
+	rm -f -r $zlibdir
+	tar xzvf tarballs/$zlibtar
+	cd $zlibdir
+	./configure --prefix=$BASE3
+	make clean all 
+	make install
+	make clean
+    fi
 fi
 
 # Open Motif
@@ -232,16 +233,16 @@ if test $doMOTIF = yes; then
     if !(test -f other/tarballs/$openmotiftar); then
 	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$openmotiftar
 	mv $openmotiftar other/tarballs/$openmotiftar
-    fi
-    cd $BASE3
+	cd $BASE3
     # cleanup
-    rm -f -r $openmotifdir
-    tar xzvf tarballs/$openmotiftar
-    cd $openmotifdir
-    ./configure --prefix=$BASE3
-    make clean all 
-    make install
-    make clean
+	rm -f -r $openmotifdir
+	tar xzvf tarballs/$openmotiftar
+	cd $openmotifdir
+	./configure --prefix=$BASE3
+	make clean all 
+	make install
+	make clean
+    fi
 fi
 
 # Python
@@ -253,17 +254,16 @@ if test $doPYTHON = yes; then
     if !(test -f other/tarballs/$Pythontar); then
 	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$Pythontar
 	mv $Pythontar other/tarballs/$Pythontar
-    fi
-    cd $BASE3
-    cd $BASE3
+	cd $BASE3
 # cleanup
-    rm -f -r $Pythondir
-    tar xzvf tarballs/$Pythontar
-    cd $Pythondir
-    ./configure --prefix=$BASE3 --exec-prefix=$BASE3/../ --enable-shared 
-    make clean all 
-    make install
-    make clean
+	rm -f -r $Pythondir
+	tar xzvf tarballs/$Pythontar
+	cd $Pythondir
+	./configure --prefix=$BASE3 --exec-prefix=$BASE3/../ --enable-shared 
+	make clean all 
+	make install
+	make clean
+    fi
 fi
 
 # WWW (must have zlib installed in a standard location)
@@ -276,16 +276,16 @@ if test $doWWW = yes; then
     if !(test -f other/tarballs/$wwwtar); then
 	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$wwwtar
 	mv $wwwtar other/tarballs/$wwwtar
-    fi
-    cd $BASE3
+	cd $BASE3
 # cleanup
-    rm -f -r $wwwdir
-    tar xzvf tarballs/$wwwtar
-    cd $wwwdir
-    ./configure --prefix=$BASE3 --with-zlib=$BASE3/lib/libz.a
-    make clean all 
-    make install
-    make clean
+	rm -f -r $wwwdir
+	tar xzvf tarballs/$wwwtar
+	cd $wwwdir
+	./configure --prefix=$BASE3 --with-zlib=$BASE3/lib/libz.a
+	make clean all 
+	make install
+	make clean
+    fi
 fi
 
 # curl
@@ -297,17 +297,17 @@ if test $doCURL = yes; then
     if !(test -f other/tarballs/$curltar); then
 	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$curltar
 	mv $curltar other/tarballs/$curltar
-    fi
-    cd $BASE3
+	cd $BASE3
 # cleanup
-    rm -f -r $curldir
-    tar xzvf tarballs/$curltar
-    cd $curldir
-    ./configure --prefix=$BASE3 --with-zlib=$BASE3/lib
-    make clean all install
+	rm -f -r $curldir
+	tar xzvf tarballs/$curltar
+	cd $curldir
+	./configure --prefix=$BASE3 --with-zlib=$BASE3/lib
+	make clean all install
 # Link headers where they can be found at compile time
-    ln -s $BASE3/include/curl/*.h  $BASE3/include
-    make clean
+	ln -s $BASE3/include/curl/*.h  $BASE3/include
+	make clean
+    fi
 fi
 
 # xmlrpc 
@@ -322,31 +322,31 @@ if test $doXMLRPC = yes; then
     if !(test -f other/tarballs/$xmlrpctar); then
 	wget https://svn.cv.nrao.edu/svn/ObitInstall/other/tarballs/$xmlrpctar
 	mv $xmlrpctar other/tarballs/$xmlrpctar
-    fi
-    cd $BASE3
+	cd $BASE3
 # cleanup
-    rm -f -r $xmlrpcdir
-    tar xzvf tarballs/$xmlrpctar
-    cd $xmlrpcdir
+	rm -f -r $xmlrpcdir
+	tar xzvf tarballs/$xmlrpctar
+	cd $xmlrpcdir
 # Optionally use ObitSystem www, curl
-    curl_opt=" --disable-curl-client "
-    if test $doCURL = yes; then
-        curl_opt=" CURL_CONFIG=$BASE3/bin/curl-config "
-    fi
-    libwww_opt=" --disable-libwww-client"
-    if test $doWWW = yes; then
-        libwww_opt=" LIBWWW_CONFIG=$BASE3/bin/libwww-config "
-    fi
-    ./configure --prefix=$BASE3 --disable-cplusplus $curl_opt $libwww_opt
-    make clean all install
+	curl_opt=" --disable-curl-client "
+	if test $doCURL = yes; then
+	    curl_opt=" CURL_CONFIG=$BASE3/bin/curl-config "
+	fi
+	libwww_opt=" --disable-libwww-client"
+	if test $doWWW = yes; then
+	    libwww_opt=" LIBWWW_CONFIG=$BASE3/bin/libwww-config "
+	fi
+	./configure --prefix=$BASE3 --disable-cplusplus $curl_opt $libwww_opt
+	make clean all install
 # Patch xmlrpc install bugs
-    rm -f $BASE3/include/XmlRpcCpp.h
-    install-sh lib/libutil/.libs/libxmlrpc_util.so.3 $BASE3/lib
-    install-sh lib/libutil/.libs/libxmlrpc_util.so.3.6.15 $BASE3/lib
-    install-sh lib/libutil/.libs/libxmlrpc_util.a $BASE3/lib
-    install-sh lib/libutil/.libs/libxmlrpc_util.lai $BASE3/lib
+	rm -f $BASE3/include/XmlRpcCpp.h
+	install-sh lib/libutil/.libs/libxmlrpc_util.so.3 $BASE3/lib
+	install-sh lib/libutil/.libs/libxmlrpc_util.so.3.6.15 $BASE3/lib
+	install-sh lib/libutil/.libs/libxmlrpc_util.a $BASE3/lib
+	install-sh lib/libutil/.libs/libxmlrpc_util.lai $BASE3/lib
     #install-sh lib/libutil/.libs/libxmlrpc_util.la $BASE3/lib
-    make clean
+	make clean
+    fi
 fi
 
 

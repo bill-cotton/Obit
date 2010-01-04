@@ -51,7 +51,7 @@ for dir in $testdirs; do
 			LDFLAGS="$ac_gsl_saved_LDFLAGS $GSL_LDFLAGS"
   			touch /tmp/dummy3_gsl.h
 	        	AC_CHECK_HEADERS(/tmp/dummy3_gsl.h, [ac_have_gslh=yes], [ac_have_gslh=no],
-				[#include "gsl/gsl_blas.h])
+				[#include "gsl/gsl_blas.h"])
 			rm /tmp/dummy3_gsl.h
 			if test $ac_have_gslh = yes; then
 				# Force check
