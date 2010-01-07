@@ -1,7 +1,7 @@
 /* $Id:  $  */
 /* Task to correct off-axis instrumental polarization in UV data      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009                                               */
+/*;  Copyright (C) 2009,2020                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -804,15 +804,15 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   /* if not, use DataType */
   if ((strTemp==NULL) || (!strncmp(strTemp, "    ", 4))) {
     ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&strTemp);
-      ObitInfoListAlwaysPut (myInput, "in3DataType", type, dim, strTemp);
   }
+  ObitInfoListAlwaysPut (myInput, "in3DataType", type, dim, strTemp);
 
   ObitInfoListGetP (myInput, "outDType", &type, dim, (gpointer)&strTemp);
   /* if not, use DataType */
   if ((strTemp==NULL) || (!strncmp(strTemp, "    ", 4))) {
     ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&strTemp);
-      ObitInfoListAlwaysPut (myInput, "outDataType", type, dim, strTemp);
   }
+  ObitInfoListAlwaysPut (myInput, "outDataType", type, dim, strTemp);
 
   /* Output name -
    FITS - defaults to "UVPolCor"+inFile */

@@ -808,7 +808,7 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   }
 
   /* Scale by ratio of frequency to beam image ref. frequency */
-  plane = in->FreqPlane[args->channel];
+  plane = in->FreqPlane[MIN(args->channel, in->numUVChann-1)];
   kindex = (in->startChannelPB+(in->numberChannelPB/2)-1)*kincf +
     (in->startIFPB+(in->numberIFPB/2)-1)*kincif;
   fscale = uvdata->myDesc->freqArr[kindex] / in->IBeam->freqs[plane];
@@ -835,7 +835,7 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
     if (ifield<0) continue;
 
     /* Interpolate gains -RR and LL as voltage gains */
-    plane = in->FreqPlane[args->channel];
+    plane = in->FreqPlane[MIN(args->channel, in->numUVChann-1)];
     Ipol = ObitImageInterpValueInt (in->IBeam, args->BeamIInterp, x, y, -curPA, plane, err);
     /* Get primary beam correction for component */
     PBCor = Ipol / getPBBeam(in->mosaic->images[ifield]->myDesc, xx, yy, in->antSize, 0.01);

@@ -1,7 +1,7 @@
-/* $Id$ */
-/* Obit VLA Squint correcting Radio interferometry imaging software  */
+/* $Id: BeamCor.c 144 2009-12-01 15:01:18Z bill.cotton $ */
+/*  Imaging software correcting for tabulated beamshape               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2009                                          */
+/*;  Copyright (C) 2010                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -29,7 +29,7 @@
 
 #include "ObitImageMosaic.h"
 #include "ObitThread.h"
-#include "ObitSkyModelVMSquint.h"
+#include "ObitSkyModelVMBeam.h"
 #include "ObitUV.h"
 #include "ObitImageUtil.h"
 #include "ObitUVImager.h"
@@ -53,9 +53,9 @@
 
 /* internal prototypes */
 /* Get inputs */
-ObitInfoList* SquintIn (int argc, char **argv, ObitErr *err);
+ObitInfoList* BeamCorIn (int argc, char **argv, ObitErr *err);
 /* Set outputs */
-void SquintOut (ObitInfoList* outList, ObitErr *err);
+void BeamCorOut (ObitInfoList* outList, ObitErr *err);
 /* Give basic usage on error */
 void Usage(void);
 /* Set default inputs */
@@ -89,22 +89,28 @@ void subIPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver,
 		   ObitErr* err);
 
 /* Write history */
-void SquintHistory (gchar *Source, ObitInfoList* myInput, 
+void BeamCorHistory (gchar *Source, ObitInfoList* myInput, 
 		    ObitUV* inData, ObitImage* outImage, ObitUV* outData, 
 		    ObitErr* err);
 
 /* Image statistics */
-void SquintStats (ObitInfoList* myInput, ObitImage *outImage[4], 
+void BeamCorStats (ObitInfoList* myInput, ObitImage *outImage[4], 
 		    olong nstok, ObitErr* err);
 
 /* Baseline dependent time averaging */
 void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData, 
 	    ObitErr* err);
 
+/* Get beam images*/
+void getBeam (ObitInfoList *myInput, gboolean doPhase,
+	      ObitImage **Ipol, ObitImage **Vpol, ObitImage **Qpol, ObitImage **Upol, 
+	      ObitImage **IpolPh, ObitImage **VpolPh, ObitImage **QpolPh, ObitImage **UpolPh, 
+	      ObitErr *err);
+
 /* Program globals */
-gchar *pgmName = "Squint";       /* Program name */
-gchar *infile  = "Squint.in" ;   /* File with program inputs */
-gchar *outfile = "Squint.out";   /* File to contain program outputs */
+gchar *pgmName = "BeamCor";       /* Program name */
+gchar *infile  = "BeamCor.in" ;   /* File with program inputs */
+gchar *outfile = "BeamCor.out";   /* File to contain program outputs */
 olong  pgmNumber;       /* Program number (like POPS no.) */
 olong  AIPSuser;        /* AIPS user number number (like POPS no.) */
 olong  nAIPS=0;         /* Number of AIPS directories */
@@ -126,7 +132,7 @@ int main ( int argc, char **argv )
 
    /* Startup - parse command line */
   err = newObitErr();
-  myInput = SquintIn (argc, argv, err);
+  myInput = BeamCorIn (argc, argv, err);
   if (err->error) ierr = 1;
   ObitErrLog(err); /* show any error messages on err */
   if (ierr!=0) return 1;
@@ -164,7 +170,7 @@ int main ( int argc, char **argv )
   return ierr;
 } /* end of main */
 
-ObitInfoList* SquintIn (int argc, char **argv, ObitErr *err)
+ObitInfoList* BeamCorIn (int argc, char **argv, ObitErr *err)
 /*----------------------------------------------------------------------- */
 /*  Parse control info from command line                                  */
 /*   Input:                                                               */
@@ -183,7 +189,7 @@ ObitInfoList* SquintIn (int argc, char **argv, ObitErr *err)
   gchar *strTemp;
   oint    itemp, i, j, k;
   ObitInfoList* list=NULL;
-  gchar *routine = "SquintIn";
+  gchar *routine = "BeamCorIn";
 
   /* error checks */
   if (err->error) return list;
@@ -354,18 +360,18 @@ ObitInfoList* SquintIn (int argc, char **argv, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
   return list;
-} /* end SquintIn */
+} /* end BeamCorIn */
 
 void Usage(void)
 /*----------------------------------------------------------------------- */
 /*   Tells about usage of program and bails out                           */
 /*----------------------------------------------------------------------- */
 {
-    fprintf(stderr, "Usage: Squint -input file -output ofile [args]\n");
-    fprintf(stderr, "Squint Obit task to image/CLEAN data\n");
+    fprintf(stderr, "Usage: BeamCor -input file -output ofile [args]\n");
+    fprintf(stderr, "BeamCor Obit task to image/CLEAN data\n");
     fprintf(stderr, "Arguments:\n");
-    fprintf(stderr, "  -input input parameter file, def Squint.in\n");
-    fprintf(stderr, "  -output output result file, def Squint.out\n");
+    fprintf(stderr, "  -input input parameter file, def BeamCor.in\n");
+    fprintf(stderr, "  -output output result file, def BeamCor.out\n");
     fprintf(stderr, "  -pgmNumber Program (POPS) number, def 1 \n");
     fprintf(stderr, "  -DataType AIPS or FITS type for input image\n");
     fprintf(stderr, "  -inFile input FITS UV file\n");
@@ -498,13 +504,13 @@ ObitInfoList* defaultInputs(ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* input FITS file name */
-  strTemp = "Squint.uvtab";
+  strTemp = "BeamCor.uvtab";
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, "inFile", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* input AIPS file name */
-  strTemp = "SquintName";
+  strTemp = "BeamCorName";
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, "inName", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
@@ -528,13 +534,13 @@ ObitInfoList* defaultInputs(ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* output FITS Image file name */
-  strTemp = "SquintOut.fits";
+  strTemp = "BeamCorOut.fits";
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, "outFile", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* Output AIPS Image file name */
-  strTemp = "SquintOut";
+  strTemp = "BeamCorOut";
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, "outName", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
@@ -899,6 +905,22 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   dim[0] = 4; dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "Stokes", OBIT_string, dim, Stokes);
 
+  /* Default data types */
+  ObitInfoListGetP (myInput, "in3DType", &type, dim, (gpointer)&strTemp);
+  /* if not, use DataType */
+  if ((strTemp==NULL) || (!strncmp(strTemp, "    ", 4))) {
+    ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&strTemp);
+  }
+  ObitInfoListAlwaysPut (myInput, "in3DataType", type, dim, strTemp);
+  ObitInfoListAlwaysPut (myInput, "in4DataType", type, dim, strTemp);
+
+  ObitInfoListGetP (myInput, "outDType", &type, dim, (gpointer)&strTemp);
+  /* if not, use DataType */
+  if ((strTemp==NULL) || (!strncmp(strTemp, "    ", 4))) {
+    ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&strTemp);
+  }
+  ObitInfoListAlwaysPut (myInput, "outDataType", type, dim, strTemp);
+
   /* Initialize Threading */
   ObitThreadInit (myInput);
 
@@ -1079,10 +1101,10 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
     if (ObitInfoListGetP(myInput, "out2Class", &type, dim, (gpointer)&strTemp)) {
       strncpy (Aclass, strTemp, 7);
     } else { /* Didn't find */
-      strncpy (Aclass, "Squint ", 7);
+      strncpy (Aclass, "BeamCor ", 7);
     }
     /* Default for blank */
-    if (!strncmp (Aclass, "    ", 4)) strncpy (Aclass, "Squint ", 7);
+    if (!strncmp (Aclass, "    ", 4)) strncpy (Aclass, "BeamCor ", 7);
     Aclass[6] = 0;
 
     /* if ASeq==0 create new, high+1 */
@@ -1156,7 +1178,7 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
 /*  One output image per requested Stokes                                 */
 /*   Input:                                                               */
 /*      Source    Source name                                             */
-/*      iStoke    Stokes number (0-rel) I (0) or V (1)                    */
+/*      iStoke    Stokes number (0-rel) I (0), Q(1), U(2) or V (3)        */
 /*      myInput   Input parameters on InfoList                            */
 /*      inData    ObitUV to accept parameters defining output             */
 /*   Output:                                                              */
@@ -1175,7 +1197,7 @@ void setOutputData (gchar *Source, olong iStoke, ObitInfoList *myInput,
   olong      blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong      trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   gboolean  exist;
-  gchar     tname[129], *chStokes="IV", Stokes[5];
+  gchar     tname[129], *chStokes="IQUV", Stokes[5];
   gchar     *routine = "setOutputData";
 
   /* error checks */
@@ -1221,7 +1243,7 @@ void setOutputData (gchar *Source, olong iStoke, ObitInfoList *myInput,
     }
     /* Default for blank */
     if (!strncmp (Aclass, "    ", 4)) strncpy (Aclass, "xClean", 7);
-    Aclass[0] = Stokes[iStoke];
+    Aclass[0] = chStokes[iStoke];
     Aclass[6] = 0;
 
     /* if ASeq==0 create new, high+1 */
@@ -1399,19 +1421,21 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   ObitDConCleanVis *myClean=NULL;
   ObitUV       *outData = NULL;
   ObitImage    *outField=NULL;
-  ObitImage    *outImage[2]={NULL,NULL};
+  ObitImage    *outImage[6]={NULL,NULL,NULL,NULL,NULL,NULL};
   ObitSkyModel *skyModel=NULL;
   ObitUVImager *imager=NULL;
   ObitInfoList* saveParmList=NULL;
+  ObitImage    *IBeam=NULL, *VBeam=NULL, *QBeam=NULL, *UBeam=NULL;
+  ObitImage    *IBeamPh=NULL, *VBeamPh=NULL, *QBeamPh=NULL, *UBeamPh=NULL;
   ObitImageMosaic *mosaic=NULL;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong        i, chInc, BChan, EChan, BIF, nchan, ipoln, npoln, *IChanSel;
-  olong        niter;
-  gboolean     doFlat, autoWindow, Tr=TRUE, do3D;
+  olong        i, chInc, BChan, EChan, BIF, nchan, istok, ipoln, npoln, bpoln, epoln;
+  olong        niter, *IChanSel;
+  gboolean     doFlat, autoWindow, Tr=TRUE, do3D, doPhase=FALSE, doVPol;
   olong        inver, outver, selFGver, *unpeeled=NULL, plane[5] = {0,1,1,1,1};
   oint         otemp;
-  gchar        Stokes[5],  IStokes[5], *CCType = "AIPS CC";
+  gchar        Stokes[5],  IStokes[5], *chStokes=" IQUVRL", *CCType = "AIPS CC";
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "UVRange", "timeRange", "UVTape",
     "BIF", "EIF", "subA",
@@ -1513,10 +1537,27 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   ObitInfoListGetTest(myInput, "Stokes",  &type, dim, Stokes);
   dim[0] = 4;
   ObitInfoListAlwaysPut (outData->info, "Stokes", OBIT_string, dim, Stokes);
-  npoln = 1;
-  if ((Stokes[0]=='I') && (Stokes[1]=='V')) npoln = 2;
-  if ((Stokes[0]=='F') && (Stokes[1]=='V')) npoln = 2;
-  if ((Stokes[0]=='I') && (Stokes[1]=='I')) npoln = 2; /* Debugging */
+
+  /* Number of stokes parameter, I, Q, U, V */
+  npoln = 0;
+  bpoln = 1;
+  doVPol = FALSE;
+  if ((Stokes[0]=='I') || (Stokes[0]=='F') || (Stokes[0]==' ')) npoln = 1;
+  if ((npoln==1) && (Stokes[1]=='Q')) npoln = 2;
+  if ((npoln==2) && (Stokes[2]=='U')) npoln = 3;
+  if ((npoln==3) && (Stokes[3]=='V')) npoln = 4;
+  if ((npoln==1) && (Stokes[1]=='V')) {npoln = 2; doVPol = TRUE;}
+  epoln = bpoln + npoln - 1;
+  /* Single poln cases */
+  if (Stokes[0]=='Q') {bpoln=2; epoln=2; npoln = 1;}
+  if (Stokes[0]=='U') {bpoln=3; epoln=3; npoln = 1;}
+  if (Stokes[0]=='V') {bpoln=4; epoln=4; npoln = 1;}
+  if ((Stokes[0]=='R') && (Stokes[1]=='R')) {bpoln=5; epoln=5; npoln = 1;}
+  if ((Stokes[0]=='L') && (Stokes[1]=='L')) {bpoln=6; epoln=6; npoln = 1;}
+  /* Make sure Stokes OK */
+  Obit_return_if_fail((epoln>=bpoln), err, 
+			"%s: Problem with Stokes %s", routine, Stokes);
+
   dim[0] = 1;
   ObitInfoListAlwaysPut (outData->info, "doCalSelect", OBIT_bool, dim, &Tr);
 
@@ -1534,48 +1575,71 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     ObitInfoListAlwaysPut (outData->info, "flagVer", OBIT_oint, dim, &otemp);
   }
   
+  /* Want phase images in beam model? */
+  ObitInfoListGetTest(myInput, "doPhase", &type, dim, &doPhase); 
+
+  /* Get Beam */
+  getBeam (myInput, doPhase, &IBeam, &VBeam, &QBeam, &UBeam, 
+	   &IBeamPh, &VBeamPh, &QBeamPh, &UBeamPh, err);
+  if (err->error) Obit_traceback_msg (err, routine, inData->name);
+
   /* Loop over polarization */
-  for (ipoln=0; ipoln<npoln; ipoln++) {
+  for (ipoln=bpoln; ipoln<=epoln; ipoln++) {
+    istok = ipoln-1;  /* 0-rel */
   
+    /* set selected Stokes  */
+    dim[0] = 4;
+    sprintf (IStokes, "    ");
+    if (ipoln<=4) sprintf (IStokes, "%c   ", chStokes[ipoln]);
+    else if (ipoln==5) sprintf (IStokes, "RR  ");
+    else if (ipoln==6) sprintf (IStokes, "LL  ");
+    /* Trap for 'IV' mode */
+    if (doVPol && (ipoln>bpoln)) IStokes[0] = 'V';
+    ObitInfoListAlwaysPut (outData->info, "Stokes", OBIT_string, dim, IStokes);
+    dim[0] = 1;
+    ObitInfoListAlwaysPut (outData->info, "doCalSelect", OBIT_bool, dim, &Tr);
+    
     /* Message */
-    Obit_log_error(err, OBIT_InfoErr, " Image %cPol", Stokes[ipoln]);
+    Obit_log_error(err, OBIT_InfoErr, " Image %cPol", IStokes[0]);
     ObitErrLog(err); 
 
-    /* Set Stokes on data */
-    strcpy (IStokes, "    ");
-    IStokes[0] = Stokes[ipoln];
-    dim[0] = 4;
-    ObitInfoListAlwaysPut (outData->info, "Stokes", OBIT_string, dim, IStokes);
-
     /* Define output image */
-    setOutputData (Source, ipoln, myInput, outData, &outImage[ipoln], err);
+    setOutputData (Source, istok, myInput, outData, &outImage[istok], err);
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
  
     /* Create Imager */
     /* Save old mosaic */
     if ((imager) && (imager->mosaic)) mosaic = ObitImageMosaicRef(imager->mosaic);
-    imager   = ObitUVImagerSquintUnref(imager);
+    imager   = ObitUVImagerUnref(imager);
     skyModel = ObitSkyModelUnref(skyModel);
     if ((IStokes[0]=='I') || (IStokes[0]=='F') || (IStokes[0]==' ')
 	|| (IStokes[0]=='R') || (IStokes[0]=='L')) {
-      /* Squint corrections only for Stokes I */
-      imager = (ObitUVImager*)ObitUVImagerSquintCreate("imager", outData, err);
+      /* BeamCor corrections only for Stokes I - use Squint Imager to image with RR and LL */
+      imager = (ObitUVImager*)ObitUVImagerSquintCreate("SquintImager", outData, err);
     
       /* Create SkyModel */
-      skyModel = (ObitSkyModel*)ObitSkyModelVMSquintCreate("Squint Model", 
-							   imager->mosaic);
+      skyModel = 
+	(ObitSkyModel*)ObitSkyModelVMBeamCreate("BeamCor Model", 
+						imager->mosaic, outData,
+						IBeam, VBeam, QBeam, UBeam,
+						IBeamPh, VBeamPh, QBeamPh, UBeamPh,
+						err);
+      if (err->error) Obit_traceback_msg (err, routine, inData->name);
       /* Save imaging parms for weighting - from defaults in mosaic creation */	
       ObitInfoListCopyList (outData->info, saveParmList, saveParms);
       
     } else { /* Normal imaging */
-      imager = ObitUVImagerCreate2 ("imager", outData, mosaic, err);
+      if (mosaic)
+	imager = ObitUVImagerCreate2 ("imager", outData, mosaic, err);
+      else
+	imager = ObitUVImagerCreate ("imager", outData, err);
       mosaic = ObitImageMosaicUnref(mosaic);
       skyModel = ObitSkyModelCreate("Sky Model", imager->mosaic);
     }
     ObitInfoListCopyList (myInput, skyModel->info, SkyParms);
     
     /* Make CleanVis if needed */
-    if (ipoln==0) {
+    if ((ipoln==1) || (myClean==NULL)) {
       myClean = ObitDConCleanVisCreate2("Clean Object", outData, 
 					imager, skyModel, err);
     } else {  /* replace imager,skyModel */
@@ -1595,7 +1659,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     ObitInfoListCopyList (saveParmList, outData->info, saveParms);
 
     /* Set CLEAN windows first pass */
-    if (ipoln==0) ObitDConCleanVisDefWindow((ObitDConClean*)myClean, err);
+    if (ipoln==1) ObitDConCleanVisDefWindow((ObitDConClean*)myClean, err);
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     
     /* Get output image(s) */
@@ -1607,17 +1671,20 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
     
     /* Create poln image */
-    if (ipoln==0) strcpy (IStokes, "I   ");
-    if (ipoln==1) strcpy (IStokes, "V   ");
+    sprintf (IStokes, "    ");
+    if (ipoln<=4) sprintf (IStokes, "%c   ", chStokes[ipoln]);
+    else if (ipoln==5) sprintf (IStokes, "RR  ");
+    else if (ipoln==6) sprintf (IStokes, "LL  ");
+    /* Trap for 'IV' mode */
+    if (doVPol && (ipoln>bpoln)) IStokes[0] = 'V';
     ObitImageUtilMakeCube (outField->myDesc, inData->myIO->myDesc, 
-			   outImage[ipoln]->myDesc, IStokes, BChan, EChan, chInc, err);
+			   outImage[istok]->myDesc, IStokes, BChan, EChan, chInc, err);
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
-    ObitImageFullInstantiate (outImage[ipoln], FALSE, err);
+    ObitImageFullInstantiate (outImage[istok], FALSE, err);
     outField = ObitImageUnref(outField);
-    if (err->error) Obit_traceback_msg (err, routine, outImage[ipoln]->name);
+    if (err->error) Obit_traceback_msg (err, routine, outImage[istok]->name);
     
     /* Set Stokes on SkyModel */
-    IStokes[0] = Stokes[ipoln];
     dim[0] = 4;
     ObitInfoListAlwaysPut (myClean->skyModel->info, "Stokes", OBIT_string, dim, IStokes);
     
@@ -1639,7 +1706,9 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     /* Subtract sky model from outData for I if any cleaning requested */
     niter = 0;
     ObitInfoListGetTest(myInput, "Niter",  &type, dim, &niter);
-    if ((ipoln==0) && (niter>0)) subIPolModel (outData, skyModel, &selFGver, err);
+    if ((ipoln==1) && (niter>0) && 
+	((Stokes[0]=='I') || (Stokes[0]=='F') || (Stokes[0]==' '))) 
+      subIPolModel (outData, skyModel, &selFGver, err);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
     
     /* If 2D imaging or single Fly's eye facet then concatenate CC tables */
@@ -1658,40 +1727,40 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       /* and copy the CC table */
       inver = 1;
       outver = plane[0];
-      ObitDataCopyTable ((ObitData*)outField, (ObitData*)outImage[ipoln],
+      ObitDataCopyTable ((ObitData*)outField, (ObitData*)outImage[istok],
 			 CCType, &inver, &outver, err);
     }
-    ObitImageUtilInsertPlane (outField, outImage[ipoln], plane, err);
+    ObitImageUtilInsertPlane (outField, outImage[istok], plane, err);
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     
     /* For 2D imaging copy CC Table */
     if (!do3D) {
       inver  = 1;
       outver = plane[0];
-      ObitDataCopyTable ((ObitData*)outField, (ObitData*)outImage[ipoln],
+      ObitDataCopyTable ((ObitData*)outField, (ObitData*)outImage[istok],
 			 CCType, &inver, &outver, err);
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     }
     outField = ObitImageUnref(outField);
   
     /* Make sure image created */
-    Obit_return_if_fail((outImage[ipoln]!=NULL), err, "%s: No image generated", routine);
+    Obit_return_if_fail((outImage[istok]!=NULL), err, "%s: No image generated", routine);
 
     /* Do history */
-    if (ipoln==0) 
-      SquintHistory (Source, myInput, inData, outImage[ipoln], outData, err);
+    if (ipoln==1) 
+      BeamCorHistory (Source, myInput, inData, outImage[istok], outData, err);
     else
-      SquintHistory (Source, myInput, inData, outImage[ipoln], NULL, err);
+      BeamCorHistory (Source, myInput, inData, outImage[istok], NULL, err);
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
 
   } /* End loop over poln */
   
   
   /* Get Image Stats */
-  SquintStats (myInput, outImage, npoln, err);
+  BeamCorStats (myInput, outImage, npoln, err);
 
   /* Cleanup */
-  for (ipoln=0; ipoln<npoln; ipoln++) outImage[ipoln]  = ObitUnref(outImage[ipoln]);
+  for (ipoln=0; ipoln<6; ipoln++) outImage[ipoln]  = ObitUnref(outImage[ipoln]);
   /* Zap any selection flagging table */
   if (selFGver>0) {
     ObitUVZapTable (outData, "AIPS FG", selFGver ,err);
@@ -1707,8 +1776,16 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     }
   }
-  myClean = ObitDConCleanVisUnref(myClean); /* Also gets images, skyModel */
+  myClean  = ObitDConCleanVisUnref(myClean); /* Also gets images, skyModel */
   outData  = ObitUVUnref(outData);
+  IBeam    = ObitImageUnref(IBeam);
+  VBeam    = ObitImageUnref(VBeam);
+  QBeam    = ObitImageUnref(QBeam);
+  UBeam    = ObitImageUnref(UBeam);
+  IBeamPh  = ObitImageUnref(IBeamPh);
+  VBeamPh  = ObitImageUnref(VBeamPh);
+  QBeamPh  = ObitImageUnref(QBeamPh);
+  UBeamPh  = ObitImageUnref(UBeamPh);
 
 }  /* end doChanPoln */
 
@@ -2303,7 +2380,7 @@ void subIPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver,
 
 
 /*----------------------------------------------------------------------- */
-/*  Write History for Squint                                              */
+/*  Write History for BeamCor                                             */
 /*   Input:                                                               */
 /*      Source    Name of source being imaged                             */
 /*      myInput   Input parameters on InfoList                            */
@@ -2313,7 +2390,7 @@ void subIPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver,
 /*   Output:                                                              */
 /*      err    Obit Error stack                                           */
 /*----------------------------------------------------------------------- */
-void SquintHistory (gchar *Source, ObitInfoList* myInput, 
+void BeamCorHistory (gchar *Source, ObitInfoList* myInput, 
 		    ObitUV* inData, ObitImage* outImage, ObitUV* outData, 
 		    ObitErr* err)
 {
@@ -2321,6 +2398,8 @@ void SquintHistory (gchar *Source, ObitInfoList* myInput,
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq",
+    "in3DType", "in3File",  "in3Disk", "in3Name", "in3Class", "in3Seq",
+    "doPhase", "in4File",  "in4Disk", "in4Name", "in4Class", "in4Seq",
     "outFile",  "outDisk", "outName", "outClass", "outSeq",
     "BChan", "EChan", "BIF", "EIF", "IChanSel", "Threshold", "CCVer",
     "FOV",  "UVRange",  "timeRange",  "Robust",  "UVTaper",  
@@ -2340,7 +2419,7 @@ void SquintHistory (gchar *Source, ObitInfoList* myInput,
     "PeelMinFlux", "PeelAvgPol", "PeelAvgIF",
     "nThreads",
     NULL};
-  gchar *routine = "SquintHistory";
+  gchar *routine = "BeamCorHistory";
 
   /* error checks */
   if (err->error) return;
@@ -2411,7 +2490,7 @@ void SquintHistory (gchar *Source, ObitInfoList* myInput,
   inHistory  = ObitHistoryUnref(inHistory);  /* cleanup */
   outHistory = ObitHistoryUnref(outHistory);
  
-} /* end SquintHistory  */
+} /* end BeamCorHistory  */
 
 /*----------------------------------------------------------------------- */
 /*  Determine Image Statistics and copy to myInputs to be written to      */
@@ -2429,7 +2508,7 @@ void SquintHistory (gchar *Source, ObitInfoList* myInput,
 /*   Output:                                                              */
 /*      err    Obit Error stack                                           */
 /*----------------------------------------------------------------------- */
-void SquintStats (ObitInfoList* myInput, ObitImage *outImage[4], 
+void BeamCorStats (ObitInfoList* myInput, ObitImage *outImage[4], 
 		    olong nstok, ObitErr* err)
 {
   ObitImage *tmp=NULL;
@@ -2445,7 +2524,7 @@ void SquintStats (ObitInfoList* myInput, ObitImage *outImage[4],
   olong pos[5]={0,0,0,0,0};
   gboolean iqu[3]  = {FALSE, FALSE, FALSE};
   ObitIOCode retCode;
-  gchar *routine = "SquintStats";
+  gchar *routine = "BeamCorStats";
 
   /* error checks */
   if (err->error) return;
@@ -2517,7 +2596,7 @@ void SquintStats (ObitInfoList* myInput, ObitImage *outImage[4],
   ObitInfoListAlwaysPut (myInput, "PixMin",  OBIT_float, dim, pixmin);
   ObitInfoListAlwaysPut (myInput, "Quality", OBIT_float, dim, quality);
   ObitInfoListAlwaysPut (myInput, "IQU",      OBIT_bool, dim, iqu);
-} /* end SquintStats  */
+} /* end BeamCorStats  */
 
 #ifndef VELIGHT
 #define VELIGHT 2.997924562e8
@@ -2581,3 +2660,211 @@ void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
   }
 } /* end BLAvg */
+/*----------------------------------------------------------------------- */
+/*  Get Beam images                                                       */
+/*   Input:                                                               */
+/*      myInput   Input parameters on InfoList                            */
+/*      doPhase   If TRUE, also get phase images                          */
+/*   Output:                                                              */
+/*      Ipol      I pol image                                             */
+/*      Vpol      V pol image                                             */
+/*      Qpol      Q pol image or NULL if none                             */
+/*      Upol      U pol image or NULL if none                             */
+/*      IpoPh     I pol phase image or NULL if none                       */
+/*      VpoPh     V pol phase image or NULL if none                       */
+/*      QpoPh     Q pol phase image or NULL if none                       */
+/*      UpoPh     U pol phase image or NULL if none                       */
+/*----------------------------------------------------------------------- */
+/* Get beam images*/
+void getBeam (ObitInfoList *myInput, gboolean doPhase,
+	      ObitImage **Ipol, ObitImage **Vpol, 
+	      ObitImage **Qpol, ObitImage **Upol, 
+	      ObitImage **IpolPh, ObitImage **VpolPh, 
+	      ObitImage **QpolPh, ObitImage **UpolPh, 
+	      ObitErr *err)
+{
+  ObitInfoType type;
+  gchar        Aclass[20], *strTemp, *Type, inFile[129];
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *routine = "getBeam";
+
+  /* error checks */
+  g_assert(ObitErrIsA(err));
+  if (err->error) return;
+  g_assert (ObitInfoListIsA(myInput));
+
+  /* File type - could be either AIPS or FITS */
+  ObitInfoListGetP (myInput, "in3DataType", &type, dim, (gpointer)&Type);
+  if ((Type==NULL) || ((Type[0]==' ')&&(Type[1]==' ')&&(Type[2]==' ')))
+    ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
+  if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
+    /* AIPS Class */
+    strncpy (Aclass, "I     ", 7);
+    ObitInfoListGetTest(myInput, "in3Class", &type, dim, Aclass);
+  } else if (!strncmp (Type, "FITS", 4)) {  /* FITS input */
+    /* input FITS file name */
+    if (ObitInfoListGetP(myInput, "in3File", &type, dim, (gpointer)&strTemp)) {
+      strncpy (inFile, strTemp, 128);
+    } else { 
+      strncpy (inFile, "No_Filename_Given", 128);
+    }
+    ObitTrimTrail(inFile);  /* remove trailing blanks */
+  } else { /* Unknown type - barf and bail */
+    Obit_log_error(err, OBIT_Error, "%s: Unknown Data type %s", 
+                   pgmName, Type);
+    return;
+  }
+  
+  /* Stokes I */
+  inFile[0]='I';
+  dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (myInput, "in3File", OBIT_string, dim, inFile);
+  Aclass[0]='I';
+  dim[0] = 6; dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (myInput, "in3Class", OBIT_string, dim, Aclass);
+  *Ipol = ObitImageFromFileInfo ("in3", myInput, err);
+   /* Set name */
+  if (*Ipol) {
+    if ((*Ipol)->name) g_free((*Ipol)->name);
+    (*Ipol)->name = g_strdup("IBeam");
+  }
+  if (err->error) Obit_traceback_msg (err, routine, "myInput");
+  ObitErrLog(err); /* Show messages */
+
+  /* Stokes V */
+  inFile[0]='V';
+  dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (myInput, "in3File", OBIT_string, dim, inFile);
+  Aclass[0]='V';
+  dim[0] = 6; dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (myInput, "in3Class", OBIT_string, dim, Aclass);
+  *Vpol = ObitImageFromFileInfo ("in3", myInput, err);
+  /* Set name */
+  if (*Vpol) {
+    if ((*Vpol)->name) g_free((*Vpol)->name);
+    (*Vpol)->name = g_strdup("VBeam");
+  }
+  if (err->error) Obit_traceback_msg (err, routine, "myInput");
+  ObitErrLog(err); /* Show messages */
+
+  /* Stokes Q if present */
+  inFile[0]='Q';
+  dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (myInput, "in3File", OBIT_string, dim, inFile);
+  Aclass[0]='Q';
+  dim[0] = 6; dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (myInput, "in3Class", OBIT_string, dim, Aclass);
+  *Qpol = ObitImageFromFileInfo ("in3", myInput, err);
+  /* Set name */
+  if (*Qpol) {
+    if ((*Qpol)->name) g_free((*Qpol)->name);
+    (*Qpol)->name = g_strdup("QBeam");
+  }
+  ObitErrClear(err);  /* Suppress failure messages */
+
+  /* Stokes U if present */
+  inFile[0]='U';
+  dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (myInput, "in3File", OBIT_string, dim, inFile);
+  Aclass[0]='U';
+  dim[0] = 6; dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (myInput, "in3Class", OBIT_string, dim, Aclass);
+  *Upol = ObitImageFromFileInfo ("in3", myInput, err);
+  /* Set name */
+  if (*Upol) {
+    if ((*Upol)->name) g_free((*Upol)->name);
+    (*Upol)->name = g_strdup("UBeam");
+  }
+  ObitErrClear(err);  /* Suppress failure messages */
+
+  /* Also phase? */
+  if (doPhase) {
+    ObitInfoListGetP (myInput, "in4DataType", &type, dim, (gpointer)&Type);
+    if ((Type==NULL) || ((Type[0]==' ')&&(Type[1]==' ')&&(Type[2]==' ')))
+      ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
+    /* Get base parts of name */
+    if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
+      /* AIPS Class */
+      strncpy (Aclass, "I     ", 7);
+      ObitInfoListGetTest(myInput, "in4Class", &type, dim, Aclass);
+    } else if (!strncmp (Type, "FITS", 4)) {  /* FITS input */
+      /* input FITS file name */
+      if (ObitInfoListGetP(myInput, "in4File", &type, dim, (gpointer)&strTemp)) {
+	strncpy (inFile, strTemp, 128);
+      } else { 
+	strncpy (inFile, "No_Filename_Given", 128);
+      }
+      ObitTrimTrail(inFile);  /* remove trailing blanks */
+    } 
+
+    /* Stokes I */
+    inFile[0]='I';
+    dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
+    ObitInfoListAlwaysPut (myInput, "in4File", OBIT_string, dim, inFile);
+    Aclass[0]='I';
+    dim[0] = 6; dim[1] = dim[2] = 1;
+    ObitInfoListAlwaysPut (myInput, "in4Class", OBIT_string, dim, Aclass);
+    *IpolPh = ObitImageFromFileInfo ("in4", myInput, err);
+    /* Set name */
+    if (*IpolPh) {
+      if ((*IpolPh)->name) g_free((*IpolPh)->name);
+      (*IpolPh)->name = g_strdup("IBeam phase");
+    }
+    if (err->error) Obit_traceback_msg (err, routine, "myInput");
+    ObitErrLog(err); /* Show messages */
+
+    /* Stokes V */
+    inFile[0]='V';
+    dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
+    ObitInfoListAlwaysPut (myInput, "in4File", OBIT_string, dim, inFile);
+    Aclass[0]='V';
+    dim[0] = 6; dim[1] = dim[2] = 1;
+    ObitInfoListAlwaysPut (myInput, "in4Class", OBIT_string, dim, Aclass);
+    *VpolPh = ObitImageFromFileInfo ("in4", myInput, err);
+    /* Set name */
+    if (*VpolPh) {
+      if ((*VpolPh)->name) g_free((*VpolPh)->name);
+      (*VpolPh)->name = g_strdup("VBeam phase");
+    }
+    if (err->error) Obit_traceback_msg (err, routine, "myInput");
+    ObitErrLog(err); /* Show messages */
+
+    /* Stokes Q if present */
+    if (*Qpol) {
+      inFile[0]='Q';
+      dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
+      ObitInfoListAlwaysPut (myInput, "in4File", OBIT_string, dim, inFile);
+      Aclass[0]='Q';
+      dim[0] = 6; dim[1] = dim[2] = 1;
+      ObitInfoListAlwaysPut (myInput, "in4Class", OBIT_string, dim, Aclass);
+      *QpolPh = ObitImageFromFileInfo ("in4", myInput, err);
+      /* Set name */
+      if (*QpolPh) {
+	if ((*QpolPh)->name) g_free((*QpolPh)->name);
+	(*QpolPh)->name = g_strdup("QBeam phase");
+      }
+      if (err->error) Obit_traceback_msg (err, routine, "myInput");
+      ObitErrClear(err);  /* Suppress failure messages */
+    } /* end if QPol */
+
+    /* Stokes U if present */
+    if (*Upol) {
+      inFile[0]='U';
+      dim[0] = strlen(inFile); dim[1] = dim[2] = 1;
+      ObitInfoListAlwaysPut (myInput, "in4File", OBIT_string, dim, inFile);
+      Aclass[0]='U';
+      dim[0] = 6; dim[1] = dim[2] = 1;
+      ObitInfoListAlwaysPut (myInput, "in4Class", OBIT_string, dim, Aclass);
+      *UpolPh = ObitImageFromFileInfo ("in4", myInput, err);
+      /* Set name */
+      if (*UpolPh) {
+	if ((*UpolPh)->name) g_free((*UpolPh)->name);
+	(*UpolPh)->name = g_strdup("UBeam phase");
+      }
+      if (err->error) Obit_traceback_msg (err, routine, "myInput");
+      ObitErrClear(err);  /* Suppress failure messages */
+    } /* end if UPol */
+
+  } /* End also phase */
+
+} /* end getBeam */
