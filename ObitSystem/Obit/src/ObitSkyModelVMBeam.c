@@ -89,7 +89,7 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer arg);
 
 /** Private: get model frequency primary beam */
 static ofloat getPBBeam(ObitImageDesc *desc, ofloat x, ofloat y, 
-			ofloat antSize, ofloat pbmin);
+			ofloat antSize, odouble freq, ofloat pbmin);
 
 /*---------------Private structures----------------*/
 /* FT threaded function argument 
@@ -812,7 +812,7 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   kindex = (in->startChannelPB+(in->numberChannelPB/2)-1)*kincf +
     (in->startIFPB+(in->numberIFPB/2)-1)*kincif;
   fscale = uvdata->myDesc->freqArr[kindex] / in->IBeam->freqs[plane];
-  
+
   /* Compute antenna gains and put in to Rgain, Lgain, Qgain, Ugain */
   for (i=0; i<ncomp; i++) {
     Lgain[i]  = 1.0;
@@ -825,7 +825,7 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
       Qgaini[i] = 0.0;
       Ugaini[i] = 0.0;
     }
-    /* Where in the beam? */
+    /* Where in the beam? Offsets are from pointing position */
     xx = -ccData[i*lcomp+1];  /* AZ opposite of RA; offsets in beam images are of source */
     yy =  ccData[i*lcomp+2];
     /* Scale by ratio of frequency to beam image ref. frequency */
@@ -836,14 +836,15 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
 
     /* Interpolate gains -RR and LL as voltage gains */
     plane = in->FreqPlane[MIN(args->channel, in->numUVChann-1)];
-    Ipol = ObitImageInterpValueInt (in->IBeam, args->BeamIInterp, x, y, -curPA, plane, err);
+    Ipol = ObitImageInterpValueInt (in->IBeam, args->BeamIInterp, x, y, curPA, plane, err);
     /* Get primary beam correction for component */
-    PBCor = Ipol / getPBBeam(in->mosaic->images[ifield]->myDesc, xx, yy, in->antSize, 0.01);
+    PBCor = getPBBeam(in->mosaic->images[ifield]->myDesc, xx, yy, in->antSize,  
+		      uvdata->myDesc->freqArr[kindex], 0.01) / Ipol;
     if (in->IBeamPh)
-      IpolPh = DG2RAD*ObitImageInterpValueInt (in->IBeamPh, args->BeamIPhInterp, x, y, -curPA, plane, err);
-    Vpol = ObitImageInterpValueInt (in->VBeam, args->BeamVInterp, x, y, -curPA, plane, err);
+      IpolPh = DG2RAD*ObitImageInterpValueInt (in->IBeamPh, args->BeamIPhInterp, x, y, curPA, plane, err);
+    Vpol = ObitImageInterpValueInt (in->VBeam, args->BeamVInterp, x, y, curPA, plane, err);
     if (in->VBeamPh)
-      VpolPh = DG2RAD*ObitImageInterpValueInt (in->VBeamPh, args->BeamVPhInterp, x, y, -curPA, plane, err);
+      VpolPh = DG2RAD*ObitImageInterpValueInt (in->VBeamPh, args->BeamVPhInterp, x, y, curPA, plane, err);
     if (Ipol!=fblank) {
       /* Phases given? */
       if (in->IBeamPh && in->VBeamPh) {
@@ -864,19 +865,19 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
     }
 
     if (in->doCrossPol) {
-      Qgain[i] = ObitImageInterpValueInt (in->QBeam, args->BeamQInterp, x, y, -curPA, plane, err);
+      Qgain[i] = ObitImageInterpValueInt (in->QBeam, args->BeamQInterp, x, y, curPA, plane, err);
       if (Qgain[i]==fblank) Qgain[i] = 0.0;
       if (in->QBeamPh)
-	QpolPh = DG2RAD*ObitImageInterpValueInt (in->QBeamPh, args->BeamQPhInterp, x, y, -curPA, plane, err);
-      Ugain[i] = ObitImageInterpValueInt (in->UBeam, args->BeamUInterp, x, y, -curPA, plane, err);
+	QpolPh = DG2RAD*ObitImageInterpValueInt (in->QBeamPh, args->BeamQPhInterp, x, y, curPA, plane, err);
+      Ugain[i] = ObitImageInterpValueInt (in->UBeam, args->BeamUInterp, x, y, curPA, plane, err);
       if (Ugain[i]==fblank) Ugain[i] = 0.0;
       if (in->UBeamPh)
-	UpolPh = DG2RAD*ObitImageInterpValueInt (in->UBeamPh, args->BeamUPhInterp, x, y, -curPA, plane, err);
+	UpolPh = DG2RAD*ObitImageInterpValueInt (in->UBeamPh, args->BeamUPhInterp, x, y, curPA, plane, err);
       /* Rotate Q+jU by parallactic angle */
       /* Phases given? */
       if (in->QBeamPh && in->UBeamPh) {
-	xr  = cos (2.0*curPA*DG2RAD);
-	xi  = sin (2.0*curPA*DG2RAD);
+	xr  =  cos (2.0*curPA*DG2RAD);
+	xi  =  sin (2.0*curPA*DG2RAD);
 	tr  = Qgain[i]*cos(QpolPh);
 	ti  = Ugain[i]*cos(UpolPh);
 	tri = Qgain[i]*sin(QpolPh);
@@ -886,14 +887,14 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
 	Qgaini[i] = tri*xr - xi*tii;
 	Ugaini[i] = tri*xi + xr*tii;
       } else { /* no phase */
-	xr = cos (2.0*curPA*DG2RAD);
-	xi = sin (2.0*curPA*DG2RAD);
+	xr =  cos (2.0*curPA*DG2RAD);
+	xi =  sin (2.0*curPA*DG2RAD);
 	tr = Qgain[i];
 	ti = Ugain[i];
 	Qgain[i]  = tr*xr - xi*ti;
-	Qgaini[i] = 0.0;
+	Qgaini[i] = 0.0; 
 	Ugain[i]  = tr*xi + xr*ti;
-	Ugaini[i] = 0.0;
+	Ugaini[i] = 0.0; 
       }
     }
     
@@ -1912,7 +1913,7 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
     newPlane:
       visData += lrec; /* Update vis pointer */
     } /* end loop over visibilities */
-    iStoke = 0;  /* DEBUG */
+    iStoke = 0;  /* DEB */
   } /* end outer frequency loop */
 
   /* Indicate completion */
@@ -2582,18 +2583,17 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
 /** 
  *  Get model frequency primary beam 
  * \param desc    model image header
- * \param Angle   Angle from the pointing position (deg)
- * \param x       x offset from center (deg)
- * \param y       y offset from center (deg)
+ * \param x       x offset from pointing center (deg)
+ * \param y       y offset from pointing center (deg)
  * \param antSize Antenna diameter in meters. (defaults to 25.0)
+ * \param freq    Frequency in Hz
  * \param pbmin   Minimum antenna gain Jinc 0=>0.05, poly 0=> 0.01
  * \return Relative gain at freq refFreq wrt average of Freq.
 */
 static ofloat getPBBeam(ObitImageDesc *desc, ofloat x, ofloat y, 
-			ofloat antSize, ofloat pbmin)
+			ofloat antSize, odouble freq, ofloat pbmin)
 {
   ofloat PBBeam = 1.0;
-  odouble freq;
   gboolean doJinc;
   odouble Angle, RAPnt, DecPnt, ra, dec, xx, yy, zz;
 
@@ -2601,14 +2601,14 @@ static ofloat getPBBeam(ObitImageDesc *desc, ofloat x, ofloat y,
 
   /* Get pointing position */
   ObitImageDescGetPoint(desc, &RAPnt, &DecPnt);
-  RAPnt  *= DG2RAD;
-  DecPnt *= DG2RAD;
 
   /* Convert offset to position */
-  ObitSkyGeomXYShift (desc->crval[desc->jlocr], desc->crval[desc->jlocd],
-		      x, y, ObitImageDescRotate(desc), &ra, &dec);
+  ObitSkyGeomXYShift (RAPnt, DecPnt, x, y, ObitImageDescRotate(desc), 
+		      &ra, &dec);
 
   /* Angle from center */
+  RAPnt  *= DG2RAD;
+  DecPnt *= DG2RAD;
   xx = DG2RAD * ra;
   yy = DG2RAD * dec;
   zz = sin (yy) * sin (DecPnt) + cos (yy) * cos (DecPnt) * cos (xx-RAPnt);
@@ -2616,7 +2616,6 @@ static ofloat getPBBeam(ObitImageDesc *desc, ofloat x, ofloat y,
   Angle = acos (zz) * RAD2DG;
 
   /* Which beam shape function to use? */
-  freq = desc->crval[desc->jlocf];
   doJinc = (freq >= 1.0e9);
   
   /* Gain at freq */
