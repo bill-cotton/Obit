@@ -108,7 +108,8 @@ void ObitUVGridSetup (ObitUVGrid *in, ObitUV *UVin,
 		       gboolean doBeam, ObitErr *err);
 /** Typedef for definition of class pointer structure */
 typedef void (*ObitUVGridSetupFP) (ObitUVGrid *in, ObitUV *UVin, 
-		       ObitImageDesc *imageDesc,
+		       ObitImageDesc *beamDesc,
+		       ObitImageDesc *imageDesc, 
 		       gboolean doBeam, ObitErr *err);
 
 /** Public: Read uv data accumulating to grid */

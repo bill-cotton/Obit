@@ -143,7 +143,7 @@ ObitTableSN* ObitIoN2SolNTableConvert (ObitUV *inUV, ObitTableNI *NITable,
   }
 
   /* 3D/rotation matrices */
-  do3Dmul = ObitUVDescShift3DPos (inUV->myDesc, shift, do3D, 0.0, URot3D, PRot3D);
+  do3Dmul = ObitUVDescShift3DPos (inUV->myDesc, shift, 0.0,  do3D, URot3D, PRot3D);
 
   /* Open IoN table for read */
   retCode = ObitTableNIOpen (NITable, OBIT_IO_ReadOnly, err);
