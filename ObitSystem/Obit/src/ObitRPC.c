@@ -261,7 +261,7 @@ ObitXML* ObitRPCCall (ObitRPC* client, gchar *serverURL, ObitXML* arg,
       *status = ObitXMLXML2InfoList (tempXML, err);
       tempXML = ObitXMLUnref(tempXML);
     }
-    if (err->error) Obit_traceback_val (err, routine, "Get status", out);  
+    if (err->error) goto cleanup;
   } /* end get status */
 
   /* Get request if requested - should be an InfoList on the other end */
@@ -283,9 +283,11 @@ ObitXML* ObitRPCCall (ObitRPC* client, gchar *serverURL, ObitXML* arg,
   if (client->envP.fault_occurred) {
     Obit_log_error(err, OBIT_StrongError, "XML-RPC Fault: %s (%d)",
 		   client->envP.fault_string, client->envP.fault_code);
+    xmlrpc_DECREF(returnP);
   } else {
     xmlrpc_DECREF(returnP);
   }
+  if (err->error) Obit_traceback_val (err, routine, "Get status", out);  
 
   return out;
 } /* end ObitRPCCall */

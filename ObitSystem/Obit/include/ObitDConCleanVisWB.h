@@ -1,6 +1,6 @@
-/* $Id$   */
+/* $Id: ObitDConCleanVisWB.h 128 2009-09-23 14:48:29Z bill.cotton $   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2010                                          */
+/*;  Copyright (C) 2010                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -25,26 +25,33 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-#ifndef OBITDCONCLEANVIS_H 
-#define OBITDCONCLEANVIS_H 
+#ifndef OBITDCONCLEANVISWB_H 
+#define OBITDCONCLEANVISWB_H 
 
 #include "Obit.h"
 #include "ObitErr.h"
 #include "ObitDConCleanPxList.h"
 #include "ObitDConClean.h"
+#include "ObitDConCleanVis.h"
 #include "ObitImageMosaic.h"
+#include "ObitImageMosaicWB.h"
 #include "ObitDConCleanWindow.h"
 #include "ObitDConCleanBmHist.h"
 #include "ObitDConCleanPxHist.h"
 #include "ObitUVImager.h"
+#include "ObitUVImagerWB.h"
 #include "ObitSkyModel.h"
 #include "ObitDisplay.h"
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
- * \file ObitDConCleanVis.h
- * ObitDConCleanVis Visisibility-based (Cotton-Schwab) CLEAN class.
+ * \file ObitDConCleanVisWB.h
+ * ObitDConCleanVisWB Visibility-based (Cotton-Schwab) CLEAN class 
+ * for wideband imaging in the style of Sault & Wieringa 1994 A&AS 108, 585
+ * Fit S = S_0 exp(alpha log(nu/nu_0) + beta log(nu/nu_0)*2)
+ * using approximation:
+ * S = S0(1+ alpha*log(nu/nu_0) + beta * log(nu/nu_0)^2)
  *
- * This class is derived from the #ObitDConClean class.
+ * This class is derived from the #ObitDConCleanVis class.
  *
  * autoWindow feature will automatically set CLEAN windows inside 
  * a predefined outer window.  Each cycle the residuals inside the outer 
@@ -57,18 +64,18 @@
  * This should result in the brightest emission being cleaned next 
  * and a box added on it if necessary.
  *
- * \section ObitDConCleanVisaccess Creators and Destructors
- * An ObitDConCleanVis will usually be created using ObitDConCleanVisCreate 
- * or ObitDConCleanVisCreate2 which allow
+ * \section ObitDConCleanVisWBaccess Creators and Destructors
+ * An ObitDConCleanVisWB will usually be created using ObitDConCleanVisWBCreate 
+ * or ObitDConCleanVisWBCreate2 which allow
  * specifying a name for the object as well as other information.
  *
- * A copy of a pointer to an ObitDConCleanVis should always be made using the
- * #ObitDConCleanVisRef function which updates the reference count in the object.
- * Then whenever freeing an ObitDConCleanVis or changing a pointer, the function
- * #ObitDConCleanVisUnref will decrement the reference count and destroy the object
+ * A copy of a pointer to an ObitDConCleanVisWB should always be made using the
+ * #ObitDConCleanVisWBRef function which updates the reference count in the object.
+ * Then whenever freeing an ObitDConCleanVisWB or changing a pointer, the function
+ * #ObitDConCleanVisWBUnref will decrement the reference count and destroy the object
  * when the reference count hits 0.
  * There is no explicit destructor.
- * \section ObitDConCleanViscontrol CLEAN control information
+ * \section ObitDConCleanVisWBcontrol CLEAN control information
  * The control parameters for the CLEAN are read from the ObitInfoList member
  * when the Deconvolve function is called:
  * The file etc. info should have been stored in the ObitInfoList:
@@ -107,25 +114,25 @@
  */
 
 /*--------------Class definitions-------------------------------------*/
-/** ObitDConCleanVis Class structure. */
+/** ObitDConCleanVisWB Class structure. */
 typedef struct {
-#include "ObitDConCleanVisDef.h"   /* this class definition */
-} ObitDConCleanVis;
+#include "ObitDConCleanVisWBDef.h"   /* this class definition */
+} ObitDConCleanVisWB;
 
 /*----------------- Macroes ---------------------------*/
 /** 
- * Macro to unreference (and possibly destroy) an ObitDConCleanVis
- * returns a ObitDConCleanVis*.
+ * Macro to unreference (and possibly destroy) an ObitDConCleanVisWB
+ * returns a ObitDConCleanVisWB*.
  * in = object to unreference
  */
-#define ObitDConCleanVisUnref(in) ObitUnref (in)
+#define ObitDConCleanVisWBUnref(in) ObitUnref (in)
 
 /** 
- * Macro to reference (update reference count) an ObitDConCleanVis.
- * returns a ObitDConCleanVis*.
+ * Macro to reference (update reference count) an ObitDConCleanVisWB.
+ * returns a ObitDConCleanVisWB*.
  * in = object to reference
  */
-#define ObitDConCleanVisRef(in) ObitRef (in)
+#define ObitDConCleanVisWBRef(in) ObitRef (in)
 
 /** 
  * Macro to determine if an object is the member of this or a 
@@ -133,112 +140,98 @@ typedef struct {
  * Returns TRUE if a member, else FALSE
  * in = object to reference
  */
-#define ObitDConCleanVisIsA(in) ObitIsA (in, ObitDConCleanVisGetClass())
+#define ObitDConCleanVisWBIsA(in) ObitIsA (in, ObitDConCleanVisWBGetClass())
 
 /*---------------Public functions---------------------------*/
 /** Public: Class initializer. */
-void ObitDConCleanVisClassInit (void);
+void ObitDConCleanVisWBClassInit (void);
 
 /** Public: Default Constructor. */
-ObitDConCleanVis* newObitDConCleanVis (gchar* name);
+ObitDConCleanVisWB* newObitDConCleanVisWB (gchar* name);
 
-/** Public: Create/initialize ObitDConCleanVis structures */
-ObitDConCleanVis* ObitDConCleanVisCreate (gchar* name, ObitUV *uvdata, 
-					  ObitErr *err);
+/** Public: Create/initialize ObitDConCleanVisWB structures */
+ObitDConCleanVisWB* ObitDConCleanVisWBCreate (gchar* name, ObitUV *uvdata, 
+					      olong order, ObitErr *err);
 
-/** Public: Create/initialize ObitDConCleanVis structures from
+/** Public: Create/initialize ObitDConCleanVisWB structures from
     optional components */
 ObitDConCleanVis* 
-ObitDConCleanVisCreate2 (gchar* name, ObitUV *uvdata, 
-			 ObitUVImager *imager, ObitSkyModel *skyModel, 
-			 ObitErr *err);
+ObitDConCleanVisWBCreate2 (gchar* name, ObitUV *uvdata, 
+			   ObitUVImager *imager, ObitSkyModel *skyModel, 
+			   olong order, ObitErr *err);
 
 /** Public: ClassInfo pointer */
-gconstpointer ObitDConCleanVisGetClass (void);
+gconstpointer ObitDConCleanVisWBGetClass (void);
 
 /** Public: Copy (deep) constructor. */
-ObitDConCleanVis* ObitDConCleanVisCopy  (ObitDConCleanVis *in, 
-					 ObitDConCleanVis *out, ObitErr *err);
+ObitDConCleanVis* ObitDConCleanVisWBCopy  (ObitDConCleanVis *in, 
+					   ObitDConCleanVis *out, ObitErr *err);
 
 /** Public: Copy structure. */
-void ObitDConCleanVisClone (ObitDConCleanVis *in, 
-			    ObitDConCleanVis *out, ObitErr *err);
+void ObitDConCleanVisWBClone (ObitDConCleanVis *in, 
+			      ObitDConCleanVis *out, ObitErr *err);
 
 /** Public: Do deconvolution. */
-void ObitDConCleanVisDeconvolve (ObitDCon *in, ObitErr *err);
+void ObitDConCleanVisWBDeconvolve (ObitDCon *in, ObitErr *err);
 
 /** Public: Get parameters. */
-void  ObitDConCleanVisGetParms (ObitDCon *in, ObitErr *err);
+void  ObitDConCleanVisWBGetParms (ObitDCon *in, ObitErr *err);
 
 /** Public: Set Default CLEAN windows */
-void  ObitDConCleanVisDefWindow (ObitDConClean *in, ObitErr *err);
-typedef void (*ObitDConCleanVisDefWindowFP) (ObitDConClean *in, ObitErr *err);
+void  ObitDConCleanVisWBDefWindow (ObitDConClean *in, ObitErr *err);
 
 /** Public: Subtract components from UV data */
-void ObitDConCleanVisSub(ObitDConCleanVis *in, ObitErr *err);
+void ObitDConCleanVisWBSub(ObitDConClean *in, ObitErr *err);
 
 /** Public: Determine quality measure for field */
-ofloat ObitDConCleanVisQuality(ObitDConCleanVis *in, olong field, 
-			       ObitErr *err);
-typedef ofloat (*ObitDConCleanVisQualityFP) (ObitDConCleanVis *in, olong field,
-					     ObitErr *err);
+ofloat ObitDConCleanVisWBQuality(ObitDConCleanVis *in, olong field, 
+				 ObitErr *err);
 
 /** Public: Reimaging needed to center strong source on pixel? */
-gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata, 
+gboolean ObitDConCleanVisWBReimage (ObitDConCleanVisWB *in, ObitUV* uvdata, 
 				  ObitErr* err);
-typedef gboolean (*ObitDConCleanVisReimageFP) (ObitDConCleanVis *in, ObitUV* uvdata, 
-					       ObitErr* err);
 
 /** Public: Resize to add a new field */
-void ObitDConCleanVisAddField (ObitDConCleanVis *in, ObitUV* uvdata, 
-			       ObitErr* err);
-typedef void (*ObitDConCleanVisAddFieldFP) (ObitDConCleanVis *in, ObitUV* uvdata, 
-					    ObitErr* err);
+void ObitDConCleanVisWBAddField (ObitDConCleanVis *in, ObitUV* uvdata, 
+				 ObitErr* err);
 
 /** Public: Recenter autoCenter images */
-gboolean ObitDConCleanVisRecenter (ObitDConCleanVis *in, ObitUV* uvdata, 
-				   ObitErr* err);
-typedef gboolean (*ObitDConCleanVisRecenterFP) (ObitDConCleanVis *in, ObitUV* uvdata, 
-					      ObitErr* err);
+gboolean ObitDConCleanVisWBRecenter (ObitDConCleanVis *in, ObitUV* uvdata, 
+				     ObitErr* err);
 
 /** Public: Filter weak, isolated components */
-gboolean ObitDConCleanVisFilter (ObitDConCleanVis *in, ofloat filter[2], 
-				 ObitErr* err);
-typedef gboolean (*ObitDConCleanVisFilterFP) (ObitDConCleanVis *in, 
-					      ofloat filter[2], ObitErr* err);
+gboolean ObitDConCleanVisWBFilter (ObitDConCleanVis *in, ofloat filter[2], 
+				   ObitErr* err);
 
 /** Public: Automatically add window. */
-gboolean ObitDConCleanVisAutoWindow(ObitDConClean *in, olong *fields, 
-				    ObitFArray **pixarray, ObitErr *err);
+gboolean ObitDConCleanVisWBAutoWindow(ObitDConClean *in, olong *fields, 
+				      ObitFArray **pixarray, ObitErr *err);
 
 /** Public:  Get pixel statistics. */
-gboolean ObitDConCleanVisPixelStats(ObitDConClean *in, ObitFArray **pixarray,
-				    ObitErr *err);
-
-/* Private functions definitions for derived classes */
-/** Private: (re)make residuals. */
-typedef void  (*MakeResidualsFP) (ObitDConCleanVis *in, olong *fields, 
-				  gboolean doBeam, ObitErr *err);
-
-/** Private: (re)make all residuals. */
-typedef void  (*MakeAllResidualsFP) (ObitDConCleanVis *in, ObitErr *err);
-
-/** Private: Low accuracy subtract CLEAN model. */
-typedef void (*SubNewCCsFP) (ObitDConCleanVis *in, olong *newCC, 
-			     ObitFArray **pixarray, ObitErr *err);
-
-/** Private: Create/init PxList. */
-typedef void (*NewPxListFP) (ObitDConCleanVis *in, ObitErr *err);
-
-/** Private: Create/init Pixarray. */
-typedef ObitFArray** (*NewPxArrayFP) (ObitDConCleanVis *in, olong *startCC, 
+gboolean ObitDConCleanVisWBPixelStats(ObitDConClean *in, ObitFArray **pixarray,
 				      ObitErr *err);
 
-/** Private: Delete Pixarray. */
-typedef ObitFArray** (*KillPxArrayFP) (ObitDConCleanVis *in, 
-				       ObitFArray **pixarray);
-/** Private: Delete BeamPatches. */
-typedef void (*KillBeamPatchesFP) (ObitDConCleanVis *in);
+/** Public: Select CLEAN components? */
+gboolean ObitDConCleanVisWBSelect(ObitDConClean *inn, ObitFArray **pixarray, 
+				  ObitErr *err);
+
+/** Public:  Restore subtracted components. */
+void ObitDConCleanVisWBRestore(ObitDConClean *in, ObitErr *err);
+
+/** Public:  Restore subtracted components from other fields. */
+void ObitDConCleanVisWBXRestore(ObitDConClean *in, ObitErr *err);
+
+/** Public:  Normalize spectral images. */
+void ObitDConCleanVisWBSpecNorm(ObitDConCleanVisWB *in, ObitErr *err);
+
+/** Public: Flatten multiple facets to one. */
+void ObitDConCleanVisWBFlatten(ObitDConClean *in, ObitErr *err);
+
+/** Public:  Decompose images into spectral components. */
+void ObitDConCleanVisWBDecomp(ObitDConCleanVisWB *in, ObitErr *err);
+typedef void (*ObitDConCleanVisWBDecompFP) (ObitDConCleanVisWB *in, 
+					    ObitErr *err);
+
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.
@@ -246,7 +239,7 @@ typedef void (*KillBeamPatchesFP) (ObitDConCleanVis *in);
  * (NULL if none) and function pointers.
  */
 typedef struct  {
-#include "ObitDConCleanVisClassDef.h"
-} ObitDConCleanVisClassInfo; 
+#include "ObitDConCleanVisWBClassDef.h"
+} ObitDConCleanVisWBClassInfo; 
 
-#endif /* OBITDCONCLEANVIS_H */ 
+#endif /* OBITDCONCLEANVISWB_H */ 

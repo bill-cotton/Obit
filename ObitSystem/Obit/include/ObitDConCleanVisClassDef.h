@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2009                                          */
+/*;  Copyright (C) 2005-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -37,3 +37,20 @@ ObitDConCleanVisAddFieldFP ObitDConCleanVisAddField;
 ObitDConCleanVisRecenterFP ObitDConCleanVisRecenter;
 /** Pointer to Filter weak, isolated components.*/
 ObitDConCleanVisFilterFP ObitDConCleanVisFilter;
+/** Pointer to Set Default CLEAN windows .*/
+ObitDConCleanVisDefWindowFP ObitDConCleanVisDefWindow;
+/* Private functions for derived classes */
+/** Pointer to (re)make residuals */
+MakeResidualsFP MakeResiduals;
+/** Pointer to  (re)make all residuals. */
+MakeAllResidualsFP MakeAllResiduals;
+/** Pointer to Low accuracy subtract CLEAN model.*/
+SubNewCCsFP SubNewCCs;
+/** Pointer to Create/init PxList.*/
+NewPxListFP NewPxList;
+/** Pointer to Create/init Pixarray.*/
+NewPxArrayFP NewPxArray;
+/** Pointer to Delete Pixarray.*/
+KillPxArrayFP KillPxArray;
+/** Pointer to Delete BeamPatches.*/
+KillBeamPatchesFP KillBeamPatches;

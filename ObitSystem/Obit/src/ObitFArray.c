@@ -98,6 +98,9 @@ static gpointer ThreadFARMSSum (gpointer arg);
 /** Private: Threaded Accumulate histogram elements */
 static gpointer ThreadFAHisto (gpointer arg);
 
+/** Private: Threaded Convolve Gaussian */
+static gpointer ThreadFAConvGaus (gpointer arg);
+
 /** Private: Make Threaded args */
 static olong MakeFAFuncArgs (ObitThread *thread, ObitFArray *in,
 			     olong larg1, olong larg2, olong larg3, 
@@ -2434,6 +2437,7 @@ void ObitFArrayShiftAdd (ObitFArray* in1, olong *pos1,
  * Zero fills out and inserts in, centered and multiplied by factor.
  * Any blanks in in are replaced with zero.
  * This routine is intended for zero padding images before an FFT
+ * May run threaded
  * to increase the resolution in the uv plane.
  * \param in      Object with structures to zero pad
  * \param out     Output object
@@ -2478,45 +2482,61 @@ void ObitFArrayPad (ObitFArray *in, ObitFArray* out, ofloat factor)
 void  ObitFArrayConvGaus (ObitFArray* in, ObitFArray* list, olong ncomp, 
 			  ofloat gauss[3])
 {
-  olong icomp, lrec, ix, iy, indx;
-  ofloat *table, *image, dx, dy, arg, aa, bb, cc;
 
-  /* error checks */
+  olong i;
+  olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
+  gboolean OK;
+  FAFuncArg **threadArgs;
+
+   /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
   g_assert (ObitIsA(list, &myClassInfo));
 
-  /* Setup list to access */
-  table = list->array;
-  lrec = list->naxis[0];
+  /* Initialize Threading */
+  nThreads = MakeFAFuncArgs (in->thread, in, 
+			     0, sizeof(olong), 3*sizeof(ofloat*), 0, 0,
+			     &threadArgs);
+  
+  /* Divide up work by row - only thread if more than 100 rows */
+  nElem = in->naxis[1];
+  nElemPerThread = nElem/nThreads;
+  nTh = nThreads;
+  if (nElem<100) {nElemPerThread = nElem; nTh = 1;}
+  loElem = 1;
+  hiElem = nElemPerThread;
+  hiElem = MIN (hiElem, nElem);
 
-  /* access to in as image */
-  image = in->array;
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hiElem = nElem;  /* Make sure do all */
+    threadArgs[i]->first   = loElem;
+    threadArgs[i]->last    = hiElem;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    threadArgs[i]->arg1 = (gpointer)list;
+    memmove(threadArgs[i]->arg2, &ncomp, sizeof(olong));
+    memmove(threadArgs[i]->arg3, gauss, 3*sizeof(ofloat*));
+    /* Update which Elem */
+    loElem += nElemPerThread;
+    hiElem += nElemPerThread;
+    hiElem = MIN (hiElem, nElem);
+  }
 
-  /* Gaussian parameters */
-  aa = gauss[0];
-  bb = gauss[1];
-  cc = gauss[2];
+  /* Do operation */
+  OK = ObitThreadIterator (in->thread, nTh, 
+			   (ObitThreadFunc)ThreadFAConvGaus,
+			   (gpointer**)threadArgs);
 
-  /* Loop over elements in list */
-  for (icomp=0; icomp<ncomp; icomp++) {
-    if (table[2]==0.0) continue;  /* ignore zero flux */
-    indx = 0;  /* image array index */
+  /* Check for problems */
+  if (!OK) return;
 
-    /* Loop over array convolving */
-    for (iy = 0; iy<in->naxis[1]; iy++) {
-      dy = iy - table[1];   /* y offset */
-      for (ix = 0; ix<in->naxis[0]; ix++) {
-	dx = ix - table[0];   /* x offset */
-	arg = aa*dx*dx + bb*dy*dy + cc*dx*dy;
-	if (arg<12.0) {
-	  image[indx] += table[2] * exp(-arg);
-	}
-	indx++;
-      }
-    }
-    table += lrec;
-  } /* end list over components */
+  /* Reset arg1 - keep KillFAFuncArgs from zapping what it's pointing at */
+  for (i=0; i<nTh; i++) {
+    threadArgs[i]->arg1 = NULL;
+  }
 
+  /* Free local objects */
+  KillFAFuncArgs(nThreads, threadArgs);
 } /* end ObitFArrayConvGaus */
 
 /**
@@ -3068,6 +3088,89 @@ static gpointer ThreadFAHisto (gpointer arg)
   
   return NULL;
 } /*  end ThreadFAHisto */
+
+/**
+ * Thread convolve a list of points, 
+ * Magic value blanking supported.
+ * Callable as thread
+ * \param arg Pointer to FAFuncArg argument with elements:
+ * \li in       ObitFArray to work on
+ * \li first    First row (1-rel) row in in
+ * \li last     Highest row (1-rel) in in
+ * \li arg1     (ObitFArray*)list List of positions and fluxes of the Gaussians
+ *              (x pixel, y pixel, flux)
+ * \li arg2     (olong*)ncomp   Number of components in list  
+ *              generally less than size of FArray).
+ * \li arg3     (ofloat*) gauss[3]  Gaussian coefficients for (d_x*d_x, d_y*d_y, d_x*d_y)
+ *                Gaussian maj = major axis FWHM, min=minor, pa = posn. angle
+ *                cr=cos(pa+rotation), sr=sin(pa+rotation),
+ *                cell_x, cell_y x, y cell spacing is same units as maj, min
+ *                [0] = {(cr/min)^2 + ((sr/maj)^2)}*(cell_x^2)*4*log(2)
+ *                [1] = {(sr/min)^2 + ((cr/maj)^2)}*(cell_y^2)*4*log(2)
+ *                [2] = {(1/min)^2 - ((1/maj)^2)}*sr*cr*abs(cell_x*cell_y)*8*log(2)
+ * \li ithread  thread number, <0 -> no threading
+ * \return NULL
+ */
+static gpointer ThreadFAConvGaus (gpointer arg)
+{
+  /* Get arguments from structure */
+  FAFuncArg *largs = (FAFuncArg*)arg;
+  ObitFArray *in        = largs->in;
+  ObitFArray *list      = (ObitFArray*)largs->arg1;
+  olong      loElem     = largs->first-1;
+  olong      hiElem     = largs->last-1;
+  olong      ncomp      = *(olong*)largs->arg2;
+  ofloat     gauss[3];
+
+  /* local */
+  olong icomp, lrec, ix, iy, indx;
+  ofloat *table, *image, dx, dy, farg, aa, bb, cc;
+
+  if (hiElem<loElem) goto finish;
+
+  /* Get Gauss */
+  memmove(gauss, largs->arg3, 3*sizeof(ofloat*));
+
+  /* Setup list to access */
+  table = list->array;
+  lrec  = list->naxis[0];
+
+  /* access to in as image */
+  image = in->array;
+
+  /* Gaussian parameters */
+  aa = gauss[0];
+  bb = gauss[1];
+  cc = gauss[2];
+
+  /* Loop over elements in list */
+  for (icomp=0; icomp<ncomp; icomp++) {
+    if (table[2]==0.0) continue;  /* ignore zero flux */
+    indx = loElem*in->naxis[0];  /* image array index */
+
+    /* Loop over array convolving */
+    for (iy = loElem; iy<hiElem; iy++) {
+      dy = iy - table[1];   /* y offset */
+      for (ix = 0; ix<in->naxis[0]; ix++) {
+	dx = ix - table[0];   /* x offset */
+	farg = aa*dx*dx + bb*dy*dy + cc*dx*dy;
+	if (farg<12.0) {
+	  image[indx] += table[2] * exp(-farg);
+	}
+	indx++;
+      }
+    }
+    table += lrec;
+  } /* end loop over components list */
+
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (largs->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+  
+} /*  end ThreadFAConvGaus */
 
 /**
  * Make arguments for a Threaded ThreadFAFunc?

@@ -2,7 +2,7 @@
 /* XMLRPC server for ObitView */
 /* Much of this material directly adapted from xmlrpc-c-1.2/examples */
 /*-----------------------------------------------------------------------
-*  Copyright (C) 2005-2008
+*  Copyright (C) 2005-2010
 *  Associated Universities, Inc. Washington DC, USA.
 *  This program is free software; you can redistribute it and/or
 *  modify it under the terms of the GNU General Public License as
@@ -151,7 +151,8 @@ static void server_loop(gint port)
   ObitRPCAddMethod (server, "copyFile",   &copyFile,   NULL, err);
 
   /* Loop forever 'neath the streets of Boston */
-  ObitRPCServerLoop(server, port, "/tmp/xmlrpc_log");
+  /*ObitRPCServerLoop(server, port, "/tmp/xmlrpc_log");*/
+  ObitRPCServerLoop(server, port, "/dev/null");
 
 } /* end server_loop */
 

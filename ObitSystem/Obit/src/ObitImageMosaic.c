@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -76,31 +76,9 @@ void  ObitImageMosaicInit  (gpointer in);
 /** Private: Deallocate members. */
 void  ObitImageMosaicClear (gpointer in);
 
-/** Private: Cover specified field of view */
-static ofloat
-FlyEye (ofloat radius, olong imsize, ofloat cells[2], olong ovrlap,
-	ofloat shift[2], double ra0, double dec0, 
-	olong *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, olong *flqual,
-	ObitErr *err);
-
-/** Private: Add field to list */
-static int 
-AddField (ofloat shift[2], ofloat dec, olong imsize, ofloat cells[2], 
-	  olong qual, gboolean check, ofloat minImpact,
-	  olong *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, olong *flqual,
-	  ObitErr *err);
-
 /** Private: Bubble sort */
  static void 
  Bubble (ofloat *data, olong* indx, olong number, olong direct);
-
-/** Private: Lookup outliers in catalog */
-static void 
-AddOutlier (gchar *Catalog, olong catDisk, ofloat minRad, ofloat cells[2], 
-	    ofloat OutlierDist, ofloat OutlierFlux, ofloat OutlierSI, olong OutlierSize,
-	    odouble ra0, odouble dec0, gboolean doJ2B, odouble Freq, ofloat minImpact, 
-	    olong *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, olong *flqual, 
-	    ObitErr *err);
 
 /** Private: Set Class function pointers. */
 static void ObitImageMosaicClassInfoDefFn (gpointer inClass);
@@ -109,7 +87,8 @@ static void ObitImageMosaicClassInfoDefFn (gpointer inClass);
 /**
  * Constructor.
  * Initializes class if needed on first call.
- * \param name An optional name for the object.
+ * \param name   An optional name for the object.
+ * \param number Number of images
  * \return the new object.
  */
 ObitImageMosaic* newObitImageMosaic (gchar* name, olong number)
@@ -381,7 +360,8 @@ gconstpointer ObitImageMosaicGetClass (void)
 /**
  * Zap (delete with underlying structures) selected image member(s).
  * Also deletes any associated beam member
- * \param in      The array of images
+ * \param in      The array of images, infoList has following:
+ * \li "saveBeam" boolean  If TRUE, save beams, [def FALSE]
  * \param number  The 0-rel image number, -1=> all
  * \param err     Error stack, returns if not empty.
  */
@@ -391,18 +371,23 @@ ObitImageMosaicZapImage  (ObitImageMosaic *in, olong number,
 {
   olong i;
   ObitImage *myBeam=NULL;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gboolean saveBeam = FALSE;
   gchar *routine="ObitImageMosaicZapImage";
 
   /* error checks */
-  g_assert(ObitErrIsA(err));
   if (err->error) return;
   g_assert (ObitIsA(in, &myClassInfo));
+
+  /* God save the Beam? */
+  ObitInfoListGetTest(in->info, "saveBeam", &type, dim, &saveBeam);
 
   /* Kill 'em all? */
   if (number==-1) {
     for (i=0; i<in->numberImages; i++) {
       /* First the beam if any */
-      if (in->images[i]->myBeam!=NULL) {
+      if (!saveBeam && in->images[i]->myBeam!=NULL) {
 	myBeam = (ObitImage*)in->images[i]->myBeam;
 	in->images[i]->myBeam = (Obit*)ObitImageZap(myBeam, err);
       }
@@ -423,7 +408,7 @@ ObitImageMosaicZapImage  (ObitImageMosaic *in, olong number,
   }
 
   /* First the beam if any */
-  if (in->images[number]->myBeam!=NULL) {
+  if (!saveBeam && in->images[number]->myBeam!=NULL) {
     myBeam = (ObitImage*)in->images[number]->myBeam;
     in->images[number]->myBeam = (Obit*)ObitImageZap(myBeam, err);
   }
@@ -741,7 +726,8 @@ void ObitImageMosaicSetFiles  (ObitImageMosaic *in, gboolean doBeam, ObitErr *er
   gchar *routine = "ObitImageMosaicSetFiles";
 
  /* Create full field image if needed */
-  if (in->doFull && (in->FOV>0.0) && (in->numberImages>1) && (in->nInit<=0)) {
+  /*???if (in->doFull && (in->FOV>0.0) && (in->numberImages>1) && (in->nInit<=0)) {*/
+  if (in->doFull && (in->numberImages>1) && (in->nInit<=0)) {
     image = in->FullField;
 
     /* AIPS file */
@@ -1172,9 +1158,10 @@ void ObitImageMosaicDefine (ObitImageMosaic *in, ObitUV *uvData, gboolean doBeam
   olong i, nx, ny;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  ofloat *farr=NULL;
+  ofloat *farr=NULL, FOV;
   gboolean doCalSelect, *barr=NULL;
   ObitIOAccess access;
+  ObitImageMosaicClassInfo* mosaicClass;
   gchar *routine = "ObitImageMosaicDefine";
 
   /* error checks */
@@ -1234,9 +1221,11 @@ void ObitImageMosaicDefine (ObitImageMosaic *in, ObitUV *uvData, gboolean doBeam
     /* Replace name */
     g_free(in->FullField->name);
     in->FullField->name = g_strdup("Flattened Image");
+    mosaicClass = (ObitImageMosaicClassInfo*)&myClassInfo;  /* Class pointer */
+    FOV = mosaicClass->ObitImageMosaicFOV (in, err);
     /* set size */
-    nx = 2 * in->FOV / fabs (in->xCells);
-    ny = 2 * in->FOV / fabs (in->yCells);
+    nx = 2 * FOV / fabs (in->xCells);
+    ny = 2 * FOV / fabs (in->yCells);
     in->FullField->myDesc->inaxes[0] = nx;
     in->FullField->myDesc->inaxes[1] = ny;
     /* set center pixel must be an integer pixel */
@@ -2409,6 +2398,44 @@ static void ObitImageMosaicClassInfoDefFn (gpointer inClass)
   theClass->ObitInit      = (ObitInitFP)ObitImageMosaicInit;
   theClass->ObitImageMosaicFromInfo = (ObitImageMosaicFromInfoFP)ObitImageMosaicFromInfo;
   theClass->ObitImageMosaicGetInfo  = (ObitImageMosaicGetInfoFP)ObitImageMosaicGetInfo;
+  theClass->ObitImageMosaicZapImage =
+    (ObitImageMosaicZapImageFP)ObitImageMosaicZapImage;
+  theClass->ObitImageMosaicGetImage = 
+    (ObitImageMosaicGetImageFP)ObitImageMosaicGetImage;
+  theClass->ObitImageMosaicSetImage = 
+    (ObitImageMosaicSetImageFP)ObitImageMosaicSetImage;
+  theClass->ObitImageMosaicGetImageRMS = 
+    (ObitImageMosaicGetImageRMSFP)ObitImageMosaicGetImageRMS;
+  theClass->ObitImageMosaicGetFullImage = 
+    (ObitImageMosaicGetFullImageFP)ObitImageMosaicGetFullImage;
+  theClass->ObitImageMosaicSetFullImage = 
+    (ObitImageMosaicSetFullImageFP)ObitImageMosaicSetFullImage;
+  theClass->ObitImageMosaicSetFiles = 
+    (ObitImageMosaicSetFilesFP)ObitImageMosaicSetFiles;
+  theClass->ObitImageMosaicCreate = 
+    (ObitImageMosaicCreateFP)ObitImageMosaicCreate;
+  theClass->ObitImageMosaicDefine = 
+    (ObitImageMosaicDefineFP)ObitImageMosaicDefine;
+  theClass->ObitImageMosaicFlatten = 
+    (ObitImageMosaicFlattenFP)ObitImageMosaicFlatten;
+  theClass->ObitImageMosaicFOV = 
+    (ObitImageMosaicFOVFP)ObitImageMosaicFOV;
+  theClass->ObitImageMosaicMaxFOV = 
+    (ObitImageMosaicMaxFOVFP)ObitImageMosaicMaxFOV;
+  theClass->ObitImageMosaicMaxCC = 
+    (ObitImageMosaicMaxCCFP)ObitImageMosaicMaxCC;
+  theClass->ObitImageMosaicFlagCC = 
+    (ObitImageMosaicFlagCCFP)ObitImageMosaicFlagCC;
+  theClass->ObitImageMosaicAddField = 
+    (ObitImageMosaicAddFieldFP)ObitImageMosaicAddField;
+  theClass->ObitImageMosaicMaxField = 
+    (ObitImageMosaicMaxFieldFP)ObitImageMosaicMaxField;
+  theClass->ObitImageMosaicCopyCC = 
+    (ObitImageMosaicCopyCCFP)ObitImageMosaicCopyCC;
+  /* Private functions for derived classes */
+  theClass->FlyEye        = (FlyEyeFP)FlyEye;
+  theClass->AddField      = (AddFieldFP)AddField;
+  theClass->AddOutlier    = (AddOutlierFP)AddOutlier;
 
 } /* end ObitImageMosaicClassDefFn */
 
@@ -2521,7 +2548,7 @@ void ObitImageMosaicClear (gpointer inn)
  * \param  err     Error stack, returns if not empty.
  * \return radius of zone of avoidence for externals (deg)
  */
-static ofloat
+ofloat
 FlyEye (ofloat radius, olong imsize, ofloat cells[2], olong overlap,
 	ofloat shift[2], odouble ra0, odouble dec0, 
 	olong *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, olong *flqual,
@@ -2694,7 +2721,7 @@ FlyEye (ofloat radius, olong imsize, ofloat cells[2], olong overlap,
  * \param   err      Error stack, returns if not empty.
  * \return 0 if added, 1=matches previous, 2=table full
  */
-static int 
+olong 
 AddField (ofloat shift[2], ofloat dec, olong imsize, ofloat cells[2], 
 	  olong qual, gboolean check, ofloat minImpact,
 	  olong *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, olong *flqual,
@@ -2827,7 +2854,7 @@ AddField (ofloat shift[2], ofloat dec, olong imsize, ofloat cells[2],
  * \param flqual       (output) field quality (crowding) code, -1 => ignore 
  * \param err          Error stack, returns if not empty.
  */
-static void 
+ void 
 AddOutlier (gchar *Catalog, olong catDisk, ofloat minRad, ofloat cells[2], 
 	    ofloat OutlierDist, ofloat OutlierFlux, ofloat OutlierSI, olong OutlierSize,
 	    odouble ra0, odouble dec0, gboolean doJ2B, odouble Freq, ofloat minImpact, 

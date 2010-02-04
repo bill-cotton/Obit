@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -540,6 +540,8 @@ void ObitDConCleanPxListReset (ObitDConCleanPxList *in, ObitErr *err)
   ObitDConCleanPxListGetParms(in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
+  in->resMax    = -1.0e20;  /* Maximum residual */
+
   /* Number of components */
   in->currentIter = 0;
   in->totalFlux   = 0.0;
@@ -636,10 +638,12 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong  blc[IM_MAXDIM], trc[IM_MAXDIM];
+  olong xoff, yoff;
   olong i, j, field,  ifld, number, excess, ix, iy, nx, ny, pos[2], skipCnt;
   olong nterm, nplanes, iplane, naxis[2], iterm, nfield, nCCparms, parmoff;
   ofloat *data, *spec[20], fblank =  ObitMagicF();
   gboolean blewIt=FALSE, *mask=NULL, rebuild=FALSE;
+  const ObitDConCleanPxListClassInfo *pxListClass;
   gchar *routine = "ObitDConCleanPxListUpdate";
 
   /* error checks */
@@ -711,7 +715,8 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
       if (rebuild) {
 	Obit_log_error(err, OBIT_InfoWarn,"%s: Rebuilding CC Tables to add spectral terms",
 		       routine);
-	ObitDConCleanPxListReset (in, err);
+	pxListClass = (ObitDConCleanPxListClassInfo*)in->ClassInfo; 
+	pxListClass->ObitDConCleanPxListReset (in, err);
 	if (err->error) Obit_traceback_msg (err, routine, in->name);
       }
     } /* End add spectra */
@@ -762,6 +767,14 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
     /* Loop over image saving selected values */
     nx = image->myDesc->inaxes[0];
     ny = image->myDesc->inaxes[1];
+    /* subtract closest interger to reference pixel */
+    if (image->myDesc->crpix[0]>0.0)  
+      xoff = (olong)(image->myDesc->crpix[0]+0.5);
+    else xoff = (olong)(image->myDesc->crpix[0]-0.5);
+    if (image->myDesc->crpix[1]>0.0)  
+      yoff = (olong)(image->myDesc->crpix[1]+0.5);
+    else yoff = (olong)(image->myDesc->crpix[1]-0.5);
+
     for (iy=0; iy<ny; iy++) {
       /* Get window mask */
       if (ObitDConCleanWindowRow(window, field, iy+1, &mask, err)) {
@@ -775,8 +788,8 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
 		blewIt = TRUE;   /* Blew arrays */
 		excess++;
 	      } else { /* OK */
-		in->pixelX[number]    = ix;
-		in->pixelY[number]    = iy;
+		in->pixelX[number]    = ix - xoff;
+		in->pixelY[number]    = iy - yoff;
 		in->pixelFld[number]  = field;
 		in->pixelFlux[number] = data[ix];
 		/* Spectral terms if given */
@@ -832,8 +845,8 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
 {
   gboolean done = FALSE;
   olong iter, ipeak=0, field, iXres, iYres, beamPatch, tipeak=0;
-  olong i, j, lpatch, irow, lastField=-1;
-  ofloat peak, tpeak, minFlux=0.0, factor, CCmin, atlim, xfac=1.0, resmax, xflux;
+  olong i, j, lpatch, irow, xoff, yoff, lastField=-1;
+  ofloat peak, tpeak, minFlux=0.0, factor, CCmin, atlim, xfac=1.0, xflux;
   ofloat subval, ccfLim=0.5;
   odouble totalFlux, *fieldFlux=NULL;
   gchar reason[51];
@@ -878,7 +891,6 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
   beamPatch     = (lpatch-1)/2;
   CCmin         = 1.0e20;
   atlim         = 0.0;
-  resmax        = -1.0e20;
   in->complCode = OBIT_CompReasonUnknown;  /* No reason for completion yet */
 
   /* Tell details */
@@ -982,12 +994,12 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
     }
     
     /* If first pass set up stopping criteria */
-    if (resmax < 0.0) {
-      resmax = MAX (fabs(xflux), 1.0e-10);
-      xfac = pow ((in->minFluxLoad / resmax), in->factor[field-1]);
-      ccfLim = resmax*in->ccfLim;  /* Fraction of peak limit */
+    if (in->resMax < 0.0) {
+      in->resMax = MAX (fabs(xflux), 1.0e-10);
     }      
     /* Keep statistics */
+    xfac = pow ((in->minFluxLoad / in->resMax), in->factor[field-1]);
+    ccfLim = in->resMax * in->ccfLim;  /* Fraction of peak limit */
     in->iterField[field-1]++;
     iter++;  /* iteration count */
     fieldFlux[field-1] += subval;
@@ -1014,8 +1026,15 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
     /* Set value */
     desc = in->mosaic->images[field-1]->myDesc;
     /* What's in AIPS is a bit more complex and adds field offset from tangent */
-    CCRow->DeltaX = (iXres - desc->crpix[0]+1)*desc->cdelt[0];
-    CCRow->DeltaY = (iYres - desc->crpix[1]+1)*desc->cdelt[1];
+    /* correct by offset in ObitDConCleanPxListUpdate */
+    if (desc->crpix[0]>0.0)  
+      xoff = (olong)(desc->crpix[0]+0.5);
+    else xoff = (olong)(desc->crpix[0]-0.5);
+    if (desc->crpix[1]>0.0)  
+      yoff = (olong)(desc->crpix[1]+0.5);
+    else yoff = (olong)(desc->crpix[1]-0.5);
+    CCRow->DeltaX = (iXres - desc->crpix[0]+1 + xoff)*desc->cdelt[0];
+    CCRow->DeltaY = (iYres - desc->crpix[1]+1 + yoff)*desc->cdelt[1];
     CCRow->Flux = subval;
     /* May need Gaussian components */
     parmoff = 0;
@@ -1119,8 +1138,8 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
   /* Tell about results */
   if (in->prtLv>1) {
     Obit_log_error(err, OBIT_InfoErr,"Clean stopped because: %s", reason);
-    Obit_log_error(err, OBIT_InfoErr,"%s: Min. Flux density %f",
-		   routine, xflux);
+    Obit_log_error(err, OBIT_InfoErr,"Min. Flux density %f",
+		   xflux);
     if (in->nfield>1) /* Multiple fields? */
       for (i=0; i<in->nfield; i++) {
 	if (doField[i]) {
@@ -1151,8 +1170,8 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
 gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
 {
   gboolean done = FALSE;
-  olong iter, iresid, field=0, beamPatch, lpatch, ipeak, iXres, iYres;
-  olong lastField=-1, irow, i, j;
+  olong iter, iresid, field=0, beamPatch, lpatch=0, ipeak, iXres, iYres;
+  olong lastField=-1, xoff, yoff, irow, i, j;
   ofloat minFlux=0.0, xflux;
   ofloat minVal=-1.0e20, sum, wt, mapLim;
   odouble totalFlux, *fieldFlux=NULL;
@@ -1222,8 +1241,8 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
   else maxThread = 1;
   nThreads = MakeCLEANArgs (in, maxThread, &targs);
 
-  /* Threading doesn't seem to help much */
-  maxThread = 1;
+  /* Threading doesn't seem to help much 
+  maxThread = 1; or does it? */
 
   /* Divide up work */
   npix = in->nPixel;
@@ -1311,8 +1330,15 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
     /* Set value */
     desc = in->mosaic->images[field-1]->myDesc;
     /* What's in AIPS is a bit more complex and adds field offset from tangent */
-    CCRow->DeltaX = (iXres - desc->crpix[0]+1)*desc->cdelt[0];
-    CCRow->DeltaY = (iYres - desc->crpix[1]+1)*desc->cdelt[1];
+    /* correct by offset in ObitDConCleanPxListUpdate */
+    if (desc->crpix[0]>0.0)  
+      xoff = (olong)(desc->crpix[0]+0.5);
+    else xoff = (olong)(desc->crpix[0]-0.5);
+    if (desc->crpix[1]>0.0)  
+      yoff = (olong)(desc->crpix[1]+0.5);
+    else yoff = (olong)(desc->crpix[1]-0.5);
+    CCRow->DeltaX = (iXres - desc->crpix[0]+1+xoff)*desc->cdelt[0];
+    CCRow->DeltaY = (iYres - desc->crpix[1]+1+yoff)*desc->cdelt[1];
     CCRow->Flux = xflux;
     /* May need Gaussian components */
     parmoff = 0;
@@ -1483,6 +1509,22 @@ static void ObitDConCleanPxListClassInfoDefFn (gpointer inClass)
   theClass->ObitClone     = NULL;
   theClass->ObitClear     = (ObitClearFP)ObitDConCleanPxListClear;
   theClass->ObitInit      = (ObitInitFP)ObitDConCleanPxListInit;
+  theClass->ObitDConCleanPxListCreate   = 
+    (ObitDConCleanPxListCreateFP)ObitDConCleanPxListCreate;
+  theClass->ObitDConCleanPxListGetParms = 
+    (ObitDConCleanPxListGetParmsFP)ObitDConCleanPxListGetParms;
+  theClass->ObitDConCleanPxListReset    = 
+    (ObitDConCleanPxListResetFP)ObitDConCleanPxListReset;
+  theClass->ObitDConCleanPxListResize   = 
+    (ObitDConCleanPxListResizeFP)ObitDConCleanPxListResize;
+  theClass->ObitDConCleanPxListUpdate   = 
+    (ObitDConCleanPxListUpdateFP)ObitDConCleanPxListUpdate;
+  theClass->ObitDConCleanPxListCLEAN    = 
+    (ObitDConCleanPxListCLEANFP)ObitDConCleanPxListCLEAN;
+  theClass->ObitDConCleanPxListSDI      = 
+    (ObitDConCleanPxListSDIFP)ObitDConCleanPxListSDI;
+  theClass->ObitDConCleanPxListResult   = 
+    (ObitDConCleanPxListResultFP)ObitDConCleanPxListResult;
 
 } /* end ObitDConCleanPxListClassDefFn */
 
@@ -1526,6 +1568,7 @@ void ObitDConCleanPxListInit  (gpointer inn)
   in->factor    = NULL;
   in->CCTable   = NULL;
   in->pixelSpectra = NULL;
+  in->resMax    = -1.0e20;
   in->nSpecTerm = 0;
   for (i=0; i<IM_MAXDIM-2; i++) in->plane[i] = 1;
   in->autoWinFlux  = -1.0e20;
@@ -1632,8 +1675,8 @@ gpointer ThreadCLEAN (gpointer args)
     for (iresid=loPix; iresid<hiPix; iresid++) {
       /* Is this inside the Beam patch ? */
       if ((abs(in->pixelX[iresid]-iXres) <= beamPatch) && 
-	  (abs(in->pixelY[iresid]-iYres) <= beamPatch) &&
-	  (in->pixelFld[iresid]==field)) {
+	  (abs(in->pixelY[iresid]-iYres) <= beamPatch)) {
+	/*&& (in->pixelFld[iresid]==field)) {*/
 	/* Index in beam patch array */
 	iBeam = (beamPatch + (in->pixelY[iresid] - iYres)) * lpatch +
 	  (beamPatch + (in->pixelX[iresid] - iXres));
@@ -1704,8 +1747,8 @@ gpointer ThreadSDICLEAN (gpointer args)
   for (iresid=loPix; iresid<hiPix; iresid++) {
     /* Is this inside the Beam patch ? */
     if ((abs(in->pixelY[iresid]-iYres) <= beamPatch) && 
-	(abs(in->pixelX[iresid]-iXres) <= beamPatch) &&
-	(in->pixelFld[iresid]==field)) {
+	(abs(in->pixelX[iresid]-iXres) <= beamPatch)) {
+      /* && (in->pixelFld[iresid]==field)) { */
       /* Index in beam patch array */
       iBeam = (beamPatch + (in->pixelY[iresid] - iYres)) * lpatch +
 	(beamPatch + (in->pixelX[iresid] - iXres));

@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004                                               */
+/*;  Copyright (C) 2004,2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -27,3 +27,19 @@
 /*  Define the basic components of the ObitDConCleanPxList ClassInfo structure */
 /* This is intended to be included in a classInfo structure definition  */
 #include "ObitClassDef.h"  /* Parent class ClassInfo definition file */
+/** Function pointer to Create/initialize ObitDCon structures */
+ObitDConCleanPxListCreateFP ObitDConCleanPxListCreate;
+/** Function pointer to Get Parameters */
+ObitDConCleanPxListGetParmsFP ObitDConCleanPxListGetParms;
+/** Function pointer to  Reset Clean */
+ObitDConCleanPxListResetFP ObitDConCleanPxListReset;
+/** Function pointer to Resize Arrrays */
+ObitDConCleanPxListResizeFP ObitDConCleanPxListResize;
+/** Function pointer to Update with new image and window */
+ObitDConCleanPxListUpdateFP ObitDConCleanPxListUpdate;
+/** Function pointer to Do minor cycle BGC CLEANing. */
+ObitDConCleanPxListCLEANFP ObitDConCleanPxListCLEAN;
+/** Function pointer to Do SDI CLEANing */
+ObitDConCleanPxListSDIFP ObitDConCleanPxListSDI;
+/** Function pointer to Get results of CLEAN  */
+ObitDConCleanPxListResultFP ObitDConCleanPxListResult;

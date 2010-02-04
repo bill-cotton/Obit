@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -73,7 +73,9 @@ olong CCver;
 ofloat *maxAbsRes;
 /** Average windowed residual per field, -1=> uninitialized */
 ofloat *avgRes;
-/** Image Peak/RMS per field, -1=> uninitialized */
+/** Image RMS per field, -1=> uninitialized */
+ofloat *imgRMS;
+/** Image Windowed Peak/RMS per field, -1=> uninitialized */
 ofloat *imgPeakRMS;
 /** Beam Peak/RMS per field, -1=> uninitialized */
 ofloat *beamPeakRMS;

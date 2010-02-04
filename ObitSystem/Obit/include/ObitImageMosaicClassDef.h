@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004,2008                                          */
+/*;  Copyright (C) 2004,2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -32,3 +32,44 @@ ObitImageMosaicFromInfoFP ObitImageMosaicFromInfo;
 /** Function pointer to Extract information about underlying structures 
     to ObitInfoList. */
 ObitImageMosaicGetInfoFP ObitImageMosaicGetInfo;
+/** Function pointer to Zap specified image. */
+ObitImageMosaicZapImageFP ObitImageMosaicZapImage;
+/** Function pointer to Return specified image */
+ObitImageMosaicGetImageFP ObitImageMosaicGetImage;
+/** Function pointer to Set specified image */
+ObitImageMosaicSetImageFP ObitImageMosaicSetImage;
+/** Function pointer to Return RMS pixel value of  image */
+ObitImageMosaicGetImageRMSFP ObitImageMosaicGetImageRMS;
+/** Function pointer to ObitImageMosaicGetFullImage */
+ObitImageMosaicGetFullImageFP ObitImageMosaicGetFullImage;
+/** Function pointer to Set  Full Field  image */
+ObitImageMosaicSetFullImageFP ObitImageMosaicSetFullImage;
+/** Function pointer to Set underlying files */
+ObitImageMosaicSetFilesFP ObitImageMosaicSetFiles;
+/** Function pointer to Create Mosaic from uv data */
+ObitImageMosaicCreateFP ObitImageMosaicCreate;
+/** Function pointer to Define parameters of images */
+ObitImageMosaicDefineFP ObitImageMosaicDefine;
+/** Function pointer to Flatten tiles onto full field image  */
+ObitImageMosaicFlattenFP ObitImageMosaicFlatten;
+/** Function pointer to Give field of view */
+ObitImageMosaicFOVFP ObitImageMosaicFOV;
+/** Function pointer to Give max. field of view in current model */
+ObitImageMosaicMaxFOVFP ObitImageMosaicMaxFOV;
+/** Function pointer to Get max summed CC and determine offset from nearest pixel */
+ObitImageMosaicMaxCCFP ObitImageMosaicMaxCC;
+/** Function pointer to Zero selected CC entries */
+ObitImageMosaicFlagCCFP ObitImageMosaicFlagCC;
+/** Function pointer to Add field to mosaic */
+ObitImageMosaicAddFieldFP ObitImageMosaicAddField;
+/** Function pointer to Generate a mosaic for peeling */
+ObitImageMosaicMaxFieldFP ObitImageMosaicMaxField;
+/** Function pointer to Concatenate Image CC tables onto the FullField Image */
+ObitImageMosaicCopyCCFP ObitImageMosaicCopyCC;
+/* Private functions for derived classes */
+/** Function pointer to  Cover specified field of view */
+FlyEyeFP FlyEye;
+/**  Function pointer to Add field to list */
+AddFieldFP AddField;
+/** Function pointer to Lookup outliers in catalog */
+AddOutlierFP AddOutlier;

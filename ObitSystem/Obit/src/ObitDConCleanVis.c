@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2009                                          */
+/*;  Copyright (C) 2005-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -35,6 +35,7 @@
 #include "ObitTableUtil.h"
 #include "ObitTableCCUtil.h"
 #include "ObitSkyGeom.h"
+#include "ObitImageWB.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -118,10 +119,6 @@ static gboolean ResetSkyModel (ObitDConCleanVis *in, ObitErr *err);
 static ObitFArray* GetFieldPixArray (ObitDConCleanVis *in, olong field, 
 				     ObitErr *err);
 
-/** Private: Low accuracy subtract CLEAN model. */
-static void SubNewCCs (ObitDConCleanVis *in, olong *newCC, 
-		       ObitFArray **pixarray, ObitErr *err);
-
 /** Public: Pick next field(s) and get Residual image(s) */
 static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, 
 					   ObitErr *err);
@@ -144,6 +141,23 @@ static olong MakeImSubFuncArgs (ObitThread *thread,
 
 /** Private: Delete Threaded Image subtraction args */
 static void KillImSubFuncArgs (olong nargs, ImSubFuncArg **ThreadArgs);
+
+/** Private: Low accuracy subtract CLEAN model. */
+static void SubNewCCs (ObitDConCleanVis *in, olong *newCC, 
+		       ObitFArray **pixarray, ObitErr *err);
+
+/** Private: Create/init PxList. */
+static void NewPxList (ObitDConCleanVis *in, ObitErr *err);
+
+/** Private: Create/init Pixarray. */
+static ObitFArray** NewPxArray (ObitDConCleanVis *in, olong *startCC, ObitErr *err);
+
+/** Private: Delete Pixarray. */
+static ObitFArray** KillPxArray (ObitDConCleanVis *in, ObitFArray **pixarray);
+
+/** Private: Delete BeamPatches. */
+static void KillBeamPatches (ObitDConCleanVis *in);
+
 /*----------------------Public functions---------------------------*/
 /**
  * Constructor.
@@ -348,6 +362,7 @@ ObitDConCleanVis* ObitDConCleanVisCreate (gchar* name, ObitUV *uvdata,
   out->cleanable   = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean cleanable");
   out->maxAbsRes   = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean max res");
   out->avgRes      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean avg res");
+  out->imgRMS      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Image RMS");
   out->imgPeakRMS  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Image Peak/RMS");
   out->beamPeakRMS = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Beam Peak/RMS");
   out->currentFields = ObitMemAlloc0Name((nfield+3)*sizeof(olong),"Current fields");
@@ -356,6 +371,7 @@ ObitDConCleanVis* ObitDConCleanVisCreate (gchar* name, ObitUV *uvdata,
     out->avgRes[i]      = -1.0;
     out->quality[i]     = -1.0;
     out->cleanable[i]   = -1.0;
+    out->imgRMS[i]      = -1.0;
     out->imgPeakRMS[i]  = -1.0;
     out->beamPeakRMS[i] = -1.0;
  }
@@ -429,6 +445,7 @@ ObitDConCleanVisCreate2 (gchar* name, ObitUV *uvdata,
   out->cleanable   = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean cleanable");
   out->maxAbsRes   = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean max res");
   out->avgRes      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Clean avg res");
+  out->imgRMS      = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Image RMS");
   out->imgPeakRMS  = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Image Peak/RMS");
   out->beamPeakRMS = ObitMemAlloc0Name(nfield*sizeof(ofloat),"Beam Peak/RMS");
   out->currentFields = ObitMemAlloc0Name((nfield+3)*sizeof(olong),"Current fields");
@@ -437,6 +454,7 @@ ObitDConCleanVisCreate2 (gchar* name, ObitUV *uvdata,
     out->avgRes[i]      = -1.0;
     out->quality[i]     = -1.0;
     out->cleanable[i]   = -1.0;
+    out->imgRMS[i]      = -1.0;
     out->imgPeakRMS[i]  = -1.0;
     out->beamPeakRMS[i] = -1.0;
  }
@@ -469,13 +487,14 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
 {
   ObitDConCleanVis *in;
   ObitFArray **pixarray=NULL;
-  gboolean done, fin=TRUE, quit, doSub, bail, doMore, moreClean, notDone;
+  gboolean done, fin=TRUE, quit=FALSE, doSub, bail, doMore, moreClean, notDone;
   gboolean redo;
   olong jtemp, i, *startCC=NULL, *newCC=NULL, count, ifld;
   olong redoCnt=0;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   const ObitDConCleanVisClassInfo *inClass;
   const ObitUVImagerClassInfo *imagerClass;
+  const ObitDConCleanPxListClassInfo *pxListClass;
   gchar *routine = "ObitDConCleanVisDeconvolve";
 
   /* DEBUG
@@ -495,6 +514,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   /* Reset highest peak */
   in->peakFlux = -1000.0;
   bail = FALSE;  /* if going to recenter facets, don't need to make final residuals */
+  in->autoWinFlux = 0.0;
 
   /* Get parameters */
   inClass->ObitDConGetParms(inn, err);
@@ -516,23 +536,15 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   }
 
   /* Create Pixel List if needed - has size changed? */
-  if (in->Pixels && (in->Pixels->nfield!=in->mosaic->numberImages)) 
-    in->Pixels = ObitDConCleanPxListUnref(in->Pixels);
-  if (!in->Pixels) {
-    in->Pixels = ObitDConCleanPxListCreate("Pixel List", in->mosaic, 
-					   in->maxPixel, err);
-    if (err->error) Obit_traceback_msg (err, routine, in->name);
-  }
-  /* Reset  min. resid */
-  in->Pixels->maxResid = 1.0e10;
+  inClass->NewPxList (in, err);
+  /* PxList class structure */
+  pxListClass = (ObitDConCleanPxListClassInfo*)in->Pixels->ClassInfo; 
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* No more fields than in mosaic */
   Obit_return_if_fail ((in->nfield == in->mosaic->numberImages),
 		       err, "%s: CLEAN and mosaic different number of fields %d %d",
 		       routine, in->nfield, in->mosaic->numberImages);
-
-  /* Copy control info to PixelList */
-  ObitInfoListCopyData(in->info, in->Pixels->info);
 
   /* Reset Sky model */
   doSub = ResetSkyModel (in, err);
@@ -542,7 +554,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Reset/Init Pixel list if not done in ResetSkyModel */
-  if (!doSub) ObitDConCleanPxListReset (in->Pixels, err);
+  if (!doSub) pxListClass->ObitDConCleanPxListReset (in->Pixels, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Be sure to (re)generate residuals */
@@ -556,7 +568,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   }
 
   /* Make initial images */
-  MakeAllResiduals (in, err);
+   inClass->MakeAllResiduals (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
   if (in->prtLv>1) ObitErrLog(err);  /* Progress Report */
   else ObitErrClear(err);
@@ -609,13 +621,8 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
     }
 
     /* If using autoWindow, iterate until clean not limited by autoWindow flux */
-    pixarray   = g_malloc0(in->numCurrentField*sizeof(ObitFArray*));
-    for (ifld=0; ifld<in->numCurrentField; ifld++) {
-      if (in->currentFields[ifld]<=0) break;  /* List terminated? */
-      startCC[ifld]   = in->Pixels->iterField[in->currentFields[ifld]-1];  /* no. at start */
-      /* Pixel array for field */
-      pixarray[ifld]  = GetFieldPixArray (in, in->currentFields[ifld], err);  
-    }
+    pixarray = inClass->NewPxArray (in, startCC, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
 
     /* Get image/beam statistics needed for this cycle */
     notDone = inClass->ObitDConCleanPixelStats((ObitDConClean*)in, pixarray, err);
@@ -666,13 +673,13 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
       moreClean = (in->Pixels->complCode==OBIT_CompReasonAutoWin);
       /* Don't do this forever */
       if ((count>0) && !doMore) moreClean = FALSE;
-      if (count>10) moreClean = FALSE;
+      if (count>5) moreClean = FALSE;
       /*fprintf (stderr,"DEBUG doMore %d count %d moreClean %d Peak/RMS %g\n", 
 	doMore, count, moreClean, in->imgPeakRMS[31]);*/
       if (!moreClean) break;
 
       /* Subtract these CCs from images in pixarray if possible */
-      SubNewCCs(in, newCC, pixarray, err);
+      inClass->SubNewCCs(in, newCC, pixarray, err);
       if (err->error) Obit_traceback_msg (err, routine, in->name);
       count++;
     } /* End middle CLEAN loop */
@@ -683,25 +690,15 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
       if (fin) in->maxAbsRes[in->currentFields[ifld]-1] = 0.0;
       else in->maxAbsRes[in->currentFields[ifld]-1] = in->Pixels->maxResid;
       in->quality[in->currentFields[ifld]-1] = 
-	ObitDConCleanVisQuality((ObitDConCleanVis*)in, in->currentFields[ifld], err);
+	inClass->ObitDConCleanVisQuality((ObitDConCleanVis*)in, in->currentFields[ifld], err);
       in->cleanable[in->currentFields[ifld]-1] = in->maxAbsRes[in->currentFields[ifld]-1];
     }
 
     /* Release working pixel arrays */
-    if (pixarray) {
-      for (ifld=0; ifld<in->numCurrentField; ifld++) {
-	if (in->currentFields[ifld]<=0) break;  /* List terminated? */
-	pixarray[ifld] = ObitFArrayUnref(pixarray[ifld]);
-      }
-      g_free(pixarray);  pixarray = NULL;
-    }
+    pixarray = inClass->KillPxArray (in, pixarray);
 
     /* Clear BeamPatches array */
-    if (in->BeamPatches) {
-      for (i=0; i<in->mosaic->numberImages; i++) 
-	if (in->BeamPatches[i]) ObitFArrayUnref(in->BeamPatches[i]);
-      in->BeamPatches =  ObitMemFree (in->BeamPatches);
-    }
+    inClass->KillBeamPatches (in);
 
     /* Subtract any components from visibility data */
     inClass->ObitDConCleanSub((ObitDConClean*)in, err);
@@ -715,18 +712,12 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   if (startCC) g_free(startCC);
   if (newCC) g_free(newCC);
 
-    /* Release working pixel arrays */
-    if (pixarray) {
-      for (ifld=0; ifld<in->numCurrentField; ifld++) {
-	if (in->currentFields[ifld]<=0) break;  /* List terminated? */
-	pixarray[ifld] = ObitFArrayUnref(pixarray[ifld]);
-      }
-      g_free(pixarray); pixarray = NULL;
-    }
+  /* Release working pixel arrays */
+  pixarray = inClass->KillPxArray (in, pixarray);
 
   /* Make final residuals */
   if ((!bail) && (in->niter>0)) {
-    MakeAllResiduals (in, err);
+    inClass->MakeAllResiduals (in, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
     if (in->prtLv>1) ObitErrLog(err);  /* Progress Report */
     /* Check if any fields now CLEANable and autoWin and more clean allowed */
@@ -850,7 +841,7 @@ void  ObitDConCleanVisGetParms (ObitDCon *inn, ObitErr *err)
   ObitInfoListGetTest(in->info, "doXRestore", &type, dim, &in->doXRestore);
 
   /* Flatten image when done? */
-  ObitInfoListGetTest(in->info, "doFlatten", &type, dim, &in->doFlatten);
+   ObitInfoListGetTest(in->info, "doFlatten", &type, dim, &in->doFlatten);
 
   /* Weight data? */
   ObitInfoListGetTest(in->info, "doWeight", &type, dim, &in->doWeight);
@@ -861,7 +852,7 @@ void  ObitDConCleanVisGetParms (ObitDCon *inn, ObitErr *err)
 
   /* Allow recentering? */
   in->doRecenter = TRUE;
-  ObitInfoListGetTest(in->info, "doBeam", &type, dim, &in->doRecenter);
+  ObitInfoListGetTest(in->info, "doRecenter", &type, dim, &in->doRecenter);
 
  /* Flux level to reuse in CCs */
   ObitInfoListGetTest(in->info, "reuseFlux", &type, dim, &in->reuseFlux);
@@ -1020,6 +1011,9 @@ void ObitDConCleanVisSub(ObitDConCleanVis *in, ObitErr *err)
     in->skyModel->startComp[i] = in->skyModel->endComp[i]+1;
   }
 
+  /* Reset max residual on Pixel List */
+  in->Pixels->resMax    = -1.0e20;  /* Maximum residual */
+
 } /* end ObitDConCleanVisSub */
 
 /**
@@ -1037,18 +1031,21 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
 {
   olong i, best, lastBest=-1, loopCheck, indx, NumPar;
   olong *fldList=NULL;
-  gboolean *fresh, doBeam=FALSE, done=TRUE, found;
+  gboolean *fresh, doBeam=FALSE, done=TRUE, found, OK;
   ofloat sumwts, autoCenFlux=0.0;
   ObitImage *theBeam=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   const ObitUVImagerClassInfo *imagerClass;
+  const ObitDConCleanVisClassInfo *inClass;
   gchar *routine = "ObitDConCleanVisPickNext2D";
 
   /* error checks */
   g_assert (ObitErrIsA(err));
   if (err->error) return done;
   g_assert (ObitDConCleanVisIsA(in));
+
+  inClass = (ObitDConCleanVisClassInfo*)in->ClassInfo; /* clean class structure */
 
   /* Check if reached max number of components and some done */
   if ((in->Pixels->currentIter >= in->Pixels->niter) && 
@@ -1059,10 +1056,18 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
     in->currentFields[0] = 1;
     in->currentFields[1] = 0;
     in->numCurrentField  = 1;
-    MakeResiduals(in, in->currentFields, FALSE, err);
+    /* Remake if not first pass */
+    if (in->Pixels->currentIter>0)
+      inClass->MakeResiduals(in, in->currentFields, FALSE, err);
+    /* Is this field OK to image? */
+    if (in->autoWindow)
+      OK = in->imgPeakRMS[0]>1.0 ||
+	in->cleanable[0]/in->imgRMS[0]>MAX (4.0,(0.1*(MIN(40.0,in->beamPeakRMS[0]))));
+    else
+      OK = in->imgPeakRMS[0]>1.0;
     done = (in->cleanable[0] <= in->minFlux[0]) || 
-      ((in->Pixels->maxResid <= in->minFlux[0]) && (in->Pixels->currentIter>1)) || 
-      (in->autoWindow && (in->imgPeakRMS[0]<MAX (4.0,(0.1*in->beamPeakRMS[0]))));
+      ((in->Pixels->maxResid <= in->minFlux[0]) && (in->Pixels->currentIter>1)) || (!OK);
+    in->peakFlux = MAX (in->peakFlux, in->maxAbsRes[0]);
     return done;
   }
 
@@ -1104,7 +1109,7 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
       }
     } /* end loop initializing fields */
     /* Make residual images */
-    if (fldList[0]>0) MakeResiduals(in, fldList, doBeam, err);
+    if (fldList[0]>0) inClass->MakeResiduals(in, fldList, doBeam, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, done);
 
     /* Check if reached max number of components */
@@ -1113,12 +1118,17 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
     /* Ignore fields already known to be finished or low SNR, see if all done */
     done = TRUE;
     for (i=0; i<in->nfield; i++) {
-      if ((in->maxAbsRes[i] <= in->minFlux[i]) || (in->imgPeakRMS[i]<5.0)) {
+      /* Is this field OK to image? */
+      if (in->autoWindow)
+	OK = in->imgPeakRMS[i]>1.0 ||
+	  in->cleanable[i]/in->imgRMS[i]>MAX (4.0,(0.1*(MIN(40.0,in->beamPeakRMS[i]))));
+      else
+	OK = in->imgPeakRMS[i]>1.0;
+      if ((!OK) || (in->maxAbsRes[i] <= in->minFlux[i])) {
 	in->quality[i]   = 0.0;
 	in->cleanable[i] = -in->cleanable[i];
-      }
-      else done = FALSE;
-    }
+      }  else done = FALSE;
+    } /* end loop over fields */
     
     /* anything left? */
     if (done) {ObitMemFree(fresh); ObitMemFree(fldList); return done;} 
@@ -1150,7 +1160,7 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
     }
 
     /* Make residual images if needed */
-    if (fldList[0]>0) MakeResiduals(in, fldList, FALSE, err);
+    if (fldList[0]>0) inClass->MakeResiduals(in, fldList, FALSE, err);
     /* If this is not the first call we should need to make residuals */
     else if (in->Pixels->currentIter>0) break;  /* Apparently nothing to do for now */
     if (err->error) Obit_traceback_val (err, routine, in->name, done);
@@ -1254,18 +1264,21 @@ static gboolean ObitDConCleanVisPickNext3D(ObitDConCleanVis *in, ObitErr *err)
 {
   olong i, best, second, loopCheck, indx, NumPar;
   olong *fldList;
-  gboolean *fresh, doBeam=FALSE, done=TRUE;
+  gboolean OK, *fresh, doBeam=FALSE, done=TRUE;
   ofloat sumwts;
   ObitImage *theBeam=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   const ObitUVImagerClassInfo *imagerClass;
+  const ObitDConCleanVisClassInfo *inClass;
   gchar *routine = "ObitDConCleanVisPickNext3D";
 
   /* error checks */
   g_assert (ObitErrIsA(err));
   if (err->error) return done;
   g_assert (ObitDConCleanVisIsA(in));
+
+  inClass = (ObitDConCleanVisClassInfo*)in->ClassInfo; /* clean class structure */
 
   /* Check if reached max number of components and some done */
   if ((in->Pixels->currentIter >= in->Pixels->niter) && 
@@ -1276,10 +1289,13 @@ static gboolean ObitDConCleanVisPickNext3D(ObitDConCleanVis *in, ObitErr *err)
     in->currentFields[0] = 1;
     in->currentFields[1] = 0;
     in->numCurrentField  = 1;
-    MakeResiduals(in, in->currentFields, FALSE, err);
+    /* Remake if not first pass */
+    if (in->Pixels->currentIter>0)
+      inClass->MakeResiduals(in, in->currentFields, FALSE, err);
     done = (in->cleanable[0] <= in->minFlux[0]) || 
       ((in->Pixels->maxResid <= in->minFlux[0]) && (in->Pixels->currentIter>1)) || 
-      (in->autoWindow && (in->imgPeakRMS[0]<MAX (4.0,(0.1*in->beamPeakRMS[0]))));
+      (in->autoWindow && (in->imgPeakRMS[0]<MAX (4.0,(0.1*(MIN(40.0,in->beamPeakRMS[0]))))));
+    in->peakFlux = MAX (in->peakFlux, in->maxAbsRes[0]);
     return done;
   }
 
@@ -1313,7 +1329,7 @@ static gboolean ObitDConCleanVisPickNext3D(ObitDConCleanVis *in, ObitErr *err)
     } /* end loop initializing fields */
     
     /* Make images */
-    if (fldList[0]>0) MakeResiduals (in, fldList, doBeam, err);
+    if (fldList[0]>0) inClass->MakeResiduals (in, fldList, doBeam, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, done);
 
     /* Check if reached max number of components */
@@ -1322,12 +1338,17 @@ static gboolean ObitDConCleanVisPickNext3D(ObitDConCleanVis *in, ObitErr *err)
     /* Ignore fields already known to be finished or low SNR, see if all done */
     done = TRUE;
     for (i=0; i<in->nfield; i++) {
-      if ((in->maxAbsRes[i] <= in->minFlux[i]) || (in->imgPeakRMS[i]<5.0)) {
+      /* Is this field OK to image? */
+      if (in->autoWindow)
+	OK = in->imgPeakRMS[i]>1.0 ||
+	  in->cleanable[i]/in->imgRMS[i]>MAX (4.0,(0.1*(MIN(40.0,in->beamPeakRMS[i]))));
+      else
+	OK = in->imgPeakRMS[i]>1.0;
+      if ((!OK) || (in->maxAbsRes[i] <= in->minFlux[i])) {
 	in->quality[i]   = 0.0;
 	in->cleanable[i] = -in->cleanable[i];
-      }
-      else done = FALSE;
-    }
+      } else done = FALSE;
+    } /* end loop over fields */
     /* anything left? */
     if (done) {ObitMemFree(fresh); ObitMemFree(fldList); return done;} 
     
@@ -1349,7 +1370,7 @@ static gboolean ObitDConCleanVisPickNext3D(ObitDConCleanVis *in, ObitErr *err)
 	if ((second>=0) && (!fresh[second]) && (NumPar>1)) fldList[1] = second+1;
 	else fldList[1] = 0;
 	fldList[2] = 0;
-	MakeResiduals(in, fldList, FALSE, err);
+	inClass->MakeResiduals(in, fldList, FALSE, err);
 	if (err->error) Obit_traceback_val (err, routine, in->name, done);
 	fresh[best]   = TRUE;
 	if ((second>=0) && (fldList[1]>0)) fresh[second] = TRUE;
@@ -1478,6 +1499,7 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
   ObitTableCC *CCTab=NULL;
   ObitImageDesc *imDesc, *imDesc2;
   ObitImageMosaic *mosaic = in->mosaic;
+  ObitImageMosaicClassInfo* mosaicClass; 
   ofloat freset, tol;
   gint32 dim[MAXINFOELEMDIM];
   ObitInfoType type;
@@ -1488,11 +1510,14 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
   ofloat xcen, ycen, RAShift, DecShift, deltax, deltay, delta, *farray;
   odouble pos[2], pos2[2], RAPnt, DecPnt;
   gboolean done, outside=FALSE, facetDone, clear, Tr=TRUE, Fl=FALSE;
+  const ObitDConCleanVisClassInfo *inClass;
   gchar *routine = "ObitDConCleanVisReimage";
 
   /* Error checks */
   if (err->error) return redo;  /* previous error? */
   g_assert(ObitDConCleanVisIsA(in));
+
+  inClass     = (ObitDConCleanVisClassInfo*)in->ClassInfo; /* clean class structure */
 
   /* Number of fields */
   nfield = mosaic->numberImages;
@@ -1632,9 +1657,13 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 	ObitSkyGeomShiftXY (RAPnt, DecPnt, ObitImageDescRotate(imDesc),
 			    pos[0], pos[1], &RAShift, &DecShift);
 	nx = ny = ObitFFTSuggestSize (128); nplane = 1;
-	ObitImageMosaicAddField (in->mosaic, uvdata, nx, ny, nplane, 
-				 RAShift, DecShift, TRUE, err);
+	mosaicClass = (ObitImageMosaicClassInfo*)in->mosaic->ClassInfo;
+	mosaicClass->ObitImageMosaicAddField (in->mosaic, uvdata, nx, ny, nplane, 
+					      RAShift, DecShift, TRUE, err);
 	if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
+	/* Get size actually made */
+	nx = mosaic->images[mosaic->numberImages-1]->myDesc->inaxes[0];
+	ny = mosaic->images[mosaic->numberImages-1]->myDesc->inaxes[1];
 
 	/* Mark as an autoCenter Image */
 	dim[0] = dim[1] = 1;
@@ -1672,13 +1701,15 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 	  
 	  /* OK - add unbox */
 	  win[0] = (nx/2)-15; win[1] = (olong)(opixel[0]+0.5); win[2] = (olong)(opixel[1]+0.5); 
+	  /* Set size for new Wideband image */
+	  if (ObitImageWBIsA(mosaic->images[mosaic->numberImages-1])) win[0] = 20;
 	  /* If this is a previous autoCenter window make unbox smaller */
 	  if ((jfield+1)>nprior) win[0] = 5;
 	  ObitDConCleanWindowAdd (in->window, jfield+1, OBIT_DConCleanWindow_unround,
 				  win, err);	
 	} /* end loop adding unboxes */
 	
-	/* Add field to window */
+	/* Add new field to window */
 	inaxes[0] = nx; inaxes[1] = ny;
 	newField = ObitDConCleanWindowAddField (in->window, inaxes, err);
 	if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
@@ -1692,12 +1723,14 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 	ObitDConCleanWindowAdd (in->window, newField, OBIT_DConCleanWindow_round,
 				win, err);
 	win[0] = (nx/2)-10; win[1] = (olong)(xcen+0.5); win[2] = (olong)(ycen+0.5); 
+	/* Set size for new Wideband image */
+	if (ObitImageWBIsA(mosaic->images[mosaic->numberImages-1])) win[0] = 22;
 	ObitDConCleanWindowOuter (in->window, newField, OBIT_DConCleanWindow_round,
 				  win, err);
 	if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
 	
 	/* Add field to Clean */
-	ObitDConCleanVisAddField (in, uvdata, err);
+	inClass->ObitDConCleanVisAddField (in, uvdata, err);
 	if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
 	
 	/* Add field to SkyModel */
@@ -1754,9 +1787,13 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 	nplane   = 1;
 	RAShift  = mosaic->RAShift[ifield];
 	DecShift = mosaic->DecShift[ifield];
-	ObitImageMosaicAddField (in->mosaic, uvdata, nx, ny, nplane, 
-				 RAShift, DecShift, FALSE, err);
+	mosaicClass = (ObitImageMosaicClassInfo*)in->mosaic->ClassInfo;
+	mosaicClass->ObitImageMosaicAddField (in->mosaic, uvdata, nx, ny, nplane, 
+					      RAShift, DecShift, FALSE, err);
 	if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
+	/* Get size actually made */
+	nx = mosaic->images[mosaic->numberImages-1]->myDesc->inaxes[0];
+	ny = mosaic->images[mosaic->numberImages-1]->myDesc->inaxes[1];
 
 	/* Add field to window */
 	inaxes[0] = nx; inaxes[1] = ny;
@@ -1777,7 +1814,7 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 	if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
 	
 	/* Add field to Clean */
-	ObitDConCleanVisAddField (in, uvdata, err);
+	inClass->ObitDConCleanVisAddField (in, uvdata, err);
 	if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
 	
 	/* Add field to SkyModel */
@@ -1852,6 +1889,10 @@ void ObitDConCleanVisAddField (ObitDConCleanVis *in, ObitUV* uvdata,
   for (i=0; i<oldField; i++) ftemp[i] = in->avgRes[i]; ftemp[i] = 0.0; 
   in->avgRes = ObitMemFree(in->avgRes);
   in->avgRes = ftemp;
+  ftemp = ObitMemAlloc0Name(newField*sizeof(ofloat),"Image RMS");
+  for (i=0; i<oldField; i++) ftemp[i] = in->imgRMS[i]; ftemp[i] = 0.0; 
+  in->imgRMS = ObitMemFree(in->imgRMS);
+  in->imgRMS = ftemp;
   ftemp = ObitMemAlloc0Name(newField*sizeof(ofloat),"Image Peak/RMS");
   for (i=0; i<oldField; i++) ftemp[i] = in->imgPeakRMS[i]; ftemp[i] = 0.0; 
   in->imgPeakRMS = ObitMemFree(in->imgPeakRMS);
@@ -2227,6 +2268,7 @@ gboolean ObitDConCleanVisAutoWindow(ObitDConClean *inn, olong *fields, ObitFArra
 
     /* Reset peak/RMS */
     in->imgPeakRMS[fields[field]-1] = PeakIn/RMS;
+    in->imgRMS[fields[field]-1]     = RMS;
   } /* end loop gathering statistics */
 
   /* Use best field */
@@ -2356,7 +2398,7 @@ gboolean ObitDConCleanVisPixelStats(ObitDConClean *inn, ObitFArray **pixarray,
 				    ObitErr *err)
 {
   ObitDConCleanVis *in=(ObitDConCleanVis*)inn;
-  gboolean newWin = FALSE, isLast = FALSE, allDone=TRUE;
+  gboolean newWin = FALSE, isLast = FALSE, allDone=TRUE, OK;
   olong field, ifld;
   ObitImage *Beam=NULL;
   const ObitDConCleanClassInfo *inClass;
@@ -2392,12 +2434,18 @@ gboolean ObitDConCleanVisPixelStats(ObitDConClean *inn, ObitFArray **pixarray,
     field = in->currentFields[ifld];
     if (field<=0) break;  /* List terminates */
 
+    /* Is this field OK to clean? */
+    if (in->autoWindow)
+      OK = in->imgPeakRMS[field-1]>1.0 ||
+	in->cleanable[field-1]/in->imgRMS[field-1]>MAX (4.0,(0.1*(MIN(40.0,in->beamPeakRMS[field-1]))));
+    else
+      OK = in->imgPeakRMS[field-1]>1.0;
+
     /* Is this field finished? */  
     if ((in->Pixels->complCode!=OBIT_CompReasonNiter) &&
 	(in->Pixels->complCode!=OBIT_CompReasonMinFlux)) {
       allDone = allDone && 
-	((in->cleanable[field-1] <= in->minFlux[field-1]) || 
-	 (in->imgPeakRMS[field-1]<4.0));
+	((in->cleanable[field-1] <= in->minFlux[field-1]) || !OK);
     }
 
     /* Beam image */
@@ -2614,10 +2662,19 @@ static void ObitDConCleanVisClassInfoDefFn (gpointer inClass)
   theClass->ObitDConCleanVisAddField  = (ObitDConCleanVisAddFieldFP)ObitDConCleanVisAddField;
   theClass->ObitDConCleanVisRecenter  = (ObitDConCleanVisRecenterFP)ObitDConCleanVisRecenter;
   theClass->ObitDConCleanVisFilter    = (ObitDConCleanVisFilterFP)ObitDConCleanVisFilter;
+  theClass->ObitDConCleanVisDefWindow = (ObitDConCleanVisDefWindowFP)ObitDConCleanVisDefWindow;
   theClass->ObitDConCleanAutoWindow = 
     (ObitDConCleanAutoWindowFP)ObitDConCleanVisAutoWindow;
   theClass->ObitDConCleanPixelStats = (ObitDConCleanPixelStatsFP)ObitDConCleanVisPixelStats;
 
+  /* Private functions for derived classes */
+  theClass->MakeResiduals   = (MakeResidualsFP)MakeResiduals;
+  theClass->MakeAllResiduals= (MakeAllResidualsFP)MakeAllResiduals;
+  theClass->SubNewCCs       = (SubNewCCsFP)SubNewCCs;
+  theClass->NewPxList       = (NewPxListFP)NewPxList;
+  theClass->NewPxArray      = (NewPxArrayFP)NewPxArray;
+  theClass->KillPxArray     = (KillPxArrayFP)KillPxArray;
+  theClass->KillBeamPatches = (KillBeamPatchesFP)KillBeamPatches;
 } /* end ObitDConCleanVisClassDefFn */
 
 /*---------------Private functions--------------------------*/
@@ -2833,7 +2890,7 @@ static void  MakeAllResiduals (ObitDConCleanVis *in, ObitErr *err)
 
 /**
  * Find current estimates best and second field  3D
- * Ignore fields with imgPeakRMS<4.0
+ * Ignore fields with imgPeakRMS<4.0 if autoWindow, else imgPeakRMS<1.0
  * \param in     The Clean object
  * \param best   [out] 0-rel best field
  * \param second [out] 0-rel second best field
@@ -2841,12 +2898,21 @@ static void  MakeAllResiduals (ObitDConCleanVis *in, ObitErr *err)
 static void WhosBest (ObitDConCleanVis *in, olong *bbest, olong *ssecond)
 {
   ofloat testBest, testSecond;
-  olong i, best, second;;
+  olong i, best, second;
+  gboolean OK;
   
   best = second = -1; 
   testBest = testSecond = -1.0e20;
   for (i=0; i<in->nfield; i++) {
-    if (in->imgPeakRMS[i]<4.0) continue;  /*ignore if too low SNR */
+    /* Is this field OK to CLEAN? */
+    if (in->autoWindow)
+      OK = in->imgPeakRMS[i]>1.0 ||
+	in->cleanable[i]/in->imgRMS[0]>MAX (4.0,(0.1*(MIN(40.0,in->beamPeakRMS[i]))));
+    else
+      OK = in->imgPeakRMS[i]>1.0;
+
+    if (!OK) continue;  /*ignore if too low SNR */
+
     /* First best ?*/
     if (in->quality[i]>testBest) {
       /* Move old one to second place? */
@@ -2871,7 +2937,7 @@ static void WhosBest (ObitDConCleanVis *in, olong *bbest, olong *ssecond)
 /**
  * Find current estimates best  field  2D
  * Uses autoShift only for flux densities above 0.1 x autoCenFlux
- * Ignores fields with imgPeakRMS<4.0
+ * Ignore fields with imgPeakRMS<4.0 if autoWindow, else imgPeakRMS<1.0
  * \param in          The Clean object
  * \param autoCenFlux Cutoff level for autocentering,  0=> no autoCenter
  * \param bbest       [out] 0-rel best field
@@ -2881,14 +2947,21 @@ static void WhosBest2D (ObitDConCleanVis *in, ofloat autoCenFlux,
 {
   ofloat testBest;
   olong i, best;
-  gboolean isAuto=FALSE;
+  gboolean OK, isAuto=FALSE;
 
   /* Find absolute best */
   best = -1; 
   testBest = -1.0e20;
   for (i=0; i<in->nfield; i++) {
-    /* Ignore if SNR too low */
-    if (in->imgPeakRMS[i]<4.0) continue;
+    /* Is this field OK to CLEAN? */
+    if (in->autoWindow)
+      OK = in->imgPeakRMS[i]>1.0 ||
+	in->cleanable[i]/in->imgRMS[0]>MAX (4.0,(0.1*(MIN(40.0,in->beamPeakRMS[i]))));
+    else
+      OK = in->imgPeakRMS[i]>1.0;
+    
+    if (!OK) continue;  /* Ignore if too low SNR */
+    
     if (in->quality[i]>testBest) {
       testBest = in->quality[i];
       best = i;
@@ -2908,8 +2981,16 @@ static void WhosBest2D (ObitDConCleanVis *in, ofloat autoCenFlux,
   for (i=0; i<in->nfield; i++) {
     /* Ignore autoCenter if not isAuto */
     if (!isAuto && (in->mosaic->isAuto[i]>=0)) continue;
+    
+    /* Is this field OK to CLEAN? */
+    if (in->autoWindow)
+      OK = in->imgPeakRMS[i]>1.0 ||
+	in->cleanable[i]/in->imgRMS[0]>MAX (4.0,(0.1*(MIN(40.0,in->beamPeakRMS[i]))));
+    else
+      OK = in->imgPeakRMS[i]>1.0;
+    
     /* Ignore if SNR too low */
-    if (in->imgPeakRMS[i]<4.0) continue;
+    if (!OK) continue;
     if ((in->quality[i]>testBest) &&
 	(!isAuto || (in->mosaic->isAuto[i]>=0))) { /* Only autoCenter if isAuto */
       testBest = in->quality[i];
@@ -2940,7 +3021,7 @@ static void OrderImage (ObitDConCleanVis *in, gboolean *fresh,
 {
   ofloat *tmpQual=NULL, maxQual, bestQual;
   olong i, n, indx, best;
-  gboolean done, isAuto=FALSE;
+  gboolean OK, done, isAuto=FALSE;
   
   /* Make temporary array of quality factors */
   tmpQual = g_malloc0(in->mosaic->numberImages*sizeof(ofloat));
@@ -2949,10 +3030,17 @@ static void OrderImage (ObitDConCleanVis *in, gboolean *fresh,
   n = in->mosaic->numberImages;
   bestQual = -1.0e18;
   for (i=0; i<n; i++) {
+    /* Is this field OK to image? */
+    if (in->autoWindow)
+      OK = in->imgPeakRMS[i]>1.0 ||
+	in->cleanable[i]/in->imgRMS[0]>MAX (4.0,(0.1*(MIN(40.0,in->beamPeakRMS[i]))));
+    else
+      OK = in->imgPeakRMS[i]>1.0;
+    
     if ((!fresh[i]) && (in->mosaic->isShift[i]<0)&& (in->quality[i]>0.0))
       tmpQual[i] = in->quality[i];
     else tmpQual[i] = -1.0e20;
-    if ((tmpQual[i]>bestQual) && (in->imgPeakRMS[i]>=4.0)) {
+    if ((tmpQual[i]>bestQual) && (OK)) {
       bestQual = tmpQual[i];                 /* Best quality */
       isAuto   = (in->mosaic->isAuto[i]>=0)
 	&& (in->maxAbsRes[i]>0.1*autoCenFlux); /* Is best a strong autoCenter image? */
@@ -2996,7 +3084,7 @@ static void OrderImage (ObitDConCleanVis *in, gboolean *fresh,
  * Only includes images with a quality within 50% of the best
  * If the best is an autoWindow (>0.1autoCenFlux), only other 
  * autoWindow fields are considered
- * Ignores windows with in->imgPeakRMS<4.0
+ * Ignore fields with imgPeakRMS<4.0 if autoWindow, else imgPeakRMS<1.0
  * Uses autoShift only for flux densities above 0.1 x autoCenFlux
  * \param in      The Clean object
  * \param fresh   List of flags indicating freshly made
@@ -3010,14 +3098,20 @@ static void OrderClean (ObitDConCleanVis *in, gboolean *fresh,
 {
   ofloat *tmpQual=NULL, maxQual, bestQual, testBest;
   olong i, n, indx, best;
-  gboolean done, isAuto=FALSE;
+  gboolean OK, done, isAuto=FALSE;
   
   /* Find absolute best */
   best = -1; 
   testBest = -1.0e20;
   for (i=0; i<in->nfield; i++) {
-    /* Ignore if SNR too low */
-    if (in->imgPeakRMS[i]<4.0) continue;
+    /* Is this field OK to CLEAN? */
+    if (in->autoWindow)
+      OK = in->imgPeakRMS[i]>1.0 ||
+	in->cleanable[i]/in->imgRMS[0]>MAX (4.0,(0.1*(MIN(40.0,in->beamPeakRMS[i]))));
+    else
+      OK = in->imgPeakRMS[i]>1.0;
+    if (!OK) continue;  /* Ignore if too low SNR */
+
     if (in->quality[i]>testBest) {
       testBest = in->quality[i];
       best = i;
@@ -3031,7 +3125,13 @@ static void OrderClean (ObitDConCleanVis *in, gboolean *fresh,
   n = in->mosaic->numberImages;
   bestQual = -1.0e18;
   for (i=0; i<n; i++) {
-    if (fresh[i] && (in->imgPeakRMS[i]>=4.0) && (in->mosaic->isShift[i]<0))
+    /* Is this field OK to CLEAN? */
+    if (in->autoWindow)
+      OK = in->imgPeakRMS[i]>1.0 ||
+	in->cleanable[i]/in->imgRMS[0]>MAX (4.0,(0.1*(MIN(40.0,in->beamPeakRMS[i]))));
+    else
+      OK = in->imgPeakRMS[i]>1.0;
+    if (fresh[i] && OK && (in->mosaic->isShift[i]<0))
       tmpQual[i] = in->quality[i];
     else tmpQual[i] = -1.0e20;
     if (tmpQual[i]>bestQual) {
@@ -3099,6 +3199,7 @@ static gboolean ResetSkyModel(ObitDConCleanVis *in, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM];
   olong *itemp=NULL, nfield;
   ObitTableCCRow *CCRow = NULL;
+  const ObitDConCleanPxListClassInfo *pxListClass;
   gchar *routine = "ObitDConCleanVisResetSkyModel";
 
   /* error checks */
@@ -3107,7 +3208,8 @@ static gboolean ResetSkyModel(ObitDConCleanVis *in, ObitErr *err)
   g_assert (ObitDConCleanVisIsA(in));
 
   /* Reset PixelList parameters */
-  ObitDConCleanPxListGetParms (in->Pixels, err);
+  pxListClass = (ObitDConCleanPxListClassInfo*)in->Pixels->ClassInfo; 
+  pxListClass->ObitDConCleanPxListGetParms (in->Pixels, err);
   if (err->error) goto cleanup;
   in->Pixels->currentIter = 0;
   in->Pixels->totalFlux   = 0.0;
@@ -3310,14 +3412,103 @@ static ofloat ObitDConCleanVisCleanable(ObitDConCleanVis *in, olong field,
 			    doAbs,
 			    &PeakIn, &PeakInPos[0], &PeakOut, 
 			    &RMS, err);
+  /* Check for pathologies */
+  if (fabs(PeakIn)>1.0e10)  PeakIn = 0.0;
+  if (fabs(PeakOut)>1.0e10) PeakOut = 0.0;
+
   /* Free Image array */
   usePixels = ObitFArrayUnref(usePixels);
   if (pixarray==NULL) image->image = ObitFArrayUnref(image->image);
   
   if (err->error) Obit_traceback_val (err, routine, image->name, out);
   
-  return fabs(PeakOut);
+  return MAX (fabs(PeakOut), fabs(PeakIn));
 } /* end ObitDConCleanVisCleanable */
+
+/**
+ * Create Pixel list for cleaning
+ * \param in       The Clean object
+ * \param err      Obit error stack object.
+ * \return TRUE if attempted, FALSE if cannot do 
+ */
+static void NewPxList (ObitDConCleanVis *in, ObitErr *err)
+{
+  gchar *routine = "ObitDConCleanVis:NewPxList";
+
+  if (in->Pixels && (in->Pixels->nfield!=in->mosaic->numberImages)) 
+    in->Pixels = ObitDConCleanPxListUnref(in->Pixels);
+  if (!in->Pixels) {
+    in->Pixels = ObitDConCleanPxListCreate("Pixel List", in->mosaic, 
+					   in->maxPixel, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+  }
+  /* Reset  min. resid */
+  in->Pixels->maxResid = 1.0e10;
+
+  /* Copy control info to PixelList */
+  ObitInfoListCopyData(in->info, in->Pixels->info);
+
+} /* end NewPxList */
+
+/**
+ * Create Pixel array for intermediate CLEAN
+ * \param in       The Clean object
+ * \param startCC  [out] Current number of components per field
+ * \param err      Obit error stack object.
+ * \return array of ObitFArrays for cleaning
+ */
+static ObitFArray** NewPxArray (ObitDConCleanVis *in, olong *startCC, 
+				ObitErr *err)
+{
+  ObitFArray** pixarray=NULL;
+  olong ifld;
+  /*gchar *routine = "ObitDConCleanVis:NewPxArray";*/
+
+  pixarray  = g_malloc0(in->numCurrentField*sizeof(ObitFArray*));
+  for (ifld=0; ifld<in->numCurrentField; ifld++) {
+    if (in->currentFields[ifld]<=0) break;  /* List terminated? */
+    startCC[ifld]   = in->Pixels->iterField[in->currentFields[ifld]-1];  /* no. at start */
+    /* Pixel array for field */
+    pixarray[ifld]  = GetFieldPixArray (in, in->currentFields[ifld], err);  
+  }
+  
+  return pixarray;
+} /* end NewPxArray */
+
+/**
+ * Delete Pixel array for intermediate CLEAN
+ * \param in       The Clean object
+ * \param pixarray Array to delete
+ * \return NULL
+ */
+static ObitFArray** KillPxArray (ObitDConCleanVis *in,  ObitFArray **pixarray)
+{
+  olong ifld;
+
+  if (pixarray) {
+    for (ifld=0; ifld<in->numCurrentField; ifld++) {
+      if (in->currentFields[ifld]<=0) break;  /* List terminated? */
+      pixarray[ifld] = ObitFArrayUnref(pixarray[ifld]);
+    }
+    g_free(pixarray);  pixarray = NULL;
+  }
+  return pixarray;
+} /* end KillPxArray */
+
+/**
+ * Delete Beam Patches on in
+ * \param in       The Clean object
+ */
+static void KillBeamPatches (ObitDConCleanVis *in)
+{
+  olong i;
+  
+  if (in->BeamPatches) {
+    for (i=0; i<in->mosaic->numberImages; i++) 
+      if (in->BeamPatches[i]) ObitFArrayUnref(in->BeamPatches[i]);
+    in->BeamPatches =  ObitMemFree (in->BeamPatches);
+  }
+} /* end KillBeamPatches */
 
 /* GLOBAL DEBUG */
 ObitDConCleanVis *damn;
@@ -3328,7 +3519,8 @@ ObitDConCleanVis *damn;
  * Updates cleanable member on in
  * \param in       The Clean object
  * \param newCC    Start CC -1 per in->mosaic field for subtraction
- * \param pixarray Array of arrays of pixels to subtract
+ * \param pixarray Array of arrays of pixels to subtract, in order of fields in 
+ *                 in->currentFields
  * \param err      Obit error stack object.
  * \return TRUE if attempted, FALSE if cannot do 
  */
@@ -3339,9 +3531,9 @@ static void SubNewCCs (ObitDConCleanVis *in, olong *newCC, ObitFArray **pixarray
   ObitTableCC *CCTable = NULL;
   ImSubFuncArg **threadArgs;
   ObitFArray **comps=NULL;
-  ofloat parms[20];
-  olong i, j, ncc, ver, nThreads=0, nTh, nfield, ifield, nDo, nLeft;
-  gboolean OK;
+  ofloat PeakIn, PeakOut, RMS,  parms[20];
+  olong i, j, ncc, ver, nThreads=0, nTh, nfield, ifield, nDo, nLeft, PeakInPos[2];
+  gboolean doAbs, OK;
   gchar *tabType = "AIPS CC";
   gchar *routine = "SubNewCCs";
   gboolean DebugGDB=FALSE;  /*  DEBUG */
@@ -3452,12 +3644,30 @@ static void SubNewCCs (ObitDConCleanVis *in, olong *newCC, ObitFArray **pixarray
     for (i=0; i<nfield; i++) comps[i] = ObitFArrayUnref(comps[i]);
     g_free(comps);
   }
+
+  /* Image statistics */
+  /* Loop over fields */
+  for (i=0; i<nfield; i++) {
+    ifield = in->currentFields[i]-1;
+    if (ifield<0) break;
+    /* Remeasure cleanable flux */
+    /* Allow negative for Stokes other than I */
+    doAbs = fabs (in->mosaic->images[ifield]->myDesc->crval[in->mosaic->images[ifield]->myDesc->jlocs]-1.0) > 0.1;
+    
+    /* Get statistics */
+    ObitDConCleanWindowStats (in->window, ifield+1, pixarray[i],
+			      doAbs,
+			      &PeakIn, &PeakInPos[0], &PeakOut,
+			      &RMS, err);
+    in->cleanable[ifield]  = MAX(PeakOut, PeakIn);
+    in->imgRMS[ifield]     = RMS;
+    in->imgPeakRMS[ifield] = PeakIn/RMS;
+  } /* end statistics loop over fields */
   
 } /* end SubNewCCs */
 
 /**
  * Subtract a set of lists of CLEAN components from an image in a thread
- * Determines statistics on completed image set on in.
  * Uses BeamPatches on in.
  * \param arg Pointer to ImSubFuncArg argument with elements:
  * \li in       The ObitDConCleanVis object
@@ -3483,9 +3693,7 @@ static gpointer ThreadImSub (gpointer args)
   ObitErr    *err       = largs->err;
   ObitThread *thread    = largs->thread;
   /* local */
-  olong i, j, ifield, len, pos1[2], pos2[2], PeakInPos[2];
-  ofloat PeakIn, PeakOut, RMS;
-  gboolean doAbs;
+  olong i, j, ifield, len, pos1[2], pos2[2];
   ofloat idx, idy, ftemp, flux, offset[2];
   ObitFArray *comps;
   ObitImageDesc *inDesc, *outDesc;
@@ -3532,18 +3740,6 @@ static gpointer ThreadImSub (gpointer args)
     } /* End loop over components */
   } /* end loop over fields */
  
-  /* Remeasure cleanable flux */
-  /* Allow negative for Stokes other than I */
-  doAbs = fabs (in->mosaic->images[ofield-1]->myDesc->crval[in->mosaic->images[ofield-1]->myDesc->jlocs]-1.0) > 0.1;
-
-  /* Get statistics */
-  ObitDConCleanWindowStats (in->window, ofield, pixarray,
-                            doAbs,
-                            &PeakIn, &PeakInPos[0], &PeakOut,
-                            &RMS, err);
-  in->cleanable[ofield-1]  = PeakOut;
-  in->imgPeakRMS[ofield-1] = PeakIn/RMS;
-
   /* Indicate completion */
  finish:
   if (largs->ithread>=0)

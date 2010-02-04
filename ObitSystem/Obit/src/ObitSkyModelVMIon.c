@@ -309,6 +309,9 @@ void ObitSkyModelVMIonInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   VMIonFTFuncArg *args;
   gchar *routine = "ObitSkyModelVMIonInitMod";
 
+  /* How many threads? */
+  in->nThreads = MAX (1, ObitThreadNumProc(in->thread));
+  
    /* Setup for threading - delete existing threadArgs */
   if (in->threadArgs) {
     for (i=0; i<in->nThreads; i++) {
@@ -318,9 +321,6 @@ void ObitSkyModelVMIonInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
     in->threadArgs = NULL;
   } 
 
-  /* How many threads? */
-  in->nThreads = MAX (1, ObitThreadNumProc(in->thread));
-  
   /* Initialize threadArg array */
   if (in->threadArgs==NULL) {
     in->threadArgs = g_malloc0(in->nThreads*sizeof(VMIonFTFuncArg*));

@@ -1956,15 +1956,29 @@ stored on disk - in large blocks in memory rather than structures.
 The details of the storage in the buffer are kept in the 
 ObitTableDesc.
 For non--point components, there are extra parameters:
-major axis size (deg), minor axis size (deg), position angle (deg) and
-model type (0 = point,1 = Gaussian on sky,2 = Convolved Gaussian,
-3 = Uniform optically thin sphere)
+\begin{enumerate}
+\item param[0] = major axis size (deg)
+\item param[1] = minor axis size (deg)
+\item param[2] = position angle (deg)
+\item param[3] = type
+\begin{itemize}
+\item 0 = point,
+\item 1 = Gaussian on sky,
+\item 2 = Convolved Gaussian,
+\item 3 = Uniform optically thin sphere
+\item type + 10 $=>$ following parameters are spectral coefficients
+of powers of $ln(\nu/\nu_0)$
+\end{itemize}
+\item param[4] spectral index (if type$>$10)
+\item param[5] spectral curvature (if type$>$10)
+\item param[6] spectral curvature square (if type$>$10)
+\end{enumerate}
 }
 % Table keyword description
 No Keywords in table.
 \begin{keywords}
 \tablekey[{"NO\_PARMS"}{J}{noParms}{0}{(0,5)}
-{Number of parameters for non point components, usually 0 or 4}
+{Number of parameters for non point components, usually 0 or 4+}
 ]
 \end{keywords}
 %
@@ -1981,11 +1995,6 @@ No Keywords in table.
 ] 
 \tablecol[{"PARMS   "}{"        "}{E}{(noParms)}{parms}
 {[OPTIONAL] Component parameters;}
-  parms[3] = type:\hfill\break
-    0 = point, no parameters\hfill\break
-    1 = Sky Gaussian, [0:3]=maj, min, PA\hfill\break
-    2 = Convolved Gaussian, [0:3]=maj axis, min axis, PA (all deg)\hfill\break
-    3 = Uniform Sphere [0] = radius (deg)\hfill\break
 ] 
 \end{columns}
 %

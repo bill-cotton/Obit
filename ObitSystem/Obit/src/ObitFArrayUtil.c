@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2009                                          */
+/*;  Copyright (C) 2005-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -164,7 +164,6 @@ ObitFArray* ObitFArrayUtilConvolve (ObitFArray *in1, ObitFArray *in2,
   gchar *routine = "ObitFArrayUtilConvolve";
 
    /* error checks */
-  g_assert (ObitErrIsA(err));
   if (err->error) return out;
   g_assert (ObitFArrayIsA(in1));
   g_assert (ObitFArrayIsA(in2));
@@ -238,6 +237,103 @@ ObitFArray* ObitFArrayUtilConvolve (ObitFArray *in1, ObitFArray *in2,
 
   return out;
 } /* end ObitFArrayUtilConvolve */
+
+/**
+ * Correlate two 2-D Arrays using FFTs
+ * Arrays must have the same geometry and NOT contain magic value blanking
+ * \param in1  First input array
+ * \param in2  Second input array
+ * \param err  Error stack, returns if not empty.
+ * \return Convolution, shoud be ObitFArrayUnrefed when done
+ */
+ObitFArray* ObitFArrayUtilCorrel (ObitFArray *in1, ObitFArray *in2, 
+				  ObitErr *err)
+{
+  ObitFArray *out=NULL;
+  ObitCArray *uv1 = NULL, *uv2 = NULL;
+  ObitFFT *forFFT = NULL, *revFFT = NULL;
+  olong  ddim[2];
+  olong ndim, naxis[2];
+  ofloat scale;
+  gchar *routine = "ObitFArrayUtilCorrel";
+
+   /* error checks */
+  if (err->error) return out;
+  g_assert (ObitFArrayIsA(in1));
+  g_assert (ObitFArrayIsA(in2));
+  Obit_retval_if_fail(ObitFArrayIsCompatable(in1, in2),  err, out,
+		      "%s: FArrays %s and %s incompatible", 
+		      routine, in1->name, in2->name);
+  Obit_retval_if_fail((in1->ndim==2),  err, out,
+		      "%s: FArrays %s and %s NOT 2-D", 
+		      routine, in1->name, in2->name);
+  Obit_retval_if_fail((in1->naxis[0]==ObitFFTSuggestSize(in1->naxis[0])),  
+		      err, out,
+		      "%s: FArray %s dim 1 NOT proper size for FFT", 
+		      routine, in1->name);
+  Obit_retval_if_fail((in1->naxis[1]==ObitFFTSuggestSize(in1->naxis[1])),  
+		      err, out,
+		      "%s: FArray %s dim 2NOT proper size for FFT", 
+		      routine, in1->name);
+
+  /* Make UV plane arrays */
+  ndim = 2;
+  naxis[0] = 1+in1->naxis[0]/2; naxis[1] = in1->naxis[1]; 
+  uv1 = ObitCArrayCreate ("Correl work 1", ndim, naxis);
+  uv2 = ObitCArrayCreate ("Correl work 2", ndim, naxis);
+
+  /* Make FFTs */
+  ddim[0] = in1->naxis[0]; ddim[1] = in1->naxis[1];
+  forFFT = newObitFFT("FTImage", OBIT_FFT_Forward, 
+		      OBIT_FFT_HalfComplex, 2, ddim);
+  revFFT = newObitFFT("FTuv", OBIT_FFT_Reverse, 
+		      OBIT_FFT_HalfComplex, 2, ddim);
+
+  /* FFT to uv plane */
+  ObitFArray2DCenter (in1); /* Swaparoonie to FFT order */
+  ObitFFTR2C (forFFT, in1, uv1);
+  ObitFArray2DCenter (in2);
+  ObitFFTR2C (forFFT, in2, uv2);
+
+  /* return input to original order */
+  ObitFArray2DCenter (in1);
+  ObitFArray2DCenter (in2);
+
+  /* Scale */
+  scale = 1.0 / ((ofloat)in1->naxis[0] * (ofloat)in1->naxis[1]);
+  ObitCArraySMul (uv1, scale);
+  /*ObitCArraySMul (uv2, scale); only 1?*/
+
+  /* conjugate uv2 */
+  ObitCArrayConjg(uv2);
+
+  /* Multiply */
+  ObitCArrayMul(uv1, uv2, uv1);
+
+  /* Some Cleanup */
+  forFFT = ObitFFTUnref(forFFT);
+  uv2    = ObitCArrayUnref(uv2);
+
+  /* Create output */
+  out =  newObitFArray ("Convolution");;
+  ObitFArrayClone (in1, out, err);
+  if (err->error) {
+    uv1    = ObitCArrayUnref(uv1); /* cleanup */
+    revFFT = ObitFFTUnref(revFFT);
+    Obit_traceback_val (err, routine, in1->name, out);
+  }
+
+  /* FFT back to image plane */
+  ObitFFTC2R (revFFT, uv1, out);
+  
+  /* Put the center at the center */
+  ObitFArray2DCenter (out);
+
+  uv1    = ObitCArrayUnref(uv1); /* cleanup */
+  revFFT = ObitFFTUnref(revFFT);
+
+  return out;
+} /* end ObitFArrayUtilCorrel */
 
 /**
  * Create a Gaussian UV tapering array corresponding to an image plane Gaussian

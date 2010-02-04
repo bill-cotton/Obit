@@ -750,9 +750,9 @@ void ObitSkyModelShutDownMod (ObitSkyModel* in, ObitUV *uvdata, ObitErr *err)
       }
       g_free(in->threadArgs);
       in->threadArgs = NULL;
+      in->nThreads   = 0;
     } /* end if this a "base" threadArg */
   }
-  in->nThreads   = 0;
 } /* end ObitSkyModelShutDownMod */
 
 /**
@@ -1439,7 +1439,7 @@ gboolean ObitSkyModelLoadPoint (ObitSkyModel *in, ObitUV *uvdata, ObitErr *err)
   if (in->modType>=10) {
     /* Get number */
     cnt = 0;
-    for (i=4; i<10; i++) if (in->pointParms[3+i]!=0.0) cnt++;
+    for (i=4; i<10; i++) if (in->pointParms[i]!=0.0) cnt++;
     in->nSpecTerm = cnt;
   }
 
@@ -1462,6 +1462,11 @@ gboolean ObitSkyModelLoadPoint (ObitSkyModel *in, ObitUV *uvdata, ObitErr *err)
   table[1] = xxoff;
   table[2] = yyoff;
   table[3] = zzoff;
+
+  /* Point + spectrum */
+  if (in->modType==OBIT_SkyModel_PointModSpec) {
+    for (i=0; i<in->nSpecTerm; i++) table[i+4] = in->pointParms[i+4];
+  }
 
   /* Gaussian */
   if (in->modType==OBIT_SkyModel_GaussMod) {
@@ -1530,7 +1535,7 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
   ObitTable *tempTable=NULL;
   ObitTableCC *CCTable = NULL;
   ObitTableCCRow *CCRow = NULL;
-  ObitImageDesc *imDesc=NULL;
+  ObitImageDesc *imDesc=NULL, *imIODesc=NULL;
   ObitUVDesc *uvDesc=NULL;
   ObitFArray *CompArr=NULL;
   ObitSkyModelCompType modType;
@@ -1640,7 +1645,9 @@ gboolean ObitSkyModelLoadComps (ObitSkyModel *in, olong n, ObitUV *uvdata,
     /* Is spectral information included? */
     if (!strncmp (in->mosaic->images[i]->myDesc->ctype[in->mosaic->images[i]->myDesc->jlocf], 
 		  "SPECLOGF", 8)) {
-      nterm = in->mosaic->images[i]->myDesc->inaxes[in->mosaic->images[i]->myDesc->jlocf];
+      /* IO descriptor give true size */
+      imIODesc = (ObitImageDesc*)in->mosaic->images[0]->myIO->myDesc;
+      nterm = imIODesc->inaxes[imIODesc->jlocf];
       ObitInfoListGetTest (in->mosaic->images[i]->myDesc->info, "NTERM", &type, dim, &nterm);
       in->nSpecTerm = nterm -1;  /* Only higher order terms */
     }

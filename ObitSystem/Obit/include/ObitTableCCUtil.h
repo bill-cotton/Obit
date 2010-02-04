@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -78,11 +78,25 @@ ObitIOCode ObitTableCCUtilGrid (ObitTableCC *in, olong OverSample,
 				ofloat gparm[3], olong *ncomps,
 				ObitErr *err);
 
+/** Public: grid spectral components onto a grid */
+ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong iterm,
+				olong *first, olong *last, gboolean noNeg,
+				ofloat factor, ofloat minFlux, ofloat maxFlux,
+				ObitImageDesc *desc, ObitFArray **grid, 
+				ofloat gparm[3], olong *ncomps,
+				ObitErr *err);
+
 /** Public: return list of CC from one image overlapping another */
 ObitFArray* 
 ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,  
 			  ObitImageDesc *outDesc, ofloat gparm[3], 
 			  olong *ncomps, ObitErr *err);
+
+/** Public: return list of spectral components from one image overlapping another */
+ObitFArray* 
+ObitTableCCUtilCrossListSpec (ObitTableCC *inCC, ObitImageDesc *inDesc,  
+			      ObitImageDesc *outDesc, ofloat gparm[3], 
+			      olong *ncomps, olong iterm, ObitErr *err);
 
 /** Merge elements of an ObitTableCC */
 ObitIOCode ObitTableCCUtilMerge (ObitTableCC *in, ObitTableCC *out, 
@@ -92,6 +106,11 @@ ObitIOCode ObitTableCCUtilMerge (ObitTableCC *in, ObitTableCC *out,
 ObitFArray* ObitTableCCUtilMergeSel (ObitTableCC *in, olong startComp, 
 				     olong endComp, ofloat *parms,
 				     ObitErr *err);
+
+/** Merge spectral elements of an ObitTableCC with selection */
+ObitFArray* ObitTableCCUtilMergeSelSpec (ObitTableCC *in, olong startComp, 
+					 olong endComp, ofloat *parms,
+					 ObitErr *err);
 
 /** Merge selected elements of an ObitTableCC to a new table */
 ObitTableCC* 

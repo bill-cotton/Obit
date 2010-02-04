@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -132,16 +132,23 @@ void ObitDConCleanPxListClone (ObitDConCleanPxList *in,
 ObitDConCleanPxList* 
 ObitDConCleanPxListCreate (gchar* name, ObitImageMosaic *mosaic, 
 			  olong maxPixel, ObitErr *err);
+typedef ObitDConCleanPxList* 
+(*ObitDConCleanPxListCreateFP) (gchar* name, ObitImageMosaic *mosaic, 
+				olong maxPixel, ObitErr *err);
 
 /** Public: Get Parameters. */
 void ObitDConCleanPxListGetParms (ObitDConCleanPxList *in, ObitErr *err);
+typedef void (*ObitDConCleanPxListGetParmsFP) (ObitDConCleanPxList *in, ObitErr *err);
 
 /** Public: Reset Clean. */
 void ObitDConCleanPxListReset (ObitDConCleanPxList *in, ObitErr *err);
+typedef void (*ObitDConCleanPxListResetFP) (ObitDConCleanPxList *in, ObitErr *err);
 
 /** Public: Resize Arrrays. */
 void ObitDConCleanPxListResize (ObitDConCleanPxList *in, olong maxPixel, 
 				ObitErr *err);
+typedef void (*ObitDConCleanPxListResizeFP) (ObitDConCleanPxList *in, olong maxPixel, 
+					     ObitErr *err);
 
 /** Public: Update with new image and window. */
 void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in, 
@@ -153,15 +160,30 @@ void ObitDConCleanPxListUpdate (ObitDConCleanPxList *in,
 				ObitFArray **pixarray,
 				ObitErr *err);
 
+typedef void 
+(*ObitDConCleanPxListUpdateFP) (ObitDConCleanPxList *in, 
+				olong *fields, olong nSkip, 
+				ofloat minFluxLoad,
+				ofloat autoWinFlux,
+				ObitDConCleanWindow *window, 
+				ObitFArray **BeamPatch,
+				ObitFArray **pixarray,
+				ObitErr *err);
+
 /** Public: Do minor cycle BGC CLEANing. */
 gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err);
+typedef gboolean (*ObitDConCleanPxListCLEANFP) (ObitDConCleanPxList *in, ObitErr *err);
 
 /** Public: Do SDI CLEANing. */
 gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err);
+typedef gboolean (*ObitDConCleanPxListSDIFP) (ObitDConCleanPxList *in, ObitErr *err);
 
 /** Public: Get results of CLEAN */
 olong ObitDConCleanPxListResult (ObitDConCleanPxList *in, olong *ncomp,
 				 ObitErr *err);
+typedef olong 
+(*ObitDConCleanPxListResultFP) (ObitDConCleanPxList *in, olong *ncomp,
+				ObitErr *err);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

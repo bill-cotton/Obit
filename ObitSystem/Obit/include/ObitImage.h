@@ -1,6 +1,6 @@
 /* $Id$           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -352,6 +352,16 @@ void ObitImageReadKeyword (ObitImage *in,
 void ObitImageSetSelect (ObitImage *in, ObitIOSize IOBy, 
 			 olong blc[IM_MAXDIM], olong trc[IM_MAXDIM],
 			 ObitErr *err);
+/** Public: Return image Beam. */
+ObitImage* ObitImageGetBeam (ObitImage *in, olong beamNo, olong plane[5], 
+			     ObitErr *err);
+typedef ObitImage* (*ObitImageGetBeamFP) (ObitImage *in, olong beamNo,
+					  olong plane[5], ObitErr *err);
+
+/** Public: Return image Beam order. */
+olong ObitImageGetBeamOrder (ObitImage *in);
+typedef olong (*ObitImageGetBeamOrderFP) (ObitImage *in);
+
 /*----------- ClassInfo Structure -----------------------------------*/
 
 /**

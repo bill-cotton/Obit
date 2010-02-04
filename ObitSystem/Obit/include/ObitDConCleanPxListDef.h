@@ -96,5 +96,7 @@ ofloat ccfLim;
 /** message level for deconvolution progress messages, 
     0=none, 1=summary, 2=normal, higher numbers for diagnostics */
 olong prtLv;
-/** CLEAN conpletion code - why terminated */
+/** CLEAN completion code - why terminated */
 ObitCLEANCompletionReason complCode;
+/** Maximum residual this CLEAN major cycle */
+ofloat resMax;

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -690,7 +690,7 @@ void ObitDConCleanWindowDel (ObitDConCleanWindow *in,
  * Modify an existing window, add if no window with that ID exists
  * \param in     The Window object
  * \param field  Which field (1-rel) is of interest?
- * \param Id     Window Id
+ * \param Id     Window Id, -1=outer
  * \param type   Window type
  * \param window Parameters, depends on type
  * \param err    Obit error stack object.
@@ -711,6 +711,36 @@ void ObitDConCleanWindowUpdate (ObitDConCleanWindow *in,
                    routine, field, in->nfield, in->name);
       return;
   }
+  /* Is this the outer window? */
+  if (Id==-1) { /* Yes outer window */
+    elem = (WindowListElem*)in->outWindow[field-1];
+    /* Update */
+    elem->type = type;
+    switch (elem->type) {
+    case OBIT_DConCleanWindow_rectangle:
+    case OBIT_DConCleanWindow_unrectangle:
+      /* Copy 4 */
+      elem->window[0] = window[0];
+      elem->window[1] = window[1];
+      elem->window[2] = window[2];
+      elem->window[3] = window[3];
+      break;
+    case OBIT_DConCleanWindow_round:
+    case OBIT_DConCleanWindow_unround:
+      /* Copy 3 */
+      elem->window[0] = window[0];
+      elem->window[1] = window[1];
+      elem->window[2] = window[2];
+      break;
+    default:
+      g_error ("Undefined Clean window type");
+      return;
+    }; /* end switch by window type */
+    
+    return;
+  }
+
+  /* Inner window */
   elem = ObitDConCleanWindowFind (in->Lists[field-1], Id);
   if (!elem) {  /* Not there - add with Id */
     elem = newWindowListElem(Id, type, window);

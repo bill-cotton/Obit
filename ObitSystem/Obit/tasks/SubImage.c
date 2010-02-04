@@ -875,6 +875,9 @@ void SubImageCopy (ObitInfoList* myInput, ObitImage* inImage,
       noParms = 0;
       inCC = newObitTableCCValue ("inCC", (ObitData*)inImage, &inVer, OBIT_IO_ReadOnly, 
 				  noParms, err);
+      /* Open/close to get header */
+      ObitTableCCOpen(inCC, OBIT_IO_ReadOnly, err);
+      ObitTableCCClose(inCC, err);
       /* Find one? */
       if (inCC==NULL) continue;
       noParms = inCC->noParms;

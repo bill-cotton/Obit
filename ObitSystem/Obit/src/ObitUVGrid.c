@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -29,6 +29,7 @@
 #include <math.h>
 #include "ObitUVGrid.h"
 #include "ObitFFT.h"
+#include "ObitImage.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -83,7 +84,7 @@ typedef struct {
   ofloat       *buffer;
 } UVGridFuncArg;
 
-/* FFT/gridding correction threaded function argument */
+/** FFT/gridding correction threaded function argument */
 typedef struct {
   /* ObitThread with restart queue */
   ObitThread *thread;
@@ -94,19 +95,13 @@ typedef struct {
   /* thread number, >0 -> no threading   */
   olong        ithread;
 } FFT2ImFuncArg;
+
 /*---------------Private function prototypes----------------*/
 /** Private: Initialize newly instantiated object. */
 void  ObitUVGridInit  (gpointer in);
 
 /** Private: Deallocate members. */
 void  ObitUVGridClear (gpointer in);
-
-/** Private: Prepare visibility data for gridding */
-static void PrepBuffer (ObitUVGrid* in, ObitUV *uvdata, olong loVis, olong hiVis);
-
-/** Private: convolve a uv data buffer and sum to grid */
-static void GridBuffer (ObitUVGrid* in, ObitUV *uvdata, olong loVis, olong hiVis, 
-			ObitCArray *grid);
 
 /** Private: Grid a single image/Beam possibly with Threads */
 static void GridOne (ObitUVGrid* in, ObitUV *UVin, UVGridFuncArg **args, 
@@ -117,10 +112,6 @@ static void ConvFunc (ObitUVGrid* in, olong fnType);
 
 /** Private: Compute spherical wave functions */
 static ofloat sphfn (olong ialf, olong im, olong iflag, ofloat eta);
-
-/** Private: Compute gridding correction function */
-static void GridCorrFn (ObitUVGrid* in, long n, olong icent, 
-			ofloat *data, ofloat *ramp, ObitFArray *out);
 
 /** Private: Set Class function pointers. */
 static void ObitUVGridClassInfoDefFn (gpointer inClass);
@@ -185,17 +176,18 @@ gconstpointer ObitUVGridGetClass (void)
  * same ObitUVGrid.
  * \param in       Object to initialize
  * \param UVin     Uv data object to be gridded.
- * \param beamDesc  Descriptor for beam to be derived.
- * \param imageDesc Descriptor for image to be derived.
+ * \param imagee   Image to be gridded (as Obit*)
  * \param doBeam   TRUE is this is a Beam.
  * \param err      ObitErr stack for reporting problems.
  */
-void ObitUVGridSetup (ObitUVGrid *in, ObitUV *UVin, ObitImageDesc *beamDesc,
-		       ObitImageDesc *imageDesc, gboolean doBeam, ObitErr *err)
+void ObitUVGridSetup (ObitUVGrid *in, ObitUV *UVin, Obit *imagee,
+		      gboolean doBeam, ObitErr *err)
 {
   ObitIOCode retCode;
   ObitUVDesc *uvDesc;
   ObitImageDesc *theDesc=NULL;
+  ObitImage *image = (ObitImage*)imagee;
+  ObitImage *myBeam;
   olong nx, ny, naxis[2];
   ofloat cellx, celly, dxyzc[3], xt, yt, zt;
   ObitInfoType type;
@@ -209,13 +201,18 @@ void ObitUVGridSetup (ObitUVGrid *in, ObitUV *UVin, ObitImageDesc *beamDesc,
   if (err->error) return;
   g_assert (ObitUVGridIsA(in));
   g_assert (ObitUVIsA(UVin));
-  g_assert (ObitImageDescIsA(imageDesc));
-  if ((imageDesc->inaxes[0]<0) || (imageDesc->inaxes[1]<0)) {
-    Obit_log_error(err, OBIT_Error, 
-		   "%s: MUST fully define image descriptor %s",
-		   routine, imageDesc->name);
-    return;
-  }
+  g_assert (ObitImageIsA(image));
+
+  Obit_return_if_fail((image->myDesc->inaxes[0]>0) && 
+		      (image->myDesc->inaxes[1]>0), err,
+		      "%s: MUST fully define image descriptor %s",
+		      routine, image->name);
+
+  /* Need beam */
+  myBeam = (ObitImage*)imagee;
+  Obit_return_if_fail(ObitImageIsA(myBeam), err,
+		      "%s: Beam for %s not defined", 
+		      routine, image->name);
 
   /* Applying calibration or selection? */
   ObitInfoListGetTest(UVin->info, "doCalSelect", &type, dim, &doCalSelect);
@@ -239,19 +236,19 @@ void ObitUVGridSetup (ObitUVGrid *in, ObitUV *UVin, ObitImageDesc *beamDesc,
   }
 
   /* Beam, image dependent stuff */
-  in->nxBeam = beamDesc->inaxes[0];
-  in->nyBeam = beamDesc->inaxes[1];
+  in->nxBeam = myBeam->myDesc->inaxes[0];
+  in->nyBeam = myBeam->myDesc->inaxes[1];
   in->icenxBeam = in->nxBeam/2 + 1; 
   in->icenyBeam = in->nyBeam/2 + 1;
-  in->nxImage = imageDesc->inaxes[0];
-  in->nyImage = imageDesc->inaxes[1];
+  in->nxImage = image->myDesc->inaxes[0];
+  in->nyImage = image->myDesc->inaxes[1];
   in->icenxImage = in->nxImage/2 + 1;
   in->icenyImage = in->nyImage/2 + 1;
   
   /* Get values by Beam/Image */
   in->doBeam = doBeam;
   if (doBeam) {
-    theDesc = beamDesc;  /* Which descriptor in use */
+    theDesc = myBeam->myDesc;  /* Which descriptor in use */
     /* shift parameters */
     /* zeros for beam */
     in->dxc = 0.0;
@@ -260,8 +257,8 @@ void ObitUVGridSetup (ObitUVGrid *in, ObitUV *UVin, ObitImageDesc *beamDesc,
 
   } else {
     /* shift parameters */
-    theDesc = imageDesc;  /* Which descriptor in use */
-    ObitUVDescShiftPhase (uvDesc, imageDesc, dxyzc, err);
+    theDesc = image->myDesc;  /* Which descriptor in use */
+    ObitUVDescShiftPhase (uvDesc, image->myDesc, dxyzc, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
     in->dxc = -dxyzc[0];
     in->dyc = -dxyzc[1];
@@ -295,25 +292,10 @@ void ObitUVGridSetup (ObitUVGrid *in, ObitUV *UVin, ObitImageDesc *beamDesc,
     xt = (in->dxc)*in->PRot3D[0][0] + (in->dyc)*in->PRot3D[1][0] + (in->dzc)*in->PRot3D[2][0];
     yt = (in->dxc)*in->PRot3D[0][1] + (in->dyc)*in->PRot3D[1][1] + (in->dzc)*in->PRot3D[2][1];
     zt = (in->dxc)*in->PRot3D[0][2] + (in->dyc)*in->PRot3D[1][2] + (in->dzc)*in->PRot3D[2][2];
-    /* debug
-    fprintf (stderr,"debug shift for %s\n",in->name);
-    fprintf (stderr,"raw %10.8f %10.8f %10.8f\n",in->dxc,in->dyc,in->dzc);
-    fprintf (stderr,"rot %10.8f %10.8f %10.8f\n",xt,yt,zt);
-    fprintf (stderr,"scale %10.8f %10.8f %10.8f\n",in->UScale,in->VScale,in->WScale); */
     in->dxc = xt;
     in->dyc = yt;
     in->dzc = zt;
   }
-
-    /* debug
-    fprintf (stderr,"debug shift for %s\n",in->name);
-    fprintf (stderr,"P %10.5f %10.5f %10.5f\n",in->PRot3D[0][0],in->PRot3D[1][0],in->PRot3D[2][0]);
-    fprintf (stderr,"P %10.5f %10.5f %10.5f\n",in->PRot3D[0][1],in->PRot3D[1][1],in->PRot3D[2][1]);
-    fprintf (stderr,"P %10.5f %10.5f %10.5f\n",in->PRot3D[0][2],in->PRot3D[1][2],in->PRot3D[2][2]);
-    fprintf (stderr,"U %10.5f %10.5f %10.5f\n",in->URot3D[0][0],in->URot3D[1][0],in->URot3D[2][0]);
-    fprintf (stderr,"U %10.5f %10.5f %10.5f\n",in->URot3D[0][1],in->URot3D[1][1],in->URot3D[2][1]);
-    fprintf (stderr,"U %10.5f %10.5f %10.5f\n",in->URot3D[0][2],in->URot3D[1][2],in->URot3D[2][2]);
- */
 
   /* frequency tables if not defined */
   if ((uvDesc->freqArr==NULL) || (uvDesc->fscale==NULL)) {
@@ -321,14 +303,7 @@ void ObitUVGridSetup (ObitUVGrid *in, ObitUV *UVin, ObitImageDesc *beamDesc,
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   } /* end setup frequency table */
 
-    /* debug
-  fprintf (stderr,"ref freq %15.4lf\n",uvDesc->freq);    
-  fprintf (stderr,"freqScl %10.7f %10.7f %10.7f %10.7f\n",uvDesc->fscale[0],uvDesc->fscale[1],uvDesc->fscale[2],uvDesc->fscale[3]);
-  fprintf (stderr,"        %10.7f %10.7f %10.7f %10.7f\n",uvDesc->fscale[4],uvDesc->fscale[5],uvDesc->fscale[6],uvDesc->fscale[7]);
-  fprintf (stderr,"freq    %15.6f %15.6f %15.6f %15.6f\n",uvDesc->freqArr[0],uvDesc->freqArr[1],uvDesc->freqArr[2],uvDesc->freqArr[3]);
-  fprintf (stderr,"        %15.6f %15.6f %15.6f %15.6f\n",uvDesc->freqArr[4],uvDesc->freqArr[5],uvDesc->freqArr[6],uvDesc->freqArr[7]); */
-
- }  /* end ObitUVGridSetup */
+}  /* end ObitUVGridSetup */
 
 /**
  * Read a UV data object, applying any shift and accumulating to grid.
@@ -780,7 +755,7 @@ void ObitUVGridReadUVPar (olong nPar, ObitUVGrid **in, ObitUV **UVin, ObitErr *e
 
 } /* end ObitUVGridReadUVPar  */
 
-/**
+ /**
  * Perform half plane complex to real FFT, convert to center at the center order and
  * apply corrections for the convolution  function used in gridding
  * Requires setup by #ObitUVGridCreate and gridding by #ObitUVGridReadUV.
@@ -1135,11 +1110,14 @@ static void ObitUVGridClassInfoDefFn (gpointer inClass)
   theClass->ObitClone     = NULL;
   theClass->ObitClear     = (ObitClearFP)ObitUVGridClear;
   theClass->ObitInit      = (ObitInitFP)ObitUVGridInit;
-  theClass->ObitUVGridSetup   = (ObitUVGridSetupFP)ObitUVGridSetup;
-  theClass->ObitUVGridReadUV  = (ObitUVGridReadUVFP)ObitUVGridReadUV;
+  theClass->ObitUVGridSetup      = (ObitUVGridSetupFP)ObitUVGridSetup;
+  theClass->ObitUVGridReadUV     = (ObitUVGridReadUVFP)ObitUVGridReadUV;
   theClass->ObitUVGridReadUVPar  = (ObitUVGridReadUVParFP)ObitUVGridReadUVPar;
-  theClass->ObitUVGridFFT2Im  = (ObitUVGridFFT2ImFP)ObitUVGridFFT2Im;
+  theClass->ObitUVGridFFT2Im     = (ObitUVGridFFT2ImFP)ObitUVGridFFT2Im;
   theClass->ObitUVGridFFT2ImPar  = (ObitUVGridFFT2ImParFP)ObitUVGridFFT2ImPar;
+  theClass->PrepBuffer           = (PrepBufferFP)PrepBuffer;
+  theClass->GridBuffer           = (GridBufferFP)GridBuffer;
+  theClass->GridCorrFn           = (GridCorrFnFP)GridCorrFn;
 
 } /* end ObitUVGridClassDefFn */
 
@@ -1182,6 +1160,7 @@ void ObitUVGridInit  (gpointer inn)
   /* initialize convolving function table */
   /* pillbox (0) for testing (4=exp*sinc, 5=Spherodial wave) */
   ConvFunc(in, 5);
+  /* ConvFunc(in, 0);   DEBUG - use pillbox */
 } /* end ObitUVGridInit */
 
 /**
@@ -1248,7 +1227,7 @@ void ObitUVGridClear (gpointer inn)
  * \param loVis   (0-rel) first vis in buffer in uv data
  * \param hiVis   (1-rel) highest vis in buffer in uv data
  */
-static void PrepBuffer (ObitUVGrid* in, ObitUV *uvdata, olong loVis, olong hiVis)
+void PrepBuffer (ObitUVGrid* in, ObitUV *uvdata, olong loVis, olong hiVis)
 {
   olong ivis, nvis, ifreq, nif, iif, nfreq, ifq, loFreq, hiFreq;
   ofloat *u, *v, *w, *vis, *ifvis, *vvis;
@@ -1400,7 +1379,7 @@ static void PrepBuffer (ObitUVGrid* in, ObitUV *uvdata, olong loVis, olong hiVis
  * \param hiVis   (1-rel) highest vis in buffer in uv data
  * \param accGrid Grid to accumulate onto
  */
-static void GridBuffer (ObitUVGrid* in, ObitUV *uvdata, olong loVis, olong hiVis,
+void GridBuffer (ObitUVGrid* in, ObitUV *uvdata, olong loVis, olong hiVis,
 			ObitCArray *accGrid)
 {
   olong ivis, nvis, ifreq, nfreq, ncol=0, iu, iv, iuu, ivv, icu, icv, lGridRow, lGridCol, itemp;
@@ -1951,8 +1930,8 @@ static ofloat sphfn (olong ialf, olong im, olong iflag, ofloat eta)
  * \param ramp    (complex) work array the size of the convolution table.
  * \param out     1-D correction function for this axis.
  */
-static void GridCorrFn (ObitUVGrid* in, long n, olong icent, 
-			ofloat *data, ofloat *ramp, ObitFArray *out)
+void GridCorrFn (ObitUVGrid* in, long n, olong icent, 
+		 ofloat *data, ofloat *ramp, ObitFArray *out)
 {
   ofloat p1, p2, p3, p4, sumre, tr, ti, amp, phase; 
   olong i, j, size, bias;
@@ -2095,6 +2074,7 @@ static gpointer ThreadUVGridBuffer (gpointer arg)
   ofloat *buffer   = largs->buffer;
  
   gsize size, offset;
+  ObitUVGridClassInfo *gridClass = (ObitUVGridClassInfo*)in->ClassInfo;
 
   /* Need to copy data? */
   if ((buffer!=NULL) && (buffSize>0)) {
@@ -2104,10 +2084,10 @@ static gpointer ThreadUVGridBuffer (gpointer arg)
   }
 
   /* prepare data */
-  PrepBuffer (in, UVin, loVis, hiVis);
+  gridClass->PrepBuffer (in, UVin, loVis, hiVis);
   
   /* grid */
-  GridBuffer (in, UVin, loVis, hiVis, grid);
+  gridClass->GridBuffer (in, UVin, loVis, hiVis, grid);
 
   /* Indicate completion */
   if (largs->ithread>=0)

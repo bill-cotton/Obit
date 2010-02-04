@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -120,73 +120,115 @@ ObitImageMosaicCopy  (ObitImageMosaic *in, ObitImageMosaic *out,
 void 
 ObitImageMosaicZapImage  (ObitImageMosaic *in, olong number,
 			  ObitErr *err);
+typedef void 
+(*ObitImageMosaicZapImageFP)  (ObitImageMosaic *in, olong number,
+			       ObitErr *err);
 
 /** Public: Return specified image. */
 ObitImage* 
 ObitImageMosaicGetImage  (ObitImageMosaic *in, olong number,
 			  ObitErr *err);
+typedef ObitImage* 
+(*ObitImageMosaicGetImageFP)  (ObitImageMosaic *in, olong number,
+			       ObitErr *err);
 
 /** Public: Set specified image. */
 void 
 ObitImageMosaicSetImage  (ObitImageMosaic *in, olong number, 
 			  ObitImage* image, ObitErr *err);
+typedef void 
+(*ObitImageMosaicSetImageFP)  (ObitImageMosaic *in, olong number, 
+			       ObitImage* image, ObitErr *err);
 
 /** Public: Return RMS pixel value of  image. */
 ofloat 
 ObitImageMosaicGetImageRMS  (ObitImageMosaic *in, olong number,
 			     ObitErr *err);
+typedef ofloat 
+(*ObitImageMosaicGetImageRMSFP)  (ObitImageMosaic *in, olong number,
+				  ObitErr *err);
 
 /** Public: return Full Field image image. */
 ObitImage* 
 ObitImageMosaicGetFullImage  (ObitImageMosaic *in, ObitErr *err);
+typedef ObitImage* 
+(*ObitImageMosaicGetFullImageFP)  (ObitImageMosaic *in, ObitErr *err);
 
 /** Public: Set  Full Field  image. */
 void 
 ObitImageMosaicSetFullImage  (ObitImageMosaic *in, 
 			      ObitImage* image, ObitErr *err);
+typedef void 
+(*ObitImageMosaicSetFullImageFP)  (ObitImageMosaic *in, 
+				   ObitImage* image, ObitErr *err);
 
 /** Public: Set underlying files */
 void ObitImageMosaicSetFiles  (ObitImageMosaic *in, gboolean doBeam, ObitErr *err);
+typedef void (*ObitImageMosaicSetFilesFP)  (ObitImageMosaic *in, gboolean doBeam, 
+					    ObitErr *err);
 
 /** Public: Create Mosaic from uv data */
-ObitImageMosaic *ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *err);
+ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *err);
+typedef ObitImageMosaic* (*ObitImageMosaicCreateFP) (gchar *name, ObitUV *uvData, 
+						     ObitErr *err);
 
 /** Public: Define parameters of images */
 void ObitImageMosaicDefine (ObitImageMosaic *in, ObitUV *uvData, gboolean doBeam,
 			    ObitErr *err);
+typedef void (*ObitImageMosaicDefineFP) (ObitImageMosaic *in, ObitUV *uvData, 
+					 gboolean doBeam, ObitErr *err);
 
 /** Public: Flatten tiles onto full field image */
 void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err);
+typedef void (*ObitImageMosaicFlattenFP) (ObitImageMosaic *in, ObitErr *err);
 
 /** Public: Give field of view */
 ofloat ObitImageMosaicFOV (ObitImageMosaic *in, ObitErr *err);
+typedef ofloat (*ObitImageMosaicFOVFP) (ObitImageMosaic *in, ObitErr *err);
 
 /** Public: Give max. field of view in current model */
 ofloat ObitImageMosaicMaxFOV (ObitImageMosaic *in, olong *startCC, olong *endCC, 
 			      ObitErr *err);
+typedef ofloat (*ObitImageMosaicMaxFOVFP) (ObitImageMosaic *in, olong *startCC, 
+					   olong *endCC, ObitErr *err);
 
 /** Public: Reimaging needed to center strong source on pixel? */
 gboolean ObitImageMosaicReimage (ObitImageMosaic *mosaic, ObitErr* err);
+typedef gboolean (*ObitImageMosaicReimageFP) (ObitImageMosaic *mosaic, ObitErr* err);
 
 /** Public: Get max summed CC and determine offset from nearest pixel */
 void ObitImageMosaicMaxCC (ObitTableCC *CCTab, olong nccpos, ofloat radius, 
 			   ofloat* maxcmp, ofloat* xcenter, ofloat* ycenter, 
 			   ofloat* xoff, ofloat* yoff, ObitErr* err);
 
+typedef void (*ObitImageMosaicMaxCCFP) (ObitTableCC *CCTab, olong nccpos, ofloat radius, 
+					ofloat* maxcmp, ofloat* xcenter, ofloat* ycenter, 
+					ofloat* xoff, ofloat* yoff, ObitErr* err);
+
 /** Public: Zero selected CC entries */
 void ObitImageMosaicFlagCC (ObitTableCC *CCTab, olong nccpos, ofloat radius, 
 			   ofloat xcenter, ofloat ycenter, ObitErr* err);
+typedef void (*ObitImageMosaicFlagCCFP) (ObitTableCC *CCTab, olong nccpos, 
+					 ofloat radius, ofloat xcenter, ofloat ycenter, 
+					 ObitErr* err);
 
 /** Public: Add field to mosaic */
 void ObitImageMosaicAddField (ObitImageMosaic *in, ObitUV *uvData, 
 			      olong nx, olong ny, olong nplane, 
 			      ofloat RAShift, ofloat DecShift, 
 			      gboolean isAuto, ObitErr *err);
+typedef void (*ObitImageMosaicAddFieldFP) (ObitImageMosaic *in, ObitUV *uvData, 
+					   olong nx, olong ny, olong nplane, 
+					   ofloat RAShift, ofloat DecShift, 
+					   gboolean isAuto, ObitErr *err);
 
 /** Public:  Generate a mosaic for peeling */
 ObitImageMosaic* ObitImageMosaicMaxField (ObitImageMosaic *mosaic, 
 					  ofloat MinFlux, olong *ignore, olong *field,
 					  ObitErr* err); 
+typedef ObitImageMosaic* (*ObitImageMosaicMaxFieldFP) (ObitImageMosaic *mosaic, 
+						       ofloat MinFlux, olong *ignore, 
+						       olong *field, ObitErr* err); 
 
 /** Public: Extract information about underlying structures to ObitInfoList */
 void ObitImageMosaicGetInfo (ObitImageMosaic *in, gchar *prefix, ObitInfoList *outList, 
@@ -194,9 +236,43 @@ void ObitImageMosaicGetInfo (ObitImageMosaic *in, gchar *prefix, ObitInfoList *o
 typedef void 
 (*ObitImageMosaicGetInfoFP) (ObitImageMosaic *in, gchar *prefix, ObitInfoList *outList, 
 			     ObitErr *err);
+
 /** Public: Concatenate Image CC tables onto the FullField Image */
 void ObitImageMosaicCopyCC (ObitImageMosaic *in, ObitErr *err);
+typedef void (*ObitImageMosaicCopyCCFP) (ObitImageMosaic *in, ObitErr *err);
 
+/* Private functions for derived classes */
+/** Private: Cover specified field of view */
+ofloat FlyEye (ofloat radius, olong imsize, ofloat cells[2], olong ovrlap,
+	ofloat shift[2], double ra0, double dec0, 
+	olong *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, olong *flqual,
+	ObitErr *err);
+typedef ofloat (*FlyEyeFP) (ofloat radius, olong imsize, ofloat cells[2], olong ovrlap,
+			    ofloat shift[2], double ra0, double dec0, 
+			    olong *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, 
+			    olong *flqual, ObitErr *err);
+
+/** Private: Add field to list */
+olong AddField (ofloat shift[2], ofloat dec, olong imsize, ofloat cells[2], 
+	  olong qual, gboolean check, ofloat minImpact,
+	  olong *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, olong *flqual,
+	  ObitErr *err);
+typedef olong (*AddFieldFP) (ofloat shift[2], ofloat dec, olong imsize, ofloat cells[2], 
+			     olong qual, gboolean check, ofloat minImpact,
+			     olong *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, 
+			     olong *flqual, ObitErr *err);
+
+/** Private: Lookup outliers in catalog */
+void AddOutlier (gchar *Catalog, olong catDisk, ofloat minRad, ofloat cells[2], 
+	    ofloat OutlierDist, ofloat OutlierFlux, ofloat OutlierSI, olong OutlierSize,
+	    odouble ra0, odouble dec0, gboolean doJ2B, odouble Freq, ofloat minImpact, 
+	    olong *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, olong *flqual, 
+	    ObitErr *err);
+typedef void (*AddOutlierFP) (gchar *Catalog, olong catDisk, ofloat minRad, ofloat cells[2], 
+			      ofloat OutlierDist, ofloat OutlierFlux, ofloat OutlierSI, 
+			      olong OutlierSize, odouble ra0, odouble dec0, gboolean doJ2B, 
+			      odouble Freq, ofloat minImpact, olong *nfield, olong *fldsiz, 
+			      ofloat *rash, ofloat *decsh, olong *flqual, ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

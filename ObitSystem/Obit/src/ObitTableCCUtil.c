@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -58,6 +58,9 @@ static gint CCCompareFlux (gconstpointer in1, gconstpointer in2,
 
 /** Private: Merge entries in Sort structure */
 static void CCMerge (ofloat *base, olong size, olong number); 
+
+/** Private: Merge spectral entries in Sort structure */
+static void CCMergeSpec (ofloat *base, olong size, olong number); 
 
 /** Private: reorder table based on Sort structure */
 static ObitIOCode 
@@ -252,6 +255,208 @@ ObitIOCode ObitTableCCUtilGrid (ObitTableCC *in, olong OverSample,
 } /* end ObitTableCCUtilGrid */
 
 /**
+ * Grid spectral components as points onto grid.  The image from which the components is
+ * derived is described in desc.  The output grid is padded by a factor OverSample.
+ * If the components are Gaussians, their parameters are returned in gaus.
+ * Output image is spectral term iterm times the flux density.
+ * \param in         Table to grid
+ * \param OverSample Expansion factor for output image
+ * \param iterm      Spectral term to grid, 0=flux, 1=flux*si, 2=flux*curve...
+ * \param first      First component (1-rel) to include, 0=>1, filled in if changed
+ * \param last       Last component (1-rel) to include, 0=>all, filled in if changed
+ * \param noNeg      Ignore first negative flux component and after
+ * \param factor     factor to multiply timec fluxes
+ * \param minFlux    Minimum abs. value flux density to include (before factor)
+ * \param maxFlux    Maximum abs. value flux density to include (before factor)
+ * \param desc       Descriptor for image from which components derived
+ * \param grid       [out] filled in array, created, resized if necessary
+ * \param gparm      [out] Gaussian parameters (major, minor, PA all in deg) if
+ *                   the components in in are Gaussians, else, -1.
+ * \param ncomp      [out] number of components gridded.
+ * \param err        ObitErr error stack.
+ * \return I/O Code  OBIT_IO_OK = OK.
+ */
+ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong iterm,
+				     olong *first, olong *last, gboolean noNeg,
+				     ofloat factor, ofloat minFlux, ofloat maxFlux,
+				     ObitImageDesc *desc, ObitFArray **grid, 
+				     ofloat gparm[3], olong *ncomp, 
+				     ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  ObitTableCCRow *CCRow = NULL;
+  olong itestX, itestY;
+  ofloat ftestX, ftestY, maxX, minX, maxY, minY;
+  ofloat *array, xpoff, ypoff;
+  olong j, irow, xPix, yPix, iAddr;
+  ofloat iCellX, iCellY, fNx, fNy, spectTerm;
+  olong ndim, naxis[2], nx, ny, parmoff, count = 0, badCnt = 0;
+  gchar *routine = "ObitTableCCGridSpect";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return retCode;
+  g_assert (ObitTableCCIsA(in));
+
+  gparm[0] = gparm[1] = gparm[2] = -1.0; /* init Gaussian */
+  
+  /* Create/resize output if necessary */
+  ndim = 2;
+  naxis[0] = OverSample*desc->inaxes[desc->jlocr];
+  naxis[1] = OverSample*desc->inaxes[desc->jlocd];
+  /* (re)allocate memory for plane */
+  if (*grid!=NULL) *grid = ObitFArrayRealloc(*grid, ndim, naxis);
+  else *grid = ObitFArrayCreate("ModelImage", ndim, naxis);
+
+  /* Zero fill */
+  ObitFArrayFill (*grid, 0.0);
+
+  /* Get pointer to in->plane data array */
+  naxis[0] = 0; naxis[1] = 0; 
+  array = ObitFArrayIndex(*grid, naxis);
+  
+  /* Image size as float */
+  nx  = OverSample*desc->inaxes[desc->jlocr];
+  ny  = OverSample*desc->inaxes[desc->jlocd];
+  fNx = (ofloat)nx;
+  fNy = (ofloat)ny;
+  /* allowed range of X */
+  minX = (-fNx/2.0) * fabs(desc->cdelt[desc->jlocr]);
+  maxX = ((fNx/2.0) - 1.0) * fabs(desc->cdelt[desc->jlocr]);
+  /* allowed range of Y */
+  minY = (-fNy/2.0) * fabs(desc->cdelt[desc->jlocd]);
+  maxY = ((fNy/2.0) - 1.0) * fabs(desc->cdelt[desc->jlocd]);
+
+  /* Open CC table */
+  retCode = ObitTableCCOpen (in, OBIT_IO_ReadWrite, err);
+  if ((retCode != OBIT_IO_OK) || (err->error))
+    Obit_traceback_val (err, routine, in->name, retCode);
+  
+  /* Create table row */
+  if (!CCRow) CCRow = newObitTableCCRow (in);
+
+  /* Field specific stuff */
+  /* Inverse Cell spacings */
+  if (desc->cdelt[desc->jlocr]!=0.0) iCellX = 1.0/desc->cdelt[desc->jlocr];
+  else iCellX = 1.0;
+  if (desc->cdelt[desc->jlocd]!=0.0) iCellY = 1.0/desc->cdelt[desc->jlocd];
+  else iCellY = 1.0;
+
+  /*    Get reference pixel offsets from (nx/2+1, ny/2+1) */
+  xpoff = (desc->crpix[desc->jlocr] - (desc->inaxes[desc->jlocr]/2) - 1) *
+    desc->cdelt[desc->jlocr];
+  ypoff = (desc->crpix[desc->jlocd] - (desc->inaxes[desc->jlocd]/2) - 1) *
+    desc->cdelt[desc->jlocd];
+
+  /* Where is spectral term */
+  parmoff = 4;
+
+  /* loop over CCs */
+  count = 0;  /* Count of components */
+  if (*first<=0) *first = 1;
+  if (*last<=0) *last = in->myDesc->nrow;
+  *last = MIN (*last, in->myDesc->nrow);
+  for (j=*first; j<=*last; j++) {
+    irow = j;
+    retCode = ObitTableCCReadRow (in, irow, CCRow, err);
+    if ((retCode != OBIT_IO_OK) || (err->error)) 
+      Obit_traceback_val (err, routine, in->name, retCode);
+    
+    /* Make sure this has a spectrum */
+    Obit_retval_if_fail((CCRow->parms && (CCRow->parms[3]>=10.)), err, retCode, 
+			"%s: CCs do not contain spectra", routine);
+    
+
+    /* Get any Gaussian parameters on first, else check */
+    if (j==*first) {
+      /* Is this a Gaussian component? */
+      if ((in->parmsCol>=0) &&
+	  (in->myDesc->dim[in->parmsCol][0]>4) && 
+	  ((CCRow->parms[3]==1.0) || (CCRow->parms[3]==11.0))) {
+	gparm[0] = CCRow->parms[0];
+	gparm[1] = CCRow->parms[1];
+	gparm[2] = CCRow->parms[2];
+      }
+    } else if (gparm[0]>0.0) {
+      /* All Gaussians MUST be the same */
+      if ((CCRow->parms[0]!=gparm[0]) || (CCRow->parms[1]!=gparm[1]) || 
+	  (CCRow->parms[2]!=gparm[2])) {
+	Obit_log_error(err, OBIT_Error,"%s: All Gaussians MUST have same size",
+		       routine);
+	return retCode ;
+      }
+    } /* end of Gaussian Check */
+
+    /* Only to first negative? */
+    if (noNeg && (CCRow->Flux<0.0)) break;
+  
+    /* Process component */
+    CCRow->Flux *= factor;     /* Apply factor */
+    CCRow->DeltaX += xpoff;    /* Reference pixel offset from  (nx/2,ny/2)*/
+    CCRow->DeltaY += ypoff;
+
+    /* Component wanted? larger than in->minFlux and not zero */
+    if ((fabs(CCRow->Flux)<minFlux)  || (CCRow->Flux==0.0)) continue;
+    /* Nothing too big */
+    if (fabs(CCRow->Flux)>maxFlux) continue;
+    
+    /* Check that comps are on cells */
+    ftestX = CCRow->DeltaX * iCellX; /* Convert to cells */
+    ftestY = CCRow->DeltaY * iCellY;
+    if (ftestX>0.0) itestX = (olong)(ftestX + 0.5);
+    else itestX = (olong)(ftestX - 0.5);
+    if (ftestY>0.0) itestY = (olong)(ftestY + 0.5);
+    else itestY = (olong)(ftestY - 0.5);
+  
+    /* Count bad cells */
+    if ((fabs((ftestX-itestX)>0.1)) || (fabs((ftestY-itestY)>0.1))) {
+      badCnt++;
+      /* Warn but keep going */
+      if (badCnt<50) {
+	Obit_log_error(err, OBIT_InfoWarn, "%s Warning: Bad cell %f %f", 
+		       routine, CCRow->DeltaX, CCRow->DeltaY);
+      }
+    }
+
+    /* Clip range of X,Y */
+    CCRow->DeltaX = MIN (maxX, MAX (CCRow->DeltaX, minX));
+    CCRow->DeltaY = MIN (maxY, MAX (CCRow->DeltaY, minY));
+
+    /* X,Y to cells */
+    CCRow->DeltaX *= iCellX;
+    CCRow->DeltaY *= iCellY;
+    /* 0-rel pixel numbers */
+    xPix = (olong)(CCRow->DeltaX + nx/2 + 0.5);
+    yPix = (olong)(CCRow->DeltaY + ny/2 + 0.5);
+
+    /* Spectral term */
+    spectTerm = 1.0;
+    if (iterm==1) spectTerm = CCRow->parms[0+parmoff];
+    if (iterm==2) spectTerm = CCRow->parms[1+parmoff];
+    if (iterm==3) spectTerm = CCRow->parms[2+parmoff];
+
+    /* Sum into image */
+    iAddr = xPix + nx * yPix;
+    array[iAddr] += CCRow->Flux*spectTerm;
+
+    count++;        /* how many */
+  } /* end loop over components */
+
+  /* How many? */
+  *ncomp = count;
+  
+  /* Close Table */
+  retCode = ObitTableCCClose (in, err);
+  if ((retCode != OBIT_IO_OK) || (err->error))
+    Obit_traceback_val (err, routine, in->name, retCode);
+  
+  /* Release table/row */
+  CCRow   = ObitTableCCRowUnref (CCRow);
+  
+  return retCode;
+} /* end ObitTableCCUtilGridSpect */
+
+/**
  * Return an ObitFArray containing the list of components in the CC table
  * from one image which appear in another.
  * Returned array has component values on the first axis and one row per
@@ -285,7 +490,7 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
   olong nrow, ndim, naxis[2], size, fsize, tsize;
   ofloat *table, inPixel[2], outPixel[2], *SortStruct = NULL;
   ofloat *entry;
-  gboolean wanted;
+  gboolean wanted, doSpec;
   gchar *outName;
   ObitCCCompType modType;
   gchar *routine = "ObitTableCCUtilCrossList";
@@ -306,7 +511,10 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
   /* Create sortStruct 
      element size */
   nrow = inCC->myDesc->nrow;
-  fsize = 3;
+  /* Normal CCs or with spectra? */
+  doSpec = (inCC->noParms>4);
+  if (doSpec) fsize = 4;
+  else fsize = 3;
   size = fsize * sizeof(ofloat);
   /*   Total size of structure in case all rows valid */
   tsize = size * nrow;
@@ -388,8 +596,12 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
   ncomp  = 2;     /* number of values to compare */
   g_qsort_with_data (SortStruct, number, size, CCComparePos, &ncomp);
 
-  /* Merge entries */
-  CCMerge (SortStruct, fsize, number);
+  /* Merge entries - Normal or with spectra? */
+  doSpec = (inCC->noParms>4);
+  if (doSpec) 
+    CCMergeSpec (SortStruct, fsize, number);
+  else
+    CCMerge (SortStruct, fsize, number);
   
   /* Sort to descending merged flux densities */
   ncomp = 1;
@@ -451,6 +663,225 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
 } /*  end ObitTableCCUtilCrossList */
 
 /**
+ * Return an ObitFArray containing the list of spectral components in the 
+ * CC table from one image which appear in another.
+ * Returned array has component values on the first axis and one row per
+ * overlapping component.  (X cell (0-rel), Y cell (0-rel), flux, spectral terms).  
+ * CCs on cells within 0.5 pixels of outDesc are included.
+ * Components in the same cell are combined.
+ * If the components are Gaussians, their parameters are returned in gparm.
+ * Output list has element 4 being flux weighted spectral term, except for 
+ * iterm=0 in which it's the sum of the flux density .
+ * \param in         Table of CCs
+ * \param inDesc     Descriptor for image from which components derived
+ * \param outDesc    Descriptor for output image 
+ * \param grid       [out] filled in array, created, resized if necessary
+ * \param gparm      [out] Gaussian parameters (major, minor, PA (all deg)) 
+ *                   if the components in in are Gaussians, else, -1.
+ *                   These are the values from the first CC.
+ * \param ncomp      [out] number of components in output list (generally less 
+ *                   than size of FArray).
+ * \param iterm      Select spectral term, 0=flux, 1=si, 2=curvature...
+ * \param err        ObitErr error stack.
+ * \return pointer to list of components, may be NULL on failure, 
+ *  MUST be Unreffed.
+ */
+ObitFArray* 
+ObitTableCCUtilCrossListSpec (ObitTableCC *inCC, ObitImageDesc *inDesc,  
+			      ObitImageDesc *outDesc, ofloat gparm[3], 
+			      olong *ncomps, olong iterm, ObitErr *err)
+{
+  ObitFArray *outArray=NULL;
+  ObitIOCode retCode;
+  ObitTableCCRow *CCRow = NULL;
+  olong i, count, number, nout, irow, lrec;
+  olong ncomp, parmoff=4;
+  olong nrow, ndim, naxis[2], size, fsize, tsize;
+  ofloat *table, inPixel[2], outPixel[2], *SortStruct = NULL;
+  ofloat *entry, spectTerm;
+  gboolean wanted;
+  gchar *outName;
+  ObitCCCompType modType;
+  gchar *routine = "ObitTableCCUtilCrossListSpec";
+  
+  /* error checks */
+  if (err->error) return outArray;
+
+  /* Open */
+  retCode = ObitTableCCOpen (inCC, OBIT_IO_ReadOnly, err);
+  /* If this fails try ReadWrite */
+  if (err->error) { 
+    ObitErrClearErr(err);  /* delete failure messages */
+    retCode = ObitTableCCOpen (inCC, OBIT_IO_ReadWrite, err);
+  }
+  if ((retCode != OBIT_IO_OK) || (err->error))
+      Obit_traceback_val (err, routine, inCC->name, outArray);
+
+  /* Create sortStruct 
+     element size */
+  nrow = inCC->myDesc->nrow;
+  fsize = 4;
+  size = fsize * sizeof(ofloat);
+  /*   Total size of structure in case all rows valid */
+  tsize = size * nrow;
+  /* create output structure */
+  SortStruct = ObitMemAlloc0Name (tsize, "CCSortStructure");
+
+
+  /* Create table row */
+  CCRow = newObitTableCCRow (inCC);
+
+  /* Initialize */
+  gparm[0] = gparm[1] = gparm[2] = -1.0;  /* No Gaussian yet */
+  count = 0;         /* How many CCs accepted */
+  /* If only 3 col, or parmsCol 0 size then this is a point model */
+  if ((inCC->myDesc->nfield==3) || 
+      (inCC->parmsCol<0) ||
+      (inCC->myDesc->dim[inCC->parmsCol]<=0)) 
+    modType = OBIT_CC_PointMod;
+  else  
+    modType = OBIT_CC_Unknown; /* Model type not yet known */
+  
+  /* Loop over table reading CCs */
+  for (i=1; i<=nrow; i++) {
+
+    irow = i;
+    retCode = ObitTableCCReadRow (inCC, irow, CCRow, err);
+    if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+
+    /* Get model type  */
+    if (modType == OBIT_CC_Unknown) {
+      modType = (olong)(CCRow->parms[3] + 0.5);
+      /* If Gaussian take model */
+      if ((modType==OBIT_CC_GaussMod)     || (modType==OBIT_CC_CGaussMod) ||
+	  (modType==OBIT_CC_GaussModSpec) || (modType==OBIT_CC_CGaussModSpec)) {
+	gparm[0] = CCRow->parms[0];
+	gparm[1] = CCRow->parms[1];
+	gparm[2] = CCRow->parms[2];
+      }
+      /* If neither a point nor Gaussian - barf */
+      if ((modType!=OBIT_CC_GaussMod) && (modType!=OBIT_CC_CGaussMod) && 
+	  (modType!=OBIT_CC_PointMod) && (modType!=OBIT_CC_GaussModSpec) && 
+	  (modType!=OBIT_CC_CGaussModSpec) && (modType!=OBIT_CC_PointModSpec)) {
+	Obit_log_error(err, OBIT_Error,
+		       "%s: Model type %d neither point nor Gaussian in %s",
+		       routine, modType, inCC->name);
+	goto cleanup;
+      }
+    } /* end model type checking */
+
+    /* Is this one within 3 pixels of outDesc? */
+    inPixel[0] = CCRow->DeltaX / inDesc->cdelt[0] + inDesc->crpix[0];
+    inPixel[1] = CCRow->DeltaY / inDesc->cdelt[1] + inDesc->crpix[1];
+    wanted = ObitImageDescCvtPixel (inDesc, outDesc, inPixel, outPixel, err);
+    if (err->error) goto cleanup;
+
+    if (wanted) { /* yes */
+      /* Spectral term */
+      spectTerm = 1.0;
+      if (iterm==1) spectTerm = CCRow->parms[0+parmoff];
+      if (iterm==2) spectTerm = CCRow->parms[1+parmoff];
+      if (iterm==3) spectTerm = CCRow->parms[2+parmoff];
+
+      /* add to structure */
+      entry = (ofloat*)(SortStruct + count * fsize);  /* set pointer to entry */
+      entry[0] = outPixel[0] - 1.0;  /* Make zero rel. pixels */
+      entry[1] = outPixel[1] - 1.0;
+      entry[2] = CCRow->Flux;
+      entry[3] = spectTerm;
+      count++; /* How many? */
+    }
+  } /* end loop over TableCC */
+
+  /* Close */
+  retCode = ObitTableCCClose (inCC, err);
+  if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+  
+  /* Release table row */
+  CCRow = ObitTableCCRowUnref (CCRow);
+
+  /* Catch anything? */
+  *ncomps = count;
+  if (count<=0) goto cleanup;
+    
+  /* Sort */
+  number = count; /* Total number of entries */
+  ncomp  = 2;     /* number of values to compare */
+  g_qsort_with_data (SortStruct, number, size, CCComparePos, &ncomp);
+
+  /* Merge entries */
+  CCMergeSpec (SortStruct, fsize, number);
+  
+  /* Sort to descending merged flux densities */
+  ncomp = 1;
+  g_qsort_with_data (SortStruct, number, size, CCCompareFlux, &ncomp);
+
+  /* Count number of valid entries left */
+  entry = SortStruct;
+  count = 0;
+  for (i=0; i<number; i++) {
+    if (entry[0]>-1.0e19) count++;
+    entry += fsize;  /* pointer in table */
+  }
+
+  /* Create FArray list large enough for merged CCs */
+  ndim = 2; naxis[0] = fsize; naxis[1] = count;
+  nout = naxis[1];
+  lrec = naxis[0];   /* size of table row */
+  nout = naxis[1];   /* Size of output array */
+  outName =  g_strconcat ("CC List:", inCC->name, NULL);
+  outArray = ObitFArrayCreate (outName, ndim, naxis);
+  g_free (outName);  /* deallocate name */
+
+  /* Get pointer to array */
+  naxis[0] = naxis[1] = 0;
+  table = ObitFArrayIndex (outArray, naxis);
+
+  /* Copy structure to output array */
+  entry = SortStruct;
+  count = 0;
+  for (i=0; i<number; i++) {
+
+    /* Deleted? */
+    if (entry[0]>-1.0e19) {
+      /* Check that array not blown */
+      if (count>nout) {
+	Obit_log_error(err, OBIT_Error,"%s: Internal array overrun",
+		       routine);
+	goto cleanup;
+      }
+      /* copy to out */
+      table[0] = entry[0];
+      table[1] = entry[1];
+      table[2] = entry[2];
+      table[3] = entry[3];
+      table += lrec;
+      count++;
+    } /* end of contains value */
+    entry += fsize;  /* pointer in table */
+  } /* end loop over array */
+
+  /* Flux weighted flux is sum of flux */
+  if (iterm==0) {
+    table = ObitFArrayIndex (outArray, naxis);
+    for (i=0; i<count; i++) {
+      table[3] = table[2];
+      table += lrec;
+    }
+  } /* end of flux only */
+  
+  /* How many? */
+  *ncomps = count;
+
+  /* Cleanup */
+ cleanup:
+  if (SortStruct) ObitMemFree(SortStruct);
+  if (err->error) Obit_traceback_val (err, routine, inCC->name, outArray);
+
+  return outArray;
+} /*  end ObitTableCCUtilCrossListSpec */
+
+/**
  * Merge elements of an ObitTableCC on the same position.
  * First sorts table, collapses, sorts to desc. flux
  * \param in      Table to sort
@@ -465,6 +896,7 @@ ObitIOCode ObitTableCCUtilMerge (ObitTableCC *in, ObitTableCC *out,
   olong size, fsize, number=0, ncomp;
   ofloat parms[20];
   ofloat *SortStruct = NULL;
+  gboolean doSpec;
   gchar *routine = "ObitTableCCUtilMerge";
 
   /* error checks */
@@ -497,9 +929,13 @@ ObitIOCode ObitTableCCUtilMerge (ObitTableCC *in, ObitTableCC *out,
   /* Sort */
   g_qsort_with_data (SortStruct, number, size, CCComparePos, &ncomp);
 
-  /* Merge entries */
+  /* Merge entries - Normal or with spectra? */
   fsize = size/sizeof(ofloat);
-  CCMerge (SortStruct, fsize, number);
+  doSpec = (in->noParms>4);
+  if (doSpec) 
+    CCMergeSpec (SortStruct, fsize, number);
+  else
+    CCMerge (SortStruct, fsize, number);
   
   /* Sort to descending merged flux densities */
   ncomp = 1;
@@ -650,6 +1086,140 @@ ObitFArray* ObitTableCCUtilMergeSel (ObitTableCC *in, olong startComp,
 
   return out;
 } /* end ObitTableCCUtilMergeSel */
+
+
+/**
+ * Merge spectral elements of an ObitTableCC on the same position.
+ * with selection by row number.
+ * Spectral components are flux weighted average
+ * First sorts table, collapses, sorts to desc. flux
+ * \param in        Table to sort
+ * \param startComp First component to select 
+ * \param endComp   Last component to select, 0=> all
+ * \param parms     [out] Non-point parameters (MUST all be the same ) dimen. at least 4.
+ *                  parms[3] = type
+ *                  0 => point, no parameters
+ *                  1 = Sky Gaussian, [0:3]=maj, min, PA
+ *                  2 = Convolved Gaussian, [0:3]=maj axis, min axis, PA (all deg)
+ *                  3 = Uniform Sphere [0] = radius (deg)
+ * \param err       ObitErr error stack.
+ * \return FArray containing merged CC table contents; MUST be Unreffed.
+ *                Will contain flux, X, Y, + any spectral terms
+ * \li Flux
+ * \li Delta X
+ * \li Delta Y
+ * \li Parms if [3]>=10 [4-?] are spectral components
+ */
+ObitFArray* ObitTableCCUtilMergeSelSpec (ObitTableCC *in, olong startComp, 
+					  olong endComp, ofloat *parms, 
+					  ObitErr *err)
+{
+  ObitFArray *out = NULL;
+  olong i, j, count, lout, nout, ndim, naxis[2];
+  ObitIOCode retCode;
+  olong size, fsize, number=0, ncomp, nterms;
+  ofloat lparms[20];
+  ofloat *entry, *outArray, *SortStruct = NULL;
+  gchar *routine = "ObitTableCCUtilMergeSelSpec";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return out;
+  g_assert (ObitTableCCIsA(in));
+
+  /* Open table */
+  retCode = ObitTableCCOpen (in, OBIT_IO_ReadOnly, err);
+  if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+  
+  /* Must be something in the table else just return */
+  if (in->myDesc->nrow<=0) {
+    retCode = ObitTableCCClose (in, err);
+    if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+    return OBIT_IO_OK;
+  }
+
+  /* Check range of components */
+  startComp = MAX (1, startComp);
+  endComp   = MIN (in->myDesc->nrow, endComp);
+
+  /* build sort structure from table */
+  SortStruct = MakeCCSortStructSel (in, startComp, endComp, 
+				    &size, &number, &ncomp, lparms, 
+				    err);
+  if (err->error) goto cleanup;
+
+  /* Close table */
+  retCode = ObitTableCCClose (in, err);
+  if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+
+  /* Sort */
+  g_qsort_with_data (SortStruct, number, size, CCComparePos, &ncomp);
+
+  /* Merge entries */
+  fsize = size/sizeof(ofloat);
+  CCMergeSpec (SortStruct, fsize, number);
+  
+  /* Sort to descending merged flux densities */
+  ncomp = 1;
+  g_qsort_with_data (SortStruct, number, size, CCCompareFlux, &ncomp);
+
+  /* Count number of valid entries left */
+  entry = SortStruct;
+  count = 0;
+  for (i=0; i<number; i++) {
+    if (entry[0]>-1.0e19) count++;
+    entry += fsize;  /* pointer in table */
+  }
+
+
+  /* Create output Array */
+  lout = 3;
+  /* Need room for spectral terms? */
+  if (in->noParms>4)  nterms = in->noParms-4;
+  else nterms = 0;
+  if (in->noParms>4) lout += nterms;
+
+  ndim = 2; naxis[0] = lout; naxis[1] = count;
+  nout = count;
+  out      = ObitFArrayCreate ("MergedCC", ndim, naxis);
+  naxis[0] = naxis[1] = 0;
+  outArray = ObitFArrayIndex(out, naxis);
+
+  /* Any model parameters */
+  for (i=0; i<4; i++) parms[i] = 0.0;
+  for (i=0; i<MIN (4,in->noParms); i++) parms[i] = lparms[i];
+
+  /* Copy structure to output array */
+  entry = SortStruct;
+  count = 0;
+  for (i=0; i<number; i++) {
+
+    /* Deleted? */
+    if (entry[0]>-1.0e19) {
+      /* Check that array not blown */
+      if (count>nout) {
+	Obit_log_error(err, OBIT_Error,"%s: Internal array overrun",
+		       routine);
+	goto cleanup;
+      }
+      /* copy to out */
+      outArray[0] = entry[2];
+      outArray[1] = entry[0];
+      outArray[2] = entry[1];
+      for (j=0; j<nterms; j++) outArray[3+j] = entry[3+j];
+      outArray += lout;
+      count++;
+    } /* end of contains value */
+    entry += fsize;  /* pointer in table */
+  } /* end loop over array */
+  
+  /* Cleanup */
+ cleanup:
+  if (SortStruct) ObitMemFree(SortStruct);
+  if (err->error) Obit_traceback_val (err, routine, in->name, out);
+
+  return out;
+} /* end ObitTableCCUtilMergeSelSpec */
 
 
 /**
@@ -1259,6 +1829,57 @@ static void CCMerge (ofloat *base, olong size, olong number)
   } /* end loop over table */
 
 } /* end CCMerge */
+
+/**
+ * Merge Spectral entries in sort structure
+ * leaves "X" posn entry in defunct rows -1.0e20
+ * table and then copies over the input table.
+ * Takes flux weighted average of spectral components,
+ * assumed to be entries 3+
+ * \param base    Base address of sort structure
+ * \param size    Size in gfloats of an element
+ * \param number  Number of sort elements
+ */
+static void CCMergeSpec (ofloat *base, olong size, olong number)
+{
+  olong i, j, k;
+  ofloat *array = base;
+  
+  /* Multiply spectral term by flux */
+  j = 0;
+  while (j<number) {
+    for (k=3; k<size; k++) 
+      array[j*size+k] *=  array[j*size+2];
+    j++;
+  }
+
+  i = 0;
+  while (i<number) {
+    j=i+1;
+    while (j<number) {
+      if ((array[j*size]!=array[i*size]) || (array[j*size+1]!=array[i*size+1]))
+	break;
+      /* Sum spectral components  flux */
+      for (k=3; k<size; k++) 
+	array[i*size+k] += array[j*size+k]; 
+      array[i*size+2] += array[j*size+2];  /* sum fluxes */
+      array[j*size] = -1.0e20;             /* Don't need any more */
+      j++;
+    } /* end finding matches */
+    i = j;   /* move on */
+  } /* end loop over table */
+
+  /* Normalize by sum of flux */
+  i = 0;
+  while (i<number) {
+    if ((array[i*size]>-1.0e-19) && (fabs(array[i*size+3])>0.0)) {
+      for (k=3; k<size; k++) 
+	array[i*size+k] /= array[i*size+2]; 
+    }
+    i++;
+  }
+
+} /* end CCMergeSpec */
 
 /**
  * Write valid entries in sort structure

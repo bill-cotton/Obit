@@ -1,6 +1,6 @@
-/* $Id$        */
+/* $Id: ObitUVGridWB.h 69 2009-01-21 16:00:01Z bill.cotton $        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2010                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -25,8 +25,8 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-#ifndef OBITUVGRID_H 
-#define OBITUVGRID_H 
+#ifndef OBITUVGRIDWB_H 
+#define OBITUVGRIDWB_H 
 
 #include "Obit.h"
 #include "ObitErr.h"
@@ -36,52 +36,53 @@
 #include "ObitFArray.h"
 #include "ObitCArray.h"
 #include "ObitFFT.h"
+#include "ObitImageWB.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
- * \file ObitUVGrid.h
- * ObitUVGrid uv data class definition.
+ * \file ObitUVGridWB.h
+ * ObitUVGridWB uv data class definition with beams for SW wideband imaging
  *
- * This class is derived from the #Obit class.
+ * This class is derived from the #ObitUVGrid class.
  *
- * This class is for creating and manipulating a UVGrid as a memory resident 
+ * This class is for creating and manipulating a UVGridWB as a memory resident 
  * intermediate entity between ObitUV and ObitImage classes.
  * The beam corresponding to each image should be made first using the
- * same ObitUVGrid.
+ * same ObitUVGridWB.
  * 
- * \section ObitUVGridaccess Creators and Destructors
- * An ObitUVGrid can be created using newObitUVGrid which allows specifying 
+ * \section ObitUVGridWBaccess Creators and Destructors
+ * An ObitUVGridWB can be created using newObitUVGridWB which allows specifying 
  * a name for the object.  This name is used to label messages.
  *
- * A copy of a pointer to an ObitUVGrid should always be made using the
- * #ObitUVGridRef function which updates the reference count in the object.
- * Then whenever freeing an ObitUVGrid or changing a pointer, the function
- * #ObitUVGridUnref will decrement the reference count and destroy the object
+ * A copy of a pointer to an ObitUVGridWB should always be made using the
+ * #ObitUVGridWBRef function which updates the reference count in the object.
+ * Then whenever freeing an ObitUVGridWB or changing a pointer, the function
+ * #ObitUVGridWBUnref will decrement the reference count and destroy the object
  * when the reference count hits 0.
  * There is no explicit destructor.
  *
  */
 
 /*--------------Class definitions-------------------------------------*/
-/** ObitUVGrid Class structure. */
+/** ObitUVGridWB Class structure. */
 typedef struct {
-#include "ObitUVGridDef.h"   /* this class definition */
-} ObitUVGrid;
+#include "ObitUVGridWBDef.h"   /* this class definition */
+} ObitUVGridWB;
 
 /*----------------- Macroes ---------------------------*/
 /** 
- * Macro to unreference (and possibly destroy) an ObitUVGrid
- * returns a ObitUVGrid*.
+ * Macro to unreference (and possibly destroy) an ObitUVGridWB
+ * returns a ObitUVGridWB*.
  * in = object to unreference
  */
-#define ObitUVGridUnref(in) ObitUnref (in)
+#define ObitUVGridWBUnref(in) ObitUnref (in)
 
 /** 
- * Macro to reference (update reference count) an ObitUVGrid.
- * returns a ObitUVGrid*.
+ * Macro to reference (update reference count) an ObitUVGridWB.
+ * returns a ObitUVGridWB*.
  * in = object to reference
  */
-#define ObitUVGridRef(in) ObitRef (in)
+#define ObitUVGridWBRef(in) ObitRef (in)
 
 /** 
  * Macro to determine if an object is the member of this or a 
@@ -89,62 +90,37 @@ typedef struct {
  * Returns TRUE if a member, else FALSE
  * in = object to reference
  */
-#define ObitUVGridIsA(in) ObitIsA (in, ObitUVGridGetClass())
+#define ObitUVGridWBIsA(in) ObitIsA (in, ObitUVGridWBGetClass())
 
 /*---------------Public functions---------------------------*/
 /** Public: Class initializer. */
-void ObitUVGridClassInit (void);
+void ObitUVGridWBClassInit (void);
 
 /** Public: Constructor. */
-ObitUVGrid* newObitUVGrid (gchar* name);
+ObitUVGridWB* newObitUVGridWB (gchar* name);
 
 /** Public: ClassInfo pointer */
-gconstpointer ObitUVGridGetClass (void);
+gconstpointer ObitUVGridWBGetClass (void);
 
-/** Public: initialize/reset ObitUVGrid structures */
-void ObitUVGridSetup (ObitUVGrid *in, ObitUV *UVin, 
-		       Obit *image,
-		       gboolean doBeam, ObitErr *err);
-/** Typedef for definition of class pointer structure */
-typedef void (*ObitUVGridSetupFP) (ObitUVGrid *in, ObitUV *UVin, 
-		       Obit *image,
-		       gboolean doBeam, ObitErr *err);
+/** Public: initialize/reset ObitUVGridWB structures */
+void ObitUVGridWBSetup (ObitUVGrid *in, ObitUV *UVin, 
+			Obit *image,
+			gboolean doBeam, ObitErr *err);
 
 /** Public: Read uv data accumulating to grid */
-void ObitUVGridReadUV (ObitUVGrid *in, ObitUV *UVin, ObitErr *err);
-typedef ObitIOCode (*ObitUVGridReadUVFP) (ObitUVGrid *in, ObitUV *UVin, 
-					 ObitErr *err);
+void ObitUVGridWBReadUV (ObitUVGrid *in, ObitUV *UVin, ObitErr *err);
 
 /** Public: Parallel read uv data accumulating to grid */
-void ObitUVGridReadUVPar (olong nPar, ObitUVGrid **in, ObitUV **UVin, ObitErr *err);
-typedef ObitIOCode (*ObitUVGridReadUVParFP) (olong nPar, ObitUVGrid **in, ObitUV **UVin, 
-					     ObitErr *err);
+void ObitUVGridWBReadUVPar (olong nPar, ObitUVGrid **in, ObitUV **UVin, 
+			    ObitErr *err);
 
 /** Public: FFT grid to image plane with gridding correction. */
-void ObitUVGridFFT2Im (ObitUVGrid *in, ObitFArray *array, ObitErr *err);
-typedef void (*ObitUVGridFFT2ImFP) (ObitUVGrid *in, ObitFArray *array, ObitErr *err);
+void ObitUVGridWBFFT2Im (ObitUVGrid *in, ObitFArray *array, ObitErr *err);
 
 /** Public: Parallel FFT grid to image plane with gridding correction. */
-void ObitUVGridFFT2ImPar (olong nPar, ObitUVGrid **in, ObitFArray **array, ObitErr *err);
-typedef void (*ObitUVGridFFT2ImParFP) (olong nPar, ObitUVGrid **in, ObitFArray **array, 
-				       ObitErr *err);
+void ObitUVGridWBFFT2ImPar (olong nPar, ObitUVGrid **in, ObitFArray **array, 
+			    ObitErr *err);
 
-/* Private functions for derived classes */
-/** Prepare uv buffer for gridding */
-void PrepBuffer (ObitUVGrid* in, ObitUV *uvdata, olong loVis, olong hiVis);
-typedef void (*PrepBufferFP) (ObitUVGrid* in, ObitUV *uvdata, olong loVis, olong hiVis);
-
-/** Grid uv buffer */
-void GridBuffer (ObitUVGrid* in, ObitUV *uvdata, olong loVis, olong hiVis,
-		 ObitCArray *accGrid);
-typedef void (*GridBufferFP) (ObitUVGrid* in, ObitUV *uvdata, olong loVis, olong hiVis,
-	      ObitCArray *accGrid);
-
-/** Gridding correction */
-void GridCorrFn (ObitUVGrid* in, long n, olong icent, 
-		 ofloat *data, ofloat *ramp, ObitFArray *out);
-typedef void (*GridCorrFnFP) (ObitUVGrid* in, long n, olong icent, 
-			      ofloat *data, ofloat *ramp, ObitFArray *out);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.
@@ -152,7 +128,7 @@ typedef void (*GridCorrFnFP) (ObitUVGrid* in, long n, olong icent,
  * (NULL if none) and function pointers.
  */
 typedef struct  {
-#include "ObitUVGridClassDef.h"
-} ObitUVGridClassInfo; 
+#include "ObitUVGridWBClassDef.h"
+} ObitUVGridWBClassInfo; 
 
-#endif /* OBITUVGRID_H */ 
+#endif /* OBITUVGRIDWB_H */ 

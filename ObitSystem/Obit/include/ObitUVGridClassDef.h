@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2009                                          */
+/*;  Copyright (C) 2002-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -37,3 +37,11 @@ ObitUVGridReadUVParFP ObitUVGridReadUVPar;
 ObitUVGridFFT2ImFP ObitUVGridFFT2Im;
 /** Function pointer to Parallel transform/correct. */
 ObitUVGridFFT2ImParFP ObitUVGridFFT2ImPar;
+
+/* Private functions for derived classes */
+/** Function pointer to Prep buffer. */
+PrepBufferFP PrepBuffer;
+/** Function pointer to Grid buffer. */
+GridBufferFP GridBuffer;
+/** Function pointer to Gridding correction. */
+GridCorrFnFP  GridCorrFn;

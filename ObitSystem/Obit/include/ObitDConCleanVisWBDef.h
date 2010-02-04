@@ -1,6 +1,6 @@
-/* $Id$  */
+/* $Id: ObitDConCleanVisWBDef.h 128 2009-09-23 14:48:29Z bill.cotton $ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2010                                          */
+/*;  Copyright (C) 2010                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -24,25 +24,15 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitUVImager ClassInfo structure */
-/* This is intended to be included in a classInfo structure definition  */
-#include "ObitClassDef.h"  /* Parent class ClassInfo definition file */
-/** Function pointer to Constructor from ObitInfo. */
-ObitUVImagerFromInfoFP ObitUVImagerFromInfo;
-/** Function pointer to Constructor. */
-ObitUVImagerCreateFP ObitUVImagerCreate;
-/** Function pointer to Constructor.given mosaic  */
-ObitUVImagerCreate2FP ObitUVImagerCreate2;
-/** Function pointer to Weight function. */
-ObitUVImagerWeightFP ObitUVImagerWeight;
-/** Function pointer to Image function. */
-ObitUVImagerImageFP ObitUVImagerImage;
-/** Function pointer to Flatten function. */
-ObitUVImagerFlattenFP ObitUVImagerFlatten;
-/** Function pointer to get ImageMosaic function. */
-ObitUVImagerGetMosaicFP ObitUVImagerGetMosaic;
-/** Function pointer to Extract information about underlying structures 
-    to ObitInfoList. */
-ObitUVImagerGetInfoFP ObitUVImagerGetInfo;
-/** Function pointer to get number or parallel images function. */
-ObitUVImagerGetNumParFP ObitUVImagerGetNumPar;
+/*  Define the basic components of the ObitDConCleanVisWB structure   */
+/*  This is intended to be included in a class structure definition   */
+/**
+ * \file ObitDConCleanVisWBDef.h
+ * ObitDConCleanVisWB structure members for this and any derived classes.
+ */
+#include "ObitDConCleanVisDef.h"  /* Parent class definitions */
+/** Order of the imaging 
+    Spectral index only = 1, plus curvature = 2 */
+olong order;
+/** minimum residual flux for 1st and second order */
+ofloat OrdFlux[5];

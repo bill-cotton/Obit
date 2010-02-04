@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1377,6 +1377,8 @@ ObitIOCode ObitImageGetPlane (ObitImage *in, ofloat *data, olong plane[5], ObitE
   /* which plane? */
   iPlane = PlaneNumber(plane, in->myDesc->naxis, in->myDesc->inaxes);
   in->myDesc->plane = ((ObitImageDesc*)in->myIO->myDesc)->plane  = iPlane-1;
+  in->mySel->blc[2] = ((ObitImageSel*)in->myIO->mySel)->blc[2]   = iPlane;
+  in->mySel->trc[2] = ((ObitImageSel*)in->myIO->mySel)->trc[2]   = iPlane;
   in->myDesc->row   = ((ObitImageDesc*)in->myIO->myDesc)->row    = 0;
   in->myDesc->IOsize= ((ObitImageDesc*)in->myIO->myDesc)->IOsize = OBIT_IO_byPlane;
 
@@ -1414,7 +1416,7 @@ ObitIOCode ObitImageGetPlane (ObitImage *in, ofloat *data, olong plane[5], ObitE
  *   descriptor plane needs to be turned into an array.
  * \param in    Pointer to object to be read.
  * \param data  Pointer to buffer with pixel data
- *              if NULL, use the image member of in.
+ *              if NULL, use the image member of in (MUST exist).
  * \param plane 5 element array giving pixel numbers (1-rel) on axes 3-7
  * \param err   ObitErr for reporting errors.
  * \return return code, OBIT_IO_OK => OK
@@ -1423,7 +1425,7 @@ ObitIOCode ObitImagePutPlane (ObitImage *in, ofloat *data, olong plane[5], ObitE
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitIOAccess access;
-  gboolean doOpen = FALSE;
+  gboolean saveExtBuffer, doOpen = FALSE;
   olong iPlane;
   ofloat *buffer = data;
   gchar *routine = "ObitImagePutPlane";
@@ -1440,15 +1442,19 @@ ObitIOCode ObitImagePutPlane (ObitImage *in, ofloat *data, olong plane[5], ObitE
   if ((in->myStatus!=OBIT_Active) && (in->myStatus!=OBIT_Modified)) {
     access = OBIT_IO_ReadWrite;
     doOpen = TRUE;   /* will need to close */
-    in->extBuffer = (data!=NULL);
+    saveExtBuffer = in->extBuffer;
+    in->extBuffer = TRUE;
     retCode = ObitImageOpen (in, access, err);
     if ((retCode!=OBIT_IO_OK) || (err->error))
       Obit_traceback_val (err, routine, in->name, retCode);
+    in->extBuffer = saveExtBuffer;
   }
 
   /* which plane? */
   iPlane = PlaneNumber(plane, in->myDesc->naxis, in->myDesc->inaxes);
   in->myDesc->plane = ((ObitImageDesc*)in->myIO->myDesc)->plane  = iPlane-1;
+  in->mySel->blc[2] = ((ObitImageSel*)in->myIO->mySel)->blc[2]   = iPlane;
+  in->mySel->trc[2] = ((ObitImageSel*)in->myIO->mySel)->trc[2]   = iPlane;
   in->myDesc->row   = ((ObitImageDesc*)in->myIO->myDesc)->row    = 0;
   in->myDesc->IOsize= ((ObitImageDesc*)in->myIO->myDesc)->IOsize = OBIT_IO_byPlane;
 
@@ -1767,6 +1773,40 @@ void ObitImageSetSelect (ObitImage *in, ObitIOSize IOBy,
   
 } /* end ObitImageSetSelect */
 
+/**
+ * Get pointer to image beam
+ * \param image  Image whose beam name is to be set 
+ * \param beamNo Which order Beam, only 0 for base class [0-rel]
+ * \param plane  [out] Plane number for beam [all 1s here]
+ * \param err    Obit error structure
+ * \return pointer to beam, NULL if not defined.
+ */
+ObitImage* ObitImageGetBeam (ObitImage *image, olong beamNo, 
+			     olong plane[5], ObitErr *err) 
+{
+  olong i;
+  ObitImage *theBeam;
+
+  /* error checks */
+  g_assert (ObitImageIsA(image));
+
+  for (i=0; i<5; i++) plane[i] = 1;  /* Initialize plane */
+
+  theBeam = (ObitImage*)image->myBeam;
+  return theBeam;
+} /* end ObitImageGetBeam */
+
+/**
+ * Get highest order of image beam
+ * Used for Sault-Wieringa wideband imaging, 0 for base class
+ * \param image  Image whose beam name is to be set 
+ * \return order number
+ */
+olong ObitImageGetBeamOrder (ObitImage *image) 
+{
+  return 0;
+} /* end ObitImageGetBeam */
+
 /*-------Private functions called by ObitData class ------*/
 /** Private:  Copy Constructor for scratch file*/
 static ObitData* newObitDataImageScratch (ObitData *in, ObitErr *err)
@@ -1892,6 +1932,10 @@ static void ObitImageClassInfoDefFn ( gpointer inClass)
     (ObitImageUpdateTablesFP)ObitImageUpdateTables;
   theClass->ObitImageSetBeamName = 
     (ObitImageSetBeamNameFP)ObitImageSetBeamName;
+  theClass->ObitImageGetBeam = 
+    (ObitImageGetBeamFP)ObitImageGetBeam;
+  theClass->ObitImageGetBeamOrder = 
+    (ObitImageGetBeamOrderFP)ObitImageGetBeamOrder;
 
   /* Function pointers referenced from ObitData class */
   theClass->newObitDataScratch  = (newObitDataScratchFP)newObitDataImageScratch;
