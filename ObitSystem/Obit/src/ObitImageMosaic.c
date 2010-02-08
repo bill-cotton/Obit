@@ -1031,7 +1031,7 @@ ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *er
   
   /* Not bigger than FOV */
   imsize = MIN (imsize, ((2.0*3600.0*FOV/fabs(xCells))+10.99));
-  overlap = MAX (20, (olong)(0.1*imsize + 0.5));
+  overlap = 7;
   cells[0] = xCells; cells[1] = yCells;
   ObitUVGetRADec (uvData, &ra0, &dec0, err);
   if (err->error) Obit_traceback_val (err, routine, uvData->name, out);
@@ -2580,6 +2580,8 @@ FlyEye (ofloat radius, olong imsize, ofloat cells[2], olong overlap,
 
   /* spacing of imaging region in  rad.   */
   drad = 0.5 * AS2RAD * fabs(cells[0]) * (imsize - overlap);
+  /* a bit less spacing to allow for sky curvature */
+  drad *= 1.0 / (1. + tan(drad));
   dx = 1.5 * drad;
   dy = cos (30.0*DG2RAD) * drad;
 

@@ -432,7 +432,7 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
 {
   ObitTableSN *outCal=NULL;
   ObitTableSNRow *row=NULL;
-  ObitAntennaList *AntList=NULL;
+  ObitAntennaList **AntList=NULL;
   ObitTableAN *ANTable=NULL;
   ObitSourceList *SouList=NULL;
   ObitTableSU *SUTable=NULL;
@@ -442,13 +442,13 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
   ObitInfoType type;
   ofloat *rec, solInt, t0, sumTime, cbase, lastTime=-1.0, lastSource=-1.0, lastFQID=-1.0;
   ofloat delTime, curSou=-1.0, curFQ=-1.0;
-  olong i, ia, lrec, maxant;
+  olong i, ia, lrec, maxant, numSubA, iANver;
   olong  nTime, SubA=0, ant1, ant2, lastSubA=-1;
   oint numPol, numIF, numOrb, numPCal;
   odouble DecR=0.0, RAR=0.0, ArrLong, cosdec=0.0;
   gboolean doCalSelect, doFirst=TRUE, someData=FALSE, gotAnt[MAXANT], invert=FALSE;
   ObitIOCode retCode;
-  gchar *tname;
+  gchar *tname, *ANType = "AIPS AN";;
   gchar *routine = "ObitTableSNGetZeroFR";
  
    /* error checks */
@@ -516,26 +516,34 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
   }
 
   /* Antenna info */
-  ver      = 1;
-  access   = OBIT_IO_ReadOnly;
-  numOrb   = 0;
-  numPCal  = 0;
-  ANTable = newObitTableANValue ("AN table", (ObitData*)outUV, 
-				 &ver, access, numOrb, numPCal, err);
-  if (ANTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with AN table");
-  AntList = ObitTableANGetList (ANTable, err);
-  if (err->error) Obit_traceback_val (err, routine, outUV->name, outCal);
+  /* How many AN tables (no. subarrays)?  */
+  numSubA = ObitTableListGetHigh (inUV->tableList, ANType);
+  AntList = g_malloc0(numSubA*sizeof(ObitAntennaList*));
+  maxant = 0;
 
-  /* Cleanup */
-  ANTable = ObitTableANUnref(ANTable);
+  /* Loop over AN tables (subarrays) */
+  for (iANver=1; iANver<=numSubA; iANver++) {
+    access   = OBIT_IO_ReadOnly;
+    numOrb   = 0;
+    numPCal  = 0;
 
-  /* Antenna coordinates to wavelengths at reference frequency */
-  for (i=0; i<AntList->number; i++) {
-    AntList->ANlist[i]->AntXYZ[0] *= desc->crval[desc->jlocf]/VELIGHT;
-    AntList->ANlist[i]->AntXYZ[1] *= desc->crval[desc->jlocf]/VELIGHT;
-    AntList->ANlist[i]->AntXYZ[2] *= desc->crval[desc->jlocf]/VELIGHT;
-  }
-  ArrLong = AntList->ANlist[0]->AntLong;  /* Array longitude */
+    ANTable = newObitTableANValue ("AN table", (ObitData*)outUV, 
+				   &iANver, access, numOrb, numPCal, err);
+    if (ANTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with AN table");
+    AntList[iANver-1] = ObitTableANGetList (ANTable, err);
+    if (err->error) Obit_traceback_val (err, routine, outUV->name, outCal);
+    
+    /* Cleanup */
+    ANTable = ObitTableANUnref(ANTable);
+
+    /* Antenna coordinates to wavelengths at reference frequency */
+    for (i=0; i<AntList[iANver-1]->number; i++) {
+      AntList[iANver-1]->ANlist[i]->AntXYZ[0] *= desc->crval[desc->jlocf]/VELIGHT;
+      AntList[iANver-1]->ANlist[i]->AntXYZ[1] *= desc->crval[desc->jlocf]/VELIGHT;
+      AntList[iANver-1]->ANlist[i]->AntXYZ[2] *= desc->crval[desc->jlocf]/VELIGHT;
+    }
+    maxant = MAX (maxant, AntList[iANver-1]->number);  /* Highest antenna number */
+  } /* End loop over subarrays */
 
   /* Open table */
   if ((ObitTableSNOpen (outCal, OBIT_IO_WriteOnly, err) 
@@ -556,7 +564,7 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
   row->TimeI  = 0.0;
   row->SourID = 0;
   row->antNo  = 0;
-  row->SubA   = 0;
+  row->SubA   = 1;
   row->NodeNo = 0;
   row->FreqID = 0;
   row->IFR       = 0.0;
@@ -584,7 +592,6 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
   } /* end two poln */
   /* List of antennas found */
   for (i=0; i<MAXANT; i++) gotAnt[i] = FALSE;
-  maxant = AntList->number;
 
   /* Number of antennas */
   outCal->numAnt = maxant;
@@ -620,7 +627,7 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
       cbase      = rec[inUV->myDesc->ilocb]; /* Baseline */
       ant1       = (cbase / 256.0) + 0.001;
       ant2       = (cbase - ant1 * 256) + 0.001;
-      lastSubA   = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 0.5);
+      lastSubA   = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 1.5);
     }
     
     /* Loop over buffer */
@@ -631,6 +638,8 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
       if (inUV->myDesc->ilocfq>0) curFQ  = rec[inUV->myDesc->ilocfq];
       if ((rec[inUV->myDesc->iloct] > (t0+solInt)) || 
 	  (curSou != lastSource) ||  (curFQ != lastFQID)) {
+	
+	ArrLong = AntList[lastSubA-1]->ANlist[0]->AntLong;  /* Array longitude */
 	
 	/* Not first time - assume first descriptive parameter never blanked */
 	if (nTime>0) {
@@ -645,7 +654,7 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
 	      row->FreqID = (oint)(MAX(lastFQID,0.0)+0.5);
 	      row->SubA   = lastSubA;
 	      /* calculate/write rows */
-	      SetRow (AntList, SouList, ArrLong, desc, &RAR, &DecR, delTime,
+	      SetRow (AntList[row->SubA-1], SouList, ArrLong, desc, &RAR, &DecR, delTime,
 		      maxant,  gotAnt, invert, row, outCal, err);
 	      if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
 	    } else { /* Not first scan */
@@ -656,7 +665,7 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
 	      row->FreqID = (oint)(MAX(lastFQID,0.0)+0.5);
 	      row->SubA   = lastSubA;
 	      /* calculate/write rows */
-	      SetRow (AntList, SouList, ArrLong, desc, &RAR, &DecR, delTime,
+	      SetRow (AntList[row->SubA-1], SouList, ArrLong, desc, &RAR, &DecR, delTime,
 		      maxant,  gotAnt, invert, row, outCal, err);
 	      if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
 
@@ -676,7 +685,7 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
       
 	  /* Write Cal table */
 	  /* calculate/write rows */
-	  SetRow (AntList, SouList, ArrLong, desc, &RAR, &DecR, delTime,
+	  SetRow (AntList[row->SubA-1], SouList, ArrLong, desc, &RAR, &DecR, delTime,
 		  maxant,  gotAnt, invert, row, outCal, err);
 	  if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
 
@@ -699,7 +708,7 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
       cbase = rec[inUV->myDesc->ilocb]; /* Baseline */
       ant1 = (cbase / 256.0) + 0.001;
       ant2 = (cbase - ant1 * 256) + 0.001;
-      SubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 0.5);
+      SubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 1.5);
       if(lastSubA<=0) lastSubA = SubA;
       gotAnt[ant1] = TRUE;
       gotAnt[ant2] = TRUE;
@@ -720,7 +729,7 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
 
     /* Write Cal table */
     /* calculate/write rows */
-    SetRow (AntList, SouList, ArrLong, desc, &RAR, &DecR, delTime,
+    SetRow (AntList[row->SubA-1], SouList, ArrLong, desc, &RAR, &DecR, delTime,
 	    maxant,  gotAnt, invert, row, outCal, err);
     if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
   } /* End final cal */
@@ -740,7 +749,12 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
   if (!someData) Obit_log_error(err, OBIT_InfoWarn, 
 				"%s: Warning: NO data selected", routine);
   /* Cleanup */
-  AntList = ObitAntennaListUnref(AntList);
+  if (AntList) {
+    for (i=0; i<numSubA; i++) {
+      AntList[i] = ObitAntennaListUnref(AntList[i]);
+    }
+    g_free(AntList);
+  }
   SouList = ObitSourceListUnref(SouList);
   row     = ObitTableSNRowUnref(row); 
   return outCal;
@@ -785,7 +799,7 @@ static void SetRow (ObitAntennaList *AntList, ObitSourceList *SouList,
   odouble AntLst, HrAng=0.0, cosdec=0.0;
   olong ia, j, suid, iRow, numIF, numPol;
   gdouble twopi = 2.0* G_PI, omegaE=7.29115e-5;
-  ofloat wt, uvw[3], bl[3], delay, phase;
+  ofloat time, wt, uvw[3], bl[3], delay, phase;
   gchar *routine = "ObitTableSN:SetRow";
 
   numIF  = outCal->numIF; 
@@ -797,9 +811,10 @@ static void SetRow (ObitAntennaList *AntList, ObitSourceList *SouList,
     *RAR     = SouList->SUlist[suid]->RAApp*DG2RAD;
     *DecR    = SouList->SUlist[suid]->DecApp*DG2RAD;
   }
-  cosdec   = cos(*DecR);
 
-  AntLst = AntList->GSTIAT0 + ArrLong + row->Time*AntList->RotRate;
+  cosdec   = cos(*DecR);
+  time     = row->Time - (row->SubA-1)*5.0;  /* Correct time for subarray */
+  AntLst = AntList->GSTIAT0 + ArrLong + time*AntList->RotRate;
   HrAng  = AntLst - *RAR;
   /* Loop over antennas found */
   for (ia=1; ia<=maxant; ia++) {
