@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -185,6 +185,12 @@ gboolean ObitDConCleanAutoWindow(ObitDConClean *in, olong *fields,
 				 ObitFArray **pixarray, ObitErr *err);
 typedef gboolean (*ObitDConCleanAutoWindowFP) (ObitDConClean *in, olong *fields, 
 					       ObitFArray **pixarray, ObitErr *err);
+
+/* Private routines */
+/** Private: Read Beam patches. */
+void ReadBP (ObitDConClean* in, ObitErr *err);
+typedef void (*ReadBPFP) (ObitDConClean* in, ObitErr *err);
+
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

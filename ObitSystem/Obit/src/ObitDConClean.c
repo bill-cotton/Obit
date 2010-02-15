@@ -97,8 +97,8 @@ void  ObitDConCleanClear (gpointer in);
 /** Private: Set Beam patch, min. flux, decide on SDI CLEAN. */
 void ObitDConCleanDecide (ObitDConClean* in, ObitErr *err);
 
-/** Private: Read Beam patch. */
-static void ReadBP (ObitDConClean* in, ObitErr *err);
+/** Private: Read Beam patches. */
+void ReadBP (ObitDConClean* in, ObitErr *err);
 
 /** Private: Apply Gaussian taper to uv grid. */
 static void GaussTaper (ObitCArray* uvGrid,  ObitImageDesc *imDesc,
@@ -1029,6 +1029,7 @@ gboolean ObitDConCleanSelect(ObitDConClean *in, ObitFArray **pixarray,
 			     ObitErr *err)
 {
   gboolean done = FALSE;
+  const ObitDConCleanClassInfo *inClass;
   const ObitDConCleanPxListClassInfo *pxListClass;
   gchar *routine = "ObitDConCleanSelect";
 
@@ -1037,7 +1038,8 @@ gboolean ObitDConCleanSelect(ObitDConClean *in, ObitFArray **pixarray,
   g_assert (ObitDConCleanIsA(in));
 
   /* Read beam Patch(es) */
-  ReadBP (in, err);
+  inClass = (ObitDConCleanClassInfo*)in->ClassInfo; /* class structure */
+  inClass->ReadBP (in, err);
   if (err->error) Obit_traceback_val (err, routine, in->name, done);
 
   /* Read Pixel List */
@@ -1699,6 +1701,9 @@ static void ObitDConCleanClassInfoDefFn (gpointer inClass)
   theClass->ObitDConCleanAutoWindow = 
     (ObitDConCleanAutoWindowFP)ObitDConCleanAutoWindow;
 
+  /* private functions */
+  theClass->ReadBP = (ReadBPFP)ReadBP;
+
 } /* end ObitDConCleanClassDefFn */
 
 /*---------------Private functions--------------------------*/
@@ -1930,7 +1935,7 @@ void ObitDConCleanDecide (ObitDConClean* in, ObitErr *err)
  * \param in   The object to deconvolve
  * \param err  Obit error stack object.
  */
-static void ReadBP (ObitDConClean* in, ObitErr *err)
+void ReadBP (ObitDConClean* in, ObitErr *err)
 {
   ObitIOCode retCode;
   ObitIOSize IOsize = OBIT_IO_byPlane;
@@ -2261,6 +2266,7 @@ static void KillStatsFuncArgs (olong nargs, StatsFuncArg **ThreadArgs)
   olong i;
 
   if (ThreadArgs==NULL) return;
+  ObitThreadPoolFree (ThreadArgs[0]->thread);  /* Free thread pool */
   for (i=0; i<nargs; i++) {
     if (ThreadArgs[i]) {
       if (ThreadArgs[i]->inData)  ObitFArrayUnref(ThreadArgs[i]->inData);

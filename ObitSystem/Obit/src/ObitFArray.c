@@ -3234,6 +3234,7 @@ static void KillFAFuncArgs (olong nargs, FAFuncArg **ThreadArgs)
   olong i;
 
   if (ThreadArgs==NULL) return;
+  ObitThreadPoolFree (ThreadArgs[0]->thread);  /* Free thread pool */
   for (i=0; i<nargs; i++) {
     if (ThreadArgs[i]) {
       if (ThreadArgs[i]->thread) ObitThreadUnref(ThreadArgs[i]->thread);

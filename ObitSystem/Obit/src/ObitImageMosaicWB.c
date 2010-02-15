@@ -1657,27 +1657,6 @@ void ObitImageMosaicWBInit  (gpointer inn)
     ParentClass->ObitInit (inn);
 
   /* set members in this class */
-  in->thread    = newObitThread();
-  in->info      = newObitInfoList(); 
-  in->FullField = NULL;
-  in->doFull    = FALSE;
-  in->images    = ObitMemAlloc0Name(in->numberImages*sizeof(ObitImage*),"ImageMosaicWB images");
-  for (i=0; i<in->numberImages; i++) in->images[i] = NULL;
-  in->imDisk    = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicWB imDisk");
-  in->nx        = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicWB nx");
-  in->ny        = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicWB ny");
-  in->nplane    = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicWB nplane");
-  in->RAShift   = ObitMemAlloc0Name(in->numberImages*sizeof(ofloat),"ImageMosaicWB RAShift");
-  in->DecShift  = ObitMemAlloc0Name(in->numberImages*sizeof(ofloat),"ImageMosaicWB DecShift");
-  in->isAuto    = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicWB isAuto");
-  in->isShift   = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicWB isShift");
-  in->imName    = NULL;
-  in->imClass   = NULL;
-  in->bmaj      = 0.0;
-  in->bmin      = 0.0;
-  in->bpa       = 0.0;
-  in->Radius    = 0.0;
-  in->OutlierSize= 0;
 
 } /* end ObitImageMosaicWBInit */
 
@@ -1697,24 +1676,6 @@ void ObitImageMosaicWBClear (gpointer inn)
   g_assert (ObitIsA(in, &myClassInfo));
   
   /* delete this class members */
-  in->thread    = ObitThreadUnref(in->thread);
-  in->info      = ObitInfoListUnref(in->info);
-  in->FullField = ObitUnref(in->FullField);
-  if (in->images) {
-    for (i=0; i<in->numberImages; i++)
-      in->images[i] = ObitUnref(in->images[i]);
-    in->images = ObitMemFree(in->images); 
-  }
-  if (in->imDisk)   ObitMemFree(in->imDisk);
-  if (in->nx)       ObitMemFree(in->nx);
-  if (in->ny)       ObitMemFree(in->ny);
-  if (in->nplane)   ObitMemFree(in->nplane);
-  if (in->RAShift)  ObitMemFree(in->RAShift);
-  if (in->DecShift) ObitMemFree(in->DecShift);
-  if (in->isAuto)   ObitMemFree(in->isAuto);
-  if (in->isShift)  ObitMemFree(in->isShift);
-  if (in->imName)   g_free(in->imName);
-  if (in->imClass)  g_free(in->imClass);
  
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

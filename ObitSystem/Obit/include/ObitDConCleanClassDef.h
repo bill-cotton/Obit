@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -43,6 +43,8 @@ ObitDConCleanRestoreFP ObitDConCleanRestore;
 ObitDConCleanFlattenFP ObitDConCleanFlatten;
 /** Pointer to Restore subtracted components from other fields.*/
 ObitDConCleanXRestoreFP ObitDConCleanXRestore;
-/** Pointer to .Automatically add window. */
+/** Pointer to Automatically add window. */
 ObitDConCleanAutoWindowFP ObitDConCleanAutoWindow;
-
+/* Private functions */
+/** Pointer to Read beamp atches */
+ReadBPFP ReadBP;

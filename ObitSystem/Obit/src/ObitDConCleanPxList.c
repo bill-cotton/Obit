@@ -416,7 +416,7 @@ ObitDConCleanPxListCreate (gchar* name, ObitImageMosaic *mosaic,
   out->minFlux   = ObitMemAlloc0Name (nfield*sizeof(ofloat), "PxList Clean Mix flux");
   out->factor    = ObitMemAlloc0Name (nfield*sizeof(ofloat), "PxList Clean factor");
   out->CCTable   = ObitMemAlloc0Name (nfield*sizeof(ObitTableCC*), "PxList CC tables");
-  out->BeamPatch = ObitMemAlloc0Name (nfield*sizeof(ObitFArray*), "PxList CC tables");
+  out->BeamPatch = ObitMemAlloc0Name (nfield*sizeof(ObitFArray*), "PxList Beampatch");
   for (i=0; i<nfield; i++) {
     out->iterField[i] = 0;
     out->CCver[i]     = 0;
@@ -1134,6 +1134,7 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
     /* Cleanup */
   CCRow = ObitTableCCRowUnref(CCRow);  
   KillCLEANArgs (nThreads, targs);
+  ObitThreadPoolFree (in->thread);
    
   /* Tell about results */
   if (in->prtLv>1) {
@@ -1414,6 +1415,7 @@ gboolean ObitDConCleanPxListSDI (ObitDConCleanPxList *in, ObitErr *err)
   /* Cleanup */
   CCRow = ObitTableCCRowUnref(CCRow);  
   KillCLEANArgs (nThreads, targs);
+  ObitThreadPoolFree (in->thread);
   
  
   /* Tell about results */

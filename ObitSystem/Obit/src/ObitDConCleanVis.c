@@ -1,3 +1,7 @@
+/* To do
+- SubNewCCs loop over planes subtracting and rewriting planes
+   then form new combined image, read and replace elements in pixarray
+ */
 /* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2005-2010                                          */
@@ -2598,8 +2602,6 @@ static void ObitDConCleanVisDecide (ObitDConCleanVis* in, ObitErr *err)
     }
   } else {
     in->doSDI = FALSE;
-    /* Impose min fraction of initial residual */
-    in->minFluxLoad = MAX (in->minFluxLoad, in->PixelHist->histMax*in->ccfLim);
   }
 
   /* Give warning if skipping */
@@ -3795,6 +3797,7 @@ static void KillImSubFuncArgs (olong nargs, ImSubFuncArg **ThreadArgs)
   olong i;
 
   if (ThreadArgs==NULL) return;
+  ObitThreadPoolFree (ThreadArgs[0]->thread);  /* Free thread pool */
   for (i=0; i<nargs; i++) {
     if (ThreadArgs[i]) {
       g_free(ThreadArgs[i]);

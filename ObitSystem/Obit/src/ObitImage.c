@@ -1476,6 +1476,11 @@ ObitIOCode ObitImagePutPlane (ObitImage *in, ofloat *data, olong plane[5], ObitE
   /* set Status */
   in->myStatus = OBIT_Modified;
 
+  /* save max/min/blanking */
+  in->myDesc->maxval    = ((ObitImageDesc*)in->myIO->myDesc)->maxval;
+  in->myDesc->minval    = ((ObitImageDesc*)in->myIO->myDesc)->minval;
+  in->myDesc->areBlanks = ((ObitImageDesc*)in->myIO->myDesc)->areBlanks;
+
   /* Close if needed */
   if (doOpen) {
     retCode = ObitImageClose (in, err);

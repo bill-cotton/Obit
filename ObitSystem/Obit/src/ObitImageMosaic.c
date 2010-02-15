@@ -2510,16 +2510,16 @@ void ObitImageMosaicClear (gpointer inn)
       in->images[i] = ObitUnref(in->images[i]);
     in->images = ObitMemFree(in->images); 
   }
-  if (in->imDisk)   ObitMemFree(in->imDisk);
-  if (in->nx)       ObitMemFree(in->nx);
-  if (in->ny)       ObitMemFree(in->ny);
-  if (in->nplane)   ObitMemFree(in->nplane);
-  if (in->RAShift)  ObitMemFree(in->RAShift);
-  if (in->DecShift) ObitMemFree(in->DecShift);
-  if (in->isAuto)   ObitMemFree(in->isAuto);
-  if (in->isShift)  ObitMemFree(in->isShift);
-  if (in->imName)   g_free(in->imName);
-  if (in->imClass)  g_free(in->imClass);
+  if (in->imDisk)   ObitMemFree(in->imDisk); in->imDisk = NULL;
+  if (in->nx)       ObitMemFree(in->nx);     in->nx     = NULL;
+  if (in->ny)       ObitMemFree(in->ny);     in->ny     = NULL;
+  if (in->nplane)   ObitMemFree(in->nplane); in->nplane = NULL;
+  if (in->RAShift)  ObitMemFree(in->RAShift);in->RAShift=NULL;
+  if (in->DecShift) ObitMemFree(in->DecShift);in->DecShift=NULL;
+  if (in->isAuto)   ObitMemFree(in->isAuto); in->isAuto = NULL;
+  if (in->isShift)  ObitMemFree(in->isShift);in->isShift= NULL;
+  if (in->imName)   g_free(in->imName);      in->imName = NULL;
+  if (in->imClass)  g_free(in->imClass);     in->imClass= NULL;
  
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
