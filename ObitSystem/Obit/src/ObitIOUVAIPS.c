@@ -1714,8 +1714,8 @@ ObitIOUVAIPSCreateBuffer (ofloat **data, olong *size,
   /* get size */
   *size = ObitUVSelBufferSize(in->myDesc, in->mySel);
 
-  /* Add a bit for saftey */
-  *size += 128;
+  /* Add a bit for saftey 
+  *size += 128;*/
 
   /* (re)allocate */
   name =  g_strconcat ("UVBuffer:", in->name, NULL);

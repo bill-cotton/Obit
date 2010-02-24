@@ -37,6 +37,8 @@ ObitUVImagerCreate2FP ObitUVImagerCreate2;
 ObitUVImagerWeightFP ObitUVImagerWeight;
 /** Function pointer to Image function. */
 ObitUVImagerImageFP ObitUVImagerImage;
+/** Function pointer to 2D Shift function. */
+ObitUVImagerShiftyFP ObitUVImagerShifty;
 /** Function pointer to Flatten function. */
 ObitUVImagerFlattenFP ObitUVImagerFlatten;
 /** Function pointer to get ImageMosaic function. */

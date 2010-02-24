@@ -1216,7 +1216,8 @@ void ObitImageMosaicWBFlatten (ObitImageMosaic *inn, ObitErr *err)
 
   /* How big do we want ? */
   /*radius = MAX (in->FOV/(3600.0*in->xCells), in->FOV/(3600.0*in->yCells));*/
-  radius = in->Radius;
+  radius = (olong)(0.5 + ObitImageMosaicFOV((ObitImageMosaic*)in, err)/fabs(in->xCells));
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Loop over spectral planes */
   if (ObitImageWBIsA(in->FullField))
@@ -1645,7 +1646,6 @@ static void ObitImageMosaicWBClassInfoDefFn (gpointer inClass)
 void ObitImageMosaicWBInit  (gpointer inn)
 {
   ObitClassInfo *ParentClass;
-  olong i;
   ObitImageMosaicWB *in = inn;
 
   /* error checks */
@@ -1670,7 +1670,6 @@ void ObitImageMosaicWBClear (gpointer inn)
 {
   ObitClassInfo *ParentClass;
   ObitImageMosaicWB *in = inn;
-  olong i;
   
   /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));

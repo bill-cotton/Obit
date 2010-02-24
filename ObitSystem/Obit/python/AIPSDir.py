@@ -55,7 +55,7 @@ def ehex(n, width=0, padding=None):
 # end ehex
 
 # Python interface to AIPS directory utilities
-import Obit, OSystem, OErr, pydoc, string, sre, os, Image, UV
+import Obit, OSystem, OErr, pydoc, string, re, os, Image, UV
 global AIPSdisks, nAIPS
 nAIPS = 0
 AIPSdisks = []
@@ -93,14 +93,14 @@ def Amatch(tmpl, strn):
     strng    = String to search for occurance of tmpl
     """
     # All blank?
-    if sre.match("^ *$",tmpl):
+    if re.match("^ *$",tmpl):
         return True
     # Full test
-    t   = sre.escape(tmpl.strip())
+    t   = re.escape(tmpl.strip())
     tt  = t.replace("\\?",".")
     ttt = tt.replace("\\*",".*")
     pat = "^"+ttt+"$"
-    m = sre.match(pat,strn.strip())
+    m = re.match(pat,strn.strip())
     return m!=None
     # end Amatch
 

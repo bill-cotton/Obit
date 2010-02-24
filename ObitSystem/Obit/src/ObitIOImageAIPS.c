@@ -518,7 +518,7 @@ ObitIOCode ObitIOImageAIPSRead (ObitIOImageAIPS *in, ofloat *data,
   /* set current request by desc->IOsize */
   if (desc->IOsize==OBIT_IO_byRow) {
     
-    plane = MAX (1, plane);
+    plane = MAX(plane, sel->blc[2]);
     row++; /* increment row */
     if (row>sel->trc[1]) { /* next plane */
       row = sel->blc[1];
@@ -619,8 +619,8 @@ ObitIOCode ObitIOImageAIPSWrite (ObitIOImageAIPS *in, ofloat *data,
   /* set current request by desc->IOsize */
   if (desc->IOsize==OBIT_IO_byRow) {
     
-    plane = MAX (1, plane);
-    row++; /* increment row */
+    plane = MAX (sel->blc[2], plane);
+    row++;   /* increment row */
     if (row>sel->trc[1]) { /* next plane */
       row = sel->blc[1];
       plane++;

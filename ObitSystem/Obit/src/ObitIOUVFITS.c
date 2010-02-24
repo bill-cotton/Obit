@@ -2076,7 +2076,7 @@ ObitIOUVFITSWriteDescriptor (ObitIOUVFITS *in, ObitErr *err)
   strncpy (commnt, "             ", FLEN_COMMENT);
   for (i=0; i<nkey; i++) {
     /* Copy from ObitInfoList */
-    ObitInfoListGetNumber(desc->info, i, &keyNameP, &keyType, dim, 
+    ObitInfoListGetNumber(desc->info, i+1, &keyNameP, &keyType, dim, 
 			  blob.s, err);
     if (err->error)  Obit_traceback_val (err, routine, in->name, retCode);
     /* Copy, possibly truncating name */

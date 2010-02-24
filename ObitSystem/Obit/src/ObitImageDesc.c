@@ -408,6 +408,7 @@ void ObitImageDescIndex (ObitImageDesc* in)
     else if (!strncmp (in->ctype[i], "VELO",     4)) in->jlocf = i;
     else if (!strncmp (in->ctype[i], "FREQ",     4)) in->jlocf = i;
     else if (!strncmp (in->ctype[i], "SPECLOGF", 8)) in->jlocf = i;
+    else if (!strncmp (in->ctype[i], "SPECLNMF", 8)) in->jlocf = i;
     if (!strncmp (in->ctype[i], "IF",       2)) in->jlocif = i;
   }
   /* Make sure equinox set if epoch set */

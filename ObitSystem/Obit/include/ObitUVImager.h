@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2009                                          */
+/*;  Copyright (C) 2005-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -265,6 +265,12 @@ void ObitUVImagerImage (ObitUVImager *in, olong *field, gboolean doWeight,
 /** Typedef for definition of class pointer structure */
 typedef void (*ObitUVImagerImageFP) (ObitUVImager *in, olong *field, gboolean doWeight, 
 				     gboolean doBeam, gboolean doFlatten, ObitErr *err);
+
+/** Public: Shift image for 2D */
+void ObitUVImagerShifty (ObitUVImager *in, olong *field, gboolean doall, ObitErr *err);
+/** Typedef for definition of class pointer structure */
+typedef void (*ObitUVImagerShiftyFP) (ObitUVImager *in, olong *field, gboolean doall, 
+				      ObitErr *err);
 
 /** Public: Flatten */
 void ObitUVImagerFlatten (ObitUVImager *in, ObitErr *err);

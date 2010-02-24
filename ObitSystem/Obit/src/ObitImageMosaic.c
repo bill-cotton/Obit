@@ -1398,7 +1398,8 @@ void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err)
 
   /* How big do we want ? */
   /*radius = MAX (in->FOV/(3600.0*in->xCells), in->FOV/(3600.0*in->yCells));*/
-  radius = in->Radius;
+  radius = (olong)(0.5 + ObitImageMosaicFOV(in, err)/fabs(in->xCells));
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
  
   /* Zero fill accumulations */
   ObitFArrayFill (sc1, 0.0);

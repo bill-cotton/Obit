@@ -1770,7 +1770,7 @@ gpointer ThreadSDICLEAN (gpointer args)
 
 /**
  * Make arguments for Threaded CLEAN
- * \param in         OTF with internal buffer to be modified.
+ * \param in         Clean with internal buffer to be modified.
  * \param maxThread  Maximum desirable no. threads
  * \param args       Created array of CLEANFuncArg, 
  *                   delete with KillCLEANArgs

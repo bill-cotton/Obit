@@ -744,8 +744,8 @@ ObitIOCode ObitIOImageFITSRead (ObitIOImageFITS *in, ofloat *data,
   /* set current request by desc->IOsize */
   if (desc->IOsize==OBIT_IO_byRow) {
 
-    plane = MAX (1, plane);
-   /* increment row */
+    plane = MAX(plane, sel->blc[2]);
+    /* increment row */
     row++;
     if (row>sel->trc[1]) { /* next plane */
       row = sel->blc[1];
@@ -855,12 +855,12 @@ ObitIOCode ObitIOImageFITSWrite (ObitIOImageFITS *in, ofloat *data,
     (sel->trc[1]!=desc->inaxes[1]);
 
   /* set cfitsio request parameters */
-  row = MAX (desc->row, sel->blc[1]-1);
+  row   = MAX (desc->row,   sel->blc[1]-1);
   plane = MAX (desc->plane, sel->blc[2]-1);
 
   /* set current request by desc->IOsize */
   if (desc->IOsize==OBIT_IO_byRow) {
-    plane = MAX (1, plane);
+    plane = MAX (sel->blc[2], plane);
     row++; /* increment row */
     nRows = 1;
     if (row>sel->trc[1]) { /* next plane */
@@ -1376,7 +1376,7 @@ ObitIOImageFITSWriteDescriptor (ObitIOImageFITS *in, ObitErr *err)
   strncpy (commnt, "             ", FLEN_COMMENT);
   for (i=0; i<nkey; i++) {
     /* Read from ObitInfoList */
-    ObitInfoListGetNumber(desc->info, i, &keyNameP, &keyType, dim, 
+    ObitInfoListGetNumber(desc->info, i+1, &keyNameP, &keyType, dim, 
 			  blob.s, err);
     /* Copy, possibly truncating name */
     strncpy (keyName, keyNameP, FLEN_KEYWORD); keyName[FLEN_KEYWORD-1] = 0;
