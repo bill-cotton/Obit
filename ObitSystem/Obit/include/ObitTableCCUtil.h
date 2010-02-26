@@ -64,7 +64,15 @@ enum obitCCCompType {
   /** Convolved Gaussian + spectrum */
   OBIT_CC_CGaussModSpec = OBIT_CC_CGaussMod+10,  
   /** Uniform sphere + spectrum */
-  OBIT_CC_USphereModSpec = OBIT_CC_USphereMod+10 
+  OBIT_CC_USphereModSpec = OBIT_CC_USphereMod+10,
+  /** Point + tabulated spectrum */
+  OBIT_CC_PointModTSpec = OBIT_CC_PointMod+20,
+  /** Gaussian on sky + tabulated spectrum */
+  OBIT_CC_GaussModTSpec = OBIT_CC_GaussMod+20,  
+  /** Convolved Gaussian + tabulated spectrum */
+  OBIT_CC_CGaussModTSpec = OBIT_CC_CGaussMod+20,  
+  /** Uniform sphere + tabulated spectrum */
+  OBIT_CC_USphereModTSpec = OBIT_CC_USphereMod+20 
 }; /* end enum obitCCCompType */
 /** typedef for enum for ObitCCCompType. */
 typedef enum obitCCCompType ObitCCCompType;

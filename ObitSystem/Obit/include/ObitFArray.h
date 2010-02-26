@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -246,6 +246,11 @@ typedef void (*ObitFArrayMaxArrFP) (ObitFArray* in1, ObitFArray* in2,
 /** Public: Get lesser elements of two FArrays */
 void ObitFArrayMinArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out);
 typedef void (*ObitFArrayMinArrFP) (ObitFArray* in1, ObitFArray* in2, 
+				    ObitFArray* out);
+
+/** Public: Get more extreme elements of two FArrays */
+void ObitFArrayExtArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out);
+typedef void (*ObitFArrayExtArrFP) (ObitFArray* in1, ObitFArray* in2, 
 				    ObitFArray* out);
 
 /** Public: Sum nonblanked elements of two FArrays */

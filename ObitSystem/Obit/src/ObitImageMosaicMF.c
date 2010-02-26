@@ -1,4 +1,4 @@
-/* $Id: ObitImageMosaicWB.c 147 2009-12-11 12:58:31Z bill.cotton $  */
+/* $Id: ObitImageMosaicMF.c 147 2009-12-11 12:58:31Z bill.cotton $  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2010                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
@@ -26,12 +26,12 @@
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
 
-#include "ObitImageMosaicWB.h"
+#include "ObitImageMosaicMF.h"
 #include "ObitIOImageFITS.h"
 #include "ObitIOImageAIPS.h"
 #include "ObitSystem.h"
 #include "ObitImageUtil.h"
-#include "ObitImageWB.h"
+#include "ObitImageMF.h"
 #include "ObitUVUtil.h"
 #include "ObitAIPSDir.h"
 #include "ObitUV.h"
@@ -44,8 +44,8 @@
 #include "ObitMem.h"
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
- * \file ObitImageMosaicWB.c
- * ObitImageMosaicWB class function definitions.
+ * \file ObitImageMosaicMF.c
+ * ObitImageMosaicMF class function definitions.
  * This class is derived from the Obit base class.
  *
  * This class contains an array of associated astronomical images.
@@ -54,17 +54,17 @@
  */
 
 /** name of the class defined in this file */
-static gchar *myClassName = "ObitImageMosaicWB";
+static gchar *myClassName = "ObitImageMosaicMF";
 
 /** Function to obtain parent ClassInfo - Obit */
 static ObitGetClassFP ObitParentGetClass = ObitImageMosaicGetClass;
 
 /*--------------- File Global Variables  ----------------*/
 /**
- * ClassInfo structure ObitImageMosaicWBClassInfo.
+ * ClassInfo structure ObitImageMosaicMFClassInfo.
  * This structure is used by class objects to access class functions.
  */
-static ObitImageMosaicWBClassInfo myClassInfo = {FALSE};
+static ObitImageMosaicMFClassInfo myClassInfo = {FALSE};
 
 /*--------------------------- Macroes ---------------------*/
 #ifndef MAXFLD         /* Maxum number of fields */
@@ -73,13 +73,13 @@ static ObitImageMosaicWBClassInfo myClassInfo = {FALSE};
 
 /*---------------Private function prototypes----------------*/
 /** Private: Initialize newly instantiated object. */
-void  ObitImageMosaicWBInit  (gpointer in);
+void  ObitImageMosaicMFInit  (gpointer in);
 
 /** Private: Deallocate members. */
-void  ObitImageMosaicWBClear (gpointer in);
+void  ObitImageMosaicMFClear (gpointer in);
 
 /** Private: Set Class function pointers. */
-static void ObitImageMosaicWBClassInfoDefFn (gpointer inClass);
+static void ObitImageMosaicMFClassInfoDefFn (gpointer inClass);
 
 /*----------------------Public functions---------------------------*/
 /**
@@ -89,15 +89,15 @@ static void ObitImageMosaicWBClassInfoDefFn (gpointer inClass);
  * \param number Number of images
  * \return the new object.
  */
-ObitImageMosaicWB* newObitImageMosaicWB (gchar* name, olong number)
+ObitImageMosaicMF* newObitImageMosaicMF (gchar* name, olong number)
 {
-  ObitImageMosaicWB* out;
+  ObitImageMosaicMF* out;
 
   /* Class initialization if needed */
-  if (!myClassInfo.initialized) ObitImageMosaicWBClassInit();
+  if (!myClassInfo.initialized) ObitImageMosaicMFClassInit();
 
   /* allocate/init structure */
-  out = ObitMemAlloc0Name(sizeof(ObitImageMosaicWB), "ObitImageMosaicWB");
+  out = ObitMemAlloc0Name(sizeof(ObitImageMosaicMF), "ObitImageMosaicMF");
 
   /* initialize values */
   if (name!=NULL) out->name = g_strdup(name);
@@ -108,10 +108,10 @@ ObitImageMosaicWB* newObitImageMosaicWB (gchar* name, olong number)
 
   /* initialize other stuff */
   out->numberImages = number;
-  ObitImageMosaicWBInit((gpointer)out);
+  ObitImageMosaicMFInit((gpointer)out);
 
  return out;
-} /* end newObitImageMosaicWB */
+} /* end newObitImageMosaicMF */
 
 /**
  * Constructor from ObitInfoList.
@@ -147,19 +147,19 @@ ObitImageMosaicWB* newObitImageMosaicWB (gchar* name, olong number)
  * \param err     ObitErr for reporting errors.
  * \return the new object.
  */
-ObitImageMosaicWB* ObitImageMosaicWBFromInfo (gchar *prefix, ObitInfoList *inList, 
+ObitImageMosaicMF* ObitImageMosaicMFFromInfo (gchar *prefix, ObitInfoList *inList, 
 					      ObitErr *err)
 { 
-  ObitImageMosaicWB *out = NULL;
+  ObitImageMosaicMF *out = NULL;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *keyword=NULL, *None = "None", *value=NULL;
   olong i, numberImages, otemp, norder;
   gboolean missing;
-  gchar *routine = "ObitImageMosaicWBFromInfo";
+  gchar *routine = "ObitImageMosaicMFFromInfo";
 
   /* Class initialization if needed */
-  if (!myClassInfo.initialized) ObitImageMosaicWBClassInit();
+  if (!myClassInfo.initialized) ObitImageMosaicMFClassInit();
 
   /* error checks */
   if (err->error) return out;
@@ -177,8 +177,8 @@ ObitImageMosaicWB* ObitImageMosaicWBFromInfo (gchar *prefix, ObitInfoList *inLis
   g_free(keyword);
 
   /* Create output */
-  out = newObitImageMosaicWB (prefix, numberImages);
-  out->norder = norder;   /* Max beam order */
+  out = newObitImageMosaicMF (prefix, numberImages);
+  out->maxOrder = norder;   /* Max beam order */
 
   /* Copy any InfoList Parameters */
   if (prefix) keyword = g_strconcat (prefix, "Info", NULL);
@@ -349,19 +349,19 @@ ObitImageMosaicWB* ObitImageMosaicWBFromInfo (gchar *prefix, ObitInfoList *inLis
   g_free(keyword);
 
   return out;
-} /* end ObitImageMosaicWBFromInfo */
+} /* end ObitImageMosaicMFFromInfo */
 
 /**
  * Returns ClassInfo pointer for the class.
  * \return pointer to the class structure.
  */
-gconstpointer ObitImageMosaicWBGetClass (void)
+gconstpointer ObitImageMosaicMFGetClass (void)
 {
   /* Class initialization if needed */
-  if (!myClassInfo.initialized) ObitImageMosaicWBClassInit();
+  if (!myClassInfo.initialized) ObitImageMosaicMFClassInit();
 
   return (gconstpointer)&myClassInfo;
-} /* end ObitGetImageMosaicWBClass */
+} /* end ObitGetImageMosaicMFClass */
 
 /**
  * Zap (delete with underlying structures) selected image member(s).
@@ -372,12 +372,12 @@ gconstpointer ObitImageMosaicWBGetClass (void)
  * \param err     Error stack, returns if not empty.
  */
 void 
-ObitImageMosaicWBZapImage  (ObitImageMosaic *inn, olong number,
+ObitImageMosaicMFZapImage  (ObitImageMosaic *inn, olong number,
 			    ObitErr *err)
 {
   olong i;
-  ObitImageMosaicWB *in = (ObitImageMosaicWB*)inn;
-  gchar *routine="ObitImageMosaicWBZapImage";
+  ObitImageMosaicMF *in = (ObitImageMosaicMF*)inn;
+  gchar *routine="ObitImageMosaicMFZapImage";
 
   /* error checks */
   g_assert(ObitErrIsA(err));
@@ -388,7 +388,7 @@ ObitImageMosaicWBZapImage  (ObitImageMosaic *inn, olong number,
   if (number==-1) {
     for (i=0; i<in->numberImages; i++) {
       /* The image and all beams */
-      in->images[i] = ObitImageWBZap(in->images[i], err);
+      in->images[i] = ObitImageMFZap(in->images[i], err);
       if (err->error) Obit_traceback_msg (err, routine, in->name);
     }
     return;
@@ -403,11 +403,11 @@ ObitImageMosaicWBZapImage  (ObitImageMosaic *inn, olong number,
   }
 
   /* The image and all beams */
-  in->images[number] = ObitImageWBZap(in->images[number], err);
+  in->images[number] = ObitImageMFZap(in->images[number], err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
   
   return;
-} /* end ObitImageMosaicWBZapImage */
+} /* end ObitImageMosaicMFZapImage */
 
 /**
  * Make a shallow copy of input object.
@@ -417,16 +417,16 @@ ObitImageMosaicWBZapImage  (ObitImageMosaic *inn, olong number,
  * \param err  Error stack, returns if not empty.
  * \return pointer to the new object.
  */
-ObitImageMosaic* ObitImageMosaicWBCopy (ObitImageMosaic *inn, ObitImageMosaic *outt, 
+ObitImageMosaic* ObitImageMosaicMFCopy (ObitImageMosaic *inn, ObitImageMosaic *outt, 
 					ObitErr *err)
 {
   const ObitClassInfo *ParentClass;
   gboolean oldExist;
   olong i;
   gchar *outName;
-  ObitImageMosaicWB *in  = (ObitImageMosaicWB*)inn;
-  ObitImageMosaicWB *out = (ObitImageMosaicWB*)outt;
-  gchar *routine = "ObitImageMosaicWBCopy";
+  ObitImageMosaicMF *in  = (ObitImageMosaicMF*)inn;
+  ObitImageMosaicMF *out = (ObitImageMosaicMF*)outt;
+  gchar *routine = "ObitImageMosaicMFCopy";
 
   /* error checks */
   if (err->error) return NULL;
@@ -438,7 +438,7 @@ ObitImageMosaic* ObitImageMosaicWBCopy (ObitImageMosaic *inn, ObitImageMosaic *o
   if (!oldExist) {
     /* derive object name */
     outName = g_strconcat ("Copy: ",in->name,NULL);
-    out = newObitImageMosaicWB(outName, in->numberImages);
+    out = newObitImageMosaicMF(outName, in->numberImages);
     g_free(outName);
   }
 
@@ -462,9 +462,9 @@ ObitImageMosaic* ObitImageMosaicWBCopy (ObitImageMosaic *inn, ObitImageMosaic *o
   }
 
   /* Copy other class members */
-  out->norder   = in->norder;
+  out->maxOrder   = in->maxOrder;
   return outt;
-} /* end ObitImageMosaicWBCopy */
+} /* end ObitImageMosaicMFCopy */
 
 /**
  * Attach images to their underlying files.
@@ -494,7 +494,7 @@ ObitImageMosaic* ObitImageMosaicWBCopy (ObitImageMosaic *inn, ObitImageMosaic *o
  * \param doBeam  If true, make beam as well.
  * \param err     Error stack, returns if not empty.
  */
-void ObitImageMosaicWBSetFiles  (ObitImageMosaic *inn, gboolean doBeam, ObitErr *err) 
+void ObitImageMosaicMFSetFiles  (ObitImageMosaic *inn, gboolean doBeam, ObitErr *err) 
 {
   olong i, j, user, cno;
   olong blc[IM_MAXDIM] = {1,1,1,1,1};
@@ -502,9 +502,9 @@ void ObitImageMosaicWBSetFiles  (ObitImageMosaic *inn, gboolean doBeam, ObitErr 
   gboolean exist;
   ObitImage *image=NULL;
   gchar ct, strTemp[48], Aname[13], Aclass[7], Atclass[3], Atype[3] = "MA";
-  ObitImageMosaicWB *in = (ObitImageMosaicWB*)inn;
+  ObitImageMosaicMF *in = (ObitImageMosaicMF*)inn;
   gchar beamClass[]="BCDEFGHI", altbeamClass[] = "bcdefghi";
-  gchar *routine = "ObitImageMosaicWBSetFiles";
+  gchar *routine = "ObitImageMosaicMFSetFiles";
 
  /* Create full field image if needed */
   /*???if (in->doFull && (in->FOV>0.0) && (in->numberImages>1) && (in->nInit<=0)) {*/
@@ -529,7 +529,7 @@ void ObitImageMosaicWBSetFiles  (ObitImageMosaic *inn, gboolean doBeam, ObitErr 
 		     Aname, Aclass, in->imSeq, in->imDisk[0], cno);
       /* fprintf (stderr,"Making AIPS image %s %s on disk %d cno %d\n",
 	 Aname, Aclass, in->imDisk[0], cno);*/
-
+   
     /* FITS file */
     } else if (in->fileType==OBIT_IO_FITS) {
       /* set filename - derive from field */
@@ -537,11 +537,13 @@ void ObitImageMosaicWBSetFiles  (ObitImageMosaic *inn, gboolean doBeam, ObitErr 
       /* replace blanks with underscores */
       for (j=0; j<strlen(strTemp); j++) if (strTemp[j]==' ') strTemp[j]='_';
       ObitImageSetFITS(image,OBIT_IO_byPlane,in->imDisk[0],strTemp,blc,trc,err);
-    }
+   }
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
     /* fully instantiate */
     ObitImageFullInstantiate (image, FALSE, err);
+    /* Blank spectral planes */
+    ObitImageMFBlank ((ObitImageMF*)image, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   } /* end do full field image */
@@ -579,8 +581,10 @@ void ObitImageMosaicWBSetFiles  (ObitImageMosaic *inn, gboolean doBeam, ObitErr 
     }
     /* fully instantiate */
     ObitImageFullInstantiate (image, FALSE, err);
+    /* Blank spectral planes */
+    ObitImageMFBlank ((ObitImageMF*)image, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
- 
+    
     /* Doing beams? */
     if (doBeam) {
       image = (ObitImage*)in->images[i]->myBeam;
@@ -610,6 +614,8 @@ void ObitImageMosaicWBSetFiles  (ObitImageMosaic *inn, gboolean doBeam, ObitErr 
       /* Open and close to fully instantiate */
       ObitImageOpen(image, OBIT_IO_WriteOnly, err);
       ObitImageClose(image, err);
+      /* Blank spectral planes */
+      ObitImageMFBlank ((ObitImageMF*)image, err);
       if (err->error) Obit_traceback_msg (err, routine, in->name);
     } /* end Beam */
   }    /* end loop over images */
@@ -617,15 +623,16 @@ void ObitImageMosaicWBSetFiles  (ObitImageMosaic *inn, gboolean doBeam, ObitErr 
   /* Everything should now be initialized */
   in->nInit = in->numberImages;
  
-} /* end  ObitImageMosaicWBSetFiles */
+} /* end  ObitImageMosaicMFSetFiles */
 
 /**
  * Create an Image Mosaic based on a uv data and parameters attached thereto
  * 
  * \param name    Name to be given to new object
  * \param order  Spectral imaging order,0=flux,1=si, 2=curve
+ * \param maxFBW Max. IF center fractional bandwidth.
  * \param uvData  The object to create images in,  Details are defined in info members:
-  * \li FileType = Underlying file type, OBIT_IO_FITS, OBIT_IO_AIPS
+ * \li FileType = Underlying file type, OBIT_IO_FITS, OBIT_IO_AIPS
  * \li Name     = Name of image, used as AIPS name or to derive FITS filename
  * \li Class    = Root of class, used as AIPS class or to derive FITS filename
  * \li Seq      = Sequence number
@@ -668,10 +675,10 @@ void ObitImageMosaicWBSetFiles  (ObitImageMosaic *inn, gboolean doBeam, ObitErr 
  * \param err     Error stack, returns if not empty.
  * \return Newly created object.
  */
-ObitImageMosaicWB* ObitImageMosaicWBCreate (gchar *name, olong order, ObitUV *uvData, 
-					    ObitErr *err)
+ObitImageMosaicMF* ObitImageMosaicMFCreate (gchar *name, olong order, ofloat maxFBW, 
+					    ObitUV *uvData, ObitErr *err)
 {
-  ObitImageMosaicWB *out = NULL;
+  ObitImageMosaicMF *out = NULL;
   ObitInfoType type;
   ObitIOType Type;
   ObitIOAccess access;
@@ -688,10 +695,10 @@ ObitImageMosaicWB* ObitImageMosaicWBCreate (gchar *name, olong order, ObitUV *uv
   union ObitInfoListEquiv InfoReal; 
   gchar Catalog[100], Aname[100], Aclass[100];
   ObitImageMosaicClassInfo* mosaicClass;
-  gchar *routine = "ObitImageMosaicWBCreate";
+  gchar *routine = "ObitImageMosaicMFCreate";
 
   /* Class initialization if needed */
-  if (!myClassInfo.initialized) ObitImageMosaicWBClassInit();
+  if (!myClassInfo.initialized) ObitImageMosaicMFClassInit();
 
   /* Get inputs with plausible defaults */
   NField = 1;
@@ -871,14 +878,14 @@ ObitImageMosaicWB* ObitImageMosaicWBCreate (gchar *name, olong order, ObitUV *uv
   Obit_retval_if_fail((NField>0), err, out, "%s: NO Fields defined", routine);
 
   /* Create output object */
-  out = newObitImageMosaicWB (name, NField);
+  out = newObitImageMosaicMF (name, NField);
 
-  /* Set maximum beam order */
-  out->norder = order;
+  /* Set maximum beam order, fractional bandwidty */
+  out->maxOrder = order;
+  out->maxFBW   = maxFBW;
 
-  /* Copy fldsiz to nx, ny 
-     Double sizes of images and beams - need for image plane convolution */
-  for (i=0; i<NField; i++) nx[i] = ny[i] = 2*fldsiz[i];
+  /* Copy fldsiz to nx, ny */
+  for (i=0; i<NField; i++) nx[i] = ny[i] = fldsiz[i];
       
   /* Set values on out */
   out->fileType= Type;
@@ -911,7 +918,7 @@ ObitImageMosaicWB* ObitImageMosaicWBCreate (gchar *name, olong order, ObitUV *uv
   if (Disk) g_free(Disk);
 
   return out;
-} /* end ObitImageMosaicWBCreate */
+} /* end ObitImageMosaicMFCreate */
 
 /**
  * Define images in an Image Mosaic from a UV data.
@@ -947,7 +954,7 @@ ObitImageMosaicWB* ObitImageMosaicWBCreate (gchar *name, olong order, ObitUV *uv
  * \param doBeam  If true, make beam as well.
  * \param err     Error stack, returns if not empty.
  */
-void ObitImageMosaicWBDefine (ObitImageMosaic *inn, ObitUV *uvData, gboolean doBeam,
+void ObitImageMosaicMFDefine (ObitImageMosaic *inn, ObitUV *uvData, gboolean doBeam,
 			      ObitErr *err)
 {
   olong i, nx, ny;
@@ -957,9 +964,9 @@ void ObitImageMosaicWBDefine (ObitImageMosaic *inn, ObitUV *uvData, gboolean doB
   gboolean doCalSelect, *barr=NULL;
   ObitIOAccess access;
   ObitImage *tmpImage=NULL;
-  ObitImageMosaicWB *in = (ObitImageMosaicWB*)inn;
+  ObitImageMosaicMF *in = (ObitImageMosaicMF*)inn;
   ObitImageMosaicClassInfo* mosaicClass;
-  gchar *routine = "ObitImageMosaicWBDefine";
+  gchar *routine = "ObitImageMosaicMFDefine";
 
   /* error checks */
   if (err->error) return;
@@ -1002,17 +1009,19 @@ void ObitImageMosaicWBDefine (ObitImageMosaic *inn, ObitUV *uvData, gboolean doB
 
   /* Loop over uninitialized images */
   for (i=in->nInit; i<in->numberImages; i++) {
-    /* Create regular ObitImage then convert to ObitImageWB */
+    /* Create regular ObitImage then convert to ObitImageMF */
     tmpImage =  ObitImageUtilCreateImage(uvData, i+1, doBeam, err);
-    in->images[i] = (ObitImage*)ObitImageWBFromImage(tmpImage, in->norder, err);
+    in->images[i] = (ObitImage*)ObitImageMFFromImage(tmpImage, uvData, 
+						     in->maxOrder, in->maxFBW, err);
     tmpImage = ObitImageUnref(tmpImage);
     /* If making a beam convert it as well */
     if (doBeam && in->images[i]->myBeam) {
-     tmpImage =  (ObitImage*)ObitImageWBFromImage((ObitImage*)in->images[i]->myBeam, 
-						  in->norder, err);
+     tmpImage =  (ObitImage*)ObitImageMFFromImage((ObitImage*)in->images[i]->myBeam, 
+						  uvData, in->maxOrder, in->maxFBW, 
+						  err);
      in->images[i]->myBeam = ObitImageUnref((ObitImage*)in->images[i]->myBeam);
      in->images[i]->myBeam = (Obit*)tmpImage;  /* xfer ownership */
-    }
+   }
     if (err->error) Obit_traceback_msg (err, routine, in->name);
     /* For 2D imaging pick up shift */
     if (!in->images[i]->myDesc->do3D) {
@@ -1024,9 +1033,11 @@ void ObitImageMosaicWBDefine (ObitImageMosaic *inn, ObitUV *uvData, gboolean doB
  /* Create full field image if needed */
   if (in->doFull && (in->nInit<=0) && (in->numberImages>1)) { 
     /* Basic structure of field 1 */
-    /* Create regular ObitImage then convert  to ObitImageWB */
+    /* Create regular ObitImage then convert  to ObitImageMF */
     tmpImage =  ObitImageUtilCreateImage(uvData, 1, FALSE, err);
-    in->FullField = (ObitImage*)ObitImageWBFromImage(tmpImage, in->norder, err);
+    in->FullField = 
+      (ObitImage*)ObitImageMFFromImage(tmpImage, uvData, in->maxOrder, 
+				       in->maxFBW, err);
     tmpImage = ObitImageUnref(tmpImage);
     /* Replace name */
     g_free(in->FullField->name);
@@ -1046,15 +1057,15 @@ void ObitImageMosaicWBDefine (ObitImageMosaic *inn, ObitUV *uvData, gboolean doB
     in->FullField->myDesc->yshift = 0.0;
   }
 
-  ObitImageMosaicWBSetFiles (inn, doBeam, err);
+  ObitImageMosaicMFSetFiles (inn, doBeam, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
  
-} /* end ObitImageMosaicWBDefine */
+} /* end ObitImageMosaicMFDefine */
 
 
 /**
  * Add a Field to a mosaic
- * Wideband version: image doubles in size and converted to ObitImageWB
+ * Wideband MF version: image converted to ObitImageMF
  * \param inn       The object with images to modify
  * \param uvData   UV data from which the images are to be made.
  * \param nx       Number of pixels in X for image, 
@@ -1066,7 +1077,7 @@ void ObitImageMosaicWBDefine (ObitImageMosaic *inn, ObitUV *uvData, gboolean doB
  * \param isAuto   If true, this is an autoCenter image
  * \param err      Error stack, returns if not empty.
  */
-void ObitImageMosaicWBAddField (ObitImageMosaic *inn, ObitUV *uvData, 
+void ObitImageMosaicMFAddField (ObitImageMosaic *inn, ObitUV *uvData, 
 				olong nx, olong ny, olong nplane, 
 				ofloat RAShift, ofloat DecShift,
 				gboolean isAuto, ObitErr *err)
@@ -1074,8 +1085,8 @@ void ObitImageMosaicWBAddField (ObitImageMosaic *inn, ObitUV *uvData,
   ofloat *ftemp;
   olong   i, *itemp;
   ObitImage **imtemp;
-  ObitImageMosaicWB *in = (ObitImageMosaicWB*)inn;
-  gchar *routine = "ObitImageMosaicWBAddField";
+  ObitImageMosaicMF *in = (ObitImageMosaicMF*)inn;
+  gchar *routine = "ObitImageMosaicMFAddField";
 
   /* error checks */
   if (err->error) return;
@@ -1086,20 +1097,20 @@ void ObitImageMosaicWBAddField (ObitImageMosaic *inn, ObitUV *uvData,
   in->numberImages++;
 
   /* Image array */
-  imtemp = ObitMemAlloc0Name(in->numberImages*sizeof(ObitImage*),"ImageMosaicWB images");
+  imtemp = ObitMemAlloc0Name(in->numberImages*sizeof(ObitImage*),"ImageMosaicMF images");
   for (i=0; i<in->nInit; i++) imtemp[i] = in->images[i]; imtemp[i] = NULL;
   in->images = ObitMemFree(in->images);
   in->images = imtemp;
 
   /* Disk array - add new images on same disk as first */
-  itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicWB imDisk");
+  itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicMF imDisk");
   for (i=in->nInit; i<in->numberImages; i++) itemp[i] = in->imDisk[0]; 
   for (i=0; i<in->nInit; i++) itemp[i] = in->imDisk[i]; 
   in->imDisk = ObitMemFree(in->imDisk);
   in->imDisk = itemp;
  
   /* isAuto array */
-  itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicWB isAuto");
+  itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicMF isAuto");
   for (i=0; i<in->nInit; i++) itemp[i] = in->isAuto[i]; 
   for (i=in->nInit; i<in->numberImages; i++) itemp[i] = -1; 
   /* Large dummy value in new element if isAuto */
@@ -1108,54 +1119,50 @@ void ObitImageMosaicWBAddField (ObitImageMosaic *inn, ObitUV *uvData,
   in->isAuto = itemp;
  
   /* isShift array */
-  itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicWB isShift");
+  itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicMF isShift");
   for (i=0; i<in->nInit; i++) itemp[i] = in->isShift[i]; 
   for (i=in->nInit; i<in->numberImages; i++) itemp[i] = -1; 
   in->isShift = ObitMemFree(in->isShift);
   in->isShift = itemp;
  
   /* Image size */
-  itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicWB nx");
+  itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicMF nx");
   for (i=0; i<in->nInit; i++) itemp[i] = in->nx[i]; 
-  /* Double but at least 512 */
-  nx = MAX (2*nx, 512);
   itemp[i] = ObitFFTSuggestSize (nx);
   in->nx = ObitMemFree(in->nx);
   in->nx = itemp;
-  itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicWB ny");
+  itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicMF ny");
   for (i=0; i<in->nInit; i++) itemp[i] = in->ny[i]; 
-  /* Double but at least 512 */
-  ny = MAX (2*ny, 512);
   itemp[i] = ObitFFTSuggestSize (ny);
   in->ny = ObitMemFree(in->ny);
   in->ny = itemp;
-  itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicWB nplane");
+  itemp  = ObitMemAlloc0Name(in->numberImages*sizeof(olong),"ImageMosaicMF nplane");
   for (i=0; i<in->nInit; i++) itemp[i] = in->nplane[i]; 
   itemp[i] = nplane;
   in->nplane = ObitMemFree(in->nplane);
   in->nplane = itemp;
 
   /* Shift */
-  ftemp  = ObitMemAlloc0Name(in->numberImages*sizeof(ofloat),"ImageMosaicWB RAShift");
+  ftemp  = ObitMemAlloc0Name(in->numberImages*sizeof(ofloat),"ImageMosaicMF RAShift");
   for (i=0; i<in->nInit; i++) ftemp[i] = in->RAShift[i]; 
   ftemp[i] = RAShift;
   in->RAShift = ObitMemFree(in->RAShift);
   in->RAShift = ftemp;
-  ftemp  = ObitMemAlloc0Name(in->numberImages*sizeof(ofloat),"ImageMosaicWB DecShift");
+  ftemp  = ObitMemAlloc0Name(in->numberImages*sizeof(ofloat),"ImageMosaicMF DecShift");
   for (i=0; i<in->nInit; i++) ftemp[i] = in->DecShift[i]; 
   ftemp[i] = DecShift;
   in->DecShift = ObitMemFree(in->DecShift);
   in->DecShift = ftemp;
 
   /* Define image */
-  ObitImageMosaicWBDefine (inn, uvData, TRUE, err);
+  ObitImageMosaicMFDefine (inn, uvData, TRUE, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Create/initialize image */
-  ObitImageMosaicWBSetFiles (inn, TRUE, err);
+  ObitImageMosaicMFSetFiles (inn, TRUE, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
-} /* end ObitImageMosaicWBAddField */
+} /* end ObitImageMosaicMFAddField */
 
 /**
  * Project the tiles of a Mosaic to the full field flattened image
@@ -1164,10 +1171,11 @@ void ObitImageMosaicWBAddField (ObitImageMosaic *inn, ObitUV *uvData,
  * \param inn     The object with images
  * \param err     Error stack, returns if not empty.
  */
-void ObitImageMosaicWBFlatten (ObitImageMosaic *inn, ObitErr *err)
+void ObitImageMosaicMFFlatten (ObitImageMosaic *inn, ObitErr *err)
 {
   olong   blc[IM_MAXDIM]={1,1,1,1,1}, trc[IM_MAXDIM]={0,0,0,0,0};
-  olong nterm, i, j, radius, rad, plane[IM_MAXDIM] = {1,1,1,1,1}, hwidth = 2;
+  olong nterm, nspec, nplane, i, j, radius, rad;
+  olong plane[IM_MAXDIM] = {1,1,1,1,1}, hwidth = 2;
   olong *naxis, pos1[IM_MAXDIM], pos2[IM_MAXDIM];
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1}, iplane;
   ObitImage *out=NULL, *tout1=NULL, *tout2=NULL;
@@ -1175,8 +1183,8 @@ void ObitImageMosaicWBFlatten (ObitImageMosaic *inn, ObitErr *err)
   ObitIOSize IOsize = OBIT_IO_byPlane;
   ofloat xpos1[IM_MAXDIM], xpos2[IM_MAXDIM];
   gboolean overlap;
-  ObitImageMosaicWB *in = (ObitImageMosaicWB*)inn;
-  gchar *routine = "ObitImageMosaicWBFlatten";
+  ObitImageMosaicMF *in = (ObitImageMosaicMF*)inn;
+  gchar *routine = "ObitImageMosaicMFFlatten";
 
   /* error checks */
   if (err->error) return;
@@ -1216,14 +1224,19 @@ void ObitImageMosaicWBFlatten (ObitImageMosaic *inn, ObitErr *err)
 
   /* How big do we want ? */
   /*radius = MAX (in->FOV/(3600.0*in->xCells), in->FOV/(3600.0*in->yCells));*/
-  radius = in->Radius;
+  radius = (olong)(0.5 + ObitImageMosaicFOV(inn, err)/fabs(in->xCells));
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Loop over spectral planes */
-  if (ObitImageWBIsA(in->FullField))
-    nterm = MAX(1,(((ObitImageWB*)in->FullField)->order+1));
-  else
+  if (ObitImageMFIsA(in->FullField)) {
+    nterm = MAX(1,(((ObitImageMF*)in->FullField)->maxOrder+1));
+    nspec = MAX(1,(((ObitImageMF*)in->FullField)->nSpec));
+  } else {
     nterm = 1;
-  for (iplane=0; iplane<nterm; iplane++) {
+    nspec = 1;
+  }
+  nplane = nterm+nspec;
+  for (iplane=0; iplane<nplane; iplane++) {
     
     /* Zero fill accumulations */
     ObitFArrayFill (sc1, 0.0);
@@ -1362,24 +1375,24 @@ void ObitImageMosaicWBFlatten (ObitImageMosaic *inn, ObitErr *err)
   tout1 = ObitImageUnref(tout1);
   tout2 = ObitImageUnref(tout2);
 
-} /* end ObitImageMosaicWBFlatten */
+} /* end ObitImageMosaicMFFlatten */
 
 /**
- * Make a single field ImageMosaicWB corresponding to the field with
+ * Make a single field ImageMosaicMF corresponding to the field with
  * the highest summed peak of CCs if any above MinFlux.
  * Fields with 1-rel numbers in the zero terminated list ignore are ignored
- * \param inn      ImageMosaicWB to process
+ * \param inn      ImageMosaicMF to process
  * \param MinFlux  Min. flux density for operation.
  * \param ignore   0 terminated list of 1-rel field numbers to ignore
  * \param field    [out] the 1-rel number of the field copied
  * \param err      Error/message stack
- * return Newly created ImageMosaicWB or NULL
+ * return Newly created ImageMosaicMF or NULL
  */
-ObitImageMosaicWB* ObitImageMosaicWBMaxField (ObitImageMosaic *inn, 
+ObitImageMosaicMF* ObitImageMosaicMFMaxField (ObitImageMosaic *inn, 
 					      ofloat MinFlux, olong *ignore, olong *field,
 					      ObitErr* err) 
 {
-  ObitImageMosaicWB* out=NULL;
+  ObitImageMosaicMF* out=NULL;
   ObitTableCC *CCTab=NULL, *inCCTable=NULL, *outCCTable=NULL;
   ObitImage   *tmpImage=NULL, *tmpBeam=NULL;
   gint32 dim[MAXINFOELEMDIM];
@@ -1389,12 +1402,12 @@ ObitImageMosaicWB* ObitImageMosaicWBMaxField (ObitImageMosaic *inn,
   olong  CCVer;
   ofloat tmax, xcenter, ycenter, xoff, yoff, radius, cells[2], maxCC;
   gboolean forget;
-  ObitImageMosaicWB *mosaic = (ObitImageMosaicWB*)inn;
-  gchar *routine = "ObitImageMosaicWBMaxField";
+  ObitImageMosaicMF *mosaic = (ObitImageMosaicMF*)inn;
+  gchar *routine = "ObitImageMosaicMFMaxField";
 
   /* Error checks */
   if (err->error) return out;  /* previous error? */
-  g_assert(ObitImageMosaicWBIsA(mosaic));
+  g_assert(ObitImageMosaicMFIsA(mosaic));
 
   /* Number of fields */
   nfield = mosaic->numberImages;
@@ -1456,11 +1469,11 @@ ObitImageMosaicWB* ObitImageMosaicWBMaxField (ObitImageMosaic *inn,
   /* Catch anything? */
   if (maxField<0) return out;
 
-  /* Make output ImageMosaicWB */
-  out = newObitImageMosaicWB ("Temp mosaic", 1);
+  /* Make output ImageMosaicMF */
+  out = newObitImageMosaicMF ("Temp mosaic", 1);
   tmpImage = newObitImageScratch (mosaic->images[maxField], err);
   /* Copy image */
-  tmpImage = (ObitImage*)ObitImageWBCopy((ObitImageWB*)mosaic->images[maxField], (ObitImageWB*)tmpImage, err);
+  tmpImage = (ObitImage*)ObitImageMFCopy((ObitImageMF*)mosaic->images[maxField], (ObitImageMF*)tmpImage, err);
   ObitImageMosaicSetImage ((ObitImageMosaic*)out, 0, tmpImage, err);
   if  (err->error) Obit_traceback_val (err, routine, mosaic->images[maxField]->name, out);
   /* Give more sensible name */
@@ -1469,7 +1482,7 @@ ObitImageMosaicWB* ObitImageMosaicWBMaxField (ObitImageMosaic *inn,
 
   /* Copy beam NEED to copy higher order beams  */
   tmpBeam = newObitImageScratch ((ObitImage*)mosaic->images[maxField]->myBeam, err);
-  tmpBeam = (ObitImage*)ObitImageWBCopy((ObitImageWB*)mosaic->images[maxField]->myBeam, (ObitImageWB*)tmpBeam, err);
+  tmpBeam = (ObitImage*)ObitImageMFCopy((ObitImageMF*)mosaic->images[maxField]->myBeam, (ObitImageMF*)tmpBeam, err);
   ObitImageMosaicSetImage ((ObitImageMosaic*)out, 0, tmpImage, err);
   if  (err->error) Obit_traceback_val (err, routine, mosaic->images[maxField]->name, out);
   tmpImage->myBeam = ObitImageUnref(tmpImage->myBeam);
@@ -1509,7 +1522,7 @@ ObitImageMosaicWB* ObitImageMosaicWBMaxField (ObitImageMosaic *inn,
 
   *field = maxField+1;  /* Which field is this? */
   return out;
-} /* end of routine ObitImageMosaicWBMaxField */ 
+} /* end of routine ObitImageMosaicMFMaxField */ 
 
 /**
  * Convert structure information to entries in an ObitInfoList
@@ -1543,21 +1556,21 @@ ObitImageMosaicWB* ObitImageMosaicWBMaxField (ObitImageMosaic *inn,
  *      \li "xxxnorder"       olong maximum beam order
  * \param err     ObitErr for reporting errors.
  */
-void ObitImageMosaicWBGetInfo (ObitImageMosaic *inn, gchar *prefix, ObitInfoList *outList, 
+void ObitImageMosaicMFGetInfo (ObitImageMosaic *inn, gchar *prefix, ObitInfoList *outList, 
 			       ObitErr *err)
 { 
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *keyword=NULL;
-  ObitImageMosaicWB *in = (ObitImageMosaicWB*)inn;
+  ObitImageMosaicMF *in = (ObitImageMosaicMF*)inn;
   const ObitImageMosaicClassInfo *ParentClass = myClassInfo.ParentClass;
-  gchar *routine = "ObitImageMosaicWBGetInfo";
+  gchar *routine = "ObitImageMosaicMFGetInfo";
 
   /* error checks */
   if (err->error) return;
   g_assert (ObitIsA(in, &myClassInfo));
 
   /* Get basic info from parent class */
-  if (ParentClass->ObitImageMosaicGetInfo!=ObitImageMosaicWBGetInfo)
+  if (ParentClass->ObitImageMosaicGetInfo!=ObitImageMosaicMFGetInfo)
     ParentClass->ObitImageMosaicGetInfo (inn, prefix, outList, err);
   if  (err->error) Obit_traceback_msg (err, routine, in->name);
 
@@ -1565,15 +1578,15 @@ void ObitImageMosaicWBGetInfo (ObitImageMosaic *inn, gchar *prefix, ObitInfoList
   if (prefix) keyword = g_strconcat (prefix, "norder", NULL);
   else        keyword = g_strdup("norder");
   dim[0] = 1; dim[1] = 1;
-  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->norder);
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->maxOrder);
   g_free(keyword);
 
-} /* end ObitImageMosaicWBGetInfo */
+} /* end ObitImageMosaicMFGetInfo */
 
 /**
  * Initialize global ClassInfo Structure.
  */
-void ObitImageMosaicWBClassInit (void)
+void ObitImageMosaicMFClassInit (void)
 {
   if (myClassInfo.initialized) return;  /* only once */
   
@@ -1582,18 +1595,18 @@ void ObitImageMosaicWBClassInit (void)
   myClassInfo.ParentClass = ObitParentGetClass();
 
   /* Set function pointers */
-  ObitImageMosaicWBClassInfoDefFn ((gpointer)&myClassInfo);
+  ObitImageMosaicMFClassInfoDefFn ((gpointer)&myClassInfo);
  
   myClassInfo.initialized = TRUE; /* Now initialized */
  
-} /* end ObitImageMosaicWBClassInit */
+} /* end ObitImageMosaicMFClassInit */
 
 /**
  * Initialize global ClassInfo Function pointers.
  */
-static void ObitImageMosaicWBClassInfoDefFn (gpointer inClass)
+static void ObitImageMosaicMFClassInfoDefFn (gpointer inClass)
 {
-  ObitImageMosaicWBClassInfo *theClass = (ObitImageMosaicWBClassInfo*)inClass;
+  ObitImageMosaicMFClassInfo *theClass = (ObitImageMosaicMFClassInfo*)inClass;
   ObitClassInfo *ParentClass = (ObitClassInfo*)myClassInfo.ParentClass;
 
   if (theClass->initialized) return;  /* only once */
@@ -1607,32 +1620,32 @@ static void ObitImageMosaicWBClassInfoDefFn (gpointer inClass)
     ParentClass->ObitClassInfoDefFn(theClass);
 
   /* function pointers defined or overloaded this class */
-  theClass->ObitClassInit = (ObitClassInitFP)ObitImageMosaicWBClassInit;
-  theClass->ObitClassInfoDefFn = (ObitClassInfoDefFnFP)ObitImageMosaicWBClassInfoDefFn;
-  theClass->ObitGetClass  = (ObitGetClassFP)ObitImageMosaicWBGetClass;
-  theClass->newObit       = (newObitFP)newObitImageMosaicWB;
-  theClass->ObitCopy      = (ObitCopyFP)ObitImageMosaicWBCopy;
+  theClass->ObitClassInit = (ObitClassInitFP)ObitImageMosaicMFClassInit;
+  theClass->ObitClassInfoDefFn = (ObitClassInfoDefFnFP)ObitImageMosaicMFClassInfoDefFn;
+  theClass->ObitGetClass  = (ObitGetClassFP)ObitImageMosaicMFGetClass;
+  theClass->newObit       = (newObitFP)newObitImageMosaicMF;
+  theClass->ObitCopy      = (ObitCopyFP)ObitImageMosaicMFCopy;
   theClass->ObitClone     = NULL;  /* Different call */
-  theClass->ObitClear     = (ObitClearFP)ObitImageMosaicWBClear;
-  theClass->ObitInit      = (ObitInitFP)ObitImageMosaicWBInit;
-  theClass->ObitImageMosaicFromInfo = (ObitImageMosaicFromInfoFP)ObitImageMosaicWBFromInfo;
-  theClass->ObitImageMosaicGetInfo  = (ObitImageMosaicGetInfoFP)ObitImageMosaicWBGetInfo;
+  theClass->ObitClear     = (ObitClearFP)ObitImageMosaicMFClear;
+  theClass->ObitInit      = (ObitInitFP)ObitImageMosaicMFInit;
+  theClass->ObitImageMosaicFromInfo = (ObitImageMosaicFromInfoFP)ObitImageMosaicMFFromInfo;
+  theClass->ObitImageMosaicGetInfo  = (ObitImageMosaicGetInfoFP)ObitImageMosaicMFGetInfo;
   theClass->ObitImageMosaicZapImage =
-    (ObitImageMosaicZapImageFP)ObitImageMosaicWBZapImage;
+    (ObitImageMosaicZapImageFP)ObitImageMosaicMFZapImage;
   theClass->ObitImageMosaicSetFiles = 
-    (ObitImageMosaicSetFilesFP)ObitImageMosaicWBSetFiles;
+    (ObitImageMosaicSetFilesFP)ObitImageMosaicMFSetFiles;
   theClass->ObitImageMosaicCreate = 
-    (ObitImageMosaicCreateFP)ObitImageMosaicWBCreate;
+    (ObitImageMosaicCreateFP)ObitImageMosaicMFCreate;
   theClass->ObitImageMosaicDefine = 
-    (ObitImageMosaicDefineFP)ObitImageMosaicWBDefine;
+    (ObitImageMosaicDefineFP)ObitImageMosaicMFDefine;
   theClass->ObitImageMosaicFlatten = 
-    (ObitImageMosaicFlattenFP)ObitImageMosaicWBFlatten;
+    (ObitImageMosaicFlattenFP)ObitImageMosaicMFFlatten;
   theClass->ObitImageMosaicAddField = 
-    (ObitImageMosaicAddFieldFP)ObitImageMosaicWBAddField;
+    (ObitImageMosaicAddFieldFP)ObitImageMosaicMFAddField;
   theClass->ObitImageMosaicMaxField = 
-    (ObitImageMosaicMaxFieldFP)ObitImageMosaicWBMaxField;
+    (ObitImageMosaicMaxFieldFP)ObitImageMosaicMFMaxField;
 
-} /* end ObitImageMosaicWBClassDefFn */
+} /* end ObitImageMosaicMFClassDefFn */
 
 
 /*---------------Private functions--------------------------*/
@@ -1642,10 +1655,10 @@ static void ObitImageMosaicWBClassInfoDefFn (gpointer inClass)
  * Parent classes portions are (recursively) initialized first
  * \param inn Pointer to the object to initialize.
  */
-void ObitImageMosaicWBInit  (gpointer inn)
+void ObitImageMosaicMFInit  (gpointer inn)
 {
   ObitClassInfo *ParentClass;
-  ObitImageMosaicWB *in = inn;
+  ObitImageMosaicMF *in = inn;
 
   /* error checks */
   g_assert (in != NULL);
@@ -1656,31 +1669,33 @@ void ObitImageMosaicWBInit  (gpointer inn)
     ParentClass->ObitInit (inn);
 
   /* set members in this class */
+  in->maxOrder = 0;
+  in->maxFBW   = 1.0;
 
-} /* end ObitImageMosaicWBInit */
+} /* end ObitImageMosaicMFInit */
 
 /**
  * Deallocates member objects.
  * Does (recursive) deallocation of parent class members.
  * \param  inn Pointer to the object to deallocate.
- *           Actually it should be an ObitImageMosaicWB* cast to an Obit*.
+ *           Actually it should be an ObitImageMosaicMF* cast to an Obit*.
  */
-void ObitImageMosaicWBClear (gpointer inn)
+void ObitImageMosaicMFClear (gpointer inn)
 {
   ObitClassInfo *ParentClass;
-  ObitImageMosaicWB *in = inn;
+  ObitImageMosaicMF *in = inn;
   
   /* error checks */
   g_assert (ObitIsA(in, &myClassInfo));
   
   /* delete this class members */
- 
+
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
   /* delete parent class members */
   if ((ParentClass!=NULL) && ( ParentClass->ObitClear!=NULL)) 
     ParentClass->ObitClear (inn);
   
-} /* end ObitImageMosaicWBClear */
+} /* end ObitImageMosaicMFClear */
 
 

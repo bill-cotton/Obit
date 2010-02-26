@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2008                                          */
+/*;  Copyright (C) 2002-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -89,7 +89,9 @@ ObitFArrayBlankFP ObitFArrayBlank;
 ObitFArrayMaxArrFP ObitFArrayMaxArr;
 /** Function pointer to get lesser elements of two FArrays */
 ObitFArrayMinArrFP ObitFArrayMinArr;
-/** Function pointer to Add enonblanked lements of two FArrays */
+/** Function pointer to get more extreme elements of two FArrays */
+ObitFArrayExtArrFP ObitFArrayExtArr;
+/** Function pointer to Add nonblanked elements of two FArrays */
 ObitFArraySumArrFP ObitFArraySumArr;
 /** Function pointer to average nonblanked elements of two FArrays */
 ObitFArrayAvgArrFP ObitFArrayAvgArr;

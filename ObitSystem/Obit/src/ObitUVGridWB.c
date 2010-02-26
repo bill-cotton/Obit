@@ -285,17 +285,24 @@ void ObitUVGridWBSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
  * Perform half plane complex to real FFT, convert to center at the center order and
  * apply corrections for the convolution  function used in gridding
  * Requires setup by #ObitUVGridCreate and gridding by #ObitUVGridReadUV.
+ * Writes image to disk.
  * \param in      Object to initialize
+ *                info element "Channel" has plane number, def[1]
+ * \param oout    Output image, should be open for call (as Obit*)
  * \param array   Output image array.
  * \param err     ObitErr stack for reporting problems.
  */
-void ObitUVGridWBFFT2Im (ObitUVGrid *inn, ObitFArray *array, ObitErr *err)
+void ObitUVGridWBFFT2Im (ObitUVGrid *inn, Obit *oout, ObitErr *err)
 {
-  ofloat *ramp=NULL, *data=NULL, *imagep=NULL, *xCorrp=NULL, *yCorrp=NULL, fact;
   ObitUVGridWB *in = (ObitUVGridWB*)inn;
-  olong size, naxis[2], pos[5];
+  ObitImage *out = (ObitImage*)oout;
+  ofloat *ramp=NULL, *data=NULL, *imagep=NULL, *xCorrp=NULL, *yCorrp=NULL, fact;
+  olong size, naxis[2], pos[5], pln, plane[5]={1,1,1,1,1};
   ObitFArray *xCorrTemp=NULL;
-  olong dim[7];
+  ObitFArray *array = out->image;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  olong xdim[7];
   ObitUVGridClassInfo *gridClass = (ObitUVGridClassInfo*)in->ClassInfo; /* Gridder class */
   gchar *routine = "ObitUVGridWBFFT2Im";
   
@@ -316,10 +323,10 @@ void ObitUVGridWBFFT2Im (ObitUVGrid *inn, ObitFArray *array, ObitErr *err)
     /* Making Beam */ 
     /* Create FFT object if not done before */
     if (in->FFTBeam==NULL) {
-      dim[0] = in->nxBeam; 
-      dim[1] = in->nyBeam; 
+      xdim[0] = in->nxBeam; 
+      xdim[1] = in->nyBeam; 
       in->FFTBeam = newObitFFT ("Beam FFT", OBIT_FFT_Reverse, OBIT_FFT_HalfComplex,
-				2, dim);
+				2, xdim);
     }
 
     /* do FFT */
@@ -385,10 +392,10 @@ void ObitUVGridWBFFT2Im (ObitUVGrid *inn, ObitFArray *array, ObitErr *err)
     
     /* Create FFT object if not done before */
     if (in->FFTImage==NULL) {
-      dim[0] = in->nxImage; 
-      dim[1] = in->nyImage; 
+      xdim[0] = in->nxImage; 
+      xdim[1] = in->nyImage; 
       in->FFTImage = newObitFFT ("Image FFT", OBIT_FFT_Reverse, OBIT_FFT_HalfComplex,
-				 2, dim);
+				 2, xdim);
     }
     
     /* do FFT */
@@ -435,6 +442,13 @@ void ObitUVGridWBFFT2Im (ObitUVGrid *inn, ObitFArray *array, ObitErr *err)
   if (ramp) g_free (ramp); ramp = NULL;
   if (data) g_free (data); data = NULL;
 
+  /* Write output */
+  pln = 1;  /* Get channel/plane number */
+  ObitInfoListGetTest(in->info, "Channel", &type, dim, &pln);
+  plane[0] = pln;
+  ObitImagePutPlane (out, array->array, plane, err);
+  if (err->error) Obit_traceback_msg (err, routine, out->name);
+	
 } /* end ObitUVGridWBFFT2Im */
 
  /**
@@ -445,17 +459,21 @@ void ObitUVGridWBFFT2Im (ObitUVGrid *inn, ObitFArray *array, ObitErr *err)
  * beam and image with the beam immediately prior to the associated image.
  * Apparently the threading in FFTW clashes with that in Obit so here the
  * FFTs are done sequentially 
- * Wideband version: No gridding corrections for beams
+ * Images written to disk
+ * Wideband version:
  * \param nPar    Number of parallel griddings
  * \param in      Array of  objects to grid
- * \param array   Array of output image pixel arrays, 
- *                elements must correspond to those in in
+ *                info element "Channel" has plane number, def[1]
+ * \param oout    Array of output images,  pixel array elements must correspond 
+ *                to those in in. (As Obit*)
  * \param err     ObitErr stack for reporting problems.
  */
-void ObitUVGridWBFFT2ImPar (olong nPar, ObitUVGrid **inn, ObitFArray **array, ObitErr *err)
+void ObitUVGridWBFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *err)
 {
-  olong i, nTh, nnTh, off, nLeft, pos[5], dim[7];
+  ObitImage **out = (ObitImage**)oout;
+  olong i, nTh, nnTh, off, nLeft, pos[5], xdim[7], pln, plane[5]={1,1,1,1,1};
   FFT2ImFuncArg *args=NULL;
+  ObitFArray **array=NULL;
   ObitUVGridWB **in = (ObitUVGridWB**)inn;
   ObitThreadFunc func=(ObitThreadFunc)ThreadFFT2ImWB;
   gboolean OK;
@@ -468,22 +486,26 @@ void ObitUVGridWBFFT2ImPar (olong nPar, ObitUVGrid **inn, ObitFArray **array, Ob
 
   for (i=0; i<nPar; i++) {
     g_assert (ObitUVGridWBIsA(in[i]));
-    g_assert (ObitFArrayIsA(array[i]));
-    /* Arrays compatable */
-    g_assert (in[i]->grid->ndim == array[i]->ndim);
-    g_assert (2*(in[i]->grid->naxis[0]-1) == array[i]->naxis[0]);
-    g_assert (in[i]->grid->naxis[1] == array[i]->naxis[1]);
+    g_assert (ObitImageIsA(out[i]));  
   }
+  
+  /* Create FArray array */
+  array = g_malloc0(nPar*sizeof(ObitFArray*));
 
   /* FFTs */
   for (i=0; i<nPar; i++) {
     /* Create FFT object if not done before */
     if (in[i]->doBeam) { /* Beam? */
       if (in[i]->FFTBeam==NULL) {
-	dim[0] = in[i]->nxBeam; 
-	dim[1] = in[i]->nyBeam; 
+	xdim[0] = in[i]->nxBeam; 
+	xdim[1] = in[i]->nyBeam; 
 	in[i]->FFTBeam = newObitFFT ("Beam FFT", OBIT_FFT_Reverse, OBIT_FFT_HalfComplex,
-				     2, dim);
+				     2, xdim);
+	/* Reference or create beam array for higher order beam */
+	if (in[i]->order==0)
+	  array[i] = ObitFArrayRef(out[i]->image);
+	else
+	  array[i] = ObitFArrayCreate("Beam", 2, xdim);
       }
       
       /* do FFT */
@@ -492,10 +514,11 @@ void ObitUVGridWBFFT2ImPar (olong nPar, ObitUVGrid **inn, ObitFArray **array, Ob
     } else { /* Image */
       /* Create FFT object if not done before */
       if (in[i]->FFTImage==NULL) {
-	dim[0] = in[i]->nxImage; 
-	dim[1] = in[i]->nyImage; 
+	xdim[0] = in[i]->nxImage; 
+	xdim[1] = in[i]->nyImage; 
 	in[i]->FFTImage = newObitFFT ("Image FFT", OBIT_FFT_Reverse, OBIT_FFT_HalfComplex,
-				      2, dim);
+				      2, xdim);
+	array[i] = ObitFArrayRef(out[i]->image);
       }
       
       /* do FFT */
@@ -538,7 +561,7 @@ void ObitUVGridWBFFT2ImPar (olong nPar, ObitUVGrid **inn, ObitFArray **array, Ob
   /* Check for problems */
   if (!OK) {
     Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
-    return;
+    goto cleanup;
   }
   
   /* Loop over rest of images */
@@ -565,7 +588,7 @@ void ObitUVGridWBFFT2ImPar (olong nPar, ObitUVGrid **inn, ObitFArray **array, Ob
     /* Check for problems */
     if (!OK) {
       Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
-      return;
+      goto cleanup;
     }
     off   += nnTh;  /* update offset */
     nLeft -= nnTh;  /* update number left */
@@ -587,27 +610,54 @@ void ObitUVGridWBFFT2ImPar (olong nPar, ObitUVGrid **inn, ObitFArray **array, Ob
       if (BeamNorm==0.0) {
 	Obit_log_error(err, OBIT_Error, "%s ERROR peak in beam is zero for: %s",
 		       routine, in[i]->name);
-	return;
+	goto cleanup;
       }
       fact = 1.0 / MAX (1.0e-20, BeamNorm);
       ObitFArraySMul (array[i], fact);  /* Normalize beam */
       /* Save normalization on in[i,i+1] */
       if (!in[i+1]->doBeam) in[i+1]->BeamNorm = BeamNorm;
-       in[i]->BeamNorm = BeamNorm;
-      i++;       /* Advance to image or next beam */
+      in[i]->BeamNorm = BeamNorm;
+      /* Write output */
+      pln = 1+in[i]->order;  /* get channel/plane number */
+      plane[0] = pln;
+      ObitImagePutPlane (out[i], array[i]->array, plane, err);
+      if (err->error) goto cleanup;
+      i++;       /* Advance to next beam or image */
       in[i]->BeamNorm = BeamNorm;  /* Save */
     } /* end if beam */
-    /*  Now image or higher order beam */
+    
+   /*  Now image or higher order beam */
     if (in[i]->BeamNorm==0.0) in[i]->BeamNorm = BeamNorm;  /* Save */
     if (in[i]->BeamNorm==0.0) {
       Obit_log_error(err, OBIT_Error, "%s ERROR image normalization is zero for: %s",
 		     routine, in[i]->name);
-      return;
+      goto cleanup;
     }
     fact = 1.0 / MAX (1.0e-20, in[i]->BeamNorm);
     ObitFArraySMul (array[i], fact);  /* Normalize image */
+    
+    /* Write output */
+    if (!in[i]->doBeam) {  /* Image */
+      pln = 1;  /* get channel/plane number */
+      plane[0] = pln;
+      ObitImagePutPlane (out[i], array[i]->array, plane, err);
+    } else {  /* Beam */
+      pln = 1+in[i]->order;  /* get channel/plane number */
+      plane[0] = pln;
+      ObitImagePutPlane (out[i], array[i]->array, plane, err);
+    }
+    if (err->error) goto cleanup;
   } /* end normalization loop */
 
+  /*  cleanup */
+ cleanup:
+  if (array) {
+    for (i=0; i<nPar; i++) {
+      array[i] = ObitFArrayUnref( array[i]);
+    }
+    g_free(array);
+  }
+    if (err->error) Obit_traceback_msg (err, routine, out[0]->name);
 } /* end ObitUVGridWBFFT2ImPar */
 
 /**

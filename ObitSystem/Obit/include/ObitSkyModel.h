@@ -142,7 +142,15 @@ enum obitSkyModelCompType {
   /** Convolved Gaussian + spectrum */
   OBIT_SkyModel_CGaussModSpec = OBIT_SkyModel_CGaussMod+10,  
   /** Uniform sphere + spectrum */
-  OBIT_SkyModel_USphereModSpec = OBIT_SkyModel_USphereMod+10 
+  OBIT_SkyModel_USphereModSpec = OBIT_SkyModel_USphereMod+10 ,
+  /** Point + Tabulated spectrum */
+  OBIT_SkyModel_PointModTSpec = OBIT_SkyModel_PointMod+20,
+  /** Gaussian on sky + Tabulated spectrum */
+  OBIT_SkyModel_GaussModTSpec = OBIT_SkyModel_GaussMod+20,  
+  /** Convolved Gaussian + sTabulated pectrum */
+  OBIT_SkyModel_CGaussModTSpec = OBIT_SkyModel_CGaussMod+20,  
+  /** Uniform sphere + Tabulated spectrum */
+  OBIT_SkyModel_USphereModTSpec = OBIT_SkyModel_USphereMod+20 
 }; /* end enum obitSkyModelCompType */
 /** typedef for enum for ObitSkyModelCompType. */
 typedef enum obitSkyModelCompType ObitSkyModelCompType;

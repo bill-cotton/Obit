@@ -394,7 +394,7 @@ void ObitUVImagerWeight (ObitUVImager *in, ObitErr *err)
   /* List of control parameters on uvwork */
   gchar *controlList[] = 
     {"do3D", "FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
-     "RAShift", "DecShift", "Sources", 
+     "RAShift", "DecShift", "Sources",  "Beam",
      "Catalog",  "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
      NULL};
@@ -433,7 +433,7 @@ void ObitUVImagerWeight (ObitUVImager *in, ObitErr *err)
  * \param doFlatten If TRUE, flatten images when done
  * \param err       Obit error stack object.
  */
-void ObitUVImagerImage (ObitUVImager *in,  olong *field, gboolean doWeight, 
+void ObitUVImagerImage (ObitUVImager *in, olong *field, gboolean doWeight, 
 			gboolean doBeam, gboolean doFlatten, ObitErr *err)
 { 
   ObitUV *data=NULL;
@@ -442,11 +442,12 @@ void ObitUVImagerImage (ObitUVImager *in,  olong *field, gboolean doWeight,
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitUVDesc *UVDesc;
   ObitImageDesc *imageDesc;
-  olong i, j, n, fldCnt, ifield, ofield, channel=0, nDo, nLeft, nImage, prtLv, *fldNo=NULL;
+  olong i, n, fldCnt, ifield, channel=0, nDo, nLeft, nImage, prtLv, *fldNo=NULL;
   olong NumPar;
-  ofloat sumwts, shift[2];
+  ofloat sumwts[2];
   ObitImage *theBeam=NULL;
-  gboolean *forceBeam=NULL, needBeam, doall, found;
+  gboolean *forceBeam=NULL, needBeam, doall;
+  ObitUVImagerClassInfo *imgClass = (ObitUVImagerClassInfo*)in->ClassInfo;
   gchar *routine = "ObitUVImagerImage";
 
   /* error checks */
@@ -602,7 +603,45 @@ void ObitUVImagerImage (ObitUVImager *in,  olong *field, gboolean doWeight,
   } /* End loop over fields finalizing*/
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
+  /* Make any 2D shifted images */
  shifty:
+  imgClass->ObitUVImagerShifty (in, field, doall, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Need to flatten? */
+  if (doFlatten) ObitUVImagerFlatten (in, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Cleanup */
+  if (forceBeam) g_free(forceBeam);
+  if (fldNo) g_free(fldNo);
+  if (imageList) g_free(imageList);
+} /* end ObitUVImagerImage */
+
+/**
+ * Create shifted 2D imaging facets
+ * \param in     The input UVImager object
+ * \param field  Zero terminated list of field numbers to image, 0=> all
+ * \param doall  If true then all images were remade
+ * \param err    Obit error stack object.
+ */
+void ObitUVImagerShifty (ObitUVImager *in, olong *field, gboolean doall, 
+			 ObitErr *err)
+{
+  olong i, j, ofield, ifield;
+  ofloat shift[2];
+  gboolean found;
+  gchar *routine = "ObitUVImagerShifty";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitIsA(in, &myClassInfo));
+  if (!ObitImageMosaicIsA(in->mosaic)) {
+    Obit_log_error(err, OBIT_Error,"%s ImageMosaic not defined in %s", 
+		   routine, in->name);
+    return;
+  }
+
   /* Loop making any (2D) shifted images */
   for (i=0; i<in->mosaic->numberImages; i++) {
     /* Only needed for 2D */
@@ -629,15 +668,7 @@ void ObitUVImagerImage (ObitUVImager *in,  olong *field, gboolean doWeight,
   } /* End loop making shifted images */
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
-  /* Need to flatten? */
-  if (doFlatten) ObitUVImagerFlatten (in, err);
-  if (err->error) Obit_traceback_msg (err, routine, in->name);
-
-  /* Cleanup */
-  if (forceBeam) g_free(forceBeam);
-  if (fldNo) g_free(fldNo);
-  if (imageList) g_free(imageList);
-} /* end ObitUVImagerImage */
+} /* end ObitUVImageShifty */
 
 /**
  * Flatten Image Mosaic
@@ -852,6 +883,7 @@ static void ObitUVImagerClassInfoDefFn (gpointer inClass)
   theClass->ObitUVImagerCreate2= (ObitUVImagerCreate2FP)ObitUVImagerCreate2;
   theClass->ObitUVImagerWeight = (ObitUVImagerWeightFP)ObitUVImagerWeight;
   theClass->ObitUVImagerImage  = (ObitUVImagerImageFP)ObitUVImagerImage;
+  theClass->ObitUVImagerShifty = (ObitUVImagerShiftyFP)ObitUVImagerShifty;
   theClass->ObitUVImagerFlatten= (ObitUVImagerFlattenFP)ObitUVImagerFlatten;
   theClass->ObitUVImagerGetMosaic = 
     (ObitUVImagerGetMosaicFP)ObitUVImagerGetMosaic;

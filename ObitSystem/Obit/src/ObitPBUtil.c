@@ -29,6 +29,7 @@
 /*--------------------------------------------------------------------*/
 
 #include "ObitPBUtil.h"
+#include "ObitSkyModel.h"
 #include <math.h>
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
@@ -279,6 +280,8 @@ ofloat ObitPBUtilPntErr (odouble Angle, odouble AngleO, ofloat antSize,
  * Derive an ObitTableCC from the input one in which the fluxes
  * are corrected by the relative antenna gains between refFreq and 
  * the average of Freq.
+ * Also processes CC tables with tabulated spectra, i.e.
+ * Param[3] between 20 and 29, each channel is processed.
  * From the AIPSish $FOURMASS/SUB/PBUTIL.FOR PBFCCT 
  * \param image    input image with input CC table
  * \param inCCver  input CC table
@@ -306,8 +309,14 @@ ObitTableCC *ObitPBUtilCCCor(ObitImage *image, olong inCCver, olong *outCCver,
   ObitTableCC *inCCTable = NULL, *outCCTable = NULL;
   ObitTableCCRow *CCRow = NULL;
   gchar *tabType = "AIPS CC";
+  odouble *specFreq=NULL;
   ofloat Angle;
-  olong j, ver, irow, orow;
+  olong i, j, ver, irow, orow, nSpec, offset=0;
+  gchar keyword[20];
+  gboolean isSpec=FALSE;
+  ObitSkyModelCompType modType;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *routine = "ObitPBUtilCCCor";
 
    /* error checks */
@@ -330,6 +339,7 @@ ObitTableCC *ObitPBUtilCCCor(ObitImage *image, olong inCCver, olong *outCCver,
     Obit_traceback_val (err, routine, image->name, outCCTable);
   /* Create table row */
   CCRow = newObitTableCCRow (inCCTable);
+  isSpec = inCCTable->noParms>4;  /* Might this have a tabulated spectrum? */
   
   /* Create output CC table */
   ver = *outCCver;
@@ -363,6 +373,39 @@ ObitTableCC *ObitPBUtilCCCor(ObitImage *image, olong inCCver, olong *outCCver,
     CCRow->Flux *= ObitPBUtilRelPB ((odouble)Angle, nfreq, Freq, antSize, refFreq, 
 				    pbmin);
 
+    /* Is this a tabulated spectrum CC? */
+    if (isSpec) {
+      if ((inCCTable->noParms>4) && (CCRow->parms[3]>=19.99) && 
+	  (CCRow->parms[3]<=29.99)) {
+	/* Need to initialize? */
+	if ((nSpec<=0) || (specFreq==NULL)) {
+	  nSpec = 0;
+	  ObitInfoListGetTest(image->myDesc->info, "NSPEC", &type, dim, &nSpec);
+	  /* get number of and channel frequencies for CC spectra from 
+	     CC table on first image in mosaic */
+	  if (nSpec>0) {
+	    specFreq = g_malloc0(nSpec*sizeof(odouble));
+	    for (i=0; i<nSpec; i++) {
+	      specFreq[i] = 1.0;
+	      sprintf (keyword, "FREQ%4.4d",i+1);
+	      ObitInfoListGetTest(image->myDesc->info, keyword, &type, dim, &specFreq[i]);
+	    } /* end loop reading frequencies */
+	    /* Get model type and offset in record of start of spectrum */
+	    modType = CCRow->parms[3] + 0.5;
+	    /* Offset in record */
+	    offset = 4;
+	    /* end initialize */
+	  } else {isSpec = FALSE; nSpec = 0;}
+	} /* end initialize */
+
+	/* Correct tabulated spectrum */
+	for (i=0; i<nSpec; i++) {
+	  CCRow->parms[offset+i] *=  ObitPBUtilRelPB ((odouble)Angle, 1, &specFreq[i], 
+						     antSize, refFreq, pbmin);
+	}
+      } else isSpec = FALSE;  /* No tabulated spectrum */
+    } /* end tabulated spectrum  */
+
     /* Write output */
     orow++;
     retCode = ObitTableCCWriteRow (outCCTable, orow, CCRow, err);
@@ -375,6 +418,7 @@ ObitTableCC *ObitPBUtilCCCor(ObitImage *image, olong inCCver, olong *outCCver,
   if  (err->error) Obit_traceback_val (err, routine, image->name, outCCTable);
   inCCTable = ObitTableUnref(inCCTable);
   CCRow = ObitTableRowUnref(CCRow);
+  if (specFreq) g_free(specFreq);
 
   /* Set actual values in output table */
   *startCC = 1;

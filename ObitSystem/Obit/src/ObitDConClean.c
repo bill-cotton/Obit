@@ -2266,7 +2266,6 @@ static void KillStatsFuncArgs (olong nargs, StatsFuncArg **ThreadArgs)
   olong i;
 
   if (ThreadArgs==NULL) return;
-  ObitThreadPoolFree (ThreadArgs[0]->thread);  /* Free thread pool */
   for (i=0; i<nargs; i++) {
     if (ThreadArgs[i]) {
       if (ThreadArgs[i]->inData)  ObitFArrayUnref(ThreadArgs[i]->inData);

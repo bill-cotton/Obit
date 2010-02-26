@@ -121,12 +121,12 @@ typedef ObitIOCode (*ObitUVGridReadUVParFP) (olong nPar, ObitUVGrid **in, ObitUV
 					     ObitErr *err);
 
 /** Public: FFT grid to image plane with gridding correction. */
-void ObitUVGridFFT2Im (ObitUVGrid *in, ObitFArray *array, ObitErr *err);
-typedef void (*ObitUVGridFFT2ImFP) (ObitUVGrid *in, ObitFArray *array, ObitErr *err);
+void ObitUVGridFFT2Im (ObitUVGrid *in, Obit *out, ObitErr *err);
+typedef void (*ObitUVGridFFT2ImFP) (ObitUVGrid *in, Obit *out, ObitErr *err);
 
 /** Public: Parallel FFT grid to image plane with gridding correction. */
-void ObitUVGridFFT2ImPar (olong nPar, ObitUVGrid **in, ObitFArray **array, ObitErr *err);
-typedef void (*ObitUVGridFFT2ImParFP) (olong nPar, ObitUVGrid **in, ObitFArray **array, 
+void ObitUVGridFFT2ImPar (olong nPar, ObitUVGrid **in, Obit **out, ObitErr *err);
+typedef void (*ObitUVGridFFT2ImParFP) (olong nPar, ObitUVGrid **in, Obit **out, 
 				       ObitErr *err);
 
 /* Private functions for derived classes */

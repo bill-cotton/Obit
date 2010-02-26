@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -196,6 +196,10 @@ ObitImage* ObitImageUtilFArray2FITS (ObitFArray *array,
 
 /** Public: Interpolate an image to a grid with a fixed shift */
 void ObitImageUtilShift (ObitImage *inImage,  ObitImage *outImage, 
+			 ofloat *shift, ObitErr *err);
+
+/** Public: Interpolate an MF image to a grid with a fixed shift */
+void ObitImageUtilMFShift (ObitImage *inImage,  ObitImage *outImage, 
 			 ofloat *shift, ObitErr *err);
 
 /** Public: Give parallel imaging buffer size */

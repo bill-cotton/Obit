@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2009                                          */
+/*;  Copyright (C) 2008-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -148,6 +148,18 @@ typedef ofloat*(*ObitSpectrumFitSingleFP) (olong nfreq, olong nterm, odouble ref
 					   odouble *freq, ofloat *flux, ofloat *sigma, 
 					   gboolean doBrokePow, ObitErr *err);
 
+/** Public: Make fitting arg structure */
+gpointer ObitSpectrumFitMakeArg (olong nfreq, olong nterm, 
+				 odouble refFreq, odouble *freq, 
+				 gboolean doBrokePow, 
+				 ofloat **out, ObitErr *err);
+
+/** Public: Fit single spectrum using arg */
+void ObitSpectrumFitSingleArg (gpointer arg, ofloat *flux, ofloat  *sigma,
+			       ofloat *out);
+
+/** Public: Kill fitting arg structure */
+void ObitSpectrumFitKillArg (gpointer arg);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

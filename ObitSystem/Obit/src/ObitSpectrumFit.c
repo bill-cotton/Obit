@@ -1,6 +1,6 @@
-/* $Id$        */
+/* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2008-2009                                          */
+/*;  Copyright (C) 2008-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1122,6 +1122,215 @@ ofloat* ObitSpectrumFitSingle (olong nfreq, olong nterm, odouble refFreq,
 } /* end ObitSpectrumFitSingle */
 
 /**
+ * Make single spectrum fitting argument array
+ * Without GSL, only the average intensity is determined (no spectrum)
+ * \param nfreq    Number of entries in freq, flux, sigma
+ * \param nterm    Number of coefficients of powers of log(nu) to fit
+ * \param refFreq  Reference frequency (Hz)
+ * \param freq     Array of Frequencies (Hz)
+ * \param flux     Array of fluxes (Jy) same dim as freq
+ * \param sigma    Array of errors (Jy) same dim as freq
+ * \param doBrokePow  TRUE if a broken power law fit is desired (3 terms)
+ * \param out      Array for output results, should be g_freed when done
+ * \param err      Obit error stack object.
+ * \return  argument for single spectrum fitting, use ObitSpectrumFitKillArg to dispose.
+ */
+gpointer ObitSpectrumFitMakeArg (olong nfreq, olong nterm, odouble refFreq, 
+				 odouble *freq, gboolean doBrokePow, 
+				 ofloat **out, ObitErr *err)
+{
+  olong i;
+  NLFitArg *arg=NULL;
+  gchar *routine = "ObitSpectrumFitMakeArg";
+  /* GSL implementation */
+#ifdef HAVE_GSL
+  const gsl_multifit_fdfsolver_type *T=NULL;
+#endif /* HAVE_GSL */ 
+
+  if (err->error) return out;
+
+  /* Warn if too many terms asked for */
+  if (nterm>5) {
+      Obit_log_error(err, OBIT_InfoWarn, 
+		    "%s: Asked for %d terms, will limit to 5", routine, nterm);
+  }
+
+  /* Warn if incorrect number of terms */
+  if (doBrokePow && (nterm!=3)) {
+      Obit_log_error(err, OBIT_InfoWarn, 
+		    "%s: Must have three terms for broken power law, not %d", 
+		     routine, nterm);
+  }
+
+  /* Warn if ref. freq <= 0, set to 1.0e9 */
+  if (refFreq<=0.0) {
+    refFreq = 1.0e9;
+    Obit_log_error(err, OBIT_InfoWarn, 
+		   "%s: Setting reference Frequency to 1 GHz", routine);
+  }
+
+  /* Create function argument */
+  arg = g_malloc(sizeof(NLFitArg));
+  arg->in             = NULL;     /* Not needed here */
+  arg->nfreq          = nfreq;
+  arg->nterm          = nterm;
+  arg->doError        = TRUE;
+  arg->doBrokePow     = doBrokePow;
+  arg->doPBCorr       = FALSE;
+  arg->maxIter        = 100;
+  arg->minDelta       = 1.0e-5;  /* Min step size */
+  arg->maxChiSq       = 1.5;     /* max acceptable normalized chi squares */
+  arg->refFreq        = refFreq; /* Reference Frequency */
+  arg->weight         = g_malloc0(arg->nfreq*sizeof(ofloat));
+  arg->isigma         = g_malloc0(arg->nfreq*sizeof(ofloat));
+  arg->obs            = g_malloc0(arg->nfreq*sizeof(ofloat));
+  arg->nu             = g_malloc0(arg->nfreq*sizeof(ofloat));
+  arg->logNuOnu0      = g_malloc0(arg->nfreq*sizeof(ofloat));
+  arg->coef           = g_malloc0(2*arg->nterm*sizeof(ofloat));
+  for (i=0; i<nfreq; i++) {
+    arg->nu[i]        = freq[i];
+    arg->logNuOnu0[i] = log(freq[i]/refFreq);
+  }
+
+  /* GSL implementation */
+#ifdef HAVE_GSL
+  arg->solver2 =  arg->solver3 =  arg->solver4 =  arg->solver5 = NULL;
+  arg->covar2  =  arg->covar3  =  arg->covar4  =  arg->covar5  = NULL;
+  arg->work2   =  arg->work3   =  arg->work4   =  arg->work5   = NULL;
+  /* Setup solvers */
+  T = gsl_multifit_fdfsolver_lmder;
+  if (arg->nterm>=2)
+    arg->solver2 = gsl_multifit_fdfsolver_alloc(T, arg->nfreq, 2);
+  if (arg->nterm>=3)
+    arg->solver3 = gsl_multifit_fdfsolver_alloc(T, arg->nfreq, 3);
+  if (arg->nterm>=4)
+    arg->solver4 = gsl_multifit_fdfsolver_alloc(T, arg->nfreq, 4);
+  if (arg->nterm>=5)
+    arg->solver5 = gsl_multifit_fdfsolver_alloc(T, arg->nfreq, 5);
+
+  /* Fitting function info */
+  arg->funcStruc = g_malloc0(sizeof(gsl_multifit_function_fdf));
+  if (doBrokePow) {
+    arg->funcStruc->f      = &SpecFitFuncBP;
+    arg->funcStruc->df     = &SpecFitJacBP;
+    arg->funcStruc->fdf    = &SpecFitFuncJacBP;
+  } else {
+    arg->funcStruc->f      = &SpecFitFunc;
+    arg->funcStruc->df     = &SpecFitJac;
+    arg->funcStruc->fdf    = &SpecFitFuncJac;
+  }
+  arg->funcStruc->n      = arg->nfreq;
+  arg->funcStruc->p      = arg->nterm;
+  arg->funcStruc->params = arg;
+
+  /* Set up work arrays */
+  if (arg->nterm>=2) {
+    arg->covar2 = gsl_matrix_alloc(2, 2);
+    arg->work2  = gsl_vector_alloc(2);
+  }
+  if (arg->nterm>=3) {
+    arg->covar3 = gsl_matrix_alloc(3, 3);
+    arg->work3  = gsl_vector_alloc(3);
+  }
+  if (arg->nterm>=4) {
+    arg->covar4 = gsl_matrix_alloc(4, 4);
+    arg->work4  = gsl_vector_alloc(4);
+  }
+  if (arg->nterm>=5) {
+    arg->covar5 = gsl_matrix_alloc(5, 5);
+    arg->work5  = gsl_vector_alloc(5);
+  }
+#endif /* HAVE_GSL */ 
+
+  /* output array */
+  *out = (ofloat*)g_malloc0((2*arg->nterm+1)*sizeof(ofloat));
+
+  return (gpointer)arg;
+} /* end ObitSpectrumFitMakeArg */
+
+/**
+ * Fit single spectrum to flux measurements using precomputed argument
+ * \param aarg      pointer to argument for fitting
+ * \param flux      Array of values to be fitted
+ * \param sigma     Array of uncertainties of flux
+ * \param out       Result array at least 2*nterms+1 in size.
+ *                  in order, fitted parameters, error estimates, chi sq of fit.
+ */
+void ObitSpectrumFitSingleArg (gpointer aarg, ofloat *flux, ofloat *sigma,
+			       ofloat *out)
+{
+  olong i, j;
+  NLFitArg *arg=(NLFitArg*)aarg;
+
+  /* Save flux array, sigma */
+   for (i=0; i<arg->nfreq; i++) arg->obs[i] = flux[i];
+   for (i=0; i<arg->nfreq; i++) {
+     arg->obs[i]    = flux[i];
+     arg->isigma[i] = 1.0 / sigma[i];
+     arg->weight[i] = arg->isigma[i]*arg->isigma[i];
+   }
+
+  /* Fit - poly power or broken power */
+  if (arg->doBrokePow) {
+    /* Broken power law */
+    arg->nterm = 2;  /* simple power law */
+    arg->funcStruc->f      = &SpecFitFunc;
+    arg->funcStruc->df     = &SpecFitJac;
+    arg->funcStruc->fdf    = &SpecFitFuncJac;
+    NLFit(arg);
+    arg->nterm = 3;  /* broken power law */
+    arg->funcStruc->f      = &SpecFitFuncBP;
+    arg->funcStruc->df     = &SpecFitJacBP;
+    arg->funcStruc->fdf    = &SpecFitFuncJacBP;
+    NLFitBP(arg);
+  } else {
+    /* multi term power */
+    NLFit(arg);
+  }
+  
+  /* get results parameters + errors */
+  for (j=0; j<arg->nterm*2; j++) out[j] = arg->coef[j];
+  /* Chi squared */
+  out[arg->nterm*2] = arg->ChiSq;
+  
+  return;
+} /* end ObitSpectrumFitSingleArg */
+
+/**
+ * Delete single fitting argument
+ * \param aarg      pointer to argument to kill
+ */
+void ObitSpectrumFitKillArg (gpointer aarg)
+{
+  NLFitArg *arg= (NLFitArg*)aarg;
+
+  if (arg==NULL) return;
+  if (arg->weight)    g_free(arg->weight);
+  if (arg->isigma)    g_free(arg->isigma);
+  if (arg->obs)       g_free(arg->obs);
+  if (arg->nu)        g_free(arg->nu);
+  if (arg->logNuOnu0) g_free(arg->logNuOnu0);
+  if (arg->coef)      g_free(arg->coef);
+#ifdef HAVE_GSL
+  if (arg->solver2)   gsl_multifit_fdfsolver_free (arg->solver2);
+  if (arg->solver3)   gsl_multifit_fdfsolver_free (arg->solver3);
+  if (arg->solver4)   gsl_multifit_fdfsolver_free (arg->solver4);
+  if (arg->solver5)   gsl_multifit_fdfsolver_free (arg->solver5);
+  if (arg->work2)     gsl_vector_free(arg->work2);
+  if (arg->work3)     gsl_vector_free(arg->work3);
+  if (arg->work4)     gsl_vector_free(arg->work4);
+  if (arg->work5)     gsl_vector_free(arg->work5);
+  if (arg->covar2)    gsl_matrix_free(arg->covar2);
+  if (arg->covar3)    gsl_matrix_free(arg->covar3);
+  if (arg->covar4)    gsl_matrix_free(arg->covar4);
+  if (arg->covar5)    gsl_matrix_free(arg->covar5);
+  if (arg->funcStruc) g_free(arg->funcStruc);
+#endif /* HAVE_GSL */
+  g_free(arg);
+
+} /* end ObitSpectrumFitKillArg */
+
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitSpectrumFitClassInit (void)
@@ -1657,16 +1866,16 @@ static gpointer ThreadNLFit (gpointer arg)
  */
 static void NLFit (NLFitArg *arg)
 {
-  olong iter=0, i, nterm, nvalid, best;
+  olong iter=0, i, nterm=arg->nterm, nvalid, best;
   ofloat avg, delta, chi2Test, sigma, fblank = ObitMagicF();
   ofloat meanSNR, SNRperTerm=5.0;
   odouble sum, sumwt, sum2;
   gboolean isDone;
   int status;
 #ifdef HAVE_GSL
-  gsl_multifit_fdfsolver *solver;
-  gsl_matrix *covar;
-  gsl_vector *work;
+  gsl_multifit_fdfsolver *solver=NULL;
+  gsl_matrix *covar=NULL;
+  gsl_vector *work=NULL;
 #endif /* HAVE_GSL */ 
  
   /* Initialize output */

@@ -60,7 +60,8 @@ static gint CCCompareFlux (gconstpointer in1, gconstpointer in2,
 static void CCMerge (ofloat *base, olong size, olong number); 
 
 /** Private: Merge spectral entries in Sort structure */
-static void CCMergeSpec (ofloat *base, olong size, olong number); 
+static void CCMergeSpec (ofloat *base, olong size, olong number, 
+			 gboolean doSpec, gboolean doTSpec); 
 
 /** Private: reorder table based on Sort structure */
 static ObitIOCode 
@@ -259,9 +260,12 @@ ObitIOCode ObitTableCCUtilGrid (ObitTableCC *in, olong OverSample,
  * derived is described in desc.  The output grid is padded by a factor OverSample.
  * If the components are Gaussians, their parameters are returned in gaus.
  * Output image is spectral term iterm times the flux density.
+ * Works for both parameterized spectra (Param[3} 10-19) 
+ * or tabulated spectra (Param[3} 20-29).
  * \param in         Table to grid
  * \param OverSample Expansion factor for output image
  * \param iterm      Spectral term to grid, 0=flux, 1=flux*si, 2=flux*curve...
+ *                   For tabulated spectra this is the spectrum
  * \param first      First component (1-rel) to include, 0=>1, filled in if changed
  * \param last       Last component (1-rel) to include, 0=>all, filled in if changed
  * \param noNeg      Ignore first negative flux component and after
@@ -291,6 +295,7 @@ ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong it
   olong j, irow, xPix, yPix, iAddr;
   ofloat iCellX, iCellY, fNx, fNy, spectTerm;
   olong ndim, naxis[2], nx, ny, parmoff, count = 0, badCnt = 0;
+  gboolean doSpec=TRUE, doTSpec=FALSE;
   gchar *routine = "ObitTableCCGridSpect";
 
   /* error checks */
@@ -348,8 +353,8 @@ ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong it
   ypoff = (desc->crpix[desc->jlocd] - (desc->inaxes[desc->jlocd]/2) - 1) *
     desc->cdelt[desc->jlocd];
 
-  /* Where is spectral term */
-  parmoff = 4;
+  /* Where is spectral term? */
+  parmoff = 3;
 
   /* loop over CCs */
   count = 0;  /* Count of components */
@@ -372,7 +377,7 @@ ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong it
       /* Is this a Gaussian component? */
       if ((in->parmsCol>=0) &&
 	  (in->myDesc->dim[in->parmsCol][0]>4) && 
-	  ((CCRow->parms[3]==1.0) || (CCRow->parms[3]==11.0))) {
+	  ((CCRow->parms[3]==1.0) || (CCRow->parms[3]==11.0) || (CCRow->parms[3]==21.0))) {
 	gparm[0] = CCRow->parms[0];
 	gparm[1] = CCRow->parms[1];
 	gparm[2] = CCRow->parms[2];
@@ -387,6 +392,10 @@ ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong it
       }
     } /* end of Gaussian Check */
 
+      /* Get spectrum type */
+    doSpec  = (CCRow->parms[3]>=9.9)  && (CCRow->parms[3]<=19.0);
+    doTSpec = (CCRow->parms[3]>=19.9) && (CCRow->parms[3]<=29.0);
+    
     /* Only to first negative? */
     if (noNeg && (CCRow->Flux<0.0)) break;
   
@@ -429,15 +438,23 @@ ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong it
     xPix = (olong)(CCRow->DeltaX + nx/2 + 0.5);
     yPix = (olong)(CCRow->DeltaY + ny/2 + 0.5);
 
-    /* Spectral term */
-    spectTerm = 1.0;
-    if (iterm==1) spectTerm = CCRow->parms[0+parmoff];
-    if (iterm==2) spectTerm = CCRow->parms[1+parmoff];
-    if (iterm==3) spectTerm = CCRow->parms[2+parmoff];
+    /* Spectral term parameter or tabulated */
+    if (doSpec) {
+      spectTerm = 1.0;
+      if (iterm==1) spectTerm = CCRow->parms[1+parmoff];
+      if (iterm==2) spectTerm = CCRow->parms[2+parmoff];
+      if (iterm==3) spectTerm = CCRow->parms[3+parmoff];
+    } else if (doTSpec) {
+      spectTerm = CCRow->parms[iterm+parmoff];
+    } else  spectTerm = 0.0;  /* Something went wrong */
 
     /* Sum into image */
     iAddr = xPix + nx * yPix;
-    array[iAddr] += CCRow->Flux*spectTerm;
+    if (doSpec) {
+      array[iAddr] += CCRow->Flux*spectTerm;
+    } else if (doTSpec) {
+     array[iAddr] += spectTerm;
+    }
 
     count++;        /* how many */
   } /* end loop over components */
@@ -490,7 +507,7 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
   olong nrow, ndim, naxis[2], size, fsize, tsize;
   ofloat *table, inPixel[2], outPixel[2], *SortStruct = NULL;
   ofloat *entry;
-  gboolean wanted, doSpec;
+  gboolean wanted, doSpec=TRUE, doTSpec=FALSE;
   gchar *outName;
   ObitCCCompType modType;
   gchar *routine = "ObitTableCCUtilCrossList";
@@ -521,7 +538,6 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
   /* create output structure */
   SortStruct = ObitMemAlloc0Name (tsize, "CCSortStructure");
 
-
   /* Create table row */
   CCRow = newObitTableCCRow (inCC);
 
@@ -535,6 +551,10 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
     modType = OBIT_CC_PointMod;
   else  
     modType = OBIT_CC_Unknown; /* Model type not yet known */
+
+  /* Get spectrum type */
+  doSpec  = (CCRow->parms[3]>=9.9)  && (CCRow->parms[3]<=19.0);
+  doTSpec = (CCRow->parms[3]>=19.9) && (CCRow->parms[3]<=29.0);
   
   /* Loop over table reading CCs */
   for (i=1; i<=nrow; i++) {
@@ -556,7 +576,9 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
       /* If neither a point nor Gaussian - barf */
       if ((modType!=OBIT_CC_GaussMod) && (modType!=OBIT_CC_CGaussMod) && 
 	  (modType!=OBIT_CC_PointMod) && (modType!=OBIT_CC_GaussModSpec) && 
-	  (modType!=OBIT_CC_CGaussModSpec) && (modType!=OBIT_CC_PointModSpec)) {
+	  (modType!=OBIT_CC_CGaussModSpec) && (modType!=OBIT_CC_PointModSpec) &&
+	  (modType!=OBIT_CC_GaussModTSpec) && (modType!=OBIT_CC_CGaussModTSpec) && 
+	  (modType!=OBIT_CC_PointModTSpec)) {
 	Obit_log_error(err, OBIT_Error,
 		       "%s: Model type %d neither point nor Gaussian in %s",
 		       routine, modType, inCC->name);
@@ -598,8 +620,8 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
 
   /* Merge entries - Normal or with spectra? */
   doSpec = (inCC->noParms>4);
-  if (doSpec) 
-    CCMergeSpec (SortStruct, fsize, number);
+  if (doSpec || doTSpec) 
+    CCMergeSpec (SortStruct, fsize, number, doSpec, doTSpec);
   else
     CCMerge (SortStruct, fsize, number);
   
@@ -670,7 +692,11 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
  * CCs on cells within 0.5 pixels of outDesc are included.
  * Components in the same cell are combined.
  * If the components are Gaussians, their parameters are returned in gparm.
- * Output list has element 4 being flux weighted spectral term, except for 
+ * Works for both parameterized spectra (Param[3} 10-19) 
+ * or tabulated spectra (Param[3} 20-29).
+ * For tabulated spectra, selected channel components are summed and saved as 
+ * element 4 in the output array.
+ * For paramertized spectra, element 4 is flux weighted spectral term, except for 
  * iterm=0 in which it's the sum of the flux density .
  * \param in         Table of CCs
  * \param inDesc     Descriptor for image from which components derived
@@ -682,6 +708,7 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
  * \param ncomp      [out] number of components in output list (generally less 
  *                   than size of FArray).
  * \param iterm      Select spectral term, 0=flux, 1=si, 2=curvature...
+ *                   For tabulated spectra this is the spectrum
  * \param err        ObitErr error stack.
  * \return pointer to list of components, may be NULL on failure, 
  *  MUST be Unreffed.
@@ -695,11 +722,12 @@ ObitTableCCUtilCrossListSpec (ObitTableCC *inCC, ObitImageDesc *inDesc,
   ObitIOCode retCode;
   ObitTableCCRow *CCRow = NULL;
   olong i, count, number, nout, irow, lrec;
-  olong ncomp, parmoff=4;
+  olong ncomp, parmoff=3;
   olong nrow, ndim, naxis[2], size, fsize, tsize;
   ofloat *table, inPixel[2], outPixel[2], *SortStruct = NULL;
   ofloat *entry, spectTerm;
   gboolean wanted;
+  gboolean doSpec=TRUE, doTSpec=FALSE;
   gchar *outName;
   ObitCCCompType modType;
   gchar *routine = "ObitTableCCUtilCrossListSpec";
@@ -727,7 +755,6 @@ ObitTableCCUtilCrossListSpec (ObitTableCC *inCC, ObitImageDesc *inDesc,
   /* create output structure */
   SortStruct = ObitMemAlloc0Name (tsize, "CCSortStructure");
 
-
   /* Create table row */
   CCRow = newObitTableCCRow (inCC);
 
@@ -752,17 +779,23 @@ ObitTableCCUtilCrossListSpec (ObitTableCC *inCC, ObitImageDesc *inDesc,
     /* Get model type  */
     if (modType == OBIT_CC_Unknown) {
       modType = (olong)(CCRow->parms[3] + 0.5);
+      /* Get spectrum type */
+      doSpec  = (CCRow->parms[3]>=9.9)  && (CCRow->parms[3]<=19.0);
+      doTSpec = (CCRow->parms[3]>=19.9) && (CCRow->parms[3]<=29.0);
       /* If Gaussian take model */
-      if ((modType==OBIT_CC_GaussMod)     || (modType==OBIT_CC_CGaussMod) ||
-	  (modType==OBIT_CC_GaussModSpec) || (modType==OBIT_CC_CGaussModSpec)) {
+      if ((modType==OBIT_CC_GaussMod)      || (modType==OBIT_CC_CGaussMod) ||
+	  (modType==OBIT_CC_GaussModSpec)  || (modType==OBIT_CC_CGaussModSpec) ||
+	  (modType==OBIT_CC_GaussModTSpec) || (modType==OBIT_CC_CGaussModTSpec)) {
 	gparm[0] = CCRow->parms[0];
 	gparm[1] = CCRow->parms[1];
 	gparm[2] = CCRow->parms[2];
       }
       /* If neither a point nor Gaussian - barf */
-      if ((modType!=OBIT_CC_GaussMod) && (modType!=OBIT_CC_CGaussMod) && 
-	  (modType!=OBIT_CC_PointMod) && (modType!=OBIT_CC_GaussModSpec) && 
-	  (modType!=OBIT_CC_CGaussModSpec) && (modType!=OBIT_CC_PointModSpec)) {
+      if ((modType!=OBIT_CC_PointMod)       && (modType!=OBIT_CC_PointModSpec)  &&
+	  (modType!=OBIT_CC_PointModTSpec)  &&
+	  (modType!=OBIT_CC_CGaussMod)      && (modType!=OBIT_CC_GaussMod)      && 
+	  (modType!=OBIT_CC_CGaussModSpec)  && (modType!=OBIT_CC_GaussModSpec)  && 
+	  (modType!=OBIT_CC_CGaussModTSpec) && (modType!=OBIT_CC_GaussModTSpec)) {
 	Obit_log_error(err, OBIT_Error,
 		       "%s: Model type %d neither point nor Gaussian in %s",
 		       routine, modType, inCC->name);
@@ -777,11 +810,15 @@ ObitTableCCUtilCrossListSpec (ObitTableCC *inCC, ObitImageDesc *inDesc,
     if (err->error) goto cleanup;
 
     if (wanted) { /* yes */
-      /* Spectral term */
+    /* Spectral term parameter or tabulated */
+    if (doSpec) {
       spectTerm = 1.0;
-      if (iterm==1) spectTerm = CCRow->parms[0+parmoff];
-      if (iterm==2) spectTerm = CCRow->parms[1+parmoff];
-      if (iterm==3) spectTerm = CCRow->parms[2+parmoff];
+      if (iterm==1) spectTerm = CCRow->parms[1+parmoff];
+      if (iterm==2) spectTerm = CCRow->parms[2+parmoff];
+      if (iterm==3) spectTerm = CCRow->parms[3+parmoff];
+    } else if (doTSpec) {
+      spectTerm = CCRow->parms[iterm+parmoff];
+    } else  spectTerm = 0.0;  /* Something went wrong */
 
       /* add to structure */
       entry = (ofloat*)(SortStruct + count * fsize);  /* set pointer to entry */
@@ -810,7 +847,7 @@ ObitTableCCUtilCrossListSpec (ObitTableCC *inCC, ObitImageDesc *inDesc,
   g_qsort_with_data (SortStruct, number, size, CCComparePos, &ncomp);
 
   /* Merge entries */
-  CCMergeSpec (SortStruct, fsize, number);
+  CCMergeSpec (SortStruct, fsize, number, doSpec, doTSpec);
   
   /* Sort to descending merged flux densities */
   ncomp = 1;
@@ -896,7 +933,7 @@ ObitIOCode ObitTableCCUtilMerge (ObitTableCC *in, ObitTableCC *out,
   olong size, fsize, number=0, ncomp;
   ofloat parms[20];
   ofloat *SortStruct = NULL;
-  gboolean doSpec;
+  gboolean doSpec=TRUE, doTSpec=FALSE;
   gchar *routine = "ObitTableCCUtilMerge";
 
   /* error checks */
@@ -929,11 +966,14 @@ ObitIOCode ObitTableCCUtilMerge (ObitTableCC *in, ObitTableCC *out,
   /* Sort */
   g_qsort_with_data (SortStruct, number, size, CCComparePos, &ncomp);
 
+  /* Get spectrum type */
+  doSpec  = (parms[3]>=9.9)  && (parms[3]<=19.0);
+  doTSpec = (parms[3]>=19.9) && (parms[3]<=29.0);
+
   /* Merge entries - Normal or with spectra? */
   fsize = size/sizeof(ofloat);
-  doSpec = (in->noParms>4);
-  if (doSpec) 
-    CCMergeSpec (SortStruct, fsize, number);
+  if (doSpec || doTSpec) 
+    CCMergeSpec (SortStruct, fsize, number, doSpec, doTSpec);
   else
     CCMerge (SortStruct, fsize, number);
   
@@ -986,6 +1026,7 @@ ObitFArray* ObitTableCCUtilMergeSel (ObitTableCC *in, olong startComp,
   olong size, fsize, number=0, ncomp, nterms;
   ofloat lparms[20];
   ofloat *entry, *outArray, *SortStruct = NULL;
+  gboolean doSpec=TRUE, doTSpec=FALSE;
   gchar *routine = "ObitTableCCUtilMergeSel";
 
   /* error checks */
@@ -1021,9 +1062,16 @@ ObitFArray* ObitTableCCUtilMergeSel (ObitTableCC *in, olong startComp,
   /* Sort */
   g_qsort_with_data (SortStruct, number, size, CCComparePos, &ncomp);
 
+  /* Get spectrum type */
+  doSpec  = (lparms[3]>=9.9)  && (lparms[3]<=19.0);
+  doTSpec = (lparms[3]>=19.9) && (lparms[3]<=29.0);
+
   /* Merge entries */
   fsize = size/sizeof(ofloat);
-  CCMerge (SortStruct, fsize, number);
+  if (doSpec || doTSpec) 
+    CCMergeSpec (SortStruct, fsize, number, doSpec, doTSpec);
+  else
+    CCMerge (SortStruct, fsize, number);
   
   /* Sort to descending merged flux densities */
   ncomp = 1;
@@ -1119,6 +1167,7 @@ ObitFArray* ObitTableCCUtilMergeSelSpec (ObitTableCC *in, olong startComp,
   ObitIOCode retCode;
   olong size, fsize, number=0, ncomp, nterms;
   ofloat lparms[20];
+  gboolean doSpec=TRUE, doTSpec=FALSE;
   ofloat *entry, *outArray, *SortStruct = NULL;
   gchar *routine = "ObitTableCCUtilMergeSelSpec";
 
@@ -1155,9 +1204,13 @@ ObitFArray* ObitTableCCUtilMergeSelSpec (ObitTableCC *in, olong startComp,
   /* Sort */
   g_qsort_with_data (SortStruct, number, size, CCComparePos, &ncomp);
 
+  /* Get spectrum type */
+  doSpec  = (lparms[3]>=9.9)  && (lparms[3]<=19.0);
+  doTSpec = (lparms[3]>=19.9) && (lparms[3]<=29.0);
+
   /* Merge entries */
   fsize = size/sizeof(ofloat);
-  CCMergeSpec (SortStruct, fsize, number);
+  CCMergeSpec (SortStruct, fsize, number, doSpec, doTSpec);
   
   /* Sort to descending merged flux densities */
   ncomp = 1;
@@ -1170,7 +1223,6 @@ ObitFArray* ObitTableCCUtilMergeSelSpec (ObitTableCC *in, olong startComp,
     if (entry[0]>-1.0e19) count++;
     entry += fsize;  /* pointer in table */
   }
-
 
   /* Create output Array */
   lout = 3;
@@ -1647,7 +1699,7 @@ MakeCCSortStruct (ObitTableCC *in, olong *size, olong *number, olong *ncomp,
   *number = count;
 
   return out;
-} /* end MakeSortStruc */ 
+} /* end MakeCCSortStruc */ 
 
 /**
  * Create/fill sort structure for a CC table selecting by row
@@ -1834,23 +1886,31 @@ static void CCMerge (ofloat *base, olong size, olong number)
  * Merge Spectral entries in sort structure
  * leaves "X" posn entry in defunct rows -1.0e20
  * table and then copies over the input table.
+ * For parameterized spectra:
  * Takes flux weighted average of spectral components,
  * assumed to be entries 3+
+ * For tabulated spectra:
+ * Takes sums spectral components assumed to be entries 3+
  * \param base    Base address of sort structure
  * \param size    Size in gfloats of an element
  * \param number  Number of sort elements
+ * \param doSpec  TRUE if parameterized spectra
+ * \param doTSpec TRUE if tabulated spectra
  */
-static void CCMergeSpec (ofloat *base, olong size, olong number)
+static void CCMergeSpec (ofloat *base, olong size, olong number, 
+			 gboolean doSpec, gboolean doTSpec)
 {
   olong i, j, k;
   ofloat *array = base;
   
-  /* Multiply spectral term by flux */
-  j = 0;
-  while (j<number) {
-    for (k=3; k<size; k++) 
-      array[j*size+k] *=  array[j*size+2];
-    j++;
+  /* Multiply parameterized spectral terms by flux */
+  if (doSpec) {
+    j = 0;
+    while (j<number) {
+      for (k=3; k<size; k++) 
+	array[j*size+k] *=  array[j*size+2];
+      j++;
+    }
   }
 
   i = 0;
@@ -1869,14 +1929,16 @@ static void CCMergeSpec (ofloat *base, olong size, olong number)
     i = j;   /* move on */
   } /* end loop over table */
 
-  /* Normalize by sum of flux */
-  i = 0;
-  while (i<number) {
-    if ((array[i*size]>-1.0e-19) && (fabs(array[i*size+3])>0.0)) {
-      for (k=3; k<size; k++) 
-	array[i*size+k] /= array[i*size+2]; 
+  /* Normalize parameterized spectra by sum of flux */
+  if (doSpec) {
+    i = 0;
+    while (i<number) {
+      if ((array[i*size]>-1.0e-19) && (fabs(array[i*size+3])>0.0)) {
+	for (k=3; k<size; k++) 
+	  array[i*size+k] /= array[i*size+2]; 
+      }
+      i++;
     }
-    i++;
   }
 
 } /* end CCMergeSpec */

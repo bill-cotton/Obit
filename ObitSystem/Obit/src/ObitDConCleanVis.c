@@ -1,7 +1,3 @@
-/* To do
-- SubNewCCs loop over planes subtracting and rewriting planes
-   then form new combined image, read and replace elements in pixarray
- */
 /* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2005-2010                                          */
@@ -2340,6 +2336,7 @@ gboolean ObitDConCleanVisAutoWindow(ObitDConClean *inn, olong *fields, ObitFArra
       if ((fields[j]-1)==i) found = TRUE;
       /* Look for autoCenter/shifted pairs */
       if (in->mosaic->isAuto[i]  == (fields[j])) found = TRUE;
+      if (in->mosaic->isShift[i] == (fields[best])) found = TRUE;
       if (in->mosaic->isShift[fields[j]-1] == (i+1)) found = TRUE;
       if (found) break;
     }
@@ -2816,7 +2813,7 @@ static void  MakeResiduals (ObitDConCleanVis *in, olong *fields,
 	/* Quality measure */
 	in->quality[ifld] = ObitDConCleanVisQuality((ObitDConCleanVis*)in, ifld+1, err);
 	/* Max cleanable flux */
-	in->cleanable[field-1] = ObitDConCleanVisCleanable(in, field, NULL, err);
+	in->cleanable[ifld]   = ObitDConCleanVisCleanable(in, ifld+1, NULL, err);
 	in->beamPeakRMS[ifld] = in->beamPeakRMS[jfld];
       } else { /* Not remade - Use residual */
 	in->maxAbsRes[ifld] = in->maxAbsRes[jfld];

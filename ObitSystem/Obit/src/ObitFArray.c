@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1798,6 +1798,38 @@ void ObitFArrayMinArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 } /* end ObitFArrayMinArr */
 
 /**
+ * Pick the more extreme (furthest from zero) nonblanked elements of two arrays.
+ *  out = MIN (in1, in2) or whichever is not blanked
+ * \param in1  Input object with data
+ * \param in2  Input object with data
+ * \param out  Output array (may be an input array).
+ */
+void ObitFArrayExtArr (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
+{
+  olong i;
+  ofloat fblank = ObitMagicF();
+
+   /* error checks */
+  g_assert (ObitIsA(in1, &myClassInfo));
+  g_assert (ObitIsA(in2, &myClassInfo));
+  g_assert (ObitFArrayIsCompatable(in1, in2));
+  g_assert (ObitFArrayIsCompatable(in1, out));
+
+  for (i=0; i<in1->arraySize; i++) {
+    if ((in1->array[i]!=fblank) && (in2->array[i]!=fblank)) {
+      if (fabs(in1->array[i])>fabs(in2->array[i]))
+	out->array[i] = in1->array[i];
+      else
+	out->array[i] = in2->array[i];
+    } else if (in1->array[i]==fblank)  /* 1 blanked */
+      out->array[i] = in2->array[i];
+    else if (in2->array[i]==fblank)
+      out->array[i] = in1->array[i];  /* 2 blanked */
+    else out->array[i] = fblank;      /* both blanked */
+  }
+} /* end ObitFArrayExtArr */
+
+/**
  * Sum nonblanked elements of two arrays.
  *  out = (in1 + in2) or whichever is not blanked
  * \param in1  Input object with data
@@ -2712,6 +2744,7 @@ static void ObitFArrayClassInfoDefFn (gpointer inClass)
   theClass->ObitFArrayBlank  = (ObitFArrayBlankFP)ObitFArrayBlank;
   theClass->ObitFArrayMaxArr = (ObitFArrayMaxArrFP)ObitFArrayMaxArr;
   theClass->ObitFArrayMinArr = (ObitFArrayMinArrFP)ObitFArrayMinArr;
+  theClass->ObitFArrayExtArr = (ObitFArrayExtArrFP)ObitFArrayExtArr;
   theClass->ObitFArraySumArr = (ObitFArraySumArrFP)ObitFArraySumArr;
   theClass->ObitFArrayAvgArr = (ObitFArrayAvgArrFP)ObitFArrayAvgArr;
   theClass->ObitFArrayAdd    = (ObitFArrayAddFP)ObitFArrayAdd;
