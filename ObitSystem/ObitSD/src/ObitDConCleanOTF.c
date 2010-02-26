@@ -62,7 +62,7 @@ void  ObitDConCleanOTFInit  (gpointer in);
 void  ObitDConCleanOTFClear (gpointer in);
 
 /** Read Beam into Beam patch */
-static void ReadBP (ObitDConCleanOTF* in, ObitErr *err);
+static void ReadBPOTF (ObitDConCleanOTF* in, ObitErr *err);
 
 /** Private: Set Class function pointers. */
 static void ObitDConCleanOTFClassInfoDefFn (gpointer inClass);
@@ -318,7 +318,7 @@ void ObitDConCleanOTFDeconvolve (ObitDCon *inn, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Read Beam patch if needed*/
-  if (!in->BeamPatches[0]) ReadBP (in, err);
+  if (!in->BeamPatches[0]) ReadBPOTF (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /*Only one pass deconvolution needed */
@@ -516,7 +516,7 @@ void ObitDConCleanOTFRestore (ObitDConClean *inn, ObitErr *err)
   cleanSize = in->cleanSize / (fabs(in->clean->myDesc->cdelt[0]));
 
   /* Generate clean beam - clone from BeamPatch */
-  if (!in->BeamPatches[0]) ReadBP(in, err);
+  if (!in->BeamPatches[0]) ReadBPOTF(in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* center of beam = peak */
@@ -649,7 +649,7 @@ void ObitDConCleanOTFScaleCC (ObitDConCleanOTF *in, ObitErr *err)
   cleanSize = in->cleanSize / (fabs(in->clean->myDesc->cdelt[0]));
 
   /* Generate clean beam - clone from BeamPatch */
-  if (!in->BeamPatches[0]) ReadBP(in, err);
+  if (!in->BeamPatches[0]) ReadBPOTF(in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* center of beam = peak */
@@ -898,7 +898,7 @@ void ObitDConCleanOTFClear (gpointer inn)
  * \param in   The object to deconvolve
  * \param err  Obit error stack object.
  */
-static void ReadBP (ObitDConCleanOTF* in, ObitErr *err)
+static void ReadBPOTF (ObitDConCleanOTF* in, ObitErr *err)
 {
   ObitIOCode retCode;
   ObitIOSize IOsize = OBIT_IO_byPlane;
@@ -908,7 +908,7 @@ static void ReadBP (ObitDConCleanOTF* in, ObitErr *err)
   olong icenx, iceny, nx, ny, mxPatch;
   ofloat fmax, beamSize ;
   ObitImage *Beam;
-  gchar *routine = "ObitDConCleanOTF:ReadBP";
+  gchar *routine = "ObitDConCleanOTF:ReadBPOTF";
   
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -999,5 +999,5 @@ static void ReadBP (ObitDConCleanOTF* in, ObitErr *err)
 
   /* Free Image array? */
   Beam->image = ObitFArrayUnref(Beam->image);
-} /* end ReadBP */
+} /* end ReadBPOTF */
 

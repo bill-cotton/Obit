@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2009                                          */
+/*;  Copyright (C) 2006-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -62,7 +62,7 @@ void  ObitDConCleanOTFRecInit  (gpointer in);
 void  ObitDConCleanOTFRecClear (gpointer in);
 
 /** Read Beam into Beam patch */
-static void ReadBP (ObitDConCleanOTFRec* in, ObitErr *err);
+static void ReadBPOTF (ObitDConCleanOTFRec* in, ObitErr *err);
 
 /** Private: Set Class function pointers. */
 static void ObitDConCleanOTFRecClassInfoDefFn (gpointer inClass);
@@ -450,7 +450,7 @@ void ObitDConCleanOTFRecDeconvolve (ObitDCon *inn, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Read Beam patch if needed*/
-  if (!in->BeamPatches) ReadBP (in, err);
+  if (!in->BeamPatches) ReadBPOTF (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Reset Sky Model */
@@ -763,7 +763,7 @@ void ObitDConCleanOTFRecRestore (ObitDConClean *inn, ObitErr *err)
   cleanSize = tempSize / (fabs(in->clean->myDesc->cdelt[0]));
 
  /* Generate clean beam - clone from BeamPatches */
-  if (!in->BeamPatches) ReadBP(in, err);
+  if (!in->BeamPatches) ReadBPOTF(in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* center of beam = peak */
@@ -1063,7 +1063,7 @@ void ObitDConCleanOTFRecClear (gpointer inn)
  * \param in   The object to deconvolve
  * \param err  Obit error stack object.
  */
-static void ReadBP (ObitDConCleanOTFRec* in, ObitErr *err)
+static void ReadBPOTF (ObitDConCleanOTFRec* in, ObitErr *err)
 {
   ObitIOCode retCode;
   ObitIOSize IOsize = OBIT_IO_byPlane;
@@ -1073,7 +1073,7 @@ static void ReadBP (ObitDConCleanOTFRec* in, ObitErr *err)
   olong icenx, iceny, nx, ny, mxPatch;
   ofloat fmax, beamSize ;
   ObitImage *Beam;
-  gchar *routine = "ObitDConCleanOTFRec:ReadBP";
+  gchar *routine = "ObitDConCleanOTFRec:ReadBPOTF";
   
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -1164,5 +1164,5 @@ static void ReadBP (ObitDConCleanOTFRec* in, ObitErr *err)
 
   /* Free Image array? */
   Beam->image = ObitFArrayUnref(Beam->image);
-} /* end ReadBP */
+} /* end ReadBPOTF */
 
