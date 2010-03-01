@@ -150,14 +150,15 @@ ObitDConCleanVisMF* newObitDConCleanVisMF (gchar* name);
 /** Public: Create/initialize ObitDConCleanVisMF structures */
 ObitDConCleanVisMF* ObitDConCleanVisMFCreate (gchar* name, ObitUV *uvdata, 
 					      olong order, ofloat maxFBW,
-					      ObitErr *err);
+					      ofloat alpha, ObitErr *err);
 
 /** Public: Create/initialize ObitDConCleanVisMF structures from
     optional components */
 ObitDConCleanVis* 
 ObitDConCleanVisMFCreate2 (gchar* name, ObitUV *uvdata, 
 			   ObitUVImager *imager, ObitSkyModel *skyModel, 
-			   olong order, ofloat maxFBW, ObitErr *err);
+			   olong order, ofloat maxFBW, ofloat alpha, 
+			   ObitErr *err);
 
 /** Public: ClassInfo pointer */
 gconstpointer ObitDConCleanVisMFGetClass (void);

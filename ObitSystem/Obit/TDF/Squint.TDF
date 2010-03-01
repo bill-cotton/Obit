@@ -265,6 +265,8 @@ PeelMinFlux                        Minimum Peel Clean component (Jy)
 PeelAvgPol                         Avg. poln in peel self cal?
 **PARAM** boo 1 **DEF** F
 PeelAvgIF                          Avg. IFs in peel self cal?
+**PARAM** boo 1  **DEF** T
+doSub                              Subtract IPol model?
 **PARAM** int 1 
 prtLv             0.0              Print level in selfcal
 **PARAM** str 48 **DEF** ObitView
@@ -646,6 +648,8 @@ Adverbs:
   PeelMinFlux.Min. Peel CLEAN flux density
   PeelAvgPol..Average Polarizations in Peel self calibration? 
   PeelAvgIF ..Average IFs in Peel self calibration? 
+
+  doSub.......If True, subtract the IPol model from the output data.
 
                           Interactive display
   dispURL.....The URL of the display server to use. "None"=>none

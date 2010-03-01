@@ -50,3 +50,5 @@ olong *BIFSpec, *EIFSpec;
 olong *BChanSpec, *EChanSpec;
 /** Arrays of Center Frequency, per coarse channel */
 odouble *specFreq;
+/** Spectral index correction applied to data making image */
+ofloat alpha;

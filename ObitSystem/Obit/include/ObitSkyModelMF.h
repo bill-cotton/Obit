@@ -85,7 +85,8 @@
  * \li  "CCVer" OBIT_int (?,1,1) CC table versions to use [def all 0 => highest]
  * \li  "BComp" OBIT_int (?,1,1) Start CC to use per table, 1-rel [def 1 ]
  * \li  "EComp" OBIT_int (?,1,1) Highest CC to use per table, 1-rel [def to end ]
- * \li "prtLv" OBIT_int message level  [def 0]
+ * \li  "prtLv" OBIT_int message level  [def 0]
+ * \li  "doAlphaCorr"  OBIT_bool (1,1,1) TRUE if prior spectral index corrections to be made
  */
 
 /*-------------- enumerations -------------------------------------*/

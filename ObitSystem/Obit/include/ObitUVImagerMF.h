@@ -240,7 +240,7 @@ void ObitUVImagerMFClone (ObitUVImager *inn, ObitUVImager *outn, ObitErr *err);
 
 /** Public: Create/initialize ObitUVImagerMF structures */
 ObitUVImagerMF* ObitUVImagerMFCreate (gchar* name, olong order, ofloat maxFBW, 
-				      ObitUV *uvdata,  ObitErr *err);
+				      ofloat alpha, ObitUV *uvdata,  ObitErr *err);
 
 /** Public: Create/initialize ObitUVImagerMF structures given mosaic */
 ObitUVImagerMF* ObitUVImagerMFCreate2 (gchar* name, olong order, ObitUV *uvdata, 

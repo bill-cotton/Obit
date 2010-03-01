@@ -631,6 +631,7 @@ void ObitImageMosaicMFSetFiles  (ObitImageMosaic *inn, gboolean doBeam, ObitErr 
  * \param name    Name to be given to new object
  * \param order  Spectral imaging order,0=flux,1=si, 2=curve
  * \param maxFBW Max. IF center fractional bandwidth.
+ * \param alpha  Spectral index correction applied to uv data making mosaic
  * \param uvData  The object to create images in,  Details are defined in info members:
  * \li FileType = Underlying file type, OBIT_IO_FITS, OBIT_IO_AIPS
  * \li Name     = Name of image, used as AIPS name or to derive FITS filename
@@ -676,7 +677,7 @@ void ObitImageMosaicMFSetFiles  (ObitImageMosaic *inn, gboolean doBeam, ObitErr 
  * \return Newly created object.
  */
 ObitImageMosaicMF* ObitImageMosaicMFCreate (gchar *name, olong order, ofloat maxFBW, 
-					    ObitUV *uvData, ObitErr *err)
+					    ofloat alpha, ObitUV *uvData, ObitErr *err)
 {
   ObitImageMosaicMF *out = NULL;
   ObitInfoType type;
@@ -880,9 +881,10 @@ ObitImageMosaicMF* ObitImageMosaicMFCreate (gchar *name, olong order, ofloat max
   /* Create output object */
   out = newObitImageMosaicMF (name, NField);
 
-  /* Set maximum beam order, fractional bandwidty */
+  /* Set maximum beam order, fractional bandwidth, spectral index */
   out->maxOrder = order;
   out->maxFBW   = maxFBW;
+  out->alpha    = alpha;
 
   /* Copy fldsiz to nx, ny */
   for (i=0; i<NField; i++) nx[i] = ny[i] = fldsiz[i];
@@ -1012,13 +1014,14 @@ void ObitImageMosaicMFDefine (ObitImageMosaic *inn, ObitUV *uvData, gboolean doB
     /* Create regular ObitImage then convert to ObitImageMF */
     tmpImage =  ObitImageUtilCreateImage(uvData, i+1, doBeam, err);
     in->images[i] = (ObitImage*)ObitImageMFFromImage(tmpImage, uvData, 
-						     in->maxOrder, in->maxFBW, err);
+						     in->maxOrder, in->maxFBW, 
+						     in->alpha, err);
     tmpImage = ObitImageUnref(tmpImage);
     /* If making a beam convert it as well */
     if (doBeam && in->images[i]->myBeam) {
      tmpImage =  (ObitImage*)ObitImageMFFromImage((ObitImage*)in->images[i]->myBeam, 
 						  uvData, in->maxOrder, in->maxFBW, 
-						  err);
+						  in->alpha, err);
      in->images[i]->myBeam = ObitImageUnref((ObitImage*)in->images[i]->myBeam);
      in->images[i]->myBeam = (Obit*)tmpImage;  /* xfer ownership */
    }
@@ -1037,7 +1040,7 @@ void ObitImageMosaicMFDefine (ObitImageMosaic *inn, ObitUV *uvData, gboolean doB
     tmpImage =  ObitImageUtilCreateImage(uvData, 1, FALSE, err);
     in->FullField = 
       (ObitImage*)ObitImageMFFromImage(tmpImage, uvData, in->maxOrder, 
-				       in->maxFBW, err);
+				       in->maxFBW, in->alpha, err);
     tmpImage = ObitImageUnref(tmpImage);
     /* Replace name */
     g_free(in->FullField->name);
@@ -1671,6 +1674,7 @@ void ObitImageMosaicMFInit  (gpointer inn)
   /* set members in this class */
   in->maxOrder = 0;
   in->maxFBW   = 1.0;
+  in->alpha    = 0.0;
 
 } /* end ObitImageMosaicMFInit */
 

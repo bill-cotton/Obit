@@ -36,6 +36,8 @@
 olong nSpec;
 /** Array of component model with tabulated spectra as rows in an FArray */
 ObitFArray *specComps;
+/** Reference frequency in Hz */
+odouble refFreq;
 /** Array of nSpec central frequencies in Hz */
 odouble *specFreq;
 /** Array of CC spectrum index (0-rel) per input vis channel */
@@ -46,3 +48,7 @@ ObitFArray **planes;
 ObitCArray **FTplanes;
 /** Array of Interpolators for UV grids */
 ObitCInterpolate **myInterps;
+/** Apply prior alpha correction? */
+gboolean doAlphaCorr;
+/** Prior spectral index correction */
+ofloat priorAlpha;

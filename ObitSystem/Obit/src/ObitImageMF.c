@@ -67,6 +67,8 @@ typedef struct {
   olong   nSpec;
   /* Array (nSpec) channel frequencies (hz) */
   odouble *Freq;
+  /* Spectral index correction previousls applied to data */
+  ofloat alpha;
   /* Array of sigma for each channel */
   ofloat *sigma;
   /** BeamShape object */
@@ -169,7 +171,7 @@ ObitImageMF* newObitImageMF (gchar* name)
  */
 ObitImageMF* ObitImageMFFromImage (ObitImage* in, ObitUV *inData, 
 				   olong norder, ofloat maxFBW, 
-				   ObitErr *err)
+				   ofloat alpha, ObitErr *err)
 {
   ObitImageMF* out = NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -221,7 +223,7 @@ ObitImageMF* ObitImageMFFromImage (ObitImage* in, ObitUV *inData,
   if (err->error) Obit_traceback_val (err, routine, in->name, out);
 
   /* Set coarse channelization */
-  ObitImageMFSetSpec (out, inData, maxFBW, err);
+  ObitImageMFSetSpec (out, inData, maxFBW, alpha, err);
   if (err->error) Obit_traceback_val (err, routine, in->name, out);
   return out;
 } /* end ObitImageMFFromImage */
@@ -692,13 +694,14 @@ void ObitImageMFSetOrder (ObitImageMF *in, olong order,
  * Increments the descriptor number of planes by nSpec
  * Frequency information added to image descriptor with keywords
  * NSPEC, FREQ001...
+ * The value of the alpha is similarly saved in the HEADER
  * \param in     Pointer to object, should be fully defined
  * \param uvdata UV data to be imaged
  * \param maxFBW Maximum fractional bandwidth at center of each IF
  * \param err    ObitErr for reporting errors.
  */
 void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
-			 ObitErr *err)
+			 ofloat alpha, ObitErr *err)
 {
   olong iif, ichan, nSpec=0, nIF, nChan, incf, incif, maxCh, ndiv;
   olong fincf, fincif, i, ip, ipo, count, count2;
@@ -821,7 +824,10 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
     ObitInfoListAlwaysPut (in->myDesc->info, keyword, OBIT_double, 
 			   dim, &in->specFreq[i]);
  }
-  ObitInfoListAlwaysPut (in->myDesc->info, "FILL", OBIT_long, dim, &nSpec);
+
+  /* Save Alpha */
+  ObitInfoListAlwaysPut (in->myDesc->info, "ALPHA", OBIT_float, dim, &alpha);
+  in->alpha = alpha;
  
 } /* end  ObitImageMFSetSpec */
 
@@ -1307,6 +1313,7 @@ static olong MakeFitSpecArgs (ObitImageMF *image, olong maxThread,
     (*args)[i]->BeamShape = ObitBeamShapeCreate ("BS", (ObitImage*)image, pbmin, antSize, doPBCor);
     (*args)[i]->nSpec     = image->nSpec;
     (*args)[i]->nOrder    = image->maxOrder;
+    (*args)[i]->alpha     = image->alpha;
     (*args)[i]->sigma     = g_malloc0(image->nSpec*sizeof(ofloat));
     (*args)[i]->workFlux  = g_malloc0(image->nSpec*sizeof(ofloat));
     (*args)[i]->workSigma = g_malloc0(image->nSpec*sizeof(ofloat));
@@ -1371,6 +1378,7 @@ static void KillFitSpecArgs (olong nargs, FitSpecFuncArg **args)
  * Processes one row of an image
  * Arguments are given in the structure passed as arg
  * \param arg Pointer to CLEANFuncArg argument with elements:
+ * \li alpha    Spectral index correction previously applied to data.
  * \li nSpec    Number of spectral channels
  * \li Freq     Array (nSpec) ofchannel frequencies (Hz).
  * \li sigma    Array of sigma for each channel
@@ -1394,6 +1402,7 @@ static void KillFitSpecArgs (olong nargs, FitSpecFuncArg **args)
 gpointer ThreadFitSpec (gpointer args)
 {
   FitSpecFuncArg *largs  = (FitSpecFuncArg*)args;
+  ofloat alpha             = largs->alpha;
   olong   nSpec            = largs->nSpec;
   odouble *Freq            = largs->Freq;
   ofloat *sigma            = largs->sigma;
@@ -1458,6 +1467,9 @@ gpointer ThreadFitSpec (gpointer args)
     
     /* Fit spectrum */
     ObitSpectrumFitSingleArg (fitArg, workFlux, workSigma, fitResult);
+
+    /* Spectral index correction */
+    if (nterm>=2) fitResult[1] += alpha;
     
     /* Save values */
     for (i=0; i<nterm; i++) {

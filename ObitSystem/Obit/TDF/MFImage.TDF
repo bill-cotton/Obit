@@ -548,6 +548,8 @@ Adverbs:
             '    ' allows the program to use the fastest
                method.
   PBCor......Apply Frequency dependent primary beam corrections?
+             These are applied in imaging and when fitting spectra
+             to the pixels.
   antSize....Diameter of antenna for PBCor (m), default = 25
              Used both in CLEANing and in the final fitting.
              If > 0 and doFit=True then the fitting takes into account

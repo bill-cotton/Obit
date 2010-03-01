@@ -111,6 +111,10 @@ typedef struct {
   olong        last;
   /* Number of spectral channels in Interp */
   olong        nSpec;
+  /* Apply prior alpha correction? */
+  gboolean doAlphaCorr;
+  /* Prior spectral index correction */
+  ofloat priorAlpha;
   /* thread number, >0 -> no threading  */
   olong        ithread;
   /* Obit error stack object */
@@ -201,6 +205,8 @@ ObitSkyModelMF* newObitSkyModelMF (gchar* name)
  *      \li "xxxprtLv"           olong   message level for progress messages
  *      \li "xxxnSpecTerm"       olong   Number of spectral terms
  *      \li "xxxnThreads"        olong   Number of threads
+ *      \li "xxxdoAlphaCorr"     boolean TRUE if prior spectral index corrections to be made
+ *      \li "xxxpriorAlpha"      ofloat  prior spectral index applied to be corrected.
  * \param err     ObitErr for reporting errors.
  * \return the new object.
  */
@@ -522,6 +528,18 @@ ObitSkyModelMF* ObitSkyModelMFFromInfo (gchar *prefix, ObitInfoList *inList,
   ObitInfoListGetTest(inList, keyword, &type, dim, &out->nThreads);
   g_free(keyword);
 
+  /* ""xxxdoAlphaCorr"        olong   Number of threads */
+  if (prefix) keyword = g_strconcat (prefix, "doAlphaCorr", NULL);
+  else        keyword = g_strdup("doAlphaCorr");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->doAlphaCorr);
+  g_free(keyword);
+
+  /* ""xxxpriorAlpha"        olong   Number of threads */
+  if (prefix) keyword = g_strconcat (prefix, "priorAlpha", NULL);
+  else        keyword = g_strdup("priorAlpha");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->priorAlpha);
+  g_free(keyword);
+
   /* Cleanup */
   mosaic = ObitImageMosaicUnref(mosaic);
 
@@ -729,6 +747,8 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
       args->in     = in;
       args->uvdata = uvdata;
       args->ithread= i;
+      args->doAlphaCorr = in->doAlphaCorr;
+      args->priorAlpha  = in->priorAlpha;
       args->err    = err;
       if (args->Interp) 
 	for (k=0; k<args->nSpec; k++) 
@@ -743,7 +763,8 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   nSpec = 1;
   image0 = (ObitImageMF*)in->mosaic->images[0];	  
   ObitInfoListGetTest(image0->myDesc->info, "NSPEC", &type, dim, &nSpec);
-  in->nSpec = nSpec;
+  in->nSpec   = nSpec;
+  in->refFreq = image0->myDesc->crval[image0->myDesc->jlocf];
   /* get number of and channel frequencies for CC spectra from 
      CC table on first image in mosaic */
   if (nSpec>1) {
@@ -754,6 +775,9 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
       ObitInfoListGetTest(image0->myDesc->info, keyword, &type, dim, &in->specFreq[i]);
     }
   }
+
+  /* Prior spectral index */
+  ObitInfoListGetTest(image0->myDesc->info, "ALPHA", &type, dim, &in->priorAlpha);
   
   /* Make array of which coarse spectrum value is closest to each uv channel */
   nfreq = uvdata->myDesc->inaxes[uvdata->myDesc->jlocf];
@@ -955,7 +979,7 @@ gboolean ObitSkyModelMFLoadPoint (ObitSkyModel *inn, ObitUV *uvdata, ObitErr *er
  * If the frequency axis has ctype "SPECLNMF" and if "NSPEC" exists in the 
  * first image descriptor InfoList and is > 0 then there should be a spectrum 
  * in each CLEAN component.
- * Multiplies by factor member.
+ * Multiplies by factor member and any prior spectral index correction.
  * This function may be overridden in a derived class and 
  * should always be called by its function pointer.
  * Adapted from the AIPSish QNOT:VISDFT
@@ -981,7 +1005,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong warray, larray;
-  ofloat *array, parms[20];
+  ofloat *array, parms[20], *specCorr=NULL;
   olong ver, i, j, hi, lo, count, ncomp, startComp, endComp, irow, lrec;
   olong nspec, iterm, outCCVer, ndim, naxis[2];
   ofloat *table, xxoff, yyoff, zzoff;
@@ -998,7 +1022,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
   /* Don't bother if no components requested */
   if ((n>=0) && (in->startComp[n]>in->endComp[n])) return gotSome;
 
-  /* Uv descriptor */
+  /* UV descriptor */
   uvDesc = uvdata->myDesc;
 
   konst = DG2RAD * 2.0 * G_PI;
@@ -1103,6 +1127,16 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 
   /* Any spectral terms */
   naxis[0] += in->nSpec;
+
+  /* Spectral correction for prior alpha array */
+  specCorr = g_malloc0(in->nSpec*sizeof(ofloat));
+  if (in->doAlphaCorr && (in->priorAlpha!=0.0)) {
+    for (i=0; i<in->nSpec; i++) {
+      specCorr[i] = pow((in->specFreq[i]/in->refFreq), in->priorAlpha);
+    }
+  } else { /* No correction */
+    for (i=0; i<in->nSpec; i++) specCorr[i] = 1.0;
+  }
 
   if (in->comps!=NULL) in->comps = ObitFArrayRealloc(in->comps, ndim, naxis);
   else in->comps = ObitFArrayCreate("Components", ndim, naxis);
@@ -1239,7 +1273,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 
 	/* Point with tabulated spectrum */
 	if (in->modType==OBIT_SkyModel_PointModTSpec) {
-	  for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+4] = array[iterm+3];
+	  for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+4] = array[iterm+3]*specCorr[iterm];
 
 	/* Gaussian */
 	} else if (in->modType==OBIT_SkyModel_GaussMod) {
@@ -1261,7 +1295,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 	  table[5] = -(((spa * xmaj)*(spa * xmaj)) + (cpa * xmin)*(cpa * xmin));
 	  table[6] = -2.0 *  cpa * spa * (xmaj*xmaj - xmin*xmin);
 	  /*  spectrum */
-	  for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+7] = array[iterm+3];
+	  for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+7] = array[iterm+3]*specCorr[iterm];
 	  
 	/* Uniform sphere */
 	} else if (in->modType==OBIT_SkyModel_USphereMod) {
@@ -1275,7 +1309,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 	  table[4] = parms[1]  * 0.109662271 * 2.7777778e-4;
 	  table[5] = 0.1;
 	  /*  spectrum */
-	  for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+6] = array[iterm+3];
+	  for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+6] = array[iterm+3]*specCorr[iterm];
 	}
 	    
 	/* Update */
@@ -1311,6 +1345,8 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
     table += lrec;  /* Update pointer */
   } /* end loop zeroing extra components */
 
+  if (specCorr) g_free(specCorr); /* Cleanup */
+
   /* Find anything */
   gotSome = ncomp>0;
 
@@ -1320,7 +1356,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 /**
  * Grid components model into in plane member and Fourier transform to
  * FTplanes and apply Gaussian taper if needed.
- * Multiplies by factor member.
+ * Multiplies by factor member and any prior spectral index correction.
  * This function may be overridden in a derived class and 
  * should always be called by its function pointer.
  * Due to the difference with the FFT ordering for half plane complex 
@@ -2297,7 +2333,7 @@ void ObitSkyModelMFGetInput (ObitSkyModel* inn, ObitErr *err)
 {
   ObitSkyModelMF *in = (ObitSkyModelMF*)inn;
   ObitInfoType type;
-  /*gint32 i, dim[MAXINFOELEMDIM] = {1,1,1,1,1};*/
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   union ObitInfoListEquiv InfoReal; 
   gchar *routine = "ObitSkyModelMFGetInput";
 
@@ -2311,6 +2347,11 @@ void ObitSkyModelMFGetInput (ObitSkyModel* inn, ObitErr *err)
  /* Call base class version */
   ObitSkyModelGetInput (inn, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Prior Alpha correction wanted? */
+  InfoReal.itg = (olong)FALSE; type = OBIT_bool;
+  ObitInfoListGetTest(in->info, "doAlphaCorr", &type, (gint32*)dim, &InfoReal);
+  in->doAlphaCorr = InfoReal.itg;
 
 } /* end ObitSkyModelMFGetInput */
 
@@ -2412,6 +2453,7 @@ void ObitSkyModelMFgetPBImage (ObitSkyModel* in, ObitUV* uvdata, olong field,
  * Due to the difference with the FFT ordering for half plane complex 
  * in AIPS and using FFTW, the method here is different.
  * Components are added to a grid which is then FFTed.
+ * Multiplies by factor member and any prior spectral index correction.
  * \param inn    Pointer to theObitSkyModelMF .
  * \param field  field number (0-rel) in in->mosaic->images
  * \param uvdata UV data set to model
@@ -2584,7 +2626,7 @@ void  ObitSkyModelMFLoadGridComps (ObitSkyModel* inn, olong field, ObitUV* uvdat
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitTableCC *CCTable = NULL;
   ObitImageDesc *imDesc = NULL;
-  ofloat range[2];
+  ofloat range[2], specCorr;
   olong k;
   gchar *tabType = "AIPS CC";
   olong outCCVer, ver, first, last, startComp, endComp;
@@ -2626,9 +2668,17 @@ void  ObitSkyModelMFLoadGridComps (ObitSkyModel* inn, olong field, ObitUV* uvdat
   if (in->planes==NULL)
     in->planes = g_malloc0(in->nSpec*sizeof(ObitFArray*));
   for (k=0; k<in->nSpec; k++) {
+
+    /* Spectral correction for prior alpha array */
+     if (in->doAlphaCorr && (in->priorAlpha!=0.0)) {
+       specCorr = pow((in->specFreq[k]/in->refFreq), in->priorAlpha);
+    } else { /* No correction */
+      specCorr = 1.0;
+    }
+    
     retCode = ObitTableCCUtilGridSpect (CCTable, OverSampleMF, k+1,
 					&first, &last, in->noNeg,
-					in->factor, 
+					in->factor*specCorr, 
 					in->minFlux, in->maxGrid,
 					imDesc, &in->planes[k], gparm, 
 					ncomp, err);
@@ -2748,6 +2798,8 @@ void  ObitSkyModelMFFTImage (ObitSkyModel* inn, ObitFArray *inArray,
  *      \li "xxxprtLv"           olong   message level for progress messages
  *      \li "xxxnSpecTerm"       olong   Number of spectral terms
  *      \li "xxxnThreads"        olong   Number of threads
+ *      \li "xxxdoAlphaCorr"     boolean TRUE if prior spectral index corrections to be made
+ *      \li "xxxpriorAlpha"      ofloat  prior spectral index applied to be corrected.
  * \param err     ObitErr for reporting errors.
  */
 void ObitSkyModelMFGetInfo (ObitSkyModel *inn, gchar *prefix, ObitInfoList *outList, 
@@ -3078,6 +3130,20 @@ void ObitSkyModelMFGetInfo (ObitSkyModel *inn, gchar *prefix, ObitInfoList *outL
   ObitInfoListAlwaysPut(outList, keyword, OBIT_long, dim, &in->nThreads);
   g_free(keyword);
 
+  /* "xxxdoAlphaCorr"        olong   Number of threads */
+  if (prefix) keyword = g_strconcat (prefix, "doAlphaCorr", NULL);
+  else        keyword = g_strdup("doAlphaCorr");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_bool, dim, &in->doAlphaCorr);
+  g_free(keyword);
+
+  /* "xxxpriorAlpha"        olong   Number of threads */
+  if (prefix) keyword = g_strconcat (prefix, "priorAlpha", NULL);
+  else        keyword = g_strdup("priorAlpha");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->priorAlpha);
+  g_free(keyword);
+
 
 } /* end ObitSkyModelMFGetInfo */
 
@@ -3168,12 +3234,15 @@ void ObitSkyModelMFInit  (gpointer inn)
     ParentClass->ObitInit (inn);
 
   /* set members in this class */
-  in->planes    = NULL;
-  in->FTplanes  = NULL;
-  in->myInterps = NULL;
-  in->specFreq  = NULL;
-  in->specIndex = NULL;
-  in->nSpec     = 0;
+  in->planes      = NULL;
+  in->FTplanes    = NULL;
+  in->myInterps   = NULL;
+  in->specFreq    = NULL;
+  in->specIndex   = NULL;
+  in->refFreq     = 1.0;
+  in->nSpec       = 0;
+  in->doAlphaCorr = FALSE;
+  in->priorAlpha  = 0.0;
 
 } /* end ObitSkyModelMFInit */
 

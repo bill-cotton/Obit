@@ -220,6 +220,7 @@ void ObitUVImagerMFClone  (ObitUVImager *inn, ObitUVImager *outt, ObitErr *err)
  * \param name   An optional name for the object.
  * \param order  Spectral imaging order,0=flux,1=si, 2=curve
  * \param maxFBW Maximum IF center fractional bandwidth.
+ * \param alpha  Spectral index correction applied to uv data making mosaic
  * \param uvdata ObitUV object with info member containng the output image
  *               specifications and all processing parameters.
  * \li FileType = Underlying file type, OBIT_IO_FITS, OBIT_IO_AIPS
@@ -266,7 +267,7 @@ void ObitUVImagerMFClone  (ObitUVImager *inn, ObitUVImager *outt, ObitErr *err)
  * \return the new object.
  */
 ObitUVImagerMF* ObitUVImagerMFCreate (gchar* name, olong order,ofloat maxFBW, 
-				      ObitUV *uvdata,  ObitErr *err)
+				      ofloat alpha, ObitUV *uvdata,  ObitErr *err)
 {
   ObitUVImagerMF* out=NULL;
   gchar *routine = "ObitUVImagerMFCreate";
@@ -285,7 +286,8 @@ ObitUVImagerMF* ObitUVImagerMFCreate (gchar* name, olong order,ofloat maxFBW,
 
   /* Create output mosaic */
   out->mosaic = 
-    (ObitImageMosaic*)ObitImageMosaicMFCreate (name, order, maxFBW, uvdata, err);
+    (ObitImageMosaic*)ObitImageMosaicMFCreate (name, order, maxFBW, alpha,
+					       uvdata, err);
   if (err->error) Obit_traceback_val (err, routine, name, out);
 
   /* Define images */

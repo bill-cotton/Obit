@@ -509,7 +509,7 @@ ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV,
     if (done) break; still have OK data */
     
     /* Write time if requested */
-    if (prtlv >= 2) {
+    if (prtlv >= 4) {
       kday = timec;
       timex = (timec - kday) * 24.;
       khr = timex;
@@ -627,7 +627,7 @@ ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV,
   if (err->error) goto cleanup;
   
   /* Give success rate */
-  if (prtlv>=1) {
+  if (prtlv>=3) {
     Obit_log_error(err, OBIT_InfoErr, " %d of %d possible solutions found",
 		   cntGood, cntPoss);
   }
@@ -1063,7 +1063,7 @@ NextAvg (ObitUV* inUV, ofloat interv,
  *                3=full, constrain amplitude.
  * \param minno   Minimum number of antannas allowed 
  * \param snrmin  Minimum SNR allowed.
- * \param prtlv   Print level, .ge. 2 gives some print.
+ * \param prtlv   Print level, .ge. 4 gives some print.
  * \param creal   [out] (ant,if,pol) Real part of solution
  * \param cimag   [out] (ant,if,pol) Imag part of solution 
  * \param cwt     [out] (ant,if,pol) Weights = SNR
@@ -1154,7 +1154,7 @@ doSolve (ofloat* vobs, olong *ant1, olong *ant2, olong numAnt, olong numIF,
       
       /* Compute SNRs */
       lprtlv = prtlv;
-      if (lprtlv > 1)  lprtlv += 3;
+      if (lprtlv > 3)  lprtlv += 3;
       calcSNR (&vobs[BLIndex], ant1, ant2, numBL, 
 	       numAnt, gain, snr, closer, snrmin, time, iif, ist, count, 
 	       lprtlv, prtsou, err);
@@ -1235,7 +1235,7 @@ doSolve (ofloat* vobs, olong *ant1, olong *ant2, olong numAnt, olong numIF,
  * \param count   A work array used for the counts for each 
  *                antenna, must be at least MAXANT in size. 
  * \param prtlv   Print level: 0 none, 2 statistics of failures, 
- *                3 individual failures, 4 the antenna SNRs 
+ *                4 individual failures, 5 the antenna SNRs 
  * \param prtsou  Current source name. 
  * \param err     Error/message stack, returns if error.
  */
@@ -1259,9 +1259,9 @@ calcSNR (ofloat* vobs, olong *ant1, olong *ant2, olong numBL,
   
   /* What messages are wanted? */
   docls1 = (closer[0][0] * closer[1][0] > 1.0e-20)  &&  
-    (closer[0][0] * closer[1][0] < 1.0e20)  &&  (prtlv > 1);
+    (closer[0][0] * closer[1][0] < 1.0e20)  &&  (prtlv > 3);
   docls2 = ((closer[0][1] * closer[1][1] > 1.0e-20)  &&  
-	    (closer[0][1] * closer[1][1] < 1.0e20))  &&  (prtlv > 1);
+	    (closer[0][1] * closer[1][1] < 1.0e20))  &&  (prtlv > 3);
   doclos = (docls1)  ||  (docls2);
   msgdun = FALSE;
   
@@ -1369,14 +1369,14 @@ calcSNR (ofloat* vobs, olong *ant1, olong *ant2, olong numBL,
 	  error[jj]++;
 	  ne = ne + 1;
 	  /* individual messages */
-	  if (prtlv >= 3) {
+	  if (prtlv >= 5) {
 	    /* Print header message */
 	    if (!msgdun) {
               Obit_log_error(err, OBIT_InfoErr, "%s", msgtxt);
 	      msgdun = TRUE;
 	    } 
 	    /* Flush buffer if full */
-	    if (nprt >= 3) {
+	    if (nprt >= 5) {
               Obit_log_error(err, OBIT_InfoErr, 
 		   "%4.2d-%2.2d %7.1f %5d %4.2d-%2.2d %7.1f %5d %4.2d-%2.2d %7.1f %5d ", 
 			     blprt[0][0], blprt[0][1],  blrprt[0], blprt[0][2],
@@ -1436,7 +1436,7 @@ calcSNR (ofloat* vobs, olong *ant1, olong *ant2, olong numBL,
     }
     
     /* Print result if desired. */
-    if ((count[loop] >= 1)  &&  (prtlv >= 4)) {
+    if ((count[loop] >= 1)  &&  (prtlv >= 5)) {
       prtsnr = MIN (9999.999, snr[loop]);
       Obit_log_error(err, OBIT_InfoErr, "antenna(%2d)  %3d obs, snr = %10.3f", 
 		     loop+1, count[loop], prtsnr);
@@ -1465,7 +1465,7 @@ calcSNR (ofloat* vobs, olong *ant1, olong *ant2, olong numBL,
  * \param minno   Min. number of antennas acceptable. 
  * \param g       Complex antenna gains to be applied. 
  * \param nref    Reference antenna used. 
- * \param prtlv   Print flag,    0=none, 2=soln, 3=data plus soln
+ * \param prtlv   Print flag,    0=none, 4=soln, 5=data plus soln
  * \param ierr    Return error code 0 = OK, 1 = no valid data, 2=didn't converge, 
  *                3 = too few antennas
  * \param err     Error/message stack, returns if error.
@@ -1503,7 +1503,7 @@ gainCalc (ofloat* vobs, olong *ant1, olong *ant2, olong numBL, olong numAnt,
   for (i=0; i<numAnt; i++) swt[i] = 0.0;
 
   /* Print data if nec. */
-  if (prtlv >= 3) {
+  if (prtlv >= 5) {
     for (k=0; k<numBL; k++) { /* loop 20 */
       if (vobs[k*lenEntry+2] > 1.0e-20) {
 	amp = sqrt (vobs[k*lenEntry]*vobs[k*lenEntry] + 
@@ -1571,7 +1571,7 @@ gainCalc (ofloat* vobs, olong *ant1, olong *ant2, olong numBL, olong numAnt,
   } 
 
   /* Print statistics */
-  if (prtlv >= 3) {
+  if (prtlv >= 5) {
     /* Sum chi squares */
     s = 0.0;
     for (k=0; k<numBL; k++) { /* loop 160 */
@@ -1719,7 +1719,7 @@ gainCalc (ofloat* vobs, olong *ant1, olong *ant2, olong numBL, olong numAnt,
       glast[i*2+1] = g[i*2+1];
     } /* end loop  L280: */;
 
-    if (prtlv >= 3) {
+    if (prtlv >= 5) {
       /* Print statistics */
       s = 0.0;
       for (k=0; k<numBL; k++) { /* loop 290 */
@@ -1767,7 +1767,7 @@ gainCalc (ofloat* vobs, olong *ant1, olong *ant2, olong numBL, olong numAnt,
   g[iref*2] = sqrt (g[iref*2]*g[iref*2] + g[iref*2+1]*g[iref*2+1]);
   g[iref*2+1] = 0.0;
 
-  if (prtlv >= 2) {
+  if (prtlv >= 4) {
     for (i=0; i<nt; i++) { /* loop 610 */
       if (swt[i] > 1.0e-20) {
 	/* Print results. */
@@ -1804,7 +1804,7 @@ gainCalc (ofloat* vobs, olong *ant1, olong *ant2, olong numBL, olong numAnt,
  * \param minno   Min. number of antennas acceptable. 
  * \param g       Complex antenna gains to be applied. 
  * \param nref    Reference antenna used. 
- * \param prtlv   Print flag,    0=none, 2=soln, 3b=data plus soln
+ * \param prtlv   Print flag,    0=none, 4=soln, 5=data plus soln
  * \param ierr    Return error code 0 = OK, 1 = no valid data, 3 = too few antennas
  * \param err     Error/message stack, returns if error.
  */
@@ -1855,7 +1855,7 @@ gainCalcL1 (ofloat* vobs, olong *ant1, olong *ant2, olong numBL,
   /* Find which antennas have data and normalize to unit amplitude if requested. */
   for (k=0; k<numBL; k++) { /* loop 40 */
     /* Data dump if requested */
-    if ((prtlv >= 3)  &&  (vobs[k*lenEntry+2] > 1.0e-20)) {
+    if ((prtlv >= 5)  &&  (vobs[k*lenEntry+2] > 1.0e-20)) {
       amp = sqrt (vobs[k*lenEntry]*vobs[k*lenEntry] + vobs[k*lenEntry+1]*vobs[k*lenEntry+1]);
       ph = 57.296 * atan2 (vobs[k*lenEntry+1], vobs[k*lenEntry]+1.0e-20);
       /* DEBUG g_snprintf (msgtxt,80," %4d amp =%12.3e phase =%9.3f  %3d  %3d %12.3e", 
@@ -1924,7 +1924,7 @@ gainCalcL1 (ofloat* vobs, olong *ant1, olong *ant2, olong numBL,
   for (ie= 1; ie<=ne; ie++) { /* loop 320 */
     eps = epss[ie-1];
     /* Print rms residual if requested */
-    if (prtlv >= 3) { /*goto L170;*/
+    if (prtlv >= 5) { /*goto L170;*/
       s = 0.0;
       for (k=0; k<numBL; k++) { /* loop 160 */
 	if (vobs[k*lenEntry+2] > 0.0) { /*goto L160;*/
@@ -2056,7 +2056,7 @@ gainCalcL1 (ofloat* vobs, olong *ant1, olong *ant2, olong numBL,
       } /* end loop  L280: */
       
       /* Print iteration value is requested */
-      if (prtlv >= 3) { /*goto L300; */
+      if (prtlv >= 5) { /*goto L300; */
 	s = 0.0;
 	for (k=0; k<numBL; k++) { /* loop 290 */
 	  if (vobs[k*lenEntry+2] > 0.0) { /*goto L290;*/
@@ -2100,7 +2100,7 @@ gainCalcL1 (ofloat* vobs, olong *ant1, olong *ant2, olong numBL,
   g[iref*2+1] = 0.0;
  
   /* Print final results if requested */
-  if (prtlv >= 2) {
+  if (prtlv >= 5) {
     for (i=0; i<nt; i++) { /* loop 610 */
       if (swt[i] > 0.0) { /*goto L610;*/
 	amp = sqrt (g[i*2]*g[i*2] + g[i*2+1]*g[i*2+1]);

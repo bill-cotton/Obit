@@ -37,6 +37,7 @@
 #include "ObitTableCCUtil.h"
 #include "ObitSkyGeom.h"
 #include "ObitDConCleanPxListMF.h"
+#include "ObitSkyModelMF.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -257,12 +258,13 @@ void ObitDConCleanVisMFClone  (ObitDConCleanVis *inn, ObitDConCleanVis *outt, Ob
                  information defined on info member.
  * \param order  Order of the imaging, Spectral index only=1, plus curvature=2
  * \param maxFBW Max. IF center fractional bandwidth.
+ * \param alpha  Spectral index correction previously applied to data.
  * \param err    Obit error stack object.
  * \return the new object.
  */
 ObitDConCleanVisMF* ObitDConCleanVisMFCreate (gchar* name, ObitUV *uvdata,  
 					      olong order, ofloat maxFBW, 
-					      ObitErr *err)
+					      ofloat alpha, ObitErr *err)
 {
   olong nfield, i;
   ObitDConCleanVisMF* out=NULL;
@@ -279,7 +281,7 @@ ObitDConCleanVisMF* ObitDConCleanVisMFCreate (gchar* name, ObitUV *uvdata,
 
   /* Create UV imager and its ImageMosaic */
   out->imager = (ObitUVImager*)ObitUVImagerMFCreate("UVImagerMF", order, maxFBW, 
-						    uvdata, err);
+						    alpha, uvdata, err);
   if (err->error) Obit_traceback_val (err, routine, name, out);
 
   /* Save uv Mosaic reference */
@@ -335,13 +337,15 @@ ObitDConCleanVisMF* ObitDConCleanVisMFCreate (gchar* name, ObitUV *uvdata,
  *                 Reference "stolen" (i.e. no need to Unref after call)
  * \param order    Order of the imaging, Spectral index only=1, plus curvature=2
  * \param maxFBW   Max. IF center fractional bandwidth.
+ * \param alpha  Spectral index correction previously applied to data.
  * \param err      Obit error stack object.
  * \return the new object.
  */
 ObitDConCleanVis* 
 ObitDConCleanVisMFCreate2 (gchar* name, ObitUV *uvdata,  
 			   ObitUVImager *imager, ObitSkyModel *skyModel, 
-			   olong order, ofloat maxFBW, ObitErr *err)
+			   olong order, ofloat maxFBW, ofloat alpha, 
+			   ObitErr *err)
 {
   olong nfield, i;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -361,7 +365,7 @@ ObitDConCleanVisMFCreate2 (gchar* name, ObitUV *uvdata,
   /* Use or create UV imager and create its ImageMosaic */
   if (imager==NULL) {
     out->imager =(ObitUVImager*) ObitUVImagerMFCreate("UVImager", order, maxFBW, 
-						      uvdata, err);
+						      alpha, uvdata, err);
     if (err->error) Obit_traceback_val (err, routine, name, (ObitDConCleanVis*)out);
   } else out->imager = ObitUVImagerRef(imager);
 
@@ -369,7 +373,8 @@ ObitDConCleanVisMFCreate2 (gchar* name, ObitUV *uvdata,
   out->mosaic = ObitUVImagerGetMosaic(out->imager, err);
 
   /*  Use or create SkyModel object */
-  if (skyModel==NULL) out->skyModel = ObitSkyModelCreate ("SkyModel", out->mosaic);
+  if (skyModel==NULL) out->skyModel = 
+			(ObitSkyModel*)ObitSkyModelMFCreate ("SkyModel", out->mosaic);
   else out->skyModel = ObitSkyModelRef(skyModel);
 
   /* Copy control info to SkyModel */

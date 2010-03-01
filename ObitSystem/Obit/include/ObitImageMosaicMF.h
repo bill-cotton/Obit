@@ -130,7 +130,7 @@ void ObitImageMosaicMFSetFiles  (ObitImageMosaic *in, gboolean doBeam, ObitErr *
 
 /** Public: Create Mosaic from uv data */
 ObitImageMosaicMF *ObitImageMosaicMFCreate (gchar *name, olong order, ofloat maxFBW,
-					    ObitUV *uvData, ObitErr *err);
+					    ofloat alpha, ObitUV *uvData, ObitErr *err);
 
 /** Public: Define parameters of images */
 void ObitImageMosaicMFDefine (ObitImageMosaic *in, ObitUV *uvData, gboolean doBeam,

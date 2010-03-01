@@ -1464,7 +1464,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   olong        nchan,  BChan, EChan, order, chInc, chAvg, istok, kstok, nstok, bstok, estok;
   olong        BIF, EIF, nif, inver, outver;
   gboolean     first, doFlat, btemp, autoWindow, Tr=TRUE, doVPol, do3D;
-  ofloat       maxFBW;
+  ofloat       maxFBW, alpha;
   gchar        Stokes[5], *chStokes=" IQUVRL", *CCType = "AIPS CC";
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "UVRange", "timeRange", "UVTape",
@@ -1520,6 +1520,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   /* Parameters used here */
   maxFBW = 0.05;
   ObitInfoListGetTest(myInput, "maxFBW",  &type, dim, &maxFBW);
+  alpha = 0.0;
+  ObitInfoListGetTest(myInput, "Alpha",  &type, dim, &alpha);
   order = 1;
   ObitInfoListGetTest(myInput, "norder",  &type, dim, &order);
   BChan = 1;
@@ -1647,14 +1649,17 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       
       /* Create wideband Imager */
       imager = (ObitUVImager*)ObitUVImagerMFCreate("imager", order, maxFBW, 
-						   outData, err);
+						   alpha, outData, err);
       
       /* Create Sky model */
       skyModel = (ObitSkyModel*)ObitSkyModelMFCreate("Sky Model", imager->mosaic);
+      /* No alpha correction in model */
+      btemp = FALSE; dim[0] = dim[1] = dim[2] = 1;
+      ObitInfoListAlwaysPut (skyModel->info, "doAlphaCorr", OBIT_bool, dim, &btemp);
 
       /* Make CleanVis */
       myClean = ObitDConCleanVisMFCreate2("Clean Object", outData, 
-					  imager, skyModel, order, maxFBW, err);
+					  imager, skyModel, order, maxFBW, alpha, err);
       if (err->error) Obit_traceback_msg (err, routine, inData->name);
       
       /* Get input parameters from myInput, copy to myClean */
@@ -1690,7 +1695,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     
     /* Convert output to spectral image */
-    outImage[istok-bstok] = (ObitImage*)ObitImageMFFromImage(tmpImage, inData, order, maxFBW, err);
+    outImage[istok-bstok] = (ObitImage*)ObitImageMFFromImage(tmpImage, inData, order, 
+							     maxFBW, alpha, err);
     tmpImage = ObitImageUnref(tmpImage);
     
     ObitImageFullInstantiate (outImage[istok-bstok], FALSE, err);
@@ -2161,6 +2167,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	/* Possibly reuse some of CLEAN model to start next time */
 	if (reuse>0.0) {
 	  ftemp = reuse*selfCal->RMSFld1;
+	  if (SCLoop==0) ftemp = 1.0e20;  /* Not on first loop */
 	  dim[0] = 1;dim[1] = 1;
 	  ObitInfoListAlwaysPut (myClean->info, "reuseFlux", OBIT_float, dim, &ftemp);
 	} /* end set reuse level */

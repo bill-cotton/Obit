@@ -110,7 +110,7 @@ ObitImageMF* ObitImageMFFromInfo (gchar *prefix, ObitInfoList *inList,
 /** Public: Create ObitImageMF object from ObitImage */
 ObitImageMF* ObitImageMFFromImage (ObitImage* in, ObitUV *inData,
 				   olong norder, ofloat maxFBW, 
-				   ObitErr *err);
+				   ofloat alpha, ObitErr *err);
 
 /** Public: ClassInfo pointer */
 gconstpointer ObitImageMFGetClass (void);
@@ -125,7 +125,7 @@ ObitImage* ObitImageMFZap  (ObitImage *in, ObitErr *err);
 
 /** Public: Set Coarse spectral channels */
 void ObitImageMFSetSpec (ObitImageMF *image, ObitUV *inData, ofloat maxFBW,
-			 ObitErr *err);
+			 ofloat alpha, ObitErr *err);
 
 /** Public: Set order of SW spectral imaging */
 void ObitImageMFSetOrder (ObitImageMF *image, olong order, ObitErr *err);

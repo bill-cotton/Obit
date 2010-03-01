@@ -1478,7 +1478,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   };
   gchar        *CLEANParms[] = {  /* Clean parameters */
     "CLEANBox", "autoWindow", "Gain", "minFlux", "Niter", "minPatch", "Beam", 
-    "Mode", "CCFilter", "maxPixel", "dispURL", "ccfLim", "SDIGain",
+    "Mode", "CCFilter", "maxPixel", "dispURL", "ccfLim", "SDIGain", "prtLv",
     NULL
   };
   olong MemCount, MemTotal; /* DEBUG */
@@ -2128,6 +2128,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	/* Possibly reuse some of CLEAN model to start next time */
 	if (reuse>0.0) {
 	  ftemp = reuse*selfCal->RMSFld1;
+	  if (SCLoop==0) ftemp = 1.0e20;  /* Not on first loop */
 	  dim[0] = 1;dim[1] = 1;
 	  ObitInfoListAlwaysPut (myClean->info, "reuseFlux", OBIT_float, dim, &ftemp);
 	} /* end set reuse level */

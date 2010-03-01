@@ -1408,7 +1408,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong        i, chInc, BChan, EChan, BIF, nchan, ipoln, npoln, *IChanSel;
   olong        niter;
-  gboolean     doFlat, autoWindow, Tr=TRUE, do3D;
+  gboolean     doFlat, autoWindow, Tr=TRUE, do3D, doSub;
   olong        inver, outver, selFGver, *unpeeled=NULL, plane[5] = {0,1,1,1,1};
   oint         otemp;
   gchar        Stokes[5],  IStokes[5], *CCType = "AIPS CC";
@@ -1440,6 +1440,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gchar        *CLEANParms[] = {  /* Clean parameters */
     "CLEANBox", "autoWindow", "Gain", "minFlux", "Niter", "minPatch", "Beam", 
     "Mode", "CCFilter", "maxPixel", "dispURL", "Threshold", "ccfLim", "SDIGain",
+    "prtLv",
     NULL
   };
   gchar        *SkyParms[] = {  /* SkyModel parameters */
@@ -1477,6 +1478,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   ObitInfoListGetTest(myInput, "autoWindow", &type, dim, &autoWindow);
   do3D = TRUE;
   ObitInfoListGetTest(myInput, "do3D", &type, dim, &do3D);
+  doSub = TRUE;
+  ObitInfoListGetTest(myInput, "doSub",&type, dim, &doSub);
 
   /* Place to save parameters */
   saveParmList = newObitInfoList ();
@@ -1639,7 +1642,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     /* Subtract sky model from outData for I if any cleaning requested */
     niter = 0;
     ObitInfoListGetTest(myInput, "Niter",  &type, dim, &niter);
-    if ((ipoln==0) && (niter>0)) subIPolModel (outData, skyModel, &selFGver, err);
+    if ((ipoln==0) && (niter>0) && doSub) 
+      subIPolModel (outData, skyModel, &selFGver, err);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
     
     /* If 2D imaging or single Fly's eye facet then concatenate CC tables */
@@ -1864,7 +1868,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
       /* Set Stokes Desired */
       dim[0] = 4;
       ObitInfoListAlwaysPut (inUV->info, "Stokes", OBIT_string, dim, Stokes);
-      
+
       /* Image/Clean */
       ObitDConCleanVisDeconvolve ((ObitDCon*)myClean, err);
       if (err->error) Obit_traceback_msg (err, routine, myClean->name);
@@ -2001,6 +2005,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 
   /******** Amp & Phase Self cal loop  ********/
   if ((maxASCLoop>0) && (myClean->peakFlux>minFluxASC)) {
+
     init = TRUE;
     converged = FALSE;
     for (SCLoop=0; SCLoop<=maxASCLoop; SCLoop++) {
@@ -2102,6 +2107,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	/* Possibly reuse some of CLEAN model to start next time */
 	if (reuse>0.0) {
 	  ftemp = reuse*selfCal->RMSFld1;
+	  if (SCLoop==0) ftemp = 1.0e20;  /* Not on first loop */
 	  dim[0] = 1;dim[1] = 1;
 	  ObitInfoListAlwaysPut (myClean->info, "reuseFlux", OBIT_float, dim, &ftemp);
 	} /* end set reuse level */

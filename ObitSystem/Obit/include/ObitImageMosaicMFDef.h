@@ -35,3 +35,5 @@
 olong maxOrder;
 /** Maximum IF center fractional bandwidth */
 ofloat maxFBW;
+/** Spectral index correction applied to data making mosaic */
+ofloat alpha;
