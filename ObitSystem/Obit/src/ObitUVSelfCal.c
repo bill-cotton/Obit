@@ -255,6 +255,9 @@ ObitUVSelfCal* ObitUVSelfCalCreate (gchar* name, ObitSkyModel *skyModel)
  * \li "peakFlux" OBIT_float scalar If present and > 0.0, then this is the highest
  *                                  image pixel value to use to determine if SC needed
  *                                  else use sum of CC in SkyModel.
+ * \li "Beam OBIT_float (3,1,1)     Target restoring bam (asec,asec, deg)
+ *                                  If given and > 0.0, this will be used to taper 
+ *                                  weights to reduce influence of longer baselines.
  * \param inUV     Input UV data. 
  * \param init     If True, this is the first SC in a series.
  * \param noSCNeed If True, no self calibration was needed
@@ -277,7 +280,7 @@ gboolean ObitUVSelfCalSelfCal (ObitUVSelfCal *in, ObitUV *inUV, gboolean init,
   gboolean Tr=TRUE, Fl=FALSE, diverged, quit, doSmoo;
   gchar        *SCParms[] = {  /* Self parameters */
     "refAnt", "solInt", "solType", "solMode", "WtUV", "avgPol", "avgIF", 
-    "doMGM", "minSNR", "minNo", "doSmoo", "prtLv", 
+    "doMGM", "minSNR", "minNo", "doSmoo", "prtLv", "Beam",
     NULL
   };
   gchar *routine = "ObitUVSelfCalSelfCal";

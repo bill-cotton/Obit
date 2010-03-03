@@ -40,6 +40,8 @@
 #include "ObitMem.h"
 #include "ObitSinCos.h"
 #include "ObitImageMF.h"
+#include "ObitBeamShape.h"
+#include "ObitSpectrumFit.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -94,6 +96,11 @@ static gpointer ThreadSkyModelMFFTDFT (gpointer arg);
 /** Private: Threaded FTGrid */
 static gpointer ThreadSkyModelMFFTGrid (gpointer arg);
 
+/** Private: Primary beam and/or smoothing corrections */
+ObitTableCC* ObitSkyModelMFgetPBCCTab (ObitSkyModelMF* in, ObitUV* uvdata, 
+				       olong field, olong *inCCVer, olong *outCCver,
+				       olong *startCC, olong *endCC, ofloat range[2],
+				       ObitErr *err);
 /*---------------Private structures----------------*/
 /* FT threaded function argument */
 typedef struct {
@@ -207,6 +214,7 @@ ObitSkyModelMF* newObitSkyModelMF (gchar* name)
  *      \li "xxxnThreads"        olong   Number of threads
  *      \li "xxxdoAlphaCorr"     boolean TRUE if prior spectral index corrections to be made
  *      \li "xxxpriorAlpha"      ofloat  prior spectral index applied to be corrected.
+ *      \li "xxxdoSmoo"          boolean TRUE if tabulated spectra to be smooothed
  * \param err     ObitErr for reporting errors.
  * \return the new object.
  */
@@ -540,7 +548,13 @@ ObitSkyModelMF* ObitSkyModelMFFromInfo (gchar *prefix, ObitInfoList *inList,
   ObitInfoListGetTest(inList, keyword, &type, dim, &out->priorAlpha);
   g_free(keyword);
 
-  /* Cleanup */
+  /* ""xxxdoSmoo"        olong   Number of threads */
+  if (prefix) keyword = g_strconcat (prefix, "doSmoo", NULL);
+  else        keyword = g_strdup("doSmoo");
+  ObitInfoListGetTest(inList, keyword, &type, dim, &out->doSmoo);
+  g_free(keyword);
+
+ /* Cleanup */
   mosaic = ObitImageMosaicUnref(mosaic);
 
   return out;
@@ -820,9 +834,11 @@ void ObitSkyModelMFShutDownMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
     if (!strncmp((gchar*)in->threadArgs[0], "MF", 2)) {
       for (i=0; i<in->nThreads; i++) {
 	args = (FTFuncArg*)in->threadArgs[i];
-	if (args->Interp) 
+	if (args->Interp) {
 	  for (k=0; k<args->nSpec; k++) 
 	    args->Interp[k] = ObitCInterpolateUnref(args->Interp[k]);
+	  g_free(args->Interp);
+	}
 	g_free(in->threadArgs[i]);
       }
       g_free(in->threadArgs);
@@ -1159,8 +1175,8 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
     endComp = in->endComp[i];
     range[0] = in->minDFT;  /* Range of merged fluxes for DFT */
     range[1] = 1.0e20;
-    CCTable = ObitSkyModelgetPBCCTab ((ObitSkyModel*)in, uvdata, (olong)i, &ver, 
-				      &outCCVer, &startComp, &endComp, range, err); 
+    CCTable = ObitSkyModelMFgetPBCCTab (in, uvdata, (olong)i, &ver, 
+					&outCCVer, &startComp, &endComp, range, err); 
     if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
     
     /* Save values of highest comp - probably bad */
@@ -2353,6 +2369,11 @@ void ObitSkyModelMFGetInput (ObitSkyModel* inn, ObitErr *err)
   ObitInfoListGetTest(in->info, "doAlphaCorr", &type, (gint32*)dim, &InfoReal);
   in->doAlphaCorr = InfoReal.itg;
 
+  /* Smoothing of flux densities wanted? */
+  InfoReal.itg = (olong)FALSE; type = OBIT_bool;
+  ObitInfoListGetTest(in->info, "doSmoo", &type, (gint32*)dim, &InfoReal);
+  in->doSmoo = InfoReal.itg;
+
 } /* end ObitSkyModelMFGetInput */
 
 /**
@@ -2501,12 +2522,13 @@ gboolean ObitSkyModelMFGridFTComps (ObitSkyModel* inn, olong field, ObitUV* uvda
   if (in->myInterps==NULL)
     in->myInterps = g_malloc0(in->nSpec*sizeof(ObitCInterpolate*));
 
+  /* Output of FFT */
+  ndim = 2;
+  naxis[0] = 1+in->planes[0]->naxis[0]/2; naxis[1] = in->planes[0]->naxis[1]; 
+  FFTImage = ObitCArrayCreate ("FFT output", ndim, naxis);
+  
   /* Loop over spectral planes */
   for (k=0; k<in->nSpec; k++) {
-    /* Output of FFT */
-    ndim = 2;
-    naxis[0] = 1+in->planes[k]->naxis[0]/2; naxis[1] = in->planes[k]->naxis[1]; 
-    FFTImage = ObitCArrayCreate ("FFT output", ndim, naxis);
     
     /* Fourier Transform image */
     ObitSkyModelMFFTImage (inn, in->planes[k], FFTImage);
@@ -2590,15 +2612,16 @@ gboolean ObitSkyModelMFGridFTComps (ObitSkyModel* inn, olong field, ObitUV* uvda
     
     /* (re)Create interpolator */
     factor[0] = OverSampleMF; factor[1] = OverSampleMF;
-    in->myInterps[k] = ObitCInterpolateUnref(in->myInterp);
+    in->myInterps[k] = ObitCInterpolateUnref(in->myInterps[k]);
     in->myInterps[k] = 
       newObitCInterpolateCreate("UV data interpolator", in->FTplanes[k], imDesc,
-				factor[0], factor[1], in->numConjCol, HWIDTH, err);					   
+				factor[0], factor[1], in->numConjCol, HWIDTH, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, gotSome);
 
-    /* Cleanup */
-    FFTImage  = ObitCArrayUnref(FFTImage);
   } /* end loop over planes */
+
+  /* Cleanup */
+  FFTImage  = ObitCArrayUnref(FFTImage);
 
 
   return gotSome;
@@ -2655,8 +2678,8 @@ void  ObitSkyModelMFLoadGridComps (ObitSkyModel* inn, olong field, ObitUV* uvdat
   endComp = in->endComp[field];
   range[0] = 0.0;  /* Range of merged fluxes for Grid */
   range[1] = in->maxGrid;
-  CCTable = ObitSkyModelgetPBCCTab (inn, uvdata, field, &ver, &outCCVer, 
-				    &startComp, &endComp, range, err); 
+  CCTable = ObitSkyModelMFgetPBCCTab (in, uvdata, field, &ver, &outCCVer, 
+				      &startComp, &endComp, range, err); 
   if (err->error) Obit_traceback_msg (err, routine, in->name);
   in->CCver[field] = ver;  /* save if defaulted (0) */
   
@@ -2800,6 +2823,7 @@ void  ObitSkyModelMFFTImage (ObitSkyModel* inn, ObitFArray *inArray,
  *      \li "xxxnThreads"        olong   Number of threads
  *      \li "xxxdoAlphaCorr"     boolean TRUE if prior spectral index corrections to be made
  *      \li "xxxpriorAlpha"      ofloat  prior spectral index applied to be corrected.
+ *      \li "xxxdoSmoo"          boolean TRUE if tabulated spectra to be smooothed
  * \param err     ObitErr for reporting errors.
  */
 void ObitSkyModelMFGetInfo (ObitSkyModel *inn, gchar *prefix, ObitInfoList *outList, 
@@ -3144,6 +3168,12 @@ void ObitSkyModelMFGetInfo (ObitSkyModel *inn, gchar *prefix, ObitInfoList *outL
   ObitInfoListAlwaysPut(outList, keyword, OBIT_float, dim, &in->priorAlpha);
   g_free(keyword);
 
+  /* "xxxdoSmoo"        olong   Number of threads */
+  if (prefix) keyword = g_strconcat (prefix, "doSmoo", NULL);
+  else        keyword = g_strdup("doSmoo");
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(outList, keyword, OBIT_bool, dim, &in->doSmoo);
+  g_free(keyword);
 
 } /* end ObitSkyModelMFGetInfo */
 
@@ -3305,4 +3335,202 @@ void ObitSkyModelMFClear (gpointer inn)
     ParentClass->ObitClear (inn);
   
 } /* end ObitSkyModelMFClear */
+
+/**
+ * Returns the CC table to use for the current set of channels/IF
+ * If not making relative PB corrections, this is the input CC table
+ * else it is one generated making relative PB corrections.
+ * In the latter case, the table should be Zapped when use is finished.
+ * If not making relative Primary Beam correctsions then all selected,
+ * else the next block for which the primary beam correction 
+ * varies by less than 1% at the edge of the FOV.
+ * If in->currentMode=OBIT_SkyModel_Mixed then the output table will be merged
+ * and only contain entries with abs. flux densities in the range range.
+ * If there are no components selected to process, the input table is 
+ * always returned.
+ * \param in       SkyModel
+ *                 If info member doSmoo is present and TRUE then tabulated flux 
+ *                 densities are fitted by a spectrum and replaced byr the spectrum 
+ *                 evaluated at that frequency.
+ * \param uvdata   UV data
+ * \param field    Field number in in->mosaic
+ * \param inCCVer  input CC table version
+ * \param outCCver output CC table version number, 
+ *                 0=> create new in which case the actual value is returned
+ * \param startCC  [in] the desired first CC number (1-rel)
+ *                 [out] the actual first CC number in returned table
+ * \param endCC    [in] the desired highest CC number, 0=> to end of table
+ *                 [out] the actual highest CC number in returned table
+ * \param range    Range of allowed, merged CC fluxes.
+ * \param err      Obit error stack object.
+ * \return ObitCCTable to use, this should be Unref and Zapped when done 
+ */
+ObitTableCC* ObitSkyModelMFgetPBCCTab (ObitSkyModelMF* in, ObitUV* uvdata, 
+				     olong field, olong *inCCVer, olong *outCCVer,
+				     olong *startCC, olong *endCC, ofloat range[2],
+				     ObitErr *err)
+{
+  ObitTableCC *CCTable = NULL;
+  ObitTableCCRow *CCRow = NULL;
+  ObitImageMF *image=NULL;
+  ObitBeamShape *BeamShape=NULL;
+  ObitBeamShapeClassInfo *BSClass;
+  ObitIOCode retCode;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  ofloat *flux=NULL, *sigma=NULL, *fitResult=NULL, pbmin=0.01, PBCorr=1.0, alpha;
+  ofloat *FreqFact=NULL, *sigmaField=NULL, ll, lll, arg, specFact;
+  odouble *Freq=NULL, refFreq;
+  odouble Angle=0.0;
+  gpointer fitArg=NULL;
+  olong irow, row, i, iterm, nterm, offset, nSpec, tiver;
+  gchar keyword[12];
+  gchar *routine = "ObitSkyModelMFgetPBCCTab";
+
+  /* error checks */
+  if (err->error) return CCTable;
+  g_assert (ObitSkyModelIsA(in));
+
+  /* Compress/select CC table to new table */
+  *outCCVer =  0;  /* Create new one */
+  tiver = *inCCVer;
+  CCTable = ObitTableCCUtilMergeSel2Tab (in->mosaic->images[field], tiver, outCCVer, 
+					    *startCC, *endCC, range, err);
+  *startCC = 1;   /* Want all of these */
+  *endCC   = CCTable->myDesc->nrow ;
+  
+  /* Smooth table - loop through table, correcting the tabulated spectral points
+     for the primary gain, set weights to 1/PB^2, fit spectrum, replace values by
+     fit evaluated at frequency uncorrected by PBcorr.
+   */
+  if (in->doSmoo) {
+    image = (ObitImageMF*)in->mosaic->images[field];
+   /* Make sure this is an ObitImageMF */
+    Obit_retval_if_fail((ObitImageMFIsA(image)), err, CCTable,
+			"%s: Image %s NOT an ObitImageMF", 
+			routine, image->name);
+
+    /* Create spectrum info arrays */
+    nSpec = 1;
+    ObitInfoListGetTest(image->myDesc->info, "NSPEC", &type, dim, &nSpec);
+    nterm = 1;
+    ObitInfoListGetTest(image->myDesc->info, "NTERM", &type, dim, &nterm);
+    refFreq = image->myDesc->crval[image->myDesc->jlocf];
+    Freq    = g_malloc0(nSpec*sizeof(odouble));
+    FreqFact= g_malloc0(nSpec*sizeof(ofloat));
+    /* get number of and channel frequencies for CC spectra from 
+       CC table on first image in mosaic */
+    if (nSpec>1) {
+      for (i=0; i<nSpec; i++) {
+	Freq[i] = 1.0;
+	sprintf (keyword, "FREQ%4.4d",i+1);
+	ObitInfoListGetTest(image->myDesc->info, keyword, &type, dim, &Freq[i]);
+      }
+    }
+    
+    /* Log Freq ratio */
+    for (i=0; i<nSpec; i++)  FreqFact[i] = log(Freq[i]/refFreq);
+
+    /* Prior spectral index */
+    ObitInfoListGetTest(image->myDesc->info, "ALPHA", &type, dim, &alpha);
+  
+    /* Open CC table */
+    retCode = ObitTableCCOpen (CCTable, OBIT_IO_ReadWrite, err);
+    if ((retCode != OBIT_IO_OK) || (err->error))
+      Obit_traceback_val (err, routine, image->name, CCTable);
+    /* Make sure table has nSpec channels */
+    Obit_retval_if_fail((CCTable->noParms >= (4+nSpec)), err, CCTable,
+			"%s: CC table %d appears not to have tabulated spectra", 
+			routine, *outCCVer);
+
+    /* Setup */
+    offset    = 4;
+    flux      = g_malloc0(nSpec*sizeof(ofloat));
+    sigma     = g_malloc0(nSpec*sizeof(ofloat));
+    sigmaField = g_malloc0(nSpec*sizeof(ofloat));
+    BeamShape = ObitBeamShapeCreate ("BS", (ObitImage*)image, pbmin, in->antSize, TRUE);
+    BSClass   = (ObitBeamShapeClassInfo*)(BeamShape->ClassInfo);
+    fitArg    = ObitSpectrumFitMakeArg (nSpec, nterm-1, refFreq, Freq, FALSE, 
+					&fitResult, err);
+    for (i=0; i<nterm; i++) fitResult[i]  = 0.0;
+    for (i=0; i<nSpec; i++) sigmaField[i] = -1.0;
+    if  (err->error) goto cleanup;
+    
+    /* Create table row */
+    CCRow = newObitTableCCRow (CCTable);
+    
+    /* loop over table */
+    for (irow=(*startCC); irow<=(*endCC); irow++) {
+      
+      /* Read */
+      row = irow;
+      retCode = ObitTableCCReadRow (CCTable, row, CCRow, err);
+      if  (err->error) goto cleanup;
+
+      /* Set field sigma to 0.01 of first */
+      if (sigmaField[0]<0.0) {
+	for (i=0; i<nSpec; i++) {
+	  sigmaField[i] = 0.01 * CCRow->parms[offset+i];
+	}
+      }
+      
+      /* Primary beam stuff - Distance from Center  */
+      Angle = ObitImageDescAngle(image->myDesc, CCRow->DeltaX, CCRow->DeltaY);
+
+      /* Loop over spectral channels get corrected flux, sigma */
+      for (i=0; i<nSpec; i++) {
+	BeamShape->refFreq = Freq[i];  /* Set frequency */
+	PBCorr   = BSClass->ObitBeamShapeGainSym(BeamShape, Angle);
+	flux[i]  = CCRow->parms[offset+i] / PBCorr;
+	sigma[i] = sigmaField[i] / (PBCorr*PBCorr);
+      }
+
+   
+      /* Fit spectrum */
+      ObitSpectrumFitSingleArg (fitArg, flux, sigma, fitResult);
+      
+      /* Prior spectral index correction */
+      if (nterm>=2) fitResult[1] += alpha;
+
+      /* Replace channel fluxes with fitted spectrum */
+      for (i=0; i<nSpec; i++) {
+   	BeamShape->refFreq = Freq[i];  /* Set frequency */
+	PBCorr  = BSClass->ObitBeamShapeGainSym(BeamShape, Angle);
+	/* Frequency dependent term */
+	lll = ll = FreqFact[i];
+	arg = 0.0;
+	for (iterm=1; iterm<nterm; iterm++) {
+	  arg += fitResult[iterm] * lll;
+	  lll *= ll;
+	}
+	specFact = exp(arg);
+	CCRow->parms[offset+i] = specFact*fitResult[0]*PBCorr;
+      }
+ 
+     /* ReWrite output */
+      row = irow;
+      retCode = ObitTableCCWriteRow (CCTable, row, CCRow, err);
+      if  (err->error) goto cleanup;
+    } /* end loop over table */
+    
+     /* Close */
+    retCode = ObitTableCCClose (CCTable, err);
+    if  (err->error) goto cleanup;
+ 
+    /* Cleanup */
+  cleanup:
+    if (flux)       g_free(flux);
+    if (sigma)      g_free(sigma);
+    if (sigmaField) g_free(sigmaField);
+    if (Freq)       g_free(Freq);
+    if (FreqFact)   g_free(FreqFact);
+    if (fitResult)  g_free(fitResult);
+    BeamShape = ObitBeamShapeUnref(BeamShape);
+    ObitSpectrumFitKillArg(fitArg);
+    CCRow = ObitTableRowUnref(CCRow);
+   if  (err->error) Obit_traceback_val (err, routine, image->name, CCTable);
+ } /* End smoothing table */
+  
+  return CCTable;
+} /* end ObitSkyModelMFgetPBCCTab */
 

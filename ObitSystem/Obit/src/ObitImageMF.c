@@ -1454,7 +1454,7 @@ gpointer ThreadFitSpec (gpointer args)
       for (i=0; i<nSpec; i++) {
 	BeamShape->refFreq = Freq[i];  /* Set frequency */
 	PBCorr  = BSClass->ObitBeamShapeGainSym(BeamShape, Angle);
-	workFlux[i]  = inData[i][ix] * PBCorr;
+	workFlux[i]  = inData[i][ix] / PBCorr;
 	workSigma[i] = sigma[i] / (PBCorr * PBCorr);
       }
     } else { /* No PB correction */

@@ -1297,8 +1297,9 @@ ObitTableCCUtilMergeSel2Tab (ObitImage *image, olong inCCver, olong *outCCver,
   ObitTableCC *inCCTable = NULL, *outCCTable = NULL;
   ObitTableCCRow *CCRow = NULL;
   gchar *tabType = "AIPS CC";
-  olong naxis[2], warray, larray, j, ver, orow;
+  olong naxis[2], warray, larray, i, j, ver, orow, offset, nSpec=0;
   ofloat *array, parms[20];
+  gboolean doSpec=FALSE, doTSpec=FALSE;
   gchar *routine = "bitTableCCUtilMergeSel2Tab";
 
    /* error checks */
@@ -1327,6 +1328,13 @@ ObitTableCCUtilMergeSel2Tab (ObitImage *image, olong inCCver, olong *outCCver,
   warray = Merged->naxis[0];
   larray = Merged->naxis[1];
   
+  /* Get spectrum type */
+  if (inCCTable->noParms>4) {
+    doSpec  = (parms[3]>=9.9)  && (parms[3]<=19.0);
+    doTSpec = (parms[3]>=19.9) && (parms[3]<=29.0);
+    nSpec = inCCTable->noParms - 4;
+  }
+  
   /* Create output CC table */
   ver = *outCCver;
   outCCTable = newObitTableCCValue ("Merged/selected", (ObitData*)image,
@@ -1343,8 +1351,9 @@ ObitTableCCUtilMergeSel2Tab (ObitImage *image, olong inCCver, olong *outCCver,
   CCRow = newObitTableCCRow (outCCTable);
 
   /* Copy Parms to row */
-  for (j=0; j<inCCTable->noParms; j++) CCRow->parms[j] = parms[j];
+  for (j=0; j<MIN(4,inCCTable->noParms); j++) CCRow->parms[j] = parms[j];
   
+  offset = 4;
   /* loop over table */
   for (j=1; j<=larray; j++) {
     /* Want this one? */
@@ -1353,6 +1362,12 @@ ObitTableCCUtilMergeSel2Tab (ObitImage *image, olong inCCver, olong *outCCver,
       CCRow->Flux   = array[0];
       CCRow->DeltaX = array[1];
       CCRow->DeltaY = array[2];
+      /* Copy any spectra */
+      if (doSpec) {
+	for (i=0; i<nSpec; i++) CCRow->parms[i+offset] = array[3+i];
+      } else if (doTSpec) {
+	for (i=0; i<nSpec; i++) CCRow->parms[i+offset] = array[3+i];
+      }
       
       /* Write output */
       orow = -1;

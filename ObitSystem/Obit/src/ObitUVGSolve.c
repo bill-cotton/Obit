@@ -73,6 +73,16 @@ NextAvg (ObitUV *inUV, ofloat interv,
          olong* fqid, ofloat* vis, olong *ant1, olong *ant2, olong *nextVisBuf, 
 	 ObitErr* err);
 
+/** Private:  Read and average next solution interval with tapering */
+static gboolean 
+NextAvgTaper (ObitUV *inUV, ofloat interv, 
+	      gboolean avgif, gboolean avgpol, gboolean ampScalar, ofloat* antwt, 
+	      ofloat uvrang[2], ofloat wtuv, olong numAnt, olong numFreq, 
+	      olong numIF, olong numPol, odouble* timec, ofloat* timei, olong* sid, 
+	      olong* fqid, ofloat* vis, olong *ant1, olong *ant2, olong *nextVisBuf, 
+	      ofloat *sigma1, ofloat *sigma2, ofloat *sigma3, 
+	      ObitErr* err);
+
 /** Private: Solve for Gains for a solution interval */
 static void 
 doSolve (ofloat* vobs, olong *ant1, olong *ant2, olong numAnt, olong numIF, 
@@ -263,6 +273,9 @@ ObitUVGSolve* ObitUVGSolveCreate (gchar* name)
  * \li "WtUV"    OBIT_float (1,1,1) Weight outside of UVRANG. (default 1.0)
  * \li "minOK"   OBIT_float (1,1,1) Minimum fraction of valid solutions (def 0.1)
  * \li "prtLv"   OBIT_int   (1,1,1) Print level (default no print)
+ * \li "Beam     OBIT_float (3,1,1) Target restoring bam (asec,asec, deg)
+ *                                  If given and > 0.0, this will be used to taper 
+ *                                  weights to reduce influence of longer baselines.
  *
  * On output the following are set
  * \li "FractOK"    OBIT_float (1,1,1) The fraction of solutions which are OK
@@ -288,11 +301,13 @@ ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV,
   olong *ant1=NULL, *ant2=NULL, *count=NULL;
   ofloat *antwt=NULL, *creal=NULL, *cimag=NULL, *cwt=NULL;
   ofloat *avgVis=NULL, *gain=NULL, *snr=NULL;
+  ofloat  Beam[3]={0.0,0.0,0.0}, *sigma1=NULL, *sigma2=NULL, *sigma3=NULL;
+  ofloat  tarBeam[3], corrBeam[3], taper, sigma2u, sigma2v, cpa, spa;
   gboolean avgpol, avgif, domgm, dol1, ampScalar, empty;
-  gboolean done, good, oldSN, *gotAnt;
+  gboolean done, good, oldSN, *gotAnt, doTaper;
   gchar soltyp[5], solmod[5];
-  odouble timec=0.0, timex;
-  olong sid, fqid=0, sourid=0, lenEntry;
+  odouble timec=0.0, timex, tarFreq;
+  olong sid, fqid=0, sourid=0, lenEntry, iSpec;
   ofloat timei=0.0, elevmgm, elev=90.0/57.296;
   ObitIOCode retCode;
   gchar *tname, *ModeStr[] = {"A&P", "P", "P!A"};
@@ -310,6 +325,10 @@ ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV,
   ObitInfoListGetTest(in->info, "solInt", &type, dim, &solInt);
   solInt /= 1440.0;  /* Convert to days */
   ObitInfoListAlwaysPut(inUV->info, "SubScanTime", OBIT_float, dim, &solInt);
+
+  /* Check for beam for tapering weights */
+  ObitInfoListGetTest(in->info, "Beam", &type, dim, Beam);
+  doTaper = Beam[0]>0.0;
 
   /* Min allowable OK fraction */
   minOK = 0.1;
@@ -384,6 +403,36 @@ ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV,
   ant1   = g_malloc0(numBL*sizeof(olong)+5);
   ant2   = g_malloc0(numBL*sizeof(olong)+5);
   
+  /* Compute weight tapering functions for each frequency if needed */
+  if (doTaper) {
+    /* Make taper factors */
+    sigma1 = g_malloc0(numIF*numFreq*sizeof(ofloat));
+    sigma2 = g_malloc0(numIF*numFreq*sizeof(ofloat));
+    sigma3 = g_malloc0(numIF*numFreq*sizeof(ofloat));
+    tarFreq = inUV->myDesc->freqIF[0]; /* Lowest IF frequency */
+    for (iSpec=0; iSpec<numIF*numFreq; iSpec++) {
+      /* Target beam size scaled to this frequency */
+      tarBeam[0] = Beam[0] * tarFreq/inUV->myDesc->freqArr[iSpec];
+      tarBeam[1] = Beam[1] * tarFreq/inUV->myDesc->freqArr[iSpec];
+      tarBeam[2] = Beam[2];
+      /* Correction beam */
+      corrBeam[0] = sqrt (MAX(1.0e-10,Beam[0]*Beam[0]-tarBeam[0]*tarBeam[0]));
+      corrBeam[1] = sqrt (MAX(1.0e-10,Beam[1]*Beam[1]-tarBeam[1]*tarBeam[1]));
+      corrBeam[2] = Beam[2];
+      /* 0.8 fudge factor 0.9 may be better */
+      taper   = (0.8/ (((corrBeam[0]/2.35)/206265.))/(G_PI));
+      sigma2u = log(0.3)/(taper*taper);
+      taper   = (0.8/ (((corrBeam[1]/2.35)/206265.))/(G_PI));
+      sigma2v = log(0.3)/(taper*taper);
+      cpa     = cos(corrBeam[2]*DG2RAD);
+      spa     = sin(corrBeam[2]*DG2RAD);
+      sigma1[iSpec]  = (cpa*cpa*sigma2v + spa*spa*sigma2u);
+      sigma2[iSpec]  = (spa*spa*sigma2v + cpa*cpa*sigma2u);
+      sigma3[iSpec]  = 2.0*cpa*spa*(sigma2v - sigma2u);
+    } /* End loop setting tapers */
+    
+  } /* end if doTaper */
+
   /* Get parameters from inUV */
   refant = 1;
   ObitInfoListGetTest(in->info, "refAnt", &type, dim, &refant);
@@ -499,10 +548,16 @@ ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV,
   nextVisBuf = -1;
   while (!done) {
     /* Read and average next solution interval */
-    done =  NextAvg (inUV, solInt, avgif, avgpol, ampScalar, antwt, uvrang, wtuv, 
-		     (olong)numAnt, numFreq, (olong)numIF, (olong)numPol, 
-		     &timec, &timei, &sid, &fqid, avgVis, ant1, ant2, &nextVisBuf, 
-		     err);
+    if (doTaper)
+      done =  NextAvgTaper (inUV, solInt, avgif, avgpol, ampScalar, antwt, uvrang, wtuv, 
+			    (olong)numAnt, numFreq, (olong)numIF, (olong)numPol, 
+			    &timec, &timei, &sid, &fqid, avgVis, ant1, ant2, &nextVisBuf, 
+			    sigma1, sigma2, sigma3, err);
+    else
+      done =  NextAvg (inUV, solInt, avgif, avgpol, ampScalar, antwt, uvrang, wtuv, 
+		       (olong)numAnt, numFreq, (olong)numIF, (olong)numPol, 
+		       &timec, &timei, &sid, &fqid, avgVis, ant1, ant2, &nextVisBuf, 
+		       err);
     if (err->error) goto cleanup;
 
     /* Done? 
@@ -647,6 +702,9 @@ ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV,
   
  goto cleanup; /* Cleanup */
   cleanup: row = ObitTableSNUnref(row);
+  if (sigma1) g_free(sigma1);
+  if (sigma2) g_free(sigma2);
+  if (sigma3) g_free(sigma3);
   if (gain)   g_free(gain);
   if (snr)    g_free(snr);
   if (count)  g_free(count);
@@ -1034,6 +1092,289 @@ NextAvg (ObitUV* inUV, ofloat interv,
   if (err->error) Obit_traceback_val (err, routine, inUV->name, done);
   return done;
 } /* end NextAvg */
+
+/**
+ * Average next solution interval
+ *  Data is averaged until one of several conditions is met:
+ *  \li the time exceeds the initial time plus the specified interval.
+ *  \li the source id (if present) changes
+ *  \li the FQ id (if present) changes. 
+ * Routine translated from the AIPSish UVUTIL.FOR/NXTAVG
+ * \param inUV    Input UV data. 
+ * \param interv  Desired time interval of average in days. 
+ *                Will use value from inUV->mySel.ObitUVSelSubScan
+                  if available, 0=> scan average
+ * \param avgif   If true average in IF 
+ * \param avgpol  If true average in polarization (Stokes 'I')
+ * \param antwt   Extra weights to antennas (>=0 => 1.0)
+ * \param uvrang  Range of baseline lengths with full weight (lamda). 
+ *                0s => all baselines 
+ * \param wtuv    Weight outside of UVRANG. (No default)
+ * \param numAnt  Highest antenna number (NOT number of antennas)
+ * \param numIF   Maximum number of Frequencies 
+ * \param numIF   Maximum number of IFs 
+ * \param numPol  Maximum number of polarizations
+ * \param timec   [out] Center time of observations (days)
+ * \param timei   [out] Actual time interval (days)
+ * \param sid     [out] Source Id if present else -1. 
+ * \param fqid    [out] FQ id if present else -1.
+ * \param avgVis  [out] [4,baseline,IF,pol]
+ * \param ant1    [out] Array of first antenna numbers (1-rel) on a baseline
+ * \param ant2    [out] Array of second antenna numbers (1-rel) on a baseline
+ * \param nextVisBuf [in/out] next vis (0-rel) to read in buffer, 
+ *                   -1=> read, -999 done
+ * \param sigma1  u^2 component of Gaussian taper
+ * \param sigma2  v^2 component of Gaussian taper
+ * \param sigma3  u*v component of Gaussian taper
+ * \param err     Error/message stack, returns if error.
+ * \return TRUE if all data read, else FALSE
+ */
+static gboolean 
+NextAvgTaper (ObitUV* inUV, ofloat interv, 
+	      gboolean avgif, gboolean avgpol, gboolean ampScalar, ofloat* antwt, 
+	      ofloat uvrang[2], ofloat wtuv, olong numAnt, olong numFreq, olong numIF, 
+	      olong numPol, odouble* timec, ofloat* timei, olong* sid, olong* fqid, 
+	      ofloat* avgVis, olong *ant1, olong *ant2, olong *nextVisBuf, 
+	      ofloat *sigma1, ofloat *sigma2, ofloat *sigma3, ObitErr* err)
+{
+  gboolean done=FALSE;
+  ObitIOCode retCode= OBIT_IO_OK;
+  ofloat linterv, ctime, cbase, stime, ltime=0, weight, wt, bl, *visPnt, temp;
+  ofloat tmp1, tmp2, uf, vf, tape;
+  olong i, j, csid, cfqid, a1, a2, *blLookup=NULL, blIndex, visIndex, lenEntry;
+  olong incif, incf;
+  olong iFreq, iIF, iStok, jBL, jIF, jStok, jncs, jncif, mPol, mIF, offset, numBL, ifq=0;
+  odouble timeSum;
+  olong timeCount, accumIndex;
+  olong maxAllow; /* DEBUG */
+  /* olong maxShit=0; DEBUG */
+  gchar *routine = "ObitUVGSolve:NextAvgTaper";
+  
+  /* Error checks */
+  g_assert(ObitErrIsA(err));
+  if (err->error) return done;  /* previous error? */
+  g_assert(ObitUVIsA(inUV));
+  
+  /* Did we hit the end last time? */
+  if (*nextVisBuf==-999) return TRUE;
+
+  /* Get actual average time from Selector if available */
+  temp = ObitUVSelSubScan (inUV->mySel);
+  if ((temp>0.0)  && (temp<1.0)) linterv = 1.01*temp;
+  else linterv = 0.99*interv;
+  /* If still zero use one second */
+  if (linterv <=0.0) linterv = 1.0 / 86400.0;
+
+  /* Numbers of poln and IFs in accumulator */
+  if (avgpol) mPol = 1;
+  else mPol = numPol;
+  if (avgif) mIF = 1;
+  else mIF = numIF;
+
+  /* Increments in accumulator */  
+  lenEntry = 4;  /* Length of accumulator */
+  jncif = lenEntry*(numAnt*(numAnt-1))/2;
+  if (avgpol) jncs  = jncif;
+  else jncs  = jncif * mIF;
+
+  /* Channel and IF increments in frequency scaling array */
+  incf  = MAX (1, (inUV->myDesc->incf  / 3) / inUV->myDesc->inaxes[inUV->myDesc->jlocs]);
+  incif = MAX (1, (inUV->myDesc->incif / 3) / inUV->myDesc->inaxes[inUV->myDesc->jlocs]);
+  
+  maxAllow = lenEntry*((numAnt*(numAnt-1))/2)*mPol*mIF; /* DEBUG */
+  
+  /* Baseline lookup table */
+  blLookup = g_malloc0(numAnt*sizeof(olong));
+  blLookup[0] = 0;
+  for (i=1; i<numAnt; i++) blLookup[i] = blLookup[i-1] + numAnt-i;
+  
+  /* Fill in antenna numbers in ant* arrays - assume a1<a2 */
+  jBL = 0;
+  for (i=0; i<numAnt; i++) {
+    for (j=i+1; j<numAnt; j++) {
+      ant1[jBL] = i+1;
+      ant2[jBL] = j+1;
+      jBL++;
+    }
+  }
+  
+  /* Zero accumulations */
+  numBL = (numAnt*(numAnt-1)) / 2;
+  for (jBL=0; jBL<numBL; jBL++) {         /* Loop over baseline */
+    for (jStok=0; jStok<mPol; jStok++) {  /* Loop over Pol */
+      for (jIF=0; jIF<mIF; jIF++) {       /* Loop over IF */
+	/* Accumulator index */
+	accumIndex = jBL*lenEntry + jStok*jncs + jIF*jncif;
+	for (i=0; i<lenEntry; i++) avgVis[accumIndex+i] = 0.0;
+      } /* end loop over IF */
+    } /* end loop over Pol */
+  } /* end loop over baseline */
+  *fqid = -1;
+  stime = -1.0e20;
+  timeSum = 0.0;
+  timeCount = 0;
+  
+  /* Loop reading and averaging data */
+  while (!done) {
+    
+    /* Need to read? */
+    if ((*nextVisBuf<0) || (*nextVisBuf>=inUV->myDesc->numVisBuff)) {
+      retCode = ObitUVReadSelect (inUV, NULL, err);
+      if (err->error) goto cleanup;
+      /* Finished? */
+      if (retCode==OBIT_IO_EOF) {
+	done = TRUE;
+	*nextVisBuf = -999;
+	break;
+      }
+      *nextVisBuf = 0;
+      /* Get actual average time from Selector if available */
+      temp = ObitUVSelSubScan (inUV->mySel);
+      if ((temp>0.0)  && (temp<1.0)) linterv = 1.01*temp;
+      else linterv = 0.99*interv;
+      /* If still zero use one second */
+      if (linterv <=0.0) linterv = 1.0 / 86400.0;
+    }
+
+    /* Visibility pointer */
+    visPnt = inUV->buffer + (*nextVisBuf) * inUV->myDesc->lrec;
+    /* Vis data */
+    ctime = visPnt[inUV->myDesc->iloct]; /* Time */
+    if (stime<-1000.0) stime = ctime;  /* Set start time from first vis */
+    if (inUV->myDesc->ilocsu>=0) csid  = (olong)visPnt[inUV->myDesc->ilocsu]; /* Source */
+    else csid  = 0;
+    if (timeCount==0) *sid = csid;  /* Set output source id first vis */
+    if (inUV->myDesc->ilocfq>=0) cfqid = (olong)visPnt[inUV->myDesc->ilocfq]; /* FQid */
+    else cfqid  = 0;
+    if (*fqid<0) *fqid = cfqid;  /* Set output fq id first vis */
+    cbase = visPnt[inUV->myDesc->ilocb]; /* Baseline */
+    
+    /* Is this integration done? */
+    if ((*sid!=csid) || (*fqid!=cfqid) || (ctime-stime>=linterv)) break;
+    
+    /* Sum time */
+    timeSum += ctime;
+    timeCount++;
+    ltime = ctime;   /* Last time in accumulation */
+    
+    /* crack Baseline */
+    a1 = (cbase / 256.0) + 0.001;
+    a2 = (cbase - a1 * 256) + 0.001;
+
+    /* Check that antenna numbers in range */
+    if (!((a1>0) && (a2>0) && (a1<=numAnt)&& (a2<=numAnt))) {
+     Obit_log_error(err, OBIT_Error,
+		    "%s: Bad antenna number, %d or %d not in [1, %d] in %s", 
+		    routine, a1, a2, numAnt, inUV->name);
+     goto cleanup;
+    }
+
+    /* Ignore autocorrelations */
+    if (a1==a2) {(*nextVisBuf)++; continue;}
+   
+    /* Baseline index this assumes a1<a2 always */
+    blIndex =  blLookup[a1-1] + a2-a1-1;
+    
+    /* Accumulate */
+    offset = lenEntry*blIndex; /* Offset in accumulator */
+    /* Loop over polarization */
+    for (iStok = 0; iStok<numPol; iStok++) {
+      jStok = iStok;      /* Stokes in accumulation */
+      if (avgpol) jStok = 0;
+      /* Loop over IF */
+      for (iIF = 0; iIF<numIF; iIF++) {
+	jIF = iIF;        /* IF in accumulation */
+	if (avgif) jIF = 0;
+	
+	/* Loop over frequency */
+	for (iFreq = 0; iFreq<numFreq; iFreq++) {
+
+	  /* Set extra weighting factors */
+	  weight = antwt[a1-1]*antwt[a2-1];
+	  
+	  /* index in IF/freq table */
+	  ifq = iIF*incif + iFreq*incf;  
+
+	  /* U and V at frequency */
+	  uf = visPnt[inUV->myDesc->ilocu] * inUV->myDesc->fscale[ifq];
+	  vf = visPnt[inUV->myDesc->ilocv] * inUV->myDesc->fscale[ifq];
+	  
+	  /* Check baseline length - possibly modify weight */
+	  bl = sqrt (uf*uf + vf*vf);
+	  if ((bl<uvrang[0]) || (bl>uvrang[1])) weight *= wtuv;
+	  
+	  /* Apply tapering to weight */
+	  tape = uf*uf*sigma2[ifq] + vf*vf*sigma1[ifq] + uf*vf*sigma3[ifq];
+	  if (tape<-14.0) weight = 0.0;
+	  else weight *= exp(tape);
+	  
+	  /* Visibity index */
+	  visIndex = inUV->myDesc->nrparm + iStok*inUV->myDesc->incs + 
+	    iIF*inUV->myDesc->incif + iFreq*inUV->myDesc->incf;
+	  
+	  /* Accumulator index */
+	  accumIndex = offset + jStok*jncs + jIF*jncif;
+	  
+	  /* Accumulate */
+	  if (visPnt[visIndex+2]>0.0) {
+	    wt = weight * visPnt[visIndex+2];
+	    /* maxShit = MAX (maxShit, accumIndex);  DEBUG */
+	    /* DEBUGif (accumIndex>maxAllow) { 
+	       fprintf (stderr,"bad accum %d a1 %d a2 %d jStok %d jIF %d\n", 
+	       accumIndex, a1, a2, jStok, jIF);
+	       }  end DEBUG */
+	    avgVis[accumIndex]   += wt *  visPnt[visIndex];
+	    avgVis[accumIndex+1] += wt * visPnt[visIndex+1];
+	    avgVis[accumIndex+2] += wt;
+	    if (ampScalar) { /* Ampscalar averaging? Accumulate amplitude */
+	      avgVis[accumIndex+3] += wt * sqrt (visPnt[visIndex]*visPnt[visIndex] +
+						 visPnt[visIndex+1]*visPnt[visIndex+1]);
+	    }
+	  } /* End vis valid */
+	} /* Loop over Freq */
+      } /* Loop over IF */
+    } /* Loop over Stokes */
+    
+    (*nextVisBuf)++;  /* Increment vis being processed */
+  } /* End loop summing */
+  
+  /* Normalize by sum of weights */
+  for (jBL=0; jBL<numBL; jBL++) {         /* Loop over baseline */
+    for (jStok=0; jStok<mPol; jStok++) {  /* Loop over Pol */
+      for (jIF=0; jIF<mIF; jIF++) {       /* Loop over IF */
+	/* Accumulator index */
+	accumIndex = jBL*lenEntry + jStok*jncs + jIF*jncif;
+	if (avgVis[accumIndex+2]>0) {
+	  avgVis[accumIndex]  /= avgVis[accumIndex+2];
+	  avgVis[accumIndex+1]/= avgVis[accumIndex+2];
+	  /* if ampScalar replace vector amp with scalar */
+	  if (ampScalar) { 
+	    tmp1 = sqrt (avgVis[accumIndex]  *avgVis[accumIndex] + 
+			 avgVis[accumIndex+1]*avgVis[accumIndex+1]) *
+	      avgVis[accumIndex+2];
+	    if (tmp1>1.0e-20) tmp2 = avgVis[accumIndex+3] / tmp1;
+	    else tmp2 = 1.0;
+	    avgVis[accumIndex]   *= tmp2;
+	    avgVis[accumIndex+1] *= tmp2;
+	  }
+	}
+      } /* end loop over IF */
+    } /* end loop over Pol */
+  } /* end loop over baseline */
+  
+  /* Average time and interval for output */
+  if (timeCount>0) *timec = timeSum/timeCount;
+  else *timec = 0.0;
+  *timei = (ltime - stime);
+  
+  /* DEBUG
+  fprintf (stderr,"max accumIndex  %d\n", maxShit); */
+
+  /* Cleanup */
+  cleanup: if (blLookup) g_free(blLookup);
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, done);
+  return done;
+} /* end NextAvgTaper */
 
 /**
  *   Determine antenna gains.

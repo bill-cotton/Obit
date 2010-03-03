@@ -52,3 +52,5 @@ ObitCInterpolate **myInterps;
 gboolean doAlphaCorr;
 /** Prior spectral index correction */
 ofloat priorAlpha;
+/** Spectral smoothing wanted in model? */
+gboolean doSmoo;

@@ -87,6 +87,7 @@
  * \li  "EComp" OBIT_int (?,1,1) Highest CC to use per table, 1-rel [def to end ]
  * \li  "prtLv" OBIT_int message level  [def 0]
  * \li  "doAlphaCorr"  OBIT_bool (1,1,1) TRUE if prior spectral index corrections to be made
+ * \li  "doSmoo"       OBIT_bool (1,1,1) TRUE if tabulated spectra to be smooothed
  */
 
 /*-------------- enumerations -------------------------------------*/

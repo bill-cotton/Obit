@@ -153,7 +153,14 @@ difficulty.
 In addition, most classes have an ObitThread member to provide
 multi--threaded operation, locking and synchronism mechanisms.
 cfitsio, which is used for I/O to FITS files, is not thread--safe
-which limits parallel, multi--threaded usage to in--memory applications.
+which limits parallel, multi--threaded usage to in--memory
+applications.
+
+Multi-threading is implemented in the most CPU intensive operation by
+splitting the work on a single I/O buffer amoung various threads.
+This means fairly small work packets so the threading is done using 
+gthreads thread pools.
+This is accessed via ObitThreadIterator.
 
 \subsection{Portability}
 The glib library was intended to reduce portability problems and many
@@ -292,8 +299,10 @@ written into the file memwatch.log in the current working directory.
 This option overrides the ObitMem class usage.
 Don't forget to recompile/link without this option when through
 debugging as it incurs substantial overhead.
-It is important that all software linked togetheer is all compiled
+It is important that all software linked together is all compiled
 with or without the -DMEMWATCH option.
+The Unix utility valgrind is very good (if very slow) at finding
+memory related problems.
 
 \subsubsection{Messages and error handling}
 Messages and error handling is by means of the ObitErr class.
@@ -618,6 +627,9 @@ int main ( int argc, char **argv )
      will return on completion of all threads */
   ObitThreadIterator (th, nThreads, func, fargs);
   
+  /* Shut down the thread pool */
+  ObitThreadPoolFree (th);
+
   return 0;
 } /* end main */
 \end{verbatim}
@@ -685,6 +697,21 @@ Many of the algorithms used are adopted from AIPS.
 Lists of models or images can be Fourier transformed by the
 ObitSkyModel class and either divided into or subtracted from (added
 to) an ObitUV.
+Both DFT and Gridded model calculations are included for non spatially
+variant SkyModels and only DFT for these.
+Specialized subclasses of ObitSkyModel include:
+\begin{itemize}
+\item {\bf ObitSkyModelVM} \\
+Base class of spatially variant sky models.
+\item {\bf ObitSkyModelVMBeam} \\
+Spatial variation given by tabulated beam shapes.
+\item {\bf ObitSkyModelVMIon} \\
+Spatial variation given by ionospheric model.
+\item {\bf ObitSkyModelVMSquint} \\
+Spatial variation given by calculation of (E)VLA beam squint.
+\item {\bf ObitSkyModelMF } \\
+Tabulated frequency dependent sky model.
+\end{itemize}
 
 \subsection{Imaging}
    The basic interface to the imaging software is the ObitUVImager
@@ -692,12 +719,24 @@ class.
 Given an ObitUV with control parameters, this class can produce an
 ObitImageMosaic, an array of images that tile a region of the sky.
 Optionally, the array can be flattened into a single image.
+Specialized subclasses of ObitUVImager include:
+\begin{itemize}
+\item {\bf ObitUVImagerIon} \\
+Imaging for spatial variation given by ionospheric model.
+\item {\bf ObitUVImagerSquint} \\
+Imaging for spatial variation given by calculation of (E)VLA beam squint.
+\item {\bf ObitUVImagerMF} \\
+Imaging for Tabulated frequency dependent sky model.
+\item {\bf ObitUVImagerWB} \\
+Sault-Wieringa imaging.
+\end{itemize}
 
 \subsection{Deconvolution}
    There is a heirarchy of classes derived from the ObitDCon
 (Deconvolution) virtual base class.
 All current implementations are variants of the CLEAN algorithm.
-This heirarchy is currently (Jan. 2005) only partially implemented but
+Both Clark and SDI/Greisen CLEANS are implemented.
+This heirarchy is currently (Mar. 2010) only partially implemented but
 the high level design is shown in the following:
 
 \begin{verbatim}
@@ -711,13 +750,13 @@ the high level design is shown in the following:
                               |
                         ----------------
                         |              |
-              ObitDconCleanImage  ObitDconCleanVis
+              ObitDconCleanImage  ObitDConCleanVis
                (APCLN like)          (MX like)
                                          |
                            -------------------------
                            |                       |
-                 ObitDconCleanVisSDI        ObitDconCleanVisMR
-                 (SDI-Greisen)               (multi resolution)
+                 ObitDConCleanVisMF        
+                 (MultiFrequency)             
 
 \end{verbatim}
 
@@ -783,7 +822,9 @@ Functions:
 \item ObitDConCleanVis\\
 MX-like Cotton-Schwab CLEAN where components are subtracted from the
 visibility data which is reimaged to get the next round of residual
-images. Only support AIPS OVERLAP=3, DO3D=1 type.
+images. 
+SDI/Greisen variant also supported.
+Supports AIPS  2D or 3D  type.
 \begin{verbatim}
 Major Members:
    ObitUVImager
@@ -797,9 +838,6 @@ Functions:
                             Uses ObitSkyModel and ObitImager
 
 \end{verbatim}
-\item ObitDConCleanVisSDI\\
-Steer-Dwedney-Itio-Greisen CLEAN.
-NYI
 \item ObitDConCleanVisMR\\
 Multi-resolution CLEAN.
 NYI
@@ -822,13 +860,19 @@ CLEAN algorithm which is used in Obit classes.
 \item ObitDConCleanPxList\\
 This class manages lists of selected residuals from one or more images
 and implements the basic BGC CLEAN algorithm.
+Subclass ObitDConCleanPxListMF used for tabuilated spectrum wideband imaging.
 \end{itemize}
 
 \section{Building Obit}
 Obit comes with a configure script to construct the Makefiles to build
 Obit.
+An installation script, InstallObit.sh, is included in the
+distribution which attempts to do a full installation.
+The following describes the installation of Obit in case
+InstallObit.sh does not work. 
 Note: there are a number of third party packages that Obit requires
 and these must be installed prior to Obit.
+See the README file for more current details.
 The basic installation is thus:
 \begin{verbatim}
  % gtar xzvf Obit1.0.tgz
@@ -839,7 +883,7 @@ The basic installation is thus:
 
 Several of the external packages are not critical and Obit will build
 without them.
-In particular, these are pgplot, cfitsio, GSL, and FFTW.
+In particular, these are plplot, cfitsio, GSL, and FFTW3.
 However, if one of these is not installed or not found, then an attempt
 to use them will cause the program to abort.
 pgplot is used only in debugging and is not required for production use.
@@ -955,13 +999,13 @@ Available at http://www.stack.nl/\~\ dimitri/doxygen/ .
 \item  cfitsio \\
 Basic FITS I/O package.
 Available at http://heasarc.gsfc.nasa.gov/docs/software/fitsio/fitsio.html.
-\item  FFTW \\
+\item  FFTW3 \\
 Fast Fourier Transform.
-If configure does not find the FFTW library, FFTs are done using the GSL library
+If configure does not find the FFTW3 library, FFTs are done using the GSL library
 if that was found.
 Available at http://www.fftw.org/.
-Note: FFTW MUST be installed with the configure option --enable-float
-to be used by Obit.
+FFTW2 can also be used but it MUST be installed with the configure
+option --enable-float to be used by Obit.
 \item  GSL \\
 GNU Scientific Library.
 If configure does not find the GSL library, the functions using it are stubbed
@@ -975,13 +1019,14 @@ The binding interface is built using swig.
 distributed  so you don't need swig unless you want to modify the
 python interface. (http://www.swig.org/))
 Python is available from http://www.python.org/download/.
-Python 2.3 or later is needed.
+Python 2.3 or later is needed, 2.5 currently preferred.
 \item  xmlrpc \\
 Interprocess communications is via xmlrpc using the xmlrpc-c and libwww 
 libraries.\\
 xmlrpc-c-1.2 (http://download.sourceforge.net/xmlrpc-c/xmlrpc-c-\%\{ver\}.tar.gz),\\
 w3c-libwww-5.4.0 
 (http://www.w3.org/Library/Distribution/w3c-libwww-\%\{ver\}.tar.gz)
+libcurl works much better than libwww.
 \item  zlib \\
 Probably everywhere you want to be.
 (if not, http://www.gzip.org/zlib/)
@@ -1968,10 +2013,12 @@ For non--point components, there are extra parameters:
 \item 3 = Uniform optically thin sphere
 \item type + 10 $=>$ following parameters are spectral coefficients
 of powers of $ln(\nu/\nu_0)$
+\item type + 20 $=>$ following parameters are tabulated spectra
 \end{itemize}
-\item param[4] spectral index (if type$>$10)
-\item param[5] spectral curvature (if type$>$10)
-\item param[6] spectral curvature square (if type$>$10)
+\item param[4] spectral index (if type$>$10, $<=19$)
+\item param[5] spectral curvature (if type$>$10, $<=19$)
+\item param[6] spectral curvature square (if type$>$10, $<=19$)
+\item param[3+i] spectral channel i (1-rel) (if type$>$20, $<=29$)
 \end{enumerate}
 }
 % Table keyword description
