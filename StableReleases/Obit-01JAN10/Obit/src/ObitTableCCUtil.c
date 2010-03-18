@@ -1,6 +1,6 @@
 /* $Id: ObitTableCCUtil.c 127 2009-09-14 12:08:23Z bill.cotton $   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -309,7 +309,7 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
   fsize = 3;
   size = fsize * sizeof(ofloat);
   /*   Total size of structure in case all rows valid */
-  tsize = size * nrow;
+  tsize = size * (nrow+10);
   /* create output structure */
   SortStruct = ObitMemAlloc0Name (tsize, "CCSortStructure");
 
@@ -1028,7 +1028,7 @@ MakeCCSortStruct (ObitTableCC *in, olong *size, olong *number, olong *ncomp,
   *size = fsize * sizeof(ofloat);
 
   /* Total size of structure in case all rows valid */
-  tsize = (*size) * (nrow);
+  tsize = (*size) * (nrow+10);
   /* create output structure */
   out = ObitMemAlloc0Name (tsize, "CCSortStructure");
   
@@ -1127,7 +1127,7 @@ MakeCCSortStructSel (ObitTableCC *in, olong startComp, olong endComp,
   *size = fsize * sizeof(ofloat);
 
   /* Total size of structure in case all rows valid */
-  tsize = (*size) * (nrow);
+  tsize = (*size) * (nrow+10);
   /* create output structure */
   out = ObitMemAlloc0Name (tsize, "CCSortStructure");
   
