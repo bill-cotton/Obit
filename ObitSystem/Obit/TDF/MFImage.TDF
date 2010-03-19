@@ -189,7 +189,7 @@ ccfLim   *                         Min. fraction of residual peak to CLEAN
 SDIGain  *                         SDI trigger, <=0 -> no SDI Clean
 **PARAM** float 3
 Beam     *      -999.9             Clean beam (maj, min, PA)
-**PARAM** float 1  **DEF** 10.0
+**PARAM** float 1  **DEF** 1.0e9
 Reuse    *                         Factor * RMS to reuse each cycle
 **PARAM** float 1  **DEF** 1.0e20
 autoCen  *                         Auto center min flux density
@@ -236,6 +236,8 @@ WtUV              0.0              Weight outside full wt uvrange
 avgPol                             Avg. poln?
 **PARAM** boo 1 **DEF** F
 avgIF                              Avg. IFs?
+**PARAM** boo 1 **DEF** F
+noNeg                              exclude negative summed CLEAN comps?
 **PARAM** boo 1  **DEF** F
 doMGM                              Apply mean gain modulus
 **PARAM** float 1  **DEF** 5.0
@@ -288,6 +290,12 @@ Unless otherwise specified, a fly's eye pattern of
 fields with circular CLEAN boxes will be used to cover the specified
 field of view (FOV).  When processing is finished, the CLEAN images 
 are "flattened" onto a single image.
+   The output image is a composite cube.  The first norder planes are:
+flux density, spectral index, curvature....  The following planes are 
+the individual, coarsely sampled frequency images.  The center 
+frequencies of these planes are given by elements "FREQ000n" in the 
+list on the image header; getname(119).Desc.List.Dict will convert this 
+list on the image in AIPS slot number 119 to a python dict.
    If multiple sources are being processed, some failures are allowed.
 In this case, the error messages will be displayed and the Status in
 the PS table set to "Failed  " rather than "Done    ".
@@ -370,6 +378,13 @@ Adverbs:
   Alpha......If != 0.0 then correct data by spectral index Alpha before 
              imaging and self calibration. 
              -0.7 is typical for synchrotron.
+             Derived spectral index images will have this value added 
+             back in.  It is not restored to the coarse frequency images
+             or the CLEAN components but is saved in the image descriptor 
+	     list, alpha = image.Desc.List.Dict["ALPHA"] where "image" is
+             the output image.  
+             Sky models using the CLEAN components on the MFImage output 
+             image will use this value of the prior spectral index.
   BLFact.....Baseline dependent time averaging factor.
              If BLFact>1.00 then the input data is time averaged in 
              a baseline dependent fashion and written to the output 
@@ -530,7 +545,10 @@ Adverbs:
             the position angle.  If zeroes, fit beam.
   Reuse.....If >0 then each cycle of self cal after the first will
             begin with all summed components whose abs value exceeds
-            Reuse*RMS(Field 1). Default 10
+            Reuse*RMS(Field 1). Default 1.0e9
+            NB: This option reduces the runtime but may also reduce 
+            the dynamic range when reusing part of a previous model;
+            use with caution.
   autoCen...If the sum of the clean components within 1.5 pixels 
             of any pixel exceeds autoCen and is not within 0.05 of a cell
             of a pixel then the image is  remade and deconcolved with the 
@@ -581,16 +599,23 @@ Adverbs:
   maxPSCLoop..Min. peak flux density required for phase self cal (Jy)
   solPInt.....phase SC Solution interval (min)
   solPType....phase SC Solution Type: '  ', 'L1', 
-  solPMode....phase SC Solution Mode:'A&P', 'P', 'P!A',
+  solPMode....phase SC Solution Mode:'A&P', 'P', 'P!A', 'DELA'
+              'DELA' fits for delay and phase.
   maxASCLoop..Maximum number of phase self calibration loops
   maxASCLoop..Min. peak flux density required for phase self cal (Jy)
   solAInt.....A&P SC Solution interval (min)
   solAType....A&P SC Solution Type: '  ', 'L1', 
-  solAMode....A&P SC Solution Mode:'A&P', 'P', 'P!A',
+  solAMode....A&P SC Solution Mode:'A&P', 'P', 'P!A',, 'DELA'
   refAnt......Reference antenna number for selfcal
   WtUV........Weighting (wrt 1) to use outside of basic uv range in SC
   avgPol......Average Polarizations in self calibration?
   avgIF.......Average IFs in self calibration?
+  noNeg.......If True, exclude negative summed CLEAN components from the 
+              self-cal model calculation.  This is useful if the initial
+              calibration is poor and there are negative components due 
+              to phase errors but is harmful if the initial calibration is 
+              relatively good and the negative components are needed to 
+              describe a high dynamic range image (say DR>1000:1)
   doMGM.......Apply mean gain modulus to A&P selfcal soln.
   minSNR......Min. allowed SNR in self cal solution
   minNo.......Min. allowed no. antennas in selfcal

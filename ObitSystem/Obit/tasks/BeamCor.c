@@ -1817,8 +1817,8 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   gchar        Stokes[5], soltyp[5], solmod[5], stemp[5];
   gchar        *include[] = {"AIPS FG", NULL};
   gchar        *SCParms[] = {  /* Self parameters */
-    "minFluxPSC", "minFluxASC", "refAnt", "WtUV", "avgPol", "avgIF", "doMGM", "minSNR", 
-    "minNo", "doSmoo", "prtLv", "modelFlux", "modelPos", "modelParm",
+    "minFluxPSC", "minFluxASC", "refAnt", "WtUV", "avgPol", "avgIF", "noNeg", "doMGM", 
+    "minSNR", "minNo", "doSmoo", "prtLv", "modelFlux", "modelPos", "modelParm",
     "dispURL", 
     NULL };
   gchar        *CLEANParms[] = {  /* Clean parameters */
@@ -2414,7 +2414,7 @@ void BeamCorHistory (gchar *Source, ObitInfoList* myInput,
     "modelFlux", "modelPos", "modelParm",
     "maxPSCLoop", "minFluxPSC", "solPInt", "solPType", "solPMode", 
     "maxASCLoop", "minFluxASC", "solAInt", "solAType", "solAMode", 
-    "avgPol", "avgIF", "doMGM", "minSNR", "minNo", "doSmoo",
+    "avgPol", "avgIF", "noNeg", "doMGM", "minSNR", "minNo", "doSmoo",
     "PeelFlux", "PeelLoop", "PeelRefAnt", "PeelSNRMin",
     "PeelSolInt", "PeelType", "PeelMode", "PeelNiter",
     "PeelMinFlux", "PeelAvgPol", "PeelAvgIF",

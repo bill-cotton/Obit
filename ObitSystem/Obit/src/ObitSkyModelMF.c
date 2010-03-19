@@ -740,6 +740,7 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   FTFuncArg *args;
   gchar keyword[12];
+  gchar *routine="SkyModelMFInitMod";
   
   /* Fourier transform threading routines */
   in->DFTFunc  = (ObitThreadFunc)ThreadSkyModelMFFTDFT;
@@ -788,6 +789,10 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
       sprintf (keyword, "FREQ%4.4d",i+1);
       ObitInfoListGetTest(image0->myDesc->info, keyword, &type, dim, &in->specFreq[i]);
     }
+  } else { /* Bummer */
+    Obit_log_error(err, OBIT_Error,"%s No Frequency info in Image header for %s", 
+		   routine, in->mosaic->images[0]->name);
+    return;
   }
 
   /* Prior spectral index */
@@ -810,6 +815,16 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
       }
     }
   } /* End of loop making lookup table */
+
+  /* Tell selected model info if prtLv>1 */
+  if (in->prtLv>1) {
+    if (in->modelMode==OBIT_SkyModel_DFT)
+      Obit_log_error(err, OBIT_InfoErr, "SkyModelMF using DFT calculation type");
+    else if (in->modelMode==OBIT_SkyModel_Grid)
+      Obit_log_error(err, OBIT_InfoErr, "SkyModelMF using Grid calculation type");
+    else if (in->modelMode==OBIT_SkyModel_Fastest)
+      Obit_log_error(err, OBIT_InfoErr, "SkyModelMF using Fastest calculation type");
+  }
 
 } /* end ObitSkyModelMFInitMod */
 

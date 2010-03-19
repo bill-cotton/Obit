@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: ObitUVGSolveWBClassDef.h 2 2008-06-10 15:32:27Z bill.cotton $ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2010                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
@@ -24,22 +24,6 @@
 /*;                         520 Edgemont Road                         */
 /*;                         Charlottesville, VA 22903-2475 USA        */
 /*--------------------------------------------------------------------*/
-/*  Define the basic components of the ObitUVGSolveWB structure          */
-/*  This is intended to be included in a class structure definition   */
-/**
- * \file ObitUVGSolveWBDef.h
- * ObitUVGSolveWB structure members for this and any derived classes.
- */
-#include "ObitDef.h"  /* Parent class definitions */
-/** Threading info member object  */
-ObitThread *thread;
-/** Linked list of arrays of data.  */
-ObitInfoList *info;
-/** .AntennaList  */
-ObitAntennaList *AList;
-/** .Source List  */
-ObitSourceList *SList;
-/** Current source index in SList */
-olong curSource;
-/** UV range of full weight */
-ofloat UVFullRange[2];
+/*  Define the basic components of the ObitUVGSolveWB ClassInfo structure */
+/* This is intended to be included in a classInfo structure definition  */
+#include "ObitUVGSolveClassDef.h"  /* Parent class ClassInfo definition file */

@@ -31,6 +31,7 @@
 #include "ObitTableUtil.h"
 #include "ObitUVUtil.h"
 #include "ObitUVSoln.h"
+#include "ObitUVGSolveWB.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -217,9 +218,6 @@ ObitUVSelfCal* ObitUVSelfCalCreate (gchar* name, ObitSkyModel *skyModel)
   /* Save SkyModel */
   if (skyModel!=NULL) out->skyModel = ObitSkyModelRef(skyModel);
 
-  /* Calibration solution object */
-  out->mySolver = ObitUVGSolveCreate("Calibration solution");
-
   return out;
 } /* end ObitUVSelfCalCreate */
 
@@ -241,6 +239,7 @@ ObitUVSelfCal* ObitUVSelfCalCreate (gchar* name, ObitSkyModel *skyModel)
  * \li "doMGM"   OBIT_bool  (1,1,1) True then find the mean gain modulus (true)
  * \li "solType" OBIT_string (4,1,1 Solution type '  ', 'L1',  (' ')
  * \li "solMode" OBIT_string (4,1,1 Solution mode: 'A&P', 'P', 'P!A', 'GCON' ('P')
+ *                                  "DELA" = solve for group delay
  * \li "minNo"   OBIT_int   (1,1,1) Min. no. antennas. (default 4)
  * \li "antWt"   OBIT_float (*,1,1) Antenna weights. (default 1.0)
  * \li "UVR_Full"OBIT_float (2,1,1) Range of baseline lengths with full weight
@@ -255,9 +254,8 @@ ObitUVSelfCal* ObitUVSelfCalCreate (gchar* name, ObitSkyModel *skyModel)
  * \li "peakFlux" OBIT_float scalar If present and > 0.0, then this is the highest
  *                                  image pixel value to use to determine if SC needed
  *                                  else use sum of CC in SkyModel.
- * \li "Beam OBIT_float (3,1,1)     Target restoring bam (asec,asec, deg)
- *                                  If given and > 0.0, this will be used to taper 
- *                                  weights to reduce influence of longer baselines.
+ * \li "noNeg"   OBIT_bool  (1,1,1) If True, exclude negative summed CLEAN components 
+ *                                  from the model calculation def [FALSE]
  * \param inUV     Input UV data. 
  * \param init     If True, this is the first SC in a series.
  * \param noSCNeed If True, no self calibration was needed
@@ -270,6 +268,7 @@ gboolean ObitUVSelfCalSelfCal (ObitUVSelfCal *in, ObitUV *inUV, gboolean init,
 			       ObitErr *err)
 {
   gboolean converged = FALSE;
+  const ObitUVGSolveClassInfo *solnClass;
   ObitTableSN *TabSN=NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
@@ -277,10 +276,10 @@ gboolean ObitUVSelfCalSelfCal (ObitUVSelfCal *in, ObitUV *inUV, gboolean init,
   ofloat best, posFlux, peakFlux;
   ofloat minFluxPSC, minFluxASC, minFlux;
   gchar *dispURL=NULL, tname[129], solmod[5], tbuff[128];
-  gboolean Tr=TRUE, Fl=FALSE, diverged, quit, doSmoo;
+  gboolean Tr=TRUE, Fl=FALSE, diverged, quit, doSmoo, doDelay, noNeg;
   gchar        *SCParms[] = {  /* Self parameters */
     "refAnt", "solInt", "solType", "solMode", "WtUV", "avgPol", "avgIF", 
-    "doMGM", "minSNR", "minNo", "doSmoo", "prtLv", "Beam",
+    "doMGM", "minSNR", "minNo", "doSmoo", "prtLv", "noNeg",
     NULL
   };
   gchar *routine = "ObitUVSelfCalSelfCal";
@@ -298,9 +297,6 @@ gboolean ObitUVSelfCalSelfCal (ObitUVSelfCal *in, ObitUV *inUV, gboolean init,
     for (i=0; i<5; i++) {in->lastQual[i] = 0.0; in->lastSNVer[i] = -1;}
   }
 
-  /* Copy gain solution control info */
-  ObitInfoListCopyList (in->info, in->mySolver->info, SCParms);
-
   /* Image display? */
   if (!in->display) {
     ObitInfoListGetP(in->info, "dispURL", &type, dim, (gpointer)&dispURL);
@@ -310,6 +306,10 @@ gboolean ObitUVSelfCalSelfCal (ObitUVSelfCal *in, ObitUV *inUV, gboolean init,
       in->display = ObitDisplayCreate("Display", tname, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, converged);
   }
+
+  /* Want negative CCs in model? */
+  noNeg = FALSE;
+  ObitInfoListGetTest(in->info, "noNeg", &type, dim, &noNeg);
 
   /* Quality for convergence test of SkyModel */
   /* Total sum of CCs */
@@ -327,6 +327,8 @@ gboolean ObitUVSelfCalSelfCal (ObitUVSelfCal *in, ObitUV *inUV, gboolean init,
   ObitInfoListAlwaysPut(in->skyModel->info, "noNeg", OBIT_bool, dim, &Tr);
   posFlux = ObitSkyModelSum (in->skyModel, err);
   if (err->error) Obit_traceback_val (err, routine, in->name, converged);
+  /* Set noNeg fo model calculation - note double negative */
+  ObitInfoListAlwaysPut(in->skyModel->info, "noNeg", OBIT_bool, dim, &noNeg);
 
   /* Self cal needed? */
   peakFlux = posFlux;
@@ -356,6 +358,17 @@ gboolean ObitUVSelfCalSelfCal (ObitUVSelfCal *in, ObitUV *inUV, gboolean init,
     *noSCNeed = TRUE;
     return TRUE;
   }
+
+  /* (re)Create appropriate Calibration solution object */
+  doDelay = !strncmp(solmod, "DELA", 4);
+  in->mySolver = ObitUVGSolveUnref(in->mySolver);
+  if (doDelay) 
+    in->mySolver = (ObitUVGSolve*)ObitUVGSolveWBCreate("Calibration solution");
+  else
+    in->mySolver = ObitUVGSolveCreate("Calibration solution");
+
+  /* Copy gain solution control info */
+  ObitInfoListCopyList (in->info, in->mySolver->info, SCParms);
 
   /* Other info */
   refant = 0;
@@ -480,7 +493,8 @@ gboolean ObitUVSelfCalSelfCal (ObitUVSelfCal *in, ObitUV *inUV, gboolean init,
     /* Force new solution table */
     itemp = 0;
     ObitInfoListAlwaysPut(in->mySolver->info, "solnVer", OBIT_long, dim, &itemp);
-    TabSN = ObitUVGSolveCal (in->mySolver, in->SCData, inUV, inUV->mySel, err);
+    solnClass = (ObitUVGSolveClassInfo*)in->mySolver->ClassInfo;
+    TabSN = solnClass->ObitUVGSolveCal (in->mySolver, in->SCData, inUV, inUV->mySel, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, converged);
 
     /* Get SN version number */
@@ -550,12 +564,13 @@ gboolean ObitUVSelfCalSelfCal (ObitUVSelfCal *in, ObitUV *inUV, gboolean init,
 void ObitUVSelfCalModel (ObitUVSelfCal *in, ObitUV *inUV, ObitErr *err)
 {
   ObitTableSN *TabSN=NULL;
+  const ObitUVGSolveClassInfo *solnClass;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   olong itemp, isuba, refant, nparm, bestSN=0;
   ofloat pointFlux, pointPos[2], pointParms[20];
   gchar solmod[5];
-  gboolean Tr=TRUE, Fl=FALSE, doSmoo;
+  gboolean Tr=TRUE, Fl=FALSE, doSmoo, doDelay;
   gchar        *SCParms[] = {  /* Self parameters */
     "refAnt", "solInt", "solType", "solMode", "WtUV", "avgPol", "avgIF", 
     "doMGM", "minSNR", "minNo", "doSmoo", "prtLv", 
@@ -595,6 +610,14 @@ void ObitUVSelfCalModel (ObitUVSelfCal *in, ObitUV *inUV, ObitErr *err)
     if (err->error) Obit_traceback_msg (err, routine, inUV->name);
   }
   
+  /* (re)Create appropriate Calibration solution object */
+  doDelay = !strncmp(solmod, "DELA", 4);
+  in->mySolver = ObitUVGSolveUnref(in->mySolver);
+  if (doDelay) 
+    in->mySolver = (ObitUVGSolve*)ObitUVGSolveWBCreate("Calibration solution");
+  else
+    in->mySolver = ObitUVGSolveCreate("Calibration solution");
+
   /* Copy gain solution control info */
   ObitInfoListCopyList (in->info, in->mySolver->info, SCParms);
 
@@ -630,7 +653,8 @@ void ObitUVSelfCalModel (ObitUVSelfCal *in, ObitUV *inUV, ObitErr *err)
   in->sumCC = pointFlux;  /* Model flux actually being used */
   in->mySolver->UVFullRange[0] = in->UVFullRange[0];
   in->mySolver->UVFullRange[1] = in->UVFullRange[1];
-  TabSN =  ObitUVGSolveCal (in->mySolver, in->SCData, inUV, inUV->mySel, err);
+  solnClass = (ObitUVGSolveClassInfo*)in->mySolver->ClassInfo;
+   TabSN =  solnClass->ObitUVGSolveCal (in->mySolver, in->SCData, inUV, inUV->mySel, err);
   if (err->error) {
     TabSN =  ObitTableSNUnref (TabSN);
     Obit_traceback_msg (err, routine, in->name);

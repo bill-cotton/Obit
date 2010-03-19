@@ -52,6 +52,7 @@
  * \li "doMGM"   OBIT_bool  (1,1,1) True then find the mean gain modulus (true)
  * \li "solType" OBIT_string (4,1,1 Solution type '  ', 'L1',  (' ')
  * \li "solMode" OBIT_string (4,1,1 Solution mode: 'A&P', 'P', 'P!A', 'GCON' ('P')
+ *                                  "DELA" = solve for group delay
  * \li "minNo"   OBIT_int   (1,1,1) Min. no. antennas. (default 4)
  * \li "antWt"   OBIT_float (*,1,1) Antenna weights. (default 1.0)
  * \li "UVR_Full"OBIT_float (2,1,1) Range of baseline lengths with full weight
@@ -61,6 +62,8 @@
  * \li "prtLv"   OBIT_int   (1,1,1) Print level (default no print)
  * \li "minFluxPSC" OBIT_float (1,1,1) min peak flux for phase selfcal               
  * \li "minFluxASC" OBIT_float (1,1,1) min peak flux for A&P selfcal
+ * \li "noNeg"   OBIT_bool  (1,1,1) If True, exclude negative summed CLEAN components 
+ *                                  from the model calculation
  * 
  * \section ObitUVSelfCalaccess Creators and Destructors
  * An ObitUVSelfCal will usually be created using ObitUVSelfCalCreate which allows 

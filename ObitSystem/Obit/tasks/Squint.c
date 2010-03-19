@@ -1,7 +1,7 @@
 /* $Id$ */
 /* Obit VLA Squint correcting Radio interferometry imaging software  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2009                                          */
+/*;  Copyright (C) 2006-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1744,8 +1744,8 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   gchar        Stokes[5], soltyp[5], solmod[5], stemp[5];
   gchar        *include[] = {"AIPS FG", NULL};
   gchar        *SCParms[] = {  /* Self parameters */
-    "minFluxPSC", "minFluxASC", "refAnt", "WtUV", "avgPol", "avgIF", "doMGM", "minSNR", 
-    "minNo", "doSmoo", "prtLv", "modelFlux", "modelPos", "modelParm",
+    "minFluxPSC", "minFluxASC", "refAnt", "WtUV", "avgPol", "avgIF", "noNeg", "doMGM", 
+    "minSNR", "minNo", "doSmoo", "prtLv", "modelFlux", "modelPos", "modelParm",
     "dispURL", 
     NULL };
   gchar        *CLEANParms[] = {  /* Clean parameters */
@@ -2340,7 +2340,7 @@ void SquintHistory (gchar *Source, ObitInfoList* myInput,
     "modelFlux", "modelPos", "modelParm",
     "maxPSCLoop", "minFluxPSC", "solPInt", "solPType", "solPMode", 
     "maxASCLoop", "minFluxASC", "solAInt", "solAType", "solAMode", 
-    "avgPol", "avgIF", "doMGM", "minSNR", "minNo", "doSmoo",
+    "avgPol", "avgIF", "noNeg", "doMGM", "minSNR", "minNo", "doSmoo",
     "PeelFlux", "PeelLoop", "PeelRefAnt", "PeelSNRMin",
     "PeelSolInt", "PeelType", "PeelMode", "PeelNiter",
     "PeelMinFlux", "PeelAvgPol", "PeelAvgIF",

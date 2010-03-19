@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1782,7 +1782,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   gchar        soltyp[5], solmod[5], stemp[5];
   gchar        *SCParms[] = {  /* Self cal parameters */
     "minFluxPSC", "minFluxASC", "refAnt",  "WtUV", 
-    "avgPol", "avgIF", "doMGM", "minSNR",  "minNo", "prtLv", "dispURL", 
+    "avgPol", "avgIF", "noNeg", "doMGM", "minSNR",  "minNo", "prtLv", "dispURL", 
     NULL
   };
   gchar        *CLEANParms[] = {  /* Clean parameters */
@@ -2245,11 +2245,11 @@ void ImagerHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "ccfLim", "SDIGain", "BLFact", "BLFOV", 
     "Reuse", "autoCen", "Beam", "Cmethod", "CCFilter", "maxPixel", 
     "autoWindow", "subA", "maxSCLoop", "minFluxPSC", "minFluxASC",
-    "refAnt", "solInt", "solType", "solMode", "WtUV", "avgPol", "avgIF", 
+    "refAnt", "solInt", "solType", "solMode", "WtUV", "avgPol", "avgIF", "noNeg", 
+    "doMGM", "minSNR", "minNo", "PBCor", "antSize", "Alpha",
     "PeelFlux", "PeelLoop", "PeelRefAnt", "PeelSNRMin",
     "PeelSolInt", "PeelType", "PeelMode", "PeelNiter",
     "PeelMinFlux", "PeelAvgPol", "PeelAvgIF",
-    "doMGM", "minSNR", "minNo", "PBCor", "antSize", "Alpha",
     "nThreads",
     NULL};
   gchar *routine = "ImagerHistory";

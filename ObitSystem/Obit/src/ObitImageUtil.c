@@ -2720,7 +2720,10 @@ ObitImage* ObitImageUtilQuanFITS (ObitImage *inImage, gchar *fileName,
   dim[0] = dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut(outDesc->info, "Quant", OBIT_float, dim, &quant);
 
-  /* Creation date today */
+  /* Copy any descriptor info data */
+  out->myDesc->info = ObitInfoListCopyData (inImage->myDesc->info, out->myDesc->info);
+
+ /* Creation date today */
   today = ObitToday();
   strncpy (outDesc->date, today, IMLEN_VALUE-1);
   if (today) g_free(today);

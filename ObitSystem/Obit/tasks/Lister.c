@@ -1259,16 +1259,19 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     Obit_traceback_msg (err, routine, inData->name);
   inDesc = inData->myDesc;  
   sel    = inData->mySel;
-  /* Convert SU table into Source List */
-  ver = 1;
-  if (inDesc->jlocif>=0) numIF = inDesc->inaxes[inDesc->jlocif];
-  else numIF = 1;
-  BIF = MIN (BIF, numIF);
-  SUTable = newObitTableSUValue (inData->name, (ObitData*)inData, &ver, numIF, 
-				 OBIT_IO_ReadOnly, err);
-  if (SUTable) SouList = ObitTableSUGetList (SUTable, err);
-  if (err->error) Obit_traceback_msg (err, routine, inData->name);
-  SUTable = ObitTableSUUnref(SUTable);
+  /* Convert SU table into Source List if ther is an SourceID parameter */
+  if (inDesc->ilocsu>=0) {
+    ver = 1;
+    if (inDesc->jlocif>=0) numIF = inDesc->inaxes[inDesc->jlocif];
+    else numIF = 1;
+    BIF = MIN (BIF, numIF);
+    SUTable = newObitTableSUValue (inData->name, (ObitData*)inData, &ver, numIF, 
+				   OBIT_IO_ReadOnly, err);
+    if (SUTable) SouList = ObitTableSUGetList (SUTable, err);
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
+    SUTable = ObitTableSUUnref(SUTable);
+  }
+
 
   /* Convert AN table into AntennaList */
   ver = 1;
@@ -1346,7 +1349,7 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   for (iif=BIF-1; iif<BIF+numIF-1; iif++) {
     
     /* Loop in poln */
-    numPol  = inDesc->inaxes[inDesc->jlocs];
+    numPol  = MIN (2, inDesc->inaxes[inDesc->jlocs]);  /* only up to 2 in gain table */
     for (ipol=0; ipol<numPol; ipol++) {
       /* Is this the first poln in the table? */
       firstPol = (ipol==0) && (inDesc->crval[inDesc->jlocs]>-1.5);
@@ -1770,6 +1773,7 @@ ofloat getSNValue (ObitTableSNRow *SNRow, gboolean firstPol,
 	if (myUVDesc) value *= myUVDesc->freqIF[iif]*1000.0;
       }
     }
+    break;
   case 5:  /* "SNR"    */
     if (firstPol) {
       value = SNRow->Weight1[iif];

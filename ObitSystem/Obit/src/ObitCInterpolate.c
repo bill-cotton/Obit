@@ -154,7 +154,7 @@ ObitCInterpolate* newObitCInterpolateCreate (gchar* name, ObitCArray *array,
   /* Get array info */
   out->array  = array->array;
   out->nx     = array->naxis[0];
-  out->ny     = array->naxis[1];
+  if (array->ndim>1) out->ny  = array->naxis[1];
 
   /* Use same thread object */
   out->thread = ObitThreadUnref(out->thread);

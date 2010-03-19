@@ -773,6 +773,10 @@ ObitUV* ObitUVCopy (ObitUV *in, ObitUV *out, ObitErr *err)
   if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
     Obit_traceback_val (err, routine,in->name, out);
 
+  /* Make sure out frequencies up to date */
+  ObitUVGetFreq (out, err);
+  if (err->error) Obit_traceback_val (err, routine,in->name, out);
+
   /* we're in business, copy */
   count = 0;
   maxbl = -1.0;

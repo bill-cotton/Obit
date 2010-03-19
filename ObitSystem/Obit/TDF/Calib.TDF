@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry calibration software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006-2009
+;;  Copyright (C) 2006-2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -114,6 +114,7 @@ modelFlux        0.0                Initial model flux density (Jy)
 modelPos        0.0                 Initial position offset (asec)
 **PARAM** float 4  
 modelParm                           Initial parameters (maj, min, pa, type)
+                                    alpha, beta...
 **PARAM** int 1
 solnVer                             SN table to write
 **PARAM** int 1
@@ -123,11 +124,13 @@ solInt            0.0               Solution interval (min)
 **PARAM** str 4
 solType                             Soln. Type: '  ', 'L1', 
 **PARAM** str 4
-solMode                             Soln. Mode:'A&P', 'P', 'P!A',
+solMode                             Soln. Mode:'A&P', 'P', 'P!A', "DELA"
 **PARAM** boo 1 **DEF** F
 avgPol                              Avg. poln?
 **PARAM** boo 1 **DEF** F
 avgIF                               Avg. IFs?
+**PARAM** boo 1 **DEF** F
+noNeg                               Exclude negative CLEAN comps?
 **PARAM** boo 1  **DEF** F
 doMGM                               Apply mean gain modulus
 **PARAM** float 1  **DEF** 10.0
@@ -273,8 +276,21 @@ Adverbs:
              using the model specified in modelFlux, modelPos, modelParm
              is made.  modelFlux is the flux density of the model
   modelPos...RA and Dec offset in the sky in asec
-  modelparm..Other model parameters Gaussian:
-             major_axis (asec),  minor_axis (asec),  position_angle (deg),
+  modelParm..Other model parameters 
+             modelParm[3] = 0; Point - no other parameters
+             modelParm[3] = 1; Gaussian on sky:
+               [0:2] = major_axis (asec),  minor_axis (asec),  
+               position_angle (deg),
+             modelParm[3] = 3; Uniform sphere:
+               [0] =  radius (asec)
+             modelParm[4+] = spectral index, curvature...
+             If giving spectral terms, add 10 to  modelParm[3]
+  noNeg......If True, exclude negative CLEAN components from the 
+             model calculation.  This is useful if the initial
+             calibration is poor and there are negative components due 
+             to phase errors but is harmful if the initial calibration is 
+             relatively good and the negative components are needed to 
+             describe a high dynamic range image (say DR>1000:1)
 
       Calibration control
   solnVer....Solution (SN) table to write, 0=> create new
@@ -286,6 +302,7 @@ Adverbs:
   solInt.....Solution interval (min)
   solType....Solution Type: '  ', 'L1', 
   solMode....Solution Mode:'A&P', 'P', 'P!A',
+             "DELA" => solve for group delay and phase
   avgPol.....Average Polarizations in scalibration? [def False]
   avgIF......Average IFs in calibration? [def False]
   doMGM......Apply mean gain modulus to A&P soln.

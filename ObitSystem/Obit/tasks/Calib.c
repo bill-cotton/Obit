@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2009                                          */
+/*;  Copyright (C) 2006-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -35,8 +35,11 @@
 #include "ObitHistory.h"
 #include "ObitData.h"
 #include "ObitUVGSolve.h"
+#include "ObitUVGSolveWB.h"
 #include "ObitSkyModel.h"
+#include "ObitSkyModelMF.h"
 #include "ObitTableSUUtil.h"
+#include "ObitTableCCUtil.h"
 #include "ObitUVUtil.h"
 
 /* internal prototypes */
@@ -83,6 +86,7 @@ int main ( int argc, char **argv )
 {
   oint         ierr = 0;
   ObitSystem   *mySystem= NULL;
+  const ObitUVGSolveClassInfo *solnClass;
   ObitUV       *inData = NULL, *scrData = NULL;
   ObitSkyModel *skyModel=NULL;
   ObitErr      *err= NULL;
@@ -90,6 +94,13 @@ int main ( int argc, char **argv )
   ObitTableSN  *SNTable = NULL;
   ofloat       ftemp;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
+  gchar solmod[5];
+  gboolean doDelay;
+  gchar        *skyModelParms[] = {  /* skyModel parameters to save*/
+    "prtLv", "noNeg",
+    NULL
+  };
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources",  "souCode", "Qual", "timeRange",  "subA",
     "selBand", "selFreq", "FreqID", 
@@ -124,6 +135,7 @@ int main ( int argc, char **argv )
   /* Get input sky model */
   skyModel = getInputSkyModel (myInput, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  ObitInfoListCopyList (myInput, skyModel->info, skyModelParms);
 
   /* Copy selection/calibration info to data */
   ObitInfoListCopyList (myInput, inData->info, dataParms);
@@ -148,8 +160,15 @@ int main ( int argc, char **argv )
   ObitUVUtilIndex (scrData, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
-  /* Create solver */
-  solver = ObitUVGSolveCreate("Gain solver");
+  /* Create appropriate Calibration solution object */
+  solmod[0] = solmod[1] = solmod[2] = solmod[3] = '0'; solmod[4] = 0;
+  ObitInfoListGetTest(myInput, "solMode", &type, dim, solmod);
+  doDelay = !strncmp(solmod, "DELA", 4);
+  if (doDelay) 
+    solver = (ObitUVGSolve*)ObitUVGSolveWBCreate("Gain solver");
+  else
+    solver = ObitUVGSolveCreate("Gain solver");
+
   /* Save first source id in case it's the only one */
   if (inData->mySel->sources) solver->curSource = inData->mySel->sources[0];
 
@@ -157,7 +176,8 @@ int main ( int argc, char **argv )
   ObitInfoListCopyList (myInput, solver->info, solverParms);
 
   /* Do solution */
-  SNTable = ObitUVGSolveCal (solver, scrData, inData, inData->mySel, err);
+  solnClass = (ObitUVGSolveClassInfo*)solver->ClassInfo;
+  SNTable   = solnClass->ObitUVGSolveCal (solver, scrData, inData, inData->mySel, err);
   if (err->error) ierr = 1;   ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Write history */
@@ -456,7 +476,7 @@ ObitInfoList* defaultInputs(ObitErr *err)
 
   /*  Apply calibration/selection?, def=False */
   dim[0] = 1; dim[1] = 1;
-  btemp = FALSE;
+  btemp = TRUE;
   ObitInfoListPut (out, "doCalSelect", OBIT_bool, dim, &btemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
@@ -716,8 +736,9 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
   ObitSkyModel *skyModel=NULL;
   ObitImageMosaic *mosaic=NULL;
   ObitImage    **image=NULL;
+  ObitCCCompType CCType;
   ObitInfoType type;
-  olong         Aseq, disk, cno,i=0, nmaps;
+  olong         Aseq, disk, cno,i=0, ver, nmaps;
   gchar        *Type, *Type2, *strTemp, inFile[129], inRoot[129];
   gchar        Aname[13], Aclass[7], Aroot[7], *Atype = "MA";
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -890,8 +911,17 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
       return skyModel;
     }
 
-    /* Create Sky Model */
-    skyModel = ObitSkyModelCreate ("Sky Model", mosaic);
+    /* Create Sky Model for appropriate type */
+    ver = 0;
+    ObitInfoListGetTest(myInput, "CCVer", &type, dim, &ver);
+    CCType   = ObitTableCCUtilGetType ((ObitData*)mosaic->images[0], ver, err);
+    if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
+    if ((CCType==OBIT_CC_PointModTSpec)|| (CCType==OBIT_CC_GaussModTSpec) ||
+	(CCType==OBIT_CC_CGaussModTSpec) || (CCType==OBIT_CC_USphereModTSpec)) {
+      skyModel = (ObitSkyModel*)ObitSkyModelMFCreate ("Sky Model", mosaic);
+      Obit_log_error(err, OBIT_InfoErr, "Using tabulated spectrum sky model");
+    } else
+      skyModel = ObitSkyModelCreate ("Sky Model", mosaic);
 
     /* deallocate images */
     for (i=0; i<nmaps; i++) image[i] = ObitImageUnref(image[i]);
@@ -1086,7 +1116,7 @@ void CalibHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "DataType2", "in2File", "in2Disk", "in2Name", "in2Class", "in2Seq", 
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
     "modelFlux", "modelPos", "modelParm", "Alpha",
-    "solInt", "solType", "solMode", "avgPol", "avgIF", "doMGM", "minSNR",
+    "solInt", "solType", "solMode", "avgPol", "avgIF", "noNeg", "doMGM", "minSNR",
     "minNo", "prtLv",
     "nThreads",
    NULL};

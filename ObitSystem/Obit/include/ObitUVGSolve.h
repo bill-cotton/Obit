@@ -125,6 +125,9 @@ void ObitUVGSolveClone (ObitUVGSolve *in, ObitUVGSolve *out, ObitErr *err);
 /** Public: Determine calibration from UV data divided by model. */
 ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV, 
 			      ObitUVSel *sel, ObitErr *err);
+typedef ObitTableSN* (*ObitUVGSolveCalFP) (ObitUVGSolve *in, ObitUV *inUV, 
+					   ObitUV *outUV, ObitUVSel *sel, 
+					   ObitErr *err);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

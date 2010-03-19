@@ -1027,7 +1027,7 @@ ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *er
   }
      
   /* Set fly's eye if needed */
-  imsize = (olong)(2.0*Radius + 0.5);
+  imsize = (olong)(2.0*Radius + 10.99);
   
   /* Not bigger than FOV */
   imsize = MIN (imsize, ((2.0*3600.0*FOV/fabs(xCells))+10.99));

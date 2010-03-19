@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Task to subtract CLEAN components from uvdata.                */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2009                                          */
+/*;  Copyright (C) 2005-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -29,6 +29,7 @@
 
 #include "ObitImageMosaic.h"
 #include "ObitSkyModel.h"
+#include "ObitSkyModelMF.h"
 #include "ObitSystem.h"
 #include "ObitMem.h"
 #include "ObitParser.h"
@@ -888,10 +889,11 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
   ObitSkyModel *skyModel=NULL;
   ObitImageMosaic *mosaic=NULL;
   ObitImage    **image=NULL;
+  ObitCCCompType CCType;
   ObitInfoType type;
   ObitTableCC *inCC=NULL;
   gboolean     mrgCC=FALSE;
-  oint         noParms, CCVer;
+  oint         noParms, CCVer, ver;
   olong        Aseq, disk, cno, i, nparm, nmaps, channel;
   gchar        *Type, *strTemp, inFile[129], inRoot[129];
   gchar        Aname[13], Aclass[7], Aroot[7], *Atype = "MA";
@@ -902,6 +904,10 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
   ofloat       modptflx,  modptxof, modptyof, modptypm[8];
   olong        inVer;
   gchar        name[101];
+  gchar        *skyModelParms[] = {  /* skyModel parameters to save*/
+    "prtLv", "noNeg",
+    NULL
+  };
   gchar        *dataParms[] = {  /* Control parameters */
     "CCVer",  "BComp",  "EComp",  "Flux", "PBCor", "antSize", "Factor", 
     "minFlux", "Mode", "ModelType", "REPLACE", "Stokes", 
@@ -1043,8 +1049,18 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
       return skyModel;
     }
 
-    /* Create Sky Model */
-    skyModel = ObitSkyModelCreate ("Sky Model", mosaic);
+    /* Create Sky Model for appropriate type */
+    ver = 0;
+    ObitInfoListGetTest(myInput, "CCVer", &type, dim, &ver);
+    CCType   = ObitTableCCUtilGetType ((ObitData*)mosaic->images[0], ver, err);
+    if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
+    if ((CCType==OBIT_CC_PointModTSpec)|| (CCType==OBIT_CC_GaussModTSpec) ||
+	(CCType==OBIT_CC_CGaussModTSpec) || (CCType==OBIT_CC_USphereModTSpec)) {
+      skyModel = (ObitSkyModel*)ObitSkyModelMFCreate ("Sky Model", mosaic);
+      Obit_log_error(err, OBIT_InfoErr, "Using tabulated spectrum sky model");
+    } else
+      skyModel = ObitSkyModelCreate ("Sky Model", mosaic);
+    ObitInfoListCopyList (myInput, skyModel->info, skyModelParms);
 
     /* Merge CC tables? */
     ObitInfoListGetTest(myInput, "mrgCC", &type, dim, &mrgCC); 
@@ -1248,7 +1264,7 @@ void UVSubHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     "nmaps", "CCVer", "BComp",  "EComp", "Flux",
     "outFile",  "outDisk",  "outName", "outClass", "outSeq",
     "Cmethod", "Cmodel", "Factor",  "Opcode", 
-    "modelFlux", "modelPos", "modelParm",
+    "modelFlux", "modelPos", "modelParm", "noNeg",
     "mrgCC", "PBCor", "antSize", "Alpha",
     "nThreads",
     NULL};

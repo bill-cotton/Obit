@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2009                                          */
+/*;  Copyright (C) 2007-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -273,7 +273,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
   ObitTableCC       *peelCCTable=NULL, *outCCTable=NULL, *CCTab=NULL;
   ObitTableSN       *inSNTable=NULL, *outSNTable=NULL, *SNInver=NULL;
   olong        i,  jtemp, peelField, *bcomp=NULL, *ecomp=NULL, ignore[1]={0};
-  olong        dft, iter, MaxSCLoop=1;
+  olong        dft, iter, MaxSCLoop=1, nx, ny, win[4];
   oint         noParms, numPol, numIF;
   olong        ver;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -489,6 +489,14 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     ObitInfoListAlwaysPut(selfCal->info, "doSmoo", OBIT_bool, dim, &Tr);
     /* Copy control info */
     ObitInfoListCopyList (myInput, selfCal->info, SCParms);
+
+    /* Add outer window */
+    nx = tmpMosaic->images[0]->myDesc->inaxes[0]; 
+    ny = tmpMosaic->images[0]->myDesc->inaxes[1]; 
+    win[0] = (nx/2)-10; win[1] = nx/2; win[2] = ny/2; 
+    ObitDConCleanWindowOuter (tmpClean->window, 1, OBIT_DConCleanWindow_round,
+			      win, err);
+    if (err->error) goto cleanup;
 
     /* Link myClean display if given */
     if (myClean->display) selfCal->display = ObitDisplayRef(myClean->display);

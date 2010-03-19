@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006                                               */
+/*;  Copyright (C) 2006,2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -29,3 +29,5 @@
 #include "ObitClassDef.h"  /* Parent class ClassInfo definition file */
 /** Function pointer to Constructor. */
 ObitUVGSolveCreateFP ObitUVGSolveCreate;
+/** Function pointer toSolve */
+ObitUVGSolveCalFP ObitUVGSolveCal;

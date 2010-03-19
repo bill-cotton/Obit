@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -193,10 +193,10 @@ void ObitFFTR2C (ObitFFT *in, ObitFArray *inArray, ObitCArray *outArray)
   g_assert (in->dir  == OBIT_FFT_Forward);
   g_assert (in->rank == inArray->ndim);
   g_assert (in->dim[0] <= inArray->naxis[0]); /* Check two axes */
-  g_assert (in->dim[1] <= inArray->naxis[1]); 
+  if (in->rank>1) g_assert (in->dim[1] <= inArray->naxis[1]); 
   g_assert (inArray->ndim == outArray->ndim);
   g_assert (inArray->naxis[0] <= 2*(outArray->naxis[0]-1));
-  g_assert (inArray->naxis[1] <= outArray->naxis[1]);
+  if (in->rank>1) g_assert (inArray->naxis[1] <= outArray->naxis[1]);
 
   /* Lock ObitObjects aginst other threads */
   ObitThreadLock(in->thread);
@@ -332,10 +332,10 @@ void ObitFFTC2R (ObitFFT *in, ObitCArray *inArray, ObitFArray *outArray)
   g_assert (in->dir  == OBIT_FFT_Reverse);
   g_assert (in->rank == inArray->ndim);
   g_assert (in->dim[0] <= 2*(inArray->naxis[0]-1)); /* Check two axes */
-  g_assert (in->dim[1] <= inArray->naxis[1]); 
+  if (in->rank>1) g_assert (in->dim[1] <= inArray->naxis[1]); 
   g_assert (inArray->ndim == outArray->ndim); 
   g_assert (2*(inArray->naxis[0]-1) == outArray->naxis[0]); 
-  g_assert (inArray->naxis[1] == outArray->naxis[1]); 
+  if (in->rank>1) g_assert (inArray->naxis[1] == outArray->naxis[1]); 
  
   /* Lock ObitObjects aginst other threads */
   ObitThreadLock(in->thread);
@@ -463,10 +463,10 @@ void ObitFFTC2C (ObitFFT *in, ObitCArray *inArray, ObitCArray *outArray)
   g_assert (in->type == OBIT_FFT_FullComplex);
   g_assert (in->rank == inArray->ndim);
   g_assert (in->dim[0] <= inArray->naxis[0]); /* Check two axes */
-  g_assert (in->dim[1] <= inArray->naxis[1]); 
+  if (in->rank>1) g_assert (in->dim[1] <= inArray->naxis[1]); 
   g_assert (inArray->ndim == outArray->ndim);
   g_assert (inArray->naxis[0] <= outArray->naxis[0]);
-  g_assert (inArray->naxis[1] <= outArray->naxis[1]);
+  if (in->rank>1) g_assert (inArray->naxis[1] <= outArray->naxis[1]);
 
   /* Lock ObitObjects aginst other threads */
   ObitThreadLock(in->thread);

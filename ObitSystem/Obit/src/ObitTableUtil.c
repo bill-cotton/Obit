@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -569,7 +569,7 @@ MakeSortStruct (ObitTable *in, olong which[2], gboolean desc,
   *size = sizeof(olong) + ObitInfoElemSize(*type, dim);
 
   /* Total size of structure in case all rows valid */
-  tsize = (*size) * (nrow);
+  tsize = (*size) * (nrow+10);
   out = g_malloc(tsize);   /* create output structure */
   
   /* Compare 1 except for strings */
@@ -774,7 +774,7 @@ MakeSortStruct2f (ObitTable *in, olong which[4], gboolean desc1,
   *size = MAX ((sizeof(olong) + ObitInfoElemSize(*type, dim)), sizeof(ObitSortStruct));
 
   /* Total size of structure in case all rows valid */
-  tsize = (*size) * (nrow);
+  tsize = (*size) * (nrow+10);
   out = g_malloc(tsize);   /* create output structure */
   
   /* Comparing 2 floats */

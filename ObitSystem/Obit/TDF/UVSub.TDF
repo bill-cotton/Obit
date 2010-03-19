@@ -4,7 +4,7 @@
 ;! Subtracts/divides a model from/into a uv data base
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2008
+;;  Copyright (C) 2005-2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -128,6 +128,8 @@ modelPos        0.0                Model position offset (asec)
 **PARAM** float 8  
 modelParm                          Model parameters (maj, min, pa, type)
                                    alpha, beta...
+**PARAM** boo 1 **DEF** F
+noNeg                              Exclude negative CLEAN comps?
 **PARAM** boo 1
 mrgCC                              Merge CC table CCVer?
 **PARAM** boo 1  **DEF** T
@@ -285,6 +287,12 @@ Adverbs:
                [0] =  radius (asec)
              modelParm[4+] = spectral index, curvature...
              If giving spectral terms, add 10 to  modelParm[3]
+  noNeg......If True, exclude negative CLEAN components from the 
+             model calculation.  This is useful if the initial
+             calibration is poor and there are negative components due 
+             to phase errors but is harmful if the initial calibration is 
+             relatively good and the negative components are needed to 
+             describe a high dynamic range image (say DR>1000:1)
   mrgCC......If True, then merge each CC table CCVer before 
            . subtracting (one per field). In each table, all 
            . components on a given cell have their fluxes summed 

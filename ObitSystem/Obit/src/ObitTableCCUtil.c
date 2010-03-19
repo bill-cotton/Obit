@@ -534,7 +534,7 @@ ObitTableCCUtilCrossList (ObitTableCC *inCC, ObitImageDesc *inDesc,
   else fsize = 3;
   size = fsize * sizeof(ofloat);
   /*   Total size of structure in case all rows valid */
-  tsize = size * nrow;
+  tsize = size * (nrow+10);
   /* create output structure */
   SortStruct = ObitMemAlloc0Name (tsize, "CCSortStructure");
 
@@ -751,7 +751,7 @@ ObitTableCCUtilCrossListSpec (ObitTableCC *inCC, ObitImageDesc *inDesc,
   fsize = 4;
   size = fsize * sizeof(ofloat);
   /*   Total size of structure in case all rows valid */
-  tsize = size * nrow;
+  tsize = size * (nrow+10);
   /* create output structure */
   SortStruct = ObitMemAlloc0Name (tsize, "CCSortStructure");
 
@@ -1618,6 +1618,61 @@ gboolean ObitTableCCUtilFiltCC (ObitTableCC *CCTab, ofloat radius, ofloat minFlu
   return out;
 } /* end of routine ObitTableCCUtilFiltCC */ 
 
+/**
+ * Determine data type of the CCs in a specified table 
+ * \param file      Data object with CC Table attached
+ * \param ver       CCTable version
+ * \param err       Error/message stack
+ * \return ObitCCCompType of component type
+ */
+ObitCCCompType ObitTableCCUtilGetType (ObitData *file, olong ver, ObitErr* err)
+{
+  ObitCCCompType out=OBIT_CC_Unknown;
+  ObitTableCC *CCTab=NULL;
+  ObitTableCCRow *CCRow = NULL;
+  olong noParms=0, iver=ver, row;
+  gchar *routine = "ObitTableCCUtilGetType";
+
+  /* Error */
+  if (err->error) return out;
+
+  /* Ensure file fully instantiated and OK */
+  ObitDataFullInstantiate (file, TRUE, err);
+  if (err->error) Obit_traceback_val (err, routine, file->name, out);
+
+  /* Get table */ 
+  CCTab =  newObitTableCCValue ("CC", file, &iver, OBIT_IO_ReadOnly, noParms, err);
+  if (err->error) Obit_traceback_val (err, routine, file->name, out);
+
+  /* Get it? */
+  if (CCTab==NULL) {
+    Obit_log_error(err, OBIT_Error,"%s: NO AIPS CC Table %d on %s",
+		   routine, ver, file->name);
+    return out;
+  }
+
+  /* Open table */
+  ObitTableCCOpen (CCTab, OBIT_IO_ReadWrite, err);
+  if (err->error) Obit_traceback_val (err, routine, file->name, out);
+
+  row = 1;
+  CCRow = newObitTableCCRow (CCTab);
+  ObitTableCCReadRow (CCTab, row, CCRow, err);
+  if (err->error) Obit_traceback_val (err, routine, file->name, out);
+
+  ObitTableCCClose (CCTab, err);
+  if (err->error) Obit_traceback_val (err, routine, file->name, out);
+
+  /* What is it? */
+  if (CCTab->noParms<=0)      out = OBIT_CC_PointMod;
+  else if (CCTab->noParms>=0) out = CCRow->parms[3]+0.5;
+
+  /* Cleanup */
+  CCRow = ObitTableCCRowUnref(CCRow);  
+  CCTab = ObitTableCCUnref(CCTab);  
+  return out;
+} /* end ObitTableCCUtilGetType */
+
 /*----------------------Private functions---------------------------*/
 /**
  * Create/fill sort structure for a CC table
@@ -1665,7 +1720,7 @@ MakeCCSortStruct (ObitTableCC *in, olong *size, olong *number, olong *ncomp,
   *size = fsize * sizeof(ofloat);
 
   /* Total size of structure in case all rows valid */
-  tsize = (*size) * (nrow);
+  tsize = (*size) * (nrow+10);
   /* create output structure */
   out = ObitMemAlloc0Name (tsize, "CCSortStructure");
   
@@ -1764,7 +1819,7 @@ MakeCCSortStructSel (ObitTableCC *in, olong startComp, olong endComp,
   *size = fsize * sizeof(ofloat);
 
   /* Total size of structure in case all rows valid */
-  tsize = (*size) * (nrow);
+  tsize = (*size) * (nrow+10);
   /* create output structure */
   out = ObitMemAlloc0Name (tsize, "CCSortStructure");
   

@@ -1491,6 +1491,10 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "saveBeam",
     NULL
   };
+  gchar        *skyModelParms[] = {  /* skyModel parameters to save*/
+    "prtLv",
+    NULL
+  };
   gchar        *tmpName[] = {  /* Names to use for Image mosaic files */
     "imFileType", "imName", "imClass", "imDisk", "imSeq", "Sources",
     NULL
@@ -1656,6 +1660,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       /* No alpha correction in model */
       btemp = FALSE; dim[0] = dim[1] = dim[2] = 1;
       ObitInfoListAlwaysPut (skyModel->info, "doAlphaCorr", OBIT_bool, dim, &btemp);
+      ObitInfoListCopyList (myInput, skyModel->info, skyModelParms);
 
       /* Make CleanVis */
       myClean = ObitDConCleanVisMFCreate2("Clean Object", outData, 
@@ -1816,8 +1821,8 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   const ObitDConCleanVisClassInfo *clnClass=NULL;
   gchar        soltyp[5], solmod[5], stemp[5];
   gchar        *SCParms[] = {  /* Self cal parameters */
-    "minFluxPSC", "minFluxASC", "refAnt",  "WtUV", 
-    "avgPol", "avgIF", "doMGM", "minSNR",  "minNo", "prtLv", "dispURL", 
+    "minFluxPSC", "minFluxASC", "refAnt",  "WtUV",
+    "avgPol", "avgIF", "noNeg", "doMGM", "minSNR",  "minNo", "prtLv", "dispURL", 
     NULL
   };
   gchar        *CLEANParms[] = {  /* Clean parameters */
@@ -2264,7 +2269,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 } /* end MFImageLoop */
 
 /*----------------------------------------------------------------------- */
-/*  Write History for MFImage                                              */
+/*  Write History for MFImage                                             */
 /*   Input:                                                               */
 /*      Source    Name of source being imaged                             */
 /*      Stoke     Stokes's parameter imaged I, Q, U, V                    */
@@ -2293,7 +2298,7 @@ void MFImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "ccfLim", "SDIGain", "BLFact", "BLFOV", "norder", 
     "Reuse", "autoCen", "Beam", "Cmethod", "CCFilter", "maxPixel", 
     "autoWindow", "subA", "maxSCLoop", "minFluxPSC", "minFluxASC",
-    "refAnt", "solInt", "solType", "solMode", "WtUV", "avgPol", "avgIF", 
+    "refAnt", "solInt", "solType", "solMode", "WtUV", "avgPol", "avgIF", "noNeg",
     "PeelFlux", "PeelLoop", "PeelRefAnt", "PeelSNRMin",
     "PeelSolInt", "PeelType", "PeelMode", "PeelNiter",
     "PeelMinFlux", "PeelAvgPol", "PeelAvgIF",

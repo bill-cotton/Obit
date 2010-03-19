@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -723,6 +723,15 @@ void ObitSkyModelInitMod (ObitSkyModel* in, ObitUV *uvdata, ObitErr *err)
   /* Init Sine/Cosine calculator - just to be sure about threading */
   ObitSinCosCalc(phase, &sp, &cp);
 
+  /* Tell selected model info if prtLv>1 */
+  if (in->prtLv>1) {
+    if (in->modelMode==OBIT_SkyModel_DFT)
+      Obit_log_error(err, OBIT_InfoErr, "SkyModel using DFT calculation type");
+    else if (in->modelMode==OBIT_SkyModel_Grid)
+      Obit_log_error(err, OBIT_InfoErr, "SkyModel using Grid calculation type");
+    else if (in->modelMode==OBIT_SkyModel_Fastest)
+      Obit_log_error(err, OBIT_InfoErr, "SkyModel using Fastest calculation type");
+  }
 } /* end ObitSkyModelInitMod */
 
 /**

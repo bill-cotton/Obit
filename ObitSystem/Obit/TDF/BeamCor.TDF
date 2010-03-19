@@ -257,6 +257,8 @@ WtUV              0.0              Weight outside full wt uvrange
 avgPol                             Avg. poln?
 **PARAM** boo 1 **DEF** F
 avgIF                              Avg. IFs?
+**PARAM** boo 1 **DEF** F
+noNeg                              exclude negative summed CLEAN comps?
 **PARAM** boo 1  **DEF** F
 doMGM                              Apply mean gain modulus
 **PARAM** float 1  **DEF** 5.0
@@ -671,6 +673,12 @@ Adverbs:
               [def 0.0]
   avgPol......Average Polarizations in self calibration? [def True]
   avgIF.......Average IFs in self calibration? [def False]
+  noNeg.......If True, exclude negative summed CLEAN components from the 
+              self-cal model calculation.  This is useful if the initial
+              calibration is poor and there are negative components due 
+              to phase errors but is harmful if the initial calibration is 
+              relatively good and the negative components are needed to 
+              describe a high dynamic range image (say DR>1000:1)
   doMGM.......Apply mean gain modulus to A&P selfcal soln.
   minSNR......Min. allowed SNR in self cal solution [def 5]
   minNo.......Min. allowed no. antennas in selfcal

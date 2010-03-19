@@ -34,6 +34,7 @@
 #include "ObitImage.h"
 #include "ObitImageDesc.h"
 #include "ObitFArray.h"
+#include "ObitData.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -137,4 +138,7 @@ void ObitTableCCUtilAppend  (ObitTableCC *inCC, ObitTableCC *outCC,
 /** Filter weak, isolated components */
 gboolean ObitTableCCUtilFiltCC (ObitTableCC *CCTab, ofloat radius, ofloat minFlux, 
 				ObitErr* err);
+
+/** Get Clean component type */
+ObitCCCompType ObitTableCCUtilGetType (ObitData *data, olong ver, ObitErr* err);
 #endif /* OBITTABLECCUTIL_H */ 
