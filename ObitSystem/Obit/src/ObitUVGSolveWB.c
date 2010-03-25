@@ -567,7 +567,7 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
       if (gotAnt[iAnt]) {
 	good = FALSE; /* Until proven */
 	row->antNo  = iAnt+1; 
-	row->MBDelay1 = -in->antDelay[iAnt*numIF*numPol+i]*1.0e-9; 
+	row->MBDelay1 = -in->antDelay[iAnt*numIF*numPol]*1.0e-9; 
 	for (i=0; i<numIF; i++) {
 	  row->Real1[i]   =  in->antGain[(iAnt*numIF*numPol+i)*2];
 	  row->Imag1[i]   = -in->antGain[(iAnt*numIF*numPol+i)*2+1];
@@ -583,7 +583,7 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
 	  if (row->Weight1[i]<=0.0) cntBad++;    /* DEBUG */
 	}
 	if (numPol>1) {
-	  row->MBDelay2 = -in->antDelay[iAnt*numIF*numPol+i+numIF]*1.0e-9; 
+	  row->MBDelay2 = -in->antDelay[iAnt*numIF*numPol+numIF]*1.0e-9; 
 	  for (i=0; i<numIF; i++) {
 	    row->Real2[i]   =  in->antGain[(iAnt*numIF*numPol+i+numIF)*2];
 	    row->Imag2[i]   = -in->antGain[(iAnt*numIF*numPol+i+numIF)*2+1];
@@ -1918,6 +1918,8 @@ initAntSolve (ObitUVGSolveWB *in, olong iAnt, ObitErr *err)
 	/* Get location and value at peak, uses cWork2, fWork2 */
 	FindFFTPeak (in, &ppos, pval);
 	peak = sqrt (pval[0]*iNorm*pval[0]*iNorm + pval[1]*iNorm*pval[1]*iNorm);
+        /* This is REALLY needed to circumvent a gcc bug */
+        if (err->error) fprintf (stderr,"GCC Bug workaround\n");
 
 	/* Check for sensible solution */
 	if (peak>0.2) {

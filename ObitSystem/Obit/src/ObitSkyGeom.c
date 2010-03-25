@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -120,7 +120,7 @@ void ObitSkyGeomXYShift (odouble ra, odouble dec,
  * two celestial positions.
  *  The shift is in (possibly) rotated coordinates.
  * Adopted from the AIPSish SHFCRP.FOR
- * \param type     Projection type ("-SIN", "-NCP", otherwise linear)
+ * \param type     Projection type ("-SIN", "-NCP", otherwise linear, blank = -SIN)
  * \param ra       Initial (reference) Right Ascension in deg.
  * \param dec      Initial (reference) declination in deg.
  * \param rotate   Rotation of field, to E from N, deg.
@@ -146,7 +146,7 @@ ObitSkyGeomShiftCRP (gchar *type, odouble ra, odouble dec, ofloat rotate,
     yyshft = (cos (DG2RAD*dec) - cos (DG2RAD*xdec) *
 	      cos (DG2RAD*(xra-ra))) / sin (DG2RAD*dec);
   /*  M: SIN PROJECTION */
-  } else if (!strncmp(type,"-SIN",4)) {
+  } else if ((!strncmp(type,"-SIN",4)) ||(!strncmp(type,"    ",4))) {
     yyshft = sin (DG2RAD*xdec) * cos (DG2RAD*dec) - cos
       (DG2RAD*xdec) * sin (DG2RAD*dec) * cos (DG2RAD*(xra-ra));
   } else { /* Something else - do simple "linear" terms */
@@ -436,7 +436,7 @@ ObitSkyGeomNewPos (ObitSkyGeomProj Proj, odouble ra0, odouble dec0,
  * \param  xinc    x coordinate increment (deg)
  * \param  yinc    y coordinate increment (deg)
  * \param  rot     rotation (deg)  (from N through E)
- * \param  type    projection type code e.g. "-SIN"
+ * \param  type    projection type code e.g. "-SIN", blank = -SIN
  *                 Does: -SIN, -TAN, -ARC, -NCP, -GLS, -MER, -AIT 
  *                 projections anything else is linear 
  * \param  cd1     first column of CD matrix
@@ -478,7 +478,7 @@ ObitSkyGeomCDpos(ofloat xpix, ofloat ypix, odouble xref, odouble yref,
  * \param  xinc    x coordinate increment (deg)
  * \param  yinc    y coordinate increment (deg)
  * \param  rot     rotation (deg)  (from N through E)
- * \param  type    projection type code e.g. "-SIN"
+ * \param  type    projection type code e.g. "-SIN", blank = -SIN
  *                 Does: -SIN, -TAN, -ARC, -NCP, -GLS, -MER, -AIT 
  *                 projections anything else is linear 
  * \param  xpos    [out] x (RA) coordinate (deg)
@@ -521,7 +521,7 @@ ObitSkyGeomWorldPos(ofloat xpix, ofloat ypix, odouble xref, odouble yref,
  * \param  xinc    x coordinate increment (deg)
  * \param  yinc    y coordinate increment (deg)
  * \param  rot     rotation (deg)  (from N through E)
- * \param  type    projection type code e.g. "-SIN"
+ * \param  type    projection type code e.g. "-SIN", blank = -SIN
  *                 Does: -SIN, -TAN, -ARC, -NCP, -GLS, -MER, -AIT 
  *                 projections anything else is linear 
  * \param  xpos    [out] x (RA) coordinate (deg)
@@ -550,6 +550,8 @@ ObitSkyGeomWorldPosLM(odouble dx, odouble dy, odouble xref, odouble yref,
   /*  find type  */
   itype = 0;  /* default type is linear */
   for (i=0;i<8;i++) if (!strncmp(type, ctypes[i], 4)) itype = i+1;
+  /* Trap blank = -SIN = EVLA/AIPS++ screwup */
+  if (!strncmp(type, "    ", 4)) itype = 1;
   
   /* default, linear result for error return  */
   *xpos = xref + dx;
@@ -717,7 +719,7 @@ ObitSkyGeomWorldPosLM(odouble dx, odouble dy, odouble xref, odouble yref,
  * \param  xinc    x coordinate increment (deg)
  * \param  yinc    y coordinate increment (deg)
  * \param  rot     rotation (deg)  (from N through E)
- * \param  type    projection type code e.g. "-SIN"
+ * \param  type    projection type code e.g. "-SIN", blank = -SIN
  *                 Does: -SIN, -TAN, -ARC, -NCP, -GLS, -MER, -AIT 
  *                 projections anything else is linear 
  * \param  xpix    [out] x pixel number  (RA or long without rotation)
@@ -766,7 +768,7 @@ ObitSkyGeomXYpix(odouble xpos, odouble ypos, odouble xref, odouble yref,
  * \param  xinc    x coordinate increment (deg)
  * \param  yinc    y coordinate increment (deg)
  * \param  rot     rotation (deg)  (from N through E)
- * \param  type    projection type code e.g. "-SIN"
+ * \param  type    projection type code e.g. "-SIN", blank = -SIN
  *                 Does: -SIN, -TAN, -ARC, -NCP, -GLS, -MER, -AIT 
  *                 projections anything else is linear 
  * \param  cd1     first column of CD matrix
@@ -811,7 +813,7 @@ ObitSkyGeomCDpix(odouble xpos, odouble ypos, odouble xref, odouble yref,
  * \param  xinc    x coordinate increment (deg)
  * \param  yinc    y coordinate increment (deg)
  * \param  rot     rotation (deg)  (from N through E)
- * \param  type    projection type code e.g. "-SIN"
+ * \param  type    projection type code e.g. "-SIN", blank = -SIN
  *                 Does: -SIN, -TAN, -ARC, -NCP, -GLS, -MER, -AIT 
  *                 projections anything else is linear 
  * \param  dx      [out] x projected offset  (RA or long without rotation)
@@ -847,6 +849,8 @@ ObitSkyGeomXYPixLM(odouble xpos, odouble ypos, odouble xref, odouble yref,
   /*  find type  */
   itype = 0;  /* default type is linear */
   for (i=0;i<8;i++) if (!strncmp(type, ctypes[i], 4)) itype = i+1;
+  /* Trap blank = -SIN = EVLA/AIPS++ screwup */
+  if (!strncmp(type, "    ", 4)) itype = 1;
   if (itype==0) return 0;  /* done if linear */
   
   /*  rotation */

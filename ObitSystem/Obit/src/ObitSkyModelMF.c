@@ -818,11 +818,11 @@ void ObitSkyModelMFInitMod (ObitSkyModel* inn, ObitUV *uvdata, ObitErr *err)
 
   /* Tell selected model info if prtLv>1 */
   if (in->prtLv>1) {
-    if (in->modelMode==OBIT_SkyModel_DFT)
+    if (in->currentMode==OBIT_SkyModel_DFT)
       Obit_log_error(err, OBIT_InfoErr, "SkyModelMF using DFT calculation type");
-    else if (in->modelMode==OBIT_SkyModel_Grid)
+    else if (in->currentMode==OBIT_SkyModel_Grid)
       Obit_log_error(err, OBIT_InfoErr, "SkyModelMF using Grid calculation type");
-    else if (in->modelMode==OBIT_SkyModel_Fastest)
+    else if (in->currentMode==OBIT_SkyModel_Fastest)
       Obit_log_error(err, OBIT_InfoErr, "SkyModelMF using Fastest calculation type");
   }
 
@@ -1190,10 +1190,12 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
     endComp = in->endComp[i];
     range[0] = in->minDFT;  /* Range of merged fluxes for DFT */
     range[1] = 1.0e20;
-    CCTable = ObitSkyModelMFgetPBCCTab (in, uvdata, (olong)i, &ver, 
-					&outCCVer, &startComp, &endComp, range, err); 
-    if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
-    
+    if (endComp>=startComp) {
+      CCTable = ObitSkyModelMFgetPBCCTab (in, uvdata, (olong)i, &ver, 
+					  &outCCVer, &startComp, &endComp, range, err); 
+      if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
+    }      
+
     /* Save values of highest comp - probably bad */
     if (outCCVer==0) {
       /* no translation of table */
@@ -1914,7 +1916,7 @@ void ObitSkyModelMFFTGrid (ObitSkyModel *inn, olong field, ObitUV *uvdata, ObitE
   ObitSkyModelMF *in  = (ObitSkyModelMF*)inn;
   olong i, k, nvis, lovis, hivis, nvisPerThread, nThreads;
   FTFuncArg *args;
-  gboolean OK = TRUE;
+  gboolean OK = TRUE, resetInterp=FALSE;
   gchar *routine = "ObitSkyModelMFFTGrid";
 
   /* error checks - assume most done at higher level */
@@ -1947,9 +1949,13 @@ void ObitSkyModelMFFTGrid (ObitSkyModel *inn, olong field, ObitUV *uvdata, ObitE
     if (i==(nThreads-1)) hivis = nvis;  /* Make sure do all */
     args = (FTFuncArg*)in->threadArgs[i];
     args->in     = in;
-    if (args->field!=field) {
-      for (k=0; k<in->nSpec; k++)
-	args->Interp[k] = ObitCInterpolateUnref(args->Interp[k]);
+    resetInterp = FALSE;
+    if (args->Interp) {
+      if (args->field!=field) {
+	resetInterp = TRUE;
+	for (k=0; k<in->nSpec; k++)
+	  args->Interp[k] = ObitCInterpolateUnref(args->Interp[k]);
+      }
     }
     args->field  = field;
     args->uvdata = uvdata;
@@ -1959,9 +1965,12 @@ void ObitSkyModelMFFTGrid (ObitSkyModel *inn, olong field, ObitUV *uvdata, ObitE
     else args->ithread = -1;
     args->err    = err;
     /* local copies of interpolators if needed */
-    if (!args->Interp) {
+    if ((!args->Interp) || resetInterp) {
       args->nSpec = in->nSpec;
       args->Interp = g_malloc0(args->nSpec*sizeof(ObitCInterpolate*));
+      resetInterp = TRUE;
+    }
+    if (resetInterp) {
       for (k=0; k<in->nSpec; k++) {
 	if (i>0) {
 	  args->Interp[k] = ObitCInterpolateClone(in->myInterps[k], NULL);
@@ -2389,6 +2398,12 @@ void ObitSkyModelMFGetInput (ObitSkyModel* inn, ObitErr *err)
   ObitInfoListGetTest(in->info, "doSmoo", &type, (gint32*)dim, &InfoReal);
   in->doSmoo = InfoReal.itg;
 
+  /* Turn off request for frequency dependent primary beam correction,
+     as currently implemented, it is not correct as it should only make a 
+     correction wrt the channels and IFs being imaged together and NOT the
+     total set of frequencies. */
+  in->doPBCor = FALSE;
+
 } /* end ObitSkyModelMFGetInput */
 
 /**
@@ -2449,6 +2464,8 @@ void  ObitSkyModelMFChose (ObitSkyModel *inn, ObitUV* uvdata)
 
   /* How long for gridded method? */
   timfft = (timff1 * tpvgrd + timff2 * tfft*in->nSpec + timff3 * tpcgrd) * nchan;
+  /* Ad Hoc hack*/
+  timfft *= 2.0;
 
   /* How long for a DFT? */
   timdft = tpvpc * nvis * sumcc * nchan;

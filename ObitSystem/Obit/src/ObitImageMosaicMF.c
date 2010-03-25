@@ -1238,6 +1238,7 @@ void ObitImageMosaicMFFlatten (ObitImageMosaic *inn, ObitErr *err)
     nterm = 1;
     nspec = 1;
   }
+
   nplane = nterm+nspec;
   for (iplane=0; iplane<nplane; iplane++) {
     
@@ -1273,11 +1274,13 @@ void ObitImageMosaicMFFlatten (ObitImageMosaic *inn, ObitErr *err)
       blc[0] = MAX (2, blc[0]);
       blc[1] = (naxis[1] / 2) + 1 - rad;
       blc[1] = MAX (2, blc[1]);
+      blc[2] = iplane+1;
       trc[0] = (naxis[0] / 2) + rad;
       trc[0] = MIN (naxis[0]-1, trc[0]);
       trc[1] = (naxis[1] / 2) + 1 + rad;
       trc[1] = MIN (naxis[1]-1, trc[1]);
-      
+      trc[2] = iplane+1;
+     
       /* Open/read sub window of image */
       dim[0] = IM_MAXDIM;
       ObitInfoListPut (in->images[i]->info, "BLC", OBIT_long, dim, blc, err); 

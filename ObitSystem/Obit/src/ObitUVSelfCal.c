@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2009                                          */
+/*;  Copyright (C) 2005-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -969,6 +969,7 @@ void ObitUVSelfCalInit  (gpointer inn)
   in->numHist   = 0;
   in->HistInc   = 1.0;
   in->hist      = NULL;
+  in->histRMS   = NULL;
   in->UVFullRange[0] = 0.0;
   in->UVFullRange[1] = 0.0;
 
@@ -996,6 +997,7 @@ void ObitUVSelfCalClear (gpointer inn)
   in->skyModel = ObitSkyModelUnref(in->skyModel);
   in->SCData   = ObitUVUnref(in->SCData);
   in->hist     = ObitMemFree(in->hist);
+  in->histRMS  = ObitMemFree(in->histRMS);
   
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);

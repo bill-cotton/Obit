@@ -1053,7 +1053,7 @@ static void SubNewCCs (ObitDConCleanVis *inn, olong *newCC, ObitFArray **pixarra
     /* Be sure to delete inFArrays */
     for (j=0; j<nTh; j++) {
       inFArrays[j]  = ObitFArrayUnref(inFArrays[j]);
-      bmFArrays[i] = ObitFArrayUnref(bmFArrays[i]);
+      bmFArrays[j] = ObitFArrayUnref(bmFArrays[j]);
     }
   } /* end loop over field subtracting */
 

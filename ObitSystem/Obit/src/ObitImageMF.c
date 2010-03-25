@@ -947,7 +947,7 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
 
   /* Cleanup */
   imPix     = ObitFArrayUnref(imPix);
-  extPix    = ObitFArrayUnref(imPix);
+  extPix    = ObitFArrayUnref(extPix);
   in->image = ObitFArrayUnref(in->image);
 } /* end ObitImageMFCombine */
 
@@ -1428,6 +1428,7 @@ gpointer ThreadFitSpec (gpointer args)
   gboolean doJinc;
   ObitBeamShapeClassInfo *BSClass;
   odouble Angle=0.0, pos[2];
+  ofloat fblank = ObitMagicF();
   gchar *routine = "ThreadFitSpec";
 
   nterm = nOrder+1;        /* Number of fitted spectral terms */
@@ -1454,8 +1455,9 @@ gpointer ThreadFitSpec (gpointer args)
       for (i=0; i<nSpec; i++) {
 	BeamShape->refFreq = Freq[i];  /* Set frequency */
 	PBCorr  = BSClass->ObitBeamShapeGainSym(BeamShape, Angle);
-	workFlux[i]  = inData[i][ix] / PBCorr;
-	workSigma[i] = sigma[i] / (PBCorr * PBCorr);
+	if (inData[i][ix]!=fblank) workFlux[i]  = inData[i][ix] / PBCorr;
+	else workFlux[i] = fblank;
+	workSigma[i] = sigma[i] / (PBCorr);
       }
     } else { /* No PB correction */
       /* Load arrays */

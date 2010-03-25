@@ -1261,14 +1261,25 @@ void ObitSpectrumFitSingleArg (gpointer aarg, ofloat *flux, ofloat *sigma,
 {
   olong i, j;
   NLFitArg *arg=(NLFitArg*)aarg;
+  ofloat fblank = ObitMagicF();
+  gboolean allBad;
 
-  /* Save flux array, sigma */
+  /* Save flux array, sigma, Check if all data blanked  */
+  allBad = TRUE;
    for (i=0; i<arg->nfreq; i++) arg->obs[i] = flux[i];
    for (i=0; i<arg->nfreq; i++) {
      arg->obs[i]    = flux[i];
+     if (arg->obs[i]!=fblank) allBad = FALSE;
      arg->isigma[i] = 1.0 / sigma[i];
      arg->weight[i] = arg->isigma[i]*arg->isigma[i];
    }
+
+   /* Return fblanks/zeroes for no data */
+   if (allBad) {
+     out[0] = fblank;
+     for (j=1; j<=arg->nterm*2; j++) out[j] = 0.0;
+    return;
+  }
 
   /* Fit - poly power or broken power */
   if (arg->doBrokePow) {

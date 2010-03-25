@@ -158,8 +158,8 @@ doFull                             Make full field (flattened) image?
 **PARAM** boo 1  **DEF** T
 doRestore                          Restore CCs to images?
 **PARAM** boo 1 **DEF** T
-doFit                              Fit spectrum to CLEAned planes??
-**PARAM** boo 1 **DEF** T
+doFit                              Fit spectrum to CLEANed planes??
+**PARAM** boo 1 **DEF** F
 do3D                               3D imaging, else 2D
 **PARAM** str 48  **DEF** NVSSVZ.FIT
 Catalog                            Outlier catalog name (NVSSVZ.FIT)
@@ -173,7 +173,7 @@ OutlierSI                          Spectral index to estimate flux density
 OutlierSize                        Size of outlier field in pixels
 **PARAM** int 4 50
 CLEANBox        -2.0       8192.   Four coordinates for each box
-**PARAM** boo 1   **DEF** F
+**PARAM** boo 1   **DEF** T
 autoWindow                         If true, automatically set windows
 **PARAM** float 1  **DEF** 0.1
 Gain     *         0.0         2.0 CLEAN loop gain
@@ -183,13 +183,13 @@ minFlux  *                         Minimum Clean component (Jy)
 minPatch *        0.0              Min. BEAM half-width.
 **PARAM** int 1
 Niter    *         0.0             Maximum # of I CLEAN comp.
-**PARAM** float 1  **DEF** 0.7
+**PARAM** float 1  **DEF** 0.35
 ccfLim   *                         Min. fraction of residual peak to CLEAN
 **PARAM** float 1  
 SDIGain  *                         SDI trigger, <=0 -> no SDI Clean
 **PARAM** float 3
 Beam     *      -999.9             Clean beam (maj, min, PA)
-**PARAM** float 1  **DEF** 1.0e9
+**PARAM** float 1  **DEF** 10.0
 Reuse    *                         Factor * RMS to reuse each cycle
 **PARAM** float 1  **DEF** 1.0e20
 autoCen  *                         Auto center min flux density
@@ -198,7 +198,7 @@ Cmethod                            Modeling method:
                                    'DFT','GRID','    '
 **PARAM** boo 1   **DEF** F
 PBCor                              Apply Frequency PB Corr?
-**PARAM** float 1
+**PARAM** float 1  **DEF** 25.0
 antSize                            Diameter of ant. for PBCor (m)
 **PARAM** float 2
 CCFilter                           Clean component filter
@@ -216,8 +216,8 @@ minFluxPSC        0.0              Min. peak phase self cal (Jy)
 solPInt           0.0              phase SC Solution interval (min)
 **PARAM** str 4
 solPType                           phase SC Soln. Type: '  ', 'L1', 
-**PARAM** str 4 **DEF** P
-solPMode                           phase SC Soln. Mode:'A&P', 'P', 'P!A',
+**PARAM** str 4 **DEF** DELA
+solPMode                           phase SC Soln. Mode:'A&P', 'P', 'P!A','DELA'
 **PARAM** int 1
 maxASCLoop                         Max. number of amp&ph selfcal loops
 **PARAM** float 1
@@ -259,7 +259,7 @@ PeelSolInt        0.0              Peel SC Solution interval (min)
 **PARAM** str 4
 PeelType                           Peel Soln. Type: '  ', 'L1', 
 **PARAM** str 4 **DEF** A&P
-PeelMode                           Peel  Mode:'A&P', 'P', 'P!A',
+PeelMode                           Peel  Mode:'A&P', 'P', 'P!A', 'DELA'
 **PARAM** int 1  **DEF** 200
 PeelNiter                          Niter for peel.CLEAN
 **PARAM** float 1
@@ -280,12 +280,13 @@ noScrat                            AIPS disk numbers for which
 ----------------------------------------------------------------
 MFImage  Wideband imaging
 Type:  Task
- Use:  Batch processing of radio interferometry data
+ Use:  Batch processing of wideband radio interferometry data
 
 See Obit Development Memo 19 for details
 (ftp://ftp.cv.nrao.edu/NRAO-staff/bcotton/Obit/MFImage.pdf)
 
-   The products of this task are a CLEAN image.
+   The products of this task are a CLEAN image containing the spectral 
+components and a set of narrow band images.
 Unless otherwise specified, a fly's eye pattern of
 fields with circular CLEAN boxes will be used to cover the specified
 field of view (FOV).  When processing is finished, the CLEAN images 
@@ -301,6 +302,9 @@ In this case, the error messages will be displayed and the Status in
 the PS table set to "Failed  " rather than "Done    ".
    If BLFact > 1.0 then the input data will be subjected to a 
 baseline dependent time averaging.
+
+   Special parameters for this task: maxFBW, doFit and norder.
+
    Continuum only.
 
 Adverbs:
@@ -337,7 +341,7 @@ Adverbs:
   Stokes.....Stokes parameters to process.
              'I' = Stokes I only, 'IQU' = also Q, U
              'RR', 'LL' also.
-             '    ' => I, Q, U, 
+             '    ' => I
              'F'=> formal I (both orthogonal Stokes needed)
   FreqID.....Frequency identifier to select , <=0=>any
   BChan......First channel number to image, 0=>1.  Channel numbers are 1
@@ -348,7 +352,7 @@ Adverbs:
   EIF........Highest IF to process 0=> do BIF to highest.
              Note: not all data sets will have IFs.
   subA.......Sub-array number to use. 0=>all.
-  doCalib....If true, apply SN or CL table
+  doCalib....If >= 1, apply SN or CL table, 2=> calibrate weights also
   gainUse....CL/SN table version number to apply. 0=> highest.
   doBand.....If true (>0) then correct the data for the shape of the
              antenna bandpasses using the BP table specified by BPVer.
@@ -365,13 +369,13 @@ Adverbs:
              (e) if doBand=5 the table entries are interpolated in
              time (ignoring solution weights) and the data are then
              corrected.
-             MFImage uses doBand as the nearest integer; 0.1 is therefore
-             no correction.
+             MFImage uses doBand as the nearest integer; 0.1 is 
+             therefore no correction.
   BPVer......Specifies the version of the AIPS BP table to be applied
                 0 => highest numbered table.
                <0 => no bandpass correction to be applied.
   flagVer....AIPS FG table to use for editing. 0 => highest.
-  doPol......>=1 apply polarization calibration
+  doPol......True => apply polarization calibration
   norder.....Maximum spectral order to include, 
                 1 = spectral index
                 2 = spectral index + curvature
@@ -444,7 +448,7 @@ Adverbs:
 
    The following control imaging:
   maxFBW.....Maximum allowed IF center fractional bandwidth.
-             This parameter is used to difive the visibility 
+             This parameter is used to divide the visibility 
              spectrum into image channels.  
              Each IF will have an integral number of channels.
   FOV........Radius of the desired field of view.
@@ -460,11 +464,7 @@ Adverbs:
              If left 0 then the program will compute the value 
              from the data.  All fields use the same value.
   nx.........[optional] Number of x pixels in each field specified.
-             Note: any values specified will be doubled but CLEANing
-             is only allowed in the inner 1/4 of the image..
   ny.........[optional] Number of y pixels in each field specified.
-             Note: any values specified will be doubled but CLEANing
-             is only allowed in the inner 1/4 of the image..
   RAShift....[optional] RA shift (asec) per field
   DecShift...[optional] Dec shift (asec) per field
   Catalog....Name of FITS file containing outlier catalog
@@ -474,7 +474,7 @@ Adverbs:
   OutlierDist..max. distance from pointing to include (deg)
                default = 10
   OutlierFlux..min. estimated flux density (Jy)
-                 default = 0.05
+               default = 0.05
   OutlierSI....Spectral index to use,   default = -0.7
   OutlierSize.. Size in pixels of confusing fields, default 50
                 NB: This should not be so large as to cause the 
@@ -506,10 +506,11 @@ Adverbs:
              Otherwise only make facets and leave them.
   doRestore..Restore CCs to images?
   doFit......If true, the final (CLEAN) spectral planes are fitted and the 
-             first norder+1 planes are filled with the spectrum
+             first norder+1 planes are filled with the spectrum.
   do3D.......If True, make the reference pixel in each facet tangent
              to the celestial sphere, else on single tangent plane.
              If False, CLEAN components are left on flattened image.
+             False generally leads to a faster executation.
 
    The following control CLEANing:
   CLEANBox...A 4x50 array with the specification of a search
@@ -528,7 +529,7 @@ Adverbs:
             Component. 
   minPatch..Minimum half width of the portion of the beam
             which is used in the minor CLEAN. Default 500
-  Niter.....CLEAN iteration limit.  0 => 1500
+  Niter.....CLEAN iteration limit.  0 => no CLEANing
   ccfLim....Limit CLEAN in each major cycle not to CLEAN below
             ccfLim times the initial residual peak.
             If using SDIGain, set to the maximum value of 0.9.
@@ -542,7 +543,7 @@ Adverbs:
             CLEAN.
             A value of 0.1 is a reasonable initial value
   Beam......CLEAN restoring beam major, minor axis size in asec and
-            the position angle.  If zeroes, fit beam.
+            the position angle.  If zeroes, fit beam using first frequency.
   Reuse.....If >0 then each cycle of self cal after the first will
             begin with all summed components whose abs value exceeds
             Reuse*RMS(Field 1). Default 1.0e9
@@ -562,16 +563,15 @@ Adverbs:
             'DFT' uses the direct Fourier transform, this
                method is the most accurate.
             'GRID' does a gridded-FFT interpolation model
-               computation.
+               computation; may degrade dynamic range.
             '    ' allows the program to use the fastest
                method.
   PBCor......Apply Frequency dependent primary beam corrections?
-             These are applied in imaging and when fitting spectra
-             to the pixels.
+             These are when fitting spectra to the pixels.
   antSize....Diameter of antenna for PBCor (m), default = 25
-             Used both in CLEANing and in the final fitting.
-             If > 0 and doFit=True then the fitting takes into account
-             the primary beam gain.
+             Used in the final fitting.
+             If > 0 and doFit & PBCor=True then the fitting takes into 
+             account the primary beam gain.
   CCFilter...Clean component filtering parameters.
              If [0] > 0.0 then for each CLEAN conponent, the
              sum of all components within CCFilter[1] cells
@@ -600,7 +600,8 @@ Adverbs:
   solPInt.....phase SC Solution interval (min)
   solPType....phase SC Solution Type: '  ', 'L1', 
   solPMode....phase SC Solution Mode:'A&P', 'P', 'P!A', 'DELA'
-              'DELA' fits for delay and phase.
+              'DELA' fits for delay and phase and is recommended for 
+              wideband data.
   maxASCLoop..Maximum number of phase self calibration loops
   maxASCLoop..Min. peak flux density required for phase self cal (Jy)
   solAInt.....A&P SC Solution interval (min)
