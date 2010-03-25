@@ -1,7 +1,7 @@
 /* $Id:  $  */
 /* Task to correct off-axis instrumental polarization in UV data      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009,2020                                          */
+/*;  Copyright (C) 2009,2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -951,7 +951,7 @@ ObitSkyModelVMBeam* getInputSkyModel (ObitInfoList *myInput, ObitUV *uvdata,
   ObitImage    *IBeamPh=NULL, *VBeamPh=NULL, *QBeamPh=NULL, *UBeamPh=NULL;
   ObitInfoType type;
   ObitTableCC *inCC=NULL;
-  gboolean     mrgCC=FALSE, doPhase=FALSE;
+  gboolean     mrgCC=FALSE, doPhase=FALSE, do3D=TRUE;
   oint         noParms, CCVer;
   olong        Aseq, disk, cno, i, nparm, nmaps, channel;
   gchar        *Type, *strTemp, inFile[129], inRoot[129];
@@ -1073,6 +1073,9 @@ ObitSkyModelVMBeam* getInputSkyModel (ObitInfoList *myInput, ObitUV *uvdata,
 	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
       } /* end loop over fields */
       
+      /* get do3D from first image */
+      do3D = image[0]->myDesc->do3D;
+      
     } else if (!strncmp (Type, "FITS", 4)) {  /* FITS input */
       /* input FITS file name */
       if (ObitInfoListGetP(myInput, "in2File", &type, dim, (gpointer)&strTemp)) {
@@ -1101,6 +1104,9 @@ ObitSkyModelVMBeam* getInputSkyModel (ObitInfoList *myInput, ObitUV *uvdata,
 	ObitImageMosaicSetImage (mosaic, i, image[i], err);
 	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
       } /* end loop over fields */
+      
+      /* get do3D from first image */
+      do3D = image[0]->myDesc->do3D;
       
     } else { /* Unknown type - barf and bail */
       Obit_log_error(err, OBIT_Error, "%s: Unknown Data type %s", 
@@ -1160,6 +1166,10 @@ ObitSkyModelVMBeam* getInputSkyModel (ObitInfoList *myInput, ObitUV *uvdata,
   ObitInfoListCopyList (myInput, skyModel->info, dataParms);
   if (err->error) Obit_traceback_val (err, routine, skyModel->name, skyModel);
 
+  /* Save do3D */
+  dim[0] = 1; dim[1] = 1;
+  ObitInfoListAlwaysPut (skyModel->info, "do3D", OBIT_bool, dim, &do3D);
+  
   /* If channel given, select by channel */
   channel = 0;
   ObitInfoListGetTest (myInput, "channel", &type, dim, &channel);

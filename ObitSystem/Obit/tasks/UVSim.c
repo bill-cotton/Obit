@@ -1,7 +1,7 @@
 /* $Id:  $  */
 /* Simulate UV data                                                   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009                                               */
+/*;  Copyright (C) 2009,2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -662,7 +662,7 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
   ObitImage    **image=NULL;
   ObitInfoType type;
   ObitTableCC *inCC=NULL;
-  gboolean     mrgCC=FALSE;
+  gboolean     mrgCC=FALSE, do3D=TRUE;
   oint         noParms, CCVer;
   olong        Aseq, disk, cno, i, nparm, nmaps;
   gchar        *Type, *strTemp, inFile[129], inRoot[129];
@@ -782,6 +782,9 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
 	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
       } /* end loop over fields */
       
+      /* get do3D from first image */
+      do3D = image[0]->myDesc->do3D;
+      
     } else if (!strncmp (Type, "FITS", 4)) {  /* FITS input */
       /* input FITS file name */
       if (ObitInfoListGetP(myInput, "inFile", &type, dim, (gpointer)&strTemp)) {
@@ -809,6 +812,9 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
 	ObitImageMosaicSetImage (mosaic, i, image[i], err);
 	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
       } /* end loop over fields */
+      
+      /* get do3D from first image */
+      do3D = image[0]->myDesc->do3D;
       
     } else { /* Unknown type - barf and bail */
       Obit_log_error(err, OBIT_Error, "%s: Unknown Data type %s", 
@@ -858,6 +864,10 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
   /* Get input parameters from myInput, copy to skyModel */
   ObitInfoListCopyList (myInput, skyModel->info, dataParms);
   if (err->error) Obit_traceback_val (err, routine, skyModel->name, skyModel);
+
+  /* Save do3D */
+  dim[0] = 1; dim[1] = 1;
+  ObitInfoListAlwaysPut (skyModel->info, "do3D", OBIT_bool, dim, &do3D);
 
   return skyModel;
 } /* end getInputSkyModel */

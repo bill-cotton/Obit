@@ -892,7 +892,7 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
   ObitCCCompType CCType;
   ObitInfoType type;
   ObitTableCC *inCC=NULL;
-  gboolean     mrgCC=FALSE;
+  gboolean     mrgCC=FALSE, do3D=TRUE;
   oint         noParms, CCVer, ver;
   olong        Aseq, disk, cno, i, nparm, nmaps, channel;
   gchar        *Type, *strTemp, inFile[129], inRoot[129];
@@ -1014,6 +1014,9 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
 	ObitImageMosaicSetImage (mosaic, i, image[i], err);
 	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
       } /* end loop over fields */
+
+      /* get do3D from first image */
+      do3D = image[0]->myDesc->do3D;
       
     } else if (!strncmp (Type, "FITS", 4)) {  /* FITS input */
       /* input FITS file name */
@@ -1043,6 +1046,9 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
 	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
       } /* end loop over fields */
       
+      /* get do3D from first image */
+      do3D = image[0]->myDesc->do3D;
+      
     } else { /* Unknown type - barf and bail */
       Obit_log_error(err, OBIT_Error, "%s: Unknown Data type %s", 
 		     pgmName, Type);
@@ -1060,7 +1066,13 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
       Obit_log_error(err, OBIT_InfoErr, "Using tabulated spectrum sky model");
     } else
       skyModel = ObitSkyModelCreate ("Sky Model", mosaic);
+
+    /* Save parameters */
     ObitInfoListCopyList (myInput, skyModel->info, skyModelParms);
+
+    /* Save do3D */
+    dim[0] = 1; dim[1] = 1;
+    ObitInfoListAlwaysPut (skyModel->info, "do3D", OBIT_bool, dim, &do3D);
 
     /* Merge CC tables? */
     ObitInfoListGetTest(myInput, "mrgCC", &type, dim, &mrgCC); 
