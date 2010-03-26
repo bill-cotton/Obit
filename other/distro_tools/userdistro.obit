@@ -203,7 +203,7 @@ mkpath "/tmp/userdistro.$$/$NAME$tag-$version$bit";
 chdir "/tmp/userdistro.$$/$NAME$tag-$version$bit";
 system( "/bin/rm -rf *" );
 chdir "..";
-system( "svn co https://svn.cv.nrao.edu/svn/ObitInstall/other/distro_tools/files $NAME$tag-$version$bit" );
+system( "svn co https://svn.cv.nrao.edu/svn/ObitInstall/other/distro_tools/files $NAME$tag-$version$bit > /dev/null 2>&1" );
 chdir "$NAME$tag-$version$bit";
 system( "find . -type d -name .svn -exec rm -rf '{}' ';'" );
 
@@ -462,13 +462,11 @@ if ( defined $symlinks{$rhver} ) {
     my $dirs = $symlinks{$rhver};
     foreach $dir ( keys %$dirs ) {
 	chdir "/tmp/userdistro.$$/$NAME$tag-$version$bit";
-	print "$dir\n";
 	if ( -d $dir ) {
 	    chdir $dir;
 	    my $symlinks = $$dirs{$dir};
 	    foreach $link ( keys %$symlinks ) {
 		my $dest = $$symlinks{$link};
-		print "$link -> $dest\n";
 		system( "ln -s $link $dest" );
 	    }
 	}
