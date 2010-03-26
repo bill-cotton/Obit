@@ -20,7 +20,7 @@
 
 """
 #-----------------------------------------------------------------------
-# Copyright (C) 2005,2007 Associated Universities, Inc. Washington DC, USA.
+# Copyright (C) 2005,2007,2010 Associated Universities, Inc. Washington DC, USA.
 # Copyright (C) 2005 Joint Institute for VLBI in Europe
 #
 # This program is free software; you can redistribute it and/or modify
@@ -74,6 +74,8 @@ class _ObitTaskParams:
         path = name + '.TDF'
         if (not os.access(path,os.F_OK)) and  (os.getenv("OBITEXEC") != None):
             path = os.environ['OBITEXEC'] + '/TDF/' + name + '.TDF'
+        if (not os.access(path,os.F_OK)) and  (os.getenv("OBITEXEC") != None):
+            path = os.environ['OBITEXEC'] + '/tdf/' + name + '.TDF'
         if (not os.access(path,os.F_OK)) and  (os.getenv("OBIT") != None):
             path = os.environ['OBIT'] + '/TDF/' + name + '.TDF'
         # Check OBITSD if needbe
