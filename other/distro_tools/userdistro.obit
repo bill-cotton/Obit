@@ -457,13 +457,9 @@ system( "find . -type d -exec chmod a+rx \{\} \\;" );
 system( "rm -f `find . -type l ! -exec test -r \{\} \\; -print`");
 
 
-print ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> $rhver\n";
 if ( defined $symlinks{$rhver} ) {
 
-    print "                                    >>>>  here\n";
     my $dirs = $symlinks{$rhver};
-    print "                                    >>>>  ", $dirs, "\n";
-    print "                                    >>>>  " . join( ' ', keys %$dirs ) . "\n";
     foreach $dir ( keys %$dirs ) {
 	chdir "/tmp/userdistro.$$/$NAME$tag-$version$bit";
 	print "$dir\n";
