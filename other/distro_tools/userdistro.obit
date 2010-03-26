@@ -206,7 +206,6 @@ chdir "..";
 system( "svn co https://svn.cv.nrao.edu/svn/ObitInstall/other/distro_tools/files $NAME$tag-$version$bit" );
 chdir "$NAME$tag-$version$bit";
 system( "find . -type d -name .svn -exec rm -rf '{}' ';'" );
-exit(0);
 
 foreach $rpm ( @$constituents ) {
     print "_";
