@@ -1,0 +1,488 @@
+#!/usr/bin/perl
+
+use File::Basename;
+use File::Find;
+use File::Path;
+
+$tag = '';
+$lib = '';
+$bit = '';
+$dumpdir = '';
+$NAME = 'obit';
+
+##
+## set $arch
+##
+$arch_line = `uname -m`;
+if ( $arch_line =~ m/x86_64/ ) {
+    $arch = "x86_64";
+    $bit = '-64b';
+    $lib = '64';
+} else {
+    $arch = "i386";
+}
+
+$argv_rpmdir = '';
+while ($_ = @ARGV[0], (/^--/)) {
+    shift(@ARGV);
+    last if /^--$/;
+    /^--tag$/i && ($tag = '-' . shift(@ARGV), next);
+    /^--dir$/i && ($dumpdir = shift(@ARGV), next);
+    /^--repo$/i && ($argv_rpmdir = shift(@ARGV), next);
+    /^--rpmdir$/i && ($argv_rpmdir = shift(@ARGV), next);
+    die "unknown option: $_\n";
+}
+
+die "output directory ($dumpdir) not a directory..." if $dumpdir && ! -d $dumpdir;
+$dumpdir = "/tmp" unless $dumpdir;
+
+%rpmdir = ( 'el4' => "/usr/src/rpmbuild/casa/repo/el4/$arch",
+	    'el5' => "/usr/src/rpmbuild/casa/repo/el5/$arch"  );
+%versionkey = ( 'el4' => "$NAME$tag",
+		'el5' => "$NAME$tag"  );
+
+#ln -s libcrypto.so.0.9.7a libcrypto.so.4
+#ln -s libssl.so.0.9.7a libssl.so.4
+%constituent = ( 'el4' => [ 'obit',
+			    'xmlrpc-c',
+			    'fftw3',
+			    'openmotif',
+			    'plplot-c',
+			    'plplot-c-libs',
+			    'cfitsio',
+			    'openssl',
+			    'gsl',
+			    'xorg-x11-deprecated-libs',
+			    'curl',
+			    'glib2',
+			    'zlib',
+			    'libf2c',
+			    ],
+		 'el5' => [
+			    ]
+ );
+
+%preload = ( 'el4' => [ 'libgsl.so.0', 'libgslcblas.so.0', 'libObit.so.1.1',
+			'libxmlrpc.so.3', 'libxmlrpc_util.so.3',
+			'libxmlrpc_xmlparse.so.3', 'libxmlrpc_xmltok.so.3',
+			'libplplot.so.11','libssl.so.4', 'libcrypto.so.4',
+			'libcfitsio.so.0', 'libfftw3f.so.3', 'libcurl.so.3',
+			'libglib-2.0.so.0', 'libgthread-2.0.so.0', 'libg2c.so.0' ],
+	     'el5' => [  ],
+	   );
+
+%extra_script = ( 'ObitTalkServer' => '
+bindir=`dirname "$0"`
+if test -x $bindir/ObitTalk; then
+    obittalk=$bindir/ObitTalk
+else
+    obittalk=ObitTalk
+fi' );
+
+%exec_script = ( 'ObitTalkServer' => 'exec $obittalk $OBITHOME/share/obittalk/python/XMLRPCServer.py',
+		 'ObitView' => 'exec $installpath/lib/obit/ObitView  $*',
+		 'ObitMess' => 'exec $installpath/lib/obit/ObitMess  $*',
+		 'ObitTalk' => '
+# Run ObitTalk.py for interactive sessions
+PYTHONSTARTUP=$OBITHOME/share/obittalk/python/ObitTalk.py
+export PYTHONPATH PYTHONSTARTUP
+
+exec /usr/bin/python "$@"
+' );
+		 
+
+
+%symlinks = ( 'el4' => { 'lib' => { 'libcrypto.so.0.9.7a' => 'libcrypto.so.4',
+				    'libssl.so.0.9.7a' => 'libssl.so.4' } } );
+
+
+%mask_python_scripts = ( );
+@wrappers = ( 'ObitView', 'ObitTalk', 'ObitTalkServer', 'ObitMess' );
+
+$rhver = "";
+
+if ( ! $rhver ) {
+
+    if ( -f "/etc/SuSE-release" ) {
+
+        $rhver = "suse";
+
+    } elsif ( -f "/etc/redhat-release" ) {
+
+        open( IN, "</etc/redhat-release" );
+        $rhver = <IN>;
+        close( IN );
+        if ( $rhver =~ m/^Fedora Core release 6/ ) {
+            $rhver = "fc6";
+        } elsif ( $rhver =~ m/^Fedora release 7/ ) {
+            $rhver = "fc7";
+        } elsif ( $rhver =~ m/^Red Hat Enterprise.*release 4/ ) {
+            $rhver = "el4";
+        } elsif ( $rhver =~ m/^Scientific Linux SL release 4.*/ ) {
+            $rhver = "el4";
+        } elsif ( $rhver =~ m/^Red Hat Enterprise.*release 5/ ) {
+            $rhver = "el5";
+        } elsif ( $rhver =~ m/^Scientific Linux SL release 5.*/ ) {
+            $rhver = "el5";
+        } elsif ( $rhver =~ m/^Red Hat Enterprise/ ) {
+            die "unknown enterprise version: $rhver";
+        } elsif ( $rhver =~ m/^Red Hat Linux release ([0-9.]+)/ ) {
+            die "we no longer support: $rhver";
+        } elsif ( $rhver =~ m/^Mandrake Linux/  ) {
+            die "we don't yet support mandrake";
+        } else {
+            die "cannot understand version string: $rhver";
+        }
+
+    } else {
+
+        die "we're not in linux land";
+
+    }
+}
+
+die "cant build on $rhver" unless $rhver eq "el4" || $rhver eq "el5";
+
+sub move_files {
+    my $fromvec = shift(@_);
+    my $tovec = shift(@_);
+    while ( scalar(@$fromvec) > 0 && scalar(@$tovec) > 0 ) {
+	my $from = shift(@$fromvec);
+	my $to = shift(@$tovec);
+	my $dir = dirname($to);
+
+	die "rogue destinatino path: $dir" unless $dir =~ m@^/tmp/userdistro.$$@ || $dir =~ m@^[^/.]@;
+
+	if ( ! -e $dir ) {
+	    die "could not create $dir" unless mkpath $dir;
+	}
+
+	die "failed to move:\t$from\nto\t$to" unless rename($from,$to);
+    }
+}
+
+$constituents = $constituent{$rhver};
+@rpms = ( );
+%rpms = ( );
+$version = "";
+
+sub find_rpms {
+    if ( -f "$File::Find::dir/$_" && $_ =~ m/\.rpm$/ && $_ !~ m/\.src\.rpm$/ ) {
+	push( @rpms, "$File::Find::dir/$_" );
+    }
+}
+
+find( { wanted => \&find_rpms, follow => 1 }, ($argv_rpmdir ? $argv_rpmdir : $rpmdir{$rhver}) );
+
+
+##
+## rpm just can't be kept from writing stuff to stderr...
+## even the redirection below was ineffective...
+##
+close(STDERR);
+
+$key = $versionkey{$rhver};
+foreach $rpm ( @rpms ) {
+    open( NAME, "/bin/rpm -qp --qf \"%{NAME}\" $rpm 2> /dev/null |" );
+    $name = <NAME>;
+    close(NAME);
+    $rpms{$name} = $rpm;
+    print ".";
+    if ( $name eq $key ) {
+	open( VERSION, "/bin/rpm -qp --qf \"%{VERSION}-%{RELEASE}\" $rpm 2> /dev/null |" );
+	$version = <VERSION>;
+	close(VERSION);
+    }
+}
+
+$version =~ s/\.[^.]+$//;
+
+$constituents = $constituent{$rhver};
+
+mkpath "/tmp/userdistro.$$/$NAME$tag-$version$bit";
+chdir "/tmp/userdistro.$$/$NAME$tag-$version$bit";
+system( "/bin/rm -rf *" );
+chdir "..";
+system( "svn co https://svn.cv.nrao.edu/svn/ObitInstall/other/distro_tools/files $NAME$tag-$version$bit" );
+chdir "$NAME$tag-$version$bit";
+system( "find . -type d -name .svn -exec rm -rf '{}' ';'" );
+exit(0);
+
+foreach $rpm ( @$constituents ) {
+    print "_";
+    open( EXTRACT, "rpm2cpio $rpms{$rpm} | cpio -ivd |" );
+    while ( <EXTRACT> ) {
+	print;
+    }
+}
+
+
+##
+## rename qcasabrowser
+##
+sub rename_qcasabrowser {
+    if ( ! -d $_ && $_ eq "qcasabrowser" ) {
+	if ( -e "casabrowser" ) {
+	    system( "rm -rf casabrowser" );
+	}
+	rename( "qcasabrowser", "casabrowser" );
+    }
+}
+find( { wanted => \&rename_qcasabrowser }, "." );
+
+if ( -e "lib" ) {
+    if ( -d "lib" ) {
+	if ( ! -d "usr/lib" ) { mkpath "usr/lib"; }
+	system( "mv lib/* usr/lib" );
+    }
+    system("rm -rf lib");
+}
+
+if ( -e "lib64" ) {
+    if ( -d "lib64" ) {
+	if ( ! -d "usr/lib64" ) { mkpath "usr/lib64"; }
+	system( "mv lib64/* usr/lib64" );
+    }
+    system("rm -rf lib64");
+}
+
+system( "mv usr/* . && rmdir usr" );
+system( "mv lib$lib libsource" );
+system( "mv bin libsource" );
+system( "mv X11R6 libsource" );
+
+mkpath "lib$lib/$NAME";
+
+@from = ();
+@to = ();
+sub find_libs {
+    if ( -f $_ || -l $_ ) {
+	my $newdir = $File::Find::dir;
+	$newdir =~ s/libsource/lib$lib/;
+	push( @from, "$File::Find::dir/$_" );
+	if ( $File::Find::dir =~ m@libsource/bin@ ) {
+	    $newdir = "lib$lib/$NAME";
+	    push( @to, "$newdir/$_" );
+	} elsif ( $File::Find::dir =~ m@/X11R6@ ) {
+	    $newdir = "lib$lib";
+	    push( @to, "$newdir/$_" );
+	} elsif ( $File::Find::dir =~ m@/site-packages@ ) {
+	    $newdir = "lib$lib/obit/python";
+	    push( @to, "$newdir/$_" );
+	} else {
+	    push( @to, "$newdir/$_" );
+	}
+    }
+}
+
+find( { wanted => \&find_libs }, "libsource" );
+move_files(\@from,\@to);
+
+system( "rm -rf libsource" );
+system( "rm -f `find . -type f -name 'lib*.a'`" );
+rmdir( "lib/$NAME/lib" );
+
+##
+## set up preload state for wrappers...
+##
+$preload="";
+$epreload="";
+if ( defined $preload{$rhver} ) {
+    my $pl = $preload{$rhver};
+    foreach $l ( @$pl ) {
+	if ( $preload ) {
+	    $preload .= " ";
+	} else {
+	    $preload = 'LD_PRELOAD="';
+	}
+	$preload .= "\$installpath/lib$lib/$l";
+    }
+}
+if ( $preload ) {
+    $preload .= '"';
+    $epreload = "export $preload";
+}
+
+##
+## patch wrapper scripts
+##
+foreach $script ( @wrappers ) {
+
+    my $extra = '';
+    if ( defined $extra_script{$script} ) {
+	$extra = $extra_script{$script};
+    }
+
+    my $exec = '';
+    if ( defined $exec_script{$script} ) {
+	$exec = $exec_script{$script};
+    } else {
+	die "must have an exec line...";
+    }
+
+    unlink( "bin/$script$tag" );
+    open(NEW, "> $script");
+
+    ##
+    ## with casapy we need to specify the path, but not with the rest
+    ##
+    my $path_param = "";
+    if ( $script eq "casapy" ) {
+	$path_param = "--prepend-path \$installpath/lib$lib/python2.5:\$installpath/lib$lib/python2.5/heuristics:\$installpath/lib$lib/python2.5/site-packages:\$_PYTHONPATH";
+    }
+
+    print NEW <<EOF;
+#!/bin/sh
+
+name="\$0"
+while test -L "\$name"; do
+    newname=`readlink \$name`
+    name=`cd -P -- "\$(dirname -- "\$name")" && cd -P -- "\$(dirname -- "\$newname")" && echo \$(pwd -P)`/\$(basename -- \$name)
+done
+
+path=\$(dirname -- "\$name")
+installpath=`cd -P -- "\$path" && echo \$(pwd -P)`
+
+LD_LIBRARY_PATH=\$installpath/lib$lib:/lib$lib:/usr/lib$lib:\$LD_LIBRARY_PATH
+PATH="\$installpath/lib$lib/exec:\$installpath/lib$lib/$NAME/bin:/usr/bin:/usr/X11R6/bin:\$PATH"
+
+OBITHOME=\$installpath
+OBITEXEC=\$installpath/lib/obit
+
+__OBIT_PYTHONDIR="\$installpath/lib/obit/python"
+export PATH LD_LIBRARY_PATH OBITHOME OBITEXEC __OBIT_PYTHONDIR
+
+# Check whether AIPS is available.
+if test -z "\$AIPS_VERSION"; then
+    echo "\$0: AIPS Unavailable"
+else
+# Make AIPS data disks and printers available.
+    if test -z "\$DADEVS_QUIET"; then
+	DADEVS_QUIET=YES
+	export DADEVS_QUIET
+    fi
+    if test -f \$AIPS_VERSION/SYSTEM/UNIX/DADEVS.SH; then
+        . \$AIPS_VERSION/SYSTEM/UNIX/DADEVS.SH
+    fi
+    if test -f \$AIPS_VERSION/SYSTEM/UNIX/PRDEVS.SH; then
+        . \$AIPS_VERSION/SYSTEM/UNIX/PRDEVS.SH
+    fi
+fi
+
+# Make sure Python can find the ObitTalk modules.
+if test -z "\$PYTHONPATH"; then
+    PYTHONPATH=\$__OBIT_PYTHONDIR
+else
+    PYTHONPATH=\$PYTHONPATH:\$__OBIT_PYTHONDIR
+fi
+
+# Make sure Python can find the Obit modules.
+if test -z "\$OBIT_PYTHONPATH"; then
+    OBIT_PYTHONPATH=\$OBITHOME/share/obittalk/python
+else
+    OBIT_PYTHONPATH=\$OBIT_PYTHONPATH:\$OBITHOME/share/obittalk/python
+fi
+if test -n "\${OBIT_PYTHONPATH+set}"; then
+    PYTHONPATH=\$PYTHONPATH:\$OBIT_PYTHONPATH
+fi
+
+$extra
+
+$epreload
+
+$exec
+
+EOF
+
+    close( NEW );
+    system("chmod 755 $script");
+}
+
+##
+## we don't need the rest of the stuff in bin...
+##
+system( "rm -rf bin" );
+
+##
+## wrap up required python scripts
+##
+mkpath "lib$lib/exec";
+foreach $script ( keys %mask_python_scripts ) {
+    open( WRAPPER, "> lib$lib/exec/$script" );
+    print WRAPPER <<EOF;
+#!/bin/sh
+name="\$0"
+while test -L "\$name"; do
+    newname=`readlink \$name`
+    name=`cd -P -- "\$(dirname -- "\$name")" && cd -P -- "\$(dirname -- "\$newname")" && echo \$(pwd -P)`/\$(basename -- \$name)
+done
+
+path=\$(dirname -- "\$name")
+installpath=`cd -P -- "\$path/../.." && echo \$(pwd -P)`
+export LD_LIBRARY_PATH=\$installpath/lib$lib:/lib$lib:/usr/lib$lib:\$LD_LIBRARY_PATH
+export LD_PRELOAD="\$installpath/lib$lib/libpython2.5.so"
+exec \$installpath/lib$lib/$name/bin/python \$installpath/$mask_python_scripts{$script} \$*
+EOF
+    close( WRAPPER );
+    system("chmod 755 lib$lib/exec/$script");
+}
+
+##
+## making this look like an casapy-acs
+## tree for possible reuse...
+##
+chdir "lib$lib";
+system( "ln -s python2.5 python" );
+chdir "..";
+if ( -l "lib/tcl8.4" ) {
+    unlink( "lib/tcl8.4" );
+}
+if ( "$lib" eq "64" ) {
+   system("rm -rf lib");
+}
+mkpath "bin";
+chdir "bin";
+foreach $script ( @wrappers ) {
+    system( "ln -s ../$script" );
+}
+chdir "..";
+system( "mv binaddin/* bin" );
+rmdir( "binaddin" );
+
+system( "rm -rf share/man" );
+
+$here = `pwd`;
+system( "find . -type f -exec chmod a+r \{\} \\;" );
+system( "find . -type d -exec chmod a+rx \{\} \\;" );
+##### remove broken symlinks #####
+system( "rm -f `find . -type l ! -exec test -r \{\} \\; -print`");
+
+
+print ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> $rhver\n";
+if ( defined $symlinks{$rhver} ) {
+
+    print "                                    >>>>  here\n";
+    my $dirs = $symlinks{$rhver};
+    print "                                    >>>>  ", $dirs, "\n";
+    print "                                    >>>>  " . join( ' ', keys %$dirs ) . "\n";
+    foreach $dir ( keys %$dirs ) {
+	chdir "/tmp/userdistro.$$/$NAME$tag-$version$bit";
+	print "$dir\n";
+	if ( -d $dir ) {
+	    chdir $dir;
+	    my $symlinks = $$dirs{$dir};
+	    foreach $link ( keys %$symlinks ) {
+		my $dest = $$symlinks{$link};
+		print "$link -> $dest\n";
+		system( "ln -s $link $dest" );
+	    }
+	}
+    }
+}
+
+chdir "/tmp/userdistro.$$";
+system( "tar -zcf $dumpdir/$NAME$tag-$version$bit.tar.gz $NAME$tag-$version$bit" );
+chdir "/tmp";
+system( "rm -rf userdistro.$$" );
+print "\n$dumpdir/$NAME$tag-$version$bit.tar.gz\n";
+
