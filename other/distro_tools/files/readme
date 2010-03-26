@@ -1,0 +1,23 @@
+   Installing and running binary distribution of Obit
+
+1) Unpack the distribution tarball in the directory in which you wish
+   to install it; e.g.
+ > mv obit-1.1.166-4.tar.gz /home/mydir/obitinstall
+ > cd /home/mydir/obitinstall
+ > tar zxf obit-1.1.166-4.tar.gz
+
+2) Add the top level distribution to your path:
+ > setenv PATH "/home/mydir/obitinstall/obit-1.1.166-4:$PATH"
+if you use tcsh or, for bash
+ > PATH="/home/mydir/obitinstall/obit-1.1.166-4:$PATH"; export PATH
+You may wish to add these to your .cshrc or .profile login files.
+
+3) ObitTalk is the python based user interface, documentation is in
+doc/ObitTalk.pdf.
+
+4) Additional customization is possible using the python file
+dot.obitrc.py renamed to .obitrc.py and placed in your home directory
+($HOME) or in the working directory from which you run ObitTalk.
+This can be used to define the location of AIPS and AIPS data
+directories as well as FITS data directories.
+
