@@ -41,7 +41,7 @@ ObitScript = Proxy.ObitScriptP.ObitScript()
 # Use port 8000 or first command line argument
 print sys.argv
 if len(sys.argv)>1:
-    port = sys.argv[1]
+    port = int(sys.argv[1])
 else:
     port=8000
 

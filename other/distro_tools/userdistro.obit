@@ -65,6 +65,9 @@ $dumpdir = "/tmp" unless $dumpdir;
 %preload = ( 'el4' => [ 'libgsl.so.0', 'libgslcblas.so.0', 'libObit.so.1.1',
 			'libxmlrpc.so.3', 'libxmlrpc_util.so.3',
 			'libxmlrpc_xmlparse.so.3', 'libxmlrpc_xmltok.so.3',
+			'libxmlrpc_server.so.3','libxmlrpc_client.so.3',
+			'libxmlrpc_abyss.so.3','libxmlrpc_server_abyss.so.3',
+			'libxmlrpc_server_cgi.so.3',
 			'libplplot.so.11','libssl.so.4', 'libcrypto.so.4',
 			'libcfitsio.so.0', 'libfftw3f.so.3', 'libcurl.so.3',
 			'libglib-2.0.so.0', 'libgthread-2.0.so.0', 'libg2c.so.0' ],
@@ -79,7 +82,7 @@ else
     obittalk=ObitTalk
 fi' );
 
-%exec_script = ( 'ObitTalkServer' => 'exec $obittalk $OBITHOME/share/obittalk/python/XMLRPCServer.py',
+%exec_script = ( 'ObitTalkServer' => 'exec $obittalk $OBITHOME/share/obittalk/python/XMLRPCServer.py "$@"',
 		 'ObitView' => 'exec $installpath/lib/obit/ObitView  $*',
 		 'ObitMess' => 'exec $installpath/lib/obit/ObitMess  $*',
 		 'ObitTalk' => '
@@ -97,7 +100,8 @@ exec /usr/bin/python "$@"
 
 
 %mask_python_scripts = ( );
-@wrappers = ( 'ObitView', 'ObitTalk', 'ObitTalkServer', 'ObitMess' );
+@wrappersa = ( 'ObitView', 'ObitMess' );
+@wrappersb = ( 'ObitTalk', 'ObitTalkServer');
 
 $rhver = "";
 
@@ -216,70 +220,6 @@ foreach $rpm ( @$constituents ) {
 }
 
 
-##
-## rename qcasabrowser
-##
-sub rename_qcasabrowser {
-    if ( ! -d $_ && $_ eq "qcasabrowser" ) {
-	if ( -e "casabrowser" ) {
-	    system( "rm -rf casabrowser" );
-	}
-	rename( "qcasabrowser", "casabrowser" );
-    }
-}
-find( { wanted => \&rename_qcasabrowser }, "." );
-
-if ( -e "lib" ) {
-    if ( -d "lib" ) {
-	if ( ! -d "usr/lib" ) { mkpath "usr/lib"; }
-	system( "mv lib/* usr/lib" );
-    }
-    system("rm -rf lib");
-}
-
-if ( -e "lib64" ) {
-    if ( -d "lib64" ) {
-	if ( ! -d "usr/lib64" ) { mkpath "usr/lib64"; }
-	system( "mv lib64/* usr/lib64" );
-    }
-    system("rm -rf lib64");
-}
-
-system( "mv usr/* . && rmdir usr" );
-system( "mv lib$lib libsource" );
-system( "mv bin libsource" );
-system( "mv X11R6 libsource" );
-
-mkpath "lib$lib/$NAME";
-
-@from = ();
-@to = ();
-sub find_libs {
-    if ( -f $_ || -l $_ ) {
-	my $newdir = $File::Find::dir;
-	$newdir =~ s/libsource/lib$lib/;
-	push( @from, "$File::Find::dir/$_" );
-	if ( $File::Find::dir =~ m@libsource/bin@ ) {
-	    $newdir = "lib$lib/$NAME";
-	    push( @to, "$newdir/$_" );
-	} elsif ( $File::Find::dir =~ m@/X11R6@ ) {
-	    $newdir = "lib$lib";
-	    push( @to, "$newdir/$_" );
-	} elsif ( $File::Find::dir =~ m@/site-packages@ ) {
-	    $newdir = "lib$lib/obit/python";
-	    push( @to, "$newdir/$_" );
-	} else {
-	    push( @to, "$newdir/$_" );
-	}
-    }
-}
-
-find( { wanted => \&find_libs }, "libsource" );
-move_files(\@from,\@to);
-
-system( "rm -rf libsource" );
-system( "rm -f `find . -type f -name 'lib*.a'`" );
-rmdir( "lib/$NAME/lib" );
 
 ##
 ## set up preload state for wrappers...
@@ -305,7 +245,7 @@ if ( $preload ) {
 ##
 ## patch wrapper scripts
 ##
-foreach $script ( @wrappers ) {
+foreach $script ( @wrappersa ) {
 
     my $extra = '';
     if ( defined $extra_script{$script} ) {
@@ -322,13 +262,51 @@ foreach $script ( @wrappers ) {
     unlink( "bin/$script$tag" );
     open(NEW, "> $script");
 
-    ##
-    ## with casapy we need to specify the path, but not with the rest
-    ##
-    my $path_param = "";
-    if ( $script eq "casapy" ) {
-	$path_param = "--prepend-path \$installpath/lib$lib/python2.5:\$installpath/lib$lib/python2.5/heuristics:\$installpath/lib$lib/python2.5/site-packages:\$_PYTHONPATH";
+    print NEW <<EOF;
+#!/bin/sh
+
+name="\$0"
+while test -L "\$name"; do
+    newname=`readlink \$name`
+    name=`cd -P -- "\$(dirname -- "\$name")" && cd -P -- "\$(dirname -- "\$newname")" && echo \$(pwd -P)`/\$(basename -- \$name)
+done
+
+path=\$(dirname -- "\$name")
+installpath=`cd -P -- "\$path" && echo \$(pwd -P)`
+
+LD_LIBRARY_PATH=\$installpath/lib$lib:/lib$lib:/usr/lib$lib:\$LD_LIBRARY_PATH
+PATH="\$installpath/lib$lib/exec:\$installpath/lib$lib/$NAME/bin:/usr/bin:/usr/X11R6/bin:\$PATH"
+$extra
+
+$epreload
+
+$exec
+
+EOF
+
+    close( NEW );
+    system("chmod 755 $script");
+}
+
+##
+## Scripts needing to know about python and AIPS
+##
+foreach $script ( @wrappersb ) {
+
+    my $extra = '';
+    if ( defined $extra_script{$script} ) {
+	$extra = $extra_script{$script};
     }
+
+    my $exec = '';
+    if ( defined $exec_script{$script} ) {
+	$exec = $exec_script{$script};
+    } else {
+	die "must have an exec line...";
+    }
+
+    unlink( "bin/$script$tag" );
+    open(NEW, "> $script");
 
     print NEW <<EOF;
 #!/bin/sh
@@ -441,7 +419,10 @@ if ( "$lib" eq "64" ) {
 }
 mkpath "bin";
 chdir "bin";
-foreach $script ( @wrappers ) {
+foreach $script ( @wrappersa ) {
+    system( "ln -s ../$script" );
+}
+foreach $script ( @wrappersb ) {
     system( "ln -s ../$script" );
 }
 chdir "..";
