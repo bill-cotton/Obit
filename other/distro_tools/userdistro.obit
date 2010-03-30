@@ -70,7 +70,8 @@ $dumpdir = "/tmp" unless $dumpdir;
 			'libxmlrpc_server_cgi.so.3',
 			'libplplot.so.11','libssl.so.4', 'libcrypto.so.4',
 			'libcfitsio.so.0', 'libfftw3f.so.3', 'libcurl.so.3',
-			'libglib-2.0.so.0', 'libgthread-2.0.so.0', 'libg2c.so.0' ],
+			'libglib-2.0.so.0', 'libgthread-2.0.so.0', 'libg2c.so.0',
+			'libcsirocsa.so.0', 'libXm.so.3', 'libXp.so.6', 'libz.so.1'],
 	     'el5' => [  ],
 	   );
 
@@ -220,57 +221,6 @@ foreach $rpm ( @$constituents ) {
 }
 
 
-if ( -e "lib" ) {
-    if ( -d "lib" ) {
-	if ( ! -d "usr/lib" ) { mkpath "usr/lib"; }
-	system( "mv lib/* usr/lib" );
-    }
-    system("rm -rf lib");
-}
-
-if ( -e "lib64" ) {
-    if ( -d "lib64" ) {
-	if ( ! -d "usr/lib64" ) { mkpath "usr/lib64"; }
-	system( "mv lib64/* usr/lib64" );
-    }
-    system("rm -rf lib64");
-}
-
-system( "mv usr/* . && rmdir usr" );
-system( "mv lib$lib libsource" );
-system( "mv bin libsource" );
-system( "mv X11R6 libsource" );
-
-mkpath "lib$lib/$NAME";
-
-@from = ();
-@to = ();
-sub find_libs {
-    if ( -f $_ || -l $_ ) {
-	my $newdir = $File::Find::dir;
-	$newdir =~ s/libsource/lib$lib/;
-	push( @from, "$File::Find::dir/$_" );
-	if ( $File::Find::dir =~ m@libsource/bin@ ) {
-	    $newdir = "lib$lib/$NAME";
-	    push( @to, "$newdir/$_" );
-	} elsif ( $File::Find::dir =~ m@/X11R6@ ) {
-	    $newdir = "lib$lib";
-	    push( @to, "$newdir/$_" );
-	} elsif ( $File::Find::dir =~ m@/site-packages@ ) {
-	    $newdir = "lib$lib/obit/python";
-	    push( @to, "$newdir/$_" );
-	} else {
-	    push( @to, "$newdir/$_" );
-	}
-    }
-}
-
-find( { wanted => \&find_libs }, "libsource" );
-move_files(\@from,\@to);
-
-system( "rm -rf libsource" );
-system( "rm -f `find . -type f -name 'lib*.a'`" );
-rmdir( "lib/$NAME/lib" );
 
 ##
 ## set up preload state for wrappers...

@@ -884,15 +884,17 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
   if (err->error) return;
   g_assert (ObitImageMFIsA(in));
 
-  /* Create pixel arrays for accumulation */
-  imPix  = ObitFArrayCreate ("accum", 2, in->myDesc->inaxes);
-  if (addExt) extPix = ObitFArrayCreate ("accum", 2, in->myDesc->inaxes);
-
   /* Loop accumulating average */
   for (i=1+in->maxOrder; i<1+in->maxOrder+in->nSpec; i++) {
     plane[0] = i+1;
     ObitImageGetPlane ((ObitImage*)in, NULL, plane, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+    /* Create pixel arrays for accumulation first pass */
+    if (i==1+in->maxOrder) {
+      imPix  = ObitFArrayCreate ("accum", 2, in->myDesc->inaxes);
+      if (addExt) extPix = ObitFArrayCreate ("accum", 2, in->myDesc->inaxes);
+    }
 
     /* Accumulate */
     ObitFArrayAdd(imPix, in->image, imPix);

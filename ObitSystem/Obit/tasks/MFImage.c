@@ -2614,19 +2614,6 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
 		 "Imaging first IF to get target beam size");
   ObitErrLog(err); 
 
-  /* Set image size parameters from first image of CLEAN */
-  dim[0] = 1;dim[1] = 1;
-  xyCells = fabs(myClean->mosaic->images[0]->myDesc->cdelt[0])*3600.0;
-  ObitInfoListAlwaysPut (myInput, "xCells", OBIT_float, dim, &xyCells);
-  xyCells = fabs(myClean->mosaic->images[0]->myDesc->cdelt[1])*3600.0;
-  ObitInfoListAlwaysPut (myInput, "yCells", OBIT_float, dim, &xyCells);
-  ObitInfoListGetP(myInput, "nx",  &type, dim, (gpointer)&ipnt);
-  ipnt[0] = myClean->mosaic->images[0]->myDesc->inaxes[0];
-  ObitInfoListAlwaysPut (myInput, "nx", type, dim, ipnt);
-  ObitInfoListGetP(myInput, "ny",  &type, dim, (gpointer)&ipnt);
-  ipnt[0] = myClean->mosaic->images[0]->myDesc->inaxes[1];
-  ObitInfoListAlwaysPut (myInput, "ny", type, dim, ipnt);
-
   /* Copy data to scratch selecting 1 IF - weighting will modify */
   ObitInfoListGetTest(myInput, "BIF", &type, dim, &BIF);
   ObitInfoListGetTest(myInput, "EIF", &type, dim, &EIF);
@@ -2648,11 +2635,24 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
   /* Copy imaging info */
   ObitInfoListCopyList (myInput, scrUV->info, tmpParms);
 
+  /* Set image size parameters from first image of CLEAN */
+  dim[0] = 1;dim[1] = 1;
+  xyCells = -fabs(myClean->mosaic->images[0]->myDesc->cdelt[0])*3600.0;
+  ObitInfoListAlwaysPut (scrUV->info, "xCells", OBIT_float, dim, &xyCells);
+  xyCells = fabs(myClean->mosaic->images[0]->myDesc->cdelt[1])*3600.0;
+  ObitInfoListAlwaysPut (scrUV->info, "yCells", OBIT_float, dim, &xyCells);
+  ObitInfoListGetP(scrUV->info, "nx",  &type, dim, (gpointer)&ipnt);
+  ipnt[0] = myClean->mosaic->images[0]->myDesc->inaxes[0];
+  ObitInfoListAlwaysPut (scrUV->info, "nx", type, dim, ipnt);
+  ObitInfoListGetP(scrUV->info, "ny",  &type, dim, (gpointer)&ipnt);
+  ipnt[0] = myClean->mosaic->images[0]->myDesc->inaxes[1];
+  ObitInfoListAlwaysPut (scrUV->info, "ny", type, dim, ipnt);
+
    /* Scratch image */
   scrImage = ObitImageUtilCreateImage (scrUV, 1, TRUE, err);
   if (err->error) Obit_traceback_msg (err, routine, scrUV->name);
 
- /* Create temporary image */
+  /* Create temporary image */
   /* AIPS or FITS? */
   ObitInfoListGetP (myInput, "outDType", &type, dim, (gpointer)&Type);
   if ((Type==NULL) || (!strncmp(Type,"    ",4)))
@@ -2687,7 +2687,7 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
   /* Image first IF, Stokes "I" */
   dim[0] = strlen(Stokes);dim[1] = 1;
   ObitInfoListAlwaysPut (scrUV->info, "Stokes", OBIT_string, dim, Stokes);
-  ObitImageUtilMakeImage (scrUV, scrImage, 0, TRUE, TRUE, err);
+    ObitImageUtilMakeImage (scrUV, scrImage, 0, TRUE, TRUE, err);
   if (err->error) Obit_traceback_msg (err, routine, scrUV->name);
 
   /* Reset EIF, doCalSelect on inData */
@@ -2695,10 +2695,11 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
   ObitInfoListAlwaysPut (inData->info, "EIF",         OBIT_long, dim, &saveEIF);
   ObitInfoListAlwaysPut (inData->info, "doCalSelect", OBIT_bool, dim, &saveCalSelect);
 
-  /* Save Beam */
-  Beam[0] =  scrImage->myDesc->beamMaj * 3600.0;  /* to asec */
-  Beam[1] =  scrImage->myDesc->beamMin * 3600.0;
+  /* Save Beam - fudge a bit */
+  Beam[0] =  1.01*scrImage->myDesc->beamMaj * 3600.0;  /* to asec */
+  Beam[1] =  1.01*scrImage->myDesc->beamMin * 3600.0;
   Beam[2] =  scrImage->myDesc->beamPA;
+
   dim[0] = 3;dim[1] = 1;
   ObitInfoListAlwaysPut (myInput, "Beam", OBIT_float, dim, Beam);
   ObitInfoListAlwaysPut (inData->info,  "Beam", OBIT_float, dim, Beam);
