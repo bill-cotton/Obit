@@ -478,7 +478,7 @@ ObitDConCleanVisCreate2 (gchar* name, ObitUV *uvdata,
  * \li "minFlux" OBIT_float array  = Minimun flux density (Jy)  per field
  * \li "Factor"  OBIT_float array  = CLEAN depth factor per field
  * \li "autoCen" OBIT_float scalar = Threshold level for autocenter
- *               If peak exceeds this value the minFlux reset to 0.1*autoCen
+ *               If peak exceeds this value the minFlux reset to 0.09*autoCen
  * \li "Plane"   OBIT_long array    = Plane being processed, 1-rel indices of axes 3-?
  * \param in   The object to deconvolve
  * \param err Obit error stack object.
@@ -595,7 +595,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
     /* Does the peak flux density exceed the autocenter threshold */
     if (fabs (in->peakFlux) > in->autoCen) {
       for (i=0; i<in->nfield; i++) {
-	in->minFlux[i] = MAX (0.1*in->autoCen, in->minFlux[i]);
+	in->minFlux[i] = MAX (0.09*in->autoCen, in->minFlux[i]);
 	/* Value that counts is on the PxList */
 	in->Pixels->minFlux[i] = in->minFlux[i];
       }
@@ -802,7 +802,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
  * \li "Plane"   OBIT_long array    = Plane being processed, 1-rel indices of axes 3-?
  * \li "autoWindow" OBIT_boolean scalar = True if autoWindow feature wanted.
  * \li "autoCen" OBIT_float scalar = Threshold leven for autocenter
- *                 If peak exceeds this value the minFlux reset to 0.1*autoCen
+ *                 If peak exceeds this value the minFlux reset to 0.09*autoCen
  * \li "dispURL" OBIT_string scalar = URL of display server
  * \param in  The CLEAN object as base class
  * \param err Obit error stack object.

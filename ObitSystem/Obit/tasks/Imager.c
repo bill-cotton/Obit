@@ -1915,7 +1915,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
       ObitInfoListAlwaysPut (myClean->info, "autoCen", OBIT_float, dim, &ftemp);
       
       /* Need to recenter bright sources? */
-      if (myClean->peakFlux>autoCen) {
+      if ((myClean->peakFlux>autoCen) || (myClean->peakFlux> PeelFlux)) {
 	/* Compress CC files */
 	ObitSkyModelCompressCC (myClean->skyModel, err);
 	if (err->error) Obit_traceback_msg (err, routine, myClean->name);
@@ -1926,17 +1926,24 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 	reimage = ObitDConCleanVisReimage (myClean, inUV, err);
 	if (err->error) Obit_traceback_msg (err, routine, myClean->name);
 	
-	/* reImage/Clean */
+	/* Always reImage/Clean if you get here */
+	/* Don't need to remake beams  */
+	dim[0] = 1;dim[1] = 1;
+	ObitInfoListAlwaysPut(myClean->info, "doBeam", OBIT_bool, dim, &Fl);
+    
 	if (reimage) {      
-	  /* Don't need to remake beams  */
-	  dim[0] = 1;dim[1] = 1;
-	  ObitInfoListAlwaysPut(myClean->info, "doBeam", OBIT_bool, dim, &Fl);
- 
 	  Obit_log_error(err, OBIT_InfoErr, 
 			 "Redoing image/deconvolution to center strong source on pixel");
-	  ObitDConCleanVisDeconvolve ((ObitDCon*)myClean, err);
-	  if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+	} else {
+	  Obit_log_error(err, OBIT_InfoErr, 
+			 "AutoCenter false alarm - continue CLEANing");
+	  /* Reuse all prior components - note 0 here means none */
+	  ftemp  = 0.01*autoCen;
+	  dim[0] = 1;dim[1] = 1;
+	  ObitInfoListAlwaysPut (myClean->info, "reuseFlux", OBIT_float, dim, &ftemp);
 	}
+	ObitDConCleanVisDeconvolve ((ObitDCon*)myClean, err);
+	if (err->error) Obit_traceback_msg (err, routine, myClean->name);
 	
 	autoCen = 1.0e20;  /* only once */
       }
