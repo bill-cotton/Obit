@@ -85,8 +85,8 @@ else
 fi' );
 
 %exec_script = ( 'ObitTalkServer' => 'exec $obittalk $OBITHOME/share/obittalk/python/XMLRPCServer.py "$@"',
-		 'ObitView' => 'exec $installpath/lib/obit/ObitView  $*',
-		 'ObitMess' => 'exec $installpath/lib/obit/ObitMess  $*',
+		 'ObitView' => "exec \$installpath/lib$lib/obit/ObitView  \$*",
+		 'ObitMess' => "exec \$installpath/lib$lib/obit/ObitMess  \$*",
 		 'ObitTalk' => '
 # Run ObitTalk.py for interactive sessions
 PYTHONSTARTUP=$OBITHOME/share/obittalk/python/ObitTalk.py
@@ -97,8 +97,8 @@ exec /usr/bin/python "$@"
 		 
 
 
-%symlinks = ( 'el4' => { 'lib' => { 'libcrypto.so.0.9.7a' => 'libcrypto.so.4',
-				    'libssl.so.0.9.7a' => 'libssl.so.4' } } );
+%symlinks = ( 'el4' => { "lib$lib" => { 'libcrypto.so.0.9.7a' => 'libcrypto.so.4',
+					'libssl.so.0.9.7a' => 'libssl.so.4' } } );
 
 
 %mask_python_scripts = ( );
@@ -377,9 +377,9 @@ LD_LIBRARY_PATH=\$installpath/lib$lib:/lib$lib:/usr/lib$lib:\$LD_LIBRARY_PATH
 PATH="\$installpath/lib$lib/exec:\$installpath/lib$lib/$NAME/bin:/usr/bin:/usr/X11R6/bin:\$PATH"
 
 OBITHOME=\$installpath
-OBITEXEC=\$installpath/lib/obit
+OBITEXEC=\$installpath/lib$lib/obit
 
-__OBIT_PYTHONDIR="\$installpath/lib/obit/python"
+__OBIT_PYTHONDIR="\$installpath/lib$lib/obit/python"
 export PATH LD_LIBRARY_PATH OBITHOME OBITEXEC __OBIT_PYTHONDIR
 
 # Check whether AIPS is available.
