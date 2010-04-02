@@ -490,7 +490,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   gboolean done, fin=TRUE, quit=FALSE, doSub, bail, doMore, moreClean, notDone;
   gboolean redo;
   olong jtemp, i, *startCC=NULL, *newCC=NULL, count, ifld;
-  olong redoCnt=0;
+  olong redoCnt=0, damnCnt=0, lastIter, lastFld;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   const ObitDConCleanVisClassInfo *inClass;
   const ObitUVImagerClassInfo *imagerClass;
@@ -575,6 +575,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   in->doBeam = FALSE;                               /* Shouldn't need again */
 
   /* Restart CLEAN here if more CLEANable found at end */
+  damnCnt = lastIter = lastFld = 0;
  doRedo:
   in->Pixels->complCode = OBIT_CompReasonUnknown;   /* Clean not yet started */
   /* Create local arrays */
@@ -703,6 +704,27 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
     /* Subtract any components from visibility data */
     inClass->ObitDConCleanSub((ObitDConClean*)in, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+    /* Check for sombitch getting stuck */
+    if (((in->Pixels->currentIter-lastIter)==1) && 
+	(lastFld==in->currentFields[0])) {
+      damnCnt++;
+    } else {
+      damnCnt = 0;
+    }
+    lastIter = in->Pixels->currentIter;
+    lastFld = in->currentFields[0];
+    if (damnCnt>10) {
+      Obit_log_error(err, OBIT_InfoWarn,"CLEAN in trouble, disable field %d", lastFld);
+      in->quality[lastFld-1]   = -1.0;
+      in->cleanable[lastFld-1] = -1.0;
+      /* If this is a autoCenter 2D shifted image - get its twin */
+      if (in->mosaic->isShift[lastFld-1]>0) {
+	in->quality[in->mosaic->isShift[lastFld-1]-1]   = -1.0;
+	in->cleanable[in->mosaic->isShift[lastFld-1]-1] = -1.0;
+      }
+      damnCnt = 0;
+    }
 
   } /* end clean loop */
   if (in->prtLv>1) ObitErrLog(err);  /* Progress Report */
