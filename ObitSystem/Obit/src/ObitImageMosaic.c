@@ -1901,6 +1901,7 @@ void ObitImageMosaicFlagCC (ObitTableCC *CCTab, olong nccpos, ofloat radius,
 /**
  * Make a single field ImageMosaic corresponding to the field with
  * the highest summed peak of CCs if any above MinFlux.
+ * 2D autoCenter fields are adjusted by the value of autoCenFlux
  * Fields with 1-rel numbers in the zero terminated list ignore are ignored
  * \param mosaic   ImageMosaic to process
  * \param MinFlux  Min. flux density for operation.
@@ -1922,6 +1923,7 @@ ObitImageMosaic* ObitImageMosaicMaxField (ObitImageMosaic *mosaic,
   olong   maxField;
   olong  CCVer;
   ofloat tmax, xcenter, ycenter, xoff, yoff, radius, cells[2], maxCC;
+  ofloat addFlux = 0.0;
   gboolean forget;
   gchar *routine = "ObitImageMosaicMaxField";
 
@@ -1961,6 +1963,13 @@ ObitImageMosaic* ObitImageMosaicMaxField (ObitImageMosaic *mosaic,
     ObitImageOpen (mosaic->images[ifield], OBIT_IO_ReadWrite, err);
     if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, out);
 
+    /* If this is a 2D autocenter field add autoCenterFlux to test */
+    if ((!mosaic->images[ifield]->myDesc->do3D) && (mosaic->isAuto[ifield]>0)) {
+      addFlux = 0.0;
+      ObitInfoListGetTest(mosaic->images[ifield]->info, "autoCenFlux", &type, 
+			  dim, &addFlux);
+    }
+
     /* Make CC table object */
     noParms = 0;
     CCTab = newObitTableCCValue ("Temp CC", (ObitData*)mosaic->images[ifield],
@@ -1973,6 +1982,7 @@ ObitImageMosaic* ObitImageMosaicMaxField (ObitImageMosaic *mosaic,
     if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, out);
     
     /* this one of interest? */
+    tmax += addFlux;  /* 2D autocenter correction */
     if ((tmax > MinFlux) && (tmax > maxCC)) {
       maxCC = tmax;
       maxField = ifield;

@@ -715,7 +715,7 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
   ofloat curPA, tPA, tTime, bTime, fscale, PBCor, xx, yy;
   ofloat xr, xi, tr, ti, tri, tii;
   ofloat Ipol, Vpol, IpolPh=0.0, VpolPh=0.0, QpolPh=0.0, UpolPh=0.0;
-  ofloat fblank = ObitMagicF();
+  ofloat minPBCor=0.01, fblank = ObitMagicF();
   odouble x, y;
   VMBeamFTFuncArg *args;
   gchar *routine = "ObitSkyModelVMBeamUpdateModel";
@@ -837,12 +837,14 @@ void ObitSkyModelVMBeamUpdateModel (ObitSkyModelVM *inn,
     /* Interpolate gains -RR and LL as voltage gains */
     plane = in->FreqPlane[MIN(args->channel, in->numUVChann-1)];
     Ipol = ObitImageInterpValueInt (in->IBeam, args->BeamIInterp, x, y, curPA, plane, err);
+    if ((Ipol==fblank) || (fabs(Ipol)<0.001) || (fabs(Ipol)>1.1)) Ipol = minPBCor;
     /* Get primary beam correction for component */
     PBCor = getPBBeam(in->mosaic->images[ifield]->myDesc, xx, yy, in->antSize,  
-		      uvdata->myDesc->freqArr[kindex], 0.01) / Ipol;
+		      uvdata->myDesc->freqArr[kindex], minPBCor) / Ipol;
     if (in->IBeamPh)
       IpolPh = DG2RAD*ObitImageInterpValueInt (in->IBeamPh, args->BeamIPhInterp, x, y, curPA, plane, err);
     Vpol = ObitImageInterpValueInt (in->VBeam, args->BeamVInterp, x, y, curPA, plane, err);
+    if ((Vpol==fblank) || (fabs(Vpol)<0.001) || (fabs(Vpol)>0.5)) Vpol = minPBCor;
     if (in->VBeamPh)
       VpolPh = DG2RAD*ObitImageInterpValueInt (in->VBeamPh, args->BeamVPhInterp, x, y, curPA, plane, err);
     if (Ipol!=fblank) {

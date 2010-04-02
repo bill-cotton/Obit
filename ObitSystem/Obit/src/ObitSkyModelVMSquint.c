@@ -282,6 +282,8 @@ ObitSkyModelVMSquintCreate (gchar* name, ObitImageMosaic* mosaic)
     number = out->mosaic->numberImages;
     out->CCver = ObitMemAlloc0 (sizeof(olong)*number);
     for (i=0; i<number; i++) out->CCver[i] = 0;
+    if (out->startComp) ObitMemFree(out->startComp);
+    if (out->endComp)   ObitMemFree(out->endComp);
     out->startComp = ObitMemAlloc0 (sizeof(olong)*number);
     out->endComp   = ObitMemAlloc0 (sizeof(olong)*number);
   }

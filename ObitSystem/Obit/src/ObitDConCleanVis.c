@@ -2340,6 +2340,7 @@ gboolean ObitDConCleanVisAutoWindow(ObitDConClean *inn, olong *fields, ObitFArra
     /* Is this one in fields? */
     found = FALSE;
     for (j=0; j<in->nfield; j++) {
+      if (fields[j]==0) break;
       if ((fields[j]-1)==i) found = TRUE;
       /* Look for autoCenter/shifted pairs */
       if (in->mosaic->isAuto[i]  == (fields[j])) found = TRUE;

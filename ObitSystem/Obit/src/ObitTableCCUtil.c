@@ -930,7 +930,7 @@ ObitIOCode ObitTableCCUtilMerge (ObitTableCC *in, ObitTableCC *out,
 				 ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
-  olong size, fsize, number=0, ncomp;
+  olong i, size, fsize, number=0, ncomp;
   ofloat parms[20];
   ofloat *SortStruct = NULL;
   gboolean doSpec=TRUE, doTSpec=FALSE;
@@ -955,6 +955,7 @@ ObitIOCode ObitTableCCUtilMerge (ObitTableCC *in, ObitTableCC *out,
   }
 
   /* build sort structure from table */
+  for (i=0; i<20; i++) parms[i] = 0.0;
   SortStruct = MakeCCSortStruct (in, &size, &number, &ncomp, parms, err);
   if (err->error) goto cleanup;
 
@@ -1050,6 +1051,7 @@ ObitFArray* ObitTableCCUtilMergeSel (ObitTableCC *in, olong startComp,
   endComp   = MIN (in->myDesc->nrow, endComp);
 
   /* build sort structure from table */
+  for (i=0; i<20; i++) lparms[i] = 0;
   SortStruct = MakeCCSortStructSel (in, startComp, endComp, 
 				    &size, &number, &ncomp, lparms, 
 				    err);
@@ -1192,6 +1194,7 @@ ObitFArray* ObitTableCCUtilMergeSelSpec (ObitTableCC *in, olong startComp,
   endComp   = MIN (in->myDesc->nrow, endComp);
 
   /* build sort structure from table */
+  for (i=0; i<20; i++) lparms[i] = 0;
   SortStruct = MakeCCSortStructSel (in, startComp, endComp, 
 				    &size, &number, &ncomp, lparms, 
 				    err);

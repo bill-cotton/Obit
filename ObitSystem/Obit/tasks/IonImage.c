@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN a uv data set with field-based cal        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2009                                          */
+/*;  Copyright (C) 2006-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1620,7 +1620,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       if (err->error) Obit_traceback_msg (err, routine, outData->name);
 
       /* If 2D imaging concatenate CC tables */
-      if ((myClean->nfield>1) && (!myClean->mosaic->images[0]->myDesc->do3D))
+      if ((myClean->nfield>1) && (!myClean->mosaic->images[0]->myDesc->do3D) && doFlat)
 	ObitImageMosaicCopyCC (myClean->mosaic, err);
       
       /* Copy result to output */
@@ -1819,6 +1819,7 @@ void doFieldImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat       autoCen, PeelFlux, ftemp;
   gboolean     Fl = FALSE, Tr = TRUE, doRestore, doFlatten, reimage;
+  gboolean     doneRecenter=FALSE;
   gchar        *FCParms[] = {  /* Imaging parameters */
     "ionVer", "prtLv", 
     NULL
@@ -1865,7 +1866,7 @@ void doFieldImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
   ObitInfoListAlwaysPut (myClean->info, "autoCen", OBIT_float, dim, &ftemp);
 
   /* Need to recenter bright sources? */
-  if ((myClean->peakFlux>autoCen) || (myClean->peakFlux> PeelFlux)) {
+  if (((myClean->peakFlux>autoCen) || (myClean->peakFlux> PeelFlux)) && !doneRecenter) {
     /* Compress CC files */
     ObitSkyModelCompressCC (myClean->skyModel, err);
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
@@ -1896,6 +1897,7 @@ void doFieldImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     
     autoCen = 1.0e20;  /* only once */
+    doneRecenter = TRUE;
   } /* End auto center */
 
   /* Loop peeling sources */
@@ -2072,7 +2074,7 @@ void IonImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq",
     "outFile",  "outDisk", "outName", "outClass", "outSeq",
     "UVRange",  "timeRange",  "Robust",  "UVTaper",  "WtBox", "WtFunc", 
-    "BIF", "EIF", "BChan", "EChan",  "chInc", "chAvg", "BLFact", "BLFOV", 
+    "BIF", "EIF", "BChan", "EChan",  "chInc", "chAvg", "BLFact", "BLFOV",  "chAvg",
     "doCalSelect",  "doCalib",  "gainUse", "doBand ",  "BPVer",  "flagVer", 
     "doPol",  "doFull", "do3D", "Catalog",  "OutlierDist",  "OutlierFlux",  "OutlierSI",
     "OutlierSize",  "CLEANBox",  "Gain",  "minFlux",  "Niter",  "minPatch",
@@ -2176,6 +2178,7 @@ void IonImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
 /*       "BLFact"  OBIT_float  (1,1,1) Maximum time smearing factor       */
 /*       "BLFOV"   OBIT_float  (1,1,1) Field of view (radius, deg)        */
 /*                                     Default FOV or 0.5*lambda/25.0 m   */
+/*       "chAvg"   OBIT_long   (1,1,1) Number of chan to average [def 1]  */
 /*       "solPInt" OBIT_float  (1,1,1) Phase self-cal soln. interval (min)*/
 /*       "solAInt" OBIT_float  (1,1,1) Amp self-cal soln. interval (min)  */
 /*      inData    ObitUV to copy data from                                */
@@ -2199,6 +2202,8 @@ void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     /* Set parameters */
     ObitInfoListGetTest(myInput, "BLFOV",   &type, dim, &FOV);
     if (FOV<=0.0) ObitInfoListGetTest(myInput, "FOV",   &type, dim, &FOV);
+    ObitInfoListGetTest(myInput, "chAvg",   &type, dim, &NumChAvg);
+    NumChAvg = MAX (1, NumChAvg);
     ObitInfoListGetTest(myInput, "solInt",     &type, dim, &solPInt);
     solPInt /= 4.0;
     ObitInfoListGetTest(myInput, "PeelSolInt", &type, dim, &solAInt);

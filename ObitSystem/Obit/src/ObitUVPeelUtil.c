@@ -156,6 +156,11 @@ void ObitUVPeelUtilLoop (ObitInfoList* myInput, ObitUV* inUV,
     } else break;  
   }
 
+  /* Tell why quit */
+  Obit_log_error(err, OBIT_InfoErr, 
+		 "Brightest facet after peeling %g Jy/bm", myClean->peakFlux);
+  ObitErrLog(err); 
+
   /* Loop appending components in CC Table 2 of peeled fields to Table 1 */
   for (i=0; i<myClean->mosaic->numberImages; i++) {
     /* Keep track of unpeeled components */
@@ -397,20 +402,15 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     /* Trap Ion variation  SkyModel */
     if (ObitSkyModelVMIonIsA(myClean->skyModel)) {
       skyModelClass = (const ObitSkyModelClassInfo*)ObitSkyModelGetClass();
+    /* Trap VMSquint variations 
+       I don't know why this seemed needed */
+    } else if (ObitSkyModelVMSquintIsA(myClean->skyModel)) {
+      skyModelClass = (const ObitSkyModelClassInfo*)ObitSkyModelGetClass();
     } else {
       skyModelClass = (const ObitSkyModelClassInfo*)myClean->skyModel->ClassInfo;
     }
     tmpSkyModel   = skyModelClass->ObitSkyModelCreate("Peel SkyModel", tmpMosaic);
     if (err->error) goto cleanup;
-
-    /* Create temp SkyModel - use regular basal */
-    /* Trap VMSquint variations 
-       I don't know why this seemed ne
-       if (ObitSkyModelVMIsA(myClean->skyModel)) {
-       skyModelClass = (const ObitSkyModelClassInfo*)ObitSkyModelGetClass();
-       } else {
-       skyModelClass = (const ObitSkyModelClassInfo*)myClean->skyModel->ClassInfo;
-       }*/
 
     /* Use DFT model */
     dim[0] = dim[1] = 1;
@@ -573,7 +573,11 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
 
     /* Create model dataset with the model corrupted by the fitted SN soln */
     /* Work file with zeroed data */
+    /* Pass all input data */
+    dim[0] = 1; 
+    ObitInfoListAlwaysPut (inUV->info, "passAll", OBIT_bool, dim, &Tr);
     tmpUV = ObitUVUtilCopyZero(inUV, TRUE, NULL, err);
+    ObitInfoListAlwaysPut (inUV->info, "passAll", OBIT_bool, dim, &Fl);
     if (err->error) goto cleanup;
 
     /* Use all components on peel field */
@@ -631,9 +635,9 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     ObitUVUtilVisSub(inUV, tmpUV, inUV, err);
     if (err->error) goto cleanup;
     ObitUVUnref(tmpUV);  /* Done with tmpUV */
-    
+
     peeled = peelField;  /* Peel occured on field peelField */
-    
+        
     /*  Reimage Stokes I */ 
     dim[0] = 4;
     stemp[0] = 'I'; stemp[1] = stemp[2] = stemp[3] = ' ';  stemp[4] = 0;

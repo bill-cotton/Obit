@@ -1712,7 +1712,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
     
     /* If 2D imaging or single Fly's eye facet then concatenate CC tables */
-    if (myClean->nfield>1) {
+    if ((myClean->nfield>1) && doFlat) {
       if ((!myClean->mosaic->images[0]->myDesc->do3D) || 
 	  (myClean->mosaic->nFlyEye==1))
 	ObitImageMosaicCopyCC (myClean->mosaic, err);
@@ -1814,6 +1814,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gboolean     Fl = FALSE, Tr = TRUE, init=TRUE, doRestore, doFlatten, doSC;
   gboolean     noSCNeed, reimage, didSC=FALSE, imgOK, doBeam, converged = FALSE;
+  gboolean     doneRecenter=FALSE;
   gchar        Stokes[5], soltyp[5], solmod[5], stemp[5];
   gchar        *include[] = {"AIPS FG", NULL};
   gchar        *SCParms[] = {  /* Self parameters */
@@ -1953,7 +1954,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
       ObitInfoListAlwaysPut (myClean->info, "autoCen", OBIT_float, dim, &ftemp);
       
       /* Need to recenter bright sources? */
-      if ((myClean->peakFlux>autoCen) || (myClean->peakFlux> PeelFlux)) {
+      if (((myClean->peakFlux>autoCen) || (myClean->peakFlux> PeelFlux)) && !doneRecenter) {
 	/* Compress CC files */
 	ObitSkyModelCompressCC (myClean->skyModel, err);
 	if (err->error) Obit_traceback_msg (err, routine, myClean->name);
@@ -1984,7 +1985,8 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 	if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     
 	autoCen = 1.0e20;  /* only once */
-      }/* End auto center */
+ 	doneRecenter = TRUE;
+     }/* End auto center */
       
       /* Convergence test */
       if (doSC) {
@@ -2414,7 +2416,7 @@ void BeamCorHistory (gchar *Source, ObitInfoList* myInput,
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
     "doPol",  "Catalog",  "OutlierDist",  "OutlierFlux",  "OutlierSI",
     "OutlierSize",  "CLEANBox",  "Gain",  "minFlux",  "Niter",  "minPatch",
-    "ccfLim", "SDIGain", "BLFact", "BLFOV", 
+    "ccfLim", "SDIGain", "BLFact", "BLFOV", "chAvg",
     "Reuse", "autoCen", "Beam",  "Cmethod",  "CCFilter",  "maxPixel", 
     "PBCor", "antSize", "doRestore", "doFull", "do3D", 
     "autoWindow", "subA",  "Alpha",
@@ -2620,6 +2622,7 @@ void BeamCorStats (ObitInfoList* myInput, ObitImage *outImage[4],
 /*       "BLFact"  OBIT_float  (1,1,1) Maximum time smearing factor       */
 /*       "BLFOV"   OBIT_float  (1,1,1) Field of view (radius, deg)        */
 /*                                     Default FOV or 00.5*lambda/25.0 m  */
+/*       "chAvg"   OBIT_long   (1,1,1) Number of chan to average [def 1]  */
 /*       "solPInt" OBIT_float  (1,1,1) Phase self-cal soln. interval (min)*/
 /*       "solAInt" OBIT_float  (1,1,1) Amp self-cal soln. interval (min)  */
 /*      inData    ObitUV to copy data from                                */

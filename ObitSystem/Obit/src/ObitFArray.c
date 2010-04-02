@@ -3182,7 +3182,7 @@ static gpointer ThreadFAConvGaus (gpointer arg)
     indx = loElem*in->naxis[0];  /* image array index */
 
     /* Loop over array convolving */
-    for (iy = loElem; iy<hiElem; iy++) {
+    for (iy = loElem; iy<=hiElem; iy++) {
       dy = iy - table[1];   /* y offset */
       for (ix = 0; ix<in->naxis[0]; ix++) {
 	dx = ix - table[0];   /* x offset */
