@@ -1961,7 +1961,7 @@ gboolean ObitDConCleanVisRecenter (ObitDConCleanVis *in, ObitUV* uvdata,
   ObitTableCC *CCTab=NULL;
   ObitImageDesc *imDesc;
   ObitImageMosaic *mosaic = in->mosaic;
-  ofloat tol;
+  ofloat tol, autoCenFlux;
   gint32 dim[MAXINFOELEMDIM];
   ObitInfoType type;
   olong   nfield, ifield, itemp, noParms, nccpos, nprior;
@@ -2020,6 +2020,8 @@ gboolean ObitDConCleanVisRecenter (ObitDConCleanVis *in, ObitUV* uvdata,
     /* Is this an autoCenter field with CLEAN components? */
     autoCen = FALSE;
     ObitInfoListGetTest(mosaic->images[ifield]->info, "autoCenField", &type, dim, &autoCen);
+    autoCenFlux = 1.0e20;
+    ObitInfoListGetTest(mosaic->images[ifield]->info, "autoCenFlux",  &type, dim, &autoCenFlux);
     if (CCTab->myDesc->nrow>0) {
       
       /* Check Table */
@@ -2031,6 +2033,7 @@ gboolean ObitDConCleanVisRecenter (ObitDConCleanVis *in, ObitUV* uvdata,
       /* See if shift needed - if more then 2 cells this is probably a mistake */
       want = ((fabs(xcenter+xoff)>tol*cells[0]) || (fabs(ycenter+yoff)>tol*cells[1]));
       want = want && (fabs(xcenter)<2.0) && (fabs(ycenter)<2.0);
+      want = want && (tmax>=autoCenFlux);   /* Might have been peeled */
       if (want) {
 	imDesc = mosaic->images[ifield]->myDesc;
 	

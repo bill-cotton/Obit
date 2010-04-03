@@ -505,6 +505,10 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     ObitUVSelfCalFluxHist(selfCal, scrUV, err);
     if (err->error) goto cleanup;
     
+    /* Initial CLEAN of peel field - using residual data */
+    ObitDConCleanVisDeconvolve ((ObitDCon*)tmpClean, err);
+    if (err->error) goto cleanup;
+
     /* How many loops? */
     MaxSCLoop=1;
     ObitInfoListGetTest (myInput, "PeelLoop", &type, dim, &MaxSCLoop);
