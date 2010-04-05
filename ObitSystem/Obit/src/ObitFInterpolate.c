@@ -440,7 +440,7 @@ ofloat ObitFInterpolatePixel (ObitFInterpolate *in, ofloat *pixel, ObitErr *err)
     } /* end loop  L210: */
     
     /* accumulate */
-    if (row[i] != fblank) {
+    if (row[i-1] != fblank) {
       if (abs (den) > 1.0e-10) {
 	wt = prod / den;
       } else {
