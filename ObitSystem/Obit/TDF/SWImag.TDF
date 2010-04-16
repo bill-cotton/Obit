@@ -90,8 +90,8 @@ Alpha           -20.       20.      Spectral Index to correct
 BLFact                              Baseline dependent time factor
 **PARAM** float 1
 BLFOV             0.0       180.    Radius averaging FOV (deg)
-**PARAM** int 1  **DEF** 1
-chAvg                               Number of channels to average.
+**PARAM** boo 1  **DEF** F 
+BLchAvg                             If True, and BLFact >1.0 then also
 **PARAM** str 4
 outDType                            "FITS" or "AIPS" type of output
 **PARAM** str 48 **DEF** .fits
@@ -392,9 +392,9 @@ Adverbs:
   BLFOV......The radius of the field of view over which baseline 
              dependent averaging is not to distort amplitudes by more 
              than BLFact. Defaults to FOV.
-   chAvg......If doing baseline dependent averaging then also average 
-             selected channels in groups of chAvg.  Note: larger values 
-             will give more bandwidth smearing.
+  BLchAvg....If doing baseline dependent averaging then also average 
+             selected channels by no more than will give bandwidth 
+             smearing of BLFact.
  doFull.....If True make full field (flattened) image
 
       Output files

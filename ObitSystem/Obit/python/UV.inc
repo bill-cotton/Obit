@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for UV  type                               */
 /*                                                                    */
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -37,6 +37,8 @@
 #include "ObitUVEdit.h"
 #include "ObitUVWeight.h"
 #include "ObitTableSNUtil.h"
+#include "ObitTableNXUtil.h"
+#include "ObitTableFG.h"
 %}
 
 
@@ -321,6 +323,42 @@ extern float UVUtilVisCompare(ObitUV* in1, ObitUV *in2, ObitErr *err) {
 extern void UVUtilIndex(ObitUV* inUV, ObitErr *err) {
   return ObitUVUtilIndex (inUV, err);
 } // end UVUtilVisIndex
+
+extern void UVUtilQuack(ObitUV* inUV, float begDrop, float endDrop,
+	char *Reason, long fgver, ObitErr *err) {
+  olong ver;
+  ofloat ftemp;
+  ObitTableNX *NXTab = NULL;
+  ObitTableFG *FGTab = NULL;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *routine = "UVUtilQuack";
+
+  ObitUVFullInstantiate (inUV, TRUE, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
+  // Tables 
+  ver = 1;
+  NXTab = newObitTableNXValue ("Index table", (ObitData*)inUV, &ver, 
+			       OBIT_IO_ReadOnly, err);
+  ver = fgver;
+  FGTab = newObitTableFGValue ("Flag table", (ObitData*)inUV, &ver, 
+			       OBIT_IO_ReadWrite, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
+  // Editing parameters to NXTab 
+  dim[0] = 1;
+  ftemp = begDrop;
+  ObitInfoListAlwaysPut (NXTab->info, "begDrop", OBIT_float, dim, &ftemp);
+  ftemp = endDrop;
+  ObitInfoListAlwaysPut (NXTab->info, "endDrop", OBIT_float, dim, &ftemp);
+  dim[0] = MIN(24, strlen(Reason));
+  ObitInfoListAlwaysPut (NXTab->info, "Reason", OBIT_string, dim, Reason);
+
+  // Do editing 
+  ObitTableNXUtilQuack (NXTab, FGTab, inUV->mySel, inUV->myDesc->maxAnt, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+} // end UVUtilQuack
 
 extern ObitUV* UVUtilAvgF(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
   gboolean lscratch;

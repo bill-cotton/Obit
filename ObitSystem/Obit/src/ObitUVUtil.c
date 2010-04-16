@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -31,7 +31,7 @@
 #include "ObitTableNXUtil.h"
 #include "ObitTablePSUtil.h"
 #include "ObitTableFQUtil.h"
-#include "ObitTableAN.h"
+#include "ObitTableANUtil.h"
 #include "ObitTableFG.h"
 #include "ObitPrecess.h"
 #include "ObitUVSortBuffer.h"
@@ -3070,7 +3070,7 @@ ObitIOCode ObitUVUtilFlag (ObitUV *inUV, ObitErr *err)
     if (stokes[0]!='0') FlagRow->pFlags[0] += 1;
     if (stokes[1]!='0') FlagRow->pFlags[0] += 2;
     if (stokes[2]!='0') FlagRow->pFlags[0] += 4;
-    if (stokes[4]!='0') FlagRow->pFlags[0] += 8;
+    if (stokes[3]!='0') FlagRow->pFlags[0] += 8;
   }
   
   /* write row */
@@ -3224,6 +3224,107 @@ void ObitUVUtilAppend(ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitInfoListAlwaysPut (outUV->info, "nVisPIO", OBIT_long, dim,  &outNPIO);
 
 } /* end ObitUVUtilAppend */
+
+#ifndef VELIGHT
+#define VELIGHT 2.997924562e8
+#endif /* VELIGHT */
+/**
+ *  How many channels can I average
+ * \param inUV    Input UV 
+ * \param maxFact Maximum allowed bandwith smearing amplitude loss
+ * \param FOV     Radius of desired FOV (deg)
+ * \param err     Error stack
+ */
+olong ObitUVUtilNchAvg(ObitUV *inUV, ofloat maxFact, ofloat FOV, ObitErr *err)
+{
+  olong out=1;
+  ObitIOCode iretCode;
+  ObitUVDesc *inDesc;
+  ObitTableAN *ANTable=NULL;
+  ObitAntennaList **AntList=NULL;
+  olong i, j, numSubA, iANver,numOrb, numPCal;
+  ofloat chBW, maxBL, BL, fact, beta, tau;
+  odouble lowFreq;
+  gchar *routine = "ObitUVUtilNchAv";
+
+  /* error checks */
+  if (err->error) return out;
+  g_assert (ObitUVIsA(inUV));
+
+  /* test open to fully instantiate input and see if it's OK */
+  ObitUVFullInstantiate (inUV, TRUE, err);
+  iretCode = ObitUVOpen (inUV, OBIT_IO_ReadCal, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error))
+    Obit_traceback_val (err, routine, inUV->name, out);
+
+  /* Get descriptor */
+  inDesc = inUV->myDesc;
+
+  /* Channel bandwidth */
+  chBW = inDesc->cdelt[inDesc->jlocf];
+
+  /* Min (ref) frequency */
+  lowFreq = inDesc->freq;
+
+  /* Antenna List 
+     How many AN tables (no. subarrays)?  */
+  numSubA = ObitTableListGetHigh (inUV->tableList, "AIPS AN");
+  AntList = g_malloc0(numSubA*sizeof(ObitAntennaList*));
+  maxBL = 0.0;
+
+  /* Loop over AN tables (subarrays) */
+  for (iANver=1; iANver<=numSubA; iANver++) {
+    numOrb   = 0;
+    numPCal  = 0;
+
+    ANTable = newObitTableANValue ("AN table", (ObitData*)inUV, 
+				   &iANver, OBIT_IO_ReadOnly, numOrb, numPCal, err);
+    if (ANTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with AN table");
+    AntList[iANver-1] = ObitTableANGetList (ANTable, err);
+    if (err->error) Obit_traceback_val (err, routine, inUV->name, out);
+    
+    /* Cleanup */
+    ANTable = ObitTableANUnref(ANTable);
+
+    /* Find maximum baseline */
+    for (i=0; i<AntList[iANver-1]->number-1; i++) {
+      for (j=i+1; j<AntList[iANver-1]->number; j++) {
+	BL = 
+	  (AntList[iANver-1]->ANlist[i]->AntXYZ[0]-AntList[iANver-1]->ANlist[j]->AntXYZ[0]) *
+	  (AntList[iANver-1]->ANlist[i]->AntXYZ[0]-AntList[iANver-1]->ANlist[j]->AntXYZ[0]) + 
+	  (AntList[iANver-1]->ANlist[i]->AntXYZ[1]-AntList[iANver-1]->ANlist[j]->AntXYZ[1]) *
+	  (AntList[iANver-1]->ANlist[i]->AntXYZ[1]-AntList[iANver-1]->ANlist[j]->AntXYZ[1]) + 
+	  (AntList[iANver-1]->ANlist[i]->AntXYZ[2]-AntList[iANver-1]->ANlist[j]->AntXYZ[2]) *
+	  (AntList[iANver-1]->ANlist[i]->AntXYZ[2]-AntList[iANver-1]->ANlist[j]->AntXYZ[2]);
+	maxBL = MAX (maxBL, BL);
+      }
+    }
+  } /* End loop over subarrays */
+  maxBL = sqrt(maxBL);
+  /* Cleanup */
+  if (AntList) {
+    for (i=0; i<numSubA; i++) {
+      AntList[i] = ObitAntennaListUnref(AntList[i]);
+    }
+    g_free(AntList);
+  }
+
+  /* Close up */
+  iretCode = ObitUVClose (inUV, err);
+  if ((iretCode!=OBIT_IO_OK) || (err->error)) 
+    Obit_traceback_val (err, routine, inUV->name, out);
+
+  /* Calculate number of channels to average */
+  tau = sin(FOV*DG2RAD) * maxBL / VELIGHT;  /* Maximum delay across FOV */
+  for (i=2; i<=inDesc->inaxes[inDesc->jlocf]; i++) {
+    beta = i * chBW;
+    fact = (G_PI*beta*tau) / fabs(sin(G_PI*beta*tau));
+    if (fact>maxFact) break;
+    out = i;
+  }
+  
+  return out;
+} /* end ObitUVUtilNchAvg */
 
 /*----------------------Private functions---------------------------*/
 /**

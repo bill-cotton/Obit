@@ -1260,6 +1260,31 @@ def PUtilIndex (inUV, err, maxScan=None, maxGap=None):
         OErr.printErrMsg(err, "Error indexing UV data")
     # end PUtilIndex
 
+def PQuack (inUV, err, begDrop=0.0, endDrop=0.0, Reason="    ", flagVer=1):
+    """ Flags beginning and/or end of scans
+
+    inUV    = Python UV object to index
+              Selection of source, timerange, IF, channels etc. honored
+              Scans are as defined in the iNdeX table
+    err     = Python Obit Error/message stack
+    begDrop = time in min to drop from the start of each scan
+    endDrop = time in min to drop from the end of each scan
+    Reason  = Reason string for FG tabls (max. 24 char)
+    flagVer = AIPS FG table in which to put entries.
+    """
+    ################################################################
+    # Checks
+    if not inUV.UVIsA():
+        raise TypeError,"inUV MUST be a Python Obit UV"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    Obit.UVUtilQuack(inUV.cast(myClass), begDrop, endDrop, Reason,
+                     flagVer, err.me)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error Quacking UV data")
+    # end PQuack
+
 def PUtilAvgF (inUV, outUV, err, scratch=False, 
                NumChAvg=0, doAvgAll=False, ChanSel=None):
     """ Average A UV data set in Frequency

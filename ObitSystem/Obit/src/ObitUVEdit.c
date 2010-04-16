@@ -146,11 +146,11 @@ static ofloat MedianUVInt (ObitUV *inUV, ObitErr *err);
 static ofloat MedianLevel (olong n, ofloat *value, ofloat alpha);
 
 /** Private: Determine sigma for Median */
-static ofloat MedianSigma (olong n, ofloat *value, ofloat mean);
+static ofloat MedianSigma (olong n, ofloat *value, ofloat mean, ofloat alpha);
 
 /** Private: Median flagging */
 static olong MedianFlag (ofloat *devs, ofloat flagSig, 
-			olong numBL, olong numCorr,
+			olong numBL, olong numCorr, gboolean allFlag,
 			ofloat time, ofloat timeInt,
 			olong *BLAnt1, olong *BLAnt2, 
 			olong *Chan, olong *IFs, olong *Stoke,
@@ -3309,6 +3309,7 @@ ObitUV* ObitUVEditClipStokes (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
  * \li "begIF"    OBIT_int    (1,1,1) First IF in data [ def. 1]
  *                This takes into account any previous selection
  * \li "begChan"  OBIT_int    (1,1,1) First channel in data [ def. 1]
+ * \li "allChan"  OBIT_boo    (1,1,1) If true, flag all channels [ def. FALSE]
  *
  * \param inUV    Input uv data to edit. Any prior selection/calibration applied.
  * \param outUV   UV data onto which the FG table is to be attached.
@@ -3339,6 +3340,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   olong indx, jndx;
   olong numCell, ncorr, numAnt, numBL, blindx, ant1, ant2;
   gboolean gotOne, done, scanDone, scanStartDone, newTime, bufferFull, btemp;
+  gboolean allChan = FALSE;
   ofloat *times=NULL, *devs=NULL, *amps=NULL, *Buffer, fblank = ObitMagicF();
   ofloat *work=NULL;
   olong *Chan=NULL, *IFs=NULL, *Stoke=NULL, visNo=-1;
@@ -3369,6 +3371,8 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitInfoListGetTest(inUV->info, "begIF", &type, dim, &begIF);
   begChan = 1;
   ObitInfoListGetTest(inUV->info, "begChan", &type, dim, &begChan);
+  allChan = FALSE;
+  ObitInfoListGetTest(inUV->info, "allChan", &type, dim, &allChan);
   /* Window Time interval */
   timeWind = 1.0;  /* default 1 min */
   ObitInfoListGetTest(inUV->info, "timeWind", &type, dim, &timeWind);
@@ -3380,7 +3384,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   /* flagging sigma */
   flagSig = 10.0;
   ObitInfoListGetTest(inUV->info, "flagSig", &type, dim,  &flagSig);  
-  flagSig = flagSig*flagSig;  /* to variance */
+  /* No - flagSig = flagSig*flagSig;  to variance */
   /* Previous averaging time */
   timeAvg = 0.0;
   ObitInfoListGetTest(inUV->info, "timeAvg", &type, dim,  &timeAvg);  
@@ -3610,7 +3614,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  for (it=0; it<=itDone; it++) {
 	    checked  += MedianDev (amps, it, times, numBL, ncorr, numTime, ntime, alpha, devs, work,
 				   nThread, args, err);
-	    countBad += MedianFlag (devs, flagSig, numBL, ncorr, times[it], timeAvg, 
+	    countBad += MedianFlag (devs, flagSig, numBL, ncorr, allChan, times[it], timeAvg, 
 				    BLAnt1, BLAnt2, Chan, IFs, Stoke, outFlag, row, err);
 	    if (err->error) goto cleanup;
 	  }
@@ -3624,7 +3628,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	    if (times[it]>times[itDone]) {
 	      checked  += MedianDev (amps, it, times, numBL, ncorr, numTime, ntime, alpha, devs, work,
 				     nThread, args, err);
-	      countBad += MedianFlag (devs, flagSig, numBL, ncorr, times[it], timeAvg, 
+	      countBad += MedianFlag (devs, flagSig, numBL, ncorr, allChan, times[it], timeAvg, 
 				      BLAnt1, BLAnt2, Chan, IFs, Stoke, outFlag, row, err);
 	      if (err->error) goto cleanup;
 	    }
@@ -3645,7 +3649,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  if (itDone>=ntime) itDone = 0;
 	  checked  += MedianDev (amps, itDone, times, numBL, ncorr, numTime, ntime, alpha, devs, work,
 				 nThread, args, err);
-	  countBad += MedianFlag (devs, flagSig, numBL, ncorr, times[itDone], timeAvg, 
+	  countBad += MedianFlag (devs, flagSig, numBL, ncorr, allChan, times[itDone], timeAvg, 
 				  BLAnt1, BLAnt2, Chan, IFs, Stoke, outFlag, row, err);
 	  if (err->error) goto cleanup;
 	}
@@ -4607,7 +4611,7 @@ static ofloat MedianUVInt (ObitUV *inUV, ObitErr *err)
 } /* end MedianUVInt */
 
 /**
- * Determine deviations in sigma from (alpha) median  
+ * Determine deviations in sigma from (alpha) median for a given time 
  * \param amps    Circular amplitude storage (baseline,correlator,time)
  * \param itime   time slice of interest
  * \param times   times of data samples, <-1000 => ignore
@@ -4620,7 +4624,7 @@ static ofloat MedianUVInt (ObitUV *inUV, ObitErr *err)
  *               center data samples are ignored and the rest averaged).
  * \param devs   [out] Deviations in sigma per baseline/correlator
  *               fblank => not determined
- * \param work   work array at least the size of ntime
+ * \param work   work array at least the size of ntime per thread
  * \param nThread Number of threads to use
  * \param args    Array of thread arguments
  * \param err     Error stack, returns if  error.
@@ -4751,7 +4755,7 @@ static ofloat MedianLevel (olong n, ofloat *value, ofloat alpha)
 
   out = value[n/2];
 
-  beta = MAX (0.05, MIN (0.95, alpha)) / 2.0; /*  Average around median factor */
+  beta = MAX (0.05, MIN (0.95, 1.0-alpha)) / 2.0; /*  Average around median factor */
 
   /* Average around the center */
   i1 = MAX (0, (n/2)-(olong)(beta*n+0.5));
@@ -4774,26 +4778,30 @@ static ofloat MedianLevel (olong n, ofloat *value, ofloat alpha)
 
 /**
  * Determine robust RMS value of a ofloat array about mean
- * Use center 90% of points, excluding at least one point from each end
+ * Use center 1-alpha of points, excluding at least one point from each end
  * \param n       Number of points, needs at least 4
  * \param value   Array of values assumed sorted
  * \param mean    Mean value of value
+ * \param alpha   0 -> 1 = pure boxcar -> pure MWF (ALPHA of the 
+ *                data samples are discarded and the rest averaged). 
  * \return RMS value, fblank if cannot determine
  */
-static ofloat MedianSigma (olong n, ofloat *value, ofloat mean)
+static ofloat MedianSigma (olong n, ofloat *value, ofloat mean, ofloat alpha)
 {
   ofloat fblank = ObitMagicF();
   ofloat out;
-  ofloat sum;
+  ofloat sum, beta;
   olong i, i1, i2, count;
 
   out = fblank;
   if (n<=4) return out;
   if (mean==fblank) return out;
 
-  /* Get RMS around the center 90% */
-  i1 = MAX (1,   (n/2)-(olong)(0.45*n+0.5));
-  i2 = MIN (n-1, (n/2)+(olong)(0.45*n+0.5));
+  beta = MAX (0.05, MIN (0.95, 1.0-alpha)) / 2.0; /*  Average around median factor */
+
+  /* Get RMS around the center 1-alpha */
+  i1 = MAX (1,   (n/2)-(olong)(beta*n+0.5));
+  i2 = MIN (n-1, (n/2)+(olong)(beta*n+0.5));
 
   if (i2>i1) {
     sum = 0.0;
@@ -4816,6 +4824,9 @@ static ofloat MedianSigma (olong n, ofloat *value, ofloat mean)
  * \param devs    Deviations in sigma per baseline/correlator
  *                fblank => not determined
  * \param flagSig Flagging level in devs
+ * \param numBL   Number of baselines
+ * \param numCorr Number of correlators
+ * \param allChan If TRUE flag all channels
  * \param time    Time of this time interval
  * \param timeInt Width in time to flag
  * \param BLAnt1  First antenna number of baseline
@@ -4832,12 +4843,12 @@ static ofloat MedianSigma (olong n, ofloat *value, ofloat mean)
  * \return number of baselines/correlations flagged
  */
 static olong MedianFlag (ofloat *devs, ofloat flagSig, 
-			olong numBL, olong numCorr,
-			ofloat time, ofloat timeInt,
-			olong *BLAnt1, olong *BLAnt2, 
-			olong *Chan, olong *IFs, olong *Stoke,
-			ObitTableFG *FGtab, ObitTableFGRow *FGrow, 
-			ObitErr *err)
+			 olong numBL, olong numCorr, gboolean allChan,
+			 ofloat time, ofloat timeInt,
+			 olong *BLAnt1, olong *BLAnt2, 
+			 olong *Chan, olong *IFs, olong *Stoke,
+			 ObitTableFG *FGtab, ObitTableFGRow *FGrow, 
+			 ObitErr *err)
 {
   olong out = 0;
   olong  iBL, icorr, indx, jndx, kndx;
@@ -4870,8 +4881,13 @@ static olong MedianFlag (ofloat *devs, ofloat flagSig,
 	FGrow->ants[1]  = BLAnt2[iBL]; 
 	FGrow->ifs[0]   = IFs[jndx];
 	FGrow->ifs[1]   = IFs[jndx+1];
-	FGrow->chans[0] = Chan[jndx];
-	FGrow->chans[1] = Chan[jndx+1];
+	if (allChan) {
+	  FGrow->chans[0] = 1;
+	  FGrow->chans[1] = 0;
+	} else {
+	  FGrow->chans[0] = Chan[jndx];
+	  FGrow->chans[1] = Chan[jndx+1];
+	}
 	FGrow->pFlags[0]=FGrow->pFlags[1]=FGrow->pFlags[2]=FGrow->pFlags[3]=0; 
 	/* bit flag implementation kinda screwy */
 	if (Stoke[kndx]==1) FGrow->pFlags[0] |= 1<<(0);
@@ -5132,10 +5148,10 @@ static gpointer ThreadMedianDev (gpointer arg)
       } else {         /* yes */
 	level = MedianLevel (count, work, alpha);
 	delta = fabs(amps[jndx] - level);
-	sigma = MedianSigma (count, work, level);
+	sigma = MedianSigma (count, work, level, alpha);
 	/* Don't go overboard - min 0.1% */
-	sigma = MAX (0.001*level, sigma);
-	if (sigma>0.0) {
+	if (level!=fblank) sigma = MAX (0.001*level, sigma);
+	if ((sigma>0.0) && (level!=fblank)) {
 	  devs[indx] = delta/sigma;
 	  out++;   /* Count valid data */
 	} else devs[indx] = fblank;

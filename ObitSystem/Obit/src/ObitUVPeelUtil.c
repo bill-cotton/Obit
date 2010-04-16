@@ -704,7 +704,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     /* Cleanup - delete temp Imager and CLEAN */
   donePeel:   
     ver = -1;
-    ObitUVZapTable (inUV, "AIPS SN", ver, err);          /* delete Peel solutions */
+    /* ObitUVZapTable (inUV, "AIPS SN", ver, err);          delete Peel solutions */
  
     PeelFlux = 1.0e20;  /* only once */
   } /* End peeling */

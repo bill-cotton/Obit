@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006                                               */
+/*;  Copyright (C) 2006,2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -31,15 +31,21 @@
 #include "Obit.h"
 #include "ObitErr.h"
 #include "ObitTableNX.h"
+#include "ObitTableFG.h"
+#include "ObitUVSel.h"
 
 /*-------- Obit: Merx mollis mortibus nuper ------------------*/
 /**
  * \file ObitTableNXUtil.h
- * ObitTableNX class utility routine definition.
+ * ObitTableNX class utility routines definition.
  */
 
 /*---------------Public functions---------------------------*/
 /** Public: Lookup source and timerange  */
 gboolean ObitTableNXWantSour (ObitTableNX *in, olong sid, 
 			      ofloat timerange[2], ObitErr *err);
+
+/** Public: Flag beginning and or end of scans  */
+void ObitTableNXUtilQuack (ObitTableNX *in, ObitTableFG *FGTab,
+			   ObitUVSel *sel, olong maxAnt, ObitErr *err);
 #endif /* OBITTABLENXUTIL_H */ 

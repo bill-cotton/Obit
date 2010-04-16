@@ -4,7 +4,7 @@
 ;! Obit interferometry imaging with ionospheric field-based cal
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006-2009
+;;  Copyright (C) 2006-2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -84,8 +84,9 @@ Alpha           -20.       20.      Spectral Index to correct
 BLFact                              Baseline dependent time factor
 **PARAM** float 1
 BLFOV             0.0       180.    Radius averaging FOV (deg)
-**PARAM** int 1  **DEF** 1
-chAvg                               Number of channels to average.
+**PARAM** boo 1  **DEF** F 
+BLchAvg                             If True, and BLFact >1.0 then also
+                                    average channels.
 **PARAM** str 48  **DEF** .fits
 outFile                             Output FITS image file ending
 **PARAM** str 12
@@ -356,7 +357,9 @@ Adverbs:
   RChan......Channel number to restart CLEAN
              0 => BChan
   chInc......Increment between channels to image in spectral cube.
+             This is after averaging due to BLchAvg
   chAvg......Number of channels to average, 0=> all
+             This is after averaging due to BLchAvg
   subA.......Sub-array number to use. 0=>all.
   doCalib....If true, apply SN or CL table
   gainUse....CL/SN table version number to apply. 0=> highest.
@@ -404,9 +407,9 @@ Adverbs:
   BLFOV......The radius of the field of view over which baseline 
              dependent averaging is not to distort amplitudes by more 
              than BLFact.   Defaults to FOV.
-  chAvg......If doing baseline dependent averaging then also average 
-             selected channels in groups of chAvg.  Note: larger values 
-             will give more bandwidth smearing.
+  BLchAvg....If doing baseline dependent averaging then also average 
+             selected channels by no more than will give bandwidth 
+             smearing of BLFact.
   doFull.....If True, make full field (flattened) image
 
       Output files

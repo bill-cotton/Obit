@@ -135,7 +135,7 @@ int main ( int argc, char **argv )
   /* Get input sky model */
   skyModel = getInputSkyModel (myInput, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
-  ObitInfoListCopyList (myInput, skyModel->info, skyModelParms);
+  if (skyModel) ObitInfoListCopyList (myInput, skyModel->info, skyModelParms);
 
   /* Copy selection/calibration info to data */
   ObitInfoListCopyList (myInput, inData->info, dataParms);

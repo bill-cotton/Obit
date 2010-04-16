@@ -1,0 +1,112 @@
+; $Id: Quack.TDF 143 2009-11-11 17:31:04Z bill.cotton $
+; QUACK
+;---------------------------------------------------------------
+;! Obit Flags beginning or end portions of UV-data scans
+;# Task UV
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2010
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+Quack     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+Quack     Flags specified portion of scans of UV data
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                             Input UV file name (name)
+**PARAM** str 6
+inClass                            Input UV file name (class)
+**PARAM** int 1
+inSeq             0.0     9999.0   Input UV file name (seq. #)
+**PARAM** int 1
+inDisk            0.0        9.0   Input UV file disk unit #
+**PARAM** str 4
+Stokes                             Limit flagging by Stokes
+**PARAM** int 1
+BIF               0.0       90.0   Limit flagging to BIF-EIF
+**PARAM** int 1
+EIF               0.0       90.0   Limit flagging
+**PARAM** str 16 30
+Sources                            Sources selected/deselected
+**PARAM** int 1
+subA                               Subarray number 0=>all.
+**PARAM** int 1
+FreqID                             Freq. ID to flag. -1=>all.
+                                   0=> first Freq. ID.
+**PARAM** float 2
+timeRange                          Time range to process.
+**PARAM** int 50
+Antennas         0.0     1000.0     List of antennas to include
+**PARAM** int 1 **DEF** 1
+flagVer                             Flag table version
+                                   0 => highest
+**PARAM**  float 1
+begDrop          0.0               Time (min) to drop from beginning
+**PARAM**  float 1
+endDrop          0.0               Time (min) to drop from end
+**PARAM** str 24
+Reason                             Reason (24 char.)
+----------------------------------------------------------------
+Quack
+Task:  This task will flag selected portions of scans in a
+       multi-source UV data set.  The first begDrop min and last
+       endDrop min of data as defined in the AIPS NX table are 
+       flagged.
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input multisource UV data file
+  inClass....Input UV data file (class).      Standard defaults.
+  inSeq......Input UV data file (seq. #).     0 => highest.
+  inDisk.....Input UV data file disk drive #. 0 => any.
+  Stokes.....Limit flags to specified Stokes value.  ' ' = '1111'
+             Allowed values 
+             'RR', 'LL', 'RL', 'LR', 
+             and any combination of 4 1s and 0s 
+             (e.g. '1011' to delete all R polarizations).
+  BIF........Limit flag to IF beginning with BIF;  0 -> 1.
+  EIF........Limit flag to range BIF through EIF.  0, < BIF -> max.
+  Sources....List of sources in the data file to be flagged.
+             All blank = all
+  subA.......The subarray desired for the operation. 0=> all.
+  FreqID.....Frequency identifier to flag.
+  timeRange..The specified time range; scans whose central time
+             is in this range will be affected.
+             Start and end times in days relative to ref. date.  
+             Use  dhms2day to convert from human readable form
+             0-s => all times
+  Antennas...A list of the antennas to be flagged.  All baselines 
+             amoung antennas will be flagged
+  flagVer....The version of the flagging (AIPS FG) table in which to
+             make the entries.
+             0 => highest, or 1 if no FG table exists
+  begDrop ...Time in min from beginning of the scan as defined in the 
+             AIPS NX table (minus epsilon) to flag.
+  begDrop ...Time in min from end of each scan as defined in the 
+             AIPS NX table (plus epsilon) to flag.
+  Reason.....Reason for flagging the data, up to 24 characters.  This
+             string will be inserted in the FG table.
+----------------------------------------------------------------
