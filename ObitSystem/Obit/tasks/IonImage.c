@@ -1702,7 +1702,7 @@ void doFieldCal (gchar *Source, ObitInfoList* myInput, ObitUV* inUV,
 		 ObitErr* err)
 {
   ObitIonCal *ionCal = NULL;
-  gboolean autoWindow, do3D=TRUE, Tr=TRUE;
+  gboolean autoWindow, do3D=TRUE, saveDoFull=FALSE, Tr=TRUE, Fl=FALSE;
   ObitInfoType type;
   ObitIOType IOType;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -1771,9 +1771,18 @@ void doFieldCal (gchar *Source, ObitInfoList* myInput, ObitUV* inUV,
   g_snprintf (Aclass, 6, "IC0000");
   ObitInfoListAlwaysPut(inUV->info, "imClass", OBIT_string, dim, Aclass);
 
+  /* Save/reset any doFull */
+  ObitInfoListGetTest(myInput, "doFull",  &type, dim, &saveDoFull);
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut(inUV->info, "doFull", OBIT_bool, dim, &Fl);
+
   /* Calibrate */
   ObitIonCaldoCal (ionCal, err); 
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
+ /* Reset doFull */
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut(inUV->info, "doFull", OBIT_bool, dim, &saveDoFull);
 
   /* Say which NI table to use; 0=> highest*/
   dim[0] = dim[1] = 1;
@@ -2195,6 +2204,7 @@ void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
   odouble Freq;
   gboolean BLchAvg=FALSE;
   ofloat BLFact=0.0, FOV=0.0, solPInt=0.0, solAInt=0.0, maxInt;
+  gchar *blank = "    ";
   gchar *routine = "BLAvg";
 
   /* What to do? */
@@ -2233,7 +2243,16 @@ void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
     ObitInfoListAlwaysPut (inData->info, "NumChAvg", OBIT_long,  dim, &NumChAvg);
     outData = ObitUVUtilBlAvgTF(inData, FALSE, outData, err);
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
-
+  
+  /* (Re)set stuff 
+       No source selection */
+    dim[0] = 4; dim[1] = dim[2] = 1;
+    ObitInfoListAlwaysPut (inData->info, "Sources", OBIT_string,   dim, blank);
+    /* Reset FOV to previous value */
+    ObitInfoListGetTest(myInput, "FOV",   &type, dim, &FOV);
+    dim[0] = 1; dim[1] = dim[2] = 1;
+    ObitInfoListAlwaysPut (inData->info, "FOV", OBIT_float,  dim, &FOV);
+    
   } else { /* Straight copy */
     ObitUVCopy (inData, outData, err);
     if (err->error) Obit_traceback_msg (err, routine, inData->name);

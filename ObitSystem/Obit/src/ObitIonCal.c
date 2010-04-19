@@ -889,9 +889,8 @@ void ObitIonCaldoCal (ObitIonCal*in, ObitErr* err)
   if (err->error) goto cleanup;
   ClnClass = (ObitDConCleanVisClassInfo*)myClean->ClassInfo; /* class structure */
 
-
   /* Reset FOV to previous value */
-  ObitInfoListAlwaysPut (inUV->info, "FOV", type,   dim, &oldFOV);
+  ObitInfoListAlwaysPut (inUV->info, "FOV", OBIT_float,  dim, &oldFOV);
 
   /* Local pointer to calibrator mosaic */
   myMosaic = ObitUVImagerGetMosaic (myClean->imager, err);
@@ -985,6 +984,7 @@ void ObitIonCaldoCal (ObitIonCal*in, ObitErr* err)
     /* Image/deconvolve this one */
     ClnClass->ObitDConDeconvolve ((ObitDCon*)myClean, err);
     /* Be somewhat tolerant of failures here */
+    if (myClean->prtLv>2) ObitErrLog(err);  /* Debug errors */
     if (err->error) {
        badTime = TRUE;
        ObitErrClearErr (err); /* Clear error messages and condition */
@@ -995,9 +995,13 @@ void ObitIonCaldoCal (ObitIonCal*in, ObitErr* err)
       /* Tell time range */
       TR2String (timer, msgtxt);
       Obit_log_error(err, OBIT_InfoErr, "Timerange %s", msgtxt);
-      Obit_log_error(err, OBIT_InfoErr, 
-		     "Total CLEAN flux density = %8.1f, resid = %8.1f Jy", 
-		     myClean->Pixels->totalFlux, myClean->Pixels->maxResid);
+      if (myClean->Pixels) {
+	Obit_log_error(err, OBIT_InfoErr, 
+		       "Total CLEAN flux density = %8.1f, resid = %8.1f Jy", 
+		       myClean->Pixels->totalFlux, myClean->Pixels->maxResid);
+      } else {
+	Obit_log_error(err, OBIT_InfoErr, "CLEAN failed"); 
+      }
       ObitErrLog(err);
     } 
 
