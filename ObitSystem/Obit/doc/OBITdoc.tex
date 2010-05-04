@@ -4182,9 +4182,6 @@ ObitTableDesc.
 \tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
 {Observation project code}
 ]
-\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
-{Array name}
-]
 \tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
 {Reference date as "YYYY-MM-DD"}
 ]
@@ -4265,7 +4262,7 @@ IDI\_ARRAY\_GEOMETRY contains information about the locations
 of antennas in a UV data set.
 Also time information and the state of the Earth's orientation.
 Only FITS cataloged data are supported.
-]
+}
 \tableover{
 In memory tables are stored in a fashion similar to how they are 
 stored on disk - in large blocks in memory rather than structures.
@@ -4791,9 +4788,6 @@ ObitTableDesc.
 \tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
 {Observation project code}
 ]
-\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
-{Array name}
-]
 \tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
 {Reference date as "YYYY-MM-DD"}
 ]
@@ -5232,9 +5226,6 @@ ObitTableDesc.
 \tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
 {Observation project code}
 ]
-\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
-{Array name}
-]
 \tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
 {Reference date as "YYYY-MM-DD"}
 ]
@@ -5242,7 +5233,7 @@ ObitTableDesc.
 %
 % Table column description
 \begin{columns}
-\tablecol[{"ID\_NO.  "}{"       " }{J}{(1)}{SourID}
+\tablecol[{"SOURCE\_ID"}{"       " }{J}{(1)}{SourID}
 {Source ID}
 ] 
 \tablecol[{"SOURCE  "}{"       " }{A}{(16)}{Source}
@@ -5476,9 +5467,6 @@ ObitTableDesc.
 \tablekey[{"OBSCODE "}{A}{obscode}{"    "}{}
 {Observation project code}
 ]
-\tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
-{Array name}
-]
 \tablekey[{"RDATE   "}{A}{RefDate}{"YYYY-MM-DD"}{}
 {Reference date as "YYYY-MM-DD"}
 ]
@@ -5542,7 +5530,7 @@ ObitTableDesc.
 \tablekey[{"MAXIS1"}{J}{maxis1}{1}{()}
 {[OPTIONAL] Number of pixels on axis 1 }
 ]
-\tablekey[{"CTYPE1"}{A}{ctype1}{}{}
+\tablekey[{"CTYPE1"}{A}{ctype1}{"    "}{}
 {[OPTIONAL] Type of data axis 1 }
 ]
 \tablekey[{"CDELT1"}{D}{cdelt1}{0.0}{}
@@ -5557,7 +5545,7 @@ ObitTableDesc.
 \tablekey[{"MAXIS2"}{J}{maxis2}{1}{()}
 {[OPTIONAL] Number of pixels on axis 2 }
 ]
-\tablekey[{"CTYPE2"}{A}{ctype2}{}{}
+\tablekey[{"CTYPE2"}{A}{ctype2}{"    "}{}
 {[OPTIONAL] Type of data axis 2 }
 ]
 \tablekey[{"CDELT2"}{D}{cdelt2}{0.0}{}
@@ -5572,7 +5560,7 @@ ObitTableDesc.
 \tablekey[{"MAXIS3"}{J}{maxis3}{1}{()}
 {[OPTIONAL] Number of pixels on axis 3 }
 ]
-\tablekey[{"CTYPE3"}{A}{ctype3}{}{}
+\tablekey[{"CTYPE3"}{A}{ctype3}{"    "}{}
 {[OPTIONAL] Type of data axis 3 }
 ]
 \tablekey[{"CDELT3"}{D}{cdelt3}{0.0}{}
@@ -5587,7 +5575,7 @@ ObitTableDesc.
 \tablekey[{"MAXIS4"}{J}{maxis4}{1}{()}
 {[OPTIONAL] Number of pixels on axis 4 }
 ]
-\tablekey[{"CTYPE4"}{A}{ctype4}{}{}
+\tablekey[{"CTYPE4"}{A}{ctype4}{"    "}{}
 {[OPTIONAL] Type of data axis 4 }
 ]
 \tablekey[{"CDELT4"}{D}{cdelt4}{0.0}{}
@@ -5602,7 +5590,7 @@ ObitTableDesc.
 \tablekey[{"MAXIS5"}{J}{maxis5}{1}{()}
 {[OPTIONAL] Number of pixels on axis 5 }
 ]
-\tablekey[{"CTYPE5"}{A}{ctype5}{}{}
+\tablekey[{"CTYPE5"}{A}{ctype5}{"    "}{}
 {[OPTIONAL] Type of data axis 5 }
 ]
 \tablekey[{"CDELT5"}{D}{cdelt5}{0.0}{}
@@ -5617,7 +5605,7 @@ ObitTableDesc.
 \tablekey[{"MAXIS6"}{J}{maxis6}{1}{}
 {[OPTIONAL] Number of pixels on axis 6 }
 ]
-\tablekey[{"CTYPE6"}{A}{ctype6}{}{}
+\tablekey[{"CTYPE6"}{A}{ctype6}{"    "}{}
 {[OPTIONAL] Type of data axis 6 }
 ]
 \tablekey[{"CDELT6"}{D}{cdelt6}{0.0}{}
@@ -5632,7 +5620,7 @@ ObitTableDesc.
 \tablekey[{"MAXIS7"}{J}{maxis7}{1}{}
 {[OPTIONAL] Number of pixels on axis 7 }
 ]
-\tablekey[{"CTYPE7"}{A}{ctype7}{}{}
+\tablekey[{"CTYPE7"}{A}{ctype7}{"    "}{}
 {[OPTIONAL] Type of data axis 7 }
 ]
 \tablekey[{"CDELT7"}{D}{cdelt7}{0.0}{}
@@ -5656,7 +5644,7 @@ ObitTableDesc.
 \tablekey[{"VIS\_SCAL"}{E}{visScale}{1.0}{}
 {[OPTIONAL] Scaling factor for visibilities}
 ]
-\tablekey[{"SORT    "}{A}{sort}{}{}
+\tablekey[{"SORT    "}{A}{sort}{"  "}{}
 {[OPTIONAL] Sort order of data}
 ]
 \end{keywords}
@@ -5687,7 +5675,7 @@ ObitTableDesc.
 \tablecol[{"FILTER  "}{"        " }{J}{(1)}{Filter}
 {[OPTIONAL]  VLBA Filter number.}
 ] 
-\tablecol[{"SOURCE  "}{"        " }{J}{(1)}{Source}
+\tablecol[{"SOURCE_ID"}{"        " }{J}{(1)}{Source}
 {[OPTIONAL] Source ID, index into SOURCE table.}
 ] 
 \tablecol[{"FREQID  "}{"        " }{J}{(1)}{FreqID}
@@ -5696,8 +5684,8 @@ ObitTableDesc.
 \tablecol[{"INTTIM"}{"SECONDS " }{E}{(1)}{IntTim}
 {[OPTIONAL] The integration time.}
 ] 
-\tablecol[{"WEIGHT"}{"       " }{E}{(maxis2,maxis3,maxis4,maxis5)}{Weight}
-{Weight per correlation, same order as data.}
+\tablecol[{"WEIGHT"}{"       " }{E}{(maxis2,no\_band)}{Weight}
+{Weight per IF/poln.}
 ] 
 \tablecol[{"GATEID  "}{"       " }{J}{(1)}{GateID}
 {[OPTIONAL] VLBA Pulsar gate ID.}

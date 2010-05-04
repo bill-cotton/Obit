@@ -1920,7 +1920,7 @@ ObitImageMosaic* ObitImageMosaicMaxField (ObitImageMosaic *mosaic,
   gint32 dim[MAXINFOELEMDIM];
   ObitInfoType type;
   olong   i, nfield, ifield, itemp, noParms, nccpos;
-  olong   maxField;
+  olong   maxField, other;
   olong  CCVer;
   ofloat tmax, xcenter, ycenter, xoff, yoff, radius, cells[2], maxCC;
   ofloat addFlux = 0.0;
@@ -2049,6 +2049,26 @@ ObitImageMosaic* ObitImageMosaicMaxField (ObitImageMosaic *mosaic,
   outCCTable  = ObitTableCCCopy (inCCTable, outCCTable, err);
   inCCTable   = ObitTableCCUnref(inCCTable);
   outCCTable  = ObitTableCCUnref(outCCTable);
+
+  /* If 2D and autoCen copy other field CCs */
+  if ((!mosaic->images[maxField]->myDesc->do3D) && 
+      ((mosaic->isAuto[maxField]>0) || (mosaic->isShift[maxField]>0))) {
+    other = MAX (mosaic->isAuto[maxField], mosaic->isShift[maxField]);
+    if (other>0) {
+      CCVer = 1;
+      noParms = 0;
+      inCCTable = newObitTableCCValue ("Peeled CC", (ObitData*)mosaic->images[other-1],
+				       &CCVer, OBIT_IO_ReadOnly, noParms, 
+				       err);
+      CCVer = 1;
+      outCCTable = newObitTableCCValue ("outCC", (ObitData*)out->images[0],
+					&CCVer, OBIT_IO_ReadWrite, inCCTable->noParms, 
+					err);
+      ObitTableCCUtilAppend (inCCTable, outCCTable, 0, 0, err);
+      inCCTable   = ObitTableCCUnref(inCCTable);
+      outCCTable  = ObitTableCCUnref(outCCTable);
+    }
+  }
 
   *field = maxField+1;  /* Which field is this? */
   return out;

@@ -1533,7 +1533,7 @@ void SN2BPTable (ObitTableSN *SNTab, ObitTableBP *BPTab, olong chan,
 
     /* Copy info to BP Row */
     BPRow->RefAnt1   = SNRow->RefAnt1[0];
-    BPRow->RefAnt2   = SNRow->RefAnt2[0];
+    if (npol>1) BPRow->RefAnt2   = SNRow->RefAnt2[0];
 
     for (i=0; i<nif; i++) {
       /* Invert if valid */

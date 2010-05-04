@@ -31,6 +31,7 @@
 #include "ObitUVImager.h"
 #include "ObitUVImagerIon.h"
 #include "ObitImageMosaic.h"
+#include "ObitSkyGeom.h"
 #include "ObitSkyModel.h"
 #include "ObitSkyModelVM.h"
 #include "ObitSkyModelVMSquint.h"
@@ -45,6 +46,8 @@
  */
 
 /*---------------Private function prototypes----------------*/
+void Convert2Dto3D (ObitImage *image, ObitErr* err);
+ 
 /*----------------------Public functions---------------------------*/
 /**
  * Loops over sources to be peeled.
@@ -203,6 +206,7 @@ void ObitUVPeelUtilLoop (ObitInfoList* myInput, ObitUV* inUV,
   if (peeled) g_free(peeled); peeled = NULL;  /* Done with array */
 
 } /* end ObitUVPeelUtilLoop */
+
 /**
  * Peel a strong source from a data set based on previous CLEAN.
  * Picks the strongest field with peak above PeelFlux and subtracts all
@@ -284,7 +288,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat       PeelFlux, ftemp, xCells, yCells;
   gboolean     converged, didSC=FALSE, Fl=FALSE, Tr=TRUE, init, noSCNeed, btemp; 
-  gchar        stemp[5];
+  gchar        stemp[5], *pmode = "P   ";
   gchar        *imgParms[] = {  /* Imaging, weighting parameters */
     "PBCor", "antSize", 
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
@@ -331,6 +335,10 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
 					 ignore, &peelField, err);
     if (err->error) Obit_traceback_val (err, routine, myClean->name, peeled);
     if (tmpMosaic==NULL) goto donePeel;
+
+    /* Convert 2D model to 3D if necessary */
+    Convert2Dto3D (tmpMosaic->images[0], err);
+    if (err->error) goto cleanup;
 
     Obit_log_error(err, OBIT_InfoErr, 
 		   " ******  Peeling strong source from field %d", peelField);
@@ -505,10 +513,6 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     ObitUVSelfCalFluxHist(selfCal, scrUV, err);
     if (err->error) goto cleanup;
     
-    /* Initial CLEAN of peel field - using residual data */
-    ObitDConCleanVisDeconvolve ((ObitDCon*)tmpClean, err);
-    if (err->error) goto cleanup;
-
     /* How many loops? */
     MaxSCLoop=1;
     ObitInfoListGetTest (myInput, "PeelLoop", &type, dim, &MaxSCLoop);
@@ -527,6 +531,16 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
       jtemp = myClean->Pixels->iterField[peelField-1];
       ObitInfoListAlwaysPut (myClean->skyModel->info, "EComp", OBIT_long, dim, &jtemp);
       
+      /* Phase only except for last iteration */
+      dim[0] = 4; dim[1] = dim[2] = dim[3] = 1;
+      if (iter<(MaxSCLoop-1)) {
+	ObitInfoListAlwaysPut(selfCal->info, "solMode", OBIT_string, dim, pmode);
+	Obit_log_error(err, OBIT_InfoErr, "Peel self in %s mode",pmode);
+     } else {
+	ObitInfoListAlwaysPut(selfCal->info, "solMode", OBIT_string, dim, solmod);
+  	Obit_log_error(err, OBIT_InfoErr, "Peel self in %s mode",solmod);
+    }
+
       /* Self calibrate using only that field */
       converged = ObitUVSelfCalSelfCal (selfCal, scrUV, init, &noSCNeed, 
 					tmpClean->window, err);
@@ -725,3 +739,100 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
 } /* end ObitUVPeelUtilPeel */
 
 /*----------------------Private functions---------------------------*/
+/**
+ * Convert a 2d IMAGE TO 3d
+ * Fiddle descriptor and the CC table 1
+ * \param image   Image to convert
+ * \param err     Error/message stack
+ */
+void Convert2Dto3D (ObitImage *image, ObitErr* err)
+{
+  ofloat xPxOff, yPxOff, xCen, yCen, xShift, yShift, xPix, yPix;
+  odouble ra, dec;
+  olong nx, ny, CCVer, noParms, irow;
+  ObitTableCC *CCTable=NULL;
+  ObitTableCCRow *CCRow=NULL;
+  gchar *routine = "Convert2Dto3D";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitImageIsA(image));
+
+  /* Open image */
+  ObitImageOpen (image, OBIT_IO_ReadWrite, err);
+  if (err->error) Obit_traceback_msg (err, routine, image->name);
+
+  /* If already 3D just return */
+  xPxOff = image->myDesc->xPxOff;
+  yPxOff = image->myDesc->yPxOff;
+  if ((image->myDesc->do3D) && (xPxOff==0.0) && (yPxOff==0.0)) return;
+
+  /* Old image stuff */
+  nx   = image->myDesc->inaxes[0];
+  ny   = image->myDesc->inaxes[1];
+  xCen = image->myDesc->crpix[0];
+  yCen = image->myDesc->crpix[1];
+  xPix = 1.0 + nx/2.0;
+  yPix = 1.0 + ny/2.0;
+  ObitSkyGeomWorldPos(xPix, yPix, 
+		      image->myDesc->crval[0], image->myDesc->crval[1], 
+		      image->myDesc->crpix[0], image->myDesc->crpix[1],
+		      image->myDesc->cdelt[0], image->myDesc->cdelt[1],
+		      image->myDesc->crota[image->myDesc->jlocd], 
+		      &image->myDesc->ctype[image->myDesc->jlocr][4],
+		      &ra, &dec);
+
+  /* new values -
+     New reference position = center */
+  image->myDesc->crval[0] = ra;
+  image->myDesc->crval[1] = dec;
+  image->myDesc->crpix[0] = 1 + nx/2;
+  image->myDesc->crpix[1] = 1 + ny/2;
+  image->myDesc->xPxOff   = 0.0;
+  image->myDesc->yPxOff   = 0.0;
+  image->myDesc->do3D     = TRUE;
+
+  /* How much to shift (add to) CCs */
+  xShift = xPxOff * image->myDesc->cdelt[0];
+  yShift = yPxOff * image->myDesc->cdelt[1];
+
+  /* Close image */
+  image->myStatus = OBIT_Modified;  /* Force update */
+  ObitImageClose (image, err);
+  if (err->error) Obit_traceback_msg (err, routine, image->name);
+
+  /* Fix Clean components */
+  CCVer = 1;
+  noParms = 0;
+  CCTable = newObitTableCCValue ("Peeled CC", (ObitData*)image,
+				 &CCVer, OBIT_IO_ReadWrite, noParms, 
+				 err);
+  /* Open CC table */
+  ObitTableCCOpen (CCTable, OBIT_IO_ReadWrite, err);
+  if (err->error) Obit_traceback_msg (err, routine, image->name);
+  
+  /* Create table row */
+  CCRow = newObitTableCCRow (CCTable);
+
+  /* Loop over table */
+  for (irow=1; irow<=CCTable->myDesc->nrow; irow++) {
+    ObitTableCCReadRow (CCTable, irow, CCRow, err);
+    if (err->error) Obit_traceback_msg (err, routine, image->name);
+
+    /* Update row */
+    CCRow->DeltaX += xShift;
+    CCRow->DeltaY += yShift;
+
+    ObitTableCCWriteRow (CCTable, irow, CCRow, err);
+    if (err->error) Obit_traceback_msg (err, routine, image->name);
+  } /* end loop over table */
+
+  /* Close Table */
+  ObitTableCCClose (CCTable, err);
+  if (err->error) Obit_traceback_msg (err, routine, image->name);
+  
+  /* Cleanup */
+  CCTable = ObitTableCCUnref(CCTable);
+  CCRow   = ObitTableCCRowUnref (CCRow);
+  
+} /* end Convert2Dto3D */

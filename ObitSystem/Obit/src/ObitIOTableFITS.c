@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1171,7 +1171,13 @@ ObitIOCode ObitIOTableFITSReadDescriptor (ObitIOTableFITS *in, ObitErr *err)
 	/* table name */
 	fits_read_key_str (in->myFptr, "EXTNAME", (char*)cdata, (char*)commnt, &status);
 	/* version number */
-	fits_read_key_lng (in->myFptr, "EXTVER", &extver, commnt, &status);
+	if (fits_read_key_lng (in->myFptr, "EXTVER", &extver, commnt, &status)) {
+	  /* Default to 1 */
+	  extver = 1;
+	  /* Clear cfitsio */
+	  fits_clear_errmsg();
+	  status = 0;
+	}
 	/* if this is a match get the version if it's highest */
 	if (!strncmp (cdata, in->tabName, FLEN_CARD-1)) 
 	  in->tabVer = MAX ((olong)extver, in->tabVer);

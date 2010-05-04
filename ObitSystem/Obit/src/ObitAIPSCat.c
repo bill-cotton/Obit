@@ -453,14 +453,6 @@ void ObitAIPSCatImageSetDesc (ObitImageDesc *desc, gchar *buffer,
     /* UV weight normalization */
     fheader[myDHDR.KRWTN] = 0.0;
 
-    /* 3D type   */
-    if (desc->do3D) header[myDHDR.KIITY] = 2;
-    else header[myDHDR.KIITY] = 1;
-
-    /* Pixel offsets */
-    fheader[myDHDR.KRXPO] = desc->xPxOff;
-    fheader[myDHDR.KRYPO] = desc->yPxOff;
-
     /* set extension files */
     for (i=0; i<myDHDR.KIEXTN; i++) {
       /* two character code of extension file. */
@@ -471,6 +463,14 @@ void ObitAIPSCatImageSetDesc (ObitImageDesc *desc, gchar *buffer,
   } /* end of init */
 
   /* copy to header */
+
+  /* 3D type   */
+  if (desc->do3D) header[myDHDR.KIITY] = 2;
+  else header[myDHDR.KIITY] = 1;
+  
+  /* Pixel offsets */
+  fheader[myDHDR.KRXPO] = desc->xPxOff;
+  fheader[myDHDR.KRYPO] = desc->yPxOff;
 
   /* AIPS naming info from catalog directory entry */
   cp = (gchar*)&header[myDHDR.KHIMN];

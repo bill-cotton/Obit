@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006,2008                                          */
+/*;  Copyright (C) 2006,2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -115,7 +115,13 @@ void ObitIOTableFITSUtilReadTableList(ObitData *in, ObitErr *err)
 	/* table name */
 	fits_read_key_str (myFptr, "EXTNAME", (char*)cdata, (char*)commnt, &status);
 	/* version number */
-	fits_read_key_lng (myFptr, "EXTVER", &extver, (char*)commnt, &status);
+	if (fits_read_key_lng (myFptr, "EXTVER", &extver, commnt, &status)) {
+	  /* Default to 1 */
+	  extver = 1;
+	  /* Clear cfitsio */
+	  fits_clear_errmsg();
+	  status = 0;
+	}
 	if (status==0) { /* Add to TableList unless it's uv or OTF data */
 	  if (strcmp (cdata, "AIPS UV") && strcmp (cdata, "OTF")) {
 	    otemp = (olong)extver;

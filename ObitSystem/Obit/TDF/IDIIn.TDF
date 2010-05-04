@@ -4,7 +4,7 @@
 ;! Obit Convert IDI data and append to a UV data file.
 ;# Task Obit IDI
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007,2009
+;;  Copyright (C) 2007-2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
 IDIIn      LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 IDIIn :    Convert IDI data and append to a UV data file.
 **PARAM** str 64
-Scan                                Scan or file name for input
+File                                Scan or file name for input
 **PARAM** str 64
 DataRoot                            Directory for input
 **PARAM** str 4
@@ -56,16 +56,21 @@ Type:  Task
        will be converted.
        Input data must have compatable geometry with the output
        dataset.
+       u,v,w will be calculated if not given.
+       An index can be created for output (as object uv)
+       >>>  UV.PUtilIndex(uv,err)
+       An initial CL table w/ 60 sec interval can be created:
+       >>> cltab=UV.PTableCLGetDummy(uv,uv,1,err,solInt=60.0)
 
 Adverbs:
-  Scan.......Name of scan or file name 
+  File.......Name of scan or file name 
              (e.g."lwda_uv_2006_10_28_23_59_42")
              This is the input file name minus the postfix
              '.fits'
   DataRoot...Archive directory for project 
              MUST end in '/'
+             Expects full file name to be DataRoot+File+".fits"
   DataType..'FITS' or 'AIPS'  type of output
-             Expects full file name to be DataRoot/Scan.fits
   outFile....Output UV FITS file name
   outName....Output UV AIPS file name (name).
   outClass...Output UV file name (class).  Standard defaults.

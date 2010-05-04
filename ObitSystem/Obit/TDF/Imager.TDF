@@ -616,6 +616,7 @@ Adverbs:
   PeelSolInt..Peel SC Solution interval (min)
   PeelType....Peel SC Solution type '  ', 'L1'
   PeelMode....Peel SC Solution mode:'A&P', 'P', 'P!A',
+              "P" is used for all but the last peel which uses PeelMode
   PeelNiter...Max. number of components in Peel CLEAN
   PeelMinFlux.Min. Peel CLEAN flux density
   PeelAvgPol..Average Polarizations in Peel self calibration? 
