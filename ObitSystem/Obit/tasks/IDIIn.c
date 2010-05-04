@@ -779,7 +779,7 @@ void GetHeader (ObitUV *outData, gchar *inscan,
     strncpy (desc->obsdat,     inTable->RefDate, lim);
     strncpy (desc->teles,      inTable->teles, lim);
     strncpy (desc->observer,   inTable->observer, lim);
-    strncpy (desc->instrument, inTable->ArrName, lim);
+    /*???strncpy (desc->instrument, inTable->ArrName, lim);*/
    
     /* Random parameters */
     ncol = 0;

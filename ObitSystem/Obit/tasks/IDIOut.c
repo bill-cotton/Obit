@@ -2694,8 +2694,8 @@ void myObitTableIDI_UV_DATADumpKey (ObitTableIDI_UV_DATA *in, ObitErr *err)
   /* ArrName */
   type  = OBIT_string;
   dim[0] = MAXKEYCHARTABLEIDI_UV_DATA;
-  ObitInfoListAlwaysPut(info, "ARRNAM", type, dim, 
-		  (gpointer)&in->ArrName);
+  /*?? ObitInfoListAlwaysPut(info, "ARRNAM", type, dim, 
+    (gpointer)&in->ArrName);*/
   /* RefDate */
   type  = OBIT_string;
   dim[0] = MAXKEYCHARTABLEIDI_UV_DATA;
