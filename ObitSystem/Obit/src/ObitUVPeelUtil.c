@@ -46,7 +46,9 @@
  */
 
 /*---------------Private function prototypes----------------*/
-void Convert2Dto3D (ObitImage *image, ObitErr* err);
+void Convert2Dto3D (ObitImage *image, ofloat ccShift[2], ObitErr* err);
+void MoveBack (ObitTableCC *inCC, ObitTableCC *outCC, ofloat ccShift[2], 
+	       ObitErr* err);
  
 /*----------------------Public functions---------------------------*/
 /**
@@ -286,7 +288,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
   oint         noParms, numPol, numIF;
   olong        ver;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  ofloat       PeelFlux, ftemp, xCells, yCells;
+  ofloat       PeelFlux, ftemp, xCells, yCells, ccShift[2];
   gboolean     converged, didSC=FALSE, Fl=FALSE, Tr=TRUE, init, noSCNeed, btemp; 
   gchar        stemp[5], *pmode = "P   ";
   gchar        *imgParms[] = {  /* Imaging, weighting parameters */
@@ -337,7 +339,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     if (tmpMosaic==NULL) goto donePeel;
 
     /* Convert 2D model to 3D if necessary */
-    Convert2Dto3D (tmpMosaic->images[0], err);
+    Convert2Dto3D (tmpMosaic->images[0], ccShift, err);
     if (err->error) goto cleanup;
 
     Obit_log_error(err, OBIT_InfoErr, 
@@ -711,7 +713,9 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     ObitTableClearRows((ObitTable*)outCCTable, err);
     if (err->error) goto cleanup;
 
-    ObitTableCCUtilAppend (peelCCTable, outCCTable, 1, 0, err);
+    /*ObitTableCCUtilAppend (peelCCTable, outCCTable, 1, 0, err);*/
+    /* Copy Peel CC to CC2 reverting any 2D to 3D shift */
+    MoveBack (peelCCTable, outCCTable, ccShift, err);
     peelCCTable = ObitTableCCUnref(peelCCTable);
     outCCTable  = ObitTableCCUnref(outCCTable);
 
@@ -743,9 +747,10 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
  * Convert a 2d IMAGE TO 3d
  * Fiddle descriptor and the CC table 1
  * \param image   Image to convert
+ * \parms ccShift [out] x,y pixel shifts added to CC components
  * \param err     Error/message stack
  */
-void Convert2Dto3D (ObitImage *image, ObitErr* err)
+void Convert2Dto3D (ObitImage *image,ofloat ccShift[2],  ObitErr* err)
 {
   ofloat xPxOff, yPxOff, xCen, yCen, xShift, yShift, xPix, yPix;
   odouble ra, dec;
@@ -757,6 +762,10 @@ void Convert2Dto3D (ObitImage *image, ObitErr* err)
   /* error checks */
   if (err->error) return;
   g_assert (ObitImageIsA(image));
+
+  /* Init output */
+  ccShift[0] = 0.0;
+  ccShift[1] = 0.0;
 
   /* Open image */
   ObitImageOpen (image, OBIT_IO_ReadWrite, err);
@@ -795,6 +804,10 @@ void Convert2Dto3D (ObitImage *image, ObitErr* err)
   /* How much to shift (add to) CCs */
   xShift = xPxOff * image->myDesc->cdelt[0];
   yShift = yPxOff * image->myDesc->cdelt[1];
+
+  /* Save shift  */
+  ccShift[0] = xShift;
+  ccShift[1] = yShift;
 
   /* Close image */
   image->myStatus = OBIT_Modified;  /* Force update */
@@ -836,3 +849,55 @@ void Convert2Dto3D (ObitImage *image, ObitErr* err)
   CCRow   = ObitTableCCRowUnref (CCRow);
   
 } /* end Convert2Dto3D */
+
+/**
+ * Copy contents on inCC to the end of outCC adjusting positions.
+ * \param inCC    input CC table
+ * \param outCC   output CC table
+ * \parms ccShift x,y pixel shifts to subtract from CC components
+ * \param err     Error/message stack
+ */
+void MoveBack (ObitTableCC *inCC, ObitTableCC *outCC, ofloat ccShift[2],  
+	       ObitErr* err)
+{
+  olong irow, orow;
+  ObitTableCCRow *CCRow=NULL;
+  gchar *routine = "MoveBack";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitTableCCIsA(inCC));
+  g_assert (ObitTableCCIsA(outCC));
+
+  /* Open CC tables */
+  ObitTableCCOpen (inCC,  OBIT_IO_ReadOnly, err);
+  ObitTableCCOpen (outCC, OBIT_IO_ReadWrite, err);
+  if (err->error) Obit_traceback_msg (err, routine, inCC->name);
+  
+  /* Create table row */
+  CCRow = newObitTableCCRow (outCC);
+
+  /* Loop over table */
+  for (irow=1; irow<=inCC->myDesc->nrow; irow++) {
+    ObitTableCCReadRow (inCC, irow, CCRow, err);
+    if (err->error) Obit_traceback_msg (err, routine, inCC->name);
+
+    /* Update row */
+    CCRow->DeltaX -= ccShift[0];
+    CCRow->DeltaY -= ccShift[1];
+
+    orow = -1;
+    ObitTableCCWriteRow (outCC, orow, CCRow, err);
+    if (err->error) Obit_traceback_msg (err, routine, inCC->name);
+  } /* end loop over table */
+
+  /* Close Tables */
+  ObitTableCCClose (inCC,  err);
+  ObitTableCCClose (outCC, err);
+  if (err->error) Obit_traceback_msg (err, routine, inCC->name);
+  
+  /* Cleanup */
+  CCRow   = ObitTableCCRowUnref (CCRow);
+  
+} /* end MoveBack */
+
