@@ -203,6 +203,10 @@ def PHeaderDict (dict):
     if dict["xshift"]!=0.0 or dict["yshift"]!=0.0:
         print "Phase shifted in X %10.3f in Y %10.3f" % \
               (dict["xshift"], dict["yshift"])
+    if dict["beamMaj"]>0.0:
+        print "Clean Beam %10g x %10g asec, PA %7.1f deg." % \
+              (3600.0*dict["beamMaj"], 3600.0*dict["beamMin"], \
+               dict["beamPA"])
     VelDef  = dict["VelDef"]
     VelDefStr = ["LSR", "Helio", "Observer"]
     VelType  = dict["VelDef"]

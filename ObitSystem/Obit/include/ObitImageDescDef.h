@@ -55,7 +55,7 @@
   ofloat beamMaj;
   /** Convolving beam minor axis in degrees   */
   ofloat beamMin;
-  /**  Convolving beam position angle in degrees */
+  /** Convolving beam position angle in degrees */
   ofloat beamPA;
   /** Name of object. */
   gchar   object[IMLEN_VALUE]; 

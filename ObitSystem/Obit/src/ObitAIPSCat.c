@@ -732,6 +732,15 @@ void ObitAIPSCatUVGetDesc (ObitUVDesc *desc, gchar *buffer,
   /* Alternate ref pixel value (frequency or velocity) */
   desc->altRef = dheader[myDHDR.KDARV];
 
+  /* Beam major axis in degrees */
+  desc->beamMaj = fheader[myDHDR.KRBMJ];
+    
+  /* Beam minor axis in degrees */
+  desc->beamMin = fheader[myDHDR.KRBMN];
+
+  /* Beam position angle in degrees */
+  desc->beamPA = fheader[myDHDR.KRBPA];
+    
   /* Velocity reference frame  */
   desc->VelDef = header[myDHDR.KIALT] / 256;
   desc->VelReference = header[myDHDR.KIALT] - 256*desc->VelDef;
@@ -956,6 +965,15 @@ void ObitAIPSCatUVSetDesc (ObitUVDesc *desc, gchar *buffer,
    /* Alternate ref pixel value (frequency or velocity) */
    dheader[myDHDR.KDARV] = desc->altRef;
 
+   /* Beam major axis in degrees */
+   fheader[myDHDR.KRBMJ] = desc->beamMaj;
+    
+   /* Beam minor axis in degrees */
+   fheader[myDHDR.KRBMN] = desc->beamMin;
+    
+   /* Beam position angle in degrees */
+   fheader[myDHDR.KRBPA] = desc->beamPA;
+    
    /* Velocity reference frame  */
    header[myDHDR.KIALT] = desc->VelReference + 256*desc->VelDef;
 } /* end ObitAIPSCatUVSetDesc */

@@ -180,6 +180,9 @@ ObitUVDesc* ObitUVDescCopy (ObitUVDesc* in, ObitUVDesc* out, ObitErr *err)
   out->VelDef   = in->VelDef;
   out->xshift   = in->xshift;
   out->yshift   = in->yshift;
+  out->beamMaj  = in->beamMaj;
+  out->beamMin  = in->beamMin;
+  out->beamPA   = in->beamPA;
   for (i=0; i<UVLEN_VALUE; i++) out->object[i] = in->object[i];
   for (i=0; i<UVLEN_VALUE; i++) out->teles[i]  = in->teles[i];
   for (i=0; i<UVLEN_VALUE; i++) out->instrument[i] = in->instrument[i];
@@ -256,6 +259,9 @@ void ObitUVDescCopyDesc (ObitUVDesc* in, ObitUVDesc* out,
   out->VelDef   = in->VelDef;
   out->xshift   = in->xshift;
   out->yshift   = in->yshift;
+  out->beamMaj  = in->beamMaj;
+  out->beamMin  = in->beamMin;
+  out->beamPA   = in->beamPA;
   for (i=0; i<UVLEN_VALUE; i++) out->object[i] = in->object[i];
   for (i=0; i<UVLEN_VALUE; i++) out->teles[i]  = in->teles[i];
   for (i=0; i<UVLEN_VALUE; i++) out->instrument[i] = in->instrument[i];

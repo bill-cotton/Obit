@@ -75,6 +75,9 @@ extern PyObject *UVDescGetDict(ObitUVDesc* in) {
   PyDict_SetItemString(outDict, "obsdec",  PyFloat_FromDouble((double)in->obsdec));
   PyDict_SetItemString(outDict, "epoch",   PyFloat_FromDouble((double)in->epoch));
   PyDict_SetItemString(outDict, "equinox", PyFloat_FromDouble((double)in->equinox));
+  PyDict_SetItemString(outDict, "beamMaj", PyFloat_FromDouble((double)in->beamMaj));
+  PyDict_SetItemString(outDict, "beamMin", PyFloat_FromDouble((double)in->beamMin));
+  PyDict_SetItemString(outDict, "beamPA",  PyFloat_FromDouble((double)in->beamPA));
   PyDict_SetItemString(outDict, "xshift",  PyFloat_FromDouble((double)in->xshift));
   PyDict_SetItemString(outDict, "yshift",  PyFloat_FromDouble((double)in->yshift));
   PyDict_SetItemString(outDict, "altCrpix",PyFloat_FromDouble((double)in->altCrpix));
@@ -170,6 +173,9 @@ extern void UVDescSetDict(ObitUVDesc* in, PyObject *inDict) {
   in->equinox = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "equinox"));
   in->obsra   = PyFloat_AsDouble(PyDict_GetItemString(inDict, "obsra"));
   in->obsdec  = PyFloat_AsDouble(PyDict_GetItemString(inDict, "obsdec"));
+  in->beamMaj = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "beamMaj"));
+  in->beamMin = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "beamMin"));
+  in->beamPA  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "beamPA"));
   in->restFreq= (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "restFreq"));
   in->JDObs   = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "JDObs"));
   in->xshift  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "xshift"));

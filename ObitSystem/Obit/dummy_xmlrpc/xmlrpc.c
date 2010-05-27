@@ -6,7 +6,9 @@
 /* A proper version may be obtained from http://xmlrpc-c.sourceforge.net   */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "xmlrpc.h"
+#include "dummy_xmlrpc/client.h"
 
 #define CRASH_AND_BURN  \
 {fprintf(stderr,"%s: xmlrpc not implemented\n",routine); exit(1); } 
@@ -14,6 +16,7 @@
 void xmlrpc_env_init (xmlrpc_env* env)
 {
   /* NOP so the program can pretend */
+  env->fault_occurred = 0;
 }
 
 void xmlrpc_env_clean (xmlrpc_env* env)
@@ -399,3 +402,59 @@ xmlrpc_server_abyss(xmlrpc_env *                      const envP,
   /* NOP so the program can pretend */
 }
 
+void
+xmlrpc_client_setup_global_const(xmlrpc_env * const envP)
+{
+  /* NOP so the program can pretend */
+}
+
+void
+xmlrpc_client_teardown_global_const(void)
+{
+  /* NOP so the program can pretend */
+}
+
+void 
+xmlrpc_client_create(xmlrpc_env *                      const envP,
+                     int                               const flags,
+                     const char *                      const appname,
+                     const char *                      const appversion,
+                     const struct xmlrpc_clientparms * const clientparmsP,
+                     unsigned int                      const parmSize,
+                     xmlrpc_client **                  const clientPP)
+{
+  char *routine = "xmlrpc_client_create";
+  CRASH_AND_BURN 
+}
+
+void 
+xmlrpc_client_destroy(xmlrpc_client * const clientP)
+{
+  char *routine = "xmlrpc_client_destroy";
+  CRASH_AND_BURN 
+}
+
+void 
+xmlrpc_client_call_asynch(const char * const server_url,
+                          const char * const method_name,
+                          xmlrpc_response_handler callback,
+                          void *       const user_data,
+                          const char * const format,
+                          ...)
+{
+  char *routine = "xmlrpc_client_call_asynch";
+  CRASH_AND_BURN 
+}
+
+void
+xmlrpc_client_call2f(xmlrpc_env *    const envP,
+                     xmlrpc_client * const clientP,
+                     const char *    const serverUrl,
+                     const char *    const methodName,
+                     xmlrpc_value ** const resultPP,
+                     const char *    const format,
+                     ...)
+{
+  char *routine = "xmlrpc_client_call2f";
+  CRASH_AND_BURN 
+}

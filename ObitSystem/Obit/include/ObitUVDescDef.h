@@ -67,6 +67,12 @@
   ofloat xshift;
   /** Offset in Y (rotated Dec) of phase center (deg)  */
   ofloat yshift;
+  /** Convolving beam major axis in degrees  */
+  ofloat beamMaj;
+  /** Convolving beam minor axis in degrees   */
+  ofloat beamMin;
+  /** Convolving beam position angle in degrees */
+  ofloat beamPA;
   /** Data integration time in Days */
   ofloat DeltaTime;
   /** Name of object. */

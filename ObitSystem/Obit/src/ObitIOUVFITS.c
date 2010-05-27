@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -118,6 +118,15 @@ static ObitIOCode WriteAIPSUVHeader (ObitIOUVFITS *in, ObitErr *err);
 
 /** Private: Set Class function pointers. */
 static void ObitIOUVFITSClassInfoDefFn (gpointer inClass);
+
+/** Private: Read AIPS BEAM parameters. */
+void  ObitIOUVAIPSBeamRead(ObitIOUVFITS *in, olong *status);
+
+/** Private: Write AIPS BEAM parameters. */
+void  ObitIOUVAIPSBeamWrite (ObitIOUVFITS *in, olong *status);
+
+/** Private: Purge HISTORY AIPS keywords. */
+static void PurgeAIPSHistory(ObitIOUVFITS *in, olong *status);
 
 /*----------------------Public functions---------------------------*/
 /**
@@ -1775,7 +1784,10 @@ ObitIOCode ObitIOUVFITSReadDescriptor (ObitIOUVFITS *in, ObitErr *err)
   /* sort order - written in ancient AIPSish */
   ObitIOUVFITSSortRead (in, &status);
 
-  /* Look for anything else and add it to the InfoList on desc */
+   /* AIPS Beam parameters */
+  ObitIOUVAIPSBeamRead (in, &status);
+
+ /* Look for anything else and add it to the InfoList on desc */
   ObitIOUVKeysOtherRead(in, &status, err);
   if (err->error)  Obit_traceback_val (err, routine, in->name, retCode);
 
@@ -2060,6 +2072,9 @@ ObitIOUVFITSWriteDescriptor (ObitIOUVFITS *in, ObitErr *err)
   /* sort order - to be done in ancient AIPSish */
   ObitIOUVFITSSortWrite (in, err);
   if (err->error)  Obit_traceback_val (err, routine, in->name, retCode);
+
+  /* AIPS Beam parameters */
+  ObitIOUVAIPSBeamWrite (in, &status);
 
  /* Number of vis NAXIS2 - truncate if too many */
   nrows = (long)desc->nvis;
@@ -3264,3 +3279,222 @@ static ObitIOCode WriteAIPSUVHeader (ObitIOUVFITS *in, ObitErr *err)
   
   return OBIT_IO_OK;
 } /* end  WriteAIPSUVHeader */
+
+/**
+ * Look for rational keywords for the CLEAN parameters and
+ * failing this, look in AIPS history keywords.
+ * Descriptor values beamMaj, beamMin, beamPA
+ * \param in Pointer to ObitIOUVFITS.
+ * \param lstatus (Output) cfitsio status.
+ * \return return code, 0=> OK
+ */
+void  ObitIOUVAIPSBeamRead(ObitIOUVFITS *in, olong *lstatus)
+{
+  gchar commnt[FLEN_COMMENT], card[FLEN_COMMENT], temp[FLEN_COMMENT];
+  int i, j, k, keys, morekeys, status=0;
+  long ltemp;
+  float ftemp;
+  gboolean gotBeam=FALSE;
+  ObitUVDesc *desc;
+
+  /* error checks */
+  g_assert (ObitIsA(in, &myClassInfo));
+  if (*lstatus) return;  /* existing cfitsio error? */
+  status = (int)(*lstatus);
+
+  desc = in->myDesc; /* set descriptor */
+
+  /* Attempt rational keywords */
+  ftemp = -1.0;
+  fits_read_key_flt (in->myFptr, "CLEANBMJ", &ftemp, (char*)commnt, &status);
+  gotBeam = gotBeam || (status != KEY_NO_EXIST);
+  if (status==KEY_NO_EXIST) status = 0;
+  desc->beamMaj = (ofloat)ftemp;
+
+  ftemp = -1.0;
+  fits_read_key_flt (in->myFptr, "CLEANBMN", &ftemp, (char*)commnt, &status);
+  gotBeam = gotBeam || (status != KEY_NO_EXIST);
+  if (status==KEY_NO_EXIST) status = 0;
+  desc->beamMin = (ofloat)ftemp;
+
+  ftemp = -1.0;
+  fits_read_key_flt (in->myFptr, "CLEANBPA", &ftemp, (char*)commnt, &status);
+  gotBeam = gotBeam || (status != KEY_NO_EXIST);
+  if (status==KEY_NO_EXIST) status = 0;
+  desc->beamPA = (ofloat)ftemp;
+
+  /* If this worked, we're done */
+  if (gotBeam) return;
+
+  /* Oh Well, parse all the header cards looking for: 
+          1         2         3         4         5         6         7
+0123456789012345678901234567890123456789012345678901234567890123456789012345
+HISTORY AIPS   CLEAN BMAJ=  1.3432E-07 BMIN=  4.3621E-08 BPA= -43.11  
+  */
+
+  /* how many keywords to look at? */
+  fits_get_hdrspace (in->myFptr, &keys, &morekeys, &status);
+  for (k=1; k<=keys; k++) {
+    fits_read_record (in->myFptr, k, card, &status);
+    if (status==0) {
+      if (!strncmp ("HISTORY AIPS   CLEAN BMAJ", card, 25)) {
+	/* Parse card */
+	for (j=0,i=26; i<38; i++) temp[j++] = card[i]; temp[j] = 0;
+	sscanf (temp, "%f", &ftemp);
+	desc->beamMaj = (ofloat)ftemp;
+	for (j=0,i=44; i<56; i++) temp[j++] = card[i]; temp[j] = 0;
+	sscanf (temp, "%f", &ftemp);
+	desc->beamMin = (ofloat)ftemp;
+	for (j=0,i=61; i<68; i++) temp[j++] = card[i]; temp[j] = 0;
+	sscanf (temp, "%f", &ftemp);
+	desc->beamPA = (ofloat)ftemp;
+	gotBeam = TRUE;
+      }
+      /* Are we there yet? */
+      if (gotBeam) return;
+    }
+  }
+  *lstatus = (olong)status;  /* return status */
+
+} /* end ObitIOUVAIPSBeamRead */
+
+/**
+ * Write both rational keywords and AIPS HISTORY cards
+ * Descriptor values niter, beamMaj, beamMin, beamPA
+ * \param in Pointer to ObitIOUVFITS.
+ * \param status (Output) cfitsio status.
+ * \return return code, 0=> OK
+ */
+void  ObitIOUVAIPSBeamWrite (ObitIOUVFITS *in, olong *lstatus)
+{
+  gchar commnt[FLEN_COMMENT+1], card[FLEN_CARD+1];
+  int  status=0;
+  long ltemp;
+  float rtemp1, rtemp2;
+  ObitUVDesc *desc;
+
+  /* error checks */
+  g_assert (ObitIsA(in, &myClassInfo));
+  if (*lstatus) return;  /* existing error? */
+  status = (int)(*lstatus);
+
+  desc = in->myDesc; /* set descriptor */
+
+  /* Rational keywords */
+  if (desc->beamMaj > 0.0) {
+     strncpy (commnt, "Convolving Gaussian major axis FWHM (deg)", 
+	      FLEN_COMMENT);
+     fits_update_key_flt (in->myFptr, "CLEANBMJ", (float)desc->beamMaj, 
+			  6, (char*)commnt,  &status);
+     strncpy (commnt, "Convolving Gaussian minor axis FWHM (deg)", 
+	      FLEN_COMMENT);
+     fits_update_key_flt (in->myFptr, "CLEANBMN", (float)desc->beamMin,  
+			  6, (char*)commnt, &status);
+     strncpy (commnt, "Convolving Gaussian position angle (deg)", 
+	      FLEN_COMMENT);
+     fits_update_key_flt (in->myFptr, "CLEANBPA", (float)desc->beamPA,  
+			  6, (char*)commnt, &status);
+  }
+
+  /* Purge previous version */
+  PurgeAIPSHistory (in, &status);
+
+  /* Hide 'em where AIPS can find them */
+  if (desc->beamMaj > 0.0) {
+    g_snprintf (card, FLEN_COMMENT,
+		"AIPS   CLEAN BMAJ=%12.4e BMIN=%12.4e BPA=%7.2f",
+		desc->beamMaj, desc->beamMin, desc->beamPA);
+    fits_write_history (in->myFptr, (char*)card, &status);
+  }
+
+} /* end ObitIOUVAIPSBeamWrite */
+
+/**
+ * Delete selected "HISTORY AIPS" keywords from history
+ * These include restoring beam and very dangerous traps AIPS lays for itself
+ * \param in      Pointer to ObitIOUVFITS.
+ * \param lstatus (Output) cfitsio status.
+ * \return return code, 0=> OK
+ */
+static void PurgeAIPSHistory(ObitIOUVFITS *in, olong *lstatus)
+{
+  gchar card[FLEN_CARD+1];
+  int k, keys, morekeys, status=(int)*lstatus;
+
+  /* error checks */
+  g_assert (ObitIsA(in, &myClassInfo));
+  if (status) return;  /* existing cfitsio error? */
+
+  /* Oh Well, parse all the header cards looking for: 
+          1         2         3         4         5         6
+0123456789012345678901234567890123456789012345678901234567890123456789
+HISTORY AIPS   CLEAN BMAJ=  1.3432E-07 BMIN=  4.3621E-08 BPA= -43.11  
+  */
+
+  /* how many keywords to look at? */
+  fits_get_hdrspace (in->myFptr, &keys, &morekeys, &status);
+  for (k=keys; k>=1; k--) {
+    fits_read_record (in->myFptr, k, (char*)card, &status);
+    if (status==0) {
+      if (!strncmp ("HISTORY AIPS   CLEAN BMAJ", card, 25)) {
+	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY AIPS   IMAGE ITYPE", (char*)card, 26)) {
+ 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY AIPS   CLEAN NITER", (char*)card, 26)) {
+ 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY AIPS   CTYPE", (char*)card, 20)) {
+ 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY AIPS   CRVAL", (char*)card, 20)) {
+ 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY AIPS   CRPIX", (char*)card, 20)) {
+ 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY AIPS   CROTA", (char*)card, 20)) {
+ 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY AIPS   NAXIS", (char*)card, 20)) {
+ 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY AIPS   BSCALE", card, 21)) {
+ 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY AIPS   BZERO", card, 20)) {
+ 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY AIPS   BUNIT", card, 20)) {
+ 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY AIPS   BLANK", card, 20)) {
+ 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY AIPS   DATE", card, 19)) {
+ 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY 1C", (char*)card, 10)) {
+ 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY 3C", (char*)card, 10)) {
+ 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY 4C", (char*)card, 10)) {
+ 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY 5C", (char*)card, 10)) {
+ 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY 6C", (char*)card, 10)) {
+ 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      } else if (!strncmp ("HISTORY 7C", (char*)card, 10)) {
+ 	/* Delete card */
+	fits_delete_record (in->myFptr, k, &status);
+      }
+    }
+  }
+} /* end  PurgeAIPSHistory */
+

@@ -9431,6 +9431,9 @@ extern PyObject *UVDescGetDict(ObitUVDesc* in) {
   PyDict_SetItemString(outDict, "obsdec",  PyFloat_FromDouble((double)in->obsdec));
   PyDict_SetItemString(outDict, "epoch",   PyFloat_FromDouble((double)in->epoch));
   PyDict_SetItemString(outDict, "equinox", PyFloat_FromDouble((double)in->equinox));
+  PyDict_SetItemString(outDict, "beamMaj", PyFloat_FromDouble((double)in->beamMaj));
+  PyDict_SetItemString(outDict, "beamMin", PyFloat_FromDouble((double)in->beamMin));
+  PyDict_SetItemString(outDict, "beamPA",  PyFloat_FromDouble((double)in->beamPA));
   PyDict_SetItemString(outDict, "xshift",  PyFloat_FromDouble((double)in->xshift));
   PyDict_SetItemString(outDict, "yshift",  PyFloat_FromDouble((double)in->yshift));
   PyDict_SetItemString(outDict, "altCrpix",PyFloat_FromDouble((double)in->altCrpix));
@@ -9526,6 +9529,9 @@ extern void UVDescSetDict(ObitUVDesc* in, PyObject *inDict) {
   in->equinox = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "equinox"));
   in->obsra   = PyFloat_AsDouble(PyDict_GetItemString(inDict, "obsra"));
   in->obsdec  = PyFloat_AsDouble(PyDict_GetItemString(inDict, "obsdec"));
+  in->beamMaj = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "beamMaj"));
+  in->beamMin = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "beamMin"));
+  in->beamPA  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "beamPA"));
   in->restFreq= (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "restFreq"));
   in->JDObs   = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "JDObs"));
   in->xshift  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "xshift"));
@@ -9732,6 +9738,8 @@ typedef struct {
 #include "ObitUVEdit.h"
 #include "ObitUVWeight.h"
 #include "ObitTableSNUtil.h"
+#include "ObitTableNXUtil.h"
+#include "ObitTableFG.h"
 
 
 extern void UVSetFITS(ObitUV *in, long nvis, int disk, char *file, 
@@ -10014,6 +10022,42 @@ extern void UVUtilIndex(ObitUV* inUV, ObitErr *err) {
   return ObitUVUtilIndex (inUV, err);
 } // end UVUtilVisIndex
 
+extern void UVUtilQuack(ObitUV* inUV, float begDrop, float endDrop,
+	char *Reason, long fgver, ObitErr *err) {
+  olong ver;
+  ofloat ftemp;
+  ObitTableNX *NXTab = NULL;
+  ObitTableFG *FGTab = NULL;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *routine = "UVUtilQuack";
+
+  ObitUVFullInstantiate (inUV, TRUE, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
+  // Tables 
+  ver = 1;
+  NXTab = newObitTableNXValue ("Index table", (ObitData*)inUV, &ver, 
+			       OBIT_IO_ReadOnly, err);
+  ver = fgver;
+  FGTab = newObitTableFGValue ("Flag table", (ObitData*)inUV, &ver, 
+			       OBIT_IO_ReadWrite, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
+  // Editing parameters to NXTab 
+  dim[0] = 1;
+  ftemp = begDrop;
+  ObitInfoListAlwaysPut (NXTab->info, "begDrop", OBIT_float, dim, &ftemp);
+  ftemp = endDrop;
+  ObitInfoListAlwaysPut (NXTab->info, "endDrop", OBIT_float, dim, &ftemp);
+  dim[0] = MIN(24, strlen(Reason));
+  ObitInfoListAlwaysPut (NXTab->info, "Reason", OBIT_string, dim, Reason);
+
+  // Do editing 
+  ObitTableNXUtilQuack (NXTab, FGTab, inUV->mySel, inUV->myDesc->maxAnt, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+} // end UVUtilQuack
+
 extern ObitUV* UVUtilAvgF(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
   gboolean lscratch;
   lscratch = scratch!=0;
@@ -10135,6 +10179,7 @@ extern void UVUtilVisDivide(ObitUV *,ObitUV *,ObitUV *,ObitErr *);
 extern void UVUtilVisSub(ObitUV *,ObitUV *,ObitUV *,ObitErr *);
 extern float UVUtilVisCompare(ObitUV *,ObitUV *,ObitErr *);
 extern void UVUtilIndex(ObitUV *,ObitErr *);
+extern void UVUtilQuack(ObitUV *,float ,float ,char *,long ,ObitErr *);
 extern ObitUV *UVUtilAvgF(ObitUV *,int ,ObitUV *,ObitErr *);
 extern ObitUV *UVUtilAvgT(ObitUV *,int ,ObitUV *,ObitErr *);
 extern ObitUV *UVUtilAvgTF(ObitUV *,int ,ObitUV *,ObitErr *);
@@ -44473,6 +44518,60 @@ static PyObject *_wrap_UVUtilIndex(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_UVUtilQuack(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUV * _arg0;
+    float  _arg1;
+    float  _arg2;
+    char * _arg3;
+    long  _arg4;
+    ObitErr * _arg5;
+    PyObject * _argo0 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo5 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OffOlO:UVUtilQuack",&_argo0,&_arg1,&_arg2,&_obj3,&_arg4,&_argo5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVUtilQuack. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of UVUtilQuack. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    UVUtilQuack(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  free((char *) _arg3);
+}
+    return _resultobj;
+}
+
 static PyObject *_wrap_UVUtilAvgF(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitUV * _result;
@@ -52293,6 +52392,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "UVUtilAvgTF", _wrap_UVUtilAvgTF, METH_VARARGS },
 	 { "UVUtilAvgT", _wrap_UVUtilAvgT, METH_VARARGS },
 	 { "UVUtilAvgF", _wrap_UVUtilAvgF, METH_VARARGS },
+	 { "UVUtilQuack", _wrap_UVUtilQuack, METH_VARARGS },
 	 { "UVUtilIndex", _wrap_UVUtilIndex, METH_VARARGS },
 	 { "UVUtilVisCompare", _wrap_UVUtilVisCompare, METH_VARARGS },
 	 { "UVUtilVisSub", _wrap_UVUtilVisSub, METH_VARARGS },
