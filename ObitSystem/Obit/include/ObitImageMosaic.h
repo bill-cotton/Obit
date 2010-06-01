@@ -205,6 +205,13 @@ typedef void (*ObitImageMosaicMaxCCFP) (ObitTableCC *CCTab, olong nccpos, ofloat
 					ofloat* maxcmp, ofloat* xcenter, ofloat* ycenter, 
 					ofloat* xoff, ofloat* yoff, ObitErr* err);
 
+/** Public:  Get combined CC table */
+ObitTableCC* ObitImageMosaicCombineCC (ObitImageMosaic *mosaic, olong field,
+				       olong CCver, ObitErr* err); 
+typedef ObitTableCC* (*ObitImageMosaicCombineCCFP) (ObitImageMosaic *mosaic, 
+						    olong field, olong CCver, 
+						    ObitErr* err); 
+
 /** Public: Zero selected CC entries */
 void ObitImageMosaicFlagCC (ObitTableCC *CCTab, olong nccpos, ofloat radius, 
 			   ofloat xcenter, ofloat ycenter, ObitErr* err);

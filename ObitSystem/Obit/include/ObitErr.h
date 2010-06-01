@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2009                                          */
+/*;  Copyright (C) 2002-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -220,6 +220,10 @@ typedef struct {
   gint32 ReferenceCount;
   /** message buffer */
   gchar buffer[OBITERRBUFSIZE+1];
+  /** Print level flag */
+  olong prtLv;
+  /** Program name */
+  gchar *pgmName;
 } ObitErr;
 
 /**  ObitErr Stack Element structure. */

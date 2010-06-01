@@ -1,6 +1,6 @@
 /* $Id$    */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1002,7 +1002,7 @@ ObitIOCode ObitIOImageFITSReadDescriptor (ObitIOImageFITS *in, ObitErr *err)
   tableList = (ObitTableList*)in->tableList;
 
   /* Index tables in file and update TableList if not already done*/
-  if (tableList->number <= 0) {
+  if (tableList && (tableList->number <= 0)) {
     fits_get_num_hdus (in->myFptr, &nhdu, &status);
     for (i=1; i<=nhdu; i++) {
       fits_movabs_hdu (in->myFptr, i, &hdutype, &status);
@@ -2227,7 +2227,10 @@ void  ObitIOImageKeysOtherRead(ObitIOImageFITS *in, olong *lstatus,
 	  break;
 	case 'X':  /* Complex - can't handle */
 	default:
-	  g_assert_not_reached(); /* unknown, barf */
+	  /* unknown, bitch */
+	  Obit_log_error(err, OBIT_InfoWarn, 
+			 "%s: Unknown type %d for keyword %s",
+			 routine, dtype, keywrd);
 	}; /* end switch on type */
 	
 	/* error check */

@@ -253,7 +253,7 @@ ObitImage* ObitImageUtilCreateImage (ObitUV *inUV, olong fieldNo,
   /* Align 2D to grid? */
   doGrid = TRUE;
   ObitInfoListGetP(inUV->info, "doGrid", &type, dim, (gpointer*)&barray);
-  if (farray!=NULL) doGrid = barray[fieldNo-1];
+  if (barray!=NULL) doGrid = barray[fieldNo-1];
 
   /* bail out if an error so far */
   if (err->error) return outImage;
@@ -3828,6 +3828,7 @@ ObitImage* ObitImageUtilFArray2FITS (ObitFArray *array,
  * Input image is shifted by an FFT/phase ramp/FFT method to another grid
  * shifted by shift pixels.
  * Processes a single plane.
+ * Ouptut descriptor mostly unmodified - assumed coordinates are valid.
  * \param inImage  Image to be shifted.
  * \param outImage Image to be written.  Must be previously instantiated.
  * \param shift    Shift in pixels, in pixel space;
@@ -3974,7 +3975,7 @@ void ObitImageUtilShift (ObitImage *inImage, ObitImage *outImage, ofloat *shift,
   ObitFArrayBlank (outImage->image, inFArray, outImage->image);
 
   /* Copy descriptor */
-  ObitImageDescCopyDesc (inImage->myDesc, outImage->myDesc, err);
+  /*  ObitImageDescCopyDesc (inImage->myDesc, outImage->myDesc, err);*/
   if (err->error) Obit_traceback_msg (err, routine, inImage->name);
   
   /* Creation date today */
@@ -3986,11 +3987,11 @@ void ObitImageUtilShift (ObitImage *inImage, ObitImage *outImage, ofloat *shift,
   outImage->myDesc->maxval = -1.0e20;
   outImage->myDesc->minval =  1.0e20;
   outImage->myDesc->areBlanks = FALSE;
-  outImage->myDesc->crpix[0] += shift[0];
-  outImage->myDesc->crpix[1] += shift[1];
+  /*  outImage->myDesc->crpix[0] += shift[0];*/
+  /*  outImage->myDesc->crpix[1] += shift[1];*/
   if (!outImage->myDesc->do3D) {
-    outImage->myDesc->xPxOff -= shift[0];
-    outImage->myDesc->yPxOff -= shift[1];
+    /*   outImage->myDesc->xPxOff -= shift[0];*/
+    /*   outImage->myDesc->yPxOff -= shift[1];*/
   }
 
   /* Write */
@@ -4285,11 +4286,10 @@ void ObitImageUtilTwoDShift (ObitUVDesc *UVDesc, ObitImageDesc *imageDesc,
 		       imageDesc->crota[1], &imageDesc->ctype[0][4],
 		       &rac, &decc);
 
-
   /* Get shift to position (rac,decc) */
   ObitSkyGeomShiftXY (UVDesc->crval[UVDesc->jlocr], UVDesc->crval[UVDesc->jlocd],
-		       imageDesc->crota[1], rac, decc,
-		       &xshift, &yshift);
+		      imageDesc->crota[1], rac, decc,
+		      &xshift, &yshift);
   imageDesc->xshift = xshift;
   imageDesc->yshift = yshift;
 

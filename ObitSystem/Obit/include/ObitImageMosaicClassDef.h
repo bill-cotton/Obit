@@ -58,6 +58,8 @@ ObitImageMosaicFOVFP ObitImageMosaicFOV;
 ObitImageMosaicMaxFOVFP ObitImageMosaicMaxFOV;
 /** Function pointer to Get max summed CC and determine offset from nearest pixel */
 ObitImageMosaicMaxCCFP ObitImageMosaicMaxCC;
+/** Function pointer to Give combined Clean Components table */
+ObitImageMosaicCombineCCFP ObitImageMosaicCombineCC;
 /** Function pointer to Zero selected CC entries */
 ObitImageMosaicFlagCCFP ObitImageMosaicFlagCC;
 /** Function pointer to Add field to mosaic */

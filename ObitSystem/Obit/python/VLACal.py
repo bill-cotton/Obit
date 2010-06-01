@@ -1,6 +1,6 @@
 """ Functions for calibrating and editing VLA data
 """
-import UV, UVDesc, Image, ImageDesc, FArray, ObitTask, AIPSTask, OErr
+import UV, UVDesc, Image, ImageDesc, FArray, ObitTask, AIPSTask, OErr, History
 from AIPS import AIPS
 from FITS import FITS
 from AIPSDir import AIPSdisks, nAIPS
@@ -120,6 +120,161 @@ def VLAClearCal(uv, err, doGain=True, doBP=False, doFlag=False):
     OErr.printErrMsg(err, "VLAClearCal: Error reseting calibration")
     # end VLAClearCal
 
+def VLAUVLoad(filename, inDisk, Aname, Aclass, Adisk, Aseq, err):
+    """ Read FITS uvtab file into AIPS
+
+    Read a UVTAB FITS UV data file and write an AIPS data set
+    filename   = name of FITS file
+    inDisk     = FITS directory number
+    Aname      = AIPS name of file
+    Aclass     = AIPS class of file
+    Aseq       = AIPS sequence number of file, 0=> create new
+    Adisk      = FITS directory number
+    err        = Python Obit Error/message stack
+    returns AIPS UV data object
+    """
+    ################################################################
+    #
+    # Checks
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    # Get input
+    inUV = UV.newPFUV("FITS UV DATA", filename, inDisk, True, err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error with FITS data")
+    # Get output, create new if seq=0
+    if Aseq<1:
+        OErr.printErr(err)   # Print any outstanding messages
+        user = OSystem.PGetAIPSuser()
+        Aseq=AIPSDir.PHiSeq(Adisk,user,Aname,Aclass,"MA",err)
+        # If it already exists, increment seq
+        if AIPSDir.PTestCNO(Adisk,user,Aname,Aclass,"MA",Aseq,err)>0:
+            Aseq = Aseq+1
+        OErr.PClear(err)     # Clear any message/error
+    print "Creating AIPS UV file",Aname,".",Aclass,".",Aseq,"on disk",Adisk
+    outUV = UV.newPAUV("AIPS UV DATA", Aname, Aclass, Adisk, Aseq, False, err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error creating AIPS data")
+    # Copy
+    UV.PCopy (inUV, outUV, err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error copying UV data to AIPS")
+    # Copy History
+    inHistory  = History.History("inhistory",  inUV.List, err)
+    outHistory = History.History("outhistory", outUV.List, err)
+    History.PCopyHeader(inHistory, outHistory, err)
+    # Add history
+    outHistory.Open(History.READWRITE, err)
+    outHistory.TimeStamp(" Start Obit uvlod",err)
+    outHistory.WriteRec(-1,"uvlod   / FITS file "+filename+" disk "+str(inDisk),err)
+    outHistory.Close(err)
+   #
+    # Copy Tables
+    exclude=["AIPS HI", "AIPS AN", "AIPS FQ", "AIPS SL", "AIPS PL", "History"]
+    include=[]
+    UV.PCopyTables (inUV, outUV, exclude, include, err)
+    return outUV  # return new object
+    # end VLAUVLoad
+
+def VLAUVLoadT(filename, disk, Aname, Aclass, Adisk, Aseq, err, \
+              Compress=False):
+    """ Read FITS file into AIPS
+
+    Read input uvtab FITS file, write AIPS
+    Returns Obit uv object
+    Filename = input FITS uvtab format file
+    disk     = input FITS file disk number
+    Aname    = output AIPS file name
+    Aclass   = output AIPS file class
+    Adisk    = output AIPS file disk
+    Aseq     = output AIPS file sequence
+    err      = Obit error/message stack
+    Compress = Write AIPS data in compressed form?
+    """
+    ################################################################
+    #
+    uvc = ObitTask.ObitTask("UVCopy")
+    uvc.DataType = "FITS"
+    uvc.inFile   = filename
+    uvc.inDisk   = disk
+    uvc.outDType = "AIPS"
+    uvc.outName  = Aname
+    uvc.outClass = Aclass
+    uvc.outSeq   = Aseq
+    uvc.outDisk  = Adisk
+    uvc.Compress = Compress
+    uvc.g
+
+    # Get output
+    outuv = UV.newPAUV("UVdata", Aname, Aclass, Adisk, Aseq, True, err)
+    return outuv
+    # end VLAUVLoadT
+
+def VLAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
+          exclude=["AIPS HI","AIPS PL","AIPS SL"], include=["AIPS CC"],
+          headHi=False):
+    """ Write AIPS image as FITS
+
+    Write a Image data set as a FITAB format file
+    History also copied
+    inImage    = Image data to copy
+    filename   = name of FITS file
+    outDisk     = FITS directory number
+    err        = Python Obit Error/message stack
+    fract      = Fraction of RMS to quantize
+    quant      = quantization level in image units, has precedence over fract
+                 None or <= 0 => use fract.
+    exclude    = List of table types NOT to copy
+                 NB: "AIPS HI" isn't really a table and gets copied anyway
+    include    = List of table types to copy
+    headHi     = if True move history to header, else leave in History table
+    """
+    ################################################################
+    #
+    # Checks
+    if not Image.PIsA(inImage):
+        raise TypeError,"inImage MUST be a Python Obit Image"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    # Set output
+    outImage = Image.newPFImage("FITS Image DATA", filename, outDisk, False, err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error creating FITS data")
+    # Check for valid pixels
+    if inImage.Desc.Dict["maxval"]<=inImage.Desc.Dict["minval"]:
+        fract=None; quant=None
+    # Copy
+    if fract or quant:
+        Image.PCopyQuantizeFITS (inImage, outImage, err, fract=fract, quant=quant)
+    else:
+        Image.PCopy (inImage, outImage, err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error copying Image data to FITS")
+    # Copy History
+    inHistory  = History.History("inhistory",  inImage.List, err)
+    outHistory = History.History("outhistory", outImage.List, err)
+    History.PCopy(inHistory, outHistory, err)
+    # Add this programs history
+    outHistory.Open(History.READWRITE, err)
+    outHistory.TimeStamp(" Start Obit imtab",err)
+    if fract:
+        outHistory.WriteRec(-1,"imtab   / Quantized at "+str(fract)+" RMS",err)
+    outHistory.WriteRec(-1,"imtab   / FITS file "+filename+", disk "+str(outDisk),err)
+    outHistory.Close(err)
+    # History in header?
+    if headHi:
+        # Copy back to header
+        inHistory  = History.History("inhistory",  outImage.List, err)
+        History.PCopy2Header (inHistory, outHistory, err)
+        # zap table
+        outHistory.Zap(err)
+    OErr.printErrMsg(err, "Error with history")
+    # Copy Tables
+    Image.PCopyTables (inImage, outImage, exclude, include, err)
+    # end VLAImFITS
+
 def VLAMedianFlag(uv, target, err, \
                   flagTab=1, flagSig=10.0, alpha=0.5, timeWind=2.0,
                   doCalib=0, gainUse=0, doBand=0, BPVer=0, flagVer=-1,
@@ -163,6 +318,53 @@ def VLAMedianFlag(uv, target, err, \
     medn.noScrat  = noScrat
     medn.g
     # end VLAMedianFlag
+    
+def VLAQuack(uv, err, \
+             Stokes = " ", BIF=1, EIF=0, Sources=["  "], FreqID=0, \
+             subA=0, timeRange=[0.,0.], Antennas=[0], flagVer=1, \
+             begDrop=0.0, endDrop=0.0, Reason="Quack"):
+    """ Flags beginning and end of each scan
+
+    Trim start and end of each selected scan,
+    nothing done if begDrop=endDrop=0.0
+    See documentation for task Quack for details
+    uv       = UV data object to flag
+    err      = Obit error/message stack
+    Stokes   = Limit flagging by Stokes
+    BIF      = Limit flagging to BIF-EIF
+    EIF      = Limit flagging
+    Sources  = Sources selected
+    subA     = Subarray number 0=>all
+    FreqID   = Freq. ID to flag. -1=>all
+    timeRange= Time range to process
+    Antennas = List of antennas to include
+    flagVer  = Flag table version, 0 => highest
+    begDrop  = Time (min) to drop from beginning
+    endDrop  = Time (min) to drop from end
+    Reason   = Reason (max 24 char.)
+    """
+    ################################################################
+    # Anything to do?
+    if (begDrop<=0) and (endDrop<=0):
+        return
+    
+    quack=ObitTask.ObitTask("Quack")
+    
+    setname(uv, quack)
+    quack.Stokes    = Stokes
+    quack.BIF       = BIF
+    quack.EIF       = EIF
+    quack.Sources   = Sources
+    quack.subA      = subA
+    quack.FreqID    = FreqID
+    quack.timeRange = timeRange
+    quack.Antennas  = Antennas
+    quack.flagVer   = flagVer
+    quack.begDrop   = begDrop
+    quack.endDrop   = endDrop
+    quack.Reason    = Reason
+    quack.g
+    # end VLAQuack
     
 def VLAAutoFlag(uv, target, err, \
                 doCalib=0, gainUse=0, doBand=0, BPVer=0, flagVer=-1, \
@@ -376,13 +578,34 @@ def VLACal(uv, target, ACal, err, \
     # end PCal calibration
     # end VLACal
 
-def VLABPCal(uv, BPCal, err, newBPVer=1,
-             doCalib=2, gainUse=0, doBand=0, BPVer=0, flagVer=-1, \
-             solInt=0.0, refAnt=0, ampScalar=False, specIndex=0.0,
-             timerange=[0.,0.,0.,0.,0.,0.,0.,0.], noScrat=[]):
+def VLABPCal(uv, BPCal, err, newBPVer=1, timerange=[0.,0.], \
+             doCalib=2, gainUse=0, doBand=0, BPVer=0, flagVer=-1,  \
+             CalDataType="    ", CalFile="  ", CalName="  ", CalClass="  ", \
+             CalSeq=0, CalDisk=0, CalNfield=0, CalCCVer=0, \
+             CalBComp=[0], CalEComp=[0], CalCmethod=" ", CalCmodel=" ", CalFlux=0.0, \
+             modelFlux=0.0, modelPos=[0.0], modelParm=[0.0], \
+             doCenter1=None, BChan1=1, EChan1=0, \
+             BChan2=1, EChan2=0, ChWid2=1, \
+             solInt1=0.0, solInt2=0.0, refAnt=0, \
+             ampScalar=False, specIndex=0.0, \
+             doAuto=False, doPol=False, avgPol=False, avgIF=False, \
+             nThreads=1, noScrat=[]):
     """ Bandbass calibration
 
     Do bandbass calibration, write BP table
+    Calibration is done in two passes
+    1)  First a wideband phase only calibration using channels
+    BChan1 to EChan1 or the central doCenter1 fraction of the band
+    using a solution interval of solInt1.  This solution is applied
+    to all selected data and used in the second pass.
+    2)  Second channels in the range BChan2 to EChan2 averaging blocks
+    of ChWid2 are calibrated using solTYpe and solMode for solInt2 and
+    the results written as the output BP table.
+       The Calibrator model may be given as either and Image with CC table,
+    a parameterized model or a point source with the flux density in 
+    the SU table.
+    See BPass documentation for details
+    
     uv       = UV data object to calibrate
     BPCal    = Bandpass calibrator, name or list of names
     err      = Obit error/message stack
@@ -392,34 +615,94 @@ def VLABPCal(uv, BPCal, err, newBPVer=1,
     doBand   = If >0.5 apply previous bandpass cal.
     BPVer    = previous Bandpass table (BP) version
     flagVer  = Input Flagging table version
-    solInt   = solution interval (min), 0=> scan average
+    timerange= timerange in days to use
+    CalDataType =  Calibrator model file data type (AIPS,FITS)
+    CalFile  = Calibrator model FITS input image if Type=='FITS'
+    CalName  = Calibrator model Cleaned map name 
+    CalClass = Calibrator model Cleaned map class
+    CalSeq   = Calibrator model Cleaned map seq
+    CalDisk  = Calibrator model Cleaned map disk
+    CalNfield= Calibrator model  No. maps to use for model
+    CalCCVer = Calibrator model CC file version
+    CalBComp = Calibrator model First CLEAN comp to use, 1/field
+    CalEComp = Calibrator model  Last CLEAN comp to use, 0=>all
+    CalCmethod= Calibrator model Modeling method, 'DFT','GRID','    '
+    CalCmodel= Calibrator model Model type: 'COMP','IMAG'
+    CalFlux  = Calibrator model  Lowest CC component used
+    modelFlux= Parameterized model flux density (Jy)
+    modelPos = Parameterized model Model position offset (asec)
+    modelParm= Parameterized model Model parameters (maj, min, pa, type)
+    doCenter1= If defined, the center fraction of the bandpass to use first pass
+    solInt1  = first solution interval (min), 0=> scan average
+    solInt2  = second solution interval (min)
     refAnt   = Reference antenna
     ampScalar= If true, scalar average data in calibration
     specIndex= spectral index of calibrator (steep=-0.70)
-    timerange= timerange (in AIPSish) to use
+    doAuto   = Use autocorrelation spectra? Else, crosscorrelation
+    doPol    = Apply polarization cal?
+    avgPol   = Avg. poln. in solutions?
+    avgIF    = Avg. IFs. in solutions?
+    nThreads = Number of threads to use
     noScrat  = list of disks to avoid for scratch files
     """
     ################################################################
-    bpass = AIPSTask.AIPSTask("bpass")
+    bpass = ObitTask.ObitTask("BPass")
     setname(uv,bpass)
     if type(BPCal)==list:
-        bpass.calsour[1:] = BPCal
+        bpass.Sources = BPCal
     else:
-        bpass.calsour[1:] = [BPCal]
-    bpass.bpver   = BPVer
-    bpass.outver  = newBPVer
-    bpass.docalib = doCalib
-    bpass.gainuse = gainUse
-    bpass.doband  = doBand
-    bpass.bpver   = BPVer
-    bpass.flagver = flagVer
-    bpass.solint  = solInt
-    bpass.specindx= specIndex
-    bpass.refant  = refAnt
-    bpass.timerang[1:] = timerange
-    bpass.baddisk[1:]  = noScrat
-    if ampScalar:
-        bpass.bpassprm[8] = 1.0
+        bpass.Sources = [BPCal]
+    bpass.doBand    = doBand
+    bpass.BPVer     = BPVer
+    bpass.BPSoln    = newBPVer
+    bpass.doCalib   = doCalib
+    bpass.gainUse   = gainUse
+    bpass.flagVer   = flagVer
+    bpass.doPol     = doPol
+    bpass.solInt1   = solInt1
+    bpass.solInt2   = solInt2
+    bpass.Alpha     = specIndex
+    bpass.refAnt    = refAnt
+    bpass.timeRange = timerange
+    bpass.DataType2 = CalDataType
+    bpass.in2File   = CalFile
+    bpass.in2Name   = CalName
+    bpass.in2Class  = CalClass
+    bpass.in2Seq    = CalSeq 
+    bpass.in2Disk   = CalDisk
+    bpass.nfield    = CalNfield
+    bpass.CCVer     = CalCCVer
+    bpass.BComp     = CalBComp
+    bpass.EComp     = CalEComp
+    bpass.Cmethod   = CalCmethod
+    bpass.Cmodel    = CalCmodel
+    bpass.Flux      = CalFlux
+    bpass.modelFlux = modelFlux
+    bpass.modelPos  = modelPos
+    bpass.modelParm = modelParm
+    bpass.doAuto    = doAuto
+    bpass.avgPol    = avgPol
+    bpass.avgIF     = avgIF
+    bpass.ampScalar = ampScalar
+    bpass.noScrat   = noScrat
+    bpass.nThreads  = nThreads
+
+    # Channel selection
+    d     = uv.Desc.Dict
+    nchan = d["inaxes"][d["jlocf"]]
+    # Center fraction requested?
+    if doCenter1:
+        # Center doCenter1 fraction of channels for first cal
+        mchan = int(nchan*doCenter1)
+        bpass.BChan1 = max(1, (nchan/2)-(mchan/2))
+        bpass.EChan1 = min(nchan, (nchan/2)+(mchan/2))
+    else:
+        bpass.BChan1 = BChan1
+        bpass.EChan1 = EChan1
+    bpass.BChan2 = BChan2
+    bpass.EChan2 = EChan2
+    if bpass.EChan2<=0:
+        bpass.EChan2 = nchan
     
     #bpass.i
     bpass.g

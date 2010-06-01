@@ -448,6 +448,10 @@ void ObitUVImagerImage (ObitUVImager *in, olong *field, gboolean doWeight,
   ObitImage *theBeam=NULL;
   gboolean *forceBeam=NULL, needBeam, doall;
   ObitUVImagerClassInfo *imgClass = (ObitUVImagerClassInfo*)in->ClassInfo;
+  gchar        *dataParms[] = {  /* Imaging info */
+    "xShift", "yShift",
+    NULL
+  };
   gchar *routine = "ObitUVImagerImage";
 
   /* error checks */
@@ -460,6 +464,10 @@ void ObitUVImagerImage (ObitUVImager *in, olong *field, gboolean doWeight,
     Obit_log_error(err, OBIT_Error,"%s UV data not defined in %s", routine, data->name);
     return;
   }
+
+  /* Copy imaging info if uvwork already defined */
+  if (in->uvwork) 
+    ObitInfoListCopyList (in->uvdata->info, in->uvwork->info, dataParms);
 
   /* List of need to force making beam */
   forceBeam = g_malloc0(in->mosaic->numberImages*sizeof(gboolean));
@@ -476,7 +484,8 @@ void ObitUVImagerImage (ObitUVImager *in, olong *field, gboolean doWeight,
 
   /* get prtLv */
   prtLv = 1;
-  ObitInfoListGetTest(in->mosaic->info, "prtLv", &type, dim, &prtLv);
+  if (ObitInfoListGetTest(in->mosaic->info, "prtLv", &type, dim, &prtLv)) 
+    err->prtLv = prtLv;  /* Add to err */
 
   /* Single or multiple images (including beams) */
   if ((!doBeam) && ((nImage==1) || (in->mosaic->numberImages==1))) {

@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -247,26 +247,28 @@ void ObitIOImageAIPSZap (ObitIOImageAIPS *in, ObitErr *err)
 
   /* Delete any tables on the TableList */
   tableList = (ObitTableList*)in->tableList;
-  for (i=tableList->number; i>=1; i--) {
-    /* Get info */
-    ObitTableListGetNumber (tableList, i, &tabType, &tabVer, 
-			    &table, err);
-
-    /* setup input table if not instantiated */
-    if (table==NULL) {
-      table = (ObitTable*)newObitIOImageAIPSTable (in, OBIT_IO_ReadOnly, 
-						   tabType, &tabVer, err);
-    }
-
-    /* Remove table from list */
-    ObitTableListRemove (tableList, tabType, tabVer);
-
-    /* destroy the table */
-    table = ObitTableZap (table, err);
-    table = ObitTableUnref(table);
-    if (tabType) g_free(tabType);
-    if (err->error) Obit_traceback_msg (err, routine, in->name);
-  } /* End loop deleting tables */
+  if (tableList) {
+    for (i=tableList->number; i>=1; i--) {
+      /* Get info */
+      ObitTableListGetNumber (tableList, i, &tabType, &tabVer, 
+			      &table, err);
+      
+      /* setup input table if not instantiated */
+      if (table==NULL) {
+	table = (ObitTable*)newObitIOImageAIPSTable (in, OBIT_IO_ReadOnly, 
+						     tabType, &tabVer, err);
+      }
+      
+      /* Remove table from list */
+      ObitTableListRemove (tableList, tabType, tabVer);
+      
+      /* destroy the table */
+      table = ObitTableZap (table, err);
+      table = ObitTableUnref(table);
+      if (tabType) g_free(tabType);
+      if (err->error) Obit_traceback_msg (err, routine, in->name);
+    } /* End loop deleting tables */
+  } /* end if tableList exists */
   while (tableList) tableList = ObitTableUnref(tableList);  /* Get table list */
   in->tableList = NULL;
 

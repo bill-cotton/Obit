@@ -838,6 +838,8 @@ void GetHeader (ObitUV *outData, gchar *inscan,
       desc->crpix[ncol] = inTable->crpix1;
       desc->crval[ncol] = inTable->crval1;
       desc->crota[ncol] = 0.0;
+      /* Stokes may be mislabeled - use stk_1 */
+      if (!strncmp(desc->ctype[ncol], "STOKES ",6)) desc->crval[ncol] = inTable->stk_1;
       ncol++;
     }
     /* Dimension 2 */
@@ -853,6 +855,8 @@ void GetHeader (ObitUV *outData, gchar *inscan,
       desc->crpix[ncol] = inTable->crpix2;
       desc->crval[ncol] = inTable->crval2;
       desc->crota[ncol] = 0.0;
+      /* Stokes may be mislabeled - use stk_1 */
+      if (!strncmp(desc->ctype[ncol], "STOKES ",6)) desc->crval[ncol] = inTable->stk_1;
       ncol++;
     }
     /* Dimension 3 */
@@ -868,6 +872,8 @@ void GetHeader (ObitUV *outData, gchar *inscan,
       desc->crpix[ncol] = inTable->crpix3;
       desc->crval[ncol] = inTable->crval3;
       desc->crota[ncol] = 0.0;
+      /* Stokes may be mislabeled - use stk_1 */
+      if (!strncmp(desc->ctype[ncol], "STOKES ",6)) desc->crval[ncol] = inTable->stk_1;
       ncol++;
     }
     /* Dimension 4 */
@@ -883,6 +889,8 @@ void GetHeader (ObitUV *outData, gchar *inscan,
       desc->crpix[ncol] = inTable->crpix4;
       desc->crval[ncol] = inTable->crval4;
       desc->crota[ncol] = 0.0;
+      /* Stokes may be mislabeled - use stk_1 */
+      if (!strncmp(desc->ctype[ncol], "STOKES ",6)) desc->crval[ncol] = inTable->stk_1;
       ncol++;
     }
     /* Dimension 5 */
@@ -898,6 +906,8 @@ void GetHeader (ObitUV *outData, gchar *inscan,
       desc->crpix[ncol] = inTable->crpix5;
       desc->crval[ncol] = inTable->crval5;
       desc->crota[ncol] = 0.0;
+      /* Stokes may be mislabeled - use stk_1 */
+      if (!strncmp(desc->ctype[ncol], "STOKES ",6)) desc->crval[ncol] = inTable->stk_1;
       ncol++;
     }
     /* Dimension 6 */
@@ -913,6 +923,8 @@ void GetHeader (ObitUV *outData, gchar *inscan,
       desc->crpix[ncol] = inTable->crpix6;
       desc->crval[ncol] = inTable->crval6;
       desc->crota[ncol] = 0.0;
+      /* Stokes may be mislabeled - use stk_1 */
+      if (!strncmp(desc->ctype[ncol], "STOKES ",6)) desc->crval[ncol] = inTable->stk_1;
       ncol++;
     }
     /* Dimension 7 */
@@ -928,6 +940,8 @@ void GetHeader (ObitUV *outData, gchar *inscan,
       desc->crpix[ncol] = inTable->crpix7;
       desc->crval[ncol] = inTable->crval7;
       desc->crota[ncol] = 0.0;
+      /* Stokes may be mislabeled - use stk_1 */
+      if (!strncmp(desc->ctype[ncol], "STOKES ",6)) desc->crval[ncol] = inTable->stk_1;
       ncol++;
     }
     desc->naxis = ncol;  /* Number of dimensions */
@@ -1360,6 +1374,17 @@ void GetAntennaInfo (ObitData *inData, ObitUV *outData, olong arrno,
     return;
   }
 
+  /* Patch for Socorro myopia (as if there were any other telescopes in the world) */
+  if (!strncmp(in2Table->ArrName, "A       ", 8) || 
+      !strncmp(in2Table->ArrName, "B       ", 8) || 
+      !strncmp(in2Table->ArrName, "C       ", 8) || 
+      !strncmp(in2Table->ArrName, "D       ", 8)) {
+    strncpy (in2Table->ArrName, "EVLA    ", 8);
+    in2Table->ArrayX = -1601185.365;
+    in2Table->ArrayY = -5041977.547;
+    in2Table->ArrayZ =  3554915.87;
+  }
+
   /* Create Row */
   in2Row = newObitTableIDI_ARRAY_GEOMETRYRow (in2Table);
 
@@ -1783,6 +1808,8 @@ void GetSourceInfo (ObitData *inData, ObitUV *outData, gboolean isNew,
 	inRow->VFlux[i] = 0.0;
       if ((isnan(inRow->RestFreq[i])) || (inRow->RestFreq[i]==fblank))
 	inRow->RestFreq[i] = 0.0;
+      if ((isnan(inRow->SysVel[i])) || (inRow->SysVel[i]==fblank))
+	inRow->SysVel[i] = 0.0;
     }
 
     /* See if source exists in output table */

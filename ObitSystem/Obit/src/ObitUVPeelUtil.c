@@ -141,6 +141,9 @@ void ObitUVPeelUtilLoop (ObitInfoList* myInput, ObitUV* inUV,
   *nfield = myClean->mosaic->numberImages;  /* Keep track of components not peeled */
   *ncomp = g_malloc0((*nfield)*sizeof(olong));
 
+  /* Set prtLv on err */
+  ObitInfoListGetTest(myInput, "prtLv", &type, dim, &err->prtLv); 
+
   /* Peeling trip level */
   PeelFlux = 1.0e20;
   ObitInfoListGetTest(myInput, "PeelFlux", &type, dim, &PeelFlux); 
@@ -154,7 +157,7 @@ void ObitUVPeelUtilLoop (ObitInfoList* myInput, ObitUV* inUV,
 
   /* Loop while sources still brighter than PeelFlux */
   while (myClean->peakFlux>PeelFlux) {
-    peelfield = ObitUVPeelUtilPeel (myInput, inUV, myClean, err);
+    peelfield = ObitUVPeelUtilPeel (myInput, inUV, myClean, peeled, err);
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     if (peelfield>0) {
       peeled[peelfield-1] = 1;  /* keep track of peeled fields */
@@ -183,7 +186,7 @@ void ObitUVPeelUtilLoop (ObitInfoList* myInput, ObitUV* inUV,
     /* Make sure  created */
     if (peelCCTable==NULL) {
       Obit_log_error(err, OBIT_Error, 
-		     "%s: No CC table 1 found on %s", routine, myClean->mosaic->images[i]->name);
+		     "%s: No CC table 2 found on %s", routine, myClean->mosaic->images[i]->name);
       return;
     }
     ver = 1;
@@ -265,11 +268,12 @@ void ObitUVPeelUtilLoop (ObitInfoList* myInput, ObitUV* inUV,
  *                determined from the CLEAN components by 
  *                #ObitImageMosaicMaxField
  *                On output, this will include info on last CLEAN
+ * \param donePeel List of flags for fields already peeled, 1 in posn -> peeled
  * \param err     Error/message stack
  * \return the 1-rel field number of the peeled field or -1 if no peel
  */
 olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV, 
-			 ObitDConCleanVis *myClean, ObitErr* err)
+			  ObitDConCleanVis *myClean, olong *donePeel, ObitErr* err)
 {
   olong             peeled=-1;
   ObitInfoType      type;
@@ -283,7 +287,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
   ObitUVSelfCal     *selfCal = NULL;
   ObitTableCC       *peelCCTable=NULL, *outCCTable=NULL, *CCTab=NULL;
   ObitTableSN       *inSNTable=NULL, *outSNTable=NULL, *SNInver=NULL;
-  olong        i,  jtemp, peelField, *bcomp=NULL, *ecomp=NULL, ignore[1]={0};
+  olong        i,  j, k, jtemp, peelField, *bcomp=NULL, *ecomp=NULL, *ignore=NULL;
   olong        dft, iter, MaxSCLoop=1, nx, ny, win[4];
   oint         noParms, numPol, numIF;
   olong        ver;
@@ -332,11 +336,20 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     ObitSkyModelCompressCC (myClean->skyModel, err);
     if (err->error) Obit_traceback_val (err, routine, myClean->name, peeled);
 
+    /* Make list of fields already peeled to ignore */
+    ignore = g_malloc0((myClean->mosaic->numberImages+1)*sizeof(olong));
+    k = 0;
+    for (j=0; j<=myClean->mosaic->numberImages; j++) ignore[j] = 0;
+    for (j=0; j<myClean->mosaic->numberImages; j++) {
+      if (donePeel[j]>0) ignore[k++] = j+1;  /* 1-rel */
+    }
+
     /* Get ImageMosaic for brightest field if any exceeds PeelFlux */
     tmpMosaic = ObitImageMosaicMaxField (myClean->mosaic, PeelFlux, 
 					 ignore, &peelField, err);
+    if (ignore) g_free(ignore); ignore = NULL;
     if (err->error) Obit_traceback_val (err, routine, myClean->name, peeled);
-    if (tmpMosaic==NULL) goto donePeel;
+    if (tmpMosaic==NULL) goto DonePeel;
 
     /* Convert 2D model to 3D if necessary */
     Convert2Dto3D (tmpMosaic->images[0], ccShift, err);
@@ -546,7 +559,14 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
       /* Self calibrate using only that field */
       converged = ObitUVSelfCalSelfCal (selfCal, scrUV, init, &noSCNeed, 
 					tmpClean->window, err);
-      if (err->error) goto cleanup;
+      /* If something went wrong - cleanup and bail */
+      if (err->error) {
+	ObitErrClearErr(err);   /* Clear error messages */
+  	Obit_log_error(err, OBIT_InfoWarn, "Peel Self Cal failed - skip peel");
+	ObitErrLog(err);
+	peeled = -1;  /* Like it never even happened */
+	goto cleanup;
+      }  /* end failure recovery */
       init = FALSE;
       if (converged || noSCNeed) break;  /* Done? */
       didSC = TRUE;  /* Have done a Selfcal */
@@ -561,7 +581,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     } /* end self cal loop */
 
     /* Did a self cal occur?  If not just cleanup and go home */
-    if (!didSC) goto donePeel;
+    if (!didSC) goto DonePeel;
   
     /* Copy SN table to inUV */
     numPol = numIF = 0;
@@ -669,14 +689,16 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     dim[0] = 1;dim[1] = 1;
     ObitInfoListAlwaysPut(myClean->info, "doBeam", OBIT_bool, dim, &Fl);
 
-    /* Delete CCs on peel image */
+    /* Start CLEAN fresh */
     noParms = 0;
     ver = 1;
-    CCTab = newObitTableCCValue ("Temp CC", (ObitData*)myClean->mosaic->images[peeled-1],
-				 &ver, OBIT_IO_ReadWrite, noParms, err);
-    ObitTableClearRows ((ObitTable*)CCTab, err); /* Remove the entries and redo */
-    CCTab = ObitTableCCUnref(CCTab);
-    if  (err->error) Obit_traceback_val (err, routine, myClean->mosaic->images[peeled-1]->name, peeled);
+    for (j=0; j<myClean->mosaic->numberImages; j++) {
+      CCTab = newObitTableCCValue ("Temp CC", (ObitData*)myClean->mosaic->images[j],
+				   &ver, OBIT_IO_ReadWrite, noParms, err);
+      ObitTableClearRows ((ObitTable*)CCTab, err); /* Remove the entries and redo */
+      CCTab = ObitTableCCUnref(CCTab);
+      if  (err->error) Obit_traceback_val (err, routine, myClean->mosaic->images[j]->name, peeled);
+    }
 
     /* reImage/Clean All*/
     Obit_log_error(err, OBIT_InfoErr, " ******  Reimage");
@@ -684,7 +706,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     ObitDConCleanVisDeconvolve ((ObitDCon*)myClean, err);
     if (err->error) goto cleanup;
 
-    /* Copy CCs from peeled table to CC 1 on output image */
+    /* Copy CCs from peeled table (CC # 2) */
     ver = 2;
     noParms = 0;
     peelCCTable = newObitTableCCValue ("Peeled CC", (ObitData*)tmpMosaic->images[0],
@@ -720,7 +742,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     outCCTable  = ObitTableCCUnref(outCCTable);
 
     /* Cleanup - delete temp Imager and CLEAN */
-  donePeel:   
+  DonePeel:   
     ver = -1;
     /* ObitUVZapTable (inUV, "AIPS SN", ver, err);          delete Peel solutions */
  

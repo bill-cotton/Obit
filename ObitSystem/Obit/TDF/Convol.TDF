@@ -4,7 +4,7 @@
 ;! Convol together images
 ;# Obit Task 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006,2007
+;;  Copyright (C) 2006-2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ Convol:  Obit Task to convolve an image with another or a model
 DataType                          "FITS" or "AIPS" type of input
 **PARAM** str 12
 inName                             Image Name (Name) 1
-**PARAM** str 8
+**PARAM** str 6
 inClass                            Image Name (Class) 1
 **PARAM** int   1
 inSeq             0         9999   Image Name (Seq. #) 1
@@ -53,7 +53,7 @@ TRC              0.0       4096.0  Top right corner of image
 Opcode                             Operation desired:GAUS, IMAG, DCON, DGAU
 **PARAM** str 12
 in2Name                            Image Name (Name) 2
-**PARAM** str 8
+**PARAM** str 6
 in2Class                           Image Name (Class) 2
 **PARAM** int   1
 in2Seq           0          9999   Image Name (Seq. #) 2
@@ -67,7 +67,7 @@ Beam     *      -999.9             Clean beam (maj, min, PA)
 Factor   *                         Unit conversion factor;
 **PARAM** str 12
 outName                            Output Image Name
-**PARAM** str 8
+**PARAM** str 6
 outClass                           Output Image Class
 **PARAM** int   1
 outSeq            0         9999   Output Image Seq. #

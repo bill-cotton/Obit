@@ -104,7 +104,7 @@ ObitIOCode ObitTableCCUtilGrid (ObitTableCC *in, olong OverSample,
   olong j, irow, xPix, yPix, iAddr;
   ofloat iCellX, iCellY, fNx, fNy;
   olong ndim, naxis[2], nx, ny, count = 0, badCnt = 0;
-  gchar *routine = "ObitTableCCGrid";
+  gchar *routine = "ObitTableCCUtilGrid";
 
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -218,8 +218,8 @@ ObitIOCode ObitTableCCUtilGrid (ObitTableCC *in, olong OverSample,
       badCnt++;
       /* Warn but keep going */
       if (badCnt<50) {
-	Obit_log_error(err, OBIT_InfoWarn, "%s Warning: Bad cell %f %f", 
-		       routine, CCRow->DeltaX, CCRow->DeltaY);
+	Obit_log_error(err, OBIT_InfoWarn, "%s Warning: Bad cell %f %f in %s", 
+		       routine, CCRow->DeltaX*iCellX, CCRow->DeltaY*iCellY, in->name);
       }
     }
 
@@ -296,7 +296,7 @@ ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong it
   ofloat iCellX, iCellY, fNx, fNy, spectTerm;
   olong ndim, naxis[2], nx, ny, parmoff, count = 0, badCnt = 0;
   gboolean doSpec=TRUE, doTSpec=FALSE;
-  gchar *routine = "ObitTableCCGridSpect";
+  gchar *routine = "ObitTableCCUtilGridSpect";
 
   /* error checks */
   g_assert (ObitErrIsA(err));
@@ -422,8 +422,8 @@ ObitIOCode ObitTableCCUtilGridSpect (ObitTableCC *in, olong OverSample, olong it
       badCnt++;
       /* Warn but keep going */
       if (badCnt<50) {
-	Obit_log_error(err, OBIT_InfoWarn, "%s Warning: Bad cell %f %f", 
-		       routine, CCRow->DeltaX, CCRow->DeltaY);
+	Obit_log_error(err, OBIT_InfoWarn, "%s Warning: Bad cell %f %f in %s", 
+		       routine, CCRow->DeltaX*iCellX, CCRow->DeltaY*iCellY, in->name);
       }
     }
 

@@ -238,14 +238,32 @@ void ObitConvUtilConvGauss (ObitImage *inImage, ofloat Gaumaj, ofloat Gaumin,
   ObitFArray *xferFn=NULL, *subXferFn=NULL, *zeroArray=NULL;
   ObitFArray *padImage=NULL, *tmpArray=NULL;
   ObitCArray *wtArray=NULL, *FTArray=NULL;
+  ObitImageDesc *desc=NULL;
   gchar *routine = "ObitConvUtilConvGauss";
 
   if (err->error) return;  /* existing error? */
+
+  /* Save output resolution */
+  Beam[0] = outImage->myDesc->beamMaj;
+  Beam[1] = outImage->myDesc->beamMin;
+  Beam[2] = outImage->myDesc->beamPA;
 
   /* Reset any selection on images */
   ObitImageSetSelect (inImage,  OBIT_IO_byPlane, tblc, ttrc, err);
   ObitImageSetSelect (outImage, OBIT_IO_byPlane, tblc, ttrc, err);
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
+
+  /* Input beam not less than zero */
+  if ((inImage->myDesc->beamMaj<0.0) || (inImage->myDesc->beamMin<0.0)) {
+    desc = (ObitImageDesc*)inImage->myDesc;
+    desc->beamMaj = 0.0;
+    desc->beamMin = 0.0;
+    desc->beamPA  = 0.0;
+    desc = (ObitImageDesc*)inImage->myIO->myDesc;
+      desc->beamMaj = 0.0;
+      desc->beamMin = 0.0;
+      desc->beamPA  = 0.0;
+  }
 
   /* Copy header info */
   ObitImageDescCopyDesc (inImage->myDesc, outImage->myDesc, err);
@@ -263,7 +281,6 @@ void ObitConvUtilConvGauss (ObitImage *inImage, ofloat Gaumaj, ofloat Gaumin,
   /* Get Gaussian for real part */
   xferFn = ObitFArrayUtilUVGaus(naxis, &cells[0], maprot, 
 				Gaumaj, Gaumin, GauPA);
-
   /* Only need half in u */
   blc[0] = (naxis[0]/2)-1; blc[1] = 0;
   trc[0] = naxis[0]-1;     trc[1] = naxis[1]-1;
@@ -277,6 +294,7 @@ void ObitConvUtilConvGauss (ObitImage *inImage, ofloat Gaumaj, ofloat Gaumin,
   ObitCArrayComplex (subXferFn, zeroArray, wtArray);
   ObitCArray2DCenter (wtArray);        /* Swaparoonie to FFT order */
   xferFn    = ObitFArrayUnref(xferFn); /* Cleanup */
+  subXferFn = ObitFArrayUnref(subXferFn); /* Cleanup */
   zeroArray = ObitFArrayUnref(zeroArray);
 
   /* Pad array for image */
@@ -287,11 +305,6 @@ void ObitConvUtilConvGauss (ObitImage *inImage, ofloat Gaumaj, ofloat Gaumin,
   /* Open input image */
   iretCode = ObitImageOpen (inImage, OBIT_IO_ReadOnly, err);
   if (err->error) goto cleanup;
-
-  /* Save output resolution */
-  Beam[0] = outImage->myDesc->beamMaj;
-  Beam[1] = outImage->myDesc->beamMin;
-  Beam[2] = outImage->myDesc->beamPA;
 
   /* Copy descriptor */
   outImage->myDesc = ObitImageDescCopy(inImage->myDesc, outImage->myDesc, err);

@@ -1841,6 +1841,123 @@ void ObitImageMosaicMaxCC (ObitTableCC *CCTab, olong nccpos, ofloat radius,
 } /* end of routine ObitImageMosaicMaxCC */ 
 
 /**
+ * Creates a CC table with the components from this field and 
+ * overlapping ones from adjacent fields. 
+ * If field is an autoCenter field, only add the corresponding shifted field
+ * \param mosaic    Input image mosaic
+ * \param field     The field (1-rel) of interest
+ * \param CCVer     CC table version of input
+ * \param err       Error/message stack
+ * \return combined CC table
+ */
+ObitTableCC* ObitImageMosaicCombineCC (ObitImageMosaic *mosaic, olong field, 
+				       olong CCVer, ObitErr* err)  
+{
+  ObitTableCC *inCC=NULL, *outCC=NULL;
+  ObitTableCCRow *CCRow = NULL;
+  ObitImageDesc *imDesc1=NULL, *imDesc2=NULL;
+  olong   irow, orow, nrow, noParms, ifield, jfield, nx, ny, ver, hiVer;
+  ofloat pixel1[2], pixel2[2];
+  gboolean overlap;
+  gchar *routine = "ObitImageMosaicCombineCC";
+
+  /* Error checks */
+  if (err->error) return outCC;  /* previous error? */
+  g_assert (ObitIsA(mosaic, &myClassInfo));
+
+  /* Merge CC table on field to new output on same image */
+  ver = CCVer;
+  noParms = 0;
+  ifield = field-1;  /* 0 rel */
+  inCC = newObitTableCCValue ("input CC", (ObitData*)mosaic->images[ifield],
+				   &ver, OBIT_IO_ReadOnly, noParms, 
+				   err);
+  /* New output version */
+  hiVer = ObitTableListGetHigh (mosaic->images[ifield]->tableList, "AIPS CC");
+  ver = hiVer+1;
+  outCC = newObitTableCCValue ("Comb CC", (ObitData*)mosaic->images[ifield],
+				    &ver, OBIT_IO_ReadWrite, inCC->noParms, 
+				    err);
+  ObitTableCCUtilMerge (inCC, outCC, err);
+  if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, outCC);
+  inCC  = ObitTableCCUnref(inCC);
+
+  /* If there is nothing in the table ignore */
+  if ((outCC->myDesc->nrow<=0) || (ver==CCVer)) return outCC;
+
+  CCRow = newObitTableCCRow (outCC);
+
+  /* Open output table */
+  ObitTableCCOpen (outCC, OBIT_IO_ReadWrite, err);
+  if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, outCC);
+
+  /* Loop over other fields */
+  imDesc2 = (mosaic->images[ifield])->myDesc;
+  nx = imDesc2->inaxes[0];  ny = imDesc2->inaxes[1]; 
+  for (jfield = 0; jfield<mosaic->numberImages; jfield++) {
+    if (jfield==ifield) continue;
+    imDesc1 = (mosaic->images[jfield])->myDesc;
+ 
+    /* If 2D and autoCen ignore all but shifted version */
+    if ((!mosaic->images[ifield]->myDesc->do3D) && 
+	((mosaic->isAuto[ifield]>0) && (mosaic->isShift[jfield]!=field))) continue;
+      
+   /* Any overlap? */
+    if (ObitImageDescOverlap(imDesc1, imDesc2, err)) {
+      CCVer   = 1;
+      noParms = 0;
+      inCC = newObitTableCCValue ("input CC", (ObitData*)mosaic->images[jfield],
+				  &CCVer, OBIT_IO_ReadOnly, noParms, 
+				  err);
+      /* If no CC table just ignore it */
+      if (inCC==NULL)  continue;
+
+      /* Open table */
+      ObitTableCCOpen (inCC, OBIT_IO_ReadOnly, err);
+      if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, outCC);
+
+      /* Loop over table copying any overlapping CCs */
+      nrow = inCC->myDesc->nrow;
+      for (irow=1; irow<=nrow; irow++) {
+	ObitTableCCReadRow (inCC, irow, CCRow, err);
+	if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, outCC);
+
+	/* where in output image? */
+	pixel1[0] = imDesc1->crpix[0] + CCRow->DeltaX/imDesc1->cdelt[0];
+	pixel1[1] = imDesc1->crpix[1] + CCRow->DeltaY/imDesc1->cdelt[1];
+	overlap = ObitImageDescCvtPixel(imDesc1, imDesc2, pixel1, pixel2, err);
+	if  (err->error) Obit_traceback_val (err, routine, mosaic->images[jfield]->name, outCC);
+
+	/* Does this one overlap? */
+	if (overlap) {
+
+	  /* Update position if 3D (2D is OK) */
+	  if (imDesc1->do3D) {
+	    CCRow->DeltaX = (pixel2[0]-imDesc1->crpix[0]) * imDesc1->cdelt[0];
+	    CCRow->DeltaY = (pixel2[1]-imDesc1->crpix[1]) * imDesc1->cdelt[1];
+	  }
+	  
+	  /* Write row */
+	  orow = -1;
+	  ObitTableCCWriteRow (outCC, orow, CCRow, err);
+	  if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, outCC);
+	}
+      } /* end loop over table */
+
+      /* Closeup/Cleanup */
+      ObitTableCCClose (inCC, err);
+      inCC  = ObitTableCCUnref(inCC);
+    } /* end if overlap */
+  } /* end loop over other fields */
+  
+  /* Close output table */
+  ObitTableCCClose (outCC, err);
+  CCRow = ObitTableCCRowUnref(CCRow);  
+
+  return outCC;
+} /* end of routine ObitImageMosaicCombineCC */ 
+
+/**
  * Zeros all CC fluxes within radius of xcenter, ycenter 
  * \param CCTab     CC table object to filter. 
  * \param nccpos    Number of CC to consider. 
@@ -1901,7 +2018,9 @@ void ObitImageMosaicFlagCC (ObitTableCC *CCTab, olong nccpos, ofloat radius,
 /**
  * Make a single field ImageMosaic corresponding to the field with
  * the highest summed peak of CCs if any above MinFlux.
- * 2D autoCenter fields are adjusted by the value of autoCenFlux
+ * Includes CCs from overlapping fields both in the test and in  the
+ * CC table on the imaga on the output mosaic.
+ * Only considers autoCenter Fields, if any.
  * Fields with 1-rel numbers in the zero terminated list ignore are ignored
  * \param mosaic   ImageMosaic to process
  * \param MinFlux  Min. flux density for operation.
@@ -1915,7 +2034,7 @@ ObitImageMosaic* ObitImageMosaicMaxField (ObitImageMosaic *mosaic,
 					  ObitErr* err) 
 {
   ObitImageMosaic* out=NULL;
-  ObitTableCC *CCTab=NULL, *inCCTable=NULL, *outCCTable=NULL;
+  ObitTableCC *CCTab=NULL, *inCCTable=NULL, *outCCTable=NULL, *saveCCTable=NULL;
   ObitImage   *tmpImage=NULL, *tmpBeam=NULL;
   gint32 dim[MAXINFOELEMDIM];
   ObitInfoType type;
@@ -1923,8 +2042,7 @@ ObitImageMosaic* ObitImageMosaicMaxField (ObitImageMosaic *mosaic,
   olong   maxField, other;
   olong  CCVer;
   ofloat tmax, xcenter, ycenter, xoff, yoff, radius, cells[2], maxCC;
-  ofloat addFlux = 0.0;
-  gboolean forget;
+  gboolean forget, doAuto;
   gchar *routine = "ObitImageMosaicMaxField";
 
   /* Error checks */
@@ -1933,6 +2051,12 @@ ObitImageMosaic* ObitImageMosaicMaxField (ObitImageMosaic *mosaic,
 
   /* Number of fields */
   nfield = mosaic->numberImages;
+
+  /* Any autoCenter fields? */
+  doAuto = FALSE;
+  for (ifield=0; ifield<nfield; ifield++) { 
+   if (mosaic->isAuto[ifield]>=0) doAuto = TRUE;
+ }
 
   /* Get cellsize */
   cells[0] =  fabs(mosaic->xCells); cells[1] = fabs(mosaic->yCells);
@@ -1957,41 +2081,80 @@ ObitImageMosaic* ObitImageMosaicMaxField (ObitImageMosaic *mosaic,
       forget = forget || (ignore[i++]==(ifield+1));
       if (forget) break;
     }
-    if (forget) break;
+    if (forget) continue;
 
     /* Open image in case header needs update */
     ObitImageOpen (mosaic->images[ifield], OBIT_IO_ReadWrite, err);
     if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, out);
 
-    /* If this is a 2D autocenter field add autoCenterFlux to test */
-    if ((!mosaic->images[ifield]->myDesc->do3D) && (mosaic->isAuto[ifield]>0)) {
-      addFlux = 0.0;
-      ObitInfoListGetTest(mosaic->images[ifield]->info, "autoCenFlux", &type, 
-			  dim, &addFlux);
-    }
+    /* Only consider autoCenter Fields? */
+    if (doAuto && (mosaic->isAuto[ifield]<0)) goto closem;
 
-    /* Make CC table object */
-    noParms = 0;
-    CCTab = newObitTableCCValue ("Temp CC", (ObitData*)mosaic->images[ifield],
-				 &CCVer, OBIT_IO_ReadWrite, noParms, err);
-    if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, out);
+    /* Ignore if this is a 2D shifted field  */
+    if ((!mosaic->images[ifield]->myDesc->do3D) && (mosaic->isShift[ifield]>=0)) goto closem;
+
+    /* If autoCenter use only the CCs in this image - make copy */
+    if (doAuto) {
+      CCVer = 1;
+      noParms = 0;
+      inCCTable = newObitTableCCValue ("Peeled CC", (ObitData*)mosaic->images[ifield],
+				       &CCVer, OBIT_IO_ReadOnly, noParms, 
+				       err);
+      CCVer   = 0;
+      CCTab = newObitTableCCValue ("CCTab", (ObitData*)mosaic->images[ifield],
+				   &CCVer, OBIT_IO_WriteOnly, noParms, err);
+      CCTab     = ObitTableCCCopy (inCCTable, CCTab, err);
+      inCCTable = ObitTableCCUnref(inCCTable);
+
+      /* Add any components from the 2D shifted version */
+      if ((!mosaic->images[ifield]->myDesc->do3D) && (mosaic->isAuto[ifield]>0)) {
+	other = mosaic->isAuto[ifield];
+	CCVer = 1;
+	noParms = 0;
+	inCCTable = newObitTableCCValue ("Shift CC", (ObitData*)mosaic->images[other-1],
+					 &CCVer, OBIT_IO_ReadOnly, noParms, 
+					 err);
+	ObitTableCCUtilAppend (inCCTable, CCTab, 0, 0, err);
+	if  (err->error) Obit_traceback_val (err, routine, mosaic->images[other-1]->name, out);
+	inCCTable   = ObitTableCCUnref(inCCTable);
+     }
+    } else {
+      /* Not autoCenter - Make CC table object including CCs from any overlapping facets */
+      CCTab = ObitImageMosaicCombineCC (mosaic, ifield+1, CCVer, err);
+    }
+      if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, out);
 
     /* Determine maximum */
     nccpos = CCTab->myDesc->nrow;
     ObitImageMosaicMaxCC (CCTab, nccpos, radius, &tmax, &xcenter, &ycenter, &xoff, &yoff, err);
     if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, out);
+
+    /* Tell about it */
+    if (err->prtLv>=2)
+      Obit_log_error(err, OBIT_InfoErr, "Peel Max. field %d is %f", ifield+1,tmax);
     
     /* this one of interest? */
-    tmax += addFlux;  /* 2D autocenter correction */
-    if ((tmax > MinFlux) && (tmax > maxCC)) {
+    if ((tmax > MinFlux) && (tmax >= maxCC)) {
+      /* Zap a previous, now superceeded file */
+      if (saveCCTable && (maxField>=0)) {
+	ObitDataZapTable((ObitData*)mosaic->images[maxField], saveCCTable->tabType, 
+			 saveCCTable->tabVer, err);
+	if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, out);
+	saveCCTable = ObitTableCCUnref(saveCCTable);
+      }
       maxCC = tmax;
       maxField = ifield;
+      saveCCTable = ObitTableCCRef(CCTab);  /* Save table */
+    } else {
+      
+      /* Delete temporary table */
+      ObitDataZapTable((ObitData*)mosaic->images[ifield], CCTab->tabType, CCTab->tabVer, err);
+      if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, out);
+      CCTab = ObitTableCCUnref(CCTab);
     }
 
-    /* Delete temporary table */
-    CCTab = ObitTableCCUnref(CCTab);
-
     /* Close/update image */
+  closem:
     ObitImageClose(mosaic->images[ifield], err);
     if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, out);
   } /* end loop  L500: */
@@ -2036,22 +2199,26 @@ ObitImageMosaic* ObitImageMosaicMaxField (ObitImageMosaic *mosaic,
   out->RAShift[0]  = mosaic->RAShift[maxField];
   out->DecShift[0] = mosaic->DecShift[maxField];
 
-  /* Copy Clean components */
+  /* Copy Clean components from saveCCTable */
   CCVer = 1;
   noParms = 0;
-  inCCTable = newObitTableCCValue ("Peeled CC", (ObitData*)mosaic->images[maxField],
-				   &CCVer, OBIT_IO_ReadOnly, noParms, 
-				   err);
-  CCVer = 1;
+  if (saveCCTable) noParms = saveCCTable->noParms;
   outCCTable = newObitTableCCValue ("outCC", (ObitData*)out->images[0],
-				    &CCVer, OBIT_IO_ReadWrite, inCCTable->noParms, 
-				    err);
-  outCCTable  = ObitTableCCCopy (inCCTable, outCCTable, err);
-  inCCTable   = ObitTableCCUnref(inCCTable);
+				    &CCVer, OBIT_IO_ReadWrite, noParms, err);
+  outCCTable  = ObitTableCCCopy (saveCCTable, outCCTable, err);
+  if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, out);
   outCCTable  = ObitTableCCUnref(outCCTable);
+  /* Delete saveCCTable */
+  if (saveCCTable && (maxField>=0)) {
+    ObitDataZapTable((ObitData*)mosaic->images[maxField], saveCCTable->tabType, 
+		     saveCCTable->tabVer, err);
+    if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, out);
+    saveCCTable = ObitTableCCUnref(saveCCTable);
+  }
 
   /* If 2D and autoCen copy other field CCs */
-  if ((!mosaic->images[maxField]->myDesc->do3D) && 
+  if ((maxField>=0) &&
+      (!mosaic->images[maxField]->myDesc->do3D) && 
       ((mosaic->isAuto[maxField]>0) || (mosaic->isShift[maxField]>0))) {
     other = MAX (mosaic->isAuto[maxField], mosaic->isShift[maxField]);
     if (other>0) {
@@ -2064,7 +2231,8 @@ ObitImageMosaic* ObitImageMosaicMaxField (ObitImageMosaic *mosaic,
       outCCTable = newObitTableCCValue ("outCC", (ObitData*)out->images[0],
 					&CCVer, OBIT_IO_ReadWrite, inCCTable->noParms, 
 					err);
-      ObitTableCCUtilAppend (inCCTable, outCCTable, 0, 0, err);
+     ObitTableCCUtilAppend (inCCTable, outCCTable, 0, 0, err);
+      if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, out);
       inCCTable   = ObitTableCCUnref(inCCTable);
       outCCTable  = ObitTableCCUnref(outCCTable);
     }
@@ -2455,6 +2623,8 @@ static void ObitImageMosaicClassInfoDefFn (gpointer inClass)
     (ObitImageMosaicMaxFOVFP)ObitImageMosaicMaxFOV;
   theClass->ObitImageMosaicMaxCC = 
     (ObitImageMosaicMaxCCFP)ObitImageMosaicMaxCC;
+  theClass->ObitImageMosaicCombineCC = 
+    (ObitImageMosaicCombineCCFP)ObitImageMosaicCombineCC;
   theClass->ObitImageMosaicFlagCC = 
     (ObitImageMosaicFlagCCFP)ObitImageMosaicFlagCC;
   theClass->ObitImageMosaicAddField = 

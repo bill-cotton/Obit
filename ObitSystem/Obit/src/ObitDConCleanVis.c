@@ -6,7 +6,7 @@
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
 /*;  published by the Free Software Foundation; either version 2 of   */
-/*;  the License, or (at your option) any later version.              */
+/*;  the License, or (at your op2tion) any later version.              */
 /*;                                                                   */
 /*;  This program is distributed in the hope that it will be useful,  */
 /*;  but WITHOUT ANY WARRANTY; without even the implied warranty of   */
@@ -157,6 +157,9 @@ static ObitFArray** KillPxArray (ObitDConCleanVis *in, ObitFArray **pixarray);
 
 /** Private: Delete BeamPatches. */
 static void KillBeamPatches (ObitDConCleanVis *in);
+
+/** Private: Find peak brightness. */
+static void FindPeak (ObitDConCleanVis *in, ObitErr *err);
 
 /*----------------------Public functions---------------------------*/
 /**
@@ -568,7 +571,7 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   }
 
   /* Make initial images */
-   inClass->MakeAllResiduals (in, err);
+  inClass->MakeAllResiduals (in, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);
   if (in->prtLv>1) ObitErrLog(err);  /* Progress Report */
   else ObitErrClear(err);
@@ -795,6 +798,9 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   }
 
+  /* Find peak brightness in mosaic */
+  FindPeak (in, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
 } /* end ObitDConCleanVisDeconvolve */
 
 /**
@@ -892,6 +898,8 @@ void  ObitDConCleanVisGetParms (ObitDCon *inn, ObitErr *err)
     if (err->error) Obit_traceback_msg (err, routine, in->name);
   }
 
+  /* get prtLv on err */
+  ObitInfoListGetTest(in->info, "prtLv", &type, dim, &err->prtLv);
 } /* end ObitDConCleanVisGetParms */
 
 /**
@@ -1524,6 +1532,7 @@ ofloat ObitDConCleanVisQuality(ObitDConCleanVis *in, olong field,
 gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata, 
 				  ObitErr* err) 
 {
+#define MAXAUTOCEN 200
   gboolean redo = FALSE;
   ObitTableCC *CCTab=NULL;
   ObitImageDesc *imDesc, *imDesc2;
@@ -1536,10 +1545,12 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
   olong   nfield, ifield, jfield, itemp, noParms, nccpos, nx, ny, nplane, nprior;
   olong  CCVer, newField, win[3], inaxes[2], *owin;
   ofloat tmax, xcenter, ycenter, xoff, yoff, radius, cells[2], pixel[2], opixel[2];
-  ofloat xcen, ycen, RAShift, DecShift, deltax, deltay, delta, *farray;
+  ofloat xcen, ycen, RAShift, DecShift, deltax, deltay, delta, *farray, dx, dy;
   odouble pos[2], pos2[2], RAPnt, DecPnt;
   gboolean done, outside=FALSE, facetDone, clear, Tr=TRUE, Fl=FALSE;
   const ObitDConCleanVisClassInfo *inClass;
+  olong ibox, autoCenNum[MAXAUTOCEN], nAutoCen=0;
+  odouble autoCenPos[2*MAXAUTOCEN];
   gchar *routine = "ObitDConCleanVisReimage";
 
   /* Error checks */
@@ -1578,10 +1589,8 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
     ObitImageOpen (mosaic->images[ifield], OBIT_IO_ReadWrite, err);
     if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
 
-    /* Make temporary CC table */
-    noParms = 0;
-    CCTab = newObitTableCCValue ("Temp CC", (ObitData*)mosaic->images[ifield],
-				 &CCVer, OBIT_IO_ReadWrite, noParms, err);
+    /* Make temporary CC table object including CCs from any overlapping facets */
+    CCTab = ObitImageMosaicCombineCC (mosaic, ifield+1, CCVer, err);
     if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
 
     /* Loop over peaks in facet */
@@ -1621,10 +1630,19 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 	
       if (done) goto doNext;  /* Has this one already been done? */
       
+      imDesc = mosaic->images[ifield]->myDesc;
+      if (imDesc->do3D) {
+	dx = xcenter;
+	dy = ycenter;
+      } else { /* 2D */
+	dx = xcenter + imDesc->xPxOff*imDesc->cdelt[0];
+	dy = ycenter + imDesc->yPxOff*imDesc->cdelt[1];
+      }
+
       /* See if peak is near the center of the image - if within 1/2 pixel
 	 and exceeds threshold adjust field and mark as autoCenterField */ 
-      if (((fabs(xcenter+xoff)<0.5*cells[0]) && 
-	   (fabs(ycenter+yoff)<0.5*cells[1])) ) {
+      if (((fabs(dx+xoff)<0.5*cells[0]) && 
+	   (fabs(dy+yoff)<0.5*cells[1])) ) {
 	
 	/* Mark as an autoCenter Image */
 	dim[0] = dim[1] = 1;
@@ -1675,8 +1693,8 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
       if (done) goto doNext;  /* Has this one already been done? */
       
       /* See if shift needed */
-      if (((fabs(xcenter+xoff)>tol*cells[0]) || 
-	   (fabs(ycenter+yoff)>tol*cells[1])) ) {
+      if (((fabs(dx+xoff)>tol*cells[0]) || 
+	   (fabs(dy+yoff)>tol*cells[1])) ) {
 	imDesc = mosaic->images[ifield]->myDesc;
 	clear = TRUE;  /* Clear CC table */
 	redo  = TRUE;
@@ -1701,48 +1719,22 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 	ObitInfoListAlwaysPut(mosaic->images[mosaic->numberImages-1]->info, 
 			      "autoCenFlux", OBIT_float, dim, &freset);
 	
-	/* Put unwindow on this position in all prior fields in which it occured */
-	for (jfield=0; jfield<in->window->nfield; jfield++) { 
-	  /* is pos in this field */
-	  imDesc2 = mosaic->images[jfield]->myDesc;
-	  if (!ObitImageDescOverlap(imDesc, imDesc2, err)) continue;
-	  
-	  /* Check if in outer window */
-	  ObitImageDescGetPixel (imDesc2, pos, opixel, err);
-	  if (ObitDConCleanWindowInfo(in->window, jfield+1, -1, &otype, &owin, err))
-	    {
-	      if (otype==OBIT_DConCleanWindow_rectangle) {
-		outside = (opixel[0]<owin[0]) || (opixel[0]>owin[2]) ||
-		  (opixel[1]<owin[1]) || (opixel[1]>owin[3]);
-	      } else if (otype==OBIT_DConCleanWindow_round) {
-		deltax = owin[1] - opixel[0];
-		deltay = owin[2] - opixel[1];
-		delta = sqrt (deltax*deltax + deltay*deltay);
-		outside = delta > owin[0];
-	      }
-	    } else {  /* No outer window given  */
-	      outside = (opixel[0]<1.0) || (opixel[0]>imDesc2->inaxes[0]) ||
-		(opixel[1]<1.0) || (opixel[1]>imDesc2->inaxes[1]);
-	    }
-	  if  (err->error) 
-	    Obit_traceback_val (err, routine, mosaic->images[jfield]->name, redo);
-	  if (outside) continue;
-	  
-	  /* OK - add unbox */
-	  win[0] = (nx/2)-15; win[1] = (olong)(opixel[0]+0.5); win[2] = (olong)(opixel[1]+0.5); 
-	  /* Set size for new Wideband image */
-	  if (ObitImageWBIsA(mosaic->images[mosaic->numberImages-1])) win[0] = 20;
-	  /* If this is a previous autoCenter window make unbox smaller */
-	  if ((jfield+1)>nprior) win[0] = 5;
-	  ObitDConCleanWindowAdd (in->window, jfield+1, OBIT_DConCleanWindow_unround,
-				  win, err);	
-	} /* end loop adding unboxes */
-	
 	/* Add new field to window */
 	inaxes[0] = nx; inaxes[1] = ny;
 	newField = ObitDConCleanWindowAddField (in->window, inaxes, err);
 	if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
 	
+	/* Save position of unbox */
+	if (nAutoCen<MAXAUTOCEN) {
+	  autoCenNum[nAutoCen]     = newField-1;
+	  autoCenPos[nAutoCen*2]   = pos[0];
+	  autoCenPos[nAutoCen+2+1] = pos[1];
+	  nAutoCen++;
+	} else { /* oh bother - blew array */
+	  Obit_log_error(err, OBIT_InfoWarn,"Exceeded maximum number of autoCenter fields %d", 
+			 MAXAUTOCEN);
+	}
+
 	/* Add inner and outer windows */
 	xcen = mosaic->images[newField-1]->myDesc->crpix[0] - 
 	  mosaic->images[newField-1]->myDesc->xPxOff;
@@ -1793,18 +1785,75 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 
     } /* end loop over multiple peaks */
 
-    /* Need to clear CC table */
+    /* Delete temporary combined CC table */
+    if (CCTab && (ifield>=0)) {
+      ObitDataZapTable((ObitData*)mosaic->images[ifield], CCTab->tabType, 
+		       CCTab->tabVer, err);
+      if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
+      CCTab = ObitTableCCUnref(CCTab);
+    }
+
+    /* Make temporary CC table to clear rows */
+    noParms = 0;
+    CCTab = newObitTableCCValue ("Temp CC", (ObitData*)mosaic->images[ifield],
+				 &CCVer, OBIT_IO_ReadWrite, noParms, err);
+    if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
     if (clear) ObitTableClearRows ((ObitTable*)CCTab, err); /* Remove the entries and redo */
+    CCTab = ObitTableCCUnref(CCTab);
     if (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
     
-    /* Delete temporary objects */
-    CCTab = ObitTableCCUnref(CCTab);
-
     /* Close/update image */
     ObitImageClose(mosaic->images[ifield], err);
     if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
   } /* end loop  L500: */
 
+  /* Loop over autoCen position adding unboxes */
+  for (ibox=0; ibox<nAutoCen; ibox++) {
+    ifield = autoCenNum[ibox];
+    imDesc = mosaic->images[ifield]->myDesc;
+    pos[0] = autoCenPos[ibox*2];
+    pos[1] = autoCenPos[ibox+2+1];
+    /* Put unwindow on this position in all prior fields in which it occured */
+    for (jfield=0; jfield<in->window->nfield; jfield++) { 
+      /* Not is same field */
+      if (jfield!=ifield) {
+	/* is pos in this field */
+	imDesc2 = mosaic->images[jfield]->myDesc;
+	if (!ObitImageDescOverlap(imDesc, imDesc2, err)) continue;
+	
+	/* Check if in outer window */
+	ObitImageDescGetPixel (imDesc2, pos, opixel, err);
+	if (ObitDConCleanWindowInfo(in->window, jfield+1, -1, &otype, &owin, err))
+	  {
+	    if (otype==OBIT_DConCleanWindow_rectangle) {
+	      outside = (opixel[0]<owin[0]) || (opixel[0]>owin[2]) ||
+		(opixel[1]<owin[1]) || (opixel[1]>owin[3]);
+	    } else if (otype==OBIT_DConCleanWindow_round) {
+	      deltax = owin[1] - opixel[0];
+	      deltay = owin[2] - opixel[1];
+	      delta = sqrt (deltax*deltax + deltay*deltay);
+	      outside = delta > owin[0];
+	    }
+	  } else {  /* No outer window given  */
+	    outside = (opixel[0]<1.0) || (opixel[0]>imDesc2->inaxes[0]) ||
+	      (opixel[1]<1.0) || (opixel[1]>imDesc2->inaxes[1]);
+	  }
+	if  (err->error) 
+	  Obit_traceback_val (err, routine, mosaic->images[jfield]->name, redo);
+	if (outside) continue;
+	
+	/* OK - add unbox */
+	win[0] = (nx/2)-15; win[1] = (olong)(opixel[0]+0.5); win[2] = (olong)(opixel[1]+0.5); 
+	/* Set size for new Wideband image */
+	if (ObitImageWBIsA(mosaic->images[mosaic->numberImages-1])) win[0] = 20;
+	/* If this is a previous autoCenter window make unbox smaller */
+	if ((jfield+1)>nprior) win[0] = 4;
+	ObitDConCleanWindowAdd (in->window, jfield+1, OBIT_DConCleanWindow_unround,
+				win, err);
+      } /* End not same field */	
+    } /* end loop adding unboxes */
+  } /* end loop over autoCen positions */
+  
   /* If 2D imaging, make any shifted images needed */
   if (!in->mosaic->images[0]->myDesc->do3D) {
    nfield = mosaic->numberImages;
@@ -1829,19 +1878,10 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 	newField = ObitDConCleanWindowAddField (in->window, inaxes, err);
 	if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
 
-	/* Add inner and outer windows */
-	xcen = mosaic->images[newField-1]->myDesc->crpix[0] - 
-	  mosaic->images[newField-1]->myDesc->xPxOff;
-	ycen = mosaic->images[newField-1]->myDesc->crpix[1] - 
-	  mosaic->images[newField-1]->myDesc->yPxOff;
-	win[0] = 5; win[1] = (olong)(xcen+0.5); win[2] = (olong)(ycen+0.5); 
-	ObitDConCleanWindowAdd (in->window, newField, OBIT_DConCleanWindow_round,
-				win, err);
-	win[0] = (nx/2)-10; win[1] = (olong)(xcen+0.5); win[2] = (olong)(ycen+0.5); 
-	ObitDConCleanWindowOuter (in->window, newField, OBIT_DConCleanWindow_round,
-				  win, err);
+	/* Just copy window */
+	ObitDConCleanWindowReplaceField (in->window, ifield+1, in->window, newField, err);
 	if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
-	
+
 	/* Add field to Clean */
 	inClass->ObitDConCleanVisAddField (in, uvdata, err);
 	if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
@@ -1853,9 +1893,18 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 	/* Indicate association */
 	in->mosaic->isAuto[ifield]  = mosaic->numberImages;
 	in->mosaic->isShift[mosaic->numberImages-1] = ifield+1;
+
+	/* Set shift on uv data */
+	ObitInfoListGetP(uvdata->info, "xShift", &type, dim, (gpointer*)&farray);
+	farray[newField-1]  = mosaic->images[newField-1]->myDesc->xshift;
+	ObitInfoListAlwaysPut(uvdata->info, "xShift", type, dim, farray);
+	ObitInfoListGetP(uvdata->info, "yShift", &type, dim, (gpointer*)&farray);
+	farray[newField-1]  = mosaic->images[newField-1]->myDesc->yshift;
+	ObitInfoListAlwaysPut(uvdata->info, "yShift", type, dim, farray);
       }
     } /* end loop over fields */   
   } /* end of adding shifted 2D images */
+
 
   ObitErrLog(err);  /* Any messages */
   return redo;
@@ -1964,10 +2013,10 @@ gboolean ObitDConCleanVisRecenter (ObitDConCleanVis *in, ObitUV* uvdata,
   ofloat tol, autoCenFlux;
   gint32 dim[MAXINFOELEMDIM];
   ObitInfoType type;
-  olong   nfield, ifield, itemp, noParms, nccpos, nprior;
+  olong   nfield, ifield, itemp, nccpos, nprior;
   olong  CCVer, highVer;
   ofloat tmax, xcenter, ycenter, xoff, yoff, radius, cells[2], pixel[2];
-  ofloat RAShift, DecShift, *farray;
+  ofloat RAShift, DecShift, *farray, dx, dy;
   odouble pos[2], RAPnt, DecPnt;
   gboolean autoCen, want;
   gchar *routine = "ObitDConCleanVisRecenter";
@@ -1983,8 +2032,8 @@ gboolean ObitDConCleanVisRecenter (ObitDConCleanVis *in, ObitUV* uvdata,
    /* Get cellsize */
   cells[0] =  fabs(mosaic->xCells); cells[1] = fabs(mosaic->yCells);
 
-  /* Consider components within 1.5  cells  */
-  radius = 1.5 * cells[0];
+  /* Consider components within 2.5  cells  */
+  radius = 2.5 * cells[0];
 
   /* Tolerance for match to pixel */
   tol = 0.01;
@@ -2011,15 +2060,11 @@ gboolean ObitDConCleanVisRecenter (ObitDConCleanVis *in, ObitUV* uvdata,
     highVer =  ObitTableListGetHigh (mosaic->images[ifield]->tableList, "AIPS CC");
     if (highVer<=0) goto closeit;
 
-    /* Get CC table */
-    noParms = 0;
-    CCTab = newObitTableCCValue ("Temp CC", (ObitData*)mosaic->images[ifield],
-				 &CCVer, OBIT_IO_ReadWrite, noParms, err);
+    /* Make temporary CC table object including CCs from any overlapping facets */
+    CCTab = ObitImageMosaicCombineCC (mosaic, ifield+1, CCVer, err);
     if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
 
     /* Is this an autoCenter field with CLEAN components? */
-    autoCen = FALSE;
-    ObitInfoListGetTest(mosaic->images[ifield]->info, "autoCenField", &type, dim, &autoCen);
     autoCenFlux = 1.0e20;
     ObitInfoListGetTest(mosaic->images[ifield]->info, "autoCenFlux",  &type, dim, &autoCenFlux);
     if (CCTab->myDesc->nrow>0) {
@@ -2031,11 +2076,18 @@ gboolean ObitDConCleanVisRecenter (ObitDConCleanVis *in, ObitUV* uvdata,
       if  (err->error) Obit_traceback_val (err, routine, mosaic->images[ifield]->name, redo);
       
       /* See if shift needed - if more then 2 cells this is probably a mistake */
-      want = ((fabs(xcenter+xoff)>tol*cells[0]) || (fabs(ycenter+yoff)>tol*cells[1]));
-      want = want && (fabs(xcenter)<2.0) && (fabs(ycenter)<2.0);
-      want = want && (tmax>=autoCenFlux);   /* Might have been peeled */
+      imDesc = mosaic->images[ifield]->myDesc;
+      if (imDesc->do3D) {
+	dx = xcenter;
+	dy = ycenter;
+      } else { /* 2D */
+	dx = xcenter + imDesc->xPxOff*imDesc->cdelt[0];
+	dy = ycenter + imDesc->yPxOff*imDesc->cdelt[1];
+      }
+      want = ((fabs(dx+xoff)>tol*cells[0]) || (fabs(dy+yoff)>tol*cells[1]));
+      want = want && (fabs(dx)<2.0) && (fabs(dy)<2.0);
+      want = want && (tmax>=autoCenFlux*0.5);   /* Might have been peeled */
       if (want) {
-	imDesc = mosaic->images[ifield]->myDesc;
 	
 	/* Position of peak */
 	pixel[0] = imDesc->crpix[0] + ((xcenter+xoff) / imDesc->cdelt[0]);
@@ -3837,3 +3889,69 @@ static void KillImSubFuncArgs (olong nargs, ImSubFuncArg **ThreadArgs)
   }
   g_free(ThreadArgs);
 } /*  end KillImSubFuncArgs */
+
+/**
+ * Find maximum brightness using CC tables
+ * Set in->peakFlux to the larger of in->peakFlux and the maximum 
+ * brightness in the CC tables.
+ * \param in      Object of interest.
+ * \param err     ObitErr for reporting errors.
+ */
+static void FindPeak (ObitDConCleanVis *in, ObitErr *err)
+{
+  ObitImageMosaic *mosaic=in->mosaic;
+  ofloat peakFlux;
+  ObitTableCC *CCTab=NULL;
+  gint32 dim[MAXINFOELEMDIM];
+  ObitInfoType type;
+  ofloat tmax, xcenter, ycenter, xoff, yoff, radius, cells[2];
+  olong   nfield, ifield, itemp, nccpos, CCVer;
+  gchar *routine = "FindPeak";
+
+  if (err->error) return;
+
+   /* Number of fields */
+  nfield = mosaic->numberImages;
+
+  /* Get cellsize */
+  cells[0] =  fabs(mosaic->xCells); cells[1] = fabs(mosaic->yCells);
+
+  /* Consider components within 2.5  cells  */
+  radius = 2.5 * cells[0];
+
+  /* CC table(s) */
+  itemp = 1;
+  ObitInfoListGetTest(mosaic->info, "CCVer", &type, dim, &itemp);
+  CCVer = itemp;
+
+  /* Loop over fields */
+  peakFlux = -1.0e20;
+  for (ifield=0; ifield<nfield; ifield++) { 
+     /* Make CC table object including CCs from any overlapping facets */
+    CCTab = ObitImageMosaicCombineCC (mosaic, ifield+1, CCVer, err);
+    if  (err->error) Obit_traceback_msg (err, routine, mosaic->images[ifield]->name);
+
+    /* Determine maximum */
+    nccpos = CCTab->myDesc->nrow;
+    ObitImageMosaicMaxCC (CCTab, nccpos, radius, &tmax, &xcenter, &ycenter, &xoff, &yoff, err);
+    if  (err->error) Obit_traceback_msg (err, routine, mosaic->images[ifield]->name);
+
+    /* get max */
+    peakFlux = MAX (peakFlux, tmax);
+    
+    /* Delete temporary table */
+    ObitDataZapTable((ObitData*)mosaic->images[ifield], CCTab->tabType, CCTab->tabVer, err);
+    if  (err->error) Obit_traceback_msg (err, routine, mosaic->images[ifield]->name);
+    CCTab = ObitTableCCUnref(CCTab);
+ } /* end loop over fields */
+
+  /* set peak */
+  in->peakFlux = MAX(in->peakFlux, peakFlux);
+
+  /* Tell */
+  if (in->prtLv>1) {
+    Obit_log_error(err, OBIT_InfoErr,"Max. in mosaic %f", in->peakFlux);
+    ObitErrLog(err);  /* Progress Report */
+  }
+
+} /* end  FindPeak  */

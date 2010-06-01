@@ -361,8 +361,8 @@ ObitFArray* ObitFArrayUtilUVGaus (olong *naxis, ofloat *cells, ofloat maprot,
   tb = Gaumin * G_PI / 1.1774;
   am = cos((GauPA+maprot-90.)*DG2RAD);
   an = sin((GauPA+maprot-90.)*DG2RAD);
-  xnx2 = naxis[0] * cells[0];
-  xny2 = naxis[1] * cells[1];
+  xnx2 = naxis[1] * cells[1];
+  xny2 = naxis[0] * cells[0];
   xnxny = fabsf (xnx2 * xny2);
   xnx2 *= xnx2;
   xny2 *= xny2;

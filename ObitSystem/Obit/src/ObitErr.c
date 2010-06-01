@@ -1,6 +1,6 @@
 /* $Id$         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2009                                          */
+/*;  Copyright (C) 2002-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -28,6 +28,7 @@
 #include <string.h>
 #include "ObitErr.h"
 #include "ObitMem.h"
+#include "ObitSystem.h"
 
 /** name of the class defined in this file */
 static gchar *myClassName = "ObitErr";
@@ -99,6 +100,8 @@ ObitErr* newObitErr (void)
   me->error     = FALSE;
   me->stack     = g_queue_new();
   me->ReferenceCount = 1;
+  me->prtLv     = 0;
+  me->pgmName   = NULL;
 
   /* Set default handler if not done yet */
   if (!defaultHandler) {
@@ -107,7 +110,7 @@ ObitErr* newObitErr (void)
 		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_MESSAGE |
 		       G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG |
 		       G_LOG_FLAG_RECURSION, 
-		       (GLogFunc)DefaultLogHandler, NULL);
+		       (GLogFunc)DefaultLogHandler, (gpointer)me);
   }
 
 
@@ -330,6 +333,10 @@ gchar *ObitErrorLevelString[] = {
   /* error checks */
   g_assert (ObitErrIsA(in));
 
+  /* Make sure program name set */
+  if ((in->pgmName==NULL) && (ObitSystemIsInit()))
+    in->pgmName = ObitSystemGetPgmName();
+
   /* loop logging messages */
   ObitErrPop (in, &errLevel, &errMsg, &timeTag);
   while (errMsg!=NULL) {
@@ -338,7 +345,7 @@ gchar *ObitErrorLevelString[] = {
     /* Time */
     lp = localtime (&timeTag);
     if (lp->tm_year<1000) lp->tm_year += 1900;
-    g_log (NULL,G_LOG_LEVEL_MESSAGE,
+    g_log (NULL, G_LOG_LEVEL_MESSAGE,
 	   "%s %4d%2.2d%2.2dT%2.2d%2.2d%2.2d %s", 
 	   errLevelStr, 
 	   lp->tm_year, lp->tm_mon+1, lp->tm_mday,
@@ -497,5 +504,16 @@ static void DefaultLogHandler (const gchar *log_domain,
 			       const gchar *message,
 			       gpointer user_data)
 {
-  fprintf (stdout, "Obit: %s\n", message);
+  ObitErr* me;
+  /* Pass program name */
+  if (ObitErrIsA((ObitErr*)user_data)) {
+    me  = (ObitErr*)user_data;
+    if (me->pgmName)
+      fprintf (stdout, "%s: %s\n", me->pgmName, message);
+    else
+    fprintf (stdout, "Obit: %s\n", message);
+  } else {
+    fprintf (stdout, "Obit: %s\n", message);
+  }
 } /* end DefaultLogHandler */
+  
