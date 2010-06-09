@@ -221,6 +221,8 @@ doINEdit                           If true flag solutions for which the seeing
 MaxRMS            0.0              Target RMS residual ("seeing") (asec)
 **PARAM** float 1 **DEF** 0.5
 MinRat            0.0          2.0 Minimum acceptable ratio to average flux 
+**PARAM** float 1 **DEF** 1000000.0
+FCStrong            0.0            Min. Flux density for required cal.
 **PARAM** int 1  **DEF** 200
 FCNiter                            Niter for field based cal.CLEAN
 **PARAM** float 1 **DEF** 0.1
@@ -596,6 +598,12 @@ to specify outlier fields (Catalog, Outlier*).
               is averaged over the full set of snapshots and any 
               measurements for which the ratio to the peak to the 
               average is less than MinRat is ignored.  Default 0.5
+  FCStrong....Any calibrator used in Field based calibration brighter
+              than FCStrong is required to be at least MinRat * the 
+              calibrator flux density in each solution interval.
+              The flux density is determined from the average of the 
+              inner quarter of the flux ordered list of snapshot 
+              measurements.
   FCNiter.....The number of iterations of CLEAN to use in each Field-
               Based calibration snapshot CLEAN
   FCGain......The CLEAN loop gain to use in each Field-Based 

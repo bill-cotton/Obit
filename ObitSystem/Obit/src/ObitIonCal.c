@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006,2009                                          */
+/*;  Copyright (C) 2006-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -37,6 +37,7 @@
 #include "ObitIoN2SolNTable.h"
 #include "ObitTableNI.h"
 #include "ObitMem.h"
+#include "ObitUtil.h"
 #if HAVE_GSL==1  /* GSL stuff */
 #include <gsl/gsl_multifit.h>
 #endif /* GSL stuff */
@@ -201,13 +202,13 @@ FitAll (ObitIonCal *in, olong ncoef,
 static void TR2String (ofloat timer[2], gchar *msgBuf);
 
 /* Private: Fit time sequence of Zernike models */
- static ObitTableNI* 
- doIonFitAll (ObitUV *inUV, ofloat MaxRMS, ofloat MinRat, gboolean doINEdit, 
-	      olong ncoef, olong nsou, olong* isou, ofloat* x, ofloat* y, 
-	      olong nTime, ofloat* Time, ofloat* TimeI, olong* isuba, 
-	      olong n, olong* iTime, ofloat* xoff, ofloat* yoff, 
-	      ofloat* flux, ofloat *wt, olong* flqual, ofloat* sint, 
-	      olong prtLv, odouble refFreq, ofloat* totRMS, ObitErr* err);
+static ObitTableNI* 
+doIonFitAll (ObitUV *inUV, ofloat MaxRMS, ofloat MinRat, ofloat FCStrong, gboolean doINEdit, 
+	     olong ncoef, olong nsou, olong* isou, ofloat* x, ofloat* y, 
+	     olong nTime, ofloat* Time, ofloat* TimeI, olong* isuba, 
+	     olong n, olong* iTime, ofloat* xoff, ofloat* yoff, 
+	     ofloat* flux, ofloat *wt, olong* flqual, ofloat* sint, 
+	     olong prtLv, odouble refFreq, ofloat* totRMS, ObitErr* err);
 
 /* Private: Initilize Zernike time series */
 static gboolean 
@@ -234,7 +235,7 @@ IonEditSeries (olong nobs, olong nsou, olong nTime,
 /* Private: Time series editing based on amplitudes */
 static gboolean 
 IonEditAmp (olong nobs, olong nsou, olong nTime, olong* isou, olong* iTime, 
-	    ofloat MinRat, ofloat*  flux, olong* ncoef, ofloat* wt, 
+	    ofloat MinRat, ofloat FCStrong, ofloat*  flux, olong* ncoef, ofloat* wt, 
 	    olong prtLv, ObitErr* err);
 
 /* Private: Edit data for a given source based on Zernike time series */
@@ -245,6 +246,12 @@ IonEditSource (olong source, olong nobs, olong nTime, olong maxcoe, olong nsou,
 	       ofloat* soffx, ofloat* soffy, ofloat** coef, 
 	       ofloat *gdx, ofloat *gdy, olong* stoss, olong prtLv, ObitErr* err);
 
+
+/* Private: Get minimum fluxes for strong (required) calibrators */
+static ofloat* 
+getStrong (olong nobs, olong nsou, olong nTime, olong* isou, olong* iTime, 
+	   ofloat MinRat, ofloat FCStrong, ofloat*  flux, olong prtLv, 
+	   ObitErr* err);
 
 static void PosImage (ObitImage *image, ofloat pixel[2], ofloat minflux, 
 		      ofloat mxcdis, olong FitSize, 
@@ -776,6 +783,7 @@ ofloat ObitIonCalFit1 (ObitIonCal *in, olong epoch, ofloat *coef,
  * \li prtLv       OBIT_int   (1,1,1)  Print level >=2 => give list [def 0]
  * \li MaxRMS      OBIT_float (1,1,1)  Maximum allowable RMS in arcsec. [def 20]
  * \li MinRat      OBIT_float (1,1,1)  Minimum acceptable ratio to average flux  [def 0.1]
+ * \li FCStrong    OBIT_float (1,1,1)  Min. Flux for strong (required) cal [def big]
  * \li FitDist     OBIT_int   (1,1,1)  Dist, from expected location to search 
  *                                      asec [10 pixels]
  * \li MinPeak     OBIT_float (1,1,1)  Min. acceptable image peak (Jy) [1.0]
@@ -2324,7 +2332,7 @@ FitAll (ObitIonCal *in, olong ncoef, olong nEpoch,
   CalListElem *elem=NULL;
   GSList  *tmp;
   CalList *calList;
-  ofloat maxWt, MaxRMS, MinRat, MinPeak;
+  ofloat maxWt, MaxRMS, MinRat, MinPeak, FCStrong;
   gboolean doINEdit;
   olong prtLv, nobs, nTime, nsou, maxQual, is;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -2358,6 +2366,8 @@ FitAll (ObitIonCal *in, olong ncoef, olong nEpoch,
   ObitInfoListGetTest(in->info, "MinRat", &type, dim, &MinRat);
   MinPeak = 1.0;
   ObitInfoListGetTest(in->info, "MinPeak", &type, dim, &MinPeak);
+  FCStrong = 1.0e6;
+  ObitInfoListGetTest(in->info, "FCStrong", &type, dim, &FCStrong);
 
   /* Count number of sources, number of times and number of obs */
   nobs = nTime = nsou = 0;
@@ -2415,7 +2425,7 @@ FitAll (ObitIonCal *in, olong ncoef, olong nEpoch,
 
 
   /* do fitting */
-  out = doIonFitAll (inUV, MaxRMS, MinRat, doINEdit, 
+  out = doIonFitAll (inUV, MaxRMS, MinRat, FCStrong, doINEdit, 
 		     ncoef, nsou, isou, x, y, nEpoch, 
 		     timeEpoch, timeIEpoch, subaEpoch, 
 		     nobs, iTime, xoff, yoff, flux, wt, flqual, sint, 
@@ -2452,6 +2462,7 @@ FitAll (ObitIonCal *in, olong ncoef, olong nEpoch,
  * \param inUV     UV data to which output NI table is to be attached.
  * \param MaxRMS   Max. allowable RMS before filtering data. (deg) 
  * \param MinRat   Minimum acceptable ratio to average flux 
+ * \param FCStrong Min. Flux for strong (required) cal 
  * \param doINEdit if true flag solutions for which the seeing residual 
  *                 could not be determined or exceeds MAXRMS 
  * \param ncoef    Number of Zernike coeffients to solve for. 
@@ -2484,7 +2495,7 @@ FitAll (ObitIonCal *in, olong ncoef, olong nEpoch,
  * \return ObitTableNI into which values were written (ver 1)
  */
  static ObitTableNI* 
- doIonFitAll (ObitUV *inUV, ofloat MaxRMS, ofloat MinRat, gboolean doINEdit, 
+ doIonFitAll (ObitUV *inUV, ofloat MaxRMS, ofloat MinRat, ofloat FCStrong, gboolean doINEdit, 
 	      olong ncoef, olong nsou, olong* isou, ofloat* x, ofloat* y, 
 	      olong nTime, ofloat* Time, ofloat* TimeI, olong* isuba, 
 	      olong n, olong* iTime, ofloat* xoff, ofloat* yoff, 
@@ -2495,7 +2506,7 @@ FitAll (ObitIonCal *in, olong ncoef, olong nEpoch,
   ObitTableNIRow *NIrow=NULL;
   olong     i, j, ntoss;
   ofloat   xy, timer[2], fblank = ObitMagicF();
-  gboolean redo;
+  gboolean redo, redo2;
   olong     *mcoef=NULL, ngood, nbad, maxcoef;
   ofloat   **coef=NULL, *soffx=NULL, *soffy=NULL, *rms=NULL;
   gboolean *gotsou=NULL, *fitsou=NULL, allFlag, OK;
@@ -2599,8 +2610,9 @@ FitAll (ObitIonCal *in, olong ncoef, olong nEpoch,
 	if (err->error) goto cleanup; 
 
 	/* Edit By amplitude */
-        redo = redo || IonEditAmp (n, nsou, nTime, isou, iTime, MinRat,  flux, mcoef, wt, 
-				   prtLv, err);
+	redo2 = IonEditAmp (n, nsou, nTime, isou, iTime, MinRat,  FCStrong, flux, mcoef, wt, 
+			    prtLv, err);
+        redo = redo || redo2;
 	if (err->error) goto cleanup;
 	
 	/* Redo Ionospheric model if data edited */
@@ -3803,7 +3815,9 @@ IonEditSeries (olong nobs, olong nsou, olong nTime,
 
 
 /**
- * Edit times if average measured flux is less that MinRat wrt average  
+ * Edit times if average measured flux is less that MinRat wrt average 
+ * Sources brighter than FCStrong are required in all solutions  at al least 
+ * MinRat of their average.
  * Times will be flagged by setting the corresponding ncoef to zero.  
  * Routine translated from the AIPSish IONCAL.FOR/IONAED  
  * \param nobs      Number of observations 
@@ -3812,7 +3826,8 @@ IonEditSeries (olong nobs, olong nsou, olong nTime,
  * \param isou      Source number per obs.  (0-rel)
  * \param iTime     Time number per obs. 
  * \param MinRat    Minimum acceptable ratio to average flux 
- * \param  flux     Peak flux density of observations 
+ * \param FCStrong  Min. Flux for strong (required) cal 
+ * \param flux      Peak flux density of observations 
  * \param ncoef     Number of coefficents fitted per time 
  *                  On output, set to -1 to remove time. 
  * \param wt        Weights of observations, set to 0 if flagged 
@@ -3822,13 +3837,13 @@ IonEditSeries (olong nobs, olong nsou, olong nTime,
  */
 static gboolean 
 IonEditAmp (olong nobs, olong nsou, olong nTime, olong* isou, olong* iTime, 
-	    ofloat MinRat, ofloat*  flux, olong* ncoef, ofloat* wt, 
+	    ofloat MinRat, ofloat FCStrong, ofloat*  flux, olong* ncoef, ofloat* wt, 
 	    olong prtLv, ObitErr* err) 
 {
   gboolean out = FALSE;
-  olong   *cntflx, i, j, isss, ittt, ilast, drop, total, ib, ie ;
-  gboolean bad;
-  ofloat   *sumflx, sumt1, sumt2;
+  olong   *cntflx=NULL, i, j, isss, ittt, ilast, drop=0, total, ib, ie;
+  gboolean bad, allStrong;
+  ofloat   *sumflx=NULL, *strong=NULL, sumt1, sumt2;
   gchar flg[11];
   gchar *routine = "IonEditAmp";
 
@@ -3840,10 +3855,17 @@ IonEditAmp (olong nobs, olong nsou, olong nTime, olong* isou, olong* iTime,
   cntflx  = g_malloc0(nsou*sizeof(olong));
   sumflx  = g_malloc0(nsou*sizeof(ofloat));
 
+  /* get strong required flux densities */
+  strong = getStrong (nobs, nsou, nTime, isou, iTime, MinRat,  FCStrong, flux, prtLv, err);
+  if (err->error) goto cleanup;
+
   if (prtLv>=1) {
     Obit_log_error(err, OBIT_InfoErr, 
-		   "%s: filtering solutions with min. flux ratio %10.5f", 
-		   routine,MinRat );
+		   "Filtering solutions with min. flux ratio %10.5f", 
+		   MinRat );
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "Strong (required) cal level %10.5f Jy", 
+		   FCStrong);
   }
 
   drop = 0;
@@ -3870,12 +3892,13 @@ IonEditAmp (olong nobs, olong nsou, olong nTime, olong* isou, olong* iTime,
   ie = 0;
   sumt1 = 0.0;
   sumt2 = 0.0;
+  allStrong = TRUE;
   for (i=0; i<nobs; i++) { /* loop 100 */
     if (iTime[i] > ilast) {
       total++;
       /* New time - check results */
       if (sumt2 > 0.0) sumt1 /= sumt2;
-      bad = sumt1  <  MinRat;
+      bad = (sumt1  <  MinRat) || (!allStrong);
       ittt = iTime[i];
       if (bad) {
 	/* Flag time/data */
@@ -3896,10 +3919,21 @@ IonEditAmp (olong nobs, olong nsou, olong nTime, olong* isou, olong* iTime,
       }
       sumt1 = 0.0;
       sumt2 = 0.0;
+      allStrong = TRUE;
       ilast = ittt;
       ib = i;
     } 
     ie = i;
+
+    /* Check for required calibrators */
+    isss = isou[i];
+    allStrong = allStrong && (flux[i] >= strong[isss]);
+    /* Diagnostics */
+    if ((prtLv>=3) && (flux[i]< strong[isss])) {
+      Obit_log_error(err, OBIT_InfoErr, 
+		     "%s: Flag time %4.4d for source %4.4d since %f < %f",
+		     routine,iTime[i],isss+1,flux[i],strong[isss]);
+    }
 
     /* Sum Fluxes and average values for  source.  */
     if (flux[i] > 0.0) {
@@ -3911,7 +3945,7 @@ IonEditAmp (olong nobs, olong nsou, olong nTime, olong* isou, olong* iTime,
 
   /* Deal with last average */
   if (sumt2 > 0.0) sumt1 /= sumt2;
-  bad = sumt1  <  MinRat;
+  bad = (sumt1  <  MinRat) || (!allStrong);
   if (bad) {
     /* Flag time/data */
     ncoef[ilast] = -1;
@@ -3938,9 +3972,13 @@ IonEditAmp (olong nobs, olong nsou, olong nTime, olong* isou, olong* iTime,
 		   routine, drop, total);
   }
 
+  /* cleanup - deallocate arrays */
+ cleanup:
     if (cntflx) g_free(cntflx);
     if (sumflx) g_free(sumflx);
+    if (strong) g_free(strong);
     out = (drop >0);  /* Do anything? */
+    if (err->error) Obit_traceback_val (err, routine, "editing amp data", out);
     return out;
 } /* end of routine IonEditAmp */ 
 
@@ -4086,6 +4124,75 @@ static void IonEditSource (olong source, olong nobs, olong nTime, olong maxcoe, 
   if (iobs)  g_free(iobs);
 
 } /* end of routine IonEditSource */ 
+
+/**
+ * Get minimum fluxes for strong (required) calibrators 
+ * At least max(5, nTime/2) good observations needed for a calibrator 
+ * to be considered
+ * \param nobs      Number of observations 
+ * \param nsou      Number of sources  
+ * \param nTime     Number of times  
+ * \param isou      Source number per obs.  (0-rel)
+ * \param iTime     Time number per obs. 
+ * \param MinRat    Minimum acceptable ratio to average flux 
+ * \param FCStrong  Min. Flux for strong (required) cal 
+ * \param flux      Peak flux density of observations 
+ * \param prtLv     Print level >=1 => give fitting diagnostics
+ * \param err       Error/message stack 
+ * \return array of minimum required flux density for each source
+ */
+static ofloat* 
+getStrong (olong nobs, olong nsou, olong nTime, olong* isou, olong* iTime, 
+	   ofloat MinRat, ofloat FCStrong, ofloat*  flux, olong prtLv, 
+	   ObitErr* err)
+{
+  ofloat *strong=NULL;
+  olong   i, ngot, navg, isss, jsou;
+  ofloat   *srtflx=NULL, sflux;
+  gchar *routine = "getStrong";
+
+  /* Error checks */
+  g_assert(ObitErrIsA(err));
+  if (err->error) return strong;  /* previous error? */
+
+  /* allocate arrays */
+  strong  = g_malloc0(nsou*sizeof(ofloat));
+  srtflx  = g_malloc0(nTime*sizeof(ofloat));
+
+  /* Loop over sources */
+  for (jsou=0; jsou<nsou; jsou++) {
+    /* Loop over observations collecting */
+    ngot = 0;
+    for (i=0; i<nobs; i++) {
+      if (flux[i] > 0) {
+	isss = isou[i];
+	if (isss==jsou) srtflx[ngot++] = flux[i];
+      } 
+    } /* end loop over observations  */
+
+    /* Get flux density */
+    navg = MAX (3, ngot/4);
+    if (ngot>=MAX(5, nTime/2))
+      sflux = medianAvg(srtflx, 1, navg, FALSE, ngot);
+    else
+      sflux = 0.0;
+
+    /* Set minimum allowable */
+    if (sflux>=FCStrong) {
+      strong[jsou] = MinRat * sflux;
+      /* Tell results */
+      if (prtLv>=2) {
+	Obit_log_error(err, OBIT_InfoErr, 
+		       "%s: Minimum  flux density for source %4d = %10.3f", 
+		       routine,jsou+1, strong[jsou]);
+      }
+    } else strong[jsou] = -1.0e20;
+  } /* end loop over source  */
+
+  if (srtflx) g_free(srtflx);  /* Cleanup */
+
+  return strong;
+} /* end of routine getStrong */ 
 
 /**
  * Fit Zernike model to apparent position offsets.  

@@ -1712,7 +1712,7 @@ void doFieldCal (gchar *Source, ObitInfoList* myInput, ObitUV* inUV,
   gchar        *FCParms[] = {  /* Field based calibration parameters */
     "Catalog",  "OutlierDist",  "OutlierFlux",  "OutlierSI", "OutlierSize",  
     "solInt", "nZern", "FitDist", "MaxDist", "MinPeak", 
-    "MaxWt", "MaxQual", "MaxRMS", "MinRat", "prtLv", 
+    "MaxWt", "MaxQual", "MaxRMS", "MinRat", "FCStrong", "prtLv", 
     NULL
   };
   gchar *routine = "doFieldCal";
@@ -2090,7 +2090,7 @@ void IonImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "FOV", "xCells", "yCells", "nx", "ny", "RAShift", "DecShift", "doRestore",
     "Beam",  "CCFilter",  "maxPixel", "autoWindow", "subA",
     "doFCal", "ionVer", "UpdateInt", "solInt", "nZern", "FitDist", "MaxDist", "MinPeak", 
-    "MaxWt", "MaxQual", "MaxRMS", "MinRat", "FCNiter", "FCGain", "FCminFlux", 
+    "MaxWt", "MaxQual", "MaxRMS", "MinRat", "FCStrong", "FCNiter", "FCGain", "FCminFlux", 
     "seeing", "autoCen","PBCor", "antSize", "Alpha",
     "PeelFlux", "PeelRefAnt", "PeelSNRMin", "PeelSolInt", "PeelNiter", "PeelMinFlux",
     "PeelAvgPol", "PeelAvgIF", "PeelType", "PeelMode",
