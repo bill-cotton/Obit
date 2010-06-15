@@ -69,6 +69,8 @@ begDrop          0.0               Time (min) to drop from beginning
 endDrop          0.0               Time (min) to drop from end
 **PARAM** str 24
 Reason                             Reason (24 char.)
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
 ----------------------------------------------------------------
 Quack
 Task:  This task will flag selected portions of scans in a
@@ -109,4 +111,9 @@ Adverbs:
              AIPS NX table (plus epsilon) to flag.
   Reason.....Reason for flagging the data, up to 24 characters.  This
              string will be inserted in the FG table.
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files where
+             a bug in the ObitTalk message handling may cause
+             tasks to hang.  Path is absolute or relative to where
+             the task executes.
 ----------------------------------------------------------------

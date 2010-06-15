@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitErr type                           */
 /*                                                                    */
-/*;  Copyright (C) 2004,2009                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -50,6 +50,10 @@ extern int isError(ObitErr *in) {
 
 extern void SetError(ObitErr *in) {
    in->error = 1;
+}
+
+extern void ErrorInit(ObitErr *in, ObitInfoList *info) {
+   ObitErrInit(in, (gpointer)info);
 }
 
 extern void LogError (ObitErr *in, int eCode, char *message) {

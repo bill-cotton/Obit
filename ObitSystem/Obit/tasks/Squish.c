@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task - Collapse a 3-D image to 2-D                            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -82,7 +82,10 @@ int main ( int argc, char **argv )
    /* Startup - parse command line */
   err = newObitErr();
   myInput = SquishIn (argc, argv, err);
-  if (err->error) ierr = 1;
+
+  /* Initialize logging */
+  ObitErrInit (err, (gpointer)myInput);
+
   ObitErrLog(err); /* show any error messages on err */
   if (ierr!=0) goto exit;
 

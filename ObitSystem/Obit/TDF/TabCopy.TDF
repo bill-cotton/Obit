@@ -3,7 +3,7 @@
 ;!  Task to copy tables
 ;# Obit Task 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006
+;;  Copyright (C) 2006,2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -67,6 +67,8 @@ KeyWord                            Table header keyword to test
 KeyRange                           Min, max keyword values
 **PARAM** str 8
 KeyString                          String keyword
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
 ----------------------------------------------------------------
 TabCopy
 Task: Copies tables. The output tables should not exist prior to
@@ -108,4 +110,9 @@ Adverbs:
              KeyRange[1] to  KeyRange[0].    No defaults.
   KeyString..A character string required to match the value of
              a character keyword.
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files where
+             a bug in the ObitTalk message handling may cause
+             tasks to hang.  Path is absolute or relative to where
+             the task executes.
 ----------------------------------------------------------------

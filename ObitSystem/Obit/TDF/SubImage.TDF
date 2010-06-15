@@ -4,7 +4,7 @@
 ;! Copy a sub region of an image
 ;# Task 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005,2007
+;;  Copyright (C) 2005-2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -68,6 +68,8 @@ outDisk           0.0          9.0 output AIPS Disk drive #
 subCC                              select CC table per plane?
 **PARAM** boo 1
 mrgCC                              merge copied CC tables?
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
 ----------------------------------------------------------------
 SubImage
 Type: Task
@@ -103,4 +105,9 @@ Adverbs:
   mrgCC.......If True, then merge each CC table copied.  In each 
               table, all components on a given cell have their
               fluxes summed resulting in a single entry per cell,
+  taskLog.....Log file to write messages to INSTEAD of the terminal
+              This is useful in long runs or batch files where
+              a bug in the ObitTalk message handling may cause
+              tasks to hang.  Path is absolute or relative to where
+              the task executes.
 ----------------------------------------------------------------

@@ -4,7 +4,7 @@
 ;! Obit Convert UV data file to IDI  .
 ;# Task Obit IDI
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2009
+;;  Copyright (C) 2009,2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -88,6 +88,8 @@ Smooth                              Smoothing function.
 outFile                             Output FITS file
 **PARAM** int 1
 outDisk                             Output UV file disk unit #.
+**PARAM** str 128
+taskLog                             Logfile to write task messages to
 ----------------------------------------------------------------
 IDIOut: Convert Obit UV to FITS IDI format
 Type:  Task
@@ -186,4 +188,9 @@ Adverbs:
              If the name begins with '!', any existing version 
              is deleted and the '!' dropped from the filename.
   outDisk....Disk drive # of output UV file.  
+  taskLog.....Log file to write messages to INSTEAD of the terminal
+              This is useful in long runs or batch files where
+              a bug in the ObitTalk message handling may cause
+              tasks to hang.  Path is absolute or relative to where
+              the task executes.
 ----------------------------------------------------------------

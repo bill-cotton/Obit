@@ -278,6 +278,8 @@ prtLv             0.0              Print level in selfcal
 dispURL                            Display server URL
 **PARAM** int 1 **DEF** 1
 nThreads            0              Number of threads to use
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
 **PARAM** int 10
 noScrat                            AIPS disk numbers for which
                                    scratch files are disallowed
@@ -683,6 +685,12 @@ Adverbs:
               operations. 
               NB: This only improves performance if there are 
               multiple processors and/or cores in the host.
+
+  taskLog.....Log file to write messages to INSTEAD of the terminal
+              This is useful in long runs or batch files where
+              a bug in the ObitTalk message handling may cause
+              tasks to hang.  Path is absolute or relative to where
+              the task executes.
 
   noScrat.....A list of AIPS disk numbers on which you do not 
               wish scratch files

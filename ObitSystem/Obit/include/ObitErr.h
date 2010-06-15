@@ -224,6 +224,8 @@ typedef struct {
   olong prtLv;
   /** Program name */
   gchar *pgmName;
+  /** logfile name */
+  gchar *logFile;
 } ObitErr;
 
 /**  ObitErr Stack Element structure. */
@@ -247,6 +249,9 @@ ObitErr* ObitErrRef (ObitErr* in);
 
 /** Public: Unreference object, destroy if no more references. */
 ObitErr* ObitErrUnref (ObitErr* in);
+
+/** Public: Initialize message/error stack. */
+void ObitErrInit (ObitErr* in,  gpointer info);
 
 /** Public: Clear error stack. */
 void ObitErrClear (ObitErr* in);

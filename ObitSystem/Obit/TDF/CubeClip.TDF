@@ -3,7 +3,7 @@
 ;! Clip insignificant pixels
 ;# Task Obit
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006,2007
+;;  Copyright (C) 2006-2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -67,6 +67,8 @@ Parms           0.0      9999.0    [0] min. RMS
                                    [1] min. peak
                                    [2] >0.5 => blank fill
                                    [3] Convolution size (0->3)
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
 ----------------------------------------------------------------
 CubeClip
 Type: Task
@@ -119,4 +121,9 @@ Adverbs:
                   mask of pixels to be accepted, >=0 => 5
                   This allows inclusion of low level emission
                   and regions adjacent to bright emission.
+  taskLog.....Log file to write messages to INSTEAD of the terminal
+              This is useful in long runs or batch files where
+              a bug in the ObitTalk message handling may cause
+              tasks to hang.  Path is absolute or relative to where
+              the task executes.
 ----------------------------------------------------------------

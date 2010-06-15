@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry data editing software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2009
+;;  Copyright (C) 2005-2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -119,6 +119,8 @@ FDmaxResBL                          Max. baseline residual
 **PARAM** int 4 20
 FDbaseSel                           Channels for baseline fit
                                     (start, end, increment,IF)
+**PARAM** str 128
+taskLog                             Logfile to write task messages to
 ----------------------------------------------------------------
 AutoFlag Automated editing for radio Interferometry data
 Type:  Task
@@ -254,6 +256,11 @@ Adverbs:
              the list, Channel increments defaults to 1
              If the IF==0 then the group applies to all IF.
              Default is channels 2 => nchan-1 all IFs
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files where
+             a bug in the ObitTalk message handling may cause
+             tasks to hang.  Path is absolute or relative to where
+             the task executes.
 ----------------------------------------------------------------
 Automatic editing task for radio interferometer data
 Documenter:  W. D. Cotton,  NRAO

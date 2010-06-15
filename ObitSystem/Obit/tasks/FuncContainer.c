@@ -1,7 +1,7 @@
 /* $Id:  $  */
 /* FuncContainer Obit function container process                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -127,13 +127,17 @@ int main ( int argc, char **argv )
   ObitErr *err;
   ObitRPC *server;
   guint mlog;
+  oint  ierr = 0;
   
    /* Startup - parse command line */
   err = newObitErr();
   myInput = FuncContIn (argc, argv, err);
-  if (err->error) goto exit;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  goto exit;}
 
-  /* Start up Obit System */
+  /* Initialize logging */
+  ObitErrInit (err, (gpointer)myInput);
+
+ /* Start up Obit System */
   mySystem = startupObit (err);
   ObitErrLog(err); /* show any error messages on err */
   if (err->error) goto exit;
@@ -184,7 +188,7 @@ int main ( int argc, char **argv )
  exit:
   shutdownObit (mySystem, err);
   ObitErrLog(err); /* show any error messages on err */
-  return 0;
+  return ierr;
 } /* end main */
 
 ObitSystem* startupObit (ObitErr *err)

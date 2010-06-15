@@ -4,7 +4,7 @@
 ;! Low Frequency Radio Interferometry RFI removal
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006-2009
+;;  Copyright (C) 2006-2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 ;;                         National Radio Astronomy Observatory
 ;;                         520 Edgemont Road
 ;;                         Charlottesville, VA 22903-2475 USA
-;-----------------------------------------------------------------------
 ;---------------------------------------------------------------
 LowFRFI   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 LowFRFI:Low Frequency Radio Interferometry RFI removal
@@ -117,6 +116,8 @@ outSeq           -1.0     9999.0    Output UV AIPS fileseq. #
 outDisk                             Output UV file disk unit #.
 **PARAM** boo 1 
 Compress                            True => write compressed data
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
 **PARAM** int 10
 noScrat                             AIPS disk numbers for which
                                     scratch files are disallowed
@@ -265,6 +266,11 @@ Parameters:
              reduction in disk space needed.  
              DO NOT USE THIS OPTION if there is channel-dependent 
              weighting or data with extreme dynamic range.
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files where
+             a bug in the ObitTalk message handling may cause
+             tasks to hang.  Path is absolute or relative to where
+             the task executes.
   noScrat....A list of AIPS disk numbers on which you do not 
              wish scratch files
 ----------------------------------------------------------------

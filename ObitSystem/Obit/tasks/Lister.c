@@ -1,7 +1,7 @@
 /* $Id:  $  */
 /* Task to print the contents of various data files                   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009                                               */
+/*;  Copyright (C) 2009-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -130,7 +130,11 @@ int main ( int argc, char **argv )
    /* Startup - parse command line */
   err = newObitErr();
   myInput = ListerIn (argc, argv, err);
-  if (err->error) ierr = 1;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  goto exit;}
+
+ /* Initialize logging */
+  ObitErrInit (err, (gpointer)myInput);
+
   ObitErrLog(err); /* show any error messages on err */
   if (ierr!=0) goto exit;
 

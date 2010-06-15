@@ -3,7 +3,7 @@
 ;! Template task and performs IMEAN line function
 ;# Task 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005
+;;  Copyright (C) 2005,2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -52,6 +52,8 @@ Mean     $                         Estimate of mean noise value
 RMS      $                         Estimate of true noise rms
 **PARAM** str 48
 inFile                             Filename if FITS image
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
 ----------------------------------------------------------------
 Template
 Type: Task
@@ -74,4 +76,9 @@ Adverbs:
               guess to help Template fit a Gaussian to the noise.
   RMS.........RMS of the noise portion of the image
   Filename....Input File name if a FITS file
+  taskLog.....Log file to write messages to INSTEAD of the terminal
+              This is useful in long runs or batch files where
+              a bug in the ObitTalk message handling may cause
+              tasks to hang.  Path is absolute or relative to where
+              the task executes.
 ----------------------------------------------------------------

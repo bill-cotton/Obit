@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Template Obit task - computes mean and RMS of an image             */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2008                                          */
+/*;  Copyright (C) 2005-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -52,9 +52,9 @@ gchar *outfile = "TEMPLATE.out";   /* File to contain program outputs */
 olong  pgmNumber;       /* Program number (like POPS no.) */
 olong  AIPSuser;        /* AIPS user number number (like POPS no.) */
 olong  nAIPS=0;         /* Number of AIPS directories */
-gchar **AIPSdirs=NULL; /* List of AIPS data directories */
+gchar **AIPSdirs=NULL;  /* List of AIPS data directories */
 olong  nFITS=0;         /* Number of FITS directories */
-gchar **FITSdirs=NULL; /* List of FITS data directories */
+gchar **FITSdirs=NULL;  /* List of FITS data directories */
 ObitInfoList *myInput  = NULL; /* Input parameter list */
 ObitInfoList *myOutput = NULL; /* Output parameter list */
 
@@ -79,7 +79,11 @@ int main ( int argc, char **argv )
    /* Startup - parse command line */
   err = newObitErr();
   myInput = TEMPLATEIn (argc, argv, err);
-  if (err->error) ierr = 1;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  goto exit;}
+
+  /* Initialize logging */
+  ObitErrInit (err, (gpointer)myInput);
+
   ObitErrLog(err); /* show any error messages on err */
   if (ierr!=0) goto exit;
 

@@ -21,7 +21,7 @@
 \vskip 1cm
 \centerline{\ttlfont Merx mollis mortibus nuper}
 \vskip 3cm
-\centerline{\secfont Version: 1.1 \today}
+\centerline{\secfont Version: 1.2 \today}
 \vskip 1cm
 \centerline{\secfont W. D. Cotton}
 \clearpage
@@ -201,8 +201,13 @@ Routines with an ObitErr argument should check that no prior error
 condition exists and return if one does.
 At the appropriate level, the contents of the message log can be
 displayed and any error condition cleared.
-At present, the output is to stderr, but more formal logging, such as
-AIPS logging, is easily implemented.
+At present, the output is to stdout or a specified log file, but more
+formal logging, such as AIPS logging, is easily implemented.
+The error object also contains a ``prtLv'' (print level) member that
+can be used to control the amount of diagnostic messages.
+The prtLv and logging to a file are enables using the ObitErrInit
+function.
+
 
 \section{Obit Software System}
 The Obit system maintains its basic information in global structures.
@@ -320,7 +325,7 @@ Obit\_traceback macros.
 
 Message logging can be customized by an application specific logging
 handler.
-Currently all messages are written to stderr.
+Currently all messages are written to stdout or a specified log file.
 
 The most useful ways of entering information into an ObitErr are
 through macroes defined in the class:

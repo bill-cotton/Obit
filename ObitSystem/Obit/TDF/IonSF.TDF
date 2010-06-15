@@ -3,7 +3,7 @@
 ;! Convert Ionospheric movie to 2D structure func (distance,time)
 ;# Task Obit
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007
+;;  Copyright (C) 2007,2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 ;;                         National Radio Astronomy Observatory
 ;;                         520 Edgemont Road
 ;;                         Charlottesville, VA 22903-2475 USA
-;-----------------------------------------------------------------------
 ;---------------------------------------------------------------
 IonSF    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 IonSF:  Convert Ion. movie to 2D structure func (distance,time)
@@ -61,6 +60,8 @@ outClass                           Output image class.
 **PARAM** int 1
 outSeq         -1.0      9999.0    Output image seq. #.
                                      0 => highest unique
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
 **PARAM** int 1
 outDisk                            Output disk drive #
                                      0 => highest with room
@@ -94,4 +95,9 @@ Adverbs:
   outClass....Output image class.   default='IonSF'
   outSeq......Output image seq. #.  0 => next highest
   outDisk.....Disk drive # of output.  NO default
+  taskLog.....Log file to write messages to INSTEAD of the terminal
+              This is useful in long runs or batch files where
+              a bug in the ObitTalk message handling may cause
+              tasks to hang.  Path is absolute or relative to where
+              the task executes.
 ----------------------------------------------------------------

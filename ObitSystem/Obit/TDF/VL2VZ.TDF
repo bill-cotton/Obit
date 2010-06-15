@@ -3,7 +3,7 @@
 ;! Convert VL table to VZ table
 ;# Task Obit Table 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007
+;;  Copyright (C) 2007,2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 ;;                         520 Edgemont Road
 ;;                         Charlottesville, VA 22903-2475 USA
 ;-----------------------------------------------------------------------
-;---------------------------------------------------------------
 VL2VZ     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 VL2VZ     Convert VL table to VZ table, filter
 **PARAM** str 4
@@ -69,6 +68,8 @@ ignore                             Minimum acceptable flux density (Jy)
 **PARAM** float 1
 crowd                              Distance (deg) for crowding test
                                    used if doAver, default=nearest
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
 ----------------------------------------------------------------
 VL2VZ
 Task:  This task Converts a VL table to a VZ table suitable for
@@ -135,4 +136,9 @@ Adverbs:
   crowd......Distance (deg) for crowding test
              for doAver, default=nearest
              same value as nearest OK
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files where
+             a bug in the ObitTalk message handling may cause
+             tasks to hang.  Path is absolute or relative to where
+             the task executes.
 ----------------------------------------------------------------

@@ -26,7 +26,7 @@
 \vskip 1cm
 \centerline{\LARGE\it Obit: Merx mollis mortibus nuper}
 \vskip 3cm
-\centerline{\secfont Version: 1.5 \today}
+\centerline{\secfont Version: 1.6 \today}
 \vskip 1cm
 
 % Abstract
@@ -95,10 +95,13 @@ mostly for reference.
 \section {Obtaining Software}
 Obit and related software is available from
 http://www.cv.nrao.edu/$\sim$bcotton/Obit.html. 
-At present there is no system of stable releases so using the
-anonymous CVS interface is recommended.
+At present stable releases are issued roughly yearly.
+For more up to date versions of the software the
+anonymous SVN interface 
+(https://svn.cv.nrao.edu/view/ObitInstall/) is recommended.
+Binary distributions for Linux are also available. 
 Obit depends heavily on third party software which is descriped on
-this page.
+the Obit page.
 Support of the Obit package is extremely limited.
 The components of the Obit/ObitTalk package are:
 \begin{itemize}
@@ -115,6 +118,11 @@ Scripting and interactive interface to Obit software.
 \end{itemize}
 These software packages come with installation instructions and config
 scripts to build them.
+
+A simplified binary installation for Linux systems is available at 
+http://svn.cv.nrao.edu/obit/ under linux\_distro.
+The binary distribution is a tarball that can be unpacked, added to
+your \$PATH and directly executed.
 
 \section {Starting ObitTalk}
 The operation of ObitTalk is influenced by the values of a number of
@@ -798,6 +806,8 @@ Following are lists of tasks available through ObitTalk.\\
 {\bf Obit Tasks}
 \begin{itemize}
 \item {\bf AutoFlag}  Radio interferometry data editing software
+\item {\bf BeamCor}   Imaging software correcting for tabulated beamshape
+\item {\bf BPass}     Simple UV bandpass calibration
 \item {\bf Calib}     Calibrate visibility data (amp \& phase)
 \item {\bf CLCal}     Apply gain solutions to a CL table
 \item {\bf Convol}    Convolve images
@@ -808,15 +818,21 @@ Following are lists of tasks available through ObitTalk.\\
 \item {\bf GetJy}     Determine calibrator flux densities
 \item {\bf HGeom}     Task to make an image consistent with another image
 \item {\bf IDIin}     Read IDI format UV data
+\item {\bf IDIout}    Write IDI format UV data
 \item {\bf Imager}    Radio interferometry imaging task
 \item {\bf IonCal }   Low frequency Field Based calibration
 \item {\bf IonImage}  Low frequency Field Based calibration and imaging
 \item {\bf IonMovie}  Make a movie of ionospheric phase from an SN table
 \item {\bf IonSF}     Convert Ion. movie to 2D structure func (distance,time)
 \item {\bf Lister}    Listing of data and calibration tables
+\item {\bf LowFRFI}   Low Frequency Radio Interferometry RFI removal
+\item {\bf MapBeam}   Map beam polarization
+\item {\bf MCube}     Task to accumulate image planes into a cube
 \item {\bf MednFlag}  Automated UV flagging about a median value
+\item {\bf MFImage}   Wideband imaging
 \item {\bf Ringer}    Fit rings to SiO maser cubes
 \item {\bf noFQId}    Set FqIDs in continuum data to 1
+\item {\bf Quack}     Flags specified portion of scans of UV data
 \item {\bf SCMap}     Interferometry self calibration imaging
 \item {\bf SetJy}     Modify SoUrce (SU) table
 \item {\bf SNCor}     Modify visibility gain (AIPS SN) table
@@ -829,9 +845,11 @@ Following are lists of tasks available through ObitTalk.\\
 \item {\bf SubImage}  Task to copy a sub region of an image
 \item {\bf TabCopy}   Task to one or more tables
 \item {\bf Template}  Task to print the mean, rms and extrema in an image
-\item {\bf UVBLAvg}   Baseline dependent time and/or frequency averaging
+\item {\bf UVBlAvg}   Baseline dependent time and/or frequency averaging
 \item {\bf UVCopy}    Copy UV data
+\item {\bf UVPolCor}  Correct off-axis instrumental polarization in UV data
 \item {\bf UVSim}     Simulate UV data
+\item {\bf UVSubBC}   Correct off-axis instrumental polarization in UV data
 \item {\bf UVSub}     Task to subtract a clean model from a uv data base
 \item {\bf VL2VZ}     Convert VL (survey catalog) table to VZ table
 \item {\bf VLSSFix}   Corrects residual geometry in low frequency images
@@ -842,6 +860,7 @@ Following are lists of tasks available through ObitTalk.\\
 \item {\bf CCBCalib}  Calibrate GBT CCB OTF format data
 \item {\bf CCBFix}    Strip bad data from post-lobotomy GBT CCB data
 \item {\bf OTFImage}  Image OTF format data
+\item {\bf OTFSCal}   Image and self calibrate OTF format data
 \end{itemize}
 
    To see task documentation either a python task object may first
@@ -917,10 +936,21 @@ The above form of the go function runs synchronously and does not return
 until the task finishes. 
 Log messages will appear in the screen; if logging to a file is
 desired, set the name of the file (relative or full path) on the task
-object's logFileMember:
+object's logFile member:
 \begin{verbatim}
 >>> im.logFile="myLog.log"
 \end{verbatim}
+
+For Obit tasks, there is an alternative logging method, writting
+messages directly to a file and NOT displaying them on the terminal or
+Message Server; this is useful for batch, script driven processing.
+The logging file is specified as:
+\begin{verbatim}
+>>> im.taskLog="myLog.log"
+\end{verbatim}
+This avoids problems with using logging by ObitTalk which include
+missed or mangled messages and the task hanging due to a full message
+buffer.
 
 After a task is run which generates output values, these can be
 viewed using the outputs function:
@@ -1030,11 +1060,23 @@ if run asynchronously.
 Each Task window has a button that allows writing the contents into a
 file; otherwise the logging messages are lost when the window closes.
 If logging to a file is desired, set the name of the file (relative or
-full path) on the task object's logFileMember:
+full path) on the task object's logFile member:
 \begin{verbatim}
->>> im.logFile=''myLog.log''
+>>> im.logFile="myLog.log"
 \end{verbatim}
 This will cause the messages to be logged as the task runs.
+
+For batch, script--driven processing it may be desirable to write
+messages directly to the log file from the task and not to the
+terminal output or Message Server. 
+This also avoids the problems of ObitTalk occasionally losing or
+mangling messages or causing the task to hang due to a full I/O
+buffer. 
+Obit tasks can invoke direct logging using the taskLog task object
+member: 
+\begin{verbatim}
+>>> im.taskLog="myLog.log"
+\end{verbatim}
 
 \subsection{ObitTalk/Obit routines}
 ObitTalk has python binding to the Obit c library that allow access to
@@ -1171,6 +1213,7 @@ Maximum version number of AIPS HI tables is 1
 >>> d["observer"]
 'Axxxx   '
 >>> d["observer"]="my code"
+>>> x.Desc.Dict=d
 >>> x.UpdateDesc(err)
 >>> x.Close(err)
 >>> imhead(x)
@@ -1588,7 +1631,7 @@ Adverbs     Values                                   Comments
                                                          = 0 => 2-passes to get
 \end{verbatim}
 
-\subsection{Run an Obit task}
+\subsection{Run an Obit task (FndSou)}
 To run Obit task FndSou on an image, x, containing multiple sources to
 generate a source catalog (use sf.h for detailed help):
 \begin{verbatim}
@@ -1669,7 +1712,7 @@ Attempt to break 0 islands into multiple
 ** Message: info      : Date/Time: 2007-10-11  13:47:58
 \end{verbatim}
 
-\subsection{Table Access}
+\subsection{Table Access (print contents of VL table)}
 To create a python object from the VL table created in the previous example
 and display its contents using the Catalog module utility PVLPrint:
 \begin{verbatim}
@@ -2064,23 +2107,28 @@ Obit/AIPS/Radio Interferometry/Image classes and utilities
 \item {\bf OPlot}          Ploting interface
 \item {\bf OSystem}        Obit System class
 \item {\bf OWindow}        (CLEAN) image window class
+\item {\bf ParserUtil}     Obit task input/output file parser
 \item {\bf SkyGeom}        Celestial geometry
 \item {\bf SkyModel}       Sky model class
+\item {\bf SkyModelVMBeam} Tabulated beam Sky model class
+\item {\bf SkyModelVMIon}  Ionospheric Sky Model class
 \item {\bf SpectrumFit}    Spectrum fitting class
 \item {\bf TableDesc}      Table descriptor (header) class
 \item {\bf TableList}      Table list for data object (Image, UVData, OTF)
 \item {\bf Table }         Table class
 \item {\bf TableUtil}      Table utilities
+\item {\bf TableSTar}      manipulate AIPS STar tables
 \item {\bf TaskWindow}     Task message window class
-\item {\bf TimeFIlter}     Time filtering class
+\item {\bf TimeFilter}     Time filtering class
 \item {\bf UVDesc}         UV data descriptor (header)
 \item {\bf UVGSolve}       UV gain solutions
 \item {\bf UVImager}       UV data imager class
 \item {\bf UV }            UV data class
+\item {\bf UVRFIXize}      RFI Excision class
 \item {\bf UVSelfCal}      UV Self calibration class
 \item {\bf UVSoln2Cal}     UV SN to CL table routines.
 \item {\bf UVVis}          UV visibility access class
-\item {\bf VLACal}         VLA calibration utilities
+\item {\bf VLACal}         VLA calibration/pipeline utilities
 \item {\bf ZernikeUtil}    Zernike polynomial utilities
 \end{itemize}
 
@@ -2090,7 +2138,7 @@ These require the ObitSD python directory in the PYTHONPATH.
 \item {\bf CCBUtil}        GBT CCB utility package
 \item {\bf CleanOTF}       Single dish (Hogbom) CLEAN
 \item {\bf CleanOTFRec}    Single dish record based CLEAN
-\item {\bf GBTDCROTF}      Convert GBD DCR data to OTF format
+\item {\bf GBTDCROTF}      Convert GBT DCR data to OTF format
 \item {\bf GBTUtil}        Utilities for GBT data
 \item {\bf OTFDesc}        OTF Descriptor
 \item {\bf OTFGetAtmCor}   OTF Atmospheric correction utilities

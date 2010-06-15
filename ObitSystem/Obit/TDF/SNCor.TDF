@@ -4,7 +4,7 @@
 ;! applies user-selected corrections to the calibration SN table
 ;# Task Calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006,2007
+;;  Copyright (C) 2006-2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -29,7 +29,6 @@
 ;;                         520 Edgemont Road
 ;;                         Charlottesville, VA 22903-2475 USA
 ;-----------------------------------------------------------------------
-;---------------------------------------------------------------
 SNCor     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 SNCor     Task which applies various corrections to SN tables.
 **PARAM** str 4
@@ -65,9 +64,11 @@ solnVer                            SN table to use
 **PARAM** str 4
 corMode                            Operation code.See HELP
 **PARAM** float 30 
-SNCParm                          Parameters (see HELP SNCor).
+SNCParm                            Parameters (see HELP SNCor).
 **PARAM** float 30 
 PhasParm                           Parameters for corMode=XFER
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
 ----------------------------------------------------------------
 SNCor
 Task:  This task makes a number of corrections to a SN table.
@@ -139,6 +140,11 @@ Adverbs:
   SNCParm...Parameters: see above and below.
   PhasParm....More parameters: see above and below
              be placed.  This will not affect the output file.
+  taskLog.....Log file to write messages to INSTEAD of the terminal
+              This is useful in long runs or batch files where
+              a bug in the ObitTalk message handling may cause
+              tasks to hang.  Path is absolute or relative to where
+              the task executes.
 ----------------------------------------------------------------
 Mostly copied from AIPS SNCOR
 SNCor:  Task to apply corrections to an SN table in a variety of

@@ -3,7 +3,7 @@
 ;! smooths and filters a calibration SN table
 ;# Obit Task Calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006,2007
+;;  Copyright (C) 2006-2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 ;;                         520 Edgemont Road
 ;;                         Charlottesville, VA 22903-2475 USA
 ;-----------------------------------------------------------------------
-;---------------------------------------------------------------
 SNSmo     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 SNSmo     Task which smooths and filters Solution(SN) tables.
 **PARAM** str 4
@@ -75,6 +74,8 @@ solnIn                             Input SN table; 0=>highest
 solnOut                            Output SN table; 0=>new
 **PARAM** int 1
 refAnt                             Reference antenna 0=>pick.
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
 ----------------------------------------------------------------
 SNSmo
 Task: This task references and smooths an SN table.  First values
@@ -181,6 +182,11 @@ Adverbs:
              in the SN table will be referenced to
              this antenna. 0=> use the one used in the most
              solutions.
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files where
+             a bug in the ObitTalk message handling may cause
+             tasks to hang.  Path is absolute or relative to where
+             the task executes.
 ----------------------------------------------------------------
 SNSmo:  Smooths solution (SN) tables.
 Documentor: W. D. Cotton

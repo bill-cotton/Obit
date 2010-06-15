@@ -26,9 +26,11 @@
 /*--------------------------------------------------------------------*/
 #include <sys/types.h>
 #include <string.h>
+#include <stdio.h>
 #include "ObitErr.h"
 #include "ObitMem.h"
 #include "ObitSystem.h"
+#include "ObitInfoList.h"
 
 /** name of the class defined in this file */
 static gchar *myClassName = "ObitErr";
@@ -81,6 +83,12 @@ static void DefaultLogHandler (const gchar *log_domain,
 			       const gchar *message,
 			       gpointer user_data);
 
+/** Private: log handler for log file */
+static void LogFileLogHandler (const gchar *log_domain,
+			       GLogLevelFlags log_level,
+			       const gchar *message,
+			       gpointer user_data);
+
 /*---------------Public functions---------------------------*/
 /* constructor */
 /**
@@ -102,6 +110,7 @@ ObitErr* newObitErr (void)
   me->ReferenceCount = 1;
   me->prtLv     = 0;
   me->pgmName   = NULL;
+  me->logFile   = NULL;
 
   /* Set default handler if not done yet */
   if (!defaultHandler) {
@@ -177,6 +186,62 @@ ObitErr* ObitErrUnref (ObitErr* in)
 
   return NULL;
 } /* end ObitErrUnref */
+
+/**
+ * Initialize message/error handling
+ * err has prtLv to value of "prtLv" in info if defined.
+ * err has logFile menber set to "taskLog" in info if defined and
+ * the logging handler is set to write messages to that file
+ * rather than a terminal.
+ * \param  in   Pointer to message/error object 
+ * \param  info ObitInfoList* as gpointer List to be searched for 
+ *         initialization info (avoid circular definitions).
+ */
+void ObitErrInit (ObitErr* in, gpointer info)
+{
+  ObitInfoType type;
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoList *theInfo = (ObitInfoList*)info;
+  FILE *myFile;
+  gchar *tstr=NULL;
+ 
+  if (in==NULL) return;
+  if (info==NULL) return;
+
+  /* error checks */
+  g_assert (ObitErrIsA(in));
+
+  /* prtLv */
+  ObitInfoListGetTest(theInfo, "prtLv", &type, dim, &in->prtLv);
+
+  /* task log file */
+  ObitInfoListGetP(theInfo, "taskLog", &type, dim, &tstr);
+  /* If given and non empty and non blank*/
+  if ((tstr) && (dim[0]>3) && (tstr[0]!= ' ') && (tstr[1]!= ' ')) { 
+    ObitTrimTrail (tstr);
+    in->logFile = strdup (tstr); 
+
+    /* test that file is writable */
+    myFile = fopen (in->logFile, "a");
+    if (myFile!=NULL) {
+      fclose (myFile);
+      
+      /* Set new logging handler */
+      defaultHandler = TRUE;
+      g_log_set_handler (NULL,  G_LOG_LEVEL_WARNING | G_LOG_FLAG_FATAL |
+			 G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_MESSAGE |
+			 G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG |
+			 G_LOG_FLAG_RECURSION, 
+			 (GLogFunc)LogFileLogHandler, (gpointer)in);
+    } else {/* file unwritable */
+      Obit_log_error(in, OBIT_InfoWarn, 
+		     "CANNOT Write logfile %s",
+		     in->logFile);
+      ObitErrLog(in); 
+    }
+  }
+
+} /* end ObitErrInit */
 
 /**
  * Removes all entries in stack and deallocate them
@@ -516,4 +581,32 @@ static void DefaultLogHandler (const gchar *log_domain,
     fprintf (stdout, "Obit: %s\n", message);
   }
 } /* end DefaultLogHandler */
+
+/**
+ * Log handler for log file
+ * \param message message to log
+ */
+static void LogFileLogHandler (const gchar *log_domain,
+			       GLogLevelFlags log_level,
+			       const gchar *message,
+			       gpointer user_data)
+{
+  ObitErr* me=NULL;
+  FILE *myFile=NULL;
+
+  /* Pass program name */
+  if (ObitErrIsA((ObitErr*)user_data)) {
+    me  = (ObitErr*)user_data;
+    if (me->logFile) myFile = fopen (me->logFile, "a");
+    else myFile = stdout;  /* stdout if no file defined */
+    if (me->pgmName)
+      fprintf (myFile, "%s: %s\n", me->pgmName, message);
+    else
+    fprintf (myFile, "Obit: %s\n", message);
+  } else {
+    fprintf (myFile, "Obit: %s\n", message);
+  }
+  if (me->logFile) fclose (myFile);
+} /* end DefaultLogHandler */
+
   

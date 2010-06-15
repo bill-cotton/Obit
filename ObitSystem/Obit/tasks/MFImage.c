@@ -124,7 +124,11 @@ int main ( int argc, char **argv )
    /* Startup - parse command line */
   err = newObitErr();
   myInput = MFImageIn (argc, argv, err);
-  if (err->error) ierr = 1;
+   if (err->error) {ierr = 1;  ObitErrLog(err);  goto exit;}
+
+  /* Initialize logging */
+  ObitErrInit (err, (gpointer)myInput);
+
   ObitErrLog(err); /* show any error messages on err */
   if (ierr!=0) return 1;
 

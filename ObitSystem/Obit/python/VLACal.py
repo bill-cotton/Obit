@@ -1,6 +1,7 @@
 """ Functions for calibrating and editing VLA data
 """
-import UV, UVDesc, Image, ImageDesc, FArray, ObitTask, AIPSTask, OErr, History
+import UV, UVDesc, Image, ImageDesc, FArray, ObitTask, AIPSTask, AIPSDir, OErr, History
+import InfoList
 from AIPS import AIPS
 from FITS import FITS
 from AIPSDir import AIPSdisks, nAIPS
@@ -31,7 +32,7 @@ def setname (inn, out):
         out.indisk  = inn.Disk
     # end setname
     
-def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0]):
+def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0], logfile=None):
     """ Get statistics in a specified region of an image plane
 
     Returns dictionary with statistics of selected region with entries:
@@ -48,6 +49,7 @@ def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0]):
     err      = Obit error/message stack
     blc      = bottom left corner pixel (1-rel)
     trc      = top right corner pixel (1-rel)
+    logfile  = file to write results to
     """
     ################################################################
     # Read plane
@@ -74,11 +76,15 @@ def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0]):
         beamarea = 1.1331*(head["beamMaj"]/abs(head["cdelt"][0])) * \
                    (head["beamMin"]/abs(head["cdelt"][1]))
         Flux = p.Sum/beamarea
-    print "Region Mean %g, RMSHist %g RMS %g" % (Mean, RMS, RawRMS)
-    print "  Max %g @ pixel " % Max, MaxPos
-    print "  Min %g @ pixel " % Min, MinPos
+    mess =  "Image statistics:  Region Mean %g, RMSHist %g RMS %g" % (Mean, RMS, RawRMS)
+    printMess(mess, logfile)
+    mess =  "  Max %g @ pixel %s" % (Max, str(MaxPos))
+    printMess(mess, logfile)
+    mess = "  Min %g @ pixel %s" % (Min,  str(MinPos))
+    printMess(mess, logfile)
     if (head["beamMaj"]>0.0) :
-        print "  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea)
+        mess = "  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea)
+        printMess(mess, logfile)
    
     # Reset BLC, TRC
     blc = [1,1,1,1,1]
@@ -93,6 +99,53 @@ def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0]):
             "BeamArea":beamarea}
     # end imstat
    
+def AllDest (err, disk=None, Atype="  ", Aname="            ", Aclass="      ", Aseq=0):
+    """ Delete AIPS files matching a pattern
+
+    Strings use AIPS wild cards:
+        blank => any
+        '?'   => one of any character
+        "*"   => arbitrary string
+    disk      = AIPS disk number, 0=>all
+    Atype     = AIPS entry type, 'MA' or 'UV'; '  => all
+    Aname     = desired AIPS name, using AIPS wildcards, None -> don't check
+    Aclass    = desired AIPS class, using AIPS wildcards, None -> don't check
+    Aseq      = desired AIPS sequence, 0=> any
+    """
+    ################################################################
+    global Adisk
+    if disk==None:
+        disk = Adisk
+    else:
+        if disk>0:
+            Adisk = disk
+    # NO Confirm
+    #prompt = "Do you really want to delete all AIPS "+Atype+" files on disk(s) "\
+    #         +str(disk)+"\nwith names matching "+Aname+"."+Aclass+"."+str(Aseq)+ \
+    #         " y/n "
+    #ans = raw_input(prompt)
+    #if ans.startswith('y'):
+    AIPSDir.PAllDest (disk, err, Atype=Atype, Aname=Aname, Aclass=Aclass,
+                      Aseq=Aseq)
+    #else:
+    #    print "Not confirmed"
+    OErr.printErrMsg(err, "Error with destroying AIPS enreies")
+    # end AllDest
+
+def printMess (message, logfile=''):
+    """ Print message, optionally in logfile
+
+        
+        message = message to print
+        logfile = logfile for message
+    """
+    print message
+    if len(logfile)>0:
+        f = file(logfile,'a')
+        f.writelines(message+"\n")
+        f.close()
+    # end printMess
+
 def VLAClearCal(uv, err, doGain=True, doBP=False, doFlag=False):
     """ Clear previous calibration
 
@@ -120,7 +173,7 @@ def VLAClearCal(uv, err, doGain=True, doBP=False, doFlag=False):
     OErr.printErrMsg(err, "VLAClearCal: Error reseting calibration")
     # end VLAClearCal
 
-def VLAUVLoad(filename, inDisk, Aname, Aclass, Adisk, Aseq, err):
+def VLAUVLoad(filename, inDisk, Aname, Aclass, Adisk, Aseq, err, logfile=''):
     """ Read FITS uvtab file into AIPS
 
     Read a UVTAB FITS UV data file and write an AIPS data set
@@ -131,6 +184,7 @@ def VLAUVLoad(filename, inDisk, Aname, Aclass, Adisk, Aseq, err):
     Aseq       = AIPS sequence number of file, 0=> create new
     Adisk      = FITS directory number
     err        = Python Obit Error/message stack
+    logfile    = logfile for messages
     returns AIPS UV data object
     """
     ################################################################
@@ -152,7 +206,8 @@ def VLAUVLoad(filename, inDisk, Aname, Aclass, Adisk, Aseq, err):
         if AIPSDir.PTestCNO(Adisk,user,Aname,Aclass,"MA",Aseq,err)>0:
             Aseq = Aseq+1
         OErr.PClear(err)     # Clear any message/error
-    print "Creating AIPS UV file",Aname,".",Aclass,".",Aseq,"on disk",Adisk
+    mess = "Creating AIPS UV file "+Aname+"."+Aclass+"."+str(Aseq)+" on disk "+str(Adisk)
+    printMess(mess, logfile)
     outUV = UV.newPAUV("AIPS UV DATA", Aname, Aclass, Adisk, Aseq, False, err)
     if err.isErr:
         OErr.printErrMsg(err, "Error creating AIPS data")
@@ -275,10 +330,67 @@ def VLAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
     Image.PCopyTables (inImage, outImage, exclude, include, err)
     # end VLAImFITS
 
+def VLAUVFITS(inUV, filename, outDisk, err, compress=False, \
+              exclude=["AIPS HI", "AIPS AN", "AIPS FQ", "AIPS SL", "AIPS PL"], \
+                  include=[], headHi=False):
+    """ Write UV data as FITS file
+    
+    Write a UV data set as a FITAB format file
+    History written to header
+    inUV       = UV data to copy
+    filename   = name of FITS file
+    inDisk     = FITS directory number
+    err        = Python Obit Error/message stack
+    exclude    = List of table types NOT to copy
+                 NB: "AIPS HI" isn't really a table and gets copied anyway
+    include    = List of table types to copy (FQ, AN always done )
+                 Exclude has presidence over include
+    headHi     = if True move history to header, else leave in History table
+    returns FITS UV data object
+    """
+    ################################################################
+    # Checks
+    if not UV.PIsA(inUV):
+        raise TypeError,"inUV MUST be a Python Obit UV"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    # Set output
+    outUV = UV.newPFUV("FITS UV DATA", filename, outDisk, False, err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error creating FITS data")
+    #Compressed?
+    if compress:
+        inInfo = UV.PGetList(outUV)    # 
+        dim = [1,1,1,1,1]
+        InfoList.PAlwaysPutBoolean (inInfo, "Compress", dim, [True])        
+    # Copy
+    UV.PCopy (inUV, outUV, err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error copying UV data to FITS")
+    # History
+    inHistory  = History.History("inhistory",  outUV.List, err)
+    outHistory = History.History("outhistory", outUV.List, err)
+    # Add history
+    outHistory.Open(History.READWRITE, err)
+    outHistory.TimeStamp(" Start Obit uvtab",err)
+    outHistory.WriteRec(-1,"uvtab   / FITS file "+filename+" disk "+str(outDisk),err)
+    outHistory.Close(err)
+    # History in header?
+    if headHi:
+        History.PCopy2Header (inHistory, outHistory, err)
+        OErr.printErrMsg(err, "Error with history")
+        # zap table
+        outHistory.Zap(err)
+    # Copy Tables
+    UV.PCopyTables (inUV, outUV, exclude, include, err)
+    return outUV  # return new object
+    # end uvtab
+
 def VLAMedianFlag(uv, target, err, \
                   flagTab=1, flagSig=10.0, alpha=0.5, timeWind=2.0,
                   doCalib=0, gainUse=0, doBand=0, BPVer=0, flagVer=-1,
-                  nThreads=1, noScrat=[]):
+                  nThreads=1, noScrat=[], logfile = ""):
     """ Does Median window flagging
 
     Flag data based on deviations from a running median
@@ -297,6 +409,7 @@ def VLAMedianFlag(uv, target, err, \
     flagVer  = Input Flagging table version
     nThreads = Number of threads to use
     noScrat  = list of disks to avoid for scratch files
+    logfile  = Log file for task
     """
     ################################################################
     medn=ObitTask.ObitTask("MednFlag")
@@ -315,6 +428,7 @@ def VLAMedianFlag(uv, target, err, \
     medn.BPVer    = BPVer
     medn.flagVer  = flagVer
     medn.nThreads = nThreads
+    medn.logFile  = logfile
     medn.noScrat  = noScrat
     medn.g
     # end VLAMedianFlag
@@ -322,7 +436,7 @@ def VLAMedianFlag(uv, target, err, \
 def VLAQuack(uv, err, \
              Stokes = " ", BIF=1, EIF=0, Sources=["  "], FreqID=0, \
              subA=0, timeRange=[0.,0.], Antennas=[0], flagVer=1, \
-             begDrop=0.0, endDrop=0.0, Reason="Quack"):
+             begDrop=0.0, endDrop=0.0, Reason="Quack", logfile = ""):
     """ Flags beginning and end of each scan
 
     Trim start and end of each selected scan,
@@ -342,6 +456,7 @@ def VLAQuack(uv, err, \
     begDrop  = Time (min) to drop from beginning
     endDrop  = Time (min) to drop from end
     Reason   = Reason (max 24 char.)
+    logfile  = Log file for task
     """
     ################################################################
     # Anything to do?
@@ -363,6 +478,7 @@ def VLAQuack(uv, err, \
     quack.begDrop   = begDrop
     quack.endDrop   = endDrop
     quack.Reason    = Reason
+    quack.logFile   = logfile
     quack.g
     # end VLAQuack
     
@@ -371,7 +487,7 @@ def VLAAutoFlag(uv, target, err, \
                 flagTab=1, VClip=[0.0,0.0], IClip=[0.0,0.0], RMSClip=[0.0,0.0], \
                 RMSAvg=0.0, maxBad=0.25 ,timeAvg=1.0, \
                 doFD=False, FDmaxAmp=0.0, FDmaxV=0.0, FDwidMW=5, FDmaxRMS=[0.0,0.0], \
-                FDmaxRes=6.0, FDmaxResBL=6.0,  FDbaseSel=[0, 0, 0, 0]):
+                FDmaxRes=6.0, FDmaxResBL=6.0,  FDbaseSel=[0, 0, 0, 0], logfile = ""):
     """ Does Automated flagging
 
     Flag data based on any of a number of criteria
@@ -401,7 +517,8 @@ def VLAAutoFlag(uv, target, err, \
     FDmaxRMS   = Channel RMS limits
     FDmaxRes   = Max. residual flux in sigma
     FDmaxResBL = Max. baseline residual
-    FDbaseSel  =  Channels for baseline fit (start, end, iincrement,IF)
+    FDbaseSel  =  Channels for baseline fit (start, end, increment, IF)
+    logfile    = Log file for task
     """
     ################################################################
     af=ObitTask.ObitTask("AutoFlag")
@@ -430,6 +547,7 @@ def VLAAutoFlag(uv, target, err, \
     af.FDmaxRes   = FDmaxRes 
     af.FDmaxResBL = FDmaxResBL
     af.FDbaseSel  = FDbaseSel
+    af.logFile    = logfile
     af.g
     # end VLAAutoFlag
 
@@ -438,7 +556,7 @@ def VLACal(uv, target, ACal, err, \
            doCalib=-1, gainUse=0, doBand=0, BPVer=0, flagVer=-1, 
            calModel=None, calDisk=0, \
            solnVer=1, solInt=10.0, nThreads=1, refAnt=0, ampScalar=False,
-           noScrat=[]):
+           noScrat=[], logfile = ""):
     """ Basic Amplitude and phase cal for VLA data
 
     Amplitude calibration can be based either on a point flux
@@ -465,11 +583,13 @@ def VLACal(uv, target, ACal, err, \
     refAnt   = Reference antenna
     ampScalar= If true, scalar average data in calibration
     noScrat  = list of disks to avoid for scratch files
-    """
+    logfile  = Log file for tasks
+     """
     ################################################################
 
     # Run SetJy
     setjy = ObitTask.ObitTask("SetJy")
+    setjy.logFile  = logfile
     setname(uv,setjy)
     setjy.Sources=[ACal]
     if FQid:
@@ -493,6 +613,7 @@ def VLACal(uv, target, ACal, err, \
             setjy.g
     # Calib on Amp cal if not in PCal
     calib = ObitTask.ObitTask("Calib")
+    calib.logFile  = logfile
     setname(uv,calib)
     calib.Sources  = [ACal]
     calib.flagVer  = 1
@@ -524,6 +645,7 @@ def VLACal(uv, target, ACal, err, \
 
     # ClCal CL1 + SN1 => Cl2
     clcal=ObitTask.ObitTask("CLCal")
+    clcal.logFile  = logfile
     setname(uv,clcal)
     clcal.solnVer = uv.GetHighVer("AIPS SN")
     clcal.calSour = [ACal]
@@ -551,6 +673,7 @@ def VLACal(uv, target, ACal, err, \
         # GetJy to set flux density scale if ACal not in PCal
         if not ACal in PCal:
             getjy = ObitTask.ObitTask("GetJy")
+            getjy.logFile  = logfile
             setname(uv,getjy)
             getjy.calSour=[ACal]
             if type(PCal)==list:
@@ -571,7 +694,8 @@ def VLACal(uv, target, ACal, err, \
         clcal.Sources=target
     else:
         clcal.Sources=[target]
-    print "Apply calibration for",target
+    mess = "Apply calibration for "+str(target)
+    printMess(mess, logfile)
     #clcal.debug=True
     clcal.g
     
@@ -589,7 +713,7 @@ def VLABPCal(uv, BPCal, err, newBPVer=1, timerange=[0.,0.], \
              solInt1=0.0, solInt2=0.0, refAnt=0, \
              ampScalar=False, specIndex=0.0, \
              doAuto=False, doPol=False, avgPol=False, avgIF=False, \
-             nThreads=1, noScrat=[]):
+             nThreads=1, noScrat=[], logfile = ""):
     """ Bandbass calibration
 
     Do bandbass calibration, write BP table
@@ -644,9 +768,11 @@ def VLABPCal(uv, BPCal, err, newBPVer=1, timerange=[0.,0.], \
     avgIF    = Avg. IFs. in solutions?
     nThreads = Number of threads to use
     noScrat  = list of disks to avoid for scratch files
+   logfile   = Log file for task
     """
     ################################################################
     bpass = ObitTask.ObitTask("BPass")
+    bpass.logFile = logfile
     setname(uv,bpass)
     if type(BPCal)==list:
         bpass.Sources = BPCal
@@ -708,16 +834,18 @@ def VLABPCal(uv, BPCal, err, newBPVer=1, timerange=[0.,0.], \
     bpass.g
     # End VLABPCal
 
-def VLASplit(uv, target, err, FQid=1, outClass="      "):
+def VLASplit(uv, target, err, FQid=1, outClass="      ", logfile = ""):
     """ Write calibrated data
 
     uv       = UV data object to clear
     target   = Target source name source name or list of names
     err      = Obit error/message stack
     FQid     = Frequency Id to process
+    logfile  = Log file for task
     """
     ################################################################
     split=ObitTask.ObitTask("Split")
+    split.logFile = logfile
     setname(uv,split)
     if type(target)==list:
         split.Sources=target
@@ -732,7 +860,7 @@ def VLASplit(uv, target, err, FQid=1, outClass="      "):
     split.g
     # end VLAsplit
 
-def VLASetImager (uv, target, outIclass="", nThreads=1, noScrat=[]):
+def VLASetImager (uv, target, outIclass="", nThreads=1, noScrat=[], logfile = ""):
     """ Setup to run Imager
 
     return Imager task interface object
@@ -742,9 +870,11 @@ def VLASetImager (uv, target, outIclass="", nThreads=1, noScrat=[]):
     FQid     = Frequency Id to process
     nThreads = Number of threads to use
     noScrat  = list of disks to avoid for scratch files
+    logfile  = Log file for task
     """
     ################################################################
     img = ObitTask.ObitTask("Imager")
+    img.logFile = logfile
     setname(uv,img)
     img.outDisk  = img.inDisk
     img.out2Disk = img.inDisk
@@ -782,7 +912,7 @@ def VLAPolCal(uv, InsCals, RLCal, RLPhase, err, RM=0.0, \
               solInt=0.0, refAnt=0, \
               pmodel=[0.0,0.0,0.0,0.0,0.0,0.0,0.0], \
               FOV=0.05, niter = 100, \
-              nThreads=1, noScrat=[]):
+              nThreads=1, noScrat=[], logfile = ""):
     """ Polarization calibration, both instrumental and orientation
 
     Do Instrumental and R-L calibration
@@ -815,11 +945,13 @@ def VLAPolCal(uv, InsCals, RLCal, RLPhase, err, RM=0.0, \
     niter    = Number  of iterations of CLEAN in R-L cal
     nThreads = Number of threads to use in imaging
     noScrat  = list of disks to avoid for scratch files
+    logfile  = Log file for task
     """
     ################################################################
     # Instrumental calibrtation
     if InsCals!=None:
         pcal = AIPSTask.AIPSTask("pcal")
+        pcal.logFile = logfile
         setname(uv,pcal)
         if type(InsCals)==list:
             pcal.calsour[1:] = InsCals
@@ -843,6 +975,7 @@ def VLAPolCal(uv, InsCals, RLCal, RLPhase, err, RM=0.0, \
     # R-L phase cal
     if RLCal!=None:
         img = ObitTask.ObitTask("Imager")
+        img.logFile    = logfile
         setname(uv,img)
         img.doCalib    = doCalib
         img.gainUse    = gainUse
@@ -973,19 +1106,21 @@ def VLAPolCal(uv, InsCals, RLCal, RLPhase, err, RM=0.0, \
         # Give results, compute R-L correction
         RLCor = []
         import math
-        print " IF     IFlux    IRMS    QFlux   QRMS    UFlux  URMS  R-L Corr"
+        mess = " IF     IFlux    IRMS    QFlux   QRMS    UFlux  URMS  R-L Corr"
+        printMess(mess, logfile)
         for i in range (0,len(IFlux)):
             # REALLY NEED RM Correction!!!!!
             cor = RLPhase - 57.296 * math.atan2(UFlux[i],QFlux[i])
             RLCor.append(cor)
-            print "%3d  %8.3f %8.3f %7.3f %7.3f %7.3f %7.3f %7.3f "%\
-                  (i+1, IFlux[i], IRMS[i], QFlux[i], QRMS[i], UFlux[i], URMS[i], cor)
-        
+            mess = "%3d  %8.3f %8.3f %7.3f %7.3f %7.3f %7.3f %7.3f "%\
+                (i+1, IFlux[i], IRMS[i], QFlux[i], QRMS[i], UFlux[i], URMS[i], cor)
+            printMess(mess, logfile)
         # Copy highest CL table
         hiCL = uv.GetHighVer("AIPS CL")
 
         # Apply R-L phase corrections
         clcor = AIPSTask.AIPSTask("clcor")
+        clcor.logFile  = logfile
         setname(uv,clcor)
         clcor.opcode   = "POLR"
         clcor.gainver  = hiCL

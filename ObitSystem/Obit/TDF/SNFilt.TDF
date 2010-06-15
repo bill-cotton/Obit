@@ -3,7 +3,7 @@
 ;! Filter SN table phases to remove peculiar phases
 ;# Task Obit Table 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007
+;;  Copyright (C) 2007,2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 ;;                         520 Edgemont Road
 ;;                         Charlottesville, VA 22903-2475 USA
 ;-----------------------------------------------------------------------
-;---------------------------------------------------------------
 SNFilt    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 SNFilt    Filter SN table phases to remove peculiar phases
 **PARAM** str 4
@@ -67,6 +66,8 @@ width                              Width (min) of grad. smoothing
 alpha                              Smoothing parameter.
 **PARAM** int 1
 prtLv             0                Print level
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
 ----------------------------------------------------------------
 SNFilt
 Task:  This task fits a model of a time invariant instrumental 
@@ -137,4 +138,9 @@ Adverbs:
              averaged). 
              This is only useful if doRes=True and doGrad=False.
   prtLv......Diagnostic print level, 0=>none, 1=Some, 2=lots
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files where
+             a bug in the ObitTalk message handling may cause
+             tasks to hang.  Path is absolute or relative to where
+             the task executes.
 ----------------------------------------------------------------

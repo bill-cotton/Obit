@@ -3,7 +3,7 @@
 ;! determines calibrator flux densities
 ;# Task Calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007
+;;  Copyright (C) 2007,2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -27,7 +27,6 @@
 ;;                         National Radio Astronomy Observatory
 ;;                         520 Edgemont Road
 ;;                         Charlottesville, VA 22903-2475 USA
-;-----------------------------------------------------------------------
 ;---------------------------------------------------------------
 GetJy     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 GetJy     Task to determine source flux densities.
@@ -67,6 +66,8 @@ subA              0.0     1000.0   Subarray, 0=>all
 FreqID                             Freq. ID to select.
 **PARAM** int 1
 solnVer                            SN table to use
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
 ----------------------------------------------------------------
 GetJy
 Note: Adopted fropm AIPS and may not be entirely correct
@@ -147,4 +148,9 @@ Adverbs:
   FreqID.....Frequency identifier to select , <=0=>any
   SolnVer....Selected SN table.  0=> Highest
              Note: this is different from AIPS
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files where
+             a bug in the ObitTalk message handling may cause
+             tasks to hang.  Path is absolute or relative to where
+             the task executes.
 ----------------------------------------------------------------

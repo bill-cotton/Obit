@@ -27,7 +27,7 @@
 #-----------------------------------------------------------------------
 
 # Python shadow class to ObitErr class
-import Obit
+import Obit, InfoList
 
 class OErrPtr :
     def __init__(self,this):
@@ -95,6 +95,24 @@ def PIsErr(err):
         raise TypeError,"err MUST be a Python ObitErr"
     return Obit.isError(err.me) != 0
     # end PIsErr
+
+def PInit(err, prtLv=0, taskLog="    "):
+    """ Initializes logging
+
+    err      = Python Obit Error/message stack to init
+    prtLv    = Message print level, 0=little, 5=LOTS
+    taskLog  = Name of task log file, if given messages go here
+               and NOT to the terminal (visible) output.
+    """
+    ################################################################
+    # Checks
+    if not OErrIsA(err):
+        raise TypeError,"err MUST be a Python ObitErr"
+    info = InfoList.InfoList()
+    info.set("prtLv",prtLv)
+    info.set("taskLog",taskLog)
+    Obit.ErrorInit(err.me, info.me)
+    # end PInit
 
 def PClear(err):
     """ Clear Obit error stack

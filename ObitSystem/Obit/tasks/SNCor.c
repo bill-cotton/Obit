@@ -2,7 +2,7 @@
 /* Obit Radio interferometry calibration software                     */
 /* applies user-selected corrections to the calibration SN table      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -129,7 +129,11 @@ int main ( int argc, char **argv )
   /* Startup - parse command line */
   err = newObitErr();
   myInput = SNCorIn (argc, argv, err);
-  if (err->error) ierr = 1;
+  if (err->error) {ierr = 1;  ObitErrLog(err);  goto exit;}
+
+  /* Initialize logging */
+  ObitErrInit (err, (gpointer)myInput);
+
   ObitErrLog(err); /* show any error messages on err */
   if (ierr!=0) return 1;
 

@@ -47,6 +47,8 @@ outClass                            Output UV file name (class)
 outSeq           -1.0     9999.0    Output UV file name (seq. #)
 **PARAM** int 1
 outDisk                             Output UV file disk unit #.
+**PARAM** str 128
+taskLog                             Logfile to write task messages to
 ----------------------------------------------------------------
 IDIIn Convert IDI format data to UV
 Type:  Task
@@ -76,4 +78,9 @@ Adverbs:
   outClass...Output UV file name (class).  Standard defaults.
   outSeq.....Output UV file name (seq. #). 0 => highest unique.
   outDisk....Disk drive # of output UV file.  
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files where
+             a bug in the ObitTalk message handling may cause
+             tasks to hang.  Path is absolute or relative to where
+             the task executes.
 ----------------------------------------------------------------

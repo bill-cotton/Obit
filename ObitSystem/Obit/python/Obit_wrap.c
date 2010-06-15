@@ -4218,6 +4218,10 @@ extern void SetError(ObitErr *in) {
    in->error = 1;
 }
 
+extern void ErrorInit(ObitErr *in, ObitInfoList *info) {
+   ObitErrInit(in, (gpointer)info);
+}
+
 extern void LogError (ObitErr *in, int eCode, char *message) {
    ObitErrCode code;
  /* Should be coordinated with OErr class definition.*/
@@ -4305,6 +4309,7 @@ extern void Bomb(void) {
 extern ObitErr *ObitErrCreate();
 extern int isError(ObitErr *);
 extern void SetError(ObitErr *);
+extern void ErrorInit(ObitErr *,ObitInfoList *);
 extern void LogError(ObitErr *,int ,char *);
 extern char *OErrMsg(ObitErr *);
 extern void Bomb();
@@ -26394,6 +26399,36 @@ static PyObject *_wrap_SetError(PyObject *self, PyObject *args) {
         }
     }
     SetError(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_ErrorInit(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitErr * _arg0;
+    ObitInfoList * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:ErrorInit",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ErrorInit. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitInfoList_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ErrorInit. Expected _ObitInfoList_p.");
+        return NULL;
+        }
+    }
+    ErrorInit(_arg0,_arg1);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
     return _resultobj;
@@ -52799,6 +52834,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "Bomb", _wrap_Bomb, METH_VARARGS },
 	 { "OErrMsg", _wrap_OErrMsg, METH_VARARGS },
 	 { "LogError", _wrap_LogError, METH_VARARGS },
+	 { "ErrorInit", _wrap_ErrorInit, METH_VARARGS },
 	 { "SetError", _wrap_SetError, METH_VARARGS },
 	 { "isError", _wrap_isError, METH_VARARGS },
 	 { "ObitErrCreate", _wrap_ObitErrCreate, METH_VARARGS },

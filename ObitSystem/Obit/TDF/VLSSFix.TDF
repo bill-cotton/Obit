@@ -3,7 +3,7 @@
 ;! Determine and correct position errors in VLSS images
 ;# Task 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006
+;;  Copyright (C) 2006,2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -72,6 +72,8 @@ MaxQual           2.0                Maximum acceptable calibrator quality
 prtLv             0.0                Print level
 **PARAM** float 50  
 coef     $                         fitted coefficients
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
 ----------------------------------------------------------------
 VLSSFix
 Type: Task
@@ -117,4 +119,9 @@ Adverbs:
   prtLv.......Print level in selfcal, 0=>none, larger numbers 
               give increasing levels of diagnostics.
   coef........[output] fitted coefficients
+  taskLog.....Log file to write messages to INSTEAD of the terminal
+              This is useful in long runs or batch files where
+              a bug in the ObitTalk message handling may cause
+              tasks to hang.  Path is absolute or relative to where
+              the task executes.
 ----------------------------------------------------------------
