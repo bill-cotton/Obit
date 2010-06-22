@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "xmlrpc.h"
-#include "client.h"
+#include "xmlrpc-c/client.h"
 
 #define CRASH_AND_BURN  \
 {fprintf(stderr,"%s: xmlrpc not implemented\n",routine); exit(1); } 
