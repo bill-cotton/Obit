@@ -1,0 +1,1851 @@
+/* $Id: ObitBDFData.c 2 2008-06-10 15:32:27Z bill.cotton $        */
+/*--------------------------------------------------------------------*/
+/*;  Copyright (C) 2010                                               */
+/*;  Associated Universities, Inc. Washington DC, USA.                */
+/*;                                                                   */
+/*;  This program is free software; you can redistribute it and/or    */
+/*;  modify it under the terms of the GNU General Public License as   */
+/*;  published by the Free Software Foundation; either version 2 of   */
+/*;  the License, or (at your option) any later version.              */
+/*;                                                                   */
+/*;  This program is distributed in the hope that it will be useful,  */
+/*;  but WITHOUT ANY WARRANTY; without even the implied warranty of   */
+/*;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the    */
+/*;  GNU General Public License for more details.                     */
+/*;                                                                   */
+/*;  You should have received a copy of the GNU General Public        */
+/*;  License along with this program; if not, write to the Free       */
+/*;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,     */
+/*;  MA 02139, USA.                                                   */
+/*;                                                                   */
+/*;Correspondence about this software should be addressed as follows: */
+/*;         Internet email: bcotton@nrao.edu.                         */
+/*;         Postal address: William Cotton                            */
+/*;                         National Radio Astronomy Observatory      */
+/*;                         520 Edgemont Road                         */
+/*;                         Charlottesville, VA 22903-2475 USA        */
+/*--------------------------------------------------------------------*/
+
+#include "ObitBDFData.h"
+#include "ObitFile.h"
+
+/*----------------Obit: Merx mollis mortibus nuper ------------------*/
+/**
+ * \file ObitBDFData.c
+ * ObitBDFData class function definitions.
+ * This class is derived from the Obit base class.
+ * This class accesses data in the EVLA BDF format
+ */
+
+/** name of the class defined in this file */
+static gchar *myClassName = "ObitBDFData";
+
+/** Function to obtain parent ClassInfo */
+static ObitGetClassFP ObitParentGetClass = ObitGetClass;
+
+/**
+ * ClassInfo structure ObitBDFDataClassInfo.
+ * This structure is used by class objects to access class functions.
+ */
+static ObitBDFDataClassInfo myClassInfo = {FALSE};
+
+/*--------------- File Global Variables  ----------------*/
+
+
+/*---------------Private function prototypes----------------*/
+/** Private: Initialize newly instantiated object. */
+void  ObitBDFDataInit  (gpointer in);
+
+/** Private: Deallocate members. */
+void  ObitBDFDataClear (gpointer in);
+
+/** Private: Set Class function pointers. */
+static void ObitBDFDataClassInfoDefFn (gpointer inClass);
+
+/* BDF XML routines */
+/** Private: Parse integer from XML string  */
+static olong BDFparse_int(gchar *string, olong maxChar, 
+			   gchar *prior, gchar **next);
+/** Private: Parse string from XML string  */
+static gchar* BDFparse_str(gchar *string, olong maxChar, 
+			   gchar *prior, gchar **next);
+/** Private: Parse quotedstring from XML string  */
+static gchar* BDFparse_quote_str(gchar *string, olong maxChar, 
+				 gchar *prior, gchar **next);
+/** Private: Parse time from XML string  */
+static odouble BDFparse_time(gchar *string, olong maxChar, 
+			     gchar *prior, gchar **next);
+
+/** Private: Parse time interval from XML string  */
+static odouble BDFparse_timeint(gchar *string, olong maxChar, 
+				 gchar *prior, gchar **next);
+
+/** Private: Parse string array from XML string  */
+static gchar** BDFparse_strarray(gchar *string, olong maxChar, 
+				  gchar *prior, gchar **next);
+/** Private: Parse axis order array from XML string  */
+static ObitBDFAxisName* BDFparse_axesarray(gchar *string, olong maxChar, 
+				       gchar *prior, gchar **next);
+
+/** Private: Look up axis name enum */
+static ObitBDFAxisName LookupAxisName(gchar *name);
+
+/** Private: Look up data type enum */
+static ObitBDFDataType LookupDataType(gchar *name);
+
+/** Private: Look up endian enum */
+static ObitBDFEndian LookupEndian(gchar *name);
+
+/** Private: delete BDFBasebandInfo */
+static BDFBasebandInfo* KillBDFBasebandInfo(BDFBasebandInfo *info);
+
+/** Private: delete BDFScanInfo */
+static BDFScanInfo* KillBDFScanInfo(BDFScanInfo *info);
+
+/** Private: delete BDFIntegInfo */
+static BDFIntegInfo* KillBDFIntegInfo(BDFIntegInfo *info);
+
+/* Get start of next MIME segment */
+static ObitBDFMIMEType GetNextMIME(ObitBDFData *in, 
+				   gchar *last, gchar **start, 
+				   ObitErr *err);
+
+/* Get start of next MIME segment */
+static ObitBDFMIMEType GetNextMIMEType(ObitBDFData *in, 
+				       gchar *last, gchar **start, 
+				       ObitErr *err);
+/* Copy binary float data */
+static ObitIOCode CopyFloats (ObitBDFData *in, 
+			      gchar *start, ofloat *target, olong n, 
+			      gboolean byteFlip, ofloat scale, 
+			      ObitErr *err);
+
+/*----------------- Union definitions ----------------------*/
+/** Used for byte swapping shorts */
+ union sequiv { 
+   gshort full; 
+   gchar parts[2];
+ }; 
+
+/** Used for byte swapping floats */
+ union fequiv { 
+   ofloat full; 
+   gchar parts[4]; 
+ }; 
+
+/*----------------------Public functions---------------------------*/
+/**
+ * Constructor.
+ * Initializes class if needed on first call.
+ * \param name An optional name for the object.
+ * \return the new object.
+ */
+ObitBDFData* newObitBDFData (gchar* name)
+{
+  ObitBDFData* out;
+
+  /* Class initialization if needed */
+  if (!myClassInfo.initialized) ObitBDFDataClassInit();
+
+  /* allocate/init structure */
+  out = g_malloc0(sizeof(ObitBDFData));
+
+  /* initialize values */
+  if (name!=NULL) out->name = g_strdup(name);
+  else out->name = g_strdup("Noname");
+
+  /* set ClassInfo */
+  out->ClassInfo = (gpointer)&myClassInfo;
+
+  /* initialize other stuff */
+  ObitBDFDataInit((gpointer)out);
+
+ return out;
+} /* end newObitBDFData */
+
+/**
+ * Returns ClassInfo pointer for the class.
+ * \return pointer to the class structure.
+ */
+gconstpointer ObitBDFDataGetClass (void)
+{
+  /* Class initialization if needed */
+  if (!myClassInfo.initialized) ObitBDFDataClassInit();
+
+  return (gconstpointer)&myClassInfo;
+} /* end ObitBDFDataGetClass */
+
+/**
+ * Make a deep copy of an ObitBDFData. NYI
+ * \param in  The object to copy
+ * \param out An existing object pointer for output or NULL if none exists.
+ * \param err Obit error stack object.
+ * \return pointer to the new object.
+ */
+ObitBDFData* ObitBDFDataCopy  (ObitBDFData *in, ObitBDFData *out, ObitErr *err)
+{
+  /*const ObitClassInfo *ParentClass;*/
+  /*gboolean oldExist;*/
+  /*gchar *outName;*/
+
+  /* error checks */
+  if (err->error) return out;
+
+  /* Stubbed */
+  g_error("ObitBDFDataCopy: Stubbed");
+
+  return out;
+} /* end ObitBDFDataCopy */
+
+ /**
+ * Make a copy of a object but do not copy the actual data NYI
+ * This is useful to create an BDFData similar to the input one.
+ * \param in  The object to copy
+ * \param out An existing object pointer for output, must be defined.
+ * \param err Obit error stack object.
+ */
+void ObitBDFDataClone  (ObitBDFData *in, ObitBDFData *out, ObitErr *err)
+{
+  /*const ObitClassInfo *ParentClass;*/
+
+  /* error checks */
+  if (err->error) return;
+
+  /* Stubbed */
+  g_error("ObitBDFDataClone: Stubbed");
+
+} /* end ObitBDFDataClone */
+
+/**
+ * Creates an ObitBDFData 
+ * Parses the ASMD XML tables and stores
+ * \param name      An optional name for the object.
+ * \param desc      UV descriptor for data extracted
+ * \param  SDMData  ASDM structure    
+ * \param err       Obit error stack object.
+ * \return the new object.
+ */
+ObitBDFData* ObitBDFDataCreate (gchar* name,  ObitUVDesc *desc, 
+				ObitSDMData *SDMData,
+				ObitErr *err)
+{
+  ObitBDFData* out;
+  /*gchar *routine="ObitBDFDataCreate";*/
+
+  /* Create basic structure */
+  out = newObitBDFData (name);
+
+  /* Save descriptor */
+  out->desc = ObitUVDescRef(desc);
+
+  /* Save the ASDM */
+  out->SDMData = ObitSDMDataRef(SDMData);
+
+  /* Init buffer */
+  out->buffer = g_malloc0(BDFBUFFERSIZE*BDFBUFFERFRAMES);
+  out->nBytesInBuffer = 0;
+  out->current = out->buffer;
+
+  return out;
+} /* end ObitBDFDataCreate */
+
+ /**
+ * Initialize File
+ * Initializes buffer, parses scan XML header
+ * \param in       The object to fill
+ * \param DataFile Name of Mime file with data
+ * \param err      Obit error stack object.
+ * \param err Obit error stack object.
+ */
+void ObitBDFDataInitFile  (ObitBDFData *in, gchar *DataFile, ObitErr *err)
+{
+  ObitIOCode retCode;
+  gchar *routine = "ObitBDFDataInitFile";
+
+  /* error checks */
+  if (err->error) return;
+
+   /* set Values - file name */
+  in->DataFile = strdup(DataFile);
+
+  /* Get size */
+  in->fileSize = ObitFileSize(DataFile, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Create file object */
+  if (in->file==NULL) in->file = newObitFile ("BDF File");
+
+  /* Open */
+  ObitFileOpen (in->file, in->DataFile, OBIT_IO_ReadOnly, OBIT_IO_Binary, 0, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Fill Buffer */
+  retCode = ObitBDFDataFillBuffer (in, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+} /* end ObitBDFDataInitFile */
+
+ /**
+ * Fill Buffer
+ * If the buffer is filled to capacity, the bottom frame is copied to
+ * to the top of the buffer and the remainder of the buffer filled.
+ * Updates in->nBytesInBuffer, in->current.
+ * \param in  The object to fill
+ * \param err Obit error stack object.
+ * \return return code, OBIT_IO_OK => OK, OBIT_IO_EOF = EOF.
+ */
+ObitIOCode ObitBDFDataFillBuffer (ObitBDFData *in, ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_OK;
+  olong i, ncopy, size; 
+  gchar *top, *copy;
+  gchar *routine = "ObitBDFDataFillBuffer";
+
+  /* error checks */
+  if (err->error) return retCode;
+
+  if ((in->fileSize-in->file->filePos) <= 0) return OBIT_IO_EOF;
+
+   /* Is it already full? */
+  if (in->nBytesInBuffer>=BDFBUFFERSIZE*BDFBUFFERFRAMES) { /* Yes - shift */
+    top  = in->buffer;
+    copy = in->buffer + (BDFBUFFERFRAMES-1) * BDFBUFFERSIZE;
+    memmove (top, copy, (size_t)BDFBUFFERSIZE);
+    top = &in->buffer[BDFBUFFERSIZE];
+    ncopy = (BDFBUFFERFRAMES-1);
+    in->nBytesInBuffer = BDFBUFFERSIZE;
+    in->current -= (BDFBUFFERFRAMES-1) * BDFBUFFERSIZE; /* Current position */
+  } else {  /* Nope - fill 'er up */
+    top  = in->buffer;
+    ncopy = BDFBUFFERFRAMES;
+    in->nBytesInBuffer = 0;
+    in->current = in->buffer; /* Current position */
+  }
+
+  /* Do reads */
+  for (i=0; i<ncopy; i++) {
+    /* No more than what's left */
+    size = MIN ((olong)BDFBUFFERSIZE, (in->fileSize-in->file->filePos));
+    if (size<=0) break;
+    retCode = ObitFileRead (in->file, -1, size, top, err);
+    /* DEBUG
+    fprintf (stderr, "Read size %d pos %lld filesize %lld\n", size, in->file->filePos, in->fileSize); */
+    if (err->error) {
+      Obit_traceback_val (err, routine, in->name, retCode);
+    }
+    in->nBytesInBuffer += size;
+    if (in->file->filePos>=in->fileSize) break;
+    top += BDFBUFFERSIZE;
+  }
+  return retCode;
+} /* end ObitBDFDataFillBuffer */
+
+ /**
+ * Parse scan info from buffer
+ * Expects all of scan XML in buffer
+ * \param in    The object to update
+ * \param iMain The ASDM Main table row
+ * \param err   Obit error stack object.
+ */
+void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, ObitErr *err)
+{
+  gchar *startInfo, *endInfo, *startBB, *endBB, *prior, *next, *xnext, *tstr;
+  olong  configDescriptionId, fieldId, sourceId, inext;
+  olong maxStr, maxStr2, i, count, *antIds, iConfig, iAnt, jAnt, jField, iSW, jSW, jSource;
+  olong *SWoff=NULL;
+  gchar *aname;
+  gchar *routine = "ObitBDFDataInitScan";
+
+  /* error checks */
+  if (err->error) return;
+
+  /* Create info structure if not there */
+  if (in->ScanInfo==NULL) in->ScanInfo = g_malloc0(sizeof(BDFScanInfo));
+
+  /* Init */
+  in->ScanInfo->iMain      = iMain;
+  in->ScanInfo->numAntenna  = -1;
+  in->ScanInfo->numBaseband = 0;
+  in->haveFlag = FALSE;
+  if (in->ScanInfo->FlagAxes) 
+    {g_free(in->ScanInfo->FlagAxes); in->ScanInfo->FlagAxes = NULL;}
+  in->haveActualTimes = FALSE;
+  if (in->ScanInfo->actualTimesAxes) 
+    {g_free(in->ScanInfo->actualTimesAxes); in->ScanInfo->actualTimesAxes = NULL;}
+  in->haveActualDurations = FALSE;
+  if (in->ScanInfo->actualDurationsAxes) 
+    {g_free(in->ScanInfo->actualDurationsAxes); in->ScanInfo->actualDurationsAxes = NULL;}
+  in->haveCrossData = FALSE;
+  if (in->ScanInfo->crossDataAxes) 
+    {g_free(in->ScanInfo->crossDataAxes); in->ScanInfo->crossDataAxes = NULL;}
+  in->haveAutoData = FALSE;
+  if (in->ScanInfo->autoDataAxes) 
+    {g_free(in->ScanInfo->autoDataAxes); in->ScanInfo->autoDataAxes = NULL;}
+  in->haveWeight = FALSE;
+  if (in->ScanInfo->weightAxes) 
+    {g_free(in->ScanInfo->weightAxes); in->ScanInfo->weightAxes = NULL;}
+
+  /* Parse scan header - first find limits */
+  maxStr    = in->nBytesInBuffer - (in->current-in->buffer);
+  startInfo = g_strstr_len (in->current, maxStr, "<sdmDataHeader ");
+  endInfo   = g_strstr_len (in->current, maxStr, "</sdmDataHeader>");
+  maxStr    = (olong)(endInfo-startInfo);
+  
+  /* Start Time */
+  prior = "<startTime>";
+  in->ScanInfo->startTime = BDFparse_time(startInfo, maxStr, prior, &next);
+  
+  /* Number of antennas */
+  prior = "<numAntenna>";
+  in->ScanInfo->numAntenna  = BDFparse_int(startInfo, maxStr, prior, &next);
+  
+  /* Number of times */
+  prior = "<dimensionality axes=\"TIM\">";
+  in->ScanInfo->numTime  = BDFparse_int(startInfo, maxStr, prior, &next);
+  
+  /* correlation Mode */
+  prior = "<correlationMode>";
+  tstr = BDFparse_str (startInfo, maxStr, prior, &next);
+  if (tstr) {
+    if (!strcmp(tstr, "CROSS_ONLY"))          
+      in->ScanInfo->correlationMode = BDFCorrMode_CROSS_ONLY;
+    else if (!strcmp(tstr, "AUTO_ONLY"))      
+      in->ScanInfo->correlationMode = BDFCorrMode_AUTO_ONLY;
+    else if (!strcmp(tstr, "CROSS_AND_AUTO")) 
+      in->ScanInfo->correlationMode = BDFCorrMode_CROSS_AND_AUTO;
+    g_free(tstr);
+  }
+  
+  /* spectral Resolution */
+  prior = "<spectralResolution>";
+  tstr = BDFparse_str (startInfo, maxStr, prior, &next);
+  if (tstr) {
+    if (!strcmp(tstr, "CHANNEL_AVERAGE"))      
+      in->ScanInfo->spectralResolution = BDFSpecRes_CHANNEL_AVERAGE;
+    else if (!strcmp(tstr, "BASEBAND_WIDE"))   
+      in->ScanInfo->spectralResolution = BDFSpecRes_BASEBAND_WIDE;
+    else if (!strcmp(tstr, "FULL_RESOLUTION")) 
+      in->ScanInfo->spectralResolution = BDFSpecRes_FULL_RESOLUTION;
+    g_free(tstr);
+  }
+  
+  /* Endian */
+  prior = "byteOrder=";
+  tstr = BDFparse_quote_str (startInfo, maxStr, prior, &next);
+  if (tstr) {
+    in->ScanInfo->endian = LookupEndian(tstr);
+    g_free(tstr);
+  }
+  
+  /* first find limits of dataStruct */
+  maxStr    = in->nBytesInBuffer - (in->current-in->buffer);
+  startInfo = g_strstr_len (in->current, maxStr, "<dataStruct ");
+  maxStr    = in->nBytesInBuffer - (olong)(startInfo-in->buffer);
+  endInfo   = g_strstr_len (startInfo, maxStr, "</dataStruct>");
+  maxStr    = (olong)(endInfo-startInfo);
+
+  /* flags */
+   prior = "<flags size=";
+  tstr = BDFparse_quote_str (startInfo, maxStr, prior, &next);
+  if (tstr) {
+    in->ScanInfo->FlagSize = (olong)strtol(tstr, &xnext, 10);
+    /* Axes types */
+    prior = "axes=";
+    next++;
+    in->ScanInfo->FlagAxes = BDFparse_axesarray (next, maxStr, prior, &next);
+    g_free(tstr);
+  }
+  
+  /* actualTimes  */
+  prior = "<actualTimes size=";
+  tstr = BDFparse_quote_str (startInfo, maxStr, prior, &next);
+  if (tstr) {
+    in->ScanInfo->actualTimesSize = (olong)strtol(tstr, &xnext, 10);
+    /* Axes types */
+    prior = "axes=";
+    next++;
+    in->ScanInfo->actualTimesAxes = BDFparse_axesarray (next, maxStr, prior, &next);
+    g_free(tstr);
+  }
+  
+  /* actualDurations  */
+  prior = "<actualDurations size=";
+  tstr = BDFparse_quote_str (startInfo, maxStr, prior, &next);
+  if (tstr) {
+    in->ScanInfo->actualDurationsSize = (olong)strtol(tstr, &xnext, 10);
+    /* Axes types */
+    prior = "axes=";
+    in->ScanInfo->actualDurationsAxes = BDFparse_axesarray (next, maxStr, prior, &next);
+    g_free(tstr);
+  }
+  
+  /*  crossData */
+  prior = "<crossData size=";
+  tstr = BDFparse_quote_str (startInfo, maxStr, prior, &next);
+  if (tstr) {
+    in->ScanInfo->crossDataSize = (olong)strtol(tstr, &xnext, 10);
+    /* Axes types */
+    prior = "axes=";
+    next++;
+    in->ScanInfo->crossDataAxes = BDFparse_axesarray (next, maxStr, prior, &next);
+    g_free(tstr);
+  }
+  
+  /* autoData  */
+  prior = "<autoData size=";
+  tstr = BDFparse_quote_str (startInfo, maxStr, prior, &next);
+  if (tstr) {
+    in->ScanInfo->autoDataSize = (olong)strtol(tstr, &xnext, 10);
+    /* Axes types */
+    prior = "axes=";
+    next++;
+    in->ScanInfo->autoDataAxes = BDFparse_axesarray (next, maxStr, prior, &next);
+    g_free(tstr);
+  }
+  
+  /* weight  */
+  prior = "<weight size=";
+  tstr = BDFparse_quote_str (startInfo, maxStr, prior, &next);
+  if (tstr) {
+    in->ScanInfo->weightSize = (olong)strtol(tstr, &xnext, 10);
+    /* Axes types */
+    prior = "axes=";
+    next++;
+    in->ScanInfo->weightAxes = BDFparse_axesarray (next, maxStr, prior, &next);
+    g_free(tstr);
+  }
+  
+  /* Parse basebands */
+  i = 0;
+  in->ScanInfo->numBaseband = 0;
+  next = startInfo;
+  while (i<MAXBBINFO) {
+    /* first find limits of next baseband info */
+    maxStr2 = (olong)(endInfo-next);
+    startBB = g_strstr_len (next, maxStr, "<baseband ");
+    /* More? */
+    if (startBB==NULL) break;
+    maxStr2 = (olong)(endInfo-next);
+    endBB   = g_strstr_len (startBB, maxStr, "</baseband>");
+    maxStr2 = (olong)(endBB-startBB);
+ 
+    in->ScanInfo->BBinfo[i] = KillBDFBasebandInfo(in->ScanInfo->BBinfo[i]);/* delete old */
+    in->ScanInfo->BBinfo[i] = g_malloc0(sizeof(BDFBasebandInfo));          /* Allocate new */
+
+    /* Parse */
+    /* basebandName */
+    prior = "<baseband name=";
+    in->ScanInfo->BBinfo[i]->basebandName = BDFparse_quote_str(startBB, maxStr2, prior, &next);
+  
+    /* spectral window ID   */
+    prior = "<spectralWindow sw=";
+    tstr = BDFparse_quote_str (startBB, maxStr2, prior, &next);
+    in->ScanInfo->BBinfo[i]->spectralWindow = (olong)strtol(tstr, &next, 10);
+    g_free (tstr);
+  
+    /* List of single dish (autocorrelation) products  */
+    prior = "sdPolProducts=\"";
+    in->ScanInfo->BBinfo[i]->sdPolProducts = BDFparse_strarray(startBB, maxStr2, prior, &next);
+    count = 0;
+    if (in->ScanInfo->BBinfo[i]->sdPolProducts) {
+      while (in->ScanInfo->BBinfo[i]->sdPolProducts[count]) {count++;}
+    }
+    in->ScanInfo->BBinfo[i]->numSdPolProducts = count;
+  
+    /* List of crosscorrelation products */
+    prior = "crossPolProducts=\"";
+    in->ScanInfo->BBinfo[i]->crossPolProducts = BDFparse_strarray(startBB, maxStr2, prior, &next);
+    /* Count 'em */
+    count = 0;
+    if (in->ScanInfo->BBinfo[i]->crossPolProducts) {
+      while (in->ScanInfo->BBinfo[i]->crossPolProducts[count]) {count++;}
+    }
+    in->ScanInfo->BBinfo[i]->numCrossPolProducts = count;
+  
+    /* Number of spectral points  */
+    prior = "numSpectralPoint=";
+    tstr = BDFparse_quote_str (startBB, maxStr2, prior, &next);
+    in->ScanInfo->BBinfo[i]->numSpectralPoint = (olong)strtol(tstr, &next, 10);
+    g_free (tstr);
+  
+    /* Number of data (e.g. pulsar) bins  */
+    prior = "numBin=";
+    tstr = BDFparse_quote_str (startBB, maxStr2, prior, &next);
+    in->ScanInfo->BBinfo[i]->numBin = (olong)strtol(tstr, &next, 10);
+    g_free (tstr);
+  
+    /* Number of data (e.g. pulsar) bins  */
+    prior = "scaleFactor=";
+    tstr = BDFparse_quote_str (startBB, maxStr2, prior, &next);
+    in->ScanInfo->BBinfo[i]->scaleFactor = (odouble)strtod(tstr, &next);
+    g_free (tstr);
+  
+    /* Sideband */
+    prior = "sideband=";
+    in->ScanInfo->BBinfo[i]->sideband = BDFparse_quote_str(startBB, maxStr2, prior, &next);
+  
+    in->ScanInfo->numBaseband++;  /* Count */
+    i++;
+  }
+  
+  in->current = next;  /* where in buffer */
+
+  /* Numbers of things THIS IS NOT REALLY RIGHT */
+  in->numBaseline       = (in->ScanInfo->numAntenna * (in->ScanInfo->numAntenna-1))/2;
+  in->currBaseline      = 0;
+  in->numBaseband       = in->ScanInfo->numBaseband;
+  in->numSpectralWindow = 1;  /* NOT ALWAYS CORRECT */
+  in->numSpectralChann  = in->ScanInfo->BBinfo[0]->numSpectralPoint;
+  in->numCPoln = in->ScanInfo->BBinfo[0]->numCrossPolProducts;
+  in->numAPoln = in->ScanInfo->BBinfo[0]->numSdPolProducts;
+
+  /* Spectral window array */
+  in->SWArray = ObitSDMDataKillSWArray(in->SWArray);
+  in->SWArray = ObitSDMDataGetSWArray (in->SDMData, 
+				       in->SDMData->MainTab->rows[iMain]->scanNumber);
+
+  /* Init antennas */
+  in->nant   = in->ScanInfo->numAntenna;
+  if (in->antNo) g_free(in->antNo);
+  in->antNo  = g_malloc0(in->nant*sizeof(olong));
+  /* Lookup table of antenna numbers corresponding to IDs */
+
+  /* Find entry  in configDescription table */
+  configDescriptionId = 
+    in->SDMData->MainTab->rows[in->ScanInfo->iMain]->configDescriptionId;
+  for (iConfig=0; iConfig<in->SDMData->ConfigDescriptionTab->nrows; iConfig++) {
+    if (in->SDMData->ConfigDescriptionTab->rows[iConfig]->configDescriptionId==configDescriptionId) break;
+  }
+  Obit_return_if_fail((iConfig<in->SDMData->ConfigDescriptionTab->nrows), err,
+		      "%s: Could not find configDescriptionId %d in ASDM", 
+		      routine, configDescriptionId);
+
+  /* Antenna id array */
+  antIds = in->SDMData->ConfigDescriptionTab->rows[iConfig]->antennaId;
+  /* Loop over antennas */
+  for (iAnt=0; iAnt<in->nant; iAnt++) {
+    /* Find antenna */
+    for (jAnt=0; jAnt<in->SDMData->AntennaTab->nrows; jAnt++) {
+      if (in->SDMData->AntennaTab->rows[jAnt]->antennaId==antIds[iAnt]) break;
+    }
+    Obit_return_if_fail((jAnt<in->SDMData->AntennaTab->nrows), err,
+			"%s: Could not find antennaId %d in ASDM", 
+			routine, antIds[iAnt]);
+
+    /* Crack name to get number Assume EVLA starts with "ea" */
+    aname = in->SDMData->AntennaTab->rows[jAnt]->name;
+    if ((aname[0]=='e') && (aname[1]=='a'))
+      in->antNo[iAnt]    = (olong)strtol(&aname[2],NULL,10);
+    else in->antNo[iAnt] = in->SDMData->AntennaTab->rows[jAnt]->antennaId;
+  } /* end loop over antennas */
+
+  /* Source Id - have to look down goddamn tree */
+  fieldId = in->SDMData->MainTab->rows[in->ScanInfo->iMain]->fieldId;
+  for (jField=0; jField<in->SDMData->FieldTab->nrows; jField++) {
+    if (in->SDMData->FieldTab->rows[jField]->fieldId==fieldId) break;
+  }
+  Obit_return_if_fail((jField<in->SDMData->FieldTab->nrows), err,
+		      "%s: Could not find fieldId %d in ASDM", 
+		      routine, antIds[iAnt]);
+  sourceId = in->SDMData->FieldTab->rows[jField]->sourceId;
+  for (jSource=0; jSource<in->SDMData->SourceTab->nrows; jSource++) {
+    if (in->SDMData->SourceTab->rows[jSource]->sourceId==sourceId) break;
+  }
+  Obit_return_if_fail((jSource<in->SDMData->SourceTab->nrows), err,
+		      "%s: Could not find source Id %d in ASDM", 
+		      routine, sourceId);
+  sourceId = in->SDMData->SourceTab->rows[jSource]->sourceId;
+  in->sourceNo = in->SDMData->SourceTab->rows[jSource]->sourceNo;
+
+  /* Cross correlation frequency increment = no poln. x 2 */
+  in->cincf = in->numCPoln * 2;
+
+  /* Cross correlation IF increment = no poln.x no Chan x 2*/
+  in->cincif = in->numCPoln * in->numSpectralChann * 2;
+
+  /* Ordering of cross correlation polarizations - shuffle order */
+  if (in->coffs) g_free(in->coffs);
+  in->coffs = g_malloc0(in->numCPoln*sizeof(olong));
+  if (in->numCPoln==1) {
+    in->coffs[0] = 0;
+  } else if (in->numCPoln==2) {
+    in->coffs[0] = 0;
+    in->coffs[1] = 2;
+ } else if (in->numCPoln==4) {
+    in->coffs[0] = 0;
+    in->coffs[1] = 6;
+    in->coffs[2] = 2;
+    in->coffs[3] = 4;
+ }
+
+  /* Offsets of the crosscorrelation Spectral windows in input */
+  SWoff = g_malloc0((in->SWArray->nwinds+2)*sizeof(olong));
+  inext    = 0;
+  SWoff[0] = 0;
+  for (iSW=0; iSW<in->SWArray->nwinds; iSW++) {
+    inext++;
+    SWoff[inext] = SWoff[inext-1] + 
+      in->SWArray->winds[iSW]->numChan * in->SWArray->winds[iSW]->nCPoln * 2 ;
+  }
+
+  /* Which cross correlation IF/Spectral windows */
+  if (in->coffif) g_free(in->coffif);
+  in->coffif = g_malloc0((in->SWArray->nwinds+2)*sizeof(olong));
+  /* Which ones selected? */
+  inext = 0;
+  in->coffif[0] = 0;
+  for (iSW=0; iSW<in->SWArray->nwinds; iSW++) {
+    /* Use ordering */
+    jSW = in->SWArray->order[iSW];
+    if (in->SWArray->winds[jSW]->selected) {
+      in->coffif[inext] = SWoff[jSW];
+      inext++;
+    }  
+  }
+  if (SWoff) g_free(SWoff); SWoff = NULL; /* Cleanup*/
+  
+  /* Spectral window (IF) sidebands */
+  if (in->isLSB) g_free(in->isLSB);
+  in->isLSB = g_malloc0(in->SWArray->nwinds*sizeof(gboolean));
+  inext = 0;
+  for (iSW=0; iSW<in->SWArray->nwinds; iSW++) {
+    if (in->SWArray->winds[iSW]->selected) {
+      in->isLSB[iSW] = in->SWArray->winds[iSW]->netSideband[iSW]=='$';  /* DEBUG STUB */
+      inext++;
+    }
+  }
+
+  /* Auto correlation frequency increment  RR, LL(XX,YY) are real RL (XY) complex */
+  if (in->numAPoln<=2) in->aincf = in->numAPoln;
+  else in->aincf = 3;
+
+  /* Auto correlation IF increment = no poln.values x no Chan*/
+  in->aincif = in->aincf * in->numSpectralChann;
+
+  /* Ordering of auto correlation polarizations - shuffle order */
+  if (in->aoffs) g_free(in->aoffs);
+  in->aoffs = g_malloc0(in->numAPoln*sizeof(olong));
+  if (in->numAPoln==1) {
+    in->aoffs[0] = 0;
+  } else if (in->numAPoln==2) {
+    in->aoffs[0] = 0;
+    in->aoffs[1] = 1;
+ } else if (in->numAPoln==3) {
+    in->aoffs[0] = 0;
+    in->aoffs[1] = 3;
+    in->aoffs[2] = 1;
+ }
+
+  in->crossVisSize = 0;  /* Init vis size */
+  in->autoVisSize  = 0;
+
+  /* Offsets of the autocorrelation Spectral windows in input */
+  SWoff    = g_malloc0((in->SWArray->nwinds+2)*sizeof(olong));
+  inext    = 0;
+  SWoff[0] = 0;
+  for (iSW=0; iSW<in->SWArray->nwinds; iSW++) {
+    inext++;
+    SWoff[inext] = SWoff[inext-1] + 
+      in->SWArray->winds[iSW]->numChan * in->aincf;
+  }
+
+  /* Which auto correlation IF/Spectral windows */
+  if (in->aoffif) g_free(in->aoffif);
+  in->aoffif = g_malloc0((in->SWArray->nwinds+2)*sizeof(olong));
+  /* Which ones selected? */
+  inext = 0;
+  in->aoffif[0] = 0;
+  for (iSW=0; iSW<in->SWArray->nwinds; iSW++) {
+    /* Use ordering */
+    jSW = in->SWArray->order[iSW];
+    if (in->SWArray->winds[iSW]->selected) {
+      inext++;
+      in->aoffif[inext] = SWoff[jSW];
+    }
+    
+    /* Count size of visibilities */
+    in->crossVisSize += in->SWArray->winds[iSW]->numChan * in->cincf; 
+    in->autoVisSize  += in->SWArray->winds[iSW]->numChan * in->aincf;
+    
+  }
+  if (SWoff) g_free(SWoff); SWoff = NULL;  /* Cleanup*/
+} /* end ObitBDFDataInitScan */
+
+
+ /**
+ * Select Spectral windows by number of channels/band
+ * Modifies in->SWArray
+ * \param in       The structure to update
+ * \param selChan selected number of channels
+ * \param band    Selected band
+ * \return TRUE if some data selected
+ */
+gboolean ObitBDFDataSelChan  (ObitBDFData *in, olong selChan, 
+			  ObitASDMBand band)
+{
+  /*gchar *routine = "ObitBDFDataSelChan";*/
+
+  return ObitSDMDataSelChan (in->SWArray, selChan, band);
+  
+} /* end ObitBDFDataSelChan */
+
+ /**
+ * Parse integration info from buffer, ingest data for integration
+ * May update buffer contents.
+ * \param in  The object to update
+ * \param err Obit error stack object.
+ */
+void ObitBDFDataInitInteg  (ObitBDFData *in, ObitErr *err)
+{
+  gchar *startInfo, *endInfo, *prior, *next, *tstr;
+  olong maxStr;
+  gchar *routine = "ObitBDFDataInitInteg";
+
+  /* error checks */
+  if (err->error) return;
+
+  /* Create info structure if not there */
+  if (in->IntegInfo==NULL) in->IntegInfo = g_malloc0(sizeof(BDFIntegInfo));
+
+  /* Parse scan header - first find limits */
+  maxStr    = in->nBytesInBuffer - (in->current-in->buffer);
+  startInfo = g_strstr_len (in->current, maxStr, "<sdmDataSubsetHeader ");
+  /* May need next buffer */
+  while (startInfo==NULL) {
+    ObitBDFDataFillBuffer (in, err);
+    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    maxStr = in->nBytesInBuffer;
+    startInfo = g_strstr_len (in->buffer, maxStr, "<sdmDataSubsetHeader ");
+  }
+  maxStr    = in->nBytesInBuffer - (olong)(startInfo-in->buffer);
+  endInfo   = g_strstr_len (startInfo, maxStr, "</sdmDataSubsetHeader>");
+  maxStr    = (olong)(endInfo-startInfo);
+  
+  /* Start Time */
+  prior = "<time>";
+  in->IntegInfo->time = BDFparse_time(startInfo, maxStr, prior, &next);
+  in->currTime = in->IntegInfo->time - in->SDMData->refJD;
+  
+  /* Integration Time */
+  prior = "<interval>";
+  in->IntegInfo->interval = BDFparse_timeint(startInfo, maxStr, prior, &next);
+  in->currIntTime = in->IntegInfo->interval;
+  
+  /* Data type from dataStruct */
+  startInfo = g_strstr_len (startInfo, maxStr, "<dataStruct ");
+  maxStr    = (olong)(endInfo-startInfo);
+  prior = "type=";
+  tstr = BDFparse_quote_str (startInfo, maxStr, prior, &next);
+  in->IntegInfo->type = LookupDataType(tstr);
+  g_free(tstr);
+  in->current = next;  /* where in buffer */
+
+  /* Init antennas */
+  in->ant1     = 0;
+  in->ant2     = 1;
+  in->topAnt   = 1;
+  in->nextCVis = 0;   /* Cross vis index */
+  in->nextAVis = 0;   /* Auto vis index */
+} /* end ObitBDFDataInitInteg */
+
+ /**
+ * Read integration info from buffer, ingest header, data for integration
+ * May update buffer contents.
+ * \param in  The object to update
+ * \param err Obit error stack object.
+ * \return return code, OBIT_IO_OK => OK, OBIT_IO_EOF = EOF.
+ */
+ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_OK;
+  ObitBDFMIMEType type;
+  gboolean byteFlip;
+  ofloat scale;
+  gchar *last, *start;
+  gchar *routine = "ObitBDFDataReadInteg";
+
+  /* error checks */
+  if (err->error) return retCode;
+
+  /* Parse header */
+  ObitBDFDataInitInteg (in, err);
+  if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
+
+  /* Byte flip needed */
+  byteFlip =  ((in->ScanInfo->endian==BDFEndian_Big) && (G_BYTE_ORDER==G_LITTLE_ENDIAN)) ||
+    ((in->ScanInfo->endian==BDFEndian_Little) && (G_BYTE_ORDER==G_BIG_ENDIAN));
+
+  /* scale */
+  scale = 1.0;
+
+  /* Loop through data segments until next header */
+  while (1) {
+    /* Type and start of next segment */ 
+    last = in->current;
+    type = GetNextMIME (in, last, &start, err);
+    in->current = start;
+    if ((type==BDFMIMEType_sdmDataHeader) || (type==BDFMIMEType_desc)) break;
+    /* Through? */
+    if (type==BDFMIMEType_EOF) retCode = OBIT_IO_EOF;
+    if ((type==BDFMIMEType_EOF) || (type==BDFMIMEType_Unknown)) break;
+    if (retCode==OBIT_IO_EOF) break;
+
+    /* Cross correlation data */
+    if (type==BDFMIMEType_crossData) {
+      in->nCrossCorr = in->ScanInfo->crossDataSize;
+      in->haveCrossData = TRUE;
+      /* Create if needed */
+      if (in->crossCorr==NULL)
+	in->crossCorr = g_malloc0((in->nCrossCorr+10)*sizeof(ofloat));
+      retCode = CopyFloats (in, start, in->crossCorr, in->nCrossCorr, byteFlip, scale, err);
+      if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
+      if (retCode==OBIT_IO_EOF) return retCode;
+      continue;
+    } /* End cross correlation */
+    
+    /* Auto correlation data */
+    if (type==BDFMIMEType_autoData) {
+      in->nAutoCorr = in->ScanInfo->autoDataSize;
+      in->haveAutoData = TRUE;
+      /* Create if needed */
+      if (in->autoCorr==NULL)
+	in->autoCorr = g_malloc0((in->nAutoCorr+10)*sizeof(ofloat));
+      retCode = CopyFloats (in, start, in->autoCorr, in->nAutoCorr, byteFlip, scale, err);
+      if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
+      if (retCode==OBIT_IO_EOF) return retCode;
+      continue;
+   } /* End auto correlation */
+    
+    /* flag data */
+    if (type==BDFMIMEType_flags) {
+      in->haveFlag = TRUE;
+      /* Create if needed */
+      if (in->flagData==NULL)
+	in->flagData = g_malloc0((in->ScanInfo->FlagSize+10)/8);
+      /* FIX THIS */
+      retCode = CopyFloats (in, start, (ofloat*)in->flagData, in->ScanInfo->FlagSize/8, byteFlip, scale, err);
+      if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
+      if (retCode==OBIT_IO_EOF) return retCode;
+      continue;
+  } /* End flag data */
+    
+    /* ActualTimes data */
+    if (type==BDFMIMEType_actualTimes) {
+      in->haveActualTimes = TRUE;
+      /* Create if needed */
+      if (in->actualTimesData==NULL)
+	in->actualTimesData = g_malloc0((in->ScanInfo->actualTimesSize+10)/8);
+      retCode = CopyFloats (in, start, (ofloat*)in->actualTimesData, in->ScanInfo->actualTimesSize/8, byteFlip, scale, err);
+      if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
+      if (retCode==OBIT_IO_EOF) return retCode;
+      continue;
+    } /* End actualTimes data */
+     
+    /* ActualDurations data */
+    if (type==BDFMIMEType_actualDurations) {
+      in->haveActualDurations = TRUE;
+      /* Create if needed */
+      if (in->actualDurationsData==NULL)
+	in->actualDurationsData = g_malloc0((in->ScanInfo->actualDurationsSize+10));
+      retCode = CopyFloats (in, start, (ofloat*)in->actualDurationsData, in->ScanInfo->actualDurationsSize, byteFlip, scale, err);
+      if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
+      if (retCode==OBIT_IO_EOF) return retCode;
+      continue;
+    } /* End actualDurations data */
+    
+    /* weight data */
+    if (type==BDFMIMEType_weights) {
+      in->haveWeight = TRUE;
+      /* Create if needed */
+      if (in->weightData==NULL)
+	in->weightData = g_malloc0((in->ScanInfo->weightSize+10));
+      retCode = CopyFloats (in, start, (ofloat*)in->weightData, in->ScanInfo->weightSize, byteFlip, scale, err);
+      if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
+      if (retCode==OBIT_IO_EOF) return retCode;
+      continue;
+    } /* End weight data */
+ }  /* end loop over data segments */
+
+  return retCode;
+} /* end ObitBDFDataReadInteg */
+
+/**
+ * Return single visibility record from the BDF
+ * \param in      Pointer to object to be read.
+ * \param vis     [output] visibility record
+ *                <0 => start at current position.
+ * \param size    number of bytes to read.
+ * \param buffer  pointer to buffer to accept results.
+ * \param err     ObitErr for reporting errors.
+ * \return return code, OBIT_IO_OK => OK, OBIT_IO_EOF = EOF.
+ */
+ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_EOF;
+  olong iStok, iChan, iIF, indx, ondx, voff, jChan, ant1, ant2;
+  /*gchar *routine = "ObitBDFDataGetVis";*/
+
+  /* error checks */
+  if (err->error) return retCode;
+  g_assert (ObitIsA(in, &myClassInfo));
+  g_assert (vis != NULL);
+
+  /* More cross data? */
+  if (in->haveCrossData) {
+    
+    retCode = OBIT_IO_OK;  /* Have some */
+
+    /* Random parameters */
+    vis[in->desc->ilocu]  = 0.0;
+    vis[in->desc->ilocv]  = 0.0;
+    vis[in->desc->ilocw]  = 0.0;
+    vis[in->desc->iloct]  = in->currTime;
+    vis[in->desc->ilocit] = in->currIntTime;
+    vis[in->desc->ilocsu] = (ofloat)in->sourceNo;
+    ant1 = in->antNo[in->ant1];
+    ant2 = in->antNo[in->ant2];
+
+    /* Is the order of the baseline correct, ant1<ant2 ? */
+    if (ant1<ant2) {
+      vis[in->desc->ilocb]  = (ofloat)(ant1*256 + ant2);
+    
+      /* Loop over visibilities */
+      voff = in->nextCVis * in->crossVisSize;
+      for (iIF=0; iIF<in->desc->inaxes[in->desc->jlocif]; iIF++) {
+	for (iChan=0; iChan<in->desc->inaxes[in->desc->jlocf]; iChan++) {
+	  /* Need to reverse order for LSB? */
+	  if (in->isLSB[iIF]) jChan = in->desc->inaxes[in->desc->jlocf]-iChan-1;
+	  else jChan = iChan;
+	  for (iStok=0; iStok<in->desc->inaxes[in->desc->jlocs]; iStok++) {
+	    ondx = in->desc->nrparm +
+	      iStok*in->desc->incs + jChan*in->desc->incf + iIF*in->desc->incif;
+	    indx = voff + in->coffs[iStok] + iChan*in->cincf + in->coffif[iIF];
+	    vis[ondx]   = in->crossCorr[indx];
+	    vis[ondx+1] = in->crossCorr[indx+1];
+	    vis[ondx+2] = 1.0;
+	  } /* end Stokes loop */
+	} /* end Channel loop */
+      } /* end IF loop */
+    } else {   /* Flip baseline */
+      vis[in->desc->ilocb]  = (ofloat)(ant2*256 + ant1);
+    
+      /* Loop over visibilities */
+      voff = in->nextCVis * in->crossVisSize;
+      for (iIF=0; iIF<in->desc->inaxes[in->desc->jlocif]; iIF++) {
+	for (iChan=0; iChan<in->desc->inaxes[in->desc->jlocf]; iChan++) {
+	  /* Need to reverse order for LSB? */
+	  if (in->isLSB[iIF]) jChan = in->desc->inaxes[in->desc->jlocf]-iChan-1;
+	  else jChan = iChan;
+	  for (iStok=0; iStok<in->desc->inaxes[in->desc->jlocs]; iStok++) {
+	    ondx = in->desc->nrparm +
+	      iStok*in->desc->incs + jChan*in->desc->incf + iIF*in->desc->incif;
+	    indx = voff + iChan*in->cincf + in->coffif[iIF];
+	    /* Use switch to deal with different polns */
+	    switch (iStok) { 
+	    case 0:     /* RR or XX */
+	    case 1:     /* LL or YY */
+	      vis[ondx]   =  in->crossCorr[in->coffs[iStok]+indx];
+	      vis[ondx+1] = -in->crossCorr[in->coffs[iStok]+indx+1];   /* Conjugate */
+	      vis[ondx+2] = 1.0;
+	      break;
+	    case 2:  /* Swap RL, LR */
+	      vis[ondx]   =  in->crossCorr[in->coffs[iStok+1]+indx];
+	      vis[ondx+1] = -in->crossCorr[in->coffs[iStok+1]+indx+1];   /* Conjugate */
+	      vis[ondx+2] = 1.0;
+	      break;
+	    case 3:
+	      vis[ondx]   =  in->crossCorr[in->coffs[iStok-1]+indx];
+	      vis[ondx+1] = -in->crossCorr[in->coffs[iStok-1]+indx+1];   /* Conjugate */
+	      vis[ondx+2] = 1.0;
+	      break;
+	    default:
+	      g_assert_not_reached(); /* unknown, barf */
+	    }; /* end switch on polarization */
+	  } /* end Stokes loop */
+	} /* end Channel loop */
+      } /* end IF loop */
+    } /* end reverse baseline */
+
+    /* Update visibility and antenna numbers */
+    in->nextCVis++;
+    in->ant1++;
+    if (in->ant1>=in->topAnt) {in->topAnt++; in->ant1=0; in->ant2 = in->topAnt;}
+    /* Finished? */
+    if (in->topAnt>=in->nant) in->haveCrossData = FALSE;
+    if (!in->haveCrossData) {in->ant1 = 0; in->ant2 = 0; in->topAnt = 0;}
+    return retCode;
+  } /* end have cross data */
+
+   
+  /* More auto data? */
+  if (in->haveAutoData) {
+    
+    retCode = OBIT_IO_OK;  /* Have some */
+
+    /* Random parameters */
+    vis[in->desc->ilocu]  = 0.0;
+    vis[in->desc->ilocv]  = 0.0;
+    vis[in->desc->ilocw]  = 0.0;
+    vis[in->desc->iloct]  = in->currTime;
+    vis[in->desc->ilocit] = in->currIntTime;
+    vis[in->desc->ilocb]  = (ofloat)(in->antNo[in->ant1]*256 + in->antNo[in->ant1]);
+    vis[in->desc->ilocsu] = (ofloat)in->sourceNo;
+    
+    /* Loop over visibilities */
+    voff = in->nextAVis * in->autoVisSize;
+    for (iIF=0; iIF<in->desc->inaxes[in->desc->jlocif]; iIF++) {
+      for (iChan=0; iChan<in->desc->inaxes[in->desc->jlocf]; iChan++) {
+	for (iStok=0; iStok<in->desc->inaxes[in->desc->jlocs]; iStok++) {
+	  ondx = in->desc->nrparm +
+	    iStok*in->desc->incs + iChan*in->desc->incf + iIF*in->desc->incif;
+	  indx = voff + iChan*in->aincf + in->aoffif[iIF];
+	  /* Use switch to deal with different polns */
+	  switch (iStok) { 
+	  case 0:
+	    vis[ondx]   = in->autoCorr[indx+in->aoffs[0]];
+	    vis[ondx+1] = 0.0;
+	    vis[ondx+2] = 1.0;
+	    break;
+	  case 1:
+	    vis[ondx] = in->autoCorr[indx+in->aoffs[1]];
+	    vis[ondx+1] = 0.0;
+	    vis[ondx+2] = 1.0;
+	    break;
+	  case 2:
+	    vis[ondx]   = in->autoCorr[indx+in->aoffs[2]];
+	    vis[ondx+1] = in->autoCorr[indx+in->aoffs[2]+2];
+	    vis[ondx+2] = 1.0;
+	  case 3:
+	    /* Use conjugate */
+	    vis[ondx]   =  vis[ondx];
+	    vis[ondx+1] = -vis[ondx+1];
+	    vis[ondx+2] = 1.0;
+	    break;
+	  default:
+	    g_assert_not_reached(); /* unknown, barf */
+	  }; /* end switch on polarization */
+	} /* end Stokes loop */
+      } /* end Channel loop */
+    } /* end IF loop */
+    
+    /* Update visibility and antenna numbers */
+    in->nextAVis++;
+    in->ant1++;
+    /* Finished? */
+    if (in->ant1>=in->nant) in->haveAutoData = FALSE;
+    return retCode;
+  } /* end have auto data */
+    
+  return retCode;
+} /* end ObitBDFDataGetVis  */
+
+/**
+ * Initialize global ClassInfo Structure.
+ */
+void ObitBDFDataClassInit (void)
+{
+  if (myClassInfo.initialized) return;  /* only once */
+  
+  /* Set name and parent for this class */
+  myClassInfo.ClassName   = g_strdup(myClassName);
+  myClassInfo.ParentClass = ObitParentGetClass();
+
+  /* Set function pointers */
+  ObitBDFDataClassInfoDefFn ((gpointer)&myClassInfo);
+ 
+  myClassInfo.initialized = TRUE; /* Now initialized */
+ 
+} /* end ObitBDFDataClassInit */
+
+/**
+ * Initialize global ClassInfo Function pointers.
+ */
+static void ObitBDFDataClassInfoDefFn (gpointer inClass)
+{
+  ObitBDFDataClassInfo *theClass = (ObitBDFDataClassInfo*)inClass;
+  ObitClassInfo *ParentClass = (ObitClassInfo*)myClassInfo.ParentClass;
+
+  if (theClass->initialized) return;  /* only once */
+
+  /* Check type of inClass */
+  g_assert (ObitInfoIsA(inClass, (ObitClassInfo*)&myClassInfo));
+
+  /* Initialize (recursively) parent class first */
+  if ((ParentClass!=NULL) && 
+      (ParentClass->ObitClassInfoDefFn!=NULL))
+    ParentClass->ObitClassInfoDefFn(theClass);
+
+  /* function pointers defined or overloaded this class */
+  theClass->ObitClassInit = (ObitClassInitFP)ObitBDFDataClassInit;
+  theClass->newObit       = (newObitFP)newObitBDFData;
+  theClass->ObitClassInfoDefFn = (ObitClassInfoDefFnFP)ObitBDFDataClassInfoDefFn;
+  theClass->ObitGetClass  = (ObitGetClassFP)ObitBDFDataGetClass;
+  theClass->ObitCopy      = (ObitCopyFP)ObitBDFDataCopy;
+  theClass->ObitClone     = NULL;
+  theClass->ObitClear     = (ObitClearFP)ObitBDFDataClear;
+  theClass->ObitInit      = (ObitInitFP)ObitBDFDataInit;
+  theClass->ObitBDFDataCreate = (ObitBDFDataCreateFP)ObitBDFDataCreate;
+
+} /* end ObitBDFDataClassDefFn */
+
+/*---------------Private functions--------------------------*/
+
+/**
+ * Creates empty member objects, initialize reference count.
+ * Parent classes portions are (recursively) initialized first
+ * \param inn Pointer to the object to initialize.
+ */
+void ObitBDFDataInit  (gpointer inn)
+{
+  ObitClassInfo *ParentClass;
+  ObitBDFData *in = inn;
+
+  /* error checks */
+  g_assert (in != NULL);
+
+  /* recursively initialize parent class members */
+  ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
+  if ((ParentClass!=NULL) && ( ParentClass->ObitInit!=NULL)) 
+    ParentClass->ObitInit (inn);
+
+  /* set members in this class */
+  in->SDMData             = NULL;
+  in->SWArray             = NULL;
+  in->ScanInfo            = NULL;
+  in->IntegInfo           = NULL;
+  in->DataFile            = NULL;
+  in->buffer              = NULL;
+  in->crossCorr           = NULL;
+  in->autoCorr            = NULL;
+  in->flagData            = NULL;
+  in->actualTimesData     = NULL;
+  in->actualDurationsData = NULL;
+  in->weightData          = NULL;
+  in->antNo               = NULL;
+  in->coffs               = NULL;
+  in->coffif              = NULL;
+  in->aoffs               = NULL;
+  in->aoffif              = NULL;
+  in->isLSB               = NULL;
+} /* end ObitBDFDataInit */
+
+/**
+ * Deallocates member objects.
+ * Does (recursive) deallocation of parent class members.
+ * \param  inn Pointer to the object to deallocate.
+ *           Actually it should be an ObitBDFData* cast to an Obit*.
+ */
+void ObitBDFDataClear (gpointer inn)
+{
+  ObitClassInfo *ParentClass;
+  ObitBDFData *in = inn;
+  ObitErr *err;
+
+  /* error checks */
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* Close file */
+  err = newObitErr();
+  ObitFileClose (in->file, err);
+  err = ObitErrUnref(err);
+
+  /* delete this class members */
+  in->file      = ObitFileUnref(in->file);
+  in->ScanInfo  = KillBDFScanInfo(in->ScanInfo);
+  in->IntegInfo = KillBDFIntegInfo(in->IntegInfo);
+  in->desc      = ObitUVDescUnref(in->desc);
+  in->SDMData   = ObitSDMDataUnref(in->SDMData);
+  in->SWArray   = ObitSDMDataKillSWArray(in->SWArray);
+  if (in->DataFile)            g_free(in->DataFile);
+  if (in->buffer)              g_free(in->buffer);
+  if (in->crossCorr)           g_free(in->crossCorr);
+  if (in->autoCorr)            g_free(in->autoCorr);
+  if (in->flagData)            g_free(in->flagData);
+  if (in->actualTimesData)     g_free(in->actualTimesData);
+  if (in->actualDurationsData) g_free(in->actualDurationsData);
+  if (in->weightData)          g_free(in->weightData);
+  if (in->antNo)               g_free(in->antNo);
+  if (in->coffs)               g_free(in->coffs);
+  if (in->coffif)              g_free(in->coffif);
+  if (in->aoffs)               g_free(in->aoffs);
+  if (in->aoffif)              g_free(in->aoffif);
+  if (in->isLSB)               g_free(in->isLSB);
+
+  /* unlink parent class members */
+  ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
+  /* delete parent class members */
+  if ((ParentClass!=NULL) && ( ParentClass->ObitClear!=NULL)) 
+    ParentClass->ObitClear (inn);
+  
+} /* end ObitBDFDataClear */
+
+/* BDF XML routines */
+/**  Parse integer from XLM string 
+ * \param  string  String to parse
+ * \param  maxChar Maximum size of string
+ * \param  prior string prior to value
+ * \param  next  pointer in string after parsed value
+ * \return value, 0 if problem
+ */
+static olong BDFparse_int(gchar *string, olong maxChar, 
+			  gchar *prior, gchar **next)
+{
+  olong out = 0;
+  gchar *b;
+
+  *next = string;  /* if not found */
+  b = g_strstr_len (string, maxChar, prior);
+  if (b==NULL) return out;  /* Found? */
+  b += strlen(prior);
+  out = (olong)strtol(b, next, 10);
+    
+  return out;
+} /* end BDFparse_int */
+
+/**  Parse unquoted string from XLM string 
+ * All text from end of prior until next '<'
+ * \param  string  String to parse
+ * \param  maxChar Maximum size of string
+ * \param  prior string prior to value
+ * \param  next  pointer in string after parsed value
+ * \return value, NULL if problem, should be g_freeed when done
+ */
+static gchar* BDFparse_str(gchar *string, olong maxChar, 
+			   gchar *prior, gchar **next)
+{
+  gchar *out = NULL;
+  gchar *b;
+  olong charLeft;
+  olong i, n;
+
+  *next = string;  /* if not found */
+  b = g_strstr_len (string, maxChar, prior);
+  if (b==NULL) return out;  /* Found? */
+  b += strlen(prior);
+
+  /* count */
+  charLeft = maxChar - (b-string);
+  n = 0;
+  for (i=0; i<charLeft; i++) {
+    if (b[i]=='<') break;
+    n++;
+  }
+  out = g_malloc(n+1);
+  for (i=0; i<n; i++) out[i] = b[i]; out[i] = 0;
+  *next = b + n;
+
+  return out;
+} /* end BDFparse_str */
+
+/**  Parse double quoted from XLM string 
+ * All text from end of prior+1 until next '"'
+ * \param  string  String to parse
+ * \param  maxChar Maximum size of string
+ * \param  prior string prior to value
+ * \param  next  pointer in string after parsed value
+ * \return value, NULL if problem, should be g_freeed when done
+ */
+static gchar* BDFparse_quote_str(gchar *string, olong maxChar, 
+				 gchar *prior, gchar **next)
+{
+  gchar *out = NULL;
+  gchar *b;
+  olong charLeft;
+  olong i, n;
+
+  *next = string;  /* if not found */
+  b = g_strstr_len (string, maxChar, prior);
+  if (b==NULL) return out;  /* Found? */
+  b += strlen(prior);
+  if (*b!='"') return out;  /* Make sure quote */
+  b++;                      /* Skip quote */
+
+  /* count */
+  charLeft = maxChar - (b-string);
+  n = 0;
+  for (i=0; i<charLeft; i++) {
+    if (b[i]=='"') break;
+    n++;
+  }
+  out = g_malloc(n+1);
+  for (i=0; i<n; i++) out[i] = b[i]; out[i] = 0;
+  *next = b + n;
+
+  return out;
+} /* end BDFparse_quote_str */
+
+/**  Parse array of unquoted strings from XLM string;
+ * array of strings NULL terminated.
+ * Each string text from end of prior until next ' ' or '<' or '"'
+ * \param  string  String to parse
+ * \param  maxChar Maximum size of string
+ * \param  prior string prior to value
+ * \param  next  pointer in string after parsed value
+ * \return value, NULL if problem, should be g_freeed when done, last entry NULL
+ */
+static gchar** BDFparse_strarray(gchar *string, olong maxChar, 
+				 gchar *prior, gchar **next)
+{
+  gchar **out = NULL;
+  gchar *b;
+  olong charLeft, num;
+  olong i, j, n;
+
+  *next = string;  /* if not found */
+  b = g_strstr_len (string, maxChar, prior);
+  if (b==NULL) return out;  /* Found? */
+  b += strlen(prior);
+
+  /* Count blanks before next '"' (num val -1) */
+  num = 1;  /* No blank after last */
+  for (j=1; j<maxChar; j++) {
+    if (b[j]==' ') num++;
+    if (b[j]=='"') break;
+  }
+  out = g_malloc0(MAX(1,(num+1))*sizeof(gchar*));
+
+  /* Loop over strings */
+  for (j=0; j<num; j++) {
+    /* count */
+    charLeft = maxChar - (b-string);
+    n = 0;
+    for (i=0; i<charLeft; i++) {
+      if ((b[i]=='<') || (b[i]==' ') || (b[i]=='"'))break;
+      n++;
+    }
+    out[j] = g_malloc(n+1);
+    for (i=0; i<n; i++) out[j][i] = b[i]; out[j][i] = 0;
+    b += n+1;
+    *next = b;
+  } /* end loop over strings */
+
+  /* NULL in highest */
+  out[num] = NULL;
+  return out;
+} /* end BDFparse_strarray */
+
+/**  Parse axis order array from XML string  
+ * Each string text from end of prior until next ' ' or '"'
+ * \param  string  String to parse
+ * \param  maxChar Maximum size of string
+ * \param  prior string prior to value
+ * \param  next  pointer in string after parsed value
+ * \return value, NULL if problem, should be g_freeed when done
+ * one larger than actual, last = -999
+ */
+static ObitBDFAxisName* BDFparse_axesarray(gchar *string, olong maxChar, 
+					   gchar *prior, gchar **next)
+{
+  ObitBDFAxisName *out = NULL;
+  gchar *b;
+  olong charLeft, num;
+  olong i, j, n;
+  
+  *next = string;  /* if not found */
+  b = g_strstr_len (string, maxChar, prior);
+  if (b==NULL) return out;  /* Found? */
+  b += strlen(prior);
+  
+  /* Count blanks before next '"' (num val -1) */
+  num = 1;
+  for (j=1; j<maxChar; j++) {
+    if (b[j]==' ') num++;
+    if (b[j]=='"') break;
+  }
+  out = g_malloc0(MAX(1,(num+1))*sizeof(ObitBDFAxisName));
+  
+  /* Loop over strings */
+  b++;  /* Skip first quote */
+  for (j=0; j<num; j++) {
+    /* count */
+    charLeft = maxChar - (b-string);
+    n = 0;
+    for (i=0; i<charLeft; i++) {
+      if ((b[i]=='"') || (b[i]==' '))break;
+      n++;
+    }
+    out[j] = LookupAxisName(b);
+    b += n+1;
+    *next = b;
+  } /* end loop over strings */
+
+  out[num] = BDFAxisName_END;  /* mark end */
+  return out;
+} /* end BDFparse_axesarray */
+
+/**  Parse time from XLM string  
+ * Read time as a mjd nanoseconds, return as JD
+ * \param  string  String to parse
+ * \param  maxChar Maximum size of string
+ * \param  prior string prior to value
+ * \param  next  pointer in string after parsed value
+ * \return value, 0.0 if problem
+ */
+static odouble BDFparse_time(gchar *string, olong maxChar, 
+			     gchar *prior, gchar **next)
+{
+  odouble out = 0.0;
+  long long temp;
+  gchar *b;
+  odouble mjdJD0=2400000.5; /* JD of beginning of mjd time */
+
+  *next = string;  /* if not found */
+  b = g_strstr_len (string, maxChar, prior);
+  if (b==NULL) return out;  /* Found? */
+  b += strlen(prior);
+  temp = strtoll(b, next, 10);
+  out = (odouble)((temp*1.0e-9)/86400.0) + mjdJD0;
+    
+  return out;
+} /* end BDFparse_time */
+
+/**  Parse time interval from XLM string  
+ * Read time interval in nanoseconds, return as days
+ * \param  string  String to parse
+ * \param  maxChar Maximum size of string
+ * \param  prior string prior to value
+ * \param  next  pointer in string after parsed value
+ * \return value, 0.0 if problem
+ */
+static odouble BDFparse_timeint(gchar *string, olong maxChar, 
+				 gchar *prior, gchar **next)
+{
+  odouble out = 0.0;
+  long long temp;
+  gchar *b;
+
+  *next = string;  /* if not found */
+  b = g_strstr_len (string, maxChar, prior);
+  if (b==NULL) return out;  /* Found? */
+  b += strlen(prior);
+  temp = strtoll(b, next, 10);
+  out = (odouble)((temp*1.0e-9)/86400.0);
+    
+  return out;
+} /* end BDFparse_timeint */
+
+/**  Look up axis name enum 
+ * \param  string  String to lookup
+ * \return value
+ */
+static ObitBDFAxisName LookupAxisName(gchar *name)
+{
+  ObitBDFAxisName out = 0;
+ 
+  if (!strncmp (name, "TIM", 3)) return BDFAxisName_TIM;
+  if (!strncmp (name, "BAL", 3)) return BDFAxisName_BAL;
+  if (!strncmp (name, "ANT", 3)) return BDFAxisName_ANT;
+  if (!strncmp (name, "BAB", 3)) return BDFAxisName_BAB;
+  if (!strncmp (name, "SPW", 3)) return BDFAxisName_SPW;
+  if (!strncmp (name, "SIB", 3)) return BDFAxisName_SIB;
+  if (!strncmp (name, "SUB", 3)) return BDFAxisName_SUB;
+  if (!strncmp (name, "BIN", 3)) return BDFAxisName_BIN;
+  if (!strncmp (name, "APC", 3)) return BDFAxisName_APC;
+  if (!strncmp (name, "SPP", 3)) return BDFAxisName_SPP;
+  if (!strncmp (name, "POL", 3)) return BDFAxisName_POL;
+  if (!strncmp (name, "STO", 3)) return BDFAxisName_STO;
+  if (!strncmp (name, "HOL", 3)) return BDFAxisName_HOL;
+  return out;
+} /* end LookupAxisName */
+
+/**  Look up data type enum 
+ * \param  name  String to lookup
+ * \return value
+ */
+static ObitBDFDataType LookupDataType(gchar *name)
+{
+  ObitBDFDataType out = 0;
+ 
+  if (!strncmp (name, "INT16_TYPE", 10)) return BDFDataType_INT16_TYPE;
+  if (!strncmp (name, "INT32_TYPE", 10)) return BDFDataType_INT32_TYPE;
+  if (!strncmp (name, "INT64_TYPE", 10)) return BDFDataType_INT64_TYPE;
+  if (!strncmp (name, "FLOAT32_TYPE", 12)) return BDFDataType_FLOAT32_TYPE;
+  if (!strncmp (name, "FLOAT64_TYPE", 12)) return BDFDataType_FLOAT64_TYPE;
+  return out;
+} /* end LookupDataType */
+
+/**  Look up data type enum 
+ * \param  name  String to lookup
+ * \return value
+ */
+static ObitBDFEndian LookupEndian(gchar *name)
+{
+  ObitBDFEndian out = 0;
+ 
+  if (!strncmp (name, "Little_Endian", 13)) return BDFEndian_Little;
+  if (!strncmp (name, "Big_Endian",    10)) return BDFEndian_Big;
+  return out;
+} /* end LookupEndian */
+
+/** 
+ * Destructor for .BDFBasebandInfo
+ * \param  structure to destroy
+ * \return NULL pointer
+ */
+static BDFBasebandInfo* KillBDFBasebandInfo(BDFBasebandInfo *info)
+{
+  olong i;
+  if (info == NULL) return NULL;
+  if (info->basebandName) g_free(info->basebandName);
+  if (info->sideband)     g_free(info->sideband);
+  if (info->sdPolProducts) {
+    i = 0;
+    while (info->sdPolProducts[i]) {
+      g_free(info->sdPolProducts[i++]);
+    }
+    g_free(info->sdPolProducts);
+  }
+  if (info->crossPolProducts) {
+    i = 0;
+    while (info->crossPolProducts[i]) {
+      g_free(info->crossPolProducts[i++]);
+    }
+    g_free(info->crossPolProducts);
+  }
+  g_free(info);
+  return NULL;
+} /* end  KillBDFBasebandInfo */
+
+/** 
+ * Destructor for BDFScanInfo
+ * \param  structure to destroy
+ * \return NULL pointer
+ */
+static BDFScanInfo* KillBDFScanInfo(BDFScanInfo *info)
+{
+  olong i;
+
+  if (info == NULL) return NULL;
+  if ((info->BBinfo)  && (info->numBaseband>0)) {
+    /*for (i=0; i<info->numBaseband; i++) {*/
+    for (i=0; i<MAXBBINFO; i++) {
+      info->BBinfo[i] = KillBDFBasebandInfo(info->BBinfo[i]);
+    }
+  }
+  if (info->FlagAxes)            g_free(info->FlagAxes);
+  if (info->actualTimesAxes)     g_free(info->actualTimesAxes);
+  if (info->actualDurationsAxes) g_free(info->actualDurationsAxes);
+  if (info->crossDataAxes)       g_free(info->crossDataAxes);
+  if (info->autoDataAxes)        g_free(info->autoDataAxes);
+  if (info->weightAxes)          g_free(info->weightAxes);
+  g_free(info);
+  return NULL;
+} /* end KillBDFScanInfo */
+
+/** 
+ * Destructor for .BDFIntegInfo
+ * \param  structure to destroy
+ * \return NULL pointer
+ */
+static BDFIntegInfo* KillBDFIntegInfo(BDFIntegInfo *info)
+{
+  if (info == NULL) return NULL;
+  g_free(info);
+  return NULL;
+} /* end KillBDFIntegInfo */
+
+
+/* Copy binary float data */
+ /**
+ * Copy binary float data 
+ * May update buffer contents.
+ * \param in       The object to update
+ * \param start    input array
+ * \param target   output array
+ * \param n        Number of floats
+ * \param byteFlip If TRUE flip bytes
+ * \param scale    scaling factor
+ * \param err   Obit error stack object.
+ * \return return code, OBIT_IO_OK => OK, OBIT_IO_EOF = EOF.
+ */
+static ObitIOCode CopyFloats (ObitBDFData *in, 
+			      gchar *start, ofloat *target, olong n, 
+			      gboolean byteFlip, ofloat scale, 
+			      ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_OK;
+  olong i, nleft, ncopy, ncopyb, nhere, shit;
+  ofloat *out;
+  gchar *lstart;
+  union fequiv inu, outu;
+  gchar *routine = "CopyFloats";
+
+  /* error checks */
+  if (err->error) return retCode;
+
+  /* How many in current buffer load */
+  nhere = (in->nBytesInBuffer - (olong)(start-in->buffer))/sizeof(ofloat);
+  nleft = n;
+  out = target;
+  lstart = start;
+  /* All in buffer? */
+  if (nhere>=n) {  /* All in current */
+    ncopy = n*sizeof(ofloat);
+    memmove (out, lstart, (size_t)ncopy);
+    in->current = lstart + ncopy;
+  } else {         /* Multiple buffers */
+    while (nleft>0) {
+      /* Copy what's here */
+      ncopy = MIN (nleft, nhere);
+      ncopyb = ncopy*sizeof(ofloat);  /* in bytes */
+      memmove (out, lstart, (size_t)ncopyb);
+      out += ncopy;
+      shit = (olong)(out-target);
+      in->current = lstart + ncopyb;
+      nleft -= ncopy;
+      if (nleft<=0) break;  /* Done? */
+      /* Get more */
+      retCode = ObitBDFDataFillBuffer (in, err);
+      if (err->error) {
+	Obit_traceback_val (err, routine, in->name, retCode);
+      }
+      lstart = in->current;
+      nhere = (in->nBytesInBuffer - (olong)(lstart-in->buffer))/sizeof(ofloat);
+    }  /* end loop over buffers */
+  } /* end multiple buffers */
+
+  /* If in last segment of buffer, update */
+  if ((olong)(in->current-in->buffer)>(BDFBUFFERSIZE*(BDFBUFFERFRAMES-1))) {
+      retCode = ObitBDFDataFillBuffer (in, err);
+      if (err->error) {
+	Obit_traceback_val (err, routine, in->name, retCode);
+      }
+  }
+
+  /* byte flip if necessary */
+  if (byteFlip) {
+    out = target;
+    for (i=0; i<n; i++) {
+      inu.full = out[i];
+      outu.parts[0] = inu.parts[3]; 
+      outu.parts[1] = inu.parts[2]; 
+      outu.parts[2] = inu.parts[1]; 
+      outu.parts[3] = inu.parts[0]; 
+      out[i] = outu.full;
+    }
+  } /* end byte flip */
+
+  /* scale if necessary */
+  if (fabs(scale-1.000)>1.0e-5) {
+    out = target;
+    for (i=0; i<n; i++) out[i] *= scale;
+  }  /* end scaling */
+  return retCode;
+} /* end CopyFloats */
+
+ /**
+ * Find beginning of next Mime segment
+ * May update buffer contents.
+ * \param in    The object to update
+ * \param last  Last byte in buffer of previous segment
+ * \param start First byte in buffer of segment
+ * \param err   Obit error stack object.
+ */
+static ObitBDFMIMEType GetNextMIME(ObitBDFData *in, 
+				   gchar *last, gchar **start, 
+				   ObitErr *err)
+{
+  ObitBDFMIMEType out = BDFMIMEType_Unknown;
+  ObitIOCode retCode;
+  gchar *prior, *tstr;
+  olong maxStr;
+  gboolean isData, isHeader;
+  gchar *dataType  = "\nContent-Type: application/octet-stream\n";
+  gchar *headerType = "\nContent-Type: text/xml; charset=utf-8\n";
+  gchar *routine = "GetNextMIME";
+
+  /* error checks */
+  if (err->error) return out;
+
+  /* Look for MIME_boundary-2 */
+  maxStr    = in->nBytesInBuffer - (olong)(last-in->buffer);
+  prior = "--MIME_boundary-2";
+  tstr = g_strstr_len (last, maxStr, prior);
+  *start = tstr + strlen(prior);
+
+  /* if found - see what type */
+  if (tstr!=NULL) {
+    /* Data? */
+    isData = !strncmp(*start, dataType, strlen(dataType));
+    /* Header? */
+    isHeader = !strncmp(*start, headerType, strlen(headerType));
+    out = GetNextMIMEType (in, tstr, start, err);
+    /* If it's incomplete, update buffer and try again */
+    if (out==BDFMIMEType_Unknown) {
+      retCode = ObitBDFDataFillBuffer (in, err);
+      if (err->error) Obit_traceback_val (err, routine, in->name, out);
+      last = in->current;
+      out = GetNextMIMEType (in, last, start, err);
+    }
+  } else { /* Not found, update buffer */
+    retCode = ObitBDFDataFillBuffer (in, err);
+    if (err->error) Obit_traceback_val (err, routine, in->name, out);
+    /* Try again */
+    last = in->buffer;
+    out = GetNextMIMEType (in, last, start, err);
+ }
+  if (err->error) Obit_traceback_val (err, routine, in->name, out);
+
+  return out;
+} /* end GetNextMIME */
+
+ /**
+ * Find type of next Mime segment
+ * May update buffer contents.
+ * \param in    The object to update
+ * \param last  Last byte in buffer of previous segment
+ * \param start First byte in buffer of segment
+ * \param err   Obit error stack object.
+ */
+static ObitBDFMIMEType GetNextMIMEType(ObitBDFData *in, 
+				     gchar *last, gchar **start, 
+				     ObitErr *err)
+{
+  ObitBDFMIMEType out = BDFMIMEType_Unknown;
+  gchar *s, *e, *slash, *dot, *Xpad, *prior, *tstr;
+  olong i, maxStr;
+  /*gchar *routine = "GetNextMIMEType";*/
+
+  /* error checks */
+  if (err->error) return out;
+
+  /* Look for boundaries */
+  maxStr    = in->nBytesInBuffer - (olong)(last-in->buffer);
+  prior = "Content-Location:";
+  tstr = g_strstr_len (last, maxStr, prior);
+  if (tstr==NULL) return out;  /* Cannot find? */
+  s = tstr + strlen(prior);
+  slash = s;  /* In case no slashing */
+  prior = "X-pad: **";
+  Xpad = g_strstr_len (last, maxStr, prior);
+  if (Xpad==NULL) return out;  /* Cannot find? */
+  e = Xpad;
+
+  /* find last '/' and '.' */
+  maxStr = (olong)(e-s);
+  for (i=0; i<maxStr; i++) {
+    if (s[i]=='/') slash = &s[i];
+    if (s[i]=='.') dot   = &s[i];
+  }
+
+  /* What type? */
+  slash++;  /* Skip slash or blank */
+  if (!strncmp(slash, "sdmDataHeader.xml", 17))        out = BDFMIMEType_sdmDataHeader;
+  else if (!strncmp(slash, "desc.xml", 8))             out = BDFMIMEType_desc;
+  else if (!strncmp(slash, "crossData.bin", 13))       out = BDFMIMEType_crossData;
+  else if (!strncmp(slash, "autoData.bin", 12))        out = BDFMIMEType_autoData;
+  else if (!strncmp(slash, "flags.bin", 9))            out = BDFMIMEType_flags;
+  else if (!strncmp(slash, "actualTimes.bin", 15))     out = BDFMIMEType_actualTimes;
+  else if (!strncmp(slash, "actualDurations.bin", 19)) out = BDFMIMEType_actualDurations;
+  else if (!strncmp(slash, "weights.bin", 11))         out = BDFMIMEType_weights;
+  else out =  BDFMIMEType_Unknown;
+
+  /* Find start - after **\n\n */
+  maxStr    = in->nBytesInBuffer - (olong)(Xpad-in->buffer);
+  prior = "**\n\n";
+  tstr = g_strstr_len (Xpad, maxStr, prior);
+  *start = tstr + strlen(prior);  /* First byte of data */
+
+  return out;
+} /* end GetNextMIMEType */
+

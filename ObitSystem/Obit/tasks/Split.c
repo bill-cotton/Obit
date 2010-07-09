@@ -883,7 +883,7 @@ void doSplit (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat       timeAvg;
-  olong         avgFreq, nchAvg;
+  olong        avgFreq, nchAvg;
   gboolean     isScratch, doAvgAll;
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Stokes", "UVRange", "timeRange", "FreqID",
@@ -943,6 +943,8 @@ void doSplit (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     scrData = ObitUVUtilAvgF (inData, isScratch, NULL, err);
     /* Then time */
     isScratch = FALSE;
+    dim[0] = dim[1] = 1;
+    ObitInfoListAlwaysPut (scrData->info, "timeAvg", OBIT_float, dim, &timeAvg);
     outData = ObitUVUtilAvgT (scrData, isScratch, outData, err);
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
     scrData = ObitUVUnref(scrData);

@@ -563,7 +563,7 @@ void ObitThreadPoolDone (ObitThread* in, gpointer arg)
 void ObitThreadPoolFree (ObitThread* in)
 {
 #ifdef OBIT_THREADS_ENABLED
-  if (in->pool)  g_thread_pool_free(in->pool, FALSE, TRUE);  /* Be patient */
+  if (in->pool)  g_thread_pool_free(in->pool, TRUE, TRUE); 
   in->pool = NULL;
   if (in->queue) g_async_queue_unref (in->queue);
   in->queue = NULL;

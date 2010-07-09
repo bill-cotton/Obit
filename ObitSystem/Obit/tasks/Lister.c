@@ -1572,7 +1572,7 @@ void getDataScale (ObitUV* inData, ofloat *blscale, ofloat *wtscale,
   ObitIOCode   iretCode;
   olong count=0, i, j, indx, jndx, kndx;
   gboolean good;
-  ofloat u, maxBL, v, w, re, im, amp, maxAmp=0.0, wt, maxWt=0.0, minWt=0.0;
+  ofloat u, maxBL=0.0, v, w, re, im, amp, maxAmp=0.0, wt, maxWt=0.0, minWt=0.0;
   gchar *routine = "getDataScale";
 
     if (err->error) return;  /* prior error */

@@ -1,0 +1,102 @@
+; $Id: BDFIn.TDF 199 2010-06-15 11:39:58Z bill.cotton $
+; BDFIn 
+;---------------------------------------------------------------
+;! Obit Convert EVLA BDF data and append to a UV data file.
+;# Task Obit BDF
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2010
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+BDFIn      LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+BDFIn :    Convert EVLA BDF data and append to a UV data file.
+**PARAM** str 128
+DataRoot                            Directory for input
+**PARAM** str 4
+DataType                            "FITS" or "AIPS" type of output
+**PARAM** str 48
+outFile                             FITS output uvdata if Type=='FITS'
+**PARAM** str 12
+outName                             Output UV AIPS file name
+**PARAM** str 6
+outClass                            Output UV AIPS class
+**PARAM** int 1
+outSeq           -1.0     9999.0    Output UV AIPS seq. #
+**PARAM** int 1
+outDisk                             Output UV file disk unit #.
+**PARAM** int 1
+selChan                             no. channels to select, 0=>first.
+**PARAM** str 4
+selBand                             Band to select, "  "=>first.
+**PARAM** boo 1  **DEF** T
+dropZero                            Drop records with all zero vis
+**PARAM** float 1 **DEF** 0.5
+calInt                              CL Table interval
+**PARAM** boo 1  **DEF** T
+Compress                            True => write compressed data
+**PARAM** str 128
+taskLog                             Logfile to write task messages to
+----------------------------------------------------------------
+BDFIn Convert BDF format data to UV
+Type:  Task
+ Use:  Convert BDF archive format to Obit UV data
+   Uses ALMA data format for EVLA data in the form of an ASDM 
+directory structure.
+   Flag entries in the ASDM are converted to entries in the AIPS FG
+table.  Scans with ascribed intents clearly for online calibration
+olly, "CALIBRATE-POINTING", arealso flagged.
+
+Adverbs:
+  DataRoot...Archive directory for project, end in '/'
+  DataType..'FITS' or 'AIPS'  type of output
+  outFile....Output UV FITS file name
+  outName....Output UV AIPS file name (name).
+  outClass...Output UV AIPS class.  Default BDFIn
+  outSeq.....Output UV AIPS seq. #. 0 => highest unique.
+  outDisk....Disk drive # of output UV file. (AIPS or FITS)
+
+Data selection
+  selChan....Number of channels to select.  Only Spectral windows with 
+             this number of channels is selected, others ignored.
+             0 -> use number of channels in first spectral window.
+
+  selBand....Band Code to select.  Only Spectral windows with 
+             this freq. band are selected, others ignored.
+             "  " -> use band in first spectral window.
+             Recognized values:
+               "4","P","L","S","C","X","Ku","K","Ka","Q","W"
+  dropZero...If True, visibility records with all zero records 
+             will be dropped.  In any case, visibilities which are 
+             exactly zero will be flagged (zero weight).
+  calInt.....Interval in min between AIPS CL table entries.
+
+  Compress...If True  the output data is written in
+             compressed format which can result in a substantial
+             reduction in disk space needed.  DO NOT USE THIS OPTION if
+             there is channel-dependent flagging.
+
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files.
+             Path is absolute or relative to where the task executes.
+----------------------------------------------------------------

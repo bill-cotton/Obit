@@ -215,7 +215,7 @@ void ObitErrInit (ObitErr* in, gpointer info)
   ObitInfoListGetTest(theInfo, "prtLv", &type, dim, &in->prtLv);
 
   /* task log file */
-  ObitInfoListGetP(theInfo, "taskLog", &type, dim, &tstr);
+  ObitInfoListGetP(theInfo, "taskLog", &type, dim, (gpointer)&tstr);
   /* If given and non empty and non blank*/
   if ((tstr) && (dim[0]>3) && (tstr[0]!= ' ') && (tstr[1]!= ' ')) { 
     ObitTrimTrail (tstr);
