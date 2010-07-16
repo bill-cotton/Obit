@@ -187,6 +187,8 @@ typedef enum obitBDFEndian ObitBDFEndian;
 #define BDFBUFFERFRAMES 32
 /** Maximum number of BasebandInfo structs */
 #define MAXBBINFO 128
+/** Maximum number of Spectral windows per BasebandInfo */
+#define MAXBBSW 32
 /** 
  * Macro to unreference (and possibly destroy) an ObitBDFData
  * returns a ObitBDFData*.
@@ -254,7 +256,7 @@ void ObitBDFDataInitScan (ObitBDFData *in, olong iMain, ObitErr *err);
 
 /** Public: Select Spectral window by number of channels  */
 gboolean ObitBDFDataSelChan  (ObitBDFData *in, olong selChan, 
-			      ObitASDMBand band);
+			      olong selIF, ObitASDMBand band);
 
 /** Public: Initialize Integration */
 void ObitBDFDataInitInteg (ObitBDFData *in, ObitErr *err);

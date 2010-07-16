@@ -29,12 +29,10 @@
 /* This class accesses data in the EVLA BDF format                   */
 /* This file defines BDF structures                          */
 
-/** Baseband info from XML           */
+/** Spectral Window info from XML           */
 typedef struct {
- /** Baseband name */
-  gchar   *basebandName;
- /** spectral window ID */
-  olong   spectralWindow;
+ /** spectral window number (NOT Id) */
+  olong   spectralWindowNum;
  /** List of single dish (autocorrelation) products, e.g. RR, RL, LL */
   gchar   **sdPolProducts;
  /** Number of autocorrelation products */
@@ -51,6 +49,16 @@ typedef struct {
   odouble scaleFactor;
   /** Sideband */
   gchar *sideband;
+} BDFSpecWindowInfo;
+
+/** Baseband info from XML           */
+typedef struct {
+ /** Baseband name */
+  gchar   *basebandName;
+  /** Number of spectral windows */
+  olong numSpectralWindow;
+  /** Array of Spectral window information dimension(MAXBBSW) */
+  BDFSpecWindowInfo** SWinds;
 } BDFBasebandInfo;
 
 /**

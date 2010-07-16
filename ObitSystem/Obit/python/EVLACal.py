@@ -177,6 +177,54 @@ def printMess (message, logfile=''):
         f.close()
     # end printMess
 
+def dhms2day(st):
+    """ convert a time string in d/hh:mm:ss.s to days
+
+    Returns time in days
+    st        time string as "d/hh:mm:ss.s"
+    """
+    ################################################################
+    stt = st
+    if st.__contains__("/"):
+        pp=stt.split("/")
+        day = int(pp[0])
+        stt = pp[1]
+    else:
+        day = 0
+    pp=stt.split(":")
+    if len(pp)>0:
+        hour = int(pp[0])
+    else:
+        hour = 0
+    if len(pp)>1:
+        min = int(pp[1])
+    else:
+        min = 0
+    if len(pp)>2:
+        ssec = float(pp[2])
+    else:
+        ssec = 0.0
+    tim = day + hour/24.0 + min/1440.0 + ssec/86400.0
+    return tim
+    # end dhms2day
+
+def day2dhms(tim):
+    """ convert a time in days to a string as d/hh:mm:ss.s
+
+    Returns time as string:  "d/hh:mm:ss.s"
+    tim       time in days
+    """
+    ################################################################
+    day=int(tim)
+    ttim = 24.0*(tim - day)
+    thour = min (int(ttim), 23)
+    ttim = 60.0*(ttim - thour)
+    tmin = min (int(ttim), 59)
+    ssec = 60.0*(ttim - tmin)
+    return str(day)+"/"+str(thour).zfill(2)+":"+str(tmin).zfill(2)+\
+           ":"+str(ssec)
+    # end day2dhms
+
 def EVLAClearCal(uv, err, doGain=True, doBP=False, doFlag=False):
     """ Clear previous calibration
 

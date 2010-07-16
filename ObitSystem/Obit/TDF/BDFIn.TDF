@@ -30,7 +30,7 @@
 ;;                         Charlottesville, VA 22903-2475 USA
 ;-----------------------------------------------------------------------
 BDFIn      LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-BDFIn :    Convert EVLA BDF data and append to a UV data file.
+BDFIn :    Convert EVLA BDF data and write to a UV data file.
 **PARAM** str 128
 DataRoot                            Directory for input
 **PARAM** str 4
@@ -47,6 +47,8 @@ outSeq           -1.0     9999.0    Output UV AIPS seq. #
 outDisk                             Output UV file disk unit #.
 **PARAM** int 1
 selChan                             no. channels to select, 0=>first.
+**PARAM** int 1
+selIF                               no. IFs to select, 0=>first.
 **PARAM** str 4
 selBand                             Band to select, "  "=>first.
 **PARAM** boo 1  **DEF** T
@@ -65,7 +67,7 @@ Type:  Task
 directory structure.
    Flag entries in the ASDM are converted to entries in the AIPS FG
 table.  Scans with ascribed intents clearly for online calibration
-olly, "CALIBRATE-POINTING", arealso flagged.
+only, "CALIBRATE-POINTING", are also flagged.
 
 Adverbs:
   DataRoot...Archive directory for project, end in '/'
@@ -80,7 +82,12 @@ Data selection
   selChan....Number of channels to select.  Only Spectral windows with 
              this number of channels is selected, others ignored.
              0 -> use number of channels in first spectral window.
-
+  selIF......Number of IFs (spectral windows) to select.  
+             Only scans with this number of Spectral windows is
+             selected, others ignored.
+             Note: not all of these spectral windows may be selected
+             depending on selChan.
+             0 -> use number of IFs in first scan.
   selBand....Band Code to select.  Only Spectral windows with 
              this freq. band are selected, others ignored.
              "  " -> use band in first spectral window.

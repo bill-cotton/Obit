@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -116,6 +116,7 @@ void ObitPrecessUVRaDecApp (ObitUVDesc *desc, odouble *RAApp, odouble *DecApp)
   ObitUVDescDate2JD (desc->obsdat, &JD);
   
   /* Precess */
+  if (desc->crval[desc->jlocr]<0.0) desc->crval[desc->jlocr] += 360.0; /* Patch AIPS++ corruption */
   RAMean  = desc->crval[desc->jlocr]*DG2RAD;
   DecMean = desc->crval[desc->jlocd]*DG2RAD;
   jpreces (JD, desc->equinox, 0.01, 1, FALSE, obsPos, polar,

@@ -96,6 +96,9 @@ static ObitBDFDataType LookupDataType(gchar *name);
 /** Private: Look up endian enum */
 static ObitBDFEndian LookupEndian(gchar *name);
 
+/** Private: delete BDFSpecWindowInfo */
+static BDFSpecWindowInfo* KillBDFSpecWindowInfo(BDFSpecWindowInfo *info);
+
 /** Private: delete BDFBasebandInfo */
 static BDFBasebandInfo* KillBDFBasebandInfo(BDFBasebandInfo *info);
 
@@ -351,8 +354,9 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, ObitErr *err)
 {
   gchar *startInfo, *endInfo, *startBB, *endBB, *prior, *next, *xnext, *tstr;
   olong  configDescriptionId, fieldId, sourceId, inext;
-  olong maxStr, maxStr2, i, count, *antIds, iConfig, iAnt, jAnt, jField, iSW, jSW, jSource;
+  olong maxStr, maxStr2, i, j, count, *antIds, iConfig, iAnt, jAnt, jField, iSW, jSW, jSource;
   olong *SWoff=NULL;
+  gboolean done;
   gchar *aname;
   gchar *routine = "ObitBDFDataInitScan";
 
@@ -521,7 +525,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, ObitErr *err)
   next = startInfo;
   while (i<MAXBBINFO) {
     /* first find limits of next baseband info */
-    maxStr2 = (olong)(endInfo-next);
+    maxStr = (olong)(endInfo-next);
     startBB = g_strstr_len (next, maxStr, "<baseband ");
     /* More? */
     if (startBB==NULL) break;
@@ -532,61 +536,77 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, ObitErr *err)
     in->ScanInfo->BBinfo[i] = KillBDFBasebandInfo(in->ScanInfo->BBinfo[i]);/* delete old */
     in->ScanInfo->BBinfo[i] = g_malloc0(sizeof(BDFBasebandInfo));          /* Allocate new */
 
+    /* Allocate MAXBBSW Spectral window array */
+    in->ScanInfo->BBinfo[i]->SWinds = g_malloc0(MAXBBSW*sizeof(BDFSpecWindowInfo*)); 
+    in->ScanInfo->BBinfo[i]->numSpectralWindow = 0;
+
     /* Parse */
     /* basebandName */
     prior = "<baseband name=";
     in->ScanInfo->BBinfo[i]->basebandName = BDFparse_quote_str(startBB, maxStr2, prior, &next);
   
-    /* spectral window ID   */
-    prior = "<spectralWindow sw=";
-    tstr = BDFparse_quote_str (startBB, maxStr2, prior, &next);
-    in->ScanInfo->BBinfo[i]->spectralWindow = (olong)strtol(tstr, &next, 10);
-    g_free (tstr);
-  
-    /* List of single dish (autocorrelation) products  */
-    prior = "sdPolProducts=\"";
-    in->ScanInfo->BBinfo[i]->sdPolProducts = BDFparse_strarray(startBB, maxStr2, prior, &next);
-    count = 0;
-    if (in->ScanInfo->BBinfo[i]->sdPolProducts) {
-      while (in->ScanInfo->BBinfo[i]->sdPolProducts[count]) {count++;}
-    }
-    in->ScanInfo->BBinfo[i]->numSdPolProducts = count;
-  
-    /* List of crosscorrelation products */
-    prior = "crossPolProducts=\"";
-    in->ScanInfo->BBinfo[i]->crossPolProducts = BDFparse_strarray(startBB, maxStr2, prior, &next);
-    /* Count 'em */
-    count = 0;
-    if (in->ScanInfo->BBinfo[i]->crossPolProducts) {
-      while (in->ScanInfo->BBinfo[i]->crossPolProducts[count]) {count++;}
-    }
-    in->ScanInfo->BBinfo[i]->numCrossPolProducts = count;
-  
-    /* Number of spectral points  */
-    prior = "numSpectralPoint=";
-    tstr = BDFparse_quote_str (startBB, maxStr2, prior, &next);
-    in->ScanInfo->BBinfo[i]->numSpectralPoint = (olong)strtol(tstr, &next, 10);
-    g_free (tstr);
-  
-    /* Number of data (e.g. pulsar) bins  */
-    prior = "numBin=";
-    tstr = BDFparse_quote_str (startBB, maxStr2, prior, &next);
-    in->ScanInfo->BBinfo[i]->numBin = (olong)strtol(tstr, &next, 10);
-    g_free (tstr);
-  
-    /* Number of data (e.g. pulsar) bins  */
-    prior = "scaleFactor=";
-    tstr = BDFparse_quote_str (startBB, maxStr2, prior, &next);
-    in->ScanInfo->BBinfo[i]->scaleFactor = (odouble)strtod(tstr, &next);
-    g_free (tstr);
-  
-    /* Sideband */
-    prior = "sideband=";
-    in->ScanInfo->BBinfo[i]->sideband = BDFparse_quote_str(startBB, maxStr2, prior, &next);
-  
-    in->ScanInfo->numBaseband++;  /* Count */
-    i++;
-  }
+    /* loop over spectral window numbers */
+    done = FALSE;
+    j = 0;
+    while (!done) {
+      prior = "<spectralWindow sw=";
+      tstr = BDFparse_quote_str (startBB, maxStr2, prior, &next);
+      if (tstr==NULL) break;  /* All? */
+      in->ScanInfo->BBinfo[i]->SWinds[j] = g_malloc0(sizeof(BDFSpecWindowInfo)); 
+      in->ScanInfo->BBinfo[i]->SWinds[j]->spectralWindowNum = (olong)strtol(tstr, &next, 10);
+      g_free (tstr);
+      
+      /* List of single dish (autocorrelation) products  */
+      prior = "sdPolProducts=\"";
+      in->ScanInfo->BBinfo[i]->SWinds[j]->sdPolProducts = BDFparse_strarray(startBB, maxStr2, prior, &next);
+      count = 0;
+      if (in->ScanInfo->BBinfo[i]->SWinds[j]->sdPolProducts) {
+	while (in->ScanInfo->BBinfo[i]->SWinds[j]->sdPolProducts[count]) {count++;}
+      }
+      in->ScanInfo->BBinfo[i]->SWinds[j]->numSdPolProducts = count;
+      
+      /* List of crosscorrelation products */
+      prior = "crossPolProducts=\"";
+      in->ScanInfo->BBinfo[i]->SWinds[j]->crossPolProducts = BDFparse_strarray(startBB, maxStr2, prior, &next);
+      /* Count 'em */
+      count = 0;
+      if (in->ScanInfo->BBinfo[i]->SWinds[j]->crossPolProducts) {
+	while (in->ScanInfo->BBinfo[i]->SWinds[j]->crossPolProducts[count]) {count++;}
+      }
+      in->ScanInfo->BBinfo[i]->SWinds[j]->numCrossPolProducts = count;
+      
+      /* Number of spectral points  */
+      prior = "numSpectralPoint=";
+      tstr = BDFparse_quote_str (startBB, maxStr2, prior, &next);
+      in->ScanInfo->BBinfo[i]->SWinds[j]->numSpectralPoint = (olong)strtol(tstr, &next, 10);
+      g_free (tstr);
+      
+      /* Number of data (e.g. pulsar) bins  */
+      prior = "numBin=";
+      tstr = BDFparse_quote_str (startBB, maxStr2, prior, &next);
+      in->ScanInfo->BBinfo[i]->SWinds[j]->numBin = (olong)strtol(tstr, &next, 10);
+      g_free (tstr);
+      
+      /* Data scaling factor  */
+      prior = "scaleFactor=";
+      tstr = BDFparse_quote_str (startBB, maxStr2, prior, &next);
+      in->ScanInfo->BBinfo[i]->SWinds[j]->scaleFactor = (odouble)strtod(tstr, &next);
+      g_free (tstr);
+      
+      /* Sideband */
+      prior = "sideband=";
+      in->ScanInfo->BBinfo[i]->SWinds[j]->sideband = BDFparse_quote_str(startBB, maxStr2, prior, &next);
+
+      /* Update text search range */
+      maxStr2 -= next-startBB;
+      startBB = next;
+      
+      in->ScanInfo->BBinfo[i]->numSpectralWindow++;
+      j++;  /* Spectral window index */
+    } /* End loop over baseband spectral windows */
+    in->ScanInfo->numBaseband++;  /* Count basebands */
+    i++;  /* baseband index */
+ } /* end loop over baseband */
   
   in->current = next;  /* where in buffer */
 
@@ -594,10 +614,10 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, ObitErr *err)
   in->numBaseline       = (in->ScanInfo->numAntenna * (in->ScanInfo->numAntenna-1))/2;
   in->currBaseline      = 0;
   in->numBaseband       = in->ScanInfo->numBaseband;
-  in->numSpectralWindow = 1;  /* NOT ALWAYS CORRECT */
-  in->numSpectralChann  = in->ScanInfo->BBinfo[0]->numSpectralPoint;
-  in->numCPoln = in->ScanInfo->BBinfo[0]->numCrossPolProducts;
-  in->numAPoln = in->ScanInfo->BBinfo[0]->numSdPolProducts;
+  in->numSpectralWindow = in->ScanInfo->BBinfo[0]->numSpectralWindow; /* NOT ALWAYS CORRECT */
+  in->numSpectralChann  = in->ScanInfo->BBinfo[0]->SWinds[0]->numSpectralPoint;
+  in->numCPoln = in->ScanInfo->BBinfo[0]->SWinds[0]->numCrossPolProducts;
+  in->numAPoln = in->ScanInfo->BBinfo[0]->SWinds[0]->numSdPolProducts;
 
   /* Spectral window array */
   in->SWArray = ObitSDMDataKillSWArray(in->SWArray);
@@ -777,15 +797,16 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, ObitErr *err)
  * Modifies in->SWArray
  * \param in       The structure to update
  * \param selChan selected number of channels
+ * \param selIF   selected number of IFs (spectral windows)
  * \param band    Selected band
  * \return TRUE if some data selected
  */
 gboolean ObitBDFDataSelChan  (ObitBDFData *in, olong selChan, 
-			  ObitASDMBand band)
+			      olong selIF, ObitASDMBand band)
 {
   /*gchar *routine = "ObitBDFDataSelChan";*/
 
-  return ObitSDMDataSelChan (in->SWArray, selChan, band);
+  return ObitSDMDataSelChan (in->SWArray, selChan, selIF, band);
   
 } /* end ObitBDFDataSelChan */
 
@@ -1578,15 +1599,14 @@ static ObitBDFEndian LookupEndian(gchar *name)
 } /* end LookupEndian */
 
 /** 
- * Destructor for .BDFBasebandInfo
+ * Destructor for .BDFSpecWindowInfo
  * \param  structure to destroy
  * \return NULL pointer
  */
-static BDFBasebandInfo* KillBDFBasebandInfo(BDFBasebandInfo *info)
+static BDFSpecWindowInfo* KillBDFSpecWindowInfo(BDFSpecWindowInfo *info)
 {
   olong i;
   if (info == NULL) return NULL;
-  if (info->basebandName) g_free(info->basebandName);
   if (info->sideband)     g_free(info->sideband);
   if (info->sdPolProducts) {
     i = 0;
@@ -1601,6 +1621,24 @@ static BDFBasebandInfo* KillBDFBasebandInfo(BDFBasebandInfo *info)
       g_free(info->crossPolProducts[i++]);
     }
     g_free(info->crossPolProducts);
+  }
+  g_free(info);
+  return NULL;
+} /* end  KillBDFSpecWindowInfo */
+
+/** 
+ * Destructor for .BDFBasebandInfo
+ * \param  structure to destroy
+ * \return NULL pointer
+ */
+static BDFBasebandInfo* KillBDFBasebandInfo(BDFBasebandInfo *info)
+{
+  olong i;
+  if (info == NULL) return NULL;
+  if (info->basebandName) g_free(info->basebandName);
+  for (i = 0; i<MAXBBSW; i++) {
+    if (info->SWinds[i])  KillBDFSpecWindowInfo(info->SWinds[i]);
+    else break;
   }
   g_free(info);
   return NULL;

@@ -232,7 +232,7 @@ olong ObitUVSelBufferSize (ObitUVDesc* desc,
 } /* end ObitUVSelBufferSize */
 
 /**
- * 
+ * Enforce defaults (RA in range (0,360)
  * Also indexes structure.
  * \param in Pointer to descriptor.
  * \param sel UV selector, output vis descriptor changed if needed.
@@ -247,6 +247,12 @@ void ObitUVSelDefault (ObitUVDesc* in, ObitUVSel* sel)
 
   /* Index as well */
   ObitUVDescIndex(in);
+
+  /* Patch AIPS++ Bugs */
+  if (in->jlocr>=0) {
+    if (in->crval[in->jlocr]<0.0) in->crval[in->jlocr] += 360.0;
+  }
+  if (in->obsra<0.0) in->obsra += 360.0;
 } /* end ObitUVSelDefault */
 
 /**

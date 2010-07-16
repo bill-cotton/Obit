@@ -857,14 +857,14 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong scan)
   /* Sort into ascending reference frequencies - o
      float precision should be good enough */
   out->order = g_malloc0(out->nwinds*sizeof(olong));
-  sortStruct = g_malloc0(2*out->nwinds*sizeof(ofloat));
+  sortStruct = g_malloc0((2*out->nwinds+5)*sizeof(ofloat));
   for (i=0; i<out->nwinds; i++) {
     sortStruct[2*i]   = (ofloat)i;
     sortStruct[2*i+1] = (ofloat)out->winds[i]->chanFreqStart;
   }
   /* Sort */
   number = out->nwinds;
-  size   = out->nwinds*sizeof(ofloat);
+  size   = 2*sizeof(ofloat);
   ncomp  = 1;
   g_qsort_with_data (sortStruct, number, size, CompareFreq, &ncomp);
 
@@ -920,7 +920,7 @@ ASDMSpectralWindowArray* ObitSDMDataKillSWArray (ASDMSpectralWindowArray *in)
  * \param band    Selected band
  */
 gboolean ObitSDMDataSelChan  (ASDMSpectralWindowArray *in, olong selChan,
-			      ObitASDMBand band)
+			      olong selIF, ObitASDMBand band)
 {
   gboolean out = FALSE;
   olong iSW;
@@ -928,7 +928,8 @@ gboolean ObitSDMDataSelChan  (ASDMSpectralWindowArray *in, olong selChan,
   
   for (iSW=0; iSW<in->nwinds; iSW++) {
     in->winds[iSW]->selected = (in->winds[iSW]->numChan == selChan) &&
-      (ObitSDMDataFreq2Band (in->winds[iSW]->refFreq)==band);
+      (ObitSDMDataFreq2Band (in->winds[iSW]->refFreq)==band) && 
+      (in->nwinds==selIF);
     if (in->winds[iSW]->selected) out = TRUE;
   }
   return out;
@@ -1224,14 +1225,16 @@ ObitASDMBand ObitSDMDataFreq2Band (odouble freq)
 /**  Find first selected Scan
  * \param  in      ASDM object
  * \param  selChan Number of selected channels
+ * \param  selIF   Number of selected IFs (spectral windows)
  * \param  selBand Selected band
  * \return 1-rel scan number, -1=> problem.
  */
-olong ObitASDSelScan(ObitSDMData *in, olong selChan, ObitASDMBand selBand)
+olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF, 
+		     ObitASDMBand selBand)
 {
   olong out = 1;
   olong configDescriptionId, dataDescriptionId, spectralWindowId;
-  olong iMain, iConfig, iDD, jSW, jDD;
+  olong iMain, iConfig, iDD, jSW, jDD, numDD, i;
  
   /* Loop over scans in Main table */
   for (iMain=0; iMain<in->MainTab->nrows; iMain++) {
@@ -1244,6 +1247,11 @@ olong ObitASDSelScan(ObitSDMData *in, olong selChan, ObitASDMBand selBand)
     }
     if (iConfig>=in->ConfigDescriptionTab->nrows) return -1;
     
+      /* Count number of data descriptions = number of spectral windows */
+      numDD = 0;
+      i = 0;
+      while(in->ConfigDescriptionTab->rows[iConfig]->dataDescriptionId[i++]>=0) {numDD++;}
+
     /* Reference frequency - get from Spectral window on any dataDescription */
     /* Find Data description */
     for (iDD=0; iDD<in->ConfigDescriptionTab->rows[iConfig]->numDataDescription; iDD++) {
@@ -1261,11 +1269,12 @@ olong ObitASDSelScan(ObitSDMData *in, olong selChan, ObitASDMBand selBand)
       if (jSW>=in->SpectralWindowTab->nrows) return -1;
       /* Finally, is this one a match? */
       if ((ObitSDMDataFreq2Band (in->SpectralWindowTab->rows[jSW]->refFreq)==selBand) && 
-	  (in->SpectralWindowTab->rows[jSW]->numChan==selChan)) return out;
+	  (in->SpectralWindowTab->rows[jSW]->numChan==selChan) && 
+	  (numDD==selIF)) return out;
     } /* End loop over data descriptions */
   } /* End loop over main table */
 
-  return -1;
+  return -1;  /* Must not have found a match */
 } /* end ObitASDSelScan */
 
 /**

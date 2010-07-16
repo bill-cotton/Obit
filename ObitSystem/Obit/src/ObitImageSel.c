@@ -226,6 +226,12 @@ void ObitImageSelDefault (ObitImageDesc* in, ObitImageSel* sel)
 
   /* Index as well */
   ObitImageDescIndex(in);
+
+  /* Patch AIPS++ Bug */
+  if (in->jlocr>=0) {
+    if (in->crval[in->jlocr]<0.0) in->crval[in->jlocr] += 360.0;
+  }
+  if (in->obsra<0.0) in->obsra += 360.0;
 } /* end ObitImageSelDefault */
 
 /**

@@ -1154,7 +1154,11 @@ void ObitDConCleanRestore(ObitDConClean *in, ObitErr *err)
       bmaj = image->myDesc->beamMaj;
       bmin = image->myDesc->beamMin;
       bpa  = image->myDesc->beamPA;
-    }
+      /* Use for any others */
+      in->bmaj = bmaj;
+      in->bmin = bmin;
+      in->bpa  = bpa;
+   }
     
     /* Get CC table */
     ver = in->CCver;
@@ -1416,9 +1420,19 @@ void ObitDConCleanXRestore(ObitDConClean *in, ObitErr *err)
 	  gauss[2] = (1.0/(bmin*bmin) - 1.0/(bmaj*bmaj)) *
 	    sr*cr*fabs(celly*celly)*8.0*log(2.0);
 
-	  /* Convolve list to tmpArray */
+	  /* Convolve list to tmpArray  */
 	  ObitFArrayConvGaus (tmpArray, list, ncomp, gauss);
-
+	  /* DEBUG
+	     if ((ifield==32) && (jfield==29)) {
+	     ObitFArrayFill(tmpArray,0.0);
+	     ObitFArrayConvGaus (tmpArray, list, ncomp, gauss);
+	     ObitImageUtilArray2Image ("DbugXRestCC.fits", 0, tmpArray, err);
+	     if (err->error) Obit_traceback_msg (err, routine, in->name);
+	     } else {
+	     ObitFArrayConvGaus (tmpArray, list, ncomp, gauss);
+	     } */
+	  
+	  /* END DEBUG */
 	} /* end of Anything to do? */
 
 	/* Free list */

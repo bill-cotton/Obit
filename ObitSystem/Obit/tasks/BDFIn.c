@@ -54,7 +54,7 @@
 #include "ObitHistory.h"
 #include "ObitPrecess.h"
 #ifndef VELIGHT
-#define VELIGHT 2.997924562e8
+#define VELIGHT 2.99792458e8
 #endif
 
 /* internal prototypes */
@@ -668,11 +668,11 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   ObitUVDesc *desc;
   olong ncol;
   gchar *today=NULL;
-  olong i, lim, selChan, iScan;
-  ofloat epoch, equinox;
-  olong nchan, npoln, nIF;
-  odouble refFreq, startFreq;
-  ofloat freqStep;
+  olong i, lim, selChan, selIF, iScan, iConfig, numDD, configDescriptionId;
+  ofloat epoch=2000.0, equinox=2000.0;
+  olong nchan=1, npoln=1, nIF=1;
+  odouble refFreq, startFreq=1.0;
+  ofloat freqStep=1.0;
   ASDMSpectralWindowArray* SpWinArray;
   ASDMAntennaArray*  AntArray;
   ObitInfoType type;
@@ -728,8 +728,36 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   Obit_log_error(err, OBIT_InfoErr, "Selecting spectral windows with %d channels", selChan);
   ObitErrLog(err);
 
+  /* IF selection */
+  selIF = 0;
+  ObitInfoListGetTest(myInput, "selIF", &type, dim, &selIF);
+  /* Default = first scan - what a bizzare format!!!  */
+  configDescriptionId = SDMData->MainTab->rows[0]->configDescriptionId;
+  /* Lookup in configDescription table */
+  for (iConfig=0; iConfig<SDMData->ConfigDescriptionTab->nrows; iConfig++) {
+    if (SDMData->ConfigDescriptionTab->rows[iConfig]->configDescriptionId==configDescriptionId) break;
+  }
+  Obit_return_if_fail((iConfig<SDMData->ConfigDescriptionTab->nrows), err,
+		      "%s: Could not find ConfigDescriptionID %d in ASDM", 
+		      routine, configDescriptionId);
+
+  /* Count number of data descriptions */
+  numDD = 0;
+  i = 0;
+  while(SDMData->ConfigDescriptionTab->rows[iConfig]->dataDescriptionId[i++]>=0) {numDD++;}
+  /* Number of data descriptors = no. spectral windows */
+  if (selIF<=0) selIF = numDD;
+  /* Save for history */
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListAlwaysPut(myInput, "selIF", OBIT_long, dim, &selIF);
+  Obit_log_error(err, OBIT_InfoErr, "Selecting scans with %d Spectral Windows", selIF);
+  ObitErrLog(err);
+
   /* Find first selected scan */
-  iScan = ObitASDSelScan (SDMData, selChan, band);
+  iScan = ObitASDSelScan (SDMData, selChan, selIF, band);
+  Obit_return_if_fail((iScan>=0), err,
+		      "%s: No scans found matching selection criteria", 
+		      routine);
 
   /* Define output descriptor */
   desc = outData->myDesc;
@@ -743,7 +771,7 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
 		      "%s: Could not extract Antenna info from ASDM", 
 		      routine);
   /* Selectral Spectral windows */
-  ObitSDMDataSelChan (SpWinArray, selChan, band);
+  ObitSDMDataSelChan (SpWinArray, selChan, selIF, band);
 
   /* Frequency info from first selected Spectral window */
   for (i=0; i<SpWinArray->nwinds; i++) {
@@ -757,11 +785,13 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
     }
   }
   
-  /* Count elected Spectral window */
+  /* Count selected Spectral windows */
   nIF = 0;
   for (i=0; i<SpWinArray->nwinds; i++) {
     if (SpWinArray->winds[i]->selected) nIF++;
   }
+  Obit_log_error(err, OBIT_InfoErr, "Selecting %d spectral windows (IFs)", nIF);
+  ObitErrLog(err);
   
   /* Define header */
   desc->nvis = 0;
@@ -945,7 +975,7 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData,
   olong          iScan, iIntent;
   gchar          hicard[81], begString[17], endString[17];
   gchar         *hiEntries[] = {
-    "DataRoot", "selChan", "selBand", "dropZero", "calInt",
+    "DataRoot", "selChan", "selIF", "selBand", "dropZero", "calInt",
     NULL};
   gchar *routine = "BDFInHistory";
   
@@ -1447,7 +1477,7 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   /* Create output Source table object */
   ver      = 1;
   access   = OBIT_IO_ReadWrite;
-  numIF    = SpWinArray->nwinds;   /* One spectral window = 1 IF */
+  numIF    = outData->myDesc->inaxes[outData->myDesc->jlocif];
   outTable = newObitTableSUValue ("Output table", (ObitData*)outData, 
 				  &ver, access, numIF, err);
   if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with SU table");
@@ -1603,12 +1633,13 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 {
   ObitBDFData *BDFData=NULL;
   ObitIOCode retCode;
-  olong iMain, iInteg, i, selChan, iSW, jSW, nIFsel, cntDrop=0, BBNum;
+  olong iMain, iInteg, ScanId, i, j, iBB, selChan, selIF, iSW, jSW, kBB, nIFsel, 
+    cntDrop=0, BBNum;
   ofloat *Buffer=NULL, tlast=-1.0e20;
   ObitUVDesc *desc;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar selBand[12];
+  gchar selBand[12], begString[17], endString[17];
   ObitASDMBand band;
   ASDMSpectralWindowArray* SpWinArray=NULL;
   gboolean dropZero=TRUE;
@@ -1640,9 +1671,11 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   BDFData = ObitBDFDataCreate ("BDF", outData->myDesc, SDMData, err);
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
 
-  /* Channel selection - should have been completely specified in GetHeader */
+  /* Channel/IF selection - should have been completely specified in GetHeader */
   selChan = 0;
   ObitInfoListGetTest(myInput, "selChan", &type, dim, &selChan);
+  selIF   = 0;
+  ObitInfoListGetTest(myInput, "selIF", &type, dim, &selIF);
 
   /* Drop Zero vis? */
   ObitInfoListGetTest(myInput, "dropZero", &type, dim, &dropZero);
@@ -1668,10 +1701,16 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     Obit_return_if_fail((SpWinArray), err,
 			"%s: Could not extract Spectral Windows from ASDM", 
 			routine);
-    if (!ObitSDMDataSelChan (SpWinArray, selChan, band)) continue;
+    if (!ObitSDMDataSelChan (SpWinArray, selChan, selIF, band)) continue;
     
     /* Get filename */
     filename = g_strconcat (dataroot, "/ASDMBinary/uid_", SDMData->MainTab->rows[iMain]->entityId, NULL);
+    /* Complain and bail if file doesn't exist */
+    if (!ObitFileExist(filename, err)) {
+      Obit_log_error(err, OBIT_InfoWarn, "Quiting, BDF file %s not found", filename);
+      goto done;
+    }
+    /* File initialization */
     ObitBDFDataInitFile (BDFData, filename, err);
     g_free(filename);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
@@ -1681,15 +1720,17 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
  
     /* Set selection */
-    ObitBDFDataSelChan (BDFData, selChan, band);
+    ObitBDFDataSelChan (BDFData, selChan, selIF, band);
 
     /* Consistency check - loop over selected Spectral windows */
-    nIFsel = 0;
-    for (iSW=0; iSW<BDFData->SWArray->nwinds; iSW++) {
+    nIFsel = 0;   /* Number of selected IFs */
+    iSW    = 0;   /* input Spectral window index */
+    kBB    = 0;   /* Baseband index */
+    iBB    = 0;   /* SW Index in baseband */
+    while (iSW<BDFData->SWArray->nwinds) {
       /* Get from ordered list */
       jSW = BDFData->SWArray->order[iSW];
       if (BDFData->SWArray->winds[jSW]->selected) {
- 	nIFsel++;
 	Obit_return_if_fail((nchan==BDFData->SWArray->winds[jSW]->numChan), err,
 			    "%s: Input number freq. incompatible %d != %d", 
 			    routine, nchan, BDFData->SWArray->winds[jSW]->numChan);
@@ -1697,16 +1738,34 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 			    "%s: Input number Poln incompatible %d != %d", 
 			    routine, nstok, BDFData->SWArray->winds[jSW]->nCPoln);
 	/* Baseband - assume name starts with "BB_" and ends in number */
-	BBNum = (olong)strtol(&BDFData->ScanInfo->BBinfo[iSW]->basebandName[3], NULL, 10);
+	BBNum = (olong)strtol(&BDFData->ScanInfo->BBinfo[kBB]->basebandName[3], NULL, 10);
 	Obit_return_if_fail((BBNum==BDFData->SWArray->winds[jSW]->basebandNum), err,
 			    "%s: Input basebands inconsistent %d != %d, IF %d", 
 			    routine, BBNum, BDFData->SWArray->winds[jSW]->basebandNum, nIFsel);
-     } /* end if selected */
-    }
+  	nIFsel++;
+      } 
+      iSW++;
+      /* All of this baseband? */
+      iBB++;
+      if (iBB>=BDFData->ScanInfo->BBinfo[kBB]->numSpectralWindow) {kBB++; iBB=0;} /* Next baseband */
+    } /* End loop over basebands/spectral windows */
     /* Same number of IFs? */
     Obit_return_if_fail((nIF==nIFsel), err,
 			"%s: Input number Bands (IFs) incompatible %d != %d", 
 			routine, nIF, nIFsel);
+
+    /* Tell about scan */
+    ScanId = SDMData->MainTab->rows[iMain]->scanNumber;
+    for (j=0; j<SDMData->ScanTab->nrows; j++) {
+      if (SDMData->ScanTab->rows[j]->scanNumber==ScanId) break;
+    }
+    if (j<SDMData->ScanTab->nrows) {
+      /* Timerange in human form */
+      day2dhms(SDMData->ScanTab->rows[j]->startTime-refJD, begString);
+      day2dhms(SDMData->ScanTab->rows[j]->endTime-refJD,   endString);
+      Obit_log_error(err, OBIT_InfoErr, "Scan %3.3d %s time %s  - %s", 
+		     ScanId, SDMData->ScanTab->rows[j]->sourceName, begString, endString);
+    }
 
     /* Loop over integrations */
     for (iInteg=0; iInteg<SDMData->MainTab->rows[iMain]->numIntegration; iInteg++) {
@@ -1750,6 +1809,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   } /* End loop over scans */
 
   /* Tell results */
+ done:
   Obit_log_error(err, OBIT_InfoErr, 
 		 "Wrote %d visibilities, drop %d all zero", 
 		 outData->myDesc->nvis, cntDrop);

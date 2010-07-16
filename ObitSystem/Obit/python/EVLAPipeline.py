@@ -63,8 +63,8 @@ chAvg       = 1            # number of channels to average
 doEditList  = False        # Edit using editList?
 editFG      = 1            # Table to apply edit list to
 editList = [
-#    {"timer"("0/0:0:0","1:0:0"),Ant=[0,0],IFs=[1,0],Chans=[1,0],Stokes='1111',Reason="bad data"},
-]
+#    {"timer":("0/06:09:0.0","0/06:13:0.0"),"Ant":[ 8,0],"IFs":[2,2],"Chans":[1,0],"Stokes":'1110',"Reason":"bad data"},
+    ]
 
 # Bandpass Calibration
 doBP        = True         # Clear BP tables

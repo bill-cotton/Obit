@@ -345,7 +345,7 @@ ASDMSpectralWindowArray* ObitSDMDataKillSWArray (ASDMSpectralWindowArray *in);
 
 /** Public: Select Spectral window by number of channels  */
 gboolean ObitSDMDataSelChan  (ASDMSpectralWindowArray *in, olong selChan, 
-			      ObitASDMBand band);
+			      olong selIF, ObitASDMBand band);
 
 /** Public: Get antenna/station array. */
 ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong scan);
@@ -366,7 +366,7 @@ ObitASDMBand ObitSDMDataBand2Band (gchar *code);
 ObitASDMBand ObitSDMDataFreq2Band (odouble freq);
 
 /** Find first scan matching selection */
-olong ObitASDSelScan(ObitSDMData *in, olong selChan, ObitASDMBand band);
+olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF, ObitASDMBand band);
 
 /** Fix source numbers in an ASDMSourceTable */
 void ObitSDMSourceTabFix(ObitSDMData *in);

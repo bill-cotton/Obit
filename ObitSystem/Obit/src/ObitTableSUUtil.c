@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -275,8 +275,12 @@ ObitSourceList* ObitTableSUGetList (ObitTableSU *in, ObitErr *err) {
     out->SUlist[sid]->numIF   = in->numIF;
     out->SUlist[sid]->equinox = row->Epoch;   /* correct AIPS misnaming */
     out->SUlist[sid]->RAMean  = row->RAMean;
+    /* Patch AIPS++ corruption */
+    if (out->SUlist[sid]->RAMean<0.0) out->SUlist[sid]->RAMean += 360.0;
     out->SUlist[sid]->DecMean = row->DecMean;
     out->SUlist[sid]->RAApp   = row->RAApp;
+    /* Patch AIPS++ corruption */
+    if (out->SUlist[sid]->RAApp<0.0) out->SUlist[sid]->RAApp += 360.0;
     out->SUlist[sid]->DecApp  = row->DecApp;
     out->SUlist[sid]->Bandwidth  = row->Bandwidth;
     strncpy (out->SUlist[sid]->SourceName, row->Source, 17);
@@ -438,9 +442,11 @@ ObitIOCode ObitTableSUSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
     outRow->Qual      = inRow->Qual;
     outRow->Bandwidth = inRow->Bandwidth;
     outRow->RAMean    = inRow->RAMean;
+    if (outRow->RAMean<0.0) outRow->RAMean += 360.0; /* Patch AIPS++ corruption */
     outRow->DecMean   = inRow->DecMean;
     outRow->Epoch     = inRow->Epoch;
     outRow->RAApp     = inRow->RAApp;
+    if (outRow->RAApp<0.0) outRow->RAApp += 360.0; /* Patch AIPS++ corruption */
     outRow->DecApp    = inRow->DecApp;
     outRow->PMRa      = inRow->PMDec;
     for (i=0; i<inTab->myDesc->repeat[inTab->SourceCol]; i++) 
