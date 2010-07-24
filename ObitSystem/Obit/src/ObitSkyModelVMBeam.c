@@ -1,6 +1,6 @@
 /* $Id:  $ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009                                               */
+/*;  Copyright (C) 2009,2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1894,6 +1894,7 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 	  channel++; /* Finished another channel */
 	  /* Have we finished this plane in the correction cubes? */
 	  if (plane!=in->FreqPlane[MIN(channel, (in->numUVChann-1))]) {
+	    plane   = in->FreqPlane[MIN(channel, (in->numUVChann-1))];  /* Which plane in correction cube */
 	    /* Reset gains & channels if this the last vis */
 	    if (iVis>=(hiVis-1)) {
 	      largs->endVMModelTime = -1.0e20;  
@@ -1903,19 +1904,17 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 		lstartChannel = 0;
 		lstartIF++;
 	      }
-	    }
-	    plane   = in->FreqPlane[MIN(channel, (in->numUVChann-1))];  /* Which plane in correction cube */
-	    goto newPlane;
-	  } /* end if new channel */
+	    } /* end if last vis */
+	    if (channel>1) goto newPlane;
+	  } /* end if new plane */
 	} /* end loop over Channel */
 	offsetIF += jincif;
       } /* end loop over IF */
       
-      /* Come to here is finished with correction plane */
+      /* Come to here if finished with correction plane */
     newPlane:
       visData += lrec; /* Update vis pointer */
     } /* end loop over visibilities */
-    iStoke = 0;  /* DEB */
   } /* end outer frequency loop */
 
   /* Indicate completion */

@@ -961,6 +961,9 @@ void MakeCubeDesc (ObitImageDesc *inDesc, ObitImageDesc *outDesc,
   outDesc->maxval    = -1.0e20;
   outDesc->minval    =  1.0e20;
 
+  /* 32 bit float */
+  outDesc->bitpix = -32;
+
   return;
 } /* end MakeCubeDesc */
 

@@ -89,7 +89,9 @@ gboolean ObitTableNXWantSour (ObitTableNX *in, olong sid,
 
 /**
  * Make flagging entries in FGTab for beginning and/or end of scans
- * for selected data.
+ * for selected data.  
+ * Flags an extra 2 seconds before and after each scan depending on 
+ * begDrop/endDrop if the source changes between scans
  * \param in        NX table to use
  * Control parameter on info element of in:
  * \li "begDrop"   OBIT_float  (1,1,1) Time (min) at start of scan to flag
@@ -106,8 +108,8 @@ void ObitTableNXUtilQuack (ObitTableNX *in, ObitTableFG *FGTab,
   ObitTableNXRow *NXrow = NULL;
   ObitTableFGRow *FGrow = NULL;
   gboolean want, *AntOK;
-  olong irow, orow, iant, nscan=0;
-  ofloat begDrop, endDrop, sumTime=0.0;
+  olong irow, orow, iant, nscan=0, lastSou=-999;
+  ofloat begDrop, endDrop, edgeDrop, drop=0.0, sumTime=0.0;
   gchar Reason[64];
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
@@ -130,6 +132,16 @@ void ObitTableNXUtilQuack (ObitTableNX *in, ObitTableFG *FGTab,
   /* to days */
   begDrop /= 1440.0;
   endDrop /= 1440.0;
+
+  /* Additional band at edges - 2 sec */
+  edgeDrop = 2.0 / 86400.0;
+
+  /* If there is already data, mark as unsorted */
+  if (FGTab->myDesc->nrow>0) {
+    FGTab->myDesc->sort[0]=0; FGTab->myDesc->sort[1]=0;
+    ((ObitTableDesc*)FGTab->myIO->myDesc)->sort[0]=0; 
+    ((ObitTableDesc*)FGTab->myIO->myDesc)->sort[1]=0;
+  }
 
   /* Which antennas wanted */
   AntOK  = g_malloc0(maxAnt*sizeof(gboolean));
@@ -196,15 +208,20 @@ void ObitTableNXUtilQuack (ObitTableNX *in, ObitTableFG *FGTab,
 
     /* If so write selected flagging */
     if (want) {
+
+      /* Add extra time is source changed */
+      if (NXrow->SourID!=lastSou) drop = edgeDrop;
+      else drop = 0.0;
+
       nscan++; /* Count */
       FGrow->SourID       = NXrow->SourID;
       FGrow->SubA         = NXrow->SubA;
       FGrow->freqID       = NXrow->FreqID;
-      FGrow->TimeRange[0] = NXrow->Time-0.51*NXrow->TimeI;
+      FGrow->TimeRange[0] = NXrow->Time-0.51*NXrow->TimeI - drop;
       FGrow->TimeRange[1] = NXrow->Time-0.5*NXrow->TimeI + begDrop;
-      sumTime +=  begDrop;
      /* Beginning */
       if (begDrop> 0.0) {
+	sumTime +=  begDrop;
 	/* Loop over antennas */
 	for (iant=0; iant<maxAnt; iant++) {
 	  if (!AntOK[iant]) continue;  /* selected? */
@@ -222,7 +239,7 @@ void ObitTableNXUtilQuack (ObitTableNX *in, ObitTableFG *FGTab,
 	FGrow->SubA         = NXrow->SubA;
 	FGrow->freqID       = NXrow->FreqID;
 	FGrow->TimeRange[0] = NXrow->Time+0.5*NXrow->TimeI - endDrop;
-	FGrow->TimeRange[1] = NXrow->Time+0.51*NXrow->TimeI;
+	FGrow->TimeRange[1] = NXrow->Time+0.51*NXrow->TimeI + drop;
 	sumTime += endDrop;
 	for (iant=0; iant<maxAnt; iant++) {
 	  if (!AntOK[iant]) continue;  /* selected? */
@@ -234,7 +251,7 @@ void ObitTableNXUtilQuack (ObitTableNX *in, ObitTableFG *FGTab,
 	}
       } /* end antenna loop */
     }
-    
+    lastSou = NXrow->SourID;
   } /* end loop over rows */
 
   /* close and cleanup */

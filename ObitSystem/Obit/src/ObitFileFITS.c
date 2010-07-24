@@ -822,7 +822,7 @@ ObitIOCode
 ObitFileFITSWriteHistory (ObitFileFITS *in, gchar *hiCard, ObitErr *err)
 {
   ObitIOCode  retCode = OBIT_IO_SpecErr;
-  int status = 0;
+  int i, n, status = 0;
   gchar *routine = "ObitFileFITSWriteHistory";
 
   /* error checks */
@@ -830,6 +830,10 @@ ObitFileFITSWriteHistory (ObitFileFITS *in, gchar *hiCard, ObitErr *err)
   if (err->error) return retCode;
   g_assert (ObitIsA(in, &myClassInfo));
   if (in->status==OBIT_ErrorExist) return retCode;
+
+  /* Remove any non ascii char - replace by blank */
+  n = strlen(hiCard);
+  for (i=0; i<n; i++) if (!g_ascii_isalnum (hiCard[i])) hiCard[i] = ' ';
  
   fits_write_history (in->myFptr, (char*)hiCard, &status);
   if (status!=0) {

@@ -36,6 +36,7 @@
 #include "ObitTableCCUtil.h"
 #include "ObitSkyGeom.h"
 #include "ObitImageWB.h"
+#include "ObitSkyModelVMBeam.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -491,13 +492,15 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
   ObitDConCleanVis *in;
   ObitFArray **pixarray=NULL;
   gboolean done, fin=TRUE, quit=FALSE, doSub, bail, doMore, moreClean, notDone;
-  gboolean redo;
+  gboolean redo, isBeamCor;
   olong jtemp, i, *startCC=NULL, *newCC=NULL, count, ifld;
   olong redoCnt=0, damnCnt=0, lastIter, lastFld;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType type;
   const ObitDConCleanVisClassInfo *inClass;
   const ObitUVImagerClassInfo *imagerClass;
   const ObitDConCleanPxListClassInfo *pxListClass;
+  gchar *HALF="HALF", oldStokes[6];
   gchar *routine = "ObitDConCleanVisDeconvolve";
 
   /* DEBUG
@@ -533,9 +536,23 @@ void ObitDConCleanVisDeconvolve (ObitDCon *inn, ObitErr *err)
 
   /* If doing SDI Clean save copy of uvwork data */
   if (in->SDIGain>0.0) {
+    /* If BeamCor imaging, make sure both parallel hands copied */
+    isBeamCor = ObitSkyModelVMBeamIsA(in->skyModel);
+    if (isBeamCor) {
+      strncpy (oldStokes, HALF, 5);  /* Save old value */
+      ObitInfoListGetTest(in->imager->uvwork->info, "Stokes", &type, dim, oldStokes);
+      dim[0] = 4; dim[1] = dim[2] = 1;
+      ObitInfoListAlwaysPut (in->imager->uvwork->info, "Stokes", OBIT_string, dim, HALF);
+      
+    }
     in->SDIdata = newObitUVScratch (in->imager->uvwork, err);
     in->SDIdata = ObitUVCopy (in->imager->uvwork, in->SDIdata, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
+    if (isBeamCor) {  /* restore previous value of Stokes */
+      dim[0] = 4; dim[1] = dim[2] = 1;
+      ObitInfoListAlwaysPut (in->imager->uvwork->info, "Stokes", OBIT_string, dim, oldStokes);
+      
+    }
   }
 
   /* Create Pixel List if needed - has size changed? */

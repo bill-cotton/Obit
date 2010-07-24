@@ -125,7 +125,9 @@ int main ( int argc, char **argv )
   ObitInfoListCopyList (myInput, NXTab->info, editParms);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
-  /* Do editing */
+  /* Do editing - open/close to init selector */
+  ObitUVOpen (inData, OBIT_IO_ReadCal, err);
+  ObitUVClose (inData, err);
   ObitTableNXUtilQuack (NXTab, FGTab, inData->mySel, inData->myDesc->maxAnt, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
@@ -143,7 +145,7 @@ int main ( int argc, char **argv )
  exit: 
   ObitReturnDumpRetCode (ierr, outfile, myOutput, err);
   myOutput  = ObitInfoListUnref(myOutput);   /* delete output list */
-  mySystem = ObitSystemShutdown (mySystem);
+  mySystem  = ObitSystemShutdown (mySystem);
   
   return ierr;
 } /* end of main */
@@ -329,8 +331,9 @@ ObitInfoList* defaultInputs(ObitErr *err)
   gchar *strTemp;
   oint   itemp;
   ofloat farray[3];
+  gboolean btemp;
   ObitInfoList *out = newObitInfoList();
-  gchar *routine = "defaultInputs";
+  /*gchar *routine = "defaultInputs";*/
 
   /* error checks */
   if (err->error) return out;
@@ -339,78 +342,72 @@ ObitInfoList* defaultInputs(ObitErr *err)
   /* Program number */
   dim[0] = 1; dim[1] = 1;
   itemp = 1;
-  ObitInfoListPut (out, "pgmNumber", OBIT_oint, dim, &itemp, err);
-  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  ObitInfoListAlwaysPut (out, "pgmNumber", OBIT_oint, dim, &itemp);
 
   /* Default FITS directories - same directory */
   dim[0] = 1; dim[1] = 1;
   itemp = 0; /* number of FITS directories */
-  ObitInfoListPut (out, "nFITS", OBIT_oint, dim, &itemp, err);
+  ObitInfoListAlwaysPut (out, "nFITS", OBIT_oint, dim, &itemp);
 
   /* AIPS user number */
   dim[0] = 1; dim[1] = 1;
   itemp = 2;
-  ObitInfoListPut (out, "AIPSuser", OBIT_oint, dim, &itemp, err);
-  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  ObitInfoListAlwaysPut (out, "AIPSuser", OBIT_oint, dim, &itemp);
 
   /* Default AIPS directories */
   dim[0] = 1;dim[1] = 1;
   itemp = 0; /* number of AIPS directories */
-  ObitInfoListPut (out, "nAIPS", OBIT_oint, dim, &itemp, err);
+  ObitInfoListAlwaysPut (out, "nAIPS", OBIT_oint, dim, &itemp);
 
-  /* Default type "FITS" */
+ /* Default type "FITS" */
   strTemp = "FITS";
   dim[0] = strlen (strTemp); dim[1] = 1;
-  ObitInfoListPut (out, "DataType", OBIT_string, dim, strTemp, err);
-  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  ObitInfoListAlwaysPut (out, "DataType", OBIT_string, dim, strTemp);
 
   /* input FITS file name */
   strTemp = "Quack.uvtab";
   dim[0] = strlen (strTemp); dim[1] = 1;
-  ObitInfoListPut (out, "inFile", OBIT_string, dim, strTemp, err);
-  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  ObitInfoListAlwaysPut (out, "inFile", OBIT_string, dim, strTemp);
 
   /* input AIPS file name */
   strTemp = "QuackName";
   dim[0] = strlen (strTemp); dim[1] = 1;
-  ObitInfoListPut (out, "inName", OBIT_string, dim, strTemp, err);
-  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  ObitInfoListAlwaysPut (out, "inName", OBIT_string, dim, strTemp);
 
   /* input AIPS file class */
   strTemp = "Class ";
   dim[0] = strlen (strTemp); dim[1] = 1;
-  ObitInfoListPut (out, "inClass", OBIT_string, dim, strTemp, err);
-  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  ObitInfoListAlwaysPut (out, "inClass", OBIT_string, dim, strTemp);
 
   /* AIPS sequence */
   dim[0] = 1;dim[1] = 1;
   itemp = 1; 
-  ObitInfoListPut (out, "inSeq", OBIT_oint, dim, &itemp, err);
-  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  ObitInfoListAlwaysPut (out, "inSeq", OBIT_oint, dim, &itemp);
 
   /* AIPS or FITS disk number */
   dim[0] = 1;dim[1] = 1;
   itemp = 1; 
-  ObitInfoListPut (out, "inDisk", OBIT_oint, dim, &itemp, err);
-  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  ObitInfoListAlwaysPut (out, "inDisk", OBIT_oint, dim, &itemp);
 
   /* Stokes parameter to edit */
   strTemp = "    ";
   dim[0] = strlen (strTemp); dim[1] = 1;
-  ObitInfoListPut (out, "Stokes", OBIT_string, dim, strTemp, err);
-  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  ObitInfoListAlwaysPut (out, "Stokes", OBIT_string, dim, strTemp);
 
   /* Timerange in days */
   dim[0] = 2;dim[1] = 1;
   farray[0] = -1.0e20; farray[1] = 1.0e20;
-  ObitInfoListPut (out, "timeRange", OBIT_float, dim, farray, err);
-  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  ObitInfoListAlwaysPut (out, "timeRange", OBIT_float, dim, farray);
+
+  /*  Apply calibration/selection?, def=True */
+  dim[0] = 1; dim[1] = 1;
+  btemp = TRUE;
+  ObitInfoListAlwaysPut (out, "doCalSelect", OBIT_bool, dim, &btemp);
 
   /* Flagging table version, def=0 */
   dim[0] = 1;dim[1] = 1;
   itemp = 0; 
-  ObitInfoListPut (out, "flagVer", OBIT_oint, dim, &itemp, err);
-  if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
+  ObitInfoListAlwaysPut (out, "flagVer", OBIT_oint, dim, &itemp);
   
   return out;
 } /* end defaultInputs */
@@ -474,13 +471,13 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
 {
   ObitUV       *inData = NULL;
   ObitInfoType type;
-  olong         Aseq, disk, cno, nvis=1000;
+  olong         Aseq, disk, cno, nvis=1000, flagver;
   gchar        *Type, *strTemp, inFile[129];
   gchar        Aname[13], Aclass[7], *Atype = "UV";
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
-    "Sources", "Stokes", "timeRange", "BIF", "EIF", "subA", "flagVer",  
-    "Antennas",
+    "Sources", "Stokes", "timeRange", "BIF", "EIF", "subA", "Antennas",
+    "doCalSelect", 
     NULL};
   gchar *routine = "getInputData";
 
@@ -555,10 +552,16 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   ObitInfoListCopyList (myInput, inData->info, dataParms);
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
 
- /* Ensure inData fully instantiated and OK */
-  ObitUVFullInstantiate (inData, TRUE, err);
+  /* Ensure inData fully instantiated and OK and selector set 
+     Don't want flagging */
+  flagver = -1;
+  dim[0] = dim[1] = 1;
+  ObitInfoListAlwaysPut(inData->info, "flagVer", OBIT_int, dim, &flagver);
+  
+  ObitUVOpen (inData, OBIT_IO_ReadCal, err);
+  ObitUVClose (inData, err);
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
-
+  
   return inData;
 } /* end getInputData */
 

@@ -1101,7 +1101,7 @@ ASDMSourceArray* ObitSDMDataGetSourceArray (ObitSDMData *in)
   out = g_malloc0(sizeof(ASDMSourceArray));
 
   /* Assume no more sources than total Fields defined */
-  out->sou  = g_malloc0(in->FieldTab->nrows*sizeof(ASDMSourceArrayEntry));
+  out->sou  = g_malloc0(in->SourceTab->nrows*sizeof(ASDMSourceArrayEntry));
   out->nsou = 0;
 
   /* Loop over Sources */
@@ -1212,7 +1212,7 @@ ObitASDMBand ObitSDMDataFreq2Band (odouble freq)
   if (freq<900.0e6) return ASDMBand_P;
   if (freq<2.0e9)   return ASDMBand_L;
   if (freq<3.7e9)   return ASDMBand_S;
-  if (freq<7.0e9)   return ASDMBand_C;
+  if (freq<7.5e9)   return ASDMBand_C;
   if (freq<12.0e9)  return ASDMBand_X;
   if (freq<18.0e9)  return ASDMBand_Ku;
   if (freq<25.0e9)  return ASDMBand_K;

@@ -96,7 +96,7 @@ ObitThread* freeObitThread (ObitThread *in)
 
   /* Delete members */
 #ifdef OBIT_THREADS_ENABLED
-  if (in->pool)  g_thread_pool_free(in->pool, FALSE, TRUE);  /* Be patient */
+  if (in->pool)  g_thread_pool_free(in->pool, TRUE, FALSE);
   if (in->queue) g_async_queue_unref (in->queue);
   /*g_mutex_unlock(in->myMutex); *//* Make sure unlocked */
   g_mutex_free(in->myMutex); in->myMutex = NULL;

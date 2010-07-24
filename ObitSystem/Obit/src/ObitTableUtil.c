@@ -518,7 +518,7 @@ MakeSortStruct (ObitTable *in, olong which[2], gboolean desc,
   gpointer out = NULL;
   ObitTableRow *row;
   ObitSortStruct *entry;
-  olong irow, nrow, tsize, count, col, cell, byteOffset, i;
+  olong irow, nrow, tsize, ttsize, count, col, cell, byteOffset, i;
   ObitInfoType itype;
   gint32 dim[MAXINFOELEMDIM];
   /* Pointers for row data */
@@ -563,10 +563,15 @@ MakeSortStruct (ObitTable *in, olong which[2], gboolean desc,
 
   /* element size */
   dim[0] = 1; dim[1] = 1;dim[2] = 1;dim[3] = 1;dim[4] = 1;
-  /* string size - one element of everything else */
-  if (*type == OBIT_string) 
+  /* string size - one element of everything else 
+   64 bit OS does something wierd here */
+  ttsize = sizeof(ObitSortStruct);
+  if (*type == OBIT_string) {
     dim[0] = MIN(8,in->myDesc->dim[col][0]);
-  *size = sizeof(olong) + ObitInfoElemSize(*type, dim);
+    ttsize += dim[0];
+  }
+  *size = MAX ((sizeof(olong) + ObitInfoElemSize(*type, dim)), ttsize);
+
 
   /* Total size of structure in case all rows valid */
   tsize = (*size) * (nrow+10);

@@ -641,7 +641,7 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
   /* Set CL table interval */
   ObitInfoListGetTest(myInput, "calInt", &type, dim, &calInt);
   /* to days */
-  calInt /= 86400.0;
+  calInt /= 1440.0;
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
   ObitInfoListAlwaysPut(outUV->info, "solInt", OBIT_float, dim, &calInt);
   

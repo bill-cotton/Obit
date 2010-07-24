@@ -1217,7 +1217,8 @@ ObitIOImageFITSWriteDescriptor (ObitIOImageFITS *in, ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_SpecErr;
   gchar keywrd[FLEN_KEYWORD], commnt[FLEN_COMMENT+1];
-  int i, status = 0;
+  int i, j, n, status = 0;
+  gboolean bad;
   long ltemp;
   ObitImageDesc* desc;
   ObitImageSel* sel;
@@ -1381,6 +1382,13 @@ ObitIOImageFITSWriteDescriptor (ObitIOImageFITS *in, ObitErr *err)
     /* Copy, possibly truncating name */
     strncpy (keyName, keyNameP, FLEN_KEYWORD); keyName[FLEN_KEYWORD-1] = 0;
     if (err->error)  Obit_traceback_val (err, routine, in->name, retCode);
+
+    /* Check for trash characters */
+    n = strlen(keyName);
+    bad = FALSE;
+    for (j=0; j<n; j++) if (!g_ascii_isalnum (keyName[j])) bad = TRUE;
+    if (bad) continue;
+
     /* write by type */
     if (keyType==OBIT_double) {
       fits_update_key_dbl (in->myFptr, (char*)keyName, (double)blob.d, 12, (char*)commnt, 
@@ -2376,9 +2384,9 @@ static gpointer WriteQuantInit (ObitIOImageFITS *in, olong size,
     out = g_malloc0(size*sizeof(gshort));
   } else if (desc->bitpix==32) {  /* 32-bit integer */
     itemp[0] = (int)in->magic;
-    memcpy (outBlank, &itemp, sizeof(olong));
+    memcpy (outBlank, &itemp, sizeof(long)); /* for 64 bit */
     *outType = TINT32BIT;
-    out = g_malloc0(size*sizeof(olong));
+    out = g_malloc0(size*sizeof(long));  /* for 64 bit OS */
   } else  {  /* Shouldn't happen - pretend float */
     memcpy (outBlank, &fblank, sizeof(ofloat));
     *outType = TFLOAT;
@@ -2408,7 +2416,7 @@ static void WriteQuantCopy (ObitIOImageFITS *in, olong size, gpointer *wbuff,
   ofloat val, zero, iscale=1.0, fblank = ObitMagicF();
   gchar  cblank, *cbuff = (gchar*)*wbuff;
   gshort sblank, *sbuff = (gshort*)*wbuff;
-  olong  lblank, *lbuff = (olong*)*wbuff;
+  long  lblank, *lbuff = (long*)*wbuff;  /* for 64 bit */
   ObitImageDesc *desc = (ObitImageDesc*)in->myDesc;
 
   if (in->bscale!=0) iscale = 1.0 / in->bscale;

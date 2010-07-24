@@ -728,7 +728,6 @@ void ObitUVGridReadUVPar (olong nPar, ObitUVGrid **in, ObitUV **UVin, ObitErr *e
   ObitThreadPoolFree (in[0]->thread);
   if (in[0]->threadArgs) {
     for (i=0; i<in[0]->nThreads; i++) {
-      args = (UVGridFuncArg*)in[0]->threadArgs[i];
      if (in[0]->threadArgs[i]) g_free(in[0]->threadArgs[i]);
     }
     g_free(in[0]->threadArgs);
@@ -1104,6 +1103,17 @@ void ObitUVGridFFT2ImPar (olong nPar, ObitUVGrid **in, Obit **oout, ObitErr *err
     if (err->error) Obit_traceback_msg (err, routine, out[0]->name);
 	out[i]->image = ObitFArrayUnref(out[i]->image);  /* Free buffer */
   } /* end normalization loop */
+
+  /* Shutdown threading */
+  ObitThreadPoolFree (in[0]->thread);
+  if (in[0]->threadArgs) {
+    for (i=0; i<in[0]->nThreads; i++) {
+     if (in[0]->threadArgs[i]) g_free(in[0]->threadArgs[i]);
+    }
+    g_free(in[0]->threadArgs);
+  }
+  in[0]->threadArgs = NULL;
+  in[0]->nThreads   = 0;
 
 } /* end ObitUVGridFFT2ImPar */
 
