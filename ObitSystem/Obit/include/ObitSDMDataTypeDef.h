@@ -36,6 +36,8 @@
 /* Structures interpreted from the ASDM */
 /* SpectralWindow/Poln array */
 typedef struct {
+  /** Spectral window ID */
+  olong spectralWindowId;
   /** Selected? */
   gboolean selected;
   /** Baseband number */
