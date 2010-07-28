@@ -842,8 +842,9 @@ void PutAntennaInfo (ObitInfoList *myInput, ObitUV *inData,
     access  = OBIT_IO_ReadWrite;
     numOrb  = 0;
     numPCal = 0;
+    numIF   = inData->myDesc->inaxes[inData->myDesc->jlocif];
     inTable = newObitTableANValue ("Input table", (ObitData*)inData, 
-				   &ver, access, numOrb, numPCal, err);
+				   &ver, access, numIF, numOrb, numPCal, err);
     if (inTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with AN table");
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
     
@@ -995,8 +996,9 @@ void PutAntennaInfo (ObitInfoList *myInput, ObitUV *inData,
     access  = OBIT_IO_ReadWrite;
     numOrb  = 0;
     numPCal = 0;
+    numIF   = inData->myDesc->inaxes[inData->myDesc->jlocif];
     inTable = newObitTableANValue ("Input table", (ObitData*)inData, 
-				   &ver, access, numOrb, numPCal, err);
+				   &ver, access, numIF, numOrb, numPCal, err);
     if (inTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with AN table");
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
     

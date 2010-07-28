@@ -220,7 +220,9 @@ ObitIOCode ObitTableFQSelect (ObitUV *inUV, ObitUV *outUV, odouble *SouIFOff,
   ObitTableFQ    *inTab=NULL, *outTab=NULL;
   ObitTableFQRow *inRow=NULL, *outRow=NULL;
   ObitErr *terr=NULL;
-  olong iif, oif, nif;
+  ObitInfoType type;
+  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong iif, oif, nif, nchAvg;
   olong iFQver, inFQRow, outFQRow, highFQver;
   oint numIF;
   gboolean wanted;
@@ -245,6 +247,11 @@ ObitIOCode ObitTableFQSelect (ObitUV *inUV, ObitUV *outUV, odouble *SouIFOff,
 
   /* Are there any? */
   if (highFQver <= 0) return OBIT_IO_OK;
+
+  /* How many channels to average */
+  nchAvg = 1;
+  ObitInfoListGetTest(inUV->info, "NumChAvg",  &type, dim, &nchAvg);  
+  nchAvg = MAX (1,nchAvg);
 
   /* Should only be one FQ table */
   iFQver = 1;
@@ -317,7 +324,7 @@ ObitIOCode ObitTableFQSelect (ObitUV *inUV, ObitUV *outUV, odouble *SouIFOff,
 	 iif++) {
       outRow->freqOff[oif]  = inRow->freqOff[iif] - 
 	inRow->freqOff[inUV->mySel->startIF-1]; /* New reference freq */
-      outRow->chWidth[oif]  = inRow->chWidth[iif];
+      outRow->chWidth[oif]  = inRow->chWidth[iif] * nchAvg;
       outRow->totBW[oif]    = inRow->totBW[iif];
       outRow->sideBand[oif] = inRow->sideBand[iif];
       /* Source dependent OFFSets */

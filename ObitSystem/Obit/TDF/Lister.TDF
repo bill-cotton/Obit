@@ -47,7 +47,7 @@ Sources                            Source list
 **PARAM** int 1 **DEF** -1
 Qual             -1.0              Source qualifier -1=>all
 **PARAM** str 4
-calCode                            Calibrator code '    '=>all
+souCode                            Calibrator code '    '=>all
 **PARAM** float 2
 timeRange                          Time range to copy
 **PARAM** str 4
@@ -139,13 +139,13 @@ Adverbs:
              all qualifiers will be written.  These qualifiers will be
              written to separate output files.  Note that outSeq must be
              zero in this case.
-  calCode....Sources may be selected on the basis of the calibrator code
+  souCode....Sources may be selected on the basis of the calibrator code
              given in the SU table.
                   '    ' => any calibrator code selected
                   '*   ' => any non blank code (cal. only)
                   '-CAL' => blank codes only (no calibrators)
                   anything else = calibrator code to select.
-             NB: The calCode test is applied in addition to the other
+             NB: The souCode test is applied in addition to the other
              tests, i.e. Sources and Qual, in the selection of sources to
              process.
   timeRange..Time range of the data to be copied. In order:
@@ -257,8 +257,7 @@ Adverbs:
   prtFile....Name of the disk file to accept output.  Text will be
              appended to the end if it already exists.
   taskLog....Log file to write messages to INSTEAD of the terminal
-             This is useful in long runs or batch files where
-             a bug in the ObitTalk message handling may cause
-             tasks to hang.  Path is absolute or relative to where
-             the task executes.
+             This is useful in long runs or batch files.
+             Path is absolute or relative to where the task 
+             executes.
 ----------------------------------------------------------------

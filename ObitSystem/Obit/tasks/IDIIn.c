@@ -1397,8 +1397,9 @@ void GetAntennaInfo (ObitData *inData, ObitUV *outData, olong arrno,
   access   = OBIT_IO_ReadWrite;
   numOrb   = in2Table->numOrb;
   numPCal  = inTable->numPCal;
+  numIF    = outData->myDesc->inaxes[outData->myDesc->jlocif];
   outTable = newObitTableANValue ("Output table", (ObitData*)outData, 
-				  &ver, access, numOrb, numPCal, err);
+				  &ver, access, numIF, numOrb, numPCal, err);
   if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with AN table");
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
 
@@ -3203,7 +3204,7 @@ void UpdateAntennaInfo (ObitUV *outData, olong arrno, ObitErr *err)
 /*----------------------------------------------------------------------- */
 {
   ObitTableAN  *outTable=NULL;
-  oint numPCal, numOrb;
+  oint numIF, numPCal, numOrb;
   olong ver;
   odouble JD;
   ObitIOAccess access;
@@ -3221,8 +3222,9 @@ void UpdateAntennaInfo (ObitUV *outData, olong arrno, ObitErr *err)
   access   = OBIT_IO_ReadWrite;
   numOrb   = 0;
   numPCal  = 0;
+  numIF    = outData->myDesc->inaxes[outData->myDesc->jlocif];
   outTable = newObitTableANValue ("Output AN table", (ObitData*)outData, 
-				  &ver, access, numOrb, numPCal, err);
+				  &ver, access, numIF, numOrb, numPCal, err);
   if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with AN table");
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
 
@@ -3297,7 +3299,7 @@ void UVFIXCalcUVW (ObitUV *outData, ObitTableIDI_UV_DATARow* inRow,
     for (i=0; i<numArray; i++) {
       iANver = i+1;
       ANTable = newObitTableANValue ("AN table", (ObitData*)outData, &iANver, 
-				     OBIT_IO_ReadOnly, 0, 0, err);
+				     OBIT_IO_ReadOnly, 0, 0, 0, err);
       antennaLists[i] = ObitTableANGetList (ANTable, err);
       if (err->error) Obit_traceback_msg (err, routine, outData->name);
       /* release table object */
@@ -3444,7 +3446,7 @@ void CalcUVW (ObitUV *outData, ObitTableIDI_UV_DATARow* inRow,
     for (i=0; i<numArray; i++) {
       iANver = i+1;
       ANTable = newObitTableANValue ("AN table", (ObitData*)outData, &iANver, 
-				     OBIT_IO_ReadOnly, 0, 0, err);
+				     OBIT_IO_ReadOnly, 0, 0, 0, err);
       antennaLists[i] = ObitTableANGetList (ANTable, err);
       if (err->error) Obit_traceback_msg (err, routine, outData->name);
       /* release table object */

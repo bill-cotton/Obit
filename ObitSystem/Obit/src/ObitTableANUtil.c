@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -357,9 +357,10 @@ ObitIOCode ObitTableANSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
     /* Get input table */
     numOrb  = 0;
     numPCal = 0;
+    numIF   = 0;
     inTab = 
       newObitTableANValue (inUV->name, (ObitData*)inUV, &iANver, OBIT_IO_ReadOnly, 
-			   numOrb, numPCal, err);
+			   numIF, numOrb, numPCal, err);
     if (err->error) Obit_traceback_val (err, routine, inTab->name, retCode);
     /* Find it */
     if (inTab==NULL) continue;  /* No keep looping */
@@ -381,7 +382,7 @@ ObitIOCode ObitTableANSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
     else numPCal = 0;
     outTab = 
       newObitTableANValue (outUV->name, (ObitData*)outUV, &iANver, OBIT_IO_WriteOnly, 
-			    numOrb, numPCal, err);
+			    numIF, numOrb, numPCal, err);
     if (err->error) Obit_traceback_val (err, routine, outUV->name, retCode);
     /* Create it? */
     Obit_retval_if_fail((outTab!=NULL), err, retCode,

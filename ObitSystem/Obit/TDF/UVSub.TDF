@@ -49,6 +49,10 @@ inDisk                             Input UV file disk unit #
 Sources                            Source to process
 **PARAM** int 1 **DEF** -1
 Qual            -10.0              Source qualifier -1=>any
+**PARAM** str 4
+souCode                            Calibrator code '    '=>all
+**PARAM** int 1 **DEF** -1
+FreqID                             Freq. ID to select.
 **PARAM** int 1
 channel          -1.0     9999.0   Spectral channel (0=>all)
                                    Use 0 for continuum
@@ -165,6 +169,18 @@ Adverbs:
   Qual.......Only sources with a source qualifier number in the
              SU table matching Qual will be used if Qual is not
              -1.  
+  souCode....Sources may be selected on the basis of the calibrator code
+             given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The souCode test is applied in addition to the other
+             tests, i.e. Sources and Qual, in the selection of sources to
+             process.
+  FreqID.....Frequency identifier to select (you may determine which is
+             applicable from the OPTYPE='SCAN' listing produced by
+             AIPS task LISTR). <=0=>any
   channel....Frequency channel, 0 => all (use 0 for continuum)
   BIF........First IF to process. 0=>1
   EIF........Highest IF to process 0=> do BIF to highest.
@@ -311,12 +327,11 @@ Adverbs:
   noScrat....A list of AIPS disk numbers on which you do not 
              wish scratch files
   taskLog....Log file to write messages to INSTEAD of the terminal
-             This is useful in long runs or batch files where
-             a bug in the ObitTalk message handling may cause
-             tasks to hang.  Path is absolute or relative to where
-             the task executes.
+             This is useful in long runs or batch files.
+             Path is absolute or relative to where the task 
+             executes.
 ---------------------------------------------------------------
-UVSub: task to subtract a clean model from a uv data base
+UVSub: task to subtract a model from a uv data base
 DOCUMENTOR: B.E.Turner  NRAO/Charlottesville (AIPS version)
 RELATED PROGRAMS:
 

@@ -1557,6 +1557,13 @@ ObitTableDesc.
 }
 % Table keyword description
 \begin{keywords}
+\tablekey[{"REVISION"}{J}{revision}{10}{}
+{Revision number of the table definition.}
+]
+% Must be position 2 to index
+\tablekey[{"NO\_IF  "}{J}{numIF}{1}{()}
+{The number of IFs}
+]
 \tablekey[{"ARRAYX  "}{D}{ArrayX}{0.0}{}
 {Array center X coord. (meters, earth center)}
 ]
@@ -1595,6 +1602,12 @@ ObitTableDesc.
 ]
 \tablekey[{"ARRNAM  "}{A}{ArrName}{}{}
 {Array name}
+]
+\tablekey[{"XYZHAND"}{A}{XYZHand}{"RIGHT"}{}
+{Handedness of coordinate system'}
+]
+\tablekey[{"FRAME"}{A}{FRAME}{"UNKNOWN "}{}
+{Reference frame of coordinate system'}
 ]
 \tablekey[{"NUMORB  "}{J}{numOrb}{0}{()}
 {Number of orbital parameters}
@@ -1660,6 +1673,12 @@ ObitTableDesc.
 \tablecol[{"STAXOF  "}{"METERS " }{E}{(1)}{staXof}
 {Axis offset}
 ] 
+\tablecol[{"DIAMETER"}{"METERS " }{E}{(1)}{diameter}
+{[OPTIONAL] Diameter of dish}
+] 
+\tablecol[{"BEAMFWHM"}{"DEG/M  " }{E}{(numIF)}{BeamFWHM}
+{[OPTIONAL] FWHM (degrees/meter) of single dish each IF, scales as wavelength}
+] 
 \tablecol[{"POLTYA  "}{"       " }{A}{(4)}{polTypeA}
 {Feed A feed poln. type 'R','L','X','Y', actually only one valid character.}
 ] 
@@ -1683,6 +1702,8 @@ ObitTableDesc.
 % Table modification history
 \begin{history}
 \modhistory[{W. D. Cotton}{02/03/2003}{Revision 1: Copied from AIPS}]
+\modhistory[{W. D. Cotton}{28/07/2010}{Add keywords NO\_IF, XYZHAND,
+FRAME,  columns DIAMETER, BEAMFWHM}]
 \end{history}
 \clearpage
 %%%%%%%%%%%%%%% ObitTableAT Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

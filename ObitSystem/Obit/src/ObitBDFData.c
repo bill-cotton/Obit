@@ -1020,6 +1020,7 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
     vis[in->desc->ilocu]  = 0.0;
     vis[in->desc->ilocv]  = 0.0;
     vis[in->desc->ilocw]  = 0.0;
+    if (in->desc->ilocfq>=0) vis[in->desc->ilocfq] = 1.0;
     vis[in->desc->iloct]  = in->currTime;
     vis[in->desc->ilocit] = in->currIntTime;
     vis[in->desc->ilocsu] = (ofloat)in->sourceNo;

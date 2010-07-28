@@ -810,16 +810,17 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong scan)
     if (jSW>=in->SpectralWindowTab->nrows) return NULL;
 
     out->winds[iSW] = g_malloc(sizeof(ASDMSpectralWindowArrayEntry));
-    out->winds[iSW]->selected      = TRUE;
-    out->winds[iSW]->numChan       = in->SpectralWindowTab->rows[jSW]->numChan;
-    out->winds[iSW]->netSideband   = g_strdup(in->SpectralWindowTab->rows[jSW]->netSideband);
-    out->winds[iSW]->refFreq       = in->SpectralWindowTab->rows[jSW]->refFreq;
-    out->winds[iSW]->totBandwidth  = in->SpectralWindowTab->rows[jSW]->totBandwidth;
-    out->winds[iSW]->chanFreqStart = in->SpectralWindowTab->rows[jSW]->chanFreqStart;
-    out->winds[iSW]->chanFreqStep  = in->SpectralWindowTab->rows[jSW]->chanFreqStep;
-    out->winds[iSW]->chanWidth     = in->SpectralWindowTab->rows[jSW]->chanWidth;
-    out->winds[iSW]->effectiveBw   = in->SpectralWindowTab->rows[jSW]->effectiveBw;
-    out->winds[iSW]->resolution    = in->SpectralWindowTab->rows[jSW]->resolution;
+    out->winds[iSW]->spectralWindowId = in->SpectralWindowTab->rows[jSW]->spectralWindowId;
+    out->winds[iSW]->selected         = TRUE;
+    out->winds[iSW]->numChan          = in->SpectralWindowTab->rows[jSW]->numChan;
+    out->winds[iSW]->netSideband      = g_strdup(in->SpectralWindowTab->rows[jSW]->netSideband);
+    out->winds[iSW]->refFreq          = in->SpectralWindowTab->rows[jSW]->refFreq;
+    out->winds[iSW]->totBandwidth     = in->SpectralWindowTab->rows[jSW]->totBandwidth;
+    out->winds[iSW]->chanFreqStart    = in->SpectralWindowTab->rows[jSW]->chanFreqStart;
+    out->winds[iSW]->chanFreqStep     = in->SpectralWindowTab->rows[jSW]->chanFreqStep;
+    out->winds[iSW]->chanWidth        = in->SpectralWindowTab->rows[jSW]->chanWidth;
+    out->winds[iSW]->effectiveBw      = in->SpectralWindowTab->rows[jSW]->effectiveBw;
+    out->winds[iSW]->resolution       = in->SpectralWindowTab->rows[jSW]->resolution;
 
     /* Fix up frequency for LSB - DEBUG STUB */
     if (out->winds[iSW]->netSideband[0]=='$') 
@@ -1215,8 +1216,8 @@ ObitASDMBand ObitSDMDataFreq2Band (odouble freq)
   if (freq<7.5e9)   return ASDMBand_C;
   if (freq<12.0e9)  return ASDMBand_X;
   if (freq<18.0e9)  return ASDMBand_Ku;
-  if (freq<25.0e9)  return ASDMBand_K;
-  if (freq<35.0e9)  return ASDMBand_Ka;
+  if (freq<26.5e9)  return ASDMBand_K;
+  if (freq<40.0e9)  return ASDMBand_Ka;
   if (freq<50.0e9)  return ASDMBand_Q;
   if (freq<100.0e9) return ASDMBand_W;
   return out;
@@ -1294,7 +1295,7 @@ void ObitSDMSourceTabFix (ObitSDMData *in)
 	for (j=i+1; j<in->SourceTab->nrows; j++) {
 	  if (in->SourceTab->rows[j]) {
 	    jrow = in->SourceTab->rows[j];
-	    if (!strcmp(irow->sourceName, jrow->sourceName)) 
+	    if (!strcmp(irow->sourceName, jrow->sourceName))
 	      jrow->sourceNo = irow->sourceNo;
 	  }
 	}
@@ -1302,6 +1303,33 @@ void ObitSDMSourceTabFix (ObitSDMData *in)
   }
   return;
 } /* end ObitSDMSourceTabFix */
+
+/**
+ * Give all sources with the same name and calcode the same source number
+ * \param in  Structure with SourceTab to fix
+ */
+void ObitSDMSourceTabFixCode (ObitSDMData *in)
+{ 
+  olong i, j;
+  ASDMSourceRow *irow, *jrow;
+
+  if (in==NULL) return;
+  /* fix entries */  
+  for (i=0; i<in->SourceTab->nrows; i++) {
+    if (in->SourceTab->rows[i]) {
+      irow = in->SourceTab->rows[i];
+	for (j=i+1; j<in->SourceTab->nrows; j++) {
+	  if (in->SourceTab->rows[j]) {
+	    jrow = in->SourceTab->rows[j];
+	    if (!strcmp(irow->sourceName, jrow->sourceName) &&
+		!strcmp(irow->code, jrow->code)) 
+	      jrow->sourceNo = irow->sourceNo;
+	  }
+	}
+    }
+  }
+  return;
+} /* end ObitSDMSourceTabFixCode */
 
 /**
  * Initialize global ClassInfo Structure.

@@ -51,6 +51,10 @@ BIF               0.0       90.0   Limit flagging to BIF-EIF
 EIF               0.0       90.0   Limit flagging
 **PARAM** str 16 30
 Sources                            Sources selected/deselected
+**PARAM** int 1 **DEF** -1
+Qual             -1.0              Source qualifier -1=>all
+**PARAM** str 4
+souCode                            Calibrator code '    '=>all
 **PARAM** int 1
 subA                               Subarray number 0=>all.
 **PARAM** int 1
@@ -93,6 +97,20 @@ Adverbs:
   EIF........Limit flag to range BIF through EIF.  0, < BIF -> max.
   Sources....List of sources in the data file to be flagged.
              All blank = all
+  Qual.......Only sources with a source qualifier number in the SU table
+             matching Qual will be used if Qual is >= 0.  If Qual < 0,
+             all qualifiers will be written.  These qualifiers will be
+             written to separate output files.  Note that outSeq must be
+             zero in this case.
+  souCode....Sources may be selected on the basis of the calibrator code
+             given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The souCode test is applied in addition to the other
+             tests, i.e. Sources and Qual, in the selection of sources to
+             process.
   subA.......The subarray desired for the operation. 0=> all.
   FreqID.....Frequency identifier to flag.
   timeRange..The specified time range; scans whose central time
@@ -112,8 +130,7 @@ Adverbs:
   Reason.....Reason for flagging the data, up to 24 characters.  This
              string will be inserted in the FG table.
   taskLog....Log file to write messages to INSTEAD of the terminal
-             This is useful in long runs or batch files where
-             a bug in the ObitTalk message handling may cause
-             tasks to hang.  Path is absolute or relative to where
-             the task executes.
+             This is useful in long runs or batch files.
+             Path is absolute or relative to where the task 
+             executes.
 ----------------------------------------------------------------

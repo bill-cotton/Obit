@@ -2434,7 +2434,7 @@ ObitInfoList* ObitUVUtilCount (ObitUV *inUV, ofloat timeInt, ObitErr *err)
   /* Get time information */
   ver = 1;
   ANTable = newObitTableANValue (inUV->name, (ObitData*)inUV, &ver, 
-				 OBIT_IO_ReadOnly, 0, 0, err);
+				 OBIT_IO_ReadOnly, 0, 0, 0, err);
   GSTiat0 = ANTable->GSTiat0;
   DegDay  = ANTable->DegDay;
   ArrayX  = ANTable->ArrayX;
@@ -3242,7 +3242,7 @@ olong ObitUVUtilNchAvg(ObitUV *inUV, ofloat maxFact, ofloat FOV, ObitErr *err)
   ObitUVDesc *inDesc;
   ObitTableAN *ANTable=NULL;
   ObitAntennaList **AntList=NULL;
-  olong i, j, numSubA, iANver,numOrb, numPCal;
+  olong i, j, numSubA, iANver, numIF, numOrb, numPCal;
   ofloat chBW, maxBL, BL, fact, beta, tau;
   odouble lowFreq;
   gchar *routine = "ObitUVUtilNchAv";
@@ -3276,9 +3276,10 @@ olong ObitUVUtilNchAvg(ObitUV *inUV, ofloat maxFact, ofloat FOV, ObitErr *err)
   for (iANver=1; iANver<=numSubA; iANver++) {
     numOrb   = 0;
     numPCal  = 0;
+    numIF    = 0;
 
     ANTable = newObitTableANValue ("AN table", (ObitData*)inUV, 
-				   &iANver, OBIT_IO_ReadOnly, numOrb, numPCal, err);
+				   &iANver, OBIT_IO_ReadOnly, numIF, numOrb, numPCal, err);
     if (ANTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with AN table");
     AntList[iANver-1] = ObitTableANGetList (ANTable, err);
     if (err->error) Obit_traceback_val (err, routine, inUV->name, out);
@@ -3379,7 +3380,7 @@ static ofloat AvgFSetDesc (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
   if (inDesc->jlocs>=0) nstok = inDesc->inaxes[inDesc->jlocs];
   else nstok = 1;
 
-  numChan = nchan / MAX (1, NumChAvg);  /* Number of output channels */
+  numChan = 1 + (nchan-1) / MAX (1, NumChAvg);  /* Number of output channels */
   /* IF averaging */
   NumIFAvg   = 1;
   if (doAvgAll) NumIFAvg   = nif;
@@ -3483,7 +3484,7 @@ static ofloat AvgFSetDesc (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
   } /* End doAvgAll */
 
   /* Averaging channels  - IFs unaffected */
-  numChan = inDesc->inaxes[inDesc->jlocf] / NumChAvg;
+  numChan = 1 + ((inDesc->inaxes[inDesc->jlocf]-1) / NumChAvg);
   /* Get frequency of first average */
   sum  = 0.0; count  = 0;
   sum2 = 0.0; count2 = 0;

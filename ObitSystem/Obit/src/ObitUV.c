@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1996,7 +1996,7 @@ ObitIOCode ObitUVGetSubA (ObitUV *in, ObitErr *err)
 
     /* Get table */
     ANTable = 
-      newObitTableANValue (in->name, (ObitData*)in, &iANver, OBIT_IO_ReadOnly, 0, 0, err);
+      newObitTableANValue (in->name, (ObitData*)in, &iANver, OBIT_IO_ReadOnly, 0, 0, 0, err);
     /* Ignore missing table */
     if (ANTable==NULL) {
       ObitErrClear(err); 
@@ -3216,7 +3216,7 @@ static void ObitUVSetupCal (ObitUV *in, ObitErr *err)
       /* Get table */
       useVer = iVer+1;
       cal->ANTables[iVer] =
-	(Obit*)newObitTableANValue (in->name, (ObitData*)in, &useVer, OBIT_IO_ReadOnly, 0, 0, err);
+	(Obit*)newObitTableANValue (in->name, (ObitData*)in, &useVer, OBIT_IO_ReadOnly, 0, 0, 0, err);
       if (err->error) {
 	Obit_log_error(err, OBIT_Error, 
 		       "%s: NO Antenna AN table %d for %s", routine, useVer, in->name);

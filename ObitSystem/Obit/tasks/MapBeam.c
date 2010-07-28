@@ -1817,7 +1817,7 @@ void  accumData (ObitUV* inData, ObitInfoList* myInput, olong ant,
   /* Get Antenna List */
   iver = 1;  /* Or Subarray no. */
   ANTable = newObitTableANValue (inData->name, (ObitData*)inData, &iver, 
-				 OBIT_IO_ReadOnly, 0, 0, err);
+				 OBIT_IO_ReadOnly, 0, 0, 0, err);
   AList   = ObitTableANGetList (ANTable, err);
   ANTable = ObitTableANUnref(ANTable);   /* Done with table */
   if (err->error) Obit_traceback_msg (err, routine, ANTable->name);

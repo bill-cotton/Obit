@@ -49,6 +49,7 @@
 #include "ObitTableGC.h"
 #include "ObitTablePC.h"
 #include "ObitTableWX.h"
+#include "ObitTableNX.h"
 #include "ObitSDMData.h"
 #include "ObitBDFData.h"
 #include "ObitHistory.h"
@@ -210,12 +211,6 @@ int main ( int argc, char **argv )
   if ((ObitUVClose (outData, err) != OBIT_IO_OK) || (err->error>0))
     Obit_log_error(err, OBIT_Error, "ERROR closing output file");
   
-  /* Index data */
-  Obit_log_error(err, OBIT_InfoErr, "Indexing visibilities");
-  ObitErrLog(err);
-  ObitUVUtilIndex (outData, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
-
   /* Create CL table - interval set in setOutputData */
   Obit_log_error(err, OBIT_InfoErr, "Creating CL Table");
   ObitErrLog(err);
@@ -539,7 +534,7 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
   gchar     tname[129], *fullname=NULL;
   ofloat    calInt = 0.5;
   gchar     *outParms[] = {  /* Parameters for output data */
-    "Compress", NULL};
+    "Compress", "maxGap", "maxScan", NULL};
   gchar     *routine = "setOutputData";
 
   /* error checks */
@@ -852,14 +847,13 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   strncpy (desc->ptype[ncol], "SOURCE  ", UVLEN_KEYWORD);
   ncol++;
   
-  /* FreqID */
-  strncpy (desc->ptype[ncol], "FREQSEL ", UVLEN_KEYWORD);
-  ncol++;
-  
-  
   /* Integration time */
   strncpy (desc->ptype[ncol], "INTTIM  ", UVLEN_KEYWORD);
   ncol++;
+  
+  /* FreqID - NYI */
+  /* strncpy (desc->ptype[ncol], "FREQSEL ", UVLEN_KEYWORD);
+     ncol++; */
   
   desc->nrparm = ncol;  /* Number of random parameters */
   
@@ -975,7 +969,7 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData,
   olong          iScan, iIntent;
   gchar          hicard[81], begString[17], endString[17];
   gchar         *hiEntries[] = {
-    "DataRoot", "selChan", "selIF", "selBand", "dropZero", "calInt",
+    "DataRoot", "selChan", "selIF", "selBand", "dropZero", "doCode", "calInt",
     NULL};
   gchar *routine = "BDFInHistory";
   
@@ -1129,7 +1123,7 @@ void FlagIntent (ObitSDMData *SDMData, ObitUV* outData, ObitErr* err)
   }
   
   /* Tell about it */
-  Obit_log_error(err, OBIT_InfoErr, "Flagged %d scans for that intent", count);
+  Obit_log_error(err, OBIT_InfoErr, "Flagged %d online cal only scans", count);
 
   /* Cleanup */
   outRow   = ObitTableFGRowUnref(outRow);
@@ -1154,7 +1148,7 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ObitTableAN        *outTable=NULL;
   ObitTableANRow     *outRow=NULL;
   olong i, lim, iRow, oRow, ver, iarr;
-  oint numPCal, numOrb;
+  oint numIF, numPCal, numOrb;
   odouble JD, GASTM, Rate;
   ObitIOAccess access;
   gboolean isEVLA;
@@ -1174,8 +1168,9 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   access   = OBIT_IO_ReadWrite;
   numOrb   = 0;
   numPCal  = 0;
+  numIF    = outData->myDesc->inaxes[outData->myDesc->jlocif];
   outTable = newObitTableANValue ("Output table", (ObitData*)outData, 
-				  &ver, access, numOrb, numPCal, err);
+				  &ver, access, numIF, numOrb, numPCal, err);
   if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with AN table");
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
 
@@ -1446,10 +1441,12 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ASDMSpectralWindowArray* SpWinArray;
   ObitTableSU*       outTable=NULL;
   ObitTableSURow*    outRow=NULL;
-  olong i, jSU, lim, iRow, oRow, ver, SourceID, lastSID=-1;
+  olong i, jSU, lim, iRow, oRow, ver, SourceID, lastSID=-1, iSW, SWId;
   oint numIF;
   ObitIOAccess access;
-  gboolean *isDone=NULL;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gboolean *isDone=NULL, doCode=TRUE;
   gchar *blank = "        ";
   gchar *routine = "GetSourceInfo";
 
@@ -1461,8 +1458,13 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   /* Print any messages */
   ObitErrLog(err);
   
-  /* Give each source in source table by name a constant source number */
-  ObitSDMSourceTabFix(SDMData);
+  /* Give each source in source table by name a constant source number 
+     include calcode or not? */
+  ObitInfoListGetTest(myInput, "doCode", &type, dim, &doCode);
+  if (doCode) 
+    ObitSDMSourceTabFixCode(SDMData);
+  else
+    ObitSDMSourceTabFix(SDMData);
 
   /* Extract info */
   SourceArray = ObitSDMDataGetSourceArray(SDMData);
@@ -1534,6 +1536,15 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 
     /* Done this one? */
     if ((isDone[iRow]) || (SourceArray->sou[iRow]->sourceNo<=lastSID)) continue;
+
+    /* Is this one selected? - check in Spectral Window array */
+    SWId = SourceArray->sou[iRow]->spectralWindowId;
+    for (iSW=0; iSW<SpWinArray->nwinds; iSW++) {
+      if (SpWinArray->winds[iSW]->spectralWindowId==SWId) break;
+    }
+    /* Not found or not selected? */
+    if ((iSW>=SpWinArray->nwinds) || (!SpWinArray->winds[iSW]->selected)) 
+      continue;
 
     /* Set output row  */
     outRow->SourID    = SourceArray->sou[iRow]->sourceNo;
@@ -1634,9 +1645,11 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   ObitBDFData *BDFData=NULL;
   ObitIOCode retCode;
   olong iMain, iInteg, ScanId, i, j, iBB, selChan, selIF, iSW, jSW, kBB, nIFsel, 
-    cntDrop=0, BBNum;
-  ofloat *Buffer=NULL, tlast=-1.0e20;
+    cntDrop=0, BBNum, ver, iRow, sourId;
+  ofloat *Buffer=NULL, tlast=-1.0e20, startTime, endTime;
   ObitUVDesc *desc;
+  ObitTableNX* NXtable;
+  ObitTableNXRow* NXrow=NULL;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar selBand[12], begString[17], endString[17];
@@ -1691,6 +1704,40 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   dataroot[dim[0]] = 0;  /* null terminate */
   ObitTrimTrail(dataroot);  /* Trim trailing blanks */
 
+  /* Create Index table object */
+  ver = 1;
+  NXtable = newObitTableNXValue ("Index table", (ObitData*)outData, &ver, 
+				 OBIT_IO_ReadWrite, err);
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  
+  /* Clear existing rows */
+  ObitTableClearRows ((ObitTable*)NXtable, err);
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+
+  /* Open Index table */
+  if ((ObitTableNXOpen (NXtable, OBIT_IO_WriteOnly, err)
+       != OBIT_IO_OK) || (err->error)) goto done;
+
+  /* Create Index Row */
+  NXrow = newObitTableNXRow (NXtable);
+
+  /* initialize NX row */
+  NXrow->SourID   = 0;
+  NXrow->SubA     = 0;
+  NXrow->Time     = 0.0;
+  NXrow->TimeI    = 0.0;
+  NXrow->StartVis = -1;
+  NXrow->EndVis   = -1;
+  NXrow->FreqID   = 1;
+
+  /* attach to table buffer */
+  ObitTableNXSetRow (NXtable, NXrow, err);
+  if (err->error)  goto done;
+
+  /* Write at beginning of iNdeX Table */
+  iRow = 0;
+  NXtable->myDesc->nrow = 0; /* ignore any previous entries */
+
   /* Loop over Main Table in ASDM */
   for (iMain=0; iMain<SDMData->MainTab->nrows; iMain++) {
 
@@ -1707,10 +1754,11 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     filename = g_strconcat (dataroot, "/ASDMBinary/uid_", SDMData->MainTab->rows[iMain]->entityId, NULL);
     /* Complain and bail if file doesn't exist */
     if (!ObitFileExist(filename, err)) {
-      Obit_log_error(err, OBIT_InfoWarn, "Quiting, BDF file %s not found", filename);
-      goto done;
+      Obit_log_error(err, OBIT_InfoWarn, "Skipping, BDF file %s not found", filename);
+      continue;
     }
-    /* File initialization */
+ 
+   /* File initialization */
     ObitBDFDataInitFile (BDFData, filename, err);
     g_free(filename);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
@@ -1765,7 +1813,14 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
       day2dhms(SDMData->ScanTab->rows[j]->endTime-refJD,   endString);
       Obit_log_error(err, OBIT_InfoErr, "Scan %3.3d %s time %s  - %s", 
 		     ScanId, SDMData->ScanTab->rows[j]->sourceName, begString, endString);
-    }
+      ObitErrLog(err);
+  }
+
+    /* Initialize index */
+    startTime = -1.0e20;
+    endTime   = startTime;
+    NXrow->StartVis = outData->myDesc->nvis+1;
+    NXrow->EndVis   = NXrow->StartVis;
 
     /* Loop over integrations */
     for (iInteg=0; iInteg<SDMData->MainTab->rows[iMain]->numIntegration; iInteg++) {
@@ -1799,6 +1854,12 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	  cntDrop++;
 	  continue;
 	}
+
+	/* Get indexing information on first vis written */
+	if (startTime<-1.0e10) {
+	  startTime = Buffer[desc->iloct];
+	  sourId    = (olong)(Buffer[desc->ilocsu]+0.5);
+	}
 	
 	/* Write output */
 	if ((ObitUVWrite (outData, NULL, err) != OBIT_IO_OK) || (err->error))
@@ -1806,6 +1867,18 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	if (err->error) Obit_traceback_msg (err, routine, outData->name);
       } /* End loop over data in integration */
     } /* end loop over integrations */
+    
+    /* Write Index table */
+    if (startTime>-1.0e10) {
+      endTime         = Buffer[desc->iloct];
+      NXrow->Time     = 0.5 * (startTime + endTime);
+      NXrow->TimeI    = (endTime - startTime);
+      NXrow->EndVis   = desc->nvis;
+      NXrow->SourID   = sourId;
+      iRow++;
+      if ((ObitTableNXWriteRow (NXtable, iRow, NXrow, err)
+	   != OBIT_IO_OK) || (err->error>0)) goto done; 
+    }
   } /* End loop over scans */
 
   /* Tell results */
@@ -1816,8 +1889,13 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   ObitErrLog(err);
 
   /* Cleanup */
+  if ((ObitTableNXClose (NXtable, err) != OBIT_IO_OK) || (err->error>0)) 
+    Obit_traceback_msg (err, routine, NXtable->name);
+
   BDFData  = ObitBDFDataUnref (BDFData);
   if (SpWinArray) SpWinArray  = ObitSDMDataKillSWArray (SpWinArray);
+  NXrow    = ObitTableNXRowUnref(NXrow);
+  NXtable   = ObitTableNXUnref(NXtable);
 
 } /* end GetData  */
 
@@ -1863,7 +1941,7 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
     for (i=0; i<numArray; i++) {
       iANver = i+1;
       ANTable = newObitTableANValue ("AN table", (ObitData*)outData, &iANver, 
-				     OBIT_IO_ReadOnly, 0, 0, err);
+				     OBIT_IO_ReadOnly, 0, 0, 0, err);
       antennaLists[i] = ObitTableANGetList (ANTable, err);
       if (err->error) Obit_traceback_msg (err, routine, outData->name);
       /* release table object */

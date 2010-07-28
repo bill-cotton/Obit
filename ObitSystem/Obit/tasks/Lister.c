@@ -503,7 +503,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *strTemp;
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
-    "Sources", "Qual", "calCode", "Stokes", "timeRange",  "FreqID", 
+    "Sources", "Qual", "souCode", "Stokes", "timeRange",  "FreqID", 
     "BIF", "EIF", "BChan", "EChan", "Antennas", "subA", "corrType",
     "doCalib", "gainUse", "doPol", "flagVer", "doBand", "BPVer", "Smooth", 
     "doCalSelect",
@@ -572,13 +572,14 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ObitUVDesc   *inDesc;
   FILE         *outStream = NULL;
   gboolean     isInteractive = FALSE, quit = FALSE, first=TRUE, doReal=FALSE;
+  gboolean     doBand=FALSE, doPol=FALSE;
   gchar        line[1024], Title1[1024], Title2[1024];
-  olong        LinesPerPage = 0;
+  olong        LinesPerPage = 0, BPVer=1;
   olong        i, ii, indx, jndx, count, bPrint, nPrint, doCrt=1, lenLine=0;
   ofloat       u, v, w, cbase, re, im, amp, phas, wt;
   ofloat       blscale=1., wtscale=1., ampscale=1.;
   olong        start, ic, ncor, mcor, maxcor, ant1, ant2, souID, SubA, inc=2;
-  olong        bif=1, bchan=1, ichan, doCalib, gainUse, flagVer;
+  olong        bif=1, eif, bchan=1, ichan, doCalib, gainUse, flagVer=-1;
   gchar        *prtFile=NULL, timeString[25];
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -596,7 +597,10 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ObitInfoListGet(myInput, "nPrint",    &type, dim, &nPrint, err);
   ObitInfoListGet(myInput, "doCalib",   &type, dim, &doCalib, err);
   ObitInfoListGet(myInput, "gainUse",   &type, dim, &gainUse, err);
-  ObitInfoListGet(myInput, "flagVer",   &type, dim, &flagVer, err);
+  ObitInfoListGetTest(myInput, "flagVer",&type, dim, &flagVer);
+  ObitInfoListGetTest(myInput, "doPol", &type, dim, &doPol);
+  ObitInfoListGetTest(myInput, "doBand",&type, dim, &doBand);
+  ObitInfoListGetTest(myInput, "BPVer", &type, dim, &BPVer);
   ObitInfoListGetTest(myInput, "inc",   &type, dim, &inc);
   inc = MAX (1, inc);
   nPrint *= inc;   /* Correct for increment */
@@ -618,12 +622,17 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     /* Tell about it */
     Obit_log_error(err, OBIT_InfoErr, "Writing output to %s",prtFile);
     ObitErrLog(err);
- }
+  }
   if (err->error) Obit_traceback_msg (err, routine, "myInput");
 
   /* How long is a line? */
   lenLine = MAX (72, MIN(doCrt,1023));
   if (!isInteractive) lenLine = 132;
+
+  /* Only look at IF being printed  */
+  eif = bif;
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut (inData->info, "BIF", OBIT_long, dim, &eif);
 
   /* Get scaling factors */
   getDataScale (inData, &blscale, &wtscale, &ampscale, err);
@@ -635,6 +644,10 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     Obit_traceback_msg (err, routine, inData->name);
   count = 0;
   inDesc = inData->myDesc;  
+
+  /* Limit by actual data i.e., in IO descriptor */
+  bchan = MIN (bchan, ((ObitUVDesc*)(inData->myIO->myDesc))->inaxes[inDesc->jlocf]);
+  bif   = MIN (bif  , ((ObitUVDesc*)(inData->myIO->myDesc))->inaxes[inDesc->jlocif]);
 
    /* Titles */
   sprintf (Title1, "                                                   ");
@@ -695,6 +708,17 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   if (doCalib>0) {
     if (gainUse<=0) gainUse = inData->mySel->calVersion;
     sprintf(line,"   Calibrating data with gain table %d", gainUse);
+    ObitPrinterWrite (myPrint, line, &quit, err);
+    if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
+  }
+  if (doBand>0) {
+    if (BPVer<=0) BPVer = inData->mySel->BPversion;
+    sprintf(line,"   Calibrating data with BandPass table %d", BPVer);
+    ObitPrinterWrite (myPrint, line, &quit, err);
+    if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
+  }
+  if (doPol) {
+    sprintf(line,"   Applying polarization corrections");
     ObitPrinterWrite (myPrint, line, &quit, err);
     if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
   }
@@ -1263,11 +1287,12 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     Obit_traceback_msg (err, routine, inData->name);
   inDesc = inData->myDesc;  
   sel    = inData->mySel;
+  if (inDesc->jlocif>=0) numIF = inDesc->inaxes[inDesc->jlocif];
+  else numIF = 1;
+
   /* Convert SU table into Source List if ther is an SourceID parameter */
   if (inDesc->ilocsu>=0) {
     ver = 1;
-    if (inDesc->jlocif>=0) numIF = inDesc->inaxes[inDesc->jlocif];
-    else numIF = 1;
     BIF = MIN (BIF, numIF);
     SUTable = newObitTableSUValue (inData->name, (ObitData*)inData, &ver, numIF, 
 				   OBIT_IO_ReadOnly, err);
@@ -1282,7 +1307,7 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   numPCal  = 0;
   numOrb   = 0;
   ANTable = newObitTableANValue (inData->name, (ObitData*)inData, &ver, 
-				 numOrb, numPCal, OBIT_IO_ReadOnly, err);
+				 numIF, numOrb, numPCal, OBIT_IO_ReadOnly, err);
   if (ANTable) AntList = ObitTableANGetList (ANTable, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
   ANTable = ObitTableANUnref(ANTable);

@@ -886,7 +886,7 @@ void doSplit (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   olong        avgFreq, nchAvg;
   gboolean     isScratch, doAvgAll;
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
-    "Stokes", "UVRange", "timeRange", "FreqID",
+    "Stokes", "UVRange", "timeRange", "FreqID", "souCode", "Qual", 
     "BIF", "EIF", "BChan", "EChan", "subA", "doCalWt", "dropSubA",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "Smooth", "flagVer", 
     "doPol", "Mode", "corrType", "BLVer", "InputAvgTime", "timeAvg",
@@ -995,6 +995,7 @@ void SplitHistory (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq",
+    "FreqID", "souCode", "Qual", 
     "outFile",  "outDisk", "outName", "outClass", "outSeq",
     "BIF", "EIF", "BChan", "EChan",  "chInc", "chAvg",
     "UVRange",  "timeRange",  "Compress", "doCalWt", "dropSubA",

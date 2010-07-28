@@ -212,7 +212,7 @@ ObitTableSN* ObitIoN2SolNTableConvert (ObitUV *inUV, ObitTableNI *NITable,
     iANver = i+1;
     /* Get table */
     ANTable = newObitTableANValue (inUV->name, (ObitData*)inUV, &iANver, 
-				   OBIT_IO_ReadOnly, 0, 0, err);
+				   OBIT_IO_ReadOnly, 0, 0, 0, err);
     if ((err->error) || (ANTable==NULL)) goto cleanup;
     
     antennaLists[i] = ObitTableANGetList (ANTable, err);

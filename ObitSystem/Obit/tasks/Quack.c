@@ -477,6 +477,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "BIF", "EIF", "subA", "Antennas",
+    "FreqID", "souCode", "Qual",
     "doCalSelect", 
     NULL};
   gchar *routine = "getInputData";
@@ -579,7 +580,7 @@ void QuackHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq", 
-    "BIF", "EIF", "FreqID",
+    "BIF", "EIF", "FreqID", "souCode", "Qual", 
     "Sources", "Stokes", "timeRange",  "subA", "Antennas", "flagVer", 
     "begDrop", "endDrop", "Reason",
     NULL};

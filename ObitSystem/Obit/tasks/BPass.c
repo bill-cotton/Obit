@@ -1396,13 +1396,14 @@ ObitTableBP* DummyBPTable (ObitUV* inData, ObitTableSN *SNTmpl, ObitErr *err)
     BPOut->myDesc->sort[1] = BPOut->antNoCol+1;
 
   /* Initialize BP Row */
-  BPRow->BW        = desc->cdelt[desc->jlocf];
+  desc = (ObitUVDesc*)inData->myIO->myDesc;
+  BPRow->BW           = desc->cdelt[desc->jlocf];
   BPRow->ChanShift[0] = 0.0;
   BPRow->ChanShift[1] = 0.0;
-  BPRow->RefAnt1   = 0;
-  BPRow->RefAnt2   = 0;
+  BPRow->RefAnt1      = 0;
+  BPRow->RefAnt2      = 0;
   for (i=0; i<nif; i++) BPRow->ChanShift[i] = 0.0;
-  for (i=0; i<nif; i++) BPRow->Weight1[i] = 0.0;
+  for (i=0; i<nif; i++) BPRow->Weight1[i]   = 0.0;
   if (npol>1) for (i=0; i<nif; i++) BPRow->Weight2[i] = 0.0;
   for (i=0; i<nchan*nif; i++) { 
     BPRow->Real1[i]   = fblank;
@@ -1493,6 +1494,10 @@ void SN2BPTable (ObitTableSN *SNTab, ObitTableBP *BPTab, olong chan,
   BPRow = newObitTableBPRow(BPTab);
   ObitTableBPSetRow (BPTab, BPRow, err);
   if (err->error) Obit_traceback_msg (err, routine, BPTab->name);
+
+  /* Make sure valid number on number of antennas */
+  if ((BPTab->numAnt<=0) && (SNTab->numAnt>0))
+    BPTab->numAnt    = SNTab->numAnt;  /* Max. antenna number */
 
   /* Loop over SN table */
   orow = 0;

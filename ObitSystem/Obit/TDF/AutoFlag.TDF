@@ -29,7 +29,6 @@
 ;;                         520 Edgemont Road
 ;;                         Charlottesville, VA 22903-2475 USA
 ;-----------------------------------------------------------------------
-;---------------------------------------------------------------
 AutoFlag   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
 AutoFlag:  Obit radio interferometry data editing software
 **PARAM** str 4
@@ -46,6 +45,12 @@ inSeq                               Input UV data (seq. #)
 inDisk                              Input UV data disk drive #
 **PARAM** str 16 30
 Sources                             Source (pointings) list
+**PARAM** int 1 **DEF** -1
+Qual             -1.0               Source qualifier -1=>all
+**PARAM** int 1 **DEF** -1
+FreqID                              Freq. ID to select.
+**PARAM** str 4
+souCode                             Calibrator code '    '=>all
 **PARAM** float 2
 timeRange                           Time range to process.
 **PARAM** str 4
@@ -151,6 +156,23 @@ Adverbs:
   Sources....List of sources (pointings) to be processed.
              '*' or blank = all; a "-" before a source name
              means all except ANY source named. 
+  Qual.......Only sources with a source qualifier number in the SU table
+             matching Qual will be used if Qual is >= 0.  If Qual < 0,
+             all qualifiers will be written.  These qualifiers will be
+             written to separate output files.  Note that outSeq must be
+             zero in this case.
+  souCode....Sources may be selected on the basis of the calibrator code
+             given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The souCode test is applied in addition to the other
+             tests, i.e. Sources and Qual, in the selection of sources to
+             process.
+  FreqID.....Frequency identifier to select (you may determine which is
+             applicable from the OPTYPE='SCAN' listing produced by
+             AIPS task LISTR). <=0=>any
   timeRange..Time range of the data to be processed. In order:
              Start and end times in days relative to ref. date.  
              Use  dhms2day to convert from human readable form
@@ -257,11 +279,10 @@ Adverbs:
              If the IF==0 then the group applies to all IF.
              Default is channels 2 => nchan-1 all IFs
   taskLog....Log file to write messages to INSTEAD of the terminal
-             This is useful in long runs or batch files where
-             a bug in the ObitTalk message handling may cause
-             tasks to hang.  Path is absolute or relative to where
-             the task executes.
-----------------------------------------------------------------
+             This is useful in long runs or batch files.
+             Path is absolute or relative to where the task 
+             executes.
+g----------------------------------------------------------------
 Automatic editing task for radio interferometer data
 Documenter:  W. D. Cotton,  NRAO
 Related Programs: MednFlag

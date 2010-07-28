@@ -1288,7 +1288,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gchar        Stokes[5], *CCType = "AIPS CC";
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "UVRange", "timeRange", "UVTape",
-    "BIF", "EIF", "subA",
+    "BIF", "EIF", "subA", "FreqID", "souCode", "Qual", 
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "doPol",
     "Mode",
     NULL
@@ -1873,6 +1873,7 @@ void SCMapHistory (gchar *Source, ObitInfoList* myInput,
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq",
+    "FreqID", "souCode", "Qual", 
     "outFile",  "outDisk", "outName", "outClass", "outSeq",
     "BChan", "EChan", "BIF", "EIF", 
     "FOV",  "UVRange",  "timeRange",  "Robust",  "UVTaper",  

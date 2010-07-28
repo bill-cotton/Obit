@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005,2009                                          */
+/*;  Copyright (C) 2005,2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -526,9 +526,10 @@ ObitTableSN* ObitTableSNGetZeroFR (ObitUV *inUV, ObitUV *outUV, olong ver,
     access   = OBIT_IO_ReadOnly;
     numOrb   = 0;
     numPCal  = 0;
+    numIF    = 0;
 
     ANTable = newObitTableANValue ("AN table", (ObitData*)outUV, 
-				   &iANver, access, numOrb, numPCal, err);
+				   &iANver, access, numIF, numOrb, numPCal, err);
     if (ANTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with AN table");
     AntList[iANver-1] = ObitTableANGetList (ANTable, err);
     if (err->error) Obit_traceback_val (err, routine, outUV->name, outCal);

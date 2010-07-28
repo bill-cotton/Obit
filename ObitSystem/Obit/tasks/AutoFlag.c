@@ -734,7 +734,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "BChan", "EChan",   "BIF", "EIF", "subA",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "doPol",
-    "timeAvg", "maxBad", "flagTab",
+    "timeAvg", "maxBad", "flagTab", "FreqID", "souCode", "Qual", 
     NULL};
   gchar *routine = "getInputData";
 
@@ -955,7 +955,7 @@ void AutoFlagHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq", 
     "outFile",  "outDisk", "outName", "outClass", "outSeq", 
-    "Sources", "Stokes", "timeRange",  "subA",
+    "Sources", "Stokes", "timeRange",  "subA", "FreqID", "souCode", "Qual", 
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
     "doPol",  
     "flagTab", "VClip", "IClip", "RMSClip", "doHiEdit", "RMSAvg", "maxBad", "timeAvg", 

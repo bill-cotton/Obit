@@ -559,7 +559,7 @@ void ObitSkyModelVMBeamInitMod (ObitSkyModel* inn, ObitUV *uvdata,
   in->numAntList = numAntList;
   for (iver=1; iver<=numAntList; iver++) { 
     TableAN = newObitTableANValue ("AN", (ObitData*)uvdata, &iver, 
-				   OBIT_IO_ReadOnly, 0, 0, err);
+				   OBIT_IO_ReadOnly, 0, 0, 0, err);
     in->AntList[iver-1] = ObitAntennaListUnref(in->AntList[iver-1]);
     in->AntList[iver-1] = ObitTableANGetList(TableAN, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);

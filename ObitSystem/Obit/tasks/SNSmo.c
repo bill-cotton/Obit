@@ -523,7 +523,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        Aname[13], Aclass[7], *Atype = "UV";
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "timeRange", "BChan", "EChan",   "BIF", "EIF", "subA",
-    "Antennas", "FredID", 
+    "Antennas", "FredID", "souCode", "Qual", 
      NULL};
   gchar *routine = "getInputData";
 
@@ -625,7 +625,7 @@ void SNSmoHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq", 
-    "Sources", "FreqID", "timeRange",  "subA", "Antennas", 
+    "Sources", "FreqID", "souCode", "Qual", "timeRange",  "subA", "Antennas", 
     "solnIn", "solnOut", "smoFunc", "smoParm", "doBlank", "smoType", 
     "refAnt",
     NULL};

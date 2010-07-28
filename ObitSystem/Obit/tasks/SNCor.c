@@ -512,7 +512,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "BIF", "EIF", "subA",
-    "doCalSelect", "Antennas",
+    "doCalSelect", "Antennas", "FreqID", "souCode", "Qual", 
      NULL};
   gchar *routine = "getInputData";
 
@@ -610,7 +610,7 @@ void SNCorHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq", 
-    "Sources", "souCode",  "EditStokes", "BIF", "EIF", 
+    "Sources", "souCode", "Qual", "EditStokes", "BIF", "EIF", 
     "FreqID", "timeRange",  "subA", "Antennas", 
     "solnVer", "corMode", "SNCParm", "PhasParm",
     NULL};

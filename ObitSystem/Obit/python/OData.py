@@ -201,7 +201,7 @@ class OData(ODataPtr):
         numOrb    = Number of orbital parameters (AN)
         numPCal   = Number of polarization parameters (AN)
         numIF     = Number of IFs (FQ, SN, CL, BP, BL, TY, CQ)
-        numPol    = Number of Stokes' (SN, CL, BP, BL, PC, TY, GC, MC, IM)
+        numPol    = Number of Stokes' (AN, SN, CL, BP, BL, PC, TY, GC, MC, IM)
         numTerm   = Number of terms in model polynomial (CL)
         numChan   = Number of spectral channels (BP)
         numTomes  = Number of Phase cal tones (PC)
@@ -223,7 +223,7 @@ class OData(ODataPtr):
         id  = inOData.cast(myClass)
         outTab = None
         if tabType=="AIPS AN":
-            outTab = Obit.TableAN(id, [tabVer], access, tabType, numOrb, numPCal, err.me)
+            outTab = Obit.TableAN(id, [tabVer], access, tabType, numIF, numOrb, numPCal, err.me)
         elif tabType=="AIPS SU":
             outTab = Obit.TableSU(id, [tabVer], access, tabType, numIF, err.me)
         elif tabType=="AIPS NX":

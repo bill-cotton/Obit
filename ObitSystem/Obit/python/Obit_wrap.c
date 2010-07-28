@@ -5545,13 +5545,14 @@ typedef struct {
 extern ObitTable* TableAN (ObitData *inData, long *tabVer,
  	                   int access,
  	                   char *tabName,
-                           int numOrb, int numPCal,
+                           int numIF, int numOrb, int numPCal,
                            ObitErr *err)
  {
    ObitIOAccess laccess;
    /* Cast structural keywords to correct type */
-   oint lnumOrb = (oint)numOrb;
+   oint lnumOrb  = (oint)numOrb;
    oint lnumPCal = (oint)numPCal;
+   oint lnumIF   = (oint)numIF;
    olong ltabVer = (olong)*tabVer;
    ObitTable *outTable=NULL;
    laccess = OBIT_IO_ReadOnly;
@@ -5559,7 +5560,7 @@ extern ObitTable* TableAN (ObitData *inData, long *tabVer,
    else if (access==3) laccess = OBIT_IO_ReadWrite;
    outTable = (ObitTable*)newObitTableANValue ((gchar*)tabName, inData, (olong*)&ltabVer,
    			   laccess, 
-                           lnumOrb, lnumPCal,
+                           lnumIF, lnumOrb, lnumPCal,
                            err);
    *tabVer = (long)ltabVer;
    return outTable;
@@ -5633,7 +5634,7 @@ extern void TableANSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
     lTab->myStatus = OBIT_Modified;
 } 
 
-extern ObitTable *TableAN(ObitData *,long *,int ,char *,int ,int ,ObitErr *);
+extern ObitTable *TableAN(ObitData *,long *,int ,char *,int ,int ,int ,ObitErr *);
 extern PyObject *TableANGetHeadKeys(ObitTable *);
 extern void TableANSetHeadKeys(ObitTable *,PyObject *);
 
@@ -33825,15 +33826,16 @@ static PyObject *_wrap_TableAN(PyObject *self, PyObject *args) {
     char * _arg3;
     int  _arg4;
     int  _arg5;
-    ObitErr * _arg6;
+    int  _arg6;
+    ObitErr * _arg7;
     PyObject * _argo0 = 0;
     PyObject * _obj1 = 0;
     PyObject * _obj3 = 0;
-    PyObject * _argo6 = 0;
+    PyObject * _argo7 = 0;
     char _ptemp[128];
 
     self = self;
-    if(!PyArg_ParseTuple(args,"OOiOiiO:TableAN",&_argo0,&_obj1,&_arg2,&_obj3,&_arg4,&_arg5,&_argo6)) 
+    if(!PyArg_ParseTuple(args,"OOiOiiiO:TableAN",&_argo0,&_obj1,&_arg2,&_obj3,&_arg4,&_arg5,&_arg6,&_argo7)) 
         return NULL;
     if (_argo0) {
         if (_argo0 == Py_None) { _arg0 = NULL; }
@@ -33878,14 +33880,14 @@ static PyObject *_wrap_TableAN(PyObject *self, PyObject *args) {
     return NULL;
   }
 }
-    if (_argo6) {
-        if (_argo6 == Py_None) { _arg6 = NULL; }
-        else if (SWIG_GetPtrObj(_argo6,(void **) &_arg6,"_ObitErr_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 7 of TableAN. Expected _ObitErr_p.");
+    if (_argo7) {
+        if (_argo7 == Py_None) { _arg7 = NULL; }
+        else if (SWIG_GetPtrObj(_argo7,(void **) &_arg7,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 8 of TableAN. Expected _ObitErr_p.");
         return NULL;
         }
     }
-    _result = (ObitTable *)TableAN(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
+    _result = (ObitTable *)TableAN(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7);
     if (_result) {
         SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
         _resultobj = Py_BuildValue("s",_ptemp);

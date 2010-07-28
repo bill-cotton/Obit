@@ -778,7 +778,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "Sources", "Stokes", "timeRange", "BChan", "EChan",  "BIF", "EIF", "subA",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "doPol",
-    "Smooth", "Antennas",  "Sources",  "souCode", "Qual", "Alpha", 
+    "Smooth", "Antennas",  "Sources",  "souCode", "Qual", "FreqID", "Alpha", 
      NULL};
   gchar *routine = "getInputData";
 
@@ -1273,7 +1273,7 @@ void UVSubHistory (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
   gchar        *hiEntries[] = {
     "DataType", 
     "inFile",  "inDisk", "inName", "inClass", "inSeq",
-    "channel", "BIF", "EIF",   "Sources",  "Qual", 
+    "channel", "BIF", "EIF",   "Sources",  "Qual", "FreqID", "souCode", 
     "doCalSelect", "doCalib", "gainUse", "doPol", "flagVer", 
     "doBand", "BPVer", "Smooth", 
     "in2File",  "in2Disk", "in2Name", "in2Class", "in2Seq",

@@ -874,7 +874,7 @@ void SNFiltSet (ObitInfoList* myInput, ObitUV* inData, ObitTableSN *SNTab,
   iANver = 1;
   /* Get table */
   ANTab = newObitTableANValue (inData->name, (ObitData*)inData, &iANver, 
-			       OBIT_IO_ReadOnly, 0, 0, err);
+			       OBIT_IO_ReadOnly, 0, 0, 0, err);
   /* Get Antenna list */
   Ant = ObitTableANGetList (ANTab, err);
   if ((err->error) || (ANTab==NULL) || (Ant==NULL)) goto cleanup;

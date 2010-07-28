@@ -45,6 +45,10 @@ inSeq             0.0     9999.0   Input UV file name (seq. #)
 inDisk            0.0        9.0   Input UV file disk unit #
 **PARAM** str 16 30
 Sources                            Source list ' '=>all.
+**PARAM** int 1 **DEF** -1
+Qual             -1.0              Source qualifier -1=>all
+**PARAM** str 4
+souCode                            Calibrator code '    '=>all
 **PARAM** str 4
 EditStokes                         Stokes type to process
 **PARAM** int 1
@@ -83,6 +87,20 @@ Adverbs:
   Sources....list of sources to process.
              '*' = all; a "-" before a source name
              means all except ANY source named.
+  Qual.......Only sources with a source qualifier number in the SU table
+             matching Qual will be used if Qual is >= 0.  If Qual < 0,
+             all qualifiers will be written.  These qualifiers will be
+             written to separate output files.  Note that outSeq must be
+             zero in this case.
+  souCode....Sources may be selected on the basis of the calibrator code
+             given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The souCode test is applied in addition to the other
+             tests, i.e. Sources and Qual, in the selection of sources to
+             process.
   EditStokes..The desired Stokes type to modify:
              'R ', 'L ', 'RL', '  '=> 'RL'.
   FreqID.....Frequency identifier to select (you may determine
@@ -140,11 +158,10 @@ Adverbs:
   SNCParm...Parameters: see above and below.
   PhasParm....More parameters: see above and below
              be placed.  This will not affect the output file.
-  taskLog.....Log file to write messages to INSTEAD of the terminal
-              This is useful in long runs or batch files where
-              a bug in the ObitTalk message handling may cause
-              tasks to hang.  Path is absolute or relative to where
-              the task executes.
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files.
+             Path is absolute or relative to where the task 
+             executes.
 ----------------------------------------------------------------
 Mostly copied from AIPS SNCOR
 SNCor:  Task to apply corrections to an SN table in a variety of

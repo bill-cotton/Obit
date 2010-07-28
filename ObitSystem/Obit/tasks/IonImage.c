@@ -1373,7 +1373,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gchar        Stokes[5], *chStokes=" IQUV", *CCType = "AIPS CC";
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "UVRange", "timeRange", "UVTape",
-    "BIF", "EIF", "BChan", "EChan", "subA",
+    "BIF", "EIF", "BChan", "EChan", "subA", "FreqID", "souCode", "Qual",
     "doCalSelect", "doCalib", "gainUse", "doBand", "BPVer", "flagVer", "doPol",
     "Mode",
     NULL
@@ -2085,6 +2085,7 @@ void IonImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq",
+    "FreqID", "souCode", "Qual", 
     "outFile",  "outDisk", "outName", "outClass", "outSeq",
     "UVRange",  "timeRange",  "Robust",  "UVTaper",  "WtBox", "WtFunc", 
     "BIF", "EIF", "BChan", "EChan",  "chInc", "chAvg", "BLFact", "BLFOV",  "BLchAvg",

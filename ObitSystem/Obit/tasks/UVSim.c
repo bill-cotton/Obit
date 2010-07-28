@@ -891,7 +891,7 @@ void GetHeader (ObitUV *outData, ObitInfoList *myInput, ObitErr *err)
   ObitTableAN *ANTable=NULL;
   olong ncol;
   gchar *today=NULL;
-  olong numOrb,  numPCal;
+  olong numIF, numOrb,  numPCal;
   ObitIOAccess access;
   olong ver;
   ObitInfoType type;
@@ -1014,6 +1014,7 @@ void GetHeader (ObitUV *outData, ObitInfoList *myInput, ObitErr *err)
     ncol++;
 
     /* IF */
+    numIF = nIF;
     ObitInfoListGet(myInput, "nIF",   &type, dim, &nIF,   err);
     ObitInfoListGet(myInput, "delIF", &type, dim, &deltaIF, err);
     strncpy (desc->ctype[ncol], "IF      ", UVLEN_KEYWORD);
@@ -1072,7 +1073,7 @@ void GetHeader (ObitUV *outData, ObitInfoList *myInput, ObitErr *err)
   numOrb   = 0;
   numPCal  = 0;
   ANTable = newObitTableANValue ("AN table", (ObitData*)outData, 
-				 &ver, access, numOrb, numPCal, err);
+				 &ver, access, numIF, numOrb, numPCal, err);
   if (ANTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with AN table");
   AntList = ObitTableANGetList (ANTable, err);
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
@@ -1221,7 +1222,7 @@ void GetAntennaInfo (ObitInfoList *myInput, ObitUV *outData, ObitErr *err)
   ObitTableAN    *outTable=NULL;
   ObitTableANRow *outRow  =NULL;
   olong          iRow, oRow, ver;
-  oint           numPCal, numOrb;
+  oint           numIF, numPCal, numOrb;
   odouble        JD, GASTM, Rate;
   ObitIOAccess   access;
   ObitInfoType   type;
@@ -1252,8 +1253,12 @@ void GetAntennaInfo (ObitInfoList *myInput, ObitUV *outData, ObitErr *err)
   access   = OBIT_IO_ReadWrite;
   numOrb   = 0;
   numPCal  = 0;
+  if (outData->myDesc->jlocif>=0)
+    numIF    = outData->myDesc->inaxes[outData->myDesc->jlocif];
+  else
+    numIF = 1;
   outTable = newObitTableANValue ("Output table", (ObitData*)outData, 
-				  &ver, access, numOrb, numPCal, err);
+				  &ver, access, numIF, numOrb, numPCal, err);
   if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with AN table");
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
 

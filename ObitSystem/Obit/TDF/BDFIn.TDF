@@ -53,6 +53,8 @@ selIF                               no. IFs to select, 0=>first.
 selBand                             Band to select, "  "=>first.
 **PARAM** boo 1  **DEF** T
 dropZero                            Drop records with all zero vis
+**PARAM** boo 1  **DEF** F
+doCode                              Each calcode a different source?
 **PARAM** float 1 **DEF** 0.5
 calInt                              CL Table interval
 **PARAM** boo 1  **DEF** T
@@ -70,7 +72,7 @@ table.  Scans with ascribed intents clearly for online calibration
 only, "CALIBRATE-POINTING", are also flagged.
 
 Adverbs:
-  DataRoot...Archive directory for project, end in '/'
+  DataRoot...Archive directory for project
   DataType..'FITS' or 'AIPS'  type of output
   outFile....Output UV FITS file name
   outName....Output UV AIPS file name (name).
@@ -96,6 +98,10 @@ Data selection
   dropZero...If True, visibility records with all zero records 
              will be dropped.  In any case, visibilities which are 
              exactly zero will be flagged (zero weight).
+  doCode.....If True then each calcode used for a given source name 
+             will be generate distinct source ID (entry in the 
+             AIPS SU table).  If False, all data for a given source 
+             name will have the same source ID.
   calInt.....Interval in min between AIPS CL table entries.
 
   Compress...If True  the output data is written in

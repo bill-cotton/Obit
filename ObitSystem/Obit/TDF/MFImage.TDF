@@ -195,7 +195,7 @@ Beam     *      -999.9             Clean beam (maj, min, PA)
 Reuse    *                         Factor * RMS to reuse each cycle
 **PARAM** float 1  **DEF** 1.0e20
 autoCen  *                         Auto center min flux density
-**PARAM** str 4
+**PARAM** str 4   **DEF** DFT
 Cmethod                            Modeling method:
                                    'DFT','GRID','    '
 **PARAM** boo 1   **DEF** F
@@ -567,6 +567,7 @@ Adverbs:
             the initial CLEAN is stopped at minFlux=0.1*autoCen
   Cmethod...This determines the method used to compute the
             model visibility values.
+            NOTE: Only the DFT method is implemented for wideband imaging.
             'DFT' uses the direct Fourier transform, this
                method is the most accurate.
             'GRID' does a gridded-FFT interpolation model
@@ -674,10 +675,9 @@ Adverbs:
               NB: This only improves performance if there are 
               multiple processors and/or cores in the host.
   taskLog.....Log file to write messages to INSTEAD of the terminal
-              This is useful in long runs or batch files where
-              a bug in the ObitTalk message handling may cause
-              tasks to hang.  Path is absolute or relative to where
-              the task executes.
+              This is useful in long runs or batch files.
+              Path is absolute or relative to where the task 
+              executes.
   noScrat.....A list of AIPS disk numbers on which you do not 
               wish scratch files
 ----------------------------------------------------------------

@@ -1309,7 +1309,7 @@ static void SetLists (ObitUVGSolveWB *in, ObitUV *inUV, olong suba, ObitErr* err
   /* Antenna list */
   iver = MAX (1, suba);
   ANTable = newObitTableANValue (in->name, (ObitData*)inUV, &iver, 
-				 OBIT_IO_ReadOnly, 0, 0, err);
+				 OBIT_IO_ReadOnly, 0, 0, 0, err);
   in->AList = ObitTableANGetList (ANTable, err);
   ANTable = ObitTableANUnref(ANTable);   /* Done with table */
   if (err->error) Obit_traceback_msg (err, routine, ANTable->name);
