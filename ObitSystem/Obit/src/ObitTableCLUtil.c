@@ -255,7 +255,7 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
   ofloat *rec, solInt, t0, sumTime, cbase, lastTime=-1.0, lastSource=-1.0, lastFQID=-1.0;
   olong iRow, i, ia, lrec, maxant;
   olong  nTime, SubA, ant1, ant2, lastSubA=-1;
-  oint numPol, numIF, numTerm;
+  oint numPol, numIF, numTerm, numAnt;
   gboolean doCalSelect, doFirst=TRUE, someData=FALSE, gotAnt[MAXANT];
   ObitIOCode retCode;
   gchar *tname;
@@ -286,6 +286,7 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
   if (desc->jlocif>=0) numIF = desc->inaxes[desc->jlocif];
   else                 numIF = 1;
   numTerm= 1;
+  numAnt = inUV->myDesc->numAnt[0];/* actually highest antenna number */
   tname  = g_strconcat ("Calibration for: ",inUV->name, NULL);
   outCal = newObitTableCLValue(tname, (ObitData*)outUV, &ver, OBIT_IO_WriteOnly,  
 			       numPol, numIF, numTerm, err);
@@ -312,7 +313,10 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
   ObitTableCLSetRow (outCal, row, err);
   if (err->error) Obit_traceback_val (err, routine, inUV->name, outCal);
 
-  /* Initialize */
+  /* Set header values */
+  outCal->numAnt    = numAnt;  /* Max. antenna number */
+
+ /* Initialize */
   row->Time   = 0.0;
   row->TimeI  = 0.0;
   row->SourID = 0;

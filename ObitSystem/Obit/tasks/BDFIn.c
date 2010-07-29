@@ -81,7 +81,8 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
 void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData, 
 		       ASDMSpectralWindowArray* SpWinArray, ObitErr *err);
 /* Get Source info */
-void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
+void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iScan, 
+		    ObitErr *err);
 /* Copy any FLAG tables */
 void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
 /* Copy any CALIBRATION tables */
@@ -635,9 +636,9 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
 
   /* Set CL table interval */
   ObitInfoListGetTest(myInput, "calInt", &type, dim, &calInt);
-  /* to days */
-  calInt /= 1440.0;
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  /* to seconds */
+  calInt *= 60.0;
   ObitInfoListAlwaysPut(outUV->info, "solInt", OBIT_float, dim, &calInt);
   
   /* Get input parameters from myInput, copy to outUV */
@@ -926,7 +927,7 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   
   /* Get source info, copy to output SU table, save lookup table in SourceID */
   ObitUVOpen (outData, OBIT_IO_WriteOnly, err);
-  GetSourceInfo (SDMData, outData, err);
+  GetSourceInfo (SDMData, outData, iScan, err);
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
 
   /* Save any equinox information */
@@ -1338,7 +1339,7 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
   ObitTableFQ*            outTable=NULL;
   ObitTableFQRow*         outRow=NULL;
   olong i, oRow, ver, numIF, iIF;
-  odouble refFreq;
+  odouble refFreq=0.0;
   ObitIOAccess access;
   gchar *routine = "GetFrequencyInfo";
 
@@ -1426,13 +1427,15 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
 
 } /* end  GetFrequencyInfo */
 
-void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
+void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iScan,
+		    ObitErr *err)
 /*----------------------------------------------------------------------- */
 /*  Get Source info from ASDM                                             */
 /*  ASDM structure has one source entry per spectral window(=IF)          */
 /*   Input:                                                               */
 /*      SDMData  ASDM structure                                           */
 /*      outData  Output UV object                                         */
+/*      iScan    Scan number to use for Spectral Window array             */
 /*   Output:                                                              */
 /*       err     Obit return error stack                                  */
 /*----------------------------------------------------------------------- */
@@ -1471,7 +1474,7 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   Obit_return_if_fail((SourceArray), err,
 		      "%s: Could not extract Source info from ASDM", 
 		      routine);
-  SpWinArray  = ObitSDMDataGetSWArray (SDMData, 1);
+  SpWinArray  = ObitSDMDataGetSWArray (SDMData, iScan);
   Obit_return_if_fail((SpWinArray), err,
 		      "%s: Could not extract Spectral Windows from ASDM", 
 		      routine);
@@ -1544,7 +1547,7 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     }
     /* Not found or not selected? */
     if ((iSW>=SpWinArray->nwinds) || (!SpWinArray->winds[iSW]->selected)) 
-      continue;
+      continue; 
 
     /* Set output row  */
     outRow->SourID    = SourceArray->sou[iRow]->sourceNo;
@@ -1645,7 +1648,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   ObitBDFData *BDFData=NULL;
   ObitIOCode retCode;
   olong iMain, iInteg, ScanId, i, j, iBB, selChan, selIF, iSW, jSW, kBB, nIFsel, 
-    cntDrop=0, BBNum, ver, iRow, sourId;
+    cntDrop=0, BBNum, ver, iRow, sourId=0;
   ofloat *Buffer=NULL, tlast=-1.0e20, startTime, endTime;
   ObitUVDesc *desc;
   ObitTableNX* NXtable;

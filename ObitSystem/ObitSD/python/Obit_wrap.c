@@ -4236,6 +4236,10 @@ extern void SetError(ObitErr *in) {
    in->error = 1;
 }
 
+extern void ErrorInit(ObitErr *in, ObitInfoList *info) {
+   ObitErrInit(in, (gpointer)info);
+}
+
 extern void LogError (ObitErr *in, int eCode, char *message) {
    ObitErrCode code;
  /* Should be coordinated with OErr class definition.*/
@@ -4323,6 +4327,7 @@ extern void Bomb(void) {
 extern ObitErr *ObitErrCreate();
 extern int isError(ObitErr *);
 extern void SetError(ObitErr *);
+extern void ErrorInit(ObitErr *,ObitInfoList *);
 extern void LogError(ObitErr *,int ,char *);
 extern char *OErrMsg(ObitErr *);
 extern void Bomb();
@@ -5558,13 +5563,14 @@ typedef struct {
 extern ObitTable* TableAN (ObitData *inData, long *tabVer,
  	                   int access,
  	                   char *tabName,
-                           int numOrb, int numPCal,
+                           int numIF, int numOrb, int numPCal,
                            ObitErr *err)
  {
    ObitIOAccess laccess;
    /* Cast structural keywords to correct type */
-   oint lnumOrb = (oint)numOrb;
+   oint lnumOrb  = (oint)numOrb;
    oint lnumPCal = (oint)numPCal;
+   oint lnumIF   = (oint)numIF;
    olong ltabVer = (olong)*tabVer;
    ObitTable *outTable=NULL;
    laccess = OBIT_IO_ReadOnly;
@@ -5572,7 +5578,7 @@ extern ObitTable* TableAN (ObitData *inData, long *tabVer,
    else if (access==3) laccess = OBIT_IO_ReadWrite;
    outTable = (ObitTable*)newObitTableANValue ((gchar*)tabName, inData, (olong*)&ltabVer,
    			   laccess, 
-                           lnumOrb, lnumPCal,
+                           lnumIF, lnumOrb, lnumPCal,
                            err);
    *tabVer = (long)ltabVer;
    return outTable;
@@ -5646,7 +5652,7 @@ extern void TableANSetHeadKeys (ObitTable *inTab, PyObject *inDict) {
     lTab->myStatus = OBIT_Modified;
 } 
 
-extern ObitTable *TableAN(ObitData *,long *,int ,char *,int ,int ,ObitErr *);
+extern ObitTable *TableAN(ObitData *,long *,int ,char *,int ,int ,int ,ObitErr *);
 extern PyObject *TableANGetHeadKeys(ObitTable *);
 extern void TableANSetHeadKeys(ObitTable *,PyObject *);
 
@@ -9449,6 +9455,9 @@ extern PyObject *UVDescGetDict(ObitUVDesc* in) {
   PyDict_SetItemString(outDict, "obsdec",  PyFloat_FromDouble((double)in->obsdec));
   PyDict_SetItemString(outDict, "epoch",   PyFloat_FromDouble((double)in->epoch));
   PyDict_SetItemString(outDict, "equinox", PyFloat_FromDouble((double)in->equinox));
+  PyDict_SetItemString(outDict, "beamMaj", PyFloat_FromDouble((double)in->beamMaj));
+  PyDict_SetItemString(outDict, "beamMin", PyFloat_FromDouble((double)in->beamMin));
+  PyDict_SetItemString(outDict, "beamPA",  PyFloat_FromDouble((double)in->beamPA));
   PyDict_SetItemString(outDict, "xshift",  PyFloat_FromDouble((double)in->xshift));
   PyDict_SetItemString(outDict, "yshift",  PyFloat_FromDouble((double)in->yshift));
   PyDict_SetItemString(outDict, "altCrpix",PyFloat_FromDouble((double)in->altCrpix));
@@ -9544,6 +9553,9 @@ extern void UVDescSetDict(ObitUVDesc* in, PyObject *inDict) {
   in->equinox = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "equinox"));
   in->obsra   = PyFloat_AsDouble(PyDict_GetItemString(inDict, "obsra"));
   in->obsdec  = PyFloat_AsDouble(PyDict_GetItemString(inDict, "obsdec"));
+  in->beamMaj = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "beamMaj"));
+  in->beamMin = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "beamMin"));
+  in->beamPA  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "beamPA"));
   in->restFreq= (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "restFreq"));
   in->JDObs   = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "JDObs"));
   in->xshift  = (float)PyFloat_AsDouble(PyDict_GetItemString(inDict, "xshift"));
@@ -9750,6 +9762,8 @@ typedef struct {
 #include "ObitUVEdit.h"
 #include "ObitUVWeight.h"
 #include "ObitTableSNUtil.h"
+#include "ObitTableNXUtil.h"
+#include "ObitTableFG.h"
 
 
 extern void UVSetFITS(ObitUV *in, long nvis, int disk, char *file, 
@@ -10032,6 +10046,42 @@ extern void UVUtilIndex(ObitUV* inUV, ObitErr *err) {
   return ObitUVUtilIndex (inUV, err);
 } // end UVUtilVisIndex
 
+extern void UVUtilQuack(ObitUV* inUV, float begDrop, float endDrop,
+	char *Reason, long fgver, ObitErr *err) {
+  olong ver;
+  ofloat ftemp;
+  ObitTableNX *NXTab = NULL;
+  ObitTableFG *FGTab = NULL;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *routine = "UVUtilQuack";
+
+  ObitUVFullInstantiate (inUV, TRUE, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
+  // Tables 
+  ver = 1;
+  NXTab = newObitTableNXValue ("Index table", (ObitData*)inUV, &ver, 
+			       OBIT_IO_ReadOnly, err);
+  ver = fgver;
+  FGTab = newObitTableFGValue ("Flag table", (ObitData*)inUV, &ver, 
+			       OBIT_IO_ReadWrite, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
+  // Editing parameters to NXTab 
+  dim[0] = 1;
+  ftemp = begDrop;
+  ObitInfoListAlwaysPut (NXTab->info, "begDrop", OBIT_float, dim, &ftemp);
+  ftemp = endDrop;
+  ObitInfoListAlwaysPut (NXTab->info, "endDrop", OBIT_float, dim, &ftemp);
+  dim[0] = MIN(24, strlen(Reason));
+  ObitInfoListAlwaysPut (NXTab->info, "Reason", OBIT_string, dim, Reason);
+
+  // Do editing 
+  ObitTableNXUtilQuack (NXTab, FGTab, inUV->mySel, inUV->myDesc->maxAnt, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+} // end UVUtilQuack
+
 extern ObitUV* UVUtilAvgF(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
   gboolean lscratch;
   lscratch = scratch!=0;
@@ -10153,6 +10203,7 @@ extern void UVUtilVisDivide(ObitUV *,ObitUV *,ObitUV *,ObitErr *);
 extern void UVUtilVisSub(ObitUV *,ObitUV *,ObitUV *,ObitErr *);
 extern float UVUtilVisCompare(ObitUV *,ObitUV *,ObitErr *);
 extern void UVUtilIndex(ObitUV *,ObitErr *);
+extern void UVUtilQuack(ObitUV *,float ,float ,char *,long ,ObitErr *);
 extern ObitUV *UVUtilAvgF(ObitUV *,int ,ObitUV *,ObitErr *);
 extern ObitUV *UVUtilAvgT(ObitUV *,int ,ObitUV *,ObitErr *);
 extern ObitUV *UVUtilAvgTF(ObitUV *,int ,ObitUV *,ObitErr *);
@@ -29031,6 +29082,36 @@ static PyObject *_wrap_SetError(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_ErrorInit(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitErr * _arg0;
+    ObitInfoList * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:ErrorInit",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ErrorInit. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitInfoList_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ErrorInit. Expected _ObitInfoList_p.");
+        return NULL;
+        }
+    }
+    ErrorInit(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 static PyObject *_wrap_LogError(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitErr * _arg0;
@@ -36422,15 +36503,16 @@ static PyObject *_wrap_TableAN(PyObject *self, PyObject *args) {
     char * _arg3;
     int  _arg4;
     int  _arg5;
-    ObitErr * _arg6;
+    int  _arg6;
+    ObitErr * _arg7;
     PyObject * _argo0 = 0;
     PyObject * _obj1 = 0;
     PyObject * _obj3 = 0;
-    PyObject * _argo6 = 0;
+    PyObject * _argo7 = 0;
     char _ptemp[128];
 
     self = self;
-    if(!PyArg_ParseTuple(args,"OOiOiiO:TableAN",&_argo0,&_obj1,&_arg2,&_obj3,&_arg4,&_arg5,&_argo6)) 
+    if(!PyArg_ParseTuple(args,"OOiOiiiO:TableAN",&_argo0,&_obj1,&_arg2,&_obj3,&_arg4,&_arg5,&_arg6,&_argo7)) 
         return NULL;
     if (_argo0) {
         if (_argo0 == Py_None) { _arg0 = NULL; }
@@ -36475,14 +36557,14 @@ static PyObject *_wrap_TableAN(PyObject *self, PyObject *args) {
     return NULL;
   }
 }
-    if (_argo6) {
-        if (_argo6 == Py_None) { _arg6 = NULL; }
-        else if (SWIG_GetPtrObj(_argo6,(void **) &_arg6,"_ObitErr_p")) {
-            PyErr_SetString(PyExc_TypeError,"Type error in argument 7 of TableAN. Expected _ObitErr_p.");
+    if (_argo7) {
+        if (_argo7 == Py_None) { _arg7 = NULL; }
+        else if (SWIG_GetPtrObj(_argo7,(void **) &_arg7,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 8 of TableAN. Expected _ObitErr_p.");
         return NULL;
         }
     }
-    _result = (ObitTable *)TableAN(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
+    _result = (ObitTable *)TableAN(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7);
     if (_result) {
         SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTable_p");
         _resultobj = Py_BuildValue("s",_ptemp);
@@ -47147,6 +47229,60 @@ static PyObject *_wrap_UVUtilIndex(PyObject *self, PyObject *args) {
     UVUtilIndex(_arg0,_arg1);
     Py_INCREF(Py_None);
     _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_UVUtilQuack(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUV * _arg0;
+    float  _arg1;
+    float  _arg2;
+    char * _arg3;
+    long  _arg4;
+    ObitErr * _arg5;
+    PyObject * _argo0 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _argo5 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OffOlO:UVUtilQuack",&_argo0,&_arg1,&_arg2,&_obj3,&_arg4,&_argo5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVUtilQuack. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of UVUtilQuack. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    UVUtilQuack(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  free((char *) _arg3);
+}
     return _resultobj;
 }
 
@@ -64720,6 +64856,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "UVUtilAvgTF", _wrap_UVUtilAvgTF, METH_VARARGS },
 	 { "UVUtilAvgT", _wrap_UVUtilAvgT, METH_VARARGS },
 	 { "UVUtilAvgF", _wrap_UVUtilAvgF, METH_VARARGS },
+	 { "UVUtilQuack", _wrap_UVUtilQuack, METH_VARARGS },
 	 { "UVUtilIndex", _wrap_UVUtilIndex, METH_VARARGS },
 	 { "UVUtilVisCompare", _wrap_UVUtilVisCompare, METH_VARARGS },
 	 { "UVUtilVisSub", _wrap_UVUtilVisSub, METH_VARARGS },
@@ -65126,6 +65263,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "Bomb", _wrap_Bomb, METH_VARARGS },
 	 { "OErrMsg", _wrap_OErrMsg, METH_VARARGS },
 	 { "LogError", _wrap_LogError, METH_VARARGS },
+	 { "ErrorInit", _wrap_ErrorInit, METH_VARARGS },
 	 { "SetError", _wrap_SetError, METH_VARARGS },
 	 { "isError", _wrap_isError, METH_VARARGS },
 	 { "ObitErrCreate", _wrap_ObitErrCreate, METH_VARARGS },
