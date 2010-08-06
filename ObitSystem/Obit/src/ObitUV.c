@@ -2898,8 +2898,9 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
 		sel->name);
   }
 
-  /* Use descriptor on IO */
-  if (in->myIO && in->myIO->myDesc) desc = (ObitUVDesc*)in->myIO->myDesc;
+  /* Use descriptor on IO if valid */
+  if (in->myIO && in->myIO->myDesc && ObitUVDescIsA(in->myIO->myDesc)) 
+    desc = (ObitUVDesc*)in->myIO->myDesc;
   else  desc = in->myDesc;
 
   /* Be sure properly indexed */

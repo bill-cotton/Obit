@@ -1233,11 +1233,11 @@ ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 {
   ObitIOCode iretCode, oretCode;
   gboolean doCalSelect;
-  gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
-		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
-		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL","AIPS NI","AIPS BP","AIPS OF","AIPS PS",
-		    "AIPS FQ",
+  gchar *exclude[]={"AIPS CL", "AIPS SN", "AIPS FG", "AIPS CQ", "AIPS WX",
+		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
+		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
+		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
+		    "AIPS FQ", "AIPS SU", "AIPS AN",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong i, j, indx, jndx;
@@ -1277,17 +1277,6 @@ ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
     ChanSel = defSel;  /* Use default = channels 1 => n */
   }
 
-
-  /* Create scratch? */
-  if (scratch) {
-    if (outUV) outUV = ObitUVUnref(outUV);
-    outUV = newObitUVScratch (inUV, err);
-  } else { /* non scratch output must exist - clone from inUV */
-    outUV->myDesc = ObitUVDescCopy (inUV->myDesc, outUV->myDesc, err);
-    /*ObitUVClone (inUV, outUV, err);*/
-  }
-  if (err->error) Obit_traceback_val (err, routine, inUV->name, inUV);
-
   /* Selection/calibration/editing of input? */
   doCalSelect = FALSE;
   ObitInfoListGetTest(inUV->info, "doCalSelect", &type, (gint32*)dim, &doCalSelect);
@@ -1298,6 +1287,16 @@ ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   iretCode = ObitUVOpen (inUV, access, err);
   if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
     Obit_traceback_val (err, routine, inUV->name, outUV);
+
+  /* Create scratch? */
+  if (scratch) {
+    if (outUV) outUV = ObitUVUnref(outUV);
+    outUV = newObitUVScratch (inUV, err);
+  } else { /* non scratch output must exist - clone from inUV */
+    outUV->myDesc = ObitUVDescCopy (inUV->myDesc, outUV->myDesc, err);
+    /*ObitUVClone (inUV, outUV, err);*/
+  }
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, inUV);
 
   /* copy Descriptor */
   outUV->myDesc = ObitUVDescCopy(inUV->myDesc, outUV->myDesc, err);
@@ -1445,10 +1444,11 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 {
   ObitIOCode iretCode, oretCode;
   gboolean doCalSelect;
-  gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
-		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
-		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI","AIPS BP","AIPS OF","AIPS PS",
+  gchar *exclude[]={"AIPS CL"," AIPS SN", "AIPS FG", "AIPS CQ", "AIPS WX",
+		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
+		    "AIPS PC"," AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
+		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
+		    "AIPS FQ", "AIPS SU", "AIPS AN",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   ObitInfoType type;
@@ -1482,15 +1482,6 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   if (timeAvg<=(1.0/60.0)) timeAvg = 1.0;
   timeAvg /= 1440.0;  /* convert to days */
 
-  /* Create scratch? */
-  if (scratch) {
-    if (outUV) outUV = ObitUVUnref(outUV);
-    outUV = newObitUVScratch (inUV, err);
-  } else { /* non scratch output must exist - clone from inUV */
-    ObitUVClone (inUV, outUV, err);
-  }
-  if (err->error) Obit_traceback_val (err, routine, inUV->name, inUV);
-
   /* Selection/calibration/editing of input? */
   doCalSelect = FALSE;
   ObitInfoListGetTest(inUV->info, "doCalSelect", &type, dim, &doCalSelect);
@@ -1501,6 +1492,15 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   iretCode = ObitUVOpen (inUV, access, err);
   if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
     Obit_traceback_val (err, routine, inUV->name, outUV);
+
+  /* Create scratch? */
+  if (scratch) {
+    if (outUV) outUV = ObitUVUnref(outUV);
+    outUV = newObitUVScratch (inUV, err);
+  } else { /* non scratch output must exist - clone from inUV */
+    ObitUVClone (inUV, outUV, err);
+  }
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, inUV);
 
   /* copy Descriptor */
   outUV->myDesc = ObitUVDescCopy(inUV->myDesc, outUV->myDesc, err);
@@ -1834,10 +1834,11 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 {
   ObitIOCode iretCode, oretCode;
   gboolean doCalSelect;
-  gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
-		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
-		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL", "AIPS NI","AIPS BP","AIPS OF","AIPS PS",
+  gchar *exclude[]={"AIPS CL", "AIPS SN", "AIPS FG", "AIPS CQ", "AIPS WX",
+		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
+		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
+		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
+		    "AIPS FQ", "AIPS SU", "AIPS AN",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   ObitInfoType type;
@@ -1918,16 +1919,6 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   /* Averaging in frequency? */
   doAvgFreq = (NumChAvg>1) || doAvgAll;
 
-  /* Is scratch? */
-  if (scratch) {
-    if (outUV) outUV = ObitUVUnref(outUV);
-    outUV = newObitUVScratch (inUV, err);
-  } else { /* non scratch output must exist - clone from inUV */
-    outUV->myDesc = ObitUVDescCopy (inUV->myDesc, outUV->myDesc, err);
-    /*ObitUVClone (inUV, outUV, err);*/
-  }
-  if (err->error) Obit_traceback_val (err, routine, inUV->name, outUV);
-
   /* Selection/calibration/editing of input? */
   doCalSelect = FALSE;
   ObitInfoListGetTest(inUV->info, "doCalSelect", &type, dim, &doCalSelect);
@@ -1938,6 +1929,16 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   iretCode = ObitUVOpen (inUV, access, err);
   if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
     Obit_traceback_val (err, routine, inUV->name, outUV);
+
+  /* Is scratch? */
+  if (scratch) {
+    if (outUV) outUV = ObitUVUnref(outUV);
+    outUV = newObitUVScratch (inUV, err);
+  } else { /* non scratch output must exist - clone from inUV */
+    outUV->myDesc = ObitUVDescCopy (inUV->myDesc, outUV->myDesc, err);
+    /*ObitUVClone (inUV, outUV, err);*/
+  }
+  if (err->error) Obit_traceback_val (err, routine, inUV->name, outUV);
 
   inDesc  = inUV->myDesc;
   /* Create work array for frequency averaging */
@@ -2501,10 +2502,11 @@ void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV,
 {
   ObitIOCode iretCode=OBIT_IO_SpecErr, oretCode=OBIT_IO_SpecErr;
   gboolean doCalSelect;
-  gchar *exclude[]={"AIPS CL","AIPS SN","AIPS FG","AIPS CQ","AIPS WX",
-		    "AIPS AT","AIPS CT","AIPS OB","AIPS IM","AIPS MC",
-		    "AIPS PC","AIPS NX","AIPS TY","AIPS GC","AIPS HI",
-		    "AIPS PL","AIPS NI","AIPS BP","AIPS OF","AIPS PS",
+  gchar *exclude[]={"AIPS CL", "AIPS SN", "AIPS FG", "AIPS CQ", "AIPS WX",
+		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
+		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
+		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
+		    "AIPS FQ", "AIPS SU", "AIPS AN",
 		    NULL};
   gchar *sourceInclude[] = {"AIPS SU", NULL};
   olong *BChan=NULL, *numChan=NULL, *BIF=NULL, *numIF=NULL;
