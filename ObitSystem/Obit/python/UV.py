@@ -1362,7 +1362,7 @@ def PUtilAvgT (inUV, outUV, err, scratch=False, timeAvg=1.0):
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
-    if ((not scratch) and (notoutUV.UVIsA())):
+    if ((not scratch) and (not outUV.UVIsA())):
         raise TypeError,"outUV MUST be a Python Obit UV"
     if not OErr.OErrIsA(err):
         raise TypeError,"err MUST be an OErr"
@@ -1414,7 +1414,7 @@ def PUtilAvgTF (inUV, outUV, err, scratch=False, \
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
-    if ((not scratch) and (notoutUV.UVIsA())):
+    if ((not scratch) and (not outUV.UVIsA())):
         raise TypeError,"outUV MUST be a Python Obit UV"
     if not OErr.OErrIsA(err):
         raise TypeError,"err MUST be an OErr"
@@ -1519,7 +1519,7 @@ def PEditTD (inUV, outUV, err):
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
-    if ((not scratch) and (notoutUV.UVIsA())):
+    if ((not scratch) and (not outUV.UVIsA())):
         raise TypeError,"outUV MUST be a Python Obit UV"
     if not OErr.OErrIsA(err):
         raise TypeError,"err MUST be an OErr"
@@ -1592,7 +1592,7 @@ def PEditFD (inUV, outUV, err):
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
-    if ((not scratch) and (notoutUV.UVIsA())):
+    if ((not scratch) and (not outUV.UVIsA())):
         raise TypeError,"outUV MUST be a Python Obit UV"
     if not OErr.OErrIsA(err):
         raise TypeError,"err MUST be an OErr"
@@ -1639,7 +1639,7 @@ def PEditStokes (inUV, outUV, err):
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
-    if ((not scratch) and (notoutUV.UVIsA())):
+    if ((not scratch) and (not outUV.UVIsA())):
         raise TypeError,"outUV MUST be a Python Obit UV"
     if not OErr.OErrIsA(err):
         raise TypeError,"err MUST be an OErr"
@@ -1716,7 +1716,7 @@ def PEditClipStokes (inUV, scratch, outUV, err):
     # Checks
     if not inUV.UVIsA():
         raise TypeError,"inUV MUST be a Python Obit UV"
-    if ((not scratch) and (notoutUV.UVIsA())):
+    if ((not scratch) and (not outUV.UVIsA())):
         raise TypeError,"outUV MUST be a Python Obit UV"
     if not OErr.OErrIsA(err):
         raise TypeError,"err MUST be an OErr"

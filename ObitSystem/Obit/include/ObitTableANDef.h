@@ -69,7 +69,7 @@ gchar  XYZHand[MAXKEYCHARTABLEAN];
 gchar  FRAME[MAXKEYCHARTABLEAN];
 /** Number of orbital parameters */
 oint  numOrb;
-/** Number of polarization calibration constants */
+/** Number of polarization calibration constants per IF */
 oint  numPCal;
 /** Denotes the FQ ID for which the AN poln. parms have been modified. */
 oint  FreqID;

@@ -185,7 +185,7 @@ class OData(ODataPtr):
         # end History
         
     def NewTable (self, access, tabType, tabVer, err, \
-                  numOrb=0, numPCal=3, numIF=1, numPol=1, \
+                  numOrb=0, numPCal=2, numIF=1, numPol=1, \
                   numTerm=0, numChan=1, numTones=1, numBand=1, \
                   numTabs=1, npoly=1, numCoef=5, noParms=0):
         """ Return the specified associated table
@@ -199,7 +199,7 @@ class OData(ODataPtr):
         err       = Python Obit Error/message stack
         Optional parameters, values only used if table created
         numOrb    = Number of orbital parameters (AN)
-        numPCal   = Number of polarization parameters (AN)
+        numPCal   = Number of polarization parameters per IF (AN)
         numIF     = Number of IFs (FQ, SN, CL, BP, BL, TY, CQ)
         numPol    = Number of Stokes' (AN, SN, CL, BP, BL, PC, TY, GC, MC, IM)
         numTerm   = Number of terms in model polynomial (CL)

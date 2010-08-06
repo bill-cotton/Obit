@@ -1396,7 +1396,7 @@ void GetAntennaInfo (ObitData *inData, ObitUV *outData, olong arrno,
   ver      = arrno;
   access   = OBIT_IO_ReadWrite;
   numOrb   = in2Table->numOrb;
-  numPCal  = inTable->numPCal;
+  numPCal  = MIN (2, inTable->numPCal);
   numIF    = outData->myDesc->inaxes[outData->myDesc->jlocif];
   outTable = newObitTableANValue ("Output table", (ObitData*)outData, 
 				  &ver, access, numIF, numOrb, numPCal, err);

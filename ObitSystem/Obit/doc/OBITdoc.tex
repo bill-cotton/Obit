@@ -1613,7 +1613,7 @@ ObitTableDesc.
 {Number of orbital parameters}
 ]
 \tablekey[{"NOPCAL "}{J}{numPCal}{4}{()}
-{Number of polarization calibration constants}
+{Number of polarization calibration constants per IF}
 ]
 \tablekey[{"FREQID  "}{J}{FreqID}{0}{}
 {Denotes the FQ ID for which the AN poln. parms have been modified.}
@@ -1685,7 +1685,7 @@ ObitTableDesc.
 \tablecol[{"POLAA   "}{"DEGREES " }{E}{(1)}{PolAngA}
 {Feed A feed position angle}
 ] 
-\tablecol[{"POLCALA"}{"       " }{E}{(numPCal)}{PolCalA}
+\tablecol[{"POLCALA"}{"       " }{E}{(numPCal,numIF)}{PolCalA}
 {Feed A poln. cal parameter. }
 ] 
 \tablecol[{"POLTYB "}{"       " }{A}{(4)}{polTypeB}
@@ -1694,7 +1694,7 @@ ObitTableDesc.
 \tablecol[{"POLAB  "}{"DEGREES " }{E}{(1)}{PolAngB}
 {Feed B feed position angle}
 ] 
-\tablecol[{"POLCALB"}{"       " }{E}{(numPCal)}{PolCalB}
+\tablecol[{"POLCALB"}{"       " }{E}{(numPCal,numIF)}{PolCalB}
 {Feed B poln. cal parameter}
 ] 
 \end{columns}
@@ -1703,7 +1703,7 @@ ObitTableDesc.
 \begin{history}
 \modhistory[{W. D. Cotton}{02/03/2003}{Revision 1: Copied from AIPS}]
 \modhistory[{W. D. Cotton}{28/07/2010}{Add keywords NO\_IF, XYZHAND,
-FRAME,  columns DIAMETER, BEAMFWHM}]
+FRAME,  columns DIAMETER, BEAMFWHM, redefine numPCal}]
 \end{history}
 \clearpage
 %%%%%%%%%%%%%%% ObitTableAT Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

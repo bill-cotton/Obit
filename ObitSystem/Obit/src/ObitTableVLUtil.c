@@ -246,6 +246,7 @@ void ObitTableVLIndex (ObitTableVL *in, ObitErr *err)
 
     /* RA bin */
     ira = row->Ra2000/15.0;
+    ira = MAX(MIN(ira,23), 0);
     indx[ira+1] = irow;
 
   } /* End loop over table */

@@ -1208,7 +1208,7 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ObitTableSNRow  *SNRow   = NULL;
   ObitUVSel       *sel;
   ObitIOCode   iretCode;
-  ObitUVDesc   *inDesc;
+  ObitUVDesc   *inDesc, *inIODesc;
   FILE         *outStream = NULL;
   gboolean     isInteractive = FALSE, quit = FALSE;
   gboolean     doSN, done=FALSE, souChange=FALSE, firstPol, *doAnt=NULL;
@@ -1285,13 +1285,14 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   iretCode = ObitUVOpen (inData, OBIT_IO_ReadCal, err);
   if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
     Obit_traceback_msg (err, routine, inData->name);
-  inDesc = inData->myDesc;  
+  inDesc   = inData->myDesc;  
+  inIODesc = (ObitUVDesc*)inData->myIO->myDesc;  /* Actual values */
   sel    = inData->mySel;
-  if (inDesc->jlocif>=0) numIF = inDesc->inaxes[inDesc->jlocif];
+  if (inIODesc->jlocif>=0) numIF = inIODesc->inaxes[inIODesc->jlocif];
   else numIF = 1;
 
-  /* Convert SU table into Source List if ther is an SourceID parameter */
-  if (inDesc->ilocsu>=0) {
+  /* Convert SU table into Source List if there is an SourceID parameter */
+  if (inIODesc->ilocsu>=0) {
     ver = 1;
     BIF = MIN (BIF, numIF);
     SUTable = newObitTableSUValue (inData->name, (ObitData*)inData, &ver, numIF, 
@@ -1327,7 +1328,7 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   
   /* Open CL/SN Table */
   ver = gainVer;
-  numPol  = inDesc->inaxes[inDesc->jlocs];
+  numPol  = inIODesc->inaxes[inIODesc->jlocs];
   numTerm = 0;
   if (doSN) {  /* SN table */
     SNTable = newObitTableSNValue (inData->name, (ObitData*)inData, &ver, OBIT_IO_ReadOnly, 

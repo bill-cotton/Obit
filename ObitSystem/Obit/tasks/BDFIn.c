@@ -55,7 +55,7 @@
 #include "ObitHistory.h"
 #include "ObitPrecess.h"
 #ifndef VELIGHT
-#define VELIGHT 2.99792458e8
+#define VELIGHT 2.997924562e8
 #endif
 
 /* internal prototypes */

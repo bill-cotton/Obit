@@ -158,6 +158,8 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
 
   /* Create output */
   g_snprintf (tempName, 100, "Antenna List for %s",in->name);
+  /* Look out for AIPS bug */
+  in->numPCal = MAX(in->numPCal, in->myDesc->repeat[in->PolCalACol]);
   out = ObitAntennaListCreate (tempName, maxANid, in->numPCal);
   
   /* Get table header information */
@@ -179,15 +181,16 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
   out->ut1Utc      = in->ut1Utc*DG2RAD*15./3600.0;  /* Convert to radians */
   out->dataUtc     = in->dataUtc*DG2RAD*15./3600.0; /* Convert to radians */
   if (!strncmp (in->TimeSys, "IAT", 3))
-    out->dataIat = 0.0;
+    out->dataIat   = 0.0;
   else
-    out->dataIat  = in->iatUtc*DG2RAD*15./3600.0; /* Convert to radians */
+    out->dataIat   = in->iatUtc*DG2RAD*15./3600.0; /* Convert to radians */
   out->numPoln     = in->numPCal;
   for (i=0; i<12; i++) out->TimSys[i]  = in->TimeSys[i];
   for (i=0; i<12; i++) out->ArrName[i] = in->ArrName[i];
   out->FreqID      = in->FreqID;
-  out->numPCal = in->numPCal;
-  out->numIF   = in->numPCal/2; /* look out */
+  /* Look out for AIPS change */
+  out->numPCal = MAX(in->numPCal*in->numIF, in->myDesc->repeat[in->PolCalACol]);
+  out->numIF   = in->numIF;
 
   /* Polarization reference antenna */
   out->polRefAnt = 1;
@@ -239,8 +242,8 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
     out->ANlist[iant]->FeedBType  = row->polTypeB[0];
     for (i=0; i<8; i++) out->ANlist[iant]->AntName[i]  = row->AntName[i];
     for (i=0; i<3; i++) out->ANlist[iant]->AntXYZ[i]  = row->StaXYZ[i];
-    for (i=0; i<out->numPoln; i++) out->ANlist[iant]->FeedAPCal[i]  = row->PolCalA[i];
-    for (i=0; i<out->numPoln; i++) out->ANlist[iant]->FeedBPCal[i]  = row->PolCalB[i];
+    for (i=0; i<out->numPCal; i++) out->ANlist[iant]->FeedAPCal[i]  = row->PolCalA[i];
+    for (i=0; i<out->numPCal; i++) out->ANlist[iant]->FeedBPCal[i]  = row->PolCalB[i];
 
     /* Lat, (E) long in radians
        X => (lat 0, long 0)
@@ -378,7 +381,7 @@ ObitIOCode ObitTableANSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
     /* Create output table */
     numOrb  = inTab->numOrb;
     numIF   = inUV->mySel->numberIF;
-    if (inTab->numPCal>0) numPCal = 2 * numIF;
+    if (inTab->numPCal>0) numPCal = 2;
     else numPCal = 0;
     outTab = 
       newObitTableANValue (outUV->name, (ObitData*)outUV, &iANver, OBIT_IO_WriteOnly, 

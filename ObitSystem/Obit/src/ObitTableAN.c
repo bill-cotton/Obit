@@ -217,7 +217,7 @@ gconstpointer ObitTableANGetClass (void)
  * \param access access (OBIT_IO_ReadOnly, means do not create if it doesn't exist.
  * \param numIF The number of IFs
  * \param numOrb Number of orbital parameters
- * \param numPCal Number of polarization calibration constants
+ * \param numPCal Number of polarization calibration constants per IF
  * \param err Error stack, returns if not empty.
  * \return the new object, NULL on failure.
  */
@@ -435,6 +435,7 @@ ObitTableAN* newObitTableANValue (gchar* name, ObitData *file, olong *ver,
     desc->type[colNo] = OBIT_float;
     for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
     desc->dim[colNo][0] = numPCal;
+    desc->dim[colNo][1] = numIF;
     colNo++;
   }
   optional = FALSE;
@@ -458,6 +459,7 @@ ObitTableAN* newObitTableANValue (gchar* name, ObitData *file, olong *ver,
     desc->type[colNo] = OBIT_float;
     for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
     desc->dim[colNo][0] = numPCal;
+    desc->dim[colNo][1] = numIF;
     colNo++;
   }
   /* Add _status column at end */

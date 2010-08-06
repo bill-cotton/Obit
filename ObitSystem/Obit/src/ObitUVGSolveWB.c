@@ -1731,7 +1731,7 @@ initAntSolve (ObitUVGSolveWB *in, olong iAnt, ObitErr *err)
   olong naxis[1], maxis[1], iBase, jBase, iPoln, jAnt, iIF, ip, jp, nPoln;
   olong iBase1, iBase2, offset, nval, icend, refChan, nFreq2, k, kndx, kp;
   ofloat cmplx[2] = {0.0,0.0}, delTau, iNorm, pval[2], ppos, dph, dre, dim, tre, tim;
-  ofloat peak;
+  ofloat peak, fblank = ObitMagicF();
   gboolean good;
   if (err->error) return;  /* Prior error? */
 
@@ -1917,7 +1917,10 @@ initAntSolve (ObitUVGSolveWB *in, olong iAnt, ObitErr *err)
 	
 	/* Get location and value at peak, uses cWork2, fWork2 */
 	FindFFTPeak (in, &ppos, pval);
-	peak = sqrt (pval[0]*iNorm*pval[0]*iNorm + pval[1]*iNorm*pval[1]*iNorm);
+	if ((pval[0]!=fblank) && (pval[1]))
+	  peak = sqrt (pval[0]*iNorm*pval[0]*iNorm + pval[1]*iNorm*pval[1]*iNorm);
+	else 
+	  peak = 0.0;
         /* This is REALLY needed to circumvent a gcc bug */
         if (err->error) fprintf (stderr,"GCC Bug workaround\n");
 
@@ -2586,8 +2589,12 @@ FindFFTPeak (ObitUVGSolveWB *in, ofloat *ppos, ofloat pval[2])
     wt  += in->fWork2->array[i];
     sum += i*in->fWork2->array[i];
   }
-  pixel = sum / wt;
-  *ppos = pixel;
+  if (fabs(wt)>0.0) {
+    pixel = sum / wt;
+    *ppos = pixel;
+  } else { /* No data */
+    *ppos = 0.0;
+  }
 
   /* Interpolate */
   ObitCInterpolate1D (in->myCInterp, pixel, pval);

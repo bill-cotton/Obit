@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -155,10 +155,8 @@ ObitIOCode ObitTableFQPutInfo (ObitTableFQ *in, oint fqid, oint nif,
    
    /* Save on info */
    oitemp = (oint)in->numIF;
-   ObitInfoListPut(in->myDesc->info, "NO_IF", OBIT_oint, dim, 
-		   (gconstpointer)&oitemp, err);
-   if (err->error) /* add traceback,return */
-     Obit_traceback_val (err, routine, in->name, retCode);
+   ObitInfoListAlwaysPut(in->myDesc->info, "NO_IF", OBIT_oint, dim, 
+			 (gconstpointer)&oitemp);
    
    /* Write one row  */
    nRowPIO = 1;
