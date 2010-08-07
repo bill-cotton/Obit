@@ -1120,6 +1120,7 @@ ObitUV* InitialCal (ObitInfoList* myInput, ObitUV* scrData, ObitErr* err)
     "refAnt", "ampScalar", "minSNR",  "minNo", "prtLv",
     NULL};
   gchar *blank = "    ";
+  gchar *FQInclude[] = {"AIPS FQ", NULL};
   gchar *routine = "InitialCal";
 
   /* error checks */
@@ -1183,7 +1184,10 @@ ObitUV* InitialCal (ObitInfoList* myInput, ObitUV* scrData, ObitErr* err)
   avgData = ObitUVUtilAvgT(scrData, TRUE, avgData, err);
   if (err->error) Obit_traceback_val (err, routine, scrData->name, avgData);
   
-  /* cleanup */
+   /* Be sure FQ table copied */
+   ObitUVCopyTables (scrData, avgData, NULL, FQInclude, err);
+
+ /* cleanup */
   solver    = ObitUVGSolveUnref(solver);
   SNTable   = ObitTableSNUnref(SNTable);
   CLTable1  = ObitTableSNUnref(CLTable1);

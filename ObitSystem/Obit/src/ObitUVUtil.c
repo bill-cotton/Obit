@@ -1444,9 +1444,9 @@ ObitUV* ObitUVUtilAvgT (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 {
   ObitIOCode iretCode, oretCode;
   gboolean doCalSelect;
-  gchar *exclude[]={"AIPS CL"," AIPS SN", "AIPS FG", "AIPS CQ", "AIPS WX",
+  gchar *exclude[]={"AIPS CL", "AIPS SN", "AIPS FG", "AIPS CQ", "AIPS WX",
 		    "AIPS AT", "AIPS CT", "AIPS OB", "AIPS IM", "AIPS MC",
-		    "AIPS PC"," AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
+		    "AIPS PC", "AIPS NX", "AIPS TY", "AIPS GC", "AIPS HI",
 		    "AIPS PL", "AIPS NI", "AIPS BP", "AIPS OF", "AIPS PS",
 		    "AIPS FQ", "AIPS SU", "AIPS AN",
 		    NULL};
