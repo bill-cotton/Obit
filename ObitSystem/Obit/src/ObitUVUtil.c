@@ -1936,7 +1936,7 @@ ObitUV* ObitUVUtilBlAvgTF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
     outUV = newObitUVScratch (inUV, err);
   } else { /* non scratch output must exist - clone from inUV */
     outUV->myDesc = ObitUVDescCopy (inUV->myDesc, outUV->myDesc, err);
-    /*ObitUVClone (inUV, outUV, err);*/
+    ObitUVClone (inUV, outUV, err);
   }
   if (err->error) Obit_traceback_val (err, routine, inUV->name, outUV);
 

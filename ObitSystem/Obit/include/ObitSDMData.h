@@ -371,6 +371,9 @@ olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF, ObitASDMBand b
 /** Fix source numbers in an ASDMSourceTable */
 void ObitSDMSourceTabFix(ObitSDMData *in);
 
+/** Fix source numbers in an ASDMSourceTable including the calcode */
+void ObitSDMSourceTabFixCode(ObitSDMData *in);
+
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

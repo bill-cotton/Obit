@@ -158,9 +158,9 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
 
   /* Create output */
   g_snprintf (tempName, 100, "Antenna List for %s",in->name);
-  /* Look out for AIPS bug */
-  in->numPCal = MAX(in->numPCal, in->myDesc->repeat[in->PolCalACol]);
-  out = ObitAntennaListCreate (tempName, maxANid, in->numPCal);
+  /* Look out for AIPS bug
+  in->numPCal = MAX(in->numPCal, in->myDesc->repeat[in->PolCalACol]); */
+  out = ObitAntennaListCreate (tempName, maxANid, in->myDesc->repeat[in->PolCalACol]);
   
   /* Get table header information */
   /* Have to see of polarization type is in the header ('POLTYPE') */

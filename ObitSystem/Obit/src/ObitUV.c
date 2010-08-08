@@ -481,10 +481,14 @@ ObitUV* newObitUVScratch (ObitUV *in, ObitErr *err)
 
   /* Allocate underlying file */
   ObitSystemGetScratch (in->mySel->FileType, "UV", out->info, err);
-  if (err->error) Obit_traceback_val (err, routine, in->name, in);
+  if (err->error) Obit_traceback_val (err, routine, in->name, out);
   
   /* Register in the scratch file list */
   ObitSystemAddScratch ((Obit*)out, err);
+
+  /* Copy/select tables */
+  CopyTablesSelect (in, out, err);
+  if (err->error) Obit_traceback_val (err, routine,in->name, out);
 
   /* File may not be completely properly defined here, defer instantiation */
  return out;

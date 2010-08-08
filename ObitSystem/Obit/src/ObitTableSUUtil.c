@@ -189,8 +189,8 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
       if (strncmp(tempName, "                ", dim[0])) {
 	ObitTrimTrail(tempName);
 	Obit_log_error(err, OBIT_InfoWarn, 
-		       "%s: Source %s :%4.4d not found in source table or dup in list", 
-		       routine, tempName, Qual);
+		       "Source %s :%4.4d code %s not found in source table or dup in list", 
+		       tempName, Qual, souCode);
       }
     }
   }
