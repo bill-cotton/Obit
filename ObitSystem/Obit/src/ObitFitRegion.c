@@ -262,7 +262,7 @@ gchar* ObitFitRegionName (olong indx)
 {
   gchar *out=NULL;
   
-  out = g_malloc0 (10);
+  out = g_malloc0 (16);
   sprintf (out, "reg%6.6d", (gint)indx);
   return out;
   

@@ -95,7 +95,7 @@ gainVer                            Table version for "GAIN"
 **PARAM** str 8
 dispType                           Data display type"
                                    "AMP", "PHASE", "WT", "DELAY", "RATE"
-                                   "SNR"
+                                   "SNR", "PA", "ELEV"
 **PARAM** int 1 **DEF** 4
 ndig                               Number of digits in compressed displays
 **PARAM** str 4
@@ -132,7 +132,7 @@ Adverbs:
               AIPS data: NO default
               FITS data: 0=> current directory
   Sources....Source list.  One output file will be made per source.
-             '*' = all; a "-" before a source name means all except ANY
+             blanks = all; a "-" before a source name means all except ANY
              source named.
   Qual.......Only sources with a source qualifier number in the SU table
              matching Qual will be used if Qual is >= 0.  If Qual < 0,
@@ -240,6 +240,8 @@ Adverbs:
              "DELAY" Group Delay (nsec)
              "RATE"  Fringe rate in mHz.
              "SNR"   Signal to noise (weight)
+             "PA"    Parallactic angle (deg)
+             "ELEV"  Source elevation (deg)
   ndig.......Number of digits in compressed displays (4-8)
   opType.....Printing operation desired:
              "DATA" print UV data in a form similar to AIPS/PRTUV

@@ -432,7 +432,9 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
  * The output will have the underlying files of the same type as in already 
  * allocated.
  * The object is defined but the underlying structures are not created.
- * \param in  The object to copy
+ * Necessary tables are copied.
+ * \param in  The object to copy,  control parameters:
+ * \li "copyCalTab" OBIT_boolean (1,1,1) If true and doCalib<=0 copy SN, CL 
  * \param err Error stack, returns if not empty.
  * \return pointer to the new object.
  */
@@ -444,8 +446,8 @@ ObitUV* newObitUVScratch (ObitUV *in, ObitErr *err)
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *outName;
   olong NPIO;
-  /* Don't copy Cal and Soln tables */
-  /*gchar *exclude[]={"AIPS UV", "AIPS CL", "AIPS NI",
+  /* Don't copy Cal and Soln tables 
+  gchar *exclude[]={"AIPS UV", "AIPS CL", "AIPS NI",
     "AIPS SN", "AIPS NX", "AIPS HI", "AIPS PL", "AIPS SL", NULL};*/
   gchar *routine = "newObitUVScratch";
 
@@ -857,7 +859,9 @@ ObitUV* ObitUVCopy (ObitUV *in, ObitUV *out, ObitErr *err)
 /**
  * Make a copy of a object but do not copy the actual data
  * This is useful to create a UV object similar to the input one.
- * \param in  The object to copy
+ * Necessary tables are copied.
+ * \param in  The object to copy, control parameters:
+ * \li "copyCalTab" OBIT_boolean (1,1,1) If true and doCalib<=0 copy SN, CL
  * \param out An existing object pointer for output or NULL if none exists.
  * \param err Error stack, returns if not empty.
  */
@@ -3051,9 +3055,9 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   else itemp = InfoReal.itg;
   sel->doBPCal = itemp > 0;
   sel->doBand = itemp;
-  itemp = 0;
+  InfoReal.itg = 0;
   ObitInfoListGetTest(info, "BPVer", &type, dim, &InfoReal);
-  sel->BPversion = itemp;
+  sel->BPversion = InfoReal.itg;
 
   /* Spectral smoothing */
   for (i=0; i<3; i++) ftempArr[i] = 0.0; 
@@ -3435,6 +3439,7 @@ static void ObitUVSetupIO (ObitUV *in, ObitErr *err)
  * Uses source dependent frequency info if available from inUV->info
  * \li "SouIFOff" OBIT_double (nif,1,1) Source frequency offset per IF
  * \li "SouBW"    OBIT_double (1,1,1)   Bandwidth
+ * \li "copyCalTab" OBIT_boolean (1,1,1) If true and doCalib<=0 copy SN, CL
  *
  * \param outUV An existing object pointer for output or NULL if none exists.
  * \param err Error stack, returns if not empty.
@@ -3450,11 +3455,12 @@ static ObitIOCode CopyTablesSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 		    "AIPS PS",
 		    "AIPS HI","AIPS PL","AIPS SL", 
 		    NULL};
-  gboolean copySU;
+  gboolean copySU, copyCalTab=FALSE;
+  olong doCalib;
   odouble *SouIFOff=NULL, SouBW=0.0;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar *sourceInclude[] = {"AIPS SU", NULL};
+  /*gchar *sourceInclude[] = {"AIPS SU", NULL};*/
   gchar *routine = "ObitUV:CopyTablesSelect";
 
   /* error checks */
@@ -3464,8 +3470,10 @@ static ObitIOCode CopyTablesSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   g_assert (ObitUVIsA(outUV));
 
   /* Source info available? */
-  ObitInfoListGetP    (inUV->info, "SouIFOff",  &type, dim, (gpointer)&SouIFOff);
-  ObitInfoListGetTest (inUV->info, "SouBW",     &type, dim, &SouBW);
+  ObitInfoListGetP    (inUV->info, "SouIFOff",    &type, dim, (gpointer)&SouIFOff);
+  ObitInfoListGetTest (inUV->info, "SouBW",       &type, dim, &SouBW);
+  ObitInfoListGetTest (inUV->info, "doCalib",     &type, dim, &doCalib);
+  ObitInfoListGetTest (inUV->info, "copyCalTab",  &type, dim, &copyCalTab);
   
   /* Copy standard tables */
   retCode = ObitUVCopyTables (inUV, outUV, exclude, NULL, err);
@@ -3492,13 +3500,15 @@ static ObitIOCode CopyTablesSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   if ((retCode != OBIT_IO_OK) || (err->error))
     Obit_traceback_val (err, routine, inUV->name, retCode);
 
-  /* Copy SN Tables */
-  retCode =  ObitTableSNSelect (inUV, outUV, err);
+  /* Copy SN Tables if not calibrating */
+  if (copyCalTab &&(doCalib<=0))
+    retCode =  ObitTableSNSelect (inUV, outUV, err);
   if ((retCode != OBIT_IO_OK) || (err->error))
     Obit_traceback_val (err, routine, inUV->name, retCode);
 
-  /* Copy CL Tables */
-  retCode =  ObitTableCLSelect (inUV, outUV, err);
+  /* Copy CL Tables if not calibrating  */
+  if (copyCalTab &&(doCalib<=0))
+    retCode =  ObitTableCLSelect (inUV, outUV, err);
   if ((retCode != OBIT_IO_OK) || (err->error))
     Obit_traceback_val (err, routine, inUV->name, retCode);
 

@@ -27,6 +27,7 @@
 /*--------------------------------------------------------------------*/
 
 #include "ObitTableSUUtil.h"
+#include "ObitPrecess.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -282,6 +283,9 @@ ObitSourceList* ObitTableSUGetList (ObitTableSU *in, ObitErr *err) {
     /* Patch AIPS++ corruption */
     if (out->SUlist[sid]->RAApp<0.0) out->SUlist[sid]->RAApp += 360.0;
     out->SUlist[sid]->DecApp  = row->DecApp;
+    /* More Patch AIPS++ corruption */
+    if ((out->SUlist[sid]->RAApp==0.0) && (out->SUlist[sid]->DecApp==0.0))
+      ObitPrecessUVJPrecessApp (((ObitUV*)in->myHost)->myDesc, out->SUlist[sid]);
     out->SUlist[sid]->Bandwidth  = row->Bandwidth;
     strncpy (out->SUlist[sid]->SourceName, row->Source, 17);
     out->SUlist[sid]->SourceName[16] = 0;  /* to be sure */
@@ -357,6 +361,7 @@ ObitIOCode ObitTableSUSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   ObitIOCode retCode = OBIT_IO_SpecErr;
   ObitTableSU    *inTab=NULL, *outTab=NULL;
   ObitTableSURow *inRow=NULL, *outRow=NULL;
+  ObitSource *source=NULL;
   olong i, iif, oif;
   olong highSUver, iSUver, inSURow, outSURow;
   oint numIF;
@@ -448,6 +453,18 @@ ObitIOCode ObitTableSUSelect (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
     outRow->RAApp     = inRow->RAApp;
     if (outRow->RAApp<0.0) outRow->RAApp += 360.0; /* Patch AIPS++ corruption */
     outRow->DecApp    = inRow->DecApp;
+    /* Patch AIPS++ bug */
+    if ((outRow->RAApp==0.0) && (outRow->DecApp==0.0)) {
+      source = newObitSource("Temp");
+      source->equinox = outUV->myDesc->equinox;
+      source->RAMean  = outUV->myDesc->crval[outUV->myDesc->jlocr];
+      source->DecMean = outUV->myDesc->crval[outUV->myDesc->jlocd];
+      /* Compute apparent position */
+      ObitPrecessUVJPrecessApp (outUV->myDesc, source);
+      outRow->RAApp  = source->RAApp;
+      outRow->DecApp = source->DecApp;
+      source = ObitSourceUnref(source);
+    }
     outRow->PMRa      = inRow->PMDec;
     for (i=0; i<inTab->myDesc->repeat[inTab->SourceCol]; i++) 
       outRow->Source[i] = inRow->Source[i];

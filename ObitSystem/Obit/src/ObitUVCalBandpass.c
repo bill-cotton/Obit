@@ -853,20 +853,20 @@ static void ObitUVCalBandpassNewTime (ObitUVCalBandpassS *in, ofloat time,
       for (iif= in->bIF; iif<=in->eIF; iif++) { /* loop 60 */
 	IFoff = nchan*(iif - 1);
 	indx = lenEntryAnt * (iant) +  lenEntry * (iif-in->bIF);
-	wt1 = BPTableRow->Weight1[IFoff];
+	wt1 = BPTableRow->Weight1[iif-1];
 	/* loop over channels */
 	for (ichan=in->bChan; ichan<=in->eChan; ichan++) {
 	  if ((wt1>0.0) &&  (BPTableRow->Real1[IFoff+ichan-1]!=fblank)) {
 	    in->BPPrior[indx]   += BPTableRow->Real1[IFoff+ichan-1];
 	    in->BPPrior[indx+1] += BPTableRow->Imag1[IFoff+ichan-1];
-	    in->BPFollow[indx]++;
+	    in->BPFollow[indx]++;   /* Count */
 	    in->BPFollow[indx+1]++;
 	  }
 	  indx += in->lenBPArrayEntry;
 	}
 	/* second polarization if present */
 	if (in->numPol >= 2) {
-	  wt2 = BPTableRow->Weight2[IFoff];
+	  wt2 = BPTableRow->Weight2[iif-1];
 	  /* loop over channels */
 	  for (ichan=in->bChan; ichan<=in->eChan; ichan++) {
 	    if ((wt2>0.0) &&  (BPTableRow->Real2[IFoff+ichan-1]!=fblank)) {

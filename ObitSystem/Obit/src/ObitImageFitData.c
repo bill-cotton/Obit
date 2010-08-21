@@ -128,10 +128,10 @@ ObitImageFitDataCreate (gchar* name, ObitFitRegion *reg,
   gint32       dim[MAXINFOELEMDIM];
   ObitInfoType type;
   olong blc[2], trc[2],pos[2] ;
-  ofloat cells, rmax, rmin, fblank=ObitMagicF();
+  ofloat cells, rmax, rmin, rms, fblank=ObitMagicF();
   odouble dblank;
   gboolean doPosGuard, doFluxLow, doGMajUp, doGMajLow, doGMinUp, doGMinLow;
-  odouble PosGuard, FluxLow, GMajUp, GMajLow, GMinUp, GMinLow;
+  odouble PosGuard=0.0, FluxLow=0.0, GMajUp=0.0, GMajLow=0.0, GMinUp=0.0, GMinLow=0.0;
   olong i, j, k, nparm, nvar;
   gchar *routine = "ObitImageFitDataCreate";
 
@@ -170,7 +170,15 @@ ObitImageFitDataCreate (gchar* name, ObitFitRegion *reg,
   trc[1] = reg->corner[1] + reg->dim[1] - 1;
   out->pixels = ObitFArraySubArr (image->image, blc, trc, err);
   out->resids = ObitFArraySubArr (image->image, blc, trc, err);
-  out->irms   = ObitFArrayRMS(image->image);
+  /* Get RMS if saved, else calculate */
+  rms = -1.0;
+  ObitInfoListGetTest(image->info, "RMS",  &type, dim, &rms);
+  if (rms>0.0) out->irms = rms;
+  else {
+    out->irms = ObitFArrayRMS(image->image);
+    dim[0] = dim[1] = dim[2] = 1;
+    ObitInfoListAlwaysPut(image->info, "RMS", OBIT_float, dim, &rms);
+  }
 
   /* Beam info */
   if (image->myDesc->beamMaj>0.0) {

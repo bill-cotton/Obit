@@ -156,10 +156,17 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
   if ((retCode > OBIT_IO_EOF) || (err->error))
     Obit_traceback_val (err, routine, in->name, out);
 
-  /* Create output */
-  g_snprintf (tempName, 100, "Antenna List for %s",in->name);
+  /* Trap old tables */
+  if ((in->numIF==1) && (in->numPCal>2)) {
+    /* Some assumprions here */
+    in->numIF   = in->numPCal/2;
+    in->numPCal = 2;
+  }
   /* Look out for AIPS bug
   in->numPCal = MAX(in->numPCal, in->myDesc->repeat[in->PolCalACol]); */
+
+  /* Create output */
+  g_snprintf (tempName, 100, "Antenna List for %s",in->name);
   out = ObitAntennaListCreate (tempName, maxANid, in->myDesc->repeat[in->PolCalACol]);
   
   /* Get table header information */

@@ -870,8 +870,10 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
   data = ObitFArrayRef(inImage->image);
   if (err->error) goto cleanup;
 
-  /* Get RMS from histogram */
+  /* Get RMS from histogram/ save */
   rms = ObitFArrayRMS(data);
+  dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListAlwaysPut(inImage->info, "RMS", OBIT_float, dim, &rms);
 
   /* Get minimum for defining islands */
   cutt = 0.0;

@@ -448,7 +448,7 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
 	  } else {  /* in middle of scan - use average time */
 	    /* Set descriptive info on Row */
 	    row->Time  = sumTime/nTime;  /* time */
-	    row->TimeI = 2.0 * (row->Time - t0);
+	    row->TimeI = MAX (0.0, (2.0 * (row->Time - t0)));
 	    row->SourID = (oint)(rec[inUV->myDesc->ilocsu]+0.5);
 	    row->SubA   = SubA;
 	  }

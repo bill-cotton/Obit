@@ -144,6 +144,7 @@ ObitAntennaList **antennaLists=NULL;  /* Array of antenna lists for uvw calc */
 ObitSourceList *uvwSourceList=NULL;   /* Source List for uvw calc */
 olong uvwSourID=-1;                   /* Source ID for uvw calc */
 olong uvwcurSourID=-1;                /* Current source ID for uvw calc */
+ofloat uvrot=-0.0;                    /* Current source rotation of u-v */
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
@@ -1444,6 +1445,7 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iScan,
   ASDMSpectralWindowArray* SpWinArray;
   ObitTableSU*       outTable=NULL;
   ObitTableSURow*    outRow=NULL;
+  ObitSource *source=NULL;
   olong i, jSU, lim, iRow, oRow, ver, SourceID, lastSID=-1, iSW, SWId;
   oint numIF;
   ObitIOAccess access;
@@ -1554,12 +1556,20 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iScan,
     isDone[iRow]      = TRUE;   /* Mark as done */
     outRow->RAMean    = SourceArray->sou[iRow]->direction[0]*RAD2DG;
     outRow->DecMean   = SourceArray->sou[iRow]->direction[1]*RAD2DG;
-    outRow->RAApp     = 0.0;
-    outRow->DecApp    = 0.0;
     outRow->PMRa      = SourceArray->sou[iRow]->properMotion[0]*RAD2DG*365.25;
     outRow->PMDec     = SourceArray->sou[iRow]->properMotion[1]*RAD2DG*365.25;
     outRow->Epoch     = 2000.0;   /* ASDM Lacking - AIPS naming is wrong */
     lastSID           = SourceArray->sou[iRow]->sourceNo;
+    /* Precess */
+    source = newObitSource("Temp");
+    source->equinox = outRow->Epoch;
+    source->RAMean  = outRow->RAMean;
+    source->DecMean = outRow->DecMean;
+    /* Compute apparent position */
+    ObitPrecessUVJPrecessApp (outData->myDesc, source);
+    outRow->RAApp  = source->RAApp;
+    outRow->DecApp = source->DecApp;
+    source = ObitSourceUnref(source);
 
     /* blank fill source name */
     lim = outTable->myDesc->repeat[outTable->SourceCol];
@@ -1919,10 +1929,11 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
   olong souId, ant1, ant2, i, iANver, iarr;
   ObitTableAN *ANTable=NULL;
   ObitTableSU *SUTable=NULL;
+  ObitSource *source=NULL;
   ObitAntennaList *AntList;
-  ofloat time, uvw[3], bl[3], tmp;
+  ofloat time, uvw[3], bl[3], tmp, u, v;
   odouble arrJD, DecR, RAR, AntLst, HrAng=0.0, ArrLong, ArrLat;
-  odouble sum, xx, yy, zz, lambda;
+  odouble sum, xx, yy, zz, lambda, DecOff, RAOff;
   gchar *routine = "CalcUVW";
 
   /* error checks */
@@ -1998,6 +2009,20 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
       uvwcurSourID = i;
       if (uvwSourceList->SUlist[i]->SourID==uvwSourID) break;
     }
+    
+    /* Get rotation to get v north at standard epoch - 
+       precess posn. 10" north */
+    source = newObitSource("Temp");
+    source->RAMean  = uvwSourceList->SUlist[uvwcurSourID]->RAMean;
+    source->DecMean = uvwSourceList->SUlist[uvwcurSourID]->DecMean + 10.0/3600.0;
+    /* Compute apparent position */
+    ObitPrecessUVJPrecessApp (outData->myDesc, source);
+    RAOff  = source->RAApp;
+    DecOff = source->DecApp;
+    source = ObitSourceUnref(source);
+    /* uvrot global = rotation to north */
+    uvrot = -(ofloat)atan2(RAOff-uvwSourceList->SUlist[uvwcurSourID]->RAApp,
+			   DecOff-uvwSourceList->SUlist[uvwcurSourID]->DecApp);
   } /* end new source */
   
     /* Array number (0-rel)*/
@@ -2025,6 +2050,12 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
 
   /* Compute uvw - short baseline approximation */
   ObitUVUtilUVW (bl, DecR, (ofloat)HrAng, uvw);
+
+  /* Rotate in u-v plane to north of standard epoch */
+  u = uvw[0];
+  v = uvw[1];
+  uvw[0] = u*cos(uvrot) - v*sin(uvrot);
+  uvw[1] = v*cos(uvrot) + u*sin(uvrot);
 
   Buffer[BDFData->desc->ilocu] = uvw[0];
   Buffer[BDFData->desc->ilocv] = uvw[1];

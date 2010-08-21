@@ -1,7 +1,7 @@
-/* $Id: BPass.c 109 2009-06-10 12:11:14Z bill.cotton $  */
-/* Obit Radio interferometry calibration software                     */
+/* $Id: RLPass.c 109 2009-06-10 12:11:14Z bill.cotton $  */
+/* R-L phase bandpass calibration                                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009,2010                                          */
+/*;  Copyright (C) 2010                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -43,12 +43,15 @@
 #include "ObitTableCLUtil.h"
 #include "ObitTableBP.h"
 #include "ObitUVSoln2Cal.h"
+#ifndef VELIGHT
+#define VELIGHT 2.997924562e8
+#endif
 
 /* internal prototypes */
 /* Get inputs */
-ObitInfoList* BPassIn (int argc, char **argv, ObitErr *err);
+ObitInfoList* RLPassIn (int argc, char **argv, ObitErr *err);
 /* Set outputs */
-void BPassOut (ObitInfoList* outList, ObitErr *err);
+void RLPassOut (ObitInfoList* outList, ObitErr *err);
 /* Give basic usage on error */
 void Usage(void);
 /* Set default inputs */
@@ -62,29 +65,32 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err);
 /* Get input sky model */
 ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err);
 /* Do channel solutions */
-void  BandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData, 
-		  ObitErr* err);
+void RLBandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData, 
+		   ObitErr* err);
 /* Divide by SU table flux density */
 void DivideSource (ObitUV *inUV, ObitUV *scrUV, ObitErr *err);
 /* Divide buffer table flux density */
 static void DivideBuffer (ObitSourceList *sList, olong sourId, ObitUV *uvdata);
 /* Write history */
-void BPassHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err);
+void RLPassHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err);
 /* Initial calibration */
 ObitUV* InitialCal (ObitInfoList* myInput, ObitUV* scrData, ObitErr* err);
-/* Create initial BP table */
-ObitTableBP* DummyBPTable (ObitUV* inData, ObitTableSN *SNTab, ObitErr *err);
-/* Copy SN info to BP table */
-void SN2BPTable (ObitTableSN *SNTab, ObitTableBP *BPTab, olong chan,
-		 ObitErr *err);
-/* Bandpass from AutoCorrelations */
-void AutoCorrBP (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData, 
-		 ObitErr* err);
+/* Create  BP table */
+ObitTableBP* MakeBPTable (ObitUV* inData, ofloat time,
+			  olong bchan, olong echan, olong nif, 
+			  ofloat *phase, ofloat RLPhase, ofloat RM, olong refAnt,
+			  ObitErr *err);
+/* Update  BP table */
+ObitTableBP* UpdateBPTable (ObitUV* inData, olong BPver, ObitUV* outData, 
+			    ofloat time, olong bchan, olong echan, olong nif, 
+			    ofloat *phase, ofloat RLPhase, ofloat RM, olong refAnt,
+			    ObitErr *err);
+
 
 /* Program globals */
-gchar *pgmName = "BPass";       /* Program name */
-gchar *infile  = "BPass.in" ;   /* File with program inputs */
-gchar *outfile = "BPass.out";   /* File to contain program outputs */
+gchar *pgmName = "RLPass";      /* Program name */
+gchar *infile  = "RLPass.in" ;  /* File with program inputs */
+gchar *outfile = "RLPass.out";  /* File to contain program outputs */
 olong  pgmNumber;               /* Program number (like POPS no.) */
 olong  AIPSuser;                /* AIPS user number number  */
 olong  nAIPS=0;                 /* Number of AIPS directories */
@@ -97,7 +103,7 @@ olong  souNo=0;                 /* Single source number */
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
-/*   Obit task to determine gains for a uv data set                       */
+/*    R-L phase bandpass calibration                                      */
 /*----------------------------------------------------------------------- */
 {
   oint         ierr = 0;
@@ -106,8 +112,6 @@ int main ( int argc, char **argv )
   ObitSkyModel *skyModel=NULL;
   ObitErr      *err= NULL;
   ofloat       ftemp;
-  gboolean     doAuto = FALSE;
-  ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *SCParms[] = {  /* Selfcal Parameters  */
     "refAnt",
@@ -115,7 +119,7 @@ int main ( int argc, char **argv )
 
   /* Startup - parse command line */
   err = newObitErr();
-  myInput = BPassIn (argc, argv, err);
+  myInput = RLPassIn (argc, argv, err);
   if (err->error) {ierr = 1;  ObitErrLog(err);  goto exit;}
 
   /* Initialize logging */
@@ -137,53 +141,45 @@ int main ( int argc, char **argv )
   inData = getInputData (myInput, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
-   /* Use autocorrelations rather than cross correlations? */
-  ObitInfoListGetTest (myInput, "doAuto", &type, dim, &doAuto); 
-  if (doAuto) {
-    AutoCorrBP (myInput, inData, inData, err);
-    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
-  } else { /* cross correlations */
-    
-    /* Get input sky model */
-    skyModel = getInputSkyModel (myInput, err);
-    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
-    
-    /* Copy/select/calibrate to scratch file */
-    scrData = newObitUVScratch (inData,err);
-    scrData = ObitUVCopy (inData, scrData, err);
-    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
-    
-    /* Save first source id in case it's the only one */
-    if (inData->mySel->sources) souNo = inData->mySel->sources[0];
-    
-    /* Divide if model given */
-    if (skyModel) ObitSkyModelDivUV (skyModel, scrData, scrData, err);
-    /* Otherwise divide by source flux density if given */
-    else DivideSource (inData, scrData, err);
-    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
-    /* Self cal parameters to scrData */
-    ObitInfoListCopyList (myInput, scrData->info, SCParms);
+  /* Get input sky model */
+  skyModel = getInputSkyModel (myInput, err);
+  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
   
-    /* Index scrData */
-    dim[0] = dim[1] = 1;
-    ftemp = 15.0;  /* Max scan time 15 min. */
-    ObitInfoListAlwaysPut(scrData->info, "maxScan", OBIT_float, dim, &ftemp);
-    ftemp = 1.0; /* Max allowable gap 1 min. */
-    ObitInfoListAlwaysPut(scrData->info, "maxGap", OBIT_float, dim, &ftemp);
-    ObitUVUtilIndex (scrData, err);
-    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
-    
-    /* Initial calibration */
-    avgData =  InitialCal(myInput, scrData, err);
-    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
-    
-    /* Do channel solutions, convert to BP table */
-    BandpassCal(myInput, avgData, inData, err);
-    if (err->error) ierr = 1;   ObitErrLog(err);  if (ierr!=0) goto exit;
-  } /* end calibration */
+  /* Copy/select/calibrate to scratch file */
+  scrData = newObitUVScratch (inData,err);
+  scrData = ObitUVCopy (inData, scrData, err);
+  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  
+  /* Save first source id in case it's the only one */
+  if (inData->mySel->sources) souNo = inData->mySel->sources[0];
+  
+  /* Divide if model given */
+  if (skyModel) ObitSkyModelDivUV (skyModel, scrData, scrData, err);
+  /* Otherwise divide by source flux density if given */
+  else DivideSource (inData, scrData, err);
+  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  /* Self cal parameters to scrData */
+  ObitInfoListCopyList (myInput, scrData->info, SCParms);
+
+  /* Index scrData */
+  dim[0] = dim[1] = 1;
+  ftemp = 15.0;  /* Max scan time 15 min. */
+  ObitInfoListAlwaysPut(scrData->info, "maxScan", OBIT_float, dim, &ftemp);
+  ftemp = 1.0; /* Max allowable gap 1 min. */
+  ObitInfoListAlwaysPut(scrData->info, "maxGap", OBIT_float, dim, &ftemp);
+  ObitUVUtilIndex (scrData, err);
+  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  
+  /* Initial calibration */
+  avgData =  InitialCal(myInput, scrData, err);
+  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  
+  /* Do channel solutions, convert to BP table */
+  RLBandpassCal(myInput, avgData, inData, err);
+  if (err->error) ierr = 1;   ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Write history */
-  BPassHistory (myInput, inData, err); 
+  RLPassHistory (myInput, inData, err); 
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
   /* show any messages and errors */
@@ -204,7 +200,7 @@ int main ( int argc, char **argv )
   return ierr;
 } /* end of main */
 
-ObitInfoList* BPassIn (int argc, char **argv, ObitErr *err)
+ObitInfoList* RLPassIn (int argc, char **argv, ObitErr *err)
 /*----------------------------------------------------------------------- */
 /*  Parse control info from command line                                  */
 /*   Input:                                                               */
@@ -223,7 +219,7 @@ ObitInfoList* BPassIn (int argc, char **argv, ObitErr *err)
   gchar *strTemp;
   oint    itemp, i, j, k;
   ObitInfoList* list=NULL;
-  gchar *routine = "BPassIn";
+  gchar *routine = "RLPassIn";
 
   /* error checks */
   if (err->error) return list;
@@ -339,18 +335,18 @@ ObitInfoList* BPassIn (int argc, char **argv, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
   return list;
-} /* end BPassIn */
+} /* end RLPassIn */
 
 void Usage(void)
 /*----------------------------------------------------------------------- */
 /*   Tells about usage of program and bails out                           */
 /*----------------------------------------------------------------------- */
 {
-    fprintf(stderr, "Usage: BPass -input file -output ofile [args]\n");
-    fprintf(stderr, "BPass Obit task determine bandpass for UV data\n");
+    fprintf(stderr, "Usage: RLPass -input file -output ofile [args]\n");
+    fprintf(stderr, "RLPass Obit task determine bandpass for UV data\n");
     fprintf(stderr, "Arguments:\n");
-    fprintf(stderr, "  -input input parameter file, def BPass.in\n");
-    fprintf(stderr, "  -output uv data onto which to attach FG table, def BPass.out\n");
+    fprintf(stderr, "  -input input parameter file, def RLPass.in\n");
+    fprintf(stderr, "  -output uv data onto which to attach FG table, def RLPass.out\n");
     fprintf(stderr, "  -pgmNumber Program (POPS) number, def 1 \n");
     fprintf(stderr, "  -DataType AIPS or FITS type for input image\n");
     fprintf(stderr, "  -AIPSuser User AIPS number, def 2\n");
@@ -434,13 +430,13 @@ ObitInfoList* defaultInputs(ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* input FITS file name */
-  strTemp = "BPass.uvtab";
+  strTemp = "RLPass.uvtab";
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, "inFile", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* input AIPS file name */
-  strTemp = "BPassName";
+  strTemp = "RLPassName";
   dim[0] = strlen (strTemp); dim[1] = 1;
   ObitInfoListPut (out, "inName", OBIT_string, dim, strTemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
@@ -965,18 +961,18 @@ void DivideSource (ObitUV *inUV, ObitUV *scrUV, ObitErr *err)
  cleanup:
   /* Close data */
   retCode = ObitUVClose (scrUV, err);
-  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  if (err->error) Obit_traceback_msg (err, routine, scrUV->name);
   
   if (SUTable) ObitTableSUUnref(SUTable);
   if (sList) ObitSourceListUnref(sList);
-  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+  if (err->error) Obit_traceback_msg (err, routine, scrUV->name);
 
 } /* end DivideSource  */
 
 /**
  * Divide buffer load of data by reciprocal of flux density in SourceList
  * \param sList   Source list with 1/flux densities
- * \param sourId  Source ID (0-rel) in sList is uvdata a siingle source file
+ * \param sourId  Source ID (0-rel) in sList is uvdata a single source file
  * \param uvdata  Object with uv data in buffer, prepared for correcrion.
  */
 static void DivideBuffer (ObitSourceList *sList, olong sourId, ObitUV *uvdata)
@@ -1047,14 +1043,14 @@ static void DivideBuffer (ObitSourceList *sList, olong sourId, ObitUV *uvdata)
 } /* end DivideBuffer */
 
 /*----------------------------------------------------------------------- */
-/*  Write History for BPass                                               */
+/*  Write History for RLPass                                               */
 /*   Input:                                                               */
 /*      myInput   Input parameters on InfoList                            */
 /*      inData    ObitUV to write history to                              */
 /*   Output:                                                              */
 /*      err    Obit Error stack                                           */
 /*----------------------------------------------------------------------- */
-void BPassHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
+void RLPassHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
 {
   ObitHistory *outHistory=NULL;
   gchar        hicard[81];
@@ -1064,15 +1060,13 @@ void BPassHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "selBand", "selFreq", "FreqID", 
     "BChan1", "EChan1", "BChan2", "EChan2", "ChWid2", 
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol", "Antennas",  "refAnt",  "doAuto",
+    "doPol", "Antennas",  "refAnt",  
     "DataType2", "in2File", "in2Disk", "in2Name", "in2Class", "in2Seq", 
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
-    "modelFlux", "modelPos", "modelParm", "Alpha",
-    "solInt1", "solInt2", "solType", "solMode", "avgPol", "avgIF", "doMGM", "minSNR",
-    "minNo", "prtLv",
-    "nThreads",
+    "modelFlux", "modelPos", "modelParm", "RLPhase", "RM",
+    "solInt1",  "minSNR",  "minNo", "prtLv", "nThreads",
    NULL};
-  gchar *routine = "BPassHistory";
+  gchar *routine = "RLPassHistory";
 
   /* error checks */
   if (err->error) return;
@@ -1096,7 +1090,7 @@ void BPassHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
 
   outHistory = ObitHistoryUnref(outHistory); /* cleanup */
  
-} /* end BPassHistory  */
+} /* end RLPassHistory  */
 
 /**
  * Initial atmospheric calibration, calibrates data and averages to
@@ -1125,7 +1119,7 @@ ObitUV* InitialCal (ObitInfoList* myInput, ObitUV* scrData, ObitErr* err)
     "refAnt", "ampScalar", "minSNR",  "minNo", "prtLv",
     NULL};
   gchar *blank = "    ";
-  gchar *FQInclude[] = {"AIPS FQ", NULL};
+  gchar *FQInclude[] = {"AIPS FQ", "AIPS AN", NULL};
   gchar *routine = "InitialCal";
 
   /* error checks */
@@ -1134,7 +1128,7 @@ ObitUV* InitialCal (ObitInfoList* myInput, ObitUV* scrData, ObitErr* err)
   
   /* Initial CL table on scratch file */
   ObitInfoListGet(myInput, "solInt1", &type, dim, &ftemp, err);
-  ObitInfoListAlwaysPut(scrData->info, "solInt", type, dim, &ftemp);
+  ObitInfoListAlwaysPut(scrData->info, "solInt", OBIT_float, dim, &ftemp);
   CLTable1 =  ObitTableCLGetDummy (scrData, scrData, ver, err);
   if (err->error) Obit_traceback_val (err, routine, scrData->name, avgData);
 
@@ -1144,7 +1138,7 @@ ObitUV* InitialCal (ObitInfoList* myInput, ObitUV* scrData, ObitErr* err)
   /* Copy calibration control to solver */
   ObitInfoListCopyList (myInput, solver->info, solverParms);
   ObitInfoListGet(myInput, "solInt1", &type, dim, &ftemp, err);
-  ObitInfoListAlwaysPut(solver->info, "solInt", OBIT_long, dim, &ftemp);
+  ObitInfoListAlwaysPut(solver->info, "solInt", OBIT_float, dim, &ftemp);
   itemp = 1;
   ObitInfoListAlwaysPut(solver->info, "solnVer", OBIT_long, dim, &itemp);
   ObitInfoListGet(myInput, "BChan1", &type, dim, &itemp, err);
@@ -1190,11 +1184,11 @@ ObitUV* InitialCal (ObitInfoList* myInput, ObitUV* scrData, ObitErr* err)
   ObitInfoListAlwaysPut(scrData->info, "timeAvg", OBIT_float, dim, &solInt);
   avgData = ObitUVUtilAvgT(scrData, TRUE, avgData, err);
   if (err->error) Obit_traceback_val (err, routine, scrData->name, avgData);
-  
-   /* Be sure FQ table copied */
+
+  /* Be sure FQ table copied */
    ObitUVCopyTables (scrData, avgData, NULL, FQInclude, err);
 
- /* cleanup */
+  /* cleanup */
   solver    = ObitUVGSolveUnref(solver);
   SNTable   = ObitTableSNUnref(SNTable);
   CLTable1  = ObitTableSNUnref(CLTable1);
@@ -1210,29 +1204,35 @@ ObitUV* InitialCal (ObitInfoList* myInput, ObitUV* scrData, ObitErr* err)
  * \param inUV    UV data onto which the BP table to be written
  * \param err     ObitErr stack for reporting problems.
  */
-void  BandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData, 
-		  ObitErr* err)
+void  RLBandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData, 
+		    ObitErr* err)
 {
-  ObitTableSN **SNTables = NULL;
-  ObitTableBP *BPTable = NULL;
-  ObitUVGSolve *solver=NULL;
-  olong ichan, nchan, bchan2=0, echan2=0, chinc2=0;
-  olong nif, maxch, maxno, itemp;
+  ObitTableBP *BPTable=NULL, *BPOut=NULL;
+  ObitIOCode retCode = OBIT_IO_OK;
+  olong ichan, nchan, bchan2=0, echan2=0, chinc2=0, nc, i;
+  olong ivis, nvis, ifreq, nfreq, iif, nstok, nif, indx, count=0;
+  olong itemp, nchanIF, doBand, BPVer, outVer, npol, BPSoln, refAnt;
   gboolean btemp;
-  ofloat ftemp;
+  ofloat RLPhase=0.0, RM=0.0, fblank = ObitMagicF();
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  gchar        *solverParms[] = {  /* Calibration parameters */
-    "solnVer", "solType", "solMode", "avgPol", "avgIF", "doMGM", "elevMGM",
-    "refAnt", "ampScalar", "minSNR",  "minNo", "prtLv",
-    NULL};
-  gchar *copyBPTable[] = {"AIPS BP", NULL};
-  gchar *routine = "BandpassCal";
+  ofloat *vis, *ifvis, *fvis, *svis, *rec, time=-1.0e20;
+  ObitUVDesc *desc;
+  gfloat *Qsum=NULL, *Usum=NULL, *Qwt=NULL, *Uwt=NULL;
+  gchar *Stokes="IQUV";
+  gchar *routine = "RLBandpassCal";
 
   /* error checks */
   if (err->error) return;
   g_assert (ObitUVIsA(inData));
   g_assert (ObitUVIsA(avgData));
+
+
+  /* Any data in avgData? */
+  if (avgData->myDesc->nvis<=0) {
+    Obit_log_error(err, OBIT_Error, "NO averaged/calibrated data");
+    return;
+  }
 
   /* Range of channels */
   nchan = avgData->myDesc->inaxes[avgData->myDesc->jlocf];
@@ -1245,6 +1245,23 @@ void  BandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData,
   ObitInfoListGetTest (myInput, "ChWid2", &type, dim, &chinc2); 
   chinc2 /= 2;
   chinc2 = MAX (0, chinc2);
+  /* Stokes */
+  if (avgData->myDesc->jlocs>=0)
+    npol = MIN (2, avgData->myDesc->inaxes[avgData->myDesc->jlocs]);
+  else
+    npol = 1; 
+
+  /* Target */
+  ObitInfoListGetTest (myInput, "RM",      &type, dim, &RM); 
+  ObitInfoListGetTest (myInput, "RLPhase", &type, dim, &RLPhase); 
+  RLPhase *= DG2RAD;    /* to radians */
+
+  /* Prior bandpass calibration */
+  ObitInfoListGetTest (myInput, "doBand", &type, dim, &doBand); 
+  ObitInfoListGetTest (myInput, "BPVer",  &type, dim, &BPVer); 
+  ObitInfoListGetTest (myInput, "BPSoln", &type, dim, &BPSoln);
+  if (BPVer<=0) BPVer = ObitTableListGetHigh (inData->tableList, "AIPS BP");
+  ObitInfoListGetTest (myInput, "refAnt", &type, dim, &refAnt); 
 
   /* Number of IFs */
   if (avgData->myDesc->jlocif>=0)  
@@ -1252,18 +1269,13 @@ void  BandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData,
   else
     nif = 1;
 
-  /* Array of SN tables */
-  SNTables = g_malloc0(nchan*sizeof(*SNTables));
-
-  /* Create solver */
-  solver = ObitUVGSolveCreate("Gain solver");
-  /* Save first source id in case it's the only one */
-  if (inData->mySel->sources) solver->curSource = inData->mySel->sources[0];
-
-  /* Copy calibration parameters */
-  ObitInfoListCopyList (myInput, solver->info, solverParms);
-  ObitInfoListGet(myInput, "solInt2", &type, dim, &ftemp, err);
-  ObitInfoListAlwaysPut(solver->info, "solInt", type, dim, &ftemp);
+  /* Accumulator arrays */
+  nc      =  (echan2-bchan2+1);
+  nchanIF =  nif * nc;
+  Qsum = g_malloc0(nchanIF*sizeof(ofloat));
+  Qwt  = g_malloc0(nchanIF*sizeof(ofloat));
+  Usum = g_malloc0(nchanIF*sizeof(ofloat));
+  Uwt  = g_malloc0(nchanIF*sizeof(ofloat));
 
   /* Don't need to apply calibration */
   btemp = TRUE;
@@ -1271,98 +1283,193 @@ void  BandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData,
   ObitInfoListAlwaysPut(avgData->info, "doCalSelect", OBIT_bool, dim, &btemp);
   itemp = -1;
   ObitInfoListAlwaysPut(avgData->info, "doCalib", OBIT_long, dim, &itemp);
-  /* Don't care how many work */
-  ftemp = 0.0;
-  ObitInfoListAlwaysPut(solver->info, "minOK", OBIT_float, dim, &ftemp);
+  /* Want to convert to IQUV */
+  dim[0] = strlen(Stokes);
+  ObitInfoListAlwaysPut(avgData->info, "Stokes", OBIT_string, dim, Stokes);
 
   /* Loop over channels getting channel calibration */
   for (ichan=bchan2; ichan<=echan2; ichan++) {
-    /* Select channel */
+    /* Select channel(s) */
     dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
     itemp = MAX (1, ichan-chinc2);
     ObitInfoListAlwaysPut(avgData->info, "BChan", OBIT_long, dim, &itemp);
     itemp = MIN (nchan, ichan+chinc2);
     ObitInfoListAlwaysPut(avgData->info, "EChan", OBIT_long, dim, &itemp);
     
-    /* Solve one channel and all IFs */
-    SNTables[ichan-1] = ObitUVGSolveCal (solver, avgData, avgData, avgData->mySel, err);
-    if (err->error) Obit_traceback_msg (err, routine, avgData->name);
-  }  /* end channel loop */
+    /* Sum one block of channels and all IFs */
+    retCode = ObitUVOpen (avgData, OBIT_IO_ReadCal, err);
+    if (err->error) goto cleanup;
+    desc  = avgData->myDesc;
 
-  /* Find channel with maximum number of solutions - 
-     use it to create initial BP table */
-  maxch = bchan2; 
-  maxno = SNTables[0]->myDesc->nrow;
-  for (ichan=bchan2; ichan<=echan2; ichan++) {
-    if (SNTables[ichan-1]->myDesc->nrow>maxno) {
-      maxch = ichan; 
-      maxno = SNTables[ichan-1]->myDesc->nrow;
+    nfreq = desc->inaxes[desc->jlocf];
+    nif = 1;
+    if (desc->jlocif>=0) nif = desc->inaxes[desc->jlocif];
+    nstok = 1;
+    if (desc->jlocs>=0) nstok = desc->inaxes[desc->jlocs];
+
+    /* loop over blocks of data */
+    while (retCode == OBIT_IO_OK) {
+      
+      /* read buffer */
+      retCode = ObitUVReadSelect (avgData, NULL, err);
+      if (retCode == OBIT_IO_EOF) break; /* done? */
+      if (err->error) goto cleanup;
+ 
+      /* how much data? */
+      nvis  = desc->numVisBuff;
+   
+      /* Loop over visibilities in buffer */
+      vis = avgData->buffer+desc->nrparm;
+      rec = avgData->buffer;
+      /* Save first time */
+      if (time<-1.0e10) time = rec[desc->iloct];
+      for (ivis=0; ivis<nvis; ivis++) {
+	
+	/* loop over IFs */
+	ifvis = vis;
+	for (iif=0; iif<nif; iif++) {
+	  indx = iif*nc + ichan-bchan2;
+	  
+	  /* loop over frequencies being averaged */
+	  fvis = ifvis;
+	  for (ifreq = 0; ifreq<nfreq; ifreq++) {
+	    
+	    /*  Stokes */
+	    svis = fvis;
+	    /* I - not needed */
+	    svis += desc->incs; /* visibility pointer */
+	    /* Q */
+	    if (*(svis+2)>0.0) {
+	      Qsum[indx] += *svis * *(svis+2);
+	      Qwt[indx]  += *(svis+2);
+	    }
+	    svis += desc->incs; 
+	    /* U */
+	    if (*(svis+2)>0.0) {
+	      Usum[indx] += *svis * *(svis+2);
+	      Uwt[indx]  += *(svis+2);
+	    }
+
+	    fvis += desc->incf; /* visibility pointer */
+	  } /* end loop over frequencies */
+	  ifvis += desc->incif; /* visibility pointer */
+	} /* Loop over IFs */
+	
+	/* update data pointers */
+	vis += desc->lrec;
+	rec += desc->lrec;
+      } /* end loop over buffer */
+  
+    } /* end loop over data */
+
+    /* Close data */
+    retCode = ObitUVClose (avgData, err);
+    if (err->error) goto cleanup;
+    }  /* end channel loop */
+
+  /* Normalize - convert to angle */
+  for (i=0; i<nchanIF; i++) {
+    if (Qwt[i]>0.0) Qsum[i] /= Qwt[i];
+    if (Uwt[i]>0.0) Usum[i] /= Uwt[i];
+    if ((Qwt[i]>0.0) && (Uwt[i]>0.0)) {
+      Qsum[i] = atan2(Usum[i], Qsum[i]);
+      count++;
     }
+    else Qsum[i] = fblank;
   }
-  /* Create BP table */
-  BPTable = DummyBPTable (avgData, SNTables[maxch-1], err);
+		      
+  /* tell about it */
+  if (count>0) {
+    Obit_log_error(err, OBIT_InfoErr, "Calibrated %d channels", count);
+  } else {
+    Obit_log_error(err, OBIT_Error, "NO channels calibrated");
+    goto cleanup;
+ }
 
-  /* Loop over SN tables copying to BP */
-  for (ichan=bchan2; ichan<=echan2; ichan++) {
-    SN2BPTable (SNTables[ichan-1], BPTable, ichan-1, err);
-    if (err->error) Obit_traceback_msg (err, routine, avgData->name);
-  } /* end  end loop copying */  
+  /* Create new or update prior depending on doBand */
+  if (doBand<=0) {
+    /* Create/populate BP table */
+    BPTable = MakeBPTable (avgData, time, bchan2, echan2, nif, 
+			   Qsum,  RLPhase, RM, refAnt, err);
+    outVer = BPSoln;
+    if (outVer<=0) 
+      outVer = ObitTableListGetHigh (inData->tableList, "AIPS BP")+1;
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "New BP table ver. %d", outVer);
+  } else {
+    BPTable = UpdateBPTable (inData, BPVer, avgData, time, bchan2, echan2, nif, 
+			     Qsum,  RLPhase, RM, refAnt, err);
+    outVer = BPSoln;
+    if (outVer<=0) 
+      outVer = ObitTableListGetHigh (inData->tableList, "AIPS BP")+1;
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "Update BP table ver. %d to ver. %d", BPVer, outVer);
+  }
+
+  /* Create output BP table */
+  BPOut = newObitTableBPValue ("Temp BP", (ObitData*)inData, &outVer,
+			       OBIT_IO_WriteOnly, npol, nif, nchan, err);
+  /* Clear existing rows */
+  ObitTableClearRows ((ObitTable*)BPOut, err);
+  if (err->error) goto cleanup;
 
   /* Copy BP table to inData */
-  ObitUVCopyTables (avgData, inData, NULL, copyBPTable, err);
-  if (err->error) Obit_traceback_msg (err, routine, avgData->name);
+  BPTable = ObitTableBPCopy (BPTable, BPOut, err);
+  if (err->error) goto cleanup;
 
   /* Cleanup */
-  solver = ObitUVGSolveUnref(solver);
+ cleanup:
+  if (Qsum) g_free(Qsum);
+  if (Usum) g_free(Usum);
+  if (Qwt)  g_free(Qwt);
+  if (Uwt)  g_free(Uwt);
   ObitUVZapTable (avgData, "AIPS BP", -1, err);
   BPTable = ObitTableBPUnref(BPTable );
   ObitUVZapTable (avgData, "AIPS SN", -1, err);
   if (err->error) Obit_traceback_msg (err, routine, avgData->name);
-  for (ichan=0; ichan<nchan; ichan++) 
-    SNTables[ichan] = ObitTableSNUnref(SNTables[ichan]);
+  } /* end RLBandpassCal  */
 
-} /* end BandpassCal  */
-
-/**
- * Create dummy Bandpass table, creates entries at times and for antennas
- * of the entries in SNTmpl, bandpass calibration blanked.
+/** 
+ * Create Bandpass table, creates entries at time and for antennas numbers
+ * up to the max in the data.
  * \param inData  UV onto which the BP table is to be attached
- * \param SNTmpl  Template SN table
+ * \param time    Time in days to write entry
+ * \param bchan   First channel calibrated
+ * \param echan   Highest channel calibrated
+ * \param nif     Number of IFs
+ * \param phase   Channel phase in radians
+ * \param RLPhase Target R-L phase (rad) at reference freq
+ * \param RM      Rotation measure (rad/M^2)
+ * \param refAnt  Reference antenna
  * \param err     ObitErr stack for reporting problems.
  */
-ObitTableBP* DummyBPTable (ObitUV* inData, ObitTableSN *SNTmpl, ObitErr *err)
+ObitTableBP* MakeBPTable (ObitUV* inData, ofloat time,
+			  olong bchan, olong echan, olong nif, 
+			  ofloat *phase, ofloat RLPhase, ofloat RM,
+			  olong refAnt, ObitErr *err)
 {
   ObitTableBP *BPOut=NULL;
   ObitIOCode retCode = OBIT_IO_OK;
-  ObitTableSNRow *SNRow=NULL;
   ObitTableBPRow *BPRow=NULL;
   ObitUVDesc *desc;
-  olong i, irow, orow, nchan, nif, npol, ver;
-  ofloat fblank = ObitMagicF();
+  olong i, irow, orow, nchan, npol, ver, numAnt, ichan, iif, nc;
+  olong indx, jndx, suba=1;
+  odouble freq, reffreq, lambda, reflambda;
+  ofloat pdif, fblank = ObitMagicF();
   ObitInfoType type;
   gint32   dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar *routine = "DummyBPTable";
+  gchar *routine = "MakeBPTable";
 
   /* error checks */
   if (err->error) return BPOut;
   g_assert (ObitUVIsA(inData));
-  g_assert (ObitTableSNIsA(SNTmpl));
-
-  /* Ensure inData fully instantiated and OK */
-  ObitUVFullInstantiate (inData, TRUE, err);
-  if (err->error) Obit_traceback_val (err, routine,inData->name, BPOut);
 
   /* Table info - channels */
   desc = (ObitUVDesc*)inData->myIO->myDesc;
   if (desc->jlocf>=0)
     nchan = desc->inaxes[desc->jlocf];
   else
-    nchan = 1;  /* Curious */
-  /* IFs */
-  if (desc->jlocif>=0)
-    nif = desc->inaxes[desc->jlocif];
-  else
-    nif = 1;
+    nchan = 1;  /* Curious it */
   /* Stokes */
   if (desc->jlocs>=0)
     npol = MIN (2, desc->inaxes[desc->jlocs]);
@@ -1379,14 +1486,8 @@ ObitTableBP* DummyBPTable (ObitUV* inData, ObitTableSN *SNTmpl, ObitErr *err)
   /* Clear existing rows */
   ObitTableClearRows ((ObitTable*)BPOut, err);
 
-  /* Open SN table */
-  retCode = ObitTableOpen ((ObitTable*)SNTmpl, OBIT_IO_ReadOnly, err);
-  if ((retCode != OBIT_IO_OK) || (err->error))
-    Obit_traceback_val (err, routine, SNTmpl->name, BPOut);
-  SNRow = newObitTableSNRow(SNTmpl);
-
   /* Open BP table */
-  retCode = ObitTableOpen ((ObitTable*)BPOut, OBIT_IO_WriteOnly, err);
+  retCode = ObitTableBPOpen (BPOut, OBIT_IO_WriteOnly, err);
   if ((retCode != OBIT_IO_OK) || (err->error))
     Obit_traceback_val (err, routine, BPOut->name, BPOut);
   BPRow = newObitTableBPRow(BPOut);
@@ -1394,28 +1495,31 @@ ObitTableBP* DummyBPTable (ObitUV* inData, ObitTableSN *SNTmpl, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine,inData->name, BPOut);
 
   /* Set header values */
-  BPOut->numAnt    = SNTmpl->numAnt;  /* Max. antenna number */
+  numAnt  = inData->myDesc->numAnt[suba-1];/* actually highest antenna number */
+  BPOut->numAnt    = numAnt;  /* Max. antenna number */
   BPOut->numShifts = 0;
   BPOut->numChan   = nchan;
   BPOut->startChan = 1;
   BPOut->lowShift  = 1;
   BPOut->shiftInc  = 1;
   strncpy (BPOut->BPType, "          ", MAXKEYCHARTABLEBP);
-  if ((SNTmpl->myDesc->sort[0]-1)==SNTmpl->TimeCol)
-    BPOut->myDesc->sort[0] = BPOut->TimeCol+1;  /* Sort order */
-  if ((SNTmpl->myDesc->sort[1]-1)==SNTmpl->antNoCol)
-    BPOut->myDesc->sort[1] = BPOut->antNoCol+1;
+  BPOut->myDesc->sort[0] = BPOut->TimeCol+1;  /* Sort order */
+  BPOut->myDesc->sort[1] = BPOut->antNoCol+1;
 
   /* Initialize BP Row */
   desc = (ObitUVDesc*)inData->myIO->myDesc;
   BPRow->BW           = desc->cdelt[desc->jlocf];
   BPRow->ChanShift[0] = 0.0;
   BPRow->ChanShift[1] = 0.0;
-  BPRow->RefAnt1      = 0;
-  BPRow->RefAnt2      = 0;
+  BPRow->RefAnt1      = refAnt;
+  BPRow->RefAnt2      = refAnt;
+  BPRow->SubA         = 0;
+  BPRow->FreqID       = 0;
+  BPRow->TimeI        = 24.0;
+  BPRow->SourID       = souNo;
   for (i=0; i<nif; i++) BPRow->ChanShift[i] = 0.0;
-  for (i=0; i<nif; i++) BPRow->Weight1[i]   = 0.0;
-  if (npol>1) for (i=0; i<nif; i++) BPRow->Weight2[i] = 0.0;
+  for (i=0; i<nif; i++) BPRow->Weight1[i]   = 1.0;
+  if (npol>1) for (i=0; i<nif; i++) BPRow->Weight2[i] = 1.0;
   for (i=0; i<nchan*nif; i++) { 
     BPRow->Real1[i]   = fblank;
     BPRow->Imag1[i]   = fblank;
@@ -1425,487 +1529,217 @@ ObitTableBP* DummyBPTable (ObitUV* inData, ObitTableSN *SNTmpl, ObitErr *err)
     }
   }
 
-  /* Loop over SN table */
-  for (irow=1; irow<=SNTmpl->myDesc->nrow; irow++) {
-    retCode = ObitTableSNReadRow (SNTmpl, irow, SNRow, err);
-    if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+  /* Reference wavelength */
+  reffreq   = desc->freq;
+  reflambda = VELIGHT/reffreq;
+
+  /* Fill actual values */
+  nc      =  (echan-bchan+1);
+  for (iif=0; iif<nif; iif++) {
+    for (ichan=bchan; ichan<=echan; ichan++) {
+      /* channel wavelength */
+      freq   = reffreq + desc->freqIF[iif] + 
+	(ichan-desc->crpix[desc->jlocf]+1) * desc->cdelt[desc->jlocf];
+      lambda = VELIGHT/freq;
+      /* Target phase difference */
+      pdif = RLPhase + 2.0 * (lambda*lambda - reflambda*reflambda) * RM;
+      indx = iif*nc + ichan-bchan;
+      jndx = iif*nchan + ichan -1;
+      if (phase[indx]!=fblank) {
+	BPRow->Real1[jndx]   = 1.0;
+	BPRow->Imag1[jndx]   = 0.0;
+	if (npol>1) {   /* There better be or this is pretty pointless */
+	  BPRow->Real2[jndx] = cos(pdif-phase[indx]);
+	  BPRow->Imag2[jndx] = sin(pdif-phase[indx]);
+	}
+      } else {
+	BPRow->Real1[jndx]   = fblank;
+	BPRow->Imag1[jndx]   = fblank;
+	if (npol>1) { 
+	  BPRow->Real2[jndx] = fblank;
+	  BPRow->Imag2[jndx] = fblank;
+	}
+      }
+    } /* end loop over channel */
+  } /* end loop over IF */
+  
+  /* Loop over antennas - entries all the same */
+  for (irow=1; irow<=numAnt; irow++) {
 
     /* Set time, antenna etc.*/
-    BPRow->Time   = SNRow->Time;
-    BPRow->TimeI  = SNRow->TimeI;
-    BPRow->SourID = SNRow->SourID;
-    BPRow->antNo  = SNRow->antNo;
-    BPRow->SubA   = SNRow->SubA;
-    BPRow->FreqID = SNRow->FreqID;
-    /* single source in calibration? */
-    if (BPRow->SourID==0) BPRow->SourID = souNo;
+    BPRow->Time   = time;
+    BPRow->antNo  = irow;
 
     /* Write output table */
     orow = -1;
     retCode = ObitTableBPWriteRow (BPOut, orow, BPRow, err);
     if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
-  } /* end loop over SN table */
+  } /* end loop over antennas */
 
-  /* Close SN table */
  cleanup:
-  retCode = ObitTableClose ((ObitTable*)SNTmpl, err);
-  if ((retCode != OBIT_IO_OK) || (err->error))
-    Obit_traceback_val (err, routine, SNTmpl->name, BPOut);
-  SNRow = ObitTableSNRowUnref(SNRow);
 
   /* Close BP table */
-  retCode = ObitTableClose ((ObitTable*)BPOut, err);
+  retCode = ObitTableBPClose (BPOut, err);
   if ((retCode != OBIT_IO_OK) || (err->error))
     Obit_traceback_val (err, routine, BPOut->name, BPOut);
   BPRow = ObitTableBPRowUnref(BPRow);
 
   return BPOut;
-} /* end DummyBPTable  */
-
-/**
- * Copy the contents of an SN table to a BP table for a given channel
- * The solutions in the SN table are kept as corrections and in the 
- * BP table as solutions so the gains are inverted.
- * \param SNTab  InputSN table
- * \param BPTab  BP table to be updated
- * \param chan   0-rel channel number 
- * \param err    ObitErr stack for reporting problems.
+} /* end MakeBPTable  */
+/** 
+ * Create Bandpass table, creates entries at time and for antennas numbers
+ * up to the max in the data.
+ * \param inData  UV onto which the input BP table is attached
+ * \param outData UV onto which the BP table is to be attached
+ * \param time    Time in days to write entry
+ * \param bchan   First channel calibrated
+ * \param echan   Highest channel calibrated
+ * \param nif     Number of IFs
+ * \param phase   Channel phase in radians
+ * \param RLPhase Target R-L phase (rad) at reference freq
+ * \param RM      Rotation measure (rad/M^2)
+ * \param refAnt  Reference antenna
+ * \param err     ObitErr stack for reporting problems.
  */
-void SN2BPTable (ObitTableSN *SNTab, ObitTableBP *BPTab, olong chan,
-		 ObitErr *err)
+ObitTableBP* UpdateBPTable (ObitUV* inData, olong BPver, ObitUV* outData, 
+			    ofloat time, olong bchan, olong echan, olong nif, 
+			    ofloat *phase, ofloat RLPhase, ofloat RM,
+			    olong refAnt, ObitErr *err)
 {
+  ObitTableBP *BPOut=NULL, *BPIn=NULL;
   ObitIOCode retCode = OBIT_IO_OK;
-  ObitTableSNRow *SNRow=NULL;
   ObitTableBPRow *BPRow=NULL;
-  olong irow, orow, nchan, nif, npol, count, i, indx;
-  ofloat amp, fblank = ObitMagicF();
-  gboolean found = FALSE;
-  gchar *routine = "SN2BPTable";
+  ObitUVDesc *desc;
+  olong irow, orow, nchan, npol, ver, ichan, iif, nc;
+  olong indx, jndx;
+  odouble freq, reffreq, lambda, reflambda;
+  ofloat pdif, xr, xi, yr, yi, fblank = ObitMagicF();
+  ObitInfoType type;
+  gint32   dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gchar *routine = "MakeBPTable";
 
   /* error checks */
-  if (err->error) return;
-  g_assert (ObitTableSNIsA(SNTab));
-  g_assert (ObitTableBPIsA(BPTab));
+  if (err->error) return BPOut;
+  g_assert (ObitUVIsA(inData));
+  g_assert (ObitUVIsA(outData));
 
   /* Table info - channels */
-  nchan = BPTab->numChan;
-  nif   = BPTab->numIF;
-  npol  = BPTab->numPol;
+  desc = (ObitUVDesc*)outData->myIO->myDesc;
+  if (desc->jlocf>=0)
+    nchan = desc->inaxes[desc->jlocf];
+  else
+    nchan = 1;  /* Curious it */
+  /* Stokes */
+  if (desc->jlocs>=0)
+    npol = MIN (2, desc->inaxes[desc->jlocs]);
+  else
+    npol = 1; 
 
-  /* Open SN table */
-  retCode = ObitTableSNOpen (SNTab, OBIT_IO_ReadOnly, err);
-  if ((retCode != OBIT_IO_OK) || (err->error))
-    Obit_traceback_msg (err, routine, SNTab->name);
-  SNRow = newObitTableSNRow(SNTab);
-
-  /* Open BP table */
-  retCode = ObitTableBPOpen (BPTab, OBIT_IO_ReadWrite, err);
-  if ((retCode != OBIT_IO_OK) || (err->error))
-    Obit_traceback_msg (err, routine, BPTab->name);
-  BPRow = newObitTableBPRow(BPTab);
-  ObitTableBPSetRow (BPTab, BPRow, err);
-  if (err->error) Obit_traceback_msg (err, routine, BPTab->name);
-
-  /* Make sure valid number on number of antennas */
-  if ((BPTab->numAnt<=0) && (SNTab->numAnt>0))
-    BPTab->numAnt    = SNTab->numAnt;  /* Max. antenna number */
-
-  /* Loop over SN table */
-  orow = 0;
-  for (irow=1; irow<=SNTab->myDesc->nrow; irow++) {
-    retCode = ObitTableSNReadRow (SNTab, irow, SNRow, err);
-    if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
-
-    /* Set time, antenna etc
-       BPRow->Time.  = SNRow->Time;
-       BPRow->TimeI. = SNRow->TimeI;
-       BPRow->SourID.= SNRow->SourID;
-       BPRow->antNo  = SNRow->antNo;
-       BPRow->SubA.  = SNRow->;
-       BPRow->FreqID.= SNRow->FreqID;.*/
-
-    /* Find corresponding BP row */
-    orow++;
-    count = 0;
-    retCode = ObitTableBPReadRow (BPTab, irow, BPRow, err);
-    if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
-    found = (BPRow->Time==SNRow->Time) && (BPRow->antNo==SNRow->antNo);
-    while (!found) {
-      /* Forward?? */
-      if ((BPRow->Time<SNRow->Time) || 
-	  ((BPRow->Time<=SNRow->Time) && (BPRow->antNo<SNRow->antNo))) {
-	orow++;
-	retCode = ObitTableBPReadRow (BPTab, orow, BPRow, err);
-	if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
-	found = (BPRow->Time==SNRow->Time) && (BPRow->antNo==SNRow->antNo);
-	/* Reverse? */
-      } else if ((BPRow->Time>SNRow->Time) || 
-		 ((BPRow->Time==SNRow->Time) && (BPRow->antNo>SNRow->antNo))) {
-	orow--;
-	retCode = ObitTableBPReadRow (BPTab, orow, BPRow, err);
-	if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
-	found = (BPRow->Time==SNRow->Time) && (BPRow->antNo==SNRow->antNo);
-      }
-      /* Not forever */
-      count++;
-      if (count>(2*irow<=SNTab->myDesc->nrow)) goto cleanup;
-    }
-
-    /* Copy info to BP Row */
-    BPRow->RefAnt1   = SNRow->RefAnt1[0];
-    if (npol>1) BPRow->RefAnt2   = SNRow->RefAnt2[0];
-
-    for (i=0; i<nif; i++) {
-      /* Invert if valid */
-      if ((SNRow->Real1[i]!=fblank) && (SNRow->Imag1[i]!=fblank)) {
-	amp = SNRow->Real1[i]*SNRow->Real1[i] + SNRow->Imag1[i]*SNRow->Imag1[i];
-	if (amp>1.0e-20) {
-	  SNRow->Real1[i] /= amp;
-	  SNRow->Imag1[i] /= amp;
-	}
-      } /* end invert */
-      indx = i*nchan + chan;
-      BPRow->Real1[indx]   = SNRow->Real1[i];
-      BPRow->Imag1[indx]   = SNRow->Imag1[i];
-      if (SNRow->Weight1[i]!=fblank) BPRow->Weight1[i]    = MAX (SNRow->Weight1[i], BPRow->Weight1[i]);
-      if (npol>1) {
-	/* Invert if valid */
-	if ((SNRow->Real2[i]!=fblank) && (SNRow->Imag2[i]!=fblank)) {
-	  amp = SNRow->Real2[i]*SNRow->Real2[i] + SNRow->Imag2[i]*SNRow->Imag2[i];
-	  if (amp>1.0e-20) {
-	    SNRow->Real2[i] /= amp;
-	    SNRow->Imag2[i] /= amp;
-	  }
-	} /* end invert */
-	BPRow->Real2[indx]   = SNRow->Real2[i];
-	BPRow->Imag2[indx]   = SNRow->Imag2[i];
-	if (SNRow->Weight2[i]!=fblank) BPRow->Weight2[i]    = MAX (SNRow->Weight2[i], BPRow->Weight2[i]);
-      }
-    }
-
-    /* reWrite output table */
-    retCode = ObitTableBPWriteRow (BPTab, orow, BPRow, err);
-    if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
-  } /* end loop over SN table */
-
-  /* Close SN table */
- cleanup:
-  retCode = ObitTableSNClose (SNTab, err);
-  if ((retCode != OBIT_IO_OK) || (err->error))
-    Obit_traceback_msg (err, routine, SNTab->name);
-  SNRow = ObitTableSNRowUnref(SNRow);
-
-  /* Close BP table */
-  retCode = ObitTableBPClose (BPTab, err);
-  if ((retCode != OBIT_IO_OK) || (err->error))
-    Obit_traceback_msg (err, routine, BPTab->name);
-  BPRow = ObitTableBPRowUnref(BPRow);
-
-} /* end SN2BPTable  */
-
-/*----------------------------------------------------------------------- */
-/*  Derive bandpass from autocorrelations                                 */
-/*  Each spectrum is normalized to an average value of 1.0                */
-/*   Input:                                                               */
-/*      myInput   Input parameters on InfoList                            */
-/*      inData    ObitUV to derive Bandpass for                           */
-/*      outData   ObitUV to Write BP table on                             */
-/*   Output:                                                              */
-/*      err    Obit Error stack                                           */
-/*----------------------------------------------------------------------- */
-void AutoCorrBP (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData, 
-		 ObitErr* err)
-{
-  ObitIOCode retCode;
-  ObitTableBP* BPTable;
-  ObitTableBPRow* BPRow=NULL;
-  ObitUVDesc *inDesc;
-  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  ObitInfoType type;
-  olong i, j, lrec, ver, suba;
-  olong lastSubA=0, lastSourceID=0, lastFQID=0, curSourceID=0;
-  olong  numAnt, numChan, numIF, numStoke, indx, jndx;
-  olong corrType=2, refAnt = 1, iant, iif, istok, ichan, incs, incf, incif;
-  olong ant1, ant2, ivis, orow, count = 0, cnt1, cnt2;
-  ofloat cbase, curTime, norm1=1.0, norm2=1.0;
-  ofloat **BPSum=NULL, **BPWt=NULL, solInt, *inBuffer;
-  ofloat fblank = ObitMagicF();
-  odouble startTime=0.0, endTime=0.0, lastTime = -1.0e20; 
-  gboolean OK;
-  gchar *routine = "AutoCorrBP";
-
-  /* error checks */
-  if (err->error) return;
-  g_assert (ObitUVIsA(inData));
-
-  /* Only want autocorrelations */
-  dim[0] = dim[1] = dim[2] = 1;
-  ObitInfoListAlwaysPut(inData->info, "corrType", OBIT_int, dim, &corrType);
+  /* Create input BP table */
+  ver = BPver;
+  ObitInfoListGetTest(myInput, "BPVer",  &type, dim, &ver);
+  BPIn = newObitTableBPValue ("Temp BP", (ObitData*)inData, &ver,
+			      OBIT_IO_ReadOnly, npol, nif, nchan, err);
+  /* Does it exist? */
+  if (BPIn==NULL) 
+    Obit_log_error(err, OBIT_Error, "Failure finding input BP ver %d", BPver);
+  if (err->error) Obit_traceback_val (err, routine, inData->name, BPOut);
   
-  /* Solution interval */
-  solInt = 0.0;
-  ObitInfoListGetTest(myInput, "solInt2", &type, dim, &solInt);
-  solInt /= 1440.0;     /* to days */
-  if (solInt<=1.0e-5) solInt = 1000.0; /* 0 => whole data set */
-
-  /* Reference antenna */
-  ObitInfoListGetTest(myInput, "refAnt", &type, dim, &refAnt);
-  ver = 0;
-  ObitInfoListGetTest(myInput, "BPSoln", &type, dim, &ver);
-
-  /* Open */
-  retCode = ObitUVOpen (inData, OBIT_IO_ReadCal, err);
-  if (err->error) Obit_traceback_msg (err, routine, inData->name);
-  
-  /* Get descriptor */
-  inDesc  = inData->myDesc;
-
-  /* Save first source id in case it's the only one */
-  if (inData->mySel->sources) curSourceID = inData->mySel->sources[0];
-
-  /* Number of channels, antennas */
-  numChan = inDesc->inaxes[inDesc->jlocf];
-  if (inDesc->jlocif>0) numIF   = inDesc->inaxes[inDesc->jlocif];
-  else numIF = 1;
-  numStoke = inDesc->inaxes[inDesc->jlocs];
-  numStoke = MIN (2, numStoke);
-  suba = 1;
-  numAnt  = inData->myDesc->numAnt[suba-1];/* actually highest antenna number */
-  incs  = inDesc->incs;
-  incf  = inDesc->incf;
-  incif = inDesc->incif;
-  lrec  = inDesc->lrec;
-
   /* Create output BP table */
-  BPTable = newObitTableBPValue ("Output BP", (ObitData*)outData, &ver,
-			       OBIT_IO_WriteOnly, numStoke, numIF, numChan, err);
-  if (err->error) Obit_traceback_msg (err, routine, inData->name);
-
+  ver = 0;
+  ObitInfoListGetTest(myInput, "BPSoln",  &type, dim, &ver);
+  BPOut = newObitTableBPValue ("Temp BP", (ObitData*)outData, &ver,
+			       OBIT_IO_WriteOnly, npol, nif, nchan, err);
+  if (err->error) Obit_traceback_val (err, routine,outData->name, BPOut);
+  
   /* Clear existing rows */
-  ObitTableClearRows ((ObitTable*)BPTable, err);
-  if (err->error) goto cleanup;
-
-  /* Open BP table */
-  retCode = ObitTableBPOpen (BPTable, OBIT_IO_ReadWrite, err);
+  ObitTableClearRows ((ObitTable*)BPOut, err);
+  
+  /* Open BP tables */
+  retCode = ObitTableBPOpen (BPIn, OBIT_IO_ReadOnly, err);
   if ((retCode != OBIT_IO_OK) || (err->error))
-    Obit_traceback_msg (err, routine, BPTable->name);
-  BPRow = newObitTableBPRow(BPTable);
-  ObitTableBPSetRow (BPTable, BPRow, err);
-  if (err->error) Obit_traceback_msg (err, routine, BPTable->name);
+    Obit_traceback_val (err, routine, BPIn->name, BPOut);
+  retCode = ObitTableBPOpen (BPOut, OBIT_IO_WriteOnly, err);
+  if ((retCode != OBIT_IO_OK) || (err->error))
+    Obit_traceback_val (err, routine, BPOut->name, BPOut);
+  BPRow = newObitTableBPRow(BPOut);
+  ObitTableBPSetRow (BPOut, BPRow, err);
+  if (err->error) Obit_traceback_val (err, routine,outData->name, BPOut);
 
   /* Set header values */
-  BPTable->numAnt    = numAnt;  /* Max. antenna number */
-  BPTable->numShifts = 0;
-  BPTable->numChan   = numChan;
-  BPTable->startChan = 1;
-  BPTable->lowShift  = 1;
-  BPTable->shiftInc  = 1;
-  strncpy (BPTable->BPType, "          ", MAXKEYCHARTABLEBP);
-  BPTable->myDesc->sort[0] = BPTable->TimeCol+1;  /* Sort order */
-  BPTable->myDesc->sort[1] = BPTable->antNoCol+1;
+  BPOut->numAnt    = BPIn->numAnt;  /* Max. antenna number */
+  BPOut->numShifts = BPIn->numShifts;
+  BPOut->numChan   = BPIn->numChan;
+  BPOut->startChan = BPIn->startChan;
+  BPOut->lowShift  = BPIn->lowShift;
+  BPOut->shiftInc  = BPIn->shiftInc;
+  strncpy (BPOut->BPType, "          ", MAXKEYCHARTABLEBP);
+  BPOut->myDesc->sort[0] = BPIn->myDesc->sort[0];  /* Sort order */
+  BPOut->myDesc->sort[1] = BPIn->myDesc->sort[1];
 
-  /* Initialize BP Row */
-  BPRow->BW        = inDesc->cdelt[inDesc->jlocf];
-  BPRow->ChanShift[0] = 0.0;
-  BPRow->ChanShift[1] = 0.0;
-  BPRow->RefAnt1   = refAnt;
-  BPRow->RefAnt2   = refAnt;
-  for (i=0; i<numIF; i++) BPRow->ChanShift[i] = 0.0;
-  for (i=0; i<numIF; i++) BPRow->Weight1[i] = 0.0;
-  if (numStoke>1) for (i=0; i<numIF; i++) BPRow->Weight2[i] = 0.0;
-  for (i=0; i<numChan*numIF; i++) { 
-    BPRow->Real1[i]   = fblank;
-    BPRow->Imag1[i]   = fblank;
-    if (numStoke>1) {
-      BPRow->Real2[i]   = fblank;
-      BPRow->Imag2[i]   = fblank;
-    }
-  }
+  /* Loop over input table updating */
+  for (irow=1; irow<=BPIn->myDesc->nrow; irow++) {
+    retCode = ObitTableBPReadRow (BPIn, irow, BPRow, err);
+    if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
 
-  /* Create accumulators, is order: channel, Stokes, IF */
-  BPSum = g_malloc0(numAnt*sizeof(ofloat*));
-  BPWt = g_malloc0(numAnt*sizeof(olong*));
-  for (i=0; i<numAnt; i++) {
-    BPSum[i] = g_malloc0(numIF*numStoke*numChan*sizeof(ofloat));
-    BPWt[i]  = g_malloc0(numIF*numStoke*numChan*sizeof(olong));
-  }
-
-  /* Loop over file */
-  startTime = -9999.9;
-  while (retCode==OBIT_IO_OK) {
-      retCode = ObitUVReadSelect (inData, inData->buffer, err);
-      if (retCode > OBIT_IO_EOF) goto cleanup;
-
-      inBuffer = inData->buffer;  /* Buffer */
-      /* Hack to write last accumulation */
-      if (retCode==OBIT_IO_EOF) inDesc->numVisBuff = 1;
-
-      /* loop over visibilities */
-      for (ivis=0; ivis<inDesc->numVisBuff; ivis++) { 
-	curTime = inBuffer[inDesc->iloct]; /* Time */
-	if (inDesc->ilocsu>=0) curSourceID = (olong)(inBuffer[inDesc->ilocsu]+0.5);
-	cbase = inBuffer[inData->myDesc->ilocb]; /* Baseline */
-	ant1 = (cbase / 256.0) + 0.001;
-	ant2 = (cbase - ant1 * 256) + 0.001;
-	if (ant1!=ant2) {inBuffer += lrec; continue;}
-	lastSubA = (olong)(100.0 * (cbase -  ant1 * 256 - ant2) + 0.5);
-	if (startTime < -1000.0) {  /* Set time window etc. if needed */
-	  startTime = curTime;
-	  lastTime  = curTime;
-	  endTime   = startTime + solInt;
-	  lastSourceID = curSourceID;
-	}
-	
-	/* Still in current interval/source? */
-	if ((curTime>=endTime) || (curSourceID != lastSourceID) ||
-	    (inDesc->firstVis>inDesc->nvis) || (retCode==OBIT_IO_EOF)) {
-	  /* No - write BP table - setup row */
-	  BPRow->SourID = lastSourceID;
-	  BPRow->SubA   = lastSubA;
-	  BPRow->FreqID = lastFQID;
-	  BPRow->Time   = 0.5*(lastTime+startTime);
-	  BPRow->TimeI  = lastTime-startTime;
-	  for (iant=0; iant<numAnt; iant++) {
-	    BPRow->antNo   = iant+1;
-	    OK = FALSE;
-	    for (iif=0; iif<numIF; iif++) {
-	      BPRow->Weight1[iif] = 0.0;
-	      /* Normalize */
-	      norm1 = 0.0; cnt1 = 0;
-	      for (ichan=0; ichan<numChan; ichan++) { 
-		jndx = iif*numChan*numStoke + ichan;
-		if (BPWt[iant][jndx]>0.0) {
-		  norm1 += (BPSum[iant][jndx]/BPWt[iant][jndx]);
-		  cnt1++;
-		}
-	      }
-	      if (cnt1>=1) norm1 = cnt1/norm1;
-	      else norm1 = 1.0;
-	      if (numStoke>1) {
-		BPRow->Weight2[iif] = 0.0;
-		norm2 = 0.0; cnt2 = 0;
-		for (ichan=0; ichan<numChan; ichan++) { 
-		  jndx = iif*numChan*numStoke + numChan + ichan;
-		  if (BPWt[iant][jndx]>0.0) {
-		    norm2 += (BPSum[iant][jndx]/BPWt[iant][jndx]);
-		    cnt2++;
-		  }
-		}
-		if (cnt2>=1) norm2 = cnt2/norm2;
-		else norm2 = 1.0;
-	      } /* end setup for 2nd Poln */
-	      for (ichan=0; ichan<numChan; ichan++) { 
-		indx = iif*numChan + ichan;
-		jndx = iif*numChan*numStoke + ichan;
-		if (BPWt[iant][jndx]>0.0) {
-		  BPRow->Real1[indx]  = sqrt(norm1*BPSum[iant][jndx]/BPWt[iant][jndx]);
-		  BPRow->Imag1[indx]  = 0.0;
-		  BPRow->Weight1[iif] = MAX (norm1*BPRow->Weight1[indx], BPWt[iant][jndx]);
-		} else {
-		  BPRow->Real1[indx]   = fblank;
-		  BPRow->Imag1[indx]   = fblank;
-		}
-	      } /* end loop over channel */
-	      if (numStoke>1) {
-		for (ichan=0; ichan<numChan; ichan++) { 
-		  indx = iif*numChan + ichan;
-		  jndx = iif*numChan*numStoke + numChan + ichan;
-		  if (BPWt[iant][jndx]>0.0) {
-		    BPRow->Real2[indx]  = sqrt(norm2*BPSum[iant][jndx]/BPWt[iant][jndx]);
-		    BPRow->Imag2[indx]  = 0.0;
-		    BPRow->Weight2[iif] = MAX (norm2*BPRow->Weight2[indx], BPWt[iant][jndx]);
-		    OK = TRUE;
-		  } else {
-		    BPRow->Real2[indx]   = fblank;
-		    BPRow->Imag2[indx]   = fblank;
-		  }
-		} /* end loop over channel */
-	      } /* end if two stokes */
-	      if (BPRow->Weight1[iif]>0.0) 
-		BPRow->Weight1[iif] = MAX (1.0, BPRow->Weight1[iif]);
-	      if ((numStoke>1) && (BPRow->Weight2[iif]>0.0) )
-		BPRow->Weight2[iif] = MAX (1.0, BPRow->Weight2[iif]);
-	    } /* end loop over IF */
-	    
-	    /* Write table */
-	    if (OK) {
-	      orow = -1;
-	      count++;  /* How much good data? */
-	      ObitTableBPWriteRow (BPTable, orow, BPRow, err);
-	      if (err->error) goto cleanup;
-	    }
-	  } /* end loop over antenna */
-
-	  /* reset accumulators */
-	  for (i=0; i<numAnt; i++) {
-	    for (j=0; j<numChan*numIF*numStoke; j++) {BPSum[i][j]=0.0; BPWt[i][j]=0.0;}
+    /* Reference wavelength */
+    reffreq   = desc->freq;
+    reflambda = VELIGHT/reffreq;
+    
+    /* Fill actual values */
+    BPRow->RefAnt1 = refAnt;
+    BPRow->RefAnt2 = refAnt;
+    nc      =  (echan-bchan+1);
+    for (iif=0; iif<nif; iif++) {
+      for (ichan=bchan; ichan<=echan; ichan++) {
+	/* channel wavelength */
+	freq   = reffreq + desc->freqIF[iif] + 
+	  (ichan-desc->crpix[desc->jlocf]+1) * desc->cdelt[desc->jlocf];
+	lambda = VELIGHT/freq;
+	/* Target phase difference */
+	pdif = RLPhase + 2.0 * (lambda*lambda - reflambda*reflambda) * RM;
+	indx = iif*nc + ichan-bchan;
+	jndx = iif*nchan + ichan -1;
+	if (phase[indx]!=fblank) {
+	  BPRow->Real1[jndx]   = 1.0;
+	  BPRow->Imag1[jndx]   = 0.0;
+	  if (npol>1) {   /* There better be or this is pretty pointless */
+	    yr = BPRow->Real2[jndx];
+	    yi = BPRow->Imag2[jndx];
+	    xr = cos(pdif-phase[indx]);
+	    xi = sin(pdif-phase[indx]);
+	    BPRow->Real2[jndx] = xr*yr - xi*yi;
+	    BPRow->Imag2[jndx] = xr*yi + xi*yr;
 	  }
-	  startTime = curTime;
-	  lastTime  = curTime;
-	  endTime   = startTime + solInt;
-	  lastSourceID = curSourceID;
-	} /* end if end of accumulation */
+	} else {  /* No value - blank */
+	  BPRow->Real1[jndx]   = fblank;
+	  BPRow->Imag1[jndx]   = fblank;
+	  if (npol>1) { 
+	    BPRow->Real2[jndx] = fblank;
+	    BPRow->Imag2[jndx] = fblank;
+	  }
+	}
+      } /* end loop over channel */
+    } /* end loop over IF */
+    
+    /* Write output table */
+    orow = -1;
+    retCode = ObitTableBPWriteRow (BPOut, orow, BPRow, err);
+    if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+  } /* end loop over antennas */
 
-        /* Done? */
-	if (retCode==OBIT_IO_EOF) break;
-	  
-	/* Accumulate spectra */
-	/* loop over IF */
-	for (iif=0; iif<numIF; iif++) {
-	  /* Loop over polarization */
-	  for (istok=0; istok<numStoke; istok++) {
-	    /* Loop over frequency channel */
-	    for (ichan=0; ichan<numChan; ichan++) { 
-	      	indx = inDesc->nrparm + istok*incs + iif*incif + ichan*incf;
-		jndx = iif*numChan*numStoke + istok*numChan + ichan;
-		if (inBuffer[indx+2]>0.0) {
-		  BPSum[ant1-1][jndx] += inBuffer[indx];
-		  BPWt[ant1-1][jndx]  += inBuffer[indx+2];
-		}
-	    } /* end loop over Channel */
-	  } /* end loop over Stokes */
-	} /* end loop over IF */
-	/* Save descriptive info*/
-	if (inDesc->ilocfq>=0) lastFQID = (olong)(inBuffer[inDesc->ilocfq]+0.5);
-	else lastFQID = 0;
-	lastTime = curTime;
-	lastSourceID = curSourceID;
-	inBuffer += lrec;
-      } /* end loop over buffer */
-      /* Done? */
-      if (retCode==OBIT_IO_EOF) break;
-  } /* end loop over file */
-
-  /* Close UV data */
-  retCode = ObitUVClose (inData, err);
-  if (err->error) Obit_traceback_msg (err, routine, inData->name);
+ cleanup:
 
   /* Close BP table */
-  retCode = ObitTableBPClose (BPTable, err);
+  retCode = ObitTableBPClose (BPOut, err);
   if ((retCode != OBIT_IO_OK) || (err->error))
-    Obit_traceback_msg (err, routine, BPTable->name);
+    Obit_traceback_val (err, routine, BPOut->name, BPOut);
+  retCode = ObitTableBPClose (BPIn, err);
+  if ((retCode != OBIT_IO_OK) || (err->error))
+    Obit_traceback_val (err, routine, BPIn->name, BPOut);
+  BPRow = ObitTableBPRowUnref(BPRow);
+  BPIn  = ObitTableBPUnref(BPIn);
 
-  /* Cleanup */
- cleanup:
-  BPTable = ObitTableBPUnref(BPTable );
-  BPRow   = ObitTableBPRowUnref(BPRow);
-  /* Delete accumulators */
-  if (BPSum) {
-    for (i=0; i<numAnt; i++) {
-      if (BPSum[i]) g_free(BPSum[i]);
-    }
-    g_free(BPSum);
-  }
-  if (BPWt) {
-    for (i=0; i<numAnt; i++) {
-      if (BPWt[i]) g_free(BPWt[i]);
-    }
-    g_free(BPWt);
-  }
+  return BPOut;
+} /* end UpdateBPTable  */
 
-  /* something actually done? */
-   Obit_return_if_fail((count>0), err,
-		      "%s: No valid autocorrelation data in %s", 
-		      routine, inData->name);
-
-}  /* end AutoCorrBP */

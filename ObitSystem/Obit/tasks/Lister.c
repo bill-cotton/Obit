@@ -44,6 +44,7 @@
 #include "ObitTableFQ.h"
 #include "ObitPosLabelUtil.h"
 #include "ObitSystem.h"
+#include "ObitPrecess.h"
 #include "ObitParser.h"
 #include "ObitReturn.h"
 #include "ObitAIPSDir.h"
@@ -76,10 +77,12 @@ void getDataScale (ObitUV* inData, ofloat *blscale, ofloat *wtscale,
 void day2dhms(ofloat time, gchar *timeString);
 /* Extract data value from SN row */
 ofloat getSNValue (ObitTableSNRow *SNRow, gboolean firstPol, 
-		   olong iif, olong dtype);
+		   olong iif, olong dtype, 
+		   ObitAntennaList *inAList, ObitSource *Source);
 /* Extract data value from CL row */
 ofloat getCLValue (ObitTableCLRow *CLRow, gboolean firstPol, 
-		   olong iif, olong dtype);
+		   olong iif, olong dtype, 
+		   ObitAntennaList *inAList, ObitSource *Source);
 /* Set gain scaling for SN table */
 ofloat getSNGainScale (ObitUVSel *sel, ObitTableSN *SNTable, ObitTableSNRow *SNRow, 
 		       olong maxAnt, gboolean *doAnt, olong loAnt, olong hiAnt, 
@@ -1197,16 +1200,17 @@ void doSCAN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 /*----------------------------------------------------------------------- */
 void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 {
-  ObitPrinter     *myPrint = NULL;
-  ObitSourceList  *SouList = NULL;
-  ObitTableSU     *SUTable = NULL;
-  ObitAntennaList *AntList = NULL;
-  ObitTableAN     *ANTable = NULL;
-  ObitTableCL     *CLTable = NULL;
-  ObitTableCLRow  *CLRow   = NULL;
-  ObitTableSN     *SNTable = NULL;
-  ObitTableSNRow  *SNRow   = NULL;
-  ObitUVSel       *sel;
+  ObitPrinter     *myPrint  = NULL;
+  ObitSourceList  *SouList  = NULL;
+  ObitSource      *mySource = NULL, *curSource;
+  ObitTableSU     *SUTable  = NULL;
+  ObitAntennaList *AntList  = NULL;
+  ObitTableAN     *ANTable  = NULL;
+  ObitTableCL     *CLTable  = NULL;
+  ObitTableCLRow  *CLRow    = NULL;
+  ObitTableSN     *SNTable  = NULL;
+  ObitTableSNRow  *SNRow    = NULL;
+  ObitUVSel    *sel;
   ObitIOCode   iretCode;
   ObitUVDesc   *inDesc, *inIODesc;
   FILE         *outStream = NULL;
@@ -1221,9 +1225,9 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   ofloat       scale = 1.0;
   gchar        *prtFile=NULL, timeString[25], inTab[28], dispType[10], source[20];
   gchar        *dTypes[] = {"AMP     ","PHASE   ","WT      ","DELAY   ","RATE    ",
-                "SNR     "};
+			    "SNR     ", "PA      ", "ELEV    "};
   gchar        *dLabel[] = {"Amplitude","Phase","Weight/SNR","Delay(nsec)","Rate(mHz)",
-                "SNR"};
+			    "SNR", "Parallactic Angle (deg)", "Source elevation (deg)"};
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *routine = "doSCAN";
@@ -1266,10 +1270,14 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 
   /* Digest */
   doSN = (!strncmp (inTab, "AIPS SN", 7));  /* Use SN? */
+  Obit_return_if_fail((doSN || !strncmp (inTab, "AIPS CL", 7)), 
+		      err, "Unsupported Table Type %s",inTab);
+ 
+
   dt = -1;       /* Display type code */
   /* Default is "AMP" */
   if (!strncmp(dispType, "    ",4)) sprintf (dispType,"%s",dTypes[0]);
-  for (i=0; i<6; i++) {
+  for (i=0; i<8; i++) {
     if (!strcmp (dispType, dTypes[i])) {
       dt = i;
       break;
@@ -1300,8 +1308,15 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     if (SUTable) SouList = ObitTableSUGetList (SUTable, err);
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
     SUTable = ObitTableSUUnref(SUTable);
+  } else {  /* Create a source object */
+    mySource = newObitSource("Single");
+    strncpy (mySource->SourceName, inDesc->object, MIN(20,UVLEN_VALUE));
+    mySource->equinox = inDesc->equinox;
+    mySource->RAMean  = inDesc->crval[inDesc->jlocr];
+    mySource->DecMean = inDesc->crval[inDesc->jlocd];
+    /* Compute apparent position */
+    ObitPrecessUVJPrecessApp (inDesc, mySource);
   }
-
 
   /* Convert AN table into AntennaList */
   ver = 1;
@@ -1475,7 +1490,9 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 	      freqID = SNRow->FreqID;
 	      antNo  = SNRow->antNo-1;
 	      SubA   = SNRow->SubA;
-	      value  = getSNValue(SNRow, firstPol, iif, dt);
+	      if (SouList) curSource = SouList->SUlist[souID-1];
+	      else curSource = mySource;
+	      value  = getSNValue(SNRow, firstPol, iif, dt, AntList, curSource);
 	    } else {  /* CL table */
 	      iretCode = ObitTableCLReadRow (CLTable, iRow, CLRow, err);
 	      time   = CLRow->Time;
@@ -1483,7 +1500,9 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 	      freqID = CLRow->FreqID;
 	      antNo  = CLRow->antNo-1;
 	      SubA   = CLRow->SubA;
-	      value  = getCLValue(CLRow, firstPol, iif, dt);
+	      if (SouList) curSource = SouList->SUlist[souID-1];
+	      else curSource = mySource;
+	      value  = getCLValue(CLRow, firstPol, iif, dt, AntList, curSource);
 	    } /* End CL table */
 	    if (err->error) Obit_traceback_msg (err, routine, inData->name);
 	  
@@ -1569,12 +1588,13 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
 
   /* Cleanup */
-  CLTable = ObitTableCLUnref(CLTable);
-  CLRow   = ObitTableCLRowUnref(CLRow);
-  SNTable = ObitTableSNUnref(SNTable);
-  SNRow   = ObitTableSNRowUnref(SNRow);
-  SouList = ObitSourceListUnref(SouList);
-  AntList = ObitAntennaListUnref(AntList);
+  CLTable  = ObitTableCLUnref(CLTable);
+  CLRow    = ObitTableCLRowUnref(CLRow);
+  SNTable  = ObitTableSNUnref(SNTable);
+  SNRow    = ObitTableSNRowUnref(SNRow);
+  SouList  = ObitSourceListUnref(SouList);
+  mySource = ObitSourceUnref(mySource);
+  AntList  = ObitAntennaListUnref(AntList);
   if (doAnt)    g_free(doAnt);
   if (valueArr) g_free(valueArr);
 
@@ -1741,11 +1761,14 @@ void day2dhms(ofloat time, gchar *timeString)
  * \param firstPol  If true, first poln, else second
  * \param iif       0-rel IF number
  * \param dtype     Desired data type code
- *                  0=amp, 1=phase, 2=wt, 3=Delay, 4=Rate, 5=SNR(Weight)
+ *                  0=amp, 1=phase, 2=wt, 3=Delay, 4=Rate, 5=SNR(Weight), 6=ParAng, 7=elev
+ * \param AntList   Antenna list
+ * \param curSource Current source structure
  * \return value, blanked if necessary
  */
 ofloat getSNValue (ObitTableSNRow *SNRow, gboolean firstPol, 
-		   olong iif, olong dtype)
+		   olong iif, olong dtype, ObitAntennaList *AntList, 
+		   ObitSource *curSource)
 {
   ofloat       value, fblank = ObitMagicF();
 
@@ -1811,6 +1834,14 @@ ofloat getSNValue (ObitTableSNRow *SNRow, gboolean firstPol,
       value = SNRow->Weight2[iif];
     }
     break;
+  case 6:  /* "Parallactic angle"    */
+    value = ObitAntennaListParAng(AntList, SNRow->antNo, SNRow->Time, curSource);
+    value *= RAD2DG;   /* to degrees */
+    break;
+  case 7:  /* "Elevation"    */
+    value = ObitAntennaListElev(AntList, SNRow->antNo, SNRow->Time, curSource);
+    value *= RAD2DG;   /* to degrees */
+    break;
   default:
     value = fblank;
   }; /* end switch by type */
@@ -1823,11 +1854,14 @@ ofloat getSNValue (ObitTableSNRow *SNRow, gboolean firstPol,
  * \param firstPol  If true, first poln, else second
  * \param iif       0-rel IF number
  * \param dtype     Desired data type code
- *                  0=amp, 1=phase, 2=wt, 3=Delay, 4=Rate, 5=SNR(Weight)
+ *                  0=amp, 1=phase, 2=wt, 3=Delay, 4=Rate, 5=SNR(Weight), 6=ParAng, 7=elev
+ * \param AntList   Antenna list
+ * \param curSource Current source structure
  * \return value, blanked if necessary
  */
 ofloat getCLValue (ObitTableCLRow *CLRow, gboolean firstPol, 
-		   olong iif, olong dtype)
+		   olong iif, olong dtype, ObitAntennaList *AntList, 
+		   ObitSource *curSource)
 {
   ofloat       value, fblank = ObitMagicF();
 
@@ -1894,6 +1928,14 @@ ofloat getCLValue (ObitTableCLRow *CLRow, gboolean firstPol,
       value = CLRow->Weight2[iif];
     }
     break;
+  case 6:  /* "Parallactic angle"    */
+    value = ObitAntennaListParAng(AntList, CLRow->antNo, CLRow->Time, curSource);
+    value *= RAD2DG;   /* to degrees */
+    break;
+  case 7:  /* "Elevation"    */
+    value = ObitAntennaListElev(AntList, CLRow->antNo, CLRow->Time, curSource);
+    value *= RAD2DG;   /* to degrees */
+    break;
   default:
     value = fblank;
   }; /* end switch by type */
@@ -1911,7 +1953,7 @@ ofloat getCLValue (ObitTableCLRow *CLRow, gboolean firstPol,
  * \param iif       0-rel IF number
  * \param firstPol  If true, first poln, else second
  * \param dtype     Desired data type code
- *                  0=amp, 1=phase, 3=wt, 4=Delay, 5=Rate
+ *                  0=amp, 1=phase, 3=wt, 4=Delay, 5=Rate, 6=ParAng, 7=elev
  * \param ndig      Number of digits in display
  * \param err       Obit Error stack 
  * \return scaling value
@@ -1927,6 +1969,9 @@ ofloat getSNGainScale (ObitUVSel *sel, ObitTableSN *SNTable, ObitTableSNRow *SNR
   gboolean isNeg = FALSE;
   ObitIOCode   iretCode;
   gchar *routine = "getSNGainScale";
+
+  /* Fixed scaling for parallactic angle, elevation or phase */
+  if ((dtype==1) || (dtype==6)|| (dtype==7)) return out;
 
   nrow = SNTable->myDesc->nrow;   /* How many rows */
   /* Loop over table or first 1000 hits */
@@ -1951,7 +1996,7 @@ ofloat getSNGainScale (ObitUVSel *sel, ObitTableSN *SNTable, ObitTableSNRow *SNR
     if ((sel->FreqID>0) && (freqID!=sel->FreqID)) continue;
 
     /* Valid value? */
-    value  = getSNValue(SNRow, firstPol, iif, dtype);
+    value  = getSNValue(SNRow, firstPol, iif, dtype, NULL, NULL);
     if (value==fblank) continue;
 
     /* Keep max abs value */
@@ -1991,7 +2036,7 @@ ofloat getSNGainScale (ObitUVSel *sel, ObitTableSN *SNTable, ObitTableSNRow *SNR
  * \param iif       0-rel IF number
  * \param firstPol  If true, first poln, else second
  * \param dtype     Desired data type code
- *                  0=amp, 1=phase, 3=wt, 4=Delay, 5=Rate
+ *                  0=amp, 1=phase, 3=wt, 4=Delay, 5=Rate, 6=ParAng, 7=elev
  * \param ndig      Number of digits in display
  * \param err       Obit Error stack 
  * \return scaling value
@@ -2007,6 +2052,9 @@ ofloat getCLGainScale (ObitUVSel *sel, ObitTableCL *CLTable, ObitTableCLRow *CLR
   gboolean isNeg = FALSE;
   ObitIOCode   iretCode;
   gchar *routine = "getCLGainScale";
+
+  /* Fixed scaling for parallactic angle, elevation or phase */
+  if ((dtype==1) || (dtype==6)|| (dtype==7)) return out;
 
   nrow = CLTable->myDesc->nrow;   /* How many rows */
   /* Loop over table or first 1000 hits */
@@ -2031,7 +2079,7 @@ ofloat getCLGainScale (ObitUVSel *sel, ObitTableCL *CLTable, ObitTableCLRow *CLR
     if ((sel->FreqID>0) && (freqID!=sel->FreqID)) continue;
 
     /* Valid value? */
-    value  = getCLValue(CLRow, firstPol, iif, dtype);
+    value  = getCLValue(CLRow, firstPol, iif, dtype, NULL, NULL);
     if (value==fblank) continue;
 
     /* Keep max abs value */

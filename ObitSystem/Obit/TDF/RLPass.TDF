@@ -1,10 +1,10 @@
-; $Id: BPass.TDF 109 2009-06-10 12:11:14Z bill.cotton $
-; BPass
+; $Id: RLPass.TDF 109 2009-06-10 12:11:14Z bill.cotton $
+; RLPass
 ;---------------------------------------------------------------
-;! Obit Radio interferometry bandpass calibration software
+;! Obit Radio interferometry R-L phase bandpass calibration 
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2009-2010
+;;  Copyright (C) 2010
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -29,9 +29,8 @@
 ;;                         520 Edgemont Road
 ;;                         Charlottesville, VA 22903-2475 USA
 ;-----------------------------------------------------------------------
-;---------------------------------------------------------------
-BPass     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
-BPass:  Simple UV bandpass calibration
+RLPass    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+RLPass:   R-L phase bandpass calibration 
 **PARAM** str 4
 DataType                            "FITS" or "AIPS" type of input
 **PARAM** str 48
@@ -58,15 +57,15 @@ UVRange         0.                  Min & max baseline (klambda)
 WtUV              0.0               Weight outside full wt uvrange
 **PARAM** int 1
 FreqID                              Freq. ID to select.
-**PARAM** int 1
+**PARAM** int 1 **DEF** 1
 BChan1           0.0     8192.0     Low freq. channel,  initial
 **PARAM** int 1
 EChan1           0.0     8192.0     Highest freq channel, initial
-**PARAM** int 1
+**PARAM** int 1 **DEF** 1
 BChan2           0.0     8192.0     Low freq. channel for BP
 **PARAM** int 1
 EChan2           0.0     8192.0     Highest freq channel for BP
-**PARAM** int 1  **DEF** 1
+**PARAM** int 1 **DEF** 1
 ChWid2           0.0                Number of channels in BP soln
 **PARAM** int 1
 subA                                Subarray
@@ -85,7 +84,9 @@ flagVer                             Flag table version
 **PARAM** boo 1 **DEF** F
 doPol                               Apply polarization cal?
 **PARAM** float 1  **DEF** 0.0
-Alpha           -20.       20.      Spectral Index to correct
+RLPhase        -400.      400.      R-L phase difference
+**PARAM** float 1  **DEF** 0.0
+RM                                  Rotation measure
 **PARAM** str 4
 DataType2                           "FITS" or "AIPS" type of model
 **PARAM** str 48
@@ -126,26 +127,10 @@ modelParm                           Model parameters (maj, min, pa, type)
 BPSoln                              BP table to write
 **PARAM** int 1
 refAnt            0                 Reference antenna
-**PARAM** boo 1  **DEF** F
-doAuto                              Use autocorrelation spectra?
 **PARAM** float 1
 solInt1           0.0               Initial Soln interval (min)
 **PARAM** float 1
-solInt2           0.0               Bandpass solution interval (min)
-**PARAM** str 4
-solType                             Soln. Type: '  ', 'L1', 
-**PARAM** str 4  **DEF** A&P
-solMode                             Soln. Mode:'A&P', 'P', 'P!A',
-**PARAM** boo 1 **DEF** F
-avgPol                              Avg. poln?
-**PARAM** boo 1 **DEF** F
-avgIF                               Avg. IFs?
-**PARAM** boo 1  **DEF** F
-doMGM                               Apply mean gain modulus
-**PARAM** float 1  **DEF** 10.0
-elevMGM                             Minimum elevation for MGM
-**PARAM** boo 1  **DEF** F
-ampScalar                           Amp-scalar averaging
+solInt2           0.0               Averaging time (min)
 **PARAM** float 1  **DEF** 5.0
 minSNR                              Min. allowed SNR in cal
 **PARAM** int 1 **DEF** 3
@@ -160,27 +145,29 @@ taskLog                            Logfile to write task messages to
 noScrat                             AIPS disk numbers for which
                                     scratch files are disallowed
 ----------------------------------------------------------------
-BPass Determine simple bandpass for radio interferometry data
+RLPass Determine R-L bandpasses
 Type:  Task
- Use:  Bandpass calibration of radio interferometry data
+ Use:  R-L Bandpass calibration of radio interferometry data
 
-This program determines the bandpass calibration to be applied to a 
-uv data set given a model of the source(s) producing an AIPS BP 
-table.
+This program determines the R-L phase bandpass calibration to be 
+applied to a  uv data set given a model of the source(s) producing 
+an AIPS BP table.  In addition, if the R-L phase (twice the 
+polarization angle) is known for the calibration source then the R-L
+phase in each channel will be set to this value; otherwise to zero.
    If a model is supplied, either in the form of an image or model
 parameters, this model will be Fourier transformed and divided into 
 the data before performing the solutions.
-   Bandpasses may be determined from either autocorrelation spectra
-(doAuto=True) or crosscorrelation spectra (doAuto=False).
-The operation for crosscorrelations consists of two steps, 
+   The operation for  consists of two steps, 
 1) an initial phase self cal on a short time scale using channels 
 BChan1 to Echan1 to remove atmospheric phase fluctuations followed 
 by 
-2) a longer timescale  amplitude/phase calibration in each of channels 
-BChan2 to EChan2.  The results of this latter set of fits is 
-accumulated into the output AIPS BP table.
-   Note: No Doppler corrections are made so this program is not really 
-suitable for calibrating VLBI data.
+2) The real parts of the Q and U responses in each channel are 
+averaged and the R-L phase determined from the atan(u,q); these 
+values are suitably adjusted using RLPhase and RM.
+    If a prior BP table is applied then the corrections determined are
+applied to the input BP table and written to a new BP table.  If no
+prior BP table is applied then a new BP table will be written with only
+entries at a single time.
 
 Adverbs:
   DataType..'FITS' or 'AIPS'  type of input
@@ -194,6 +181,8 @@ Adverbs:
   Sources....List of sources (pointings) to be processed.
              '*' or blank = all; a "-" before a source name
              means all except ANY source named. 
+             In general only a single source with significant
+             polarization should be used.
   Qual.......Only sources with a source qualifier number in the
              SU table matching Qual will be used if Qual is not
              -1.  Qual affects the selection of both the list of
@@ -222,11 +211,11 @@ Adverbs:
   BChan2.....First channel number to include, 0=>1.  Channel numbers are 1
              relative as defined in the input data file.
              This defines the channels for which bandpass solutions are 
-             desired.
+             desired; other channels will be flagged.
   EChan2.....Highest channel number to to include,  0 => max 
              This defines the channels for which bandpass solutions are 
              desired.
-  ChWid2.....If >0, The bandpass (2nd) calibration will use ChWid2 channels 
+  ChWid2.....If >0, The bandpass calibration will use ChWid2 channels 
              centered on each channel, should be odd.
   FreqID.....Frequency identifier to select (you may determine which is
              applicable from the opType='SCAN' listing produced by
@@ -255,15 +244,13 @@ Adverbs:
              corrected.
   BPVer......Specifies the version of the BP table to be applied
                 0 => highest numbered table.
-               <0 => no bandpass correction to be applied.
-             Note: Applying a prior BP table in this manner may not
-             be a good idea as the output will be a differential
-             correction and there is no way to apply it to a BP table.
+               <0 => no prior bandpass correction to be applied.
   flagVer....FG table to use for editing. 0 => highest.
   doPol......If True, apply polarization calibration
-  Alpha......If != 0.0 then correct data by spectral index Alpha before 
-             calibration. 
-             -0.7 is typical for optically thin synchrotron.
+  RLPhase....The target value of the R-L phase difference at the data 
+             reference frequency. (deg)
+  RM.........The rotation measure (rad/m^2) used to convert RLPhase
+             to other frequencies.
 
       Model
   DataType2.'FITS' or 'AIPS'  type of input, defaults to DataType
@@ -316,21 +303,10 @@ Adverbs:
 
       Calibration control
   BPSoln.....Bandpass (BP) table to write, 0=> create new
-  refAnt.....Reference antenna number, YOU REALLY SHOULD SET THIS!
-  doAuto.....If True, use autocorrelation spectra for fitting.
-             Each spectral bandpass is normalized to an average of 1.0.
+  refAnt.....Reference antenna number
   solInt1....Solution interval (min) of initial wideband self cal.
-  solInt2....Solution interval (min) of channel self-cal or 
-             autocorrelation fitting. 0 => Average whole data set.
-  solType....Solution Type: '  ', 'L1', 
-  solMode....Solution Mode:'A&P', 'P', 'P!A',
-             Used for bandpass solutions only.
-  avgPol.....Average Polarizations in calibration? 
-  avgIF......Average IFs in calibration? 
-  doMGM......Apply mean gain modulus to A&P soln.
-  elevMGM....Minimum elevation for mean gain modulus average.
-  ampScalar..If true average amplitudes and phases rather than
-             vector average; used in initial calibration only.
+  solInt2....Averaging time of self caled data. 
+             only one solution is determined for the dataset.
   minSNR.....Min. allowed SNR in calibration solution 
   minNo......Min. allowed no. antennas in solution
   prtLv......Print level in solution, 0=>none 
@@ -341,10 +317,9 @@ Adverbs:
              NB: This only improves performance if there are 
              multiple processors and/or cores in the host.
   taskLog....Log file to write messages to INSTEAD of the terminal
-             This is useful in long runs or batch files where
-             a bug in the ObitTalk message handling may cause
-             tasks to hang.  Path is absolute or relative to where
-             the task executes.
+             This is useful in long runs or batch files.
+             Path is absolute or relative to where the task 
+             executes.
   noScrat....A list of AIPS disk numbers on which you do not 
              wish scratch files
 ----------------------------------------------------------------

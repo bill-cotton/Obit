@@ -58,7 +58,7 @@ void ObitUVSolnCopyCal (ObitTableSN *inSoln, ObitTableCL *outCal,  ObitErr *err)
  * \li  "calSour"  OBIT_string (?,?,1) Calibrator names selected unless any 
  *                 starts with a '-' in which cse all are deselected 
  *                 (with '-' stripped).
- * \li "calCode"   OBIT_strine (4,1,1) Calibrator code
+ * \li "calCode"   OBIT_string (4,1,1) Calibrator code
  * \li "solnVer"   OBIT_int (1,1,1) Input Solution (SN) table version 
  * \li "calIn"     OBIT_int (1,1,1) Input Cal (CL) table version 
  *                 iff <0 then no input Cal table, copy Soln records to output.
@@ -288,7 +288,7 @@ ObitTableCL* ObitUVSoln2Cal (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 
     /* Set selection */
     SolnRow->Time   = CalRow->Time;
-    SolnRow->TimeI  = CalRow->TimeI;
+    SolnRow->TimeI  = fabs(CalRow->TimeI);
     SolnRow->SourID = CalRow->SourID;
     SolnRow->antNo  = CalRow->antNo;
     SolnRow->SubA   = CalRow->SubA;

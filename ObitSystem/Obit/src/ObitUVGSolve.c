@@ -319,6 +319,10 @@ ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV,
   retCode = ObitUVOpen (inUV, OBIT_IO_ReadCal, err);
   if (err->error) Obit_traceback_val (err, routine, inUV->name, outSoln);
   
+  /* Make sure some data */
+  Obit_retval_if_fail((inUV->myDesc->nvis>0), err, outSoln,
+		      "%s: NO data in %s", routine, inUV->name);
+
   /* Update frequency tables on inUV */
   if (!inUV->myDesc->freqArr) ObitUVGetFreq (inUV, err);
   if (err->error) Obit_traceback_val (err, routine, inUV->name, outSoln);

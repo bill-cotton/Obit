@@ -449,9 +449,15 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
     Beam[0] /= 3600.0;
     Beam[1] /= 3600.0;
     /* Beam from Header */
-    oldBeam[0] = inImage->myDesc->beamMaj;
-    oldBeam[1] = inImage->myDesc->beamMin;
-    oldBeam[2] = inImage->myDesc->beamPA;
+    if ((inImage->myDesc->beamMaj>0.0) && (inImage->myDesc->beamMin>0.0)) {
+      oldBeam[0] = inImage->myDesc->beamMaj;
+      oldBeam[1] = inImage->myDesc->beamMin;
+      oldBeam[2] = inImage->myDesc->beamPA;
+    } else {  /* Zero size */
+      oldBeam[0] = 0.0;
+      oldBeam[1] = 0.0;
+      oldBeam[2] = 0.0;
+    }
     
     /* Deconvolve to get beam to convolve with */
     if ((oldBeam[0]>0.0) && (oldBeam[1]>0.0))
@@ -528,8 +534,8 @@ void convolGetImage(ObitInfoList *myInput, ObitErr *err)
   olong         j, k, Aseq, disk, cno;
   gboolean     exist;
   gchar        *strTemp=NULL, inFile[128];
-  gchar        iAname[13], iAclass[7];
-  gchar        Aname[13], Aclass[7], *Atype = "MA";
+  gchar        iAname[16], iAclass[8];
+  gchar        Aname[16], Aclass[8], *Atype = "MA";
   gchar        tname[101];
   gchar *routine = "convolGetImage";
 
@@ -850,6 +856,9 @@ void doConvol (ObitInfoList *myInput, ObitImage *inImage, ObitFArray *convFn,
   useBeam[0] = useBeam[1] = fabs(inImage->myDesc->cdelt[0]); 
   useBeam[2] = 0.0;
   ObitInfoListGetTest (myInput, "useBeam", &type, dim, useBeam);
+  /* to asec */
+  useBeam[0] *= 3600.0;
+  useBeam[1] *= 3600.0;
 
   /* Set output image resolution */
   if (ObitInfoListGetTest (myInput, "Beam", &type, dim, Beam)) {
@@ -863,6 +872,13 @@ void doConvol (ObitInfoList *myInput, ObitImage *inImage, ObitFArray *convFn,
   outImage->myDesc->beamMaj = Beam[0];
   outImage->myDesc->beamMin = Beam[1];
   outImage->myDesc->beamPA  = Beam[2];
+
+  /* inImage beam at least zero */
+  if ((inImage->myDesc->beamMaj<0.0) || (inImage->myDesc->beamMin<0.0)) {
+    inImage->myDesc->beamMaj = 0.0;
+    inImage->myDesc->beamMin = 0.0;
+    inImage->myDesc->beamPA  = 0.0;
+  }
 
 
   /* Trap simple Gaussian convolution */
