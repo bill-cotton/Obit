@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -883,7 +883,9 @@ ObitIOCode ObitTableRead (ObitTable *in, olong rowno, ofloat *data,
   if (myBuf==NULL) {
     myBuf = in->buffer;
     /* Check that internal buffer (defined in bytes) large enough */
-    need = ObitTableSelBufferSize (in->myDesc, in->mySel);
+    if (in->bufferSize>0) need = in->bufferSize;
+    else need = ObitTableSelBufferSize (in->myDesc, in->mySel);
+    /* need = ObitTableSelBufferSize (in->myDesc, in->mySel);   DEBUG */
     if (need > in->bufferSize) {
       Obit_log_error(err, OBIT_Error, 
 		     "IO buffer ( %d) too small, need %d for %s", 

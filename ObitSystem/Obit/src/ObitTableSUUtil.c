@@ -92,7 +92,7 @@ ObitIOCode ObitTableSULookup (ObitTableSU *in, gint32 *dim, gchar *inlist,
   row = newObitTableSURow (in);
 
   /* Cross list of sources */
-  cross = g_malloc0(maxNum*sizeof(olong));
+  cross = g_malloc0((in->myDesc->nrow+2)*sizeof(olong));
   for (i=0; i<MIN (maxNum,dim[1]); i++) cross[i] = -1;
 
   /* loop over table */

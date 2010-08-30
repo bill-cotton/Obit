@@ -252,7 +252,8 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
   ObitIOAccess access;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  ofloat *rec, solInt, t0, sumTime, cbase, lastTime=-1.0, lastSource=-1.0, lastFQID=-1.0;
+  ofloat *rec, solInt, t0, sumTime, cbase;
+  ofloat lastTime=-1.0, lastSource=-1.0, lastFQID=-1.0, curSource=1.0, curFQID=0.0;
   olong iRow, i, ia, lrec, maxant;
   olong  nTime, SubA, ant1, ant2, lastSubA=-1;
   oint numPol, numIF, numTerm, numAnt;
@@ -380,8 +381,8 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
     /* First time */
     if (t0<-1.0e10) {
       t0         = rec[inUV->myDesc->iloct];
-      lastSource = rec[inUV->myDesc->ilocsu];
-      lastFQID   = rec[inUV->myDesc->ilocfq];
+      if (inUV->myDesc->ilocsu>=0) lastSource = rec[inUV->myDesc->ilocsu];
+      if (inUV->myDesc->ilocfq>=0) lastFQID   = rec[inUV->myDesc->ilocfq];
       lastTime   = rec[inUV->myDesc->iloct];
       cbase      = rec[inUV->myDesc->ilocb]; /* Baseline */
       ant1       = (cbase / 256.0) + 0.001;
@@ -393,15 +394,17 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
     for (i=0; i<inUV->myDesc->numVisBuff; i++) {
 
       /* Accumulation or scan finished? If so, write "calibration".*/
+      if (inUV->myDesc->ilocsu>=0) curSource = rec[inUV->myDesc->ilocsu];
+      if (inUV->myDesc->ilocfq>=0) curFQID   = rec[inUV->myDesc->ilocfq];
       if ((rec[inUV->myDesc->iloct] > (t0+solInt)) || 
-	  (rec[inUV->myDesc->ilocsu] != lastSource) ||  
-	  (rec[inUV->myDesc->ilocfq] != lastFQID)) {
+	  (curSource != lastSource) ||  
+	  (curFQID != lastFQID)) {
 	
 	/* Not first time - assume first descriptive parameter never blanked */
 	if (nTime>0) {
 	  /* if new scan write end of last scan and this time */
-	  if ((rec[inUV->myDesc->ilocsu] != lastSource) ||  
-	      (rec[inUV->myDesc->ilocfq] != lastFQID)) {
+	  if ((curSource != lastSource) ||  
+	      (curFQID != lastFQID)) {
 	    /* Need first entry for scan? */
 	    if (doFirst) {
 	      doFirst = FALSE;
@@ -468,8 +471,8 @@ ObitTableCL* ObitTableCLGetDummy (ObitUV *inUV, ObitUV *outUV, olong ver,
 	  }
 	  /* initialize accumulators */
 	  t0         = rec[inUV->myDesc->iloct];
-	  lastSource = rec[inUV->myDesc->ilocsu];
-	  lastFQID   = rec[inUV->myDesc->ilocfq];
+	  lastSource = curSource;
+	  lastFQID   = curFQID;
 	  sumTime    = 0.0;
 	  nTime      = 0;
 	  lastSubA   = -1;
