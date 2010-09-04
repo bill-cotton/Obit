@@ -29,7 +29,7 @@ X    Station.xml
 X    Subscan.xml
 X    SwitchCycle.xml
      SysCal.xml
-     Weather.xml
+X    Weather.xml
  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2010                                               */
@@ -396,15 +396,6 @@ static ASDMSwitchCycleTable* ParseASDMSwitchCycleTable(ObitSDMData *me,
 /** Private: Destructor for SwitchCycle table. */
 static ASDMSwitchCycleTable* KillASDMSwitchCycleTable(ASDMSwitchCycleTable* table);
 
-/** Private: Destructor for Weather table row. */
-static ASDMWeatherRow* KillASDMWeatherRow(ASDMWeatherRow* row);
-/** Private: Parser constructor for Weather table from file */
-static ASDMWeatherTable* ParseASDMWeatherTable(ObitSDMData *me,
-					 gchar *WeatherFile, 
-					 ObitErr *err);
-/** Private: Destructor for Weather table. */
-static ASDMWeatherTable* KillASDMWeatherTable(ASDMWeatherTable* table);
-
 /** Private: Destructor for SysCal table row. */
 static ASDMSysCalRow* KillASDMSysCalRow(ASDMSysCalRow* row);
 /** Private: Parser constructor for SysCal table from file */
@@ -414,6 +405,17 @@ static ASDMSysCalTable* ParseASDMSysCalTable(ObitSDMData *me,
 /** Private: Destructor for SysCal table. */
 static ASDMSysCalTable* KillASDMSysCalTable(ASDMSysCalTable* table);
 
+
+/** Private: Destructor for Weather table row. */
+static ASDMWeatherRow* KillASDMWeatherRow(ASDMWeatherRow* row);
+/** Private: Parser constructor for Weather table from file */
+static ASDMWeatherTable* ParseASDMWeatherTable(ObitSDMData *me,
+					       gchar *WeatherFile, 
+					       ObitErr *err);
+/** Private: Destructor for Weather table. */
+static ASDMWeatherTable* KillASDMWeatherTable(ASDMWeatherTable* table);
+/** Private: Count rows in a table */
+static olong CountTableRows(gchar *WeatherFile, ObitErr *err);
 
 /** Private: Destructor for XXXX table row. */
 static ASDMXXXXRow* KillASDMXXXXRow(ASDMXXXXRow* row);
@@ -929,8 +931,8 @@ gboolean ObitSDMDataSelChan  (ASDMSpectralWindowArray *in, olong selChan,
   
   for (iSW=0; iSW<in->nwinds; iSW++) {
     in->winds[iSW]->selected = (in->winds[iSW]->numChan == selChan) &&
-      (ObitSDMDataFreq2Band (in->winds[iSW]->refFreq)==band) && 
-      (in->nwinds==selIF);
+      ((ObitSDMDataFreq2Band (in->winds[iSW]->refFreq)==band) || 
+       (band==ASDMBand_Any)) &&   (in->nwinds==selIF);
     if (in->winds[iSW]->selected) out = TRUE;
   }
   return out;
@@ -1227,15 +1229,17 @@ ObitASDMBand ObitSDMDataFreq2Band (odouble freq)
  * \param  in      ASDM object
  * \param  selChan Number of selected channels
  * \param  selIF   Number of selected IFs (spectral windows)
- * \param  selBand Selected band
+ * \param  selBand   Selected band
+ * \param  selConfig Selected configID, >=0 overrides selIF, selBand
  * \return 1-rel scan number, -1=> problem.
  */
 olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF, 
-		     ObitASDMBand selBand)
+		     ObitASDMBand selBand, olong selConfig)
 {
   olong out = 1;
   olong configDescriptionId, dataDescriptionId, spectralWindowId;
   olong iMain, iConfig, iDD, jSW, jDD, numDD, i;
+  gboolean doConfigId = selConfig>=0;
  
   /* Loop over scans in Main table */
   for (iMain=0; iMain<in->MainTab->nrows; iMain++) {
@@ -1243,6 +1247,11 @@ olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF,
     
     /* Find entry  in configDescription table */
     configDescriptionId = in->MainTab->rows[iMain]->configDescriptionId;
+
+    /* Specified config ID? */
+    if (doConfigId && (selConfig==configDescriptionId)) return out;
+    if (doConfigId) continue;  /* Others tests don't matter */
+
     for (iConfig=0; iConfig<in->ConfigDescriptionTab->nrows; iConfig++) {
       if (in->ConfigDescriptionTab->rows[iConfig]->configDescriptionId==configDescriptionId) break;
     }
@@ -6095,105 +6104,6 @@ static ASDMSwitchCycleTable* KillASDMSwitchCycleTable(ASDMSwitchCycleTable* tabl
   return NULL;
 } /* end KillASDMSwitchCycleTable */
 
-/* ----------------------  Weather ----------------------------------- */
-/** 
- * Destructor for Weather table row.
- * \param  structure to destroy
- * \return NULL row pointer
- */
-static ASDMWeatherRow* KillASDMWeatherRow(ASDMWeatherRow* row)
-{
-  if (row == NULL) return NULL;
-  g_free(row);
-  return NULL;
-} /* end   KillASDMWeatherRow */
-
-/** 
- * Constructor for Weather table parsing from file
- * \param  WeatherFile Name of file containing table
- * \param  err     ObitErr for reporting errors.
- * \return table structure,  use KillASDMWeatherTable to free
- */
-static ASDMWeatherTable* 
-ParseASDMWeatherTable(ObitSDMData *me, 
-		      gchar *WeatherFile, 
-		      ObitErr *err)
-{
-  ASDMWeatherTable* out=NULL;
-  ObitFile *file=NULL;
-  ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
-  gchar *endrow = "</row>";
-  /*gchar *prior, *next;*/
-  gchar *routine = " ParseASDMWeatherTable";
-
-  /* error checks */
-  if (err->error) return out;
-
-  out = g_malloc0(sizeof(ASDMWeatherTable));
-  out->rows = NULL;
-
-  /* How many rows? */
-  out->nrows = MAX(0, me->ASDMTab->WeatherRows);
-  if (out->nrows<1) return out;
-
-  /* Finish building it */
-  out->rows = g_malloc0((out->nrows+1)*sizeof(ASDMWeatherRow*));
-  for (irow=0; irow<out->nrows; irow++) out->rows[irow] = g_malloc0(sizeof(ASDMWeatherRow));
-
-  file = newObitFile("ASDM");
-  retCode = ObitFileOpen(file, WeatherFile, OBIT_IO_ReadOnly, OBIT_IO_Text, 0, err);
-  if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
-
-  /* Loop over file */
-  irow = 0;
-  while (retCode!=OBIT_IO_EOF) {
-
-    retCode = ObitFileReadLine (file, line, maxLine, err);
-    if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
-    if (retCode==OBIT_IO_EOF) break;
-
-    /* Parse entries */
-
-    /* Is this the end of a row? */
-    if (g_strstr_len (line, maxLine, endrow)!=NULL) irow++;
-
-    /* Check overflow */
-    Obit_retval_if_fail((irow<=out->nrows), err, out,
-			"%s: Found more rows than allocated (%d)", 
-			routine, out->nrows);
-  } /* end loop over table */
-
-  /* Close up */
-  retCode = ObitFileClose (file, err);
-  if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
-  file = ObitFileUnref(file);
-
-  return out;
-} /* end ParseASDMWeatherTable */
-
-/** 
- * Destructor for Weather table
- * \param  structure to destroy
- * \return NULL pointer
- */
-static ASDMWeatherTable* KillASDMWeatherTable(ASDMWeatherTable* table)
-{
-  olong i;
-
-  if (table==NULL) return NULL;  /* Anybody home? */
-
-  /* Delete row structures */
-  if (table->rows) {
-    for (i=0; i<table->nrows; i++) 
-      table->rows[i] = KillASDMWeatherRow(table->rows[i]);
-    g_free(table->rows);
-  }
-  g_free(table);
-  return NULL;
-} /* end KillASDMWeatherTable */
-
 /* ---------------------- SysCal ----------------------------------- */
 /** 
  * Destructor for SysCal table row.
@@ -6292,6 +6202,217 @@ static ASDMSysCalTable* KillASDMSysCalTable(ASDMSysCalTable* table)
   g_free(table);
   return NULL;
 } /* end KillASDMSysCalTable */
+
+/* ---------------------- Weather ----------------------------------- */
+/** 
+ * Destructor for Weather table row.
+ * \param  structure to destroy
+ * \return NULL row pointer
+ */
+static ASDMWeatherRow* KillASDMWeatherRow(ASDMWeatherRow* row)
+{
+  if (row == NULL) return NULL;
+  if (row->timeInterval)  g_free(row->timeInterval);
+  g_free(row);
+  return NULL;
+} /* end   KillASDMWeatherRow */
+
+/** 
+ * Constructor for Weather table parsing from file
+ * Note: Fblank used to indicate invalid values.
+ * \param  WeatherFile Name of file containing table
+ * \param  err     ObitErr for reporting errors.
+ * \return table structure,  use KillASDMWeatherTable to free
+ */
+static ASDMWeatherTable* ParseASDMWeatherTable(ObitSDMData *me, 
+					       gchar *WeatherFile, 
+					       ObitErr *err)
+{
+  ASDMWeatherTable* out=NULL;
+  ObitFile *file=NULL;
+  ObitIOCode retCode;
+  olong irow, maxLine = 1024;
+  ofloat fblank = ObitMagicF();
+  odouble dtemp;
+  gboolean flagged;
+  gchar line[1025];
+  gchar *endrow = "</row>";
+  gchar *prior, *next;
+  gchar *routine = " ParseASDMWeatherTable";
+
+  /* error checks */
+  if (err->error) return out;
+
+  out = g_malloc0(sizeof(ASDMWeatherTable));
+  out->rows = NULL;
+
+  /* How many rows? */
+  out->nrows = MAX(0, me->ASDMTab->WeatherRows); 
+  if (out->nrows<1) return out;
+
+  /* Finish building it */
+  out->rows = g_malloc0((out->nrows+1)*sizeof(ASDMWeatherRow*));
+  for (irow=0; irow<out->nrows; irow++) out->rows[irow] = g_malloc0(sizeof(ASDMWeatherRow));
+
+  file = newObitFile("ASDM");
+  retCode = ObitFileOpen(file, WeatherFile, OBIT_IO_ReadOnly, OBIT_IO_Text, 0, err);
+  if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+
+  /* Loop over file */
+  irow = 0;
+  while (retCode!=OBIT_IO_EOF) {
+
+    retCode = ObitFileReadLine (file, line, maxLine, err);
+    if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+    if (retCode==OBIT_IO_EOF) break;
+
+    /* Parse entries */
+    prior = "<timeInterval>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->timeInterval = ASDMparse_timeRange(line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<pressure>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      dtemp = ASDMparse_dbl (line, maxLine, prior, &next);
+      if (out->rows[irow]->pressure!=fblank)
+	out->rows[irow]->pressure = (ofloat)dtemp;
+      continue;
+    }
+    prior = "<pressureFlag>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      flagged = ASDMparse_boo (line, maxLine, prior, &next);
+      if (flagged) out->rows[irow]->pressure = fblank;
+      continue;
+    }
+
+    prior = "<relHumidity>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      dtemp = ASDMparse_dbl (line, maxLine, prior, &next);
+      if (out->rows[irow]->relHumidity!=fblank)
+	out->rows[irow]->relHumidity = (ofloat)dtemp;
+      continue;
+    }
+    prior = "<relHumidityFlag>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      flagged = ASDMparse_boo (line, maxLine, prior, &next);
+      if (flagged) out->rows[irow]->relHumidity = fblank;
+      continue;
+    }
+ 
+    prior = "<temperature>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      dtemp = ASDMparse_dbl (line, maxLine, prior, &next);
+      if (out->rows[irow]->temperature!=fblank)
+	out->rows[irow]->temperature = (ofloat)dtemp;
+      continue;
+    }
+    prior = "<temperatureFlag>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      flagged = ASDMparse_boo (line, maxLine, prior, &next);
+      if (flagged) out->rows[irow]->temperature = fblank;
+      continue;
+    }
+
+    prior = "<windDirection>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      dtemp = ASDMparse_dbl (line, maxLine, prior, &next);
+      if (out->rows[irow]->windDirection!=fblank)
+	out->rows[irow]->windDirection = (ofloat)dtemp;
+      continue;
+    }
+    prior = "<windDirectionFlag>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      flagged = ASDMparse_boo (line, maxLine, prior, &next);
+      if (flagged) out->rows[irow]->windDirection = fblank;
+      continue;
+    }
+
+    prior = "<windSpeed>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      dtemp = ASDMparse_dbl (line, maxLine, prior, &next);
+      if (out->rows[irow]->windSpeed!=fblank)
+	out->rows[irow]->windSpeed = (ofloat)dtemp;
+      continue;
+    }
+    prior = "<windSpeedFlag>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      flagged = ASDMparse_boo (line, maxLine, prior, &next);
+      if (flagged) out->rows[irow]->windSpeed = fblank;
+      continue;
+    }
+
+    prior = "<windMax>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      dtemp = ASDMparse_dbl (line, maxLine, prior, &next);
+      if (out->rows[irow]->windMax!=fblank)
+	out->rows[irow]->windMax = (ofloat)dtemp;
+      continue;
+    }
+    prior = "<windMaxFlag>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      flagged = ASDMparse_boo (line, maxLine, prior, &next);
+      if (flagged) out->rows[irow]->windMax = fblank;
+      continue;
+    }
+
+    prior = "<dewPoint>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      dtemp = ASDMparse_dbl (line, maxLine, prior, &next);
+      if (out->rows[irow]->dewPoint!=fblank)
+	out->rows[irow]->dewPoint = (ofloat)dtemp;
+      continue;
+    }
+    prior = "<dewPointFlag>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      flagged = ASDMparse_boo (line, maxLine, prior, &next);
+      if (flagged) out->rows[irow]->dewPoint = fblank;
+      continue;
+    }
+
+    prior = "<stationId>Station_";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->stationId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    /* Is this the end of a row? */
+    if (g_strstr_len (line, maxLine, endrow)!=NULL) irow++;
+
+    /* Check overflow */
+    Obit_retval_if_fail((irow<=out->nrows), err, out,
+			"%s: Found more rows than allocated (%d)", 
+			routine, out->nrows);
+  } /* end loop over table */
+
+  /* Close up */
+  retCode = ObitFileClose (file, err);
+  if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+  file = ObitFileUnref(file);
+
+  return out;
+} /* end ParseASDMWeatherTable */
+
+/** 
+ * Destructor for Weather table
+ * \param  structure to destroy
+ * \return NULL pointer
+ */
+static ASDMWeatherTable* KillASDMWeatherTable(ASDMWeatherTable* table)
+{
+  olong i;
+
+  if (table==NULL) return NULL;  /* Anybody home? */
+
+  /* Delete row structures */
+  if (table->rows) {
+    for (i=0; i<table->nrows; i++) 
+      table->rows[i] = KillASDMWeatherRow(table->rows[i]);
+    g_free(table->rows);
+  }
+  g_free(table);
+  return NULL;
+} /* end KillASDMWeatherTable */
 
 /* ---------------------- XXXX ----------------------------------- */
 /** 

@@ -2601,7 +2601,10 @@ ObitTableGC Class
 "AIPS GC" contains Antenna gain curve information
 An ObitTableGC is the front end to a persistent disk resident structure.
 Both FITS and AIPS cataloged data are supported.
-This class is derived from the ObitTable class. }
+This class is derived from the ObitTable class. 
+For polynomials in zenith angle (TYPE\_n=2), only NTERM\_n, GAIN\_n and SENS\_n
+are used.
+Other types are defined but seem to have no implementations.}
 ]
 \tableover{
 In memory tables are stored in a fashion similar to how they are 
@@ -2615,14 +2618,14 @@ ObitTableDesc.
 % Table keyword description
 \begin{keywords}
 \tablekey[{"NO\_BAND "}{J}{numBand}{}{()}
-{The number of Bands(?).}
+{The number of Bands(IFs).}
 ]
 % Must be position 2 to index
 \tablekey[{"NO\_POL"}{J}{numPol}{}{(1,2)}
 {The number of polarizations.}
 ]
 \tablekey[{"NO\_TABS"}{J}{numTabs}{}{()}
-{The number of ??.}
+{The number of tabulated values per row.}
 ]
 \tablekey[{"TABREV"}{J}{revision}{3}{}
 {Revision number of the table definition.}
@@ -2641,28 +2644,31 @@ ObitTableDesc.
 {Frequency id of scan}
 ] 
 \tablecol[{"TYPE\_\#NO\_POL"}{"        " }{J}{(numBand)}{Type}
-{TYPE\_\#NO\_POL}
+{TYPE\_\#NO\_POL 1=tabulated, 2=polynomial in ZA, 3=spherical harmonics}
 ] 
 \tablecol[{"NTERM\_\#NO\_POL"}{"        " }{J}{(numBand)}{NTerm}
-{NTERM\_\#NO\_POL}
+{NTERM\_\#NO\_POL number of terms or entries actually given}
 ] 
 \tablecol[{"X\_TYP\_\#NO\_POL"}{"        " }{J}{(numBand)}{XTyp}
-{X\_TYP\_\#NO\_POL}
+{X\_TYP\_\#NO\_POL  Gain curve X-absicssa code type:
+0 =$>$ none, 1 =$>$ elevation (degrees), 2 =$>$ zenith angle (degrees), 
+3 =$>$ hour angle (degrees), 4=$>$ declination (degrees),  5 =$>$ 90-declination (degrees)}
 ] 
 \tablecol[{"Y\_TYP\_\#NO\_POL"}{"        " }{J}{(numBand)}{YTyp}
-{Y\_TYP\_\#NO\_POL}
+{Y\_TYP\_\#NO\_POL Gain curve Y-absicssa code type}
 ] 
 \tablecol[{"X\_VAL\_\#NO\_POL"}{"        " }{E}{(numBand)}{XVal}
-{X\_TYP\_\#NO\_POL}
+{X\_TYP\_\#NO\_POL Value of X abscissa}
 ] 
 \tablecol[{"Y\_VAL\_\#NO\_POL"}{"        " }{E}{(numTabs,numBand)}{YVal}
-{Y\_TYP\_\#NO\_POL}
+{Y\_TYP\_\#NO\_POL Values of Y abscissa}
 ] 
 \tablecol[{"GAIN\_\#NO\_POL"}{"        " }{E}{(numTabs,numBand)}{gain}
-{GAIN\_\#NO\_POL}
+{GAIN\_\#NO\_POL Corresponding values of relative gain (if tabulated);
+or coefficients of approximating function. }
 ] 
 \tablecol[{"SENS\_\#NO\_POL"}{"K/JY    " }{E}{(numBand)}{sens}
-{X\_TYP\_\#NO\_POL}
+{X\_TYP\_\#NO\_POL Point source sensitivity}
 ] 
 \end{columns}
 %

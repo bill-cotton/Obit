@@ -366,7 +366,8 @@ ObitASDMBand ObitSDMDataBand2Band (gchar *code);
 ObitASDMBand ObitSDMDataFreq2Band (odouble freq);
 
 /** Find first scan matching selection */
-olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF, ObitASDMBand band);
+olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF, 
+		     ObitASDMBand band, olong selConfig);
 
 /** Fix source numbers in an ASDMSourceTable */
 void ObitSDMSourceTabFix(ObitSDMData *in);

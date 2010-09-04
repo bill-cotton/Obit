@@ -843,8 +843,24 @@ typedef struct {
 
  /* Weather Table */
 typedef struct {
-  /** place holder */
-  olong holder;
+  /** time Interval (days) */
+  odouble *timeInterval;
+  /** atmospheric pressure (Pascal), fblank = invalid */
+  ofloat  pressure;
+  /** relative humidity, fblank = invalid */
+  ofloat  relHumidity;
+  /** temperature(K), fblank = invalid */
+  ofloat temperature ;
+  /** wind direction, Azimuth?, radians?, fblank = invalid */
+  ofloat windDirection ;
+  /** wind speed (m/s), fblank = invalid */
+  ofloat  windSpeed;
+  /** wind max - max gust(?) (m/s), fblank = invalid */
+  ofloat  windMax;
+  /** dew point (K), fblank = invalid */
+  ofloat dewPoint;
+  /** station Id */
+  olong  stationId;
 } ASDMWeatherRow;
 typedef struct {
   /** Number of rows */

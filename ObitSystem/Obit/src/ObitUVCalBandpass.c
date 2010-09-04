@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -67,7 +67,7 @@ static void BPCCShift (ObitCArray *Spectrum,  ObitCArray *Work, ObitFFT *FFTFor,
 		       olong sideband, olong nchan, ofloat shift);
 
 /* Private: Interpolate flagged spectral channels */
-static void BPinterpol (olong numCh, float *spectrum, float *weight, float *newWeight, 
+static void BPinterpol (olong numCh, ofloat *spectrum, ofloat *weight, ofloat *newWeight, 
 			gboolean *allFlag);
 
 /* Private: Read BP table entry */
@@ -694,6 +694,7 @@ static void ObitUVCalBandpassUpdate (ObitUVCalBandpassS *in, ObitUVCal *UVCal,
 
   /* Determine shift needed from BP table */
   /* Special treatment for VLBA data - may need to shift BP spectra */
+
   if (in->isVLBA[SubA-1]) {
     desc = UVCal->myDesc;
 
@@ -1076,28 +1077,35 @@ static ofloat  DopplerRate (ofloat time, ObitSourceList *sourceList, olong SourI
  */
 static void BPShift (ObitUVCalBandpassS *in, olong iant, olong ifno, olong sideband, ofloat shift)
 {
-  olong ipol, indx, jndex, ifrq, asize, numCh;
+  olong ipol, indx, jndex, ifrq, asize, ifsize, psize, numCh;
   olong pos[2] = {0, 0};
   gboolean dointp, allflg;
   ofloat *spectrum1, *spectrum2, fblank = ObitMagicF();
   
   /* How big is an antenna entry in the calibration table. */
-  numCh = in->eChan - in->bChan + 1;
-  asize = in->numPol * numCh * (in->eIF - in->bIF + 1) * in->lenBPArrayEntry;
+  asize = in->numPol * in->numChan * in->numIF * in->lenBPArrayEntry;
+
+  /* How big is a poln entry */
+  psize = in->numChan * in->lenBPArrayEntry;
+  
+  /* How big is an IF entry */
+  ifsize = in->numPol * in->numChan * in->lenBPArrayEntry;
+  numCh = in->numChan;
+  
   /* Beginning of calibration entry */
-  jndex = (iant - 1) * asize;
+  jndex = (iant-1)*asize + (ifno-1)*ifsize;
   
   /* loop over polarizations in calibration */
   spectrum1 = ObitCArrayIndex (in->spectrum1, pos);
   spectrum2 = ObitCArrayIndex (in->spectrum2, pos);
-   for (ipol= 1; ipol<=in->numPol; ipol++) { /* loop 300 */
-
+  for (ipol= 1; ipol<=in->numPol; ipol++) { /* loop 300 */
+    
     /* copy data to temp array. */
     dointp = FALSE;
-
+    
     /* loop over channels */
     indx = jndex;
-    for (ifrq= 1; ifrq<=numCh; ifrq++) { /* loop 120 */
+    for (ifrq=0; ifrq<numCh; ifrq++) { /* loop 120 */
       spectrum1[ifrq*2]   = in->BPApply[indx];
       spectrum1[ifrq*2+1] = in->BPApply[indx+1];
 
@@ -1126,6 +1134,7 @@ static void BPShift (ObitUVCalBandpassS *in, olong iant, olong ifno, olong sideb
       for (ifrq= 1; ifrq<=numCh; ifrq++) { /* loop 125 */
       in->BPApply[indx]   = fblank;
       in->BPApply[indx+1] = fblank;
+      indx += in->lenBPArrayEntry; /* index in cal table */
       } /* end loop  L125: */
 
       /* finished with this spectrum */
@@ -1143,7 +1152,7 @@ static void BPShift (ObitUVCalBandpassS *in, olong iant, olong ifno, olong sideb
 
     /* copy data back to calibration array */
     indx = jndex;
-    for (ifrq= 1; ifrq<=numCh; ifrq++) { /* loop 140 */
+    for (ifrq=0; ifrq<numCh; ifrq++) { /* loop 140 */
       in->BPApply[indx]   = spectrum1[ifrq*2];
       in->BPApply[indx+1] = spectrum1[ifrq*2+1];
 
@@ -1152,7 +1161,7 @@ static void BPShift (ObitUVCalBandpassS *in, olong iant, olong ifno, olong sideb
     
 
     /* Update index */
-    jndex += in->lenBPArrayEntry;
+    jndex += psize;
   } /* end loop over polarization L300: */
 
 } /* end BPShift */
@@ -1344,17 +1353,17 @@ static void BPCCShift (ObitCArray *Spectrum,  ObitCArray *Work,
  * \param newWeight  Output Weight array for spectrum, 1=good, -1=bad
  * \param allFlag    On output set to TRUE if the whole spectrum is flagged.
  */
-static void BPinterpol (olong numCh, float *spectrum, float *weight, float *newWeight, 
-			gboolean *allFlag)
+static void BPinterpol (olong numCh, ofloat *spectrum, ofloat *weight, 
+			ofloat *newWeight, gboolean *allFlag)
 {
-  ofloat  mxwt, wt1, wt2, avgwts, v1r, v2r, v1i, v2i, navg; 
-  olong   ifrq, schan, lchan, negwts, poswts, i, nintp, chan1, chan2, j, k;
-  gboolean   interp, gotneg, atBegin, atEnd, done;
+  ofloat  mxwt, wt1, wt2, avgwts, amp, ph, amp1, amp2, ph1, ph2;
+  ofloat fblank = ObitMagicF();
+  olong   ifrq, negwts, poswts,i, j, k;
+  gboolean   interp;
 
 
   /* Initial value of newWeight is weight */
   for (i=0; i<numCh; i++)  newWeight[i] = weight[i];
-
 
   /* determine if interpolation necessary */
   mxwt     = -1.0e10;
@@ -1363,8 +1372,6 @@ static void BPinterpol (olong numCh, float *spectrum, float *weight, float *newW
   *allFlag = FALSE;
   poswts   = 0;
   avgwts   = 0.0;
-  atBegin  = FALSE;
-  atEnd    = FALSE;
 
   /* see it there is flagged or enough good data */
   for (ifrq= 0; ifrq< numCh; ifrq++) { /* loop 50 */
@@ -1388,131 +1395,69 @@ static void BPinterpol (olong numCh, float *spectrum, float *weight, float *newW
   } 
   
   /* determine average positive  weight */
-  avgwts = avgwts / poswts;
+  avgwts /= poswts;
   
-  /* select range to interpolate over - this could be done  multiple times */
-  schan = 0;
-  lchan = 0;
-  chan1 = 1;
-  chan2 = numCh;
-  gotneg = FALSE;
-  done = TRUE;
-  
-  /* Loop until done */
-  while (!done) {
-    /* Look for first good weight */
-    for (i= chan1; i<= chan2; i++) { /* loop  */
-      if ((weight[i-1] <= 0.0)  &&  (i > lchan)  && (!gotneg)) {
-	schan = i - 1;
-	gotneg = TRUE;
-      } 
-      if ((weight[i-1] > 0.0)  &&  (i > schan)  &&  gotneg) {
-	lchan = i;  /* first good channel */
-	done = FALSE;
-	break;
-      } 
-    } /* end loop  L200: */
-    
-    if (gotneg  &&  (lchan == 0)) {
-      lchan = numCh;
-      done = FALSE;
-    } 
-    
-    /* more to do? */
-    if (done) return;
-    
-    /* # channels to interpolate */
-    nintp = lchan - schan;
-    
-    /* 2 special cases, beginning and  end of spectrum. */
-    atBegin = schan  ==  0;
-    atEnd   = lchan ==  numCh;
-    if (atBegin  &&  atEnd) {
-      *allFlag = TRUE;
-      return;
+  /* Is the beginning blanked?  If so find first valid value and fill */
+  if (weight[0]<0.0) {  /* Beginning blanked */
+    for (i=0; i<numCh; i++) {
+      if (weight[i]>0.0) break;
+    } /* End loop looking for first valid */
+    for (j=0; j<i; j++) {
+      spectrum[j*2]   = spectrum[i*2];
+      spectrum[j*2+1] = spectrum[i*2+1];
+      newWeight[j]    = 1.0;
     }
-    
-    /* range of channels to interpolate */
-    chan1 = lchan;
-    chan2 = numCh;
-    gotneg = FALSE;
-    
-    /* interpolation values - get prior value */
-    if (schan  >  0) {
-      v1r = spectrum[2*schan];
-      v1i = spectrum[2*schan+1];
-    } else {
-      v1r = 0.0;
-      v1i = 0.0;
-    } 
-    /* get following value */
-    v2r = spectrum[2*lchan];
-    v2i = spectrum[2*lchan+1];
-    
-    /* Special case of bad channels at the beginning */ 
-    if (atBegin) {
-      /* Average first 5 good channels to provide new values at beginning */
-      j = lchan + 4;
-      v2r = 0.0;
-      v2i = 0.0;
-      navg = 0.0;
-      for (i= lchan-1; i< j; i++) { /* loop 270 */
-	if (weight[i] > 0.0) {
-	  v2r = v2r + spectrum[2*i];
-	  v2i = v2i + spectrum[2*i+1];
-	  navg = navg + 1.0;
-	} 
-      } /* end loop   L270 */
-      v2r = v2r / navg;
-      v2i = v2i / navg;
-    }  /* end average channels for beginning point */
-    
-    /* Special case of bad channels at the end */ 
-    if (atEnd) {
-      /* Average last 5 good channels to provide new values at end */
-      j = schan - 4;
-      v1r = 0.0;
-      v1i = 0.0;
-      navg = 0.0;
-      for (i= j-1; i< schan; i++) { /* loop 280 */
-	if (weight[i] > 0.0) {
-	  v1r = v1r + spectrum[2*i];
-	  v1i = v1i + spectrum[2*i+1];
-	  navg = navg + 1.0;
-	} 
-      } /* end loop   L280 */
-      v1r = v1r / navg;
-      v1i = v1i / navg;
-    } /* end average channels for end point */
-    
-    /* do linear interpolation  */
-    for (i= 0; i< nintp; i++) { /* loop 300 */
-      wt1 =  (ofloat)(lchan - (schan + i + 1)) / (ofloat)(lchan - schan);
-      wt2 = 1.0 - wt1;
-      if ((schan  ==  0)  ||  (atBegin)) {
-	wt1 = 0.0;
-	wt2 = 1.0;
-      } 
-      if (atEnd) {
-	wt1 = 1.0;
-	wt2 = 0.0;
-      } 
-      k = 2*(i+schan);
-      spectrum[k]   = wt1*v1r + wt2*v2r;
-      spectrum[k+1] = wt1*v1i + wt2*v2i;
-      newWeight[k]  = avgwts;
-    } /* end loop  L300: */
-    
-    /* loop back for more? */
-    if (lchan  <  numCh) {
-      lchan = 0;
-      done = FALSE;
-    } else { /* finished */
-      done = TRUE;
+  } /* end fix start */
+
+  /* Is the end blanked?  If so find first valid value and fill */
+  if (weight[numCh-1]<0.0) {  /* End blanked */
+    for (i=numCh; i>0; i--) {
+      if (weight[i]>0.0) break;
+    } /* End loop looking for first valid */
+    for (j=i+1; j<numCh; j++) {
+      spectrum[j*2]   = spectrum[i*2];
+      spectrum[j*2+1] = spectrum[i*2+1];
+      newWeight[j]    = 1.0;
     }
-    
-  } /* end while loop */
-  
+  } /* end fix start */
+
+  /* Interpolate over any gaps */
+  for (i=0; i<numCh; i++) {
+    if (newWeight[i]<0.0) {
+      /* Find next good */
+      for (j=i+1; j<numCh; j++) {
+	if (newWeight[j]>0.0) break;
+      }
+      /* Interpolate i to j-1 bewteen values i-1 and j */
+      amp1 = sqrt (spectrum[(i-1)*2]  *spectrum[(i-1)*2] + 
+		   spectrum[(i-1)*2+1]*spectrum[(i-1)*2+1]);
+      ph1  = atan2 (spectrum[(i-1)*2+1], spectrum[(i-1)*2]);
+      amp2 = sqrt (spectrum[j*2]  *spectrum[j*2] + 
+		   spectrum[j*2+1]*spectrum[j*2+1]);
+      ph2  = atan2 (spectrum[j*2+1], spectrum[j*2]);
+      /* Phase gap should be less than pi */
+      if ((ph2-ph1) >  G_PI) ph2 -= 2.0*G_PI;
+      if ((ph2-ph1) < -G_PI) ph2 += 2.0*G_PI;
+      for (k=i; k<j; k++) {
+	wt1 = (ofloat)(j-k)/(ofloat)(j-i+1);
+	wt2 = 1.0 - wt1;
+	amp = wt1*amp1 + amp2*wt2;
+	ph  = wt1*ph1  + ph2*wt2;
+	spectrum[k*2]   = amp*cos(ph);
+	spectrum[k*2+1] = amp*sin(ph);
+	newWeight[k]    = 1.0;
+      } /* end loop interpolating gap */
+    } /* End patch gap */
+  } /* end loop interpolating over gaps */
+
+  /* DEBUG - check */
+   for (i=0; i<numCh; i++) {
+     if ((spectrum[i*2]==fblank) || ((spectrum[i*2+1]==fblank))) {
+       fprintf (stderr,"GODDAMN\n");
+     }
+   }
+ 
+
 } /* end BPinterpol */
 
 /**
@@ -1606,7 +1551,6 @@ static void BPGetNext (ObitUVCalBandpassS *in, ObitTableBP *BPTable, olong  irow
       }
     }
   }
-
 } /* end BPGetNext */
   
   /**
