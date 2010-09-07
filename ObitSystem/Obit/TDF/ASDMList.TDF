@@ -1,0 +1,62 @@
+; $Id: ASDMList.TDF 199 2010-06-15 11:39:58Z bill.cotton $
+; ASDMList 
+;---------------------------------------------------------------
+;! List contents of an ALMA Science Data Model.
+;# Task Obit BDF
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2010
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+ASDMList   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+ASDMList : List contents of an ALMA Science Data Model.
+**PARAM** str 4  **DEF** FITS
+DataType                            Keep python happy
+**PARAM** str 128
+DataRoot                            Directory for input
+**PARAM** int 1  **DEF** 90
+doCrt                               If > 0 the size of the 
+**PARAM** str 48 **DEF** print.list
+prtFile                             Print output file
+**PARAM** str 128
+taskLog                             Logfile to write task messages to
+----------------------------------------------------------------
+ASDMList: List the contents of an ALMA Science Data Model
+Type:  Task
+  Contents of the descriptive files of an archive data set are 
+summarized.  Each of the frequency configurations are described 
+and a list of the scans with the declared intents are given.
+The configuration Ids  can be used to select data in BDFIn.
+
+Adverbs:
+  DataRoot...Archive directory for project
+  DataType...Needed for python task initiation.
+  doCrt......If >0 then the output is to the terminal with lines
+             widths of max(90,doCrt).
+  prtFile....Name of the disk file to accept output.  Text will be
+             appended to the end if it already exists.
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files.
+             Path is absolute or relative to where the task executes.
+----------------------------------------------------------------

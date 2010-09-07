@@ -100,7 +100,7 @@ void GetPhaseCalInfo (ObitData *inData, ObitUV *outData,
 void GetInterferometerModelInfo (ObitData *inData, ObitUV *outData, 
 				 ObitErr *err);
 /* Copy any WEATHER tables */
-void GetWeatherInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
+void GetWeatherInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
 /* Write history */
 void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData, ObitUV* outData, 
 		   ObitErr* err);
@@ -145,6 +145,8 @@ ObitSourceList *uvwSourceList=NULL;   /* Source List for uvw calc */
 olong uvwSourID=-1;                   /* Source ID for uvw calc */
 olong uvwcurSourID=-1;                /* Current source ID for uvw calc */
 ofloat uvrot=-0.0;                    /* Current source rotation of u-v */
+ofloat **antLongs=NULL;               /* Array of Antenna longitudes per subarray */
+ofloat **antLats=NULL;                /* Array of Antenna latitudes per subarray */
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
@@ -227,7 +229,7 @@ int main ( int argc, char **argv )
   /* GetGainCurveInfo (inData, outData, err);     GAIN_CURVE tables */
   /* GetInterferometerModelInfo (inData, outData, err); INTERFEROMETER_MODEL tables */
   /* GetPhaseCalInfo (inData, outData, err);      PHASE_CAL tables */
-  /* GetWeatherInfo (inData, outData, err);       WEATHER tables */
+  GetWeatherInfo (SDMData, outData, err);  /*     WEATHER tables */
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Check scan intents for online only calibrations */
@@ -665,7 +667,8 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   ObitUVDesc *desc;
   olong ncol;
   gchar *today=NULL;
-  olong i, lim, selChan, selIF, iScan, iConfig, numDD, configDescriptionId;
+  olong i, lim, selChan, selIF, selConfig, iScan, iConfig, numDD, 
+    configDescriptionId;
   ofloat epoch=2000.0, equinox=2000.0;
   olong nchan=1, npoln=1, nIF=1;
   odouble refFreq, startFreq=1.0;
@@ -725,6 +728,10 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   Obit_log_error(err, OBIT_InfoErr, "Selecting spectral windows with %d channels", selChan);
   ObitErrLog(err);
 
+  /* ConfigID selection */
+  selConfig = -1;
+  ObitInfoListGetTest(myInput, "selConfig", &type, dim, &selConfig);
+
   /* IF selection */
   selIF = 0;
   ObitInfoListGetTest(myInput, "selIF", &type, dim, &selIF);
@@ -744,6 +751,12 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   while(SDMData->ConfigDescriptionTab->rows[iConfig]->dataDescriptionId[i++]>=0) {numDD++;}
   /* Number of data descriptors = no. spectral windows */
   if (selIF<=0) selIF = numDD;
+
+  /* Default configID */
+  if (selConfig<0) selConfig = configDescriptionId;
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListAlwaysPut(myInput, "selConfig", OBIT_long, dim, &selConfig);
+
   /* Save for history */
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
   ObitInfoListAlwaysPut(myInput, "selIF", OBIT_long, dim, &selIF);
@@ -751,12 +764,19 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   ObitErrLog(err);
 
   /* Find first selected scan */
-  iScan = ObitASDSelScan (SDMData, selChan, selIF, band);
+  iScan = ObitASDSelScan (SDMData, selChan, selIF, band, selConfig);
   Obit_return_if_fail((iScan>=0), err,
 		      "%s: No scans found matching selection criteria", 
 		      routine);
 
-  /* Define output descriptor */
+   /* Set default configID */
+  if (selConfig<0) selConfig = SDMData->MainTab->rows[iScan]->configDescriptionId;
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListAlwaysPut(myInput, "selConfig", OBIT_long, dim, &selConfig);
+  Obit_log_error(err, OBIT_InfoErr, "Selecting scans with ConfigID %d", selConfig);
+  ObitErrLog(err);
+
+ /* Define output descriptor */
   desc = outData->myDesc;
   /* Extract ASDM data  */
   SpWinArray  = ObitSDMDataGetSWArray (SDMData, iScan);
@@ -767,8 +787,8 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   Obit_return_if_fail((AntArray), err,
 		      "%s: Could not extract Antenna info from ASDM", 
 		      routine);
-  /* Selectral Spectral windows */
-  ObitSDMDataSelChan (SpWinArray, selChan, selIF, band);
+  /* Select Spectral windows */
+  ObitSDMDataSelChan (SpWinArray, selChan, selIF, ASDMBand_Any);
 
   /* Frequency info from first selected Spectral window */
   for (i=0; i<SpWinArray->nwinds; i++) {
@@ -971,7 +991,8 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData,
   olong          iScan, iIntent;
   gchar          hicard[81], begString[17], endString[17];
   gchar         *hiEntries[] = {
-    "DataRoot", "selChan", "selIF", "selBand", "dropZero", "doCode", "calInt",
+    "DataRoot", "selChan", "selIF", "selBand", "selConfig", "dropZero", 
+    "doCode", "calInt",
     NULL};
   gchar *routine = "BDFInHistory";
   
@@ -1193,16 +1214,9 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   isEVLA = !strncmp(AntArray->arrayName, "EVLA", 4);
 
   /* Set AN table values */
-  /* Need real position - VLA */
-  if (isEVLA) {
-    outTable->ArrayX  = -1601185.365;
-    outTable->ArrayY  = -5041977.547;
-    outTable->ArrayZ  =  3554915.87;
-  } else { /* something else */
-    outTable->ArrayX  = 0.0;   /* Earth centered */
-    outTable->ArrayY  = 0.0;
-    outTable->ArrayZ  = 0.0;
-  }
+  outTable->ArrayX  = 0.0;   /* Earth centered */
+  outTable->ArrayY  = 0.0;
+  outTable->ArrayZ  = 0.0;
   
   outTable->Freq    = outData->myDesc->crval[outData->myDesc->jlocf];
   /*MORE;*/
@@ -1657,8 +1671,8 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 {
   ObitBDFData *BDFData=NULL;
   ObitIOCode retCode;
-  olong iMain, iInteg, ScanId, i, j, iBB, selChan, selIF, iSW, jSW, kBB, nIFsel, 
-    cntDrop=0, BBNum, ver, iRow, sourId=0;
+  olong iMain, iInteg, ScanId, i, j, iBB, selChan, selIF, selConfig, 
+    iSW, jSW, kBB, nIFsel, cntDrop=0, ver, iRow, sourId=0;
   ofloat *Buffer=NULL, tlast=-1.0e20, startTime, endTime;
   ObitUVDesc *desc;
   ObitTableNX* NXtable;
@@ -1697,11 +1711,13 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   BDFData = ObitBDFDataCreate ("BDF", outData->myDesc, SDMData, err);
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
 
-  /* Channel/IF selection - should have been completely specified in GetHeader */
+  /* Channel/IF/config selection - should have been completely specified in GetHeader */
   selChan = 0;
   ObitInfoListGetTest(myInput, "selChan", &type, dim, &selChan);
   selIF   = 0;
   ObitInfoListGetTest(myInput, "selIF", &type, dim, &selIF);
+  selConfig = -1;
+  ObitInfoListGetTest(myInput, "selConfig", &type, dim, &selConfig);
 
   /* Drop Zero vis? */
   ObitInfoListGetTest(myInput, "dropZero", &type, dim, &dropZero);
@@ -1755,13 +1771,15 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   for (iMain=0; iMain<SDMData->MainTab->nrows; iMain++) {
 
     /* Selected? */
+    if (selConfig != SDMData->MainTab->rows[iMain]->configDescriptionId) continue;
     if (SpWinArray) SpWinArray  = ObitSDMDataKillSWArray (SpWinArray);
     SpWinArray  = 
       ObitSDMDataGetSWArray (SDMData, SDMData->MainTab->rows[iMain]->scanNumber);
     Obit_return_if_fail((SpWinArray), err,
 			"%s: Could not extract Spectral Windows from ASDM", 
 			routine);
-    if (!ObitSDMDataSelChan (SpWinArray, selChan, selIF, band)) continue;
+    /* Selection here mostly by ConfigID */
+    if (!ObitSDMDataSelChan (SpWinArray, selChan, selIF, ASDMBand_Any)) continue;
     
     /* Get filename */
     filename = g_strconcat (dataroot, "/ASDMBinary/uid_", SDMData->MainTab->rows[iMain]->entityId, NULL);
@@ -1780,8 +1798,8 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     ObitBDFDataInitScan (BDFData, iMain, err);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
  
-    /* Set selection */
-    ObitBDFDataSelChan (BDFData, selChan, selIF, band);
+    /* Set selection - here mostly by ConfigID */
+    ObitBDFDataSelChan (BDFData, selChan, selIF, ASDMBand_Any);
 
     /* Consistency check - loop over selected Spectral windows */
     nIFsel = 0;   /* Number of selected IFs */
@@ -1798,11 +1816,17 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	Obit_return_if_fail((nstok==BDFData->SWArray->winds[jSW]->nCPoln), err,
 			    "%s: Input number Poln incompatible %d != %d", 
 			    routine, nstok, BDFData->SWArray->winds[jSW]->nCPoln);
-	/* Baseband - assume name starts with "BB_" and ends in number */
-	BBNum = (olong)strtol(&BDFData->ScanInfo->BBinfo[kBB]->basebandName[3], NULL, 10);
-	Obit_return_if_fail((BBNum==BDFData->SWArray->winds[jSW]->basebandNum), err,
-			    "%s: Input basebands inconsistent %d != %d, IF %d", 
-			    routine, BBNum, BDFData->SWArray->winds[jSW]->basebandNum, nIFsel);
+	/* Baseband - assume name starts with "BB_" and ends in number 
+	   BBNum = (olong)strtol(&BDFData->ScanInfo->BBinfo[kBB]->basebandName[3], NULL, 10);
+	   Obit_return_if_fail((BBNum==BDFData->SWArray->winds[jSW]->basebandNum), err,
+	   "%s: Input basebands inconsistent %d != %d, IF %d", 
+	   routine, BBNum, BDFData->SWArray->winds[jSW]->basebandNum, nIFsel);*/
+	/* Test frequency */
+	Obit_return_if_fail((fabs(BDFData->SWArray->winds[iSW]->refFreq-
+				  outData->myDesc->freqIF[iSW]) < 1.0e3), err,
+			    "%s: Frequencies inconsistent %lf != %lf, IF %d", 
+			    routine, BDFData->SWArray->winds[iSW]->refFreq, 
+			    outData->myDesc->freqIF[iSW], nIFsel);
   	nIFsel++;
       } 
       iSW++;
@@ -1926,7 +1950,7 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
 /*       err     Obit return error stack                                  */
 /*----------------------------------------------------------------------- */
 {
-  olong souId, ant1, ant2, i, iANver, iarr;
+  olong souId, ant1, ant2, i, iANver, iarr, cnt;
   ObitTableAN *ANTable=NULL;
   ObitTableSU *SUTable=NULL;
   ObitSource *source=NULL;
@@ -1950,6 +1974,10 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
   /* Get antenna lists if they don't already exist */
   if (antennaLists==NULL) {
 
+    /* Array of subarrays for antenna longitudes/latitudes */
+    antLongs = g_malloc0(numArray*sizeof(ofloat*));
+    antLats  = g_malloc0(numArray*sizeof(ofloat*));
+
     /* Create AntennaLists */
     antennaLists = g_malloc0(numArray*sizeof(ObitAntennaList*));
     for (i=0; i<numArray; i++) {
@@ -1961,13 +1989,23 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
       /* release table object */
       ANTable = ObitTableANUnref(ANTable);
 
+      /* Subarray list of antenna longitudes/latitudes */
+      antLongs[i] = g_malloc0(antennaLists[i]->number*sizeof(ofloat));
+      antLats[i]  = g_malloc0(antennaLists[i]->number*sizeof(ofloat));
+
       /* Get average longitude */
       AntList = antennaLists[i];
-      sum = 0.0;
-      for (iarr=0; iarr<AntList->number; iarr++) 
-	sum += atan2 (AntList->ANlist[iarr]->AntXYZ[1], 
-		      AntList->ANlist[iarr]->AntXYZ[0]);
-      ArrLong = sum / AntList->number;
+      sum = 0.0; cnt = 0;
+      for (iarr=0; iarr<AntList->number; iarr++) {
+	antLongs[i][iarr] = atan2 (AntList->ANlist[iarr]->AntXYZ[1], 
+				  AntList->ANlist[iarr]->AntXYZ[0]);
+	antLats[i][iarr]  = AntList->ANlist[iarr]->AntLat;
+	if (fabs(AntList->ANlist[iarr]->AntXYZ[1])>1.0) {
+	  sum += antLongs[i][iarr];
+	  cnt++;
+	}
+      }
+      ArrLong = sum / cnt;
       AntList->ANlist[0]->AntLong = ArrLong;
 
       lambda = VELIGHT/BDFData->desc->freq;  /* Reference wavelength */
@@ -2030,10 +2068,10 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
   /* Array reference JD */
   arrJD = arrayRefJDs[iarr];
 
-  /* Array geometry - assume first for all */
+  /* Array geometry  */
   AntList = antennaLists[iarr];
-  ArrLong = AntList->ANlist[0]->AntLong;
-  ArrLat  = AntList->ANlist[0]->AntLat;
+  ArrLong = 0.5*(antLongs[iarr][ant1-1] + antLongs[iarr][ant2-1]);
+  ArrLat  = 0.5*(antLats[iarr][ant1-1]  + antLats[iarr][ant2-1]);
   
   bl[0] =  AntList->ANlist[ant1-1]->AntXYZ[0] - AntList->ANlist[ant2-1]->AntXYZ[0];
   bl[1] =  AntList->ANlist[ant1-1]->AntXYZ[1] - AntList->ANlist[ant2-1]->AntXYZ[1];
@@ -2178,6 +2216,104 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   AntArray = ObitSDMDataKillAntArray(AntArray);
 
 } /* end  GetFlagInfo */
+
+void GetWeatherInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
+/*----------------------------------------------------------------------- */
+/*  Convert any WEATHER tables from ASDM  to AIPS WX on outData           */
+/*   Input:                                                               */
+/*      SDMData  ASDM structure                                           */
+/*      outData  Output UV object                                         */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  ObitTableWX*          outTable=NULL;
+  ObitTableWXRow*       outRow=NULL;
+  ASDMWeatherTable*     inTab=SDMData->WeatherTab;
+  olong iRow, oRow, ver;
+  odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
+  odouble K0 = 273.15;      /* Zero point of Centigrade in Kelvin */
+  ofloat fblank = ObitMagicF();
+  ObitIOAccess access;
+  gchar *routine = "GetWeatherInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitUVIsA(outData));
+
+  /* Any entries? */
+  if (inTab->nrows<=0) return;
+
+  /* Print any messages */
+  ObitErrLog(err);
+  
+  /* Create output WX table object */
+  ver      = 1;
+  access   = OBIT_IO_ReadWrite;
+  outTable = newObitTableWXValue ("Output table", (ObitData*)outData, 
+				  &ver, access, err);
+  if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with WX table");
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  
+  /* Open table */
+  if ((ObitTableWXOpen (outTable, access, err) 
+       != OBIT_IO_OK) || (err->error))  { /* error test */
+    Obit_log_error(err, OBIT_Error, "ERROR opening output WX table");
+    return;
+  }
+  
+  /* Create output Row */
+  outRow = newObitTableWXRow (outTable);
+  /* attach to table buffer */
+  ObitTableWXSetRow (outTable, outRow, err);
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  
+  /* Initialize output row */
+  outRow->status      = 0;
+  
+  /* loop through input table */
+  for (iRow=0; iRow<inTab->nrows; iRow++) {
+    
+    /* Save to WX table */
+    outRow->Time          = inTab->rows[iRow]->timeInterval[0]-refJD;
+    outRow->TimeI         = inTab->rows[iRow]->timeInterval[1] -
+                            inTab->rows[iRow]->timeInterval[0];
+    /* Correct interval if necessary */
+    if (inTab->rows[iRow]->timeInterval[1]<inTab->rows[iRow]->timeInterval[0])
+      outRow->TimeI = inTab->rows[iRow]->timeInterval[1] - mjdJD0;
+    outRow->antNo         = inTab->rows[iRow]->stationId;
+    outRow->temperature   = inTab->rows[iRow]->temperature - K0;  /* K -> C */
+    outRow->pressure      = inTab->rows[iRow]->pressure*0.01;     /* Pascal to millibar */
+    outRow->dewpoint      = inTab->rows[iRow]->dewPoint - K0;     /* K -> C */
+    outRow->windVelocity  = inTab->rows[iRow]->windSpeed;
+    outRow->windDirection = inTab->rows[iRow]->windDirection*RAD2DG; /* rad to deg */
+    outRow->wvrH2O        = fblank;
+    outRow->onosElectron  = fblank;
+    /* Write */
+    oRow = -1;
+    if ((ObitTableWXWriteRow (outTable, oRow, outRow, err)
+	 != OBIT_IO_OK) || (err->error>0)) { 
+      Obit_log_error(err, OBIT_Error, "ERROR updating WX Table");
+      return;
+    }
+    
+  } /* end loop over input table */
+  
+    /* Close  table */
+  if ((ObitTableWXClose (outTable, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "ERROR closing output WX Table file");
+    return;
+  }
+  
+  /* Tell about it */
+  Obit_log_error(err, OBIT_InfoErr, "Copied WEATHER table");
+  
+  /* Cleanup */
+  outRow   = ObitTableWXRowUnref(outRow);
+  outTable = ObitTableWXUnref(outTable);
+
+} /* end  GetWeatherInfo */
 
 /** 
  * Convert Time in days to a human readable form "dd/hh:mm:ss.s"

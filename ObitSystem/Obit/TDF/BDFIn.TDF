@@ -49,6 +49,8 @@ outDisk                             Output UV file disk unit #.
 selChan                             no. channels to select, 0=>first.
 **PARAM** int 1
 selIF                               no. IFs to select, 0=>first.
+**PARAM** int 1  **DEF** -1
+selConfig                           Config ID, -1 ->first.
 **PARAM** str 4
 selBand                             Band to select, "  "=>first.
 **PARAM** boo 1  **DEF** T
@@ -95,6 +97,12 @@ Data selection
              "  " -> use band in first spectral window.
              Recognized values:
                "4","P","L","S","C","X","Ku","K","Ka","Q","W"
+             Selection by band is risky as EVLA bands overlap which may
+             result in the exclusion of some data.
+  selConfig..ASDM array configuration index to select.  Used in 
+             conjunction with selChan, overrides selBand.
+             Task ASDMList can be used to decide which configuration
+             number(s) are desired.
   dropZero...If True, visibility records with all zero records 
              will be dropped.  In any case, visibilities which are 
              exactly zero will be flagged (zero weight).
