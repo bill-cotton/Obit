@@ -815,15 +815,17 @@ gboolean ObitBDFDataSelChan  (ObitBDFData *in, olong selChan,
  * May update buffer contents.
  * \param in  The object to update
  * \param err Obit error stack object.
+ * \return I/O code, OBIT_IO_OK = OK, OBIT_IO_EOF=File read without finding data.
  */
-void ObitBDFDataInitInteg  (ObitBDFData *in, ObitErr *err)
+ObitIOCode ObitBDFDataInitInteg  (ObitBDFData *in, ObitErr *err)
 {
+  ObitIOCode retCode = OBIT_IO_OK;
   gchar *startInfo, *endInfo, *prior, *next, *tstr;
   olong maxStr;
   gchar *routine = "ObitBDFDataInitInteg";
 
   /* error checks */
-  if (err->error) return;
+  if (err->error) return retCode;
 
   /* Create info structure if not there */
   if (in->IntegInfo==NULL) in->IntegInfo = g_malloc0(sizeof(BDFIntegInfo));
@@ -833,11 +835,15 @@ void ObitBDFDataInitInteg  (ObitBDFData *in, ObitErr *err)
   startInfo = g_strstr_len (in->current, maxStr, "<sdmDataSubsetHeader ");
   /* May need next buffer */
   while (startInfo==NULL) {
-    ObitBDFDataFillBuffer (in, err);
-    if (err->error) Obit_traceback_msg (err, routine, in->name);
+    retCode = ObitBDFDataFillBuffer (in, err);
+    if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
     maxStr = in->nBytesInBuffer;
     startInfo = g_strstr_len (in->buffer, maxStr, "<sdmDataSubsetHeader ");
+   if (retCode==OBIT_IO_EOF) startInfo = in->buffer;
   }
+  /* If the entire file was read and no start info - then something is wrong */
+  if (retCode==OBIT_IO_EOF) return retCode;
+
   maxStr    = in->nBytesInBuffer - (olong)(startInfo-in->buffer);
   endInfo   = g_strstr_len (startInfo, maxStr, "</sdmDataSubsetHeader>");
   maxStr    = (olong)(endInfo-startInfo);
@@ -867,6 +873,8 @@ void ObitBDFDataInitInteg  (ObitBDFData *in, ObitErr *err)
   in->topAnt   = 1;
   in->nextCVis = 0;   /* Cross vis index */
   in->nextAVis = 0;   /* Auto vis index */
+
+  return retCode;
 } /* end ObitBDFDataInitInteg */
 
  /**
@@ -889,7 +897,8 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
   if (err->error) return retCode;
 
   /* Parse header */
-  ObitBDFDataInitInteg (in, err);
+  retCode = ObitBDFDataInitInteg (in, err);
+  if (retCode==OBIT_IO_EOF) return retCode;
   if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
 
   /* Byte flip needed */

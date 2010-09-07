@@ -171,6 +171,8 @@ typedef struct {
   olong AntennaRows;
   /** Number of calData rows */
   olong calDataRows;
+  /** Number of calDevice rows */
+  olong calDeviceRows;
   /** Number of calPointing rows */
   olong calPointingRows;
   /** Number of CalReduction rows */
@@ -217,10 +219,12 @@ typedef struct {
   olong SubscanRows;
   /** Number of SwitchCycle rows */
   olong SwitchCycleRows;
-  /** Number of Weather rows */
-  olong WeatherRows;
   /** Number of SysCal rows */
   olong SysCalRows;
+  /** Number of SysPower rows */
+  olong SysPowerRows;
+  /** Number of Weather rows */
+  olong WeatherRows;
 } ASDMTable;
 
 
@@ -302,6 +306,36 @@ typedef struct {
   /** Array of ASDMcalData rows */
   ASDMcalDataRow **rows;
 } ASDMcalDataTable;
+
+ /* calDevice Table */
+typedef struct {
+  /** antenna Id */
+  olong antennaId;
+  /** spectral Window Id */
+  olong spectralWindowId;
+  /** feedId */
+  olong feedId;
+  /** number of Cal loads (N_cal) */
+  olong numCalLoad;
+  /** number of Receptors (N_rec) */
+  olong numReceptor;
+  /** Names of calibration devices (1D array of strings per cal device) */
+  gchar **calLoadNames;
+  /** time Interval (days) */
+  odouble *timeInterval;
+  /**  Calibration efficiencies (2D array of double [N_rec][N_cal]) */
+  odouble *calEff;
+  /**  equivalent temp of noise cal (1D array of double, one per load) */
+  odouble *noiseCal;
+  /**  Physical temperature of loads (1D array of double, one per load) */
+  odouble *temperatureLoad;
+} ASDMcalDeviceRow;
+typedef struct {
+  /** Number of rows */
+  olong nrows;
+  /** Array of ASDMcalData rows */
+  ASDMcalDeviceRow **rows;
+} ASDMcalDeviceTable;
 
  /* calPointing Table */
 typedef struct {
@@ -483,7 +517,7 @@ typedef struct {
   olong feedId;
   /** time Interval (days) */
   odouble *timeInterval;
-  /** number of Receptor */
+  /** number of Receptors */
   olong numReceptor;
   /** beam Offset (2D array of double) */
   odouble *beamOffset;
@@ -880,6 +914,32 @@ typedef struct {
   /** Array of ASDMSysCal rows */
   ASDMSysCalRow **rows;
 } ASDMSysCalTable;
+
+ /* SysPower Table */
+typedef struct {
+  /** antenna Id */
+  olong antennaId;
+  /** spectral Window Id */
+  olong spectralWindowId;
+  /** feedId */
+  olong feedId;
+  /** number of Receptors */
+  olong numReceptor;
+  /** time Interval (days) */
+  odouble *timeInterval;
+  /** switched Power Difference (1D array of double) */
+  odouble *switchedPowerDifference;
+  /** switched Power Sum (1D array of double) */
+  odouble *switchedPowerSum;
+  /** Requantizer gain Sum (1D array of double) */
+  odouble *requantizerGain;
+} ASDMSysPowerRow;
+typedef struct {
+  /** Number of rows */
+  olong nrows;
+  /** Array of ASDMSysPower rows */
+  ASDMSysPowerRow **rows;
+} ASDMSysPowerTable;
 
  /* XXXX Table */
 typedef struct {

@@ -3,7 +3,7 @@ This module provides support for starting an interactive ObitTalk
 session.
 
 """
-# Copyright (C) 2006-2008 Associated Universities, Inc.
+# Copyright (C) 2006-2010 Associated Universities, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,7 +46,6 @@ print ""
 path = ".obitrc.py"
 if (not os.path.exists(path)) and ("HOME" in os.environ):
     path = os.environ["HOME"]+"/.obitrc.py"
-
 
 print "Welcome to ObitTalk"
 # Using AIPS?
@@ -94,3 +93,8 @@ if os.path.exists(path):
     else:
         pass
 
+
+# suppress spurious messages about LD_PRELOAD
+if os.environ.has_key('LD_PRELOAD'):
+    del os.environ['LD_PRELOAD']
+    

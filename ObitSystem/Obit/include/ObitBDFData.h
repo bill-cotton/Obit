@@ -259,7 +259,7 @@ gboolean ObitBDFDataSelChan  (ObitBDFData *in, olong selChan,
 			      olong selIF, ObitASDMBand band);
 
 /** Public: Initialize Integration */
-void ObitBDFDataInitInteg (ObitBDFData *in, ObitErr *err);
+ObitIOCode ObitBDFDataInitInteg (ObitBDFData *in, ObitErr *err);
 
 /** Public: Read Next Integration */
 ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err);

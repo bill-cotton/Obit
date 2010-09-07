@@ -5,6 +5,7 @@ X    ASDM.xml
 X    Main.xml
 X    Antenna.xml
      CalData.xml
+X    CalDevice.xml
      CalPointing.xml
      CalReduction.xml
 X    ConfigDescription.xml
@@ -29,6 +30,7 @@ X    Station.xml
 X    Subscan.xml
 X    SwitchCycle.xml
      SysCal.xml
+X    SysPower.xml
 X    Weather.xml
  */
 /*--------------------------------------------------------------------*/
@@ -126,6 +128,9 @@ static odouble ASDMparse_timeint(gchar *string, olong maxChar,
 /** Private: Parse array of doubles from XML string  */
 static odouble* ASDMparse_dblarray(gchar *string, olong maxChar, 
 				   gchar *prior, gchar **next);
+/** Private: Parse array of floatss from XML string  */
+static ofloat* ASDMparse_fltarray(gchar *string, olong maxChar, 
+				   gchar *prior, gchar **next);
 /** Private: Parse array of ints from XML string  */
 static olong* ASDMparse_intarray(gchar *string, olong maxChar, 
 				 gchar *prior, gchar **next);
@@ -187,6 +192,15 @@ static ASDMcalDataTable* ParseASDMcalDataTable(ObitSDMData *me,
 					 ObitErr *err);
 /** Private: Destructor for calData table. */
 static ASDMcalDataTable* KillASDMcalDataTable(ASDMcalDataTable* table);
+
+/** Private: Destructor for calDevice table row. */
+static ASDMcalDeviceRow* KillASDMcalDeviceRow(ASDMcalDeviceRow* row);
+/** Private: Parser constructor for calDevice table from file */
+static ASDMcalDeviceTable* ParseASDMcalDeviceTable(ObitSDMData *me,
+					 gchar *calDeviceFile, 
+					 ObitErr *err);
+/** Private: Destructor for calDevice table. */
+static ASDMcalDeviceTable* KillASDMcalDeviceTable(ASDMcalDeviceTable* table);
 
 /** Private: Destructor for calPointing table row. */
 static ASDMcalPointingRow* KillASDMcalPointingRow(ASDMcalPointingRow* row);
@@ -405,6 +419,14 @@ static ASDMSysCalTable* ParseASDMSysCalTable(ObitSDMData *me,
 /** Private: Destructor for SysCal table. */
 static ASDMSysCalTable* KillASDMSysCalTable(ASDMSysCalTable* table);
 
+/** Private: Destructor for SysPower table row. */
+static ASDMSysPowerRow* KillASDMSysPowerRow(ASDMSysPowerRow* row);
+/** Private: Parser constructor for SysPower table from file */
+static ASDMSysPowerTable* ParseASDMSysPowerTable(ObitSDMData *me,
+					 gchar *SysPowerFile, 
+					 ObitErr *err);
+/** Private: Destructor for SysPower table. */
+static ASDMSysPowerTable* KillASDMSysPowerTable(ASDMSysPowerTable* table);
 
 /** Private: Destructor for Weather table row. */
 static ASDMWeatherRow* KillASDMWeatherRow(ASDMWeatherRow* row);
@@ -560,6 +582,12 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
+  /* calDevice table */
+  fullname = g_strconcat (DataRoot,"/calDevice.xml", NULL);
+  out->calDeviceTab = ParseASDMcalDeviceTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
   /* calPointing table */
   fullname = g_strconcat (DataRoot,"/calPointing.xml", NULL);
   out->calPointingTab = ParseASDMcalPointingTable(out, fullname, err);
@@ -698,15 +726,21 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
-  /* Weather table */
-  fullname = g_strconcat (DataRoot,"/Weather.xml", NULL);
-  out->WeatherTab = ParseASDMWeatherTable(out, fullname, err);
-  if (err->error) Obit_traceback_val (err, routine, fullname, out);
-  g_free(fullname);
-
   /* SysCal table */
   fullname = g_strconcat (DataRoot,"/SysCal.xml", NULL);
   out->SysCalTab = ParseASDMSysCalTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* SysPower table */
+  fullname = g_strconcat (DataRoot,"/SysPower.xml", NULL);
+  out->SysPowerTab = ParseASDMSysPowerTable(out, fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+
+  /* Weather table */
+  fullname = g_strconcat (DataRoot,"/Weather.xml", NULL);
+  out->WeatherTab = ParseASDMWeatherTable(out, fullname, err);
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
@@ -1415,6 +1449,7 @@ void ObitSDMDataInit  (gpointer inn)
   in->MainTab              = NULL;
   in->AntennaTab           = NULL;
   in->calDataTab           = NULL;
+  in->calDeviceTab         = NULL;
   in->calPointingTab       = NULL;
   in->CalReductionTab      = NULL;
   in->ConfigDescriptionTab = NULL;
@@ -1438,8 +1473,9 @@ void ObitSDMDataInit  (gpointer inn)
   in->StationTab           = NULL;
   in->SubscanTab           = NULL;
   in->SwitchCycleTab       = NULL;
-  in->WeatherTab           = NULL;
   in->SysCalTab            = NULL;
+  in->SysPowerTab          = NULL;
+  in->WeatherTab           = NULL;
 
 } /* end ObitSDMDataInit */
 
@@ -1463,6 +1499,7 @@ void ObitSDMDataClear (gpointer inn)
   in->MainTab              = KillASDMMainTable(in->MainTab);
   in->AntennaTab           = KillASDMAntennaTable(in->AntennaTab);
   in->calDataTab           = KillASDMcalDataTable(in->calDataTab);
+  in->calDeviceTab         = KillASDMcalDeviceTable(in->calDeviceTab);
   in->calPointingTab       = KillASDMcalPointingTable(in->calPointingTab);
   in->CalReductionTab      = KillASDMCalReductionTable(in->CalReductionTab);
   in->ConfigDescriptionTab = KillASDMConfigDescriptionTable(in->ConfigDescriptionTab);
@@ -1486,8 +1523,9 @@ void ObitSDMDataClear (gpointer inn)
   in->StationTab           = KillASDMStationTable(in->StationTab);
   in->SubscanTab           = KillASDMSubscanTable(in->SubscanTab);
   in->SwitchCycleTab       = KillASDMSwitchCycleTable(in->SwitchCycleTab);
-  in->WeatherTab           = KillASDMWeatherTable(in->WeatherTab);
   in->SysCalTab            = KillASDMSysCalTable(in->SysCalTab);
+  in->SysPowerTab          = KillASDMSysPowerTable(in->SysPowerTab);
+  in->WeatherTab           = KillASDMWeatherTable(in->WeatherTab);
 
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
@@ -1682,6 +1720,50 @@ static odouble* ASDMparse_dblarray(gchar *string, olong maxChar,
 
   return out;
 } /* end ASDMparse_dblarray */
+
+/**  Parse array of floats from XML string 
+ * \param  string  String to parse
+ * \param  maxChar Maximum size of string
+ * \param  prior string prior to value
+ * \param  next  pointer in string after parsed value
+ * \return value, NULL if problem, should be g_freeed when done
+ */
+static ofloat* ASDMparse_fltarray(gchar *string, olong maxChar, 
+				   gchar *prior, gchar **next)
+{
+  ofloat *out = NULL;
+  gchar *b;
+  olong charLeft, ndim, naxis1=1, naxis2=1, num;
+  olong i;
+
+  *next = string;  /* if not found */
+  b = g_strstr_len (string, maxChar, prior);
+  if (b==NULL) return out;  /* Found? */
+  b += strlen(prior);
+
+  /* Get dimensionality - only can handle 2 */
+  ndim = (olong)strtol(b, next, 10);
+  b = *next;
+  /* get number of values axis 1 */
+  naxis1 = (olong)strtol(b, next, 10);
+  b = *next;
+  /* get number of values axis 2 */
+  if (ndim==2) {
+    naxis2 = (olong)strtol(b, next, 10);
+    b = *next;
+  }
+  num = naxis1*naxis2;
+  out = g_malloc0(MAX(1,num)*sizeof(ofloat));
+
+  /* Loop parsing */
+  for (i=0; i<num; i++) {
+    charLeft = maxChar - (b-string);
+    out[i] = (ofloat)strtod(b, next);
+    b = *next;
+  } /* end loop parsing values */
+
+  return out;
+} /* end ASDMparse_fltarray */
 
 /**  Parse array of doubles from XML string 
  * \param  string  String to parse
@@ -2110,6 +2192,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
   out->MainRows             = -1;
   out->AntennaRows          = -1;
   out->calDataRows          = -1;
+  out->calDeviceRows        = -1;
   out->calPointingRows      = -1;
   out->CalReductionRows     = -1;
   out->ConfigDescriptionRows= -1;
@@ -2133,8 +2216,9 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
   out->StationRows          = -1;
   out->SubscanRows          = -1;
   out->SwitchCycleRows      = -1;
-  out->WeatherRows          = -1;
   out->SysCalRows           = -1;
+  out->SysPowerRows         = -1;
+  out->WeatherRows          = -1;
 
   file = newObitFile("ASDM");
   retCode = ObitFileOpen(file, ASDMFile,OBIT_IO_ReadOnly, OBIT_IO_Text, 0, err);
@@ -2170,6 +2254,14 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
       out->calDataRows = ASDMparse_int(line, maxLine, "<NumberRows>", &next);
+      continue;
+    }
+    /* Number of calDevice rows */
+    if (g_strstr_len (line, maxLine, "<Name>calDevice")!=NULL) {
+      retCode = ObitFileReadLine (file, line, maxLine, err);
+      if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+      if (retCode==OBIT_IO_EOF) break;
+      out->calDeviceRows = ASDMparse_int(line, maxLine, "<NumberRows>", &next);
       continue;
     }
     /* Number of calPointing rows */
@@ -2356,20 +2448,28 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       out->SwitchCycleRows = ASDMparse_int(line, maxLine, "<NumberRows>", &next);
       continue;
     }
-    /* Number of Weather rows */
-    if (g_strstr_len (line, maxLine, "<Name>Weather")!=NULL) {
-      retCode = ObitFileReadLine (file, line, maxLine, err);
-      if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
-      if (retCode==OBIT_IO_EOF) break;
-      out->WeatherRows = ASDMparse_int(line, maxLine, "<NumberRows>", &next);
-      continue;
-    }
     /* Number of SysCal rows */
     if (g_strstr_len (line, maxLine, "<Name>SysCal")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
       out->SysCalRows = ASDMparse_int(line, maxLine, "<NumberRows>", &next);
+      continue;
+    }
+    /* Number of SysPower rows */
+    if (g_strstr_len (line, maxLine, "<Name>SysPower")!=NULL) {
+      retCode = ObitFileReadLine (file, line, maxLine, err);
+      if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+      if (retCode==OBIT_IO_EOF) break;
+      out->SysPowerRows = ASDMparse_int(line, maxLine, "<NumberRows>", &next);
+      continue;
+    }
+    /* Number of Weather rows */
+    if (g_strstr_len (line, maxLine, "<Name>Weather")!=NULL) {
+      retCode = ObitFileReadLine (file, line, maxLine, err);
+      if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+      if (retCode==OBIT_IO_EOF) break;
+      out->WeatherRows = ASDMparse_int(line, maxLine, "<NumberRows>", &next);
       continue;
     }
   } /* end loop over table */
@@ -2838,6 +2938,165 @@ static ASDMcalDataTable* KillASDMcalDataTable(ASDMcalDataTable* table)
   g_free(table);
   return NULL;
 } /* end KillASDMcalDataTable */
+
+/* ----------------------  calDevice ----------------------------------- */
+/** 
+ * Destructor for calDevice table row.
+ * \param  structure to destroy
+ * \return NULL row pointer
+ */
+static ASDMcalDeviceRow* KillASDMcalDeviceRow(ASDMcalDeviceRow* row)
+{
+  olong i, n;
+  if (row == NULL) return NULL;
+  if (row->timeInterval)    g_free(row->timeInterval);
+  if (row->calEff)          g_free(row->calEff);
+  if (row->noiseCal)        g_free(row->noiseCal);
+  if (row->temperatureLoad) g_free(row->temperatureLoad);
+  if (row->calLoadNames) {
+    n = row->numCalLoad;
+    for (i=0; i<n; i++) if (row->calLoadNames[i]) g_free(row->calLoadNames[i]);
+    g_free(row->calLoadNames);
+  }
+  g_free(row);
+  return NULL;
+} /* end   KillASDMcalDeviceRow */
+
+/** 
+ * Constructor for calDevice table parsing from file
+ * \param  calDeviceFile Name of file containing table
+ * \param  err     ObitErr for reporting errors.
+ * \return table structure,  use KillASDMcalDeviceTable to free
+ */
+static ASDMcalDeviceTable* 
+ParseASDMcalDeviceTable(ObitSDMData *me, 
+		      gchar *calDeviceFile, 
+		      ObitErr *err)
+{
+  ASDMcalDeviceTable* out=NULL;
+  ObitIOCode retCode;
+  olong irow, maxLine = 4098;
+  gchar line[4099];
+  gchar *endrow = "</row>";
+  gchar *prior, *next;
+  ObitFile *file=NULL;
+  odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
+  gchar *routine = " ParseASDMcalDeviceTable";
+
+  /* error checks */
+  if (err->error) return out;
+
+  out = g_malloc0(sizeof(ASDMcalDeviceTable));
+  out->rows = NULL;
+
+  /* How many rows? */
+  out->nrows = MAX(0, me->ASDMTab->calDeviceRows);
+  if (out->nrows<1) return out;
+
+  /* Finish building it */
+  out->rows = g_malloc0((out->nrows+1)*sizeof(ASDMcalDeviceRow*));
+  for (irow=0; irow<out->nrows; irow++) out->rows[irow] = g_malloc0(sizeof(ASDMcalDeviceRow));
+
+  file = newObitFile("ASDM");
+  retCode = ObitFileOpen(file, calDeviceFile, OBIT_IO_ReadOnly, OBIT_IO_Text, 0, err);
+  if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+
+  /* Loop over file */
+  irow = 0;
+  while (retCode!=OBIT_IO_EOF) {
+
+    retCode = ObitFileReadLine (file, line, maxLine, err);
+    if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+    if (retCode==OBIT_IO_EOF) break;
+
+    /* Parse entries */
+    prior = "<antennaId>Antenna_";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->antennaId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<spectralWindowId>SpectralWindow_";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->spectralWindowId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<feedId>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->feedId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<numReceptor>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numReceptor = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<timeInterval>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->timeInterval = ASDMparse_timeRange(line, maxLine, prior, &next);
+      /* Remove offset from second */
+      if ((out->rows[irow]->timeInterval[1]<out->rows[irow]->timeInterval[0]) &&
+	  (out->rows[irow]->timeInterval[1]>mjdJD0))
+	out->rows[irow]->timeInterval[1] -= mjdJD0;
+      continue;
+    }
+    prior = "<calLoadNames>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->calLoadNames = ASDMparse_strarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<calEff>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->calEff = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<noiseCal>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->noiseCal = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<temperatureLoad>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->temperatureLoad = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+
+    /* Is this the end of a row? */
+    if (g_strstr_len (line, maxLine, endrow)!=NULL) irow++;
+
+    /* Check overflow */
+    Obit_retval_if_fail((irow<=out->nrows), err, out,
+			"%s: Found more rows than allocated (%d)", 
+			routine, out->nrows);
+  } /* end loop over table */
+
+  /* Close up */
+  retCode = ObitFileClose (file, err);
+  if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+  file = ObitFileUnref(file);
+
+  return out;
+} /* end ParseASDMcalDeviceTable */
+
+/** 
+ * Destructor for calDevice table
+ * \param  structure to destroy
+ * \return NULL pointer
+ */
+static ASDMcalDeviceTable* KillASDMcalDeviceTable(ASDMcalDeviceTable* table)
+{
+  olong i;
+
+  if (table==NULL) return NULL;  /* Anybody home? */
+
+  /* Delete row structures */
+  if (table->rows) {
+    for (i=0; i<table->nrows; i++) 
+      table->rows[i] = KillASDMcalDeviceRow(table->rows[i]);
+    g_free(table->rows);
+  }
+  g_free(table);
+  return NULL;
+} /* end KillASDMcalDeviceTable */
 
 /* ----------------------  calPointing ----------------------------------- */
 /** 
@@ -6202,6 +6461,154 @@ static ASDMSysCalTable* KillASDMSysCalTable(ASDMSysCalTable* table)
   g_free(table);
   return NULL;
 } /* end KillASDMSysCalTable */
+
+/* ---------------------- SysPower ----------------------------------- */
+/** 
+ * Destructor for SysPower table row.
+ * \param  structure to destroy
+ * \return NULL row pointer
+ */
+static ASDMSysPowerRow* KillASDMSysPowerRow(ASDMSysPowerRow* row)
+{
+  if (row == NULL) return NULL;
+  if (row->timeInterval)            g_free(row->timeInterval);
+  if (row->switchedPowerDifference) g_free(row->switchedPowerDifference);
+  if (row->switchedPowerSum)        g_free(row->switchedPowerSum);
+  if (row->requantizerGain)         g_free(row->requantizerGain);
+  g_free(row);
+  return NULL;
+} /* end   KillASDMSysPowerRow */
+
+/** 
+ * Constructor for SysPower table parsing from file
+ * \param  SysPowerFile Name of file containing table
+ * \param  err     ObitErr for reporting errors.
+ * \return table structure,  use KillASDMSysPowerTable to free
+ */
+static ASDMSysPowerTable* 
+ParseASDMSysPowerTable(ObitSDMData *me, 
+		       gchar *SysPowerFile, 
+		       ObitErr *err)
+{
+  ASDMSysPowerTable* out=NULL;
+  ObitFile *file=NULL;
+  ObitIOCode retCode;
+  olong irow, maxLine = 4098;
+  odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
+  gchar line[4099];
+  gchar *endrow = "</row>";
+  gchar *prior, *next;
+  gchar *routine = " ParseASDMSysPowerTable";
+
+  /* error checks */
+  if (err->error) return out;
+
+  out = g_malloc0(sizeof(ASDMSysPowerTable));
+  out->rows = NULL;
+
+  /* How many rows? */
+  out->nrows = MAX(0, me->ASDMTab->SysPowerRows);
+  if (out->nrows<1) return out;
+
+  /* Finish building it */
+  out->rows = g_malloc0((out->nrows+1)*sizeof(ASDMSysPowerRow*));
+  for (irow=0; irow<out->nrows; irow++) out->rows[irow] = g_malloc0(sizeof(ASDMSysPowerRow));
+
+  file = newObitFile("ASDM");
+  retCode = ObitFileOpen(file, SysPowerFile, OBIT_IO_ReadOnly, OBIT_IO_Text, 0, err);
+  if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+
+  /* Loop over file */
+  irow = 0;
+  while (retCode!=OBIT_IO_EOF) {
+
+    retCode = ObitFileReadLine (file, line, maxLine, err);
+    if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+    if (retCode==OBIT_IO_EOF) break;
+
+    /* Parse entries */
+    prior = "<antennaId>Antenna_";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->antennaId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<spectralWindowId>SpectralWindow_";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->spectralWindowId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<feedId>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->feedId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<numReceptor>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numReceptor = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<timeInterval>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->timeInterval = ASDMparse_timeRange(line, maxLine, prior, &next);
+      /* Remove offset from second */
+      if ((out->rows[irow]->timeInterval[1]<out->rows[irow]->timeInterval[0]) &&
+	  (out->rows[irow]->timeInterval[1]>mjdJD0))
+	out->rows[irow]->timeInterval[1] -= mjdJD0;
+      continue;
+    }
+    prior = "<switchedPowerDifference>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->switchedPowerDifference = ASDMparse_fltarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<switchedPowerSum>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->switchedPowerSum = ASDMparse_fltarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<requantizerGain>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->requantizerGain = ASDMparse_fltarray (line, maxLine, prior, &next);
+      continue;
+    }
+
+    /* Is this the end of a row? */
+    if (g_strstr_len (line, maxLine, endrow)!=NULL) irow++;
+
+    /* Check overflow */
+    Obit_retval_if_fail((irow<=out->nrows), err, out,
+			"%s: Found more rows than allocated (%d)", 
+			routine, out->nrows);
+  } /* end loop over table */
+
+  /* Close up */
+  retCode = ObitFileClose (file, err);
+  if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+  file = ObitFileUnref(file);
+
+  return out;
+} /* end ParseASDMSysPowerTable */
+
+/** 
+ * Destructor for SysPower table
+ * \param  structure to destroy
+ * \return NULL pointer
+ */
+static ASDMSysPowerTable* KillASDMSysPowerTable(ASDMSysPowerTable* table)
+{
+  olong i;
+
+  if (table==NULL) return NULL;  /* Anybody home? */
+
+  /* Delete row structures */
+  if (table->rows) {
+    for (i=0; i<table->nrows; i++) 
+      table->rows[i] = KillASDMSysPowerRow(table->rows[i]);
+    g_free(table->rows);
+  }
+  g_free(table);
+  return NULL;
+} /* end KillASDMSysPowerTable */
 
 /* ---------------------- Weather ----------------------------------- */
 /** 
