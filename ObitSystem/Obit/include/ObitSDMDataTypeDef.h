@@ -928,11 +928,11 @@ typedef struct {
   /** time Interval (days) */
   odouble *timeInterval;
   /** switched Power Difference (1D array of double) */
-  odouble *switchedPowerDifference;
+  ofloat *switchedPowerDifference;
   /** switched Power Sum (1D array of double) */
-  odouble *switchedPowerSum;
+  ofloat *switchedPowerSum;
   /** Requantizer gain Sum (1D array of double) */
-  odouble *requantizerGain;
+  ofloat *requantizerGain;
 } ASDMSysPowerRow;
 typedef struct {
   /** Number of rows */
