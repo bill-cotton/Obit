@@ -42,6 +42,8 @@ ASDMMainTable* MainTab;
 ASDMAntennaTable* AntennaTab;
 /** calData table */
 ASDMcalDataTable* calDataTab;
+/** calDevice table */
+ASDMcalDeviceTable* calDeviceTab;
 /** calPointing table */
 ASDMcalPointingTable* calPointingTab;
 /** CalReduction table */
@@ -92,6 +94,8 @@ ASDMSwitchCycleTable* SwitchCycleTab;
 ASDMWeatherTable* WeatherTab;
 /** SysCal table */
 ASDMSysCalTable* SysCalTab;
+/** SysPower table */
+ASDMSysPowerTable* SysPowerTab;
 /** XXXX table 
     ASDMXXXXTable* ASDMXXXXTab; */
 /** Reference Frequency */
