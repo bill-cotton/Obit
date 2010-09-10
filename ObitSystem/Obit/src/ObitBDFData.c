@@ -1277,7 +1277,7 @@ void ObitBDFDataClear (gpointer inn)
 
   /* Close file */
   err = newObitErr();
-  ObitFileClose (in->file, err);
+  if (in->file) ObitFileClose (in->file, err);
   err = ObitErrUnref(err);
 
   /* delete this class members */

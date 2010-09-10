@@ -999,7 +999,8 @@ ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong scan)
 
   /* How many? */
   numAnt = in->AntennaTab->nrows;
-  out->nants = numAnt;
+  out->nants  = numAnt;
+  out->maxAnt = numAnt;
 
   /* Find entry  in configDescription table */
   configDescriptionId = in->MainTab->rows[iMain]->configDescriptionId;
@@ -1068,6 +1069,7 @@ ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong scan)
     if ((out->ants[iAnt]->antName[0]=='e') && (out->ants[iAnt]->antName[1]=='a'))
       out->ants[iAnt]->antennaNo = strtol(&out->ants[iAnt]->antName[2],NULL,10);
     else out->ants[iAnt]->antennaNo = out->ants[iAnt]->antennaId;
+    out->maxAnt = MAX(out->maxAnt, out->ants[iAnt]->antennaNo);
 
     /* Find Station */
     stationId = out->ants[iAnt]->stationId;
@@ -1259,11 +1261,11 @@ ObitASDMBand ObitSDMDataFreq2Band (odouble freq)
   return out;
 } /* end ObitSDMDataFreq2Band */
 
-/**  Find first selected Scan
+/**  Find first selected Scan, allows defaults 
  * \param  in      ASDM object
- * \param  selChan Number of selected channels
- * \param  selIF   Number of selected IFs (spectral windows)
- * \param  selBand   Selected band
+ * \param  selChan Number of selected channels [def 0]
+ * \param  selIF   Number of selected IFs (spectral windows)[def 0]
+ * \param  selBand   Selected band [def ASDMBand_Any]
  * \param  selConfig Selected configID, >=0 overrides selIF, selBand
  * \return 1-rel scan number, -1=> problem.
  */
@@ -1312,9 +1314,10 @@ olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF,
       }
       if (jSW>=in->SpectralWindowTab->nrows) return -1;
       /* Finally, is this one a match? */
-      if ((ObitSDMDataFreq2Band (in->SpectralWindowTab->rows[jSW]->refFreq)==selBand) && 
-	  (in->SpectralWindowTab->rows[jSW]->numChan==selChan) && 
-	  (numDD==selIF)) return out;
+      if (((ObitSDMDataFreq2Band (in->SpectralWindowTab->rows[jSW]->refFreq)==selBand) || 
+	   (selBand==ASDMBand_Any)) && 
+	  ((in->SpectralWindowTab->rows[jSW]->numChan==selChan) || (selChan<=0)) && 
+	  ((numDD==selIF) || (selIF<=0))) return out;
     } /* End loop over data descriptions */
   } /* End loop over main table */
 

@@ -41,6 +41,7 @@
 #include "ObitTableANUtil.h"
 #include "ObitTableFQ.h"
 #include "ObitTableFG.h"
+#include "ObitTableCD.h"
 #include "ObitTableCL.h"
 #include "ObitTableCLUtil.h"
 #include "ObitTableBP.h"
@@ -48,6 +49,7 @@
 #include "ObitTableIM.h"
 #include "ObitTableGC.h"
 #include "ObitTablePC.h"
+#include "ObitTableSY.h"
 #include "ObitTableWX.h"
 #include "ObitTableNX.h"
 #include "ObitSDMData.h"
@@ -85,6 +87,10 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iScan,
 		    ObitErr *err);
 /* Copy any FLAG tables */
 void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
+/* Copy  CalDevice to AIPS CD table */
+void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
+/* Copy  SysPower to AIPS SY table */
+void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
 /* Copy any CALIBRATION tables */
 void GetCalibrationInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
 /* Copy any BANDPASS tables */
@@ -114,6 +120,9 @@ void day2dhms(ofloat time, gchar *timeString);
 gboolean CheckAllZero(ObitUVDesc *desc, ofloat *Buffer);
 /*  Write FG table entries for scans intended for online calibration */
 void FlagIntent (ObitSDMData *SDMData, ObitUV* outData, ObitErr* err);
+/* Is a given time in next scan? */
+gboolean nextScan(ObitSDMData *SDMData, olong curScan, odouble time,  
+		  olong *curScanI, olong *nextScanNo, olong *SourID);
 
 /* Program globals */
 gchar *pgmName = "BDFIn";       /* Program name */
@@ -147,6 +156,9 @@ olong uvwcurSourID=-1;                /* Current source ID for uvw calc */
 ofloat uvrot=-0.0;                    /* Current source rotation of u-v */
 ofloat **antLongs=NULL;               /* Array of Antenna longitudes per subarray */
 ofloat **antLats=NULL;                /* Array of Antenna latitudes per subarray */
+olong selScan=-1;                     /* First selected scan number */
+olong selChan=-1;                     /* Selected number of channels */
+olong selIF=-1;                       /* Selected number of IFs (SpWin) */
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
@@ -229,7 +241,9 @@ int main ( int argc, char **argv )
   /* GetGainCurveInfo (inData, outData, err);     GAIN_CURVE tables */
   /* GetInterferometerModelInfo (inData, outData, err); INTERFEROMETER_MODEL tables */
   /* GetPhaseCalInfo (inData, outData, err);      PHASE_CAL tables */
-  GetWeatherInfo (SDMData, outData, err);  /*     WEATHER tables */
+  GetWeatherInfo   (SDMData, outData, err);  /*   Weather table */
+  GetCalDeviceInfo (SDMData, outData, err);  /*   calDevice table */
+  GetSysPowerInfo  (SDMData, outData, err);  /*   SysPower table */
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Check scan intents for online only calibrations */
@@ -667,8 +681,7 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   ObitUVDesc *desc;
   olong ncol;
   gchar *today=NULL;
-  olong i, lim, selChan, selIF, selConfig, iScan, iConfig, numDD, 
-    configDescriptionId;
+  olong i, lim, selConfig, iScan;
   ofloat epoch=2000.0, equinox=2000.0;
   olong nchan=1, npoln=1, nIF=1;
   odouble refFreq, startFreq=1.0;
@@ -702,80 +715,67 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
     }
   }
 
+  /* ConfigID selection */
+  selConfig = -1;
+  ObitInfoListGetTest(myInput, "selConfig", &type, dim, &selConfig);
+  
+  /* Channel selection */
+  selChan = 0;
+  ObitInfoListGetTest(myInput, "selChan", &type, dim, &selChan);
+
   /* Band selection */
   for (i=0; i<12; i++) selBand[i] = 0;
   ObitInfoListGetTest(myInput, "selBand", &type, dim, selBand);
   band = ObitSDMDataBand2Band (selBand);
-  /* Default = first SW */
-  if (band==ASDMBand_Any) 
-    band = ObitSDMDataFreq2Band (SDMData->SpectralWindowTab->rows[0]->refFreq);
-  /* Save for history */
-  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
-  strcpy(selBand,  bandCodes[band]);
-  dim[0] = strlen(selBand);
-  ObitInfoListAlwaysPut(myInput, "selBand", OBIT_string, dim, selBand);
-  Obit_log_error(err, OBIT_InfoErr, "Selecting %s band", bandCodes[band]);
-  ObitErrLog(err);
-
-  /* Channel selection */
-  selChan = 0;
-  ObitInfoListGetTest(myInput, "selChan", &type, dim, &selChan);
-  /* Default = first SW */
-  if (selChan<=0) selChan = SDMData->SpectralWindowTab->rows[0]->numChan;
-  /* Save for history */
-  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
-  ObitInfoListAlwaysPut(myInput, "selChan", OBIT_long, dim, &selChan);
-  Obit_log_error(err, OBIT_InfoErr, "Selecting spectral windows with %d channels", selChan);
-  ObitErrLog(err);
-
-  /* ConfigID selection */
-  selConfig = -1;
-  ObitInfoListGetTest(myInput, "selConfig", &type, dim, &selConfig);
 
   /* IF selection */
   selIF = 0;
   ObitInfoListGetTest(myInput, "selIF", &type, dim, &selIF);
-  /* Default = first scan - what a bizzare format!!!  */
-  configDescriptionId = SDMData->MainTab->rows[0]->configDescriptionId;
-  /* Lookup in configDescription table */
-  for (iConfig=0; iConfig<SDMData->ConfigDescriptionTab->nrows; iConfig++) {
-    if (SDMData->ConfigDescriptionTab->rows[iConfig]->configDescriptionId==configDescriptionId) break;
-  }
-  Obit_return_if_fail((iConfig<SDMData->ConfigDescriptionTab->nrows), err,
-		      "%s: Could not find ConfigDescriptionID %d in ASDM", 
-		      routine, configDescriptionId);
-
-  /* Count number of data descriptions */
-  numDD = 0;
-  i = 0;
-  while(SDMData->ConfigDescriptionTab->rows[iConfig]->dataDescriptionId[i++]>=0) {numDD++;}
-  /* Number of data descriptors = no. spectral windows */
-  if (selIF<=0) selIF = numDD;
-
-  /* Default configID */
-  if (selConfig<0) selConfig = configDescriptionId;
-  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
-  ObitInfoListAlwaysPut(myInput, "selConfig", OBIT_long, dim, &selConfig);
-
-  /* Save for history */
-  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
-  ObitInfoListAlwaysPut(myInput, "selIF", OBIT_long, dim, &selIF);
-  Obit_log_error(err, OBIT_InfoErr, "Selecting scans with %d Spectral Windows", selIF);
-  ObitErrLog(err);
 
   /* Find first selected scan */
   iScan = ObitASDSelScan (SDMData, selChan, selIF, band, selConfig);
   Obit_return_if_fail((iScan>=0), err,
 		      "%s: No scans found matching selection criteria", 
 		      routine);
+  /* Extract ASDM Spectral windows data  */
+  SpWinArray  = ObitSDMDataGetSWArray (SDMData, iScan);
+  Obit_return_if_fail((SpWinArray), err,
+		      "%s: Could not extract Spectral Windows from ASDM", 
+		      routine);
 
-   /* Set default configID */
-  if (selConfig<0) selConfig = SDMData->MainTab->rows[iScan]->configDescriptionId;
+  /* selConfig overrides selBand, selIF */
+  if (selConfig>=0) {
+    /* Set selIF, selBand, default selChan */
+    selIF = SpWinArray->nwinds;
+    band  = ObitSDMDataFreq2Band(SpWinArray->refFreq);
+    /* Default selChans? use first Spectral window */
+    if (selChan<=0) selChan = SpWinArray->winds[0]->numChan;
+
+  } else { /* Selection including selBand, selIF */
+    /* Default selChans? use first Spectral window */
+    if (selChan<=0) selChan = SpWinArray->winds[0]->numChan;
+    if (selIF<=0)   selIF   = SpWinArray->nwinds;
+    if (band==ASDMBand_Any)  band  = ObitSDMDataFreq2Band(SpWinArray->refFreq);
+    /* Set default configID */
+    if (selConfig<0) selConfig = SDMData->MainTab->rows[iScan]->configDescriptionId;
+  }
+
+  /* Save selection for history */
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
   ObitInfoListAlwaysPut(myInput, "selConfig", OBIT_long, dim, &selConfig);
   Obit_log_error(err, OBIT_InfoErr, "Selecting scans with ConfigID %d", selConfig);
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  strcpy(selBand,  bandCodes[band]);
+  dim[0] = strlen(selBand);
+  ObitInfoListAlwaysPut(myInput, "selBand", OBIT_string, dim, selBand);
+  Obit_log_error(err, OBIT_InfoErr, "Selecting %s band", bandCodes[band]);
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListAlwaysPut(myInput, "selIF", OBIT_long, dim, &selIF);
+  Obit_log_error(err, OBIT_InfoErr, "Selecting scans with %d Spectral Windows", selIF);
+  ObitInfoListAlwaysPut(myInput, "selChan", OBIT_long, dim, &selChan);
+  Obit_log_error(err, OBIT_InfoErr, "Selecting spectral windows with %d channels", selChan);
   ObitErrLog(err);
-
+ 
  /* Define output descriptor */
   desc = outData->myDesc;
   /* Extract ASDM data  */
@@ -1224,6 +1224,7 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   outTable->PolarY  = 0.0;
   outTable->dataUtc = 0.0;
   lim = MAXKEYCHARTABLEAN;
+  strncpy (outTable->FRAME, "ITRF", lim);        /* ASDM doesn't say */
   strncpy (outTable->TimeSys, "IAT", lim);       /* ASDM doesn't say */
   strncpy (outTable->ArrName, AntArray->arrayName, lim);
   outTable->FreqID = 0;
@@ -1376,6 +1377,9 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
   for (i=0; i<SpWinArray->nwinds; i++) {
     if (SpWinArray->winds[i]->selected) numIF++;
   }
+  /* Better be some */
+  Obit_return_if_fail((numIF>=1), err,
+		      "%s: NO SpectralWindows selected", routine);
 
   /* Create output FQ table object */
   ver = 1;
@@ -1682,7 +1686,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   gchar selBand[12], begString[17], endString[17];
   ObitASDMBand band;
   ASDMSpectralWindowArray* SpWinArray=NULL;
-  gboolean dropZero=TRUE;
+  gboolean dropZero=TRUE, found=FALSE;
   gchar dataroot[132];
   gchar *filename;
   gchar *routine = "GetData";
@@ -1899,6 +1903,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	}
 	
 	/* Write output */
+	found = TRUE;
 	if ((ObitUVWrite (outData, NULL, err) != OBIT_IO_OK) || (err->error))
 	  Obit_log_error(err, OBIT_Error, "ERROR writing output UV data"); 
 	if (err->error) Obit_traceback_msg (err, routine, outData->name);
@@ -2219,7 +2224,7 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 
 void GetWeatherInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 /*----------------------------------------------------------------------- */
-/*  Convert any WEATHER tables from ASDM  to AIPS WX on outData           */
+/*  Convert any WEATHER table from ASDM  to AIPS WX on outData            */
 /*   Input:                                                               */
 /*      SDMData  ASDM structure                                           */
 /*      outData  Output UV object                                         */
@@ -2315,6 +2320,396 @@ void GetWeatherInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 
 } /* end  GetWeatherInfo */
 
+void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
+/*----------------------------------------------------------------------- */
+/*  Convert the CalDevice table from ASDM  to AIPS CD on outData          */
+/*  Entries are accumulated into AIPS CD table                            */
+/*   Input:                                                               */
+/*      SDMData  ASDM structure                                           */
+/*      outData  Output UV object                                         */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  ObitTableCD*          outTable=NULL;
+  ObitTableCDRow*       outRow=NULL;
+  ASDMcalDeviceTable*   inTab=SDMData->calDeviceTab;
+  ASDMAntennaArray*    AntArray;
+  ASDMSpectralWindowArray* SpWinArray;
+  olong i, j, iRow, oRow, ver, maxAnt, iAnt, jAnt, IFno;
+  olong *antLookup, *SpWinLookup;
+  oint numIF, numPol;
+  ofloat fblank = ObitMagicF();
+  ObitIOAccess access;
+  gchar *routine = "GetCalDeviceInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitUVIsA(outData));
+
+  /* Any entries? */
+  if (inTab->nrows<=0) return;
+
+  /* Print any messages */
+  ObitErrLog(err);
+  
+  /* Extract ASDM SpWin data  - selScan global */
+  SpWinArray  = ObitSDMDataGetSWArray (SDMData, selScan);
+  Obit_return_if_fail((SpWinArray), err,
+		      "%s: Could not extract Spectral Windows from ASDM", 
+		      routine);
+  /* Extract antenna info */
+  AntArray    = ObitSDMDataGetAntArray(SDMData, selScan);
+  Obit_return_if_fail((AntArray), err,
+		      "%s: Could not extract Antenna info from ASDM", 
+		      routine);
+
+  /* Select Spectral windows - use global selChan, selIF */
+  ObitSDMDataSelChan (SpWinArray, selChan, selIF, ASDMBand_Any);
+
+  /* Highest antenna number? */
+  maxAnt = AntArray->maxAnt;
+  numIF  = outData->myDesc->inaxes[outData->myDesc->jlocif];
+  numPol = MAX (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
+  
+  /* Antenna number lookup table */
+  antLookup = g_malloc(maxAnt*sizeof(olong));
+  for (i=0; i<maxAnt; i++) antLookup[i] = -1;  /* For missing ants */
+  for (i=0; i<AntArray->nants; i++) {
+    if ((AntArray->ants[i]->antennaId>=0) && (AntArray->ants[i]->antennaId<maxAnt))
+      antLookup[AntArray->ants[i]->antennaId] = AntArray->ants[i]->antennaNo;
+  }
+
+  /* Spectral window/IF lookup table */ 
+  SpWinLookup = g_malloc(numIF*sizeof(olong));
+  for (i=0; i<numIF; i++) SpWinLookup[i] = -1;  /* For deselected */
+  for (i=0; i<SpWinArray->nwinds; i++) {
+    if ((SpWinArray->winds[i]->spectralWindowId>=0) && 
+	(SpWinArray->winds[i]->spectralWindowId<numIF) &&
+	SpWinArray->winds[i]->selected)
+      SpWinLookup[SpWinArray->winds[i]->spectralWindowId] = SpWinArray->order[i];
+  }
+
+  /* Create output CD table object */
+  ver      = 1;
+  access   = OBIT_IO_ReadWrite;
+  outTable = newObitTableCDValue ("Output table", (ObitData*)outData, 
+				  &ver, access, numIF, numPol, err);
+  if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with CD table");
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  
+  /* Open table */
+  if ((ObitTableCDOpen (outTable, access, err) 
+       != OBIT_IO_OK) || (err->error))  { /* error test */
+    Obit_log_error(err, OBIT_Error, "ERROR opening output CD table");
+    return;
+  }
+  
+  /* Table Header */
+  ObitUVDescJD2Date (AntArray->refJD, outTable->RefDate);
+
+  /* Create output Row */
+  outRow = newObitTableCDRow (outTable);
+  /* attach to table buffer */
+  ObitTableCDSetRow (outTable, outRow, err);
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  
+  /* Initialize output row */
+  outRow->status      = 0;
+  outRow->SubA        = 1;
+  outRow->FreqID      = 1;
+
+  /* Loop over antennas collecting SpWin/IFs for each antenna */
+  for (iAnt=1; iAnt<=maxAnt; iAnt++) {
+    outRow->antennaNo  = iAnt;
+
+    /* Blank data in case missing */
+    for (i=0; i<numIF; i++) {
+      outRow->TCal1[i] = fblank;
+      if (numPol>1) 
+	outRow->TCal2[i] = fblank;
+  }
+    
+    /* loop through input table */
+    for (iRow=0; iRow<inTab->nrows; iRow++) {
+
+      /* Is this the desired antenna? */
+      if ((inTab->rows[iRow]->antennaId>=0) && 
+	  (inTab->rows[iRow]->antennaId<AntArray->nants)) 
+	jAnt = antLookup[inTab->rows[iRow]->antennaId];
+      else jAnt = -1;
+      if (jAnt!=iAnt) continue;
+
+      /* Get 0-rel IF number - must be valid and selected */
+      if ((inTab->rows[iRow]->spectralWindowId>=0) && 
+	  (inTab->rows[iRow]->spectralWindowId<AntArray->nants) &&
+	  SpWinArray->winds[inTab->rows[iRow]->spectralWindowId]->selected) 
+	IFno = SpWinLookup[inTab->rows[iRow]->spectralWindowId];
+      else continue;
+      
+      /* Save to CD table row */
+      j = 0;
+      /* Apply efficiencies to cal temp */
+      outRow->TCal1[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[i]*inTab->rows[iRow]->calEff[j++]);
+      if (numPol>1) 
+	outRow->TCal2[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[i]*inTab->rows[iRow]->calEff[j++]);
+    } /* end loop over input table */
+
+    /* Write */
+    oRow = -1;
+    if ((ObitTableCDWriteRow (outTable, oRow, outRow, err)
+	 != OBIT_IO_OK) || (err->error>0)) { 
+      Obit_log_error(err, OBIT_Error, "ERROR updating CD Table");
+      return;
+    }
+    
+  } /* end Antenna loop */
+
+  /* Close  table */
+  if ((ObitTableCDClose (outTable, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "ERROR closing output CD Table file");
+    return;
+  }
+  
+  /* Tell about it */
+  Obit_log_error(err, OBIT_InfoErr, "Copied calDevice table");
+  
+  /* Cleanup */
+  SpWinArray = ObitSDMDataKillSWArray (SpWinArray);
+  AntArray   = ObitSDMDataKillAntArray(AntArray);
+  outRow     = ObitTableCDRowUnref(outRow);
+  outTable   = ObitTableCDUnref(outTable);
+  if (antLookup)   g_free(antLookup);
+  if (SpWinLookup) g_free(SpWinLookup);
+
+} /* end  GetCalDeviceInfo */
+
+void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
+/*----------------------------------------------------------------------- */
+/*  Convert the SysPower table from ASDM  to AIPS SY on outData           */
+/*  Entries are accumulated into AIPS SY table                            */
+/*  Input SysPower table is modified (antennaId)                          */
+/*   Input:                                                               */
+/*      SDMData  ASDM structure                                           */
+/*      outData  Output UV object                                         */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  ObitTableSY*          outTable=NULL;
+  ObitTableSYRow*       outRow=NULL;
+  ASDMSysPowerTable*     inTab=SDMData->SysPowerTab;
+  ASDMAntennaArray*    AntArray;
+  ASDMSpectralWindowArray* SpWinArray;
+  olong i, iRow, jRow, oRow, ver, maxAnt, IFno, SourNo;
+  olong *antLookup, *SpWinLookup, curScan, curScanI, nextScanNo;
+  oint numIF, numPol;
+  ofloat fblank = ObitMagicF();
+  ObitIOAccess access;
+  gchar *routine = "GetSysPowerInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitUVIsA(outData));
+
+  /* Any entries? */
+  if (inTab->nrows<=0) return;
+
+  /* Print any prior messages */
+  ObitErrLog(err);
+  
+  /* Extract ASDM SpWin data  - selScan global */
+  curScan    = selScan;
+  curScanI   = -1;  /* Force init */
+  SourNo     = 0;
+  nextScanNo = 0;
+  SpWinArray  = ObitSDMDataGetSWArray (SDMData, selScan);
+  Obit_return_if_fail((SpWinArray), err,
+		      "%s: Could not extract Spectral Windows from ASDM", 
+		      routine);
+  /* Extract antenna info */
+  AntArray    = ObitSDMDataGetAntArray(SDMData, selScan);
+  Obit_return_if_fail((AntArray), err,
+		      "%s: Could not extract Antenna info from ASDM", 
+		      routine);
+
+  /* Select Spectral windows - use global selChan, selIF */
+  ObitSDMDataSelChan (SpWinArray, selChan, selIF, ASDMBand_Any);
+
+  /* Highest antenna number? */
+  maxAnt = AntArray->maxAnt;
+  numIF  = outData->myDesc->inaxes[outData->myDesc->jlocif];
+  numPol = MAX (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
+
+  /* Antenna number lookup table */
+  antLookup = g_malloc(maxAnt*sizeof(olong));
+  for (i=0; i<maxAnt; i++) antLookup[i] = -1;  /* For missing ants */
+  for (i=0; i<AntArray->nants; i++) {
+    if ((AntArray->ants[i]->antennaId>=0) && (AntArray->ants[i]->antennaId<maxAnt))
+      antLookup[AntArray->ants[i]->antennaId] = AntArray->ants[i]->antennaNo;
+  }
+
+  /* Spectral window/IF lookup table */ 
+  SpWinLookup = g_malloc(numIF*sizeof(olong));
+  for (i=0; i<numIF; i++) SpWinLookup[i] = -1;  /* For deselected */
+  for (i=0; i<SpWinArray->nwinds; i++) {
+    if ((SpWinArray->winds[i]->spectralWindowId>=0) && 
+	(SpWinArray->winds[i]->spectralWindowId<numIF) &&
+	SpWinArray->winds[i]->selected)
+      SpWinLookup[SpWinArray->winds[i]->spectralWindowId] = SpWinArray->order[i];
+  }
+
+  /* Create output SY table object */
+  ver      = 1;
+  access   = OBIT_IO_ReadWrite;
+  outTable = newObitTableSYValue ("Output table", (ObitData*)outData, 
+				  &ver, access, numIF, numPol, err);
+  if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with SY table");
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  
+  /* Open table */
+  if ((ObitTableSYOpen (outTable, access, err) 
+       != OBIT_IO_OK) || (err->error))  { /* error test */
+    Obit_log_error(err, OBIT_Error, "ERROR opening output SY table");
+    return;
+  }
+  
+  /* Create output Row */
+  outRow = newObitTableSYRow (outTable);
+  /* attach to table buffer */
+  ObitTableSYSetRow (outTable, outRow, err);
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+
+  /* Have to collect multiple SpWin into one record */
+  
+  /* Initialize output row */
+  outRow->status      = 0;
+  outRow->SubA        = 1;
+  outRow->FreqID      = 1;
+  /* Blank data in case missing */
+  for (i=0; i<numIF; i++) {
+    outRow->PwrDif1[i] = fblank;
+    outRow->PwrSum1[i] = fblank;
+    outRow->Gain1[i]   = fblank;
+    if (numPol>1) {
+      outRow->PwrDif2[i] = fblank;
+      outRow->PwrSum2[i] = fblank;
+      outRow->Gain2[i]   = fblank;
+    }
+  }
+    
+  /* loop through input table */
+  for (iRow=0; iRow<inTab->nrows; iRow++) {
+
+    /* Look for previously handled data (antennaId=-10) */
+    if (inTab->rows[iRow]->antennaId<=-10) continue;
+
+    /* Is this in the same scan?  Antennas may change but not SpWin */
+    if (nextScan(SDMData, curScan, inTab->rows[iRow]->timeInterval[0], 
+		&curScanI, &nextScanNo, &SourNo)) {
+      curScan = nextScanNo;
+
+      /* Extract antenna info */
+      AntArray = ObitSDMDataKillAntArray (AntArray);  /* Delete old */
+      AntArray = ObitSDMDataGetAntArray(SDMData, curScan);
+      Obit_return_if_fail((AntArray), err,
+			  "%s: Could not extract Antenna info from ASDM", 
+			  routine);
+
+      /* Antenna number lookup table */
+      antLookup = g_malloc(maxAnt*sizeof(olong));
+      for (i=0; i<maxAnt; i++) antLookup[i] = -1;  /* For missing ants */
+      for (i=0; i<AntArray->nants; i++) {
+	if ((AntArray->ants[i]->antennaId>=0) && (AntArray->ants[i]->antennaId<maxAnt))
+	  antLookup[AntArray->ants[i]->antennaId] = AntArray->ants[i]->antennaNo;
+      }
+    } /* End new scan */
+      
+    /* Save info to SY table row */
+    outRow->Time          = inTab->rows[iRow]->timeInterval[0]-refJD;
+    outRow->TimeI         = inTab->rows[iRow]->timeInterval[1];
+    outRow->SourID        = SourNo;
+    /* Convert antennaID to antenna number */
+    if ((inTab->rows[iRow]->antennaId>=0) && 
+	(inTab->rows[iRow]->antennaId<AntArray->nants)) 
+      outRow->antennaNo = antLookup[inTab->rows[iRow]->antennaId];
+    else continue;  /* ignore if antennaId bad */
+
+    /* Search table until find entry for same antennaId with a later time */
+    for (jRow=iRow; jRow<inTab->nrows; jRow++) {
+      /* Gone far enough? */
+      if ((inTab->rows[jRow]->timeInterval[0]>inTab->rows[iRow]->timeInterval[0])) break;
+      /* DEBUG 
+	 if ((inTab->rows[jRow]->timeInterval[0]>inTab->rows[iRow]->timeInterval[0]) &&
+	 (inTab->rows[jRow]->antennaId==inTab->rows[iRow]->antennaId)) break; */
+
+      /* Look for previously handled data (antennaId=-10) */
+      if (inTab->rows[jRow]->antennaId<=-10) continue;
+
+      /* Desired antenna? */
+      if (inTab->rows[jRow]->antennaId!=inTab->rows[iRow]->antennaId) continue;
+
+      /* Must want this one - work out IF number - must be valid and selected */
+      if ((inTab->rows[jRow]->spectralWindowId>=0) && 
+	  (inTab->rows[jRow]->spectralWindowId<AntArray->nants) &&
+	  SpWinArray->winds[inTab->rows[jRow]->spectralWindowId]->selected) 
+	IFno = SpWinLookup[inTab->rows[jRow]->spectralWindowId];
+      else continue;
+      
+      /* snatch data */
+      outRow->PwrDif1[IFno] = inTab->rows[jRow]->switchedPowerDifference[0];
+      outRow->PwrSum1[IFno] = inTab->rows[jRow]->switchedPowerSum[0];
+      outRow->Gain1[IFno]   = inTab->rows[jRow]->requantizerGain[0];
+      if (numPol>1) {
+	outRow->PwrDif2[IFno] = inTab->rows[jRow]->switchedPowerDifference[1];
+	outRow->PwrSum2[IFno] = inTab->rows[jRow]->switchedPowerSum[1];
+	outRow->Gain2[IFno]   = inTab->rows[jRow]->requantizerGain[1];
+      }
+      /* Mark table row as done */
+      inTab->rows[jRow]->antennaId = -10;
+    } /* end loop looking for rest of the IFs */
+    /* Write */
+    oRow = -1;
+    if ((ObitTableSYWriteRow (outTable, oRow, outRow, err)
+	 != OBIT_IO_OK) || (err->error>0)) { 
+      Obit_log_error(err, OBIT_Error, "ERROR updating SY Table");
+      return;
+    }
+    /* Blank data in case missing */
+    for (i=0; i<numIF; i++) {
+      outRow->PwrDif1[i] = fblank;
+      outRow->PwrSum1[i] = fblank;
+      outRow->Gain1[i]   = fblank;
+      if (numPol>1) {
+	outRow->PwrDif2[i] = fblank;
+	outRow->PwrSum2[i] = fblank;
+	outRow->Gain2[i]   = fblank;
+      }
+    }
+    
+  } /* end loop over input table */
+  
+    /* Close  table */
+  if ((ObitTableSYClose (outTable, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "ERROR closing output SY Table file");
+    return;
+  }
+  
+  /* Tell about it */
+  Obit_log_error(err, OBIT_InfoErr, "Copied SysPower table");
+  
+  /* Cleanup */
+  outRow   = ObitTableSYRowUnref(outRow);
+  outTable = ObitTableSYUnref(outTable);
+  ObitSDMDataKillSWArray (SpWinArray);
+  ObitSDMDataKillAntArray (AntArray);
+  if (antLookup)   g_free(antLookup);
+  if (SpWinLookup) g_free(SpWinLookup);
+
+} /* end  GetSysPowerInfo */
+
 /** 
  * Convert Time in days to a human readable form "dd/hh:mm:ss.s"
  * \param time  Time in days
@@ -2376,3 +2771,55 @@ gboolean CheckAllZero (ObitUVDesc *desc, ofloat *Buffer)
 
   return out;
 } /* end CheckAllZero */
+
+/*----------------------------------------------------------------------- */
+/*  Is a given time in the current scan?                                  */
+/*   Input:                                                               */
+/*      SDMData   ASDM structure                                          */
+/*      curScan   Current scan number                                     */
+/*       time     Time to test in JD                                      */
+/*       curScanI Current scan index in ScanTab, updated on new scan      */
+/*       nextScan Scan number of next scan, updated on new scan           */
+/*       SourNo   Source number for next Scan, updated on new scan        */
+/*   Return:                                                              */
+/*       TRUE if time in another scan                                     */
+/*----------------------------------------------------------------------- */
+gboolean nextScan(ObitSDMData *SDMData, olong curScan, odouble time,  
+		  olong *curScanI, olong *nextScanNo, olong *SourNo)
+{
+  gboolean out = FALSE;
+  olong iScan = *curScanI;
+  olong i, iMain, fieldId, jField, sourceId, jSource;
+
+  /* New scan? */
+  if ((iScan>=0) && (time<=SDMData->ScanTab->rows[iScan]->endTime)) return out;
+  out = TRUE;
+
+  /* Find scan whose end time greater than time - use last if not found */
+  iScan = MAX(0, iScan);
+  for (i=iScan; i<SDMData->ScanTab->nrows; i++) {
+    if (time<=SDMData->ScanTab->rows[i]->endTime) break;
+  }
+  iScan = MIN (i, SDMData->ScanTab->nrows-1);
+  *curScanI   = iScan;
+  *nextScanNo = SDMData->ScanTab->rows[iScan]->scanNumber;
+
+  /* Now lookup source */
+  /* Find scan number in MainTab */
+  for (iMain=0; iMain<SDMData->MainTab->nrows; iMain++) {
+    if (SDMData->MainTab->rows[iMain]->scanNumber==(*nextScanNo)) break;
+  }
+
+  /* Source Id - have to look down goddamn tree */
+  fieldId = SDMData->MainTab->rows[iMain]->fieldId;
+  for (jField=0; jField<SDMData->FieldTab->nrows; jField++) {
+    if (SDMData->FieldTab->rows[jField]->fieldId==fieldId) break;
+  }
+  sourceId = SDMData->FieldTab->rows[jField]->sourceId;
+  for (jSource=0; jSource<SDMData->SourceTab->nrows; jSource++) {
+    if (SDMData->SourceTab->rows[jSource]->sourceId==sourceId) break;
+  }
+  *SourNo = SDMData->SourceTab->rows[jSource]->sourceNo;
+
+  return out;
+} /* end nextScan */

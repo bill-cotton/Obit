@@ -200,8 +200,8 @@ class OData(ODataPtr):
         Optional parameters, values only used if table created
         numOrb    = Number of orbital parameters (AN)
         numPCal   = Number of polarization parameters per IF (AN)
-        numIF     = Number of IFs (FQ, SN, CL, BP, BL, TY, CQ)
-        numPol    = Number of Stokes' (AN, SN, CL, BP, BL, PC, TY, GC, MC, IM)
+        numIF     = Number of IFs (CD, FQ, SN, CL, BP, BL, SY, TY, CQ)
+        numPol    = Number of Stokes' (AN, SN, CD, CL, BP, BL, PC, SY, TY, GC, MC, IM)
         numTerm   = Number of terms in model polynomial (CL)
         numChan   = Number of spectral channels (BP)
         numTomes  = Number of Phase cal tones (PC)

@@ -179,8 +179,8 @@ void ObitTableSelDefault (ObitTableDesc* in, ObitTableSel* sel)
   g_assert (ObitIsA(in, ObitTableDescGetClass()));
   g_assert (ObitIsA(sel, &myClassInfo));
 
-  /* Index as well `
-     ObitTableDescIndex(in);  excessive  */
+  /* Index as well if needed */
+  if (in->lrow<=0) ObitTableDescIndex(in);  
 } /* end ObitTableSelDefault */
 
 /**
