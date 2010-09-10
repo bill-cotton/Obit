@@ -126,6 +126,8 @@ typedef struct {
   odouble refJD;
   /** Number of rows */
   olong nants;
+  /** Highest antenna number */
+  olong maxAnt;
   /** Array of Antenna entries */
   ASDMAntennaArrayEntry **ants;
 } ASDMAntennaArray;
