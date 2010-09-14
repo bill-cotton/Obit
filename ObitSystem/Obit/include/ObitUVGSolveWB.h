@@ -50,8 +50,11 @@
  * \li "subA"    OBIT_int   (1,1,1) Selected subarray (default 1)
  * \li "solInt"  OBIT_float (1,1,1) Solution interval (min). (default scan)
  * \li "refAnt"  OBIT_int   (1,1,1) Ref ant to use. (default 1)
+ * \li "refAnts" OBIT_int   (?,1,1) list of Ref ants to use. (default (1))
  * \li "avgPol"  OBIT_bool  (1,1,1) True if RR and LL to be averaged (false)
  * \li "avgIF"   OBIT_bool  (1,1,1) True if all IFs to be averaged (false)
+ *                                  otherwise individual IF fits.
+ * \li "doTwo"   OBIT_bool  (1,1,1) Use 2 BL combinations as well as 1 BL. (true)
  * \li "minSNR"  OBIT_float (1,1,1) Minimum acceptable SNR (5)
  * \li "doMGM"   OBIT_bool  (1,1,1) True then find the mean gain modulus (true)
  * \li "elevMGM" OBIT_float (1,1,1) Min. elevation to include in mean gain modulus
@@ -114,6 +117,8 @@ typedef struct {
   olong maxAnt;
   /* Number of baselines */
   olong numBase;
+  /* Number of spectral channels */
+  olong numChan;
   /* Reference channel */
   ofloat refChan;
   /* Time averaging (days) - bin size */
@@ -122,10 +127,16 @@ typedef struct {
   ofloat freqAvg;
   /* Average polarization?  If TRUE, only one poln. in data */
   gboolean avgPoln;
+  /* Average IF?  otherwise single IF fits */
+  gboolean avgIF;
+  /* Use two baseline combinations as well as 1 baseline */
+  gboolean doTwo;
   /* Center time of observations (days) */
   odouble timec;
   /* Actual time interval (days) */
   ofloat timei;
+  /* RMS Phase residual */
+  ofloat RMSRes;
   /* Subarray number */
   olong suba;
   /* Source Id if present else -1 */
@@ -138,6 +149,8 @@ typedef struct {
   olong curAnt;
   /* Current (0-rel) polarization being solved for */
   olong curPoln;
+  /* Current (0-rel) IF being solved for */
+  olong curIF;
   /* Array with Frequency offsets for antenna stacked data arrays (GHz) */
   ObitFArray *antFreqOff;
   /* Array of stacked antenna phases per antenna/poln (ant varies fastest) */

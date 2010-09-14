@@ -117,14 +117,16 @@ modelParm                           Initial parameters (maj, min, pa, type)
                                     alpha, beta...
 **PARAM** int 1
 solnVer                             SN table to write
-**PARAM** int 1
-refAnt            0                 Reference antenna
+**PARAM** int 5
+refAnts           0                 Reference antenna(s)
 **PARAM** float 1
 solInt            0.0               Solution interval (min)
 **PARAM** str 4
 solType                             Soln. Type: '  ', 'L1', 
 **PARAM** str 4
 solMode                             Soln. Mode:'A&P', 'P', 'P!A', "DELA"
+**PARAM** boo 1 **DEF** T
+doTwo                               1 & 2 baseline combs for SolMode="DELA"
 **PARAM** boo 1 **DEF** F
 avgPol                              Avg. poln?
 **PARAM** boo 1 **DEF** F
@@ -300,12 +302,19 @@ Adverbs:
              full weight. (default all)
   WtUV.......Weighting (wrt 1) to use outside of basic UVRange
              [def 0.0]
-  refAnt.....Reference antenna number
+  refAnts....List of acceptable Reference antenna numbers
+             For solMode="DELA" multiple reference antennas may be 
+             atempted.
+             For other solution modes, only the first value is used.
   solInt.....Solution interval (min)
   solType....Solution Type: '  ', 'L1', 
   solMode....Solution Mode:'A&P', 'P', 'P!A',
              "DELA" => solve for group delay and phase
-  avgPol.....Average Polarizations in scalibration? [def False]
+  doTwo......If true use one and two baseline combinations for
+             solMode="DELA" calibration.  If False then only
+             the baseline from the reference antenna to each 
+             antenna is used.
+  avgPol.....Average Polarizations in calibration? [def False]
   avgIF......Average IFs in calibration? [def False]
   doMGM......Apply mean gain modulus to A&P soln.
   elevMGM....Minimum elevation for mean gain modulus average.

@@ -56,6 +56,7 @@
 #include "ObitBDFData.h"
 #include "ObitHistory.h"
 #include "ObitPrecess.h"
+#include "ObitVLAGain.h"
 #ifndef VELIGHT
 #define VELIGHT 2.997924562e8
 #endif
@@ -97,8 +98,8 @@ void GetCalibrationInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
 void GetBandpassInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
 /* Copy any SYSTEM_TEMPERATURE tables */
 void GetTSysInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
-/* Copy any GAIN_CURVEtables */
-void GetGainCurveInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
+/* Get Gain curve  (GC) table */
+void GetGainCurveInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
 /* Copy any PHASE_CALtables */
 void GetPhaseCalInfo (ObitData *inData, ObitUV *outData, 
 				 ObitErr *err);
@@ -123,6 +124,8 @@ void FlagIntent (ObitSDMData *SDMData, ObitUV* outData, ObitErr* err);
 /* Is a given time in next scan? */
 gboolean nextScan(ObitSDMData *SDMData, olong curScan, odouble time,  
 		  olong *curScanI, olong *nextScanNo, olong *SourID);
+/* Nominal VLA sensitivity */
+ofloat nomSen(ASDMAntennaArray*  AntArray);
 
 /* Program globals */
 gchar *pgmName = "BDFIn";       /* Program name */
@@ -238,12 +241,12 @@ int main ( int argc, char **argv )
   /* GetCalibrationInfo (inData, outData, err);   CALIBRATION tables */
   /* GetBandpassInfo (inData, outData, err);      BANDPASS tables */
   /* GetTSysInfo (inData, outData, err);          SYSTEM_TEMPERATURE tables */
-  /* GetGainCurveInfo (inData, outData, err);     GAIN_CURVE tables */
   /* GetInterferometerModelInfo (inData, outData, err); INTERFEROMETER_MODEL tables */
   /* GetPhaseCalInfo (inData, outData, err);      PHASE_CAL tables */
   GetWeatherInfo   (SDMData, outData, err);  /*   Weather table */
   GetCalDeviceInfo (SDMData, outData, err);  /*   calDevice table */
   GetSysPowerInfo  (SDMData, outData, err);  /*   SysPower table */
+  GetGainCurveInfo (SDMData, outData, err);  /* gain curve (GC) table */
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Check scan intents for online only calibrations */
@@ -738,6 +741,7 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
 		      "%s: No scans found matching selection criteria", 
 		      routine);
   /* Extract ASDM Spectral windows data  */
+  selScan = iScan;    /* Save to global */
   SpWinArray  = ObitSDMDataGetSWArray (SDMData, iScan);
   Obit_return_if_fail((SpWinArray), err,
 		      "%s: Could not extract Spectral Windows from ASDM", 
@@ -1184,7 +1188,7 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   g_assert (ObitUVIsA(outData));
   
   /* Extract antenna info */
-  AntArray    = ObitSDMDataGetAntArray(SDMData, 1);
+  AntArray    = ObitSDMDataGetAntArray(SDMData, selScan);
 
   /* Create output Antenna table object */
   ver      = 1;
@@ -2151,7 +2155,7 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   }
   
   /* Antenna array to lookup antenna numbers */
-  AntArray    = ObitSDMDataGetAntArray(SDMData, 1);
+  AntArray    = ObitSDMDataGetAntArray(SDMData, selScan);
   Obit_return_if_fail((AntArray), err,
 		      "%s: Could not extract Antenna info from ASDM", 
 		      routine);
@@ -2710,6 +2714,130 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 
 } /* end  GetSysPowerInfo */
 
+void GetGainCurveInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
+/*----------------------------------------------------------------------- */
+/*  Generate AIPS GC on outData                                           */
+/*  Gives band average Stokes I gain curves                               */
+/*   Input:                                                               */
+/*      SDMData  ASDM structure                                           */
+/*      outData  Output UV object                                         */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  ObitTableGC*       outTable=NULL;
+  ObitTableGCRow*    outRow=NULL;
+  ASDMAntennaArray*  AntArray;
+  olong i, j, iAnt, Ant, oRow, ver;
+  ofloat gains[10], sens, fblank = ObitMagicF();
+;
+  odouble refJD, Freq;
+  oint numIF, numPol, numTabs;
+  ObitIOAccess access;
+  gchar *routine = "GetGainCurveInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitUVIsA(outData));
+
+   /* Extract antenna info */
+  AntArray    = ObitSDMDataGetAntArray(SDMData, selScan);
+  refJD       = AntArray->refJD;
+  Freq        = outData->myDesc->crval[outData->myDesc->jlocf];
+  sens        = nomSen(AntArray); /* get nominal sensitivity */
+
+ /* Create output GC table object */
+  ver      = 1;
+  access   = OBIT_IO_ReadWrite;
+  numIF    = outData->myDesc->inaxes[outData->myDesc->jlocif];
+  numPol   = MAX (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
+  numTabs  = 4;   /* 4 values in gain curves */
+  outTable = newObitTableGCValue ("Output table", (ObitData*)outData, 
+				  &ver, access, numIF, numPol, numTabs, err);
+  if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with GC table");
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  
+  /* Open table */
+  if ((ObitTableGCOpen (outTable, access, err) 
+       != OBIT_IO_OK) || (err->error))  { /* error test */
+    Obit_log_error(err, OBIT_Error, "ERROR opening output GC table");
+    return;
+  }
+  
+  /* Create output Row */
+  outRow = newObitTableGCRow (outTable);
+  /* attach to table buffer */
+  ObitTableGCSetRow (outTable, outRow, err);
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  
+  /* Initialize output row */
+  outRow->status = 0;
+  
+  /* over antennas */
+  for (iAnt=1; iAnt<=AntArray->nants; iAnt++) {
+
+    Ant = AntArray->ants[iAnt-1]->antennaNo;  /* Actual antenna number */
+
+    /* get curve */
+    ObitVLAGainParseGain (Ant, refJD, Freq, gains);
+    
+    /* Save to GC table */
+    outRow->antennaNo  = Ant;
+    outRow->SubArray   = 1;
+    outRow->FreqID     = 1;
+    for (i=0; i<numIF; i++) {
+      outRow->Type1[i] = 2;
+      outRow->NTerm1[i]= numTabs;
+      outRow->XTyp1[i] = 2;
+      outRow->YTyp1[i] = 2;
+      outRow->XVal1[i] = fblank;
+      outRow->sens1[i] = sens;
+      for (j=0; j<numTabs; j++) {
+	outRow->YVal1[i*numTabs+j] = fblank;
+	outRow->gain1[i*numTabs+j] = gains[j];
+      }
+    }
+    if (numPol>1) {   /* 2 poln */
+      for (i=0; i<numIF; i++) {
+	outRow->Type2[i] = 2;
+	outRow->NTerm2[i]= numTabs;
+	outRow->XTyp2[i] = 2;
+	outRow->YTyp2[i] = 2;
+	outRow->XVal2[i] = fblank;
+	outRow->sens2[i] = sens;
+	for (j=0; j<numTabs; j++) {
+	  outRow->YVal2[i*numTabs+j] = fblank;
+	  outRow->gain2[i*numTabs+j] = gains[j];
+	}
+      }
+    }
+    
+    /* Write */
+    oRow = -1;
+    if ((ObitTableGCWriteRow (outTable, oRow, outRow, err)
+	 != OBIT_IO_OK) || (err->error>0)) { 
+      Obit_log_error(err, OBIT_Error, "ERROR updating GC Table");
+      return;
+    }
+    
+  } /* end loop over input table */
+    
+    /* Close  table */
+    if ((ObitTableGCClose (outTable, err) 
+	 != OBIT_IO_OK) || (err->error>0)) { /* error test */
+      Obit_log_error(err, OBIT_Error, "ERROR closing output GC Table file");
+      return;
+    }
+
+    /* Tell about it */
+    Obit_log_error(err, OBIT_InfoErr, "Generated GC table %d", ver);
+
+    /* Cleanup */
+    outRow   = ObitTableGCRowUnref(outRow);
+    outTable = ObitTableGCUnref(outTable);
+    ObitSDMDataKillAntArray (AntArray);
+} /* end  GetGainCurveInfo */
+
 /** 
  * Convert Time in days to a human readable form "dd/hh:mm:ss.s"
  * \param time  Time in days
@@ -2823,3 +2951,39 @@ gboolean nextScan(ObitSDMData *SDMData, olong curScan, odouble time,
 
   return out;
 } /* end nextScan */
+
+/*----------------------------------------------------------------------- */
+/*  Get nominal sensitivity if EVLA                                       */
+/*  Values as per EVLA web site Sep. 2010 (some interpolation)            */
+/*   Input:                                                               */
+/*     AntArray  Antenna information array                                */
+/*   Return:                                                              */
+/*       Nominal sensitivity in K/Jy if EVLA, else fblank                 */
+/*----------------------------------------------------------------------- */
+ofloat nomSen(ASDMAntennaArray*  AntArray)
+{
+  ofloat out = ObitMagicF();
+  olong i, band;
+   /* Number of bands tabulated */
+  olong nband=10;
+ /* Upper frequency of bands */
+  odouble upFreq[] = 
+    /*  4        P      L       S      C       X      U        K       A      Q */
+    {100.0e6, 900.0e6, 2.0e9, 3.7e9, 7.5e9, 12.0e9, 18.0e9, 26.5e9, 40.0e9, 60.0e9};
+  /* Band sensitivity EVLA web site Sep 2010 */
+  ofloat bandSen[] = 
+    /*  4(Ha)     P      L     S(?)    C       X      U        K       A(?)    Q */
+    {0.071,   0.071,  0.098,  0.12,  0.123, 0.112,  0.103,   0.071,  0.066, 0.062};
+
+  /* Only for EVLA */
+  if (strncmp(AntArray->arrayName, "EVLA", 4)) return out;
+ 
+  /* Lookup band */
+  band = 0;
+  for (i=0; i<nband; i++) {
+    band = i;
+    if (AntArray->refFreq<upFreq[i]) break;
+  }
+  
+  return bandSen[band];
+} /* end nomSen  */

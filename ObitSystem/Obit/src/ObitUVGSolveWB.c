@@ -1,3 +1,12 @@
+/* Thoughts 
+X1) use rms residual phase to directly determine final SNR
+X  (ref = max of any others )
+X2) recompute stacked data deighting by antenna SNR
+3) put some constraint on soln - say a penalty to keep from going wild.
+X4) can get very bad soln with good data - ant 4 w/ref 5.
+X5) Fitting FFT poor, 4-5 9:14:27 5=ref
+X6) stacking baselines in correct order? (sign of ant-ref)
+ */
 /* $Id: ObitUVGSolveWB.c 163 2010-03-01 15:05:52Z bill.cotton $ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2010                                               */
@@ -88,8 +97,12 @@ static olong
 GetRefAnt (ScanData *scanData, ObitErr *err);
 
 /** Private: initial (FFT) solution for one antenna  */
+static gboolean 
+initAntSolve (ObitUVGSolveWB *in, olong iAnt, olong refAnt, ObitErr *err);
+
+/** Private: Stack baselines for one antenna  */
 static void 
-initAntSolve (ObitUVGSolveWB *in, olong iAnt, ObitErr *err);
+stackAnt (ObitUVGSolveWB *in, olong iAnt, ObitErr *err);
 
 /** Private: Determine SNR of solution */
 static void   
@@ -140,6 +153,21 @@ void ObitCArrayFMulEnd (ObitCArray* Cin, ObitFArray* Fin, ObitCArray* out);
 /** Private: Add elements of two FArrays, second adjusted to end of first  */
 void ObitFArrayAddEnd (ObitFArray* in1, ObitFArray* in2, ObitFArray* out);
 
+/** Private: Harmonic sum of elements of two FArrays, second adjusted to end of first  */
+void ObitFArrayHarmAddEnd (ObitFArray* in1, ObitFArray* in2, ObitFArray* out);
+
+/** Private: Add square of sum of elements of two FArrays, 
+    second adjusted to end of first  */
+void ObitFArrayAddEnd2 (ObitFArray* in1, ObitFArray* in2, ObitFArray* out, olong *count);
+
+/** Private: Accumulate square of harmonic sum of elements of two FArrays, 
+    second adjusted to end of first  */
+void ObitFArrayHarmAccEnd2 (ObitFArray* in1, ObitFArray* in2, ObitFArray* out,
+			    olong *count);
+
+/** Privaste: Calculate SNR from decorrelation */
+static ofloat 
+decorSNR (ofloat amp, ofloat sumw, ofloat sumww, ofloat tfact, olong count);
 
 #if HAVE_GSL==1  /* GSL stuff */
 /** Private Fringe fitting function calculating model  */
@@ -300,9 +328,12 @@ ObitUVGSolveWB* ObitUVGSolveWBCreate (gchar* name)
  * \li "solnVer" OBIT_int   (1,1,1) Solution (SN) table to write; 0=> create new.
  * \li "subA"    OBIT_int   (1,1,1) Selected subarray (default 1)
  * \li "solInt"  OBIT_float (1,1,1) Solution interval (min). (default scan)
- * \li "refAnt"  OBIT_int   (1,1,1) Ref ant to use. (default 1)
+ * \li "refAnt"  OBIT_int   (1,1,1) Single Ref ant to use. (default most common)
+ * \li "refAnts" OBIT_int   (?,1,1) list of Ref ants to use. (default (most common))
  * \li "avgPol"  OBIT_bool  (1,1,1) True if RR and LL to be averaged (false)
  * \li "avgIF"   OBIT_bool  (1,1,1) True if all IFs to be averaged (false)
+ *                                  otherwise individual IF fits.
+ * \li "doTwo"   OBIT_bool  (1,1,1) Use 2 BL combinations as well as 1 BL. (true)
  * \li "minSNR"  OBIT_float (1,1,1) Minimum acceptable SNR (5)
  * \li "doMGM"   OBIT_bool  (1,1,1) True then find the mean gain modulus (false)
  * \li "elevMGM" OBIT_float (1,1,1) Min. elevation to include in mean gain modulus
@@ -338,7 +369,7 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
   oint numPol, numIF, numAnt, suba, minno, prtlv, mode;
   ofloat solInt, snrmin, uvrang[2], wtuv, FractOK, minOK=0.1;
   olong itemp, kday, khr, kmn, ksec;
-  ofloat *antwt=NULL,fblank = ObitMagicF();
+  ofloat *antwt=NULL, fblank = ObitMagicF();
   gboolean avgpol, dol1, empty;
   gboolean done, good, oldSN, *gotAnt;
   gchar soltyp[5], solmod[5];
@@ -421,13 +452,12 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
   numBL  = (numAnt * (numAnt-1)) / 2;
   
   /* Get parameters from inUV */
-  in->refAnt = -1;
-  ObitInfoListGetTest(in->info, "refAnt", &type, dim, &in->refAnt);
   avgpol = FALSE;
   ObitInfoListGetTest(in->info, "avgPol", &type, dim, &avgpol);
   if (numPol<=1) avgpol = FALSE;  /* Don't average if only one */
   snrmin = 5.0;
   ObitInfoListGetTest(in->info, "minSNR", &type, dim, &snrmin);
+  in->minSNR = snrmin;
   soltyp[0] = soltyp[1] = soltyp[2] = soltyp[3] = ' '; soltyp[4] = 0;
   ObitInfoListGetTest(in->info, "solType", &type, dim, soltyp);
   solmod[0] = solmod[1] = solmod[2] = solmod[3] = ' '; solmod[4] = 0;
@@ -530,7 +560,7 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
     if (done) break; still have OK data */
     
     /* Write time if requested */
-    if (prtlv >= 4) {
+    if (prtlv >= 3) {
       kday = in->scanData->timec;
       timex = (in->scanData->timec - kday) * 24.;
       khr = timex;
@@ -567,11 +597,11 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
       if (gotAnt[iAnt]) {
 	good = FALSE; /* Until proven */
 	row->antNo  = iAnt+1; 
-	row->MBDelay1 = -in->antDelay[iAnt*numIF*numPol]*1.0e-9; 
+	row->MBDelay1 = -in->antDelay[iAnt*numIF*numPol]; 
 	for (i=0; i<numIF; i++) {
 	  row->Real1[i]   =  in->antGain[(iAnt*numIF*numPol+i)*2];
-	  row->Imag1[i]   = -in->antGain[(iAnt*numIF*numPol+i)*2+1];
-	  row->Delay1[i]  = -in->antDelay[iAnt*numIF*numPol+i]*1.0e-9;
+	  row->Imag1[i]   =  in->antGain[(iAnt*numIF*numPol+i)*2+1];
+	  row->Delay1[i]  =  in->antDelay[iAnt*numIF*numPol+i];
 	  row->Weight1[i] =  in->antWeight[iAnt*numIF*numPol+i];
 	  if (row->Weight1[i]<=0.0) {
 	    row->Real1[i]   = fblank;
@@ -583,11 +613,11 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
 	  if (row->Weight1[i]<=0.0) cntBad++;    /* DEBUG */
 	}
 	if (numPol>1) {
-	  row->MBDelay2 = -in->antDelay[iAnt*numIF*numPol+numIF]*1.0e-9; 
+	  row->MBDelay2 = -in->antDelay[iAnt*numIF*numPol+numIF]; 
 	  for (i=0; i<numIF; i++) {
 	    row->Real2[i]   =  in->antGain[(iAnt*numIF*numPol+i+numIF)*2];
-	    row->Imag2[i]   = -in->antGain[(iAnt*numIF*numPol+i+numIF)*2+1];
-	    row->Delay2[i]  = -in->antDelay[iAnt*numIF*numPol+i+numIF]*1.0e-9;
+	    row->Imag2[i]   =  in->antGain[(iAnt*numIF*numPol+i+numIF)*2+1];
+	    row->Delay2[i]  =  in->antDelay[iAnt*numIF*numPol+i+numIF];
 	    row->Weight2[i] =  in->antWeight[iAnt*numIF*numPol+i+numIF];
 	    if (row->Weight2[i]<=0.0) {
 	      row->Real2[i]   = fblank;
@@ -736,6 +766,7 @@ void ObitUVGSolveWBInit  (gpointer inn)
   in->antDelay    = NULL;
   in->antDisp     = NULL;
   in->antWeight   = NULL;
+  in->refAnts     = NULL;
   in->cWork1      = NULL;
   in->cWork2      = NULL;
   in->cWork3      = NULL;
@@ -743,6 +774,7 @@ void ObitUVGSolveWBInit  (gpointer inn)
   in->fWork1      = NULL;
   in->fWork2      = NULL;
   in->fWork3      = NULL;
+  in->fWorkWt2    = NULL;
   in->myFFT       = NULL;
   in->myCInterp   = NULL;
   in->FFTOverSamp = 4;
@@ -780,12 +812,14 @@ void ObitUVGSolveWBClear (gpointer inn)
   in->fWork1       = ObitFArrayUnref(in->fWork1);
   in->fWork2       = ObitFArrayUnref(in->fWork2);
   in->fWork3       = ObitFArrayUnref(in->fWork3);
+  in->fWorkWt2     = ObitFArrayUnref(in->fWorkWt2);
   in->myFFT        = ObitFFTUnref(in->myFFT);
   in->myCInterp    = ObitCInterpolateUnref(in->myCInterp);
   if (in->antGain)   g_free(in->antGain);
   if (in->antDelay)  g_free(in->antDelay);
   if (in->antDisp)   g_free(in->antDisp);
   if (in->antWeight) g_free(in->antWeight);
+  if (in->refAnts)   g_free(in->refAnts);
 #if HAVE_GSL==1  /* GSL stuff */
   if (in->myCoarseSolver)   gsl_multifit_fdfsolver_free(in->myCoarseSolver);
   if (in->myCoarseFunc)     g_free(in->myCoarseFunc);
@@ -813,8 +847,8 @@ SetupFitter (ObitUVGSolveWB *in, ObitUV *inUV, ObitErr* err)
 {
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  olong suba, naxis[1], i;
-  gboolean avgpol;
+  olong suba, naxis[1], i, *refAnts;
+  gboolean avgpol, avgIF;
 #if HAVE_GSL==1  /* GSL stuff */
   const gsl_multifit_fdfsolver_type *T;
   olong ndata, ncoef, refChan;
@@ -838,13 +872,17 @@ SetupFitter (ObitUVGSolveWB *in, ObitUV *inUV, ObitErr* err)
   avgpol = FALSE;
   ObitInfoListGetTest(in->info, "avgPol", &type, dim, &avgpol);
   if (in->numPoln<=1) avgpol = FALSE;  /* Don't average if only one */
-  in->refAnt  = -1;
-  ObitInfoListGetTest(in->info, "refAnt", &type, dim, &in->refAnt);
+  avgIF = FALSE;
+  ObitInfoListGetTest(in->info, "avgIF", &type, dim, &avgIF);
+  if (in->numIF<=1) avgIF = FALSE;  /* Don't average if only one */
 
   /* Generate scanData structure */
   in->scanData = MakeScanData (inUV, avgpol);
 
   in->scanData->avgPoln = avgpol;
+  in->scanData->avgIF   = avgIF;
+  in->scanData->doTwo   = TRUE;
+  ObitInfoListGetTest(in->info, "doTwo", &type, dim, &in->scanData->doTwo);
 
   /* Setup for interpolation of FFT result */
   in->FFTOverSamp = 4;   /* Over sampling factor for FFT search */
@@ -852,6 +890,23 @@ SetupFitter (ObitUVGSolveWB *in, ObitUV *inUV, ObitErr* err)
   in->FFTFitArray = ObitCArrayCreate("FFTFit work", 1, naxis);
   in->myCInterp   = newObitCInterpolateCreate ("FFT Search", in->FFTFitArray, NULL, 
 					       1.0, 1.0, 2, 2, err);
+
+  /* Reference antenna(s) */
+  in->refAnt  = -1;
+  ObitInfoListGetTest(in->info, "refAnt", &type, dim, &in->refAnt);
+  /* Determine reference antenna is none given */
+  if (in->refAnt<=0) 
+    in->refAnt = GetRefAnt(in->scanData, err);
+  /* Check for list - zero terminated list */
+  if (ObitInfoListGetP(in->info, "refAnts",  &type, dim, (gpointer)&refAnts)) {
+    in->refAnts = g_malloc0((dim[0]+1)*sizeof(olong));
+    for (i=0; i<dim[0]; i++) in->refAnts[i] = refAnts[i]; in->refAnts[i] = 0;
+    /* make sure at least one non zero */
+    if (in->refAnts[0]==0) in->refAnts[0] = in->refAnt;
+  } else { /* Use single antenna list */
+    in->refAnts = g_malloc0(2*sizeof(olong));
+    in->refAnts[0] = in->refAnt; in->refAnts[1] = 0; 
+  }
 
   /* Setup for coarse IF result fitting */
 #if HAVE_GSL==1  /* GSL stuff */
@@ -1120,6 +1175,8 @@ NextAvgWB (ObitUV* inUV, ofloat interv, ofloat* antwt,
  * Does a weighted solution for the SNR.  If insufficient data is  
  * present to compute an RMS but at least one observation exists, the  
  * SNR is set to 6.0.  
+ * If the previous weight is larger that the calculated one, 
+ * the previous is used.
  * \param in      Solver data structure
  * \param snrmin  Minimum SNR allowed. 
  * \param count   A work array used for the counts for each 
@@ -1138,7 +1195,7 @@ calcSNR (ObitUVGSolveWB *in, ofloat snrmin, gboolean *gotAnt, olong prtlv,
   ofloat  *wtArray, *phArray, phase1, phase2, phase, amp2, ph1, ph2;
   ofloat *sumwt=NULL, *snr=NULL;
   olong  npoln, ipoln, iIF, iFreq, iAnt, indx, *error=NULL;
-  
+
   /* Error checks */
   g_assert(ObitErrIsA(err));
   if (err->error) return;  /* previous error? */
@@ -1154,6 +1211,8 @@ calcSNR (ObitUVGSolveWB *in, ofloat snrmin, gboolean *gotAnt, olong prtlv,
   else  npoln = in->numPoln;
   nval = in->numIF * in->numPoln;  /* solution entries per antenna in output */
 
+  for (loop=0; loop<in->scanData->maxAnt; loop++) gotAnt[loop]= FALSE;
+
   /* Loop over polarization */
   for (ipoln=0; ipoln<npoln; ipoln++) {
     
@@ -1164,7 +1223,6 @@ calcSNR (ObitUVGSolveWB *in, ofloat snrmin, gboolean *gotAnt, olong prtlv,
       sumwt[loop] = 0.0;
       count[loop] = 0;
       error[loop] = 0;
-      gotAnt[loop]= FALSE;
     } /* end loop  L10:  */
     
     /* Determine phase residuals. */
@@ -1227,13 +1285,18 @@ calcSNR (ObitUVGSolveWB *in, ofloat snrmin, gboolean *gotAnt, olong prtlv,
 	if (snr[loop]<snrmin) snr[loop] = 0.0;
       }
       
-      /* Save to antWeight */
+      /* Save to antWeight if larger - set to zero if previous <snrmin */
       /* Loop over IF */
       offset = loop*nval;
       ip = 0 + ipoln*in->numIF;
       for (iIF=0; iIF<in->numIF; iIF++) {
-	  in->antWeight[offset+ip] = snr[loop];
-	  ip++;
+	if (in->antWeight[offset+ip]>snrmin) {
+	  /*in->antWeight[offset+ip] = MAX (in->antWeight[offset+ip], snr[loop]); 
+	    else
+	    in->antWeight[offset+ip] = 0.0;DEBUG*/
+	}
+	if (in->antWeight[offset+ip]<snrmin) in->antWeight[offset+ip] = 0.0;
+	ip++;
       }
       
       /* Print result if desired. */
@@ -1317,18 +1380,18 @@ static void SetLists (ObitUVGSolveWB *in, ObitUV *inUV, olong suba, ObitErr* err
 
 /**
  * Initial guess at solutions based on FFT on baselines to reference antenna
+ * Gets stacked antenna phases weithted by SNR of fit.
  * \param in   The structure with data and solutions.
  * \param err  Error/message stack, returns if error.
  */
 static void 
 initSolve (ObitUVGSolveWB *in, ObitErr *err)
 {
-  olong iAnt, i, nval, offset;
+  olong iAnt, i, nval, offset, iref, refAnt;
+  gboolean good, test;
+
   if (err->error) return;  /* Prior error? */
 
-  /* Determine reference antenna is none given */
-  if (in->refAnt<=0) 
-    in->refAnt = GetRefAnt(in->scanData, err);
   nval = in->numIF * in->numPoln;  /* entries per antenna */
 
   /* Create solution structures if needed */
@@ -1337,25 +1400,42 @@ initSolve (ObitUVGSolveWB *in, ObitErr *err)
   if (in->antDisp==NULL)   in->antDisp   = g_malloc(in->maxAnt*nval*sizeof(ofloat));
   if (in->antWeight==NULL) in->antWeight = g_malloc(in->maxAnt*nval*sizeof(ofloat));
 
-  /* Loop over antennas making one and two baseline combinations
-     between each antenna and the reference.  Then FFT to get
-     initial gain, delay and rate from the amp peak of the FFT. */
-  for (iAnt=1; iAnt<=in->maxAnt; iAnt++) {
+  /* Loop over list of possible reference antennas */
+  iref = 0;
+  good = FALSE;
+  while (!good && (in->refAnts[iref]>0)) {
+    refAnt = in->refAnts[iref];
+
+    /* Zero test reference antenna values */
     /* Use 0 phase, derivatives for reference antenna */
-    if (iAnt==in->refAnt) {
-      /* zero */
-      offset = (iAnt-1) * nval;
-      for (i=0; i<nval; i++) {
-	in->antGain[2*(offset+i)]   = 1.0;
-	in->antGain[2*(offset+i)+1] = 0.0;
-	in->antDelay[offset+i ]     = 0.0;
-	in->antDisp[offset+i]       = 0.0;
-	in->antWeight[offset+i ]    = 0.0;
-      }
-    } else { /* not reference ant - solve */
-      initAntSolve (in, iAnt, err);
-    } /* end solve */
-  } /* end loop over antennas */
+    offset = (refAnt-1) * nval;
+    for (i=0; i<nval; i++) {
+      in->antGain[2*(offset+i)]   = 1.0;
+      in->antGain[2*(offset+i)+1] = 0.0;
+      in->antDelay[offset+i ]     = 0.0;
+      in->antDisp[offset+i]       = 0.0;
+      in->antWeight[offset+i ]    = in->minSNR+1;
+    }
+    /* Loop over antennas making one and two baseline combinations
+       between each antenna and the reference.  Then FFT to get
+       initial gain, delay and rate from the amp peak of the FFT. */
+    for (iAnt=1; iAnt<=in->maxAnt; iAnt++) {
+      if (iAnt!=refAnt) {
+	/* not reference ant - solve */
+	test = initAntSolve (in, iAnt, refAnt, err);
+	good = good || test;
+      } /* end solve */
+    } /* end loop over antennas */
+    in->refAnt = in->refAnts[iref];  /* In case this is it */
+    if (good) break;
+    iref++;    /* Try next */
+  } /* end loop over reference antennas */
+
+  /* Now stack data using weights from fitting */
+  for (iAnt=1; iAnt<=in->maxAnt; iAnt++) {
+    if (iAnt==in->refAnt) continue;
+      stackAnt (in, iAnt, err);
+  }
 
 } /* end initSolve */
 
@@ -1376,107 +1456,187 @@ finalSolve (ObitUVGSolveWB *in, ObitErr *err)
   gsl_multifit_fdfsolver* solver;
   gsl_multifit_function_fdf func;
   gsl_vector_view coef;
-  int status, iter, ncoef, ndata, iAnt, iIF, iPoln, ip, jp, kp;
+  int status, iter, ncoef, ndata, iAnt, iIF, jIF, iPoln, ip, jp, kp;
+  olong loIF, hiIF;
   olong nval, offset, np, iFreq;
   double *coef_init=NULL;
   ofloat phase, delay, disp, IFphase, gnorm, twopi=2.0*G_PI;
+  ofloat fblank = ObitMagicF();
+  gboolean noData; 
   olong nPoln;
   /*gchar *routine = "finalSolve";*/
 
   if (err->error) return;  /* Prior error? */
-  /* Number of coeffiecnts to solve for 
-     phase, delay, rate for n-1 antennas */
+  /* Number of coefficients to solve for 
+     phase, delay, for n-1 antennas */
   np = 2;    /* number of parameters per antenna */
   ncoef = np; 
   nval  = in->numIF * in->numPoln;  /* solution entries per antenna */
-  ndata = in->scanData->BLData[0]->numIF * in->scanData->BLData[0]->numFreq;  
+  if (in->scanData->avgIF) {
+    ndata = in->scanData->BLData[0]->numIF * in->scanData->BLData[0]->numFreq;  
+    loIF = 0;
+    hiIF = 1;
+  } else { /* IF at a time */
+    ndata = in->scanData->BLData[0]->numFreq;  
+    loIF = 0;
+    hiIF = in->numIF;
+  }
  
   T = gsl_multifit_fdfsolver_lmsder;
   /* T = gsl_multifit_fdfsolver_lmder; Faster */
   solver = gsl_multifit_fdfsolver_alloc(T, ndata, ncoef);
 
-  /* Outer loop over polarization */
+  /* Create /fill function structure */
+  func.f   = &fringeFitFunc;      /* Compute function */
+  func.df  = &fringeFitJacob;     /* Compute Jacobian (derivative matrix) */
+  func.fdf = &fringeFitFuncJacob; /* Compute both function and derivatives */
+  func.n = ndata;                 /* Number of data points */
+  func.p = ncoef;                 /* number of parameters */
+  func.params = in;               /* Object */
+
+  /* Zero initial reference antenna weights */	
   nPoln = in->scanData->BLData[0]->numPoln;
+  for (iPoln=0; iPoln<nPoln; iPoln++) {
+      for (jIF=loIF; jIF<hiIF; jIF++) {
+	ip     = iPoln*in->numIF + jIF;
+	in->antWeight[(in->refAnt-1)*nval+ip] = 0.0;
+      }
+  }
+
+  /* Outer loop over polarization */
   if (in->scanData->avgPoln) nPoln = 1;
   for (iPoln=0; iPoln<nPoln; iPoln++) {
     
     /* Loop over non reference antennas averaging IF values */
     for (iAnt=1; iAnt<=in->maxAnt; iAnt++) {
       if (iAnt==in->refAnt) continue;  /* Not reference antenna */
-      
-      /* initial guesses */
-      if (coef_init==NULL) coef_init = g_malloc(ncoef*sizeof(double));
-      jp = 0;
-      /* Get initial value from fitting IF solutions - skip if no data */
-      if (!fitIFData (in, iAnt, iPoln, &phase, &delay, &disp, err)) continue;
 
-      coef_init[jp++] = (double)phase;
-      coef_init[jp++] = (double)delay;
+      /* Loop over IF */
+      for (jIF=loIF; jIF<hiIF; jIF++) {
       
-      /* Create coeffient vector */
-      coef = gsl_vector_view_array (coef_init, ncoef);
+	/* Does it have fringes? */
+	offset = (iAnt-1)*nval;
+	ip     = iPoln*in->numIF;
+	if (!in->scanData->avgIF) offset += jIF;
+	if (in->antWeight[offset+ip]<in->minSNR) continue;
 
-      /* tell what's being solved for */
-      in->scanData->curAnt  = iAnt;
-      in->scanData->curPoln = iPoln;
-      
-      /* Create /fill function structure */
-      func.f   = &fringeFitFunc;      /* Compute function */
-      func.df  = &fringeFitJacob;     /* Compute Jacobian (derivative matrix) */
-      func.fdf = &fringeFitFuncJacob; /* Compute both function and derivatives */
-      func.n = ndata;                 /* Number of data points */
-      func.p = ncoef;                 /* number of parameters */
-      func.params = in;               /* Object */
-      
-      /* Set up solver */
-      gsl_multifit_fdfsolver_set(solver, &func, &coef.vector);
-    
-      /* ready to rumble */
-      iter = 0;
-      do {
-	iter++;
-	status = gsl_multifit_fdfsolver_iterate(solver);
-	if ((status!=GSL_CONTINUE) && (status!=GSL_SUCCESS)) {/* problem? */
-	  /*Obit_log_error(err, OBIT_InfoWarn, "%s: Solver status %d %s", 
-	    routine,status,gsl_strerror(status));*/
-	  /*break;*/
+	/* initial guesses */
+	noData = FALSE;
+	jp = 0;
+	if (coef_init==NULL) coef_init = g_malloc(ncoef*sizeof(double));
+	if (in->scanData->avgIF) {
+	  /* Get initial value from fitting IF solutions - skip if no data */
+	  if (!fitIFData (in, iAnt, iPoln, &phase, &delay, &disp, err)) {
+	    noData = TRUE;
+	    continue;
+	  } /* end no data */
+	  /* Set initial values */
+	  coef_init[jp++] = (double)phase;
+	  coef_init[jp++] = (double)delay;
+	} else { /* single IF */
+	  ip = iPoln*in->numIF;
+	  offset = (iAnt-1)*nval + jIF;
+	  coef_init[jp++] = (double)atan2(in->antGain[2*(offset+ip)+1], in->antGain[2*(offset+ip)]);
+	  coef_init[jp++] = (double)in->antDelay[offset]*1.0e9;
 	}
-	/* convergence test */
-	status = gsl_multifit_test_delta(solver->dx, solver->x, 1.0e-6, 1.0e-6);
+
+	/* Create coeffient vector */
+	coef = gsl_vector_view_array (coef_init, ncoef);
+      
+	/* tell what's being solved for */
+	in->scanData->curAnt  = iAnt;
+	in->scanData->curPoln = iPoln;
+	in->scanData->curIF   = jIF;
+	in->scanData->avgIF   = in->scanData->avgIF;
+	in->scanData->numChan = in->scanData->BLData[0]->numFreq;
 	
-	/* Diagnostic messages */
+	/* Set up solver */
+	gsl_multifit_fdfsolver_set(solver, &func, &coef.vector);
+	
+	/* tell initial values */
 	if (in->prtLv>=4) {
-	  gnorm = (ofloat)gsl_blas_dnrm2(solver->f);
-	  phase  = (ofloat)gsl_vector_get(solver->x, 0);
-	  delay  = (ofloat)gsl_vector_get(solver->x, 1);
 	  Obit_log_error(err, OBIT_InfoErr, 
-			 "ant %d poln %d Iteration %d phase %f delay %f gradient norm %f", 
-			 iAnt, iPoln, iter, phase*57.296, delay, gnorm);
+			 "ant %d poln %d IF %d initial guess phase %lf delay %lf  RMS %f", 
+			 iAnt, iPoln, jIF, coef_init[0]*57.296, coef_init[1], in->scanData->RMSRes*57.296);
 	  ObitErrLog(err);
 	}
-      }
-      while ((status == GSL_CONTINUE) && (iter< 100));
-    
-      /* Get fitted values */
-      jp = 0;
-      iFreq = in->scanData->BLData[0]->numFreq/2;  /* Center or edge??? */
-      iFreq = 0;
 
-      phase  = (ofloat)gsl_vector_get(solver->x, jp++);
-      phase  = fmodf(phase, twopi);
-      delay  = (ofloat)gsl_vector_get(solver->x, jp++);
-      offset = (iAnt-1)*nval;
-      ip = kp = iPoln*in->numIF;
-      /* Loop over IF */
-      for (iIF=0; iIF<in->numIF; iIF++) {
-	/* Phase of this IF */
-	IFphase = phase + delay * twopi * in->scanData->BLData[0]->dFreq[iIF][iFreq];
-	in->antGain[2*(offset+ip)]   = cos(IFphase);
-	in->antGain[2*(offset+ip)+1] = sin(IFphase);
-	in->antDelay[offset+kp]      = delay;
-	ip++;
-	kp++;
-      } /* end IF loop */
+	/* ready to rumble */
+	iter = 0;
+	do {
+	  iter++;
+	  status = gsl_multifit_fdfsolver_iterate(solver);
+	  if ((status!=GSL_CONTINUE) && (status!=GSL_SUCCESS)) {/* problem? */
+	    /*Obit_log_error(err, OBIT_InfoWarn, "%s: Solver status %d %s", 
+	      routine,status,gsl_strerror(status));*/
+	    /*break;*/
+	  }
+	  /* convergence test */
+	  status = gsl_multifit_test_delta(solver->dx, solver->x, 1.0e-5, 1.0e-5);
+	  
+	  /* Diagnostic messages */
+	  if (in->prtLv>=4) {
+	    gnorm = (ofloat)gsl_blas_dnrm2(solver->f);
+	    phase  = (ofloat)gsl_vector_get(solver->x, 0);
+	    delay  = (ofloat)gsl_vector_get(solver->x, 1);
+	    Obit_log_error(err, OBIT_InfoErr, 
+			   "ant %d poln %d IF %d Iteration %d phase %f delay %f gradient norm %f RMS %f", 
+			   iAnt, iPoln, jIF, iter, phase*57.296, delay, gnorm, in->scanData->RMSRes*57.296);
+	    ObitErrLog(err);
+	  }
+	}
+	while ((status == GSL_CONTINUE) && (iter< 100));
+	
+	/* Get fitted values */
+	jp = 0;
+	iFreq = in->scanData->BLData[0]->numFreq/2;  /* Center or edge??? */
+	iFreq = 0;
+	
+	phase  = (ofloat)gsl_vector_get(solver->x, jp++);
+	phase  = fmodf(phase, twopi);
+	delay  = (ofloat)gsl_vector_get(solver->x, jp++)*1.0e-9;
+	offset = (iAnt-1)*nval;
+	ip = kp = iPoln*in->numIF;
+	/* Loop over if averaging IF */
+	if (in->scanData->avgIF) {
+	  for (iIF=0; iIF<in->numIF; iIF++) {
+	    /* Phase of this IF */
+	    IFphase = phase + delay * twopi * in->scanData->BLData[0]->dFreq[iIF][iFreq];
+	    /* Have data? */
+	    if (noData) {
+	      in->antGain[2*(offset+ip)]   =  fblank;
+	      in->antGain[2*(offset+ip)+1] =  fblank;
+	      in->antDelay[offset+kp]      =  fblank;
+	    } else { /* OK */
+	      in->antGain[2*(offset+ip)]   =  cos(IFphase);
+	      in->antGain[2*(offset+ip)+1] =  sin(IFphase);
+	      in->antDelay[offset+kp]      =  delay;
+	      in->antWeight[offset+kp]     =  1.0/in->scanData->RMSRes;
+	      /* Reference antenna SNR the highest of any */
+	      in->antWeight[(in->refAnt-1)*nval+kp] = 
+		MAX (in->antWeight[(in->refAnt-1)*nval+kp],in->antWeight[offset+kp] );
+	    }
+	    ip++;
+	    kp++;
+	  } /* end inner IF loop */
+	} else { 
+	    offset += jIF;
+	    /* Have data? */
+	    if (noData) {
+	      in->antGain[2*(offset+ip)]   =  fblank;
+	      in->antGain[2*(offset+ip)+1] =  fblank;
+	      in->antDelay[offset+kp]      =  fblank;
+	    } else { /* OK */
+	      in->antGain[2*(offset+ip)]   =  cos(phase);
+	      in->antGain[2*(offset+ip)+1] =  sin(phase);
+	      in->antDelay[offset+kp]      =  delay;
+	      in->antWeight[offset+kp]     =  1.0/in->scanData->RMSRes;
+	      /* Reference antenna SNR the highest of any */
+	      in->antWeight[(in->refAnt-1)*nval+kp] = 
+		MAX (in->antWeight[(in->refAnt-1)*nval+kp],in->antWeight[offset+kp] );
+	    }	  
+	}  /* end single IF */
+      } /* end outer IF loop */
     } /* end iAnt loop */
   } /* end poln loop */
   
@@ -1564,6 +1724,9 @@ fitIFData (ObitUVGSolveWB *in, olong iAnt, olong iPoln,
   *delay = 1.0e9*sumDelay/count;  /* In nsec */
   *disp  = 0.0;
   
+  /* With only one frequency, this is the best you can do */
+  if (in->ndataCoarse<=1) return out;
+
   /* Set data */
   for (i=0; i<in->ndataCoarse; i++) {
     in->coarseData[i] = atan2(in->antGain[2*(offset+ip)+1], in->antGain[2*(offset+ip)]);
@@ -1720,20 +1883,23 @@ GetRefAnt (ScanData *scanData, ObitErr *err) {
  * Accumulates one and two baseline connections between iAnt and the 
  * reference antenna and FFTs to determine the value at the peak.
  * This is used to determine gain, delay and rate per IF/Poln
- * Also collects stacked antenna phases
- * \param in   The structure with data and solutions.
- * \param iAnt which Antenna (1-rel)
- * \param err  Error/message stack, returns if error.
+ * \param in     The structure with data and solutions.
+ * \param iAnt   which Antenna (1-rel)
+ * \param refAnt reference Antenna (1-rel)
+ * \param err    Error/message stack, returns if error.
+ * \return TRUE if fringes found on at least some IF/Poln
  */
-static void 
-initAntSolve (ObitUVGSolveWB *in, olong iAnt, ObitErr *err)
+static gboolean 
+initAntSolve (ObitUVGSolveWB *in, olong iAnt, olong refAnt, ObitErr *err)
 {
   olong naxis[1], maxis[1], iBase, jBase, iPoln, jAnt, iIF, ip, jp, nPoln;
   olong iBase1, iBase2, offset, nval, icend, refChan, nFreq2, k, kndx, kp;
+  olong count;
   ofloat cmplx[2] = {0.0,0.0}, delTau, iNorm, pval[2], ppos, dph, dre, dim, tre, tim;
   ofloat peak, fblank = ObitMagicF();
-  gboolean good;
-  if (err->error) return;  /* Prior error? */
+  ofloat amp, sumw, sumww, ph;
+  gboolean good=FALSE, OK=FALSE;
+  if (err->error) return OK;  /* Prior error? */
 
   /* Need to create work arrays? */
   naxis[0] = in->scanData->BLData[0]->numFreq;
@@ -1753,6 +1919,8 @@ initAntSolve (ObitUVGSolveWB *in, olong iAnt, ObitErr *err)
   if (in->fWork1==NULL) in->fWork1 = ObitFArrayCreate ("FWork1", 1, naxis);
   else in->fWork1 = ObitFArrayRealloc (in->fWork1, 1, naxis);
   if (in->fWork2==NULL) in->fWork2 = ObitFArrayCreate ("FWork2", 1, naxis);
+  else in->fWorkWt2 = ObitFArrayRealloc (in->fWorkWt2, 1, naxis);
+  if (in->fWorkWt2==NULL) in->fWorkWt2 = ObitFArrayCreate ("FWorkWt2", 1, naxis);
   else in->fWork2 = ObitFArrayRealloc (in->fWork2, 1, naxis);
   maxis[0] = in->scanData->BLData[0]->numFreq;
   if (in->fWork3==NULL) in->fWork3 = ObitFArrayCreate ("FWork3", 1, maxis);
@@ -1780,21 +1948,23 @@ initAntSolve (ObitUVGSolveWB *in, olong iAnt, ObitErr *err)
     /* Loop over IF */
     for (iIF=0; iIF<in->scanData->BLData[0]->numIF; iIF++) {
 
-      /* Zero accumulators (cWork1, fWork1) */
-      ObitCArrayFill(in->cWork1, cmplx);
-      ObitFArrayFill(in->fWork1, 0.0);
-      ObitCArrayFill(in->cWork2, cmplx);
-      ObitFArrayFill(in->fWork2, 0.0);
-      ObitCArrayFill(in->cWork3, cmplx);
-      ObitFArrayFill(in->fWork3, 0.0);
+      /* Zero accumulators (cWorkn, fWorkn) */
+      ObitCArrayFill(in->cWork1,   cmplx);
+      ObitFArrayFill(in->fWork1,   0.0);
+      ObitCArrayFill(in->cWork2,   cmplx);
+      ObitFArrayFill(in->fWork2,   0.0);
+      ObitCArrayFill(in->cWork3,   cmplx);
+      ObitFArrayFill(in->fWork3,   0.0);
+      ObitFArrayFill(in->fWorkWt2, 0.0);
+      count = 0;
 
       /* One baseline combination */
       iBase = -1;
       for (jBase=0; jBase<in->scanData->numBase; jBase++) {
 	if (((in->scanData->BLData[jBase]->ant1==iAnt) && 
-	     (in->scanData->BLData[jBase]->ant2==in->refAnt)) ||
+	     (in->scanData->BLData[jBase]->ant2==refAnt)) ||
 	    ((in->scanData->BLData[jBase]->ant2==iAnt) && 
-	     (in->scanData->BLData[jBase]->ant1==in->refAnt))) {
+	     (in->scanData->BLData[jBase]->ant1==refAnt))) {
 	  /* found it  */
 	  iBase = jBase;
 	  break;
@@ -1805,95 +1975,107 @@ initAntSolve (ObitUVGSolveWB *in, olong iAnt, ObitErr *err)
       if ((iBase>=0) && (in->scanData->BLData[iBase]->WtPolnIF[ip]>0.0)) { 
 	/* Promote phases to complex, zero pad */
 	ObitCArrayFSinCos (in->scanData->BLData[iBase]->phArray[ip], in->cWork2);
+	/* Conjugate if reference antenna has lower number */
+	if (refAnt<iAnt) ObitCArrayConjg(in->cWork2);
 	/* Add to end of accumulator */
 	ObitCArrayAdd (in->cWork1,  in->cWork2, in->cWork1);
 	/* Multiply by Weights */
 	ObitCArrayFMulEnd (in->cWork1, in->scanData->BLData[iBase]->wtArray[ip],  in->cWork1);
 	/* Accumulate weights */
 	ObitFArrayAddEnd (in->fWork1,  in->scanData->BLData[iBase]->wtArray[ip],  in->fWork1);
+	/* Accumulate weights squares, count */
+	ObitFArrayAddEnd2 (in->fWorkWt2,  in->scanData->BLData[iBase]->wtArray[ip],  
+			   in->fWorkWt2,  &count);
 	/* Double the weights */
         ObitCArraySMul (in->cWork1, 2.0);
         ObitFArraySMul (in->fWork1, 2.0);
+        ObitFArraySMul (in->fWorkWt2, 4.0);
       }
 
       /* Two baseline combinations - search for antenna with data on both baselines 
-	 to iAnt and in->refAnt */
-      iBase1 = -1; iBase2 = -1;
-      for (jAnt = 1; jAnt<=in->scanData->maxAnt; jAnt++) {
-	/* Ignore iAnt and refAnt */
-	if ((jAnt==iAnt) || (jAnt==in->refAnt)) continue;
-
-	/* First find baseline between iAnt and jAnt */
-	for (jBase=0; jBase<in->scanData->numBase; jBase++) {
-	  if (((in->scanData->BLData[jBase]->ant1==iAnt) && 
-	       (in->scanData->BLData[jBase]->ant2==jAnt)) ||
-	      ((in->scanData->BLData[jBase]->ant2==iAnt) && 
-	       (in->scanData->BLData[jBase]->ant1==jAnt))) {
-	    /* found it  */
-	    iBase1 = jBase;
-	    break;
-	  }
-	}
-	
-	/* Next find baseline between jAnt and in->refAnt */
-	for (jBase=0; jBase<in->scanData->numBase; jBase++) {
-	  if (((in->scanData->BLData[jBase]->ant1==in->refAnt) && 
-	       (in->scanData->BLData[jBase]->ant2==jAnt)) ||
-	      ((in->scanData->BLData[jBase]->ant2==in->refAnt) && 
-	       (in->scanData->BLData[jBase]->ant1==jAnt))) {
-	    /* found it  */
-	    iBase2 = jBase;
-	    break;
-	  }
-	}
-	/* find them? Any data on both? */
-	if (((iBase1>=0) && (in->scanData->BLData[iBase1]->WtPolnIF[ip]>0.0)) &&
-	    ((iBase2>=0) && (in->scanData->BLData[iBase2]->WtPolnIF[ip]>0.0))) { 
-	  /* Get difference in cWork2 */
-	  if (in->refAnt<jAnt) {
-	    if (jAnt<iAnt)
-	      ObitFArrayAdd (in->scanData->BLData[iBase2]->phArray[ip], 
-			     in->scanData->BLData[iBase1]->phArray[ip], in->fWork3);
-	    else
-	      ObitFArraySub (in->scanData->BLData[iBase2]->phArray[ip], 
-			     in->scanData->BLData[iBase1]->phArray[ip], in->fWork3);
-	  } else {
-	    if (jAnt<iAnt) {
-	      ObitFArraySub (in->scanData->BLData[iBase1]->phArray[ip], 
-			     in->scanData->BLData[iBase2]->phArray[ip], in->fWork3);
-	    } else {
-	      ObitFArrayAdd (in->scanData->BLData[iBase2]->phArray[ip], 
-			     in->scanData->BLData[iBase1]->phArray[ip], in->fWork3);
-	      ObitFArrayNeg (in->fWork3);
+	 to iAnt and refAnt */
+      if (in->scanData->doTwo) {
+	iBase1 = -1; iBase2 = -1;
+	for (jAnt = 1; jAnt<=in->scanData->maxAnt; jAnt++) {
+	  /* Ignore iAnt and refAnt */
+	  if ((jAnt==iAnt) || (jAnt==refAnt)) continue;
+	  
+	  /* First find baseline 1 between iAnt and jAnt */
+	  for (jBase=0; jBase<in->scanData->numBase; jBase++) {
+	    if (((in->scanData->BLData[jBase]->ant1==iAnt) && 
+		 (in->scanData->BLData[jBase]->ant2==jAnt)) ||
+		((in->scanData->BLData[jBase]->ant2==iAnt) && 
+		 (in->scanData->BLData[jBase]->ant1==jAnt))) {
+	      /* found it  */
+	      iBase1 = jBase;
+	      break;
 	    }
 	  }
+	  
+	  /* Next find baseline 2 between jAnt and refAnt */
+	  for (jBase=0; jBase<in->scanData->numBase; jBase++) {
+	    if (((in->scanData->BLData[jBase]->ant1==refAnt) && 
+		 (in->scanData->BLData[jBase]->ant2==jAnt)) ||
+		((in->scanData->BLData[jBase]->ant2==refAnt) && 
+		 (in->scanData->BLData[jBase]->ant1==jAnt))) {
+	      /* found it  */
+	      iBase2 = jBase;
+	      break;
+	    }
+	  }
+	  /* find them? Any data on both? */
+	  if (((iBase1>=0) && (in->scanData->BLData[iBase1]->WtPolnIF[ip]>0.0)) &&
+	      ((iBase2>=0) && (in->scanData->BLData[iBase2]->WtPolnIF[ip]>0.0))) { 
+	    /* Get difference in fWork3 -> cWork2 */
+	    /* want baseline 1 - baseline 2 ((ant-other)-(ref-other)) 
+	     baseline data will have ant2>ant1 - may need to flip sign */
+	    if (refAnt>jAnt) {  /* Negate baseline 2 */
+	      if (jAnt<iAnt) {      /* Also negate baseline 1 */
+		ObitFArraySub (in->scanData->BLData[iBase2]->phArray[ip], 
+			       in->scanData->BLData[iBase1]->phArray[ip], in->fWork3);
+	      } else                /* baseline 1 OK */
+		ObitFArrayAdd (in->scanData->BLData[iBase1]->phArray[ip], 
+			       in->scanData->BLData[iBase2]->phArray[ip], in->fWork3);
+	    } else {   /* Baseline 2 OK */
+	      if (jAnt<iAnt) {  /* negate baseline 1 */
+		ObitFArrayAdd (in->scanData->BLData[iBase2]->phArray[ip], 
+			       in->scanData->BLData[iBase1]->phArray[ip], in->fWork3);
+		ObitFArrayNeg (in->fWork3);
+	      } else {          /* Also baseline 1 OK */
+		ObitFArraySub (in->scanData->BLData[iBase1]->phArray[ip], 
+			       in->scanData->BLData[iBase2]->phArray[ip], in->fWork3);
+	      }
+	    } /* end ref vs other */
 	    
-	  /* Promote phases to complex, zero pad */
-	  ObitCArrayFSinCos (in->fWork3, in->cWork2);
-	  
-	  /* Get Weight array for this combination fWork2 */
-	  ObitFArrayAddEnd (in->scanData->BLData[iBase1]->wtArray[ip], 
-			    in->scanData->BLData[iBase2]->wtArray[ip], 
-			    in->fWork2);
-	  
-	  /* Multiply by Weights */
-	  ObitCArrayFMul (in->cWork2, in->fWork2 , in->cWork2);
-	  
-	  /* Accumulate to cWork1, fWork1 */
-	  ObitCArrayAdd (in->cWork1, in->cWork2, in->cWork1);
-	  ObitFArrayAdd (in->fWork1, in->fWork2, in->fWork1);
-	  
-	} /* end add two baseline combination */
-      } /* end loop over secondary antennas */
+	    /* Promote phases to complex, zero pad */
+	    ObitCArrayFSinCos (in->fWork3, in->cWork2);
+	    
+	    /* Get harmonic sum Weight array for this combination fWork2 */
+	    ObitFArrayHarmAddEnd (in->scanData->BLData[iBase1]->wtArray[ip], 
+				  in->scanData->BLData[iBase2]->wtArray[ip], 
+				  in->fWork2);
+	    
+	    /* Accumulate weights squares, count */
+	    ObitFArrayHarmAccEnd2 (in->scanData->BLData[iBase1]->wtArray[ip], 
+				   in->scanData->BLData[iBase2]->wtArray[ip],
+				   in->fWorkWt2, &count);
+	    
+	    /* Multiply by Weights */
+	    ObitCArrayFMul (in->cWork2, in->fWork2 , in->cWork2);
+	    
+	    /* Accumulate to cWork1, fWork1 */
+	    ObitCArrayAdd (in->cWork1, in->cWork2, in->cWork1);
+	    ObitFArrayAdd (in->fWork1, in->fWork2, in->fWork1);
+	    
+	  } /* end add two baseline combination */
+	} /* end loop over secondary antennas */
+      } /* end if doTwo */
 
-      /* Copy stacked phases/weights to in->antStackPh */
+      /* Check for good data */
       good = FALSE;
       kndx = (iAnt-1) + iPoln*in->scanData->maxAnt;
       kp = iIF*in->scanData->BLData[0]->numFreq;
       for (k=0; k<in->scanData->antStackWt[kndx]->naxis[0]; k++) {
-	in->scanData->antStackPh[kndx]->array[kp] = 
-	  atan2(in->cWork1->array[1+2*k], in->cWork1->array[2*k]);
-	in->scanData->antStackWt[kndx]->array[kp] = in->fWork1->array[k];
 	good = good || (in->fWork1->array[k]>0.0);  /* Any good data? */
 	kp++;
       }
@@ -1903,9 +2085,14 @@ initAntSolve (ObitUVGSolveWB *in, olong iAnt, ObitErr *err)
       in->antGain[2*(offset+ip)+1] = 0.0;
       in->antDelay[offset+ip]      = 0.0;
       in->antDisp[offset+ip]       = 0.0; 
+      in->antWeight[offset+ip]     = 0.0;
 
       /* Any valid data? */
       if (good) {
+	/* get weight sums */
+	sumw  = ObitFArraySum(in->fWork1);
+	sumww = ObitFArraySum(in->fWorkWt2);
+
 	/* Replace zero weights by 1.0 */
 	ObitFArrayInClip (in->fWork1, -1.0e-6, 1.0e-6, 1.0);
 	
@@ -1924,17 +2111,28 @@ initAntSolve (ObitUVGSolveWB *in, olong iAnt, ObitErr *err)
         /* This is REALLY needed to circumvent a gcc bug */
         if (err->error) fprintf (stderr,"GCC Bug workaround\n");
 
-	/* Check for sensible solution */
-	if (peak>0.2) {
+	/* Get SNR */
+	amp   = peak;
+	in->antWeight[offset+ip] = decorSNR (amp, sumw, sumww, 1.0, count);
+	/* Use the best found as the reference antenna value */
+	in->antWeight[(refAnt-1)*nval+ip] = 
+	  MAX (in->antWeight[(refAnt-1)*nval+ip], in->antWeight[offset+ip]);
+	
+	/* Check for OK solution */
+	if (in->antWeight[offset+ip]>in->minSNR) {
 	  
 	  /* Gain is peak value - measured at center of IF */
-	  in->antGain[2*(offset+ip)]   = pval[0] * iNorm;
-	  in->antGain[2*(offset+ip)+1] = pval[1] * iNorm;
+	  ph = atan2(pval[1], pval[0]);
+	  in->antGain[2*(offset+ip)]   = cos(ph);
+	  in->antGain[2*(offset+ip)+1] = sin(ph);
+	  OK = TRUE;  /* At least something worked */
 	  
 	  /* Delay and rate from position of peak - 
-	     if less than 1/2 of a cell from zero - call it zero */
-	  if (fabs(ppos-icend)<0.5*in->FFTOverSamp) in->antDelay[offset+ip] = 0.0;
+	     if less than 1/2 of a cell from zero - call it zero 
+	     WHY ?? - disable with minus */
+	  if (fabs(ppos-icend)<-0.125*in->FFTOverSamp) in->antDelay[offset+ip] = 0.0;
 	  else in->antDelay[offset+ip]      = (ppos-icend)*delTau;
+	  
 	  in->antDisp[offset+ip]       = 0.0;  /* No dispersion here */
 
 	  /* Correct phase to reference channel */
@@ -1947,13 +2145,23 @@ initAntSolve (ObitUVGSolveWB *in, olong iAnt, ObitErr *err)
 	  in->antGain[2*(offset+ip)]   = tre*dre - tim*dim;
 	  in->antGain[2*(offset+ip)+1] = tre*dim + tim*dre;
 	  
-	  /* Adjust for baseline direction */
-	  if (in->refAnt>iAnt) {
-	    /* Flip phases */
+	  /* Adjust for baseline direction - no already done  */
+	  if (refAnt>iAnt) {
+	    /* Flip phases
 	    in->antGain[2*(offset+ip)+1] = -in->antGain[2*(offset+ip)+1];
-	    in->antDelay[offset+ip]      = -in->antDelay[offset+ip];
+	    in->antDelay[offset+ip]      = -in->antDelay[offset+ip]; */
 	  }
+
 	} /* end sensible fit */
+	/* Tell result if requested */
+	if (in->prtLv>=3) {
+	  Obit_log_error(err, OBIT_InfoErr, 
+			 "ant %2d poln %d IF %2d  delay %9.3f nsec SNR %8.1f", 
+			 iAnt, iPoln, iIF, in->antDelay[offset+ip]*1.0e9, 
+			 in->antWeight[offset+ip]);
+	  ObitErrLog(err);
+	}
+	
       } /* end if good data */
       ip++;
     } /* end loop over IF */
@@ -1969,10 +2177,222 @@ initAntSolve (ObitUVGSolveWB *in, olong iAnt, ObitErr *err)
       in->antGain[2*(offset+ip)+1] = in->antGain[2*(offset+jp)+1];
       in->antDelay[offset+ip]      = in->antDelay[offset+jp];
       in->antDisp[offset+ip]       = in->antDisp[offset+jp];
-      jp++;  ip++;
+      in->antWeight[offset+ip]     = in->antWeight[offset+jp];
+      /* Use the best found as the reference antenna value */
+      in->antWeight[(refAnt-1)*nval+ip] = 
+	MAX (in->antWeight[(refAnt-1)*nval+ip], in->antWeight[offset+jp]);
+     jp++;  ip++;
     }
   }
+  return OK;
 } /* end  initAntSolve */
+
+/**
+ * Stack one and two baseline combination phases between 
+ * an antenna and the reference.
+ * \param in   The structure with data and solutions.
+ * \param iAnt which Antenna (1-rel)
+ * \param err  Error/message stack, returns if error.
+ */
+static void 
+stackAnt (ObitUVGSolveWB *in, olong iAnt, ObitErr *err)
+{
+  olong naxis[1], maxis[1], iBase, jBase, iPoln, jAnt, iIF, ip, nPoln;
+  olong iBase1, iBase2, offset, nval, k, kndx, kp;
+  ofloat cmplx[2] = {0.0,0.0};
+  ofloat antWt;
+  gboolean good;
+  if (err->error) return;  /* Prior error? */
+
+  /* Need to create work arrays? */
+  naxis[0] = in->scanData->BLData[0]->numFreq;
+  /* Make FFT friendly, then quadruple to zero pad */
+  naxis[0] = in->FFTOverSamp*ObitFFTSuggestSize(naxis[0]);
+
+  if (in->cWork1==NULL) in->cWork1 = ObitCArrayCreate ("CWork1", 1, naxis);
+  else in->cWork1 = ObitCArrayRealloc (in->cWork1, 1, naxis);
+  if (in->cWork2==NULL) in->cWork2 = ObitCArrayCreate ("CWork2", 1, naxis);
+  else in->cWork2 = ObitCArrayRealloc (in->cWork2, 1, naxis);
+  if (in->cWork3==NULL) in->cWork3 = ObitCArrayCreate ("CWork2", 1, naxis);
+  else in->cWork3 = ObitCArrayRealloc (in->cWork3, 1, naxis);
+  if (in->fWork1==NULL) in->fWork1 = ObitFArrayCreate ("FWork1", 1, naxis);
+  else in->fWork1 = ObitFArrayRealloc (in->fWork1, 1, naxis);
+  if (in->fWork2==NULL) in->fWork2 = ObitFArrayCreate ("FWork2", 1, naxis);
+  else in->fWorkWt2 = ObitFArrayRealloc (in->fWorkWt2, 1, naxis);
+  if (in->fWorkWt2==NULL) in->fWorkWt2 = ObitFArrayCreate ("FWorkWt2", 1, naxis);
+  else in->fWork2 = ObitFArrayRealloc (in->fWork2, 1, naxis);
+  maxis[0] = in->scanData->BLData[0]->numFreq;
+  if (in->fWork3==NULL) in->fWork3 = ObitFArrayCreate ("FWork3", 1, maxis);
+  else in->fWork3 = ObitFArrayRealloc (in->fWork3, 1, maxis);
+
+  nval = in->numIF * in->numPoln;  /* entries per antenna */
+  offset = (iAnt-1)*nval;          /* This antennas offset on solutions */
+
+  /* How many polarizations? */
+  if (in->scanData->avgPoln)  nPoln = 1;
+  else nPoln = in->scanData->BLData[0]->numPoln;
+
+  /* Loop over poln */
+  ip = 0;
+  for (iPoln=0; iPoln<nPoln; iPoln++) {
+    /* Loop over IF */
+    for (iIF=0; iIF<in->scanData->BLData[0]->numIF; iIF++) {
+
+      /* Zero accumulators (cWorkn, fWorkn) */
+      ObitCArrayFill(in->cWork1,   cmplx);
+      ObitFArrayFill(in->fWork1,   0.0);
+      ObitCArrayFill(in->cWork2,   cmplx);
+      ObitFArrayFill(in->fWork2,   0.0);
+      ObitCArrayFill(in->cWork3,   cmplx);
+      ObitFArrayFill(in->fWork3,   0.0);
+      ObitFArrayFill(in->fWorkWt2, 0.0);
+
+      /* One baseline combination */
+      iBase = -1;
+      for (jBase=0; jBase<in->scanData->numBase; jBase++) {
+	if (((in->scanData->BLData[jBase]->ant1==iAnt) && 
+	     (in->scanData->BLData[jBase]->ant2==in->refAnt)) ||
+	    ((in->scanData->BLData[jBase]->ant2==iAnt) && 
+	     (in->scanData->BLData[jBase]->ant1==in->refAnt))) {
+	  /* found it 
+	     Where there Fringes on this baseline? */
+	  if ((in->antWeight[(in->refAnt-1)*nval+ip]>in->minSNR) && 
+	      (in->antWeight[(iAnt-1)*nval+ip]>in->minSNR))
+	    iBase = jBase;
+	  break;
+	}
+      }
+
+      /* find it? Any data? */
+      if ((iBase>=0) && (in->scanData->BLData[iBase]->WtPolnIF[ip]>0.0)) { 
+	/* Promote phases to complex, zero pad */
+	ObitCArrayFSinCos (in->scanData->BLData[iBase]->phArray[ip], in->cWork2);
+	/* Conjugate if reference antenna has lower number */
+	if (in->refAnt<iAnt) ObitCArrayConjg(in->cWork2);
+	/* Add to end of accumulator */
+	ObitCArrayAdd (in->cWork1,  in->cWork2, in->cWork1);
+	/* Get data weights */
+	ObitFArrayAddEnd (in->fWork1,  in->scanData->BLData[iBase]->wtArray[ip],  in->fWork1);
+	/* Multiply data weight by product of antenna weights * 2 */
+	/*antWt = 2.0 * sqrt(in->antWeight[(in->refAnt-1)*nval+ip] * 
+	  in->antWeight[(iAnt-1)*nval+ip]);
+	  Works better without weighting */
+	antWt = 2.0;
+	ObitFArraySMul (in->fWork1, antWt);
+	
+	/* Multiply by  weights */
+	ObitCArrayFMulEnd (in->cWork1, in->fWork1,  in->cWork1);
+      } /* end of any data on baseline */
+
+      /* Two baseline combinations - search for antenna with data on both baselines 
+	 to iAnt and in->refAnt */
+      if (in->scanData->doTwo) {
+	iBase1 = -1; iBase2 = -1;
+	for (jAnt = 1; jAnt<=in->scanData->maxAnt; jAnt++) {
+	  /* Ignore iAnt and refAnt */
+	  if ((jAnt==iAnt) || (jAnt==in->refAnt)) continue;
+	  
+	  /* First find baseline 1 between iAnt and jAnt */
+	  for (jBase=0; jBase<in->scanData->numBase; jBase++) {
+	    if (((in->scanData->BLData[jBase]->ant1==iAnt) && 
+		 (in->scanData->BLData[jBase]->ant2==jAnt)) ||
+		((in->scanData->BLData[jBase]->ant2==iAnt) && 
+		 (in->scanData->BLData[jBase]->ant1==jAnt))) {
+	      /* found it  
+		 Where there Fringes on this baseline? */
+	      if ((in->antWeight[(iAnt-1)*nval+ip]>in->minSNR) && 
+		  (in->antWeight[(jAnt-1)*nval+ip]>in->minSNR))
+		iBase1 = jBase;
+	      break;
+	    }
+	  }
+	  
+	  /* Next find baseline 2 between jAnt and in->refAnt */
+	  for (jBase=0; jBase<in->scanData->numBase; jBase++) {
+	    if (((in->scanData->BLData[jBase]->ant1==in->refAnt) && 
+		 (in->scanData->BLData[jBase]->ant2==jAnt)) ||
+		((in->scanData->BLData[jBase]->ant2==in->refAnt) && 
+		 (in->scanData->BLData[jBase]->ant1==jAnt))) {
+	      /* found it  
+		 Where there Fringes on this baseline? */
+	      if ((in->antWeight[(in->refAnt-1)*nval+ip]>in->minSNR) && 
+		  (in->antWeight[(jAnt-1)*nval+ip]>in->minSNR))
+		iBase2 = jBase;
+	      break;
+	    }
+	  }
+	  /* find them? Any data on both? */
+	  if (((iBase1>=0) && (in->scanData->BLData[iBase1]->WtPolnIF[ip]>0.0)) &&
+	      ((iBase2>=0) && (in->scanData->BLData[iBase2]->WtPolnIF[ip]>0.0))) { 
+	    /* Get difference in fWork3 -> cWork2 */
+	    /* want baseline 1 - baseline 2 ((ant-other)-(ref-other)) 
+	     baseline data will have ant2>ant1 - may need to flip sign */
+	    if (in->refAnt>jAnt) {  /* Negate baseline 2 */
+	      if (jAnt<iAnt) {      /* Also negate baseline 1 */
+		ObitFArraySub (in->scanData->BLData[iBase2]->phArray[ip], 
+			       in->scanData->BLData[iBase1]->phArray[ip], in->fWork3);
+	      } else                /* baseline 1 OK */
+		ObitFArrayAdd (in->scanData->BLData[iBase1]->phArray[ip], 
+			       in->scanData->BLData[iBase2]->phArray[ip], in->fWork3);
+	    } else {   /* Baseline 2 OK */
+	      if (jAnt<iAnt) {  /* negate baseline 1 */
+		ObitFArrayAdd (in->scanData->BLData[iBase2]->phArray[ip], 
+			       in->scanData->BLData[iBase1]->phArray[ip], in->fWork3);
+		ObitFArrayNeg (in->fWork3);
+	      } else {          /* Also baseline 1 OK */
+		ObitFArraySub (in->scanData->BLData[iBase1]->phArray[ip], 
+			       in->scanData->BLData[iBase2]->phArray[ip], in->fWork3);
+	      }
+	    } /* end ref vs other */
+	    
+	    /* Promote phases to complex, zero pad */
+	    ObitCArrayFSinCos (in->fWork3, in->cWork2);
+	    
+	    /* Baseline 1 weights - multiply by product of antenna weights 
+	       antWt = sqrt(in->antWeight[(jAnt-1)*nval+ip] * in->antWeight[(iAnt-1)*nval+ip]);*/
+	    antWt = 1.0;
+	    ObitFArrayFill(in->fWork2,   0.0);
+	    ObitFArrayAddEnd (in->fWork2,in->scanData->BLData[iBase1]->wtArray[ip], in->fWork2);
+	    /* Multiply data weight by product of antenna weights * 2 */
+	    ObitFArraySMul (in->fWork2, antWt);
+
+	    /* Baseline 2 weights - multiply by product of antenna weights 
+	       antWt = sqrt(in->antWeight[(in->refAnt-1)*nval+ip] * in->antWeight[(jAnt-1)*nval+ip]);*/
+	    antWt = 1.0;
+	    ObitFArrayFill(in->fWorkWt2, 0.0);
+	    ObitFArrayAddEnd (in->fWorkWt2,in->scanData->BLData[iBase1]->wtArray[ip], in->fWorkWt2);
+	    /* Multiply data weight by product of antenna weights * 2 */
+	    ObitFArraySMul (in->fWork2, antWt);
+
+	    /* Get harmonic sum Weight array for this combination fWork2 */
+	    ObitFArrayHarmAddEnd (in->fWork2, in->fWorkWt2, in->fWork2);
+
+	    /* Multiply phasors by Weights */
+	    ObitCArrayFMul (in->cWork2, in->fWork2, in->cWork2);
+	    
+	    /* Accumulate to cWork1, fWork1 */
+	    ObitCArrayAdd (in->cWork1, in->cWork2, in->cWork1);
+	    ObitFArrayAdd (in->fWork1, in->fWork2, in->fWork1);
+	    
+	  } /* end add two baseline combination */
+	} /* end loop over secondary antennas */
+      } /* end if doTwo */
+
+      /* Copy stacked phases/weights to in->antStackPh */
+      good = FALSE;
+      kndx = (iAnt-1) + iPoln*in->scanData->maxAnt;
+      kp = iIF*in->scanData->BLData[0]->numFreq;
+      for (k=0; k<in->scanData->antStackWt[kndx]->naxis[0]; k++) {
+	in->scanData->antStackPh[kndx]->array[kp] = 
+	  atan2(in->cWork1->array[1+2*k], in->cWork1->array[2*k]);
+	in->scanData->antStackWt[kndx]->array[kp] = in->fWork1->array[k];
+	good = good || (in->fWork1->array[k]>0.0);  /* Any good data? */
+	kp++;
+      }
+      ip++; /* next Poln/IF */
+    } /* End IF Loop */
+  } /* end Poln loop */
+} /* end  stackAnt */
 
 /**
  * Create Baseline structure
@@ -2280,12 +2700,14 @@ static int fringeFitFunc (const gsl_vector *coef, void *params, gsl_vector *f)
 {
   ObitUVGSolveWB *in  = (ObitUVGSolveWB*)params;
   ScanData     *data  = in->scanData; 
-  olong i, ndata, kndx;
+  olong i, ndata, kndx, lo, hi;
+  odouble sum, freq0=0.0;
   ofloat lcoef[10], *vdata, *vwt, *vfreq, resid, phase, twopi=2.0*G_PI;
 
   /* fill local array of coeffieients */
   for (i=0; i<in->ncoefCoarse; i++) 
     lcoef[i] = (ofloat)gsl_vector_get(coef, i);
+
 
   /* Loop over data */
   kndx = (data->curAnt-1) + data->curPoln*data->maxAnt;
@@ -2293,8 +2715,18 @@ static int fringeFitFunc (const gsl_vector *coef, void *params, gsl_vector *f)
   vwt   = data->antStackWt[kndx]->array;
   vfreq = data->antFreqOff->array;
   ndata = data->antStackPh[kndx]->naxis[0];
-  for (i=0; i<ndata; i++) {
-    phase = lcoef[0] + twopi*lcoef[1]*vfreq[i];
+  sum   = 0.0;   /* RMS residual accumulator */
+  /* Set range of data values */
+  if (data->avgIF) {  /* all at once */
+    lo = 0;
+    hi = ndata;
+  } else {   /* Only one IF */
+    lo = data->curIF*data->numChan;
+    hi = lo + data->numChan;
+  }
+  if (!data->avgIF) freq0 = vfreq[lo];   /* First frequency of IF */
+  for (i=lo; i<hi; i++) {
+    phase = lcoef[0] + twopi*lcoef[1]*(vfreq[i]-freq0);
     resid = phase- vdata[i];
     /* Take out any whole turns */
     resid = fmodf(resid, twopi);
@@ -2302,12 +2734,18 @@ static int fringeFitFunc (const gsl_vector *coef, void *params, gsl_vector *f)
     if (resid>G_PI) resid -= twopi;
     else if (resid<-G_PI) resid += twopi;
 
+    /* RMS resid */
+    sum += resid*resid;
+
     /* Weight */
     resid *= vwt[i];
     
     /* Save residual */
-    gsl_vector_set(f, i, resid);	
+    gsl_vector_set(f, i-lo, resid);	
   } /* end loop over data */
+
+  /* Save RMS residual */
+  data->RMSRes = (ofloat)sqrt(sum)/(hi-lo);
 
   return GSL_SUCCESS;
 } /* end  fringeFitFunc */
@@ -2324,7 +2762,8 @@ static int fringeFitJacob (const gsl_vector *coef, void *params, gsl_matrix *J)
 {
   ObitUVGSolveWB *in = (ObitUVGSolveWB*)params;
   ScanData     *data  = in->scanData; 
-  olong i, ndata, kndx;
+  olong i, ndata, kndx, lo, hi;
+  odouble freq0=0.0;
   ofloat lcoef[10], *vdata, *vwt, *vfreq, resid, phase, part1, part2, twopi=2.0*G_PI;
  
   /* Fill local array of coeffieients */
@@ -2337,8 +2776,17 @@ static int fringeFitJacob (const gsl_vector *coef, void *params, gsl_matrix *J)
   vwt   = data->antStackWt[kndx]->array;
   vfreq = data->antFreqOff->array;
   ndata = data->antStackPh[kndx]->naxis[0];
-  for (i=0; i<ndata; i++) {
-    phase = lcoef[0] + twopi*lcoef[1]*vfreq[i];
+  /* Set range of data values */
+  if (data->avgIF) {  /* all at once */
+    lo = 0;
+    hi = ndata;
+  } else {   /* Only one IF */
+    lo = data->curIF*data->numChan;
+    hi = lo + data->numChan;
+  }
+  if (!data->avgIF) freq0 = vfreq[lo];   /* First frequency of IF */
+  for (i=lo; i<hi; i++) {
+    phase = lcoef[0] + twopi*lcoef[1]*(vfreq[i]-freq0);
     resid = phase - vdata[i];
     /* Take out any whole turns */
     resid = fmodf(resid, twopi);
@@ -2351,11 +2799,11 @@ static int fringeFitJacob (const gsl_vector *coef, void *params, gsl_matrix *J)
     
     /* compute partials */
     part1 = vwt[i];
-    part2 = vwt[i]*twopi*vfreq[i];
+    part2 = vwt[i]*twopi*(vfreq[i]-freq0);
     
     /* Update Jacobean */
-    gsl_matrix_set (J, i, 0,  part1);
-    gsl_matrix_set (J, i, 1,  part2);
+    gsl_matrix_set (J, i-lo, 0,  part1);
+    gsl_matrix_set (J, i-lo, 1,  part2);
   } /* end loop over data */
 
   return GSL_SUCCESS;
@@ -2502,10 +2950,10 @@ void ObitFArrayAddEnd (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
 
   if (in1->arraySize==in2->arraySize) {   /* Inputs same size */
     j = 0;
-   
+    
     for (i=0; i<in2->arraySize; i++) {
       if ((in1->array[j]!=fblank) && (in2->array[i]!=fblank)) 
-	out->array[j] = in1->array[i] + in2->array[i];
+	out->array[j] = in1->array[i] + in2->array[j];
       else out->array[j] = fblank;
       j++;
     }
@@ -2520,6 +2968,132 @@ void ObitFArrayAddEnd (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
     }
   }
 } /* end ObitFArrayAddEnd */
+
+/**
+ *  Add harmonic sum of corresponding elements of two arrays, 
+ * second adjusted to beginning of first
+ *  out = 1/(1/in1 + 1/in2),  if either is blanked the result is blanked
+ * Only works for 1D
+ * \param in1  Input object with data
+ * \param in2  Input object with data
+ * \param out  Output array (may be an input array).
+ */
+void ObitFArrayHarmAddEnd (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
+{
+  olong i, j;
+  ofloat harm;
+  ofloat fblank = ObitMagicF();
+  
+  if (in1->arraySize==in2->arraySize) {   /* Inputs same size */
+    j = 0;
+    
+    for (i=0; i<in2->arraySize; i++) {
+      if ((in1->array[j]!=fblank) && (in2->array[i]!=fblank) && 
+	  (in1->array[j]!=0.0) && (in2->array[i]!=0.0)) {
+	harm = 1.0 / ((1.0/in1->array[j]) + (1.0/in2->array[i]));
+	out->array[j] = harm;
+      }
+      else out->array[j] = fblank;
+      j++;
+    }
+  } else {  /* Inputs different size */
+    j = 0; 
+    
+    for (i=0; i<in2->arraySize; i++) {
+      if ((in1->array[j]!=fblank) && (in2->array[i]!=fblank) && 
+	  (in1->array[j]!=0.0) && (in2->array[i]!=0.0)) {
+	harm = 1.0 / ((1.0/in1->array[j]) + (1.0/in2->array[i]));
+	out->array[j] = harm;
+      }
+      else out->array[j] = fblank;
+      j++;
+    }
+  }
+} /* end ObitFArrayHarmAddEnd */
+
+/**
+ *  Add square of sum of corresponding elements of two arrays, 
+ *  second adjusted to beginning of first
+ *  out = in1 + in2,  if either is blanked the result is blanked
+ * Only works for 1D
+ * \param in1  Input object with data
+ * \param in2  Input object with data
+ * \param out  Output array (may be an input array).
+ * \param count incremented by number of valid data.
+ */
+void ObitFArrayAddEnd2 (ObitFArray* in1, ObitFArray* in2, ObitFArray* out, olong *count)
+{
+  olong i, j;
+  ofloat fblank = ObitMagicF();
+  
+  if (in1->arraySize==in2->arraySize) {   /* Inputs same size */
+    j = 0;
+    
+    for (i=0; i<in2->arraySize; i++) {
+      if ((in1->array[j]!=fblank) && (in2->array[i]!=fblank)) {
+	out->array[j] = (in1->array[i] + in2->array[j])*(in1->array[i] + in2->array[j]);
+	(*count)++;
+      } else out->array[j] = fblank;    
+      j++;
+    }
+  } else {  /* Inputs different size */
+    j = 0; 
+    
+    for (i=0; i<in2->arraySize; i++) {
+      if ((in1->array[j]!=fblank) && (in2->array[i]!=fblank)) {
+	out->array[j] = (in1->array[j] + in2->array[i]) * (in1->array[j] + in2->array[i]);
+	(*count) ++;
+      }  else out->array[j] = fblank;
+      j++;
+    }
+  }
+} /* end ObitFArrayAddEnd2 */
+
+/**
+ *  Aaccumulate square of harmonic sum of corresponding elements of two arrays, 
+ *  second adjusted to beginning of first
+ *  out = 1/(1/in1 + 1/in2),  if either is blanked the result is blanked
+ * Only works for 1D
+ * \param in1  Input object with data
+ * \param in2  Input object with data
+ * \param out  Output array (may be an input array).
+ * \param count incremented by number of valid data.
+ */
+void ObitFArrayHarmAccEnd2 (ObitFArray* in1, ObitFArray* in2, ObitFArray* out,
+			   olong *count)
+{
+  olong i, j;
+  ofloat harm;
+  ofloat fblank = ObitMagicF();
+
+  if (in1->arraySize==in2->arraySize) {   /* Inputs same size */
+    j = 0;
+   
+    for (i=0; i<in2->arraySize; i++) {
+      if ((in1->array[j]!=fblank) && (in2->array[i]!=fblank) && 
+	  (in1->array[j]!=0.0) && (in2->array[i]!=0.0) &&
+	  (out->array[j]!=fblank)) {
+	harm = 1.0 / ((1.0/in1->array[j]) + (1.0/in2->array[i]));
+	out->array[j] += harm*harm;
+	(*count)++;
+      }
+      j++;
+    }
+  } else {  /* Inputs different size */
+    j = 0; 
+    
+    for (i=0; i<in2->arraySize; i++) {
+      if ((in1->array[j]!=fblank) && (in2->array[i]!=fblank) && 
+	  (in1->array[j]!=0.0) && (in2->array[i]!=0.0) &&
+	  (out->array[j]!=fblank)) {
+	harm = 1.0 / ((1.0/in1->array[j]) + (1.0/in2->array[i]));
+	out->array[j] *= harm*harm;
+	(*count)++;
+      }
+      j++;
+    }
+  }
+} /* end ObitFArrayHarmAddEnd2 */
 
 /**
  *  Multiply the elements of a CArray by the elements of an FArray, 
@@ -2626,3 +3200,35 @@ void ObitCArrayFSinCos (ObitFArray* in, ObitCArray* out)
   }
 } /* end ObitCArrayFSinCos */
 
+/**
+ *  Approximate SNR from the peak amplitude of the FFT 
+ *  of a set of phasors. The phasors are intended to be 
+ *  stacked baselines with combinations arrprximating that 
+ *  of a given antenna to a given reference antenna.
+ *  This approximation breaks down for large values of SNR (>50).
+ *  From the AIPSish FRING.FOR/FRNSR2
+ * \param  amp   Amplitude of coherent sum
+ * \param  amp   Normalized amplitude of coherent sum
+ * \param  sumw  Sum of weights used in stacking
+ * \param  sumww Sum of weights squared
+ * \param  tfact Weight modification array; used if unequal 
+ *               integration times in the data.  Use 1.0
+ * \param  count Count of data points added to array FFTed.
+ * \return Approximation to SNR
+ */
+static ofloat 
+decorSNR (ofloat amp, ofloat sumw, ofloat sumww, ofloat tfact, olong count)
+{
+  ofloat snr = 0.0;
+
+  amp = MIN (amp, 0.999);   /* Disallow correlations > 1.0 */
+  if ((amp> 0.0) && (sumw>0.0)) {
+    snr = tan(1.570796*amp);
+    snr = pow(snr,1.163);
+    snr *= sqrt(sumw/sqrt(sumww/count));
+  }
+  /*  Adjust for unequal integration times in the data 
+  tfact = MAX(1.0, tfact);
+  snr /= sqrt (tfact);*/
+  return snr;
+} /*  end decorSNR */

@@ -109,7 +109,7 @@ int main ( int argc, char **argv )
     NULL};
   gchar        *solverParms[] = {  /* Calibration parameters */
     "solInt", "solnVer", "solType", "solMode", "avgPol", "avgIF", "doMGM", "elevMGM",
-    "refAnt", "ampScalar", "minSNR",  "minNo", "prtLv",
+    "refAnt", "refAnts", "doTwo", "ampScalar", "minSNR",  "minNo", "prtLv",
     NULL};
 
   /* Startup - parse command line */
@@ -569,7 +569,7 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   gchar        *strTemp;
   ObitSkyModelMode modelMode;
   ObitSkyModelType modelType;
-  ofloat       modelFlux;
+  ofloat       modelFlux, refAnt, *refAnts;
   gboolean     doCalSelect;
   oint         doCalib;
   gchar *routine = "digestInputs";
@@ -609,7 +609,18 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   ObitInfoListGetTest(myInput, "doCalib",  &type, dim, &doCalib);
   doCalSelect = doCalSelect || (doCalib>0);
   ObitInfoListAlwaysPut (myInput, "doCalSelect", OBIT_bool, dim, &doCalSelect);
- 
+
+  /* Copy first refAnts value to refAnt */
+   if (ObitInfoListGetP(myInput, "refAnts",  &type, dim, (gpointer)&refAnts)) {
+     refAnt = refAnts[0];
+   } else {
+     refAnt = 0;
+     /* For old inputs */
+     ObitInfoListGetTest(myInput, "refAnt", &type, dim, &refAnt);
+   }
+   dim[0] = dim[1] = dim[2] = 1;
+   ObitInfoListAlwaysPut (myInput, "refAnt", OBIT_long, dim, &refAnt);
+
   /* Initialize Threading */
   ObitThreadInit (myInput);
 
@@ -1128,7 +1139,7 @@ void CalibHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "Sources", "Qual", "souCode", "timeRange",  "subA",
     "selBand", "selFreq", "FreqID", "BChan", "EChan", 
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol", "Antennas",  "refAnt", 
+    "doPol", "Antennas",  "refAnts", "doTwo",
     "DataType2", "in2File", "in2Disk", "in2Name", "in2Class", "in2Seq", 
     "nfield", "CCVer", "BComp", "EComp", "Cmethod", "Cmodel", "Flux",
     "modelFlux", "modelPos", "modelParm", "Alpha",

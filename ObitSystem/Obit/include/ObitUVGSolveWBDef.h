@@ -1,6 +1,6 @@
 /* $Id: ObitUVGSolveDef.h 2 2008-06-10 15:32:27Z bill.cotton $ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006                                               */
+/*;  Copyright (C) 2010                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -41,6 +41,11 @@ olong numPoln;
 olong prtLv;
 /** Reference antenna number (1-rel) */
 olong refAnt;
+/** Zero terminated list of potential reference antennas in priority 
+    order (1-rel) */
+olong *refAnts;
+/** Minimum SNR */
+ofloat minSNR;
 /** Data for current scan  */
 ScanData *scanData;
 /** Complex gain (r,i) per antenna, IF,poln IF varies fastest */
@@ -54,7 +59,7 @@ ofloat *antWeight;
 /** Work complex arrays */
 ObitCArray *cWork1, *cWork2, *cWork3;
 /** Work float arrays */
-ObitFArray *fWork1, *fWork2, *fWork3;
+ObitFArray *fWork1, *fWork2, *fWork3, *fWorkWt2;
 /** FFT for coarse fringe search  */
 ObitFFT *myFFT;
 /** FFT over sampling */
