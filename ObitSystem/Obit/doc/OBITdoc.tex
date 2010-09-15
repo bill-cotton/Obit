@@ -3433,6 +3433,64 @@ ObitTableDesc.
 \end{history}
 %
 \clearpage
+%%%%%%%%%%%%%%% ObitTableOT Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+%
+\ClassName[{ObitTableOT}]
+ObitTableOT Class
+\tabletitle{Over the Top antenna pointing table for uv data}
+% table name
+\tablename{OT}
+\tableintro[
+{This class contains tabular data and allows access.
+"AIPS OT" contains a flag indicating if the antenna elevation was over
+$90^\circ$ deg, i.e. ``over the top''.
+An ObitTableOT is the front end to a persistent disk resident structure.
+Both FITS and AIPS cataloged data are supported.
+This class is derived from the ObitTable class. }
+]
+\tableover{
+In memory tables are stored in a fashion similar to how they are 
+stored on disk - in large blocks in memory rather than structures.
+Due to the word alignment requirements of some machines, they are 
+stored by order of the decreasing element size: 
+double, float long, int, short, char rather than the logical order.
+The details of the storage in the buffer are kept in the 
+ObitTableDesc.
+}
+% Table keyword description
+\begin{keywords}
+\tablekey[{"REVISION"}{J}{revision}{1}{}
+{Revision number of the table definition.}
+]
+\end{keywords}
+%
+% Table column description
+\begin{columns}
+\tablecol[{"TIME    "}{"DAYS   " }{E}{(1)}{Time}
+{The center time.}
+] 
+\tablecol[{"TIME INTERVAL "}{"DAYS   " }{E}{(1)}{TimeI}
+{Time interval of record }
+] 
+\tablecol[{"SOURCE ID  "}{"        " }{J}{(1)}{SourID}
+{Source ID number}
+] 
+\tablecol[{"ANTENNA    "}{"        " }{J}{(1)}{Antenna}
+{Antenna number}
+]
+\tablecol[{"OVER TOP"}{"        " }{L}{(1)}{OverTop}
+{True if antenna is observing at elevations over $90^\circ$ = ``Over
+the top''}
+] 
+\end{columns}
+%
+% Table modification history
+\begin{history}
+\modhistory[{W. D. Cotton}{09/14/2006}{Revision 1: Copied from AIPS}]
+\end{history}
+%
+\clearpage
 %%%%%%%%%%%%%%% ObitTablePC Class %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % 
 %

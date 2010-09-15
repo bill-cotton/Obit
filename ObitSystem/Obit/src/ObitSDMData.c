@@ -577,19 +577,19 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   g_free(fullname);
 
   /* calData table */
-  fullname = g_strconcat (DataRoot,"/calData.xml", NULL);
+  fullname = g_strconcat (DataRoot,"/CalData.xml", NULL);
   out->calDataTab = ParseASDMcalDataTable(out, fullname, err);
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
   /* calDevice table */
-  fullname = g_strconcat (DataRoot,"/calDevice.xml", NULL);
+  fullname = g_strconcat (DataRoot,"/CalDevice.xml", NULL);
   out->calDeviceTab = ParseASDMcalDeviceTable(out, fullname, err);
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
   /* calPointing table */
-  fullname = g_strconcat (DataRoot,"/calPointing.xml", NULL);
+  fullname = g_strconcat (DataRoot,"/CalPointing.xml", NULL);
   out->calPointingTab = ParseASDMcalPointingTable(out, fullname, err);
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
@@ -2348,7 +2348,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of Pointing rows */
-    if (g_strstr_len (line, maxLine, "<Name>Pointing")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>Pointing<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -4098,7 +4098,7 @@ ParseASDMExecBlockTable(ObitSDMData *me,
       out->rows[irow]->baseRangeMax = ASDMparse_dbl (line, maxLine, prior, &next);
       continue;
     }
-    prior = "baseRmsMinor<>";
+    prior = "<baseRmsMinor>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->baseRmsMinor = ASDMparse_dbl (line, maxLine, prior, &next);
       continue;
@@ -4646,6 +4646,11 @@ static ASDMFlagTable* KillASDMFlagTable(ASDMFlagTable* table)
 static ASDMPointingRow* KillASDMPointingRow(ASDMPointingRow* row)
 {
   if (row == NULL) return NULL;
+  if (row->timeInterval)      g_free(row->timeInterval);
+  if (row->encoder)           g_free(row->encoder);
+  if (row->pointingDirection) g_free(row->pointingDirection);
+  if (row->target)            g_free(row->target);
+  if (row->offset)            g_free(row->offset);
   g_free(row);
   return NULL;
 } /* end   KillASDMPointingRow */
@@ -4664,10 +4669,10 @@ static ASDMPointingTable* ParseASDMPointingTable(ObitSDMData *me,
   ObitFile *file=NULL;
   ObitIOCode retCode;
   olong irow, maxLine = 4098;
-  odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
   gchar line[4099];
   gchar *endrow = "</row>";
-  /*gchar *prior, *next;*/
+  odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
+  gchar *prior, *next;
   gchar *routine = " ParseASDMPointingTable";
 
   /* error checks */
@@ -4698,6 +4703,75 @@ static ASDMPointingTable* ParseASDMPointingTable(ObitSDMData *me,
     if (retCode==OBIT_IO_EOF) break;
 
     /* Parse entries */
+    prior = "<timeInterval>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->timeInterval = ASDMparse_timeRange(line, maxLine, prior, &next);
+      /* Remove offset from second */
+      if ((out->rows[irow]->timeInterval[1]<out->rows[irow]->timeInterval[0]) &&
+	  (out->rows[irow]->timeInterval[1]>mjdJD0))
+	out->rows[irow]->timeInterval[1] -= mjdJD0;
+      continue;
+    }
+    prior = "<numSample>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numSample = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<encoder>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->encoder = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<pointingTracking>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->pointingTracking = ASDMparse_boo (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<usePolynomials>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->usePolynomials = ASDMparse_boo (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<timeOrigin>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->timeOrigin = ASDMparse_time (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<numTerm>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numTerm = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<pointingDirection>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->pointingDirection = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<target>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->target = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<offset>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->offset = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<overTheTop>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->overTheTop = ASDMparse_boo (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<antennaId>Antenna_";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->antennaId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<pointingModelId>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->pointingModelId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
 
     /* Is this the end of a row? */
     if (g_strstr_len (line, maxLine, endrow)!=NULL) irow++;

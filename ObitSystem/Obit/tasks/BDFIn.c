@@ -2190,7 +2190,10 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   /* loop through input table */
   for (iRow =0; iRow<SDMData->FlagTab->nrows; iRow++) {
 
-    /* Look up antenna number from Id */
+     /* Make sure valid */
+    if (SDMData->FlagTab->rows[iRow]->reason==NULL) continue;
+
+   /* Look up antenna number from Id */
     antId = SDMData->FlagTab->rows[iRow]->antennaId;
     antNo = antId;
     for (iAnt=0; iAnt<AntArray->nants; iAnt++) {
@@ -2287,6 +2290,9 @@ void GetWeatherInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   /* loop through input table */
   for (iRow=0; iRow<inTab->nrows; iRow++) {
     
+    /* Make sure valid */
+    if (inTab->rows[iRow]->timeInterval==NULL) continue;
+
     /* Save to WX table */
     outRow->Time          = inTab->rows[iRow]->timeInterval[0]-refJD;
     outRow->TimeI         = inTab->rows[iRow]->timeInterval[1] -
@@ -2344,7 +2350,7 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ASDMcalDeviceTable*   inTab=SDMData->calDeviceTab;
   ASDMAntennaArray*    AntArray;
   ASDMSpectralWindowArray* SpWinArray;
-  olong i, j, iRow, oRow, ver, maxAnt, iAnt, jAnt, IFno;
+  olong i, iRow, oRow, ver, maxAnt, iAnt, jAnt, IFno;
   olong *antLookup, *SpWinLookup;
   oint numIF, numPol;
   ofloat fblank = ObitMagicF();
@@ -2441,6 +2447,9 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     /* loop through input table */
     for (iRow=0; iRow<inTab->nrows; iRow++) {
 
+      /* Make sure valid */
+      if (inTab->rows[iRow]->timeInterval==NULL) continue;
+
       /* Is this the desired antenna? */
       if ((inTab->rows[iRow]->antennaId>=0) && 
 	  (inTab->rows[iRow]->antennaId<AntArray->nants)) 
@@ -2456,11 +2465,16 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       else continue;
       
       /* Save to CD table row */
-      j = 0;
       /* Apply efficiencies to cal temp */
-      outRow->TCal1[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[i]*inTab->rows[iRow]->calEff[j++]);
-      if (numPol>1) 
-	outRow->TCal2[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[i]*inTab->rows[iRow]->calEff[j++]);
+      if (inTab->rows[iRow]->calEff) {
+	outRow->TCal1[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]*inTab->rows[iRow]->calEff[0]);
+	if (numPol>1) 
+	  outRow->TCal2[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]*inTab->rows[iRow]->calEff[1]);
+      } else { /* - No efficiency - just cal */
+ 	outRow->TCal1[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]);
+	if (numPol>1) 
+	  outRow->TCal2[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]);
+      }
     } /* end loop over input table */
 
     /* Write */
@@ -2481,7 +2495,8 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   }
   
   /* Tell about it */
-  Obit_log_error(err, OBIT_InfoErr, "Copied calDevice table");
+  Obit_log_error(err, OBIT_InfoErr, "Copied calDevice table %d rows",
+		 outTable->myDesc->nrow);
   
   /* Cleanup */
   SpWinArray = ObitSDMDataKillSWArray (SpWinArray);
@@ -2610,6 +2625,9 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   /* loop through input table */
   for (iRow=0; iRow<inTab->nrows; iRow++) {
 
+    /* Make sure valid */
+    if (inTab->rows[iRow]->timeInterval==NULL) continue;
+
     /* Look for previously handled data (antennaId=-10) */
     if (inTab->rows[iRow]->antennaId<=-10) continue;
 
@@ -2644,8 +2662,25 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       outRow->antennaNo = antLookup[inTab->rows[iRow]->antennaId];
     else continue;  /* ignore if antennaId bad */
 
+    /* Work out IF number - must be valid and selected */
+    if ((inTab->rows[iRow]->spectralWindowId>=0) && 
+	(inTab->rows[iRow]->spectralWindowId<AntArray->nants) &&
+	SpWinArray->winds[inTab->rows[iRow]->spectralWindowId]->selected) 
+      IFno = SpWinLookup[inTab->rows[iRow]->spectralWindowId];
+    else continue;
+      
+    /* snatch data */
+    outRow->PwrDif1[IFno] = inTab->rows[iRow]->switchedPowerDifference[0];
+    outRow->PwrSum1[IFno] = inTab->rows[iRow]->switchedPowerSum[0];
+    outRow->Gain1[IFno]   = inTab->rows[iRow]->requantizerGain[0];
+    if (numPol>1) {
+      outRow->PwrDif2[IFno] = inTab->rows[iRow]->switchedPowerDifference[1];
+      outRow->PwrSum2[IFno] = inTab->rows[iRow]->switchedPowerSum[1];
+      outRow->Gain2[IFno]   = inTab->rows[iRow]->requantizerGain[1];
+    }
+
     /* Search table until find entry for same antennaId with a later time */
-    for (jRow=iRow; jRow<inTab->nrows; jRow++) {
+    for (jRow=iRow+1; jRow<inTab->nrows; jRow++) {
       /* Gone far enough? */
       if ((inTab->rows[jRow]->timeInterval[0]>inTab->rows[iRow]->timeInterval[0])) break;
       /* DEBUG 
@@ -2706,7 +2741,8 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   }
   
   /* Tell about it */
-  Obit_log_error(err, OBIT_InfoErr, "Copied SysPower table");
+  Obit_log_error(err, OBIT_InfoErr, "Copied SysPower table %d rows",
+		 outTable->myDesc->nrow);
   
   /* Cleanup */
   outRow   = ObitTableSYRowUnref(outRow);
@@ -2796,6 +2832,9 @@ void GetOTTInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     
   /* loop through input table */
   for (iRow=0; iRow<inTab->nrows; iRow++) {
+
+    /* Make sure valid */
+    if (inTab->rows[iRow]->timeInterval==NULL) continue;
 
     /* Look for previously handled data (antennaId=-10) */
     if (inTab->rows[iRow]->antennaId<=-10) continue;
