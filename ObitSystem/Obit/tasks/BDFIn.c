@@ -52,6 +52,7 @@
 #include "ObitTableSY.h"
 #include "ObitTableWX.h"
 #include "ObitTableNX.h"
+#include "ObitTableOT.h"
 #include "ObitSDMData.h"
 #include "ObitBDFData.h"
 #include "ObitHistory.h"
@@ -92,6 +93,8 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
 void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
 /* Copy  SysPower to AIPS SY table */
 void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
+/* Copy  Over the top from Pointing table to AIPS OT table */
+void GetOTTInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
 /* Copy any CALIBRATION tables */
 void GetCalibrationInfo (ObitData *inData, ObitUV *outData, ObitErr *err);
 /* Copy any BANDPASS tables */
@@ -246,7 +249,8 @@ int main ( int argc, char **argv )
   GetWeatherInfo   (SDMData, outData, err);  /*   Weather table */
   GetCalDeviceInfo (SDMData, outData, err);  /*   calDevice table */
   GetSysPowerInfo  (SDMData, outData, err);  /*   SysPower table */
-  GetGainCurveInfo (SDMData, outData, err);  /* gain curve (GC) table */
+  GetOTTInfo  (SDMData, outData, err);       /*   Over the top table */
+  GetGainCurveInfo (SDMData, outData, err);  /*   gain curve (GC) table */
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Check scan intents for online only calibrations */
@@ -2711,6 +2715,148 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ObitSDMDataKillAntArray (AntArray);
   if (antLookup)   g_free(antLookup);
   if (SpWinLookup) g_free(SpWinLookup);
+
+} /* end  GetSysPowerInfo */
+
+void GetOTTInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
+/*----------------------------------------------------------------------- */
+/*  Convert the Pointing table from ASDM  to AIPS OT on outData           */
+/*   Input:                                                               */
+/*      SDMData  ASDM structure                                           */
+/*      outData  Output UV object                                         */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+{
+  ObitTableOT*          outTable=NULL;
+  ObitTableOTRow*       outRow=NULL;
+  ASDMPointingTable*    inTab=SDMData->PointingTab;
+  ASDMAntennaArray*     AntArray;
+  olong i, iRow, oRow, ver, maxAnt, SourNo;
+  olong *antLookup, curScan, curScanI, nextScanNo;
+  ObitIOAccess access;
+  gchar *routine = "GetSysPowerInfo";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitUVIsA(outData));
+
+  /* Any entries? */
+  if (inTab->nrows<=0) return;
+
+  /* Print any prior messages */
+  ObitErrLog(err);
+  
+  /* Extract ASDM Antenna data  - selScan global */
+  curScan    = selScan;
+  curScanI   = -1;  /* Force init */
+  SourNo     = 0;
+  nextScanNo = 0;
+  AntArray    = ObitSDMDataGetAntArray(SDMData, selScan);
+  Obit_return_if_fail((AntArray), err,
+		      "%s: Could not extract Antenna info from ASDM", 
+		      routine);
+
+  /* Highest antenna number? */
+  maxAnt = AntArray->maxAnt;
+
+  /* Antenna number lookup table */
+  antLookup = g_malloc(maxAnt*sizeof(olong));
+  for (i=0; i<maxAnt; i++) antLookup[i] = -1;  /* For missing ants */
+  for (i=0; i<AntArray->nants; i++) {
+    if ((AntArray->ants[i]->antennaId>=0) && (AntArray->ants[i]->antennaId<maxAnt))
+      antLookup[AntArray->ants[i]->antennaId] = AntArray->ants[i]->antennaNo;
+  }
+
+  /* Create output OT table object */
+  ver      = 1;
+  access   = OBIT_IO_ReadWrite;
+  outTable = newObitTableOTValue ("Output table", (ObitData*)outData, 
+				  &ver, access, err);
+  if (outTable==NULL) Obit_log_error(err, OBIT_Error, "ERROR with OT table");
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  
+  /* Open table */
+  if ((ObitTableOTOpen (outTable, access, err) 
+       != OBIT_IO_OK) || (err->error))  { /* error test */
+    Obit_log_error(err, OBIT_Error, "ERROR opening output OT table");
+    return;
+  }
+  
+  /* Create output Row */
+  outRow = newObitTableOTRow (outTable);
+  /* attach to table buffer */
+  ObitTableOTSetRow (outTable, outRow, err);
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+
+  /* Have to collect multiple SpWin into one record */
+  
+  /* Initialize output row */
+  outRow->status      = 0;
+    
+  /* loop through input table */
+  for (iRow=0; iRow<inTab->nrows; iRow++) {
+
+    /* Look for previously handled data (antennaId=-10) */
+    if (inTab->rows[iRow]->antennaId<=-10) continue;
+
+    /* Is this in the same scan?  Antennas may change but not SpWin */
+    if (nextScan(SDMData, curScan, inTab->rows[iRow]->timeInterval[0], 
+		&curScanI, &nextScanNo, &SourNo)) {
+      curScan = nextScanNo;
+
+      /* Extract antenna info */
+      AntArray = ObitSDMDataKillAntArray (AntArray);  /* Delete old */
+      AntArray = ObitSDMDataGetAntArray(SDMData, curScan);
+      Obit_return_if_fail((AntArray), err,
+			  "%s: Could not extract Antenna info from ASDM", 
+			  routine);
+
+      /* Antenna number lookup table */
+      antLookup = g_malloc(maxAnt*sizeof(olong));
+      for (i=0; i<maxAnt; i++) antLookup[i] = -1;  /* For missing ants */
+      for (i=0; i<AntArray->nants; i++) {
+	if ((AntArray->ants[i]->antennaId>=0) && (AntArray->ants[i]->antennaId<maxAnt))
+	  antLookup[AntArray->ants[i]->antennaId] = AntArray->ants[i]->antennaNo;
+      }
+    } /* End new scan */
+      
+    /* Save info to OT table row */
+    outRow->Time          = inTab->rows[iRow]->timeInterval[0]-refJD;
+    outRow->TimeI         = inTab->rows[iRow]->timeInterval[1];
+    outRow->SourID        = SourNo;
+    /* Convert antennaID to antenna number */
+    if ((inTab->rows[iRow]->antennaId>=0) && 
+	(inTab->rows[iRow]->antennaId<AntArray->nants)) 
+      outRow->Antenna = antLookup[inTab->rows[iRow]->antennaId];
+    else continue;  /* ignore if antennaId bad */
+    /* Over the top? */
+    outRow->OverTop = inTab->rows[iRow]->overTheTop;
+
+    /* Write */
+    oRow = -1;
+    if ((ObitTableOTWriteRow (outTable, oRow, outRow, err)
+	 != OBIT_IO_OK) || (err->error>0)) { 
+      Obit_log_error(err, OBIT_Error, "ERROR updating OT Table");
+      return;
+    }
+  } /* end loop over input table */
+  
+    /* Close  table */
+  if ((ObitTableOTClose (outTable, err) 
+       != OBIT_IO_OK) || (err->error>0)) { /* error test */
+    Obit_log_error(err, OBIT_Error, "ERROR closing output OT Table file");
+    return;
+  }
+  
+  /* Tell about it */
+  Obit_log_error(err, OBIT_InfoErr, "Copied OT table");
+  
+  /* Cleanup */
+  outRow   = ObitTableOTRowUnref(outRow);
+  outTable = ObitTableOTUnref(outTable);
+  ObitSDMDataKillAntArray (AntArray);
+  if (antLookup)   g_free(antLookup);
 
 } /* end  GetSysPowerInfo */
 

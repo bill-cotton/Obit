@@ -17,7 +17,7 @@ X    Feed.xml
 X    Field.xml
 X    Flag.xml
      PointingModel.xml
-     Pointing.xml
+X    Pointing.xml
 X    Polarization.xml
 X    Processor.xml
      Receiver.xml
@@ -4664,6 +4664,7 @@ static ASDMPointingTable* ParseASDMPointingTable(ObitSDMData *me,
   ObitFile *file=NULL;
   ObitIOCode retCode;
   olong irow, maxLine = 4098;
+  odouble mjdJD0=2400000.5; /* JD of beginning of MJD time */
   gchar line[4099];
   gchar *endrow = "</row>";
   /*gchar *prior, *next;*/

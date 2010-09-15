@@ -595,8 +595,32 @@ typedef struct {
 
  /* Pointing Table */
 typedef struct {
-  /** place holder */
-  olong holder;
+  /** time Interval (JD days) */
+  odouble *timeInterval;
+  /** number of samples */
+  olong numSample;
+  /** Encoder values */
+  odouble *encoder;
+  /** Was antenna in tracking mode */
+  gboolean pointingTracking;
+  /** using Polynomials */
+  gboolean usePolynomials;
+  /** Time origin JD of the polynomial expansion */
+  odouble timeOrigin;
+  /** number of terms in the polynomial */
+  olong numTerm;
+  /** Commanded pointing direction */
+  odouble *pointingDirection;
+  /** Direction of target */
+  odouble *target;
+  /** Horizion mapping offsets */
+  odouble *offset;
+  /** over the top observing? */
+  gboolean overTheTop;
+  /** antenna Id identifying row in Antenna table */
+  olong antennaId;
+  /** pointing model Id */
+  olong pointingModelId;
 } ASDMPointingRow;
 typedef struct {
   /** Number of rows */

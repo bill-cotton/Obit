@@ -951,6 +951,8 @@ void doSplit (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 
   } else if (avgFreq>0) {    /* Freq averaging only */
     isScratch = FALSE;
+    /* Need to clone */
+    ObitUVClone (inData, outData, err);
     outData = ObitUVUtilAvgF (inData, isScratch, outData, err);
     if (err->error) Obit_traceback_msg (err, routine, inData->name);
 

@@ -1282,10 +1282,11 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   ObitImage    *outImage=NULL;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong        chInc, BChan, EChan, nchan, oldSN;
+  olong        chInc, BChan, EChan, nchan, oldSN, win[4];
   gboolean     doFlat, btemp, autoWindow, Tr=TRUE, do3D;
-  olong        inver, outver, plane[5] = {0,1,1,1,1};
+  olong        inver, outver, *CLEANBox, plane[5] = {0,1,1,1,1};
   gchar        Stokes[5], *CCType = "AIPS CC";
+  ofloat       modelFlux=0.0;
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
     "UVRange", "timeRange", "UVTape",
     "BIF", "EIF", "subA", "FreqID", "souCode", "Qual", 
@@ -1398,9 +1399,23 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   /* Set CLEAN windows  */
   ObitDConCleanVisDefWindow((ObitDConClean*)myClean, err);
   if (err->error) Obit_traceback_msg (err, routine, myClean->name);
-    
+
+  /* Check if need to add a small window at the origin? */    
+  ObitInfoListGetTest(myInput, "modelFlux",  &type, dim, &modelFlux);
+  ObitInfoListGetP(myInput, "CLEANBox",  &type, dim, (gpointer)&CLEANBox);
+  if ((modelFlux>0.0) && CLEANBox && (CLEANBox[0]==0)) {
+    /* `yes add 5 pixel circle at center - change default window */
+    win[0] = 5;
+    win[1] = myClean->mosaic->nx[0]/2 + 1;
+    win[2] = myClean->mosaic->ny[0]/2 + 1;
+    win[3] = 0;
+    ObitDConCleanWindowUpdate (myClean->window, 1, 1, OBIT_DConCleanWindow_round,
+			       win, err);
+    if (err->error) Obit_traceback_msg (err, routine, myClean->name);
+  }
+
   /* Create output image(s) */
-  if (doFlat) 
+  if (doFlat && (myClean->mosaic->numberImages>1)) 
     outField = ObitImageMosaicGetFullImage (myClean->mosaic, err);
   else
     outField = ObitImageMosaicGetImage (myClean->mosaic, 0, err);
@@ -1414,6 +1429,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
     
   /* Set Stokes on SkyModel */
+  dim[0] = dim[1] = dim[2] = dim[3] = 1;
   ObitInfoListAlwaysPut (myClean->skyModel->info, "Stokes", OBIT_string, dim, Stokes);
   
   /* Automatic windowing?  */
