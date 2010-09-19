@@ -517,6 +517,7 @@ ObitTableSY* ObitTableSYCopy (ObitTableSY *in, ObitTableSY *out, ObitErr *err)
   /* Copy this class  info */
   out->nIF = in->nIF;
   out->nPol = in->nPol;
+  out->nAnt = in->nAnt;
   out->revision = in->revision;
   /* Update class specific info */
   ObitTableSYUpdate (out, err);
@@ -1071,6 +1072,9 @@ static void ObitTableSYUpdate (ObitTableSY *in, ObitErr *err)
    /* nPol */
   if (!ObitInfoListGet(in->myDesc->info, "NPOL", &type, dim, 
 		       (gpointer)&in->nPol, err)) return;
+   /* nAnt */
+  if (!ObitInfoListGet(in->myDesc->info, "NO_ANT", &type, dim, 
+		       (gpointer)&in->nAnt, err)) return;
    /* revision */
   in->revision = 1; 
   ObitInfoListGetTest(in->myDesc->info, "REVISION", &type, dim, 
@@ -1212,6 +1216,11 @@ static void ObitTableSYDumpKey (ObitTableSY *in, ObitErr *err)
   dim[0] = 1;
   ObitInfoListAlwaysPut(info, "NPOL", type, dim, 
 		  (gpointer)&in->nPol);
+  /* nAnt */
+  type  = OBIT_oint;
+  dim[0] = 1;
+  ObitInfoListAlwaysPut(info, "NO_ANT", type, dim, 
+		  (gpointer)&in->nAnt);
   /* revision */
   type  = OBIT_oint;
   dim[0] = 1;

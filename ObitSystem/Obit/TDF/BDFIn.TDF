@@ -60,6 +60,8 @@ doCode                              Each calcode a different source?
 **PARAM** float 1 **DEF** 0.5
 calInt                              CL Table interval
 **PARAM** boo 1  **DEF** T
+doSwPwr                             Make EVLA Switched power corr?
+**PARAM** boo 1  **DEF** T
 Compress                            True => write compressed data
 **PARAM** str 128
 taskLog                             Logfile to write task messages to
@@ -72,6 +74,10 @@ directory structure.
    Flag entries in the ASDM are converted to entries in the AIPS FG
 table.  Scans with ascribed intents clearly for online calibration
 only, "CALIBRATE-POINTING", are also flagged.
+   The output file will contain a CL table with amplitude corrections 
+based on standard EVLA gain curves, an opacity model based partly on
+the weather (WX) table and optionally EVLA switched power measurements
+to remove variations in electronics gain.
 
 Adverbs:
   DataRoot...Archive directory for project
@@ -111,6 +117,11 @@ Data selection
              AIPS SU table).  If False, all data for a given source 
              name will have the same source ID.
   calInt.....Interval in min between AIPS CL table entries.
+  doSwPwr....If True, make corrections in the output CL table based
+             on measurements of the cal (from AIPS SY table).
+             The SY table 1 is copied to ver 2 in which the switched 
+             power differenced are smoothed to calInt using an
+             alpha median window filter with alpha = 0.5
 
   Compress...If True  the output data is written in
              compressed format which can result in a substantial

@@ -745,7 +745,7 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   g_free(fullname);
 
   /* Other info - what a piece of shit */
-  damn = ObitSDMDataGetSWArray (out, 1);
+  damn = ObitSDMDataGetSWArray (out, out->MainTab->rows[0]->scanNumber);
 
   /* Reference JD from first Main table entry (0 h )*/
   out->refJD = damn->refJD;
@@ -2252,7 +2252,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of calData rows */
-    if (g_strstr_len (line, maxLine, "<Name>calData")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>CalData")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2260,7 +2260,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of calDevice rows */
-    if (g_strstr_len (line, maxLine, "<Name>calDevice")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>CalDevice")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2268,7 +2268,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of calPointing rows */
-    if (g_strstr_len (line, maxLine, "<Name>calPointing")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>CalPointing")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;

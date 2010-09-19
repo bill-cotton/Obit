@@ -37,6 +37,8 @@
 oint  nIF;
 /** The number of polarizations. */
 oint  nPol;
+/** The number of antennas in table */
+oint  nAnt;
 /** Revision number of the table definition. */
 oint  revision;
 /** Column offset for The center time. in table record */
@@ -63,27 +65,27 @@ olong  SubACol;
 olong  FreqIDOff;
 /** Physical column number for Frequency id of scan in table record */
 olong  FreqIDCol;
-/** Column offset for (P_on-P_off)*G  Poln # 1 ) in table record */
+/** Column offset for (P_on-P_off)*G  Poln # 1 ), invalid data fblanked in table record */
 olong  PwrDif1Off;
-/** Physical column number for (P_on-P_off)*G  Poln # 1 ) in table record */
+/** Physical column number for (P_on-P_off)*G  Poln # 1 ), invalid data fblanked in table record */
 olong  PwrDif1Col;
-/** Column offset for (P_on+P_off)*G  Poln # NOPOL ) in table record */
+/** Column offset for (P_on+P_off)*G  Poln # 1 ), invalid data fblanked in table record */
 olong  PwrSum1Off;
-/** Physical column number for (P_on+P_off)*G  Poln # NOPOL ) in table record */
+/** Physical column number for (P_on+P_off)*G  Poln # 1 ), invalid data fblanked in table record */
 olong  PwrSum1Col;
-/** Column offset for Post switched power gain Poln # 1) in table record */
+/** Column offset for Post switched power gain Poln # 1), invalid data fblanked in table record */
 olong  Gain1Off;
-/** Physical column number for Post switched power gain Poln # 1) in table record */
+/** Physical column number for Post switched power gain Poln # 1), invalid data fblanked in table record */
 olong  Gain1Col;
-/** Column offset for (P_on-P_off)*G  Poln # 2 ) in table record */
+/** Column offset for (P_on-P_off)*G  Poln # 2 ), invalid data fblanked in table record */
 olong  PwrDif2Off;
-/** Physical column number for (P_on-P_off)*G  Poln # 2 ) in table record */
+/** Physical column number for (P_on-P_off)*G  Poln # 2 ), invalid data fblanked in table record */
 olong  PwrDif2Col;
-/** Column offset for (P_on+P_off)*G  Poln # NOPOL ) in table record */
+/** Column offset for (P_on+P_off)*G  Poln # 2 ), invalid data fblanked in table record */
 olong  PwrSum2Off;
-/** Physical column number for (P_on+P_off)*G  Poln # NOPOL ) in table record */
+/** Physical column number for (P_on+P_off)*G  Poln # 2 ), invalid data fblanked in table record */
 olong  PwrSum2Col;
-/** Column offset for Post switched power gain Poln # 2) in table record */
+/** Column offset for Post switched power gain Poln # 2), invalid data fblanked in table record */
 olong  Gain2Off;
-/** Physical column number for Post switched power gain Poln # 2) in table record */
+/** Physical column number for Post switched power gain Poln # 2), invalid data fblanked in table record */
 olong  Gain2Col;

@@ -58,6 +58,7 @@
 #include "ObitHistory.h"
 #include "ObitPrecess.h"
 #include "ObitVLAGain.h"
+#include "ObitGainCal.h"
 #ifndef VELIGHT
 #define VELIGHT 2.997924562e8
 #endif
@@ -79,6 +80,7 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
 /* Get data */
 void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData, 
 	      ObitErr *err);
+
 /* Get Antenna info */
 void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err);
 /* Get Frequency info */
@@ -180,6 +182,7 @@ int main ( int argc, char **argv )
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitSDMData *SDMData=NULL;
   ObitBDFData *BDFData=NULL;
+  ObitTable   *CalTab=NULL;
 
   err = newObitErr();  /* Obit error/message stack */
 
@@ -216,7 +219,7 @@ int main ( int argc, char **argv )
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Get header info, array geometry, initialize output */
-  GetHeader (outData, SDMData, myInput, err);
+    GetHeader (outData, SDMData, myInput, err); 
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit; 
 
   /* Open output data */
@@ -226,19 +229,13 @@ int main ( int argc, char **argv )
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
   
   /* convert data  */
-  GetData (SDMData, myInput, outData, err);
+  GetData (SDMData, myInput, outData, err); 
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Close output uv data */
   if ((ObitUVClose (outData, err) != OBIT_IO_OK) || (err->error>0))
     Obit_log_error(err, OBIT_Error, "ERROR closing output file");
   
-  /* Create CL table - interval set in setOutputData */
-  Obit_log_error(err, OBIT_InfoErr, "Creating CL Table");
-  ObitErrLog(err);
-  ObitTableCLGetDummy (outData, outData, 1, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
-
   /* Copy tables */
   GetFlagInfo (SDMData, outData, err);       /*   FLAG tables */
   /* GetCalibrationInfo (inData, outData, err);   CALIBRATION tables */
@@ -261,6 +258,13 @@ int main ( int argc, char **argv )
   /*for (i=1; i<=numArray; i++)  UpdateAntennaInfo (outData, i, err);*/
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
+  /* Create CL table - interval etc,  set in setOutputData */
+  Obit_log_error(err, OBIT_InfoErr, "Creating CL Table");
+  ObitErrLog(err);
+  /*ObitTableCLGetDummy (outData, outData, 1, err); */
+  CalTab = ObitGainCalCalc (outData, FALSE, err);
+  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+
   /* History */
   BDFInHistory (myInput, SDMData, outData, err);
   
@@ -278,6 +282,7 @@ int main ( int argc, char **argv )
   SDMData  = ObitSDMDataUnref (SDMData);
   BDFData  = ObitBDFDataUnref (BDFData);
   outData  = ObitUnref(outData);
+  CalTab   = ObitTableUnref(CalTab);
   uvwSourceList = ObitUnref(uvwSourceList);
   if (dataRefJDs)  g_free(dataRefJDs);
   if (arrayRefJDs) g_free(arrayRefJDs);
@@ -553,13 +558,13 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
   olong      i, n, Aseq, disk, cno, lType;
   gchar     *Type, *strTemp, outFile[129];
   gchar     Aname[13], Aclass[7], *Atype = "UV";
-  olong      nvis;
+  olong      nvis, itemp;
   gint32    dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gboolean  exist;
+  gboolean  exist, btemp;
   gchar     tname[129], *fullname=NULL;
-  ofloat    calInt = 0.5;
+  ofloat    calInt = 0.5, ftemp;
   gchar     *outParms[] = {  /* Parameters for output data */
-    "Compress", "maxGap", "maxScan", NULL};
+    "Compress", "maxGap", "maxScan", "doSwPwr", NULL};
   gchar     *routine = "setOutputData";
 
   /* error checks */
@@ -663,7 +668,16 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
   /* to seconds */
   calInt *= 60.0;
-  ObitInfoListAlwaysPut(outUV->info, "solInt", OBIT_float, dim, &calInt);
+  ObitInfoListAlwaysPut(outUV->info, "calInt", OBIT_float, dim, &calInt);
+  
+  /* Other CL Table controls */
+  itemp = 1;   /* Output CL table version */
+  ObitInfoListAlwaysPut(outUV->info, "calVer", OBIT_float, dim, &itemp);
+  btemp = TRUE;
+  ObitInfoListAlwaysPut(outUV->info, "doGain",  OBIT_bool, dim, &btemp);
+  ObitInfoListAlwaysPut(outUV->info, "doOpac",  OBIT_bool, dim, &btemp);
+  ftemp = 0.5;   /* Weight of weather in opacity */
+  ObitInfoListAlwaysPut(outUV->info, "WXWeight", OBIT_float, dim, &ftemp);
   
   /* Get input parameters from myInput, copy to outUV */
   ObitInfoListCopyList (myInput, outUV->info, outParms);
@@ -1000,7 +1014,7 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData,
   gchar          hicard[81], begString[17], endString[17];
   gchar         *hiEntries[] = {
     "DataRoot", "selChan", "selIF", "selBand", "selConfig", "dropZero", 
-    "doCode", "calInt",
+    "doCode", "calInt", "doSwPwr",
     NULL};
   gchar *routine = "BDFInHistory";
   
@@ -1797,8 +1811,13 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     filename = g_strconcat (dataroot, "/ASDMBinary/uid_", SDMData->MainTab->rows[iMain]->entityId, NULL);
     /* Complain and bail if file doesn't exist */
     if (!ObitFileExist(filename, err)) {
-      Obit_log_error(err, OBIT_InfoWarn, "Skipping, BDF file %s not found", filename);
-      continue;
+      /* Try adding .txt to end */
+      if(filename) g_free(filename); 
+      filename = g_strconcat (dataroot, "/ASDMBinary/uid_", SDMData->MainTab->rows[iMain]->entityId, ".txt",NULL);
+      if (!ObitFileExist(filename, err)) {
+	Obit_log_error(err, OBIT_InfoWarn, "Skipping, BDF file %s not found", filename);
+	continue;
+      }
     }
  
    /* File initialization */
@@ -2597,6 +2616,9 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     Obit_log_error(err, OBIT_Error, "ERROR opening output SY table");
     return;
   }
+
+  /* Header values */
+  outTable->nAnt = maxAnt;
   
   /* Create output Row */
   outRow = newObitTableSYRow (outTable);

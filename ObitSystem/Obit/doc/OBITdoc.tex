@@ -3919,6 +3919,10 @@ ObitTableDesc.
 \tablekey[{"NPOL "}{J}{nPol}{}{(1,2)}
 {The number of polarizations.}
 ]
+\tablekey[{"NO\_ANT  "}{J}{nAnt}{}{}
+{The number of antennas in table (max. ant. number in file).
+}
+]
 \tablekey[{"REVISION"}{J}{revision}{1}{}
 {Revision number of the table definition.}
 ]
@@ -3948,7 +3952,7 @@ ObitTableDesc.
 { (P\_on-P\_off)*G  Poln \# NPOL ), invalid data fblanked}
 ] 
 \tablecol[{"POWER SUM\#NPOL"}{"    " }{E}{(nIF)}{PwrSum}
-{(P\_on+P\_off)*G  Poln \# NOPOL ), invalid data fblanked}
+{(P\_on+P\_off)*G  Poln \# NPOL ), invalid data fblanked}
 ] 
 \tablecol[{"POWER GAIN \#NPOL"}{"     "}{E}{(nIF)}{Gain}
 {Post switched power gain Poln \# NPOL), invalid data fblanked}
