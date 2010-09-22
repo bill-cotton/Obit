@@ -521,8 +521,8 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
   row->TimeI  = 0.0; 
   row->SourID = sid; 
   row->antNo  = 0; 
-  row->SubA   = 0; 
-  row->FreqID = 0; 
+  row->SubA   = 1; 
+  row->FreqID = 1; 
   row->IFR    = 0.0; 
   row->NodeNo = 0; 
   row->MBDelay1 = 0.0; 
@@ -588,7 +588,7 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
     row->Time   = in->scanData->timec; 
     row->TimeI  = in->scanData->timei; 
     if (in->scanData->sid>0) row->SourID = in->scanData->sid; 
-    row->SubA   = in->scanData->suba; 
+    row->SubA   = MAX (1, in->scanData->suba); 
     row->FreqID = in->scanData->fqid; 
     
     /* Loop over antennas - write as corrections rather than solutions */
@@ -597,7 +597,8 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
       if (gotAnt[iAnt]) {
 	good = FALSE; /* Until proven */
 	row->antNo  = iAnt+1; 
-	row->MBDelay1 = -in->antDelay[iAnt*numIF*numPol]; 
+	if (in->scanData->avgIF)
+	    row->MBDelay1 = -in->antDelay[iAnt*numIF*numPol]; 
 	for (i=0; i<numIF; i++) {
 	  row->Real1[i]   =  in->antGain[(iAnt*numIF*numPol+i)*2];
 	  row->Imag1[i]   =  in->antGain[(iAnt*numIF*numPol+i)*2+1];
@@ -613,7 +614,8 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
 	  if (row->Weight1[i]<=0.0) cntBad++;    /* DEBUG */
 	}
 	if (numPol>1) {
-	  row->MBDelay2 = -in->antDelay[iAnt*numIF*numPol+numIF]; 
+	  if (in->scanData->avgIF)
+	    row->MBDelay2 = -in->antDelay[iAnt*numIF*numPol+numIF]; 
 	  for (i=0; i<numIF; i++) {
 	    row->Real2[i]   =  in->antGain[(iAnt*numIF*numPol+i+numIF)*2];
 	    row->Imag2[i]   =  in->antGain[(iAnt*numIF*numPol+i+numIF)*2+1];
@@ -1632,8 +1634,8 @@ finalSolve (ObitUVGSolveWB *in, ObitErr *err)
 	      in->antDelay[offset+kp]      =  delay;
 	      in->antWeight[offset+kp]     =  1.0/in->scanData->RMSRes;
 	      /* Reference antenna SNR the highest of any */
-	      in->antWeight[(in->refAnt-1)*nval+kp] = 
-		MAX (in->antWeight[(in->refAnt-1)*nval+kp],in->antWeight[offset+kp] );
+	      in->antWeight[(in->refAnt-1)*nval+kp+jIF] = 
+		MAX (in->antWeight[(in->refAnt-1)*nval+kp+jIF],in->antWeight[offset+kp] );
 	    }	  
 	}  /* end single IF */
       } /* end outer IF loop */
@@ -1654,6 +1656,7 @@ finalSolve (ObitUVGSolveWB *in, ObitErr *err)
 	in->antGain[2*(offset+ip)+1] = in->antGain[2*(offset+jp)+1];
 	in->antDelay[offset+ip]      = in->antDelay[offset+jp];
 	in->antDisp[offset+ip]       = in->antDisp[offset+jp];
+	in->antWeight[offset+ip]     = in->antWeight[offset+jp];
 	jp++;  ip++;
       } /* End IF Loop */
     } /* end antenna loop */

@@ -108,6 +108,7 @@ olong  nFITS=0;         /* Number of FITS directories */
 gchar **FITSdirs=NULL; /* List of FITS data directories */
 ObitInfoList *myInput  = NULL; /* Input parameter list */
 ObitInfoList *myOutput = NULL; /* Output parameter list */
+olong inSNVer, outSNVer;       /* Input and output SN tables */
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
@@ -658,18 +659,10 @@ void SNSmoHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
 
 
 /**
- * Routine to deselect records in an SN table if they match a given
- * subarray, have a selected FQ id, appear on a list of antennas and
- * are in a given timerange.
- * \param SNTab      SN table object 
- * \param isub       Subarray number, <=0 -> any
- * \param fqid       Selected FQ id, <=0 -> any
- * \param nantf      Number of antennas in ants
- * \param ants       List of antennas, NULL or 0 in first -> flag all
- * \param nsou       Number of source ids in sources
- * \param sources    List of sources, NULL or 0 in first -> flag all
- * \param timerange  Timerange to flag, 0s -> all
- * \param err        Error/message stack, returns if error.
+ * Routine to copy the iinput table to the output.
+ *  \param     myInput   Input parameters on InfoList 
+ *  \param     inData    ObitUV with tables  
+ *  \param     err       Obit Error stack                
  */
 void SNSmoCopy (ObitInfoList* myInput, ObitUV* inData,  ObitErr* err)
 {
@@ -698,6 +691,7 @@ void SNSmoCopy (ObitInfoList* myInput, ObitUV* inData,  ObitErr* err)
   /* Save to inputs */
   dim[0] = dim[1] = dim[2] = 1; itemp = solnIn;
   ObitInfoListAlwaysPut(myInput, "solnIn", OBIT_long, dim, &itemp);
+  inSNVer = itemp;
 
   ObitInfoListGetTest(myInput, "solnOut", &type, dim, &itemp);
   solnOut = itemp;
@@ -705,7 +699,7 @@ void SNSmoCopy (ObitInfoList* myInput, ObitUV* inData,  ObitErr* err)
   /* Save to inputs */
   dim[0] = dim[1] = dim[2] = 1; itemp = solnOut;
   ObitInfoListAlwaysPut(myInput, "solnOut", OBIT_long, dim, &itemp);
-
+  outSNVer = itemp;
 
   inTab = newObitTableSNValue (inData->name, (ObitData*)inData, &solnIn, 
 			       OBIT_IO_ReadWrite, 0, 0, err);
@@ -1036,8 +1030,9 @@ void SNSmoSmooth (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   SNver = itemp;
   highVer = ObitTableListGetHigh (inData->tableList, "AIPS SN");
   if (SNver==0) SNver = highVer;
-  SNTable = newObitTableSNValue (inData->name, (ObitData*)inData, &SNver, 
-				 OBIT_IO_ReadWrite, 0, 0, err);
+  outSNVer = SNver;
+  SNTable  = newObitTableSNValue (inData->name, (ObitData*)inData, &SNver, 
+				  OBIT_IO_ReadWrite, 0, 0, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
   /* desired subarray */
@@ -1045,7 +1040,11 @@ void SNSmoSmooth (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   numSub = (olong)ObitTableListGetHigh (inData->tableList, "AIPS AN");
   ObitInfoListGetTest(myInput, "subA",  &type, dim, &subA);
 
-  /* copy smoothing parameters to SNTable */
+  /* Tell */
+  Obit_log_error(err, OBIT_InfoErr, 
+		 "Smooth SN %d to SN %d", inSNVer, outSNVer);
+
+ /* copy smoothing parameters to SNTable */
   ObitInfoListCopyList (myInput, SNTable->info, smoParms);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
 

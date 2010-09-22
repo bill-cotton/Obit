@@ -142,11 +142,11 @@ Adverbs:
   smoParm......Parameters for smoothing function.
              'BOX':
              smoParm gives the boxcar width in hours.
-              (1) => smoothing time for amplitudes,
-              (2) => smoothing time for phase,
-              (3) => smoothing time for rates
-              (4) => smoothing time for singleband delay
-              (5) => smoothing time for multiband delay
+              [0] => smoothing time for amplitudes,
+              [1] => smoothing time for phase,
+              [2] => smoothing time for singleband delay
+              [3] => smoothing time for rates
+              [4] => smoothing time for multiband delay
              'MWF':
              smoParm gives the window width in hours.
               (1) => smoothing time for amplitudes,

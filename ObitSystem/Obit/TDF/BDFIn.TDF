@@ -49,7 +49,7 @@ outDisk                             Output UV file disk unit #.
 selChan                             no. channels to select, 0=>first.
 **PARAM** int 1
 selIF                               no. IFs to select, 0=>first.
-**PARAM** int 1  **DEF** -1
+**PARAM** int 1  **DEF** 0
 selConfig                           Config ID, -1 ->first.
 **PARAM** str 4
 selBand                             Band to select, "  "=>first.

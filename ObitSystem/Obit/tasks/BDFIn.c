@@ -2369,10 +2369,11 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ASDMcalDeviceTable*   inTab=SDMData->calDeviceTab;
   ASDMAntennaArray*    AntArray;
   ASDMSpectralWindowArray* SpWinArray;
-  olong i, iRow, oRow, ver, maxAnt, iAnt, jAnt, IFno;
+  olong i, j, iRow, oRow, ver, maxAnt, iAnt, jAnt, IFno;
   olong *antLookup, *SpWinLookup;
   oint numIF, numPol;
   ofloat fblank = ObitMagicF();
+  gboolean want;
   ObitIOAccess access;
   gchar *routine = "GetCalDeviceInfo";
 
@@ -2476,10 +2477,14 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       else jAnt = -1;
       if (jAnt!=iAnt) continue;
 
-      /* Get 0-rel IF number - must be valid and selected */
-      if ((inTab->rows[iRow]->spectralWindowId>=0) && 
-	  (inTab->rows[iRow]->spectralWindowId<AntArray->nants) &&
-	  SpWinArray->winds[inTab->rows[iRow]->spectralWindowId]->selected) 
+      /* Get 0-rel IF number - Sp Win must be in current config and selected */
+      want = FALSE; 
+      for (j=0; j<SpWinArray->nwinds; j++) {
+	if ((inTab->rows[iRow]->spectralWindowId==SpWinArray->winds[j]->spectralWindowId) &&
+	  SpWinArray->winds[j]->selected) {want=TRUE; break;}
+      }
+
+      if (want) 
 	IFno = SpWinLookup[inTab->rows[iRow]->spectralWindowId];
       else continue;
       
@@ -2544,10 +2549,11 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ASDMSysPowerTable*     inTab=SDMData->SysPowerTab;
   ASDMAntennaArray*    AntArray;
   ASDMSpectralWindowArray* SpWinArray;
-  olong i, iRow, jRow, oRow, ver, maxAnt, IFno, SourNo;
+  olong i, j, iRow, jRow, oRow, ver, maxAnt, IFno, SourNo;
   olong *antLookup, *SpWinLookup, curScan, curScanI, nextScanNo;
   oint numIF, numPol;
   ofloat fblank = ObitMagicF();
+  gboolean want;
   ObitIOAccess access;
   gchar *routine = "GetSysPowerInfo";
 
@@ -2684,13 +2690,17 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       outRow->antennaNo = antLookup[inTab->rows[iRow]->antennaId];
     else continue;  /* ignore if antennaId bad */
 
-    /* Work out IF number - must be valid and selected */
-    if ((inTab->rows[iRow]->spectralWindowId>=0) && 
-	(inTab->rows[iRow]->spectralWindowId<AntArray->nants) &&
-	SpWinArray->winds[inTab->rows[iRow]->spectralWindowId]->selected) 
+    /* Get 0-rel IF number - Sp Win must be in current config and selected */
+    want = FALSE; 
+    for (j=0; j<SpWinArray->nwinds; j++) {
+      if ((inTab->rows[iRow]->spectralWindowId==SpWinArray->winds[j]->spectralWindowId) &&
+	  SpWinArray->winds[j]->selected) {want=TRUE; break;}
+    }
+    
+    if (want) 
       IFno = SpWinLookup[inTab->rows[iRow]->spectralWindowId];
     else continue;
-      
+    
     /* snatch data */
     outRow->PwrDif1[IFno] = inTab->rows[iRow]->switchedPowerDifference[0];
     outRow->PwrSum1[IFno] = inTab->rows[iRow]->switchedPowerSum[0];

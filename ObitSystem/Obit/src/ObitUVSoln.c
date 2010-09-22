@@ -1584,8 +1584,6 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 	smoIt (smoFunc, stamp, alpha, &work1[8*nxt], &work1[2*nxt], &work1[3*nxt], numtim, 
 	       &work2[0*nxt], &work2[1*nxt], &work2[2*nxt], &work2[3*nxt], doBlank);
 	for (i=0; i<numtim; i++) work1[2*nxt+i] = work2[i];
-	/* Save deblanked weights if not going to smooth phases */
-	if (doBlank &&(!doph)) for (i=0; i<numtim; i++) work1[3*nxt+i] = work2[1*nxt+i];
       }
       if (doph) {
 	smoIt (smoFunc, stph, alpha, &work1[8*nxt], &work1[0*nxt], &work1[3*nxt], numtim, 
@@ -1594,7 +1592,6 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 	smoIt (smoFunc, stph, alpha, &work1[8*nxt], &work1[1*nxt], &work1[3*nxt], numtim, 
 	       &work2[0*nxt], &work2[1*nxt], &work2[2*nxt], &work2[3*nxt], doBlank);
 	for (i=0; i<numtim; i++) work1[1*nxt+i] = work2[i];
-	for (i=0; i<numtim; i++) work1[3*nxt+i] = work2[1*nxt+i];
       }
       if (doMB) {
 	smoIt (smoFunc, stMB, alpha, &work1[8*nxt], &work1[10*nxt], &work1[3*nxt], numtim, 
@@ -1611,15 +1608,17 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 	       &work2[0*nxt], &work2[1*nxt], &work2[2*nxt], &work2[3*nxt], doBlank);
 	for (i=0; i<numtim; i++) work1[12*nxt+i] = work2[i];
       }
+
+      /* Save deblanked weights if doBlank */
+      if (doBlank) for (i=0; i<numtim; i++) work1[3*nxt+i] = work2[1*nxt+i];
     } /* end first polarization */
+    
     
     if (n2good > 0) {  /* Second polarization */
       if (doamp) {
 	smoIt (smoFunc, stamp, alpha, &work1[8*nxt], &work1[6*nxt], &work1[7*nxt], numtim, 
 	       &work2[0*nxt], &work2[1*nxt], &work2[2*nxt], &work2[3*nxt], doBlank);
 	for (i=0; i<numtim; i++) work1[6*nxt+i] = work2[i];
-	/* Save deblanked weights if not going to smooth phases */
-	if (doBlank &&(!doph)) for (i=0; i<numtim; i++) work1[7*nxt+i] = work2[1*nxt+i];
       }
       if (doph) {
 	smoIt (smoFunc, stph, alpha, &work1[8*nxt], &work1[4*nxt], &work1[7*nxt], numtim, 
@@ -1628,7 +1627,6 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 	smoIt (smoFunc, stph, alpha, &work1[8*nxt], &work1[5*nxt], &work1[7*nxt], numtim, 
 	       &work2[0*nxt], &work2[1*nxt], &work2[2*nxt], &work2[3*nxt], doBlank);
 	for (i=0; i<numtim; i++) work1[5*nxt+i] = work2[i];
-	for (i=0; i<numtim; i++) work1[7*nxt+i] = work2[1*nxt+i];
       }
       if (doMB) {
 	smoIt (smoFunc, stMB, alpha, &work1[8*nxt], &work1[13*nxt], &work1[3*nxt], numtim, 
@@ -1645,6 +1643,8 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 	       &work2[0*nxt], &work2[1*nxt], &work2[2*nxt], &work2[3*nxt], doBlank);
 	for (i=0; i<numtim; i++) work1[15*nxt+i] = work2[i];
       }
+      /* Save deblanked weights if doBlank */
+      if (doBlank) for (i=0; i<numtim; i++) work1[7*nxt+i] = work2[1*nxt+i];
     } /* end second polarization */
     
     /* Replace with smoothed values */
@@ -2035,8 +2035,8 @@ void
 ObitUVSolnSmooMWF (ofloat width, ofloat alpha, ofloat* x, ofloat* y, ofloat* w, olong n, 
 		   ofloat* ys, ofloat* ws, ofloat* yor, ofloat* wor, gboolean doBlank) 
 {
-  olong   i, j, k, l, i1, i2, ic;
-  ofloat      hw, d, temp, beta=0.0, fblank =  ObitMagicF();
+  olong      i, j, k, l, i1, i2, ic;
+  ofloat     hw, d, temp, beta=0.0, fblank =  ObitMagicF();
   gboolean   wasb, onlyb, blnkd;
 
   if (n <= 0) return;    /* any data? */
@@ -2143,6 +2143,7 @@ ObitUVSolnSmooMWF (ofloat width, ofloat alpha, ofloat* x, ofloat* y, ofloat* w, 
       /* Get smoothed datum */
       if (ws[i] > 0.0) {
 	ys[i] /= ws[i];
+	ws[i] /= (i2-i1+1);
       } else {
 	ys[i] = fblank;
 	wasb = TRUE;
@@ -2191,7 +2192,6 @@ ObitUVSolnSmooMWF (ofloat width, ofloat alpha, ofloat* x, ofloat* y, ofloat* w, 
       } 
     } /* end loop  L130: */
   } /* end of if any blanks to interpolate */ 
-
 
 } /* end of routine ObitUVSolnSmooMWF */ 
 
