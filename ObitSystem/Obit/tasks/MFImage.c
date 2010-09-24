@@ -2264,7 +2264,7 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
      clnClass->ObitDConCleanFlatten((ObitDConClean*)myClean, err);
 
     /* Display flattened field? */
-    if (myClean->display && myClean->mosaic->FullField)
+    if (myClean->display && myClean->mosaic->FullField && myClean->mosaic->FullField)
       ObitDisplayShow (myClean->display, (Obit*)myClean->mosaic->FullField, NULL, 
 		       1, err);
   } else {

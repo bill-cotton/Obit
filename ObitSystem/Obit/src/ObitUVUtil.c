@@ -741,6 +741,9 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
  * divided by the amplitude of inUV2.
  * Only valid visibilities compared, zero amplitudes ignored.
  * \param inUV1    Input uv data numerator, no calibration/selection
+ *  Control parameter on info
+ * \li printRat OBIT_float (1) If given and >0.0 then tell about entries
+ *              with a real or imaginary ratio > printRat
  * \param inUV2    Input uv data denominator, no calibration/selection
  *                 inUV2 should have the same structure, no. vis etc
  *                 as inUV1.
@@ -751,11 +754,11 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
 ofloat ObitUVUtilVisCompare (ObitUV *inUV1, ObitUV *inUV2, ObitErr *err)
 {
   ObitIOCode iretCode;
-  olong i, j, indx, count;
+  olong i, j, indx, jndx, count, vscnt;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong NPIO;
-  ofloat amp, rms = -1.0;
+  ofloat amp, rms = -1.0, rrat, irat, printRat=-1.0;
   odouble sum;
   gboolean incompatible;
   ObitUVDesc *in1Desc, *in2Desc;
@@ -766,6 +769,9 @@ ofloat ObitUVUtilVisCompare (ObitUV *inUV1, ObitUV *inUV2, ObitErr *err)
   if (err->error) return rms;
   g_assert (ObitUVIsA(inUV1));
   g_assert (ObitUVIsA(inUV2));
+
+  /* Diagnostics? */
+  ObitInfoListGetTest(inUV1->info, "printRat", &type, dim, &printRat);
 
   /* test open to fully instantiate input and see if it's OK */
   iretCode = ObitUVOpen (inUV1, OBIT_IO_ReadWrite, err);
@@ -800,6 +806,7 @@ ofloat ObitUVUtilVisCompare (ObitUV *inUV1, ObitUV *inUV2, ObitErr *err)
 
   /* we're in business, loop comparing */
   count = 0;
+  vscnt = 0;
   sum = 0.0;
   while (iretCode==OBIT_IO_OK) {
     /* Read first input */
@@ -815,27 +822,39 @@ ofloat ObitUVUtilVisCompare (ObitUV *inUV1, ObitUV *inUV2, ObitErr *err)
 
     /* Compare data */
     for (i=0; i<in1Desc->numVisBuff; i++) { /* loop over visibilities */
+      vscnt++;
       /* compatability check - check time and baseline code */
       indx = i*in1Desc->lrec ;
+      jndx = i*in2Desc->lrec ;
       incompatible = 
-	inUV1->buffer[indx+in1Desc->iloct]!=inUV1->buffer[indx+in2Desc->iloct] ||
-	inUV1->buffer[indx+in1Desc->ilocb]!=inUV1->buffer[indx+in2Desc->ilocb];
+	inUV1->buffer[indx+in1Desc->iloct]!=inUV2->buffer[jndx+in2Desc->iloct] ||
+	inUV1->buffer[indx+in1Desc->ilocb]!=inUV2->buffer[jndx+in2Desc->ilocb];
       if (incompatible) break;
 
       indx += in1Desc->nrparm;
+      jndx += in2Desc->nrparm;
       for (j=0; j<in1Desc->ncorr; j++) { /* loop over correlations */
 	/* Statistics  */
-	amp = inUV2->buffer[indx]*inUV2->buffer[indx] + 
-	  inUV2->buffer[indx+1]*inUV2->buffer[indx+1];
+	amp = inUV2->buffer[jndx]*inUV2->buffer[jndx] + 
+	  inUV2->buffer[jndx+1]*inUV2->buffer[jndx+1];
 	if ((inUV1->buffer[indx+2]>0.0) && (inUV2->buffer[indx+2]>0.0) && (amp>0.0)) {
 	  amp = sqrt(amp);
-	  sum += ((inUV1->buffer[indx] - inUV2->buffer[indx]) * 
-	    (inUV1->buffer[indx] - inUV2->buffer[indx])) / amp;
-	  sum += ((inUV1->buffer[indx+1] - inUV2->buffer[indx+1]) * 
-	    (inUV1->buffer[indx+1] - inUV2->buffer[indx+1])) / amp;
+	  rrat = ((inUV1->buffer[indx] - inUV2->buffer[jndx]) *
+		  (inUV1->buffer[indx] - inUV2->buffer[jndx])) / amp;
+	  irat = ((inUV1->buffer[indx+1] - inUV2->buffer[jndx+1]) *
+		  (inUV1->buffer[indx+1] - inUV2->buffer[jndx+1])) / amp;
+	  sum += rrat + irat;
 	  count += 2;
+	  /* Diagnostics */
+	  if ((printRat>0.0) && ((rrat>printRat) ||  (irat>printRat))) {
+	    Obit_log_error(err, OBIT_InfoWarn, 
+			   "High ratio vis %d corr %d ratio %f %f amp %f vis %f %f - %f %f",
+			   vscnt, j+1, rrat, irat, amp, inUV1->buffer[indx], inUV1->buffer[indx+1],
+			   inUV2->buffer[jndx], inUV2->buffer[jndx+1]);
+	  }
 	}
 	indx += in1Desc->inaxes[0];
+	jndx += in2Desc->inaxes[0];
       } /* end loop over correlations */
       if (incompatible) break;
     } /* end loop over visibilities */
@@ -1349,8 +1368,8 @@ ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   iretCode = ObitUVCopyTables (inUV, outUV, NULL, sourceInclude, err);
   /* FQ table selection */
   iretCode = ObitTableFQSelect (inUV, outUV, NULL, 0.0, err);
-  /* Correct FQ table for averaging */
-  FQSel (outUV, NumChAvg, 1, err);
+  /* Correct FQ table for averaging 
+     FQSel (outUV, NumChAvg, 1, err); done in FQSelect(?) */
   if (err->error) goto cleanup;
 
   /* reset to beginning of uv data */
@@ -3673,7 +3692,7 @@ static void FQSel (ObitUV *inUV, olong chAvg, olong fqid, ObitErr *err)
   ObitTableFQ    *inTab=NULL;
   olong iFQver, highFQver;
   oint numIF;
-  olong i, nif;
+  olong i, nif, nchan;
   odouble *freqOff=NULL;
   ofloat *chBandw=NULL;
   oint *sideBand=NULL;
@@ -3692,6 +3711,7 @@ static void FQSel (ObitUV *inUV, olong chAvg, olong fqid, ObitErr *err)
 
   /* Should only be one FQ table */
   iFQver = 1;
+  nchan = inUV->myDesc->inaxes[inUV->myDesc->jlocf];
   if (inUV->myDesc->jlocif>=0) 
     nif = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
   else
@@ -3711,7 +3731,7 @@ static void FQSel (ObitUV *inUV, olong chAvg, olong fqid, ObitErr *err)
    /* Fetch values */
    ObitTableFQGetInfo (inTab, fqid, &nif, &freqOff, &sideBand, &chBandw, err);
    if (err->error) Obit_traceback_msg (err, routine, inTab->name);
-   
+
    /* Update channel widths */
    for (i=0; i<nif; i++) chBandw[i] *= (ofloat)chAvg;
 

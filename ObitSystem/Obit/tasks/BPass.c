@@ -1217,7 +1217,7 @@ void  BandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData,
   ObitTableBP *BPTable = NULL;
   ObitUVGSolve *solver=NULL;
   olong ichan, nchan, bchan2=0, echan2=0, chinc2=0;
-  olong nif, maxch, maxno, itemp;
+  olong nif, maxch, maxno, itemp, highVer, ver;
   gboolean btemp;
   ofloat ftemp;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -1292,9 +1292,9 @@ void  BandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData,
   /* Find channel with maximum number of solutions - 
      use it to create initial BP table */
   maxch = bchan2; 
-  maxno = SNTables[0]->myDesc->nrow;
+  maxno = 0;
   for (ichan=bchan2; ichan<=echan2; ichan++) {
-    if (SNTables[ichan-1]->myDesc->nrow>maxno) {
+    if (SNTables[ichan-1] && (SNTables[ichan-1]->myDesc->nrow>maxno)) {
       maxch = ichan; 
       maxno = SNTables[ichan-1]->myDesc->nrow;
     }
@@ -1311,6 +1311,13 @@ void  BandpassCal(ObitInfoList* myInput, ObitUV* avgData, ObitUV* inData,
   /* Copy BP table to inData */
   ObitUVCopyTables (avgData, inData, NULL, copyBPTable, err);
   if (err->error) Obit_traceback_msg (err, routine, avgData->name);
+
+  /* Tell which BP version */
+  ver = 0;
+  ObitInfoListGetTest(myInput, "BPSoln",  &type, dim, &ver);
+  highVer = ObitTableListGetHigh (inData->tableList, "AIPS BP");
+  if (ver<=0) ver = highVer;
+  Obit_log_error(err, OBIT_InfoErr, "Writing crosscorrelation BP Table %d", ver);
 
   /* Cleanup */
   solver = ObitUVGSolveUnref(solver);
@@ -1484,8 +1491,8 @@ void SN2BPTable (ObitTableSN *SNTab, ObitTableBP *BPTab, olong chan,
 
   /* error checks */
   if (err->error) return;
-  g_assert (ObitTableSNIsA(SNTab));
   g_assert (ObitTableBPIsA(BPTab));
+  if (SNTab==NULL) return;   /* Any data? */
 
   /* Table info - channels */
   nchan = BPTab->numChan;
@@ -1681,6 +1688,9 @@ void AutoCorrBP (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
 			       OBIT_IO_WriteOnly, numStoke, numIF, numChan, err);
   if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
+  /* Tell which BP version */ 
+  Obit_log_error(err, OBIT_InfoErr, "Writing autocorrelation BP Table %d", ver);
+
   /* Clear existing rows */
   ObitTableClearRows ((ObitTable*)BPTable, err);
   if (err->error) goto cleanup;
@@ -1801,6 +1811,7 @@ void AutoCorrBP (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData,
 		  BPRow->Real1[indx]  = sqrt(norm1*BPSum[iant][jndx]/BPWt[iant][jndx]);
 		  BPRow->Imag1[indx]  = 0.0;
 		  BPRow->Weight1[iif] = MAX (norm1*BPRow->Weight1[indx], BPWt[iant][jndx]);
+		  OK = TRUE;
 		} else {
 		  BPRow->Real1[indx]   = fblank;
 		  BPRow->Imag1[indx]   = fblank;

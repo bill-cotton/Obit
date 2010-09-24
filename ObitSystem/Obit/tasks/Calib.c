@@ -872,6 +872,9 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
 	ObitImageSetAIPS(image[i], OBIT_IO_byPlane, disk, cno, AIPSuser,  blc, trc, err);
 	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
 	
+	/* Ensure image fully instantiated and OK */
+	ObitImageFullInstantiate (image[i], TRUE, err);
+
 	/* Attach Image */
 	ObitImageMosaicSetImage (mosaic, i, image[i], err);
 	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
@@ -903,9 +906,12 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
 	ObitImageSetFITS(image[0], OBIT_IO_byPlane, disk, inFile, blc, trc, err);
 	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
 	
-	  /* Attach Image */
-	  ObitImageMosaicSetImage (mosaic, 0, image[0], err);
-	  if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
+	/* Ensure image fully instantiated and OK */
+	ObitImageFullInstantiate (image[0], TRUE, err);
+
+	/* Attach Image */
+	ObitImageMosaicSetImage (mosaic, 0, image[0], err);
+	if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
      } else { /* Multiple fields */
 	
 	/* Loop over fields */
@@ -919,6 +925,9 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
 	  ObitImageSetFITS(image[i], OBIT_IO_byPlane, disk, inFile, blc, trc, err);
 	  if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
 	  
+	  /* Ensure image fully instantiated and OK */
+	  ObitImageFullInstantiate (image[i], TRUE, err);
+
 	  /* Attach Image */
 	  ObitImageMosaicSetImage (mosaic, i, image[i], err);
 	  if (err->error) Obit_traceback_val (err, routine, "myInput", skyModel);
@@ -928,7 +937,7 @@ ObitSkyModel* getInputSkyModel (ObitInfoList *myInput, ObitErr *err)
       /* get do3D from first image */
       do3D = image[0]->myDesc->do3D;
       
-    } else { /* Unknown type - barf and bail */
+   } else { /* Unknown type - barf and bail */
       Obit_log_error(err, OBIT_Error, "%s: Unknown Data type %s", 
 		     pgmName, Type2);
       return skyModel;

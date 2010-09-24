@@ -284,10 +284,15 @@ ObitFArray* ObitFArrayCreate (gchar* name, olong ndim, olong *naxis)
   /* copy geometry */
   out->ndim = ndim;
   out->naxis = ObitMemAlloc0Name (ndim*sizeof(olong), "FArray naxis");
-  size = 1;
-  for (i=0; i<ndim; i++) {
-    out->naxis[i] = MAX (1, naxis[i]);
-    size *= out->naxis[i]; /* total size */
+  if (ndim<=1) {  /* Single dimension */
+    out->naxis[0] = MAX (1, naxis[i]);
+    size = out->naxis[i]; /* total size */
+  } else { /* Multi */
+    size = 1; /* total size */
+    for (i=0; i<ndim; i++) {
+      out->naxis[i] = MAX (1, MIN(naxis[i],32768));  /* Not too big */
+      size *= out->naxis[i]; /* total size */
+    }
   }
 
   /* create array - add a bit extra, FFT seems to need it */
@@ -585,13 +590,18 @@ ObitFArray* ObitFArrayRealloc (ObitFArray* in, olong ndim, olong *naxis)
   }
 
   /* set dimensions, find output size */
-  size = 1;
-  for (i=0; i<ndim; i++) {
-    out->naxis[i] = MAX (1, naxis[i]);
-    size *= out->naxis[i]; /* total size */
+  if (ndim<=1) {  /* Single dimension */
+    out->naxis[0] = MAX (1, naxis[i]);
+    size = out->naxis[i]; /* total size */
+  } else { /* Multi */
+    size = 1; /* total size */
+    for (i=0; i<ndim; i++) {
+      out->naxis[i] = MAX (1, MIN(naxis[i],32768));  /* Not too big */
+      size *= out->naxis[i]; /* total size */
+    }
   }
-
-  /* resize array if needed */
+  
+ /* resize array if needed */
   if (size != out->arraySize) {
     out->array = ObitMemRealloc(out->array, 
 			   size*sizeof(ofloat)+out->naxis[0]*sizeof(ofloat));

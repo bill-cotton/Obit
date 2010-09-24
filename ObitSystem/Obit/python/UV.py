@@ -1210,7 +1210,9 @@ def PUtilVisCompare (in1UV, in2UV, err):
     """ Compares the visibilites in in1UV with those in in2UV
 
     returns RMS real, imaginary parts/amplitude
-    in1UV   = Numerator  Python UV object
+    in1UV   = Numerator  Python UV object, possible infoList parameter
+        printRat scalar float  If given and >0.0 then tell about entries
+                 with a real or imaginary difference ratio > printRat
     in2UV   = Denominator Python UV object
     err       = Python Obit Error/message stack
     """

@@ -1414,8 +1414,9 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
   }
 
+  if (myClean->mosaic->numberImages<=1) doFlat = FALSE;  /* Don't flatten 1 */
   /* Create output image(s) */
-  if (doFlat && (myClean->mosaic->numberImages>1)) 
+  if (doFlat) 
     outField = ObitImageMosaicGetFullImage (myClean->mosaic, err);
   else
     outField = ObitImageMosaicGetImage (myClean->mosaic, 0, err);
@@ -1851,7 +1852,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   /* Flatten if requested */
   doFlatten = TRUE;
   ObitInfoListGetTest(myInput, "doFlatten", &type, dim, &doFlatten);
-  if (doFlatten) {
+  if (doFlatten && (myClean->mosaic->numberImages>1)) {
     ObitDConCleanFlatten((ObitDConClean*)myClean, err);
     /* If 2D imaging concatenate CC tables */
     if (!myClean->mosaic->images[0]->myDesc->do3D) 
@@ -1862,7 +1863,7 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
   if (err->error) Obit_traceback_msg (err, routine, myClean->name);
   
   /* Display? */
-  if (selfCal && selfCal->display)
+  if (selfCal && selfCal->display && outImage)
     ObitDisplayShow (selfCal->display, (Obit*)outImage, NULL, 1, err);
   if (err->error) Obit_traceback_msg (err, routine, myClean->name);
    

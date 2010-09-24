@@ -376,7 +376,7 @@ ObitTableSY* newObitTableSYValue (gchar* name, ObitData *file, olong *ver,
     colNo++;
   }
   if (nPol>=1) {
-    desc->FieldName[colNo] = g_strdup("POWER GAIN 1");
+    desc->FieldName[colNo] = g_strdup("POST GAIN1");
     desc->FieldUnit[colNo] = g_strdup("");
     desc->type[colNo] = OBIT_float;
     for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
@@ -400,7 +400,7 @@ ObitTableSY* newObitTableSYValue (gchar* name, ObitData *file, olong *ver,
     colNo++;
   }
   if (nPol>=2) {
-    desc->FieldName[colNo] = g_strdup("POWER GAIN 2");
+    desc->FieldName[colNo] = g_strdup("POST GAIN2");
     desc->FieldUnit[colNo] = g_strdup("");
     desc->type[colNo] = OBIT_float;
     for (i=0; i<MAXINFOELEMDIM; i++) desc->dim[colNo][i] = 1;
@@ -1141,7 +1141,7 @@ static void ObitTableSYUpdate (ObitTableSY *in, ObitErr *err)
 	     in->PwrSum1Off = desc->offset[i];
  	     in->PwrSum1Col = i;
       }
-      if (!strncmp (desc->FieldName[i], "POWER GAIN 1", 12)) {
+      if (!strncmp (desc->FieldName[i], "POST GAIN1", 10)) {
 	     in->Gain1Off = desc->offset[i];
  	     in->Gain1Col = i;
       }
@@ -1153,7 +1153,7 @@ static void ObitTableSYUpdate (ObitTableSY *in, ObitErr *err)
 	     in->PwrSum2Off = desc->offset[i];
  	     in->PwrSum2Col = i;
       }
-      if (!strncmp (desc->FieldName[i], "POWER GAIN 2", 12)) {
+      if (!strncmp (desc->FieldName[i], "POST GAIN2", 10)) {
 	     in->Gain2Off = desc->offset[i];
  	     in->Gain2Col = i;
       }
