@@ -40,6 +40,7 @@
 #include "ObitHistory.h"
 #include "ObitData.h"
 #include "ObitDisplay.h"
+#include "ObitUVUtil.h"
 
 /* internal prototypes */
 /* Get inputs */
@@ -76,6 +77,10 @@ void doImage (ObitInfoList* myInput, ObitUV* inData,
 /* Write history */
 void SCMapHistory (gchar *Source, ObitInfoList* myInput, 
 		    ObitUV* inData, ObitData* outData, ObitErr* err);
+
+/* Baseline dependent time averaging */
+void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData, 
+	    ObitErr* err);
 
 /* Program globals */
 gchar *pgmName = "SCMap";       /* Program name */
@@ -1367,7 +1372,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   ObitInfoListAlwaysPut (inData->info, "Sources", OBIT_string, dim, Source);
   /* Copy data unless restarting */
   if (oldSN<0) {
-    outData = ObitUVCopy (inData, outData, err);
+    BLAvg (myInput, inData, outData, err);
+    /* Old outData = ObitUVCopy (inData, outData, err);*/
   } else {
     /* Ensure inData fully instantiated and OK */
     ObitUVFullInstantiate (outData, TRUE, err);
@@ -1892,7 +1898,7 @@ void SCMapHistory (gchar *Source, ObitInfoList* myInput,
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq",
     "FreqID", "souCode", "Qual", 
     "outFile",  "outDisk", "outName", "outClass", "outSeq",
-    "BChan", "EChan", "BIF", "EIF", 
+    "BChan", "EChan", "BIF", "EIF", "BLFact", "BLFOV", "BLchAvg",
     "FOV",  "UVRange",  "timeRange",  "Robust",  "UVTaper",  
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
     "doPol",  "doFull", "do3D", "Catalog",  "OutlierDist",  "OutlierFlux",  "OutlierSI",
@@ -1945,3 +1951,77 @@ void SCMapHistory (gchar *Source, ObitInfoList* myInput,
  
 } /* end SCMapHistory  */
 
+#ifndef VELIGHT
+#define VELIGHT 2.997924562e8
+#endif
+/*----------------------------------------------------------------------- */
+/*  Copy or baseline dependent time average data                          */
+/*  If BLFact>1.00 then use baseline dependent time averaging, else       */
+/*  just a straight copy from inData to outData                           */
+/*  Uses minimum of solPint or solAInt as the maximum time average        */
+/*  or if this is zero then 1 min.                                        */
+/*   Input:                                                               */
+/*      myInput   Input parameters on InfoList use:                       */
+/*       "BLFact"  OBIT_float  (1,1,1) Maximum time smearing factor       */
+/*       "BLFOV"   OBIT_float  (1,1,1) Field of view (radius, deg)        */
+/*                                     Default FOV or 0.5*lambda/25.0 m   */
+/*       "BLchAvg" OBIT_bool   (1,1,1) Also average channels? [def FALSE] */
+/*       "solPInt" OBIT_float  (1,1,1) Phase self-cal soln. interval (min)*/
+/*       "solAInt" OBIT_float  (1,1,1) Amp self-cal soln. interval (min)  */
+/*      inData    ObitUV to copy data from                                */
+/*      outData   Output UV data to write                                 */
+/*   Output:                                                              */
+/*      err    Obit Error stack                                           */
+/*----------------------------------------------------------------------- */
+void BLAvg (ObitInfoList* myInput, ObitUV* inData, ObitUV* outData, 
+	    ObitErr* err)
+{
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong NumChAvg=1;
+  odouble Freq;
+  gboolean BLchAvg=FALSE;
+  ofloat BLFact=0.0, FOV=0.0, solPInt=0.0, solAInt=0.0, maxInt;
+  gchar *routine = "BLAvg";
+
+  /* What to do? */
+  ObitInfoListGetTest(myInput, "BLFact", &type, dim, &BLFact);
+  if (BLFact>1.00) { /* Average */
+    /* Set parameters */
+    ObitInfoListGetTest(myInput, "BLFOV",   &type, dim, &FOV);
+    if (FOV<=0.0) ObitInfoListGetTest(myInput, "FOV",   &type, dim, &FOV);
+    ObitInfoListGetTest(myInput, "BLchAvg",   &type, dim, &BLchAvg);
+    ObitInfoListGetTest(myInput, "solPInt", &type, dim, &solPInt);
+    ObitInfoListGetTest(myInput, "solAInt", &type, dim, &solAInt);
+    if (solAInt<=0.0) solAInt = solPInt;
+    if (solPInt<=0.0) solPInt = solAInt;
+    maxInt = MIN (solPInt, solAInt);
+    if (maxInt<=0.0) maxInt = 1.0;  /* Default 1 min */
+    /* Default FOV 0.5 lambda/diameter */
+    if (FOV<=0.0) {
+      Freq = inData->myDesc->crval[inData->myDesc->jlocf];
+      FOV = RAD2DG * 0.5 * VELIGHT / (Freq * 25.0);
+    }
+
+    /* Average channels? */
+    if (BLchAvg) {
+      NumChAvg = ObitUVUtilNchAvg(inData, BLFact, FOV, err);
+      if (err->error) Obit_traceback_msg (err, routine, inData->name);
+      NumChAvg = MAX (1, NumChAvg);
+      Obit_log_error(err, OBIT_InfoErr, 
+		     "Averaging %d channels", NumChAvg);
+    }
+
+    dim[0] = dim[1] = dim[2] = dim[3] = 1;
+    ObitInfoListAlwaysPut (inData->info, "FOV",      OBIT_float, dim, &FOV);
+    ObitInfoListAlwaysPut (inData->info, "maxInt",   OBIT_float, dim, &maxInt);
+    ObitInfoListAlwaysPut (inData->info, "maxFact",  OBIT_float, dim, &BLFact);
+    ObitInfoListAlwaysPut (inData->info, "NumChAvg", OBIT_long,  dim, &NumChAvg);
+    outData = ObitUVUtilBlAvgTF(inData, FALSE, outData, err);
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
+
+  } else { /* Straight copy */
+    ObitUVCopy (inData, outData, err);
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
+  }
+} /* end BLAvg */

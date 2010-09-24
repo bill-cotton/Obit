@@ -285,8 +285,8 @@ ObitFArray* ObitFArrayCreate (gchar* name, olong ndim, olong *naxis)
   out->ndim = ndim;
   out->naxis = ObitMemAlloc0Name (ndim*sizeof(olong), "FArray naxis");
   if (ndim<=1) {  /* Single dimension */
-    out->naxis[0] = MAX (1, naxis[i]);
-    size = out->naxis[i]; /* total size */
+    out->naxis[0] = MAX (1, naxis[0]);
+    size = out->naxis[0]; /* total size */
   } else { /* Multi */
     size = 1; /* total size */
     for (i=0; i<ndim; i++) {
@@ -591,8 +591,8 @@ ObitFArray* ObitFArrayRealloc (ObitFArray* in, olong ndim, olong *naxis)
 
   /* set dimensions, find output size */
   if (ndim<=1) {  /* Single dimension */
-    out->naxis[0] = MAX (1, naxis[i]);
-    size = out->naxis[i]; /* total size */
+    out->naxis[0] = MAX (1, naxis[0]);
+    size = out->naxis[0]; /* total size */
   } else { /* Multi */
     size = 1; /* total size */
     for (i=0; i<ndim; i++) {
