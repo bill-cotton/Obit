@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1669,8 +1669,10 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 	row->Real1[iif]   = work1[0*nxt+itime] * work1[2*nxt+itime] / amp;
 	row->Imag1[iif]   = work1[1*nxt+itime] * work1[2*nxt+itime] / amp;
 	row->Weight1[iif] = work1[3*nxt+itime];
-	row->Delay1[iif]  = work1[11*nxt+itime];
-	row->Rate1[iif]   = work1[12*nxt+itime];
+	if (work1[11*nxt+itime]!=fblank)  row->Delay1[iif]  = work1[11*nxt+itime];
+	else row->Delay1[iif] = 0.0;
+	if (work1[12*nxt+itime]!=fblank)  row->Rate1[iif]   = work1[12*nxt+itime];
+	else row->Rate1[iif] = 0.0;
 	(*gncnt) += + 1.0;
 	(*gnsum) += work1[2*nxt+itime];
 	if (row->RefAnt1[iif] == 0) row->RefAnt1[iif] = refa1;
@@ -1691,8 +1693,10 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 	  row->Real2[iif]   = work1[4*nxt+itime] * work1[6*nxt+itime] / amp;
 	  row->Imag2[iif]   = work1[5*nxt+itime] * work1[6*nxt+itime] / amp;
 	  row->Weight2[iif] = work1[7*nxt+itime];
-	  row->Delay2[iif]  = work1[14*nxt+itime];
-	  row->Rate2[iif]   = work1[15*nxt+itime];
+	  if (work1[14*nxt+itime]!=fblank)  row->Delay2[iif]  = work1[14*nxt+itime];
+	  else row->Delay2[iif] = 0.0;
+	  if (work1[14*nxt+itime]!=fblank)  row->Rate2[iif]   = work1[15*nxt+itime];
+	  else row->Rate2[iif] = 0.0;
 	  (*gncnt) += 1.0;
 	  (*gnsum) += work1[6*nxt+itime];
 	  if (row->RefAnt2[iif] == 0) row->RefAnt2[iif] = refa2;

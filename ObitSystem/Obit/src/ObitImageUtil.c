@@ -1202,7 +1202,8 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
     
     /* Copy Gaussian beam fit if necessary */
     theBeam = (ObitImage*)outImage[j]->myBeam;
-    if ((outImage[j]->myDesc->beamMaj<=0.0) || (outImage[j]->myDesc->beamMin<=0.0)) {
+    /*if ((outImage[j]->myDesc->beamMaj<=0.0) || (outImage[j]->myDesc->beamMin<=0.0)) {*/
+    if (theBeam->myDesc->beamMaj>0.0) {
       outImage[j]->myDesc->beamMaj = theBeam->myDesc->beamMaj;
       outImage[j]->myDesc->beamMin = theBeam->myDesc->beamMin;
       outImage[j]->myDesc->beamPA  = theBeam->myDesc->beamPA;
