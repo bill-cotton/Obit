@@ -823,6 +823,9 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
       break;
     }
   }
+
+  /* EVLA always effectively USB */
+  if (!strncmp(AntArray->arrayName, "EVLA", 4)) freqStep = fabs(freqStep );
   
   /* Count selected Spectral windows */
   nIF = 0;

@@ -360,6 +360,12 @@ extern void UVUtilQuack(ObitUV* inUV, float begDrop, float endDrop,
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
 } // end UVUtilQuack
 
+extern ObitUV* UVUtilHann(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
+  gboolean lscratch;
+  lscratch = scratch!=0;
+  return ObitUVUtilHann (in, lscratch, out, err);
+} // end UVUtilHann
+
 extern ObitUV* UVUtilAvgF(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
   gboolean lscratch;
   lscratch = scratch!=0;

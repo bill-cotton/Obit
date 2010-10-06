@@ -979,10 +979,10 @@ static void ObitTableCDUpdate (ObitTableCD *in, ObitErr *err)
 
   /* Get Keywords */
    /* nIF */
-  if (!ObitInfoListGet(in->myDesc->info, "NIF", &type, dim, 
+  if (!ObitInfoListGet(in->myDesc->info, "NO_IF", &type, dim, 
 		       (gpointer)&in->nIF, err)) return;
    /* nPol */
-  if (!ObitInfoListGet(in->myDesc->info, "NPOL", &type, dim, 
+  if (!ObitInfoListGet(in->myDesc->info, "NO_POL", &type, dim, 
 		       (gpointer)&in->nPol, err)) return;
    /* RefDate */
   strncpy (in->RefDate, "YYYY-MM-DD", MAXKEYCHARTABLECD); 
@@ -1066,12 +1066,12 @@ static void ObitTableCDDumpKey (ObitTableCD *in, ObitErr *err)
   /* nIF */
   type  = OBIT_oint;
   dim[0] = 1;
-  ObitInfoListAlwaysPut(info, "NIF", type, dim, 
+  ObitInfoListAlwaysPut(info, "NO_IF", type, dim, 
 		  (gpointer)&in->nIF);
   /* nPol */
   type  = OBIT_oint;
   dim[0] = 1;
-  ObitInfoListAlwaysPut(info, "NPOL", type, dim, 
+  ObitInfoListAlwaysPut(info, "NO_POL", type, dim, 
 		  (gpointer)&in->nPol);
   /* RefDate */
   type  = OBIT_string;

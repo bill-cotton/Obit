@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -67,6 +67,10 @@ void ObitUVUtilIndex (ObitUV *inUV, ObitErr *err);
 
 /** Public: Get list of selected sources  */
 ObitSourceList* ObitUVUtilWhichSources (ObitUV *inUV, ObitErr *err);
+
+/** Public: Hanning smooth a dataset */
+ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
+			ObitErr *err);
 
 /** Public: Average a data set in frequency */
 ObitUV* ObitUVUtilAvgF (ObitUV *inUV, gboolean scratch, ObitUV *outUV,

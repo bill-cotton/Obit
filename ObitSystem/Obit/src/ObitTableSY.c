@@ -1067,10 +1067,10 @@ static void ObitTableSYUpdate (ObitTableSY *in, ObitErr *err)
 
   /* Get Keywords */
    /* nIF */
-  if (!ObitInfoListGet(in->myDesc->info, "NIF", &type, dim, 
+  if (!ObitInfoListGet(in->myDesc->info, "NO_IF", &type, dim, 
 		       (gpointer)&in->nIF, err)) return;
    /* nPol */
-  if (!ObitInfoListGet(in->myDesc->info, "NPOL", &type, dim, 
+  if (!ObitInfoListGet(in->myDesc->info, "NO_POL", &type, dim, 
 		       (gpointer)&in->nPol, err)) return;
    /* nAnt */
   if (!ObitInfoListGet(in->myDesc->info, "NO_ANT", &type, dim, 
@@ -1209,12 +1209,12 @@ static void ObitTableSYDumpKey (ObitTableSY *in, ObitErr *err)
   /* nIF */
   type  = OBIT_oint;
   dim[0] = 1;
-  ObitInfoListAlwaysPut(info, "NIF", type, dim, 
+  ObitInfoListAlwaysPut(info, "NO_IF", type, dim, 
 		  (gpointer)&in->nIF);
   /* nPol */
   type  = OBIT_oint;
   dim[0] = 1;
-  ObitInfoListAlwaysPut(info, "NPOL", type, dim, 
+  ObitInfoListAlwaysPut(info, "NO_POL", type, dim, 
 		  (gpointer)&in->nPol);
   /* nAnt */
   type  = OBIT_oint;

@@ -1452,7 +1452,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong        ochan, ichan, nchan, chInc, chAvg, BChan, EChan, RChan, 
     bchan, echan, istok, kstok, nstok, bstok, estok;
-  gboolean     first, doFlat, btemp, autoWindow, Tr=TRUE, doVPol, do3D;
+  gboolean     first, doFlat, btemp, autoWindow, Tr=TRUE, doVPol, do3D, formalI;
   olong        inver, outver, plane[5] = {0,1,1,1,1};
   gchar        Stokes[5], *chStokes=" IQUVRL", *CCType = "AIPS CC";
   gchar        *dataParms[] = {  /* Parameters to calibrate/select data */
@@ -1534,6 +1534,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   /* Number of stokes parameter, I, Q, U, V */
   nstok = 0;
   bstok = 1;
+  formalI = Stokes[0]=='F';   /* Need both polarizations? */
   doVPol = FALSE;
   if ((Stokes[0]=='I') || (Stokes[0]=='F') || (Stokes[0]==' ')) nstok = 1;
   if ((nstok==1) && (Stokes[1]=='Q')) nstok = 2;
@@ -1596,6 +1597,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       dim[0] = 4;
       sprintf (Stokes, "    ");
       if (istok<=4) sprintf (Stokes, "%c   ", chStokes[istok]);
+      if (formalI && (istok==1)) Stokes[0] = 'F';
       else if (istok==5) sprintf (Stokes, "RR  ");
       else if (istok==6) sprintf (Stokes, "LL  ");
       /* Trap for 'IV' mode */

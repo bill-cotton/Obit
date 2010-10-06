@@ -40,7 +40,7 @@ Data selection, calibration and editing parameters on List member:
   "InputAvgTime" float (1,1,1) Input data averaging time (sec).
             used for fringe rate decorrelation correction.
   "Sources" string (?,?,1) Source names selected unless any starts with
-            a '-' in which case all are deselected (with '-' stripped).
+            a '-' in which case all are deselected (with '-' sgFtripped).
   "souCode" string (4,1,1) Source Cal code desired, '    ' => any code selected
                                '*   ' => any non blank code (calibrators only)
                                '-CAL' => blank codes only (no calibrators)
@@ -1286,6 +1286,38 @@ def PQuack (inUV, err, begDrop=0.0, endDrop=0.0, Reason="    ", flagVer=1):
     if err.isErr:
         OErr.printErrMsg(err, "Error Quacking UV data")
     # end PQuack
+
+def PUtilHann (inUV, outUV, err, scratch=False):
+    """ Hanning smooth a UV data set
+
+    returns smoothed UV data object
+    inUV   = Python UV object to smooth
+             Any selection editing and calibration applied before average.
+    outUV  = Predefined UV data if scratch is False, ignored if
+             scratch is True.
+    err    = Python Obit Error/message stack
+    scratch  = True if this is to be a scratch file (same type as inUV)
+    """
+    ################################################################
+    # Checks
+    if not inUV.UVIsA():
+        raise TypeError,"inUV MUST be a Python Obit UV"
+    if ((not scratch) and (not outUV.UVIsA())):
+        raise TypeError,"outUV MUST be a Python Obit UV"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    # Create output for scratch
+    if scratch:
+        outUV = UV("None")
+    outUV.me = Obit.UVUtilHann(inUV.cast(myClass), scratch, outUV.cast(myClass), err.me)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error Hanning UV data")
+    # Get scratch file info
+    if scratch:
+        PUVInfo (outUV, err)
+    return outUV
+    # end PUtilHann
 
 def PUtilAvgF (inUV, outUV, err, scratch=False, 
                NumChAvg=0, doAvgAll=False, ChanSel=None):

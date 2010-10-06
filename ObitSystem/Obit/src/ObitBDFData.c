@@ -1531,7 +1531,7 @@ static odouble BDFparse_time(gchar *string, olong maxChar,
 } /* end BDFparse_time */
 
 /**  Parse time interval from XLM string  
- * Read time interval in nanoseconds, return as days
+ * Read time interval in nanoseconds, return as seconds
  * \param  string  String to parse
  * \param  maxChar Maximum size of string
  * \param  prior string prior to value
@@ -1550,7 +1550,7 @@ static odouble BDFparse_timeint(gchar *string, olong maxChar,
   if (b==NULL) return out;  /* Found? */
   b += strlen(prior);
   temp = strtoll(b, next, 10);
-  out = (odouble)((temp*1.0e-9)/86400.0);
+  out = (odouble)(temp*1.0e-9);
     
   return out;
 } /* end BDFparse_timeint */

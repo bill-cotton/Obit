@@ -586,7 +586,7 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   gchar        *prtFile=NULL, timeString[25];
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar        *cstokes[4] = {"RR", "LL", "RL", "LR"};
+  gchar        *cstokes[8] = {"RR", "LL", "RL", "LR", "XX", "YY", "XY", "YX"};
   gchar        *stokes[4]  = {"I ", "Q ", "U ", "V "};
   gchar        *routine = "doDATA";
 
@@ -677,6 +677,7 @@ void doDATA (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
 	sprintf (&Title2[start], "    Amp  Phase  Wt");
       start = strlen(Title1);
       ii = (olong)(fabs(inDesc->crval[inDesc->jlocs]) - 0.9);
+      ii = MAX(0, MIN(ii,7));
       if (inDesc->crval[inDesc->jlocs]>0.0)
 	sprintf (&Title1[start], "    %2d/%4d %s    ", 
 		 bif,bchan+ichan,stokes[ic+ii]);

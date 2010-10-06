@@ -10240,6 +10240,12 @@ extern void UVUtilQuack(ObitUV* inUV, float begDrop, float endDrop,
   if (err->error) Obit_traceback_msg (err, routine, inUV->name);
 } // end UVUtilQuack
 
+extern ObitUV* UVUtilHann(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
+  gboolean lscratch;
+  lscratch = scratch!=0;
+  return ObitUVUtilHann (in, lscratch, out, err);
+} // end UVUtilHann
+
 extern ObitUV* UVUtilAvgF(ObitUV* in, int scratch, ObitUV *out, ObitErr *err) {
   gboolean lscratch;
   lscratch = scratch!=0;
@@ -10362,6 +10368,7 @@ extern void UVUtilVisSub(ObitUV *,ObitUV *,ObitUV *,ObitErr *);
 extern float UVUtilVisCompare(ObitUV *,ObitUV *,ObitErr *);
 extern void UVUtilIndex(ObitUV *,ObitErr *);
 extern void UVUtilQuack(ObitUV *,float ,float ,char *,long ,ObitErr *);
+extern ObitUV *UVUtilHann(ObitUV *,int ,ObitUV *,ObitErr *);
 extern ObitUV *UVUtilAvgF(ObitUV *,int ,ObitUV *,ObitErr *);
 extern ObitUV *UVUtilAvgT(ObitUV *,int ,ObitUV *,ObitErr *);
 extern ObitUV *UVUtilAvgTF(ObitUV *,int ,ObitUV *,ObitErr *);
@@ -47895,6 +47902,53 @@ static PyObject *_wrap_UVUtilQuack(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_UVUtilHann(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitUV * _result;
+    ObitUV * _arg0;
+    int  _arg1;
+    ObitUV * _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo2 = 0;
+    PyObject * _argo3 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OiOO:UVUtilHann",&_argo0,&_arg1,&_argo2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of UVUtilHann. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitUV_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of UVUtilHann. Expected _ObitUV_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of UVUtilHann. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitUV *)UVUtilHann(_arg0,_arg1,_arg2,_arg3);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitUV_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
 static PyObject *_wrap_UVUtilAvgF(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     ObitUV * _result;
@@ -65465,6 +65519,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "UVUtilAvgTF", _wrap_UVUtilAvgTF, METH_VARARGS },
 	 { "UVUtilAvgT", _wrap_UVUtilAvgT, METH_VARARGS },
 	 { "UVUtilAvgF", _wrap_UVUtilAvgF, METH_VARARGS },
+	 { "UVUtilHann", _wrap_UVUtilHann, METH_VARARGS },
 	 { "UVUtilQuack", _wrap_UVUtilQuack, METH_VARARGS },
 	 { "UVUtilIndex", _wrap_UVUtilIndex, METH_VARARGS },
 	 { "UVUtilVisCompare", _wrap_UVUtilVisCompare, METH_VARARGS },
