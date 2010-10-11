@@ -119,7 +119,7 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
   olong irow;
   olong maxANid, i, iant;
   ObitInfoType type;
-  gboolean doVLA, doVLBI, doATCA;
+  gboolean doVLA, doVLBI, doATCA, doEVLA;
   odouble x, y, z, ArrLong, rho, dtemp;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar tempName[101]; /* should always be big enough */
@@ -215,13 +215,14 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
   /* Some array dependent information */
   /* Is this the VLA? */
   doVLA  = !strncmp(in->ArrName, "VLA     ", 8);
-  out->isVLA = doVLA;
+  doEVLA = !strncmp(in->ArrName, "EVLA    ", 8);
+  out->isVLA = doVLA || doEVLA;
 
   /* Is this the ATCA? It uses earth center but without Y flip like VLBI */
   doATCA = !strncmp(in->ArrName, "ATCA    ", 8);
 
   /* Otherwise VLBI Uses earth center, but with Y with sign flip */
-  doVLBI = (!doATCA ) && 
+  doVLBI = (!doATCA && !doEVLA) && 
     (fabs(in->ArrayX)<1000.0) && (fabs(in->ArrayY)<1000.0) && (fabs(in->ArrayZ)<1000.0);
 
   /* loop over table saving information */
@@ -272,7 +273,7 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
       x = x + row->StaXYZ[0];
       y = -(y + row->StaXYZ[1]);  /* Flip handedness of VLBI data */
       z = z + row->StaXYZ[2];
-    } else if (doATCA) {
+    } else if (doATCA||doEVLA) {
       x = x + row->StaXYZ[0];
       y = y + row->StaXYZ[1];
       z = z + row->StaXYZ[2];
