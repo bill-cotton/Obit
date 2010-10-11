@@ -178,6 +178,7 @@ int main ( int argc, char **argv )
   ObitSystem *mySystem= NULL;
   ObitUV *outData= NULL;
   ObitErr *err= NULL;
+  gboolean doOnline=FALSE;
   gchar dataroot[132];
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -254,7 +255,8 @@ int main ( int argc, char **argv )
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Check scan intents for online only calibrations */
-  if (isEVLA) FlagIntent (SDMData, outData, err);
+  ObitInfoListGetTest(myInput, "doOnline", &type, dim, &doOnline);
+  if (isEVLA && !doOnline) FlagIntent (SDMData, outData, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Update An tables with correct ref. date */
@@ -1022,7 +1024,7 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData,
   gchar          hicard[81], begString[17], endString[17];
   gchar         *hiEntries[] = {
     "DataRoot", "selChan", "selIF", "selBand", "selConfig", "dropZero", 
-    "doCode", "calInt", "doSwPwr",
+    "doCode", "calInt", "doSwPwr", "doOnline",
     NULL};
   gchar *routine = "BDFInHistory";
   

@@ -57,6 +57,8 @@ selBand                             Band to select, "  "=>first.
 dropZero                            Drop records with all zero vis
 **PARAM** boo 1  **DEF** F
 doCode                              Each calcode a different source?
+**PARAM** boo 1  **DEF** F
+doOnline                            Don't flag "online" calibration data
 **PARAM** float 1 **DEF** 0.5
 calInt                              CL Table interval
 **PARAM** boo 1  **DEF** T
@@ -116,6 +118,11 @@ Data selection
              will be generate distinct source ID (entry in the 
              AIPS SU table).  If False, all data for a given source 
              name will have the same source ID.
+  doOnline...Data in scans with stated intents indicating an onliine
+             calibration, such as "CALIBRATE_POINTING", will be written 
+             but marked as flagged in the FG table if doOnline=False.
+             If doOnline=True, no flagging entries will be written for
+             these scans.
   calInt.....Interval in min between AIPS CL table entries.
   doSwPwr....If True, make corrections in the output CL table based
              on measurements of the cal (from AIPS SY table).
