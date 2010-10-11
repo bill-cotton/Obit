@@ -167,6 +167,7 @@ ofloat **antLats=NULL;                /* Array of Antenna latitudes per subarray
 olong selScan=-1;                     /* First selected scan number */
 olong selChan=-1;                     /* Selected number of channels */
 olong selIF=-1;                       /* Selected number of IFs (SpWin) */
+gboolean isEVLA;                      /* Is this EVLA data? */
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
@@ -236,22 +237,24 @@ int main ( int argc, char **argv )
   if ((ObitUVClose (outData, err) != OBIT_IO_OK) || (err->error>0))
     Obit_log_error(err, OBIT_Error, "ERROR closing output file");
   
-  /* Copy tables */
-  GetFlagInfo (SDMData, outData, err);       /*   FLAG tables */
-  /* GetCalibrationInfo (inData, outData, err);   CALIBRATION tables */
-  /* GetBandpassInfo (inData, outData, err);      BANDPASS tables */
-  /* GetTSysInfo (inData, outData, err);          SYSTEM_TEMPERATURE tables */
-  /* GetInterferometerModelInfo (inData, outData, err); INTERFEROMETER_MODEL tables */
-  /* GetPhaseCalInfo (inData, outData, err);      PHASE_CAL tables */
+  /* Copy EVLA tables */
+  if (isEVLA) {
+    GetFlagInfo (SDMData, outData, err);       /*   FLAG tables */
+    /* GetCalibrationInfo (inData, outData, err);   CALIBRATION tables */
+    /* GetBandpassInfo (inData, outData, err);      BANDPASS tables */
+    /* GetTSysInfo (inData, outData, err);          SYSTEM_TEMPERATURE tables */
+    /* GetInterferometerModelInfo (inData, outData, err); INTERFEROMETER_MODEL tables */
+    /* GetPhaseCalInfo (inData, outData, err);      PHASE_CAL tables */
+    GetCalDeviceInfo (SDMData, outData, err);  /*   calDevice table */
+    GetSysPowerInfo  (SDMData, outData, err);  /*   SysPower table */
+    GetOTTInfo  (SDMData, outData, err);       /*   Over the top table */
+    GetGainCurveInfo (SDMData, outData, err);  /*   gain curve (GC) table */
+  }
   GetWeatherInfo   (SDMData, outData, err);  /*   Weather table */
-  GetCalDeviceInfo (SDMData, outData, err);  /*   calDevice table */
-  GetSysPowerInfo  (SDMData, outData, err);  /*   SysPower table */
-  GetOTTInfo  (SDMData, outData, err);       /*   Over the top table */
-  GetGainCurveInfo (SDMData, outData, err);  /*   gain curve (GC) table */
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Check scan intents for online only calibrations */
-  FlagIntent (SDMData, outData, err);
+  if (isEVLA) FlagIntent (SDMData, outData, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Update An tables with correct ref. date */
@@ -259,11 +262,13 @@ int main ( int argc, char **argv )
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Create CL table - interval etc,  set in setOutputData */
-  Obit_log_error(err, OBIT_InfoErr, "Creating CL Table");
-  ObitErrLog(err);
-  /*ObitTableCLGetDummy (outData, outData, 1, err); */
-  CalTab = ObitGainCalCalc (outData, FALSE, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  if (isEVLA) {
+    Obit_log_error(err, OBIT_InfoErr, "Creating CL Table");
+    ObitErrLog(err);
+    /*ObitTableCLGetDummy (outData, outData, 1, err); */
+    CalTab = ObitGainCalCalc (outData, FALSE, err);
+    if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+  }
 
   /* History */
   BDFInHistory (myInput, SDMData, outData, err);
@@ -1199,7 +1204,6 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   oint numIF, numPCal, numOrb;
   odouble JD, GASTM, Rate;
   ObitIOAccess access;
-  gboolean isEVLA;
   gchar *out = "OUT";
   gchar *routine = "GetAntennaInfo";
   
@@ -1249,12 +1253,16 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   outTable->PolarY  = 0.0;
   outTable->dataUtc = 0.0;
   lim = MAXKEYCHARTABLEAN;
-  strncpy (outTable->FRAME, "ITRF", lim);        /* ASDM doesn't say */
-  strncpy (outTable->TimeSys, "IAT", lim);       /* ASDM doesn't say */
+  strncpy (outTable->FRAME,   "ITRF    ", lim);        /* ASDM doesn't say */
+  for (i=0; i<lim; i++) if (outTable->FRAME[i]==0) outTable->FRAME[i]=' ';
+  strncpy (outTable->TimeSys, "IAT     ", lim);        /* ASDM doesn't say */
+  for (i=0; i<lim; i++) if (outTable->TimeSys[i]==0) outTable->TimeSys[i]=' ';
   strncpy (outTable->ArrName, AntArray->arrayName, lim);
+  for (i=0;i<lim;i++) if (outTable->ArrName[i]==0) outTable->ArrName[i] = ' ';
   outTable->FreqID = 0;
   outTable->iatUtc = 0.0;                        /* ASDM Lacks */
   strncpy (outTable->polType, "        ", lim);  /* ASDM Lacks */
+  for (i=0;i<lim;i++) if (outTable->polType[i]==0) outTable->polType[i] = ' ';
   outTable->P_Refant = 0;
   outTable->P_Diff01 = 0.0;
   outTable->P_Diff02 = 0.0;
@@ -1331,9 +1339,12 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       for (i=0; i<numPCal; i++) 
 	outRow->PolCalB[i] = 0.0;
     }
+    for (i=0; i<outTable->myDesc->repeat[outTable->AntNameCol]; i++) 
+      outRow->AntName[i] = ' ';
     lim = MIN(strlen(AntArray->ants[iRow-1]->staName), 
 	      outTable->myDesc->repeat[outTable->AntNameCol]);
-    for (i=0; i<lim; i++) outRow->AntName[i] = AntArray->ants[iRow-1]->staName[i];
+    for (i=0; i<lim; i++) 
+      outRow->AntName[i] = AntArray->ants[iRow-1]->staName[i];
     outRow->status    = 0;
     outRow->mntSta    = 0;   /* ASDM lacks information */
     outRow->staXof    = AntArray->ants[iRow-1]->offset[0];  /* Not sure */
@@ -1856,10 +1867,10 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	   "%s: Input basebands inconsistent %d != %d, IF %d", 
 	   routine, BBNum, BDFData->SWArray->winds[jSW]->basebandNum, nIFsel);*/
 	/* Test frequency */
-	Obit_return_if_fail((fabs(BDFData->SWArray->winds[iSW]->refFreq-
+	Obit_return_if_fail((fabs(BDFData->SWArray->winds[iSW]->chanFreqStart-
 				  outData->myDesc->freqIF[iSW]) < 1.0e3), err,
 			    "%s: Frequencies inconsistent %lf != %lf, IF %d", 
-			    routine, BDFData->SWArray->winds[iSW]->refFreq, 
+			    routine, BDFData->SWArray->winds[iSW]->chanFreqStart, 
 			    outData->myDesc->freqIF[iSW], nIFsel);
   	nIFsel++;
       } 
@@ -2407,7 +2418,7 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   /* Highest antenna number? */
   maxAnt = AntArray->maxAnt;
   numIF  = outData->myDesc->inaxes[outData->myDesc->jlocif];
-  numPol = MAX (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
+  numPol = MIN (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
   
   /* Antenna number lookup table */
   antLookup = g_malloc(maxAnt*sizeof(olong));
@@ -2591,7 +2602,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   /* Highest antenna number? */
   maxAnt = AntArray->maxAnt;
   numIF  = outData->myDesc->inaxes[outData->myDesc->jlocif];
-  numPol = MAX (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
+  numPol = MIN (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
 
   /* Antenna number lookup table */
   antLookup = g_malloc(maxAnt*sizeof(olong));
@@ -2970,7 +2981,7 @@ void GetGainCurveInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ver      = 1;
   access   = OBIT_IO_ReadWrite;
   numIF    = outData->myDesc->inaxes[outData->myDesc->jlocif];
-  numPol   = MAX (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
+  numPol   = MIN (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
   numTabs  = 4;   /* 4 values in gain curves */
   outTable = newObitTableGCValue ("Output table", (ObitData*)outData, 
 				  &ver, access, numIF, numPol, numTabs, err);

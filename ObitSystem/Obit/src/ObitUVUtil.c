@@ -1260,7 +1260,7 @@ ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   ObitIOAccess access;
   ObitUVDesc *inDesc, *outDesc;
   gchar *today=NULL;
-  olong NumChAvg, defSel[] = {1,-10,1,0, 0,0,0,0};
+  olong NumChAvg, defSel[] = {1,100000000,1,0, 0,0,0,0};
   gboolean doAvgAll=FALSE;
    ofloat *work=NULL, scale;
   gchar *routine = "ObitUVUtilHann";
@@ -1300,6 +1300,8 @@ ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
  
   /* Effectively averaging 2 channels */
   NumChAvg = 2;
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListAlwaysPut(inUV->info, "NumChAvg", OBIT_long, dim, &NumChAvg);
  
   /* Creation date today */
   today = ObitToday();
@@ -3868,7 +3870,7 @@ static void Hann (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
 
   /* Accumulate order, channel, IF, poln */
   indx = 0;
-  for (i=0; i<(inDesc->ncorr-1); i+=2) {
+  for (i=0; i<(inDesc->ncorr-1); i) {
     jndx = 4*(corChan[i] + corIF[i]*nchan + corStok[i]*nchan*nif);
     if ((indx>=3) && (inBuffer[indx-1]>0.0)) {
       /* Prior 0.25 wt */

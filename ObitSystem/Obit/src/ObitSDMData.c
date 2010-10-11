@@ -770,7 +770,7 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong scan)
   ASDMSpectralWindowArray* out=NULL;
   olong configDescriptionId, dataDescriptionId, spectralWindowId, *dataDescriptions;
   olong jPoln, polarizationId;
-  olong i, j, iMain, iConfig, jSW, iSW, jDD, numDD, iJD, ncomp;
+  olong i, j, k, iMain, iConfig, jSW, iSW, jDD, numDD, iJD, ncomp;
   odouble JD;
   gboolean first = TRUE;
   ASDMSpectralWindowArrayEntry **twinds=NULL;
@@ -852,11 +852,30 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong scan)
     out->winds[iSW]->netSideband      = g_strdup(in->SpectralWindowTab->rows[jSW]->netSideband);
     out->winds[iSW]->refFreq          = in->SpectralWindowTab->rows[jSW]->refFreq;
     out->winds[iSW]->totBandwidth     = in->SpectralWindowTab->rows[jSW]->totBandwidth;
-    out->winds[iSW]->chanFreqStart    = in->SpectralWindowTab->rows[jSW]->chanFreqStart;
-    out->winds[iSW]->chanFreqStep     = in->SpectralWindowTab->rows[jSW]->chanFreqStep;
-    out->winds[iSW]->chanWidth        = in->SpectralWindowTab->rows[jSW]->chanWidth;
-    out->winds[iSW]->effectiveBw      = in->SpectralWindowTab->rows[jSW]->effectiveBw;
-    out->winds[iSW]->resolution       = in->SpectralWindowTab->rows[jSW]->resolution;
+    /* Which world view - single channel info or array of everything */
+    if (in->SpectralWindowTab->rows[jSW]->chanFreqArray==NULL) { /* Single */
+      out->winds[iSW]->chanFreqStart    = in->SpectralWindowTab->rows[jSW]->chanFreqStart;
+      out->winds[iSW]->chanFreqStep     = in->SpectralWindowTab->rows[jSW]->chanFreqStep;
+      out->winds[iSW]->chanWidth        = in->SpectralWindowTab->rows[jSW]->chanWidth;
+      out->winds[iSW]->effectiveBw      = in->SpectralWindowTab->rows[jSW]->effectiveBw;
+      out->winds[iSW]->resolution       = in->SpectralWindowTab->rows[jSW]->resolution;
+    } else { /* Potential trouble - cannot deal with general case */
+      out->winds[iSW]->chanFreqStart    = in->SpectralWindowTab->rows[jSW]->chanFreqArray[0];
+      out->winds[iSW]->chanFreqStep     = in->SpectralWindowTab->rows[jSW]->chanFreqArray[1] - 
+	in->SpectralWindowTab->rows[jSW]->chanFreqArray[0];
+      out->winds[iSW]->chanWidth        = in->SpectralWindowTab->rows[jSW]->chanWidthArray[0];
+      out->winds[iSW]->effectiveBw      = in->SpectralWindowTab->rows[jSW]->effectiveBwArray[0];
+      out->winds[iSW]->resolution       = in->SpectralWindowTab->rows[jSW]->resolutionArray[0];
+      /* Can I cope with this one??? */
+      for (k=1; k<in->SpectralWindowTab->rows[jSW]->numChan; k++) {
+	if (in->SpectralWindowTab->rows[jSW]->chanWidthArray[0] != 
+	    in->SpectralWindowTab->rows[jSW]->chanWidthArray[k])  out->winds[iSW]->selected = FALSE;
+	if (in->SpectralWindowTab->rows[jSW]->effectiveBwArray[0] != 
+	    in->SpectralWindowTab->rows[jSW]->effectiveBwArray[k])  out->winds[iSW]->selected = FALSE;
+	if (in->SpectralWindowTab->rows[jSW]->resolutionArray[0] != 
+	    in->SpectralWindowTab->rows[jSW]->resolutionArray[k])  out->winds[iSW]->selected = FALSE;
+      }
+    }
 
     /* Fix up frequency for LSB - DEBUG STUB */
     if (out->winds[iSW]->netSideband[0]=='$') 
@@ -883,8 +902,10 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong scan)
       (olong)strtol(&in->SpectralWindowTab->rows[jSW]->basebandName[3], NULL, 10);
 
     /* Subband number - assume name starts with "Subband:" and ends in number */
-    out->winds[iSW]->subbandNum  = 
-      (olong)strtol(&in->SpectralWindowTab->rows[jSW]->name[8], NULL, 10);
+    if (in->SpectralWindowTab->rows[jSW]->name) {
+      out->winds[iSW]->subbandNum  = 
+	(olong)strtol(&in->SpectralWindowTab->rows[jSW]->name[8], NULL, 10);
+    } else out->winds[iSW]->subbandNum = out->winds[iSW]->basebandNum;
 
     iSW++;
   } /* end loop over DataDescriptions */
@@ -959,14 +980,15 @@ ASDMSpectralWindowArray* ObitSDMDataKillSWArray (ASDMSpectralWindowArray *in)
 gboolean ObitSDMDataSelChan  (ASDMSpectralWindowArray *in, olong selChan,
 			      olong selIF, ObitASDMBand band)
 {
-  gboolean out = FALSE;
+  gboolean out = FALSE, damn;
   olong iSW;
   /*gchar *routine = "ObitSDMDataSelChan";*/
   
   for (iSW=0; iSW<in->nwinds; iSW++) {
-    in->winds[iSW]->selected = (in->winds[iSW]->numChan == selChan) &&
+    damn = (in->winds[iSW]->numChan == selChan) &&
       ((ObitSDMDataFreq2Band (in->winds[iSW]->refFreq)==band) || 
        (band==ASDMBand_Any)) &&   (in->nwinds==selIF);
+    in->winds[iSW]->selected = in->winds[iSW]->selected || damn;
     if (in->winds[iSW]->selected) out = TRUE;
   }
   return out;
@@ -1088,7 +1110,8 @@ ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong scan)
     out->ants[iAnt]->numPoln     = MIN(2, in->PolarizationTab->rows[0]->numCorr);
     out->ants[iAnt]->numPolnCorr = in->PolarizationTab->rows[0]->numCorr;
     out->ants[iAnt]->polnType[0] = in->PolarizationTab->rows[0]->corrType[0][0];
-    out->ants[iAnt]->polnType[1] = in->PolarizationTab->rows[0]->corrType[1][1];
+    if (out->ants[iAnt]->numPolnCorr>1)
+      out->ants[iAnt]->polnType[1] = in->PolarizationTab->rows[0]->corrType[1][1];
   } /* end loop over antennas */
   
   return out;
@@ -5712,10 +5735,15 @@ static ASDMSpectralWindowRow*
 KillASDMSpectralWindowRow(ASDMSpectralWindowRow* row)
 {
   if (row == NULL) return NULL;
-  if (row->basebandName)   g_free(row->basebandName);
-  if (row->netSideband)    g_free(row->netSideband);
-  if (row->name)           g_free(row->name);
-  if (row->correlationBit) g_free(row->correlationBit);
+  if (row->basebandName)          g_free(row->basebandName);
+  if (row->netSideband)           g_free(row->netSideband);
+  if (row->name)                  g_free(row->name);
+  if (row->correlationBit)        g_free(row->correlationBit);
+  if (row->chanWidthArray)        g_free(row->chanWidthArray);
+  if (row->effectiveBwArray)      g_free(row->effectiveBwArray);
+  if (row->resolutionArray)       g_free(row->resolutionArray);
+  if (row->SpecRes)               g_free(row->SpecRes);
+  if (row->assocSpectralWindowId) g_free(row->assocSpectralWindowId);
   g_free(row);
   return NULL;
 } /* end   KillASDMSpectralWindowRow */
@@ -5734,8 +5762,8 @@ ParseASDMSpectralWindowTable(ObitSDMData *me,
   ASDMSpectralWindowTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
-  olong irow, maxLine = 4098;
-  gchar line[4099];
+  olong i, irow, maxLine = 4098;
+  gchar line[4099], **assNat=NULL;
   gchar *endrow = "</row>";
   gchar *prior, *next, *tstr;
   gchar *routine = " ParseASDMSpectralWindowTable";
@@ -5855,6 +5883,57 @@ ParseASDMSpectralWindowTable(ObitSDMData *me,
     prior = "<resolution>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->resolution = ASDMparse_dbl (line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<chanFreqArray>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->chanFreqArray = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<chanWidthArray>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->chanWidthArray = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<effectiveBwArray>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->effectiveBwArray = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<resolutionArray>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->resolutionArray = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<numAssocValues>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numAssocValues = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<assocNature>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      assNat = ASDMparse_strarray (line, maxLine, prior, &next);
+      out->rows[irow]->SpecRes = g_malloc0(MIN(1,out->rows[irow]->numAssocValues)*sizeof(ObitASDMSpecRes));
+      i = 0;
+      while(assNat[i]) {
+	if (i>=MIN(1,out->rows[irow]->numAssocValues)) break;  /* FULL? */
+	if (!strcmp(assNat[i], "CHANNEL_AVERAGE"))      
+	  out->rows[irow]->SpecRes[i] = (olong)ASDMSpecRes_CHANNEL_AVERAGE;
+	else if (!strcmp(assNat[i], "BASEBAND_WIDE"))   
+	  out->rows[irow]->SpecRes[i] = (olong)ASDMSpecRes_BASEBAND_WIDE;
+	else if (!strcmp(assNat[i], "FULL_RESOLUTION")) 
+	  out->rows[irow]->SpecRes[i] = (olong)ASDMSpecRes_FULL_RESOLUTION;
+	g_free(assNat[i]);
+	i++;
+      }
+      g_free(assNat);
+      continue; 
+    }
+    
+    prior = "<assocSpectralWindowId>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->assocSpectralWindowId = ASDMparse_enumarray (line, maxLine, prior, &next);
       continue;
     }
 

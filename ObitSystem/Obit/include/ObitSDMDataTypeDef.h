@@ -803,6 +803,21 @@ typedef struct {
   gboolean quantization;
   /** spectral resolution in Hz */
   odouble resolution;
+  /** Arrays of info - dim numChan
+      channel frequency array */
+  odouble *chanFreqArray;
+  /* channel width array */
+  odouble *chanWidthArray;
+  /* effective bandwidth array */
+  odouble *effectiveBwArray;
+  /* resolution array */
+  odouble *resolutionArray;
+  /** Number of associated values */
+  olong numAssocValues;
+  /** Nature of associated values (ObitASDMSpecRes as olong) */
+  olong *SpecRes;
+  /** Associated Spectral window IDs */
+  olong *assocSpectralWindowId;
 } ASDMSpectralWindowRow;
 typedef struct {
   /** Number of rows */

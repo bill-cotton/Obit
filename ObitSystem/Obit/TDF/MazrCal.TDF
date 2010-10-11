@@ -1,0 +1,312 @@
+; $Id: MazrCal.TDF 220 2010-09-14 15:57:27Z bill.cotton $
+; MazrCal
+;---------------------------------------------------------------
+;! Amplitude and phase calibration for VLBI Maser data
+;# Task Obit Imaging calibration
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2010
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+;---------------------------------------------------------------
+MazrCal   LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+MazrCal: Amplitude and phase calibration for VLBI Maser data
+**PARAM** str 4
+DataType                            "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                              FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                              Input multisource UV data AIPS
+**PARAM** str 6
+inClass                             Input UV data (class)
+**PARAM** int 1
+inSeq                               Input UV data (seq. #)
+**PARAM** int 1
+inDisk                              Input UV data disk drive #
+**PARAM** str 16 30
+Sources                             Calibrator sources (pointings) list
+**PARAM** int 1 **DEF** -1
+Qual            -10.0               Source qualifier -1=>any
+**PARAM** str 4
+souCode                             Calibrator code '    '=>any
+**PARAM** float 2
+timeRange                           Time range to process.
+**PARAM** float 2
+UVRange         0.                  Min & max baseline (klambda)
+**PARAM** float 1  **DEF** 0.01
+WtUV              0.0               Weight outside full wt uvrange
+**PARAM** int 1  **DEF** 1
+BChan            0.0     8192.0     Low freq. channel 0 for cont.
+**PARAM** int 1
+EChan            0.0     8192.0     Highest freq channel
+**PARAM** int 1
+subA                                Subarray
+**PARAM** int 50
+Antennas         0.0     1000.0     List of antennas to calibrate
+**PARAM** int 1
+doCalib          -1         10      Apply calibration table
+**PARAM** int 1
+gainUse                             CL/SN table to apply
+**PARAM** int 1
+doBand           -1.0       10.0    If >0.5 apply bandpass cal.
+**PARAM** int 1
+BPVer                               Bandpass table version
+**PARAM** int 1 **DEF** -1
+flagVer                             Flag table version
+**PARAM** boo 1 **DEF** F
+doPol                               Apply polarization cal?
+**PARAM** float 1  **DEF** 0.0
+Alpha           -20.       20.      Spectral Index to correct
+**PARAM** str 4
+DataType2                           "FITS" or "AIPS" type of model
+**PARAM** str 48
+in2File                             FITS input image if Type=='FITS'
+**PARAM** str 12
+in2Name                             Cleaned map name (name)
+**PARAM** str 6
+in2Class                            Cleaned map name (class)
+**PARAM** int 1
+in2Seq            0.0     9999.0    Cleaned map name (seq. #)
+**PARAM** int 1
+in2Disk                             Cleaned map disk unit #
+**PARAM** int 1   **DEF** 1
+nfield            0.0     4192.0    No. maps to use for model.
+                                    0 => use fluxes in SU table
+**PARAM** int 1  **DEF** 1
+CCVer1           -1.0    46655.0    CC file ver # first channel
+**PARAM** int 64
+BComp                               First CLEAN comp to sub.
+                                    1 per field.
+**PARAM** int 64
+EComp                               Last CLEAN comp to sub.
+                                    to use (0 => all)
+**PARAM** str 4
+Cmethod                            Modeling method:
+                                   'DFT','GRID','    '
+**PARAM** str 4
+Cmodel                             Model type: 'COMP','IMAG'
+**PARAM** float 1
+Flux                                Lowest CC component used.
+**PARAM** int 1
+solnVer                             SN table to write
+**PARAM** int 1
+refAnt            0                 Reference antenna
+**PARAM** float 1
+solInt            0.0               Solution interval (min)
+**PARAM** str 4
+solType                             Soln. Type: '  ', 'L1', 
+**PARAM** str 4
+solMode                             Soln. Mode:'A&P', 'P', 'P!A'
+**PARAM** boo 1 **DEF** F
+avgPol                              Avg. poln?
+**PARAM** boo 1 **DEF** F
+noNeg                               Exclude negative CLEAN comps?
+**PARAM** boo 1  **DEF** F
+doMGM                               Apply mean gain modulus
+**PARAM** float 1  **DEF** 10.0
+elevMGM                             Minimum elevation for MGM
+**PARAM** boo 1  **DEF** F
+ampScalar                           Amp-scalar averaging
+**PARAM** float 1  **DEF** 5.0
+minSNR                              Min. allowed SNR in selfcal
+**PARAM** int 1 **DEF** 3
+minNo             2                 Min. no. antennas in selfcal
+**PARAM** int 1
+prtLv             0.0               Print level in selfcal
+**PARAM** int 1 **DEF** 1
+nThreads            0              Number of threads to use
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+**PARAM** int 10
+noScrat                            AIPS disk numbers for which
+                                   scratch files are disallowed
+----------------------------------------------------------------
+MazrCal: Determine gain solutions from multiple channels of maser data
+Type:  Task
+ Use:  Calibration of VLBI maser
+
+   This program determines the calibration to be applied to a uv 
+data from multiple channels of a uv data set.  Prior to averaging, 
+the channel data is divided by the Fourier transform of a CLEAN model 
+corresponding to that channel.
+   This technique is most useful for VLBI maser data in which the 
+only detectable signal comes from a collection of maser spots.
+Application of this technique separately to Right and left 
+circularly polarized data (avgPol=False) should produce an accurate
+calibration of the circular polarization.
+   MazrCal should only be run one IF (transition) at a time.
+   The output is an SN table on the input dataset.
+
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input multisource UV data file
+  inClass....Input UV data file (class).      Standard defaults.
+  inSeq......Input UV data file (seq. #).     0 => highest.
+  inDisk.....Input UV data file disk drive #.
+
+       Data selection
+  Sources....List of sources (pointings) to be processed.
+             '*' or blank = all; a "-" before a source name
+             means all except ANY source named. 
+  Qual.......Only sources with a source qualifier number in the
+             SU table matching Qual will be used if Qual is not
+             -1.  Qual affects the selection of both the list of
+             sources and the list of calibrators.
+  souCode....Calibrators may be selected on the basis of the
+             calibrator code given in the SU table.
+                  '    ' => any calibrator code selected
+                  '*   ' => any non blank code (cal. only)
+                  '-CAL' => blank codes only (no calibrators)
+                  anything else = calibrator code to select.
+             NB: The souCode test is applied in addition to the
+             other tests, i.e. Sources and Qual, in the
+             selection of sources to process.
+  timeRange..Start and end times (day)
+             Use  dhms2day to convert from human readable form
+  BChan......First channel number to include, 0=>1.  Channel numbers are 1
+             relative as defined in the input data file.
+  EChan......Highest channel number to to include,  0 => max 
+  FreqID.....Frequency identifier to select (you may determine which is
+             applicable from the OPTYPE='SCAN' listing produced by
+             LISTR).
+  subA.......Sub-array number to use. 0=>all.
+  Antennas...A list of the antennas to  have solutions
+             determined. If any number is negative then all
+             antennas listed  are NOT to be used to determine
+             solutions and all others are. All 0 => use all.
+  doCalib....If >=2, apply SN or CL table, 2=> calibrate weights also
+  gainUse....CL/SN table version number to apply. 0=> highest.
+  doBand.....If true (>0) then correct the data for the shape of the
+             antenna bandpasses using the BP table specified by BPVer.
+             The correction has five modes:
+             (a) if DOBAND=1 all entries for an antenna in the table
+             are averaged together before correcting the data.
+             (b) if DOBAND=2 the entry nearest in time (including
+             solution weights) is used to correct the data.
+             (c) if DOBAND=3 the table entries are interpolated in
+             time (using solution weights) and the data are then
+             corrected.
+             (d) if DOBAND=4 the entry nearest in time (ignoring
+             solution weights) is used to correct the data.
+             (e) if DOBAND=5 the table entries are interpolated in
+             time (ignoring solution weights) and the data are then
+             corrected.
+             IMAGR uses DOBAND as the nearest integer; 0.1 is therefore
+             "false".
+  BPVer......Specifies the version of the BP table to be applied
+                0 => highest numbered table.
+               <0 => no bandpass correction to be applied.
+  flagVer....FG table to use for editing. 0 => highest.
+  doPol......True => apply polarization calibration
+  Alpha......If != 0.0 then correct data by spectral index Alpha before 
+             calibration. 
+             -0.7 is typical for synchrotron.
+
+      Model
+             The model should have one CC table for each channel being
+             included in the calibration.  CC version CCVer1, should 
+             correspond to BChan, CCVer1+1 to BChan+1, etc.
+  DataType2.'FITS' or 'AIPS'  type of input, defaults to DataType
+  in2Name....Model map name (name).      Standard defaults.
+  in2Class...Model map name (class).     Standard defaults.
+  in2Seq.....Model map name (seq. #).    0 => highest.
+  in2Disk....Disk drive # of model map.  0 => any.
+  in2File....FITS input root if Type=='FITS'
+             Any digits should be left off the end of the name as 
+             the 0-rel field number is added (no leading zeroes).
+  nfield.....Number of image files to use for model.  If more than one
+             file is to be used, the Name, Class, Disk and Seq of the
+             subsequent image files will be the same as the first file
+             except that the LAST two characters of the Class will be
+             '01' thru 'E7' for files number 2 thru 4192.  Maximum 4192.
+             NOTE: 0 => ignore in2name etc. and use flux densities in 
+             source table.
+  CCVer1.....CC file ver. number corresponding to BChan.
+  BComp......The first clean component to process. One value is
+             specified for each field used.  Applied to all CC Tables.
+  EComp......highest CLEAN comps. to use for model. ALL 0 => all.
+             This array has one value per field up to 64 fields.  All
+             components are used for fields > 64.
+             If any EComp[i] < 0, then components are only used up to
+             the first negative in each field. Applied to all CC.
+  Cmethod....This determines the method used to compute the
+             model visibility values.
+             'DFT' uses the direct Fourier transform, this
+             method is the most accurate.
+             'GRID' does a gridded-FFT interpolation model
+             computation.
+             '    ' allows the program to use the fastest
+             method.
+             NOTE: Cmethod='GRID' does not work correctly for RL
+             and LR data; DO NOT USE Cmethod='GRID' for RL, LR!
+             (Not sure this is correct for Obit)
+  Cmodel.....This indicates the type of input model; 'COMP' means that
+             the input model consists of Clean components, 'IMAG'
+             indicates that the input model consists of images.  If
+             Cmodel is '   ' Clean components will be used if present
+             and the image if not.  Note that Clean images do not make
+             good models.  The Clean components have been convolved with
+             the Gaussian Clean beam making their Fourier transform be
+             rather tapered compared to the original uv data.
+  Flux.......Only components > Flux are used in the model.
+  noNeg......If True, exclude negative CLEAN components from the 
+             model calculation.  This is useful if the initial
+             calibration is poor and there are negative components due 
+             to phase errors but is harmful if the initial calibration is 
+             relatively good and the negative components are needed to 
+             describe a high dynamic range image (say DR>1000:1)
+
+      Calibration control
+  solnVer....Solution (SN) table to write, 0=> create new
+  UVRange....(Minimum,Maximum) baseline (kilo-lambda) to give
+             full weight. (default all)
+  WtUV.......Weighting (wrt 1) to use outside of basic UVRange
+             [def 0.0]
+  refAnt.....Reference antenna
+  solInt.....Solution interval (min)
+  solType....Solution Type: '  ', 'L1', 
+  solMode....Solution Mode:'A&P', 'P', 'P!A',
+  avgPol.....Average Polarizations in calibration? [def False]
+  doMGM......Apply mean gain modulus to A&P soln.
+  elevMGM....Minimum elevation for mean gain modulus average.
+  ampScalar..If true average amplitudes and phases rather than
+             vector agerage.
+  minSNR.....Min. allowed SNR in self cal solution [def 5]
+  minNo......Min. allowed no. antennas in solution
+  prtLv......Print level in solution, 0=>none [def. 0]
+  nThreads...If the Obit libraries are compiled with multiple
+             thread operation enabled, this parameter sets the 
+             number of threads that can be used for parallel 
+             operations. 
+             NB: This only improves performance if there are 
+             multiple processors and/or cores in the host.
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files where
+             a bug in the ObitTalk message handling may cause
+             tasks to hang.  Path is absolute or relative to where
+             the task executes.
+  noScrat....A list of AIPS disk numbers on which you do not 
+             wish scratch files
+----------------------------------------------------------------
