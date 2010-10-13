@@ -730,7 +730,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, ObitErr *err)
   inext = 0;
   for (iSW=0; iSW<in->SWArray->nwinds; iSW++) {
     if (in->SWArray->winds[iSW]->selected) {
-      in->isLSB[iSW] = in->SWArray->winds[iSW]->netSideband[iSW]=='$';  /* DEBUG STUB */
+      in->isLSB[iSW] = in->SWArray->winds[iSW]->netSideband[0]=='$';  /* DEBUG STUB */
       inext++;
     }
   }

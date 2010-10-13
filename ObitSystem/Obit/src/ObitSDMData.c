@@ -4955,8 +4955,8 @@ KillASDMPolarizationRow(ASDMPolarizationRow* row)
   if (row->corrProduct) {
     n = row->numCorr*2;
     for (i=0; i<n; i++) {
-      if (row->corrProduct[i]) g_free(row->corrProduct[i]);
       if (row->corrProduct[i]==NULL) break;
+      if (row->corrProduct[i]) g_free(row->corrProduct[i]);
     }
      g_free(row->corrProduct);
   }
@@ -5410,16 +5410,16 @@ static ASDMScanRow* KillASDMScanRow(ASDMScanRow* row)
   if (row->scanIntent) {
     n = row->numIntent;
     for (i=0; i<n; i++) {
-      if (row->scanIntent[i]) g_free(row->scanIntent[i]);
       if (row->scanIntent[i]==NULL) break;
+      if (row->scanIntent[i]) g_free(row->scanIntent[i]);
     }
     g_free(row->scanIntent);
   }
   if (row->calDataType) {
     n = row->numSubScan;
     for (i=0; i<n; i++) {
-      if (row->calDataType[i]) g_free(row->calDataType[i]);
       if (row->calDataType[i]==NULL) break;
+      if (row->calDataType[i]) g_free(row->calDataType[i]);
     }
     g_free(row->calDataType);
   }

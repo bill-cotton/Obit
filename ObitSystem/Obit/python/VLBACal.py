@@ -600,7 +600,7 @@ def VLBAPlotTab(uv, inext, invers, err, \
             snplt.g
     except Exception, exception:
         print exception
-        mess = "Snplt Failed "
+        mess = "SNPLT Failed "
         printMess(mess, logfile)
         return 1
     else:
@@ -1139,6 +1139,99 @@ def VLBAGoodCal(uv, err, solInt=0.5, timeInt=100., FreqID=1, \
     return out
     # end VLBAGoodCal
 
+def VLBAPCcor(uv, err, calSou=None,  timeRange=[0.,0.], FreqID=1, \
+              PCin=1, SNout=0, refAnt=1, doPCPlot=False, plotFile="./PC.ps", \
+              logfile='', check=False, debug=False):
+    """ Apply corrections from PC table
+
+    Use a short section of calibrator data to resolve ambiguities in tghe PC
+    measurements and apply the calibration derived from a PC file and write an
+    SN table.  This SN table is then applied to the previous highest CL table
+    creating a new CL table.
+    Returns task error code, 0=OK, else failed
+    err        = Python Obit Error/message stack
+    calSou     = Source name to use
+    timeRange  = timerange of data to use
+    FreqID     = Frequency group identifier
+    PCin       = Input PC table input number
+    SNout      = Output SN table, 0=> create new
+    refAnt     = Reference antenna
+    logfile    = logfile for messages
+    check      = Only check script, don't execute tasks
+    debug      = show input
+    """
+    ################################################################
+    mess = "Determine Phase cal (PC) corrections"
+    printMess(mess, logfile)
+
+    # Set output (new) SN table
+    if SNout<=0:
+        SNver = uv.GetHighVer("AIPS SN")+1
+    else:
+        SNver = SNout
+
+    pccor = AIPSTask.AIPSTask("pccor")
+    if not check:
+        setname(uv,pccor)
+    pccor.snver       = SNver
+    pccor.inver       = PCin
+    pccor.refant      = refAnt
+    pccor.freqid      = FreqID
+    pccor.calsour[1]  = calSou
+    pccor.timerang[1] = timeRange[0]
+    pccor.timerang[5] = timeRange[1]
+    pccor.logFile     = logfile
+    if debug:
+        pccor.i
+    # Trap failure
+    try:
+        if not check:
+            pccor.g
+    except Exception, exception:
+        print exception
+        mess = "PCCOR Failed "
+        printMess(mess, logfile)
+        return 1
+    else:
+        pass
+
+    # Open/close UV to update header
+    uv.Open(UV.READONLY,err)
+    uv.Close(err)
+    if err.isErr:
+        OErr.printErr(err)
+        mess = "Update UV header failed"
+        printMess(mess, logfile)
+        return 1
+
+    # Plot
+    SNver = uv.GetHighVer("AIPS SN")
+    # Plot PC corrections?
+    if doPCPlot:
+        # Phase corrections
+        retCode = VLBAPlotTab(uv, "SN", SNver, err, nplots=6, optype="PHAS", \
+                              logfile=logfile, check=check, debug=debug)
+        if retCode!=0:
+            return retCode
+        # Delay corrections
+        retCode = VLBAPlotTab(uv, "SN", SNver, err, nplots=6, optype="DELA", \
+                              logfile=logfile, check=check, debug=debug)
+        if retCode!=0:
+            return retCode
+  
+        retCode = VLBAWritePlots (uv, 1, 0, plotFile, err, \
+                                  logfile=logfile, check=check, debug=debug)
+        if retCode!=0:
+            return retCode
+    # end SN table plot
+
+    # Apply to CL table - one scan for whole dataset
+    retCode = VLBAApplyCal(uv, err, maxInter=2880.0, logfile=logfile, check=check,debug=debug)
+    if retCode!=0:
+        return retCode
+    return 0
+    # end VLBAPCcor
+
 def VLBAManPCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None, \
                 timeRange=[0.,0.], FreqID=1, doCalib=-1, gainUse=0, minSNR = 10.0, \
                 refAnts=[0], doBand=-1, BPVer=0, flagVer=-1,  \
@@ -1520,6 +1613,7 @@ def VLBAImageCals(uv, err,  FreqID=1, Sources=None, seq=1, sclass="ImgSC", \
     uv         = UV data object
     err        = Python Obit Error/message stack
     Sources    = Source name or list of names to use
+                 If an empty list all sources in uv are included
     seq        = sequence number of output
     sclass     = Image output class
     FreqID     = Frequency group identifier
@@ -1551,6 +1645,17 @@ def VLBAImageCals(uv, err,  FreqID=1, Sources=None, seq=1, sclass="ImgSC", \
     ################################################################
     mess = "Image a list of sources "
     printMess(mess, logfile)
+
+    # If list empty get all sources
+    if type(Sources)==list:
+        sl = Sources
+    else:
+        sl = [Sources]
+
+    if len(sl)<=0:
+        slist = VLBAAllSource(uv,err,logfile=logfile,check=check,debug=debug)
+    else:
+        slist = sl
     
     scmap = ObitTask.ObitTask("SCMap")
     scmap.taskLog  = logfile
@@ -1588,25 +1693,31 @@ def VLBAImageCals(uv, err,  FreqID=1, Sources=None, seq=1, sclass="ImgSC", \
     scmap.noScrat     = noScrat
     scmap.nThreads    = nThreads
     scmap.prtLv       = 3
-    if type(Sources)==list:
-        scmap.Sources = Sources
-    else:
-        scmap.Sources = [Sources]
     if debug:
         scmap.prtLv = 5
         scmap.i
         scmap.debug = debug
-    # Trap failure
-    try:
-        if not check:
-            scmap.g
-    except Exception, exception:
-        print exception
-        mess = "SCMap Failed retCode= "+str(scmap.retCode)
-        printMess(mess, logfile)
-        return 1
-    else:
-        pass
+    # Loop over slist
+    for sou in slist:
+        scmap.Sources[0] = sou
+        # Trap failure
+        try:
+            if not check:
+                scmap.g
+        except Exception, exception:
+            print exception
+            mess = "SCMap Failed retCode= "+str(scmap.retCode)
+            printMess(mess, logfile)
+            return 1
+        else:
+            pass
+        # Delete SCMap file if not debug
+        if not debug:
+            u = UV.newPAUV("zap", scmap.Sources[0], "SCMap", scmap.out2Disk, scmap.out2Seq, True, err)
+            if UV.PIsA(u):
+                u.Zap(err) # cleanup
+            del u
+    # end loop over sources
     return 0
     # end VLBAImageCals
 
@@ -3096,12 +3207,12 @@ def VLBACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
                FQid=0, \
                flagVer=0, doCalib=2, gainUse=0, doBand=1, BPVer=0,  \
                BIF=1, EIF=0, BChan=1, EChan=0, \
-               FOV=0.01, maxFact=1.004, avgFreq=0, chAvg=1, Compress=False, \
+               avgFreq=0, chAvg=1, Compress=False, \
                logfile = "", check=False, debug=False):
-    """ Calibrate and baseline dependent average data to a multisource file
+    """ Calibrate, select and/or average data to a multisource file
 
     Returns task error code, 0=OK, else failed
-    Generates NX and initial dummy CL table
+    Generates NX and initial dummy CL table if needed
     uv         = UV data object to clear
     avgClass   = Class name of averaged data
     avgSeq     = Sequence number of averaged data
@@ -3117,8 +3228,6 @@ def VLBACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
     BChan      = first channel to copy
     EChan      = highest channel to copy
     flagVer    = Input Flagging table version
-    FOV        = Undistorted Field of View (deg)
-    maxFact    = max. allowed amp distortion
     avgFreq    = If 0 < avgFreq <= 1 then average channels
     chAvg      = Number of channels to average
     Compress   = Write "Compressed" data?
@@ -3127,55 +3236,55 @@ def VLBACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
     debug      = Run tasks debug, show input
     """
     ################################################################
-    blavg=ObitTask.ObitTask("UVBlAvg")
-    blavg.logFile = logfile
+    splat=ObitTask.ObitTask("Splat")
+    splat.logFile = logfile
     if not check:
-        setname(uv,blavg)
-    blavg.doCalib  = doCalib
-    blavg.gainUse  = gainUse
-    blavg.doBand   = doBand
-    blavg.BPVer    = BPVer
-    blavg.BIF      = BIF
-    blavg.EIF      = EIF
-    blavg.BChan    = BChan
-    blavg.EChan    = EChan
-    blavg.flagVer  = flagVer
-    blavg.FreqID   = FQid
-    blavg.FOV      = FOV
-    blavg.maxInt   = CalAvgTime/60.
-    blavg.maxFact  = maxFact
-    blavg.avgFreq  = avgFreq
-    blavg.chAvg    = chAvg
-    blavg.Compress = Compress
-    blavg.outClass = avgClass
-    blavg.outDisk  = blavg.inDisk
-    blavg.outSeq   = avgSeq
+        setname(uv,splat)
+    splat.doCalib  = doCalib
+    splat.gainUse  = gainUse
+    splat.doBand   = doBand
+    splat.BPVer    = BPVer
+    splat.BIF      = BIF
+    splat.EIF      = EIF
+    splat.BChan    = BChan
+    splat.EChan    = EChan
+    splat.flagVer  = flagVer
+    splat.FreqID   = FQid
+    splat.timeAvg  = CalAvgTime
+    splat.avgFreq  = avgFreq
+    splat.chAvg    = chAvg
+    splat.Compress = Compress
+    splat.outClass = avgClass
+    splat.outDisk  = splat.inDisk
+    splat.outSeq   = avgSeq
     if debug:
-        blavg.i
-        blavg.debug = debug
+        splat.i
+        splat.debug = debug
     # Trap failure
     try:
         if not check:
-            blavg.g
+            splat.g
     except Exception, exception:
         print exception
-        mess = "UVBlAvg Failed retCode="+str(blavg.retCode)
+        mess = "Splat Failed retCode="+str(splat.retCode)
         printMess(mess, logfile)
         return 1
     else:
         pass
     # end average
 
-    # Get calibrated/averaged data, index and make CL table
+    # Get calibrated/averaged data, index and make CL table 1 if doCalib>0
     if not check:
         try:
-            uvc = UV.newPAUV("AIPS UV DATA", blavg.inName, avgClass, blavg.inDisk, avgSeq, True, err)
+            uvc = UV.newPAUV("AIPS UV DATA", splat.inName, avgClass, splat.inDisk, avgSeq, True, err)
             if err.isErr:
                 print "Error creating cal/avg AIPS data"
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
             # Dummy CL table
-            solint = blavg.maxInt * 2   # CL table interval twice averaging
-            UV.PTableCLGetDummy(uvc, uvc, 0, err, solInt=solint)
+            solint = splat.timeAvg * 2   # CL table interval twice averaging
+            hiver = uvc.GetHighVer("AIPS CL")
+            if (doCalib>0) or (hiver<=0):
+                UV.PTableCLGetDummy(uvc, uvc, 0, err, solInt=solint)
             if err.isErr:
                 print "Error creating cal/avg AIPS data CL table"
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data CL table")
@@ -4172,4 +4281,50 @@ def VLBAImageModel(snames, sclass, sdisk, sseq, err, \
                 out = {sname:{"image":x}}
     return out
     # end VLBAImageModel
+    
+def VLBAAllSource(uv, err, \
+               logfile='', check=False, debug=False):
+    """ Flag SN table entries with real < Flag
+
+    Returns List of all sources, empty if no SU table
+    uv         = UV data object
+    err        = Python Obit Error/message stack
+    logfile    = logfile for messages
+    check      = Only check script
+    debug      = Only debug - no effect
+    """
+    ################################################################
+    allSou = []
+    if check or debug:
+        return allSou
+    # Is there an SU table?
+    hiver = uv.GetHighVer("AIPS SU")
+    if hiver<=0:
+        return allSou
+    mess = "List of source in database"  
+    printMess(mess, logfile)
+    SUTab = uv.NewTable(Table.READONLY, "AIPS SU", 1, err)
+    if err.isErr:
+        return allSou
+    # Open
+    SUTab.Open(Table.READONLY, err)
+    if err.isErr:
+        return allSou
+    # Number of rows
+    nrow =  SUTab.Desc.Dict["nrow"]
+    for i in range (0,nrow):    # Loop over rows
+        SUrow = SUTab.ReadRow(i+1, err)
+        if err.isErr:
+            return
+        allSou.append(SUrow["SOURCE"][0].strip())
+        mess = "Source("+str(i+1)+") = "+SUrow["SOURCE"][0]  
+        printMess(mess, logfile)
+    # end loop over rows
+            
+    # Close table
+    SUTab.Close(err)
+    if err.isErr:
+        return allSou
+    return allSou
+    # end VLBAAllSource
     

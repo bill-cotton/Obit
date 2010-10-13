@@ -403,7 +403,7 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, "myInput");
 
   /* Reference date */
-  iScan = 1;
+  iScan       = SDMData->MainTab->rows[0]->scanNumber;
   AntArray    = ObitSDMDataGetAntArray(SDMData, iScan);
   refJD       = AntArray->refJD;
   ObitUVDescJD2Date (AntArray->refJD, obsdat);

@@ -583,12 +583,17 @@ void ObitSwPowerSYSmo (ObitTableSY *SYTab, olong isuba, ObitErr* err)
   /* Subarray */
   isub = MAX (1, isuba);
   
+  /* Sort to time-antenna order - just to be sure */
+  ObitTableUtilSort2f ((ObitTable*)SYTab, "TIME    ", 1, FALSE, "ANTENNA NO.", 
+		       1, FALSE, err);
+  if (err->error) Obit_traceback_msg (err, routine, SYTab->name);
+
   /* Count number of times appearing in table */
   mxtime = SYCountTime(SYTab, isuba, err);
   if (err->error) Obit_traceback_msg (err, routine, SYTab->name);
-  mxtime += 10;  /* Fudge a bit on the number of times */
+  mxtime += 100;  /* Fudge a bit on the number of times */
 
-  /* MUST be antenna-time order */
+  /* Sort to antenna-time order */
   ObitTableUtilSort2f ((ObitTable*)SYTab, "ANTENNA NO.", 1, FALSE, "TIME  ", 
 		       1, FALSE, err);
   if (err->error) Obit_traceback_msg (err, routine, SYTab->name);

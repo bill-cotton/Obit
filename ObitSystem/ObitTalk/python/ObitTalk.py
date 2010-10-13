@@ -98,3 +98,6 @@ if os.path.exists(path):
 if os.environ.has_key('LD_PRELOAD'):
     del os.environ['LD_PRELOAD']
     
+# Set umask to allow others to access AIPS data
+import os
+os.umask(002)
