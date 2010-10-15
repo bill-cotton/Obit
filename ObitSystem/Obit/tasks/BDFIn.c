@@ -1413,7 +1413,7 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
     }
   }
 
- /* Count elected Spectral window */
+  /* Count elected Spectral window */
   numIF = 0;
   for (i=0; i<SpWinArray->nwinds; i++) {
     if (SpWinArray->winds[i]->selected) numIF++;
@@ -1463,6 +1463,8 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
     outRow->totBW[iIF]    = SpWinArray->winds[i]->totBandwidth;
     if (SpWinArray->winds[i]->netSideband[0]=='U') outRow->sideBand[iIF] = 1;
     else outRow->sideBand[iIF] = -1;
+    /* FOR EVLA everything is upper even if it's not */
+    if (isEVLA) outRow->sideBand[iIF] = 1;
     iIF++;
   }
   outRow->status    = 0;
