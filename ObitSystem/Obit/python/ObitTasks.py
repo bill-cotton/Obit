@@ -57,7 +57,7 @@ def obitTaskDict():
     # Step through each TDF file in list
     for i,file in enumerate(fileList):
         # Extract the task name from the file name
-        task = os.path.basename(file).rsplit('.',1)[0] 
+        task = os.path.basename(file)[:-4] 
     
         # Extract 2nd task description line from the TDF file. 
         # There are multiple description lines. We want the 2nd one.
@@ -80,6 +80,13 @@ def obitTaskDict():
         
     return taskDict
 
+def caseIndependentSort(a, b):
+    """Comparison function for sorting strings without regard to case.
+       This function can be given as an argument to the sort list method."""
+    import string
+    a, b = string.lower(a), string.lower(b)
+    return cmp(a, b)
+
 def obitTaskList():        
     """Print obit task names and descriptions."""
     try:
@@ -87,5 +94,7 @@ def obitTaskList():
     except EnvVarError, e:
         print e.msg
         return
-    for key in taskDict.keys(): 
+    keys = taskDict.keys()
+    keys.sort(caseIndependentSort) # sort for python 2.3
+    for key in keys: 
         print "%-10s  %s" % (key, taskDict[key])
