@@ -8352,7 +8352,7 @@ ac_x_header_dirs='
 /usr/openwin/share/include'
 
 if test "$ac_x_includes" = no; then
-  # Guess where to find include files, by looking for Xlib.h.
+  # Guess where to find include files, by looking for Intrinsic.h.
   # First, try using that file with no special directory specified.
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -8360,7 +8360,7 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <X11/Xlib.h>
+#include <X11/Intrinsic.h>
 _ACEOF
 if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
   (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
@@ -8387,7 +8387,7 @@ else
 sed 's/^/| /' conftest.$ac_ext >&5
 
   for ac_dir in $ac_x_header_dirs; do
-  if test -r "$ac_dir/X11/Xlib.h"; then
+  if test -r "$ac_dir/X11/Intrinsic.h"; then
     ac_x_includes=$ac_dir
     break
   fi
@@ -8401,18 +8401,18 @@ if test "$ac_x_libraries" = no; then
   # See if we find them without any special options.
   # Don't add to $LIBS permanently.
   ac_save_LIBS=$LIBS
-  LIBS="-lX11 $LIBS"
+  LIBS="-lXt $LIBS"
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-#include <X11/Xlib.h>
+#include <X11/Intrinsic.h>
 int
 main ()
 {
-XrmInitialize ()
+XtMalloc (0)
   ;
   return 0;
 }
@@ -10879,13 +10879,16 @@ fi
 
 # Check for Obit
 
+XMLRPC_LIBS="$XMLRPC_LIBS $GSL_LIBS $FFTW3_LIBS -lxmlrpc_abyss -lxmlrpc_client -lxmlrpc_server_abyss -lxmlrpc_server_cgi -lxmlrpc_server -lxmlrpc -lxmlrpc_util -lxmlrpc_xmlparse -lxmlrpc_xmltok"
+LIBS="$LIBS $XMLRPC_LIBS -lm -lcfitsio"
+
 # Default root of Obit directory is $OBIT
 	OBIT_DIR="$OBIT"
 	if test -d $OBIT_DIR/include; then
 	     OBIT_CPPFLAGS="$OBIT_CPPFLAGS -I$OBIT_DIR/include $GLIB_CFLAGS"
 	fi
 	if test -d $OBIT_DIR/lib/; then
-	     OBIT_LDFLAGS="$OBIT_LDFLAGS -L$OBIT_DIR/lib/ $GLIB_LIBS $GTHREAD_LIBS"
+	     OBIT_LDFLAGS="$OBIT_LDFLAGS -L$OBIT_DIR/lib/ $GLIB_LIBS $GTHREAD_LIBS -lm -lcfitsio"
 	fi
 
 
@@ -10898,8 +10901,8 @@ if test "${with_obit+set}" = set; then
       OBIT_DIR="$dir"
       OBIT="$dir"
     fi
-    if test -d $dir/lib/$ARCH; then
-      OBIT_LDFLAGS="$OBIT_LDFLAGS -L$dir/lib/ $GLIB_LIBS $GTHREAD_LIBS"
+    if test -d $dir/lib/; then
+      OBIT_LDFLAGS="$OBIT_LDFLAGS -L$dir/lib/ $GLIB_LIBS $GTHREAD_LIBS -lm -lcfitsio"
     fi
   done
 fi;
@@ -10998,7 +11001,7 @@ else
 	             { { echo "$as_me:$LINENO: error: cannot find OBIT library" >&5
 echo "$as_me: error: cannot find OBIT library" >&2;}
    { (exit 1); exit 1; }; }
-			$GLIB_LIBS $GTHREAD_LIBS -lglib-2.0
+			$GLIB_LIBS  $GTHREAD_LIBS -lglib-2.0 -lm -lcfitsio
 fi
 
         if test "${ac_cv_header_Obit_h+set}" = set; then

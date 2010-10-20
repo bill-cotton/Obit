@@ -2611,7 +2611,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   /* Highest antenna number? */
   maxAnt = AntArray->maxAnt;
   numIF  = outData->myDesc->inaxes[outData->myDesc->jlocif];
-  numPol = MAX (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
+  numPol = MIN (2, outData->myDesc->inaxes[outData->myDesc->jlocs]);
 
   /* Antenna number lookup table */
   antLookup = g_malloc(maxAnt*sizeof(olong));

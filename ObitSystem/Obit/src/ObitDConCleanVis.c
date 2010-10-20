@@ -1745,7 +1745,7 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
 	if (nAutoCen<MAXAUTOCEN) {
 	  autoCenNum[nAutoCen]     = newField-1;
 	  autoCenPos[nAutoCen*2]   = pos[0];
-	  autoCenPos[nAutoCen+2+1] = pos[1];
+	  autoCenPos[nAutoCen*2+1] = pos[1];
 	  nAutoCen++;
 	} else { /* oh bother - blew array */
 	  Obit_log_error(err, OBIT_InfoWarn,"Exceeded maximum number of autoCenter fields %d", 
@@ -1829,7 +1829,7 @@ gboolean ObitDConCleanVisReimage (ObitDConCleanVis *in, ObitUV* uvdata,
     ifield = autoCenNum[ibox];
     imDesc = mosaic->images[ifield]->myDesc;
     pos[0] = autoCenPos[ibox*2];
-    pos[1] = autoCenPos[ibox+2+1];
+    pos[1] = autoCenPos[ibox*2+1];
     /* Put unwindow on this position in all prior fields in which it occured */
     for (jfield=0; jfield<in->window->nfield; jfield++) { 
       /* Not is same field */

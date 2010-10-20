@@ -1,13 +1,15 @@
 # Find Obit libraries
-
 AC_DEFUN([AC_PATH_OBIT], [
+XMLRPC_LIBS="$XMLRPC_LIBS $GSL_LIBS $FFTW3_LIBS -lxmlrpc_abyss -lxmlrpc_client -lxmlrpc_server_abyss -lxmlrpc_server_cgi -lxmlrpc_server -lxmlrpc -lxmlrpc_util -lxmlrpc_xmlparse -lxmlrpc_xmltok"
+LIBS="$LIBS $XMLRPC_LIBS -lm -lcfitsio"
+
 # Default root of Obit directory is $OBIT
 	OBIT_DIR="$OBIT"
 	if test -d $OBIT_DIR/include; then
 	     OBIT_CPPFLAGS="$OBIT_CPPFLAGS -I$OBIT_DIR/include $GLIB_CFLAGS"
 	fi
 	if test -d $OBIT_DIR/lib/; then
-	     OBIT_LDFLAGS="$OBIT_LDFLAGS -L$OBIT_DIR/lib/ $GLIB_LIBS $GTHREAD_LIBS"
+	     OBIT_LDFLAGS="$OBIT_LDFLAGS -L$OBIT_DIR/lib/ $GLIB_LIBS $GTHREAD_LIBS -lm -lcfitsio"
 	fi
 
 	AC_ARG_WITH(obit,
@@ -20,7 +22,7 @@ AC_DEFUN([AC_PATH_OBIT], [
       OBIT="$dir"
     fi
     if test -d $dir/lib/; then
-      OBIT_LDFLAGS="$OBIT_LDFLAGS -L$dir/lib/ $GLIB_LIBS $GTHREAD_LIBS"
+      OBIT_LDFLAGS="$OBIT_LDFLAGS -L$dir/lib/ $GLIB_LIBS $GTHREAD_LIBS -lm -lcfitsio"
     fi
   done[]])
 
@@ -41,7 +43,7 @@ LDFLAGS="$LDFLAGS $OBIT_LDFLAGS"
 ac_have_obit=yes
         AC_CHECK_LIB(Obit, newObit, [], [ac_have_obit=no
 	             AC_MSG_ERROR([cannot find OBIT library])]
-			$GLIB_LIBS  $GTHREAD_LIBS -lglib-2.0)
+			$GLIB_LIBS  $GTHREAD_LIBS -lglib-2.0 -lm -lcfitsio )
         AC_CHECK_HEADER(Obit.h, [], [ac_have_obit=no
 	                AC_MSG_ERROR([cannot find OBIT headers])])
 if test $ac_have_obit = yes; then
