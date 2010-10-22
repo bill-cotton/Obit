@@ -132,7 +132,7 @@ int main ( int argc, char **argv )
   /* Fit position offsets */
   MinFlux = 1.0;
   ObitInfoListGetTest(myInput, "OutlierFlux", &type, dim, &MinFlux);
-  ObitInfoListAlwaysPut(ionCal->info, "MinFlux", type, dim, &MinFlux);
+  ObitInfoListAlwaysPut(ionCal->info, "MinPeak", type, dim, &MinFlux);
   ObitIonCalPosMul (ionCal, inImage, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 

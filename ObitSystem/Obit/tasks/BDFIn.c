@@ -1951,7 +1951,8 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	}
 	
 	/* Write output */
-	found = TRUE;
+	found   = TRUE;
+	endTime = Buffer[desc->iloct];
 	if ((ObitUVWrite (outData, NULL, err) != OBIT_IO_OK) || (err->error))
 	  Obit_log_error(err, OBIT_Error, "ERROR writing output UV data"); 
 	if (err->error) Obit_traceback_msg (err, routine, outData->name);
@@ -1960,7 +1961,6 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     
     /* Write Index table */
     if (startTime>-1.0e10) {
-      endTime         = Buffer[desc->iloct];
       NXrow->Time     = 0.5 * (startTime + endTime);
       NXrow->TimeI    = (endTime - startTime);
       NXrow->EndVis   = desc->nvis;
@@ -2167,7 +2167,7 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 {
   ObitTableFG*       outTable=NULL;
   ObitTableFGRow*    outRow=NULL;
-  olong              iRow, oRow, ver, iarr, antId, antNo, iAnt;
+  olong              iRow, oRow, ver, iarr, antId, antNo, iAnt, i;
   ObitIOAccess       access;
   ASDMAntennaArray*  AntArray;
   gchar              *routine = "GetFlagInfo";
@@ -2246,6 +2246,8 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 	 outRow->TimeRange[0] = SDMData->FlagTab->rows[iRow]->startTime - AntArray->refJD;
     outRow->TimeRange[1] = SDMData->FlagTab->rows[iRow]->endTime   - AntArray->refJD;
     strncpy (outRow->reason, SDMData->FlagTab->rows[iRow]->reason, 24);
+    /* Patch for archaic software */
+    for (i=0; i<24; i++) if (outRow->reason[i]==0) outRow->reason[i] = ' ';
 
     /* Write */
     oRow = -1;
@@ -2757,10 +2759,11 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       /* Must want this one - work out IF number - must be valid and selected */
       SWId = SpWinLookup2[inTab->rows[jRow]->spectralWindowId];
       if ((inTab->rows[jRow]->spectralWindowId>=0) && 
-	  (inTab->rows[jRow]->spectralWindowId<AntArray->nants) &&
-	  (SWId>=0) && (SWId<SpWinArray->nwinds) &&  SpWinArray->winds[SWId]->selected) 
+	  (inTab->rows[jRow]->spectralWindowId<SpWinArray->nwinds) &&
+	  (SWId>=0) && (SWId<SpWinArray->nwinds) &&  SpWinArray->winds[SWId]->selected) {
 	IFno = SpWinLookup[inTab->rows[jRow]->spectralWindowId];
-      else continue;
+	IFno = MAX (0, MIN(IFno, (numIF-1)));
+      } else continue;
       
       /* snatch data */
       outRow->PwrDif1[IFno] = inTab->rows[jRow]->switchedPowerDifference[0];

@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -2875,7 +2875,7 @@ void  ObitPlotSetLineStyle (ObitPlot* in, olong lstyle, ObitErr *err)
 /****************** pgplot implementation *************************/
 #ifdef HAVE_PGPLOT  /* Only if pgplot available */
   /* Call pgplot routine */
-  cpgssls ((int)lstyle);
+  cpgsls ((int)lstyle);
 #endif /* HAVE_PGPLOT */
 
 } /* end ObitPlotSetLineStyle */
