@@ -1747,6 +1747,8 @@ static ObitIOCode CopyFloats (ObitBDFData *in,
       if (err->error) {
 	Obit_traceback_val (err, routine, in->name, retCode);
       }
+      /* If EOF and not done - bail */
+      if ((retCode==OBIT_IO_EOF) && (nleft>0)) return retCode;
       lstart = in->current;
       nhere = (in->nBytesInBuffer - (olong)(lstart-in->buffer))/sizeof(ofloat);
     }  /* end loop over buffers */
