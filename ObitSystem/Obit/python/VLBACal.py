@@ -6,6 +6,7 @@ import os, pickle, math
 from AIPS import AIPS
 from FITS import FITS
 from AIPSDir import AIPSdisks, nAIPS
+from OTObit import Acat, getname, zap
 import re
 
 def setname (inn, out):
@@ -192,13 +193,12 @@ def AllDest (err, disk=None, Atype="  ", Aname="            ", Aclass="      ", 
 
 def printMess (message, logfile=''):
     """ Print message, optionally in logfile
-
         
         message = message to print
         logfile = logfile for message
     """
     print message
-    if len(logfile)>0:
+    if logfile and len(logfile) > 0:
         f = file(logfile,'a')
         f.writelines(message+"\n")
         f.close()
@@ -429,7 +429,8 @@ def VLBAIDILoad(filename, project, session, band, Aclass, Adisk, Aseq, err, \
         pass
     
     # Get output
-    outuv = UV.newPAUV("UVdata", Aname, Aclass, Adisk, Aseq, True, err)
+    if not check:
+        outuv = UV.newPAUV("UVdata", Aname, Aclass, Adisk, Aseq, True, err)
 
     return outuv
     # end VLBAIDILoad
@@ -508,19 +509,21 @@ def VLBAApplyCal(uv, err, SNver=0, CLin=0, CLout=0, maxInter=240.0, \
     """
     ################################################################
     # Open/close UV to update header
-    uv.Open(UV.READONLY,err)
-    uv.Close(err)
+    if not check:
+        uv.Open(UV.READONLY,err)
+        uv.Close(err)
     if err.isErr:
         OErr.printErr(err)
         mess = "Update UV header failed"
         printMess(mess, logfile)
         return 1
-    if SNver<=0:
-        SNver = uv.GetHighVer("AIPS SN")
-    if CLin<=0:
-        CLin = uv.GetHighVer("AIPS CL")
-    if CLout<=0:
-        CLout = uv.GetHighVer("AIPS CL")+1
+    if not check:
+        if SNver<=0:
+            SNver = uv.GetHighVer("AIPS SN")
+        if CLin<=0:
+            CLin = uv.GetHighVer("AIPS CL")
+        if CLout<=0:
+            CLout = uv.GetHighVer("AIPS CL")+1
 
     clcal = ObitTask.ObitTask("CLCal")
     if not check:
@@ -547,8 +550,9 @@ def VLBAApplyCal(uv, err, SNver=0, CLin=0, CLout=0, maxInter=240.0, \
     # End CLCal
 
     # Open/close UV to update header
-    uv.Open(UV.READONLY,err)
-    uv.Close(err)
+    if not check:
+        uv.Open(UV.READONLY,err)
+        uv.Close(err)
     if err.isErr:
         OErr.printErr(err)
         mess = "Update UV header failed"
@@ -607,8 +611,9 @@ def VLBAPlotTab(uv, inext, invers, err, \
         pass
 
     # Open/close UV to update header
-    uv.Open(UV.READONLY,err)
-    uv.Close(err)
+    if not check:
+        uv.Open(UV.READONLY,err)
+        uv.Close(err)
     if err.isErr:
         OErr.printErr(err)
         mess = "Update UV header failed"
@@ -635,14 +640,15 @@ def VLBAWritePlots(uv, loPL, hiPL, plotFile, err, \
     """
     ################################################################
     # Open/close UV to update header
-    uv.Open(UV.READONLY,err)
-    uv.Close(err)
+    if not check:
+        uv.Open(UV.READONLY,err)
+        uv.Close(err)
     if err.isErr:
         OErr.printErr(err)
         mess = "Update UV header failed"
         printMess(mess, logfile)
         return 1
-    if hiPL<=0:
+    if hiPL<=0 and not check:
         hiPL = uv.GetHighVer("AIPS PL")
 
     lwpla = AIPSTask.AIPSTask("lwpla")
@@ -667,7 +673,8 @@ def VLBAWritePlots(uv, loPL, hiPL, plotFile, err, \
         pass
     
     # Delete plot files
-    zz=uv.ZapTable("AIPS PL", -1,err)
+    if not check:
+        zz=uv.ZapTable("AIPS PL", -1,err)
     
     return 0
     # end VLBAWritePlots
@@ -715,8 +722,9 @@ def VLBAQuantCor(uv, QuantSmoo, QuantFlag, err, \
         pass
 
     # Open/close UV to update header
-    uv.Open(UV.READONLY,err)
-    uv.Close(err)
+    if not check:
+        uv.Open(UV.READONLY,err)
+        uv.Close(err)
     #uv.UpdateTables(err)
     if err.isErr:
         OErr.printErr(err)
@@ -725,7 +733,9 @@ def VLBAQuantCor(uv, QuantSmoo, QuantFlag, err, \
         return 1
 
     # Smooth
-    SNver = uv.GetHighVer("AIPS SN")
+    SNver = 0
+    if not check:
+        SNver = uv.GetHighVer("AIPS SN")
     snsmo = ObitTask.ObitTask("SNSmo")
     if not check:
         setname(uv, snsmo)
@@ -812,7 +822,7 @@ def VLBAPACor(uv, err, CLver=0, FreqID=1,\
     printMess(mess, logfile)
 
     # Which CL?
-    if CLver<=0:
+    if CLver<=0 and not check:
         CLver = uv.GetHighVer("AIPS CL")
     mess = "Parallactic angle corrections made to CL "+str(CLver)
     printMess(mess, logfile)
@@ -872,8 +882,9 @@ def VLBAOpacCor(uv, OpacSmoo, err, FreqID=1, WXver=0, TYver=0, GCver=0, \
     printMess(mess, logfile)
 
     # Open/close UV to update header
-    uv.Open(UV.READONLY,err)
-    uv.Close(err)
+    if not check:
+        uv.Open(UV.READONLY,err)
+        uv.Close(err)
     #uv.UpdateTables(err)
     if err.isErr:
         OErr.printErr(err)
@@ -881,12 +892,13 @@ def VLBAOpacCor(uv, OpacSmoo, err, FreqID=1, WXver=0, TYver=0, GCver=0, \
         printMess(mess, logfile)
         return 1
     # Input tables
-    if WXver==0:
-        WXver = uv.GetHighVer("AIPS WX")
-    if TYver==0:
-        TYver = uv.GetHighVer("AIPS TY")
-    if GCver==0:
-        GCver = uv.GetHighVer("AIPS GC")
+    if not check:
+        if WXver==0:
+            WXver = uv.GetHighVer("AIPS WX")
+        if TYver==0:
+            TYver = uv.GetHighVer("AIPS TY")
+        if GCver==0:
+            GCver = uv.GetHighVer("AIPS GC")
 
     apcal = AIPSTask.AIPSTask("apcal")
     if not check:
@@ -916,8 +928,9 @@ def VLBAOpacCor(uv, OpacSmoo, err, FreqID=1, WXver=0, TYver=0, GCver=0, \
         pass
     
     # Open/close UV to update header
-    uv.Open(UV.READONLY,err)
-    uv.Close(err)
+    if not check:
+        uv.Open(UV.READONLY,err)
+        uv.Close(err)
     if err.isErr:
         OErr.printErr(err)
         mess = "Update UV header failed"
@@ -925,7 +938,9 @@ def VLBAOpacCor(uv, OpacSmoo, err, FreqID=1, WXver=0, TYver=0, GCver=0, \
         return 1
 
     # Smooth
-    SNver = uv.GetHighVer("AIPS SN")
+    SNver = 0
+    if not check:
+        SNver = uv.GetHighVer("AIPS SN")
     snsmo = ObitTask.ObitTask("SNSmo")
     if not check:
         setname(uv, snsmo)
@@ -968,7 +983,8 @@ def VLBAOpacCor(uv, OpacSmoo, err, FreqID=1, WXver=0, TYver=0, GCver=0, \
         
 
     # Delete any plot files left
-    zz=uv.ZapTable("AIPS PL", -1,err)
+    if not check: 
+        zz=uv.ZapTable("AIPS PL", -1,err)
 
     # Apply latest SN to CL table
     retCode = VLBAApplyCal(uv, err, logfile=logfile, check=check,debug=debug)
@@ -1031,7 +1047,9 @@ def VLBAGoodCal(uv, err, solInt=0.5, timeInt=100., FreqID=1, \
     printMess(mess, logfile)
 
     # Set output (new) SN table
-    SNver = uv.GetHighVer("AIPS SN")+1
+    SNver = 0
+    if not check:
+        SNver = uv.GetHighVer("AIPS SN")+1
 
     calib = ObitTask.ObitTask("Calib")
     calib.taskLog  = logfile
@@ -3215,7 +3233,7 @@ def VLBACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
     Generates NX and initial dummy CL table if needed
     uv         = UV data object to clear
     avgClass   = Class name of averaged data
-    avgSeq     = Sequence number of averaged data
+    avgSeq     = Sequence number of averaged data. 0 => highest unique
     CalAvgTime = Averaging time in sec
     err        = Obit error/message stack
     FQid       = Frequency Id to process, 0=>all
@@ -3228,7 +3246,7 @@ def VLBACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
     BChan      = first channel to copy
     EChan      = highest channel to copy
     flagVer    = Input Flagging table version
-    avgFreq    = If 0 < avgFreq <= 1 then average channels
+    avgFreq    = If 0 < avgFreq <= 1 then avg chans (see splat for details)
     chAvg      = Number of channels to average
     Compress   = Write "Compressed" data?
     logfile    = Log file for task
@@ -4282,10 +4300,8 @@ def VLBAImageModel(snames, sclass, sdisk, sseq, err, \
     return out
     # end VLBAImageModel
     
-def VLBAAllSource(uv, err, \
-               logfile='', check=False, debug=False):
-    """ Flag SN table entries with real < Flag
-
+def VLBAAllSource(uv, err, logfile='', check=False, debug=False):
+    """ 
     Returns List of all sources, empty if no SU table
     uv         = UV data object
     err        = Python Obit Error/message stack
@@ -4328,3 +4344,119 @@ def VLBAAllSource(uv, err, \
     return allSou
     # end VLBAAllSource
     
+def VLBADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
+    session='', band='', logfile=None, check=False, debug=False ):
+    """
+    Generate single source diagnostic plots.
+
+    This method uses the averaged, calibrated data generated by the
+    pipeline to produced single source diagnostics. The diagnostics
+    can be used to assess the quality of the visibility data underlying
+    the pipeline image maps and to assess the quality of the pipeline
+    algorithms.
+
+    uv = UV data object to plot
+    err = Python Obit Error/message stack
+    cleanUp = clean up temporary files when finished
+    JPEG = if True, make JPEG plots; else make PS 
+    sources = list of sources; None = make plots for each source
+    logfile =  logfile for messages
+    check = Only check script
+    debug = Turn on debug mode
+    """
+
+    mess = "Generate diagnostic plots for each source"
+    printMess(mess, logfile)
+
+    avgClass = 'UVAvgT' # uv average temporary data
+    avgSeq = 1
+    
+    # Average data over: 1 sec, all IFs, all channels
+    calAvgTime = 1 # temporal averaging (sec)
+    printMess("Averaging: "+str(calAvgTime)+" sec interval, all IFs, all channels",
+        logfile = logfile)
+    rtn = VLBACalAvg( uv, avgClass=avgClass, avgSeq=avgSeq, err = err, 
+        logfile = logfile, check=check, debug = debug, CalAvgTime = calAvgTime, 
+        avgFreq = 3, # avg all IFs
+        chAvg = 0, # avg all channels (should already have been done)
+        doCalib = 2, # apply calibration
+        doBand = 0 # do not calibrate bandpass; already calibrated
+        )
+    if rtn != 0:
+        mess = "Error averaging data. VLBACalAvg returned: " + str(rtn)
+        printMess(mess, logfile)
+        return rtn
+
+    # Get the newly averaged data set: most recent file with class UVAvg
+    uvAvg = None
+    if not check:
+        uvAvg = UV.newPAUV("AIPS UV DATA", uv.Aname, avgClass, uv.Disk, avgSeq, 
+            True, err)
+
+    # Put source list into slist
+    if not sources:
+        slist = VLBAAllSource(uvAvg,err,logfile=logfile,check=check,debug=debug)
+    else:
+        slist = sources
+    if not type(slist) == list:
+        slist = [slist]
+
+    # Setup UVPLT
+    uvplt = AIPSTask.AIPSTask("uvplt")
+    if not check:
+        setname(uvAvg, uvplt)
+    uvplt.stokes = 'I' # unpolarized
+    uvplt.ltype = -3 # Omit PL number and creation time
+    printMess("Plotting stokes "+uvplt.stokes, logfile=logfile)
+
+    # Setup LWPLA
+    lwpla = AIPSTask.AIPSTask("lwpla")
+    if not check:
+        setname(uvAvg, lwpla)
+    
+    # Define plots: file => filename string, bparm => UVPLT 
+    plotTypes =  ( { 'file' : 'amp', 'bparm' : [3,1]   },  # Amp vs. uv Dist
+                   { 'file' : 'uv' , 'bparm' : [7,6,2] },  # u vs. v 
+                   { 'file' : 'ri' , 'bparm' : [10,9]  } ) # Re vs. Im
+
+    # Loop over sources
+    for (i,s) in enumerate(slist):
+        print "Generatig diagnostic plots for source "+s+ \
+            " ("+str(i+1)+"/"+str(len(slist))+")"
+        uvplt.sources[1] = s
+        # Loop over plot types
+        for plot in plotTypes:
+            uvplt.bparm = AIPSTask.AIPSList( plot['bparm'] )
+            if not check:
+                uvplt.go()
+
+            # Create output file name
+            outfile = project+session+band+s+'.'+plot['file']+'.ps'
+            lwpla.outfile = 'PWD:'+outfile # output to current directory
+
+            # Remove preexisting file
+            if os.path.exists(outfile): os.remove(outfile) 
+    
+            if not check:
+                lwpla.go()
+
+            if JPEG:
+                # Convert PS to JPG
+                jpg = outfile[:-3]+'.jpg'
+                printMess('Converting '+outfile+' -> '+jpg,logfile)
+                cmd = 'convert -depth 96 '+outfile+' '+outfile[:-3]+'.jpg'
+                rtn = os.system(cmd)
+                if rtn == 0: 
+                    if cleanUp: 
+                        os.remove(outfile) # Remove the PS file
+                else:
+                    # Print error message and leave the PS file
+                    mess="Error occurred while converting PS to JPG"
+                    printMess(mess,logfile)
+
+    if cleanUp:
+        printMess('Cleaning up temporary data',logfile)
+        if not check:
+            zap(uvAvg)
+
+    # end VLBADiagPlot
