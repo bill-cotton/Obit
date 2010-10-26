@@ -75,34 +75,60 @@ doAmpCal    = True         # Determine/smooth/apply amplitudes from contCals
 # Check for calibrator models
 contCalModel = VLBAImageModel(contCals, outIclass, disk, seq, err)
 
+# Phase calibration of all targets in averaged calibrated data 
+doPhaseCal    = True       # Phase calibrate all data with self-cal?
+
+# Instrumental polarization cal?
+doInstPol     = True      # determination instrumental polarization from instPolCal
+instPolCal    = None      # Defaults to contCals
+
+# Right-Left phase (EVPA) calibration 
+doRLCal      = True          # Set RL phases from RLCal - also needs RLCal
+# if given, a triplet, (name, R-L phase(deg@1GHz), RM)
+# interpolated from VLA calibration
+RLCal = [  \
+    ("1253-055", -8.,0.0), \
+        ("2200+420", 16.,0.0), \
+        ("2251+158",120.,0.0), \
+        ]
+
+# Final Image/Clean
+doImgFullTarget = True    # Final Image/Clean/selfcal
+Stokes          = "IQU"   # Stokes to image
+
 # Control
 T   = True
 F   = False
-check         = F       # Only check script, don't execute tasks
-debug         = F       # run tasks debug
-doLoadIDI     = F       # Load data from IDI FITS?, else already in AIPS?
-doLoadUVF     = T       # Load the "AIPS Friendly" UV FITS  version?
-doClearTab    = T       # Clear cal/edit tables
-doCopyFG      = T       # Copy FG 1 to FG 2
-doEditList    = T       # Edit using editList?
-doQuack       = T       # Quack data?
-doQuantCor    = T       # Quantization correction/flagging?
-doPACor       = T       # Make parallactic angle correction?
-doOpacCor     = T       # Make Opacity/Tsys/gain correction?
-doFindCal     = T       # Search for best calibration/reference antenna
-doPCcor       = T       # Apply PC table?
-doManPCal     = T       # Determine and apply manual phase cals?
-doBPCal       = T       # Determine Bandpass calibration
-doImgCal      = T       # Image calibrators
-doDelayCal    = T       # Determine/apply delays from contCals
-doAmpCal      = T       # Determine/smooth/apply amplitudes from contCals
-doImgTarget   = T       # Image targets?
-doCalAvg      = T       # calibrate and average
-doSaveUV      = T       # Save UV (calibrated and averaged) results
-doSaveImg     = T       # Save image results
-doSaveTab     = T       # Save calibration and editing tables
+check           = F       # Only check script, don't execute tasks
+debug           = F       # run tasks debug
+doLoadIDI       = F       # Load data from IDI FITS?, else already in AIPS?
+doLoadUVF       = F       # Load the "AIPS Friendly" UV FITS  version?
+doClearTab      = F       # Clear cal/edit tables
+doCopyFG        = F       # Copy FG 1 to FG 2
+doEditList      = F       # Edit using editList?
+doQuack         = F       # Quack data?
+doQuantCor      = F       # Quantization correction/flagging?
+doPACor         = F       # Make parallactic angle correction?
+doOpacCor       = F       # Make Opacity/Tsys/gain correction?
+doFindCal       = F       # Search for best calibration/reference antenna
+doPCcor         = F       # Apply PC table?
+doManPCal       = F       # Determine and apply manual phase cals?
+doBPCal         = F       # Determine Bandpass calibration
+doImgCal        = F       # Image calibrators
+doDelayCal      = F       # Determine/apply delays from contCals
+doAmpCal        = F       # Determine/smooth/apply amplitudes from contCals
+doCalAvg        = T       # calibrate and average
+doImgTarget     = T       # Image targets?
+doPhaseCal      = T       # Phase calibrate all data with self-cal?
+doInstPol       = T       # determination instrumental polarization from instPolCal 
+doRLCal         = T       # Set RL phases from RLCal - also needs RLCal
+doImgFullTarget = F       # Final Image/Clean/selfcal 
+doSaveUV        = F       # Save UV (calibrated and averaged) results
+doSaveImg       = F       # Save image results
+doSaveTab       = F       # Save calibration and editing tablesT
+doCleanup       = F       # Cleanup AIPS direstories?
 
 # diagnostics
-doCleanup     = T       # Cleanup AIPS direstories?
-doSNPlot      = T       # Plot SN tables etc
-doPCPlot      = T       # Plot PC results?
+doSNPlot        = T       # Plot SN tables etc
+doPCPlot        = T       # Plot PC results?
+

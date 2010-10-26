@@ -737,7 +737,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, ObitErr *err)
 
   /* Auto correlation frequency increment  RR, LL(XX,YY) are real RL (XY) complex */
   if (in->numAPoln<=2) in->aincf = in->numAPoln;
-  else in->aincf = 3;
+  else in->aincf = 4;
 
   /* Auto correlation IF increment = no poln.values x no Chan*/
   in->aincif = in->aincf * in->numSpectralChann;
@@ -778,9 +778,9 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, ObitErr *err)
   for (iSW=0; iSW<in->SWArray->nwinds; iSW++) {
     /* Use ordering */
     jSW = in->SWArray->order[iSW];
-    if (in->SWArray->winds[iSW]->selected) {
-      inext++;
+    if (in->SWArray->winds[jSW]->selected) {
       in->aoffif[inext] = SWoff[jSW];
+      inext++;
     }
     
     /* Count size of visibilities */
