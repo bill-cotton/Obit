@@ -115,6 +115,9 @@ int main ( int argc, char **argv )
   ver = 1;
   NXTab = newObitTableNXValue ("Index table", (ObitData*)inData, &ver, 
 			       OBIT_IO_ReadOnly, err);
+  if (!NXTab) Obit_log_error(err, OBIT_Error, "NX table not found");
+  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+
   ver = 0;
   ObitInfoListGetTest(myInput, "flagVer", &type, dim, &ver);
   FGTab = newObitTableFGValue ("Flag table", (ObitData*)inData, &ver, 

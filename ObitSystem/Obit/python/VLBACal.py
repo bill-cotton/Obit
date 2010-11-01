@@ -2940,10 +2940,12 @@ def VLBAUVFITS(inUV, filename, outDisk, err, compress=False, \
     outUV = UV.newPFUV("FITS UV DATA", fn, outDisk, False, err)
     if err.isErr:
         OErr.printErrMsg(err, "Error creating FITS data")
+
+    inInfo = UV.PGetList(outUV)     
+    dim = [1,1,1,1,1]
+    InfoList.PAlwaysPutInt(inInfo, "corrType", dim, [1]) # Copy XC and AC data
     #Compressed?
     if compress:
-        inInfo = UV.PGetList(outUV)    # 
-        dim = [1,1,1,1,1]
         InfoList.PAlwaysPutBoolean (inInfo, "Compress", dim, [True])        
     # Copy
     UV.PCopy (inUV, outUV, err)
