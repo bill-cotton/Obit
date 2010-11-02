@@ -34,6 +34,32 @@ def setname (inn, out):
         out.indisk  = inn.Disk
     # end setname
     
+def setoname (inn, out):
+    """ Copy file definition from inn to out as out...
+    
+    Supports both FITS and AIPS
+    Copies Data type and file name, disk, class etc
+    inn  = Obit data object, created with getname, getFITS
+    out  = ObitTask object,
+    """
+    ################################################################
+    # AIPS or Obit?
+    if out.__class__ == ObitTask.ObitTask:
+        out.DataType = inn.FileType
+        out.outDisk   = int(inn.Disk)
+        if inn.FileType == 'FITS':
+            out.outFile = inn.Fname
+        else:   # AIPS
+            out.outName  = inn.Aname
+            out.outClass = inn.Aclass
+            out.outSeq   = int(inn.Aseq)
+    else:  # AIPS
+        out.outname  = inn.Aname
+        out.outclass = inn.Aclass
+        out.outseq   = inn.Aseq
+        out.outdisk  = inn.Disk
+    # end setoname
+    
 def set2name (in2, out):
     """ Copy file definition from in2 to out as in2...
 
@@ -376,6 +402,47 @@ def VLBACopyFG(uv, err, logfile='', check=False, debug = False):
         pass
     return 0
     # end VLBACopyFG
+
+def VLBACopyTable(inObj, outObj, inTab, err, inVer=1, outVer=0,
+                  logfile='', check=False, debug = False):
+    """ Copy AIPS Table
+
+    Returns task error code, 0=OK, else failed
+    inObj    = Input Object (UV or Image)
+    outObj   = Output object
+    inTab    = Table type, e.g. "AIPS AN"
+    err      = Obit error/message stack
+    inVer    = intput version
+    outVer   = output version
+    logfile  = logfile for messages
+    check    = Only check script, don't execute tasks
+    debug    = Run tasks debug, show input
+    """
+    ################################################################
+    taco = ObitTask.ObitTask("TabCopy")
+    if not check:
+        setname(inObj, taco)
+        setoname(outObj, taco)
+    taco.inTab    = inTab
+    taco.inVer    = inVer
+    taco.outVer   = outVer
+    taco.logFile  = logfile
+    if debug:
+        taco.debug = debug
+        taco.i
+    # Trap failure
+    try:
+        if not check:
+            taco.g
+    except Exception, exception:
+        print exception
+        mess = "Copy of "+inTab+" table Failed retCode="+str(taco.retCode)
+        printMess(mess, logfile)
+        return 1
+    else:
+        pass
+    return 0
+    # end VLBACopyTable
 
 def VLBAIDILoad(filename, project, session, band, Aclass, Adisk, Aseq, err, \
                     wtThresh=0.8,calInt=1.0,logfile='',Compress=False, \
@@ -2940,10 +3007,10 @@ def VLBAUVFITS(inUV, filename, outDisk, err, compress=False, \
     outUV = UV.newPFUV("FITS UV DATA", fn, outDisk, False, err)
     if err.isErr:
         OErr.printErrMsg(err, "Error creating FITS data")
-
-    inInfo = UV.PGetList(outUV)     
+    inInfo = UV.PGetList(outUV)    # 
     dim = [1,1,1,1,1]
-    InfoList.PAlwaysPutInt(inInfo, "corrType", dim, [1]) # Copy XC and AC data
+    #InfoList.PAlwaysPutInt (inInfo, "corrType", dim, [1])  
+    inInfo.set("corrType", [1]) 
     #Compressed?
     if compress:
         InfoList.PAlwaysPutBoolean (inInfo, "Compress", dim, [True])        
@@ -4086,7 +4153,7 @@ def VLBARLCal(uv, err, RLPCal=None, \
     return 0
     # end VLBARLCal
 
-def VLBARLCal2(uv, err, \
+def VLBARLCal2(uv, err, uv2 = None, \
                RLDCal=None, BChan=1, EChan = 0,  \
                FQid=0, calcode="    ", doCalib=-1, gainUse=0, \
                timerange = [0.,0.,0.,0.,0.,0.,0.,0.], \
@@ -4100,6 +4167,8 @@ def VLBARLCal2(uv, err, \
     Calibration applies to (new) highest numbered CL table on uv
     uv       = UV data object to clear
     err      = Obit error/message stack
+    uv2      = If gives, then copy AN table from uv to uv2 and apply same
+               calibration (intended to calibrate CVel data)
     RLPCal   = An array of triplets with R-L calibrators:
                (name, R-L phase (deg at 1 GHz), RM (rad/m**2))
                If None no R-L cal
@@ -4262,7 +4331,7 @@ def VLBARLCal2(uv, err, \
     
                 if check:      # Don't bother if only checking 
                     continue
-                # Get fluxes from inner quarter of images
+                # Get fluxes from Summed CCs, RMS from inner quarter of images
                 if img.DataType=="AIPS":
                     outName = (img.Sources[0].strip()+"TEMP")[0:12]
                     outDisk = img.outDisk
@@ -4270,27 +4339,30 @@ def VLBARLCal2(uv, err, \
                     # Stokes I
                     outClass="IPOLCL"
                     x =  Image.newPAImage("I",outName, outClass, outDisk,outSeq,True,err)
+                    SumCC = VLBAGetSumCC (x,err)
                     h = x.Desc.Dict
                     blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
                     trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
                     stat = imstat(x, err, blc=blc,trc=trc, logfile=logfile)
-                    IFlux.append(stat["Flux"])
+                    IFlux.append(SumCC)
                     IRMS.append(stat["RMSHist"])
                     x.Zap(err)  # Cleanup
                     del x
                     # Stokes Q
                     outClass="QPOLCL"
                     x =  Image.newPAImage("Q",outName, outClass, outDisk,outSeq,True,err)
+                    SumCC = VLBAGetSumCC (x,err)
                     stat = imstat(x, err, blc=blc,trc=trc, logfile=logfile)
-                    QFlux.append(stat["Flux"])
+                    QFlux.append(SumCC)
                     QRMS.append(stat["RMSHist"])
                     x.Zap(err)  # Cleanup
                     del x
                     # Stokes U
                     outClass="UPOLCL"
                     x =  Image.newPAImage("U",outName, outClass, outDisk,outSeq,True,err)
+                    SumCC = VLBAGetSumCC (x,err)
                     stat = imstat(x, err, blc=blc,trc=trc, logfile=logfile)
-                    UFlux.append(stat["Flux"])
+                    UFlux.append(SumCC)
                     URMS.append(stat["RMSHist"])
                     x.Zap(err)  # Cleanup
                     del x
@@ -4306,28 +4378,31 @@ def VLBARLCal2(uv, err, \
                     # Stokes I
                     outFile  = img.Sources[0].strip()+"ITEMPPOLCAL.fits"
                     x =  Image.newPFImage("I",outFile,img.outDisk,True,err)
+                    SumCC = VLBAGetSumCC (x,err)
                     h = x.Desc.Dict
                     blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
                     trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
                     stat = imstat(x, err, blc=blc,trc=trc, logfile=logfile)
-                    IFlux.append(stat["Flux"])
+                    IFlux.append(SumCC)
                     IRMS.append(stat["RMSHist"])
                     x.Zap(err)  # Cleanup
                     del x
                     # Stokes Q
                     outFile  = img.Sources[0].strip()+"ITEMPPOLCAL.fits"
                     x =  Image.newPFImage("Q",outFile,img.outDisk,True,err)
+                    SumCC = VLBAGetSumCC (x,err)
                     stat = imstat(x, err, blc=blc,trc=trc, logfile=logfile)
-                    IFlux.append(stat["Flux"])
-                    IRMS.append(stat["RMSHist"])
+                    QFlux.append(SumCC)
+                    QRMS.append(stat["RMSHist"])
                     x.Zap(err)  # Cleanup
                     del x
                     # Stokes U
                     outFile  = img.Sources[0].strip()+"ITEMPPOLCAL.fits"
                     x =  Image.newPFImage("Q",outFile,img.outDisk,True,err)
+                    SumCC = VLBAGetSumCC (x,err)
                     stat = imstat(x, err, blc=blc,trc=trc, logfile=logfile)
-                    IFlux.append(stat["Flux"])
-                    IRMS.append(stat["RMSHist"])
+                    UFlux.append(SumCC)
+                    URMS.append(stat["RMSHist"])
                     x.Zap(err)  # Cleanup
                     del x
                     out2File = img.Sources[0].strip()+"TEMPPOLCAL2.uvtab"
@@ -4403,6 +4478,15 @@ def VLBARLCal2(uv, err, \
             RLCor.append(cor)
         # end loop making weighted average
 
+        # If calibrating second uv data, copy AN table 1
+        if uv2:
+            z = uv2.ZapTable("AIPS AN",1,err)
+            VLBACopyTable (uv, uv2, "AIPS AN", err, \
+                           logfile=logfile, check=check, debug=debug)
+            if err.isErr:
+                print  "Error copying AN Table"
+                return 1
+            
         # Apply R-L phase corrections
         clcor = AIPSTask.AIPSTask("clcor")
         clcor.logFile  = logfile
@@ -4426,9 +4510,79 @@ def VLBARLCal2(uv, err, \
             return 1
         else:
             pass
+        # If calibrating second uv data, run clcor
+        if uv2:
+            mess = "Also calibrate Secondary UV data"
+            printMess(mess, logfile)
+            if not check:
+                setname(uv2,clcor)
+                hiCL = uv2.GetHighVer("AIPS CL")
+                clcor.gainver  = hiCL
+                clcor.gainuse  = hiCL+1
+            if debug:
+                clcor.i
+                clcor.debug = debug
+            # Trap failure
+            try:
+                if not check:
+                    clcor.g
+            except Exception, exception:
+                print exception
+                mess = "CLCOR Failed retCode="+str(clcor.retCode)
+                printMess(mess, logfile)
+                return 1
+            else:
+                pass
         # end R-L Cal
     return 0
     # end VLBARLCal2
+
+def VLBAGetSumCC(image, err, CCver=1,
+                 logfile='', check=False, debug=False):
+    """ Sum fluxes in a CC table
+    
+    Sums the flux densities in a CC Table on an image
+    Returns sum
+    Returns with err set on error
+    image      = Image with CC table
+    err        = Python Obit Error/message stack
+    CCver      = CC table to sum
+    logfile    = logfile for messages
+    check      = Only check script
+    debug      = Only debug - no effect
+    """
+    ################################################################
+    if check:
+        return 0.0
+    if debug:
+        return 0.0
+    # Open and close image to sync with disk 
+    image.Open(Image.READONLY, err)
+    image.Close(err)
+    
+    CCTab = image.NewTable(Table.READONLY, "AIPS CC", CCver, err)
+    if err.isErr:
+        return 0.0
+    # Open
+    CCTab.Open(Table.READONLY, err)
+    if err.isErr:
+        return 0.0
+    # Number of rows
+    nrow    = CCTab.Desc.Dict["nrow"]
+    sum     = 0.0
+    # Loop over table
+    for irow in range (1, nrow+1):
+        CCrow = CCTab.ReadRow(irow, err)
+        if err.isErr:
+            return sum
+        sum += CCrow["FLUX"][0]
+    # End loop over table
+    # Close table
+    CCTab.Close(err)
+    if err.isErr:
+        return sum
+    return sum
+    # end VLBAGetSumCC
 
 def VLBARefMB(uv, SNver, err, smoTime=1.0e20, \
               logfile='', check=False, debug=False):
