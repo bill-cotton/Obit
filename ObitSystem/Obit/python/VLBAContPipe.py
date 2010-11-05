@@ -5,6 +5,7 @@
 import sys
 import OErr, OSystem, UV, AIPS, FITS
 import ObitTalkUtil
+import pydoc
 from AIPS import AIPSDisk
 from FITS import FITSDisk
 from VLBACal import *
@@ -22,8 +23,8 @@ band          = "?"                         # Observing band
 logFile       = project+"_"+session+"_"+band+".log"  # Processing log file
 seq           = 1          # AIPS sequence number
 gain          = 0.10       # CLEAN loop gain
-doLoadIDI     = True       # Load data from IDI FITS?, else already in AIPS 
-doLoadAF      = False      # Load the "AIPS Friendly" (uvfits) FITS  version
+doLoadIDI     = True       # Load data from IDI FITS?
+doLoadUVF     = False      # Load the "AIPS Friendly" (uvfits) FITS  version
 dataInUVF     = None       # Input uvfits data file name
 dataInIDI     = None       # Input FITS-IDI file or list
 dataClass     = "Raw"      # AIPS class of raw uv data
@@ -162,6 +163,7 @@ doCleanup     = True       # Destroy AIPS files
 
 # diagnostics
 doSNPlot      = True       # Plot SN tables etc
+doDiagPlots   = True       # Plot single source diagnostics
 prtLv         = 2          # Amount of task print diagnostics
 
 ############################# Set Project Processing parameters ##################
@@ -182,6 +184,7 @@ retCode = 0
 mess = "Start project "+project+" session "+session+" "+band+" Band"+" AIPS user no. "+str(AIPS.userno)
 printMess(mess, logFile)
 if debug:
+    pydoc.ttypager = pydoc.plainpager # don't page task input displays
     mess = "Using Debug mode "
     printMess(mess, logFile)
 if check:
@@ -212,7 +215,8 @@ if doLoadUVF:
     uv = VLBAIDILoad(dataInUVF, project, session, band, dataClass, disk, seq, err, logfile=logFile, \
                          wtThresh=wtThresh, calInt=calInt, Compress=Compress, \
                          check=check, debug=debug)
-    if not UV.PIsA(uv):
+    # Adding check condition to avoid error when checking
+    if not UV.PIsA(uv) and not check:
         raise RuntimeError,"Cannot load "+dataInUVF
 # Otherwise set uv
 if uv==None and not check:
@@ -280,7 +284,7 @@ if doFindCal:
                           doCalib=-1, flagVer=2, refAnts=refAnts, \
                           noScrat=noScrat, nThreads=nThreads, \
                           logfile=logFile, check=check, debug=debug)
-    if not goodCal:
+    if not goodCal and not check:
         raise RuntimeError,"Error in finding best calibration data"
     # Save it to a pickle jar
     SaveObject(goodCal, goodCalPicklefile, True)
@@ -289,7 +293,7 @@ else:
     goodCal = FetchObject(goodCalPicklefile)
 
 # Apply Phase cals from PC table?
-if doPCcor:
+if doPCcor and not check:
     plotFile = "./"+project+"_"+session+"_"+band+"PC.ps"
     retCode = VLBAPCcor(uv, err, calSou=goodCal["Source"], \
                         timeRange=goodCal["timeRange"], \
@@ -300,7 +304,7 @@ if doPCcor:
         raise RuntimeError,"Error in PC calibration"
 
 # manual phase cal
-if doManPCal:
+if doManPCal and not check:
     retCode = VLBAManPCal(uv, err, calSou=goodCal["Source"], \
                           #CalModel=contCalModel, \
                           timeRange=goodCal["timeRange"], \
@@ -311,7 +315,7 @@ if doManPCal:
         raise RuntimeError,"Error in manual phase calibration"
 
 # Bandpass calibration if needed
-if doBPCal:
+if doBPCal and not check:
     retCode = VLBABPass(uv, goodCal["Source"], err, CalModel=contCalModel, \
                         timeRange=goodCal["timeRange"], doCalib=2, flagVer=2, \
                         noScrat=noScrat, solInt1=bpsolint1, solInt2=bpsolint2, solMode=bpsolMode, \
@@ -323,7 +327,7 @@ if doBPCal:
         raise RuntimeError,"Error in Bandpass calibration"
 
 # image cals
-if doImgCal:
+if doImgCal and not check:
     retCode = VLBAImageCals(uv, err, Sources=contCals, seq=seq, sclass=outCclass, \
                             doCalib=2, flagVer=2, doBand=1, \
                             FOV=FOV, Robust=Robust, \
@@ -338,7 +342,7 @@ if doImgCal:
 contCalModel = VLBAImageModel(contCals, outCclass, disk, seq, err)
 
 # delay calibration
-if doDelayCal:
+if doDelayCal and not check:
     plotFile = "./"+project+"_"+session+"_"+band+"DelayCal.ps"
     retCode = VLBADelayCal(uv, err, calSou=contCals, CalModel=contCalModel, \
                                doCalib=2, flagVer=2, doBand=1, \
@@ -350,7 +354,7 @@ if doDelayCal:
         raise RuntimeError,"Error in delay calibration"
     
 # Amplitude calibration
-if doAmpCal:
+if doAmpCal and not check:
     plotFile = "./"+project+"_"+session+"_"+band+"AmpCal.ps"
     retCode = VLBAAmpCal(uv, err, calSou=contCals, CalModel=contCalModel, \
                          doCalib=2, flagVer=2, doBand=1, \
@@ -372,7 +376,7 @@ if doCalAvg:
        raise  RuntimeError,"Error in CalAvg"
 
 # image targets phase only self-cal
-if doImgTarget:
+if doImgTarget and not check:
     if not uvc:
         # Get calibrated/averaged data
         Aname = VLBAAIPSName(project, session)
@@ -458,12 +462,12 @@ if doImgFullTarget:
         if err.isErr:
             OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
     retCode = VLBAImageTargets(uvc, err, Sources=targets, seq=seq, sclass=outIclass, \
-                                   doCalib=2, flagVer=0, doBand=1, \
-                                   Stokes=Stokes, FOV=FOV, Robust=Robust, \
-                                   maxPSCLoop=2, minFluxPSC=minFluxPSC, solPInt=solPInt, solMode=solMode, \
-                                   maxASCLoop=0, \
-                            avgPol=avgPol, avgIF=avgIF, minSNR=minSNR, refAnt=goodCal["bestRef"], \
-                            nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
+                  doCalib=2, flagVer=0, doBand=-1, \
+                  Stokes=Stokes, FOV=FOV, Robust=Robust, \
+                  maxPSCLoop=2, minFluxPSC=minFluxPSC, solPInt=solPInt, solMode=solMode, \
+                  maxASCLoop=0, \
+                  avgPol=avgPol, avgIF=avgIF, minSNR=minSNR, refAnt=goodCal["bestRef"], \
+                  nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in imaging targets"
     
@@ -531,6 +535,18 @@ if doSaveImg:
             zz=imstat(x, err, logfile=logFile)
             del x, xf
     # end writing images loop
+
+# Diagnostic plots
+if doDiagPlots:
+    # Get the highest number avgClass catalog file
+    Aname = VLBAAIPSName( project, session )
+    uvc = None
+    if not check:
+        uvc = UV.newPAUV("AIPS UV DATA", Aname, avgClass, disk, seq, True, err)
+    VLBADiagPlots( uvc, err, cleanUp=doCleanup, logfile=logFile, check=check, 
+        debug=debug )
+elif debug:
+    print "Not creating diagnostic plots ( doDiagPlots = ", doDiagPlots, " )"
 
 # Cleanup - delete AIPS files
 if doCleanup and (not check):
