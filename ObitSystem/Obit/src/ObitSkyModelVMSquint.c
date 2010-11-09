@@ -523,6 +523,7 @@ void ObitSkyModelVMSquintUpdateModel (ObitSkyModelVM *inn,
   ofloat feedPA, squint, dx, dy, x, y, antsize = 24.5, pbmin = 0.0;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gboolean allEVLA;
   VMSquintFTFuncArg *args;
   gchar *routine = "ObitSkyModelVMSquintUpdateModel";
 
@@ -556,16 +557,17 @@ void ObitSkyModelVMSquintUpdateModel (ObitSkyModelVM *inn,
   /* Which antennas are EVLA ? */
   if (in->isEVLA==NULL) {
     ObitThreadLock(in->thread);  /* Lock against other threads */
-    if (in->isEVLA==NULL)   /* Still NULL? */
+    if (in->isEVLA==NULL)        /* Still NULL? */
       in->isEVLA = g_malloc((100+in->AntList[suba]->number)*sizeof(gboolean));
     ObitThreadUnlock(in->thread); 
   }
+  allEVLA = !strncmp(in->AntList[suba]->ArrName, "EVLA", 4);
   for (i=0; i<in->AntList[suba]->number; i++) {
-    in->isEVLA[i] = 
-      (in->AntList[suba]->ANlist[i]->AntName[0]=='E') &&
-      (in->AntList[suba]->ANlist[i]->AntName[1]=='V') &&
-      (in->AntList[suba]->ANlist[i]->AntName[2]=='L') &&
-      (in->AntList[suba]->ANlist[i]->AntName[3]=='A');
+    in->isEVLA[i] = allEVLA ||
+      ((in->AntList[suba]->ANlist[i]->AntName[0]=='E') &&
+       (in->AntList[suba]->ANlist[i]->AntName[1]=='V') &&
+       (in->AntList[suba]->ANlist[i]->AntName[2]=='L') &&
+       (in->AntList[suba]->ANlist[i]->AntName[3]=='A'));
   }
 
   /* Compute VLA corrections */
