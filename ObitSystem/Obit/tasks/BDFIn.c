@@ -168,6 +168,7 @@ olong selScan=-1;                     /* First selected scan number */
 olong selChan=-1;                     /* Selected number of channels */
 olong selIF=-1;                       /* Selected number of IFs (SpWin) */
 gboolean isEVLA;                      /* Is this EVLA data? */
+gboolean SWOrder=FALSE;               /* Leave in SW Order? */
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
@@ -221,7 +222,7 @@ int main ( int argc, char **argv )
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
   /* Get header info, array geometry, initialize output */
-    GetHeader (outData, SDMData, myInput, err); 
+  GetHeader (outData, SDMData, myInput, err); 
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit; 
 
   /* Open output data */
@@ -685,6 +686,7 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
   ObitInfoListAlwaysPut(outUV->info, "doOpac",  OBIT_bool, dim, &btemp);
   ftemp = 0.5;   /* Weight of weather in opacity */
   ObitInfoListAlwaysPut(outUV->info, "WXWeight", OBIT_float, dim, &ftemp);
+  ObitInfoListAlwaysPut(outUV->info, "solInt", OBIT_float, dim, &calInt);
   
   /* Get input parameters from myInput, copy to outUV */
   ObitInfoListCopyList (myInput, outUV->info, outParms);
@@ -760,6 +762,12 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   selIF = 0;
   ObitInfoListGetTest(myInput, "selIF", &type, dim, &selIF);
 
+  /* Check if Spectral window order desired */
+  ObitInfoListGetTest(myInput, "SWOrder", &type, dim, &SWOrder);
+  if (SWOrder)
+    Obit_log_error(err, OBIT_InfoWarn, 
+		   "Frequencies in Spectral Window Possibly NOT Frequency order");
+
   /* Find first selected scan */
   iScan = ObitASDSelScan (SDMData, selChan, selIF, band, selConfig);
   Obit_return_if_fail((iScan>=0), err,
@@ -767,7 +775,7 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
 		      routine);
   /* Extract ASDM Spectral windows data  */
   selScan = iScan;    /* Save to global */
-  SpWinArray  = ObitSDMDataGetSWArray (SDMData, iScan);
+  SpWinArray  = ObitSDMDataGetSWArray (SDMData, iScan, SWOrder);
   Obit_return_if_fail((SpWinArray), err,
 		      "%s: Could not extract Spectral Windows from ASDM", 
 		      routine);
@@ -808,7 +816,7 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
  /* Define output descriptor */
   desc = outData->myDesc;
   /* Extract ASDM data  */
-  SpWinArray  = ObitSDMDataGetSWArray (SDMData, iScan);
+  SpWinArray  = ObitSDMDataGetSWArray (SDMData, iScan, SWOrder);
   Obit_return_if_fail((SpWinArray), err,
 		      "%s: Could not extract Spectral Windows from ASDM", 
 		      routine);
@@ -1024,7 +1032,7 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData,
   gchar          hicard[81], begString[17], endString[17];
   gchar         *hiEntries[] = {
     "DataRoot", "selChan", "selIF", "selBand", "selConfig", "dropZero", 
-    "doCode", "calInt", "doSwPwr", "doOnline",
+    "doCode", "calInt", "doSwPwr", "doOnline", "SWOrder", 
     NULL};
   gchar *routine = "BDFInHistory";
   
@@ -1537,7 +1545,7 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iScan,
   Obit_return_if_fail((SourceArray), err,
 		      "%s: Could not extract Source info from ASDM", 
 		      routine);
-  SpWinArray  = ObitSDMDataGetSWArray (SDMData, iScan);
+  SpWinArray  = ObitSDMDataGetSWArray (SDMData, iScan, SWOrder);
   Obit_return_if_fail((SpWinArray), err,
 		      "%s: Could not extract Spectral Windows from ASDM", 
 		      routine);
@@ -1718,8 +1726,8 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 {
   ObitBDFData *BDFData=NULL;
   ObitIOCode retCode;
-  olong iMain, iInteg, ScanId, i, j, iBB, selChan, selIF, selConfig, 
-    iSW, jSW, kBB, nIFsel, cntDrop=0, ver, iRow, sourId=0;
+  olong iMain, iInteg, ScanId=0, i, j, iBB, selChan, selIF, selConfig, 
+    iSW, jSW, kBB, nIFsel, cntDrop=0, ver, iRow, sourId=0, iIntent, iScan;
   ofloat *Buffer=NULL, tlast=-1.0e20, startTime, endTime;
   ObitUVDesc *desc;
   ObitTableNX* NXtable;
@@ -1729,7 +1737,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   gchar selBand[12], begString[17], endString[17];
   ObitASDMBand band;
   ASDMSpectralWindowArray* SpWinArray=NULL;
-  gboolean dropZero=TRUE, found=FALSE;
+  gboolean dropZero=TRUE, found=FALSE, doOnline=FALSE, drop;
   gchar dataroot[132];
   gchar *filename;
   gchar *routine = "GetData";
@@ -1769,6 +1777,9 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   /* Drop Zero vis? */
   ObitInfoListGetTest(myInput, "dropZero", &type, dim, &dropZero);
 
+  /* Want Online scans? */
+  ObitInfoListGetTest(myInput, "doOnline", &type, dim, &doOnline);
+  
   /* Band selection */
   for (i=0; i<12; i++) selBand[i] = 0;
   ObitInfoListGetTest(myInput, "selBand", &type, dim, selBand);
@@ -1821,12 +1832,34 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     if (selConfig != SDMData->MainTab->rows[iMain]->configDescriptionId) continue;
     if (SpWinArray) SpWinArray  = ObitSDMDataKillSWArray (SpWinArray);
     SpWinArray  = 
-      ObitSDMDataGetSWArray (SDMData, SDMData->MainTab->rows[iMain]->scanNumber);
+      ObitSDMDataGetSWArray (SDMData, SDMData->MainTab->rows[iMain]->scanNumber, 
+			     SWOrder);
     Obit_return_if_fail((SpWinArray), err,
 			"%s: Could not extract Spectral Windows from ASDM", 
 			routine);
     /* Selection here mostly by ConfigID */
     if (!ObitSDMDataSelChan (SpWinArray, selChan, selIF, ASDMBand_Any)) continue;
+
+    /* Ignore online cal scans unless doOnline */
+    if (!doOnline) {
+      drop = FALSE;
+      /* DAMN ASDM - lookup ScanID */
+      for (iScan=0; iScan<SDMData->ScanTab->nrows; iScan++) {
+	ScanId = iScan;
+	if ( SDMData->MainTab->rows[iMain]->scanNumber == 
+	     SDMData->ScanTab->rows[ScanId]->scanNumber) break;
+      }
+      for (iIntent=0; iIntent<SDMData->ScanTab->rows[ScanId]->numIntent; iIntent++) {
+	drop = drop ||  (!strncmp(SDMData->ScanTab->rows[ScanId]->scanIntent[iIntent], 
+				  "CALIBRATE_POINTING", 18));
+      }
+      if (drop) {
+	Obit_log_error(err, OBIT_InfoErr, "Drop online cal scan %3.3d subscan %3.3d", 
+		       SDMData->MainTab->rows[iMain]->scanNumber, SDMData->MainTab->rows[iMain]->subscanNumber);
+	ObitErrLog(err);
+	continue;
+      }
+    }
     
     /* Get filename */
     filename = g_strconcat (dataroot, "/ASDMBinary/uid_", SDMData->MainTab->rows[iMain]->entityId, NULL);
@@ -1933,7 +1966,15 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 
 	/* Check sort order */
 	if (Buffer[desc->iloct]<tlast) 
-	  {desc->isort[0]=' '; desc->isort[1]=' ';}
+	  if (Buffer[desc->iloct]<tlast) {
+	    if (desc->isort[0]=='T') {
+	      day2dhms(tlast, begString);
+	      day2dhms(Buffer[desc->iloct], endString);
+	      Obit_log_error(err, OBIT_InfoWarn, "Lost Time ordering at scan %d %s>%s", 
+			     ScanId, begString, endString);
+	    }
+	    {desc->isort[0]=' '; desc->isort[1]=' ';}
+	  }
 	tlast = Buffer[desc->iloct];
 	
 	/* set number of records */
@@ -2411,7 +2452,7 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ObitErrLog(err);
   
   /* Extract ASDM SpWin data  - selScan global */
-  SpWinArray  = ObitSDMDataGetSWArray (SDMData, selScan);
+  SpWinArray  = ObitSDMDataGetSWArray (SDMData, selScan, SWOrder);
   Obit_return_if_fail((SpWinArray), err,
 		      "%s: Could not extract Spectral Windows from ASDM", 
 		      routine);
@@ -2597,7 +2638,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   curScanI   = -1;  /* Force init */
   SourNo     = 0;
   nextScanNo = 0;
-  SpWinArray  = ObitSDMDataGetSWArray (SDMData, selScan);
+  SpWinArray  = ObitSDMDataGetSWArray (SDMData, selScan, SWOrder);
   Obit_return_if_fail((SpWinArray), err,
 		      "%s: Could not extract Spectral Windows from ASDM", 
 		      routine);

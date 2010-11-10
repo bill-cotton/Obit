@@ -59,11 +59,13 @@ dropZero                            Drop records with all zero vis
 doCode                              Each calcode a different source?
 **PARAM** boo 1  **DEF** F
 doOnline                            Don't flag "online" calibration data
+**PARAM** boo 1  **DEF** F
+SWOrder                             Keep data in Spectral window order?
 **PARAM** float 1 **DEF** 0.5
 calInt                              CL Table interval
-**PARAM** boo 1  **DEF** T
+**PARAM** boo 1  **DEF** F
 doSwPwr                             Make EVLA Switched power corr?
-**PARAM** boo 1  **DEF** T
+**PARAM** boo 1  **DEF** F
 Compress                            True => write compressed data
 **PARAM** str 128
 taskLog                             Logfile to write task messages to
@@ -123,6 +125,8 @@ Data selection
              but marked as flagged in the FG table if doOnline=False.
              If doOnline=True, no flagging entries will be written for
              these scans.
+  SWOrder....If True keep frequencies in Spectral window order
+             If False IF will be in ascending frequency order.
   calInt.....Interval in min between AIPS CL table entries.
   doSwPwr....If True, make corrections in the output CL table based
              on measurements of the cal (from AIPS SY table).

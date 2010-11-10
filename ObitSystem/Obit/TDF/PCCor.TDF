@@ -1,0 +1,224 @@
+; $Id:  $
+; PCCor
+;---------------------------------------------------------------
+;! Corrects phases using  PCAL tones data from PC table
+;# Task UV VLBI CALIBRATION
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2010
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: W. D. Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+PCCor     LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+PCCor     Corrects phases using  PCAL tones data from PC table
+**PARAM** str 4  **DEF** FITS
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                             FITS input uvdata if Type=='FITS'
+**PARAM** str 12
+inName                             Input UV file name (name)
+**PARAM** str 6
+inClass                            Input UV file name (class)
+**PARAM** int 1
+inSeq             0.0     9999.0   Input UV file name (seq. #)
+**PARAM** int 1
+inDisk            0.0        9.0   Input UV file disk unit #
+**PARAM** float 2
+timeRange                          Time range to process.
+**PARAM** int 1
+PCVer             -1.0   46655.0   Input  PC table, 0=>last one
+**PARAM** int 1
+refAnt             0.0      20.0   Ref. antenna, 0=>the first
+**PARAM** int 1
+subA               0.0    9999.0   Subarray;  0 => all.
+**PARAM** str 16 
+calSour                            Calibrator source name;
+                                   blank => any
+**PARAM** int 1
+doCalib          -1         10     Apply calibration table
+**PARAM** int 1
+gainUse                            CL/SN table to apply
+**PARAM** int 1
+doBand           -1.0       10.0   If >0.5 apply bandpass cal.
+**PARAM** int 1
+BPVer                              Bandpass table version
+**PARAM** int 1 **DEF** -1
+flagVer                            Flag table version
+**PARAM** int 1
+solnVer           -1.0   46655.0   Output SN table, 0=>new table
+**PARAM** float 1
+solInt            0.0              Solution interval (min)
+**PARAM** boo 1 **DEF** F
+doTwo                              1 & 2 baseline combs for SolMode="DELA"
+**PARAM** boo 1 **DEF** F
+doCabCor                           Cable correction:
+**PARAM** int 1
+BIF               0.0      100.0   Lowest IF number 0=>1
+**PARAM** int 1
+EIF               0.0      100.0   Highest IF number 0=>NIF
+                                   Use BIF=EIF=0 except for
+                                   special cases (see help)
+**PARAM** boo 1 **DEF** F
+doZeroMB                           True => zero MBDELY.
+                                   Use False always except for
+                                   special cases (see help)
+**PARAM** int 1
+prtLv             0.0               Print level in selfcal
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+**PARAM** int 10
+noScrat                            AIPS disk numbers for which
+                                   scratch files are disallowed
+----------------------------------------------------------------
+PCCor
+Type: Task
+Use:  PCCor corrects for instrumental phase and delay offsets using
+      pulse-calibration data already loaded in the PC table.
+Adverbs:
+  DataType..'FITS' or 'AIPS'  type of input
+  inFile.....FITS input uvdata if Type=='FITS'
+  inName.....Input AIPS UV file name (name).      Standard defaults.
+  inClass....Input AIPS UV file name (class).     Standard defaults.
+  inSeq......Input AIPS UV file name (seq. #).    0 => highest.
+  inDisk.....Disk drive # of input file. 
+  timeRange..Start and end times (day)
+             Use  dhms2day to convert from human readable form
+  PCVer......Input PC table. 0 means the last one in the data.
+  refAnt.....Reference antenna, 0 => 1
+  subA.......The subarray to use. 0 => all
+  calSour....Calibrator source name
+  doCalib....If >=2, apply SN or CL table, 2=> calibrate weights also
+  gainUse....CL/SN table version number to apply. 0=> highest.
+  doBand.....If true (>0) then correct the data for the shape of the
+             antenna bandpasses using the BP table specified by BPVer.
+             The correction has five modes:
+             (a) if doBand=1 all entries for an antenna in the table
+             are averaged together before correcting the data.
+             (b) if doBand=2 the entry nearest in time (including
+             solution weights) is used to correct the data.
+             (c) if doBand=3 the table entries are interpolated in
+             time (using solution weights) and the data are then
+             corrected.
+             (d) if doBand=4 the entry nearest in time (ignoring
+             solution weights) is used to correct the data.
+             (e) if doBand=5 the table entries are interpolated in
+             time (ignoring solution weights) and the data are then
+             corrected.
+  BPVer......Specifies the version of the BP table to be applied
+                0 => highest numbered table.
+               <0 => no bandpass correction to be applied.
+  flagVer....FG table to use for editing. 0 => highest.
+  solnVer....Desired output SN table.
+             0 means create a new SN table.
+  solInt.....Solution interval (min)
+  doTwo......If true use one and two baseline combinations.
+             If False then only the baseline from the reference 
+             antenna to each antenna is used.
+  doCabCor...Make cable correction:
+             This option was requested by geodesy people. Use False
+             if you do not have a special idea.
+  BIF........Start IF number to use. 0 => 1
+  EIF........End IF number to use. 0 => Max available IF in the data
+
+  doZeroMB...If doZeroMB=True, MBDELY is equal zero in the output SN table.
+             table.
+             Multi band delay (MBDELY) of the output CL table will
+             include the sum of the two SN tables MBDELYs. So it does
+             not correspond to the either first IFs or second IFs.
+             If you want to have MBDELY for one of the two IFs, you need
+             to zero MBDELY in the relevant SN table. The zeroing of
+             MBDELY can be done under control of doZeroMB.
+             The column MBDELY of a CL table is not used in the
+             calibration procedure but used in the astrometry/geodesy
+             projects to restore the total delay.
+  prtLv......Print level in solution, 0=>none [def. 0]
+  taskLog....Log file to write messages to INSTEAD of the terminal
+             This is useful in long runs or batch files where
+             a bug in the ObitTalk message handling may cause
+             tasks to hang.  Path is absolute or relative to where
+             the task executes.
+  noScrat....A list of AIPS disk numbers on which you do not 
+             wish scratch files
+-----------------------------------------------------------------------
+PCCor: Corrects instrumental phase and delay offsets using
+       pulse-calibration information in the PC table.
+Documenters:  L.R. Kogan, Obit version by W. D. Cotton
+RELATED PROGRAMS: Calib, CLCal, PCLOD
+
+                          METHOD
+
+Pulse-calibration tones are injected into the VLBA receivers and, in
+conjunction with the cable calibration system, can be used to measure
+and track instrumental variations in delay and phase between separate
+baseband converters. If the pulses are separated by 1 microsecond in
+time then the corresponding tones are separated by 1 MHz in frequency.
+The measured phases of the tones allow the connection of the phase
+across the all IFs. The phase difference between two tones in the same
+IF allows to estimate  the instrumental single-band delay for that IF.
+The measurement of single band instrumental delay is however subject
+to ambiguity due to the 2pi*N ambiguity in measured phase.  The
+visibilities of a calibrator are used to resolve this ambiguity.  The
+ambiguity is solved in for each polarization, IF and antenna relative 
+to the reference antenna.  The adverbs, timeRange and calSour select
+both UV and PC table calibrator data. The PC table is interpolated to 
+the center time of the UV data.
+
+The calibrator data used for ambiguity has SB delays using parameters
+solInt and doTwo.  The delay used is the average of the values for 
+each antenna/IF/poln in the fitted solutions.
+
+The phase ambiguity, as measured for the calibrator scan, is used to
+correct the entire experiment. Each pulse-calibration (PC) table entry
+is read, corrected for the ambiguity, and an SN table record is
+written containing single- and multi-band instrumental phase and delay
+corrections for each IF and polarization. The application of this SN
+table, using CLcal, eliminates instrumental phase and delay offsets
+between individual IF's.  Further details of how the pulse-calibration
+data may be applied are contained in VLBA Scientific Memo. #8,
+by Craig Walker.
+
+
+                          COMMENTS
+
+Two tones per IF are used by PCCor to find the single band 
+instrumental delay.  It is not necesary to have more than two 
+tones per IF for this purpose. If more than two tones exist, 
+the most left and the most right ones are selected.
+The selection criteria timeRange and subA are used only to 
+specify data to resolve single band delay ambiguities.  
+The calibrator visibilities are vector during the
+time range. The time range of the calibrator scan should be 
+large enough to provide a good SNR but small enough to insure 
+that the fringe rate does not decorrelate the signal. A reasonable 
+compromise is around one minute.If there is only a single tone
+per IF, no single band corrections is made and thus no ambiguity 
+need be resolved. 
+PCCor converts each PC table row into an SN table row.
+
+If there is only a single tone per IF, NO singleband delay 
+corrections will be made.
+
+Some antennas (VLA for example) do not have pulse cals at all.  
+The output SN table will have a single, dummy entry for these 
+antennas which will not modify the calibration of these antennas.
+These antennas will then need to be calibrated "manually".

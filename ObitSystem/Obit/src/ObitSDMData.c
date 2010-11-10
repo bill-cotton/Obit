@@ -745,9 +745,9 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   g_free(fullname);
 
   /* Other info - what a piece of shit */
-  damn = ObitSDMDataGetSWArray (out, out->MainTab->rows[0]->scanNumber);
+  damn = ObitSDMDataGetSWArray (out, out->MainTab->rows[0]->scanNumber, FALSE);
 
-  /* Reference JD from first Main table entry (0 h )*/
+  /* Reference JD from SW Array */
   out->refJD = damn->refJD;
 
   /* Reference Frequency */
@@ -760,12 +760,13 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
 /**
  * Creates and fills n spectral window array
  * Parses the ASMD XML tables and stores
- * For LSB windows, the chanFreqStart returned is that of the lowest frequency channel
- * \param in   ASDM object to use
- * \param scan Scan number (in ASDMMain table)
+ * \param in      ASDM object to use
+ * \param scan    Scan number (in ASDMMain table)
+ * \param SWOrder If TRUE leave data is SW order
  * \return the new structure, NULL on error, delete using ObitSDMKillSWArray
  */
-ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong scan)
+ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong scan, 
+						gboolean SWOrder)
 { 
   ASDMSpectralWindowArray* out=NULL;
   olong configDescriptionId, dataDescriptionId, spectralWindowId, *dataDescriptions;
@@ -915,26 +916,31 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong scan)
   /* Sort into ascending reference frequencies - o
      float precision should be good enough */
   out->order = g_malloc0(out->nwinds*sizeof(olong));
-  sortStruct = g_malloc0((2*out->nwinds+5)*sizeof(ofloat));
-  for (i=0; i<out->nwinds; i++) {
-    sortStruct[2*i]   = (ofloat)i;
-    sortStruct[2*i+1] = (ofloat)out->winds[i]->chanFreqStart;
-  }
-  /* Sort */
-  number = out->nwinds;
-  size   = 2*sizeof(ofloat);
-  ncomp  = 1;
-  g_qsort_with_data (sortStruct, number, size, CompareFreq, &ncomp);
+  for (i=0; i<out->nwinds; i++) out->order[i] = i;
 
-  /* Save sorted results */
-  /* save initial windows to temporary array */
-  twinds     = out->winds;
-  out->winds = g_malloc0(in->SpectralWindowTab->nrows*sizeof(ASDMSpectralWindowArrayEntry));
-  for (i=0; i<out->nwinds; i++) {
-    j = (olong)(sortStruct[i*2]+0.5);
-    out->winds[i] = twinds[j];
-    out->order[i] = j;
-  }
+  /* Need to sort? */
+  if (!SWOrder) {
+    sortStruct = g_malloc0((2*out->nwinds+5)*sizeof(ofloat));
+    for (i=0; i<out->nwinds; i++) {
+      sortStruct[2*i]   = (ofloat)i;
+      sortStruct[2*i+1] = (ofloat)out->winds[i]->chanFreqStart;
+    }
+    /* Sort */
+    number = out->nwinds;
+    size   = 2*sizeof(ofloat);
+    ncomp  = 1;
+    g_qsort_with_data (sortStruct, number, size, CompareFreq, &ncomp);
+    
+    /* Save sorted results */
+    /* save initial windows to temporary array */
+    twinds     = out->winds;
+    out->winds = g_malloc0(in->SpectralWindowTab->nrows*sizeof(ASDMSpectralWindowArrayEntry));
+    for (i=0; i<out->nwinds; i++) {
+      j = (olong)(sortStruct[i*2]+0.5);
+      out->winds[i] = twinds[j];
+      out->order[i] = j;
+    }
+  } /* end sorting frequencies */
 
   /* Set reference frequency to first ordered Spectral window */
   out->refFreq = out->winds[0]->chanFreqStart;

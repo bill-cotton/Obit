@@ -338,7 +338,8 @@ ObitSDMData* ObitSDMDataCopy  (ObitSDMData *in, ObitSDMData *out, ObitErr *err);
 void ObitSDMDataClone (ObitSDMData *in, ObitSDMData *out, ObitErr *err);
 
 /** Public: Get spectral window array. */
-ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong scan);
+ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong scan, 
+						gboolean SWOrder);
 
 /** Public: Delete spectral window array. */
 ASDMSpectralWindowArray* ObitSDMDataKillSWArray (ASDMSpectralWindowArray *in);
