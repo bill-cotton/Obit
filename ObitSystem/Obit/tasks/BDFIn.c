@@ -1880,7 +1880,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
     
     /* Init Scan */
-    ObitBDFDataInitScan (BDFData, iMain, err);
+    ObitBDFDataInitScan (BDFData, iMain, SWOrder, err);
     if (err->error) Obit_traceback_msg (err, routine, outData->name);
  
     /* Set selection - here mostly by ConfigID */

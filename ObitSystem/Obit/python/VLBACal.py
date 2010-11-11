@@ -1235,8 +1235,10 @@ def VLBAGoodCal(uv, err, solInt=0.5, timeInt=100., FreqID=1, \
     # end VLBAGoodCal
 
 def VLBAPCcor(uv, err, calSou=None,  timeRange=[0.,0.], FreqID=1, \
-              PCin=1, SNout=0, refAnt=1, doPCPlot=False, plotFile="./PC.ps", \
-              logfile='', check=False, debug=False):
+                  doCalib=-1, gainUse=0, doBand=-1, BPVer=0,  \
+                  flagVer=-1,  solInt = 0.5, \
+                  PCin=1, SNout=0, refAnt=1, doPCPlot=False, plotFile="./PC.ps", \
+                  noScrat=[], logfile='', check=False, debug=False):
     """ Apply corrections from PC table
 
     Use a short section of calibrator data to resolve ambiguities in tghe PC
@@ -1245,12 +1247,19 @@ def VLBAPCcor(uv, err, calSou=None,  timeRange=[0.,0.], FreqID=1, \
     creating a new CL table.
     Returns task error code, 0=OK, else failed
     err        = Python Obit Error/message stack
+    doCalib    = Apply calibration table
+    gainUse    = CL/SN table to apply
+    doBand     = If >0.5 apply bandpass cal.
+    BPVer      = Bandpass table version
+    flagVer    = Input Flagging table version
     calSou     = Source name to use
     timeRange  = timerange of data to use
     FreqID     = Frequency group identifier
     PCin       = Input PC table input number
     SNout      = Output SN table, 0=> create new
     refAnt     = Reference antenna
+    solInt     = solution interval for cal data (min)
+    noScrat    = list of disks to avoid for scratch files
     logfile    = logfile for messages
     check      = Only check script, don't execute tasks
     debug      = show input
@@ -1265,17 +1274,24 @@ def VLBAPCcor(uv, err, calSou=None,  timeRange=[0.,0.], FreqID=1, \
     else:
         SNver = SNout
 
-    pccor = AIPSTask.AIPSTask("pccor")
+    pccor = ObitTask.ObitTask("PCCor")
     if not check:
         setname(uv,pccor)
-    pccor.snver       = SNver
-    pccor.inver       = PCin
-    pccor.refant      = refAnt
-    pccor.freqid      = FreqID
-    pccor.calsour[1]  = calSou
-    pccor.timerang[1] = timeRange[0]
-    pccor.timerang[5] = timeRange[1]
-    pccor.logFile     = logfile
+    pccor.flagVer      = flagVer
+    pccor.doCalib      = doCalib
+    pccor.gainUse      = gainUse
+    pccor.doBand       = doBand
+    pccor.BPVer        = BPVer
+    pccor.solnVer      = SNver
+    pccor.PCVer        = PCin
+    pccor.refAnt       = refAnt
+    pccor.calSour      = calSou
+    pccor.timeRange[0] = timeRange[0]
+    pccor.timeRange[1] = timeRange[1]
+    pccor.solInt       = solInt
+    pccor.prtLv        = 1
+    pccor.taskLog      = logfile
+    pccor.noScrat      = noScrat
     if debug:
         pccor.i
     # Trap failure
@@ -1284,7 +1300,7 @@ def VLBAPCcor(uv, err, calSou=None,  timeRange=[0.,0.], FreqID=1, \
             pccor.g
     except Exception, exception:
         print exception
-        mess = "PCCOR Failed "
+        mess = "PCCor Failed "
         printMess(mess, logfile)
         return 1
     else:
@@ -4504,14 +4520,20 @@ def VLBARLCal2(uv, err, uv2 = None, \
             if err.isErr:
                 print  "Error copying AN Table"
                 return 1
-            
+        # Copy CL table to be modified
+        VLBACopyTable (uv, uv, "AIPS CL", err, inVer=gainUse, outVer=hiCL+1, \
+                           logfile=logfile, check=check, debug=debug)
+        if err.isErr:
+            print  "Error copying CL Table"
+            return 1
+        
         # Apply R-L phase corrections
         clcor = AIPSTask.AIPSTask("clcor")
         clcor.logFile  = logfile
         if not check:
             setname(uv,clcor)
         clcor.opcode   = "POLR"
-        clcor.gainver  = gainUse
+        clcor.gainver  = hiCL+1
         clcor.gainuse  = hiCL+1
         clcor.clcorprm[1:] = RLCor
         if debug:
@@ -4536,7 +4558,14 @@ def VLBARLCal2(uv, err, uv2 = None, \
             if not check:
                 setname(uv2,clcor)
                 hiCL = uv2.GetHighVer("AIPS CL")
-                clcor.gainver  = hiCL
+                # Copy CL table to be modified
+                VLBACopyTable (uv, uv, "AIPS CL", err, inVer=hiCL, outVer=hiCL+1, \
+                                   logfile=logfile, check=check, debug=debug)
+                if err.isErr:
+                    print  "Error copying CL Table"
+                    return 1
+                
+                clcor.gainver  = hiCL+1
                 clcor.gainuse  = hiCL+1
             if debug:
                 clcor.i

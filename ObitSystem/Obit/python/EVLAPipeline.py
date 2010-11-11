@@ -16,31 +16,45 @@ execfile (setup)
 
 ############################# Default parameters ##########################################                                 
 # Generic parameters
+project       = "Unspecified"               # Project name (12 char or less, used as AIPS Name)
+session       = "?"                         # Project session code
+band          = "?"                         # Observing band
 seq           = 1          # AIPS sequence number
 gain          = 0.10       # CLEAN loop gain
-doLoad        = True       # Load data from FITS?, else already in AIPS 
-doLoadArchive = False      # Load from archive?
-dataClass     = "UVData"   # AIPS class of raw uv data
-Compress      = False      # Use compressed UV data?
-archRoot      = "."        # Archive directory root
-selBand       = " "        # Selected band, def = first  
-selNIF        = 0          # Selected number of IFs, def = first  
-selChan       = 0          # Selected number of channels, def = first  
-calInt        = 0.5        # Calibration table interval in min.
 check         = False      # Only check script, don't execute tasks
 debug         = False      # run tasks debug
 
+# Archive parameters
+doLoadArchive = True       # Load from archive?
+archRoot      = "."        # Archive directory root
+selBand       = " "        # Selected band, def = first  
+selConfig     = 0          # Selected frequency config, def = first  
+selNIF        = 0          # Selected number of IFs, def = first  
+selChan       = 0          # Selected number of channels, def = first  
+calInt        = 0.5        # Calibration table interval in min.
+doSwPwr       = False      # Make EVLA Switched power corr?
+
+# Load from FITS
+doLoad       = False       # Load FITS file?
+FITSIn       = ""          # Input FITS file
+FITSinDisk   = 0           # Input FITS disk
+
+# General data parameters
+dataClass     = "UVData"   # AIPS class of raw uv data
+Compress      = False      # Use compressed UV data?
+
 # Editing
 doClearTab  = True         # Clear cal/edit tables
-doGain      = True         # Clear SN and CL tables >1
-doFlag      = True         # Clear FG tables > 1
-doBP        = True         # Clear BP tables?
-doCopyFG    = True         # Copy FG 1 to FG 2quack
+doClearGain = True         # Clear SN and CL tables >1
+doClearFlag = True         # Clear FG tables > 1
+doClearBP   = True         # Clear BP tables?
+doCopyFG    = True         # Copy FG 1 to FG 2 
 Reason      = "Quack"      # Reason code for Quack
 doQuack     = True         # Quack data?
 quackBegDrop= 0.1          # Time to drop from start of each scan in min
 quackEndDrop= 0.1          # Time to drop from end of each scan in min
 quackReason   = "Quack"                 # Reason string
+
 doAutoFlag    = True       # Autoflag editing?
 RMSAvg      = 20.0         # AutoFlag Max RMS/Avg for time domain RMS filtering
 IClip       = [1000.0,0.1] # AutoFlag Stokes I clipping
@@ -63,7 +77,7 @@ chAvg       = 1            # number of channels to average
 
 # Special editing list
 doEditList  = False        # Edit using editList?
-editFG      = 1            # Table to apply edit list to
+editFG      = 2            # Table to apply edit list to
 editList = [
 #    {"timer":("0/06:09:0.0","0/06:13:0.0"),"Ant":[ 8,0],"IFs":[2,2],"Chans":[1,0],"Stokes":'1110',"Reason":"bad data"},
     ]
@@ -72,6 +86,7 @@ editList = [
 doBP        = True         # Clear BP tables
 doBPCal     = True         # Determine Bandpass calibration
 BPCal       = None         # Bandpass calibrator
+bpSpecIndex = 0.0          # BPCal spectral index
 bpBChan1      = 1          # Low freq. channel,  initial cal
 bpEChan1      = 0          # Highest freq channel, initial cal, 0=>all
 bpDoCenter1   = None       # Fraction of  channels in 1st, overrides bpBChan1, bpEChan1
@@ -123,15 +138,15 @@ rlDoBand      = -1       # Apply and type of bandpass
 rlBPVer       = 0        # BP table to apply, 0=>highest
 rlflagVer     = 0        # Flagging table to apply, 0=>highest
 rlrefAnt      = 1        # Reference antenna REQUIRED
-rldoPol       = False    # Apply polarization cal?
+rldoPol       = True     # Apply polarization cal?
 rlChWid       = 1        # Number of channels in running mean phase BP soln
 rlBPSoln      = 0        # Number of output RL phase BP table
-rlsolint1     = 10.0/60.0 # RL BPass phase correction solution in min
-rlsolint2     = 10.0      # RL BPass bandpass solution in min
+rlsolint1     = 10.0/60.0 # RLPass phase correction solution in min
+rlsolint2     = 10.0      # RLPass bandpass solution in min
 
 # Imaging
 doImage     = True         # Image targets
-targets     = []           # targets
+targets     = []           # targets, empty = all
 outIclass   = "IClean"     # Output image class
 Stokes      = "I"          # Stokes parameter(s) to image
 do3D        = False        # 2/3D imaging
@@ -147,8 +162,10 @@ yCells      = 0.0          # y cell spacing in asec
 doAmpPhaseCal = True       # Amplitude/phase calibration
 doPol       = False        # Poln cal in imaging
 solPType    = "L1"         # L1 solution for phase self cal
-solPMode    = "DELA"       # Delay solution for phase self cal
-avgPol      = True         # Average poln in self cal?
+solPMode    = "P"          # Delay solution for phase self cal
+solAType    = "  "         # L1 solution for amp&phase self cal
+solAMode    = "A&P"        # Delay solution for amp&phase self cal
+avgPol      = False        # Average poln in self cal?
 solAType    = "    "       # Type solution for amp+phase self cal
 avgIF       = False        # Average IF in self cal?
 maxPSCLoop  = 0            # Max. number of phase self cal loops
@@ -166,17 +183,21 @@ doSaveImg     = True       # Save images
 doSaveTab     = True       # Save Tables
 doCleanup     = True       # Destroy AIPS files
 prtLv         = 2          # Amount of diagnostics
+doMB          = True       # Use wideband imaging?
+MBnorder      = 2          # Order of wideband imaging
+MBmaxFBW      = 0.05       # Max. fractional IF center bandwidth
 
 ############################# Set Project Processing parameters ##################
 parmFile = sys.argv[2]
 execfile (parmFile)
 
 ################################## Process #####################################
+logFile       = project+"_"+session+"_"+band+".log"  # Processing log file
 # Logging directly to logFile
 OErr.PInit(err, prtLv, logFile)
 retCode = 0
 
-mess = "Start project "+project
+mess = "Start project "+project+" session "+session+" "+band+" Band"+" AIPS user no. "+str(AIPS.userno)
 printMess(mess, logFile)
 if debug:
     mess = "Using Debug mode "
@@ -188,15 +209,16 @@ if check:
 # Load Data from FITS
 uv = None
 if doLoad:
-    uv = EVLAUVLoadT(inFile, inDisk, project, dataClass, disk, seq, err, logfile=logFile, \
+    uv = EVLAUVLoadT(FITSIn, FITSinDisk, project, dataClass, disk, seq, err, logfile=logFile, \
                          Compress=True, check=check, debug=debug)
     if uv==None:
         raise RuntimeError,"Cannot load "+inFile
 # Load Data from Archive directory
 if doLoadArchive:
     uv = EVLAUVLoadArch(archRoot, project, dataClass, disk, seq, err, logfile=logFile, \
+                            selConfig=selConfig, doSwPwr=doSwPwr, \
                             selBand=selBand, selChan=selChan, selNIF=selNIF, calInt=calInt, \
-                            Compress=True, check=check, debug=debug)
+                            logfile=logFile, Compress=True, check=check, debug=debug)
     if uv==None and not check:
         raise RuntimeError,"Cannot load "+inFile
 # Otherwise set uv
@@ -207,7 +229,9 @@ if uv==None and not check:
 
 # Clear any old calibration/editing 
 if doClearTab:
-    EVLAClearCal(uv, err, doGain=doGain, doFlag=doFlag, doBP=doBP, check=check)
+    mess =  "Clear previous calibration"
+    printMess(mess, logFile)
+    EVLAClearCal(uv, err, doGain=doClearGain, doFlag=doClearFlag, doBP=doClearBP, check=check)
     OErr.printErrMsg(err, "Error resetting calibration")
 
 # Copy FG 1 to FG 2
@@ -240,21 +264,21 @@ if doMedn:
     if retCode!=0:
         raise RuntimeError,"Error in MednFlag"
 
-# Bandpass calibration if needed
+# Bandpass calibration
 if doBPCal and BPCal:
     retCode = EVLABPCal(uv, BPCal, err, noScrat=noScrat, solInt1=bpsolint2, solInt2=bpsolint2, solMode=bpsolMode, \
                             BChan1=bpBChan1, EChan1=bpEChan1, BChan2=bpBChan2, EChan2=bpEChan2, ChWid2=bpChWid2, \
-                            doCenter1=bpDoCenter1, refAnt=refAnt, specIndex=specIndex, flagVer=2, logfile=logFile, \
+                            doCenter1=bpDoCenter1, refAnt=refAnt, specIndex=bpSpecIndex, flagVer=2, logfile=logFile, \
                             check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in Bandpass calibration"
 
 # Amp & phase Calibrate
 if doAmpPhaseCal:
-    retCode = EVLACal (uv, targets, ACal, err, PCal=PCal, doBand=1, BPVer=1, flagVer=2, \
-                           calModel=AcalModel, calDisk=AcalDisk, calFlux=AcalFlux, nThreads=nThreads, \
-                           solInt=solint, solSmo=solsmo, noScrat=noScrat, ampScalar=ampScalar, \
-                           refAnt=refAnt, logfile=logFile, check=check, debug=debug)
+    retCode = EVLACalAP (uv, targets, ACal, err, PCal=PCal, doBand=1, BPVer=1, flagVer=2, \
+                         calModel=AcalModel, calDisk=AcalDisk, calFlux=AcalFlux, nThreads=nThreads, \
+                         solInt=solint, solSmo=solsmo, noScrat=noScrat, ampScalar=ampScalar, \
+                         refAnt=refAnt, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error calibrating"
 
@@ -270,14 +294,10 @@ if doAutoFlag:
        raise  RuntimeError,"Error in AutoFlag"
 
 # Calibrate and average data
+# Note, PCAL doesn't handle flagging so this has to be here
 if doCalAvg:
-#    retCode = EVLACalAvg (uv, avgClass, seq, CalAvgTime, err, \
-#                          flagVer=2, doCalib=2, gainUse=0, doBand=1, BPVer=1,  \
-#                          BIF=CABIF, EIF=CAEIF, \
-#                          FOV=FOV, maxFact=1.004, Compress=Compress, \
-#                          logfile=logFile, check=check, debug=debug)
-    retCode = EVLACalAvg2(uv, avgClass, seq, CalAvgTime, err, \
-                          flagVer=2, doCalib=2, gainUse=0, doBand=1, BPVer=1,  \
+    retCode = EVLACalAvg (uv, avgClass, seq, CalAvgTime, err, \
+                          flagVer=2, doCalib=2, gainUse=0, doBand=1, BPVer=1, doPol=False, \
                           BIF=CABIF, EIF=CAEIF, Compress=Compress, \
                           logfile=logFile, check=check, debug=debug)
     if retCode!=0:
@@ -290,21 +310,6 @@ if not check:
         OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
 
 
-# R-L  delay calibration cal if needed, creates new CL table
-# THIS NEEDS CLEANUP
-if doRLCal:
-    retCode = EVLARLCal(uv, err, RLPCal=RLPCal, RLPhase=PCRLPhase, RM=RM, \
-                        BChan=rlBChan, EChan=rlEChan, ChWid=rlChWid, \
-                        calcode=rlCalCode, doCalib=rlDoCal, gainUse=rlgainUse, \
-                        timerange=rltimerange, \
-                        doBand=rlDoBand, BPVer=rlBPVer, flagVer=rlflagVer, \
-                        refAnt=rlrefAnt, doPol=rldoPol,  \
-                        BPSoln=rlBPSoln, solInt1=rlsolint1, solInt2=rlsolint2, \
-                        nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
-                        check=check, debug=debug)
-    if retCode!=0:
-        raise RuntimeError,"Error in RL phase spectrum calibration"
-
 # Polarization calibration
 if doPolCal:
     retCode = EVLAPolCal(uv, PCInsCals, err, \
@@ -312,102 +317,83 @@ if doPolCal:
                          fixPoln=PCFixPoln, avgIF=PCAvgIF, \
                          solInt=PCSolInt, refAnt=PCRefAnt, \
                          check=check, debug=debug, \
-                         noScrat=noScrat, logfile =logFile)
+                         noScrat=noScrat, logfile=logFile)
     if retCode!=0 and (not check):
        raise  RuntimeError,"Error in polarization calibration: "+str(retCode)
     # end poln cal.
 
 
+# R-L  delay calibration cal if needed, creates new CL table
+if doRLCal:
+    retCode = EVLARLCal(uv, err, RLPCal=RLPCal, RLPhase=PCRLPhase, RM=RM, \
+                        BChan=rlBChan, EChan=rlEChan, \
+                        calcode=rlCalCode, doCalib=rlDoCal, gainUse=rlgainUse, \
+                        timerange=rltimerange, \
+                        doBand=rlDoBand, BPVer=rlBPVer, flagVer=rlflagVer, \
+                        refAnt=rlrefAnt, doPol=rldoPol,  \
+                        nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
+                        check=check, debug=debug)
+    if retCode!=0:
+        raise RuntimeError,"Error in RL phase spectrum calibration"
+
 # Image targets
 if doImage:
-    img = EVLASetImager(uv, targets, outIclass=outIclass, nThreads=nThreads, \
-                            check=check, logfile=logFile)
-    img.Stokes      = Stokes       # Stokes parameters to image
-    img.xCells      = xCells       # x cell spacing in asec
-    img.yCells      = yCells       # x cell spacing in asec
-    img.outSeq      = seq          # output sequence number
-    img.out2Seq     = seq          # output sequence number
-    img.Niter       = Niter        # Maximum number of CLEAN components
-    img.Gain        = gain         # CLEAN loop gain
-    img.minFlux     = minFlux      # Minimum CLEAN flux density
-    img.Robust      = Robust       # Weighting robust parameter 
-    img.FOV         = FOV          # Field of view radius in deg
-    img.maxPSCLoop  = maxPSCLoop   # Max. number of phase self cal loops
-    img.minFluxPSC  = minFluxPSC   # Min flux density peak for phase self cal
-    img.solPType    = solPType     # L1 solution for phase self cal
-    img.solPMode    = solPMode     # Solution mode for phase self cal
-    img.solPInt     = solPInt      # Phase self cal solution interval
-    img.avgPol      = avgPol       # Average poln in self cal
-    img.maxASCLoop  = maxASCLoop   # Max. number of Amp&phase self cal loops
-    img.minFluxASC  = minFluxASC   # Min flux density peak for amp+phase self cal
-    img.solAType    = solAType     # Type solution for amp+phase self cal
-    img.solAInt     = solAInt      # amp+phase self cal solution interval
-    img.avgIF       = avgIF        # Don't average IF in self cal
-    img.do3D        = do3D         # 2/3D imagingDon't average IF in self cal
-    img.OutlierDist = OutlierDist  # Distance (deg) to which  outlying fields
-    img.OutlierFlux = OutlierFlux  # Minimum outlier apparent flux density
-    img.dispURL     = "None"       # No display
-    img.prtLv       = prtLev       # Control amount of messages
-    img.BLFact      = BLFact       # Baseline dependent time averaging factor
-    img.BLchAvg     = BLchAvg      # If True, and BLFact >1.0 then also average channels.
-    img.flagVer     = 2            # Flag table version
-    img.doPol       = doPol        # Polcal?
-    # Bandpass calibration?
-    if BPCal:
-        img.doBand=1; img.BPVer = 0;
-    #img.debug = True
-    img.noScrat = noScrat
-    if debug:
-        img.i
-        img.debug = debug
-    # Trap failure
-    try:
-        if not check:
-            img.g                      # Image/deconvolve
-    except:
-        mess = "Imaging failed "
-        printMess(mess, logFile)
+    # If targets not specified, image all
+    if len(targets)<=0:
+        slist = EVLAAllSource(uv,err,logfile=logFile,check=check,debug=debug)
     else:
-        pass
-    mess = "Imager Return code = "+str(img.retCode)
-    printMess(mess, logFile)
+        slist = targets
+    EVLAImageTargets (uv, err, Sources=slist, seq=seq, sclass=outIclass, \
+                       doCalib=2, doBand=-1,  flagVer=2, doPol=rldoPol,  \
+                       Stokes=Stokes, FOV=FOV, Robust=Robust, Niter=Niter, \
+                       maxPSCLoop=maxPSCLoop, minFluxPSC=minFluxPSC, \
+                       solPInt=solPInt, solPMode=solPMode, solPType=solPType, \
+                       maxASCLoop=maxASCLoop, minFluxASC=minFluxASC, \
+                       solAInt=solAInt, solAMode=solAMode, solAType=solAType, \
+                       avgPol=avgPol, avgIF=avgIF, minSNR = 5.0, refAnt=refAnt, \
+                       do3D=do3D, BLFact=BLFact, BLchAvg=BLchAvg, \
+                       doMB = doMB, norder=MBnorder, maxFBW=MBmaxFBW, \
+                       nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
+                       check=check, debug=debug)
 
-# cleanup
-mess ="Write results/Cleanup" 
-printMess(mess, logFile)
-if doCleanup:
-    uv.Zap(err)  # UV data
+                       
+    # End image
 
 # Write results, cleanup    
 # Save UV data? 
 if doSaveUV and (not check):
-    filename = project+"Cal.uvtab"
+    filename = project+session+band+"Cal.uvtab"
     fuv = EVLAUVFITS (uv, filename, 0, err, compress=Compress)
 # Save UV data tables?
 if doSaveTab and (not check):
-    filename = project+"CalTab.uvtab"
+    filename = project+session+band+"CalTab.uvtab"
     fuv = EVLAUVFITSTab (uv, filename, 0, err)
-# Delete UV data
-if doCleanup and (not check):
-    uv.Zap(err)
 # Imaging results
 for target in targets:
     if doSaveImg and (not check):
         for s in Stokes:
             oclass = s+outIclass[1:]
             x = Image.newPAImage("out", target, oclass, disk, seq, True, err)
-            outfile = target+"."+outIclass+".fits"
+            outfile = project+session+band+target+"."+outIclass+".fits"
             mess ="Write " +outfile+" on disk "+str(outDisk)
             printMess(mess, logFile)
             xf = EVLAImFITS (x, outfile, outDisk, err)
             # Statistics
             zz=imstat(x, err, logfile=logFile)
-            if doCleanup:
-                x.Zap(err) # cleanup
-        # Zap Imager work file
-        u = UV.newPAUV("out", target, "Imager", disk, seq, True, err)
-        u.Zap(err) # cleanup
 # end writing loop
+
+# cleanup
+mess ="Cleanup AIPS Files" 
+printMess(mess, logFile)
+if doCleanup and (not check):
+    uv.Zap(err)  # UV data
+    for target in targets:
+        for s in Stokes:
+            oclass = s+outIclass[1:]
+            x = Image.newPAImage("out", target, oclass, disk, seq, True, err)
+            x.Zap(err) # cleanup
+# end cleanup
+
 OErr.printErrMsg(err, "Writing output/cleanup")
 
 # Shutdown

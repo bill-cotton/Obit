@@ -252,7 +252,8 @@ void ObitBDFDataInitFile (ObitBDFData *in, gchar *DataFile, ObitErr *err);
 ObitIOCode ObitBDFDataFillBuffer (ObitBDFData *in, ObitErr *err);
 
 /** Public: Initialize Scan */
-void ObitBDFDataInitScan (ObitBDFData *in, olong iMain, ObitErr *err);
+void ObitBDFDataInitScan (ObitBDFData *in, olong iMain, gboolean SWOrder,
+			  ObitErr *err);
 
 /** Public: Select Spectral window by number of channels  */
 gboolean ObitBDFDataSelChan  (ObitBDFData *in, olong selChan, 

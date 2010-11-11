@@ -346,11 +346,13 @@ ObitIOCode ObitBDFDataFillBuffer (ObitBDFData *in, ObitErr *err)
  /**
  * Parse scan info from buffer
  * Expects all of scan XML in buffer
- * \param in    The object to update
- * \param iMain The ASDM Main table row
- * \param err   Obit error stack object.
+ * \param in      The object to update
+ * \param iMain   The ASDM Main table row
+ * \param SWOrder If TRUE leave data is SW order
+ * \param err     Obit error stack object.
  */
-void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, ObitErr *err)
+void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
+			   ObitErr *err)
 {
   gchar *startInfo, *endInfo, *startBB, *endBB, *prior, *next, *xnext, *tstr;
   olong  configDescriptionId, fieldId, sourceId, inext;
@@ -622,7 +624,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, ObitErr *err)
   /* Spectral window array */
   in->SWArray = ObitSDMDataKillSWArray(in->SWArray);
   in->SWArray = ObitSDMDataGetSWArray (in->SDMData, 
-				       in->SDMData->MainTab->rows[iMain]->scanNumber);
+				       in->SDMData->MainTab->rows[iMain]->scanNumber, SWOrder);
 
   /* Init antennas */
   in->nant   = in->ScanInfo->numAntenna;

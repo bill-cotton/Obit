@@ -297,9 +297,10 @@ if doPCcor and not check:
     plotFile = "./"+project+"_"+session+"_"+band+"PC.ps"
     retCode = VLBAPCcor(uv, err, calSou=goodCal["Source"], \
                         timeRange=goodCal["timeRange"], \
+                        doCalib=-1, flagVer=2, solInt=manPCsolInt, \
                         PCin=1, SNout=0, refAnt=goodCal["bestRef"], \
                         doPCPlot=doPCPlot, plotFile=plotFile, \
-                        logfile=logFile, check=check, debug=debug)
+                        noScrat=noScrat, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in PC calibration"
 
