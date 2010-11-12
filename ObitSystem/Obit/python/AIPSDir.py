@@ -372,7 +372,7 @@ def PListDir(disk, err, type = "  ", first=1, last=1000,
                 olist.append(cno)
     if err.isErr:
         OErr.printErrMsg(err, "Error getting AIPS directory listing")
-    # User pager
+    # User pager 
     pydoc.ttypager(dirlist)
     return olist
     # end PListDir
@@ -398,7 +398,7 @@ def PListCat(cat, disk, type = "  ", first=1, last=1000,
     Aseq     = desired sequence, 0=> any
     first    = optional first slot number (1-rel)
     last     = optional last slot number
-    giveList = If true, return list of CNOs matching
+    giveList = If true, return list of CNOs matching (no terminal output)
     """
     ################################################################
     # Init output
@@ -415,8 +415,9 @@ def PListCat(cat, disk, type = "  ", first=1, last=1000,
             dirlist = dirlist+string.rjust(str(cno),3)+" "+line+"\n"
             if giveList:
                 olist.append(cno)
-    # User pager
-    pydoc.ttypager(dirlist)
+    # Use pager if giveList is False
+    if not giveList:
+        pydoc.ttypager(dirlist)
     return olist
     # end PListCat
 

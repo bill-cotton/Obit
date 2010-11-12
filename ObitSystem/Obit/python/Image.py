@@ -586,17 +586,28 @@ def newPAImage(name, Aname, Aclass, disk, seq, exists, err, verbose=True):
     ################################################################
     out = Image (name)
     out.isOK = True  # until proven otherwise
+    cno = -1
     user = OSystem.PGetAIPSuser()
     # print "disk, aseq", disk, seq
     # Does it really previously exist?
     test = AIPSDir.PTestCNO(disk, user, Aname, Aclass, "MA", seq, err)
     out.exist = test>0
-    if exists:
-        cno = AIPSDir.PFindCNO(disk, user, Aname, Aclass, "MA", seq, err)
-        Obit.ImageSetAIPS(out.me, 2, disk, cno, user, blc, trc, err.me)
-        Obit.ImagefullInstantiate (out.me, 1, err.me)
-        #print "found",Aname,Aclass,"as",cno
-    else:
+    if exists: # If user thinks file exists...
+        if out.exist: # If file is defined in catalog -> verify that file exists
+            OErr.PLog(err, OErr.Info, Aname + " image found. Now verifying...")
+            if verbose: OErr.printErr(err)
+            cno = AIPSDir.PFindCNO(disk, user, Aname, Aclass, "MA", seq, err)
+            Obit.ImageSetAIPS(out.me, 2, disk, cno, user, blc, trc, err.me)
+            Obit.ImagefullInstantiate (out.me, 1, err.me)
+            #print "found",Aname,Aclass,"as",cno
+        else: # If file not defined in catalog -> error
+            OErr.PLog(err, OErr.Error, Aname + " image does not exist")
+            out.isOK = False
+    else: # exists=False
+        # Create new image entry in catalog; if image already defined, this
+        # has no effect
+        OErr.PLog(err, OErr.Info, "Creating new image: "+Aname+", "+Aclass)
+        if verbose: OErr.printErr(err)
         cno = AIPSDir.PAlloc(disk, user, Aname, Aclass, "MA", seq, err)
         Obit.ImageSetAIPS(out.me, 2, disk, cno, user, blc, trc, err.me)
         #print "assigned",Aname,Aclass,"to",cno
@@ -608,6 +619,7 @@ def newPAImage(name, Aname, Aclass, disk, seq, exists, err, verbose=True):
     elif err.isErr:
         out.isOK = False
         OErr.PClear(err)  # Clear unwanted messages
+    else: OErr.PClear(err) # Clear non-error messages
 
     # It work?
     if not out.isOK:

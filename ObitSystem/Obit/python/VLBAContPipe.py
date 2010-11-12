@@ -153,6 +153,7 @@ RLCal        = None       # RL Calibrator source name, if given, a list of tripl
 # Final Image/Clean
 doImgFullTarget = True    # Final Image/Clean/selfcal
 Stokes          = "I"     # Stokes to image
+doKntrPlots     = True    # Contour plots
 
 # Final
 outDisk       = 0          # FITS disk number for output (0=cwd)
@@ -505,6 +506,9 @@ if doSaveImg:
             # intermediate images
             oclass = outTclass
             x = Image.newPAImage("out", target, oclass, disk, seq, True, err)
+            if (not x.exist): 
+                print target,"image not found. Skipping."
+                continue
             outfile = project+session+band+target+"."+oclass+".fits"
             mess ="Write Intermediate target " +outfile+" on disk "+str(outDisk)
             printMess(mess, logFile)
@@ -528,6 +532,9 @@ if doSaveImg:
         if not check:
             oclass = outCclass
             x = Image.newPAImage("out", target, oclass, disk, seq, True, err)
+            if (not x.exist): 
+                print target,"image not found. Skipping."
+                continue
             outfile = project+session+band+target+"."+oclass+".fits"
             mess ="Write Calibrator " +outfile+" on disk "+str(outDisk)
             printMess(mess, logFile)
@@ -536,6 +543,13 @@ if doSaveImg:
             zz=imstat(x, err, logfile=logFile)
             del x, xf
     # end writing images loop
+
+# Contour plots
+if doKntrPlots:
+    VLBAKntrPlots( err, project=project, session=session, band=band,
+        debug=debug )
+elif debug:
+    print "Not creating contour plots ( doKntrPlots = ", doKntrPlots, " )"
 
 # Diagnostic plots
 if doDiagPlots:

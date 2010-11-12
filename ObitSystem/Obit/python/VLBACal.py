@@ -6,7 +6,7 @@ import os, pickle, math
 from AIPS import AIPS
 from FITS import FITS
 from AIPSDir import AIPSdisks, nAIPS
-from OTObit import Acat, getname, zap, imhead
+from OTObit import Acat, AMcat, getname, zap, imhead
 import re
 
 def setname (inn, out):
@@ -5123,3 +5123,68 @@ def VLBADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
             zap(uvAvg)
 
     # end VLBADiagPlot
+
+def VLBAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj', 
+    session='tSes', band='tB', debug=False ):
+    """
+    Create contour plots for the specified images. Image selection is made
+    based on the input catalog numbers (catNos), or, if catalog numbers are not
+    given, based on a pattern match to the image name and class. Pattern
+    matching follows the rules of function AMcat(). One PS file is generated
+    for each unique image name. Multiple images with the same name will be added
+    to the same file on different pages. Arugments project, session, and band
+    are used only in creating file names.
+
+    err = Python Obit Error/message stack
+    catNos = catalog numbers of images
+    imClass = class of images to plot (used only if catNos is empty)
+    imName = name of images to plot; None = make plots for each source (used 
+             only if catNos is empty)
+    project = project name
+    session = project session
+    band = project receiver band code
+    debug = Turn on debug mode
+    """
+    # Setup AIPS task KNTR
+    kntr = AIPSTask.AIPSTask("kntr")
+    kntr.dogrey = 0
+    kntr.dovect = 0
+    kntr.ltype = -2 # Show border and labels w/o creation date and PL version
+    kntr.cbplot = -18 # half-power beam in bottom right; no contour overlay
+    # Set contour levels in units of cntr.clev (defined below). Contours begin 
+    #   with -2, -2^0.5, 2^0.5, and then increase as powers of root two.
+    levs = [ -2, -2**(0.5), 2**(0.5) ]
+    for i in range(27):
+        l = levs[-1] * 2.0**( 0.5 )
+        levs = levs + [ l ]
+    kntr.levs = AIPSTask.AIPSList( levs )
+
+    # Instantiate AIPS task LWPLA
+    lwpla = AIPSTask.AIPSTask("lwpla")    
+    
+    # If catalog numbers not given, get all images matching class imClass
+    # and with names in list imName.
+    if (not catNos):
+        if not imName:
+            imName = '*'
+        elif not type(imName) == list:
+            imName = [ imName ]
+        for n in imName:
+            catNos += AMcat( Aname=n, Aclass=imClass, giveList=True )
+    for cno in catNos: # loop over images
+        image = getname(cno)
+
+        # Run CNTR to make plot
+        setname(image, kntr)
+        # Contour level unit = 2 * RMS noise
+        stats = imstat(image, err)
+        kntr.clev = 2 * stats['RMSHist']
+        kntr.go()
+
+        # Run LWPLA to make PS file
+        setname(image, lwpla)
+        name = image.Aname.rstrip() # Image name w/o whitespace
+        outfile = project+session+band+name+'.cntr.ps'
+        lwpla.outfile = './'+outfile # output to current directory
+        lwpla.go()
+    # end VLBACntrPlots
