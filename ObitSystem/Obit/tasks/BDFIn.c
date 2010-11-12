@@ -2799,9 +2799,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 
       /* Must want this one - work out IF number - must be valid and selected */
       SWId = SpWinLookup2[inTab->rows[jRow]->spectralWindowId];
-      if ((inTab->rows[jRow]->spectralWindowId>=0) && 
-	  (inTab->rows[jRow]->spectralWindowId<SpWinArray->nwinds) &&
-	  (SWId>=0) && (SWId<SpWinArray->nwinds) &&  SpWinArray->winds[SWId]->selected) {
+      if ((SWId>=0) && (SWId<SpWinArray->nwinds) &&  SpWinArray->winds[SWId]->selected) {
 	IFno = SpWinLookup[inTab->rows[jRow]->spectralWindowId];
 	IFno = MAX (0, MIN(IFno, (numIF-1)));
       } else continue;

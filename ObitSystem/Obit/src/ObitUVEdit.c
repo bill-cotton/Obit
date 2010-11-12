@@ -2254,7 +2254,7 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
  /* RMS clipping parameters, no default */
   ObitInfoListGet(inUV->info, "maxAmp", &type, dim, temp, err);
   maxAmp = temp[0];
-  doStat = ((dim[0]==1) || (temp[1]!=0.0));
+  doStat = ((dim[0]==1) || (temp[1]<=0.0));
   mxamp2 = maxAmp * maxAmp;
   /* max. fraction bad baselines */
   maxBad = 0.25;           /* default 0.25 */
