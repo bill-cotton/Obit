@@ -1998,7 +1998,7 @@ void ProcessData (gchar *inscan, ofloat avgTime,
       mean = fabs (saeSum[i] / saeCnt[i]);
       sigma = sqrt ((saeSum2[i]/saeCnt[i]) - mean*mean);
       if (mean>750.0)     bad[i] = TRUE;
-      if (mean>5.0*sigma) bad[i] = TRUE;
+      /* Where is this from? if (mean>5.0*sigma) bad[i] = TRUE; */
       if (mean==0.0)      bad[i] = TRUE;
       if (sigma==0.0)     bad[i] = TRUE;
     }
