@@ -1609,7 +1609,8 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iScan,
   for (iRow=0; iRow<SourceArray->nsou; iRow++) {
 
     /* Done this one? */
-    if ((isDone[iRow]) || (SourceArray->sou[iRow]->sourceNo<=lastSID)) continue;
+    /*if ((isDone[iRow]) || (SourceArray->sou[iRow]->sourceNo<=lastSID)) continue;*/
+    if (isDone[iRow]) continue;
 
     /* Is this one selected? - check in Spectral Window array */
     SWId = SourceArray->sou[iRow]->spectralWindowId;
