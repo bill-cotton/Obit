@@ -61,6 +61,7 @@ doPCPlot = True           # Plot results?
 doManPCal      = True      # Determine and apply manual phase cals?
 manPCsolInt    = 0.5       # Manual phase cal solution interval (min)
 manPCSmoo      = 10.0      # Manual phase cal smoothing time (min)
+doManPCalPlot  = True      # Plot the phase and delays from manual phase cal
 
 # Bandpass Calibration?
 doBPCal       = True       # Determine Bandpass calibration
@@ -75,6 +76,7 @@ bpsolMode     = 'A&P'      # Band pass type 'A&P', 'P', 'P!A'
 bpsolint1     = 10.0/60.0  # BPass phase correction solution in min
 bpsolint2     = 10.0       # BPass bandpass solution in min
 specIndex     = 0.0        # Spectral index of BP Cal
+doSpecPlot    = True       # Plot the amp. and phase across the spectrum
 
 # Editing
 doClearTab  = True         # Clear cal/edit tables
@@ -305,16 +307,28 @@ if doPCcor and not check:
     if retCode!=0:
         raise RuntimeError,"Error in PC calibration"
 
+# Plot amplitude and phase vs. frequency
+if doSpecPlot:
+    plotFile = "./"+project+session+band+".PCcor.spec.ps"
+    VLBASpecPlot( uv, goodCal, err, doband=0, plotFile=plotFile )
+
 # manual phase cal
 if doManPCal and not check:
+    plotFile = "./"+project+session+band+".ManPCal.ps"
     retCode = VLBAManPCal(uv, err, calSou=goodCal["Source"], \
                           #CalModel=contCalModel, \
                           timeRange=goodCal["timeRange"], \
                           solInt=manPCsolInt, smoTime=manPCSmoo,  \
-                          refAnts=[goodCal["bestRef"]], doCalib=2, flagVer=2, noScrat=noScrat, \
+                          refAnts=[goodCal["bestRef"]], doCalib=2, flagVer=2, 
+                          doManPCalPlot=doManPCalPlot, plotFile=plotFile, noScrat=noScrat, \
                           nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in manual phase calibration"
+
+# Plot amplitude and phase vs. frequency
+if doSpecPlot:
+    plotFile = "./"+project+session+band+".ManPCal.spec.ps"
+    VLBASpecPlot( uv, goodCal, err, doband=0, plotFile=plotFile )
 
 # Bandpass calibration if needed
 if doBPCal and not check:
@@ -327,6 +341,11 @@ if doBPCal and not check:
                         nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in Bandpass calibration"
+
+# Plot amplitude and phase vs. frequency
+if doSpecPlot:
+    plotFile = "./"+project+session+band+".spec.ps"
+    VLBASpecPlot( uv, goodCal, err, doband=1, plotFile=plotFile )
 
 # image cals
 if doImgCal and not check:

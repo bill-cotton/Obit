@@ -6,7 +6,7 @@ import os, pickle, math
 from AIPS import AIPS
 from FITS import FITS
 from AIPSDir import AIPSdisks, nAIPS
-from OTObit import Acat, AMcat, getname, zap, imhead
+from OTObit import Acat, AMcat, getname, zap, imhead, tabdest
 import re
 
 def setname (inn, out):
@@ -1343,9 +1343,10 @@ def VLBAPCcor(uv, err, calSou=None,  timeRange=[0.,0.], FreqID=1, \
     return 0
     # end VLBAPCcor
 
-def VLBAManPCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None, \
-                timeRange=[0.,0.], FreqID=1, doCalib=-1, gainUse=0, minSNR = 10.0, \
-                refAnts=[0], doBand=-1, BPVer=0, flagVer=-1,  \
+def VLBAManPCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None, CalModel=None, 
+                timeRange=[0.,0.], FreqID=1, doCalib=-1, gainUse=0, 
+                minSNR = 10.0, refAnts=[0], doBand=-1, BPVer=0, flagVer=-1,  
+                doManPCalPlot=True, plotFile='ManPCal.ps', 
                 nThreads=1, noScrat=[], logfile='', check=False, debug=False):
     """ Manual phase cal
 
@@ -1515,6 +1516,24 @@ def VLBAManPCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None, 
         printMess(mess, logfile)
         return 1
     
+    # Plot man p-cal corrections?
+    if doManPCalPlot:
+        # Phase corrections
+        retCode = VLBAPlotTab(uv, "SN", SNver, err, nplots=6, optype="PHAS", \
+                              logfile=logfile, check=check, debug=debug)
+        if retCode!=0:
+            return retCode
+        # Delay corrections
+        retCode = VLBAPlotTab(uv, "SN", SNver, err, nplots=6, optype="DELA", \
+                              logfile=logfile, check=check, debug=debug)
+        if retCode!=0:
+            return retCode
+        retCode = VLBAWritePlots (uv, 1, 0, plotFile, err, \
+                                  logfile=logfile, check=check, debug=debug)
+        if retCode!=0:
+            return retCode
+    # end SN table plot
+
     # Apply to CL table - one scan for whole dataset
     retCode = VLBAApplyCal(uv, err, maxInter=2880.0, logfile=logfile, check=check,debug=debug)
     if retCode!=0:
@@ -1708,6 +1727,50 @@ def VLBABPass(uv, BPCal, err, CalModel=None, newBPVer=1, timeRange=[0.,0.], \
     # End calibrator loop
     return 0
 # end VLBABPass
+
+def VLBASpecPlot(uv, goodCal, err, doband=0, plotFile="./spec.ps"):
+    """
+    Plot amplitude and phase across the spectrum.
+
+    uv = uv data object
+    goodCal = good calibrator info; dictionary from VLBAGoodCal
+    err = Obit error object
+    doband = do bandpass calibration before plotting (requires BP table)
+    plotFile = name of output PS file
+    """
+    # Remove any pre-existing PL tables
+    tabdest(uv, "AIPS PL", -1)
+
+    # Setup and run POSSM
+    possm = AIPSTask.AIPSTask("possm")
+    setname(uv, possm)
+    source = [ goodCal["Source"] ] # get BP calibration source, in list format
+    possm.sources= AIPSTask.AIPSList( source )
+    tr = goodCal["timeRange"] # get BP calibration time range
+    #          [   day, hr, min, sec,   day, hr, min, sec ] <- possm format
+    timerang = [ tr[0],  0,   0,   0, tr[1],  0,   0,   0 ]
+    possm.timerang = AIPSTask.AIPSList( timerang )
+    possm.stokes = 'HALF' # plot only RR & LL
+    possm.docalib = 1 # calibrate data & weights
+    possm.doband = doband # calibrate bandpass
+    possm.bpver = 0 # apply highest BP table
+    possm.aparm = AIPSTask.AIPSList( [0] * 10 ) # initialize with zeroes
+    possm.aparm[9] = 3 # all IFs and pols in same frame
+    possm.nplots = 2 # plot each baseline in seperate frame on page
+    possm.ltype = 3 # include all labels
+    possm.go()
+
+    # Setup and run LWPLA
+    lwpla = AIPSTask.AIPSTask("lwpla")
+    setname(uv,lwpla)
+    lwpla.plver = 1
+    print "PL high ver = ", uv.GetHighVer("AIPS PL")
+    uv.Header(err) # this is required in order for GetHighVer to work
+    print "PL high ver = ", uv.GetHighVer("AIPS PL")
+    lwpla.invers = uv.GetHighVer("AIPS PL")
+    lwpla.outfile = plotFile
+    lwpla.go()
+# end VLBASpecPlot
 
 def VLBAImageCals(uv, err,  FreqID=1, Sources=None, seq=1, sclass="ImgSC", \
                   doCalib=-1, gainUse=0, doBand=-1, BPVer=0,  flagVer=-1,  \
