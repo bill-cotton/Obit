@@ -93,7 +93,6 @@ int main ( int argc, char **argv )
   ObitTableSN  *SNTable = NULL;
   ofloat       ftemp;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong prtLv;
   gchar        *solverParms[] = {  /* Calibration parameters */
     "solInt", "solnVer", "solType", "solMode", "avgPol", "avgIF", "doMGM", "elevMGM",
     "refAnt", "ampScalar", "minSNR",  "minNo", "prtLv",
@@ -128,7 +127,7 @@ int main ( int argc, char **argv )
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
   /* Copy/select/calibrate to scratch file */
-  if (prtLv>=3) {
+  if (err->prtLv>=3) {
     Obit_log_error(err, OBIT_InfoErr, "Calibrate/edit/select data");
     ObitErrLog(err);
   }
@@ -935,6 +934,7 @@ void DivideModel (ObitInfoList *myInput, ObitSkyModel *skyModel,
   olong ichan, nchan, hiver, itemp, prtLv=0, CCVer1=1;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
+  ofloat xShift, yShift, shift;
   gchar *routine = "DivideModel";
 
   /* error checks */
@@ -950,6 +950,22 @@ void DivideModel (ObitInfoList *myInput, ObitSkyModel *skyModel,
   Obit_return_if_fail ((hiver>=(CCVer1+nchan-1)), err, 
 			"%s not enough CC Tables %d < %d", 
 			routine, hiver, CCVer1+nchan-1);
+
+  /* Make sure the shift is less than 0.1 degree */
+  ObitSkyGeomShiftXY (scrUV->myDesc->crval[scrUV->myDesc->jlocr], 
+		      scrUV->myDesc->crval[scrUV->myDesc->jlocd], 
+		      scrUV->myDesc->crota[scrUV->myDesc->jlocd],
+		      skyModel->mosaic->images[0]->myDesc->->crval[0],
+		      skyModel->mosaic->images[0]->myDesc->->crval[1],
+		      &xShift, &yShift);
+  shift = sqrt (xShift*xShift + yShift*yShift);
+  Obit_return_if_fail ((shift>0.1), err, 
+			"%s Excessive shift %f > %f", 
+			routine, shift, 0.1);
+
+  /* scrUV better be asingle source file */
+  Obit_return_if_fail ((scrUV->myDesc->ilocrsu<=0), err, 
+		       "You must select a single source");
   
   /* Loop over channels dividing */
   for (ichan=0; ichan<nchan; ichan++) {

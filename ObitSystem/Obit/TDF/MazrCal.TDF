@@ -170,6 +170,8 @@ Adverbs:
   Sources....List of sources (pointings) to be processed.
              '*' or blank = all; a "-" before a source name
              means all except ANY source named. 
+             NB: YOU SHOULD REALLY SET THIS if the input file 
+             is multisource
   Qual.......Only sources with a source qualifier number in the
              SU table matching Qual will be used if Qual is not
              -1.  Qual affects the selection of both the list of
