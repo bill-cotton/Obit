@@ -41,6 +41,7 @@
 #include "ObitTableSUUtil.h"
 #include "ObitTableCCUtil.h"
 #include "ObitUVUtil.h"
+#include "ObitSkyGeom.h"
 
 /* internal prototypes */
 /* Get inputs */
@@ -955,8 +956,8 @@ void DivideModel (ObitInfoList *myInput, ObitSkyModel *skyModel,
   ObitSkyGeomShiftXY (scrUV->myDesc->crval[scrUV->myDesc->jlocr], 
 		      scrUV->myDesc->crval[scrUV->myDesc->jlocd], 
 		      scrUV->myDesc->crota[scrUV->myDesc->jlocd],
-		      skyModel->mosaic->images[0]->myDesc->->crval[0],
-		      skyModel->mosaic->images[0]->myDesc->->crval[1],
+		      skyModel->mosaic->images[0]->myDesc->crval[0],
+		      skyModel->mosaic->images[0]->myDesc->crval[1],
 		      &xShift, &yShift);
   shift = sqrt (xShift*xShift + yShift*yShift);
   Obit_return_if_fail ((shift>0.1), err, 
@@ -964,7 +965,7 @@ void DivideModel (ObitInfoList *myInput, ObitSkyModel *skyModel,
 			routine, shift, 0.1);
 
   /* scrUV better be asingle source file */
-  Obit_return_if_fail ((scrUV->myDesc->ilocrsu<=0), err, 
+  Obit_return_if_fail ((scrUV->myDesc->ilocsu<=0), err, 
 		       "You must select a single source");
   
   /* Loop over channels dividing */
