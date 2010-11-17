@@ -960,7 +960,7 @@ void DivideModel (ObitInfoList *myInput, ObitSkyModel *skyModel,
 		      skyModel->mosaic->images[0]->myDesc->crval[1],
 		      &xShift, &yShift);
   shift = sqrt (xShift*xShift + yShift*yShift);
-  Obit_return_if_fail ((shift>0.1), err, 
+  Obit_return_if_fail ((shift<0.1), err, 
 			"%s Excessive shift %f > %f", 
 			routine, shift, 0.1);
 

@@ -862,8 +862,8 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   strncpy (desc->date, today, UVLEN_VALUE-1);
   if (today) g_free(today);
   desc->freq    = startFreq;
-  desc->JDObs   = AntArray->refJD;
-  refJD         = AntArray->refJD;
+  desc->JDObs   = SDMData->refJD;
+  refJD         = SDMData->refJD;
   desc->epoch   = epoch;
   desc->equinox = equinox;
   desc->obsra   = 0.0;
@@ -877,7 +877,7 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   desc->VelReference = 0;
   strncpy (desc->bunit, "        ", UVLEN_VALUE);
   lim = UVLEN_VALUE;
-  ObitUVDescJD2Date (AntArray->refJD, desc->obsdat);
+  ObitUVDescJD2Date (SDMData->refJD, desc->obsdat);
   strncpy (desc->teles,      AntArray->arrayName, lim);
   strncpy (desc->observer,   AntArray->obsName, lim);
   strncpy (desc->instrument, AntArray->arrayName, lim);
@@ -1286,10 +1286,10 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   outTable->P_Diff07 = 0.0;
   outTable->P_Diff08 = 0.0;
   /* Get reference date for array  */
-  ObitUVDescJD2Date (AntArray->refJD, outTable->RefDate);
+  ObitUVDescJD2Date (SDMData->refJD, outTable->RefDate);
 
   /* Calculate earth rotation rate, GMST at UT midnight if not given */
-  JD = AntArray->refJD;
+  JD = SDMData->refJD;
   iarr = 0;
   arrayRefJDs[iarr] = JD;
   ObitUVDescJD2Date (JD, outTable->RefDate);
@@ -2285,8 +2285,8 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     
     outRow->ants[0]      = antNo;
     outRow->ants[1]      = 0;
-	 outRow->TimeRange[0] = SDMData->FlagTab->rows[iRow]->startTime - AntArray->refJD;
-    outRow->TimeRange[1] = SDMData->FlagTab->rows[iRow]->endTime   - AntArray->refJD;
+	 outRow->TimeRange[0] = SDMData->FlagTab->rows[iRow]->startTime - SDMData->refJD;
+    outRow->TimeRange[1] = SDMData->FlagTab->rows[iRow]->endTime   - SDMData->refJD;
     strncpy (outRow->reason, SDMData->FlagTab->rows[iRow]->reason, 24);
     /* Patch for archaic software */
     for (i=0; i<24; i++) if (outRow->reason[i]==0) outRow->reason[i] = ' ';
@@ -2505,7 +2505,7 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   }
   
   /* Table Header */
-  ObitUVDescJD2Date (AntArray->refJD, outTable->RefDate);
+  ObitUVDescJD2Date (SDMData->refJD, outTable->RefDate);
 
   /* Create output Row */
   outRow = newObitTableCDRow (outTable);
@@ -3033,7 +3033,7 @@ void GetGainCurveInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 
    /* Extract antenna info */
   AntArray    = ObitSDMDataGetAntArray(SDMData, selScan);
-  refJD       = AntArray->refJD;
+  refJD       = SDMData->refJD;
   Freq        = outData->myDesc->crval[outData->myDesc->jlocf];
   sens        = nomSen(AntArray); /* get nominal sensitivity */
 

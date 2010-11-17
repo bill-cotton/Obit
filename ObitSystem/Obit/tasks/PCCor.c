@@ -1210,10 +1210,11 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
 	  delay = dPhase / DFreq;
 
 	  /* Resolve ambiguity */
-	  temp = (-SBDelay[iAnt][i] - delay) * DFreq;
+	  temp = (delay - SBDelay[iAnt][i]) * DFreq;
 	  if (temp>0.0) n2pi = (olong)(temp + 0.5);
 	  else  n2pi = (olong)(temp - 0.5);
-	  /* DEBUG?? delay += n2pi / DFreq;*/
+	  n2pi = (olong)(temp);
+	  delay -= n2pi / DFreq;
 
 	  SNrow->Delay1[i]  = delay - SBDelay[iAnt][i] - SBDelay[refAnt-1][i];
 	  if (SNrow->antNo==refAnt)  SNrow->Delay1[i] = 0.;  /* Reference antenna = 0 */
@@ -1263,10 +1264,11 @@ void PC2SN (ObitInfoList *myInput, ObitUV *inData, ObitErr *err)
 	    delay = dPhase / DFreq;
 
 	    /* Resolve ambiguity */
-	    temp = (-SBDelay[iAnt][i+numIF] - delay) * DFreq;
+	    temp = (delay - SBDelay[iAnt][i+numIF]) * DFreq;
 	    if (temp>0.0) n2pi = (olong)(temp + 0.5);
 	    else  n2pi = (olong)(temp - 0.5);
-	    /* DEBUG?? delay += n2pi / DFreq;*/
+	    n2pi = (olong)(temp);
+	    delay -= n2pi / DFreq;
 	    
 	    SNrow->Delay2[i]  = delay - SBDelay[iAnt][i+numIF] - SBDelay[refAnt-1][i+numIF];
 	    if (SNrow->antNo==refAnt) SNrow->Delay2[i] = 0.;  /* Reference antenna = 0 */
