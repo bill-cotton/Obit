@@ -104,7 +104,7 @@ def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0], logfile=None):
     err      = Obit error/message stack
     blc      = bottom left corner pixel (1-rel)
     trc      = top right corner pixel (1-rel)
-    logfile  = file to write results to
+    logfile  = file to write results to, if None don't print
     """
     ################################################################
     # Read plane
@@ -131,15 +131,16 @@ def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0], logfile=None):
         beamarea = 1.1331*(head["beamMaj"]/abs(head["cdelt"][0])) * \
                    (head["beamMin"]/abs(head["cdelt"][1]))
         Flux = p.Sum/beamarea
-    mess =  "Image statistics:  Region Mean %g, RMSHist %g RMS %g" % (Mean, RMS, RawRMS)
-    printMess(mess, logfile)
-    mess =  "  Max %g @ pixel %s" % (Max, str(MaxPos))
-    printMess(mess, logfile)
-    mess = "  Min %g @ pixel %s" % (Min,  str(MinPos))
-    printMess(mess, logfile)
-    if (head["beamMaj"]>0.0) :
-        mess = "  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea)
+    if logfile:
+        mess =  "Image statistics:  Region Mean %g, RMSHist %g RMS %g" % (Mean, RMS, RawRMS)
         printMess(mess, logfile)
+        mess =  "  Max %g @ pixel %s" % (Max, str(MaxPos))
+        printMess(mess, logfile)
+        mess = "  Min %g @ pixel %s" % (Min,  str(MinPos))
+        printMess(mess, logfile)
+        if (head["beamMaj"]>0.0) :
+            mess = "  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea)
+            printMess(mess, logfile)
    
     # Reset BLC, TRC
     blc = [1,1,1,1,1]
@@ -1292,6 +1293,8 @@ def VLBAPCcor(uv, err, calSou=None,  timeRange=[0.,0.], FreqID=1, \
     pccor.prtLv        = 1
     pccor.taskLog      = logfile
     pccor.noScrat      = noScrat
+    pccor.debug        = debug
+    pccor.debug = True
     if debug:
         pccor.i
     # Trap failure
@@ -1510,21 +1513,21 @@ def VLBAManPCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None, CalModel=None,
     # End SNSmo
 
     # Filter to remove phase fluctuations, average delays
-    VLBARefMB(uv, SNver+1, err, logfile=logfile, check=check,debug=debug)
-    if err.isErr:
-        mess = "VLBARefMB Failed"
-        printMess(mess, logfile)
-        return 1
+    #?? VLBARefMB(uv, SNver+1, err, logfile=logfile, check=check,debug=debug)
+    #?? if err.isErr:
+    #??     mess = "VLBARefMB Failed"
+    #??     printMess(mess, logfile)
+    #??     return 1
     
     # Plot man p-cal corrections?
     if doManPCalPlot:
         # Phase corrections
-        retCode = VLBAPlotTab(uv, "SN", SNver, err, nplots=6, optype="PHAS", \
+        retCode = VLBAPlotTab(uv, "SN", SNver+1, err, nplots=6, optype="PHAS", \
                               logfile=logfile, check=check, debug=debug)
         if retCode!=0:
             return retCode
         # Delay corrections
-        retCode = VLBAPlotTab(uv, "SN", SNver, err, nplots=6, optype="DELA", \
+        retCode = VLBAPlotTab(uv, "SN", SNver+1, err, nplots=6, optype="DELA", \
                               logfile=logfile, check=check, debug=debug)
         if retCode!=0:
             return retCode
@@ -1728,7 +1731,7 @@ def VLBABPass(uv, BPCal, err, CalModel=None, newBPVer=1, timeRange=[0.,0.], \
     return 0
 # end VLBABPass
 
-def VLBASpecPlot(uv, goodCal, err, doband=0, plotFile="./spec.ps"):
+def VLBASpecPlot(uv, goodCal, err, doband=0, plotFile="./spec.ps", logfile = ""):
     """
     Plot amplitude and phase across the spectrum.
 
@@ -1737,6 +1740,7 @@ def VLBASpecPlot(uv, goodCal, err, doband=0, plotFile="./spec.ps"):
     err = Obit error object
     doband = do bandpass calibration before plotting (requires BP table)
     plotFile = name of output PS file
+    logfile  = Log file for task
     """
     # Remove any pre-existing PL tables
     tabdest(uv, "AIPS PL", -1)
@@ -1758,6 +1762,7 @@ def VLBASpecPlot(uv, goodCal, err, doband=0, plotFile="./spec.ps"):
     possm.aparm[9] = 3 # all IFs and pols in same frame
     possm.nplots = 2 # plot each baseline in seperate frame on page
     possm.ltype = 3 # include all labels
+    possm.logFile = logfile
     possm.go()
 
     # Setup and run LWPLA
@@ -1769,7 +1774,22 @@ def VLBASpecPlot(uv, goodCal, err, doband=0, plotFile="./spec.ps"):
     print "PL high ver = ", uv.GetHighVer("AIPS PL")
     lwpla.invers = uv.GetHighVer("AIPS PL")
     lwpla.outfile = plotFile
-    lwpla.go()
+    lwpla.logFile = logfile
+    # Trap failure
+    try:
+        if not check:
+            lwpla.g
+    except Exception, exception:
+        print exception
+        mess = "Lwpla Failed - continuing anyway"
+        printMess(mess, logfile)
+        # return 1  # Continue in spite of lwpla failure
+    else:
+        pass
+
+    # Remove any tables
+    tabdest(uv, "AIPS PL", -1)
+
 # end VLBASpecPlot
 
 def VLBAImageCals(uv, err,  FreqID=1, Sources=None, seq=1, sclass="ImgSC", \
@@ -4440,7 +4460,7 @@ def VLBARLCal2(uv, err, uv2 = None, \
                     h = x.Desc.Dict
                     blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
                     trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
-                    stat = imstat(x, err, blc=blc,trc=trc, logfile=logfile)
+                    stat = imstat(x, err, blc=blc,trc=trc)
                     IFlux.append(SumCC)
                     IRMS.append(stat["RMSHist"])
                     x.Zap(err)  # Cleanup
@@ -4449,7 +4469,7 @@ def VLBARLCal2(uv, err, uv2 = None, \
                     outClass="QPOLCL"
                     x =  Image.newPAImage("Q",outName, outClass, outDisk,outSeq,True,err)
                     SumCC = VLBAGetSumCC (x,err)
-                    stat = imstat(x, err, blc=blc,trc=trc, logfile=logfile)
+                    stat = imstat(x, err, blc=blc,trc=trc)
                     QFlux.append(SumCC)
                     QRMS.append(stat["RMSHist"])
                     x.Zap(err)  # Cleanup
@@ -4458,7 +4478,7 @@ def VLBARLCal2(uv, err, uv2 = None, \
                     outClass="UPOLCL"
                     x =  Image.newPAImage("U",outName, outClass, outDisk,outSeq,True,err)
                     SumCC = VLBAGetSumCC (x,err)
-                    stat = imstat(x, err, blc=blc,trc=trc, logfile=logfile)
+                    stat = imstat(x, err, blc=blc,trc=trc)
                     UFlux.append(SumCC)
                     URMS.append(stat["RMSHist"])
                     x.Zap(err)  # Cleanup
@@ -4479,7 +4499,7 @@ def VLBARLCal2(uv, err, uv2 = None, \
                     h = x.Desc.Dict
                     blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
                     trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
-                    stat = imstat(x, err, blc=blc,trc=trc, logfile=logfile)
+                    stat = imstat(x, err, blc=blc,trc=trc)
                     IFlux.append(SumCC)
                     IRMS.append(stat["RMSHist"])
                     x.Zap(err)  # Cleanup
@@ -4488,7 +4508,7 @@ def VLBARLCal2(uv, err, uv2 = None, \
                     outFile  = img.Sources[0].strip()+"ITEMPPOLCAL.fits"
                     x =  Image.newPFImage("Q",outFile,img.outDisk,True,err)
                     SumCC = VLBAGetSumCC (x,err)
-                    stat = imstat(x, err, blc=blc,trc=trc, logfile=logfile)
+                    stat = imstat(x, err, blc=blc,trc=trc)
                     QFlux.append(SumCC)
                     QRMS.append(stat["RMSHist"])
                     x.Zap(err)  # Cleanup
@@ -4497,7 +4517,7 @@ def VLBARLCal2(uv, err, uv2 = None, \
                     outFile  = img.Sources[0].strip()+"ITEMPPOLCAL.fits"
                     x =  Image.newPFImage("Q",outFile,img.outDisk,True,err)
                     SumCC = VLBAGetSumCC (x,err)
-                    stat = imstat(x, err, blc=blc,trc=trc, logfile=logfile)
+                    stat = imstat(x, err, blc=blc,trc=trc)
                     UFlux.append(SumCC)
                     URMS.append(stat["RMSHist"])
                     x.Zap(err)  # Cleanup
@@ -4648,6 +4668,109 @@ def VLBARLCal2(uv, err, uv2 = None, \
     return 0
     # end VLBARLCal2
 
+def VLBAReportTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
+                          Stokes="I", logfile='', check=False, debug=False):
+    """ Generate report info for a list of targets in AIPS files
+
+    Returns a report which is a list of dicts, each of which contains
+        "Source":   Source name
+        "ObsDate":  Observing date as "yyyy-mm-dd"
+        "RA"    :   Source RA (deg0 at standard equinox
+        "Dec"   :   Source Dec (deg) at standard equinox
+        "RAPnt" :   Antenna pointing RA (deg) at standard equinox
+        "DecPnt":   Antenna pointing Dec (deg) at standard equinox
+        "Freq" :    Reference frequency (Hz)
+        "numVis":   Number of visibilities (ignoring flagging)
+        "Size"  :   Width of image in deg (From Stokes I)
+        "Cells" :   Cell spacing in deg (From Stokes I)
+        "Exposure": Total integration time (day)
+        for each s in Stokes:
+            "sSum" : Sum of clean components in Jy
+            "sPeak": Peak pixel brightness in Jy
+            "sRMS" : RMS noise in inner quarter (Jy)
+            "sBeam": Beam (maj, min, PA) (deg)
+    
+    uv         = UV data object
+    err        = Python Obit Error/message stack
+    Sources    = Source name or list of names to use
+                 If an empty list all sources in uv are included
+    seq        = sequence number of images
+    sclass     = Image class, first character replaced with char in Stokes
+    FreqID     = Frequency group identifier
+    Stokes     = Stokes parameters of images
+    logfile    = logfile for messages
+    check      = Only check script, don't execute tasks
+    debug      = show input
+    """
+    ################################################################
+    mess = "Generate source statistics "
+    printMess(mess, logfile)
+
+    # If list empty get all sources
+    if type(Sources)==list:
+        sl = Sources
+    else:
+        sl = [Sources]
+
+    if len(sl)<=0:
+        slist = VLBAAllSource(uv,err,logfile=logfile,check=check,debug=debug)
+    else:
+        slist = sl
+    
+    # Init output
+    Report = []
+
+    # Image disk assumed same as uv
+    disk = uv.Disk
+    
+    # Loop over slist
+    for sou in slist:
+        sdict = {"Source":sou}  # Init source structure
+        # Image statistics, loop over Stokes
+        for s in Stokes:
+            klass = s+sclass[1:]
+            x = Image.newPAImage(s, sou, klass, disk, seq, True, err)
+            hd = x.Desc.Dict
+            sdict[s+"Beam"] = (hd["beamMaj"],hd["beamMin"],hd["beamPA"])
+            # Some from Stokes I only
+            if s == 'I':
+                sdict["Size"]    = hd["inaxes"][1]*hd["cdelt"][1]
+                sdict["Cells"]   = hd["cdelt"][1]
+                sdict["RA"]      = hd["crval"][0]
+                sdict["Dec"]     = hd["crval"][1]
+                sdict["RAPnt"]   = hd["obsra"]
+                sdict["DecPnt"]  = hd["obsdec"]
+                sdict["ObsDate"] = hd["obsdat"]
+                sdict["Freq"]    = hd["crval"][hd["jlocf"]]
+            blc = [hd["inaxes"][0]/4,hd["inaxes"][1]/4]
+            trc = [3*hd["inaxes"][0]/4,3*hd["inaxes"][1]/4]
+            stat = imstat(x,err,blc=blc,trc=trc)  # Image statistics inner quarter
+            sdict[s+"Peak"] = stat["Max"]
+            sdict[s+"RMS"]  = stat["RMSHist"]
+            sdict[s+"Sum"]  = VLBAGetSumCC(x, err, logfile=logfile, check=check, debug=debug)
+        # End stokes image loop
+        # Observing stats
+        obstat = VLBAGetTimes (uv, sou, err, logfile=logfile, check=check, debug=debug)
+        sdict["numVis"]   = obstat["numVis"]
+        sdict["Exposure"] = obstat["Exposure"]
+        Report.append(sdict)  # Save source info
+    # end loop over sources
+
+    # Give terse listing
+    for sdict in Report:
+        mess = "\n Source = "+sdict["Source"]+", Exposure="+"%5.3f"%(sdict["Exposure"]*24.)+" hr"
+        printMess(mess, logfile)
+        mess = "IPol Beam = ("+"%8.3f"%(sdict["IBeam"][0]*3600000.0)+", %8.3f"%(sdict["IBeam"][1]*3600000.0)+ \
+            ", %6.1f"%(sdict["IBeam"][2])+") mas, mas, deg"
+        printMess(mess, logfile)
+        for s in Stokes:
+            mess = "Stokes "+s+" Sum CC="+"%8.3f"%(sdict[s+"Sum"])+", Peak="+"%8.3f"%(sdict[s+"Peak"])+ \
+                ", RMS="+"%8.5f"%(sdict[s+"RMS"])+" Jy"
+            printMess(mess, logfile)
+    # End terse listing
+    return Report
+    # end VLBAReportTargets
+
 def VLBAGetSumCC(image, err, CCver=1,
                  logfile='', check=False, debug=False):
     """ Sum fluxes in a CC table
@@ -4695,6 +4818,82 @@ def VLBAGetSumCC(image, err, CCver=1,
     return sum
     # end VLBAGetSumCC
 
+def VLBAGetTimes(uv, Source, err, 
+                 logfile='', check=False, debug=False):
+    """ Lookup observing times and number of visibilities for a source
+    
+    Return dict {"numVis":no vis, "Exposure":Total integration time (day)}
+    uv         = UV data with AIPS SU and AIPS NX tables
+    Source     = Source to lookup
+    err        = Python Obit Error/message stack
+    logfile    = logfile for messages
+    check      = Only check script
+    debug      = Only debug - no effect
+    """
+    ################################################################
+    if check:
+        return {"numVis":0, "Exposure":0.0}
+    # Open and close uv to sync with disk 
+    uv.Open(UV.READONLY, err)
+    uv.Close(err)
+    
+    # Lookup Source ID (SouID)
+    SUtab = uv.NewTable(Table.READONLY, "AIPS SU", 1, err)
+    SUtab.Open(Table.READONLY, err)
+    if err.isErr:
+        return  {"numVis":0, "Exposure":0.0}
+    # Number of rows
+    nrow =  SUtab.Desc.Dict["nrow"]
+    for i in range (0,nrow):    # Loop over rows
+        SUrow = SUtab.ReadRow(i+1, err)
+        if err.isErr:
+            return  {"numVis":0, "Exposure":0.0}
+        SouID = SUrow["ID. NO."][0]
+        #if debug:
+        #    mess="Source "+Source+" test "+SUrow["SOURCE"][0]+" ID ="+str(SouID)+ \
+        #        " match="+str(SUrow["SOURCE"][0].rstrip()==Source.rstrip())
+        #    printMess(mess, logfile)
+        if SUrow["SOURCE"][0].rstrip()==Source.rstrip():   # This it?
+            break;
+    SUtab.Close(err)
+    if err.isErr:
+        return  {"numVis":0, "Exposure":0.0}
+    
+    # get observing stats from AIPS NX table
+    cntVis  = 0
+    sumTime = 0.0
+    NXTab = uv.NewTable(Table.READONLY, "AIPS NX", 1, err)
+    if err.isErr:
+        return 0.0
+    # Open
+    NXTab.Open(Table.READONLY, err)
+    if err.isErr:
+        return {"numVis":cntVis, "Exposure":sumTime}
+    # Number of rows
+    nrow    = NXTab.Desc.Dict["nrow"]
+    # Loop over table
+    for irow in range (1, nrow+1):
+        NXrow = NXTab.ReadRow(irow, err)
+        if err.isErr:
+            return {"numVis":cntVis, "Exposure":sumTime}
+        #  Is this the desired source?
+        if NXrow["SOURCE ID"][0]==SouID:
+            sumTime += NXrow["TIME INTERVAL"][0]
+            cntVis  += NXrow["END VIS"][0] - NXrow["START VIS"][0] + 1
+    # End loop over table
+    # Close table
+    NXTab.Close(err)
+    if err.isErr:
+        return {"numVis":cntVis, "Exposure":sumTime}
+
+    if debug:
+        mess="VLBAGetTimes: Source "+Source+"="+str(SouID)+" numVis="+str(cntVis)+ \
+            " Integration time = "+"%5.3f"%(sumTime*24.)+" hr"
+        printMess(mess, logfile)
+ 
+    return {"numVis":cntVis, "Exposure":sumTime}
+    # end VLBAGetTimes
+
 def VLBARefMB(uv, SNver, err, smoTime=1.0e20, \
               logfile='', check=False, debug=False):
     """ Average delays and reference phases to first IF
@@ -4713,6 +4912,8 @@ def VLBARefMB(uv, SNver, err, smoTime=1.0e20, \
     debug      = Only debug - no effect
     """
     ################################################################
+    mess = "VLBARefMB: Filter SN "+str(SNver)+" to remove phase fluctuations, average delays"
+    printMess(mess, logfile)
     # Open and close uv to sync with disk 
     uv.Open(UV.READONLY, err)
     uv.Close(err)
@@ -5164,22 +5365,29 @@ def VLBADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
             if os.path.exists(outfile): os.remove(outfile) 
     
             if not check:
-                lwpla.go()
-
-            if JPEG:
-                # Convert PS to JPG
-                jpg = outfile[:-3]+'.jpg'
-                printMess('Converting '+outfile+' -> '+jpg,logfile)
-                cmd = 'convert -depth 96 '+outfile+' '+outfile[:-3]+'.jpg'
-                rtn = os.system(cmd)
-                if rtn == 0: 
-                    if cleanUp: 
-                        os.remove(outfile) # Remove the PS file
+                # Trap failure
+                try:
+                    if not check:
+                        lwpla.g
+                except Exception, exception:
+                    print exception
+                    mess = "Lwpla Failed - continuing anyway"
+                    printMess(mess, logfile)
                 else:
-                    # Print error message and leave the PS file
-                    mess="Error occurred while converting PS to JPG"
-                    printMess(mess,logfile)
-
+                    if JPEG:
+                        # Convert PS to JPG
+                        jpg = outfile[:-3]+'.jpg'
+                        printMess('Converting '+outfile+' -> '+jpg,logfile)
+                        cmd = 'convert -depth 96 '+outfile+' '+outfile[:-3]+'.jpg'
+                        rtn = os.system(cmd)
+                        if rtn == 0: 
+                            if cleanUp: 
+                                os.remove(outfile) # Remove the PS file
+                            else:
+                                # Print error message and leave the PS file
+                                mess="Error occurred while converting PS to JPG"
+                                printMess(mess,logfile)
+    
     if cleanUp:
         printMess('Cleaning up temporary data',logfile)
         if not check:
@@ -5249,5 +5457,17 @@ def VLBAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
         name = image.Aname.rstrip() # Image name w/o whitespace
         outfile = project+session+band+name+'.cntr.ps'
         lwpla.outfile = './'+outfile # output to current directory
-        lwpla.go()
+        # Trap failure
+        try:
+            if not check:
+                lwpla.g
+        except Exception, exception:
+            print exception
+            mess = "Lwpla Failed - continuing anyway"
+            printMess(mess, logfile)
+        else:
+            pass
+        # Delete plot files
+        if not check:
+            zz=image.ZapTable("AIPS PL", -1,err)
     # end VLBACntrPlots

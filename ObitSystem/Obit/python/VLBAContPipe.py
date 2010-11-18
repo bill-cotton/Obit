@@ -168,6 +168,7 @@ doCleanup     = True       # Destroy AIPS files
 doSNPlot      = True       # Plot SN tables etc
 doDiagPlots   = True       # Plot single source diagnostics
 prtLv         = 2          # Amount of task print diagnostics
+doReport      = True       # Individual source report2
 
 ############################# Set Project Processing parameters ##################
 parmFile = sys.argv[2]
@@ -310,7 +311,7 @@ if doPCcor and not check:
 # Plot amplitude and phase vs. frequency
 if doSpecPlot:
     plotFile = "./"+project+session+band+".PCcor.spec.ps"
-    VLBASpecPlot( uv, goodCal, err, doband=0, plotFile=plotFile )
+    VLBASpecPlot( uv, goodCal, err, doband=0, plotFile=plotFile, logfile=logFile )
 
 # manual phase cal
 if doManPCal and not check:
@@ -328,7 +329,7 @@ if doManPCal and not check:
 # Plot amplitude and phase vs. frequency
 if doSpecPlot:
     plotFile = "./"+project+session+band+".ManPCal.spec.ps"
-    VLBASpecPlot( uv, goodCal, err, doband=0, plotFile=plotFile )
+    VLBASpecPlot( uv, goodCal, err, doband=0, plotFile=plotFile, logfile=logFile )
 
 # Bandpass calibration if needed
 if doBPCal and not check:
@@ -345,7 +346,7 @@ if doBPCal and not check:
 # Plot amplitude and phase vs. frequency
 if doSpecPlot:
     plotFile = "./"+project+session+band+".spec.ps"
-    VLBASpecPlot( uv, goodCal, err, doband=1, plotFile=plotFile )
+    VLBASpecPlot( uv, goodCal, err, doband=1, plotFile=plotFile, logfile=logFile )
 
 # image cals
 if doImgCal and not check:
@@ -491,7 +492,21 @@ if doImgFullTarget:
                   nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in imaging targets"
-    
+
+# Get report on sources
+if doReport:
+    if not uvc:
+        # Get calibrated/averaged data
+        Aname = VLBAAIPSName(project, session)
+        uvc = UV.newPAUV("AIPS UV DATA", Aname, avgClass, disk, seq, True, err)
+        if err.isErr:
+            OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
+    Report = VLBAReportTargets(uvc, err, Sources=targets, seq=seq, sclass=outIclass, \
+                                   Stokes=Stokes, logfile=logFile, check=check, debug=debug)
+    # Save to pickle jar
+    ReportPicklefile = "./"+project+"_"+session+"_"+band+"Report.pickle"   # Where results saved
+    SaveObject(Report, ReportPicklefile, True) 
+   
 # cleanup
 mess ="Write results/Cleanup" 
 printMess(mess, logFile)
