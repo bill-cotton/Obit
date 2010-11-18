@@ -3071,6 +3071,11 @@ ParseASDMcalDeviceTable(ObitSDMData *me,
 	out->rows[irow]->timeInterval[1] -= mjdJD0;
       continue;
     }
+    prior = "<numCalload>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numCalLoad = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
     prior = "<calLoadNames>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->calLoadNames = ASDMparse_strarray (line, maxLine, prior, &next);
@@ -5422,7 +5427,7 @@ static ASDMScanRow* KillASDMScanRow(ASDMScanRow* row)
     g_free(row->scanIntent);
   }
   if (row->calDataType) {
-    n = row->numSubScan;
+    n = row->numIntent;
     for (i=0; i<n; i++) {
       if (row->calDataType[i]==NULL) break;
       if (row->calDataType[i]) g_free(row->calDataType[i]);

@@ -716,7 +716,7 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   olong nchan=1, npoln=1, nIF=1;
   odouble refFreq, startFreq=1.0;
   ofloat freqStep=1.0;
-  ASDMSpectralWindowArray* SpWinArray;
+  ASDMSpectralWindowArray* SpWinArray=NULL;
   ASDMAntennaArray*  AntArray;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -815,6 +815,7 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
  
  /* Define output descriptor */
   desc = outData->myDesc;
+  SpWinArray = ObitSDMDataKillSWArray (SpWinArray);  /* Free old */
   /* Extract ASDM data  */
   SpWinArray  = ObitSDMDataGetSWArray (SDMData, iScan, SWOrder);
   Obit_return_if_fail((SpWinArray), err,
@@ -1668,12 +1669,12 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iScan,
 
     /* Grumble, grumble, lookup velocity info for first line in other SWs */
     for (i=1; i<numIF; i++) {
-      SourceID = SourceArray->sou[iRow]->sourceNo;
-      for (jSU=iRow; jSU<SourceArray->nsou; jSU++) {
+      SourceID = SourceArray->sou[iRow]->sourceId;
+      for (jSU=iRow+i; jSU<SourceArray->nsou; jSU++) {
 	if (SourceArray->sou[jSU]->sourceId==SourceID) break;
       }
       if (jSU<SourceArray->nsou) {
-	isDone[iRow] = TRUE;    /* Mark as done */
+	isDone[jSU] = TRUE;    /* Mark as done */
 	if (SourceArray->sou[jSU]->sysVel)
 	  outRow->LSRVel[i]   = SourceArray->sou[jSU]->sysVel[0];
 	else
