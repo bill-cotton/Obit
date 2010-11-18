@@ -567,7 +567,7 @@ def newPFImage(name, filename, disk, exists, err, verbose=True):
     # end newPFImage
 
     
-def newPAImage(name, Aname, Aclass, disk, seq, exists, err, verbose=True):
+def newPAImage(name, Aname, Aclass, disk, seq, exists, err, verbose=False):
     """ Create and initialize an AIPS based Image structure
 
     Create, set initial access information (full image, plane at a time)
