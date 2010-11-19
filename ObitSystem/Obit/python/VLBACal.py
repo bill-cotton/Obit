@@ -7,6 +7,9 @@ from AIPS import AIPS
 from FITS import FITS
 from AIPSDir import AIPSdisks, nAIPS
 from OTObit import Acat, AMcat, getname, zap, imhead, tabdest
+from datetime import date
+from sys import version
+from subprocess import Popen, PIPE
 import re
 
 def setname (inn, out):
@@ -5471,3 +5474,110 @@ def VLBAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
         if not check:
             zz=image.ZapTable("AIPS PL", -1,err)
     # end VLBACntrPlots
+
+def VLBAReportMultisource( uv, AIPS_VERSION, err, contCals=[None], goodCal={}, 
+    project='project', session='session', band='band', logfile='', debug=False ):
+    """
+    Return a 'report' on the multisource data as a dictionary. Contents:
+      "project"     : observation project name 
+      "session"     : observation project session
+      "band"        : receiver band code
+      "obsDate"     : observation date
+      "procDate"    : pipeline processing date
+      "obitVer"     : Obit version (TBD)
+      "aipsVer"     : AIPS version
+      "pyVer"       : Python version
+      "sysInfo"     : system information on processing machine (uname -a)
+      "contCals"    : continuum calibrators
+      "goodCal"     : good calibrator data 
+      "anNames"     : names of all antennas used
+      "freqCov"     : frequency coverage (low & up sideband pairs for all IFs)
+      "minFringeMas": minimum fringe spacing (mas)
+
+    uv = uv data object for which the report will be generated
+    AIPS_VERSION = AIPS version information
+    err = Python Obit Error/message stack
+    contCals = list of continuum calibrators
+    goodCal = dictionary output of VLBAGoodCal
+    project = Observation project name
+    session = Observation project session
+    band = receiver band code
+    logfile = file to use for logging
+    debug = run in debug mode
+    """
+    r = {} 
+    r["project"] = project
+    r["session"] = session
+    r["band"] = band # Receiver band code
+    r["obsDate"] = uv.Desc.Dict["obsdat"] # observation date
+    r["procDate"] = str( date.today() ) # processing date
+    r["obitVer"] = "" # obit version
+    r["aipsVer"] = AIPS_VERSION # AIPS version
+    r["pyVer"] = version # python version
+    p = Popen("uname -a", shell=True, stdout=PIPE).stdout # get sys info
+    r["sysInfo"] = p.read()
+
+    r["contCals"] = contCals # list of continuum calibrators
+    r["goodCal"] = goodCal # Output of VLBAGoodCal: best calibrator, best ref ant
+
+    # Get antenna names and positions
+    antab = uv.NewTable(Table.READONLY,"AIPS AN",1,err)
+    antab.Open(Table.READONLY,err)
+    OErr.printErrMsg(err) # catch table open errors
+    nrow = antab.Desc.Dict["nrow"]
+    annames = []
+    anpos = []
+    for i in range(1,nrow+1):
+        anrow = antab.ReadRow(i, err)
+        name = anrow["ANNAME"][0].rstrip()
+        annames.append( name )
+        pos = anrow["STABXYZ"]
+        anpos.append( pos )
+    antab.Close(err)
+    r["anNames"] = annames # list of antennas used
+
+    # Get the frequency coverage
+    d = uv.Desc.Dict # UV data descriptor dictionary
+    refFreq = d["crval"][ d["jlocf"] ] # reference frequency
+    fqtab = uv.NewTable(Table.READONLY,"AIPS FQ",1,err)
+    fqtab.Open(Table.READONLY,err)
+    OErr.printErrMsg(err) # catch table open errors
+    nrow = fqtab.Desc.Dict["nrow"]
+    freqCov = []
+    for i in range(1,nrow+1):
+        fqrow = fqtab.ReadRow(i, err)
+        freq = fqrow["IF FREQ"]
+        bw = fqrow["TOTAL BANDWIDTH"]
+        sb = fqrow["SIDEBAND"] # +1 => 'IF FREQ' is upper-side band; -1 => lower-side band
+        for i in range( len(freq) ):
+            f1 = refFreq + freq[i] # 1st bound of IF
+            f2 = f1 + sb[i] * bw[i] # 2nd bound of IF
+            fc = [ f1, f2 ]
+            fc.sort()
+            freqCov.append( fc ) # sort bounds and add to list
+    fqtab.Close(err)
+    r["freqCov"] = freqCov
+    
+    # Calculate the minimum fringe spacing
+    maxBl = 0 # maximum baseline length
+    maxBlAnt = [] # antenna indices forming maximum baseline
+    for (i, p1) in enumerate( anpos ):
+        for (j, p2) in enumerate( anpos ):
+            if i == j: continue
+            dpos = [0, 0, 0]
+            for k in range(3):
+                dpos[k] = p1[k] - p2[k]
+            # Baseline length in meters
+            bl = ( dpos[0]**2 + dpos[1]**2 + dpos[2]**2 )**(0.5)
+            if bl > maxBl:
+                maxBl = bl
+                maxBlAnt = [i, j]
+    # r["maxBl"] = [ annames[ maxBlAnt[0] ], # antennas forming max baseline
+    #                annames[ maxBlAnt[1] ] ]
+    lightSpeed = 299792458 # ( meters / second)
+    wavelength = lightSpeed / refFreq
+    maxBlWavelength = maxBl / wavelength # max baseline (units of wavelength)
+    # minimum fringe spacing (mas)
+    r["minFringeMas"] = 1 / maxBlWavelength / 4.8481368e-9 
+    return r
+# end VLBAReport
