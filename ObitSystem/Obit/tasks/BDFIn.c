@@ -1516,12 +1516,13 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iScan,
   ObitTableSU*       outTable=NULL;
   ObitTableSURow*    outRow=NULL;
   ObitSource *source=NULL;
-  olong i, jSU, lim, iRow, oRow, ver, SourceID, lastSID=-1, iSW, SWId;
+  olong i, j, jSU, lim, iRow, oRow, ver, SourceID, lastSID=-1, iSW, SWId;
   oint numIF;
   ObitIOAccess access;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gboolean *isDone=NULL, doCode=TRUE;
+  gboolean *isDone=NULL, doCode=TRUE, doneIt;
+  olong *souNoList=NULL, nSouDone=0;
   gchar *blank = "        ";
   gchar *routine = "GetSourceInfo";
 
@@ -1603,8 +1604,13 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iScan,
   }
   outRow->status    = 0;
 
+  /* Flags if table row done */
   isDone = g_malloc0(SourceArray->nsou*sizeof(gboolean));
   for (iRow=0; iRow<SourceArray->nsou; iRow++) isDone[iRow] = FALSE;
+
+  /* List of source numbers already processed */
+  souNoList = g_malloc0(SourceArray->nsou*sizeof(olong));
+  for (iRow=0; iRow<SourceArray->nsou; iRow++) souNoList[iRow] = 0;
 
   /* loop through input table */
   for (iRow=0; iRow<SourceArray->nsou; iRow++) {
@@ -1621,6 +1627,17 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iScan,
     /* Not found or not selected? */
     if ((iSW>=SpWinArray->nwinds) || (!SpWinArray->winds[iSW]->selected)) 
       continue; 
+
+    /* Is this a duplicate? */
+    doneIt = FALSE;
+    for (j=0; j<nSouDone; j++) {
+      if (SourceArray->sou[iRow]->sourceNo==souNoList[j]) {
+	doneIt = TRUE;
+	break;
+      }
+    }
+    if (doneIt) continue;
+    souNoList[nSouDone++] = SourceArray->sou[iRow]->sourceNo;
 
     /* Set output row  */
     outRow->SourID    = SourceArray->sou[iRow]->sourceNo;
@@ -1711,7 +1728,8 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iScan,
   SpWinArray  = ObitSDMDataKillSWArray (SpWinArray);
   outRow      = ObitTableSURowUnref(outRow);
   outTable    = ObitTableSUUnref(outTable);
-  if (isDone) g_free(isDone);
+  if (isDone)    g_free(isDone);
+  if (souNoList) g_free(souNoList);
 
 } /* end  GetSourceInfo */
 

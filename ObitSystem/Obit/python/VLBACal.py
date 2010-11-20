@@ -389,7 +389,7 @@ def VLBACopyFG(uv, err, logfile='', check=False, debug = False):
     taco.inTab    = "AIPS FG"
     taco.inVer    = 1
     taco.outVer   = 2
-    taco.logFile = logfile
+    taco.taskLog = logfile
     if debug:
         taco.debug = debug
         taco.i
@@ -430,7 +430,7 @@ def VLBACopyTable(inObj, outObj, inTab, err, inVer=1, outVer=0,
     taco.inTab    = inTab
     taco.inVer    = inVer
     taco.outVer   = outVer
-    taco.logFile  = logfile
+    taco.taskLog  = logfile
     if debug:
         taco.debug = debug
         taco.i
@@ -1899,15 +1899,15 @@ def VLBAImageCals(uv, err,  FreqID=1, Sources=None, seq=1, sclass="ImgSC", \
         scmap.Sources[0] = sou
         mess = "Image/selfcal "+sou
         printMess(mess, logfile)
-        # Trap failure
+        # Trap failure, tolerate
         try:
             if not check:
                 scmap.g
         except Exception, exception:
             print exception
-            mess = "SCMap Failed retCode= "+str(scmap.retCode)
+            mess = "SCMap Failed retCode= "+str(scmap.retCode)+" for "+sou
             printMess(mess, logfile)
-            return 1
+            OErr.PClear(err)
         else:
             pass
         # Save SN table and delete SCMap file if not debug
@@ -2025,20 +2025,21 @@ def VLBAImageTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
         imager.prtLv = 5
         imager.i
         imager.debug = debug
+        imager.debug = True
     # Loop over slist
     for sou in slist:
         imager.Sources[0] = sou
         mess = "Image "+sou
         printMess(mess, logfile)
-        # Trap failure
+        # Trap failure, tolerate
         try:
             if not check:
                 imager.g
         except Exception, exception:
             print exception
-            mess = "Imager Failed retCode= "+str(imager.retCode)
+            mess = "Imager Failed retCode= "+str(imager.retCode)+" for "+sou
             printMess(mess, logfile)
-            return 1
+            OErr.PClear(err)
         else:
             pass
         # delete Imager file if not debug
@@ -3241,6 +3242,8 @@ def VLBAMedianFlag(uv, target, err, \
     logfile  = Log file for task
     """
     ################################################################
+    mess = "Median window flag data"
+    printMess(mess, logfile)
     medn=ObitTask.ObitTask("MednFlag")
     setname(uv,medn)
     if type(target)==list:
@@ -3307,6 +3310,8 @@ def VLBAQuack(uv, err, \
     logfile  = Log file for task
     """
     ################################################################
+    mess = "Quack data"
+    printMess(mess, logfile)
     # Anything to do?
     if (begDrop<=0) and (endDrop<=0):
         return 0
@@ -3388,6 +3393,8 @@ def VLBAAutoFlag(uv, target, err, \
     logfile    = Log file for task
     """
     ################################################################
+    mess = "AutoFlag data"
+    printMess(mess, logfile)
     af=ObitTask.ObitTask("AutoFlag")
     if not check:
         setname(uv,af)
@@ -3474,6 +3481,8 @@ def VLBACal(uv, target, ACal, err, \
     logfile  = Log file for tasks
      """
     ################################################################
+    mess = "Amplitude and phase cal data"
+    printMess(mess, logfile)
 
     # Run SetJy
     setjy = ObitTask.ObitTask("SetJy")
@@ -3783,8 +3792,10 @@ def VLBACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
     debug      = Run tasks debug, show input
     """
     ################################################################
+    mess = "Calibrate/Average data"
+    printMess(mess, logfile)
     splat=ObitTask.ObitTask("Splat")
-    splat.logFile = logfile
+    splat.taskLog = logfile
     if not check:
         setname(uv,splat)
     splat.doCalib  = doCalib
@@ -4100,6 +4111,8 @@ def VLBAPolCal(uv, InsCals, err, \
     logfile  = Log file for task
     """
     ################################################################
+    mess = "Instrumental polarization calibration of data"
+    printMess(mess, logfile)
     # Need to set flux densities?
     if doSetJy:
         setjy=ObitTask.ObitTask("SetJy")
@@ -4216,6 +4229,8 @@ def VLBARLCal(uv, err, RLPCal=None, \
     debug    = Run tasks debug, show input
     """
     ################################################################
+    mess = "R-L Phase bandpass calibration"
+    printMess(mess, logfile)
     # Anything to do?
     if (not RLPCal) or (len(RLPCal)<=0):
         return 0
@@ -4317,6 +4332,8 @@ def VLBARLCal2(uv, err, uv2 = None, \
     debug    = Run tasks debug, show input
     """
     ################################################################
+    mess = "R-L Delay and Phase calibration"
+    printMess(mess, logfile)
     # Want R-L delay cal?
     if RLDCal!=None:
         rldly=ObitTask.AIPSTask("rldly")
@@ -4676,17 +4693,20 @@ def VLBAReportTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", 
     """ Generate report info for a list of targets in AIPS files
 
     Returns a report which is a list of dicts, each of which contains
-        "Source":   Source name
-        "ObsDate":  Observing date as "yyyy-mm-dd"
-        "RA"    :   Source RA (deg0 at standard equinox
-        "Dec"   :   Source Dec (deg) at standard equinox
+        "Source":    Source name
+        "haveImage": True if images were made, 
+        "ObsDate":   Observing date as "yyyy-mm-dd"
+        "numVis":    Number of visibilities (ignoring flagging)
+        "Exposure":  Total integration time (day)
+        "RA"    :    Source RA (deg) at standard equinox
+        "Dec"   :    Source Dec (deg) at standard equinox
+    following present if haveImage True
         "RAPnt" :   Antenna pointing RA (deg) at standard equinox
         "DecPnt":   Antenna pointing Dec (deg) at standard equinox
-        "Freq" :    Reference frequency (Hz)
-        "numVis":   Number of visibilities (ignoring flagging)
+        "Freq"  :   Reference frequency (Hz)
+        "BW"    :   Image bandwidth (Hz)
         "Size"  :   Width of image in deg (From Stokes I)
         "Cells" :   Cell spacing in deg (From Stokes I)
-        "Exposure": Total integration time (day)
         for each s in Stokes:
             "sSum" : Sum of clean components in Jy
             "sPeak": Peak pixel brightness in Jy
@@ -4725,10 +4745,23 @@ def VLBAReportTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", 
 
     # Image disk assumed same as uv
     disk = uv.Disk
-    
+    user = OSystem.PGetAIPSuser()
+
     # Loop over slist
     for sou in slist:
-        sdict = {"Source":sou}  # Init source structure
+        sdict = {"Source":sou, "haveImage":False}  # Init source structure
+        sdict["ObsDate"]  = uv.Desc.Dict["obsdat"]
+        # Observing stats
+        obstat = VLBAGetTimes (uv, sou, err, logfile=logfile, check=check, debug=debug)
+        sdict["numVis"]   = obstat["numVis"]
+        sdict["Exposure"] = obstat["Exposure"]
+        sdict["RA"]       = obstat["RA"]
+        sdict["Dec"]      = obstat["Dec"]
+        # Test if image exists
+        cno = AIPSDir.PTestCNO(disk, user, sou, Stokes[0:1]+sclass[1:], "MA", seq, err)
+        if cno <= 0 :
+            Report.append(sdict)  # Save source info
+            continue
         # Image statistics, loop over Stokes
         for s in Stokes:
             klass = s+sclass[1:]
@@ -4737,25 +4770,23 @@ def VLBAReportTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", 
             sdict[s+"Beam"] = (hd["beamMaj"],hd["beamMin"],hd["beamPA"])
             # Some from Stokes I only
             if s == 'I':
+                sdict["haveImage"] = True
                 sdict["Size"]    = hd["inaxes"][1]*hd["cdelt"][1]
                 sdict["Cells"]   = hd["cdelt"][1]
-                sdict["RA"]      = hd["crval"][0]
-                sdict["Dec"]     = hd["crval"][1]
                 sdict["RAPnt"]   = hd["obsra"]
                 sdict["DecPnt"]  = hd["obsdec"]
-                sdict["ObsDate"] = hd["obsdat"]
                 sdict["Freq"]    = hd["crval"][hd["jlocf"]]
+                sdict["BW"]      = hd["cdelt"][hd["jlocf"]]
             blc = [hd["inaxes"][0]/4,hd["inaxes"][1]/4]
             trc = [3*hd["inaxes"][0]/4,3*hd["inaxes"][1]/4]
             stat = imstat(x,err,blc=blc,trc=trc)  # Image statistics inner quarter
-            sdict[s+"Peak"] = stat["Max"]
+            if abs(stat["Max"]) >  abs(stat["Min"]):
+                sdict[s+"Peak"] = stat["Max"]
+            else:
+                sdict[s+"Peak"] = stat["Min"]
             sdict[s+"RMS"]  = stat["RMSHist"]
             sdict[s+"Sum"]  = VLBAGetSumCC(x, err, logfile=logfile, check=check, debug=debug)
         # End stokes image loop
-        # Observing stats
-        obstat = VLBAGetTimes (uv, sou, err, logfile=logfile, check=check, debug=debug)
-        sdict["numVis"]   = obstat["numVis"]
-        sdict["Exposure"] = obstat["Exposure"]
         Report.append(sdict)  # Save source info
     # end loop over sources
 
@@ -4763,14 +4794,16 @@ def VLBAReportTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", 
     for sdict in Report:
         mess = "\n Source = "+sdict["Source"]+", Exposure="+"%5.3f"%(sdict["Exposure"]*24.)+" hr"
         printMess(mess, logfile)
-        mess = "IPol Beam = ("+"%8.3f"%(sdict["IBeam"][0]*3600000.0)+", %8.3f"%(sdict["IBeam"][1]*3600000.0)+ \
-            ", %6.1f"%(sdict["IBeam"][2])+") mas, mas, deg"
-        printMess(mess, logfile)
-        for s in Stokes:
-            mess = "Stokes "+s+" Sum CC="+"%8.3f"%(sdict[s+"Sum"])+", Peak="+"%8.3f"%(sdict[s+"Peak"])+ \
-                ", RMS="+"%8.5f"%(sdict[s+"RMS"])+" Jy"
+        if sdict["haveImage"]:
+            mess = "IPol Beam = ("+"%8.3f"%(sdict["IBeam"][0]*3600000.0)+", %8.3f"%(sdict["IBeam"][1]*3600000.0)+ \
+                ", %6.1f"%(sdict["IBeam"][2])+") mas, mas, deg"
             printMess(mess, logfile)
+            for s in Stokes:
+                mess = "Stokes "+s+" Sum CC="+"%8.3f"%(sdict[s+"Sum"])+", Peak="+"%8.3f"%(sdict[s+"Peak"])+ \
+                    ", RMS="+"%8.5f"%(sdict[s+"RMS"])+" Jy"
+                printMess(mess, logfile)
     # End terse listing
+
     return Report
     # end VLBAReportTargets
 
@@ -4825,7 +4858,8 @@ def VLBAGetTimes(uv, Source, err,
                  logfile='', check=False, debug=False):
     """ Lookup observing times and number of visibilities for a source
     
-    Return dict {"numVis":no vis, "Exposure":Total integration time (day)}
+    Return dict {"numVis":no vis, "Exposure":Total integration time (day),
+                 "RA": RA@equinox, "Dec" Dec@equinox}
     uv         = UV data with AIPS SU and AIPS NX tables
     Source     = Source to lookup
     err        = Python Obit Error/message stack
@@ -4835,7 +4869,7 @@ def VLBAGetTimes(uv, Source, err,
     """
     ################################################################
     if check:
-        return {"numVis":0, "Exposure":0.0}
+        return {"numVis":0, "Exposure":0.0, "RA":0.0, "Dec":0.0}
     # Open and close uv to sync with disk 
     uv.Open(UV.READONLY, err)
     uv.Close(err)
@@ -4844,14 +4878,16 @@ def VLBAGetTimes(uv, Source, err,
     SUtab = uv.NewTable(Table.READONLY, "AIPS SU", 1, err)
     SUtab.Open(Table.READONLY, err)
     if err.isErr:
-        return  {"numVis":0, "Exposure":0.0}
+        return  {"numVis":0, "Exposure":0.0, "RA":0.0, "Dec":0.0}
     # Number of rows
     nrow =  SUtab.Desc.Dict["nrow"]
     for i in range (0,nrow):    # Loop over rows
         SUrow = SUtab.ReadRow(i+1, err)
         if err.isErr:
-            return  {"numVis":0, "Exposure":0.0}
+            return  {"numVis":0, "Exposure":0.0, "RA":0.0, "Dec":0.0}
         SouID = SUrow["ID. NO."][0]
+        RA    = SUrow["RAEPO"][0]
+        Dec   = SUrow["DECEPO"][0]
         #if debug:
         #    mess="Source "+Source+" test "+SUrow["SOURCE"][0]+" ID ="+str(SouID)+ \
         #        " match="+str(SUrow["SOURCE"][0].rstrip()==Source.rstrip())
@@ -4860,25 +4896,25 @@ def VLBAGetTimes(uv, Source, err,
             break;
     SUtab.Close(err)
     if err.isErr:
-        return  {"numVis":0, "Exposure":0.0}
+        return  {"numVis":0, "Exposure":0.0, "RA":RA, "Dec":Dec}
     
     # get observing stats from AIPS NX table
     cntVis  = 0
     sumTime = 0.0
     NXTab = uv.NewTable(Table.READONLY, "AIPS NX", 1, err)
     if err.isErr:
-        return 0.0
+        return {"numVis":0, "Exposure":0.0, "RA":RA, "Dec":Dec}
     # Open
     NXTab.Open(Table.READONLY, err)
     if err.isErr:
-        return {"numVis":cntVis, "Exposure":sumTime}
+        return {"numVis":cntVis, "Exposure":sumTime, "RA":RA, "Dec":Dec}
     # Number of rows
     nrow    = NXTab.Desc.Dict["nrow"]
     # Loop over table
     for irow in range (1, nrow+1):
         NXrow = NXTab.ReadRow(irow, err)
         if err.isErr:
-            return {"numVis":cntVis, "Exposure":sumTime}
+            return {"numVis":cntVis, "Exposure":sumTime, "RA":RA, "Dec":Dec}
         #  Is this the desired source?
         if NXrow["SOURCE ID"][0]==SouID:
             sumTime += NXrow["TIME INTERVAL"][0]
@@ -4887,14 +4923,14 @@ def VLBAGetTimes(uv, Source, err,
     # Close table
     NXTab.Close(err)
     if err.isErr:
-        return {"numVis":cntVis, "Exposure":sumTime}
+        return {"numVis":cntVis, "Exposure":sumTime, "RA":RA, "Dec":Dec}
 
     if debug:
         mess="VLBAGetTimes: Source "+Source+"="+str(SouID)+" numVis="+str(cntVis)+ \
             " Integration time = "+"%5.3f"%(sumTime*24.)+" hr"
         printMess(mess, logfile)
  
-    return {"numVis":cntVis, "Exposure":sumTime}
+    return {"numVis":cntVis, "Exposure":sumTime, "RA":RA, "Dec":Dec}
     # end VLBAGetTimes
 
 def VLBARefMB(uv, SNver, err, smoTime=1.0e20, \

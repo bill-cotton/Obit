@@ -103,6 +103,8 @@ Parms                              [0]: Pixel to which SysVel
                                         multiply the calculated
                                         fluxes by Parms[2] with
                                         0 -> 1
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
 ----------------------------------------------------------------
 SetJy
 Note: Adopted from AIPS and may not be entirely correct
@@ -189,6 +191,11 @@ Adverbs:
                   from the VLA measurements to account for resolution
                   effects.  If 0 < Parms[2] <= 2.0, the computed flux
                   is multipled by Parms[2].
+  taskLog.....Log file to write messages to INSTEAD of the terminal
+              This is useful in long runs or batch files where
+              a bug in the ObitTalk message handling may cause
+              tasks to hang.  Path is absolute or relative to where
+              the task executes.
 ----------------------------------------------------------------
 SetJy: Enter Source Flux Density and Calcode into the AIPS SU Table.
        Other source parameters may also be entered.

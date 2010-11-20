@@ -250,6 +250,7 @@ ObitIOCode ObitTableFQSelect (ObitUV *inUV, ObitUV *outUV, odouble *SouIFOff,
   nchAvg = 1;
   ObitInfoListGetTest(inUV->info, "NumChAvg",  &type, dim, &nchAvg);  
   nchAvg = MAX (1,nchAvg);
+  nchAvg = MIN (nchAvg, inUV->myDesc->inaxes[inUV->myDesc->jlocf]);
 
   /* Should only be one FQ table */
   iFQver = 1;

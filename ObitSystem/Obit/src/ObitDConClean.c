@@ -640,6 +640,7 @@ void  ObitDConCleanGetParms (ObitDCon *inn, ObitErr *err)
  * \param in   The CLEAN object, info may have CLEAN Boxes:
  * \li "CLEANBox"   OBIT_long [4,?]  = Array of Clean boxes for field 1
  *    Any entries with first element=0 are ignored.
+ *    If round and position<=0 then center 
  *
  * \param err Obit error stack object.
  */
@@ -673,8 +674,8 @@ void ObitDConCleanDefWindow(ObitDConClean *in, ObitErr *err)
       j = 0;
       for (i=0; i<dim[1]; i++) {
 	/* Default if all zero */
-	if ((winArray[j]!=0) && (winArray[j+1]!=0) && 
-	    (winArray[j+2]!=0) && (winArray[j+2]!=0)) {
+	if (!((winArray[j]==0) && (winArray[j+1]==0) && 
+	      (winArray[j+2]==0) && (winArray[j+2]==0))) {
 	  /* Round or rectangular? ignore if first element = 0 */
 	  if (winArray[j]>0) { /* rectangular */
 	    type = OBIT_DConCleanWindow_rectangle;
@@ -687,8 +688,16 @@ void ObitDConCleanDefWindow(ObitDConClean *in, ObitErr *err)
 	  } else if (winArray[j]<0){        /* round */
 	    type = OBIT_DConCleanWindow_round;
 	    window[0] = winArray[j+1];
-	    window[1] = winArray[j+2];
-	    window[2] = winArray[j+3];
+	    /* If pos=[0,0] center */
+	    if ((winArray[j+2]<=0) && (winArray[j+2]<=0)) {
+	      window[1] = (olong)(in->mosaic->images[0]->myDesc->crpix[0]-
+				  in->mosaic->images[0]->myDesc->xPxOff);
+	      window[2] = (olong)(in->mosaic->images[0]->myDesc->crpix[1]-
+				  in->mosaic->images[0]->myDesc->yPxOff);
+	    } else {  /* Position given */
+	      window[1] = winArray[j+2];
+	      window[2] = winArray[j+3];
+	    }
 	    ObitDConCleanWindowAdd (in->window, 1, type, window, err);
 	    sfield = 2;  /* Done 1 already */
 	  }
@@ -1862,9 +1871,15 @@ void ObitDConCleanDecide (ObitDConClean* in, ObitErr *err)
     if (err->error) Obit_traceback_msg (err, routine, in->name);
     if (ObitDConCleanPxHistNumber(in->PixelHist, minFlux, err) < 
 	in->maxPixel) {  /* this fits */
+      if (minFlux>in->PixelHist->histMax) {
+	fprintf (stderr,"DEBUG bad minFlux %f peak %f  Number %d\n",  minFlux, 
+		 ObitDConCleanBmHistPeak (in->BeamHist, i, err), 
+		 ObitDConCleanPxHistNumber(in->PixelHist, minFlux, err));
+	continue;
+      }
       Patch = i;
       /* diagnostics */
-      if (in->prtLv>2) {
+      if (in->prtLv>0) {
 	Obit_log_error(err, OBIT_InfoErr, "%s field %d min %f Patch %d bmPeak %f pxMax %f",
 		       routine, in->currentFields[0], minFlux, Patch, 
 		       ObitDConCleanBmHistPeak (in->BeamHist, i, err), in->PixelHist->histMax);
@@ -1937,6 +1952,11 @@ void ObitDConCleanDecide (ObitDConClean* in, ObitErr *err)
   if ((in->numberSkip>=1) && (in->prtLv>0)) 
     Obit_log_error(err, OBIT_InfoWarn,"%s: Too many residuals, taking 1 of every  %d",
 		   routine, in->numberSkip+1);
+  /* DEBUG */
+  if (in->minFluxLoad>0.5) {
+    fprintf (stderr,"BAD DECIDE skip %d minPatch %d min %f max %f ccflim %f\n",
+	     in->numberSkip,minPatch, in->PixelHist->histMax, in->PixelHist->histMin, in->ccfLim);
+  }
 
 } /* end  ObitDConCleanDecide */
 

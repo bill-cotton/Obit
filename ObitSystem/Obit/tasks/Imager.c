@@ -821,7 +821,7 @@ ObitInfoList* defaultInputs(ObitErr *err)
   /* maxSCLoop */
   dim[0] = 1;dim[1] = 1;
   itemp = 0; 
-  ObitInfoListPut (out, "maxSCLoop", OBIT_oint, dim, &itemp, err);
+  ObitInfoListPut (out, "maxPSCLoop", OBIT_oint, dim, &itemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* Subarray */
@@ -2259,7 +2259,7 @@ void ImagerHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "OutlierSize",  "CLEANBox", "Gain", "minFlux",  "Niter", "minPatch",
     "ccfLim", "SDIGain", "BLFact", "BLFOV", "BLchAvg",
     "Reuse", "autoCen", "Beam", "Cmethod", "CCFilter", "maxPixel", 
-    "autoWindow", "subA", "maxSCLoop", "minFluxPSC", "minFluxASC",
+    "autoWindow", "subA", "maxPSCLoop", "minFluxPSC", "maxASCLoop", "minFluxASC",
     "refAnt", "solInt", "solType", "solMode", "WtUV", "avgPol", "avgIF", "noNeg", 
     "doMGM", "minSNR", "minNo", "PBCor", "antSize", "Alpha",
     "PeelFlux", "PeelLoop", "PeelRefAnt", "PeelSNRMin",
