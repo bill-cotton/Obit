@@ -2487,6 +2487,8 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	      acc[jndx+1] = avg*avg;
 	      /* Histogram */
 	      hicell = avg / hisinc;
+	      /* Could have wrapped */
+	      if (hicell<0) hicell = numCell-1;
 	      hicell = MIN (hicell, numCell-1);
 	      hissig[hicell+j*numCell]++;
 	    } 
@@ -5148,7 +5150,8 @@ static gpointer ThreadMedianDev (gpointer arg)
       } else {         /* yes */
 	level = MedianLevel (count, work, alpha);
 	delta = fabs(amps[jndx] - level);
-	sigma = MedianSigma (count, work, level, alpha);
+	/* This sigma will be an underestimate - double */
+	sigma = 2*MedianSigma (count, work, level, alpha);
 	/* Don't go overboard - min 0.1% */
 	if (level!=fblank) sigma = MAX (0.001*level, sigma);
 	if ((sigma>0.0) && (level!=fblank)) {

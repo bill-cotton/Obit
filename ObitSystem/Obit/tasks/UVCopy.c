@@ -656,6 +656,8 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   doCalib = -1;
   ObitInfoListGetTest(myInput, "doCalib",  &type, dim, &doCalib);
   doCalSelect = doCalSelect || (doCalib>0);
+  /* Always */
+  doCalSelect = TRUE;
   ObitInfoListAlwaysPut (myInput, "doCalSelect", OBIT_bool, dim, &doCalSelect);
  
 

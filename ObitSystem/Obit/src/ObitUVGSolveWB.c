@@ -1539,7 +1539,7 @@ finalSolve (ObitUVGSolveWB *in, ObitErr *err)
 	  ip = iPoln*in->numIF;
 	  offset = (iAnt-1)*nval + jIF;
 	  coef_init[jp++] = (double)atan2(in->antGain[2*(offset+ip)+1], in->antGain[2*(offset+ip)]);
-	  coef_init[jp++] = (double)in->antDelay[offset]*1.0e9;
+	  coef_init[jp++] = (double)in->antDelay[offset+ip]*1.0e9;
 	}
 
 	/* Create coeffient vector */
@@ -1931,7 +1931,7 @@ initAntSolve (ObitUVGSolveWB *in, olong iAnt, olong refAnt, ObitErr *err)
 
   /* Stuff for finding solution */
   icend = naxis[0]/2;  /* Center delay pixel */
-  delTau  = 2.0/(naxis[0]*in->scanData->freqAvg);   /* Delay increment */
+  delTau  = 1.0/(naxis[0]*in->scanData->freqAvg);   /* Delay increment */
 
   /* Need to create FFT? */
   if (in->myFFT==NULL) 

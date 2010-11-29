@@ -1584,6 +1584,12 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 	smoIt (smoFunc, stamp, alpha, &work1[8*nxt], &work1[2*nxt], &work1[3*nxt], numtim, 
 	       &work2[0*nxt], &work2[1*nxt], &work2[2*nxt], &work2[3*nxt], doBlank);
 	for (i=0; i<numtim; i++) work1[2*nxt+i] = work2[i];
+      } else {  /* Not smoothing amp, replace fblank with 1.0 if doBlank */
+	if (doBlank) {
+	  for (i=0; i<numtim; i++) {
+	    if (work1[2*nxt+i]==fblank) work1[2*nxt+i] = 1.0;
+	  }
+	}
       }
       if (doph) {
 	smoIt (smoFunc, stph, alpha, &work1[8*nxt], &work1[0*nxt], &work1[3*nxt], numtim, 
@@ -1619,6 +1625,12 @@ ObitUVSolnSNSmooth (ObitTableSN *SNTab, gchar* smoFunc, gchar* smoType, ofloat a
 	smoIt (smoFunc, stamp, alpha, &work1[8*nxt], &work1[6*nxt], &work1[7*nxt], numtim, 
 	       &work2[0*nxt], &work2[1*nxt], &work2[2*nxt], &work2[3*nxt], doBlank);
 	for (i=0; i<numtim; i++) work1[6*nxt+i] = work2[i];
+      } else {  /* Not smoothing amp, replace fblank with 1.0 if doBlank */
+	if (doBlank) {
+	  for (i=0; i<numtim; i++) {
+	    if (work1[6*nxt+i]==fblank) work1[6*nxt+i] = 1.0;
+	  }
+	}
       }
       if (doph) {
 	smoIt (smoFunc, stph, alpha, &work1[8*nxt], &work1[4*nxt], &work1[7*nxt], numtim, 

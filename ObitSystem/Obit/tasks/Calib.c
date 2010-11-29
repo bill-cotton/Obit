@@ -1145,7 +1145,7 @@ void CalibHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq", 
-    "Sources", "Qual", "souCode", "timeRange",  "subA",
+    "Sources", "Qual", "souCode", "timeRange",  "subA", "solnVer",
     "selBand", "selFreq", "FreqID", "BChan", "EChan", 
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
     "doPol", "Antennas",  "refAnts", "doTwo",

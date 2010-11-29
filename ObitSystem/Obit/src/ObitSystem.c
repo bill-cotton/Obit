@@ -325,6 +325,9 @@ void ObitSystemGetScratch (ObitIOType FileType,gchar *type,
       if (!ObitAIPSisNoScrat(mySystemInfo->lastDisk)) break;
       /* Keep going */
       mySystemInfo->lastDisk++; /* spread scratch files out */
+      /* Keep disk number in bounds */
+      if (mySystemInfo->lastDisk>mySystemInfo->numberAIPSdisk)
+	mySystemInfo->lastDisk = 1;
     } /* End of loop checking */
 
     /* Make sure some allowed */

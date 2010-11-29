@@ -1,11 +1,11 @@
 """ Functions for calibrating and editing EVLA data
 """
 import UV, UVDesc, Image, ImageDesc, FArray, ObitTask, AIPSTask, AIPSDir, OErr, History
-import InfoList, Table
+import InfoList, Table, OSystem
 from AIPS import AIPS
 from FITS import FITS
 from AIPSDir import AIPSdisks, nAIPS
-import re
+import re, pickle, math
 
 def setname (inn, out):
     """ Copy file definition from inn to out as in...
@@ -85,7 +85,7 @@ def set2name (in2, out):
         out.in2Disk  = in2.Disk
     # end set2name
    
-def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0], logfile=""):
+def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0], logfile=None):
     """ Get statistics in a specified region of an image plane
 
     Returns dictionary with statistics of selected region with entries:
@@ -102,7 +102,7 @@ def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0], logfile=""):
     err      = Obit error/message stack
     blc      = bottom left corner pixel (1-rel)
     trc      = top right corner pixel (1-rel)
-    logfile  = file to write results to
+    logfile  = file to write results to, if None don't print
     """
     ################################################################
     # Read plane
@@ -129,15 +129,17 @@ def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0], logfile=""):
         beamarea = 1.1331*(head["beamMaj"]/abs(head["cdelt"][0])) * \
                    (head["beamMin"]/abs(head["cdelt"][1]))
         Flux = p.Sum/beamarea
-    mess =  "Image statistics:  Region Mean %g, RMSHist %g RMS %g" % (Mean, RMS, RawRMS)
-    printMess(mess, logfile)
-    mess =  "  Max %g @ pixel %s" % (Max, str(MaxPos))
-    printMess(mess, logfile)
-    mess = "  Min %g @ pixel %s" % (Min,  str(MinPos))
-    printMess(mess, logfile)
-    if (head["beamMaj"]>0.0) :
-        mess = "  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea)
+    if logfile:
+        mess =  "Image statistics:  Region Mean %g, RMSHist %g RMS %g" % (Mean, RMS, RawRMS)
         printMess(mess, logfile)
+        mess =  "  Max %g @ pixel %s" % (Max, str(MaxPos))
+        printMess(mess, logfile)
+        mess = "  Min %g @ pixel %s" % (Min,  str(MinPos))
+        printMess(mess, logfile)
+        if (head["beamMaj"]>0.0) :
+            mess = "  Integrated Flux density %g, beam area = %7.1f pixels" % (Flux, beamarea)
+            printMess(mess, logfile)
+   
    
     # Reset BLC, TRC
     blc = [1,1,1,1,1]
@@ -277,6 +279,35 @@ def day2dhms(tim):
            ":"+str(ssec)
     # end day2dhms
 
+def SaveObject (pyobj, file, update):
+    """ Save python object to a pickle file
+
+    pyobj    = python object to save
+    file     = pickle file name
+    update   = If True update, otherwise only if file doesn't already exist
+    """
+    ################################################################
+    # Does file exist?, only do this is not or update
+    if update or not os.path.isfile(file):
+        fd = open(file, "w")
+        pickle.dump(pyobj, fd)
+        fd.close()
+    # end SaveObject
+   
+def FetchObject (file):
+    """ Fetch python object from a pickle file
+
+    returns python object
+    file     = pickle file name
+    """
+    ################################################################
+    # unpickle file
+    fd = open(file, "r")
+    pyobj = pickle.load(fd)
+    fd.close()
+    return pyobj
+    # end FetchObject
+   
 def EVLAClearCal(uv, err, doGain=True, doBP=False, doFlag=False, check=False):
     """ Clear previous calibration
 
@@ -292,6 +323,9 @@ def EVLAClearCal(uv, err, doGain=True, doBP=False, doFlag=False, check=False):
     # Only checking?
     if check:
         return
+    # Open and close image to sync with disk 
+    uv.Open(UV.READONLY, err)
+    uv.Close(err)
     # Gain tables
     if doGain:
         uv.ZapTable("AIPS SN",-1,err)
@@ -366,7 +400,7 @@ def EVLACopyTable(inObj, outObj, inTab, err, inVer=1, outVer=0,
     debug    = Run tasks debug, show input
     """
     ################################################################
-    mess =  "Copy "+inTab+" Table"
+    mess =  "Copy "+inTab+" Table "+str(inVer)+" to "+str(outVer)
     printMess(mess, logfile)
     taco = ObitTask.ObitTask("TabCopy")
     if not check:
@@ -583,7 +617,7 @@ def EVLAUVLoadArch(dataroot, Aname, Aclass, Adisk, Aseq, err, \
 
 def EVLAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
           exclude=["AIPS HI","AIPS PL","AIPS SL"], include=["AIPS CC"],
-          headHi=False):
+          headHi=False, logfile=""):
     """ Write AIPS image as FITS
 
     Write a Image data set as a FITAB format file
@@ -601,6 +635,8 @@ def EVLAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
     headHi     = if True move history to header, else leave in History table
     """
     ################################################################
+    mess =  "Write Image to FITS "+filename+" on disk "+str(outDisk)
+    printMess(mess, logfile)
     #
     # Checks
     if not Image.PIsA(inImage):
@@ -649,14 +685,14 @@ def EVLAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
 
 def EVLAUVFITS(inUV, filename, outDisk, err, compress=False, \
               exclude=["AIPS HI", "AIPS AN", "AIPS FQ", "AIPS SL", "AIPS PL"], \
-                  include=[], headHi=False):
+                  include=[], headHi=False, logfile=""):
     """ Write UV data as FITS file
     
     Write a UV data set as a FITAB format file
     History written to header
     inUV       = UV data to copy
     filename   = name of FITS file, any whitespace characters replaced with underscore 
-    inDisk     = FITS directory number
+    outDisk    = FITS directory number
     err        = Python Obit Error/message stack
     exclude    = List of table types NOT to copy
                  NB: "AIPS HI" isn't really a table and gets copied anyway
@@ -666,6 +702,8 @@ def EVLAUVFITS(inUV, filename, outDisk, err, compress=False, \
     returns FITS UV data object
     """
     ################################################################
+    mess =  "Write Data to FITS UV data "+filename+" on disk "+str(outDisk)
+    printMess(mess, logfile)
 
     # Checks
     if not UV.PIsA(inUV):
@@ -709,14 +747,14 @@ def EVLAUVFITS(inUV, filename, outDisk, err, compress=False, \
 
 def EVLAUVFITSTab(inUV, filename, outDisk, err, \
               exclude=["AIPS HI", "AIPS AN", "AIPS FQ", "AIPS SL", "AIPS PL"], \
-                  include=[]):
+                  include=[], logfile=""):
     """ Write Tables on UV data as FITS file
     
     Write Tables from a UV data set (but no data) as a FITAB format file
     History written to header
     inUV       = UV data to copy
     filename   = name of FITS file, any whitespace characters replaced with underscore 
-    inDisk     = FITS directory number
+    outDisk    = FITS directory number
     err        = Python Obit Error/message stack
     exclude    = List of table types NOT to copy
                  NB: "AIPS HI" isn't really a table and gets copied anyway
@@ -725,7 +763,7 @@ def EVLAUVFITSTab(inUV, filename, outDisk, err, \
     returns FITS UV data object
     """
     ################################################################
-    mess =  "Write Tables to FITS UV data "+filename
+    mess =  "Write Tables to FITS UV data "+filename+" on disk "+str(outDisk)
     printMess(mess, logfile)
     # Checks
     if not UV.PIsA(inUV):
@@ -817,6 +855,7 @@ def EVLAMedianFlag(uv, target, err, \
     medn.taskLog  = logfile
     medn.noScrat  = noScrat
     medn.debug    = debug
+    #bombaroonie = BombsAwayWithCurtisLemay # DEBUG
     if debug:
         medn.i
     # Trap failure
@@ -991,13 +1030,282 @@ def EVLAAutoFlag(uv, target, err, \
     return 0
     # end EVLAAutoFlag
 
+def EVLAPACor(uv, err, CLver=0, FreqID=1,\
+                  noScrat=[], logfile='', check=False, debug=False):
+    """ Make parallactic angle correction
+
+    Updates CL CLver, if only one, a new one (CL 2) is copied
+    Returns task error code, 0=OK, else failed
+    uv         = UV data object
+    err        = Python Obit Error/message stack
+    CLver      = Cl version to update, 0=> highest
+    FreqID     = Frequency group identifier
+    noScrat    = list of disks to avoid for scratch files
+    logfile    = logfile for messages
+    check      = Only check script, don't execute tasks
+    debug      = show input
+    """
+    ################################################################
+
+    # Which CL?
+    if CLver<=0 and not check:
+        # Open and close image to sync with disk 
+        uv.Open(UV.READONLY, err)
+        uv.Close(err)
+        CLver = uv.GetHighVer("AIPS CL")
+    # If CLver==1, copy to 2 first
+    if CLver==1 and not check:
+        EVLACopyTable (uv, uv, "AIPS CL", err, inVer=CLver, outVer=CLver+1, \
+                       logfile=logfile, check=check, debug=debug)
+        if err.isErr:
+            print  "Error copying CL Table"
+            return 1
+        CLver += 1  # Use copy
+        
+    mess = "Parallactic angle corrections made to CL "+str(CLver)
+    printMess(mess, logfile)
+
+    clcor = AIPSTask.AIPSTask("clcor")
+    if not check:
+        setname(uv,clcor)
+    clcor.opcode      = "PANG"
+    clcor.gainver     = CLver
+    clcor.gainuse     = CLver
+    clcor.clcorprm[1] = 1.0
+    clcor.freqid      = FreqID
+    clcor.logFile     = logfile
+    i = 1;
+    for d in noScrat:
+        clcor.baddisk[i] = d
+        i += 1
+    if debug:
+        clcor.i
+    # Trap failure
+    try:
+        if not check:
+            clcor.g
+    except Exception, exception:
+        print exception
+        mess = "CLCOR Failed "
+        printMess(mess, logfile)
+        return 1
+    else:
+        pass
+    return 0
+    # end EVLAPACor
+
+def EVLADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None, \
+                     timeRange=[0.,0.], FreqID=1, doCalib=-1, gainUse=0, minSNR=5.0, \
+                     refAnts=[0], doBand=-1, BPVer=0, flagVer=-1,  \
+                     doPlot=False, plotFile="./DelayCal.ps", \
+                     nThreads=1, noScrat=[], logfile='', check=False, debug=False):
+    """ Group delay calibration
+
+    Determine delay corrections from a list of calibrators
+    Solutions smoothed to smoTime
+    Apply this SN table to the highest CL table writing a new CL table (Obit/CLCal)
+    Returns task error code, 0=OK, else failed
+    err        = Python Obit Error/message stack
+    calSou     = Source name or list of names to use
+    CalModel = python dict with image model dicts keyed on calibrator name
+               image object = "Image"
+               also optional
+               "nfield",    Calibrator model  No. maps to use for model
+               "CCver",     Calibrator model CC file version
+               "BComp",     Calibrator model First CLEAN comp to use, 1/field
+               "EComp"      Calibrator model  Last CLEAN comp to use, 0=>all
+               "Cmethod"    Calibrator model Modeling method, 'DFT','GRID','    '
+               "CModel"     Calibrator model Model type: 'COMP','IMAG'
+               "CalFlux"    Calibrator model  Lowest CC component used
+               "modelFlux"  if ["Image"]=None, Parameterized model flux density (Jy)
+               "modepPos"   if ["Image"]=None, Parameterized model Model position offset (asec)
+               "modelParm"  if ["Image"]=None, Parameterized model Model parameters
+                            (maj, min, pa, type)
+    timeRange  = timerange of data to use
+    solInt     = Calib solution interval (min)
+    smoTime    = Smoothing time applied to SN table (hr)
+    FreqID     = Frequency group identifier
+    minSNR     = minimum acceptable SNR in Calib
+    refAnts    = List of reference antennas
+    doCalib    = Apply calibration table
+    gainUse    = CL/SN table to apply
+    doBand     = If >0.5 apply bandpass cal.
+    BPVer      = Bandpass table version
+    flagVer    = Input Flagging table version
+    doPlot     = If True make plots of SN gains
+    plotFile   = Name of postscript file for plots
+    nThreads   = Max. number of threads to use
+    noScrat    = list of disks to avoid for scratch files
+    logfile    = logfile for messages
+    check      = Only check script, don't execute tasks
+    debug      = show input
+    """
+    ################################################################
+    mess = "Determine parallel hand group delays"
+    printMess(mess, logfile)
+
+    # Open and close image to sync with disk 
+    uv.Open(UV.READONLY, err)
+    uv.Close(err)
+
+    # Set output (new) SN table
+    SNver = uv.GetHighVer("AIPS SN")+1
+
+    calib = ObitTask.ObitTask("Calib")
+    calib.taskLog  = logfile
+    if not check:
+        setname(uv,calib)
+    calib.flagVer   = flagVer
+    calib.timeRange = timeRange
+    calib.doCalib   = doCalib
+    calib.gainUse   = gainUse
+    calib.doBand    = doBand
+    calib.BPVer     = BPVer
+    calib.solMode   = "DELA"
+    calib.solType   = "  "
+    calib.solInt    = solInt
+    calib.minSNR    = minSNR
+    calib.refAnts   = refAnts
+    calib.solnVer   = SNver
+    calib.noScrat   = noScrat
+    calib.nThreads  = nThreads
+    #calib.doTwo = False   # DEBUG
+    #  If multiple sources given with models - loop
+    if (type(calSou)==list) and (len(calSou)>1):
+        ncloop = len(calSou)
+        calsou = calSou[0] # setup for first
+    else:
+        ncloop = 1;
+        calsou = calSou
+    # Loop
+    for ical in range(0,ncloop):
+        if type(calsou)==list:
+            calib.Sources[0] = calsou[ical]
+        else:
+            calib.Sources = [calsou]
+        # Get model details
+        if CalModel and calib.Sources[0] in CalModel:
+            Model = CalModel[calib.Sources[0]]
+            if Model["image"]:
+                if not check:
+                    set2name(Model["image"], calib)
+            if "nfield" in Model:
+                calib.nfield    = Model["nfield"]
+            if "CCVer" in Model:
+                calib.CCVer     = Model["CCVer"]
+            if "BComp" in Model:
+                calib.BComp     = Model["BComp"]
+            if "EComp" in Model:
+                calib.EComp     = Model["EComp"]
+            if "Cmethod" in Model:
+                calib.Cmethod   = Model["Cmethod"]
+            if "Cmodel" in Model:
+                calib.Cmodel    = Model["Cmodel"]
+            if "Flux" in Model:
+                calib.Flux      = Model["Flux"]
+            if "modelFlux" in Model:
+                calib.modelFlux = Model["modelFlux"]
+            if "modelPos" in Model:
+                calib.modelPos  = Model["modelPos"]
+            if "modelParm" in Model:
+                calib.modelParm = Model["modelParm"]
+        if debug:
+            calib.prtLv =6
+            calib.i
+            calib.debug = debug
+        # Trap failure
+        try:
+            if not check:
+                calib.g
+        except Exception, exception:
+            print exception
+            mess = "Calib Failed retCode= "+str(calib.retCode)
+            printMess(mess, logfile)
+            return None
+        else:
+            pass
+        # Setup for next if looping
+        if ical<(ncloop-1):
+            calsou = calSou[ical+1]
+    # End loop over calibrators
+    
+    # Open/close UV to update header
+    uv.Open(UV.READONLY,err)
+    uv.Close(err)
+    if err.isErr:
+        OErr.printErr(err)
+        mess = "Update UV header failed"
+        printMess(mess, logfile)
+        return 1
+
+    # Smooth
+    SNver = uv.GetHighVer("AIPS SN")
+    snsmo = ObitTask.ObitTask("SNSmo")
+    if not check:
+        setname(uv, snsmo)
+    snsmo.solnIn     = SNver
+    snsmo.solnOut    = SNver+1
+    snsmo.smoType    = 'VLBI'
+    snsmo.smoFunc    = 'MWF '
+    snsmo.smoParm    = [smoTime,smoTime,smoTime,smoTime,smoTime]
+    snsmo.doBlank    = True
+    snsmo.refAnt     = refAnts[0]
+    snsmo.taskLog    = logfile
+    snsmo.debug      = debug
+    #snsmo.debug     = True  # DEBUG
+    #bombaroonie     = BombsAwayWithCurtisLemay # DEBUG
+    if debug:
+        snsmo.i
+    mess = "EVLADelayCal: SNSmo SN "+str(snsmo.solnIn)+" to "+str(snsmo.solnOut)
+    printMess(mess, logfile)
+    # Trap failure
+    try:
+        if not check:
+            snsmo.g
+    except Exception, exception:
+        print exception
+        mess = "SNSmo Failed retCode="+str(snsmo.retCode)
+        printMess(mess, logfile)
+        return 1
+    else:
+        pass
+    # End SNSmo
+
+    # Plot fits?
+    if doPlot:
+        retCode = EVLAPlotTab(uv, "SN", SNver+1, err, nplots=6, optype="DELA", \
+                                  logfile=logfile, check=check, debug=debug)
+        if retCode!=0:
+            return retCode
+  
+        retCode = EVLAPlotTab(uv, "SN", SNver+1, err, nplots=6, optype="PHAS", \
+                                  logfile=logfile, check=check, debug=debug)
+        if retCode!=0:
+            return retCode
+        retCode = EVLAWritePlots (uv, 1, 0, plotFile, err, \
+                                      logfile=logfile, check=check, debug=debug)
+        if retCode!=0:
+            return retCode
+        
+    # end SN table plot
+    # Apply to CL table
+    retCode = EVLAApplyCal(uv, err, maxInter=600.0, logfile=logfile, check=check,debug=debug)
+    if retCode!=0:
+        return retCode
+    
+    # Open and close image to sync with disk 
+    uv.Open(UV.READONLY, err)
+    uv.Close(err)
+    return 0
+    # end EVLADelayCal
+
 def EVLACalAP(uv, target, ACal, err, \
               PCal=None, FQid=0, calFlux=None, \
               doCalib=-1, gainUse=0, doBand=0, BPVer=0, flagVer=-1, \
               calModel=None, calDisk=0, \
-              solnVer=1, solInt=10.0/60.0, solSmo=0.0, nThreads=1, refAnt=0, ampScalar=False, \
-              check=False, debug = False, \
-              noScrat=[], logfile = ""):
+              solnver=0, solInt=10.0/60.0, solSmo=0.0, nThreads=1, refAnt=0, ampScalar=False, \
+              doPlot=False, plotFile="./APCal.ps", \
+              check=False, debug = False, noScrat=[], logfile = ""):
     """ Basic Amplitude and phase cal for EVLA data
     
     Amplitude calibration can be based either on a point flux
@@ -1020,12 +1328,14 @@ def EVLACalAP(uv, target, ACal, err, \
     doBand   = If >0.5 apply previous bandpass cal.
     BPVer    = previous Bandpass table (BP) version
     flagVer  = Flagging table to apply
-    solnVer  = output SN table version (+1 if smooth)
+    solnver  = output SN table version (+1 if smooth), 0=>new
     solInt   = solution interval (min)
     solSmo   = if solSmo<solInt smooth solutions to solSmo
     nThreads = Number of threads to use
     refAnt   = Reference antenna
     ampScalar= If true, scalar average data in calibration
+    doPlot   = If True make plots of solutions
+    plotFile = Name of postscript file for plots
     check    = Only check script, don't execute tasks
     debug    = Run tasks debug, show input
     noScrat  = list of disks to avoid for scratch files
@@ -1037,7 +1347,7 @@ def EVLACalAP(uv, target, ACal, err, \
 
     # Run SetJy
     setjy = ObitTask.ObitTask("SetJy")
-    setjy.logFile  = logfile
+    setjy.taskLog  = logfile
     if not check:
         setname(uv,setjy)
     setjy.Sources=[ACal]
@@ -1062,6 +1372,16 @@ def EVLACalAP(uv, target, ACal, err, \
         return 1
     else:
         pass
+
+    # output SN version
+    if solnver<=0:
+        # Open and close image to sync with disk 
+        uv.Open(UV.READONLY, err)
+        uv.Close(err)
+        solnVer  = max(1,uv.GetHighVer("AIPS SN")+1)
+    else:
+        solnVer  = solnver
+
     if PCal:
         setjy.ZeroFlux=[1.0,0.0,0.0,0.0]
         if type(PCal)==list:
@@ -1097,12 +1417,12 @@ def EVLACalAP(uv, target, ACal, err, \
     calib.gainUse  = gainUse
     calib.doBand   = doBand
     calib.BPVer    = BPVer
-    calib.solMode  ="A&P"
-    calib.solnVer  = solnVer
+    calib.solMode  = "A&P"
     calib.nThreads = nThreads
     calib.solInt   = solInt
     calib.refAnts  = [refAnt]
     calib.noScrat  = noScrat
+    calib.solnVer  = solnVer
     # Given model?
     if calModel:
         calib.DataType2 = "FITS"
@@ -1136,44 +1456,61 @@ def EVLACalAP(uv, target, ACal, err, \
             setname(uv,clcal)
         clcal.calSour = [ACal]
         if not check:
+            # Open and close image to sync with disk 
+            uv.Open(UV.READONLY, err)
+            uv.Close(err)
             clcal.calIn   = uv.GetHighVer("AIPS CL")
         else:
             clcal.calIn   = 1
-        clcal.calOut  = clcal.calIn+1
-        clcal.interMode="2PT"
-        clcal.FreqID = FQid
+        clcal.calOut    = clcal.calIn+1
+        clcal.interMode = "2PT"
+        clcal.interMode = "SELF"  # DEBUG
+        clcal.FreqID    = FQid
         
     # Calib on phase reference if given
         if PCal:
             if type(PCal)==list:
-                calib.Sources=PCal
+                slist = PCal
             else:
-                calib.Sources=[PCal]
-                calib.in2File   = "    "
-                calib.nfield    = 0
-                calib.flagVer   = flagVer
-                calib.ampScalar = ampScalar
-                calib.doCalib   = 2
-                calib.solMode   = "A&P"
-                calib.Cmethod   = "DFT"
-                calib.Cmodel    = " "
+                slist = [PCal]
+            calib.in2File   = "    "
+            calib.nfield    = 0
+            calib.flagVer   = flagVer
+            calib.ampScalar = ampScalar
+            calib.doCalib   = 2
+            calib.solMode   = "A&P"
+            calib.Cmethod   = "DFT"
+            calib.Cmodel    = " "
             if debug:
                 calib.i
                 calib.debug = debug
-            # Trap failure
-            try:
-                if not check:
-                    calib.g
-            except Exception, exception:
-                print exception
-                mess = "Calib Failed retCode= "+str(calib.retCode)
-                printMess(mess, logfile)
-                return 1
-            else:
-                pass
-            
-        # Smoothing?
+            # Loop over sources
+            for s in slist:
+                calib.Sources = [s]
+                # Trap failure
+                try:
+                    if not check:
+                        calib.g
+                except Exception, exception:
+                    print exception
+                    mess = "Calib Failed retCode= "+str(calib.retCode)
+                    printMess(mess, logfile)
+                    return 1
+                else:
+                    pass
+            # end source list
+
+        solnVer2 = calib.solnVer
+        # Smoothing?   
         if solSmo>solInt:
+            # Get list of calibrators
+            smoList = [ACal]
+            if PCal:
+                if type(PCal)==list:
+                    for s in PCal:
+                        smoList.append(s)
+                else:
+                    smoList.append(PCal)
             solnVer2 = solnVer+1
             snsmo=ObitTask.ObitTask("SNSmo")
             snsmo.taskLog  = logfile
@@ -1182,12 +1519,16 @@ def EVLACalAP(uv, target, ACal, err, \
             snsmo.solnIn  = solnVer
             snsmo.solnOut = solnVer2
             snsmo.smoType = "BOTH"
-            snsmo.smoParm = [solSmo*60., solSmo*60.]
             snsmo.smoType = "MWF"
             snsmo.refAnt  = refAnt
+            snsmo.clipSmo = [24.]  # Clip wild amplitudes
+            snsmo.clipParm= [100.0]
+            mess = "Smooth SN "+str(snsmo.solnIn)+" to "+str(snsmo.solnOut)
+            printMess(mess, logfile)
             if debug:
                 snsmo.i
                 snsmo.debug = debug
+            # run on all sources for clipping then on individual cal.
             # Trap failure
             try:
                 if not check:
@@ -1199,7 +1540,28 @@ def EVLACalAP(uv, target, ACal, err, \
                 return 1
             else:
                 pass
-        else:
+            snsmo.clipSmo = [solSmo/60.0] 
+            snsmo.clipParm= [0.5]
+            # Next time smooth
+            snsmo.smoParm = [solSmo/60., solSmo/60.]
+            snsmo.solnIn  = solnVer2
+            snsmo.solnOut = solnVer2+1
+            solnVer2     +=1
+            # Loop over sources
+            for s in smoList:
+                snsmo.Sources[0] = s
+                # Trap failure
+                try:
+                    if not check:
+                        snsmo.g
+                except Exception, exception:
+                    print exception
+                    mess = "SNSmo Failed retCode="+str(snsmo.retCode)
+                    printMess(mess, logfile)
+                    return 1
+                else:
+                    pass
+        else:   # No smoothing
             solnVer2 = solnVer
         # GetJy to set flux density scale if ACal not in PCal
         if not ACal in PCal:
@@ -1215,6 +1577,7 @@ def EVLACalAP(uv, target, ACal, err, \
                 getjy.Sources=[PCal]
                 getjy.FreqID = FQid
             #getjy.debug = True # DEBUG
+            #bombaroonie = BombsAwayWithCurtisLemay # DEBUG
             if debug:
                 getjy.i
                 getjy.debug = debug
@@ -1229,9 +1592,33 @@ def EVLACalAP(uv, target, ACal, err, \
                 return 1
             else:
                 pass
-        
+       
+    # Plot gain corrections?
+    if doPlot:
+        # Amplitude corrections
+        retCode = EVLAPlotTab(uv, "SN", solnVer2, err, nplots=6, optype="AMP ", \
+                              logfile=logfile, check=check, debug=debug)
+        # Phase corrections
+        retCode = EVLAPlotTab(uv, "SN", solnVer2, err, nplots=6, optype="PHAS", \
+                              logfile=logfile, check=check, debug=debug)
+        if retCode!=0:
+            return retCode
+        # R-L phase corrections
+        retCode = EVLAPlotTab(uv, "SN", solnVer2, err, nplots=6, optype="PHAS", stokes="DIFF", \
+                              logfile=logfile, check=check, debug=debug)
+        if retCode!=0:
+            return retCode
+        retCode = EVLAWritePlots (uv, 1, 0, plotFile, err, \
+                                  logfile=logfile, check=check, debug=debug)
+        if retCode!=0:
+            return retCode
+    # end SN table plot
+
     # Set up for CLCal - only use phase calibrators
     if not check:
+        # Open and close image to sync with disk 
+        uv.Open(UV.READONLY, err)
+        uv.Close(err)
         clcal.solnVer = uv.GetHighVer("AIPS SN")
     else:
         clcal.solnVer = 1
@@ -1245,7 +1632,9 @@ def EVLACalAP(uv, target, ACal, err, \
         clcal.Sources=[target]
     mess = "Apply calibration for "+str(target)
     printMess(mess, logfile)
-    #clcal.debug=True
+    mess = "Update CL "+str(clcal.calIn)+" with SN "+str(clcal.solnVer)+" to CL "+str(clcal.calOut)
+    printMess(mess, logfile)
+
     if debug:
         clcal.i
         clcal.debug = debug
@@ -1274,8 +1663,8 @@ def EVLABPCal(uv, BPCal, err, newBPVer=1, timerange=[0.,0.], \
                   solInt1=0.0, solInt2=0.0, solMode="A&P", refAnt=0, \
                   ampScalar=False, specIndex=0.0, \
                   doAuto=False, doPol=False, avgPol=False, avgIF=False, \
-                  check=False, debug = False, \
-                  nThreads=1, noScrat=[], logfile = ""):
+                  doPlot=False, plotFile="./BPCal.ps", \
+                  check=False, debug = False, nThreads=1, noScrat=[], logfile = ""):
     """ Bandbass calibration
 
     Do bandbass calibration, write BP table
@@ -1335,6 +1724,8 @@ def EVLABPCal(uv, BPCal, err, newBPVer=1, timerange=[0.,0.], \
     doPol    = Apply polarization cal?
     avgPol   = Avg. poln. in solutions?
     avgIF    = Avg. IFs. in solutions?
+    doPlot   = If True make plots of corrected data
+    plotFile = Name of postscript file for plots
     check    = Only check script, don't execute tasks
     debug    = Run tasks debug, show input
     nThreads = Number of threads to use
@@ -1422,6 +1813,19 @@ def EVLABPCal(uv, BPCal, err, newBPVer=1, timerange=[0.,0.], \
         printMess(mess, logfile)
     else:
         pass
+    # Plot corrected data?
+    if doPlot:
+        scr = EVLASpecPlot( uv, bpass.Sources[0], timerange, refAnt, err, \
+                            Stokes=["RR","LL"], doband=1,          \
+                            plotFile=plotFile, check=check, logfile=logfile )
+        if not UV.PIsA(scr):
+            return 1
+        retCode = EVLAWritePlots (scr, 1, 0, plotFile, err, \
+                                  logfile=logfile, check=check, debug=debug)
+        if retCode!=0:
+            return retCode
+        scr.Zap(err)
+        # end plots
     return 0
     # End EVLABPCal
 
@@ -1504,7 +1908,7 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
     debug      = Run tasks debug, show input
     """
     ################################################################
-    mess =  "Average/calibrate calibrate data"
+    mess =  "Average/calibrate data"
     printMess(mess, logfile)
     splat=ObitTask.ObitTask("Splat")
     splat.taskLog = logfile
@@ -1553,6 +1957,9 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
             # Dummy CL table
             solint = splat.timeAvg * 2   # CL table interval twice averaging
+            # Open and close image to sync with disk 
+            uvc.Open(UV.READONLY, err)
+            uvc.Close(err)
             hiver = uvc.GetHighVer("AIPS CL")
             if (doCalib>0) or (hiver<=0):
                 UV.PTableCLGetDummy(uvc, uvc, 0, err, solInt=solint)
@@ -1769,7 +2176,7 @@ def EVLASetImager (uv, target, outIclass="", nThreads=1, noScrat=[], logfile = "
 
 def EVLAPolCal(uv, InsCals, err, RM=0.0, \
                doCalib=2, gainUse=0, doBand=1, BPVer=0, flagVer=-1, \
-               soltype="APPR", fixPoln=False, avgIF=False, \
+               soltype="ORI-", fixPoln=False, avgIF=False, \
                solInt=0.0, refAnt=0, \
                pmodel=[0.0,0.0,0.0,0.0,0.0,0.0,0.0], \
                check=False, debug = False, \
@@ -1790,7 +2197,7 @@ def EVLAPolCal(uv, InsCals, err, RM=0.0, \
     doBand   = >0 => apply bandpass calibration
     BPVer    = AIPS BP table to apply
     flagVer  = Input Flagging table version
-    soltype  = solution type
+    soltype  = solution type, "ORI-", "RAPR"
     fixPoln  = if True, don't solve for source polarization in ins. cal
     avgIF    = if True, average IFs in ins. cal.
     solInt   = instrumental solution interval (min), 0=> scan average
@@ -1828,11 +2235,13 @@ def EVLAPolCal(uv, InsCals, err, RM=0.0, \
         pcal.soltype = soltype
         pcal.solint  = solInt
         pcal.refant  = refAnt
+        pcal.prtlev  = 1
         i = 1;
         for d in noScrat:
             pcal.baddisk[i] = d
             i += 1
         if fixPoln:
+            # pcal.domodel = 1. # Does not work
             pcal.bparm[10]=1.0
         if avgIF:
             pcal.cparm[1]=1.0
@@ -1855,27 +2264,37 @@ def EVLAPolCal(uv, InsCals, err, RM=0.0, \
     return 0
     # End EVLAPolCal
 
-def EVLARLCal(uv, err, RLPCal=None, RLPhase=0.0, RM=0.0, \
-              RLDCal=None, BChan=1, EChan = 0,  \
-              FQid=0, calcode="    ", doCalib=-1, gainUse=0, \
+def EVLARLCal(uv, err, \
+              RLDCal=None, BChan=1, EChan = 0, ChWid2=1, solInt1=1./6, solInt2=10., \
+              RLPCal=None, RLPhase=0.0, RM=0.0, UVRange=[0.0,0.0], \
               timerange = [0.,0.,0.,0.,0.,0.,0.,0.], \
-              doBand=0, BPVer=0, flagVer=-1, \
-              refAnt=0, doPol=-1, smooth=[0.,0.,0.], dataInt=0., \
-              FOV=0.05, niter = 100, \
+              FQid=0, calcode="    ", doCalib=-1, gainUse=0, \
+              doBand=0, BPVer=0, flagVer=-1,  \
+              refAnt=0, doPol=-1, FOV=0.05, niter = 100, CleanRad=None, \
+              doPlot=False, plotFile="./BPCal.ps", \
               nThreads=1, noScrat=[], logfile = "",check=False, debug = False):
-    """ Determine R-L delay and phase calibration
+    """ Determine R-L delay and/or phase calibration
 
     Returns task error code, 0=OK, else failed
-    Calibration applies to (new) highest numbered CL table on uv
+    R-L Delay calibration using new BP table, if R-L phase (& RM) known for
+    calibrator(s), this also does the R-L phase calibration
+    R-L Phase Calibration applies to (new) highest numbered CL table on uv
     uv       = UV data object to clear
     err      = Obit error/message stack
     RLPCal   = R-L (polarization angle) calibrator,
                If None no R-L cal
     RLPhase  = R-L phase of RLPCal (deg) at 1 GHz
-    RLDCal   = R-L delay calibrator name or list
+    RM       = R-L phase RM (NYI)
+    RLDCal   = An array of triplets with R-L calibrators:
+               (name, R-L phase (deg at 1 GHz), RM (rad/m**2))
                If None no R-L delay cal
+    solInt1  = first solution interval (min), 0=> scan average
+    solInt2  = second solution interval (min)
+    RLDPhase = R-L phase of RLPCal (deg) at 1 GHz
     BChan    = First (1-rel) channel number
     EChan    = Highest channel number. 0=> high in data.
+    ChWid2   = Number of channels in running mean RL BP soln, 
+    UVRange  = Range of baseline used in kilowavelengths
     FQid     = Frequency Id to process
     calcode  = Calibrator code
     doCalib  = Apply calibration table, positive=>calibrate
@@ -1886,10 +2305,11 @@ def EVLARLCal(uv, err, RLPCal=None, RLPhase=0.0, RM=0.0, \
     flagVer  = Flagging table to apply
     refAnt   = Reference antenna REQUIRED
     doPol    = Apply polarization cal?
-    smooth   = Channel smoothing function
-    dataInt  = Data integration time (sec)
     FOV      = field of view radius (deg) needed to image RLPCal
     niter    = Number  of iterations of CLEAN in R-L cal
+    CleanRad = CLEAN radius about center or None=autoWin
+    doPlot   = If True make plots of corrected data
+    plotFile = Name of postscript file for plots
     noScrat  = list of AIPS disks to avoid for scratch files
     nThreads = Number of threads to use in imaging
     logfile  = Log file for task
@@ -1899,63 +2319,85 @@ def EVLARLCal(uv, err, RLPCal=None, RLPhase=0.0, RM=0.0, \
     ################################################################
     mess =  "R-L polarization calibration "
     printMess(mess, logfile)
+
+    lbpver = BPVer  # default bandpass in imaging
     # Want R-L delay cal?
     if RLDCal!=None:
-        rldly=ObitTask.AIPSTask("rldly")
-        rldly.logFile = logfile
+        ncal = len(RLDCal)  # How many calibrators?
+        rlpass=ObitTask.ObitTask("RLPass")
+        rlpass.taskLog = logfile
         if not check:
-            setname(uv,rldly)
-        if type(RLDCal)!=list:
-            rldly.calsour[1]=RLDCal
-        else:
-            i = 1
-            for t in RLDCal:
-                rldly.calsour[i] = t
-                i  += 1
-        i = 1
-        for t in timerange:
-            rldly.timerang[i] = t
-            i  += 1
-        rldly.bchan   = BChan
-        rldly.echan   = EChan
-        rldly.docalib = doCalib
-        rldly.gainuse = gainUse
-        rldly.flagver = flagVer
-        rldly.freqid  = FQid
-        rldly.calcode = calcode
-        rldly.dopol   = doPol
-        rldly.smooth[1]=smooth[0]; rldly.smooth[2]=smooth[1];rldly.smooth[3]=smooth[2];
-        rldly.doband  = doBand
-        rldly.bpver   = BPVer
-        rldly.flagver = flagVer
-        rldly.refant  = refAnt
-        rldly.solint  = dataInt
-        if debug:
-            print "timerange", rldly.timerang
-            rldly.i
-        # Trap failure
-        try:
-            if not check:
-                rldly.g
-        except Exception, exception:
-            print exception
-            mess = "rldly Failed retCode="+str(rldly.retCode)
-            printMess(mess, logfile)
-            return 1
-        else:
-            pass
-        # Get new CL table number
-        if not check:
-            gainUse = uv.GetHighVer("AIPS CL")
-            
+            setname(uv,rlpass)
+            #if Antennas:
+            #    i = 0
+            #    for a in Antennas:
+            #        rlpass.Antennas[i] = a; i  += 1
+            rlpass.timeRange[0] = timerange[0]+(timerange[1]+(timerange[2]+timerange[3]/60)/60)/24
+            rlpass.timeRange[1] = timerange[4]+(timerange[5]+(timerange[6]+timerange[7]/60)/60)/24
+            rlpass.BChan1  = BChan
+            rlpass.EChan1  = EChan
+            rlpass.BChan2  = BChan
+            rlpass.EChan2  = EChan
+            rlpass.ChWid2  = ChWid2
+            rlpass.UVRange[0] = UVRange[0];
+            rlpass.UVRange[1] = UVRange[1];
+            rlpass.doCalib = doCalib
+            rlpass.gainUse = gainUse
+            rlpass.flagVer = flagVer
+            rlpass.FreqID  = FQid
+            rlpass.doPol   = doPol
+            rlpass.doBand  = doBand
+            rlpass.BPVer   = BPVer
+            rlpass.refAnt  = refAnt
+            rlpass.solInt1 = solInt1
+            rlpass.solInt2 = solInt2
+            rlpass.BPSoln  = 0
+            rlpass.prtLv   = 1
+            rlpass.nThreads = nThreads
+            # Loop over calibrators
+            for ical in range (0,ncal):
+                rlpass.Sources[0]= RLDCal[ical][0]
+                rlpass.RLPhase   = RLDCal[ical][1]
+                rlpass.RM        = RLDCal[ical][2]
+                mess =  "R-L delay calibration using "+rlpass.Sources[0]
+                printMess(mess, logfile)
+                if debug:
+                    print "timerange", rlpass.timerang
+                    rlpass.i
+                    rlpass.debug = True
+                # Trap failure
+                try:
+                    if not check:
+                        rlpass.g
+                except Exception, exception:
+                    print exception
+                    mess = "rlpass Failed retCode="+str(rlpass.retCode)
+                    printMess(mess, logfile)
+                    return 1
+                else:
+                    pass
+            # end loop over calibrators
+        # Get output BP table
+        # Open and close image to sync with disk 
+        uv.Open(UV.READONLY, err)
+        uv.Close(err)
+        lbpver = uv.GetHighVer("AIPS BP")
     # end R-L delay cal
     
     # R-L phase cal
     if RLPCal!=None:
+        mess =  "R-L phase calibration using "+RLPCal
+        printMess(mess, logfile)
         img = ObitTask.ObitTask("Imager")
         img.taskLog    = logfile
         if not check:
             setname(uv,img)
+        if RLDCal==None:
+            img.doBand = doBand
+            img.BPVer  = lbpver
+        else:
+            img.doBand = 1
+            img.BPVer  = lbpver  # Just created one
         img.doCalib    = doCalib
         img.gainUse    = gainUse
         img.flagVer    = flagVer
@@ -1964,10 +2406,20 @@ def EVLARLCal(uv, err, RLPCal=None, RLPhase=0.0, RM=0.0, \
         img.Stokes     = "IQU"
         img.FOV        = FOV
         img.Niter      = niter
-        img.autoWindow = True
+        # Auto window or centered box
+        if CleanRad:
+            img.CLEANBox=[-1,CleanRad,0,0]
+        else:
+            img.autoWindow  = True
         img.dispURL    = "None"
+        img.BLFact     = 1.004
         img.Catalog    = "None"
         img.nThreads   = nThreads
+        img.maxPSCLoop = 2
+        img.minFluxPSC = 0.05
+        img.solPInt    = solInt1
+        img.solPType   = "L1"
+        img.prtLv      = 2
         img.noScrat    = noScrat
         # Temporary output files
         if img.DataType=="AIPS":
@@ -2037,7 +2489,7 @@ def EVLARLCal(uv, err, RLPCal=None, RLPhase=0.0, RM=0.0, \
                 h = x.Desc.Dict
                 blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
                 trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
-                stat = imstat(x, err, blc=blc,trc=trc)
+                stat = imstat(x, err, blc=blc,trc=trc,logfile=None)
                 IFlux.append(stat["Flux"])
                 IRMS.append(stat["RMSHist"])
                 x.Zap(err)  # Cleanup
@@ -2045,7 +2497,7 @@ def EVLARLCal(uv, err, RLPCal=None, RLPhase=0.0, RM=0.0, \
                 # Stokes Q
                 outClass="QPOLCL"
                 x =  Image.newPAImage("Q",outName, outClass, outDisk,outSeq,True,err)
-                stat = imstat(x, err, blc=blc,trc=trc)
+                stat = imstat(x, err, blc=blc,trc=trc,logfile=None)
                 QFlux.append(stat["Flux"])
                 QRMS.append(stat["RMSHist"])
                 x.Zap(err)  # Cleanup
@@ -2053,7 +2505,7 @@ def EVLARLCal(uv, err, RLPCal=None, RLPhase=0.0, RM=0.0, \
                 # Stokes U
                 outClass="UPOLCL"
                 x =  Image.newPAImage("U",outName, outClass, outDisk,outSeq,True,err)
-                stat = imstat(x, err, blc=blc,trc=trc)
+                stat = imstat(x, err, blc=blc,trc=trc,logfile=None)
                 UFlux.append(stat["Flux"])
                 URMS.append(stat["RMSHist"])
                 x.Zap(err)  # Cleanup
@@ -2073,7 +2525,7 @@ def EVLARLCal(uv, err, RLPCal=None, RLPhase=0.0, RM=0.0, \
                 h = x.Desc.Dict
                 blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
                 trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
-                stat = imstat(x, err, blc=blc,trc=trc)
+                stat = imstat(x, err, blc=blc,trc=trc,logfile=None)
                 IFlux.append(stat["Flux"])
                 IRMS.append(stat["RMSHist"])
                 x.Zap(err)  # Cleanup
@@ -2081,7 +2533,7 @@ def EVLARLCal(uv, err, RLPCal=None, RLPhase=0.0, RM=0.0, \
                 # Stokes Q
                 outFile  = img.Sources[0].strip()+"ITEMPPOLCAL.fits"
                 x =  Image.newPFImage("Q",outFile,img.outDisk,True,err)
-                stat = imstat(x, err, blc=blc,trc=trc)
+                stat = imstat(x, err, blc=blc,trc=trc,logfile=None)
                 IFlux.append(stat["Flux"])
                 IRMS.append(stat["RMSHist"])
                 x.Zap(err)  # Cleanup
@@ -2089,7 +2541,7 @@ def EVLARLCal(uv, err, RLPCal=None, RLPhase=0.0, RM=0.0, \
                 # Stokes U
                 outFile  = img.Sources[0].strip()+"ITEMPPOLCAL.fits"
                 x =  Image.newPFImage("Q",outFile,img.outDisk,True,err)
-                stat = imstat(x, err, blc=blc,trc=trc)
+                stat = imstat(x, err, blc=blc,trc=trc,logfile=None)
                 IFlux.append(stat["Flux"])
                 IRMS.append(stat["RMSHist"])
                 x.Zap(err)  # Cleanup
@@ -2110,11 +2562,14 @@ def EVLARLCal(uv, err, RLPCal=None, RLPhase=0.0, RM=0.0, \
             # REALLY NEED RM Correction!!!!!
             cor = RLPhase - 57.296 * math.atan2(UFlux[i],QFlux[i])
             RLCor.append(cor)
-            mess = "%3d  %8.3f %8.3f %7.3f %7.3f %7.3f %7.3f %7.3f "%\
+            mess = "%3d  %8.3f %8.4f %7.3f %7.4f %7.3f %7.4f %7.2f "%\
                 (i+1, IFlux[i], IRMS[i], QFlux[i], QRMS[i], UFlux[i], URMS[i], cor)
             printMess(mess, logfile)
         # Copy gainUse to new highest CL table
         if not check:
+            # Open and close image to sync with disk 
+            uv.Open(UV.READONLY, err)
+            uv.Close(err)
             hiCL = uv.GetHighVer("AIPS CL")
         else:
             hiCL = 1
@@ -2151,108 +2606,24 @@ def EVLARLCal(uv, err, RLPCal=None, RLPhase=0.0, RM=0.0, \
         else:
             pass
         # end R-L Cal
-    return 0
-    # end EVLARLCal
-
-def EVLARLCal2(uv, err, RLPCal=None, \
-              BChan=1, EChan = 0, ChWid=1, solInt1=1./6, solInt2=10., \
-              UVRange=[0.,0.], WtUV=0.0, \
-              FQid=0, calcode="    ", doCalib=-1, gainUse=0, \
-              timerange = [0.,0.], Antennas=None, \
-              doBand=0, BPVer=0, flagVer=-1, BPSoln=0, \
-              refAnt=0, doPol=-1, smooth=[0.,0.,0.], \
-              nThreads=1, noScrat=[], logfile = "",check=False, debug = False):
-    """ Determine R-L phase bandpass
-
-    Determines new BP table by looping over entries in RLPCal
-    Returns task error code, 0=OK, else failed
-    uv       = UV data object to clear
-    err      = Obit error/message stack
-    RLPCal   = An array of triplets with R-L calibrators:
-               (name, R-L phase (deg at 1 GHz), RM (rad/m**2))
-    BChan    = First (1-rel) channel number
-    EChan    = Highest channel number. 0=> high in data.
-    ChWid    = Number of channels to average to determine soln.
-    solInt1  = first solution interval (min), 0=> scan average
-    solInt2  = second solution interval (min)
-    UVRange  = Range of baseline used in kilowavelengths
-    WTUV     = Weight to use outside of UVRange
-    FQid     = Frequency Id to process
-    calcode  = Calibrator code
-    doCalib  = Apply calibration table, positive=>calibrate
-    gainUse  = CL/SN table to apply
-    timerange= time range of data (days)
-    Antennas = if given, a list of antennas to use
-    doBand   = If >0.5 apply previous bandpass cal.
-    BPVer    = previous Bandpass table (BP) version
-    BPSoln   = Output BP table, 0=>new
-    flagVer  = Flagging table to apply
-    refAnt   = Reference antenna REQUIRED
-    doPol    = Apply polarization cal?
-    smooth   = Channel smoothing function
-    noScrat  = list of AIPS disks to avoid for scratch files
-    nThreads = Number of threads to use in imaging
-    logfile  = Log file for task
-    check    = Only check script, don't execute tasks
-    debug    = Run tasks debug, show input
-    """
-    ################################################################
-    # Anything to do?
-    if (not RLPCal) or (len(RLPCal)<=0):
-        return 0
-    mess =  "R-L polarization calibration "
-    printMess(mess, logfile)
-    ncal = len(RLPCal)  # How many calibrators?
-    rlpass=ObitTask.ObitTask("RLPass")
-    rlpass.taskFile = logfile
-    if not check:
-        setname(uv,rlpass)
-    if Antennas:
-        i = 0
-        for a in Antennas:
-            rlpass.Antennas[i] = a; i  += 1
-    rlpass.timeRange[0] = timerange[0];rlpass.timeRange[1] = timerange[1];
-    rlpass.BChan1  = BChan
-    rlpass.EChan1  = EChan
-    rlpass.BChan2  = BChan
-    rlpass.EChan2  = EChan
-    rlpass.ChWid2  = ChWid
-    rlpass.UVRange[0] = UVRange[0]; rlpass.UVRange[1] = UVRange[1];
-    rlpass.doCalib = doCalib
-    rlpass.gainUse = gainUse
-    rlpass.flagVer = flagVer
-    rlpass.FreqID  = FQid
-    rlpass.souCode = calcode
-    rlpass.doPol   = doPol
-    rlpass.doBand  = doBand
-    rlpass.BPVer   = BPVer
-    rlpass.refAnt  = refAnt
-    rlpass.solInt1 = solInt1
-    rlpass.solInt2 = solInt2
-    rlpass.BPSoln  = BPSoln
-    rlpass.prtLv   = 1
-    rlpass.nThreads = nThreads
-    # Loop over calibrators
-    for ical in range (0,ncal):
-        rlpass.Sources[0]= RLPCal[ical][0]
-        rlpass.RLPhase   = RLPCal[ical][1]
-        rlpass.RM        = RLPCal[ical][2]
-        if debug:
-            print "timerange", rlpass.timerang
-            rlpass.i
-            rlpass.debug = True
-        # Trap failure
-        try:
-            if not check:
-                rlpass.g
-        except Exception, exception:
-            print exception
-            mess = "rlpass Failed retCode="+str(rlpass.retCode)
-            printMess(mess, logfile)
-            return 1
+    # Plot corrected data?
+    if doPlot:
+        if RLPCal:
+            pSou = RLPCal
         else:
-            pass
-    # end loop over calibrators
+            pSou = RLDCal[0][0]
+        scr = EVLASpecPlot( uv, pSou, timerange, refAnt, err,    \
+                                Stokes=["RL","LR"], doband=1,   \
+                                plotFile=plotFile, \
+                                check=check, debug=debug, logfile=logfile )
+        if not scr.UVIsA():
+            return 1
+        retCode = EVLAWritePlots (scr, 1, 0, plotFile, err, \
+                                  logfile=logfile, check=check, debug=debug)
+        if retCode!=0:
+            return retCode
+        scr.Zap(err)
+        # end plots
     return 0
     # end EVLARLCal
 
@@ -2349,6 +2720,9 @@ def EVLARLCal2(uv, err, uv2 = None, \
             pass
         # Get new CL table number
         if not check:
+            # Open and close image to sync with disk 
+            uv.Open(UV.READONLY, err)
+            uv.Close(err)
             gainUse = uv.GetHighVer("AIPS CL")
             
     # end R-L delay cal
@@ -2563,6 +2937,9 @@ def EVLARLCal2(uv, err, uv2 = None, \
                 printMess(mess, logfile)
             # Copy gainUse to new highest CL table
             if not check:
+                # Open and close image to sync with disk 
+                uv.Open(UV.READONLY, err)
+                uv.Close(err)
                 hiCL = uv.GetHighVer("AIPS CL")
             else:
                 hiCL = 1
@@ -2629,6 +3006,9 @@ def EVLARLCal2(uv, err, uv2 = None, \
             printMess(mess, logfile)
             if not check:
                 setname(uv2,clcor)
+                # Open and close image to sync with disk 
+                uv2.Open(UV.READONLY, err)
+                uv2.Close(err)
                 hiCL = uv2.GetHighVer("AIPS CL")
                 # Copy CL table to be modified (CLCOR buggy)
                 EVLACopyTable (uv, uv, "AIPS CL", err, inVer=hiCL, outVer=hiCL+1, \
@@ -2656,6 +3036,152 @@ def EVLARLCal2(uv, err, uv2 = None, \
         # end R-L Cal
     return 0
     # end EVLARLCal2
+
+def EVLAReportTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
+                          Stokes="I", logfile='', check=False, debug=False):
+    """ Generate report info for a list of targets in AIPS files
+
+    Returns a report which is a list of dicts, each of which contains
+        "Source":    Source name
+        "haveImage": True if images were made, 
+        "ObsDate":   Observing date as "yyyy-mm-dd"
+        "numVis":    Number of visibilities (ignoring flagging)
+        "Exposure":  Total integration time (day)
+        "RA"    :    Source RA (deg) at standard equinox
+        "Dec"   :    Source Dec (deg) at standard equinox
+        "IFlux" :    Source Table IPol flux per IF
+        "QFlux" :    Source Table QPol flux per IF
+        "UFlux" :    Source Table UPol flux per IF
+        "VFlux" :    Source Table VPol flux per IF
+    following present if haveImage True
+        "RAPnt" :   Antenna pointing RA (deg) at standard equinox
+        "DecPnt":   Antenna pointing Dec (deg) at standard equinox
+        "Freq"  :   Reference frequency (Hz)
+        "BW"    :   Image bandwidth (Hz)
+        "Size"  :   Width of image in deg (From Stokes I)
+        "Cells" :   Cell spacing in deg (From Stokes I)
+        for each s in Stokes:
+            "sSum" : Sum of clean components in Jy
+            "sPeak": Peak pixel brightness in Jy
+            "sRMS" : RMS noise in inner quarter (Jy)
+            "sBeam": Beam (maj, min, PA) (deg)
+    
+    uv         = UV data object
+    err        = Python Obit Error/message stack
+    Sources    = Source name or list of names to use
+                 If an empty list all sources in uv are included
+    seq        = sequence number of images
+    sclass     = Image class, first character replaced with char in Stokes
+    FreqID     = Frequency group identifier
+    Stokes     = Stokes parameters of images
+    logfile    = logfile for messages
+    check      = Only check script, don't execute tasks
+    debug      = show input
+    """
+    ################################################################
+    mess = "Generate source statistics "
+    printMess(mess, logfile)
+
+    # If list empty get all sources
+    if type(Sources)==list:
+        sl = Sources
+    else:
+        sl = [Sources]
+
+    if len(sl)<=0:
+        slist = EVLAAllSource(uv,err,logfile=logfile,check=check,debug=debug)
+    else:
+        slist = sl
+    
+    # Init output
+    Report = []
+
+    # Image disk assumed same as uv
+    disk = uv.Disk
+    user = OSystem.PGetAIPSuser()
+    
+    # Loop over slist
+    for sou in slist:
+        sdict = {"Source":sou, "haveImage":False}  # Init source structure
+        sdict["ObsDate"]  = uv.Desc.Dict["obsdat"]
+        # Observing stats
+        obstat = EVLAGetTimes (uv, sou, err, logfile=logfile, check=check, debug=debug)
+        sdict["numVis"]   = obstat["numVis"]
+        sdict["Exposure"] = obstat["Exposure"]
+        sdict["RA"]       = obstat["RA"]
+        sdict["Dec"]      = obstat["Dec"]
+        sdict["IFlux"]    = obstat["IFlux"]
+        sdict["QFlux"]    = obstat["QFlux"]
+        sdict["UFlux"]    = obstat["UFlux"]
+        sdict["VFlux"]    = obstat["VFlux"]
+        # Test if image exists
+        cno = AIPSDir.PTestCNO(disk, user, sou, Stokes[0:1]+sclass[1:], "MA", seq, err)
+        if cno <= 0 :
+            Report.append(sdict)  # Save source info
+            continue
+        # Image statistics, loop over Stokes
+        for s in Stokes:
+            klass = s+sclass[1:]
+            x = Image.newPAImage(s, sou, klass, disk, seq, True, err)
+            hd = x.Desc.Dict
+            sdict[s+"Beam"] = (hd["beamMaj"],hd["beamMin"],hd["beamPA"])
+            # Some from Stokes I only
+            if s == 'I':
+                sdict["haveImage"] = True
+                sdict["Size"]    = hd["inaxes"][1]*hd["cdelt"][1]
+                sdict["Cells"]   = hd["cdelt"][1]
+                sdict["RAPnt"]   = hd["obsra"]
+                sdict["DecPnt"]  = hd["obsdec"]
+                sdict["Freq"]    = hd["crval"][hd["jlocf"]]
+                sdict["BW"]      = hd["cdelt"][hd["jlocf"]]
+            blc = [hd["inaxes"][0]/4,hd["inaxes"][1]/4]
+            trc = [3*hd["inaxes"][0]/4,3*hd["inaxes"][1]/4]
+            stat = imstat(x,err,blc=blc,trc=trc)  # Image statistics inner quarter
+            if abs(stat["Max"]) >  abs(stat["Min"]):
+                sdict[s+"Peak"] = stat["Max"]
+            else:
+                sdict[s+"Peak"] = stat["Min"]
+            sdict[s+"RMS"]  = stat["RMSHist"]
+            sdict[s+"Sum"]  = EVLAGetSumCC(x, err, logfile=logfile, check=check, debug=debug)
+        # End stokes image loop
+        Report.append(sdict)  # Save source info
+    # end loop over sources
+
+    # Give terse listing
+    mess = "\n Summary at frequency = "+"%8.3f"%(hd["crval"][hd["jlocf"]]*1.0e-9)+" GHz on "+ \
+           uv.Desc.Dict["obsdat"]
+    printMess(mess, logfile)
+    for sdict in Report:
+        mess = "\n Source = "+sdict["Source"]+", Exposure="+"%5.3f"%(sdict["Exposure"]*24.)+" hr"
+        printMess(mess, logfile)
+        mess = "IPol Beam = ("+"%8.3f"%(sdict["IBeam"][0]*3600.0)+", %8.3f"%(sdict["IBeam"][1]*3600.0)+ \
+            ", %6.1f"%(sdict["IBeam"][2])+") asec, asec, deg"
+        printMess(mess, logfile)
+        # Source table flux densities
+        if "IFlux" in sdict:
+            n = len(sdict["IFlux"])
+            for i in range(0,n):
+                mess = "IF "+str(i+1)+" IPol="+"%8.4f"%(sdict["IFlux"][i])+ \
+                       ", QPol="+"%8.4f"%(sdict["QFlux"][i])+ \
+                       ", UPol="+"%8.4f"%(sdict["UFlux"][i])+ \
+                       ", VPol="+"%8.4f"%(sdict["VFlux"][i])
+                printMess(mess, logfile)
+        for s in Stokes:
+            mess = "Stokes "+s+" Sum CC="+"%8.4f"%(sdict[s+"Sum"])+", Peak="+"%8.4f"%(sdict[s+"Peak"])+ \
+                ", RMS="+"%8.5f"%(sdict[s+"RMS"])+" Jy"
+            printMess(mess, logfile)
+        # Polarization
+        if Stokes=="IQU":
+            ppolSum  = (sdict["QSum"]**2  + sdict["USum"]**2)**0.5
+            ppolPeak = (sdict["QPeak"]**2 + sdict["UPeak"]**2)**0.5
+            RLSum    = 57.296*math.atan2(sdict["USum"], sdict["QSum"])
+            RLPeak   = 57.296*math.atan2(sdict["UPeak"],sdict["QPeak"])
+            mess = "Sum CC PPol="+"%8.4f"%(ppolSum)+", R=L Phase="+"%8.2f"%(RLSum)+ \
+                   "; Peak PPol="+"%8.4f"%(ppolPeak)+", R=L Phase="+"%8.2f"%(RLPeak)
+            printMess(mess, logfile)
+    # End terse listing
+    return Report
+    # end EVLAReportTargets
 
 def EVLAGetSumCC(image, err, CCver=1,
                  logfile='', check=False, debug=False):
@@ -2704,9 +3230,99 @@ def EVLAGetSumCC(image, err, CCver=1,
     return sum
     # end EVLAGetSumCC
 
+def EVLAGetTimes(uv, Source, err, 
+                 logfile='', check=False, debug=False):
+    """ Lookup observing times and number of visibilities for a source, other info
+    
+    Return dict {"numVis":no vis, "Exposure":Total integration time (day),
+                 "RA": RA@equinox, "Dec" Dec@equinox,
+                 "IFlux":IFlux, "QFlux":QFlux, "UFlux":UFlux, "VFlux":VFlux}
+    uv         = UV data with AIPS SU and AIPS NX tables
+    Source     = Source to lookup
+    err        = Python Obit Error/message stack
+    logfile    = logfile for messages
+    check      = Only check script
+    debug      = Only debug - no effect
+    """
+    ################################################################
+    if check:
+        return {"numVis":0, "Exposure":0.0, "RA":0.0, "Dec":0.0}
+    # Open and close uv to sync with disk 
+    uv.Open(UV.READONLY, err)
+    uv.Close(err)
+    
+    # Lookup Source ID (SouID)
+    SUtab = uv.NewTable(Table.READONLY, "AIPS SU", 1, err)
+    SUtab.Open(Table.READONLY, err)
+    if err.isErr:
+        return  {"numVis":0, "Exposure":0.0, "RA":0.0, "Dec":0.0}
+    # Number of rows
+    nrow =  SUtab.Desc.Dict["nrow"]
+    for i in range (0,nrow):    # Loop over rows
+        SUrow = SUtab.ReadRow(i+1, err)
+        if err.isErr:
+            return  {"numVis":0, "Exposure":0.0, "RA":0.0, "Dec":0.0}
+        SouID = SUrow["ID. NO."][0]
+        RA    = SUrow["RAEPO"][0]
+        Dec   = SUrow["DECEPO"][0]
+        IFlux = SUrow["IFLUX"]
+        QFlux = SUrow["QFLUX"]
+        UFlux = SUrow["UFLUX"]
+        VFlux = SUrow["VFLUX"]
+        #if debug:
+        #    mess="Source "+Source+" test "+SUrow["SOURCE"][0]+" ID ="+str(SouID)+ \
+        #        " match="+str(SUrow["SOURCE"][0].rstrip()==Source.rstrip())
+        #    printMess(mess, logfile)
+        if SUrow["SOURCE"][0].rstrip()==Source.rstrip():   # This it?
+            break;
+    SUtab.Close(err)
+    if err.isErr:
+        return  {"numVis":0, "Exposure":0.0, "RA":RA, "Dec":Dec, \
+                 "IFlux":IFlux, "QFlux":QFlux, "UFlux":UFlux, "VFlux":VFlux}
+    
+    # get observing stats from AIPS NX table
+    cntVis  = 0
+    sumTime = 0.0
+    NXTab = uv.NewTable(Table.READONLY, "AIPS NX", 1, err)
+    if err.isErr:
+        return {"numVis":0, "Exposure":0.0, "RA":RA, "Dec":Dec, \
+                 "IFlux":IFlux, "QFlux":QFlux, "UFlux":UFlux, "VFlux":VFlux}
+    # Open
+    NXTab.Open(Table.READONLY, err)
+    if err.isErr:
+        return {"numVis":cntVis, "Exposure":sumTime, "RA":RA, "Dec":Dec, \
+                 "IFlux":IFlux, "QFlux":QFlux, "UFlux":UFlux, "VFlux":VFlux}
+    # Number of rows
+    nrow    = NXTab.Desc.Dict["nrow"]
+    # Loop over table
+    for irow in range (1, nrow+1):
+        NXrow = NXTab.ReadRow(irow, err)
+        if err.isErr:
+            return {"numVis":cntVis, "Exposure":sumTime, "RA":RA, "Dec":Dec, \
+                 "IFlux":IFlux, "QFlux":QFlux, "UFlux":UFlux, "VFlux":VFlux}
+        #  Is this the desired source?
+        if NXrow["SOURCE ID"][0]==SouID:
+            sumTime += NXrow["TIME INTERVAL"][0]
+            cntVis  += NXrow["END VIS"][0] - NXrow["START VIS"][0] + 1
+    # End loop over table
+    # Close table
+    NXTab.Close(err)
+    if err.isErr:
+        return {"numVis":cntVis, "Exposure":sumTime, "RA":RA, "Dec":Dec, \
+                 "IFlux":IFlux, "QFlux":QFlux, "UFlux":UFlux, "VFlux":VFlux}
+
+    if debug:
+        mess="EVLAGetTimes: Source "+Source+"="+str(SouID)+" numVis="+str(cntVis)+ \
+            " Integration time = "+"%5.3f"%(sumTime*24.)+" hr"
+        printMess(mess, logfile)
+ 
+    return {"numVis":cntVis, "Exposure":sumTime, "RA":RA, "Dec":Dec, \
+                 "IFlux":IFlux, "QFlux":QFlux, "UFlux":UFlux, "VFlux":VFlux}
+    # end EVLAGetTimes
+
 def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", \
                      doCalib=-1, gainUse=0, doBand=-1, BPVer=0,  flagVer=-1,  doPol=False, \
-                     Stokes="I", FOV=0.1/3600.0, Robust=0, Niter=300, \
+                     Stokes="I", FOV=0.1/3600.0, Robust=0, Niter=300, CleanRad=None, \
                      maxPSCLoop=0, minFluxPSC=0.1, solPInt=20.0/60., \
                      solPMode="P", solPType= "  ", \
                      maxASCLoop=0, minFluxASC=0.5, solAInt=2.0, \
@@ -2738,6 +3354,7 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", \
     FOV        = Field of view to image in deg
     Robust     = Weighting robustness parameter
     Niter      = max no. iterations
+    CleanRad   = CLEAN radius about center or None=autoWin
     maxPSCLoop = max. number of phase sc loops
     minFluxPSC = Trip level for phase self cal (Jy)
     solPInt    = Phase solution interval (min)
@@ -2767,6 +3384,14 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", \
     ################################################################
     mess = "Image a list of sources "
     printMess(mess, logfile)
+
+    # Tolerate missing BP table
+    # Open and close image to sync with disk 
+    uv.Open(UV.READONLY, err)
+    uv.Close(err)
+    hiBP = uv.GetHighVer("AIPS BP")
+    if hiBP<=0:
+        doBand = -1
 
     # If list empty get all sources
     if type(Sources)==list:
@@ -2822,7 +3447,11 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", \
     imager.minSNR      = minSNR
     imager.do3D        = do3D
     imager.dispURL     = "None"
-    imager.autoWindow  = True
+    # Auto window or centered box
+    if CleanRad:
+        imager.CLEANBox=[-1,CleanRad,0,0]
+    else:
+        imager.autoWindow  = True
     imager.noScrat     = noScrat
     imager.nThreads    = nThreads
     if debug:
@@ -2912,4 +3541,304 @@ def EVLAAllSource(uv, err, \
         return allSou
     return allSou
     # end EVLAAllSource
+
+def EVLAPlotTab(uv, inext, invers, err, \
+                source=None, timerang=[0.,0.,0.,0.,0.,0.,0.,0.], \
+                stokes="HALF", optype="    ", opcode="    ", nplots=1,  \
+                logfile=None, check=False, debug=False):
+    """ Makes AIPS plots of tables
     
+    Returns task error code, 0=OK, else failed
+    uv       = UV data object to plot
+    inext    = AIPS Table ("SN", "CL", "TY", "PC")
+    inver    = version number, 0-> highest
+    source   = if given the name of the source
+    timerang = timerange to plot.
+    stokes   = Stokes type to plot
+    optype   = Data to be plotted (see help snplt)
+    opcode   = Plot type (see help snplt)
+    nplots   = number of plots per page
+    err      = Obit error/message stack
+    logfile  = logfile for messages
+    check    = Only check script, don't execute tasks
+    debug    = show input
+    """
+    ################################################################
+    snplt = AIPSTask.AIPSTask("snplt")
+    if not check:
+        setname(uv,snplt)
+    snplt.inext   = inext
+    snplt.invers  = invers
+    snplt.optype  = optype
+    snplt.opcode  = opcode
+    snplt.nplots  = nplots
+    snplt.stokes  = stokes
+    i = 1
+    for t in timerang:
+        snplt.timerang[i] = t
+        i  += 1
+    snplt.logFile = logfile
+    if debug:
+        snplt.i
+    # Trap failure
+    try:
+        if not check:
+            snplt.g
+    except Exception, exception:
+        print exception
+        mess = "SNPLT Failed "
+        printMess(mess, logfile)
+        return 1
+    else:
+        pass
+
+    # Open/close UV to update header
+    if not check:
+        uv.Open(UV.READONLY,err)
+        uv.Close(err)
+    if err.isErr:
+        OErr.printErr(err)
+        mess = "Update UV header failed"
+        printMess(mess, logfile)
+        return 1
+    
+    return 0
+    # end EVLAPlotTab
+
+def EVLAWritePlots(uv, loPL, hiPL, plotFile, err, \
+                     logfile=None, check=False, debug=False):
+    """ Writes plots to an external postscript file
+
+    All Plots deleted from AIPS
+    Returns task error code, 0=OK, else failed
+    uv       = UV data object to plot
+    loPL     = Lowest (1-rel) plot number
+    hiPL     = Highest PL version number (0->all)
+    plotFile = plot file
+    err      = Obit error/message stack
+    logfile  = logfile for messages
+    check    = Only check script, don't execute tasks
+    debug    = show input
+    """
+    ################################################################
+    # Open/close UV to update header
+    if not check:
+        uv.Open(UV.READONLY,err)
+        uv.Close(err)
+    if err.isErr:
+        OErr.printErr(err)
+        mess = "Update UV header failed"
+        printMess(mess, logfile)
+        return 1
+    if hiPL<=0 and not check:
+        hiPL = uv.GetHighVer("AIPS PL")
+
+    lwpla = AIPSTask.AIPSTask("lwpla")
+    if not check:
+        setname(uv,lwpla)
+    lwpla.plver   = max(1, loPL)
+    lwpla.invers  = hiPL
+    lwpla.outfile = plotFile
+    lwpla.logFile = logfile
+    if debug:
+        lwpla.i
+    # Trap failure
+    try:
+        if not check:
+            lwpla.g
+    except Exception, exception:
+        print exception
+        mess = "Lwpla Failed - continuing anyway"
+        printMess(mess, logfile)
+        # return 1  # Continue in spite of lwpla failure
+    else:
+        pass
+    
+    # Delete plot files
+    if not check:
+        zz=uv.ZapTable("AIPS PL", -1,err)
+    
+    return 0
+    # end EVLAWritePlots
+
+def EVLASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["RR","LL"], \
+                 doband=0, plotFile="./spec.ps",
+                 check=False, debug=False, logfile = ""):
+    """
+    Plot amplitude and phase across the spectrum.
+
+    returns scratch file with plot
+    Note: possm can't apply flags so data copied to scratch file
+    Returns task error code, 0=OK, else failed
+    uv        = uv data object
+    Source    = Name of source to plot
+    timerange = timerange (Obit form) to plot
+    refAnt    = ref. Ant, only baselines to this antenna plotted
+    err       = Obit error object
+    Stokes    = List of stokes types to plot
+    doband    = do bandpass calibration before plotting (requires BP table)
+    plotFile  = name of output PS file
+    check     = Only check script, don't execute tasks
+    debug     = Run tasks debug, show input
+    logfile   = Log file for task
+    """
+    # Calibrate and edit data
+    scr  = uv.Scratch(err)
+    info = uv.List
+    info.set("doCalSelect",True)
+    info.set("doCalib",2)
+    info.set("gainUse",0)
+    info.set("doBand",doband)
+    info.set("BPVer",0)
+    info.set("flagVer",2)
+    info.set("Sources",[Source])
+    info.set("Stokes","    ")
+    info.set("timeRange",timerange)
+    #uv.Header(err) # DEBUG 
+    uv.Copy(scr, err)
+    scr.Info(err)     # Get file information
+    
+    # Setup and run POSSM
+    possm = AIPSTask.AIPSTask("possm")
+    setname(scr, possm)
+    source = [ Source ] # get BP calibration source, in list format
+    possm.sources= AIPSTask.AIPSList( source )
+    timerang = [ timerange[0],  0,   0,   0, timerange[1],  0,   0,   0 ]
+    possm.timerang = AIPSTask.AIPSList( timerang )
+    solint          = (timerange[1]-timerange[0])*1440.0
+    possm.baseline[1] = refAnt
+    possm.flagver  = -1           # POSSM can't flag
+    possm.aparm    = AIPSTask.AIPSList( [0] * 10 ) # initialize with zeroes
+    possm.aparm[1] = -1           # scalar average
+    possm.aparm[9] = 3            # all IFs and pols in same frame
+    possm.nplots   = 6            # plot each baseline in seperate frame on page
+    possm.ltype    = 3            # include all labels
+    possm.solint   = solint       # time interval of plot
+    possm.logFile  = logfile
+    # Loop over Stokes
+    for s in Stokes:
+        possm.stokes   = s
+        # Trap failure
+        try:
+            if not check:
+                possm.g
+        except Exception, exception:
+            print exception
+            mess = "POSSM Failed"
+            printMess(mess, logfile)
+            return 1
+        else:
+            pass
+        # End Stokes loop
+    return scr
+# end EVLASpecPlot
+
+def EVLAApplyCal(uv, err, SNver=0, CLin=0, CLout=0, maxInter=240.0, \
+                     logfile=None, check=False, debug=False):
+    """ Applies an SN table to a CL table and writes another
+
+    Returns task error code, 0=OK, else failed
+    uv       = UV data object to clear
+    err      = Obit error/message stack
+    SNver    = SN table to apply, 0=>highest
+    CLin     = input CL table, 0=>highest
+    CLout    = output CL table, 0=>create new
+    maxInter = Max time (min) over which to interpolate
+    logfile  = logfile for messages
+    check    = Only check script, don't execute tasks
+    debug    = show input, ObitTasks debug
+    """
+    ################################################################
+    # Open/close UV to update header
+    if not check:
+        uv.Open(UV.READONLY,err)
+        uv.Close(err)
+    if err.isErr:
+        OErr.printErr(err)
+        mess = "Update UV header failed"
+        printMess(mess, logfile)
+        return 1
+    if not check:
+        if SNver<=0:
+            SNver = uv.GetHighVer("AIPS SN")
+        if CLin<=0:
+            CLin = uv.GetHighVer("AIPS CL")
+        if CLout<=0:
+            CLout = uv.GetHighVer("AIPS CL")+1
+
+    if CLin<1:
+        mess = "No input CL table to update"
+        printMess(mess, logfile)
+        uv.Header(err)
+        return 1
+    mess = "Update CL "+str(CLin)+" with SN "+str(SNver)+" to CL "+str(CLout)
+    printMess(mess, logfile)
+
+    clcal = ObitTask.ObitTask("CLCal")
+    if not check:
+        setname(uv,clcal)
+    clcal.solnVer  = SNver
+    clcal.calIn    = CLin
+    clcal.calOut   = CLout
+    clcal.maxInter = maxInter
+    clcal.taskLog  = logfile
+    clcal.debug    = debug
+    if debug:
+        clcal.i
+    # Trap failure
+    try:
+        if not check:
+            clcal.g
+    except Exception, exception:
+        print exception
+        mess = "CLCal Failed retCode="+str(clcal.retCode)
+        printMess(mess, logfile)
+        return 1
+    else:
+        pass
+    # End CLCal
+
+    # Open/close UV to update header
+    if not check:
+        uv.Open(UV.READONLY,err)
+        uv.Close(err)
+    if err.isErr:
+        OErr.printErr(err)
+        mess = "Update UV header failed"
+        printMess(mess, logfile)
+        return 1
+    
+    return 0
+    # end EVLAApplyCal
+
+def EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
+                 Stokes=["RR","LL"], doband=-1,                   \
+                 logfile=None, check=False, debug=False):
+    """ Spectrum plot of selected data
+
+    Returns task error code, 0=OK, else failed
+    uv         = UV data object to clear
+    plotSource = Name of source to plot
+    plotTime   = timerange (Obit form) to plot
+    plotFile   = name of output PS file
+    refAnt     = ref. Ant, only baselines to this antenna plotted
+    err        = Obit error/message stack
+    Stokes     = List of stokes types to plot
+    doband     = do bandpass calibration before plotting (requires BP table)
+    logfile    = logfile for messages
+    check      = Only check script, don't execute tasks
+    debug      = show input, ObitTasks debug
+    """
+    ################################################################
+    # POSSM can't apply flags so write scratch file and plot
+    scr = EVLASpecPlot( uv, plotSource,  plotTime, refAnt, err, \
+                        Stokes=Stokes, doband=doband,          \
+                        plotFile=plotFile, check=check, logfile=logfile )
+    if scr.UVIsA():
+        retCode = EVLAWritePlots (scr, 1, 0, plotFile, err, \
+                                  logfile=logfile, check=check, debug=debug)
+    if retCode!=0:
+        return 1
+    scr.Zap(err)
+    return 0
+    # end EVLASpectrum

@@ -45,7 +45,7 @@ void Usage(void);
 /* Set default inputs */
 ObitInfoList* defaultInputs(ObitErr *err);
 /* Set default outputs */
-ObitInfoList* defaultOutputs(ObitErr *err);
+ObitInfoList* defaultOutputs(olong nZern, ObitErr *err);
 /* Get input image */
 ObitImage* getInputImage (ObitInfoList *myInput, ObitErr *err);
 /* Define output image */
@@ -207,6 +207,7 @@ ObitInfoList* VLSSFixIn (int argc, char **argv, ObitErr *err)
   gchar *strTemp;
   oint    itemp, i, j, k;
   ObitInfoList* list;
+  olong         nZern;
   gchar *routine = "VLSSFixIn";
 
   /* Make default inputs InfoList */
@@ -315,6 +316,8 @@ ObitInfoList* VLSSFixIn (int argc, char **argv, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
   /* Extract basic information to program globals */
+  nZern = 5;
+  ObitInfoListGetTest(list, "nZern",     &type, dim, &nZern);
   ObitInfoListGet(list, "pgmNumber", &type, dim, &pgmNumber, err);
   ObitInfoListGet(list, "AIPSuser",  &type, dim, &AIPSuser,  err);
   ObitInfoListGet(list, "nAIPS",     &type, dim, &nAIPS,     err);
@@ -351,7 +354,7 @@ ObitInfoList* VLSSFixIn (int argc, char **argv, ObitErr *err)
   }
 
   /* Initialize output */
-  myOutput = defaultOutputs(err);
+  myOutput = defaultOutputs(nZern, err);
   ObitReturnDumpRetCode (-999, outfile, myOutput, err);
   if (err->error) Obit_traceback_val (err, routine, "GetInput", list);
 
@@ -545,11 +548,8 @@ ObitInfoList* defaultInputs(ObitErr *err)
 /*  Create default output ObitInfoList                                    */
 /*   Return                                                               */
 /*       ObitInfoList  with default values                                */
-/*  Values:                                                               */
-/*     Mean     Int        Image pixel mean  [0.0]                        */
-/*     RMS      Int        Image pixel rms   [0.0]                        */
 /*----------------------------------------------------------------------- */
-ObitInfoList* defaultOutputs(ObitErr *err)
+ObitInfoList* defaultOutputs(olong nZern, ObitErr *err)
 {
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat farray[50];
@@ -558,7 +558,7 @@ ObitInfoList* defaultOutputs(ObitErr *err)
   gchar *routine = "defaultOutputs";
 
   /* Fitted coefficients */
-  dim[0] = 50; dim[1] = 1;
+  dim[0] = nZern; dim[1] = 1;
   for (i=0; i<dim[0]; i++) farray[i] = 0.0;
   ObitInfoListPut (out, "coef", OBIT_float, dim, farray, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
@@ -806,6 +806,7 @@ void VLSSFixHistory (ObitInfoList* myInput, ObitImage* inImage,
     "nZern",  "correct", "Catalog", "catDisk", "MaxQual", 
     "OutlierFlux", "OutlierSI", "MaxRMS", 
     NULL};
+  odouble drms;
   gchar *routine = "VLSSFixHistory";
 
   /* error checks */
@@ -847,7 +848,8 @@ void VLSSFixHistory (ObitInfoList* myInput, ObitImage* inImage,
 
   /* Add RMS residual as image header "SEEING" keyword */
   ObitImageOpen (outImage, OBIT_IO_ReadWrite, err);
-  ObitImageWriteKeyword(outImage, "SEEING", OBIT_float, dim, &rms, err);
+  drms = rms;   /* This gets converted to double as keyword */
+  ObitImageWriteKeyword(outImage, "SEEING", OBIT_double, dim, &drms, err);
   ObitImageClose (outImage, err);
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
 

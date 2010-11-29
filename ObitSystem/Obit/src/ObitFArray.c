@@ -2534,9 +2534,12 @@ void  ObitFArrayConvGaus (ObitFArray* in, ObitFArray* list, olong ncomp,
   g_assert (ObitIsA(in, &myClassInfo));
   g_assert (ObitIsA(list, &myClassInfo));
 
+  /* anything to do? */
+  if (ncomp<=0) return;
+
   /* Initialize Threading */
   nThreads = MakeFAFuncArgs (in->thread, in, 
-			     0, sizeof(olong), 3*sizeof(ofloat*), 0, 0,
+			     0, sizeof(olong), 3*sizeof(ofloat), 0, 0,
 			     &threadArgs);
   
   /* Divide up work by row - only thread if more than 100 rows */
@@ -2557,7 +2560,7 @@ void  ObitFArrayConvGaus (ObitFArray* in, ObitFArray* list, olong ncomp,
     else threadArgs[i]->ithread = -1;
     threadArgs[i]->arg1 = (gpointer)list;
     memmove(threadArgs[i]->arg2, &ncomp, sizeof(olong));
-    memmove(threadArgs[i]->arg3, gauss, 3*sizeof(ofloat*));
+    memmove(threadArgs[i]->arg3, gauss, 3*sizeof(ofloat));
     /* Update which Elem */
     loElem += nElemPerThread;
     hiElem += nElemPerThread;
@@ -3172,7 +3175,7 @@ static gpointer ThreadFAConvGaus (gpointer arg)
   if (hiElem<loElem) goto finish;
 
   /* Get Gauss */
-  memmove(gauss, largs->arg3, 3*sizeof(ofloat*));
+  memmove(gauss, largs->arg3, 3*sizeof(ofloat));
 
   /* Setup list to access */
   table = list->array;

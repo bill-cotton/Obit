@@ -1312,8 +1312,14 @@ void clipDly (ObitTableSN *SNTable, ObitUVSel *sel, olong iif,
       ObitTableSNReadRow (SNTable, isnrno, row, err);
       if (err->error) Obit_traceback_msg (err, routine, SNTable->name);
 
-      bad = FALSE;
-      diff = fabs (row->Delay1[iif-1] - work1[itime]);
+      /* Blanked? */
+      if ((row->Real1[iif-1]==fblank) || (row->Imag1[iif-1]==fblank)) {
+	diff = 10.0*mxdela;
+	bad = TRUE;
+      } else {
+	bad = FALSE;
+	diff = fabs (row->Delay1[iif-1] - work1[itime]);
+      }
       if (diff > mxdela) {
 	row->Delay1[iif-1] = fblank;
 	bad = TRUE;
@@ -1453,7 +1459,14 @@ void clipRat (ObitTableSN *SNTable, ObitUVSel *sel,
       bad = FALSE;
       for (i=0; i<SNTable->numIF; i++) { /* loop 20 */
 
-	diff = fabs (row->Rate1[i] - work1[itime]);
+	/* Blanked? */
+	if ((row->Real1[i-1]==fblank) || (row->Imag1[i-1]==fblank)) {
+	  diff = 10.0*mxrate;
+	  bad = TRUE;
+	} else {
+	  
+	  diff = fabs (row->Rate1[i] - work1[itime]);
+	}
 	if (diff > mxrate) {
 	  row->Rate1[i] = fblank;
 	  bad = TRUE;
@@ -1594,10 +1607,17 @@ void clipRat (ObitTableSN *SNTable, ObitUVSel *sel,
       ObitTableSNReadRow (SNTable, isnrno, row, err);
       if (err->error) Obit_traceback_msg (err, routine, SNTable->name);
 
-      bad = FALSE;
-      diff = fabs (sqrt (row->Real1[iif-1]*row->Real1[iif-1] + 
-			 row->Imag1[iif-1]*row->Imag1[iif-1]) 
-		   - work1[itime]);
+      /* Blanked? */
+      if ((row->Real1[iif-1]==fblank) || (row->Imag1[iif-1]==fblank)) {
+	diff = 10.0*mxamp;
+	bad = TRUE;
+      } else {
+	
+	bad = FALSE;
+	diff = fabs (sqrt (row->Real1[iif-1]*row->Real1[iif-1] + 
+			   row->Imag1[iif-1]*row->Imag1[iif-1]) 
+		     - work1[itime]);
+      }
       if (diff > mxamp) {
 	row->Real1[iif-1] = fblank;
 	row->Imag1[iif-1] = fblank;

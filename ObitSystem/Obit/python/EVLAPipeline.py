@@ -14,7 +14,7 @@ setup = sys.argv[1]
 noScrat     = []    
 execfile (setup)
 
-############################# Default parameters ##########################################                                 
+############################# Default parameters ##########################################
 # Generic parameters
 project       = "Unspecified"               # Project name (12 char or less, used as AIPS Name)
 session       = "?"                         # Project session code
@@ -61,10 +61,10 @@ IClip       = [1000.0,0.1] # AutoFlag Stokes I clipping
 VClip       = [10.0,0.05]  # AutoFlag Stokes V clipping
 timeAvg     = 2.0          # AutoFlag time averaging in min.
 doAFFD      = False        # do AutoFlag frequency domain flag
-FDmaxAmp    = 0.0          # Maximum average amplitude (Jy)
-FDmaxV      = 0.0          # Maximum average VPol amp (Jy)
+FDmaxAmp    = IClip[0]     # Maximum average amplitude (Jy)
+FDmaxV      = VClip[0]     # Maximum average VPol amp (Jy)
 FDwidMW     = 5            # Width of the median window
-FDmaxRMS    = 0.0          # Channel RMS limits (Jy)
+FDmaxRMS    = [6.0,0.1]    # Channel RMS limits (Jy)
 FDmaxRes    = 6.0          # Max. residual flux in sigma
 FDmaxResBL  = 6.0          # Max. baseline residual
 FDbaseSel   = [0,0,0,0]    # Channels for baseline fit
@@ -82,6 +82,9 @@ editList = [
 #    {"timer":("0/06:09:0.0","0/06:13:0.0"),"Ant":[ 8,0],"IFs":[2,2],"Chans":[1,0],"Stokes":'1110',"Reason":"bad data"},
     ]
 
+# Parallactic angle correction, need for PCAL w/ "ORI-"
+doPACor     = True         # Make parallactic angle correction
+
 # Bandpass Calibration
 doBP        = True         # Clear BP tables
 doBPCal     = True         # Determine Bandpass calibration
@@ -97,9 +100,13 @@ bpsolMode     = 'A&P'      # Band pass type 'A&P', 'P', 'P!A'
 bpsolint1     = 10.0/60.0  # BPass phase correction solution in min
 bpsolint2     = 10.0       # BPass bandpass solution in min
 
+# Delay calibration from DCal (see below)
+doDelayCal  = True         # Determine/apply delays from DCal
+
 # Amp/phase calibration
-PCal          = None                    # Phase calibrator
+PCal          = None                    # Phase calibrator(s)
 ACal          = None                    # Amplitude calibrator
+DCal          = None                    # Delay calibrator(s)
 solint        = 0.0                     # Calibration solution time
 solsmo        = 0.0                     # Smooth calibration
 ampScalar     = False                   # Amp-scalar operation in Calib
@@ -108,26 +115,37 @@ AcalFlux      = None                    # Flux for amp calibrator, None=>use mod
 AcalDisk      = 1                       # Flux calibrator model FITS disk
 refAnt        = 0                       # Reference antenna
 
+# Sample spectra
+doRawSpecPlot = True        # Plot Raw spectrum
+doSpecPlot    = True        # Plot spectrum at various stages of processing
+plotSource    = None        # Source or None
+plotTime      = [0.,1.]     # timerange
+
 # Apply calibration and average?
 doCalAvg      = True                    # calibrate and average data
 avgClass      = "UVAvg"                 # AIPS class of calibrated/averaged uv data
-CalAvgTime    = 10.0                    # Time for averaging calibrated uv data (sec)
+CalAvgTime    = 10.0/60.0               # Time for averaging calibrated uv data (min)
 CABIF         = 1                       # First IF to copy
 CAEIF         = 0                       # Highest IF to copy
+avgFreq       = 0                       # average channels, 0=no, 1=yes, 2=all, 3=also IFs
+chAvg         = 1                       # Number of channels to average
 
 # Poln  Cal
 doPolCal      = False     # Do polarization calibration?
 PCInsCals     = []        # List of instrumental poln calibrators
+PCpmodel      = [1.0,0.,0.,0.,0.,0.]     # Polarization model
 PCFixPoln     = False     # Fix polarization to value in source table?
 PCAvgIF       = False     # Determine average calibration for all IFs?
 PCSolInt      = 2.0       # Pcal solution averaging time in min.
 PCRefAnt      = 0         # Poln cal reference antenna
 
 # R-L phase/delay calibration
-doRLCal       = False    # Determine R-L bandpass?
+doRLCal       = False    # Determine R-L bandpass prior to pcal?
+doRLCal2      = False    # Determine R-L bandpass after pcal?
 RLPCal        = None     # Polarization angle (R-L phase) calibrator
 PCRLPhase     = 0.0      # R-L phase difference for RLPCal
 RM            = 0.0      # rotation measure (rad/m^2) for RLPCal
+RLDCal        = None     # R-L delay calibrator
 rlBChan       = 1        # Low freq. channel
 rlEChan       = 0        # High freq. channel
 rlCalCode     = "    "   # Calcode to select
@@ -143,6 +161,7 @@ rlChWid       = 1        # Number of channels in running mean phase BP soln
 rlBPSoln      = 0        # Number of output RL phase BP table
 rlsolint1     = 10.0/60.0 # RLPass phase correction solution in min
 rlsolint2     = 10.0      # RLPass bandpass solution in min
+rlUVRange     = [0.,0.]   # Range of baseline used in kilowavelengths in RL Delay cal.
 
 # Imaging
 doImage     = True         # Image targets
@@ -176,8 +195,10 @@ minFluxASC  = 0.2          # Min flux density peak for amp+phase self cal
 solAInt     = 3.0          # amp+phase self cal solution interval (min)
 OutlierDist = 0.0          # Distance (deg) to which  to add outlying fields
 OutlierFlux = 0.0          # Minimum outlier flux density in Jy
+CleanRad    = None         # CLEAN radius about center or None=autoWin
 
 # Final
+doReport      = True       # Individual source report
 doSaveUV      = True       # Save uv data
 doSaveImg     = True       # Save images
 doSaveTab     = True       # Save Tables
@@ -209,13 +230,13 @@ if check:
 # Load Data from FITS
 uv = None
 if doLoad:
-    uv = EVLAUVLoadT(FITSIn, FITSinDisk, project, dataClass, disk, seq, err, logfile=logFile, \
+    uv = EVLAUVLoadT(FITSIn, FITSinDisk, project+session, dataClass, disk, seq, err, logfile=logFile, \
                          Compress=True, check=check, debug=debug)
     if uv==None:
         raise RuntimeError,"Cannot load "+inFile
 # Load Data from Archive directory
 if doLoadArchive:
-    uv = EVLAUVLoadArch(archRoot, project, dataClass, disk, seq, err, logfile=logFile, \
+    uv = EVLAUVLoadArch(archRoot, project+session, dataClass, disk, seq, err, \
                             selConfig=selConfig, doSwPwr=doSwPwr, \
                             selBand=selBand, selChan=selChan, selNIF=selNIF, calInt=calInt, \
                             logfile=logFile, Compress=True, check=check, debug=debug)
@@ -223,7 +244,7 @@ if doLoadArchive:
         raise RuntimeError,"Cannot load "+inFile
 # Otherwise set uv
 if uv==None and not check:
-    uv = UV.newPAUV("AIPS UV DATA", project, dataClass, disk, seq, True, err)
+    uv = UV.newPAUV("AIPS UV DATA", project+session, dataClass, disk, seq, True, err)
     if err.isErr:
         OErr.printErrMsg(err, "Error creating AIPS data")
 
@@ -264,20 +285,70 @@ if doMedn:
     if retCode!=0:
         raise RuntimeError,"Error in MednFlag"
 
+# Plot Raw data?
+if doRawSpecPlot and plotSource:
+    plotFile = "./"+project+"_"+session+"_"+band+"RawSpec.ps"
+    retCode = EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
+                           Stokes=["RR","LL"], doband=-1,          \
+                           check=check, debug=debug, logfile=logFile )
+    if retCode!=0:
+        raise  RuntimeError,"Error in Plotting spectrum"
+
+# Parallactic angle correction?
+if doPACor:
+    retCode = EVLAPACor(uv, err, noScrat=noScrat, \
+                            logfile=logFile, check=check, debug=debug)
+    if retCode!=0:
+        raise RuntimeError,"Error in Parallactic angle correction"
+
 # Bandpass calibration
 if doBPCal and BPCal:
     retCode = EVLABPCal(uv, BPCal, err, noScrat=noScrat, solInt1=bpsolint2, solInt2=bpsolint2, solMode=bpsolMode, \
-                            BChan1=bpBChan1, EChan1=bpEChan1, BChan2=bpBChan2, EChan2=bpEChan2, ChWid2=bpChWid2, \
-                            doCenter1=bpDoCenter1, refAnt=refAnt, specIndex=bpSpecIndex, flagVer=2, logfile=logFile, \
-                            check=check, debug=debug)
+                        BChan1=bpBChan1, EChan1=bpEChan1, BChan2=bpBChan2, EChan2=bpEChan2, ChWid2=bpChWid2, \
+                        doCenter1=bpDoCenter1, refAnt=refAnt, specIndex=bpSpecIndex, \
+                        doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
+                        logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in Bandpass calibration"
+    
+    # Plot corrected data?
+    if doSpecPlot and plotSource:
+        plotFile = "./"+project+"_"+session+"_"+band+"BPSpec.ps"
+        retCode = EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
+                               Stokes=["RR","LL"], doband=1,          \
+                               check=check, debug=debug, logfile=logFile )
+        if retCode!=0:
+            raise  RuntimeError,"Error in Plotting spectrum"
+
+# delay calibration
+if doDelayCal and DCal and not check:
+    plotFile = "./"+project+"_"+session+"_"+band+"DelayCal.ps"
+    retCode = EVLADelayCal(uv, err, calSou=DCal, CalModel=None, \
+                           doCalib=2, flagVer=2, doBand=1, \
+                           solInt=solint, smoTime=20.0/60.0,  \
+                           refAnts=[refAnt], \
+                           doPlot=doSNPlot, plotFile=plotFile, \
+                           nThreads=nThreads, noScrat=noScrat, \
+                           logfile=logFile, check=check, debug=debug)
+    if retCode!=0:
+        raise RuntimeError,"Error in delay calibration"
+    
+    # Plot corrected data?
+    if doSpecPlot and plotSource:
+        plotFile = "./"+project+"_"+session+"_"+band+"DelaySpec.ps"
+        retCode = EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
+                               Stokes=["RR","LL"], doband=1,          \
+                               check=check, debug=debug, logfile=logFile )
+        if retCode!=0:
+            raise  RuntimeError,"Error in Plotting spectrum"
 
 # Amp & phase Calibrate
 if doAmpPhaseCal:
-    retCode = EVLACalAP (uv, targets, ACal, err, PCal=PCal, doBand=1, BPVer=1, flagVer=2, \
+    plotFile = "./"+project+"_"+session+"_"+band+"APCal.ps"
+    retCode = EVLACalAP (uv, targets, ACal, err, PCal=PCal, doCalib=2, doBand=1, BPVer=1, flagVer=2, \
                          calModel=AcalModel, calDisk=AcalDisk, calFlux=AcalFlux, nThreads=nThreads, \
                          solInt=solint, solSmo=solsmo, noScrat=noScrat, ampScalar=ampScalar, \
+                         doPlot=doSNPlot, plotFile=plotFile, \
                          refAnt=refAnt, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error calibrating"
@@ -287,17 +358,27 @@ if doAutoFlag:
     retCode = EVLAAutoFlag (uv, targets, err, RMSAvg=RMSAvg, flagVer=2, \
                                 doCalib=2, gainUse=0, doBand=1, BPVer=1,  \
                                 IClip=IClip, VClip=VClip, timeAvg=timeAvg, \
-                                doFD=doAFFD, FDmaxAmp=FDmaxAmp, FDmaxV=FDmaxV, FDwidMW=5, \
+                                doFD=doAFFD, FDmaxAmp=FDmaxAmp, FDmaxV=FDmaxV, FDwidMW=5, FDmaxRMS=FDmaxRMS, \
                                 FDmaxRes=FDmaxRes,  FDmaxResBL= FDmaxResBL, FDbaseSel=FDbaseSel, \
                                 logfile=logFile, check=check, debug=debug)
     if retCode!=0:
        raise  RuntimeError,"Error in AutoFlag"
+
+# Plot corrected data?
+if doSpecPlot and plotSource:
+    plotFile = "./"+project+"_"+session+"_"+band+"Spec.ps"
+    retCode = EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
+                           Stokes=["RR","LL"], doband=1,          \
+                           check=check, debug=debug, logfile=logFile )
+    if retCode!=0:
+        raise  RuntimeError,"Error in Plotting spectrum"
 
 # Calibrate and average data
 # Note, PCAL doesn't handle flagging so this has to be here
 if doCalAvg:
     retCode = EVLACalAvg (uv, avgClass, seq, CalAvgTime, err, \
                           flagVer=2, doCalib=2, gainUse=0, doBand=1, BPVer=1, doPol=False, \
+                          avgFreq=avgFreq, chAvg=chAvg, \
                           BIF=CABIF, EIF=CAEIF, Compress=Compress, \
                           logfile=logFile, check=check, debug=debug)
     if retCode!=0:
@@ -305,16 +386,33 @@ if doCalAvg:
    
 # Get calibrated/averaged data
 if not check:
-    uv = UV.newPAUV("AIPS UV DATA", project, avgClass, disk, seq, True, err)
+    uv = UV.newPAUV("AIPS UV DATA", project+session, avgClass, disk, seq, True, err)
     if err.isErr:
         OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
 
 
-# Polarization calibration
+# R-L  delay calibration cal if needed, creates new BP table
+if doRLCal:
+    plotFile = "./"+project+"_"+session+"_"+band+"RLSpec.ps"
+    retCode = EVLARLCal(uv, err,\
+                        RLDCal=RLDCal, BChan=rlBChan, EChan=rlEChan, UVRange=rlUVRange, \
+                        ChWid2=rlChWid, solInt1=rlsolint1, solInt2=rlsolint2, \
+                        RLPCal=None, RLPhase=PCRLPhase, RM=RM, CleanRad=CleanRad, \
+                        calcode=rlCalCode, doCalib=rlDoCal, gainUse=rlgainUse, \
+                        timerange=rltimerange, FOV=FOV, \
+                        doBand=rlDoBand, BPVer=rlBPVer, flagVer=rlflagVer, \
+                        refAnt=rlrefAnt, doPol=False,  \
+                        doPlot=doSNPlot, plotFile=plotFile, \
+                        nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
+                        check=check, debug=debug)
+    if retCode!=0:
+        raise RuntimeError,"Error in RL phase spectrum calibration"
+
+# Polarization calibration 
 if doPolCal:
     retCode = EVLAPolCal(uv, PCInsCals, err, \
-                         doCalib=-1, gainUse=0, doBand=-1, BPVer=0, flagVer=0, \
-                         fixPoln=PCFixPoln, avgIF=PCAvgIF, \
+                         doCalib=2, gainUse=0, doBand=1, BPVer=0, flagVer=0, \
+                         fixPoln=PCFixPoln, pmodel=PCpmodel, avgIF=PCAvgIF, \
                          solInt=PCSolInt, refAnt=PCRefAnt, \
                          check=check, debug=debug, \
                          noScrat=noScrat, logfile=logFile)
@@ -323,14 +421,18 @@ if doPolCal:
     # end poln cal.
 
 
-# R-L  delay calibration cal if needed, creates new CL table
-if doRLCal:
-    retCode = EVLARLCal(uv, err, RLPCal=RLPCal, RLPhase=PCRLPhase, RM=RM, \
-                        BChan=rlBChan, EChan=rlEChan, \
+# R-L  delay calibration cal if needed, creates new BP table (again)
+if doRLCal2:
+    plotFile = "./"+project+"_"+session+"_"+band+"RLSpec2.ps"
+    retCode = EVLARLCal(uv, err,\
+                        RLDCal=RLDCal, BChan=rlBChan, EChan=rlEChan, UVRange=rlUVRange, \
+                        ChWid2=rlChWid, solInt1=rlsolint1, solInt2=rlsolint2, \
+                        RLPCal=RLPCal, RLPhase=PCRLPhase, RM=RM, CleanRad=CleanRad, \
                         calcode=rlCalCode, doCalib=rlDoCal, gainUse=rlgainUse, \
-                        timerange=rltimerange, \
-                        doBand=rlDoBand, BPVer=rlBPVer, flagVer=rlflagVer, \
-                        refAnt=rlrefAnt, doPol=rldoPol,  \
+                        timerange=rltimerange, FOV=FOV, \
+                        doBand=-1, BPVer=1, flagVer=rlflagVer, \
+                        refAnt=rlrefAnt, doPol=True,  \
+                        doPlot=doSNPlot, plotFile=plotFile, \
                         nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
                         check=check, debug=debug)
     if retCode!=0:
@@ -344,8 +446,9 @@ if doImage:
     else:
         slist = targets
     EVLAImageTargets (uv, err, Sources=slist, seq=seq, sclass=outIclass, \
-                       doCalib=2, doBand=-1,  flagVer=2, doPol=rldoPol,  \
+                      doCalib=2, doBand=1,  flagVer=2, doPol=doPol,  \
                        Stokes=Stokes, FOV=FOV, Robust=Robust, Niter=Niter, \
+                       CleanRad=CleanRad, \
                        maxPSCLoop=maxPSCLoop, minFluxPSC=minFluxPSC, \
                        solPInt=solPInt, solPMode=solPMode, solPType=solPType, \
                        maxASCLoop=maxASCLoop, minFluxASC=minFluxASC, \
@@ -354,11 +457,22 @@ if doImage:
                        do3D=do3D, BLFact=BLFact, BLchAvg=BLchAvg, \
                        doMB = doMB, norder=MBnorder, maxFBW=MBmaxFBW, \
                        nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
-                       check=check, debug=debug)
-
-                       
+                       check=check, debug=debug)                       
     # End image
 
+# Get report on sources
+if doReport:
+    # If targets not specified, image all
+    if len(targets)<=0:
+        slist = EVLAAllSource(uv,err,logfile=logFile,check=check,debug=debug)
+    else:
+        slist = targets
+    Report = EVLAReportTargets(uv, err, Sources=slist, seq=seq, sclass=outIclass, \
+                                   Stokes=Stokes, logfile=logFile, check=check, debug=debug)
+    # Save to pickle jar
+    ReportPicklefile = "./"+project+"_"+session+"_"+band+"Report.pickle"   # Where results saved
+    SaveObject(Report, ReportPicklefile, True) 
+   
 # Write results, cleanup    
 # Save UV data? 
 if doSaveUV and (not check):
@@ -367,29 +481,50 @@ if doSaveUV and (not check):
 # Save UV data tables?
 if doSaveTab and (not check):
     filename = project+session+band+"CalTab.uvtab"
-    fuv = EVLAUVFITSTab (uv, filename, 0, err)
+    fuv = EVLAUVFITSTab (uv, filename, 0, err, logfile=logFile)
 # Imaging results
-for target in targets:
+# If targets not specified, save all
+if len(targets)<=0:
+    slist = EVLAAllSource(uv,err,logfile=logFile,check=check,debug=debug)
+else:
+    slist = targets
+for target in slist:
     if doSaveImg and (not check):
         for s in Stokes:
             oclass = s+outIclass[1:]
+            # Test if image exists
+            cno = AIPSDir.PTestCNO(disk, user, target, oclass, "MA", seq, err)
+            if cno <= 0 :
+                continue
             x = Image.newPAImage("out", target, oclass, disk, seq, True, err)
-            outfile = project+session+band+target+"."+outIclass+".fits"
-            mess ="Write " +outfile+" on disk "+str(outDisk)
-            printMess(mess, logFile)
-            xf = EVLAImFITS (x, outfile, outDisk, err)
+            outfile = project+session+band+target+"."+oclass+".fits"
+            xf = EVLAImFITS (x, outfile, 0, err, logfile=logFile)
             # Statistics
             zz=imstat(x, err, logfile=logFile)
 # end writing loop
 
 # cleanup
-mess ="Cleanup AIPS Files" 
-printMess(mess, logFile)
 if doCleanup and (not check):
+    if len(targets)<=0:
+        slist = EVLAAllSource(uv,err,logfile=logFile,check=check,debug=debug)
+    else:
+        slist = targets
+    mess ="Cleanup AIPS Files" 
+    printMess(mess, logFile)
     uv.Zap(err)  # UV data
-    for target in targets:
+    # Initial data 
+    uv = UV.newPAUV("AIPS UV DATA", project+session, dataClass, disk, seq, True, err)
+    uv.Zap(err)  # UV data
+    # If targets not specified, save all
+    for target in slist:
         for s in Stokes:
             oclass = s+outIclass[1:]
+            # Test if image exists
+            cno = AIPSDir.PTestCNO(disk, user, target, oclass, "MA", seq, err)
+            if cno <= 0 :
+                mess = "Image"+target+" "+oclass+" Not found"
+                printMess(mess, logFile)
+                continue
             x = Image.newPAImage("out", target, oclass, disk, seq, True, err)
             x.Zap(err) # cleanup
 # end cleanup
@@ -397,7 +532,7 @@ if doCleanup and (not check):
 OErr.printErrMsg(err, "Writing output/cleanup")
 
 # Shutdown
-mess = "Finished project "+project
+mess = "Finished project "+project+" session "+session+" "+band+" Band"+" AIPS user no. "+str(AIPS.userno)
 printMess(mess, logFile)
 OErr.printErr(err)
 OSystem.Shutdown(ObitSys)
