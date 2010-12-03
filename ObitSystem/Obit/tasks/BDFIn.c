@@ -2219,6 +2219,7 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 /*----------------------------------------------------------------------- */
 /*  Convert any flag info from ASDM to AIPS FG on outData                 */
 /*  ASDM only has antenna/time flagging                                   */
+/*  Extends flagging times for 1.5 integrations on each end               */
 /*   Input:                                                               */
 /*      SDMData  ASDM structure                                           */
 /*      outData  Output UV object                                         */
@@ -2241,7 +2242,11 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   /* Any entries? */
   if (SDMData->FlagTab->nrows<=0) return;
 
-  /* Print any messages */
+   /* Tell about integration time */
+  Obit_log_error(err, OBIT_InfoErr, "Extending online flags by %6.1f sec. on each end", 
+		 SDMData->integTime*86400.0*1.5);
+
+ /* Print any messages */
   ObitErrLog(err);
   
   /* Create output FG table object */
@@ -2304,11 +2309,15 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     
     outRow->ants[0]      = antNo;
     outRow->ants[1]      = 0;
-	 outRow->TimeRange[0] = SDMData->FlagTab->rows[iRow]->startTime - SDMData->refJD;
+    outRow->TimeRange[0] = SDMData->FlagTab->rows[iRow]->startTime - SDMData->refJD;
     outRow->TimeRange[1] = SDMData->FlagTab->rows[iRow]->endTime   - SDMData->refJD;
     strncpy (outRow->reason, SDMData->FlagTab->rows[iRow]->reason, 24);
     /* Patch for archaic software */
     for (i=0; i<24; i++) if (outRow->reason[i]==0) outRow->reason[i] = ' ';
+
+    /* extend range on each end by 1.5 integrations */
+    outRow->TimeRange[0] -= SDMData->integTime;
+    outRow->TimeRange[1] += SDMData->integTime;
 
     /* Write */
     oRow = -1;

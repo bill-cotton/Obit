@@ -102,3 +102,5 @@ ASDMSysPowerTable* SysPowerTab;
 odouble refFreq;
 /** Reference JD */
 odouble refJD;
+/** Integration time in days */
+ofloat integTime;

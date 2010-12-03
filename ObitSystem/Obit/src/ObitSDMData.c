@@ -754,6 +754,11 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   out->refFreq = damn->refFreq;
 
   damn = ObitSDMDataKillSWArray(damn);
+
+  /* Get integration time from the first scan */
+  out->integTime = out->MainTab->rows[0]->interval / 
+    MAX(1, out->MainTab->rows[0]->numIntegration);
+
   return out;
 } /* end ObitSDMDataCreate */
 

@@ -80,7 +80,7 @@ def PCreate(im, err, ver=0):
     # Get image descriptor
     id = im.Desc.Dict
     # Set descriptor dict
-    dd = {"FieldName":[id["ctype"][0], id["ctype"][1], "MAJOR AX", "MINOR AX", \
+    dd = {"FieldName":[id["ctype"][0].strip(), id["ctype"][1].strip(), "MAJOR AX", "MINOR AX", \
                        'POSANG', 'STARTYPE',  'LABEL', \
                        "_status"], \
           "FieldUnit":["DEGREES", "DEGREES", "DEGREES", "DEGREES", \
@@ -131,7 +131,7 @@ def newRow (im):
     """
     # Get image descriptor
     id = im.Desc.Dict
-    out = {id["ctype"][0]:[0.0], id["ctype"][1]:[0.0], \
+    out = {id["ctype"][0].strip():[0.0], id["ctype"][1].strip():[0.0], \
            'MINOR AX': [0.0], 'MAJOR AX': [0.0], 'POSANG': [0.0], 'STARTYPE':[3.0], \
            'LABEL': ['                        '], \
            'NumFields': 8, 'Table name': 'AIPS ST', '_status': [0]}
@@ -161,8 +161,8 @@ def PWriteCirc (sttab, im, center, radius, err):
     pos = ImageDesc.PGetPos(im.Desc, center, err)
     if err.isErr:
         printErrMsg(err, "Error converting pixel location to position")
-    row[id["ctype"][0]] = [pos[0]]
-    row[id["ctype"][1]] = [pos[1]]
+    row[id["ctype"][0].strip()] = [pos[0]]
+    row[id["ctype"][1].strip()] = [pos[1]]
     row['MAJOR AX']  = [radius * abs(id["cdelt"][0])]
     row['MINOR AX']  = row['MAJOR AX']
     row['POSANG']    = [0.0]
@@ -199,8 +199,8 @@ def PWriteEllipse (sttab, im, center, major, minor, PA, err):
     pos = ImageDesc.PGetPos(im.Desc, center, err)
     if err.isErr:
         printErrMsg(err, "Error converting pixel location to position")
-    row[id["ctype"][0]] = [pos[0]]
-    row[id["ctype"][1]] = [pos[1]]
+    row[id["ctype"][0].strip()] = [pos[0]]
+    row[id["ctype"][1].strip()] = [pos[1]]
     row['MAJOR AX']  = [major * abs(id["cdelt"][0])]
     row['MINOR AX']  = [minor * abs(id["cdelt"][0])]
     row['POSANG']    = [PA]
