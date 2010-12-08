@@ -67,6 +67,7 @@ SERVER_CFLAGS =
 SERVER_LDFLAGS = $(LDFLAGS) @XMLRPC_SERVER_LDFLAGS@
 SERVER_LIBS =  @XMLRPC_SERVER_LIBS@ 
 
+# Must use SWIG v1.1-883
 SWIG = @SWIG@
 
 # Libraries in case they've changed
@@ -78,7 +79,8 @@ TARGETS := Obit.so
 all: $(TARGETS)
 
 # Build shared library for python interface
-$(TARGETS): %.so:setupdata.py $(MYLIBS)
+$(TARGETS): setupdata.py $(MYLIBS)
+	rm -rf build
 	python makesetup.py
 	python setup.py build install --install-lib=.
 
@@ -87,7 +89,8 @@ interface: Obit_wrap.c
 	echo "rebuild Obit/python interface"
 
 # Use Swig to build python/c interface if necessary
-Obit_wrap.c: *.inc 
+Obit_wrap.c: *.inc $(MYLIBS)
+	rm Obit_wrap.c
 	echo "%module Obit" > Obit.i
 	cat ObitTypeMaps.swig >> Obit.i
 	cat *.inc >> Obit.i

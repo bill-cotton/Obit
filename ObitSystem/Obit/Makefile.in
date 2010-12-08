@@ -56,10 +56,14 @@ DISTRIB = @PACKAGE_TARNAME@@PACKAGE_VERSION@
 DIRN = @PACKAGE_NAME@
 
 #------------------------------------------------------------------------
-TARGETS =  cfitsioupdate xmlrpcupdate srcupdate libupdate \
+TARGETS = versionupdate cfitsioupdate xmlrpcupdate srcupdate libupdate \
 	pythonupdate taskupdate
 
 all:  $(TARGETS)
+
+# update the Obit version (svn revision)
+versionupdate:
+	python share/scripts/getVersion.py
 
 # update dummy_cfitsio directory
 cfitsioupdate:
@@ -96,7 +100,6 @@ taskupdate:
 # update work directory
 work: 
 	cd src/work; $(MAKE) CC="$(CC)" CFLAGS="$(CFLAGS)" LIB="$(LIB)"
-
 
 # update python directory
 pythonupdate: 
