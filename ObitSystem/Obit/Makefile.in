@@ -37,7 +37,7 @@ top_srcdir = @top_srcdir@
 CPPFLAGS = @CPPFLAGS@
 CFLAGS = @CFLAGS@  -Wall -fno-strict-aliasing
 LDFLAGS = @LDFLAGS@
-OBIT = @OBIT@
+OBIT = $(top_srcdir)
 CC = @CC@
 
 # RANLIB = library "randomizer", ranlib if needed, else blank
@@ -47,7 +47,7 @@ RANLIB = @RANLIB@
 LIBS = @LIBS@ @GTHREAD_LIBS@
 
 # DOCS = LaTeX Documentation file
-DOCS = $t(op_srcdir)/doc/obitdoc.tex
+DOCS = $(top_srcdir)/doc/obitdoc.tex
 
 # names of archive files
 ARCHIVE = @PACKAGE_TARNAME@Back@PACKAGE_VERSION@

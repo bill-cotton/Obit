@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -34,6 +34,7 @@
 #include "ObitIOHistoryFITS.h"
 #include "ObitIOHistoryAIPS.h"
 #include "ObitHistory.h"
+#include "ObitVersion.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -693,6 +694,7 @@ ObitIOCode ObitHistoryTimeStamp (ObitHistory *in,
   struct tm *lp;
   time_t clock;
   olong timea[3], datea[3];
+  gchar *version=NULL;
   gchar *routine = "ObitHistoryTimeStamp";
 
   /* error checks */
@@ -716,9 +718,12 @@ ObitIOCode ObitHistoryTimeStamp (ObitHistory *in,
   timea[1] = lp->tm_min;
   timea[2] = lp->tm_sec;
 
+  /* Get svn version */
+  version = ObitVersion();
+
   /* Compose line to write */
-  g_snprintf (line,70, "        / %4d-%2.2d-%2.2dT%2.2d:%2.2d:%2.2d %s",
-	   datea[0],datea[1],datea[2],timea[0], timea[1],timea[2],label);
+  g_snprintf (line,70, "   / %4d-%2.2d-%2.2dT%2.2d:%2.2d:%2.2d %s svn ver. %s",
+	   datea[0],datea[1],datea[2],timea[0], timea[1],timea[2],label,version);
 
   /* write row rowno */
   retCode = ObitIOHistoryWriteRec (in->myIO, in->myIO->CurrentNumber+1, line, err);
@@ -766,7 +771,7 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
   oint         *odata;
   ofloat       *fdata;
   odouble      *ddata;
-  gchar        hicard[81], bchar, *cdata, cstring[65];
+  gchar        hicard[81], bchar, *cdata, cstring[65], bpgmName[80];
   const ObitIOHistoryClassInfo *outClass;
   gchar *routine = "ObitHistoryyCopyInfoList";
 
@@ -774,6 +779,10 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
   g_assert(ObitErrIsA(err));
   if (err->error) return retCode;
   g_assert (ObitIsA(out, &myClassInfo));
+
+  /* Get blank string size of the program name */
+  lstr = strlen(pgmName);
+  for (i=0; i<lstr; i++) bpgmName[i] = ' ';  bpgmName[i] = 0;
 
   outClass = (ObitIOHistoryClassInfo*)out->myIO->ClassInfo;
   /* loop through list copying elements */
@@ -805,7 +814,7 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	  }
 	  outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	  if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
-	  g_snprintf (hicard, 80, "%s   ", pgmName);
+	  g_snprintf (hicard, 80, "%s ", bpgmName);
 	  indx = strlen (hicard);
 	}
 
@@ -826,7 +835,7 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	  }
 	  outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	  if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
-	  g_snprintf (hicard, 80, "%s   ", pgmName);
+	  g_snprintf (hicard, 80, "%s ", bpgmName);
 	  indx = strlen (hicard);
 	}
 
@@ -847,7 +856,7 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	  }
 	  outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	  if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
-	  g_snprintf (hicard, 80, "%s   ", pgmName);
+	  g_snprintf (hicard, 80, "%s ", bpgmName);
 	  indx = strlen (hicard);
 	}
 
@@ -865,7 +874,7 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	}
 	outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
-	g_snprintf (hicard, 80, "%s ", pgmName);
+	g_snprintf (hicard, 80, "%s ", bpgmName);
 	indx = strlen (hicard);
 	while (more>0) {
 	  for (j=0; j<4; j++) {
@@ -877,7 +886,7 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	  }
 	  outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	  if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
-	  g_snprintf (hicard, 80, "%s   ", pgmName);
+	  g_snprintf (hicard, 80, "%s ", bpgmName);
 	  indx = strlen (hicard);
 	}
 
@@ -890,7 +899,7 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
 	more = size - 1;
-	g_snprintf (hicard, 80, "%s ", pgmName);
+	g_snprintf (hicard, 80, "%s ", bpgmName);
 	indx = strlen (hicard);
 	while (more>0) {
 	  for (j=0; j<2; j++) {
@@ -902,7 +911,7 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	  }
 	  outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	  if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
-	  g_snprintf (hicard, 80, "%s   ", pgmName);
+	  g_snprintf (hicard, 80, "%s ", bpgmName);
 	  indx = strlen (hicard);
 	}
 
@@ -933,7 +942,7 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	  }
 	  outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	  if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
-	  g_snprintf (hicard, 80, "%s   ", pgmName);
+	  g_snprintf (hicard, 80, "%s ", bpgmName);
 	  indx = strlen (hicard);
 	}
 
@@ -955,7 +964,7 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 	  }
 	  outClass->ObitIOHistoryWriteRec (out->myIO, -1, hicard, err);
 	  if (err->error) Obit_traceback_val (err, routine, out->name, retCode);
-	  g_snprintf (hicard, 80, "%s   ", pgmName);
+	  g_snprintf (hicard, 80, "%s ", bpgmName);
 	  indx = strlen (hicard);
 	}
 
@@ -1134,58 +1143,64 @@ static void ObitHistoryInfoListTrim (ObitInfoType type,
   switch (type) { 
   case OBIT_int:
     idata = (olong*)xdata;
-    dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    dim[0] = size;
     for (i=size-1; i>=0; i--) {
       if (idata[i]!=0) break;
-      else dim[0] = i+1;
+      else dim[0]--;
     }
     break;
   case OBIT_oint:
     odata = (oint*)xdata;
-    dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    dim[0] = size;
     for (i=size-1; i>=0; i--) {
       if (odata[i]!=0) break;
-      else dim[0] = i+1;
+      else dim[0]--;
     }
     break;
   case OBIT_long:
     ldata = (olong*)xdata;
-    dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    dim[0] = size;
     for (i=size-1; i>=0; i--) {
       if (ldata[i]!=0) break;
-      else dim[0] = i+1;
+      else dim[0]--;
     }
     break;
   case OBIT_float:
     fdata = (ofloat*)xdata;
-    dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    dim[0] = size;
     for (i=size-1; i>=0; i--) {
       if (fdata[i]!=0.0) break;
-      else dim[0] = i+1;
+      else dim[0]--;
     }
     break;
   case OBIT_double:
     ddata = (odouble*)xdata;
-    dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    dim[0] = size;
     for (i=size-1; i>=0; i--) {
       if (ddata[i]!=0.0) break;
-      else dim[0] = i+1;
+      else dim[0]--;
     }
     break;
   case OBIT_string:   /* only 64 char of string */
-    dim[1] = dim[2] = dim[3] = dim[4] = 1;
+    dim[2] = dim[3] = dim[4] = 1;
     cdata = (gchar*)xdata;
     lstr = dim[0];  /* length of string */
     size /= MAX(1, lstr);
+    dim[1] = size;
     for (i=size-1; i>=0; i--) {
-      strncpy (cstring, cdata, MIN (lstr, 64));
+      strncpy (cstring, &cdata[i*lstr], MIN (lstr, 64));
       cstring[MIN (lstr, 64)] = 0;  /* null terminate */
-      if (!strncmp(cstring, blank, lstr)) break;
-      else dim[1] = i+1;
+      if (strncmp(cstring, blank, lstr)) break;
+      else dim[1]--;
     }
     break;
   case OBIT_bool:
-    /* Use all, can tell invalid */
+    /* Use all, can't tell invalid */
     bdata = (gboolean*)xdata;
     break;
   default:

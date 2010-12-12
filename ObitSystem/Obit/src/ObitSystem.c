@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -27,12 +27,13 @@
 #include <errno.h>
 #include <time.h>
 #include <sys/times.h>
-/* Bah humbug */
-#  ifndef CLK_TCK
-#   include <bits/types.h>
-extern long int __sysconf (int);
-#   define CLK_TCK ((__clock_t) __sysconf (2))  /* 2 is _SC_CLK_TCK */
-#  endif
+/* Bah humbug 
+   #  ifndef CLK_TCK
+   #   include <bits/types.h>
+   extern long int __sysconf (int);
+   #   define CLK_TCK ((__clock_t) __sysconf (2))   2 is _SC_CLK_TCK */
+/* #  endif*/
+#include <sys/resource.h>
 #include "Obit.h"
 #include "ObitSystem.h"
 #include "ObitAIPS.h"
@@ -41,6 +42,7 @@ extern long int __sysconf (int);
 #include "ObitImage.h"
 #include "ObitTable.h"
 #include "ObitUV.h"
+#include "ObitVersion.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -128,6 +130,7 @@ ObitSystemStartup (gchar *pgmName, olong pgmNumber,
 		   olong numberFITSdisk, gchar* FITSdir[], 
 		   oint F_TRUE, oint F_FALSE, ObitErr *err)
 {
+  gchar *version=NULL;
   ObitSystem* out;
 
   /* Init system error flag */
@@ -171,12 +174,18 @@ ObitSystemStartup (gchar *pgmName, olong pgmNumber,
   /* Save error/message stack object */
   out->err = ObitErrRef (err);
 
+  /* Get svn version */
+  version = ObitVersion();
+
   /* Startup message if program name given */
   if ((strlen(out->pgmName)>0) && strncmp (out->pgmName, "NameLess", 8))
-    Obit_log_error(out->err, OBIT_InfoErr, "%s Begins", out->pgmName);
+    Obit_log_error(out->err, OBIT_InfoErr, "%s Begins, svn ver. %s", 
+		   out->pgmName, version);
   ObitErrTimeStamp(out->err);  /* Add Timestamp */
  
   ObitErrLog(out->err);
+
+  if (version) g_free(version);  /* Cleanup */
 
   return out;
 } /*  end ObitSystemStartup */
@@ -207,7 +216,9 @@ ObitSystem* ObitSystemShutdown (ObitSystem* in)
    ObitClassInfo *myClass;
    Obit *tst;
    GSList *tmp;
-   struct tms buf;
+   gchar *version=NULL;
+   /*struct tms buf;*/
+   struct rusage ru;
    time_t endTime;
    ofloat cputim, realtim;
 
@@ -250,14 +261,23 @@ ObitSystem* ObitSystemShutdown (ObitSystem* in)
   /* Shutdown RPC */
   ObitRPCClassShutdown();
 
+  /* Get svn version */
+  version = ObitVersion();
+
   /* Shutdown message if program name given */
   if ((strlen(in->pgmName)>0) && strncmp (in->pgmName, "NameLess", 8))
-    Obit_log_error(in->err, OBIT_InfoErr, "%s Ends", in->pgmName);
+    Obit_log_error(in->err, OBIT_InfoErr, "%s Ends, svn ver. %s", 
+		   in->pgmName, version);
   ObitErrTimeStamp(in->err);  /* Add Timestamp */
+  if (version) g_free(version);  /* Cleanup */
+
 
   /* CPU Usage */
-  times (&buf);
-  cputim = (buf.tms_utime + buf.tms_stime) / (ofloat) CLK_TCK;
+  /*times (&buf);
+    cputim = (buf.tms_utime + buf.tms_stime) / (ofloat) CLK_TCK;*/
+  getrusage(RUSAGE_SELF, &ru);
+  cputim = ru.ru_utime.tv_sec + (ofloat) ru.ru_utime.tv_usec / 1000000;
+  cputim += ru.ru_stime.tv_sec + (ofloat) ru.ru_stime.tv_usec / 1000000;
 
   /* Real time */
   time(&endTime);

@@ -735,8 +735,10 @@ gboolean ObitImageDescOverlap(ObitImageDesc *in1, ObitImageDesc *in2,
     (0.5*in2->inaxes[in2->jlocd] + 1.0 - in2->crpix[in2->jlocd]) * 
     in2->cdelt[in2->jlocd];
 
-  /* Offsets */
-  deltaRa  = fabs (ra1-ra2) * cos(dec1*DG2RAD);
+  /* Offsets - allow wrap in RA */
+  deltaRa  = fabs (ra1-ra2);
+  if (deltaRa>180.0) deltaRa  = fabs (deltaRa-360.0);
+  deltaRa  = deltaRa * cos(dec1*DG2RAD);
   deltaDec = fabs (dec1-dec2);
 
   /* Half widths - add a little slop */
