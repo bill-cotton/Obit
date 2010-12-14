@@ -1,0 +1,114 @@
+; ImPlot
+;---------------------------------------------------------------
+;! Image plots
+;# Task 
+;-----------------------------------------------------------------------
+;;  Copyright (C) 2007,2010
+;;  Associated Universities, Inc. Washington DC, USA.
+;;
+;;  This program is free software; you can redistribute it and/or
+;;  modify it under the terms of the GNU General Public License as
+;;  published by the Free Software Foundation; either version 2 of
+;;  the License, or (at your option) any later version.
+;;
+;;  This program is distributed in the hope that it will be useful,
+;;  but WITHOUT ANY WARRANTY; without even the implied warranty of
+;;  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;;  GNU General Public License for more details.
+;;
+;;  You should have received a copy of the GNU General Public
+;;  License along with this program; if not, write to the Free
+;;  Software Foundation, Inc., 675 Massachusetts Ave, Cambridge,
+;;  MA 02139, USA.
+;;
+;;  Correspondence concerning Obit should be addressed as follows:
+;;         Internet email: bcotton@nrao.edu.
+;;         Postal address: Bill Cotton
+;;                         National Radio Astronomy Observatory
+;;                         520 Edgemont Road
+;;                         Charlottesville, VA 22903-2475 USA
+;-----------------------------------------------------------------------
+ImPlot    LLLLLLLLLLLLUUUUUUUUUUUU CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+ImPlot:    Plot images 
+**PARAM** str 4
+DataType                           "FITS" or "AIPS" type of input
+**PARAM** str 48
+inFile                             input Filename if FITS image
+**PARAM** str 12
+inName                             Image name (name)
+**PARAM** str 6
+inClass                            Image name (class)
+**PARAM** int 1
+inSeq            0.0       9999.0  Image name (seq. #)
+**PARAM** int 1
+inDisk           0.0         99.0  Disk drive #
+**PARAM** int 7
+BLC               0.0       8192.0 Bottom left corner of image
+                                     0=>entire image
+**PARAM** int 7
+TRC               0.0       8192.0  Top right corner of image
+                                     0=>entire image
+**PARAM** float 2
+PixRange                           Range of pixel values in image
+**PARAM** str 12  **DEF** Gray
+plotType                           Plot type: "Contour", "Gray"
+                                   "ColorCont", "Phlame"
+**PARAM** str 128 **DEF** plot.png
+plotFile                           Output plot file (only does CWD)
+**PARAM** str 12 **DEF** png
+format                             Output type, see help
+**PARAM** float 1
+lev                                Basic contour level (def 0.1 peak)
+**PARAM** float 1  **DEF** 1.41421356237
+cntfac                             Factor for spacing between contours
+**PARAM** boo 1
+doSqrt                             If True show square root of intensity
+**PARAM** boo 1
+doInvert                           If True invert colors of intensity
+**PARAM** str 128
+taskLog                            Logfile to write task messages to
+----------------------------------------------------------------
+ImPlot
+Type: Task
+Use:  Plot images in a variety of forms
+
+More flexible plotting options are available in ObitTalk using 
+class OPlot.
+
+Parameters:
+  DataType...."FITS" or "AIPS"
+  inFile......1st  file name if a FITS file
+  inName......1st Image name(name).
+  inClass.....1st Image name(class).  
+  inSeq.......1st Image name(seq. #). 0 => highest.
+  inDisk......1st Disk drive # of image.
+  BLC.........The Bottom Left-hand pixel of the subarray of the 
+              image to be plotted. The value (0,0) means (1,1).
+  TRC.........The Top Right-hand pixel of the subarray of the 
+              image to be plotted.  The value (0,0) means the 
+              top right hand corner of the entire image.
+  PixRange....Range of pixels in image to plot, 0's => all
+  plotType....Type of plot:
+              "Contour" Contour plot
+              "Gray" plots a grayscale plot of image 1
+              "ColorCont" plots a color contour plot of image 1
+              "Phlame" plots a "phlame" pseudocolor plot of image 1
+  plotFile....Name of the output plot file 
+              NB: plplot only writes in the current directory
+  format......Output plot format (plplot options:)
+                   "None"  interactive prompt giving options
+                   "xwin"  X-Window (Xlib)
+                   "gcw"   Gnome Canvas Widget
+                   "ps"    PostScript File (monochrome)
+                   "psc"   PostScript File (color)
+                   "xfig"  Fig file
+                   "png"   PNG file
+                   "jpeg"  JPEG file
+                   "gif"   GIF file
+  lev.........Basic contour level (def 0.1 peak)
+  cntfac......Factor for spacing between contours
+  doSqrt......If True, show the square root of the intensity
+  doInvert....If True, show inverse of intensity, light becomes dark.
+  taskLog.....Log file to write messages to INSTEAD of the terminal
+              Path is absolute or relative to where the task executes.
+----------------------------------------------------------------

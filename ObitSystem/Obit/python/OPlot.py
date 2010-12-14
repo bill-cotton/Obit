@@ -90,12 +90,12 @@ class OPlot(OPlotPtr):
             Obit.delete_OPlot(self.this)
 
 # Foreground Colors
-BLACK       = 0
+unBLACK     = 0
 RED         = 1
 YELLOW      = 2
 GREEN       = 3
 AQUAMARINE  = 4
-PINK        = 5
+BLACK       = 5
 WHEAT       = 6
 GRAY        = 7
 BROWN       = 8
@@ -558,8 +558,8 @@ def PSetColor (plot, color, err):
 
     plot   = Python Plot object
     color  =  color index (1-15), symbolic names
-              BLACK, RED(default), YELLOW, GREEN, 
-              AQUAMARINE, PINK, WHEAT, GRAY, BROWN,
+              BLACK (notreally), RED(default), YELLOW, GREEN, 
+              AQUAMARINE, BLACK, WHEAT, GRAY, BROWN,
               BLUE, BLUEVIOLET, CYAN, TURQUOISE,
               MAGENTA, SALMON, WHITE
    err     =  ObitErr error stack

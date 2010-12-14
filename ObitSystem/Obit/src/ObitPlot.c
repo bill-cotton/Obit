@@ -2884,8 +2884,8 @@ void  ObitPlotSetLineStyle (ObitPlot* in, olong lstyle, ObitErr *err)
  * Set foreground color
  * \param in      Pointer to Plot object.
  * \param color   color index (1-15)
- *                0=black, 1=red(default), 2=yellow, 3=green, 
- *                4=aquamarine, 5=pink, 6=wheat, 7=gray, 8=brown,
+ *                0=black (not really), 1=red(default), 2=yellow, 3=green, 
+ *                4=aquamarine, 5=black, 6=wheat, 7=gray, 8=brown,
  *                9=blue, 10=BlueViolet, 11=cyan, 12=turquoise
  *                13=magenta, 14=salmon, 15=white
  * \param err     ObitErr error stack
@@ -2901,6 +2901,10 @@ void  ObitPlotSetColor (ObitPlot* in, olong color, ObitErr *err)
 /****************** plplot implementation *************************/
 #ifdef HAVE_PLPLOT  /* Only if plplot available */
   /* Call plplot routine */
+  /* If it's 5 turn it black */
+  if (color==5) {
+    plscol0 (color, 0, 0, 0);
+  }
   plcol0 ((PLINT)color);
 #endif /* HAVE_PLPLOT */
 
