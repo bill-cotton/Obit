@@ -13,14 +13,18 @@
 from os import environ, popen
 import re
 from sys import exit
+import sys
 
 OBIT = '' # path to Obit directory
 filename = '' # C file that will hold version
 ver = '' # Obit version string
 
 try:
-    # Get svn revision from the OBIT directory
-    OBIT = environ['OBIT']
+    # Get svn revision from the OBIT directory, Obit from environment or command line
+    if 'OBIT' in environ:
+        OBIT = environ['OBIT']
+    else:
+        OBIT = sys.argv[1]
     filename = OBIT + '/src/ObitVersion.c'
     cmd = 'svnversion -n ' + OBIT
     f = popen(cmd)
@@ -33,9 +37,6 @@ try:
     # Compare the current and previous version strings
     matchstr = re.compile('"(.*)"') # get first text in quotes
     groups = re.findall( matchstr, txt )
-    if ( groups and groups[0] == ver ):
-        print "Obit version in ObitVersion.c is already up to date."
-        exit() # terminate script
 
 except KeyError:
     print 'Warning: Obit version not set. Environment variable OBIT not found.'
@@ -47,7 +48,11 @@ except IOError:
 except Exception:
     print 'Error while getting Obit version.'
     raise
-
+# Need to update?
+if ( groups and groups[0] == ver ):
+    print "Obit version in ObitVersion.c is already up to date."
+    exit() # terminate script
+    
 # Write version.c to hold and return version information
 f = open( filename, 'w' )
 txt = """

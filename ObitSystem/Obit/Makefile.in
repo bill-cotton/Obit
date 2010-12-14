@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#;  Copyright (C) 2002-2008
+#;  Copyright (C) 2002-2010
 #;  Associated Universities, Inc. Washington DC, USA.
 #;
 #;  This program is free software; you can redistribute it and/or
@@ -63,7 +63,7 @@ all:  $(TARGETS)
 
 # update the Obit version (svn revision)
 versionupdate:
-	python share/scripts/getVersion.py
+	python share/scripts/getVersion.py ${OBIT}
 
 # update dummy_cfitsio directory
 cfitsioupdate:
