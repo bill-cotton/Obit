@@ -1712,11 +1712,10 @@ UVSolnDeselCL = _Obit.UVSolnDeselCL
 SNInvert = _Obit.SNInvert
 UVVisGet = _Obit.UVVisGet
 UVVisSet = _Obit.UVVisSet
-getVersion = _Obit.getVersion
+Version = _Obit.Version
 Zernike = _Obit.Zernike
 ZernikeGradX = _Obit.ZernikeGradX
 ZernikeGradY = _Obit.ZernikeGradY
 ZernikePolar = _Obit.ZernikePolar
 
-version = cvar.version
 
