@@ -10711,6 +10711,14 @@ extern void UVVisSet (PyObject* vis, ObitUV* outUV, ObitErr *err) {
 extern PyObject *UVVisGet(ObitUV *,ObitErr *);
 extern void UVVisSet(PyObject *,ObitUV *,ObitErr *);
 
+#include <string.h>
+extern char *ObitVersion();
+
+extern char *Version() {
+    return ObitVersion();
+}
+extern char *Version();
+
 
 #include "ObitZernike.h"
 
@@ -49678,6 +49686,18 @@ static PyObject *_wrap_UVVisSet(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_Version(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,":Version")) 
+        return NULL;
+    _result = (char *)Version();
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_Zernike(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     float  _result;
@@ -65477,6 +65497,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "ZernikeGradY", _wrap_ZernikeGradY, METH_VARARGS },
 	 { "ZernikeGradX", _wrap_ZernikeGradX, METH_VARARGS },
 	 { "Zernike", _wrap_Zernike, METH_VARARGS },
+	 { "Version", _wrap_Version, METH_VARARGS },
 	 { "UVVisSet", _wrap_UVVisSet, METH_VARARGS },
 	 { "UVVisGet", _wrap_UVVisGet, METH_VARARGS },
 	 { "SNInvert", _wrap_SNInvert, METH_VARARGS },

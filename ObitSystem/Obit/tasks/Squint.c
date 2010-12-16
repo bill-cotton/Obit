@@ -1056,7 +1056,9 @@ ObitUV* setOutputUV (gchar *Source, ObitInfoList *myInput, ObitUV* inData,
   outUV = newObitUV(tname);
     
   /* File type - could be either AIPS or FITS */
-  ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
+  ObitInfoListGetP (myInput, "outDType", &type, dim, (gpointer)&Type);
+  if ((Type==NULL) || (!strncmp(Type,"    ",4)))
+    ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
   lType = dim[0];
   if (!strncmp (Type, "AIPS", 4)) { /* AIPS input */
     /* Generate output name from Source, out2Name */
@@ -1195,7 +1197,9 @@ void setOutputData (gchar *Source, olong iStoke, ObitInfoList *myInput,
   ObitInfoListGetTest(myInput, "Stokes",  &type, dim, Stokes);
 
   /* File type - could be either AIPS or FITS */
-  ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
+  ObitInfoListGetP (myInput, "outDType", &type, dim, (gpointer)&Type);
+  if ((Type==NULL) || (!strncmp(Type,"    ",4)))
+    ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
   lType = dim[0];
   if (!strncmp (Type, "AIPS", 4)) { /* AIPS output */
     /* Generate output name from Source, outName */
@@ -2141,6 +2145,11 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
 
   if (ncomp) g_free(ncomp);   ncomp  = NULL;  /* Done with array */
 
+  /* Make sure at least images made */
+  Obit_return_if_fail((myClean->maxAbsRes[0]>0.0), err, 
+		      "%s: No image(s) generated", 
+		      routine);
+  
   /* Any final CC Filtering? */
   if (CCFilter[0]>0.0) {
     /* Compress CC files */
@@ -2170,10 +2179,10 @@ void doImage (ObitInfoList* myInput, ObitUV* inUV,
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
   } /* end final filtering */
 
-  /* Restore if requested */
+  /* Restore if requested and CLEANing done */
   doRestore = TRUE;
   ObitInfoListGetTest(myInput, "doRestore", &type, dim, &doRestore);
-  if (doRestore) {
+  if (doRestore && myClean->Pixels && (myClean->Pixels->currentIter>0)) {
     ObitDConCleanRestore((ObitDConClean*)myClean, err);
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     /* Cross restore? */
@@ -2274,6 +2283,10 @@ void subIPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver,
   sprintf (IStokes, "    ");
   ObitInfoListAlwaysPut (outData->info, "Stokes", OBIT_string, dim, IStokes);
   
+  /* Open and close uvdata to set descriptor for scratch file */
+  ObitUVOpen (outData, OBIT_IO_ReadCal, err);
+  ObitUVClose (outData, err);
+
   /* Copy to scratch with calibration */
   scrUV = newObitUVScratch (outData, err);
   scrUV = ObitUVCopy (outData, scrUV, err);
@@ -2340,7 +2353,7 @@ void SquintHistory (gchar *Source, ObitInfoList* myInput,
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq",
-    "outFile",  "outDisk", "outName", "outClass", "outSeq",
+    "outDType", "outFile",  "outDisk", "outName", "outClass", "outSeq",
     "BChan", "EChan", "BIF", "EIF", "IChanSel", "Threshold", "CCVer",
     "FOV",  "UVRange",  "timeRange",  "Robust",  "UVTaper",  
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 

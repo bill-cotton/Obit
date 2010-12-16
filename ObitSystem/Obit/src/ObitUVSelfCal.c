@@ -275,7 +275,7 @@ gboolean ObitUVSelfCalSelfCal (ObitUVSelfCal *in, ObitUV *inUV, gboolean init,
   olong i, j, jj, nfield, *iatemp, itemp, isuba, refant, bestSN=0, oldDoCal;
   ofloat best, posFlux, peakFlux;
   ofloat minFluxPSC, minFluxASC, minFlux;
-  gchar *dispURL=NULL, tname[129], solmod[5], tbuff[128];
+  gchar *dispURL=NULL, tname[129], solmod[5], tbuff[128], *Stokes="    ";
   gboolean Tr=TRUE, Fl=FALSE, diverged, quit, doSmoo, doDelay, noNeg;
   gchar        *SCParms[] = {  /* Self parameters */
     "refAnt", "solInt", "solType", "solMode", "WtUV", "avgPol", "avgIF", 
@@ -472,9 +472,15 @@ gboolean ObitUVSelfCalSelfCal (ObitUVSelfCal *in, ObitUV *inUV, gboolean init,
     
     /* Scratch file to use for self calibration */
     if (in->SCData==NULL) {
-      in->SCData = newObitUVScratch (inUV, err);
+      /* All Stokes on scratch file */
+      dim[0] = 4;
+      ObitInfoListAlwaysPut (inUV->info, "Stokes", OBIT_string, dim, Stokes);
+      /* Open and close uvdata to set descriptor for scratch file */
+      ObitUVOpen (inUV, OBIT_IO_ReadCal, err);
+      ObitUVClose (inUV, err);
       if (err->error) Obit_traceback_val (err, routine, inUV->name, converged);
-    }
+       in->SCData = newObitUVScratch (inUV, err);
+   }
     
     /* Don't apply any  calibration to inUV */
     dim[0] = 1; dim[1] = 1;

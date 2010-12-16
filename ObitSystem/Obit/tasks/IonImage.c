@@ -2021,6 +2021,10 @@ void subIPolModel (ObitUV* outData,  ObitSkyModel *skyModel, olong *selFGver,
   dim[0] = 1; jtemp = -1;
   ObitInfoListAlwaysPut (outData->info, "doCalib", OBIT_long, dim, &jtemp);
   
+  /* Open and close uvdata to set descriptor for scratch file */
+  ObitUVOpen (outData, OBIT_IO_ReadCal, err);
+  ObitUVClose (outData, err);
+
   /* Copy to scratch with calibration */
   scrUV = newObitUVScratch (outData, err);
   scrUV = ObitUVCopy (outData, scrUV, err);

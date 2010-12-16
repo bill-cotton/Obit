@@ -305,11 +305,7 @@ void ObitUVImagerSquintWeight (ObitUVImager *in, ObitErr *err)
   if (err->error) return;
   g_assert (ObitIsA(in, &myClassInfo));
 
-  /* Create scratch uvwork if it doesn't exist */
-  if (in->uvwork==NULL) in->uvwork = newObitUVScratch (in->uvdata, err);
-  if (err->error) Obit_traceback_msg (err, routine, in->name);
- 
- /* Get Stokes being imaged */
+  /* Get Stokes being imaged */
   strncpy (IStokes, "F   ", 4); 
   ObitInfoListGetTest (in->uvdata->info, "Stokes", &type, dim, IStokes);
 
@@ -317,6 +313,15 @@ void ObitUVImagerSquintWeight (ObitUVImager *in, ObitErr *err)
   dim[0] = 4;
   ObitInfoListAlwaysPut (in->uvdata->info, "Stokes", OBIT_string, dim, Stokes);
 
+  /* Open and close uvdata to set descriptor for scratch file */
+  ObitUVOpen (in->uvdata, OBIT_IO_ReadCal, err);
+  ObitUVClose (in->uvdata, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
+  /* Create scratch uvwork if it doesn't exist */
+  if (in->uvwork==NULL) in->uvwork = newObitUVScratch (in->uvdata, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+ 
   /* Copy/calibrate/select uvdata to uvwork */
   in->uvwork = ObitUVCopy (in->uvdata, in->uvwork, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);

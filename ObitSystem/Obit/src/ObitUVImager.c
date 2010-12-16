@@ -405,6 +405,11 @@ void ObitUVImagerWeight (ObitUVImager *in, ObitErr *err)
   if (err->error) return;
   g_assert (ObitIsA(in, &myClassInfo));
 
+  /* Open and close uvdata to set descriptor for scratch file */
+  ObitUVOpen (in->uvdata, OBIT_IO_ReadCal, err);
+  ObitUVClose (in->uvdata, err);
+  if (err->error) Obit_traceback_msg (err, routine, in->name);
+
   /* Create scratch uvwork if it doesn't exist */
   if (in->uvwork==NULL) in->uvwork = newObitUVScratch (in->uvdata, err);
   if (err->error) Obit_traceback_msg (err, routine, in->name);

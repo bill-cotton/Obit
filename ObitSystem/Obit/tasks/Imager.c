@@ -2160,6 +2160,11 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
 
   if (ncomp) g_free(ncomp);   ncomp  = NULL;  /* Done with array */
 
+  /* Make sure at least images made */
+  Obit_return_if_fail((myClean->maxAbsRes[0]>0.0), err, 
+		      "%s: No image(s) generated", 
+		      routine);
+  
   /* Any final CC Filtering? */
   if (CCFilter[0]>0.0) {
     /* Compress CC files */
@@ -2189,10 +2194,10 @@ void doImage (gchar *Stokes, ObitInfoList* myInput, ObitUV* inUV,
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
   } /* end final filtering */
 
-  /* Restore if requested */
+  /* Restore if requested and CLEANing done */
   doRestore = TRUE;
   ObitInfoListGetTest(myInput, "doRestore", &type, dim, &doRestore);
-  if (doRestore) {
+  if (doRestore && myClean->Pixels && (myClean->Pixels->currentIter>0)) {
     ObitDConCleanRestore((ObitDConClean*)myClean, err);
     if (err->error) Obit_traceback_msg (err, routine, myClean->name);
     /* Cross restore? */

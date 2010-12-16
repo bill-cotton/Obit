@@ -3632,7 +3632,7 @@ gboolean ObitSkyModelsetPBChans(ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
     } /* end loop over channels */
     if (found) break;
     in->numberIFPB++;
-    in->startChannelPB = 1;
+    /* WHAT??? in->startChannelPB = 1;*/
   } /* end loop over IFs */
 
   /* Either whole IFs or a block of channels in a single IF */
