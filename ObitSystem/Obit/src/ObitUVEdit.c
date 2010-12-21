@@ -110,14 +110,14 @@ static void EditFDAvg(olong numChan, olong numIF, olong numPol, olong numBL, olo
 
 /** Private: Fit baselines  for FD to averages, subtract */
 static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL, 
-			   olong *count, ofloat *avg, ofloat *RMS, 
+			   olong *count, ofloat *avg, ofloat *RMS, ofloat *sigma,
 			   olong widMW, gboolean *chanMask, ObitErr* err);
 	    
 /** Private: Do editing for FD */
 static void EditFDEdit(olong numChan, olong numIF, olong numPol, olong numBL, 
-		       olong *count, ofloat *avg, ofloat *RMS, 
+		       olong *count, ofloat *avg, ofloat *RMS, ofloat *sigma,
 		       ofloat *maxRMS, ofloat maxRes, ofloat maxResBL, 
-		       gboolean *chanMask);
+		       gboolean *chanMask, gboolean doMW);
 
 /** Private: Get median value of an array */
 static ofloat medianVal (ofloat *array, olong incs, olong n);
@@ -1767,9 +1767,9 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   ofloat startTime, endTime, curTime, amp2, *Buffer;
   ofloat lastTime=-1.0, cbase;
   olong *corChan=NULL, *corIF=NULL, *corStok=NULL, *corV=NULL;
-  gboolean *chanMask=NULL, done, gotOne;
+  gboolean *chanMask=NULL, done, gotOne, doMW;
   /* Accumulators per spectral channel/IF/poln/baseline */
-  ofloat *sumA=NULL, *sumA2=NULL;
+  ofloat *sumA=NULL, *sumA2=NULL, *sigma=NULL;
   olong *count=NULL, *blLookup=NULL, *BLAnt1=NULL, *BLAnt2=NULL;
   olong defSel[] = {2,-10,1,0, 0,0,0,0};
   ofloat sec;
@@ -1889,6 +1889,7 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   /* index in order */
   sumA     = g_malloc0 (numChan*numPol*numIF*numBL*sizeof(ofloat));
   sumA2    = g_malloc0 (numChan*numPol*numIF*numBL*sizeof(ofloat));
+  sigma    = g_malloc0 (numChan*numPol*numIF*numBL*sizeof(ofloat));
   count    = g_malloc0 (numChan*numPol*numIF*numBL*sizeof(olong));
   corChan  = g_malloc0 (ncorr * sizeof(olong));     /* Correlator Channel */
   corIF    = g_malloc0 (ncorr * sizeof(olong));     /* Correlator IF */
@@ -2053,13 +2054,14 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
 		  maxAmp, maxV, corV);
 	    
 	/* Fit baselines to averages, subtract */
-	EditFDBaseline(numChan, numIF, numPol, numBL, count, sumA, sumA2, 
+	EditFDBaseline(numChan, numIF, numPol, numBL, count, sumA, sumA2, sigma,
 		       widMW, chanMask, err);
 	if (err->error) goto cleanup;
 	    
 	/* Do editing on residuals, RMSes */
-	EditFDEdit(numChan, numIF, numPol, numBL, count, sumA, sumA2, 
-		   maxRMS, maxRes, maxResBL, chanMask);
+	doMW = widMW>0;
+	EditFDEdit(numChan, numIF, numPol, numBL, count, sumA, sumA2, sigma,
+		   maxRMS, maxRes, maxResBL, chanMask, doMW);
 
 	/* Init Flagging table entry */
 	row->SourID  = lastSourceID; 
@@ -2156,6 +2158,7 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
   outFlag = ObitTableFGUnref(outFlag);
   if (sumA)     g_free(sumA);
   if (sumA2)    g_free(sumA2);
+  if (sigma)    g_free(sigma);
   if (count)    g_free(count);
   if (blLookup) g_free(blLookup);
   if (BLAnt1)   g_free(BLAnt1);
@@ -4270,21 +4273,22 @@ static void EditFDAvg(olong numChan, olong numIF, olong numPol, olong numBL, olo
  * \param numPol   Number of polarizations in count, sumA, RMS
  * \param numBL    Number of baselines in count, sumA, RMS
  * \param count    Count of entries in each cell of avg, RMS
- * \param avg     Sum of amplitudes in time interval for freq, IF, poln, baseline
- *                 <=0.0 => no data or flagged
- * \param RMS    Sum of amplitude**2 in time interval for freq, IF, poln, baseline
+ * \param avg      Sum of amplitudes in time interval for freq, IF, poln, baseline
+ *                  <=0.0 => no data or flagged
+ * \param RMS      Sum of amplitude**2 in time interval for freq, IF, poln, baseline
+ * \param sigma    [out] median alpha sigma for values in avg (MW only)
  * \param widMW    If > 0 the width of the median window in channels.
  *                 If <= 0 use linear baseline and chanMask
  * \param chanMask Mask, True if channel is to be used in baseline fit
  * \param err      Error stack, returns if not empty.
  */
 static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL, 
-			   olong *count, ofloat *avg, ofloat *RMS, 
+			   olong *count, ofloat *avg, ofloat *RMS, ofloat *sigma,
 			   olong widMW, gboolean *chanMask, ObitErr* err)
 {
   olong js, jf, jif, jbl, jj, indx, jndx, cnt, half;
   gboolean haveBL, doMW = widMW>0;  /* Median window filter or linear baseline */
-  ofloat a, b, *temp=NULL;
+  ofloat a, b, aaa, *temp=NULL;
   /*gchar *routine = "EditFDBaseline";*/
 
   /* error checks */
@@ -4322,8 +4326,11 @@ static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL
 	      }
 	    }
 	    /* Get Median and subtract */
-	    if ((count[indx+jj]>0) && (avg[indx]>-9900.0))
-	      avg[indx] -= medianVal (temp, 1, cnt);
+	    if ((count[indx+jj]>0) && (avg[indx]>-9900.0)) {
+	      aaa = medianVal (temp, 1, cnt);
+	      avg[indx] -= aaa;
+	      sigma[indx] = MedianSigma (cnt, temp, aaa, 0.2);
+	    }
 	    indx++;
 	  } /* end loop over Channel */
 	} /* end loop over IF */
@@ -4376,6 +4383,7 @@ static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL
  * \param avg      Sum of amplitudes in time interval for freq, IF, poln, baseline
  *                 <=0.0 => no data or flagged, -9999 => flagged
  * \param RMS      Sum of amplitude**2 in time interval for freq, IF, poln, baseline
+ * \param sigma    [out] median alpha sigma for values in avg (MW only)
  * \param maxRMS   Flag all channels having RMS values > maxRMS[0] of the 
  *                 channel median sigma.[default 6.0] plus maxRMS[1] (default 0.1) 
  *                 of the channel average in quadrature
@@ -4385,11 +4393,12 @@ static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL
  * \param maxResBL Max. residual flux in sigma allowed for channels within 
  *                 the baseline fitting regions. 
  * \param chanMask Mask, True if channel is to be used in baseline fit
+ * \param doMW     True if using median window baselines.
  */
 static void EditFDEdit(olong numChan, olong numIF, olong numPol, olong numBL, 
-		       olong *count, ofloat *avg, ofloat *RMS, 
+		       olong *count, ofloat *avg, ofloat *RMS, ofloat *sigma,
 		       ofloat *maxRMS, ofloat maxRes, ofloat maxResBL, 
-		       gboolean *chanMask)
+		       gboolean *chanMask, gboolean doMW)
 {
   olong js, jf, jif, jbl, indx, jndx, cnt;
   odouble sum1, sum2, meanRMS, residualRMS;
@@ -4438,13 +4447,14 @@ static void EditFDEdit(olong numChan, olong numIF, olong numPol, olong numBL,
 	/* Residual RMS */
 	if (cnt>0) residualRMS = sqrt (sum2/cnt + (sum1/cnt)*(sum1/cnt));
 	else residualRMS = 1.0e20;
+	if (!doMW) sigma[indx+jf] = residualRMS;
 
 	/* Residual flagging */
 	for (jf=0; jf<numChan; jf++) {
 	  if (chanMask[jndx+jf]) { /* In baseline */
-	    if (fabs(avg[indx+jf])>maxResBL*residualRMS) avg[indx+jf] = -9999.0;
+	    if (fabs(avg[indx+jf])>maxResBL*sigma[indx+jf]) avg[indx+jf] = -9999.0;
 	  } else {  /* Not in baseline */
-	    if (fabs(avg[indx+jf])>maxRes*residualRMS)   avg[indx+jf] = -9999.0;
+	    if (fabs(avg[indx+jf])>maxRes*sigma[indx+jf])   avg[indx+jf] = -9999.0;
 	  }
 	} /* end loop over Channel */
 	jndx += numChan;
@@ -4478,7 +4488,6 @@ static ofloat medianVal (ofloat *array, olong incs, olong n)
 
   return out;
 } /* end medianVal */
-
 /**
  * ofloat comparison of two arguments
  * \param arg1 first value to compare

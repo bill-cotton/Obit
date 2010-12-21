@@ -1096,7 +1096,7 @@ def EVLAPACor(uv, err, CLver=0, FreqID=1,\
 
 def EVLADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None, \
                      timeRange=[0.,0.], FreqID=1, doCalib=-1, gainUse=0, minSNR=5.0, \
-                     refAnts=[0], doBand=-1, BPVer=0, flagVer=-1,  \
+                     refAnts=[0], doBand=-1, BPVer=0, flagVer=-1, doTwo=True, \
                      doPlot=False, plotFile="./DelayCal.ps", \
                      nThreads=1, noScrat=[], logfile='', check=False, debug=False):
     """ Group delay calibration
@@ -1132,6 +1132,8 @@ def EVLADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
     doBand     = If >0.5 apply bandpass cal.
     BPVer      = Bandpass table version
     flagVer    = Input Flagging table version
+    doTwo      = If True, use one and two baseline combinations
+                 for delay calibration, else only one baseline
     doPlot     = If True make plots of SN gains
     plotFile   = Name of postscript file for plots
     nThreads   = Max. number of threads to use
@@ -1169,7 +1171,7 @@ def EVLADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
     calib.solnVer   = SNver
     calib.noScrat   = noScrat
     calib.nThreads  = nThreads
-    #calib.doTwo = False   # DEBUG
+    calib.doTwo     = doTwo
     #  If multiple sources given with models - loop
     if (type(calSou)==list) and (len(calSou)>1):
         ncloop = len(calSou)
@@ -2455,7 +2457,7 @@ def EVLARLCal(uv, err, \
         UFlux = []
         URMS  = []
         
-        # Loop over IF imaging I,Q, U
+        # Loop over IF imaging I,Q, U, allow failure
         for iif in range (1, nif+1):
             img.BIF = iif
             img.EIF = iif
@@ -2465,16 +2467,26 @@ def EVLARLCal(uv, err, \
                 img.i
                 img.debug = debug
             # Trap failure
+            failed = False
             try:
                 if not check:
                     img.g
             except Exception, exception:
                 print exception
-                mess = "Imager Failed retCode="+str(img.retCode)
+                mess = "Imager Failed IF "+str(iif)+" retCode="+str(img.retCode)
                 printMess(mess, logfile)
-                return 1
+                failed = True
             else:
                 pass
+            # Stub if failed
+            if failed:
+                IFlux.append(-1.0)
+                IRMS.append(-1.0)
+                QFlux.append(-1.0)
+                QRMS.append(-1.0)
+                UFlux.append(-1.0)
+                URMS.append(-1.0)
+                continue
 
             if check:      # Don't bother if only checking 
                 continue
@@ -3724,9 +3736,9 @@ def EVLASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["RR","LL"], \
                 possm.g
         except Exception, exception:
             print exception
-            mess = "POSSM Failed"
+            mess = "POSSM Failed - continue anyway"
             printMess(mess, logfile)
-            return 1
+            # return 1
         else:
             pass
         # End Stokes loop

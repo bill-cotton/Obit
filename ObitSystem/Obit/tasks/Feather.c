@@ -444,7 +444,7 @@ void featherGetImage(ObitInfoList *myInput, olong *numImage,
   olong        number;
   gboolean     exist;
   gchar        *strTemp=NULL, inFile[128];
-  gchar        Aname[13], Aclass[7], *Atype = "MA";
+  gchar        Aname[13], Aclass[9], *Atype = "MA";
   gchar        tname[101], *Type, *FITS="FITS";
   gchar *routine = "featherGetImage";
 

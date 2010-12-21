@@ -1,6 +1,6 @@
-# Pipeline processing 
+# Pipeline processing for calibrating and imaging EVLA data
 # AIPS/FITS setup and Parameter file given as arguments:
-# > python EVLAPipeline.py AIPSSetup.py parms.py
+# > ObitTalk EVLAPipeline.py AIPSSetup.py parms.py
 #
 import sys
 import OErr, OSystem, UV, AIPS, FITS
@@ -16,13 +16,13 @@ execfile (setup)
 
 ############################# Default parameters ##########################################
 # Generic parameters
-project       = "Unspecified"               # Project name (12 char or less, used as AIPS Name)
-session       = "?"                         # Project session code
-band          = "?"                         # Observing band
-seq           = 1          # AIPS sequence number
-gain          = 0.10       # CLEAN loop gain
-check         = False      # Only check script, don't execute tasks
-debug         = False      # run tasks debug
+project       = "Unspecified"   # Project name (12 char or less, used as AIPS Name)
+session       = "?"             # Project session code
+band          = "?"             # Observing band
+seq           = 1               # AIPS sequence number
+gain          = 0.10            # CLEAN loop gain
+check         = False           # Only check script, don't execute tasks
+debug         = False           # run Obit tasks debug
 
 # Archive parameters
 doLoadArchive = True       # Load from archive?
@@ -44,7 +44,7 @@ dataClass     = "UVData"   # AIPS class of raw uv data
 Compress      = False      # Use compressed UV data?
 
 # Editing
-doClearTab  = True         # Clear cal/edit tables
+doClearTab  = True         # Clear cal/edit tables at (re)start
 doClearGain = True         # Clear SN and CL tables >1
 doClearFlag = True         # Clear FG tables > 1
 doClearBP   = True         # Clear BP tables?
@@ -53,7 +53,19 @@ Reason      = "Quack"      # Reason code for Quack
 doQuack     = True         # Quack data?
 quackBegDrop= 0.1          # Time to drop from start of each scan in min
 quackEndDrop= 0.1          # Time to drop from end of each scan in min
-quackReason   = "Quack"                 # Reason string
+quackReason   = "Quack"    # Reason string
+
+doMedn      = True         # Median editing?
+mednSigma   = 10.0         # Median sigma clipping level
+timeWind    = 2.0          # Median window width in min for median flagging
+avgTime     = 10.0/60.     # Averaging time in min
+avgFreq     = 0            # 1=>avg chAvg chans, 2=>avg all chan, 3=> avg chan and IFs
+chAvg       = 1            # number of channels to average
+
+doFD1       = True         # Do initial frequency domain flagging
+FD1widMW    = 15           # Width of the initial FD median window
+FD1maxRes   = 10.0         # Clipping level in sigma
+FD1TimeAvg  = 2.0          # Time averaging in min. for initial FD flagging
 
 doAutoFlag    = True       # Autoflag editing?
 RMSAvg      = 20.0         # AutoFlag Max RMS/Avg for time domain RMS filtering
@@ -63,17 +75,11 @@ timeAvg     = 2.0          # AutoFlag time averaging in min.
 doAFFD      = False        # do AutoFlag frequency domain flag
 FDmaxAmp    = IClip[0]     # Maximum average amplitude (Jy)
 FDmaxV      = VClip[0]     # Maximum average VPol amp (Jy)
-FDwidMW     = 5            # Width of the median window
+FDwidMW     = 15           # Width of the median window
 FDmaxRMS    = [6.0,0.1]    # Channel RMS limits (Jy)
-FDmaxRes    = 6.0          # Max. residual flux in sigma
-FDmaxResBL  = 6.0          # Max. baseline residual
+FDmaxRes    = 10.0         # Max. residual flux in sigma
+FDmaxResBL  = 10.0         # Max. baseline residual
 FDbaseSel   = [0,0,0,0]    # Channels for baseline fit
-doMedn      = True         # Median editing?
-mednSigma   = 10.0         # Median sigma clipping level
-timeWind    = 2.0          # Median window width in min for median flagging
-avgTime     = 10.0/60.     # Averaging time in min
-avgFreq     = 0            # 1=>avg chAvg chans, 2=>avg all chan, 3=> avg chan and IFs
-chAvg       = 1            # number of channels to average
 
 # Special editing list
 doEditList  = False        # Edit using editList?
@@ -102,6 +108,7 @@ bpsolint2     = 10.0       # BPass bandpass solution in min
 
 # Delay calibration from DCal (see below)
 doDelayCal  = True         # Determine/apply delays from DCal
+doTwo       = True         # Use 1 and 2 bl combinations?
 
 # Amp/phase calibration
 PCal          = None                    # Phase calibrator(s)
@@ -138,6 +145,7 @@ PCFixPoln     = False     # Fix polarization to value in source table?
 PCAvgIF       = False     # Determine average calibration for all IFs?
 PCSolInt      = 2.0       # Pcal solution averaging time in min.
 PCRefAnt      = 0         # Poln cal reference antenna
+PCSolType     ="ORI-"     # Solution type "ORI-", "RAPR"
 
 # R-L phase/delay calibration
 doRLCal       = False    # Determine R-L bandpass prior to pcal?
@@ -276,7 +284,7 @@ if doQuack:
     if retCode!=0:
         raise RuntimeError,"Error Quacking data"
 
-# Median editing
+# Median window time editing, for RFI impulsive in time
 if doMedn:
     retCode = EVLAMedianFlag (uv, "    ", err, noScrat=noScrat, nThreads=nThreads, \
                               avgTime=avgTime, avgFreq=avgFreq,  chAvg= chAvg, \
@@ -285,7 +293,18 @@ if doMedn:
     if retCode!=0:
         raise RuntimeError,"Error in MednFlag"
 
-# Plot Raw data?
+# Median window frequency editing, for RFI impulsive in frequency
+if doFD1:
+    retCode = EVLAAutoFlag (uv, targets, err,  flagVer=2, doCalib=-1, doBand=-1,   \
+                                timeAvg=FD1TimeAvg, \
+                                doFD=True, FDmaxAmp=1.0e20, FDmaxV=1.0e20, FDwidMW=FD1widMW,  \
+                                FDmaxRMS=[1.0e20,0.1], FDmaxRes=FD1maxRes,  FDmaxResBL= FD1maxRes,  \
+                                logfile=logFile, check=check, debug=debug)
+    if retCode!=0:
+       raise  RuntimeError,"Error in AutoFlag"
+
+
+# Plot Raw, edited data?
 if doRawSpecPlot and plotSource:
     plotFile = "./"+project+"_"+session+"_"+band+"RawSpec.ps"
     retCode = EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
@@ -326,7 +345,7 @@ if doDelayCal and DCal and not check:
     retCode = EVLADelayCal(uv, err, calSou=DCal, CalModel=None, \
                            doCalib=2, flagVer=2, doBand=1, \
                            solInt=solint, smoTime=20.0/60.0,  \
-                           refAnts=[refAnt], \
+                           refAnts=[refAnt], doTwo=doTwo, \
                            doPlot=doSNPlot, plotFile=plotFile, \
                            nThreads=nThreads, noScrat=noScrat, \
                            logfile=logFile, check=check, debug=debug)
@@ -353,12 +372,13 @@ if doAmpPhaseCal:
     if retCode!=0:
         raise RuntimeError,"Error calibrating"
 
-# More editing
+# More editing, with flux limits
 if doAutoFlag:
     retCode = EVLAAutoFlag (uv, targets, err, RMSAvg=RMSAvg, flagVer=2, \
                                 doCalib=2, gainUse=0, doBand=1, BPVer=1,  \
                                 IClip=IClip, VClip=VClip, timeAvg=timeAvg, \
-                                doFD=doAFFD, FDmaxAmp=FDmaxAmp, FDmaxV=FDmaxV, FDwidMW=5, FDmaxRMS=FDmaxRMS, \
+                                doFD=doAFFD, FDmaxAmp=FDmaxAmp, FDmaxV=FDmaxV, \
+                                FDwidMW=FDwidMW, FDmaxRMS=FDmaxRMS, \
                                 FDmaxRes=FDmaxRes,  FDmaxResBL= FDmaxResBL, FDbaseSel=FDbaseSel, \
                                 logfile=logFile, check=check, debug=debug)
     if retCode!=0:
@@ -413,7 +433,7 @@ if doPolCal:
     retCode = EVLAPolCal(uv, PCInsCals, err, \
                          doCalib=2, gainUse=0, doBand=1, BPVer=0, flagVer=0, \
                          fixPoln=PCFixPoln, pmodel=PCpmodel, avgIF=PCAvgIF, \
-                         solInt=PCSolInt, refAnt=PCRefAnt, \
+                         solInt=PCSolInt, refAnt=PCRefAnt, soltype=PCSolType, \
                          check=check, debug=debug, \
                          noScrat=noScrat, logfile=logFile)
     if retCode!=0 and (not check):

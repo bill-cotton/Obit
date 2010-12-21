@@ -345,7 +345,9 @@ clipping is done on correlator and Vpol amplitudes. Following this, an
 average and RMS is determined for each channel in each timeAvg period
 and a spectral baseline is established for the average values, either
 using a  median window filter (FDwidMW>0) or a linear baseline fit
-(FDwidMW<=0) to specified channels.  Channels with excessive RMSes or
+(FDwidMW<=0) to specified channels.  If median filtering is used, the
+alpha filtered (robust) RMS estimator is used to determine the sigma
+aginst which the residual is compared. Channels with excessive RMSes or
 residual amplitudes are flagged. 
 Options other than FDmaxAmp and FDmaxV can be used on uncalibrated data;
 all can be used on calibrated data.

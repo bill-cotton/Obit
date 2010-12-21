@@ -3846,12 +3846,15 @@ static void Hann (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
 		  ofloat *inBuffer, ofloat *outBuffer, ofloat *work, 
 		  ObitErr *err)
 {
-  olong i, n, indx, jndx, jf, jif, js, nochan, noif;
-  olong nchan, nif, nstok, incs, incf, incif;
+  olong i, n, indx, jndx, jf, jif, js, nochan, noif, off;
+  olong nchan, nif, nstok, iincs, iincf, iincif, incs, incf, incif;
 
   /* error checks */
   if (err->error) return;
 
+  iincs  = inDesc->incs;
+  iincf  = inDesc->incf;
+  iincif = inDesc->incif;
   nchan = inDesc->inaxes[inDesc->jlocf];
   if (inDesc->jlocf>=0) nif = inDesc->inaxes[inDesc->jlocif];
   else nif = 1;
@@ -3869,39 +3872,44 @@ static void Hann (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
   for (i=0; i<n; i++) work[i] = 0.0;
 
   /* Accumulate order, channel, IF, poln */
-  indx = 0;
-  for (i=0; i<(inDesc->ncorr-1); i) {
-    jndx = 4*(corChan[i] + corIF[i]*nchan + corStok[i]*nchan*nif);
-    if ((indx>=3) && (inBuffer[indx-1]>0.0)) {
-      /* Prior 0.25 wt */
-      work[jndx]   += 0.25*inBuffer[indx-3];
-      work[jndx+1] += 0.25*inBuffer[indx-2];
-      work[jndx+2] += 0.25*inBuffer[indx-1];
-      work[jndx+3] += 0.25;
-    }
-    /* Center 0.5 wt */
-    if (inBuffer[indx+2]>0.0) {
-      work[jndx]   += 0.5*inBuffer[indx];
-      work[jndx+1] += 0.5*inBuffer[indx+1];
-      work[jndx+2] += 0.5*inBuffer[indx+2];
-      work[jndx+3] += 0.5;
-    }
-      /* Follow 0.25 wt */
-    if (inBuffer[indx+5]>0.0) {
-      work[jndx]   += 0.25*inBuffer[indx+3];
-      work[jndx+1] += 0.25*inBuffer[indx+4];
-      work[jndx+2] += 0.25*inBuffer[indx+5];
-      work[jndx+3] += 0.25;
-    }
-    indx += inDesc->inaxes[0];
-  } /* end accumulation loop */
+  for (js=0; js<nstok; js++) {  /* Stokes loop */
+    for (jif=0; jif<nif; jif++) {  /* IF loop */
+      for (jf=0; jf<nchan; jf++) {  /* Frequency loop */
+	indx = js*iincs + jif*iincif + jf*iincf;
+	jndx = 4*(jf + jif*nchan + js*nchan*nif);
+	off = -iincf;
+	if ((jf>0) && (inBuffer[indx+off+2]>0.0)) {
+	  /* Prior channel 0.25 wt */
+	  work[jndx]   += 0.25*inBuffer[indx+off];
+	  work[jndx+1] += 0.25*inBuffer[indx+off+1];
+	  work[jndx+2] += 0.25*inBuffer[indx+off+2];
+	  work[jndx+3] += 0.25;
+	}
+	/* Center channel 0.5 wt */
+	if (inBuffer[indx+2]>0.0) {
+	  work[jndx]   += 0.5*inBuffer[indx];
+	  work[jndx+1] += 0.5*inBuffer[indx+1];
+	  work[jndx+2] += 0.5*inBuffer[indx+2];
+	  work[jndx+3] += 0.5;
+	}
+	/* Follow channel 0.25 wt */
+	off = iincf;
+	if ((jf<(nchan-1)) && (inBuffer[indx+off+2]>0.0)) {
+	  work[jndx]   += 0.25*inBuffer[indx+off];
+	  work[jndx+1] += 0.25*inBuffer[indx+off+1];
+	  work[jndx+2] += 0.25*inBuffer[indx+off+2];
+	  work[jndx+3] += 0.25;
+	}
+      } /* end freq loop */
+    } /* end IF loop */
+  } /* end stokes loop */
   
   /* Normalize to output */
   /* Loop over Stokes */
   for (js=0; js<nstok; js++) {  /* Stokes loop */
     for (jif=0; jif<noif; jif++) {  /* IF loop */
       for (jf=0; jf<nochan; jf++) {  /* Frequency loop */
-	jndx = 4*(jf + jif*nchan + js*nchan*nif);
+	jndx = 4*(jf*2 + jif*nchan + js*nchan*nif);
 	indx = js*incs + jif*incif + jf*incf;
 	if (work[jndx+3]>0.0) {
 	  outBuffer[indx]   = work[jndx]   / work[jndx+3];

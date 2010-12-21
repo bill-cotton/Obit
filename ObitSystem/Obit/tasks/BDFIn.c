@@ -131,6 +131,10 @@ gboolean nextScan(ObitSDMData *SDMData, olong curScan, odouble time,
 		  olong *curScanI, olong *nextScanNo, olong *SourID);
 /* Nominal VLA sensitivity */
 ofloat nomSen(ASDMAntennaArray*  AntArray);
+/* Swallow NX Table */
+void ReadNXTable (ObitUV *outData, ObitErr *err);
+/* Is a time in the NX Table */
+gboolean timeInNXTable (ofloat time);
 
 /* Program globals */
 gchar *pgmName = "BDFIn";       /* Program name */
@@ -169,6 +173,10 @@ olong selChan=-1;                     /* Selected number of channels */
 olong selIF=-1;                       /* Selected number of IFs (SpWin) */
 gboolean isEVLA;                      /* Is this EVLA data? */
 gboolean SWOrder=FALSE;               /* Leave in SW Order? */
+
+/* NX table structure, times only */
+olong noNXTimes=0;       /* Number of entries in NXTimes */
+ofloat *NXTimes =NULL;    /* Array of pairs of start/stop times in days */
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
@@ -238,6 +246,10 @@ int main ( int argc, char **argv )
   /* Close output uv data */
   if ((ObitUVClose (outData, err) != OBIT_IO_OK) || (err->error>0))
     Obit_log_error(err, OBIT_Error, "ERROR closing output file");
+
+  /* Read NX table to internam array */
+  ReadNXTable(outData, err);  
+  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
   
   /* Copy EVLA tables */
   if (isEVLA) {
@@ -292,6 +304,7 @@ int main ( int argc, char **argv )
   outData  = ObitUnref(outData);
   CalTab   = ObitTableUnref(CalTab);
   uvwSourceList = ObitUnref(uvwSourceList);
+  if (NXTimes)     g_free(NXTimes);
   if (dataRefJDs)  g_free(dataRefJDs);
   if (arrayRefJDs) g_free(arrayRefJDs);
   if (arrRefJDCor) g_free(arrRefJDCor);
@@ -2046,7 +2059,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   BDFData  = ObitBDFDataUnref (BDFData);
   if (SpWinArray) SpWinArray  = ObitSDMDataKillSWArray (SpWinArray);
   NXrow    = ObitTableNXRowUnref(NXrow);
-  NXtable   = ObitTableNXUnref(NXtable);
+  NXtable  = ObitTableNXUnref(NXtable);
 
 } /* end GetData  */
 
@@ -2645,7 +2658,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ASDMSpectralWindowArray* SpWinArray;
   olong i, j, iRow, jRow, oRow, ver, maxAnt, IFno, SourNo, SWId;
   olong *antLookup=NULL, *SpWinLookup=NULL, *SpWinLookup2=NULL;
-  olong curScan, curScanI, nextScanNo;
+  olong curScan, curScanI, nextScanNo, bad=0;
   oint numIF, numPol;
   ofloat fblank = ObitMagicF();
   gboolean want;
@@ -2756,9 +2769,15 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     /* Make sure valid */
     if (inTab->rows[iRow]->timeInterval==NULL) continue;
 
+    /* Is this one during a scan - if not, ignore */
+    if (!timeInNXTable(inTab->rows[iRow]->timeInterval[0]-refJD)) {
+      bad++;   /* Count entries */
+      continue;
+    }
+    
     /* Look for previously handled data (antennaId=-10) */
     if (inTab->rows[iRow]->antennaId<=-10) continue;
-
+    
     /* Is this in the same scan?  Antennas may change but not SpWin */
     if (nextScan(SDMData, curScan, inTab->rows[iRow]->timeInterval[0], 
 		&curScanI, &nextScanNo, &SourNo)) {
@@ -2876,6 +2895,14 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   /* Tell about it */
   Obit_log_error(err, OBIT_InfoErr, "Copied SysPower table %d rows",
 		 outTable->myDesc->nrow);
+
+  /* Ones flagged out of scans */
+  bad /= (numIF*numPol);  /* Reduce to per antenna */
+  if (bad>0) {
+    Obit_log_error(err, OBIT_InfoErr, 
+		   "Dropped SysPower table %d rows not in scan",
+		   bad);
+  }
   
   /* Cleanup */
   outRow   = ObitTableSYRowUnref(outRow);
@@ -3306,3 +3333,73 @@ ofloat nomSen(ASDMAntennaArray*  AntArray)
   
   return bandSen[band];
 } /* end nomSen  */
+
+/*----------------------------------------------------------------------- */
+/*  Read NX table and populate globals NXTimes, noNXTimes                 */
+/*   Input:                                                               */
+/*      outData  Output UV object                                         */
+/*   Output:                                                              */
+/*       err     Obit return error stack                                  */
+/*----------------------------------------------------------------------- */
+void ReadNXTable (ObitUV *outData, ObitErr *err)
+{
+  ObitTableNX* NXtable;
+  ObitTableNXRow* NXrow=NULL;
+  olong irow, ver, indx;
+  gchar *routine = "ReadNXTable";
+
+ /* Create Index table object */
+  ver = 1;
+  NXtable = newObitTableNXValue ("Index table", (ObitData*)outData, &ver, 
+				 OBIT_IO_ReadOnly, err);
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  
+  /* Open Index table */
+  ObitTableNXOpen (NXtable, OBIT_IO_ReadOnly, err);
+  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  
+  /* Create Index Row */
+  NXrow = newObitTableNXRow (NXtable);
+
+  /* Create output */
+  noNXTimes = NXtable->myDesc->nrow;
+  NXTimes   = g_malloc0(noNXTimes*2*sizeof(ofloat));
+
+  /* Loop over table reading */
+  for (irow=1; irow<=noNXTimes; irow++) {
+    if ((ObitTableNXReadRow (NXtable, irow, NXrow, err)
+	 != OBIT_IO_OK) || (err->error>0)) goto done; 
+    indx = (irow-1)*2;
+    NXTimes[indx]   = NXrow->Time - 0.5*NXrow->TimeI;
+    NXTimes[indx+1] = NXrow->Time + 0.5*NXrow->TimeI;
+  } /* end loop over table */
+  
+  /* Closeup cleanup */
+ done:
+  if ((ObitTableNXClose (NXtable, err) != OBIT_IO_OK) || (err->error>0)) 
+    Obit_traceback_msg (err, routine, NXtable->name);
+  NXrow    = ObitTableNXRowUnref(NXrow);
+  NXtable   = ObitTableNXUnref(NXtable);
+ } /* end ReadNXTable */
+
+/*----------------------------------------------------------------------- */
+/*  Is a given time in the NX table>                                      */
+/*  Looks up time in  NXTimes                                             */
+/*   Input:                                                               */
+/*     time Time wrt reftime in days                                      */
+/*   Return:                                                              */
+/*       TRUE if time in NX Times                                         */
+/*----------------------------------------------------------------------- */
+/* Is a time in the NX Table */
+gboolean timeInNXTable (ofloat time)
+{
+  gboolean out=FALSE;
+  olong i;
+
+  /* Loop through table */
+  for (i=0; i<noNXTimes; i++) {
+    if ((time>=NXTimes[i*2]) && (time<=NXTimes[i*2+1])) return TRUE;
+  }
+
+  return out;
+} /* end timeInNXTable */

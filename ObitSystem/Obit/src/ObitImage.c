@@ -901,6 +901,9 @@ void ObitImageClone2  (ObitImage *in1, ObitImage *in2, ObitImage *out,
   fact = 2.0 * fabs (pix3[0] - pix2[0]);
   fact = 1.0 + MIN (1.0, fact);
 
+  /* Take into account relative pixel sizes */
+  fact *= (fabs(in1->myDesc->cdelt[1]) / fabs(in2->myDesc->cdelt[1]));
+
   /* Increase size for possible differential rotation. */
   naxis[0] = (olong) (0.5+naxis[0]*fact);
   naxis[1] = (olong) (0.5+naxis[1]*fact);
