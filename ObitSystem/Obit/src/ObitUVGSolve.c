@@ -631,7 +631,7 @@ ObitTableSN* ObitUVGSolveCal (ObitUVGSolve *in, ObitUV *inUV, ObitUV *outUV,
   if (err->error) goto cleanup;
   
   /* Give success rate */
-  if (prtlv>=3) {
+  if (prtlv>=2) {
     Obit_log_error(err, OBIT_InfoErr, " %d of %d possible solutions found",
 		   cntGood, cntPoss);
   }

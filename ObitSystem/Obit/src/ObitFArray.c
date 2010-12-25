@@ -290,7 +290,7 @@ ObitFArray* ObitFArrayCreate (gchar* name, olong ndim, olong *naxis)
   } else { /* Multi */
     size = 1; /* total size */
     for (i=0; i<ndim; i++) {
-      out->naxis[i] = MAX (1, MIN(naxis[i],32768));  /* Not too big */
+      out->naxis[i] = MAX (1, MIN(naxis[i],524288));  /* Not too big */
       size *= out->naxis[i]; /* total size */
     }
   }

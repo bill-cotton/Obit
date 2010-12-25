@@ -3911,7 +3911,8 @@ static void Hann (ObitUVDesc *inDesc, ObitUVDesc *outDesc,
       for (jf=0; jf<nochan; jf++) {  /* Frequency loop */
 	jndx = 4*(jf*2 + jif*nchan + js*nchan*nif);
 	indx = js*incs + jif*incif + jf*incf;
-	if (work[jndx+3]>0.0) {
+	/* Check for zero data */
+	if ((work[jndx+3]>0.0) && !(( work[jndx]==0.0) && (work[jndx+1]==0.0))) {
 	  outBuffer[indx]   = work[jndx]   / work[jndx+3];
 	  outBuffer[indx+1] = work[jndx+1] / work[jndx+3];
 	  outBuffer[indx+2] = work[jndx+2];

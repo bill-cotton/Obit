@@ -1102,7 +1102,7 @@ def EVLADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
     """ Group delay calibration
 
     Determine delay corrections from a list of calibrators
-    Solutions smoothed to smoTime
+    Solutions optionally smoothed to smoTime
     Apply this SN table to the highest CL table writing a new CL table (Obit/CLCal)
     Returns task error code, 0=OK, else failed
     err        = Python Obit Error/message stack
@@ -1123,7 +1123,7 @@ def EVLADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
                             (maj, min, pa, type)
     timeRange  = timerange of data to use
     solInt     = Calib solution interval (min)
-    smoTime    = Smoothing time applied to SN table (hr)
+    smoTime    = Smoothing time applied to SN table (hr) if >0.0
     FreqID     = Frequency group identifier
     minSNR     = minimum acceptable SNR in Calib
     refAnts    = List of reference antennas
@@ -1240,37 +1240,38 @@ def EVLADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
         printMess(mess, logfile)
         return 1
 
-    # Smooth
-    SNver = uv.GetHighVer("AIPS SN")
-    snsmo = ObitTask.ObitTask("SNSmo")
-    if not check:
-        setname(uv, snsmo)
-    snsmo.solnIn     = SNver
-    snsmo.solnOut    = SNver+1
-    snsmo.smoType    = 'VLBI'
-    snsmo.smoFunc    = 'MWF '
-    snsmo.smoParm    = [smoTime,smoTime,smoTime,smoTime,smoTime]
-    snsmo.doBlank    = True
-    snsmo.refAnt     = refAnts[0]
-    snsmo.taskLog    = logfile
-    snsmo.debug      = debug
-    #snsmo.debug     = True  # DEBUG
-    #bombaroonie     = BombsAwayWithCurtisLemay # DEBUG
-    if debug:
-        snsmo.i
-    mess = "EVLADelayCal: SNSmo SN "+str(snsmo.solnIn)+" to "+str(snsmo.solnOut)
-    printMess(mess, logfile)
-    # Trap failure
-    try:
+    # Smooth if requested
+    if smoTime>0.0:
+        SNver = uv.GetHighVer("AIPS SN")
+        snsmo = ObitTask.ObitTask("SNSmo")
         if not check:
-            snsmo.g
-    except Exception, exception:
-        print exception
-        mess = "SNSmo Failed retCode="+str(snsmo.retCode)
+            setname(uv, snsmo)
+        snsmo.solnIn     = SNver
+        snsmo.solnOut    = SNver+1
+        snsmo.smoType    = 'VLBI'
+        snsmo.smoFunc    = 'MWF '
+        snsmo.smoParm    = [smoTime,smoTime,smoTime,smoTime,smoTime]
+        snsmo.doBlank    = True
+        snsmo.refAnt     = refAnts[0]
+        snsmo.taskLog    = logfile
+        snsmo.debug      = debug
+        #snsmo.debug     = True  # DEBUG
+        #bombaroonie     = BombsAwayWithCurtisLemay # DEBUG
+        if debug:
+            snsmo.i
+        mess = "EVLADelayCal: SNSmo SN "+str(snsmo.solnIn)+" to "+str(snsmo.solnOut)
         printMess(mess, logfile)
-        return 1
-    else:
-        pass
+        # Trap failure
+        try:
+            if not check:
+                snsmo.g
+        except Exception, exception:
+            print exception
+            mess = "SNSmo Failed retCode="+str(snsmo.retCode)
+            printMess(mess, logfile)
+            return 1
+        else:
+            pass
     # End SNSmo
 
     # Plot fits?
@@ -3166,9 +3167,12 @@ def EVLAReportTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", 
     for sdict in Report:
         mess = "\n Source = "+sdict["Source"]+", Exposure="+"%5.3f"%(sdict["Exposure"]*24.)+" hr"
         printMess(mess, logfile)
-        mess = "IPol Beam = ("+"%8.3f"%(sdict["IBeam"][0]*3600.0)+", %8.3f"%(sdict["IBeam"][1]*3600.0)+ \
-            ", %6.1f"%(sdict["IBeam"][2])+") asec, asec, deg"
-        printMess(mess, logfile)
+        if "IBeam" in sdict:
+            mess = "IPol Beam = ("+"%8.3f"%(sdict["IBeam"][0]*3600.0)+", %8.3f"%(sdict["IBeam"][1]*3600.0)+ \
+                   ", %6.1f"%(sdict["IBeam"][2])+") asec, asec, deg"
+            printMess(mess, logfile)
+        else:
+            continue   # Nothing to report
         # Source table flux densities
         if "IFlux" in sdict:
             n = len(sdict["IFlux"])
@@ -3332,7 +3336,7 @@ def EVLAGetTimes(uv, Source, err,
                  "IFlux":IFlux, "QFlux":QFlux, "UFlux":UFlux, "VFlux":VFlux}
     # end EVLAGetTimes
 
-def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", \
+def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", band="", \
                      doCalib=-1, gainUse=0, doBand=-1, BPVer=0,  flagVer=-1,  doPol=False, \
                      Stokes="I", FOV=0.1/3600.0, Robust=0, Niter=300, CleanRad=None, \
                      maxPSCLoop=0, minFluxPSC=0.1, solPInt=20.0/60., \
@@ -3355,6 +3359,7 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", \
                  If an empty list all sources in uv are included
     seq        = sequence number of output
     sclass     = Image output class
+    band       = project band - appended to name
     FreqID     = Frequency group identifier
     doCalib    = Apply calibration table
     gainUse    = CL/SN table to apply
@@ -3427,6 +3432,8 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", \
     if not check:
         setname(uv,imager)
     imager.outDisk     = imager.inDisk
+    imager.outName     = "_"+band
+    imager.out2Name    = "_"+band
     imager.out2Disk    = imager.inDisk
     imager.outSeq      = seq
     imager.out2Seq     = seq
@@ -3585,6 +3592,7 @@ def EVLAPlotTab(uv, inext, invers, err, \
     snplt.opcode  = opcode
     snplt.nplots  = nplots
     snplt.stokes  = stokes
+    snplt.msgkill = 5        # Suppress blather
     i = 1
     for t in timerang:
         snplt.timerang[i] = t
@@ -3652,6 +3660,7 @@ def EVLAWritePlots(uv, loPL, hiPL, plotFile, err, \
     lwpla.invers  = hiPL
     lwpla.outfile = plotFile
     lwpla.logFile = logfile
+    lwpla.msgkill = 5         # Suppress blather
     if debug:
         lwpla.i
     # Trap failure
@@ -3727,6 +3736,7 @@ def EVLASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["RR","LL"], \
     possm.ltype    = 3            # include all labels
     possm.solint   = solint       # time interval of plot
     possm.logFile  = logfile
+    possm.msgkill  = 5    # Suppress blather
     # Loop over Stokes
     for s in Stokes:
         possm.stokes   = s

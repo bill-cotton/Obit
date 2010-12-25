@@ -571,7 +571,7 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   ObitSkyModelType modelType;
   ofloat       modelFlux, refAnt, *refAnts;
   gboolean     doCalSelect;
-  oint         doCalib;
+  oint         doCalib, doBand;
   gchar *routine = "digestInputs";
 
   /* error checks */
@@ -607,7 +607,9 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   ObitInfoListGetTest(myInput, "doCalSelect",  &type, dim, &doCalSelect);
   doCalib = -1;
   ObitInfoListGetTest(myInput, "doCalib",  &type, dim, &doCalib);
-  doCalSelect = doCalSelect || (doCalib>0);
+  doBand = -1;
+  ObitInfoListGetTest(myInput, "doBand",  &type, dim, &doBand);
+  doCalSelect = doCalSelect || (doCalib>0) || (doBand>0);
   ObitInfoListAlwaysPut (myInput, "doCalSelect", OBIT_bool, dim, &doCalSelect);
 
   /* Copy first refAnts value to refAnt */

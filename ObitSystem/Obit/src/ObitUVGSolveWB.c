@@ -1,12 +1,3 @@
-/* Thoughts 
-X1) use rms residual phase to directly determine final SNR
-X  (ref = max of any others )
-X2) recompute stacked data deighting by antenna SNR
-3) put some constraint on soln - say a penalty to keep from going wild.
-X4) can get very bad soln with good data - ant 4 w/ref 5.
-X5) Fitting FFT poor, 4-5 9:14:27 5=ref
-X6) stacking baselines in correct order? (sign of ant-ref)
- */
 /* $Id: ObitUVGSolveWB.c 163 2010-03-01 15:05:52Z bill.cotton $ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2010                                               */
@@ -143,6 +134,9 @@ static ScanData* KillScanData (ScanData *in);
 
 /** Private: Find peak in FFT delay function */
 static void  FindFFTPeak (ObitUVGSolveWB *in, ofloat *ppos, ofloat *pval);
+
+/** Private: Zero elements of array in1 where array in2 is blanked */
+void ObitFArrayZeroBlank (ObitFArray* in1, ObitFArray* in2, ObitFArray* out);
 
 /** Private: Fill last half of CArray with cos/sin of phases in in */
 void ObitCArrayFSinCos (ObitFArray* in, ObitCArray* out);
@@ -971,7 +965,7 @@ NextAvgWB (ObitUV* inUV, ofloat interv, ofloat* antwt,
   BaselineData *BLData;
   ObitIOCode retCode= OBIT_IO_OK;
   ofloat linterv, ctime, cbase, stime, ltime=0, weight, wt, bl, *visPnt, temp;
-  ofloat *wtArray, *visArray, *phArray;
+  ofloat *wtArray, *visArray, *phArray, fblank = ObitMagicF();
   olong i, ip, csid, cfqid, a1, a2, *blLookup=NULL, blIndex, visIndex;
   olong iFreq, iIF, iStok, jBL, jIF, jStok, mPol, mIF, numBL, suba;
   olong numAnt, numFreq, numIF, numPol;
@@ -1152,6 +1146,10 @@ NextAvgWB (ObitUV* inUV, ofloat interv, ofloat* antwt,
 	    visArray[2*iFreq]   /= wtArray[iFreq];
 	    visArray[1+2*iFreq] /= wtArray[iFreq];
 	    phArray[iFreq] = atan2(visArray[1+2*iFreq], visArray[2*iFreq]);
+	  } else {
+	    visArray[2*iFreq]   = fblank;
+	    visArray[1+2*iFreq] = fblank;
+	    phArray[iFreq]      = fblank;
 	  }
  	} /* Loop over Freq */
 	ip++;
@@ -1271,8 +1269,8 @@ calcSNR (ObitUVGSolveWB *in, ofloat snrmin, gboolean *gotAnt, olong prtlv,
 	    }
 	  } 
 	} /* End loop over frequency */
+	ip++;  /* data product (IF/poln) indicator */
       } /* End loop over IF */
-      ip++;  /* data product (IF/poln) indicator */
     } /* end loop  L30:  */
     
     /* Convert to SNRs */
@@ -1993,6 +1991,10 @@ initAntSolve (ObitUVGSolveWB *in, olong iAnt, olong refAnt, ObitErr *err)
         ObitCArraySMul (in->cWork1, 2.0);
         ObitFArraySMul (in->fWork1, 2.0);
         ObitFArraySMul (in->fWorkWt2, 4.0);
+
+	/* Zero weights where data blanked */
+	ObitFArrayZeroBlank (in->fWork1, in->scanData->BLData[iBase]->phArray[ip], in->fWork1);
+	ObitFArrayZeroBlank (in->fWorkWt2, in->scanData->BLData[iBase]->phArray[ip], in->fWorkWt2);
       }
 
       /* Two baseline combinations - search for antenna with data on both baselines 
@@ -2063,6 +2065,9 @@ initAntSolve (ObitUVGSolveWB *in, olong iAnt, olong refAnt, ObitErr *err)
 				   in->scanData->BLData[iBase2]->wtArray[ip],
 				   in->fWorkWt2, &count);
 	    
+	    /* Zero weights where data blanked */
+	    ObitFArrayZeroBlank (in->fWork2, in->fWork3, in->fWork2);
+
 	    /* Multiply by Weights */
 	    ObitCArrayFMul (in->cWork2, in->fWork2 , in->cWork2);
 	    
@@ -2283,6 +2288,9 @@ stackAnt (ObitUVGSolveWB *in, olong iAnt, ObitErr *err)
 	antWt = 2.0;
 	ObitFArraySMul (in->fWork1, antWt);
 	
+	/* Zero weights where data blanked */
+	ObitFArrayZeroBlank (in->fWork1, in->scanData->BLData[iBase]->phArray[ip], in->fWork1);
+
 	/* Multiply by  weights */
 	ObitCArrayFMulEnd (in->cWork1, in->fWork1,  in->cWork1);
       } /* end of any data on baseline */
@@ -2369,6 +2377,9 @@ stackAnt (ObitUVGSolveWB *in, olong iAnt, ObitErr *err)
 
 	    /* Get harmonic sum Weight array for this combination fWork2 */
 	    ObitFArrayHarmAddEnd (in->fWork2, in->fWorkWt2, in->fWork2);
+
+	    /* Zero weights where data blanked */
+	    ObitFArrayZeroBlank (in->fWork2, in->fWork3, in->fWork2);
 
 	    /* Multiply phasors by Weights */
 	    ObitCArrayFMul (in->cWork2, in->fWork2, in->cWork2);
@@ -2703,7 +2714,7 @@ static int fringeFitFunc (const gsl_vector *coef, void *params, gsl_vector *f)
 {
   ObitUVGSolveWB *in  = (ObitUVGSolveWB*)params;
   ScanData     *data  = in->scanData; 
-  olong i, ndata, kndx, lo, hi;
+  olong i, ndata, kndx, lo, hi, cnt;
   odouble sum, freq0=0.0;
   ofloat lcoef[10], *vdata, *vwt, *vfreq, resid, phase, twopi=2.0*G_PI;
 
@@ -2711,6 +2722,10 @@ static int fringeFitFunc (const gsl_vector *coef, void *params, gsl_vector *f)
   for (i=0; i<in->ncoefCoarse; i++) 
     lcoef[i] = (ofloat)gsl_vector_get(coef, i);
 
+  /* DEBUG
+  if(data->curAnt==22) {
+    fprintf (stdout, "Model IF %d %f %f \n", data->curIF, lcoef[0], lcoef[1]);
+  } */
 
   /* Loop over data */
   kndx = (data->curAnt-1) + data->curPoln*data->maxAnt;
@@ -2719,6 +2734,7 @@ static int fringeFitFunc (const gsl_vector *coef, void *params, gsl_vector *f)
   vfreq = data->antFreqOff->array;
   ndata = data->antStackPh[kndx]->naxis[0];
   sum   = 0.0;   /* RMS residual accumulator */
+  cnt    = 0;
   /* Set range of data values */
   if (data->avgIF) {  /* all at once */
     lo = 0;
@@ -2737,18 +2753,28 @@ static int fringeFitFunc (const gsl_vector *coef, void *params, gsl_vector *f)
     if (resid>G_PI) resid -= twopi;
     else if (resid<-G_PI) resid += twopi;
 
+    /* DEBUG 
+    if(data->curAnt==22) {
+      fprintf (stdout, " %d, %f %f %f  %f %f \n", 
+	       i, phase*57.296,  vdata[i]*57.296, resid*57.296, vwt[i], vfreq[i]-freq0);
+    }*/
+   /* Weight */
+    resid *= vwt[i];
+    if (vwt[i]>0.0) cnt++;
+    
     /* RMS resid */
     sum += resid*resid;
 
-    /* Weight */
-    resid *= vwt[i];
-    
     /* Save residual */
     gsl_vector_set(f, i-lo, resid);	
   } /* end loop over data */
 
   /* Save RMS residual */
   data->RMSRes = (ofloat)sqrt(sum)/(hi-lo);
+  /* DEBUG
+  if(data->curAnt==22) {
+    fprintf (stdout, " RMS resid  %f \n", data->RMSRes*57.296);
+  } */
 
   return GSL_SUCCESS;
 } /* end  fringeFitFunc */
@@ -2803,6 +2829,9 @@ static int fringeFitJacob (const gsl_vector *coef, void *params, gsl_matrix *J)
     /* compute partials */
     part1 = vwt[i];
     part2 = vwt[i]*twopi*(vfreq[i]-freq0);
+    /* DEBUG 
+    part1 = resid;
+    part2 = resid*twopi*(vfreq[i]-freq0);*/
     
     /* Update Jacobean */
     gsl_matrix_set (J, i-lo, 0,  part1);
@@ -2906,9 +2935,12 @@ static int coarseFitJacob (const gsl_vector *coef, void *params, gsl_matrix *J)
     /* Weight */
     resid *= vwt[i];
     
-    /* compute partials */
+    /* compute partials*/
     part1 = vwt[i];
-    part2 = vwt[i]*twopi*vfreq[i];
+    part2 = vwt[i]*twopi*vfreq[i]; 
+    /* DEBUG
+    part1 = resid;
+    part2 = resid*twopi*(vfreq[i]); */
     
     /* Update Jacobean */
     gsl_matrix_set (J, i, 0, part1);
@@ -3178,8 +3210,31 @@ FindFFTPeak (ObitUVGSolveWB *in, ofloat *ppos, ofloat pval[2])
 } /* end FindFFTPeak  */
 
 /**
+ *  Zero elements of array in1 where array in2 is blanked
+ *  out = in1 or zero where in2 is blank
+ * Only operates for the number of elements in in1 (WATCH out - special case)
+ * \param in1  Input object with data
+ * \param in2  Input object with blanking
+ * \param out  Output array (may be an input array).
+ */
+void ObitFArrayZeroBlank (ObitFArray* in1, ObitFArray* in2, ObitFArray* out)
+{
+  olong i;
+  ofloat fblank = ObitMagicF();
+
+   /* error checks */
+
+  for (i=0; i<in1->arraySize; i++) {
+    if (in2->array[i]!=fblank)
+      out->array[i] = in1->array[i];
+    else out->array[i] = 0.0;
+  }
+} /* end ObitFArrayZeroBlank */
+
+/**
  *  Fill the beginning of a CArray with (cos,sin) of phases in in.
  *  out = complex(cos(in), sin(in))
+ * Allows magic value blanking
  * Only works for 1D
  * \param in   Input FArray
  * \param out  Output CArray
@@ -3187,17 +3242,22 @@ FindFFTPeak (ObitUVGSolveWB *in, ofloat *ppos, ofloat pval[2])
 void ObitCArrayFSinCos (ObitFArray* in, ObitCArray* out)
 {
   olong i, j, k, n;
-  ofloat stemp[8], ctemp[8];
+  ofloat stemp[16], ctemp[16], fblank = ObitMagicF();
 
   /* j = 2*(out->arraySize - in->arraySize);  Where does in start in out? */
   j = 0; 
-  for (i=0; i<in->arraySize; i+=8) {
-    /* use fast sin/cos in blocks of 8 */
-    n = MIN(8, in->arraySize-i);
+  for (i=0; i<in->arraySize; i+=16) {
+    /* use fast sin/cos in blocks of 16 */
+    n = MIN(16, in->arraySize-i);
     ObitSinCosVec (n, &in->array[i], stemp, ctemp);
     for (k=0; k<n; k++){
-      out->array[j]   = ctemp[k];
-      out->array[j+1] = stemp[k];
+      if (in->array[i+k]!=fblank) {
+	out->array[j]   = ctemp[k];
+	out->array[j+1] = stemp[k];
+      } else {
+	out->array[j]   = 0.0;
+	out->array[j+1] = 0.0;
+      }
       j += 2;
     }
   }

@@ -67,6 +67,10 @@ FD1widMW    = 15           # Width of the initial FD median window
 FD1maxRes   = 10.0         # Clipping level in sigma
 FD1TimeAvg  = 2.0          # Time averaging in min. for initial FD flagging
 
+doRMSAvg    = True         # Edit calibrators by RMSAvg?
+RMSAvg      = 5.0          # AutoFlag Max RMS/Avg for time domain RMS filtering
+RMSTimeAvg  = 1.0          # AutoFlag time averaging in min.
+
 doAutoFlag    = True       # Autoflag editing?
 RMSAvg      = 20.0         # AutoFlag Max RMS/Avg for time domain RMS filtering
 IClip       = [1000.0,0.1] # AutoFlag Stokes I clipping
@@ -108,6 +112,7 @@ bpsolint2     = 10.0       # BPass bandpass solution in min
 
 # Delay calibration from DCal (see below)
 doDelayCal  = True         # Determine/apply delays from DCal
+doDelayCal2 = True         # Determine/apply delays from DCal on averaged data
 doTwo       = True         # Use 1 and 2 bl combinations?
 
 # Amp/phase calibration
@@ -146,6 +151,7 @@ PCAvgIF       = False     # Determine average calibration for all IFs?
 PCSolInt      = 2.0       # Pcal solution averaging time in min.
 PCRefAnt      = 0         # Poln cal reference antenna
 PCSolType     ="ORI-"     # Solution type "ORI-", "RAPR"
+doRecal       = True      # Redo calibration after editing
 
 # R-L phase/delay calibration
 doRLCal       = False    # Determine R-L bandpass prior to pcal?
@@ -271,6 +277,8 @@ if doCopyFG:
 
 # Special editing
 if doEditList and not check:
+    mess =  "Special editing"
+    printMess(mess, logFile)
     for edt in editList:
         UV.PFlag(uv,err,timeRange=[dhms2day(edt["timer"][0]),dhms2day(edt["timer"][1])], \
                      flagVer=editFG, Ants=edt["Ant"], Chans=edt["Chans"], IFs=edt["IFs"], \
@@ -286,6 +294,8 @@ if doQuack:
 
 # Median window time editing, for RFI impulsive in time
 if doMedn:
+    mess =  "Median window time editing, for RFI impulsive in time:"
+    printMess(mess, logFile)
     retCode = EVLAMedianFlag (uv, "    ", err, noScrat=noScrat, nThreads=nThreads, \
                               avgTime=avgTime, avgFreq=avgFreq,  chAvg= chAvg, \
                               timeWind=timeWind, flagVer=2,flagSig=mednSigma, logfile=logFile, \
@@ -295,10 +305,26 @@ if doMedn:
 
 # Median window frequency editing, for RFI impulsive in frequency
 if doFD1:
+    mess =  "Median window frequency editing, for RFI impulsive in frequency:"
+    printMess(mess, logFile)
     retCode = EVLAAutoFlag (uv, targets, err,  flagVer=2, doCalib=-1, doBand=-1,   \
                                 timeAvg=FD1TimeAvg, \
                                 doFD=True, FDmaxAmp=1.0e20, FDmaxV=1.0e20, FDwidMW=FD1widMW,  \
                                 FDmaxRMS=[1.0e20,0.1], FDmaxRes=FD1maxRes,  FDmaxResBL= FD1maxRes,  \
+                                logfile=logFile, check=check, debug=debug)
+    if retCode!=0:
+       raise  RuntimeError,"Error in AutoFlag"
+
+
+# RMS/Mean editing for calibrators
+if doRMSAvg:
+    mess =  "RMS/Mean editing for calibrators:"
+    printMess(mess, logFile)
+    clist = [ACal]   # Calibrator list
+    for s in PCal:
+        clist.append(s)
+    retCode = EVLAAutoFlag (uv, clist, err,  flagVer=2, doCalib=-1, doBand=-1,   \
+                                RMSAvg=RMSAvg, timeAvg=RMSTimeAvg, \
                                 logfile=logFile, check=check, debug=debug)
     if retCode!=0:
        raise  RuntimeError,"Error in AutoFlag"
@@ -374,7 +400,9 @@ if doAmpPhaseCal:
 
 # More editing, with flux limits
 if doAutoFlag:
-    retCode = EVLAAutoFlag (uv, targets, err, RMSAvg=RMSAvg, flagVer=2, \
+    mess =  "Post calibration editing:"
+    printMess(mess, logFile)
+    retCode = EVLAAutoFlag (uv, targets, err, flagVer=2, \
                                 doCalib=2, gainUse=0, doBand=1, BPVer=1,  \
                                 IClip=IClip, VClip=VClip, timeAvg=timeAvg, \
                                 doFD=doAFFD, FDmaxAmp=FDmaxAmp, FDmaxV=FDmaxV, \
@@ -384,14 +412,43 @@ if doAutoFlag:
     if retCode!=0:
        raise  RuntimeError,"Error in AutoFlag"
 
-# Plot corrected data?
-if doSpecPlot and plotSource:
-    plotFile = "./"+project+"_"+session+"_"+band+"Spec.ps"
-    retCode = EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
-                           Stokes=["RR","LL"], doband=1,          \
-                           check=check, debug=debug, logfile=logFile )
-    if retCode!=0:
-        raise  RuntimeError,"Error in Plotting spectrum"
+# Redo the calibration using new flagging?
+if doRecal:
+    mess =  "Redo calibration:"
+    printMess(mess, logFile)
+    EVLAClearCal(uv, err, doGain=True, doFlag=False, doBP=True, check=check)
+    OErr.printErrMsg(err, "Error resetting calibration")
+    # Parallactic angle correction?
+    if doPACor:
+        retCode = EVLAPACor(uv, err, noScrat=noScrat, \
+                            logfile=logFile, check=check, debug=debug)
+        if retCode!=0:
+            raise RuntimeError,"Error in Parallactic angle correction"
+
+    # Bandpass calibration
+    if doBPCal and BPCal:
+        retCode = EVLABPCal(uv, BPCal, err, noScrat=noScrat, \
+                            solInt1=bpsolint2, solInt2=bpsolint2, solMode=bpsolMode, \
+                            BChan1=bpBChan1, EChan1=bpEChan1, BChan2=bpBChan2, EChan2=bpEChan2, ChWid2=bpChWid2, \
+                            doCenter1=bpDoCenter1, refAnt=refAnt, specIndex=bpSpecIndex, \
+                            doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
+                            logfile=logFile, check=check, debug=debug)
+        if retCode!=0:
+            raise RuntimeError,"Error in Bandpass calibration"
+
+
+    # Amp & phase Calibrate
+    if doAmpPhaseCal:
+        plotFile = "./"+project+"_"+session+"_"+band+"APCal.ps"
+        retCode = EVLACalAP (uv, targets, ACal, err, PCal=PCal, doCalib=2, doBand=1, BPVer=1, flagVer=2, \
+                             calModel=AcalModel, calDisk=AcalDisk, calFlux=AcalFlux, nThreads=nThreads, \
+                             solInt=solint, solSmo=solsmo, noScrat=noScrat, ampScalar=ampScalar, \
+                             doPlot=doSNPlot, plotFile=plotFile, \
+                             refAnt=refAnt, logfile=logFile, check=check, debug=debug)
+        if retCode!=0:
+            raise RuntimeError,"Error calibrating"
+
+# end recal
 
 # Calibrate and average data
 # Note, PCAL doesn't handle flagging so this has to be here
@@ -410,6 +467,28 @@ if not check:
     if err.isErr:
         OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
 
+
+# delay calibration
+if doDelayCal2 and DCal and not check:
+    plotFile = "./"+project+"_"+session+"_"+band+"DelayCal.ps"
+    retCode = EVLADelayCal(uv, err, calSou=DCal, CalModel=None, \
+                           doCalib=2, flagVer=2, doBand=-1, \
+                           solInt=solint*2, smoTime=5.0/60.0,  \
+                           refAnts=[refAnt], doTwo=doTwo, \
+                           doPlot=doSNPlot, plotFile=plotFile, \
+                           nThreads=nThreads, noScrat=noScrat, \
+                           logfile=logFile, check=check, debug=debug)
+    if retCode!=0:
+        raise RuntimeError,"Error in delay calibration"
+
+# Plot corrected data?
+if doSpecPlot and plotSource:
+    plotFile = "./"+project+"_"+session+"_"+band+"Spec.ps"
+    retCode = EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
+                           Stokes=["RR","LL"], doband=-1,          \
+                           check=check, debug=debug, logfile=logFile )
+    if retCode!=0:
+        raise  RuntimeError,"Error in Plotting spectrum"
 
 # R-L  delay calibration cal if needed, creates new BP table
 if doRLCal:
@@ -473,7 +552,7 @@ if doImage:
                        solPInt=solPInt, solPMode=solPMode, solPType=solPType, \
                        maxASCLoop=maxASCLoop, minFluxASC=minFluxASC, \
                        solAInt=solAInt, solAMode=solAMode, solAType=solAType, \
-                       avgPol=avgPol, avgIF=avgIF, minSNR = 5.0, refAnt=refAnt, \
+                       avgPol=avgPol, avgIF=avgIF, minSNR = 3.0, refAnt=refAnt, \
                        do3D=do3D, BLFact=BLFact, BLchAvg=BLchAvg, \
                        doMB = doMB, norder=MBnorder, maxFBW=MBmaxFBW, \
                        nThreads=nThreads, noScrat=noScrat, logfile=logFile, \
