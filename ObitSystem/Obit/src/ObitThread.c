@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2008                                          */
+/*;  Copyright (C) 2002-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -468,7 +468,7 @@ void ObitThreadPoolInit (ObitThread* in, olong nthreads,
 /**
  * Loops over a set of threads, all with same function call
  * If nthreads=1 or threading not allowed, routine called directly.
- * Waits for operations to finish before returning, 1 min timeout.
+ * Waits for operations to finish before returning, 10 min timeout.
  * Initializes Thread pool and asynchronous queue (ObitThreadPoolInit)
  * if not already done.
  * When threaded operations are finished, call ObitThreadPoolFree to release
@@ -530,7 +530,7 @@ gboolean ObitThreadIterator (ObitThread* in, olong nthreads,
   /* Wait for them to finish, expects each to send a message to the asynchronous 
    queue iff they finish */
   /* 1 min. timeout */
-  add_time = 60 * 1000000;
+  add_time = 600 * 1000000;
   g_get_current_time (&end_time);
   g_time_val_add (&end_time, add_time); /* add timeout in microseconds */
   for (i=0; i<nthreads; i++) {

@@ -116,7 +116,8 @@ static void ObitImageMFClassInfoDefFn (gpointer inClass);
 
 /** Private: Make arguments for Threaded CLEAN */
 static olong MakeFitSpecArgs (ObitImageMF *in, olong maxThread,
-			      ofloat antSize, FitSpecFuncArg ***args, 
+			      ofloat antSize, olong nOrder,
+			      FitSpecFuncArg ***args, 
 			      ObitErr *err);
 
 /** Private: Delete arguments for Threaded CLEAN */
@@ -832,6 +833,60 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
 } /* end  ObitImageMFSetSpec */
 
 /**
+ * Get info from the descriptor for coarse channels:
+ * ALPHA, NTERM NSPEC, FREQ001...
+ * into alpha, maxOrder-1, nSpec, specFreq
+ * \param in     Pointer to object, should be fully defined
+ * \param alpha  Spectral index applied
+ * \param err    ObitErr for reporting errors.
+ */
+void ObitImageMFGetSpec (ObitImageMF *in, ObitErr *err)
+{
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ofloat farr[10];
+  gchar keyword[12];
+  olong i, nSpec, nTerm;
+  /*gchar *routine = "ObitImageMFSetSpec";*/
+  
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* Number of spectral channels */
+  nSpec = 0;
+  ObitInfoListGetTest (in->myDesc->info, "NSPEC", &type, dim, &nSpec);
+  in->nSpec     = nSpec;
+  if (nSpec<=0) return;
+
+  /* Number of spectral terms */
+  nTerm = 0;
+  ObitInfoListGetTest (in->myDesc->info, "NTERM", &type, dim, &nTerm);
+  in->maxOrder = nTerm - 1;
+
+  /* Alpha */
+  farr[0] = 0.0;
+  ObitInfoListGetTest (in->myDesc->info, "ALPHA", &type, dim, farr);
+  in->alpha = farr[0];
+
+  /* Reference frequency if not set */
+  if (in->refFreq<1.0) in->refFreq = in->myDesc->crval[in->myDesc->jlocf];
+
+  /* Create array */
+  if (in->specFreq) g_free(in->specFreq);
+  in->specFreq  = g_malloc0(nSpec*sizeof(odouble));
+
+  /* Fetch frequencies */
+  for (i=0; i<nSpec; i++) {
+    in->specFreq[i] = 1.0;
+    sprintf (keyword, "FREQ%4.4d",i+1);
+    ObitInfoListGetTest (in->myDesc->info, keyword, &type, 
+			 dim, &in->specFreq[i]);
+  }
+ 
+} /* end  ObitImageMFGetSpec */
+
+/**
  * Zero blank combined image and higher order planes
  * Planes 1-1+maxOrder
  * \param in     Pointer to object, should be fully defined
@@ -956,7 +1011,9 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
 /**
  * Fit Spectra to coarse spectral planes in an ObitImageMF
  * Possibly uses threads, looping over rows.
- * \param in      Image to fit
+ * \param in      Image to fit, info may have
+ * \li nOrder OBIT_int (1,1,1) Maximum order to fit
+ *            If absent use maxOrder
  * \param antSize If > 0 make primary beam corrections assuming antenna 
  *                diameter (m) antSize
  * \param err     Obit error stack object.
@@ -967,9 +1024,10 @@ void ObitImageMFFitSpec (ObitImageMF *in, ofloat antSize, ObitErr *err)
   FitSpecFuncArg **targs=NULL;
   ObitImage **inArray=NULL, **outArray=NULL; 
   ofloat sigma;
-  olong i, iy, ny, nterm, nTh, plane[5] = {1,1,1,1,1};
+  olong i, iy, ny, nterm, nOrder, nTh, plane[5] = {1,1,1,1,1};
   olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitIOSize IOBy = OBIT_IO_byRow;
   gboolean OK;
@@ -979,9 +1037,21 @@ void ObitImageMFFitSpec (ObitImageMF *in, ofloat antSize, ObitErr *err)
   if (err->error) return;
   g_assert (ObitImageMFIsA(in));
 
+  /* Tru reading spectral info if missing */
+  if (in->nSpec<=0) ObitImageMFGetSpec (in, err);
+  if (err->error) goto cleanup;
+
+  /* Make sure have spectra */
+  Obit_return_if_fail((in->nSpec>0), err, 
+  		      "%s: NO spectra in %s", 
+		      routine, in->name);
+
   /* Tell about it */
   Obit_log_error(err, OBIT_InfoErr, "Fitting pixel spectra");
   ObitErrLog(err); 
+
+  nOrder = in->maxOrder;
+  ObitInfoListGetTest (in->info, "nOrder", &type, dim, &nOrder);
 
   /* Create arrays of Images to handle input and output I/O */
   nterm = in->maxOrder+1;    /* Number of output spectral terms */
@@ -1026,7 +1096,7 @@ void ObitImageMFFitSpec (ObitImageMF *in, ofloat antSize, ObitErr *err)
   /* Only thread large cases */
   if (in->myDesc->inaxes[0]>200) maxThread = 1000;
   else maxThread = 1;
-  nThreads = MakeFitSpecArgs (in, maxThread, antSize, &targs, err);
+  nThreads = MakeFitSpecArgs (in, maxThread, antSize, nOrder, &targs, err);
   if (err->error) goto cleanup;
 
   /* Read through all input channels getting sigmas - save on thread arguments */
@@ -1280,12 +1350,14 @@ void ObitImageMFClear (gpointer inn)
  * \param in         MF Image to be fitted
  * \param maxThread  Maximum desirable no. threads
  * \param antSize    if >0 then make primary beam corrections
+ * \param nOrder     Fitting order
  * \param args       [out] Created array of FitSpecFuncArg, 
  *                   delete with KillFitSpecArgs
  * \return number of elements in args.
  */
 static olong MakeFitSpecArgs (ObitImageMF *image, olong maxThread,
-			      ofloat antSize, FitSpecFuncArg ***args, 
+			      ofloat antSize, olong nOrder,
+			      FitSpecFuncArg ***args, 
 			      ObitErr *err)
 {
   olong i, j, nx, nThreads;
@@ -1314,7 +1386,7 @@ static olong MakeFitSpecArgs (ObitImageMF *image, olong maxThread,
     (*args)[i]->doPBCorr  = doPBCor;
     (*args)[i]->BeamShape = ObitBeamShapeCreate ("BS", (ObitImage*)image, pbmin, antSize, doPBCor);
     (*args)[i]->nSpec     = image->nSpec;
-    (*args)[i]->nOrder    = image->maxOrder;
+    (*args)[i]->nOrder    = nOrder;
     (*args)[i]->alpha     = image->alpha;
     (*args)[i]->sigma     = g_malloc0(image->nSpec*sizeof(ofloat));
     (*args)[i]->workFlux  = g_malloc0(image->nSpec*sizeof(ofloat));
@@ -1329,7 +1401,7 @@ static olong MakeFitSpecArgs (ObitImageMF *image, olong maxThread,
     for (j=0; j<(image->maxOrder+1); j++) {
       (*args)[i]->outData[j] = g_malloc0(nx*sizeof(ofloat*));
     }
-    (*args)[i]->fitArg    = ObitSpectrumFitMakeArg (image->nSpec, image->maxOrder+1, 
+    (*args)[i]->fitArg    = ObitSpectrumFitMakeArg (image->nSpec, nOrder+1, 
 						    image->refFreq, image->specFreq,
 						    FALSE, 
 						    &(*args)[i]->fitResult, err);

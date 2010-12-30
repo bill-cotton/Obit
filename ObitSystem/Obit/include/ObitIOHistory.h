@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -134,9 +134,14 @@ ObitIOCode ObitIOHistoryReadDescriptor (ObitIOHistory *in, ObitErr *err);
 /** Public:  Write Descriptor */
 ObitIOCode ObitIOHistoryWriteDescriptor (ObitIOHistory *in, ObitErr *err);
 
-/** Public:  number of records */
+/** Public:  Get number of records */
 olong ObitIOHistoryNumRec (ObitIOHistory *in);
 typedef olong (*ObitIOHistoryNumRecFP) (ObitIOHistory *in);
+
+/** Public:  Set number of records */
+void ObitIOHistorySetNumRec (ObitIOHistory *in, olong current);
+typedef void (*ObitIOHistorySetNumRecFP) (ObitIOHistory *in, 
+					  olong current);
 
 /*-------------------Class Info--------------------------*/
 /**

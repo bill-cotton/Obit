@@ -67,7 +67,7 @@ static ObitSkyModelMFClassInfo myClassInfo = {FALSE};
 /*--------------- File Global Variables  ----------------*/
 
 /** Over sampling factor in uv plane */
-olong OverSampleMF=2; 
+olong OverSampleMF=4; 
 
 /*----------------- Macroes ---------------------------*/
 /** Half width of gridded subtraction interpolation kernal */
@@ -2743,11 +2743,11 @@ void  ObitSkyModelMFLoadGridComps (ObitSkyModel* inn, olong field, ObitUV* uvdat
   /* Save values of highest comp - probably bad*/
   if (outCCVer==0) {
     /* no translation of table */
-    in->startComp[field] = first;
-    in->endComp[field] = last;
+    /* Bad in->startComp[field] = first;
+       in->endComp[field] = last; */
   } else {
     /* Translated table with only selected values */
-    in->endComp[field] = in->startComp[field] + last-first;
+    /* Bad in->endComp[field] = in->startComp[field] + last-first; */
   }
   
   /* if outCCver>0 then the CCtable is temporary - Zap */

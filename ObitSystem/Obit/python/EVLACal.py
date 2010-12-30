@@ -942,8 +942,8 @@ def EVLAQuack(uv, err, \
     
 def EVLAAutoFlag(uv, target, err, \
                      doCalib=0, gainUse=0, doBand=0, BPVer=0, flagVer=-1, \
-                     flagTab=2, VClip=[0.0,0.0], IClip=[0.0,0.0], RMSClip=[0.0,0.0], \
-                     RMSAvg=0.0, maxBad=0.25 ,timeAvg=1.0, \
+                     flagTab=2, VClip=[0.0,0.0], IClip=[0.0,0.0], minAmp=0.0, \
+                     RMSClip=[0.0,0.0], RMSAvg=0.0, maxBad=0.25 ,timeAvg=1.0, \
                      doFD=False, FDmaxAmp=0.0, FDmaxV=0.0, FDwidMW=5, FDmaxRMS=[0.0,0.0], \
                      FDmaxRes=6.0, FDmaxResBL=6.0,  FDbaseSel=[0, 0, 0, 0], \
                      check=False, debug = False, logfile = ""):
@@ -963,6 +963,7 @@ def EVLAAutoFlag(uv, target, err, \
     flagTab    = Output Flagging table version
     VClip      = If > 0.0 VPol clipping level
     IClip      = If > 0.0 IPol clipping level
+    minAmp     = Min flux for IClip flagging
     RMSClip    = Abs and fractional clip levels for
                  Time domain RMS filtering
     RMSAvg     = Max RMS/Avg for time domain RMS filtering
@@ -1000,6 +1001,7 @@ def EVLAAutoFlag(uv, target, err, \
     af.BPVer      = BPVer
     af.VClip      = VClip
     af.IClip      = IClip
+    af.minAmp     = minAmp
     af.RMSClip    = RMSClip
     af.RMSAvg     = RMSAvg
     af.maxBad     = maxBad

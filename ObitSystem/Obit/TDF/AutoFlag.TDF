@@ -93,6 +93,8 @@ flagTab                             Output Flagging table version
 VClip                               If > 0.0 VPol clipping level
 **PARAM** float 2
 IClip                               If > 0.0 IPol clipping level
+**PARAM** float 1
+minAmp                              Min. amp. in IPol clipping
 **PARAM**  float 2
 RMSClip                             Abs and fractional clip levels for 
                                     Time domain RMS filtering
@@ -140,7 +142,7 @@ Any or all may be specified.  The result of this operation will be
 a FG (flag) table attached to the "output" data.
 
    Flagging is based on a combination of user supplied parameters
-(VClip, IClip, RMSClip, RMSAvg) and a statistical analysis of the 
+(VClip, IClip, minAmp, RMSClip, RMSAvg) and a statistical analysis of the 
 data in each averaging interval (timeAvg).  
 See EXPLAIN for more details.
 
@@ -225,6 +227,8 @@ Adverbs:
              IClip[1]==0 => use statistical clipping
              Data are vector averaged for timeAvg before clipping.
              See HELP and EXPLAIN sections for details.    
+  minAmp.....If IClip flapping is selected, any amplitudes less than
+             minAmp will be flagged.
   RMSClip....Clip level for time domain (RMS editing) as
              constant + proportional part, 
              clip = RMSClip[0] + amp*RMSClip[1]
@@ -334,6 +338,7 @@ amplitude of the Stokes 'I' exceeds IClip[0].  If IClip[1]==0.0
 then the actual clipping level is the lesser of IClip[0] and a 
 value determined from a statistical analysis of each interval 
 intended to flag the most discrepant 3 percent of the data.
+Data with amplitudes less than minAmp will also be flagged.
 This is useful for editing really strong interference or data 
 with a model subtracted.
 Results are unpredictable for uncalibrated data.

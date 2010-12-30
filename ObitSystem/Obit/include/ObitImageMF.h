@@ -127,6 +127,9 @@ ObitImage* ObitImageMFZap  (ObitImage *in, ObitErr *err);
 void ObitImageMFSetSpec (ObitImageMF *image, ObitUV *inData, ofloat maxFBW,
 			 ofloat alpha, ObitErr *err);
 
+/** Public: Get Coarse spectral channel info */
+void ObitImageMFGetSpec (ObitImageMF *image, ObitErr *err);
+
 /** Public: Set order of SW spectral imaging */
 void ObitImageMFSetOrder (ObitImageMF *image, olong order, ObitErr *err);
 

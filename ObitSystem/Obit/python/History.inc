@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for History utilities                      */
 /*                                                                    */
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -106,6 +106,14 @@ extern int HistoryWriteRec (ObitHistory* in, long recno, char hiCard[73],
 		           ObitErr *err) {
   ObitIOCode ret;
   ret = ObitHistoryWriteRec(in, recno, hiCard, err);
+  if (ret==OBIT_IO_OK) return 0;
+  else return 1;
+}
+
+extern int HistoryEdit (ObitHistory* in, long startr, long endr,
+		         ObitErr *err) {
+  ObitIOCode ret;
+  ret = ObitHistoryEdit(in, startr, endr, err);
   if (ret==OBIT_IO_OK) return 0;
   else return 1;
 }

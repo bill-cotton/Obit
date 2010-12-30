@@ -74,6 +74,7 @@ RMSTimeAvg  = 1.0          # AutoFlag time averaging in min.
 doAutoFlag    = True       # Autoflag editing?
 RMSAvg      = 20.0         # AutoFlag Max RMS/Avg for time domain RMS filtering
 IClip       = [1000.0,0.1] # AutoFlag Stokes I clipping
+minAmp      = 0.0001       # Min. allowable calibrated amplitude
 VClip       = [10.0,0.05]  # AutoFlag Stokes V clipping
 timeAvg     = 2.0          # AutoFlag time averaging in min.
 doAFFD      = False        # do AutoFlag frequency domain flag
@@ -404,7 +405,7 @@ if doAutoFlag:
     printMess(mess, logFile)
     retCode = EVLAAutoFlag (uv, targets, err, flagVer=2, \
                                 doCalib=2, gainUse=0, doBand=1, BPVer=1,  \
-                                IClip=IClip, VClip=VClip, timeAvg=timeAvg, \
+                                IClip=IClip, minAmp=minAmp, VClip=VClip, timeAvg=timeAvg, \
                                 doFD=doAFFD, FDmaxAmp=FDmaxAmp, FDmaxV=FDmaxV, \
                                 FDwidMW=FDwidMW, FDmaxRMS=FDmaxRMS, \
                                 FDmaxRes=FDmaxRes,  FDmaxResBL= FDmaxResBL, FDbaseSel=FDbaseSel, \

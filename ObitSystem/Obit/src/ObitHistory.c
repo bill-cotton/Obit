@@ -30,10 +30,10 @@
 #include <time.h>
 #include "Obit.h"
 #include "ObitFileFITS.h"
+#include "ObitHistory.h"
 #include "ObitIOHistory.h"
 #include "ObitIOHistoryFITS.h"
 #include "ObitIOHistoryAIPS.h"
-#include "ObitHistory.h"
 #include "ObitVersion.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
@@ -188,6 +188,65 @@ ObitHistory* ObitHistoryZap (ObitHistory *in, ObitErr *err)
   return in;
 } /* end ObitHistoryZap */
 
+/*
+ * Edit History
+ * Remove (1-rel) entries start to end
+ * Does not resize history file
+ * \param in     Pointer to object to be edited. Must be opened/closed externally
+ * \param startr first record to remove
+ * \param endr   last record to remove, 0->to end
+ * \param err    ObitErr for reporting errors.
+ * \return return code, OBIT_IO_OK=> OK
+ */
+ObitIOCode ObitHistoryEdit (ObitHistory *in, olong startr, olong endr,
+			    ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  olong i, j, drop, CurrentNumber;
+  gchar hicard[80];
+  gchar *routine = "ObitIOHistoryEdit";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return retCode;
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  CurrentNumber =  ObitIOHistoryNumRec(in->myIO);
+  if (endr<=0) endr =  CurrentNumber;  /* All? */
+  endr = MIN(endr, CurrentNumber);
+
+  /* If end record after last only need to reset last */
+  if (endr>=CurrentNumber) {
+    CurrentNumber = MAX (0, startr-1);
+    ObitIOHistorySetNumRec(in->myIO, CurrentNumber);
+    /* Tell about it */
+    drop = (endr - startr + 1);
+    Obit_log_error(err, OBIT_InfoWarn, 
+		   "%d History records sent to Siberian salt mine", drop);
+    return OBIT_IO_OK;
+  }
+
+  /* Shuffle down */
+  j = startr;
+  for (i=endr+1; i<CurrentNumber; i++) {
+    retCode = ObitHistoryReadRec  (in, i-1, hicard, err);
+    retCode = ObitHistoryWriteRec (in, j-1, hicard, err);
+    if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
+    j++;
+}
+
+  /* Tell about it */
+  drop = (MIN(CurrentNumber, endr) - startr + 1);
+  Obit_log_error(err, OBIT_InfoWarn, 
+		 "%d History records sent to Siberian salt mine", drop);
+
+  /* Reset current */
+  CurrentNumber = j;
+  ObitIOHistorySetNumRec(in->myIO, CurrentNumber);
+
+  return OBIT_IO_OK;
+} /* end ObitIOHistoryAIPSEdit */
+
 /**
  * Make a deep copy of input object.
  * Both objects should be filly defined.
@@ -267,10 +326,10 @@ ObitHistory* ObitHistoryCopy (ObitHistory *in, ObitHistory *out,
  * \param in  The object to copy
  * \param out An existing object pointer for output 
  * \param err Error stack, returns if not empty.
- * \return pointer to the new object.
+ * \return IO code, OBIT_IO_OK=OK.
  */
 ObitIOCode ObitHistoryCopyHeader (ObitHistory *in, ObitHistory *out, 
-				 ObitErr *err)
+				  ObitErr *err)
 {
   ObitIOCode iretCode, oretCode;
   olong disk, i;
@@ -1029,8 +1088,7 @@ static void ObitHistoryClassInfoDefFn (gpointer inClass)
   theClass->ObitHistoryOpen  = (ObitHistoryOpenFP)ObitHistoryOpen;
   theClass->ObitHistoryClose = (ObitHistoryCloseFP)ObitHistoryClose;
   theClass->ObitHistoryZap   = (ObitHistoryZapFP)ObitHistoryZap;
-
-  /* *************** CHANGE HERE *********************************  */
+  theClass->ObitHistoryEdit  = (ObitHistoryEditFP)ObitHistoryEdit;
 
 } /* end ObitHistoryClassDefFn */
 

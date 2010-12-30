@@ -1,6 +1,6 @@
-/* $Id$                            */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004                                               */
+/*;  Copyright (C) 2004,2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -33,3 +33,5 @@ ObitHistoryZapFP ObitHistoryZap;
 ObitHistoryOpenFP ObitHistoryOpen;
 /** Function pointer to  Close */
 ObitHistoryCloseFP ObitHistoryClose;
+/** Function pointer to  Edit */
+ObitHistoryEditFP ObitHistoryEdit;

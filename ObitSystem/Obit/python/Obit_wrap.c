@@ -2552,6 +2552,14 @@ extern int HistoryWriteRec (ObitHistory* in, long recno, char hiCard[73],
   else return 1;
 }
 
+extern int HistoryEdit (ObitHistory* in, long startr, long endr,
+		         ObitErr *err) {
+  ObitIOCode ret;
+  ret = ObitHistoryEdit(in, startr, endr, err);
+  if (ret==OBIT_IO_OK) return 0;
+  else return 1;
+}
+
 extern int HistoryTimeStamp (ObitHistory* in, char *label, ObitErr *err) {
   ObitIOCode ret;
   ret = ObitHistoryTimeStamp(in, label, err);
@@ -2593,6 +2601,7 @@ extern int HistoryOpen(ObitHistory *,int ,ObitErr *);
 extern int HistoryClose(ObitHistory *,ObitErr *);
 extern PyObject *HistoryReadRec(ObitHistory *,long ,ObitErr *);
 extern int HistoryWriteRec(ObitHistory *,long ,char [73],ObitErr *);
+extern int HistoryEdit(ObitHistory *,long ,long ,ObitErr *);
 extern int HistoryTimeStamp(ObitHistory *,char *,ObitErr *);
 extern ObitHistory *HistoryUnref(ObitHistory *);
 extern ObitHistory *HistoryRef(ObitHistory *);
@@ -3362,6 +3371,193 @@ extern int ImageInterpIsA(ObitImageInterp *);
 typedef struct {
   ObitImageInterp *me;
 } ImageInterp;
+
+#include "ObitImageMF.h"
+#include "ObitData.h"
+#include "ObitIOImageAIPS.h"
+#include "ObitIOImageFITS.h"
+
+
+// size=1-> OBIT_IO_byRow, else OBIT_IO_byPlane
+extern void ImageMFSetFITS(ObitImageMF *in, int size, int disk, char *file, 
+                         int blc[7], int trc[7], ObitErr *err) {
+  ObitIOSize fsize;
+
+  if (size==1) fsize = OBIT_IO_byRow;
+  else fsize = OBIT_IO_byPlane;
+  ObitImageSetFITS(in, fsize, disk, file, blc, trc, err);
+ }
+
+extern void ImageMFSetAIPS(ObitImageMF *in, int size, int disk, int cno, int user, 
+                         int blc[7], int trc[7], ObitErr *err) {
+  ObitIOSize fsize;
+
+  if (size==1) fsize = OBIT_IO_byRow;
+  else fsize = OBIT_IO_byPlane;
+  ObitImageSetAIPS(in, fsize, disk, cno, user, blc, trc, err);
+ }
+
+extern ObitData* ImageMFCastData (ObitImageMF* inImage) {
+  return (ObitData*)inImage;
+} // end ImageMFCastData
+
+extern ObitImageMF* ImageMFCreate (char* name) {
+  return newObitImageMF (name);
+} // end  ImageMFCreate
+
+extern PyObject* ImageMFInfo (ObitImageMF *in, ObitErr *err) {
+  ObitIOImageAIPS *AIPSIO=NULL;
+  ObitIOImageFITS *FITSIO=NULL;
+  PyObject *outDict=PyDict_New();
+  PyObject *o=NULL;
+
+  if (err->error) return outDict;
+
+  // Ensure in fully instantiated -assume OK if myIO exists 
+  if (!in->myIO) ObitImageMFFullInstantiate (in, TRUE, err);
+  if (err->error) return outDict;
+
+  // Get details and save in dict
+  if (ObitIOImageAIPSIsA(in->myIO)) {  // AIPS
+    o = PyString_InternFromString("AIPS");
+    PyDict_SetItemString(outDict, "type", o);
+    AIPSIO = (ObitIOImageAIPS*)in->myIO;
+    o = PyInt_FromLong((long)AIPSIO->disk);
+    PyDict_SetItemString(outDict, "disk", o);
+    o = PyInt_FromLong((long)AIPSIO->CNO);
+    PyDict_SetItemString(outDict, "CNO", o);
+    o = PyInt_FromLong((long)AIPSIO->UserId);
+    PyDict_SetItemString(outDict, "user", o);
+  } else if (ObitIOImageFITSIsA(in->myIO)) {  // FITS
+    o = PyString_InternFromString("FITS");
+    PyDict_SetItemString(outDict, "type", o);
+    FITSIO = (ObitIOImageFITS*)in->myIO;
+    o = PyInt_FromLong((long)FITSIO->disk);
+    PyDict_SetItemString(outDict, "disk", o);
+    o = PyString_InternFromString((char*)FITSIO->FileName);
+    PyDict_SetItemString(outDict, "filename", o);
+  } else {  // Don't know this one
+    o = PyString_InternFromString("UNKNOWN");
+    PyDict_SetItemString(outDict, "type", o);
+  }
+  return outDict;
+} // end  ImageMFInfo
+
+extern ObitImageMF* ImageMFZap  (ObitImageMF *in, ObitErr *err) {
+  ObitImageMFZap ((ObitImage*)in, err);
+} // end ImageMFZap
+
+extern void ImageMFRename  (ObitImageMF *in, ObitErr *err) {
+  ObitImageRename ((ObitImage*)in, err);
+} // end ImageMFRename
+
+extern ObitImageMF* ImageMFCopy  (ObitImageMF *in, ObitImageMF *out, 
+			         ObitErr *err) {
+  return ObitImageMFCopy (in, out, err);
+} // end  ImageMFCopy
+
+// force header update 
+extern void ImageMFDirty (ObitImageMF *in) {
+  in->myStatus = OBIT_Modified;
+} // end Dirty
+
+extern ObitImageMF* ImageMFUnref (ObitImageMF* in) {
+  if (!ObitImageMFIsA(in)) return NULL;
+  if (in && (in->ReferenceCount>0)) in = ObitImageMFUnref(in);
+  return in;
+}
+
+extern ObitImageMF*  ImageMFRef (ObitImageMF* in) {
+  return ObitImageMFRef(in);
+}
+
+extern ObitInfoList* ImageMFGetList (ObitImageMF* in) {
+  return ObitInfoListRef(in->info);
+}
+
+extern ObitTableList* ImageMFGetTableList (ObitImageMF* in) {
+  return ObitTableListRef(in->tableList);
+}
+
+extern ObitImageDesc* ImageMFGetDesc (ObitImageMF* in) {
+  return ObitImageDescRef(in->myDesc);
+}
+
+extern void ImageMFSetDesc (ObitImageMF* in, ObitImageDesc* desc) {
+  in->myDesc = ObitImageDescUnref(in->myDesc);
+  in->myDesc = ObitImageDescRef(desc);
+}
+
+extern ObitFArray* ImageMFGetFArray (ObitImageMF* in) {
+  return ObitFArrayRef(in->image);
+}
+
+extern void ImageMFSetFArray (ObitImageMF* in, ObitFArray *image) {
+  in->image = ObitFArrayUnref(in->image);
+  in->image = ObitFArrayRef(image);
+}
+
+extern ObitImageMF* ImageMFGetBeam (ObitImageMF* in) {
+  return (ObitImageMF*)ObitImageMFRef(in->myBeam);
+}
+
+extern void ImageMFSetBeam (ObitImageMF* in, ObitImageMF *beam) {
+  in->myBeam = (Obit*)ObitImageMFUnref(in->myBeam);
+  in->myBeam = (Obit*)ObitImageMFRef(beam);
+}
+
+extern long ImageMFGetHighVer (ObitImageMF* in, char *tabType) {
+  return ObitTableListGetHigh(in->tableList, tabType);
+}
+
+extern int ImageMFisScratch (ObitImageMF* in) {
+  return (int)in->isScratch;
+}
+
+extern int ImageMFIsA (ObitImageMF* in) {
+  return ObitImageMFIsA(in);
+}
+
+extern char* ImageMFGetName (ObitImageMF* in) {
+  if (ObitImageMFIsA(in)) {
+    return in->name;
+  } else {
+    return NULL;
+  }
+}
+
+extern void ImageMFFitSpec (ObitImageMF* in, float antSize, ObitErr* err) {
+  ObitImageMFFitSpec (in, antSize, err);
+}
+
+extern void ImageMFSetFITS(ObitImageMF *,int ,int ,char *,int [7],int [7],ObitErr *);
+extern void ImageMFSetAIPS(ObitImageMF *,int ,int ,int ,int ,int [7],int [7],ObitErr *);
+extern ObitData *ImageMFCastData(ObitImageMF *);
+extern ObitImageMF *ImageMFCreate(char *);
+extern PyObject *ImageMFInfo(ObitImageMF *,ObitErr *);
+extern ObitImageMF *ImageMFZap(ObitImageMF *,ObitErr *);
+extern void ImageMFRename(ObitImageMF *,ObitErr *);
+extern ObitImageMF *ImageMFCopy(ObitImageMF *,ObitImageMF *,ObitErr *);
+extern void ImageMFDirty(ObitImageMF *);
+extern ObitImageMF *ImageMFUnref(ObitImageMF *);
+extern ObitImageMF *ImageMFRef(ObitImageMF *);
+extern ObitInfoList *ImageMFGetList(ObitImageMF *);
+extern ObitTableList *ImageMFGetTableList(ObitImageMF *);
+extern ObitImageDesc *ImageMFGetDesc(ObitImageMF *);
+extern void ImageMFSetDesc(ObitImageMF *,ObitImageDesc *);
+extern ObitFArray *ImageMFGetFArray(ObitImageMF *);
+extern void ImageMFSetFArray(ObitImageMF *,ObitFArray *);
+extern ObitImageMF *ImageMFGetBeam(ObitImageMF *);
+extern void ImageMFSetBeam(ObitImageMF *,ObitImageMF *);
+extern long ImageMFGetHighVer(ObitImageMF *,char *);
+extern int ImageMFisScratch(ObitImageMF *);
+extern int ImageMFIsA(ObitImageMF *);
+extern char *ImageMFGetName(ObitImageMF *);
+extern void ImageMFFitSpec(ObitImageMF *,float ,ObitErr *);
+
+typedef struct {
+  ObitImageMF *me;
+} ImageMF;
 
 #include "ObitImageMosaic.h"
 
@@ -20171,6 +20367,38 @@ static PyObject *_wrap_HistoryWriteRec(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_HistoryEdit(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitHistory * _arg0;
+    long  _arg1;
+    long  _arg2;
+    ObitErr * _arg3;
+    PyObject * _argo0 = 0;
+    PyObject * _argo3 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OllO:HistoryEdit",&_argo0,&_arg1,&_arg2,&_argo3)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitHistory_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of HistoryEdit. Expected _ObitHistory_p.");
+        return NULL;
+        }
+    }
+    if (_argo3) {
+        if (_argo3 == Py_None) { _arg3 = NULL; }
+        else if (SWIG_GetPtrObj(_argo3,(void **) &_arg3,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 4 of HistoryEdit. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (int )HistoryEdit(_arg0,_arg1,_arg2,_arg3);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_HistoryTimeStamp(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     int  _result;
@@ -23138,6 +23366,855 @@ static PyObject *_wrap_ImageInterpIsA(PyObject *self, PyObject *args) {
     }
     _result = (int )ImageInterpIsA(_arg0);
     _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFSetFITS(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageMF * _arg0;
+    int  _arg1;
+    int  _arg2;
+    char * _arg3;
+    int * _arg4;
+    int * _arg5;
+    ObitErr * _arg6;
+    PyObject * _argo0 = 0;
+    PyObject * _obj3 = 0;
+    PyObject * _obj4 = 0;
+    PyObject * _obj5 = 0;
+    PyObject * _argo6 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OiiOOOO:ImageMFSetFITS",&_argo0,&_arg1,&_arg2,&_obj3,&_obj4,&_obj5,&_argo6)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFSetFITS. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyString_Check(_obj3)) {
+    int size = PyString_Size(_obj3);
+    char *str;
+    int i = 0;
+    _arg3 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj3);
+    for (i = 0; i < size; i++) {
+      _arg3[i] = str[i];
+    }
+    _arg3[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+{
+  if (PyList_Check(_obj4)) {
+    int size = PyList_Size(_obj4);
+    int i = 0;
+    _arg4 = (int*) malloc((size+1)*sizeof(int));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj4,i);
+      if (PyInt_Check(o)) {
+         _arg4[i] = (int)((PyIntObject*)o)->ob_ival;
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain ints");
+         free(_arg4);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyList_Check(_obj5)) {
+    int size = PyList_Size(_obj5);
+    int i = 0;
+    _arg5 = (int*) malloc((size+1)*sizeof(int));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj5,i);
+      if (PyInt_Check(o)) {
+         _arg5[i] = (int)((PyIntObject*)o)->ob_ival;
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain ints");
+         free(_arg5);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+    if (_argo6) {
+        if (_argo6 == Py_None) { _arg6 = NULL; }
+        else if (SWIG_GetPtrObj(_argo6,(void **) &_arg6,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 7 of ImageMFSetFITS. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    ImageMFSetFITS(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  free((char *) _arg3);
+}
+{
+  free((int *) _arg4);
+}
+{
+  free((int *) _arg5);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFSetAIPS(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageMF * _arg0;
+    int  _arg1;
+    int  _arg2;
+    int  _arg3;
+    int  _arg4;
+    int * _arg5;
+    int * _arg6;
+    ObitErr * _arg7;
+    PyObject * _argo0 = 0;
+    PyObject * _obj5 = 0;
+    PyObject * _obj6 = 0;
+    PyObject * _argo7 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OiiiiOOO:ImageMFSetAIPS",&_argo0,&_arg1,&_arg2,&_arg3,&_arg4,&_obj5,&_obj6,&_argo7)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFSetAIPS. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj5)) {
+    int size = PyList_Size(_obj5);
+    int i = 0;
+    _arg5 = (int*) malloc((size+1)*sizeof(int));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj5,i);
+      if (PyInt_Check(o)) {
+         _arg5[i] = (int)((PyIntObject*)o)->ob_ival;
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain ints");
+         free(_arg5);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyList_Check(_obj6)) {
+    int size = PyList_Size(_obj6);
+    int i = 0;
+    _arg6 = (int*) malloc((size+1)*sizeof(int));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj6,i);
+      if (PyInt_Check(o)) {
+         _arg6[i] = (int)((PyIntObject*)o)->ob_ival;
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain ints");
+         free(_arg6);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+    if (_argo7) {
+        if (_argo7 == Py_None) { _arg7 = NULL; }
+        else if (SWIG_GetPtrObj(_argo7,(void **) &_arg7,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 8 of ImageMFSetAIPS. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    ImageMFSetAIPS(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5,_arg6,_arg7);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  free((int *) _arg5);
+}
+{
+  free((int *) _arg6);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFCastData(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitData * _result;
+    ObitImageMF * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageMFCastData",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFCastData. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitData *)ImageMFCastData(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitData_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFCreate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageMF * _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageMFCreate",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (ObitImageMF *)ImageMFCreate(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImageMF_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFInfo(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PyObject * _result;
+    ObitImageMF * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:ImageMFInfo",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFInfo. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageMFInfo. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (PyObject *)ImageMFInfo(_arg0,_arg1);
+{
+  if (PyList_Check(_result) || PyDict_Check(_result)
+      || PyString_Check(_result) || PyBuffer_Check(_result)) {
+    _resultobj = _result;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"output PyObject not dict or list");
+    return NULL;
+  }
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFZap(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageMF * _result;
+    ObitImageMF * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:ImageMFZap",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFZap. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageMFZap. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitImageMF *)ImageMFZap(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImageMF_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFRename(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageMF * _arg0;
+    ObitErr * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:ImageMFRename",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFRename. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageMFRename. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    ImageMFRename(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFCopy(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageMF * _result;
+    ObitImageMF * _arg0;
+    ObitImageMF * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:ImageMFCopy",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFCopy. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageMFCopy. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of ImageMFCopy. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitImageMF *)ImageMFCopy(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImageMF_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFDirty(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageMF * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageMFDirty",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFDirty. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    ImageMFDirty(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFUnref(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageMF * _result;
+    ObitImageMF * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageMFUnref",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFUnref. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitImageMF *)ImageMFUnref(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImageMF_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFRef(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageMF * _result;
+    ObitImageMF * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageMFRef",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFRef. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitImageMF *)ImageMFRef(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImageMF_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFGetList(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitInfoList * _result;
+    ObitImageMF * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageMFGetList",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFGetList. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitInfoList *)ImageMFGetList(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitInfoList_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFGetTableList(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitTableList * _result;
+    ObitImageMF * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageMFGetTableList",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFGetTableList. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitTableList *)ImageMFGetTableList(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitTableList_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFGetDesc(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageDesc * _result;
+    ObitImageMF * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageMFGetDesc",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFGetDesc. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitImageDesc *)ImageMFGetDesc(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImageDesc_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFSetDesc(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageMF * _arg0;
+    ObitImageDesc * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:ImageMFSetDesc",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFSetDesc. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImageDesc_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageMFSetDesc. Expected _ObitImageDesc_p.");
+        return NULL;
+        }
+    }
+    ImageMFSetDesc(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFGetFArray(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitFArray * _result;
+    ObitImageMF * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageMFGetFArray",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFGetFArray. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitFArray *)ImageMFGetFArray(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitFArray_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFSetFArray(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageMF * _arg0;
+    ObitFArray * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:ImageMFSetFArray",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFSetFArray. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitFArray_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageMFSetFArray. Expected _ObitFArray_p.");
+        return NULL;
+        }
+    }
+    ImageMFSetFArray(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFGetBeam(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageMF * _result;
+    ObitImageMF * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageMFGetBeam",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFGetBeam. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitImageMF *)ImageMFGetBeam(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImageMF_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFSetBeam(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageMF * _arg0;
+    ObitImageMF * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:ImageMFSetBeam",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFSetBeam. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageMFSetBeam. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    ImageMFSetBeam(_arg0,_arg1);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFGetHighVer(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    long  _result;
+    ObitImageMF * _arg0;
+    char * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:ImageMFGetHighVer",&_argo0,&_obj1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFGetHighVer. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyString_Check(_obj1)) {
+    int size = PyString_Size(_obj1);
+    char *str;
+    int i = 0;
+    _arg1 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj1);
+    for (i = 0; i < size; i++) {
+      _arg1[i] = str[i];
+    }
+    _arg1[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (long )ImageMFGetHighVer(_arg0,_arg1);
+    _resultobj = Py_BuildValue("l",_result);
+{
+  free((char *) _arg1);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFisScratch(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitImageMF * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageMFisScratch",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFisScratch. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    _result = (int )ImageMFisScratch(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFIsA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitImageMF * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageMFIsA",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFIsA. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    _result = (int )ImageMFIsA(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFGetName(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    ObitImageMF * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageMFGetName",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFGetName. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    _result = (char *)ImageMFGetName(_arg0);
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_ImageMFFitSpec(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageMF * _arg0;
+    float  _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OfO:ImageMFFitSpec",&_argo0,&_arg1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMFFitSpec. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of ImageMFFitSpec. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    ImageMFFitSpec(_arg0,_arg1,_arg2);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
     return _resultobj;
 }
 
@@ -49461,6 +50538,149 @@ static PyObject *_wrap_delete_ImageInterp(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+#define ImageMF_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
+static PyObject *_wrap_ImageMF_me_set(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageMF * _result;
+    ImageMF * _arg0;
+    ObitImageMF * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:ImageMF_me_set",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMF_me_set. Expected _ImageMF_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of ImageMF_me_set. Expected _ObitImageMF_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitImageMF *)ImageMF_me_set(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImageMF_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+#define ImageMF_me_get(_swigobj) ((ObitImageMF *) _swigobj->me)
+static PyObject *_wrap_ImageMF_me_get(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitImageMF * _result;
+    ImageMF * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:ImageMF_me_get",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of ImageMF_me_get. Expected _ImageMF_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitImageMF *)ImageMF_me_get(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitImageMF_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static ImageMF *new_ImageMF(char *name) {
+     ImageMF *out;
+     out = (ImageMF *) malloc(sizeof(ImageMF));
+     if (strcmp(name, "None")) out->me = ImageMFCreate(name);
+     else out->me = NULL;
+     return out;
+   }
+
+static PyObject *_wrap_new_ImageMF(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ImageMF * _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:new_ImageMF",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (ImageMF *)new_ImageMF(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ImageMF_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static void delete_ImageMF(ImageMF *self) { /* Scratch files may be deleted separately */
+  if (self && (self->me)) {
+    if (self->me->ReferenceCount>0) 
+       self->me = ImageMFUnref(self->me);
+    free(self);
+    } 
+  }
+static PyObject *_wrap_delete_ImageMF(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ImageMF * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:delete_ImageMF",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ImageMF_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of delete_ImageMF. Expected _ImageMF_p.");
+        return NULL;
+        }
+    }
+    delete_ImageMF(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 #define ImageMosaic_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
 static PyObject *_wrap_ImageMosaic_me_set(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -53006,6 +54226,10 @@ static PyMethodDef ObitMethods[] = {
 	 { "new_ImageMosaic", _wrap_new_ImageMosaic, METH_VARARGS },
 	 { "ImageMosaic_me_get", _wrap_ImageMosaic_me_get, METH_VARARGS },
 	 { "ImageMosaic_me_set", _wrap_ImageMosaic_me_set, METH_VARARGS },
+	 { "delete_ImageMF", _wrap_delete_ImageMF, METH_VARARGS },
+	 { "new_ImageMF", _wrap_new_ImageMF, METH_VARARGS },
+	 { "ImageMF_me_get", _wrap_ImageMF_me_get, METH_VARARGS },
+	 { "ImageMF_me_set", _wrap_ImageMF_me_set, METH_VARARGS },
 	 { "delete_ImageInterp", _wrap_delete_ImageInterp, METH_VARARGS },
 	 { "new_ImageInterp", _wrap_new_ImageInterp, METH_VARARGS },
 	 { "ImageInterp_me_get", _wrap_ImageInterp_me_get, METH_VARARGS },
@@ -53595,6 +54819,30 @@ static PyMethodDef ObitMethods[] = {
 	 { "ImageMosaicUnref", _wrap_ImageMosaicUnref, METH_VARARGS },
 	 { "ImageMosaicCopy", _wrap_ImageMosaicCopy, METH_VARARGS },
 	 { "newImageMosaic", _wrap_newImageMosaic, METH_VARARGS },
+	 { "ImageMFFitSpec", _wrap_ImageMFFitSpec, METH_VARARGS },
+	 { "ImageMFGetName", _wrap_ImageMFGetName, METH_VARARGS },
+	 { "ImageMFIsA", _wrap_ImageMFIsA, METH_VARARGS },
+	 { "ImageMFisScratch", _wrap_ImageMFisScratch, METH_VARARGS },
+	 { "ImageMFGetHighVer", _wrap_ImageMFGetHighVer, METH_VARARGS },
+	 { "ImageMFSetBeam", _wrap_ImageMFSetBeam, METH_VARARGS },
+	 { "ImageMFGetBeam", _wrap_ImageMFGetBeam, METH_VARARGS },
+	 { "ImageMFSetFArray", _wrap_ImageMFSetFArray, METH_VARARGS },
+	 { "ImageMFGetFArray", _wrap_ImageMFGetFArray, METH_VARARGS },
+	 { "ImageMFSetDesc", _wrap_ImageMFSetDesc, METH_VARARGS },
+	 { "ImageMFGetDesc", _wrap_ImageMFGetDesc, METH_VARARGS },
+	 { "ImageMFGetTableList", _wrap_ImageMFGetTableList, METH_VARARGS },
+	 { "ImageMFGetList", _wrap_ImageMFGetList, METH_VARARGS },
+	 { "ImageMFRef", _wrap_ImageMFRef, METH_VARARGS },
+	 { "ImageMFUnref", _wrap_ImageMFUnref, METH_VARARGS },
+	 { "ImageMFDirty", _wrap_ImageMFDirty, METH_VARARGS },
+	 { "ImageMFCopy", _wrap_ImageMFCopy, METH_VARARGS },
+	 { "ImageMFRename", _wrap_ImageMFRename, METH_VARARGS },
+	 { "ImageMFZap", _wrap_ImageMFZap, METH_VARARGS },
+	 { "ImageMFInfo", _wrap_ImageMFInfo, METH_VARARGS },
+	 { "ImageMFCreate", _wrap_ImageMFCreate, METH_VARARGS },
+	 { "ImageMFCastData", _wrap_ImageMFCastData, METH_VARARGS },
+	 { "ImageMFSetAIPS", _wrap_ImageMFSetAIPS, METH_VARARGS },
+	 { "ImageMFSetFITS", _wrap_ImageMFSetFITS, METH_VARARGS },
 	 { "ImageInterpIsA", _wrap_ImageInterpIsA, METH_VARARGS },
 	 { "ImageInterpGetName", _wrap_ImageInterpGetName, METH_VARARGS },
 	 { "ImageInterpFindPlane", _wrap_ImageInterpFindPlane, METH_VARARGS },
@@ -53673,6 +54921,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "HistoryRef", _wrap_HistoryRef, METH_VARARGS },
 	 { "HistoryUnref", _wrap_HistoryUnref, METH_VARARGS },
 	 { "HistoryTimeStamp", _wrap_HistoryTimeStamp, METH_VARARGS },
+	 { "HistoryEdit", _wrap_HistoryEdit, METH_VARARGS },
 	 { "HistoryWriteRec", _wrap_HistoryWriteRec, METH_VARARGS },
 	 { "HistoryReadRec", _wrap_HistoryReadRec, METH_VARARGS },
 	 { "HistoryClose", _wrap_HistoryClose, METH_VARARGS },

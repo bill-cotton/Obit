@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2009                                          */
+/*;  Copyright (C) 2005-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1015,15 +1015,16 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	  for (j=0; j<ncorr; j++) { /* loop 190 */
  	    jndx = j*3 + i*3*ncorr;
             if (acc[jndx] > 1.1) {
+
 	      /* Get rms**2 */
 	      rms2 = acc[jndx+2];
-	      /* Average amppl**2 */
+	      /* Average ampl**2 */
 	      ampl2 = acc[jndx+1]*acc[jndx+1];
 	      acc[jndx+1] = maxRMS2[j];
 	      acc[jndx+2] = rms2 / MAX(ampl2, 1.0e-20);
 
 	      /* Is this one bad? */
-	      isbad = acc[jndx+2]  > acc[jndx+1]  ;
+	      isbad = isbad || acc[jndx+2]  > acc[jndx+1]  ;
 
 	      /* Correlator info */
 	      corCnt[j]++;
@@ -2197,6 +2198,7 @@ void ObitUVEditFD (ObitUV* inUV, ObitUV* outUV, ObitErr* err)
  *               data to be flagged (min) [def = 1 min.]
  * \li "maxAmp"  OBIT_float (2,1,1) Maximum value allowed
  *               [0] = clipping level, [1]==0.0 use statistical level
+ * \li "minAmp"    OBIT_float (1,1,1) Minimum amplitude allowed
  * \li "maxBad"  OBIT_float (1,1,1) Fraction of allowed flagged baselines 
  *               to an antenna above which all baselines are flagged.
  *               [default 0.25]
@@ -2228,7 +2230,7 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   gboolean doStat, done, isbad, *badAnt=NULL;
   ofloat *acc=NULL, *corCnt=NULL, *corBad=NULL, *hiClip=NULL, *Buffer;
   ofloat startTime, endTime, curTime, avg, avg2, hisinc;
-  ofloat mxamp2, sec;
+  ofloat minAmp=0.0, minAmp2, mxamp2, sec;
   gchar *tname, Stokes[5], oStokes[5], reason[25];
   struct tm *lp;
   time_t clock;
@@ -2259,6 +2261,8 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
   maxAmp = temp[0];
   doStat = ((dim[0]==1) || (temp[1]<=0.0));
   mxamp2 = maxAmp * maxAmp;
+  ObitInfoListGetTest(inUV->info, "minAmp", &type, dim,  &minAmp);  
+  minAmp2 = minAmp*minAmp;
   /* max. fraction bad baselines */
   maxBad = 0.25;           /* default 0.25 */
   ObitInfoListGetTest(inUV->info, "maxBad", &type, dim,  &maxBad);  
@@ -2477,7 +2481,7 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
       process:
 	/* Now have the next record in the IO Buffer */
 	if (iretCode==OBIT_IO_OK) gotOne = TRUE;
-	    
+
 	/* Get average amplitude/collect histogram */
 	for (i=0; i<ncorr * numCell; i++)  hissig[i] = 0;
 	for (i=0; i<numBL; i++) { /* loop 170 */
@@ -2522,7 +2526,7 @@ void ObitUVEditStokes (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	      avg2 = acc[jndx+1];
 	      /* Is this one bad? */
 	      acc[jndx+2] = MIN (mxamp2, hiClip[j]);
-	      isbad = avg2  >  acc[jndx+2];
+	      isbad = (avg2  >  acc[jndx+2]) || (avg2 < minAmp2);
 
 	      /* Ant/Correlator info */
 	      corCnt[kndx]++;
@@ -3241,7 +3245,7 @@ ObitUV* ObitUVEditClipStokes (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 	  amp2 = (vis[0]*vis[0] +  vis[1]*vis[1]) / ((wt1+wt2)*(wt1+wt2));
 
 	  /* Flag? */
-	  flagIt = amp2 > maxAmp2;
+	  flagIt = (amp2 > maxAmp2);
 	  if (!flagIt) continue;
 	  cntFlagged++;   /* number flagged */
 

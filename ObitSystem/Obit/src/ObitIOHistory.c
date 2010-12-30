@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -354,7 +354,51 @@ ObitIOCode ObitIOHistoryWriteRec (ObitIOHistory *in, olong recno, gchar *hiCard,
   retCode = myClass->ObitIOHistoryWriteRec (in, recno, hiCard, err);
 
   return retCode;
-} /* end ObitIOHistoryWriteRow */
+} /* end ObitIOHistoryWriteRec */
+
+/**
+ * Edit History
+ * Remove (1-rel) entries start to end
+ * Does not resize history file
+ * \param in     Pointer to object to be edited. Must be opened/closed externally
+ * \param startr first record to remove
+ * \param endr   last record to remove
+ * \param err    ObitErr for reporting errors.
+ * \return return code, OBIT_IO_OK=> OK
+ */
+ObitIOCode ObitIOHistoryEdit (ObitIOHistory *in, olong startr, olong endr,
+			      ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  olong i, j;
+  gchar hicard[80];
+  gchar *routine = "ObitIOHistoryEdit";
+
+  /* error checks */
+  g_assert (ObitErrIsA(err));
+  if (err->error) return retCode;
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* If end record after last only need to reset last */
+  if (endr>=in->CurrentNumber) {
+    in->CurrentNumber = MAX (0, startr-2);
+    return OBIT_IO_OK;
+  }
+
+  /* Shuffle down */
+  j = startr;
+  for (i=endr+1; i<in->CurrentNumber; i++) {
+    retCode = ObitIOHistoryReadRec  (in, i, hicard, err);
+    retCode = ObitIOHistoryWriteRec (in, j, hicard, err);
+    if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
+    j++;
+}
+
+  /* Reset current */
+  in->CurrentNumber = j;
+
+  return OBIT_IO_OK;
+} /* end ObitIOHistoryEdit */
 
 /**
  * Tell number of History records
@@ -371,6 +415,17 @@ olong ObitIOHistoryNumRec (ObitIOHistory *in)
 
   return out;
 } /* end ObitIOHistoryNumRec */
+
+/**
+ * Set number of History records
+ * Any higher numbered values ignored
+ * \param in       Pointer to open object to be tested
+ * \param current  New number of records,
+ */
+void ObitIOHistorySetNumRec (ObitIOHistory *in, olong current )
+{
+  in->CurrentNumber = current;
+} /* end ObitIOHistorySetNumRec */
 
 /**
  * Read image Descriptor data from disk.

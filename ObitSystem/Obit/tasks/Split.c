@@ -941,6 +941,7 @@ void doSplit (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     /* First frequency */
     isScratch = TRUE;
     scrData = ObitUVUtilAvgF (inData, isScratch, NULL, err);
+    if (err->error) Obit_traceback_msg (err, routine, inData->name);
     /* Then time */
     isScratch = FALSE;
     dim[0] = dim[1] = 1;

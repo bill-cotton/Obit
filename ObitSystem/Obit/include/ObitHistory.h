@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -216,15 +216,15 @@ typedef ObitHistory*(*ObitHistoryZapFP) (ObitHistory *in, ObitErr *err);
 
 /** Public: Deep copy. */
 ObitHistory* ObitHistoryCopy  (ObitHistory *in, ObitHistory *out, 
-					 ObitErr *err);
+			       ObitErr *err);
 
 /** Public: Copy history from header (FITS). */
 ObitIOCode ObitHistoryCopyHeader  (ObitHistory *in, ObitHistory *out, 
-					ObitErr *err);
+				   ObitErr *err);
 
 /** Public: Copy history to header (FITS). */
 ObitIOCode ObitHistoryCopy2Header  (ObitHistory *in, ObitHistory *out, 
-					 ObitErr *err);
+				    ObitErr *err);
 
 /** Public: Copy history from header (FITS) to header (FITS). */
 ObitIOCode ObitHistoryHeader2Header  (ObitHistory *in, ObitHistory *out, 
@@ -262,6 +262,13 @@ ObitHistoryCopyInfoList (ObitHistory *out, gchar *pgmName, gchar *list[],
 
 /** Public: Tell number of history records */
 olong ObitHistoryNumRec (ObitHistory *in);
+
+/** Public: Remove a range of records */
+ObitIOCode ObitHistoryEdit (ObitHistory *in, olong startr, olong endr,
+			    ObitErr *err);
+typedef ObitIOCode(*ObitHistoryEditFP) (ObitHistory *in, 
+					olong startr, olong endr,
+					ObitErr *err);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

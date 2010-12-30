@@ -135,6 +135,18 @@ class History(HistoryPtr):
         return PWriteRec (self, recno, hiCard, err)
     # end PWriteRec
 
+    def Stalin (self, startr, endr, err):
+        """ Edit history
+        
+        return 0 on success, else failure
+        self   = input Python History
+        startr = first (1-rel) history record to delete
+        endr   = highest (1-rel) history record to delete, 0->to end
+        err    = Python Obit Error/message stack
+        """
+        return PEdit (self, startr, endr, err)
+    # end Stalin
+
     def TimeStamp (self, label, err):
         """ Write timestamp and label to History
         
@@ -304,7 +316,7 @@ def PReadRec (inHis, recno, err):
 
     returns string
     inHis    = input Python History
-    recno    = desirec record
+    recno    = desired record
     err      = Python Obit Error/message stack
     """
     ################################################################
@@ -325,7 +337,7 @@ def PWriteRec (inHis, recno, hiCard, err):
 
     return 0 on success, else failure
     inHis    = input Python History
-    recno    = desirec record
+    recno    = desired record
     hiCard   = input history record
     err      = Python Obit Error/message stack
     """
@@ -341,6 +353,32 @@ def PWriteRec (inHis, recno, hiCard, err):
         OErr.printErrMsg(err, "Error writing History record")
     return ret
     # end PWriteRec
+
+def PEdit (inHis, startr, endr, err):
+    """ Edit History
+
+    Deletes a range of history records.
+    return 0 on success, else failure
+    inHis    = input Python History
+    startr   = first (1-rel) history record to delete
+    endr     = highest (1-rel) history record to delete, 0=>to end
+    err      = Python Obit Error/message stack
+    """
+    ################################################################
+    # Checks
+    if not PIsA(inHis):
+        raise TypeError,"inHis MUST be a History"
+    if not OErr.OErrIsA(err):
+        raise TypeError,"err MUST be an OErr"
+    #
+    ret = POpen (inHis, READWRITE, err)
+    ret = Obit.HistoryEdit(inHis.me, startr, endr, err.me)
+    OErr.printErr(err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error Editing History")
+    ret = PClose (inHis, err)
+    return ret
+    # end PEdit
 
 def PTimeStamp (inHis, label, err):
     """ Write timestamp and label to History

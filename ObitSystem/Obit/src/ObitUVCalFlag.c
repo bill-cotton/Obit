@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -120,7 +120,7 @@ void ObitUVCalFlagInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
   me->numRow = ((ObitTableFG*)me->FGTable)->myDesc->nrow;
 
   /* Allocate flagging arrays */
-  me->maxFlag     = 100000;
+  me->maxFlag     = 250000;
   me->numFlag     = 0;
   me->flagSour    = g_malloc0(me->maxFlag*sizeof(olong));
   me->flagAnt     = g_malloc0(me->maxFlag*sizeof(olong));

@@ -184,6 +184,19 @@ class OData(ODataPtr):
         return out
         # end History
         
+    def Stalin (self, startr, endr, err):
+        """ Edit history
+        
+        return 0 on success, else failure
+        self   = input Python History
+        startr = first (1-rel) history record to delete
+        endr   = highest (1-rel) history record to delete, 0->to end
+        err    = Python Obit Error/message stack
+        """
+        hi = self.History (READWRITE, err)
+        return History.PEdit (hi, startr, endr, err)
+    # end Stalin
+
     def NewTable (self, access, tabType, tabVer, err, \
                   numOrb=0, numPCal=2, numIF=1, numPol=1, \
                   numTerm=0, numChan=1, numTones=1, numBand=1, \

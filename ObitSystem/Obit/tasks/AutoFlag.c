@@ -77,7 +77,8 @@ int main ( int argc, char **argv )
   oint         ierr = 0;
   ObitSystem   *mySystem= NULL;
   ObitUV       *inData = NULL,*outData = NULL;
-  ofloat       VClip[2], IClip[2], RMSClip[2], RMSAvg;
+  ofloat       VClip[2], IClip[2], RMSClip[2], RMSAvg, minAmp=0.0, timeAvg=0.0;
+  olong        flagTab=0;
   gchar        *VStokes = "V", *IStokes = "I";
   gboolean doneIt = FALSE, doFD;
   ObitInfoType type;
@@ -117,6 +118,12 @@ int main ( int argc, char **argv )
   outData = setOutputUV (myInput, inData, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
+  ObitInfoListGetTest(myInput, "timeAvg",  &type, dim, &timeAvg);
+  ObitInfoListGetTest(myInput, "flagTab",  &type, dim, &flagTab);
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListAlwaysPut (inData->info, "timeAvg", OBIT_float, dim, &timeAvg);
+  ObitInfoListAlwaysPut (inData->info, "flagTab", OBIT_long,  dim, &flagTab);
+  
   /* VPol clipping if requested */
   VClip[0] = -1.0; VClip[1] = 0.0;
   ObitInfoListGetTest(myInput, "VClip",  &type, dim, VClip);
@@ -134,15 +141,18 @@ int main ( int argc, char **argv )
 
   /* IPol clipping if requested */
   IClip[0] = -1.0; IClip[1] = 0.0;
-  ObitInfoListGetTest(myInput, "IClip",  &type, dim, IClip);
+  ObitInfoListGetTest(myInput, "IClip",   &type, dim, IClip);
+  ObitInfoListGetTest(myInput, "minAmp",  &type, dim, &minAmp);
   if (IClip[0]>0.0) {
     doneIt = TRUE;  /* Done anything? */
     /* Set remaining control parameters */
     dim[0] = strlen (IStokes);
     ObitInfoListAlwaysPut (inData->info, "flagStok", OBIT_string, dim, IStokes);
     dim[0] = 2;
-    ObitInfoListAlwaysPut (inData->info, "maxAmp", OBIT_float, dim, &IClip[0]);
-    
+    ObitInfoListAlwaysPut (inData->info, "maxAmp",  OBIT_float, dim, &IClip[0]);
+    dim[0] = 1; 
+    ObitInfoListAlwaysPut (inData->info, "minAmp",  OBIT_float, dim, &minAmp);
+   
     ObitUVEditStokes (inData, outData, err);
     if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
   } /* end Ipol cliping */
@@ -959,6 +969,7 @@ void AutoFlagHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
     "doPol",  
     "flagTab", "VClip", "IClip", "RMSClip", "doHiEdit", "RMSAvg", "maxBad", "timeAvg", 
+    "minAmp", 
     "doFD", "FDmaxAmp", "FDmaxV", "FDwidMW", "FDmaxRMS", 
     "FDmaxRes", "FDmaxResBL", "FDbaseSel",
     NULL};

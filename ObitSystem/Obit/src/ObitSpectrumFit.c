@@ -1179,7 +1179,7 @@ gpointer ObitSpectrumFitMakeArg (olong nfreq, olong nterm, odouble refFreq,
   arg->doPBCorr       = FALSE;
   arg->maxIter        = 100;
   arg->minDelta       = 1.0e-5;  /* Min step size */
-  arg->maxChiSq       = 1.5;     /* max acceptable normalized chi squares */
+  arg->maxChiSq       = 3.0;     /* max acceptable normalized chi squares */
   arg->refFreq        = refFreq; /* Reference Frequency */
   arg->weight         = g_malloc0(arg->nfreq*sizeof(ofloat));
   arg->isigma         = g_malloc0(arg->nfreq*sizeof(ofloat));
