@@ -33,6 +33,7 @@
 #include "ObitReturn.h"
 #include "ObitAIPSDir.h"
 #include "ObitUVEdit.h"
+#include "ObitTableFG.h"
 #include "ObitHistory.h"
 #include "ObitData.h"
 
@@ -76,15 +77,16 @@ int main ( int argc, char **argv )
 {
   oint         ierr = 0;
   ObitSystem   *mySystem= NULL;
+  ObitTableFG  *FlagTab=NULL;
   ObitUV       *inData = NULL,*outData = NULL;
   ofloat       VClip[2], IClip[2], RMSClip[2], RMSAvg, minAmp=0.0, timeAvg=0.0;
-  olong        flagTab=0;
+  olong        flagTab=0, hiTab;
   gchar        *VStokes = "V", *IStokes = "I";
   gboolean doneIt = FALSE, doFD;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *FDParms[] = {
-    "flagTab", "timeAvg", "doHiEdit", 
+    "timeAvg", "doHiEdit", 
     "doFD", "FDmaxAmp", "FDmaxV", "FDwidMW", "FDmaxRMS", 
     "FDmaxRes", "FDmaxResBL", "FDbaseSel",
     NULL};
@@ -114,7 +116,7 @@ int main ( int argc, char **argv )
   inData = getInputData (myInput, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
-  /* Get output uvdata */
+  /* Get output uvdata (for AIPS FG table) */
   outData = setOutputUV (myInput, inData, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
@@ -122,8 +124,25 @@ int main ( int argc, char **argv )
   ObitInfoListGetTest(myInput, "flagTab",  &type, dim, &flagTab);
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
   ObitInfoListAlwaysPut (inData->info, "timeAvg", OBIT_float, dim, &timeAvg);
-  ObitInfoListAlwaysPut (inData->info, "flagTab", OBIT_long,  dim, &flagTab);
-  
+
+  /* Make sure flagTab exists, assign if passed 0 */
+  FlagTab = newObitTableFGValue("tmpFG", (ObitData*)outData, &flagTab, OBIT_IO_ReadWrite, 
+				err);
+  if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+  /* Open/close table */
+  ObitTableFGOpen (FlagTab, OBIT_IO_ReadWrite, err);
+  ObitTableFGClose (FlagTab, err);
+  FlagTab = ObitTableFGUnref(FlagTab);
+  /* Save for history */
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListAlwaysPut(myInput, "flagTab",  OBIT_long, dim, &flagTab);
+ 
+  /* Get (new) highest table number */
+  hiTab = ObitTableListGetHigh (outData->tableList, "AIPS FG")+1;
+  /* Write flags to temporary, highest numbered table */
+  ObitInfoListAlwaysPut (outData->info, "flagTab", OBIT_long,  dim, &hiTab);
+  ObitInfoListAlwaysPut (inData->info , "flagTab", OBIT_long,  dim, &hiTab);
+
   /* VPol clipping if requested */
   VClip[0] = -1.0; VClip[1] = 0.0;
   ObitInfoListGetTest(myInput, "VClip",  &type, dim, VClip);
@@ -135,9 +154,14 @@ int main ( int argc, char **argv )
     dim[0] = 2;
     ObitInfoListAlwaysPut (inData->info, "maxAmp", OBIT_float, dim, &VClip[0]);
     
+    /* Edit, Write flags to temp highest */
     ObitUVEditStokes (inData, outData, err);
     if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
-  } /* end Vpol flagging */
+
+    /* Copy flags to flagTab, delete temp highest */
+    ObitUVEditAppendFG (outData, flagTab, err);
+    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+ } /* end Vpol flagging */
 
   /* IPol clipping if requested */
   IClip[0] = -1.0; IClip[1] = 0.0;
@@ -153,9 +177,14 @@ int main ( int argc, char **argv )
     dim[0] = 1; 
     ObitInfoListAlwaysPut (inData->info, "minAmp",  OBIT_float, dim, &minAmp);
    
+    /* Edit, Write flags to temp highest */
     ObitUVEditStokes (inData, outData, err);
     if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
-  } /* end Ipol cliping */
+ 
+    /* Copy flags to flagTab, delete temp highest */
+    ObitUVEditAppendFG (outData, flagTab, err);
+    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+ } /* end Ipol cliping */
 
   /* Time domain flagging if requested */
   RMSClip[0] = RMSClip[1] = 0.0;
@@ -167,7 +196,12 @@ int main ( int argc, char **argv )
     dim[0] = 2;
     ObitInfoListAlwaysPut (inData->info, "maxRMS", OBIT_float, dim, RMSClip);
     
+    /* Edit, Write flags to temp highest */
     ObitUVEditTD (inData, outData, err);
+    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+
+    /* Copy flags to flagTab, delete temp highest */
+    ObitUVEditAppendFG (outData, flagTab, err);
     if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
   } /* end Time domain flagging */
 
@@ -181,9 +215,14 @@ int main ( int argc, char **argv )
     dim[0] = 1;
     ObitInfoListAlwaysPut (inData->info, "maxRMSAvg", OBIT_float, dim, &RMSAvg);
     
+    /* Edit, Write flags to temp highest */
     ObitUVEditTDRMSAvg (inData, outData, err);
     if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
-  } /* end Time domain flagging */
+ 
+    /* Copy flags to flagTab, delete temp highest */
+    ObitUVEditAppendFG (outData, flagTab, err);
+    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+ } /* end Time domain flagging */
 
   /* Frequency domain flagging if requested */
   doFD = FALSE;
@@ -194,7 +233,12 @@ int main ( int argc, char **argv )
     /* Copy FD parameters */
     ObitInfoListCopyList (myInput, inData->info, FDParms);
     
+    /* Edit, Write flags to temp highest */
     ObitUVEditFD (inData, outData, err);
+    if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
+
+    /* Copy flags to flagTab, delete temp highest */
+    ObitUVEditAppendFG (outData, flagTab, err);
     if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
   } /* end Frequency domain editing */
 
@@ -722,6 +766,9 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   doCalSelect = doCalSelect || (doCalib>0);
   ObitInfoListAlwaysPut (myInput, "doCalSelect", OBIT_bool, dim, &doCalSelect);
  
+  /* Initialize Threading */
+  ObitThreadInit (myInput);
+
 } /* end digestInputs */
 
 /*----------------------------------------------------------------------- */
@@ -820,7 +867,7 @@ ObitUV* getInputData (ObitInfoList *myInput, ObitErr *err)
   ObitInfoListCopyList (myInput, inData->info, dataParms);
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
 
- /* Ensure inData fully instantiated and OK */
+  /* Ensure inData fully instantiated and OK */
   ObitUVFullInstantiate (inData, TRUE, err);
   if (err->error) Obit_traceback_val (err, routine, "myInput", inData);
 
@@ -947,7 +994,11 @@ ObitUV* setOutputUV (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     return outUV;
   }
   
-  return outUV;
+  /* Ensure outData fully instantiated and OK */
+  ObitUVFullInstantiate (outUV, TRUE, err);
+  if (err->error) Obit_traceback_val (err, routine, "myInput", outUV);
+
+ return outUV;
 } /* end setOutputUV */
 
 /*----------------------------------------------------------------------- */
@@ -971,7 +1022,7 @@ void AutoFlagHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "flagTab", "VClip", "IClip", "RMSClip", "doHiEdit", "RMSAvg", "maxBad", "timeAvg", 
     "minAmp", 
     "doFD", "FDmaxAmp", "FDmaxV", "FDwidMW", "FDmaxRMS", 
-    "FDmaxRes", "FDmaxResBL", "FDbaseSel",
+    "FDmaxRes", "FDmaxResBL", "FDbaseSel", "nThreads", 
     NULL};
   gchar *routine = "AutoFlagHistory";
 

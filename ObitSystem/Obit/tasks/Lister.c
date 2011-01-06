@@ -488,6 +488,9 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   ObitInfoListGetP (myInput, "DataType", &type, dim, (gpointer)&Type);
   ObitInfoListAlwaysPut (myInput, "inDataType", type, dim, Type);
 
+  /* Initialize Threading */
+  ObitThreadInit (myInput);
+
 } /* end digestInputs */
 
 /*----------------------------------------------------------------------- */

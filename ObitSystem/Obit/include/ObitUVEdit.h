@@ -67,4 +67,6 @@ ObitUV* ObitUVEditClipStokes (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
 /** Public: Flag visibilities by running median */
 void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err);
 
+/** Public: Append contents of highest FG to flagTab and delete highest */
+void ObitUVEditAppendFG (ObitUV *inUV, olong flagTab, ObitErr *err);
 #endif /* OBITIUVEDIT_H */ 

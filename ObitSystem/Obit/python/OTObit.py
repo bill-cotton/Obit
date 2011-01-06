@@ -1132,7 +1132,7 @@ def saveLog (log, file=None):
     fd.close()
     # end saveLog
 
-def PrintHistory (ObitObj, hiStart=1, hiEnd=1000000, file=None):
+def PrintHistory (ObitObj, hiStart=1, hiEnd=1000000, task=None, file=None):
     """ Display history log or write to file
 
     Reads selected history records and displays with "more"
@@ -1140,6 +1140,8 @@ def PrintHistory (ObitObj, hiStart=1, hiEnd=1000000, file=None):
     err       = Python Obit Error/message stack
     hiStart   = if given the first (1-rel) history record
     hiEnd     = if given the highest (1-rel) history record
+    task      = If given, only list entries beginning with the string
+                given in task
     file      = if present, the name of a file into which to write
                 the history rather than displaying it on the screen
     """
@@ -1188,7 +1190,11 @@ def PrintHistory (ObitObj, hiStart=1, hiEnd=1000000, file=None):
     hilist = "History for"+label+"\n"
     x = hist.ReadRec(recno,err)
     while (len(x)>0) and (recno<hiEnd):
-        hilist = hilist+string.rjust(str(recno+1),6)+" "+x+"\n"
+        if task:   # Look for task name?
+            if x.startswith(task):
+                hilist = hilist+string.rjust(str(recno+1),6)+" "+x+"\n"
+        else:
+            hilist = hilist+string.rjust(str(recno+1),6)+" "+x+"\n"
         recno = recno+1
         x = hist.ReadRec(recno,err)
     #print x

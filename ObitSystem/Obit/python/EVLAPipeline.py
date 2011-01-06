@@ -74,7 +74,7 @@ RMSTimeAvg  = 1.0          # AutoFlag time averaging in min.
 doAutoFlag    = True       # Autoflag editing?
 RMSAvg      = 20.0         # AutoFlag Max RMS/Avg for time domain RMS filtering
 IClip       = [1000.0,0.1] # AutoFlag Stokes I clipping
-minAmp      = 0.0001       # Min. allowable calibrated amplitude
+minAmp      = 0.001        # Min. allowable calibrated amplitude
 VClip       = [10.0,0.05]  # AutoFlag Stokes V clipping
 timeAvg     = 2.0          # AutoFlag time averaging in min.
 doAFFD      = False        # do AutoFlag frequency domain flag
@@ -99,6 +99,7 @@ doPACor     = True         # Make parallactic angle correction
 # Bandpass Calibration
 doBP        = True         # Clear BP tables
 doBPCal     = True         # Determine Bandpass calibration
+doBPCal2    = None         # Second BP cal, defaults to doBPCal
 BPCal       = None         # Bandpass calibrator
 bpSpecIndex = 0.0          # BPCal spectral index
 bpBChan1      = 1          # Low freq. channel,  initial cal
@@ -111,15 +112,18 @@ bpsolMode     = 'A&P'      # Band pass type 'A&P', 'P', 'P!A'
 bpsolint1     = 10.0/60.0  # BPass phase correction solution in min
 bpsolint2     = 10.0       # BPass bandpass solution in min
 
-# Delay calibration from DCal (see below)
+# Delay calibration from DCal
 doDelayCal  = True         # Determine/apply delays from DCal
-doDelayCal2 = True         # Determine/apply delays from DCal on averaged data
+doDelayCal2 = None         # Determine/apply delays from DCal on averaged data
+                           # Defaults to doDelayCal
 doTwo       = True         # Use 1 and 2 bl combinations?
+DCal        = None         # Delay calibrator(s)
 
 # Amp/phase calibration
+doAmpPhaseCal = True                    # Amplitude/phase calibration
+doAmpPhaseCal2 = None                   # 2nd Amplitude/phase calibration, defaults to doAmpPhaseCal
 PCal          = None                    # Phase calibrator(s)
 ACal          = None                    # Amplitude calibrator
-DCal          = None                    # Delay calibrator(s)
 solint        = 0.0                     # Calibration solution time
 solsmo        = 0.0                     # Smooth calibration
 ampScalar     = False                   # Amp-scalar operation in Calib
@@ -193,7 +197,6 @@ Niter       = 100          # Max number of clean iterations
 minFlux     = 0.0          # Minimum CLEAN flux density
 xCells      = 0.0          # x cell spacing in asec
 yCells      = 0.0          # y cell spacing in asec
-doAmpPhaseCal = True       # Amplitude/phase calibration
 doPol       = False        # Poln cal in imaging
 solPType    = "L1"         # L1 solution for phase self cal
 solPMode    = "P"          # Delay solution for phase self cal
@@ -231,6 +234,7 @@ execfile (parmFile)
 logFile       = project+"_"+session+"_"+band+".log"  # Processing log file
 # Logging directly to logFile
 OErr.PInit(err, prtLv, logFile)
+OSystem.PAllowThreads(nThreads)   # Allow threads in Obit/oython
 retCode = 0
 
 mess = "Start project "+project+" session "+session+" "+band+" Band"+" AIPS user no. "+str(AIPS.userno)
@@ -300,7 +304,7 @@ if doMedn:
     retCode = EVLAMedianFlag (uv, "    ", err, noScrat=noScrat, nThreads=nThreads, \
                               avgTime=avgTime, avgFreq=avgFreq,  chAvg= chAvg, \
                               timeWind=timeWind, flagVer=2,flagSig=mednSigma, logfile=logFile, \
-                              check=check, debug=debug)
+                              check=check, debug=False)
     if retCode!=0:
         raise RuntimeError,"Error in MednFlag"
 
@@ -312,7 +316,7 @@ if doFD1:
                                 timeAvg=FD1TimeAvg, \
                                 doFD=True, FDmaxAmp=1.0e20, FDmaxV=1.0e20, FDwidMW=FD1widMW,  \
                                 FDmaxRMS=[1.0e20,0.1], FDmaxRes=FD1maxRes,  FDmaxResBL= FD1maxRes,  \
-                                logfile=logFile, check=check, debug=debug)
+                                nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
        raise  RuntimeError,"Error in AutoFlag"
 
@@ -326,7 +330,7 @@ if doRMSAvg:
         clist.append(s)
     retCode = EVLAAutoFlag (uv, clist, err,  flagVer=2, doCalib=-1, doBand=-1,   \
                                 RMSAvg=RMSAvg, timeAvg=RMSTimeAvg, \
-                                logfile=logFile, check=check, debug=debug)
+                                nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
        raise  RuntimeError,"Error in AutoFlag"
 
@@ -349,7 +353,7 @@ if doPACor:
 
 # Bandpass calibration
 if doBPCal and BPCal:
-    retCode = EVLABPCal(uv, BPCal, err, noScrat=noScrat, solInt1=bpsolint2, solInt2=bpsolint2, solMode=bpsolMode, \
+    retCode = EVLABPCal(uv, BPCal, err, noScrat=noScrat, solInt1=bpsolint1, solInt2=bpsolint2, solMode=bpsolMode, \
                         BChan1=bpBChan1, EChan1=bpEChan1, BChan2=bpBChan2, EChan2=bpEChan2, ChWid2=bpChWid2, \
                         doCenter1=bpDoCenter1, refAnt=refAnt, specIndex=bpSpecIndex, \
                         doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
@@ -371,7 +375,7 @@ if doDelayCal and DCal and not check:
     plotFile = "./"+project+"_"+session+"_"+band+"DelayCal.ps"
     retCode = EVLADelayCal(uv, err, calSou=DCal, CalModel=None, \
                            doCalib=2, flagVer=2, doBand=1, \
-                           solInt=solint, smoTime=20.0/60.0,  \
+                           solInt=solint, smoTime=1.0/60.0,  \
                            refAnts=[refAnt], doTwo=doTwo, \
                            doPlot=doSNPlot, plotFile=plotFile, \
                            nThreads=nThreads, noScrat=noScrat, \
@@ -399,37 +403,43 @@ if doAmpPhaseCal:
     if retCode!=0:
         raise RuntimeError,"Error calibrating"
 
-# More editing, with flux limits
+# More editing, with flux limits VClip a very bad idea here
 if doAutoFlag:
     mess =  "Post calibration editing:"
     printMess(mess, logFile)
     retCode = EVLAAutoFlag (uv, targets, err, flagVer=2, \
                                 doCalib=2, gainUse=0, doBand=1, BPVer=1,  \
-                                IClip=IClip, minAmp=minAmp, VClip=VClip, timeAvg=timeAvg, \
+                                IClip=IClip, minAmp=minAmp, timeAvg=timeAvg, \
                                 doFD=doAFFD, FDmaxAmp=FDmaxAmp, FDmaxV=FDmaxV, \
                                 FDwidMW=FDwidMW, FDmaxRMS=FDmaxRMS, \
                                 FDmaxRes=FDmaxRes,  FDmaxResBL= FDmaxResBL, FDbaseSel=FDbaseSel, \
-                                logfile=logFile, check=check, debug=debug)
+                                nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
        raise  RuntimeError,"Error in AutoFlag"
 
 # Redo the calibration using new flagging?
+if doBPCal2==None:
+    doBPCal2 = doBPCal2
+if doDelayCal2==None:
+    doDelayCal2 = doDelayCal2
+if doAmpPhaseCal2==None:
+    doAmpPhaseCal2 = doAmpPhaseCal2
 if doRecal:
     mess =  "Redo calibration:"
     printMess(mess, logFile)
-    EVLAClearCal(uv, err, doGain=True, doFlag=False, doBP=True, check=check)
-    OErr.printErrMsg(err, "Error resetting calibration")
+    #EVLAClearCal(uv, err, doGain=True, doFlag=False, doBP=True, check=check)
+    #OErr.printErrMsg(err, "Error resetting calibration")
     # Parallactic angle correction?
-    if doPACor:
-        retCode = EVLAPACor(uv, err, noScrat=noScrat, \
-                            logfile=logFile, check=check, debug=debug)
-        if retCode!=0:
-            raise RuntimeError,"Error in Parallactic angle correction"
+    #if doPACor:
+    #    retCode = EVLAPACor(uv, err, noScrat=noScrat, \
+    #                        logfile=logFile, check=check, debug=debug)
+    #    if retCode!=0:
+    #        raise RuntimeError,"Error in Parallactic angle correction"
 
     # Bandpass calibration
-    if doBPCal and BPCal:
+    if doBPCal2 and BPCal and not check:
         retCode = EVLABPCal(uv, BPCal, err, noScrat=noScrat, \
-                            solInt1=bpsolint2, solInt2=bpsolint2, solMode=bpsolMode, \
+                            solInt1=bpsolint1, solInt2=bpsolint2, solMode=bpsolMode, \
                             BChan1=bpBChan1, EChan1=bpEChan1, BChan2=bpBChan2, EChan2=bpEChan2, ChWid2=bpChWid2, \
                             doCenter1=bpDoCenter1, refAnt=refAnt, specIndex=bpSpecIndex, \
                             doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
@@ -438,8 +448,30 @@ if doRecal:
             raise RuntimeError,"Error in Bandpass calibration"
 
 
+    # Delay calibration
+    if doDelayCal2 and DCal:
+        plotFile = "./"+project+"_"+session+"_"+band+"DelayCal.ps"
+        retCode = EVLADelayCal(uv, err, calSou=DCal, CalModel=None, \
+                               doCalib=2, flagVer=2, doBand=1, \
+                               solInt=solint, smoTime=1.0/60.0,  \
+                               refAnts=[refAnt], doTwo=doTwo, \
+                               doPlot=doSNPlot, plotFile=plotFile, \
+                               nThreads=nThreads, noScrat=noScrat, \
+                               logfile=logFile, check=check, debug=debug)
+        if retCode!=0:
+            raise RuntimeError,"Error in delay calibration"
+            
+        # Plot corrected data?
+        if doSpecPlot and plotSource:
+            plotFile = "./"+project+"_"+session+"_"+band+"DelaySpec.ps"
+            retCode = EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
+                                   Stokes=["RR","LL"], doband=1,          \
+                                   check=check, debug=debug, logfile=logFile )
+            if retCode!=0:
+                raise  RuntimeError,"Error in Plotting spectrum"
+
     # Amp & phase Calibrate
-    if doAmpPhaseCal:
+    if doAmpPhaseCal2:
         plotFile = "./"+project+"_"+session+"_"+band+"APCal.ps"
         retCode = EVLACalAP (uv, targets, ACal, err, PCal=PCal, doCalib=2, doBand=1, BPVer=1, flagVer=2, \
                              calModel=AcalModel, calDisk=AcalDisk, calFlux=AcalFlux, nThreads=nThreads, \
@@ -450,6 +482,8 @@ if doRecal:
             raise RuntimeError,"Error calibrating"
 
 # end recal
+
+
 
 # Calibrate and average data
 # Note, PCAL doesn't handle flagging so this has to be here
@@ -467,29 +501,6 @@ if not check:
     uv = UV.newPAUV("AIPS UV DATA", project+session, avgClass, disk, seq, True, err)
     if err.isErr:
         OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
-
-
-# delay calibration
-if doDelayCal2 and DCal and not check:
-    plotFile = "./"+project+"_"+session+"_"+band+"DelayCal.ps"
-    retCode = EVLADelayCal(uv, err, calSou=DCal, CalModel=None, \
-                           doCalib=2, flagVer=2, doBand=-1, \
-                           solInt=solint*2, smoTime=5.0/60.0,  \
-                           refAnts=[refAnt], doTwo=doTwo, \
-                           doPlot=doSNPlot, plotFile=plotFile, \
-                           nThreads=nThreads, noScrat=noScrat, \
-                           logfile=logFile, check=check, debug=debug)
-    if retCode!=0:
-        raise RuntimeError,"Error in delay calibration"
-
-# Plot corrected data?
-if doSpecPlot and plotSource:
-    plotFile = "./"+project+"_"+session+"_"+band+"Spec.ps"
-    retCode = EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
-                           Stokes=["RR","LL"], doband=-1,          \
-                           check=check, debug=debug, logfile=logFile )
-    if retCode!=0:
-        raise  RuntimeError,"Error in Plotting spectrum"
 
 # R-L  delay calibration cal if needed, creates new BP table
 if doRLCal:
@@ -537,6 +548,24 @@ if doRLCal2:
                         check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in RL phase spectrum calibration"
+
+# VClip
+if VClip:
+    retCode = EVLAAutoFlag (uv, targets, err, flagVer=2, flagTab=2, \
+                            doCalib=2, gainUse=0, doBand=-1,  \
+                            VClip=VClip, timeAvg=timeAvg, \
+                            nThreads=nThreads, logfile=logFile, check=check, debug=debug)
+    if retCode!=0:
+        raise  RuntimeError,"Error in AutoFlag"
+
+# Plot corrected data?
+if doSpecPlot and plotSource:
+    plotFile = "./"+project+"_"+session+"_"+band+"Spec.ps"
+    retCode = EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
+                           Stokes=["RR","LL"], doband=-1,          \
+                           check=check, debug=debug, logfile=logFile )
+    if retCode!=0:
+        raise  RuntimeError,"Error in Plotting spectrum"
 
 # Image targets
 if doImage:

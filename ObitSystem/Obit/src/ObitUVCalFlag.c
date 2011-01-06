@@ -33,6 +33,7 @@
 #include "ObitUVSel.h"
 #include "ObitTableFG.h"
 #include "ObitTableUtil.h"
+#include "ObitThread.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -46,8 +47,24 @@ static ObitUVCalFlagS* newObitUVCalFlagS (ObitUVCal *in);
 
 /** Private: Update flagging arrays. */
 static void ObitUVCalFlagUpdate (ObitUVCalFlagS *in, ObitUVSel *sel, ofloat time,
-					ObitErr *err);
+				 ObitErr *err);
 
+/** Private: Make Threaded args */
+static olong MakeCalFlagFuncArgs (ObitThread *thread, ObitUVCalFlagS *in,
+				  ObitUVDesc *desc,
+				  CalFlagFuncArg ***ThreadArgs);
+
+/** Private: Delete Threaded args */
+static void KillCalFlagFuncArgs (olong nargs, CalFlagFuncArg **ThreadArgs);
+
+/** Private: Threaded Flag routine */
+static gpointer ThreadCalFlag (gpointer arg);
+
+/** Private: Flag everything in a vis */
+static void CalFlagAll (ObitUVDesc *desc, ofloat *visIn);
+
+/** Private: Time to String */
+static void T2String (ofloat time, gchar *msgBuf);
 /*----------------------Public functions---------------------------*/
 /**
  * Initialize structures for Flagging.
@@ -57,7 +74,7 @@ static void ObitUVCalFlagUpdate (ObitUVCalFlagS *in, ObitUVSel *sel, ofloat time
  * \param err  ObitError stack.
  */
 void ObitUVCalFlagInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc, 
-		    ObitErr *err)
+			ObitErr *err)
 {
   ObitIOCode retCode;
   ObitUVCalFlagS *me;
@@ -135,28 +152,37 @@ void ObitUVCalFlagInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
   me->flagEndTime = g_malloc0(me->maxFlag*sizeof(ofloat));
 
   /* Initial time to trigger update of calibration arrays */
-  me->flagTime = -1.0e20;
+  me->flagTime   = -1.0e20;
+  me->maxSimFlag = 0;  /* Max. simultaneous flags */
+  me->flagAll = FALSE;
+  /* Setup threading structures */
+  me->nThArg = MakeCalFlagFuncArgs (in->thread, me, desc, 
+				    (CalFlagFuncArg***)&me->thArgArr);
+
+
 } /*  end ObitUVCalFlagInit */
 
 /**
- * Flag a visibility
+ * Flag a visibility, possibly with threading
  * Adapted from AIPS DATFLG.FOR
  * \param in    Flag Object.
  * \param time  Time of datum
  * \param ant1  first antenna number of baseline
  * \param ant2  second antanna of baseline.
  * \param RP    Random parameters array.
- * \param visIn 1 visibility as an array of floats
+ * \param visIn visibility as an array of floats
  * \param err   ObitError stack.
  */
 void ObitUVCalFlag (ObitUVCal *in, float time, olong ant1, olong ant2, 
 		    ofloat *RP, ofloat *visIn, ObitErr *err)
 {
-  olong   iflag, kbase, flga,jif, jchan, FQID, SourID, iSubA;
-  olong jpoln, limf1, limf2, limc1, limc2, index, stadd, ipolpt;
+  olong   kbase, FQID, SourID, iSubA;
+  olong   i, nElem, nElemPerThread, nTh, loElem, hiElem;
+  gboolean OK;
   ObitUVCalFlagS *me;
   ObitUVDesc *desc;
   ObitUVSel *sel;
+  CalFlagFuncArg **threadArgs;
   gchar *routine="ObitUVCalFlag";
 
   /* error checks */
@@ -190,57 +216,52 @@ void ObitUVCalFlag (ObitUVCal *in, float time, olong ant1, olong ant2,
   if (desc->ilocsu >= 0) SourID = RP[desc->ilocsu] + 0.1;
   else SourID = 0;
 
-  /* loop thru flagging criteria */
-  for (iflag= 0; iflag<me->numFlag; iflag++) { /* loop 500 */
- 
-   /* check source */
-    if ((me->flagSour[iflag] != SourID)  &&  (me->flagSour[iflag] != 0)  && 
-	(SourID != 0)) continue;
+  /* Are we flagging everything? */
+  if (me->flagAll) {
+    CalFlagAll (desc, visIn);
+    return;
+  }
 
-    /* check antenna */
-    flga = me->flagAnt[iflag];
-    if ((flga != 0)  &&  (flga != ant1)  &&  (flga != ant2)) continue;
+  /* Divide up work, can have me->nThArg threads */
+  nElem = me->numFlag;
+  nElemPerThread = nElem/me->nThArg;
+  nTh = me->nThArg;
+  /* Lower limit on threading */
+  if (nElem<1000) {nElemPerThread = nElem; nTh = 1;}
+  loElem = 1;
+  hiElem = nElemPerThread;
+  hiElem = MIN (hiElem, nElem);
 
-    /* check baseline */
-    if ((me->flagBase[iflag] != 0)  &&  (me->flagBase[iflag] != kbase)) continue;
+  /* Set up thread arguments */
+  threadArgs = (CalFlagFuncArg**)me->thArgArr;
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hiElem = nElem;  /* Make sure do all */
+    threadArgs[i]->first   = loElem-1;
+    threadArgs[i]->last    = hiElem-1;
+    threadArgs[i]->iSubA   = iSubA;
+    threadArgs[i]->kbase   = kbase;
+    threadArgs[i]->SourID  = SourID;
+    threadArgs[i]->FQID    = FQID;
+    threadArgs[i]->ant1    = ant1;
+    threadArgs[i]->ant2    = ant2;
+    threadArgs[i]->visIn   = visIn;
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which Elems */
+    loElem += nElemPerThread;
+    hiElem += nElemPerThread;
+    hiElem = MIN (hiElem, nElem);
+  }
 
-    /* check subarray */
-    if ((me->flagSubA[iflag] > 0)  &&  (me->flagSubA[iflag] != iSubA)) continue;
+  /* Do operation */
+  OK = ObitThreadIterator (in->thread, nTh, 
+			   (ObitThreadFunc)ThreadCalFlag,
+			   (gpointer**)threadArgs);
 
-    /* check freqid. */
-    if ((desc->ilocfq>=0) && (me->flagFQID[iflag] > 0)  &&  
-	(me->flagFQID[iflag] != FQID)) continue;
-
-    /* some data to be flagged - set limits */
-    limf1 = MAX (1, me->flagBIF[iflag]);
-    limf2 = MIN (me->numIF, me->flagEIF[iflag]);
-    limc1 = MAX (1, me->flagBChan[iflag]);
-    limc2 = MIN (me->numChan,  me->flagEChan[iflag]);
-
-    /* loop over polarizations */
-    ipolpt = abs(me->stoke0)-1;
-    for (jpoln= 0; jpoln<me->numStok; jpoln++) { /* loop 400 */
-
-      if (me->flagPol[iflag*4+jpoln+ipolpt]) { /* Flagged polarization? */
-	stadd = jpoln * desc->incs;
-
-	/* loop over IF */
-	for (jif= limf1; jif<=limf2; jif++) { /* loop 300 */
-	  index = stadd + (jif-1) * desc->incif + (limc1-1) * desc->incf;
-
-	  if (limc1 == limc2) {/* single channel */	    
-	    visIn[index+2] = - fabs (visIn[index+2]);
-
-	  } else { /* loop over channel */
-	    for (jchan= limc1; jchan<=limc2; jchan++) { /* loop 200 */
-	      visIn[index+2] = - fabs (visIn[index+2]);
-	      index += desc->incf;
-	    } /* end loop over channels L200: */;
-	  } 
-	} /* end loop  over IF L300: */;
-      }
-    } /* end loop over Stokes L400: */;
-  } /* end loop over flagging entries L500: */;
+  /* Check for problems */
+  if (!OK) {
+    Obit_log_error(err, OBIT_Error,"%s: Problem in threading", routine);
+  }
 } /* end ObitUVCalFlag */
 
 
@@ -270,6 +291,12 @@ void ObitUVCalFlagShutdown (ObitUVCal *in, ObitErr *err)
   /* Release row structure  */
   me->FGTableRow = ObitTableFGRowUnref(me->FGTableRow);
 
+  /* If err->prtLv>2 tell max number of simultaneous flags */
+  if ((err->prtLv>2) && (me->maxSimFlag>0)) {
+    Obit_log_error(err, OBIT_InfoErr, "Maximum simultaneous flags %d", 
+		   me->maxSimFlag);
+  }
+
   /* delete structure */
   in->flag = ObitUVCalFlagSUnref(in->flag);
 } /*  end ObitUVCalFlagShutdown */
@@ -296,6 +323,11 @@ ObitUVCalFlagSUnref (ObitUVCalFlagS *in)
   if (in->flagEChan)   g_free(in->flagEChan);   in->flagEChan = NULL;
   if (in->flagPol)     g_free(in->flagPol);     in->flagPol   = NULL;
   if (in->flagEndTime) g_free(in->flagEndTime); in->flagEndTime = NULL;
+  if (in->thArgArr) {
+    KillCalFlagFuncArgs (in->nThArg, in->thArgArr);
+    in->thArgArr = NULL;
+    in->nThArg = 0;
+  }
 
   /* basic structure */
    g_free (in);
@@ -331,6 +363,7 @@ newObitUVCalFlagS (ObitUVCal *in)
   out->flagEChan   = NULL;
   out->flagPol     = NULL;
   out->flagEndTime = NULL;
+  out->thArgArr    = NULL;
   
   return out;
 } /*  end newObitUVCalFlagS */
@@ -346,12 +379,14 @@ newObitUVCalFlagS (ObitUVCal *in)
 static void ObitUVCalFlagUpdate (ObitUVCalFlagS *in, ObitUVSel *sel, ofloat time,
 				 ObitErr *err)
 {
-  olong   ndrop, limit, a1, a2, it;
-  olong irow,  i, limit4;
-  gboolean done;
+  olong   ndrop, mdrop, a1, a2, it;
+  olong irow,  i, limit4, nwords;
+  gboolean done, dropall, warn;
   ObitIOCode retCode;
   ObitTableFG *FGTable = NULL;
   ObitTableFGRow *FGTableRow = NULL;
+  gchar tString[25];
+  size_t nbytes;
   gchar *routine="ObitUVCalFlagUpdate";
  
   /* error checks */
@@ -369,44 +404,75 @@ static void ObitUVCalFlagUpdate (ObitUVCalFlagS *in, ObitUVSel *sel, ofloat time
   
     /* find highest number expired flag */
     ndrop = -1;
-    for (i= 0; i<in->numFlag; i++) { /* loop 100 */
-      if (in->flagEndTime[i] < time) ndrop = i;
-    } /* end loop  L100: */;
+    for (i=in->numFlag-1; i>=0; i--) { /* loop 100 */
+      if (in->flagEndTime[i] < time) {ndrop = i; break;}
+    } /* end loop  L100: */
 
     /* see if any to be dropped. */
     done = (ndrop < 0);
     if (done) break;
 
+    /* See if any lower consecutive entries to be dropped */
+    mdrop = 1; 
+    i = ndrop;
+    while (((i-mdrop)>=0) && (in->flagEndTime[i-mdrop] < time)) {
+      mdrop++;
+      ndrop--;
+    }
+
+
+    /* Are all dropped to end of list? */
+    dropall = ((ndrop+mdrop) >= in->numFlag);
+    if (dropall) {in->numFlag -= mdrop; continue;}
+
     /* compress, dropping flag. */
-    if ((ndrop+1) < in->numFlag) {  /* This is not the last one the list */
-      limit = ndrop;
-      for (i= limit; i<in->numFlag-1; i++) { /* loop 150 */
-	in->flagEndTime[i] = in->flagEndTime[i+1];
-	in->flagSour[i]    = in->flagSour[i+1];
-	in->flagAnt[i]     = in->flagAnt[i+1];
-	in->flagFQID[i]    = in->flagFQID[i+1];
-	in->flagBase[i]    = in->flagBase[i+1];
-	in->flagSubA[i]    = in->flagSubA[i+1];
-	in->flagBIF[i]     = in->flagBIF[i+1];
-	in->flagEIF[i]     = in->flagEIF[i+1];
-	in->flagBChan[i]   = in->flagBChan[i+1];
-	in->flagEChan[i]   = in->flagEChan[i+1];
-	in->flagPol[i*4]   = in->flagPol[4*(i+1)];
-	in->flagPol[i*4+1] = in->flagPol[4*(i+1)+1];
-	in->flagPol[i*4+2] = in->flagPol[4*(i+1)+2];
-	in->flagPol[i*4+3] = in->flagPol[4*(i+1)+3];
-      } /* end loop  L150: */;
-    } 
-    in->numFlag--;
+    if ((ndrop+mdrop) < in->numFlag) {  /* This is not the last one the list */
+      i      = ndrop;
+      nwords = in->numFlag - ndrop - mdrop + 1;
+      nbytes = nwords * sizeof(ofloat);
+      memmove(&in->flagEndTime[i], &in->flagEndTime[i+mdrop], nbytes);
+      nbytes = nwords * sizeof(olong);
+      memmove(&in->flagSour[i] , &in->flagSour[i+mdrop],  nbytes);
+      memmove(&in->flagAnt[i]  , &in->flagAnt[i+mdrop],   nbytes);
+      memmove(&in->flagFQID[i] , &in->flagFQID[i+mdrop],  nbytes);
+      memmove(&in->flagBase[i] , &in->flagBase[i+mdrop],  nbytes);
+      memmove(&in->flagSubA[i] , &in->flagSubA[i+mdrop],  nbytes);
+      memmove(&in->flagBIF[i]  , &in->flagBIF[i+mdrop],   nbytes);
+      memmove(&in->flagEIF[i]  , &in->flagEIF[i+mdrop],   nbytes);
+      memmove(&in->flagBChan[i], &in->flagBChan[i+mdrop], nbytes);
+      memmove(&in->flagEChan[i], &in->flagEChan[i+mdrop], nbytes);
+      nbytes = 4 * nwords * sizeof(gboolean);
+      memmove(&in->flagPol[i*4], &in->flagPol[4*(i+mdrop)], nbytes);
+
+      /*    for (i= limit; i<in->numFlag-1; i++) { 
+	    in->flagEndTime[i] = in->flagEndTime[i+1];
+	    in->flagSour[i]    = in->flagSour[i+1];
+	    in->flagAnt[i]     = in->flagAnt[i+1];
+	    in->flagFQID[i]    = in->flagFQID[i+1];
+	    in->flagBase[i]    = in->flagBase[i+1];
+	    in->flagSubA[i]    = in->flagSubA[i+1];
+	    in->flagBIF[i]     = in->flagBIF[i+1];
+	    in->flagEIF[i]     = in->flagEIF[i+1];
+	    in->flagBChan[i]   = in->flagBChan[i+1];
+	    in->flagEChan[i]   = in->flagEChan[i+1];
+	    in->flagPol[i*4]   = in->flagPol[4*(i+1)];
+	    in->flagPol[i*4+1] = in->flagPol[4*(i+1)+1];
+	    in->flagPol[i*4+2] = in->flagPol[4*(i+1)+2];
+	    in->flagPol[i*4+3] = in->flagPol[4*(i+1)+3];
+	    }*/
+    }  
+    in->numFlag -= mdrop;
   } /* end loop deleting expired entries */
 
+    
   /* check if list exhausted */
-  if (in->LastRowRead >= in->numRow) return;
+  if (in->LastRowRead >= in->numRow) goto alldone;
 
   /* FG table - set local pointers */
   FGTable = (ObitTableFG*)in->FGTable;
   FGTableRow = (ObitTableFGRow*)in->FGTableRow;
 
+  warn = TRUE;
   /* Find next valid flag. Loop through records */
   limit4 = MAX (1, in->LastRowRead+1);
   for (i= limit4; i<=in->numRow; i++) { /* loop 360 */
@@ -416,7 +482,7 @@ static void ObitUVCalFlagUpdate (ObitUVCalFlagS *in, ObitUVSel *sel, ofloat time
     if (FGTableRow->status < 0) continue; /* entry flagged? */
     in->LastRowRead = i-1;  /* may try this one again */
   
-    if (time < FGTableRow->TimeRange[0]) return;
+    if (time < FGTableRow->TimeRange[0]) goto alldone;
     if (time > FGTableRow->TimeRange[1]) continue;
   
     /* check FQ id. */
@@ -434,15 +500,27 @@ static void ObitUVCalFlagUpdate (ObitUVCalFlagS *in, ObitUVSel *sel, ofloat time
 	(!ObitUVSelWantSour(sel, (olong)FGTableRow->SourID))) continue;
     
     /* Must want this one - save it */
-    in->numFlag = in->numFlag + 1;
     /* check if too big */
-    if (in->numFlag > in->maxFlag) {
-      Obit_log_error(err, OBIT_Error, 
-		     "ERROR: Exceeded limit of %d simultaneous flags for %s", 
-		     in->maxFlag, sel->name);
-      return;
+    if (in->numFlag >= in->maxFlag) {
+      if (warn) {
+	warn = FALSE; /* Only once */
+	Obit_log_error(err, OBIT_InfoWarn, 
+		       "ERROR: Exceeded limit of %d simultaneous flags for %s", 
+		       in->maxFlag, sel->name);
+	T2String (time, tString);
+	Obit_log_error(err, OBIT_InfoWarn, 
+		       "       Time: %s", tString);
+	Obit_log_error(err, OBIT_InfoWarn, 
+		       "       Flagging all data until number drops");
+	ObitErrLog(err); 
+	in->flagAll = (in->numFlag >= in->maxFlag);
+      }
+      continue;
     }
-    
+
+    /* New flag */
+    in->numFlag++;
+ 
     /* fill in tables */
     in->LastRowRead = i;  /* Last row actually used */
     it = in->numFlag - 1;
@@ -455,7 +533,7 @@ static void ObitUVCalFlagUpdate (ObitUVCalFlagS *in, ObitUVSel *sel, ofloat time
       in->flagAnt[it] = a2;
       in->flagBase[it] = 0;
     } else {
-      in->flagAnt[it] = FGTableRow->ants[0];
+      in->flagAnt[it]  = a1;
       in->flagBase[it] = a1*256 + a2;
     } 
     in->flagSubA[it] = FGTableRow->SubA;
@@ -469,8 +547,10 @@ static void ObitUVCalFlagUpdate (ObitUVCalFlagS *in, ObitUVSel *sel, ofloat time
     if (in->flagBChan[it] <= 0) in->flagBChan[it] = 1;
     if (in->flagEChan[it] <= 0) in->flagEChan[it] = in->numChan;
 
-    /* Ensure that if and channel selection are in range */
-    in->flagEIF[it] = MIN (in->flagEIF[it], in->numIF);
+    /* Ensure that IF and channel selection are in range */
+    in->flagBIF[it]   = MAX (in->flagBIF[it], 1);
+    in->flagBChan[it] = MAX (in->flagBChan[it], 1);
+    in->flagEIF[it]   = MIN (in->flagEIF[it], in->numIF);
     in->flagEChan[it] = MIN (in->flagEChan[it], in->numChan);
 
     /* Stokes flags are packed into a bit array */
@@ -479,6 +559,218 @@ static void ObitUVCalFlagUpdate (ObitUVCalFlagS *in, ObitUVSel *sel, ofloat time
     in->flagPol[it*4+2] = FGTableRow->pFlags[0] & 0x4;
     in->flagPol[it*4+3] = FGTableRow->pFlags[0] & 0x8;
     
-  }  /* end loop over file  L360: */;
+  }  /* end loop over file  L360: */
+
+ alldone:
+  /* Save maximum number of simultaneous flags */
+  in->maxSimFlag = MAX (in->maxSimFlag, in->numFlag);
+  /* Resuming normal flagging */
+  if (in->flagAll && ((in->numFlag<in->maxFlag))) {
+    T2String (time, tString);
+    Obit_log_error(err, OBIT_InfoWarn, 
+		   "       Resume normal flagging at Time: %s", tString);
+    ObitErrLog(err); 
+  }
+  in->flagAll = (in->numFlag >= in->maxFlag);
 
 } /* end ObitUVCalFlagUpdate */
+
+/**
+ * Make arguments for a Threaded ThreadCalFlag
+ * \param thread     ObitThread object to be used
+ * \param in         ObitUVCalFlagS to be operated on
+ * \param desc       ObitUVDesc for data
+ * \param ThreadArgs[out] Created array of FAFuncArg, 
+ *                   delete with KillFAFuncArgs
+ * \return number of elements in args (number of allowed threads).
+ */
+static olong MakeCalFlagFuncArgs (ObitThread *thread, ObitUVCalFlagS *in,
+				  ObitUVDesc *desc,
+				  CalFlagFuncArg ***ThreadArgs)
+{
+  olong i, nThreads;
+
+  /* Setup for threading */
+  /* How many threads? */
+  nThreads = MAX (1, ObitThreadNumProc(thread));
+
+  /* Initialize threadArg array */
+  *ThreadArgs = g_malloc0(nThreads*sizeof(CalFlagFuncArg*));
+  for (i=0; i<nThreads; i++) 
+    (*ThreadArgs)[i] = g_malloc0(sizeof(CalFlagFuncArg)); 
+  for (i=0; i<nThreads; i++) {
+    (*ThreadArgs)[i]->thread = ObitThreadRef(thread);
+    (*ThreadArgs)[i]->in     = in;
+    (*ThreadArgs)[i]->desc   = ObitUVDescRef(desc);
+    (*ThreadArgs)[i]->first = 0;
+    (*ThreadArgs)[i]->last  = 0;
+    (*ThreadArgs)[i]->ithread  = i;
+  }
+
+  return nThreads;
+} /*  end MakeCalFlagFuncArg */
+
+/**
+ * Delete arguments for ThreadCalFlag
+ * \param nargs      number of elements in ThreadArgs.
+ * \param ThreadArgs Array of CalFlagFuncArg
+ */
+static void KillCalFlagFuncArgs (olong nargs, 
+				 CalFlagFuncArg **ThreadArgs)
+{
+  olong i;
+
+  if (ThreadArgs==NULL) return;
+  ObitThreadPoolFree (ThreadArgs[0]->thread);  /* Free thread pool */
+  for (i=0; i<nargs; i++) {
+    if (ThreadArgs[i]) {
+      if (ThreadArgs[i]->thread) ObitThreadUnref(ThreadArgs[i]->thread);
+      if (ThreadArgs[i]->desc)   ObitUVDescUnref(ThreadArgs[i]->desc);
+      g_free(ThreadArgs[i]);
+    }
+  }
+  g_free(ThreadArgs);
+} /*  end KillCalFlagFuncArgs */
+
+/**
+ * Thread apply flags to data
+ * Callable as thread
+ * The potential dependencies between threads should not be a problem.
+ * \param arg Pointer to CalFlagFuncArg argument with elements:
+ * \li   thread ObitThread to use 
+ * \li   in     CalFlag to work on 
+ * \li   first  First flag entry (0-rel) number 
+ * \li   last   Highest flag entry  (0-rel) number 
+ * \li   time   Time of datum (day) 
+ * \li   iSubA  Subarray number  of datum
+ * \li   kbase  Baseline index  of datum 
+ * \li   SourID Source ID of datum
+ * \li   FQID   FQ ID of datum
+ * \li   ant1   First antenna number
+ * \li   ant2   Second antenna number
+ * \li   visIn  Visibility as an array of floats 
+ * \li   ithread  thread number, <0 -> no threading
+ * \return NULL
+ */
+static gpointer ThreadCalFlag (gpointer arg)
+{
+  /* Get arguments from structure */
+  CalFlagFuncArg *largs = (CalFlagFuncArg*)arg;
+  ObitUVCalFlagS *me    = largs->in;
+  ObitUVDesc *desc      = largs->desc;
+  olong      first      = largs->first;
+  olong      last       = largs->last;
+  olong      iSubA      = largs->iSubA;
+  olong      kbase      = largs->kbase;
+  olong      SourID     = largs->SourID;
+  olong      FQID       = largs->FQID;
+  olong      ant1       = largs->ant1;
+  olong      ant2       = largs->ant2;
+  ofloat     *visIn     = largs->visIn;
+
+  /* local */
+  olong iflag, jpoln, jif, jchan, index, limf1, limf2, limc1, limc2;
+  olong flga, ipolpt, stadd;
+
+  /* Anything to do? */
+  if (last<=0) goto finish;
+  if (last<first) goto finish;
+
+  /* loop thru flagging criteria */
+  ipolpt = abs(me->stoke0)-1;
+  for (iflag=first; iflag<last; iflag++) { /* loop 500 */
+ 
+    /* check antenna */
+    flga = me->flagAnt[iflag];
+    if ((flga != 0)  &&  (flga != ant1)  &&  (flga != ant2)) continue;
+
+    /* check baseline */
+    if ((me->flagBase[iflag] != 0)  &&  (me->flagBase[iflag] != kbase)) continue;
+
+   /* check source */
+    if ((me->flagSour[iflag] != SourID)  &&  (me->flagSour[iflag] != 0)  && 
+	(SourID != 0)) continue;
+
+    /* check subarray */
+    if ((me->flagSubA[iflag] > 0)  &&  (me->flagSubA[iflag] != iSubA)) continue;
+
+    /* check freqid. */
+    if ((desc->ilocfq>=0) && (me->flagFQID[iflag] > 0)  &&  
+	(me->flagFQID[iflag] != FQID)) continue;
+
+    /* some data to be flagged - set limits */
+    limf1 = me->flagBIF[iflag];
+    limf2 = me->flagEIF[iflag];
+    limc1 = me->flagBChan[iflag];
+    limc2 = me->flagEChan[iflag];
+
+    /* loop over polarizations */
+    for (jpoln= 0; jpoln<me->numStok; jpoln++) { /* loop 400 */
+
+      if (me->flagPol[iflag*4+jpoln+ipolpt]) { /* Flagged polarization? */
+	stadd = jpoln * desc->incs;
+
+	/* loop over IF */
+	for (jif= limf1; jif<=limf2; jif++) { /* loop 300 */
+	  index = stadd + (jif-1) * desc->incif + (limc1-1) * desc->incf;
+
+	  if (limc1 == limc2) {/* single channel */	    
+	    visIn[index+2] = - fabs (visIn[index+2]);
+
+	  } else { /* loop over channel */
+	    for (jchan= limc1; jchan<=limc2; jchan++) { /* loop 200 */
+	      visIn[index+2] = - fabs (visIn[index+2]);
+	      index += desc->incf;
+	    } /* end loop over channels L200: */;
+	  } 
+	} /* end loop  over IF L300: */;
+      }
+    } /* end loop over Stokes L400: */;
+  } /* end loop over flagging entries L500: */;
+
+  /* Indicate completion */
+  finish: 
+  if (largs->ithread>=0)
+    ObitThreadPoolDone (largs->thread, (gpointer)&largs->ithread);
+  
+  return NULL;
+  
+} /*  end ThreadCalFlag */
+
+/**
+ * Flag all visibilities in a record
+ * \param desc       ObitUVDesc for data
+ * \param visIn       visibility as an array of floats
+ */
+static void CalFlagAll (ObitUVDesc *desc, ofloat *visIn)
+{
+  olong i;
+
+  for (i=0; i<desc->ncorr; i++) {
+    visIn[i*3+2] = - fabs(visIn[i*3+2]);
+  }
+} /*  end CalFlagAll */
+
+/**
+ * Convert a time as time in days to a printable string
+ * \param    time  Beginning time, end time in days
+ * \msgBuff  Human readable string as "dd/hh:mm:ss.s"
+ *           must be allocated at least 13 characters
+ */
+static void T2String (ofloat time, gchar *msgBuf)
+{
+  ofloat rtemp, rt1;
+  olong   id1, it1, it2;
+
+  id1 = time;
+  rtemp = 24.0 * (time - id1);
+  it1 = rtemp;
+  it1 = MIN (23, it1);
+  rtemp = (rtemp - it1)*60.0;
+  it2 = rtemp;
+  it2 = MIN (59, it2);
+  rt1 = (rtemp - it2)*60.0;
+  g_snprintf (msgBuf, 30, "%2.2d/%2.2d:%2.2d:%5.2f",
+	      id1, it1, it2, rt1);
+} /* end of routine T2String   */ 
+

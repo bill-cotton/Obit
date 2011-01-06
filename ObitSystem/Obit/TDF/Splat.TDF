@@ -127,8 +127,10 @@ corrType                           Cross or auto correlations
                                      0 pass only xc data
                                      1 pass xc and ac data
                                      2 pass only ac data
+**PARAM** int 1 **DEF** 1
+nThreads            1               Number of threads to use
 **PARAM** str 128
-taskLog                            Logfile to write task messages to
+taskLog                             Logfile to write task messages to
 ----------------------------------------------------------------
 Splat
 
@@ -307,6 +309,12 @@ Adverbs:
              If corr=1 then both cross-power and total-power data 
              will be passed; 
              if corr=2 then only total-power data will be passed.
+  nThreads...If the Obit libraries are compiled with multiple
+             thread operation enabled, this parameter sets the 
+             number of threads that can be used for parallel 
+             operations. 
+             NB: This only improves performance if there are 
+             multiple processors and/or cores in the host.
   taskLog....Log file to write messages to INSTEAD of the terminal
              This is useful in long runs or batch files.
              Path is absolute or relative to where the task 

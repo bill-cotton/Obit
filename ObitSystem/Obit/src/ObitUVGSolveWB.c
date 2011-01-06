@@ -2758,13 +2758,14 @@ static int fringeFitFunc (const gsl_vector *coef, void *params, gsl_vector *f)
       fprintf (stdout, " %d, %f %f %f  %f %f \n", 
 	       i, phase*57.296,  vdata[i]*57.296, resid*57.296, vwt[i], vfreq[i]-freq0);
     }*/
-   /* Weight */
-    resid *= vwt[i];
-    if (vwt[i]>0.0) cnt++;
-    
+
     /* RMS resid */
     sum += resid*resid;
 
+    /* Weight */
+    resid *= vwt[i];
+    if (vwt[i]>0.0) cnt++;
+    
     /* Save residual */
     gsl_vector_set(f, i-lo, resid);	
   } /* end loop over data */

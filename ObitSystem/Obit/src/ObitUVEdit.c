@@ -1024,7 +1024,7 @@ void ObitUVEditTDRMSAvg (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	      acc[jndx+2] = rms2 / MAX(ampl2, 1.0e-20);
 
 	      /* Is this one bad? */
-	      isbad = isbad || acc[jndx+2]  > acc[jndx+1]  ;
+	      isbad = acc[jndx+2]  > acc[jndx+1]  ;
 
 	      /* Correlator info */
 	      corCnt[j]++;
@@ -3692,7 +3692,7 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 	/* Purge any now expired time slots */
 	tTime = curTime-timeWind;
 	for (k=0; k<numTime; k++) {
-	  if (times[k]<tTime) {
+	  if ((times[k]<tTime) && (times[k]>-1.0e10)) {
 	    times[k] = -1.0e20;
 	    /* Blank fill data buffer */
 	    for (j=0; j<numBL; j++) {
@@ -3802,6 +3802,95 @@ void ObitUVEditMedian (ObitUV *inUV, ObitUV *outUV, ObitErr *err)
 
   return;
 } /* end ObitUVEditMedian */
+
+/**
+ * Append the contents of the highest numbered AIPS FG table to flagTab
+ * And then delete the highest numbered table.
+ * Nothing is done if the highest numbered table has a number less than flagTab.
+ * \param inUV     Input uv data to with flag tables.
+ * \param flagTab  AIPS FG table version number for output, MUST be >= 1
+ * \param err      Error stack, returns if not empty.
+ */
+void ObitUVEditAppendFG (ObitUV *inUV, olong flagTab, ObitErr *err)
+{
+  ObitIOCode iretCode, oretCode;
+  ObitTableFG *inFlag=NULL, *outFlag=NULL;
+  ObitTableFGRow *row=NULL;
+  olong hiTab, iRow, oRow; 
+  gchar *routine = "ObitUVEditAppendFG";
+
+  /* error checks */
+  if (err->error) return;
+  g_assert (ObitUVIsA(inUV));
+
+  Obit_return_if_fail ((flagTab>=1), err, 
+		       "%s flagTab MUST be >= 1, not %d", routine, flagTab);  
+
+  /* Fully instantiate UV data if needed */
+  ObitUVFullInstantiate (inUV, TRUE, err);
+  if (err->error) Obit_traceback_msg (err, routine, inUV->name);
+
+  /* Highest table number */
+  hiTab = ObitTableListGetHigh (inUV->tableList, "AIPS FG");
+
+  /* If hiTab not greater than flagTab return with warning */
+  if (hiTab<=flagTab) {
+    Obit_log_error(err, OBIT_InfoWarn, "%s: temp hiTab (%d) must be greater than flagTab (%d)",
+		 routine, hiTab, flagTab);
+    return;
+  }
+ 
+  /* input table */
+  inFlag = newObitTableFGValue("InFG", (ObitData*)inUV, &hiTab, OBIT_IO_ReadWrite, 
+			       err);
+  oretCode = ObitTableFGOpen (inFlag, OBIT_IO_ReadWrite, err);
+  if (err->error) goto cleanup;
+
+  /* Anything in input? */
+  if (inFlag->myDesc->nrow<=0) goto cleanup;
+  
+  /* Now output table */
+  outFlag = newObitTableFGValue("OutFG", (ObitData*)inUV, &flagTab, OBIT_IO_ReadWrite, 
+				err);
+  /* Open output table */
+  oretCode = ObitTableFGOpen (outFlag, OBIT_IO_ReadWrite, err);
+  if (err->error) goto cleanup;
+  
+  /* Create Row */
+  row = newObitTableFGRow (inFlag);
+  
+  /* Attach row to output buffer */
+  ObitTableFGSetRow (outFlag, row, err);
+  if (err->error) goto cleanup;
+  
+  /* If there are entries in the output table, mark it unsorted */
+  if (outFlag->myDesc->nrow>0) 
+    {outFlag->myDesc->sort[0]=0; outFlag->myDesc->sort[1]=0;}
+
+  /* Loop over input copying */
+  for (iRow=1; iRow<=inFlag->myDesc->nrow; iRow++) {
+    iretCode = ObitTableFGReadRow  (inFlag,  iRow, row, err);
+    oRow = -1;
+    oretCode = ObitTableFGWriteRow (outFlag, oRow, row, err);
+    if (err->error) goto cleanup;
+  } /* end loop copying */
+  
+  /* Close tables */
+  oretCode = ObitTableFGClose (outFlag, err);
+  iretCode = ObitTableFGClose (inFlag, err);
+
+  /* Give report */
+  Obit_log_error(err, OBIT_InfoErr, "Copied %d flags from temp table %d to %d",
+		 inFlag->myDesc->nrow, hiTab, flagTab);
+  /* Cleanup */
+ cleanup:
+  /* Delete input table */
+  iretCode = ObitDataZapTable ((ObitData*)inUV, "AIPS FG", hiTab, err);
+  inFlag   = ObitTableFGUnref(inFlag);
+  row      = ObitTableFGRowUnref(row);
+  outFlag  = ObitTableFGUnref(outFlag);
+  if (err->error)  Obit_traceback_msg (err, routine, inUV->name);
+} /* end ObitUVEditAppendFG */
 
 /**
  * Routine translated from the AIPSish TDEDIT.FOR/TDCLHI  
@@ -4290,7 +4379,7 @@ static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL
 			   olong *count, ofloat *avg, ofloat *RMS, ofloat *sigma,
 			   olong widMW, gboolean *chanMask, ObitErr* err)
 {
-  olong js, jf, jif, jbl, jj, indx, jndx, cnt, half;
+  olong js, jf, jif, jbl, jj, jjj, indx, jndx, cnt, half;
   gboolean haveBL, doMW = widMW>0;  /* Median window filter or linear baseline */
   ofloat a, b, aaa, *temp=NULL;
   /*gchar *routine = "EditFDBaseline";*/
@@ -4312,28 +4401,32 @@ static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL
 	    cnt = 0;
 	    if (jf<half) { /* Beginning */
 	      for (jj=0; jj<widMW; jj++) {
-		if ((count[indx+jj]>0) && (avg[indx]>-9900.0)) {  /* Any data? */
-		  temp[cnt++] = avg[indx+jj];
+		jjj = jj - jf;  /* If we're no longer at the beginning */
+		if ((count[indx+jjj]>0) && (avg[indx+jjj]>-9900.0)) {  /* Any data? */
+		  temp[cnt++] = avg[indx+jjj];
 		}
 	      }
 	    } else if (jf>=(numChan-half-1)) { /* End */
 	      for (jj=numChan-widMW; jj<numChan; jj++) {
-		if ((count[indx+jj]>0) && (avg[indx]>-9900.0)) {  /* Any data? */
+		if ((count[indx+jj]>0) && (avg[indx+jj]>-9900.0)) {  /* Any data? */
 		  temp[cnt++] = avg[indx+jj];
 		}
 	      }
 	    } else { /* Middle */
 	      for (jj=jf-half; jj<jf+half; jj++) {
-		if ((count[indx+jj]>0) && (avg[indx]>-9900.0)) {  /* Any data? */
+		if ((count[indx+jj]>0) && (avg[indx+jj]>-9900.0)) {  /* Any data? */
 		  temp[cnt++] = avg[indx+jj];
 		}
 	      }
 	    }
 	    /* Get Median and subtract */
-	    if ((count[indx+jj]>0) && (avg[indx]>-9900.0)) {
+	    if ((count[indx]>0) && (avg[indx]>-9900.0)) {
 	      aaa = medianVal (temp, 1, cnt);
 	      avg[indx] -= aaa;
 	      sigma[indx] = MedianSigma (cnt, temp, aaa, 0.2);
+	    } else {  /* Datum bad */
+	      avg[indx]   = 0.0;
+	      sigma[indx] = 100.0;
 	    }
 	    indx++;
 	  } /* end loop over Channel */

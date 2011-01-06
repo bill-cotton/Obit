@@ -946,7 +946,7 @@ def EVLAAutoFlag(uv, target, err, \
                      RMSClip=[0.0,0.0], RMSAvg=0.0, maxBad=0.25 ,timeAvg=1.0, \
                      doFD=False, FDmaxAmp=0.0, FDmaxV=0.0, FDwidMW=5, FDmaxRMS=[0.0,0.0], \
                      FDmaxRes=6.0, FDmaxResBL=6.0,  FDbaseSel=[0, 0, 0, 0], \
-                     check=False, debug = False, logfile = ""):
+                     nThreads=1, check=False, debug=False, logfile = ""):
     """ Does Automated flagging
 
     Flag data based on any of a number of criteria
@@ -979,6 +979,7 @@ def EVLAAutoFlag(uv, target, err, \
     FDmaxRes   = Max. residual flux in sigma
     FDmaxResBL = Max. baseline residual
     FDbaseSel  =  Channels for baseline fit (start, end, increment, IF)
+    nThreads = Number of threads to use
     check      = Only check script, don't execute tasks
     debug      = Run tasks debug, show input
     logfile    = Log file for task
@@ -1014,6 +1015,7 @@ def EVLAAutoFlag(uv, target, err, \
     af.FDmaxRes   = FDmaxRes 
     af.FDmaxResBL = FDmaxResBL
     af.FDbaseSel  = FDbaseSel
+    af.nThreads   = nThreads
     af.taskLog    = logfile
     if debug:
         af.i
@@ -1241,10 +1243,10 @@ def EVLADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
         mess = "Update UV header failed"
         printMess(mess, logfile)
         return 1
+    SNver = uv.GetHighVer("AIPS SN")
 
     # Smooth if requested
     if smoTime>0.0:
-        SNver = uv.GetHighVer("AIPS SN")
         snsmo = ObitTask.ObitTask("SNSmo")
         if not check:
             setname(uv, snsmo)
@@ -1276,14 +1278,24 @@ def EVLADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
             pass
     # End SNSmo
 
+    # Open/close UV to update header
+    uv.Open(UV.READONLY,err)
+    uv.Close(err)
+    if err.isErr:
+        OErr.printErr(err)
+        mess = "Update UV header failed"
+        printMess(mess, logfile)
+        return 1
+    SNver = uv.GetHighVer("AIPS SN")
+
     # Plot fits?
     if doPlot:
-        retCode = EVLAPlotTab(uv, "SN", SNver+1, err, nplots=6, optype="DELA", \
+        retCode = EVLAPlotTab(uv, "SN", SNver, err, nplots=6, optype="DELA", \
                                   logfile=logfile, check=check, debug=debug)
         if retCode!=0:
             return retCode
   
-        retCode = EVLAPlotTab(uv, "SN", SNver+1, err, nplots=6, optype="PHAS", \
+        retCode = EVLAPlotTab(uv, "SN", SNver, err, nplots=6, optype="PHAS", \
                                   logfile=logfile, check=check, debug=debug)
         if retCode!=0:
             return retCode
@@ -1423,6 +1435,7 @@ def EVLACalAP(uv, target, ACal, err, \
     calib.doBand   = doBand
     calib.BPVer    = BPVer
     calib.solMode  = "A&P"
+    calib.solType  = "L1"
     calib.nThreads = nThreads
     calib.solInt   = solInt
     calib.refAnts  = [refAnt]
@@ -1484,6 +1497,7 @@ def EVLACalAP(uv, target, ACal, err, \
             calib.ampScalar = ampScalar
             calib.doCalib   = 2
             calib.solMode   = "A&P"
+            calib.solType   = "L1"
             calib.Cmethod   = "DFT"
             calib.Cmodel    = " "
             if debug:
@@ -2500,31 +2514,66 @@ def EVLARLCal(uv, err, \
                 outSeq  = 6666
                 # Stokes I
                 outClass="IPOLCL"
-                x =  Image.newPAImage("I",outName, outClass, outDisk,outSeq,True,err)
-                h = x.Desc.Dict
-                blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
-                trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
-                stat = imstat(x, err, blc=blc,trc=trc,logfile=None)
-                IFlux.append(stat["Flux"])
-                IRMS.append(stat["RMSHist"])
-                x.Zap(err)  # Cleanup
-                del x
+                # Test if image exists
+                user =  OSystem.PGetAIPSuser();
+                cno = AIPSDir.PTestCNO(outDisk, user, outName, outClass, "MA", outSeq, err)
+                if cno >= 0 :
+                    x =  Image.newPAImage("I",outName, outClass, outDisk,outSeq,True,err)
+                    h = x.Desc.Dict
+                    blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
+                    trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
+                    try:
+                        stat = imstat(x, err, blc=blc,trc=trc,logfile=None)
+                        IFlux.append(stat["Flux"])
+                        IRMS.append(stat["RMSHist"])
+                        x.Zap(err)  # Cleanup
+                        del x
+                    except:
+                        IFlux.append(-1.0)
+                        IRMS.append(-1.0)
+                else:
+                    IFlux.append(-1.0)
+                    IRMS.append(-1.0)
                 # Stokes Q
                 outClass="QPOLCL"
-                x =  Image.newPAImage("Q",outName, outClass, outDisk,outSeq,True,err)
-                stat = imstat(x, err, blc=blc,trc=trc,logfile=None)
-                QFlux.append(stat["Flux"])
-                QRMS.append(stat["RMSHist"])
-                x.Zap(err)  # Cleanup
-                del x
+                cno = AIPSDir.PTestCNO(outDisk, user, outName, outClass, "MA", outSeq, err)
+                if cno > 0 :
+                    x =  Image.newPAImage("Q",outName, outClass, outDisk,outSeq,True,err)
+                    h = x.Desc.Dict
+                    blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
+                    trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
+                    try:
+                        stat = imstat(x, err, blc=blc,trc=trc,logfile=None)
+                        QFlux.append(stat["Flux"])
+                        QRMS.append(stat["RMSHist"])
+                        x.Zap(err)  # Cleanup
+                        del x
+                    except:
+                        QFlux.append(-1.0)
+                        QRMS.append(-1.0)
+                else:
+                    QFlux.append(-1.0)
+                    QRMS.append(-1.0)
                 # Stokes U
                 outClass="UPOLCL"
-                x =  Image.newPAImage("U",outName, outClass, outDisk,outSeq,True,err)
-                stat = imstat(x, err, blc=blc,trc=trc,logfile=None)
-                UFlux.append(stat["Flux"])
-                URMS.append(stat["RMSHist"])
-                x.Zap(err)  # Cleanup
-                del x
+                cno = AIPSDir.PTestCNO(outDisk, user, outName, outClass, "MA", outSeq, err)
+                if cno > 0 :
+                    x =  Image.newPAImage("U",outName, outClass, outDisk,outSeq,True,err)
+                    h = x.Desc.Dict
+                    blc = [h["inaxes"][0]/4,h["inaxes"][1]/4]
+                    trc = [3*h["inaxes"][0]/4,3*h["inaxes"][1]/4]
+                    try:
+                        stat = imstat(x, err, blc=blc,trc=trc,logfile=None)
+                        UFlux.append(stat["Flux"])
+                        URMS.append(stat["RMSHist"])
+                        x.Zap(err)  # Cleanup
+                        del x
+                    except:
+                        QUlux.append(-1.0)
+                        QUMS.append(-1.0)
+                else:
+                    UFlux.append(-1.0)
+                    URMS.append(-1.0)
                 # Delete UV output
                 out2Name = (img.Sources[0].strip()+"TEMP")[0:12]
                 out2Class="IPOLCL"

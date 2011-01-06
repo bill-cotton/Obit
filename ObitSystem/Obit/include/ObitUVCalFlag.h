@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003                                               */
+/*;  Copyright (C) 2003,2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -67,5 +67,34 @@ void  ObitUVCalFlagShutdown (ObitUVCal *in, ObitErr *err);
 
 /** Public:  Destroy Flagging structure. */
 ObitUVCalFlagS* ObitUVCalFlagSUnref (ObitUVCalFlagS *in);
+
+/*---------------Private structures----------------*/
+/* Threaded function argument */
+typedef struct {
+  /* ObitThread to use */
+  ObitThread *thread;
+  /* CalFlag to work on */
+  ObitUVCalFlagS *in;
+  /* UV Data descriptor */
+  ObitUVDesc *desc;
+  /* thread number  */
+  olong        ithread;
+  /* First flag entry (0-rel) number */
+  olong        first;
+  /* Highest flag entry  (0-rel) number */
+  olong        last;
+  /* Subarray number  of datum */
+  olong        iSubA;
+  /* baseline index  of datum */
+  olong        kbase;
+  /* Source ID of datum */
+  olong        SourID;
+  /* FQ ID of datum */
+  olong        FQID;
+  /* First and second antenna numbers */
+  olong        ant1, ant2;
+  /* visibility as an array of floats */
+  ofloat       *visIn;
+} CalFlagFuncArg;
 
 #endif /* OBITUVCALFLAG_H */ 

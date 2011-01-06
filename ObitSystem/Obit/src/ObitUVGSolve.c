@@ -1140,6 +1140,11 @@ doSolve (ofloat* vobs, olong *ant1, olong *ant2, olong numAnt, olong numIF,
       }
       iref = refant;
       
+      /* Label diagnostics */
+      if (prtlv >= 4) {
+	Obit_log_error(err, OBIT_InfoErr, "IF=%d Stokes=%d", iif+1, ist);
+      }
+ 
       /* Do solution */
       
       if (dol1) {/* L1 solution */
@@ -1152,6 +1157,9 @@ doSolve (ofloat* vobs, olong *ant1, olong *ant2, olong numAnt, olong numIF,
       } 
       
       if (ierr != 0) { /* Solution failed */
+	if (prtlv >= 4) {
+	  Obit_log_error(err, OBIT_InfoWarn, "Solution failed %d", ierr);
+	}
 	for (iant=0; iant<numAnt; iant++) cwt[iant+(iif+ist*numIF)*numAnt] = -1.0;
 	BLIndex += (+numBL)*lenEntry; continue;
       } 

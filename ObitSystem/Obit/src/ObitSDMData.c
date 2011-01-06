@@ -2989,6 +2989,7 @@ static ASDMcalDeviceRow* KillASDMcalDeviceRow(ASDMcalDeviceRow* row)
   if (row->timeInterval)    g_free(row->timeInterval);
   if (row->calEff)          g_free(row->calEff);
   if (row->noiseCal)        g_free(row->noiseCal);
+  if (row->coupledNoiseCal) g_free(row->coupledNoiseCal);
   if (row->temperatureLoad) g_free(row->temperatureLoad);
   if (row->calLoadNames) {
     n = row->numCalLoad;
@@ -3094,6 +3095,11 @@ ParseASDMcalDeviceTable(ObitSDMData *me,
     prior = "<noiseCal>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->noiseCal = ASDMparse_dblarray (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<coupledNoiseCal>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->coupledNoiseCal = ASDMparse_dblarray (line, maxLine, prior, &next);
       continue;
     }
     prior = "<temperatureLoad>";

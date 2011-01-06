@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003                                               */
+/*;  Copyright (C) 2003,2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -99,8 +99,17 @@ typedef struct {
   /**  Flags for the polarizations per flag entry  {FLGPOL} 
    Note: there are 4*numFlag values */
   gboolean *flagPol;
-  /**  End time of vslidity per flag entry  {FLGTND} */
+  /**  End time of validity per flag entry  {FLGTND} */
   ofloat *flagEndTime;
+  /**  Flag all due to excessive number of flags  */
+  gboolean flagAll;
+  /**  Maximum number of simultaneous flags */
+  olong maxSimFlag;
+  /**  Number of thread argument structures in thArgArr */
+  olong nThArg;
+  /** Array of thread argument structures - 
+      gpointer to avoid circular definition */
+  gpointer thArgArr;
 } ObitUVCalFlagS;
 #endif /* OBITUVCALFLAGDEF_H */ 
 

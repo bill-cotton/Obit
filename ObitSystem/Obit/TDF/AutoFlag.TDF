@@ -126,6 +126,8 @@ FDmaxResBL                          Max. baseline residual
 **PARAM** int 4 20
 FDbaseSel                           Channels for baseline fit
                                     (start, end, increment,IF)
+**PARAM** int 1 **DEF** 1
+nThreads            1               Number of threads to use
 **PARAM** str 128
 taskLog                             Logfile to write task messages to
 ----------------------------------------------------------------
@@ -282,11 +284,17 @@ Adverbs:
              the list, Channel increments defaults to 1
              If the IF==0 then the group applies to all IF.
              Default is channels 2 => nchan-1 all IFs
+  nThreads...If the Obit libraries are compiled with multiple
+             thread operation enabled, this parameter sets the 
+             number of threads that can be used for parallel 
+             operations. 
+             NB: This only improves performance if there are 
+             multiple processors and/or cores in the host.
   taskLog....Log file to write messages to INSTEAD of the terminal
              This is useful in long runs or batch files.
              Path is absolute or relative to where the task 
              executes.
-g----------------------------------------------------------------
+----------------------------------------------------------------
 Automatic editing task for radio interferometer data
 Documenter:  W. D. Cotton,  NRAO
 Related Programs: MednFlag

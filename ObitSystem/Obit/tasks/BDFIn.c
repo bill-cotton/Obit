@@ -2596,12 +2596,17 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
       } else continue;
       
       /* Save to CD table row */
-      /* Apply efficiencies to cal temp */
-      if (inTab->rows[iRow]->calEff) {
+      /* Both cal values? */
+      if (inTab->rows[iRow]->coupledNoiseCal) {
+ 	outRow->TCal1[IFno] = (ofloat)(inTab->rows[iRow]->coupledNoiseCal[0]);
+	if (numPol>1) 
+	  outRow->TCal2[IFno] = (ofloat)(inTab->rows[iRow]->coupledNoiseCal[1]);
+      } else if (inTab->rows[iRow]->calEff) {
+	/* Apply efficiencies to cal temp? */
 	outRow->TCal1[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]*inTab->rows[iRow]->calEff[0]);
 	if (numPol>1) 
 	  outRow->TCal2[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]*inTab->rows[iRow]->calEff[1]);
-      } else { /* - No efficiency - just cal */
+      } else { /* - No efficiency - just single cal */
  	outRow->TCal1[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]);
 	if (numPol>1) 
 	  outRow->TCal2[IFno] = (ofloat)(inTab->rows[iRow]->noiseCal[0]);

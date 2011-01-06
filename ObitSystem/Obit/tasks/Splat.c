@@ -580,6 +580,9 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   dim[0] = dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "doCalib", OBIT_long, dim, &doCalib);
 
+  /* Initialize Threading */
+  ObitThreadInit (myInput);
+
 } /* end digestInputs */
 
 /*----------------------------------------------------------------------- */
@@ -965,7 +968,7 @@ void SplatHistory (ObitInfoList* myInput, ObitUV* inData,
     "UVRange",  "timeRange",  "Compress", "doCalWt", "dropSubA",
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
     "doPol", "BLVer", "timeAvg", "avgFreq", "chAvg",  "ChanSel",
-    "InputAvgTime",  "dropSubA",  "doWtCal",  "corrType",  
+    "InputAvgTime",  "dropSubA",  "doWtCal",  "corrType",  "nThreads", 
     NULL};
   gchar *routine = "SplatHistory";
 

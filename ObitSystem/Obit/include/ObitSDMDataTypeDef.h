@@ -327,8 +327,10 @@ typedef struct {
   odouble *timeInterval;
   /**  Calibration efficiencies (2D array of double [N_rec][N_cal]) */
   odouble *calEff;
-  /**  equivalent temp of noise cal (1D array of double, one per load) */
+  /**  equivalent temp of noise cal (1D array of double, one per load) obsolete */
   odouble *noiseCal;
+  /**  equivalent temp of noise cal (1D array of double, one per poln (R, L)) */
+  odouble *coupledNoiseCal;
   /**  Physical temperature of loads (1D array of double, one per load) */
   odouble *temperatureLoad;
 } ASDMcalDeviceRow;
