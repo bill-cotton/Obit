@@ -168,7 +168,8 @@ doCleanup     = True       # Destroy AIPS files
 doSNPlot      = True       # Plot SN tables etc
 doDiagPlots   = True       # Plot single source diagnostics
 prtLv         = 2          # Amount of task print diagnostics
-doReport      = True       # Individual source report2
+doMetadata    = True       # Save source and project metadata
+doHTML        = True       # Output HTML report
 
 ############################# Set Project Processing parameters ##################
 parmFile = sys.argv[2]
@@ -181,9 +182,13 @@ goodCalPicklefile = "./"+project+"_"+session+"_"+band+"GoodCal.pickle"   # Where
 goodCal = {"Source":"  ", "souID":0,"timeRange":(0.0,100.0), "Fract":0.0, "SNR":0.0, "bestRef":0}
 SaveObject(goodCal, goodCalPicklefile, False)   # Save initial default
 
+# Load the outputs pickle jar
+VLBAFetchOutFiles()
+
 # Logging directly to logFile
 OErr.PInit(err, prtLv, logFile)
 retCode = 0
+VLBAAddOutFile( logFile, 'project', 'Pipeline log file' )
 
 mess = "Start project "+project+" session "+session+" "+band+" Band"+" AIPS user no. "+str(AIPS.userno)
 printMess(mess, logFile)
@@ -308,11 +313,6 @@ if doPCcor and not check:
     if retCode!=0:
         raise RuntimeError,"Error in PC calibration"
 
-# Plot amplitude and phase vs. frequency
-if doSpecPlot:
-    plotFile = "./"+project+session+band+".PCcor.spec.ps"
-    VLBASpecPlot( uv, goodCal, err, doband=0, plotFile=plotFile, logfile=logFile )
-
 # manual phase cal
 if doManPCal and not check:
     plotFile = "./"+project+session+band+".ManPCal.ps"
@@ -325,11 +325,6 @@ if doManPCal and not check:
                           nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in manual phase calibration"
-
-# Plot amplitude and phase vs. frequency
-if doSpecPlot:
-    plotFile = "./"+project+session+band+".ManPCal.spec.ps"
-    VLBASpecPlot( uv, goodCal, err, doband=0, plotFile=plotFile, logfile=logFile )
 
 # Bandpass calibration if needed
 if doBPCal and not check:
@@ -493,27 +488,10 @@ if doImgFullTarget:
     if retCode!=0:
         raise RuntimeError,"Error in imaging targets"
 
-# Get report on sources
-if doReport:
-    if not uvc:
-        # Get calibrated/averaged data
-        Aname = VLBAAIPSName(project, session)
-        uvc = UV.newPAUV("AIPS UV DATA", Aname, avgClass, disk, seq, True, err)
-        if err.isErr:
-            OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
-    Report = VLBAReportTargets(uvc, err, Sources=targets, seq=seq, sclass=outIclass, \
-                                   Stokes=Stokes, logfile=logFile, check=check, debug=debug)
-    # Save to pickle jar
-    ReportPicklefile = "./"+project+"_"+session+"_"+band+"Report.pickle"   # Where results saved
-    SaveObject(Report, ReportPicklefile, True) 
-   
-# cleanup
-mess ="Write results/Cleanup" 
-printMess(mess, logFile)
-
-# Write results, cleanup    
 # Save UV data? 
 if doSaveUV and (not check):
+    mess ="Write calibrated and averaged UV data to disk" 
+    printMess(mess, logFile)
     # Get calibrated/averaged data
     if not uvc:
         Aname = VLBAAIPSName(project, session)
@@ -523,10 +501,13 @@ if doSaveUV and (not check):
     # Write 
     filename = project+session+band+"CalAvg.uvtab"
     fuv = VLBAUVFITS (uvc, filename, 0, err, compress=Compress)
+    VLBAAddOutFile( filename, 'project', "Calibrated Averaged UV data" )
+
 # Save UV data tables?
 if doSaveTab and (not check):
     filename = project+session+band+"CalTab.uvtab"
     fuv = VLBAUVFITSTab (uv, filename, 0, err)
+    VLBAAddOutFile( filename, 'project', "Calibrated AIPS tables" )
 # Imaging results
 if doSaveImg:
     # How many Stokes images
@@ -545,6 +526,7 @@ if doSaveImg:
                 continue
             outfile = project+session+band+target+"."+oclass+".fits"
             mess ="Write Intermediate target " +outfile+" on disk "+str(outDisk)
+            VLBAAddOutFile( outfile, target, 'Intermediate target image' )
             printMess(mess, logFile)
             xf = VLBAImFITS (x, outfile, outDisk, err, fract=0.1)
             # Statistics
@@ -558,6 +540,8 @@ if doSaveImg:
                 mess ="Write " +outfile+" on disk "+str(outDisk)
                 printMess(mess, logFile)
                 xf = VLBAImFITS (x, outfile, outDisk, err, fract=0.1)
+                VLBAAddOutFile( outfile, target, 'Image' )
+                print "Writing file ", outfile                
                 # Statistics
                 zz=imstat(x, err, logfile=logFile)
                 del x, xf
@@ -573,6 +557,7 @@ if doSaveImg:
             mess ="Write Calibrator " +outfile+" on disk "+str(outDisk)
             printMess(mess, logFile)
             xf = VLBAImFITS (x, outfile, outDisk, err, fract=0.1)
+            VLBAAddOutFile( outfile, target, 'Calibrator Image' )
             # Statistics
             zz=imstat(x, err, logfile=logFile)
             del x, xf
@@ -596,6 +581,38 @@ if doDiagPlots:
         debug=debug )
 elif debug:
     print "Not creating diagnostic plots ( doDiagPlots = ", doDiagPlots, " )"
+
+# Save metadata
+srcMetadata = None
+projMetadata = None
+if doMetadata:
+    if not uvc:
+        # Get calibrated/averaged data
+        Aname = VLBAAIPSName(project, session)
+        uvc = UV.newPAUV("AIPS UV DATA", Aname, avgClass, disk, seq, True, err)
+        if err.isErr:
+            OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
+
+    # Get source metadata; save to pickle file
+    srcMetadata = VLBASrcMetadata( uvc, err, Sources=targets, seq=seq, 
+        sclass=outIclass, Stokes=Stokes, logfile=logFile, check=check, 
+        debug=debug )
+    picklefile = "./"+project+"_"+session+"_"+band+"SrcReport.pickle" 
+    SaveObject(srcMetadata, picklefile, True) 
+
+    # Get project metadata; save to pickle file
+    projMetadata = VLBAProjMetadata( uvc, AIPS_VERSION, err, contCals=contCals,
+        goodCal = goodCal, project = project, session = session, band = band )
+    picklefile = "./"+project+"_"+session+"_"+band+"ProjReport.pickle"
+    SaveObject(srcMetadata, picklefile, True) 
+
+# Write report
+if doHTML:
+    VLBAHTMLReport( projMetadata, srcMetadata, outfile="report.html",
+        logFile=logFile )
+
+# Save list of output files
+VLBASaveOutFiles()
 
 # Cleanup - delete AIPS files
 if doCleanup and (not check):

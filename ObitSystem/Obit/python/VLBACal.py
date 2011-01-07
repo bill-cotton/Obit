@@ -7,10 +7,14 @@ from AIPS import AIPS
 from FITS import FITS
 from AIPSDir import AIPSdisks, nAIPS
 from OTObit import Acat, AMcat, getname, zap, imhead, tabdest
+from Obit import Version
 from datetime import date
 from sys import version
 from subprocess import Popen, PIPE
 import re
+
+outfiles = { 'project' : [],  # list of project output files
+             'source'  : {} } # dict of source output files
 
 def setname (inn, out):
     """ Copy file definition from inn to out as in...
@@ -297,6 +301,7 @@ def SaveObject (pyobj, file, update):
     # Does file exist?, only do this is not or update
     if update or not os.path.isfile(file):
         fd = open(file, "w")
+        VLBAAddOutFile( file, 'project', "Python object pickle file" )
         pickle.dump(pyobj, fd)
         fd.close()
     # end SaveObject
@@ -4688,125 +4693,6 @@ def VLBARLCal2(uv, err, uv2 = None, \
     return 0
     # end VLBARLCal2
 
-def VLBAReportTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
-                          Stokes="I", logfile='', check=False, debug=False):
-    """ Generate report info for a list of targets in AIPS files
-
-    Returns a report which is a list of dicts, each of which contains
-        "Source":    Source name
-        "haveImage": True if images were made, 
-        "ObsDate":   Observing date as "yyyy-mm-dd"
-        "numVis":    Number of visibilities (ignoring flagging)
-        "Exposure":  Total integration time (day)
-        "RA"    :    Source RA (deg) at standard equinox
-        "Dec"   :    Source Dec (deg) at standard equinox
-    following present if haveImage True
-        "RAPnt" :   Antenna pointing RA (deg) at standard equinox
-        "DecPnt":   Antenna pointing Dec (deg) at standard equinox
-        "Freq"  :   Reference frequency (Hz)
-        "BW"    :   Image bandwidth (Hz)
-        "Size"  :   Width of image in deg (From Stokes I)
-        "Cells" :   Cell spacing in deg (From Stokes I)
-        for each s in Stokes:
-            "sSum" : Sum of clean components in Jy
-            "sPeak": Peak pixel brightness in Jy
-            "sRMS" : RMS noise in inner quarter (Jy)
-            "sBeam": Beam (maj, min, PA) (deg)
-    
-    uv         = UV data object
-    err        = Python Obit Error/message stack
-    Sources    = Source name or list of names to use
-                 If an empty list all sources in uv are included
-    seq        = sequence number of images
-    sclass     = Image class, first character replaced with char in Stokes
-    FreqID     = Frequency group identifier
-    Stokes     = Stokes parameters of images
-    logfile    = logfile for messages
-    check      = Only check script, don't execute tasks
-    debug      = show input
-    """
-    ################################################################
-    mess = "Generate source statistics "
-    printMess(mess, logfile)
-
-    # If list empty get all sources
-    if type(Sources)==list:
-        sl = Sources
-    else:
-        sl = [Sources]
-
-    if len(sl)<=0:
-        slist = VLBAAllSource(uv,err,logfile=logfile,check=check,debug=debug)
-    else:
-        slist = sl
-    
-    # Init output
-    Report = []
-
-    # Image disk assumed same as uv
-    disk = uv.Disk
-    user = OSystem.PGetAIPSuser()
-
-    # Loop over slist
-    for sou in slist:
-        sdict = {"Source":sou, "haveImage":False}  # Init source structure
-        sdict["ObsDate"]  = uv.Desc.Dict["obsdat"]
-        # Observing stats
-        obstat = VLBAGetTimes (uv, sou, err, logfile=logfile, check=check, debug=debug)
-        sdict["numVis"]   = obstat["numVis"]
-        sdict["Exposure"] = obstat["Exposure"]
-        sdict["RA"]       = obstat["RA"]
-        sdict["Dec"]      = obstat["Dec"]
-        # Test if image exists
-        cno = AIPSDir.PTestCNO(disk, user, sou, Stokes[0:1]+sclass[1:], "MA", seq, err)
-        if cno <= 0 :
-            Report.append(sdict)  # Save source info
-            continue
-        # Image statistics, loop over Stokes
-        for s in Stokes:
-            klass = s+sclass[1:]
-            x = Image.newPAImage(s, sou, klass, disk, seq, True, err)
-            hd = x.Desc.Dict
-            sdict[s+"Beam"] = (hd["beamMaj"],hd["beamMin"],hd["beamPA"])
-            # Some from Stokes I only
-            if s == 'I':
-                sdict["haveImage"] = True
-                sdict["Size"]    = hd["inaxes"][1]*hd["cdelt"][1]
-                sdict["Cells"]   = hd["cdelt"][1]
-                sdict["RAPnt"]   = hd["obsra"]
-                sdict["DecPnt"]  = hd["obsdec"]
-                sdict["Freq"]    = hd["crval"][hd["jlocf"]]
-                sdict["BW"]      = hd["cdelt"][hd["jlocf"]]
-            blc = [hd["inaxes"][0]/4,hd["inaxes"][1]/4]
-            trc = [3*hd["inaxes"][0]/4,3*hd["inaxes"][1]/4]
-            stat = imstat(x,err,blc=blc,trc=trc)  # Image statistics inner quarter
-            if abs(stat["Max"]) >  abs(stat["Min"]):
-                sdict[s+"Peak"] = stat["Max"]
-            else:
-                sdict[s+"Peak"] = stat["Min"]
-            sdict[s+"RMS"]  = stat["RMSHist"]
-            sdict[s+"Sum"]  = VLBAGetSumCC(x, err, logfile=logfile, check=check, debug=debug)
-        # End stokes image loop
-        Report.append(sdict)  # Save source info
-    # end loop over sources
-
-    # Give terse listing
-    for sdict in Report:
-        mess = "\n Source = "+sdict["Source"]+", Exposure="+"%5.3f"%(sdict["Exposure"]*24.)+" hr"
-        printMess(mess, logfile)
-        if sdict["haveImage"]:
-            mess = "IPol Beam = ("+"%8.3f"%(sdict["IBeam"][0]*3600000.0)+", %8.3f"%(sdict["IBeam"][1]*3600000.0)+ \
-                ", %6.1f"%(sdict["IBeam"][2])+") mas, mas, deg"
-            printMess(mess, logfile)
-            for s in Stokes:
-                mess = "Stokes "+s+" Sum CC="+"%8.3f"%(sdict[s+"Sum"])+", Peak="+"%8.3f"%(sdict[s+"Peak"])+ \
-                    ", RMS="+"%8.5f"%(sdict[s+"RMS"])+" Jy"
-                printMess(mess, logfile)
-    # End terse listing
-
-    return Report
-    # end VLBAReportTargets
-
 def VLBAGetSumCC(image, err, CCver=1,
                  logfile='', check=False, debug=False):
     """ Sum fluxes in a CC table
@@ -5417,15 +5303,16 @@ def VLBADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
                         # Convert PS to JPG
                         jpg = outfile[:-3]+'.jpg'
                         printMess('Converting '+outfile+' -> '+jpg,logfile)
-                        cmd = 'convert -depth 96 '+outfile+' '+outfile[:-3]+'.jpg'
+                        cmd = 'convert -depth 96 '+outfile+' '+jpg
                         rtn = os.system(cmd)
                         if rtn == 0: 
+                            VLBAAddOutFile( jpg, s, "Diagnostic plot" )
                             if cleanUp: 
                                 os.remove(outfile) # Remove the PS file
-                            else:
-                                # Print error message and leave the PS file
-                                mess="Error occurred while converting PS to JPG"
-                                printMess(mess,logfile)
+                        else:
+                            # Print error message and leave the PS file
+                            mess="Error occurred while converting PS to JPG"
+                            printMess(mess,logfile)
     
     if cleanUp:
         printMess('Cleaning up temporary data',logfile)
@@ -5435,7 +5322,7 @@ def VLBADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
     # end VLBADiagPlot
 
 def VLBAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj', 
-    session='tSes', band='tB', debug=False ):
+    session='tSes', band='tB', logfile='', check=False, debug=False ):
     """
     Create contour plots for the specified images. Image selection is made
     based on the input catalog numbers (catNos), or, if catalog numbers are not
@@ -5453,6 +5340,7 @@ def VLBAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
     project = project name
     session = project session
     band = project receiver band code
+    logfile = file for logging messages
     debug = Turn on debug mode
     """
     # Setup AIPS task KNTR
@@ -5506,15 +5394,16 @@ def VLBAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
             printMess(mess, logfile)
         else:
             pass
+        VLBAAddOutFile( outfile, name, "Contour plot" )
         # Delete plot files
         if not check:
             zz=image.ZapTable("AIPS PL", -1,err)
     # end VLBACntrPlots
 
-def VLBAReportMultisource( uv, AIPS_VERSION, err, contCals=[None], goodCal={}, 
-    project='project', session='session', band='band', logfile='', debug=False ):
+def VLBAProjMetadata( uv, AIPS_VERSION, err, contCals=[None], goodCal={}, 
+    project='project', session='session', band='band' ):
     """
-    Return a 'report' on the multisource data as a dictionary. Contents:
+    Return a dictionary holding project metadata. Contents:
       "project"     : observation project name 
       "session"     : observation project session
       "band"        : receiver band code
@@ -5538,8 +5427,6 @@ def VLBAReportMultisource( uv, AIPS_VERSION, err, contCals=[None], goodCal={},
     project = Observation project name
     session = Observation project session
     band = receiver band code
-    logfile = file to use for logging
-    debug = run in debug mode
     """
     r = {} 
     r["project"] = project
@@ -5547,8 +5434,9 @@ def VLBAReportMultisource( uv, AIPS_VERSION, err, contCals=[None], goodCal={},
     r["band"] = band # Receiver band code
     r["obsDate"] = uv.Desc.Dict["obsdat"] # observation date
     r["procDate"] = str( date.today() ) # processing date
-    r["obitVer"] = "" # obit version
-    r["aipsVer"] = AIPS_VERSION # AIPS version
+    r["obitVer"] = Version() # Obit version
+    # Does this need to be passed as a function argument?
+    r["aipsVer"] = AIPS_VERSION + '(' + str( date.today() ) + ')' # AIPS version
     r["pyVer"] = version # python version
     p = Popen("uname -a", shell=True, stdout=PIPE).stdout # get sys info
     r["sysInfo"] = p.read()
@@ -5616,4 +5504,305 @@ def VLBAReportMultisource( uv, AIPS_VERSION, err, contCals=[None], goodCal={},
     # minimum fringe spacing (mas)
     r["minFringeMas"] = 1 / maxBlWavelength / 4.8481368e-9 
     return r
-# end VLBAReport
+# end VLBAProjMetadata
+
+def VLBASrcMetadata(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
+                          Stokes="I", logfile='', check=False, debug=False):
+    """ Generate report info for a list of targets in AIPS files
+
+    Returns a report which is a list of dicts, each of which contains
+        "Source":    Source name
+        "haveImage": True if images were made, 
+        "ObsDate":   Observing date as "yyyy-mm-dd"
+        "numVis":    Number of visibilities (ignoring flagging)
+        "Exposure":  Total integration time (day)
+        "RA"    :    Source RA (deg) at standard equinox
+        "Dec"   :    Source Dec (deg) at standard equinox
+    following present if haveImage True
+        "RAPnt" :   Antenna pointing RA (deg) at standard equinox
+        "DecPnt":   Antenna pointing Dec (deg) at standard equinox
+        "Freq"  :   Reference frequency (Hz)
+        "BW"    :   Image bandwidth (Hz)
+        "Size"  :   Width of image in deg (From Stokes I)
+        "Cells" :   Cell spacing in deg (From Stokes I)
+        "Stokes":   Stokes parameters of images
+        for each s in Stokes:
+            "sSum" : Sum of clean components in Jy
+            "sPeak": Peak pixel brightness in Jy
+            "sRMS" : RMS noise in inner quarter (Jy)
+            "sBeam": Beam (maj, min, PA) (deg)
+    
+
+    uv         = UV data object
+    err        = Python Obit Error/message stack
+    Sources    = Source name or list of names to use
+                 If an empty list all sources in uv are included
+    seq        = sequence number of images
+    sclass     = Image class, first character replaced with char in Stokes
+    FreqID     = Frequency group identifier
+    Stokes     = Stokes parameters of images
+    logfile    = logfile for messages
+    check      = Only check script, don't execute tasks
+    debug      = show input
+    """
+    ################################################################
+    mess = "Generate source statistics "
+    printMess(mess, logfile)
+
+    # If list empty get all sources
+    if type(Sources)==list:
+        sl = Sources
+    else:
+        sl = [Sources]
+
+    if len(sl)<=0:
+        slist = VLBAAllSource(uv,err,logfile=logfile,check=check,debug=debug)
+    else:
+        slist = sl
+    
+    # Init output
+    Report = []
+
+    # Image disk assumed same as uv
+    disk = uv.Disk
+    user = OSystem.PGetAIPSuser()
+
+    # Loop over slist
+    for sou in slist:
+        sdict = {"Source":sou, "haveImage":False}  # Init source structure
+        sdict["ObsDate"]  = uv.Desc.Dict["obsdat"]
+        # Observing stats
+        obstat = VLBAGetTimes (uv, sou, err, logfile=logfile, check=check, debug=debug)
+        sdict["numVis"]   = obstat["numVis"]
+        sdict["Exposure"] = obstat["Exposure"]
+        sdict["RA"]       = obstat["RA"]
+        sdict["Dec"]      = obstat["Dec"]
+        # Test if image exists
+        cno = AIPSDir.PTestCNO(disk, user, sou, Stokes[0:1]+sclass[1:], "MA", seq, err)
+        if cno <= 0 :
+            Report.append(sdict)  # Save source info
+            continue
+        # Image statistics, loop over Stokes
+        for s in Stokes:
+            klass = s+sclass[1:]
+            x = Image.newPAImage(s, sou, klass, disk, seq, True, err)
+            hd = x.Desc.Dict
+            sdict[s+"Beam"] = (hd["beamMaj"],hd["beamMin"],hd["beamPA"])
+            # Some from Stokes I only
+            if s == 'I':
+                sdict["haveImage"] = True
+                sdict["Size"]    = hd["inaxes"][1]*hd["cdelt"][1]
+                sdict["Cells"]   = hd["cdelt"][1]
+                sdict["RAPnt"]   = hd["obsra"]
+                sdict["DecPnt"]  = hd["obsdec"]
+                sdict["Freq"]    = hd["crval"][hd["jlocf"]]
+                sdict["BW"]      = hd["cdelt"][hd["jlocf"]]
+                sdict["Stokes"]  = Stokes
+            blc = [hd["inaxes"][0]/4,hd["inaxes"][1]/4]
+            trc = [3*hd["inaxes"][0]/4,3*hd["inaxes"][1]/4]
+            stat = imstat(x,err,blc=blc,trc=trc)  # Image statistics inner quarter
+            if abs(stat["Max"]) >  abs(stat["Min"]):
+                sdict[s+"Peak"] = stat["Max"]
+            else:
+                sdict[s+"Peak"] = stat["Min"]
+            sdict[s+"RMS"]  = stat["RMSHist"]
+            sdict[s+"Sum"]  = VLBAGetSumCC(x, err, logfile=logfile, check=check, debug=debug)
+        # End stokes image loop
+        Report.append(sdict)  # Save source info
+    # end loop over sources
+
+    # Give terse listing
+    for sdict in Report:
+        mess = "\n Source = "+sdict["Source"]+", Exposure="+"%5.3f"%(sdict["Exposure"]*24.)+" hr"
+        printMess(mess, logfile)
+        if sdict["haveImage"]:
+            mess = "IPol Beam = ("+"%8.3f"%(sdict["IBeam"][0]*3600000.0)+", %8.3f"%(sdict["IBeam"][1]*3600000.0)+ \
+                ", %6.1f"%(sdict["IBeam"][2])+") mas, mas, deg"
+            printMess(mess, logfile)
+            for s in Stokes:
+                mess = "Stokes "+s+" Sum CC="+"%8.3f"%(sdict[s+"Sum"])+", Peak="+"%8.3f"%(sdict[s+"Peak"])+ \
+                    ", RMS="+"%8.5f"%(sdict[s+"RMS"])+" Jy"
+                printMess(mess, logfile)
+    # End terse listing
+    return Report
+# end VLBASrcMetadata
+
+def VLBAHTMLReport( projMetadata, srcMetadata, outfile="report.html", 
+    logFile="" ):
+    """
+    Write an HTML report on the processed data set.  This includes information
+    on project (multi-source) metadata and data files as well as single source
+    metadata and data files.
+
+    projMetadata = dictionary of project metadata
+    srcMetadata  = dictionary of single-source metadata
+    outfile = name of HTML output file
+    logFile = file for writing log messages
+    """
+    mess = "Writing HTML report to " + outfile
+    printMess( mess, logFile )
+    file = open( outfile, 'w' )
+    VLBAAddOutFile( outfile, 'project', "HTML Report generated by pipeline" )
+    s = "<html><head>\n" + \
+        "<link rel='stylesheet' type='text/css' href='report.css' />" + \
+        "</head><body>"
+    file.write( s )
+
+    # Write project metadata
+    s  = "<h2> Project </h2>\n"
+    s += "<h3> Metadata </h3>\n"
+    s += "<table>\n"
+    keys = [ 'project', 'session', 'band', 'obsDate', 'procDate', 'contCals', 
+             'goodCal', 'anNames', 'freqCov', 'minFringeMas', 'obitVer', 
+             'aipsVer', 'pyVer', 'sysInfo' ]
+    s += writeTableRow( projMetadata, keys )
+    s += "</table>\n"
+    file.write( s )
+
+    # Write project output files
+    projFiles = outfiles['project']
+    s  = "<h3> Files </h3>\n"
+    s += "<table>\n"
+    for d in projFiles:
+        s += '<tr><th><a href="' + d['name'] + '">' + d['name'] + '</a>' + \
+             '</th><td>' + d['description'] + '</td></tr>\n'
+    s += '</table>\n'
+    s += '<hr>\n'
+    file.write( s )
+
+    # Write metadata and data files for each source
+    for metadata in srcMetadata:
+        # Create list of keys
+        keys = [ 'ObsDate', 'RA', 'Dec', 'Exposure', 'numVis', 'haveImage' ]
+        # if haveImage is True, these keys are also present
+        iKeys = [ 'RAPnt', 'DecPnt', 'Freq', 'BW', 'Size', 'Cells' ]
+        # These are present for each Stokes, w/ the Stokes character prepended
+        sKeys = [ 'Sum', 'Peak', 'RMS', 'Beam' ]
+        if metadata['haveImage'] == True:
+            keys = keys + iKeys
+        for s in metadata['Stokes']:
+            for k in sKeys:
+                keys.append(s + k)
+        
+        # Write metadata table
+        s  = "<h2>" + metadata['Source'] + "</h2>\n"
+        s += "<h3> Metadata </h3>\n"
+        s += '<table>\n'
+        s += writeTableRow( metadata, keys )
+        s += '</table>\n'
+        file.write(s)
+
+        # Write output file table
+        s  = "<h3> Files </h3>\n"
+        s += "<table>\n"
+        for d in outfiles['source'][ metadata['Source'] ]:
+            s += '<tr><th><a href="' + d['name'] + '">' + d['name'] + '</a>' + \
+                 '</th><td>' + d['description'] + '</td></tr>'
+        s += "</table>\n"
+        s += "<hr>\n"
+        file.write(s)
+
+    s = "</body></html>"
+    file.write(s)
+    file.close()
+# end VLBAHTMLReport
+
+def writeTableRow( dict, keys=None ):
+    """
+    Write the contents of a dictionary as an HTML table. 
+    
+    dict = dictionary whose contents will be written
+    keys = dictionary keys to be written
+    """
+    if not keys:
+        keys = dict.keys()
+    s = ""
+    # Write a row of the HTML table for every key in keys.  Handle some key
+    # values specially.
+    for key in keys:
+        if key == "anNames":
+            # Print the number of antennas when printing the list of ant names
+            s += '<tr><th>' + key + '</th>' + \
+                 '<td> Number = ' + str( len( dict[key] ) ) + ', ' + \
+                 'Names = ' + str( dict[key] ) + \
+                 '</td></tr>\n'
+        elif key == 'freqCov':
+            # Print frequencies with limited precision
+            fs = "" 
+            for freqs in dict[key]:
+                fs += '(%.3e, %.3e) ' % ( freqs[0], freqs[1] )
+            s += '<tr><th>' + key + '</th><td>' + fs + '</td></tr>\n'
+        elif key == 'goodCal':
+            # Print goodCal Python dictionary
+            subKeys = [ 'Source', 'timeRange', 'bestRef', 'SNR' ]
+            s += '<tr><th>' + key + '</th><td><table>' + \
+                writeTableRow( dict[key], subKeys ) + '</table>\n'
+        else:
+            # Everything else
+            s += '<tr><th>' + key + '</th>' + \
+                 '<td>' + str( dict[key] ) + '</td></tr>\n'
+    return s
+
+def VLBAAddOutFile( filename, target, description, logFile=""):
+    """
+    Add file names and descriptions to the outfiles object. Verify that the 
+    file is not already in outfiles before adding.
+
+    filename = name of file to be added
+    target = name of target source; or 'project' if this is a multi-source file
+    description = description of file
+    """
+    mess = "Adding " + filename + \
+        " (for " + target + ") to list of output files."
+    printMess( mess, logFile )
+    d = { 'name' : filename, 'description' : description }
+    projFiles = outfiles['project']
+    srcFiles = outfiles['source']
+    
+    if ( target == 'project' ): # If this is a project file
+        if ( not d in projFiles ): # If file is not already in list     
+            projFiles.append( d ) # Add file to project list
+    else: # else, it is a single-source file
+        if srcFiles.has_key( target ): # If files already exist for this source
+            if ( not d in srcFiles[ target ] ): # If file is not already in list 
+                srcFiles[ target ].append( d ) # Add file to target list
+        else:
+            # No files yet present for this source.
+            # Create a new dictionary key and assign it a list w/ member d
+            srcFiles[ target ] = [ d ]
+
+def VLBAFetchOutFiles( pickleFile='outfiles.pickle' ):
+    """
+    Fetch a pickled python object that holds pipeline output files. Check that 
+    each output file still exists.  If it does not, remove it from the object.
+
+    pickleFile = pickle file to be fetched
+    """
+    if not os.path.exists( pickleFile ):
+        return
+    global outfiles 
+    outfiles = FetchObject( pickleFile )
+    # Check project files
+    for file in outfiles['project']:
+        if not os.path.exists( file['name'] ):
+            del outfiles['project'][file]
+    # Check single-source files
+    srcFiles = outfiles['source']
+    srcKeys = srcFiles.keys()
+    for srcName in srcKeys:
+        # Check files for each source
+        for file in srcFiles[ srcName ][:]: # iterate over a slice/shallow copy
+            if not os.path.exists( file['name'] ):
+                srcFiles[ srcName ].remove( file )
+        # If this source no longer has files, remove it
+        if len( srcFiles[ srcName ] ) == 0:
+            del srcFiles[ srcName ]
+
+def VLBASaveOutFiles( pickleFile='outfiles.pickle' ):
+    """
+    Save pipeline output files Python object in a pickle file.
+
+    pickleFile = name of pickle file
+    """
+    VLBAAddOutFile( pickleFile, 'project', 'Python object pickle file' )
+    SaveObject( outfiles, pickleFile, True)
