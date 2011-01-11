@@ -1,6 +1,6 @@
 /* $Id: ObitDConCleanVisMF.h 128 2009-09-23 14:48:29Z bill.cotton $   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -150,7 +150,8 @@ ObitDConCleanVisMF* newObitDConCleanVisMF (gchar* name);
 /** Public: Create/initialize ObitDConCleanVisMF structures */
 ObitDConCleanVisMF* ObitDConCleanVisMFCreate (gchar* name, ObitUV *uvdata, 
 					      olong order, ofloat maxFBW,
-					      ofloat alpha, ObitErr *err);
+					      ofloat alpha, odouble alphaRefF,
+					      ObitErr *err);
 
 /** Public: Create/initialize ObitDConCleanVisMF structures from
     optional components */
@@ -158,7 +159,7 @@ ObitDConCleanVis*
 ObitDConCleanVisMFCreate2 (gchar* name, ObitUV *uvdata, 
 			   ObitUVImager *imager, ObitSkyModel *skyModel, 
 			   olong order, ofloat maxFBW, ofloat alpha, 
-			   ObitErr *err);
+			   odouble alphaRefF, ObitErr *err);
 
 /** Public: ClassInfo pointer */
 gconstpointer ObitDConCleanVisMFGetClass (void);

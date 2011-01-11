@@ -2666,7 +2666,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   olong curScan, curScanI, nextScanNo, bad=0;
   oint numIF, numPol;
   ofloat fblank = ObitMagicF();
-  gboolean want;
+  gboolean want, ChkVis;
   ObitIOAccess access;
   gchar *routine = "GetSysPowerInfo";
 
@@ -2679,6 +2679,9 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 
   /* Print any prior messages */
   ObitErrLog(err);
+
+  /* If there is some data check that SY entries are during valid data */
+  ChkVis = outData->myDesc->nvis>0;
   
   /* Extract ASDM SpWin data  - selScan global */
   curScan    = selScan;
@@ -2774,8 +2777,8 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     /* Make sure valid */
     if (inTab->rows[iRow]->timeInterval==NULL) continue;
 
-    /* Is this one during a scan - if not, ignore */
-    if (!timeInNXTable(inTab->rows[iRow]->timeInterval[0]-refJD)) {
+    /* Is this one during a scan? - if not and some data, ignore */
+    if (ChkVis && (!timeInNXTable(inTab->rows[iRow]->timeInterval[0]-refJD))) {
       bad++;   /* Count entries */
       continue;
     }

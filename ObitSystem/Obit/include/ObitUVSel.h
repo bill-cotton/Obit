@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -121,6 +121,8 @@
  *            function has value - in channels.
  *            Defaults: 1, 3, 1, 4 times Smooth(2) used when
  * \li "Alpha"  OBIT_float (1,1,1) Spectral index to apply
+ * \li "AlphaRefF"  OBIT_double (1,1,1) Reference freq for Alpha
+ *              Defaults to data reference frequency.
  * \li "SubScanTime" Obit_float scalar [Optional] if given, this is the 
  *          desired time (days) of a sub scan.  This is used by the 
  *          selector to suggest a value close to this which will

@@ -259,12 +259,14 @@ void ObitDConCleanVisMFClone  (ObitDConCleanVis *inn, ObitDConCleanVis *outt, Ob
  * \param order  Order of the imaging, Spectral index only=1, plus curvature=2
  * \param maxFBW Max. IF center fractional bandwidth.
  * \param alpha  Spectral index correction previously applied to data.
+ * \param alphaRefF Reference frequency for alpha
  * \param err    Obit error stack object.
  * \return the new object.
  */
 ObitDConCleanVisMF* ObitDConCleanVisMFCreate (gchar* name, ObitUV *uvdata,  
 					      olong order, ofloat maxFBW, 
-					      ofloat alpha, ObitErr *err)
+					      ofloat alpha, odouble alphaRefF,
+					      ObitErr *err)
 {
   olong nfield, i;
   ObitDConCleanVisMF* out=NULL;
@@ -281,7 +283,7 @@ ObitDConCleanVisMF* ObitDConCleanVisMFCreate (gchar* name, ObitUV *uvdata,
 
   /* Create UV imager and its ImageMosaic */
   out->imager = (ObitUVImager*)ObitUVImagerMFCreate("UVImagerMF", order, maxFBW, 
-						    alpha, uvdata, err);
+						    alpha, alphaRefF, uvdata, err);
   if (err->error) Obit_traceback_val (err, routine, name, out);
 
   /* Save uv Mosaic reference */
@@ -338,6 +340,7 @@ ObitDConCleanVisMF* ObitDConCleanVisMFCreate (gchar* name, ObitUV *uvdata,
  * \param order    Order of the imaging, Spectral index only=1, plus curvature=2
  * \param maxFBW   Max. IF center fractional bandwidth.
  * \param alpha  Spectral index correction previously applied to data.
+ * \param alphaRefF Reference frequency for alpha
  * \param err      Obit error stack object.
  * \return the new object.
  */
@@ -345,7 +348,7 @@ ObitDConCleanVis*
 ObitDConCleanVisMFCreate2 (gchar* name, ObitUV *uvdata,  
 			   ObitUVImager *imager, ObitSkyModel *skyModel, 
 			   olong order, ofloat maxFBW, ofloat alpha, 
-			   ObitErr *err)
+			   odouble alphaRefF, ObitErr *err)
 {
   olong nfield, i;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -365,7 +368,7 @@ ObitDConCleanVisMFCreate2 (gchar* name, ObitUV *uvdata,
   /* Use or create UV imager and create its ImageMosaic */
   if (imager==NULL) {
     out->imager =(ObitUVImager*) ObitUVImagerMFCreate("UVImager", order, maxFBW, 
-						      alpha, uvdata, err);
+						      alpha, alphaRefF, uvdata, err);
     if (err->error) Obit_traceback_val (err, routine, name, (ObitDConCleanVis*)out);
   } else out->imager = ObitUVImagerRef(imager);
 

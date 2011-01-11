@@ -419,11 +419,11 @@ if doAutoFlag:
 
 # Redo the calibration using new flagging?
 if doBPCal2==None:
-    doBPCal2 = doBPCal2
+    doBPCal2 = doBPCal
 if doDelayCal2==None:
     doDelayCal2 = doDelayCal2
 if doAmpPhaseCal2==None:
-    doAmpPhaseCal2 = doAmpPhaseCal2
+    doAmpPhaseCal2 = doAmpPhaseCal
 if doRecal:
     mess =  "Redo calibration:"
     printMess(mess, logFile)
@@ -446,7 +446,15 @@ if doRecal:
                             logfile=logFile, check=check, debug=debug)
         if retCode!=0:
             raise RuntimeError,"Error in Bandpass calibration"
-
+        
+        # Plot corrected data?
+        if doSpecPlot and plotSource:
+            plotFile = "./"+project+"_"+session+"_"+band+"BPSpec.ps"
+            retCode = EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
+                                   Stokes=["RR","LL"], doband=1,          \
+                                   check=check, debug=debug, logfile=logFile )
+            if retCode!=0:
+                raise  RuntimeError,"Error in Plotting spectrum"
 
     # Delay calibration
     if doDelayCal2 and DCal:
@@ -492,7 +500,7 @@ if doCalAvg:
                           flagVer=2, doCalib=2, gainUse=0, doBand=1, BPVer=1, doPol=False, \
                           avgFreq=avgFreq, chAvg=chAvg, \
                           BIF=CABIF, EIF=CAEIF, Compress=Compress, \
-                          logfile=logFile, check=check, debug=debug)
+                          nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
        raise  RuntimeError,"Error in CalAvg"
    
@@ -551,7 +559,9 @@ if doRLCal2:
 
 # VClip
 if VClip:
-    retCode = EVLAAutoFlag (uv, targets, err, flagVer=2, flagTab=2, \
+    mess =  "VPol clipping:"
+    printMess(mess, logFile)
+    retCode = EVLAAutoFlag (uv, targets, err, flagVer=-1, flagTab=1, \
                             doCalib=2, gainUse=0, doBand=-1,  \
                             VClip=VClip, timeAvg=timeAvg, \
                             nThreads=nThreads, logfile=logFile, check=check, debug=debug)

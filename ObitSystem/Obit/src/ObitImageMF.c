@@ -172,7 +172,8 @@ ObitImageMF* newObitImageMF (gchar* name)
  */
 ObitImageMF* ObitImageMFFromImage (ObitImage* in, ObitUV *inData, 
 				   olong norder, ofloat maxFBW, 
-				   ofloat alpha, ObitErr *err)
+				   ofloat alpha, odouble alphaRefF,
+				   ObitErr *err)
 {
   ObitImageMF* out = NULL;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
@@ -224,7 +225,7 @@ ObitImageMF* ObitImageMFFromImage (ObitImage* in, ObitUV *inData,
   if (err->error) Obit_traceback_val (err, routine, in->name, out);
 
   /* Set coarse channelization */
-  ObitImageMFSetSpec (out, inData, maxFBW, alpha, err);
+  ObitImageMFSetSpec (out, inData, maxFBW, alpha, alphaRefF, err);
   if (err->error) Obit_traceback_val (err, routine, in->name, out);
   return out;
 } /* end ObitImageMFFromImage */
@@ -695,14 +696,16 @@ void ObitImageMFSetOrder (ObitImageMF *in, olong order,
  * Increments the descriptor number of planes by nSpec
  * Frequency information added to image descriptor with keywords
  * NSPEC, FREQ001...
- * The value of the alpha is similarly saved in the HEADER
- * \param in     Pointer to object, should be fully defined
- * \param uvdata UV data to be imaged
- * \param maxFBW Maximum fractional bandwidth at center of each IF
- * \param err    ObitErr for reporting errors.
+ * The value of the alpha, alphaRefF are similarly saved in the HEADER
+ * \param in        Pointer to object, should be fully defined
+ * \param uvdata    UV data to be imaged
+ * \param maxFBW    Maximum fractional bandwidth at center of each IF
+ * \param alpha     Prior spectral index
+ * \param alphaRefF Reference frequency for alpha
+ * \param err       ObitErr for reporting errors.
  */
 void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
-			 ofloat alpha, ObitErr *err)
+			 ofloat alpha, odouble alphaRefF, ObitErr *err)
 {
   olong iif, ichan, nSpec=0, nIF, nChan, incf, incif, maxCh, ndiv;
   olong fincf, fincif, i, ip, ipo, count, count2;
@@ -830,11 +833,15 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
   ObitInfoListAlwaysPut (in->myDesc->info, "ALPHA", OBIT_float, dim, &alpha);
   in->alpha = alpha;
  
+  /* Save Alpha reference frequency */
+  ObitInfoListAlwaysPut (in->myDesc->info, "ALPHARF", OBIT_double, dim, &alphaRefF);
+  in->alphaRefF = alphaRefF;
+ 
 } /* end  ObitImageMFSetSpec */
 
 /**
  * Get info from the descriptor for coarse channels:
- * ALPHA, NTERM NSPEC, FREQ001...
+ * ALPHA, ALPHARF, NTERM NSPEC, FREQ001...
  * into alpha, maxOrder-1, nSpec, specFreq
  * \param in     Pointer to object, should be fully defined
  * \param alpha  Spectral index applied
@@ -845,6 +852,7 @@ void ObitImageMFGetSpec (ObitImageMF *in, ObitErr *err)
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ofloat farr[10];
+  odouble darr[10];
   gchar keyword[12];
   olong i, nSpec, nTerm;
   /*gchar *routine = "ObitImageMFSetSpec";*/
@@ -871,6 +879,12 @@ void ObitImageMFGetSpec (ObitImageMF *in, ObitErr *err)
 
   /* Reference frequency if not set */
   if (in->refFreq<1.0) in->refFreq = in->myDesc->crval[in->myDesc->jlocf];
+
+  /* Alpha reference frequency - default to reference frequency */
+  darr[0] = in->refFreq;
+  ObitInfoListGetTest (in->myDesc->info, "ALPHARF", &type, dim, darr);
+  in->alphaRefF = darr[0];
+  if (in->alphaRefF<=0.0) in->alphaRefF = in->refFreq;
 
   /* Create array */
   if (in->specFreq) g_free(in->specFreq);
@@ -1024,7 +1038,7 @@ void ObitImageMFFitSpec (ObitImageMF *in, ofloat antSize, ObitErr *err)
   FitSpecFuncArg **targs=NULL;
   ObitImage **inArray=NULL, **outArray=NULL; 
   ofloat sigma;
-  olong i, iy, ny, nterm, nOrder, nTh, plane[5] = {1,1,1,1,1};
+  olong i, iy, ny, nterm=1, nOrder, nTh, plane[5] = {1,1,1,1,1};
   olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   ObitInfoType type;
@@ -1380,7 +1394,10 @@ static olong MakeFitSpecArgs (ObitImageMF *image, olong maxThread,
   for (i=0; i<nThreads; i++) {
     (*args)[i]->err       = err;
     (*args)[i]->desc      = ObitImageDescRef(image->myDesc);
-    (*args)[i]->ithread   = i;
+    if (nThreads>1)
+      (*args)[i]->ithread   = i;
+    else
+      (*args)[i]->ithread   = -1;
     (*args)[i]->thread    = image->thread;
     (*args)[i]->antSize   = antSize;
     (*args)[i]->doPBCorr  = doPBCor;
@@ -1468,7 +1485,7 @@ static void KillFitSpecArgs (olong nargs, FitSpecFuncArg **args)
  * \li outData   (nOrder+1) Arrays of fitted values 
  * \li fitArg    Fitting argument
  * \li fitResult Fitting result array
- * \li ithread   Thread number, >0 -> no threading 
+ * \li ithread   Thread number, <0 -> no threading 
  * \li thread    Obit Thread object 
  * \li err       Obit error stack object
  * \return NULL

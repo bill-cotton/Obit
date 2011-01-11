@@ -37,3 +37,5 @@ olong maxOrder;
 ofloat maxFBW;
 /** Spectral index correction applied to data making mosaic */
 ofloat alpha;
+/** Reference frequency (Hz) for spectral index */
+odouble alphaRefF;

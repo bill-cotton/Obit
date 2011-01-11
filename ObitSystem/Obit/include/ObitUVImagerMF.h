@@ -1,6 +1,6 @@
 /* $Id: ObitUVImagerMF.h 128 2009-09-23 14:48:29Z bill.cotton $     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -240,7 +240,8 @@ void ObitUVImagerMFClone (ObitUVImager *inn, ObitUVImager *outn, ObitErr *err);
 
 /** Public: Create/initialize ObitUVImagerMF structures */
 ObitUVImagerMF* ObitUVImagerMFCreate (gchar* name, olong order, ofloat maxFBW, 
-				      ofloat alpha, ObitUV *uvdata,  ObitErr *err);
+				      ofloat alpha, odouble alphaRefF, 
+				      ObitUV *uvdata,  ObitErr *err);
 
 /** Public: Create/initialize ObitUVImagerMF structures given mosaic */
 ObitUVImagerMF* ObitUVImagerMFCreate2 (gchar* name, olong order, ObitUV *uvdata, 

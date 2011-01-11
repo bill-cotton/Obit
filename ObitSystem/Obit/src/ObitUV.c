@@ -242,7 +242,8 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
 			  "doPol", "doCalib", "gainUse", "flagVer", "BLVer", "BPVer",
 			  "Subarray", "dropSubA", "FreqID", "timeRange", "UVRange",
 			  "InputAvgTime", "Sources", "souCode", "Qual", "Antennas",
-			  "corrType", "passAll", "doBand", "Smooth", "Alpha", 
+			  "corrType", "passAll", "doBand", "Smooth", 
+			  "Alpha", "AlphaRefF" 
 			  "SubScanTime",
 			  NULL};
   gchar *routine = "ObiUVFromFileInfo";
@@ -2883,6 +2884,7 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   olong itemp, *iptr, Qual;
   olong iver, j, count=0;
   ofloat ftempArr[10];/* fblank = ObitMagicF();*/
+  odouble dtempArr[10];
   ObitTableSU *SUTable=NULL;
   union ObitInfoListEquiv InfoReal; 
   gchar tempStr[5], souCode[5], *sptr;
@@ -3068,6 +3070,12 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   ftempArr[0] = 0.0;
   ObitInfoListGetTest(info, "Alpha", &type, dim, ftempArr);
   sel->alpha = ftempArr[0];
+
+  /* Reference frequency for Spectral index, default to data reference frequency */
+  dtempArr[0] = desc->crval[desc->jlocf];
+  ObitInfoListGetTest(info, "AlphaRefF", &type, dim, dtempArr);
+  sel->alphaRefF = dtempArr[0];
+  if (sel->alphaRefF<=0.0) sel->alphaRefF = desc->crval[desc->jlocf];
 
   /* Data averaging time */
   if (ObitInfoListGetTest(info, "InputAvgTime", &type, (gint32*)dim, 

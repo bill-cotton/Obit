@@ -1,7 +1,7 @@
 /* $Id: MFImage.c 144 2009-12-01 15:01:18Z bill.cotton $  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1475,6 +1475,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   olong blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
   olong trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
   ofloat Beam[3]={0.0,0.0,0.0};
+  odouble alphaRefF;
   ObitImage    *outImage[4]={NULL,NULL,NULL,NULL}, *tmpImage=NULL;
   ObitInfoList* saveParmList=NULL;
   ObitInfoType type;
@@ -1519,8 +1520,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   };
   gchar        *CLEANParms[] = {  /* Clean parameters */
     "CLEANBox", "autoWindow", "Gain", "minFlux", "Niter", "minPatch", "Beam", 
-    "Mode", "CCFilter", "maxPixel", "dispURL", "ccfLim", "SDIGain", "Alpha", 
-    "norder",
+    "Mode", "CCFilter", "maxPixel", "dispURL", "ccfLim", "SDIGain", 
+    "Alpha", "AlphaRefF", "norder",
     NULL
   };
   olong MemCount, MemTotal; /* DEBUG */
@@ -1611,7 +1612,6 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   /* Save imaging parms */	
   ObitInfoListCopyList (outData->info, saveParmList, saveParms);
 
-  
   /* set selected channels */
   dim[0] = 1;
   ObitInfoListAlwaysPut (inData->info, "BChan", OBIT_long, dim, &BChan);
@@ -1664,9 +1664,22 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     if (first ) {
       first = FALSE;
       
-      /* Create wideband Imager */
+      /* Create wideband Imager - first time to determinealphaRefF */
       imager = (ObitUVImager*)ObitUVImagerMFCreate("imager", order, maxFBW, 
-						   alpha, outData, err);
+						   alpha, alphaRefF, outData, err);
+     if (err->error) Obit_traceback_msg (err, routine, inData->name);
+    
+      /* Set reference frequency for spectral index corrections -
+	 use inData reference freq */
+      alphaRefF = imager->mosaic->images[0]->myDesc->crval[imager->mosaic->images[0]->myDesc->jlocf];
+      dim[0] = dim[1] = dim[2] = 1;
+      ObitInfoListAlwaysPut (outData->info, "AlphaRefF", OBIT_double, dim, &alphaRefF);
+
+      /* Again for real */
+      imager   = ObitUVImagerUnref(imager);
+      imager = (ObitUVImager*)ObitUVImagerMFCreate("imager", order, maxFBW, 
+						   alpha, alphaRefF, outData, err);
+      if (err->error) Obit_traceback_msg (err, routine, inData->name);
       
       /* Create Sky model */
       skyModel = (ObitSkyModel*)ObitSkyModelMFCreate("Sky Model", imager->mosaic);
@@ -1677,7 +1690,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
 
       /* Make CleanVis */
       myClean = ObitDConCleanVisMFCreate2("Clean Object", outData, 
-					  imager, skyModel, order, maxFBW, alpha, err);
+					  imager, skyModel, order, maxFBW, 
+					  alpha, alphaRefF, err);
       if (err->error) Obit_traceback_msg (err, routine, inData->name);
       
       /* Get input parameters from myInput, copy to myClean */
@@ -1719,7 +1733,8 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     
     /* Convert output to spectral image */
     outImage[istok-bstok] = (ObitImage*)ObitImageMFFromImage(tmpImage, inData, order, 
-							     maxFBW, alpha, err);
+							     maxFBW, alpha, alphaRefF, 
+							     err);
     tmpImage = ObitImageUnref(tmpImage);
     
     ObitImageFullInstantiate (outImage[istok-bstok], FALSE, err);
@@ -2644,8 +2659,7 @@ void BeamOne (ObitInfoList* myInput, ObitUV* inData,
   ObitInfoListGetTest(myInput, "EIF", &type, dim, &EIF);
   saveEIF = EIF;
   EIF = BIF;
-  dim[0] = 3;dim[1] = 1;
-  ObitInfoListAlwaysPut (inData->info, "BIF", OBIT_long, dim, &BIF);
+  dim[0] = 1;dim[1] = 1;
   ObitInfoListAlwaysPut (inData->info, "EIF", OBIT_long, dim, &EIF);
   ObitInfoListGetTest(inData->info,  "doCalSelect", &type, dim, &saveCalSelect);
   btemp = TRUE;  /* Need selection */

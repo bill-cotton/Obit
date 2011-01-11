@@ -1,6 +1,6 @@
 /* $Id: ObitImageMosaicMF.h 128 2009-09-23 14:48:29Z bill.cotton $ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -130,7 +130,8 @@ void ObitImageMosaicMFSetFiles  (ObitImageMosaic *in, gboolean doBeam, ObitErr *
 
 /** Public: Create Mosaic from uv data */
 ObitImageMosaicMF *ObitImageMosaicMFCreate (gchar *name, olong order, ofloat maxFBW,
-					    ofloat alpha, ObitUV *uvData, ObitErr *err);
+					    ofloat alpha, odouble alphaRefF,
+					    ObitUV *uvData, ObitErr *err);
 
 /** Public: Define parameters of images */
 void ObitImageMosaicMFDefine (ObitImageMosaic *in, ObitUV *uvData, gboolean doBeam,

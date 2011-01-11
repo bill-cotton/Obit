@@ -1,6 +1,6 @@
 /* $Id: ObitImageMF.h 128 2009-09-23 14:48:29Z bill.cotton $ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -110,7 +110,8 @@ ObitImageMF* ObitImageMFFromInfo (gchar *prefix, ObitInfoList *inList,
 /** Public: Create ObitImageMF object from ObitImage */
 ObitImageMF* ObitImageMFFromImage (ObitImage* in, ObitUV *inData,
 				   olong norder, ofloat maxFBW, 
-				   ofloat alpha, ObitErr *err);
+				   ofloat alpha, odouble alphaRefF,
+				   ObitErr *err);
 
 /** Public: ClassInfo pointer */
 gconstpointer ObitImageMFGetClass (void);
@@ -125,7 +126,7 @@ ObitImage* ObitImageMFZap  (ObitImage *in, ObitErr *err);
 
 /** Public: Set Coarse spectral channels */
 void ObitImageMFSetSpec (ObitImageMF *image, ObitUV *inData, ofloat maxFBW,
-			 ofloat alpha, ObitErr *err);
+			 ofloat alpha, odouble alphaRefF, ObitErr *err);
 
 /** Public: Get Coarse spectral channel info */
 void ObitImageMFGetSpec (ObitImageMF *image, ObitErr *err);

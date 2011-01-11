@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2010                                          */
+/*;  Copyright (C) 2006-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -38,6 +38,7 @@
 #include "ObitTableSN.h"
 #include "ObitTableSU.h"
 #include "ObitTableSUUtil.h"
+#include "ObitSpectrumFit.h"
 
 /* internal prototypes */
 /* Get inputs */
@@ -70,6 +71,10 @@ void  ReadSN (ObitTableSN* SNTab, ObitUV *inData, olong CalSrc,
 void DetFlux (olong maxIF, olong maxAnt, olong maxSou, ofloat *offCnt, ofloat *offCnt2, 
 	      ofloat *offSum, ofloat *offSum2, olong *offCalSou, ofloat *oldFlux, 
 	      ofloat *souFlux, ofloat *souErr, ObitErr* err);
+/* Fit calibrator spectra */
+void FitSpec (ObitUV* inData, gchar **source, olong maxIF, olong maxSou, olong nterm, 
+	      ofloat *souFlux, ofloat *souErr, 
+	      ofloat *newFlux, ObitErr* err);
 /* Update SN table */
 void UpdateSN (ObitTableSN* SNTab, olong maxIF, olong maxAnt, olong maxSou, 
 	       olong BIF, olong EIF,
@@ -587,7 +592,7 @@ void GetJyHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq", 
     "Sources", "souCode", "Qual", "calSour", "calCode", "BIF", "EIF",
-    "FreqID", "timeRange",  "subA", "Antennas",  "solnVer",
+    "FreqID", "timeRange",  "subA", "Antennas",  "solnVer", "nTerm",
     NULL};
   gchar *routine = "GetJyHistory";
 
@@ -631,9 +636,9 @@ ObitTableSN* GetJyUpdate (ObitUV* inData, ObitErr* err)
   ObitTableSURow *row=NULL;
   ObitUVDesc *desc;
   ofloat *offCnt=NULL, *offCnt2=NULL, *offSum=NULL, *offSum2=NULL;
-  ofloat *oldFlux=NULL, *souFlux=NULL, *souErr=NULL;
+  ofloat *oldFlux=NULL, *souFlux=NULL, *newFlux=NULL, *souErr=NULL;
   olong *offCalSou=NULL;
-  olong ver, offset;
+  olong ver, offset, nterm=2;
   oint numIF=1, numPol=1;
   ObitIOCode retCode = OBIT_IO_SpecErr;
   olong i, j, isou, irow, lsou, nsou, lcal, ncal,iif,  bif, eif;
@@ -644,7 +649,7 @@ ObitTableSN* GetJyUpdate (ObitUV* inData, ObitErr* err)
   ofloat timeRange[2];
   olong Qual, maxAnt, maxSou, maxIF, nant, FreqID=0, BIF=1, EIF=0, subA=0, solnVer=0;
   gchar tempName[101]; /* should always be big enough */
-  gchar *blank = "        ";
+  gchar *blank = "        ", **source=NULL;
   gchar *routine = "GetJyUpdate";
 
   /* error checks */
@@ -682,6 +687,7 @@ ObitTableSN* GetJyUpdate (ObitUV* inData, ObitErr* err)
   ObitInfoListGetTest(inData->info, "subA",       &type, dim, &subA);
   ObitInfoListGetTest(inData->info, "FreqID",     &type, dim, &FreqID);
   ObitInfoListGetTest(inData->info, "solnVer",    &type, dim, &solnVer);
+  ObitInfoListGetTest(inData->info, "nTerm",      &type, dim, &nterm);
   if (calCode==NULL) calCode = blank;
   if (souCode==NULL) souCode = blank;
 
@@ -736,10 +742,12 @@ ObitTableSN* GetJyUpdate (ObitUV* inData, ObitErr* err)
   offSum2 = g_malloc0(maxAnt*maxIF*maxSou*sizeof(ofloat));
   oldFlux = g_malloc0(maxIF*maxSou*sizeof(ofloat));
   souFlux = g_malloc0(maxIF*maxSou*sizeof(ofloat));
+  newFlux = g_malloc0(maxIF*maxSou*sizeof(ofloat));
   souErr  = g_malloc0(maxIF*maxSou*sizeof(ofloat));
   offCalSou= g_malloc0(maxSou*sizeof(olong));
+  source   = g_malloc0(maxSou*sizeof(gchar*));
 
-  /* Get previous fluxes */
+  /* Get previous fluxes, source names */
   irow = 0;
   retCode = OBIT_IO_OK;
   while (retCode==OBIT_IO_OK) {
@@ -754,6 +762,9 @@ ObitTableSN* GetJyUpdate (ObitUV* inData, ObitErr* err)
       if (row->IFlux[iif]==0.0)  oldFlux[offset+iif] = 1.0;
       else oldFlux[offset+iif] = row->IFlux[iif];
     }
+    offset = MAX (0, row->SourID-1);
+    source[offset] = g_strdup(row->Source);
+    source[offset][15] = 0;  /* Terminate */
   } /* end loop looking up max source ID */
 
   /* Close SU table - avoid conflict in ReadSN */
@@ -781,6 +792,10 @@ ObitTableSN* GetJyUpdate (ObitUV* inData, ObitErr* err)
 	   offCalSou, oldFlux, souFlux, souErr, err);
   if (err->error) goto cleanup;
 
+  /* Fit calibrator spectra */
+  FitSpec (inData, source, maxIF, maxSou, nterm, souFlux, souErr, newFlux, err);
+  if (err->error) goto cleanup;
+
   /* Open SU table */
   retCode = ObitTableSUOpen (SUTab, OBIT_IO_ReadWrite, err);
   if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
@@ -799,7 +814,7 @@ ObitTableSN* GetJyUpdate (ObitUV* inData, ObitErr* err)
     /* Update flux density  */
     for (iif=bif-1; iif<eif; iif++) {
       offset = MAX (0, row->SourID-1) * maxIF;
-      row->IFlux[iif] = souFlux[offset+iif];
+      row->IFlux[iif] = newFlux[offset+iif];
 
       /* Message */
       /* Get source name */
@@ -811,11 +826,13 @@ ObitTableSN* GetJyUpdate (ObitUV* inData, ObitErr* err)
       }
       if (souFlux[offset+iif]>0.0) {
 	Obit_log_error(err, OBIT_InfoErr,
-		       "%s IF %d Flux %8.3f +/- %8.3f Jy",
-		       tempName, iif+1, souFlux[offset+iif], souErr[offset+iif]);
+		       "%s IF %d Flux %8.3f +/- %8.3f Jy, Smoothed %8.3f Jy",
+		       tempName, iif+1, souFlux[offset+iif], souErr[offset+iif], 
+		       newFlux[offset+iif]);
       } else { /* No solution */
 	Obit_log_error(err, OBIT_InfoWarn,
-		       "%s IF %d No Flux density measured", tempName, iif+1);
+		       "%s IF %d No Flux density measured, Smoothed %8.3f Jy", 
+		       tempName, iif+1, newFlux[offset+iif]);
       }
     } /* end IF loop */
 
@@ -827,7 +844,7 @@ ObitTableSN* GetJyUpdate (ObitUV* inData, ObitErr* err)
 
   /* Update SN table */
   UpdateSN (SNTab, maxIF, maxAnt, maxSou, bif, eif, offCalSou, 
-	    oldFlux, souFlux, err);
+	    oldFlux, newFlux, err);
   if (err->error) goto cleanup;
 
   /* Cleanup */
@@ -836,14 +853,21 @@ ObitTableSN* GetJyUpdate (ObitUV* inData, ObitErr* err)
   retCode = ObitTableSUClose (SUTab, err);
   row = ObitTableSURowUnref (row);
   SUTab = ObitTableSUUnref (SUTab);
-  if (offCnt)  g_free(offCnt);
-  if (offCnt2) g_free(offCnt2);
-  if (offSum)  g_free(offSum);
-  if (offSum2) g_free(offSum2);
+  if (offCnt)    g_free(offCnt);
+  if (offCnt2)   g_free(offCnt2);
+  if (offSum)    g_free(offSum);
+  if (offSum2)   g_free(offSum2);
   if (oldFlux)   g_free(oldFlux);
   if (souFlux)   g_free(souFlux);
+  if (newFlux)   g_free(newFlux);
   if (souErr)    g_free(souErr);
   if (offCalSou) g_free(offCalSou);
+  if (source) {
+    for (isou=0; isou<maxSou; isou++) {
+      if (source[isou]) g_free (source[isou]);
+    }
+    g_free (source);
+  }
   if (err->error) Obit_traceback_val (err, routine, inData->name, SNTab);
   return SNTab;
 } /* end GetJyUpdate  */
@@ -993,7 +1017,7 @@ void  ReadSN (ObitTableSN* SNTab, ObitUV *inData, olong CalSou,
 /*   Output:                                                              */
 /*     souFlux   Derived flux density  (source, IF)                       */
 /*     souErr    Error in derived flux density  (source, IF)              */
-/*      err     Obit Error stack                                          */
+/*      err      Obit Error stack                                         */
 /*----------------------------------------------------------------------- */
 void DetFlux (olong maxIF, olong maxAnt, olong maxSou, ofloat *offCnt, ofloat *offCnt2, 
 	      ofloat *offSum, ofloat *offSum2, olong *offCalSou, ofloat *oldFlux, 
@@ -1046,13 +1070,13 @@ void DetFlux (olong maxIF, olong maxAnt, olong maxSou, ofloat *offCnt, ofloat *o
   }
 
   /* Average receiver calibration factors */
-    for (iif=0; iif<maxIF; iif++) {
-      for (iant=0; iant<maxAnt; iant++) {
-	offset2 = iant*maxIF;
-	if (ical1[offset2+iif]>0.0) rcal1[offset2+iif] /= ical1[offset2+iif];
-	if (ical2[offset2+iif]>0.0) rcal2[offset2+iif] /= ical2[offset2+iif];
-      } /* end loop over antenna */
-    } /* end loop over IF */
+  for (iif=0; iif<maxIF; iif++) {
+    for (iant=0; iant<maxAnt; iant++) {
+      offset2 = iant*maxIF;
+      if (ical1[offset2+iif]>0.0) rcal1[offset2+iif] /= ical1[offset2+iif];
+      if (ical2[offset2+iif]>0.0) rcal2[offset2+iif] /= ical2[offset2+iif];
+    } /* end loop over antenna */
+  } /* end loop over IF */
  
 
   /* Loop over sources - compute source fluxes and RMSes */
@@ -1101,6 +1125,107 @@ void DetFlux (olong maxIF, olong maxAnt, olong maxSou, ofloat *offCnt, ofloat *o
   if (err->error) Obit_traceback_msg (err, routine, routine);
 } /* end DetFlux */
 
+/*----------------------------------------------------------------------- */
+/*  Least Squares fit to calibrator spectra                               */
+/*  Spectra are fitted to each calibrator and the IF values in newFlux    */
+/*  are those determined from the fit.                                    */
+/*  If nterm<1 then no fitting is done and souFlux values are copied      */
+/*  to newFlux                                                            */
+/*   Input:                                                               */
+/*     inData    ObitUV with SU/SN tables to update                       */
+/*     source    Array of source names                                    */
+/*     maxIF     Maximum IF number in accumulators                        */
+/*     maxSou    Maximum source ID in accumulators                        */
+/*     ntern     Number of terms in the spectral fit                      */
+/*     souFlux   Derived flux density  (source, IF)                       */
+/*     souErr    Error in derived flux density  (source, IF)              */
+/*   Output:                                                              */
+/*     newFlux   Derived flux density  (source, IF)                       */
+/*      err      Obit Error stack                                         */
+/*----------------------------------------------------------------------- */
+void FitSpec (ObitUV* inData, gchar **source, 
+	      olong maxIF, olong maxSou, olong nterm, 
+	      ofloat *souFlux, ofloat *souErr, float *newFlux, 
+	      ObitErr* err)
+{
+  olong isou, iif, iterm, offset2, count;
+  ofloat *flux=NULL, *sigma=NULL, *fitVal=NULL;
+  odouble *freq=NULL, lnu, lll, arg;
+
+  /* error checks */
+  if (err->error) return;
+  if (maxIF<=0) return;
+  if (maxSou<=0) return;
+  /* Copy souFlux to newFlux in case */
+  for (isou=0; isou<maxSou; isou++) {
+    for (iif=0; iif<maxIF; iif++) {
+      offset2 = isou*maxIF;
+      newFlux[offset2+iif] = souFlux[offset2+iif];
+    }
+  }
+  /* Anything to do? */
+  if (nterm<=0) return;
+
+  /* Work arrays */
+  flux  = g_malloc0(maxIF*sizeof(ofloat));
+  sigma = g_malloc0(maxIF*sizeof(ofloat));
+  freq  = g_malloc0(maxIF*sizeof(odouble));
+
+  
+  Obit_log_error(err, OBIT_InfoErr, "Smoothing by fitting %d term spectrum", nterm);
+
+  /* Loop over sources */
+  for (isou=0; isou<maxSou; isou++) {
+    /* Collect data to fit */
+    count = 0;
+    for (iif=0; iif<maxIF; iif++) {
+      offset2 = isou*maxIF;
+      if (souFlux[offset2+iif]>0.0) {
+	freq[count]  = inData->myDesc->freqIF[iif];
+	flux[count]  = souFlux[offset2+iif];
+	sigma[count] = souErr[offset2+iif];
+	count++;
+      }
+    }
+
+    /* Anything? */
+    if (count<1) continue;
+
+    /* Fit */
+    fitVal = ObitSpectrumFitSingle(count, nterm, freq[0], freq, flux, sigma, FALSE, err);
+
+    /* Tell results */
+    if (nterm==1) {
+      Obit_log_error(err, OBIT_InfoErr,
+		     "Source %s Flux density=%8.3f(%8.3f) Jy Chi^2= %8.3f", 
+		     source[isou], fitVal[0], fitVal[nterm], fitVal[nterm*2]);
+    }
+
+    if (nterm>=2) {
+      Obit_log_error(err, OBIT_InfoErr,
+		     "Source %s Flux density=%8.3f(%5.3f) Jy, SI=%5.3f(%5.3f) Jy Chi^2=%5.1f", 
+		     source[isou], fitVal[0], fitVal[nterm], fitVal[1], 
+		     fitVal[nterm+1], fitVal[nterm*2]);
+    }
+
+    /* Calculate new */
+    for (iif=0; iif<maxIF; iif++) {
+      offset2 = isou*maxIF;
+      lnu = log (inData->myDesc->freqIF[iif]/inData->myDesc->freqIF[0]);
+      lll = lnu; arg = 0.0;
+      for (iterm=1; iterm<nterm; iterm++) {
+	arg += fitVal[iterm] * lll;
+	lll *= lnu;
+      }
+      newFlux[offset2+iif] =  exp(arg) * fitVal[0];
+    } /* end IF loop */
+   if (fitVal) g_free(fitVal);
+  } /* end of source loop */
+  /* Cleanup */
+  if (flux)  g_free(flux);
+  if (sigma) g_free(sigma);
+  if (freq)  g_free(freq);
+} /* end FitSpec  */
 /*----------------------------------------------------------------------- */
 /*  Update SN table for new fluxes                                        */
 /*   Input:                                                               */

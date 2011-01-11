@@ -2029,7 +2029,8 @@ static void NLFit (NLFitArg *arg)
 
     /* Is this good enough? */
     isDone = (arg->ChiSq<0.0) || (arg->ChiSq<=arg->maxChiSq) || (chi2Test>arg->ChiSq);
-    if (meanSNR>(SNRperTerm*nterm)) isDone = FALSE;  /* Always try for high SNR */
+    if ((meanSNR>(SNRperTerm*nterm)) && (nterm<arg->nterm)) 
+      isDone = FALSE;  /* Always try for high SNR */
     if (isDone) goto done;
     /*    if ((arg->ChiSq>0.0) && (arg->ChiSq<=arg->maxChiSq)) goto done;*/
 

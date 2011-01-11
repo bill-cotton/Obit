@@ -1898,7 +1898,7 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
                flagVer=0, doCalib=2, gainUse=0, doBand=1, BPVer=0,  doPol=False, \
                BIF=1, EIF=0, BChan=1, EChan=0, \
                avgFreq=0, chAvg=1, Compress=False, \
-               logfile = "", check=False, debug=False):
+               nThreads=1, logfile = "", check=False, debug=False):
     """ Calibrate, select and/or average data to a multisource file
 
     Returns task error code, 0=OK, else failed
@@ -1922,6 +1922,7 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
     avgFreq    = If 0 < avgFreq <= 1 then average channels
     chAvg      = Number of channels to average
     Compress   = Write "Compressed" data?
+    nThreads   = Number of threads to use
     logfile    = Log file for task
     check      = Only check script, don't execute tasks
     debug      = Run tasks debug, show input
@@ -1951,6 +1952,7 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
     splat.outClass = avgClass
     splat.outDisk  = splat.inDisk
     splat.outSeq   = avgSeq
+    splat.nThreads = nThreads
     if debug:
         splat.i
         splat.debug = debug
@@ -3762,13 +3764,24 @@ def EVLASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["RR","LL"], \
     info.set("gainUse",0)
     info.set("doBand",doband)
     info.set("BPVer",0)
-    info.set("flagVer",2)
+    info.set("flagVer",0)
     info.set("Sources",[Source])
     info.set("Stokes","    ")
     info.set("timeRange",timerange)
     #uv.Header(err) # DEBUG 
     uv.Copy(scr, err)
     scr.Info(err)     # Get file information
+    info = uv.List
+    
+    # Reset selection
+    info.set("doCalSelect",True)
+    info.set("doCalib",-1)
+    info.set("gainUse",0)
+    info.set("doBand",-1)
+    info.set("BPVer",0)
+    info.set("flagVer",0)
+    info.set("Sources",["    "])
+    info.set("timeRange",[0.0, 0.0)
     
     # Setup and run POSSM
     possm = AIPSTask.AIPSTask("possm")

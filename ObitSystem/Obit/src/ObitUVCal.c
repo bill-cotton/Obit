@@ -273,6 +273,7 @@ void ObitUVCalStart (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
   in->eIF       = sel->startIF + sel->numberIF - 1;
   in->dropSubA  = sel->dropSubA;
   in->alpha     = sel->alpha;
+  in->alphaRefF = sel->alphaRefF;
 
   /* Get source information - is there a source table, or get from header? */
   if (in->SUTable) { /* Read table */
@@ -322,7 +323,7 @@ void ObitUVCalStart (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
 	    ichan = iif + ifreq*nif;
 	  /* Which correlation? */
 	  i = iif*incif + ifreq*incf + istok*incs;
-	  in->SpecIndxWork[i] = (ofloat)pow((double)(in->myDesc->freqArr[ichan]/in->myDesc->freq), 
+	  in->SpecIndxWork[i] = (ofloat)pow((double)(in->myDesc->freqArr[ichan]/in->alphaRefF), 
 					    -(double)in->alpha);
 	}
       }

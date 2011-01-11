@@ -1,6 +1,6 @@
 /* $Id: ObitSkyModelMFDef.h 119 2009-07-17 16:02:35Z bill.cotton $ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -52,5 +52,7 @@ ObitCInterpolate **myInterps;
 gboolean doAlphaCorr;
 /** Prior spectral index correction */
 ofloat priorAlpha;
+/** Reference frequency (Hz) for spectral index */
+odouble priorAlphaRefF;
 /** Spectral smoothing wanted in model? */
 gboolean doSmoo;
