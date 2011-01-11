@@ -163,6 +163,8 @@ doSaveUV      = True       # Save uv data
 doSaveImg     = True       # Save images
 doSaveTab     = True       # Save Tables
 doCleanup     = True       # Destroy AIPS files
+copyDestDir   = ''         # Destination directory for copying output files
+                           #   empty string -> do not copy
 
 # diagnostics
 doSNPlot      = True       # Plot SN tables etc
@@ -613,6 +615,10 @@ if doHTML:
 
 # Save list of output files
 VLBASaveOutFiles()
+
+# Copy output files to specificed destination directory
+if copyDestDir:
+    VLBACopyOutFiles( destDir=copyDestDir, logFile=logFile )
 
 # Cleanup - delete AIPS files
 if doCleanup and (not check):
