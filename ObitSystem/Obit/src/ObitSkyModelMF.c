@@ -3551,8 +3551,6 @@ ObitTableCC* ObitSkyModelMFgetPBCCTab (ObitSkyModelMF* in, ObitUV* uvdata,
 
       /* Replace channel fluxes with fitted spectrum */
       for (i=0; i<nSpec; i++) {
-   	BeamShape->refFreq = Freq[i];  /* Set frequency */
-	PBCorr  = BSClass->ObitBeamShapeGainSym(BeamShape, Angle);
 	/* Frequency dependent term */
 	lll = ll = FreqFact[i];
 	arg = 0.0;
@@ -3561,7 +3559,7 @@ ObitTableCC* ObitSkyModelMFgetPBCCTab (ObitSkyModelMF* in, ObitUV* uvdata,
 	  lll *= ll;
 	}
 	specFact = exp(arg);
-	CCRow->parms[offset+i] = specFact*fitResult[0]*PBCorr;
+	CCRow->parms[offset+i] = specFact*fitResult[0]*PBCorr[i];
       }
  
      /* ReWrite output */
