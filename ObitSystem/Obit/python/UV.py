@@ -24,8 +24,10 @@ Data selection, calibration and editing parameters on List member:
            In the above 'F' can substitute for "formal" 'I' (both RR+LL).
   "BChan"   int (1,1,1) First spectral channel selected. [def all]
   "EChan"   int (1,1,1) Highest spectral channel selected. [def all]
+  "chanInc" int (1,1,1) channel selected increment. [def 1]
   "BIF"     int (1,1,1) First "IF" selected. [def all]
   "EIF"     int (1,1,1) Highest "IF" selected. [def all]
+  "IFInc"   int (1,1,1)"IF" selected increment. [def 1]
   "doPol"   int (1,1,1) >0 -> calibrate polarization.
   "doCalib" int (1,1,1) >0 -> calibrate, 2=> also calibrate Weights
   "gainUse" int (1,1,1) SN/CL table version number, 0-> use highest

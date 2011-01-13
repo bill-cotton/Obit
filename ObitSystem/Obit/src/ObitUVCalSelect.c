@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -446,9 +446,10 @@ void ObitUVCalSelectInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *inDesc,
  * \returns TRUE if at least some data is valid
  */
 gboolean ObitUVCalSelect (ObitUVCal *in, ofloat *RP, ofloat *visIn, ofloat *visOut, 
-		      ObitErr *err)
+			  ObitErr *err)
 {
   olong   i, ip1, ip2, op, lf, lc, lp, lfoff, ioff, incf, incif, incs;
+  olong channInc, IFInc, maxChan, maxIF;
   gboolean   good;
   ofloat wt1, wt2, temp, xfact1, xfact2;
   ObitUVSel *sel = in->mySel;
@@ -468,21 +469,25 @@ gboolean ObitUVCalSelect (ObitUVCal *in, ofloat *RP, ofloat *visIn, ofloat *visO
   incs  = 3 * desc->incs  / desc->inaxes[0];
   incf  = 3 * desc->incf  / desc->inaxes[0];
   incif = 3 * desc->incif / desc->inaxes[0];
+  channInc = MAX (1, sel->channInc);
+  maxChan  = MIN (sel->numberChann*channInc, desc->inaxes[desc->incf]);
+  IFInc    = MAX (1, sel->IFInc);
+  maxIF    = MIN (sel->numberIF*IFInc, desc->inaxes[desc->incif]);
 
   /* loop checking  and summing weights and getting visibilities. */
   i = -1; /* output visibility number */
 
   /* visibility offset in input */
-  lfoff = (sel->startIF - 2) * incif + (sel->startChann - 2) * incf;
+  lfoff = (sel->startIF-1-IFInc) * incif + (sel->startChann-1-channInc) * incf;
 
   /* loop over IF */
-  for (lf=0; lf<sel->numberIF; lf++) { /* loop 70 */
-    lfoff += incif;
+  for (lf=0; lf<maxIF; lf += IFInc) { /* loop 70 */
+    lfoff += incif * IFInc;
     ioff   = lfoff;
 
     /* Loop over channel */
-    for (lc=0; lc<sel->numberChann; lc++) { /* loop 60 */
-      ioff += incf;
+    for (lc=0; lc<maxChan; lc += channInc) { /* loop 60 */
+      ioff += incf * channInc;
 
       /* translating stokes? */
       if (sel->transPol) {

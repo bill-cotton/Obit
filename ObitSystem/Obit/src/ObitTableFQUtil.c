@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -220,8 +220,8 @@ ObitIOCode ObitTableFQSelect (ObitUV *inUV, ObitUV *outUV, odouble *SouIFOff,
   ObitErr *terr=NULL;
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong iif, oif, nif, nchAvg;
-  olong iFQver, inFQRow, outFQRow, highFQver;
+  olong iif, oif, nif, nchAvg, chInc, IFInc;
+  olong iFQver, inFQRow, outFQRow, highFQver, maxIF;
   oint numIF;
   gboolean wanted;
   gchar *FQType = "AIPS FQ";
@@ -248,16 +248,24 @@ ObitIOCode ObitTableFQSelect (ObitUV *inUV, ObitUV *outUV, odouble *SouIFOff,
 
   /* How many channels to average */
   nchAvg = 1;
+  chInc  = MAX (1, inUV->mySel->channInc);
   ObitInfoListGetTest(inUV->info, "NumChAvg",  &type, dim, &nchAvg);  
+  nchAvg /= chInc;   /* Channel increment */
   nchAvg = MAX (1,nchAvg);
   nchAvg = MIN (nchAvg, inUV->myDesc->inaxes[inUV->myDesc->jlocf]);
 
   /* Should only be one FQ table */
   iFQver = 1;
-  if (inUV->myDesc->jlocif>=0) 
-    nif = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
-  else
+  if (inUV->myDesc->jlocif>=0) {
+    nif   = inUV->myDesc->inaxes[inUV->myDesc->jlocif];
+    IFInc = MAX (1, inUV->mySel->IFInc);   /* IF increment */
+    maxIF = inUV->mySel->startIF+inUV->mySel->numberIF*IFInc-1;
+    maxIF = MIN (maxIF, 
+		 ((ObitUVDesc*)inUV->myIO->myDesc)->inaxes[((ObitUVDesc*)inUV->myIO->myDesc)->jlocif]);
+  } else {
     nif = 1;
+    IFInc = 1;
+  }
 
   /* Get input table */
   numIF = 0;
@@ -318,9 +326,7 @@ ObitIOCode ObitTableFQSelect (ObitUV *inUV, ObitUV *outUV, odouble *SouIFOff,
     /* Copy selected data */
     outRow->fqid     = inRow->fqid;
     oif = 0;
-    for (iif=inUV->mySel->startIF-1; 
-	 iif<inUV->mySel->startIF+inUV->mySel->numberIF-1;
-	 iif++) {
+    for (iif=inUV->mySel->startIF-1; iif<maxIF; iif+=IFInc) {
       outRow->freqOff[oif]  = inRow->freqOff[iif] - 
 	inRow->freqOff[inUV->mySel->startIF-1]; /* New reference freq */
       outRow->chWidth[oif]  = inRow->chWidth[iif] * nchAvg;

@@ -4,7 +4,7 @@
 ;! Copy UV data
 ;# Task UV  Obit 
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2007-2010
+;;  Copyright (C) 2007-2011
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -59,10 +59,14 @@ FreqID                              Freq. ID to select.
 BChan            0.0     8192.0     Low freq. channel 
 **PARAM** int 1
 EChan            0.0     8192.0     Highest freq channel
+**PARAM** int 1 **DEF** 1
+chanInc          0.0     8192.0     Channel increment
 **PARAM** int 1
-BIF               0.0     9999.0   First IF (0=>1)
+BIF               0.0     9999.0    First IF (0=>1)
 **PARAM** int 1
-EIF               0.0     9999.0   Highest IF (0=>BIF to last)
+EIF               0.0     9999.0    Highest IF (0=>BIF to last)
+**PARAM** int 1 **DEF** 1
+IFInc             0.0     8192.0    IF increment
 **PARAM** int 1
 subA                                Subarray
 **PARAM** int 50
@@ -140,9 +144,11 @@ Adverbs:
              relative as defined in the input data file.
   EChan......Highest channel number to to include in image,
              0 => max 
+  chanInc....Increment in channel selected, 0=>1
   BIF........First IF to process. 0=>1
   EIF........Highest IF to process 0=> do BIF to highest.
              Note: not all data sets will have IFs.
+  IFInc......Increment in IF selected, 0=>1
   subA.......Sub-array number to use. 0=>all.
   Antennas...A list of the antennas to  have solutions
              determined. If any number is negative then all

@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -152,9 +152,11 @@ ObitUVSel* ObitUVSelCopy (ObitUVSel* in, ObitUVSel* out,
   out->jincs       = in->jincs;
   out->startChann  = in->startChann;
   out->numberChann = in->numberChann;
+  out->channInc    = in->channInc;
   out->jincf       = in->jincf;
   out->startIF     = in->startIF;
   out->numberIF    = in->numberIF;
+  out->IFInc       = in->IFInc;
   out->jincif      = in->jincif;
   out->doCalSelect = in->doCalSelect;
   out->transPol    = in->transPol;
@@ -258,6 +260,7 @@ void ObitUVSelDefault (ObitUVDesc* in, ObitUVSel* sel)
 /**
  * Derive the descriptor for data being written; 
  * also updates defaults on sel.
+ * Some of this is also done in ObitUVCalSelectInit:
  * \param in Pointer to input descriptor, this describes the data
  *           as they appear in memory.
  * \param sel UV selector, blc, trc members changed if needed.
@@ -374,12 +377,15 @@ void ObitUVSelSetDesc (ObitUVDesc* in, ObitUVSel* sel,
   sel->jincif = in->incif;
 
   /* Selection */
-  if (sel->numberChann<=0) sel->numberChann = in->inaxes[in->jlocf];
+  if (sel->channInc<=0) sel->channInc = 1;
+  if (sel->numberChann<=0) 
+    sel->numberChann = in->inaxes[in->jlocf] /sel->channInc;
   if (sel->startChann<=0)  sel->startChann = 1;
   sel->numberChann = MIN (sel->numberChann, in->inaxes[in->jlocf]);
 
+  if (sel->IFInc<=0) sel->IFInc = 1;
   if ((sel->numberIF<=0) && (in->jlocif>=0)) 
-    sel->numberIF = in->inaxes[in->jlocif];
+    sel->numberIF = in->inaxes[in->jlocif] / sel->IFInc;
   if (sel->numberIF<=0) sel->numberIF = 1;
   if (sel->startIF<=0)  sel->startIF = 1;
   if (in->jlocif>=0) 
@@ -845,9 +851,11 @@ void ObitUVSelInit  (gpointer inn)
   in->numberPoln    = 1;
   in->startChann    = 1;
   in->numberChann   = 1;
+  in->channInc      = 1;
   in->jincf         = 3;
   in->startIF       = 1;
   in->numberIF      = 1;
+  in->IFInc         = 1;
   in->jincif        = 3;
   in->selectAnts    = TRUE;
   in->ants          = NULL;
@@ -875,6 +883,7 @@ void ObitUVSelInit  (gpointer inn)
   in->NXTable       = NULL;
   in->NXTableRow    = NULL;
   in->numRow        = -1;
+  in->LastRowRead   = 0;
   in->LastRowRead   = 0;
 } /* end ObitUVSelInit */
 

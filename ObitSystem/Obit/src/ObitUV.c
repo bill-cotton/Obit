@@ -1,6 +1,6 @@
 /* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -156,9 +156,11 @@ ObitUV* newObitUV (gchar* name)
  *              "HALF" = RR,LL, "FULL"=RR,LL,RL,LR. [default "    "]
  *              In the above 'F' can substitute for "formal" 'I' (both RR+LL).
  * \li xxxBChan OBIT_int (1,1,1) First spectral channel selected. [def all]
- * \li xxxEChan OBIT_int (1,1,1) Highest spectral channel selected. [def all]
+ * \li xxxEChan OBIT_int (1,1,1) Selected channel increment. [def all]
+ * \li xxxchanInc OBIT_int (1,1,1) Highest spectral channel selected. [def 1]
  * \li xxxBIF   OBIT_int (1,1,1) First "IF" selected. [def all]
  * \li xxxEIF   OBIT_int (1,1,1) Highest "IF" selected. [def all]
+ * \li xxxIFInc OBIT_int (1,1,1) "IF" increment. [def 1]
  * \li xxxdoPol OBIT_int (1,1,1) >0 -> calibrate polarization.
  * \li xxxdoCalib OBIT_int (1,1,1) >0 -> calibrate, 2=> also calibrate Weights
  * \li xxxgainUse OBIT_int (1,1,1) SN/CL table version number, 0-> use highest
@@ -238,7 +240,8 @@ ObitUV* ObitUVFromFileInfo (gchar *prefix, ObitInfoList *inList,
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gpointer     listPnt;
   gchar        *keyword=NULL, *DataTypeKey = "DataType", *DataType=NULL;
-  gchar        *parm[] = {"DoCalSelect", "Stokes", "BChan", "EChan", "BIF", "EIF",
+  gchar        *parm[] = {"DoCalSelect", "Stokes", 
+			  "BChan", "EChan", "chanInc", "BIF", "EIF", "IFInc",
 			  "doPol", "doCalib", "gainUse", "flagVer", "BLVer", "BPVer",
 			  "Subarray", "dropSubA", "FreqID", "timeRange", "UVRange",
 			  "InputAvgTime", "Sources", "souCode", "Qual", "Antennas",
@@ -2460,7 +2463,7 @@ void ObitUVReadKeyword (ObitUV *in,
  * If a flag table is currently selected it is copied to a new AIPS FG
  * table on the uv data and channel selection  added.
  * If no flag table is selected then an new table is created.
- * The new flagging entries includ all channels and IFs in the range
+ * The new flagging entries include all channels and IFs in the range
  * specified in the UVSel values of BChan, EChan, BIF and EIF that are
  * NOT specified in the IChanSel array
  * \param in       UV with selection to which the new flag table is to be attached.
@@ -2968,28 +2971,53 @@ static void ObitUVGetSelect (ObitUV *in, ObitInfoList *info, ObitUVSel *sel,
   InfoReal.itg = 0; type = OBIT_oint;
   ObitInfoListGetTest(info, "EChan", &type, dim, &InfoReal);
   if (type==OBIT_float) itemp = InfoReal.flt + 0.5;
-  else itemp = InfoReal.itg;
+  else                  itemp = InfoReal.itg;
   if (desc->jlocf>0) itemp = MIN (itemp, desc->inaxes[desc->jlocf]);
   if (itemp>0) sel->numberChann = itemp - sel->startChann+1;
-  else  sel->numberChann = desc->inaxes[desc->jlocf] - sel->startChann+1;
+  else         sel->numberChann = desc->inaxes[desc->jlocf] - sel->startChann+1;
+  sel->numberChann = MAX (1, MIN (sel->numberChann, desc->inaxes[desc->jlocf]));
+
+  InfoReal.itg = 1; type = OBIT_oint;
+  ObitInfoListGetTest(info, "channInc", &type, dim, &InfoReal);
+  if (type==OBIT_float) itemp = InfoReal.flt + 0.5;
+  else                  itemp = InfoReal.itg;
+  if (desc->jlocf>0) itemp = MIN (itemp, desc->inaxes[desc->jlocf]);
+  if (itemp>0) sel->channInc = itemp;
+  else         sel->channInc = 1;
+  sel->channInc = MAX (1, MIN (sel->channInc, desc->inaxes[desc->jlocf]));
+  /* Reset number of channels for increment */
+  sel->numberChann = 1 + (sel->numberChann-1)/sel->channInc;
   sel->numberChann = MAX (1, MIN (sel->numberChann, desc->inaxes[desc->jlocf]));
 
   InfoReal.itg = 0; type = OBIT_oint;
   ObitInfoListGetTest(info, "BIF", &type, (gint32*)dim, &InfoReal);
   if (type==OBIT_float) itemp = InfoReal.flt + 0.5;
-  else itemp = InfoReal.itg;
+  else                  itemp = InfoReal.itg;
   if (desc->jlocf>0) itemp = MIN (itemp, desc->inaxes[desc->jlocif]);
   sel->startIF  =  MAX (1, itemp);
 
   InfoReal.itg = 0; type = OBIT_oint;
   ObitInfoListGetTest(info, "EIF", &type, dim, &InfoReal);
   if (type==OBIT_float) itemp = InfoReal.flt + 0.5;
-  else itemp = InfoReal.itg;
+  else                  itemp = InfoReal.itg;
   if (desc->jlocf>0) itemp = MIN (itemp, desc->inaxes[desc->jlocif]);
   if (itemp>0) sel->numberIF = itemp - sel->startIF+1;
-  else sel->numberIF = desc->inaxes[desc->jlocif] - sel->startIF+1;
+  else         sel->numberIF = desc->inaxes[desc->jlocif] - sel->startIF+1;
   sel->numberIF = MAX (1, MIN (sel->numberIF, desc->inaxes[desc->jlocif]));
   if (desc->jlocif<0) sel->numberIF = 1;
+
+  InfoReal.itg = 1; type = OBIT_oint;
+  ObitInfoListGetTest(info, "IFInc", &type, dim, &InfoReal);
+  if (type==OBIT_float) itemp = InfoReal.flt + 0.5;
+  else                  itemp = InfoReal.itg;
+  if (desc->jlocif>0) itemp = MIN (itemp, desc->inaxes[desc->jlocif]);
+  if (itemp>0) sel->IFInc = itemp;
+  else  sel->IFInc = 1;
+  sel->IFInc = MAX (1, MIN (sel->IFInc, desc->inaxes[desc->jlocif]));
+  /* Reset number of IF for increment */
+  sel->numberIF = 1 + (sel->numberIF-1)/sel->IFInc;
+  sel->numberIF = MAX (1, MIN (sel->numberIF, desc->inaxes[desc->jlocif]));
+ 
 
   for (i=0; i<4; i++) tempStr[i] = ' '; tempStr[4] = 0;
   ObitInfoListGetTest(info, "Stokes", &type, dim, &tempStr);

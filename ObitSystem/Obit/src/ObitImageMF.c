@@ -1,6 +1,6 @@
 /* $Id: ObitImageMF.c 143 2009-11-11 17:31:04Z bill.cotton $      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -932,7 +932,10 @@ void ObitImageMFBlank (ObitImageMF *in, ObitErr *err)
 
 /**
  * Make image or beam from combined spectral channels
+ * Average using weighting by 1/sigma of plane
  * Use average + 0.1 times most extreme channel value > 5 sigma.
+ * Note: values of lambda>0.1 may lead to instabilities causing 
+ * CLEAN not to converge.
  * The extrema array is then apodized using the FT of the CLEAN beam 
  * to remove out of band noise that can drive CLEAN into oscillations.
  * Extrema are the most discrepent points from the average.
@@ -946,7 +949,8 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
 {
   ObitFArray *imPix=NULL, *extPix=NULL, *extConvl=NULL;
   olong i, plane[5] = {1,1,1,1,1};
-  ofloat norm, sigma, sigClip = 5.0, lambda = 0.1, beamArea, cells;
+  ofloat norm, sigma, sigClip=5.0, lambda=0.1, beamArea, cells;
+  ofloat wt, sumWt, fblank = ObitMagicF();
   gchar *routine = "ObitImageMFCombine";
 
   /* error checks */
@@ -954,6 +958,7 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
   g_assert (ObitImageMFIsA(in));
 
   /* Loop accumulating average */
+  sumWt = 0.0;
   for (i=1+in->maxOrder; i<1+in->maxOrder+in->nSpec; i++) {
     plane[0] = i+1;
     ObitImageGetPlane ((ObitImage*)in, NULL, plane, err);
@@ -964,6 +969,13 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
       imPix  = ObitFArrayCreate ("accum", 2, in->myDesc->inaxes);
       if (addExt) extPix = ObitFArrayCreate ("accum", 2, in->myDesc->inaxes);
     }
+    /* Weight by 1/sigma */
+    wt = ObitFArrayRMS(in->image);
+    /* Values? */
+    if (wt==fblank) continue;
+    wt = 1.0 / wt;
+    sumWt += wt;
+    ObitFArraySMul (in->image, wt);
 
     /* Accumulate */
     ObitFArrayAdd(imPix, in->image, imPix);
@@ -971,7 +983,7 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
   } /* end loop accumulating */
  
   /* Normalize */
-  norm = 1.0 / ((ofloat)in->nSpec);
+  norm = 1.0 / sumWt;
   ObitFArraySMul (imPix, norm);
 
   /* Add scaled extrema convolved with dirth beam */

@@ -51,12 +51,16 @@ olong jincs;
 olong startChann;
 /** Number of channels */
 olong numberChann;
+/** Channel increment */
+olong channInc;
 /** Increment in visibility float array between Frequencies */
 olong jincf;
 /** Start IF (1-rel) */
 olong startIF;
 /** Number of IFs */
 olong numberIF;
+/** IF increment */
+olong IFInc;
 /** Increment in visibility float array between IFs */
 olong jincif;
 /** Selected Subarray number. <=0 -> all */

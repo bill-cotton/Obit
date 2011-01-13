@@ -3430,7 +3430,7 @@ ObitTableCC* ObitSkyModelMFgetPBCCTab (ObitSkyModelMF* in, ObitUV* uvdata,
   ObitIOCode retCode;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  ofloat *flux=NULL, *sigma=NULL, *fitResult=NULL, pbmin=0.01, PBCorr=1.0, alpha;
+  ofloat *flux=NULL, *sigma=NULL, *fitResult=NULL, pbmin=0.01, *PBCorr=NULL, alpha;
   ofloat *FreqFact=NULL, *sigmaField=NULL, ll, lll, arg, specFact;
   odouble *Freq=NULL, refFreq;
   odouble Angle=0.0;
@@ -3480,6 +3480,10 @@ ObitTableCC* ObitSkyModelMFgetPBCCTab (ObitSkyModelMF* in, ObitUV* uvdata,
       }
     }
     
+    if (in->prtLv>1) Obit_log_error(err, OBIT_InfoErr, 
+				    "Smooth CCs to %d term spectrum",
+				    nterm);
+    
     /* Prior spectral index */
     ObitInfoListGetTest(image->myDesc->info, "ALPHA", &type, dim, &alpha);
   
@@ -3496,14 +3500,16 @@ ObitTableCC* ObitSkyModelMFgetPBCCTab (ObitSkyModelMF* in, ObitUV* uvdata,
 			routine, *outCCVer);
 
     /* Setup */
-    offset    = 4;
-    flux      = g_malloc0(nSpec*sizeof(ofloat));
-    sigma     = g_malloc0(nSpec*sizeof(ofloat));
+    offset     = 4;
+    flux       = g_malloc0(nSpec*sizeof(ofloat));
+    sigma      = g_malloc0(nSpec*sizeof(ofloat));
     sigmaField = g_malloc0(nSpec*sizeof(ofloat));
-    BeamShape = ObitBeamShapeCreate ("BS", (ObitImage*)image, pbmin, in->antSize, TRUE);
-    BSClass   = (ObitBeamShapeClassInfo*)(BeamShape->ClassInfo);
-    fitArg    = ObitSpectrumFitMakeArg (nSpec, nterm-1, refFreq, Freq, FALSE, 
-					&fitResult, err);
+    PBCorr     = g_malloc0(nSpec*sizeof(ofloat));
+    BeamShape  = ObitBeamShapeCreate ("BS", (ObitImage*)image, pbmin, in->antSize, TRUE);
+    BeamShape  = ObitBeamShapeCreate ("BS", (ObitImage*)image, pbmin, in->antSize, TRUE);
+    BSClass    = (ObitBeamShapeClassInfo*)(BeamShape->ClassInfo);
+    fitArg     = ObitSpectrumFitMakeArg (nSpec, nterm, refFreq, Freq, FALSE, 
+					 &fitResult, err);
     for (i=0; i<nterm; i++) fitResult[i]  = 0.0;
     for (i=0; i<nSpec; i++) sigmaField[i] = -1.0;
     if  (err->error) goto cleanup;
@@ -3532,9 +3538,9 @@ ObitTableCC* ObitSkyModelMFgetPBCCTab (ObitSkyModelMF* in, ObitUV* uvdata,
       /* Loop over spectral channels get corrected flux, sigma */
       for (i=0; i<nSpec; i++) {
 	BeamShape->refFreq = Freq[i];  /* Set frequency */
-	PBCorr   = BSClass->ObitBeamShapeGainSym(BeamShape, Angle);
-	flux[i]  = CCRow->parms[offset+i] / PBCorr;
-	sigma[i] = sigmaField[i] / (PBCorr*PBCorr);
+	PBCorr[i] = BSClass->ObitBeamShapeGainSym(BeamShape, Angle);
+	flux[i]   = CCRow->parms[offset+i] / PBCorr[i];
+	sigma[i]  = sigmaField[i] / (PBCorr[i]*PBCorr[i]);
       }
  
       /* Fit spectrum */
@@ -3573,6 +3579,7 @@ ObitTableCC* ObitSkyModelMFgetPBCCTab (ObitSkyModelMF* in, ObitUV* uvdata,
     if (flux)       g_free(flux);
     if (sigma)      g_free(sigma);
     if (sigmaField) g_free(sigmaField);
+    if (PBCorr)     g_free(PBCorr);
     if (Freq)       g_free(Freq);
     if (FreqFact)   g_free(FreqFact);
     if (fitResult)  g_free(fitResult);
