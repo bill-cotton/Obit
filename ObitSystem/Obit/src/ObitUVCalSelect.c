@@ -470,9 +470,9 @@ gboolean ObitUVCalSelect (ObitUVCal *in, ofloat *RP, ofloat *visIn, ofloat *visO
   incf  = 3 * desc->incf  / desc->inaxes[0];
   incif = 3 * desc->incif / desc->inaxes[0];
   channInc = MAX (1, sel->channInc);
-  maxChan  = MIN (sel->numberChann*channInc, desc->inaxes[desc->incf]);
+  maxChan  = MIN (sel->numberChann*channInc, desc->inaxes[desc->jlocf]);
   IFInc    = MAX (1, sel->IFInc);
-  maxIF    = MIN (sel->numberIF*IFInc, desc->inaxes[desc->incif]);
+  maxIF    = MIN (sel->numberIF*IFInc, desc->inaxes[desc->jlocif]);
 
   /* loop checking  and summing weights and getting visibilities. */
   i = -1; /* output visibility number */

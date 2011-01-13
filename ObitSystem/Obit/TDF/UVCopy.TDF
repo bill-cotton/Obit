@@ -55,13 +55,13 @@ timeRange                           Time range to process.
 Stokes                              Stokes to process
 **PARAM** int 1
 FreqID                              Freq. ID to select.
-**PARAM** int 1
+**PARAM** int 1 **DEF** 1
 BChan            0.0     8192.0     Low freq. channel 
 **PARAM** int 1
 EChan            0.0     8192.0     Highest freq channel
 **PARAM** int 1 **DEF** 1
 chanInc          0.0     8192.0     Channel increment
-**PARAM** int 1
+**PARAM** int 1 **DEF** 1
 BIF               0.0     9999.0    First IF (0=>1)
 **PARAM** int 1
 EIF               0.0     9999.0    Highest IF (0=>BIF to last)
@@ -71,7 +71,7 @@ IFInc             0.0     8192.0    IF increment
 subA                                Subarray
 **PARAM** int 50
 Antennas         0.0     1000.0     List of antennas to calibrate
-**PARAM** int 1
+**PARAM** int 1 **DEF** 1
 corrType                            Cross or auto correlations
                                       0 pass only xc data
                                       1 pass xc and ac data
