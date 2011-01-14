@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2010                                          */
+/*;  Copyright (C) 2004-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1262,7 +1262,7 @@ ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   gchar *today=NULL;
   olong NumChAvg, defSel[] = {1,100000000,1,0, 0,0,0,0};
   gboolean doAvgAll=FALSE;
-   ofloat *work=NULL, scale;
+  ofloat *work=NULL, scale;
   gchar *routine = "ObitUVUtilHann";
  
   /* error checks */
@@ -1325,6 +1325,9 @@ ObitUV* ObitUVUtilHann (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   scale = AvgFSetDesc (inDesc, outDesc, NumChAvg, defSel, doAvgAll, 
 		       corChan, corIF, corStok, corMask, err);
   if (err->error) goto cleanup;
+
+  /* Last channel incomplete - drop */
+  outDesc->inaxes[outDesc->jlocf]--;
 
   /* test open output */
   oretCode = ObitUVOpen (outUV, OBIT_IO_WriteOnly, err);

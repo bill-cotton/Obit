@@ -66,6 +66,11 @@ void MakeCubeDesc (ObitImageDesc *inDesc, ObitImageDesc *outDesc,
 /* Insert input plane into output image */
 void InsertPlane (ObitImage *in, ObitImage *out, olong *plane, 
 		  ObitErr *err);
+/* Combine header keyword frequency information */
+void UpdateFreq(ObitInfoList *myInput, 
+		ObitInfoList *oldInfo, ObitInfoList *newInfo, 
+		ObitImage *in, ObitImage *out, 
+		ObitErr *err);
 
 /* Program globals */
 gchar *pgmName = "MCube";       /* Program name */
@@ -77,10 +82,12 @@ olong  nAIPS=0;         /* Number of AIPS directories */
 gchar **AIPSdirs=NULL; /* List of AIPS data directories */
 olong  nFITS=0;         /* Number of FITS directories */
 gchar **FITSdirs=NULL; /* List of FITS data directories */
-ObitImage *inImage;    /* Input image */
-ObitImage *outImage;          /* output image */
-ObitInfoList *myInput  = NULL; /* Input parameter list */
-ObitInfoList *myOutput = NULL; /* Output parameter list */
+ObitImage *inImage=NULL;           /* Input image */
+ObitImage *outImage=NULL;          /* output image */
+ObitInfoList *newInfo=NULL;        /* Input Desc.List */
+ObitInfoList *oldInfo=NULL;        /* Old output Desc.List */
+ObitInfoList *myInput  = NULL;     /* Input parameter list */
+ObitInfoList *myOutput = NULL;     /* Output parameter list */
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
@@ -117,6 +124,10 @@ int main ( int argc, char **argv )
   doMCube (myInput, inImage, outImage, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
+  /* Update any header keyword frequency info */
+  UpdateFreq (myInput, newInfo, oldInfo, inImage, outImage, err);
+  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
+
   /* History */
   doHistory (myInput, inImage, outImage, isNew, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
@@ -130,6 +141,8 @@ int main ( int argc, char **argv )
  exit: 
   ObitReturnDumpRetCode (ierr, outfile, myOutput, err);
   myOutput = ObitInfoListUnref(myOutput);
+  newInfo  = ObitInfoListUnref(newInfo);
+  oldInfo  = ObitInfoListUnref(oldInfo);
   mySystem = ObitSystemShutdown (mySystem);
   
   return ierr;
@@ -654,6 +667,9 @@ void GetImages(ObitInfoList *myInput, gboolean *isNew, ObitErr *err)
   }
   if (err->error) Obit_traceback_msg (err, routine, routine);
 
+  /* Save Descriptor list */
+  newInfo = ObitInfoListCopy(inImage->myDesc->info);
+   
   /* Output image */
 
   /* File type - could be either AIPS or FITS */
@@ -771,7 +787,9 @@ void GetImages(ObitInfoList *myInput, gboolean *isNew, ObitErr *err)
     ObitImageOpen (outImage, OBIT_IO_WriteOnly, err);
     ObitImageClose (outImage, err);
   } else { /* test */
-    ObitImageFullInstantiate (outImage, TRUE, err);
+    ObitImageOpen (outImage, OBIT_IO_ReadWrite, err);
+    ObitImageClose (outImage, err);
+    oldInfo = ObitInfoListCopy(outImage->myDesc->info);
   }
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
 } /* end GetImages */
@@ -967,3 +985,162 @@ void MakeCubeDesc (ObitImageDesc *inDesc, ObitImageDesc *outDesc,
   return;
 } /* end MakeCubeDesc */
 
+/*----------------------------------------------------------------------- */
+/*  Combine header keyword frequency information                          */
+/*  If "NSPEC" not found on input images descriptor list, return          */
+/*  Values:                                                               */
+/*      myInput   Input parameters on InfoList                            */
+/*      newInfo   Input Desc List                                         */
+/*      oldInfo   Existing output Desc List                               */
+/*      in        Input ObitImage                                         */
+/*      out       Output ObitImage                                        */
+/*      err       Obit error/message stack                                */
+/*----------------------------------------------------------------------- */
+void UpdateFreq(ObitInfoList *myInput, 
+		ObitInfoList *newInfo, ObitInfoList *oldInfo, 
+		ObitImage *in, ObitImage *out, 
+		ObitErr *err)
+{
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ofloat farr[10], inAlpha, outAlpha;
+  odouble *inSpecFreq=NULL, *outSpecFreq=NULL, *combSpecFreq=NULL;
+  odouble darr[10], inAlphaRefF, outAlphaRefF;
+  gchar keyword[12];
+  olong i, j, nTerm, axPix, inSpec, inTerm, onSpec, onTerm, cnSpec, cnTerm;
+  gchar *routine = "UpdateFreq";
+
+  if (err->error) return;  /* existing error? */
+
+  /* Number of spectral channels */
+  inSpec = 0;
+  ObitInfoListGetTest (newInfo, "NSPEC", &type, dim, &inSpec);
+  if (inSpec<=0) return;
+
+  /* Open image */
+  ObitImageOpen (out, OBIT_IO_WriteOnly, err);
+  if (err->error) Obit_traceback_msg (err, routine, out->name);
+  out->myStatus = OBIT_Modified;  /* Force update on disk */
+
+  /* Number of input spectral terms */
+  inTerm = 0;
+  ObitInfoListGetTest (newInfo, "NTERM", &type, dim, &inTerm);
+
+  /* Number of spectral terms  */
+  nTerm = inTerm;
+  ObitInfoListGetTest (myInput, "nTerm", &type, dim, &nTerm);
+  if (nTerm>0) cnTerm = nTerm;
+
+  /* Where inserted  */
+  axPix = nTerm+1;
+  ObitInfoListGetTest (myInput, "axPix", &type, dim, &axPix);
+
+  /* Alpha */
+  farr[0] = 0.0;
+  ObitInfoListGetTest (newInfo, "ALPHA", &type, dim, farr);
+  inAlpha = farr[0];
+
+  /* Alpha reference frequency - default to reference frequency */
+  darr[0] = in->myDesc->crval[in->myDesc->jlocf];
+  ObitInfoListGetTest (newInfo, "ALPHARF", &type, dim, darr);
+  inAlphaRefF = darr[0];
+
+  /* Create frequency array */
+  inSpecFreq  = g_malloc0(inSpec*sizeof(odouble));
+
+  /* Fetch frequencies */
+  for (i=0; i<inSpec; i++) {
+    inSpecFreq[i] = 1.0;
+    sprintf (keyword, "FREQ%4.4d",i+1);
+    ObitInfoListGetTest (newInfo, keyword, &type, 
+			 dim, &inSpecFreq[i]);
+  }
+  
+  /* See if they are already on output */
+  onSpec = 0;
+  if (oldInfo) {
+    /* Number of spectral channels */
+    ObitInfoListGetTest (oldInfo, "NSPEC", &type, dim, &onSpec);
+    if (onSpec>0) {
+      
+      /* Number of input spectral terms */
+      onTerm = 0;
+      ObitInfoListGetTest (oldInfo, "NTERM", &type, dim, &onTerm);
+      cnTerm = onTerm;
+      
+      /* Alpha */
+      farr[0] = 0.0;
+      ObitInfoListGetTest (oldInfo, "ALPHA", &type, dim, farr);
+      outAlpha = farr[0];
+      
+      /* Alpha reference frequency - default to reference frequency */
+      darr[0] = out->myDesc->crval[out->myDesc->jlocf];
+      ObitInfoListGetTest (oldInfo, "ALPHARF", &type, dim, darr);
+      outAlphaRefF = darr[0];
+      
+      /* Create frequency array */
+      outSpecFreq  = g_malloc0(onSpec*sizeof(odouble));
+      
+      /* Fetch frequencies */
+      for (i=0; i<onSpec; i++) {
+	outSpecFreq[i] = 1.0;
+	sprintf (keyword, "FREQ%4.4d",i+1);
+	ObitInfoListGetTest (oldInfo, keyword, &type, 
+			     dim, &outSpecFreq[i]);
+      }
+      
+      /* IF both alphas not 0.0 then AlphaRefFs must be the same */
+      if (inAlpha!=outAlpha){
+	Obit_log_error(err, OBIT_InfoWarn, 
+		       "%s: Prior ALPHAs unequal, %f != %f", 
+		       routine, inAlpha, outAlpha);
+      }
+      if ((inAlpha==outAlpha) && (inAlpha!=0.0) && (inAlphaRefF!=outAlphaRefF)) {
+	Obit_log_error(err, OBIT_InfoWarn, 
+		       "%s: Prior ALPHAref freq  unequal, %lf != %lf", 
+		       routine, inAlphaRefF, outAlphaRefF);
+      }
+    }
+  } /* end if exist already on output */
+
+  /* Make combined output */
+  cnSpec = out->myDesc->inaxes[out->myDesc->jlocf] - inTerm;
+  combSpecFreq  = g_malloc0(cnSpec*sizeof(odouble));
+  if ((onSpec>0) && outSpecFreq) {
+    j = 0;
+    for (i=0; i<onSpec; i++) combSpecFreq[j++] = outSpecFreq[i];
+  }
+  j = axPix-cnTerm;
+  for (i=0; i<inSpec; i++) combSpecFreq[j++] = inSpecFreq[i];
+  
+  /* Update header list */
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListAlwaysPut (out->myDesc->info, "NSPEC", OBIT_long, dim, &cnSpec);
+  ObitInfoListAlwaysPut (out->myDesc->info, "NTERM", OBIT_long, dim, &cnTerm);
+  
+  /* Add frequency info to descriptor */
+  for (i=0; i<cnSpec; i++) {
+    sprintf (keyword, "FREQ%4.4d",i+1);
+    ObitInfoListAlwaysPut (out->myDesc->info, keyword, OBIT_double, 
+			   dim, &combSpecFreq[i]);
+  }
+
+  /* New info output? */
+  if (onSpec<=0) {
+    /* Save Alpha */
+    ObitInfoListAlwaysPut (out->myDesc->info, "ALPHA", OBIT_float, dim, &inAlpha);
+    
+    /* Save Alpha reference frequency */
+    ObitInfoListAlwaysPut (out->myDesc->info, "ALPHARF", OBIT_double, dim, &inAlphaRefF);
+  }
+
+  /* Open image */
+  ObitImageClose (out, err);
+  if (err->error) Obit_traceback_msg (err, routine, out->name);
+
+  /* Cleanup */
+  if (inSpecFreq)   g_free(inSpecFreq);
+  if (outSpecFreq)  g_free(outSpecFreq);
+  if (combSpecFreq) g_free(combSpecFreq);
+ 
+} /* end  UpdateFreq */

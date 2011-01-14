@@ -61,6 +61,8 @@ axCRPix                            New reference pixel of axisNum
 axCDelt                            New axis increment of axisNum
 **PARAM** dbl   1 **DEF** -1000.0
 axCRVal                            New reference value of axisNum
+**PARAM** int   1 **DEF** 0
+nTerm                              Number of spectral terms
 **PARAM** str 4
 outDType                           "FITS" or "AIPS" type of output
 **PARAM** str 12
@@ -85,6 +87,15 @@ image and insert the selected planes into the cube.
 The program assumes that one axis of the input image will be 
 expanded.  Planes should be inserted in order beginning with 
 the first image on the expanded plane.
+
+   Multifrequency spectral cubes produces by MFImage can be
+combined.  In this case, the frequency information in the 
+descriptor keywords (Desc.List member in python) will also
+be concatenated.
+   These combined cubes can have spectra fitted using the 
+python ImageMF class. For help see: 
+>>> import ImageMF
+>>> help(ImageMF)
 
 Adverbs:
   DataType...."FITS" or AIPS
@@ -117,6 +128,10 @@ Adverbs:
   axCRVal.....Coordinate reference value on axis axNum
               at pixel axCRPix.
               If -1000 -> use input value
+  nTerm.......If the image being built  has frequency axis type
+              'SPECLNMF' made by MFImage then the output image
+              will have nTerm planes allocated for spectral 
+              parameters.
   outDType....'FITS' or 'AIPS'  type of output
               Defaults to DataType.
   outName.....Output AIPS Name(Name).         

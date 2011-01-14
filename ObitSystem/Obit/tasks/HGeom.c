@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task - interpolates image to different geometry               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2010                                          */
+/*;  Copyright (C) 2005-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -70,6 +70,7 @@ olong  nFITS=0;         /* Number of FITS directories */
 gchar **FITSdirs=NULL;  /* List of FITS data directories */
 ObitInfoList *myInput  = NULL; /* Input parameter list */
 ObitInfoList *myOutput = NULL; /* Output parameter list */
+ObitInfoList *savInfo  = NULL; /* Input Desc.List */
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
@@ -116,6 +117,12 @@ int main ( int argc, char **argv )
   HGeomInterp (myInput, inImage, outImage, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
+  /* Restore Descriptor list */
+  ObitImageOpen (outImage, OBIT_IO_ReadWrite, err);
+  ObitInfoListCopyData (savInfo, outImage->myDesc->info);
+  outImage->myStatus = OBIT_Modified;
+  ObitImageClose (outImage, err);
+
   /* Do history */
   HGeomHistory ( myInput, inImage, outImage, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
@@ -135,6 +142,7 @@ int main ( int argc, char **argv )
  exit: 
   ObitReturnDumpRetCode (ierr, outfile, myOutput, err);  /* Final output */
   myOutput = ObitInfoListUnref(myOutput);   /* delete output list */
+  savInfo  = ObitInfoListUnref(savInfo);
   mySystem = ObitSystemShutdown (mySystem);
   
   return ierr;
@@ -548,8 +556,6 @@ ObitInfoList* defaultInputs(ObitErr *err)
 /*   Return                                                               */
 /*       ObitInfoList  with default values                                */
 /*  Values:                                                               */
-/*     Mean     Int        Image pixel mean  [0.0]                        */
-/*     RMS      Int        Image pixel rms   [0.0]                        */
 /*----------------------------------------------------------------------- */
 ObitInfoList* defaultOutputs(ObitErr *err)
 {
@@ -672,6 +678,9 @@ ObitImage* getInputImage (ObitInfoList *myInput, ObitErr *err)
   ObitImageFullInstantiate (inImage, TRUE, err);
   if (err->error) Obit_traceback_val (err, routine, "myInput", inImage);
 
+  /* Save Descriptor list */
+  savInfo = ObitInfoListCopy(inImage->myDesc->info);
+   
   /* Set defaults BLC, TRC */
   for (i=0; i<IM_MAXDIM; i++) {
     if (blc[i]<=0) blc[i] = 1;
