@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -33,6 +33,7 @@
 #include "ObitAIPSCat.h"
 #include "ObitTableDesc.h"
 #include "ObitFile.h"
+#include "ObitSystem.h"
 
 /*-------- ObitIO: Merx mollis mortibus nuper ------------------*/
 /**
@@ -1283,10 +1284,10 @@ void ObitAIPSCatTableSetDesc (ObitTableDesc *desc, gboolean init,
 			      AIPSint controlBlock[256],
 			      AIPSint record[256], ObitErr *err)
 {
-  olong i, len, more, itemp;
+  olong i, len, more, itemp, ll;
   olong nrps, nspr=0, ns, nr, off;
   olong AIPStype;
-  gchar  tt[4];
+  gchar  tt[4], *pgmName;
   gchar   *blank = "                                                  ";
   gchar *routine = " ObitAIPSCatTableSetDesc";
 
@@ -1321,7 +1322,12 @@ void ObitAIPSCatTableSetDesc (ObitTableDesc *desc, gboolean init,
 
     /* Creator info */
     ObitAIPSCatUpdateAccess(&controlBlock[10]); /* date/time */
-    g_memmove ((gchar*)&controlBlock[28], "Obit  ", 6); /* Creator */
+    pgmName = ObitSystemGetPgmName ();
+    ll = MIN (12, strlen(pgmName));
+    g_memmove ((gchar*)&controlBlock[28], pgmName, ll); /* Creator */
+
+    /* Number of logical records for expansion */
+    controlBlock[41] = 100;
 
     /* "Record" for column types and data pointers */
     controlBlock[44] = 2;
@@ -1436,7 +1442,9 @@ void ObitAIPSCatTableSetDesc (ObitTableDesc *desc, gboolean init,
 
   /* Last access */
   ObitAIPSCatUpdateAccess(&controlBlock[32]);
-  g_memmove ((gchar*)&controlBlock[38], "Obit  ", 6); 
+  pgmName = ObitSystemGetPgmName ();
+  ll = MIN (12, strlen(pgmName));
+  g_memmove ((gchar*)&controlBlock[38], pgmName, ll); /* Creator */
 
   /* sort order (logical column numbers */
   itemp = abs (desc->sort[0]) % 256;

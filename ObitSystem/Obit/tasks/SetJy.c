@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007,2010                                          */
+/*;  Copyright (C) 2007-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -615,7 +615,7 @@ ObitTableSU* SetJyUpdate (ObitUV* inData, ObitErr* err)
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *Sources=NULL, *calCode=NULL, *OPType=NULL, *VelType=NULL, *VelDef=NULL;
   ofloat SysVel=0.0, ZeroFlux[4]={0.0,0.0,0.0,0.0}, *Parms=NULL;
-  ofloat altrfp, refpix, velinc;
+  ofloat altrfp, refpix, centpix, velinc;
   olong Qual, lsign, ncheck, FreqID=0, BIF=1, EIF=0;
   odouble RestFreq=0.0;
   gboolean wanted, match=FALSE;
@@ -630,7 +630,8 @@ ObitTableSU* SetJyUpdate (ObitUV* inData, ObitErr* err)
 
   /* Get control parameters */
   desc = inData->myDesc;
-  refpix = desc->crpix[desc->jlocf];
+  refpix  = desc->crpix[desc->jlocf];
+  centpix = 1.0 + desc->inaxes[desc->jlocf]/2.0;
   ObitInfoListGetP(inData->info, "Sources",  &type, dim, (gpointer)&Sources);
   /* Count number of actual sources */
   lsou = dim[0];
@@ -737,6 +738,8 @@ ObitTableSU* SetJyUpdate (ObitUV* inData, ObitErr* err)
       /* Update flux */
       for (iif=bif; iif<=eif; iif++) {
 	Freq = desc->freq + freqOff[iif-1] + row->FreqOff[iif-1];
+	/* Offset to IF center */
+	Freq += (centpix-refpix) * chBandw[iif] * sideBand[iif];
 	/* Calculate flux density? */
 	if (!strncmp (OPType, "CALC", 4)) {
 	  CalcFlux (row, Parms, Freq, ZeroFlux, err);
