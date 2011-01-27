@@ -60,9 +60,11 @@
  *               "HALF" = RR,LL, "FULL"=RR,LL,RL,LR. [default "    "]
  *               In the above 'F' can substitute for "formal" 'I' (both RR+LL).
  * \li  "BChan" OBIT_int (1,1,1) First spectral channel selected. [def all]
+ * \li  "chanInc" OBIT_int (1,1,1) Highest spectral channel selected. [def 1]
  * \li  "EChan" OBIT_int (1,1,1) Highest spectral channel selected. [def all]
  * \li  "BIF"   OBIT_int (1,1,1) First "IF" selected. [def all]
  * \li  "EIF"   OBIT_int (1,1,1) Highest "IF" selected. [def all]
+ * \li  "IFInc" OBIT_int (1,1,1) "IF" increment. [def 1]
  * \li  "doPol"   OBIT_int (1,1,1) >0 -> calibrate polarization.
  * \li  "doCalib" OBIT_int (1,1,1) >0 -> calibrate, 2=> also calibrate Weights
  * \li  "gainUse" OBIT_int (1,1,1) SN/CL table version number, 0-> use highest

@@ -365,7 +365,7 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
   olong itemp, kday, khr, kmn, ksec;
   ofloat *antwt=NULL, fblank = ObitMagicF();
   gboolean avgpol, dol1, empty;
-  gboolean done, good, oldSN, *gotAnt;
+  gboolean done, good, avgIF, oldSN, *gotAnt;
   gchar soltyp[5], solmod[5];
   odouble timex;
   olong sid;
@@ -378,6 +378,16 @@ ObitTableSN* ObitUVGSolveWBCal (ObitUVGSolveWB *in, ObitUV *inUV, ObitUV *outUV,
   g_assert (ObitUVGSolveWBIsA(in));
   g_assert (ObitUVIsA(inUV));
   g_assert (ObitUVIsA(outUV));
+
+  /* Make sure you can solve for delay */
+  avgIF = FALSE;
+  ObitInfoListGetTest(in->info, "avgIF", &type, dim, &avgIF);
+  Obit_retval_if_fail(((inUV->myDesc->inaxes[inUV->myDesc->jlocf]>1) || 
+		       (avgIF && (inUV->myDesc->inaxes[inUV->myDesc->jlocif]>1))), 
+		       err, outSoln,
+		      "%s: MUST have multiple frequencies to solve for Delay", 
+		      routine);
+
   
   /* Get Solution interval from inUV and copy to SubScanTime*/
   solInt = 0.0;

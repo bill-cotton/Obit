@@ -2051,7 +2051,8 @@ void
 ObitUVSolnSmooMWF (ofloat width, ofloat alpha, ofloat* x, ofloat* y, ofloat* w, olong n, 
 		   ofloat* ys, ofloat* ws, ofloat* yor, ofloat* wor, gboolean doBlank) 
 {
-  olong      i, j, k, l, i1, i2, ic;
+  olong      i, j, k, l, i1, i2, ic=0, nword;
+  size_t     nbyte;
   ofloat     hw, d, temp, beta=0.0, fblank =  ObitMagicF();
   gboolean   wasb, onlyb, blnkd;
 
@@ -2061,6 +2062,10 @@ ObitUVSolnSmooMWF (ofloat width, ofloat alpha, ofloat* x, ofloat* y, ofloat* w, 
   hw = d / 2.0;          /* Half width of smoothing */
   wasb = FALSE;          /* any blanked data? */
   beta = MAX (0.05, MIN (0.95, alpha)) / 2.0; /*  Average around median factor */
+
+  nbyte = n*sizeof(ofloat);
+  /*memmove (yor, y, nbyte);*/
+  /*memmove (wor, w, nbyte);*/
 
   /* width = 0.0 => interp only - here copy good and interpolate later */
   if (d <= 0.0) {
@@ -2094,9 +2099,7 @@ ObitUVSolnSmooMWF (ofloat width, ofloat alpha, ofloat* x, ofloat* y, ofloat* w, 
       
       if ((blnkd)  ||  (!onlyb)) { /* smoothing data */
 	for (k=1; k<=i; k++) { /* previous values loop 30 */
-	  if (fabs(x[i]-x[i-k]) > hw) {
-	    break;   /* out of window? goto L35; */
-	  } else {
+	  if (fabs(x[i]-x[i-k]) <= hw) {  /* In window? */
 	    if ((y[i-k] != fblank)  &&  (w[i-k] > 0.0)  &&  (w[i-k] != fblank)) {
 	      /* valid datum in window, order the datum */
 	      l = ic;
@@ -2104,11 +2107,18 @@ ObitUVSolnSmooMWF (ofloat width, ofloat alpha, ofloat* x, ofloat* y, ofloat* w, 
 		if (yor[j] > y[i-k]) {l = j; break;}  /* goto L20; */
 	      } /* end loop  L15:  */;
 	      
-	      for (j=l; j<=ic; j++) { /* shuffle loop 25 */
+	      nword = ic-l+1;
+	      nbyte = nword*sizeof(ofloat);
+	      if (nword>0) {
+		memmove (&yor[l+1], &yor[l], nbyte);
+		memmove (&wor[l+1], &wor[l], nbyte);
+	      }
+	      /* shuffle loop 25 */
+	      /*for (j=l; j<=ic; j++) { 
 		i1 = ic - j + l;
 		yor[i1] = yor[i1-1];
 		wor[i1] = wor[i1-1];
-	      } /* end loop  L25:  */;
+		} *//* end loop  L25:  */;
 	      yor[l] = y[i-k];  /* insert [i-k] in ordered array */
 	      wor[l] = w[i-k];
 	      ic++; /* Number of elements in ordered list */
@@ -2125,12 +2135,19 @@ ObitUVSolnSmooMWF (ofloat width, ofloat alpha, ofloat* x, ofloat* y, ofloat* w, 
 	      for (j=0; j<ic; j++) { /* find location in ordered arrays for [k] loop 45 */
 		if (yor[j] > y[k]) {l = j; break;}  /* goto L50; */
 	      } /* end loop  L45:  */;
-	      
-	      for (j=l; j<ic; j++) { /*shuffle  loop 55 */
+
+	      nword = ic - l;
+	      nbyte = nword*sizeof(ofloat);
+	      if (nword>0) {
+		memmove (&yor[l+1], &yor[l], nbyte);
+		memmove (&wor[l+1], &wor[l], nbyte);
+	      }
+	      /*shuffle  loop 55 */
+	      /*for (j=l; j<ic; j++) { 
 		i1 = ic - j + l;
 		yor[i1] = yor[i1-1];
 		wor[i1] = wor[i1-1];
-	      } /* end loop  L55:  */;
+		}*/ /* end loop  L55:  */;
 	      yor[l] = y[k];   /* insert [k] in ordered array */
 	      wor[l] = w[k];
 	      ic++; /* Number of elements in ordered list */

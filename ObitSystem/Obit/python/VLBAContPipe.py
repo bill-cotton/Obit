@@ -16,7 +16,7 @@ noScrat     = []
 execfile (setup)
 
 ############################# Default parameters ##########################################                                 
-# Generic parameters
+# Define data
 project       = "Unspecified"               # Project name (12 char or less, used as AIPS Name)
 session       = "?"                         # Project session code
 band          = "?"                         # Observing band
@@ -33,156 +33,24 @@ calInt        = 0.15       # Calibration table interval in min.
 wtThresh      = 0.8        # Data weight  threshold
 check         = False      # Only check script, don't execute tasks
 debug         = False      # run tasks debug
+prtLv         = 2          # Print level
 
-# Quantization correction
-doQuantCor  = True         # Do quantization correction
-QuantSmo    = 0.5          # Smoothing time (hr) for quantization corrections
-QuantFlag   = 0.0          # If >0, flag solutions < QuantFlag (use 0.9 for 1 bit, 0.8 for 2 bit)
-
-# Parallactic angle correction
-doPACor     = True         # Make parallactic angle correction
-
-# Opacity/Tsys correction
-doOpacCor   = True         # Make Opacity/Tsys/gain correction?
-OpacSmoo    = 0.25         # Smoothing time (hr) for opacity corrections
-
-# Special editing list
-doEditList  = False        # Edit using editList?
-editFG      = 2            # Table to apply edit list to
-editList = [
-#    {"timer":("0/06:09:0.0","0/06:13:0.0"),"Ant":[ 8,0],"IFs":[2,2],"Chans":[1,0],"Stokes":'1110',"Reason":"bad data"},
-    ]
-
-# Apply phase cal corrections?
-doPCcor  = True           # Apply PC table?
-doPCPlot = True           # Plot results?
-
-# 'Manual" phase cal - even to tweak up PCals
-doManPCal      = True      # Determine and apply manual phase cals?
-manPCsolInt    = 0.5       # Manual phase cal solution interval (min)
-manPCSmoo      = 10.0      # Manual phase cal smoothing time (min)
-doManPCalPlot  = True      # Plot the phase and delays from manual phase cal
-
-# Bandpass Calibration?
-doBPCal       = True       # Determine Bandpass calibration
-bpBChan1      = 1          # Low freq. channel,  initial cal
-bpEChan1      = 0          # Highest freq channel, initial cal, 0=>all
-bpDoCenter1   = None       # Fraction of  channels in 1st, overrides bpBChan1, bpEChan1
-bpBChan2      = 1          # Low freq. channel for BP cal
-bpEChan2      = 0          # Highest freq channel for BP cal,  0=>all 
-bpChWid2      = 1          # Number of channels in running mean BP soln
-bpdoAuto      = False      # Use autocorrelations rather than cross?
-bpsolMode     = 'A&P'      # Band pass type 'A&P', 'P', 'P!A'
-bpsolint1     = 10.0/60.0  # BPass phase correction solution in min
-bpsolint2     = 10.0       # BPass bandpass solution in min
-specIndex     = 0.0        # Spectral index of BP Cal
-doSpecPlot    = True       # Plot the amp. and phase across the spectrum
-
-# Editing
-doClearTab  = True         # Clear cal/edit tables
-doGain      = True         # Clear SN and CL tables >1
-doFlag      = True         # Clear FG tables > 1
-doBP        = True         # Clear BP tables?
-doCopyFG    = True         # Copy FG 1 to FG 2quack
-doQuack     = True         # Quack data?
-quackBegDrop= 0.1          # Time to drop from start of each scan in min
-quackEndDrop= 0.0          # Time to drop from end of each scan in min
-quackReason = "Quack"      # Reason string
-
-# Amp/phase calibration parameters
-refAnt        = 0                       # Reference antenna
-refAnts       = [0]                     # List of Reference antenna for fringe fitting
-
-# Imaging calibrators (contCals) and targets
-doImgCal    = True         # Image calibrators
-targets     = []           # targets
-doImgTarget = True         # Image targets?
-outCclass   = "ICalSC"     # Output calibrator image class
-outTclass   = "IImgSC"     # Output target temporary image class
-outIclass   = "IClean"     # Output target final image class
-Robust      = 0.0          # Weighting robust parameter
-FOV         = 0.1/3600     # Field of view radius in deg.
-Niter       = 100          # Max number of clean iterations
-minFlux     = 0.0          # Minimum CLEAN flux density
-minSNR      = 5.0          # Minimum Allowed SNR
-solMode     = "P"          # Delay solution for phase self cal
-avgPol      = True         # Average poln in self cal?
-avgIF       = False        # Average IF in self cal?
-maxPSCLoop  = 6            # Max. number of phase self cal loops
-minFluxPSC  = 0.1          # Min flux density peak for phase self cal
-solPInt     = 0.25         # phase self cal solution interval (min)
-maxASCLoop  = 1            # Max. number of phase self cal loops
-minFluxASC  = 0.5          # Min flux density peak for amp+phase self cal
-solAInt     = 3.0          # amp+phase self cal solution interval (min)
-
-# Find good calibration data
-doFindCal    = True         # Search for good calibration/reference antenna
-findSolInt   = 0.5          # Solution interval (min) for Calib
-findTimeInt  = 10.0         # Maximum timerange, large=>scan
-contCals     = None         # Name or list of continuum cals
-contCalModel = VLBAImageModel(contCals,outCclass, disk, seq, err)         # Check for any
-targetModel  = None         # No target model yet
-
-# Delay calibration
-doDelayCal  = True         # Determine/apply delays from contCals
-
-# Amplitude calibration
-doAmpCal    = True         # Determine/smooth/apply amplitudes from contCals
-
-# Apply calibration and average?
-doCalAvg      = True                    # calibrate and average cont. calibrator data
-avgClass      = "UVAvg"                 # AIPS class of calibrated/averaged uv data
-CalAvgTime    = 10.0/60.0               # Time for averaging calibrated uv data (min)
-CABIF         = 1                       # First IF to copy
-CAEIF         = 0                       # Highest IF to copy
-CABChan       = 1                       # First Channel to copy
-CAEChan       = 0                       # Highest Channel to copy
-chAvg         = 10000000                # Average all channels
-avgFreq       = 1                       # Average all channels
-
-# Phase calibration of all targets in averaged calibrated data
-doPhaseCal    = True       # Phase calibrate all data with self-cal?
-
-# Instrumental polarization cal?
-doInstPol     = True      # determination instrumental polarization from instPolCal
-instPolCal    = None      # Defaults to contCals
-
-# Right-Left phase (EVPA) calibration 
-doRLCal      = True       # Set RL phases from RLCal - also needs RLCal
-RLCal        = None       # RL Calibrator source name, if given, a list of triplets, 
-                          # (name, R-L phase(deg@1GHz), RM (rad/m^2))
-
-# Final Image/Clean
-doImgFullTarget = True    # Final Image/Clean/selfcal
-Stokes          = "I"     # Stokes to image
-doKntrPlots     = True    # Contour plots
-
-# Final
-outDisk       = 0          # FITS disk number for output (0=cwd)
-doSaveUV      = True       # Save uv data
-doSaveImg     = True       # Save images
-doSaveTab     = True       # Save Tables
-doCleanup     = True       # Destroy AIPS files
-copyDestDir   = ''         # Destination directory for copying output files
-                           #   empty string -> do not copy
-
-# diagnostics
-doSNPlot      = True       # Plot SN tables etc
-doDiagPlots   = True       # Plot single source diagnostics
-prtLv         = 2          # Amount of task print diagnostics
-doMetadata    = True       # Save source and project metadata
-doHTML        = True       # Output HTML report
+# Initialize parameters
+parms = VLBAInitContParms()
 
 ############################# Set Project Processing parameters ##################
 parmFile = sys.argv[2]
 execfile (parmFile)
 
 ################################## Process #####################################
-# Init cal pickle jar
+# Init cal pickle jars
 goodCalPicklefile = "./"+project+"_"+session+"_"+band+"GoodCal.pickle"   # Where results saved
 # Default "best" calibration
 goodCal = {"Source":"  ", "souID":0,"timeRange":(0.0,100.0), "Fract":0.0, "SNR":0.0, "bestRef":0}
 SaveObject(goodCal, goodCalPicklefile, False)   # Save initial default
+OKCalPicklefile = "./"+project+"_"+session+"_"+band+"OKCal.pickle"   # Where results saved
+# Default OK calibrators
+SaveObject(parms["contCals"], OKCalPicklefile, False)   # Save initial default
 
 # Load the outputs pickle jar
 VLBAFetchOutFiles()
@@ -232,69 +100,99 @@ if doLoadUVF:
 # Otherwise set uv
 if uv==None and not check:
     Aname = VLBAAIPSName(project, session)
-    uv = UV.newPAUV("AIPS UV DATA", Aname, dataClass, disk, seq, True, err)
+    uvname = project+"_"+session+"_"+band
+    uv = UV.newPAUV(uvname, Aname, dataClass, disk, seq, True, err)
     if err.isErr:
         OErr.printErrMsg(err, "Error creating AIPS data")
 
+# frequency dependent default parameters
+VLBAInitContFQParms(uv, parms, err, \
+                        logfile=logFile, check=check, debug=debug)
+
 # Clear any old calibration/editing 
-if doClearTab:
-    VLBAClearCal(uv, err, doGain=doGain, doFlag=doFlag, doBP=doBP, check=check, logfile=logFile)
+if parms["doClearTab"]:
+    VLBAClearCal(uv, err, doGain=parms["doGain"], doFlag=parms["doFlag"], doBP=parms["doBP"], \
+                     check=check, logfile=logFile)
     OErr.printErrMsg(err, "Error resetting calibration")
 
 # Copy FG 1 to FG 2
-if doCopyFG:
+if parms["doCopyFG"]:
     retCode = VLBACopyFG (uv, err, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error Copying FG table"
 
 # Special editing
-if doEditList and not check:
-    for edt in editList:
+if parms["doEditList"] and not check:
+    for edt in parms["editList"]:
         UV.PFlag(uv,err,timeRange=[dhms2day(edt["timer"][0]),dhms2day(edt["timer"][1])], \
                      flagVer=editFG, Ants=edt["Ant"], Chans=edt["Chans"], IFs=edt["IFs"], \
                      Stokes=edt["Stokes"], Reason=edt["Reason"])
         OErr.printErrMsg(err, "Error Flagging")
 
 # Quack to remove data from start and end of each scan
-if doQuack:
-    retCode = VLBAQuack (uv, err, begDrop=quackBegDrop, endDrop=quackEndDrop, Reason=quackReason, \
+if parms["doQuack"]:
+    retCode = VLBAQuack (uv, err, \
+                             begDrop=parms["quackBegDrop"], endDrop=parms["quackEndDrop"], \
+                             Reason=parms["quackReason"], \
                              logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error Quacking data"
 
 # Quantization correction?
-if doQuantCor:
+if parms["doQuantCor"]:
     plotFile = "./"+project+"_"+session+"_"+band+"Quant.ps"
-    retCode = VLBAQuantCor(uv, QuantSmo, QuantFlag, err, \
-                               doSNPlot=doSNPlot, plotFile=plotFile, \
+    retCode = VLBAQuantCor(uv, parms["QuantSmo"], parms["QuantFlag"], err, \
+                               doSNPlot=parms["doSNPlot"], plotFile=plotFile, \
                                logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in quantization correcting/flagging"
 
 # Parallactic angle correction?
-if doPACor:
+if parms["doPACor"]:
     retCode = VLBAPACor(uv, err, noScrat=noScrat, \
                             logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in quantization correcting/flagging"
 
 # Opacity/Tsys/gain correction
-if doOpacCor:
+if parms["doOpacCor"]:
     plotFile = "./"+project+"_"+session+"_"+band+"Opacity.ps"
-    retCode = VLBAOpacCor(uv, OpacSmoo, err,  \
-                              doSNPlot=doSNPlot, plotFile=plotFile, \
+    retCode = VLBAOpacCor(uv, parms["OpacSmoo"], err,  \
+                              doSNPlot=parms["doSNPlot"], plotFile=plotFile, \
                               logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in opacity/gain.Tsys correction"
+    
+    VLBASaveOutFiles() # Save plot file in Outfiles
 
-# Find best calibration
-if doFindCal:
-    goodCal = VLBAGoodCal(uv,  err, solInt=findSolInt, timeInt=findTimeInt, \
-                          calSou=contCals, \
-                          #CalModel=contCalModel, \
-                          doCalib=-1, flagVer=2, refAnts=refAnts, \
-                          noScrat=noScrat, nThreads=nThreads, \
-                          logfile=logFile, check=check, debug=debug)
+# Need to determine a list of calibrators?
+if (parms["contCals"]==None) or (len(parms["contCals"])<=0):
+    if parms["doFindOK"]:
+        slist = VLBAAllSource(uv, err,logfile=logFile,check=check,debug=debug)
+        parms["contCals"] = VLBAOKCal(uv, parms["minOKFract"], err, \
+                                          solInt=parms["findSolInt"],  \
+                                          calSou=slist, minSNR=parms["minOKSNR"], \
+                                          doCalib=-1, flagVer=2, refAnts=parms["refAnts"], \
+                                          noScrat=noScrat, nThreads=nThreads, \
+                                          logfile=logFile, check=check, debug=debug)
+        if not parms["contCals"] and not check:
+            raise RuntimeError,"Error in finding acceptable calibrators"
+    else:
+        # Snatch from pickle jat
+        parms["contCals"] = FetchObject(OKCalPicklefile)
+
+# Save contCals to a pickle jar
+SaveObject(parms["contCals"], OKCalPicklefile, True)
+
+# Find best calibration source
+if parms["doFindCal"]:
+    goodCal = VLBAGoodCal(uv,  err, \
+                              solInt=parms["findSolInt"], timeInt=parms["findTimeInt"], \
+                              calSou=parms["contCals"], \
+                              #CalModel=parms["contCalModel"], \
+                              doCalib=-1, flagVer=2, refAnts=parms["refAnts"], \
+                              noScrat=noScrat, nThreads=nThreads, \
+                              logfile=logFile, check=check, debug=debug)
     if not goodCal and not check:
         raise RuntimeError,"Error in finding best calibration data"
     # Save it to a pickle jar
@@ -304,146 +202,164 @@ else:
     goodCal = FetchObject(goodCalPicklefile)
 
 # Apply Phase cals from PC table?
-if doPCcor and not check:
+if parms["doPCcor"] and not check:
     plotFile = "./"+project+"_"+session+"_"+band+"PC.ps"
     retCode = VLBAPCcor(uv, err, calSou=goodCal["Source"], \
                         timeRange=goodCal["timeRange"], \
-                        doCalib=-1, flagVer=2, solInt=manPCsolInt, \
+                        doCalib=-1, flagVer=2, solInt=parms["manPCsolInt"], \
                         PCin=1, SNout=0, refAnt=goodCal["bestRef"], \
-                        doPCPlot=doPCPlot, plotFile=plotFile, \
+                        doPCPlot=parms["doPCPlot"], plotFile=plotFile, \
                         noScrat=noScrat, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in PC calibration"
+    VLBASaveOutFiles() # Save plot file in Outfiles
 
 # manual phase cal
-if doManPCal and not check:
+if parms["doManPCal"] and not check:
     plotFile = "./"+project+session+band+".ManPCal.ps"
     retCode = VLBAManPCal(uv, err, calSou=goodCal["Source"], \
-                          #CalModel=contCalModel, \
-                          timeRange=goodCal["timeRange"], \
-                          solInt=manPCsolInt, smoTime=manPCSmoo,  \
-                          refAnts=[goodCal["bestRef"]], doCalib=2, flagVer=2, 
-                          doManPCalPlot=doManPCalPlot, plotFile=plotFile, noScrat=noScrat, \
-                          nThreads=nThreads, logfile=logFile, check=check, debug=debug)
+                              #CalModel=parms["contCalModel"], \
+                              timeRange=goodCal["timeRange"], \
+                              solInt=parms["manPCsolInt"], smoTime=parms["manPCSmoo"],  \
+                              refAnts=[goodCal["bestRef"]], doCalib=2, flagVer=2, \
+                              doManPCalPlot=parms["doManPCalPlot"], \
+                              plotFile=plotFile, noScrat=noScrat, \
+                              nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in manual phase calibration"
 
 # Bandpass calibration if needed
-if doBPCal and not check:
-    retCode = VLBABPass(uv, goodCal["Source"], err, CalModel=contCalModel, \
-                        timeRange=goodCal["timeRange"], doCalib=2, flagVer=2, \
-                        noScrat=noScrat, solInt1=bpsolint1, solInt2=bpsolint2, solMode=bpsolMode, \
-                        BChan1=bpBChan1, EChan1=bpEChan1, BChan2=bpBChan2, EChan2=bpEChan2, ChWid2=bpChWid2, \
-                        doCenter1=bpDoCenter1, refAnt=goodCal["bestRef"], specIndex=specIndex, \
-                        doAuto = bpdoAuto, \
-                        nThreads=nThreads, logfile=logFile, check=check, debug=debug)
+if parms["doBPCal"] and not check:
+    retCode = VLBABPass(uv, goodCal["Source"], err, CalModel=None, \
+                            timeRange=goodCal["timeRange"], doCalib=2, flagVer=2, \
+                            noScrat=noScrat, solInt1=parms["bpsolint1"], \
+                            solInt2=parms["bpsolint2"], solMode=parms["bpsolMode"], \
+                            BChan1=parms["bpBChan1"], EChan1=parms["bpEChan1"], BChan2=parms["bpBChan2"], \
+                            EChan2=parms["bpEChan2"], ChWid2=parms["bpChWid2"], \
+                            doCenter1=parms["bpDoCenter1"], refAnt=goodCal["bestRef"], specIndex=parms["specIndex"], \
+                            doAuto = parms["bpdoAuto"], \
+                            nThreads=nThreads, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in Bandpass calibration"
 
 # Plot amplitude and phase vs. frequency
-if doSpecPlot:
+if parms["doSpecPlot"]:
     plotFile = "./"+project+session+band+".spec.ps"
-    VLBASpecPlot( uv, goodCal, err, doband=1, plotFile=plotFile, logfile=logFile )
+    VLBASpecPlot( uv, goodCal, err, doband=1, check=check, plotFile=plotFile, logfile=logFile )
+    VLBASaveOutFiles() # Save plot file in Outfiles
 
 # image cals
-if doImgCal and not check:
-    retCode = VLBAImageCals(uv, err, Sources=contCals, seq=seq, sclass=outCclass, \
-                            doCalib=2, flagVer=2, doBand=1, \
-                            FOV=FOV, Robust=Robust, \
-                            maxPSCLoop=maxPSCLoop, minFluxPSC=minFluxPSC, solPInt=solPInt, solMode=solMode, \
-                            maxASCLoop=maxASCLoop, minFluxASC=minFluxASC, solAInt=solAInt, \
-                            avgPol=avgPol, avgIF=avgIF, minSNR=minSNR, refAnt=goodCal["bestRef"], \
-                            nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
+if parms["doImgCal"] and not check:
+    retCode = VLBAImageCals(uv, err, Sources=parms["contCals"], seq=seq, sclass=parms["outCclass"], \
+                                doCalib=2, flagVer=2, doBand=1, \
+                                FOV=parms["FOV"], Robust=parms["Robust"], \
+                                maxPSCLoop=parms["maxPSCLoop"], minFluxPSC=parms["minFluxPSC"], \
+                                solPInt=parms["solPInt"], solMode=parms["solMode"], \
+                                maxASCLoop=parms["maxASCLoop"], minFluxASC=parms["minFluxASC"], solAInt=parms["solAInt"], \
+                                avgPol=parms["avgPol"], avgIF=parms["avgIF"], minSNR=parms["minSNR"], refAnt=goodCal["bestRef"], \
+                                nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in imaging calibrators"
     
 # Check if calibrator models now available
-contCalModel = VLBAImageModel(contCals, outCclass, disk, seq, err)
+parms["contCalModel"] = VLBAImageModel(parms["contCals"], parms["outCclass"], disk, seq, err)
 
 # delay calibration
-if doDelayCal and not check:
+if parms["doDelayCal"] and not check:
     plotFile = "./"+project+"_"+session+"_"+band+"DelayCal.ps"
-    retCode = VLBADelayCal(uv, err, calSou=contCals, CalModel=contCalModel, \
+    retCode = VLBADelayCal(uv, err, calSou=parms["contCals"], CalModel=parms["contCalModel"], \
                                doCalib=2, flagVer=2, doBand=1, \
-                               solInt=manPCsolInt, smoTime=manPCSmoo,  \
+                               solInt=parms["manPCsolInt"], smoTime=parms["delaySmoo"],  \
                                refAnts=[goodCal["bestRef"]], \
-                               doSNPlot=doSNPlot, plotFile=plotFile, \
+                               doSNPlot=parms["doSNPlot"], plotFile=plotFile, \
                                nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in delay calibration"
+    VLBASaveOutFiles() # Save plot file in Outfiles
     
 # Amplitude calibration
-if doAmpCal and not check:
+# NOTE: REALLY OUGHT TO HAVE MODEL FOR THIS
+if parms["doAmpCal"] and not check:
     plotFile = "./"+project+"_"+session+"_"+band+"AmpCal.ps"
-    retCode = VLBAAmpCal(uv, err, calSou=contCals, CalModel=contCalModel, \
+    retCode = VLBAAmpCal(uv, err, calSou=parms["contCals"], CalModel=parms["contCalModel"], \
                          doCalib=2, flagVer=2, doBand=1, \
-                         refAnt=goodCal["bestRef"], solInt=manPCsolInt, \
-                         smoTimeA=1440.0, smoTimeP = 10.0, \
-                         doSNPlot=doSNPlot, plotFile=plotFile, \
+                         refAnt=goodCal["bestRef"], solInt=parms["solAInt"], \
+                         smoTimeA=24.0, smoTimeP = 10./60., \
+                         doSNPlot=parms["doSNPlot"], plotFile=plotFile, \
                          nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in amplitude calibration"
+    VLBASaveOutFiles() # Save plot file in Outfiles
     
-# Calibrate and average continuum calibrator data
-if doCalAvg:
-    retCode = VLBACalAvg (uv, avgClass, seq, CalAvgTime, err, \
-                          flagVer=2, doCalib=2, gainUse=0, doBand=1, BPVer=1,  \
-                          BIF=CABIF, EIF=CAEIF, BChan=CABChan, EChan=CAEChan, \
-                          chAvg=chAvg, avgFreq=avgFreq, Compress=Compress, \
-                          logfile=logFile, check=check, debug=debug)
+# Calibrate and average  data
+if parms["doCalAvg"]:
+    retCode = VLBACalAvg (uv, parms["avgClass"], seq, parms["CalAvgTime"], err, \
+                              flagVer=2, doCalib=2, gainUse=0, doBand=1, BPVer=1,  \
+                              BIF=parms["CABIF"], EIF=parms["CAEIF"], \
+                              BChan=parms["CABChan"], EChan=parms["CAEChan"], \
+                              chAvg=parms["chAvg"], avgFreq=parms["avgFreq"], Compress=Compress, \
+                              logfile=logFile, check=check, debug=debug)
     if retCode!=0:
        raise  RuntimeError,"Error in CalAvg"
 
 # image targets phase only self-cal
-if doImgTarget and not check:
+if parms["doImgTarget"] and not check:
     if not uvc:
         # Get calibrated/averaged data
         Aname = VLBAAIPSName(project, session)
-        uvc = UV.newPAUV("AIPS UV DATA", Aname, avgClass, disk, seq, True, err)
+        uvname = project+"_"+session+"_"+band+"_Cal"
+        uvc = UV.newPAUV(uvname, Aname, parms["avgClass"], disk, seq, True, err)
         if err.isErr:
             OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
-    retCode = VLBAImageCals(uv, err, Sources=targets, seq=seq, sclass=outTclass, \
-                            doCalib=2, flagVer=2, doBand=1, \
-                            FOV=FOV, Robust=Robust, \
-                            maxPSCLoop=maxPSCLoop, minFluxPSC=minFluxPSC, solPInt=solPInt, solMode=solMode, \
-                            maxASCLoop=0, \
-                            avgPol=avgPol, avgIF=avgIF, minSNR=minSNR, refAnt=goodCal["bestRef"], \
-                            nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
+    retCode = VLBAImageCals(uv, err, Sources=parms["targets"], seq=seq, sclass=parms["outTclass"], \
+                                doCalib=2, flagVer=2, doBand=1, \
+                                FOV=parms["FOV"], Robust=parms["Robust"], \
+                                maxPSCLoop=parms["maxPSCLoop"], minFluxPSC=parms["minFluxPSC"], \
+                                solPInt=parms["solPInt"], solMode=parms["solMode"], \
+                                maxASCLoop=parms["maxASCLoop"], minFluxASC=parms["minFluxASC"], solAInt=parms["solAInt"], \
+                                avgPol=parms["avgPol"], avgIF=parms["avgIF"], minSNR=parms["minSNR"],\
+                                refAnt=goodCal["bestRef"], \
+                                nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in imaging targets"
     
 # Phase calibration using target models
-if doPhaseCal:
+if parms["doPhaseCal"]:
     if not uvc:
         # Get calibrated/averaged data
         Aname = VLBAAIPSName(project, session)
-        uvc = UV.newPAUV("AIPS UV DATA", Aname, avgClass, disk, seq, True, err)
+        uvname = project+"_"+session+"_"+band+"_Cal"
+        uvc = UV.newPAUV(uvname, Aname, parms["avgClass"], disk, seq, True, err)
         if err.isErr:
             OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
     # Get list of all if no explicit list given
-    if len(targets)<=0:
+    if len(parms["targets"])<=0:
         slist = VLBAAllSource(uvc,err,logfile=logFile,check=check,debug=debug)
     else:
-        slist = targets
-    targetModel  = VLBAImageModel(slist,outTclass,disk, seq, err)
+        slist = parms["targets"]
+    targetModel  = VLBAImageModel(slist,parms["outTclass"],disk, seq, err)
     plotFile = "./"+project+"_"+session+"_"+band+"PhaseCal.ps"
-    retCode = VLBAPhaseCal(uvc, err, calSou=slist, CalModel=targetModel, \
+    retCode = VLBAPhaseCal(uvc, err, calSou=slist, CalModel=parms["targetModel"], \
                          doCalib=-1, flagVer=0, doBand=-1, \
-                         refAnt=goodCal["bestRef"], solInt=manPCsolInt, \
-                         doSNPlot=doSNPlot, plotFile=plotFile, \
+                         refAnt=goodCal["bestRef"], solInt=parms["manPCsolInt"], \
+                         doSNPlot=parms["doSNPlot"], plotFile=plotFile, \
                          nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in phase calibration"
+    VLBASaveOutFiles() # Save plot file in Outfiles
     
 # Instrumental polarization calibration
-if doInstPol:
+if parms["doInstPol"]:
     # calibrators defaults to strong calibrator list
-    if not instPolCal:
+    if not parms["instPolCal"]:
         instPolCal = contCals
+    else:
+        instPolCal = parms["instPolCal"]
     if not uvc:
         # Get calibrated/averaged data
         Aname = VLBAAIPSName(project, session)
-        uvc = UV.newPAUV("AIPS UV DATA", Aname, avgClass, disk, seq, True, err)
+        uvname = project+"_"+session+"_"+band+"_Cal"
+        uvc = UV.newPAUV(uvname, Aname, parms["avgClass"], disk, seq, True, err)
         if err.isErr:
             OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
     retCode = VLBAPolCal(uvc, instPolCal, err, \
@@ -454,74 +370,83 @@ if doInstPol:
         raise RuntimeError,"Error in instrumental poln calibration"
     
 # RL Phase (EVPA) calibration as BP table
-if doRLCal and RLCal:
+if parms["doRLCal"] and parms["RLCal"]:
     if not uvc:
         # Get calibrated/averaged data
         Aname = VLBAAIPSName(project, session)
-        uvc = UV.newPAUV("AIPS UV DATA", Aname, avgClass, disk, seq, True, err)
+        uvname = project+"_"+session+"_"+band+"_Cal"
+        uvc = UV.newPAUV(uvname, Aname, parms["avgClass"], disk, seq, True, err)
         if err.isErr:
             OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
-    #retCode = VLBARLCal(uvc, err, RLPCal=RLCal,  \
-    #                        doCalib=2, flagVer=0, doBand=-1, doPol=True, BPSoln=1, \
-    #                        refAnt=goodCal["bestRef"], solInt1=1.0, \
-    #                        nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
-    retCode = VLBARLCal2(uvc, err, RLPCal=RLCal, \
+    retCode = VLBARLCal2(uvc, err, RLPCal=parms["RLCal"], \
                             doCalib=2, gainUse=2, flagVer=0, doBand=-1, doPol=True,  \
                             refAnt=goodCal["bestRef"], niter=300, FOV=0.02/3600.0, \
                             nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in RL phase calibration"
     
-# image targets possible with Stokes IQU
-if doImgFullTarget:
+# image targets possible with Stokes I(QU)
+if parms["doImgFullTarget"]:
     if not uvc:
         # Get calibrated/averaged data
         Aname = VLBAAIPSName(project, session)
-        uvc = UV.newPAUV("AIPS UV DATA", Aname, avgClass, disk, seq, True, err)
+        uvname = project+"_"+session+"_"+band+"_Cal"
+        uvc = UV.newPAUV(uvname, Aname, parms["avgClass"], disk, seq, True, err)
         if err.isErr:
             OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
-    retCode = VLBAImageTargets(uvc, err, Sources=targets, seq=seq, sclass=outIclass, \
-                  doCalib=2, flagVer=0, doBand=-1, \
-                  Stokes=Stokes, FOV=FOV, Robust=Robust, \
-                  maxPSCLoop=2, minFluxPSC=minFluxPSC, solPInt=solPInt, solMode=solMode, \
-                  maxASCLoop=0, \
-                  avgPol=avgPol, avgIF=avgIF, minSNR=minSNR, refAnt=goodCal["bestRef"], \
-                  nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
+    # Get list of all if no explicit list given
+    if len(parms["targets"])<=0:
+        slist = VLBAAllSource(uvc,err,logfile=logFile,check=check,debug=debug)
+    else:
+        slist = parms["targets"]
+    retCode = VLBAImageTargets(uvc, err, Sources=slist, seq=seq, sclass=parms["outIclass"], \
+                                   doCalib=2, flagVer=0, doBand=-1, \
+                                   Stokes=parms["Stokes"], FOV=parms["FOV"], Robust=parms["Robust"], \
+                                   maxPSCLoop=2, minFluxPSC=parms["minFluxPSC"], solPInt=parms["solPInt"], solMode="P", \
+                                   maxASCLoop=parms["maxASCLoop"], minFluxASC=parms["minFluxASC"], solAInt=parms["solAInt"], \
+                                   avgPol=parms["avgPol"], avgIF=parms["avgIF"], minSNR=parms["minSNR"], refAnt=goodCal["bestRef"], \
+                                   nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in imaging targets"
 
 # Save UV data? 
-if doSaveUV and (not check):
+if parms["doSaveUV"] and (not check):
     mess ="Write calibrated and averaged UV data to disk" 
     printMess(mess, logFile)
     # Get calibrated/averaged data
     if not uvc:
         Aname = VLBAAIPSName(project, session)
-        uvc = UV.newPAUV("AIPS UV DATA", Aname, avgClass, disk, seq, True, err)
+        uvname = project+"_"+session+"_"+band+"_Cal"
+        uvc = UV.newPAUV(uvname, Aname, parms["avgClass"], disk, seq, True, err)
         if err.isErr:
             OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
     # Write 
     filename = project+session+band+"CalAvg.uvtab"
     fuv = VLBAUVFITS (uvc, filename, 0, err, compress=Compress)
     VLBAAddOutFile( filename, 'project', "Calibrated Averaged UV data" )
+    # Save list of output files
+    VLBASaveOutFiles()
 
 # Save UV data tables?
-if doSaveTab and (not check):
+if parms["doSaveTab"] and (not check):
     filename = project+session+band+"CalTab.uvtab"
     fuv = VLBAUVFITSTab (uv, filename, 0, err)
     VLBAAddOutFile( filename, 'project', "Calibrated AIPS tables" )
+    # Save list of output files
+    VLBASaveOutFiles()
 # Imaging results
-if doSaveImg:
+outDisk = 0
+if parms["doSaveImg"]:
     # How many Stokes images
-    nstok = len(Stokes)
+    nstok = len(parms["Stokes"])
     # Targets
-    if len(targets)<=0:
+    if len(parms["targets"])<=0:
         # fetch full list if needed
         targets = VLBAAllSource(uv, err, logfile=logFile,check=check,debug=debug)
     for target in targets:
         if not check:
             # intermediate images
-            oclass = outTclass
+            oclass = parms["outTclass"]
             x = Image.newPAImage("out", target, oclass, disk, seq, True, err)
             if (not x.exist): 
                 print target,"image not found. Skipping."
@@ -531,12 +456,14 @@ if doSaveImg:
             VLBAAddOutFile( outfile, target, 'Intermediate target image' )
             printMess(mess, logFile)
             xf = VLBAImFITS (x, outfile, outDisk, err, fract=0.1)
+            # Save list of output files
+            VLBASaveOutFiles()
             # Statistics
             zz=imstat(x, err, logfile=logFile)
             del x, xf
             # Final images
             for istok in range(0,nstok):
-                oclass = Stokes[istok:istok+1]+outIclass[1:]
+                oclass = parms["Stokes"][istok:istok+1]+parms["outIclass"][1:]
                 x = Image.newPAImage("out", target, oclass, disk, seq, True, err)
                 outfile = project+session+band+target+"."+oclass+".fits"
                 mess ="Write " +outfile+" on disk "+str(outDisk)
@@ -547,10 +474,12 @@ if doSaveImg:
                 # Statistics
                 zz=imstat(x, err, logfile=logFile)
                 del x, xf
+                # Save list of output files
+                VLBASaveOutFiles()
     # Calibrators
-    for target in contCals:
+    for target in parms["contCals"]:
         if not check:
-            oclass = outCclass
+            oclass = parms["outCclass"]
             x = Image.newPAImage("out", target, oclass, disk, seq, True, err)
             if (not x.exist): 
                 print target,"image not found. Skipping."
@@ -563,77 +492,87 @@ if doSaveImg:
             # Statistics
             zz=imstat(x, err, logfile=logFile)
             del x, xf
+            # Save list of output files
+            VLBASaveOutFiles()
     # end writing images loop
 
 # Contour plots
-if doKntrPlots:
+if parms["doKntrPlots"]:
     VLBAKntrPlots( err, project=project, session=session, band=band,
-        debug=debug )
+        disk=disk, debug=debug )
+    # Save list of output files
+    VLBASaveOutFiles()
 elif debug:
-    print "Not creating contour plots ( doKntrPlots = ", doKntrPlots, " )"
+    print "Not creating contour plots ( doKntrPlots = ", parms["doKntrPlots"], " )"
 
-# Diagnostic plots
-if doDiagPlots:
+# Source uv plane diagnostic plots
+if parms["doDiagPlots"]:
     # Get the highest number avgClass catalog file
     Aname = VLBAAIPSName( project, session )
     uvc = None
     if not check:
-        uvc = UV.newPAUV("AIPS UV DATA", Aname, avgClass, disk, seq, True, err)
-    VLBADiagPlots( uvc, err, cleanUp=doCleanup, logfile=logFile, check=check, 
-        debug=debug )
+        uvname = project+"_"+session+"_"+band+"_Cal"
+        uvc = UV.newPAUV(uvname, Aname, parms["avgClass"], disk, seq, True, err)
+    VLBADiagPlots( uvc, err, cleanUp=parms["doCleanup"], \
+                       project=project, session=session, band=band, \
+                       logfile=logFile, check=check, debug=debug )
+    # Save list of output files
+    VLBASaveOutFiles()
 elif debug:
-    print "Not creating diagnostic plots ( doDiagPlots = ", doDiagPlots, " )"
+    print "Not creating diagnostic plots ( doDiagPlots = ", parms["doDiagPlots"], " )"
 
 # Save metadata
 srcMetadata = None
 projMetadata = None
-if doMetadata:
+if parms["doMetadata"]:
     if not uvc:
         # Get calibrated/averaged data
         Aname = VLBAAIPSName(project, session)
-        uvc = UV.newPAUV("AIPS UV DATA", Aname, avgClass, disk, seq, True, err)
+        uvname = project+"_"+session+"_"+band+"_Cal"
+        uvc = UV.newPAUV(uvname, Aname, parms["avgClass"], disk, seq, True, err)
         if err.isErr:
             OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
 
     # Get source metadata; save to pickle file
-    srcMetadata = VLBASrcMetadata( uvc, err, Sources=targets, seq=seq, 
-        sclass=outIclass, Stokes=Stokes, logfile=logFile, check=check, 
+    srcMetadata = VLBASrcMetadata( uvc, err, Sources=parms["targets"], seq=seq, 
+        sclass=parms["outIclass"], Stokes=parms["Stokes"], logfile=logFile, check=check, 
         debug=debug )
     picklefile = "./"+project+"_"+session+"_"+band+"SrcReport.pickle" 
     SaveObject(srcMetadata, picklefile, True) 
 
     # Get project metadata; save to pickle file
-    projMetadata = VLBAProjMetadata( uvc, AIPS_VERSION, err, contCals=contCals,
+    projMetadata = VLBAProjMetadata( uvc, AIPS_VERSION, err, contCals=parms["contCals"],
         goodCal = goodCal, project = project, session = session, band = band )
     picklefile = "./"+project+"_"+session+"_"+band+"ProjReport.pickle"
     SaveObject(srcMetadata, picklefile, True) 
 
 # Write report
-if doHTML:
-    VLBAHTMLReport( projMetadata, srcMetadata, outfile="report.html",
-        logFile=logFile )
+if parms["doHTML"]:
+    VLBAHTMLReport( projMetadata, srcMetadata, \
+                        outfile=project+"_"+session+"_"+band+"report.html", \
+                        logFile=logFile )
 
 # Save list of output files
 VLBASaveOutFiles()
 
 # Copy output files to specificed destination directory
-if copyDestDir:
-    VLBACopyOutFiles( destDir=copyDestDir, logFile=logFile )
+if parms["copyDestDir"]:
+    VLBACopyOutFiles( destDir=parms["copyDestDir"], logFile=logFile )
 
 # Cleanup - delete AIPS files
-if doCleanup and (not check):
+if parms["doCleanup"] and (not check):
     # Delete target images
     # How many Stokes images
-    nstok = len(Stokes)
+    nstok = len(parms["Stokes"])
     for istok in range(0,nstok):
-        oclass = Stokes[istok:istok+1]+outIclass[1:]
+        oclass = parms["Stokes"][istok:istok+1]+parms["outIclass"][1:]
         AllDest(err, disk=disk,Aseq=seq,Aclass=oclass)
     
     # delete Calibrator images
-    AllDest(err, disk=disk,Aseq=seq,Aclass=outCclass)
+    AllDest(err, disk=disk,Aseq=seq,Aclass=parms["outCclass"])
     
     # Delete intermediate target images
-    AllDest(err, disk=disk,Aseq=seq,Aclass=outTclass)
+    AllDest(err, disk=disk,Aseq=seq,Aclass=parms["outTclass"])
     OErr.printErrMsg(err, "Deleting AIPS images")
     
     # Delete UV data
@@ -641,7 +580,7 @@ if doCleanup and (not check):
     # Zap calibrated/averaged data
     if not uvc:
         Aname = VLBAAIPSName(project, session)
-        uvc = UV.newPAUV("AIPS UV DATA", Aname, avgClass, disk, seq, True, err)
+        uvc = UV.newPAUV("AIPS UV DATA", Aname, parms["avgClass"], disk, seq, True, err)
         if err.isErr:
             OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
     uvc.Zap(err)

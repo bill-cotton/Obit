@@ -1,4 +1,4 @@
-# Mira Sprectrum plotting  utilities
+# Spectrum plotting  utilities
 import math, string, Obit, Image, ImageUtil, ImageDesc, FArray, FArrayUtil, InfoList
 import Table, OErr
 import OPlot
@@ -299,6 +299,77 @@ def OImageSpectrum(inImage, pixel, err, chOff=-9999,bchan=1, echan=0):
     # end OImageSpectrum
     
 
+def OImageMFSpectrum(inImage, pixel, err, bchan=1, echan=0):
+    """ Obtain a spectrum from a given pixel in an Obit MF image
+
+    returns a dictionary with entries
+       ch      = channel numbers
+       freq    = velocity (MHz) coordinate
+       flux    = spectral values (mJy)
+       refFreq = reference frequency
+       fitSpec = fitted spectrum
+    inImage = Obit MF image (as from MFImage)
+    pixel   = array of integers giving 1-rel pixel
+    bchan   = first 1-rel plane number (relative to cube)
+    echan   = highest plane number 0->all
+    """
+    ################################################################
+    # Frequency info
+    imDict = inImage.Desc.List.Dict
+    nterm = imDict["NTERM"][2][0]
+    nspec = imDict["NSPEC"][2][0]
+    hfreq = []
+    for i in range(0,nspec):
+        key = "FREQ%4.4d"%(i+1)
+        hfreq.append(imDict[key][2][0])
+    # Image
+    info = inImage.List
+    info.set("BLC",[1,1,1,1,1,1,1])
+    info.set("TRC",[0,0,0,0,0,0,0])
+    inImage.Open(Image.READONLY, err)
+    OErr.printErrMsg(err, "Error opening image")
+    imDict = inImage.Desc.Dict
+    nplane = imDict["inaxes"][2]
+    blc = [pixel[0],pixel[1],1];
+    trc=[pixel[0], imDict["inaxes"][1], 1]
+    trc=[pixel[0], pixel[1], 1]
+    nchan = echan
+    if echan<=0:
+        echan = imDict["inaxes"][2]
+        nchan = echan
+    refFreq = imDict["crval"][2]
+
+    # Loop over planes reading fittes spectrum
+    fitSpec = []
+    for i in range(1,nterm+1):
+        # Read plane
+        blc[2]=i; trc[2]=i
+        data = inImage.ReadPlane(err,blc=blc,trc=trc)
+        OErr.printErrMsg(err, "Error reading plane")
+        fitSpec.append(data.get(0,0))
+    
+    # Loop over planes reading channel fluxes
+    ch = []; freq = []; flux=[]
+    for i in range(bchan+nterm,nchan+1):
+        # Read plane
+        blc[2]=i; trc[2]=i
+        data = inImage.ReadPlane(err,blc=blc,trc=trc)
+        OErr.printErrMsg(err, "Error reading plane")
+        s = data.get(0,0)
+        
+        #print "debug", i, blc, trc, s
+        # save
+        ch.append(i)
+        freq.append(hfreq[i-nterm-1]*1.0e-9)
+        flux.append(s*1.0e3)
+    
+    inImage.Close(err)
+    OErr.printErrMsg(err, "Error closinging image")
+    bchan = 1; echan = 0;
+    return {'ch':ch,'freq':freq,'flux':flux,'refFreq':refFreq,'fitSpec':fitSpec}
+    # end OImageMFSpectrum
+    
+
 def PlotInp(spec, spec2, label, file, \
             xlabel="Velocity (km/sec)", ylabel="Flux Density (Jy)",
             xrange=None, yrange=None):
@@ -499,7 +570,94 @@ def doSimplePlot(spec, label, file="None", \
     y   = spec["flux"]
     OPlot.PXYPlot (plot, symbol, x, y, err)
     OPlot.PShow  (plot, err)
+    del plot
     # end doSimplePlot
+
+def doSimpleLogPlot(spec, label, file="None", \
+           xlabel="Freq (MHz)", ylabel="Flux Density (mJy)", \
+           lwidth=1,csize=1,symbol=3):
+    """ Plots and displays a simple log=log spectrum
+
+    accepts spectrum in a dictionary with entries
+       freq    = freq coordinate (MHz)
+       flux    = flux (mJy)
+       refFreq = reference frequency
+       fitSpec = fitted spectrum, plotted as line if given
+    spec   = input spectrum to plot with symbol
+    label  = plot label
+    file   = name of output postscript file, if "None" ask
+             "/xterm" gives xterm display
+    xlabel = [optional] x axis label
+    ylabel = [optional] y axis label
+    lwidth = [optional] line width (integer)
+    csize  = [optional] symbol size (integer)
+    symbol = [optional] plot symbol code
+    """
+    ################################################################
+    xmin=0.95*min(spec['freq'])
+    xmax=1.05*max(spec['freq'])
+    ymin=0.95*min(spec['flux'])
+    ymax=1.05*max(spec['flux'])
+    # Add "/PS" for postscript files
+    if file!="None" and file!="/xterm":
+        filename = file+"/ps"
+    else:
+        filename = file
+    # Create plot object
+    err=Image.err
+    plot=OPlot.newOPlot("plot", err,output=filename)
+    # Set labeling on plot InfoList member
+    info = plot.List
+    dim = [1,1,1,1,1]
+    InfoList.PPutFloat   (info, "XMAX", dim, [xmax],err)
+    InfoList.PPutFloat   (info, "XMIN", dim, [xmin],err)
+    InfoList.PPutFloat   (info, "YMAX", dim, [ymax],err)
+    InfoList.PPutFloat   (info, "YMIN", dim, [ymin],err)
+    InfoList.PPutInt     (info, "LWIDTH", dim, [lwidth],err)
+    InfoList.PPutInt     (info, "CSIZE",  dim, [csize],err)
+    dim[0] = max (1,len(label))
+    InfoList.PAlwaysPutString  (info, "TITLE", dim, [label])
+    dim[0] = max (1,len(xlabel))
+    InfoList.PAlwaysPutString  (info, "XLABEL",dim, [xlabel])
+    dim[0] =  max (1,len(ylabel))
+    InfoList.PAlwaysPutString  (info, "YLABEL",dim, [ylabel])
+    xopt = "BCLTS"
+    dim[0] =  max (1,len(xopt))
+    InfoList.PAlwaysPutString  (info, "XOPT",  dim, [xopt])
+    yopt = "BCLTS"
+    dim[0] =  max (1,len(yopt))
+    InfoList.PAlwaysPutString  (info, "YOPT",  dim, [yopt])
+    x   = spec["freq"]
+    y   = spec["flux"]
+    OPlot.PXYPlot (plot, symbol, x, y, err)
+    # Fitted spectrum given?
+    if ("fitSpec" in spec) and (spec["fitSpec"]!=None) and (len(spec["fitSpec"])>0):
+        refFreq = spec["refFreq"]*1.0e-9
+        ss = spec["fitSpec"]
+        x = []; y = []
+        deltax = xmax - xmin
+        for i in range (0,101):
+            f = xmin + i*0.01*deltax
+            x.append(f)
+            ll  = math.log(f/refFreq)
+            lll = math.log(f/refFreq)
+            arg = 0.0
+            for t in ss[1:]:
+                arg += t*lll
+                lll *= ll
+            y.append(ss[0] * 1000.0 * math.exp(arg))
+        OPlot.PXYOver (plot, 0, x, y, err)
+        if len(ss)>=3:
+            speclabel="S#d%5.1f GHz#u=%5.1f Jy, #ga= %5.2f, curve=%5.3f"%(refFreq,ss[0],ss[1],ss[2])
+        elif len(ss)==2:
+            speclabel="S#d%5.1f GHz#u=%5.1f Jy, #ga= %5.2f"%(refFreq,ss[0],ss[1])
+        OPlot.PRelText(plot, "T", -01.0, 0.3, 0.0, speclabel, err)
+
+        
+    labelLogPlot (plot, xmin, xmax, ymin, ymax, err)
+    OPlot.PShow  (plot, err)
+    del plot
+    # end doSimpleLogPlot
 
 def doVPlot(spec, spec2, label, fact2=1.0, file="None", \
            xlabel="Velocity (km/s)", ylabel="Flux Density (Jy)", \
@@ -568,3 +726,53 @@ def doVPlot(spec, spec2, label, fact2=1.0, file="None", \
     OPlot.PText(plot, tx, ty, 0.0, 0.0, "* = "+Stokes+"*"+str(fact2), err)
     OPlot.PShow  (plot, err)
     # end doVPlot
+    
+def labelLogPlot(plot, xmin, xmax, ymin, ymax, err, vals=None):
+    """ Label log-log plots - plPlot is completely incompetent at this
+
+    plot   = plot to label
+    xmin   = xmin of plot, normal units
+    xmax   = xmax of plot, normal units
+    ymin   = ymin of plot, normal units
+    ymax   = ymax of plot, normal units
+    vals   = list of strings of values to plot
+    """
+    ################################################################
+    # Default values of labels
+    defvals = ["0.002", "0.003", "0.004", "0.005", "0.007", \
+               "0.02", "0.03", "0.04", "0.05", "0.07", \
+               "0.2", "0.3", "0.4", "0.5", "0.7", \
+               "2", "3", "4", "5", "6", "7", "8", "9", \
+               "20", "30", "40", "50", "70", \
+               "200", "300", "400", "500", "700", \
+               "2000", "3000", "4000", "5000", "7000", \
+               ]
+    if vals==None:
+        pltVals = defvals
+    else:
+        pltVals = vals
+
+    # logs of extrema
+    logxmin = math.log10(xmin)
+    logxmax = math.log10(xmax)
+    logymin = math.log10(ymin)
+    logymax = math.log10(ymax)
+    
+    # X axis
+    fjust = 0.5
+    for val in pltVals:
+        num = float(val)
+        if (num>=xmin) and (num<=xmax):
+            disp  = len(val)
+            coord = (math.log10(num)-logxmin) / (logxmax - logxmin)
+            OPlot.PRelText (plot, "B", disp, coord, fjust, val, err)
+    # end loop
+    # Y axis
+    fjust = 0.0
+    for val in pltVals:
+        num = float(val)
+        if (num>=ymin) and (num<=ymax):
+            disp  = len(val)
+            coord = (math.log10(num)-logymin) / (logymax - logymin)
+            OPlot.PRelText (plot, "LV", disp, coord, fjust, val, err)
+    # end loop
