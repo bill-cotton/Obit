@@ -1,4 +1,4 @@
-/* $Id: ObitImageMosaicWB.c 147 2009-12-11 12:58:31Z bill.cotton $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2010                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

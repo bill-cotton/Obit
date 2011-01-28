@@ -1,4 +1,4 @@
-/* $Id: ObitDConCleanVisWB.c 149 2010-01-01 18:31:02Z bill.cotton $  */
+/* $Id$  */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2010                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

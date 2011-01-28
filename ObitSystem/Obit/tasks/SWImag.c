@@ -1,4 +1,4 @@
-/* $Id: SWImag.c 144 2009-12-01 15:01:18Z bill.cotton $  */
+/* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set               */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2010                                               */

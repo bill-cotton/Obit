@@ -1,4 +1,4 @@
-/* $Id: BeamCor.c 144 2009-12-01 15:01:18Z bill.cotton $ */
+/* $Id$ */
 /*  Imaging software correcting for tabulated beamshape               */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2010                                               */

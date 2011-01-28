@@ -1,4 +1,4 @@
-/* $Id:  $  */
+/* $Id$  */
 /* FuncContainer Obit function container process                     */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2005-2010                                          */

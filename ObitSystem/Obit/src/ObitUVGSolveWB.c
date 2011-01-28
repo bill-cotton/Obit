@@ -1,4 +1,4 @@
-/* $Id: ObitUVGSolveWB.c 163 2010-03-01 15:05:52Z bill.cotton $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2010                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

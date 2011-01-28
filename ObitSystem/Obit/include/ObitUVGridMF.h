@@ -1,4 +1,4 @@
-/* $Id: ObitUVGridMF.h 69 2009-01-21 16:00:01Z bill.cotton $        */
+/* $Id$        */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2010                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

@@ -1,4 +1,4 @@
-/* $Id:  $  */
+/* $Id$  */
 /* Task to correct off-axis instrumental polarization in UV data      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2009-2010                                          */

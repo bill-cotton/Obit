@@ -1,4 +1,4 @@
-/* $Id:  $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2009,2010                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

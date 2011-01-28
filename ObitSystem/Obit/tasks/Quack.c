@@ -1,4 +1,4 @@
-/* $Id: Quack.c 101 2009-05-17 18:53:54Z bill.cotton $  */
+/* $Id$  */
 /* Obit task to Flag beginning or end portions of UV-data scans       */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2010                                               */

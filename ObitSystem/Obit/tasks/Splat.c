@@ -1,4 +1,4 @@
-/* $Id: Splat.c 221 2010-09-15 01:10:23Z bill.cotton $  */
+/* $Id$  */
 /* Obit Task apply calibration snd write multi source files */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2010                                               */

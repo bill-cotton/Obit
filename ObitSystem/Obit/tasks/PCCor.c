@@ -1,4 +1,4 @@
-/* $Id: PCCor.c 225 2010-09-24 00:53:00Z bill.cotton $  */
+/* $Id$  */
 /* Convert Pulse Cal (PC) table into an SN table                      */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2010                                               */

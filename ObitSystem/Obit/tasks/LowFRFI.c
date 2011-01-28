@@ -1,4 +1,4 @@
-/* $Id: LowFRFI.c 109 2009-06-10 12:11:14Z bill.cotton $  */
+/* $Id$  */
 /* Low Frequency Radio Interferometry RFI removal                     */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2006-2010                                          */

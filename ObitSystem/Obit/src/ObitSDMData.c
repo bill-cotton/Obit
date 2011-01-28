@@ -1,4 +1,4 @@
-/* $Id: ObitSDMData.c 2 2008-06-10 15:32:27Z bill.cotton $        */
+/* $Id$        */
 /*
 Which ASDM tables have been coded (X)
 X    ASDM.xml

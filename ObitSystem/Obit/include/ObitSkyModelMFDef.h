@@ -1,4 +1,4 @@
-/* $Id: ObitSkyModelMFDef.h 119 2009-07-17 16:02:35Z bill.cotton $ */
+/* $Id$ */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2010,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

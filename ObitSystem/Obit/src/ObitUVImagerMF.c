@@ -1,4 +1,4 @@
-/* $Id: ObitUVImagerMF.c 129 2009-09-27 22:00:59Z bill.cotton $        */
+/* $Id$        */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2010                                               */
 /*;  Associated Universities, Inc. Washington DC, USA.                */

@@ -1,4 +1,4 @@
-; $Id: BDFIn.TDF 199 2010-06-15 11:39:58Z bill.cotton $
+; $Id$
 ; BDFIn 
 ;---------------------------------------------------------------
 ;! Obit Convert EVLA BDF data and append to a UV data file.

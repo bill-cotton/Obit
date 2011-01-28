@@ -1,4 +1,4 @@
-/* $Id: BPass.c 109 2009-06-10 12:11:14Z bill.cotton $  */
+/* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2009,2010                                          */

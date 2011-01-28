@@ -1,4 +1,4 @@
-/* $Id:  $  */
+/* $Id$  */
 /* Obit  Radio Single dish On The Fly imaging/selfcalibration         */
 /*--------------------------------------------------------------------*/
 /*;  Copyright (C) 2009                                               */
