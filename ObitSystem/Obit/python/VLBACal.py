@@ -331,6 +331,455 @@ def VLBAAIPSName( project, session):
     return Aname
     # end VLBAAIPSName
 
+def VLBAIDILoad(filename, project, session, band, Aclass, Adisk, Aseq, err, \
+                    wtThresh=0.8,calInt=1.0,logfile='',Compress=False, \
+                    check=False, debug=False):
+    """ Read FITS IDI file into AIPS
+
+    Read a IDI FITS UV data file and write an AIPS data set
+    AIPS file name will be project+session with project truncated to fit in 12 characters
+    Returns AIPS data file
+    filename   = name of FITS file
+    project    = project name
+    session    = session code
+    band       = observing band code
+    Aclass     = AIPS class of file
+    Aseq       = AIPS sequence number of file, 0=> create new
+    Adisk      = FITS directory number
+    err        = Python Obit Error/message stack
+    logfile    = logfile for messages
+    wtThresh   = Data weight threshold
+    calInt     = CL entry interval (min)
+    Compress   = Write AIPS data in compressed form?
+    check      = Only check script, don't execute tasks
+    debug      = show input
+    returns AIPS UV data object
+    """
+    ################################################################
+    outuv = None   # In case of failure
+    #  Get AIPS Name
+    Aname = VLBAAIPSName(project,session)
+    fitld = AIPSTask.AIPSTask("fitld")
+    fitld.datain   = filename
+    fitld.outname  = Aname
+    fitld.outclass = Aclass
+    fitld.outseq   = Aseq
+    fitld.outdisk  = Adisk
+    if Compress:
+        fitld.douvcomp = 1.0
+    fitld.doconcat = 1.0
+    fitld.clint    = calInt
+    fitld.wtthresh = wtThresh
+    fitld.logFile  = logfile
+    if debug:
+        fitld.i
+    # Trap failure
+    try:
+        if not check:
+            fitld.g
+    except Exception, exception:
+        print exception
+        mess = "FITLD load Failed "
+        printMess(mess, logfile)
+    else:
+        pass
+    
+    # Get output
+    if not check:
+        uvname = project+"_"+session+"_"+band
+        outuv = UV.newPAUV(uvname, Aname, Aclass, Adisk, Aseq, True, err)
+
+    return outuv
+    # end VLBAIDILoad
+
+def VLBAInitContParms():
+    """ Initialize VLBA continuum pipeline parameters
+
+    Creates and initializes the parameter dict
+    Returns python dict with parameters
+    """
+    ################################################################
+ 
+    parms = {}
+    # Quantization correction
+    parms["doQuantCor"] =  True         # Do quantization correction
+    parms["QuantSmo"] =    0.5          # Smoothing time (hr) for quantization corrections
+    parms["QuantFlag"] =   0.0          # If >0, flag solutions < QuantFlag (use 0.9 for 1 bit, 0.8 for 2 bit)
+    
+    # Parallactic angle correction
+    parms["doPACor"] =     True         # Make parallactic angle correction
+    
+    # Opacity/Tsys correction
+    parms["doOpacCor"] =   True         # Make Opacity/Tsys/gain correction?
+    parms["OpacSmoo"] =    0.25         # Smoothing time (hr) for opacity corrections
+
+    # Special editing list
+    parms["doEditList"] =  False        # Edit using editList?
+    parms["editFG"] =      2            # Table to apply edit list to
+    editList = [ \
+        #    "timer":("0/06:09:0.0","0/06:13:0.0"),"Ant":[ 8,0],"IFs":[2,2],"Chans":[1,0],"Stokes":'1110',"Reason":"bad data"},
+        ]
+    parms["editList"] = editList
+
+    # Apply phase cal corrections?
+    parms["doPCcor"] =  True            # Apply PC table?
+    parms["doPCPlot"] = True            # Plot results?
+    
+    # 'Manual" phase cal - even to tweak up PCals
+    parms["doManPCal"] =      True      # Determine and apply manual phase cals?
+    parms["manPCsolInt"] =    None      # Manual phase cal solution interval (min)
+    parms["manPCSmoo"] =      None      # Manual phase cal smoothing time (hr)
+    parms["doManPCalPlot"] =  True      # Plot the phase and delays from manual phase cal
+    
+    # Bandpass Calibration?
+    parms["doBPCal"] =       True       # Determine Bandpass calibration
+    parms["bpBChan1"] =      1          # Low freq. channel,  initial cal
+    parms["bpEChan1"] =      0          # Highest freq channel, initial cal, 0=>all
+    parms["bpDoCenter1"] =   None       # Fraction of  channels in 1st, overrides bpBChan1, bpEChan1
+    parms["bpBChan2"] =      1          # Low freq. channel for BP cal
+    parms["bpEChan2"] =      0          # Highest freq channel for BP cal,  0=>all 
+    parms["bpChWid2"] =      1          # Number of channels in running mean BP soln
+    parms["bpdoAuto"] =      False      # Use autocorrelations rather than cross?
+    parms["bpsolMode"] =     'A&P'      # Band pass type 'A&P', 'P', 'P!A'
+    parms["bpsolint1"] =     None       # BPass phase correction solution in min
+    parms["bpsolint2"] =     10.0       # BPass bandpass solution in min
+    parms["specIndex"] =     0.0        # Spectral index of BP Cal
+    parms["doSpecPlot"] =    True       # Plot the amp. and phase across the spectrum
+    
+    # Editing
+    parms["doClearTab"] =  True         # Clear cal/edit tables
+    parms["doGain"] =      True         # Clear SN and CL tables >1
+    parms["doFlag"] =      True         # Clear FG tables > 1
+    parms["doBP"] =        True         # Clear BP tables?
+    parms["doCopyFG"] =    True         # Copy FG 1 to FG 2quack
+    parms["doQuack"] =     True         # Quack data?
+    parms["quackBegDrop"] = 0.1         # Time to drop from start of each scan in min
+    parms["quackEndDrop"] = 0.0         # Time to drop from end of each scan in min
+    parms["quackReason"]  = "Quack"     # Reason string
+    
+    # Amp/phase calibration parameters
+    parms["refAnt"] =        0          # Reference antenna
+    parms["refAnts"] =       [0]        # List of Reference antenna for fringe fitting
+    
+    # Imaging calibrators (contCals) and targets
+    parms["doImgCal"] =    True         # Image calibrators
+    parms["targets"] =     []           # targets
+    parms["doImgTarget"] = True         # Image targets?
+    parms["outCclass"] =   "ICalSC"     # Output calibrator image class
+    parms["outTclass"] =   "IImgSC"     # Output target temporary image class
+    parms["outIclass"] =   "IClean"     # Output target final image class
+    parms["Robust"]    =      0.0       # Weighting robust parameter
+    parms["FOV"]       =     None       # Field of view radius in deg.
+    parms["Niter"]     =     500        # Max number of clean iterations
+    parms["minFlux"]   =     0.0        # Minimum CLEAN flux density
+    parms["minSNR"]    =     4.0        # Minimum Allowed SNR
+    parms["solMode"]   =     "DELA"     # Delay solution for phase self cal
+    parms["avgPol"]    =     True       # Average poln in self cal?
+    parms["avgIF"]     =     False      # Average IF in self cal?
+    parms["maxPSCLoop"] =  6            # Max. number of phase self cal loops
+    parms["minFluxPSC"] =  0.1          # Min flux density peak for phase self cal
+    parms["solPInt"]    =  None         # phase self cal solution interval (min)
+    parms["maxASCLoop"] =  1            # Max. number of phase self cal loops
+    parms["minFluxASC"] =  0.5          # Min flux density peak for amp+phase self cal
+    parms["solAInt"]    =  None         # amp+phase self cal solution interval (min)
+    
+    # Find good calibration data
+    parms["doFindCal"]    = True        # Search for good calibration/reference antenna
+    parms["findSolInt"]   = None        # Solution interval (min) for Calib
+    parms["findTimeInt"]  = None        # Maximum timerange, large=>scan
+    parms["contCals"]     = None        # Name or list of continuum cals
+    parms["contCalModel"] = None        # No cal model
+    parms["targetModel"]  = None        # No target model yet
+    # If need to search for calibrators
+    parms["doFindOK"]     = True        # Search for OK cals if contCals not given
+    parms["minOKFract"]   = 0.5         # Minimum fraction of acceptable solutions
+    parms["minOKSNR"]     = 20.0        # Minimum test SNR
+
+    
+    # Delay calibration
+    parms["doDelayCal"] =  True         # Determine/apply delays from contCals
+    parms["delaySmoo"]  =  None         # Delay smoothing time (hr)
+    
+    # Amplitude calibration
+    parms["doAmpCal"] =    True         # Determine/smooth/apply amplitudes from contCals
+    
+    # Apply calibration and average?
+    parms["doCalAvg"] =      True       # calibrate and average cont. calibrator data
+    parms["avgClass"] =      "UVAvg"    # AIPS class of calibrated/averaged uv data
+    parms["CalAvgTime"] =    None       # Time for averaging calibrated uv data (min)
+    parms["CABIF"] =         1          # First IF to copy
+    parms["CAEIF"] =         0          # Highest IF to copy
+    parms["CABChan"] =       1          # First Channel to copy
+    parms["CAEChan"] =       0          # Highest Channel to copy
+    parms["chAvg"] =         10000000   # Average all channels
+    parms["avgFreq"] =       1          # Average all channels
+    
+    # Phase calibration of all targets in averaged calibrated data
+    parms["doPhaseCal"] =    True       # Phase calibrate all data with self-cal?
+    
+    # Instrumental polarization cal?
+    parms["doInstPol"] =     False     # determination instrumental polarization from instPolCal
+    parms["instPolCal"] =    None       # Defaults to contCals
+    
+    # Right-Left phase (EVPA) calibration 
+    parms["doRLCal"] =      False       # Set RL phases from RLCal - also needs RLCal
+    parms["RLCal"] =        None        # RL Calibrator source name, if given, a list of triplets, 
+                                        # (name, R-L phase(deg@1GHz), RM (rad/m^2))
+    
+    # Final Image/Clean
+    parms["doImgFullTarget"] = True     # Final Image/Clean/selfcal
+    parms["Stokes"] =          "I"      # Stokes to image
+    parms["doKntrPlots"] =     True     # Contour plots
+    
+    # Final
+    parms["outDisk"] =       0          # FITS disk number for output (0=cwd)
+    parms["doSaveUV"] =      True       # Save uv data
+    parms["doSaveImg"] =     True       # Save images
+    parms["doSaveTab"] =     True       # Save Tables
+    parms["doCleanup"] =     True       # Destroy AIPS files
+    parms["copyDestDir"] =   ''         # Destination directory for copying output files
+                                        #   empty string -> do not copy
+    
+    # diagnostics
+    parms["doSNPlot"] =      True       # Plot SN tables etc
+    parms["doDiagPlots"] =   True       # Plot single source diagnostics
+    parms["prtLv"] =         2          # Amount of task print diagnostics
+    parms["doMetadata"] =    True       # Save source and project metadata
+    parms["doHTML"] =        True       # Output HTML report
+
+    return parms
+# end VLBAInitContParms
+
+def VLBAInitContFQParms(uv, parms, err, \
+                    logfile=None, check=False, debug=False):
+    """ Initialize VLBA continuum pipeline frequency dependent parameters
+
+    Values set if None on input
+    uv         = Project raw UV data object
+    parms      = Project parameters
+    err        = Obit error/message stack
+    logfile    = logfile for messages
+    check      = Only check script, don't execute tasks
+    debug      = show input
+    Returns python dict with parameters
+    """
+    ################################################################
+    # get frequency from uv data
+    freq = uv.Desc.Dict["crval"][uv.Desc.Dict["jlocf"]]
+
+    # Frequency dependent values
+    if freq<1.0e9:                        # Below L band
+        if parms["manPCsolInt"]==None:
+            parms["manPCsolInt"] =  0.25        # Manual phase cal solution interval (min)
+        if parms["manPCSmoo"]==None:
+            parms["manPCSmoo"]   =  10.0        # Manual phase cal smoothing time (hr)
+        if parms["delaySmoo"]==None:
+            parms["delaySmoo"]   =  0.5         # Delay smoothing time (hr)
+        if parms["bpsolint1"]==None:
+            parms["bpsolint1"]   =  10.0/60.0   # BPass phase correction solution in min
+        if parms["FOV"]==None:
+            parms["FOV"]         =  0.2/3600    # Field of view radius in deg.
+        if parms["solPInt"]==None:
+            parms["solPInt"]     =  0.10        # phase self cal solution interval (min)
+        if parms["solAInt"]==None:
+            parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["findSolInt"]==None:
+            parms["findSolInt"]  =  0.1         # Solution interval (min) for Calib
+        if parms["findTimeInt"]==None:
+            parms["findTimeInt"] =  10.0        # Maximum timerange, large=>scan
+        if parms["CalAvgTime"]==None:
+            parms["CalAvgTime"]  =  10.0/60.0   # Time for averaging calibrated uv data (min)
+    elif freq<2.0e9:                      # L band
+        if parms["manPCsolInt"]==None:
+            parms["manPCsolInt"] =  0.5         # Manual phase cal solution interval (min)
+        if parms["manPCSmoo"]==None:
+            parms["manPCSmoo"]   =  10.0        # Manual phase cal smoothing time (hr)
+        if parms["delaySmoo"]==None:
+            parms["delaySmoo"]   =  0.5         # Delay smoothing time (hr)
+        if parms["bpsolint1"]==None:
+            parms["bpsolint1"]   =  15.0/60.0   # BPass phase correction solution in min
+        if parms["FOV"]==None:
+            parms["FOV"]         =  0.2/3600    # Field of view radius in deg.
+        if parms["solPInt"]==None:
+            parms["solPInt"]     =  0.25        # phase self cal solution interval (min)
+        if parms["solAInt"]==None:
+            parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["findSolInt"]==None:
+            parms["findSolInt"]  =  0.25        # Solution interval (min) for Calib
+        if parms["findTimeInt"]==None:
+            parms["findTimeInt"] =  10.0        # Maximum timerange, large=>scan
+        if parms["CalAvgTime"]==None:
+            parms["CalAvgTime"]  =  10.0/60.0   # Time for averaging calibrated uv data (min)
+    elif freq<3.0e9:                     # S band
+        if parms["manPCsolInt"]==None:
+            parms["manPCsolInt"] =  0.5         # Manual phase cal solution interval (min)
+        if parms["manPCSmoo"]==None:
+            parms["manPCSmoo"]   =  1.0        # Manual phase cal smoothing time (hr)
+        if parms["delaySmoo"]==None:
+            parms["delaySmoo"]   =  0.5         # Delay smoothing time (hr)
+        if parms["bpsolint1"]==None:
+            parms["bpsolint1"]   =  10.0/60.0   # BPass phase correction solution in min
+        if parms["FOV"]==None:
+            parms["FOV"]         =  0.1/3600    # Field of view radius in deg.
+        if parms["solPInt"]==None:
+            parms["solPInt"]     =  0.25        # phase self cal solution interval (min)
+        if parms["solAInt"]==None:
+            parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["findSolInt"]==None:
+            parms["findSolInt"]  =  0.5         # Solution interval (min) for Calib
+        if parms["findTimeInt"]==None:
+            parms["findTimeInt"] =  10.0        # Maximum timerange, large=>scan
+        if parms["CalAvgTime"]==None:
+            parms["CalAvgTime"]  =  10.0/60.0   # Time for averaging calibrated uv data (min)
+    elif freq<8.0e9:                      # C band
+        if parms["manPCsolInt"]==None:
+            parms["manPCsolInt"] =  0.5         # Manual phase cal solution interval (min)
+        if parms["manPCSmoo"]==None:
+            parms["manPCSmoo"]   =  10.0         # Manual phase cal smoothing time (hr)
+        if parms["delaySmoo"]==None:
+            parms["delaySmoo"]   =  0.5         # Delay smoothing time (hr)
+        if parms["bpsolint1"]==None:
+            parms["bpsolint1"]   =  10.0/60.0   # BPass phase correction solution in min
+        if parms["FOV"]==None:
+            parms["FOV"]         =  0.1/3600    # Field of view radius in deg.
+        if parms["solPInt"]==None:
+            parms["solPInt"]     =  0.25        # phase self cal solution interval (min)
+        if parms["solAInt"]==None:
+            parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["findSolInt"]==None:
+            parms["findSolInt"]  =  0.5         # Solution interval (min) for Calib
+        if parms["findTimeInt"]==None:
+            parms["findTimeInt"] =  10.0        # Maximum timerange, large=>scan
+        if parms["CalAvgTime"]==None:
+            parms["CalAvgTime"]  =  10.0/60.0   # Time for averaging calibrated uv data (min)
+    elif freq<10.0e9:                      # X band
+        if parms["manPCsolInt"]==None:
+            parms["manPCsolInt"] =  0.5         # Manual phase cal solution interval (min)
+        if parms["manPCSmoo"]==None:
+            parms["manPCSmoo"]   =  10.0        # Manual phase cal smoothing time (hr)
+        if parms["delaySmoo"]==None:
+            parms["delaySmoo"]   =  0.5         # Delay smoothing time (hr)
+        if parms["bpsolint1"]==None:
+            parms["bpsolint1"]   =  10.0/60.0   # BPass phase correction solution in min
+        if parms["FOV"]==None:
+            parms["FOV"]         =  0.05/3600   # Field of view radius in deg.
+        if parms["solPInt"]==None:
+            parms["solPInt"]     =  0.25        # phase self cal solution interval (min)
+        if parms["solAInt"]==None:
+            parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["findSolInt"]==None:
+            parms["findSolInt"]  =  0.5         # Solution interval (min) for Calib
+        if parms["findTimeInt"]==None:
+            parms["findTimeInt"] =  10.0        # Maximum timerange, large=>scan
+        if parms["CalAvgTime"]==None:
+            parms["CalAvgTime"]  =  10.0/60.0   # Time for averaging calibrated uv data (min)
+    elif freq<18.0e9:                      # Ku band
+        if parms["manPCsolInt"]==None:
+            parms["manPCsolInt"] =  0.5         # Manual phase cal solution interval (min)
+        if parms["manPCSmoo"]==None:
+            parms["manPCSmoo"]   =  10.0        # Manual phase cal smoothing time (hr)
+        if parms["delaySmoo"]==None:
+            parms["delaySmoo"]   =  0.5         # Delay smoothing time (hr)
+        if parms["bpsolint1"]==None:
+            parms["bpsolint1"]   =  10.0/60.0   # BPass phase correction solution in min
+        if parms["FOV"]==None:
+            parms["FOV"]         =  0.02/3600   # Field of view radius in deg.
+        if parms["solPInt"]==None:
+            parms["solPInt"]     =  0.25        # phase self cal solution interval (min)
+        if parms["solAInt"]==None:
+            parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["findSolInt"]==None:
+            parms["findSolInt"]  =  0.5         # Solution interval (min) for Calib
+        if parms["findTimeInt"]==None:
+            parms["findTimeInt"] =  10.0        # Maximum timerange, large=>scan
+        if parms["CalAvgTime"]==None:
+            parms["CalAvgTime"]  =  10.0/60.0   # Time for averaging calibrated uv data (min)
+    elif freq<26.0e9:                      # K band
+        if parms["manPCsolInt"]==None:
+            parms["manPCsolInt"] =  0.2         # Manual phase cal solution interval (min)
+        if parms["manPCSmoo"]==None:
+            parms["manPCSmoo"]   =  10.0        # Manual phase cal smoothing time (hr)
+        if parms["delaySmoo"]==None:
+            parms["delaySmoo"]   =  0.5         # Delay smoothing time (hr)
+        if parms["bpsolint1"]==None:
+            parms["bpsolint1"]   =  10.0/60.0   # BPass phase correction solution in min
+        if parms["FOV"]==None:
+            parms["FOV"]         =  0.02/3600   # Field of view radius in deg.
+        if parms["solPInt"]==None:
+            parms["solPInt"]     =  0.25        # phase self cal solution interval (min)
+        if parms["solAInt"]==None:
+            parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["findSolInt"]==None:
+            parms["findSolInt"]  =  0.3         # Solution interval (min) for Calib
+        if parms["findTimeInt"]==None:
+            parms["findTimeInt"] =  10.0        # Maximum timerange, large=>scan
+        if parms["CalAvgTime"]==None:
+            parms["CalAvgTime"]  =  5.0/60.0    # Time for averaging calibrated uv data (min)
+    elif freq<38.0e9:                     # Ka band
+        if parms["manPCsolInt"]==None:
+            parms["manPCsolInt"] =  0.2         # Manual phase cal solution interval (min)
+        if parms["manPCSmoo"]==None:
+            parms["manPCSmoo"]   =  10.0        # Manual phase cal smoothing time (hr)
+        if parms["delaySmoo"]==None:
+            parms["delaySmoo"]   =  0.5         # Delay smoothing time (hr)
+        if parms["bpsolint1"]==None:
+            parms["bpsolint1"]   =  10.0/60.0   # BPass phase correction solution in min
+        if parms["FOV"]==None:
+            parms["FOV"]         =  0.02/3600   # Field of view radius in deg.
+        if parms["solPInt"]==None:
+            parms["solPInt"]     =  0.25        # phase self cal solution interval (min)
+        if parms["solAInt"]==None:
+            parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["findSolInt"]==None:
+            parms["findSolInt"]  =  0.2         # Solution interval (min) for Calib
+        if parms["findTimeInt"]==None:
+            parms["findTimeInt"] =  10.0        # Maximum timerange, large=>scan
+        if parms["CalAvgTime"]==None:
+            parms["CalAvgTime"]  =  5.0/60.0    # Time for averaging calibrated uv data (min)
+    elif freq<50.0e9:                      # Q band
+        if parms["manPCsolInt"]==None:
+            parms["manPCsolInt"] =  0.1         # Manual phase cal solution interval (min)
+        if parms["manPCSmoo"]==None:
+            parms["manPCSmoo"]   =  10.0        # Manual phase cal smoothing time (hr)
+        if parms["delaySmoo"]==None:
+            parms["delaySmoo"]   =  0.5         # Delay smoothing time (hr)
+        if parms["bpsolint1"]==None:
+            parms["bpsolint1"]   =  5.0/60.0    # BPass phase correction solution in min
+        if parms["FOV"]==None:
+            parms["FOV"]         =  0.02/3600   # Field of view radius in deg.
+        if parms["solPInt"]==None:
+            parms["solPInt"]     =  0.10        # phase self cal solution interval (min)
+        if parms["solAInt"]==None:
+            parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["findSolInt"]==None:
+            parms["findSolInt"]  =  0.1         # Solution interval (min) for Calib
+        if parms["findTimeInt"]==None:
+            parms["findTimeInt"] =  10.0        # Maximum timerange, large=>scan
+        if parms["CalAvgTime"]==None:
+            parms["CalAvgTime"]  =  5.0/60.0    # Time for averaging calibrated uv data (min)
+    else:                                   # Above Q band
+        if parms["manPCsolInt"]==None:
+            parms["manPCsolInt"] =  0.10        # Manual phase cal solution interval (min)
+        if parms["manPCSmoo"]==None:
+            parms["manPCSmoo"]   =  10.0        # Manual phase cal smoothing time (hr)
+        if parms["delaySmoo"]==None:
+            parms["delaySmoo"]   =  0.5         # Delay smoothing time (hr)
+        if parms["bpsolint1"]==None:
+            parms["bpsolint1"]   =  5.0/60.0    # BPass phase correction solution in min
+        if parms["FOV"]==None:
+            parms["FOV"]         =  0.01/3600   # Field of view radius in deg.
+        if parms["solPInt"]==None:
+            parms["solPInt"]     =  0.10        # phase self cal solution interval (min)
+        if parms["solAInt"]==None:
+            parms["solAInt"]     =  3.0         # amp+phase self cal solution interval (min)
+        if parms["findSolInt"]==None:
+            parms["findSolInt"]  =  0.1         # Solution interval (min) for Calib
+        if parms["findTimeInt"]==None:
+            parms["findTimeInt"] =  10.0        # Maximum timerange, large=>scan
+        if parms["CalAvgTime"]==None:
+            parms["CalAvgTime"]  =  4.0/60.0    # Time for averaging calibrated uv data (min)
+    # end VLBAInitContFqParms
+
 def VLBAClearCal(uv, err, doGain=True, doBP=False, doFlag=False, logfile=None, check=False):
     """ Clear previous calibration
 
@@ -451,66 +900,6 @@ def VLBACopyTable(inObj, outObj, inTab, err, inVer=1, outVer=0,
         pass
     return 0
     # end VLBACopyTable
-
-def VLBAIDILoad(filename, project, session, band, Aclass, Adisk, Aseq, err, \
-                    wtThresh=0.8,calInt=1.0,logfile='',Compress=False, \
-                    check=False, debug=False):
-    """ Read FITS IDI file into AIPS
-
-    Read a IDI FITS UV data file and write an AIPS data set
-    AIPS file name will be project+session with project truncated to fit in 12 characters
-    Returns AIPS data file
-    filename   = name of FITS file
-    project    = project name
-    session    = session code
-    band       = observing band code
-    Aclass     = AIPS class of file
-    Aseq       = AIPS sequence number of file, 0=> create new
-    Adisk      = FITS directory number
-    err        = Python Obit Error/message stack
-    logfile    = logfile for messages
-    wtThresh   = Data weight threshold
-    calInt     = CL entry interval (min)
-    Compress   = Write AIPS data in compressed form?
-    check      = Only check script, don't execute tasks
-    debug      = show input
-    returns AIPS UV data object
-    """
-    ################################################################
-    outuv = None   # In case of failure
-    #  Get AIPS Name
-    Aname = VLBAAIPSName(project,session)
-    fitld = AIPSTask.AIPSTask("fitld")
-    fitld.datain   = filename
-    fitld.outname  = Aname
-    fitld.outclass = Aclass
-    fitld.outseq   = Aseq
-    fitld.outdisk  = Adisk
-    if Compress:
-        fitld.douvcomp = 1.0
-    fitld.doconcat = 1.0
-    fitld.clint    = calInt
-    fitld.wtthresh = wtThresh
-    fitld.logFile  = logfile
-    if debug:
-        fitld.i
-    # Trap failure
-    try:
-        if not check:
-            fitld.g
-    except Exception, exception:
-        print exception
-        mess = "FITLD load Failed "
-        printMess(mess, logfile)
-    else:
-        pass
-    
-    # Get output
-    if not check:
-        outuv = UV.newPAUV("UVdata", Aname, Aclass, Adisk, Aseq, True, err)
-
-    return outuv
-    # end VLBAIDILoad
 
 def VLBAFreqInfo(uv, restFreq, srcVel, err, FreqID=1, \
                     logfile='',Compress=False,  check=False, debug=False):
@@ -676,6 +1065,7 @@ def VLBAPlotTab(uv, inext, invers, err, \
     snplt.optype  = optype
     snplt.opcode  = opcode
     snplt.nplots  = nplots
+    snplt.msgkill = 5
     i = 1
     for t in timerang:
         snplt.timerang[i] = t
@@ -709,9 +1099,11 @@ def VLBAPlotTab(uv, inext, invers, err, \
     # end VLBAPlotTab
 
 def VLBAWritePlots(uv, loPL, hiPL, plotFile, err, \
-                     logfile=None, check=False, debug=False):
+                       plotDesc="Diagnostic plot", \
+                       logfile=None, check=False, debug=False):
     """ Writes plots to an external postscript file
 
+    Plot saved in outfiles list
     All Plots deleted from AIPS
     Returns task error code, 0=OK, else failed
     uv       = UV data object to plot
@@ -719,6 +1111,7 @@ def VLBAWritePlots(uv, loPL, hiPL, plotFile, err, \
     hiPL     = Highest PL version number (0->all)
     plotFile = plot file
     err      = Obit error/message stack
+    plotDesc = Description of plot
     logfile  = logfile for messages
     check    = Only check script, don't execute tasks
     debug    = show input
@@ -742,6 +1135,7 @@ def VLBAWritePlots(uv, loPL, hiPL, plotFile, err, \
     lwpla.plver   = max(1, loPL)
     lwpla.invers  = hiPL
     lwpla.outfile = plotFile
+    lwpla.msgkill = 5
     lwpla.logFile = logfile
     if debug:
         lwpla.i
@@ -755,9 +1149,10 @@ def VLBAWritePlots(uv, loPL, hiPL, plotFile, err, \
         printMess(mess, logfile)
         # return 1  # Continue in spite of lwpla failure
     else:
-        pass
+        # Save in outfile list (drop ./ needed by LWPLA)
+        VLBAAddOutFile(plotFile[2:], 'project', plotDesc, logFile=logfile)
     
-    # Delete plot files
+    # Delete AIPS plot files
     if not check:
         zz=uv.ZapTable("AIPS PL", -1,err)
     
@@ -875,6 +1270,7 @@ def VLBAQuantCor(uv, QuantSmoo, QuantFlag, err, \
             return retCode
   
         retCode = VLBAWritePlots (uv, 1, 0, plotFile, err, \
+                                      plotDesc="Quantization corrections",\
                                       logfile=logfile, check=check, debug=debug)
         if retCode!=0:
             return retCode
@@ -1060,6 +1456,7 @@ def VLBAOpacCor(uv, OpacSmoo, err, FreqID=1, WXver=0, TYver=0, GCver=0, \
             return retCode
   
         retCode = VLBAWritePlots (uv, 1, 0, plotFile, err, \
+                                      plotDesc="Gain/Opacity corrections",\
                                       logfile=logfile, check=check, debug=debug)
         if retCode!=0:
             return retCode
@@ -1096,8 +1493,8 @@ def VLBAGoodCal(uv, err, solInt=0.5, timeInt=100., FreqID=1, \
     uv         = UV data object
     err        = Python Obit Error/message stack
     calSou     = Source name or list of names to use
-    CalModel = python dict with image model dicts keyed on calibrator name
-               image object = "Image"
+    CalModel   = python dict with image model dicts keyed on calibrator name
+                 image object = "Image"
                also optional
                "nfield",    Calibrator model  No. maps to use for model
                "CCver",     Calibrator model CC file version
@@ -1192,6 +1589,14 @@ def VLBAGoodCal(uv, err, solInt=0.5, timeInt=100., FreqID=1, \
                 calib.modelPos  = Model["modelPos"]
             if "modelParm" in Model:
                 calib.modelParm = Model["modelParm"]
+        else:
+            # No model given
+            calib.in2Name   = "          "
+            calib.in2Class  = "    "
+            calib.in2Disk   = 0
+            calib.in2Seq    = 0
+            calib.nfield    = 0
+            calib.modelFlux = 0.0
         if debug:
             calib.prtLv = 2
             calib.i
@@ -1241,6 +1646,182 @@ def VLBAGoodCal(uv, err, solInt=0.5, timeInt=100., FreqID=1, \
  
     return out
     # end VLBAGoodCal
+
+def VLBAOKCal(uv, minOKFract, err, \
+                  solInt=0.5, FreqID=1, \
+                  calSou=None, CalModel=None, \
+                  doCalib=-1, gainUse=0, minSNR = 10.0, refAnts=[0], \
+                  doBand=-1, BPVer=0,  \
+                  flagVer=-1,  \
+                  nThreads=1, noScrat=[], logfile='', check=False, debug=False):
+    """ Find which sources in a list are acceptable calibrators
+
+    Determines which sources in a list are detected an acceptable fraction of the
+    time at a given SNR.
+    Return list of source names
+                or None on failure
+    uv         = UV data object
+    minOKFract = Min. fractions of OK solutions to accept source
+    err        = Python Obit Error/message stack
+    calSou     = Source name or list of names to use
+    CalModel   = python dict with image model dicts keyed on calibrator name
+                 image object = "Image"
+               also optional
+               "nfield",    Calibrator model  No. maps to use for model
+               "CCver",     Calibrator model CC file version
+               "BComp",     Calibrator model First CLEAN comp to use, 1/field
+               "EComp"      Calibrator model  Last CLEAN comp to use, 0=>all
+               "Cmethod"    Calibrator model Modeling method, 'DFT','GRID','    '
+               "CModel"     Calibrator model Model type: 'COMP','IMAG'
+               "CalFlux"    Calibrator model  Lowest CC component used
+               "modelFlux"  if ["Image"]=None, Parameterized model flux density (Jy)
+               "modepPos"   if ["Image"]=None, Parameterized model Model position offset (asec)
+               "modelParm"  if ["Image"]=None, Parameterized model Model parameters
+                            (maj, min, pa, type)
+    solInt     = Calib solution interval (min)
+    timeInt    = interval width (min) to use for timerange (large=>scan)
+    FreqID     = Frequency group identifier
+    minSNR     = minimum acceptable SNR in Calib
+    refAnts    = List of reference antennas in priority order,
+                 Also, if values given then list of acceptable ref. ants
+    doCalib    = Apply calibration table
+    gainUse    = CL/SN table to apply
+    doBand     = If >0.5 apply bandpass cal.
+    BPVer      = Bandpass table version
+    flagVer    = Input Flagging table version
+    nThreads   = Max. number of threads to use
+    noScrat    = list of disks to avoid for scratch files
+    logfile    = logfile for messages
+    check      = Only check script, don't execute tasks
+    debug      = show input
+    """
+    ################################################################
+    mess = "Find acceptable calibrators"
+    printMess(mess, logfile)
+
+    # Set output (new) SN table
+    SNver = 0
+    if not check:
+        SNver = uv.GetHighVer("AIPS SN")+1
+
+    calib = ObitTask.ObitTask("Calib")
+    calib.taskLog  = logfile
+    if not check:
+        setname(uv,calib)
+    calib.flagVer   = flagVer
+    calib.doCalib   = doCalib
+    calib.gainUse   = gainUse
+    calib.doBand    = doBand
+    calib.BPVer     = BPVer
+    calib.solMode   = "DELA"
+    calib.solType   = "  "
+    calib.solInt    = solInt
+    calib.refAnts   = refAnts
+    calib.minSNR    = minSNR
+    calib.solnVer   = SNver
+    calib.nThreads  = nThreads
+    calib.noScrat   = noScrat
+    #  If multiple sources given with models - loop
+    if (type(calSou)==list) and (len(calSou)>1) and CalModel:
+        ncloop = len(calSou)
+        calsou = calSou[0] # setup for first
+    else:
+        ncloop = 1;
+        calsou = calSou
+    # Loop
+    for ical in range(0,ncloop):
+        if type(calsou)==list:
+            calib.Sources = calsou
+        else:
+            calib.Sources = [calsou]
+        # Get model details
+        if CalModel and calib.Sources[0] in CalModel:
+            Model = CalModel[calib.Sources[0]]
+            if Model["image"]:
+                if not check:
+                    set2name(Model["image"], calib)
+            if "nfield" in Model:
+                calib.nfield    = Model["nfield"]
+            if "CCVer" in Model:
+                calib.CCVer     = Model["CCVer"]
+            if "BComp" in Model:
+                calib.BComp     = Model["BComp"]
+            if "EComp" in Model:
+                calib.EComp     = Model["EComp"]
+            if "Cmethod" in Model:
+                calib.Cmethod   = Model["Cmethod"]
+            if "Cmodel" in Model:
+                calib.Cmodel    = Model["Cmodel"]
+            if "Flux" in Model:
+                calib.Flux      = Model["Flux"]
+            if "modelFlux" in Model:
+                calib.modelFlux = Model["modelFlux"]
+            if "modelPos" in Model:
+                calib.modelPos  = Model["modelPos"]
+            if "modelParm" in Model:
+                calib.modelParm = Model["modelParm"]
+        else:
+            # No model given
+            calib.in2Name   = "          "
+            calib.in2Class  = "    "
+            calib.in2Disk   = 0
+            calib.in2Seq    = 0
+            calib.nfield    = 0
+            calib.modelFlux = 0.0
+        if debug:
+            calib.prtLv = 2
+            calib.i
+            calib.debug = debug
+        # Trap failure
+        try:
+            if not check:
+                calib.g
+        except Exception, exception:
+            print exception
+            mess = "Calib Failed retCode= "+str(calib.retCode)
+            printMess(mess, logfile)
+            return None
+        else:
+            pass
+        # Setup for next if looping
+        if ical<(ncloop-1):
+            calsou = calSou[ical+1]
+    # End loop over calibrators
+    # no further for check only
+    if check:
+        return
+
+    # Open/close UV to update header
+    uv.Open(UV.READONLY,err)
+    uv.Close(err)
+    if err.isErr:
+        OErr.printErr(err)
+        mess = "Update UV header failed"
+        printMess(mess, logfile)
+        return None
+
+    # Get SN table version
+    SNver = uv.GetHighVer("AIPS SN")
+
+    # Get list of OK sources
+    out = VLBASNOKSou(uv, SNver, minOKFract, err,  \
+                      logfile=logfile, check=check, debug=debug)
+
+    # Delete SN table
+    #uv.ZapTable("AIPS SN", SNver, err)
+
+    # Tell results
+    if out:
+        mess = "Acceptable calibrators:"
+        printMess(mess, logfile)
+        for s in out:
+            printMess(s, logfile)
+    else:
+        mess = "NO acceptable calibrators"
+        printMess(mess, logfile)
+
+    return out
+    # end VLBAOKCal
 
 def VLBAPCcor(uv, err, calSou=None,  timeRange=[0.,0.], FreqID=1, \
                   doCalib=-1, gainUse=0, doBand=-1, BPVer=0,  \
@@ -1301,7 +1882,7 @@ def VLBAPCcor(uv, err, calSou=None,  timeRange=[0.,0.], FreqID=1, \
     pccor.taskLog      = logfile
     pccor.noScrat      = noScrat
     pccor.debug        = debug
-    pccor.debug = True
+    #pccor.debug = True
     if debug:
         pccor.i
     # Trap failure
@@ -1341,7 +1922,8 @@ def VLBAPCcor(uv, err, calSou=None,  timeRange=[0.,0.], FreqID=1, \
             return retCode
   
         retCode = VLBAWritePlots (uv, 1, 0, plotFile, err, \
-                                  logfile=logfile, check=check, debug=debug)
+                                      plotDesc="Phase Cal corrections",\
+                                      logfile=logfile, check=check, debug=debug)
         if retCode!=0:
             return retCode
     # end SN table plot
@@ -1353,7 +1935,7 @@ def VLBAPCcor(uv, err, calSou=None,  timeRange=[0.,0.], FreqID=1, \
     return 0
     # end VLBAPCcor
 
-def VLBAManPCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None, CalModel=None, 
+def VLBAManPCal(uv, err, solInt=0.5, smoTime=1.0, calSou=None, CalModel=None, 
                 timeRange=[0.,0.], FreqID=1, doCalib=-1, gainUse=0, 
                 minSNR = 10.0, refAnts=[0], doBand=-1, BPVer=0, flagVer=-1,  
                 doManPCalPlot=True, plotFile='ManPCal.ps', 
@@ -1381,7 +1963,7 @@ def VLBAManPCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None, CalModel=None,
                             (maj, min, pa, type)
     timeRange  = timerange of data to use
     solInt     = Calib solution interval (min)
-    smoTime    = Smoothing time applied to SN table (min)
+    smoTime    = Smoothing time applied to SN table (hr)
     FreqID     = Frequency group identifier
     minSNR     = minimum acceptable SNR in Calib
     refAnt   = Reference antenna
@@ -1460,6 +2042,14 @@ def VLBAManPCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None, CalModel=None,
                 calib.modelPos  = Model["modelPos"]
             if "modelParm" in Model:
                 calib.modelParm = Model["modelParm"]
+        else:
+            # No model given
+            calib.in2Name   = "          "
+            calib.in2Class  = "    "
+            calib.in2Disk   = 0
+            calib.in2Seq    = 0
+            calib.nfield    = 0
+            calib.modelFlux = 0.0
         if debug:
             calib.prtLv = 2
             calib.i
@@ -1539,7 +2129,8 @@ def VLBAManPCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None, CalModel=None,
         if retCode!=0:
             return retCode
         retCode = VLBAWritePlots (uv, 1, 0, plotFile, err, \
-                                  logfile=logfile, check=check, debug=debug)
+                                      plotDesc="Corrections tp Phase Cal",\
+                                      logfile=logfile, check=check, debug=debug)
         if retCode!=0:
             return retCode
     # end SN table plot
@@ -1738,15 +2329,19 @@ def VLBABPass(uv, BPCal, err, CalModel=None, newBPVer=1, timeRange=[0.,0.], \
     return 0
 # end VLBABPass
 
-def VLBASpecPlot(uv, goodCal, err, doband=0, plotFile="./spec.ps", logfile = ""):
+def VLBASpecPlot(uv, goodCal, err, doband=0, plotFile="./spec.ps", \
+                     plotDesc="Calibrated calibrator spectrum", \
+                     check=False, logfile = ""):
     """
     Plot amplitude and phase across the spectrum.
 
+    Plot saved in outfiles list
     uv = uv data object
     goodCal = good calibrator info; dictionary from VLBAGoodCal
     err = Obit error object
     doband = do bandpass calibration before plotting (requires BP table)
     plotFile = name of output PS file
+    plotDesc = description of plot.
     logfile  = Log file for task
     """
     # Remove any pre-existing PL tables
@@ -1767,8 +2362,9 @@ def VLBASpecPlot(uv, goodCal, err, doband=0, plotFile="./spec.ps", logfile = "")
     possm.bpver = 0 # apply highest BP table
     possm.aparm = AIPSTask.AIPSList( [0] * 10 ) # initialize with zeroes
     possm.aparm[9] = 3 # all IFs and pols in same frame
-    possm.nplots = 2 # plot each baseline in seperate frame on page
-    possm.ltype = 3 # include all labels
+    possm.nplots  = 2 # plot each baseline in seperate frame on page
+    possm.ltype   = 3 # include all labels
+    possm.msgkill = 5 # suppress babble
     possm.logFile = logfile
     possm.go()
 
@@ -1776,11 +2372,17 @@ def VLBASpecPlot(uv, goodCal, err, doband=0, plotFile="./spec.ps", logfile = "")
     lwpla = AIPSTask.AIPSTask("lwpla")
     setname(uv,lwpla)
     lwpla.plver = 1
-    print "PL high ver = ", uv.GetHighVer("AIPS PL")
-    uv.Header(err) # this is required in order for GetHighVer to work
-    print "PL high ver = ", uv.GetHighVer("AIPS PL")
+    # Open/close UV to update header
+    uv.Open(UV.READONLY,err)
+    uv.Close(err)
+    if err.isErr:
+        OErr.printErr(err)
+        mess = "Update UV header failed"
+        printMess(mess, logfile)
+        return 1
     lwpla.invers = uv.GetHighVer("AIPS PL")
     lwpla.outfile = plotFile
+    lwpla.msgkill = 5
     lwpla.logFile = logfile
     # Trap failure
     try:
@@ -1792,7 +2394,8 @@ def VLBASpecPlot(uv, goodCal, err, doband=0, plotFile="./spec.ps", logfile = "")
         printMess(mess, logfile)
         # return 1  # Continue in spite of lwpla failure
     else:
-        pass
+        # Save in outfile list (drop ./ needed by LWPLA)
+        VLBAAddOutFile(plotFile[2:], 'project', plotDesc,  logFile=logfile)
 
     # Remove any tables
     tabdest(uv, "AIPS PL", -1)
@@ -1868,7 +2471,7 @@ def VLBAImageCals(uv, err,  FreqID=1, Sources=None, seq=1, sclass="ImgSC", \
     scmap.out2Seq     = seq
     scmap.outClass    = sclass
     scmap.BLFact      = 1.004
-    scmap.BLchAvg     = True
+    scmap.BLchAvg     = False
     scmap.flagVer     = flagVer
     scmap.doCalib     = doCalib
     scmap.gainUse     = gainUse
@@ -1893,7 +2496,7 @@ def VLBAImageCals(uv, err,  FreqID=1, Sources=None, seq=1, sclass="ImgSC", \
     scmap.modelFlux   = 1.0
     scmap.noScrat     = noScrat
     scmap.nThreads    = nThreads
-    scmap.prtLv       = 3
+    scmap.prtLv       = 1
     if debug:
         scmap.prtLv = 5
         scmap.i
@@ -1999,7 +2602,7 @@ def VLBAImageTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
     imager.out2Seq     = seq
     imager.outClass    = sclass
     imager.BLFact      = 1.004
-    imager.BLchAvg     = True
+    imager.BLchAvg     = False
     imager.flagVer     = flagVer
     imager.doCalib     = doCalib
     imager.gainUse     = gainUse
@@ -2024,7 +2627,7 @@ def VLBAImageTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
     imager.autoWindow  = True
     imager.noScrat     = noScrat
     imager.nThreads    = nThreads
-    imager.prtLv       = 3
+    imager.prtLv       = 1
     if debug:
         imager.prtLv = 5
         imager.i
@@ -2247,6 +2850,7 @@ def VLBADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
             return retCode
   
         retCode = VLBAWritePlots (uv, 1, 0, plotFile, err, \
+                                      plotDesc="Delay corrections",\
                                       logfile=logfile, check=check, debug=debug)
         if retCode!=0:
             return retCode
@@ -2329,7 +2933,7 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0, \
     calib.solInt    = solInt
     calib.minSNR    = minSNR
     calib.refAnts   = [refAnt]
-    calib.prtLv     = 3
+    calib.prtLv     = 1
     calib.solnVer   = SNver
     calib.nThreads  = nThreads
     calib.noScrat   = noScrat
@@ -2373,6 +2977,14 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0, \
                 calib.modelPos  = Model["modelPos"]
             if "modelParm" in Model:
                 calib.modelParm = Model["modelParm"]
+        else:
+            # No model given
+            calib.in2Name   = "          "
+            calib.in2Class  = "    "
+            calib.in2Disk   = 0
+            calib.in2Seq    = 0
+            calib.nfield    = 0
+            calib.modelFlux = 0.0
         if debug:
             calib.prtLv = 2
             calib.i
@@ -2385,7 +2997,9 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0, \
             print exception
             mess = "Calib Failed retCode= "+str(calib.retCode)
             printMess(mess, logfile)
-            return None
+            mess = "Source= "+calsou
+            printMess(mess, logfile)
+            #return None # Tolerate
         else:
             pass
         # Setup for next if looping
@@ -2443,6 +3057,7 @@ def VLBAAmpCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0, \
             return retCode
   
         retCode = VLBAWritePlots (uv, 1, 0, plotFile, err, \
+                                      plotDesc="Amplitude corrections",\
                                       logfile=logfile, check=check, debug=debug)
         if retCode!=0:
             return retCode
@@ -2525,7 +3140,7 @@ def VLBAPhaseCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0/60.0, doSmo
     calib.solInt    = solInt
     calib.minSNR    = minSNR
     calib.refAnts   = [refAnt]
-    calib.prtLv     = 3
+    calib.prtLv     = 1
     calib.solnVer   = SNver
     calib.nThreads  = nThreads
     calib.noScrat   = noScrat
@@ -2581,6 +3196,14 @@ def VLBAPhaseCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0/60.0, doSmo
                 calib.modelPos  = Model["modelPos"]
             if "modelParm" in Model:
                 calib.modelParm = Model["modelParm"]
+        else:
+            # No model given
+            calib.in2Name   = "          "
+            calib.in2Class  = "    "
+            calib.in2Disk   = 0
+            calib.in2Seq    = 0
+            calib.nfield    = 0
+            calib.modelFlux = 0.0
         if debug:
             calib.prtLv = 2
             calib.i
@@ -2652,6 +3275,7 @@ def VLBAPhaseCal(uv, err, solInt=0.5, smoTimeA=1440.0, smoTimeP=10.0/60.0, doSmo
             return retCode
   
         retCode = VLBAWritePlots (uv, 1, 0, plotFile, err, \
+                                      plotDesc="Phase corrections",\
                                       logfile=logfile, check=check, debug=debug)
         if retCode!=0:
             return retCode
@@ -3029,6 +3653,138 @@ def VLBASNStats(uv, SNver, solInt, err, refAnts=[0], logfile='', check=False, de
     out = {"Source":souName, "souID":hi[0],"timeRange":hi[1], "Fract":hi[2], "SNR":hi[3], "bestRef":bestRef}
     return out
     # end VLBSNStats
+
+def VLBASNOKSou(uv, SNver, minOKFract, err, logfile='', check=False, debug=False):
+    """ Find list of acceptable calibrators
+
+    Returns with err set on error
+    Return list of source names or None if all bad.
+    If there is no SU table or source ID not in table, source name is blank
+    uv         = UV data object
+    SNver      = SN table to flag
+    minOKFract = Minimum acceptable fractions of solutions.
+    err        = Python Obit Error/message stack
+    logfile    = logfile for messages
+    check      = Only check script
+    debug      = Only debug
+    """
+    ################################################################
+    # Number of IFs
+    nif   = uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocif"]]
+    # Number of Stokes
+    npoln = uv.Desc.Dict["inaxes"][uv.Desc.Dict["jlocs"]]
+    npoln = min(2, npoln)   # No more than 2
+    SNtab = uv.NewTable(Table.READONLY, "AIPS SN", SNver, err, \
+                        numIF=nif, numPol=npoln)
+    if err.isErr:
+        return None
+    # Open
+    SNtab.Open(Table.READONLY, err)
+    if err.isErr:
+        return None
+    # Number of antennas
+    nant = SNtab.Desc.List.Dict["NO_ANT"][2][0]
+    # Number of rows
+    nrow =  SNtab.Desc.Dict["nrow"]
+    
+    # For each source, man a dict entry in souDict with:
+    # key "ID"      =  source ID number
+    # list of 2 entries, firtst on total number of soln
+    # the other the number of valid solutions.
+    # Includes all IF, poln
+    souDict = {}
+    souList = []   # List of source IDs
+    for i in range (0,nrow):    # Loop over rows
+        SNrow = SNtab.ReadRow(i+1, err)
+        if err.isErr:
+            return None
+        curSouID = SNrow["SOURCE ID"][0]
+        sidStr = str(curSouID)
+        # Does an entry exist?
+        if not sidStr in souList:
+            souDict[sidStr] = [0,0]
+            souList.append(sidStr)
+        all = 0; valid = 0;  # Counts
+        # Loop over IF
+        for iif in range (0, nif):
+            all += 1
+            if SNrow["WEIGHT 1"][iif]>0.0:
+                valid += 1
+            # Second Poln
+            if npoln>1:
+                all += 1
+                if SNrow["WEIGHT 1"][iif]>0.0:
+                    valid += 1
+        # Accumulate
+        souDict[sidStr][0] += all
+        souDict[sidStr][1] += valid
+    # end loop over rows
+            
+    # Close table
+    SNtab.Close(err)
+    if err.isErr:
+        return None
+
+    # Get list of acceptable sources
+    souOK = []
+    for s in souList:
+        all   = souDict[s][0]
+        valid = souDict[s][1]
+        if debug:
+            mess = "SouID %s all soln %d valid soln %d "%(s,all,valid)
+            printMess(mess, logfile)
+        if (float(valid)/float(all)) >= minOKFract:
+            souOK.append(int(s))
+    
+    # Any?
+    if len(souOK)<=0:
+        mess = "No acceptable calibrators"
+        printMess(mess, logfile)
+        return None
+    if debug:
+        mess = "Found %d OK calibrators "%(len(souOK))
+        printMess(mess, logfile)
+       
+
+    # List of names
+    outList = []
+    for s in souList:
+        outList.append("            ") # default
+    # Lookup source name if SU table present
+    hiSU = uv.GetHighVer("AIPS SU")
+    if debug:
+        mess = "High source table %d "%(hiSU)
+        printMess(mess, logfile)
+    if hiSU>= 1:
+        SUtab = uv.NewTable(Table.READONLY, "AIPS SU", 1, err, \
+                        numIF=nif,)
+        SUtab.Open(Table.READONLY, err)
+        if err.isErr:
+            return
+        # Number of rows
+        nrow =  SUtab.Desc.Dict["nrow"]
+        for i in range (0,nrow):    # Loop over rows
+            SUrow = SUtab.ReadRow(i+1, err)
+            if err.isErr:
+                return outList
+            curSouID = SUrow["ID. NO."][0]
+            if debug:
+                mess = "%d %s "%(curSouID, SUrow["SOURCE"][0])
+                printMess(mess, logfile)
+           # Lookup
+            ii = -1
+            for isou in range(0, len(souList)):
+                ii += 1
+                if int(souList[ii]) == curSouID:
+                    outList[ii] = SUrow["SOURCE"][0].strip()
+                    break
+        # end loop over table
+        SUtab.Close(err)
+        if err.isErr:
+            return outList
+    
+    return outList
+    # end VLBSNOKSou
 
 def VLBAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
           exclude=["AIPS HI","AIPS PL","AIPS SL"], include=["AIPS CC"],
@@ -3838,7 +4594,8 @@ def VLBACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
     # Get calibrated/averaged data, index and make CL table 1 if doCalib>0
     if not check:
         try:
-            uvc = UV.newPAUV("AIPS UV DATA", splat.inName, avgClass, splat.inDisk, avgSeq, True, err)
+            uvname = uv.GetName()+"_Cal"
+            uvc = UV.newPAUV(uvname, splat.inName, avgClass, splat.inDisk, avgSeq, True, err)
             if err.isErr:
                 print "Error creating cal/avg AIPS data"
                 OErr.printErrMsg(err, "Error creating cal/avg AIPS data")
@@ -3923,7 +4680,8 @@ def VLBACalAvg2(uv, avgClass, avgSeq, CalAvgTime,  err, \
         #print "info", info.Dict  # DEBUG
         # Open and close to set
         uv.Open(UV.READCAL, err)
-        outuv = UV.newPAUV("CalAvg", uv.Aname, avgClass, uv.Disk, avgSeq, False, err)
+        uvname = uv.GetName()+"_Cal"
+        outuv = UV.newPAUV(uvname, uv.Aname, avgClass, uv.Disk, avgSeq, False, err)
         info = outuv.List
         info.set("Compress", Compress,)
         uv.Clone (outuv, err)
@@ -3959,7 +4717,8 @@ def VLBACalAvg2(uv, avgClass, avgSeq, CalAvgTime,  err, \
     if not check:
         try:
             # Do History - previous already copied
-            ooutuv = UV.newPAUV("CalAvg", uv.Aname, avgClass, uv.Disk, avgSeq, True, err)
+            uvname = uv.GetName()+"_Cal"
+            ooutuv = UV.newPAUV(uvname, uv.Aname, avgClass, uv.Disk, avgSeq, True, err)
             inHistory  = History.History("inhistory",  uv.List, err)
             outHistory = History.History("outhistory", ooutuv.List, err)
 
@@ -4056,7 +4815,7 @@ def VLBASetImager (uv, target, outIclass="", check=False, nThreads=1, \
     img.FOV        = 0.05
     img.autoWindow = True
     img.BLFact     = 1.01
-    img.BLchAvg    = True
+    img.BLchAvg    = False
     img.Niter      = 5000
     img.Gain       = 0.10
     img.maxPSCLoop = 3
@@ -4408,7 +5167,7 @@ def VLBARLCal2(uv, err, uv2 = None, \
         img.Catalog    = "None"
         img.nThreads   = nThreads
         img.noScrat    = noScrat
-        img.prtLv      = 2
+        img.prtLv      = 1
         # Temporary output files
         if img.DataType=="AIPS":
             img.outName = "TEMP"
@@ -5241,7 +6000,8 @@ def VLBADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
     # Get the newly averaged data set: most recent file with class UVAvg
     uvAvg = None
     if not check:
-        uvAvg = UV.newPAUV("AIPS UV DATA", uv.Aname, avgClass, uv.Disk, avgSeq, 
+        uvname = uv.GetName()+"_Cal"
+        uvAvg = UV.newPAUV(uvname, uv.Aname, avgClass, uv.Disk, avgSeq, 
             True, err)
 
     # Put source list into slist
@@ -5256,19 +6016,21 @@ def VLBADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
     uvplt = AIPSTask.AIPSTask("uvplt")
     if not check:
         setname(uvAvg, uvplt)
-    uvplt.stokes = 'I' # unpolarized
-    uvplt.ltype = -3 # Omit PL number and creation time
+    uvplt.stokes  = 'I' # unpolarized
+    uvplt.ltype   = -3  # Omit PL number and creation time
+    uvplt.msgkill = 5   # Omit babble
     printMess("Plotting stokes "+uvplt.stokes, logfile=logfile)
 
     # Setup LWPLA
     lwpla = AIPSTask.AIPSTask("lwpla")
+    lwpla.msgkill = 5 
     if not check:
         setname(uvAvg, lwpla)
     
     # Define plots: file => filename string, bparm => UVPLT 
-    plotTypes =  ( { 'file' : 'amp', 'bparm' : [3,1]   },  # Amp vs. uv Dist
-                   { 'file' : 'uv' , 'bparm' : [7,6,2] },  # u vs. v 
-                   { 'file' : 'ri' , 'bparm' : [10,9]  } ) # Re vs. Im
+    plotTypes =  ( { 'file' : 'amp', 'bparm' : [3,1]   , 'desc': 'Amp vs. uv Dist'},
+                   { 'file' : 'uv' , 'bparm' : [7,6,2],  'desc': 'u vs. v '}, 
+                   { 'file' : 'ri' , 'bparm' : [10,9],   'desc': 'Re vs. Im'} )
 
     # Loop over sources
     for (i,s) in enumerate(slist):
@@ -5277,7 +6039,8 @@ def VLBADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
         uvplt.sources[1] = s
         # Loop over plot types
         for plot in plotTypes:
-            uvplt.bparm = AIPSTask.AIPSList( plot['bparm'] )
+            uvplt.bparm   = AIPSTask.AIPSList( plot['bparm'] )
+            uvplt.msgkill = 5   # Omit babble
             if not check:
                 uvplt.go()
 
@@ -5305,7 +6068,7 @@ def VLBADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
                         cmd = 'convert -depth 96 '+outfile+' '+jpg
                         rtn = os.system(cmd)
                         if rtn == 0: 
-                            VLBAAddOutFile( jpg, s, "Diagnostic plot" )
+                            VLBAAddOutFile( jpg, s, plot['desc'] )
                             if cleanUp: 
                                 os.remove(outfile) # Remove the PS file
                         else:
@@ -5321,7 +6084,7 @@ def VLBADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
     # end VLBADiagPlot
 
 def VLBAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj', 
-    session='tSes', band='tB', cleanUp=True, logfile='', check=False, 
+    session='tSes', band='tB', disk=1, cleanUp=True, logfile='', check=False, 
     debug=False ):
     """
     Create contour plots for the specified images. Image selection is made
@@ -5340,15 +6103,17 @@ def VLBAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
     project = project name
     session = project session
     band = project receiver band code
+    disk = data disk number
     logfile = file for logging messages
     debug = Turn on debug mode
     """
     # Setup AIPS task KNTR
     kntr = AIPSTask.AIPSTask("kntr")
-    kntr.dogrey = 0
-    kntr.dovect = 0
-    kntr.ltype = -2 # Show border and labels w/o creation date and PL version
-    kntr.cbplot = -18 # half-power beam in bottom right; no contour overlay
+    kntr.msgkill = 5
+    kntr.dogrey  = 0
+    kntr.dovect  = 0
+    kntr.ltype   = -5 # Show border and labels w/o creation date and PL version
+    kntr.cbplot  = -18 # half-power beam in bottom right; no contour overlay
     # Set contour levels in units of cntr.clev (defined below). Contours begin 
     #   with -2, -2^0.5, 2^0.5, and then increase as powers of root two.
     levs = [ -2, -2**(0.5), 2**(0.5) ]
@@ -5359,7 +6124,8 @@ def VLBAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
 
     # Instantiate AIPS task LWPLA
     lwpla = AIPSTask.AIPSTask("lwpla")    
-    
+    lwpla.msgkill = 5
+   
     # If catalog numbers not given, get all images matching class imClass
     # and with names in list imName.
     if (not catNos):
@@ -5368,7 +6134,7 @@ def VLBAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
         elif not type(imName) == list:
             imName = [ imName ]
         for n in imName:
-            catNos += AMcat( Aname=n, Aclass=imClass, giveList=True )
+            catNos += AMcat(disk=disk, Aname=n, Aclass=imClass, giveList=True )
     for cno in catNos: # loop over images
         image = getname(cno)
 
@@ -5729,15 +6495,17 @@ def VLBAHTMLReport( projMetadata, srcMetadata, outfile="report.html",
         s += "<tr><th>Contour</th><th>Amp vs Baseline</th><th>Re vs Im</th>"
         s += "<th>U vs V</th></tr>\n"
         s += "<tr>\n"
-        fileList = outfiles['source'][ metadata['Source'] ]
-        tList = range(4)
-        for f in fileList:
-            if f['name'].find('cntr.jpg') != -1: tList[0] = f
-            if f['name'].find('amp.jpg') != -1: tList[1] = f 
-            if f['name'].find('ri.jpg') != -1: tList[2] = f 
-            if f['name'].find('uv.jpg') != -1: tList[3] = f 
-        for f in tList:
-            s += writeImageCell( f )
+        if metadata['Source'] in outfiles['source']:
+            fileList = outfiles['source'][ metadata['Source'] ]
+            tList = range(4)
+            for f in fileList:
+                if f['name'].find('cntr.jpg') != -1: tList[0] = f
+                if f['name'].find('amp.jpg') != -1: tList[1] = f 
+                if f['name'].find('ri.jpg') != -1: tList[2] = f 
+                if f['name'].find('uv.jpg') != -1: tList[3] = f 
+            for f in tList:
+                if type(f)==dict:
+                    s += writeImageCell( f )
         s += '</tr></table>\n'
         file.write(s)
         
@@ -5783,9 +6551,49 @@ def writeTableRow( dict, keys=None ):
             s += '<tr><th>' + key + '</th><td>' + fs + '</td></tr>\n'
         elif key == 'goodCal':
             # Print goodCal Python dictionary
+            # Timerange to human form
             subKeys = [ 'Source', 'timeRange', 'bestRef', 'SNR' ]
             s += '<tr><th>' + key + '</th><td><table>' + \
                 writeTableRow( dict[key], subKeys ) + '</table>\n'
+        elif (key == 'RA') or (key == 'RAPnt'):
+            s += '<tr><th>' + key + '</th>' + \
+                 '<td>' + UVDesc.PRA2HMS(dict[key]) + '</td></tr>\n'
+        elif (key == 'Dec') or (key == 'DecPnt'):
+            s += '<tr><th>' + key + '</th>' + \
+                 '<td>' + UVDesc.PDec2DMS(dict[key]) + '</td></tr>\n'
+        elif (key == 'timeRange'):
+            s += '<tr><th> Time Range </th>' + \
+                 '<td>' + day2dhms(dict['timeRange'][0]) + ' - ' + \
+                  day2dhms(dict['timeRange'][1]) + ' </td></tr>\n'
+        elif (key == 'Freq'):
+            s += '<tr><th>' + key + '</th>' + \
+                 '<td>' + "%6.3f"%(dict[key]*1.0e-9) + ' GHz </td></tr>\n'
+        elif (key == 'BW'):
+            s += '<tr><th>' + key + '</th>' + \
+                 '<td>' + "%6.3f"%(dict[key]*1.0e-6) + ' MHz </td></tr>\n'
+        elif (key == 'SNR'):
+            s += '<tr><th>' + key + '</th>' + \
+                 '<td>' + "%6.1f"%(dict[key]) + ' </td></tr>\n'
+        elif (key == 'Exposure'):
+            s += '<tr><th>' + key + '</th>' + \
+                 '<td>' + "%6.3f"%(dict[key]*24.0) + ' Hours </td></tr>\n'
+        elif (key == 'Size') or (key == "Cells"):
+            s += '<tr><th>' + key + '</th>' + \
+                 '<td>' + "%8.5f"%(dict[key]*3.6e6) + ' mas </td></tr>\n'
+        elif (key == 'ISum') or (key == "QSum") or (key == "USum"):
+            s += '<tr><th>' + key + '</th>' + \
+                 '<td>' + "%8.3f"%(dict[key]*1.0e3) + ' mJy </td></tr>\n'
+        elif (key == 'IPeak') or (key == "QPeak") or (key == "UPeak"):
+            s += '<tr><th>' + key + '</th>' + \
+                 '<td>' + "%8.3f"%(dict[key]*1.0e3) + ' mJy </td></tr>\n'
+        elif (key == 'IRMS') or (key == "QRMS") or (key == "URMS"):
+            s += '<tr><th>' + key + '</th>' + \
+                 '<td>' + "%8.5f"%(dict[key]*1.0e3) + ' mJy </td></tr>\n'
+        elif (key == 'IBeam'):
+            s += '<tr><th> Clean Beam </th>' + \
+                 '<td>' + \
+            " %6.4f, %6.4f, %6.1f"%(dict[key][0]*3.6e6, dict[key][1]*3.6e6, dict[key][2]) + \
+            ' (mas,mas,deg) </td></tr>\n'
         else:
             # Everything else
             s += '<tr><th>' + key + '</th>' + \
@@ -5832,9 +6640,11 @@ def VLBAFetchOutFiles( pickleFile='outfiles.pickle' ):
     global outfiles 
     outfiles = FetchObject( pickleFile )
     # Check project files
+    i = 0
     for file in outfiles['project']:
         if not os.path.exists( file['name'] ):
-            del outfiles['project'][file]
+            del outfiles['project'][i]
+        i += 1
     # Check single-source files
     srcFiles = outfiles['source']
     srcKeys = srcFiles.keys()
@@ -5895,3 +6705,25 @@ def VLBACopyOutFiles( destDir='./output', logFile='' ):
         mess  = "Error occurred while rsyncing to destination directory.\n" 
         mess += "rsync return value: " + rtn
         printMess(mess, logFile)
+
+def VLBAMakeParmFile(template, subs, parmfile):
+    """
+    Generate a parameter file from a template and a list of substitutions
+
+    template = name of template parameter file
+    subs     = listr of substitutions as tuple:
+               ("@PARAMETER@", "valuestring")
+    parmfile = output parameter file
+    """
+    fdin  = open(template, "r")
+    fdout = open(parmfile,"w")
+    line = fdin.readline()
+    while (line):
+        for s in subs:
+            line = line.replace(s[0],s[1])
+        fdout.writeline(line)
+        line = fdin.readline()
+    fdin.close()
+    fdout.close()
+# end VLBAMakeParmFile
+
