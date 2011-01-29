@@ -4910,7 +4910,7 @@ def VLBAPolCal(uv, InsCals, err, \
         if not check:
             setname(uv,pcal)
         if type(InsCals)==list:
-            pcal.calsour[1:] = InsCals
+            pcal.calsour[1:] = InsCals[0:30]
         else:
             pcal.calsour[1:] = [InsCals]
         pcal.docalib = doCalib
@@ -6062,15 +6062,19 @@ def VLBADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
                     printMess(mess, logfile)
                 else:
                     if JPEG:
-                        # Convert PS to JPG
-                        jpg = outfile[:-3]+'.jpg'
+                        # Convert PS -> PDF; Convert PDF -> JPG
+                        # (on 64-bit, converting directoy PS -> JPG fails)
+                        tmpPDF = outfile[:-3] + '.pdf'
+                        jpg = outfile[:-3] + '.jpg'
                         printMess('Converting '+outfile+' -> '+jpg,logfile)
-                        cmd = 'convert -depth 96 '+outfile+' '+jpg
+                        cmd = 'convert ' + outfile + ' ' + tmpPDF + ';' + \
+                            'convert -density 96 ' + tmpPDF + ' ' + jpg
                         rtn = os.system(cmd)
                         if rtn == 0: 
                             VLBAAddOutFile( jpg, s, plot['desc'] )
                             if cleanUp: 
                                 os.remove(outfile) # Remove the PS file
+                                os.remove(tmpPDF)
                         else:
                             # Print error message and leave the PS file
                             mess="Error occurred while converting PS to JPG"
@@ -6163,17 +6167,22 @@ def VLBAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
         VLBAAddOutFile( outfile, name, "Contour plot" )
 
         # Convert 1st page of PS (Stokes I) to JPG
-        tmp = 'temp.ps'
-        jpg = outfile[:-3]+'.jpg'
+        tmpPS = outfile[:-3] + '.1.ps'
+        tmpPDF = outfile[:-3] + '.pdf'
+        jpg = outfile[:-3] + '.jpg'
         printMess('Converting '+outfile+' (1st page) -> '+jpg,logfile)
-        cmd1 = 'pstops 1000:0 ' + outfile + ' > ' + tmp # extract first page
-        cmd2 = 'convert -depth 96 ' + tmp + ' ' + jpg
-        rtn1 = os.system(cmd1)
-        rtn2 = os.system(cmd2)
-        if ( rtn1 == 0 ) and ( rtn2 == 0 ): 
+        # Extract first page of PS; Convert to PDF; Convert to JPG
+        # (on 64-bit, converting directly from PS to JPG does not work)
+        cmd = 'pstops 1000:0 ' + outfile + ' > ' + tmpPS + ';' + \
+            'ps2pdf ' + tmpPS + ' ' + tmpPDF + ';' + \
+            'convert -density 96 ' + tmpPDF + ' ' + jpg
+        print cmd
+        rtn = os.system(cmd)
+        if rtn == 0: 
             VLBAAddOutFile( jpg, name, "Contour plot (Stokes I)" )
-            if cleanUp: 
-                os.remove(tmp) # Remove the PS file
+            if cleanUp:
+                os.remove(tmpPS)
+                os.remove(tmpPDF)
         else:
             # Print error message and leave the PS file
             mess="Error occurred while converting PS to JPG"
