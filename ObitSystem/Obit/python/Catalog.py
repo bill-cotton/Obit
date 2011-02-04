@@ -243,6 +243,45 @@ def PVLRedun (inVL, outVL, err, centerPix=[512,512], maxDist=15.0):
     Obit.TableVLRedun (inVL.me, outVL.me, err.me);
     # end PVLRedun 
 
+def PVLFilter (inVL, outVL, err, \
+                   col1="PEAK INT", col2="I RMS", minRatio=5.0):
+    """   Select entriies in a VL table based on the ratio of the values
+    
+    Copy table rows whose ratio of the values in two columns exceed minRatio
+    value(col1)/value(col2) > minRatio are copied
+    inVL      = Input Obit VL Table
+    outVL     = Output Obit VL Table, new data appended to end of old
+    err       = Python Obit Error/message stack
+    col1      = label of first column
+    col2      = label of second column
+    minRatio  = minimum acceptable ratio
+    """
+    ################################################################
+    # Checks
+    if not Table.PIsA(inVL):
+        print "Actually ",inVL.__class__
+        raise TypeError,"inVL MUST be a Python Obit Table"
+    if not Table.PIsA(outVL):
+        print "Actually ",outVL.__class__
+        raise TypeError,"VLTable MUST be a Python Obit Table"
+    inVL.Open(Table.READONLY,err)
+    outVL.Open(Table.READWRITE,err)
+    if err.isErr:
+        OErr.printErrMsg(err, "Error Opening tables")
+    nrow = inVL.Desc.Dict['nrow']
+    orow = -1;
+    for irow in range(1,nrow+1):
+        row = inVL.ReadRow(irow,err)
+        ratio = row[col1][0]/row[col2][0]
+        if ratio>minRatio:
+            outVL.WriteRow(orow, row, err)
+            if err.isErr:
+                break
+    inVL.Close(err)
+    outVL.Close(err)
+
+    # end PVLFilter 
+
 def PVLPrint (VLTable, image, err, file="stdout"):
     """   Write human readable version of an VL table to a file
 
