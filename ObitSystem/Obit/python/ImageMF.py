@@ -17,7 +17,7 @@ PixBuf    - memory pointer into I/O Buffer
 Additional Functions are available in ImageUtil.
 """
 # Python/Obit Astronomical ImageMF class
-# $Id: ImageMF.py 259 2010-11-18 21:14:53Z jared.crossley $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2010
 #  Associated Universities, Inc. Washington DC, USA.

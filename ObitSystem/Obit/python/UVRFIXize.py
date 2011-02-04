@@ -1,4 +1,4 @@
-# $Id:  $
+# $Id$
 """ Utility to estimate and subtract quasi-constant RFI from UV data
 """
 #-----------------------------------------------------------------------

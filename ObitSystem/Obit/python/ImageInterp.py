@@ -3,7 +3,7 @@
 This class provides values of the beam shape derived from an image
 
 """
-# $Id: $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2009
 #  Associated Universities, Inc. Washington DC, USA.

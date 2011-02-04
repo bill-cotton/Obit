@@ -3,7 +3,7 @@
 This class provides values of the beam shape derived from an image
 
 """
-# $Id: FullBeam.py 2 2008-06-10 15:32:27Z bill.cotton $
+# $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2009
 #  Associated Universities, Inc. Washington DC, USA.
