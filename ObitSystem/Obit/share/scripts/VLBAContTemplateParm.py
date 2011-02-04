@@ -15,7 +15,7 @@ band          = "@BAND@"                   # Observing band
 logFile       = project+"_"+session+"_"+band+".log"  # Processing log file
 #parms["copyDestDir"]   = '/home/ftp/NRAO-staff/bcotton/PipeOut'   # Destination directory for copying output files
 #   empty string -> do not copy
-parms["copyDestDir"]   = "@DESTDIR@"
+parms["copyDestDir"]   = "@DESTDIR@/" + project + session + band
 
 dataInUVF     = "@UVFITS@"    # Input uvfits data file name
 # NOTE: this REALLY HAS TO BE IN $FITS!!!!!!

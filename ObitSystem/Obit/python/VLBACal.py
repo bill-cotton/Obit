@@ -6450,8 +6450,16 @@ def VLBAHTMLReport( projMetadata, srcMetadata, outfile="report.html",
     </style></head><body>"""
     file.write( s )
 
+    s  = "<h2> Contents </h2>"
+    s += "<a href='#project_Section'> Project </a>"
+    for metadata in srcMetadata: 
+        # Create links to each section
+        s += ' - <a href="#' + metadata['Source'] + '_Section">' + \
+            metadata['Source'] + '</a>' 
+    file.write( s )
+
     # Write project metadata
-    s  = "<h2> Project </h2>\n"
+    s  = "<a id='project_Section'><h2> Project </h2></a>\n"
     s += "<h3> Metadata </h3>\n"
     s += "<table>\n"
     keys = [ 'project', 'session', 'band', 'obsDate', 'procDate', 'contCals', 
@@ -6487,7 +6495,8 @@ def VLBAHTMLReport( projMetadata, srcMetadata, outfile="report.html",
                 keys.append(s + k)
         
         # Write metadata table
-        s  = "<h2>" + metadata['Source'] + "</h2>\n"
+        s  = '<a id="' + metadata['Source'] + '_Section">' + \
+             '<h2>' + metadata['Source'] + "</h2></a>\n"
         s += "<h3> Metadata </h3>\n"
         s += '<table>\n'
         s += writeTableRow( metadata, keys )
