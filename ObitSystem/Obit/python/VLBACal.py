@@ -6739,7 +6739,7 @@ def VLBAMakeParmFile(template, subs, parmfile):
     while (line):
         for s in subs:
             line = line.replace(s[0],s[1])
-        fdout.writeline(line)
+        fdout.write(line)
         line = fdin.readline()
     fdin.close()
     fdout.close()
