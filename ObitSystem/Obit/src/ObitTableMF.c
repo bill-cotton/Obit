@@ -1411,7 +1411,7 @@ static void ObitTableMFUpdate (ObitTableMF *in, ObitErr *err)
 	 in->D0MinorOff = desc->offset[i];
  	 in->D0MinorCol = i;
       }
-      if (!strncmp (desc->FieldName[i], "D0 POSANG", 9)) {
+      if (!strncmp (desc->FieldName[i], "D0 POSAN", 8)) {
 	 in->D0PosAngleOff = desc->offset[i];
  	 in->D0PosAngleCol = i;
       }
