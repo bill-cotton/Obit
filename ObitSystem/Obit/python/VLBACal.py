@@ -3,13 +3,14 @@
 import UV, UVDesc, Image, ImageDesc, FArray, ObitTask, AIPSTask, AIPSDir, OErr, History
 import InfoList, Table, AIPSDir, OSystem
 import os, os.path, re, shutil, pickle, math
+import urllib, urllib2
+import sys, commands
 from AIPS import AIPS
 from FITS import FITS
 from AIPSDir import AIPSdisks, nAIPS
 from OTObit import Acat, AMcat, getname, zap, imhead, tabdest
 from Obit import Version
 from datetime import date
-from sys import version
 from subprocess import Popen, PIPE
 
 outfiles = { 'project' : [],  # list of project output files
@@ -360,7 +361,14 @@ def VLBAIDILoad(filename, project, session, band, Aclass, Adisk, Aseq, err, \
     #  Get AIPS Name
     Aname = VLBAAIPSName(project,session)
     fitld = AIPSTask.AIPSTask("fitld")
-    fitld.datain   = filename
+    # fitld.datain can hold 48 charaters maximum. Since some archive file names
+    # are too long, use sym links. Create sym links using UUIDs to avoid 
+    # concurrent pipeline processes from trampling each other's links. 
+    linkname = commands.getoutput('uuidgen') + '.uvfits'
+    linkpath = FITS.disks[1].dirname + linkname
+    filepath = FITS.disks[1].dirname + filename
+    os.symlink( filepath, linkpath )
+    fitld.datain = linkname
     fitld.outname  = Aname
     fitld.outclass = Aclass
     fitld.outseq   = Aseq
@@ -388,6 +396,8 @@ def VLBAIDILoad(filename, project, session, band, Aclass, Adisk, Aseq, err, \
     if not check:
         uvname = project+"_"+session+"_"+band
         outuv = UV.newPAUV(uvname, Aname, Aclass, Adisk, Aseq, True, err)
+
+    os.remove( linkpath )
 
     return outuv
     # end VLBAIDILoad
@@ -6230,7 +6240,7 @@ def VLBAProjMetadata( uv, AIPS_VERSION, err, contCals=[None], goodCal={},
     r["obitVer"] = Version() # Obit version
     # Does this need to be passed as a function argument?
     r["aipsVer"] = AIPS_VERSION + '(' + str( date.today() ) + ')' # AIPS version
-    r["pyVer"] = version # python version
+    r["pyVer"] = sys.version # python version
     p = Popen("uname -a", shell=True, stdout=PIPE).stdout # get sys info
     r["sysInfo"] = p.read()
 
@@ -6701,7 +6711,7 @@ def VLBACopyOutFiles( destDir='./output', logFile='' ):
             printMess( mess, logFile )
             return
         else: # not dir & not exists
-            os.mkdir( destDir )
+            os.makedirs( destDir )
 
     # Build a list of all outfiles
     srcFiles = [] # list if files to be copied
@@ -6729,7 +6739,7 @@ def VLBAMakeParmFile(template, subs, parmfile):
     Generate a parameter file from a template and a list of substitutions
 
     template = name of template parameter file
-    subs     = listr of substitutions as tuple:
+    subs     = list of substitutions as tuple:
                ("@PARAMETER@", "valuestring")
     parmfile = output parameter file
     """
@@ -6744,4 +6754,214 @@ def VLBAMakeParmFile(template, subs, parmfile):
     fdin.close()
     fdout.close()
 # end VLBAMakeParmFile
+
+def VLBAQueryArchive(startTime, endTime):
+    """
+    Query the NRAO Archive for data files.
+
+    startTime = Start of query time range ( YYYY-mmm-DD [ HH:MM:SS ] )
+    endTime = End of query time range
+    """
+    freqRange = '1000 - 16000' # frequency range (MHz) (L to U bands)
+    format = 'FITS-AIPS' # Archive file format (FITS-AIPS good prior to ? 2010)
+    # HTTP POST parameters
+    dataList = [ ('PROTOCOL','TEXT-stream'),
+                 ('TELESCOPE','VLBA'),
+                 ('QUERYTYPE','ARCHIVE'),
+                 ('OBSFREQ1', freqRange ),
+                 ('ARCHFORMAT', format),
+                 ('TIMERANGE1', startTime),
+                 ('TIMERANGE2', endTime) ]
+    data = urllib.urlencode( dataList )
+    url = 'https://archive.nrao.edu/archive/ArchiveQuery'
+    # Archive is known to occasionally send a null response. This is an error.
+    # At the least, a header line should be returned. Repeat the query 
+    # until a non-null response is obtained. If the response contains a header
+    # only, repeat the query once to verify.
+    lineCount = 0
+    while 1:
+        response = urllib2.urlopen( url, data ) # Submit query
+        lines = response.readlines() # Extract response into a list of lines
+        if len(lines) == 0: # null response
+            print "Archive response is null. Repeating query."
+            lineCount = len(lines)
+        else: 
+            lines.pop() # remove tailing blank line
+        if len(lines) == 1: # Header only, no data
+            if lineCount != 1:
+                print "Archive response contains no files. " + \
+                    "Repeating query to verify."
+                lineCount = len(lines)
+            else:
+                print "Verified: Archive response contains no files."
+                break
+        elif len(lines) > 1: # Data is present
+            break
+    return lines
+
+def VLBAParseArchiveResponse( responseLines ):
+    """
+    Parse the archive response returned by VLBAQueryArchive and return a list
+    containing one dictionary for each file. The values in each dictionary will
+    correspond to items in each row of the query response.  The keys will 
+    correspond to the items in the response header row, with additional column
+    headers added where needed. Redundant columns are not included in the 
+    dictionaries.
+
+    responseLines = Archive query response returned by VLBAQueryArchive
+    """
+    head = responseLines[0] # header line
+    headers = head.split(' ')
+    headers.pop(0) # remove leading '#'
+    headers.pop(1) # remove extra space
+    # Add headers to columns where there are none
+    headers[14:] = ['DATE', 'RESPONSE_ROW', '?', 'FILESIZE_UNIT']
+    fileList = []
+    for line in responseLines[1:]:
+        metadata = line.split(',')
+        # Remove redundant metadata
+        metadata[14:19] = [] 
+        metadata.pop(17)
+        dict = {}
+        for i,d in enumerate(metadata): # iterate over every column
+            dict[ headers[i] ] = d.strip()
+        fileList.append( dict )
+    return fileList
+
+def VLBADownloadArchiveFile( fileDict, email, destination ):
+    """
+    Download a file from the archive.
+
+    fileDict = a single file dictionary returned in the response from 
+               VLBAParseArchiveResponse
+    email = Email address to receive download confirmation
+    destination = Download destination directory
+    """
+    FTPCHECKED=fileDict['file_root']+','+ \
+               fileDict['logical_file']+','+ \
+               fileDict['raw_project_code']+','+ \
+               fileDict['segment']+','+ \
+               fileDict['lock_status']+','+ \
+               fileDict['DATE']+','+ \
+               fileDict['RESPONSE_ROW']+','+ \
+               fileDict['?']+','+ \
+               fileDict['format']+','+ \
+               fileDict['FILESIZE_UNIT']
+    # This IP lookup method may be host dependent. Since the archive accepts
+    # the request without parameter REMOTEADDR, leave this off for now.
+    # localhostIP =  \
+    #     commands.getoutput("/sbin/ifconfig").split("\n")[1].split()[1][5:]
+    dataList = [
+        ('EMAILADDR', email ),
+        ('FTPCHECKED', FTPCHECKED ),
+        ('COPYFILEROOT', destination ),
+        ('ARCHIVEROOT', '/home/archive/e2e/archive'),
+        ('CONVERT2FORMAT', 'UVFITS'),
+        ('DOWNLOADFTPCHK', 'Download Checked Files'),
+        ('FILENAMESTYLE', 'ANALYSTS'),
+        ('FLAGGING', 'FLAG'),
+        ('PROTOCOL', 'HTML'),
+        ('SPECTAVG', 'x1'),
+        ('TIMEAVG','0s'),
+        ('USERSTRING', '')
+    ]
+    data = urllib.urlencode( dataList )
+    url = 'https://archive.nrao.edu/cgi-bin/e2eftp.cgi'
+    response = urllib2.urlopen( url, data )
+    lines = response.readlines()
+    print "--- Archive Download Response ---"
+    for ln in lines: print ln,
+    print "--- --- "
+
+def VLBASummarizeArchiveResponse( fileList ):
+    """
+    Print a table summary of the archive response.
+
+    fileList = List of file dictionaries returned by VLBAParseArchiveResponse
+    """
+    formatHead = "%-2s %-6s %-1s %-18s %-18s %-6s"
+    print formatHead % \
+        ( "#-", "PCODE-", "S", "STARTTIME---------", "STOPTIME----------", 
+        "SIZE--" )
+    for i,file in enumerate(fileList):
+        formatStr = "%2d %6s %1s %18s %18s %6s" 
+        print formatStr % ( i, file['project_code'], 
+            file['segment'], file['starttime'], file['stoptime'], 
+            file['FILESIZE_UNIT'] )
+
+def VLBAGetParms( fileDict, DESTDIR=None ):
+    """
+    Get pipeline input parameters from a file dictionary returned by
+    VLBAParseArchiveResponse.
+    
+    fileDict = a single file dictionary returned in the response from 
+                   VLBAParseArchiveResponse
+    DESTDIR = Destination directory for copy (rsync)
+    """
+    # Get session from archive file name
+    session = '??'
+    pattern = re.compile(r'VLBA_[A-Za-z]+[0-9]+([A-Za-z]{2})')   
+    match = re.match( pattern, fileDict['logical_file'] )
+    if match:
+        session = match.group(1)
+    else:
+        session = '??'
+    # Get band letter(s) from numerical frequency in file name
+    bandLetter = '?'
+    pattern = re.compile('.*_(\d+\.\d+)([MG]HZ)')
+    match = re.match( pattern, fileDict['logical_file'] )
+    if match:
+        f, unit = match.group( 1, 2 )
+        f = float( f )
+        print f, unit
+        if unit == 'MHZ':
+            f = f / 1000
+        if   f >= 1.35 and f <= 1.75: bandLetter = 'L' 
+        elif f >= 2.15 and f <= 2.35: bandLetter = 'S'
+        elif f >= 4.6  and f <= 5.1 : bandLetter = 'C'
+        elif f >= 8.0  and f <= 8.8 : bandLetter = 'X'
+        elif f >= 12.0 and f <= 15.4: bandLetter = 'Ku'
+        else: bandLetter= '?'
+    # Set the copy destination directory
+    if not DESTDIR:
+        try:
+            DESTDIR = os.environ['DESTDIR'] # get destination from env var
+        except KeyError:
+            DESTDIR = './output' # default
+    parms = [ ('@PROJECT@', fileDict['project_code']),
+              ('@SESSION@', session),
+              ('@BAND@',    bandLetter),
+              ('@UVFITS@',  fileDict['logical_file']),
+              ('@CALINT@',  '10.0 / 60.0' ), # default value
+              ('@DESTDIR@', DESTDIR) ] # should be stored somewhere (env var?)
+    return parms
+
+def VLBAPrepare( starttime, stoptime, email, fitsDest, outputDest,
+    template="VLBAContTemplateParm.py", parmFile=None ):
+    """
+    Prepare pipeline for processing. Query archive, parse response, print 
+    summary, get user file selection, download archive file, create
+    parameter file. Give user the command to execute the pipeline.
+    
+    startTime = Start of query time range ( YYYY-mmm-DD [ HH:MM:SS ] )
+    stopTime = End of query time range
+    email = email address to receive download confirmation
+    destination = download destination directory
+    template = name of template parameter file
+    parmFile = name of output parameter file; None => used default name
+    """
+    response = VLBAQueryArchive( starttime, stoptime )
+    fileList = VLBAParseArchiveResponse( response )
+    VLBASummarizeArchiveResponse( fileList )
+    print "Download file #: ",
+    fileNum = int( sys.stdin.readline() )
+    fileDict = fileList[fileNum]
+    VLBADownloadArchiveFile( fileDict, email, fitsDest )
+    parmList = VLBAGetParms( fileDict, DESTDIR = outputDest )
+    if not parmFile:
+        parmFile = "VLBAContParm_" + fileDict['project_code'] + '.py'
+    print 'parmFile = ' + parmFile
+    VLBAMakeParmFile( template, parmList, parmFile )
+    print "Start pipeline with command:"
+    print "python VLBAContPipe.py AIPSSetup.py " + parmFile
 
