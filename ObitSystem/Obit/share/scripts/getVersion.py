@@ -11,6 +11,7 @@
 #
 
 from os import environ, popen
+import os.path
 import re
 from sys import exit
 import sys
@@ -31,8 +32,10 @@ try:
     ver = f.read()
 
     # Get the svn revision written previously to ObitVersion.c
-    f = open( filename, 'r' )
-    txt = f.read()
+    txt = ''
+    if os.path.exists( filename ):
+        f = open( filename, 'r' )
+        txt = f.read()
 
     # Compare the current and previous version strings
     matchstr = re.compile('"(.*)"') # get first text in quotes
