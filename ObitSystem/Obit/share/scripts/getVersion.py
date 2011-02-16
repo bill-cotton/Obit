@@ -27,8 +27,13 @@ try:
     else:
         OBIT = sys.argv[1]
     filename = OBIT + '/src/ObitVersion.c'
-    cmd = 'svnversion -n ' + OBIT
-    f = popen(cmd)
+    # Revert ObitVersion.c before calling svnversion. This prevents
+    # ObitVersion.c from making the source look modified.
+    cmd1 = 'svn revert ' + filename
+    f = popen(cmd1)
+    print f.read(),
+    cmd2 = 'svnversion -n ' + OBIT
+    f = popen(cmd2)
     ver = f.read()
 
     # Get the svn revision written previously to ObitVersion.c
