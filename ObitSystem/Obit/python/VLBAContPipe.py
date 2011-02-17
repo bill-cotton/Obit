@@ -9,6 +9,7 @@ import pydoc
 from AIPS import AIPSDisk
 from FITS import FITSDisk
 from VLBACal import *
+from PipeUtil import *
 
 ############################# Initialize OBIT ##########################################                                 
 setup = sys.argv[1]
@@ -429,6 +430,8 @@ if parms["doSaveUV"] and (not check):
 
 # Save UV data tables?
 if parms["doSaveTab"] and (not check):
+    mess = "Write UV data tables to disk."
+    printMess(mess, logFile)
     filename = project+session+band+"CalTab.uvtab"
     fuv = VLBAUVFITSTab (uv, filename, 0, err)
     VLBAAddOutFile( filename, 'project', "Calibrated AIPS tables" )
@@ -437,6 +440,8 @@ if parms["doSaveTab"] and (not check):
 # Imaging results
 outDisk = 0
 if parms["doSaveImg"]:
+    mess = "Write images to disk."
+    printMess( mess, logFile )
     # How many Stokes images
     nstok = len(parms["Stokes"])
     # Targets
