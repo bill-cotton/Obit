@@ -1015,6 +1015,7 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
 {
   ObitIOCode retCode = OBIT_IO_EOF;
   olong iStok, iChan, iIF, indx, ondx, voff, jChan, ant1, ant2;
+  ofloat weight;
   /*gchar *routine = "ObitBDFDataGetVis";*/
 
   /* error checks */
@@ -1037,6 +1038,7 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
     vis[in->desc->ilocsu] = (ofloat)in->sourceNo;
     ant1 = in->antNo[in->ant1];
     ant2 = in->antNo[in->ant2];
+    weight = vis[in->desc->ilocit];  /* Use integration time as weight */
 
     /* Is the order of the baseline correct, ant1<ant2 ? */
     if (ant1<ant2) {
@@ -1055,7 +1057,7 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
 	    indx = voff + in->coffs[iStok] + iChan*in->cincf + in->coffif[iIF];
 	    vis[ondx]   = in->crossCorr[indx];
 	    vis[ondx+1] = in->crossCorr[indx+1];
-	    vis[ondx+2] = 1.0;
+	    vis[ondx+2] = weight;
 	  } /* end Stokes loop */
 	} /* end Channel loop */
       } /* end IF loop */
@@ -1079,17 +1081,17 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
 	    case 1:     /* LL or YY */
 	      vis[ondx]   =  in->crossCorr[in->coffs[iStok]+indx];
 	      vis[ondx+1] = -in->crossCorr[in->coffs[iStok]+indx+1];   /* Conjugate */
-	      vis[ondx+2] = 1.0;
+	      vis[ondx+2] = weight;
 	      break;
 	    case 2:  /* Swap RL, LR */
 	      vis[ondx]   =  in->crossCorr[in->coffs[iStok+1]+indx];
 	      vis[ondx+1] = -in->crossCorr[in->coffs[iStok+1]+indx+1];   /* Conjugate */
-	      vis[ondx+2] = 1.0;
+	      vis[ondx+2] = weight;
 	      break;
 	    case 3:
 	      vis[ondx]   =  in->crossCorr[in->coffs[iStok-1]+indx];
 	      vis[ondx+1] = -in->crossCorr[in->coffs[iStok-1]+indx+1];   /* Conjugate */
-	      vis[ondx+2] = 1.0;
+	      vis[ondx+2] = weight;
 	      break;
 	    default:
 	      g_assert_not_reached(); /* unknown, barf */
@@ -1137,22 +1139,22 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
 	  case 0:
 	    vis[ondx]   = in->autoCorr[indx+in->aoffs[0]];
 	    vis[ondx+1] = 0.0;
-	    vis[ondx+2] = 1.0;
+	    vis[ondx+2] = weight;
 	    break;
 	  case 1:
 	    vis[ondx] = in->autoCorr[indx+in->aoffs[1]];
 	    vis[ondx+1] = 0.0;
-	    vis[ondx+2] = 1.0;
+	    vis[ondx+2] = weight;
 	    break;
 	  case 2:
 	    vis[ondx]   = in->autoCorr[indx+in->aoffs[2]];
 	    vis[ondx+1] = in->autoCorr[indx+in->aoffs[2]+2];
-	    vis[ondx+2] = 1.0;
+	    vis[ondx+2] = weight;
 	  case 3:
 	    /* Use conjugate */
 	    vis[ondx]   =  vis[ondx];
 	    vis[ondx+1] = -vis[ondx+1];
-	    vis[ondx+2] = 1.0;
+	    vis[ondx+2] = weight;
 	    break;
 	  default:
 	    g_assert_not_reached(); /* unknown, barf */
