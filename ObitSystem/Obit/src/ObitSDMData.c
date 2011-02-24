@@ -61,6 +61,7 @@ X    Weather.xml
 /*--------------------------------------------------------------------*/
 
 #include "ObitSDMData.h"
+#include "ObitEVLASysPower.h"
 #include "ObitFile.h"
 #include "glib/gqsort.h"
 
@@ -425,6 +426,14 @@ static ASDMSysPowerRow* KillASDMSysPowerRow(ASDMSysPowerRow* row);
 static ASDMSysPowerTable* ParseASDMSysPowerTable(ObitSDMData *me,
 					 gchar *SysPowerFile, 
 					 ObitErr *err);
+/** Private: Parser constructor for SysPowerl table from xml file */
+static ASDMSysPowerTable* ParseASDMSysPowerTableXML(ObitSDMData *me,
+						    gchar *SysPowerFile, 
+						    ObitErr *err);
+/** Private: Parser constructor for SysPower table from binary file */
+static ASDMSysPowerTable* ParseASDMSysPowerTableBin(ObitSDMData *me,
+						    gchar *SysPowerFile, 
+						    ObitErr *err);
 /** Private: Destructor for SysPower table. */
 static ASDMSysPowerTable* KillASDMSysPowerTable(ASDMSysPowerTable* table);
 
@@ -732,8 +741,8 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
-  /* SysPower table */
-  fullname = g_strconcat (DataRoot,"/SysPower.xml", NULL);
+  /* SysPower table from either xml or binary */
+  fullname = g_strconcat (DataRoot,"/SysPower", NULL);
   out->SysPowerTab = ParseASDMSysPowerTable(out, fullname, err);
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
@@ -6660,7 +6669,7 @@ static ASDMSysPowerRow* KillASDMSysPowerRow(ASDMSysPowerRow* row)
 
 /** 
  * Constructor for SysPower table parsing from file
- * \param  SysPowerFile Name of file containing table
+ * \param  SysPowerFile Name root of file containing table
  * \param  err     ObitErr for reporting errors.
  * \return table structure,  use KillASDMSysPowerTable to free
  */
@@ -6670,6 +6679,42 @@ ParseASDMSysPowerTable(ObitSDMData *me,
 		       ObitErr *err)
 {
   ASDMSysPowerTable* out=NULL;
+  gchar *fullname;
+  gchar *routine = "ParseASDMSysPowerTable";
+
+  if (err->error) return out;
+
+  /* does either table exist? Try binary first */
+  fullname = g_strconcat (SysPowerFile,".bin", NULL);
+  if (ObitFileExist(fullname, err)) {
+    out = ParseASDMSysPowerTableBin(me, fullname, err);
+  }
+  if (fullname) g_free(fullname);
+  if (err->error) Obit_traceback_val (err, routine, me->name, out);
+  if (out) return out;  /* Done? */
+
+  /* does either table exist? Try binary first */
+  fullname = g_strconcat (SysPowerFile,".xml", NULL);
+  if (ObitFileExist(fullname, err)) {
+    out = ParseASDMSysPowerTableXML(me, fullname, err);
+  }
+  if (fullname) g_free(fullname);
+  if (err->error) Obit_traceback_val (err, routine, me->name, out);
+  return out;
+} /* end ParseASDMSysPowerTable */
+
+/** 
+ * Constructor for SysPower table parsing from xml file
+ * \param  SysPowerFile Name of file containing table
+ * \param  err          ObitErr for reporting errors.
+ * \return table structure,  use KillASDMSysPowerTable to free
+ */
+static ASDMSysPowerTable* 
+ParseASDMSysPowerTableXML(ObitSDMData *me, 
+			  gchar *SysPowerFile, 
+			  ObitErr *err)
+{
+  ASDMSysPowerTable* out=NULL;
   ObitFile *file=NULL;
   ObitIOCode retCode;
   olong irow, maxLine = 4098;
@@ -6677,7 +6722,7 @@ ParseASDMSysPowerTable(ObitSDMData *me,
   gchar line[4099];
   gchar *endrow = "</row>";
   gchar *prior, *next;
-  gchar *routine = " ParseASDMSysPowerTable";
+  gchar *routine = "ParseASDMSysPowerTableXML";
 
   /* error checks */
   if (err->error) return out;
@@ -6768,6 +6813,68 @@ ParseASDMSysPowerTable(ObitSDMData *me,
   return out;
 } /* end ParseASDMSysPowerTable */
 
+/** 
+ * Constructor for SysPower table parsing from binary file
+ * \param  SysPowerFile Name of file containing table
+ * \param  err          ObitErr for reporting errors.
+ * \return table structure,  use KillASDMSysPowerTable to free
+ */
+static ASDMSysPowerTable* 
+ParseASDMSysPowerTableBin(ObitSDMData *me, 
+			  gchar *SysPowerFile, 
+			  ObitErr *err)
+{
+  ASDMSysPowerTable* out=NULL;
+  ObitEVLASysPower*  binTab=NULL;
+  olong nrow, orow, irow;
+  gchar *routine = "ParseASDMSysPowerTableBin";
+
+  if (err->error) return out;
+
+  /* Basic output */
+  out = g_malloc0(sizeof(ASDMSysPowerTable));
+  out->rows = NULL;
+
+  /* Create binary table parsing structure */
+  binTab = ObitEVLASysPowerCreate ("EVLASysPower", err);
+  if (err->error) Obit_traceback_val (err, routine, me->name, out);
+
+  /* Init file */
+  ObitEVLASysPowerInitFile (binTab, SysPowerFile, err);
+  if (err->error) goto cleanup;
+
+  /* How big */
+  nrow = ObitEVLASysPowerGetNrow (binTab);
+  /* If not given use ASDM table */
+  if (nrow<0) {
+    nrow = me->ASDMTab->SysPowerRows;
+    binTab->nrow = nrow;
+  }
+  out->nrows = nrow;
+  if (nrow<1) return out;
+
+  /* Finish building output */
+  out->rows = g_malloc0((out->nrows+1)*sizeof(ASDMSysPowerRow*));
+  for (irow=0; irow<out->nrows; irow++) out->rows[irow] = g_malloc0(sizeof(ASDMSysPowerRow));
+
+  /* Loop reading rows */
+  for (irow=0; irow<out->nrows; irow++) {
+    orow = ObitEVLASysPowerGetRow (binTab, out->rows[irow], err);
+    if (orow<=0) break;  /* Done? */
+    if (err->error) goto cleanup;
+    nrow = orow;
+  } /* end loop reading */
+  out->nrows = nrow;
+
+  /* Cleanup */
+  binTab = ObitEVLASysPowerUnref(binTab); 
+  if (err->error) Obit_traceback_val (err, routine, me->name, out);
+ cleanup:
+  
+
+  if (err->error) Obit_traceback_val (err, routine, me->name, out);
+  return out;
+} /* end ParseASDMSysPowerTableBin */
 /** 
  * Destructor for SysPower table
  * \param  structure to destroy
