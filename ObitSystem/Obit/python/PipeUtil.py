@@ -438,3 +438,19 @@ def SummarizeArchiveResponse( fileList ):
         print formatStr % ( i, file['project_code'], 
             file['segment'], file['starttime'], file['stoptime'], 
             file['FILESIZE_UNIT'] )
+
+def XMLSetAttributes( element, nameValList ):
+    """
+    Add a sequence of name-value pairs as attributes to an xml.dom.minidom
+    element. Makes adding multiple attributes to an element easier.
+
+    element = xml.dom.minidom element
+    nameValList = list of name-value pairs to be added as attributes
+                  to element
+    """
+    for pair in nameValList:
+        # xml.dom.minidom.Element.setAttribute() must be given strings,
+        # otherwise an error is produced.
+        element.setAttribute( str(pair[0]), str(pair[1]) )
+
+

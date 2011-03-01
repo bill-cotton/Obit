@@ -71,5 +71,6 @@ parms["doPCPlot"]        = T       # Plot PC results?
 parms["doSpecPlot"]      = T       # Plot the amp. and phase across the spectrum
 parms["doDiagPlots"]     = T       # Source plots
 parms["doKntrPlots"]     = T       # Contour plots
-parms["doReport"]        = T       # Individual source report
+parms["doMetadata"]      = T       # Generate metadata dictionaries
+parms["doVOTable"]       = T       # VOTable report
 parms["doHTML"]          = T       # Generate HTML report?

@@ -547,15 +547,21 @@ if parms["doMetadata"]:
 
     # Get project metadata; save to pickle file
     projMetadata = VLBAProjMetadata( uvc, AIPS_VERSION, err, contCals=parms["contCals"],
-        goodCal = goodCal, project = project, session = session, band = band )
+        goodCal = goodCal, project = project, session = session, band = band,
+        dataInUVF = dataInUVF )
     picklefile = "./"+project+"_"+session+"_"+band+"ProjReport.pickle"
-    SaveObject(srcMetadata, picklefile, True) 
+    SaveObject(projMetadata, picklefile, True) 
 
 # Write report
 if parms["doHTML"]:
     VLBAHTMLReport( projMetadata, srcMetadata, \
                         outfile=project+"_"+session+"_"+band+"report.html", \
                         logFile=logFile )
+
+# Write VOTable
+if parms["doVOTable"]:
+    VLBAWriteVOTable( projMetadata, srcMetadata, filename='VOTable.xml' )
+    VLBAAddOutFile( 'VOTable.xml', 'project', 'VOTable report' )
 
 # Save list of output files
 VLBASaveOutFiles()

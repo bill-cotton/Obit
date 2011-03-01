@@ -5,12 +5,13 @@ import InfoList, Table, AIPSDir, OSystem
 import os, os.path, re, shutil, pickle, math
 import urllib, urllib2
 import sys, commands
+import datetime
+import xml.dom.minidom
 from AIPS import AIPS
 from FITS import FITS
 from AIPSDir import AIPSdisks, nAIPS
 from OTObit import Acat, AMcat, getname, zap, imhead, tabdest
 from Obit import Version
-from datetime import date
 from subprocess import Popen, PIPE
 from PipeUtil import *
 
@@ -5901,23 +5902,29 @@ def VLBAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
     # end VLBACntrPlots
 
 def VLBAProjMetadata( uv, AIPS_VERSION, err, contCals=[None], goodCal={}, 
-    project='project', session='session', band='band' ):
+    project='project', session='session', band='band', dataInUVF='' ):
     """
     Return a dictionary holding project metadata. Contents:
-      "project"     : observation project name 
-      "session"     : observation project session
-      "band"        : receiver band code
-      "obsDate"     : observation date
-      "procDate"    : pipeline processing date
-      "obitVer"     : Obit version (TBD)
-      "aipsVer"     : AIPS version
-      "pyVer"       : Python version
-      "sysInfo"     : system information on processing machine (uname -a)
-      "contCals"    : continuum calibrators
-      "goodCal"     : good calibrator data 
-      "anNames"     : names of all antennas used
-      "freqCov"     : frequency coverage (low & up sideband pairs for all IFs)
-      "minFringeMas": minimum fringe spacing (mas)
+      "project"      : observation project name 
+      "session"      : observation project session
+      "band"         : receiver band code
+      "obsDate"      : observation date
+      "procDate"     : pipeline processing date
+      "contCals"     : array of continuum calibrators
+      "goodCalSrc"   : best calibrator
+      "goodCalTime"  : best calibrator time range
+      "goodCalRefAnt": best calibrator reference antenna
+      "goodCalSNR"   : best calibrator signal-to-noise ratio
+      "obitVer"      : Obit version (TBD)
+      "aipsVer"      : AIPS version
+      "pyVer"        : Python version
+      "sysInfo"      : system information on processing machine (uname -a)
+      "contCals"     : continuum calibrators
+      "goodCal"      : good calibrator data 
+      "anNames"      : names of all antennas used
+      "freqCov"      : frequency coverage (low & up sideband pairs for all IFs)
+      "minFringeMas" : minimum fringe spacing (mas)
+      "dataSet"      : Data set archive file name
 
     uv = uv data object for which the report will be generated
     AIPS_VERSION = AIPS version information
@@ -5927,22 +5934,26 @@ def VLBAProjMetadata( uv, AIPS_VERSION, err, contCals=[None], goodCal={},
     project = Observation project name
     session = Observation project session
     band = receiver band code
+    dataInUVF = data set archive file name
     """
     r = {} 
     r["project"] = project
     r["session"] = session
     r["band"] = band # Receiver band code
     r["obsDate"] = uv.Desc.Dict["obsdat"] # observation date
-    r["procDate"] = str( date.today() ) # processing date
+    r["procDate"] = str( datetime.date.today() ) # processing date
     r["obitVer"] = Version() # Obit version
     # Does this need to be passed as a function argument?
-    r["aipsVer"] = AIPS_VERSION + '(' + str( date.today() ) + ')' # AIPS version
+    r["aipsVer"] = AIPS_VERSION + '(' + str( datetime.date.today() ) + ')' # AIPS version
     r["pyVer"] = sys.version # python version
     p = Popen("uname -a", shell=True, stdout=PIPE).stdout # get sys info
     r["sysInfo"] = p.read()
-
     r["contCals"] = contCals # list of continuum calibrators
-    r["goodCal"] = goodCal # Output of VLBAGoodCal: best calibrator, best ref ant
+    r["goodCalSrc"] = goodCal["Source"]
+    r["goodCalTime"] = goodCal["timeRange"]
+    r["goodCalBestRef"] = goodCal["bestRef"]
+    r["goodCalSNR"] = goodCal["SNR"]
+    r["dataSet"] = dataInUVF
 
     # Get antenna names and positions
     antab = uv.NewTable(Table.READONLY,"AIPS AN",1,err)
@@ -6169,9 +6180,10 @@ def VLBAHTMLReport( projMetadata, srcMetadata, outfile="report.html",
     s  = "<a id='project_Section'><h2> Project </h2></a>\n"
     s += "<h3> Metadata </h3>\n"
     s += "<table>\n"
-    keys = [ 'project', 'session', 'band', 'obsDate', 'procDate', 'contCals', 
-             'goodCal', 'anNames', 'freqCov', 'minFringeMas', 'obitVer', 
-             'aipsVer', 'pyVer', 'sysInfo' ]
+    # keys = [ 'project', 'session', 'band', 'obsDate', 'procDate', 'contCals', 
+    #          'goodCal', 'anNames', 'freqCov', 'minFringeMas', 'obitVer', 
+    #          'aipsVer', 'pyVer', 'sysInfo' ]
+    keys = None
     s += writeTableRow( projMetadata, keys )
     s += "</table>\n"
     file.write( s )
@@ -6237,9 +6249,10 @@ def VLBAHTMLReport( projMetadata, srcMetadata, outfile="report.html",
         # Write output file table
         s  = "<h3> Files </h3>\n"
         s += "<table>\n"
-        for d in outfiles['source'][ metadata['Source'] ]:
-            s += '<tr><th><a href="' + d['name'] + '">' + d['name'] + '</a>' + \
-                 '</th><td>' + d['description'] + '</td></tr>'
+        if metadata['Source'] in outfiles['source']:
+            for d in outfiles['source'][ metadata['Source'] ]:
+                s += '<tr><th><a href="' + d['name'] + '">' + d['name'] + \
+                     '</a>' + '</th><td>' + d['description'] + '</td></tr>'
         s += "</table>\n"
         s += "<hr>\n"
         file.write(s)
@@ -6528,3 +6541,340 @@ def VLBAPrepare( starttime, stoptime, email, fitsDest, outputDest,
     print "Start pipeline with command:"
     print "python VLBAContPipe.py AIPSSetup.py " + parmFile
 
+def VLBAWriteVOTable( projMeta, srcMeta, filename="votable.xml" ):
+    """
+    Write metadata and file information to a VOTable.
+
+    projMetadata = dictionary of project metadata
+    srcMetadata  = dictionary of single-source metadata
+    """
+    now = datetime.datetime.utcnow()
+
+    doc = xml.dom.minidom.Document()
+    vo = doc.createElement("votable") # root element VOTABLE
+    doc.appendChild(vo)
+
+    rs = doc.createElement("resource") # RESOURCE VLBA Pipeline
+    rs.setAttribute("name","VLBA Pipeline")
+    vo.appendChild(rs)
+
+    io = doc.createElement("info")
+    io.setAttribute("name", "obit (pipeline) version")
+    io.setAttribute("value", Version() )
+    rs.appendChild(io)
+
+    io = doc.createElement("info")
+    io.setAttribute("name", "votable creation time")
+    io.setAttribute("value", now.strftime("%Y-%m-%d %X UTC") )
+    rs.appendChild(io)
+
+    rs2 = doc.createElement("resource") # RESOURCE Project Data
+    rs2.setAttribute("name","Project Data")
+    rs.appendChild(rs2)
+
+    tb = doc.createElement("table") # TABLE metadata (project)
+    tb.setAttribute("name","metadata")
+    rs2.appendChild(tb)
+
+    # Write project metadata
+    keys = projMeta.keys()
+    setAttribs = PipeUtil.XMLSetAttributes # use short name - save space
+    for key in keys:
+        pr = doc.createElement("param")
+        if key == "project":
+            setAttribs( pr, [ ("name", key ),
+                              ("value", projMeta[key] ),
+                              ("datatype", "char"),
+                              ("arraysize","*"),
+                              ("ucd","meta.code") ] )
+        elif key == "session":
+            setAttribs( pr, [ ("name", key ),
+                              ("value", projMeta[key] ),
+                              ("datatype","char"),
+                              ("arraysize","*"),
+                              ("ucd","meta.code") ] )
+        elif key == "band":
+            setAttribs( pr, [ ("name", key ),
+                              ("value", projMeta[key] ),
+                              ("datatype","char"),
+                              ("arraysize","*"),
+                              ("ucd","meta.code;instr.bandpass") ] )
+        elif key == "obsDate":
+            setAttribs( pr, [ ("name", key ),
+                              ("value", projMeta[key] ),
+                              ("datatype","char"),
+                              ("arraysize","10"),
+                              ("ucd","time.start") ] )
+        elif key == "procDate":
+            setAttribs( pr, [ ("name", key ),
+                              ("value", projMeta[key] ),
+                              ("datatype","char"),
+                              ("arraysize","10"),
+                              ("ucd","time.processing") ] )
+        elif key == "fileName":
+            setAttribs( pr, [ ("name", key ),
+                              ("value", projMeta[key] ),
+                              ("datatype","char"),
+                              ("arraysize","*"),
+                              ("ucd","meta.dataset;meta.file") ] )
+        elif key == "contCals":
+            # All strings in array must have same length
+            maxLen = 0
+            for string in projMeta[key]:
+                length = len(string)
+                if length > maxLen:
+                    maxLen = length
+            value = ""
+            for string in projMeta[key]:
+                # Concatenate strings, left justified, with min length maxLen+1
+                value += "%-*s" % ( maxLen+1, string )
+            arraysize = str(maxLen+1) + "x" + str( len(projMeta) )
+            setAttribs( pr, [ ("name", key ),
+                              ("value", value ),
+                              ("datatype","char"),
+                              ("arraysize", arraysize ),
+                              ("ucd","meta.id;src.calib") ] )
+        elif key == "goodCalSrc":
+            setAttribs( pr, [ ("name", key ),
+                              ("value", projMeta[key] ),
+                              ("datatype","char"),
+                              ("arraysize","*"),
+                              ("ucd","meta.id;src") ] )
+        elif key == "goodCalTime":
+            list = projMeta[key]
+            string = str( list[0] ) + " " + str( list[0] ) 
+            setAttribs( pr, [ ("name", key ),
+                              ("value", string ),
+                              ("datatype","double"),
+                              ("arraysize","2"),
+                              ("ucd","time.interval"),
+                              ("unit","8.64x10+4s") ] ) # frac of day
+        elif key == "goodCalSNR":
+            setAttribs( pr, [ ("name", key ),
+                              ("value", str( projMeta[key] ) ),
+                              ("datatype","double"),
+                              ("ucd","stat.snr;src.calib") ] )
+        elif key == "goodCalBestRef":
+            setAttribs( pr, [ ("name", key ),
+                              ("value", str( projMeta[key] ) ),
+                              ("datatype","int"),
+                              ("ucd","inst.calib") ] )
+        elif key == "anNames":
+            numAnt = len( projMeta[key] )
+            value=""
+            for name in projMeta[key]:
+                value += name + " " # 2-char name plus space => len = 3
+            arraysize = "3x" + str( numAnt )
+            setAttribs( pr, [ ("name", key ),
+                              ("value", value ),
+                              ("datatype","char"),
+                              ("arraysize", arraysize),
+                              ("ucd","meta.code") ] )
+        elif key == "freqCov":
+            pairList = projMeta[key]
+            arraysize = "2x" + str( len( pairList ) )
+            value = ""
+            for pair in pairList:
+                value += "%f %f " % ( pair[0], pair[1] )
+            setAttribs( pr, [ ("name", key ),
+                              ("value", value ),
+                              ("datatype","double"),
+                              ("arraysize", arraysize),
+                              ("ucd","em.freq"),
+                              ("unit", "Hz") ] )
+        elif key == "minFringeMas":
+            setAttribs( pr, [ ("name", key ),
+                              ("value", str( projMeta[key] ) ),
+                              ("datatype","double"),
+                              ("ucd","phys.angSize"),
+                              ("unit", "mas") ] )
+        elif key == "dataSet":
+            setAttribs( pr, [ ("name", key ),
+                              ("value", projMeta[key] ),
+                              ("datatype","char"),
+                              ("arraysize","*"),
+                              ("ucd","meta.dataset;meta.file") ] )
+        elif key in ("obitVer", "aipsVer", "pyVer", "sysInfo"):
+            setAttribs( pr, [ ("name", key ),
+                              ("value", projMeta[key] ),
+                              ("datatype","char"),
+                              ("arraysize","*"),
+                              ("ucd","meta.version;meta.software") ] )
+        tb.appendChild(pr)
+
+    table_ProjFiles = doc.createElement("table")
+    table_ProjFiles.setAttribute("name","files")
+    rs2.appendChild(table_ProjFiles)
+
+    fi = doc.createElement("field")
+    fi.setAttribute("name","file name")
+    fi.setAttribute("datatype","char")
+    fi.setAttribute("arraysize","*")
+    fi.setAttribute("ucd","meta;meta.file")
+    table_ProjFiles.appendChild(fi)
+
+    fi = fi.cloneNode( False )
+    fi.setAttribute("name","description")
+    fi.setAttribute("ucd","meta.title")
+    table_ProjFiles.appendChild(fi)
+
+    dt = doc.createElement("data")
+    table_ProjFiles.appendChild(dt)
+
+    td = doc.createElement("tabledata")
+    dt.appendChild(td)
+
+    # Make copy of node for later use
+    table_SrcFiles = table_ProjFiles.cloneNode( True )
+
+    # Project files
+    VLBAWriteVOTableFiles( outfiles['project'], td)
+
+    rs2 = doc.createElement("resource") # RESOURCE Source Data
+    rs2.setAttribute("name","Source Data")
+    rs.appendChild(rs2)
+
+    # Loop over all sources
+    for src in srcMeta:
+        rs3 = doc.createElement("resource") # RESOURCE (each source)
+        rs3.setAttribute("name", src["Source"] )
+        rs2.appendChild(rs3)
+
+        tb = doc.createElement("table") # TABLE metadata
+        tb.setAttribute("name","metadata")
+        rs3.appendChild(tb)
+
+        # Src metadata
+        keys = src.keys()
+        for key in keys:
+            pr = doc.createElement("param")
+            if key == "ObsDate":
+                setAttribs( pr, [ ("name", key ),
+                                  ("value", src[key] ),
+                                  ("datatype","char"),
+                                  ("arraysize","10"),
+                                  ("ucd","time.start") ] )
+            elif key == "RA":
+                setAttribs( pr, [ ("name", key ),
+                                  ("value", src[key] ),
+                                  ("datatype","double"),
+                                  ("ucd","pos.eq.ra;src"),
+                                  ("unit","deg") ] )
+            elif key == "Dec":
+                setAttribs( pr, [ ("name", key ),
+                                  ("value", src[key] ),
+                                  ("datatype","double"),
+                                  ("ucd","pos.eq.dec;src"),
+                                  ("unit","deg") ] )
+            elif key == "Exposure":
+                setAttribs( pr, [ ("name", key ),
+                                  ("value", src[key] ),
+                                  ("datatype","double"),
+                                  ("ucd","time.duration;obs.exposure"), 
+                                  ("unit","8.64x10+4s") ] ) # frac of day
+            elif key == "numVis":
+                setAttribs( pr, [ ("name", key ),
+                                  ("value", src[key] ),
+                                  ("datatype","int"),
+                                  ("ucd","meta.number;obs") ] )
+            elif key == "RAPnt":
+                setAttribs( pr, [ ("name", key ),
+                                  ("value", src[key] ),
+                                  ("datatype","double"),
+                                  ("ucd","pos.eq.ra;instr"),
+                                  ("unit","deg") ] )
+            elif key == "DecPnt":
+                setAttribs( pr, [ ("name", key ),
+                                  ("value", src[key] ),
+                                  ("datatype","double"),
+                                  ("ucd","pos.eq.dec;instr"), 
+                                  ("unit","deg") ] )
+            elif key == "Freq":
+                setAttribs( pr, [ ("name", key ),
+                                  ("value", src[key] ),
+                                  ("datatype","double"),
+                                  ("ucd","em.freq"),
+                                  ("unit","Hz") ] )
+            elif key == "BW":
+                setAttribs( pr, [ ("name", key ),
+                                  ("value", src[key] ),
+                                  ("datatype","double"),
+                                  ("ucd","instr.bandwidth"),
+                                  ("unit","Hz") ] )
+            elif key == "Size":
+                setAttribs( pr, [ ("name", key ),
+                                  ("value", src[key] ),
+                                  ("datatype","double"),
+                                  ("ucd","pos.angDistance"), 
+                                  ("unit","deg") ] )
+            elif key == "Cells":
+                setAttribs( pr, [ ("name", key ),
+                                  ("value", src[key] ),
+                                  ("datatype","double"),
+                                  ("ucd","pos.angResolution"), 
+                                  ("unit","deg") ] )
+            elif key.find("Peak") == 1:
+                setAttribs( pr, [ ("name", key ),
+                                  ("value", src[key] ),
+                                  ("datatype","double"),
+                                  ("ucd","phot.flux.density;stat.max"),
+                                  ("unit","Jy") ] )
+            elif key.find("Sum") == 1:
+                setAttribs( pr, [ ("name", key ),
+                                  ("value", src[key] ),
+                                  ("datatype","double"),
+                                  ("ucd","phot.flux.density;arith"),
+                                  ("unit","Jy") ] )
+            elif key.find("RMS") == 1:
+                setAttribs( pr, [ ("name", key ),
+                                  ("value", src[key] ),
+                                  ("datatype","double"),
+                                  ("ucd","stat.stdev;phot.flux.density"),
+                                  ("unit","Jy") ] )
+            elif key.find("Beam") == 1:
+                value = ""
+                for float in src[key]:
+                    value += str( float ) + " "
+                setAttribs( pr, [ ("name", key ),
+                                  ("value", value ),
+                                  ("datatype","double"),
+                                  ("arraysize","3"),
+                                  ("ucd","instr.beam"),
+                                  ("unit","deg") ] )
+            else: continue # skip append and go to next key
+            tb.appendChild(pr)
+
+        tb = table_SrcFiles.cloneNode( True ) # make deep copy for this source
+        rs3.appendChild(tb) 
+        nodeList = tb.getElementsByTagName('tabledata')
+        td = nodeList.item(0)
+        # if this source is in the outfiles single-source dictionary...
+        if src['Source'] in outfiles['source']:
+            fileList = outfiles['source'][ src['Source'] ]
+            VLBAWriteVOTableFiles( fileList, td )
+    
+    votable = open( filename, "w" )
+    doc.writexml( votable, addindent="  ", newl="\n") # readable format
+    # doc.writexml( votable ) # production format
+
+def VLBAWriteVOTableFiles( fileList, tableData ):
+    """
+    Write output file data to a VOTable.
+
+    fileList = List of file dictionaries, from outfiles
+    tableData = TABLEDATA element to which child elements will be appended
+    """
+    doc = xml.dom.minidom.Document()
+    for file in fileList:
+        tr = doc.createElement("tr")
+        tableData.appendChild(tr)
+
+        td = doc.createElement("td")
+        tr.appendChild(td)
+        tx = doc.createTextNode( file['name'] )
+        td.appendChild(tx)
+
+        td = doc.createElement("td")
+        tr.appendChild(td)
+        tx = doc.createTextNode( file['description'] )
+        td.appendChild(tx)
