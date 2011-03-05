@@ -1,6 +1,6 @@
 /* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2010                                          */
+/*;  Copyright (C) 2004-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -185,6 +185,10 @@ gboolean ObitDConCleanAutoWindow(ObitDConClean *in, olong *fields,
 				 ObitFArray **pixarray, ObitErr *err);
 typedef gboolean (*ObitDConCleanAutoWindowFP) (ObitDConClean *in, olong *fields, 
 					       ObitFArray **pixarray, ObitErr *err);
+
+/** Public: Get cross restoring beam parameters */
+ofloat ObitDConCleanGetXRestoreBeam(ObitImageDesc *imDesc1, ObitImageDesc *imDesc2, 
+				    ofloat *gparm, ofloat *bmaj, ofloat *bmin, ofloat *bpa);
 
 /* Private routines */
 /** Private: Read Beam patches. */

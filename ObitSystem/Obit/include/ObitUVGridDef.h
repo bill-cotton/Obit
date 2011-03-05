@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -95,3 +95,5 @@ olong nThreads;
 gpointer **threadArgs;
 /** nThreads-1 work gridding arrays */
 ObitCArray **workGrids;
+/** Additional beam tapering as sigma^2 of Gaussian */
+ofloat BeamTaperUV;

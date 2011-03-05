@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN/selfcalibrate a uv data set               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2010                                          */
+/*;  Copyright (C) 2005-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -895,7 +895,7 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *strTemp;
-  ofloat ftemp;
+  ofloat ftemp, tapes[20];
   gboolean *booTemp, btemp;
   olong itemp;
   ObitSkyModelMode modelMode;
@@ -917,7 +917,7 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   dim[0] = dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "Mode", OBIT_long, dim, &modelMode);
 
-   /* Default NField is 1 if FOV not specified =.Figure it out */
+  /* Default NField is 1 if FOV not specified => Figure it out */
   ObitInfoListGet(myInput, "FOV",     &type, dim,  &ftemp, err);
   if (ftemp>0.0) itemp = 0;
   else itemp = 1;
@@ -935,6 +935,16 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
  /* Copy doFull to doFlatten */
   ObitInfoListGetP (myInput, "doFull", &type, dim, (gpointer)&booTemp);
   ObitInfoListAlwaysPut (myInput, "doFlatten", OBIT_bool, dim, booTemp);
+
+  /* Convert nTaper to numBeamTapes */
+  itemp = 1;  type = OBIT_long; dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListGetTest(myInput, "nTaper", &type, dim, &itemp);
+  ObitInfoListAlwaysPut (myInput, "numBeamTapes", type, dim, &itemp);
+
+  /* Convert Tapers to Tapes */
+  if (ObitInfoListGetTest(myInput, "Tapers", &type, dim,  tapes)) {
+    ObitInfoListAlwaysPut (myInput, "BeamTapes", type, dim, tapes);
+  }
 
   /* Initialize Threading */
   ObitThreadInit (myInput);
@@ -1469,6 +1479,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "MaxBaseline", "MinBaseline", "rotate", "Beam",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
     "nxBeam", "nyBeam", "Alpha", "doCalSelect",
+    "numBeamTapes", "BeamTapes", "MResKnob",
     NULL
   };
   gchar        *saveParms[] = {  /* Imaging, weighting parameters to save*/
@@ -1672,7 +1683,6 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
       /* Set Stokes on SkyModel */
       ObitInfoListAlwaysPut (myClean->skyModel->info, "Stokes", OBIT_string, dim, Stokes);
 
-      /* Do actual processing */
       doImage (Stokes, myInput, outData, myClean, err);
       if (err->error) Obit_traceback_msg (err, routine, inData->name);
 
@@ -2270,6 +2280,7 @@ void ImagerHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "PeelFlux", "PeelLoop", "PeelRefAnt", "PeelSNRMin",
     "PeelSolInt", "PeelType", "PeelMode", "PeelNiter",
     "PeelMinFlux", "PeelAvgPol", "PeelAvgIF",
+    "nTaper", "Tapers", "MResKnob",
     "nThreads",
     NULL};
   gchar *routine = "ImagerHistory";

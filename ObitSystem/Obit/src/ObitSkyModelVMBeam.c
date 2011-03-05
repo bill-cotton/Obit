@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009,2010                                          */
+/*;  Copyright (C) 2009,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1604,14 +1604,14 @@ static gpointer ThreadSkyModelVMBeamFTDFT (gpointer args)
 			       ddata[8]*visData[ilocv]*visData[ilocv] +
 			       ddata[9]*visData[ilocu]*visData[ilocv]);
 		ampr = ddata[3] * rgain1[iComp];
-		if (arg>1.0e-5) ampr *= exp (arg);
+		if (arg<-1.0e-5) ampr *= exp (arg);
 		sumRealRR += ampr*cp;
 		sumImagRR += ampr*sp;
 		arg = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
 			       ddata[8]*visData[ilocv]*visData[ilocv] +
 			       ddata[9]*visData[ilocu]*visData[ilocv]);
 		ampl = ddata[3] * lgain1[iComp];
-		if (arg>1.0e-5) ampl *= exp (arg);
+		if (arg<-1.0e-5) ampl *= exp (arg);
 		AmpArrR[itcnt] = ampr;
 		AmpArrL[itcnt] = ampl;
 		ddata += lcomp;   /* update pointer */
@@ -2240,18 +2240,15 @@ static gpointer ThreadSkyModelVMBeamFTDFTPh (gpointer args)
 		arg = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
 			       ddata[8]*visData[ilocv]*visData[ilocv] +
 			       ddata[9]*visData[ilocu]*visData[ilocv]);
-		if (arg>1.0e-5) ampr *= exp (arg);
-		arg = freq2 * (ddata[7]*visData[ilocu]*visData[ilocu] +
-			       ddata[8]*visData[ilocv]*visData[ilocv] +
-			       ddata[9]*visData[ilocu]*visData[ilocv]);
+		if (arg<-1.0e-5) ampr *= exp (arg);
 		ampr = ddata[3] * rgain1[iComp];
 		ampl = ddata[3] * lgain1[iComp];
-		if (arg>1.0e-5) {ampl *= exp (arg); ampr *= exp (arg);}
+		if (arg<-1.0e-5) {ampl *= exp (arg); ampr *= exp (arg);}
 		AmpArrRr[itcnt] = ampr;
 		AmpArrLr[itcnt] = ampl;
 		ampl = ddata[3] * lgain1i[iComp];
 		ampr = ddata[3] * rgain1i[iComp];
-		if (arg>1.0e-5) {ampl *= exp (arg); ampr *= exp (arg);}
+		if (arg<-1.0e-5) {ampl *= exp (arg); ampr *= exp (arg);}
 		AmpArrRi[itcnt] = ampr;
 		AmpArrLi[itcnt] = ampl;
 		ddata += lcomp;   /* update pointer */

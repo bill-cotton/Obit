@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -482,7 +482,7 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
   ObitImageDesc *imDesc, *bmDesc;
   ObitIOSize IOBy;
   ObitInfoType type;
-  ofloat sumwts, imMax, imMin, BeamNorm=0.0, Beam[3]={0.0,0.0,0.0};
+  ofloat sumwts, imMax, imMin, BeamTaper=0., BeamNorm=0.0, Beam[3]={0.0,0.0,0.0};
   gchar *outName=NULL;
   olong plane[5], pln, NPIO, oldNPIO;
   olong i, ichannel, icLo, icHi, norder=0, iorder=0;
@@ -680,7 +680,8 @@ void ObitImageUtilMakeImage (ObitUV *inUV, ObitImage *outImage,
 	  if (err->error) Obit_traceback_msg (err, routine, theBeam->name);
 
 	  /* Beam specified? */
-	  if (Beam[0]>0.0) {
+	  ObitInfoListGetTest(outImage->myDesc->info, "BeamTapr", &type, dim, &BeamTaper);
+	  if ((Beam[0]>0.0) && (BeamTaper<=0.0)) {
 	    Obit_log_error(err, OBIT_InfoErr, 
 			 "Using Beam %f %f %f", Beam[0], Beam[1], Beam[2]);
 	    theBeam->myDesc->beamMaj = Beam[0]/3600.0;
@@ -845,7 +846,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
   ObitImage *theBeam=NULL;
   ObitIOCode retCode;
   ObitIOSize IOBy;
-  ofloat sumwts, imMax, imMin, Beam[3]={0.0,0.0,0.0};
+  ofloat sumwts, imMax, imMin, BeamTaper=0.0, Beam[3]={0.0,0.0,0.0};
   gchar outName[120];
   olong i, j, ip, pln, nImage, nGain=0, *gainUse=NULL, gain;
   olong plane[5], NPIO, oldNPIO, *arrayNx=NULL, *arrayNy=NULL;
@@ -936,7 +937,7 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
     }
     
     /* Get Beam member from outImage[j] */
-    theBeam = (ObitImage*)outImage[j]->myBeam;
+    theBeam  = (ObitImage*)outImage[j]->myBeam;
     /* Need to force making a beam? */
     forceBeam = (theBeam==NULL) ||
       !ObitInfoListGetTest(theBeam->info, "SUMWTS", &type, dim, (gpointer)&sumwts);
@@ -1166,7 +1167,8 @@ void ObitImageUtilMakeImagePar (ObitUV *inUV, olong nPar, ObitImage **outImage,
 	  if (err->error) goto cleanup;
 
 	  /* Beam specified? */
-	  if (Beam[0]>0.0) {
+	  ObitInfoListGetTest(outImage[j]->myDesc->info, "BeamTapr", &type, dim, &BeamTaper);
+	  if ((Beam[0]>0.0) && (BeamTaper<=0.0)) {
 	    if (j==0)
 	      Obit_log_error(err, OBIT_InfoErr, 
 			     "Using Beam %f %f %f", Beam[0], Beam[1], Beam[2]);

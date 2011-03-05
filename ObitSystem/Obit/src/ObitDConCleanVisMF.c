@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -562,9 +562,12 @@ void ObitDConCleanVisMFRestore(ObitDConClean *inn, ObitErr *err)
  */
 void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
 {
- ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
+  ObitDConCleanVisMF *in = (ObitDConCleanVisMF*)inn;
   ObitImage *image1=NULL, *image2=NULL;
   olong ifield, jfield, iplane, num, nOrd, plane[5]={1,1,1,1,1};
+  ofloat BeamTaper1=0.0;
+  gint32 dim[MAXINFOELEMDIM];
+  ObitInfoType itype;
   gchar *routine = "ObitDConCleanVisMFXRestore";
 
    /* error checks */
@@ -586,6 +589,11 @@ void ObitDConCleanVisMFXRestore(ObitDConClean *inn, ObitErr *err)
     image1 = in->mosaic->images[jfield];
     num  = ((ObitImageMF*)image1)->nSpec;
     nOrd = ((ObitImageMF*)image1)->maxOrder;
+
+    /* Get additional beam taper */
+    ObitInfoListGetTest(image1->myDesc->info, "BeamTapr", &itype, dim, &BeamTaper1);
+    /* Ignore this one if not zero */
+    if (BeamTaper1>0.0) continue;
 
     /* Restore Flux then individual channels */
     for (iplane=0; iplane<(num+1); iplane++) {
@@ -1408,9 +1416,12 @@ static void XConvlCC(ObitImage *in, olong CCVer, olong iterm,
   ObitTable *tempTable=NULL;
   ObitTableCC *CCTable = NULL;
   ObitFArray *list = NULL, *tmpArray = NULL;
-  olong ver, ncomp, ndim, naxis[2];
+  olong j, ver, ncomp, ndim, naxis[2];
   ofloat gparm[3], gauss[3], bmaj, bmin, bpa, sr, cr, cellx, celly;
+  ofloat scale, BeamTaper1=0.0, BeamTaper2=0.0;
   gchar *tabType = "AIPS CC";
+  gint32 dim[MAXINFOELEMDIM];
+  ObitInfoType itype;
   gchar *routine = "ObitDConCleanVisMF:XConvlCC";
 
   /* error checks */
@@ -1422,6 +1433,14 @@ static void XConvlCC(ObitImage *in, olong CCVer, olong iterm,
   /* Any overlap? */
   if (!ObitImageDescOverlap(imDesc1, imDesc2, err)) return;
   
+  /* Get additional beam taper for input */
+  ObitInfoListGetTest(imDesc1->info, "BeamTapr", &itype, dim, &BeamTaper1);
+  /* Ignore this one if not zero */
+  if (BeamTaper1>0.0) return;
+
+  /* Get additional beam taper for output */
+  ObitInfoListGetTest(imDesc2->info, "BeamTapr", &itype, dim, &BeamTaper2);
+
   /* Get CC table */
   ver = CCVer;
   tempTable = newObitImageTable (in, OBIT_IO_ReadWrite, tabType, &ver, err);
@@ -1450,17 +1469,15 @@ static void XConvlCC(ObitImage *in, olong CCVer, olong iterm,
     tmpArray = ObitFArrayCreate ("Image for CCs", ndim, naxis);
   }
   
-  /* Set Gaussian parameters  Use beam from CC table or header? */
-  if (gparm[0]<0.0) {
-    bmaj = imDesc1->beamMaj;
-    bmin = imDesc1->beamMin;
-    bpa  = imDesc1->beamPA;
-  } else {
-    bmaj = gparm[0];
-    bmin = gparm[1];
-    bpa  = gparm[2];
-  }
+  /* get restoring beam and scaling */
+  scale = ObitDConCleanGetXRestoreBeam(imDesc1, imDesc2, gparm, &bmaj, &bmin, &bpa);
 
+  /* Scale list flux if needed */
+  if (scale!=1.0) {
+    for (j=0; j<list->naxis[1]; j++)
+      list->array[j*list->naxis[0]] *= scale;
+  }
+  
   cellx = imDesc1->cdelt[0];
   celly = imDesc1->cdelt[1];
   cr = cos ((bpa + imDesc1->crota[imDesc1->jlocd])*DG2RAD);

@@ -4,7 +4,7 @@
 ;! Obit Radio interferometry imaging software
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2005-2010
+;;  Copyright (C) 2005-2011
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -268,6 +268,14 @@ PeelMinFlux                        Minimum Peel Clean component (Jy)
 PeelAvgPol                         Avg. poln in peel self cal?
 **PARAM** boo 1 **DEF** F
 PeelAvgIF                          Avg. IFs in peel self cal?
+                                       Multiresolution info
+**PARAM** int 1 
+nTaper            0                Number of additional tapers
+**PARAM** float 10
+Tapers            0                List of tapers (asec)
+**PARAM** float 10
+MResKnob          0                Multiresolution controls 
+
 **PARAM** int 1 
 prtLv             0                Print level in selfcal
 **PARAM** str 48 **DEF** ObitView
@@ -624,6 +632,43 @@ Adverbs:
   PeelMinFlux.Min. Peel CLEAN flux density
   PeelAvgPol..Average Polarizations in Peel self calibration? 
   PeelAvgIF ..Average IFs in Peel self calibration? 
+
+                      Multiresolution CLEAN
+                 A multiresolution CLEAN is enabled using nTaper>0.
+              This allows multiple circular imaging tapers to be 
+              specified in units of pixels; full resolution is 
+              generally 3-8 pixels. The full mosaic is reproduced in 
+              each resolution
+                 Each major cycle, which resolution is to be used is
+              picked on the basis of image statistics, the weightings 
+              of which are controled by MResKnob.
+              The objective function used to chose the resolution is 
+              given by:
+                fact1 * (maxTaper - Taper)/maxTaper +
+                fact2 * (resid_peak/resid_RMS) +
+                fact3 * quality
+              where
+                fact1 is from the reduced MResKnob[0]
+                fact2 = MResKnob[1]
+                fact3 = MResKnob[2]
+                maxTaper is the highest beam taper (lowest res)
+                Taper is the beam taper of the given resolution
+                resid_peak is the peak residual in the facet
+                resid_RMS is the robust RMS of the residual
+                quality is the measure used to pick amoung the facets 
+                   at a given resolution and is a function of peak and 
+                   average residual.
+              The comparison is performed on the facet at each 
+              resolution with the highest "quality".
+  nTaper......Number of resolutions expressed as the number of tapers
+              to be applied to the data
+  Tapers......List of circular Gaussian tapers in (x) pixels.
+  MResKnob....Controls on selecting resolution to be CLEAned next.
+              [0] Bias towards higher resolution, 0=>0.2
+                  As the CLEAN progresses, this factor is reduced by
+                  (1-iteration/niter)**3
+              [1] SNR factor,                     0=>0.35
+              [2] "Quality" factor,               0=>0.2
 
                           Interactive display
   dispURL.....The URL of the display server to use. "None"=>none

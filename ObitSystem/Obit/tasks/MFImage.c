@@ -908,7 +908,7 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *strTemp;
-  ofloat ftemp;
+  ofloat ftemp, tapes[20];
   gboolean *booTemp, btemp;
   olong itemp;
   ObitSkyModelMode modelMode;
@@ -960,6 +960,16 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   } else if (!btemp) {
     ftemp = 0.0;
     ObitInfoListAlwaysPut(myInput, "antSize", type, dim, &ftemp);
+  }
+
+  /* Convert nTaper to numBeamTapes */
+  itemp = 1;  type = OBIT_long; dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListGetTest(myInput, "nTaper", &type, dim, &itemp);
+  ObitInfoListAlwaysPut (myInput, "numBeamTapes", type, dim, &itemp);
+
+  /* Convert Tapers to Tapes */
+  if (ObitInfoListGetTest(myInput, "Tapers", &type, dim,  tapes)) {
+    ObitInfoListAlwaysPut (myInput, "BeamTapes", type, dim, tapes);
   }
 
   /* Initialize Threading */
@@ -1499,6 +1509,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "MaxBaseline", "MinBaseline", "rotate", "Beam",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
     "nxBeam", "nyBeam", "Alpha", "doCalSelect",
+    "numBeamTapes", "BeamTapes", "MResKnob",
     NULL
   };
   gchar        *saveParms[] = {  /* Imaging, weighting parameters to save*/
@@ -2347,6 +2358,7 @@ void MFImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "PeelSolInt", "PeelType", "PeelMode", "PeelNiter",
     "PeelMinFlux", "PeelAvgPol", "PeelAvgIF",
     "doMGM", "minSNR", "minNo", "PBCor", "antSize", "Alpha",
+    "nTaper", "Tapers", "MResKnob",
     "nThreads",
     NULL};
   gchar *routine = "MFImageHistory";

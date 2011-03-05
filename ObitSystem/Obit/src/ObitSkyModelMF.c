@@ -1025,6 +1025,7 @@ gboolean ObitSkyModelMFLoadPoint (ObitSkyModel *inn, ObitUV *uvdata, ObitErr *er
  * Multiplies by factor member and any prior spectral index correction.
  * This function may be overridden in a derived class and 
  * should always be called by its function pointer.
+ * Allows mixed points and Gaussians, one per CC Table
  * Adapted from the AIPSish QNOT:VISDFT
  * \param inn    SkyModelMF 
  * \param n      Image number on mosaic, if -1 load all images
@@ -1044,17 +1045,17 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
   ObitImageDesc *imDesc=NULL, *imIODesc=NULL;
   ObitUVDesc *uvDesc=NULL;
   ObitFArray *CompArr=NULL;
-  ObitSkyModelCompType modType;
+  ObitSkyModelCompType modType, maxModType=OBIT_SkyModel_PointMod;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong warray, larray;
   ofloat *array, parms[20], *specCorr=NULL;
   olong ver, i, j, hi, lo, count, ncomp, startComp, endComp, irow, lrec;
-  olong nspec, iterm, outCCVer, ndim, naxis[2];
+  olong nspec, iterm, maxTerm=1, outCCVer, ndim, naxis[2], lenEntry;
   ofloat *table, xxoff, yyoff, zzoff;
   ofloat konst, konst2, xyz[3], xp[3], umat[3][3], pmat[3][3];
   ofloat ccrot, ssrot, xpoff, ypoff, maprot, uvrot;
-  ofloat dxyzc[3], cpa, spa, xmaj, xmin, range[2];
+  ofloat dxyzc[3], cpa, spa, xmaj, xmin, range[2], gp1=0., gp2=0., gp3=0.;
   gboolean doCheck=FALSE, want, do3Dmul;
   gchar *tabType = "AIPS CC";
   gchar *routine = "ObitSkyModelMFLoadComps";
@@ -1070,7 +1071,8 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 
   konst = DG2RAD * 2.0 * G_PI;
   /* konst2 converts FWHM(deg) to coefficients for u*u, v*v, u*v */
-  konst2 = DG2RAD * (G_PI / 1.17741022) * sqrt (0.5);
+  /*konst2 = DG2RAD * (G_PI / 1.17741022) * sqrt (0.5);*/
+  konst2 = DG2RAD * 2.15169;
 
   /* Loop over images counting CCs */
   count = 0;
@@ -1116,9 +1118,13 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
     /* If only 3 col, or parmsCol 0 size then this is a point model */
     if ((CCTable->myDesc->nfield==3) || 
 	(CCTable->parmsCol<0) ||
-	(CCTable->myDesc->dim[CCTable->parmsCol]<=0))
-      in->modType = OBIT_SkyModel_PointMod;
-    if ((in->modType == OBIT_SkyModel_Unknown) && (in->startComp[i]<=endComp)) {
+	(CCTable->myDesc->dim[CCTable->parmsCol]<=0)) {
+      if (in->startComp[i]<=endComp) {
+	in->modType = OBIT_SkyModel_PointMod;
+	maxModType  =  MAX (maxModType, in->modType);
+      }
+      /* Check type of all tables with components to subtract */
+    } else if (in->startComp[i]<=endComp) {
       /* Create table row */
       CCRow = newObitTableCCRow (CCTable);
       /* Read first */
@@ -1132,13 +1138,14 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 
       /* Get model type */
       in->modType = CCRow->parms[3] + 0.5;
+      maxModType  =  MAX (maxModType, in->modType);
       /* Release table row */
       CCRow = ObitTableCCRowUnref (CCRow);
     }
 
     /* Do we need to check model type */
-    doCheck = (CCTable->myDesc->nfield>4) && (CCTable->parmsCol>=0) && 
-      (CCTable->myDesc->dim[CCTable->parmsCol][0]>=3);
+    doCheck = doCheck || ((CCTable->myDesc->nfield>4) && (CCTable->parmsCol>=0) && 
+      (CCTable->myDesc->dim[CCTable->parmsCol][0]>=3));
     
     /* Close */
     retCode = ObitTableCCClose (CCTable, err);
@@ -1155,10 +1162,15 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
       imIODesc = (ObitImageDesc*)in->mosaic->images[0]->myIO->myDesc;
       nspec = imIODesc->inaxes[imIODesc->jlocf];
       ObitInfoListGetTest (in->mosaic->images[i]->myDesc->info, "NSPEC", &type, dim, &nspec);
+      maxTerm = MAX (nspec, maxTerm);
       in->nSpec = nspec;  /* Number of terms in the spectrum */
     }
 
   } /* end loop counting CCs */
+
+  /* Use mode type, nSpec of the highest encountered */
+  in->modType = maxModType;
+  in->nSpec   = MAX (0, maxTerm-1);
 
   /* (re)allocate structure */
   ndim = 2;
@@ -1170,6 +1182,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 
   /* Any spectral terms */
   naxis[0] += in->nSpec;
+  lenEntry = naxis[0];  /* Length of table entry */
 
   /* Spectral correction for prior alpha array */
   specCorr = g_malloc0(in->nSpec*sizeof(ofloat));
@@ -1273,22 +1286,27 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
     warray = CompArr->naxis[0];
     larray = CompArr->naxis[1];
     modType = (ObitSkyModelCompType)(parms[3]+0.5);  /* model type +20 */
+    in->modType = MAX (in->modType, modType);  /* Need highest number */
 
-    /* Test for consistency for spectral terms */
-    Obit_retval_if_fail ((CompArr->naxis[0]-3>=in->nSpec), err, retCode,
-			 "%s Inconsistent request for spectral corrections, %d < %d",  
-		       routine,CompArr->naxis[0]-3, in->nSpec);  
-   
+    /* Gaussian parameters */
+    if ((modType==OBIT_SkyModel_GaussMod) || (modType==OBIT_SkyModel_GaussModSpec)) {
+      cpa = cos (DG2RAD * parms[2]);
+      spa = sin (DG2RAD * parms[2]);
+      xmaj = parms[0] * konst2;
+      xmin = parms[1] * konst2;
+      gp1 = -(((cpa * xmaj)*(cpa * xmaj)) + (spa * xmin)*(spa * xmin));
+      gp2 = -(((spa * xmaj)*(spa * xmaj)) + (cpa * xmin)*(cpa * xmin));
+      gp3 = -2.0 *  cpa * spa * (xmaj*xmaj - xmin*xmin);
+    }
+
     /* loop over CCs */
     for (j=0; j<larray; j++) {
 
       /* Only down to first negative? */
       if (in->noNeg && (array[0]<=0.0)) break;
 
-      /* Do we want this one? Only accept components of in->modType */
-      if (doCheck) want = in->modType==modType;
-	else want = TRUE;
-      want = want && (fabs(array[0])>in->minDFT);
+      /* Do we want this one?  */
+      want = (fabs(array[0])>in->minDFT);
       want = want && (array[0]>in->minFlux);
       want = want && (ncomp<count);  /* don't overflow */
       if (want) {
@@ -1312,50 +1330,90 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
 	table[2] = xyz[1] + yyoff;
 	table[3] = xyz[2] + zzoff;
 
+	/* Zero rest in case */
+	for (iterm=4; iterm<lenEntry; iterm++) table[iterm] = 0.0;
+
 	/* DEBUG
         fprintf (stderr,"%s: comp %d   pos %g %g %g xyz %g %g %g poff %g %g\n",
         routine, irow,table[1],table[2],table[3], xxoff, yyoff, zzoff, xpoff, ypoff);  */
 
-	/* Point with tabulated spectrum */
-	if (in->modType==OBIT_SkyModel_PointModTSpec) {
-	  for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+4] = array[iterm+3]*specCorr[iterm];
+	/* Only same type as highest */
+	if  (in->modType==modType) {
+	  /* Only Point */
+	  if (modType==OBIT_SkyModel_PointMod){
+	    /* Nothing special this case */
+	    
+	    /* Only Point with tabulated spectrum */
+	  } else if (modType==OBIT_SkyModel_PointModTSpec) {
+	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+4] = array[iterm+3]*specCorr[iterm];
+	    
+	    /* Only Gaussian */
+	  } else if (in->modType==OBIT_SkyModel_GaussMod) {
+	    table[4] = gp1;
+	    table[5] = gp2;
+	    table[6] = gp3;
+	    
+	    /* Only Gaussian + tabulated spectrum */
+	  } else if (in->modType==OBIT_SkyModel_GaussModTSpec) {
+	    table[4] = gp1;
+	    table[5] = gp2;
+	    table[6] = gp3;
+	    /*  spectrum */
+	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+7] = array[iterm+3]*specCorr[iterm];
+	    
+	    /* Only Uniform sphere */
+	  } else if (in->modType==OBIT_SkyModel_USphereMod) {
+	    table[0] = 3.0 * array[0] * in->factor;
+	    table[4] = parms[1]  * 0.109662271 * 2.7777778e-4;
+	    table[5] = 0.1;
+	    
+	    /* Only Uniform sphere+ spectrum */
+	  } else if (in->modType==OBIT_SkyModel_USphereModTSpec) {
+	    table[0] = 3.0 * array[0] * in->factor;
+	    table[4] = parms[1]  * 0.109662271 * 2.7777778e-4;
+	    table[5] = 0.1;
+	    /*  spectrum */
+	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+6] = array[iterm+3]*specCorr[iterm];
+	  }
+	} else { /* Mixed type - zero unused model components */
 
-	/* Gaussian */
-	} else if (in->modType==OBIT_SkyModel_GaussMod) {
-	  cpa = cos (DG2RAD * parms[2]);
-	  spa = sin (DG2RAD * parms[2]);
-	  xmaj = parms[0] * konst2;
-	  xmin = parms[1] * konst2;
-	  table[4] = -(((cpa * xmaj)*(cpa * xmaj)) + (spa * xmin)*(spa * xmin));
-	  table[5] = -(((spa * xmaj)*(spa * xmaj)) + (cpa * xmin)*(cpa * xmin));
-	  table[6] = -2.0 *  cpa * spa * (xmaj*xmaj - xmin*xmin);
+	  /* Only Point here but some Gaussian - zero Gauss comps */
+	  if ((modType==OBIT_SkyModel_PointMod) && (in->modType==OBIT_SkyModel_GaussMod)) {
+	    table[4] = 0.0;
+	    table[5] = 0.0;
+	    table[6] = 0.0;
 	  
-	/* Gaussian + tabulated spectrum */
-	} else if (in->modType==OBIT_SkyModel_GaussModTSpec) {
-	  cpa = cos (DG2RAD * parms[2]);
-	  spa = sin (DG2RAD * parms[2]);
-	  xmaj = parms[0] * konst2;
-	  xmin = parms[1] * konst2;
-	  table[4] = -(((cpa * xmaj)*(cpa * xmaj)) + (spa * xmin)*(spa * xmin));
-	  table[5] = -(((spa * xmaj)*(spa * xmaj)) + (cpa * xmin)*(cpa * xmin));
-	  table[6] = -2.0 *  cpa * spa * (xmaj*xmaj - xmin*xmin);
-	  /*  spectrum */
-	  for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+7] = array[iterm+3]*specCorr[iterm];
+	    /* Gauss here but also some points */
+	  } else if ((modType==OBIT_SkyModel_GaussMod) && (in->modType==OBIT_SkyModel_PointMod)) {
+	    table[4] = gp1;
+	    table[5] = gp2;
+	    table[6] = gp3;
 	  
-	/* Uniform sphere */
-	} else if (in->modType==OBIT_SkyModel_USphereMod) {
-	  table[0] = 3.0 * array[0] * in->factor;
-	  table[4] = parms[1]  * 0.109662271 * 2.7777778e-4;
-	  table[5] = 0.1;
+	  /* Only PointSpectrum here but some GaussianSpectrum - zero Gauss comps */
+	  } else if ((modType==OBIT_SkyModel_PointModTSpec) && (in->modType==OBIT_SkyModel_GaussModTSpec)) {
+	    table[4] = 0.0;
+	    table[5] = 0.0;
+	    table[6] = 0.0;
+	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+7] = array[iterm+3]*specCorr[iterm];
+	  
+	    /* GaussianTSpectrum here but also some PointTSpectrum */
+	  } else if ((in->modType==OBIT_SkyModel_PointModTSpec) && (modType==OBIT_SkyModel_GaussModTSpec)) {
+	    table[4] = gp1;
+	    table[5] = gp2;
+	    table[6] = gp3;
+	    /*  spectrum */
+	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+7] = array[iterm+3];
+	  
+	  /* Only Point here but some with spectrum - zero spectra (Unlikely) */
+	  } else if ((modType==OBIT_SkyModel_PointMod) && (in->modType==OBIT_SkyModel_PointModTSpec)) {
+	    for (iterm=0; iterm<in->nSpecTerm; iterm++) table[iterm+4] = 0.0;
 
-	/* Uniform sphere + tabulated spectrum */
-	} else if (in->modType==OBIT_SkyModel_USphereModTSpec) {
-	  table[0] = 3.0 * array[0] * in->factor;
-	  table[4] = parms[1]  * 0.109662271 * 2.7777778e-4;
-	  table[5] = 0.1;
-	  /*  spectrum */
-	  for (iterm=0; iterm<in->nSpec; iterm++) table[iterm+6] = array[iterm+3]*specCorr[iterm];
-	}
+	  } else { /* Unsupported combination */
+	    Obit_log_error(err, OBIT_Error,"%s Unsupported combination of model types %d %d  %s",
+			   routine, modType, in->modType, CCTable->name);
+	    Obit_traceback_val (err, routine, in->name, retCode);
+	  }
+	} /* end mixed type */
 	    
 	/* Update */
 	table += lrec;
@@ -2636,7 +2694,7 @@ gboolean ObitSkyModelMFGridFTComps (ObitSkyModel* inn, olong field, ObitUV* uvda
 	  grid[2*j]   *= taper;
 	  grid[2*j+1] *= taper;
 	}
-	grid += FFTImage->naxis[0];
+	grid += 2*FFTImage->naxis[0];
       }
     } /* end tapering */
     

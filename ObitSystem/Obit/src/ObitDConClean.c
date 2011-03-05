@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2010                                          */
+/*;  Copyright (C) 2004-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,6 +32,7 @@
 #include "ObitTableCCUtil.h"
 #include "ObitImageUtil.h"
 #include "ObitThread.h"
+#include "ObitConvUtil.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -712,68 +713,76 @@ void ObitDConCleanDefWindow(ObitDConClean *in, ObitErr *err)
     if (in->mosaic->Radius>0.0) {  /* Use round box of radius Radius */
       type = OBIT_DConCleanWindow_round;
       window[0] = (olong)(in->mosaic->Radius);
-      for (field=sfield; field<=in->mosaic->nFlyEye; field++) {
-	window[1] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[0]-
-			    in->mosaic->images[field-1]->myDesc->xPxOff);
-	window[2] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[1]-
-                            in->mosaic->images[field-1]->myDesc->yPxOff);
-	/* Add inner if CLEANBox not specified */
-	if ((field>=sfield) && (!in->autoWindow))
-	  ObitDConCleanWindowAdd (in->window, field, type, window, err);
-	/* Add outer window */
-	ObitDConCleanWindowOuter (in->window, field, type, window, err);
-	if (err->error) Obit_traceback_msg (err, routine, in->name);
+      for (field=sfield; field<=in->mosaic->numberImages; field++) {
+	if (in->mosaic->inFlysEye[field-1]) {
+	  window[1] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[0]-
+			      in->mosaic->images[field-1]->myDesc->xPxOff);
+	  window[2] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[1]-
+			      in->mosaic->images[field-1]->myDesc->yPxOff);
+	  /* Add inner if CLEANBox not specified */
+	  if ((field>=sfield) && (!in->autoWindow))
+	    ObitDConCleanWindowAdd (in->window, field, type, window, err);
+	  /* Add outer window */
+	  ObitDConCleanWindowOuter (in->window, field, type, window, err);
+	  if (err->error) Obit_traceback_msg (err, routine, in->name);
+	} /* End if in Fly's eye */
      }
     } else { /* Use rectangle */
       type = OBIT_DConCleanWindow_rectangle;
       window[0] = 5;
       window[1] = 5;
-      for (field=sfield; field<=in->mosaic->nFlyEye; field++) {
-	window[2] = in->mosaic->images[field-1]->myDesc->inaxes[0]-5;
-	window[3] = in->mosaic->images[field-1]->myDesc->inaxes[1]-5;
-	/* Add inner if CLEANBox not specified */
-	if ((field>=sfield)  && (!in->autoWindow))
-	  ObitDConCleanWindowAdd (in->window, field, type, window, err);
-	/* Add outer window */
-	ObitDConCleanWindowOuter (in->window, field, type, window, err);
-	if (err->error) Obit_traceback_msg (err, routine, in->name);
+      for (field=sfield; field<=in->mosaic->numberImages; field++) {
+	if (in->mosaic->inFlysEye[field-1]) {
+	  window[2] = in->mosaic->images[field-1]->myDesc->inaxes[0]-5;
+	  window[3] = in->mosaic->images[field-1]->myDesc->inaxes[1]-5;
+	  /* Add inner if CLEANBox not specified */
+	  if ((field>=sfield)  && (!in->autoWindow))
+	    ObitDConCleanWindowAdd (in->window, field, type, window, err);
+	  /* Add outer window */
+	  ObitDConCleanWindowOuter (in->window, field, type, window, err);
+	  if (err->error) Obit_traceback_msg (err, routine, in->name);
+	}  /* End if in Fly's eye */
      }
     }  /* End Fly's Eye */
     /* Do outliers */
     type = OBIT_DConCleanWindow_rectangle;
     if (in->mosaic->OutlierSize) {
-      for (field=in->mosaic->nFlyEye+1; field<=in->mosaic->numberImages; field++) {
-	window[0] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[0]-
-			    in->mosaic->images[field-1]->myDesc->xPxOff) - 
-	  in->mosaic->OutlierSize/2;
-	window[1] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[1]-
-                            in->mosaic->images[field-1]->myDesc->yPxOff) - 
-	  in->mosaic->OutlierSize/2;
-	window[2] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[0]-
-                            in->mosaic->images[field-1]->myDesc->xPxOff) +
-	  in->mosaic->OutlierSize/2;
-	window[3] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[1]-
-                            in->mosaic->images[field-1]->myDesc->yPxOff) + 
-	  in->mosaic->OutlierSize/2;
-	/* Only use if not autoWindow */
-	if (!in->autoWindow) ObitDConCleanWindowAdd (in->window, field, type, window, err);
-	/* Add outer window */
-	ObitDConCleanWindowOuter (in->window, field, type, window, err);
-	if (err->error) Obit_traceback_msg (err, routine, in->name);
-     }
+      for (field=sfield; field<=in->mosaic->numberImages; field++) {
+	if (!in->mosaic->inFlysEye[field-1]) {
+	  window[0] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[0]-
+			      in->mosaic->images[field-1]->myDesc->xPxOff) - 
+	    in->mosaic->OutlierSize/2;
+	  window[1] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[1]-
+			      in->mosaic->images[field-1]->myDesc->yPxOff) - 
+	    in->mosaic->OutlierSize/2;
+	  window[2] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[0]-
+			      in->mosaic->images[field-1]->myDesc->xPxOff) +
+	    in->mosaic->OutlierSize/2;
+	  window[3] = (olong)(in->mosaic->images[field-1]->myDesc->crpix[1]-
+			      in->mosaic->images[field-1]->myDesc->yPxOff) + 
+	    in->mosaic->OutlierSize/2;
+	  /* Only use if not autoWindow */
+	  if (!in->autoWindow) ObitDConCleanWindowAdd (in->window, field, type, window, err);
+	  /* Add outer window */
+	  ObitDConCleanWindowOuter (in->window, field, type, window, err);
+	  if (err->error) Obit_traceback_msg (err, routine, in->name);
+	} /* End if not in Fly's eye */
+      } /* End loop over fields */
     } else {  /* Default for outliers */
       window[0] = 5;
       window[1] = 5;
-      for (field=in->mosaic->nFlyEye+1; field<=in->mosaic->numberImages; field++) {
-	window[2] = in->mosaic->images[field-1]->myDesc->inaxes[0]-5;
-	window[3] = in->mosaic->images[field-1]->myDesc->inaxes[1]-5;
-	if (!in->autoWindow) 
-	  ObitDConCleanWindowAdd (in->window, field, type, window, err);
-	/* Add outer window */
-	ObitDConCleanWindowOuter (in->window, field, type, window, err);
-	if (err->error) Obit_traceback_msg (err, routine, in->name);
-     }
-   }
+      for (field=sfield; field<=in->mosaic->numberImages; field++) {
+	if (!in->mosaic->inFlysEye[field-1]) {
+	  window[2] = in->mosaic->images[field-1]->myDesc->inaxes[0]-5;
+	  window[3] = in->mosaic->images[field-1]->myDesc->inaxes[1]-5;
+	  if (!in->autoWindow) 
+	    ObitDConCleanWindowAdd (in->window, field, type, window, err);
+	  /* Add outer window */
+	  ObitDConCleanWindowOuter (in->window, field, type, window, err);
+	  if (err->error) Obit_traceback_msg (err, routine, in->name);
+	} /* End if not in Fly's eye */
+      } /* End loop over fields */
+    }
   } else { /* No Fly's eye - rectangular boxes for all */
     type = OBIT_DConCleanWindow_rectangle;
     window[0] = 5;
@@ -1102,11 +1111,12 @@ void ObitDConCleanRestore(ObitDConClean *in, ObitErr *err)
   ObitImage *image=NULL;
   ObitImageDesc *imDesc = NULL;
   ObitIOSize IOsize = OBIT_IO_byPlane;
+  ObitInfoType itype;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong  blc[IM_MAXDIM], trc[IM_MAXDIM], ddim[2];
   olong i, field, first, last, ncomp, ver, ndim, naxis[2];
   gchar *tabType = "AIPS CC";
-  ofloat gparm[3], bmaj, bmin, bpa;
+  ofloat gparm[3], bmaj, bmin, bpa, BeamTaper=0.0;
   ObitFArray *grid = NULL;
   ObitCArray *uvGrid = NULL;
   ObitFFT *forFFT = NULL, *revFFT = NULL;
@@ -1152,7 +1162,9 @@ void ObitDConCleanRestore(ObitDConClean *in, ObitErr *err)
 
     /* Restoring beam, use value on image if given (else bmaj==0)
        or the value in the image header */
-    if (in->bmaj>0.0) { /* value on CLEAN */
+    /* This a tapered image? */
+    ObitInfoListGetTest(image->myDesc->info, "BeamTapr", &itype, dim, &BeamTaper);
+    if ((in->bmaj>0.0) && (BeamTaper<=0.0)){ /* value on CLEAN and not a tapered image */
       bmaj = in->bmaj;
       bmin = in->bmin;
       bpa  = in->bpa;
@@ -1335,7 +1347,7 @@ void ObitDConCleanFlatten(ObitDConClean *in, ObitErr *err)
  */
 void ObitDConCleanXRestore(ObitDConClean *in, ObitErr *err)
 {
-  olong i, ifield, jfield, ncomp, ver, ndim, naxis[2];
+  olong i, j, ifield, jfield, ncomp, ver, ndim, naxis[2];
   ObitImage *image=NULL;
   ObitImageDesc *imDesc1=NULL, *imDesc2=NULL;
   ObitTable *tempTable=NULL;
@@ -1344,8 +1356,10 @@ void ObitDConCleanXRestore(ObitDConClean *in, ObitErr *err)
   ObitIOSize IOsize = OBIT_IO_byPlane;
   ObitIOCode retCode;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  ObitInfoType itype;
   olong  blc[IM_MAXDIM], trc[IM_MAXDIM];
   ofloat gparm[3], gauss[3], bmaj, bmin, bpa, sr, cr, cellx, celly;
+  ofloat scale, BeamTaper1=0.0, BeamTaper2=0.0;
   gchar *tabType = "AIPS CC";
   gboolean gotSome;
   gchar *routine = "ObitDConCleanXRestore";
@@ -1368,6 +1382,11 @@ void ObitDConCleanXRestore(ObitDConClean *in, ObitErr *err)
   for (ifield = 0; ifield<in->nfield; ifield++) {
     imDesc2 = (in->mosaic->images[ifield])->myDesc;
 
+    /* Get additional beam taper */
+    ObitInfoListGetTest(imDesc2->info, "BeamTapr", &itype, dim, &BeamTaper2);
+    /* Ignore this one if not zero */
+    if (BeamTaper2>0.0) continue;
+
     gotSome = FALSE; /* until proven otherwise */
     for (jfield = 0; jfield<in->nfield; jfield++) {
       if (ifield==jfield) continue; /* don't do same field */
@@ -1375,6 +1394,9 @@ void ObitDConCleanXRestore(ObitDConClean *in, ObitErr *err)
 
       /* Any overlap? */
       if (ObitImageDescOverlap(imDesc1, imDesc2, err)) {
+
+	/* Get additional beam taper */
+	ObitInfoListGetTest(imDesc1->info, "BeamTapr", &itype, dim, &BeamTaper1);
 
 	/* Get CC table */
 	ver = in->CCver;
@@ -1408,16 +1430,18 @@ void ObitDConCleanXRestore(ObitDConClean *in, ObitErr *err)
 	    tmpArray = ObitFArrayCreate ("Image for CCs", ndim, naxis);
 	  }
 
-	  /* Set Gaussian parameters  Use beam from CC table or header? */
-	  if (gparm[0]<0.0) {
-	    bmaj = imDesc1->beamMaj;
-	    bmin = imDesc1->beamMin;
-	    bpa  = imDesc1->beamPA;
-	  } else {
-	    bmaj = gparm[0];
-	    bmin = gparm[1];
-	    bpa  = gparm[2];
+	  /* get restoring beam and scaling */
+	  scale = ObitDConCleanGetXRestoreBeam(imDesc1, imDesc2, gparm, &bmaj, &bmin, &bpa);
+	  /*fprintf (stderr, "DEBUG: scale %f beam %f %f %f\n", 
+	    scale, 3600.0*bmaj, 3600.0*bmin, bpa);*/
+
+	  /* Scale list flux if needed */
+	  if (scale!=1.0) {
+	    for (j=0; j<list->naxis[1]; j++)
+	      list->array[2+j*list->naxis[0]] *= scale;
 	  }
+
+	  /* Get Gaussian parameters in units of cells */
 	  cellx = imDesc1->cdelt[0];
 	  celly = imDesc1->cdelt[1];
 	  cr = cos ((bpa + imDesc1->crota[imDesc1->jlocd])*DG2RAD);
@@ -1476,7 +1500,11 @@ void ObitDConCleanXRestore(ObitDConClean *in, ObitErr *err)
       /* read image */
       retCode = ObitImageRead (image, image->image->array, err);
       if (err->error) Obit_traceback_msg (err, routine, image->name);
-      
+
+      /* DEBUG Zero old 
+      fprintf (stderr, "DEBUG: zero old pixels\n");
+      ObitFArrayFill (image->image, 0.0);*/
+    
       /* Add restored components */
       ObitFArrayAdd (image->image, tmpArray, tmpArray);
       
@@ -1665,6 +1693,50 @@ gboolean ObitDConCleanAutoWindow(ObitDConClean *in, olong *fields, ObitFArray **
   }
   return newWin;
 } /* end ObitDConCleanAutoWindow */
+
+/**
+ * Get cross restoring beam parameters
+ * If the beams on imDesc1 and imDesc2 are significantly different then the 
+ * resultant beam is the beam in imDesc1  and scale is set.
+ * Otherwise the beam on imDesc1 (defaulting to gparm) is returned
+ * \param imDesc1  Descriptor of field whose components are being restored
+ * \param imDesc2  Descriptor of field being restored to
+ * \param gparm    Array of beam parameters from the CC table related to imDesc1
+ * \param bmaj     [out] Beam major axis (deg)
+ * \param bmin     [out] Beam minor axis (deg)
+ * \param bpa      [out] Beam position (deg)
+ * \return scale factor to get units correct
+ */
+ofloat ObitDConCleanGetXRestoreBeam(ObitImageDesc *imDesc1, ObitImageDesc *imDesc2, 
+				    ofloat *gparm, ofloat *bmaj, ofloat *bmin, ofloat *bpa)
+{
+  ofloat scale, rat1, rat2;
+
+  /* If Beam not given in imDesc1 - use gparm */
+  if (imDesc1->beamMaj<=0.0) {
+    imDesc1->beamMaj = gparm[0];
+    imDesc1->beamMin = gparm[1];
+    imDesc1->beamPA  = gparm[2];
+  }
+  
+  /* Get Beam */
+  *bmaj = imDesc1->beamMaj;
+  *bmin = imDesc1->beamMin;
+  *bpa  = imDesc1->beamPA;
+  
+   /* Are they more or less the same (within factor of 2) */
+  rat1 = imDesc2->beamMaj / imDesc1->beamMaj;
+  rat2 = imDesc2->beamMin / imDesc1->beamMin;
+  if ((rat1>0.5) && (rat1<2.0) && (rat2>0.5) && (rat2<2.0)) {
+    scale = 1.0;
+    return scale;
+  }
+
+  /* Get scaling for change of resolution */
+  scale = ((imDesc2->beamMaj) * (imDesc2->beamMin))/ ((*bmaj)*(*bmin));
+
+  return scale;
+} /* end ObitDConCleanGetXRestoreBeam */
 
 /**
  * Initialize global ClassInfo Structure.

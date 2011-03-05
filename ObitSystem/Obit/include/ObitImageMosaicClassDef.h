@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004,2010                                          */
+/*;  Copyright (C) 2004-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -75,3 +75,5 @@ FlyEyeFP FlyEye;
 AddFieldFP AddField;
 /** Function pointer to Lookup outliers in catalog */
 AddOutlierFP AddOutlier;
+/** Function pointer to add beam tapers */
+AddTapersFP AddTapers;

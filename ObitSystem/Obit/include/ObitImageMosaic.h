@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2010                                          */
+/*;  Copyright (C) 2004-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -280,6 +280,18 @@ typedef void (*AddOutlierFP) (gchar *Catalog, olong catDisk, ofloat minRad, oflo
 			      olong OutlierSize, odouble ra0, odouble dec0, gboolean doJ2B, 
 			      odouble Freq, ofloat minImpact, olong *nfield, olong *fldsiz, 
 			      ofloat *rash, ofloat *decsh, olong *flqual, ObitErr *err);
+/** Private: Add additional beam tapers */
+void 
+AddTapers (ObitUV *uvData, 
+	   olong *numBeamTapes, ofloat *BeamTapes, ofloat cells, ofloat *Tapers, 
+	   olong *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, 
+	   olong *flqual, gboolean *inFlysEye, olong *FacetNo, ObitErr *err);
+typedef void 
+(*AddTapersFP) (ObitUV *uvData, 
+		olong *numBeamTapes, ofloat *BeamTapes, ofloat cells, ofloat *Tapers, 
+		olong *nfield, olong *fldsiz, ofloat *rash, ofloat *decsh, 
+		olong *flqual, gboolean *inFlysEye, olong *FacetNo, 
+		ObitErr *err);
 /*----------- ClassInfo Structure -----------------------------------*/
 /**
  * ClassInfo Structure.

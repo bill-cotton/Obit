@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2010                                          */
+/*;  Copyright (C) 2004-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -176,7 +176,7 @@ ObitIOCode ObitTableCCUtilGrid (ObitTableCC *in, olong OverSample,
     if (j==*first) {
       /* Is this a Gaussian component? */
       if ((in->parmsCol>=0) &&
-	  (in->myDesc->dim[in->parmsCol][0]>4) && 
+	  (in->myDesc->dim[in->parmsCol][0]>=4) && 
 	  (CCRow->parms[3]==1.0)) {
 	gparm[0] = CCRow->parms[0];
 	gparm[1] = CCRow->parms[1];

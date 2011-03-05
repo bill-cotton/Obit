@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -185,6 +185,8 @@ gconstpointer ObitUVGridMFGetClass (void)
  * \param in       Object to initialize
  * \param UVin     Uv data object to be gridded.
  * \param imagee   Image (beam) to be gridded. (as Obit*)
+ *                 Descriptor infoList entry "BeamTapr" gives any additional
+ *                 tapering in degrees.
  * \param doBeam   TRUE is this is for a Beam.
  * \param err      ObitErr stack for reporting problems.
  */
@@ -198,7 +200,7 @@ void ObitUVGridMFSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
   ObitImageMF *image = (ObitImageMF*)imagee;
   ObitImage *myBeam;
   olong nx, ny, naxis[2], iSpec, size, nif, nfreq, nn;
-  ofloat cellx, celly, dxyzc[3], xt, yt, zt;
+  ofloat cellx, celly, dxyzc[3], xt, yt, zt, BeamTaper=0.0;
   ofloat *ramp=NULL, *data=NULL;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
@@ -258,8 +260,15 @@ void ObitUVGridMFSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
   in->nyImage = image->myDesc->inaxes[1];
   in->icenxImage = in->nxImage/2 + 1;
   in->icenyImage = in->nyImage/2 + 1;
+   
+  /* Any additional tapering (deg) */
+  ObitInfoListGetTest(image->myDesc->info, "BeamTapr", &type, dim, &BeamTaper);
+  if (BeamTaper>0.0) {
+    taper   = (1.0 / (((BeamTaper/2.35)/206265.))/(G_PI));
+    in->BeamTaperUV = log(0.3)/(taper*taper);
+  } else in->BeamTaperUV = 0.0;
   
-  /* Get values by Beam/Image */
+ /* Get values by Beam/Image */
   in->doBeam = doBeam;
   if (doBeam) {
     theDesc = myBeam->myDesc;  /* Which descriptor in use */
@@ -368,7 +377,7 @@ void ObitUVGridMFSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
     GridCorrFn (inn, in->nyImage, in->icenyImage, data, ramp, in->yCorrImage);    
   }
 
-  /* tapers for forcing beam size */
+  /* tapers for forcing beam size - include additional beam tapers here */
   if (uvDesc->jlocif>=0) nif = uvDesc->inaxes[uvDesc->jlocif];
   else  nif = 1;
   nfreq = uvDesc->inaxes[uvDesc->jlocf];
@@ -389,9 +398,9 @@ void ObitUVGridMFSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
     tarBeam[0] = Beam[0] * tarFreq/uvDesc->freqArr[iSpec];
     tarBeam[1] = Beam[1] * tarFreq/uvDesc->freqArr[iSpec];
     tarBeam[2] = Beam[2];
-    /* Correction beam */
-    corrBeam[0] = sqrt (MAX(1.0e-10,Beam[0]*Beam[0]-tarBeam[0]*tarBeam[0]));
-    corrBeam[1] = sqrt (MAX(1.0e-10,Beam[1]*Beam[1]-tarBeam[1]*tarBeam[1]));
+    /* Correction beam including any additional */
+    corrBeam[0] = sqrt (MAX(1.0e-10,Beam[0]*Beam[0]-tarBeam[0]*tarBeam[0]) + BeamTaper);
+    corrBeam[1] = sqrt (MAX(1.0e-10,Beam[1]*Beam[1]-tarBeam[1]*tarBeam[1]) + BeamTaper);
     corrBeam[2] = Beam[2];
     /* 0.8 fudge factor 0.9 may be better */
     taper   = (0.8/ (((corrBeam[0]/2.35)/206265.))/(G_PI));

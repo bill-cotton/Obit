@@ -1,7 +1,7 @@
 /* $Id$ */
 /* Obit VLA Squint correcting Radio interferometry imaging software  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2010                                          */
+/*;  Copyright (C) 2006-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -861,6 +861,7 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   gchar *strTemp, Stokes[5];
   gboolean *booTemp, btemp;
   olong itemp;
+  ofloat tapes[20];
   ObitSkyModelMode modelMode;
   gchar *routine = "digestInputs";
 
@@ -902,6 +903,16 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   if (!strncmp (Stokes, "    ", 4)) strncpy (Stokes, "I   ", 4);
   dim[0] = 4; dim[1] = dim[2] = 1;
   ObitInfoListAlwaysPut (myInput, "Stokes", OBIT_string, dim, Stokes);
+
+  /* Convert nTaper to numBeamTapes */
+  itemp = 1;  type = OBIT_long; dim[0] = dim[1] = dim[2] = 1;
+  ObitInfoListGetTest(myInput, "nTaper", &type, dim, &itemp);
+  ObitInfoListAlwaysPut (myInput, "numBeamTapes", type, dim, &itemp);
+
+  /* Convert Tapers to Tapes */
+  if (ObitInfoListGetTest(myInput, "Tapers", &type, dim,  tapes)) {
+    ObitInfoListAlwaysPut (myInput, "BeamTapes", type, dim, tapes);
+  }
 
   /* Initialize Threading */
   ObitThreadInit (myInput);
@@ -1434,6 +1445,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
     "MaxBaseline", "MinBaseline", "rotate", "Beam",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
     "nxBeam", "nyBeam", "Alpha", "doCalSelect", 
+    "numBeamTapes", "BeamTapes", "MResKnob",
     NULL
   };
   gchar        *saveParms[] = {  /* Imaging, weighting parameters to save*/
@@ -2370,6 +2382,7 @@ void SquintHistory (gchar *Source, ObitInfoList* myInput,
     "PeelFlux", "PeelLoop", "PeelRefAnt", "PeelSNRMin",
     "PeelSolInt", "PeelType", "PeelMode", "PeelNiter",
     "PeelMinFlux", "PeelAvgPol", "PeelAvgIF",
+    "nTaper", "Tapers", "MResKnob",
     "nThreads",
     NULL};
   gchar *routine = "SquintHistory";

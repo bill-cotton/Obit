@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -83,3 +83,13 @@ ofloat bmaj, bmin, bpa;
 olong *isAuto;
 /** If >=0 then this field is shifted autoCenter field and value is counterpart */
 olong *isShift;
+/** Number of Beam tapers (elements in BeamTapes) */
+olong numBeamTapes;
+/** List of Beam tapers as FWHM in pixels */
+ofloat *BeamTapes;
+/** Beam Taper per image as FWHM in deg */
+ofloat *BeamTaper;
+/** Is each facet in Fly's Eye? */
+gboolean *inFlysEye;
+/** Untapered facet number (0-rel) - associate various taperings of same facet */
+olong *FacetNo;

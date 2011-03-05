@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -298,7 +298,7 @@ ObitDConCleanPxListWBCreate (gchar* name, ObitImageMosaic *mosaic,
     out->iterField[i] = 0;
     out->CCver[i]     = 0;
     out->fluxField[i] = 0.0;
-    out->circGaus[i]  = 0.0;
+    out->circGaus[i]  = mosaic->BeamTaper[i];
     out->gain[i]      = 0.1;
     out->minFlux[i]   = 0.0;
     out->factor[i]    = 0.0;

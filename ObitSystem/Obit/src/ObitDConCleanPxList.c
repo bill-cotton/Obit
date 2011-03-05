@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2010                                          */
+/*;  Copyright (C) 2004-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -396,7 +396,7 @@ ObitDConCleanPxListCreate (gchar* name, ObitImageMosaic *mosaic,
   out = newObitDConCleanPxList (name);
 
   /* Create arrays */
-  out->maxPixel = maxPixel;
+  out->maxPixel  = maxPixel;
   out->pixelX    = ObitMemAlloc0Name (maxPixel*sizeof(olong),  "PxList X pixel");
   out->pixelY    = ObitMemAlloc0Name (maxPixel*sizeof(olong),  "PxList Y pixel");
   out->pixelFld  = ObitMemAlloc0Name (maxPixel*sizeof(gshort), "PxList pixel field");
@@ -421,7 +421,7 @@ ObitDConCleanPxListCreate (gchar* name, ObitImageMosaic *mosaic,
     out->iterField[i] = 0;
     out->CCver[i]     = 0;
     out->fluxField[i] = 0.0;
-    out->circGaus[i]  = 0.0;
+    out->circGaus[i]  = mosaic->BeamTaper[i];
     out->gain[i]      = 0.1;
     out->minFlux[i]   = 0.0;
     out->factor[i]    = 0.0;
@@ -508,8 +508,8 @@ void  ObitDConCleanPxListGetParms (ObitDConCleanPxList *in, ObitErr *err)
   if ((in->nfield>1) && (dim[0]==1))
     for (i=1; i<in->nfield; i++) in->factor[i] = in->factor[0];
 
-  /* Gaussian convolution per field */
-  ObitInfoListGetTest(in->info, "fGauss", &type, (gint32*)dim, in->circGaus);
+  /* Gaussian convolution per field 
+  ObitInfoListGetTest(in->info, "fGauss", &type, (gint32*)dim, in->circGaus);*/
 
   /* Print level */
   in->prtLv = 2;  /* default = normal */

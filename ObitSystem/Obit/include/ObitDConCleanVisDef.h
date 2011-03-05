@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2009                                          */
+/*;  Copyright (C) 2005-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -63,3 +63,9 @@ ofloat autoCen;
 ObitDisplay *display;
 /** Copy of calibrated/weighted data if doing SDI clean */
 ObitUV *SDIdata;
+/** Max BeamTaper to consider */
+ofloat maxBeamTaper;
+/** Min BeamTaper to consider */
+ofloat minBeamTaper;
+/** Resolution selection controls */
+ofloat MResKnob[10];

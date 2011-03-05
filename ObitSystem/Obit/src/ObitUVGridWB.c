@@ -1,6 +1,6 @@
 /* $Id$      */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -146,6 +146,8 @@ gconstpointer ObitUVGridWBGetClass (void)
  * \param in       Object to initialize
  * \param UVin     Uv data object to be gridded.
  * \param imagee   Image (beam) to be gridded. (as Obit*)
+ *                 Descriptor infoList entry "BeamTapr" gives any additional
+ *                 tapering in degrees.
  * \param doBeam   TRUE is this is for a set of Beams.
  * \param err      ObitErr stack for reporting problems.
  */
@@ -159,7 +161,7 @@ void ObitUVGridWBSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
   ObitImage *image = (ObitImage*)imagee;
   ObitImage *myBeam;
   olong nx, ny, naxis[2];
-  ofloat cellx, celly, dxyzc[3], xt, yt, zt;
+  ofloat cellx, celly, dxyzc[3], xt, yt, zt, taper, BeamTaper=0.0;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM];
   gboolean doCalSelect = FALSE;
@@ -215,6 +217,13 @@ void ObitUVGridWBSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
   in->nyImage = image->myDesc->inaxes[1];
   in->icenxImage = in->nxImage/2 + 1;
   in->icenyImage = in->nyImage/2 + 1;
+  
+  /* Any additional tapering (deg) */
+  ObitInfoListGetTest(image->myDesc->info, "BeamTapr", &type, dim, &BeamTaper);
+  if (BeamTaper>0.0) {
+    taper   = (1.0 / (((BeamTaper/2.35)/206265.))/(G_PI));
+    in->BeamTaperUV = log(0.3)/(taper*taper);
+  } else in->BeamTaperUV = 0.0;
   
   /* Get values by Beam/Image */
   in->doBeam = doBeam;
@@ -773,12 +782,12 @@ void ObitUVGridWBClear (gpointer inn)
 {
   olong ivis, nvis, ifreq, nif, iif, nfreq, ifq, loFreq, hiFreq;
   ofloat *u, *v, *w, *vis, *ifvis, *vvis;
-  ofloat phase, cp, sp, vr, vi, uu, vv, ww, uf, vf, wf       ;
-  ofloat bl2, blmax2, blmin2, wt, guardu, guardv, ftemp;
+  ofloat phase, cp, sp, vr, vi, uu, vv, ww, uf, vf, wf, tfact;
+  ofloat bl2, blmax2, blmin2, wt, guardu, guardv, ftemp, tape;
   odouble ifreq0;
   ObitUVDesc *desc;
   olong fincf, fincif, order;
-  gboolean doShift, doFlag, flip;
+  gboolean doShift, doFlag, flip, doTaper;
   ObitUVGridWB *in = (ObitUVGridWB*)inn;
 
   /* error checks */
@@ -816,6 +825,9 @@ void ObitUVGridWBClear (gpointer inn)
   /* what needed */
   doShift = (in->dxc!=0.0) || (in->dyc!=0.0) || (in->dzc!=0.0);
   doShift = doShift && (!in->doBeam); /* no shift for beam */
+
+  /* Need additional taper? */
+  doTaper = (in->BeamTaperUV!=0.0);
 
   /* Baseline max, min values */
   blmax2 = in->blmax * in->blmax;
@@ -912,6 +924,14 @@ void ObitUVGridWBClear (gpointer inn)
 	
 	/* enforce guardband */
 	if ((fabs(uf)>guardu) || (fabs(vf)>guardv)) vvis[2] = 0.0;
+	
+	/* apply any taper to the weight. */
+	if (doTaper) {
+	  tape = ((uf*uf) + (vf*vf))*in->BeamTaperUV;
+	  if (tape<-14.0) tfact = 0.0; /* underflow */
+	  else tfact = exp(tape);
+	  vvis[2] *= tfact;
+	}
 	
 	vvis += desc->incf; /* visibility pointer */
       } /* end loop over frequencies */
