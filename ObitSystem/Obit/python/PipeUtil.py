@@ -1,5 +1,5 @@
 import ObitTask, Image, AIPSDir, OErr, FArray
-import urllib, urllib2, os.path, pickle
+import urllib, urllib2, os.path, pickle, time, sys
 
 def setname (inn, out):
     """ Copy file definition from inn to out as in...
@@ -305,12 +305,13 @@ def FetchObject (file):
     return pyobj
     # end FetchObject
    
-def QueryArchive(startTime, endTime):
+def QueryArchive(startTime, endTime, project=None):
     """
     Query the NRAO Archive for data files.
 
     startTime = Start of query time range ( YYYY-mmm-DD [ HH:MM:SS ] )
     endTime = End of query time range
+    project = Project code
     """
     freqRange = '1000 - 16000' # frequency range (MHz) (L to U bands)
     format = 'FITS-AIPS' # Archive file format (FITS-AIPS good prior to ? 2010)
@@ -322,6 +323,8 @@ def QueryArchive(startTime, endTime):
                  ('ARCHFORMAT', format),
                  ('TIMERANGE1', startTime),
                  ('TIMERANGE2', endTime) ]
+    if project:
+        dataList.append( ('PROJECT_CODE', project) )
     data = urllib.urlencode( dataList )
     url = 'https://archive.nrao.edu/archive/ArchiveQuery'
     # Archive is known to occasionally send a null response. This is an error.
@@ -378,50 +381,61 @@ def ParseArchiveResponse( responseLines ):
         fileList.append( dict )
     return fileList
 
-def DownloadArchiveFile( fileDict, email, destination ):
+def DownloadArchiveFile( fileDict, destination ):
     """
-    Download a file from the archive.
+    Download a file from the archive. Return the output of urllib2.urlopen.
+    If the file already exists in the download area, ask the user what to do.
+    If the user aborts the download, return None.
 
-    fileDict = a single file dictionary returned in the response from 
-               ParseArchiveResponse
-    email = Email address to receive download confirmation
-    destination = Download destination directory
+    fileDict = archive file dictionary from ParseArchiveResponse
+    destination = path to destination directory
     """
-    FTPCHECKED=fileDict['file_root']+','+ \
-               fileDict['logical_file']+','+ \
-               fileDict['raw_project_code']+','+ \
-               fileDict['segment']+','+ \
-               fileDict['lock_status']+','+ \
-               fileDict['DATE']+','+ \
-               fileDict['RESPONSE_ROW']+','+ \
-               fileDict['?']+','+ \
-               fileDict['format']+','+ \
-               fileDict['FILESIZE_UNIT']
-    # This IP lookup method may be host dependent. Since the archive accepts
-    # the request without parameter REMOTEADDR, leave this off for now.
-    # localhostIP =  \
-    #     commands.getoutput("/sbin/ifconfig").split("\n")[1].split()[1][5:]
-    dataList = [
-        ('EMAILADDR', email ),
-        ('FTPCHECKED', FTPCHECKED ),
-        ('COPYFILEROOT', destination ),
-        ('ARCHIVEROOT', '/home/archive/e2e/archive'),
-        ('CONVERT2FORMAT', 'UVFITS'),
-        ('DOWNLOADFTPCHK', 'Download Checked Files'),
-        ('FILENAMESTYLE', 'ANALYSTS'),
-        ('FLAGGING', 'FLAG'),
-        ('PROTOCOL', 'HTML'),
-        ('SPECTAVG', 'x1'),
-        ('TIMEAVG','0s'),
-        ('USERSTRING', '')
-    ]
+    url = "https://archive.nrao.edu/archive/ArchiveDeliver"
+    filename = fileDict['logical_file']
+    string = fileDict['telescope:config']
+    telescope = string[ 0 : string.find(':') ] # extract telescope name
+    dataList = [ ('FILE_ID', filename ),
+                 ('telescope', telescope ),
+                 ('deliver_dir', destination) ]
+    fullDLPath = destination + '/' + filename
+    if os.path.exists( fullDLPath ):
+        print "File " + fullDLPath
+        print "  already exists in download area. Overwrite? (y/n) [y]: ",
+        overwrite = str( sys.stdin.readline() )
+        if overwrite[0] == 'n':
+            print "Using file in download area."
+            return None
+        else:
+            os.remove( fullDLPath )
     data = urllib.urlencode( dataList )
-    url = 'https://archive.nrao.edu/cgi-bin/e2eftp.cgi'
     response = urllib2.urlopen( url, data )
-    lines = response.readlines()
-    print "--- Archive Download Response ---"
-    for ln in lines: print ln,
-    print "--- --- "
+    return response
+    
+def PollDownloadStatus( fileDict, destination ):
+    """
+    Poll the status of a file download from the archive.
+
+    filepath = full path to file
+    """
+    filename = fileDict['logical_file']
+    finishName = destination + '/' + filename
+    downloadName = finishName + '.loading'
+    waitFlag = False
+    inProgressFlag = False
+    while 1:
+        if not os.path.exists( downloadName ) and not os.path.exists( finishName ):
+            if not waitFlag:
+                print "Waiting for download to initiate. (" + time.strftime('%Y-%m-%d %X %Z') + ")"
+                waitFlag = True
+            time.sleep(3)
+        elif os.path.exists( downloadName ):
+            if not inProgressFlag:
+                print "Download in progress... (" + time.strftime('%Y-%m-%d %X %Z') + ")"
+                inProgressFlag = True
+            time.sleep(3)
+        elif os.path.exists( finishName ):
+            print "Download complete."
+            return
 
 def SummarizeArchiveResponse( fileList ):
     """

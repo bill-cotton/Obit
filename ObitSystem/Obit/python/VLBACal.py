@@ -6489,7 +6489,6 @@ def VLBAGetParms( fileDict, DESTDIR=None ):
     if match:
         f, unit = match.group( 1, 2 )
         f = float( f )
-        print f, unit
         if unit == 'MHZ':
             f = f / 1000
         if   f >= 1.35 and f <= 1.75: bandLetter = 'L' 
@@ -6512,7 +6511,7 @@ def VLBAGetParms( fileDict, DESTDIR=None ):
               ('@DESTDIR@', DESTDIR) ] # should be stored somewhere (env var?)
     return parms
 
-def VLBAPrepare( starttime, stoptime, email, fitsDest, outputDest,
+def VLBAPrepare( starttime, stoptime, fitsDest, outputDest, project=None,
     template="VLBAContTemplateParm.py", parmFile=None ):
     """
     Prepare pipeline for processing. Query archive, parse response, print 
@@ -6526,17 +6525,18 @@ def VLBAPrepare( starttime, stoptime, email, fitsDest, outputDest,
     template = name of template parameter file
     parmFile = name of output parameter file; None => used default name
     """
-    response = QueryArchive( starttime, stoptime )
+    response = QueryArchive( starttime, stoptime, project )
     fileList = ParseArchiveResponse( response )
     SummarizeArchiveResponse( fileList )
     print "Download file #: ",
     fileNum = int( sys.stdin.readline() )
     fileDict = fileList[fileNum]
-    DownloadArchiveFile( fileDict, email, fitsDest )
+    response = DownloadArchiveFile( fileDict, fitsDest )
+    if response != None:
+        PollDownloadStatus( fileDict, fitsDest )
     parmList = VLBAGetParms( fileDict, DESTDIR = outputDest )
     if not parmFile:
         parmFile = "VLBAContParm_" + fileDict['project_code'] + '.py'
-    print 'parmFile = ' + parmFile
     VLBAMakeParmFile( template, parmList, parmFile )
     print "Start pipeline with command:"
     print "python VLBAContPipe.py AIPSSetup.py " + parmFile
