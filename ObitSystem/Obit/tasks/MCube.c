@@ -1,7 +1,7 @@
 /* $Id$  */
 /*  MCube: put together images into a cube                            */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2010                                          */
+/*;  Copyright (C) 2007-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1029,6 +1029,7 @@ void UpdateFreq(ObitInfoList *myInput,
   /* Number of spectral terms  */
   nTerm = inTerm;
   ObitInfoListGetTest (myInput, "nTerm", &type, dim, &nTerm);
+  if (nTerm<=0) return;  /* Want some? */
   if (nTerm>0) cnTerm = nTerm;
 
   /* Where inserted  */

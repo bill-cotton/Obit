@@ -279,8 +279,8 @@ ObitDConCleanPxListMFCreate (gchar* name, ObitImageMosaic *mosaic,
   out->minFlux    = ObitMemAlloc0Name (nfield*sizeof(ofloat), "PxListMF Clean Mix flux");
   out->factor     = ObitMemAlloc0Name (nfield*sizeof(ofloat), "PxListMF Clean factor");
   out->CCTable    = ObitMemAlloc0Name (nfield*sizeof(ObitTableCC*), "PxListMF CC tables");
- out->BeamPatch   = ObitMemAlloc0Name (nfield*sizeof(ObitFArray*), "PxList BeamPatch");
-   for (i=0; i<nfield; i++) {
+  out->BeamPatch   = ObitMemAlloc0Name (nfield*sizeof(ObitFArray*), "PxList BeamPatch");
+  for (i=0; i<nfield; i++) {
     out->iterField[i] = 0;
     out->CCver[i]     = 0;
     out->fluxField[i] = 0.0;
@@ -630,8 +630,10 @@ void ObitDConCleanPxListMFUpdate (ObitDConCleanPxList *inn,
 		maxChFlux = -1.0;
 		if (in->nSpec>1) {
 		  for (j=0; j<in->nSpec; j++) {
-		    in->channelFlux[j][number] = sdata[j][ix];
-		    maxChFlux = MAX(fabs(sdata[j][ix]),maxChFlux);
+		    if (sdata[j][ix]!=fblank) {
+		      in->channelFlux[j][number] = sdata[j][ix];
+		      maxChFlux = MAX(fabs(sdata[j][ix]),maxChFlux);
+		    } else in->channelFlux[j][number] = 0.0;
 		  }
 		}
 		/* Only accept this one if the combined value is less than the max abs 
@@ -1544,7 +1546,7 @@ static void GetSpecBeamPatch (ObitDConCleanPxListMF *in, olong ifld,
   ObitImage *theBeam;
   olong ablc[2], atrc[2], pos[2], plane[]={1,1,1,1,1};
   olong i, ip, nx, ny, icenx, iceny, beamPatchSize;
-  ofloat fmax;
+  ofloat fmax, zero=0.0;
   ObitImageClassInfo *imgClass;
   ObitFArray *FAtemp=NULL;
   gchar *routine = "GetSpecBeamPatch";
@@ -1588,18 +1590,25 @@ static void GetSpecBeamPatch (ObitDConCleanPxListMF *in, olong ifld,
     if (err->error) Obit_traceback_msg (err, routine, theBeam->name);
     fmax = ObitFArrayMax (FAtemp, pos);
     FAtemp = ObitFArrayUnref(FAtemp);
-    icenx = pos[0]+ablc[0];
-    iceny = pos[1]+ablc[1];
-    
-    /* Beam patch window as 0-rel */
-    ablc[0] = icenx - beamPatchSize;
-    atrc[0] = icenx + beamPatchSize;
-    ablc[1] = iceny - beamPatchSize;
-    atrc[1] = iceny + beamPatchSize;
+
+    /* Set if Beam OK - peak>0.5 */
+    if ((fmax>0.5) && (fmax<1.5)) {
+      icenx = pos[0]+ablc[0];
+      iceny = pos[1]+ablc[1];
+      
+      /* Beam patch window as 0-rel */
+      ablc[0] = icenx - beamPatchSize;
+      atrc[0] = icenx + beamPatchSize;
+      ablc[1] = iceny - beamPatchSize;
+      atrc[1] = iceny + beamPatchSize;
+    }
     
     /* Save Beam patch */
     in->SBeamPatch[ip] = ObitFArraySubArr(theBeam->image, ablc, atrc, err);
     if (err->error) Obit_traceback_msg (err, routine, theBeam->name);
+
+    /* If beam bad, zero */
+    if ((fmax<0.5) || (fmax>1.5)) ObitFArrayFill (in->SBeamPatch[ip], zero);
     
     ip++;  /* next */
   } /* end loop over planes */

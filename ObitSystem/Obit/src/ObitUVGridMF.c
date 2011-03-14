@@ -264,8 +264,10 @@ void ObitUVGridMFSetup (ObitUVGrid *inn, ObitUV *UVin, Obit *imagee,
   /* Any additional tapering (deg) */
   ObitInfoListGetTest(image->myDesc->info, "BeamTapr", &type, dim, &BeamTaper);
   if (BeamTaper>0.0) {
-    taper   = (1.0 / (((BeamTaper/2.35)/206265.))/(G_PI));
-    in->BeamTaperUV = log(0.3)/(taper*taper);
+    /* DEBUG taper   = (1.0 / (BeamTaper*DG2RAD/2.35)/(G_PI));
+       in->BeamTaperUV = log(0.3)/(taper*taper);*/
+    taper = BeamTaper*DG2RAD;
+    in->BeamTaperUV = -taper*taper*2.15169;
   } else in->BeamTaperUV = 0.0;
   
  /* Get values by Beam/Image */
@@ -835,7 +837,7 @@ void ObitUVGridMFReadUVPar (olong nPar, ObitUVGrid **inn, ObitUV **UVin, ObitErr
 void ObitUVGridMFFFT2Im (ObitUVGrid *inn, Obit *oout, ObitErr *err)
 {
   ObitImage *out = (ObitImage*)oout;
-  ofloat *imagep=NULL, *xCorrp=NULL, *yCorrp=NULL, fact;
+  ofloat *imagep=NULL, *xCorrp=NULL, *yCorrp=NULL, fact, fblank = ObitMagicF();
   ObitUVGridMF *in = (ObitUVGridMF*)inn;
   olong j,pos[5], pln, plane[5]={1,1,1,1,1};
   ObitFArray *xCorrTemp=NULL;
@@ -884,20 +886,25 @@ void ObitUVGridMFFFT2Im (ObitUVGrid *inn, Obit *oout, ObitErr *err)
       in->BeamNorms[j] = (*imagep) * (*xCorrp) * (*yCorrp);
 
       /* MUST have beam peak for normalization */
-      if (in->BeamNorm==0.0) {
+      if (in->BeamNorms[j]==0.0) {
 	Obit_log_error(err, OBIT_Error, 
 		       "ObitUVGridFFT2Im: MUST have made beam first: %s",
 		       in->name);
 	goto cleanup;
       }
       
-      /* Correct xCorr by normalization factor */
-      fact = 1.0 / MAX (1.0e-20, in->BeamNorms[j]);
-      xCorrTemp = ObitFArrayCopy (in->xCorrBeam, xCorrTemp, err);
-      ObitFArraySMul (xCorrTemp, fact);
-      
-      /* Do multiply */
-      ObitFArrayMulColRow (array, xCorrTemp, in->yCorrBeam, array);
+      /* Bad plane? */
+      if (in->BeamNorms[j]==fblank) {
+	ObitFArrayFill (array, fblank); /* Blank fill */
+      } else { /* OK */
+	/* Correct xCorr by normalization factor */
+	fact = 1.0 / MAX (1.0e-20, in->BeamNorms[j]);
+	xCorrTemp = ObitFArrayCopy (in->xCorrBeam, xCorrTemp, err);
+	ObitFArraySMul (xCorrTemp, fact);
+	
+	/* Do multiply */
+	ObitFArrayMulColRow (array, xCorrTemp, in->yCorrBeam, array);
+      }
       
       /* Write output */
       pln = 2+in->maxOrder+j;  /* Get channel/plane number */
@@ -940,30 +947,35 @@ void ObitUVGridMFFFT2Im (ObitUVGrid *inn, Obit *oout, ObitErr *err)
 	goto cleanup;
       }
       
-      /* Create FFT object if not done before */
-      if (in->FFTImage==NULL) {
-	xdim[0] = in->nxImage; 
-	xdim[1] = in->nyImage; 
-	in->FFTImage = newObitFFT ("Image FFT", OBIT_FFT_Reverse, OBIT_FFT_HalfComplex,
-				   2, xdim);
-      }
-      
-      ObitFFTC2R (in->FFTImage, in->grids[j], array);
-      
-      /* reorder to center at center */
-      ObitFArray2DCenter (array);
-      
-      /* Do gridding corrections */
-      /* Create arrays / initialize if not done */
-       
-      /* Normalization: use center value of beam */
-      /* Correct xCorr by normalization factor */
-      fact = 1.0 / MAX (1.0e-20, in->BeamNorms[j]);
-      xCorrTemp = ObitFArrayCopy (in->xCorrImage, xCorrTemp, err);
-      ObitFArraySMul (xCorrTemp, fact);
-      
-      /* Do multiply   */
-      ObitFArrayMulColRow (array, xCorrTemp, in->yCorrImage, array); 
+      /* Bad plane? */
+      if (in->BeamNorms[j]==fblank) {
+	ObitFArrayFill (array, fblank); /* Blank fill */
+      } else { /* OK */
+	/* Create FFT object if not done before */
+	if (in->FFTImage==NULL) {
+	  xdim[0] = in->nxImage; 
+	  xdim[1] = in->nyImage; 
+	  in->FFTImage = newObitFFT ("Image FFT", OBIT_FFT_Reverse, OBIT_FFT_HalfComplex,
+				     2, xdim);
+	}
+	
+	ObitFFTC2R (in->FFTImage, in->grids[j], array);
+	
+	/* reorder to center at center */
+	ObitFArray2DCenter (array);
+	
+	/* Do gridding corrections */
+	/* Create arrays / initialize if not done */
+	
+	/* Normalization: use center value of beam */
+	/* Correct xCorr by normalization factor */
+	fact = 1.0 / MAX (1.0e-20, in->BeamNorms[j]);
+	xCorrTemp = ObitFArrayCopy (in->xCorrImage, xCorrTemp, err);
+	ObitFArraySMul (xCorrTemp, fact);
+	
+	/* Do multiply   */
+	ObitFArrayMulColRow (array, xCorrTemp, in->yCorrImage, array); 
+      } /* end if valid plane */
 
       /* Write output */
       pln = 2+in->maxOrder+j;  /* Get channel/plane number */
@@ -1019,7 +1031,7 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
   ObitImageClassInfo *imgClass;
   ObitImage *theBeam;
   gboolean OK;
-  ofloat fact, *Corrp;
+  ofloat fact, *Corrp, fblank = ObitMagicF();
   gchar *routine = "ObitUVGridMFFFT2ImPar";
   /* DEBUG 
      ObitFArray *dbgRArr=NULL, *dbgIArr=NULL;*/
@@ -1171,18 +1183,22 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
 	Corrp = ObitFArrayIndex(array[i*in[i]->nSpec+j], pos);
 	in[i]->BeamNorms[j] = *Corrp;
 	/* Check */
-	if (in[i]->BeamNorms[j]==0.0) {
-	  Obit_log_error(err, OBIT_Error, "%s ERROR peak in beam  %d is zero for:%s",
+	if (in[i]->BeamNorms[j]==0.0) {  /* No data? */
+	  Obit_log_error(err, OBIT_InfoWarn, 
+			 "%s Peak in beam  %d is zero for:%s, blank plane",
 			 routine, j, in[i]->name);
+	  in[i]->BeamNorms[j] = fblank;
 	  /* DEBUG
 	  ObitImageUtilArray2Image ("DbugRawBeamBad.fits",  0, array[i*in[i]->nSpec+j], err);   */
 	  /* END DEBUG */
-	  goto cleanup;
+	  ObitFArrayFill (array[i*in[i]->nSpec+j], fblank); /* Blank fill */
+
+	} else {  /* OK */
+	  
+	  /* Normalize */
+	  fact = 1.0 / MAX (1.0e-20, in[i]->BeamNorms[j]);
+	  ObitFArraySMul (array[i*in[i]->nSpec+j], fact);  /* Normalize beam */
 	}
-	
-	/* Normalize */
-	fact = 1.0 / MAX (1.0e-20, in[i]->BeamNorms[j]);
-	ObitFArraySMul (array[i*in[i]->nSpec+j], fact);  /* Normalize beam */
 	
 	/* Save normalization on in[i+1] */
 	if (!in[i+1]->doBeam) in[i+1]->BeamNorms[j] = in[i]->BeamNorms[j];
@@ -1215,14 +1231,20 @@ void ObitUVGridMFFFT2ImPar (olong nPar, ObitUVGrid **inn, Obit **oout, ObitErr *
     /* Loop over planes */
     for (j=0; j<in[i]->nSpec; j++) {
       if (in[i]->BeamNorms[j]==0.0) {
-	Obit_log_error(err, OBIT_Error, "%s ERROR image normalization is zero for: %s",
+	Obit_log_error(err, OBIT_Error,
+		       "%s ERROR image normalization is zero for: %s",
 		       routine, in[i]->name);
 	goto cleanup;
-      }
+      } else if (in[i]->BeamNorms[j]==fblank) { /* Plane blanked? */
 
-      /* Normalize */
-      fact = 1.0 / MAX (1.0e-20, in[i]->BeamNorms[j]);
-      ObitFArraySMul (array[i*in[i]->nSpec+j], fact);  /* Normalize image */
+	ObitFArrayFill (array[i*in[i]->nSpec+j], fblank); /* Blank fill */
+	
+      } else {
+
+	/* Normalize */
+	fact = 1.0 / MAX (1.0e-20, in[i]->BeamNorms[j]);
+	ObitFArraySMul (array[i*in[i]->nSpec+j], fact);  /* Normalize image */
+      }
     
       /* Write output */
       pln = 2+j+in[i]->maxOrder;       /* Get channel/plane number */
@@ -1510,7 +1532,7 @@ void PrepBufferMF (ObitUVGridMF* in, ObitUV *uvdata, olong BIF, olong EIF,
   guardv = ((1.0-in->guardband) * ((ofloat)accGrid->naxis[1])/2) / fabs(in->VScale);
 
   /* Tapering?  */
-  doTaper = fabs(in->sigma1[nfreq*nif/2])>1.0e-20;
+  doTaper = (fabs(in->sigma1[nfreq*nif/2])>1.0e-20) || (in->BeamTaperUV!=0.0);
 
   /* Loop over visibilities */
   for (ivis=0; ivis<nvis; ivis++) {
@@ -1553,7 +1575,9 @@ void PrepBufferMF (ObitUVGridMF* in, ObitUV *uvdata, olong BIF, olong EIF,
 	  /*taper = 0.95 / (Scorr*tapeConst) ;*/
 	  /* taper = (0.8/ ((Scorr/2.35)/206265.))/(G_PI); */
 	  /* sigma2  = log(0.3)/(taper*taper); */
-	  tape = (uf*uf*in->sigma2[ifq] + vf*vf*in->sigma1[ifq] + uf*vf*in->sigma3[ifq]);
+	  tape = (uf*uf*(in->sigma2[ifq]+in->BeamTaperUV) + 
+		  vf*vf*(in->sigma1[ifq]+in->BeamTaperUV) + 
+		  uf*vf*(in->sigma3[ifq]));
 	  if (tape<-14.0) taperWt = 0.0; /* underflow */
 	  else taperWt = exp(tape);
 	  vvis[2] *= taperWt;  /* Apply to weight */

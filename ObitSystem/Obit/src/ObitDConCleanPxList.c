@@ -906,8 +906,8 @@ gboolean ObitDConCleanPxListCLEAN (ObitDConCleanPxList *in, ObitErr *err)
   /* Only thread large cases */
   if (in->nPixel>1000) maxThread = 1000;
   else maxThread = 1;
-  /* Threading doesn't seem to help much */
-  maxThread = 1;
+  /* Threading doesn't seem to help much 
+  maxThread = 1;*/
   nThreads = MakeCLEANArgs (in, maxThread, &targs);
 
   /* Divide up work */

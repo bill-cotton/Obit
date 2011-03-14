@@ -203,6 +203,7 @@ def ImageSpectrum(path, pixel, err, chOff=-9999,bchan=1, echan=0):
     returns a dictionary with entries
        ch   = channel numbers
        vel  = velocity (km/s) coordinate (first col)
+       freq = frequency (Hz)
        flux = spectral values
     path = FITS file path, assume FITS disk 0
     pixel = array of integers giving 1-rel pixel
@@ -215,6 +216,7 @@ def ImageSpectrum(path, pixel, err, chOff=-9999,bchan=1, echan=0):
     inImage   = Image.newPFImage("Input image", path, 0, True, err)
     OErr.printErrMsg(err, "Error making image")
     imDict = inImage.Desc.Dict
+    #print imDict
     nplane = imDict["inaxes"][2]
     blc = [pixel[0],pixel[1],1];
     trc=[pixel[0], imDict["inaxes"][1], 1]
@@ -228,24 +230,25 @@ def ImageSpectrum(path, pixel, err, chOff=-9999,bchan=1, echan=0):
         chOff = 1-d["crpix"][d["jlocf"]]
 
     # Loop over planes
-    ch = []; vel = []; flux=[]
-    for i in range(bchan,nchan+1):
+    ch = []; vel = []; freq=[]; flux=[]
+    for i in range(bchan,echan+1):
         # Read plane
         blc[2]=i; trc[2]=i
         data = inImage.ReadPlane(err,blc=blc,trc=trc)
         OErr.printErrMsg(err, "Error reading plane")
         s = data.get(0,0)
         
-        #print "debug", i, s
         # save
         ch.append(i)
         v = 0.001*(imDict['crval'][2]+imDict['cdelt'][2]*(i+chOff-imDict['crpix'][2]))
         vel.append(v)
+        freq.append(v)
         flux.append(s)
+        #print "debug", i, s, v
     
     inImage.Close(err)
     OErr.printErrMsg(err, "Error closinging image")
-    return {'ch':ch,'vel':vel,'flux':flux}
+    return {'ch':ch,'vel':vel,'freq':freq,'flux':flux}
     # end ImageSpectrum
     
 def OImageSpectrum(inImage, pixel, err, chOff=-9999,bchan=1, echan=0):
@@ -539,10 +542,10 @@ def doSimplePlot(spec, label, file="None", \
     symbol = [optional] plot symbol code
     """
     ################################################################
-    xmin=min(spec['vel'])
-    xmax=max(spec['vel'])
-    ymin=1.05*min(spec['flux'])
-    ymax=1.1*max(spec['flux'])
+    xmin=0.95*min(spec['vel'])
+    xmax=1.05*max(spec['vel'])
+    ymin=0.95*min(spec['flux'])
+    ymax=1.05*max(spec['flux'])
     # Add "/PS" for postscript files
     if file!="None" and file!="/xterm":
         filename = file+"/ps"
@@ -648,9 +651,9 @@ def doSimpleLogPlot(spec, label, file="None", \
             y.append(ss[0] * 1000.0 * math.exp(arg))
         OPlot.PXYOver (plot, 0, x, y, err)
         if len(ss)>=3:
-            speclabel="S#d%5.1f GHz#u=%5.1f Jy, #ga= %5.2f, curve=%5.3f"%(refFreq,ss[0],ss[1],ss[2])
+            speclabel="S#d%5.1f GHz#u=%5.3f mJy, #ga= %5.2f, #gb=%5.3f"%(refFreq,ss[0]*1000.0,ss[1],ss[2])
         elif len(ss)==2:
-            speclabel="S#d%5.1f GHz#u=%5.1f Jy, #ga= %5.2f"%(refFreq,ss[0],ss[1])
+            speclabel="S#d%5.1f GHz#u=%5.3f mJy, #ga= %5.2f"%(refFreq,ss[0]*1000.0,ss[1])
         OPlot.PRelText(plot, "T", -01.0, 0.3, 0.0, speclabel, err)
 
         

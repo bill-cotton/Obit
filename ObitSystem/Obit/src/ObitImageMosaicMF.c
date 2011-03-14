@@ -985,7 +985,7 @@ ObitImageMosaicMF* ObitImageMosaicMFCreate (gchar *name, olong order, ofloat max
 
 /**
  * Define images in an Image Mosaic from a UV data.
- * Saves BeamTaper in Descriptor infoList
+ * Saves BeamTaper (as BeamTapr) in Descriptor infoList
  * \param inn     The object to create images in,  Details are defined in members:
  * \li numberImage - Number of images in Mosaic
  * \li nInit    - number of images already initialized
@@ -1027,6 +1027,7 @@ void ObitImageMosaicMFDefine (ObitImageMosaic *inn, ObitUV *uvData, gboolean doB
   gboolean doCalSelect, *barr=NULL;
   ObitIOAccess access;
   ObitImage *tmpImage=NULL;
+  ObitImage *myBeam;
   ObitImageMosaicMF *in = (ObitImageMosaicMF*)inn;
   ObitImageMosaicClassInfo* mosaicClass;
   gchar *routine = "ObitImageMosaicMFDefine";
@@ -1092,11 +1093,14 @@ void ObitImageMosaicMFDefine (ObitImageMosaic *inn, ObitUV *uvData, gboolean doB
       in->RAShift[i]  = in->images[i]->myDesc->xshift;
       in->DecShift[i] = in->images[i]->myDesc->yshift;
     }
-    /* Add BeamTaper to Descriptor InfoList */
+    /* Add BeamTaper to Descriptor InfoList - only 8 char allowed */
     dim[0] = dim[1] = 1;
-    ObitInfoListAlwaysPut (in->images[i]->myDesc->info, "BeamTaper", OBIT_float, dim, 
+    ObitInfoListAlwaysPut (in->images[i]->myDesc->info, "BeamTapr", OBIT_float, dim, 
 			   &in->BeamTaper[i]);
-  }    /* end loop over images */
+    myBeam = (ObitImage*)(in->images[i]->myBeam);
+    ObitInfoListAlwaysPut (myBeam->myDesc->info, "BeamTapr", OBIT_float, 
+			   dim, &in->BeamTaper[i]);
+}    /* end loop over images */
 
  /* Create full field image if needed */
   if (in->doFull && (in->nInit<=0) && (in->numberImages>1)) { 

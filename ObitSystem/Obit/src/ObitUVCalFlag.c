@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -673,12 +673,12 @@ static gpointer ThreadCalFlag (gpointer arg)
   olong flga, ipolpt, stadd;
 
   /* Anything to do? */
-  if (last<=0) goto finish;
+  if (last<0) goto finish;
   if (last<first) goto finish;
 
   /* loop thru flagging criteria */
   ipolpt = abs(me->stoke0)-1;
-  for (iflag=first; iflag<last; iflag++) { /* loop 500 */
+  for (iflag=first; iflag<=last; iflag++) { /* loop 500 */
  
     /* check antenna */
     flga = me->flagAnt[iflag];

@@ -164,16 +164,16 @@ void ObitUVCalBandpassInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
   me->lenBPArrayEntry = 2; /* length of cal array entry */
 
   /* How big is the calibration table */
-  size = me->numAnt * (me->eIF- me->bIF + 1) * (me->eChan- me->bChan + 1) * 
+  size = me->numAnt * (me->eIF- me->bIF + 1) * (me->eChan- me->bChan + 1) *
     me->numPol * me->lenBPArrayEntry;
-  me->BPApply      = g_malloc(size*sizeof(float));
-  me->BPPrior      = g_malloc(size*sizeof(float));
-  me->BPFollow     = g_malloc(size*sizeof(float));
-  me->PriorAntTime = g_malloc(me->numAnt*sizeof(float));
-  me->FollowAntTime= g_malloc(me->numAnt*sizeof(float));
+  me->BPApply      = g_malloc0(size*sizeof(float));
+  me->BPPrior      = g_malloc0(size*sizeof(float));
+  me->BPFollow     = g_malloc0(size*sizeof(float));
+  me->PriorAntTime = g_malloc0(me->numAnt*sizeof(float));
+  me->FollowAntTime= g_malloc0(me->numAnt*sizeof(float));
 
   /* Solution weight array */
-  size = me->numAnt * me->numPol * (me->eIF- me->bIF + 1);
+  size = me->numAnt * me->numPol * me->numIF;
   me->PriorSolnWt    = g_malloc(size*sizeof(float));
   me->FollowSolnWt   = g_malloc(size*sizeof(float));
 
@@ -218,7 +218,7 @@ void ObitUVCalBandpassInit (ObitUVCal *in, ObitUVSel *sel, ObitUVDesc *desc,
 void ObitUVCalBandpass (ObitUVCal *in, float time, olong ant1, olong ant2, 
 			 ofloat *RP, ofloat *visIn, ObitErr *err)
 {
-  olong   iif, ipol, ifreq, ioff, joff, index, nstoke, iSubA, itemp;
+  olong   iif, ipol, ifreq, ioff, joff, index, nstoke, iSubA, itemp, nIF;
   olong   ia1, ia2, FreqID, SourID, numCh, numIF, asize, maxpol, jndxa1, jndxa2, indxa1, indxa2;
   gboolean   sombad, somflg, allflg, smpflg, alpflg, allded, ccor;
   gboolean calBad;
@@ -240,8 +240,9 @@ void ObitUVCalBandpass (ObitUVCal *in, float time, olong ant1, olong ant2,
   if (desc->jlocif>=0) numIF = desc->inaxes[desc->jlocif];
   else numIF = 1;
 
-  /* Number of selected channels */
+  /* Number of selected channels/IF */
   numCh = (me->eChan - me->bChan + 1);
+  nIF   = (me->eIF - me->bIF + 1);
 
   /* Subarray number in data */
   itemp = (olong)RP[desc->ilocb];
@@ -277,7 +278,7 @@ void ObitUVCalBandpass (ObitUVCal *in, float time, olong ant1, olong ant2,
   maxpol = MAX (1, MIN(in->numStok, me->numPol*me->numPol));
 
   /* How big is an antenna entry in the calibration table. */
-  asize = me->numPol * numCh * (me->eIF - me->bIF + 1) * me->lenBPArrayEntry;
+  asize = me->numPol * numCh * nIF * me->lenBPArrayEntry;
 
   /* Set beginning antenna indices */
   jndxa1 = (ant1 - 1) * asize;

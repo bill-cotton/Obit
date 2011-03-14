@@ -951,6 +951,7 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
   olong i, plane[5] = {1,1,1,1,1};
   ofloat norm, sigma, sigClip=5.0, lambda=0.1, beamArea, cells;
   ofloat wt, sumWt, fblank = ObitMagicF();
+  gboolean *bad=NULL;
   gchar *routine = "ObitImageMFCombine";
 
   /* error checks */
@@ -959,6 +960,7 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
 
   /* Loop accumulating average */
   sumWt = 0.0;
+  bad = g_malloc0(in->nSpec*sizeof(gboolean));
   for (i=1+in->maxOrder; i<1+in->maxOrder+in->nSpec; i++) {
     plane[0] = i+1;
     ObitImageGetPlane ((ObitImage*)in, NULL, plane, err);
@@ -972,7 +974,10 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
     /* Weight by 1/sigma */
     wt = ObitFArrayRMS(in->image);
     /* Values? */
-    if (wt==fblank) continue;
+    if ((wt==fblank) || (wt<=0.0)) {
+      bad[i-1+in->maxOrder] = TRUE;
+      continue;
+    } else bad[i-1+in->maxOrder] = FALSE;
     wt = 1.0 / wt;
     sumWt += wt;
     ObitFArraySMul (in->image, wt);
@@ -986,21 +991,23 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
   norm = 1.0 / sumWt;
   ObitFArraySMul (imPix, norm);
 
-  /* Add scaled extrema convolved with dirth beam */
+  /* Add scaled extrema convolved with dirty beam */
   if (addExt && in->myBeam) {
     /* Loop accumulating extrema */
     for (i=1+in->maxOrder; i<1+in->maxOrder+in->nSpec; i++) {
-      plane[0] = i+1;
-      ObitImageGetPlane ((ObitImage*)in, NULL, plane, err);
-      if (err->error) Obit_traceback_msg (err, routine, in->name);
-      
-      /* Subtract average */
-      ObitFArraySub(in->image, imPix, in->image);
-      
-      /* Accumulate extrema - first clip below sigClip */
-      sigma = ObitFArrayRMS0(in->image);
-      ObitFArrayInClip (in->image, -sigClip*sigma, sigClip*sigma, 0.0);
-      ObitFArrayExtArr (extPix, in->image, extPix);
+      if (!bad[i-1+in->maxOrder]) {
+	plane[0] = i+1;
+	ObitImageGetPlane ((ObitImage*)in, NULL, plane, err);
+	if (err->error) Obit_traceback_msg (err, routine, in->name);
+	
+	/* Subtract average */
+	ObitFArraySub(in->image, imPix, in->image);
+	
+	/* Accumulate extrema - first clip below sigClip */
+	sigma = ObitFArrayRMS0(in->image);
+	ObitFArrayInClip (in->image, -sigClip*sigma, sigClip*sigma, 0.0);
+	ObitFArrayExtArr (extPix, in->image, extPix);
+      } /* end if valid */
     } /* end loop accumulating */
 
     /* Read dirty beam */
@@ -1029,6 +1036,7 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, in->name);
 
   /* Cleanup */
+  if (bad) g_free(bad);
   imPix     = ObitFArrayUnref(imPix);
   extPix    = ObitFArrayUnref(extPix);
   in->image = ObitFArrayUnref(in->image);

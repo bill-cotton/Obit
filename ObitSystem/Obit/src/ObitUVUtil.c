@@ -220,7 +220,7 @@ ObitUV* ObitUVUtilCopyZero (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   /* use same data buffer on input and output 
      so don't assign buffer for output */
   if (outUV->buffer) ObitIOFreeBuffer(outUV->buffer); /* free existing */
-  outUV->buffer = inUV->buffer;
+  outUV->buffer = NULL;
   outUV->bufferSize = -1;
 
   /* test open output */
@@ -238,6 +238,7 @@ ObitUV* ObitUVUtilCopyZero (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
     Obit_traceback_val (err, routine, outUV->name, outUV);
   }
 
+  /* iretCode = ObitUVClose (inUV, err); DEBUG */
   /* Copy tables before data */
   iretCode = ObitUVCopyTables (inUV, outUV, exclude, NULL, err);
   /* If multisource out then copy SU table, multiple sources selected or
@@ -264,6 +265,7 @@ ObitUV* ObitUVUtilCopyZero (ObitUV *inUV, gboolean scratch, ObitUV *outUV,
   iretCode = ObitUVOpen (inUV, access, err);
   if ((iretCode!=OBIT_IO_OK) || (err->error)) /* add traceback,return */
     Obit_traceback_val (err, routine,inUV->name, outUV);
+  outUV->buffer = inUV->buffer;
 
   /* Get descriptors */
   inDesc  = inUV->myDesc;
@@ -375,7 +377,7 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
     /* use same data buffer on input 1 and output 
        so don't assign buffer for output */
     if (outUV->buffer) ObitIOFreeBuffer(outUV->buffer); /* free existing */
-    outUV->buffer = inUV1->buffer;
+    outUV->buffer = NULL;
     outUV->bufferSize = -1;
   }
 
@@ -448,6 +450,7 @@ void ObitUVUtilVisDivide (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   iretCode = ObitUVOpen (inUV1, OBIT_IO_ReadWrite, err);
   if ((iretCode!=OBIT_IO_OK) || (err->error))
     Obit_traceback_msg (err, routine,inUV1->name);
+  outUV->buffer = inUV1->buffer;
 
   outDesc = outUV->myDesc;   /* Get output descriptor */
 
@@ -580,7 +583,7 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
     /* use same data buffer on input 1 and output 
        so don't assign buffer for output */
     if (outUV->buffer) ObitIOFreeBuffer(outUV->buffer); /* free existing */
-    outUV->buffer = inUV1->buffer;
+    outUV->buffer = NULL;
     outUV->bufferSize = -1;
   }
 
@@ -659,6 +662,7 @@ void ObitUVUtilVisSub (ObitUV *inUV1, ObitUV *inUV2, ObitUV *outUV,
   iretCode = ObitUVOpen (inUV1, OBIT_IO_ReadWrite, err);
   if ((iretCode!=OBIT_IO_OK) || (err->error))
     Obit_traceback_msg (err, routine,inUV1->name);
+  outUV->buffer = inUV1->buffer;
 
   outDesc = outUV->myDesc;   /* Get output descriptor */
 
@@ -3013,7 +3017,7 @@ void ObitUVUtilNoise(ObitUV *inUV, ObitUV *outUV, ofloat scale, ofloat sigma,
     /* use same data buffer on input 1 and output 
        so don't assign buffer for output */
     if (outUV->buffer) ObitIOFreeBuffer(outUV->buffer); /* free existing */
-    outUV->buffer = inUV->buffer;
+    outUV->buffer = NULL;
     outUV->bufferSize = -1;
   }
 
@@ -3055,6 +3059,7 @@ void ObitUVUtilNoise(ObitUV *inUV, ObitUV *outUV, ofloat scale, ofloat sigma,
       Obit_traceback_msg (err, routine, inUV->name);
     }
   } /* end if not same */
+  outUV->buffer = inUV->buffer;
 
   /* Init random number generator */
 #if HAVE_GSL==1  /* GSL stuff */

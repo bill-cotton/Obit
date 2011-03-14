@@ -1585,7 +1585,7 @@ static ObitFArray* GetSpecBeamPatch (ObitDConCleanVisMF *in, ObitFArray *BP,
   ObitImage *theBeam;
   olong ablc[2], atrc[2], pos[2], plane[]={1,1,1,1,1};
   olong nx, ny, icenx, iceny, beamPatchSize;
-  ofloat fmax;
+  ofloat fmax, zero=0.0;
   ObitImageClassInfo *imgClass;
   ObitFArray *out=NULL, *FAtemp=NULL;
   gchar *routine = "GetSpecBeamPatch";
@@ -1622,18 +1622,24 @@ static ObitFArray* GetSpecBeamPatch (ObitDConCleanVisMF *in, ObitFArray *BP,
   if (err->error) Obit_traceback_val (err, routine, theBeam->name, out);
   fmax = ObitFArrayMax (FAtemp, pos);
   FAtemp = ObitFArrayUnref(FAtemp);
-  icenx = pos[0]+ablc[0];
-  iceny = pos[1]+ablc[1];
+  /* Set if Beam OK - peak>0.5 */
+  if ((fmax>0.5) && (fmax<1.5)) {
+    icenx = pos[0]+ablc[0];
+    iceny = pos[1]+ablc[1];
   
-  /* Beam patch window as 0-rel */
-  ablc[0] = icenx - beamPatchSize;
-  atrc[0] = icenx + beamPatchSize;
-  ablc[1] = iceny - beamPatchSize;
-  atrc[1] = iceny + beamPatchSize;
-  
+    /* Beam patch window as 0-rel */
+    ablc[0] = icenx - beamPatchSize;
+    atrc[0] = icenx + beamPatchSize;
+    ablc[1] = iceny - beamPatchSize;
+    atrc[1] = iceny + beamPatchSize;
+  }
+
   /* Output Beam patch */
   out = ObitFArraySubArr(theBeam->image, ablc, atrc, err);
   if (err->error) Obit_traceback_val (err, routine, theBeam->name, out);
+    
+  /* If beam bad, zero */
+  if ((fmax<0.5) || (fmax>1.5)) ObitFArrayFill (theBeam->image, zero);
     
   /* Free Image array? */
   theBeam->image = ObitFArrayUnref(theBeam->image);
