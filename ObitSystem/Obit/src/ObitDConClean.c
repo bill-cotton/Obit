@@ -1363,8 +1363,9 @@ void ObitDConCleanXRestore(ObitDConClean *in, ObitErr *err)
   gchar *tabType = "AIPS CC";
   gboolean gotSome;
   gchar *routine = "ObitDConCleanXRestore";
+  /* DEBUG gchar DBGname[100]; */
 
- /* error checks */
+  /* error checks */
   g_assert (ObitErrIsA(err));
   if (err->error) return;
   g_assert (ObitDConCleanIsA(in));
@@ -1432,8 +1433,6 @@ void ObitDConCleanXRestore(ObitDConClean *in, ObitErr *err)
 
 	  /* get restoring beam and scaling */
 	  scale = ObitDConCleanGetXRestoreBeam(imDesc1, imDesc2, gparm, &bmaj, &bmin, &bpa);
-	  /*fprintf (stderr, "DEBUG: scale %f beam %f %f %f\n", 
-	    scale, 3600.0*bmaj, 3600.0*bmin, bpa);*/
 
 	  /* Scale list flux if needed */
 	  if (scale!=1.0) {
@@ -1446,6 +1445,15 @@ void ObitDConCleanXRestore(ObitDConClean *in, ObitErr *err)
 	  celly = imDesc1->cdelt[1];
 	  cr = cos ((bpa + imDesc1->crota[imDesc1->jlocd])*DG2RAD);
 	  sr = sin ((bpa + imDesc1->crota[imDesc1->jlocd])*DG2RAD);
+
+	  /* Actually convolve with imaging taper */
+	  bmaj = BeamTaper1;
+	  bmin = BeamTaper1;
+	  bpa  = 0.0;
+	  if ((in->prtLv>2) && (ncomp>0)) {
+	    Obit_log_error(err, OBIT_InfoErr,"Field %d to %d scale %f beam %f %f %f",
+			   jfield+1, ifield+1, scale, 3600.0*bmaj, 3600.0*bmin, bpa);
+	  }
 	  gauss[0] = ((cr*cr)/(bmin*bmin) + (sr*sr)/(bmaj*bmaj)) *
 	    cellx*cellx*4.0*log(2.0);
 	  gauss[1] =  ((sr*sr)/(bmin*bmin) + (cr*cr)/(bmaj*bmaj)) *
@@ -1454,18 +1462,16 @@ void ObitDConCleanXRestore(ObitDConClean *in, ObitErr *err)
 	    sr*cr*fabs(celly*celly)*8.0*log(2.0);
 
 	  /* Convolve list to tmpArray  */
+	  /* DEBUG - only this one - this will destroy the output 
+	     ObitFArrayFill(tmpArray,0.0);*/
 	  ObitFArrayConvGaus (tmpArray, list, ncomp, gauss);
-	  /* DEBUG
-	     if ((ifield==32) && (jfield==29)) {
-	     ObitFArrayFill(tmpArray,0.0);
-	     ObitFArrayConvGaus (tmpArray, list, ncomp, gauss);
-	     ObitImageUtilArray2Image ("DbugXRestCC.fits", 0, tmpArray, err);
-	     if (err->error) Obit_traceback_msg (err, routine, in->name);
-	     } else {
-	     ObitFArrayConvGaus (tmpArray, list, ncomp, gauss);
-	     } */
+
+	  /* DEBUG  
+	     sprintf (DBGname, "DbugXRestCC%3.3d_%3.3d.fits", 
+	     ifield, jfield, 0, tmpArray, err);
+	     ObitImageUtilArray2Image (DBGname, 0, tmpArray, err);*/
 	  
-	  /* END DEBUG */
+	  
 	} /* end of Anything to do? */
 
 	/* Free list */
@@ -2211,6 +2217,7 @@ static void GaussTaper (ObitCArray* uvGrid, ObitImageDesc *imDesc,
 
 /**
  * Get image statistics for portion of an image in a thread
+ * Allows blanked images
  * \param arg Pointer to StatsFuncArg argument with elements:
  * \li inData   ObitFArray with input plane pixel data
  * \li window   Clean Window
@@ -2235,7 +2242,7 @@ static gpointer ThreadImageStats (gpointer args)
   ObitThread *thread    = largs->thread;
   /* local */
   olong ix, iy, nx, ny, count, pos[2];
-  ofloat *data, tmax, tmax2, sum, sum2;
+  ofloat *data, tmax, tmax2, sum, sum2, fblank = ObitMagicF();
   gboolean *umask=NULL, *mask=NULL, *innerMask=NULL, isUnbox;
   /*gchar *routine = "ThreadImageStats";*/
 
@@ -2260,7 +2267,7 @@ static gpointer ThreadImageStats (gpointer args)
       if (ObitDConCleanWindowOuterRow(window, field, iy+1, &mask, err)) {
 	if (isUnbox) {
 	  for (ix=0; ix<nx; ix++) {
-	    if (mask[ix] && (!umask[ix])) {
+	    if (mask[ix] && (!umask[ix]) && (data[ix]!=fblank)) {
 	      count++;
 	      sum  += data[ix];
 	      sum2 += data[ix]*data[ix];
@@ -2269,14 +2276,14 @@ static gpointer ThreadImageStats (gpointer args)
 	  } /* end loop over columns - now inner window */
 	  if (ObitDConCleanWindowInnerRow(window, field, iy+1, &innerMask, err)) {
 	    for (ix=0; ix<nx; ix++) {
-	      if (innerMask[ix] && (!umask[ix])) {
+	      if (innerMask[ix] && (!umask[ix]) && (data[ix]!=fblank)) {
 		tmax2 = MAX (tmax2, fabs(data[ix]));
 	      }
 	    }
 	  } /* End if inner window */
 	} else { /* no unboxes */
 	  for (ix=0; ix<nx; ix++) {
-	    if (mask[ix]) {
+	    if (mask[ix] && (data[ix]!=fblank)) {
 	      count++;
 	      sum  += data[ix];
 	      sum2 += data[ix]*data[ix];
@@ -2286,17 +2293,20 @@ static gpointer ThreadImageStats (gpointer args)
 	  /* get inner max */
 	  if (ObitDConCleanWindowInnerRow(window, field, iy+1, &innerMask, err)) {
 	    for (ix=0; ix<nx; ix++) {
-	      if (innerMask[ix]) tmax2 = MAX (tmax2, fabs(data[ix]));
+	      if (innerMask[ix] && (data[ix]!=fblank)) 
+		tmax2 = MAX (tmax2, fabs(data[ix]));
 	    }
 	  } /* End if inner window */
 	} /* end no unboxes */
       }
     } else { /* No - no window - do everything */
       for (ix=0; ix<nx; ix++) {
-	count++;
-	sum  += data[ix];
-	sum2 += data[ix]*data[ix];
-	tmax  = MAX (tmax, fabs(data[ix]));
+	if  (data[ix]!=fblank) {
+	  count++;
+	  sum  += data[ix];
+	  sum2 += data[ix]*data[ix];
+	  tmax  = MAX (tmax, fabs(data[ix]));
+	}
       }
       tmax2 = tmax;
     }

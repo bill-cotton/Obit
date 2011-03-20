@@ -2051,7 +2051,7 @@ void
 ObitUVSolnSmooMWF (ofloat width, ofloat alpha, ofloat* x, ofloat* y, ofloat* w, olong n, 
 		   ofloat* ys, ofloat* ws, ofloat* yor, ofloat* wor, gboolean doBlank) 
 {
-  olong      i, j, k, l, i1, i2, ic=0, nword;
+  olong      i, j, k, l, i1=0, i2=0, ic=0, nword;
   size_t     nbyte;
   ofloat     hw, d, temp, beta=0.0, fblank =  ObitMagicF();
   gboolean   wasb, onlyb, blnkd;

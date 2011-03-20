@@ -1289,7 +1289,7 @@ gboolean ObitSkyModelMFLoadComps (ObitSkyModel *inn, olong n, ObitUV *uvdata,
     in->modType = MAX (in->modType, modType);  /* Need highest number */
 
     /* Gaussian parameters */
-    if ((modType==OBIT_SkyModel_GaussMod) || (modType==OBIT_SkyModel_GaussModSpec)) {
+    if ((modType==OBIT_SkyModel_GaussMod) || (modType==OBIT_SkyModel_GaussModTSpec)) {
       cpa = cos (DG2RAD * parms[2]);
       spa = sin (DG2RAD * parms[2]);
       xmaj = parms[0] * konst2;

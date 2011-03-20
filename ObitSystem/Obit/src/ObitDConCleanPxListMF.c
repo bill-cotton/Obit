@@ -1595,13 +1595,13 @@ static void GetSpecBeamPatch (ObitDConCleanPxListMF *in, olong ifld,
     if ((fmax>0.5) && (fmax<1.5)) {
       icenx = pos[0]+ablc[0];
       iceny = pos[1]+ablc[1];
-      
-      /* Beam patch window as 0-rel */
-      ablc[0] = icenx - beamPatchSize;
-      atrc[0] = icenx + beamPatchSize;
-      ablc[1] = iceny - beamPatchSize;
-      atrc[1] = iceny + beamPatchSize;
     }
+    
+    /* Beam patch window as 0-rel */
+    ablc[0] = icenx - beamPatchSize;
+    atrc[0] = icenx + beamPatchSize;
+    ablc[1] = iceny - beamPatchSize;
+    atrc[1] = iceny + beamPatchSize;
     
     /* Save Beam patch */
     in->SBeamPatch[ip] = ObitFArraySubArr(theBeam->image, ablc, atrc, err);

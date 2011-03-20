@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -3186,7 +3186,7 @@ static void
 FindFFTPeak (ObitUVGSolveWB *in, ofloat *ppos, ofloat pval[2])
 {
   olong i, n, pos[0], i1, i2;
-  ofloat *inData, *outData, pmax, sum, wt, pixel;
+  ofloat *inData, *outData, pmax, sum, wt, pixel=0.0;
 
   /* Shuffle data to interpolator array */
   n = in->cWork2->arraySize/2;

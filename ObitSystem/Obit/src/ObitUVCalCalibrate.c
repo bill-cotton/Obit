@@ -233,7 +233,7 @@ void ObitUVCalCalibrate (ObitUVCal *in, ofloat time, olong ant1, olong ant2,
     jndxa1, jndxa2, maxpol, idndx, itfilt, corID, iSubA, itemp;
   gboolean   sombad, somflg, allflg, smpflg, alpflg, allded, ccor;
   gboolean calBad, doDisp, badDsp;
-  ofloat tvr, tvi, tvr1, gr, gi, dgr, dgi, ddgr, ddgi, phase, grd, gid;
+  ofloat tvr, tvi, tvr1, gr, gi, dgr, dgi, ddgr=1.0, ddgi=0.0, phase, grd, gid;
   ofloat  cp, sp, gwt, dphas, rate, arg=0.0, rfact, dfact, fblank = ObitMagicF();
   odouble dbits, dsfact;
   ObitUVCalCalibrateS *me;

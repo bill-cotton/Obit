@@ -34,7 +34,7 @@ X    SysPower.xml
 X    Weather.xml
  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1419,6 +1419,49 @@ void ObitSDMSourceTabFixCode (ObitSDMData *in)
   }
   return;
 } /* end ObitSDMSourceTabFixCode */
+
+/**   Select Scan by source code
+ * \param  in      ASDM object
+ * \param  iMain   Main table number of scan in question
+ * \param  selCode Desired Source code:
+ *        "*" => Anything other than "NONE", "NONE"=>"NONE",
+ *        No characters or starts with blank => any scan
+ *        otherwise if any character matches the first character 
+ *        in Field Table code, the scan is selected
+ * \return True if scan desired
+ */
+gboolean ObitSDMDataSelCode  (ObitSDMData *in, olong iMain, gchar *selCode)
+{
+  gboolean want=TRUE;
+  olong fieldId, iField, i, n;
+
+  /* Checking anything? */
+  if ((strlen(selCode)==0) || (selCode[0]==' ')) return want;
+
+  /* Find Field table row */
+  fieldId = in->MainTab->rows[iMain]->fieldId;
+  for (iField=0; iField<in->FieldTab->nrows; iField++) {
+    if (in->FieldTab->rows[iField]->fieldId==fieldId) break;
+  }
+  if (iField>=in->FieldTab->nrows) return want; /* Bother - not found */
+
+  /* Selections */
+  if ((selCode[0]=='*') && (in->FieldTab->rows[iField]->code[0]!=' ')) return TRUE;
+  if ((selCode[0]=='*') && (in->FieldTab->rows[iField]->code[0]==' ')) return FALSE;
+  if ((!strncmp(selCode, "NONE", 4)) && 
+      (!strncmp(in->FieldTab->rows[iField]->code, "NONE", 4))) return TRUE;
+  if ((!strncmp(selCode, "NONE", 4)) && 
+      (in->FieldTab->rows[iField]->code[0]!=' '))  return FALSE;
+
+  n    = (strlen(selCode));
+  want = FALSE;
+  for (i=0; i<n; i++) {
+    if (selCode[i]== ' ') continue;
+    if (selCode[i]==in->FieldTab->rows[iField]->code[0]) return TRUE;
+  }
+
+  return want;
+} /* end ObitSDMDataSelCode */
 
 /**
  * Initialize global ClassInfo Structure.

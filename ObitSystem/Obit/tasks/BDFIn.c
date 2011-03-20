@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Read BDF format data, convert to Obit UV                           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -733,7 +733,7 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   ASDMAntennaArray*  AntArray;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar selBand[12];
+  gchar selBand[12], selCode[24];
   ObitASDMBand band;
   gchar *bandCodes[] = {"Any", "4","P","L","S","C","X","Ku","K","Ka","Q","W"};
   gchar *routine = "GetHeader";
@@ -774,6 +774,10 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   /* IF selection */
   selIF = 0;
   ObitInfoListGetTest(myInput, "selIF", &type, dim, &selIF);
+
+  /* Cal code selection */
+  sprintf (selCode, "        ");
+  ObitInfoListGetTest(myInput, "selCode", &type, dim, selCode);
 
   /* Check if Spectral window order desired */
   ObitInfoListGetTest(myInput, "SWOrder", &type, dim, &SWOrder);
@@ -824,6 +828,7 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   Obit_log_error(err, OBIT_InfoErr, "Selecting scans with %d Spectral Windows", selIF);
   ObitInfoListAlwaysPut(myInput, "selChan", OBIT_long, dim, &selChan);
   Obit_log_error(err, OBIT_InfoErr, "Selecting spectral windows with %d channels", selChan);
+  Obit_log_error(err, OBIT_InfoErr, "Selecting calCode '%s'", selCode);
   ObitErrLog(err);
  
  /* Define output descriptor */
@@ -1045,8 +1050,8 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData,
   olong          iScan, iIntent;
   gchar          hicard[81], begString[17], endString[17];
   gchar         *hiEntries[] = {
-    "DataRoot", "selChan", "selIF", "selBand", "selConfig", "dropZero", 
-    "doCode", "calInt", "doSwPwr", "doOnline", "SWOrder", 
+    "DataRoot", "selChan", "selIF", "selBand", "selConfig", "selCode", 
+    "dropZero", "doCode", "calInt", "doSwPwr", "doOnline", "SWOrder", 
     NULL};
   gchar *routine = "BDFInHistory";
   
@@ -1767,7 +1772,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   ObitTableNXRow* NXrow=NULL;
   ObitInfoType type;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  gchar selBand[12], begString[17], endString[17];
+  gchar selBand[12], begString[17], endString[17], selCode[24];
   ObitASDMBand band;
   ASDMSpectralWindowArray* SpWinArray=NULL;
   gboolean dropZero=TRUE, found=FALSE, doOnline=FALSE, drop;
@@ -1806,6 +1811,8 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   ObitInfoListGetTest(myInput, "selIF", &type, dim, &selIF);
   selConfig = -1;
   ObitInfoListGetTest(myInput, "selConfig", &type, dim, &selConfig);
+  sprintf (selCode, "        ");
+  ObitInfoListGetTest(myInput, "selCode", &type, dim, selCode);
 
   /* Drop Zero vis? */
   ObitInfoListGetTest(myInput, "dropZero", &type, dim, &dropZero);
@@ -1872,6 +1879,9 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 			routine);
     /* Selection here mostly by ConfigID */
     if (!ObitSDMDataSelChan (SpWinArray, selChan, selIF, ASDMBand_Any)) continue;
+
+    /* Want this source? */
+    if (!ObitSDMDataSelCode (SDMData, iMain, selCode)) continue;
 
     /* Ignore online cal scans unless doOnline */
     if (!doOnline) {
@@ -2675,7 +2685,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   g_assert (ObitUVIsA(outData));
 
   /* Any entries? */
-  if (inTab->nrows<=0) return;
+  if ((inTab==NULL) || (inTab->nrows<=0)) return;
 
   /* Print any prior messages */
   ObitErrLog(err);

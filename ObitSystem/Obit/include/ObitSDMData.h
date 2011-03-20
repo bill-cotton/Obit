@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -375,6 +375,9 @@ void ObitSDMSourceTabFix(ObitSDMData *in);
 
 /** Fix source numbers in an ASDMSourceTable including the calcode */
 void ObitSDMSourceTabFixCode(ObitSDMData *in);
+
+/** Public: Select Scan by code  */
+gboolean ObitSDMDataSelCode  (ObitSDMData *in, olong iMain, gchar *selCode);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

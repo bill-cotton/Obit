@@ -948,9 +948,9 @@ void ObitImageMFBlank (ObitImageMF *in, ObitErr *err)
 void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
 {
   ObitFArray *imPix=NULL, *extPix=NULL, *extConvl=NULL;
-  olong i, plane[5] = {1,1,1,1,1};
+  olong i, plane[5] = {1,1,1,1,1}, pos[2];
   ofloat norm, sigma, sigClip=5.0, lambda=0.1, beamArea, cells;
-  ofloat wt, sumWt, fblank = ObitMagicF();
+  ofloat wt, sumWt, p1, p2, fblank = ObitMagicF();
   gboolean *bad=NULL;
   gchar *routine = "ObitImageMFCombine";
 
@@ -975,9 +975,9 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
     wt = ObitFArrayRMS(in->image);
     /* Values? */
     if ((wt==fblank) || (wt<=0.0)) {
-      bad[i-1+in->maxOrder] = TRUE;
+      bad[i-1-in->maxOrder] = TRUE;
       continue;
-    } else bad[i-1+in->maxOrder] = FALSE;
+    } else bad[i-1-in->maxOrder] = FALSE;
     wt = 1.0 / wt;
     sumWt += wt;
     ObitFArraySMul (in->image, wt);
@@ -995,7 +995,7 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
   if (addExt && in->myBeam) {
     /* Loop accumulating extrema */
     for (i=1+in->maxOrder; i<1+in->maxOrder+in->nSpec; i++) {
-      if (!bad[i-1+in->maxOrder]) {
+      if (!bad[i-1-in->maxOrder]) {
 	plane[0] = i+1;
 	ObitImageGetPlane ((ObitImage*)in, NULL, plane, err);
 	if (err->error) Obit_traceback_msg (err, routine, in->name);
@@ -1023,8 +1023,10 @@ void ObitImageMFCombine (ObitImageMF *in, gboolean addExt, ObitErr *err)
     /* Convolve extrema with dirty beam */
     extConvl = ObitFArrayUtilConvolve (extPix, ((ObitImage*)in->myBeam)->image, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
-    /* add */
-    ObitFArrayAdd (imPix, extConvl, imPix);
+    /* add if peak in imPix exceeds that in extConvl - something occasionally goes wrong */
+    p1 = ObitFArrayMaxAbs (imPix, pos);
+    p2 = ObitFArrayMaxAbs (extConvl, pos);
+    if (p1>p2) ObitFArrayAdd (imPix, extConvl, imPix);
     /* Cleanup */
     ((ObitImage*)in->myBeam)->image  = ObitFArrayUnref(((ObitImage*)in->myBeam)->image);
     extConvl = ObitFArrayUnref(extConvl);
@@ -1568,13 +1570,15 @@ gpointer ThreadFitSpec (gpointer args)
 	PBCorr  = BSClass->ObitBeamShapeGainSym(BeamShape, Angle);
 	if (inData[i][ix]!=fblank) workFlux[i]  = inData[i][ix] / PBCorr;
 	else workFlux[i] = fblank;
-	workSigma[i] = sigma[i] / (PBCorr);
+	if (sigma[i]>1.0e-9) workSigma[i] = sigma[i] / (PBCorr);
+ 	else {workSigma[i] = 1.0e10; workFlux[i] = fblank;}
       }
     } else { /* No PB correction */
       /* Load arrays */
       for (i=0; i<nSpec; i++) {
 	workFlux[i]  = inData[i][ix];
-	workSigma[i] = sigma[i];
+	if (sigma[i]>1.0e-9) workSigma[i] = sigma[i];
+  	else {workSigma[i] = 1.0e10; workFlux[i] = fblank;}
       }
     }
     
@@ -1587,6 +1591,7 @@ gpointer ThreadFitSpec (gpointer args)
     /* Save values */
     for (i=0; i<nterm; i++) {
       outData[i][ix] = fitResult[i];
+      if (fitResult[0]==fblank)  outData[i][ix] = fblank;
     }
     
   }  /* end loop over row */

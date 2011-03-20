@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -789,7 +789,8 @@ static void LXYPol(ObitUVCalPolarizationS *in, olong iant1, olong iant2, olong i
 static void SetInvJones(ObitUVCalPolarizationS *in, ObitAntennaList *Ant, 
 			ObitUVCalCalibrateS *cal, olong iChan, olong iant)
 {
-  ofloat Jones[8], Dr[2], Dl[2], Det[2], d,  Er, El, Or, Ol, fblank = ObitMagicF();
+  ofloat Jones[8], Dr[2]={0.0,0.0}, Dl[2]={0.0,0.0}, Det[2], d,  Er, El, Or, Ol;
+  ofloat fblank = ObitMagicF();
   ofloat rotate=0.0, crot, srot, temp[8];
   olong iif, jndx, loff, refAnt, i, SubA;
 

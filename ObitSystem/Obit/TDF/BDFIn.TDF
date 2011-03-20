@@ -4,7 +4,7 @@
 ;! Obit Convert EVLA BDF data and append to a UV data file.
 ;# Task Obit BDF
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2010
+;;  Copyright (C) 2010,2011
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -53,6 +53,8 @@ selIF                               no. IFs to select, 0=>first.
 selConfig                           Config ID, -1 ->first.
 **PARAM** str 4
 selBand                             Band to select, "  "=>first.
+**PARAM** str 4
+selCode                             Source code to select, "  "=>any.
 **PARAM** boo 1  **DEF** T
 dropZero                            Drop records with all zero vis
 **PARAM** boo 1  **DEF** F
@@ -109,7 +111,13 @@ Data selection
                "4","P","L","S","C","X","Ku","K","Ka","Q","W"
              Selection by band is risky as EVLA bands overlap which may
              result in the exclusion of some data.
-  selConfig..ASDM array configuration index to select.  Used in 
+  selCode....Source calibrator code to select scans:
+             selCode starting with a blank matches any scan,
+             "*" matches anything other than "NONE", i.e. any calibrator, 
+             "NONE" matches "NONE" (not a calibrator).
+             otherwise if any character matches the first character 
+             in Field Table code, the scan is selected
+ selConfig..ASDM array configuration index to select.  Used in 
              conjunction with selChan, overrides selBand.
              Task ASDMList can be used to decide which configuration
              number(s) are desired.
