@@ -406,6 +406,7 @@ if parms["doImgFullTarget"]:
                                    maxPSCLoop=2, minFluxPSC=parms["minFluxPSC"], solPInt=parms["solPInt"], solMode="P", \
                                    maxASCLoop=parms["maxASCLoop"], minFluxASC=parms["minFluxASC"], solAInt=parms["solAInt"], \
                                    avgPol=parms["avgPol"], avgIF=parms["avgIF"], minSNR=parms["minSNR"], refAnt=goodCal["bestRef"], \
+                                   nTaper=parms["nTaper"], Tapers=parms["Tapers"], \
                                    nThreads=nThreads, noScrat=noScrat, logfile=logFile, check=check, debug=debug)
     if retCode!=0:
         raise RuntimeError,"Error in imaging targets"

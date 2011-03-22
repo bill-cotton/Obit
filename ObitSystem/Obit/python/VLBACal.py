@@ -190,6 +190,8 @@ def VLBAInitContParms():
     parms["maxASCLoop"] =  1            # Max. number of phase self cal loops
     parms["minFluxASC"] =  0.5          # Min flux density peak for amp+phase self cal
     parms["solAInt"]    =  None         # amp+phase self cal solution interval (min)
+    parms["nTaper"]     =  1            # Number of additional imaging multiresolution tapers
+    parms["Tapers"]     =  [20.0,0.0]   # List of tapers in pixels
     
     # Find good calibration data
     parms["doFindCal"]    = True        # Search for good calibration/reference antenna
@@ -2246,6 +2248,7 @@ def VLBAImageTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
                          maxPSCLoop=0, minFluxPSC=0.1, solPInt=20.0/60., solMode="P", \
                          maxASCLoop=0, minFluxASC=0.5, solAInt=2.0, \
                          avgPol=False, avgIF=False, minSNR = 5.0, refAnt=0, \
+                         nTaper=0, Tapers=[0.,0.,0.], \
                          nThreads=1, noScrat=[], logfile='', check=False, debug=False):
     """ Image a list of sources with optional selfcal
 
@@ -2280,6 +2283,8 @@ def VLBAImageTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
     avgIF      = Average IFs in SC?
     minSNR     = minimum acceptable SNR in SC
     refAnt     = Reference antenna
+    nTaper     = number of multiresolution tapers to add
+    Taper      = List of tapers in pixels
     nThreads   = Max. number of threads to use
     noScrat    = list of disks to avoid for scratch files
     logfile    = logfile for messages
@@ -2333,6 +2338,12 @@ def VLBAImageTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
     imager.minSNR      = minSNR
     imager.dispURL     = "None"
     imager.autoWindow  = True
+    imager.nTaper      = nTaper
+    imager.Tapers      = Tapers
+    imager.ccfLim      = 0.35
+    if nTaper>0:       # Less aggressive CLEAN for multi-res
+        imager.ccfLim  = 0.6
+        imager.Gain    = 0.05
     imager.noScrat     = noScrat
     imager.nThreads    = nThreads
     imager.prtLv       = 1

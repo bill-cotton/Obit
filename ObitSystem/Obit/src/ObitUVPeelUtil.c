@@ -706,6 +706,9 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     ObitDConCleanVisDeconvolve ((ObitDCon*)myClean, err);
     if (err->error) goto cleanup;
 
+    /* Make sure CLEAN indicates some cleaning */
+    myClean->Pixels->currentIter = MAX (1, myClean->Pixels->currentIter);
+
     /* Copy CCs from peeled table (CC # 2) */
     ver = 2;
     noParms = 0;

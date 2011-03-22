@@ -3443,8 +3443,8 @@ static gboolean SelectTaper (ObitDConCleanVis *in, gboolean *fresh, ObitErr *err
 	fresh[j] = TRUE;  /* Mark as fresh */
       }
       fresh[l] = TRUE;  /* Mark as fresh */
-    i++;
     }
+    i++;
   } /* end finding facets to be remade */
   
   /* Make images */
