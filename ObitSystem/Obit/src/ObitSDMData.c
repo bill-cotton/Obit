@@ -1433,6 +1433,7 @@ void ObitSDMSourceTabFixCode (ObitSDMData *in)
 gboolean ObitSDMDataSelCode  (ObitSDMData *in, olong iMain, gchar *selCode)
 {
   gboolean want=TRUE;
+  gboolean noCode;
   olong fieldId, iField, i, n;
 
   /* Checking anything? */
@@ -1446,10 +1447,10 @@ gboolean ObitSDMDataSelCode  (ObitSDMData *in, olong iMain, gchar *selCode)
   if (iField>=in->FieldTab->nrows) return want; /* Bother - not found */
 
   /* Selections */
-  if ((selCode[0]=='*') && (in->FieldTab->rows[iField]->code[0]!=' ')) return TRUE;
-  if ((selCode[0]=='*') && (in->FieldTab->rows[iField]->code[0]==' ')) return FALSE;
-  if ((!strncmp(selCode, "NONE", 4)) && 
-      (!strncmp(in->FieldTab->rows[iField]->code, "NONE", 4))) return TRUE;
+  noCode = !strncmp(in->FieldTab->rows[iField]->code, "NONE", 4);
+  if ((selCode[0]=='*') && (!noCode)) return TRUE;
+  if ((selCode[0]=='*') && (noCode))  return FALSE;
+  if ((!strncmp(selCode, "NONE", 4)) && noCode) return TRUE;
   if ((!strncmp(selCode, "NONE", 4)) && 
       (in->FieldTab->rows[iField]->code[0]!=' '))  return FALSE;
 

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2004-2009                                          */
+/*;  Copyright (C) 2004-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -290,7 +290,7 @@ void ObitDConCleanPxHistUpdate (ObitDConCleanPxHist *in, olong field,
     /* Get window mask */
     if (ObitDConCleanWindowRow(window, field, iy+1, &mask, err)) {
       for (ix=0; ix<nx; ix++) {
-	if (mask[ix]) {
+	if ((mask[ix]) && (data[ix]!=fblank)) {
 	  icell = tfact * (fabs(data[ix]) - tmin) + 0.5;
 	  icell = MIN (icell, in->ncell-1);
 	  in->hist[icell]++;    /* count it */
