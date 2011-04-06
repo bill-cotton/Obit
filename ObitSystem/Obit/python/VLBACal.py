@@ -19,11 +19,11 @@ outfiles = { 'project' : [],  # list of project output files
              'source'  : {} } # dict of source output files
 
 def VLBAAIPSName( project, session):
-    """ Derive AIPS Name
+    """ Derive AIPS Name.  AIPS file name will be project+session with project 
+truncated to fit in 12 characters.
 
-    AIPS file name will be project+session with project truncated to fit in 12 characters
-    project    = project name
-    session    = session code
+* project = project name
+* session = session code
     """
     ################################################################
     Aname = Aname=project.strip()[0:12-len(session)]+session
@@ -33,26 +33,24 @@ def VLBAAIPSName( project, session):
 def VLBAIDILoad(filename, project, session, band, Aclass, Adisk, Aseq, err, \
                     wtThresh=0.8,calInt=1.0,logfile='',Compress=False, \
                     check=False, debug=False):
-    """ Read FITS IDI file into AIPS
+    """ Read an IDI FITS UV data file and write an AIPS data set. AIPS file
+name will be project+session with project truncated to fit in 12
+characters.  Returns AIPS data file (UV data object).
 
-    Read a IDI FITS UV data file and write an AIPS data set
-    AIPS file name will be project+session with project truncated to fit in 12 characters
-    Returns AIPS data file
-    filename   = name of FITS file
-    project    = project name
-    session    = session code
-    band       = observing band code
-    Aclass     = AIPS class of file
-    Aseq       = AIPS sequence number of file, 0=> create new
-    Adisk      = FITS directory number
-    err        = Python Obit Error/message stack
-    logfile    = logfile for messages
-    wtThresh   = Data weight threshold
-    calInt     = CL entry interval (min)
-    Compress   = Write AIPS data in compressed form?
-    check      = Only check script, don't execute tasks
-    debug      = show input
-    returns AIPS UV data object
+* filename  = name of FITS file
+* project   = project name
+* session   = session code
+* band      = observing band code
+* Aclass    = AIPS class of file
+* Aseq      = AIPS sequence number of file, 0=> create new
+* Adisk     = FITS directory number
+* err       = Python Obit Error/message stack
+* logfile   = logfile for messages
+* wtThresh  = Data weight threshold
+* calInt    = CL entry interval (min)
+* Compress  = Write AIPS data in compressed form?
+* check     = Only check script, don't execute tasks
+* debug     = show input
     """
     ################################################################
     outuv = None   # In case of failure
@@ -192,6 +190,7 @@ def VLBAInitContParms():
     parms["solAInt"]    =  None         # amp+phase self cal solution interval (min)
     parms["nTaper"]     =  1            # Number of additional imaging multiresolution tapers
     parms["Tapers"]     =  [20.0,0.0]   # List of tapers in pixels
+    parms["do3D"]       =  True         # Make ref. pixel tangent to celest. sphere for each facet
     
     # Find good calibration data
     parms["doFindCal"]    = True        # Search for good calibration/reference antenna
@@ -2248,7 +2247,7 @@ def VLBAImageTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
                          maxPSCLoop=0, minFluxPSC=0.1, solPInt=20.0/60., solMode="P", \
                          maxASCLoop=0, minFluxASC=0.5, solAInt=2.0, \
                          avgPol=False, avgIF=False, minSNR = 5.0, refAnt=0, \
-                         nTaper=0, Tapers=[0.,0.,0.], \
+                         nTaper=0, Tapers=[0.,0.,0.], do3D=True, \
                          nThreads=1, noScrat=[], logfile='', check=False, debug=False):
     """ Image a list of sources with optional selfcal
 
@@ -2341,6 +2340,7 @@ def VLBAImageTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
     imager.nTaper      = nTaper
     imager.Tapers      = Tapers
     imager.ccfLim      = 0.35
+    imager.do3D        = do3D
     if nTaper>0:       # Less aggressive CLEAN for multi-res
         imager.ccfLim  = 0.6
         imager.Gain    = 0.05
@@ -5193,6 +5193,7 @@ def VLBAGetSumCC(image, err, CCver=1,
     image.Open(Image.READONLY, err)
     image.Close(err)
     
+    image.Header(err) # DEBUG STATEMENT
     CCTab = image.NewTable(Table.READONLY, "AIPS CC", CCver, err)
     if err.isErr:
         return 0.0
@@ -5753,7 +5754,7 @@ def VLBADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
 
     # Loop over sources
     for (i,s) in enumerate(slist):
-        print "Generatig diagnostic plots for source "+s+ \
+        print "Generating diagnostic plots for source "+s+ \
             " ("+str(i+1)+"/"+str(len(slist))+")"
         uvplt.sources[1] = s
         # Loop over plot types
@@ -5765,7 +5766,7 @@ def VLBADiagPlots( uv, err, cleanUp=True, JPEG=True, sources=None, project='',
 
             # Create output file name
             outfile = project+session+band+s+'.'+plot['file']+'.ps'
-            lwpla.outfile = 'PWD:'+outfile # output to current directory
+            lwpla.outfile = './'+outfile # output to current directory
 
             # Remove preexisting file
             if os.path.exists(outfile): os.remove(outfile) 
@@ -5861,7 +5862,7 @@ def VLBAKntrPlots( err, catNos=[], imClass='?Clean', imName=[], project='tProj',
     for cno in catNos: # loop over images
         image = getname(cno)
 
-        # Run CNTR to make plot
+        # Run KNTR to make plot
         setname(image, kntr)
         # Contour level unit = 2 * RMS noise
         stats = imstat(image, err)
@@ -6415,55 +6416,31 @@ def VLBASaveOutFiles( pickleFile='outfiles.pickle' ):
     VLBAAddOutFile( pickleFile, 'project', 'Python object pickle file' )
     SaveObject( outfiles, pickleFile, True)
 
-def VLBACopyOutFiles( destDir='./output', logFile='' ):
+def VLBAMakeOutfilesList( outfiles=outfiles ):
     """
-    Copy output files to destination directory. This is done using rsync.
-
-    destDir = directory to which files should be copied
-    logFile = file for log messages
+    Extract filenames from the outfiles structure and return as a list.
     """
-    mess = "Copying (rsync-ing) output files to " + destDir
-    printMess( mess, logFile )
-
-    # Prepare destination directory
-    if not os.path.isdir( destDir ): # not dir
-        if os.path.exists( destDir ):  # not dir & exists
-            mess = "Copy failed: destination exists and is not a directory."
-            printMess( mess, logFile )
-            return
-        else: # not dir & not exists
-            os.makedirs( destDir )
-
     # Build a list of all outfiles
-    srcFiles = [] # list if files to be copied
+    srcFiles = [] # list of files to be copied
     for file in outfiles['project']:
         srcFiles.append( file['name'] )
     srcKeys = outfiles['source'].keys()
     for srcKey in srcKeys:
         for file in outfiles['source'][ srcKey ]:    
             srcFiles.append( file['name'] )
+    return srcFiles
 
-    # Turn list into space-separated string
-    srcString = ""
-    for f in srcFiles: srcString += ' ' + f
-    
-    # Copy files using rsync
-    cmd = "rsync --verbose --times" + srcString + " " + destDir
-    rtn = os.system( cmd )
-    if rtn != 0:
-        mess  = "Error occurred while rsyncing to destination directory.\n" 
-        mess += "rsync return value: " + str(rtn)
-        printMess(mess, logFile)
-
-def VLBAMakeParmFile(template, subs, parmfile):
+def VLBAMakeParmFile(subs, parmfile, template=None):
     """
     Generate a parameter file from a template and a list of substitutions
 
-    template = name of template parameter file
     subs     = list of substitutions as tuple:
                ("@PARAMETER@", "valuestring")
     parmfile = output parameter file
+    template = name of template parameter file; if none, use default
     """
+    if not template:
+        template = os.environ['OBIT'] + '/share/scripts/VLBAContTemplateParm.py'
     fdin  = open(template, "r")
     fdout = open(parmfile,"w")
     line = fdin.readline()
@@ -6485,29 +6462,8 @@ def VLBAGetParms( fileDict, DESTDIR=None ):
                    ParseArchiveResponse
     DESTDIR = Destination directory for copy (rsync)
     """
-    # Get session from archive file name
-    session = '??'
-    pattern = re.compile(r'VLBA_[A-Za-z]+[0-9]+([A-Za-z]{2})')   
-    match = re.match( pattern, fileDict['logical_file'] )
-    if match:
-        session = match.group(1)
-    else:
-        session = '??'
-    # Get band letter(s) from numerical frequency in file name
-    bandLetter = '?'
-    pattern = re.compile('.*_(\d+\.\d+)([MG]HZ)')
-    match = re.match( pattern, fileDict['logical_file'] )
-    if match:
-        f, unit = match.group( 1, 2 )
-        f = float( f )
-        if unit == 'MHZ':
-            f = f / 1000
-        if   f >= 1.35 and f <= 1.75: bandLetter = 'L' 
-        elif f >= 2.15 and f <= 2.35: bandLetter = 'S'
-        elif f >= 4.6  and f <= 5.1 : bandLetter = 'C'
-        elif f >= 8.0  and f <= 8.8 : bandLetter = 'X'
-        elif f >= 12.0 and f <= 15.4: bandLetter = 'Ku'
-        else: bandLetter= '?'
+    session = VLBAGetSessionCode( fileDict )
+    ( bandLetter, fGHz ) = VLBAGetBandLetter( fileDict )
     # Set the copy destination directory
     if not DESTDIR:
         try:
@@ -6521,6 +6477,46 @@ def VLBAGetParms( fileDict, DESTDIR=None ):
               ('@CALINT@',  '10.0 / 60.0' ), # default value
               ('@DESTDIR@', DESTDIR) ] # should be stored somewhere (env var?)
     return parms
+
+def VLBAGetSessionCode( fileDict ):
+    """
+    Get the project session code from a fileDict returned by 
+    PipeUtil.ParseArchiveResponse.
+
+    fileDict = dictionary returned by ParseArchiveResponse
+    """
+    # Get session from archive file name
+    session = '??'
+    pattern = re.compile(r'VLBA_[A-Za-z]+[0-9]+([A-Za-z]{2})')   
+    match = re.match( pattern, fileDict['logical_file'] )
+    if match:
+        session = match.group(1)
+    return session
+
+def VLBAGetBandLetter( fileDict ):
+    """
+    Return the project observing band letter and frequency in GHz from a 
+    dictionary returned by PipeUtil.ParseArchiveResponse.
+
+    fileDict = dictionary returned by ParseArchiveResponse
+    """
+    # Get band letter(s) from numerical frequency in file name
+    bandLetter = '?'
+    pattern = re.compile('.*_(\d+\.\d+)([MG]HZ)')
+    match = re.match( pattern, fileDict['logical_file'] )
+    f = 0.0
+    if match:
+        f, unit = match.group( 1, 2 )
+        f = float( f )
+        if unit == 'MHZ':
+            f = f / 1000
+        if   f >= 1.35 and f <= 1.75: bandLetter = 'L' 
+        elif f >= 2.15 and f <= 2.35: bandLetter = 'S'
+        elif f >= 4.6  and f <= 5.1 : bandLetter = 'C'
+        elif f >= 8.0  and f <= 8.8 : bandLetter = 'X'
+        elif f >= 12.0 and f <= 15.4: bandLetter = 'Ku'
+        else: bandLetter= '?'
+    return ( bandLetter, f )
 
 def VLBAPrepare( starttime, stoptime, fitsDest, outputDest, project=None,
     template="VLBAContTemplateParm.py", parmFile=None ):
@@ -6538,7 +6534,7 @@ def VLBAPrepare( starttime, stoptime, fitsDest, outputDest, project=None,
     """
     response = QueryArchive( starttime, stoptime, project )
     fileList = ParseArchiveResponse( response )
-    SummarizeArchiveResponse( fileList )
+    print SummarizeArchiveResponse( fileList )
     print "Download file #: ",
     fileNum = int( sys.stdin.readline() )
     fileDict = fileList[fileNum]
@@ -6548,7 +6544,7 @@ def VLBAPrepare( starttime, stoptime, fitsDest, outputDest, project=None,
     parmList = VLBAGetParms( fileDict, DESTDIR = outputDest )
     if not parmFile:
         parmFile = "VLBAContParm_" + fileDict['project_code'] + '.py'
-    VLBAMakeParmFile( template, parmList, parmFile )
+    VLBAMakeParmFile( parmList, parmFile )
     print "Start pipeline with command:"
     print "python VLBAContPipe.py AIPSSetup.py " + parmFile
 
@@ -6589,7 +6585,7 @@ def VLBAWriteVOTable( projMeta, srcMeta, filename="votable.xml" ):
 
     # Write project metadata
     keys = projMeta.keys()
-    setAttribs = PipeUtil.XMLSetAttributes # use short name - save space
+    setAttribs = XMLSetAttributes # use short name - save space
     for key in keys:
         pr = doc.createElement("param")
         if key == "project":

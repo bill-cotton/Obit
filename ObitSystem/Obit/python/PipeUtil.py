@@ -1,5 +1,12 @@
-import ObitTask, Image, AIPSDir, OErr, FArray
-import urllib, urllib2, os.path, pickle, time, sys
+"""
+Obit pipeline utilities. These functions are generic utlities that may be
+useful for any pipeline.
+"""
+
+import urllib, urllib2, os.path, pickle, time, sys, logging, socket
+import ObitTask, Image, AIPSDir, OErr, FArray, VLBACal
+
+logger = logging.getLogger("obitLog.PipeUtil")
 
 def setname (inn, out):
     """ Copy file definition from inn to out as in...
@@ -82,21 +89,23 @@ def set2name (in2, out):
 def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0], logfile=None):
     """ Get statistics in a specified region of an image plane
 
-    Returns dictionary with statistics of selected region with entries:
-        Mean    = Mean value
-        RMSHist = RMS value from a histogram analysis
-        RMS     = Simple RMS value
-        Max     = maximum value
-        MaxPos  = pixel of maximum value
-        Min     = minimum value
-        MinPos  = pixel of minimum value
-        Flux    = Flux density if CLEAN beam given, else -1
-        BeamArea= CLEAN Beam area in pixels
-    inImage   = Python Image object, created with getname, getFITS
-    err      = Obit error/message stack
-    blc      = bottom left corner pixel (1-rel)
-    trc      = top right corner pixel (1-rel)
-    logfile  = file to write results to, if None don't print
+Returns dictionary with statistics of selected region with entries:
+
+    - Mean    = Mean value
+    - RMSHist = RMS value from a histogram analysis
+    - RMS     = Simple RMS value
+    - Max     = maximum value
+    - MaxPos  = pixel of maximum value
+    - Min     = minimum value
+    - MinPos  = pixel of minimum value
+    - Flux    = Flux density if CLEAN beam given, else -1
+    - BeamArea= CLEAN Beam area in pixels
+
+* inImage   = Python Image object, created with getname, getFITS
+* err      = Obit error/message stack
+* blc      = bottom left corner pixel (1-rel)
+* trc      = top right corner pixel (1-rel)
+* logfile  = file to write results to, if None don't print
     """
     ################################################################
     # Read plane
@@ -177,18 +186,19 @@ def unique (inn):
     return outl
 # end unique
 
-def AllDest (err, disk=None, Atype="  ", Aname="            ", Aclass="      ", Aseq=0):
-    """ Delete AIPS files matching a pattern
+def AllDest (err, disk=None, Atype="  ", Aname="            ", Aclass="      ",
+    Aseq=0):
+    """ Delete AIPS files matching a pattern. Strings use AIPS wild cards:
 
-    Strings use AIPS wild cards:
-        blank => any
-        '?'   => one of any character
-        "*"   => arbitrary string
-    disk      = AIPS disk number, 0=>all
-    Atype     = AIPS entry type, 'MA' or 'UV'; '  => all
-    Aname     = desired AIPS name, using AIPS wildcards, None -> don't check
-    Aclass    = desired AIPS class, using AIPS wildcards, None -> don't check
-    Aseq      = desired AIPS sequence, 0=> any
+     * blank => any
+     * '?'   => one of any character
+     * "*"   => arbitrary string
+     
+* disk      = AIPS disk number, 0=>all
+* Atype     = AIPS entry type, 'MA' or 'UV'; '  => all
+* Aname     = desired AIPS name, using AIPS wildcards, None -> don't check
+* Aclass    = desired AIPS class, using AIPS wildcards, None -> don't check
+* Aseq      = desired AIPS sequence, 0=> any
     """
     ################################################################
     if err.isErr:   # Ignore if error condition
@@ -307,7 +317,8 @@ def FetchObject (file):
    
 def QueryArchive(startTime, endTime, project=None):
     """
-    Query the NRAO Archive for data files.
+    Query the NRAO Archive for data files. Return the response as a list of 
+    lines.
 
     startTime = Start of query time range ( YYYY-mmm-DD [ HH:MM:SS ] )
     endTime = End of query time range
@@ -402,18 +413,21 @@ def DownloadArchiveFile( fileDict, destination ):
         print "File " + fullDLPath
         print "  already exists in download area. Overwrite? (y/n) [y]: ",
         overwrite = str( sys.stdin.readline() )
-        if overwrite[0] == 'n':
+        if overwrite[0].lower() == 'n':
             print "Using file in download area."
             return None
         else:
             os.remove( fullDLPath )
     data = urllib.urlencode( dataList )
+    logger.debug("Submitting download request with parameters:\n" + \
+        "  url = " + url + "\n" + "  data = " + data)
     response = urllib2.urlopen( url, data )
     return response
     
 def PollDownloadStatus( fileDict, destination ):
     """
-    Poll the status of a file download from the archive.
+    Poll the status of a file download from the archive. Return only when
+    download is complete.
 
     filepath = full path to file
     """
@@ -422,45 +436,52 @@ def PollDownloadStatus( fileDict, destination ):
     downloadName = finishName + '.loading'
     waitFlag = False
     inProgressFlag = False
+    logger.debug("Checking download status. Looking for 1 of 2 files:\n" +
+        finishName + "\n" +
+        downloadName)
     while 1:
         if not os.path.exists( downloadName ) and not os.path.exists( finishName ):
             if not waitFlag:
-                print "Waiting for download to initiate. (" + time.strftime('%Y-%m-%d %X %Z') + ")"
+                logger.info("Waiting for download to initiate. (" + 
+                    time.strftime('%Y-%m-%d %X %Z') + ")" )
                 waitFlag = True
             time.sleep(3)
         elif os.path.exists( downloadName ):
             if not inProgressFlag:
-                print "Download in progress... (" + time.strftime('%Y-%m-%d %X %Z') + ")"
+                logger.info("Download in progress... (" + 
+                    time.strftime('%Y-%m-%d %X %Z') + ")" )
                 inProgressFlag = True
             time.sleep(3)
         elif os.path.exists( finishName ):
-            print "Download complete."
+            logger.info("Download complete.")
             return
 
 def SummarizeArchiveResponse( fileList ):
     """
-    Print a table summary of the archive response.
+    Return a table summary of the archive response as a string.
 
     fileList = List of file dictionaries returned by ParseArchiveResponse
     """
-    formatHead = "%-2s %-6s %-1s %-18s %-18s %-6s"
-    print formatHead % \
-        ( "#-", "PCODE-", "S", "STARTTIME---------", "STOPTIME----------", 
-        "SIZE--" )
+    formatHead = "%-2s %-6s %-3s %-3s %-3s %-18s %-18s %-7s %-6s\n"
+    table = formatHead % \
+        ( "#-", "PCODE-", "Sec", "Seg", "Bnd", "STARTTIME---------", "STOPTIME----------", 
+        "FRQ_GHz", "SIZE--" )
     for i,file in enumerate(fileList):
-        formatStr = "%2d %6s %1s %18s %18s %6s" 
-        print formatStr % ( i, file['project_code'], 
-            file['segment'], file['starttime'], file['stoptime'], 
-            file['FILESIZE_UNIT'] )
+        formatStr = "%2d %6s %3s %3s %3s %18s %18s %7.4f %6s\n" 
+        ( bandLetter, fGHz ) = VLBACal.VLBAGetBandLetter(file)
+        table += formatStr % ( i, file['project_code'], 
+            VLBACal.VLBAGetSessionCode( file ), file['segment'], 
+            bandLetter, file['starttime'], 
+            file['stoptime'], fGHz, file['FILESIZE_UNIT'] )
+    return table
 
 def XMLSetAttributes( element, nameValList ):
     """
-    Add a sequence of name-value pairs as attributes to an xml.dom.minidom
-    element. Makes adding multiple attributes to an element easier.
+Add a sequence of name-value pairs as attributes to an xml.dom.minidom
+element. Makes adding multiple attributes to an element easier.
 
-    element = xml.dom.minidom element
-    nameValList = list of name-value pairs to be added as attributes
-                  to element
+* element = xml.dom.minidom element
+* nameValList = list of name-value pairs to be added as attributes to element
     """
     for pair in nameValList:
         # xml.dom.minidom.Element.setAttribute() must be given strings,

@@ -58,6 +58,7 @@ parms["doDelayCal"]      = T       # Determine/apply delays from contCals
 parms["doAmpCal"]        = T       # Determine/smooth/apply amplitudes from contCals
 parms["doCalAvg"]        = T       # calibrate and average
 parms["doImgTarget"]     = T       # Image targets?
+parms["do3D"]            = F       # Do 3D imaging (SET TO FALSE AS WORKAROUND TO CC TABLE BUG!)
 parms["doPhaseCal"]      = T       # Phase calibrate all data with self-cal?
 parms["doImgFullTarget"] = T       # Final Image/Clean/selfcal ?
 parms["doSaveUV"]        = T       # Save UV (calibrated and averaged) results?

@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#;  Copyright (C) 2007
+#;  Copyright (C) 2007,2008
 #;  Associated Universities, Inc. Washington DC, USA.
 #;
 #;  This program is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 #
 #------------------------------------------------------------------------
 # Installed Python
-PREFIX = /export/data_2/fits/ObitTest/Fix64/ObitInstallWork/opt
+PREFIX = /export/home/cv-pipe-a/jcrossle/ObitInstall/opt
 PYTHONDIR = $(PREFIX)/share/obittalk/python
 # Installed Proxy Python
 PROXYDIR = $(PYTHONDIR)/Proxy
@@ -39,7 +39,7 @@ PROXYDIR = $(PYTHONDIR)/Proxy
 WIZDIR = $(PYTHONDIR)/Wizardry
 
 # Obit Python path
-OBIT_PYTHONPATH = /export/data_2/fits/ObitTest/Fix64/ObitInstallWork/ObitSystem/Obit/python
+OBIT_PYTHONPATH = /export/home/cv-pipe-a/jcrossle/ObitInstall/ObitSystem/Obit/python
 
 # GMAKE IS REALLY STUPID
 PYTHONTAR := $(DESTDIR)$(PYTHONDIR)/AIPSData.py \
@@ -47,13 +47,13 @@ PYTHONTAR := $(DESTDIR)$(PYTHONDIR)/AIPSData.py \
 	$(DESTDIR)$(PYTHONDIR)/AIPSTask.py \
 	$(DESTDIR)$(PYTHONDIR)/AIPSTV.py \
 	$(DESTDIR)$(PYTHONDIR)/AIPSUtil.py \
-	$(DESTDIR)$(PYTHONDIR)/FITSData.py \
 	$(DESTDIR)$(PYTHONDIR)/FITS.py \
 	$(DESTDIR)$(PYTHONDIR)/FITSData.py \
 	$(DESTDIR)$(PYTHONDIR)/FITS.py \
 	$(DESTDIR)$(PYTHONDIR)/LocalProxy.py \
 	$(DESTDIR)$(PYTHONDIR)/MinimalMatch.py \
 	$(DESTDIR)$(PYTHONDIR)/ObitTalk.py \
+	$(DESTDIR)$(PYTHONDIR)/ObitTalkUtil.py \
 	$(DESTDIR)$(PYTHONDIR)/ObitTask.py \
 	$(DESTDIR)$(PYTHONDIR)/ObitScript.py \
 	$(DESTDIR)$(PYTHONDIR)/otcompleter.py \
@@ -65,6 +65,7 @@ PYTHONTAR := $(DESTDIR)$(PYTHONDIR)/AIPSData.py \
 PROXYTAR:= $(DESTDIR)$(PYTHONDIR)/Proxy/AIPSData.py \
 	$(DESTDIR)$(PYTHONDIR)/Proxy/AIPS.py \
 	$(DESTDIR)$(PYTHONDIR)/Proxy/AIPSTask.py \
+	$(DESTDIR)$(PYTHONDIR)/Proxy/FITSData.py \
 	$(DESTDIR)$(PYTHONDIR)/Proxy/__init__.py \
 	$(DESTDIR)$(PYTHONDIR)/Proxy/ObitScriptP.py \
 	$(DESTDIR)$(PYTHONDIR)/Proxy/ObitTask.py \
@@ -133,6 +134,9 @@ $(DESTDIR)$(PYTHONDIR)/MinimalMatch.py: MinimalMatch.py
 $(DESTDIR)$(PYTHONDIR)/ObitTalk.py: ObitTalk.py
 	cp ObitTalk.py $@
 
+$(DESTDIR)$(PYTHONDIR)/ObitTalkUtil.py: ObitTalkUtil.py
+	cp ObitTalkUtil.py $@
+
 $(DESTDIR)$(PYTHONDIR)/ObitTask.py: ObitTask.py
 	cp ObitTask.py $@
 
@@ -152,6 +156,9 @@ $(DESTDIR)$(PYTHONDIR)/XMLRPCServer.py: XMLRPCServer.py
 # Proxies
 $(DESTDIR)$(PYTHONDIR)/Proxy/AIPSData.py: Proxy/AIPSData.py $(DESTDIR)$(PROXYDIR) 
 	cp ./Proxy/AIPSData.py $@
+
+$(DESTDIR)$(PYTHONDIR)/Proxy/FITSData.py: Proxy/FITSData.py $(DESTDIR)$(PROXYDIR) 
+	cp ./Proxy/FITSData.py $@
 
 $(DESTDIR)$(PYTHONDIR)/Proxy/AIPS.py: Proxy/AIPS.py
 	cp ./Proxy/AIPS.py $@
