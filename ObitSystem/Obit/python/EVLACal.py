@@ -3781,7 +3781,7 @@ def EVLASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["RR","LL"], \
     info.set("BPVer",0)
     info.set("flagVer",0)
     info.set("Sources",["    "])
-    info.set("timeRange",[0.0, 0.0)
+    info.set("timeRange",[0.0, 0.0])
     
     # Setup and run POSSM
     possm = AIPSTask.AIPSTask("possm")

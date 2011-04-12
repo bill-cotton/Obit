@@ -58,7 +58,7 @@ for dsk in ["DA01","DA02","DA03","DA04","DA05","DA06","DA07","DA08","DA09","DA10
     dir = os.getenv(dsk)
     if dir:
         AIPSdisks.append(dir)
-        nAIPS = len(AIPSdisks)
+nAIPS = len(AIPSdisks)
         
 # Init Obit
 userno =  AIPS.AIPS.userno

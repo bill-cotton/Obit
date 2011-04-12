@@ -19,8 +19,8 @@ def AppendVLTable (infile, outfile=outfile, err=err):
     """
     ################################################################
     # Get images
-    inImage  = Image.newPImage("Input image",  infile,  indisk,  1, err)
-    outImage = Image.newPImage("Output image", outfile, outdisk, 1, err)
+    inImage  = Image.newPFImage("Input image",  infile,  indisk,  1, err)
+    outImage = Image.newPFImage("Output image", outfile, outdisk, 1, err)
     OErr.printErrMsg(err, "Error creating image objects")
     #
     # obtain "AIPS VL" tables from each

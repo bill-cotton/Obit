@@ -9,7 +9,7 @@ External Dependencies:
 """
 
 import os, shutil, sys, logging, logging.config, pprint, subprocess, errno 
-import exceptions, pprint, re
+import exceptions, pprint, re, types
 from optparse import OptionParser
 from urllib2 import URLError, HTTPError
 from ConfigParser import NoSectionError
@@ -58,6 +58,24 @@ unique working directory.
         logger.info( "\n" + str1 )
     if options.query: 
         return
+    if options.select:
+        print "Select file number(s) for download and processing (ex: 1, 3, 4): ", 
+        selection = input()
+        # convert selection to list
+        if type(selection) == types.IntType:
+            selection = [ selection ]
+        elif type(selection) == types.TupleType:
+            selection = list( selection )
+        else:
+            raise TypeError("Selection must be an integer or comma-separated" +
+                " sequence of integers")
+        # Test that input numbers are valid
+        for num in selection:
+            test = fileDictList[ num ]
+        # Throw out file dicts that are not in selection
+        for index in range( len( fileDictList ) ):
+            if not ( index in selection ):
+                fileDictList.pop( index ) # remove index item
     
     # Loop over all files in response, setup working directory and process
     cwd = os.getcwd()
@@ -212,6 +230,8 @@ if __name__ == "__main__":
     parser.add_option( '-P', '--project', help="project code" )
     parser.add_option( '-q', '--query', action="store_true", default=False, 
         help="query and summary only" )
+    parser.add_option( '-s', '--select', action="store_true", default=False, 
+        help="Select files manually" )
     parser.add_option( '--verbose', action="store_true", default=False, 
         help="Display entire query response" )
     (options, args) = parser.parse_args()
