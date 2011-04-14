@@ -178,15 +178,15 @@ fi
 if test $doPYTHON = yes; then
     cd $BASE3
 # cleanup
-    rm -f -r Python-2.5.1
-    tar xzvf tarballs/Python-2.5.1.tgz
-    cd Python-2.5.1
+    rm -f -r Python-2.7.1
+    tar xzvf tarballs/Python-2.7.1.tgz
+    cd Python-2.7.1
     ./configure --prefix=$BASE3 --exec-prefix=$BASE3 --enable-shared 
     make clean all 
     make install
 # Link Python executable
-    if test -f $BASE3/bin/python2.5; then
-        ln -s $BASE3/bin/python2.5 $BASE3/../bin/python
+    if test -f $BASE3/bin/python2.7; then
+        ln -s $BASE3/bin/python2.7 $BASE3/../bin/python
     fi
     if test -f $BASE3/bin/python; then
        ln -s  $BASE3/bin/python $BASE3/../bin/python
