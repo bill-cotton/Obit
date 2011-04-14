@@ -1,7 +1,18 @@
-# VLBA Continuum Pipeline processing 
-# AIPS/FITS setup and Parameter file given as arguments:
-# > python VLBAContPipe.py AIPSSetup.py parms.py
-#
+#!/usr/bin/env python
+"""
+The VLBA Continuum Pipeline.  The pipeline can be invoked from the command line 
+as, ::
+
+    $ VLBAContPipe AipsSetupScript PipelineParamScript
+
+where the required arguments are
+
+* *AipsSetupScript* = an AIPS setup script (an example of this file is stored in 
+    ``Obit/share/scripts``)
+* *PipelineParamScript* = the VLBA continuum pipeline input parameters script 
+    (a template is in ``Obit/share/scripts``)
+"""
+
 import sys, pydoc, logging, logging.config
 from optparse import OptionParser
 from ConfigParser import NoSectionError
@@ -26,8 +37,8 @@ def pipeline( aipsSetup, parmFile ):
     """
     VLBA Continuum pipeline.
 
-    aipsSetup = AIPS setup file
-    parmFile = pipeline input parameters file
+* *aipsSetup* = AIPS setup file
+* *parmFile* = pipeline input parameters file
     """
     ############################# Initialize OBIT ##########################################                                 
     noScrat     = []    
@@ -96,6 +107,7 @@ def pipeline( aipsSetup, parmFile ):
     uv  = None   # Raw data
     uvc = None   # Cal/averaged data
     if doLoadIDI:
+        logger.info("--> Load IDI data file (doLoadIDI)")
         if type(dataInIDI)==list:
             # Read list
             for dataIn in datainIDI:
@@ -112,7 +124,7 @@ def pipeline( aipsSetup, parmFile ):
             if not UV.PIsA(uv):
                 raise RuntimeError,"Cannot load "+dataInIDI
     if doLoadUVF:
-        # Single uv fits file
+        logger.info("--> Load UVFITS data file (doLoadUVF)")
         uv = VLBAIDILoad(dataInUVF, project, session, band, dataClass, disk, seq, err, logfile=logFile, \
                              wtThresh=wtThresh, calInt=calInt, Compress=Compress, \
                              check=check, debug=debug)
@@ -133,18 +145,21 @@ def pipeline( aipsSetup, parmFile ):
     
     # Clear any old calibration/editing 
     if parms["doClearTab"]:
+        logger.info("--> Clear old calibration/editing (doClearTab)")
         VLBAClearCal(uv, err, doGain=parms["doGain"], doFlag=parms["doFlag"], doBP=parms["doBP"], \
                          check=check, logfile=logFile)
         OErr.printErrMsg(err, "Error resetting calibration")
     
     # Copy FG 1 to FG 2
     if parms["doCopyFG"]:
+        logger.info("--> Copy flag (FG) table 1 to flag table 2 (doCopyFG)")
         retCode = VLBACopyFG (uv, err, logfile=logFile, check=check, debug=debug)
         if retCode!=0:
             raise RuntimeError,"Error Copying FG table"
     
     # Special editing
     if parms["doEditList"] and not check:
+        logger.info("--> Special editing (doEditList)")
         for edt in parms["editList"]:
             UV.PFlag(uv,err,timeRange=[dhms2day(edt["timer"][0]),dhms2day(edt["timer"][1])], \
                          flagVer=editFG, Ants=edt["Ant"], Chans=edt["Chans"], IFs=edt["IFs"], \
@@ -153,6 +168,7 @@ def pipeline( aipsSetup, parmFile ):
     
     # Quack to remove data from start and end of each scan
     if parms["doQuack"]:
+        logger.info("--> Remove data from start and end of scans (doQuack)")
         retCode = VLBAQuack (uv, err, \
                                  begDrop=parms["quackBegDrop"], endDrop=parms["quackEndDrop"], \
                                  Reason=parms["quackReason"], \
@@ -162,6 +178,7 @@ def pipeline( aipsSetup, parmFile ):
     
     # Quantization correction?
     if parms["doQuantCor"]:
+        logger.info("--> Quantization correction (doQuantCor)")
         plotFile = "./"+project+"_"+session+"_"+band+"Quant.ps"
         retCode = VLBAQuantCor(uv, parms["QuantSmo"], parms["QuantFlag"], err, \
                                    doSNPlot=parms["doSNPlot"], plotFile=plotFile, \
@@ -171,6 +188,7 @@ def pipeline( aipsSetup, parmFile ):
     
     # Parallactic angle correction?
     if parms["doPACor"]:
+        logger.info("--> Parallactic angle correction (doPACor)")
         retCode = VLBAPACor(uv, err, noScrat=noScrat, \
                                 logfile=logFile, check=check, debug=debug)
         if retCode!=0:
@@ -178,6 +196,7 @@ def pipeline( aipsSetup, parmFile ):
     
     # Opacity/Tsys/gain correction
     if parms["doOpacCor"]:
+        logger.info("--> Opacity/Tsys/Gain correction (doOpacCor)")
         plotFile = "./"+project+"_"+session+"_"+band+"Opacity.ps"
         retCode = VLBAOpacCor(uv, parms["OpacSmoo"], err,  \
                                   doSNPlot=parms["doSNPlot"], plotFile=plotFile, \
@@ -189,6 +208,7 @@ def pipeline( aipsSetup, parmFile ):
     
     # Need to determine a list of calibrators?
     if (parms["contCals"]==None) or (len(parms["contCals"])<=0):
+        logger.info("--> Get list of calibrators (contCals = None or [])")
         if parms["doFindOK"]:
             slist = VLBAAllSource(uv, err,logfile=logFile,check=check,debug=debug)
             parms["contCals"] = VLBAOKCal(uv, parms["minOKFract"], err, \
@@ -208,6 +228,7 @@ def pipeline( aipsSetup, parmFile ):
     
     # Find best calibration source
     if parms["doFindCal"]:
+        logger.info("--> Find best calibration source (doFindCal)")
         goodCal = VLBAGoodCal(uv,  err, \
                                   solInt=parms["findSolInt"], timeInt=parms["findTimeInt"], \
                                   calSou=parms["contCals"], \
@@ -225,6 +246,7 @@ def pipeline( aipsSetup, parmFile ):
     
     # Apply Phase cals from PC table?
     if parms["doPCcor"] and not check:
+        logger.info("--> Apply phase cals (doPCcor)")
         plotFile = "./"+project+"_"+session+"_"+band+"PC.ps"
         retCode = VLBAPCcor(uv, err, calSou=goodCal["Source"], \
                             timeRange=goodCal["timeRange"], \
@@ -238,6 +260,7 @@ def pipeline( aipsSetup, parmFile ):
     
     # manual phase cal
     if parms["doManPCal"] and not check:
+        logger.info("--> Manual phase cal (doManPCal)")
         plotFile = "./"+project+session+band+".ManPCal.ps"
         retCode = VLBAManPCal(uv, err, calSou=goodCal["Source"], \
                                   #CalModel=parms["contCalModel"], \
@@ -252,6 +275,7 @@ def pipeline( aipsSetup, parmFile ):
     
     # Bandpass calibration if needed
     if parms["doBPCal"] and not check:
+        logger.info("--> Bandpass calibration (doBPCal)")
         retCode = VLBABPass(uv, goodCal["Source"], err, CalModel=None, \
                                 timeRange=goodCal["timeRange"], doCalib=2, flagVer=2, \
                                 noScrat=noScrat, solInt1=parms["bpsolint1"], \
@@ -266,12 +290,14 @@ def pipeline( aipsSetup, parmFile ):
     
     # Plot amplitude and phase vs. frequency
     if parms["doSpecPlot"]:
+        logger.info("--> Spectral plotting (doSpecPlot)")
         plotFile = "./"+project+session+band+".spec.ps"
         VLBASpecPlot( uv, goodCal, err, doband=1, check=check, plotFile=plotFile, logfile=logFile )
         VLBASaveOutFiles() # Save plot file in Outfiles
     
     # image cals
     if parms["doImgCal"] and not check:
+        logger.info("--> Image calibrators (doImgCal)")
         retCode = VLBAImageCals(uv, err, Sources=parms["contCals"], seq=seq, sclass=parms["outCclass"], \
                                     doCalib=2, flagVer=2, doBand=1, \
                                     FOV=parms["FOV"], Robust=parms["Robust"], \
@@ -288,6 +314,7 @@ def pipeline( aipsSetup, parmFile ):
     
     # delay calibration
     if parms["doDelayCal"] and not check:
+        logger.info("--> Delay calibration (doDelayCal)")
         plotFile = "./"+project+"_"+session+"_"+band+"DelayCal.ps"
         retCode = VLBADelayCal(uv, err, calSou=parms["contCals"], CalModel=parms["contCalModel"], \
                                    doCalib=2, flagVer=2, doBand=1, \
@@ -302,6 +329,7 @@ def pipeline( aipsSetup, parmFile ):
     # Amplitude calibration
     # NOTE: REALLY OUGHT TO HAVE MODEL FOR THIS
     if parms["doAmpCal"] and not check:
+        logger.info("--> Amplitude calibration (doAmpCal)")
         plotFile = "./"+project+"_"+session+"_"+band+"AmpCal.ps"
         retCode = VLBAAmpCal(uv, err, calSou=parms["contCals"], CalModel=parms["contCalModel"], \
                              doCalib=2, flagVer=2, doBand=1, \
@@ -315,6 +343,7 @@ def pipeline( aipsSetup, parmFile ):
         
     # Calibrate and average  data
     if parms["doCalAvg"]:
+        logger.info("--> Calibration and average data (doCalAvg)")
         retCode = VLBACalAvg (uv, parms["avgClass"], seq, parms["CalAvgTime"], err, \
                                   flagVer=2, doCalib=2, gainUse=0, doBand=1, BPVer=1,  \
                                   BIF=parms["CABIF"], EIF=parms["CAEIF"], \
@@ -326,6 +355,7 @@ def pipeline( aipsSetup, parmFile ):
     
     # image targets phase only self-cal
     if parms["doImgTarget"] and not check:
+        logger.info("--> Image targets (doImgTargets)")
         if not uvc:
             # Get calibrated/averaged data
             Aname = VLBAAIPSName(project, session)
@@ -347,6 +377,7 @@ def pipeline( aipsSetup, parmFile ):
         
     # Phase calibration using target models
     if parms["doPhaseCal"]:
+        logger.info("--> Phase calibration using target models (doPhaseCal)")
         if not uvc:
             # Get calibrated/averaged data
             Aname = VLBAAIPSName(project, session)
@@ -372,6 +403,7 @@ def pipeline( aipsSetup, parmFile ):
         
     # Instrumental polarization calibration
     if parms["doInstPol"]:
+        logger.info("--> Instrumental polarization calibration (doInstPol)")
         # calibrators defaults to strong calibrator list
         if not parms["instPolCal"]:
             instPolCal = contCals
@@ -393,6 +425,7 @@ def pipeline( aipsSetup, parmFile ):
         
     # RL Phase (EVPA) calibration as BP table
     if parms["doRLCal"] and parms["RLCal"]:
+        logger.info("--> RL phase calibration (doRLCal)")
         if not uvc:
             # Get calibrated/averaged data
             Aname = VLBAAIPSName(project, session)
@@ -409,6 +442,7 @@ def pipeline( aipsSetup, parmFile ):
         
     # image targets possible with Stokes I(QU)
     if parms["doImgFullTarget"]:
+        logger.info("--> Image targets (doImgFullTargets)")
         if not uvc:
             # Get calibrated/averaged data
             Aname = VLBAAIPSName(project, session)
@@ -434,6 +468,7 @@ def pipeline( aipsSetup, parmFile ):
     
     # Save UV data? 
     if parms["doSaveUV"] and (not check):
+        logger.info("--> Save UV data (doSaveUV)")
         mess ="Write calibrated and averaged UV data to disk" 
         printMess(mess, logFile)
         # Get calibrated/averaged data
@@ -452,6 +487,7 @@ def pipeline( aipsSetup, parmFile ):
     
     # Save UV data tables?
     if parms["doSaveTab"] and (not check):
+        logger.info("--> Save UV data tables (doSaveTab)")
         mess = "Write UV data tables to disk."
         printMess(mess, logFile)
         filename = project+session+band+"CalTab.uvtab"
@@ -462,6 +498,7 @@ def pipeline( aipsSetup, parmFile ):
     # Imaging results
     outDisk = 0
     if parms["doSaveImg"]:
+        logger.info("--> Save images (doSaveImg)")
         mess = "Write images to disk."
         printMess( mess, logFile )
         # How many Stokes images
@@ -525,6 +562,7 @@ def pipeline( aipsSetup, parmFile ):
     
     # Contour plots
     if parms["doKntrPlots"]:
+        logger.info("--> Contour plots (doKntrPlots)")
         VLBAKntrPlots( err, project=project, session=session, band=band,
             disk=disk, debug=debug )
         # Save list of output files
@@ -534,6 +572,7 @@ def pipeline( aipsSetup, parmFile ):
     
     # Source uv plane diagnostic plots
     if parms["doDiagPlots"]:
+        logger.info("--> Diagnostic plots (doDiagPlots)")
         # Get the highest number avgClass catalog file
         Aname = VLBAAIPSName( project, session )
         uvc = None
@@ -552,6 +591,7 @@ def pipeline( aipsSetup, parmFile ):
     srcMetadata = None
     projMetadata = None
     if parms["doMetadata"]:
+        logger.info("--> Save metadata (doMetadata)")
         if not uvc:
             # Get calibrated/averaged data
             Aname = VLBAAIPSName(project, session)
@@ -578,12 +618,14 @@ def pipeline( aipsSetup, parmFile ):
     
     # Write report
     if parms["doHTML"]:
+        logger.info("--> Write HTML report (doHTML)")
         VLBAHTMLReport( projMetadata, srcMetadata, \
                             outfile=project+"_"+session+"_"+band+"report.html", \
                             logFile=logFile )
     
     # Write VOTable
     if parms["doVOTable"]:
+        logger.info("--> Write VOTable (doVOTable)")
         VLBAWriteVOTable( projMetadata, srcMetadata, filename='VOTable.xml' )
         VLBAAddOutFile( 'VOTable.xml', 'project', 'VOTable report' )
     
@@ -596,6 +638,7 @@ def pipeline( aipsSetup, parmFile ):
     
     # Cleanup - delete AIPS files
     if parms["doCleanup"] and (not check):
+        logger.info("--> Clean up (doCleanup)")
         # Delete target images
         # How many Stokes images
         nstok = len(parms["Stokes"])

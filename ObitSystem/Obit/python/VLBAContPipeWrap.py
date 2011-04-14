@@ -72,9 +72,13 @@ unique working directory.
         # Test that input numbers are valid
         for num in selection:
             test = fileDictList[ num ]
-        # Throw out file dicts that are not in selection
-        for index in range( len( fileDictList ) ):
+        # Throw out file dicts that are not in selection.
+        # Work thru indices in reverse, so pop(index) doesn't go out of range.
+        indices = range( len( fileDictList ) )
+        indices.reverse()
+        for index in indices:
             if not ( index in selection ):
+                print "index = ", index
                 fileDictList.pop( index ) # remove index item
     
     # Loop over all files in response, setup working directory and process
@@ -144,8 +148,11 @@ def copyFiles( outfilesPickle, destDir='./output' ):
     """
 Copy output files to destination directory. This is done using rsync.
 
-* outfilesPickle = name of outfiles pickle file
-* destDir = directory to which files should be copied
+:param string outfilesPickle: name of outfiles pickle file
+:param string destDir: directory to which files should be copied
+
+:raises subprocess.CalledProcessError: if rsync returns an error value
+:raises exceptions.IOError: if outfilesPickle does not exist
     """
     # Get a list of all output files
     if not os.path.exists( outfilesPickle ):
@@ -153,7 +160,6 @@ Copy output files to destination directory. This is done using rsync.
             outfilesPickle )
     outfiles = PipeUtil.FetchObject( outfilesPickle )
     outfilesList = VLBACal.VLBAMakeOutfilesList( outfiles )
-    logger.debug("outfilesList = " + str(outfilesList) )
     logger.info( "Copying (rsync-ing) output files to " + destDir )
     # Prepare destination directory
     if not os.path.isdir( destDir ): # not dir
@@ -179,15 +185,17 @@ Copy output files to destination directory. This is done using rsync.
  
 def checkDirEquality( dir1, dir2 ):
     """
-Compare directories given by paths dir1 and dir2.  If the files contained
-in the directory are the same, return true.  If any files differ return 
-false.
+Compare directories given by paths *dir1* and *dir2*.  If the files contained
+in the directory are the same, return *True*.  If any files differ return 
+*False*.
 
-Use system utility diff for directory comparison. diff compares directory
-AND file content in one call. This is not easy to do with Python's filecmp
+Use system utility *diff* for directory comparison. *diff* compares directory
+*and* file content in one call. This is not easy to do with Python's filecmp
 module.
 
-* dir1, dir2 = directories to compare
+:param string dir1: first directory to compare
+:param string dir2: second directory to compare
+:rtype: boolean
     """
     logger.info("Comparing contents of work and validation directories.")
     logger.debug("diff will ignore logging.conf")
@@ -211,10 +219,10 @@ def substitute( inFile, outFile, str1, str2 ):
 Write the contents of inFile to outFile with each instance of str1
 replaced with str2.
 
-* inFile = input file
-* outFile = output file
-* str1 = string to be replaced
-* str2 = replacement string
+:param string inFile: input file
+:param string outFile: output file
+:param string str1: string to be replaced
+:param string str2: replacement string
     """
     logger.debug("Writing " + inFile + " to " + outFile + 
         " while replacing " + str1 + " with " + str2 )

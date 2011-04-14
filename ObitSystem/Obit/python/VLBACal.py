@@ -2,7 +2,7 @@
 """
 import UV, UVDesc, Image, ImageDesc, FArray, ObitTask, AIPSTask, AIPSDir, OErr, History
 import InfoList, Table, AIPSDir, OSystem
-import os, os.path, re, shutil, pickle, math
+import os, os.path, re, shutil, pickle, math, logging
 import urllib, urllib2
 import sys, commands
 import datetime
@@ -14,6 +14,8 @@ from OTObit import Acat, AMcat, getname, zap, imhead, tabdest
 from Obit import Version
 from subprocess import Popen, PIPE
 from PipeUtil import *
+
+logger = logging.getLogger("obitLog.VLBACal")
 
 outfiles = { 'project' : [],  # list of project output files
              'source'  : {} } # dict of source output files
@@ -2467,6 +2469,7 @@ def VLBADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
             calib.Sources = calsou
         else:
             calib.Sources = [calsou]
+        logger.debug("calib.Sources[0] = " + calib.Sources[0] )
         # Get model details
         if CalModel and calib.Sources[0] in CalModel:
             Model = CalModel[calib.Sources[0]]
@@ -2505,7 +2508,7 @@ def VLBADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
             print exception
             mess = "Calib Failed retCode= "+str(calib.retCode)
             printMess(mess, logfile)
-            return None
+            #return None
         else:
             pass
         # Setup for next if looping
