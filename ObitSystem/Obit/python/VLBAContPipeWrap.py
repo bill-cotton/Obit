@@ -46,6 +46,8 @@ unique working directory.
     fitsDir        = '/lustre/aoc/users/jcrossle/fits' # fits download directory
     outfilesPickle = 'outfiles.pickle' # output files pickle
     logConfig      = 'logging.conf' # logging module configuration
+    wrapLog        = 'VLBAContPipeWrap.log' # wrapper log, from logConfig file
+    pipeNowLog     = 'pipe.now.log' # link to log of currenting running pipeline
     ###############################
 
     # Send query and print summary
@@ -103,8 +105,10 @@ unique working directory.
             newLogName = fileDict['project_code'] + '_' + \
                 VLBACal.VLBAGetSessionCode( fileDict ) + '_' + \
                 VLBACal.VLBAGetBandLetter( fileDict )[0] + '.log'
-            substitute( logConfig, newLogConfig, "VLBAContPipeWrap.log",
-                newLogName )
+            substitute( logConfig, newLogConfig, wrapLog, newLogName )
+            if os.path.lexists( pipeNowLog ):
+                os.remove( pipeNowLog )
+            os.symlink( dirName + '/' + newLogName, pipeNowLog )
             os.chdir( dirName )
             # create pipeline input parm file
             parmList = VLBACal.VLBAGetParms( fileDict, checkDir )
@@ -121,6 +125,7 @@ unique working directory.
             projCheckDir = checkDir + '/' + dirName
             copyFiles( outfilesPickle, projCheckDir )
             os.chdir( cwd )
+            os.remove( pipeNowLog )
             # if all contents copied, remove working directory; otherwise keep
             if checkDirEquality( dirName, projCheckDir ):
                 logger.info("Removing " + dirName)
