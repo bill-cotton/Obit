@@ -1102,6 +1102,9 @@ HistoryReadRec(in,recno,err)
 HistoryWriteRec(in,recno,hiCard,err)
         [ returns int  ]
 
+HistoryEdit(in,startr,endr,err)
+        [ returns int  ]
+
 HistoryTimeStamp(in,label,err)
         [ returns int  ]
 
@@ -1465,6 +1468,102 @@ delete_ImageInterp(self)
 
 ----------
 
+ImageMFSetFITS(in,size,disk,file,blc,trc,err)
+        [ returns void  ]
+
+ImageMFSetAIPS(in,size,disk,cno,user,blc,trc,err)
+        [ returns void  ]
+
+ImageMFCastData(inImage)
+        [ returns ObitData * ]
+        end ImageMFCastData
+
+ImageMFCreate(name)
+        [ returns ObitImageMF * ]
+        end ImageMFCreate
+
+ImageMFInfo(in,err)
+        [ returns PyObject * ]
+        end ImageMFInfo
+
+ImageMFZap(in,err)
+        [ returns ObitImageMF * ]
+        end ImageMFZap
+
+ImageMFRename(in,err)
+        [ returns void  ]
+        end ImageMFRename
+
+ImageMFCopy(in,out,err)
+        [ returns ObitImageMF * ]
+        end ImageMFCopy
+
+ImageMFDirty(in)
+        [ returns void  ]
+        end Dirty
+
+ImageMFUnref(in)
+        [ returns ObitImageMF * ]
+
+ImageMFRef(in)
+        [ returns ObitImageMF * ]
+
+ImageMFGetList(in)
+        [ returns ObitInfoList * ]
+
+ImageMFGetTableList(in)
+        [ returns ObitTableList * ]
+
+ImageMFGetDesc(in)
+        [ returns ObitImageDesc * ]
+
+ImageMFSetDesc(in,desc)
+        [ returns void  ]
+
+ImageMFGetFArray(in)
+        [ returns ObitFArray * ]
+
+ImageMFSetFArray(in,image)
+        [ returns void  ]
+
+ImageMFGetBeam(in)
+        [ returns ObitImageMF * ]
+
+ImageMFSetBeam(in,beam)
+        [ returns void  ]
+
+ImageMFGetHighVer(in,tabType)
+        [ returns long  ]
+
+ImageMFisScratch(in)
+        [ returns int  ]
+
+ImageMFIsA(in)
+        [ returns int  ]
+
+ImageMFGetName(in)
+        [ returns char * ]
+
+ImageMFFitSpec(in,antSize,err)
+        [ returns void  ]
+
+16.  class ImageMF
+==================
+[ created from struct ImageMF ]
+
+
+ImageMF_me_set(self,me)
+ImageMF_me_get(self)
+        [ Member data: returns ObitImageMF * ]
+
+new_ImageMF(name)
+        [ Constructor: returns ImageMF * ]
+
+delete_ImageMF(self)
+        [ Destructor: returns void  ]
+
+----------
+
 newImageMosaic(name,number)
         [ returns ObitImageMosaic * ]
         end newImageMosaic
@@ -1515,7 +1614,7 @@ ImageMosaicGetNumber(in)
 ImageMosaicIsA(in)
         [ returns int  ]
 
-16.  class ImageMosaic
+17.  class ImageMosaic
 ======================
 [ created from struct ImageMosaic ]
 
@@ -1568,7 +1667,7 @@ ImageUtilUVFilter(inImage,outImage,radius,err)
         [ returns void  ]
         end ImageUtilUVFilter
 
-17.  class InfoListBlob
+18.  class InfoListBlob
 =======================
 [ created from struct InfoListBlob ]
 
@@ -1708,7 +1807,7 @@ InfoListGetDict(in)
         [ returns PyObject * ]
         end InfoListGetDict
 
-18.  class InfoList
+19.  class InfoList
 ===================
 [ created from struct InfoList ]
 
@@ -1766,7 +1865,7 @@ OErrMsg(in)
 Bomb()
         [ returns void  ]
 
-19.  class OErr
+20.  class OErr
 ===============
 [ created from struct OErr ]
 
@@ -1835,7 +1934,7 @@ SystemGetNoThreads()
         [ returns int  ]
         end SystemGetNoThreads
 
-20.  class OSystem
+21.  class OSystem
 ==================
 [ created from struct OSystem ]
 
@@ -1939,7 +2038,7 @@ ODataIsA(in)
 ODataGetName(in)
         [ returns char * ]
 
-21.  class OData
+22.  class OData
 ================
 [ created from struct OData ]
 
@@ -1991,7 +2090,7 @@ ODisplayGetName(in)
         [ returns char * ]
         end ODisplayGetName
 
-22.  class ODisplay
+23.  class ODisplay
 ===================
 [ created from struct ODisplay ]
 
@@ -2118,7 +2217,7 @@ OPlotGetName(in)
 PlotGetList(in)
         [ returns ObitInfoList * ]
 
-23.  class OPlot
+24.  class OPlot
 ================
 [ created from struct OPlot ]
 
@@ -2182,7 +2281,7 @@ OWindowUnref(in)
 OWindowIsA(in)
         [ returns int  ]
 
-24.  class OWindow
+25.  class OWindow
 ==================
 [ created from struct OWindow ]
 
@@ -2305,7 +2404,7 @@ SkyModelGetName(in)
 SkyModelIsA(in)
         [ returns int  ]
 
-25.  class SkyModel
+26.  class SkyModel
 ===================
 [ created from struct SkyModel ]
 
@@ -2348,7 +2447,7 @@ SkyModelVMBeamGetName(in)
 SkyModelVMBeamIsA(in)
         [ returns int  ]
 
-26.  class SkyModelVMBeam
+27.  class SkyModelVMBeam
 =========================
 [ created from struct SkyModelVMBeam ]
 
@@ -2391,7 +2490,7 @@ SkyModelVMIonGetName(in)
 SkyModelVMIonIsA(in)
         [ returns int  ]
 
-27.  class SkyModelVMIon
+28.  class SkyModelVMIon
 ========================
 [ created from struct SkyModelVMIon ]
 
@@ -2448,7 +2547,7 @@ SpectrumFitGetName(in)
 SpectrumFitIsA(in)
         [ returns int  ]
 
-28.  class SpectrumFit
+29.  class SpectrumFit
 ======================
 [ created from struct SpectrumFit ]
 
@@ -2592,7 +2691,7 @@ TableDescUnref(in)
 TableDescIsA(in)
         [ returns int  ]
 
-29.  class TableDesc
+30.  class TableDesc
 ====================
 [ created from struct TableDesc ]
 
@@ -2852,7 +2951,7 @@ TableGetName(in)
 TableUtilSort(in,colName,desc,err)
         [ returns int  ]
 
-30.  class Table
+31.  class Table
 ================
 [ created from struct Table ]
 
@@ -2900,7 +2999,7 @@ TableListUnref(in)
 TableListIsA(in)
         [ returns int  ]
 
-31.  class TableList
+32.  class TableList
 ====================
 [ created from struct TableList ]
 
@@ -3140,7 +3239,7 @@ TimeFilterSetFreq(in,seriesNo,inDict)
         [ returns void  ]
         end TimeFilterSetFreq
 
-32.  class TimeFilter
+33.  class TimeFilter
 =====================
 [ created from struct TimeFilter ]
 
@@ -3195,7 +3294,7 @@ UVDescUnref(in)
 UVDescIsA(in)
         [ returns int  ]
 
-33.  class UVDesc
+34.  class UVDesc
 =================
 [ created from struct UVDesc ]
 
@@ -3239,7 +3338,7 @@ UVGSolveCal(in,inUV,outUV,sel,err)
         [ returns ObitTable * ]
         end UVGSolveCal
 
-34.  class UVGSolve
+35.  class UVGSolve
 ===================
 [ created from struct UVGSolve ]
 
@@ -3294,7 +3393,7 @@ UVImagerGetName(in)
 UVImagerIsA(in)
         [ returns int  ]
 
-35.  class UVImager
+36.  class UVImager
 ===================
 [ created from struct UVImager ]
 
@@ -3534,7 +3633,7 @@ TableSNGetZeroFR(inUV,outUV,ver,err)
         [ returns ObitTable * ]
         end TableCLGetDummy
 
-36.  class UV
+37.  class UV
 =============
 [ created from struct UV ]
 
@@ -3582,7 +3681,7 @@ UVRFIXizeGetRFI(in)
 UVRFIXizeIsA(in)
         [ returns int  ]
 
-37.  class UVRFIXize
+38.  class UVRFIXize
 ====================
 [ created from struct UVRFIXize ]
 
@@ -3628,7 +3727,7 @@ UVSelfCalSetSkyModel(in,skyModel,err)
 UVSelfCalIsA(in)
         [ returns int  ]
 
-38.  class UVSelfCal
+39.  class UVSelfCal
 ====================
 [ created from struct UVSelfCal ]
 

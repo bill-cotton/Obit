@@ -19,8 +19,8 @@ Cen = [38.0, 41.0];
 GauMod = [6.0, 3.0, 45.0]
 
 # Set data
-inImage   = Image.newPImage("Input image",  inFile,   inDisk,   1, err)
-outImage  = Image.newPImage("Output image", outFile,  outDisk,  0, err)
+inImage   = Image.newPFImage("Input image",  inFile,   inDisk,   1, err)
+outImage  = Image.newPFImage("Output image", outFile,  outDisk,  0, err)
 Image.PClone(inImage, outImage, err)   # Same structure etc.
 OErr.printErrMsg(err, "Error initializing")
 
