@@ -52,6 +52,7 @@ print f.read(),
 cmd = 'svnversion -n ' + OBIT 
 f = os.popen(cmd)
 ver = f.read()
+print('Obit version is ' + ver)
 
 if ( verOrig and verOrig == ver ):
     print "Obit version in ObitVersion.c is already up to date."
