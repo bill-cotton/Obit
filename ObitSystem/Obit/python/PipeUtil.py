@@ -3,7 +3,7 @@ Obit pipeline utilities. These functions are generic utlities that may be
 useful for any pipeline.
 """
 
-import urllib, urllib2, os.path, pickle, time, sys, logging, socket
+import urllib, urllib2, os.path, pickle, time, sys, logging, socket, signal
 import ObitTask, Image, AIPSDir, OErr, FArray, VLBACal
 
 logger = logging.getLogger("obitLog.PipeUtil")
@@ -410,11 +410,11 @@ def DownloadArchiveFile( fileDict, destination ):
                  ('deliver_dir', destination) ]
     fullDLPath = destination + '/' + filename
     if os.path.exists( fullDLPath ):
-        print "File " + fullDLPath
-        print "  already exists in download area. Overwrite? (y/n) [y]: ",
-        overwrite = str( sys.stdin.readline() )
-        if overwrite[0].lower() == 'n':
-            print "Using file in download area."
+        print( "File " + fullDLPath + " already exists in download area." )
+        overwrite = nonBlockingRawInput( 
+            '  Overwrite? {60 sec to respond} (y/n) [y]: ', timeout=60 )
+        if ( overwrite and overwrite[0].lower() == 'n' ):
+            print "Using file already in download area."
             return None
         else:
             os.remove( fullDLPath )
@@ -488,4 +488,27 @@ element. Makes adding multiple attributes to an element easier.
         # otherwise an error is produced.
         element.setAttribute( str(pair[0]), str(pair[1]) )
 
+class AlarmException(Exception):
+    pass
 
+def alarmHandler(signum, frame):
+    raise AlarmException
+
+def nonBlockingRawInput(prompt='', timeout=60):
+    """
+Write *prompt* and wait a maximum of *timeout* seconds for user input.
+
+* *prompt* = prompt for user input
+* *timeout* = seconds to wait before proceeding without input
+    """
+    signal.signal(signal.SIGALRM, alarmHandler)
+    signal.alarm(timeout)
+    try:
+        text = raw_input(prompt)
+        signal.alarm(0)
+        return text
+    except AlarmException:
+        print "\n"
+        logging.info('Prompt timeout. Continuing...')
+    signal.signal(signal.SIGALRM, signal.SIG_IGN)
+    return ''
