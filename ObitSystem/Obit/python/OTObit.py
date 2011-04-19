@@ -291,7 +291,7 @@ Note: these dict are independent of the underlying data structures.
 #                         520 Edgemont Road
 #                         Charlottesville, VA 22903-2475 USA
 #-----------------------------------------------------------------------
-import Obit, Table, FArray, OErr, InfoList, History, OSystem
+import Obit, Table, FArray, OErr, InfoList, History, OSystem, ObitTasks
 #import FITSDir, AIPSDir
 import Image, ImageDesc, ImageUtil, TableList, ODisplay, UV, OWindow
 import re
@@ -1753,3 +1753,5 @@ def day2dhms(tim):
            ":"+str(ssec)
     # end day2dhms
 
+def ObitTaskList():
+    ObitTasks.obitTaskList()

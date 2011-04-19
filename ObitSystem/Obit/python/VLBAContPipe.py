@@ -110,7 +110,7 @@ def pipeline( aipsSetup, parmFile ):
         logger.info("--> Load IDI data file (doLoadIDI)")
         if type(dataInIDI)==list:
             # Read list
-            for dataIn in datainIDI:
+            for dataIn in dataInIDI:
                 uv = VLBAIDILoad(dataIn, project, session, band, dataClass, disk, seq, err, logfile=logFile, \
                                      wtThresh=wtThresh, calInt=calInt, Compress=Compress, \
                                      check=check, debug=debug)
