@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Summarize contents of ASDM                                        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -35,6 +35,7 @@
 #include "ObitSDMData.h"
 #include "ObitPrinter.h"
 
+
 /* internal prototypes */
 /* Get inputs */
 ObitInfoList* ASDMListin (int argc, char **argv, ObitErr *err);
@@ -63,6 +64,8 @@ ObitInfoList *myOutput = NULL; /* Output parameter list */
 gchar **FITSdirs=NULL; /* List of FITS data directories */
 odouble refJD = 0.0;   /* reference Julian date */
 odouble refMJD = 0.0;  /* reference Modified Julian date */
+gboolean isEVLA;                      /* Is this EVLA data? */
+gboolean isALMA;                      /* Is this ALMA data? */
 
 int main ( int argc, char **argv )
 /*----------------------------------------------------------------------- */
@@ -361,15 +364,17 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *prtFile=NULL, begString[25], endString[25];
+  gchar        calCode[24];
   ASDMMainTable *MainTab;
   ASDMScanTable *ScanTab;
   ASDMDataDescriptionTable *DataDescTab;
   ASDMConfigDescriptionTable *ConfigTab;
   ASDMSpectralWindowTable *SpectralWindowTab;
   ASDMAntennaArray*  AntArray;
+  ASDMSourceArray*   SourceArray;
   olong        iScan, iIntent, iConfig, configID, dataDescriptionId;
-  olong        i, doCrt, LinesPerPage, iDD, jDD, jSW;
-  olong        spectralWindowId, ScanID, iMain;
+  olong        i, ii, doCrt, LinesPerPage, iDD, jDD, jSW;
+  olong        spectralWindowId, ScanID, iMain, iSource;
   gchar        *routine = "Summary";
 
   /* error checks */
@@ -407,7 +412,17 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
   AntArray    = ObitSDMDataGetAntArray(SDMData, iScan);
   refJD       = AntArray->refJD;
   ObitUVDescJD2Date (AntArray->refJD, obsdat);
+
+  /* Source Info */
+  SourceArray = ObitSDMDataGetSourceArray(SDMData);
  
+  /* Is this the EVLA? */
+  isEVLA = !strncmp(AntArray->arrayName, "EVLA", 4);
+  /* Is this the ALMA? */
+  isALMA = !strncmp(AntArray->arrayName, "ALMA", 4);
+  /* ALMA is a bit confused */
+  if (!isALMA) isALMA = !strncmp(AntArray->arrayName, "OSF", 3);
+
   /* Titles */
   sprintf (Title1, "Summary of ASDM in %s",DataRoot);
   sprintf (Title2, "  Configuration Summary");
@@ -475,6 +490,28 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
       if (quit) goto Quit;
       if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
     } /* end loop over DataDescriptions */
+    /* ALMA specific stuff */
+    if (isALMA) {
+      if (ConfigTab->rows[iConfig]->numAtmPhaseCorrection==1) {
+	if (ConfigTab->rows[iConfig]->atmPhaseCorrection[0]==ASDMAtmPhCorr_AP_CORRECTED)
+	  sprintf(line,"       ALMA Data with atmospheric correction");
+	if (ConfigTab->rows[iConfig]->atmPhaseCorrection[0]==ASDMAtmPhCorr_AP_UNCORRECTED)
+	  sprintf(line,"       ALMA Data without atmospheric correction");
+	ObitPrinterWrite (myPrint, line, &quit, err);
+      } else if (ConfigTab->rows[iConfig]->numAtmPhaseCorrection==2) {
+	sprintf(line,"       ALMA Data with and without atmospheric correction");
+	ObitPrinterWrite (myPrint, line, &quit, err);
+      }
+      if (ConfigTab->rows[iConfig]->spectralType==ASDMSpecRes_CHANNEL_AVERAGE) {
+	sprintf(line,"       Spec Res = CHANNEL_AVERAGE");
+      } else if (ConfigTab->rows[iConfig]->spectralType==ASDMSpecRes_BASEBAND_WIDE) {
+	sprintf(line,"       Spec Res = BASEBAND_WIDE");
+      } else if (ConfigTab->rows[iConfig]->spectralType==ASDMSpecRes_FULL_RESOLUTION) {
+	sprintf(line,"       Spec Res = FULL_RESOLUTION");
+      }
+    ObitPrinterWrite (myPrint, line, &quit, err);
+    } /* End ALMA */
+     
   } /* end loop over configs */
   
   sprintf(line,"    ");
@@ -514,10 +551,20 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
     /* Timerange in human form */
     day2dhms(ScanTab->rows[iScan]->startTime-refJD, begString);
     day2dhms(ScanTab->rows[iScan]->endTime-refJD,   endString);
+
+    /* Get Calcode */
+    calCode[0] = ' '; calCode[1] = 0;
+    for (iSource=0; iSource<SourceArray->nsou; iSource++) {
+      if (!strcmp(SourceArray->sou[iSource]->sourceName, 
+		  ScanTab->rows[iScan]->sourceName)) {
+	g_snprintf (calCode, 20, "%s", SourceArray->sou[iSource]->code);
+	break;
+      }
+    }
     
-    g_snprintf (line, 80, "Scan=%d config=%d, Source='%s' time= %s - %s", 
+    g_snprintf (line, 90, "Scan=%d config=%d Source=%s Code='%s' time= %s-%s", 
 		ScanTab->rows[iScan]->scanNumber,configID,
-		ScanTab->rows[iScan]->sourceName, begString, endString);
+		ScanTab->rows[iScan]->sourceName, calCode, begString, endString);
     ObitPrinterWrite (myPrint, line, &quit, err);
     if (quit) goto Quit;
     if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
@@ -529,6 +576,16 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
       if (quit) goto Quit;
       if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
     } /* end intent loop */
+    /* ALMA specific */
+    if (isALMA) {
+      ii = 0;
+      sprintf(line,"     ALMA Data types: ");
+      while (ScanTab->rows[iScan]->calDataType[ii]) {
+	strncat(line, ScanTab->rows[iScan]->calDataType[ii++], 1000);
+	strncat(line, " ", 1000);
+      }
+      ObitPrinterWrite (myPrint, line, &quit, err);
+    }
   } /* End scan look */
   
   /* Done - Close Printer */
@@ -537,7 +594,8 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, myPrint->name);
 
   /* Cleanup */
-  AntArray   = ObitSDMDataKillAntArray(AntArray);
+  AntArray    = ObitSDMDataKillAntArray(AntArray);
+  SourceArray = ObitSDMDataKillSourceArray(SourceArray);
 
 } /* end Summary */
 

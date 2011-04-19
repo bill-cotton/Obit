@@ -161,6 +161,9 @@ static ObitASDMSideBMode LookupSideBMode(gchar *name);
 /** Private: Look up window function enum */
 static ObitASDMWindowFn LookupWindowFn(gchar *name);
 
+/** Private: Look up atmospheric correction enum */
+static ObitASDMAtmPhCorr LookupAtmPhCorr(gchar *name);
+
 /** Private: Parser for ASDM table from file */
 static ASDMTable* ParseASDMTable(gchar *ASDMFile, 
 				 ObitErr *err);
@@ -774,12 +777,12 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
 /**
  * Creates and fills n spectral window array
  * Parses the ASMD XML tables and stores
- * \param in      ASDM object to use
- * \param scan    Scan number (in ASDMMain table)
- * \param SWOrder If TRUE leave data is SW order
+ * \param in       ASDM object to use
+ * \param mainRow  Scan number (in ASDMMain table)
+ * \param SWOrder  If TRUE leave data is SW order
  * \return the new structure, NULL on error, delete using ObitSDMKillSWArray
  */
-ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong scan, 
+ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow, 
 						gboolean SWOrder)
 { 
   ASDMSpectralWindowArray* out=NULL;
@@ -793,16 +796,14 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong scan,
   gint number;
   size_t size;
 
+  /* Find scan in Main table */
+  iMain = mainRow;
+  if (iMain>=in->MainTab->nrows) return out;
+
   out = g_malloc0(sizeof(ASDMSpectralWindowArray));
 
   /* Assume no more spectral windows than total defined */
   out->winds = g_malloc0(in->SpectralWindowTab->nrows*sizeof(ASDMSpectralWindowArrayEntry));
-
-  /* Find scan in Main table */
-  for (iMain=0; iMain<in->MainTab->nrows; iMain++) {
-    if (in->MainTab->rows[iMain]->scanNumber==scan) break;
-  }
-  if (iMain>=in->MainTab->nrows) return NULL;
 
   /* Find entry  in configDescription table */
   configDescriptionId = in->MainTab->rows[iMain]->configDescriptionId;
@@ -1017,27 +1018,25 @@ gboolean ObitSDMDataSelChan  (ASDMSpectralWindowArray *in, olong selChan,
 /**
  * Creates and fills an antenna/station array
  * Parses the ASMD XML tables and stores
- * \param in   ASDM object to use
- * \param scan Scan number (in ASDMMain table)
+ * \param in       ASDM object to use
+ * \param mainRow Main table number (in ASDMMain table)
  * \return the new structure, NULL on error, delete using ObitSDMKillAntArray
  */
-ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong scan)
+ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong mainRow)
 { 
   ASDMAntennaArray* out=NULL;
   olong  configDescriptionId, stationId, dataDescriptionId, spectralWindowId, execBlockId;
   olong i, iMain, iConfig, iAnt, jAnt, jDD, jSW, numAnt, iJD, iExec;
   odouble JD;
 
+  /* Find scan in Main table */
+  iMain = mainRow;
+  if (iMain>=in->MainTab->nrows) return out;
+
   out = g_malloc0(sizeof(ASDMAntennaArray));
 
   /* Assume no more antennas than total defined */
   out->ants = g_malloc0(in->AntennaTab->nrows*sizeof(ASDMAntennaArrayEntry));
-
-  /* Find scan in Main table */
-  for (iMain=0; iMain<in->MainTab->nrows; iMain++) {
-    if (in->MainTab->rows[iMain]->scanNumber==scan) break;
-  }
-  if (iMain>=in->MainTab->nrows) return NULL;
 
   /* How many? */
   numAnt = in->AntennaTab->nrows;
@@ -1222,8 +1221,10 @@ ASDMSourceArray* ObitSDMDataGetSourceArray (ObitSDMData *in)
     if (iField>=in->FieldTab->nrows) return NULL;
     
     /* Save code - ignore terminally stupid "NONE" */
-    if (strcmp("NONE", in->FieldTab->rows[iField]->code))
+    if (strcmp("NONE", in->FieldTab->rows[iField]->code) && 
+	strcmp("none", in->FieldTab->rows[iField]->code))
 	out->sou[iSource]->code = strdup(in->FieldTab->rows[iField]->code);
+    else out->sou[iSource]->code = strdup(" ");
  } /* end loop over sources */
 
   return out;
@@ -1304,13 +1305,13 @@ ObitASDMBand ObitSDMDataFreq2Band (odouble freq)
   return out;
 } /* end ObitSDMDataFreq2Band */
 
-/**  Find first selected Scan, allows defaults 
+/**  Find first selected Main table row, allows defaults 
  * \param  in      ASDM object
  * \param  selChan Number of selected channels [def 0]
  * \param  selIF   Number of selected IFs (spectral windows)[def 0]
  * \param  selBand   Selected band [def ASDMBand_Any]
  * \param  selConfig Selected configID, >=0 overrides selIF, selBand
- * \return 1-rel scan number, -1=> problem.
+ * \return 0-rel main row number, -1=> problem.
  */
 olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF, 
 		     ObitASDMBand selBand, olong selConfig)
@@ -1322,7 +1323,7 @@ olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF,
  
   /* Loop over scans in Main table */
   for (iMain=0; iMain<in->MainTab->nrows; iMain++) {
-    out = in->MainTab->rows[iMain]->scanNumber;  /* In case this is OK */
+    out = iMain;  /* In case this is OK */
     
     /* Find entry  in configDescription table */
     configDescriptionId = in->MainTab->rows[iMain]->configDescriptionId;
@@ -1424,7 +1425,7 @@ void ObitSDMSourceTabFixCode (ObitSDMData *in)
  * \param  in      ASDM object
  * \param  iMain   Main table number of scan in question
  * \param  selCode Desired Source code:
- *        "*" => Anything other than "NONE", "NONE"=>"NONE",
+ *        "*" => Anything other than "NONE" or "none", "NONE"=>"NONE",
  *        No characters or starts with blank => any scan
  *        otherwise if any character matches the first character 
  *        in Field Table code, the scan is selected
@@ -1447,7 +1448,8 @@ gboolean ObitSDMDataSelCode  (ObitSDMData *in, olong iMain, gchar *selCode)
   if (iField>=in->FieldTab->nrows) return want; /* Bother - not found */
 
   /* Selections */
-  noCode = !strncmp(in->FieldTab->rows[iField]->code, "NONE", 4);
+  noCode = !strncmp(in->FieldTab->rows[iField]->code, "NONE", 4) ||
+    !strncmp(in->FieldTab->rows[iField]->code, "none", 4);
   if ((selCode[0]=='*') && (!noCode)) return TRUE;
   if ((selCode[0]=='*') && (noCode))  return FALSE;
   if ((!strncmp(selCode, "NONE", 4)) && noCode) return TRUE;
@@ -1981,7 +1983,7 @@ static gchar** ASDMparse_strarray(gchar *string, olong maxChar,
     b = *next+1;
   }
   num = naxis1*naxis2;
-  out = g_malloc0(MAX(1,num)*sizeof(gchar*));
+  out = g_malloc0(MAX(1,(num+1))*sizeof(gchar*));
 
   /* Loop over strings */
   for (j=0; j<num; j++) {
@@ -2254,6 +2256,19 @@ static ObitASDMWindowFn LookupWindowFn(gchar *name)
   if (!strncmp (name, "WELCH", 5))             return ASDMWindowFn_WELCH;
   return out;
 } /* end LookupWindowFn */
+
+/**  Look up atmospheric phase correction enum 
+ * \param  string  String to look up
+ * \return value
+ */
+static ObitASDMAtmPhCorr LookupAtmPhCorr(gchar *name)
+{
+  ObitASDMAtmPhCorr out = 0;
+  
+  if (!strncmp (name, "AP_UNCORRECTED", 14))   return ASDMAtmPhCorr_AP_UNCORRECTED;
+  if (!strncmp (name, "AP_CORRECTED", 12))     return ASDMAtmPhCorr_AP_CORRECTED;
+  return out;
+} /* end LookupAtmPhCorr */
 
 /** Constructor for ASDM table parsing from file
  * Expect the number of rows in the line following the <Name> line.

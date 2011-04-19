@@ -75,7 +75,7 @@ ObitInfoList* defaultOutputs(ObitErr *err);
 /* Create output uvdata */
 ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err);
 /* Get file descriptor */
-void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput, 
+void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput, 
 		ObitErr *err);
 /* Get data */
 void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData, 
@@ -168,10 +168,11 @@ olong uvwcurSourID=-1;                /* Current source ID for uvw calc */
 ofloat uvrot=-0.0;                    /* Current source rotation of u-v */
 ofloat **antLongs=NULL;               /* Array of Antenna longitudes per subarray */
 ofloat **antLats=NULL;                /* Array of Antenna latitudes per subarray */
-olong selScan=-1;                     /* First selected scan number */
+olong selMain=-1;                     /* First selected SDM Main row number */
 olong selChan=-1;                     /* Selected number of channels */
 olong selIF=-1;                       /* Selected number of IFs (SpWin) */
 gboolean isEVLA;                      /* Is this EVLA data? */
+gboolean isALMA;                      /* Is this ALMA data? */
 gboolean SWOrder=FALSE;               /* Leave in SW Order? */
 
 /* NX table structure, times only */
@@ -225,12 +226,8 @@ int main ( int argc, char **argv )
   SDMData = ObitSDMDataCreate ("SDM", dataroot, err);
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
-  /* Create ObitUV for data */
-  outData = setOutputData (myInput, err);
-  if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
-
-  /* Get header info, array geometry, initialize output */
-  GetHeader (outData, SDMData, myInput, err); 
+  /* Create output, get header info, array geometry, initialize output */
+  GetHeader (&outData, SDMData, myInput, err); 
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit; 
 
   /* Open output data */
@@ -687,6 +684,7 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
   /* Set CL table interval */
   ObitInfoListGetTest(myInput, "calInt", &type, dim, &calInt);
   dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  if (calInt<=1.0e-5) calInt = 0.5;
   /* to seconds */
   calInt *= 60.0;
   ObitInfoListAlwaysPut(outUV->info, "calInt", OBIT_float, dim, &calInt);
@@ -708,13 +706,14 @@ ObitUV* setOutputData (ObitInfoList *myInput, ObitErr *err)
   return outUV;
 } /* end setOutputUV */
 
-void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput, 
+void GetHeader (ObitUV **outData, ObitSDMData *SDMData, ObitInfoList *myInput, 
 		ObitErr *err)
 /*----------------------------------------------------------------------- */
 /*  Get header information from scan header files                         */
+/*  Creates output data                                                   */
 /*  Returns TRUE if the file is just created                              */
 /*   Input:                                                               */
-/*      outData  Output UV object                                         */
+/*      outData  Pointer to Output UV object                              */
 /*      SDMData  ASDM structure                                           */
 /*      myInput  parser object                                            */
 /*   Output:                                                              */
@@ -724,7 +723,7 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   ObitUVDesc *desc;
   olong ncol;
   gchar *today=NULL;
-  olong i, lim, selConfig, iScan;
+  olong i, lim, selConfig, iMain;
   ofloat epoch=2000.0, equinox=2000.0;
   olong nchan=1, npoln=1, nIF=1;
   odouble refFreq, startFreq=1.0;
@@ -740,7 +739,7 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
 
   /* error checks */
   if (err->error) return;
-  g_assert (ObitUVIsA(outData));
+  g_assert (outData!=NULL);
   g_assert(SDMData!=NULL);
   g_assert(myInput!=NULL);
 
@@ -786,13 +785,18 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
 		   "Frequencies in Spectral Window Possibly NOT Frequency order");
 
   /* Find first selected scan */
-  iScan = ObitASDSelScan (SDMData, selChan, selIF, band, selConfig);
-  Obit_return_if_fail((iScan>=0), err,
+  iMain = ObitASDSelScan (SDMData, selChan, selIF, band, selConfig);
+  Obit_return_if_fail((iMain>=0), err,
 		      "%s: No scans found matching selection criteria", 
 		      routine);
+
+  /* Create ObitUV for data */
+  *outData = setOutputData (myInput, err);
+  if (err->error) Obit_traceback_msg (err, routine, routine);
+
   /* Extract ASDM Spectral windows data  */
-  selScan = iScan;    /* Save to global */
-  SpWinArray  = ObitSDMDataGetSWArray (SDMData, iScan, SWOrder);
+  selMain = iMain;    /* Save to global */
+  SpWinArray  = ObitSDMDataGetSWArray (SDMData, iMain, SWOrder);
   Obit_return_if_fail((SpWinArray), err,
 		      "%s: Could not extract Spectral Windows from ASDM", 
 		      routine);
@@ -811,7 +815,7 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
     if (selIF<=0)   selIF   = SpWinArray->nwinds;
     if (band==ASDMBand_Any)  band  = ObitSDMDataFreq2Band(SpWinArray->refFreq);
     /* Set default configID */
-    if (selConfig<0) selConfig = SDMData->MainTab->rows[iScan]->configDescriptionId;
+    if (selConfig<0) selConfig = SDMData->MainTab->rows[iMain]->configDescriptionId;
   }
 
   /* Save selection for history */
@@ -832,14 +836,14 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   ObitErrLog(err);
  
  /* Define output descriptor */
-  desc = outData->myDesc;
+  desc = (*outData)->myDesc;
   SpWinArray = ObitSDMDataKillSWArray (SpWinArray);  /* Free old */
   /* Extract ASDM data  */
-  SpWinArray  = ObitSDMDataGetSWArray (SDMData, iScan, SWOrder);
+  SpWinArray  = ObitSDMDataGetSWArray (SDMData, iMain, SWOrder);
   Obit_return_if_fail((SpWinArray), err,
 		      "%s: Could not extract Spectral Windows from ASDM", 
 		      routine);
-  AntArray    = ObitSDMDataGetAntArray(SDMData, iScan);
+  AntArray    = ObitSDMDataGetAntArray(SDMData, iMain);
   Obit_return_if_fail((AntArray), err,
 		      "%s: Could not extract Antenna info from ASDM", 
 		      routine);
@@ -853,7 +857,7 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
       npoln     = SpWinArray->winds[i]->nCPoln;
       refFreq   = SpWinArray->winds[i]->refFreq;
       startFreq = SpWinArray->winds[i]->chanFreqStart;
-      freqStep  = (ofloat)SpWinArray->winds[i]->chanFreqStep;
+      freqStep  = fabs((ofloat)SpWinArray->winds[i]->chanFreqStep);
       break;
     }
   }
@@ -1006,25 +1010,25 @@ void GetHeader (ObitUV *outData, ObitSDMData *SDMData, ObitInfoList *myInput,
   ObitUVDescIndex (desc);
   
   /* Get source info, copy to output SU table, save lookup table in SourceID */
-  ObitUVOpen (outData, OBIT_IO_WriteOnly, err);
-  GetSourceInfo (SDMData, outData, iScan, err);
-  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  ObitUVOpen (*outData, OBIT_IO_WriteOnly, err);
+  GetSourceInfo (SDMData, *outData, iMain, err);
+  if (err->error) Obit_traceback_msg (err, routine, (*outData)->name);
 
   /* Save any equinox information */
-  outData->myDesc->epoch   = 2000;   /* ASDM Lacking */
-  outData->myDesc->equinox = 2000;
-  epoch   = outData->myDesc->epoch;
-  equinox = outData->myDesc->equinox;
+  (*outData)->myDesc->epoch   = 2000;   /* ASDM Lacking */
+  (*outData)->myDesc->equinox = 2000;
+  epoch   = (*outData)->myDesc->epoch;
+  equinox = (*outData)->myDesc->equinox;
  
   /* Add Antenna and Frequency info */
-  GetAntennaInfo (SDMData, outData,err);
-  GetFrequencyInfo (SDMData, outData,  SpWinArray, err);
-  ObitUVClose (outData, err);
-  if (err->error) Obit_traceback_msg (err, routine, outData->name);
+  GetAntennaInfo (SDMData, *outData,err);
+  GetFrequencyInfo (SDMData, *outData,  SpWinArray, err);
+  ObitUVClose (*outData, err);
+  if (err->error) Obit_traceback_msg (err, routine, (*outData)->name);
   
   /* Instantiate output Data */
-  ObitUVFullInstantiate (outData, FALSE, err);
-  if (err->error)Obit_traceback_msg (err, routine, outData->name);
+  ObitUVFullInstantiate (*outData, FALSE, err);
+  if (err->error)Obit_traceback_msg (err, routine, (*outData)->name);
 
   /* Cleanup */
   SpWinArray = ObitSDMDataKillSWArray (SpWinArray);
@@ -1242,7 +1246,7 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   g_assert (ObitUVIsA(outData));
   
   /* Extract antenna info */
-  AntArray    = ObitSDMDataGetAntArray(SDMData, selScan);
+  AntArray    = ObitSDMDataGetAntArray(SDMData, selMain);
 
   /* Create output Antenna table object */
   ver      = 1;
@@ -1270,6 +1274,10 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 
   /* Is this the EVLA? */
   isEVLA = !strncmp(AntArray->arrayName, "EVLA", 4);
+  /* Is this the ALMA? */
+  isALMA = !strncmp(AntArray->arrayName, "ALMA", 4);
+  /* ALMA is a bit confused */
+  if (!isALMA) isALMA = !strncmp(AntArray->arrayName, "OSF", 3);
 
   /* Set AN table values */
   outTable->ArrayX  = 0.0;   /* Earth centered */
@@ -1359,6 +1367,8 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     } /* end dummy loop */
     /* Set output Row */
     outRow->noSta          = AntArray->ants[iRow-1]->antennaNo;
+    /* For ALMA these are 0 rel rather than 1 rel */
+    if (isALMA) outRow->noSta++;
     outRow->PolAngA        = 0.0;
     outRow->polTypeA       = g_strdup("    "); 
     outRow->polTypeA[0]    = AntArray->ants[iRow-1]->polnType[0];
@@ -1516,7 +1526,7 @@ void GetFrequencyInfo (ObitSDMData *SDMData, ObitUV *outData,
 
 } /* end  GetFrequencyInfo */
 
-void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iScan,
+void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iMain,
 		    ObitErr *err)
 /*----------------------------------------------------------------------- */
 /*  Get Source info from ASDM                                             */
@@ -1524,7 +1534,7 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iScan,
 /*   Input:                                                               */
 /*      SDMData  ASDM structure                                           */
 /*      outData  Output UV object                                         */
-/*      iScan    Scan number to use for Spectral Window array             */
+/*      iMain    SDM Main row number to use for Spectral Window array     */
 /*   Output:                                                              */
 /*       err     Obit return error stack                                  */
 /*----------------------------------------------------------------------- */
@@ -1565,7 +1575,7 @@ void GetSourceInfo (ObitSDMData *SDMData, ObitUV *outData, olong iScan,
   Obit_return_if_fail((SourceArray), err,
 		      "%s: Could not extract Source info from ASDM", 
 		      routine);
-  SpWinArray  = ObitSDMDataGetSWArray (SDMData, iScan, SWOrder);
+  SpWinArray  = ObitSDMDataGetSWArray (SDMData, iMain, SWOrder);
   Obit_return_if_fail((SpWinArray), err,
 		      "%s: Could not extract Spectral Windows from ASDM", 
 		      routine);
@@ -1766,6 +1776,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   ObitIOCode retCode;
   olong iMain, iInteg, ScanId=0, i, j, iBB, selChan, selIF, selConfig, 
     iSW, jSW, kBB, nIFsel, cntDrop=0, ver, iRow, sourId=0, iIntent, iScan;
+  olong lastScan=-1, ScanTabRow=-1;
   ofloat *Buffer=NULL, tlast=-1.0e20, startTime, endTime;
   ObitUVDesc *desc;
   ObitTableNX* NXtable;
@@ -1872,8 +1883,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     if (selConfig != SDMData->MainTab->rows[iMain]->configDescriptionId) continue;
     if (SpWinArray) SpWinArray  = ObitSDMDataKillSWArray (SpWinArray);
     SpWinArray  = 
-      ObitSDMDataGetSWArray (SDMData, SDMData->MainTab->rows[iMain]->scanNumber, 
-			     SWOrder);
+      ObitSDMDataGetSWArray (SDMData, iMain, SWOrder);
     Obit_return_if_fail((SpWinArray), err,
 			"%s: Could not extract Spectral Windows from ASDM", 
 			routine);
@@ -1972,20 +1982,22 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     for (j=0; j<SDMData->ScanTab->nrows; j++) {
       if (SDMData->ScanTab->rows[j]->scanNumber==ScanId) break;
     }
-    if (j<SDMData->ScanTab->nrows) {
+    if ((j<SDMData->ScanTab->nrows) && (ScanId!=lastScan)) {
+      ScanTabRow = j;
       /* Timerange in human form */
       day2dhms(SDMData->ScanTab->rows[j]->startTime-refJD, begString);
       day2dhms(SDMData->ScanTab->rows[j]->endTime-refJD,   endString);
       Obit_log_error(err, OBIT_InfoErr, "Scan %3.3d %s time %s  - %s", 
 		     ScanId, SDMData->ScanTab->rows[j]->sourceName, begString, endString);
       ObitErrLog(err);
-  }
 
-    /* Initialize index */
-    startTime = -1.0e20;
-    endTime   = startTime;
-    NXrow->StartVis = outData->myDesc->nvis+1;
-    NXrow->EndVis   = NXrow->StartVis;
+      /* Initialize index */
+      lastScan = ScanId;
+      startTime = -1.0e20;
+      endTime   = startTime;
+      NXrow->StartVis = outData->myDesc->nvis+1;
+      NXrow->EndVis   = NXrow->StartVis;
+    }
 
     /* Loop over integrations */
     for (iInteg=0; iInteg<SDMData->MainTab->rows[iMain]->numIntegration; iInteg++) {
@@ -2028,7 +2040,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
 	  continue;
 	}
 
-	/* Get indexing information on first vis written */
+	/* Get indexing information on first vis written for scan */
 	if (startTime<-1.0e10) {
 	  startTime = Buffer[desc->iloct];
 	  sourId    = (olong)(Buffer[desc->ilocsu]+0.5);
@@ -2044,7 +2056,8 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     } /* end loop over integrations */
     
     /* Write Index table */
-    if (startTime>-1.0e10) {
+    if ((startTime>-1.0e10) && 
+	(SDMData->MainTab->rows[iMain]->subscanNumber>=SDMData->ScanTab->rows[ScanTabRow]->numSubScan)) {
       NXrow->Time     = 0.5 * (startTime + endTime);
       NXrow->TimeI    = (endTime - startTime);
       NXrow->EndVis   = desc->nvis;
@@ -2052,7 +2065,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
       iRow++;
       if ((ObitTableNXWriteRow (NXtable, iRow, NXrow, err)
 	   != OBIT_IO_OK) || (err->error>0)) goto done; 
-    }
+    } 
   } /* End loop over scans */
 
   /* Tell results */
@@ -2288,7 +2301,7 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   }
   
   /* Antenna array to lookup antenna numbers */
-  AntArray    = ObitSDMDataGetAntArray(SDMData, selScan);
+  AntArray    = ObitSDMDataGetAntArray(SDMData, selMain);
   Obit_return_if_fail((AntArray), err,
 		      "%s: Could not extract Antenna info from ASDM", 
 		      routine);
@@ -2503,13 +2516,13 @@ void GetCalDeviceInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   /* Print any messages */
   ObitErrLog(err);
   
-  /* Extract ASDM SpWin data  - selScan global */
-  SpWinArray  = ObitSDMDataGetSWArray (SDMData, selScan, SWOrder);
+  /* Extract ASDM SpWin data  - selMain global */
+  SpWinArray  = ObitSDMDataGetSWArray (SDMData, selMain, SWOrder);
   Obit_return_if_fail((SpWinArray), err,
 		      "%s: Could not extract Spectral Windows from ASDM", 
 		      routine);
   /* Extract antenna info */
-  AntArray    = ObitSDMDataGetAntArray(SDMData, selScan);
+  AntArray    = ObitSDMDataGetAntArray(SDMData, selMain);
   Obit_return_if_fail((AntArray), err,
 		      "%s: Could not extract Antenna info from ASDM", 
 		      routine);
@@ -2693,17 +2706,17 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   /* If there is some data check that SY entries are during valid data */
   ChkVis = outData->myDesc->nvis>0;
   
-  /* Extract ASDM SpWin data  - selScan global */
-  curScan    = selScan;
+  /* Extract ASDM SpWin data  - selMain global */
+  curScan    = selMain;
   curScanI   = -1;  /* Force init */
   SourNo     = 0;
   nextScanNo = 0;
-  SpWinArray  = ObitSDMDataGetSWArray (SDMData, selScan, SWOrder);
+  SpWinArray  = ObitSDMDataGetSWArray (SDMData, selMain, SWOrder);
   Obit_return_if_fail((SpWinArray), err,
 		      "%s: Could not extract Spectral Windows from ASDM", 
 		      routine);
   /* Extract antenna info */
-  AntArray    = ObitSDMDataGetAntArray(SDMData, selScan);
+  AntArray    = ObitSDMDataGetAntArray(SDMData, selMain);
   Obit_return_if_fail((AntArray), err,
 		      "%s: Could not extract Antenna info from ASDM", 
 		      routine);
@@ -2962,12 +2975,12 @@ void GetOTTInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   /* Print any prior messages */
   ObitErrLog(err);
   
-  /* Extract ASDM Antenna data  - selScan global */
-  curScan    = selScan;
+  /* Extract ASDM Antenna data  - selMain global */
+  curScan    = selMain;
   curScanI   = -1;  /* Force init */
   SourNo     = 0;
   nextScanNo = 0;
-  AntArray    = ObitSDMDataGetAntArray(SDMData, selScan);
+  AntArray    = ObitSDMDataGetAntArray(SDMData, selMain);
   Obit_return_if_fail((AntArray), err,
 		      "%s: Could not extract Antenna info from ASDM", 
 		      routine);
@@ -3105,7 +3118,7 @@ void GetGainCurveInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   g_assert (ObitUVIsA(outData));
 
    /* Extract antenna info */
-  AntArray    = ObitSDMDataGetAntArray(SDMData, selScan);
+  AntArray    = ObitSDMDataGetAntArray(SDMData, selMain);
   refJD       = SDMData->refJD;
   Freq        = outData->myDesc->crval[outData->myDesc->jlocf];
   sens        = nomSen(AntArray); /* get nominal sensitivity */
@@ -3267,8 +3280,8 @@ gboolean CheckAllZero (ObitUVDesc *desc, ofloat *Buffer)
 /*----------------------------------------------------------------------- */
 /*  Is a given time in the current scan?                                  */
 /*   Input:                                                               */
-/*      SDMData   ASDM structure                                          */
-/*      curScan   Current scan number                                     */
+/*       SDMData  ASDM structure                                          */
+/*       curScan  Current scan number                                     */
 /*       time     Time to test in JD                                      */
 /*       curScanI Current scan index in ScanTab, updated on new scan      */
 /*       nextScan Scan number of next scan, updated on new scan           */
