@@ -1469,6 +1469,8 @@ void ObitTableCCUtilAppend  (ObitTableCC *inCC, ObitTableCC *outCC,
   ObitTableCCRow *row=NULL;
   olong irow, orow;
   ObitIOCode retCode;
+  gboolean dummyParms=FALSE;
+  ofloat *parms=NULL;
   gchar *routine = "ObitTableCCUtilAppend";
 
   /* error checks */
@@ -1491,7 +1493,11 @@ void ObitTableCCUtilAppend  (ObitTableCC *inCC, ObitTableCC *outCC,
   retCode = ObitTableCCOpen (outCC, OBIT_IO_ReadWrite, err);
   if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
 
-  /* Check range of components */
+   /* Dummy output parms if needed */
+  dummyParms = ((inCC->parmsCol<0) && (outCC->parmsCol>0));
+  if (dummyParms) parms = g_malloc0(outCC->myDesc->repeat[outCC->parmsCol]*sizeof(ofloat));
+
+ /* Check range of components */
   startComp = MAX (1, startComp);
   endComp   = MIN (inCC->myDesc->nrow, endComp);
   if (endComp<=0) endComp = inCC->myDesc->nrow;
@@ -1506,6 +1512,8 @@ void ObitTableCCUtilAppend  (ObitTableCC *inCC, ObitTableCC *outCC,
     retCode = ObitTableCCReadRow (inCC, irow, row, err);
     if (row->status<0) continue;  /* Skip deselected record */
     if (err->error) goto cleanup;
+    /* Dummy parms? */
+    if (dummyParms) row->parms = parms;
     orow = -1;
     retCode = ObitTableCCWriteRow (outCC, orow, row, err);
     if (err->error) goto cleanup;
@@ -1519,6 +1527,7 @@ void ObitTableCCUtilAppend  (ObitTableCC *inCC, ObitTableCC *outCC,
 
   /* Cleanup */
  cleanup:
+  if (parms) g_free(parms);
   row = ObitTableCCRowUnref (row); /* Release table row */
   if (err->error) Obit_traceback_msg (err, routine, inCC->name);
 } /* end ObitTableCCUtilAppend */

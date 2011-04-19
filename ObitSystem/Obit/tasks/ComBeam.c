@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Combine beam images           */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -729,11 +729,11 @@ void ComBeamGetImage(ObitInfoList *myInput, ObitErr *err)
   ObitTableFQPutInfo (FQTab, fqid, nif, freqOff, sideBand, chBandw, err);
   if (err->error) Obit_traceback_msg (err, routine, outImage->name);
 
-   /* Cleanup */
-   if (freqOff)  g_free(freqOff);
-   if (sideBand) g_free(sideBand);
-   if (chBandw)  g_free(chBandw);
-   FQTab = ObitTableFQUnref(FQTab);
+  /* Cleanup */
+  if (freqOff)  g_free(freqOff);
+  if (sideBand) g_free(sideBand);
+  if (chBandw)  g_free(chBandw);
+  FQTab = ObitTableFQUnref(FQTab);
 } /* end ComBeamGetImage */
 
 /*----------------------------------------------------------------------- */
@@ -795,9 +795,9 @@ void doComBeam (ObitInfoList *myInput, ObitErr *err)
 
     /* Loop over image */
     for (iy=0; iy<ny; iy++) {
-      y = (iy-ny/2-1) * yCells;
+      y = (iy-ny/2) * yCells;
       for (ix=0; ix<nx; ix++) {
-	x = (ix-nx/2-1) * xCells;
+	x = (ix-nx/2) * xCells;
 
 	/* Loop over input images */
 	sum = sumwt = 0.0;

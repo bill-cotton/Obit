@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -199,6 +199,11 @@ void ObitTableVLAppend (ObitTableVL *in, ObitTableVL *out, ObitErr *err)
     ObitTableVLReadRow (in, irow, row, err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
     if (VLdesel(row)) continue;  /* Skip deselected record */
+
+    /* Make sure RA in range */
+    if (row->Ra2000>360.0) row->Ra2000 -= 360.0;
+    if (row->Ra2000<0.0)   row->Ra2000 += 360.0;
+    
     /* Write row */
     orow = -1;
     ObitTableVLWriteRow (out, orow, row, err);
@@ -1004,6 +1009,7 @@ void ObitTableVLRedun (ObitTableVL *in, ObitTableVL *out, ObitErr *err)
   odouble dist2, ramax, dismax;
   gboolean isbad, toss1, want1;
   olong irow, jrow, orow, nrow, iold, inWant, ocount;
+  gchar Field[9];
   gchar *routine = "ObitTableVLRedun";
   
   /* error checks */
@@ -1085,6 +1091,12 @@ void ObitTableVLRedun (ObitTableVL *in, ObitTableVL *out, ObitErr *err)
     ObitTableVLReadRow (in, irow, row, err);
     if (err->error) goto cleanup;
     if (VLdesel(row)) continue;  /* Skip deselected record */
+    /* Have to save Field - pointer in buffer that changes */
+    strncpy (Field, row->Field, 8);
+
+    /* Make sure RA in range */
+    if (row->Ra2000>360.0) row->Ra2000 -= 360.0;
+    if (row->Ra2000<0.0)   row->Ra2000 += 360.0;
 
     /* How far from center */
     rad1 = fieldOff(row, centerPix);
@@ -1106,6 +1118,10 @@ void ObitTableVLRedun (ObitTableVL *in, ObitTableVL *out, ObitErr *err)
       if (err->error) goto cleanup;
       if (VLdesel(row)) continue;  /* Skip deselected record */
 
+      /* Make sure RA in range */
+      if (row2->Ra2000>360.0) row2->Ra2000 -= 360.0;
+      if (row2->Ra2000<0.0)   row2->Ra2000 += 360.0;
+      
       /* Is this far enough? */
       if ((row2->Ra2000-row->Ra2000) > ramax) break;
 
@@ -1116,8 +1132,9 @@ void ObitTableVLRedun (ObitTableVL *in, ObitTableVL *out, ObitErr *err)
       toss1 = dist2<dismax;  /* Does one need to go? */
 
       /* Only if from separate fields or processings */
-      toss1 = toss1 && ((strncmp(row->Field, row2->Field, 8)) ||
-	(row->JDProcess!=row2->JDProcess));
+      toss1 = toss1 && ((strncmp(Field, row2->Field, 8)));
+      /* All may be processed on the same day */
+      /* || (row->JDProcess!=row2->JDProcess)); */
 
       /* Check for complete, exact duplicates */
       toss1 = toss1 || ((row->Ra2000==row2->Ra2000) &&
@@ -1131,7 +1148,9 @@ void ObitTableVLRedun (ObitTableVL *in, ObitTableVL *out, ObitErr *err)
 	/* Decide if this is the correct field for source */
 	want1 = rad2<rad1;
 	/* If all else equal take later processing */
-	want1 = want1 || ((rad2==rad1) && (row2->JDProcess>=row->JDProcess));
+	want1 = want1 || ((rad2==rad1));
+	/* All may be processed on the same day */
+ 	/* && (row2->JDProcess>=row->JDProcess));*/
 
 	/* Use this one? */
 	if (want1) {
@@ -1162,12 +1181,14 @@ void ObitTableVLRedun (ObitTableVL *in, ObitTableVL *out, ObitErr *err)
       } /* end of toss1 */
     } /* End forward search for matches */
 
-    /* Reread entry to copy if needed */
-    if (inWant!=irow) {
-      ObitTableVLReadRow (in, inWant, row, err);
-      if (err->error) goto cleanup;
-      if (VLdesel(row)) continue; 
-    }
+    /* Reread entry to copy */
+    ObitTableVLReadRow (in, inWant, row, err);
+    if (err->error) goto cleanup;
+    if (VLdesel(row)) continue; 
+
+    /* Make sure RA in range */
+    if (row->Ra2000>360.0) row->Ra2000 -= 360.0;
+    if (row->Ra2000<0.0)   row->Ra2000 += 360.0;
 
     /* Write output row */
     orow = -1;

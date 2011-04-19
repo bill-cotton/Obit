@@ -1,6 +1,6 @@
 # $Id$
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2005
+#  Copyright (C) 2004-2011
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -171,6 +171,10 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1):
             ImageUtil.PPBImage(inImage, WtImage, err, minGain)
             OErr.printErrMsg(err, "Error making weight image for "+Image.PGetName(inImage))
             WtArray  = WtImage.FArray   # Get array
+            # DEBUG
+            #tempDesc  = Image.PGetDesc(WtImage)
+            #tempArray = Image.PGetFArray(WtImage);
+            #Image.PFArray2FITS(tempArray, "PBImage.fits", err, 0, tempDesc)
         #
         # Make image*Wt and Wt^2 memory resident images
         ImageWt = Image.Image("ImageXwt")
@@ -192,7 +196,7 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1):
         Image.PClone2(inImage, SumWtImage, InterpWtWt, err)
         ImageUtil.PInterpolateImage(WtWt, InterpWtWt, err)
         #OErr.printErrMsg(err, "Error interpolating wt*wt "+Image.PGetName(inImage))
-        
+
         # Debug
         #if iPlane == 0:
         #    tempDesc    = Image.PGetDesc(InterpWtImage)
@@ -226,6 +230,15 @@ def PWeightImage(inImage, factor, SumWtImage, SumWt2, err, minGain=0.1):
         #print "DEBUG Mean after ",FArray.PMean(SumWtImageArray)
         SumWt2Array = Image.PGetFArray(SumWt2)
         InterpWtWtArray = Image.PGetFArray(InterpWtWt)
+
+        # Blank weight whereever image is blank or zero
+        FArray.PInClip(InterpWtArray, -1.0e-20, 1.0e-20, FArray.PGetBlank())
+        FArray.PBlank (InterpWtWtArray, InterpWtArray, InterpWtWtArray);
+        # DEBUG
+        #print "DEBUG, RMS",InterpWtArray.RMS
+        #tempDesc  = Image.PGetDesc(InterpWtWt)
+        #Image.PFArray2FITS(InterpWtWtArray, "PBImage2.fits", err, 0, tempDesc)
+
         FArray.PShiftAdd (SumWt2Array,     pos2, InterpWtWtArray,pos1, factor, SumWt2Array)
         #
         # Debug
@@ -352,8 +365,11 @@ def PAccumIxWt(im, wt, factor, accum, accumwt, err):
         InterpWtArray = InterpWtImage.FArray
         FArray.PShiftAdd (accumArray, pos2, InterpWtArray,  pos1, factor, accumArray)
         accumwtArray = accumwt.FArray
-        InterpWtArray = InterpWt.FArray
-        FArray.PShiftAdd (accumwtArray,     pos2, InterpWtArray,pos1, factor, accumwtArray)
+        InterpWtWtArray = InterpWt.FArray
+        # Blank weight whereever image is blank or zero
+        FArray.PInClip(InterpWtArray, -1.0e-20, 1.0e-20, FArray.PGetBlank())
+        FArray.PBlank (InterpWtWtArray, InterpWtArray, InterpWtWtArray);
+        FArray.PShiftAdd (accumwtArray,     pos2, InterpWtWtArray,pos1, factor, accumwtArray)
         #
             
         # Write output

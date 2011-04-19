@@ -37,7 +37,7 @@ DataType                            Keep python happy
 DataRoot                            Directory for input
 **PARAM** int 1  **DEF** 90
 doCrt                               If > 0 the size of the 
-**PARAM** str 48 **DEF** print.list
+**PARAM** str 128 **DEF** print.list
 prtFile                             Print output file
 **PARAM** str 128
 taskLog                             Logfile to write task messages to

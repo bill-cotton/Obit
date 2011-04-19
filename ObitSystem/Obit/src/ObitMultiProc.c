@@ -327,8 +327,7 @@ ObitMultiProc* ObitMultiProcCreate (gchar* name, olong njobs,
 } /* end ObitMultiProcCreate */
 
 /**
- * Enables multiprocessing based on values in myInput and the availability
- * of threading. 
+ * Enables multiprocessing based on values in myInput.
  * Starts auxillary executions of FuncContainer and saves the necessary information
  * in class structures where they are available to any ObitMultiProc instance.
  * \param myInput Task parameter input list.  Significant entries:

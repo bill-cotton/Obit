@@ -186,6 +186,7 @@ ObitIOCode ObitTableFQPutInfo (ObitTableFQ *in, oint fqid, oint nif,
    
    /* Mark as modified */
    siRow[in->myDesc->statusOff] = 1;
+   in->myDesc->numRowBuff = 1;
    
    /* rewrite */
    retCode = ObitTableWrite ((ObitTable*)in, fqid, NULL,  err);

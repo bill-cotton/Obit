@@ -345,10 +345,22 @@ void ObitSystemGetScratch (ObitIOType FileType,gchar *type,
       if (!ObitAIPSisNoScrat(mySystemInfo->lastDisk)) break;
       /* Keep going */
       mySystemInfo->lastDisk++; /* spread scratch files out */
+      /* Writeable? */
+      if (!ObitAIPSisNoScrat(mySystemInfo->lastDisk)) continue;
       /* Keep disk number in bounds */
       if (mySystemInfo->lastDisk>mySystemInfo->numberAIPSdisk)
 	mySystemInfo->lastDisk = 1;
     } /* End of loop checking */
+    
+    /* If it failed, try harder */
+    if (!ObitAIPSisNoScrat(mySystemInfo->lastDisk)) {
+      mySystemInfo->lastDisk = 1;
+      for (i=0; i<mySystemInfo->numberAIPSdisk; i++) {
+	if (!ObitAIPSisNoScrat(mySystemInfo->lastDisk)) break;
+	/* Keep going */
+	mySystemInfo->lastDisk++; /* spread scratch files out */
+      }
+    } /* end try harder */
 
     /* Make sure some allowed */
     Obit_return_if_fail ((!ObitAIPSisNoScrat(mySystemInfo->lastDisk)), err,

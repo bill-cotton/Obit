@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -408,6 +408,9 @@ void ObitTableMF2VL (ObitTableMF *MFTable, ObitTableVL *VLTable,
     /* Set output values */
     VLrow->Ra2000    = pos[0];
     VLrow->Dec2000   = pos[1];
+    /* Make sure RA in range */
+    if (VLrow->Ra2000>360.0) VLrow->Ra2000 -= 360.0;
+    if (VLrow->Ra2000<0.0)   VLrow->Ra2000 += 360.0;
     VLrow->PeakInt   = pbf * MFrow->Peak;
     VLrow->MajorAxis = MFrow->MajorAx;
     VLrow->MinorAxis = MFrow->MinorAx;

@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -140,3 +140,7 @@ olong *aoffs;
 olong *aoffif;
 /** IF (spectral window) sideband, true = LSB */
 gboolean *isLSB;
+/** Is this EVLA data? */
+gboolean isEVLA;
+/** Is this ALMA data? */
+gboolean isALMA;

@@ -1,7 +1,7 @@
 /* $Id$  */
 /* FndSou Obit task - generate source list from image                 */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2010                                          */
+/*;  Copyright (C) 2006-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1604,7 +1604,7 @@ void snglDef (ObitFArray *pixels, gboolean doPoint, gboolean doPA,
     sumpts = 0;
     for (j=0; j<ny; j++) { /* loop 60 */
       for (i=0; i<nx; i++) { /* loop 50 */
-	pts = j*ny + i;
+	pts = j*nx + i;
 	if ((pixData[pts] != fblank)  &&  (pixData[pts] >= slit)) {
 	  x = i - ixmax;
 	  y = j - iymax;
