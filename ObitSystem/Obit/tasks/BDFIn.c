@@ -2686,7 +2686,7 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ASDMSpectralWindowArray* SpWinArray;
   olong i, j, iRow, jRow, oRow, ver, maxAnt, IFno, SourNo, SWId;
   olong *antLookup=NULL, *SpWinLookup=NULL, *SpWinLookup2=NULL;
-  olong curScan, curScanI, nextScanNo, bad=0;
+  olong curScan, curScanI, nextScanNo, bad=0, iMain;
   oint numIF, numPol;
   ofloat fblank = ObitMagicF();
   gboolean want, ChkVis;
@@ -2814,9 +2814,14 @@ void GetSysPowerInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 		&curScanI, &nextScanNo, &SourNo)) {
       curScan = nextScanNo;
 
+      /* Find Main table entry for this scan */
+      for (iMain=0; iMain<SDMData->MainTab->nrows; iMain++) {
+	if (SDMData->MainTab->rows[iMain]->scanNumber==nextScanNo) break;
+      }
+
       /* Extract antenna info */
       AntArray = ObitSDMDataKillAntArray (AntArray);  /* Delete old */
-      AntArray = ObitSDMDataGetAntArray(SDMData, curScan);
+      AntArray = ObitSDMDataGetAntArray(SDMData, iMain);
       Obit_return_if_fail((AntArray), err,
 			  "%s: Could not extract Antenna info from ASDM", 
 			  routine);
@@ -2960,7 +2965,7 @@ void GetOTTInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   ObitTableOTRow*       outRow=NULL;
   ASDMPointingTable*    inTab=SDMData->PointingTab;
   ASDMAntennaArray*     AntArray;
-  olong i, iRow, oRow, ver, maxAnt, SourNo;
+  olong i, iRow, oRow, ver, maxAnt, SourNo, iMain;
   olong *antLookup, curScan, curScanI, nextScanNo;
   ObitIOAccess access;
   gchar *routine = "GetSysPowerInfo";
@@ -3036,9 +3041,14 @@ void GetOTTInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 		&curScanI, &nextScanNo, &SourNo)) {
       curScan = nextScanNo;
 
+      /* Find Main table entry for this scan */
+      for (iMain=0; iMain<SDMData->MainTab->nrows; iMain++) {
+	if (SDMData->MainTab->rows[iMain]->scanNumber==nextScanNo) break;
+      }
+
       /* Extract antenna info */
       AntArray = ObitSDMDataKillAntArray (AntArray);  /* Delete old */
-      AntArray = ObitSDMDataGetAntArray(SDMData, curScan);
+      AntArray = ObitSDMDataGetAntArray(SDMData, iMain);
       Obit_return_if_fail((AntArray), err,
 			  "%s: Could not extract Antenna info from ASDM", 
 			  routine);

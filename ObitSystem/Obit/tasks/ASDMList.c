@@ -395,7 +395,7 @@ void Summary (ObitInfoList *myInput, ObitSDMData *SDMData, ObitErr *err)
     outStream = stdout;
   } else { /* write to file */
     ObitInfoListGetP(myInput, "prtFile",  &type, dim, (gpointer)&prtFile);
-    if (prtFile) prtFile[MIN (47,dim[0])] = 0;
+    if (prtFile) prtFile[MIN (127,dim[0])] = 0;
     ObitTrimTrail(prtFile);
     /* Make sure file named */
     Obit_return_if_fail(((strlen(prtFile)>2) && 
