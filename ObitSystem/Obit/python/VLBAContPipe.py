@@ -35,7 +35,7 @@ except NoSectionError, e:
 
 def pipeline( aipsSetup, parmFile ):
     """
-    VLBA Continuum pipeline.
+VLBA Continuum pipeline.
 
 * *aipsSetup* = AIPS setup file
 * *parmFile* = pipeline input parameters file
@@ -123,6 +123,10 @@ def pipeline( aipsSetup, parmFile ):
                                  check=check, debug=debug)
             if not UV.PIsA(uv):
                 raise RuntimeError,"Cannot load "+dataInIDI
+        # Fix IDI files:
+        import IDIFix
+        uv = IDIFix.IDIFix( uv, err )
+        seq = uv.Aseq
     if doLoadUVF:
         logger.info("--> Load UVFITS data file (doLoadUVF)")
         uv = VLBAIDILoad(dataInUVF, project, session, band, dataClass, disk, seq, err, logfile=logFile, \

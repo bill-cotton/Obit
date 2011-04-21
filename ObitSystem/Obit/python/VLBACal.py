@@ -192,7 +192,8 @@ def VLBAInitContParms():
     parms["solAInt"]    =  None         # amp+phase self cal solution interval (min)
     parms["nTaper"]     =  1            # Number of additional imaging multiresolution tapers
     parms["Tapers"]     =  [20.0,0.0]   # List of tapers in pixels
-    parms["do3D"]       =  True         # Make ref. pixel tangent to celest. sphere for each facet
+    parms["do3D"]       =  False        # Make ref. pixel tangent to celest. sphere for each facet
+                                        # (SET TO FALSE AS WORKAROUND TO CC TABLE BUG!)
     
     # Find good calibration data
     parms["doFindCal"]    = True        # Search for good calibration/reference antenna
