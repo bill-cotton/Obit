@@ -16,7 +16,7 @@ where the required arguments are
 import sys, pydoc, logging, logging.config
 from optparse import OptionParser
 from ConfigParser import NoSectionError
-import OErr, OSystem, UV, AIPS, FITS
+import OErr, OSystem, UV, AIPS, FITS, IDIFix
 import ObitTalkUtil
 from AIPS import AIPSDisk
 from FITS import FITSDisk
@@ -109,6 +109,10 @@ VLBA Continuum pipeline.
     if doLoadIDI:
         logger.info("--> Load IDI data file (doLoadIDI)")
         if type(dataInIDI)==list:
+            logger.info("--> Loading a list of IDI files (dataInIDI is a list)\n" +
+                        "    This data appears to be from the old correlator.\n" + 
+                        "    IDI corrections will be applied when loading is\n" + 
+                        "    complete.")
             # Read list
             for dataIn in dataInIDI:
                 uv = VLBAIDILoad(dataIn, project, session, band, dataClass, disk, seq, err, logfile=logFile, \
@@ -116,17 +120,19 @@ VLBA Continuum pipeline.
                                      check=check, debug=debug)
                 if not UV.PIsA(uv):
                     raise RuntimeError,"Cannot load "+dataIn
+            # Fix IDI files:
+            uv = IDIFix.IDIFix( uv, err )
+            seq = uv.Aseq
         else:
+            logger.info("--> Loading a single IDI file (dataInIDI is not a list)\n" +
+                        "    This data appears to be from the DiFX correlator.\n" +
+                        "    No IDI corrections will be applied.")
             # Single IDI file
             uv = VLBAIDILoad(dataInIDI, project, session, band, dataClass, disk, seq, err, logfile=logFile, \
                                  wtThresh=wtThresh, calInt=calInt, Compress=Compress, \
                                  check=check, debug=debug)
             if not UV.PIsA(uv):
                 raise RuntimeError,"Cannot load "+dataInIDI
-        # Fix IDI files:
-        import IDIFix
-        uv = IDIFix.IDIFix( uv, err )
-        seq = uv.Aseq
     if doLoadUVF:
         logger.info("--> Load UVFITS data file (doLoadUVF)")
         uv = VLBAIDILoad(dataInUVF, project, session, band, dataClass, disk, seq, err, logfile=logFile, \
