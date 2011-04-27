@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit  Radio Single dish On The Fly imaging/selfcalibration         */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009                                               */
+/*;  Copyright (C) 2009,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -180,7 +180,8 @@ int main ( int argc, char **argv )
   Obit_log_error(err, OBIT_InfoErr, "Making final image");
   ObitErrLog(err);
   quit = doImage (myInput, outData, dirty, clean, wt, FALSE, err);
-  quit = ObitDisplayShow (display, (Obit*)clean, NULL, 1, err);
+  if (display)
+    quit = ObitDisplayShow (display, (Obit*)clean, NULL, 1, err);
   if (err->error) ierr = 1; ObitErrLog(err); if (ierr!=0) goto exit;
 
   /* History */
@@ -1682,7 +1683,8 @@ gboolean doImage (ObitInfoList* myInput, ObitOTF* outData, ObitImage* dirty,
   if (err->error) Obit_traceback_val (err, routine, outData->name, quit);
 
   /* Edit CLEAN box if necessary */
-  quit = ObitDisplayShow (display, (Obit*)dirty, myClean->window, 1, err);
+  if (display)
+    quit = ObitDisplayShow (display, (Obit*)dirty, myClean->window, 1, err);
   if (err->error) Obit_traceback_val (err, routine, clean->name, quit);
 
   if (quit) return quit;  /* Bail out? */

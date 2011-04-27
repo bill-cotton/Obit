@@ -39,6 +39,9 @@ doLoad       = False       # Load FITS file?
 FITSIn       = ""          # Input FITS file
 FITSinDisk   = 0           # Input FITS disk
 
+# Hanning smoothing
+doHann       = True        # Hanning smooth input
+
 # General data parameters
 dataClass     = "UVData"   # AIPS class of raw uv data
 Compress      = False      # Use compressed UV data?
@@ -181,6 +184,7 @@ rlBPSoln      = 0        # Number of output RL phase BP table
 rlsolint1     = 10.0/60.0 # RLPass phase correction solution in min
 rlsolint2     = 10.0      # RLPass bandpass solution in min
 rlUVRange     = [0.,0.]   # Range of baseline used in kilowavelengths in RL Delay cal.
+rlFOV         = 0.5/60    # Field of view for imaging
 
 # Imaging
 doImage     = True         # Image targets
@@ -246,22 +250,36 @@ if check:
     mess = "Only checking script"
     printMess(mess, logFile)
 
+# Are we going to be doing Hanning?
+if doHann:
+    loadClass = band+"Raw"
+else:
+    loadClass = dataClass
+
 # Load Data from FITS
 uv = None
 if doLoad:
-    uv = EVLAUVLoadT(FITSIn, FITSinDisk, project+session, dataClass, disk, seq, err, logfile=logFile, \
-                         Compress=True, check=check, debug=debug)
+    uv = EVLAUVLoadT(FITSIn, FITSinDisk, project+session, loadClass, disk, seq, err, logfile=logFile, \
+                         Compress=Compress, check=check, debug=debug)
     if uv==None:
         raise RuntimeError,"Cannot load "+inFile
 # Load Data from Archive directory
 if doLoadArchive:
-    uv = EVLAUVLoadArch(archRoot, project+session, dataClass, disk, seq, err, \
+    uv = EVLAUVLoadArch(archRoot, project+session, loadClass, disk, seq, err, \
                             selConfig=selConfig, doSwPwr=doSwPwr, \
                             selBand=selBand, selChan=selChan, selNIF=selNIF, calInt=calInt, \
-                            logfile=logFile, Compress=True, check=check, debug=debug)
+                            logfile=logFile, Compress=Compress, check=check, debug=debug)
     if uv==None and not check:
         raise RuntimeError,"Cannot load "+inFile
-# Otherwise set uv
+
+# Hanning
+if doHann:
+    uv = EVLAHann(uv, project+session, dataClass, disk, seq, err, \
+                            logfile=logFile, check=check, debug=debug)
+    if uv==None and not check:
+        raise RuntimeError,"Cannot Hann data "
+
+# Set uv is not done
 if uv==None and not check:
     uv = UV.newPAUV("AIPS UV DATA", project+session, dataClass, disk, seq, True, err)
     if err.isErr:
@@ -427,14 +445,14 @@ if doAmpPhaseCal2==None:
 if doRecal:
     mess =  "Redo calibration:"
     printMess(mess, logFile)
-    #EVLAClearCal(uv, err, doGain=True, doFlag=False, doBP=True, check=check)
-    #OErr.printErrMsg(err, "Error resetting calibration")
+    EVLAClearCal(uv, err, doGain=True, doFlag=False, doBP=True, check=check)
+    OErr.printErrMsg(err, "Error resetting calibration")
     # Parallactic angle correction?
-    #if doPACor:
-    #    retCode = EVLAPACor(uv, err, noScrat=noScrat, \
-    #                        logfile=logFile, check=check, debug=debug)
-    #    if retCode!=0:
-    #        raise RuntimeError,"Error in Parallactic angle correction"
+    if doPACor:
+        retCode = EVLAPACor(uv, err, noScrat=noScrat, \
+                            logfile=logFile, check=check, debug=debug)
+        if retCode!=0:
+            raise RuntimeError,"Error in Parallactic angle correction"
 
     # Bandpass calibration
     if doBPCal2 and BPCal and not check:
@@ -518,7 +536,7 @@ if doRLCal:
                         ChWid2=rlChWid, solInt1=rlsolint1, solInt2=rlsolint2, \
                         RLPCal=None, RLPhase=PCRLPhase, RM=RM, CleanRad=CleanRad, \
                         calcode=rlCalCode, doCalib=rlDoCal, gainUse=rlgainUse, \
-                        timerange=rltimerange, FOV=FOV, \
+                        timerange=rltimerange, FOV=rlFOV, \
                         doBand=rlDoBand, BPVer=rlBPVer, flagVer=rlflagVer, \
                         refAnt=rlrefAnt, doPol=False,  \
                         doPlot=doSNPlot, plotFile=plotFile, \
@@ -548,7 +566,7 @@ if doRLCal2:
                         ChWid2=rlChWid, solInt1=rlsolint1, solInt2=rlsolint2, \
                         RLPCal=RLPCal, RLPhase=PCRLPhase, RM=RM, CleanRad=CleanRad, \
                         calcode=rlCalCode, doCalib=rlDoCal, gainUse=rlgainUse, \
-                        timerange=rltimerange, FOV=FOV, \
+                        timerange=rltimerange, FOV=rlFOV, \
                         doBand=-1, BPVer=1, flagVer=rlflagVer, \
                         refAnt=rlrefAnt, doPol=True,  \
                         doPlot=doSNPlot, plotFile=plotFile, \

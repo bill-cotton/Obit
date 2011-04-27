@@ -3513,7 +3513,15 @@ olong ObitUVUtilNchAvg(ObitUV *inUV, ofloat maxFact, ofloat FOV, ObitErr *err)
 
     /* Find maximum baseline */
     for (i=0; i<AntList[iANver-1]->number-1; i++) {
+      /* Antenna in array? */
+      if ((fabs(AntList[iANver-1]->ANlist[i]->AntXYZ[0]<1.0)) &&
+	   (fabs(AntList[iANver-1]->ANlist[i]->AntXYZ[1]<1.0)) &&
+	  (fabs(AntList[iANver-1]->ANlist[i]->AntXYZ[2]<1.0))) continue;
       for (j=i+1; j<AntList[iANver-1]->number; j++) {
+	/* Antenna in array? */
+	if ((fabs(AntList[iANver-1]->ANlist[j]->AntXYZ[0]<1.0)) &&
+	    (fabs(AntList[iANver-1]->ANlist[j]->AntXYZ[1]<1.0)) &&
+	    (fabs(AntList[iANver-1]->ANlist[j]->AntXYZ[2]<1.0))) continue;
 	BL = 
 	  (AntList[iANver-1]->ANlist[i]->AntXYZ[0]-AntList[iANver-1]->ANlist[j]->AntXYZ[0]) *
 	  (AntList[iANver-1]->ANlist[i]->AntXYZ[0]-AntList[iANver-1]->ANlist[j]->AntXYZ[0]) + 

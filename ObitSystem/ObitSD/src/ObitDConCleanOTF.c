@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2009                                          */
+/*;  Copyright (C) 2005-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -411,7 +411,7 @@ void ObitDConCleanOTFSub(ObitDConClean *inn, ObitErr *err)
   ObitIOSize IOsize = OBIT_IO_byPlane;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong  i, blc[IM_MAXDIM], trc[IM_MAXDIM];
-  olong x, y, nx, pos[2];
+  olong x, y, nx, pos[2], xoff, yoff;
   ofloat *pixels=NULL;
   ObitImage *image=NULL;
   ObitFArray *residual=NULL;
@@ -453,9 +453,16 @@ void ObitDConCleanOTFSub(ObitDConClean *inn, ObitErr *err)
   pos[0] = pos[1] = 0;
   pixels = ObitFArrayIndex(residual, pos);
   nx = in->clean->image->naxis[0];
+  /* Pixel offsets */
+  if (in->Pixels->mosaic->images[0]->myDesc->crpix[0]>0.0)  
+    xoff = (olong)(in->Pixels->mosaic->images[0]->myDesc->crpix[0]+0.5);
+  else xoff = (olong)(in->Pixels->mosaic->images[0]->myDesc->crpix[0]-0.5);
+  if (in->Pixels->mosaic->images[0]->myDesc->crpix[1]>0.0)  
+    yoff = (olong)(in->Pixels->mosaic->images[0]->myDesc->crpix[1]+0.5);
+  else yoff = (olong)(in->Pixels->mosaic->images[0]->myDesc->crpix[1]-0.5);
   for (i=0; i<in->Pixels->nPixel; i++) {
-    x = in->Pixels->pixelX[i];
-    y = in->Pixels->pixelY[i];
+    x = in->Pixels->pixelX[i] + xoff;
+    y = in->Pixels->pixelY[i] + xoff;
     pixels[x+y*nx] = in->Pixels->pixelFlux[i];
   }
 

@@ -2106,7 +2106,7 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
   ObitSource *source=NULL;
   ObitAntennaList *AntList;
   ofloat time, uvw[3], bl[3], tmp, u, v;
-  odouble arrJD, DecR, RAR, AntLst, HrAng=0.0, ArrLong, ArrLat;
+  odouble arrJD, DecR, RAR, AntLst, HrAng=0.0, ArrLong, ArrLat, dRa;
   odouble sum, xx, yy, zz, lambda, DecOff, RAOff;
   gchar *routine = "CalcUVW";
 
@@ -2207,10 +2207,11 @@ void CalcUVW (ObitUV *outData, ObitBDFData *BDFData, ofloat *Buffer,
     ObitPrecessUVJPrecessApp (outData->myDesc, source);
     RAOff  = source->RAApp;
     DecOff = source->DecApp;
-    source = ObitSourceUnref(source);
     /* uvrot global = rotation to north */
-    uvrot = -(ofloat)atan2(RAOff-uvwSourceList->SUlist[uvwcurSourID]->RAApp,
-			   DecOff-uvwSourceList->SUlist[uvwcurSourID]->DecApp);
+    dRa = (RAOff-uvwSourceList->SUlist[uvwcurSourID]->RAApp) * 
+      cos (DG2RAD*source->DecApp);
+    uvrot = -(ofloat)atan2(dRa, DecOff-uvwSourceList->SUlist[uvwcurSourID]->DecApp);
+    source = ObitSourceUnref(source);
   } /* end new source */
   
     /* Array number (0-rel)*/
