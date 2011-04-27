@@ -2991,7 +2991,7 @@ static gpointer ThreadFAAbsMax (gpointer arg)
 
   /* local */
   olong  i, temp, maxCell;
-  ofloat maxAVal=0.0, maxVal, *data, val, fblank = ObitMagicF();
+  ofloat maxAVal=-1.0, maxVal, *data, val, fblank = ObitMagicF();
 
   largs->value = fblank;  /* In case no valid data*/
   if (hiElem<loElem) goto finish;
