@@ -27,6 +27,7 @@
 /*--------------------------------------------------------------------*/
 
 #include <math.h>
+#include <unistd.h>
 #include "ObitUVGridMF.h"
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
@@ -1409,7 +1410,7 @@ void ObitUVGridMFClear (gpointer inn)
 static void GridOne (ObitUVGridMF* in, ObitUV *UVin, UVGridFuncArg **sargs, 
 		     ObitThread *thread, ObitErr *err)
 {
-  olong i, iSpec, nvis, nTh, nThread;
+  olong i, iSpec, nvis, nTh, nThread, mTh;
   ObitThreadFunc func=(ObitThreadFunc)ThreadUVGridMFBuffer ;
   UVGridFuncArg *args;
   gboolean  OK;
@@ -1425,7 +1426,6 @@ static void GridOne (ObitUVGridMF* in, ObitUV *UVin, UVGridFuncArg **sargs,
   else nThread = in->nThreads;
   nThread = MIN (nThread, in->nSpec);
 
-
   /* Need to copy data? Only one copy needed per call. */
   args = sargs[0];
   if ((args->buffer!=NULL) && (args->buffSize>0)) {
@@ -1436,10 +1436,11 @@ static void GridOne (ObitUVGridMF* in, ObitUV *UVin, UVGridFuncArg **sargs,
   /* Loop over coarse channel processing nThread at a time */
   for (iSpec=0; iSpec<in->nSpec; iSpec+=nThread) {
     nTh = MIN (nThread, in->nSpec-iSpec);
+    mTh = MIN (nTh, (in->nSpec-iSpec));
     
-    for (i=0; i<nTh; i++) {
+    for (i=0; i<mTh; i++) {
       args = sargs[i];
-      if (nThread>1) args->ithread = i;
+      if (mTh>1) args->ithread = i;
       else args->ithread = -1;
       args->thread = thread;
       args->in     = in;
@@ -1451,9 +1452,8 @@ static void GridOne (ObitUVGridMF* in, ObitUV *UVin, UVGridFuncArg **sargs,
       args->grid   = in->grids[iSpec+i];
     } /* end setting up args */
     
-  
   /* Do operation on buffer possibly with threads */
-  OK = ObitThreadIterator (thread, nTh, func, (gpointer)sargs);
+  OK = ObitThreadIterator (thread, mTh, func, (gpointer)sargs);
     
   /* Check for problems */
   if (!OK) 
@@ -1673,13 +1673,13 @@ void GridBufferMF (ObitUVGridMF* inn, ObitUV *uvdata, olong BIF, olong EIF,
   g_assert (ObitUVGridMFIsA(in));
   g_assert (ObitUVIsA(uvdata));
   g_assert (uvdata->myDesc != NULL);
+  desc  = uvdata->myDesc;
+  nvis  = desc->numVisBuff;
+  if (nvis<=0) return; /* need something */
   g_assert (uvdata->buffer != NULL);
 
   /* how much data? */
   luvw  = uvw->naxis[0];  /* length of uvw entry */
-  desc  = uvdata->myDesc;
-  nvis  = desc->numVisBuff;
-  if (nvis<=0) return; /* need something */
   nfreq = desc->inaxes[desc->jlocf];
   nif = 1;
   if (desc->jlocif>=0) nif = desc->inaxes[desc->jlocif];
@@ -1894,8 +1894,8 @@ static gpointer ThreadUVGridMFBuffer (gpointer arg)
   olong EChan      = largs->EChan;
   ObitCArray *grid = largs->grid;
   ObitFArray  *uvw = largs->uvw;
- 
-  /* Make copy of u,v,w */
+
+ /* Make copy of u,v,w */
   copyUVW(largs);   
   
   /* prepare data */

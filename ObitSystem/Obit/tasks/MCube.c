@@ -1105,13 +1105,13 @@ void UpdateFreq(ObitInfoList *myInput,
   } /* end if exist already on output */
 
   /* Make combined output */
-  cnSpec = out->myDesc->inaxes[out->myDesc->jlocf] - inTerm;
+  cnSpec = out->myDesc->inaxes[out->myDesc->jlocf] - nTerm;
   combSpecFreq  = g_malloc0(cnSpec*sizeof(odouble));
   if ((onSpec>0) && outSpecFreq) {
     j = 0;
     for (i=0; i<onSpec; i++) combSpecFreq[j++] = outSpecFreq[i];
   }
-  j = axPix-cnTerm;
+  j = axPix-cnTerm-1;
   for (i=0; i<inSpec; i++) combSpecFreq[j++] = inSpecFreq[i];
   
   /* Update header list */

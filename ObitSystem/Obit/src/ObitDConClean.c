@@ -1446,10 +1446,12 @@ void ObitDConCleanXRestore(ObitDConClean *in, ObitErr *err)
 	  cr = cos ((bpa + imDesc1->crota[imDesc1->jlocd])*DG2RAD);
 	  sr = sin ((bpa + imDesc1->crota[imDesc1->jlocd])*DG2RAD);
 
-	  /* Actually convolve with imaging taper */
-	  bmaj = BeamTaper1;
-	  bmin = BeamTaper1;
-	  bpa  = 0.0;
+	  if (BeamTaper1>0.0) {
+	    /* Actually convolve with imaging taper if any */
+	    bmaj = BeamTaper1;
+	    bmin = BeamTaper1;
+	    bpa  = 0.0;
+	  }
 	  if ((in->prtLv>2) && (ncomp>0)) {
 	    Obit_log_error(err, OBIT_InfoErr,"Field %d to %d scale %f beam %f %f %f",
 			   jfield+1, ifield+1, scale, 3600.0*bmaj, 3600.0*bmin, bpa);

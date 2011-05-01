@@ -485,6 +485,7 @@ gboolean ObitThreadIterator (ObitThread* in, olong nthreads,
 {
   gboolean out = TRUE;
   GTimeVal end_time;
+  gpointer rval;
   glong add_time;
   olong i;
 
@@ -529,18 +530,20 @@ gboolean ObitThreadIterator (ObitThread* in, olong nthreads,
 
   /* Wait for them to finish, expects each to send a message to the asynchronous 
    queue iff they finish */
-  /* 1 min. timeout */
+  /* 10 min. timeout */
   add_time = 600 * 1000000;
   g_get_current_time (&end_time);
   g_time_val_add (&end_time, add_time); /* add timeout in microseconds */
   for (i=0; i<nthreads; i++) {
-    g_async_queue_timed_pop (in->queue, &end_time);
- }
+    rval = g_async_queue_timed_pop (in->queue, &end_time);
+    /* Check for timeout */
+    if (rval==NULL) fprintf (stderr, "Timeout on Thread %d\n", i);
+  }
 
   return out;
 } /* end ObitThreadIterator */
 
-/** 
+/**
  * Indicates that a thread function is done by sending a message to the 
  * asynchronous queue on in
  * Noop unless compiled with OBIT_THREADS_ENABLED

@@ -381,14 +381,19 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     if (bcomp) g_free(bcomp); bcomp = NULL;
     if (ecomp) g_free(ecomp); ecomp = NULL;
 
+    /* Need all stokes */
+    dim[0] = 4;
+    stemp[0] = stemp[1] = stemp[2] = stemp[3] = ' ';  stemp[4] = 0;
+    ObitInfoListAlwaysPut (inUV->info, "Stokes", OBIT_string, dim, stemp);
+    ObitUVOpen (inUV, OBIT_IO_ReadCal, err);
+    ObitUVClose (inUV, err);
+    if (err->error) goto cleanup;
+
     /* Scratch file */
     scrUV = newObitUVScratch (inUV, err);
     /* Give more sensible name */
     if (scrUV->name) g_free(scrUV->name);
     scrUV->name = g_strdup("Peel data");
-    dim[0] = 4;
-    stemp[0] = stemp[1] = stemp[2] = stemp[3] = ' ';  stemp[4] = 0;
-    ObitInfoListAlwaysPut (inUV->info, "Stokes", OBIT_string, dim, stemp);
 
     /* Subtract */
     Obit_log_error(err, OBIT_InfoErr, " ******  Subtract non-peel sources from uv data");
