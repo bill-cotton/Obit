@@ -126,7 +126,7 @@ WWW="--with-www=$THIRD"
 CURL="--with-curl=$THIRD"
 XMLRPC="--with-xmlrpc=$THIRD"
 ZLIB="--with-zlib=$THIRD"
-PYTHON="--with-python=$THIRD -with-python-includes=$THIRD/include/python2.5"
+PYTHON="--with-python=$THIRD -with-python-includes=$THIRD/include/python2.7"
 
 # Which ones wanted?
 if test $doPLPLOT  = no; then PLPLOT= ; fi
