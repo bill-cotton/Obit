@@ -63,8 +63,8 @@ characters.  Returns AIPS data file (UV data object).
     # are too long, use sym links. Create sym links using UUIDs to avoid 
     # concurrent pipeline processes from trampling each other's links. 
     linkname = commands.getoutput('uuidgen') + '.uvfits'
-    linkpath = FITS.disks[1].dirname + linkname
-    filepath = FITS.disks[1].dirname + filename
+    linkpath = FITS.FITS.disks[1].dirname + linkname
+    filepath = FITS.FITS.disks[1].dirname + filename
     os.symlink( filepath, linkpath )
     fitld.datain = linkname
     fitld.outname  = Aname

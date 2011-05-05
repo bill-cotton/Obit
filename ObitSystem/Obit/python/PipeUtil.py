@@ -4,17 +4,19 @@ useful for any pipeline.
 """
 
 import urllib, urllib2, os.path, pickle, time, sys, logging, socket, signal
-import ObitTask, Image, AIPSDir, OErr, FArray, VLBACal
+import subprocess, glob
+from pprint import pprint
+import ObitTask, Image, AIPSDir, OErr, FArray, VLBACal, FITS, UV
 
 logger = logging.getLogger("obitLog.PipeUtil")
 
 def setname (inn, out):
-    """ Copy file definition from inn to out as in...
-    
-    Supports both FITS and AIPS
-    Copies Data type and file name, disk, class etc
-    inn  = Obit data object, created with getname, getFITS
-    out  = ObitTask object,
+    """ 
+Copy file definition from *inn* to *out* as in. Supports both FITS and AIPS files.  
+Copies data type, file name, disk, class, etc.
+
+inn  = Obit data object, created with getname, getFITS
+out  = ObitTask object
     """
     ################################################################
     # AIPS or Obit?
@@ -35,12 +37,12 @@ def setname (inn, out):
     # end setname
     
 def setoname (inn, out):
-    """ Copy file definition from inn to out as out...
-    
-    Supports both FITS and AIPS
-    Copies Data type and file name, disk, class etc
-    inn  = Obit data object, created with getname, getFITS
-    out  = ObitTask object,
+    """ 
+Copy file definition from *inn* to *out* as out. Supports both FITS and AIPS
+Copies data type, file name, disk, class, etc.
+
+inn  = Obit data object, created with getname, getFITS
+out  = ObitTask object
     """
     ################################################################
     # AIPS or Obit?
@@ -61,12 +63,12 @@ def setoname (inn, out):
     # end setoname
     
 def set2name (in2, out):
-    """ Copy file definition from in2 to out as in2...
+    """
+Copy file definition from *in2* to *out* as in2. Supports both FITS and AIPS
+Copies data type, file name, disk, class, etc.
 
-    Supports both FITS and AIPS
-    Copies Data type and file name, disk, class etc
-    in2  = Obit data object, created with getname, getFITS
-    out  = ObitTask object,
+in2  = Obit data object, created with getname, getFITS
+out  = ObitTask object
     """
     ################################################################
     # AIPS or Obit?
@@ -87,10 +89,10 @@ def set2name (in2, out):
     # end set2name
    
 def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0], logfile=None):
-    """ Get statistics in a specified region of an image plane
+    """ 
+Get statistics in a specified region of an image plane
 
 Returns dictionary with statistics of selected region with entries:
-
     - Mean    = Mean value
     - RMSHist = RMS value from a histogram analysis
     - RMS     = Simple RMS value
@@ -101,7 +103,7 @@ Returns dictionary with statistics of selected region with entries:
     - Flux    = Flux density if CLEAN beam given, else -1
     - BeamArea= CLEAN Beam area in pixels
 
-* inImage   = Python Image object, created with getname, getFITS
+* inImage  = Python Image object, created with getname, getFITS
 * err      = Obit error/message stack
 * blc      = bottom left corner pixel (1-rel)
 * trc      = top right corner pixel (1-rel)
@@ -157,11 +159,12 @@ Returns dictionary with statistics of selected region with entries:
     # end imstat
    
 def unique (inn):
-    """ Removes duplicate entries from an array of strings
-    
-    Returns an array of strings, also removes null and blank strings
-    as well as leading or trailing blanks
-    inn  = list of strings with possible redundancies
+    """ 
+Removes duplicate entries from an array of strings.  Returns an array of
+strings, also removes null and blank strings as well as leading or trailing
+blanks.
+
+* inn  = list of strings with possible redundancies
     """
     # Make local working copy and blank redundant entries
     linn = []
@@ -188,7 +191,8 @@ def unique (inn):
 
 def AllDest (err, disk=None, Atype="  ", Aname="            ", Aclass="      ",
     Aseq=0):
-    """ Delete AIPS files matching a pattern. Strings use AIPS wild cards:
+    """ 
+Delete AIPS files matching a pattern. Strings use AIPS wild cards:
 
      * blank => any
      * '?'   => one of any character
@@ -224,10 +228,10 @@ def AllDest (err, disk=None, Atype="  ", Aname="            ", Aclass="      ",
 
 def printMess (message, logfile=''):
     """ 
-    Print message, optionally in logfile
+Print message, optionally in logfile
         
-    message = message to print
-    logfile = logfile for message
+* message = message to print
+* logfile = logfile for message
     """
     print message
     if logfile and len(logfile) > 0:
@@ -237,10 +241,10 @@ def printMess (message, logfile=''):
     # end printMess
 
 def dhms2day(st):
-    """ convert a time string in d/hh:mm:ss.s to days
+    """ 
+Convert a time string in d/hh:mm:ss.s to days.  Returns time in days.
 
-    Returns time in days
-    st        time string as "d/hh:mm:ss.s"
+* st = time string as "d/hh:mm:ss.s"
     """
     ################################################################
     stt = st
@@ -268,10 +272,11 @@ def dhms2day(st):
     # end dhms2day
 
 def day2dhms(tim):
-    """ convert a time in days to a string as d/hh:mm:ss.s
+    """ 
+Convert a time in days to a string as d/hh:mm:ss.s.
 
-    Returns time as string:  "d/hh:mm:ss.s"
-    tim       time in days
+* Returns time as string:  "d/hh:mm:ss.s"
+* tim       time in days
     """
     ################################################################
     day=int(tim)
@@ -287,11 +292,12 @@ def day2dhms(tim):
     # end day2dhms
 
 def SaveObject (pyobj, file, update):
-    """ Save python object to a pickle file
+    """ 
+Save python object to a pickle file
 
-    pyobj    = python object to save
-    file     = pickle file name
-    update   = If True update, otherwise only if file doesn't already exist
+* pyobj    = python object to save
+* file     = pickle file name
+* update   = If True update, otherwise only if file doesn't already exist
     """
     ################################################################
     # Does file exist?, only do this is not or update
@@ -302,10 +308,11 @@ def SaveObject (pyobj, file, update):
     # end SaveObject
    
 def FetchObject (file):
-    """ Fetch python object from a pickle file
+    """ 
+Fetch python object from a pickle file.
 
-    returns python object
-    file     = pickle file name
+* returns python object
+* file     = pickle file name
     """
     ################################################################
     # unpickle file
@@ -317,12 +324,12 @@ def FetchObject (file):
    
 def QueryArchive(startTime, endTime, project=None):
     """
-    Query the NRAO Archive for data files. Return the response as a list of 
-    lines.
+Query the NRAO Archive for data files. Return the response as a list of 
+lines.
 
-    startTime = Start of query time range ( YYYY-mmm-DD [ HH:MM:SS ] )
-    endTime = End of query time range
-    project = Project code
+* startTime = Start of query time range ( YYYY-mmm-DD [ HH:MM:SS ] )
+* endTime = End of query time range
+* project = Project code
     """
     freqRange = '1000 - 16000' # frequency range (MHz) (L to U bands)
     format = 'FITS-AIPS' # Archive file format (FITS-AIPS good prior to ? 2010)
@@ -365,14 +372,14 @@ def QueryArchive(startTime, endTime, project=None):
 
 def ParseArchiveResponse( responseLines ):
     """
-    Parse the archive response returned by QueryArchive and return a list
-    containing one dictionary for each file. The values in each dictionary will
-    correspond to items in each row of the query response.  The keys will 
-    correspond to the items in the response header row, with additional column
-    headers added where needed. Redundant columns are not included in the 
-    dictionaries.
+Parse the archive response returned by QueryArchive and return a list
+containing one dictionary for each file. The values in each dictionary will
+correspond to items in each row of the query response.  The keys will 
+correspond to the items in the response header row, with additional column
+headers added where needed. Redundant columns are not included in the 
+dictionaries.
 
-    responseLines = Archive query response returned by QueryArchive
+* responseLines = Archive query response returned by QueryArchive
     """
     head = responseLines[0] # header line
     headers = head.split(' ')
@@ -394,12 +401,12 @@ def ParseArchiveResponse( responseLines ):
 
 def DownloadArchiveFile( fileDict, destination ):
     """
-    Download a file from the archive. Return the output of urllib2.urlopen.
-    If the file already exists in the download area, ask the user what to do.
-    If the user aborts the download, return None.
+Download a file from the archive. Return the output of urllib2.urlopen.
+If the file already exists in the download area, ask the user what to do.
+If the user aborts the download, return None.
 
-    fileDict = archive file dictionary from ParseArchiveResponse
-    destination = path to destination directory
+* fileDict = archive file dictionary from ParseArchiveResponse
+* destination = path to destination directory
     """
     url = "https://archive.nrao.edu/archive/ArchiveDeliver"
     filename = fileDict['logical_file']
@@ -426,10 +433,10 @@ def DownloadArchiveFile( fileDict, destination ):
     
 def PollDownloadStatus( fileDict, destination ):
     """
-    Poll the status of a file download from the archive. Return only when
-    download is complete.
+Poll the status of a file download from the archive. Return only when
+download is complete.
 
-    filepath = full path to file
+* filepath = full path to file
     """
     filename = fileDict['logical_file']
     finishName = destination + '/' + filename
@@ -458,9 +465,9 @@ def PollDownloadStatus( fileDict, destination ):
 
 def SummarizeArchiveResponse( fileList ):
     """
-    Return a table summary of the archive response as a string.
+Return a table summary of the archive response as a string.
 
-    fileList = List of file dictionaries returned by ParseArchiveResponse
+* fileList = List of file dictionaries returned by ParseArchiveResponse
     """
     formatHead = "%-2s %-6s %-3s %-3s %-3s %-18s %-18s %-7s %-6s\n"
     table = formatHead % \
@@ -498,8 +505,8 @@ def nonBlockingRawInput(prompt='', timeout=60):
     """
 Write *prompt* and wait a maximum of *timeout* seconds for user input.
 
-* *prompt* = prompt for user input
-* *timeout* = seconds to wait before proceeding without input
+* prompt = prompt for user input
+* timeout = seconds to wait before proceeding without input
     """
     signal.signal(signal.SIGALRM, alarmHandler)
     signal.alarm(timeout)
@@ -512,3 +519,114 @@ Write *prompt* and wait a maximum of *timeout* seconds for user input.
         logging.info('Prompt timeout. Continuing...')
     signal.signal(signal.SIGALRM, signal.SIG_IGN)
     return ''
+
+def CompareFITS( fitsFile1, fitsFile2, err ):
+    """
+Compare 2 fits files.
+
+* fitsFile1 = path to first FITS file 
+* fitsFile2 = path to second FITS file
+    """
+    image1 = Image.newPFImage('image1', fitsFile1, 0, True, err, True)
+    image2 = Image.newPFImage('image2', fitsFile2, 0, True, err, True)
+    compList = Image.PCompare( image1, image2, err )
+    return compList
+
+def CompareFITSDir( dir1, dir2, pattern, err):
+    """
+Compare the FITS files matching *pattern* in *dir1* and *dir2*.
+
+* dir1, dir2 = directories to use for comparison
+* pattern = Unix shell pattern matching some FITS files
+* err = OErr object
+    """
+    print("'Image 1' is in: " + dir1 )
+    print("'Image 2' is in: " + dir2 )
+    os.chdir( dir1 )
+    fitsList1 = glob.glob( pattern )
+    fitsList1.sort()
+    os.chdir( dir2 )
+    fitsList2 = glob.glob( pattern )
+    fitsList2.sort()
+    intersec = set( fitsList1 ) & set( fitsList2 )
+    symDiff  = set( fitsList1 ) ^ set( fitsList2 )
+    if len(symDiff) != 0:
+        print("These files are not in both directories:")
+        pprint(symDiff)
+    table = []
+    for f in intersec:
+        path1 = dir1 + '/' + f
+        path2 = dir2 + '/' + f
+        row = CompareFITS( path1, path2, err )
+        # Max Absolute Difference as a percentage of the Max Absolute in Image 1
+        MaxAbsDiffPcnt = row[1] / row[0] * 100
+        # RMS Difference as a percentage of the Max Absolute Difference
+        if row[1] != 0:
+            RMSDiffPcnt = row[2] / row[1] * 100
+        else:
+            RMSDiffPcnt = -1.0
+        row.insert( 0, f )
+        row.insert( 3, MaxAbsDiffPcnt )
+        row.append( RMSDiffPcnt )
+        table.append( row )
+    format1 = "%-30.30s | %-10s %-10s %-3s %-10s %-3s"
+    format2 = "%30.30s | %10.2e %10.2e %3.0f %10.2e %3.0f"
+    print( format1 % ("Filename", "MaxAbsImg1", "MaxAbsDiff", "%", "RMS Diff", "%") )
+    print( format1 % ('-'*30, '-'*10, '-'*10, '-'*3, '-'*10, '-'*3) )
+    for row in table:
+        print( format2 % tuple(row) )
+
+def CompareUV( uvFile1, uvFile2, err, verbose=True  ):
+    """
+Compare UV FITS files *uvFile1* and *uvFile2*.
+
+* uvFile1, uvFile2 = UV FITS files to be compared
+* err = OErr object
+    """
+    uv1 = UV.newPFUV( 'uv1', uvFile1, 0, True, err )
+    uv2 = UV.newPFUV( 'uv2', uvFile2, 0, True, err )
+    rms = UV.PUtilVisCompare( uv1, uv2, err )
+    if verbose:
+        print("UV data set 1: " + uvFile1)
+        print("UV data set 2: " + uvFile2)
+    print("RMS of real, imag differences / amplitude of data set 2 =\n%6i" %
+        ( rms ) )
+
+def CompareUVDir( dir1, dir2, pattern, err ):
+    """
+Compare UV data files matching *pattern* in *dir1* and *dir2*.
+*pattern* should match a single file in each directory.
+
+* dir1, dir2 = directories to use for comparison
+* pattern = Unix shell pattern matching a single UV file in each directory
+* err = OErr object
+    """
+    os.chdir( dir1 )
+    file1 = glob.glob( pattern )
+    os.chdir( dir2 )
+    file2 = glob.glob( pattern )
+    if ( len(file1) != 1 or len(file2) != 1 ):
+        print("Input pattern does not produce a unique match.")
+        print("dir1 matches to " + str(file1) )
+        print("dir2 matches to " + str(file2) )
+        return
+    filePath1 = dir1 + '/' + file1[0]
+    filePath2 = dir2 + '/' + file2[0]
+    CompareUV( filePath1, filePath2, err )
+
+def TestPipe( dir1, dir2, err ):
+    """
+Test pipeline by comparing pipeline output in *dir1* with output in *dir2*.
+*dir1* and *dir2* could be, for example, output directories for two different
+versions of Obit.
+
+* dir1, dir2 = directories to use for comparison
+* err = OErr object
+    """
+    dir1 = os.path.abspath( dir1 )
+    dir2 = os.path.abspath( dir2 )
+    print("Testing calibrated and averaged UV data.")
+    CompareUVDir( dir1, dir2, '*CalAvg.uvtab', err )
+    print("Testing FITS images.")
+    CompareFITSDir( dir1, dir2, '*IClean.fits', err )
+

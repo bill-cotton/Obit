@@ -187,6 +187,7 @@ Copy output files to destination directory. This is done using rsync.
             "Error occurred while rsyncing to destination directory.\n" +
             "rsync return value: " + str(e.returncode) )
         raise
+    logger.info( "All files copied to " + destDir )
  
 def checkDirEquality( dir1, dir2 ):
     """

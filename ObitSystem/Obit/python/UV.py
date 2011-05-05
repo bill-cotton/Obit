@@ -1,4 +1,5 @@
-""" Python Obit inteferometer (UV) data class
+""" 
+Python Obit inteferometer (UV) data class
 
 This class contains interoferometric data and allows access.
 An ObitUV is the front end to a persistent disk resident structure.
@@ -9,89 +10,107 @@ Most access to UV data is through functions as the volume of the data is
 inappropriate to be processed directly in python.
 
 UV Members with python interfaces:
-exist     - True if object previously existed prior to object creation
-List      - used to pass instructions to processing
-Desc      - Astronomical labeling of the data
-TableList - List of tables attached
-VisBuf    - memory pointer into I/O Buffer
+
+=========  ==========================================================
+exist      True if object previously existed prior to object creation
+List       used to pass instructions to processing
+Desc       Astronomical labeling of the data
+TableList  List of tables attached
+VisBuf     memory pointer into I/O Buffer
+=========  ==========================================================
 
 Data selection, calibration and editing parameters on List member:
-  "doCalSelect" bool (1,1,1) Select/calibrate/edit data?
-  "Stokes"      string (4,1,1) Selected output Stokes parameters:
-           "    "=> no translation,"I   ","V   ","Q   ", "U   ", 
-           "IQU ", "IQUV",  "IV  ", "RR  ", "LL  ", "RL  ", "LR  ", 
-           "HALF" = RR,LL, "FULL"=RR,LL,RL,LR. [default "    "]
-           In the above 'F' can substitute for "formal" 'I' (both RR+LL).
-  "BChan"   int (1,1,1) First spectral channel selected. [def all]
-  "EChan"   int (1,1,1) Highest spectral channel selected. [def all]
-  "chanInc" int (1,1,1) channel selected increment. [def 1]
-  "BIF"     int (1,1,1) First "IF" selected. [def all]
-  "EIF"     int (1,1,1) Highest "IF" selected. [def all]
-  "IFInc"   int (1,1,1)"IF" selected increment. [def 1]
-  "doPol"   int (1,1,1) >0 -> calibrate polarization.
-  "doCalib" int (1,1,1) >0 -> calibrate, 2=> also calibrate Weights
-  "gainUse" int (1,1,1) SN/CL table version number, 0-> use highest
-  "flagVer" int (1,1,1) Flag table version, 0-> use highest, <0-> none
-  "BLVer"   int (1,1,1) BL table version, 0> use highest, <0-> none
-  "BPVer"   int (1,1,1) Band pass (BP) table version, 0-> use highest
-  "Subarray"  int (1,1,1) Selected subarray, <=0->all [default all]
-  "dropSubA"  bool (1,1,1) Drop subarray info?
-  "FreqID"    int (1,1,1) Selected Frequency ID, <=0->all [default all]
-  "timeRange" float (2,1,1) Selected timerange in days.
-  "UVRange"   float (2,1,1) Selected UV range in kilowavelengths.
-  "InputAvgTime" float (1,1,1) Input data averaging time (sec).
-            used for fringe rate decorrelation correction.
-  "Sources" string (?,?,1) Source names selected unless any starts with
-            a '-' in which case all are deselected (with '-' sgFtripped).
-  "souCode" string (4,1,1) Source Cal code desired, '    ' => any code selected
-                               '*   ' => any non blank code (calibrators only)
-                               '-CAL' => blank codes only (no calibrators)
-  "Qual"     int (1,1,1)  Source qualifier, -1 [default] = any
-  "Antennas" int (?,1,1) a list of selected antenna numbers, if any is negative
-             then the absolute values are used and the specified antennas are deselected.
-  "corrtype" int (1,1,1) Correlation type, 0=cross corr only, 1=both, 2=auto only.
-  "passAll"  bool (1,1,1) If True, pass along all data when selecting/calibration
-                              even if it's all flagged, 
-                              data deselected by time, source, antenna etc. is not passed.
-  "doBand"   int (1,1,1) Band pass application type <0-> none
-      (1) if = 1 then all the bandpass data for each antenna
-          will be averaged to form a composite bandpass
-          spectrum, this will then be used to correct the data.
-      (2) if = 2 the bandpass spectra nearest in time (in a weighted
-          sense) to the uv data point will be used to correct the data.
-      (3) if = 3 the bandpass data will be interpolated in time using
-          the solution weights to form a composite bandpass spectrum,
-          this interpolated spectrum will then be used to correct the
-          data.
-      (4) if = 4 the bandpass spectra nearest in time (neglecting
-          weights) to the uv data point will be used to correct the
-          data.
-      (5) if = 5 the bandpass data will be interpolated in time ignoring
-          weights to form a composite bandpass spectrum, this
-          interpolated spectrum will then be used to correct the data.
-  "Smooth"  float (3,1,1) specifies the type of spectral smoothing
-     Smooth(1) = type of smoothing to apply:
-        0 => no smoothing
-        1 => Hanning
-        2 => Gaussian
-        3 => Boxcar
-        4 => Sinc (i.e. sin(x)/x)
-      Smooth(2) = the "diameter" of the function, i.e.
-        width between first nulls of Hanning triangle
-        and sinc function, FWHM of Gaussian, width of
-        Boxcar. Defaults (if < 0.1) are 4, 2, 2 and 3
-        channels for Smooth(1) = 1 - 4.
-      Smooth(3) = the diameter over which the convolving
-        function has value - in channels.
-        Defaults: 1, 3, 1, 4 times Smooth(2) used when
- "Alpha" float scalar If != 0.0 then correct data by spectral index Alpha
-        -0.7 is typical for synchrotron.
- "SubScanTime" float scalar [Optional] if given, this is the 
-      desired time (days) of a sub scan.  This is used by the 
-      selector to suggest a value close to this which will
-      evenly divide the current scan.  
-      0 => Use scan average.
-      This is only useful for ReadSelect operations on indexed ObitUVs.
+
+============== ============== ==================================================
+"doCalSelect"  bool (1,1,1)   Select/calibrate/edit data?
+"Stokes"       string (4,1,1) Selected output Stokes parameters:
+                              "    "=> no translation,"I   ","V   ","Q   ", "U
+                              ", "IQU ", "IQUV",  "IV  ", "RR  ", "LL  ", "RL
+                              ", "LR  ", "HALF" = RR,LL, "FULL"=RR,LL,RL,LR.
+                              [default "    "] In the above 'F' can substitute
+                              for "formal" 'I' (both RR+LL).
+"BChan"        int (1,1,1)    First spectral channel selected. [def all]
+"EChan"        int (1,1,1)    Highest spectral channel selected. [def all]
+"chanInc"      int (1,1,1)    channel selected increment. [def 1]
+"BIF"          int (1,1,1)    First "IF" selected. [def all]
+"EIF"          int (1,1,1)    Highest "IF" selected. [def all]
+"IFInc"        int (1,1,1)    "IF" selected increment. [def 1]
+"doPol"        int (1,1,1)    >0 -> calibrate polarization.
+"doCalib"      int (1,1,1)    >0 -> calibrate, 2=> also calibrate Weights
+"gainUse"      int (1,1,1)    SN/CL table version number, 0-> use highest
+"flagVer"      int (1,1,1)    Flag table version, 0-> use highest, <0-> none
+"BLVer"        int (1,1,1)    BL table version, 0> use highest, <0-> none
+"BPVer"        int (1,1,1)    Band pass (BP) table version, 0-> use highest
+"Subarray"     int (1,1,1)    Selected subarray, <=0->all [default all]
+"dropSubA"     bool (1,1,1)   Drop subarray info?
+"FreqID"       int (1,1,1)    Selected Frequency ID, <=0->all [default all]
+"timeRange"    float (2,1,1)  Selected timerange in days.
+"UVRange"      float (2,1,1)  Selected UV range in kilowavelengths.
+"InputAvgTime" float (1,1,1)  Input data averaging time (sec).
+                              used for fringe rate decorrelation correction.
+"Sources"      string (?,?,1) Source names selected unless any starts with
+                              a '-' in which case all are deselected (with '-'
+                              sgFtripped).
+"souCode"      string (4,1,1) Source Cal code desired, '    ' => any code 
+                              selected
+                              '*   ' => any non blank code (calibrators only)
+                              '-CAL' => blank codes only (no calibrators)
+"Qual"         int (1,1,1)    Source qualifier, -1 [default] = any
+"Antennas"     int (?,1,1)    a list of selected antenna numbers, if any is 
+                              negative then the absolute values are used and
+                              the specified antennas are deselected.
+"corrtype"     int (1,1,1)    Correlation type, 0=cross corr only, 1=both, 
+                              2=auto only.
+"passAll"      bool (1,1,1)   If True, pass along all data when 
+                              selecting/calibration even if it's all flagged,
+                              data deselected by time, source, antenna etc. is
+                              not passed.
+"doBand"       int (1,1,1)    Band pass application type <0-> none
+                              
+                              (1) if = 1 then all the bandpass data for each 
+                                  antenna will be averaged to form a composite
+                                  bandpass spectrum, this will then be used to
+                                  correct the data.
+                              (2) if = 2 the bandpass spectra nearest in time 
+                                  (in a weighted sense) to the uv data point
+                                  will be used to correct the data.
+                              (3) if = 3 the bandpass data will be interpolated 
+                                  in time using the solution weights to form a
+                                  composite bandpass spectrum, this
+                                  interpolated spectrum will then be used to
+                                  correct the data.
+                              (4) if = 4 the bandpass spectra nearest in time 
+                                  (neglecting weights) to the uv data point
+                                  will be used to correct the data.
+                              (5) if = 5 the bandpass data will be interpolated 
+                                  in time ignoring weights to form a composite
+                                  bandpass spectrum, this interpolated spectrum
+                                  will then be used to correct the data.
+"Smooth"       float (3,1,1)  specifies the type of spectral smoothing
+                              
+                              Smooth(1) = type of smoothing to apply:
+                                0) => no smoothing
+                                1) => Hanning
+                                2) => Gaussian
+                                3) => Boxcar
+                                4) => Sinc (i.e. sin(x)/x)
+                              Smooth(2) = the "diameter" of the function, i.e.
+                                width between first nulls of Hanning triangle
+                                and sinc function, FWHM of Gaussian, width of
+                                Boxcar. Defaults (if < 0.1) are 4, 2, 2 and 3
+                                channels for Smooth(1) = 1 - 4.
+                              Smooth(3) = the diameter over which the convolving
+                                function has value - in channels.
+                                Defaults: 1, 3, 1, 4 times Smooth(2) used when
+"Alpha"        float scalar   If != 0.0 then correct data by spectral index 
+                              Alpha -0.7 is typical for synchrotron.
+"SubScanTime"  float scalar   [Optional] if given, this is the 
+                              desired time (days) of a sub scan.  This is used 
+                              by the selector to suggest a value close to this
+                              which will evenly divide the current scan.  0 =>
+                              Use scan average.  This is only useful for
+                              ReadSelect operations on indexed ObitUVs.
+============== ============== ==================================================
 """
 # $Id$
 #-----------------------------------------------------------------------
@@ -131,13 +150,15 @@ import OData
 myClass = "ObitUV"
 
 class UV (OData.OData):
-    """ Python Obit inteferometer (UV) data class
-    
-    UV Members with python interfaces:
-    List      - used to pass instructions to processing
-    TableList - List of tables attached
-    Desc      - Astronomical labeling of the data
-    VisBuf    - memory pointer into I/O Buffer
+    """ 
+Python Obit inteferometer (UV) data class.  UV Members with python interfaces:
+
+=========  ==========================================================
+List       used to pass instructions to processing
+Desc       Astronomical labeling of the data
+TableList  List of tables attached
+VisBuf     memory pointer into I/O Buffer
+=========  ==========================================================
     """
     def __init__(self, name) :
         self.this = Obit.new_UV(name)
@@ -196,10 +217,11 @@ class UV (OData.OData):
         return "<C UV instance> " + Obit.UVGetName(self.cast(myClass))
     
     def cast(self, toClass):
-        """ Casts object pointer to specified class
-        
-        self     = object whose cast pointer is desired
-        toClass  = Class string to cast to ("ObitUV")
+        """ 
+Casts object pointer to specified class
+
+* self     = object whose cast pointer is desired
+* toClass  = Class string to cast to ("ObitUV")
         """
         # Get pointer with type of this class
         out =  self.me
@@ -208,12 +230,13 @@ class UV (OData.OData):
     # end cast
             
     def Open (self, access, err):
-        """ Open a UV data persistent (disk) form
+        """ 
+Open a UV data persistent (disk) form
 
-        Returns 0 on success, else failure
-        self   = Python UV object
-        access = access READONLY (1), WRITEONLY (2), READWRITE(3), READCAL(4)
-        err    = Python Obit Error/message stack
+* Returns: 0 on success, else failure
+* self   = Python UV object
+* access = access READONLY (1), WRITEONLY (2), READWRITE(3), READCAL(4)
+* err    = Python Obit Error/message stack
         """
         inUV = self
         # Checks
@@ -229,13 +252,14 @@ class UV (OData.OData):
         # end Open
         
     def Read (self, err, firstVis=None):
-        """ Read a UV  persistent (disk) form
-        
-        Reads into buffer attached to UV data, use VisBuf for access
-        Returns 0 on success, else failure
-        self     = Python UV object
-        err      = Python Obit Error/message stack
-        firstVis = If given the first 1-rel visibility in data set
+        """ 
+Read a UV  persistent (disk) form.  Reads into buffer attached to UV data, use 
+VisBuf for access.
+
+* Returns: 0 on success, else failure
+* self     = Python UV object
+* err      = Python Obit Error/message stack
+* firstVis = If given the first 1-rel visibility in data set
         """
         inUV = self
         # Checks
@@ -257,13 +281,14 @@ class UV (OData.OData):
         # end Read
         
     def Write (self, err, firstVis=None):
-        """ Write a UV  persistent (disk) form
+        """ 
+Write a UV  persistent (disk) form. Writes buffer attached to UV data, use 
+VisBuf for access.
 
-        Writes buffer attached to UV data, use VisBuf for access
-        returns 0 on success, else failure
-        self     = Python UV object
-        err      = Python Obit Error/message stack
-        firstVis = If given the first 1-rel visibility in data set
+* returns: 0 on success, else failure
+* self     = Python UV object
+* err      = Python Obit Error/message stack
+* firstVis = If given the first 1-rel visibility in data set
         """
         inUV = self
         # Checks
@@ -285,13 +310,13 @@ class UV (OData.OData):
         # end Write
         
     def ReadVis (self, err, firstVis=None):
-        """ Read a UV  persistent (disk) form
-        
-        Reads into UVVis structure
-        Returns UVVis structure
-        self     = Python UV object
-        err      = Python Obit Error/message stack
-        firstVis = If given the first 1-rel visibility in data set
+        """ 
+Read a UV  persistent (disk) form.  Reads into UVVis structure.
+
+* Returns: UVVis structure
+* self     = Python UV object
+* err      = Python Obit Error/message stack
+* firstVis = If given the first 1-rel visibility in data set
         """
         # Checks
         if not self.UVIsA():
@@ -312,13 +337,13 @@ class UV (OData.OData):
         # end ReadVis
         
     def WriteVis (self, outVis, err, firstVis=None):
-        """ Write a UVVis to UV  persistent (disk) form
+        """ 
+Write a UVVis to UV  persistent (disk) form. Writes visibility to UV data.
 
-        Writes visibility to UV data
-        self      = Python UV object
-        outVis    = Vis structure to write
-        err       = Python Obit Error/message stack
-        firstVis  = If given the first 1-rel visibility in data set
+* self      = Python UV object
+* outVis    = Vis structure to write
+* err       = Python Obit Error/message stack
+* firstVis  = If given the first 1-rel visibility in data set
         """
         # Checks
         if not self.UVIsA():
@@ -339,11 +364,12 @@ class UV (OData.OData):
         # end WriteVis
         
     def Close (self, err):
-        """ Close a UV  persistent (disk) form
-        
-        returns 0 on success, else failure
-        self      = Python UV object
-        err       = Python Obit Error/message stack
+        """ 
+Close a UV  persistent (disk) form.
+
+* returns: 0 on success, else failure
+* self      = Python UV object
+* err       = Python Obit Error/message stack
         """
         inUV = self
         # Checks
@@ -359,12 +385,13 @@ class UV (OData.OData):
         # end Close
         
     def Copy (self, outUV, err):
-        """ Make a deep copy of input object.
-        
-        Makes structure the same as self, copies data, tables
-        self   = Python UV object to copy
-        outUV  = Output Python UV object, must be defined
-        err    = Python Obit Error/message stack
+        """ 
+Make a deep copy of input object. Makes structure the same as self, copies 
+data, tables
+
+* self   = Python UV object to copy
+* outUV  = Output Python UV object, must be defined
+* err    = Python Obit Error/message stack
         """
         # Checks
         if not self.UVIsA():
@@ -380,12 +407,13 @@ class UV (OData.OData):
     # end Copy
 
     def Clone (self, outUV, err):
-        """ Make a copy of a object but do not copy the actual data
-        
-        This is useful to create an UV similar to the input one.
-        self   = Python UV object
-        outUV  = Output Python UV object, must be defined
-        err    = Python Obit Error/message stack
+        """ 
+Make a copy of a object but do not copy the actual data. This is useful to 
+create an UV similar to the input one.
+
+* self   = Python UV object
+* outUV  = Output Python UV object, must be defined
+* err    = Python Obit Error/message stack
         """
         # Checks
         if not self.UVIsA():
@@ -401,12 +429,13 @@ class UV (OData.OData):
     # end Clone
 
     def Scratch (self, err):
-        """ Create a scratch file suitable for accepting the data to be read from self
-        
-        A scratch UV is more or less the same as a normal UV except that it is
-        automatically deleted on the final unreference.
-        self      = Python UV object
-        err       = Python Obit Error/message stack
+        """ 
+Create a scratch file suitable for accepting the data to be read from self.  A
+scratch UV is more or less the same as a normal UV except that it is
+automatically deleted on the final unreference.
+
+* self      = Python UV object
+* err       = Python Obit Error/message stack
         """
         ################################################################
         # Checks
@@ -424,19 +453,21 @@ class UV (OData.OData):
     # end Scratch
 
     def Header (self, err):
-        """ Write image header on output
-        
-        self   = Python Obit UV object
-        err    = Python Obit Error/message stack
+        """ 
+Write image header on output
+
+* self   = Python Obit UV object
+* err    = Python Obit Error/message stack
         """
         PHeader (self, err)
         # end Header
         
     def Info (self, err):
-        """ Get underlying data file info
-        
-        self   = Python Obit UV object
-        err    = Python Obit Error/message stack
+        """ 
+Get underlying data file info
+
+* self   = Python Obit UV object
+* err    = Python Obit Error/message stack
         """
         PUVInfo(self, err)
         # end Info
@@ -486,20 +517,19 @@ READWRITE = OData.READWRITE # 3
 READCAL   = 4
 
 def newPFUV(name, filename, disk, exists, err, verbose=True, nvis=1000):
-    """ Create and initialize an FITS based UV structure
-    
-    Create, set initial access information (full image, plane at a time)
-    and if exists verifies the file.
-    Sets buffer to hold nvis vis.
-    Returns the Python UV object
-    isOK member set to indicate success
-    name     = name desired for object (labeling purposes)
-    filename = name of FITS file
-    disk     = FITS directory number
-    exists   = if true then the file is opened and closed to verify
-    err      = Python Obit Error/message stack
-    verbose  = If true any give error messages, else suppress
-    nvis     = Number of visibilities read/written per call
+    """ 
+Create and initialize an FITS based UV structure.
+Create, set initial access information (full image, plane at a time)
+and if exists verifies the file. Sets buffer to hold nvis vis.
+
+* Return: the Python UV object. isOK member set to indicate success.
+* name     = name desired for object (labeling purposes)
+* filename = name of FITS file
+* disk     = FITS directory number
+* exists   = if true then the file is opened and closed to verify
+* err      = Python Obit Error/message stack
+* verbose  = If true any give error messages, else suppress
+* nvis     = Number of visibilities read/written per call
     """
     ################################################################
     out = UV (name)
@@ -1209,14 +1239,15 @@ def PUtilVisSub (in1UV, in2UV, outUV, err):
     # end PUtilVisSub
 
 def PUtilVisCompare (in1UV, in2UV, err):
-    """ Compares the visibilites in in1UV with those in in2UV
+    """ 
+Compares the visibilites in *in1UV* with those in *in2UV*.
 
-    returns RMS real, imaginary parts/amplitude
-    in1UV   = Numerator  Python UV object, possible infoList parameter
-        printRat scalar float  If given and >0.0 then tell about entries
-                 with a real or imaginary difference ratio > printRat
-    in2UV   = Denominator Python UV object
-    err       = Python Obit Error/message stack
+* return:  RMS ( real, imaginary differences / amplitude of *inUV2* )
+* in1UV = Numerator Python UV object. Possible infoList parameter printRat 
+          scalar float if given and >0.0 then tell about entries
+          with a real or imaginary difference ratio > printRat
+* in2UV = Denominator Python UV object
+* err   = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -1771,14 +1802,16 @@ def PEditClipStokes (inUV, scratch, outUV, err):
     # end PEditClipStokes
 
 def PNoise(inUV, outUV, scale, sigma, err):
-    """ Scale and add Gaussian noise to data in a UV dataset
+    """ 
+Scale and add Gaussian noise to data in a UV dataset.
 
-    out = in*scale + noise(sigma) for each real,imag
-    inUV    = input Python Obit UV
-    outUV   = output Python Obit UV, must be previously defined
-    scale   = multiplicative term
-    sigma   = Std. deviation of noise to be added
-    err     = Python Obit Error/message stack
+out = in*scale + noise(sigma) for each real,imag
+
+* inUV    = input Python Obit UV
+* outUV   = output Python Obit UV, must be previously defined
+* scale   = multiplicative term
+* sigma   = Std. deviation of noise to be added
+* err     = Python Obit Error/message stack
     """
     ################################################################
     # Checks
