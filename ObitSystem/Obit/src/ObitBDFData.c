@@ -1147,6 +1147,7 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
     vis[in->desc->ilocit] = in->currIntTime;
     vis[in->desc->ilocb]  = (ofloat)(in->antNo[in->ant1]*256 + in->antNo[in->ant1]);
     vis[in->desc->ilocsu] = (ofloat)in->sourceNo;
+    weight = vis[in->desc->ilocit];  /* Use integration time as weight */
     
     /* Loop over visibilities */
     voff = in->nextAVis * in->autoVisSize;

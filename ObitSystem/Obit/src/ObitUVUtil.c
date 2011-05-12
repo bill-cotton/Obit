@@ -2774,19 +2774,20 @@ void ObitUVUtilSplitCh (ObitUV *inUV, olong nOut, ObitUV **outUV,
   BIF     = g_malloc(nOut*sizeof(olong));
   numIF   = g_malloc(nOut*sizeof(olong));
 
-  /* Divvy up channels - must be an integran number of IFs per output */
+  /* Divvy up channels - must be an integral number of IFs per output -
+     or only 1 */
   nchan = inDesc->inaxes[inDesc->jlocf];
   if (inDesc->jlocif>=0) nif = inDesc->inaxes[inDesc->jlocif];
   else                   nif = 1;
   if (inDesc->jlocs>=0) nstok = inDesc->inaxes[inDesc->jlocs];
   else                  nstok= 1;
   nIFperOut = (glong) (0.9999 + (nif / (ofloat)nOut));
-   if (fabs(((ofloat)nIFperOut)-(nif / (ofloat)nOut))>0.001) {
+  if ((fabs(((ofloat)nIFperOut)-(nif / (ofloat)nOut))>0.001) && (nif>1)) {
     Obit_log_error(err, OBIT_Error,"%s Not an equal number of IFs per output",
 		   routine);
     return;
   }
- if (nOut>(nchan* nIFperOut)) {
+  if (nOut>(nchan* nIFperOut)) {
     Obit_log_error(err, OBIT_Error,"%s Fewer channels, %d than output files %d",
 		   routine, nchan, nOut);
     return;

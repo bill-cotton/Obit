@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Radio interferometry calibration software                     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009,2010                                          */
+/*;  Copyright (C) 2009-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1152,7 +1152,7 @@ ObitUV* InitialCal (ObitInfoList* myInput, ObitUV* scrData, ObitErr* err)
   ObitInfoListGet(myInput, "EChan1", &type, dim, &itemp, err);
   ObitInfoListAlwaysPut(scrData->info, "EChan", OBIT_long, dim, &itemp);
   dim[0] = strlen(blank);  /* Phase only */
-  ObitInfoListAlwaysPut(scrData->info, "solMode", OBIT_string, dim, blank);
+  ObitInfoListAlwaysPut(solver->info, "solMode", OBIT_string, dim, blank);
 
 
   /* Do atmospheric solution */
@@ -1181,6 +1181,10 @@ ObitUV* InitialCal (ObitInfoList* myInput, ObitUV* scrData, ObitErr* err)
   ObitInfoListAlwaysPut(scrData->info, "BChan", OBIT_long, dim, &itemp);
   itemp = 0;
   ObitInfoListAlwaysPut(scrData->info, "EChan", OBIT_long, dim, &itemp);
+  ftemp = 0.0;
+  ObitInfoListGetTest(myInput, "Alpha", &type, dim, &ftemp);
+  dim[0] = dim[1] = dim[2] = dim[3] = dim[4] = 1;
+  ObitInfoListAlwaysPut (scrData->info, "Alpha", OBIT_float, dim, &ftemp);
 
   /* Average data to solInt2; 0=> all */
   solInt = 0.0;
@@ -1439,7 +1443,7 @@ ObitTableBP* DummyBPTable (ObitUV* inData, ObitTableSN *SNTmpl, ObitErr *err)
 
     /* Set time, antenna etc.*/
     BPRow->Time   = SNRow->Time;
-    BPRow->TimeI  = SNRow->TimeI;
+    BPRow->TimeI  = fabs(SNRow->TimeI);
     BPRow->SourID = SNRow->SourID;
     BPRow->antNo  = SNRow->antNo;
     BPRow->SubA   = SNRow->SubA;
@@ -1522,6 +1526,7 @@ void SN2BPTable (ObitTableSN *SNTab, ObitTableBP *BPTab, olong chan,
   for (irow=1; irow<=SNTab->myDesc->nrow; irow++) {
     retCode = ObitTableSNReadRow (SNTab, irow, SNRow, err);
     if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
+    SNRow->TimeI  = fabs(SNRow->TimeI); /* Grumble, grumble */
 
     /* Set time, antenna etc
        BPRow->Time.  = SNRow->Time;
@@ -1534,28 +1539,36 @@ void SN2BPTable (ObitTableSN *SNTab, ObitTableBP *BPTab, olong chan,
     /* Find corresponding BP row */
     orow++;
     count = 0;
-    retCode = ObitTableBPReadRow (BPTab, irow, BPRow, err);
+    retCode = ObitTableBPReadRow (BPTab, orow, BPRow, err);
     if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
-    found = (BPRow->Time==SNRow->Time) && (BPRow->antNo==SNRow->antNo);
+    /*found = (BPRow->Time==SNRow->Time) && (BPRow->antNo==SNRow->antNo);*/
+    found = (fabs(BPRow->Time-SNRow->Time)<MAX(BPRow->TimeI,SNRow->TimeI)) 
+      && (BPRow->antNo==SNRow->antNo);
     while (!found) {
       /* Forward?? */
       if ((BPRow->Time<SNRow->Time) || 
-	  ((BPRow->Time<=SNRow->Time) && (BPRow->antNo<SNRow->antNo))) {
+	  ((fabs(BPRow->Time-SNRow->Time)<MAX(BPRow->TimeI,SNRow->TimeI)) 
+	   && (BPRow->antNo<SNRow->antNo))) {
 	orow++;
 	retCode = ObitTableBPReadRow (BPTab, orow, BPRow, err);
 	if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
-	found = (BPRow->Time==SNRow->Time) && (BPRow->antNo==SNRow->antNo);
+	found = (fabs(BPRow->Time-SNRow->Time)<MAX(BPRow->TimeI,SNRow->TimeI)) 
+	  && (BPRow->antNo==SNRow->antNo);
 	/* Reverse? */
       } else if ((BPRow->Time>SNRow->Time) || 
-		 ((BPRow->Time==SNRow->Time) && (BPRow->antNo>SNRow->antNo))) {
+		 ((fabs(BPRow->Time-SNRow->Time)<MAX(BPRow->TimeI,SNRow->TimeI)) 
+		 && (BPRow->antNo>SNRow->antNo))) {
 	orow--;
 	retCode = ObitTableBPReadRow (BPTab, orow, BPRow, err);
 	if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
-	found = (BPRow->Time==SNRow->Time) && (BPRow->antNo==SNRow->antNo);
+	found = (fabs(BPRow->Time-SNRow->Time)<MAX(BPRow->TimeI,SNRow->TimeI)) 
+	  && (BPRow->antNo==SNRow->antNo);
       }
+      found = (fabs(BPRow->Time-SNRow->Time)<MAX(BPRow->TimeI,SNRow->TimeI)) 
+	&& (BPRow->antNo==SNRow->antNo);
       /* Not forever */
       count++;
-      if (count>(2*irow<=SNTab->myDesc->nrow)) goto cleanup;
+      if (count>(2*SNTab->myDesc->nrow)) goto cleanup;
     }
 
     /* Copy info to BP Row */
