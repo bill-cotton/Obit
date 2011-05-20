@@ -30,6 +30,7 @@
 #include "ObitUVUtil.h"
 #include "ObitUVImager.h"
 #include "ObitUVImagerIon.h"
+#include "ObitUVImagerMF.h"
 #include "ObitImageMosaic.h"
 #include "ObitSkyGeom.h"
 #include "ObitSkyModel.h"
@@ -426,9 +427,9 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     }
     if(ObitUVImagerMFIsA(myClean->imager)) {
       /* Needs extra parameter */
-      tmpImager   = ObitUVImagerMFCreate2("Peel imager", 
-					  ((ObitImageMosaicMF*)myClean->mosaic)->maxOrder, 
-					  scrUV, tmpMosaic, err);
+      tmpImager   = (ObitUVImager*)ObitUVImagerMFCreate2("Peel imager", 
+							 ((ObitImageMosaicMF*)myClean->mosaic)->maxOrder, 
+							 scrUV, (ObitImageMosaicMF*)tmpMosaic, err);
     } else {
       tmpImager   = imagerClass->ObitUVImagerCreate2("Peel imager", scrUV, tmpMosaic, err);
     }
