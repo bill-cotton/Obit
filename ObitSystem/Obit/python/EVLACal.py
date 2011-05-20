@@ -615,6 +615,59 @@ def EVLAUVLoadArch(dataroot, Aname, Aclass, Adisk, Aseq, err, \
     return outuv
     # end EVLAUVLoadArch
 
+def EVLAHann(inUV, Aname, Aclass, Adisk, Aseq, err, \
+             logfile='', check=False, debug=False):
+    """ Hanning smooth a file to AIPS
+
+    Returns task error code, 0=OK, else failed
+    inUV       = UV data to smooth
+    Aname      = AIPS name of file
+    Aclass     = AIPS class of file
+    Aseq       = AIPS sequence number of file, 0=> create new
+    Adisk      = FITS directory number
+    err        = Python Obit Error/message stack
+    check      = Only check script, don't execute tasks
+    debug      = Run tasks debug, show input
+    logfile    = logfile for messages
+    returns AIPS UV data object, None on failure
+    """
+    ################################################################
+    mess =  "Hanning smooth data"
+    printMess(mess, logfile)
+    #
+    hann=ObitTask.ObitTask("Hann")
+    setname(inUV,hann)
+    if check:
+        return inUV
+    hann.outName  = Aname 
+    hann.outClass = Aclass
+    hann.outSeq   = Aseq
+    hann.outDisk  = Adisk
+    hann.flagVer  = -1
+    hann.taskLog  = logfile
+    hann.debug    = debug
+    if debug:
+        hann.i
+    # Trap failure
+    try:
+        if not check:
+            hann.g
+    except Exception, exception:
+        print exception
+        mess = "Median flagging Failed retCode="+str(hann.retCode)
+        printMess(mess, logfile)
+        return None
+    else:
+        pass
+    # Get output
+    outUV = UV.newPAUV("AIPS UV DATA", Aname, Aclass, Adisk, Aseq, True, err)
+    if err.isErr:
+        mess =  "Error Getting Hanning smoothed data"
+        printMess(mess, logfile)
+        return None
+    return outUV
+    # end EVLAHann
+
 def EVLAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
           exclude=["AIPS HI","AIPS PL","AIPS SL"], include=["AIPS CC"],
           headHi=False, logfile=""):
@@ -1100,7 +1153,7 @@ def EVLAPACor(uv, err, CLver=0, FreqID=1,\
 
 def EVLADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None, \
                      timeRange=[0.,0.], FreqID=1, doCalib=-1, gainUse=0, minSNR=5.0, \
-                     refAnts=[0], doBand=-1, BPVer=0, flagVer=-1, doTwo=True, \
+                     refAnts=[0], doBand=-1, BPVer=0, flagVer=-1, doTwo=True, doZeroPhs=False, \
                      doPlot=False, plotFile="./DelayCal.ps", \
                      nThreads=1, noScrat=[], logfile='', check=False, debug=False):
     """ Group delay calibration
@@ -1138,6 +1191,7 @@ def EVLADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
     flagVer    = Input Flagging table version
     doTwo      = If True, use one and two baseline combinations
                  for delay calibration, else only one baseline
+    doZeroPhs  = If true zero phases from solutions.
     doPlot     = If True make plots of SN gains
     plotFile   = Name of postscript file for plots
     nThreads   = Max. number of threads to use
@@ -1244,6 +1298,33 @@ def EVLADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
         printMess(mess, logfile)
         return 1
     SNver = uv.GetHighVer("AIPS SN")
+
+    # Zero phases?
+    if doZeroPhs:
+        sncor = ObitTask.ObitTask("SNCor")
+        if not check:
+            setname(uv, sncor)
+        sncor.solnVer    = SNver
+        sncor.corMode    = 'ZPHS'
+        sncor.timeRange  = timeRange
+        sncor.taskLog    = logfile
+        sncor.debug      = debug
+        if debug:
+            sncor.i
+        mess = "EVLADelayCal: SNCor: Zero phase in SN "+str(sncor.solnVer)
+        printMess(mess, logfile)
+        # Trap failure
+        try:
+            if not check:
+                sncor.g
+        except Exception, exception:
+            print exception
+            mess = "SNCor Failed retCode="+str(sncor.retCode)
+            printMess(mess, logfile)
+            return 1
+        else:
+            pass
+    # End SNCor
 
     # Smooth if requested
     if smoTime>0.0:
@@ -1671,7 +1752,7 @@ def EVLACalAP(uv, target, ACal, err, \
     return 0
     # end EVLACal
 
-def EVLABPCal(uv, BPCal, err, newBPVer=1, timerange=[0.,0.], \
+def EVLABPCal(uv, BPCal, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
                   doCalib=2, gainUse=0, doBand=0, BPVer=0, flagVer=-1,  \
                   CalDataType="    ", CalFile="  ", CalName="  ", CalClass="  ", \
                   CalSeq=0, CalDisk=0, CalNfield=0, CalCCVer=0, \
@@ -1711,6 +1792,7 @@ def EVLABPCal(uv, BPCal, err, newBPVer=1, timerange=[0.,0.], \
     BPVer    = previous Bandpass table (BP) version
     flagVer  = Input Flagging table version
     timerange= timerange in days to use
+    UVRange  =  Min & max baseline (klambda), 0s=> all
     CalDataType =  Calibrator model file data type (AIPS,FITS)
     CalFile  = Calibrator model FITS input image if Type=='FITS'
     CalName  = Calibrator model Cleaned map name 
@@ -1775,6 +1857,7 @@ def EVLABPCal(uv, BPCal, err, newBPVer=1, timerange=[0.,0.], \
     bpass.Alpha     = specIndex
     bpass.refAnt    = refAnt
     bpass.timeRange = timerange
+    bpass.UVRange   = UVRange
     bpass.DataType2 = CalDataType
     bpass.in2File   = CalFile
     bpass.in2Name   = CalName
@@ -1791,6 +1874,7 @@ def EVLABPCal(uv, BPCal, err, newBPVer=1, timerange=[0.,0.], \
     bpass.modelFlux = modelFlux
     bpass.modelPos  = modelPos
     bpass.modelParm = modelParm
+    bpass.ChWid2    = ChWid2
     bpass.doAuto    = doAuto
     bpass.avgPol    = avgPol
     bpass.avgIF     = avgIF
@@ -3167,6 +3251,7 @@ def EVLAReportTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", 
     user = OSystem.PGetAIPSuser()
     
     # Loop over slist
+    hd = uv.Desc.Dict
     for sou in slist:
         sdict = {"Source":sou, "haveImage":False}  # Init source structure
         sdict["ObsDate"]  = uv.Desc.Dict["obsdat"]
@@ -3214,9 +3299,10 @@ def EVLAReportTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", 
     # end loop over sources
 
     # Give terse listing
-    mess = "\n Summary at frequency = "+"%8.3f"%(hd["crval"][hd["jlocf"]]*1.0e-9)+" GHz on "+ \
-           uv.Desc.Dict["obsdat"]
-    printMess(mess, logfile)
+    if hd:
+        mess = "\n Summary at frequency = "+"%8.3f"%(hd["crval"][hd["jlocf"]]*1.0e-9)+" GHz on "+ \
+               uv.Desc.Dict["obsdat"]
+        printMess(mess, logfile)
     for sdict in Report:
         mess = "\n Source = "+sdict["Source"]+", Exposure="+"%5.3f"%(sdict["Exposure"]*24.)+" hr"
         printMess(mess, logfile)

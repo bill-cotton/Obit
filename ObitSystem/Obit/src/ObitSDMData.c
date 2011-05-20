@@ -757,7 +757,7 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   g_free(fullname);
 
   /* Other info - what a piece of shit */
-  damn = ObitSDMDataGetSWArray (out, out->MainTab->rows[0]->scanNumber, FALSE);
+  damn = ObitSDMDataGetSWArray (out, 0, FALSE);
 
   /* Reference JD from SW Array */
   out->refJD = damn->refJD;
@@ -778,7 +778,7 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
  * Creates and fills n spectral window array
  * Parses the ASMD XML tables and stores
  * \param in       ASDM object to use
- * \param mainRow  Scan number (in ASDMMain table)
+ * \param mainRow  Scan row number (in ASDMMain table)
  * \param SWOrder  If TRUE leave data is SW order
  * \return the new structure, NULL on error, delete using ObitSDMKillSWArray
  */
@@ -798,6 +798,7 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
 
   /* Find scan in Main table */
   iMain = mainRow;
+  
   if (iMain>=in->MainTab->nrows) return out;
 
   out = g_malloc0(sizeof(ASDMSpectralWindowArray));

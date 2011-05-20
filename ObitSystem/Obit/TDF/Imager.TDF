@@ -443,7 +443,7 @@ Adverbs:
              with space. default  = outDisk
 
    The following control imaging:
-  FOV........Radius of the desired field of view.
+  FOV........Radius of the desired field of view in deg..
   NField.....Optional parameter to specify fields and overrides
              the FOV parameter.  Up to 64 may be specified as 
              parameters; you should have a good reason for doing

@@ -784,8 +784,8 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
       for (ichan=0; ichan<ndiv; ichan++) {
 	in->BIFSpec[ip] = iif;
 	in->EIFSpec[ip] = iif;
-	in->BChanSpec[ip] = ichan*ndiv;
-	in->EChanSpec[ip] = (ichan+1)*ndiv - 1;
+	in->BChanSpec[ip] = ichan*maxCh;
+	in->EChanSpec[ip] = (ichan+1)*maxCh - 1;
 	ip++;
       } /* end loop over coarse channel */
       /* Make sure all channels done */

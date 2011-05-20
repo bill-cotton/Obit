@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2007-2010                                          */
+/*;  Copyright (C) 2007-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -424,7 +424,14 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     } else {
       imagerClass = (const ObitUVImagerClassInfo*)myClean->imager->ClassInfo;
     }
-    tmpImager   = imagerClass->ObitUVImagerCreate2("Peel imager", scrUV, tmpMosaic, err);
+    if(ObitUVImagerMFIsA(myClean->imager)) {
+      /* Needs extra parameter */
+      tmpImager   = ObitUVImagerMFCreate2("Peel imager", 
+					  ((ObitImageMosaicMF*)myClean->mosaic)->maxOrder, 
+					  scrUV, tmpMosaic, err);
+    } else {
+      tmpImager   = imagerClass->ObitUVImagerCreate2("Peel imager", scrUV, tmpMosaic, err);
+    }
     if (err->error) goto cleanup;
 
     /* Trap Ion variation  SkyModel */

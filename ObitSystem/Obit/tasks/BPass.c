@@ -1542,21 +1542,21 @@ void SN2BPTable (ObitTableSN *SNTab, ObitTableBP *BPTab, olong chan,
     retCode = ObitTableBPReadRow (BPTab, orow, BPRow, err);
     if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
     /*found = (BPRow->Time==SNRow->Time) && (BPRow->antNo==SNRow->antNo);*/
-    found = (fabs(BPRow->Time-SNRow->Time)<MAX(BPRow->TimeI,SNRow->TimeI)) 
+    found = (fabs(BPRow->Time-SNRow->Time)<=MAX(BPRow->TimeI,SNRow->TimeI)) 
       && (BPRow->antNo==SNRow->antNo);
     while (!found) {
       /* Forward?? */
       if ((BPRow->Time<SNRow->Time) || 
-	  ((fabs(BPRow->Time-SNRow->Time)<MAX(BPRow->TimeI,SNRow->TimeI)) 
+	  ((fabs(BPRow->Time-SNRow->Time)<=MAX(BPRow->TimeI,SNRow->TimeI)) 
 	   && (BPRow->antNo<SNRow->antNo))) {
 	orow++;
 	retCode = ObitTableBPReadRow (BPTab, orow, BPRow, err);
 	if ((retCode != OBIT_IO_OK) || (err->error)) goto cleanup;
-	found = (fabs(BPRow->Time-SNRow->Time)<MAX(BPRow->TimeI,SNRow->TimeI)) 
+	found = (fabs(BPRow->Time-SNRow->Time)<=MAX(BPRow->TimeI,SNRow->TimeI)) 
 	  && (BPRow->antNo==SNRow->antNo);
 	/* Reverse? */
       } else if ((BPRow->Time>SNRow->Time) || 
-		 ((fabs(BPRow->Time-SNRow->Time)<MAX(BPRow->TimeI,SNRow->TimeI)) 
+		 ((fabs(BPRow->Time-SNRow->Time)<=MAX(BPRow->TimeI,SNRow->TimeI)) 
 		 && (BPRow->antNo>SNRow->antNo))) {
 	orow--;
 	retCode = ObitTableBPReadRow (BPTab, orow, BPRow, err);
@@ -1564,7 +1564,7 @@ void SN2BPTable (ObitTableSN *SNTab, ObitTableBP *BPTab, olong chan,
 	found = (fabs(BPRow->Time-SNRow->Time)<MAX(BPRow->TimeI,SNRow->TimeI)) 
 	  && (BPRow->antNo==SNRow->antNo);
       }
-      found = (fabs(BPRow->Time-SNRow->Time)<MAX(BPRow->TimeI,SNRow->TimeI)) 
+      found = (fabs(BPRow->Time-SNRow->Time)<=MAX(BPRow->TimeI,SNRow->TimeI)) 
 	&& (BPRow->antNo==SNRow->antNo);
       /* Not forever */
       count++;

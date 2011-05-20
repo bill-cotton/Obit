@@ -111,9 +111,15 @@ bpDoCenter1   = None       # Fraction of  channels in 1st, overrides bpBChan1, b
 bpBChan2      = 1          # Low freq. channel for BP cal
 bpEChan2      = 0          # Highest freq channel for BP cal,  0=>all 
 bpChWid2      = 1          # Number of channels in running mean BP soln
+bpUVRange     = [0.,0.]    # UV range in klambda
 bpsolMode     = 'A&P'      # Band pass type 'A&P', 'P', 'P!A'
 bpsolint1     = 10.0/60.0  # BPass phase correction solution in min
 bpsolint2     = 10.0       # BPass bandpass solution in min
+bpModel = {                # BPass model specification
+    "CalDataType":"    ", "CalFile":"    ","CalName":"    ","CalClass":"    ",\
+    "CalSeq":0,"CalDisk":1,"CalNfield":1,"CalCCVer":1,"CalFlux":0.0,"CalBComp":[1],"CalEComp":[0],\
+    "CalCmethod":"    ","CalCmodel":'COMP'
+    }
 
 # Delay calibration from DCal
 doDelayCal  = True         # Determine/apply delays from DCal
@@ -121,6 +127,7 @@ doDelayCal2 = None         # Determine/apply delays from DCal on averaged data
                            # Defaults to doDelayCal
 doTwo       = True         # Use 1 and 2 bl combinations?
 DCal        = None         # Delay calibrator(s)
+delayZeroPhs= False        # Zero phases from delay solutions
 
 # Amp/phase calibration
 doAmpPhaseCal = True                    # Amplitude/phase calibration
@@ -274,6 +281,12 @@ if doLoadArchive:
 
 # Hanning
 if doHann:
+    # Set uv if not done
+    if uv==None and not check:
+        uv = UV.newPAUV("AIPS UV DATA", project+session, loadClass, disk, seq, True, err)
+        if err.isErr:
+            OErr.printErrMsg(err, "Error creating AIPS data")
+
     uv = EVLAHann(uv, project+session, dataClass, disk, seq, err, \
                             logfile=logFile, check=check, debug=debug)
     if uv==None and not check:
@@ -369,32 +382,13 @@ if doPACor:
     if retCode!=0:
         raise RuntimeError,"Error in Parallactic angle correction"
 
-# Bandpass calibration
-if doBPCal and BPCal:
-    retCode = EVLABPCal(uv, BPCal, err, noScrat=noScrat, solInt1=bpsolint1, solInt2=bpsolint2, solMode=bpsolMode, \
-                        BChan1=bpBChan1, EChan1=bpEChan1, BChan2=bpBChan2, EChan2=bpEChan2, ChWid2=bpChWid2, \
-                        doCenter1=bpDoCenter1, refAnt=refAnt, specIndex=bpSpecIndex, \
-                        doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
-                        logfile=logFile, check=check, debug=debug)
-    if retCode!=0:
-        raise RuntimeError,"Error in Bandpass calibration"
-    
-    # Plot corrected data?
-    if doSpecPlot and plotSource:
-        plotFile = "./"+project+"_"+session+"_"+band+"BPSpec.ps"
-        retCode = EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
-                               Stokes=["RR","LL"], doband=1,          \
-                               check=check, debug=debug, logfile=logFile )
-        if retCode!=0:
-            raise  RuntimeError,"Error in Plotting spectrum"
-
 # delay calibration
 if doDelayCal and DCal and not check:
     plotFile = "./"+project+"_"+session+"_"+band+"DelayCal.ps"
     retCode = EVLADelayCal(uv, err, calSou=DCal, CalModel=None, \
-                           doCalib=2, flagVer=2, doBand=1, \
+                           doCalib=2, flagVer=2, doBand=-1, \
                            solInt=solint, smoTime=1.0/60.0,  \
-                           refAnts=[refAnt], doTwo=doTwo, \
+                           refAnts=[refAnt], doTwo=doTwo, doZeroPhs=delayZeroPhs, \
                            doPlot=doSNPlot, plotFile=plotFile, \
                            nThreads=nThreads, noScrat=noScrat, \
                            logfile=logFile, check=check, debug=debug)
@@ -404,6 +398,32 @@ if doDelayCal and DCal and not check:
     # Plot corrected data?
     if doSpecPlot and plotSource:
         plotFile = "./"+project+"_"+session+"_"+band+"DelaySpec.ps"
+        retCode = EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
+                               Stokes=["RR","LL"], doband=-1,          \
+                               check=check, debug=debug, logfile=logFile )
+        if retCode!=0:
+            raise  RuntimeError,"Error in Plotting spectrum"
+
+# Bandpass calibration
+if doBPCal and BPCal:
+    retCode = EVLABPCal(uv, BPCal, err, noScrat=noScrat, solInt1=bpsolint1, solInt2=bpsolint2, solMode=bpsolMode, \
+                        BChan1=bpBChan1, EChan1=bpEChan1, BChan2=bpBChan2, EChan2=bpEChan2, ChWid2=bpChWid2, \
+                        doCenter1=bpDoCenter1, refAnt=refAnt, specIndex=bpSpecIndex, UVRange=bpUVRange, \
+                        doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
+                        CalDataType=bpModel["CalDataType"], \
+                        CalFile=bpModel["CalFile"], CalName=bpModel["CalName"], \
+                        CalClass=bpModel["CalClass"], CalSeq=bpModel["CalSeq"], \
+                        CalDisk=bpModel["CalDisk"], CalNfield=bpModel["CalNfield"], \
+                        CalCCVer=bpModel["CalCCVer"], CalFlux=bpModel["CalFlux"], \
+                        CalBComp=bpModel["CalBComp"], CalEComp=bpModel["CalEComp"], \
+                        CalCmethod=bpModel["CalCmethod"], CalCmodel=bpModel["CalCmodel"], \
+                        nThreads=nThreads, logfile=logFile, check=check, debug=debug)
+    if retCode!=0:
+        raise RuntimeError,"Error in Bandpass calibration"
+    
+    # Plot corrected data?
+    if doSpecPlot and plotSource:
+        plotFile = "./"+project+"_"+session+"_"+band+"BPSpec.ps"
         retCode = EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
                                Stokes=["RR","LL"], doband=1,          \
                                check=check, debug=debug, logfile=logFile )
@@ -421,7 +441,7 @@ if doAmpPhaseCal:
     if retCode!=0:
         raise RuntimeError,"Error calibrating"
 
-# More editing, with flux limits VClip a very bad idea here
+# More editing
 if doAutoFlag:
     mess =  "Post calibration editing:"
     printMess(mess, logFile)
@@ -454,33 +474,13 @@ if doRecal:
         if retCode!=0:
             raise RuntimeError,"Error in Parallactic angle correction"
 
-    # Bandpass calibration
-    if doBPCal2 and BPCal and not check:
-        retCode = EVLABPCal(uv, BPCal, err, noScrat=noScrat, \
-                            solInt1=bpsolint1, solInt2=bpsolint2, solMode=bpsolMode, \
-                            BChan1=bpBChan1, EChan1=bpEChan1, BChan2=bpBChan2, EChan2=bpEChan2, ChWid2=bpChWid2, \
-                            doCenter1=bpDoCenter1, refAnt=refAnt, specIndex=bpSpecIndex, \
-                            doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
-                            logfile=logFile, check=check, debug=debug)
-        if retCode!=0:
-            raise RuntimeError,"Error in Bandpass calibration"
-        
-        # Plot corrected data?
-        if doSpecPlot and plotSource:
-            plotFile = "./"+project+"_"+session+"_"+band+"BPSpec.ps"
-            retCode = EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
-                                   Stokes=["RR","LL"], doband=1,          \
-                                   check=check, debug=debug, logfile=logFile )
-            if retCode!=0:
-                raise  RuntimeError,"Error in Plotting spectrum"
-
     # Delay calibration
     if doDelayCal2 and DCal:
         plotFile = "./"+project+"_"+session+"_"+band+"DelayCal.ps"
         retCode = EVLADelayCal(uv, err, calSou=DCal, CalModel=None, \
-                               doCalib=2, flagVer=2, doBand=1, \
+                               doCalib=2, flagVer=2, doBand=-1, \
                                solInt=solint, smoTime=1.0/60.0,  \
-                               refAnts=[refAnt], doTwo=doTwo, \
+                               refAnts=[refAnt], doTwo=doTwo, doZeroPhs=delayZeroPhs, \
                                doPlot=doSNPlot, plotFile=plotFile, \
                                nThreads=nThreads, noScrat=noScrat, \
                                logfile=logFile, check=check, debug=debug)
@@ -490,6 +490,33 @@ if doRecal:
         # Plot corrected data?
         if doSpecPlot and plotSource:
             plotFile = "./"+project+"_"+session+"_"+band+"DelaySpec.ps"
+            retCode = EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
+                                   Stokes=["RR","LL"], doband=-1,          \
+                                   check=check, debug=debug, logfile=logFile )
+            if retCode!=0:
+                raise  RuntimeError,"Error in Plotting spectrum"
+
+    # Bandpass calibration
+    if doBPCal2 and BPCal and not check:
+        retCode = EVLABPCal(uv, BPCal, err, noScrat=noScrat, \
+                            solInt1=bpsolint1, solInt2=bpsolint2, solMode=bpsolMode, \
+                            BChan1=bpBChan1, EChan1=bpEChan1, BChan2=bpBChan2, EChan2=bpEChan2, ChWid2=bpChWid2, \
+                            doCenter1=bpDoCenter1, refAnt=refAnt, specIndex=bpSpecIndex, UVRange=bpUVRange, \
+                            doCalib=2, gainUse=0, flagVer=2, doPlot=False, \
+                            CalDataType=bpModel["CalDataType"], \
+                            CalFile=bpModel["CalFile"], CalName=bpModel["CalName"], \
+                            CalClass=bpModel["CalClass"], CalSeq=bpModel["CalSeq"], \
+                            CalDisk=bpModel["CalDisk"], CalNfield=bpModel["CalNfield"], \
+                            CalCCVer=bpModel["CalCCVer"], CalFlux=bpModel["CalFlux"], \
+                            CalBComp=bpModel["CalBComp"], CalEComp=bpModel["CalEComp"], \
+                            CalCmethod=bpModel["CalCmethod"], CalCmodel=bpModel["CalCmodel"], \
+                            nThreads=nThreads, logfile=logFile, check=check, debug=debug)
+        if retCode!=0:
+            raise RuntimeError,"Error in Bandpass calibration"
+        
+        # Plot corrected data?
+        if doSpecPlot and plotSource:
+            plotFile = "./"+project+"_"+session+"_"+band+"BPSpec.ps"
             retCode = EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
                                    Stokes=["RR","LL"], doband=1,          \
                                    check=check, debug=debug, logfile=logFile )
