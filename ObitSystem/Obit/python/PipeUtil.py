@@ -293,14 +293,14 @@ Convert a time in days to a string as d/hh:mm:ss.s.
 
 def SaveObject (pyobj, file, update):
     """ 
-Save python object to a pickle file
-
-* pyobj    = python object to save
-* file     = pickle file name
-* update   = If True update, otherwise only if file doesn't already exist
+    Save python object to a pickle file
+    
+    * pyobj    = python object to save
+    * file     = pickle file name
+    * update   = If True update, otherwise only if file doesn't already exist
     """
     ################################################################
-    # Does file exist?, only do this is not or update
+    # Does file exist?, only do this if not or update
     if update or not os.path.isfile(file):
         fd = open(file, "w")
         pickle.dump(pyobj, fd)

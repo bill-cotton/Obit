@@ -2043,7 +2043,7 @@ def VLBABPass(uv, BPCal, err, CalModel=None, newBPVer=1, timeRange=[0.,0.], \
 
 def VLBASpecPlot(uv, goodCal, err, doband=0, plotFile="./spec.ps", \
                      plotDesc="Calibrated calibrator spectrum", \
-                     check=False, logfile = ""):
+                     check=False, logfile = "", debug=False):
     """
     Plot amplitude and phase across the spectrum.
 
@@ -2055,6 +2055,7 @@ def VLBASpecPlot(uv, goodCal, err, doband=0, plotFile="./spec.ps", \
     plotFile = name of output PS file
     plotDesc = description of plot.
     logfile  = Log file for task
+    debug = show task inputs
     """
     # Remove any pre-existing PL tables
     tabdest(uv, "AIPS PL", -1)
@@ -2078,6 +2079,8 @@ def VLBASpecPlot(uv, goodCal, err, doband=0, plotFile="./spec.ps", \
     possm.ltype   = 3 # include all labels
     possm.msgkill = 5 # suppress babble
     possm.logFile = logfile
+    if debug:
+        possm.i
     possm.go()
 
     # Setup and run LWPLA

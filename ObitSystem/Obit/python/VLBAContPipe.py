@@ -302,7 +302,8 @@ VLBA Continuum pipeline.
     if parms["doSpecPlot"]:
         logger.info("--> Spectral plotting (doSpecPlot)")
         plotFile = "./"+project+session+band+".spec.ps"
-        VLBASpecPlot( uv, goodCal, err, doband=1, check=check, plotFile=plotFile, logfile=logFile )
+        VLBASpecPlot( uv, goodCal, err, doband=1, check=check, 
+            plotFile=plotFile, logfile=logFile, debug=debug )
         VLBASaveOutFiles() # Save plot file in Outfiles
     
     # image cals
