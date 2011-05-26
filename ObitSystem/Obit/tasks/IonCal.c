@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit Ionospheric calibration of uv data              */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2010                                          */
+/*;  Copyright (C) 2006-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -81,7 +81,7 @@ int main ( int argc, char **argv )
   ObitIonCal *ioncal=NULL;
   /* Controls for uv data */
   gchar *UVParms[] = {"dispURL", "Niter", "minFlux", "gain", "autoWindow",
-		      "MinPeak", "Catalog", "OutlierDist",
+		      "MinPeak", "Catalog", "CatDisk", "OutlierDist",
 		      "WtBox", "WtFunc", "UVTaper", "WtPower", "xCells", "yCells",
 		      "OutlierFlux", "OutlierSI", "OutlierSize", "solInt", "nZern", 
 		      "MaxQual", "timeRange", "subA", "Stokes", "doCalib", 
@@ -738,7 +738,7 @@ void IonCalHistory (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
     "timeRange",  "subA", "doCalib",  "gainUse",  "doBand ",  "BPVer",  
     "flagVer", "Niter", "minFlux", "gain", 
     "xCells", "yCells", "Robust",  "UVTaper", "UVRange", "WtBox", "WtFunc", 
-    "Catalog", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize", 
+    "Catalog", "CatDisk","OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize", 
     "solInt", "nZern", "MinPeak", "MaxQual", "autoWindow", "MinPeak", 
     "MaxRMS", "FitDist", "MinRat", "doINEdit",
     NULL};

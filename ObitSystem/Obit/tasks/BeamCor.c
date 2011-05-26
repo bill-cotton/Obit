@@ -1,7 +1,7 @@
 /* $Id$ */
 /*  Imaging software correcting for tabulated beamshape               */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1449,7 +1449,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   };
   gchar        *tmpParms[] = {  /* Imaging, weighting parameters */
     "doFull", "do3D", "FOV", "PBCor", "antSize", "PBmin",
-    "Catalog", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
+    "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
     "MaxBaseline", "MinBaseline", "rotate", "Beam",
     "NField", "xCells", "yCells","nx", "ny", "RAShift", "DecShift",
@@ -2418,7 +2418,7 @@ void BeamCorHistory (gchar *Source, ObitInfoList* myInput,
     "BChan", "EChan", "BIF", "EIF", "IChanSel", "Threshold", "CCVer",
     "FOV",  "UVRange",  "timeRange",  "Robust",  "UVTaper",  
     "doCalSelect",  "doCalib",  "gainUse",  "doBand ",  "BPVer",  "flagVer", 
-    "doPol",  "Catalog",  "OutlierDist",  "OutlierFlux",  "OutlierSI",
+    "doPol",  "Catalog", "CatDisk",  "OutlierDist",  "OutlierFlux",  "OutlierSI",
     "OutlierSize",  "CLEANBox",  "Gain",  "minFlux",  "Niter",  "minPatch",
     "ccfLim", "SDIGain", "BLFact", "BLFOV", "BLchAvg",
     "Reuse", "autoCen", "Beam",  "Cmethod",  "CCFilter",  "maxPixel", 

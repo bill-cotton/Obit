@@ -5,7 +5,7 @@ proxy object.
 
 """
 # Copyright (C) 2005 Joint Institute for VLBI in Europe
-# Copyright (C) 2006,2007 Associated Universities, Inc. Washington DC, USA.
+# Copyright (C) 2006,2007,2011 Associated Universities, Inc. Washington DC, USA.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -71,7 +71,7 @@ class _AIPSTaskParams:
                 continue
 
             # Short task description
-            if task and line.startswith(task+" "):
+            if task and (line.startswith(task+" ") or (line.startswith(task+":"))):
                 # get short help string
                 if  not short_help:
                     short_help = line

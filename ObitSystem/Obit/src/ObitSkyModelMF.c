@@ -3333,6 +3333,7 @@ static void ObitSkyModelMFClassInfoDefFn (gpointer inClass)
   theClass->ObitClone     = NULL;
   theClass->ObitClear     = (ObitClearFP)ObitSkyModelMFClear;
   theClass->ObitInit      = (ObitInitFP)ObitSkyModelMFInit;
+  theClass->ObitSkyModelCreate  = (ObitSkyModelCreateFP)ObitSkyModelMFCreate;
   theClass->ObitSkyModelInitMod = (ObitSkyModelInitModFP)ObitSkyModelMFInitMod;
   theClass->ObitSkyModelShutDownMod= (ObitSkyModelShutDownModFP)ObitSkyModelMFShutDownMod;
   theClass->ObitSkyModelInitModel= (ObitSkyModelInitModelFP)ObitSkyModelMFInitModel;

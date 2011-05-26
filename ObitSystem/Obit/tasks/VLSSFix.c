@@ -1,7 +1,7 @@
 /* $Id$  */
 /* VLSSFix:  Determine and correct position errors in VLSS images     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2010                                          */
+/*;  Copyright (C) 2006-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -81,7 +81,7 @@ int main ( int argc, char **argv )
   ObitErr      *err= NULL;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar *parms[] = { /* Control parameters */
-    "Catalog", "catDisk", "MaxRMS", "OutlierFlux", "OutlierSI", 
+    "Catalog", "CatDisk", "MaxRMS", "OutlierFlux", "OutlierSI", 
     "nZern", "MaxQual", "prtLv", 
     NULL };
   olong         nZern, prtLv, Plane[5] = {1, 1, 1, 1, 1};
@@ -508,7 +508,7 @@ ObitInfoList* defaultInputs(ObitErr *err)
   /* Catalog FITS disk number */
   dim[0] = 1;dim[1] = 1;
   itemp = 1; 
-  ObitInfoListPut (out, "catDisk", OBIT_oint, dim, &itemp, err);
+  ObitInfoListPut (out, "CatDisk", OBIT_oint, dim, &itemp, err);
   if (err->error) Obit_traceback_val (err, routine, "DefInput", out);
 
   /* Target max. rms residual (asec) */
@@ -803,7 +803,7 @@ void VLSSFixHistory (ObitInfoList* myInput, ObitImage* inImage,
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq",
-    "nZern",  "correct", "Catalog", "catDisk", "MaxQual", 
+    "nZern",  "correct", "Catalog", "CatDisk", "MaxQual", 
     "OutlierFlux", "OutlierSI", "MaxRMS", 
     NULL};
   odouble drms;

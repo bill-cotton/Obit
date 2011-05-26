@@ -94,6 +94,7 @@ Parms                              Components constraints
                                    outside fitting region
                                    [3] if >0 don't allow Gauss 
                                    smaller than CLEAN beam
+                                   [4] min width of island in pixels
 **PARAM** int   1
 RMSsize                            Size of region to determine RMS
 **PARAM** int   1
@@ -195,6 +196,8 @@ Adverbs:
                   smaller than the clean beam minor axis
                   This will be applied as a constraint on the
                   solution. 
+              [4] Minimum width of an island in each dimension.
+                  default = minimum = 2 pixels;
   RMSsize.....If > 1, then the half width of a square box centered
               on each source within which to determine the local 
               noise.  This is used when an MF table is converted

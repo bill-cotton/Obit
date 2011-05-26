@@ -40,6 +40,7 @@
 #include "ObitUVSelfCal.h"
 #include "ObitTableCCUtil.h"
 #include "ObitTableSNUtil.h"
+#include "ObitDConCleanVisMF.h"
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
  * \file ObitUVPeelUtil.c
@@ -280,6 +281,7 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
   ObitInfoType      type;
   const ObitSkyModelClassInfo *skyModelClass;
   const ObitUVImagerClassInfo *imagerClass;
+  const ObitImageMosaicClassInfo *mosaicClass;
   ObitUVImager      *tmpImager=NULL; 
   ObitImageMosaic   *tmpMosaic=NULL; 
   ObitUV            *scrUV=NULL, *tmpUV=NULL;
@@ -346,8 +348,9 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     }
 
     /* Get ImageMosaic for brightest field if any exceeds PeelFlux */
-    tmpMosaic = ObitImageMosaicMaxField (myClean->mosaic, PeelFlux, 
-					 ignore, &peelField, err);
+    mosaicClass = (const ObitImageMosaicClassInfo*)myClean->mosaic->ClassInfo;
+    tmpMosaic = mosaicClass->ObitImageMosaicMaxField (myClean->mosaic, PeelFlux, 
+						      ignore, &peelField, err);
     if (ignore) g_free(ignore); ignore = NULL;
     if (err->error) Obit_traceback_val (err, routine, myClean->name, peeled);
     if (tmpMosaic==NULL) goto DonePeel;
@@ -427,13 +430,18 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     }
     if(ObitUVImagerMFIsA(myClean->imager)) {
       /* Needs extra parameter */
-      tmpImager   = (ObitUVImager*)ObitUVImagerMFCreate2("Peel imager", 
+      tmpImager   = (ObitUVImager*) ObitUVImagerMFCreate2("Peel imager", 
 							 ((ObitImageMosaicMF*)myClean->mosaic)->maxOrder, 
 							 scrUV, (ObitImageMosaicMF*)tmpMosaic, err);
     } else {
       tmpImager   = imagerClass->ObitUVImagerCreate2("Peel imager", scrUV, tmpMosaic, err);
     }
     if (err->error) goto cleanup;
+
+   /* Make sure have imager */
+    Obit_retval_if_fail((ObitUVImagerIsA((ObitUVImager*)tmpImager)), err, peeled,
+			"%s: Failed to create an Imager", 
+			routine);
 
     /* Trap Ion variation  SkyModel */
     if (ObitSkyModelVMIonIsA(myClean->skyModel)) {
@@ -454,9 +462,21 @@ olong ObitUVPeelUtilPeel (ObitInfoList* myInput, ObitUV* inUV,
     ObitInfoListAlwaysPut (tmpSkyModel->info, "Mode", OBIT_long, dim, &dft);
 
     /* Make temp CleanVis */
-    tmpClean = ObitDConCleanVisCreate2("Peel Clean Object", scrUV, 
-				      (ObitUVImager*)tmpImager, 
-				      (ObitSkyModel*)tmpSkyModel, err);
+    if(ObitDConCleanVisMFIsA(myClean)) {
+      /* Needs extra parameter */
+      tmpClean = ObitDConCleanVisMFCreate2("Peel Clean Object", scrUV, 
+					   (ObitUVImager*)tmpImager, 
+					   (ObitSkyModel*)tmpSkyModel, 
+					   ((ObitImageMosaicMF*)myClean->mosaic)->maxOrder,
+					   ((ObitImageMosaicMF*)myClean->mosaic)->maxFBW,
+					   ((ObitImageMosaicMF*)myClean->mosaic)->alpha,
+					   ((ObitImageMosaicMF*)myClean->mosaic)->alphaRefF,
+					   err);
+    } else {
+      tmpClean = ObitDConCleanVisCreate2("Peel Clean Object", scrUV, 
+					 (ObitUVImager*)tmpImager, 
+					 (ObitSkyModel*)tmpSkyModel, err);
+    }
     if (err->error) goto cleanup;
     /* Share display with myClean */
     tmpClean->display = ObitDisplayRef(myClean->display);

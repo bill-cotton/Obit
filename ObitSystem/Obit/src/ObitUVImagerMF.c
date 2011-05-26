@@ -1,6 +1,6 @@
-/* $Id$        */
+/* $Id$       */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -256,7 +256,7 @@ void ObitUVImagerMFClone  (ObitUVImager *inn, ObitUVImager *outt, ObitErr *err)
  * \li Catalog  =    AIPSVZ format catalog for defining outliers, 
  *                   'None'=don't use [default]
  *                   'Default' = use default catalog.
- *                   Assumed in FITSdata disk 1.
+ * \li CatDisk  =    FITS disk for Catalog [def 1]
  * \li OutlierDist = Maximum distance (deg) from center to include outlier fields
  *                   from Catalog. [default 1 deg]
  * \li OutlierFlux = Minimum estimated flux density include outlier fields
@@ -436,7 +436,7 @@ void ObitUVImagerMFGetInfo (ObitUVImager *inn, gchar *prefix, ObitInfoList *outL
   gchar *parm[] = 
     {"do3D", "FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
      "RAShift", "DecShift", "Sources", 
-     "Catalog",  "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
+     "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
      NULL};
   gchar *routine = "ObitUVImagerMFGetInfo";

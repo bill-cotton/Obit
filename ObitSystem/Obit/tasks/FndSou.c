@@ -174,7 +174,8 @@ gboolean doResid=FALSE;/* save Residuals? */
 olong nGood=0;         /* Number of fitted components */
 olong breakIsland=0;   /* Number of islands broken into multiple */
 olong failBreak=0;     /* number of islands failing to break into multiple */
-olong rejectLoFlux=0;  /* number of componnts rejected due to low flux */
+olong rejectLoFlux=0;  /* number of components rejected due to low flux */
+olong rejectSmall=0;   /* number of components rejected due to undersize island */
 olong iterLimit=0;     /* number of fits hitting iteration limit */
 ObitInfoList *myInput  = NULL; /* Input parameter list */
 ObitInfoList *myOutput = NULL; /* Output parameter list */
@@ -758,8 +759,9 @@ void doHistory (ObitInfoList *myInput, ObitImage *inImage,
   gchar        hicard[81];
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq", "inFile",
-    "BLC", "TRC", "doVL", "doResid", "NGauss", "CutOff",
+    "BLC", "TRC", "doVL", "doResid", "NGauss", "CutOff", "NPass",
     "Retry", "Sort", "doMult", "doWidth", "Gain", "Parms", "RMSsize",
+    "doPBCor", "asize",
     NULL};
   gchar *routine = "doHistory";
 
@@ -838,12 +840,13 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
   ObitTableMF *TableMF=NULL;
   ObitTableVL *TableVL=NULL;
   olong iver, oldnGood=0, oldbreakIsland=0, oldfailBreak=0, oldrejectLoFlux=0, 
-    olditerLimit=0, nIslands=0;
+    olditerLimit=0, oldrejectSmall=0, nIslands=0;
   gchar Sort[3];
   gchar *colName[3]  = {"DELTAX", "DELTAY", "FLUX"};
   gchar *ImgParms[] = {  
     "doPBCorr", "asize",  /* Primary beam correction */
     "RMSsize",            /* RMS box half width */
+    "BLC", "TRC",         /* Portion of image */
     NULL};
   gchar      *routine = "doFndSou";
       
@@ -918,6 +921,8 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
 		     failBreak);
       Obit_log_error(err, OBIT_InfoErr, " %d components rejected for low peak", 
 		     rejectLoFlux);
+      Obit_log_error(err, OBIT_InfoErr, " %d components rejected for undersize island", 
+		     rejectSmall);
       Obit_log_error(err, OBIT_InfoErr, " %d fits hit iteration limit", iterLimit);
     } else {  /* Multiple passes */
       Obit_log_error(err, OBIT_InfoErr, "Pass %d: Successfully fitted %d components",  
@@ -928,12 +933,15 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
 		     failBreak-oldfailBreak);
       Obit_log_error(err, OBIT_InfoErr, "   %d components rejected for low peak", 
 		     rejectLoFlux-oldrejectLoFlux);
+      Obit_log_error(err, OBIT_InfoErr, "   %d components rejected for undersize island", 
+		     rejectSmall-oldrejectSmall);
       Obit_log_error(err, OBIT_InfoErr, "   %d fits hit iteration limit", 
 		     iterLimit-olditerLimit);
       oldnGood        = nGood;
       oldbreakIsland  = breakIsland;
       oldfailBreak    = failBreak;
       oldrejectLoFlux = rejectLoFlux;
+      oldrejectSmall  = rejectSmall;
       olditerLimit    = iterLimit;
     }
     ObitErrLog(err); 
@@ -961,6 +969,8 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
 		   failBreak);
     Obit_log_error(err, OBIT_InfoErr, "Total: %d components rejected for low peak", 
 		   rejectLoFlux);
+    Obit_log_error(err, OBIT_InfoErr, "Total: %d undersize islands rejected", 
+		   rejectSmall);
     Obit_log_error(err, OBIT_InfoErr, "Total: %d fits hit iteration limit", iterLimit);
     ObitErrLog(err); 
   }
@@ -993,6 +1003,7 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
       fprintf (prtFile, "Attempt to break %d islands into multiple\n",  breakIsland);
       fprintf (prtFile, " %d Attempts to break islands failed\n", failBreak);
       fprintf (prtFile, " %d components rejected for low peak\n", rejectLoFlux);
+      fprintf (prtFile, " %d undersize islands rejected\n", rejectSmall);
       fprintf (prtFile, " %d fits hit iteration limit\n\n", iterLimit);
       ObitTableVLPrint (TableVL, inImage, prtFile, err);
       if (err->error) goto cleanup;
@@ -1006,6 +1017,7 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
       fprintf (prtFile, "Attempt to break %d islands into multiple\n",  breakIsland);
       fprintf (prtFile, " %d Attempts to break islands failed\n", failBreak);
       fprintf (prtFile, " %d components rejected for low peak\n", rejectLoFlux);
+      fprintf (prtFile, " %d undersize islands rejected\n", rejectSmall);
       fprintf (prtFile, " %d fits hit iteration limit\n\n", iterLimit);
       ObitTableMFPrint (TableMF, inImage, prtFile, err);
       if (err->error) goto cleanup;
@@ -1119,6 +1131,7 @@ IslandList* Islands(ObitFArray *data, ofloat cutt)
  * Estimates initial model from a moment analysis of the image.
  * Output list in descending order of peak flux density.and all 
  * entries will be removed from the input list.
+ * Require islands to be at least minIsland+1 pixels in each dimension.
  * \param myInput Inputs object
  * \param island  List to convert 
  * \param image   ObitImage being described
@@ -1133,9 +1146,10 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
   ObitFitRegion* reg=NULL;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
-  ofloat cutt, peakResid=0.0, RMSResid=0.0, fluxResid=0.0;
+  ofloat cutt, peakResid=0.0, RMSResid=0.0, fluxResid=0.0, Parms[10];
   gboolean doPoint, doPA, doMult;
   olong nisland, corner[2], adim[2], k, nx, ny, i, bsize, d[2], nmodel=1;
+  olong minIsland;
   gchar *regname=NULL;
   ObitFitModel *models[10];
   gchar *routine = "Island2Region";
@@ -1160,6 +1174,12 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
   cutt = 0.0;
   ObitInfoListGetTest(myInput, "CutOff", &type, dim, &cutt);
 
+  /* Minimum size of island */
+  Parms[4] = 2;
+  ObitInfoListGetTest(myInput, "Parms", &type, dim, &Parms);
+  minIsland = (olong)(Parms[4]+0.5);
+  minIsland = MAX (2, minIsland) - 1;
+
    /* Not fitting size? */
   doPoint = TRUE;
   ObitInfoListGetTest(myInput, "doWidth", &type, dim, &doPoint);
@@ -1182,6 +1202,10 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
 
     /* Done enough? */
     if (k>nisland) break;
+
+    /* Must be at least minIsland+1 pixels in each dimension */
+    if (((isElem->trc[0]-isElem->blc[0])<minIsland) || 
+	((isElem->trc[1]-isElem->blc[1])<minIsland)) {rejectSmall++; goto doneIsland;}
 
     /* Expand window */
     for (i=0; i<2; i++) {
@@ -1217,6 +1241,7 @@ ObitFitRegionList* Island2Region (ObitInfoList *myInput, IslandList* island,
     } /* End found something to fit */
  
    /* Remove from IslandList */
+  doneIsland:
     IslandListRemove (island, isElem);
     /* Get next */
     isElem = IslandListFindHi (island);
@@ -1418,6 +1443,9 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
   ofloat gain, parms[20], icut, tcut, rcut, xcut, cbeam[3], oldRMS, oldPeak;
   olong blc[2], trc[2];
   ObitFArray *pixels=NULL;
+  gchar *FitParms[] = {  
+    "BLC", "TRC",         /* Portion of image */
+    NULL};
   gchar *routine = "FitRegions";
 
   if (err->error) return;
@@ -1446,6 +1474,9 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
   /* Create fitter */
   fitter = ObitImageFitCreate ("my Fitter");
 
+  /* Pass info */
+  ObitInfoListCopyList (myInput, fitter->info, FitParms);
+
   /* Print level */
   i = prtLv-2;
   ObitInfoListAlwaysPut (fitter->info, "prtLv",  OBIT_long, dim, &i);
@@ -1460,10 +1491,8 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
     ObitInfoListAlwaysPut (fitter->info, "GMajUp",   OBIT_double, dim, &dtemp);
     ObitInfoListAlwaysPut (fitter->info, "GMinUp",   OBIT_double, dim, &dtemp);
   }
-  if (parms[2]>0.0) {
-    dtemp = -parms[2];
-    ObitInfoListAlwaysPut (fitter->info, "PosGuard", OBIT_double, dim, &dtemp);
-  }
+  dtemp = -parms[2];
+  ObitInfoListAlwaysPut (fitter->info, "PosGuard", OBIT_double, dim, &dtemp);
   if (parms[3]>0.0) {
     dtemp = image->myDesc->beamMaj / fabs (image->myDesc->cdelt[0]);
     ObitInfoListAlwaysPut (fitter->info, "GMajLow",  OBIT_double, dim, &dtemp);

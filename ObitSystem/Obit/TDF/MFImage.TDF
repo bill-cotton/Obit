@@ -165,6 +165,8 @@ doFit                              Fit spectrum to CLEANed planes??
 do3D                               3D imaging, else 2D
 **PARAM** str 48  **DEF** NVSSVZ.FIT
 Catalog                            Outlier catalog name (NVSSVZ.FIT)
+**PARAM** int 1 **DEF** 1
+CatDisk                            Catalog FITS disk number
 **PARAM** float 1
 OutlierDist                        Maximum distance to add outliers (deg)
 **PARAM** float 1 **DEF** 0.01
@@ -366,7 +368,7 @@ Adverbs:
   subA.......Sub-array number to use. 0=>all.
   doCalib....If >= 1, apply SN or CL table, 2=> calibrate weights also
   gainUse....CL/SN table version number to apply. 0=> highest.
-  doBand.....If true (>0) then correct the data for the shape of the
+  doBand.....If >0 then correct the data for the shape of the
              antenna bandpasses using the BP table specified by BPVer.
              The correction has five modes:
              (a) if doBand=1 all entries for an antenna in the table
@@ -387,7 +389,7 @@ Adverbs:
                 0 => highest numbered table.
                <0 => no bandpass correction to be applied.
   flagVer....AIPS FG table to use for editing. 0 => highest.
-  doPol......True => apply polarization calibration
+  doPol......If True => apply polarization calibration
   norder.....Maximum spectral order to include, 
                 1 = spectral index
                 2 = spectral index + curvature
@@ -486,6 +488,7 @@ Adverbs:
              Default  NVSSVZ.FIT
              This must be in the form of an "AIPS VZ" table.
              'None' =. Use no outliers
+  CatDisk......FITS disk number for Catalog, 0=>cwd, 1=>$FITS
   OutlierDist..max. distance from pointing to include (deg)
                default = 10
   OutlierFlux..min. estimated flux density (Jy)

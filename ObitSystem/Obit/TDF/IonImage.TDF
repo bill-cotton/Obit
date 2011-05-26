@@ -4,7 +4,7 @@
 ;! Obit interferometry imaging with ionospheric field-based cal
 ;# Task Obit Imaging calibration
 ;-----------------------------------------------------------------------
-;;  Copyright (C) 2006-2010
+;;  Copyright (C) 2006-2011
 ;;  Associated Universities, Inc. Washington DC, USA.
 ;;
 ;;  This program is free software; you can redistribute it and/or
@@ -157,6 +157,8 @@ doRestore                          Restore CCs to images?
 do3D                               3D imaging, else 2D
 **PARAM** str 48  **DEF** NVSSVZ.FIT
 Catalog                            Outlier catalog name (NVSSVZ.FIT)
+**PARAM** int 1 **DEF** 1
+CatDisk                            Catalog FITS disk number
 **PARAM** float 1 **DEF** 40.0
 OutlierDist                        Maximum distance to add outliers (deg)
 **PARAM** float 1 **DEF** 3.0
@@ -387,9 +389,9 @@ Adverbs:
   chAvg......Number of channels to average, 0=> all
              This is after averaging due to BLchAvg
   subA.......Sub-array number to use. 0=>all.
-  doCalib....If true, apply SN or CL table
+  doCalib....If >0, apply SN or CL table
   gainUse....CL/SN table version number to apply. 0=> highest.
-  doBand.....If true (>0) then correct the data for the shape of the
+  doBand.....If >0 then correct the data for the shape of the
              antenna bandpasses using the BP table specified by BPVer.
              The correction has five modes:
              (a) if DOBAND=1 all entries for an antenna in the table
@@ -475,7 +477,7 @@ Adverbs:
              with space. default  = outDisk
 
    The following control imaging:
-  FOV........Radius of the desired field of view.
+  FOV........Radius of the desired field of view (deg).
   NField.....Optional parameter to specify fields and overrides
              the FOV parameter.  Up to 64 may be specified as 
              parameters; you should have a good reason for doing
@@ -495,6 +497,7 @@ Adverbs:
              Default  NVSSVZ.FIT
              This must be in the form of an "AIPS VZ" table.
              'None' =. Use no outliers and no calibrators in Cal.
+  CatDisk......FITS disk number for Catalog, 0=>cwd, 1=>$FITS
   OutlierDist..max. distance from pointing to include (deg)
                default = 10
   OutlierFlux..min. estimated flux density (Jy)

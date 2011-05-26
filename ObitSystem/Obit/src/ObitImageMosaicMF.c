@@ -703,7 +703,7 @@ void ObitImageMosaicMFSetFiles  (ObitImageMosaic *inn, gboolean doBeam, ObitErr 
  * \li Catalog  =    AIPSVZ format catalog for defining outliers, 
  *                   'None'=don't use [default]
  *                   'Default' = use default catalog.
- *                   Assumed in FITSdata disk 1.
+ * \li CatDisk  =    FITS disk for Catalog [def 1]
  * \li OutlierDist = Maximum distance (deg) from center to include outlier fields
  *                   from Catalog. [default 1 deg]
  * \li OutlierFlux = Minimum estimated flux density include outlier fields
@@ -773,6 +773,8 @@ ObitImageMosaicMF* ObitImageMosaicMFCreate (gchar *name, olong order, ofloat max
   ObitInfoListGetTest(uvData->info, "doFull", &type, dim,  &doFull);
   sprintf (Catalog, "None");
   ObitInfoListGetTest(uvData->info, "Catalog", &type, dim,  Catalog);
+  catDisk = 1;  /* FITS directory for catalog */
+  ObitInfoListGetTest(uvData->info, "CatDisk", &type, dim, &catDisk);
   if (err->error) Obit_traceback_val (err, routine, uvData->name, out);
 
   /* Get array inputs */
@@ -890,35 +892,34 @@ ObitImageMosaicMF* ObitImageMosaicMFCreate (gchar *name, olong order, ofloat max
   /* Blank = default */
   if (!strncmp(Catalog, "    ", 4)) sprintf (Catalog, "Default");
   if (strncmp(Catalog, "None", 4)) {
-    catDisk = 1;  /* FITS directory for catalog */
     /* Set default catalog */
-     if (!strncmp(Catalog, "Default", 7)) sprintf (Catalog, "NVSSVZ.FIT");
-
-     /* Get outlier related inputs */
-     OutlierDist = 1.0;
-     ObitInfoListGetTest(uvData->info, "OutlierDist",  &type, dim,  &OutlierDist);
-     OutlierFlux = 0.1;
-     ObitInfoListGetTest(uvData->info, "OutlierFlux",  &type, dim,  &OutlierFlux);
-     OutlierSI = -0.75;
-     ObitInfoListGetTest(uvData->info, "OutlierSI",    &type, dim,  &OutlierSI);
-     InfoReal.itg = 50;type = OBIT_float;
-     ObitInfoListGetTest(uvData->info, "OutlierSize",  &type, dim,  &InfoReal);
-     if (type==OBIT_float) itemp = InfoReal.flt + 0.5;
-     else itemp = InfoReal.itg;
-     OutlierSize = itemp;
-
-     /* Add to list from catalog */
-     equinox = uvData->myDesc->equinox;  /* Clear up confusion in AIPS */
-     if (equinox<1.0) equinox = uvData->myDesc->epoch;
-     doJ2B = (equinox!=2000.0) ;  /* need to precess? */
-
-     mosaicClass->AddOutlier (Catalog, catDisk, minRad, cells, OutlierDist, 
-			      OutlierFlux, OutlierSI, OutlierSize,
-			      ra0, dec0, doJ2B, 
-			      uvData->myDesc->crval[uvData->myDesc->jlocf], 
-			      Radius, &NField, fldsiz, RAShift, DecShift, flqual, 
-			      err);
-     if (err->error) Obit_traceback_val (err, routine, uvData->name, out);
+    if (!strncmp(Catalog, "Default", 7)) sprintf (Catalog, "NVSSVZ.FIT");
+    
+    /* Get outlier related inputs */
+    OutlierDist = 1.0;
+    ObitInfoListGetTest(uvData->info, "OutlierDist",  &type, dim,  &OutlierDist);
+    OutlierFlux = 0.1;
+    ObitInfoListGetTest(uvData->info, "OutlierFlux",  &type, dim,  &OutlierFlux);
+    OutlierSI = -0.75;
+    ObitInfoListGetTest(uvData->info, "OutlierSI",    &type, dim,  &OutlierSI);
+    InfoReal.itg = 50;type = OBIT_float;
+    ObitInfoListGetTest(uvData->info, "OutlierSize",  &type, dim,  &InfoReal);
+    if (type==OBIT_float) itemp = InfoReal.flt + 0.5;
+    else itemp = InfoReal.itg;
+    OutlierSize = itemp;
+    
+    /* Add to list from catalog */
+    equinox = uvData->myDesc->equinox;  /* Clear up confusion in AIPS */
+    if (equinox<1.0) equinox = uvData->myDesc->epoch;
+    doJ2B = (equinox!=2000.0) ;  /* need to precess? */
+    
+    mosaicClass->AddOutlier (Catalog, catDisk, minRad, cells, OutlierDist, 
+			     OutlierFlux, OutlierSI, OutlierSize,
+			     ra0, dec0, doJ2B, 
+			     uvData->myDesc->crval[uvData->myDesc->jlocf], 
+			     Radius, &NField, fldsiz, RAShift, DecShift, flqual, 
+			     err);
+    if (err->error) Obit_traceback_val (err, routine, uvData->name, out);
   } /* end add outliers from catalog */
 
   /* Make sure some fields defined */
@@ -1536,7 +1537,7 @@ ObitImageMosaicMF* ObitImageMosaicMFMaxField (ObitImageMosaic *inn,
       forget = forget || (ignore[i++]==(ifield+1));
       if (forget) break;
     }
-    if (forget) break;
+    if (forget) continue;
 
     /* Open image in case header needs update */
     ObitImageOpen (mosaic->images[ifield], OBIT_IO_ReadWrite, err);
@@ -1572,9 +1573,14 @@ ObitImageMosaicMF* ObitImageMosaicMFMaxField (ObitImageMosaic *inn,
 
   /* Make output ImageMosaicMF */
   out = newObitImageMosaicMF ("Temp mosaic", 1);
-  tmpImage = newObitImageScratch (mosaic->images[maxField], err);
+  tmpImage = newObitImageMFScratch (mosaic->images[maxField], err);
+ 
   /* Copy image */
   tmpImage = (ObitImage*)ObitImageMFCopy((ObitImageMF*)mosaic->images[maxField], (ObitImageMF*)tmpImage, err);
+  /* Make sure worked  */
+  Obit_retval_if_fail((ObitImageMFIsA(tmpImage)), err, out,
+  		      "%s: Failed to create temp image for %s", 
+		      routine, mosaic->images[maxField]->name);
   ObitImageMosaicSetImage ((ObitImageMosaic*)out, 0, tmpImage, err);
   if  (err->error) Obit_traceback_val (err, routine, mosaic->images[maxField]->name, out);
   /* Give more sensible name */
@@ -1582,8 +1588,12 @@ ObitImageMosaicMF* ObitImageMosaicMFMaxField (ObitImageMosaic *inn,
   tmpImage->name = g_strdup("Peel Image");
 
   /* Copy beam NEED to copy higher order beams  */
-  tmpBeam = newObitImageScratch ((ObitImage*)mosaic->images[maxField]->myBeam, err);
+  tmpBeam = newObitImageMFScratch ((ObitImage*)mosaic->images[maxField]->myBeam, err);
   tmpBeam = (ObitImage*)ObitImageMFCopy((ObitImageMF*)mosaic->images[maxField]->myBeam, (ObitImageMF*)tmpBeam, err);
+  /* Make sure worked  */
+  Obit_retval_if_fail((ObitImageMFIsA(tmpBeam)), err, out,
+  		      "%s: Failed to create temp Beam for %s", 
+		      routine, mosaic->images[maxField]->name);
   ObitImageMosaicSetImage ((ObitImageMosaic*)out, 0, tmpImage, err);
   if  (err->error) Obit_traceback_val (err, routine, mosaic->images[maxField]->name, out);
   tmpImage->myBeam = ObitImageUnref(tmpImage->myBeam);

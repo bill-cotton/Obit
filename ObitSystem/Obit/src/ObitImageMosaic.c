@@ -923,7 +923,7 @@ void ObitImageMosaicSetFiles  (ObitImageMosaic *in, gboolean doBeam, ObitErr *er
  * \li Catalog  =    AIPSVZ format catalog for defining outliers, 
  *                   'None'=don't use [default]
  *                   'Default' = use default catalog.
- *                   Assumed in FITSdata disk 1.
+ * \li CatDisk  =    FITS disk for Catalog [def 1]
  * \li OutlierDist = Maximum distance (deg) from center to include outlier fields
  *                   from Catalog. [default 1 deg]
  * \li OutlierFlux = Minimum estimated flux density include outlier fields
@@ -987,6 +987,8 @@ ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *er
   ObitInfoListGetTest(uvData->info, "doFull", &type, dim,  &doFull);
   sprintf (Catalog, "None");
   ObitInfoListGetTest(uvData->info, "Catalog", &type, dim,  Catalog);
+  catDisk = 1;  /* FITS directory for catalog */
+  ObitInfoListGetTest(uvData->info, "CatDisk", &type, dim, &catDisk);
   if (err->error) Obit_traceback_val (err, routine, uvData->name, out);
 
   /* Get array inputs */
@@ -1104,7 +1106,6 @@ ObitImageMosaic* ObitImageMosaicCreate (gchar *name, ObitUV *uvData, ObitErr *er
   /* Blank = default */
   if (!strncmp(Catalog, "    ", 4)) sprintf (Catalog, "Default");
   if (strncmp(Catalog, "None", 4)) {
-    catDisk = 1;  /* FITS directory for catalog */
     /* Set default catalog */
      if (!strncmp(Catalog, "Default", 7)) sprintf (Catalog, "NVSSVZ.FIT");
 

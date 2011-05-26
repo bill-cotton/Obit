@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Obit task to image/CLEAN a uv data set with field-based cal        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2010                                          */
+/*;  Copyright (C) 2006-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1380,7 +1380,7 @@ void doChanPoln (gchar *Source, ObitInfoList* myInput, ObitUV* inData,
   };
   gchar        *tmpParms[] = {  /* Imaging, weighting parameters */
     "doFull", "do3D", "FOV", "PBCor", "antSize", 
-    "Catalog", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
+    "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
     "Robust", "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "WtPower",
     "MaxBaseline", "MinBaseline", "rotate", "Beam",
     "NField", "xCells", "yCells", "nx", "ny", "RAShift", "DecShift",
@@ -1714,7 +1714,7 @@ void doFieldCal (gchar *Source, ObitInfoList* myInput, ObitUV* inUV,
   olong         NField, itemp, Niter, Aseq=1, disk, ver;
   ofloat Gain, minFlux, seeing;
   gchar        *FCParms[] = {  /* Field based calibration parameters */
-    "Catalog",  "OutlierDist",  "OutlierFlux",  "OutlierSI", "OutlierSize",  
+    "Catalog", "CatDisk", "OutlierDist",  "OutlierFlux",  "OutlierSI", "OutlierSize",  
     "solInt", "nZern", "FitDist", "MaxDist", "MinPeak", 
     "MaxWt", "MaxQual", "MaxRMS", "MinRat", "FCStrong", "prtLv", 
     NULL
@@ -2094,7 +2094,8 @@ void IonImageHistory (gchar *Source, gchar Stoke, ObitInfoList* myInput,
     "UVRange",  "timeRange",  "Robust",  "UVTaper",  "WtBox", "WtFunc", 
     "BIF", "EIF", "BChan", "EChan",  "chInc", "chAvg", "BLFact", "BLFOV",  "BLchAvg",
     "doCalSelect",  "doCalib",  "gainUse", "doBand ",  "BPVer",  "flagVer", 
-    "doPol",  "doFull", "do3D", "Catalog",  "OutlierDist",  "OutlierFlux",  "OutlierSI",
+    "doPol",  "doFull", "do3D", "Catalog", "CatDisk", 
+    "OutlierDist",  "OutlierFlux",  "OutlierSI",
     "OutlierSize",  "CLEANBox",  "Gain",  "minFlux",  "Niter",  "minPatch",
     "FOV", "xCells", "yCells", "nx", "ny", "RAShift", "DecShift", "doRestore",
     "Beam",  "CCFilter",  "maxPixel", "autoWindow", "subA",

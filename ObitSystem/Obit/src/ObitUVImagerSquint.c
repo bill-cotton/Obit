@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006-2008                                          */
+/*;  Copyright (C) 2006-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -295,7 +295,7 @@ void ObitUVImagerSquintWeight (ObitUVImager *in, ObitErr *err)
   gchar *controlList[] = 
     {"FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
      "RAShift", "DecShift", "Sources", 
-     "Catalog",  "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
+     "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
      NULL};
   gchar *routine = "ObitUVImagerWeight";

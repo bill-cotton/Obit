@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2006,2008                                          */
+/*;  Copyright (C) 2006-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -225,6 +225,8 @@ olong ObitImageFitFit (ObitImageFit* in,  ObitImage *image,
 		      ObitFitRegion* reg, ObitErr *err)
 {
   olong i, j, itmax, npr, nvar, fst, ier = -1;
+  olong blc[10]={1,1,1,1,1,1,1,1,1,1};
+  olong trc[10]={0,0,0,0,0,0,0,0,0,0};
   odouble eps, fopt, gnopt, *xi=NULL, *xerr=NULL;
   odouble dblank;
   ofloat fblank=ObitMagicF();
@@ -279,6 +281,8 @@ olong ObitImageFitFit (ObitImageFit* in,  ObitImage *image,
   ObitInfoListGetTest(in->info, "prtLv", &type, dim, &npr);
   itmax = 10 * nvar;
   ObitInfoListGetTest(in->info, "MaxIter", &type, dim, &itmax);
+  ObitInfoListGetTest(in->info, "BLC", &type, dim, blc);
+  ObitInfoListGetTest(in->info, "TRC", &type, dim, trc);
 
   /* Do fit */
   dvdmin (in->data->fx, in->data, xi, xerr, nvar, 
@@ -303,12 +307,29 @@ olong ObitImageFitFit (ObitImageFit* in,  ObitImage *image,
   ObitImageFitData2Reg (in->data, reg);
 
   /* RMS residual if requested */
-  if (npr>0) {
+  if (err->prtLv>0) {
     fopt = ObitFArrayRMS0(in->data->resids);
     fopt /= in->data->rscale;
     Obit_log_error(err, OBIT_InfoErr, "RMS residual = %g", fopt);
     ObitErrLog(err); 
  }
+  /* Full diagnostics if requested */
+  if (err->prtLv>1) {
+    Obit_log_error(err, OBIT_InfoErr, "Fit %d components", reg->nmodel);
+    for (i=0; i<reg->nmodel; i++) {
+      if (reg->nmodel>1) 
+	Obit_log_error(err, OBIT_InfoErr, "   Component %d", i+1);
+      Obit_log_error(err, OBIT_InfoErr,   "      Peak = %g +/- %g", 
+		     reg->models[i]->Peak, reg->models[i]->ePeak);
+      Obit_log_error(err, OBIT_InfoErr,   "      X (Pixel) = %8.3f +/- %8.3f", 
+		     reg->models[i]->DeltaX+blc[1]+reg->corner[1]-1.0, 
+		     reg->models[i]->eDeltaX);
+      Obit_log_error(err, OBIT_InfoErr,   "      Y (pixel) = %8.3f +/- %8.3f", 
+		     reg->models[i]->DeltaY+blc[1]+reg->corner[1]-1.0, 
+		     reg->models[i]->eDeltaY);
+   }
+    ObitErrLog(err); 
+  }
 
   /* Cleanup */
  cleanup:

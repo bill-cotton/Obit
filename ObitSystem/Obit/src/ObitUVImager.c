@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2005-2010                                          */
+/*;  Copyright (C) 2005-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -124,7 +124,7 @@ ObitUVImager* ObitUVImagerFromInfo (gchar *prefix, ObitInfoList *inList,
   gchar *parm[] = 
     {"do3D", "FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
      "RAShift", "DecShift", "Sources", 
-     "Catalog",  "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
+     "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
      NULL};
   gchar ctemp[50];
@@ -395,7 +395,7 @@ void ObitUVImagerWeight (ObitUVImager *in, ObitErr *err)
   gchar *controlList[] = 
     {"do3D", "FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
      "RAShift", "DecShift", "Sources",  "Beam",
-     "Catalog",  "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
+     "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
      NULL};
   gchar *routine = "ObitUVImagerWeight";
@@ -747,7 +747,7 @@ void ObitUVImagerGetInfo (ObitUVImager *in, gchar *prefix, ObitInfoList *outList
   gchar *parm[] = 
     {"do3D", "FOV", "doFull", "NField", "xCells", "yCells", "nx", "ny", 
      "RAShift", "DecShift", "Sources", 
-     "Catalog",  "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
+     "Catalog", "CatDisk", "OutlierDist", "OutlierFlux", "OutlierSI", "OutlierSize",
      "nuGrid", "nvGrid", "WtBox", "WtFunc", "UVTaper", "Robust", "WtPower",
      NULL};
   gchar *routine = "ObitUVImagerGetInfo";

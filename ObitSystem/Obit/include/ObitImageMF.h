@@ -103,6 +103,9 @@ void ObitImageMFClassInit (void);
 /** Public: Constructor. */
 ObitImageMF* newObitImageMF (gchar* name);
 
+/** Public: Copy Constructor for scratch file. */
+ObitImage* newObitImageMFScratch (ObitImage *in, ObitErr *err);
+
 /** Public: Create ImageMF object from description in an ObitInfoList */
 ObitImageMF* ObitImageMFFromInfo (gchar *prefix, ObitInfoList *inList, 
 				  ObitErr *err);

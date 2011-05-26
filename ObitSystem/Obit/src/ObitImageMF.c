@@ -157,6 +157,112 @@ ObitImageMF* newObitImageMF (gchar* name)
 } /* end newObitImageMF */
 
 /**
+ * Create a scratch file suitable for accepting the data to be read from in.
+ * A scratch ImageMF is more or less the same as a normal ImageMF except that it is
+ * automatically deleted on the final unreference.
+ * The output will have the underlying files of the same type as in already 
+ * allocated.
+ * \param in  The object to copy (ObitImageMF), info may have 
+ * \li ScrSize OBIT_int (?,1,1) Dimension of the desired scratch Image
+ * \param err Error stack, returns if not empty.
+ * \return pointer to the new object.
+ */
+ObitImage* newObitImageMFScratch (ObitImage *in, ObitErr *err)
+{
+  const ObitClassInfo *ParentClass;
+  ObitImage   *out=NULL;
+  ObitImageMF *inMF=NULL, *outMF=NULL;
+  ObitInfoType type;
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  olong i, size[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  gchar *outName;
+  gchar *routine = "newObitImageMFScratch";
+
+  /* error checks */
+  g_assert(ObitErrIsA(err));
+  if (err->error) return NULL;
+  g_assert (ObitIsA(in, &myClassInfo));
+
+  /* Make sure input ObitImageMF */
+  Obit_retval_if_fail((ObitImageMFIsA(in)), err, NULL,
+  		      "%s: Input image, %s NOT ImageMF", 
+		      routine, in->name);
+
+  /* Ensure in fully instantiated -assume OK if myIO exists */
+  if (!in->myIO) ObitImageFullInstantiate (in, TRUE, err);
+  if (err->error)Obit_traceback_val (err, routine, in->name, out);
+
+  /* Create - derive object name */
+  outName = g_strconcat ("Scratch Copy: ",in->name,NULL);
+  out = (ObitImage*)newObitImageMF(outName);
+  g_free(outName);
+
+  /* Mark as scratch */
+  out->isScratch = TRUE;
+
+  /* deep copy any base class members - NO fails 
+     ParentClass = myClassInfo.ParentClass;
+     g_assert ((ParentClass!=NULL) && (ParentClass->ObitCopy!=NULL));
+     ParentClass->ObitCopy (in, out, err);*/
+
+  /* Copy descriptor */
+  out->myDesc = (gpointer)ObitImageDescCopy(in->myDesc, out->myDesc, err);
+
+  /* Check if different size needed */
+  if (ObitInfoListGetTest(in->info, "ScrSize", &type, dim, size)) {
+    for (i=0; i<MIN (dim[0], IM_MAXDIM); i++) 
+      if (size[i]>0) out->myDesc->inaxes[i] = size[i];
+  }
+ 
+  /* Force to float pixels */
+  out->myDesc->bitpix=-32;
+
+  /* Allocate underlying file */
+  ObitSystemGetScratch (in->mySel->FileType, "MA", out->info, err);
+  if (err->error) Obit_traceback_val (err, routine, in->name, out);
+  
+  /* Register in the scratch file list */
+  ObitSystemAddScratch ((Obit*)out, err);
+  
+  /* same size IO as input */
+  dim[0] = 1;
+  ObitInfoListPut (out->info, "IOBy", OBIT_long, dim, &in->myDesc->IOsize, err);
+  if (err->error) Obit_traceback_val (err, routine, in->name, out);
+
+  /* Copy MF stuff */
+  inMF  = (ObitImageMF*)in;
+  outMF = (ObitImageMF*)out;
+  outMF->maxOrder = inMF->maxOrder;
+  outMF->curOrder = inMF->curOrder;
+  outMF->refFreq  = inMF->refFreq;
+  outMF->fresh = inMF->fresh;
+  outMF->nSpec = inMF->nSpec;
+  if (outMF->BIFSpec)   g_free(outMF->BIFSpec);
+  if (outMF->EIFSpec)   g_free(outMF->EIFSpec);
+  if (outMF->BChanSpec) g_free(outMF->BChanSpec);
+  if (outMF->EChanSpec) g_free(outMF->EChanSpec);
+  if (outMF->specFreq)  g_free(outMF->specFreq);
+  outMF->BIFSpec   = g_malloc0(inMF->nSpec*sizeof(olong));
+  outMF->EIFSpec   = g_malloc0(inMF->nSpec*sizeof(olong));
+  outMF->BChanSpec = g_malloc0(inMF->nSpec*sizeof(olong));
+  outMF->EChanSpec = g_malloc0(inMF->nSpec*sizeof(olong));
+  outMF->specFreq  = g_malloc0(inMF->nSpec*sizeof(odouble));
+  for (i=0; i<inMF->nSpec; i++) {
+    outMF->BIFSpec[i]   = inMF->BIFSpec[i];
+    outMF->EIFSpec[i]   = inMF->EIFSpec[i];
+    outMF->BChanSpec[i] = inMF->BChanSpec[i];
+    outMF->EChanSpec[i] = inMF->EChanSpec[i];
+    outMF->specFreq[i]  = inMF->specFreq[i];
+  }
+
+  /* Fully instantiate output */
+  ObitImageFullInstantiate (out, FALSE, err);
+  if (err->error)Obit_traceback_val (err, routine, out->name, out);
+ 
+  return out;
+} /* end newObitImageMFScratch */
+
+/**
  * Constructor from ObitImage.
  * output will have same underlying file definition as in.
  * Adds planes as needed for spectral planes and 
@@ -752,7 +858,11 @@ void ObitImageMFSetSpec (ObitImageMF *in, ObitUV *inData, ofloat maxFBW,
       ndiv = MAX (1, nChan/maxCh);
       nSpec += ndiv;
     } /* end loop over IF */
-   /* End if spectral */
+    /* Make sure have spectra */
+    Obit_return_if_fail((nSpec>in->curOrder), err, 
+			"%s: TOO Few channels %d, for requested order, decrease maxFBW", 
+			routine, nSpec);
+    /* End if spectral */
   } else nSpec = 1;
 
   /* Create arrays */
@@ -1306,6 +1416,8 @@ static void ObitImageMFClassInfoDefFn ( gpointer inClass)
   theClass->newObit       = (newObitFP)newObitImageMF;
   theClass->ObitClassInfoDefFn = (ObitClassInfoDefFnFP)ObitImageMFClassInfoDefFn;
   theClass->ObitGetClass  = (ObitGetClassFP)ObitImageMFGetClass;
+  theClass->newObitImageScratch  = 
+    (newObitImageScratchFP)newObitImageMFScratch;
   theClass->ObitCopy      = (ObitCopyFP)ObitImageMFCopy;
   theClass->ObitClone     = NULL;
   theClass->ObitClear     = (ObitClearFP)ObitImageMFClear;
