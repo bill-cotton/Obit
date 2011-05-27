@@ -1602,6 +1602,7 @@ void ObitImageMosaicFlatten (ObitImageMosaic *in, ObitErr *err)
 
       /* accumulate weight */
       ObitFArrayShiftAdd (sc2, pos2, tout2->image, pos1, 1.0, sc2);
+
     } /* end if overlap */
       /* reset window on image */
     dim[0] = IM_MAXDIM;
@@ -2053,6 +2054,12 @@ ObitTableCC* ObitImageMosaicCombineCC (ObitImageMosaic *mosaic, olong field,
       inCC  = ObitTableCCUnref(inCC);
     } /* end if overlap */
   } /* end loop over other fields */
+
+  /* Update number of CCs */
+  ObitImageOpen(mosaic->images[ifield], OBIT_IO_ReadWrite, err);
+  mosaic->images[ifield]->myDesc->niter = outCC->myDesc->nrow;
+  mosaic->images[ifield]->myStatus = OBIT_Modified;
+  ObitImageClose(mosaic->images[ifield], err);
   
   /* Close output table */
   ObitTableCCClose (outCC, err);
@@ -2648,7 +2655,7 @@ void ObitImageMosaicCopyCC (ObitImageMosaic *in, ObitErr *err)
   gchar keyword[9];
   gchar *routine = "ObitImageMosaicCopyCC";
 
- /* error checks */
+  /* error checks */
   if (err->error) return;
   g_assert (ObitIsA(in, &myClassInfo));
 
@@ -2725,6 +2732,12 @@ void ObitImageMosaicCopyCC (ObitImageMosaic *in, ObitErr *err)
     if  (err->error) Obit_traceback_msg (err, routine, outCCTab->name);
   }
 
+  /* Update number of CCs */
+  ObitImageOpen(in->FullField, OBIT_IO_ReadWrite, err);
+  in->FullField->myDesc->niter = outCCTab->myDesc->nrow;
+  in->FullField->myStatus = OBIT_Modified;
+  ObitImageClose(in->FullField, err);
+  
   outCCTab = ObitTableCCUnref(outCCTab); /* Cleanup */
 } /* end ObitImageMosaicCopyCC */
 

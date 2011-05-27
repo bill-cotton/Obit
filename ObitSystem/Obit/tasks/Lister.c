@@ -1,7 +1,7 @@
 /* $Id$  */
 /* Task to print the contents of various data files                   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2009-2010                                          */
+/*;  Copyright (C) 2009-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -1226,7 +1226,7 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
   olong        ver, iRow, maxAnt, nAnt, mAnt, iif, ipol, start, gainVer, doCrt=1;
   olong        loAnt, hiAnt, nrow, souID=0, SubA, antNo=0, freqID, lastSouID, lastSou;
   ofloat       time=0., lasttime, value=0., *valueArr=NULL, fblank = ObitMagicF();
-  ofloat       scale = 1.0;
+  ofloat       scale = 1.0, test;
   gchar        *prtFile=NULL, timeString[25], inTab[28], dispType[10], source[20];
   gchar        *dTypes[] = {"AMP     ","PHASE   ","WT      ","DELAY   ","RATE    ",
 			    "SNR     ", "PA      ", "ELEV    "};
@@ -1401,7 +1401,9 @@ void doGAIN (ObitInfoList *myInput, ObitUV* inData, ObitErr *err)
     numPol  = MIN (2, inDesc->inaxes[inDesc->jlocs]);  /* only up to 2 in gain table */
     for (ipol=0; ipol<numPol; ipol++) {
       /* Is this the first poln in the table? */
-      firstPol = (ipol==0) && (inDesc->crval[inDesc->jlocs]>-1.5);
+      test = -1.5;                                         /* Circular feeds */
+      if (inDesc->crval[inDesc->jlocs]<-4.0) test = -5.5;  /* Linear feeds */
+      firstPol = (ipol==0) && (inDesc->crval[inDesc->jlocs]>test);
       
       /* Loop making passes */
       loAnt = 0; hiAnt = -1;

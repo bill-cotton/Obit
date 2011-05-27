@@ -389,6 +389,11 @@ void ObitDConCleanPxListMFReset (ObitDConCleanPxList *inn, ObitErr *err)
     ObitTableClearRows ((ObitTable*)in->CCTable[i], err);
     if (err->error) Obit_traceback_msg (err, routine, in->name);
    
+    /* Init number of CCs to 1*/
+    ObitImageOpen(in->mosaic->images[i], OBIT_IO_ReadWrite, err);
+    in->mosaic->images[i]->myDesc->niter = 1;
+    in->mosaic->images[i]->myStatus = OBIT_Modified;
+    ObitImageClose(in->mosaic->images[i], err);
   } /* end loop over images */
 
 } /* end ObitDConCleanPxListMFReset */

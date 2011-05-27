@@ -1173,10 +1173,11 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
 	    vis[ondx]   = in->autoCorr[indx+in->aoffs[2]];
 	    vis[ondx+1] = in->autoCorr[indx+in->aoffs[2]+2];
 	    vis[ondx+2] = weight;
+	    break;
 	  case 3:
 	    /* Use conjugate */
-	    vis[ondx]   =  vis[ondx];
-	    vis[ondx+1] = -vis[ondx+1];
+	    vis[ondx]   =  in->autoCorr[indx+in->aoffs[2]];
+	    vis[ondx+1] = -in->autoCorr[indx+in->aoffs[2]+2];
 	    vis[ondx+2] = weight;
 	    break;
 	  default:
@@ -1744,6 +1745,7 @@ static ObitIOCode CopyFloats (ObitBDFData *in,
   olong i, nleft, ncopy, ncopyb, nhere, shit;
   ofloat *out;
   short *sdata;
+  gint32 *ldata;
   char  *bdata, btemp;
   gchar *lstart;
   union fequiv inu, outu;
@@ -1815,6 +1817,69 @@ static ObitIOCode CopyFloats (ObitBDFData *in,
       }
     }
     /* end 16 bit integer */
+  /* Scaled 32 bit integers */
+  } else if (Dtype==BDFDataType_INT32_TYPE) {  /* scaled 32 bit */
+    /* How many in current buffer load */
+    nhere   = (in->nBytesInBuffer - (olong)(start-in->buffer))/4;
+    nleft  = n;
+    out    = target;
+    lstart = start;
+    /* All in buffer? */
+    if (nhere>=n) {  /* All in current */
+      ldata = (gint32*)lstart;
+      ncopy = n*4;
+      /* byte flip if necessary */
+      if (byteFlip) {
+	bdata = (char*)ldata;
+	for (i=0; i<ncopy; i+=4) {
+	  btemp      = bdata[i];
+	  bdata[i]   = bdata[i+1];
+	  bdata[i+1] = btemp;
+	}
+      } /* end byte flip */
+      for (i=0; i<n; i++) out[i] = (ofloat)ldata[i];
+      in->current = lstart + ncopy;
+    } else {         /* Multiple buffers */
+      while (nleft>0) {
+	/* Copy what's here */
+	ncopy  = MIN (nleft, nhere);
+	ncopyb = ncopy*4;  /* in bytes */
+	ldata  = (gint32*)lstart;
+	/* byte flip if necessary */
+	if (byteFlip) {
+	  bdata = (char*)ldata;
+	  for (i=0; i<ncopyb; i+=4) {
+	    btemp      = bdata[i];
+	    bdata[i]   = bdata[i+1];
+	    bdata[i+1] = btemp;
+	  }
+	} /* end byte flip */
+	for (i=0; i<ncopy; i++) out[i] = (ofloat)ldata[i];
+	out += ncopy;
+	shit = (olong)(out-target);
+	in->current = lstart + ncopyb;
+	nleft -= ncopy;
+	if (nleft<=0) break;  /* Done? */
+	/* Get more */
+	retCode = ObitBDFDataFillBuffer (in, err);
+	if (err->error) {
+	  Obit_traceback_val (err, routine, in->name, retCode);
+	}
+	/* If EOF and not done - bail */
+	if ((retCode==OBIT_IO_EOF) && (nleft>0)) return retCode;
+	lstart = in->current;
+	nhere = (in->nBytesInBuffer - (olong)(lstart-in->buffer))/4;
+      }  /* end loop over buffers */
+    } /* end multiple buffers */
+    
+    /* If in last segment of buffer, update */
+    if ((olong)(in->current-in->buffer)>(BDFBUFFERSIZE*(BDFBUFFERFRAMES-1))) {
+      retCode = ObitBDFDataFillBuffer (in, err);
+      if (err->error) {
+	Obit_traceback_val (err, routine, in->name, retCode);
+      }
+    }
+    /* end 32 bit integer */
     /* 32 bit floats */
   } else if (Dtype==BDFDataType_FLOAT32_TYPE) {
     /* How many in current buffer load */
@@ -1872,7 +1937,9 @@ static ObitIOCode CopyFloats (ObitBDFData *in,
 
     /* end 32 bit float */
   } else {  /* Unsupported type */
-    g_error("CopyFloats: Unsupported data type %d", Dtype);
+    Obit_log_error(err, OBIT_Error, 
+		   "%s: Unsupported data type %d", routine, Dtype);
+    return OBIT_IO_SpecErr;
   }
 
   /* scale if necessary */

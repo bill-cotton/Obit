@@ -3546,7 +3546,7 @@ static gboolean SelectTaper (ObitDConCleanVis *in, gboolean *fresh, ObitErr *err
     else if (in->imgPeakRMS[i]<5.0) test *= 0.75;
     if (test>bestTest) {
       bestTest = test;
-      best     = i;
+      best     = j;
     }
     if (test>0.0) done = FALSE;  /* Finished CLEAN? */
       if (in->prtLv>=2) 

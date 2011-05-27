@@ -584,12 +584,12 @@ Adverbs:
               SN table attached to the output uv data which is needed to
               fully calibrate it.
   maxPSCLoop..Maximum number of phase self calibration loops
-  maxPSCLoop..Min. peak flux density required for phase self cal (Jy)
+  minFluxPSC..Min. peak flux density required for phase self cal (Jy)
   solPInt.....phase SC Solution interval (min)
   solPType....phase SC Solution Type: '  ', 'L1', 
   solPMode....phase SC Solution Mode:'A&P', 'P', 'P!A',
-  maxASCLoop..Maximum number of phase self calibration loops
-  maxASCLoop..Min. peak flux density required for phase self cal (Jy)
+  maxASCLoop..Maximum number of A&P self calibration loops
+  minFluxASC..Min. peak flux density required for phase self cal (Jy)
   solAInt.....A&P SC Solution interval (min)
   solAType....A&P SC Solution Type: '  ', 'L1', 
   solAMode....A&P SC Solution Mode:'A&P', 'P', 'P!A',
