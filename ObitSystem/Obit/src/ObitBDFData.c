@@ -1171,13 +1171,13 @@ ObitIOCode ObitBDFDataGetVis (ObitBDFData *in, ofloat *vis, ObitErr *err)
 	    break;
 	  case 2:
 	    vis[ondx]   = in->autoCorr[indx+in->aoffs[2]];
-	    vis[ondx+1] = in->autoCorr[indx+in->aoffs[2]+2];
+	    vis[ondx+1] = in->autoCorr[indx+in->aoffs[2]+1];
 	    vis[ondx+2] = weight;
 	    break;
 	  case 3:
 	    /* Use conjugate */
 	    vis[ondx]   =  in->autoCorr[indx+in->aoffs[2]];
-	    vis[ondx+1] = -in->autoCorr[indx+in->aoffs[2]+2];
+	    vis[ondx+1] = -in->autoCorr[indx+in->aoffs[2]+1];
 	    vis[ondx+2] = weight;
 	    break;
 	  default:

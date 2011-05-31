@@ -678,6 +678,7 @@ static gpointer ThreadCalFlag (gpointer arg)
 
   /* loop thru flagging criteria */
   ipolpt = abs(me->stoke0)-1;
+  if (me->stoke0<-4) ipolpt = abs(me->stoke0)-5;  /* Linear poln */
   for (iflag=first; iflag<=last; iflag++) { /* loop 500 */
  
     /* check antenna */
