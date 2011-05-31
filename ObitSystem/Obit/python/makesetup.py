@@ -43,12 +43,13 @@ import os
 import setupdata
 
 # Variables needed
-packageName = ''
-packageVer  = ''
-compileArgs = []
-incDirs     = []
-libDirs     = []
-libs        = []
+packageName    = ''
+packageVer     = ''
+compileArgs    = []
+incDirs        = []
+libDirs        = []
+runtimeLibDirs = []
+libs           = []
 
 # Parse input from  setupdata
 tt = setupdata.CFLAGS
@@ -96,7 +97,8 @@ t = tt.split()
 for x in t:
     if x[0:2]=='-L':
         libDirs.append(x[2:])
-
+    elif x[0:11]=='-Wl,-rpath,':
+         runtimeLibDirs.append( x[11:] )
 
 # Dump it out
 outfile = file("setup.py","w")
@@ -106,6 +108,7 @@ outfile.write('       ext_modules=[Extension(\"'+packageName+'\",'+os.linesep)
 outfile.write('                              [\''+packageName+'_wrap.c\'],'+os.linesep)
 outfile.write('                              extra_compile_args='+str(compileArgs)+','+os.linesep)
 outfile.write('                              library_dirs='+str(libDirs)+','+os.linesep)
-outfile.write('                              libraries='+str(libs)+')],'+os.linesep)
+outfile.write('                              libraries='+str(libs)+','+os.linesep)
+outfile.write('                              runtime_library_dirs='+str(runtimeLibDirs)+')],'+os.linesep)
 outfile.write('       include_dirs='+str(incDirs)+os.linesep)
 outfile.write(')')
