@@ -181,8 +181,14 @@ if test $doPYTHON = yes; then
     rm -f -r Python-2.7.1
     tar xzvf tarballs/Python-2.7.1.tgz
     cd Python-2.7.1
-    ./configure --prefix=$BASE3 --exec-prefix=$BASE3 --enable-shared 
+    # Build shared object python library
+    ./configure --prefix=$BASE3 --enable-shared 
     make clean all 
+    make install
+    # Build executable interpreter without a shared library. 
+    # LD_LIBRARY_PATH is not needed to start the interpreter.
+    ./configure --prefix=$BASE3
+    make clean all
     make install
 # Link Python executable
     if test -f $BASE3/bin/python2.7; then
