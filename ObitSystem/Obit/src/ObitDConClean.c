@@ -1175,9 +1175,9 @@ void ObitDConCleanRestore(ObitDConClean *in, ObitErr *err)
       bmaj = image->myDesc->beamMaj;
       bmin = image->myDesc->beamMin;
       bpa  = image->myDesc->beamPA;
-      /* Use for any others */
-      in->bmaj = bmaj;
-      in->bmin = bmin;
+      /* Use first for any others */
+      if ((in->bmaj<=0.0) && (bmaj>0.0)) in->bmaj = bmaj;
+      if ((in->bmin<=0.0) && (bmin>0.0)) in->bmin = bmin;
       in->bpa  = bpa;
    }
     

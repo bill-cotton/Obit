@@ -3627,7 +3627,10 @@ gboolean ObitSkyModelsetPBChans(ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
     /* New starting values */
     in->startIFPB      += in->numberIFPB;
     in->startChannelPB += in->numberChannelPB;
-    if (in->startChannelPB>in->numberChannel) in->startChannelPB=1;
+    if (in->startChannelPB>in->numberChannel) {
+      in->startChannelPB=1;
+      in->startIFPB++;
+    }
     in->numberIFPB      = 0;
     in->numberChannelPB = 0;
   }
@@ -3665,7 +3668,7 @@ gboolean ObitSkyModelsetPBChans(ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
   
   /* which frequency channel is the start? */
   ifreq = (in->startIFPB-1) * incif + (in->startChannelPB-1) * incf;
-  ifreq = MIN ((nfreq-1), ifreq);
+  ifreq = MIN ((nfreq+nif-1), ifreq);
 
   /* Primary beam correction factor at first IF/channel */
   uvDesc = uvdata->myDesc;
@@ -3682,7 +3685,7 @@ gboolean ObitSkyModelsetPBChans(ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
 	 iChan++) {
       /* which frequency channel is this? */
       ifreq = (iIF-1) * incif + (iChan-1) * incf;
-      ifreq = MIN ((nfreq-1), ifreq);
+      ifreq = MIN ((nfreq*nif-1), ifreq);
       PBFact = ObitPBUtilRelPB (Angle, niffreq, uvDesc->freqArr, in->antSize, 0.0,
 				uvDesc->freqArr[ifreq]);
       /* Does this one differ by more than 1% from PBStart? */
@@ -3692,7 +3695,7 @@ gboolean ObitSkyModelsetPBChans(ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
       sumFreq += uvDesc->freqArr[ifreq];
       in->numberChannelPB++;
     } /* end loop over channels */
-    if (found) break;
+    if (found || (in->startChannelPB>in->startChannel) break;
     in->numberIFPB++;
     /* WHAT??? in->startChannelPB = 1;*/
   } /* end loop over IFs */
@@ -3702,6 +3705,7 @@ gboolean ObitSkyModelsetPBChans(ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
   /* No more than all */
   in->numberChannelPB = MIN (in->numberChannelPB, 
 			     in->numberChannel-in->startChannelPB+1);
+  if (in->startChannelPB>1) in->numberIFPB = 1;
 
   /* if the limit not found counts too high
      if (!found) {

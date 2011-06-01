@@ -3551,15 +3551,15 @@ static gboolean SelectTaper (ObitDConCleanVis *in, gboolean *fresh, ObitErr *err
     if (test>0.0) done = FALSE;  /* Finished CLEAN? */
       if (in->prtLv>=2) 
 	Obit_log_error(err, OBIT_InfoErr,"Resoln. %d objective fn %f", 
-		   i, test);
+		   j, test);
   } /* End loop testing */
 
   /* Set taper */
-  in->minBeamTaper = 0.95 * in->mosaic->BeamTaper[best];
-  in->maxBeamTaper = 1.05 * in->mosaic->BeamTaper[best];
+  in->minBeamTaper = 0.95 * in->mosaic->BeamTaper[bestTap[best]];
+  in->maxBeamTaper = 1.05 * in->mosaic->BeamTaper[bestTap[best]];
   if (in->prtLv>=2) 
-    Obit_log_error(err, OBIT_InfoErr,"Select taper [%f,%f]", 
-		   in->minBeamTaper*3600.,  in->maxBeamTaper*3600.);
+    Obit_log_error(err, OBIT_InfoErr,"Select taper %f", 
+		   in->mosaic->BeamTaper[bestTap[best]]);
 
   /* Set minFlux for all facets with this taper by ratio of beam areas */
   if (best>0) {
