@@ -157,11 +157,11 @@ if test $doObit = yes; then
     echo ./configure --exec_prefix=$BASE --with-obit=$OBIT PATH=$BASE/other/bin:$PATH \
 	$PLPLOT $GSL $GLIB $FFTW $CFITSIO $WWW $CURL $XMLRPC $ZLIB $PYTHON \
 	OBIT=$OBIT  OBITINSTALL=$BASE LD_LIBRARY_PATH=$LD_LIBRARY_PATH \
-	PKG_CONFIG_PATH=$BASE/other/lib/pkgconfig/
+	PKG_CONFIG_PATH=$BASE/other/lib/pkgconfig/ LDFLAGS=-Wl,-rpath,$LD_LIBRARY_PATH
     ./configure --exec_prefix=$BASE --with-obit=$OBIT PATH=$BASE/other/bin:$PATH \
 	$PLPLOT $GSL $GLIB $FFTW $CFITSIO $WWW $CURL $XMLRPC $ZLIB $PYTHON \
 	OBIT=$OBIT  OBITINSTALL=$BASE LD_LIBRARY_PATH=$LD_LIBRARY_PATH \
-	PKG_CONFIG_PATH=$BASE/other/lib/pkgconfig/
+	PKG_CONFIG_PATH=$BASE/other/lib/pkgconfig/ LDFLAGS=-Wl,-rpath,$LD_LIBRARY_PATH
     make clean all 
 #make clean
 fi
