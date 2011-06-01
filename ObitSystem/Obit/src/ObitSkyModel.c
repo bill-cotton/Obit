@@ -3695,7 +3695,7 @@ gboolean ObitSkyModelsetPBChans(ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
       sumFreq += uvDesc->freqArr[ifreq];
       in->numberChannelPB++;
     } /* end loop over channels */
-    if (found || (in->startChannelPB>in->startChannel) break;
+    if (found || (in->startChannelPB>in->startChannel)) break;
     in->numberIFPB++;
     /* WHAT??? in->startChannelPB = 1;*/
   } /* end loop over IFs */
