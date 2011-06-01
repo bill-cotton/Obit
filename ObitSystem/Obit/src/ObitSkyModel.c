@@ -2263,6 +2263,12 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
       kincf  = 1;
   }
 
+  /* DEBUG 
+  if (startChannel+numberChannel>7) {
+    fprintf (stderr, "DEBUG BAD channel %d st %d no %d stin %d ncin %d\n", 
+	     iChannel, startChannel, numberChannel, in->startChannel, in->numberChannel);
+  }*/
+
   /* Get pointer for frequency correction tables */
   fscale  = uvdata->myDesc->fscale;
   freqArr = uvdata->myDesc->freqArr;
@@ -2513,6 +2519,12 @@ static gpointer ThreadSkyModelFTDFT (gpointer args)
 	/* Stokes Loop */
 	for (iStoke=startPoln; iStoke<startPoln+numberPoln; iStoke++) {
 	  offset = offsetChannel + iStoke*jincs; /* Visibility offset */
+
+	  /* DEBUG Look for crazy value of data
+	  if ((fabs(visData[offset])>10000.0) || (fabs(modReal)>10000.0)) {
+	    fprintf (stderr, "DEBUG DATA %g %g chann %d IF %d Stok %d vis %d\n", 
+		     visData[offset], modReal, iChannel, iIF, iStoke, iVis);
+	  } */
 
 	  /* Ignore blanked data */
 	  if ((visData[offset+2]<=0.0) && !in->doReplace) continue;
@@ -3628,7 +3640,7 @@ gboolean ObitSkyModelsetPBChans(ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
     in->startIFPB      += in->numberIFPB;
     in->startChannelPB += in->numberChannelPB;
     if (in->startChannelPB>in->numberChannel) {
-      in->startChannelPB=1;
+      in->startChannelPB = 1;
       in->startIFPB++;
     }
     in->numberIFPB      = 0;
@@ -3668,7 +3680,7 @@ gboolean ObitSkyModelsetPBChans(ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
   
   /* which frequency channel is the start? */
   ifreq = (in->startIFPB-1) * incif + (in->startChannelPB-1) * incf;
-  ifreq = MIN ((nfreq+nif-1), ifreq);
+  ifreq = MIN ((nfreq*nif-1), ifreq);
 
   /* Primary beam correction factor at first IF/channel */
   uvDesc = uvdata->myDesc;
@@ -3705,7 +3717,7 @@ gboolean ObitSkyModelsetPBChans(ObitSkyModel* in, ObitUV* uvdata, ObitErr *err)
   /* No more than all */
   in->numberChannelPB = MIN (in->numberChannelPB, 
 			     in->numberChannel-in->startChannelPB+1);
-  if (in->startChannelPB>1) in->numberIFPB = 1;
+  if (in->startChannelPB>1) in->numberIFPB = 0;
 
   /* if the limit not found counts too high
      if (!found) {
