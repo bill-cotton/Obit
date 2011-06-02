@@ -221,12 +221,6 @@ echo "# c shell version" > setup.csh
 echo "# Setup environment to run Obit software" >> setup.csh
 echo "setenv OBIT $OBIT" >> setup.csh
 echo "setenv OBITSD $OBITSD" >> setup.csh
-tstring="\"$LD_LIBRARY_PATH:\$LD_LIBRARY_PATH\""
-echo "setenv LD_LIBRARY_PATH $tstring" >> setup.csh
-tstring="\"$OBIT/python:$BASE/opt/share/obittalk/python/\""
-if test $doObitSD = yes; then
-    tstring="\"$OBITSD/python:$OBIT/python:$BASE/opt/share/obittalk/python/\""
-fi
 echo "setenv PYTHONPATH $tstring" >> setup.csh
 tstring="\"$BASE/bin:\$PATH\""
 echo "setenv PATH $tstring" >> setup.csh
@@ -239,12 +233,6 @@ echo "#!/bin/sh" > setup.sh
 echo "# Setup environment to run Obit software" >> setup.sh
 echo "OBIT=$OBIT; export OBIT" >> setup.sh
 echo "OBITSD=$OBITSD; export OBITSD" >> setup.sh
-echo "if test \"x\$LD_LIBRARY_PATH\"=\"x\"; then" >> setup.sh
-echo  "  LD_LIBRARY_PATH=$LD_LIBRARY_PATH; export LD_LIBRARY_PATH" >> setup.sh
-echo "else" >> setup.sh
-tstring="\"$LD_LIBRARY_PATH:\$LD_LIBRARY_PATH\""
-echo  "  LD_LIBRARY_PATH=$tstring; export LD_LIBRARY_PATH" >> setup.sh
-echo "fi" >> setup.sh
 tstring="\"$OBIT/python:$BASE/opt/share/obittalk/python/\""
 if test $doObitSD = yes; then
     tstring="\"$OBITSD/python:$OBIT/python:$BASE/opt/share/obittalk/python/\""
