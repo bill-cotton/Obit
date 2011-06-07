@@ -399,6 +399,8 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
     {g_free(in->ScanInfo->weightAxes); in->ScanInfo->weightAxes = NULL;}
 
   /* Parse scan header - first find limits */
+  /* Find first non null */
+  while (*in->current==0) (*in->current)++;  /* dangerous */
   maxStr    = in->nBytesInBuffer - (in->current-in->buffer);
   startInfo = g_strstr_len (in->current, maxStr, "<sdmDataHeader ");
   endInfo   = g_strstr_len (in->current, maxStr, "</sdmDataHeader>");
@@ -562,8 +564,10 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
       tstr = BDFparse_quote_str (startBB, maxStr2, prior, &next);
       if (tstr==NULL) break;  /* All? */
       in->ScanInfo->BBinfo[i]->SWinds[j] = g_malloc0(sizeof(BDFSpecWindowInfo)); 
-      in->ScanInfo->BBinfo[i]->SWinds[j]->spectralWindowNum = (olong)strtol(tstr, &next, 10);
-      g_free (tstr);
+      if (tstr!=NULL) {
+	in->ScanInfo->BBinfo[i]->SWinds[j]->spectralWindowNum = (olong)strtol(tstr, &next, 10);
+	g_free (tstr);
+      } else in->ScanInfo->BBinfo[i]->SWinds[j]->spectralWindowNum = 1;
       
       /* List of single dish (autocorrelation) products  */
       prior = "sdPolProducts=\"";
@@ -587,21 +591,27 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
       /* Number of spectral points  */
       prior = "numSpectralPoint=";
       tstr = BDFparse_quote_str (startBB, maxStr2, prior, &next);
-      in->ScanInfo->BBinfo[i]->SWinds[j]->numSpectralPoint = (olong)strtol(tstr, &next, 10);
-      g_free (tstr);
+      if (tstr!=NULL) {
+	in->ScanInfo->BBinfo[i]->SWinds[j]->numSpectralPoint = (olong)strtol(tstr, &next, 10);
+	g_free (tstr);
+      } else in->ScanInfo->BBinfo[i]->SWinds[j]->numSpectralPoint = 1;
       
       /* Number of data (e.g. pulsar) bins  */
       prior = "numBin=";
       tstr = BDFparse_quote_str (startBB, maxStr2, prior, &next);
-      in->ScanInfo->BBinfo[i]->SWinds[j]->numBin = (olong)strtol(tstr, &next, 10);
-      g_free (tstr);
+      if (tstr!=NULL) {
+	in->ScanInfo->BBinfo[i]->SWinds[j]->numBin = (olong)strtol(tstr, &next, 10);
+	g_free (tstr);      
+      } else in->ScanInfo->BBinfo[i]->SWinds[j]->numBin = 1;
       
       /* Data scaling factor  */
       prior = "scaleFactor=";
       tstr = BDFparse_quote_str (startBB, maxStr2, prior, &next);
-      in->ScanInfo->BBinfo[i]->SWinds[j]->scaleFactor = (odouble)strtod(tstr, &next);
-      g_free (tstr);
-      
+      if (tstr!=NULL) {
+	in->ScanInfo->BBinfo[i]->SWinds[j]->scaleFactor = (odouble)strtod(tstr, &next);
+	g_free (tstr);
+      } else in->ScanInfo->BBinfo[i]->SWinds[j]->scaleFactor = 1.0;
+     
       /* Sideband */
       prior = "sideband=";
       in->ScanInfo->BBinfo[i]->SWinds[j]->sideband = BDFparse_quote_str(startBB, maxStr2, prior, &next);
@@ -967,10 +977,12 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
       in->haveFlag = TRUE;
       /* Create if needed */
       if (in->flagData==NULL)
-	in->flagData = g_malloc0((in->ScanInfo->FlagSize+10)/8);
+	/*in->flagData = g_malloc0(sizeof(olong)*(in->ScanInfo->FlagSize+10)/8);*/
+	in->flagData = g_malloc0(sizeof(olong)*(in->ScanInfo->FlagSize+10));
       /* FIX THIS */
       Dtype = in->IntegInfo->type;
-      retCode = CopyFloats (in, start, (ofloat*)in->flagData, in->ScanInfo->FlagSize/8, 
+      /*retCode = CopyFloats (in, start, (ofloat*)in->flagData, in->ScanInfo->FlagSize/8, */
+      retCode = CopyFloats (in, start, (ofloat*)in->flagData, in->ScanInfo->FlagSize, 
 			    byteFlip, scale, Dtype, err);
       if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
       if (retCode==OBIT_IO_EOF) return retCode;
@@ -982,9 +994,11 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
       in->haveActualTimes = TRUE;
       /* Create if needed */
       if (in->actualTimesData==NULL)
-	in->actualTimesData = g_malloc0((in->ScanInfo->actualTimesSize+10)/8);
+	/*in->actualTimesData = g_malloc0(sizeof(olong)*(in->ScanInfo->actualTimesSize+10)/8);*/
+	in->actualTimesData = g_malloc0(sizeof(olong)*(in->ScanInfo->actualTimesSize+10));
       Dtype = in->IntegInfo->type;
-      retCode = CopyFloats (in, start, (ofloat*)in->actualTimesData, in->ScanInfo->actualTimesSize/8, 
+      /*retCode = CopyFloats (in, start, (ofloat*)in->actualTimesData, in->ScanInfo->actualTimesSize/8, */
+      retCode = CopyFloats (in, start, (ofloat*)in->actualTimesData, in->ScanInfo->actualTimesSize, 
 			    byteFlip, scale, Dtype, err);
       if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
       if (retCode==OBIT_IO_EOF) return retCode;
@@ -996,7 +1010,7 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
       in->haveActualDurations = TRUE;
       /* Create if needed */
       if (in->actualDurationsData==NULL)
-	in->actualDurationsData = g_malloc0((in->ScanInfo->actualDurationsSize+10));
+	in->actualDurationsData = g_malloc0(sizeof(olong)*(in->ScanInfo->actualDurationsSize+10));
       Dtype = in->IntegInfo->type;
       retCode = CopyFloats (in, start, (ofloat*)in->actualDurationsData, in->ScanInfo->actualDurationsSize, 
 			    byteFlip, scale, Dtype, err);
@@ -1010,7 +1024,7 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
       in->haveWeight = TRUE;
       /* Create if needed */
       if (in->weightData==NULL)
-	in->weightData = g_malloc0((in->ScanInfo->weightSize+10));
+	in->weightData = g_malloc0(sizeof(olong)*(in->ScanInfo->weightSize+10));
       Dtype = in->IntegInfo->type;
       retCode = CopyFloats (in, start, (ofloat*)in->weightData, in->ScanInfo->weightSize, byteFlip, 
 			    scale, Dtype, err);
@@ -1610,12 +1624,14 @@ static ObitBDFAxisName LookupAxisName(gchar *name)
 } /* end LookupAxisName */
 
 /**  Look up data type enum 
- * \param  name  String to lookup
+ * \param  name  String to lookup, NULL => BDFDataType_FLOAT32_TYPE
  * \return value
  */
 static ObitBDFDataType LookupDataType(gchar *name)
 {
-  ObitBDFDataType out = 0;
+  ObitBDFDataType out = BDFDataType_FLOAT32_TYPE;
+
+  if (name==NULL) return out;
  
   if (!strncmp (name, "INT16_TYPE", 10)) return BDFDataType_INT16_TYPE;
   if (!strncmp (name, "INT32_TYPE", 10)) return BDFDataType_INT32_TYPE;

@@ -338,7 +338,7 @@ ObitSDMData* ObitSDMDataCopy  (ObitSDMData *in, ObitSDMData *out, ObitErr *err);
 void ObitSDMDataClone (ObitSDMData *in, ObitSDMData *out, ObitErr *err);
 
 /** Public: Get spectral window array. */
-ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong scan, 
+ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow, 
 						gboolean SWOrder);
 
 /** Public: Delete spectral window array. */
@@ -349,7 +349,7 @@ gboolean ObitSDMDataSelChan  (ASDMSpectralWindowArray *in, olong selChan,
 			      olong selIF, ObitASDMBand band);
 
 /** Public: Get antenna/station array. */
-ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong scan);
+ASDMAntennaArray* ObitSDMDataGetAntArray (ObitSDMData *in, olong mainRow);
 
 /** Public: Delete antenna/station array. */
 ASDMAntennaArray* ObitSDMDataKillAntArray (ASDMAntennaArray *in);
@@ -366,7 +366,7 @@ ObitASDMBand ObitSDMDataBand2Band (gchar *code);
 /** Public: Convert frequency to band code enum */
 ObitASDMBand ObitSDMDataFreq2Band (odouble freq);
 
-/** Find first scan matching selection */
+/** Find first Main table row matching selection */
 olong ObitASDSelScan(ObitSDMData *in, olong selChan, olong selIF, 
 		     ObitASDMBand band, olong selConfig);
 

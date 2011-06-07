@@ -790,7 +790,7 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
   olong jPoln, polarizationId;
   olong i, j, k, iMain, iConfig, jSW, iSW, jDD, numDD, iJD, ncomp;
   odouble JD;
-  gboolean first = TRUE;
+  gboolean first = TRUE, isALMA;
   ASDMSpectralWindowArrayEntry **twinds=NULL;
   ofloat *sortStruct=NULL;
   gint number;
@@ -800,6 +800,11 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
   iMain = mainRow;
   
   if (iMain>=in->MainTab->nrows) return out;
+
+  /* Is this ALMA data? */
+  isALMA = !strncmp(in->ExecBlockTab->rows[0]->telescopeName, "ALMA", 4);
+  /* ALMA may be a bit confused */
+  if (!isALMA) isALMA = !strncmp(in->ExecBlockTab->rows[0]->telescopeName, "OSF", 3);
 
   out = g_malloc0(sizeof(ASDMSpectralWindowArray));
 
@@ -960,6 +965,10 @@ ASDMSpectralWindowArray* ObitSDMDataGetSWArray (ObitSDMData *in, olong mainRow,
 
   /* Set reference frequency to first ordered Spectral window */
   out->refFreq = out->winds[0]->chanFreqStart;
+
+  /* If there is only one ALMA window, it must be selected 
+     this is needed for ALMA WVR data to find sources */
+  if (isALMA && (out->nwinds==1)) out->winds[0]->selected = TRUE;
 
   /* Cleanup */
   if (sortStruct) g_free(sortStruct);

@@ -1291,7 +1291,7 @@ static gboolean ObitDConCleanVisPickNext2D(ObitDConCleanVis *in, ObitErr *err)
     
     /* Test BeamTaper */
     if (((in->mosaic->BeamTaper[best]<in->minBeamTaper) || 
-	 (in->mosaic->BeamTaper[best]>in->maxBeamTaper))) break;
+	 (in->mosaic->BeamTaper[best]>in->maxBeamTaper))) continue;
     
     /* Don't loop forever */
     loopCheck++;
@@ -1399,7 +1399,7 @@ static gboolean ObitDConCleanVisPickNext3D(ObitDConCleanVis *in, ObitErr *err)
   if (in->Pixels->currentIter > 0) {  /* No */
     for (i=0; i<in->nfield; i++) fresh[i] = FALSE;
     
-    /* Select taper for next CLEAN */
+    /* Select taper for next CLEAN / reimage */
     done = SelectTaper (in, fresh, err);
     if (err->error) Obit_traceback_val (err, routine, in->name, done);
     if (done) return done;
@@ -1456,11 +1456,31 @@ static gboolean ObitDConCleanVisPickNext3D(ObitDConCleanVis *in, ObitErr *err)
     done = FALSE;
     loopCheck = 0;
     while (!done) {
+      ip = 0;
+      /* if autoWin, Add any facets with peaks higher than best */
+      if (in->autoWindow) {
+	for (i=0; i<in->nfield; i++) {
+	  OK = (in->imgPeakRMS[i]>4.0) && (in->cleanable[i]>=in->cleanable[best]);
+	  OK = OK && (i!=best) && (!fresh[i]);
+	  /* Test BeamTaper */
+	  OK = OK && ((in->mosaic->BeamTaper[i]>=in->minBeamTaper) && 
+		      (in->mosaic->BeamTaper[i]<=in->maxBeamTaper));
+	  if (OK) {
+	    fldList[ip++] = i+1;
+	    fresh[i]   = TRUE;
+	    if (in->prtLv>2) {
+	      Obit_log_error(err, OBIT_InfoErr, 
+			     "PickNext3D: image %d higher peak %g than best %g",
+			     i+1, in->cleanable[i], in->cleanable[best]);
+	    }
+	  }
+	}
+      } /* End if autoWin */
+     
       /* If not just created recalculate */
       if ((best>=0) && (!fresh[best])) {
 	
 	/* Make best two residual image - get statistics */
-	ip = 0;
 	if (!fresh[best]) fldList[ip++] = best+1;
 	if ((second>=0) && (!fresh[second]) && (NumPar>1)) fldList[ip++] = second+1;
 	else fldList[ip++] = 0;
@@ -3065,6 +3085,11 @@ static void WhosBest (ObitDConCleanVis *in, olong *bbest, olong *ssecond)
   best = second = -1; 
   testBest = testSecond = -1.0e20;
   for (i=0; i<in->nfield; i++) {
+
+    /* Test BeamTaper */
+    if (((in->mosaic->BeamTaper[i]<in->minBeamTaper) || 
+	 (in->mosaic->BeamTaper[i]>in->maxBeamTaper))) continue;
+    
     /* Is this field OK to CLEAN? */
     if (in->autoWindow)
       OK = in->imgPeakRMS[i]>1.0 ||
@@ -3120,6 +3145,11 @@ static void WhosBest2D (ObitDConCleanVis *in, ofloat autoCenFlux,
   best = -1; 
   testBest = -1.0e20;
   for (i=0; i<in->nfield; i++) {
+
+     /* Test BeamTaper */
+    if (((in->mosaic->BeamTaper[i]<in->minBeamTaper) || 
+	 (in->mosaic->BeamTaper[i]>in->maxBeamTaper))) continue;
+
     /* Is this field OK to CLEAN? */
     if (in->autoWindow)
       OK = in->imgPeakRMS[i]>1.0 ||
@@ -3176,7 +3206,8 @@ static void WhosBest2D (ObitDConCleanVis *in, ofloat autoCenFlux,
 /**
  * Find priority ordering for making residual images
  * Ranking by quality, ignored "fresh" and shifted images
- * Only includes images with a quality within 30% of the best
+ * Only includes images with a quality within 30% of the best or 
+ * with cleanables at least that of the best.
  * Uses autoShift only for flux densities above 0.1 x autoCenFlux
  * Fields with quality=0.0 (reached CLEAN goal) are ignored.
  * If the best is an autoWindow, only other autoWindow fields are considered
@@ -3192,7 +3223,7 @@ static void OrderImage (ObitDConCleanVis *in, gboolean *fresh,
 			ofloat autoCenFlux, olong *fldList)
 {
   ofloat *tmpQual=NULL, maxQual, bestQual;
-  olong i, j, k, n, m, indx, best;
+  olong i, j, k, n, m, indx, best, bQual;
   gboolean OK, done, isAuto=FALSE;
   
   /* Make temporary array of quality factors */
@@ -3201,6 +3232,7 @@ static void OrderImage (ObitDConCleanVis *in, gboolean *fresh,
   /* Copy quality factors to temporary array */
   n = in->mosaic->numberImages;
   bestQual = -1.0e18;
+  bQual    = 0;
   for (i=0; i<n; i++) {
 
     /* Is this field OK to image? */
@@ -3218,7 +3250,8 @@ static void OrderImage (ObitDConCleanVis *in, gboolean *fresh,
       tmpQual[i] = in->quality[i];
     else tmpQual[i] = -1.0e20;
     if ((tmpQual[i]>bestQual) && (OK)) {
-      bestQual = tmpQual[i];                 /* Best quality */
+      bestQual = tmpQual[i];       
+      bQual    = i;          /* Best quality */
       isAuto   = (in->mosaic->isAuto[i]>=0)
 	&& (in->maxAbsRes[i]>0.1*autoCenFlux); /* Is best a strong autoCenter image? */
     }
@@ -3245,8 +3278,13 @@ static void OrderImage (ObitDConCleanVis *in, gboolean *fresh,
     /* Find anything? */
     if (done) break;
     
-    /* Save value if within 30% of best, dummy tmpQual */
-    if ((maxQual>=0.7*bestQual) && (!fresh[best])) {
+    /* Test BeamTaper */
+    OK = ((in->mosaic->BeamTaper[best]>=in->minBeamTaper) && 
+	  (in->mosaic->BeamTaper[best]<=in->maxBeamTaper));
+    
+    /* Save value if within 30% of best, or larger cleanable, same taper,  dummy tmpQual */
+    if (((maxQual>=0.7*bestQual) || (in->cleanable[best]>=in->cleanable[bQual])) 
+	&& (!fresh[best]) && OK) {
       fldList[indx++] = best+1;
     }
     if ((best>=0) && (best<n)) tmpQual[best]   = -1.0e20;
@@ -3432,15 +3470,16 @@ static gboolean SelectTaper (ObitDConCleanVis *in, gboolean *fresh, ObitErr *err
   i = m = 0;
   while (in->currentFields[i]>0) {
     l = in->currentFields[i]-1;
-    if (!fresh[l]) {   /* Need to reimage? */
-      if (in->cleanable[l]>in->minFlux[l]) fldList[m++] = l+1;
+    if (!fresh[l]) {   /* Need to reimage?  Mark as fresh */
+      if (in->cleanable[l]>in->minFlux[l]) {fldList[m++] = l+1; fresh[l] = TRUE;} 
       /* Find all matching resolutions */
       for (j=0; j<n; j++) {
 	if ((j!=l) &&  /* Not the same */
 	    (in->mosaic->FacetNo[j]==in->mosaic->FacetNo[l]) &&
-	    (!fresh[j]) && (in->cleanable[j]>in->minFlux[j])) 
+	    (!fresh[j]) && (in->cleanable[j]>in->minFlux[j])) {
 	  fldList[m++] = j+1;
-	fresh[j] = TRUE;  /* Mark as fresh */
+	  fresh[j] = TRUE;  /* Mark as fresh */
+	}
       }
       fresh[l] = TRUE;  /* Mark as fresh */
     }
@@ -3484,12 +3523,12 @@ static gboolean SelectTaper (ObitDConCleanVis *in, gboolean *fresh, ObitErr *err
   } /* end loop over tapers */
 
   /* Show statistics for each resolution */
-  if (in->prtLv>2) {
+  if (in->prtLv>3) {
     Obit_log_error(err, OBIT_InfoErr,"Current taper [%f,%f]", 
 		   in->minBeamTaper*3600.,  in->maxBeamTaper*3600.);
     for (i=0; i<n; i++) {
-      Obit_log_error(err, OBIT_InfoErr,"Resoln. %d, Taper %f, No. %d, Shift %d", 
-		     i, in->mosaic->BeamTaper[i]*3600.0, in->mosaic->FacetNo[i],
+      Obit_log_error(err, OBIT_InfoErr,"Facet %d, Taper %f, No. %d, Shift %d", 
+		     i+1, in->mosaic->BeamTaper[i]*3600.0, in->mosaic->FacetNo[i],
 		     in->mosaic->isShift[i]);
       Obit_log_error(err, OBIT_InfoErr,"   quality %f, cleanable %f", 
 		     in->quality[i], in->cleanable[i]);
@@ -4283,3 +4322,4 @@ static void FindPeak (ObitDConCleanVis *in, ObitErr *err)
   }
 
 } /* end  FindPeak  */
+

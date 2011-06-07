@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -119,7 +119,7 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
   olong irow;
   olong maxANid, i, iant;
   ObitInfoType type;
-  gboolean doVLA, doVLBI, doATCA, doEVLA;
+  gboolean doVLA, doVLBI, doATCA, doEVLA, doALMA;
   odouble x, y, z, ArrLong, rho, dtemp;
   gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   gchar tempName[101]; /* should always be big enough */
@@ -218,11 +218,14 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
   doEVLA = !strncmp(in->ArrName, "EVLA    ", 8);
   out->isVLA = doVLA || doEVLA;
 
+  /* ALMA? Earth centered */
+  doALMA  = !strncmp(in->ArrName, "ALMA    ", 8);
+
   /* Is this the ATCA? It uses earth center but without Y flip like VLBI */
   doATCA = !strncmp(in->ArrName, "ATCA    ", 8);
 
   /* Otherwise VLBI Uses earth center, but with Y with sign flip */
-  doVLBI = (!doATCA && !doEVLA) && 
+  doVLBI = (!doATCA && !doEVLA && !doALMA) &&
     (fabs(in->ArrayX)<1000.0) && (fabs(in->ArrayY)<1000.0) && (fabs(in->ArrayZ)<1000.0);
 
   /* loop over table saving information */
@@ -273,7 +276,11 @@ ObitAntennaList* ObitTableANGetList (ObitTableAN *in, ObitErr *err) {
       x = x + row->StaXYZ[0];
       y = -(y + row->StaXYZ[1]);  /* Flip handedness of VLBI data */
       z = z + row->StaXYZ[2];
-    } else if (doATCA||doEVLA) {
+    } else if (doATCA||doEVLA||doALMA) {  /* More or less normal aarrays */
+      x = x + row->StaXYZ[0];
+      y = y + row->StaXYZ[1];
+      z = z + row->StaXYZ[2];
+    } else  {  /* just in case */
       x = x + row->StaXYZ[0];
       y = y + row->StaXYZ[1];
       z = z + row->StaXYZ[2];
