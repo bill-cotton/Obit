@@ -99,9 +99,12 @@ void  ObitSDMDataClear (gpointer in);
 static void ObitSDMDataClassInfoDefFn (gpointer inClass);
 
 /* ASDM Tables routines */
-/** Private: Parse integer from XML string  */
+/** Private: Parse 32 bit integer from XML string  */
 static olong ASDMparse_int(gchar *string, olong maxChar, 
 			   gchar *prior, gchar **next);
+/** Private: Parse 64 bit integer from XML string  */
+static ollong ASDMparse_int64(gchar *string, olong maxChar, 
+			      gchar *prior, gchar **next);
 /** Private: Parse double from XML string  */
 static odouble ASDMparse_dbl(gchar *string, olong maxChar, 
 			     gchar *prior, gchar **next);
@@ -569,10 +572,19 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
 
   /* set Values */
   out->DataRoot = strdup(DataRoot);
+  out->isEVLA   = FALSE;
+  out->isALMA   = FALSE;
 
-  /* ASDM table */
+  /* ASDM table - also get schemaVersion */
   fullname = g_strconcat (DataRoot,"/ASDM.xml", NULL);
   out->ASDMTab = ParseASDMTable(fullname, err);
+  if (err->error) Obit_traceback_val (err, routine, fullname, out);
+  g_free(fullname);
+  out->schemaVersion = out->ASDMTab->schemaVersion;
+
+  /* ExecBlock table - also determines which array */
+  fullname = g_strconcat (DataRoot,"/ExecBlock.xml", NULL);
+  out->ExecBlockTab = ParseASDMExecBlockTable(out, fullname, err);
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
@@ -633,12 +645,6 @@ ObitSDMData* ObitSDMDataCreate (gchar* name, gchar *DataRoot, ObitErr *err)
   /* Doppler table */
   fullname = g_strconcat (DataRoot,"/Doppler.xml", NULL);
   out->DopplerTab = ParseASDMDopplerTable(out, fullname, err);
-  if (err->error) Obit_traceback_val (err, routine, fullname, out);
-  g_free(fullname);
-
-  /* ExecBlock table */
-  fullname = g_strconcat (DataRoot,"/ExecBlock.xml", NULL);
-  out->ExecBlockTab = ParseASDMExecBlockTable(out, fullname, err);
   if (err->error) Obit_traceback_val (err, routine, fullname, out);
   g_free(fullname);
 
@@ -1638,7 +1644,7 @@ void ObitSDMDataClear (gpointer inn)
 } /* end ObitSDMDataClear */
 
 /* ASDM Tables routines */
-/**  Parse integer from XLM string 
+/**  Parse 32 bit integer from XLM string 
  * \param  string  String to parse
  * \param  maxChar Maximum size of string
  * \param  prior string prior to value
@@ -1659,6 +1665,28 @@ static olong ASDMparse_int(gchar *string, olong maxChar,
     
   return out;
 } /* end ASDMparse_int */
+
+/**  Parse 64 bit integer from XLM string 
+ * \param  string  String to parse
+ * \param  maxChar Maximum size of string
+ * \param  prior string prior to value
+ * \param  next  pointer in string after parsed value
+ * \return value, 0 if problem
+ */
+static ollong ASDMparse_int64(gchar *string, olong maxChar, 
+			     gchar *prior, gchar **next)
+{
+  ollong out = 0;
+  gchar *b;
+
+  *next = string;  /* if not found */
+  b = g_strstr_len (string, maxChar, prior);
+  if (b==NULL) return out;  /* Found? */
+  b += strlen(prior);
+  out = (ollong)strtoll(b, next, 10);
+    
+  return out;
+} /* end ASDMparse_int64 */
 
 /**  Parse double from XLM string 
  * \param  string  String to parse
@@ -2281,6 +2309,7 @@ static ObitASDMAtmPhCorr LookupAtmPhCorr(gchar *name)
 } /* end LookupAtmPhCorr */
 
 /** Constructor for ASDM table parsing from file
+ * Reads schema version number
  * Expect the number of rows in the line following the <Name> line.
  *       <Name>Doppler</Name>
  *       <NumberRows>0</NumberRows>
@@ -2295,7 +2324,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
   ObitFile *file=NULL;
   ObitIOCode retCode;
   olong  maxLine = 4098;
-  gchar line[4099], *next;
+  gchar line[4099], *schemaVersion, *next;
   gchar *routine = " ParseASDMTable";
 
   /* error checks */
@@ -2347,8 +2376,31 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
     if (retCode==OBIT_IO_EOF) break;
 
     /* Parse entries */
+    /* schema version ALMA and EVLA differ here */
+    if (g_strstr_len (line, maxLine, "<ASDM")!=NULL) {
+      out->schemaVersion = -1;
+      /* ALMA */
+      schemaVersion = ASDMparse_quote_str(line, maxLine, "schemaVersion=", &next);
+      if (schemaVersion) {
+	out->schemaVersion = strtol(schemaVersion, &next, 10);
+	g_free(schemaVersion);
+      }
+      if (out->schemaVersion<0) { /* EVLA? */
+	retCode = ObitFileReadLine (file, line, maxLine, err);
+	if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+	if (retCode==OBIT_IO_EOF) break;
+	schemaVersion = ASDMparse_quote_str(line, maxLine, "schemaVersion=", &next);
+	if (schemaVersion) {
+	  out->schemaVersion = strtol(schemaVersion, &next, 10);
+	  g_free(schemaVersion);
+	}
+      }
+      if (out->schemaVersion<0) out->schemaVersion = 2;  /* Who knows??? */
+      continue;
+
+    }
     /** Number of Main rows */
-    if (g_strstr_len (line, maxLine, "<Name>Main")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>Main<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2356,7 +2408,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of Antenna rows */
-    if (g_strstr_len (line, maxLine, "<Name>Antenna")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>Antenna<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2364,7 +2416,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of calData rows */
-    if (g_strstr_len (line, maxLine, "<Name>CalData")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>CalData<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2372,7 +2424,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of calDevice rows */
-    if (g_strstr_len (line, maxLine, "<Name>CalDevice")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>CalDevice<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2380,7 +2432,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of calPointing rows */
-    if (g_strstr_len (line, maxLine, "<Name>CalPointing")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>CalPointing<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2388,7 +2440,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of CalReduction rows */
-    if (g_strstr_len (line, maxLine, "<Name>CalReduction")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>CalReduction<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2396,7 +2448,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of ConfigDescription rows */
-    if (g_strstr_len (line, maxLine, "<Name>ConfigDescription")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>ConfigDescription<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2404,7 +2456,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of CorrelatorMode rows */
-    if (g_strstr_len (line, maxLine, "<Name>CorrelatorMode")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>CorrelatorMode<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2412,7 +2464,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of DataDescription rows */
-    if (g_strstr_len (line, maxLine, "<Name>DataDescription")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>DataDescription<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2420,7 +2472,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of Doppler rows */
-    if (g_strstr_len (line, maxLine, "<Name>Doppler")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>Doppler<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2428,7 +2480,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of ExecBlock rows */
-    if (g_strstr_len (line, maxLine, "<Name>ExecBlock")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>ExecBlock<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2436,7 +2488,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of Feed rows */
-    if (g_strstr_len (line, maxLine, "<Name>Feed")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>Feed<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2444,7 +2496,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of Field rows */
-    if (g_strstr_len (line, maxLine, "<Name>Field")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>Field<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2452,7 +2504,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of Flag rows */
-    if (g_strstr_len (line, maxLine, "<Name>Flag")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>Flag<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2468,7 +2520,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of PointingModel rows */
-    if (g_strstr_len (line, maxLine, "<Name>PointingModel")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>PointingModel<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2476,7 +2528,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of Polarization rows */
-    if (g_strstr_len (line, maxLine, "<Name>Polarization")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>Polarization<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2484,7 +2536,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of Processor rows */
-    if (g_strstr_len (line, maxLine, "<Name>Processor")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>Processor<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2492,7 +2544,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of Receiver rows */
-    if (g_strstr_len (line, maxLine, "<Name>Receiver")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>Receiver<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2500,7 +2552,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of SBSummary rows */
-    if (g_strstr_len (line, maxLine, "<Name>SBSummary")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>SBSummary<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2508,7 +2560,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of Scan rows */
-    if (g_strstr_len (line, maxLine, "<Name>Scan")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>Scan<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2516,7 +2568,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of Source rows */
-    if (g_strstr_len (line, maxLine, "<Name>Source")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>Source<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2524,7 +2576,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of SpectralWindow rows */
-    if (g_strstr_len (line, maxLine, "<Name>SpectralWindow")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>SpectralWindow<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2532,7 +2584,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of State rows */
-    if (g_strstr_len (line, maxLine, "<Name>State")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>State<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2540,7 +2592,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of Station rows */
-    if (g_strstr_len (line, maxLine, "<Name>Station")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>Station<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2548,7 +2600,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of Subscan rows */
-    if (g_strstr_len (line, maxLine, "<Name>Subscan")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>Subscan<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2556,7 +2608,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of SwitchCycle rows */
-    if (g_strstr_len (line, maxLine, "<Name>SwitchCycle")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>SwitchCycle<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2564,7 +2616,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of SysCal rows */
-    if (g_strstr_len (line, maxLine, "<Name>SysCal")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>SysCal<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2572,7 +2624,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of SysPower rows */
-    if (g_strstr_len (line, maxLine, "<Name>SysPower")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>SysPower<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2580,7 +2632,7 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
       continue;
     }
     /* Number of Weather rows */
-    if (g_strstr_len (line, maxLine, "<Name>Weather")!=NULL) {
+    if (g_strstr_len (line, maxLine, "<Name>Weather<")!=NULL) {
       retCode = ObitFileReadLine (file, line, maxLine, err);
       if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
       if (retCode==OBIT_IO_EOF) break;
@@ -2593,6 +2645,8 @@ static ASDMTable* ParseASDMTable(gchar *ASDMFile,
   retCode = ObitFileClose (file, err);
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
+
+  if (out->schemaVersion<0) out->schemaVersion = 2;  /* Who knows??? */
 
   return out;
 } /* end ParseASDMTable */
@@ -2711,10 +2765,33 @@ static ASDMMainTable* ParseASDMMainTable(ObitSDMData *me,
     }
     prior = "<dataSize>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
-      out->rows[irow]->dataSize = ASDMparse_int (line, maxLine, prior, &next);
+      if (me->schemaVersion<=2) 
+	out->rows[irow]->dataSize = ASDMparse_int (line, maxLine, prior, &next);
+      else if (me->schemaVersion==3) 
+	out->rows[irow]->dataSize = ASDMparse_int64 (line, maxLine, prior, &next);
+      else g_error("Unsupported schemaVersion %d", me->schemaVersion);
       continue;
     }
     prior = "<dataOid>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      /* Parse off next line */
+      retCode = ObitFileReadLine (file, line, maxLine, err);
+      if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
+      if (retCode==OBIT_IO_EOF) break;
+      prior = "entityId=";
+      tstr = ASDMparse_quote_str (line, maxLine, prior, &next);
+      /* Replace slashes with underscore - drop up to colon */
+      colon = -1;
+      for (i=0; i<strlen(tstr); i++) {	
+	if (tstr[i]=='/') tstr[i]='_';
+	if (tstr[i]==':') colon = i;
+      }
+      out->rows[irow]->entityId = g_strdup(&tstr[colon+1]);
+      g_free(tstr);
+      continue;
+    }
+    /* ALMA version 3 */
+    prior = "<dataUID>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       /* Parse off next line */
       retCode = ObitFileReadLine (file, line, maxLine, err);
@@ -4101,11 +4178,17 @@ static ASDMDopplerTable* KillASDMDopplerTable(ASDMDopplerTable* table)
  */
 static ASDMExecBlockRow* KillASDMExecBlockRow(ASDMExecBlockRow* row)
 {
+  olong i;
   if (row == NULL) return NULL;
   if (row->configName)       g_free(row->configName);
   if (row->telescopeName)    g_free(row->telescopeName);
   if (row->observerName)     g_free(row->observerName);
-  if (row->observingLog)     g_free(row->observingLog);
+  if (row->observingLog)     {
+    for (i=0; i<row->numObservingLog; i++ ) {
+      if (row->observingLog[i]) g_free(row->observingLog[i]);
+    }
+    g_free(row->observingLog);
+  }
   if (row->sessionReference) g_free(row->sessionReference);
   if (row->schedulerMode)    g_free(row->schedulerMode);
   if (row->antennaId)        g_free(row->antennaId);
@@ -4115,6 +4198,7 @@ static ASDMExecBlockRow* KillASDMExecBlockRow(ASDMExecBlockRow* row)
 
 /** 
  * Constructor for ExecBlock table parsing from file
+ * Determines which array
  * \param  ExecBlockFile Name of file containing table
  * \param  err     ObitErr for reporting errors.
  * \return table structure,  use KillASDMExecBlockTable to free
@@ -4191,6 +4275,7 @@ ParseASDMExecBlockTable(ObitSDMData *me,
       out->rows[irow]->telescopeName = ASDMparse_str (line, maxLine, prior, &next);
       continue;
     }
+
     prior = "<observerName>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->observerName = ASDMparse_str (line, maxLine, prior, &next);
@@ -4198,7 +4283,18 @@ ParseASDMExecBlockTable(ObitSDMData *me,
     }
     prior = "<observingLog>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
-      out->rows[irow]->observingLog = ASDMparse_str (line, maxLine, prior, &next);
+      if (me->schemaVersion<=2) {
+	out->rows[irow]->numObservingLog = 1;
+	out->rows[irow]->observingLog    = g_malloc0(sizeof(gchar*));
+	out->rows[irow]->observingLog[0] = ASDMparse_str (line, maxLine, prior, &next);
+      } else if (me->schemaVersion==3) 
+	out->rows[irow]->observingLog = ASDMparse_strarray (line, maxLine, prior, &next);
+      else g_error("Unsupported schemaVersion %d", me->schemaVersion);
+      continue;
+    }
+    prior = "<numObservingLog>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numObservingLog = ASDMparse_int (line, maxLine, prior, &next);
       continue;
     }
     prior = "<sessionReference>";
@@ -4271,6 +4367,16 @@ ParseASDMExecBlockTable(ObitSDMData *me,
       out->rows[irow]->antennaId = ASDMparse_enumarray (line, maxLine, prior, &next);
       continue;
     }
+    prior = "<sbSummaryId>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->sbSummaryId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+    prior = "<ScaleId>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->ScaleId = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
     /* Is this the end of a row? */
     if (g_strstr_len (line, maxLine, endrow)!=NULL) irow++;
 
@@ -4280,7 +4386,22 @@ ParseASDMExecBlockTable(ObitSDMData *me,
 			routine, out->nrows);
   } /* end loop over table */
 
-  /* Close up */
+  /* Get array */
+  if (out->rows[0]->telescopeName) {
+    /* Is this ALMA data? */
+    me->isALMA = !strncmp(out->rows[0]->telescopeName, "ALMA", 4);
+    /* ALMA may be a bit confused */
+    if (!me->isALMA) me->isALMA = !strncmp(out->rows[0]->telescopeName, "OSF", 3);
+    if (!me->isALMA) me->isALMA = !strncmp(out->rows[0]->telescopeName, "AOS", 3);
+   
+    /* Is this EVLA data? */
+    me->isEVLA = !strncmp(out->rows[0]->telescopeName, "EVLA", 4);
+  } else { /* If nothing probably ALMA */
+    me->isALMA = TRUE;
+    me->isEVLA = FALSE;
+  }
+
+ /* Close up */
   retCode = ObitFileClose (file, err);
   if (err->error) Obit_traceback_val (err, routine, file->fileName, out);
   file = ObitFileUnref(file);
@@ -4648,6 +4769,9 @@ static ASDMFlagRow* KillASDMFlagRow(ASDMFlagRow* row)
 {
   if (row == NULL) return NULL;
   if (row->reason) g_free(row->reason);
+  if (row->antennaId) {
+    g_free(row->antennaId);
+  }
   g_free(row);
   return NULL;
 } /* end   KillASDMFlagRow */
@@ -4701,9 +4825,25 @@ static ASDMFlagTable* ParseASDMFlagTable(ObitSDMData *me,
     if (retCode==OBIT_IO_EOF) break;
 
     /* Parse entries */
+    /* EVLA version */
     prior = "<antennaId>Antenna_";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
-      out->rows[irow]->antennaId = ASDMparse_int (line, maxLine, prior, &next);
+      out->rows[irow]->antennaId    = g_malloc0(sizeof(olong*));
+      out->rows[irow]->antennaId[0] = ASDMparse_int (line, maxLine, prior, &next);
+      out->rows[irow]->numAntenna   = 1;
+      continue;
+    }
+
+    /* ALMA version */
+    prior = "<antennaId>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->antennaId = ASDMparse_enumarray (line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<numAntenna>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numAntenna = ASDMparse_int (line, maxLine, prior, &next);
       continue;
     }
     prior = "<reason>";
@@ -4722,7 +4862,19 @@ static ASDMFlagTable* ParseASDMFlagTable(ObitSDMData *me,
       continue;
     }
 
-    /* Is this the end of a row? */
+    prior = "<numPolarizationType>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numPolarizationType = ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+
+    prior = "<numSpectralWindow>";
+    if (g_strstr_len (line, maxLine, prior)!=NULL) {
+      out->rows[irow]->numSpectralWindow= ASDMparse_int (line, maxLine, prior, &next);
+      continue;
+    }
+
+   /* Is this the end of a row? */
     if (g_strstr_len (line, maxLine, endrow)!=NULL) irow++;
 
     /* Check overflow */
@@ -5594,9 +5746,9 @@ static ASDMScanTable* ParseASDMScanTable(ObitSDMData *me,
       out->rows[irow]->numIntent = ASDMparse_int (line, maxLine, prior, &next);
       continue;
     }
-     prior = "<numSubScan>";
+     prior = "<numSubscan>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
-      out->rows[irow]->numSubScan = ASDMparse_int (line, maxLine, prior, &next);
+      out->rows[irow]->numSubscan = ASDMparse_int (line, maxLine, prior, &next);
       continue;
     }
     prior = "<scanIntent>";

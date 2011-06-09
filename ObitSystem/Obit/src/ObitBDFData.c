@@ -374,6 +374,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   in->isALMA = !strncmp(in->SDMData->ExecBlockTab->rows[0]->telescopeName, "ALMA", 4);
   /* ALMA is a bit confused */
   if (!in->isALMA) in->isALMA = !strncmp(in->SDMData->ExecBlockTab->rows[0]->telescopeName, "OSF", 3);
+  if (!in->isALMA) in->isALMA = !strncmp(in->SDMData->ExecBlockTab->rows[0]->telescopeName, "AOS", 3);
 
   /* Init */
   in->ScanInfo->iMain      = iMain;
@@ -397,6 +398,9 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   in->haveWeight = FALSE;
   if (in->ScanInfo->weightAxes) 
     {g_free(in->ScanInfo->weightAxes); in->ScanInfo->weightAxes = NULL;}
+  in->haveZeroLag = FALSE;
+  if (in->ScanInfo->zeroLagAxes) 
+    {g_free(in->ScanInfo->zeroLagAxes); in->ScanInfo->zeroLagAxes = NULL;}
 
   /* Parse scan header - first find limits */
   /* Find first non null */
@@ -527,6 +531,18 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
     prior = "axes=";
     next++;
     in->ScanInfo->weightAxes = BDFparse_axesarray (next, maxStr, prior, &next);
+    g_free(tstr);
+  }
+  
+  /* zero lags  */
+  prior = "<zeroLags size=";
+  tstr = BDFparse_quote_str (startInfo, maxStr, prior, &next);
+  if (tstr) {
+    in->ScanInfo->zeroLagSize = (olong)strtol(tstr, &xnext, 10);
+    /* Axes types */
+    prior = "axes=";
+    next++;
+    in->ScanInfo->zeroLagAxes = BDFparse_axesarray (next, maxStr, prior, &next);
     g_free(tstr);
   }
   
@@ -1032,6 +1048,22 @@ ObitIOCode ObitBDFDataReadInteg (ObitBDFData *in, ObitErr *err)
       if (retCode==OBIT_IO_EOF) return retCode;
       continue;
     } /* End weight data */
+
+    /* zero lags data */
+    if (type==BDFMIMEType_zeroLags) {
+      in->haveZeroLag = TRUE;
+      /* Create if needed */
+      if (in->zeroLagData==NULL)
+	in->zeroLagData = g_malloc0(sizeof(olong)*(in->ScanInfo->zeroLagSize+10));
+      if (in->isALMA) Dtype = BDFDataType_FLOAT32_TYPE;
+      else Dtype = in->IntegInfo->type;
+      retCode = CopyFloats (in, start, (ofloat*)in->zeroLagData, in->ScanInfo->zeroLagSize, byteFlip, 
+			    scale, Dtype, err);
+      if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
+      if (retCode==OBIT_IO_EOF) return retCode;
+      continue;
+    } /* End zero lags data */
+
  }  /* end loop over data segments */
 
   return retCode;
@@ -1294,6 +1326,7 @@ void ObitBDFDataInit  (gpointer inn)
   in->actualTimesData     = NULL;
   in->actualDurationsData = NULL;
   in->weightData          = NULL;
+  in->zeroLagData         = NULL;
   in->antNo               = NULL;
   in->coffs               = NULL;
   in->coffif              = NULL;
@@ -1339,6 +1372,7 @@ void ObitBDFDataClear (gpointer inn)
   if (in->actualTimesData)     g_free(in->actualTimesData);
   if (in->actualDurationsData) g_free(in->actualDurationsData);
   if (in->weightData)          g_free(in->weightData);
+  if (in->zeroLagData)         g_free(in->zeroLagData);
   if (in->antNo)               g_free(in->antNo);
   if (in->coffs)               g_free(in->coffs);
   if (in->coffif)              g_free(in->coffif);
@@ -1722,6 +1756,7 @@ static BDFScanInfo* KillBDFScanInfo(BDFScanInfo *info)
   if (info->crossDataAxes)       g_free(info->crossDataAxes);
   if (info->autoDataAxes)        g_free(info->autoDataAxes);
   if (info->weightAxes)          g_free(info->weightAxes);
+  if (info->zeroLagAxes)         g_free(info->zeroLagAxes);
   g_free(info);
   return NULL;
 } /* end KillBDFScanInfo */
@@ -2077,6 +2112,7 @@ static ObitBDFMIMEType GetNextMIMEType(ObitBDFData *in,
   else if (!strncmp(slash, "actualTimes.bin", 15))     out = BDFMIMEType_actualTimes;
   else if (!strncmp(slash, "actualDurations.bin", 19)) out = BDFMIMEType_actualDurations;
   else if (!strncmp(slash, "weights.bin", 11))         out = BDFMIMEType_weights;
+  else if (!strncmp(slash, "zeroLags.bin", 12))        out = BDFMIMEType_zeroLags;
   else out =  BDFMIMEType_Unknown;
 
   /* Find start - after **\n\n */

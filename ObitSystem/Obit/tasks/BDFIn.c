@@ -250,7 +250,6 @@ int main ( int argc, char **argv )
   
   /* Copy EVLA tables */
   if (isEVLA) {
-    GetFlagInfo (SDMData, outData, err);       /*   FLAG tables */
     /* GetCalibrationInfo (inData, outData, err);   CALIBRATION tables */
     /* GetBandpassInfo (inData, outData, err);      BANDPASS tables */
     /* GetTSysInfo (inData, outData, err);          SYSTEM_TEMPERATURE tables */
@@ -261,6 +260,7 @@ int main ( int argc, char **argv )
     GetOTTInfo  (SDMData, outData, err);       /*   Over the top table */
     GetGainCurveInfo (SDMData, outData, err);  /*   gain curve (GC) table */
   }
+  GetFlagInfo (SDMData, outData, err);       /*   FLAG tables */
   GetWeatherInfo   (SDMData, outData, err);  /*   Weather table */
   if (err->error) ierr = 1;  ObitErrLog(err);  if (ierr!=0) goto exit;
 
@@ -1273,11 +1273,9 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   if (err->error) Obit_traceback_msg (err, routine, outData->name);
 
   /* Is this the EVLA? */
-  isEVLA = !strncmp(AntArray->arrayName, "EVLA", 4);
+  isEVLA = SDMData->isEVLA;
   /* Is this the ALMA? */
-  isALMA = !strncmp(AntArray->arrayName, "ALMA", 4);
-  /* ALMA is a bit confused */
-  if (!isALMA) isALMA = !strncmp(AntArray->arrayName, "OSF", 3);
+  isALMA = SDMData->isALMA;
 
   /* Set AN table values */
   outTable->ArrayX  = 0.0;   /* Earth centered */
@@ -1297,7 +1295,9 @@ void GetAntennaInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
   else
     strncpy (outTable->TimeSys, "IAT     ", lim);        /* ASDM doesn't say */
   for (i=0; i<lim; i++) if (outTable->TimeSys[i]==0) outTable->TimeSys[i]=' ';
-  strncpy (outTable->ArrName, AntArray->arrayName, lim);
+  if (isEVLA) strncpy (outTable->ArrName, "EVLA", lim);
+  else if (isALMA) strncpy (outTable->ArrName, "ALMA", lim);
+  else strncpy (outTable->ArrName, AntArray->arrayName, lim);
   for (i=0;i<lim;i++) if (outTable->ArrName[i]==0) outTable->ArrName[i] = ' ';
   outTable->FreqID = 0;
   outTable->iatUtc = 0.0;                        /* ASDM Lacks */
@@ -2057,7 +2057,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
     
     /* Write Index table */
     if ((startTime>-1.0e10) && 
-	(SDMData->MainTab->rows[iMain]->subscanNumber>=SDMData->ScanTab->rows[ScanTabRow]->numSubScan)) {
+	(SDMData->MainTab->rows[iMain]->subscanNumber>=SDMData->ScanTab->rows[ScanTabRow]->numSubscan)) {
       NXrow->Time     = 0.5 * (startTime + endTime);
       NXrow->TimeI    = (endTime - startTime);
       NXrow->EndVis   = desc->nvis;
@@ -2266,7 +2266,7 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
 {
   ObitTableFG*       outTable=NULL;
   ObitTableFGRow*    outRow=NULL;
-  olong              iRow, oRow, ver, iarr, antId, antNo, iAnt, i;
+  olong              iRow, oRow, ver, iarr, antId, antNo, iAnt, i, ia;
   ObitIOAccess       access;
   ASDMAntennaArray*  AntArray;
   gchar              *routine = "GetFlagInfo";
@@ -2336,15 +2336,6 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
      /* Make sure valid */
     if (SDMData->FlagTab->rows[iRow]->reason==NULL) continue;
 
-   /* Look up antenna number from Id */
-    antId = SDMData->FlagTab->rows[iRow]->antennaId;
-    antNo = antId;
-    for (iAnt=0; iAnt<AntArray->nants; iAnt++) {
-      if (AntArray->ants[iAnt]->antennaId==antId) 
-	{antNo = AntArray->ants[iAnt]->antennaNo; break;}
-    }
-    
-    outRow->ants[0]      = antNo;
     outRow->ants[1]      = 0;
     outRow->TimeRange[0] = SDMData->FlagTab->rows[iRow]->startTime - SDMData->refJD;
     outRow->TimeRange[1] = SDMData->FlagTab->rows[iRow]->endTime   - SDMData->refJD;
@@ -2356,12 +2347,24 @@ void GetFlagInfo (ObitSDMData *SDMData, ObitUV *outData, ObitErr *err)
     outRow->TimeRange[0] -= SDMData->integTime;
     outRow->TimeRange[1] += SDMData->integTime;
 
-    /* Write */
-    oRow = -1;
-    if ((ObitTableFGWriteRow (outTable, oRow, outRow, err)
-	 != OBIT_IO_OK) || (err->error>0)) { 
-      Obit_log_error(err, OBIT_Error, "ERROR updating FG Table");
-      return;
+    /* Loop over antennas in antennaId */
+    for (ia=0; ia< SDMData->FlagTab->rows[iRow]->numAntenna; ia++) {
+      /* Look up antenna number from Id */
+      antId = SDMData->FlagTab->rows[iRow]->antennaId[ia];
+      antNo = antId;
+      for (iAnt=0; iAnt<AntArray->nants; iAnt++) {
+	if (AntArray->ants[iAnt]->antennaId==antId) 
+	  {antNo = AntArray->ants[iAnt]->antennaNo; break;}
+      }
+      
+      outRow->ants[0]      = antNo;
+      /* Write */
+      oRow = -1;
+      if ((ObitTableFGWriteRow (outTable, oRow, outRow, err)
+	   != OBIT_IO_OK) || (err->error>0)) { 
+	Obit_log_error(err, OBIT_Error, "ERROR updating FG Table");
+	return;
+      }
     }
   } /* end loop over input table */
   

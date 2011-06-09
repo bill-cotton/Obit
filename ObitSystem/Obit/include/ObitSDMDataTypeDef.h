@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -167,6 +167,8 @@ typedef struct {
  /** EVLA ASDM Tables               */
  /* ASDM Table */
 typedef struct {
+  /** Schema version number */
+  olong schemaVersion;
   /** Number of Main rows */
   olong MainRows;
   /** Number of Antenna rows */
@@ -245,8 +247,8 @@ typedef struct {
   olong scanNumber;
   /** Subscan number */
   olong subscanNumber;
-  /** Number of bytes in the BDF data file */
-  olong dataSize;
+  /** Number of bytes in the BDF data file 64 bits */
+  ollong dataSize;
   /** Name of associated BDF data file (replaced slash with underscore) */
   gchar *entityId;
   /** Is all data with this row flagged? */
@@ -478,11 +480,13 @@ typedef struct {
   /** observer Name */
   gchar *observerName ;
   /** observing Log */
-  gchar *observingLog ;
+  gchar **observingLog ;
   /** session Reference */
   gchar *sessionReference;
   /** scheduler Mode */
   gchar *schedulerMode ;
+  /** Number of observing Log */
+  olong numObservingLog;
   /** baseline Range Min */
   odouble baseRangeMin;
   /** baseline Range Max */
@@ -505,8 +509,12 @@ typedef struct {
   olong numAntenna;
   /** flag this Row */
   gboolean flagRow;
-  /** antenna Id array*/
+  /** antenna Id array */
   olong *antennaId;
+  /** sbSummary Table ID */
+  olong sbSummaryId;
+  /** scale Id  */
+  olong ScaleId;
 } ASDMExecBlockRow;
 typedef struct {
   /** Number of rows */
@@ -579,8 +587,14 @@ typedef struct {
 typedef struct {
   /** flag Id */
   olong flagId;
-  /** antenna Id */
-  olong antennaId;
+  /** antenna Id array */
+  olong *antennaId;
+  /** number of antennas */
+  olong numAntenna;
+  /** number of polarization types, 0=> all */
+  olong numPolarizationType;
+  /** number of spectral windows, 0=> all */
+  olong numSpectralWindow;
   /** reason */
   gchar *reason;
   /** start Time (JD) */
@@ -715,8 +729,8 @@ typedef struct {
   odouble endTime;
   /** numIntent */
   olong numIntent;
-  /** numSubScan */
-  olong numSubScan;
+  /** numSubscan */
+  olong numSubscan;
   /** scan Intent array of strings */
   gchar **scanIntent;
   /** cal Data Type string array, one per subscan[?] */

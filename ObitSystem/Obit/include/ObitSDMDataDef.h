@@ -1,6 +1,6 @@
 /* $Id$ */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2010                                               */
+/*;  Copyright (C) 2010-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -34,6 +34,12 @@
 #include "ObitDef.h"  /* Parent class instance definitions */
 /** Root of data directory */
 gchar *DataRoot;
+/** Schema version number */
+olong schemaVersion;
+/* Is this EVLA data? */
+gboolean isEVLA;
+/* Is this ALMA data? */
+gboolean isALMA;
 /** ASDM table */
 ASDMTable* ASDMTab;
 /** Main table */

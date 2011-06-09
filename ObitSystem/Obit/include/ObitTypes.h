@@ -1,6 +1,6 @@
 /* $Id$     */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2008                                          */
+/*;  Copyright (C) 2002-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -65,8 +65,11 @@ typedef gint32 oint;
 /* if sizeof(glong) == sizeof(gfloat)
    typedef glong oint;*/
 
-/** Typedef for Obit integers */
+/** Typedef for Obit 32 integers */
 typedef gint32 olong;
+
+/** Typedef for Obit 64 bit integers */
+typedef gint64 ollong;
 
 /** Typedef for Obit floats */
 typedef gfloat ofloat;

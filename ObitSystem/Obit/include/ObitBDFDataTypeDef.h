@@ -109,6 +109,10 @@ typedef struct {
   olong weightSize;
   /** Order of weight axes */
   ObitBDFAxisName *weightAxes;
+  /**  zeroLag array size */
+  olong zeroLagSize;
+  /** Order of zeroLag axes */
+  ObitBDFAxisName *zeroLagAxes;
 } BDFScanInfo;
 
 /** Integration info from XML           */

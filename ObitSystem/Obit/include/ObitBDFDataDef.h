@@ -80,6 +80,10 @@ olong *actualDurationsData;
 gboolean haveWeight;
 /** Weight data for integration */
 olong *weightData;
+/** Have zeroLag data? */
+gboolean haveZeroLag;
+/** Flag data for integration */
+ofloat *zeroLagData;
 /**UV descriptor for data extracted  */
 ObitUVDesc *desc;
 /** Number of integrations in scan - not in BDF */

@@ -69,6 +69,7 @@ enum obitBDFMIMEType {
   BDFMIMEType_actualTimes,         /* actual time data */
   BDFMIMEType_actualDurations,     /* actual duration data */
   BDFMIMEType_weights,             /* weight data */
+  BDFMIMEType_zeroLags,            /* ??? */
   BDFMIMEType_EOF                  /* End of file */
 }; /* end enum obitBDFMIMEType */
 /** typedef for enum for BDFMIMEType. */
