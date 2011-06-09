@@ -30,18 +30,20 @@
 import Obit, Image, FArray, FArrayUtil, OErr
 
 def PConv(inImage, convFn, doDivide, rescale, outImage, err):
-    """ (de)Convolve an Image with an FArray and write outImage
-
+    """
+    (de)Convolve an Image with an FArray and write outImage
+    
     This routine convolves all selected planes in inImage with convFn if  
     doDivide is FALSE, else it does a linear deconvolution 
     Operations are performed using FFTs 
-    inImage  = Obit Image to be convolved
-    convFn   = Obit/FArray Convolving Function 
-    doDovide = If true divide FT of convFn into FT of inImage, else multiply.
-    rescale  = Multiplication factor to scale output to correct units
-    outImage = Output ObitImage must be a clone of inImage
-               Actual convolution size must be set externally 
-    err      = Python Obit Error/message stack
+
+    * inImage  = Obit Image to be convolved
+    * convFn   = Obit/FArray Convolving Function 
+    * doDovide = If true divide FT of convFn into FT of inImage, else multiply.
+    * rescale  = Multiplication factor to scale output to correct units
+    * outImage = Output ObitImage must be a clone of inImage
+      Actual convolution size must be set externally 
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -61,18 +63,20 @@ def PConv(inImage, convFn, doDivide, rescale, outImage, err):
     # end PConv
 
 def PConvGauss(inImage, maj, min, pa, rescale, outImage, err):
-    """ Convolve an Image with a Gaussian and write outImage
-
+    """
+    Convolve an Image with a Gaussian and write outImage
+    
     This routine convolves all selected planes in inImage with a Gaussian
     Operations are performed using FFTs 
-    inImage  = Obit Image to be convolved
-    maj      = Major axis of Gaussian in image plane (arcsec)
-    min      = Minor axis of Gaussian in image plane  (arcsec)
-    pa       = Position angle of Gaussian in image plane, from N thru E, (deg)
-    rescale  = Multiplication factor to scale output to correct units
-    outImage = Output ObitImage must be a clone of inImage
-               Actual convolution size must be set externally 
-    err      = Python Obit Error/message stack
+
+    * inImage  = Obit Image to be convolved
+    * maj      = Major axis of Gaussian in image plane (arcsec)
+    * min      = Minor axis of Gaussian in image plane  (arcsec)
+    * pa       = Position angle of Gaussian in image plane, from N thru E, (deg)
+    * rescale  = Multiplication factor to scale output to correct units
+    * outImage = Output ObitImage must be a clone of inImage
+      Actual convolution size must be set externally 
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -89,12 +93,14 @@ def PConvGauss(inImage, maj, min, pa, rescale, outImage, err):
     # end PConvGauss
 
 def PGaus(inImage, Beam):
-    """ Create an ObitFArray containing a unit area Gaussian in the center
-
+    """
+    Create an ObitFArray containing a unit area Gaussian in the center
+    
     returns  Python FArray object with normalized Gaussian
-    inImage  = Obit Image with geometry
-    Beam     = [maj, min, PA] defining eliptical Gaussian
-               size in image cell units or pixels if none given
+
+    * inImage  = Obit Image with geometry
+    * Beam     = [maj, min, PA] defining eliptical Gaussian
+      size in image cell units or pixels if none given
     """
     ################################################################
     # Checks
@@ -110,13 +116,15 @@ def PGaus(inImage, Beam):
     # end PGaus
 
 def Deconv(fBeam, cBeam):
-    """ Deconvolves a Gaussian "beam" from a Gaussian component. 
-
+    """
+    Deconvolves a Gaussian "beam" from a Gaussian component. 
+    
     Returns list of deconvolved [Maj, Min, PA], Maj,Min=0 -> unable to fit
     Can also be used to determine the Gaussian parameters which when
     convolved with (cMaj, cMin, cPA) gives fMaj, fMin, fPA).
-    fBeam = Convolved [major axis, minor axis, position angle of major axis]
-    cBeam = Beam [major axis, minor axis, position angle of major axis]
+
+    * fBeam = Convolved [major axis, minor axis, position angle of major axis]
+    * cBeam = Beam [major axis, minor axis, position angle of major axis]
     """
     ################################################################
     return Obit.ConvUtilDeconv (fBeam[0], fBeam[1], fBeam[2], \

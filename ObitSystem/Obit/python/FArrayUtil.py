@@ -30,16 +30,17 @@
 import Obit, FArray, OErr
 
 def PFitCGauss(inFA, FWHM, center, peak, err):
-    """ Fit Circular Gaussian around peak in FArray
-
+    """
+    Fit Circular Gaussian around peak in FArray
+    
     returns  RMS residual to fit
-    inFA    = Array to be fitted
-    FWHM    = [in] as list, half width of box around peak to use in fitting
-              0 = all.
-              [out] as list, Full width Half Max (pixels) of fitted Gaussian
-    center  = [out] [x,y] pixel (0-rel) coordinates of peak
-    peak    = [out] as list, peak value in fitted Gaussian
-    err     = Python Obit Error/message stack
+
+    * inFA    = Array to be fitted
+    * FWHM    = [in] as list, half width of box around peak to use in fitting
+      * 0 = all. [out] as list, Full width Half Max (pixels) of fitted Gaussian
+    * center  = [out] [x,y] pixel (0-rel) coordinates of peak
+    * peak    = [out] as list, peak value in fitted Gaussian
+    * err     = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -55,13 +56,15 @@ def PFitCGauss(inFA, FWHM, center, peak, err):
     # end PFitCGauss
 
 def PConvolve(inFA1, inFA2, err):
-    """ Return the convolution of two 2-D arrays
-
+    """
+    Return the convolution of two 2-D arrays
+    
     inFA1 and inFA2 must be compatible size and should not contain magic value blanks.
     Convolved array returned.
-    inFA1   = First array
-    inFA2   = Second array
-    err     = Python Obit Error/message stack
+
+    * inFA1   = First array
+    * inFA2   = Second array
+    * err     = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -76,15 +79,17 @@ def PConvolve(inFA1, inFA2, err):
     # end PConvolve
 
 def PUVGaus(naxis, cells, maprot, maj, min, pa):
-    """ Create a Gaussian UV tapering image corresponding to an image plane Gaussian
+    """
+    Create a Gaussian UV tapering image corresponding to an image plane Gaussian
     
     Returns an FArray with a Gaussian taper, as [u,v]
-    naxis  = dimension as [nx,ny]
-    cells  = cell spacing in x and y in units of maj,min (asec)
-    maprot = Map rotation (deg)
-    maj    = Major axis of Gaussian in image plane (same units as cells)
-    min    = Minor axis of Gaussian in image plane (same units as cells)
-    pa     = Position angle of Gaussian in image plane, from N thru E, (deg)
+
+    * naxis  = dimension as [nx,ny]
+    * cells  = cell spacing in x and y in units of maj,min (asec)
+    * maprot = Map rotation (deg)
+    * maj    = Major axis of Gaussian in image plane (same units as cells)
+    * min    = Minor axis of Gaussian in image plane (same units as cells)
+    * pa     = Position angle of Gaussian in image plane, from N thru E, (deg)
     """
     ################################################################
     # Create output

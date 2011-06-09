@@ -2,13 +2,15 @@
 FFT Class for use with Obit in python.
 
 Before performing an FFT, an FFT object must first be created.
-This is of the form
->>> fft = FFT.FFT(name, dir, type, rank, dim)
+This is of the form::
+
+    >>> fft = FFT.FFT(name, dir, type, rank, dim)
+    
 where name is an arbitrary name for the object
-      dir is the direction 1 => OBIT_FFT_Forward(R2C), 2 => OBIT_FFT_Reverse(C2R)
-      type is the FFT type: 1 => OBIT_FFT_FullComplex,  2 => OBIT_FFT_HalfComplex
-      rank is the dimensionality of the array being FFTed
-      dim is an array giving the dimensionality of each of the rank axes.
+dir is the direction 1 => OBIT_FFT_Forward(R2C), 2 => OBIT_FFT_Reverse(C2R)
+type is the FFT type: 1 => OBIT_FFT_FullComplex,  2 => OBIT_FFT_HalfComplex
+rank is the dimensionality of the array being FFTed
+dim is an array giving the dimensionality of each of the rank axes.
 
 Data passed to and from Obit FFT routines are as an FArray or CArray
 which are stored in column major (Fortran) order.  For a half plane complex array,
@@ -21,17 +23,16 @@ and there is NO transpose of the array axes.  Routine CArray.P2DCenter does
 the shuffling for a half plane complex array and FArray.PCenter2D works for a
 real array.
 
-Typical usage for a half plane complex to real (nx x ny) FFT is:
->>> # Create FFT object
->>> FFTobj = FFT.FFT("FFT", 2, 2, 2, [nx,ny])
->>> # Shuffle center to corners of half plane complex input
->>> CArray.P2DCenter (aperGrid)
->>> # Do FFT
->>> FFT.PC2R(FFTobj, aperGrid, beamGrid)
->>> # Unshuffle real array beamGrid
->>> FArray.PCenter2D (beamGrid)
+Typical usage for a half plane complex to real (nx x ny) FFT is::
 
-
+    >>> # Create FFT object
+    >>> FFTobj = FFT.FFT("FFT", 2, 2, 2, [nx,ny])
+    >>> # Shuffle center to corners of half plane complex input
+    >>> CArray.P2DCenter (aperGrid)
+    >>> # Do FFT
+    >>> FFT.PC2R(FFTobj, aperGrid, beamGrid)
+    >>> # Unshuffle real array beamGrid
+    >>> FArray.PCenter2D (beamGrid)
 """
 # $Id$
 #-----------------------------------------------------------------------
@@ -86,7 +87,8 @@ class FFTPtr :
             return
         return "<C FFT instance> " + Obit.FFTGetName(self.me)
 class FFT(FFTPtr):
-    """ Python Obit FFT class
+    """
+    Python Obit FFT class
     
     This class is for performing FFT on memory resident data.
     """
@@ -95,12 +97,14 @@ class FFT(FFTPtr):
     def __del__(self):
         if Obit!=None:
             Obit.delete_FFT(self.this)
-
+    
 def PSuggestSize(length):
-    """ Suggest efficient length of FFT equal or larger than length
-
+    """ 
+    Suggest efficient length of FFT equal or larger than length
+    
     returns suggested FFT length (1-D)
-    length = length of data array to be transformed.
+
+    * length = length of data array to be transformed.
     """
     ################################################################
     # Checks
@@ -109,11 +113,12 @@ def PSuggestSize(length):
 
 
 def PR2C(inFFT, inFA, outFA):
-    """  Real to half plane complex FFT of multidimensional array
+    """
+    Real to half plane complex FFT of multidimensional array
 
-    inFFT  = input Python FFT
-    inFA   = input ObitFArray
-    outFA  = output ObitCArray
+    * inFFT  = input Python FFT
+    * inFA   = input ObitFArray
+    * outFA  = output ObitCArray
     """
     ################################################################
     # Checks
@@ -123,11 +128,12 @@ def PR2C(inFFT, inFA, outFA):
     # end PR2C
 
 def PC2R(inFFT, inCA, outFA):
-    """  Half plane complex to Real FFT of multidimensional array
+    """
+    Half plane complex to Real FFT of multidimensional array
 
-    inFFT  = input Python FFT
-    inCA   = input ObitCArray
-    outFA  = output ObitFArray
+    * inFFT  = input Python FFT
+    * inCA   = input ObitCArray
+    * outFA  = output ObitFArray
     """
     ################################################################
     # Checks
@@ -137,11 +143,12 @@ def PC2R(inFFT, inCA, outFA):
     # end PC2R
 
 def PC2C(inFFT, inCA, outCA):
-    """  Full plane complex to complex FFT of multidimensional array
+    """
+    Full plane complex to complex FFT of multidimensional array
 
-    inFFT  = input Python FFT
-    inCA   = input ObitCArray
-    outCA  = output ObitCArray
+    * inFFT  = input Python FFT
+    * inCA   = input ObitCArray
+    * outCA  = output ObitCArray
     """
     ################################################################
     # Checks
@@ -151,10 +158,12 @@ def PC2C(inFFT, inCA, outCA):
     # end PC2C
 
 def PIsA (inFFT):
-    """ Tells if the input is a Python ObitFFT
-
+    """
+    Tells if the input is a Python ObitFFT
+    
     returns true or false (1,0)
-    inFFT = Python Obit FFT to test
+
+    * inFFT = Python Obit FFT to test
     """
     ################################################################
       # Checks
@@ -164,10 +173,12 @@ def PIsA (inFFT):
     # end PIsA
 
 def PGetName (inFFT):
-    """ Get Name of an FFT onject
-
+    """
+    Get Name of an FFT onject
+    
     returns object name
-    inFFT = Python Obit FFT
+
+    * inFFT = Python Obit FFT
     """
     ################################################################
       # Checks
@@ -177,10 +188,12 @@ def PGetName (inFFT):
     # end PGetName
 
 def PGetRank (inFFT):
-    """ Get rank of an FFT
-
+    """
+    Get rank of an FFT
+    
     returns object rank
-    inFFT = Python Obit FFT
+
+    * inFFT = Python Obit FFT
     """
     ################################################################
       # Checks
@@ -190,10 +203,12 @@ def PGetRank (inFFT):
     # end PGetName
 
 def PGetDim (inFFT):
-    """ Get dimension of an FFT
-
+    """
+    Get dimension of an FFT
+    
     returns array of 7 elements
-    inFFT = Python Obit FFT
+
+    * inFFT = Python Obit FFT
     """
     ################################################################
     # Checks
@@ -201,4 +216,3 @@ def PGetDim (inFFT):
         raise TypeError,"inFFT MUST be a Python Obit FFT"
     return Obit.FFTGetDim(inFFT.me)
     # end PGetDim
-

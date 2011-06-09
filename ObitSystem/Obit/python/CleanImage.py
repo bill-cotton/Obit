@@ -1,11 +1,14 @@
-""" Python Obit Image Clean class
+""" 
+Python Obit Image Clean class
 
 This class does BGC-like image based cleans
 
 CleanImage Members with python interfaces:
-InfoList  - used to pass instructions to processing
-Member List (readonly)
-mosaic    - ImageMosaic, use PGetMosaic, PSetMosaic
+
+========  =============================================================
+InfoList  used to pass instructions to processing Member List (readonly)
+mosaic    ImageMosaic, use PGetMosaic, PSetMosaic
+========  =============================================================
 """
 # $Id$
 #-----------------------------------------------------------------------
@@ -73,41 +76,49 @@ class CleanImagePtr :
         return "<C CleanImage instance> " + Obit.CleanImageGetName(self.me)
 #
 class CleanImage(CleanImagePtr):
-    """ Python Obit Image Clean class
-
+    """
+    Python Obit Image Clean class
+    
     This class does BGC-like image based cleans
-
+    
     CleanImage Members with python interfaces:
-    InfoList  - used to pass instructions to processing
-                Member List (readonly)
-    mosaic    - ImageMosaic, use PGetMosaic, PSetMosaic
+
+    ========  =======================================
+    InfoList  used to pass instructions to processing
+              Member List (readonly)
+    mosaic    ImageMosaic, use PGetMosaic, PSetMosaic
+    ========  =======================================
     """
     def __init__(self, name) :
         self.this = Obit.new_CleanImage(name)
     def __del__(self):
         if Obit!=None:
             Obit.delete_CleanImage(self.this)
-
+    
     def DefWindow(self, err):
-        """ Set default window (all image)
-        
-        self   = Python OTF object
-        err       = Python Obit Error/message stack
+        """ 
+        Set default window (all image)
+
+        * self   = Python OTF object
+        * err       = Python Obit Error/message stack
         """
         PDefWindow(self, err)
         # end DefWindow
 
     def AddWindow(self, window, err, field=1):
-        """ Add a  window
-        
-        self   = Python OTF object
-        window = set of 4 integers:
-                 if window[0]<0 box is round and
-                 window[1]=radius, [2,3] = center
-                 else rectangular and
-                 blc=(window[0],window[1]), trc= blc=(window[2],window[3])
-        err    = Python Obit Error/message stack
-        field  = Which field (1-rel)is the window in?
+        """
+        Add a  window
+
+        * self   = Python OTF object
+        * window = set of 4 integers:
+
+          * if window[0]<0 box is round and window[1]=radius, [2,3] = center,
+            else, 
+          * rectangular and blc=(window[0],window[1]), 
+            trc= blc=(window[2],window[3])
+
+        * err    = Python Obit Error/message stack
+        * field  = Which field (1-rel)is the window in?
         """
         PAddWindow(self, field, window, err)
         # end AddWindow
@@ -119,22 +130,25 @@ trc=[0,0,0,0,0,0,0]
 err=OErr.OErr()
 
 def input(inputDict):
-    """ Print the contents of an input Dictionary
+    """
+    Print the contents of an input Dictionary
 
-    inputDict = Python Dictionary containing the parameters for a routine
-    There should be a member of the dictionary ('structure') with a value
-    being a list containing:
-    1) The name for which the input is intended (string)
-    2) a list of tuples consisting of (parameter name, doc string)
-       with an entry for each parameter in the dictionary.
-       The display of the the inputs dictionary will be in the order of
-       the tuples and display the doc string after the value.
-       An example:
-       Soln2CalInput={'structure':['Soln2Cal',[('InData','Input OTF'),
-                                               ('soln','input soln table version'),
-                                               ('oldCal','input cal table version, -1=none'),
-                                               ('newCal','output cal table')]],
-                      'InData':None, 'soln':0, 'oldCal':-1, 'newCal':0}
+    * inputDict = Python Dictionary containing the parameters for a routine
+      There should be a member of the dictionary ('structure') with a value
+      being a list containing:
+
+      1) The name for which the input is intended (string)
+      2) a list of tuples consisting of (parameter name, doc string)
+         with an entry for each parameter in the dictionary.
+         The display of the the inputs dictionary will be in the order of
+         the tuples and display the doc string after the value.
+         An example::
+
+           Soln2CalInput={'structure':['Soln2Cal',[('InData','Input OTF'),
+                                                   ('soln','input soln table version'),
+                                                   ('oldCal','input cal table version, -1=none'),
+                                                   ('newCal','output cal table')]],
+                          'InData':None, 'soln':0, 'oldCal':-1, 'newCal':0}
     """
     ################################################################
     structure = inputDict['structure']  # Structure information
@@ -145,12 +159,14 @@ def input(inputDict):
     # end input
 
 def newObit(name, err):
-    """ Create and initialize an CleanImage structure
-
+    """
+    Create and initialize an CleanImage structure
+    
     Create sky model object
     Returns the Python CleanImage object
-    name     = name desired for object (labeling purposes)
-    err      = Python Obit Error/message stack
+
+    * name     = name desired for object (labeling purposes)
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     out = CleanImage (name)
@@ -158,12 +174,14 @@ def newObit(name, err):
     # end newObit
 
 def PCopy (inCleanImage, outCleanImage, err):
-    """ Make a shallow copy of input object.
-
+    """
+    Make a shallow copy of input object.
+    
     Makes structure the same as inCleanImage, copies pointers
-    inCleanImage  = Python CleanImage object to copy
-    outCleanImage = Output Python CleanImage object, must be defined
-    err         = Python Obit Error/message stack
+
+    * inCleanImage  = Python CleanImage object to copy
+    * outCleanImage = Output Python CleanImage object, must be defined
+    * err           = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -180,10 +198,12 @@ def PCopy (inCleanImage, outCleanImage, err):
     # end PCopy
 
 def PGetList (inCleanImage):
-    """ Return the member InfoList
-
+    """
+    Return the member InfoList
+    
     returns InfoList
-    inCleanImage  = Python CleanImage object
+
+    * inCleanImage  = Python CleanImage object
     """
     ################################################################
      # Checks
@@ -197,10 +217,12 @@ def PGetList (inCleanImage):
     # end PGetList
 
 def PGetMosaic (inCleanImage):
-    """ Return the member mosaic
-
+    """
+    Return the member mosaic
+    
     returns ImageMosaic
-    inCleanImage  = Python CleanImage object
+
+    * inCleanImage  = Python CleanImage object
     """
     ################################################################
      # Checks
@@ -213,10 +235,11 @@ def PGetMosaic (inCleanImage):
     # end PGetMosaic
 
 def PSetMosaic (inCleanImage, mosaic):
-    """ Replace an ImageMosaic in the CleanImage
+    """
+    Replace an ImageMosaic in the CleanImage
 
-    inCleanImage  = Python CleanImage object
-    mosaic      = Python ImageMosaic to attach
+    * inCleanImage  = Python CleanImage object
+    * mosaic      = Python ImageMosaic to attach
     """
     ################################################################
     # Checks
@@ -229,10 +252,12 @@ def PSetMosaic (inCleanImage, mosaic):
     # end PSetMosaic
 
 def PGetWindow (inCleanImage):
-    """ Return the member OWindow
-
+    """
+    Return the member OWindow
+    
     returns OWindow
-    inCleanImage  = Python CleanImage object
+
+    * inCleanImage  = Python CleanImage object
     """
     ################################################################
      # Checks
@@ -245,10 +270,11 @@ def PGetWindow (inCleanImage):
     # end PGetWindow
 
 def PSetWindow (inCleanImage, window):
-    """ Replace OWindow in the CleanImage
+    """
+    Replace OWindow in the CleanImage
 
-    inCleanImage  = Python CleanImage object
-    window        = Python OWindow to attach
+    * inCleanImage  = Python CleanImage object
+    * window        = Python OWindow to attach
     """
     ################################################################
     # Checks
@@ -261,15 +287,16 @@ def PSetWindow (inCleanImage, window):
     # end PSetWindow
 
 def PAddWindow (inCleanImage, field, window, err):
-    """ Add a window to a field to be CLEANed
+    """
+    Add a window to a field to be CLEANed
 
-    inCleanImage  = Python CleanImage object
-    field         = Which field (1-rel)is the window in?
-    window        = set of 4 integers:
-                    if window[0]<0 box is round and
-                    window[1]=radius, [2,3] = center
-                    else rectangular and
-                    blc=(window[0],window[1]), trc= blc=(window[2],window[3])
+    * inCleanImage  = Python CleanImage object
+    * field         = Which field (1-rel)is the window in?
+    * window        = set of 4 integers:
+
+      * if window[0]<0 box is round and window[1]=radius, [2,3] = center, else,
+      * rectangular and blc=(window[0],window[1]), 
+        trc= blc=(window[2],window[3])
     """
     ################################################################
     # Checks
@@ -282,14 +309,16 @@ def PAddWindow (inCleanImage, field, window, err):
     # end PAddWindow
 
 def PCreate (name, mosaic, err):
-    """ Create the parameters and underlying structures of a CleanImage.
-
+    """
+    Create the parameters and underlying structures of a CleanImage.
+    
     Note: The dirty image will be replaced by the CLEAN image by
     the Clean.
-    name      = Name to be given to object
-                Most control parameters are in InfoList member
-    mosaic    = Python ImageMosaic to attach
-    err       = Python Obit Error/message stack
+
+    * name      = Name to be given to object
+      Most control parameters are in InfoList member
+    * mosaic    = Python ImageMosaic to attach
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -306,14 +335,16 @@ def PCreate (name, mosaic, err):
     # end PCreate
 
 def PDefWindow (clean, err):
-    """ Set default windows on image mosaic member.
-
+    """
+    Set default windows on image mosaic member.
+    
     If mosaic member Radius>0 then make round boxes on Fly's eye field
     with this radius, else use rectangular box including all but outer 5 pixels
     On outlier fields, use rectangular box of width OutlierSize.
     Assumes all images in mosaic have descriptors defined.
-    clean     = Clean object containing mosaic
-    err       = Python Obit Error/message stack
+
+    * clean     = Clean object containing mosaic
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -356,8 +387,9 @@ CleanInput={'structure':['Clean',[('CleanImage','CleanImage Object'),
             'doRestore':True,
             'CCVer':0}
 def PClean (err, input=CleanInput):
-    """ Performs image based CLEAN
-
+    """
+    Performs image based CLEAN
+    
     The peak in the image is iteratively found and then a limited
     region of the beam times a fraction of the peak is subtracted
     and the process is iterated.  Occasionally a proper residual
@@ -368,24 +400,26 @@ def PClean (err, input=CleanInput):
     that.  However, assymetric (but stationary) dirty beams are
     allowed.  The dirty bean must be attached to its dirty image.
     The dirty image passed is replaced by the CLEAN image.
-    err     = Python Obit Error/message stack
-    input   = input parameter dictionary
+
+    * err     = Python Obit Error/message stack
+    * input   = input parameter dictionary
     
     Input dictionary entries:
-    CleanImage  = Input CleanImage,
-    Niter       = Maximum number of CLEAN iterations
-    minPatch    = Minimum beam patch in pixels [def 100]
-    maxPixel    = Maximum number of residuals [def 20000]
-    BMAJ        = Restoring beam major axis (deg)
-    BMIN        = Restoring beam minor axis (deg)
-    BPA         = Restoring beam position angle (deg)
-    Gain        = CLEAN loop gain
-    minFlux     = Minimun flux density (Jy)
-    Factor      = CLEAN depth factor
-    Plane       = Plane being processed, 1-rel indices of axes 3-?
-    doRestore   = Restore components when done [def. True]
-    CCVer       = CC table version number
 
+        * CleanImage  = Input CleanImage,
+        * Niter       = Maximum number of CLEAN iterations
+        * minPatch    = Minimum beam patch in pixels [def 100]
+        * maxPixel    = Maximum number of residuals [def 20000]
+        * BMAJ        = Restoring beam major axis (deg)
+        * BMIN        = Restoring beam minor axis (deg)
+        * BPA         = Restoring beam position angle (deg)
+        * Gain        = CLEAN loop gain
+        * minFlux     = Minimun flux density (Jy)
+        * Factor      = CLEAN depth factor
+        * Plane       = Plane being processed, 1-rel indices of axes 3-?
+        * doRestore   = Restore components when done [def. True]
+        * CCVer       = CC table version number
+    
     """
     ################################################################
     # Get input parameters
@@ -423,10 +457,11 @@ def PClean (err, input=CleanInput):
     # end PClean
 
 def PRestore (clean, err):
-    """ Restore subtracted CLEAN components to residual image
+    """
+    Restore subtracted CLEAN components to residual image
 
-    clean     = Clean object containing mosaic
-    err       = Python Obit Error/message stack
+    * clean     = Clean object containing mosaic
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -441,10 +476,12 @@ def PRestore (clean, err):
     # end PRestore
 
 def PGetName (inCleanImage):
-    """ Tells Image object name (label)
-
+    """
+    Tells Image object name (label)
+    
     returns name as character string
-    inCleanImage  = Python CleanImage object
+
+    * inCleanImage  = Python CleanImage object
     """
     ################################################################
      # Checks
@@ -455,10 +492,12 @@ def PGetName (inCleanImage):
     # end PGetName
 
 def PIsA (inCleanImage):
-    """ Tells if input really a Python Obit CleanImage
-
+    """
+    Tells if input really a Python Obit CleanImage
+    
     return true, false (1,0)
-    inCleanImage   = Python CleanImage object
+
+    * inCleanImage   = Python CleanImage object
     """
     ################################################################
     # Checks

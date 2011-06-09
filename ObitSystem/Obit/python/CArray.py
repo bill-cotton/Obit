@@ -51,7 +51,8 @@ class CArrayPtr :
             return
         return "<C CArray instance> " + Obit.CArrayGetName(self.me)
 class CArray(CArrayPtr):
-    """ Python Obit multidimensional array of complex class
+    """
+    Python Obit multidimensional array of complex class
     
     This class is for creating and manipulating a Array as a memory resident 
     multidimensional rectangular array of floats (x2).
@@ -65,14 +66,16 @@ class CArray(CArrayPtr):
     def __del__(self):
         if Obit!=None:
             Obit.delete_CArray(self.this)
-
+    
 def PGetVal(inCA, pos):
-    """ Return value of a cell in an CArray
+    """ 
+    Return value of a cell in an CArray
+    
+    Returns cell contents. Returns a pair of Reals with the Real and Imaginary
+    parts.
 
-    returns cell contents
-    inCA  = input Python CArray
-    pos   = 0-rel cell number as an array, e.g. [10,24]
-    returns a pair of Reals with the Real and Imaginary parts
+    * inCA  = input Python CArray
+    * pos   = 0-rel cell number as an array, e.g. [10,24]
     """
     ################################################################
     # Checks
@@ -84,13 +87,13 @@ def PGetVal(inCA, pos):
     return val;
     #  end PGetVal
 
-
 def PSetVal(inCA, pos, val):
-    """  Set value of a cell in an CArray
-
-    inCA  = input Python CArray
-    pos   = 0-rel cell number as an array, e.g. [10,24]
-    val  = new value for cell as two reals
+    """
+    Set value of a cell in an CArray
+    
+    * inCA  = input Python CArray
+    * pos   = 0-rel cell number as an array, e.g. [10,24]
+    * val  = new value for cell as two reals
     """
     ################################################################
     # Checks
@@ -101,11 +104,13 @@ def PSetVal(inCA, pos, val):
     # end PSetVal
 
 def PCopy (inCA, err):
-    """  Make copy an CArray
-
+    """
+    Make copy an CArray
+    
     returns copy
-    inCA = input Python CArray
-    err  = Python Obit Error/message stack
+
+    * inCA = input Python CArray
+    * err  = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -120,11 +125,13 @@ def PCopy (inCA, err):
     # end PCopy 
 
 def PIsCompatable  (in1, in2):
-    """  Tells if two CArrays have compatable geometry
-
+    """
+    Tells if two CArrays have compatable geometry
+    
     returns true or false (1, 0)
-    in1 = first input Python CArray
-    in2 = second input Python CArray
+
+    * in1 = first input Python CArray
+    * in2 = second input Python CArray
     """
     ################################################################
      # Checks
@@ -139,11 +146,13 @@ def PIsCompatable  (in1, in2):
 
 
 def PRealloc (inCA, naxis):
-    """ Change the geometry of an CArray
-
+    """
+    Change the geometry of an CArray
+    
     Contents will be zeroed
-    inCA  = input Python CArray
-    naxis = array giving desired dimension, e.g. [20,30]
+
+    * inCA  = input Python CArray
+    * naxis = array giving desired dimension, e.g. [20,30]
     """
     ################################################################
     # Checks
@@ -156,11 +165,13 @@ def PRealloc (inCA, naxis):
 
 
 def PMaxAbs (inCA, pos) :
-    """ Find maximum abs value pixel value
-
+    """
+    Find maximum abs value pixel value
+    
     returns  maximum value (may have trouble w/ > 2 dim)
-    inCA  = first input Python CArray
-    pos   = [output] 0-rel position as array
+
+    * inCA  = first input Python CArray
+    * pos   = [output] 0-rel position as array
     """
     ################################################################
     # Checks
@@ -175,9 +186,10 @@ def PMaxAbs (inCA, pos) :
     # end PMaxAbs
 
 def PNeg (inCA):
-    """ Negate each element of the array.
-
-    inCA = input Python CArray
+    """
+    Negate each element of the array.
+    
+    * inCA = input Python CArray
     """
     ################################################################
     # Checks
@@ -189,10 +201,12 @@ def PNeg (inCA):
 
 
 def PConjg (inCA):
-    """ Conjugate each element of the array.
-
+    """
+    Conjugate each element of the array.
+    
     returns conjugate
-    inCA = input Python CArray
+
+    * inCA = input Python CArray
     """
     ################################################################
     # Checks
@@ -204,11 +218,12 @@ def PConjg (inCA):
 
 
 def PFill (inCA, cmpx):
-    """ Fill the elements of an array with a complex scalar
-
-    in = cmpx
-    inCA   = input Python CArray
-    cmpx   = Value to fill as  (real,imaginary)
+    """
+    Fill the elements of an array with a complex scalar
+    
+    * in = cmpx
+    * inCA   = input Python CArray
+    * cmpx   = Value to fill as  (real,imaginary)
     """
     ################################################################
     # Checks
@@ -220,11 +235,13 @@ def PFill (inCA, cmpx):
 
 
 def PSAdd (inCA, scalar):
-    """ Add a scalar to each element of the array.
+    """
+    Add a scalar to each element of the array.
 
     in = in + scalar
-    inCA   = input Python CArray
-    scalar = Value to add
+
+    * inCA   = input Python CArray
+    * scalar = Value to add
     """
     ################################################################
     # Checks
@@ -236,11 +253,13 @@ def PSAdd (inCA, scalar):
 
 
 def PSMul (inCA, scalar):
-    """ Multiply each element of the array by a scalar
-
+    """
+    Multiply each element of the array by a scalar
+    
     in = in * scalar
-    inCA   = input Python CArray
-    scalar = Value to multiply
+
+    * inCA   = input Python CArray
+    * scalar = Value to multiply
     """
     ################################################################
     # Checks
@@ -251,11 +270,13 @@ def PSMul (inCA, scalar):
     # end PSMul
 
 def PCSAdd (inCA, scalar):
-    """ Add a complex scalar to each element of the array.
+    """
+    Add a complex scalar to each element of the array.
 
     in = in + scalar
-    inCA   = input Python CArray
-    scalar = Value to add float[2]
+
+    * inCA   = input Python CArray
+    * scalar = Value to add float[2]
     """
     ################################################################
     # Checks
@@ -265,13 +286,14 @@ def PCSAdd (inCA, scalar):
     Obit.CArraycSAdd(inCA.me, scalar)
     # end PCSAdd
 
-
 def PCSMul (inCA, scalar):
-    """ Multiply each element of the array by a complex scalar
-
+    """
+    Multiply each element of the array by a complex scalar
+    
     in = in * scalar
-    inCA   = input Python CArray
-    scalar = Value to multiply float[2]
+
+    * inCA   = input Python CArray
+    * scalar = Value to multiply float[2]
     """
     ################################################################
     # Checks
@@ -282,12 +304,14 @@ def PCSMul (inCA, scalar):
     # end PCSMul
 
 def PAdd (in1, in2, out):
-    """ Add corresponding elements of two arrays.
-
+    """
+    Add corresponding elements of two arrays.
+    
     out = in1 + in2
-    in1 = first input Python CArray
-    in2 = second input Python CArray
-    out = output Python CArray
+
+    * in1 = first input Python CArray
+    * in2 = second input Python CArray
+    * out = output Python CArray
     """
     ################################################################
     # Checks
@@ -300,12 +324,14 @@ def PAdd (in1, in2, out):
 
 
 def PSub (in1, in2, out):
-    """ Subtract corresponding elements of the arrays.
-
+    """
+    Subtract corresponding elements of the arrays.
+    
     out = in1 - in2
-    in1 = first input Python CArray
-    in2 = second input Python CArray
-    out = output Python CArray
+
+    * in1 = first input Python CArray
+    * in2 = second input Python CArray
+    * out = output Python CArray
     """
     ################################################################
     # Checks
@@ -317,12 +343,14 @@ def PSub (in1, in2, out):
     # end PSub
 
 def PMul (in1, in2, out):
-    """ Multiply corresponding elements of the arrays.
-
+    """
+    Multiply corresponding elements of the arrays.
+    
     out = in1 * in2
-    in1 = first input Python CArray
-    in2 = second input Python CArray
-    out = output Python CArray
+
+    * in1 = first input Python CArray
+    * in2 = second input Python CArray
+    * out = output Python CArray
     """
     ################################################################
     # Checks
@@ -335,12 +363,14 @@ def PMul (in1, in2, out):
 
 
 def PDiv (in1, in2, out):
-    """ Divide corresponding elements of the arrays.
-
+    """
+    Divide corresponding elements of the arrays.
+    
     out = in1 / in2
-    in1 = first input Python CArray
-    in2 = second input Python CArray
-    out = output Python CArray
+
+    * in1 = first input Python CArray
+    * in2 = second input Python CArray
+    * out = output Python CArray
     """
     ################################################################
     # Checks
@@ -353,10 +383,12 @@ def PDiv (in1, in2, out):
 
 
 def PMakeF (Cin):
-    """ Make an FArray with the same geometry as a CArray
+    """
+    Make an FArray with the same geometry as a CArray
     
     return FArray size of CArray
-    Cin = input Python CArray
+
+    * Cin = input Python CArray
     """
     ################################################################
     # Checks
@@ -370,10 +402,12 @@ def PMakeF (Cin):
 
 
 def PMakeC (Fin):
-    """ Make a CArray with the same geometry as a FArray
+    """
+    Make a CArray with the same geometry as a FArray
     
     return CArray size of Fin
-    Fin = input Python FArray
+
+    * Fin = input Python FArray
     """
     ################################################################
     # Checks
@@ -387,11 +421,13 @@ def PMakeC (Fin):
 
 
 def PIsFCompatable  (Cin, Fin):
-    """  Tells if an FArray and a CArray are compatible
-
+    """
+    Tells if an FArray and a CArray are compatible
+    
     returns true or false (1, 0)
-    Cin = input Python CArray
-    Fin = input Python FArray
+
+    * Cin = input Python CArray
+    * Fin = input Python FArray
     """
     ################################################################
     # Checks
@@ -406,12 +442,13 @@ def PIsFCompatable  (Cin, Fin):
 
 
 def PFMul (Cin, Fin, out):
-    """ Multiply corresponding elements of a CArray and an FArray.
+    """
+    Multiply corresponding elements of a CArray and an FArray.
 
-    out = Cin * Fin
-    Cin = input Python CArray
-    Fin = input Python FArray
-    out = output Python CArray
+    * out = Cin * Fin
+    * Cin = input Python CArray
+    * Fin = input Python FArray
+    * out = output Python CArray
     """
     ################################################################
     # Checks
@@ -423,12 +460,14 @@ def PFMul (Cin, Fin, out):
     # end PFMul
 
 def PFDiv (Cin, Fin, out):
-    """ Divide corresponding elements of a CArray and an FArray.
+    """
+    Divide corresponding elements of a CArray and an FArray.
 
-    out = Cin / Fin
-    Cin = input Python CArray
-    Fin = input Python FArray
-    out = output Python CArray
+    
+    * out = Cin / Fin
+    * Cin = input Python CArray
+    * Fin = input Python FArray
+    * out = output Python CArray
     """
     ################################################################
     # Checks
@@ -440,12 +479,14 @@ def PFDiv (Cin, Fin, out):
     # end PFDiv
 
 def PFAdd (Cin, Fin, out):
-    """ Add corresponding elements of a CArray and an FArray.
-
+    """
+    Add corresponding elements of a CArray and an FArray.
+    
     out = Cin + Fin
-    Cin = input Python CArray
-    Fin = input Python FArray
-    out = output Python CArray
+
+    * Cin = input Python CArray
+    * Fin = input Python FArray
+    * out = output Python CArray
     """
     ################################################################
     # Checks
@@ -458,12 +499,14 @@ def PFAdd (Cin, Fin, out):
 
 
 def PFRot (Cin, Fin, out):
-    """ Rotate phase of the elements of a CArray by the elements of an FArray
-
+    """
+    Rotate phase of the elements of a CArray by the elements of an FArray
+    
     out = Cin * exp(i*Fin)
-    Cin = input Python CArray
-    Fin = input Python FArray
-    out = output Python CArray
+
+    * Cin = input Python CArray
+    * Fin = input Python FArray
+    * out = output Python CArray
     """
     ################################################################
     # Checks
@@ -476,12 +519,14 @@ def PFRot (Cin, Fin, out):
 
 
 def PComplex (Fin1, Fin2, out):
-    """ Combine two FArrays into a CArray
+    """
+    Combine two FArrays into a CArray
     
     Fill A complex CArray from two FArrays
-    Fin1  = input Python FArray for Real part
-    Fin2  = input Python FArray for Imaginary part
-    out   = output Python CArray
+
+    * Fin1  = input Python FArray for Real part
+    * Fin2  = input Python FArray for Imaginary part
+    * out   = output Python CArray
     """
     ################################################################
     # Checks
@@ -493,11 +538,13 @@ def PComplex (Fin1, Fin2, out):
     # end PComplex 
 
 def PReal (inCA, outFA):
-    """ Copy the Real part of a CArray to an FArray
+    """
+    Copy the Real part of a CArray to an FArray
     
     out = real(in)
-    inCA  = input Python CArray
-    outFA = output Python FArray
+
+    * inCA  = input Python CArray
+    * outFA = output Python FArray
     """
     ################################################################
     # Checks
@@ -507,11 +554,13 @@ def PReal (inCA, outFA):
     # end PReal
 
 def PImag (inCA, outFA):
-    """ Copy the Imaginary part of a CArray to an FArray
+    """
+    Copy the Imaginary part of a CArray to an FArray
     
     out = imag(in)
-    inCA  = input Python CArray
-    outFA = output Python FArray
+
+    * inCA  = input Python CArray
+    * outFA = output Python FArray
     """
     ################################################################
     # Checks
@@ -521,11 +570,13 @@ def PImag (inCA, outFA):
     # end PImag
 
 def PAmp (inCA, outFA):
-    """ Copy  amplitude of elements of a CArray to an FArray
+    """
+    Copy  amplitude of elements of a CArray to an FArray
     
     outFA = sqrt( real(inCA)^2 + imag(inCA)^2))
-    inCA  = input Python CArray
-    outFA = output Python FArray
+
+    * inCA  = input Python CArray
+    * outFA = output Python FArray
     """
     ################################################################
     # Checks
@@ -535,11 +586,13 @@ def PAmp (inCA, outFA):
     # end PAmp
 
 def PPhase (inCA, outFA):
-    """ Copy phases of elements of a CArray to an FArray
+    """
+    Copy phases of elements of a CArray to an FArray
     
     outFA = atan2(imag(inCA), real(inCA))
-    inCA  = input Python CArray
-    outFA = output Python FArray
+
+    * inCA  = input Python CArray
+    * outFA = output Python FArray
     """
     ################################################################
     # Checks
@@ -550,9 +603,10 @@ def PPhase (inCA, outFA):
 
 
 def P2DCenter (inCA):
-    """ Reorder half plane complex to center at the center
-    
-    inCA  = input Python CArray to reorder
+    """
+    Reorder half plane complex to center at the center
+
+    * inCA  = input Python CArray to reorder
     """
     ################################################################
     # Checks
@@ -564,12 +618,14 @@ def P2DCenter (inCA):
 
 
 def PAddConjg (inCA, numConjRow):
-    """ Add conjugate rows to half plane complex image, copy
+    """
+    Add conjugate rows to half plane complex image, copy
     from other half plane.
     
     out = in with conjugate rows added.
-    inCA  = input Python CArray
-    numConjRow = number of conjugate rows to copy
+
+    * inCA  = input Python CArray
+    * numConjRow = number of conjugate rows to copy
     """
     ################################################################
     # Checks
@@ -583,10 +639,12 @@ def PAddConjg (inCA, numConjRow):
 
 
 def PIsA (inCA):
-    """ Tells if the input is a Python ObitCArray
-
+    """
+    Tells if the input is a Python ObitCArray
+    
     returns true or false (1,0)
-    inCA = Python Obit CArray to test
+
+    * inCA = Python Obit CArray to test
     """
     ################################################################
       # Checks
@@ -596,9 +654,10 @@ def PIsA (inCA):
     # end PIsA
 
 def PGetNdim (inCA):
-    """ Returns the number of dimensions in array
-
-    inCA = Python Obit CArray
+    """
+    Returns the number of dimensions in array
+    
+    * inCA = Python Obit CArray
     """
     ################################################################
       # Checks
@@ -609,9 +668,10 @@ def PGetNdim (inCA):
     # end PGetNdim
 
 def PGetNaxis (inCA):
-    """ Returns array of 7 elements with dimensions in array
-
-    inCA = Python Obit CArray
+    """
+    Returns array of 7 elements with dimensions in array
+    
+    * inCA = Python Obit CArray
     """
     ################################################################
       # Checks
@@ -620,4 +680,3 @@ def PGetNaxis (inCA):
         raise TypeError,"inCA MUST be a Python Obit CArray"
     return Obit.CArrayGetNaxis(inCA.me)
     # end PGetNaxis
-

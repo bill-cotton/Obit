@@ -1,9 +1,13 @@
-""" Python Obit Visibility-based CLEAN class
+""" 
+Python Obit Visibility-based CLEAN class
 
 CleanVis Members with python interfaces:
-List      - used to pass instructions to processing 
-Mosaic    - ImageMosaic
-SkyModel  - Sky Model
+
+========  =======================================
+List      used to pass instructions to processing 
+Mosaic    ImageMosaic
+SkyModel  Sky Model
+========  =======================================
 """
 # $Id$
 #-----------------------------------------------------------------------
@@ -76,41 +80,47 @@ class CleanVisPtr :
         return "<C CleanVis instance> " + Obit.CleanVisGetName(self.me)
 #
 class CleanVis(CleanVisPtr):
-    """ Python Obit Image class
-
+    """
+    Python Obit Image class
+    
     This class does visibility-based (Cotton-Schwab) CLEAN
-
+    
     CleanVis Members with python interfaces:
-    InfoList  - used to pass instructions to processing
-                Member List (readonly)
-    mosaic    - ImageMosaic, use PGetMosaic
+
+    ========  ==============================================================
+    InfoList  used to pass instructions to processing Member List (readonly)
+    mosaic    ImageMosaic, use PGetMosaic
+    ========  ==============================================================
     """
     def __init__(self, name) :
         self.this = Obit.new_CleanVis(name)
     def __del__(self):
         if Obit!=None:
             Obit.delete_CleanVis(self.this)
-
+    
     def DefWindow(self, err):
         """ Set default window (all image)
-        
-        self   = Python OTF object
-        err       = Python Obit Error/message stack
+
+        * self   = Python OTF object
+        * err       = Python Obit Error/message stack
         """
         PDefWindow(self, err)
         # end DefWindow
 
     def AddWindow(self, field, window, err):
-        """ Add a  window
-        
-        self   = Python OTF object
-        field  = Which field (1-rel) is the window in?
-        window = set of 4 integers:
-                 if window[0]<0 box is round and
-                 window[1]=radius, [2,3] = center
-                 else rectangular and
-                 blc=(window[0],window[1]), trc= blc=(window[2],window[3])
-        err    = Python Obit Error/message stack
+        """
+        Add a  window
+
+        * self   = Python OTF object
+        * field  = Which field (1-rel) is the window in?
+        * window = set of 4 integers:
+
+          * if window[0]<0 box is round and window[1]=radius, [2,3] = center,
+            else, 
+          * rectangular and blc=(window[0],window[1]), 
+            trc= blc=(window[2],window[3])
+
+        * err    = Python Obit Error/message stack
         """
         PAddWindow(self, field, window, err)
         # end AddWindow
@@ -122,22 +132,25 @@ trc=[0,0,0,0,0,0,0]
 err=OErr.OErr()
 
 def input(inputDict):
-    """ Print the contents of an input Dictionary
+    """
+    Print the contents of an input Dictionary
 
-    inputDict = Python Dictionary containing the parameters for a routine
-    There should be a member of the dictionary ('structure') with a value
-    being a list containing:
-    1) The name for which the input is intended (string)
-    2) a list of tuples consisting of (parameter name, doc string)
-       with an entry for each parameter in the dictionary.
-       The display of the the inputs dictionary will be in the order of
-       the tuples and display the doc string after the value.
-       An example:
-       Soln2CalInput={'structure':['Soln2Cal',[('InData','Input OTF'),
-                                               ('soln','input soln table version'),
-                                               ('oldCal','input cal table version, -1=none'),
-                                               ('newCal','output cal table')]],
-                      'InData':None, 'soln':0, 'oldCal':-1, 'newCal':0}
+    * inputDict = Python Dictionary containing the parameters for a routine
+      There should be a member of the dictionary ('structure') with a value
+      being a list containing:
+
+      1) The name for which the input is intended (string)
+      2) a list of tuples consisting of (parameter name, doc string)
+         with an entry for each parameter in the dictionary.
+         The display of the the inputs dictionary will be in the order of
+         the tuples and display the doc string after the value.
+         An example::
+
+           Soln2CalInput={'structure':['Soln2Cal',[('InData','Input OTF'),
+                                                   ('soln','input soln table version'),
+                                                   ('oldCal','input cal table version, -1=none'),
+                                                   ('newCal','output cal table')]],
+                          'InData':None, 'soln':0, 'oldCal':-1, 'newCal':0}
     """
     ################################################################
     structure = inputDict['structure']  # Structure information
@@ -148,12 +161,14 @@ def input(inputDict):
     # end input
 
 def newObit(name, err):
-    """ Create and initialize an CleanVis structure
-
+    """
+    Create and initialize an CleanVis structure
+    
     Create sky model object
     Returns the Python CleanVis object
-    name     = name desired for object (labeling purposes)
-    err      = Python Obit Error/message stack
+
+    * name     = name desired for object (labeling purposes)
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     out = CleanVis (name)
@@ -161,12 +176,14 @@ def newObit(name, err):
     # end newObit
 
 def PCopy (inCleanVis, outCleanVis, err):
-    """ Make a shallow copy of input object.
-
+    """
+    Make a shallow copy of input object.
+    
     Makes structure the same as inCleanVis, copies pointers
-    inCleanVis  = Python CleanVis object to copy
-    outCleanVis = Output Python CleanVis object, must be defined
-    err         = Python Obit Error/message stack
+
+    * inCleanVis  = Python CleanVis object to copy
+    * outCleanVis = Output Python CleanVis object, must be defined
+    * err         = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -183,10 +200,12 @@ def PCopy (inCleanVis, outCleanVis, err):
     # end PCopy
 
 def PGetList (inCleanVis):
-    """ Return the member InfoList
-
+    """
+    Return the member InfoList
+    
     returns InfoList
-    inCleanVis  = Python CleanVis object
+
+    * inCleanVis  = Python CleanVis object
     """
     ################################################################
      # Checks
@@ -200,10 +219,12 @@ def PGetList (inCleanVis):
     # end PGetList
 
 def PGetMosaic (inCleanVis):
-    """ Return the member mosaic
-
+    """
+    Return the member mosaic
+    
     returns ImageMosaic
-    inCleanVis  = Python CleanVis object
+
+    * inCleanVis  = Python CleanVis object
     """
     ################################################################
      # Checks
@@ -216,10 +237,11 @@ def PGetMosaic (inCleanVis):
     # end PGetMosaic
 
 def PSetMosaic (inCleanVis, mosaic):
-    """ Replace an ImageMosaic in the CleanVis
+    """
+    Replace an ImageMosaic in the CleanVis
 
-    inCleanVis  = Python CleanVis object
-    mosaic      = Python ImageMosaic to attach
+    * inCleanVis  = Python CleanVis object
+    * mosaic      = Python ImageMosaic to attach
     """
     ################################################################
     # Checks
@@ -232,10 +254,12 @@ def PSetMosaic (inCleanVis, mosaic):
     # end PSetMosaic
 
 def PGetSkyModel (inCleanVis):
-    """ Return the member skymodel
-
+    """
+    Return the member skymodel
+    
     returns SkyModel
-    inCleanVis  = Python CleanVis object
+
+    * inCleanVis  = Python CleanVis object
     """
     ################################################################
      # Checks
@@ -248,10 +272,11 @@ def PGetSkyModel (inCleanVis):
     # end PGetSkyModel
 
 def PSetSkyModel (inCleanVis, skymodel):
-    """ Replace an ImageSkyModel in the CleanVis
+    """
+    Replace an ImageSkyModel in the CleanVis
 
-    inCleanVis  = Python CleanVis object
-    skymodel    = Python SkyModel to attach
+    * inCleanVis  = Python CleanVis object
+    * skymodel    = Python SkyModel to attach
     """
     ################################################################
     # Checks
@@ -264,10 +289,12 @@ def PSetSkyModel (inCleanVis, skymodel):
     # end PSetSkyModel
 
 def PGetWindow (inCleanVis):
-    """ Return the member OWindow
-
+    """
+    Return the member OWindow
+    
     returns OWindow
-    inCleanVis  = Python CleanVis object
+
+    * inCleanVis  = Python CleanVis object
     """
     ################################################################
      # Checks
@@ -280,10 +307,11 @@ def PGetWindow (inCleanVis):
     # end PGetWindow
 
 def PSetWindow (inCleanVis, window):
-    """ Replace OWindow in the CleanVis
+    """
+    Replace OWindow in the CleanVis
 
-    inCleanVis  = Python CleanVis object
-    window      = Python OWindow to attach
+    * inCleanVis  = Python CleanVis object
+    * window      = Python OWindow to attach
     """
     ################################################################
     # Checks
@@ -296,15 +324,16 @@ def PSetWindow (inCleanVis, window):
     # end PSetWindow
 
 def PAddWindow (inCleanVis, field, window, err):
-    """ Add a window to a field to be CLEANed
+    """
+    Add a window to a field to be CLEANed
 
-    inCleanVis  = Python CleanVis object
-    field         = Which field (1-rel) is the window in?
-    window        = set of 4 integers:
-                    if window[0]<0 box is round and
-                    window[1]=radius, [2,3] = center
-                    else rectangular and
-                    blc=(window[0],window[1]), trc= blc=(window[2],window[3])
+    * inCleanVis  = Python CleanVis object
+    * field         = Which field (1-rel) is the window in?
+    * window        = set of 4 integers:
+          * if window[0]<0 box is round and window[1]=radius, [2,3] = center,
+            else, 
+          * rectangular and blc=(window[0],window[1]), 
+            trc= blc=(window[2],window[3])
     """
     ################################################################
     # Checks
@@ -449,91 +478,96 @@ CleanInput={'structure':['Clean',[('Niter','Maximum number of CLEAN iterations')
             'doRestore':True,
             'doFlatten':True }
 def PCreate (name, uvdata, err, input=CleanInput):
-    """ Create the parameters and underlying structures of a CleanVis.
-
+    """
+    Create the parameters and underlying structures of a CleanVis.
+    
     Returns CleanVis created.
-    name      = Name to be given to object
-                Most control parameters are in InfoList member
-    uvdata    = Python uv data from which image is to be made
-    err       = Python Obit Error/message stack
-    input     = control parameters:
-    Niter       = Maximum number of CLEAN iterations
-    minPatch    = Minimum beam patch in pixels [def 100]
-    maxPixel    = Maximum number of residuals [def 20000]
-    BMAJ        = Restoring beam major axis (deg)
-    BMIN        = Restoring beam minor axis (deg)
-    BPA         = Restoring beam position angle (deg)
-    Gain        = CLEAN loop gain
-    minFlux     = Minimun flux density (Jy)
-    Factor      = CLEAN depth factor
-    Plane       = Plane being processed, 1-rel indices of axes 3-?
-    autoWindow  = True if autoWindow feature wanted.
-    CCVer       = CC table version number
-    Mode        = Model mode, 0=fastest, 1=DFT, 2=Grid
-    doCalSelect = Select/calibrate/edit data?),
-    Stokes   = Stokes parameter, blank-> unchanged from input),
-    BChan    = First spectral channel selected. [def all]),
-    EChan    = Highest spectral channel selected. [def all]),
-    BIF      = First IF selected. [def all]),
-    EIF      = Highest IF selected. [def all]),
-    doPol    = >0 -> calibrate polarization.),
-    doCalib  = >0 -> calibrate, 2=> also calibrate Weights),
-    gainUse  = SN/CL table version number, 0-> use highest),
-    flagVer  = Flag table version, 0-> use highest, <0-> none),
-    BLVer    = BL table version, 0> use highest, <0-> none),
-    BPVer    = Band pass (BP) table version, 0-> use highest),
-    Subarray = Selected subarray, <=0->all [default all]),
-    freqID   = Selected Frequency ID, <=0->all [default all]),
-    timeRange= Selected timerange in days. [2 floats] 0s -> all),
-    UVRange  = Selected UV range in wavelengths. 0s -> all),
-    Sources  = Source names selected unless any starts with),
-    Antennas = A list of selected antenna numbers, if any is negative),
-    corrType = Correlation type, 0=cross corr only, 1=both, 2=auto only.),
-    doBand   = Band pass application type <0-> none),
-    Smooth   = Specifies the type of spectral smoothing [three floats]
-    DoWeight = True if Weighting to be applied
-    PBCor    = If True make freq. dependent rel. pri. beam corr.
-    Robust   = Briggs robust parameter. (AIPS definition)
-    UVTaper  = UV plane taper, sigma in klambda,deg as [maj, min, pa]
-    WtSize   = Size of weighting grid in cells [same as image nx]
-    WtBox    = Size of weighting box in cells [def 1]
-    WtFunc   = Weighting convolution function [def. 1]
-               1=Pill box, 2=linear, 3=exponential, 4=Gaussian
-               if positive, function is of radius, negative in u and v.
-    WtPower  = Power to raise weights to.  [def = 1.0]
-               Note: a power of 0.0 sets all the output weights to 1 as modified
-               by uniform/Tapering weighting.
-               Applied in determinng weights as well as after.
-    DoBeam   = True if beams are to be made
-    Type     = Underlying file type, 0=FITS, 1=AIPS
-    Name     = Name of image, used as AIPS name or to derive FITS filename
-    Class    = Root of class, used as AIPS class or to derive FITS filename
-    Seq      = Sequence number
-    Disk     = Disk number for underlying files
-    FOV      = Field of view (deg) for Mosaic
-    doFull   = If True, create full field (FOV) image
-    NField   = Number of fields defined in input,
-               if unspecified derive from data and FOV
-    xCells   = Cell spacing in X (asec) for all images,
-               if unspecified derive from data
-    yCells   = Cell spacing in Y (asec) for all images,
-               if unspecified derive from data
-    nx       = Minimum number of cells in X for NField images
-               if unspecified derive from data
-    ny       = Minimum number of cells in Y for NField images
-               if unspecified derive from data
-    RAShift  = Right ascension shift (AIPS convention) for each field
-               if unspecified derive from FOV and data
-    DecShift = Declination for each field
-               if unspecified derive from FOV and data
-    Catalog  = AIPSVZ format catalog for defining outliers, None=do not use
-    OutlierFlux = Minimum estimated outlyer flux density (Jy)
-    OutlierDist = Maximum distance to add outlyers (deg)
-    OutlierSI   = Spectral index to estimate flux density
-    OutlierSize = Size of outlyer field (pixels)
-    dispURL     = URL of display server
-    doRestore   = Restore image when done? [def True]
-    doFlatten   = Flatten image when done? [def True]
+
+    * name      = Name to be given to object. Most control parameters are in 
+      InfoList member
+    * uvdata    = Python uv data from which image is to be made
+    * err       = Python Obit Error/message stack
+    * input     = control parameters:
+
+      ===========  ============================================================
+      Niter        Maximum number of CLEAN iterations
+      minPatch     Minimum beam patch in pixels [def 100]
+      maxPixel     Maximum number of residuals [def 20000]
+      BMAJ         Restoring beam major axis (deg)
+      BMIN         Restoring beam minor axis (deg)
+      BPA          Restoring beam position angle (deg)
+      Gain         CLEAN loop gain
+      minFlux      Minimun flux density (Jy)
+      Factor       CLEAN depth factor
+      Plane        Plane being processed, 1-rel indices of axes 3-?
+      autoWindow   True if autoWindow feature wanted.
+      CCVer        CC table version number
+      Mode         Model mode, 0=fastest, 1=DFT, 2=Grid
+      doCalSelect  Select/calibrate/edit data?),
+      Stokes       Stokes parameter, blank-> unchanged from input),
+      BChan        First spectral channel selected. [def all]),
+      EChan        Highest spectral channel selected. [def all]),
+      BIF          First IF selected. [def all]),
+      EIF          Highest IF selected. [def all]),
+      doPol        >0 -> calibrate polarization.),
+      doCalib      >0 -> calibrate, 2=> also calibrate Weights),
+      gainUse      SN/CL table version number, 0-> use highest),
+      flagVer      Flag table version, 0-> use highest, <0-> none),
+      BLVer        BL table version, 0> use highest, <0-> none),
+      BPVer        Band pass (BP) table version, 0-> use highest),
+      Subarray     Selected subarray, <=0->all [default all]),
+      freqID       Selected Frequency ID, <=0->all [default all]),
+      timeRange    Selected timerange in days. [2 floats] 0s -> all),
+      UVRange      Selected UV range in wavelengths. 0s -> all),
+      Sources      Source names selected unless any starts with),
+      Antennas     A list of selected antenna numbers, if any is negative),
+      corrType     Correlation type, 0=cross corr only, 1=both, 2=auto only.),
+      doBand       Band pass application type <0-> none),
+      Smooth       Specifies the type of spectral smoothing [three floats]
+      DoWeight     True if Weighting to be applied
+      PBCor        If True make freq. dependent rel. pri. beam corr.
+      Robust       Briggs robust parameter. (AIPS definition)
+      UVTaper      UV plane taper, sigma in klambda,deg as [maj, min, pa]
+      WtSize       Size of weighting grid in cells [same as image nx]
+      WtBox        Size of weighting box in cells [def 1]
+      WtFunc       Weighting convolution function [def. 1]
+                   1=Pill box, 2=linear, 3=exponential, 4=Gaussian
+                   if positive, function is of radius, negative in u and v.
+      WtPower      Power to raise weights to.  [def = 1.0]
+                   Note: a power of 0.0 sets all the output weights to 1 as modified
+                   by uniform/Tapering weighting.
+                   Applied in determinng weights as well as after.
+      DoBeam       True if beams are to be made
+      Type         Underlying file type, 0=FITS, 1=AIPS
+      Name         Name of image, used as AIPS name or to derive FITS filename
+      Class        Root of class, used as AIPS class or to derive FITS filename
+      Seq          Sequence number
+      Disk         Disk number for underlying files
+      FOV          Field of view (deg) for Mosaic
+      doFull       If True, create full field (FOV) image
+      NField       Number of fields defined in input,
+                   if unspecified derive from data and FOV
+      xCells       Cell spacing in X (asec) for all images,
+                   if unspecified derive from data
+      yCells       Cell spacing in Y (asec) for all images,
+                   if unspecified derive from data
+      nx           Minimum number of cells in X for NField images
+                   if unspecified derive from data
+      ny           Minimum number of cells in Y for NField images
+                   if unspecified derive from data
+      RAShift      Right ascension shift (AIPS convention) for each field
+                   if unspecified derive from FOV and data
+      DecShift     Declination for each field
+                   if unspecified derive from FOV and data
+      Catalog      AIPSVZ format catalog for defining outliers, None=do not use
+      OutlierFlux  Minimum estimated outlyer flux density (Jy)
+      OutlierDist  Maximum distance to add outlyers (deg)
+      OutlierSI    Spectral index to estimate flux density
+      OutlierSize  Size of outlyer field (pixels)
+      dispURL      URL of display server
+      doRestore    Restore image when done? [def True]
+      doFlatten    Flatten image when done? [def True]
+      ===========  ============================================================
     """
     ################################################################
     # Checks
@@ -658,14 +692,16 @@ def PCreate (name, uvdata, err, input=CleanInput):
     # end PCreate
 
 def PDefWindow (clean, err):
-    """ Set default windows on image mosaic member.
-
+    """
+    Set default windows on image mosaic member.
+    
     If mosaic member Radius>0 then make round boxes on Fly's eye field
     with this radius, else use rectangular box including all but outer 5 pixels
     On outlier fields, use rectangular box of width OutlierSize.
     Assumes all images in mosaic have descriptors defined.
-    clean     = Clean object containing mosaic
-    err       = Python Obit Error/message stack
+
+    * clean     = Clean object containing mosaic
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -680,8 +716,9 @@ def PDefWindow (clean, err):
     # end PDefWindow
 
 def PClean (inCleanVis, err):
-    """ Performs visibiility-based CLEAN
-
+    """
+    Performs visibiility-based CLEAN
+    
     The peak in the image is iteratively found and then a limited
     region of the beam times a fraction of the peak is subtracted
     and the process is iterated.  Occasionally a proper residual
@@ -689,8 +726,9 @@ def PClean (inCleanVis, err):
     subtracting them from the visibility data and then imaging the
     residual data.  When done, the componsnts are restored and
     if needed, the image mosaic flattened to a single plane.
-    inCleanVis = CleanVis object
-    err        = Python Obit Error/message stack
+
+    * inCleanVis = CleanVis object
+    * err        = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -704,8 +742,9 @@ def PClean (inCleanVis, err):
     # end PClean
 
 def PReimage (inCleanVis, uvdata, err):
-    """ See if an image needs to be remade
-
+    """
+    See if an image needs to be remade
+    
     See if an image needs to be remade because a source which exceeds
     the flux  threshold is not centered (as determined by moments)
     on the reference pixel (within toler pixel).
@@ -716,10 +755,10 @@ def PReimage (inCleanVis, uvdata, err):
     Multiple centering sources per facet are allowed
     A boolean entry "autoCenField" with value True is added to the info member of any
     image members added to the mosaic member.
-    
-    inCleanVis  = Python CleanVis object
-    uvdata      = Python uv data from which image is made
-    err         = Python Obit Error/message stack
+
+    * inCleanVis  = Python CleanVis object
+    * uvdata      = Python uv data from which image is made
+    * err         = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -735,13 +774,15 @@ def PReimage (inCleanVis, uvdata, err):
     # end PReimage
 
 def PGetName (inCleanVis):
-    """ Tells Image object name (label)
-
+    """
+    Tells Image object name (label)
+    
     returns name as character string
-    inCleanVis  = Python CleanVis object
+
+    * inCleanVis  = Python CleanVis object
     """
     ################################################################
-     # Checks
+    # Checks
     if not PIsA(inCleanVis):
         raise TypeError,"inCleanVis MUST be a Python Obit CleanVis"
     #
@@ -749,10 +790,12 @@ def PGetName (inCleanVis):
     # end PGetName
 
 def PIsA (inCleanVis):
-    """ Tells if input really a Python Obit CleanVis
-
+    """
+    Tells if input really a Python Obit CleanVis
+    
     return true, false (1,0)
-    inCleanVis   = Python CleanVis object
+
+    * inCleanVis   = Python CleanVis object
     """
     ################################################################
     # Checks

@@ -1,5 +1,4 @@
-""" Utility module for Feathering images
-"""
+""" Utility module for Feathering images """
 # $Id$
 #-----------------------------------------------------------------------
 #  Copyright (C) 2004-2008
@@ -32,13 +31,15 @@
 import Image, ImageDesc, ImageUtil, FFT, FArray, CArray, OErr
 
 def PCreateFFT(image, dir):
-    """ Create an FFT object suitable for FFTing an image
-
+    """
+    Create an FFT object suitable for FFTing an image
+    
     Create an FFT for an efficient size equal to or larger than image
     One needed for each direction to be FFTed.
     returns  Python FFT object
-    image    = Image to be FFTed
-    dir      = FFT direction 1 -> R2C, 2 -> C2R
+
+    * image    = Image to be FFTed
+    * dir      = FFT direction 1 -> R2C, 2 -> C2R
     """
     ################################################################
     # Checks
@@ -63,10 +64,12 @@ def PCreateFFT(image, dir):
     # end PCreateFFT
 
 def PCreateFFTArray(inFFT):
-    """ Create a half plane CArray suitable for the output of FFTing an image
-
+    """
+    Create a half plane CArray suitable for the output of FFTing an image
+    
     returns  Python CArray object of suitable size (2D)
-    inFFT  = FFT to be applied
+
+    * inFFT  = FFT to be applied
     """
     ################################################################
     # Checks
@@ -84,14 +87,16 @@ def PCreateFFTArray(inFFT):
     # end PCreateFFTArray
 
 def PPad (inFFT, inImage, outImage, err):
-    """ Zero Pads an image as needed for an FFT
-
+    """
+    Zero Pads an image as needed for an FFT
+    
     Any blanked values are replaced with zeroes
-    inFFT    = Gives size of FFT needed
-    inImage  = Python Obit Image to be padded.
-    outImage = Python Obit Image for output
-               Must previously exist
-    err      = Python Obit Error/message stack
+
+    * inFFT    = Gives size of FFT needed
+    * inImage  = Python Obit Image to be padded.
+    * outImage = Python Obit Image for output
+      Must previously exist
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -154,14 +159,16 @@ def PPad (inFFT, inImage, outImage, err):
     # end PPad
 
 def PBigger (naxis, inImage, outImage, err):
-    """ Increases the size of an image and zero pads
-
+    """
+    Increases the size of an image and zero pads
+    
     Any blanked values are replaced with zeroes
-    naxis    = dimension array of desired output
-    inImage  = Python Obit Image to be padded.
-    outImage = Python Obit Image for output
-               Must previously exist
-    err      = Python Obit Error/message stack
+
+    * naxis    = dimension array of desired output
+    * inImage  = Python Obit Image to be padded.
+    * outImage = Python Obit Image for output
+      Must previously exist
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -216,13 +223,15 @@ def PBigger (naxis, inImage, outImage, err):
     # end PBigger
 
 def PPadArray (inFFT, inArray, outArray):
-    """ Zero Pads an array as needed for an FFT
-
+    """
+    Zero Pads an array as needed for an FFT
+    
     Any blanked values are replaced with zeroes
-    inFFT    = Gives size of FFT needed
-    inArray  = Python FArray to be padded.
-    outArray = Python FArray containing inArray but zero filled.
-               Must previously exist.
+
+    * inFFT    = Gives size of FFT needed
+    * inArray  = Python FArray to be padded.
+    * outArray = Python FArray containing inArray but zero filled.
+      Must previously exist.
     """
     ################################################################
     # Checks
@@ -256,14 +265,16 @@ def PPadArray (inFFT, inArray, outArray):
     # end PPadArray
 
 def PExtract (inFFT, inArray, outArray, err):
-    """ Extract a Real array from one padded for FFTs
-
+    """
+    Extract a Real array from one padded for FFTs
+    
     Any blanked values are replaces with zeroes
     returns outArray
-    inFFT    = Gives size of FFT used
-    inArray  = Python FArray with FFT results.
-    outArray = Python FArray describing results
-    err      = Python Obit Error/message stack
+
+    * inFFT    = Gives size of FFT used
+    * inArray  = Python FArray with FFT results.
+    * outArray = Python FArray describing results
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -298,11 +309,13 @@ def PExtract (inFFT, inArray, outArray, err):
     # end PExtract
 
 def PDeblank (inImage, value):
-    """ Replace blanks in the FArray for image inImage
-
+    """
+    Replace blanks in the FArray for image inImage
+    
     Any blanked values are replaced with value
-    inImage  = Python Image whose FArray is to be deblanked
-    value    = value to replace blanks, e.g. 0.0
+
+    * inImage  = Python Image whose FArray is to be deblanked
+    * value    = value to replace blanks, e.g. 0.0
     """
     ################################################################
     # Checks
@@ -317,14 +330,16 @@ def PDeblank (inImage, value):
     # end PDeblank
 
 def PMakeBeamMask (inImage, inFFT, err):
-    """ Make uv plane weighting array
-
+    """
+    Make uv plane weighting array
+    
     Creates an FArray the size of a plane in inImage, FFT,
     takes real part and normalizes the central value to one
     Resulting array is returned.
-    inImage  = Python Image whose FArray is to be converted to a weight mask
-    inFFT    = Python Obit fortward FFT object
-    err      = Python Obit Error/message stack
+
+    * inImage  = Python Image whose FArray is to be converted to a weight mask
+    * inFFT    = Python Obit fortward FFT object
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -375,12 +390,13 @@ def PMakeBeamMask (inImage, inFFT, err):
     # end PMakeBeamMask
 
 def PFFTR2C (inFFT, inArray, outArray):
-    """ Real to half plane complex FFT
+    """
+    Real to half plane complex FFT
 
-    inFFT    = Python Obit FFT object
-    inArray  = Python FArray To be FFTed
-    outArray = Python CArray to contain the FFT
-               Must previously exist
+    * inFFT    = Python Obit FFT object
+    * inArray  = Python FArray To be FFTed
+    * outArray = Python CArray to contain the FFT
+      Must previously exist
     """
     ################################################################
     if not FFT.PIsA(inFFT):
@@ -396,12 +412,13 @@ def PFFTR2C (inFFT, inArray, outArray):
     # end PFFTR2C
 
 def PFFTC2R (inFFT, inArray, outArray):
-    """  Half plane complex to Real FFT
+    """
+    Half plane complex to Real FFT
 
-    inFFT    = Python Obit FFT object
-    inArray  = Python CArray To be FFTed
-    outArray = Python FArray to contain the FFT
-               Must previously exist
+    * inFFT    = Python Obit FFT object
+    * inArray  = Python CArray To be FFTed
+    * outArray = Python FArray to contain the FFT
+      Must previously exist
     """
     ################################################################
     if not FFT.PIsA(inFFT):
@@ -417,13 +434,15 @@ def PFFTC2R (inFFT, inArray, outArray):
     # end PFFTC2R
 
 def PCreateModel(image, outArray):
-    """ Fill an FArray with a model the size and shape of the resolution in an image
-
+    """
+    Fill an FArray with a model the size and shape of the resolution in an image
+    
     A model image is inserted in outArray derived from the restoring beam in
     image.  The size and geometry of OutArray must be those described by image
-    image    = Python Obit Image with info
-    outArray = Python FArray to receive model
-               Must previously exist
+
+    * image    = Python Obit Image with info
+    * outArray = Python FArray to receive model
+      Must previously exist
     """
     ################################################################
     # Checks
@@ -468,19 +487,21 @@ def PCreateModel(image, outArray):
     # end PCreateModel
 
 def PAccumImage(FFTfor, inImage, wtArray, accArray, workArray, err):
-    """ Accumulate the weighted FT of an FArray
-
+    """
+    Accumulate the weighted FT of an FArray
+    
     inImage is FFTed, multiplied by wtArray and accumulated into accArray
-    FFTfor   = FFT object to FT inArray
-    inImage  = Image to be accumulated
-               must be a size compatable with FFTfor
-               returned with contents swapped for FFTs
-    wtArray  = FArray containing accumulation weights
-               must be a size compatable with FT of inArray
-    accArray = CArray in which the results are to be accumulated
-               must be a size compatable with FT of inArray
-    workArray= CArray for temporary storage of FT of inArray
-    err      = Python Obit Error/message stack
+
+    * FFTfor   = FFT object to FT inArray
+    * inImage  = Image to be accumulated
+      must be a size compatable with FFTfor
+      returned with contents swapped for FFTs
+    * wtArray  = FArray containing accumulation weights
+      must be a size compatable with FT of inArray
+    * accArray = CArray in which the results are to be accumulated
+      must be a size compatable with FT of inArray
+    * workArray= CArray for temporary storage of FT of inArray
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -534,15 +555,17 @@ def PAccumImage(FFTfor, inImage, wtArray, accArray, workArray, err):
     # end PAccumImage
     
 def PBackFFT(FFTrev, inArray, outArray, err):
-    """ Back transform half plane complex to real
-
+    """
+    Back transform half plane complex to real
+    
     inArray is FFTed (half plane complex - real) to outArray
-    FFTref   = FFT object to FT inArray
-    inArray  = CArray with image to be FFTed
-               must be a size compatable with FFTrev
-    outArray = FArray for output
-               must be a size compatable with FT of inArray
-    err      = Python Obit Error/message stack
+
+    * FFTref   = FFT object to FT inArray
+    * inArray  = CArray with image to be FFTed
+      must be a size compatable with FFTrev
+    * outArray = FArray for output
+      must be a size compatable with FT of inArray
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -565,14 +588,16 @@ def PBackFFT(FFTrev, inArray, outArray, err):
   # end PBackFFT
 
 def PInterpol(inImage, tmplImage, outImage, err):
-    """ HGEOM-like operation (Before EWG got to it)
-
+    """
+    HGEOM-like operation (Before EWG got to it)
+    
     outImage is inImage interpolated to the grid of tmplImage
-    inImage  = Image to be interpolated
-    tmplImage= Image whose geometry is to be used.
-    outImage = values from inImage on grid of tmplImage
-               undefined values set to zero to allow FFT.
-    err      = Python Obit Error/message stack
+
+    * inImage  = Image to be interpolated
+    * tmplImage= Image whose geometry is to be used.
+    * outImage = values from inImage on grid of tmplImage
+      undefined values set to zero to allow FFT.
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -635,15 +660,17 @@ def PInterpol(inImage, tmplImage, outImage, err):
     # end  PInterpol
 
 def PSubImage(inImage, inArray, outImage, err):
-    """ Extract the subimage in inAray corresponding to outImage
-
+    """
+    Extract the subimage in inAray corresponding to outImage
+    
     This assumes that both input and output images have pixels
     on the same locations (i.e. one the padded version of the other)
     outImage is updated in permanent storage (disk)
-    inImage  = Image describing inArray
-    inArray  = Image to be extracted
-    outImage = accepts values from inImage, must exist and be fully defined
-    err      = Python Obit Error/message stack
+
+    * inImage  = Image describing inArray
+    * inArray  = Image to be extracted
+    * outImage = accepts values from inImage, must exist and be fully defined
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks

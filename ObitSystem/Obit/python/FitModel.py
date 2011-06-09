@@ -1,23 +1,29 @@
-""" Python Obit FitModel class
+""" 
+Python Obit FitModel class
 
 This class contains a parameterized image model component
 
 FitModel Members with python interfaces:
-name   An optional name for the object.
-type   Model type of the model component:
-   PointMod    Point
-   GaussMod    Eliptical Gaussian
-   USphereMod  Uniform optically thin sphere
-   Background  Background wedge
-Peak   Peak density
-DeltaX "X" (RA) offset (deg) of center from reference position
-DeltaY "Y" (Dec) offset (deg) of center from reference position
-nparm  Number of parameters
-parms  Model parameters, type dependent 
-ePeak   Error in Peak density
-eDeltaX Error in "X" (RA) offset (deg) of center from reference position
-eDeltaY Error in "Y" (Dec) offset (deg) of center from reference position
-eparms  Error in Model parameters, type dependent 
+
+=======  =================================================================
+name     An optional name for the object.
+type     Model type of the model component:
+
+         * PointMod   - Point
+         * GaussMod   - Eliptical Gaussian
+         * USphereMod - Uniform optically thin sphere
+         * Background - Background wedge
+
+Peak     Peak density
+DeltaX   "X" (RA) offset (deg) of center from reference position
+DeltaY   "Y" (Dec) offset (deg) of center from reference position
+nparm    Number of parameters
+parms    Model parameters, type dependent 
+ePeak    Error in Peak density
+eDeltaX  Error in "X" (RA) offset (deg) of center from reference position
+eDeltaY  Error in "Y" (Dec) offset (deg) of center from reference position
+eparms   Error in Model parameters, type dependent 
+=======  =================================================================
 """
 # $Id$
 #-----------------------------------------------------------------------
@@ -136,7 +142,8 @@ class FitModelPtr :
         return "<C FitModel instance> " + Obit.FitModelGetName(self.me)
 #
 class FitModel(FitModelPtr):
-    """ Python Obit FitModel class
+    """
+    Python Obit FitModel class
     
     This class contains a parameterized image model
     
@@ -150,9 +157,9 @@ class FitModel(FitModelPtr):
             Obit.delete_FitModel(self.this)
     def cast(self, toClass):
         """ Casts object pointer to specified class
-        
-        self     = object whose cast pointer is desired
-        toClass  = Class string to cast to
+
+        * self     = object whose cast pointer is desired
+        * toClass  = Class string to cast to
         """
         ################################################################
         # Get pointer with type of this class
@@ -162,11 +169,13 @@ class FitModel(FitModelPtr):
     # end cast
     
     def DeconGau (self, ImDesc):
-        """ Deconvolves Beam on an image descriptor from a Gaussian model component
+        """
+        Deconvolves Beam on an image descriptor from a Gaussian model component
         
         Returns a FitModel with the deconvolved values
-        self     = object with Gaussian to be desired
-        ImDesc   = Image Descriptor with Beam
+
+        * self     = object with Gaussian to be desired
+        * ImDesc   = Image Descriptor with Beam
         """
         ################################################################
         try:
@@ -185,12 +194,14 @@ class FitModel(FitModelPtr):
     # end DeconGau
     
     def Print (self, ImDesc, corner, file=None):
-        """ Prepare human readable contents
-
+        """
+        Prepare human readable contents
+        
         Returns string with description of model
-        self     = object with Model to display
-        ImDesc   = Image Descriptor with Beam, etc.
-        corner   = bottom left corner in selected region of image (0-rel)
+
+        * self     = object with Model to display
+        * ImDesc   = Image Descriptor with Beam, etc.
+        * corner   = bottom left corner in selected region of image (0-rel)
         """
         ################################################################
         # Start output string
@@ -261,10 +272,12 @@ class FitModel(FitModelPtr):
     # end class FitModel
     
 def PIsA (inFitModel):
-    """ Tells if input really a Python Obit FitModel
-
+    """
+    Tells if input really a Python Obit FitModel
+    
     return True, False (1,0)
-    inFitModel   = Python FitModel object
+
+    * inFitModel   = Python FitModel object
     """
     ################################################################
     if inFitModel.__class__ != FitModel:

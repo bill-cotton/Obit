@@ -1,4 +1,5 @@
-"""  Catalog manipulation utilities
+"""  
+Catalog manipulation utilities
 
 This module contains the python interfaces to  utility routines to manupulate
 ObitTableMF and ObitTableVL tables containing source catalogs.
@@ -37,14 +38,16 @@ VSAD or SAD.
 import Obit, Image, Table, InfoList, OErr
 
 def PMF2VL(MFTable, VLTable, image, err):
-    """  Convert contents in an ObitTableMF to entries in an VL table
-
+    """
+    Convert contents in an ObitTableMF to entries in an VL table
+    
     Converts an MF table produced by FndSou (or AIPS tasks SAD, VSAD)
     to a VL table.
-    MFTable   = Input Obit MF Table
-    VLTable   = Output Obit VL Table
-    image     = Image being cataloged
-    err       = Python Obit Error/message stack
+
+    * MFTable   = Input Obit MF Table
+    * VLTable   = Output Obit VL Table
+    * image     = Image being cataloged
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -62,13 +65,15 @@ def PMF2VL(MFTable, VLTable, image, err):
     # end PMF2VL
 
 def PMFPrint (MFTable, image, err, file="stdout"):
-    """   Write human readable version of an MF table to a file
-
+    """
+    Write human readable version of an MF table to a file
+    
     Print contents of MF table
-    MFTable   = Input Obit MF Table
-    image     = Image being cataloged
-    err       = Python Obit Error/message stack
-    file      = Name of a file or "stdout" for terminal display
+
+    * MFTable   = Input Obit MF Table
+    * image     = Image being cataloged
+    * err       = Python Obit Error/message stack
+    * file      = Name of a file or "stdout" for terminal display
     """
     ################################################################
     # Checks
@@ -83,11 +88,12 @@ def PMFPrint (MFTable, image, err, file="stdout"):
     # end PMFPrint
 
 def PVLAppend (inVL, outVL, err):
-    """  Append contents of one VL table to another
-    
-    inVL      = Input Obit VL Table
-    outVL     = Output Obit VL Table
-    err       = Python Obit Error/message stack
+    """
+    Append contents of one VL table to another
+
+    * inVL      = Input Obit VL Table
+    * outVL     = Output Obit VL Table
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -102,11 +108,13 @@ def PVLAppend (inVL, outVL, err):
     # end PVLAppend 
     
 def PVLIndex (inVL,err):
-    """  Index a VL table
+    """
+    Index a VL table
     
     Create an index for faster access to contents
-    inVL     = Output Obit VL Table
-    err      = Python Obit Error/message stack
+
+    * inVL     = Output Obit VL Table
+    * err      = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -118,7 +126,8 @@ def PVLIndex (inVL,err):
     # end PVLIndex 
     
 def PVLMerge (inVL, err, Radius = 3, Cutoff=0.05):
-    """  Merge contents of VL table
+    """
+    Merge contents of VL table
     
     Merge overlapping components from a given field
     Sums the flux of all components within a specified distance 
@@ -128,10 +137,11 @@ def PVLMerge (inVL, err, Radius = 3, Cutoff=0.05):
     flux is the sum.
     This should be run on a table with all entries derived from 
     the same image.
-    inVL      = Input Obit VL Table
-    err       = Python Obit Error/message stack
-    Radius    = The radius in pixels within which to sum components.
-    Cutoff    = The minimum acceptable fraction  of summed flux.
+
+    * inVL      = Input Obit VL Table
+    * err       = Python Obit Error/message stack
+    * Radius    = The radius in pixels within which to sum components.
+    * Cutoff    = The minimum acceptable fraction  of summed flux.
     """
     ################################################################
     # Checks
@@ -150,7 +160,8 @@ def PVLMerge (inVL, err, Radius = 3, Cutoff=0.05):
 
 def PVLSelect (inVL, outVL, err, BLC=[10,10], TRC=[100000,100000], \
                Steps=[[2.0,0.05], [3.0,0.02], [4.0,0.01]]):
-    """  Select significant components in a VL table
+    """
+    Select significant components in a VL table
     
     Select significant components in a table to out
     Given a table of radii and fractional fluxes, filter out
@@ -159,13 +170,14 @@ def PVLSelect (inVL, outVL, err, BLC=[10,10], TRC=[100000,100000], \
     of the total within radius then it is not copied to the output.
     This should be run on a table with all entries derived from 
     the same image.
-    inVL      = Input Obit VL Table
-    outVL     = Output Obit VL Table
-    err       = Python Obit Error/message stack
-    BLC       = Lowest x,y pixel number selected
-    TRC       = Highest pixel number selected
-    Steps     = Pairs of values giving (radius(cells), fraction),
-                empty entries zero filled
+
+    * inVL      = Input Obit VL Table
+    * outVL     = Output Obit VL Table
+    * err       = Python Obit Error/message stack
+    * BLC       = Lowest x,y pixel number selected
+    * TRC       = Highest pixel number selected
+    * Steps     = Pairs of values giving (radius(cells), fraction),
+      empty entries zero filled
     """
     ################################################################
     # Checks
@@ -193,12 +205,14 @@ def PVLSelect (inVL, outVL, err, BLC=[10,10], TRC=[100000,100000], \
     # end PVLSelect 
 
 def PVLPurge (inVL, field, err):
-    """   Remove VL table entries from a given field
-
+    """
+    Remove VL table entries from a given field
+    
     Entries from "field" are deselected
-    inVL      = Input Obit VL Table
-    field     = Name of field to purge
-    err       = Python Obit Error/message stack
+
+    * inVL      = Input Obit VL Table
+    * field     = Name of field to purge
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -210,7 +224,8 @@ def PVLPurge (inVL, field, err):
     # end PVLPurge 
 
 def PVLRedun (inVL, outVL, err, centerPix=[512,512], maxDist=15.0):
-    """   Remove redundant entries from a VL table
+    """
+    Remove redundant entries from a VL table
     
     Remove redundant entries from in and write out
     Search forward from each entry until past time of possible match.
@@ -219,11 +234,12 @@ def PVLRedun (inVL, outVL, err, centerPix=[512,512], maxDist=15.0):
     entry is flagged in the input table.  When the search over the
     RA range from the original source is finished the final accepted
     entry is written to the output table.
-    inVL      = Input Obit VL Table
-    outVL     = Output Obit VL Table
-    err       = Python Obit Error/message stack
-    centerPix = Center pixel in images
-    maxDist   = How far (asec) to search for matches
+
+    * inVL      = Input Obit VL Table
+    * outVL     = Output Obit VL Table
+    * err       = Python Obit Error/message stack
+    * centerPix = Center pixel in images
+    * maxDist   = How far (asec) to search for matches
     """
     ################################################################
     # Checks
@@ -245,16 +261,18 @@ def PVLRedun (inVL, outVL, err, centerPix=[512,512], maxDist=15.0):
 
 def PVLFilter (inVL, outVL, err, \
                    col1="PEAK INT", col2="I RMS", minRatio=5.0):
-    """   Select entriies in a VL table based on the ratio of the values
+    """
+    Select entriies in a VL table based on the ratio of the values
     
     Copy table rows whose ratio of the values in two columns exceed minRatio
     value(col1)/value(col2) > minRatio are copied
-    inVL      = Input Obit VL Table
-    outVL     = Output Obit VL Table, new data appended to end of old
-    err       = Python Obit Error/message stack
-    col1      = label of first column
-    col2      = label of second column
-    minRatio  = minimum acceptable ratio
+
+    * inVL      = Input Obit VL Table
+    * outVL     = Output Obit VL Table, new data appended to end of old
+    * err       = Python Obit Error/message stack
+    * col1      = label of first column
+    * col2      = label of second column
+    * minRatio  = minimum acceptable ratio
     """
     ################################################################
     # Checks
@@ -283,13 +301,15 @@ def PVLFilter (inVL, outVL, err, \
     # end PVLFilter 
 
 def PVLPrint (VLTable, image, err, file="stdout"):
-    """   Write human readable version of an VL table to a file
-
+    """
+    Write human readable version of an VL table to a file
+    
     Print contents of VL table
-    VLTable   = Input Obit VL Table
-    image     = Image being cataloged
-    err       = Python Obit Error/message stack
-    file      = Name of a file or "stdout" for terminal display
+
+    * VLTable   = Input Obit VL Table
+    * image     = Image being cataloged
+    * err       = Python Obit Error/message stack
+    * file      = Name of a file or "stdout" for terminal display
     """
     ################################################################
     # Checks
@@ -304,15 +324,20 @@ def PVLPrint (VLTable, image, err, file="stdout"):
     # end PVLPrint
 
 def PVL2VZ(VLTable, image, err):
-    """  Convert contents in an ObitTableVL to entries in an VZ table
-
+    """
+    Convert contents in an ObitTableVL to entries in an VZ table
+    
     Converts VL table into forme used to specify outliers, calibrators
     Returns VZ table
-    VLTable   = Input Obit VL Table
-        Control parameters on info object:
-        "Flux"       OBIT_float scalar Minimum acceptable flux density (Jy)
-    image     = Image to which VZ table to be attached
-    err       = Python Obit Error/message stack
+
+    * VLTable   = Input Obit VL Table. Control parameters on info object:
+
+      ======  =================  ==================================== 
+      "Flux"  OBIT_float scalar  Minimum acceptable flux density (Jy)
+      ======  =================  ==================================== 
+
+    * image     = Image to which VZ table to be attached
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -331,48 +356,60 @@ def PVL2VZ(VLTable, image, err):
     # end PVL2VZ
 
 def PVZSel(VZTable, image, err):
-    """  Select entries in VZ table
-
+    """
+    Select entries in VZ table
+    
     Select and possibly average entries in a VZ table and determine
     crowding quality code.
     Returns new VZ table
-    VZTable   = Input Obit VZ Table
+
+    * VZTable   = Input Obit VZ Table.
+
         Control parameters on info object:
-        "clip"    OBIT_float scalar Minimum acceptable for clipping (Jy)
-            (used if doClip, no default)
-        "nearest" OBIT_float scalar Minimum nearest neighbor to be 
-           considered isolated (deg)
-           (used if doIsol, doAver, no default)
-        "distAvg" OBIT_float scalar Distance within to average sources (deg)
-           (used if doAver, no default)
-        "ignore"  OBIT_float scalar Minimum acceptable flux density (Jy)
-           (used if doAver, no default)
-        "crowd"   OBIT_float scalar  Distance (deg) for crowding test
-           (used if doAver doIsol, no default).
-           The flux of sources inside of crowd are summed and the crowing
-           quality code is determined from the ratio of the sum of the (averaged)
-           flux density of the source to the sum inside the field.
-               0 = nothing else within crowd
-               1 = >10% of peak other flux within crowd
-               2 = >30% of peak other flux within crowd
-               3 = >70% of peak other flux within crowd
-               4 = >100% of peak other flux within crowd
-               5 = >200% of peak other flux within crowd
+
+        ========= =================== =========================================
+        "clip"    OBIT_float scalar   Minimum acceptable for clipping (Jy)
+                                      (used if doClip, no default)
+        "nearest" OBIT_float scalar   Minimum nearest neighbor to be 
+                                      considered isolated (deg) (used if doIsol,
+                                      doAver, no default)
+        "distAvg" OBIT_float scalar   Distance within to average sources (deg)
+                                      (used if doAver, no default)
+        "ignore"  OBIT_float scalar   Minimum acceptable flux density (Jy)
+                                      (used if doAver, no default)
+        "crowd"   OBIT_float scalar   Distance (deg) for crowding test
+                                      (used if doAver doIsol, no default).  The
+                                      flux of sources inside of crowd are summed
+                                      and the crowing quality code is determined
+                                      from the ratio of the sum of the (averaged)
+                                      flux density of the source to the sum
+                                      inside the field.
+
+                                      * 0 = nothing else within crowd
+                                      * 1 = >10% of peak other flux within crowd
+                                      * 2 = >30% of peak other flux within crowd
+                                      * 3 = >70% of peak other flux within crowd
+                                      * 4 = >100% of peak other flux within crowd
+                                      * 5 = >200% of peak other flux within crowd
+                                    
         "doClip"  OBIT_boolean scalar Clipping by minPeak [def FALSE]
         "doIsol"  OBIT_boolean scalar Select isolated entries within nearest 
-           ignore entries fainter than ignore [def FALSE]
+                                      ignore entries fainter than ignore [def FALSE]
         "doAver"  OBIT_boolean scalar Average entries within distAvg
-               reject outliers [def FALSE]
-             If the brightest source within nearest is fainter than 
-               ignore then the source is passed, else:
-             If a component is the brightest within nearest 
-               then all components within distAvg are merged.
-             If the source has no companions within nearest 
-               it is passed.
-             If the component has brighter companions within nearest,
-                it is dropped.
-    image     = Image to which VZ table to be attached
-    err       = Python Obit Error/message stack
+                                      reject outliers [def FALSE]
+
+                                      * If the brightest source within *nearest* is fainter than 
+                                        *ignore* then the source is passed, else:
+                                      * If a component is the brightest within *nearest* 
+                                        then all components within *distAvg* are merged.
+                                      * If the source has no companions within nearest 
+                                        it is passed.
+                                      * If the component has brighter companions within *nearest*,
+                                        it is dropped.
+        ========= =================== =========================================
+
+    * image     = Image to which VZ table to be attached
+    * err       = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -389,4 +426,3 @@ def PVZSel(VZTable, image, err):
     outVZ.me = Obit.TableVZSel (VZTable.me, id, err.me);
     return outVZ
     # end PVZSel
-

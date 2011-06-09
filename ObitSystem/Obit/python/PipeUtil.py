@@ -4,7 +4,7 @@ useful for any pipeline.
 """
 
 import urllib, urllib2, os.path, pickle, time, sys, logging, socket, signal
-import subprocess, glob
+import subprocess, glob, xml.dom.minidom
 from pprint import pprint
 import ObitTask, Image, AIPSDir, OErr, FArray, VLBACal, FITS, UV
 
@@ -484,16 +484,31 @@ Return a table summary of the archive response as a string.
 
 def XMLSetAttributes( element, nameValList ):
     """
-Add a sequence of name-value pairs as attributes to an xml.dom.minidom
-element. Makes adding multiple attributes to an element easier.
-
-* element = xml.dom.minidom element
-* nameValList = list of name-value pairs to be added as attributes to element
+    Add a sequence of name-value pairs as attributes to an xml.dom.minidom element. 
+    
+    Makes adding multiple attributes to an element easier.
+    
+    * element = xml.dom.minidom element
+    * nameValList = list of name-value pairs to be added as attributes to 
+      element
     """
     for pair in nameValList:
         # xml.dom.minidom.Element.setAttribute() must be given strings,
         # otherwise an error is produced.
         element.setAttribute( str(pair[0]), str(pair[1]) )
+
+def XMLAddDescription( element, textDesc ):
+    """
+    Add VOTable description element to a xml.dom.minidom element.
+
+    * element = xml.dom.minidom element
+    * textDesc = string containing description
+    """
+    doc = xml.dom.minidom.Document()
+    d = doc.createElement( "description" )
+    tx = doc.createTextNode( textDesc )
+    d.appendChild(tx)
+    element.appendChild(d)
 
 class AlarmException(Exception):
     pass

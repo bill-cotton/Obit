@@ -1,4 +1,5 @@
-""" Functions for calibrating and editing EVLA data
+""" 
+Functions for calibrating and editing EVLA data
 """
 import UV, UVDesc, Image, ImageDesc, FArray, ObitTask, AIPSTask, AIPSDir, OErr, History
 import InfoList, Table, OSystem
@@ -8,12 +9,14 @@ from AIPSDir import AIPSdisks, nAIPS
 import re, pickle, math
 
 def setname (inn, out):
-    """ Copy file definition from inn to out as in...
+    """
+    Copy file definition from inn to out as in...
     
-    Supports both FITS and AIPS
-    Copies Data type and file name, disk, class etc
-    inn  = Obit data object, created with getname, getFITS
-    out  = ObitTask object,
+    Supports both FITS and AIPS.
+    Copies Data type and file name, disk, class etc.
+
+    * inn  = Obit data object, created with getname, getFITS
+    * out  = ObitTask object,
     """
     ################################################################
     # AIPS or Obit?
@@ -34,12 +37,14 @@ def setname (inn, out):
     # end setname
     
 def setoname (inn, out):
-    """ Copy file definition from inn to out as out...
+    """
+    Copy file definition from inn to out as out...
     
-    Supports both FITS and AIPS
-    Copies Data type and file name, disk, class etc
-    inn  = Obit data object, created with getname, getFITS
-    out  = ObitTask object,
+    Supports both FITS and AIPS.
+    Copies Data type and file name, disk, class etc.
+
+    * inn  = Obit data object, created with getname, getFITS
+    * out  = ObitTask object,
     """
     ################################################################
     # AIPS or Obit?
@@ -60,12 +65,14 @@ def setoname (inn, out):
     # end setoname
     
 def set2name (in2, out):
-    """ Copy file definition from in2 to out as in2...
+    """
+    Copy file definition from in2 to out as in2...
+    
+    Supports both FITS and AIPS.
+    Copies Data type and file name, disk, class etc.
 
-    Supports both FITS and AIPS
-    Copies Data type and file name, disk, class etc
-    in2  = Obit data object, created with getname, getFITS
-    out  = ObitTask object,
+    * in2  = Obit data object, created with getname, getFITS
+    * out  = ObitTask object,
     """
     ################################################################
     # AIPS or Obit?
@@ -86,23 +93,28 @@ def set2name (in2, out):
     # end set2name
    
 def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0], logfile=None):
-    """ Get statistics in a specified region of an image plane
-
+    """
+    Get statistics in a specified region of an image plane
+    
     Returns dictionary with statistics of selected region with entries:
-        Mean    = Mean value
-        RMSHist = RMS value from a histogram analysis
-        RMS     = Simple RMS value
-        Max     = maximum value
-        MaxPos  = pixel of maximum value
-        Min     = minimum value
-        MinPos  = pixel of minimum value
-        Flux    = Flux density if CLEAN beam given, else -1
-        BeamArea= CLEAN Beam area in pixels
-    inImage   = Python Image object, created with getname, getFITS
-    err      = Obit error/message stack
-    blc      = bottom left corner pixel (1-rel)
-    trc      = top right corner pixel (1-rel)
-    logfile  = file to write results to, if None don't print
+
+        ========  =========================================
+        Mean      Mean value
+        RMSHist   RMS value from a histogram analysis
+        RMS       Simple RMS value
+        Max       maximum value
+        MaxPos    pixel of maximum value
+        Min       minimum value
+        MinPos    pixel of minimum value
+        Flux      Flux density if CLEAN beam given, else -1
+        BeamArea  CLEAN Beam area in pixels
+        ========  =========================================
+
+    * inImage  = Python Image object, created with getname, getFITS
+    * err      = Obit error/message stack
+    * blc      = bottom left corner pixel (1-rel)
+    * trc      = top right corner pixel (1-rel)
+    * logfile  = file to write results to, if None don't print
     """
     ################################################################
     # Read plane
@@ -155,11 +167,13 @@ def imstat (inImage, err, blc=[1,1,1,1,1], trc=[0,0,0,0,0], logfile=None):
     # end imstat
    
 def unique (inn):
-    """ Removes duplicate entries from an array of strings
+    """
+    Removes duplicate entries from an array of strings
     
     Returns an array of strings, also removes null and blank strings
     as well as leading or trailing blanks
-    inn  = list of strings with possible redundancies
+
+    * inn  = list of strings with possible redundancies
     """
     # Make local working copy and blank redundant entries
     linn = []
@@ -185,17 +199,20 @@ def unique (inn):
 # end unique
 
 def AllDest (err, disk=None, Atype="  ", Aname="            ", Aclass="      ", Aseq=0):
-    """ Delete AIPS files matching a pattern
-
+    """
+    Delete AIPS files matching a pattern
+    
     Strings use AIPS wild cards:
-        blank => any
-        '?'   => one of any character
-        "*"   => arbitrary string
-    disk      = AIPS disk number, 0=>all
-    Atype     = AIPS entry type, 'MA' or 'UV'; '  => all
-    Aname     = desired AIPS name, using AIPS wildcards, None -> don't check
-    Aclass    = desired AIPS class, using AIPS wildcards, None -> don't check
-    Aseq      = desired AIPS sequence, 0=> any
+
+        * blank => any
+        * '?'   => one of any character
+        * "*"   => arbitrary string
+
+    * disk      = AIPS disk number, 0=>all
+    * Atype     = AIPS entry type, 'MA' or 'UV'; '  => all
+    * Aname     = desired AIPS name, using AIPS wildcards, None -> don't check
+    * Aclass    = desired AIPS class, using AIPS wildcards, None -> don't check
+    * Aseq      = desired AIPS sequence, 0=> any
     """
     ################################################################
     global Adisk
@@ -218,11 +235,11 @@ def AllDest (err, disk=None, Atype="  ", Aname="            ", Aclass="      ", 
     # end AllDest
 
 def printMess (message, logfile=''):
-    """ Print message, optionally in logfile
+    """
+    Print message, optionally in logfile
 
-        
-        message = message to print
-        logfile = logfile for message
+    * message = message to print
+    * logfile = logfile for message
     """
     print message
     if len(logfile)>0:
@@ -232,10 +249,12 @@ def printMess (message, logfile=''):
     # end printMess
 
 def dhms2day(st):
-    """ convert a time string in d/hh:mm:ss.s to days
-
+    """
+    convert a time string in d/hh:mm:ss.s to days
+    
     Returns time in days
-    st        time string as "d/hh:mm:ss.s"
+
+    * st = time string as "d/hh:mm:ss.s"
     """
     ################################################################
     stt = st
@@ -263,10 +282,12 @@ def dhms2day(st):
     # end dhms2day
 
 def day2dhms(tim):
-    """ convert a time in days to a string as d/hh:mm:ss.s
-
+    """
+    convert a time in days to a string as d/hh:mm:ss.s
+    
     Returns time as string:  "d/hh:mm:ss.s"
-    tim       time in days
+
+    tim = time in days
     """
     ################################################################
     day=int(tim)
@@ -280,11 +301,12 @@ def day2dhms(tim):
     # end day2dhms
 
 def SaveObject (pyobj, file, update):
-    """ Save python object to a pickle file
+    """
+    Save python object to a pickle file
 
-    pyobj    = python object to save
-    file     = pickle file name
-    update   = If True update, otherwise only if file doesn't already exist
+    * pyobj    = python object to save
+    * file     = pickle file name
+    * update   = If True update, otherwise only if file doesn't already exist
     """
     ################################################################
     # Does file exist?, only do this is not or update
@@ -295,10 +317,12 @@ def SaveObject (pyobj, file, update):
     # end SaveObject
    
 def FetchObject (file):
-    """ Fetch python object from a pickle file
-
+    """
+    Fetch python object from a pickle file
+    
     returns python object
-    file     = pickle file name
+
+    * file     = pickle file name
     """
     ################################################################
     # unpickle file
@@ -309,15 +333,17 @@ def FetchObject (file):
     # end FetchObject
    
 def EVLAClearCal(uv, err, doGain=True, doBP=False, doFlag=False, check=False):
-    """ Clear previous calibration
-
+    """
+    Clear previous calibration
+    
     Delete all SN tables, all CL but CL 1
-    uv       = UV data object to clear
-    err      = Obit error/message stack
-    doGain   = If True, delete SN and CL tables
-    doBP     = If True, delete BP tables
-    doFlag   = If True, delete FG tables except FG=1
-    check    = Only check script, don't execute tasks
+
+    * uv       = UV data object to clear
+    * err      = Obit error/message stack
+    * doGain   = If True, delete SN and CL tables
+    * doBP     = If True, delete BP tables
+    * doFlag   = If True, delete FG tables except FG=1
+    * check    = Only check script, don't execute tasks
     """
     ################################################################
     # Only checking?
@@ -346,14 +372,16 @@ def EVLAClearCal(uv, err, doGain=True, doBP=False, doFlag=False, check=False):
     # end EVLAClearCal
 
 def EVLACopyFG(uv, err, logfile='', check=False, debug = False):
-    """ Copy AIPS FG table from 1 to 2
-
+    """
+    Copy AIPS FG table from 1 to 2
+    
     Returns task error code, 0=OK, else failed
-    uv       = UV data object to copy
-    err      = Obit error/message stack
-    logfile  = logfile for messages
-    check    = Only check script, don't execute tasks
-    debug    = Run tasks debug, show input
+
+    * uv       = UV data object to copy
+    * err      = Obit error/message stack
+    * logfile  = logfile for messages
+    * check    = Only check script, don't execute tasks
+    * debug    = Run tasks debug, show input
     """
     ################################################################
     taco = ObitTask.ObitTask("TabCopy")
@@ -386,18 +414,20 @@ def EVLACopyFG(uv, err, logfile='', check=False, debug = False):
 
 def EVLACopyTable(inObj, outObj, inTab, err, inVer=1, outVer=0,
                   logfile='', check=False, debug = False):
-    """ Copy AIPS Table
-
+    """
+    Copy AIPS Table
+    
     Returns task error code, 0=OK, else failed
-    inObj    = Input Object (UV or Image)
-    outObj   = Output object
-    inTab    = Table type, e.g. "AIPS AN"
-    err      = Obit error/message stack
-    inVer    = intput version
-    outVer   = output version
-    logfile  = logfile for messages
-    check    = Only check script, don't execute tasks
-    debug    = Run tasks debug, show input
+
+    * inObj    = Input Object (UV or Image)
+    * outObj   = Output object
+    * inTab    = Table type, e.g. "AIPS AN"
+    * err      = Obit error/message stack
+    * inVer    = intput version
+    * outVer   = output version
+    * logfile  = logfile for messages
+    * check    = Only check script, don't execute tasks
+    * debug    = Run tasks debug, show input
     """
     ################################################################
     mess =  "Copy "+inTab+" Table "+str(inVer)+" to "+str(outVer)
@@ -428,18 +458,21 @@ def EVLACopyTable(inObj, outObj, inTab, err, inVer=1, outVer=0,
     # end EVLACopyTable
 
 def EVLAUVLoad(filename, inDisk, Aname, Aclass, Adisk, Aseq, err, logfile=''):
-    """ Read FITS uvtab file into AIPS
-
+    """
+    Read FITS uvtab file into AIPS
+    
     Returns task error code, 0=OK, else failed
     Read a UVTAB FITS UV data file and write an AIPS data set
-    filename   = name of FITS file
-    inDisk     = FITS directory number
-    Aname      = AIPS name of file
-    Aclass     = AIPS class of file
-    Aseq       = AIPS sequence number of file, 0=> create new
-    Adisk      = FITS directory number
-    err        = Python Obit Error/message stack
-    logfile    = logfile for messages
+
+    * filename   = name of FITS file
+    * inDisk     = FITS directory number
+    * Aname      = AIPS name of file
+    * Aclass     = AIPS class of file
+    * Aseq       = AIPS sequence number of file, 0=> create new
+    * Adisk      = FITS directory number
+    * err        = Python Obit Error/message stack
+    * logfile    = logfile for messages
+
     returns AIPS UV data object
     """
     ################################################################
@@ -491,20 +524,22 @@ def EVLAUVLoad(filename, inDisk, Aname, Aclass, Adisk, Aseq, err, logfile=''):
 
 def EVLAUVLoadT(filename, disk, Aname, Aclass, Adisk, Aseq, err, logfile="  ", \
                     check=False, debug = False,  Compress=False):
-    """ Read FITS file into AIPS
-
+    """
+    Read FITS file into AIPS
+    
     Read input uvtab FITS file, write AIPS
     Returns Obit uv object, None on failure
-    Filename = input FITS uvtab format file
-    disk     = input FITS file disk number
-    Aname    = output AIPS file name
-    Aclass   = output AIPS file class
-    Adisk    = output AIPS file disk
-    Aseq     = output AIPS file sequence
-    err      = Obit error/message stack
-    check    = Only check script, don't execute tasks
-    debug    = Run tasks debug, show input
-    Compress = Write AIPS data in compressed form?
+
+    * Filename = input FITS uvtab format file
+    * disk     = input FITS file disk number
+    * Aname    = output AIPS file name
+    * Aclass   = output AIPS file class
+    * Adisk    = output AIPS file disk
+    * Aseq     = output AIPS file sequence
+    * err      = Obit error/message stack
+    * check    = Only check script, don't execute tasks
+    * debug    = Run tasks debug, show input
+    * Compress = Write AIPS data in compressed form?
     """
     ################################################################
     mess =  "Load FITS uvtab file into AIPS"
@@ -547,25 +582,27 @@ def EVLAUVLoadArch(dataroot, Aname, Aclass, Adisk, Aseq, err, \
                    selConfig=-1, selBand="", selChan=0, selNIF=0, \
                    dropZero=True, calInt=0.5,  doSwPwr=False, Compress=False, \
                    logfile = "", check=False, debug = False):
-    """ Read EVLA archive into AIPS
-
+    """
+    Read EVLA archive into AIPS
+    
     Read EVLA archive file, write AIPS
     Returns Obit uv object, None on failure
-    dataroot = root of archive directory structure
-    Aname    = output AIPS file name
-    Aclass   = output AIPS file class
-    Adisk    = output AIPS file disk
-    Aseq     = output AIPS file sequence
-    err      = Obit error/message stack
-    selBand  = Selected band, def first
-    selChan  = Selected number of channels, def first
-    selNIF   = Selected number of IFs, def first
-    dropZero = If true drop records with all zeroes
-    calInt   = CL table interval
-    doSwPwr  = Make EVLA Switched power corr?
-    Compress = Write AIPS data in compressed form?
-    check    = Only check script, don't execute tasks
-    debug    = Run tasks debug, show input
+
+    * dataroot = root of archive directory structure
+    * Aname    = output AIPS file name
+    * Aclass   = output AIPS file class
+    * Adisk    = output AIPS file disk
+    * Aseq     = output AIPS file sequence
+    * err      = Obit error/message stack
+    * selBand  = Selected band, def first
+    * selChan  = Selected number of channels, def first
+    * selNIF   = Selected number of IFs, def first
+    * dropZero = If true drop records with all zeroes
+    * calInt   = CL table interval
+    * doSwPwr  = Make EVLA Switched power corr?
+    * Compress = Write AIPS data in compressed form?
+    * check    = Only check script, don't execute tasks
+    * debug    = Run tasks debug, show input
     """
     ################################################################
     mess =  "Load archive file into AIPS"
@@ -671,21 +708,23 @@ def EVLAHann(inUV, Aname, Aclass, Adisk, Aseq, err, \
 def EVLAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
           exclude=["AIPS HI","AIPS PL","AIPS SL"], include=["AIPS CC"],
           headHi=False, logfile=""):
-    """ Write AIPS image as FITS
-
+    """
+    Write AIPS image as FITS
+    
     Write a Image data set as a FITAB format file
     History also copied
-    inImage    = Image data to copy
-    filename   = name of FITS file, any whitespace characters replaced with underscore
-    outDisk    = FITS directory number
-    err        = Python Obit Error/message stack
-    fract      = Fraction of RMS to quantize
-    quant      = quantization level in image units, has precedence over fract
-                 None or <= 0 => use fract.
-    exclude    = List of table types NOT to copy
-                 NB: "AIPS HI" isn't really a table and gets copied anyway
-    include    = List of table types to copy
-    headHi     = if True move history to header, else leave in History table
+
+    * inImage    = Image data to copy
+    * filename   = name of FITS file, any whitespace characters replaced with underscore
+    * outDisk    = FITS directory number
+    * err        = Python Obit Error/message stack
+    * fract      = Fraction of RMS to quantize
+    * quant      = quantization level in image units, has precedence over fract
+      None or <= 0 => use fract.
+    * exclude    = List of table types NOT to copy
+      NB: "AIPS HI" isn't really a table and gets copied anyway
+    * include    = List of table types to copy
+    * headHi     = if True move history to header, else leave in History table
     """
     ################################################################
     mess =  "Write Image to FITS "+filename+" on disk "+str(outDisk)
@@ -739,19 +778,22 @@ def EVLAImFITS(inImage, filename, outDisk, err, fract=None, quant=None, \
 def EVLAUVFITS(inUV, filename, outDisk, err, compress=False, \
               exclude=["AIPS HI", "AIPS AN", "AIPS FQ", "AIPS SL", "AIPS PL"], \
                   include=[], headHi=False, logfile=""):
-    """ Write UV data as FITS file
+    """
+    Write UV data as FITS file
     
     Write a UV data set as a FITAB format file
     History written to header
-    inUV       = UV data to copy
-    filename   = name of FITS file, any whitespace characters replaced with underscore 
-    outDisk    = FITS directory number
-    err        = Python Obit Error/message stack
-    exclude    = List of table types NOT to copy
-                 NB: "AIPS HI" isn't really a table and gets copied anyway
-    include    = List of table types to copy (FQ, AN always done )
-                 Exclude has presidence over include
-    headHi     = if True move history to header, else leave in History table
+
+    * inUV       = UV data to copy
+    * filename   = name of FITS file, any whitespace characters replaced with underscore 
+    * outDisk    = FITS directory number
+    * err        = Python Obit Error/message stack
+    * exclude    = List of table types NOT to copy
+      NB: "AIPS HI" isn't really a table and gets copied anyway
+    * include    = List of table types to copy (FQ, AN always done )
+      Exclude has presidence over include
+    * headHi     = if True move history to header, else leave in History table
+
     returns FITS UV data object
     """
     ################################################################
@@ -801,18 +843,21 @@ def EVLAUVFITS(inUV, filename, outDisk, err, compress=False, \
 def EVLAUVFITSTab(inUV, filename, outDisk, err, \
               exclude=["AIPS HI", "AIPS AN", "AIPS FQ", "AIPS SL", "AIPS PL"], \
                   include=[], logfile=""):
-    """ Write Tables on UV data as FITS file
+    """
+    Write Tables on UV data as FITS file
     
     Write Tables from a UV data set (but no data) as a FITAB format file
     History written to header
-    inUV       = UV data to copy
-    filename   = name of FITS file, any whitespace characters replaced with underscore 
-    outDisk    = FITS directory number
-    err        = Python Obit Error/message stack
-    exclude    = List of table types NOT to copy
-                 NB: "AIPS HI" isn't really a table and gets copied anyway
-    include    = List of table types to copy (FQ, AN always done )
-                 Exclude has presidence over include
+
+    * inUV       = UV data to copy
+    * filename   = name of FITS file, any whitespace characters replaced with underscore 
+    * outDisk    = FITS directory number
+    * err        = Python Obit Error/message stack
+    * exclude    = List of table types NOT to copy
+      NB: "AIPS HI" isn't really a table and gets copied anyway
+    * include    = List of table types to copy (FQ, AN always done )
+      Exclude has presidence over include
+
     returns FITS UV data object
     """
     ################################################################
@@ -857,31 +902,33 @@ def EVLAMedianFlag(uv, target, err, \
                        avgTime=0, avgFreq=0, chAvg=1, \
                        check=False, debug = False, \
                        nThreads=1, noScrat=[], logfile = ""):
-    """ Does Median window flagging
-
+    """
+    Does Median window flagging
+    
     Flag data based on deviations from a running median
     See documentation for task MednFlag for details
     Returns task error code, 0=OK, else failed
-    uv       = UV data object to flag
-    target   = Target source name or list of names, blank = all
-    err      = Obit error/message stack
-    flagTab  = Output Flagging table version
-    flagSig  = Flagging level (sigma)
-    alpha    = Smoothing parameter
-    timeWind = Averaging window (min)
-    doCalib  = Apply calibration table
-    gainUse  = CL/SN table to apply
-    doBand   = If >0.5 apply bandpass cal.
-    BPVer    = Bandpass table version
-    flagVer  = Input Flagging table version
-    avgTime  = preaveraging time (min)
-    avgFreq  = 1=>avg chAvg chans, 2=>avg all chan, 3=> avg chan and IFs
-    chAvg    = number of channels to average
-    check    = Only check script, don't execute tasks
-    debug    = Run tasks debug, show input
-    nThreads = Number of threads to use
-    noScrat  = list of disks to avoid for scratch files
-    logfile  = Log file for task
+
+    * uv       = UV data object to flag
+    * target   = Target source name or list of names, blank = all
+    * err      = Obit error/message stack
+    * flagTab  = Output Flagging table version
+    * flagSig  = Flagging level (sigma)
+    * alpha    = Smoothing parameter
+    * timeWind = Averaging window (min)
+    * doCalib  = Apply calibration table
+    * gainUse  = CL/SN table to apply
+    * doBand   = If >0.5 apply bandpass cal.
+    * BPVer    = Bandpass table version
+    * flagVer  = Input Flagging table version
+    * avgTime  = preaveraging time (min)
+    * avgFreq  = 1=>avg chAvg chans, 2=>avg all chan, 3=> avg chan and IFs
+    * chAvg    = number of channels to average
+    * check    = Only check script, don't execute tasks
+    * debug    = Run tasks debug, show input
+    * nThreads = Number of threads to use
+    * noScrat  = list of disks to avoid for scratch files
+    * logfile  = Log file for task
     """
     ################################################################
     mess =  "Median Window flagging"
@@ -930,27 +977,29 @@ def EVLAQuack(uv, err, \
                   subA=0, timeRange=[0.,0.], Antennas=[0], flagVer=2, \
                   check=False, debug = False, \
                   begDrop=0.0, endDrop=0.0, Reason="Quack", logfile = ""):
-    """ Flags beginning and end of each scan
-
+    """
+    Flags beginning and end of each scan
+    
     Trim start and end of each selected scan,
     nothing done if begDrop=endDrop=0.0
     See documentation for task Quack for details
     Returns task error code, 0=OK, else failed
-    uv       = UV data object to flag
-    err      = Obit error/message stack
-    Stokes   = Limit flagging by Stokes
-    BIF      = Limit flagging to BIF-EIF
-    EIF      = Limit flagging
-    Sources  = Sources selected
-    subA     = Subarray number 0=>all
-    FreqID   = Freq. ID to flag. -1=>all
-    timeRange= Time range to process
-    Antennas = List of antennas to include
-    flagVer  = Flag table version, 0 => highest
-    begDrop  = Time (min) to drop from beginning
-    endDrop  = Time (min) to drop from end
-    Reason   = Reason (max 24 char.)
-    logfile  = Log file for task
+
+    * uv       = UV data object to flag
+    * err      = Obit error/message stack
+    * Stokes   = Limit flagging by Stokes
+    * BIF      = Limit flagging to BIF-EIF
+    * EIF      = Limit flagging
+    * Sources  = Sources selected
+    * subA     = Subarray number 0=>all
+    * FreqID   = Freq. ID to flag. -1=>all
+    * timeRange= Time range to process
+    * Antennas = List of antennas to include
+    * flagVer  = Flag table version, 0 => highest
+    * begDrop  = Time (min) to drop from beginning
+    * endDrop  = Time (min) to drop from end
+    * Reason   = Reason (max 24 char.)
+    * logfile  = Log file for task
     """
     ################################################################
     # Anything to do?
@@ -1000,42 +1049,44 @@ def EVLAAutoFlag(uv, target, err, \
                      doFD=False, FDmaxAmp=0.0, FDmaxV=0.0, FDwidMW=5, FDmaxRMS=[0.0,0.0], \
                      FDmaxRes=6.0, FDmaxResBL=6.0,  FDbaseSel=[0, 0, 0, 0], \
                      nThreads=1, check=False, debug=False, logfile = ""):
-    """ Does Automated flagging
-
+    """
+    Does Automated flagging
+    
     Flag data based on any of a number of criteria
     See documentation for task AutoFlag for details
     Returns task error code, 0=OK, else failed
-    uv         = UV data object to flag
-    target     = Target source name or list of names, blank = all
-    err        = Obit error/message stack
-    doCalib    = Apply calibration table
-    gainUse    = CL/SN table to apply
-    doBand     = If >0.5 apply bandpass cal.
-    BPVer      = Bandpass table version
-    flagVer    = Input Flagging table version
-    flagTab    = Output Flagging table version
-    VClip      = If > 0.0 VPol clipping level
-    IClip      = If > 0.0 IPol clipping level
-    minAmp     = Min flux for IClip flagging
-    RMSClip    = Abs and fractional clip levels for
-                 Time domain RMS filtering
-    RMSAvg     = Max RMS/Avg for time domain RMS filtering
-    maxBad     = Maximum fraction of baselines for
-                 correlator or antenna to be
-                 flagged before all are flagged
-    timeAvg    = Flagging interval (min)
-    doFD       = do frequency domain editing?
-    FDmaxAmp   = Maximum average amplitude
-    FDmaxV     = Maximum average VPol amp
-    FDwidMW    = Width of the median window
-    FDmaxRMS   = Channel RMS limits
-    FDmaxRes   = Max. residual flux in sigma
-    FDmaxResBL = Max. baseline residual
-    FDbaseSel  =  Channels for baseline fit (start, end, increment, IF)
-    nThreads = Number of threads to use
-    check      = Only check script, don't execute tasks
-    debug      = Run tasks debug, show input
-    logfile    = Log file for task
+
+    * uv         = UV data object to flag
+    * target     = Target source name or list of names, blank = all
+    * err        = Obit error/message stack
+    * doCalib    = Apply calibration table
+    * gainUse    = CL/SN table to apply
+    * doBand     = If >0.5 apply bandpass cal.
+    * BPVer      = Bandpass table version
+    * flagVer    = Input Flagging table version
+    * flagTab    = Output Flagging table version
+    * VClip      = If > 0.0 VPol clipping level
+    * IClip      = If > 0.0 IPol clipping level
+    * minAmp     = Min flux for IClip flagging
+    * RMSClip    = Abs and fractional clip levels for
+      Time domain RMS filtering
+    * RMSAvg     = Max RMS/Avg for time domain RMS filtering
+    * maxBad     = Maximum fraction of baselines for
+      correlator or antenna to be
+      flagged before all are flagged
+    * timeAvg    = Flagging interval (min)
+    * doFD       = do frequency domain editing?
+    * FDmaxAmp   = Maximum average amplitude
+    * FDmaxV     = Maximum average VPol amp
+    * FDwidMW    = Width of the median window
+    * FDmaxRMS   = Channel RMS limits
+    * FDmaxRes   = Max. residual flux in sigma
+    * FDmaxResBL = Max. baseline residual
+    * FDbaseSel  =  Channels for baseline fit (start, end, increment, IF)
+    * nThreads = Number of threads to use
+    * check      = Only check script, don't execute tasks
+    * debug      = Run tasks debug, show input
+    * logfile    = Log file for task
     """
     ################################################################
     mess =  "AutoFlag data"
@@ -1089,18 +1140,20 @@ def EVLAAutoFlag(uv, target, err, \
 
 def EVLAPACor(uv, err, CLver=0, FreqID=1,\
                   noScrat=[], logfile='', check=False, debug=False):
-    """ Make parallactic angle correction
-
+    """
+    Make parallactic angle correction
+    
     Updates CL CLver, if only one, a new one (CL 2) is copied
     Returns task error code, 0=OK, else failed
-    uv         = UV data object
-    err        = Python Obit Error/message stack
-    CLver      = Cl version to update, 0=> highest
-    FreqID     = Frequency group identifier
-    noScrat    = list of disks to avoid for scratch files
-    logfile    = logfile for messages
-    check      = Only check script, don't execute tasks
-    debug      = show input
+
+    * uv         = UV data object
+    * err        = Python Obit Error/message stack
+    * CLver      = Cl version to update, 0=> highest
+    * FreqID     = Frequency group identifier
+    * noScrat    = list of disks to avoid for scratch files
+    * logfile    = logfile for messages
+    * check      = Only check script, don't execute tasks
+    * debug      = show input
     """
     ################################################################
 
@@ -1156,49 +1209,53 @@ def EVLADelayCal(uv, err, solInt=0.5, smoTime=10.0, calSou=None,  CalModel=None,
                      refAnts=[0], doBand=-1, BPVer=0, flagVer=-1, doTwo=True, doZeroPhs=False, \
                      doPlot=False, plotFile="./DelayCal.ps", \
                      nThreads=1, noScrat=[], logfile='', check=False, debug=False):
-    """ Group delay calibration
-
+    """
+    Group delay calibration
+    
     Determine delay corrections from a list of calibrators
     Solutions optionally smoothed to smoTime
     Apply this SN table to the highest CL table writing a new CL table (Obit/CLCal)
     Returns task error code, 0=OK, else failed
-    err        = Python Obit Error/message stack
-    calSou     = Source name or list of names to use
-    CalModel = python dict with image model dicts keyed on calibrator name
-               image object = "Image"
-               also optional
-               "nfield",    Calibrator model  No. maps to use for model
-               "CCver",     Calibrator model CC file version
-               "BComp",     Calibrator model First CLEAN comp to use, 1/field
-               "EComp"      Calibrator model  Last CLEAN comp to use, 0=>all
-               "Cmethod"    Calibrator model Modeling method, 'DFT','GRID','    '
-               "CModel"     Calibrator model Model type: 'COMP','IMAG'
-               "CalFlux"    Calibrator model  Lowest CC component used
-               "modelFlux"  if ["Image"]=None, Parameterized model flux density (Jy)
-               "modepPos"   if ["Image"]=None, Parameterized model Model position offset (asec)
-               "modelParm"  if ["Image"]=None, Parameterized model Model parameters
-                            (maj, min, pa, type)
-    timeRange  = timerange of data to use
-    solInt     = Calib solution interval (min)
-    smoTime    = Smoothing time applied to SN table (hr) if >0.0
-    FreqID     = Frequency group identifier
-    minSNR     = minimum acceptable SNR in Calib
-    refAnts    = List of reference antennas
-    doCalib    = Apply calibration table
-    gainUse    = CL/SN table to apply
-    doBand     = If >0.5 apply bandpass cal.
-    BPVer      = Bandpass table version
-    flagVer    = Input Flagging table version
-    doTwo      = If True, use one and two baseline combinations
-                 for delay calibration, else only one baseline
-    doZeroPhs  = If true zero phases from solutions.
-    doPlot     = If True make plots of SN gains
-    plotFile   = Name of postscript file for plots
-    nThreads   = Max. number of threads to use
-    noScrat    = list of disks to avoid for scratch files
-    logfile    = logfile for messages
-    check      = Only check script, don't execute tasks
-    debug      = show input
+
+    * err        = Python Obit Error/message stack
+    * calSou     = Source name or list of names to use
+    * CalModel = python dict with image model dicts keyed on calibrator name
+      image object = "Image", also optional,
+
+      ===========  ==========================================================
+      "nfield"     Calibrator model  No. maps to use for model
+      "CCver"      Calibrator model CC file version
+      "BComp"      Calibrator model First CLEAN comp to use, 1/field
+      "EComp"      Calibrator model  Last CLEAN comp to use, 0=>all
+      "Cmethod"    Calibrator model Modeling method, 'DFT','GRID','    '
+      "CModel"     Calibrator model Model type: 'COMP','IMAG'
+      "CalFlux"    Calibrator model  Lowest CC component used
+      "modelFlux"  if ["Image"]=None, Parameterized model flux density (Jy)
+      "modepPos"   if ["Image"]=None, Parameterized model Model position offset (asec)
+      "modelParm"  if ["Image"]=None, Parameterized model Model parameters
+                   (maj, min, pa, type)
+      ===========  ==========================================================
+
+    * timeRange  = timerange of data to use
+    * solInt     = Calib solution interval (min)
+    * smoTime    = Smoothing time applied to SN table (hr) if >0.0
+    * FreqID     = Frequency group identifier
+    * minSNR     = minimum acceptable SNR in Calib
+    * refAnts    = List of reference antennas
+    * doCalib    = Apply calibration table
+    * gainUse    = CL/SN table to apply
+    * doBand     = If >0.5 apply bandpass cal.
+    * BPVer      = Bandpass table version
+    * flagVer    = Input Flagging table version
+    * doTwo      = If True, use one and two baseline combinations
+      for delay calibration, else only one baseline
+    * doPlot     = If True make plots of SN gains
+    * plotFile   = Name of postscript file for plots
+    * nThreads   = Max. number of threads to use
+    * noScrat    = list of disks to avoid for scratch files
+    * logfile    = logfile for messages
+    * check      = Only check script, don't execute tasks
+    * debug      = show input
     """
     ################################################################
     mess = "Determine parallel hand group delays"
@@ -1404,40 +1461,42 @@ def EVLACalAP(uv, target, ACal, err, \
               solnver=0, solInt=10.0/60.0, solSmo=0.0, nThreads=1, refAnt=0, ampScalar=False, \
               doPlot=False, plotFile="./APCal.ps", \
               check=False, debug = False, noScrat=[], logfile = ""):
-    """ Basic Amplitude and phase cal for EVLA data
+    """
+    Basic Amplitude and phase cal for EVLA data
     
     Amplitude calibration can be based either on a point flux
     density or a calibrator model.
     If neither calFlux nor calModel is given, an attempt is made
     to use the setjy.OPType="CALC" option.
     Returns task error code, 0=OK, else failed
-    uv       = UV data object to calibrate
-    target   = Target source name or list of names to calibrate
-    ACal     = Amp calibrator
-    err      = Obit error/message stack
-    PCal     = if given, the phase calibrator name
-    FQid     = Frequency Id to process, 0=>any
-    calFlux  = ACal point flux density if given
-    calModel = Amp. calibration model FITS file
-    Has priority over calFlux
-    calDisk  = FITS disk for calModel
-    doCalib  = Apply calibration table, positive=>calibrate
-    gainUse  = CL/SN table to apply
-    doBand   = If >0.5 apply previous bandpass cal.
-    BPVer    = previous Bandpass table (BP) version
-    flagVer  = Flagging table to apply
-    solnver  = output SN table version (+1 if smooth), 0=>new
-    solInt   = solution interval (min)
-    solSmo   = if solSmo<solInt smooth solutions to solSmo
-    nThreads = Number of threads to use
-    refAnt   = Reference antenna
-    ampScalar= If true, scalar average data in calibration
-    doPlot   = If True make plots of solutions
-    plotFile = Name of postscript file for plots
-    check    = Only check script, don't execute tasks
-    debug    = Run tasks debug, show input
-    noScrat  = list of disks to avoid for scratch files
-    logfile  = Log file for tasks
+
+    * uv       = UV data object to calibrate
+    * target   = Target source name or list of names to calibrate
+    * ACal     = Amp calibrator
+    * err      = Obit error/message stack
+    * PCal     = if given, the phase calibrator name
+    * FQid     = Frequency Id to process, 0=>any
+    * calFlux  = ACal point flux density if given
+    * calModel = Amp. calibration model FITS file
+      Has priority over calFlux
+    * calDisk  = FITS disk for calModel
+    * doCalib  = Apply calibration table, positive=>calibrate
+    * gainUse  = CL/SN table to apply
+    * doBand   = If >0.5 apply previous bandpass cal.
+    * BPVer    = previous Bandpass table (BP) version
+    * flagVer  = Flagging table to apply
+    * solnver  = output SN table version (+1 if smooth), 0=>new
+    * solInt   = solution interval (min)
+    * solSmo   = if solSmo<solInt smooth solutions to solSmo
+    * nThreads = Number of threads to use
+    * refAnt   = Reference antenna
+    * ampScalar= If true, scalar average data in calibration
+    * doPlot   = If True make plots of solutions
+    * plotFile = Name of postscript file for plots
+    * check    = Only check script, don't execute tasks
+    * debug    = Run tasks debug, show input
+    * noScrat  = list of disks to avoid for scratch files
+    * logfile  = Log file for tasks
     """
     ################################################################
     mess =  "Amplitude and phase calibration"
@@ -1765,73 +1824,76 @@ def EVLABPCal(uv, BPCal, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
                   doAuto=False, doPol=False, avgPol=False, avgIF=False, \
                   doPlot=False, plotFile="./BPCal.ps", \
                   check=False, debug = False, nThreads=1, noScrat=[], logfile = ""):
-    """ Bandbass calibration
-
+    """
+    Bandbass calibration
+    
     Do bandbass calibration, write BP table
     Returns task error code, 0=OK, else failed
     Calibration is done in two passes
-    1)  First a wideband phase only calibration using channels
-    BChan1 to EChan1 or the central doCenter1 fraction of the band
-    using a solution interval of solInt1.  This solution is applied
-    to all selected data and used in the second pass.
-    2)  Second channels in the range BChan2 to EChan2 averaging blocks
-    of ChWid2 are calibrated using solType and solMode for solInt2 and
-    the results written as the output BP table.
-       The Calibrator model may be given as either and Image with CC table,
+    
+    1) First a wideband phase only calibration using channels
+       BChan1 to EChan1 or the central doCenter1 fraction of the band
+       using a solution interval of solInt1.  This solution is applied
+       to all selected data and used in the second pass.
+    2) Second channels in the range BChan2 to EChan2 averaging blocks
+       of ChWid2 are calibrated using solType and solMode for solInt2 and
+       the results written as the output BP table.
+    
+    The Calibrator model may be given as either and Image with CC table,
     a parameterized model or a point source with the flux density in 
     the SU table.
+
     See BPass documentation for details
-    
-    uv       = UV data object to calibrate
-    BPCal    = Bandpass calibrator, name or list of names
-    err      = Obit error/message stack
-    newBPVer = output BP table
-    doCalib  = Apply calibration table, positive=>calibrate
-    gainUse  = CL/SN table to apply
-    doBand   = If >0.5 apply previous bandpass cal.
-    BPVer    = previous Bandpass table (BP) version
-    flagVer  = Input Flagging table version
-    timerange= timerange in days to use
-    UVRange  =  Min & max baseline (klambda), 0s=> all
-    CalDataType =  Calibrator model file data type (AIPS,FITS)
-    CalFile  = Calibrator model FITS input image if Type=='FITS'
-    CalName  = Calibrator model Cleaned map name 
-    CalClass = Calibrator model Cleaned map class
-    CalSeq   = Calibrator model Cleaned map seq
-    CalDisk  = Calibrator model Cleaned map disk
-    CalNfield= Calibrator model  No. maps to use for model
-    CalCCVer = Calibrator model CC file version
-    CalBComp = Calibrator model First CLEAN comp to use, 1/field
-    CalEComp = Calibrator model  Last CLEAN comp to use, 0=>all
-    CalCmethod= Calibrator model Modeling method, 'DFT','GRID','    '
-    CalCmodel= Calibrator model Model type: 'COMP','IMAG'
-    CalFlux  = Calibrator model  Lowest CC component used
-    modelFlux= Parameterized model flux density (Jy)
-    modelPos = Parameterized model Model position offset (asec)
-    modelParm= Parameterized model Model parameters (maj, min, pa, type)
-    doCenter1= If defined, the center fraction of the bandpass to use first pass
-    BChan1   = Low freq. channel,  initial cal
-    EChan1   = Highest freq channel, initial cal
-    BChan2   = Low freq. channel for BP cal
-    EChan2   = Highest freq channel for BP cal
-    ChWid2   = Number of channels in running mean BP soln, 
-    solInt1  = first solution interval (min), 0=> scan average
-    solInt2  = second solution interval (min)
-    solMode  = solution mode 'A&P', 'P', 'P!A'
-    refAnt   = Reference antenna
-    ampScalar= If true, scalar average data in calibration
-    specIndex= spectral index of calibrator (steep=-0.70)
-    doAuto   = Use autocorrelation spectra? Else, crosscorrelation
-    doPol    = Apply polarization cal?
-    avgPol   = Avg. poln. in solutions?
-    avgIF    = Avg. IFs. in solutions?
-    doPlot   = If True make plots of corrected data
-    plotFile = Name of postscript file for plots
-    check    = Only check script, don't execute tasks
-    debug    = Run tasks debug, show input
-    nThreads = Number of threads to use
-    noScrat  = list of AIPS disks to avoid for scratch files
-    logfile  = Log file for task
+
+    * uv       = UV data object to calibrate
+    * BPCal    = Bandpass calibrator, name or list of names
+    * err      = Obit error/message stack
+    * newBPVer = output BP table
+    * doCalib  = Apply calibration table, positive=>calibrate
+    * gainUse  = CL/SN table to apply
+    * doBand   = If >0.5 apply previous bandpass cal.
+    * BPVer    = previous Bandpass table (BP) version
+    * flagVer  = Input Flagging table version
+    * timerange= timerange in days to use
+    * CalDataType =  Calibrator model file data type (AIPS,FITS)
+    * CalFile  = Calibrator model FITS input image if Type=='FITS'
+    * CalName  = Calibrator model Cleaned map name 
+    * CalClass = Calibrator model Cleaned map class
+    * CalSeq   = Calibrator model Cleaned map seq
+    * CalDisk  = Calibrator model Cleaned map disk
+    * CalNfield= Calibrator model  No. maps to use for model
+    * CalCCVer = Calibrator model CC file version
+    * CalBComp = Calibrator model First CLEAN comp to use, 1/field
+    * CalEComp = Calibrator model  Last CLEAN comp to use, 0=>all
+    * CalCmethod= Calibrator model Modeling method, 'DFT','GRID','    '
+    * CalCmodel= Calibrator model Model type: 'COMP','IMAG'
+    * CalFlux  = Calibrator model  Lowest CC component used
+    * modelFlux= Parameterized model flux density (Jy)
+    * modelPos = Parameterized model Model position offset (asec)
+    * modelParm= Parameterized model Model parameters (maj, min, pa, type)
+    * doCenter1= If defined, the center fraction of the bandpass to use first pass
+    * BChan1   = Low freq. channel,  initial cal
+    * EChan1   = Highest freq channel, initial cal
+    * BChan2   = Low freq. channel for BP cal
+    * EChan2   = Highest freq channel for BP cal
+    * ChWid2   = Number of channels in running mean BP soln, 
+    * solInt1  = first solution interval (min), 0=> scan average
+    * solInt2  = second solution interval (min)
+    * solMode  = solution mode 'A&P', 'P', 'P!A'
+    * refAnt   = Reference antenna
+    * ampScalar= If true, scalar average data in calibration
+    * specIndex= spectral index of calibrator (steep=-0.70)
+    * doAuto   = Use autocorrelation spectra? Else, crosscorrelation
+    * doPol    = Apply polarization cal?
+    * avgPol   = Avg. poln. in solutions?
+    * avgIF    = Avg. IFs. in solutions?
+    * doPlot   = If True make plots of corrected data
+    * plotFile = Name of postscript file for plots
+    * check    = Only check script, don't execute tasks
+    * debug    = Run tasks debug, show input
+    * nThreads = Number of threads to use
+    * noScrat  = list of AIPS disks to avoid for scratch files
+    * logfile  = Log file for task
     """
     ################################################################
     mess =  "Bandpass calibrate data"
@@ -1934,16 +1996,18 @@ def EVLABPCal(uv, BPCal, err, newBPVer=1, timerange=[0.,0.], UVRange=[0.,0.], \
 
 def EVLASplit(uv, target, err, FQid=1, outClass="      ", logfile = "", \
                   check=False, debug = False):
-    """ Write calibrated data
-
+    """
+    Write calibrated data
+    
     Returns task error code, 0=OK, else failed
-    uv       = UV data object to clear
-    target   = Target source name source name or list of names
-    err      = Obit error/message stack
-    FQid     = Frequency Id to process
-    logfile  = Log file for task
-    check    = Only check script, don't execute tasks
-    debug    = Run tasks debug, show input
+
+    * uv       = UV data object to clear
+    * target   = Target source name source name or list of names
+    * err      = Obit error/message stack
+    * FQid     = Frequency Id to process
+    * logfile  = Log file for task
+    * check    = Only check script, don't execute tasks
+    * debug    = Run tasks debug, show input
     """
     ################################################################
     split=ObitTask.ObitTask("Split")
@@ -1983,33 +2047,35 @@ def EVLACalAvg(uv, avgClass, avgSeq, CalAvgTime,  err, \
                BIF=1, EIF=0, BChan=1, EChan=0, \
                avgFreq=0, chAvg=1, Compress=False, \
                nThreads=1, logfile = "", check=False, debug=False):
-    """ Calibrate, select and/or average data to a multisource file
-
+    """
+    Calibrate, select and/or average data to a multisource file
+    
     Returns task error code, 0=OK, else failed
     Generates NX and initial dummy CL table if needed
-    uv         = UV data object to clear
-    avgClass   = Class name of averaged data
-    avgSeq     = Sequence number of averaged data
-    CalAvgTime = Averaging time in sec
-    err        = Obit error/message stack
-    FQid       = Frequency Id to process, 0=>all
-    doCalib    = Apply calibration table, positive=>calibrate
-    gainUse    = CL/SN table to apply
-    doBand     = If >0.5 apply previous bandpass cal.
-    BPVer      = previous Bandpass table (BP) version
-    doPol      = Calibrate polarization?
-    BIF        = first IF to copy
-    EIF        = highest IF to copy
-    BChan      = first channel to copy
-    EChan      = highest channel to copy
-    flagVer    = Input Flagging table version
-    avgFreq    = If 0 < avgFreq <= 1 then average channels
-    chAvg      = Number of channels to average
-    Compress   = Write "Compressed" data?
-    nThreads   = Number of threads to use
-    logfile    = Log file for task
-    check      = Only check script, don't execute tasks
-    debug      = Run tasks debug, show input
+
+    * uv         = UV data object to clear
+    * avgClass   = Class name of averaged data
+    * avgSeq     = Sequence number of averaged data
+    * CalAvgTime = Averaging time in sec
+    * err        = Obit error/message stack
+    * FQid       = Frequency Id to process, 0=>all
+    * doCalib    = Apply calibration table, positive=>calibrate
+    * gainUse    = CL/SN table to apply
+    * doBand     = If >0.5 apply previous bandpass cal.
+    * BPVer      = previous Bandpass table (BP) version
+    * doPol      = Calibrate polarization?
+    * BIF        = first IF to copy
+    * EIF        = highest IF to copy
+    * BChan      = first channel to copy
+    * EChan      = highest channel to copy
+    * flagVer    = Input Flagging table version
+    * avgFreq    = If 0 < avgFreq <= 1 then average channels
+    * chAvg      = Number of channels to average
+    * Compress   = Write "Compressed" data?
+    * nThreads   = Number of threads to use
+    * logfile    = Log file for task
+    * check      = Only check script, don't execute tasks
+    * debug      = Run tasks debug, show input
     """
     ################################################################
     mess =  "Average/calibrate data"
@@ -2091,30 +2157,32 @@ def EVLACalAvg2(uv, avgClass, avgSeq, CalAvgTime,  err,  FQid=0, \
                 flagVer=0, doCalib=2, gainUse=0, doBand=1, BPVer=0, doPol=False,  \
                 BIF=1, EIF=0, BChan=1, EChan=0, chAvg=1, Compress=False, \
                 logfile = "", check=False, debug=False):
-    """ Calibrate and average data to a multisource file
-
+    """
+    Calibrate and average data to a multisource file
+    
     Returns task error code, 0=OK, else failed
     Generates NX and initial dummy CL table
-    uv         = UV data object to clear
-    avgClass   = Class name of averaged data
-    avgSeq     = Sequence number of averaged data
-    CalAvgTime = Averaging time in sec
-    err        = Obit error/message stack
-    FQid       = Frequency Id to process, 0=>all
-    doPol      = Calibrate polarization?
-    doCalib    = Apply calibration table, positive=>calibrate
-    gainUse    = CL/SN table to apply
-    doBand     = If >0.5 apply previous bandpass cal.
-    BPVer      = previous Bandpass table (BP) version
-    BIF        = first IF to copy
-    EIF        = highest IF to copy
-    BChan      = first channel to copy
-    EChan      = highest channel to copy
-    flagVer    = Input Flagging table version
-    Compress   = Write "Compressed" data?
-    logfile    = Log file for task
-    check      = Only check script, don't execute tasks
-    debug      = Run tasks debug, show input
+
+    * uv         = UV data object to clear
+    * avgClass   = Class name of averaged data
+    * avgSeq     = Sequence number of averaged data
+    * CalAvgTime = Averaging time in sec
+    * err        = Obit error/message stack
+    * FQid       = Frequency Id to process, 0=>all
+    * doPol      = Calibrate polarization?
+    * doCalib    = Apply calibration table, positive=>calibrate
+    * gainUse    = CL/SN table to apply
+    * doBand     = If >0.5 apply previous bandpass cal.
+    * BPVer      = previous Bandpass table (BP) version
+    * BIF        = first IF to copy
+    * EIF        = highest IF to copy
+    * BChan      = first channel to copy
+    * EChan      = highest channel to copy
+    * flagVer    = Input Flagging table version
+    * Compress   = Write "Compressed" data?
+    * logfile    = Log file for task
+    * check      = Only check script, don't execute tasks
+    * debug      = Run tasks debug, show input
     """
     ################################################################
     mess =  "Average/calibrate calibrate data"
@@ -2231,16 +2299,18 @@ def EVLACalAvg2(uv, avgClass, avgSeq, CalAvgTime,  err,  FQid=0, \
     # end EVLACalAvg2
     
 def EVLASetImager (uv, target, outIclass="", nThreads=1, noScrat=[], logfile = ""):
-    """ Setup to run Imager or MFImage
-
+    """
+    Setup to run Imager or MFImage
+    
     return MFImage task interface object
-    uv       = UV data object to image
-    target   = Target source name or list of names
-    outIclass= output class
-    FQid     = Frequency Id to process
-    nThreads = Number of threads to use
-    noScrat  = list of disks to avoid for scratch files
-    logfile  = Log file for task
+
+    * uv       = UV data object to image
+    * target   = Target source name or list of names
+    * outIclass= output class
+    * FQid     = Frequency Id to process
+    * nThreads = Number of threads to use
+    * noScrat  = list of disks to avoid for scratch files
+    * logfile  = Log file for task
     """
     ################################################################
     img = ObitTask.ObitTask("MFImage")
@@ -2286,38 +2356,44 @@ def EVLAPolCal(uv, InsCals, err, RM=0.0, \
                pmodel=[0.0,0.0,0.0,0.0,0.0,0.0,0.0], \
                check=False, debug = False, \
                noScrat=[], logfile = ""):
-    """ Instrumental Polarization 
-
+    """
+    Instrumental Polarization 
+    
     Do Instrumental
     Instrumental cal uses PCAL, R-L cal is done by imaging each IF in Q and U
     and summing the CLEAN components.
     Returns task error code, 0=OK, else failed
-    uv       = UV data object to calibrate
-    InsCals  = Instrumental poln calibrators, name or list of names
-               If None no instrumental cal
-    err      = Obit error/message stack
-    RM       = Rotation measure of RLCal
-    doCalib  = Apply prior calibration table, positive=>calibrate
-    gainUse  = CL/SN table to apply
-    doBand   = >0 => apply bandpass calibration
-    BPVer    = AIPS BP table to apply
-    flagVer  = Input Flagging table version
-    soltype  = solution type, "ORI-", "RAPR"
-    fixPoln  = if True, don't solve for source polarization in ins. cal
-    avgIF    = if True, average IFs in ins. cal.
-    solInt   = instrumental solution interval (min), 0=> scan average
-    refAnt   = Reference antenna
-    pmodel   = Instrumental poln cal source poln model.
-               pmodel[0] = I flux density (Jy)
-               pmodel[1] = Q flux density (Jy)
-               pmodel[2] = U flux density (Jy)
-               pmodel[3] = V flux density (Jy)
-               pmodel[4] = X offset in sky (arcsec)
-               pmodel[5] = Y offset in sky (arcsec)
-    check    = Only check script, don't execute tasks
-    debug    = Run tasks debug, show input
-    noScrat  = list of disks to avoid for scratch files
-    logfile  = Log file for task
+
+    * uv       = UV data object to calibrate
+    * InsCals  = Instrumental poln calibrators, name or list of names
+      If None no instrumental cal
+    * err      = Obit error/message stack
+    * RM       = Rotation measure of RLCal
+    * doCalib  = Apply prior calibration table, positive=>calibrate
+    * gainUse  = CL/SN table to apply
+    * doBand   = >0 => apply bandpass calibration
+    * BPVer    = AIPS BP table to apply
+    * flagVer  = Input Flagging table version
+    * soltype  = solution type, "ORI-", "RAPR"
+    * fixPoln  = if True, don't solve for source polarization in ins. cal
+    * avgIF    = if True, average IFs in ins. cal.
+    * solInt   = instrumental solution interval (min), 0=> scan average
+    * refAnt   = Reference antenna
+    * pmodel   = Instrumental poln cal source poln model.
+
+      =========  ========================
+      pmodel[0]  I flux density (Jy)
+      pmodel[1]  Q flux density (Jy)
+      pmodel[2]  U flux density (Jy)
+      pmodel[3]  V flux density (Jy)
+      pmodel[4]  X offset in sky (arcsec)
+      pmodel[5]  Y offset in sky (arcsec)
+      =========  ========================
+
+    * check    = Only check script, don't execute tasks
+    * debug    = Run tasks debug, show input
+    * noScrat  = list of disks to avoid for scratch files
+    * logfile  = Log file for task
     """
     ################################################################
     mess =  "Instrumental polarization calibration "
@@ -2378,48 +2454,50 @@ def EVLARLCal(uv, err, \
               refAnt=0, doPol=-1, FOV=0.05, niter = 100, CleanRad=None, \
               doPlot=False, plotFile="./BPCal.ps", \
               nThreads=1, noScrat=[], logfile = "",check=False, debug = False):
-    """ Determine R-L delay and/or phase calibration
-
+    """
+    Determine R-L delay and/or phase calibration
+    
     Returns task error code, 0=OK, else failed
     R-L Delay calibration using new BP table, if R-L phase (& RM) known for
     calibrator(s), this also does the R-L phase calibration
     R-L Phase Calibration applies to (new) highest numbered CL table on uv
-    uv       = UV data object to clear
-    err      = Obit error/message stack
-    RLPCal   = R-L (polarization angle) calibrator,
-               If None no R-L cal
-    RLPhase  = R-L phase of RLPCal (deg) at 1 GHz
-    RM       = R-L phase RM (NYI)
-    RLDCal   = An array of triplets with R-L calibrators:
-               (name, R-L phase (deg at 1 GHz), RM (rad/m**2))
-               If None no R-L delay cal
-    solInt1  = first solution interval (min), 0=> scan average
-    solInt2  = second solution interval (min)
-    RLDPhase = R-L phase of RLPCal (deg) at 1 GHz
-    BChan    = First (1-rel) channel number
-    EChan    = Highest channel number. 0=> high in data.
-    ChWid2   = Number of channels in running mean RL BP soln, 
-    UVRange  = Range of baseline used in kilowavelengths
-    FQid     = Frequency Id to process
-    calcode  = Calibrator code
-    doCalib  = Apply calibration table, positive=>calibrate
-    gainUse  = CL/SN table to apply
-    timerange= time range of data (aips format)
-    doBand   = If >0.5 apply previous bandpass cal.
-    BPVer    = previous Bandpass table (BP) version
-    flagVer  = Flagging table to apply
-    refAnt   = Reference antenna REQUIRED
-    doPol    = Apply polarization cal?
-    FOV      = field of view radius (deg) needed to image RLPCal
-    niter    = Number  of iterations of CLEAN in R-L cal
-    CleanRad = CLEAN radius about center or None=autoWin
-    doPlot   = If True make plots of corrected data
-    plotFile = Name of postscript file for plots
-    noScrat  = list of AIPS disks to avoid for scratch files
-    nThreads = Number of threads to use in imaging
-    logfile  = Log file for task
-    check    = Only check script, don't execute tasks
-    debug    = Run tasks debug, show input
+
+    * uv       = UV data object to clear
+    * err      = Obit error/message stack
+    * RLPCal   = R-L (polarization angle) calibrator,
+      If None no R-L cal
+    * RLPhase  = R-L phase of RLPCal (deg) at 1 GHz
+    * RM       = R-L phase RM (NYI)
+    * RLDCal   = An array of triplets with R-L calibrators:
+      (name, R-L phase (deg at 1 GHz), RM (rad/m**2))
+      If None no R-L delay cal
+    * solInt1  = first solution interval (min), 0=> scan average
+    * solInt2  = second solution interval (min)
+    * RLDPhase = R-L phase of RLPCal (deg) at 1 GHz
+    * BChan    = First (1-rel) channel number
+    * EChan    = Highest channel number. 0=> high in data.
+    * ChWid2   = Number of channels in running mean RL BP soln, 
+    * UVRange  = Range of baseline used in kilowavelengths
+    * FQid     = Frequency Id to process
+    * calcode  = Calibrator code
+    * doCalib  = Apply calibration table, positive=>calibrate
+    * gainUse  = CL/SN table to apply
+    * timerange= time range of data (aips format)
+    * doBand   = If >0.5 apply previous bandpass cal.
+    * BPVer    = previous Bandpass table (BP) version
+    * flagVer  = Flagging table to apply
+    * refAnt   = Reference antenna REQUIRED
+    * doPol    = Apply polarization cal?
+    * FOV      = field of view radius (deg) needed to image RLPCal
+    * niter    = Number  of iterations of CLEAN in R-L cal
+    * CleanRad = CLEAN radius about center or None=autoWin
+    * doPlot   = If True make plots of corrected data
+    * plotFile = Name of postscript file for plots
+    * noScrat  = list of AIPS disks to avoid for scratch files
+    * nThreads = Number of threads to use in imaging
+    * logfile  = Log file for task
+    * check    = Only check script, don't execute tasks
+    * debug    = Run tasks debug, show input
     """
     ################################################################
     mess =  "R-L polarization calibration "
@@ -2785,40 +2863,42 @@ def EVLARLCal2(uv, err, uv2 = None, \
                refAnt=0, doPol=-1, smooth=[0.,0.,0.], dataInt=0., \
                RLPCal=None,  FOV=0.05, niter = 100, \
                nThreads=1, noScrat=[], logfile = "",check=False, debug = False):
-    """ Determine R-L delay and phase calibration
-
+    """
+    Determine R-L delay and phase calibration
+    
     Returns task error code, 0=OK, else failed
     Calibration applies to (new) highest numbered CL table on uv
-    uv       = UV data object to clear
-    err      = Obit error/message stack
-    uv2      = If gives, then copy AN table from uv to uv2 and apply same
-               calibration (intended to calibrate CVel data)
-    RLPCal   = An array of triplets with R-L calibrators:
-               (name, R-L phase (deg at 1 GHz), RM (rad/m**2))
-               If None no R-L cal
-    RLDCal   = R-L delay calibrator name or list
-               If None no R-L delay cal
-    BChan    = First (1-rel) channel number
-    EChan    = Highest channel number. 0=> high in data.
-    FQid     = Frequency Id to process
-    calcode  = Calibrator code
-    doCalib  = Apply calibration table, positive=>calibrate
-    gainUse  = CL/SN table to apply
-    timerange= time range of data (aips format)
-    doBand   = If >0.5 apply previous bandpass cal.
-    BPVer    = previous Bandpass table (BP) version
-    flagVer  = Flagging table to apply
-    refAnt   = Reference antenna REQUIRED
-    doPol    = Apply polarization cal?
-    smooth   = Channel smoothing function
-    dataInt  = Data integration time (sec)
-    FOV      = field of view radius (deg) needed to image RLPCal
-    niter    = Number  of iterations of CLEAN in R-L cal
-    noScrat  = list of AIPS disks to avoid for scratch files
-    nThreads = Number of threads to use in imaging
-    logfile  = Log file for task
-    check    = Only check script, don't execute tasks
-    debug    = Run tasks debug, show input
+
+    * uv       = UV data object to clear
+    * err      = Obit error/message stack
+    * uv2      = If gives, then copy AN table from uv to uv2 and apply same
+      calibration (intended to calibrate CVel data)
+    * RLPCal   = An array of triplets with R-L calibrators:
+      (name, R-L phase (deg at 1 GHz), RM (rad/m**2))
+      If None no R-L cal
+    * RLDCal   = R-L delay calibrator name or list
+      If None no R-L delay cal
+    * BChan    = First (1-rel) channel number
+    * EChan    = Highest channel number. 0=> high in data.
+    * FQid     = Frequency Id to process
+    * calcode  = Calibrator code
+    * doCalib  = Apply calibration table, positive=>calibrate
+    * gainUse  = CL/SN table to apply
+    * timerange= time range of data (aips format)
+    * doBand   = If >0.5 apply previous bandpass cal.
+    * BPVer    = previous Bandpass table (BP) version
+    * flagVer  = Flagging table to apply
+    * refAnt   = Reference antenna REQUIRED
+    * doPol    = Apply polarization cal?
+    * smooth   = Channel smoothing function
+    * dataInt  = Data integration time (sec)
+    * FOV      = field of view radius (deg) needed to image RLPCal
+    * niter    = Number  of iterations of CLEAN in R-L cal
+    * noScrat  = list of AIPS disks to avoid for scratch files
+    * nThreads = Number of threads to use in imaging
+    * logfile  = Log file for task
+    * check    = Only check script, don't execute tasks
+    * debug    = Run tasks debug, show input
     """
     ################################################################
     mess =  "R-L polarization calibration "
@@ -3189,44 +3269,56 @@ def EVLARLCal2(uv, err, uv2 = None, \
 
 def EVLAReportTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", \
                           Stokes="I", logfile='', check=False, debug=False):
-    """ Generate report info for a list of targets in AIPS files
-
-    Returns a report which is a list of dicts, each of which contains
-        "Source":    Source name
-        "haveImage": True if images were made, 
-        "ObsDate":   Observing date as "yyyy-mm-dd"
-        "numVis":    Number of visibilities (ignoring flagging)
-        "Exposure":  Total integration time (day)
-        "RA"    :    Source RA (deg) at standard equinox
-        "Dec"   :    Source Dec (deg) at standard equinox
-        "IFlux" :    Source Table IPol flux per IF
-        "QFlux" :    Source Table QPol flux per IF
-        "UFlux" :    Source Table UPol flux per IF
-        "VFlux" :    Source Table VPol flux per IF
-    following present if haveImage True
-        "RAPnt" :   Antenna pointing RA (deg) at standard equinox
-        "DecPnt":   Antenna pointing Dec (deg) at standard equinox
-        "Freq"  :   Reference frequency (Hz)
-        "BW"    :   Image bandwidth (Hz)
-        "Size"  :   Width of image in deg (From Stokes I)
-        "Cells" :   Cell spacing in deg (From Stokes I)
-        for each s in Stokes:
-            "sSum" : Sum of clean components in Jy
-            "sPeak": Peak pixel brightness in Jy
-            "sRMS" : RMS noise in inner quarter (Jy)
-            "sBeam": Beam (maj, min, PA) (deg)
+    """
+    Generate report info for a list of targets in AIPS files
     
-    uv         = UV data object
-    err        = Python Obit Error/message stack
-    Sources    = Source name or list of names to use
-                 If an empty list all sources in uv are included
-    seq        = sequence number of images
-    sclass     = Image class, first character replaced with char in Stokes
-    FreqID     = Frequency group identifier
-    Stokes     = Stokes parameters of images
-    logfile    = logfile for messages
-    check      = Only check script, don't execute tasks
-    debug      = show input
+    Returns a report which is a list of dicts, each of which contains
+
+    ===========  ==========================================
+    "Source"     Source name
+    "haveImage"  True if images were made, 
+    "ObsDate"    Observing date as "yyyy-mm-dd"
+    "numVis"     Number of visibilities (ignoring flagging)
+    "Exposure"   Total integration time (day)
+    "RA"         Source RA (deg) at standard equinox
+    "Dec"        Source Dec (deg) at standard equinox
+    "IFlux"      Source Table IPol flux per IF
+    "QFlux"      Source Table QPol flux per IF
+    "UFlux"      Source Table UPol flux per IF
+    "VFlux"      Source Table VPol flux per IF
+    ===========  ==========================================
+
+    following present if haveImage True
+
+    ========  ==============================================
+    "RAPnt"   Antenna pointing RA (deg) at standard equinox
+    "DecPnt"  Antenna pointing Dec (deg) at standard equinox
+    "Freq"    Reference frequency (Hz)
+    "BW"      Image bandwidth (Hz)
+    "Size"    Width of image in deg (From Stokes I)
+    "Cells"   Cell spacing in deg (From Stokes I)
+    ========  ==============================================
+
+    for each s in Stokes:
+
+    =======  ===============================
+    "sSum"   Sum of clean components in Jy
+    "sPeak"  Peak pixel brightness in Jy
+    "sRMS"   RMS noise in inner quarter (Jy)
+    "sBeam"  Beam (maj, min, PA) (deg)
+    =======  ===============================
+
+    * uv         = UV data object
+    * err        = Python Obit Error/message stack
+    * Sources    = Source name or list of names to use
+      If an empty list all sources in uv are included
+    * seq        = sequence number of images
+    * sclass     = Image class, first character replaced with char in Stokes
+    * FreqID     = Frequency group identifier
+    * Stokes     = Stokes parameters of images
+    * logfile    = logfile for messages
+    * check      = Only check script, don't execute tasks
+    * debug      = show input
     """
     ################################################################
     mess = "Generate source statistics "
@@ -3340,17 +3432,19 @@ def EVLAReportTargets(uv, err,  FreqID=1, Sources=None, seq=1, sclass="IClean", 
 
 def EVLAGetSumCC(image, err, CCver=1,
                  logfile='', check=False, debug=False):
-    """ Sum fluxes in a CC table
+    """
+    Sum fluxes in a CC table
     
     Sums the flux densities in a CC Table on an image
     Returns sum
     Returns with err set on error
-    image      = Image with CC table
-    err        = Python Obit Error/message stack
-    CCver      = CC table to sum
-    logfile    = logfile for messages
-    check      = Only check script
-    debug      = Only debug - no effect
+
+    * image      = Image with CC table
+    * err        = Python Obit Error/message stack
+    * CCver      = CC table to sum
+    * logfile    = logfile for messages
+    * check      = Only check script
+    * debug      = Only debug - no effect
     """
     ################################################################
     if check:
@@ -3387,17 +3481,19 @@ def EVLAGetSumCC(image, err, CCver=1,
 
 def EVLAGetTimes(uv, Source, err, 
                  logfile='', check=False, debug=False):
-    """ Lookup observing times and number of visibilities for a source, other info
+    """
+    Lookup observing times and number of visibilities for a source, other info
     
     Return dict {"numVis":no vis, "Exposure":Total integration time (day),
                  "RA": RA@equinox, "Dec" Dec@equinox,
                  "IFlux":IFlux, "QFlux":QFlux, "UFlux":UFlux, "VFlux":VFlux}
-    uv         = UV data with AIPS SU and AIPS NX tables
-    Source     = Source to lookup
-    err        = Python Obit Error/message stack
-    logfile    = logfile for messages
-    check      = Only check script
-    debug      = Only debug - no effect
+
+    * uv         = UV data with AIPS SU and AIPS NX tables
+    * Source     = Source to lookup
+    * err        = Python Obit Error/message stack
+    * logfile    = logfile for messages
+    * check      = Only check script
+    * debug      = Only debug - no effect
     """
     ################################################################
     if check:
@@ -3486,56 +3582,57 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
                      do3D=True, BLFact=0.999, BLchAvg=False, \
                      doMB=False, norder=2, maxFBW=0.05, \
                      nThreads=1, noScrat=[], logfile='', check=False, debug=False):
-    """ Image a list of sources with optional selfcal
-
+    """
+    Image a list of sources with optional selfcal
+    
     Uses Imager or MFImage to image a list of sources.
     Data must be at least approximately calibrated
     Returns task error code, 0=OK, else failed
-    
-    uv         = UV data object
-    err        = Python Obit Error/message stack
-    Sources    = Source name or list of names to use
-                 If an empty list all sources in uv are included
-    seq        = sequence number of output
-    sclass     = Image output class
-    band       = project band - appended to name
-    FreqID     = Frequency group identifier
-    doCalib    = Apply calibration table
-    gainUse    = CL/SN table to apply
-    doBand     = If >0.5 apply bandpass cal.
-    BPVer      = Bandpass table version
-    flagVer    = Input Flagging table version
-    doPol      = Apply polarization cal?
-    Stokes     = Stokes parameters to image
-    FOV        = Field of view to image in deg
-    Robust     = Weighting robustness parameter
-    Niter      = max no. iterations
-    CleanRad   = CLEAN radius about center or None=autoWin
-    maxPSCLoop = max. number of phase sc loops
-    minFluxPSC = Trip level for phase self cal (Jy)
-    solPInt    = Phase solution interval (min)
-    solPMode   = Phase soln mode "P", "DELA"
-    solPType   = Phase soln type
-    maxASCLoop = max. number of amp&phase sc loops
-    minFluxASC = Trip level for amp&phase self cal (Jy)
-    solAInt    = Amp&phase solution interval (min)
-    solAMode   = Amp&Phase soln mode "A&P", "P", "DELA"
-    solAType   = Amp&PPhase soln type
-    avgPol     = Average poln in SC?
-    avgIF      = Average IFs in SC?
-    minSNR     = minimum acceptable SNR in SC
-    refAnt     = Reference antenna
-    do3D       = Use 3D imaging?
-    BLFact     = Baseline dependent averaging factor
-    BLchAvg    = If True and BLFact>=1.0 also average channels
-    doMB       = If True is wideband imaging
-    norder     = order on wideband imaging
-    maxFBW     = max. fractional wideband imaging
-    nThreads   = Max. number of threads to use
-    noScrat    = list of disks to avoid for scratch files
-    logfile    = logfile for messages
-    check      = Only check script, don't execute tasks
-    debug      = show input
+
+    * uv         = UV data object
+    * err        = Python Obit Error/message stack
+    * Sources    = Source name or list of names to use
+      If an empty list all sources in uv are included
+    * seq        = sequence number of output
+    * sclass     = Image output class
+    * band       = project band - appended to name
+    * FreqID     = Frequency group identifier
+    * doCalib    = Apply calibration table
+    * gainUse    = CL/SN table to apply
+    * doBand     = If >0.5 apply bandpass cal.
+    * BPVer      = Bandpass table version
+    * flagVer    = Input Flagging table version
+    * doPol      = Apply polarization cal?
+    * Stokes     = Stokes parameters to image
+    * FOV        = Field of view to image in deg
+    * Robust     = Weighting robustness parameter
+    * Niter      = max no. iterations
+    * CleanRad   = CLEAN radius about center or None=autoWin
+    * maxPSCLoop = max. number of phase sc loops
+    * minFluxPSC = Trip level for phase self cal (Jy)
+    * solPInt    = Phase solution interval (min)
+    * solPMode   = Phase soln mode "P", "DELA"
+    * solPType   = Phase soln type
+    * maxASCLoop = max. number of amp&phase sc loops
+    * minFluxASC = Trip level for amp&phase self cal (Jy)
+    * solAInt    = Amp&phase solution interval (min)
+    * solAMode   = Amp&Phase soln mode "A&P", "P", "DELA"
+    * solAType   = Amp&PPhase soln type
+    * avgPol     = Average poln in SC?
+    * avgIF      = Average IFs in SC?
+    * minSNR     = minimum acceptable SNR in SC
+    * refAnt     = Reference antenna
+    * do3D       = Use 3D imaging?
+    * BLFact     = Baseline dependent averaging factor
+    * BLchAvg    = If True and BLFact>=1.0 also average channels
+    * doMB       = If True is wideband imaging
+    * norder     = order on wideband imaging
+    * maxFBW     = max. fractional wideband imaging
+    * nThreads   = Max. number of threads to use
+    * noScrat    = list of disks to avoid for scratch files
+    * logfile    = logfile for messages
+    * check      = Only check script, don't execute tasks
+    * debug      = show input
     """
     ################################################################
     mess = "Image a list of sources "
@@ -3652,14 +3749,16 @@ def EVLAImageTargets(uv, err, Sources=None,  FreqID=1, seq=1, sclass="IClean", b
 
 def EVLAAllSource(uv, err, \
                logfile='', check=False, debug=False):
-    """ Flag SN table entries with real < Flag
-
+    """
+    Flag SN table entries with real < Flag
+    
     Returns List of all sources, empty if no SU table
-    uv         = UV data object
-    err        = Python Obit Error/message stack
-    logfile    = logfile for messages
-    check      = Only check script
-    debug      = Only debug - no effect
+
+    * uv         = UV data object
+    * err        = Python Obit Error/message stack
+    * logfile    = logfile for messages
+    * check      = Only check script
+    * debug      = Only debug - no effect
     """
     ################################################################
      # Open and close uv to sync with disk 
@@ -3704,22 +3803,24 @@ def EVLAPlotTab(uv, inext, invers, err, \
                 source=None, timerang=[0.,0.,0.,0.,0.,0.,0.,0.], \
                 stokes="HALF", optype="    ", opcode="    ", nplots=1,  \
                 logfile=None, check=False, debug=False):
-    """ Makes AIPS plots of tables
+    """
+    Makes AIPS plots of tables
     
     Returns task error code, 0=OK, else failed
-    uv       = UV data object to plot
-    inext    = AIPS Table ("SN", "CL", "TY", "PC")
-    inver    = version number, 0-> highest
-    source   = if given the name of the source
-    timerang = timerange to plot.
-    stokes   = Stokes type to plot
-    optype   = Data to be plotted (see help snplt)
-    opcode   = Plot type (see help snplt)
-    nplots   = number of plots per page
-    err      = Obit error/message stack
-    logfile  = logfile for messages
-    check    = Only check script, don't execute tasks
-    debug    = show input
+
+    * uv       = UV data object to plot
+    * inext    = AIPS Table ("SN", "CL", "TY", "PC")
+    * inver    = version number, 0-> highest
+    * source   = if given the name of the source
+    * timerang = timerange to plot.
+    * stokes   = Stokes type to plot
+    * optype   = Data to be plotted (see help snplt)
+    * opcode   = Plot type (see help snplt)
+    * nplots   = number of plots per page
+    * err      = Obit error/message stack
+    * logfile  = logfile for messages
+    * check    = Only check script, don't execute tasks
+    * debug    = show input
     """
     ################################################################
     snplt = AIPSTask.AIPSTask("snplt")
@@ -3766,18 +3867,20 @@ def EVLAPlotTab(uv, inext, invers, err, \
 
 def EVLAWritePlots(uv, loPL, hiPL, plotFile, err, \
                      logfile=None, check=False, debug=False):
-    """ Writes plots to an external postscript file
-
+    """
+    Writes plots to an external postscript file
+    
     All Plots deleted from AIPS
     Returns task error code, 0=OK, else failed
-    uv       = UV data object to plot
-    loPL     = Lowest (1-rel) plot number
-    hiPL     = Highest PL version number (0->all)
-    plotFile = plot file
-    err      = Obit error/message stack
-    logfile  = logfile for messages
-    check    = Only check script, don't execute tasks
-    debug    = show input
+
+    * uv       = UV data object to plot
+    * loPL     = Lowest (1-rel) plot number
+    * hiPL     = Highest PL version number (0->all)
+    * plotFile = plot file
+    * err      = Obit error/message stack
+    * logfile  = logfile for messages
+    * check    = Only check script, don't execute tasks
+    * debug    = show input
     """
     ################################################################
     # Open/close UV to update header
@@ -3826,21 +3929,22 @@ def EVLASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["RR","LL"], \
                  check=False, debug=False, logfile = ""):
     """
     Plot amplitude and phase across the spectrum.
-
+    
     returns scratch file with plot
     Note: possm can't apply flags so data copied to scratch file
     Returns task error code, 0=OK, else failed
-    uv        = uv data object
-    Source    = Name of source to plot
-    timerange = timerange (Obit form) to plot
-    refAnt    = ref. Ant, only baselines to this antenna plotted
-    err       = Obit error object
-    Stokes    = List of stokes types to plot
-    doband    = do bandpass calibration before plotting (requires BP table)
-    plotFile  = name of output PS file
-    check     = Only check script, don't execute tasks
-    debug     = Run tasks debug, show input
-    logfile   = Log file for task
+
+    * uv        = uv data object
+    * Source    = Name of source to plot
+    * timerange = timerange (Obit form) to plot
+    * refAnt    = ref. Ant, only baselines to this antenna plotted
+    * err       = Obit error object
+    * Stokes    = List of stokes types to plot
+    * doband    = do bandpass calibration before plotting (requires BP table)
+    * plotFile  = name of output PS file
+    * check     = Only check script, don't execute tasks
+    * debug     = Run tasks debug, show input
+    * logfile   = Log file for task
     """
     # Calibrate and edit data
     scr  = uv.Scratch(err)
@@ -3907,18 +4011,20 @@ def EVLASpecPlot(uv, Source, timerange, refAnt, err, Stokes=["RR","LL"], \
 
 def EVLAApplyCal(uv, err, SNver=0, CLin=0, CLout=0, maxInter=240.0, \
                      logfile=None, check=False, debug=False):
-    """ Applies an SN table to a CL table and writes another
-
+    """
+    Applies an SN table to a CL table and writes another
+    
     Returns task error code, 0=OK, else failed
-    uv       = UV data object to clear
-    err      = Obit error/message stack
-    SNver    = SN table to apply, 0=>highest
-    CLin     = input CL table, 0=>highest
-    CLout    = output CL table, 0=>create new
-    maxInter = Max time (min) over which to interpolate
-    logfile  = logfile for messages
-    check    = Only check script, don't execute tasks
-    debug    = show input, ObitTasks debug
+
+    * uv       = UV data object to clear
+    * err      = Obit error/message stack
+    * SNver    = SN table to apply, 0=>highest
+    * CLin     = input CL table, 0=>highest
+    * CLout    = output CL table, 0=>create new
+    * maxInter = Max time (min) over which to interpolate
+    * logfile  = logfile for messages
+    * check    = Only check script, don't execute tasks
+    * debug    = show input, ObitTasks debug
     """
     ################################################################
     # Open/close UV to update header
@@ -3986,20 +4092,22 @@ def EVLAApplyCal(uv, err, SNver=0, CLin=0, CLout=0, maxInter=240.0, \
 def EVLASpectrum(uv, plotSource, plotTime, plotFile, refAnt, err, \
                  Stokes=["RR","LL"], doband=-1,                   \
                  logfile=None, check=False, debug=False):
-    """ Spectrum plot of selected data
-
+    """
+    Spectrum plot of selected data
+    
     Returns task error code, 0=OK, else failed
-    uv         = UV data object to clear
-    plotSource = Name of source to plot
-    plotTime   = timerange (Obit form) to plot
-    plotFile   = name of output PS file
-    refAnt     = ref. Ant, only baselines to this antenna plotted
-    err        = Obit error/message stack
-    Stokes     = List of stokes types to plot
-    doband     = do bandpass calibration before plotting (requires BP table)
-    logfile    = logfile for messages
-    check      = Only check script, don't execute tasks
-    debug      = show input, ObitTasks debug
+
+    * uv         = UV data object to clear
+    * plotSource = Name of source to plot
+    * plotTime   = timerange (Obit form) to plot
+    * plotFile   = name of output PS file
+    * refAnt     = ref. Ant, only baselines to this antenna plotted
+    * err        = Obit error/message stack
+    * Stokes     = List of stokes types to plot
+    * doband     = do bandpass calibration before plotting (requires BP table)
+    * logfile    = logfile for messages
+    * check      = Only check script, don't execute tasks
+    * debug      = show input, ObitTasks debug
     """
     ################################################################
     # POSSM can't apply flags so write scratch file and plot

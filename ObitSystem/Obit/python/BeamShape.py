@@ -1,7 +1,7 @@
-""" Python Obit BeamShape class
+""" 
+Python Obit BeamShape class
 
 This class provides estimates of the beam shape
-
 """
 # $Id$
 #-----------------------------------------------------------------------
@@ -64,7 +64,8 @@ class BeamShapePtr :
         return "<C BeamShape instance> " + Obit.BeamShapeGetName(self.me)
 #
 class BeamShape(BeamShapePtr):
-    """ Python Obit BeamShape class
+    """
+    Python Obit BeamShape class
     
     This class provides estimates of the beam shape
     
@@ -79,8 +80,8 @@ class BeamShape(BeamShapePtr):
     def cast(self, toClass):
         """ Casts object pointer to specified class
         
-        self     = object whose cast pointer is desired
-        toClass  = Class string to cast to
+        * self     = object whose cast pointer is desired
+        * toClass  = Class string to cast to
         """
         ################################################################
         # Get pointer with type of this class
@@ -90,13 +91,13 @@ class BeamShape(BeamShapePtr):
     # end cast
     
     def Gain (self, ra, dec, ):
-        """ 
-        
+        """
         Returns Gain
-        self     = the BeamShape object
-        ra       = RA (deg) of direction for gain
-        dec      = RA (deg) of direction for gain
-        parAng   = Parallactic angle (rad) NYI
+
+        * self     = the BeamShape object
+        * ra       = RA (deg) of direction for gain
+        * dec      = RA (deg) of direction for gain
+        * parAng   = Parallactic angle (rad) NYI
         """
         ################################################################
         # Checks
@@ -106,11 +107,13 @@ class BeamShape(BeamShapePtr):
     # end Gain
     
     def GainSym (self, Angle):
-        """ Calculate gain in a given offset from a symmetric beam shape.
+        """
+        Calculate gain in a given offset from a symmetric beam shape.
         
         Returns Gain, Simple function of distance from pointing center.
-        self     = the BeamShape object
-        Angle    = Angular distance (deg) from pointing center
+
+        * self     = the BeamShape object
+        * Angle    = Angular distance (deg) from pointing center
         """
         ################################################################
         # Checks
@@ -120,10 +123,12 @@ class BeamShape(BeamShapePtr):
     # end GainSym
     
     def BeamShapeIsA (self):
-        """ Tells if input really a Python Obit BeamShape
+        """
+        Tells if input really a Python Obit BeamShape
         
         return true, false (1,0)
-        self   = Python BeamShape object
+
+        * self   = Python BeamShape object
         """
         ################################################################
         # Allow derived types
@@ -132,10 +137,12 @@ class BeamShape(BeamShapePtr):
     # end class BeamShape
     
 def PIsA (inBeamShape):
-    """ Tells if input really a Python Obit BeamShape
-
+    """
+    Tells if input really a Python Obit BeamShape
+    
     return True, False (1,0)
-    inBeamShape   = Python BeamShape object
+
+    * inBeamShape   = Python BeamShape object
     """
     ################################################################
     if inBeamShape.__class__ != BeamShape:
@@ -146,14 +153,16 @@ def PIsA (inBeamShape):
     # end PIsA
 
 def PCreate (name, image, pbmin, antSize, doGain):
-    """ Create the underlying structures of a BeamShape
-
+    """
+    Create the underlying structures of a BeamShape
+    
     return object created.
-    name      = Name to be given to object
-    image     = Python Image for which beam shape is desired
-    pbmin     = Minimum gain, lower values will be clipped at this value
-    antSize   = Size of Antenna in (m)
-    doGain    = If true gain wanted, else gain set to 1.0
+
+    * name      = Name to be given to object
+    * image     = Python Image for which beam shape is desired
+    * pbmin     = Minimum gain, lower values will be clipped at this value
+    * antSize   = Size of Antenna in (m)
+    * doGain    = If true gain wanted, else gain set to 1.0
     """
     ################################################################
     # Checks
@@ -164,4 +173,3 @@ def PCreate (name, image, pbmin, antSize, doGain):
     out.me = Obit.BeamShapeCreate(name, image.me, pbmin, antSize, doGain)
     return out;
     # end PCreate
-

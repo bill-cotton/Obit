@@ -44,21 +44,22 @@ class FInterpolatePtr :
     def __repr__(self):
         return "<C FInterpolate instance>"
 class FInterpolate(FInterpolatePtr):
-    """ Lagrangian interpolation in an FArray
+    """
+    Lagrangian interpolation in an FArray
     """
     def __init__(self, name, array, desc, hwidth) :
         self.this = Obit.new_FInterpolate(name, array.me, desc.me, hwidth)
     def __del__(self):
         if Obit!=None:
             Obit.delete_FInterpolate(self.this)
-
-
+    
 def PCopy  (inFI, outFI, err):
-    """ Make a deep copy of input object.
+    """ 
+    Make a deep copy of input object.
 
-    inFI    = Python Obit input FInterpolate
-    outFI   = Python Obit FInterpolate
-    err     = Python Obit Error/message stack
+    * inFI    = Python Obit input FInterpolate
+    * outFI   = Python Obit FInterpolate
+    * err     = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -74,12 +75,12 @@ def PCopy  (inFI, outFI, err):
         printErrMsg(err, "Error copying FInterpolate")
     # end PCopy
 
-
 def PClone (inFI, outFI):
-    """ Make a shallow copy of a object (no data copied)
+    """
+    Make a shallow copy of a object (no data copied)
 
-    inFI    = Python Obit input FInterpolate
-    outFI   = Python Obit FInterpolate
+    * inFI    = Python Obit input FInterpolate
+    * outFI   = Python Obit FInterpolate
     """
     ################################################################
     # Checks
@@ -92,10 +93,11 @@ def PClone (inFI, outFI):
     # end PClone 
 
 def PReplace (inFI, newArray):
-    """ Replace the ObitFArray member to be interpolated.
+    """
+    Replace the ObitFArray member to be interpolated.
 
-    inFI    = Python Obit input FInterpolate
-    newArray= Python Obit FArray
+    * inFI    = Python Obit input FInterpolate
+    * newArray= Python Obit FArray
     """
     ################################################################
     # Checks
@@ -111,12 +113,14 @@ def PReplace (inFI, newArray):
 
 
 def PPixel (inFI, pixel, err):
-    """ Interpolate pixel value
-
+    """
+    Interpolate pixel value
+    
     return the value of a specified pixel
-    inFI    = Python Obit input FInterpolate
-    pixel   = pixel (1-rel) as array of float
-    err     = Python Obit Error/message stack
+
+    * inFI    = Python Obit input FInterpolate
+    * pixel   = pixel (1-rel) as array of float
+    * err     = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -132,11 +136,13 @@ def PPixel (inFI, pixel, err):
     # end PPixel
 
 def P1D (inFI, pixel, err):
-    """ Interpolate pixel value in 1D array.
-
+    """
+    Interpolate pixel value in 1D array.
+    
     return the value of a specified pixel
-    inFI    = Python Obit input FInterpolate
-    pixel   = pixel number as float
+
+    * inFI    = Python Obit input FInterpolate
+    * pixel   = pixel number as float
     """
     ################################################################
     # Checks
@@ -147,16 +153,18 @@ def P1D (inFI, pixel, err):
     # end P1D
 
 def PPosition (inFI, coord, err):
-    """ Interpolate value at requested coordinate in array.
-
+    """
+    Interpolate value at requested coordinate in array.
+    
     Interpolate value at requested coordinate in array.
     The object must have an image descriptor to allow determing
     pixel coordinates.
     Interpolation between planes is not supported.
     return the value at specified coordinate
-    inFI    = Python Obit input FInterpolate
-    coord   = coordinate as array of float
-    err     = Python Obit Error/message stack
+
+    * inFI    = Python Obit input FInterpolate
+    * coord   = coordinate as array of float
+    * err     = Python Obit Error/message stack
     """
     ################################################################
     # Checks
@@ -174,10 +182,12 @@ def PPosition (inFI, coord, err):
     # end PPosition
 
 def PGetList (inFI):
-    """ Get InfoList
-
+    """
+    Get InfoList
+    
     return InfoList reference
-    inFI    = Python Obit input FInterpolate
+
+    * inFI    = Python Obit input FInterpolate
     """
     ################################################################
     # Checks
@@ -192,10 +202,12 @@ def PGetList (inFI):
 
 
 def PGetFArray (inFI):
-    """ Get Associated FArray reference
-
+    """
+    Get Associated FArray reference
+    
     return FArray (data being interpolated) reference 
-    inFI    = Python Obit input FInterpolate
+
+    * inFI    = Python Obit input FInterpolate
     """
     ################################################################
     # Checks
@@ -209,10 +221,12 @@ def PGetFArray (inFI):
 
 
 def PGetDesc (inFI):
-    """ Get Image descriptor
-
+    """
+    Get Image descriptor
+    
     return ImageDesc reference
-    inFI    = Python Obit input FInterpolate
+
+    * inFI    = Python Obit input FInterpolate
     """
     ################################################################
     # Checks
@@ -226,10 +240,11 @@ def PGetDesc (inFI):
 
 
 def PSetDesc (inFI, desc):
-    """ Replace Image descriptor
+    """
+    Replace Image descriptor
 
-    inFI    = Python Obit input FInterpolate
-    desc    = Python Obit ImageDesc to use
+    * inFI    = Python Obit input FInterpolate
+    * desc    = Python Obit ImageDesc to use
     """
     ################################################################
     # Checks
@@ -243,10 +258,12 @@ def PSetDesc (inFI, desc):
 
 
 def PGetHwidth (inFI):
-    """ return Half width of interpolation kernal
-
+    """
+    return Half width of interpolation kernal
+    
     return hwidth member value
-    inFI    = Python Obit input FInterpolate
+
+    * inFI    = Python Obit input FInterpolate
     """
     ################################################################
     # Checks
@@ -258,10 +275,11 @@ def PGetHwidth (inFI):
 
 
 def PSetHwidth (inFI, hwidth):
-    """ Set Half width of interpolation kernal
+    """
+    Set Half width of interpolation kernal
 
-    inFI    = Python Obit input FInterpolate
-    hwidth  = new half width of interpolation kernal
+    * inFI    = Python Obit input FInterpolate
+    * hwidth  = new half width of interpolation kernal
     """
     ################################################################
     # Checks
@@ -273,10 +291,12 @@ def PSetHwidth (inFI, hwidth):
 
 
 def PIsA (inFI):
-    """ Tells if object thinks it's a Python ObitFInterpolate
-
+    """
+    Tells if object thinks it's a Python ObitFInterpolate
+    
     return true, false (1,0)
-    inFI    = Python Obit input FInterpolate to test
+
+    * inFI    = Python Obit input FInterpolate to test
     """
     ################################################################
     # Checks
