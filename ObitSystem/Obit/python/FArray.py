@@ -23,7 +23,7 @@ Naxis   list of axis dimensions (by storage order)
 ======  ==============================================
 """
 #-----------------------------------------------------------------------
-#  Copyright (C) 2004-2007
+#  Copyright (C) 2004-2011
 #  Associated Universities, Inc. Washington DC, USA.
 #
 #  This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ Naxis   list of axis dimensions (by storage order)
 #-----------------------------------------------------------------------
 
 # Python shadow class to ObitFArray class
-import Obit, OErr
+import Obit, InfoList, OErr
 
 class FArrayPtr :
     def __init__(self,this):
@@ -68,6 +68,11 @@ class FArrayPtr :
             return
         if name == "me" : 
             return Obit.FArray_me_get(self.this)
+        if name=="List":
+            out    = InfoList.InfoList()
+            out.me = Obit.InfoListUnref(out.me)
+            out.me = Obit.FArrayGetList(self.me)
+            return out
         # Virtual members
         if name=="RMS":
             return PRMS(self)
@@ -1101,7 +1106,36 @@ Select elements in an FArray by increment
     if err.isErr:
         OErr.printErrMsg(err, "Error selecting FArray")
     return
-    # emd PSelInc
+    # end PSelInc
+
+def PHisto  (inFA, n, min, max):
+    """  
+Make histogram of FArray
+
+Return FArray with info elements
+
+*  nHisto int   Number of elements in histogram
+*  Min    float Minimum value in histogram
+*  Max    float Maximum value in histogram
+*  Total  float Total number of values in histogram
+*  Under  float Number of underflows in histogram
+*  Over   float Number of overflows in histogram
+*
+* inFA = input Python FArray
+* n    = Number of elements in histogram
+* min  = Min value in histogram
+* max  = Max value in histogram
+*   Uses threading
+    """
+    ################################################################
+    # Checks
+    if not PIsA(inFA):
+        print "Actually ",inFA.__class__
+        raise TypeError,"inFA MUST be a Python Obit FArray"
+    outFA = FArray("None")
+    outFA.me = Obit.FArrayHisto (inFA.me, n, min, max)
+    return outFA
+    # end PHisto
 
 def PIsA (inFA):
     """ 

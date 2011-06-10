@@ -1,6 +1,6 @@
 /* $Id$   */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2010                                          */
+/*;  Copyright (C) 2003-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -344,6 +344,10 @@ void  ObitFArraySelInc (ObitFArray* in, ObitFArray* out, olong *blc, olong *trc,
 			olong* inc, ObitErr *err);
 typedef void (*ObitFArraySelIncFP) (ObitFArray* in, ObitFArray* out, 
 				    olong *blc, olong *trc, olong* inc, ObitErr *err);
+
+/** Public: return histogram of elements in an FArray */
+ObitFArray*  ObitFArrayHisto (ObitFArray* in, olong n, ofloat min, ofloat max);
+typedef ObitFArray*  (*ObitFArrayHistoFP) (ObitFArray* in, olong n, ofloat min, ofloat max);
 
 /*----------- ClassInfo Structure -----------------------------------*/
 /**

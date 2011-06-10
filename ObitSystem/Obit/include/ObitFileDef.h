@@ -1,6 +1,6 @@
-/* $Id$                            */
+/* $Id$          */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003                                               */
+/*;  Copyright (C) 2003,2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -49,3 +49,13 @@ gboolean exist;
 gchar *fileName;
 /** File I/O structure */
 FILE *myFile;
+/** XML buffer */
+gchar *XMLbuffer;
+/** XML buffer size */
+olong XMLbufferSize;
+/** XML buffer current location */
+olong XMLcurrent;
+/** XML buffer maximum valid location */
+olong XMLmax;
+/** Has all the XML file been read? */
+gboolean XMLdone;

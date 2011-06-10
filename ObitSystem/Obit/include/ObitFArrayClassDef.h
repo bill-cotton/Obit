@@ -1,6 +1,6 @@
 /* $Id$  */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2002-2010                                          */
+/*;  Copyright (C) 2002-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;  This program is free software; you can redistribute it and/or    */
 /*;  modify it under the terms of the GNU General Public License as   */
@@ -129,3 +129,5 @@ ObitFArrayPadFP ObitFArrayPad;
 ObitFArrayConvGausFP ObitFArrayConvGaus;
 /** Function pointer to Select elements in an FArray by increment */
 ObitFArraySelIncFP ObitFArraySelInc;
+/** Function pointer to return histogram of elements in an FArray */
+ObitFArrayHistoFP ObitFArrayHisto;

@@ -64,7 +64,7 @@ typedef struct {
   /* Highest element (1-rel) number */
   olong        last;
   /* Function dependent arguments */
-  gpointer arg1, arg2, arg3, arg4, arg5;
+  gpointer arg1, arg2, arg3, arg4, arg5, arg6, arg7;
   /* Return value */
   gfloat value;
   /* Return position */
@@ -105,6 +105,7 @@ static gpointer ThreadFAConvGaus (gpointer arg);
 static olong MakeFAFuncArgs (ObitThread *thread, ObitFArray *in,
 			     olong larg1, olong larg2, olong larg3, 
 			     olong larg4, olong larg5, 
+			     olong larg6, olong larg7, 
 			     FAFuncArg ***ThreadArgs);
 
 /** Private: Delete Threaded args */
@@ -669,7 +670,7 @@ ofloat ObitFArrayMax (ObitFArray *in, olong *pos)
   g_assert (pos != NULL);
 
   /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in->thread, in, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in->thread, in, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -739,7 +740,7 @@ ofloat ObitFArrayMaxAbs (ObitFArray *in, olong *pos)
   g_assert (pos != NULL);
 
    /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in->thread, in, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in->thread, in, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -809,7 +810,7 @@ ofloat ObitFArrayMin (ObitFArray *in, olong *pos)
   g_assert (pos != NULL);
 
   /* Initialize Threading */
-  nThreads = MakeFAFuncArgs (in->thread, in, 0, 0, 0, 0, 0,
+  nThreads = MakeFAFuncArgs (in->thread, in, 0, 0, 0, 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work */
@@ -930,7 +931,8 @@ ofloat ObitFArrayRMS (ObitFArray* in)
   /* Initialize Threading */
   nThreads = 
     MakeFAFuncArgs (in->thread, in, 
-		    sizeof(olong),  sizeof(olong), numCell*sizeof(ofloat),sizeof(ofloat), sizeof(ofloat), 
+		    sizeof(olong),  sizeof(ollong), numCell*sizeof(ofloat),sizeof(ofloat), sizeof(ofloat), 
+		    sizeof(ollong), sizeof(ollong),
 		    &threadArgs);
   
   /* Divide up work */
@@ -988,7 +990,6 @@ ofloat ObitFArrayRMS (ObitFArray* in)
       thist = (ofloat*)(threadArgs[i]->arg3);
       for (j=0; j<numCell; j++) histo[j] += thist[j];
     }
-
     /* Find mode cell */
     cellFact =  numCell / (amax - amin + 1.0e-20);
     modeCell = -1;
@@ -1108,7 +1109,7 @@ ofloat ObitFArrayRawRMS (ObitFArray* in)
   /* Initialize Threading */
   nThreads = 
     MakeFAFuncArgs (in->thread, in, 
-		    sizeof(olong), sizeof(ofloat), sizeof(ofloat), 0, 0,
+		    sizeof(olong), sizeof(ofloat), sizeof(ofloat), 0, 0, 0, 0,
 		    &threadArgs);
   
   /* Divide up work */
@@ -1184,7 +1185,7 @@ ofloat ObitFArrayRMS0 (ObitFArray* in)
   /* Initialize Threading */
   nThreads = 
     MakeFAFuncArgs (in->thread, in, 
-		    sizeof(olong), sizeof(ofloat), sizeof(ofloat), 0, 0,
+		    sizeof(olong), sizeof(ofloat), sizeof(ofloat), 0, 0, 0, 0,
 		    &threadArgs);
   
   
@@ -2539,7 +2540,7 @@ void  ObitFArrayConvGaus (ObitFArray* in, ObitFArray* list, olong ncomp,
 
   /* Initialize Threading */
   nThreads = MakeFAFuncArgs (in->thread, in, 
-			     0, sizeof(olong), 3*sizeof(ofloat), 0, 0,
+			     0, sizeof(olong), 3*sizeof(ofloat), 0, 0, 0, 0,
 			     &threadArgs);
   
   /* Divide up work by row - only thread if more than 100 rows */
@@ -2686,6 +2687,113 @@ void ObitFArraySelInc (ObitFArray *in, ObitFArray *out, olong *blc, olong *trc,
 } /* end  ObitFArraySelInc */
 
 /**
+ * Return histogram of elements in an FArray
+ * \param in    Input Object
+ * \param n     Number of elements in histogram
+ * \param min   Min value in histogram
+ * \param max   Max value in histogram
+ * \return FArray with histogram, info has items:
+ * \li nHisto OBIT_long scalar Number of elements in histogram
+ * \li Min    OBIT_float scalar Minimum value in histogram
+ * \li Max    OBIT_float scalar Maximum value in histogram
+ * \li Total  OBIT_float scalar Total number of values in histogram
+ * \li Under  OBIT_float scalar Number of underflows in histogram
+ * \li Over   OBIT_float scalar Number of overflows in histogram
+ */
+ObitFArray*  ObitFArrayHisto (ObitFArray* in, olong n, ofloat min, ofloat max)
+{
+  ObitFArray *out=NULL;
+  olong i, j, ndim, naxis[1];
+  ollong cntUnder, cntOver, cntTotal;
+  ofloat  *histo = NULL, *thist=NULL, ftemp;
+  olong nTh, nElem, loElem, hiElem, nElemPerThread, nThreads;
+  gboolean OK;
+  gint32  dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  FAFuncArg **threadArgs;
+
+   /* error checks */
+  g_assert (ObitFArrayIsA(in));
+  g_assert (in->array != NULL);
+
+  /* Create output */
+  ndim = 1; naxis[0] = n;
+  out = ObitFArrayCreate ("Histogram", ndim, naxis);
+
+  /* Initialize Threading */
+  nThreads = 
+    MakeFAFuncArgs (in->thread, in, 
+		    sizeof(ollong), sizeof(olong), n*sizeof(ofloat), sizeof(ofloat), sizeof(ofloat), 
+		    sizeof(ollong), sizeof(ollong),
+		    &threadArgs);
+  
+  /* Divide up work */
+  nElem = in->arraySize;
+  nElemPerThread = nElem/nThreads;
+  nTh = nThreads;
+  if (nElem<100000) {nElemPerThread = nElem; nTh = 1;}
+  loElem = 1;
+  hiElem = nElemPerThread;
+  hiElem = MIN (hiElem, nElem);
+  
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    if (i==(nTh-1)) hiElem = nElem;  /* Make sure do all */
+    threadArgs[i]->first   = loElem;
+    threadArgs[i]->last    = hiElem;
+    memmove(threadArgs[i]->arg1, &n, sizeof(olong));
+    if (nTh>1) threadArgs[i]->ithread = i;
+    else threadArgs[i]->ithread = -1;
+    /* Update which Elem */
+    loElem += nElemPerThread;
+    hiElem += nElemPerThread;
+    hiElem = MIN (hiElem, nElem);
+  }
+  
+  /* Set up thread arguments */
+  for (i=0; i<nTh; i++) {
+    memmove(threadArgs[i]->arg4, &max, sizeof(ofloat));
+    memmove(threadArgs[i]->arg5, &min, sizeof(ofloat));
+  }
+  
+  /* Do Form Histogram */
+  OK = ObitThreadIterator (in->thread, nTh, 
+			   (ObitThreadFunc)ThreadFAHisto,
+			   (gpointer**)threadArgs);
+  
+  /* Check for problems */
+  if (!OK) return out;
+  
+  /* Accumulate counts - histogram */
+  cntTotal = *(olong*)(threadArgs[0])->arg2;
+  cntUnder = *(olong*)(threadArgs[0])->arg6;
+  cntOver  = *(olong*)(threadArgs[0])->arg7;
+  histo = (ofloat*)out->array;
+  memmove(histo, threadArgs[0]->arg3, n*sizeof(ofloat));
+  for (i=1; i<nTh; i++) {
+    cntTotal += *(olong*)(threadArgs[i])->arg2;
+    cntUnder += *(olong*)(threadArgs[i])->arg6;
+    cntOver  += *(olong*)(threadArgs[i])->arg7;
+    thist = (ofloat*)(threadArgs[i]->arg3);
+    for (j=0; j<n; j++) histo[j] += thist[j];
+  }
+  
+  /* cleanup */
+  KillFAFuncArgs(nThreads, threadArgs);
+  
+  /* Save info*/
+  ObitInfoListAlwaysPut(out->info, "nHisto", OBIT_long,  dim, &n);
+  ObitInfoListAlwaysPut(out->info, "Min",    OBIT_float, dim, &min);
+  ObitInfoListAlwaysPut(out->info, "Max",    OBIT_float, dim, &max);
+  ftemp = (ofloat)cntTotal;
+  ObitInfoListAlwaysPut(out->info, "Total",  OBIT_float, dim, &ftemp);
+  ftemp = (ofloat)cntUnder;
+  ObitInfoListAlwaysPut(out->info, "Under",  OBIT_float, dim, &ftemp);
+  ftemp = (ofloat)cntOver;
+  ObitInfoListAlwaysPut(out->info, "Over",   OBIT_float, dim, &ftemp);
+  
+  return out;
+} /* end ObitFArrayHisto  */
+/**
  * Initialize global ClassInfo Structure.
  */
 void ObitFArrayClassInit (void)
@@ -2788,6 +2896,8 @@ static void ObitFArrayClassInfoDefFn (gpointer inClass)
     (ObitFArrayConvGausFP)ObitFArrayConvGaus;
   theClass->ObitFArraySelInc = 
     (ObitFArraySelIncFP)ObitFArraySelInc;
+  theClass->ObitFArrayHisto = 
+    (ObitFArrayHistoFP)ObitFArrayHisto;
 
 } /* end ObitFArrayClassDefFn */
 
@@ -3085,13 +3195,15 @@ static gpointer ThreadFARMSSum (gpointer arg)
  * Callable as thread
  * \param arg Pointer to FAFuncArg argument with elements:
  * \li in       ObitFArray to work on
- * \li first    First element (1-rel) number
- * \li last     Highest element (1-rel) number
+ * \li first    (olong) First element (1-rel) number
+ * \li last     (olong) Highest element (1-rel) number
  * \li arg1     (olong) Number of cells in histogram
- * \li arg2     (olong) Count of pixels
+ * \li arg2     (ollong)  Count of pixels
  * \li arg3     (ofloat*) Histogram
- * \li arg4     (ofloat) Max in histogram
- * \li arg5     (ofloat) Min in histogram
+ * \li arg4     (ofloat)  Max in histogram
+ * \li arg5     (ofloat)  Min in histogram
+ * \li arg6     (ollong)  Number of underflows
+ * \li arg7     (ollong)  Number of overflows
  * \li ithread  thread number, <0 -> no threading
  * \return NULL
  */
@@ -3103,10 +3215,12 @@ static gpointer ThreadFAHisto (gpointer arg)
   olong      loElem     = largs->first-1;
   olong      hiElem     = largs->last-1;
   olong      numCell    = *(olong*)largs->arg1;
-  olong      count      = *(olong*)largs->arg2;
+  ollong     count      = *(ollong*)largs->arg2;
   ofloat     *histo     = (ofloat*)largs->arg3;
   ofloat     amax       = *(ofloat*)largs->arg4;
   ofloat     amin       = *(ofloat*)largs->arg5;
+  ollong     under      = *(ollong*)largs->arg6;
+  ollong     over       = *(ollong*)largs->arg7;
 
   /* local */
   olong  i, icell;
@@ -3116,16 +3230,22 @@ static gpointer ThreadFAHisto (gpointer arg)
 
   /* Loop over array */
   cellFact =  numCell / (amax - amin + 1.0e-20);
-  count = 0;
+  count = 0; under = 0; over = 0;
   for (i=0; i<numCell; i++) histo[i] = 0.0;
   for (i=loElem; i<hiElem; i++) {
     if (in->array[i]!=fblank){
       icell = 0.5 + cellFact * (in->array[i]-amin);
-      icell = MIN (numCell-1, MAX(0, icell));
-      histo[icell]++;
+      if (icell<0) under++;
+      else if (icell>=numCell) over++;
+      else histo[icell]++;
       count ++;
     }
   }
+
+  /* Save */
+  *(ollong*)largs->arg2 = count;
+  *(ollong*)largs->arg6 = under;
+  *(ollong*)largs->arg7 = over;
 
   /* Indicate completion */
   finish: 
@@ -3227,13 +3347,16 @@ static gpointer ThreadFAConvGaus (gpointer arg)
  * \param larg3      Length of function dependent arg3 in bytes
  * \param larg4      Length of function dependent arg4 in bytes
  * \param larg5      Length of function dependent arg5 in bytes
+ * \param larg6      Length of function dependent arg6 in bytes
+ * \param larg7      Length of function dependent arg7 in bytes
  * \param ThreadArgs[out] Created array of FAFuncArg, 
  *                   delete with KillFAFuncArgs
  * \return number of elements in args (number of allowed threads).
  */
 static olong MakeFAFuncArgs (ObitThread *thread, ObitFArray *in,
 			     olong larg1, olong larg2, olong larg3, 
-			     olong larg4, olong larg5, 
+			     olong larg4, olong larg5,
+			     olong larg6, olong larg7, 
 			     FAFuncArg ***ThreadArgs)
 
 {
@@ -3264,6 +3387,10 @@ static olong MakeFAFuncArgs (ObitThread *thread, ObitFArray *in,
     else (*ThreadArgs)[i]->arg4 = NULL;
     if (larg5>0) (*ThreadArgs)[i]->arg5 = g_malloc0(larg5);
     else (*ThreadArgs)[i]->arg5 = NULL;
+    if (larg5>0) (*ThreadArgs)[i]->arg6 = g_malloc0(larg6);
+    else (*ThreadArgs)[i]->arg6 = NULL;
+    if (larg5>0) (*ThreadArgs)[i]->arg7 = g_malloc0(larg7);
+    else (*ThreadArgs)[i]->arg7 = NULL;
     (*ThreadArgs)[i]->ithread  = i;
   }
 
@@ -3290,6 +3417,8 @@ static void KillFAFuncArgs (olong nargs, FAFuncArg **ThreadArgs)
       if (ThreadArgs[i]->arg3) g_free(ThreadArgs[i]->arg3);
       if (ThreadArgs[i]->arg4) g_free(ThreadArgs[i]->arg4);
       if (ThreadArgs[i]->arg5) g_free(ThreadArgs[i]->arg5);
+      if (ThreadArgs[i]->arg6) g_free(ThreadArgs[i]->arg6);
+      if (ThreadArgs[i]->arg7) g_free(ThreadArgs[i]->arg7);
       g_free(ThreadArgs[i]);
     }
   }

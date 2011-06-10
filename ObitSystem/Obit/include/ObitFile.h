@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2009                                          */
+/*;  Copyright (C) 2003-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -148,6 +148,11 @@ typedef ObitIOCode (*ObitFileReadFP) (ObitFile *in, ObitFilePos filePos,
 ObitIOCode 
 ObitFileReadLine (ObitFile *in, gchar *line, olong lineMax, ObitErr *err);
 typedef ObitIOCode (*ObitFileReadLineFP) (ObitFile *in, gchar *line, olong lineMax, ObitErr *err);
+
+/** Public:  Read next segment of XML file */
+ObitIOCode 
+ObitFileReadXML (ObitFile *in, gchar *line, olong lineMax, ObitErr *err);
+typedef ObitIOCode (*ObitFileReadXMLFP) (ObitFile *in, gchar *line, olong lineMax, ObitErr *err);
 
 /** Public:  Write */
 ObitIOCode 

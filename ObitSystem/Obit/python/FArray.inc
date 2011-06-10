@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ObitFarray type                        */
 /*                                                                    */
-/*;  Copyright (C) 2004-2008                                          */
+/*;  Copyright (C) 2004-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -361,6 +361,14 @@ extern void FArraySelInc  (ObitFArray *in, ObitFArray *out,
   for (i=0; i<in->ndim; i++) linc[i] = (olong)inc[i];
   ObitFArraySelInc (in, out, lblc, ltrc, linc, err);
 } // end FArraySelInc
+
+extern ObitFArray* FArrayHisto  (ObitFArray *in, long n, float min, float max) {
+  return ObitFArrayHisto (in, (olong)n, (ofloat)min, (ofloat)max);
+} // end FArrayHisto
+
+extern ObitInfoList* FArrayGetList (ObitFArray* in) {
+  return ObitInfoListRef(in->info);
+}
 
 extern char* FArrayGetName (ObitFArray* in) {
   if (!in) return "Undefined";

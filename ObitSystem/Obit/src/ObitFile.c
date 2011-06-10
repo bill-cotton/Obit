@@ -1,6 +1,6 @@
 /* $Id$        */
 /*--------------------------------------------------------------------*/
-/*;  Copyright (C) 2003-2008                                          */
+/*;  Copyright (C) 2003-2011                                          */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -32,6 +32,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ObitFile.h"
+/** Size of XML parsing buffer */
+#ifndef XMLBUFFERSIZE
+#define XMLBUFFERSIZE 2048
+#endif
 
 /*----------------Obit: Merx mollis mortibus nuper ------------------*/
 /**
@@ -711,6 +715,108 @@ ObitFileReadLine (ObitFile *in, gchar *line, olong lineMax, ObitErr *err)
 } /* end ObitFileReadLine */
 
 /**
+ * Read segment of XML from file.
+ * Returns up to next / * > segment 
+ * \param in      Pointer to object to be read.
+ * \param line    pointer to memory to accept the text
+ *                may be newline terminated.
+ * \param lineMax size in characters of line
+ * \param err     ObitErr for reporting errors.
+ * \return return code, OBIT_IO_OK => OK
+ */
+ObitIOCode 
+ObitFileReadXML (ObitFile *in, gchar *line, olong lineMax, ObitErr *err)
+{
+  ObitIOCode retCode = OBIT_IO_SpecErr;
+  ObitFilePos filePos, endPos;
+  olong i, j, size, bloc, start, end, max;
+  gchar *tstr, *estr, *slash="/", *endb=">";
+  gchar *routine = "ObitFileReadXML";
+
+  /* error checks */
+  if (err->error) return retCode;
+  g_assert (ObitIsA(in, &myClassInfo));
+  g_assert (line != NULL);
+  /* A previous error condition? */
+  if (in->status == OBIT_ErrorExist) return retCode;
+  errno = 0;  /* reset any system error */
+
+  /* This must be opened as a text file */
+  if (in->type!=OBIT_IO_Text) {
+      Obit_log_error(err, OBIT_Error, 
+		     "%s ERROR NOT text file %s", routine, in->name);
+      return retCode;
+  }
+
+  /* This must be allowed to read */
+  if ((in->access!=OBIT_IO_ReadOnly) && (in->access!=OBIT_IO_ReadWrite)) {
+      Obit_log_error(err, OBIT_Error, 
+		     "%s ERROR NO read access for %s", routine, in->name);
+      return retCode;
+  }
+
+  /* Init buffer if needed */
+  if ((in->XMLbufferSize<=0) || (in->XMLbuffer==NULL)) {
+    in->XMLbufferSize = XMLBUFFERSIZE;
+    in->XMLbuffer     = g_malloc(in->XMLbufferSize);
+    in->XMLcurrent    = XMLBUFFERSIZE + 1;
+    in->XMLmax        = XMLBUFFERSIZE;
+    in->XMLdone       = FALSE;
+  }
+
+  /* Need to read?  Current past first half of buffer */
+  if (!in->XMLdone && (2*in->XMLcurrent>in->XMLbufferSize)) {
+    /* All or half of buffer? */
+    if (in->XMLcurrent>=in->XMLbufferSize) { /* all */
+      size = in->XMLbufferSize;
+      bloc = 0;
+      in->XMLcurrent = 0;
+    } else { /* half - first shuffle bytes */
+      size = in->XMLbufferSize/2;
+      bloc = size;
+      memcpy (in->XMLbuffer, &in->XMLbuffer[bloc], size);
+      in->XMLcurrent -= size;
+    }
+    filePos = in->filePos;
+    retCode = ObitFileRead (in, filePos, size, &in->XMLbuffer[bloc], err);
+    if (err->error) Obit_traceback_val (err, routine, in->name, retCode);
+    /* If EOF set max valid character */
+    if (retCode==OBIT_IO_EOF) {
+      endPos = ftello(in->myFile);
+      in->XMLmax  = bloc + endPos - filePos;
+      in->XMLdone = TRUE;
+      retCode = OBIT_IO_OK;
+    } else in->XMLmax  = XMLBUFFERSIZE;
+  } else retCode = OBIT_IO_OK;
+
+  /* Are we done? */
+  if (in->XMLdone && (in->XMLcurrent>=in->XMLmax)) return OBIT_IO_EOF;
+
+  /* look for '/' followed by '>' */
+  max = in->XMLmax - in->XMLcurrent;
+  tstr = g_strstr_len (&in->XMLbuffer[in->XMLcurrent], max, slash);
+  if (tstr==NULL) return OBIT_IO_EOF; /* treat as EOF */
+  max   = &in->XMLbuffer[in->XMLmax] - tstr;
+  estr  = g_strstr_len (tstr, max, endb); estr++;
+  if (estr==NULL) return OBIT_IO_EOF; /* treat as EOF */
+  /* swallow newline if one */
+  if (estr[1]) estr++;
+
+  /* Copy */
+  start = in->XMLcurrent;
+  end   = estr - in->XMLbuffer;
+  j = 0;
+  for (i=start; i<end; i++) {
+    line[j++] = in->XMLbuffer[i];
+    if (j>=(lineMax+0)) break;
+  }
+  line[j++] = 0;
+  in->XMLcurrent = end;  /* Next */
+
+  return retCode;
+} /* end ObitFileReadXML */
+
+/**
  * Write information to disk.
  * \param in     Pointer to object to be written.
  * \param filePos File position in bytes of beginning of write
@@ -1142,6 +1248,8 @@ static void ObitFileClassInfoDefFn (gpointer inClass)
   theClass->ObitFileRead  = (ObitFileReadFP)ObitFileRead;
   theClass->ObitFileReadLine  = 
     (ObitFileReadLineFP)ObitFileReadLine;
+  theClass->ObitFileReadXML  = 
+    (ObitFileReadXMLFP)ObitFileReadXML;
   theClass->ObitFileWrite = (ObitFileWriteFP)ObitFileWrite;
   theClass->ObitFileWriteLine = 
     (ObitFileWriteLineFP)ObitFileWriteLine;
@@ -1182,6 +1290,11 @@ void ObitFileInit  (gpointer inn)
   in->blockSize = 0;
   in->filePos   = 0;
   in->fileName  = NULL;
+  in->XMLbuffer = NULL;
+  in->XMLbufferSize = -1;
+  in->XMLcurrent    = 0;
+  in->XMLmax        = 0;
+  in->XMLdone       = TRUE;
 } /* end ObitFileInit */
 
 /**
@@ -1208,7 +1321,8 @@ void ObitFileClear (gpointer inn)
 
   /* free this class members */
   if (in->thread) in->thread  = ObitThreadUnref(in->thread);
-  if (in->fileName) g_free(in->fileName); in->fileName = NULL;
+  if (in->fileName)  g_free(in->fileName);  in->fileName  = NULL;
+  if (in->XMLbuffer) g_free(in->XMLbuffer); in->XMLbuffer = NULL;
   
   /* unlink parent class members */
   ParentClass = (ObitClassInfo*)(myClassInfo.ParentClass);
