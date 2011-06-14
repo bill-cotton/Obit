@@ -113,6 +113,17 @@ def PSetDict (inUD, inDict):
     Obit.UVDescSetDict(inUD.me, inDict)
     # end PSetDict
 
+def PDate2JD (date):
+    """ Converts date string to Julian date
+
+    returns Julian date, MJD = JD - 2400000.5
+    date   = date string as ("yyyy-mm-dd" or "dd/mm/yy" or "yyymmdd")
+    """
+    ################################################################
+    # Checks
+    return Obit.UVDescDate2JD(date)
+    # end PDate2JD
+
 def PGetList (inDesc):
     """  Get InfoList from UVDesc
 

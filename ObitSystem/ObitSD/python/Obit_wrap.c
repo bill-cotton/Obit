@@ -9799,6 +9799,12 @@ extern ObitInfoList* UVDescGetList (ObitUVDesc* in) {
   return ObitInfoListRef(in->info);
 }
  
+extern double UVDescDate2JD (char *date) {
+  double JD;
+  ObitUVDescDate2JD ((const)date, &JD);
+  return JD;
+}
+ 
 extern PyObject *UVDescGetDict(ObitUVDesc* in) {
   PyObject *outDict = PyDict_New();
   PyObject *list1, *list2, *list3, *list4, *list5, *list6, *list7;
@@ -9980,6 +9986,7 @@ extern ObitUVDesc *UVDescCopy(ObitUVDesc *,ObitUVDesc *,ObitErr *);
 extern void UVDescCopyDesc(ObitUVDesc *,ObitUVDesc *,ObitErr *);
 extern void UVDescIndex(ObitUVDesc *);
 extern ObitInfoList *UVDescGetList(ObitUVDesc *);
+extern double UVDescDate2JD(char *);
 extern PyObject *UVDescGetDict(ObitUVDesc *);
 extern void UVDescSetDict(ObitUVDesc *,PyObject *);
 extern int UVDescIsA(ObitUVDesc *);
@@ -46585,6 +46592,39 @@ static PyObject *_wrap_UVDescGetList(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_UVDescDate2JD(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    double  _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:UVDescDate2JD",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (double )UVDescDate2JD(_arg0);
+    _resultobj = Py_BuildValue("d",_result);
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
 static PyObject *_wrap_UVDescGetDict(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     PyObject * _result;
@@ -66902,6 +66942,7 @@ static PyMethodDef ObitMethods[] = {
 	 { "UVDescRef", _wrap_UVDescRef, METH_VARARGS },
 	 { "UVDescSetDict", _wrap_UVDescSetDict, METH_VARARGS },
 	 { "UVDescGetDict", _wrap_UVDescGetDict, METH_VARARGS },
+	 { "UVDescDate2JD", _wrap_UVDescDate2JD, METH_VARARGS },
 	 { "UVDescGetList", _wrap_UVDescGetList, METH_VARARGS },
 	 { "UVDescIndex", _wrap_UVDescIndex, METH_VARARGS },
 	 { "UVDescCopyDesc", _wrap_UVDescCopyDesc, METH_VARARGS },

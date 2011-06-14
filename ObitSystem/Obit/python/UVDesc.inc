@@ -2,7 +2,7 @@
 /*--------------------------------------------------------------------*/
 /* Swig module description for ImageDesc type                         */
 /*                                                                    */
-/*;  Copyright (C)2005,2008                                           */
+/*;  Copyright (C)2005-2011                                           */
 /*;  Associated Universities, Inc. Washington DC, USA.                */
 /*;                                                                   */
 /*;  This program is free software; you can redistribute it and/or    */
@@ -53,6 +53,12 @@ extern void UVDescIndex (ObitUVDesc* in) {
 
 extern ObitInfoList* UVDescGetList (ObitUVDesc* in) {
   return ObitInfoListRef(in->info);
+}
+ 
+extern double UVDescDate2JD (char *date) {
+  double JD;
+  ObitUVDescDate2JD ((const)date, &JD);
+  return JD;
 }
  
 extern PyObject *UVDescGetDict(ObitUVDesc* in) {
