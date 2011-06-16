@@ -322,7 +322,7 @@ olong ObitImageFitFit (ObitImageFit* in,  ObitImage *image,
       Obit_log_error(err, OBIT_InfoErr,   "      Peak = %g +/- %g", 
 		     reg->models[i]->Peak, reg->models[i]->ePeak);
       Obit_log_error(err, OBIT_InfoErr,   "      X (Pixel) = %8.3f +/- %8.3f", 
-		     reg->models[i]->DeltaX+blc[1]+reg->corner[1]-1.0, 
+		     reg->models[i]->DeltaX+blc[0]+reg->corner[0]-1.0, 
 		     reg->models[i]->eDeltaX);
       Obit_log_error(err, OBIT_InfoErr,   "      Y (pixel) = %8.3f +/- %8.3f", 
 		     reg->models[i]->DeltaY+blc[1]+reg->corner[1]-1.0, 

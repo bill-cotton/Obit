@@ -920,6 +920,8 @@ ObitImageMosaicMF* ObitImageMosaicMFCreate (gchar *name, olong order, ofloat max
 			     Radius, &NField, fldsiz, RAShift, DecShift, flqual, 
 			     err);
     if (err->error) Obit_traceback_val (err, routine, uvData->name, out);
+    /* Assign facet numbers */
+    for (i=nFlyEye; i<NField; i++) FacetNo[i]   = i;
   } /* end add outliers from catalog */
 
   /* Make sure some fields defined */

@@ -1322,7 +1322,8 @@ void doSources  (ObitInfoList* myInput, ObitUV* inData, ObitErr* err)
       failed++;
       isBad = TRUE;
       if (((failed>=10) && (good<=0)) || 
-	  (((failed>=10)&&(failed>0.1*nsource)))) {
+	  (((failed>=10)&&(failed>0.1*nsource))) ||
+	  (nsource<=1)) {  /* Only one? */
 	/* This isn't working - Give up */
 	Obit_log_error(err, OBIT_Error, "%s: Too many failures, giving up", 
 		       routine);
