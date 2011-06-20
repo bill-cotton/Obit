@@ -32,8 +32,10 @@
 #include "ObitParser.h"
 #include "ObitReturn.h"
 #include "ObitAIPSDir.h"
+#include "ObitThread.h"
 #include "ObitImage.h"
 #include "ObitFArray.h"
+#include "ObitPixHisto.h"
 #include "ObitImageUtil.h"
 #include "ObitHistory.h"
 #include "ObitFitRegionList.h"
@@ -112,6 +114,9 @@ void multDef (olong peakNo, gboolean doPA, olong* xpk, olong* ypk,
 /* Split island in two */
 void fitTwo (ObitFArray *pixels, ObitFitRegion *reg, ObitFitRegion *oldreg, 
 	     ofloat cb[3], gboolean doPoint, ObitErr* err);
+/* Determine false detection rate flux */
+ofloat FDRFlux (ObitPixHisto *hist, ObitFitRegion *reg, 
+		ofloat maxFDR, olong FDRsize, ObitErr *err);
 
 /*------------  IslandElem Function protptypes  ----------*/
 /** Private: Create a IslandElem. */
@@ -160,15 +165,16 @@ static void IslandListExpand(IslandList *in, olong in1,
 gchar *pgmName = "FndSou";       /* Program name */
 gchar *infile  = "FndSou.in" ;   /* File with program inputs */
 gchar *outfile = "FndSou.out";   /* File to contain program outputs */
-olong  pgmNumber;       /* Program number (like POPS no.) */
-olong  AIPSuser;        /* AIPS user number number (like POPS no.) */
-olong  nAIPS=0;         /* Number of AIPS directories */
-gchar **AIPSdirs=NULL; /* List of AIPS data directories */
-olong  nFITS=0;         /* Number of FITS directories */
-gchar **FITSdirs=NULL; /* List of FITS data directories */
-ObitImage *inImage;    /* Input image */
+olong  pgmNumber;         /* Program number (like POPS no.) */
+olong  AIPSuser;          /* AIPS user number number (like POPS no.) */
+olong  nAIPS=0;           /* Number of AIPS directories */
+gchar **AIPSdirs=NULL;    /* List of AIPS data directories */
+olong  nFITS=0;           /* Number of FITS directories */
+gchar **FITSdirs=NULL;    /* List of FITS data directories */
+ObitImage *inImage;       /* Input image */
 ObitImage *outImage=NULL; /* output image */
-olong  prtLv=0;         /* Message level desired */
+olong BLC[IM_MAXDIM];     /* BLC corner selected in image */
+olong  prtLv=0;           /* Message level desired */
 FILE  *prtFile;        /* Output file */
 gboolean doResid=FALSE;/* save Residuals? */
 olong nGood=0;         /* Number of fitted components */
@@ -176,7 +182,9 @@ olong breakIsland=0;   /* Number of islands broken into multiple */
 olong failBreak=0;     /* number of islands failing to break into multiple */
 olong rejectLoFlux=0;  /* number of components rejected due to low flux */
 olong rejectSmall=0;   /* number of components rejected due to undersize island */
+olong rejectFDR=0;     /* number of components rejected due to false detection limit */
 olong iterLimit=0;     /* number of fits hitting iteration limit */
+ObitPixHisto *histo    = NULL; /* Histogram for FDR calculation */
 ObitInfoList *myInput  = NULL; /* Input parameter list */
 ObitInfoList *myOutput = NULL; /* Output parameter list */
 
@@ -223,6 +231,7 @@ int main ( int argc, char **argv )
   inImage     = ObitImageUnref(inImage);
   outImage    = ObitImageUnref(outImage);
   myInput     = ObitInfoListUnref(myInput); 
+  histo       = ObitPixHistoUnref(histo);
   
   /* Shutdown Obit */
  exit: 
@@ -541,6 +550,9 @@ void digestInputs(ObitInfoList *myInput, ObitErr *err)
   /* doResid */
   ObitInfoListGetTest(myInput, "doResid", &type, dim, &doResid);
 
+  /* Initialize Threading */
+  ObitThreadInit (myInput);
+
 } /* end digestInputs */
 
 /*----------------------------------------------------------------------- */
@@ -556,9 +568,9 @@ void FndSouGetImage(ObitInfoList *myInput, ObitErr *err)
 {
   ObitInfoType type;
   gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
-  olong         blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
-  olong         trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
-  olong         j, k, Aseq, disk, cno;
+  olong        blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
+  olong        trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  olong        j, k, Aseq, disk, cno;
   gboolean     exist;
   gchar        *strTemp=NULL, inFile[128];
   gchar        iAname[13], iAclass[7];
@@ -571,6 +583,8 @@ void FndSouGetImage(ObitInfoList *myInput, ObitErr *err)
   /* Get region from myInput */
   ObitInfoListGetTest(myInput, "BLC", &type, dim, blc); /* BLC */
   ObitInfoListGetTest(myInput, "TRC", &type, dim, trc); /* TRC */
+  /* Save BLC to global */
+  for (j=0; j<IM_MAXDIM; j++) BLC[j] = blc[j];
 
   /* File type - could be either AIPS or FITS */
   ObitInfoListGet (myInput, "DataType", &type, dim, tname, err);
@@ -760,7 +774,7 @@ void doHistory (ObitInfoList *myInput, ObitImage *inImage,
   gchar        *hiEntries[] = {
     "DataType", "inFile",  "inDisk", "inName", "inClass", "inSeq", "inFile",
     "BLC", "TRC", "doVL", "doResid", "NGauss", "CutOff", "NPass",
-    "Retry", "Sort", "doMult", "doWidth", "Gain", "Parms", "RMSsize",
+    "Retry", "Sort", "doMult", "doWidth", "Gain", "Parms", "RMSsize", "FDRsize",
     "doPBCor", "asize",
     NULL};
   gchar *routine = "doHistory";
@@ -828,19 +842,19 @@ void doHistory (ObitInfoList *myInput, ObitImage *inImage,
 void doFndSou (ObitInfoList *myInput, ObitImage *inImage, 
 	       ObitImage *outImage, ObitErr *err)
 {
-  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gint32  dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   ObitInfoType type;
   ObitFArray *data=NULL;
   olong  i, plane[5] = {1,1,1,1,1};
   olong ipass, npass;
-  ofloat cutt, rms;
-  gboolean doVL;
+  ofloat cutt, rms, parms[20];
+  gboolean doVL, doFDR;
   IslandList* islands=NULL;
   ObitFitRegionList *regList=NULL;
   ObitTableMF *TableMF=NULL;
   ObitTableVL *TableVL=NULL;
   olong iver, oldnGood=0, oldbreakIsland=0, oldfailBreak=0, oldrejectLoFlux=0, 
-    olditerLimit=0, oldrejectSmall=0, nIslands=0;
+    olditerLimit=0, oldrejectSmall=0, oldrejectFDR=0,  nIslands=0;
   gchar Sort[3];
   gchar *colName[3]  = {"DELTAX", "DELTAY", "FLUX"};
   gchar *ImgParms[] = {  
@@ -867,6 +881,17 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
 				   OBIT_IO_ReadWrite, err);
     if (err->error) goto cleanup;
   }
+
+  /* If doing False Detection Rate filtering, init histogram object */
+  for (i=0; i<20; i++) parms[i] = 0;
+  ObitInfoListGetTest(myInput, "Parms", &type, dim, parms);
+  doFDR   = (parms[5]>0.0) && (parms[5]<1.0);
+
+  /* If doing FDR setup histogram if needed - 
+     this MUST be before the GetPlane call */
+  if (doFDR && (histo==NULL))
+    histo = ObitPixHistoCreate("Histogram", inImage, err);
+  if (err->error) goto cleanup;;
 
   /* Read and extract image data*/
   ObitImageGetPlane (inImage, NULL, plane, err);
@@ -923,6 +948,8 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
 		     rejectLoFlux);
       Obit_log_error(err, OBIT_InfoErr, " %d components rejected for undersize island", 
 		     rejectSmall);
+      Obit_log_error(err, OBIT_InfoErr, " %d components rejected by FDR limit", 
+		     rejectFDR);
       Obit_log_error(err, OBIT_InfoErr, " %d fits hit iteration limit", iterLimit);
     } else {  /* Multiple passes */
       Obit_log_error(err, OBIT_InfoErr, "Pass %d: Successfully fitted %d components",  
@@ -935,6 +962,8 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
 		     rejectLoFlux-oldrejectLoFlux);
       Obit_log_error(err, OBIT_InfoErr, "   %d components rejected for undersize island", 
 		     rejectSmall-oldrejectSmall);
+      Obit_log_error(err, OBIT_InfoErr, "   %d components rejected by FDR limit", 
+		     rejectFDR-oldrejectFDR);
       Obit_log_error(err, OBIT_InfoErr, "   %d fits hit iteration limit", 
 		     iterLimit-olditerLimit);
       oldnGood        = nGood;
@@ -942,6 +971,7 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
       oldfailBreak    = failBreak;
       oldrejectLoFlux = rejectLoFlux;
       oldrejectSmall  = rejectSmall;
+      oldrejectFDR    = rejectFDR;
       olditerLimit    = iterLimit;
     }
     ObitErrLog(err); 
@@ -971,7 +1001,9 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
 		   rejectLoFlux);
     Obit_log_error(err, OBIT_InfoErr, "Total: %d undersize islands rejected", 
 		   rejectSmall);
-    Obit_log_error(err, OBIT_InfoErr, "Total: %d fits hit iteration limit", iterLimit);
+    Obit_log_error(err, OBIT_InfoErr, "Total: %d components rejected by FDR limit", 
+		   rejectFDR);
+   Obit_log_error(err, OBIT_InfoErr, "Total: %d fits hit iteration limit", iterLimit);
     ObitErrLog(err); 
   }
 
@@ -1004,6 +1036,7 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
       fprintf (prtFile, " %d Attempts to break islands failed\n", failBreak);
       fprintf (prtFile, " %d components rejected for low peak\n", rejectLoFlux);
       fprintf (prtFile, " %d undersize islands rejected\n", rejectSmall);
+      fprintf (prtFile, " %d islands rejected for FDR\n", rejectFDR);
       fprintf (prtFile, " %d fits hit iteration limit\n\n", iterLimit);
       ObitTableVLPrint (TableVL, inImage, prtFile, err);
       if (err->error) goto cleanup;
@@ -1018,6 +1051,7 @@ void doFndSou (ObitInfoList *myInput, ObitImage *inImage,
       fprintf (prtFile, " %d Attempts to break islands failed\n", failBreak);
       fprintf (prtFile, " %d components rejected for low peak\n", rejectLoFlux);
       fprintf (prtFile, " %d undersize islands rejected\n", rejectSmall);
+      fprintf (prtFile, " %d islands rejected for FDR\n", rejectFDR);
       fprintf (prtFile, " %d fits hit iteration limit\n\n", iterLimit);
       ObitTableMFPrint (TableMF, inImage, prtFile, err);
       if (err->error) goto cleanup;
@@ -1132,6 +1166,7 @@ IslandList* Islands(ObitFArray *data, ofloat cutt)
  * Output list in descending order of peak flux density.and all 
  * entries will be removed from the input list.
  * Require islands to be at least minIsland+1 pixels in each dimension.
+ * Regions fitted.
  * \param myInput Inputs object
  * \param island  List to convert 
  * \param image   ObitImage being described
@@ -1433,15 +1468,16 @@ foundEnough:  /* L90 */
 void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
 		 ObitImage *image, olong indx, ObitErr *err)
 {
-  gint32       dim[MAXINFOELEMDIM] = {1,1,1,1,1};
+  gint32 dim[MAXINFOELEMDIM] = {1,1,1,1,1};
   olong i, j, ier;
   ObitInfoType type;
   ObitFitRegion *oldReg=NULL;
   ObitImageFit* fitter = NULL;
-  gboolean doMult, doPoint, revert;
+  gboolean doMult, doPoint, revert, doFDR;
   odouble dtemp;
   ofloat gain, parms[20], icut, tcut, rcut, xcut, cbeam[3], oldRMS, oldPeak;
-  olong blc[2], trc[2];
+  ofloat maxFDR, minFlux;
+  olong blc[2], trc[2], FDRsize=0;
   ObitFArray *pixels=NULL;
   gchar *FitParms[] = {  
     "BLC", "TRC",         /* Portion of image */
@@ -1470,6 +1506,12 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
   rcut = parms[0];
   gain = 0.05;
   ObitInfoListGetTest(myInput, "Gain", &type, dim, &gain);
+  /* False Detection Rate (FDR) test? */
+  doFDR   = (parms[5]>0.0) && (parms[5]<1.0);
+  maxFDR  = parms[5];
+  FDRsize = 500;
+  ObitInfoListGetTest(myInput, "FDRsize", &type, dim, &FDRsize);
+  if (FDRsize<10) FDRsize = 500;
 
   /* Create fitter */
   fitter = ObitImageFitCreate ("my Fitter");
@@ -1562,13 +1604,25 @@ void FitRegion (ObitInfoList *myInput, ObitFitRegion *reg,
     }
   } /* end retry */
 
-  /* Reject (zero) components with peaks below threshold, count good */
-  for (j=0; j<reg->nmodel; j++) {
-    if (fabs(reg->models[j]->Peak)<rcut) {
-      reg->models[j]->Peak = 0.0;
-      rejectLoFlux++; /* count */
-    } else nGood++;
-  }
+  /* FDR stuff here replace threshold with FDR? */
+  if (doFDR) {   /* False detection rate test */
+    minFlux = FDRFlux (histo, reg, maxFDR, FDRsize, err);
+    /* Reject (zero) components with peaks below threshold, count good */
+    for (j=0; j<reg->nmodel; j++) {
+      if (fabs(reg->models[j]->Peak)<minFlux) {
+	reg->models[j]->Peak = 0.0;
+	rejectFDR++; /* count */
+      } else nGood++;
+    }
+  } else {  /* Absolute flux density test */
+    /* Reject (zero) components with peaks below threshold, count good */
+    for (j=0; j<reg->nmodel; j++) {
+      if (fabs(reg->models[j]->Peak)<rcut) {
+	reg->models[j]->Peak = 0.0;
+	rejectLoFlux++; /* count */
+      } else nGood++;
+    }
+  } /* end low peak tests */
   
   /* Subtract fitted model from residual */
   ObitFitRegionSubtract (reg, image, err);
@@ -1900,6 +1954,69 @@ void fitTwo (ObitFArray *pixels, ObitFitRegion *reg, ObitFitRegion *oldReg,
   }
 
 } /* end of routine fitTwo */ 
+
+/**
+ * Determine minimum flux density for a given false detection rate. 
+ * Makes histogram with 51 cells and half width 7*sigma.
+ * \param histo   Pixel histogram object
+ * \param reg     FitRegion defining location in image
+ * \param maxFDR  max. fasle detection rate as fraction
+ * \param FDRsize half width of region for statistics
+ * \param err     Obit error/message stack object.
+ */
+ofloat FDRFlux (ObitPixHisto *hist, ObitFitRegion *reg, 
+		ofloat maxFDR, olong FDRsize, ObitErr *err)
+{
+  ofloat out = hist->sigma*5;
+  olong cenx, ceny, off, nbin=51;
+  ofloat nsigma=7.0, test;
+  olong        blc[IM_MAXDIM] = {1,1,1,1,1,1,1};
+  olong        trc[IM_MAXDIM] = {0,0,0,0,0,0,0};
+  gchar *routine = "FDRFlux";
+
+  /* Error checks */
+  if (err->error) return out;  /* previous error? */
+  Obit_retval_if_fail(ObitFArrayIsA(hist->imagePix), err, out,
+		      "%s:No image pixel array for %s ", 
+		      routine, hist->name);
+
+
+  /* Get center of regions of interest, currect for initial subimaging */
+  cenx = BLC[0] - 1 + reg->corner[0] + reg->dim[0]/2;
+  ceny = BLC[1] - 1 + reg->corner[1] + reg->dim[1]/2;
+
+  /* Set corners of statics box - adjust to size */
+  if (cenx>FDRsize) blc[0] = cenx - FDRsize;
+  else blc[0] = 1;
+  if (ceny>FDRsize) blc[1] = ceny - FDRsize;
+  else blc[0] = 1;
+  trc[0] = cenx + FDRsize;
+  if (trc[0]>hist->imagePix->naxis[0]) {
+    off = hist->imagePix->naxis[0] - trc[0];
+    blc[0] += off;
+    blc[0] = MAX (1, blc[0]);
+    trc[0] += off;
+  }
+  trc[1] = ceny + FDRsize;
+  if (trc[1]>hist->imagePix->naxis[1]) {
+    off = hist->imagePix->naxis[1] - trc[1];
+    blc[1] += off;
+    blc[1] = MAX (1, blc[1]);
+    trc[1] += off;
+  }
+
+  /* Form histogram */
+  ObitPixHistoHisto (hist, blc, trc, nbin, nsigma, err);
+  if (err->error) Obit_traceback_val (err, routine, hist->name, out);
+
+  /* Get value */
+  test = ObitPixHistoFDRFlux (hist, maxFDR, err);
+  if (err->error) Obit_traceback_val (err, routine, hist->name, out);
+  /* sanity check */
+  if ((test>hist->sigma) && (test<hist->sigma*10)) out  = test; 
+
+  return out;
+} /* end of routine FDRFlux */ 
 
 /*------------  IslandElem Functions         ----------*/
 /**

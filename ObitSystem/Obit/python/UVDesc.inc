@@ -57,7 +57,7 @@ extern ObitInfoList* UVDescGetList (ObitUVDesc* in) {
  
 extern double UVDescDate2JD (char *date) {
   double JD;
-  ObitUVDescDate2JD ((const)date, &JD);
+  ObitUVDescDate2JD ((const gchar*)date, &JD);
   return JD;
 }
  

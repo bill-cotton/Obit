@@ -4408,12 +4408,13 @@ static void EditFDBaseline(olong numChan, olong numIF, olong numPol, olong numBL
 	      }
 	    } else if (jf>=(numChan-half-1)) { /* End */
 	      for (jj=numChan-widMW; jj<numChan; jj++) {
-		if ((count[indx+jj]>0) && (avg[indx+jj]>-9900.0)) {  /* Any data? */
-		  temp[cnt++] = avg[indx+jj];
+		jjj = jj - jf;  /* If we're no longer at the beginning */
+		if ((count[indx+jjj]>0) && (avg[indx+jjj]>-9900.0)) {  /* Any data? */
+		  temp[cnt++] = avg[indx+jjj];
 		}
 	      }
 	    } else { /* Middle */
-	      for (jj=jf-half; jj<jf+half; jj++) {
+	      for (jj=-half; jj<=half; jj++) {
 		if ((count[indx+jj]>0) && (avg[indx+jj]>-9900.0)) {  /* Any data? */
 		  temp[cnt++] = avg[indx+jj];
 		}

@@ -123,6 +123,12 @@ static ObitIOCode CopyFloats (ObitBDFData *in,
 			      gboolean byteFlip, ofloat scale, 
 			      ObitBDFDataType Dtype, ObitErr *err);
 
+/** Private: Squeeze all blanks out of a string */
+static void Strip (gchar *s);
+
+/** Private: Get axis order */
+static olong GetAxisOrder (ObitBDFAxisName *axes, ObitBDFAxisName axis);
+
 /*----------------- Union definitions ----------------------*/
 /** Used for byte swapping shorts */
  union sequiv { 
@@ -357,6 +363,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   gchar *startInfo, *endInfo, *startBB, *endBB, *prior, *next, *xnext, *tstr;
   olong  configDescriptionId, fieldId, sourceId, inext;
   olong maxStr, maxStr2, i, j, count, *antIds, iConfig, iAnt, jAnt, jField, iSW, jSW, jSource;
+  olong blOrder, polnOrder, freqOrder, SPWOrder, BBOrder, APCOrder, binOrder;
   olong *SWoff=NULL;
   gboolean done;
   gchar *aname;
@@ -426,6 +433,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   prior = "<correlationMode>";
   tstr = BDFparse_str (startInfo, maxStr, prior, &next);
   if (tstr) {
+    Strip(tstr);
     if (!strcmp(tstr, "CROSS_ONLY"))          
       in->ScanInfo->correlationMode = BDFCorrMode_CROSS_ONLY;
     else if (!strcmp(tstr, "AUTO_ONLY"))      
@@ -439,6 +447,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   prior = "<spectralResolution>";
   tstr = BDFparse_str (startInfo, maxStr, prior, &next);
   if (tstr) {
+    Strip(tstr);
     if (!strcmp(tstr, "CHANNEL_AVERAGE"))      
       in->ScanInfo->spectralResolution = BDFSpecRes_CHANNEL_AVERAGE;
     else if (!strcmp(tstr, "BASEBAND_WIDE"))   
@@ -549,6 +558,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
   /* Parse basebands */
   i = 0;
   in->ScanInfo->numBaseband = 0;
+  in->ScanInfo->numBin = 0;
   next = startInfo;
   while (i<MAXBBINFO) {
     /* first find limits of next baseband info */
@@ -619,6 +629,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
 	in->ScanInfo->BBinfo[i]->SWinds[j]->numBin = (olong)strtol(tstr, &next, 10);
 	g_free (tstr);      
       } else in->ScanInfo->BBinfo[i]->SWinds[j]->numBin = 1;
+      in->ScanInfo->numBin = MAX (in->ScanInfo->numBin, in->ScanInfo->BBinfo[i]->SWinds[j]->numBin);
       
       /* Data scaling factor  */
       prior = "scaleFactor=";
@@ -644,6 +655,31 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
  } /* end loop over baseband */
   
   in->current = next;  /* where in buffer */
+
+  /* Only some orders of data axes are supported - check crossData */
+  polnOrder = GetAxisOrder (in->ScanInfo->crossDataAxes, BDFAxisName_POL);
+  if (polnOrder<0)
+    polnOrder = GetAxisOrder (in->ScanInfo->crossDataAxes, BDFAxisName_STO);
+  freqOrder =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_SPP);
+  SPWOrder  =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_SPW);
+  BBOrder   =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_BAB);
+  APCOrder  =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_APC);
+  blOrder   =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_BAL);
+  binOrder  =  GetAxisOrder (in->ScanInfo->crossDataAxes,  BDFAxisName_BIN);
+   
+  Obit_return_if_fail((blOrder==0), err,
+		      "%s: Only support baseline as first axis",  routine);
+  Obit_return_if_fail(((binOrder<0) || (in->ScanInfo->numBin<=1)), err,
+		      "%s: Binned data not supported", routine);
+  Obit_return_if_fail((freqOrder<polnOrder), err,
+		      "%s: Unsupported Freq/poln axis order", routine);
+  Obit_return_if_fail(((APCOrder<0) || ((APCOrder<freqOrder) && (APCOrder<polnOrder))), err,
+		      "%s: Unsupported APC axis order", routine);
+  Obit_return_if_fail(((BBOrder<0) || ((BBOrder<freqOrder) && (BBOrder<polnOrder))), err,
+		      "%s: Unsupported Baseband axis order", routine);
+  Obit_return_if_fail(((SPWOrder<0) || ((SPWOrder<freqOrder) && (SPWOrder<polnOrder))), err,
+		      "%s: Unsupported Baseband axis order", routine);
+
 
   /* Numbers of things THIS IS NOT REALLY RIGHT */
   in->numBaseline       = (in->ScanInfo->numAntenna * (in->ScanInfo->numAntenna-1))/2;
@@ -694,6 +730,27 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
     /* ALMA antennas are 0 rel */
     if (in->isALMA) in->antNo[iAnt]++;
   } /* end loop over antennas */
+
+  /* Atmospheric phase correction stuff */
+  in->numAtmCorr = in->SDMData->ConfigDescriptionTab->rows[iConfig]->numAtmPhaseCorrection;
+  in->numAtmCorr = MIN (2, MAX(1, in->numAtmCorr));
+  if (in->numAtmCorr>1) {
+    if ((in->selAtmCorr==FALSE) &&
+	(in->SDMData->ConfigDescriptionTab->rows[iConfig]->atmPhaseCorrection[0]==ASDMAtmPhCorr_AP_UNCORRECTED))
+      in->offAtmCorr = 0;
+    else if ((in->selAtmCorr==TRUE) &&
+	     (in->SDMData->ConfigDescriptionTab->rows[iConfig]->atmPhaseCorrection[0]==ASDMAtmPhCorr_AP_CORRECTED))
+      in->offAtmCorr = 0;
+    else if ((in->selAtmCorr==FALSE) &&
+	     (in->SDMData->ConfigDescriptionTab->rows[iConfig]->atmPhaseCorrection[1]==ASDMAtmPhCorr_AP_UNCORRECTED))
+      in->offAtmCorr = 1;
+    else if ((in->selAtmCorr==TRUE) &&
+	(in->SDMData->ConfigDescriptionTab->rows[iConfig]->atmPhaseCorrection[1]==ASDMAtmPhCorr_AP_CORRECTED))
+      in->offAtmCorr = 1;
+    else  in->offAtmCorr = 0; /* shouldn't happen */
+  } else {
+    in->offAtmCorr = 0;
+  }
 
   /* Source Id - have to look down goddamn tree */
   fieldId = in->SDMData->MainTab->rows[in->ScanInfo->iMain]->fieldId;
@@ -754,7 +811,10 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
     /* Use ordering */
     jSW = in->SWArray->order[iSW];
     if (in->SWArray->winds[jSW]->selected) {
-      in->coffif[inext] = SWoff[jSW];
+      /* Correct for selection of Atm corr - 
+	 this assumes Atm corr axis earlier than freq, poln*/
+      in->coffif[inext] = (SWoff[jSW]+
+			   in->offAtmCorr*in->SWArray->winds[iSW]->numChan*in->SWArray->winds[iSW]->nCPoln*2);
       inext++;
     }  
   }
@@ -821,7 +881,7 @@ void ObitBDFDataInitScan  (ObitBDFData *in, olong iMain, gboolean SWOrder,
     }
     
     /* Count size of visibilities */
-    in->crossVisSize += in->SWArray->winds[iSW]->numChan * in->cincf; 
+    in->crossVisSize += in->SWArray->winds[iSW]->numChan * in->cincf * in->numAtmCorr; 
     in->autoVisSize  += in->SWArray->winds[iSW]->numChan * in->aincf;
     
   }
@@ -1335,6 +1395,8 @@ void ObitBDFDataInit  (gpointer inn)
   in->isLSB               = NULL;
   in->isEVLA              = FALSE;
   in->isALMA              = FALSE;
+  in->selAtmCorr          = FALSE;
+  in->numAtmCorr          = 1;
 } /* end ObitBDFDataInit */
 
 /**
@@ -2125,4 +2187,47 @@ static ObitBDFMIMEType GetNextMIMEType(ObitBDFData *in,
 
   return out;
 } /* end GetNextMIMEType */
+
+/**
+ * Squeeze all blanks out of a string
+ * \param String to squeeze
+ */
+static void Strip (gchar* s)
+{
+  olong n, i;
+
+  if (s==NULL) return;  /* Uh oh */
+  n = strlen(s);
+
+  /* Leading blanks */
+  while (s[0]==' ') {
+    for (i=0; i<n-1; i++) s[i] = s[i+1];
+    n--;
+  }
+  /* Trailing blanks */
+   for (i=n-1; i>0; i--) {
+    if (s[i]==' ') s[i] = 0;
+    if (s[i]!=0) break;
+  }
+ 
+} /* end Strip */
+
+/**
+ * Determine the order of an axis
+ * \param axes  Array of axis type enums
+ * \param axis  Axis type enum to search for
+ * \return 0-rel order, -1 if not found
+ */
+static olong GetAxisOrder (ObitBDFAxisName *axes, ObitBDFAxisName axis)
+{
+  olong out = -1, i;
+
+  /* undefined types */
+  if ((axis==BDFAxisName_END) || (axis==BDFAxisName_UNK)) return out;
+  for (i=0; i<15; i++) {
+    if ((axes[i]==BDFAxisName_END) || (axes[i]==BDFAxisName_UNK)) break;
+    if (axes[i]==axis) {out = i; break;}
+  }
+  return out;
+} /* end GetAxisOrder */
 

@@ -96,6 +96,12 @@ olong currBaseline;
 olong numBaseband;
 /** Number of SpectralWindows */
 olong numSpectralWindow;
+/** Number of atmospheric correction types */
+olong numAtmCorr;
+/** Selected Atm phase correction? */
+gboolean selAtmCorr;
+/** Offset of desired atmospheric correction type */
+olong offAtmCorr;
 /** Number of Spectral Channels */
 olong numSpectralChann;
 /** Number of cross polarization products */

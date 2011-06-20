@@ -1056,6 +1056,7 @@ void BDFInHistory (ObitInfoList* myInput, ObitSDMData *SDMData,
   gchar         *hiEntries[] = {
     "DataRoot", "selChan", "selIF", "selBand", "selConfig", "selCode", 
     "dropZero", "doCode", "calInt", "doSwPwr", "doOnline", "SWOrder", 
+    "doAtmCor", 
     NULL};
   gchar *routine = "BDFInHistory";
   
@@ -1786,7 +1787,7 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   gchar selBand[12], begString[17], endString[17], selCode[24];
   ObitASDMBand band;
   ASDMSpectralWindowArray* SpWinArray=NULL;
-  gboolean dropZero=TRUE, found=FALSE, doOnline=FALSE, drop;
+  gboolean dropZero=TRUE, found=FALSE, doOnline=FALSE, drop, doAtmCor=FALSE;
   gchar dataroot[132];
   gchar *filename;
   gchar *routine = "GetData";
@@ -1831,6 +1832,14 @@ void GetData (ObitSDMData *SDMData, ObitInfoList *myInput, ObitUV *outData,
   /* Want Online scans? */
   ObitInfoListGetTest(myInput, "doOnline", &type, dim, &doOnline);
   
+  /* Want Atm phase corrections? */
+  ObitInfoListGetTest(myInput, "doAtmCor", &type, dim, &doAtmCor);
+  BDFData->selAtmCorr = doAtmCor;
+  if (doAtmCor && (BDFData->numAtmCorr>1))
+    Obit_log_error(err, OBIT_InfoErr, "Selecting Atmospheric phase corrected data");
+  if (!doAtmCor && (BDFData->numAtmCorr>1))
+    Obit_log_error(err, OBIT_InfoErr, "Selecting Atmospheric phase uncorrected data");
+
   /* Band selection */
   for (i=0; i<12; i++) selBand[i] = 0;
   ObitInfoListGetTest(myInput, "selBand", &type, dim, selBand);

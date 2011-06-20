@@ -5280,6 +5280,106 @@ extern int Dump (char *outfile, ObitInfoList *list, ObitErr *err) {
 extern int Parse(char *,ObitInfoList *,ObitErr *);
 extern int Dump(char *,ObitInfoList *,ObitErr *);
 
+#include "ObitPixHisto.h"
+#include "ObitImage.h"
+
+extern ObitPixHisto* newPixHistFDR (char* name) {
+  return newObitPixHisto (name);
+} // end  newPixHistFDR
+
+extern ObitPixHisto* PixHistFDRCopy  (ObitPixHisto *in, ObitPixHisto *out, 
+				    ObitErr *err) {
+  return ObitPixHistoCopy (in, out, err);
+} // end  PixHistFDRCopy
+
+extern ObitPixHisto* PixHistFDRUnref (ObitPixHisto* in) {
+  if (!ObitPixHistoIsA(in)) return NULL;
+  return ObitPixHistoUnref(in);
+}
+
+extern ObitPixHisto*  PixHistFDRRef (ObitPixHisto* in) {
+  return ObitPixHistoRef(in);
+}
+
+extern ObitPixHisto* PixHistFDRCreate (char *name, ObitImage *image, ObitErr *err) {
+  return ObitPixHistoCreate((gchar*)name, image, err);
+}
+
+// Image
+extern ObitFArray* PixHistFDRGetImage (ObitPixHisto* in) {
+  return ObitImageRef(in->image);
+}
+
+// Image pixel array
+extern ObitFArray* PixHistFDRGetImPix (ObitPixHisto* in) {
+  return ObitFArrayRef(in->imagePix);
+}
+
+extern ObitInfoList* PixHistFDRGetList (ObitPixHisto* in) {
+  return ObitInfoListRef(in->info);
+}
+
+extern void PixHistFDRHisto (ObitPixHisto* in, long *blc, long *trc, 
+                             long nbin, float range, ObitErr *err) {
+  olong lblc[2], ltrc[2];
+
+  lblc[0] = (olong)blc[0]; lblc[1] = (olong)blc[1]; 
+  ltrc[0] = (olong)trc[0]; ltrc[1] = (olong)trc[1]; 
+  ObitPixHistoHisto(in, lblc, ltrc, (olong)nbin, (ofloat)range, err);
+}
+
+// Differential histogram
+extern ObitFArray* PixHistFDRGetHisto (ObitPixHisto* in) {
+  return ObitFArrayRef(in->histo);
+}
+
+// Integrated histogram
+extern ObitFArray* PixHistFDRGetIntHisto (ObitPixHisto* in) {
+  return ObitFArrayRef(in->intHisto);
+}
+
+extern float PixHistFDRSigma (ObitPixHisto* in) {
+  return (float)in->sigma;
+}
+
+
+extern float PixHistFDRFlux (ObitPixHisto* in, float maxFDR, 
+	                  ObitErr *err) {
+ return (float)ObitPixHistoFDRFlux(in, (ofloat)maxFDR, err);
+}
+
+extern char* PixHistFDRGetName (ObitPixHisto* in) {
+  if (ObitPixHistoIsA(in)) {
+    return in->name;
+  } else {
+    return NULL;
+  }
+}
+
+extern int PixHistFDRIsA (ObitPixHisto* in) {
+  return ObitPixHistoIsA(in);
+}
+
+extern ObitPixHisto *newPixHistFDR(char *);
+extern ObitPixHisto *PixHistFDRCopy(ObitPixHisto *,ObitPixHisto *,ObitErr *);
+extern ObitPixHisto *PixHistFDRUnref(ObitPixHisto *);
+extern ObitPixHisto *PixHistFDRRef(ObitPixHisto *);
+extern ObitPixHisto *PixHistFDRCreate(char *,ObitImage *,ObitErr *);
+extern ObitFArray *PixHistFDRGetImage(ObitPixHisto *);
+extern ObitFArray *PixHistFDRGetImPix(ObitPixHisto *);
+extern ObitInfoList *PixHistFDRGetList(ObitPixHisto *);
+extern void PixHistFDRHisto(ObitPixHisto *,long *,long *,long ,float ,ObitErr *);
+extern ObitFArray *PixHistFDRGetHisto(ObitPixHisto *);
+extern ObitFArray *PixHistFDRGetIntHisto(ObitPixHisto *);
+extern float PixHistFDRSigma(ObitPixHisto *);
+extern float PixHistFDRFlux(ObitPixHisto *,float ,ObitErr *);
+extern char *PixHistFDRGetName(ObitPixHisto *);
+extern int PixHistFDRIsA(ObitPixHisto *);
+
+typedef struct {
+  ObitPixHisto *me;
+} PixHistFDR;
+
 #include "ObitSkyGeom.h"
 #include "ObitPBUtil.h"
 
@@ -9783,7 +9883,7 @@ extern ObitInfoList* UVDescGetList (ObitUVDesc* in) {
  
 extern double UVDescDate2JD (char *date) {
   double JD;
-  ObitUVDescDate2JD ((const)date, &JD);
+  ObitUVDescDate2JD ((const gchar*)date, &JD);
   return JD;
 }
  
@@ -31466,6 +31566,522 @@ static PyObject *_wrap_Dump(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+static PyObject *_wrap_newPixHistFDR(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPixHisto * _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:newPixHistFDR",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (ObitPixHisto *)newPixHistFDR(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitPixHisto_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_PixHistFDRCopy(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPixHisto * _result;
+    ObitPixHisto * _arg0;
+    ObitPixHisto * _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:PixHistFDRCopy",&_argo0,&_argo1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPixHisto_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PixHistFDRCopy. Expected _ObitPixHisto_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitPixHisto_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of PixHistFDRCopy. Expected _ObitPixHisto_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of PixHistFDRCopy. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitPixHisto *)PixHistFDRCopy(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitPixHisto_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_PixHistFDRUnref(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPixHisto * _result;
+    ObitPixHisto * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:PixHistFDRUnref",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPixHisto_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PixHistFDRUnref. Expected _ObitPixHisto_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitPixHisto *)PixHistFDRUnref(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitPixHisto_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_PixHistFDRRef(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPixHisto * _result;
+    ObitPixHisto * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:PixHistFDRRef",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPixHisto_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PixHistFDRRef. Expected _ObitPixHisto_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitPixHisto *)PixHistFDRRef(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitPixHisto_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_PixHistFDRCreate(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPixHisto * _result;
+    char * _arg0;
+    ObitImage * _arg1;
+    ObitErr * _arg2;
+    PyObject * _obj0 = 0;
+    PyObject * _argo1 = 0;
+    PyObject * _argo2 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOO:PixHistFDRCreate",&_obj0,&_argo1,&_argo2)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitImage_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of PixHistFDRCreate. Expected _ObitImage_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of PixHistFDRCreate. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitPixHisto *)PixHistFDRCreate(_arg0,_arg1,_arg2);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitPixHisto_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_PixHistFDRGetImage(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitFArray * _result;
+    ObitPixHisto * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:PixHistFDRGetImage",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPixHisto_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PixHistFDRGetImage. Expected _ObitPixHisto_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitFArray *)PixHistFDRGetImage(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitFArray_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_PixHistFDRGetImPix(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitFArray * _result;
+    ObitPixHisto * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:PixHistFDRGetImPix",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPixHisto_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PixHistFDRGetImPix. Expected _ObitPixHisto_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitFArray *)PixHistFDRGetImPix(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitFArray_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_PixHistFDRGetList(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitInfoList * _result;
+    ObitPixHisto * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:PixHistFDRGetList",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPixHisto_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PixHistFDRGetList. Expected _ObitPixHisto_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitInfoList *)PixHistFDRGetList(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitInfoList_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_PixHistFDRHisto(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPixHisto * _arg0;
+    long * _arg1;
+    long * _arg2;
+    long  _arg3;
+    float  _arg4;
+    ObitErr * _arg5;
+    PyObject * _argo0 = 0;
+    PyObject * _obj1 = 0;
+    PyObject * _obj2 = 0;
+    PyObject * _argo5 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OOOlfO:PixHistFDRHisto",&_argo0,&_obj1,&_obj2,&_arg3,&_arg4,&_argo5)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPixHisto_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PixHistFDRHisto. Expected _ObitPixHisto_p.");
+        return NULL;
+        }
+    }
+{
+  if (PyList_Check(_obj1)) {
+    int size = PyList_Size(_obj1);
+    int i = 0;
+    _arg1 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj1,i);
+      if (PyInt_Check(o)) {
+         _arg1[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg1);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+{
+  if (PyList_Check(_obj2)) {
+    int size = PyList_Size(_obj2);
+    int i = 0;
+    _arg2 = (long*) malloc((size+1)*sizeof(long));
+    for (i = 0; i < size; i++) {
+      PyObject *o = PyList_GetItem(_obj2,i);
+      if (PyInt_Check(o)) {
+         _arg2[i] = PyInt_AsLong(o);
+      } else {
+         PyErr_SetString(PyExc_TypeError,"list must contain longs");
+         free(_arg2);
+         return NULL;
+      }
+    }
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a list");
+    return NULL;
+  }
+}
+    if (_argo5) {
+        if (_argo5 == Py_None) { _arg5 = NULL; }
+        else if (SWIG_GetPtrObj(_argo5,(void **) &_arg5,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 6 of PixHistFDRHisto. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    PixHistFDRHisto(_arg0,_arg1,_arg2,_arg3,_arg4,_arg5);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+{
+  free((long *) _arg1);
+}
+{
+  free((long *) _arg2);
+}
+    return _resultobj;
+}
+
+static PyObject *_wrap_PixHistFDRGetHisto(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitFArray * _result;
+    ObitPixHisto * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:PixHistFDRGetHisto",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPixHisto_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PixHistFDRGetHisto. Expected _ObitPixHisto_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitFArray *)PixHistFDRGetHisto(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitFArray_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_PixHistFDRGetIntHisto(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitFArray * _result;
+    ObitPixHisto * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:PixHistFDRGetIntHisto",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPixHisto_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PixHistFDRGetIntHisto. Expected _ObitPixHisto_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitFArray *)PixHistFDRGetIntHisto(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitFArray_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PyObject *_wrap_PixHistFDRSigma(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    float  _result;
+    ObitPixHisto * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:PixHistFDRSigma",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPixHisto_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PixHistFDRSigma. Expected _ObitPixHisto_p.");
+        return NULL;
+        }
+    }
+    _result = (float )PixHistFDRSigma(_arg0);
+    _resultobj = Py_BuildValue("f",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_PixHistFDRFlux(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    float  _result;
+    ObitPixHisto * _arg0;
+    float  _arg1;
+    ObitErr * _arg2;
+    PyObject * _argo0 = 0;
+    PyObject * _argo2 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OfO:PixHistFDRFlux",&_argo0,&_arg1,&_argo2)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPixHisto_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PixHistFDRFlux. Expected _ObitPixHisto_p.");
+        return NULL;
+        }
+    }
+    if (_argo2) {
+        if (_argo2 == Py_None) { _arg2 = NULL; }
+        else if (SWIG_GetPtrObj(_argo2,(void **) &_arg2,"_ObitErr_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 3 of PixHistFDRFlux. Expected _ObitErr_p.");
+        return NULL;
+        }
+    }
+    _result = (float )PixHistFDRFlux(_arg0,_arg1,_arg2);
+    _resultobj = Py_BuildValue("f",_result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_PixHistFDRGetName(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    char * _result;
+    ObitPixHisto * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:PixHistFDRGetName",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPixHisto_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PixHistFDRGetName. Expected _ObitPixHisto_p.");
+        return NULL;
+        }
+    }
+    _result = (char *)PixHistFDRGetName(_arg0);
+    _resultobj = Py_BuildValue("s", _result);
+    return _resultobj;
+}
+
+static PyObject *_wrap_PixHistFDRIsA(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    int  _result;
+    ObitPixHisto * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:PixHistFDRIsA",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_ObitPixHisto_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PixHistFDRIsA. Expected _ObitPixHisto_p.");
+        return NULL;
+        }
+    }
+    _result = (int )PixHistFDRIsA(_arg0);
+    _resultobj = Py_BuildValue("i",_result);
+    return _resultobj;
+}
+
 static PyObject *_wrap_SkyGeomShiftXY(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
     double  _arg0;
@@ -52244,6 +52860,149 @@ static PyObject *_wrap_delete_OWindow(PyObject *self, PyObject *args) {
     return _resultobj;
 }
 
+#define PixHistFDR_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
+static PyObject *_wrap_PixHistFDR_me_set(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPixHisto * _result;
+    PixHistFDR * _arg0;
+    ObitPixHisto * _arg1;
+    PyObject * _argo0 = 0;
+    PyObject * _argo1 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"OO:PixHistFDR_me_set",&_argo0,&_argo1)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_PixHistFDR_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PixHistFDR_me_set. Expected _PixHistFDR_p.");
+        return NULL;
+        }
+    }
+    if (_argo1) {
+        if (_argo1 == Py_None) { _arg1 = NULL; }
+        else if (SWIG_GetPtrObj(_argo1,(void **) &_arg1,"_ObitPixHisto_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 2 of PixHistFDR_me_set. Expected _ObitPixHisto_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitPixHisto *)PixHistFDR_me_set(_arg0,_arg1);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitPixHisto_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+#define PixHistFDR_me_get(_swigobj) ((ObitPixHisto *) _swigobj->me)
+static PyObject *_wrap_PixHistFDR_me_get(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    ObitPixHisto * _result;
+    PixHistFDR * _arg0;
+    PyObject * _argo0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:PixHistFDR_me_get",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_PixHistFDR_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of PixHistFDR_me_get. Expected _PixHistFDR_p.");
+        return NULL;
+        }
+    }
+    _result = (ObitPixHisto *)PixHistFDR_me_get(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_ObitPixHisto_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+    return _resultobj;
+}
+
+static PixHistFDR *new_PixHistFDR(char *name) {
+     PixHistFDR *out;
+     out = (PixHistFDR *) malloc(sizeof(PixHistFDR));
+     if (strcmp(name, "None")) {
+        out->me = newPixHistFDR(name);
+     } else out->me = NULL;
+     return out;
+   }
+
+static PyObject *_wrap_new_PixHistFDR(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PixHistFDR * _result;
+    char * _arg0;
+    PyObject * _obj0 = 0;
+    char _ptemp[128];
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:new_PixHistFDR",&_obj0)) 
+        return NULL;
+{
+  if (PyString_Check(_obj0)) {
+    int size = PyString_Size(_obj0);
+    char *str;
+    int i = 0;
+    _arg0 = (char*) malloc((size+1));
+    str = PyString_AsString(_obj0);
+    for (i = 0; i < size; i++) {
+      _arg0[i] = str[i];
+    }
+    _arg0[i] = 0;
+  } else {
+    PyErr_SetString(PyExc_TypeError,"not a string");
+    return NULL;
+  }
+}
+    _result = (PixHistFDR *)new_PixHistFDR(_arg0);
+    if (_result) {
+        SWIG_MakePtr(_ptemp, (char *) _result,"_PixHistFDR_p");
+        _resultobj = Py_BuildValue("s",_ptemp);
+    } else {
+        Py_INCREF(Py_None);
+        _resultobj = Py_None;
+    }
+{
+  free((char *) _arg0);
+}
+    return _resultobj;
+}
+
+static void delete_PixHistFDR(PixHistFDR *self) {
+   if (!self) return;  // Not defined
+   if (self->me->ReferenceCount>0) 
+      self->me = PixHistFDRUnref(self->me);
+   free(self);
+  }
+static PyObject *_wrap_delete_PixHistFDR(PyObject *self, PyObject *args) {
+    PyObject * _resultobj;
+    PixHistFDR * _arg0;
+    PyObject * _argo0 = 0;
+
+    self = self;
+    if(!PyArg_ParseTuple(args,"O:delete_PixHistFDR",&_argo0)) 
+        return NULL;
+    if (_argo0) {
+        if (_argo0 == Py_None) { _arg0 = NULL; }
+        else if (SWIG_GetPtrObj(_argo0,(void **) &_arg0,"_PixHistFDR_p")) {
+            PyErr_SetString(PyExc_TypeError,"Type error in argument 1 of delete_PixHistFDR. Expected _PixHistFDR_p.");
+        return NULL;
+        }
+    }
+    delete_PixHistFDR(_arg0);
+    Py_INCREF(Py_None);
+    _resultobj = Py_None;
+    return _resultobj;
+}
+
 #define SkyModel_me_set(_swigobj,_swigval) (_swigobj->me = _swigval,_swigval)
 static PyObject *_wrap_SkyModel_me_set(PyObject *self, PyObject *args) {
     PyObject * _resultobj;
@@ -54296,6 +55055,10 @@ static PyMethodDef ObitMethods[] = {
 	 { "new_SkyModel", _wrap_new_SkyModel, METH_VARARGS },
 	 { "SkyModel_me_get", _wrap_SkyModel_me_get, METH_VARARGS },
 	 { "SkyModel_me_set", _wrap_SkyModel_me_set, METH_VARARGS },
+	 { "delete_PixHistFDR", _wrap_delete_PixHistFDR, METH_VARARGS },
+	 { "new_PixHistFDR", _wrap_new_PixHistFDR, METH_VARARGS },
+	 { "PixHistFDR_me_get", _wrap_PixHistFDR_me_get, METH_VARARGS },
+	 { "PixHistFDR_me_set", _wrap_PixHistFDR_me_set, METH_VARARGS },
 	 { "delete_OWindow", _wrap_delete_OWindow, METH_VARARGS },
 	 { "new_OWindow", _wrap_new_OWindow, METH_VARARGS },
 	 { "OWindow_me_get", _wrap_OWindow_me_get, METH_VARARGS },
@@ -54773,6 +55536,21 @@ static PyMethodDef ObitMethods[] = {
 	 { "SkyGeomNewPos", _wrap_SkyGeomNewPos, METH_VARARGS },
 	 { "SkyGeomXYShift", _wrap_SkyGeomXYShift, METH_VARARGS },
 	 { "SkyGeomShiftXY", _wrap_SkyGeomShiftXY, METH_VARARGS },
+	 { "PixHistFDRIsA", _wrap_PixHistFDRIsA, METH_VARARGS },
+	 { "PixHistFDRGetName", _wrap_PixHistFDRGetName, METH_VARARGS },
+	 { "PixHistFDRFlux", _wrap_PixHistFDRFlux, METH_VARARGS },
+	 { "PixHistFDRSigma", _wrap_PixHistFDRSigma, METH_VARARGS },
+	 { "PixHistFDRGetIntHisto", _wrap_PixHistFDRGetIntHisto, METH_VARARGS },
+	 { "PixHistFDRGetHisto", _wrap_PixHistFDRGetHisto, METH_VARARGS },
+	 { "PixHistFDRHisto", _wrap_PixHistFDRHisto, METH_VARARGS },
+	 { "PixHistFDRGetList", _wrap_PixHistFDRGetList, METH_VARARGS },
+	 { "PixHistFDRGetImPix", _wrap_PixHistFDRGetImPix, METH_VARARGS },
+	 { "PixHistFDRGetImage", _wrap_PixHistFDRGetImage, METH_VARARGS },
+	 { "PixHistFDRCreate", _wrap_PixHistFDRCreate, METH_VARARGS },
+	 { "PixHistFDRRef", _wrap_PixHistFDRRef, METH_VARARGS },
+	 { "PixHistFDRUnref", _wrap_PixHistFDRUnref, METH_VARARGS },
+	 { "PixHistFDRCopy", _wrap_PixHistFDRCopy, METH_VARARGS },
+	 { "newPixHistFDR", _wrap_newPixHistFDR, METH_VARARGS },
 	 { "Dump", _wrap_Dump, METH_VARARGS },
 	 { "Parse", _wrap_Parse, METH_VARARGS },
 	 { "OWindowIsA", _wrap_OWindowIsA, METH_VARARGS },

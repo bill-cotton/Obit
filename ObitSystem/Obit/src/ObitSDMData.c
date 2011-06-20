@@ -2750,6 +2750,7 @@ static ASDMMainTable* ParseASDMMainTable(ObitSDMData *me,
     prior = "<timeSampling>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       tstr =  ASDMparse_str (line, maxLine, prior, &next);
+      Strip(tstr);
       if (!strcmp(tstr, "INTEGRATION")) out->rows[irow]->timeSampling = ASDMINTEGRATION;
       else if (!strcmp(tstr, "SUBINTEGRATION")) out->rows[irow]->timeSampling = ASDMSUBINTEGRATION;
       g_free(tstr);
@@ -2962,12 +2963,14 @@ ParseASDMAntennaTable(ObitSDMData *me,
     prior = "<name>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->name = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->name);   /* Deblank */
       continue;
     }
     /* antenna Make enum */
     prior = "<antennaMake>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       tstr =  ASDMparse_str (line, maxLine, prior, &next);
+      Strip(tstr);
       out->rows[irow]->antennaMake = LookupAntennaMake(tstr);
       g_free(tstr);
     }
@@ -2975,6 +2978,7 @@ ParseASDMAntennaTable(ObitSDMData *me,
     prior = "<antennaType>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       tstr =  ASDMparse_str (line, maxLine, prior, &next);
+      Strip(tstr);
       if (!strcmp(tstr, "GROUND_BASED"))      out->rows[irow]->antennaType = ASDMAnt_GROUND_BASED;
       else if (!strcmp(tstr, "SPACE_BASED"))  out->rows[irow]->antennaType = ASDMAnt_SPACE_BASED;
       else if (!strcmp(tstr, "TRACKING_STN")) out->rows[irow]->antennaType = ASDMAnt_TRACKING_STN;
@@ -3602,6 +3606,7 @@ ParseASDMConfigDescriptionTable(ObitSDMData *me,
     prior = "<correlationMode>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       tstr =  ASDMparse_str (line, maxLine, prior, &next);
+      Strip(tstr);
       if (!strcmp(tstr, "CROSS_ONLY"))          
 	out->rows[irow]->correlationMode = ASDMCorrMode_CROSS_ONLY;
       else if (!strcmp(tstr, "AUTO_ONLY"))      
@@ -3654,6 +3659,7 @@ ParseASDMConfigDescriptionTable(ObitSDMData *me,
     prior = "<processorType>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       tstr =  ASDMparse_str (line, maxLine, prior, &next);
+      Strip(tstr);
       if (!strcmp(tstr, "CORRELATOR"))        
 	out->rows[irow]->processorType = ASDMProcrType_CORRELATOR;
       else if (!strcmp(tstr, "RADIOMETER"))   
@@ -3663,6 +3669,7 @@ ParseASDMConfigDescriptionTable(ObitSDMData *me,
     prior = "<spectralType>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       tstr =  ASDMparse_str (line, maxLine, prior, &next);
+      Strip(tstr);
       if (!strcmp(tstr, "CHANNEL_AVERAGE"))      
 	out->rows[irow]->spectralType = ASDMSpecRes_CHANNEL_AVERAGE;
       else if (!strcmp(tstr, "BASEBAND_WIDE"))   
@@ -3848,6 +3855,7 @@ ParseASDMCorrelatorModeTable(ObitSDMData *me,
     prior = "<accumMode>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       tstr =  ASDMparse_str (line, maxLine, prior, &next);
+      Strip(tstr);
       if (!strcmp(tstr, "FAST"))      
 	 out->rows[irow]->accumMode = ASDMAccumMode_FAST;
       else if (!strcmp(tstr, "NORMAL"))   
@@ -3932,6 +3940,7 @@ ParseASDMCorrelatorModeTable(ObitSDMData *me,
     prior = "<correlatorName>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->correlatorName = ASDMparse_str (line, maxLine, prior, &next);
+      Strip( out->rows[irow]->correlatorName);
       continue;
     }
 
@@ -4293,17 +4302,20 @@ ParseASDMExecBlockTable(ObitSDMData *me,
     prior = "<configName>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->configName = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->configName);
       continue;
     }
     prior = "<telescopeName>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->telescopeName = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->telescopeName);
       continue;
     }
 
     prior = "<observerName>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->observerName = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->observerName);
       continue;
     }
     prior = "<observingLog>";
@@ -4312,9 +4324,11 @@ ParseASDMExecBlockTable(ObitSDMData *me,
 	out->rows[irow]->numObservingLog = 1;
 	out->rows[irow]->observingLog    = g_malloc0(sizeof(gchar*));
 	out->rows[irow]->observingLog[0] = ASDMparse_str (line, maxLine, prior, &next);
-      } else if (me->schemaVersion==3) 
+	Strip(out->rows[irow]->observingLog[0]);
+      } else if (me->schemaVersion==3) {
 	out->rows[irow]->observingLog = ASDMparse_strarray (line, maxLine, prior, &next);
-      else g_error("Unsupported schemaVersion %d", me->schemaVersion);
+	Strip(out->rows[irow]->observingLog[0]);
+      } else g_error("Unsupported schemaVersion %d", me->schemaVersion);
       continue;
     }
     prior = "<numObservingLog>";
@@ -4325,11 +4339,13 @@ ParseASDMExecBlockTable(ObitSDMData *me,
     prior = "<sessionReference>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->sessionReference = ASDMparse_str (line, maxLine, prior, &next);
+      /*Strip(out->rows[irow]->sessionReference); Huh? */
       continue;
     }
     prior = "<schedulerMode>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->schedulerMode = ASDMparse_str (line, maxLine, prior, &next);
+      /* Strip(out->rows[irow]->schedulerMode); curious */
       continue;
     }
     prior = "<baseRangeMin>";
@@ -4711,11 +4727,13 @@ static ASDMFieldTable* ParseASDMFieldTable(ObitSDMData *me,
     prior = "<fieldName>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->fieldName = ASDMparse_str (line, maxLine, prior, &next);
-      continue;
+      Strip(out->rows[irow]->fieldName);  /* Deblank */
+     continue;
     }
     prior = "<code>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->code = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->code);
       continue;
     }
     prior = "<numPoly>";
@@ -4878,6 +4896,7 @@ static ASDMFlagTable* ParseASDMFlagTable(ObitSDMData *me,
     prior = "<reason>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->reason = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->reason);
       continue;
     }
     prior = "<startTime>";
@@ -5435,11 +5454,13 @@ ParseASDMProcessorTable(ObitSDMData *me,
     prior = "<processorType>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->processorType = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->processorType);
       continue;
     }
     prior = "<processorSubType>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->processorSubType = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->processorSubType);
       continue;
     }
 
@@ -5802,7 +5823,8 @@ static ASDMScanTable* ParseASDMScanTable(ObitSDMData *me,
     prior = "<sourceName>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->sourceName = ASDMparse_str (line, maxLine, prior, &next);
-      continue;
+      Strip(out->rows[irow]->sourceName);  /* Deblank */
+     continue;
     }
     prior = "<flagRow>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
@@ -5935,6 +5957,7 @@ static ASDMSourceTable* ParseASDMSourceTable(ObitSDMData *me,
     prior = "<code>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->code = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->code);
       continue;
     }
     prior = "<direction>";
@@ -5950,6 +5973,7 @@ static ASDMSourceTable* ParseASDMSourceTable(ObitSDMData *me,
     prior = "<sourceName>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->sourceName = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->sourceName);  /* Deblank */
       continue;
     }
     prior = "<numLines>";
@@ -6092,11 +6116,13 @@ ParseASDMSpectralWindowTable(ObitSDMData *me,
     prior = "<basebandName>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->basebandName = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->basebandName);
       continue;
     }
     prior = "<netSideband>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->netSideband = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->netSideband);
       continue;
     }
     prior = "<numChan>";
@@ -6112,6 +6138,7 @@ ParseASDMSpectralWindowTable(ObitSDMData *me,
     prior = "<sidebandProcessingMode>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       tstr =  ASDMparse_str (line, maxLine, prior, &next);
+      Strip(tstr);
       out->rows[irow]->sidebandProcessingMode = LookupSideBMode(tstr);
       g_free(tstr);
       continue;
@@ -6124,6 +6151,7 @@ ParseASDMSpectralWindowTable(ObitSDMData *me,
     prior = "<windowFunction>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       tstr =  ASDMparse_str (line, maxLine, prior, &next);
+      Strip(tstr);
       out->rows[irow]->windowFunction = LookupWindowFn(tstr);
       g_free(tstr);
       continue;
@@ -6146,6 +6174,7 @@ ParseASDMSpectralWindowTable(ObitSDMData *me,
     prior = "<correlationBit>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->correlationBit = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->correlationBit);
       continue;
     }
     prior = "<effectiveBw>";
@@ -6156,6 +6185,7 @@ ParseASDMSpectralWindowTable(ObitSDMData *me,
     prior = "<name>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->name = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->name);
       continue;
     }
     prior = "<oversampling>";
@@ -6205,6 +6235,7 @@ ParseASDMSpectralWindowTable(ObitSDMData *me,
       out->rows[irow]->SpecRes = g_malloc0(MIN(1,out->rows[irow]->numAssocValues)*sizeof(ObitASDMSpecRes));
       i = 0;
       while(assNat[i]) {
+	Strip(assNat[i]);
 	if (i>=MIN(1,out->rows[irow]->numAssocValues)) break;  /* FULL? */
 	if (!strcmp(assNat[i], "CHANNEL_AVERAGE"))      
 	  out->rows[irow]->SpecRes[i] = (olong)ASDMSpecRes_CHANNEL_AVERAGE;
@@ -6334,6 +6365,7 @@ static ASDMStateTable* ParseASDMStateTable(ObitSDMData *me,
     prior = "<calDeviceName>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->calDeviceName = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->calDeviceName);
       continue;
     }
     prior = "<sig>";
@@ -6464,6 +6496,7 @@ static ASDMStationTable* ParseASDMStationTable(ObitSDMData *me,
     prior = "<name>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->name = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->name);
       continue;
     }
 
@@ -6478,6 +6511,7 @@ static ASDMStationTable* ParseASDMStationTable(ObitSDMData *me,
     prior = "<type>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       tstr =  ASDMparse_str (line, maxLine, prior, &next);
+      Strip(tstr);
       if (!strcmp(tstr, "ANTENNA_PAD"))          
 	out->rows[irow]->type = ASDMStn_ANTENNA_PAD;
       else if (!strcmp(tstr, "MAINTENANCE_PAD")) 
@@ -6611,11 +6645,13 @@ ParseASDMSubscanTable(ObitSDMData *me,
     prior = "<fieldName>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->fieldName = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->fieldName);  /* Deblank */
       continue;
     }
     prior = "<subscanIntent>";
     if (g_strstr_len (line, maxLine, prior)!=NULL) {
       out->rows[irow]->subscanIntent = ASDMparse_str (line, maxLine, prior, &next);
+      Strip(out->rows[irow]->subscanIntent);
       continue;
     }
     prior = "<numberIntegration>";
@@ -7548,6 +7584,7 @@ static void Strip (gchar* s)
 {
   olong n, i;
 
+  if (s==NULL) return;  /* Uh oh */
   n = strlen(s);
 
   /* Leading blanks */
@@ -7561,5 +7598,5 @@ static void Strip (gchar* s)
     if (s[i]!=0) break;
   }
  
-} /* end CompareFreq */
+} /* end Strip */
 

@@ -800,7 +800,7 @@ ObitFileReadXML (ObitFile *in, gchar *line, olong lineMax, ObitErr *err)
   estr  = g_strstr_len (tstr, max, endb); estr++;
   if (estr==NULL) return OBIT_IO_EOF; /* treat as EOF */
   /* swallow newline if one */
-  if (estr[1]) estr++;
+  if (estr[0]=='\n') estr++;
 
   /* Copy */
   start = in->XMLcurrent;

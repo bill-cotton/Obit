@@ -68,6 +68,8 @@ calInt                              CL Table interval
 **PARAM** boo 1  **DEF** F
 doSwPwr                             Make EVLA Switched power corr?
 **PARAM** boo 1  **DEF** F
+doAtmCor                            Select data with Atm. Corr?
+**PARAM** boo 1  **DEF** F
 Compress                            True => write compressed data
 **PARAM** str 128
 taskLog                             Logfile to write task messages to
@@ -141,7 +143,11 @@ Data selection
              The SY table 1 is copied to ver 2 in which the switched 
              power differenced are smoothed to calInt using an
              alpha median window filter with alpha = 0.5
+  doAtmCor...If True select data with estimates of atmospheric phase
+             fluctuations removed (ALMA) if such data is available.
+             Otherwise select uncorrected data.
 
+doAtmCor                            Select data with Atm. Corr?
   Compress...If True  the output data is written in
              compressed format which can result in a substantial
              reduction in disk space needed.  DO NOT USE THIS OPTION if
